@@ -1,52 +1,20 @@
-## Seleccion de ficheros para DualSPHysics4Full 
-##
-## Ignora todos los ficheros del raiz excepto gitignore y 
-## ficheros de gestion de proyectos en Visual Studio 2010.
-/*.*
-!/.gitignore
-!/*.vcxproj
-!/*.vcxproj.user
-!/*.vcxproj.filters
-!/*.sln
-!/_ClearTempFiles.bat
-## !/*.suo  Descartado pq cambia cada vez que se abre el proyecto y es bastante pesado.
+## Files selection to ignore...
+SOURCE/DualSPHysics/*.*
+!SOURCE/DualSPHysics/*.vcxproj
+!SOURCE/DualSPHysics/*.vcxproj.user
+!SOURCE/DualSPHysics/*.vcxproj.filters
+!SOURCE/DualSPHysics/*.sln
+!SOURCE/DualSPHysics/_ClearTempFiles.bat
 
-## Ignora carpetas temporales de compilacion de Visual Studio 2010.
-Intermediate/
-ipch/
+SOURCE/DualSPHysics/Source/*.a
 
-## Ignora todo del directorio Run excepto lo basico.
-Run/*
-#!/Run/__Runx.bat
-#!/Run/_partvtk4.bat
-#!/Run/_partvtkout4.bat
-#!/Run/Command Prompt.lnk
-#!/Run/runv4s.bat
-#!/Run/tail.bat
+SOURCE/DualSPHysics/Intermediate
+SOURCE/DualSPHysics/ipch
 
-## Ignora directorios temporales en Source
-Source/_SourceFull/
-Source/_ChangesDs4/
-
-## Ignora librerias precompiladas de Windows y Linux.
-#Libs/*
-#LibsLinux/*
-/Source/*.a
-
-## Ignora directorio con errores reportados.
-Errors/*
-
-## Ignora directorio con codigos deshechados.
-CodeAux/*
-
-## Ignora directorio con informacion de ampliaciones y varios.
-Addons/*
-Varios/*
-Ignore_*/*
-_CleanCode_/*
-Doxy/*
-
-## Tambien añade cualquier fichero (tipicamente zip o binario) 
-## que empiece por "ToGit_".
-!ToGit_*
-
+RUN_DIRECTORY/*
+!RUN_DIRECTORY/EXAMPLE_WIN
+!RUN_DIRECTORY/EXAMPLE_WIN/*
+RUN_DIRECTORY/EXAMPLE_WIN/*_out
+!RUN_DIRECTORY/EXAMPLE_LINUX
+!RUN_DIRECTORY/EXAMPLE_LINUX/*
+RUN_DIRECTORY/EXAMPLE_LINUX/*_out

@@ -1,0 +1,27 @@
+Example_file_to_define_points...
+
+Definition_of_points:
+"POINTS"
+x1 y1 z1
+x2 y2 z2
+x3 y3 z3
+
+Definition_of_list_of_points:
+"POINTSLIST"
+BeginX BeginY BeginZ
+StepX StepY StepZ
+CountX CountY CountZ
+
+POINTS
+0 0 1 #Point:(0,0,1)
+1 0.5 -5 #Point:(1,0.5,-5)
+
+POINTSLIST #Ten_points_in_the_line_from_(0,0,0)_to_(9,0,0)
+0 0 0
+1 0 0
+10 1 1
+
+POINTSLIST #Mesh_in_the_plane_XY_of_200_points_from_(10,0,0)_to_(19,19,0)
+10 0 0
+1 1 0
+10 20 1
