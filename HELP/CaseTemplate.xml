@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<case app="GenCase4 v4.0.055 (10-11-2017)" date="10-11-2017 17:31:05">
+<case app="GenCase4 v4.0.058 (06-12-2017)" date="06-12-2017 05:17:16">
     <casedef>
         <constantsdef>
             <lattice bound="2" fluid="1" />
@@ -413,7 +413,15 @@
             </floating>
             <floating mkbound="4" property="Material_2">
                 <massbody value="1300" />
-                <inertia x="20" y="22" z="24" />
+                <inertia x="11" y="22" z="22" />
+            </floating>
+            <floating mkbound="5" property="Material_2">
+                <massbody value="1300" />
+                <inertiafull>
+                    <values v11="11" v12="0" v13="0" />
+                    <values v21="0" v22="22" v23="0" />
+                    <values v31="0" v32="0" v33="33" />
+                </inertiafull>
             </floating>
         </floatings>
         <properties>
