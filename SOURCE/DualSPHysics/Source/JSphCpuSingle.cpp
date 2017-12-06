@@ -22,6 +22,7 @@
 #include "JCellDivCpuSingle.h"
 #include "JArraysCpu.h"
 #include "Functions.h"
+#include "FunctionsMath.h"
 #include "JXml.h"
 #include "JSphMotion.h"
 #include "JPartsLoad4.h"
@@ -692,6 +693,32 @@ tfloat3 JSphCpuSingle::FtPeriodicDist(const tdouble3 &pos,const tdouble3 &center
 }
 
 //==============================================================================
+/// Calculate summation: face, fomegaace.
+/// Calcula suma de face y fomegaace a partir de particulas floating.
+//==============================================================================
+void JSphCpuSingle::FtCalcForcesSum(unsigned cf,tfloat3 &face,tfloat3 &fomegaace)const{
+  const StFloatingData fobj=FtObjs[cf];
+  const unsigned fpini=fobj.begin-CaseNpb;
+  const unsigned fpfin=fpini+fobj.count;
+  const float fradius=fobj.radius;
+  const tdouble3 fcenter=fobj.center;
+  //-Computes traslational and rotational velocities.
+  face=TFloat3(0);
+  fomegaace=TFloat3(0);
+  //-Calculate summation: face, fomegaace. | Calcula sumatorios: face, fomegaace.
+  for(unsigned fp=fpini;fp<fpfin;fp++){
+    int p=FtRidp[fp];
+    //-Ace is initialised with the value of the gravity for all particles.
+    float acex=Acec[p].x-Gravity.x,acey=Acec[p].y-Gravity.y,acez=Acec[p].z-Gravity.z;
+    face.x+=acex; face.y+=acey; face.z+=acez;
+    tfloat3 dist=(PeriActive? FtPeriodicDist(Posc[p],fcenter,fradius): ToTFloat3(Posc[p]-fcenter)); 
+    fomegaace.x+= acez*dist.y - acey*dist.z;
+    fomegaace.y+= acex*dist.z - acez*dist.x;
+    fomegaace.z+= acey*dist.x - acex*dist.y;
+  }
+}
+
+//==============================================================================
 /// Calculate forces around floating object particles.
 /// Calcula fuerzas sobre floatings.
 //==============================================================================
@@ -702,53 +729,21 @@ void JSphCpuSingle::FtCalcForces(StFtoForces *ftoforces)const{
   #endif
   for(int cf=0;cf<ftcount;cf++){
     const StFloatingData fobj=FtObjs[cf];
-    const unsigned fpini=fobj.begin-CaseNpb;
-    const unsigned fpfin=fpini+fobj.count;
-    const float fradius=fobj.radius;
-    const tdouble3 fcenter=fobj.center;
-    const float fmassp=fobj.massp;
-    //-Computes traslational and rotational velocities.
-    tfloat3 face=TFloat3(0);
-    tfloat3 fomegaace=TFloat3(0);
-    tmatrix3f inert=TMatrix3f(0,0,0,0,0,0,0,0,0);
-    //-Calculate summation: face, fomegaace & inert. | Calcula sumatorios: face, fomegaace y inert.
-    for(unsigned fp=fpini;fp<fpfin;fp++){
-      int p=FtRidp[fp];
-      //-Ace is initialised with the value of the gravity for all particles.
-      float acex=Acec[p].x-Gravity.x,acey=Acec[p].y-Gravity.y,acez=Acec[p].z-Gravity.z;
-      face.x+=acex; face.y+=acey; face.z+=acez;
-      tfloat3 dist=(PeriActive? FtPeriodicDist(Posc[p],fcenter,fradius): ToTFloat3(Posc[p]-fcenter)); 
-      fomegaace.x+= acez*dist.y - acey*dist.z;
-      fomegaace.y+= acex*dist.z - acez*dist.x;
-      fomegaace.z+= acey*dist.x - acex*dist.y;
-      //-Inertia tensor.
-      inert.a11+=(float)  (dist.y*dist.y+dist.z*dist.z)*fmassp;
-      inert.a12+=(float) -(dist.x*dist.y)*fmassp;
-      inert.a13+=(float) -(dist.x*dist.z)*fmassp;
-      //inert.a21+=(float) -(dist.x*dist.y)*fmassp;
-      inert.a22+=(float)  (dist.x*dist.x+dist.z*dist.z)*fmassp;
-      inert.a23+=(float) -(dist.y*dist.z)*fmassp;
-      //inert.a31+=(float) -(dist.x*dist.z)*fmassp;
-      //inert.a32+=(float) -(dist.y*dist.z)*fmassp;
-      inert.a33+=(float)  (dist.x*dist.x+dist.y*dist.y)*fmassp;
-    }
-    inert.a21=inert.a12; //-Because it is symmetrical.
-    inert.a31=inert.a13;
-    inert.a32=inert.a23;
+    const float fmass=fobj.mass;
+    const tfloat3 fang=fobj.angles;
+    tmatrix3f inert=fobj.inertiaini;
+
+    //-Compute a cumulative rotation matrix.
+    const tmatrix3f frot=fmath::RotMatrix3x3(fang);
+    //-Compute the intertia tensor by rotating the initial tensor to the curent orientation I=(R*I_0)*R^T.
+    inert=fmath::MulMatrix3x3(fmath::MulMatrix3x3(frot,inert),fmath::TrasMatrix3x3(frot));
     //-Calculates the inverse of the intertia matrix to compute the I^-1 * L= W
-    tmatrix3f invinert=TMatrix3f(0,0,0,0,0,0,0,0,0);
-    const float detiner=(inert.a11*inert.a22*inert.a33+inert.a12*inert.a23*inert.a31+inert.a21*inert.a32*inert.a13-(inert.a31*inert.a22*inert.a13+inert.a21*inert.a12*inert.a33+inert.a23*inert.a32*inert.a11));
-    if(detiner){
-      invinert.a11= (inert.a22*inert.a33-inert.a23*inert.a32)/detiner;
-      invinert.a12=-(inert.a12*inert.a33-inert.a13*inert.a32)/detiner;
-      invinert.a13= (inert.a12*inert.a23-inert.a13*inert.a22)/detiner;
-      invinert.a21=-(inert.a21*inert.a33-inert.a23*inert.a31)/detiner;
-      invinert.a22= (inert.a11*inert.a33-inert.a13*inert.a31)/detiner;
-      invinert.a23=-(inert.a11*inert.a23-inert.a13*inert.a21)/detiner;
-      invinert.a31= (inert.a21*inert.a32-inert.a22*inert.a31)/detiner;
-      invinert.a32=-(inert.a11*inert.a32-inert.a12*inert.a31)/detiner;
-      invinert.a33= (inert.a11*inert.a22-inert.a12*inert.a21)/detiner;
-    }
+    const tmatrix3f invinert=fmath::InverseMatrix3x3(inert);
+
+    //-Computes traslational and rotational velocities.
+    tfloat3 face,fomegaace;
+    FtCalcForcesSum(cf,face,fomegaace);
+
     //-Calculate omega starting from fomegaace & invinert. | Calcula omega a partir de fomegaace y invinert.
     {
       tfloat3 omegaace;
@@ -758,7 +753,6 @@ void JSphCpuSingle::FtCalcForces(StFtoForces *ftoforces)const{
       fomegaace=omegaace;
     }
     //-Add gravity and divide by mass. | Añade gravedad y divide por la masa.
-    const float fmass=fobj.mass;
     face.x=(face.x+fmass*Gravity.x)/fmass;
     face.y=(face.y+fmass*Gravity.y)/fmass;
     face.z=(face.z+fmass*Gravity.z)/fmass;
@@ -814,6 +808,7 @@ void JSphCpuSingle::RunFloating(double dt,bool predictor){
     TmcStart(Timers,TMC_SuFloating);
     //-Initialises forces of floatings.
     memset(FtoForces,0,sizeof(StFtoForces)*FtCount); 
+
     //-Adds calculated forces around floating objects. | Añade fuerzas calculadas sobre floatings.
     FtCalcForces(FtoForces);
     //-Calculate data to update floatings. | Calcula datos para actualizar floatings.
@@ -855,7 +850,7 @@ void JSphCpuSingle::RunFloating(double dt,bool predictor){
       if(!predictor){
         //const tdouble3 centerold=FtObjs[cf].center;
         FtObjs[cf].center=(PeriActive? UpdatePeriodicPos(fcenter): fcenter);
-        FtObjs[cf].angles=ToTFloat3(ToTDouble3(FtObjs[cf].angles)+ToTDouble3(fomega)/dt);
+        FtObjs[cf].angles=ToTFloat3(ToTDouble3(FtObjs[cf].angles)+ToTDouble3(fomega)*dt);
         FtObjs[cf].fvel=fvel;
         FtObjs[cf].fomega=fomega;
       }

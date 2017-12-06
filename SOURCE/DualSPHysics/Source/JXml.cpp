@@ -19,6 +19,7 @@
 /// \file JXml.cpp \brief Implements the class \ref JXml.
 
 #include "JXml.h"
+#include "Functions.h"
 
 #include <ctime>
 #include <sys/stat.h>
@@ -434,6 +435,55 @@ unsigned JXml::ReadArrayInt3(TiXmlNode* node,const std::string &name,tint3 *vec,
   return(rcount);
 }
 
+//==============================================================================
+/// Loads a matrix from xml and returns the number of loaded elements.
+/// \param node Xml node the list of values is loaded from. 
+/// \param name Name of the elements of type double.
+/// \param nrow Number of rows (the maximum allowed is 9).
+/// \param ncol Number of cols (the maximum allowed is 9).
+/// \param data Memory pointer where loaded values are stored.
+/// \param ndata Available memory size of data pointer.
+/// \param optionalvalues If some value does not exist, valdef is used.
+/// \param valdef Value by default if some value does not exist and \a optional was activated. 
+/// \throw JException Size of data is not enough...
+/// \throw JException Element is not found...
+/// \throw JException Values missing or any value is not valid...
+//==============================================================================
+unsigned JXml::ReadMatrixDouble(TiXmlNode* node,const std::string &name
+  ,unsigned nrows,unsigned ncols,unsigned ndata,double *data
+  ,bool optionalvalues,double valdef)const
+{
+  TiXmlElement* ele=GetFirstElement(node,name);
+  if(nrows>9 || ncols>9)ErrReadElement(ele,name,false,"Number number of columns or rows greater than 9.");
+  if(nrows*ncols>ndata)ErrReadElement(ele,name,false,"Size of data is not enough to store the requested matrix.");
+  unsigned nvalues=0;
+  //-Look for each value.
+  for(unsigned cr=1;cr<=nrows;cr++)for(unsigned cc=1;cc<=ncols;cc++){
+    unsigned n=0;
+    double v=valdef;
+    string value=fun::PrintStr("v%d%d",cr,cc);
+    if(ExistsAttribute(ele,value)){
+      v=GetAttributeDouble(ele,value);
+      n++;
+    }
+    TiXmlElement* elerow=GetFirstElement(ele,"values",true);
+    while(elerow){
+      if(ExistsAttribute(elerow,value)){
+        v=GetAttributeDouble(elerow,value);
+        n++;
+      }
+      elerow=GetNextElement(elerow,"values",true);
+    }
+    if(!n && optionalvalues)ErrReadElement(ele,name,false,string("Value \'")+value+"\' is missing.");
+    if(n>1)ErrReadElement(ele,name,false,string("Value \'")+value+"\' is repeated.");
+    data[(cr-1)*ncols+(cc-1)]=v;
+    if(n)nvalues++;
+  }
+  return(nvalues);
+}
+
+
+
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -519,6 +569,29 @@ TiXmlElement JXml::MakeElementDouble3(const std::string &name,const tdouble3 &v,
   AddAttribute(&item,name1,v.x);
   AddAttribute(&item,name2,v.y);
   AddAttribute(&item,name3,v.z);
+  return(item);
+}
+
+//==============================================================================
+/// Creates and returns an element starting from a value of type double3.
+/// \param name Name of the element.
+/// \param nrow Number of rows.
+/// \param ncol Number of cols.
+/// \param values Values of the matrix.
+//==============================================================================
+TiXmlElement JXml::MakeElementMatrixDouble(const std::string &name
+  ,unsigned nrows,unsigned ncols,const double* values)
+{
+  const std::string fmt=(nrows>9 || ncols>9? "v%d_%d": "v%d%d");
+  TiXmlElement item(name.c_str());
+  for(unsigned cr=1;cr<=nrows;cr++){
+    TiXmlElement itemrow("values");
+    for(unsigned cc=1;cc<=ncols;cc++){
+      string value=fun::PrintStr(fmt.c_str(),cr,cc);
+      AddAttribute(&itemrow,value,values[(cr-1)*ncols+(cc-1)]);
+    }
+    item.InsertEndChild(itemrow);
+  }
   return(item);
 }
 

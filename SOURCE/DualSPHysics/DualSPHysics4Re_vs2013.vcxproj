@@ -331,6 +331,10 @@
     </CudaCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <CudaCompile Include="Source\FunctionsMath_ker.cu">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">true</ExcludedFromBuild>
+    </CudaCompile>
     <CudaCompile Include="Source\JCellDivGpu_ker.cu">
       <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">rem ***Vars de compilacion
 set CudaPath=$(CUDA_PATH_V7_5)

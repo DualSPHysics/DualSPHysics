@@ -575,8 +575,11 @@ void JSphGpuSingle::RunFloating(double dt,bool predictor){
     TmgStart(Timers,TMG_SuFloating);
     //-Initialises forces of floatings.
     cudaMemset(FtoForcesg,0,sizeof(StFtoForces)*FtCount);
+
+    //-Calculate forces summation (face,fomegaace) starting from floating particles in ftoforcessum[].
+    cusph::FtCalcForcesSum(PeriActive!=0,FtCount,Gravity,FtoDatag,FtoCenterg,FtRidpg,Posxyg,Poszg,Aceg,FtoForcesSumg);
     //-Adds calculated forces around floating objects / Añade fuerzas calculadas sobre floatings.
-    cusph::FtCalcForces(PeriActive!=0,FtCount,Gravity,FtoDatag,FtoMasspg,FtoCenterg,FtRidpg,Posxyg,Poszg,Aceg,FtoForcesg);
+    cusph::FtCalcForces(FtCount,Gravity,FtoDatag,FtoAnglesg,FtoInertiaini8g,FtoInertiaini1g,FtoForcesSumg,FtoForcesg);
     //-Calculate data to update floatings / Calcula datos para actualizar floatings.
     cusph::FtCalcForcesRes(FtCount,Simulate2D,dt,FtoOmegag,FtoVelg,FtoCenterg,FtoForcesg,FtoForcesResg,FtoCenterResg);
 

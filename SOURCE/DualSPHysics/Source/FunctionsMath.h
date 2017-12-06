@@ -33,6 +33,7 @@
 //:# - Nuevas funciones para matrices. (24-01-2017)
 //:# - En el calculo de la matriz inversa puedes pasarle el determinante. (08-02-2017)
 //:# - Nuevas funciones IntersecPlaneLine(). (08-09-2016)
+//:# - Nuevas funciones MulMatrix3x3(), TrasMatrix3x3() y RotMatrix3x3(). (29-11-2017)
 //:#############################################################################
 
 /// \file FunctionsMath.h \brief Declares basic/general math functions.
@@ -422,6 +423,46 @@ inline tmatrix4d InverseMatrix4x4(const tmatrix4d &d,const double det){
 inline tmatrix4d InverseMatrix4x4(const tmatrix4d &d){
   return(InverseMatrix4x4(d,Determinant4x4(d)));
 }
+
+
+//==============================================================================
+/// Devuelve producto de 2 matrices de 3x3.
+/// Returns the product of 2 matrices of 3x3.
+//==============================================================================
+inline tmatrix3f MulMatrix3x3(const tmatrix3f &a,const tmatrix3f &b){
+  return(TMatrix3f(
+    a.a11*b.a11 + a.a12*b.a21 + a.a13*b.a31, a.a11*b.a12 + a.a12*b.a22 + a.a13*b.a32, a.a11*b.a13 + a.a12*b.a23 + a.a13*b.a33,
+    a.a21*b.a11 + a.a22*b.a21 + a.a23*b.a31, a.a21*b.a12 + a.a22*b.a22 + a.a23*b.a32, a.a21*b.a13 + a.a22*b.a23 + a.a23*b.a33,
+    a.a31*b.a11 + a.a32*b.a21 + a.a33*b.a31, a.a31*b.a12 + a.a32*b.a22 + a.a33*b.a32, a.a31*b.a13 + a.a32*b.a23 + a.a33*b.a33
+  ));
+}
+
+//==============================================================================
+/// Devuelve traspuesta de matriz 3x3.
+/// Returns the transpose from matrix 3x3.
+//==============================================================================
+inline tmatrix3f TrasMatrix3x3(const tmatrix3f &a){
+  return(TMatrix3f(
+    a.a11, a.a21, a.a31,
+    a.a12, a.a22, a.a32,
+    a.a13, a.a23, a.a33
+  ));
+}
+
+//==============================================================================
+/// Devuelve la matriz de rotacion.
+/// Returns the rotation matrix.
+//==============================================================================
+inline tmatrix3f RotMatrix3x3(const tfloat3 &ang){
+  const float cosx=cos(ang.x),cosy=cos(ang.y),cosz=cos(ang.z);
+  const float sinx=sin(ang.x),siny=sin(ang.y),sinz=sin(ang.z);
+  return(TMatrix3f(
+     cosy*cosz,                   -cosy*sinz,                    siny,
+     sinx*siny*cosz + cosx*sinz,  -sinx*siny*sinz + cosx*cosz,  -sinx*cosy,
+    -cosx*siny*cosz + sinx*sinz,   cosx*siny*sinz + sinx*cosz,   cosx*cosy
+  ));
+}
+
 
 //==============================================================================
 /// Devuelve proyeccion ortogonal del punto en el plano.

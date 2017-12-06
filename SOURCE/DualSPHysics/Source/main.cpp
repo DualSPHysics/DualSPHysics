@@ -55,9 +55,9 @@ using namespace std;
 
 const char *APP_CODENAME="DualSPHysics4";
 #ifdef CODE_SIZE4
-  const char *APP_NAME="DualSPHysics4 MK65k v4.2.023 (29-11-2017)";
+  const char *APP_NAME="DualSPHysics4 MK65k v4.2.024.2 (04-12-2017)";
 #else
-  const char *APP_NAME="DualSPHysics4 v4.2.023 (29-11-2017)";
+  const char *APP_NAME="DualSPHysics4 v4.2.024.2 (04-12-2017)";
 #endif
 
 //==============================================================================

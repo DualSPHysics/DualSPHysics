@@ -157,10 +157,13 @@ void MoveLinBound(byte periactive,unsigned np,unsigned ini,tdouble3 mvpos,tfloat
 void MoveMatBound(byte periactive,bool simulate2d,unsigned np,unsigned ini,tmatrix4d m,double dt,const unsigned *ridpmv,double2 *posxy,double *posz,unsigned *dcell,float4 *velrhop,typecode *code);
 
 //-Kernels for Floating bodies.
-void FtCalcForces(bool periactive,unsigned ftcount
-  ,tfloat3 gravity,const float4 *ftodata,const float *ftomassp,const double3 *ftocenter,const unsigned *ftridp
+void FtCalcForcesSum(bool periactive,unsigned ftcount
+  ,tfloat3 gravity,const float4 *ftodata,const double3 *ftocenter,const unsigned *ftridp
   ,const double2 *posxy,const double *posz,const float3 *ace
-  ,float3 *ftoforces);
+  ,float3 *ftoforcessum);
+void FtCalcForces(unsigned ftcount,tfloat3 gravity,const float4 *ftodata
+  ,const float3 *ftoangles,const float4 *ftoinertiaini8,const float *ftoinertiaini1
+  ,const float3 *ftoforcessum,float3 *ftoforces);
 void FtCalcForcesRes(unsigned ftcount,bool simulate2d,double dt
   ,const float3 *ftoomega,const float3 *ftovel,const double3 *ftocenter,const float3 *ftoforces
   ,float3 *ftoforcesres,double3 *ftocenterres);

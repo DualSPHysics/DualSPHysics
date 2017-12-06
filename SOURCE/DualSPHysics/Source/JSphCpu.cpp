@@ -388,10 +388,10 @@ void JSphCpu::ConfigRunMode(const JCfgRun *cfg,std::string preinfo){
   Hardware="Cpu";
   if(OmpThreads==1)RunMode="Single core";
   else RunMode=string("OpenMP(Threads:")+fun::IntStr(OmpThreads)+")";
-  if(!preinfo.empty())RunMode=preinfo+", "+RunMode;
-  if(Stable)RunMode=string("Stable, ")+RunMode;
-  if(Psingle)RunMode=string("Pos-Single, ")+RunMode;
-  else RunMode=string("Pos-Double, ")+RunMode;
+  if(!preinfo.empty())RunMode=preinfo+" - "+RunMode;
+  if(Stable)RunMode=string("Stable - ")+RunMode;
+  if(Psingle)RunMode=string("Pos-Single - ")+RunMode;
+  else RunMode=string("Pos-Double - ")+RunMode;
   Log->Print(fun::VarStr("RunMode",RunMode));
 }
 

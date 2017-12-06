@@ -34,6 +34,7 @@
 //:# - Convierte codigos de mayor y menor a simbolos. (20-01-2016)
 //:# - Pasa varios parametros de lectura a const. (25-01-2016)
 //:# - Ahora GetAttributeUnsigned/GetAttributeUint permiten todo el rango de unsigned. (06-05-2016)
+//:# - Nuevos metodos para lectura y escritura de matrices. (29-11-2017)
 //:#############################################################################
 
 /// \file JXml.h \brief Declares the class \ref JXml.
@@ -398,6 +399,23 @@ public:
     TiXmlElement* ele=GetFirstElement(node,name,optional); 
     return(ele? GetAttributeBool(ele,attrib,optional,valdef): valdef);
   }
+  
+  //==============================================================================
+  /// Checks and returns value of type tmatrix3d of the first xml element 
+  /// of a node with a given name.
+  /// \param node Xml node where the element is reached.
+  /// \param name Name of the element to be reached.
+  /// \param optionalvalues If some value does not exist, valdef is used.
+  /// \param valdef Value by default if some value does not exist and \a optional was activated. 
+  /// \throw JException Size of data is not enough...
+  /// \throw JException Element is not found...
+  /// \throw JException Values missing or any value is not valid...
+  //==============================================================================
+  tmatrix3d ReadElementMatrix3d(TiXmlNode* node,const std::string &name,bool optionalvalues=false,double valdef=0)const{
+    tmatrix3d mat;
+    ReadMatrixDouble(node,name,3,3,sizeof(mat)/sizeof(valdef),(double*)&mat,optionalvalues,valdef);
+    return(mat);
+  }
 
   //- Reading arrays of complete nodes.
 
@@ -440,6 +458,21 @@ public:
   //==============================================================================
   unsigned ReadArrayInt3(TiXmlNode* node,const std::string &name,tint3 *vec,unsigned count,bool readcount=true)const;
 
+  //==============================================================================
+  /// Loads a matrix from xml and returns the number of loaded elements.
+  /// \param node Xml node the list of values is loaded from. 
+  /// \param name Name of the elements of type double.
+  /// \param nrow Number of rows (the maximum allowed is 9).
+  /// \param ncol Number of cols (the maximum allowed is 9).
+  /// \param data Memory pointer where loaded values are stored.
+  /// \param count Available memory size of data pointer.
+  /// \param optionalvalues If some value does not exist, valdef is used.
+  /// \param valdef Value by default if some value does not exist and \a optional was activated. 
+  /// \throw JException Element is not found...
+  /// \throw JException Values missing or any value is not valid...
+  //==============================================================================
+  unsigned ReadMatrixDouble(TiXmlNode* node,const std::string &name,unsigned nrows,unsigned ncols,unsigned ndata,double *data,bool optionalvalues=false,double valdef=0)const;
+  
 
   //-Conversion to text.
 
@@ -561,6 +594,15 @@ public:
   /// \param name3 Name of the third attribute (z by default).
   //==============================================================================
   static TiXmlElement MakeElementFloat3(const std::string &name,const tfloat3 &v,const char* name1="x",const char* name2="y",const char* name3="z"){ return(MakeElementDouble3(name,TDouble3(v.x,v.y,v.z),name1,name2,name3)); }
+
+  //==============================================================================
+  /// Creates and returns an element starting from a value of type double3.
+  /// \param name Name of the element.
+  /// \param nrow Number of rows (the maximum allowed is 9).
+  /// \param ncol Number of cols (the maximum allowed is 9).
+  /// \param values Values of the matrix.
+  //==============================================================================
+  static TiXmlElement MakeElementMatrixDouble(const std::string &name,unsigned nrows,unsigned ncols,const double* values);
   
   //==============================================================================
   /// Creates and returns an element with attribute of type double.
@@ -624,6 +666,30 @@ public:
   /// \param name3 Name of the third attribute (z by default).
   //==============================================================================
   static TiXmlElement* AddElementDouble3(TiXmlNode* node,const std::string &name,const tdouble3 &v,const char* name1="x",const char* name2="y",const char* name3="z"){ return(node->InsertEndChild(MakeElementDouble3(name,v,name1,name2,name3))->ToElement()); }
+  
+  //==============================================================================
+  /// Adds a new element of type double3 to the node and returns the element.
+  /// \param node Xml node to which the element node is created.
+  /// \param name Name of the element.
+  /// \param nrow Number of rows.
+  /// \param ncol Number of cols.
+  /// \param values Values of the matrix.
+  //==============================================================================
+  static TiXmlElement* AddElementMatrixDouble(TiXmlNode* node,const std::string &name
+    ,unsigned nrows,unsigned ncols,const double* values)
+  { 
+    return(node->InsertEndChild(MakeElementMatrixDouble(name,nrows,ncols,values))->ToElement());
+  }
+  
+  //==============================================================================
+  /// Adds a new element of type tmatrix3d to the node and returns the element.
+  /// \param node Xml node to which the element node is created.
+  /// \param name Name of the element.
+  /// \param v Value of the element.
+  //==============================================================================
+  static TiXmlElement* AddElementMatrix3d(TiXmlNode* node,const std::string &name,const tmatrix3d &v){ 
+    return(AddElementMatrixDouble(node,name,3,3,(const double*)&v));
+  }
   
   //==============================================================================
   /// Adds a new element of type double to the node and returns the element.

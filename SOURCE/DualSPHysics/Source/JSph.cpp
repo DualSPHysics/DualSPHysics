@@ -639,6 +639,7 @@ void JSph::LoadCaseConfig(){
         fobj->angles=TFloat3(0);
         fobj->fvel=ToTFloat3(fblock.GetVelini());
         fobj->fomega=ToTFloat3(fblock.GetOmegaini());
+        fobj->inertiaini=ToTMatrix3f(fblock.GetInertia());
         cobj++;
       }
     }

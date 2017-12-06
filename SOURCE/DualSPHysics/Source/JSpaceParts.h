@@ -40,6 +40,7 @@
 //:# - Se graba el valor masspart para floating bodies en el fichero XML. (05-01-2016)
 //:# - Se graban los datos de floatingns con las unidades. (29-01-2016)
 //:# - Genera resumen de particulas y bloques de MK. (03-08-2017)
+//:# - Inertia de floatings se guarda como tmatrix3d. (29-11-2017)
 //:#############################################################################
 
 /// \file JSpaceParts.h \brief Declares the class \ref JSpaceParts.
@@ -167,15 +168,15 @@ class JSpacePartBlock_Floating : public JSpacePartBlock
 private:
   double Massbody;
   tdouble3 Center;
-  tdouble3 Inertia;
+  tmatrix3d Inertia;
   tdouble3 Velini;
   tdouble3 Omegaini;
 public:
-  JSpacePartBlock_Floating(const JSpaceProperties* properties,word mktype,unsigned begin,unsigned count,double massbody,const tdouble3& center,const tdouble3& inertia,const tdouble3& velini,const tdouble3& omegaini):JSpacePartBlock(properties,PT_Floating,"Floating",true,mktype,begin,count),Massbody(massbody),Center(center),Inertia(inertia),Velini(velini),Omegaini(omegaini){}
+  JSpacePartBlock_Floating(const JSpaceProperties* properties,word mktype,unsigned begin,unsigned count,double massbody,const tdouble3& center,const tmatrix3d& inertia,const tdouble3& velini,const tdouble3& omegaini):JSpacePartBlock(properties,PT_Floating,"Floating",true,mktype,begin,count),Massbody(massbody),Center(center),Inertia(inertia),Velini(velini),Omegaini(omegaini){}
   JSpacePartBlock_Floating(const JSpaceProperties* properties,JXml *sxml,TiXmlElement* ele):JSpacePartBlock(properties,PT_Floating,"Floating",true){ ReadXml(sxml,ele); }
   double GetMassbody()const{ return(Massbody); }
   tdouble3 GetCenter()const{ return(Center); }
-  tdouble3 GetInertia()const{ return(Inertia); }
+  tmatrix3d GetInertia()const{ return(Inertia); }
   tdouble3 GetVelini()const{ return(Velini); }
   tdouble3 GetOmegaini()const{ return(Omegaini); }
   void ReadXml(JXml *sxml,TiXmlElement* ele);
@@ -245,7 +246,7 @@ public:
 
   void AddFixed(word mktype,unsigned count){ Add(new JSpacePartBlock_Fixed(Properties,mktype,GetBegin(),count)); }
   void AddMoving(word mktype,unsigned count,unsigned refmotion){ Add(new JSpacePartBlock_Moving(Properties,mktype,GetBegin(),count,refmotion)); }
-  void AddFloating(word mktype,unsigned count,double massbody,const tdouble3& center,const tdouble3& inertia,const tdouble3& velini,const tdouble3& omegaini){ Add(new JSpacePartBlock_Floating(Properties,mktype,GetBegin(),count,massbody,center,inertia,velini,omegaini)); }
+  void AddFloating(word mktype,unsigned count,double massbody,const tdouble3& center,const tmatrix3d& inertia,const tdouble3& velini,const tdouble3& omegaini){ Add(new JSpacePartBlock_Floating(Properties,mktype,GetBegin(),count,massbody,center,inertia,velini,omegaini)); }
   void AddFluid(word mktype,unsigned count){ Add(new JSpacePartBlock_Fluid(Properties,mktype,GetBegin(),count)); }
 
   void SetBlockSize(unsigned pos,unsigned np);

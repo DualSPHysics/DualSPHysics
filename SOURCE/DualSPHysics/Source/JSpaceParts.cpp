@@ -188,9 +188,16 @@ void JSpacePartBlock_Floating::ReadXml(JXml *sxml,TiXmlElement* ele){
   JSpacePartBlock::ReadXml(sxml,ele);
   Massbody=sxml->ReadElementDouble(ele,"massbody","value");
   Center=sxml->ReadElementDouble3(ele,"center");
-  Inertia=sxml->ReadElementDouble3(ele,"inertia");
   Velini=(sxml->GetFirstElement(ele,"velini",true)!=NULL? sxml->ReadElementDouble3(ele,"velini"): TDouble3(0));
   Omegaini=(sxml->GetFirstElement(ele,"omegaini",true)!=NULL? sxml->ReadElementDouble3(ele,"omegaini"): TDouble3(0));
+  //-Reads inertia data from double3 or tmatrix3d XML element.
+  TiXmlElement *item=sxml->GetFirstElement(ele,"inertia");
+  if(sxml->ExistsAttribute(item,"x") && sxml->ExistsAttribute(item,"y") && sxml->ExistsAttribute(item,"z")){
+    tdouble3 v3=sxml->ReadElementDouble3(ele,"inertia");
+    Inertia=TMatrix3d(0);
+    Inertia.a11=v3.x; Inertia.a22=v3.y; Inertia.a33=v3.z;
+  }
+  else Inertia=sxml->ReadElementMatrix3d(ele,"inertia");
 }
 
 //==============================================================================
@@ -201,7 +208,10 @@ TiXmlElement* JSpacePartBlock_Floating::WriteXml(JXml *sxml,TiXmlElement* ele)co
   sxml->AddAttribute(sxml->AddElementAttrib(ele,"massbody","value",Massbody),"units_comment","kg");
   sxml->AddAttribute(sxml->AddElementAttrib(ele,"masspart","value",Massbody/GetCount()),"units_comment","kg");
   sxml->AddAttribute(sxml->AddElementDouble3(ele,"center",Center),"units_comment","metres (m)");
-  sxml->AddAttribute(sxml->AddElementDouble3(ele,"inertia",Inertia),"units_comment","kg*m^2");
+  if(!Inertia.a12 && !Inertia.a13 && !Inertia.a21 && !Inertia.a23 && !Inertia.a31 && !Inertia.a32){
+    sxml->AddAttribute(sxml->AddElementDouble3(ele,"inertia",TDouble3(Inertia.a11,Inertia.a22,Inertia.a33)),"units_comment","kg*m^2");
+  }
+  else sxml->AddAttribute(sxml->AddElementMatrix3d(ele,"inertia",Inertia),"units_comment","kg*m^2");
   if(Velini!=TDouble3(0))sxml->AddAttribute(sxml->AddElementDouble3(ele,"velini",Velini),"units_comment","m/s");
   if(Omegaini!=TDouble3(0))sxml->AddAttribute(sxml->AddElementDouble3(ele,"omegaini",Omegaini),"units_comment","radians/s");
   return(ele);

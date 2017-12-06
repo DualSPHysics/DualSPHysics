@@ -35,6 +35,7 @@
 __constant__ StCteInteraction CTE;
 
 namespace cusph{
+#include "FunctionsMath_ker.cu"
 
 //==============================================================================
 /// Checks error and ends execution.
@@ -2088,13 +2089,13 @@ template<bool periactive> __device__ void KerFtPeriodicDist(double px,double py,
 }
 
 //------------------------------------------------------------------------------
-/// Computes forces on floatings.
-/// Calcula fuerzas sobre floatings.
+/// Calculate summation: face, fomegaace in ftoforcessum[].
+/// Calcula suma de face y fomegaace a partir de particulas floating en ftoforcessum[].
 //------------------------------------------------------------------------------
-template<bool periactive> __global__ void KerFtCalcForces( //fdata={pini,np,radius,mass}
-  float3 gravity,const float4 *ftodata,const float *ftomassp,const double3 *ftocenter,const unsigned *ftridp
+template<bool periactive> __global__ void KerFtCalcForcesSum( //fdata={pini,np,radius,mass}
+  float3 gravity,const float4 *ftodata,const double3 *ftocenter,const unsigned *ftridp
   ,const double2 *posxy,const double *posz,const float3 *ace
-  ,float3 *ftoforces)
+  ,float3 *ftoforcessum)
 {
   extern __shared__ float rfacex[];
   float *rfacey=rfacex+blockDim.x;
@@ -2102,15 +2103,6 @@ template<bool periactive> __global__ void KerFtCalcForces( //fdata={pini,np,radi
   float *rfomegaacex=rfacez+blockDim.x;
   float *rfomegaacey=rfomegaacex+blockDim.x;
   float *rfomegaacez=rfomegaacey+blockDim.x;
-  float *rinert11=rfomegaacez+blockDim.x;
-  float *rinert12=rinert11+blockDim.x;
-  float *rinert13=rinert12+blockDim.x;
-  float *rinert21=rinert13+blockDim.x;
-  float *rinert22=rinert21+blockDim.x;
-  float *rinert23=rinert22+blockDim.x;
-  float *rinert31=rinert23+blockDim.x;
-  float *rinert32=rinert31+blockDim.x;
-  float *rinert33=rinert32+blockDim.x;
 
   const unsigned tid=threadIdx.x;                      //-Thread number.
   const unsigned cf=blockIdx.y*gridDim.x + blockIdx.x; //-Floating number.
@@ -2120,8 +2112,6 @@ template<bool periactive> __global__ void KerFtCalcForces( //fdata={pini,np,radi
   const unsigned fpini=(unsigned)__float_as_int(rfdata.x);
   const unsigned fnp=(unsigned)__float_as_int(rfdata.y);
   const float fradius=rfdata.z;
-  const float fmass=rfdata.w;
-  const float fmassp=ftomassp[cf];
   const double3 rcenter=ftocenter[cf];
 
   //-Initialises shared memory to zero.
@@ -2129,9 +2119,6 @@ template<bool periactive> __global__ void KerFtCalcForces( //fdata={pini,np,radi
   if(tid<ntid){
     rfacex[tid]=rfacey[tid]=rfacez[tid]=0;
     rfomegaacex[tid]=rfomegaacey[tid]=rfomegaacez[tid]=0;
-    rinert11[tid]=rinert12[tid]=rinert13[tid]=0;
-    rinert21[tid]=rinert22[tid]=rinert23[tid]=0;
-    rinert31[tid]=rinert32[tid]=rinert33[tid]=0;
   }
 
   //-Computes data in shared memory. | Calcula datos en memoria shared.
@@ -2152,16 +2139,6 @@ template<bool periactive> __global__ void KerFtCalcForces( //fdata={pini,np,radi
         rfomegaacex[tid]+=(race.z*dy - race.y*dz);
         rfomegaacey[tid]+=(race.x*dz - race.z*dx);
         rfomegaacez[tid]+=(race.y*dx - race.x*dy);
-        //-Computes inertia tensor.
-        rinert11[tid]+= (dy*dy+dz*dz)*fmassp;
-        rinert12[tid]+=-(dx*dy)*fmassp;
-        rinert13[tid]+=-(dx*dz)*fmassp;
-        rinert21[tid]+=-(dx*dy)*fmassp;
-        rinert22[tid]+= (dx*dx+dz*dz)*fmassp;
-        rinert23[tid]+=-(dy*dz)*fmassp;
-        rinert31[tid]+=-(dx*dz)*fmassp;
-        rinert32[tid]+=-(dy*dz)*fmassp;
-        rinert33[tid]+= (dx*dx+dy*dy)*fmassp;
       }
     }
   }
@@ -2172,53 +2149,94 @@ template<bool periactive> __global__ void KerFtCalcForces( //fdata={pini,np,radi
   if(!tid){
     float3 face=make_float3(0,0,0);
     float3 fomegaace=make_float3(0,0,0);
-    float3 inert1=make_float3(0,0,0);
-    float3 inert2=make_float3(0,0,0);
-    float3 inert3=make_float3(0,0,0);
     for(unsigned c=0;c<ntid;c++){
       face.x+=rfacex[c];  face.y+=rfacey[c];  face.z+=rfacez[c];
       fomegaace.x+=rfomegaacex[c]; fomegaace.y+=rfomegaacey[c]; fomegaace.z+=rfomegaacez[c];
-      inert1.x+=rinert11[c];  inert1.y+=rinert12[c];  inert1.z+=rinert13[c];
-      inert2.x+=rinert21[c];  inert2.y+=rinert22[c];  inert2.z+=rinert23[c];
-      inert3.x+=rinert31[c];  inert3.y+=rinert32[c];  inert3.z+=rinert33[c];
     }
+    //-Stores results in ftoforcessum[].
+    ftoforcessum[cf*2]=face;
+    ftoforcessum[cf*2+1]=fomegaace;
+  }
+}
+
+//==============================================================================
+/// Calculate summation: face, fomegaace in ftoforcessum[].
+/// Calcula suma de face y fomegaace a partir de particulas floating en ftoforcessum[].
+//==============================================================================
+void FtCalcForcesSum(bool periactive,unsigned ftcount
+  ,tfloat3 gravity,const float4 *ftodata,const double3 *ftocenter,const unsigned *ftridp
+  ,const double2 *posxy,const double *posz,const float3 *ace
+  ,float3 *ftoforcessum)
+{
+  if(ftcount){
+    const unsigned bsize=256;
+    const unsigned smem=sizeof(float)*(3+3)*bsize;
+    dim3 sgrid=GetGridSize(ftcount*bsize,bsize);
+    if(periactive)KerFtCalcForcesSum<true>  <<<sgrid,bsize,smem>>> (Float3(gravity),ftodata,ftocenter,ftridp,posxy,posz,ace,ftoforcessum);
+    else          KerFtCalcForcesSum<false> <<<sgrid,bsize,smem>>> (Float3(gravity),ftodata,ftocenter,ftridp,posxy,posz,ace,ftoforcessum);
+  }
+}
+
+//------------------------------------------------------------------------------
+/// Carga valores de matriz 3x3 en bloques de 4, 4 y 1.
+/// Loads values of matrix 3x3 in blocks of 4, 4 y 1.
+//------------------------------------------------------------------------------
+__device__ void KerLoadMatrix3f(unsigned c,const float4 *data8,const float *data1,tmatrix3f &v)
+{
+  float4 v4=data8[c*2];
+  v.a11=v4.x; v.a12=v4.y; v.a13=v4.z; v.a21=v4.w;
+  v4=data8[c*2+1];
+  v.a22=v4.x; v.a23=v4.y; v.a31=v4.z; v.a32=v4.w;
+  v.a33=data1[c];
+}
+
+//------------------------------------------------------------------------------
+/// Calculate forces around floating object particles.
+/// Calcula fuerzas sobre floatings.
+//------------------------------------------------------------------------------
+__global__ void KerFtCalcForces(unsigned ftcount,float3 gravity,const float4 *ftodata
+  ,const float3 *ftoangles,const float4 *ftoinertiaini8,const float *ftoinertiaini1
+  ,const float3 *ftoforcessum,float3 *ftoforces) //fdata={pini,np,radius,mass}
+{
+  unsigned cf=blockIdx.y*gridDim.x*blockDim.x + blockIdx.x*blockDim.x + threadIdx.x; //-Number of floating.
+  if(cf<ftcount){
+    //-Loads floating data.
+    const float fmass=ftodata[cf].w;
+    const float3 fang=ftoangles[cf];
+    tmatrix3f inert;
+    KerLoadMatrix3f(cf,ftoinertiaini8,ftoinertiaini1,inert);
+
+    //-Compute a cumulative rotation matrix.
+    const tmatrix3f frot=cumath::RotMatrix3x3(fang);
+    //-Compute the intertia tensor by rotating the initial tensor to the curent orientation I=(R*I_0)*R^T.
+    inert=cumath::MulMatrix3x3(cumath::MulMatrix3x3(frot,inert),cumath::TrasMatrix3x3(frot));
     //-Calculates the inverse of the intertia matrix to compute the I^-1 * L= W
-    float3 invinert1=make_float3(0,0,0);
-    float3 invinert2=make_float3(0,0,0);
-    float3 invinert3=make_float3(0,0,0);
-    const float detiner=(inert1.x*inert2.y*inert3.z+inert1.y*inert2.z*inert3.x+inert2.x*inert3.y*inert1.z-(inert3.x*inert2.y*inert1.z+inert2.x*inert1.y*inert3.z+inert2.z*inert3.y*inert1.x));
-    if(detiner){
-      invinert1.x= (inert2.y*inert3.z-inert2.z*inert3.y)/detiner;
-      invinert1.y=-(inert1.y*inert3.z-inert1.z*inert3.y)/detiner;
-      invinert1.z= (inert1.y*inert2.z-inert1.z*inert2.y)/detiner;
-      invinert2.x=-(inert2.x*inert3.z-inert2.z*inert3.x)/detiner;
-      invinert2.y= (inert1.x*inert3.z-inert1.z*inert3.x)/detiner;
-      invinert2.z=-(inert1.x*inert2.z-inert1.z*inert2.x)/detiner;
-      invinert3.x= (inert2.x*inert3.y-inert2.y*inert3.x)/detiner;
-      invinert3.y=-(inert1.x*inert3.y-inert1.y*inert3.x)/detiner;
-      invinert3.z= (inert1.x*inert2.y-inert1.y*inert2.x)/detiner;
-    }
-    //-Computes omega from fomegaace and invinert.
-    //-Calcula omega a partir de fomegaace y invinert.
+    const tmatrix3f invinert=cumath::InverseMatrix3x3(inert);
+
+    //-Loads traslational and rotational velocities.
+    float3 face=ftoforcessum[cf*2];
+    float3 fomegaace=ftoforcessum[cf*2+1];
+
+    //-Calculate omega starting from fomegaace & invinert. | Calcula omega a partir de fomegaace y invinert.
     {
       float3 omegaace;
-      omegaace.x=(fomegaace.x*invinert1.x+fomegaace.y*invinert1.y+fomegaace.z*invinert1.z);
-      omegaace.y=(fomegaace.x*invinert2.x+fomegaace.y*invinert2.y+fomegaace.z*invinert2.z);
-      omegaace.z=(fomegaace.x*invinert3.x+fomegaace.y*invinert3.y+fomegaace.z*invinert3.z);
+      omegaace.x=(fomegaace.x*invinert.a11+fomegaace.y*invinert.a12+fomegaace.z*invinert.a13);
+      omegaace.y=(fomegaace.x*invinert.a21+fomegaace.y*invinert.a22+fomegaace.z*invinert.a23);
+      omegaace.z=(fomegaace.x*invinert.a31+fomegaace.y*invinert.a32+fomegaace.z*invinert.a33);
       fomegaace=omegaace;
     }
-    //-Add gravity and divide by mass.
-    //-Añade gravedad y divide por la masa.
+    //-Add gravity and divide by mass. | Añade gravedad y divide por la masa.
     face.x=(face.x+fmass*gravity.x)/fmass;
     face.y=(face.y+fmass*gravity.y)/fmass;
     face.z=(face.z+fmass*gravity.z)/fmass;
     //-Stores results in ftoforces[].
-    const float3 rface=ftoforces[cf*2];
-    const float3 rfome=ftoforces[cf*2+1];
+    float3 *ftoforcesc=(ftoforces+(cf*2));
+    const float3 rface=ftoforcesc[0];
+    const float3 rfome=ftoforcesc[1];
     face.x+=rface.x;      face.y+=rface.y;      face.z+=rface.z;
     fomegaace.x+=rfome.x; fomegaace.y+=rfome.y; fomegaace.z+=rfome.z;
-    ftoforces[cf*2]=face;
-    ftoforces[cf*2+1]=fomegaace;
+    ftoforcesc[0]=face;
+    ftoforcesc[1]=fomegaace;
   }
 }
 
@@ -2226,19 +2244,16 @@ template<bool periactive> __global__ void KerFtCalcForces( //fdata={pini,np,radi
 /// Computes forces on floatings.
 /// Calcula fuerzas sobre floatings.
 //==============================================================================
-void FtCalcForces(bool periactive,unsigned ftcount
-  ,tfloat3 gravity,const float4 *ftodata,const float *ftomassp,const double3 *ftocenter,const unsigned *ftridp
-  ,const double2 *posxy,const double *posz,const float3 *ace
-  ,float3 *ftoforces)
+void FtCalcForces(unsigned ftcount,tfloat3 gravity,const float4 *ftodata
+  ,const float3 *ftoangles,const float4 *ftoinertiaini8,const float *ftoinertiaini1
+  ,const float3 *ftoforcessum,float3 *ftoforces)
 {
   if(ftcount){
-    const unsigned bsize=128;
-    const unsigned smem=sizeof(float)*(3+3+9)*bsize;
-    dim3 sgrid=GetGridSize(ftcount*bsize,bsize);
-    if(periactive)KerFtCalcForces<true>  <<<sgrid,bsize,smem>>> (Float3(gravity),ftodata,ftomassp,ftocenter,ftridp,posxy,posz,ace,ftoforces);
-    else          KerFtCalcForces<false> <<<sgrid,bsize,smem>>> (Float3(gravity),ftodata,ftomassp,ftocenter,ftridp,posxy,posz,ace,ftoforces);
+    dim3 sgrid=GetGridSize(ftcount,SPHBSIZE);
+    KerFtCalcForces <<<sgrid,SPHBSIZE>>> (ftcount,Float3(gravity),ftodata,ftoangles,ftoinertiaini8,ftoinertiaini1,ftoforcessum,ftoforces);
   }
 }
+
 
 //------------------------------------------------------------------------------
 /// Calculate data to update floatings.
@@ -2341,9 +2356,9 @@ template<bool periactive> __global__ void KerFtUpdate(bool predictor,double dt /
   if(!tid && !predictor){
     ftocenter[cf]=(periactive? KerUpdatePeriodicPos(fcenter): fcenter);
     float3 rangles=ftoangles[cf];
-    rangles.x=float(double(rangles.x)+double(fomega.x)/dt);
-    rangles.y=float(double(rangles.y)+double(fomega.y)/dt);
-    rangles.z=float(double(rangles.z)+double(fomega.z)/dt);
+    rangles.x=float(double(rangles.x)+double(fomega.x)*dt);
+    rangles.y=float(double(rangles.y)+double(fomega.y)*dt);
+    rangles.z=float(double(rangles.z)+double(fomega.z)*dt);
     ftoangles[cf]=rangles;
     ftovel[cf]=fvel;
     ftoomega[cf]=fomega;

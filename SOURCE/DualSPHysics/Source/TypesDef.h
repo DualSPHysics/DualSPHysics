@@ -344,6 +344,9 @@ typedef struct{
 inline tmatrix3d TMatrix3d(double a11,double a12,double a13,double a21,double a22,double a23,double a31,double a32,double a33){ tmatrix3d m={a11,a12,a13,a21,a22,a23,a31,a32,a33}; return(m); }
 inline tmatrix3d TMatrix3d(double v){ tmatrix3d m={v,v,v,v,v,v,v,v,v}; return(m); }
 
+///Converts \ref matrix3d to \ref matrix3f.
+inline tmatrix3f ToTMatrix3f(const tmatrix3d& v){ return(TMatrix3f(float(v.a11),float(v.a12),float(v.a13),float(v.a21),float(v.a22),float(v.a23),float(v.a31),float(v.a32),float(v.a33))); }
+
 
 ///Matrix of 4x4 values of type float.
 typedef struct{
