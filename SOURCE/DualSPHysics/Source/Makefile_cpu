@@ -1,11 +1,14 @@
-#DualSPHysics CPU v4.2.023 (29-11-2017)
+#DualSPHysics CPU v4.2.025 (08-12-2017)
 
 #=============== Compilation Options ===============
 USE_DEBUG=NO
 USE_FAST_MATH=YES
 USE_NATIVE_CPU_OPTIMIZATIONS=NO
 
-LIBS_DIRECTORY=../LibsLinux/v4.2.023_gcc4
+LIBS_DIRECTORIES=-L./
+LIBS_DIRECTORIES:=$(LIBS_DIRECTORIES) -L../LibsLinux/v4.2.023_gcc4
+
+EXECNAME=DualSPHysicsCPU_linux64
 EXECS_DIRECTORY=../../../EXECS_LINUX
 
 ifeq ($(USE_DEBUG), YES)
@@ -33,23 +36,23 @@ OBSPHSINGLE=JCellDivCpuSingle.o JPartsLoad4.o JSphCpuSingle.o
 OBJECTS=$(OBJXML) $(OBJSPHMOTION) $(OBCOMMON) $(OBCOMMONDSPH) $(OBSPH) $(OBSPHSINGLE)
 
 #=============== DualSPHysics libs to be included ===============
-JLIBS=-L${LIBS_DIRECTORY} -ljformatfiles2_64 -ljwavegencpu_64
+JLIBS=${LIBS_DIRECTORIES} -ljformatfiles2_64 -ljwavegencpu_64
 
 #=============== CPU Code Compilation ===============
-all:$(EXECS_DIRECTORY)/DualSPHysicsCPU_linux64
+all:$(EXECS_DIRECTORY)/$(EXECNAME)
 	rm -rf *.o
 ifeq ($(USE_DEBUG), NO)
 	@echo "  --- Compiled Release CPU version ---"	
 else
 	@echo "  --- Compiled Debug CPU version ---"
-	mv DualSPHysicsCPU_linux64 DualSPHysicsCPU_linux64_debug
+	mv $(EXECNAME) $(EXECNAME)_debug
 endif
 
-$(EXECS_DIRECTORY)/DualSPHysicsCPU_linux64:  $(OBJECTS)
+$(EXECS_DIRECTORY)/$(EXECNAME):  $(OBJECTS)
 	$(CC) $(OBJECTS) $(CCLINKFLAGS) -o $@ $(JLIBS)
 
 .cpp.o: 
 	$(CC) $(CCFLAGS) $< 
 
 clean:
-	rm -rf *.o DualSPHysicsCPU_linux64 DualSPHysicsCPU_linux64_debug
+	rm -rf *.o $(EXECNAME) $(EXECNAME)_debug

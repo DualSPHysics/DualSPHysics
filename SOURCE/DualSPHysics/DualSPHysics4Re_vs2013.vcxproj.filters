@@ -439,5 +439,8 @@
     <CudaCompile Include="Source\JReduSum_ker.cu">
       <Filter>Cuda</Filter>
     </CudaCompile>
+    <CudaCompile Include="Source\FunctionsMath_ker.cu">
+      <Filter>Cuda</Filter>
+    </CudaCompile>
   </ItemGroup>
 </Project>

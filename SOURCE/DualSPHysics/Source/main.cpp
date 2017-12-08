@@ -29,8 +29,8 @@ School of Mechanical, Aerospace and Civil Engineering, University of Manchester,
 \section compile_sec Project files
 Please download source files and documentation from <a href="http://dual.sphysics.org">DualSPHysics website.</a> \n
 \author <a href="http://dual.sphysics.org/index.php/developers">DualSPHysics Developers.</a> 
-\version 4.2.019
-\date 02-10-2017
+\version 4.2.025
+\date 08-12-2017
 \copyright GNU Lesser General Public License <a href="http://www.gnu.org/licenses/">GNU licenses.</a>
 */
 
@@ -53,12 +53,27 @@ Please download source files and documentation from <a href="http://dual.sphysic
 
 using namespace std;
 
-const char *APP_CODENAME="DualSPHysics4";
-#ifdef CODE_SIZE4
-  const char *APP_NAME="DualSPHysics4 MK65k v4.2.024.2 (04-12-2017)";
-#else
-  const char *APP_NAME="DualSPHysics4 v4.2.024.2 (04-12-2017)";
-#endif
+///Program and version information.
+typedef struct StrAppInfo{
+  string MainName,MainVer;
+  string SubName,SubVer;
+  string Date;
+  bool ModeMK65k;
+  StrAppInfo(){
+    MainName="DualSPHysics4"; MainVer="v4.2.025";
+    //SubName="UserVersion"; SubVer="v1.0";
+    Date="08-12-2017";
+    #ifdef CODE_SIZE4
+      ModeMK65k=true;
+    #else
+      ModeMK65k=false;
+    #endif
+  }
+  string GetShortName(){ return(MainName+(!SubName.empty()? "-": "")+SubName); }
+  string GetFullName(){  return(GetShortName()+(ModeMK65k? " MK65k":"")+(!SubName.empty()? string(" ")+SubVer+" ("+MainVer+")": string(" ")+MainVer)+" ("+Date+")"); }
+}StAppInfo;
+StAppInfo AppInfo;
+
 
 //==============================================================================
 /// LGPL License.
@@ -95,8 +110,8 @@ bool ShowsVersion(int argc,char** argv){
   string ver=(argc==2? argv[1]: "");
   bool ret=(ver=="-ver" || ver=="-VER");
   if(ret){
-    printf("%s\n",APP_NAME);
-    printf("%s",getlicense_lgpl(APP_CODENAME,true).c_str());
+    printf("%s\n",AppInfo.GetFullName().c_str());
+    printf("%s",getlicense_lgpl(AppInfo.GetShortName(),true).c_str());
   }
   return(ret);
 }
@@ -106,10 +121,9 @@ bool ShowsVersion(int argc,char** argv){
 int main(int argc, char** argv){
   int errcode=1;
   if(ShowsVersion(argc,argv))return(errcode);
-  std::string proginfo;
-  std::string license=getlicense_lgpl(APP_CODENAME,false);
+  std::string license=getlicense_lgpl(AppInfo.GetShortName(),false);
   printf("%s",license.c_str());
-  std::string appname=string(APP_NAME)+" "+proginfo;
+  std::string appname=AppInfo.GetFullName();
   std::string appnamesub;
   for(unsigned c=0;c<=unsigned(appname.size());c++)appnamesub=appnamesub+"=";
   printf("\n%s\n%s\n",appname.c_str(),appnamesub.c_str());

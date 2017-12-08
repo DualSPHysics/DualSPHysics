@@ -1,11 +1,14 @@
-#DualSPHysics GPU v4.2.023 (29-11-2017)
+#DualSPHysics GPU v4.2.025 (08-12-2017)
 
 #=============== Compilation Options ===============
 USE_DEBUG=NO
 USE_FAST_MATH=YES
 USE_NATIVE_CPU_OPTIMIZATIONS=NO
 
-LIBS_DIRECTORY=../LibsLinux/v4.2.023_gcc4
+LIBS_DIRECTORIES=-L./
+LIBS_DIRECTORIES:=$(LIBS_DIRECTORIES) -L../LibsLinux/v4.2.023_gcc4
+
+EXECNAME=DualSPHysics_linux64
 EXECS_DIRECTORY=../../../EXECS_LINUX
 
 ifeq ($(USE_DEBUG), YES)
@@ -76,7 +79,7 @@ OBJECTS=$(OBJXML) $(OBJSPHMOTION) $(OBCOMMON) $(OBCOMMONDSPH) $(OBSPH) $(OBSPHSI
 OBJECTS:=$(OBJECTS) $(OBCOMMONGPU) $(OBSPHGPU) $(OBSPHSINGLEGPU) $(OBCUDA)
 
 #=============== DualSPHysics libs to be included ===============
-JLIBS=-L${LIBS_DIRECTORY} -ljformatfiles2_64 -ljwavegengpu_64
+JLIBS=${LIBS_DIRECTORIES} -ljformatfiles2_64 -ljwavegengpu_64
 
 #=============== GPU Code Compilation ===============
 CCFLAGS := $(CCFLAGS) -I./ -I$(DIRTOOLKIT)/include
@@ -91,16 +94,16 @@ ifeq ($(USE_FAST_MATH), YES)
   NCCFLAGS+= -use_fast_math
 endif
 
-all:$(EXECS_DIRECTORY)/DualSPHysics_linux64 
+all:$(EXECS_DIRECTORY)/$(EXECNAME) 
 	rm -rf *.o
 ifeq ($(USE_DEBUG), NO)
 	@echo "  --- Compiled Release GPU version ---"
 else
 	@echo "  --- Compiled Debug GPU version ---"
-	mv DualSPHysics_linux64 DualSPHysics_linux64_debug
+	mv $(EXECNAME) $(EXECNAME)_debug
 endif
 
-$(EXECS_DIRECTORY)/DualSPHysics_linux64:  $(OBJECTS)
+$(EXECS_DIRECTORY)/$(EXECNAME):  $(OBJECTS)
 	$(CC) $(OBJECTS) $(CCLINKFLAGS) -o $@ $(JLIBS)
 
 .cpp.o: 
@@ -125,5 +128,5 @@ JReduSum_ker.o: JReduSum_ker.cu
 	$(NCC) $(NCCFLAGS) JReduSum_ker.cu
 
 clean:
-	rm -rf *.o DualSPHysics_linux64 DualSPHysics_linux64_debug
+	rm -rf *.o $(EXECNAME) $(EXECNAME)_debug
 
