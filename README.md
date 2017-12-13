@@ -43,11 +43,25 @@ We appreciate your efforts! But please, if you are trying to develop a feature t
 
 This application is being developed in Visual Studio 2013. The repository contains project files for that IDE and it is recomended to use them to make the process easier.
 
-If you prefer it, you can also use the [Makefile](Source/Makefile). It is possible that you'll need to change some things in it to make it work.
+Make sure to install the CUDA SDK beforehand if you want to compile the GPU version, and configure the Visual Studio project to point to the CUDA libraries directory to compile.
+
+If you prefer it, you can also use the [Makefile](Source/Makefile). It is possible that you'll need to change some things in it to make it work. Check the GNU/Linux guide on how to compile if you're using the makefile, as it is mostly the same, just installing the things manually by yourself.
 
 ## On GNU/Linux
 
-You can build the project in GNU/Linux using the [Makefile](Source/Makefile) included in the source folder. It's meant to be used in this OS but may need a bit of tinkering to make it work.
+You can build the project in GNU/Linux using the [Makefile](Source/Makefile) included in the source folder. Follow this steps (for the GPU version):
+
+1. Clone this repository into your system
+2. Ensure you have GCC version 4.X installed. Usually there are packages in your distro like `gcc49` that provides the `g++-4.9` executable.
+3. In a terminal, go to the folder `DualSPHysics/SOURCE/DualSPHysics/Source/`
+4. Execute `make clean` to make sure the environment is clean and ready to compile
+5. Execute `make CC=g++-4.9 CPP=g++-4.9 CXX=g++-4.9 LD=g++-4.9 -f ./Makefile`. Be sure to replace `g++-4.9` for the executable name you have in your system (previously installed in step 2)
+
+After compiling you should see a message like `--- Compiled Release GPU/CPU version ---`. Go to `DualSPHysics/EXECS_LINUX/` to check that `DualSPHyiscs_linux64` or `DualSPHyiscsCPU_linux64` is there and build correctly.
+
+**For the GPU version**: Install the CUDA package on your system and edit the makefile to point the CUDA libs directories to the paths on your system. Also, check the CUDA version and adapt the Makefile to it.
+
+**For the CPU version**: If you want to compile de CPU version just ignore CUDA and use the makefile `Makefile_cpu`
 
 # Contributing
 
