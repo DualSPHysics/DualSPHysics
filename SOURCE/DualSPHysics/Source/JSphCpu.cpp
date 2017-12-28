@@ -392,7 +392,9 @@ void JSphCpu::ConfigRunMode(const JCfgRun *cfg,std::string preinfo){
   if(Stable)RunMode=string("Stable - ")+RunMode;
   if(Psingle)RunMode=string("Pos-Single - ")+RunMode;
   else RunMode=string("Pos-Double - ")+RunMode;
+  Log->Print(" ");
   Log->Print(fun::VarStr("RunMode",RunMode));
+  Log->Print(" ");
 }
 
 //==============================================================================
@@ -426,9 +428,16 @@ void JSphCpu::InitRun(){
     IdMax=unsigned(TotalNp-1);
   }
 
+  //-Shows Initialize configuration.
+  if(InitializeInfo.size()){
+    Log->Print("Initialization configuration:");
+    Log->Print(InitializeInfo);
+    Log->Print(" ");
+  }
+
   //-Prepares WaveGen configuration.
   if(WaveGen){
-    Log->Print("\nWave paddles configuration:");
+    Log->Print("Wave paddles configuration:");
     if(WaveGen->UseAwasZsurf()){
       unsigned *idp=ArraysCpu->ReserveUint();
       tdouble3 *pos=ArraysCpu->ReserveDouble3();
@@ -445,12 +454,12 @@ void JSphCpu::InitRun(){
   //-Prepares Damping configuration.
   if(Damping){
     Damping->Config(CellOrder);
-    Damping->VisuConfig("\nDamping configuration:"," ");
+    Damping->VisuConfig("Damping configuration:"," ");
   }
 
   //-Prepares AccInput configuration.
   if(AccInput){
-    Log->Print("\nAccInput configuration:");
+    Log->Print("AccInput configuration:");
     AccInput->Init(TimeMax);
     AccInput->VisuConfig(""," ");
   }
@@ -462,11 +471,11 @@ void JSphCpu::InitRun(){
   if(xml.GetNode("case.execution.special.savedt",false)){
     SaveDt=new JSaveDt(Log);
     SaveDt->Config(&xml,"case.execution.special.savedt",TimeMax,TimePart);
-    SaveDt->VisuConfig("\nSaveDt configuration:"," ");
+    SaveDt->VisuConfig("SaveDt configuration:"," ");
   }
 
   //-Shows configuration of JTimeOut.
-  if(TimeOut->UseSpecialConfig())TimeOut->VisuConfig(Log,"\nTimeOut configuration:"," ");
+  if(TimeOut->UseSpecialConfig())TimeOut->VisuConfig(Log,"TimeOut configuration:"," ");
 
   //-Shows particle and MK blocks summary.
   VisuParticleSummary(&xml);

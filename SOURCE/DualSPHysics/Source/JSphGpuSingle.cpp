@@ -196,6 +196,9 @@ void JSphGpuSingle::ConfigDomain(){
   //-Loads Code of the particles.
   LoadCodeParticles(Np,Idp,Code);
 
+  //-Runs initialization operations from XML.
+  RunInitialize(Np,Npb,AuxPos,Idp,Code,Velrhop);
+
   //-Frees memory of PartsLoaded.
   delete PartsLoaded; PartsLoaded=NULL;
   //-Applies configuration of CellOrder.

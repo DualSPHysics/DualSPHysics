@@ -160,6 +160,9 @@ void JSphCpuSingle::ConfigDomain(){
   //-Load particle code. | Carga code de particulas.
   LoadCodeParticles(Np,Idpc,Codec);
 
+  //-Runs initialization operations from XML.
+  RunInitialize(Np,Npb,Posc,Idpc,Codec,Velrhopc);
+
   //-Free memory of PartsLoaded. | Libera memoria de PartsLoaded.
   delete PartsLoaded; PartsLoaded=NULL;
   //-Apply configuration of CellOrder. | Aplica configuracion de CellOrder.

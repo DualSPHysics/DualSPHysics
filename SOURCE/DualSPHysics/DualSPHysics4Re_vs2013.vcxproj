@@ -77,15 +77,15 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup>
     <_ProjectFileVersion>10.0.30319.1</_ProjectFileVersion>
-    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">../../EXECS_WIN</OutDir>
-    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">../../EXECS_WIN</OutDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">../../EXECS_WIN/</OutDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">../../EXECS_WIN/</OutDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Intermediate/$(ProjectName)_$(Configuration)_$(PlatformName)/</IntDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Intermediate/$(ProjectName)_$(Configuration)_$(PlatformName)/</IntDir>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     </LinkIncremental>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" />
-    <OutDir Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">../../EXECS_WIN</OutDir>
-    <OutDir Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">../../EXECS_WIN</OutDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">../../EXECS_WIN/</OutDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">../../EXECS_WIN/</OutDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">Intermediate/$(ProjectName)_$(Configuration)_$(PlatformName)/</IntDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">Intermediate/$(ProjectName)_$(Configuration)_$(PlatformName)/</IntDir>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">
@@ -553,6 +553,7 @@ rem %CudaNvcc% -ccbin "$(VCInstallDir)bin" %gpuhw% -use_fast_math -c %ptxinfo% -
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">true</ExcludedFromBuild>
     </ClInclude>
+    <ClInclude Include="Source\JSphInitialize.h" />
     <ClInclude Include="Source\JSphMotion.h" />
     <ClInclude Include="Source\JSphVisco.h" />
     <ClInclude Include="Source\JPartsOut.h" />
@@ -663,6 +664,7 @@ rem %CudaNvcc% -ccbin "$(VCInstallDir)bin" %gpuhw% -use_fast_math -c %ptxinfo% -
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">true</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="Source\JSphInitialize.cpp" />
     <ClCompile Include="Source\JSphMotion.cpp" />
     <ClCompile Include="Source\JSphVisco.cpp" />
     <ClCompile Include="Source\JPartsOut.cpp" />

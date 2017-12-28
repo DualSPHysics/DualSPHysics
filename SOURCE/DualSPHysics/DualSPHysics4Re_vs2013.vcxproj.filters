@@ -238,6 +238,9 @@
     <ClInclude Include="Source\JTimerClock.h">
       <Filter>Common</Filter>
     </ClInclude>
+    <ClInclude Include="Source\JSphInitialize.h">
+      <Filter>Source</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Source\JCfgRun.cpp">
@@ -410,6 +413,9 @@
     </ClCompile>
     <ClCompile Include="Source\JSphMotion.cpp">
       <Filter>CommonDsph\JSphMotion</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\JSphInitialize.cpp">
+      <Filter>Source</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

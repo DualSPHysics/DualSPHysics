@@ -39,6 +39,7 @@
 #include "JPartFloatBi4.h"
 #include "JPartsOut.h"
 #include "JDamping.h"
+#include "JSphInitialize.h"
 #include <climits>
 
 //using namespace std;
@@ -772,6 +773,24 @@ unsigned JSph::GetMkBlockByMk(word mk)const{
 }
 
 //==============================================================================
+/// Returns the block in MkList according to a given Code.
+/// Returns UINT_MAX if number of block is invalid.
+//==============================================================================
+unsigned JSph::GetMkBlockByCode(word code)const{
+  unsigned ret=UINT_MAX;
+  const unsigned type=CODE_GetType(code);
+  const unsigned cblock=CODE_GetTypeValue(code);
+  switch(type){
+    case CODE_TYPE_FIXED:    if(cblock<MkListFixed) ret=cblock;                           break;
+    case CODE_TYPE_MOVING:   if(cblock<MkListMoving)ret=cblock+MkListFixed;               break;
+    case CODE_TYPE_FLOATING: if(cblock<MkListFloat) ret=cblock+MkListFixed+MkListMoving;  break;
+    case CODE_TYPE_FLUID:    if(cblock<MkListFluid) ret=cblock+MkListBound;               break;
+    default: RunException("GetMkBlockByCode","Type of particle is invalid.");
+  }
+  return(ret);
+}
+
+//==============================================================================
 /// Returns the code of a particle according to the given parameters.
 //==============================================================================
 typecode JSph::CodeSetType(typecode code,TpParticle type,unsigned value)const{
@@ -1030,8 +1049,8 @@ void JSph::VisuParticleSummary(JXml *xml)const{
   parts.LoadXml(xml,"case.execution.particles");
   std::vector<std::string> summary;
   parts.GetParticleSummary(summary);
-  Log->Print("");
   Log->Print(summary);
+  Log->Print(" ");
 }
 
 //==============================================================================
@@ -1062,6 +1081,29 @@ void JSph::LoadDcellParticles(unsigned n,const typecode *code,const tdouble3 *po
     else dcell[p]=PC__CodeOut;
   }
 }
+
+//==============================================================================
+/// Initializes data of particles according XML configuration.
+///
+/// Inicializa datos de las particulas a partir de la configuracion en el XML.
+//==============================================================================
+void JSph::RunInitialize(unsigned np,unsigned npb,const tdouble3 *pos,const unsigned *idp,const typecode *code,tfloat4 *velrhop){
+  const char met[]="RunInitialize";
+  JSphInitialize init(FileXml);
+  if(init.Count()){
+    //-Creates array with mktype value.
+    word *mktype=new word[np];
+    for(unsigned p=0;p<np;p++){
+      unsigned cb=GetMkBlockByCode(code[p]);
+      mktype[p]=(cb<MkListSize? word(MkList[cb].mktype): USHRT_MAX);
+    }
+    init.Run(np,npb,pos,idp,mktype,velrhop);
+    init.GetConfig(InitializeInfo);
+    //-Frees memory.
+    delete[] mktype; mktype=NULL;
+  }
+}
+
 
 //==============================================================================
 /// Configures CellOrder and adjusts order of components in data.

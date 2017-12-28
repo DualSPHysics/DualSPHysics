@@ -281,6 +281,8 @@ protected:
   static const unsigned DemDataSize=CODE_TYPE_FLUID;
   StDemData *DemData;           ///<Data of DEM objects. [DemDataSize]
 
+  std::vector<std::string> InitializeInfo; ///<Stores information about initialize configuration applied.
+
   JWaveGen *WaveGen;            ///<Object for wave generation.
   bool UseAWAS;                 ///<Indicates AWAS is used by SwashPistons or WaveGen.
 
@@ -366,6 +368,7 @@ protected:
   void LoadMkInfo(const JSpaceParts *parts);
   inline unsigned GetMkBlockById(unsigned id)const;
   unsigned GetMkBlockByMk(word mk)const;
+  unsigned GetMkBlockByCode(word code)const;
 
   typecode CodeSetType(typecode code,TpParticle type,unsigned value)const;
   void LoadCodeParticles(unsigned np,const unsigned *idp,typecode *code)const;
@@ -376,6 +379,7 @@ protected:
   void VisuConfig()const;
   void VisuParticleSummary(JXml *xml)const;
   void LoadDcellParticles(unsigned n,const typecode *code,const tdouble3 *pos,unsigned *dcell)const;
+  void RunInitialize(unsigned np,unsigned npb,const tdouble3 *pos,const unsigned *idp,const typecode *code,tfloat4 *velrhop);
 
   void ConfigCellOrder(TpCellOrder order,unsigned np,tdouble3* pos,tfloat4* velrhop);
   void DecodeCellOrder(unsigned np,tdouble3 *pos,tfloat3 *vel)const;
