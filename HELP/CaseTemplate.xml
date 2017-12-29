@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<case app="GenCase4 v4.0.058 (06-12-2017)" date="06-12-2017 05:17:16">
+<case app="GenCase4 v4.0.059 (29-12-2017)" date="29-12-2017 09:47:49">
     <casedef>
         <constantsdef>
             <lattice bound="2" fluid="1" />
@@ -390,8 +390,30 @@
         </geometry>
         <initials>
             <velocity mkfluid="0" x="0.1" y="0.4" z="0.2" />
-            <velwave mkfluid="3" depth="4" hmaxwave="3" x0="26" negative="false" />
             <velocity mkfluid="9" x="6" y="5" z="4" />
+            <velocity mkfluid="0">
+                <direction x="1" y="0" z="0" />
+                <velocity v="2" comment="Uniform profile velocity" units_comment="m/s" />
+            </velocity>
+            <velocity mkfluid="0">
+                <direction x="1" y="0" z="0" />
+                <velocity2 v="1" v2="3" z="1" z2="1.8" comment="Linear profile velocity" units_comment="m/s" />
+            </velocity>
+            <velocity mkfluid="0">
+                <direction x="1" y="0" z="0" />
+                <velocity3 v="1" v2="0.608" v3="3" z="2" z2="2.4" z3="2.8" comment="Parabolic profile velocity" units_comment="m/s" />
+            </velocity>
+            <velwave mkfluid="3" depth="4" hmaxwave="3" x0="26" negative="false" />
+            <move mkbound="0" x="0.1" y="0.4" z="0.2" />
+            <move mkfluid="0" x="0.2" y="0" z="0" />
+            <rotateaxis mkbound="0" angle="45" anglesunits="degrees">
+                <axisp1 x="0" y="0" z="0" />
+                <axisp2 x="0" y="1" z="0" />
+            </rotateaxis>
+            <rotateaxis mkfluid="0" angle="0.7854" anglesunits="radians">
+                <axisp1 x="0" y="0" z="0" />
+                <axisp2 x="0" y="1" z="0" />
+            </rotateaxis>
         </initials>
         <floatings>
             <floating mkbound="0" rhopbody="1300" />
