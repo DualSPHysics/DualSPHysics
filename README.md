@@ -63,6 +63,10 @@ After compiling you should see a message like `--- Compiled Release GPU/CPU vers
 
 **For the CPU version**: If you want to compile de CPU version just ignore CUDA and use the makefile `Makefile_cpu`
 
+# Graphical user interface (GUI)
+
+Please check [DesingSPHysics website](http://design.sphysics.org/￼).
+
 # Contributing
 
 Please read [CONTRIBUTING.md](CONTRIBUTING.md) if you want to make changes to the code that would be later merged with the main project.
