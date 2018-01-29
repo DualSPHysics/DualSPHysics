@@ -41,6 +41,7 @@
 #include <iostream>
 #include <fstream>
 
+class JSphMk;
 class JSphMotion;
 class JPartData;
 class JPartPData;
@@ -76,15 +77,6 @@ public:
     float od_wdeltap;        ///<Parameter for tensile instability correction.  
   }StCubicCte;
 
-/// Structure with mk information.
-  typedef struct {
-    unsigned begin;
-    unsigned count;
-    unsigned mktype;
-    unsigned mk;
-    typecode code;
-  }StMkInfo;
-
 /// Structure that saves extra information about the execution.
   typedef struct {
     double timesim;      ///<Seconds from the start of the simulation (after loading the initial data).                    | Segundos desde el inicio de la simulacion (despues de cargar los datos iniciales).
@@ -94,8 +86,7 @@ public:
     unsigned npf;        ///<Number of fluid particles (includes periodic particles).                                      | Numero de particulas fluid (incluye particulas periodicas).                              
     unsigned npbper;     ///<Number of periodic boundary particles (inside and outside the area of the split).             | Numero de particulas bound periodicas (dentro y fuera del area del divide).              
     unsigned npfper;     ///<Number of periodic fluid particles.                                                           | Numero de particulas fluid periodicas.                                                   
-    unsigned newnpok;    ///<Number of new fluid particles (inlet conditions)                                              | Numero de nuevas particulas fluid (inlet conditions).                                    
-    unsigned newnpfail;  ///<Number of discarded new fluid particles (inlet conditions)                                    | Numero de nuevas particulas fluid descartadas (inlet conditions).                        
+    unsigned newnp;      ///<Number of new fluid particles (inlet conditions)                                              | Numero de nuevas particulas fluid (inlet conditions).                                    
     llong memorycpualloc;
     bool gpudata;
     llong memorynpalloc;
@@ -235,14 +226,7 @@ protected:
   unsigned CaseNbound;       ///<Number of boundary particles ( \ref Nfixed + \ref Nmoving + \ref Nfloat ).
   unsigned CaseNpb;          ///<Number of particles of the boundary block ( \ref Nbound - \ref Nfloat ) or ( \ref Nfixed + \ref Nmoving).
 
-  //-Stores information for the Mk of the particles.
-  StMkInfo *MkList;          ///<Stores information for each Mk block.
-  unsigned MkListSize;       ///<Total number of Mk blocks.
-  unsigned MkListFixed;      ///<Number of Mk blocks of fixed type.
-  unsigned MkListMoving;     ///<Number of Mk blocks of moving type.
-  unsigned MkListFloat;      ///<Number of Mk blocks of floating type.
-  unsigned MkListBound;      ///<Number of Mk blocks of boundary types.
-  unsigned MkListFluid;      ///<Number of Mk blocks of fluid type.
+  JSphMk *MkInfo;            ///<Stores information for the Mk of the particles.
 
   //-Variables for periodic conditions.
   StPeriodic PeriodicConfig; ///<Stores configuration of periodic conditions before applying CellOrder. | Almacena la configuracion de condiciones periodicas antes de aplicar CellOrder. 
@@ -364,20 +348,13 @@ protected:
 
   void VisuDemCoefficients()const;
 
-  void ResetMkInfo();
-  void LoadMkInfo(const JSpaceParts *parts);
-  inline unsigned GetMkBlockById(unsigned id)const;
-  unsigned GetMkBlockByMk(word mk)const;
-  unsigned GetMkBlockByCode(word code)const;
-
-  typecode CodeSetType(typecode code,TpParticle type,unsigned value)const;
   void LoadCodeParticles(unsigned np,const unsigned *idp,typecode *code)const;
   void PrepareCfgDomainValues(tdouble3 &v,tdouble3 vdef=TDouble3(0))const;
   void ResizeMapLimits();
 
   void ConfigConstants(bool simulate2d);
   void VisuConfig()const;
-  void VisuParticleSummary(JXml *xml)const;
+  void VisuParticleSummary()const;
   void LoadDcellParticles(unsigned n,const typecode *code,const tdouble3 *pos,unsigned *dcell)const;
   void RunInitialize(unsigned np,unsigned npb,const tdouble3 *pos,const unsigned *idp,const typecode *code,tfloat4 *velrhop);
 
@@ -437,11 +414,11 @@ public:
   static std::string TimerToText(const std::string &name,float value);
 
 //-Functions for debug.
+//----------------------
 public:
   void DgSaveVtkParticlesCpu(std::string filename,int numfile,unsigned pini,unsigned pfin,const tdouble3 *pos,const typecode *code,const unsigned *idp,const tfloat4 *velrhop)const;
   void DgSaveVtkParticlesCpu(std::string filename,int numfile,unsigned pini,unsigned pfin,const tfloat3 *pos,const byte *check,const unsigned *idp,const tfloat3 *vel,const float *rhop);
   void DgSaveCsvParticlesCpu(std::string filename,int numfile,unsigned pini,unsigned pfin,std::string head,const tfloat3 *pos,const unsigned *idp=NULL,const tfloat3 *vel=NULL,const float *rhop=NULL,const float *ar=NULL,const tfloat3 *ace=NULL,const tfloat3 *vcorr=NULL);
-
 };
 
 /*:

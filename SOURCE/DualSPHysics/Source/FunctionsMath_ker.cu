@@ -20,10 +20,6 @@
 
 #include "TypesDef.h"
 #include <cuda_runtime_api.h>
-//#include <cfloat>
-//#include <math_constants.h>
-//#include "JDgKerPrint.h"
-//#include "JDgKerPrint_ker.h"
 
 namespace cumath{
 
@@ -36,11 +32,27 @@ __device__ double PointPlane(const float4 &pla,const double3 &pt){
 }
 
 //------------------------------------------------------------------------------
+/// Resuelve punto en el plano.
+/// Solves point in the plane.
+//------------------------------------------------------------------------------
+__device__ float PointPlane(const float4 &pla,float px,float py,float pz){ 
+  return(pla.x*px+pla.y*py+pla.z*pz+pla.w);
+}
+
+//------------------------------------------------------------------------------
 /// Returns the distance between a point and a plane.
 /// Devuelve la distancia entre un punto y un plano.
 //------------------------------------------------------------------------------
 __device__ double DistPlaneSign(const float4 &pla,const double3 &pt){
   return(PointPlane(pla,pt)/sqrt(pla.x*pla.x+pla.y*pla.y+pla.z*pla.z));
+}
+
+//------------------------------------------------------------------------------
+/// Returns the distance between a point and a plane.
+/// Devuelve la distancia entre un punto y un plano.
+//------------------------------------------------------------------------------
+__device__ float KerDistPlaneSign(const float4 &pla,float px,float py,float pz){ 
+  return(PointPlane(pla,px,py,pz)/sqrt(pla.x*pla.x+pla.y*pla.y+pla.z*pla.z));
 }
 
 //------------------------------------------------------------------------------

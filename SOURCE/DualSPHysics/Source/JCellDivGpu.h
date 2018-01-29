@@ -70,6 +70,8 @@ protected:
   unsigned SizeAuxMem;
   float *AuxMem;
 
+  unsigned IncreaseNp; ///<Possible number of particles to be created in the near future.
+
   //-Variables with allocated memory as a function of the number of cells in GPU.
   //-Memoria reservada en funcion de celdas en GPU.
   unsigned SizeNct;
@@ -181,6 +183,8 @@ public:
 
   //:const unsigned* GetCellPart()const{ return(CellPart); }
   const int2* GetBeginCell(){ return(BeginEndCell); }
+
+  void SetIncreaseNp(unsigned increasenp){ IncreaseNp=increasenp; }
 
   //:uint2 GetRangeParticlesCells(bool fluid,unsigned celini,unsigned celfin)const;
   //:unsigned GetParticlesCells(unsigned celini,unsigned celfin);

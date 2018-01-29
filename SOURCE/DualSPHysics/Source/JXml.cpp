@@ -207,6 +207,21 @@ void JXml::ErrReadAtrib(const TiXmlElement* ele,const std::string &atrib,bool mi
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 //==============================================================================
+/// Returns the number of times the element appears.
+/// \param ele Node where the indicated element is searched.
+/// \param name Name of the requested element.
+//==============================================================================
+unsigned JXml::CountElement(TiXmlElement* ele,const std::string &name)const{
+  unsigned count=0;
+  TiXmlElement* ele2=ele->FirstChildElement(name.c_str()); 
+  while(ele2){
+    count++;
+    ele2=ele2->NextSiblingElement(name.c_str());
+  }
+  return(count); 
+}
+
+//==============================================================================
 /// Throws an exception if there are unknown or repeated elements.
 /// \param lis Xml element to check.
 /// \param names List of valid names (separated by spaces).

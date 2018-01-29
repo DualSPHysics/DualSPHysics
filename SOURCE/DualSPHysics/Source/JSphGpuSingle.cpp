@@ -311,7 +311,7 @@ void JSphGpuSingle::RunPeriodic(){
           unsigned count=cusph::PeriodicMakeList(num2,pini2,Stable,nmax,Map_PosMin,Map_PosMax,perinc,Posxyg,Poszg,Codeg,listpg);
           //-Resizes the memory size for the particles if there is not sufficient space and repeats the serach process.
           //-Redimensiona memoria para particulas si no hay espacio suficiente y repite el proceso de busqueda.
-          if(count>nmax || count+Np>GpuParticlesSize){
+          if(count>nmax || !CheckGpuParticlesSize(count+Np)){
             ArraysGpu->Free(listpg); listpg=NULL;
             TmgStop(Timers,TMG_SuPeriodic);
             ResizeParticlesSize(Np+count,PERIODIC_OVERMEMORYNP,false);
@@ -617,6 +617,7 @@ void JSphGpuSingle::Run(std::string appname,JCfgRun *cfg,JLog2 *log){
   ConfigConstants(Simulate2D);
   ConfigDomain();
   ConfigRunMode("Single-Gpu");
+  VisuParticleSummary();
 
   //-Initialisation of execution variables. | Inicializacion de variables de ejecucion.
   //------------------------------------------------------------------------------------

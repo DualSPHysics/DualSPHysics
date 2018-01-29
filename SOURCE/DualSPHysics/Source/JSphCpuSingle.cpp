@@ -392,7 +392,7 @@ void JSphCpuSingle::RunPeriodic(){
           unsigned count=PeriodicMakeList(num2,pini2,Stable,nmax,perinc,Posc,Codec,listp);
           //-Redimension memory for particles if there is insufficient space and repeat the search process.
           //-Redimensiona memoria para particulas si no hay espacio suficiente y repite el proceso de busqueda.
-          if(count>nmax || count+Np>CpuParticlesSize){
+          if(count>nmax || !CheckCpuParticlesSize(count+Np)){
             ArraysCpu->Free(listp); listp=NULL;
             TmcStop(Timers,TMC_SuPeriodic);
             ResizeParticlesSize(Np+count,PERIODIC_OVERMEMORYNP,false);
@@ -883,6 +883,7 @@ void JSphCpuSingle::Run(std::string appname,JCfgRun *cfg,JLog2 *log){
   ConfigConstants(Simulate2D);
   ConfigDomain();
   ConfigRunMode(cfg);
+  VisuParticleSummary();
 
   //-Initialisation of execution variables. | Inicializacion de variables de ejecucion.
   //------------------------------------------------------------------------------------

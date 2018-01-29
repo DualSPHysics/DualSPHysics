@@ -20,6 +20,7 @@
 
 #include "JSph.h"
 #include "Functions.h"
+#include "JSphMk.h"
 #include "JSphMotion.h"
 #include "JXml.h"
 #include "JSpaceCtes.h"
@@ -61,7 +62,7 @@ JSph::JSph(bool cpu,bool withmpi):Cpu(cpu),WithMpi(withmpi){
   DtFixed=NULL;
   SaveDt=NULL;
   TimeOut=NULL;
-  MkList=NULL;
+  MkInfo=NULL;
   Motion=NULL;
   MotionObjBegin=NULL;
   FtObjs=NULL;
@@ -84,7 +85,7 @@ JSph::~JSph(){
   delete DtFixed;
   delete SaveDt;
   delete TimeOut;
-  ResetMkInfo();
+  delete MkInfo;
   delete Motion;
   delete[] MotionObjBegin; MotionObjBegin=NULL;
   AllocMemoryFloating(0);
@@ -146,8 +147,6 @@ void JSph::InitVars(){
 
   CasePosMin=CasePosMax=TDouble3(0);
   CaseNp=CaseNbound=CaseNfixed=CaseNmoving=CaseNfloat=CaseNfluid=CaseNpb=0;
-
-  ResetMkInfo();
 
   memset(&PeriodicConfig,0,sizeof(StPeriodic));
   PeriActive=0;
@@ -566,7 +565,8 @@ void JSph::LoadCaseConfig(){
   TotalNp=CaseNp; IdMax=CaseNp-1;
 
   //-Loads and configures MK of particles.
-  LoadMkInfo(&parts);
+  MkInfo=new JSphMk();
+  MkInfo->Config(&parts);
 
   //-Configuration of WaveGen.
   if(xml.GetNode("case.execution.special.wavepaddles",false)){
@@ -654,12 +654,9 @@ void JSph::LoadCaseConfig(){
     for(unsigned c=0;c<parts.CountBlocks();c++){
       const JSpacePartBlock &block=parts.GetBlock(c);
       if(block.Type!=PT_Fluid){
-        unsigned cmk=0;
-        //:Log->Printf("___> Busca:%u",unsigned(block.GetMk()));
-        for(;cmk<MkListBound && MkList[cmk].mk!=unsigned(block.GetMk());cmk++);
-        //:Log->Printf("___> Busca res:%u",cmk);
-        if(cmk>=MkListBound)RunException(met,"Error loading DEM objects.");
-        const unsigned tav=CODE_GetTypeAndValue(MkList[c].code);
+        const unsigned cmk=MkInfo->GetMkBlockByMkBound(block.GetMkType());
+        if(cmk>=MkInfo->Size())RunException(met,fun::PrintStr("Error loading DEM objects. Mkbound=%u is unknown.",block.GetMkType()));
+        const unsigned tav=CODE_GetTypeAndValue(MkInfo->Mkblock(cmk)->Code);
         //:Log->Printf("___> tav[%u]:%u",cmk,tav);
         if(block.Type==PT_Floating){
           const JSpacePartBlock_Floating &fblock=(const JSpacePartBlock_Floating &)block;
@@ -691,122 +688,19 @@ void JSph::LoadCaseConfig(){
 void JSph::VisuDemCoefficients()const{
   //-Gets info for each block of particles.
   Log->Printf("Coefficients for DEM:");
-  for(unsigned c=0;c<MkListSize;c++){
-    const typecode code=MkList[c].code;
+  for(unsigned c=0;c<MkInfo->Size();c++){
+    const JSphMkBlock *pmk=MkInfo->Mkblock(c);
+    const typecode code=pmk->Code;
     const typecode type=CODE_GetType(code);
-    const unsigned tav=CODE_GetTypeAndValue(MkList[c].code);
+    const unsigned tav=CODE_GetTypeAndValue(code);
     if(type==CODE_TYPE_FIXED || type==CODE_TYPE_MOVING || type==CODE_TYPE_FLOATING){
-      Log->Printf("  Object %s  mkbound:%u  mk:%u",(type==CODE_TYPE_FIXED? "Fixed": (type==CODE_TYPE_MOVING? "Moving": "Floating")),MkList[c].mktype,MkList[c].mk);
+      Log->Printf("  Object %s  mkbound:%u  mk:%u",(type==CODE_TYPE_FIXED? "Fixed": (type==CODE_TYPE_MOVING? "Moving": "Floating")),pmk->MkType,pmk->Mk);
       Log->Printf("    Young_Modulus: %g",DemData[tav].young);
       Log->Printf("    PoissonRatio.: %g",DemData[tav].poisson);
       Log->Printf("    Kfric........: %g",DemData[tav].kfric);
       Log->Printf("    Restitution..: %g",DemData[tav].restitu);
     }
   }
-}
-
-//==============================================================================
-/// Initialisation of MK information.
-//==============================================================================
-void JSph::ResetMkInfo(){
-  delete[] MkList; MkList=NULL;
-  MkListSize=MkListFixed=MkListMoving=MkListFloat=MkListBound=MkListFluid=0;
-}
-
-//==============================================================================
-/// Load MK information of particles.
-//==============================================================================
-void JSph::LoadMkInfo(const JSpaceParts *parts){
-  const char met[]="LoadMkInfo";
-  ResetMkInfo();
-  MkListSize=parts->CountBlocks();
-  MkListFixed=parts->CountBlocks(PT_Fixed);
-  MkListMoving=parts->CountBlocks(PT_Moving);
-  MkListFloat=parts->CountBlocks(PT_Floating);
-  MkListFluid=parts->CountBlocks(PT_Fluid);
-  MkListBound=MkListFixed+MkListMoving+MkListFloat;
-  //:Log->Printf("__MkInfo> MkListSize  :%u",MkListSize);
-  //:Log->Printf("__MkInfo> MkListFixed :%u",MkListFixed);
-  //:Log->Printf("__MkInfo> MkListMoving:%u",MkListMoving);
-  //:Log->Printf("__MkInfo> MkListFloat :%u",MkListFloat);
-  //:Log->Printf("__MkInfo> MkListFluid :%u",MkListFluid);
-  //:Log->Printf("__MkInfo> MkListBound :%u",MkListBound);
-  //-Checks number of objects for each type.
-  if(MkListFixed >CODE_MKRANGEMAX)RunException(met,"The number of fixed particle blocks exceeds the maximum.");
-  if(MkListMoving>CODE_MKRANGEMAX)RunException(met,"The number of moving particle blocks exceeds the maximum.");
-  if(MkListFloat >CODE_MKRANGEMAX)RunException(met,"The number of floating particle blocks exceeds the maximum.");
-  if(MkListFluid >CODE_MKRANGEMAX)RunException(met,"The number of fluid particle blocks exceeds the maximum.");
-  //-Allocates memory.
-  MkList=new StMkInfo[MkListSize];
-  //-Gets info for each block of particles.
-  for(unsigned c=0;c<MkListSize;c++){
-    const JSpacePartBlock &block=parts->GetBlock(c);
-    MkList[c].begin=block.GetBegin();
-    MkList[c].count=block.GetCount();
-    MkList[c].mk=block.GetMk();
-    MkList[c].mktype=block.GetMkType();
-    switch(block.Type){
-      case PT_Fixed:     MkList[c].code=CodeSetType(0,PART_BoundFx,c);                           break;
-      case PT_Moving:    MkList[c].code=CodeSetType(0,PART_BoundMv,c-MkListFixed);               break;
-      case PT_Floating:  MkList[c].code=CodeSetType(0,PART_BoundFt,c-MkListFixed-MkListMoving);  break;
-      case PT_Fluid:     MkList[c].code=CodeSetType(0,PART_Fluid,c-MkListBound);                 break;
-    }
-  }
-}
-
-//==============================================================================
-/// Returns the block in MkList according to a given Id.
-//==============================================================================
-unsigned JSph::GetMkBlockById(unsigned id)const{
-  unsigned c=0;
-  for(;c<MkListSize && id>=(MkList[c].begin+MkList[c].count);c++);
-  return(c);
-}
-
-//==============================================================================
-/// Returns the block in MkList according to a given MK.
-//==============================================================================
-unsigned JSph::GetMkBlockByMk(word mk)const{
-  unsigned c=0;
-  for(;c<MkListSize && unsigned(mk)!=MkList[c].mk;c++);
-  return(c);
-}
-
-//==============================================================================
-/// Returns the block in MkList according to a given Code.
-/// Returns UINT_MAX if number of block is invalid.
-//==============================================================================
-unsigned JSph::GetMkBlockByCode(word code)const{
-  unsigned ret=UINT_MAX;
-  const unsigned type=CODE_GetType(code);
-  const unsigned cblock=CODE_GetTypeValue(code);
-  switch(type){
-    case CODE_TYPE_FIXED:    if(cblock<MkListFixed) ret=cblock;                           break;
-    case CODE_TYPE_MOVING:   if(cblock<MkListMoving)ret=cblock+MkListFixed;               break;
-    case CODE_TYPE_FLOATING: if(cblock<MkListFloat) ret=cblock+MkListFixed+MkListMoving;  break;
-    case CODE_TYPE_FLUID:    if(cblock<MkListFluid) ret=cblock+MkListBound;               break;
-    default: RunException("GetMkBlockByCode","Type of particle is invalid.");
-  }
-  return(ret);
-}
-
-//==============================================================================
-/// Returns the code of a particle according to the given parameters.
-//==============================================================================
-typecode JSph::CodeSetType(typecode code,TpParticle type,unsigned value)const{
-  const char met[]="CodeSetType"; 
-  //-Chooses type.
-  typecode tp;
-  if(type==PART_BoundFx)tp=CODE_TYPE_FIXED;
-  else if(type==PART_BoundMv)tp=CODE_TYPE_MOVING;
-  else if(type==PART_BoundFt)tp=CODE_TYPE_FLOATING;
-  else if(type==PART_Fluid)tp=CODE_TYPE_FLUID;
-  else RunException(met,"Type of particle is invalid.");
-  //-Checks the value.
-  typecode v=typecode(value&CODE_MASKVALUE);
-  if(unsigned(v)!=value)RunException(met,"The value is invalid.");
-  //-Returns the new code.
-  return(code&(~CODE_MASKTYPEVALUE)|tp|v);
 }
 
 //==============================================================================
@@ -818,29 +712,8 @@ typecode JSph::CodeSetType(typecode code,TpParticle type,unsigned value)const{
 //==============================================================================
 void JSph::LoadCodeParticles(unsigned np,const unsigned *idp,typecode *code)const{
   const char met[]="LoadCodeParticles"; 
-  //-Assigns code to each group of particles (moving & floating).
-  const unsigned finfixed=CaseNfixed;
-  const unsigned finmoving=finfixed+CaseNmoving;
-  const unsigned finfloating=finmoving+CaseNfloat;
-  for(unsigned p=0;p<np;p++){
-    const unsigned id=idp[p];
-    typecode cod=0;
-    unsigned cmk=GetMkBlockById(id);
-    if(id<finfixed)cod=CodeSetType(cod,PART_BoundFx,cmk);
-    else if(id<finmoving){
-      cod=CodeSetType(cod,PART_BoundMv,cmk-MkListFixed);
-      if(cmk-MkListFixed>=MotionObjCount)RunException(met,"Motion code of particles was not found.");
-    }
-    else if(id<finfloating){
-      cod=CodeSetType(cod,PART_BoundFt,cmk-MkListFixed-MkListMoving);
-      if(cmk-MkListFixed-MkListMoving>=FtCount)RunException(met,"Floating code of particles was not found.");
-    }
-    else{
-      cod=CodeSetType(cod,PART_Fluid,cmk-MkListBound);
-      if(cmk-MkListBound>=MkListSize)RunException(met,"Fluid code of particles was not found.");
-    }
-    code[p]=cod;
-  }
+  //-Assigns code to each group of particles.
+  for(unsigned p=0;p<np;p++)code[p]=MkInfo->GetCodeById(idp[p]);
 }
 
 //==============================================================================
@@ -1044,9 +917,10 @@ void JSph::VisuConfig()const{
 //==============================================================================
 /// Shows particle and MK blocks summary.
 //==============================================================================
-void JSph::VisuParticleSummary(JXml *xml)const{
+void JSph::VisuParticleSummary()const{
+  JXml xml; xml.LoadFile(FileXml);
   JSpaceParts parts; 
-  parts.LoadXml(xml,"case.execution.particles");
+  parts.LoadXml(&xml,"case.execution.particles");
   std::vector<std::string> summary;
   parts.GetParticleSummary(summary);
   Log->Print(summary);
@@ -1094,8 +968,8 @@ void JSph::RunInitialize(unsigned np,unsigned npb,const tdouble3 *pos,const unsi
     //-Creates array with mktype value.
     word *mktype=new word[np];
     for(unsigned p=0;p<np;p++){
-      unsigned cb=GetMkBlockByCode(code[p]);
-      mktype[p]=(cb<MkListSize? word(MkList[cb].mktype): USHRT_MAX);
+      const unsigned cmk=MkInfo->GetMkBlockByCode(code[p]);
+      mktype[p]=(cmk<MkInfo->Size()? word(MkInfo->Mkblock(cmk)->MkType): USHRT_MAX);
     }
     init.Run(np,npb,pos,idp,mktype,velrhop);
     init.GetConfig(InitializeInfo);
@@ -1234,7 +1108,7 @@ void JSph::ConfigCellDivision(){
   if(SvDomainVtk){
     const llong n=llong(Map_Cells.x)*llong(Map_Cells.y)*llong(Map_Cells.z);
     if(n<1000000)SaveMapCellsVtk(Scell);
-    else Log->Print("\n*** Attention: File MapCells.vtk was not created because number of cells is too high.\n");
+    else Log->Print("\n*** Attention: File CfgInit_MapCells.vtk was not created because number of cells is too high.\n");
   }
 }
 
@@ -1497,6 +1371,7 @@ void JSph::SavePartData(unsigned npok,unsigned nout,const unsigned *idp,const td
       bdpart->SetvUint("npf",infoplus->npf);
       bdpart->SetvUint("npbper",infoplus->npbper);
       bdpart->SetvUint("npfper",infoplus->npfper);
+      bdpart->SetvUint("newnp",infoplus->newnp);
       bdpart->SetvLlong("cpualloc",infoplus->memorycpualloc);
       if(infoplus->gpudata){
         bdpart->SetvLlong("nctalloc",infoplus->memorynctalloc);
@@ -1610,6 +1485,7 @@ void JSph::SaveData(unsigned npok,const unsigned *idp,const tdouble3 *pos,const 
   }
 
   if(SvDomainVtk)SaveDomainVtk(ndom,vdom);
+  if(SaveDt)SaveDt->SaveData();
 }
 
 //==============================================================================
@@ -1644,7 +1520,7 @@ void JSph::SaveInitialDomainVtk()const{
     vdomf3[4]=ToTFloat3(Map_PosMin);
     vdomf3[5]=ToTFloat3(Map_PosMax);
   }
-  JFormatFiles2::SaveVtkBoxes(DirDataOut+"InitialDomain.vtk",nbox,vdomf3,0);
+  JFormatFiles2::SaveVtkBoxes(DirDataOut+"CfgInit_Domain.vtk",nbox,vdomf3,0);
   delete[] vdomf3;
 }
 
@@ -1653,7 +1529,7 @@ void JSph::SaveInitialDomainVtk()const{
 /// Genera fichero VTK con las celdas del mapa.
 //==============================================================================
 void JSph::SaveMapCellsVtk(float scell)const{
-  JFormatFiles2::SaveVtkCells(DirDataOut+"MapCells.vtk",ToTFloat3(OrderDecode(MapRealPosMin)),OrderDecode(Map_Cells),scell);
+  JFormatFiles2::SaveVtkCells(DirDataOut+"CfgInit_MapCells.vtk",ToTFloat3(OrderDecode(MapRealPosMin)),OrderDecode(Map_Cells),scell);
 }
 
 //==============================================================================
@@ -1848,7 +1724,7 @@ void JSph::DgSaveVtkParticlesCpu(std::string filename,int numfile,unsigned pini,
     xkind[p]=(k==CODE_NORMAL? 0: (k==CODE_PERIODIC? 1: (k==CODE_OUTIGNORE? 2: 3)));
   }
   //-Generates VTK file.
-  JFormatFiles2::StScalarData fields[5];
+  JFormatFiles2::StScalarData fields[10];
   unsigned nfields=0;
   if(idp){   fields[nfields]=JFormatFiles2::DefineField("Idp" ,JFormatFiles2::UInt32 ,1,idp+pini); nfields++; }
   if(xtype){ fields[nfields]=JFormatFiles2::DefineField("Type",JFormatFiles2::UChar8 ,1,xtype);    nfields++; }

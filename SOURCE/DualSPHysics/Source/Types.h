@@ -32,6 +32,7 @@
 #define CELLDIV_OVERMEMORYNP 0.05f  ///<Memory that is reserved for the particle management in JCellDivGpu. | Memoria que se reserva de mas para la gestion de particulas en JCellDivGpu.
 #define CELLDIV_OVERMEMORYCELLS 1   ///<Number of cells in each dimension is increased to allocate memory for JCellDivGpu cells. | Numero celdas que se incrementa en cada dimension al reservar memoria para celdas en JCellDivGpu.
 #define PERIODIC_OVERMEMORYNP 0.05f ///<Memory reserved for the creation of periodic particles in JSphGpuSingle::RunPeriodic(). | Mermoria que se reserva de mas para la creacion de particulas periodicas en JSphGpuSingle::RunPeriodic().
+#define PARTICLES_OVERMEMORY_MIN 10 ///<Minimum over memory allocated on CPU or GPU according number of particles.
 
 #define BORDER_MAP 0.05
 
@@ -58,6 +59,8 @@
   #define CODE_TYPE_FLOATING 0x00020000 //---Particles float:  131072-196607
   #define CODE_TYPE_FLUID 0x00030000    //---Particles fluid:  196608-262143
   #define CODE_MASKVALUE 0x00000ffff    //-Bits type-value: 0000 0111 1111 1111  Range:0-65535
+
+  #define CODE_TYPE_FLUID_LIMITFREE 0x0003ffef //---Last normal fluid code: 262127
 #else
   #define CODE_MKRANGEMAX 2047      //-Maximum valid MK value. | Valor maximo de MK valido.
   typedef word typecode;            //-Type of the variable code using 2 bytes.
@@ -79,6 +82,8 @@
   #define CODE_TYPE_FLOATING 0x1000 //---Particles float:  4096-6143                                      
   #define CODE_TYPE_FLUID 0x1800    //---Particles fluid:  6144-8191                                      
   #define CODE_MASKVALUE 0x7ff      //-Bits type-value: 0000 0111 1111 1111  Range:0-2047
+
+  #define CODE_TYPE_FLUID_LIMITFREE 0x1fef  //---Last normal fluid code: 8175
 #endif
 
 #define CODE_SetNormal(code)    (code&(~CODE_MASKSPECIAL))

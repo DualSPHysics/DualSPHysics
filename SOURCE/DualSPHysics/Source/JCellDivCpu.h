@@ -70,6 +70,8 @@ protected:
   unsigned *CellPart;
   unsigned *SortPart;
 
+  unsigned IncreaseNp; ///<Possible number of particles to be created in the near future.
+
   //-Variables with allocated memory as a function of the number of cells in GPU.
   //-Memoria reservada en funcion de celdas en GPU.
   unsigned SizeNct;
@@ -189,6 +191,8 @@ public:
 
   //:const unsigned* GetCellPart()const{ return(CellPart); }
   const unsigned* GetBeginCell(){ return(BeginCell); }
+
+  void SetIncreaseNp(unsigned increasenp){ IncreaseNp=increasenp; }
 
   //:bool CellNoEmpty(unsigned box,byte kind)const;
   //:unsigned CellBegin(unsigned box,byte kind)const;

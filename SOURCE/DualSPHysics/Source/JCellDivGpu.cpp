@@ -28,7 +28,15 @@ using namespace std;
 //==============================================================================
 /// Constructor.
 //==============================================================================
-JCellDivGpu::JCellDivGpu(bool stable,bool floating,byte periactive,TpCellOrder cellorder,TpCellMode cellmode,float scell,tdouble3 mapposmin,tdouble3 mapposmax,tuint3 mapcells,unsigned casenbound,unsigned casenfixed,unsigned casenpb,JLog2 *log,std::string dirout,bool allocfullnct,float overmemorynp,word overmemorycells):Stable(stable),Floating(floating),PeriActive(periactive),CellOrder(cellorder),CellMode(cellmode),Hdiv(cellmode==CELLMODE_2H? 1: (cellmode==CELLMODE_H? 2: 0)),Scell(scell),OvScell(1.f/scell),Map_PosMin(mapposmin),Map_PosMax(mapposmax),Map_PosDif(mapposmax-mapposmin),Map_Cells(mapcells),CaseNbound(casenbound),CaseNfixed(casenfixed),CaseNpb(casenpb),Log(log),DirOut(dirout),AllocFullNct(allocfullnct),OverMemoryNp(overmemorynp),OverMemoryCells(overmemorycells)
+JCellDivGpu::JCellDivGpu(bool stable,bool floating,byte periactive,TpCellOrder cellorder
+  ,TpCellMode cellmode,float scell,tdouble3 mapposmin,tdouble3 mapposmax,tuint3 mapcells
+  ,unsigned casenbound,unsigned casenfixed,unsigned casenpb,JLog2 *log,std::string dirout
+  ,bool allocfullnct,float overmemorynp,word overmemorycells)
+  :Stable(stable),Floating(floating),PeriActive(periactive),CellOrder(cellorder)
+  ,CellMode(cellmode),Hdiv(cellmode==CELLMODE_2H? 1: (cellmode==CELLMODE_H? 2: 0)),Scell(scell)
+  ,OvScell(1.f/scell),Map_PosMin(mapposmin),Map_PosMax(mapposmax),Map_PosDif(mapposmax-mapposmin)
+  ,Map_Cells(mapcells),CaseNbound(casenbound),CaseNfixed(casenfixed),CaseNpb(casenpb),Log(log)
+  ,DirOut(dirout),AllocFullNct(allocfullnct),OverMemoryNp(overmemorynp),OverMemoryCells(overmemorycells)
 {
   ClassName="JCellDivGpu";
   CellPart=NULL;  SortPart=NULL;  AuxMem=NULL;
@@ -49,6 +57,7 @@ JCellDivGpu::~JCellDivGpu(){
 //==============================================================================
 void JCellDivGpu::Reset(){
   SizeNp=SizeAuxMem=SizeNct=0;
+  IncreaseNp=0;
   FreeMemoryAll();
   Ndiv=NdivFull=0;
   Nptot=Npb1=Npf1=Npb2=Npf2=0;
@@ -96,6 +105,7 @@ void JCellDivGpu::FreeMemoryAll(){
 void JCellDivGpu::AllocMemoryNp(ullong np){
   const char met[]="AllocMemoryNp";
   FreeMemoryAll();
+  np=np+PARTICLES_OVERMEMORY_MIN;
   SizeNp=unsigned(np);
   //-Checks particle number.
   //-Comprueba numero de particulas.
@@ -155,8 +165,14 @@ void JCellDivGpu::AllocMemoryNct(ullong nct){
 /// Si no es suficiente o no hay reserva, entonces reserva la memoria requerida.
 //==============================================================================
 void JCellDivGpu::CheckMemoryNp(unsigned npmin){
-  if(SizeNp<npmin)AllocMemoryNp(ullong(npmin)+ullong(OverMemoryNp*npmin));
-  else if(!CellPart)AllocMemoryNp(SizeNp);  
+  if(SizeNp<npmin+PARTICLES_OVERMEMORY_MIN){
+    AllocMemoryNp(ullong(npmin)+ullong(OverMemoryNp*npmin)+IncreaseNp);
+    IncreaseNp=0;
+  }
+  else if(!CellPart){
+    AllocMemoryNp(SizeNp+IncreaseNp);
+    IncreaseNp=0;
+  }
 }
 
 //==============================================================================
@@ -207,6 +223,7 @@ void JCellDivGpu::VisuBoundaryOut(unsigned p,unsigned id,tdouble3 pos,typecode c
   typecode out=CODE_GetSpecialValue(code);
   if(out==CODE_OUTMOVE)info=info+"Speed";
   else if(out==CODE_OUTPOS)info=info+"Position";
+  else if(out==CODE_OUTRHOP)info=info+"Rhop";
   else info=info+"???";
   Log->PrintDbg(info+fun::PrintStr(" p:%u id:%u pos:(%f,%f,%f)",p,id,pos.x,pos.y,pos.z));
 }

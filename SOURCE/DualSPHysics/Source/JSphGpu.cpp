@@ -227,6 +227,7 @@ void JSphGpu::FreeCpuMemoryParticles(){
 void JSphGpu::AllocCpuMemoryParticles(unsigned np){
   const char* met="AllocCpuMemoryParticles";
   FreeCpuMemoryParticles();
+  if(np>0)np=np+PARTICLES_OVERMEMORY_MIN;
   CpuParticlesSize=np;
   if(np>0){
     try{
@@ -266,9 +267,9 @@ void JSphGpu::AllocGpuMemoryParticles(unsigned np,float over){
   //-Computes number of particles for which memory will be allocated.
   //-Calcula numero de particulas para las que se reserva memoria.
   const unsigned np2=(over>0? unsigned(over*np): np);
-  GpuParticlesSize=np2;
+  GpuParticlesSize=np2+PARTICLES_OVERMEMORY_MIN;
   //-Define number or arrays to use. | Establece numero de arrays a usar.
-  ArraysGpu->SetArraySize(np2);
+  ArraysGpu->SetArraySize(GpuParticlesSize);
   #ifdef CODE_SIZE4
     ArraysGpu->AddArrayCount(JArraysGpu::SIZE_4B,2);  //-code,code2
   #else
@@ -298,7 +299,7 @@ void JSphGpu::AllocGpuMemoryParticles(unsigned np,float over){
   }
   //-Shows the allocated memory.
   MemGpuParticles=ArraysGpu->GetAllocMemoryGpu();
-  PrintSizeNp(np2,MemGpuParticles);
+  PrintSizeNp(GpuParticlesSize,MemGpuParticles);
   CheckCudaError(met,"Failed GPU memory allocation.");
 }
 
@@ -306,6 +307,7 @@ void JSphGpu::AllocGpuMemoryParticles(unsigned np,float over){
 /// Resizes space in GPU memory for particles.
 //==============================================================================
 void JSphGpu::ResizeGpuMemoryParticles(unsigned npnew){
+  npnew=npnew+PARTICLES_OVERMEMORY_MIN;
   //-Saves current data from GPU.
   unsigned    *idp       =SaveArrayGpu(Np,Idpg);
   typecode    *code      =SaveArrayGpu(Np,Codeg);
@@ -381,35 +383,10 @@ template<class T> T* JSphGpu::TSaveArrayGpu(unsigned np,const T *datasrc)const{
 }
 
 //==============================================================================
-/// Saves a GPU array (uint) in CPU memory. 
-//==============================================================================
-unsigned* JSphGpu::SaveArrayGpu_Uint(unsigned np,const unsigned *datasrc)const{
-  unsigned *data=NULL;
-  if(datasrc){
-    try{
-      data=new unsigned[np];
-    }
-    catch(const std::bad_alloc){
-      RunException("SaveArrayGpu_Uint","Could not allocate the requested memory.");
-    }
-    cudaMemcpy(data,datasrc,sizeof(unsigned)*np,cudaMemcpyDeviceToHost);
-  }
-  return(data);
-}
-
-//==============================================================================
 /// Restores a GPU array (generic) from CPU memory. 
 //==============================================================================
 template<class T> void JSphGpu::TRestoreArrayGpu(unsigned np,T *data,T *datanew)const{
   if(data&&datanew)cudaMemcpy(datanew,data,sizeof(T)*np,cudaMemcpyHostToDevice);
-  delete[] data;
-}
-
-//==============================================================================
-/// Restores a GPU array (uint) from CPU memory. 
-//==============================================================================
-void JSphGpu::RestoreArrayGpu_Uint(unsigned np,unsigned *data,unsigned *datanew)const{
-  if(data&&datanew)cudaMemcpy(datanew,data,sizeof(unsigned)*np,cudaMemcpyHostToDevice);
   delete[] data;
 }
 
@@ -847,9 +824,6 @@ void JSphGpu::InitRun(){
 
   //-Shows configuration of JTimeOut.
   if(TimeOut->UseSpecialConfig())TimeOut->VisuConfig(Log,"TimeOut configuration:"," ");
-
-  //-Shows particle and MK blocks summary.
-  VisuParticleSummary(&xml);
 
   Part=PartIni; Nstep=0; PartNstep=0; PartOut=0;
   TimeStep=TimeStepIni; TimeStepM1=TimeStep;

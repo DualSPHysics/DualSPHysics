@@ -63,6 +63,8 @@
 //:# - Nueva clase JFormatFiles2Data para simplificar la generacion de ficheros
 //:#   VTK y CSV. (07-04-2017)
 //:# - New parameter csvsep to configure separator in CSV files. (23-10-2017)
+//:# - New functions to create shapes in VTK files. (25-01-2018)
+//:# - Functions to create VTK/CSV files starting from vector<StScalarData>. (25-01-2018)
 //:#############################################################################
 
 /// \file JFormatFiles2.h \brief Declares the class \ref JFormatFiles2.
@@ -75,6 +77,7 @@
 #include <string>
 #include <cstring>
 #include <string>
+#include <vector>
 
 //##############################################################################
 //# JFormatFiles2
@@ -113,6 +116,23 @@ public:
     double min3,max3,mean3;
   }StStatistics;
 
+  /// Types of shape.
+  typedef enum{ ShLine,ShTriangle,ShQuad,ShBox,ShNull }TpShape;
+
+  /// Structure with data of one shape to be stored in VTK format.
+  typedef struct StrShapeData{
+    TpShape tshape;
+    tfloat3 vpt[8];
+    int value;
+    float valuef;
+    StrShapeData(){ reset(); }
+    StrShapeData(TpShape tsh,int vi,float vf,tfloat3 p0=TFloat3(0),tfloat3 p1=TFloat3(0),tfloat3 p2=TFloat3(0),tfloat3 p3=TFloat3(0),tfloat3 p4=TFloat3(0),tfloat3 p5=TFloat3(0),tfloat3 p6=TFloat3(0),tfloat3 p7=TFloat3(0)){ 
+      reset(); tshape=tsh; value=vi; valuef=vf; vpt[0]=p0; vpt[1]=p1; vpt[2]=p2; vpt[3]=p3; vpt[4]=p4; vpt[5]=p5; vpt[6]=p6; vpt[7]=p7;
+    }
+    void reset(){ tshape=ShNull; for(unsigned c=0;c<8;c++)vpt[c]=TFloat3(0); value=0; valuef=0; }
+  }StShapeData;
+
+
   //==============================================================================
   /// Throws a simple exception.
   //==============================================================================
@@ -137,6 +157,11 @@ public:
   static void CheckFields(unsigned nfields,const StScalarData* fields);
 
   //==============================================================================
+  /// Checks the definition of fields.
+  //==============================================================================
+  static void CheckFields(const std::vector<StScalarData> &fields);
+
+  //==============================================================================
   /// Stores data in VTK format.
   //============================================================================== 
   static void SaveVtk(std::string fname,unsigned np
@@ -146,7 +171,19 @@ public:
   /// Stores data in VTK format.
   //============================================================================== 
   static void SaveVtk(std::string fname,unsigned np
+    ,const tfloat3* pos,const std::vector<StScalarData> &fields);
+
+  //==============================================================================
+  /// Stores data in VTK format.
+  //============================================================================== 
+  static void SaveVtk(std::string fname,unsigned np
     ,const tdouble3* pos,unsigned nfields,const StScalarData* fields);
+
+  //==============================================================================
+  /// Stores data in VTK format.
+  //============================================================================== 
+  static void SaveVtk(std::string fname,unsigned np
+    ,const tdouble3* pos,const std::vector<StScalarData> &fields);
   
   //==============================================================================
   /// Stores data in CSV format.
@@ -158,13 +195,31 @@ public:
   /// Stores data in CSV format.
   //============================================================================== 
   static void SaveCsv(std::string fname,bool csvsepcoma,unsigned np
+    ,const tfloat3* pos,const std::vector<StScalarData> &fields,std::string head="");
+  
+  //==============================================================================
+  /// Stores data in CSV format.
+  //============================================================================== 
+  static void SaveCsv(std::string fname,bool csvsepcoma,unsigned np
     ,const tdouble3* pos,unsigned nfields,const StScalarData* fields,std::string head="");
   
+  //==============================================================================
+  /// Stores data in CSV format.
+  //============================================================================== 
+  static void SaveCsv(std::string fname,bool csvsepcoma,unsigned np
+    ,const tdouble3* pos,const std::vector<StScalarData> &fields,std::string head="");
+
   //==============================================================================
   /// Stores data in ASCII format.
   //============================================================================== 
   static void SaveAscii(std::string fname,unsigned np,const tfloat3* pos,const tdouble3* posd
     ,unsigned nfields,const StScalarData* fields,std::string head="");
+
+  //==============================================================================
+  /// Stores data in ASCII format.
+  //============================================================================== 
+  static void SaveAscii(std::string fname,unsigned np,const tfloat3* pos,const tdouble3* posd
+    ,const std::vector<StScalarData> &fields,std::string head="");
   
   //==============================================================================
   /// Returns the definition of statistics fields.
@@ -195,12 +250,11 @@ public:
   static void SaveVtkBasic(std::string fname,unsigned np
     ,const tfloat3* pos,const unsigned* idp,const tfloat3* vel,const float* rhop)
   {
-    StScalarData fields[3];
-    unsigned nfields=0;
-    if(idp){  fields[nfields]=DefineField("Idp" ,UInt32 ,1,idp);  nfields++; }
-    if(vel){  fields[nfields]=DefineField("Vel" ,Float32,3,vel);  nfields++; }
-    if(rhop){ fields[nfields]=DefineField("Rhop",Float32,1,rhop); nfields++; }
-    SaveVtk(fname,np,pos,nfields,fields);
+    std::vector<StScalarData> fields;
+    if(idp) fields.push_back(DefineField("Idp" ,UInt32 ,1,idp));
+    if(vel) fields.push_back(DefineField("Vel" ,Float32,3,vel));
+    if(rhop)fields.push_back(DefineField("Rhop",Float32,1,rhop));
+    SaveVtk(fname,np,pos,fields);
   }
 
   //==============================================================================
@@ -362,6 +416,144 @@ public:
   /// Generates a VTK file with boxes.
   //==============================================================================
   static void SaveVtkBoxes(const std::string &fname,unsigned nbox,const tfloat3 *vbox,float sizemin=0);
+
+
+  //##############################################################################
+  //# Functions to create shapes in VTK files.
+  //##############################################################################
+  //==============================================================================
+  /// Returns the definition of shape line.
+  //==============================================================================
+  static StShapeData DefineShape_Line(const tfloat3 &pt1,const tfloat3 &pt2,int value,float valuef){
+    return(StrShapeData(ShLine,value,valuef,pt1,pt2));
+  }
+
+  //==============================================================================
+  /// Returns the definition of shape line.
+  //==============================================================================
+  static StShapeData DefineShape_Line(const tdouble3 &pt1,const tdouble3 &pt2,int value,float valuef){
+    return(DefineShape_Line(ToTFloat3(pt1),ToTFloat3(pt2),value,valuef));
+  }
+
+  //==============================================================================
+  /// Returns the definition of shape triangle.
+  //==============================================================================
+  static StShapeData DefineShape_Triangle(const tfloat3 &pt1,const tfloat3 &pt2
+    ,const tfloat3 &pt3,int value,float valuef)
+  {
+    return(StrShapeData(ShTriangle,value,valuef,pt1,pt2,pt3));
+  }
+
+  //==============================================================================
+  /// Returns the definition of shape triangle.
+  //==============================================================================
+  static StShapeData DefineShape_Triangle(const tdouble3 &pt1,const tdouble3 &pt2
+    ,const tdouble3 &pt3,int value,float valuef)
+  {
+    return(StrShapeData(ShTriangle,value,valuef,ToTFloat3(pt1),ToTFloat3(pt2),ToTFloat3(pt3)));
+  }
+
+  //==============================================================================
+  /// Returns the definition of shape quad.
+  //==============================================================================
+  static StShapeData DefineShape_Quad(const tfloat3 &pt1,const tfloat3 &pt2
+    ,const tfloat3 &pt3,const tfloat3 &pt4,int value,float valuef)
+  {
+    return(StrShapeData(ShQuad,value,valuef,pt1,pt2,pt3,pt4));
+  }
+
+  //==============================================================================
+  /// Returns the definition of shape quad.
+  //==============================================================================
+  static StShapeData DefineShape_Quad(const tdouble3 &pt1,const tdouble3 &pt2
+    ,const tdouble3 &pt3,const tdouble3 &pt4,int value,float valuef)
+  {
+    return(StrShapeData(ShQuad,value,valuef,ToTFloat3(pt1),ToTFloat3(pt2),ToTFloat3(pt3),ToTFloat3(pt4)));
+  }
+
+  //==============================================================================
+  /// Returns the definition of shape box (8pt).
+  /// pt1: left  - front - bottom.
+  /// pt2: right - front - bottom.
+  /// pt3: left  - front - top.
+  /// pt4: right - front - top.
+  /// pt5: left  - back  - bottom.
+  /// pt6: right - back  - bottom.
+  /// pt7: left  - back  - top.
+  /// pt8: right - back  - top.
+  //==============================================================================
+  static StShapeData DefineShape_Box(const tfloat3 &pt1,const tfloat3 &pt2
+    ,const tfloat3 &pt3,const tfloat3 &pt4,const tfloat3 &pt5,const tfloat3 &pt6
+    ,const tfloat3 &pt7,const tfloat3 &pt8,int value,float valuef)
+  {
+    return(StrShapeData(ShBox,value,valuef,pt1,pt2,pt3,pt4,pt5,pt6,pt7,pt8));
+  }
+  //==============================================================================
+  /// Returns the definition of shape box (8pt).
+  //==============================================================================
+  static StShapeData DefineShape_Box(const tdouble3 &pt1,const tdouble3 &pt2
+    ,const tdouble3 &pt3,const tdouble3 &pt4,const tdouble3 &pt5,const tdouble3 &pt6
+    ,const tdouble3 &pt7,const tdouble3 &pt8,int value,float valuef)
+  {
+    return(DefineShape_Box(ToTFloat3(pt1),ToTFloat3(pt2),ToTFloat3(pt3),ToTFloat3(pt4),ToTFloat3(pt5),ToTFloat3(pt6),ToTFloat3(pt7),ToTFloat3(pt8),value,valuef));
+  }
+
+  //==============================================================================
+  /// Returns the definition of shape box (1pt + size3).
+  //==============================================================================
+  static StShapeData DefineShape_Box(const tfloat3 &pt1,const tfloat3 &size
+    ,int value,float valuef)
+  {
+    const tfloat3 p0=pt1;
+    const tfloat3 p1=p0+TFloat3(size.x,0,0);
+    const tfloat3 p2=p1+TFloat3(0,0,size.z);
+    const tfloat3 p3=p0+TFloat3(0,0,size.z);
+    const tfloat3 p4=p0+TFloat3(0,size.y,0);
+    const tfloat3 p5=p1+TFloat3(0,size.y,0);
+    const tfloat3 p6=p2+TFloat3(0,size.y,0);
+    const tfloat3 p7=p3+TFloat3(0,size.y,0);
+    return(StrShapeData(ShBox,value,valuef,p0,p1,p2,p3,p4,p5,p6,p7));
+  }
+    //==============================================================================
+  /// Returns the definition of shape box (1pt + size3).
+  //==============================================================================
+  static StShapeData DefineShape_Box(const tdouble3 &pt1,const tdouble3 &size
+    ,int value,float valuef)
+  {
+    return(DefineShape_Box(ToTFloat3(pt1),ToTFloat3(size),value,valuef));
+  }
+
+  //==============================================================================
+  /// Returns the definition of shape box (1pt + 3x vec3).
+  //==============================================================================
+  static StShapeData DefineShape_Box(const tfloat3 &pt1,const tfloat3 &vx
+    ,const tfloat3 &vy,const tfloat3 &vz,int value,float valuef)
+  {
+    const tfloat3 p0=pt1;
+    const tfloat3 p1=p0+vx;
+    const tfloat3 p2=p1+vz;
+    const tfloat3 p3=p0+vz;
+    const tfloat3 p4=p0+vy;
+    const tfloat3 p5=p1+vy;
+    const tfloat3 p6=p2+vy;
+    const tfloat3 p7=p3+vy;
+    return(StrShapeData(ShBox,value,valuef,p0,p1,p2,p3,p4,p5,p6,p7));
+  }
+  //==============================================================================
+  /// Returns the definition of shape box (1pt + 3x vec3).
+  //==============================================================================
+  static StShapeData DefineShape_Box(const tdouble3 &pt1,const tdouble3 &vx
+    ,const tdouble3 &vy,const tdouble3 &vz,int value,float valuef)
+  {
+    return(DefineShape_Box(ToTFloat3(pt1),ToTFloat3(vx),ToTFloat3(vy),ToTFloat3(vz),value,valuef));
+  }
+
+  //==============================================================================
+  /// Generates a VTK file with shapes.
+  //============================================================================== 
+  static void SaveVtkShapes(std::string fname,const std::string &valuename
+    ,const std::string &valuefname,const std::vector<StShapeData> &shapes);
+
 };
 
 

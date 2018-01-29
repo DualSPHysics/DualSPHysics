@@ -241,6 +241,9 @@
     <ClInclude Include="Source\JSphInitialize.h">
       <Filter>Source</Filter>
     </ClInclude>
+    <ClInclude Include="Source\JSphMk.h">
+      <Filter>Source</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Source\JCfgRun.cpp">
@@ -415,6 +418,9 @@
       <Filter>CommonDsph\JSphMotion</Filter>
     </ClCompile>
     <ClCompile Include="Source\JSphInitialize.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\JSphMk.cpp">
       <Filter>Source</Filter>
     </ClCompile>
   </ItemGroup>

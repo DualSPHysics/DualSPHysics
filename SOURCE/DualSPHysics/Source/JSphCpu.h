@@ -122,9 +122,12 @@ protected:
   void ResizeCpuMemoryParticles(unsigned np);
   void ReserveBasicArraysCpu();
 
+  bool CheckCpuParticlesSize(unsigned requirednp){ return(requirednp+PARTICLES_OVERMEMORY_MIN<=CpuParticlesSize); }
+
   template<class T> T* TSaveArrayCpu(unsigned np,const T *datasrc)const;
   word*        SaveArrayCpu(unsigned np,const word        *datasrc)const{ return(TSaveArrayCpu<word>       (np,datasrc)); }
   unsigned*    SaveArrayCpu(unsigned np,const unsigned    *datasrc)const{ return(TSaveArrayCpu<unsigned>   (np,datasrc)); }
+  int*         SaveArrayCpu(unsigned np,const int         *datasrc)const{ return(TSaveArrayCpu<int>        (np,datasrc)); }
   float*       SaveArrayCpu(unsigned np,const float       *datasrc)const{ return(TSaveArrayCpu<float>      (np,datasrc)); }
   tfloat4*     SaveArrayCpu(unsigned np,const tfloat4     *datasrc)const{ return(TSaveArrayCpu<tfloat4>    (np,datasrc)); }
   double*      SaveArrayCpu(unsigned np,const double      *datasrc)const{ return(TSaveArrayCpu<double>     (np,datasrc)); }
@@ -133,13 +136,12 @@ protected:
   template<class T> void TRestoreArrayCpu(unsigned np,T *data,T *datanew)const;
   void RestoreArrayCpu(unsigned np,word        *data,word        *datanew)const{ TRestoreArrayCpu<word>       (np,data,datanew); }
   void RestoreArrayCpu(unsigned np,unsigned    *data,unsigned    *datanew)const{ TRestoreArrayCpu<unsigned>   (np,data,datanew); }
+  void RestoreArrayCpu(unsigned np,int         *data,int         *datanew)const{ TRestoreArrayCpu<int>        (np,data,datanew); }
   void RestoreArrayCpu(unsigned np,float       *data,float       *datanew)const{ TRestoreArrayCpu<float>      (np,data,datanew); }
   void RestoreArrayCpu(unsigned np,tfloat4     *data,tfloat4     *datanew)const{ TRestoreArrayCpu<tfloat4>    (np,data,datanew); }
   void RestoreArrayCpu(unsigned np,double      *data,double      *datanew)const{ TRestoreArrayCpu<double>     (np,data,datanew); }
   void RestoreArrayCpu(unsigned np,tdouble3    *data,tdouble3    *datanew)const{ TRestoreArrayCpu<tdouble3>   (np,data,datanew); }
   void RestoreArrayCpu(unsigned np,tsymatrix3f *data,tsymatrix3f *datanew)const{ TRestoreArrayCpu<tsymatrix3f>(np,data,datanew); }
-  void RestoreArrayCpu_Uint(unsigned np,unsigned *data,unsigned *datanew)const;
-
 
   llong GetAllocMemoryCpu()const;
   void PrintAllocMemory(llong mcpu)const;
@@ -220,7 +222,6 @@ protected:
 
   void ComputeSpsTau(unsigned n,unsigned pini,const tfloat4 *velrhop,const tsymatrix3f *gradvel,tsymatrix3f *tau)const;
 
-  void UpdatePos(tdouble3 pos0,double dx,double dy,double dz,bool outrhop,unsigned p,tdouble3 *pos,unsigned *cell,typecode *code)const;
   template<bool shift> void ComputeVerletVarsFluid(const tfloat4 *velrhop1,const tfloat4 *velrhop2,double dt,double dt2,tdouble3 *pos,unsigned *cell,typecode *code,tfloat4 *velrhopnew)const;
   void ComputeVelrhopBound(const tfloat4* velrhopold,double armul,tfloat4* velrhopnew)const;
 
@@ -251,6 +252,8 @@ protected:
 public:
   JSphCpu(bool withmpi);
   ~JSphCpu();
+
+  void UpdatePos(tdouble3 pos0,double dx,double dy,double dz,bool outrhop,unsigned p,tdouble3 *pos,unsigned *cell,typecode *code)const;
 };
 
 #endif

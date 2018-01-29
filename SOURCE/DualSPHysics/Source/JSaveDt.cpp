@@ -44,8 +44,6 @@ JSaveDt::JSaveDt(JLog2* log):Log(log){
 /// Destructor.
 //==============================================================================
 JSaveDt::~JSaveDt(){
-  SaveFileValuesEnd();
-  if(AllDt)SaveFileAllDts();
   Reset();
 }
 
@@ -69,7 +67,7 @@ void JSaveDt::Reset(){
 void JSaveDt::Config(JXml *sxml,const std::string &place,double timemax,double timeout){
   Reset();
   LoadXml(sxml,place);
-  if(TimeFinish<0)TimeFinish=timemax;
+  if(TimeFinish<=0)TimeFinish=DBL_MAX;
   if(TimeInterval<0)TimeInterval=timeout;
   SizeValuesSave=max(1u,min(GetSizeValues(),unsigned(timeout/TimeInterval)));
 }
@@ -101,7 +99,8 @@ void JSaveDt::ReadXml(JXml *sxml,TiXmlElement* ele){
 //==============================================================================
 void JSaveDt::VisuConfig(std::string txhead,std::string txfoot){
   if(!txhead.empty())Log->Print(txhead);
-  Log->Printf("  Time    : (%f - %f)",TimeStart,TimeFinish);
+  if(TimeFinish==DBL_MAX)Log->Printf("  Time    : (%f - END)",TimeStart);
+  else Log->Printf("  Time    : (%f - %f)",TimeStart,TimeFinish);
   Log->Printf("  Interval: %f (group:%u)",TimeInterval,SizeValuesSave);
   if(!txfoot.empty())Log->Print(txfoot);
 }
@@ -254,6 +253,14 @@ void JSaveDt::AddValues(double timestep,double dtfinal,double dt1,double dt2,dou
     }
   }
   else if(timestep>TimeFinish && Count)SaveFileValuesEnd();
+}
+
+//==============================================================================
+/// Saves current data in output files.
+//==============================================================================
+void JSaveDt::SaveData(){
+  SaveFileValuesEnd();
+  if(AllDt)SaveFileAllDts();
 }
 
 

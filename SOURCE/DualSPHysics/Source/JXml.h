@@ -35,6 +35,7 @@
 //:# - Pasa varios parametros de lectura a const. (25-01-2016)
 //:# - Ahora GetAttributeUnsigned/GetAttributeUint permiten todo el rango de unsigned. (06-05-2016)
 //:# - Nuevos metodos para lectura y escritura de matrices. (29-11-2017)
+//:# - Nuevo metodo CountElement() para contar numero de apariciones de un elemento. (24-01-2018)
 //:#############################################################################
 
 /// \file JXml.h \brief Declares the class \ref JXml.
@@ -146,6 +147,13 @@ public:
   /// \param name Name of the requested element.
   //==============================================================================
   bool ExistsElement(const TiXmlElement* ele,const std::string &name)const{ return(ele->FirstChildElement(name.c_str())!=NULL); }
+
+  //==============================================================================
+  /// Returns the number of times the element appears.
+  /// \param ele Node where the indicated element is searched.
+  /// \param name Name of the requested element.
+  //==============================================================================
+  unsigned CountElement(TiXmlElement* ele,const std::string &name)const;
 
   //==============================================================================
   /// Throws an exception if there are unknown or repeated elements.

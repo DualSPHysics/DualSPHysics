@@ -137,9 +137,9 @@ void JSphCpu::AllocCpuMemoryParticles(unsigned np,float over){
   FreeCpuMemoryParticles();
   //-Calculate number of partices with reserved memory | Calcula numero de particulas para las que se reserva memoria.
   const unsigned np2=(over>0? unsigned(over*np): np);
-  CpuParticlesSize=np2;
+  CpuParticlesSize=np2+PARTICLES_OVERMEMORY_MIN;
   //-Define number or arrays to use. | Establece numero de arrays a usar.
-  ArraysCpu->SetArraySize(np2);
+  ArraysCpu->SetArraySize(CpuParticlesSize);
   #ifdef CODE_SIZE4
     ArraysCpu->AddArrayCount(JArraysCpu::SIZE_4B,2);  //-code,code2
   #else
@@ -166,13 +166,14 @@ void JSphCpu::AllocCpuMemoryParticles(unsigned np,float over){
   }
   //-Shows the allocated memory.
   MemCpuParticles=ArraysCpu->GetAllocMemoryCpu();
-  PrintSizeNp(np2,MemCpuParticles);
+  PrintSizeNp(CpuParticlesSize,MemCpuParticles);
 }
 
 //==============================================================================
 /// Resizes space in CPU memory for particles.
 //==============================================================================
 void JSphCpu::ResizeCpuMemoryParticles(unsigned npnew){
+  npnew=npnew+PARTICLES_OVERMEMORY_MIN;
   //-Saves current data from CPU.
   unsigned    *idp       =SaveArrayCpu(Np,Idpc);
   typecode    *code      =SaveArrayCpu(Np,Codec);
@@ -244,14 +245,6 @@ template<class T> T* JSphCpu::TSaveArrayCpu(unsigned np,const T *datasrc)const{
 //==============================================================================
 template<class T> void JSphCpu::TRestoreArrayCpu(unsigned np,T *data,T *datanew)const{
   if(data&&datanew)memcpy(datanew,data,sizeof(T)*np);
-  delete[] data;
-}
-
-//==============================================================================
-/// Restores an array (uint) from CPU memory. 
-//==============================================================================
-void JSphCpu::RestoreArrayCpu_Uint(unsigned np,unsigned *data,unsigned *datanew)const{
-  if(data&&datanew)memcpy(datanew,data,sizeof(unsigned)*np);
   delete[] data;
 }
 
@@ -476,9 +469,6 @@ void JSphCpu::InitRun(){
 
   //-Shows configuration of JTimeOut.
   if(TimeOut->UseSpecialConfig())TimeOut->VisuConfig(Log,"TimeOut configuration:"," ");
-
-  //-Shows particle and MK blocks summary.
-  VisuParticleSummary(&xml);
 
   Part=PartIni; Nstep=0; PartNstep=0; PartOut=0;
   TimeStep=TimeStepIni; TimeStepM1=TimeStep;
@@ -734,8 +724,8 @@ float JSphCpu::GetKernelCubicTensil(float rr2,float rhopp1,float pressp1,float r
 }
 
 //==============================================================================
-/// Return cell limits for interaction.
-/// Devuelve limites de celdas para interaccion.
+/// Return cell limits for interaction starting from cell coordinates.
+/// Devuelve limites de celdas para interaccion a partir de coordenadas de celda.
 //==============================================================================
 void JSphCpu::GetInteractionCells(unsigned rcell
   ,int hdiv,const tint4 &nc,const tint3 &cellzero

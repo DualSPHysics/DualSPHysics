@@ -27,7 +27,12 @@ using namespace std;
 //==============================================================================
 /// Constructor.
 //==============================================================================
-JCellDivGpuSingle::JCellDivGpuSingle(bool stable,bool floating,byte periactive,TpCellOrder cellorder,TpCellMode cellmode,float scell,tdouble3 mapposmin,tdouble3 mapposmax,tuint3 mapcells,unsigned casenbound,unsigned casenfixed,unsigned casenpb,JLog2 *log,std::string dirout):JCellDivGpu(stable,floating,periactive,cellorder,cellmode,scell,mapposmin,mapposmax,mapcells,casenbound,casenfixed,casenpb,log,dirout){
+JCellDivGpuSingle::JCellDivGpuSingle(bool stable,bool floating,byte periactive,TpCellOrder cellorder
+  ,TpCellMode cellmode,float scell,tdouble3 mapposmin,tdouble3 mapposmax,tuint3 mapcells
+  ,unsigned casenbound,unsigned casenfixed,unsigned casenpb,JLog2 *log,std::string dirout)
+  :JCellDivGpu(stable,floating,periactive,cellorder,cellmode,scell,mapposmin,mapposmax,mapcells
+  ,casenbound,casenfixed,casenpb,log,dirout)
+{
   ClassName="JCellDivGpuSingle";
 }
 

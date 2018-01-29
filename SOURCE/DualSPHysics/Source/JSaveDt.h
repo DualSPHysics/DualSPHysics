@@ -22,6 +22,8 @@
 //:# - Clase para generar fichero CSV con info del dt. (08-01-2015)
 //:# - Permite grabar mas valores (csoundmax,acemax...). (14-01-2015)
 //:# - Se elimina el valor csound. (22-01-2015)
+//:# - Error corregido cuando TimeFinish=0. (22-01-2018)
+//:# - Error corregido al generar excepcion por error en fichero. (22-01-2018)
 //:#############################################################################
 
 /// \file JSaveDt.h \brief Declares the class \ref JSaveDt.
@@ -105,6 +107,7 @@ public:
   void VisuConfig(std::string txhead,std::string txfoot);
   void AddValues(double timestep,double dtfinal,double dt1,double dt2,double acemax,double viscdtmax,double velmax);
   bool GetFullInfo()const{ return(FullInfo); }
+  void SaveData();
 };
 
 

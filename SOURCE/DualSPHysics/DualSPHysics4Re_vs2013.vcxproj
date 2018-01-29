@@ -554,6 +554,7 @@ rem %CudaNvcc% -ccbin "$(VCInstallDir)bin" %gpuhw% -use_fast_math -c %ptxinfo% -
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">true</ExcludedFromBuild>
     </ClInclude>
     <ClInclude Include="Source\JSphInitialize.h" />
+    <ClInclude Include="Source\JSphMk.h" />
     <ClInclude Include="Source\JSphMotion.h" />
     <ClInclude Include="Source\JSphVisco.h" />
     <ClInclude Include="Source\JPartsOut.h" />
@@ -665,6 +666,7 @@ rem %CudaNvcc% -ccbin "$(VCInstallDir)bin" %gpuhw% -use_fast_math -c %ptxinfo% -
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="Source\JSphInitialize.cpp" />
+    <ClCompile Include="Source\JSphMk.cpp" />
     <ClCompile Include="Source\JSphMotion.cpp" />
     <ClCompile Include="Source\JSphVisco.cpp" />
     <ClCompile Include="Source\JPartsOut.cpp" />

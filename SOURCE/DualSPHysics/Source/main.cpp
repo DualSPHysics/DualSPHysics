@@ -29,8 +29,8 @@ School of Mechanical, Aerospace and Civil Engineering, University of Manchester,
 \section compile_sec Project files
 Please download source files and documentation from <a href="http://dual.sphysics.org">DualSPHysics website.</a> \n
 \author <a href="http://dual.sphysics.org/index.php/developers">DualSPHysics Developers.</a> 
-\version 4.2.026
-\date 28-12-2017
+\version 4.2.028
+\date 29-01-2018
 \copyright GNU Lesser General Public License <a href="http://www.gnu.org/licenses/">GNU licenses.</a>
 */
 
@@ -60,9 +60,9 @@ typedef struct StrAppInfo{
   string Date;
   bool ModeMK65k;
   StrAppInfo(){
-    MainName="DualSPHysics4"; MainVer="v4.2.026";
+    MainName="DualSPHysics4"; MainVer="v4.2.028";
     //SubName="UserVersion"; SubVer="v1.0";
-    Date="28-12-2017";
+    Date="29-01-2018";
     #ifdef CODE_SIZE4
       ModeMK65k=true;
     #else

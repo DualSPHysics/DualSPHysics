@@ -187,24 +187,26 @@ protected:
   void ResizeGpuMemoryParticles(unsigned np);
   void ReserveBasicArraysGpu();
 
+  bool CheckGpuParticlesSize(unsigned requirednp){ return(requirednp+PARTICLES_OVERMEMORY_MIN<=GpuParticlesSize); }
+
   template<class T> T* TSaveArrayGpu(unsigned np,const T *datasrc)const;
   word*        SaveArrayGpu(unsigned np,const word        *datasrc)const{ return(TSaveArrayGpu<word>       (np,datasrc)); }
   unsigned*    SaveArrayGpu(unsigned np,const unsigned    *datasrc)const{ return(TSaveArrayGpu<unsigned>   (np,datasrc)); }
+  int*         SaveArrayGpu(unsigned np,const int         *datasrc)const{ return(TSaveArrayGpu<int>        (np,datasrc)); }
   float*       SaveArrayGpu(unsigned np,const float       *datasrc)const{ return(TSaveArrayGpu<float>      (np,datasrc)); }
   float4*      SaveArrayGpu(unsigned np,const float4      *datasrc)const{ return(TSaveArrayGpu<float4>     (np,datasrc)); }
   double*      SaveArrayGpu(unsigned np,const double      *datasrc)const{ return(TSaveArrayGpu<double>     (np,datasrc)); }
   double2*     SaveArrayGpu(unsigned np,const double2     *datasrc)const{ return(TSaveArrayGpu<double2>    (np,datasrc)); }
   tsymatrix3f* SaveArrayGpu(unsigned np,const tsymatrix3f *datasrc)const{ return(TSaveArrayGpu<tsymatrix3f>(np,datasrc)); }
-  unsigned*    SaveArrayGpu_Uint(unsigned np,const unsigned *datasrc)const;
   template<class T> void TRestoreArrayGpu(unsigned np,T *data,T *datanew)const;
   void RestoreArrayGpu(unsigned np,word        *data,word        *datanew)const{ TRestoreArrayGpu<word>       (np,data,datanew); }
   void RestoreArrayGpu(unsigned np,unsigned    *data,unsigned    *datanew)const{ TRestoreArrayGpu<unsigned>   (np,data,datanew); }
+  void RestoreArrayGpu(unsigned np,int         *data,int         *datanew)const{ TRestoreArrayGpu<int>        (np,data,datanew); }
   void RestoreArrayGpu(unsigned np,float       *data,float       *datanew)const{ TRestoreArrayGpu<float>      (np,data,datanew); }
   void RestoreArrayGpu(unsigned np,float4      *data,float4      *datanew)const{ TRestoreArrayGpu<float4>     (np,data,datanew); }
   void RestoreArrayGpu(unsigned np,double      *data,double      *datanew)const{ TRestoreArrayGpu<double>     (np,data,datanew); }
   void RestoreArrayGpu(unsigned np,double2     *data,double2     *datanew)const{ TRestoreArrayGpu<double2>    (np,data,datanew); }
   void RestoreArrayGpu(unsigned np,tsymatrix3f *data,tsymatrix3f *datanew)const{ TRestoreArrayGpu<tsymatrix3f>(np,data,datanew); }
-  void RestoreArrayGpu_Uint(unsigned np,unsigned *data,unsigned *datanew)const;
 
   llong GetAllocMemoryCpu()const;
   llong GetAllocMemoryGpu()const;
@@ -251,6 +253,7 @@ public:
   ~JSphGpu();
   
 //-Functions for debug.
+//----------------------
 public:
   void DgSaveVtkParticlesGpu(std::string filename,int numfile,unsigned pini,unsigned pfin,unsigned cellcode,const double2 *posxyg,const double *poszg,const unsigned *idpg,const unsigned *dcelg,const typecode *codeg,const float4 *velrhopg,const float4 *velrhopm1g,const float3 *aceg);
   void DgSaveVtkParticlesGpu(std::string filename,int numfile,unsigned pini,unsigned pfin,bool idp,bool vel,bool rhop,bool code);

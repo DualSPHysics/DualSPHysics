@@ -26,7 +26,12 @@ using namespace std;
 //==============================================================================
 /// Constructor.
 //==============================================================================
-JCellDivCpuSingle::JCellDivCpuSingle(bool stable,bool floating,byte periactive,TpCellOrder cellorder,TpCellMode cellmode,float scell,tdouble3 mapposmin,tdouble3 mapposmax,tuint3 mapcells,unsigned casenbound,unsigned casenfixed,unsigned casenpb,JLog2 *log,std::string dirout):JCellDivCpu(stable,floating,periactive,cellorder,cellmode,scell,mapposmin,mapposmax,mapcells,casenbound,casenfixed,casenpb,log,dirout){
+JCellDivCpuSingle::JCellDivCpuSingle(bool stable,bool floating,byte periactive,TpCellOrder cellorder
+  ,TpCellMode cellmode,float scell,tdouble3 mapposmin,tdouble3 mapposmax,tuint3 mapcells
+  ,unsigned casenbound,unsigned casenfixed,unsigned casenpb,JLog2 *log,std::string dirout)
+  :JCellDivCpu(stable,floating,periactive,cellorder,cellmode,scell,mapposmin,mapposmax,mapcells
+  ,casenbound,casenfixed,casenpb,log,dirout)
+{
   ClassName="JCellDivCpuSingle";
 }
 
