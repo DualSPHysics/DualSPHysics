@@ -23,6 +23,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <cfloat>
 #include <stdarg.h>
 #include <algorithm>
 #include <fstream>
@@ -233,6 +234,15 @@ std::string FloatStr(float v,const char* fmt){
 }
 
 //==============================================================================
+/// Converts real value to string (-FLT_MAX=MIN and FLT_MAX=MAX).
+//==============================================================================
+std::string FloatxStr(float v,const char* fmt){
+  char cad[128];
+  sprintf(cad,fmt,v);
+  return(v==-FLT_MAX? std::string("MIN"): (v==FLT_MAX? std::string("MAX"): std::string(cad)));
+}
+
+//==============================================================================
 /// Converts real value to string.
 //==============================================================================
 std::string Float3Str(const tfloat3 &v,const char* fmt){
@@ -248,6 +258,15 @@ std::string DoubleStr(double v,const char* fmt){
   char cad[256];
   sprintf(cad,fmt,v);
   return(std::string(cad));
+}
+
+//==============================================================================
+/// Converts real value to string (-DBL_MAX=MIN and DBL_MAX=MAX).
+//==============================================================================
+std::string DoublexStr(double v,const char* fmt){
+  char cad[128];
+  sprintf(cad,fmt,v);
+  return(v==-DBL_MAX? std::string("MIN"): (v==DBL_MAX? std::string("MAX"): std::string(cad)));
 }
 
 //==============================================================================

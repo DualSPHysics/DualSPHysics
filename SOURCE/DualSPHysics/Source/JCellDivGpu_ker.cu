@@ -480,7 +480,7 @@ template <unsigned int blockSize> __global__ void KerLimitsCell(unsigned n,unsig
 //==============================================================================
 void LimitsCell(unsigned np,unsigned pini,unsigned cellcode,const unsigned *dcell,const typecode *code,unsigned *aux,tuint3 &celmin,tuint3 &celmax,JLog2 *log){
   if(!np){//-Execution is canceled when no particles.
-    celmin=TUint3(1);
+    celmin=TUint3(UINT_MAX);
     celmax=TUint3(0);
     return;
   }

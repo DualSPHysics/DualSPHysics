@@ -44,7 +44,7 @@
 			<gainstroke value="1" comment="Gain factor to amplify/reduce the paddle stroke (default=1)" />
 			<phase value="0" comment="Initial wave phase in function of PI (default=0)" />
 			<ramp value="0" comment="Periods of ramp (default=0)" />
-			<usefiledata file="PistonFile_WallRegLong.csv" swlmod="-0.266916" comment="Uses motion and elevation from file" />
+			<_usefiledata file="PistonFile_WallRegLong.csv" swlmod="-0.266916" comment="Uses motion and elevation from file" />
 			<savemotion periods="24" periodsteps="20" xpos="2" zpos="-0.5" comment="Saves motion data. xpos and zpos are optional. zpos=-depth of the measuring point" />
 		</piston>
 	</wavepaddles>

@@ -201,29 +201,58 @@ typecode JSphMk::CodeSetType(typecode code,TpParticle type,unsigned value)const{
   return(code&(~CODE_MASKTYPEVALUE)|tp|v);
 }
 
+////==============================================================================
+///// Calculates domain limits for each Mk value.
+////==============================================================================
+//void JSphMk::ComputeMkDomains(bool bound,const std::vector<unsigned> &mklist,unsigned np,const tdouble3 *pos,const typecode *code){
+//  for(unsigned c=0;c<unsigned(mklist.size());c++){
+//    const unsigned cmk=(bound? GetMkBlockByMkBound(mklist[c]): GetMkBlockByMkFluid(mklist[c]));
+//    if(cmk<Size() && !MkList[cmk]->GetPosDefined()){
+//      const typecode rcode=MkList[cmk]->Code;
+//      tdouble3 pmin=TDouble3(DBL_MAX),pmax=TDouble3(-DBL_MAX);
+//      //-Calculates minimum and maximum position. 
+//      for(unsigned p=0;p<np;p++)if(code[p]==rcode){
+//        const tdouble3 ps=pos[p];
+//        if(pmin.x>ps.x)pmin.x=ps.x;
+//        if(pmin.y>ps.y)pmin.y=ps.y;
+//        if(pmin.z>ps.z)pmin.z=ps.z;
+//        if(pmax.x<ps.x)pmax.x=ps.x;
+//        if(pmax.y<ps.y)pmax.y=ps.y;
+//        if(pmax.z<ps.z)pmax.z=ps.z;
+//      }
+//      if(pmin<=pmax)MkList[cmk]->SetPosMinMax(pmin,pmax);
+//      //if(pmin<=pmax)printf("------> mkfluid[%u]:%u pos:%s\n",c,mkfluidlist[c],fun::Double3gRangeStr(pmin,pmax).c_str());
+//    }
+//  }
+//}
+
 //==============================================================================
 /// Calculates domain limits for each Mk value.
 //==============================================================================
-void JSphMk::ComputeMkDomains(bool bound,const std::vector<unsigned> &mklist,unsigned np,const tdouble3 *pos,const typecode *code){
-  for(unsigned c=0;c<unsigned(mklist.size());c++){
-    const unsigned cmk=(bound? GetMkBlockByMkBound(mklist[c]): GetMkBlockByMkFluid(mklist[c]));
-    if(cmk<Size() && !MkList[cmk]->GetPosDefined()){
-      const typecode rcode=MkList[cmk]->Code;
-      tdouble3 pmin=TDouble3(DBL_MAX),pmax=TDouble3(-DBL_MAX);
-      //-Calculates minimum and maximum position. 
-      for(unsigned p=0;p<np;p++)if(code[p]==rcode){
-        const tdouble3 ps=pos[p];
-        if(pmin.x>ps.x)pmin.x=ps.x;
-        if(pmin.y>ps.y)pmin.y=ps.y;
-        if(pmin.z>ps.z)pmin.z=ps.z;
-        if(pmax.x<ps.x)pmax.x=ps.x;
-        if(pmax.y<ps.y)pmax.y=ps.y;
-        if(pmax.z<ps.z)pmax.z=ps.z;
-      }
-      if(pmin<=pmax)MkList[cmk]->SetPosMinMax(pmin,pmax);
-      //if(pmin<=pmax)printf("------> mkfluid[%u]:%u pos:%s\n",c,mkfluidlist[c],fun::Double3gRangeStr(pmin,pmax).c_str());
-    }
+void JSphMk::ComputeMkDomains(unsigned np,const tdouble3 *pos,const typecode *code){
+  //-Allocates memory and initializes dommain limits.
+  tdouble3 *pmin=new tdouble3[MkListSize];
+  tdouble3 *pmax=new tdouble3[MkListSize];
+  for(unsigned c=0;c<MkListSize;c++){
+    pmin[c]=TDouble3(DBL_MAX);
+    pmax[c]=TDouble3(-DBL_MAX);
   }
+  //-Calculates minimum and maximum position. 
+  for(unsigned p=0;p<np;p++){
+    const unsigned c=GetMkBlockByCode(code[p]);
+    const tdouble3 ps=pos[p];
+    if(pmin[c].x>ps.x)pmin[c].x=ps.x;
+    if(pmin[c].y>ps.y)pmin[c].y=ps.y;
+    if(pmin[c].z>ps.z)pmin[c].z=ps.z;
+    if(pmax[c].x<ps.x)pmax[c].x=ps.x;
+    if(pmax[c].y<ps.y)pmax[c].y=ps.y;
+    if(pmax[c].z<ps.z)pmax[c].z=ps.z;
+  }
+  //-Configures minimum and maximum position for each MK. 
+  for(unsigned c=0;c<MkListSize;c++)MkList[c]->SetPosMinMax(pmin[c],pmax[c]);
+  //-Frees memory. 
+  delete[] pmin;
+  delete[] pmax;
 }
 
 

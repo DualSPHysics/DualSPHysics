@@ -510,7 +510,8 @@ rem %CudaNvcc% -ccbin "$(VCInstallDir)bin" %gpuhw% -use_fast_math -c %ptxinfo% -
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">true</ExcludedFromBuild>
     </ClInclude>
-    <ClInclude Include="Source\JGauge.h" />
+    <ClInclude Include="Source\JGaugeItem.h" />
+    <ClInclude Include="Source\JGaugeSystem.h" />
     <ClInclude Include="Source\JGauge_ker.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">true</ExcludedFromBuild>
@@ -541,6 +542,7 @@ rem %CudaNvcc% -ccbin "$(VCInstallDir)bin" %gpuhw% -use_fast_math -c %ptxinfo% -
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">true</ExcludedFromBuild>
     </ClInclude>
     <ClInclude Include="Source\JSaveCsv.h" />
+    <ClInclude Include="Source\JSaveCsv2.h" />
     <ClInclude Include="Source\JSaveDt.h" />
     <ClInclude Include="Source\JSpaceProperties.h" />
     <ClInclude Include="Source\JSphAccInput.h" />
@@ -636,7 +638,8 @@ rem %CudaNvcc% -ccbin "$(VCInstallDir)bin" %gpuhw% -use_fast_math -c %ptxinfo% -
     </ClCompile>
     <ClCompile Include="Source\JDsphConfig.cpp" />
     <ClCompile Include="Source\JException.cpp" />
-    <ClCompile Include="Source\JGauge.cpp" />
+    <ClCompile Include="Source\JGaugeItem.cpp" />
+    <ClCompile Include="Source\JGaugeSystem.cpp" />
     <ClCompile Include="Source\JLog2.cpp" />
     <ClCompile Include="Source\JMeanValues.cpp" />
     <ClCompile Include="Source\JMotion.cpp" />
@@ -657,6 +660,7 @@ rem %CudaNvcc% -ccbin "$(VCInstallDir)bin" %gpuhw% -use_fast_math -c %ptxinfo% -
     <ClCompile Include="Source\JRangeFilter.cpp" />
     <ClCompile Include="Source\JReadDatafile.cpp" />
     <ClCompile Include="Source\JSaveCsv.cpp" />
+    <ClCompile Include="Source\JSaveCsv2.cpp" />
     <ClCompile Include="Source\JSaveDt.cpp" />
     <ClCompile Include="Source\JSpaceProperties.cpp" />
     <ClCompile Include="Source\JSphAccInput.cpp" />

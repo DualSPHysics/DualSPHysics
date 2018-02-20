@@ -105,7 +105,8 @@ public:
 
   typecode CodeSetType(typecode code,TpParticle type,unsigned value)const;
 
-  void ComputeMkDomains(bool bound,const std::vector<unsigned> &mklist,unsigned np,const tdouble3 *pos,const typecode *code);
+  //void ComputeMkDomains(bool bound,const std::vector<unsigned> &mklist,unsigned np,const tdouble3 *pos,const typecode *code);
+  void ComputeMkDomains(unsigned np,const tdouble3 *pos,const typecode *code);
 };
 
 

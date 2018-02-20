@@ -58,6 +58,7 @@ class JPartsOut;
 class JDamping;
 class JXml;
 class JTimeOut;
+class JGaugeSystem;
 
 //##############################################################################
 //# XML format of execution parameters in _FmtXML__Parameters.xml.
@@ -267,8 +268,9 @@ protected:
 
   std::vector<std::string> InitializeInfo; ///<Stores information about initialize configuration applied.
 
+  JGaugeSystem *GaugeSystem;    ///<Object for automatic gauge system.
+
   JWaveGen *WaveGen;            ///<Object for wave generation.
-  bool UseAWAS;                 ///<Indicates AWAS is used by SwashPistons or WaveGen.
 
   JDamping* Damping;            ///<Object for damping zones.
 
@@ -390,6 +392,7 @@ protected:
   void SaveData(unsigned npok,const unsigned *idp,const tdouble3 *pos,const tfloat3 *vel,const float *rhop,unsigned ndom,const tdouble3 *vdom,const StInfoPartPlus *infoplus);
   void SaveDomainVtk(unsigned ndom,const tdouble3 *vdom)const;
   void SaveInitialDomainVtk()const;
+  unsigned SaveMapCellsVtkSize()const;
   void SaveMapCellsVtk(float scell)const;
  
   void GetResInfo(float tsim,float ttot,const std::string &headplus,const std::string &detplus,std::string &hinfo,std::string &dinfo);
@@ -416,7 +419,7 @@ public:
 //-Functions for debug.
 //----------------------
 public:
-  void DgSaveVtkParticlesCpu(std::string filename,int numfile,unsigned pini,unsigned pfin,const tdouble3 *pos,const typecode *code,const unsigned *idp,const tfloat4 *velrhop)const;
+  void DgSaveVtkParticlesCpu(std::string filename,int numfile,unsigned pini,unsigned pfin,const tdouble3 *pos,const typecode *code,const unsigned *idp,const tfloat4 *velrhop,const tfloat3 *ace=NULL)const;
   void DgSaveVtkParticlesCpu(std::string filename,int numfile,unsigned pini,unsigned pfin,const tfloat3 *pos,const byte *check,const unsigned *idp,const tfloat3 *vel,const float *rhop);
   void DgSaveCsvParticlesCpu(std::string filename,int numfile,unsigned pini,unsigned pfin,std::string head,const tfloat3 *pos,const unsigned *idp=NULL,const tfloat3 *vel=NULL,const float *rhop=NULL,const float *ar=NULL,const tfloat3 *ace=NULL,const tfloat3 *vcorr=NULL);
 };

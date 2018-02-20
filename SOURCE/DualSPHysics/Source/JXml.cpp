@@ -196,7 +196,7 @@ void JXml::ErrReadAtrib(const TiXmlElement* ele,const std::string &atrib,bool mi
   std::string tex="Error reading xml - ";
   if(missing)tex=tex+"Atribute \'"+atrib+"\' is missing";
   else{
-    tex=tex+"Value of\'"+atrib+"\' invalid.";
+    tex=tex+"Value of \'"+atrib+"\' invalid.";
     if(!errortext.empty())tex=tex+" "+errortext;
   }
   RunException("ErrReadAtrib",tex,ErrGetFileRow(ele));
@@ -206,21 +206,6 @@ void JXml::ErrReadAtrib(const TiXmlElement* ele,const std::string &atrib,bool mi
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-//==============================================================================
-/// Returns the number of times the element appears.
-/// \param ele Node where the indicated element is searched.
-/// \param name Name of the requested element.
-//==============================================================================
-unsigned JXml::CountElement(TiXmlElement* ele,const std::string &name)const{
-  unsigned count=0;
-  TiXmlElement* ele2=ele->FirstChildElement(name.c_str()); 
-  while(ele2){
-    count++;
-    ele2=ele2->NextSiblingElement(name.c_str());
-  }
-  return(count); 
-}
-
 //==============================================================================
 /// Throws an exception if there are unknown or repeated elements.
 /// \param lis Xml element to check.
@@ -245,6 +230,21 @@ void JXml::CheckElementNames(TiXmlElement* lis,bool checkrepeated,std::string na
   }
 }
 
+//==============================================================================
+/// Checks if some or several attributes appers in the element. Returns number
+/// of found attribute (1...n), 0 none found and -1 several found.
+/// \param ele Xml element of the error.
+/// \param names Names of the requested attributes separated by by spaces.
+/// \param checkmanyatt Throw exception if several attributes exist.
+/// \param checkmanyele Throw exception if several elements exist.
+//==============================================================================
+int JXml::CheckElementAttributes(const TiXmlElement* ele,const std::string &name,std::string attnames,bool checkmanyatt,bool checkmanyele)const{
+  if(checkmanyele && CountElements(ele,name)>1)RunException("CheckElementAttributes",string("Element \'"+name+"\' appears several times."),ErrGetFileRow(ele));
+  TiXmlElement* ele2=GetFirstElement(ele,name,true); 
+  if(ele2)return(CheckAttributes(ele2,attnames,checkmanyatt));
+  else return(0);
+}
+
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -256,6 +256,23 @@ void JXml::CheckElementNames(TiXmlElement* lis,bool checkrepeated,std::string na
 //==============================================================================
 bool JXml::ExistsAttribute(const TiXmlElement* ele,const std::string &name)const{
   return(ele->Attribute(name.c_str())!=NULL);
+}
+
+//==============================================================================
+/// Checks if some or several attributes appers in the element. Returns number
+/// of found attribute (1...n), 0 none found and -1 several found.
+/// \param ele Xml element of the error.
+/// \param names Names of the requested attributes separated by spaces.
+/// \param checkmanyatt Throw exception if several attributes exist.
+//==============================================================================
+int JXml::CheckAttributes(const TiXmlElement* ele,std::string names,bool checkmanyatt)const{
+  int ret=0;
+  for(int c=1;!names.empty() && ret!=-1;c++){
+    string name=fun::StrSplit(" ",names);
+    if(ExistsAttribute(ele,name))ret=(ret? -1: c);
+  }
+  if(checkmanyatt && ret==-1)RunException("CheckAttributes",string("Several definitions for \'")+ele->Value()+"\'.",ErrGetFileRow(ele));
+  return(ret);
 }
 
 

@@ -130,9 +130,6 @@
     <ClInclude Include="Source\OmpDefs.h">
       <Filter>Source</Filter>
     </ClInclude>
-    <ClInclude Include="Source\JGauge.h">
-      <Filter>Source</Filter>
-    </ClInclude>
     <ClInclude Include="Source\JGauge_ker.h">
       <Filter>Cuda</Filter>
     </ClInclude>
@@ -244,6 +241,15 @@
     <ClInclude Include="Source\JSphMk.h">
       <Filter>Source</Filter>
     </ClInclude>
+    <ClInclude Include="Source\JGaugeItem.h">
+      <Filter>Source</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\JGaugeSystem.h">
+      <Filter>Source</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\JSaveCsv2.h">
+      <Filter>Common</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Source\JCfgRun.cpp">
@@ -328,9 +334,6 @@
       <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="Source\JTimeOut.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\JGauge.cpp">
       <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="Source\JDamping.cpp">
@@ -422,6 +425,15 @@
     </ClCompile>
     <ClCompile Include="Source\JSphMk.cpp">
       <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\JGaugeItem.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\JGaugeSystem.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\JSaveCsv2.cpp">
+      <Filter>Common</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

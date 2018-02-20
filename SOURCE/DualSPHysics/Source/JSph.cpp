@@ -33,6 +33,7 @@
 #include "JSaveDt.h"
 #include "JTimeOut.h"
 #include "JSphVisco.h"
+#include "JGaugeSystem.h"
 #include "JWaveGen.h"
 #include "JSphAccInput.h"
 #include "JPartDataBi4.h"
@@ -67,6 +68,7 @@ JSph::JSph(bool cpu,bool withmpi):Cpu(cpu),WithMpi(withmpi){
   MotionObjBegin=NULL;
   FtObjs=NULL;
   DemData=NULL;
+  GaugeSystem=NULL;
   WaveGen=NULL;
   Damping=NULL;
   AccInput=NULL;
@@ -90,6 +92,7 @@ JSph::~JSph(){
   delete[] MotionObjBegin; MotionObjBegin=NULL;
   AllocMemoryFloating(0);
   delete[] DemData; DemData=NULL;
+  delete GaugeSystem;
   delete WaveGen;
   delete Damping;
   delete AccInput;
@@ -198,7 +201,6 @@ void JSph::InitVars(){
   TimeStepIni=0;
   TimeStep=TimeStepM1=0;
   TimePartNext=0;
-  UseAWAS=false;
 }
 
 //==============================================================================
@@ -567,6 +569,9 @@ void JSph::LoadCaseConfig(){
   //-Loads and configures MK of particles.
   MkInfo=new JSphMk();
   MkInfo->Config(&parts);
+
+  //-Configuration of GaugeSystem.
+  GaugeSystem=new JGaugeSystem(Cpu,Log);
 
   //-Configuration of WaveGen.
   if(xml.GetNode("case.execution.special.wavepaddles",false)){
@@ -978,7 +983,6 @@ void JSph::RunInitialize(unsigned np,unsigned npb,const tdouble3 *pos,const unsi
   }
 }
 
-
 //==============================================================================
 /// Configures CellOrder and adjusts order of components in data.
 /// Configura CellOrder y ajusta orden de componentes en datos.
@@ -1105,11 +1109,8 @@ void JSph::ConfigCellDivision(){
   Log->Print(fun::VarStr("Hdiv",Hdiv));
   Log->Print(string("MapCells=(")+fun::Uint3Str(OrderDecode(Map_Cells))+")");
   //-Creates VTK file with map cells.
-  if(SvDomainVtk){
-    const llong n=llong(Map_Cells.x)*llong(Map_Cells.y)*llong(Map_Cells.z);
-    if(n<1000000)SaveMapCellsVtk(Scell);
-    else Log->Print("\n*** Attention: File CfgInit_MapCells.vtk was not created because number of cells is too high.\n");
-  }
+  if(SaveMapCellsVtkSize()<1024*1024*10)SaveMapCellsVtk(Scell);
+  else Log->Print("\n*** Attention: File CfgInit_MapCells.vtk was not created because number of cells is too high.\n");
 }
 
 //==============================================================================
@@ -1486,6 +1487,7 @@ void JSph::SaveData(unsigned npok,const unsigned *idp,const tdouble3 *pos,const 
 
   if(SvDomainVtk)SaveDomainVtk(ndom,vdom);
   if(SaveDt)SaveDt->SaveData();
+  if(GaugeSystem)GaugeSystem->SaveResults(Part);
 }
 
 //==============================================================================
@@ -1520,8 +1522,23 @@ void JSph::SaveInitialDomainVtk()const{
     vdomf3[4]=ToTFloat3(Map_PosMin);
     vdomf3[5]=ToTFloat3(Map_PosMax);
   }
-  JFormatFiles2::SaveVtkBoxes(DirDataOut+"CfgInit_Domain.vtk",nbox,vdomf3,0);
+  JFormatFiles2::SaveVtkBoxes(DirOut+"CfgInit_Domain.vtk",nbox,vdomf3,0);
   delete[] vdomf3;
+}
+
+//==============================================================================
+/// Returns size of VTK file with map cells.
+/// Devuelve tamaño de fichero VTK con las celdas del mapa.
+//==============================================================================
+unsigned JSph::SaveMapCellsVtkSize()const{
+  const tuint3 cells=OrderDecode(Map_Cells);
+  unsigned nlin=cells.x+cells.z+2;//-Back lines.
+  if(!Simulate2D){
+    nlin+=cells.x+cells.y+2;//-Bottom lines.
+    nlin+=cells.y+cells.z+2;//-Left lines.
+  }
+  const unsigned slin=sizeof(tfloat3)*2+sizeof(int)*4; //-Size per line is 40 bytes.
+  return(nlin*slin);
 }
 
 //==============================================================================
@@ -1529,7 +1546,30 @@ void JSph::SaveInitialDomainVtk()const{
 /// Genera fichero VTK con las celdas del mapa.
 //==============================================================================
 void JSph::SaveMapCellsVtk(float scell)const{
-  JFormatFiles2::SaveVtkCells(DirDataOut+"CfgInit_MapCells.vtk",ToTFloat3(OrderDecode(MapRealPosMin)),OrderDecode(Map_Cells),scell);
+  const tuint3 cells=OrderDecode(Map_Cells);
+  tdouble3 pmin=OrderDecode(MapRealPosMin);
+  tdouble3 pmax=pmin+TDouble3(scell*cells.x,scell*cells.y,scell*cells.z);
+  if(Simulate2D)pmin.y=pmax.y=Simulate2DPosY;
+  //-Creates lines.
+  std::vector<JFormatFiles2::StShapeData> shapes;
+  //-Back lines.
+  tdouble3 p0=TDouble3(pmin.x,pmax.y,pmin.z),p1=TDouble3(pmin.x,pmax.y,pmax.z);
+  for(unsigned cx=0;cx<=cells.x;cx++)shapes.push_back(JFormatFiles2::DefineShape_Line(p0+TDouble3(scell*cx,0,0),p1+TDouble3(scell*cx,0,0),0,0));
+  p1=TDouble3(pmax.x,pmax.y,pmin.z);
+  for(unsigned cz=0;cz<=cells.z;cz++)shapes.push_back(JFormatFiles2::DefineShape_Line(p0+TDouble3(0,0,scell*cz),p1+TDouble3(0,0,scell*cz),0,0));
+  if(!Simulate2D){
+    //-Bottom lines.
+    p0=TDouble3(pmin.x,pmin.y,pmin.z),p1=TDouble3(pmax.x,pmin.y,pmin.z);
+    for(unsigned cy=0;cy<=cells.y;cy++)shapes.push_back(JFormatFiles2::DefineShape_Line(p0+TDouble3(0,scell*cy,0),p1+TDouble3(0,scell*cy,0),1,0));
+    p1=TDouble3(pmin.x,pmax.y,pmin.z);
+    for(unsigned cx=0;cx<=cells.x;cx++)shapes.push_back(JFormatFiles2::DefineShape_Line(p0+TDouble3(scell*cx,0,0),p1+TDouble3(scell*cx,0,0),1,0));
+    //-Left lines.
+    p0=TDouble3(pmin.x,pmin.y,pmin.z),p1=TDouble3(pmin.x,pmax.y,pmin.z);
+    for(unsigned cz=0;cz<=cells.z;cz++)shapes.push_back(JFormatFiles2::DefineShape_Line(p0+TDouble3(0,0,scell*cz),p1+TDouble3(0,0,scell*cz),2,0));
+    p1=TDouble3(pmin.x,pmin.y,pmax.z);
+    for(unsigned cy=0;cy<=cells.y;cy++)shapes.push_back(JFormatFiles2::DefineShape_Line(p0+TDouble3(0,scell*cy,0),p1+TDouble3(0,scell*cy,0),2,0));
+  }
+  JFormatFiles2::SaveVtkShapes(DirOut+"CfgInit_MapCells.vtk","axis","",shapes);
 }
 
 //==============================================================================
@@ -1701,7 +1741,10 @@ std::string JSph::TimerToText(const std::string &name,float value){
 /// Saves VTK file with particle data (degug).
 /// Graba fichero VTK con datos de las particulas (degug).
 //==============================================================================
-void JSph::DgSaveVtkParticlesCpu(std::string filename,int numfile,unsigned pini,unsigned pfin,const tdouble3 *pos,const typecode *code,const unsigned *idp,const tfloat4 *velrhop)const{
+void JSph::DgSaveVtkParticlesCpu(std::string filename,int numfile,unsigned pini,unsigned pfin
+  ,const tdouble3 *pos,const typecode *code,const unsigned *idp,const tfloat4 *velrhop
+  ,const tfloat3 *ace)const
+{
   int mpirank=Log->GetMpiRank();
   if(mpirank>=0)filename=string("p")+fun::IntStr(mpirank)+"_"+filename;
   if(numfile>=0)filename=fun::FileNameSec(filename,numfile);
@@ -1710,6 +1753,7 @@ void JSph::DgSaveVtkParticlesCpu(std::string filename,int numfile,unsigned pini,
   const unsigned np=pfin-pini;
   tfloat3 *xpos=new tfloat3[np];
   tfloat3 *xvel=new tfloat3[np];
+  tfloat3 *xace=(ace? new tfloat3[np]: NULL);
   float *xrhop=new float[np];
   byte *xtype=new byte[np];
   byte *xkind=new byte[np];
@@ -1717,6 +1761,7 @@ void JSph::DgSaveVtkParticlesCpu(std::string filename,int numfile,unsigned pini,
     xpos[p]=ToTFloat3(pos[p+pini]);
     tfloat4 vr=velrhop[p+pini];
     xvel[p]=TFloat3(vr.x,vr.y,vr.z);
+    if(xace)xace[p]=ace[p+pini];
     xrhop[p]=vr.w;
     typecode t=CODE_GetType(code[p+pini]);
     xtype[p]=(t==CODE_TYPE_FIXED? 0: (t==CODE_TYPE_MOVING? 1: (t==CODE_TYPE_FLOATING? 2: 3)));
@@ -1731,6 +1776,7 @@ void JSph::DgSaveVtkParticlesCpu(std::string filename,int numfile,unsigned pini,
   if(xkind){ fields[nfields]=JFormatFiles2::DefineField("Kind",JFormatFiles2::UChar8 ,1,xkind);    nfields++; }
   if(xvel){  fields[nfields]=JFormatFiles2::DefineField("Vel" ,JFormatFiles2::Float32,3,xvel);     nfields++; }
   if(xrhop){ fields[nfields]=JFormatFiles2::DefineField("Rhop",JFormatFiles2::Float32,1,xrhop);    nfields++; }
+  if(xace){  fields[nfields]=JFormatFiles2::DefineField("Ace" ,JFormatFiles2::Float32,3,xace);     nfields++; }
   //string fname=DirOut+fun::FileNameSec("DgParts.vtk",numfile);
   JFormatFiles2::SaveVtk(filename,np,xpos,nfields,fields);
   //-Deallocates memory.
@@ -1739,6 +1785,7 @@ void JSph::DgSaveVtkParticlesCpu(std::string filename,int numfile,unsigned pini,
   delete[] xkind;
   delete[] xvel;
   delete[] xrhop;
+  delete[] xace;
 }
 
 //==============================================================================

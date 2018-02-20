@@ -30,6 +30,7 @@
 //:# - Nuevas funciones Printp() y Printfp() a las que se le puede añadir un 
 //:#   prefijo. (21-02-2017)
 //:# - New attribute CsvSepComa to configure separator in CSV files. (24-10-2017)
+//:# - Se incluye DirDataOut para facilitar su uso en distintos ambitos.. (19-02-2017)
 //:#############################################################################
 
 /// \file JLog2.h \brief Declares the class \ref JLog2.
@@ -61,19 +62,26 @@ protected:
   bool MpiRun;
   int MpiRank,MpiLaunch;
   TpMode_Out ModeOutDef;
-  bool CsvSepComa;   ///<Separator character in CSV files (0=semicolon, 1=coma).
+  //-General output configuration.
+  bool CsvSepComa;         ///<Separator character in CSV files (0=semicolon, 1=coma).
+  std::string DirOut;      ///<Specifies the general output directory.
+  std::string DirDataOut;  ///<Specifies the output subdirectory for binary data.
+
 public:
   JLog2(TpMode_Out modeoutdef=Out_ScrFile);
   ~JLog2();
   void Reset();
-  void Init(std::string fname,bool csvsepcoma,bool mpirun=false,int mpirank=0,int mpilaunch=0);
+  void Init(std::string fname,std::string dirdataout,bool csvsepcoma,bool mpirun=false,int mpirank=0,int mpilaunch=0);
   void Print(const std::string &tx,TpMode_Out mode=Out_Default,bool flush=false);
   void Print(const std::vector<std::string> &lines,TpMode_Out mode=Out_Default,bool flush=false);
   void PrintDbg(const std::string &tx,TpMode_Out mode=Out_Default){ Print(tx,mode,true); }
   bool IsOk()const{ return(Ok); }
   int GetMpiRank()const{ return(MpiRun? MpiRank: -1); }
-  std::string GetDirOut()const;
+
+  std::string GetDirOut()const{ return(DirOut); }
+  std::string GetDirDataOut()const{ return(DirDataOut); }
   bool GetCsvSepComa()const{ return(CsvSepComa); };
+
   void Printf(const char *format,...);
   void PrintfDbg(const char *format,...);
   //-Adding a prefix.

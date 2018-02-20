@@ -280,6 +280,13 @@ size_t Malloc(float **ptr,unsigned count){
 }
 
 //==============================================================================
+/// Allocates memory for float2 on GPU.
+//==============================================================================
+size_t Malloc(float2 **ptr,unsigned count){
+  size_t size=sizeof(float2)*count;  cudaMalloc((void**)ptr,size);  return(size);
+}
+
+//==============================================================================
 /// Allocates memory for float3 on GPU.
 //==============================================================================
 size_t Malloc(float3 **ptr,unsigned count){
@@ -408,6 +415,25 @@ ushort4* ToHostWord4(unsigned pini,unsigned n,const ushort4 *vg){
   try{
     ushort4 *v=new ushort4[n];
     cudaMemcpy(v,vg+pini,sizeof(ushort4)*n,cudaMemcpyDeviceToHost);
+    CheckCudaErrors(met+"After cudaMemcpy().");
+    return(v);
+  }
+  catch(const std::bad_alloc){
+    const std::string tx=met+fun::PrintStr("Could not allocate the requested memory (np=%u).",n);
+    throw tx;
+  }
+  return(NULL);
+}
+
+//==============================================================================
+/// Returns dynamic pointer with int data. (this pointer must be deleted)
+//==============================================================================
+int* ToHostInt(unsigned pini,unsigned n,const int *vg){
+  std::string met="ToHostInt: ";
+  CheckCudaErrors(met+"At the beginning.");
+  try{
+    int *v=new int[n];
+    cudaMemcpy(v,vg+pini,sizeof(int)*n,cudaMemcpyDeviceToHost);
     CheckCudaErrors(met+"After cudaMemcpy().");
     return(v);
   }

@@ -41,18 +41,18 @@ JCellDivGpuSingle::JCellDivGpuSingle(bool stable,bool floating,byte periactive,T
 /// Calcula limites del dominio en celdas ajustando al fluido (CellDomainMin/Max). 
 //==============================================================================
 void JCellDivGpuSingle::CalcCellDomain(const unsigned *dcellg,const typecode *codeg){
-  //-Computes the boundary domain.
-  //-Calcula dominio del contorno.
+  //-Calculate boundary domain | Calcula dominio del contorno.
   tuint3 celbmin,celbmax;
   if(!BoundLimitOk){
     CalcCellDomainBound(Npb1,0,Npb2,Npb1+Npf1,dcellg,codeg,celbmin,celbmax);
     BoundLimitOk=true; BoundLimitCellMin=celbmin; BoundLimitCellMax=celbmax;
   } 
   else{ celbmin=BoundLimitCellMin; celbmax=BoundLimitCellMax; }
-  //-Computes the fluid domain.
-  //-Calcula dominio del fluido.
+  //Log->Printf("----->CalcCellDomain> BoundLimitCellMin/Max2:%s",fun::Uint3RangeStr(BoundLimitCellMin,BoundLimitCellMax).c_str());
+  //-Calculate fluid domain | Calcula dominio del fluido.
   tuint3 celfmin,celfmax;
   CalcCellDomainFluid(Npf1,Npb1,Npf2,Npb1+Npf1+Npb2,dcellg,codeg,celfmin,celfmax);
+  //Log->Printf("----->CalcCellDomain> celfmin/max:%s",fun::Uint3RangeStr(celfmin,celfmax).c_str());
   //-Computes the domain adjusting to the boundary and the fluid ( with 2h halo).
   //-Calcula dominio ajustando al contorno y al fluido (con halo de 2h). 
   MergeMapCellBoundFluid(celbmin,celbmax,celfmin,celfmax,CellDomainMin,CellDomainMax);
@@ -91,7 +91,7 @@ void JCellDivGpuSingle::PrepareNct(){
   Ncx=CellDomainMax.x-CellDomainMin.x+1;
   Ncy=CellDomainMax.y-CellDomainMin.y+1;
   Ncz=CellDomainMax.z-CellDomainMin.z+1;
-  //:printf("======  ncx:%u ncy:%u ncz:%u\n",Ncx,Ncy,Ncz);
+  //Log->Printf("======  ncx:%u ncy:%u ncz:%u\n",Ncx,Ncy,Ncz);
   Nsheet=Ncx*Ncy; Nct=Nsheet*Ncz; Nctt=SizeBeginEndCell(Nct);
   if(Nctt!=unsigned(Nctt))RunException("PrepareNct","The number of cells is too big.");
   BoxIgnore=Nct; 
@@ -211,8 +211,8 @@ void JCellDivGpuSingle::Divide(unsigned npb1,unsigned npf1,unsigned npb2,unsigne
 
   Ndiv++;
   if(DivideFull)NdivFull++;
-  TmgStop(timers,TMG_NlCellBegin);
   CheckCudaError(met,"Error in NL construction.");
+  TmgStop(timers,TMG_NlCellBegin);
 }
 
 

@@ -1,4 +1,4 @@
-#DualSPHysics GPU v4.2.028 (29-01-2018)
+#DualSPHysics GPU v4.2.030 (20-02-2018)
 
 #=============== Compilation Options ===============
 USE_DEBUG=NO
@@ -6,7 +6,7 @@ USE_FAST_MATH=YES
 USE_NATIVE_CPU_OPTIMIZATIONS=NO
 
 LIBS_DIRECTORIES=-L./
-LIBS_DIRECTORIES:=$(LIBS_DIRECTORIES) -L../LibsLinux/v4.2.028_gcc4
+LIBS_DIRECTORIES:=$(LIBS_DIRECTORIES) -L../LibsLinux/v4.2.030_gcc4
 
 EXECNAME=DualSPHysics_linux64
 EXECS_DIRECTORY=../../../EXECS_LINUX
@@ -66,9 +66,9 @@ endif
 #=============== Files to compile ===============
 OBJXML=JXml.o tinystr.o tinyxml.o tinyxmlerror.o tinyxmlparser.o
 OBJSPHMOTION=JMotion.o JMotionList.o JMotionMov.o JMotionObj.o JMotionPos.o JSphMotion.o
-OBCOMMON=Functions.o FunctionsMath.o JBinaryData.o JException.o JLog2.o JMeanValues.o JObject.o JRadixSort.o JRangeFilter.o JReadDatafile.o JSaveCsv.o JTimeControl.o randomc.o
+OBCOMMON=Functions.o FunctionsMath.o JBinaryData.o JException.o JLog2.o JMeanValues.o JObject.o JRadixSort.o JRangeFilter.o JReadDatafile.o JSaveCsv.o JSaveCsv2.o JTimeControl.o randomc.o
 OBCOMMONDSPH=JDsphConfig.o JPartDataBi4.o JPartFloatBi4.o JPartOutBi4Save.o JSpaceCtes.o JSpaceEParms.o JSpaceParts.o JSpaceProperties.o
-OBSPH=JArraysCpu.o JCellDivCpu.o JCfgRun.o JDamping.o JGauge.o JPartsOut.o JSaveDt.o JSph.o JSphAccInput.o JSphCpu.o JSphInitialize.o JSphMk.o JSphDtFixed.o JSphVisco.o JTimeOut.o main.o
+OBSPH=JArraysCpu.o JCellDivCpu.o JCfgRun.o JDamping.o JGaugeItem.o JGaugeSystem.o JPartsOut.o JSaveDt.o JSph.o JSphAccInput.o JSphCpu.o JSphInitialize.o JSphMk.o JSphDtFixed.o JSphVisco.o JTimeOut.o main.o
 OBSPHSINGLE=JCellDivCpuSingle.o JPartsLoad4.o JSphCpuSingle.o
 OBCOMMONGPU=FunctionsCuda.o JObjectGpu.o 
 OBSPHGPU=JArraysGpu.o JBlockSizeAuto.o JCellDivGpu.o JSphGpu.o 

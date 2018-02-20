@@ -236,77 +236,136 @@ __device__ float KerCalculeMass(double px,double py,double pz,float awen
 }
 
 //------------------------------------------------------------------------------
-/// Calculate position of free surface in (px,py).
-/// Returns DBL_MAX if it does not find the free surface.
-/// Calcula posicion de la superficie libre en (px,py).
-/// Devuelve DBL_MAX si no encuentra la superficie libre.
+/// Calculates surface water level at indicated line.
 //------------------------------------------------------------------------------
-__global__ void KerInteractionGaugeZsurf(double px,double py
-  ,double gaugezmin,double gaugedp,float masslimit,unsigned czmin,unsigned czmax,float awen
-  ,int hdiv,int4 nc,int3 cellzero,unsigned cellfluid,const int2 *begincell
+__global__ void KerInteractionGaugeSwl(double p0x,double p0y,double p0z
+  ,double pdirx,double pdiry,double pdirz,unsigned pointnp,float masslimit
+  ,float awen,int hdiv,int4 nc,int3 cellzero,unsigned cellfluid,const int2 *begincell
   ,const double2 *posxy,const double *posz,const typecode *code,const float4 *velrhop
-  ,double *zsurfres
-  ,double3 domposmin,float scell,float fourh2,float h,float massf)
+  ,double3 domposmin,float scell,float fourh2,float h,float massf,float3 *ptres)
 {
   extern __shared__ float shmass[];
   const unsigned tid=threadIdx.x;
-  double zpre=gaugezmin;
-  float mpre=masslimit;
-  unsigned czini=czmin;
-  double zsurf=DBL_MAX;
-  float fin=0;
-  while(czini<=czmax && fin==0){//-Calculates mass in blocks of blockDim.x measurement points. | Calcula masa en bloques de blockDim.x puntos de medida.
-    //-Calcula valores de masa.
-    unsigned cz=czini+tid;
-    if(cz<=czmax){
-      shmass[tid]=KerCalculeMass(px,py,gaugezmin+gaugedp*cz,awen,hdiv,nc,cellzero,cellfluid,begincell,posxy,posz,code,velrhop,domposmin,scell,fourh2,h,massf);
+  unsigned cpbase=0;
+  float psurfx=FLT_MAX,psurfy=FLT_MAX,psurfz=FLT_MAX;
+  float mpre=0;
+  while(cpbase<=pointnp){
+    //-Saves mass values in shared memory.
+    const unsigned cp=cpbase+tid;
+    if(cp<=pointnp){
+      shmass[tid]=KerCalculeMass(p0x+pdirx*cp,p0y+pdiry*cp,p0z+pdirz*cp,awen,hdiv,nc,cellzero,cellfluid,begincell,posxy,posz,code,velrhop,domposmin,scell,fourh2,h,massf);
     }
-    //-Calculates mass values.
+    else shmass[tid]=0;
     __syncthreads();
+    //-Checks mass values.
     if(!tid){
-      for(unsigned th=0;th<blockDim.x && czini+th<=czmax && zsurf==DBL_MAX;th++){
-        double pz=gaugezmin+gaugedp*(czini+th);
-        float mass=shmass[th];
-        if(mass<masslimit){
-          const double fx=(masslimit-mpre)/(mass-mpre);
-          zsurf=fx*(pz-zpre)+zpre;
+      for(unsigned c=0;c<blockDim.x;c++){
+        const float mass=shmass[c];
+        if(mass>masslimit)mpre=mass;
+        if(mass<masslimit && mpre){
+          const float fxm1=((masslimit-mpre)/(mass-mpre)-1)+float(cpbase+c);
+          psurfx=p0x+pdirx*fxm1;
+          psurfy=p0y+pdiry*fxm1;
+          psurfz=p0z+pdirz*fxm1;
+          shmass[0]=FLT_MAX;
+          break;
         }
-        zpre=pz;
-        mpre=mass;
       }
-      shmass[blockDim.x]=(zsurf==DBL_MAX? 0: 1);
     }
     __syncthreads();
-    fin=shmass[blockDim.x];
-    czini+=blockDim.x;
+    if(shmass[0]==FLT_MAX)break;
+    cpbase+=blockDim.x;
   }
-  if(!tid)zsurfres[0]=zsurf;
+  //-Stores result.
+  if(!tid){
+    if(psurfx==FLT_MAX){
+      const unsigned cp=(mpre? pointnp: 0);
+      psurfx=p0x+(pdirx*cp);
+      psurfy=p0y+(pdiry*cp);
+      psurfz=p0z+(pdirz*cp);
+    }
+    ptres[0]=make_float3(psurfx,psurfy,psurfz);
+  }
 }
-
 //==============================================================================
-/// Calculates position of free surface.
-/// Calcula posicion de la superficie libre.
+/// Calculates surface water level at indicated line.
 //==============================================================================
-void Interaction_GaugeZsurf(double px,double py
-  ,double gaugezmin,double gaugedp,float masslimit,unsigned czmin,unsigned czmax
+void Interaction_GaugeSwl(tdouble3 point0,tdouble3 pointdir,unsigned pointnp,float masslimit
   ,float awen,int hdiv,tuint3 ncells,tuint3 cellmin,const int2 *begincell
   ,const double2 *posxy,const double *posz,const typecode *code,const float4 *velrhop
-  ,double *zsurf
-  ,tdouble3 domposmin,float scell,float fourh2,float h,float massf)
+  ,tdouble3 domposmin,float scell,float fourh2,float h,float massf,float3 *ptres)
 {
   const int4 nc=make_int4(ncells.x,ncells.y,ncells.z,ncells.x*ncells.y);
   const unsigned cellfluid=nc.w*nc.z+1;
   const int3 cellzero=make_int3(cellmin.x,cellmin.y,cellmin.z);
-  //-Interaction Fluid-Fluid.
   if(1){
-    const unsigned bsize=64;
+    const unsigned bsize=128;
     dim3 sgrid=GetGridSize(bsize,bsize);
     const unsigned smem=sizeof(float)*(bsize+1);
     //:JDgKerPrint info;
     //:byte* ik=NULL; //info.GetInfoPointer(sgrid,bsize);
-    KerInteractionGaugeZsurf <<<sgrid,bsize,smem>>> (px,py,gaugezmin,gaugedp,masslimit,czmin,czmax,awen,hdiv,nc,cellzero,cellfluid,begincell,posxy,posz,code,velrhop,zsurf,Double3(domposmin),scell,fourh2,h,massf);
+    KerInteractionGaugeSwl <<<sgrid,bsize,smem>>> (point0.x,point0.y,point0.z,pointdir.x,pointdir.y,pointdir.z,pointnp,masslimit,awen,hdiv,nc,cellzero,cellfluid,begincell,posxy,posz,code,velrhop,Double3(domposmin),scell,fourh2,h,massf,ptres);
     //:info.PrintValuesFull(true); //info.PrintValuesInfo();
   }
+}
+
+
+//------------------------------------------------------------------------------
+/// Calculates maximum z of fluid at distance of a vertical line.
+//------------------------------------------------------------------------------
+__global__ void KerInteractionGaugeMaxz(double p0x,double p0y,float maxdist2
+  ,int cxini,int cxfin,int yini,int yfin,int zini,int zfin
+  ,int4 nc,unsigned cellfluid,const int2 *begincell
+  ,const double2 *posxy,const double *posz,const typecode *code
+  ,float3 *ptres)
+{
+  if(threadIdx.x==0){
+    unsigned pmax=UINT_MAX;
+    float zmax=-FLT_MAX;
+    //-Interaction with fluid particles. | Interaccion con fluidas.
+    for(int z=zfin-1;z>=zini && pmax==UINT_MAX;z--){
+      int zmod=(nc.w)*z+cellfluid; //-Sum from start of fluid cells. | Le suma donde empiezan las celdas de fluido.
+      for(int y=yini;y<yfin;y++){
+        int ymod=zmod+nc.x*y;
+        unsigned pini,pfin=0;
+        for(int x=cxini;x<cxfin;x++){
+          int2 cbeg=begincell[x+ymod];
+          if(cbeg.y){
+            if(!pfin)pini=cbeg.x;
+            pfin=cbeg.y;
+          }
+        }
+        if(pfin)for(unsigned p2=pini;p2<pfin;p2++){
+          const double posz2=posz[p2];
+          if(posz2>zmax){
+            const double2 posxy2=posxy[p2];
+            const float drx=float(p0x-posxy2.x);
+            const float dry=float(p0y-posxy2.y);
+            const float rr2=drx*drx+dry*dry;
+            if(rr2<=maxdist2 && CODE_IsFluid(code[p2])){//-Only with fluid particles.
+              zmax=float(posz2);
+              pmax=p2;
+            }
+          }
+        }
+      }
+    }
+    //-Stores result.
+    ptres[0]=make_float3(0,0,zmax);
+  }
+}
+//==============================================================================
+/// Calculates maximum z of fluid at distance of a vertical line.
+//==============================================================================
+void Interaction_GaugeMaxz(tdouble3 point0,float maxdist2
+  ,int cxini,int cxfin,int yini,int yfin,int zini,int zfin
+  ,int4 nc,unsigned cellfluid,const int2 *begincell
+  ,const double2 *posxy,const double *posz,const typecode *code
+  ,float3 *ptres)
+{
+  const unsigned bsize=128;
+  dim3 sgrid=GetGridSize(1,bsize);
+  KerInteractionGaugeMaxz <<<sgrid,bsize>>> (point0.x,point0.y,maxdist2,cxini,cxfin,yini,yfin,zini,zfin,nc,cellfluid,begincell,posxy,posz,code,ptres);
 }
 
 

@@ -60,12 +60,14 @@ void JLog2::Reset(){
     delete Pf; Pf=NULL;
   }
   CsvSepComa=false;
+  DirOut="";
+  DirDataOut="";
 }
 
 //==============================================================================
 /// Initialisation of log file.
 //==============================================================================
-void JLog2::Init(std::string fname,bool csvsepcoma,bool mpirun,int mpirank,int mpilaunch){
+void JLog2::Init(std::string fname,std::string dirdataout,bool csvsepcoma,bool mpirun,int mpirank,int mpilaunch){
   Reset();
   CsvSepComa=csvsepcoma;
   MpiRun=mpirun; MpiRank=mpirank; MpiLaunch=mpilaunch;
@@ -76,19 +78,14 @@ void JLog2::Init(std::string fname,bool csvsepcoma,bool mpirun,int mpirank,int m
     if(!ext.empty())fname=fname+"."+ext;
   }
   FileName=fname;
+  DirOut=fun::GetDirWithSlash(fun::GetDirParent(FileName));
+  DirDataOut=(!dirdataout.empty()? fun::GetDirWithSlash(DirOut+dirdataout): DirOut);
   if(ModeOutDef&Out_File){
     Pf=new ofstream; 
     Pf->open(fname.c_str());
     if(Pf)Ok=true;
     else RunException("Init","Cannot open the file.",fname);
   }
-}
-
-//==============================================================================
-/// Returns output directory.
-//==============================================================================
-std::string JLog2::GetDirOut()const{
-  return(fun::GetDirWithSlash(fun::GetDirParent(FileName)));
 }
   
 //==============================================================================

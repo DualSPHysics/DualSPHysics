@@ -52,10 +52,13 @@ void JCellDivCpuSingle::CalcCellDomain(const unsigned *dcellc,const typecode *co
     BoundLimitOk=true; BoundLimitCellMin=celbmin; BoundLimitCellMax=celbmax;
   } 
   else{ celbmin=BoundLimitCellMin; celbmax=BoundLimitCellMax; }
+  //Log->Printf("----->CalcCellDomain> BoundLimitCellMin/Max2:%s",fun::Uint3RangeStr(BoundLimitCellMin,BoundLimitCellMax).c_str());
   //-Calculate fluid domain | Calcula dominio del fluido.
   tuint3 celfmin,celfmax;
   CalcCellDomainFluid(Npf1,Npb1,Npf2,Npb1+Npf1+Npb2,dcellc,codec,idpc,posc,celfmin,celfmax);
-  //-Calculate domain adjusting to boundary and fluid (with halo of 2h) | Calcula dominio ajustando al contorno y al fluido (con halo de 2h). 
+  //Log->Printf("----->CalcCellDomain> celfmin/max:%s",fun::Uint3RangeStr(celfmin,celfmax).c_str());
+  //-Computes the domain adjusting to the boundary and the fluid ( with 2h halo).
+  //-Calcula dominio ajustando al contorno y al fluido (con halo de 2h). 
   MergeMapCellBoundFluid(celbmin,celbmax,celfmin,celfmax,CellDomainMin,CellDomainMax);
 }
 

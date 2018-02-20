@@ -36,6 +36,8 @@
 //:# - Ahora GetAttributeUnsigned/GetAttributeUint permiten todo el rango de unsigned. (06-05-2016)
 //:# - Nuevos metodos para lectura y escritura de matrices. (29-11-2017)
 //:# - Nuevo metodo CountElement() para contar numero de apariciones de un elemento. (24-01-2018)
+//:# - Nuevos metodos CheckElementAttributes() y CheckAttributes(). (15-02-2018)
+//:# - Se elimino CountElement() porque ya existia CountElements(). (15-02-2018)
 //:#############################################################################
 
 /// \file JXml.h \brief Declares the class \ref JXml.
@@ -104,13 +106,6 @@ public:
   TiXmlElement* GetNextElement(TiXmlNode* node,const std::string &name,bool optional=false)const;
 
   //==============================================================================
-  /// Returns the number of elements with a requested name of a node TiXmlNode.
-  /// \param node Xml node where the reach is performed.
-  /// \param name Name of filtered elements (no filter using "").
-  //==============================================================================
-  unsigned CountElements(const TiXmlNode* node,const std::string &name)const;
-
-  //==============================================================================
   /// Removes the requested node.
   /// \param path Path of the requested node.
   //==============================================================================
@@ -149,11 +144,11 @@ public:
   bool ExistsElement(const TiXmlElement* ele,const std::string &name)const{ return(ele->FirstChildElement(name.c_str())!=NULL); }
 
   //==============================================================================
-  /// Returns the number of times the element appears.
-  /// \param ele Node where the indicated element is searched.
-  /// \param name Name of the requested element.
+  /// Returns the number of elements with a requested name of a node TiXmlNode.
+  /// \param node Xml node where the reach is performed.
+  /// \param name Name of filtered elements (no filter using "").
   //==============================================================================
-  unsigned CountElement(TiXmlElement* ele,const std::string &name)const;
+  unsigned CountElements(const TiXmlNode* node,const std::string &name)const;
 
   //==============================================================================
   /// Throws an exception if there are unknown or repeated elements.
@@ -162,6 +157,16 @@ public:
   /// \param checkrepeated Checks if there are repeated elements.
   //==============================================================================
   void CheckElementNames(TiXmlElement* lis,bool checkrepeated,std::string names)const;
+
+  //==============================================================================
+  /// Checks if some or several attributes appers in the element. Returns number
+  /// of found attribute (1...n), 0 none found and -1 several found.
+  /// \param ele Xml element of the error.
+  /// \param names Names of the requested attributes separated by by spaces.
+  /// \param checkmanyatt Throw exception if several attributes exist.
+  /// \param checkmanyele Throw exception if several elements exist.
+  //==============================================================================
+  int CheckElementAttributes(const TiXmlElement* ele,const std::string &name,std::string attnames,bool checkmanyatt,bool checkmanyele)const;
 
 
   //-Checking attributes of the element.
@@ -172,6 +177,15 @@ public:
   /// \param name Name of the requested attribute.
   //==============================================================================
   bool ExistsAttribute(const TiXmlElement* ele,const std::string &name)const;
+
+  //==============================================================================
+  /// Checks if some or several attributes appers in the element. Returns number
+  /// of found attribute (1...n), 0 none found and -1 several found.
+  /// \param ele Xml element of the error.
+  /// \param names Names of the requested attributes separated by by spaces.
+  /// \param checkmanyatt Throw exception if several attributes exist.
+  //==============================================================================
+  int CheckAttributes(const TiXmlElement* ele,std::string names,bool checkmanyatt)const;
 
 
   //-Reading attributes of the element.

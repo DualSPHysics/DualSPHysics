@@ -52,8 +52,6 @@ protected:
   void RunPeriodic();
   void RunCellDivide(bool updateperiodic);
 
-  void RunAwas();
-
   void Interaction_Forces(TpInter tinter);
   double ComputeAceMax(float *auxmem);
 
@@ -64,6 +62,7 @@ protected:
 
   void UpdateFtObjs();
   void RunFloating(double dt,bool predictor);
+  void RunGaugeSystem(double timestep);
 
   void SaveData();
   void FinishRun(bool stop);

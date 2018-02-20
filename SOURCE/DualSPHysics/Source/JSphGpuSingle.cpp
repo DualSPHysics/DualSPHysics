@@ -21,6 +21,7 @@
 #include "JSphGpuSingle.h"
 #include "JCellDivGpuSingle.h"
 #include "JArraysGpu.h"
+#include "JSphMk.h"
 #include "Functions.h"
 #include "JXml.h"
 #include "JSphMotion.h"
@@ -31,6 +32,7 @@
 #include "JTimeControl.h"
 #include "JSphGpu_ker.h"
 #include "JBlockSizeAuto.h"
+#include "JGaugeSystem.h"
 
 using namespace std;
 //==============================================================================
@@ -199,6 +201,9 @@ void JSphGpuSingle::ConfigDomain(){
   //-Runs initialization operations from XML.
   RunInitialize(Np,Npb,AuxPos,Idp,Code,Velrhop);
 
+  //-Computes MK domain for boundary and fluid particles.
+  MkInfo->ComputeMkDomains(Np,AuxPos,Code);
+
   //-Frees memory of PartsLoaded.
   delete PartsLoaded; PartsLoaded=NULL;
   //-Applies configuration of CellOrder.
@@ -339,8 +344,8 @@ void JSphGpuSingle::RunPeriodic(){
       }
     }
   }
-  TmgStop(Timers,TMG_SuPeriodic);
   CheckCudaError(met,"Failed in creation of periodic particles.");
+  TmgStop(Timers,TMG_SuPeriodic);
 }
 
 //==============================================================================
@@ -419,19 +424,6 @@ void JSphGpuSingle::RunCellDivide(bool updateperiodic){
 }
 
 //==============================================================================
-/// Runs calculations for AWAS.
-/// Ejecuta calculos para AWAS.
-//==============================================================================
-void JSphGpuSingle::RunAwas(){
-  if(WaveGen && WaveGen->UseAwas() && WaveGen->CheckAwasRun(TimeStep)){
-    float3 *aux=ArraysGpu->ReserveFloat3();
-    const bool svdata=(PartNstep+1==Nstep);
-    WaveGen->RunAwasGpu(TimeStep,svdata,CellDivSingle->GetNcells(),CellDivSingle->GetCellDomainMin(),CellDivSingle->GetBeginCell(),Posxyg,Poszg,Codeg,Velrhopg,aux);
-    ArraysGpu->Free(aux);
-  }
-}
-
-//==============================================================================
 /// Interaction for force computation.
 /// Interaccion para el calculo de fuerzas.
 //==============================================================================
@@ -472,9 +464,8 @@ void JSphGpuSingle::Interaction_Forces(TpInter tinter){
   if(Np)ViscDtMax=cusph::ReduMaxFloat(Np,0,ViscDtg,CellDivSingle->GetAuxMem(cusph::ReduMaxFloatSize(Np)));
   //-Calculates maximum value of Ace using ViscDtg like auxiliar memory.
   AceMax=ComputeAceMax(ViscDtg); 
-
-  TmgStop(Timers,TMG_CfForces);
   CheckCudaError(met,"Failed in reduction of viscdt.");
+  TmgStop(Timers,TMG_CfForces);
 }
 
 //==============================================================================
@@ -498,7 +489,6 @@ double JSphGpuSingle::ComputeAceMax(float *auxmem){
 /// calculadas en la interaccion usando Verlet.
 //==============================================================================
 double JSphGpuSingle::ComputeStep_Ver(){
-  if(UseAWAS)RunAwas();
   Interaction_Forces(INTER_Forces);    //-Interaction.
   const double dt=DtVariable(true);    //-Calculate new dt.
   DemDtForce=dt;                       //(DEM)
@@ -518,7 +508,6 @@ double JSphGpuSingle::ComputeStep_Ver(){
 /// calculadas en la interaccion usando Symplectic.
 //==============================================================================
 double JSphGpuSingle::ComputeStep_Sym(){
-  if(UseAWAS)RunAwas();
   const double dt=DtPre;
   //-Predictor
   //-----------
@@ -593,6 +582,15 @@ void JSphGpuSingle::RunFloating(double dt,bool predictor){
 }
 
 //==============================================================================
+/// Runs calculations in configured gauges.
+/// Ejecuta calculos en las posiciones de medida configuradas.
+//==============================================================================
+void JSphGpuSingle::RunGaugeSystem(double timestep){
+  const bool svpart=(TimeStep>=TimePartNext);
+  GaugeSystem->CalculeGpu(timestep,svpart,CellDivSingle->GetNcells(),CellDivSingle->GetCellDomainMin(),CellDivSingle->GetBeginCell(),Posxyg,Poszg,Codeg,Velrhopg);
+}
+
+//==============================================================================
 /// Initialises execution of simulation.
 /// Inicia ejecucion de simulacion.
 //==============================================================================
@@ -622,6 +620,7 @@ void JSphGpuSingle::Run(std::string appname,JCfgRun *cfg,JLog2 *log){
   //-Initialisation of execution variables. | Inicializacion de variables de ejecucion.
   //------------------------------------------------------------------------------------
   InitRun();
+  RunGaugeSystem(TimeStep);
   UpdateMaxValues();
   PrintAllocMemory(GetAllocMemoryCpu(),GetAllocMemoryGpu());
   SaveData(); 
@@ -640,6 +639,7 @@ void JSphGpuSingle::Run(std::string appname,JCfgRun *cfg,JLog2 *log){
   while(TimeStep<TimeMax){
     if(ViscoTime)Visco=ViscoTime->GetVisco(float(TimeStep));
     double stepdt=ComputeStep();
+    RunGaugeSystem(TimeStep+stepdt);
     if(PartDtMin>stepdt)PartDtMin=stepdt; if(PartDtMax<stepdt)PartDtMax=stepdt;
     if(CaseNmoving)RunMotion(stepdt);
     RunCellDivide(true);

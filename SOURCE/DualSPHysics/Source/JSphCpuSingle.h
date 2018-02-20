@@ -60,8 +60,6 @@ protected:
     ,int hdiv,const tint4 &nc,const tint3 &cellzero
     ,int &cxini,int &cxfin,int &yini,int &yfin,int &zini,int &zfin)const;
 
-  void RunAwas();
-
   void Interaction_Forces(TpInter tinter);
   
   template<bool checkcodenormal> double ComputeAceMaxSeq(unsigned np,const tfloat3* ace,const typecode *code)const;
@@ -76,6 +74,7 @@ protected:
   void FtCalcForces(StFtoForces *ftoforces)const;
   void FtCalcForcesRes(double dt,const StFtoForces *ftoforces,StFtoForcesRes *ftoforcesres)const;
   void RunFloating(double dt,bool predictor);
+  void RunGaugeSystem(double timestep);
   
   void SaveData();
   void FinishRun(bool stop);

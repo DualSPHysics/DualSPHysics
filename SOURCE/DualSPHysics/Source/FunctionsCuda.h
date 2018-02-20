@@ -23,6 +23,7 @@
 //:# - Reconoce arquitectura Pascal hasta 6.2. (14-03-2017)
 //:# - Ahora GetCudaDevicesInfo() no cambia la seleccion de GPU. (01-07-2017)
 //:# - Documentacion del codigo en ingles. (08-08-2017)
+//:# - Nueva funcion ToHostInt(). (30-01-2018)
 //:#############################################################################
 
 /// \file FunctionsCuda.h \brief Declares basic/general GPU functions for the entire application.
@@ -107,6 +108,7 @@ size_t Malloc(unsigned **,unsigned count);
 size_t Malloc(int      **,unsigned count);
 size_t Malloc(int2     **,unsigned count);
 size_t Malloc(float    **,unsigned count);
+size_t Malloc(float2   **,unsigned count);
 size_t Malloc(float3   **,unsigned count);
 size_t Malloc(float4   **,unsigned count);
 size_t Malloc(double   **,unsigned count);
@@ -128,6 +130,7 @@ size_t HostAlloc(tdouble2 **,unsigned count);
 //-Functions to copy data to Host (debug).
 word*     ToHostWord   (unsigned pini,unsigned n,const word     *ptrg);
 ushort4*  ToHostWord4  (unsigned pini,unsigned n,const ushort4  *ptrg);
+int*      ToHostInt    (unsigned pini,unsigned n,const int      *ptrg);
 unsigned* ToHostUint   (unsigned pini,unsigned n,const unsigned *ptrg);
 tint2*    ToHostInt2   (unsigned pini,unsigned n,const int2     *ptrg);
 float*    ToHostFloat  (unsigned pini,unsigned n,const float    *ptrg);

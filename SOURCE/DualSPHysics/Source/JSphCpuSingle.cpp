@@ -21,6 +21,7 @@
 #include "JSphCpuSingle.h"
 #include "JCellDivCpuSingle.h"
 #include "JArraysCpu.h"
+#include "JSphMk.h"
 #include "Functions.h"
 #include "FunctionsMath.h"
 #include "JXml.h"
@@ -31,7 +32,7 @@
 #include "JDamping.h"
 #include "JTimeOut.h"
 #include "JTimeControl.h"
-
+#include "JGaugeSystem.h"
 #include <climits>
 
 using namespace std;
@@ -162,6 +163,9 @@ void JSphCpuSingle::ConfigDomain(){
 
   //-Runs initialization operations from XML.
   RunInitialize(Np,Npb,Posc,Idpc,Codec,Velrhopc);
+
+  //-Computes MK domain for boundary and fluid particles.
+  MkInfo->ComputeMkDomains(Np,Posc,Codec);
 
   //-Free memory of PartsLoaded. | Libera memoria de PartsLoaded.
   delete PartsLoaded; PartsLoaded=NULL;
@@ -501,17 +505,6 @@ void JSphCpuSingle::GetInteractionCells(unsigned rcell
 }
 
 //==============================================================================
-/// Runs calculations for AWAS.
-/// Ejecuta calculos para AWAS.
-//==============================================================================
-void JSphCpuSingle::RunAwas(){
-  if(WaveGen && WaveGen->UseAwas() && WaveGen->CheckAwasRun(TimeStep)){
-    const bool svdata=(PartNstep+1==Nstep);
-    WaveGen->RunAwasCpu(TimeStep,svdata,CellDivSingle->GetNcells(),CellDivSingle->GetCellDomainMin(),CellDivSingle->GetBeginCell(),Posc,Codec,Velrhopc);
-  }
-}
-
-//==============================================================================
 /// Interaction to calculate forces.
 /// Interaccion para el calculo de fuerzas.
 //==============================================================================
@@ -627,7 +620,6 @@ template<bool checkcodenormal> double JSphCpuSingle::ComputeAceMaxOmp(unsigned n
 /// calculadas en la interaccion usando Verlet.
 //==============================================================================
 double JSphCpuSingle::ComputeStep_Ver(){
-  if(UseAWAS)RunAwas();
   Interaction_Forces(INTER_Forces);    //-Interaction.
   const double dt=DtVariable(true);    //-Calculate new dt.
   DemDtForce=dt;                       //(DEM)
@@ -647,7 +639,6 @@ double JSphCpuSingle::ComputeStep_Ver(){
 /// calculadas en la interaccion usando Symplectic.
 //==============================================================================
 double JSphCpuSingle::ComputeStep_Sym(){
-  if(UseAWAS)RunAwas();
   const double dt=DtPre;
   //-Predictor
   //-----------
@@ -863,6 +854,15 @@ void JSphCpuSingle::RunFloating(double dt,bool predictor){
 }
 
 //==============================================================================
+/// Runs calculations in configured gauges.
+/// Ejecuta calculos en las posiciones de medida configuradas.
+//==============================================================================
+void JSphCpuSingle::RunGaugeSystem(double timestep){
+  const bool svpart=(TimeStep>=TimePartNext);
+  GaugeSystem->CalculeCpu(timestep,svpart,CellDivSingle->GetNcells(),CellDivSingle->GetCellDomainMin(),CellDivSingle->GetBeginCell(),Posc,Codec,Velrhopc);
+}
+
+//==============================================================================
 /// Initialises execution of simulation.
 /// Inicia ejecucion de simulacion.
 //==============================================================================
@@ -888,6 +888,7 @@ void JSphCpuSingle::Run(std::string appname,JCfgRun *cfg,JLog2 *log){
   //-Initialisation of execution variables. | Inicializacion de variables de ejecucion.
   //------------------------------------------------------------------------------------
   InitRun();
+  RunGaugeSystem(TimeStep);
   UpdateMaxValues();
   PrintAllocMemory(GetAllocMemoryCpu());
   SaveData(); 
@@ -906,6 +907,7 @@ void JSphCpuSingle::Run(std::string appname,JCfgRun *cfg,JLog2 *log){
   while(TimeStep<TimeMax){
     if(ViscoTime)Visco=ViscoTime->GetVisco(float(TimeStep));
     double stepdt=ComputeStep();
+    RunGaugeSystem(TimeStep+stepdt);
     if(PartDtMin>stepdt)PartDtMin=stepdt; if(PartDtMax<stepdt)PartDtMax=stepdt;
     if(CaseNmoving)RunMotion(stepdt);
     RunCellDivide(true);

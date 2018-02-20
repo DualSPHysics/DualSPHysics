@@ -35,6 +35,7 @@
 #include "JSphAccInput.h"
 #include "JXml.h"
 #include "JFormatFiles2.h"
+#include "JGaugeSystem.h"
 
 using namespace std;
 
@@ -786,17 +787,19 @@ void JSphGpu::InitRun(){
     Log->Print(InitializeInfo);
     Log->Print(" ");
   }
+  
+  //-Process Special configurations in XML.
+  JXml xml; xml.LoadFile(FileXml);
+
+  //-Configuration of GaugeSystem.
+  GaugeSystem->Config(Simulate2D,Simulate2DPosY,TimeMax,TimePart,Dp,DomPosMin,DomPosMax,Scell,Hdiv,H,MassFluid);
+  if(xml.GetNode("case.execution.special.gauges",false))GaugeSystem->LoadXml(&xml,"case.execution.special.gauges");
 
   //-Prepares WaveGen configuration.
   if(WaveGen){
     Log->Print("Wave paddles configuration:");
-    if(WaveGen->UseAwasZsurf()){
-      unsigned npnormal=ParticlesDataDown(Np,0,false,true,PeriActive!=0);
-      WaveGen->CheckPaddleParticles(npnormal,AuxPos,Idp);
-    }
-    WaveGen->Init(TimeMax,Gravity,Simulate2D,CellOrder,MassFluid,Dp,Dosh,Scell,Hdiv,DomPosMin,DomRealPosMin,DomRealPosMax);
+    WaveGen->Init(GaugeSystem,MkInfo,TimeMax,Gravity);
     WaveGen->VisuConfig(""," ");
-    if(WaveGen->UseAwas())UseAWAS=true;
   }
 
   //-Prepares Damping configuration.
@@ -812,15 +815,15 @@ void JSphGpu::InitRun(){
     AccInput->VisuConfig(""," ");
   }
 
-  //-Process Special configurations in XML.
-  JXml xml; xml.LoadFile(FileXml);
-
   //-Configuration of SaveDt.
   if(xml.GetNode("case.execution.special.savedt",false)){
     SaveDt=new JSaveDt(Log);
     SaveDt->Config(&xml,"case.execution.special.savedt",TimeMax,TimePart);
     SaveDt->VisuConfig("SaveDt configuration:"," ");
   }
+
+  //-Shows configuration of JGaugeSystem.
+  if(GaugeSystem->GetCount())GaugeSystem->VisuConfig("GaugeSystem configuration"," ");
 
   //-Shows configuration of JTimeOut.
   if(TimeOut->UseSpecialConfig())TimeOut->VisuConfig(Log,"TimeOut configuration:"," ");
@@ -1083,8 +1086,9 @@ void JSphGpu::RunMotion(double stepdt){
       tmatrix4d matmov,matmov2;
       unsigned nparts,idbegin;
       //-Get movement data.
-      if(motsim)typesimple=WaveGen->GetMotion   (c,TimeStep+MotionTimeMod,stepdt,simplemov,simplevel,matmov,nparts,idbegin);
-      else      typesimple=WaveGen->GetMotionAce(c,TimeStep+MotionTimeMod,stepdt,simplemov,simplevel,simpleace,matmov,matmov2,nparts,idbegin);
+      const bool svdata=TimeStep>=TimePartNext;
+      if(motsim)typesimple=WaveGen->GetMotion   (svdata,c,TimeStep+MotionTimeMod,stepdt,simplemov,simplevel,matmov,nparts,idbegin);
+      else      typesimple=WaveGen->GetMotionAce(svdata,c,TimeStep+MotionTimeMod,stepdt,simplemov,simplevel,simpleace,matmov,matmov2,nparts,idbegin);
       //-Applies movement to paddle particles.
       const unsigned np=nparts,pini=idbegin-CaseNfixed;
       if(typesimple){//-Simple movement. | Movimiento simple.

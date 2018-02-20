@@ -266,7 +266,7 @@ void JCellDivCpu::LimitsCellBound(unsigned n,unsigned pini,const unsigned* dcell
   ,const typecode *codec,const unsigned* idpc,const tdouble3* posc
   ,tuint3 &cellmin,tuint3 &cellmax)const
 {
-  tuint3 cmin=TUint3(1);
+  tuint3 cmin=TUint3(UINT_MAX);
   tuint3 cmax=TUint3(0);
   unsigned nerr=0;
   const unsigned pfin=pini+n;
@@ -335,7 +335,7 @@ void JCellDivCpu::LimitsCellFluid(unsigned n,unsigned pini,const unsigned* dcell
   ,tuint3 &cellmin,tuint3 &cellmax,unsigned &npfoutrhop,unsigned &npfoutmove)const
 {
   unsigned noutrhop=0,noutmove=0;
-  tuint3 cmin=TUint3(1);
+  tuint3 cmin=TUint3(UINT_MAX);
   tuint3 cmax=TUint3(0);
   unsigned nerr=0;
   const unsigned pfin=pini+n;
