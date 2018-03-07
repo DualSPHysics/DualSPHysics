@@ -26,6 +26,7 @@
 //:# - Documentacion del codigo en ingles. (08-08-2017)
 //:# - New attribute CsvSepComa to configure separator in CSV files. (24-10-2017)
 //:# - New improved code to simplify CSV file creation. (08-11-2017)
+//:# - Error corregido: Reescribia fichero cuando ya estaba cerrado pos SaveData(). (02-03-2018)
 //:#############################################################################
 
 /// \file JSaveCsv2.h \brief Declares the class \ref JSaveCsv2.
@@ -119,6 +120,7 @@ private:
 
   std::fstream *Pf;
   bool FileError;
+  bool FirstSaveData;
 
   static const unsigned SizeFmt=18;  ///<Number of different formats.
   std::string FmtDefault[SizeFmt];   ///<Default formats.
@@ -130,14 +132,12 @@ private:
   std::string Data;
   bool DataLineEmpty;
 
-
   void InitFmt();
   void AddStr(const std::string &tx);
   void AddSeparator(unsigned count);
   void AddEndl();
   void Save(const std::string &tx);
   void SetSeparators(std::string &tx);
-
 
 public:
   JSaveCsv2(std::string fname,bool app,bool csvsepcoma);
