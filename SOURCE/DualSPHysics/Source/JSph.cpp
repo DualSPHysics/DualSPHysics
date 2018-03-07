@@ -119,7 +119,7 @@ void JSph::InitVars(){
   TStep=STEP_None;
   VerletSteps=40;
   TKernel=KERNEL_Wendland;
-  Awen=Bwen=0;
+  Awen=Bwen=Agau=Bgau=0;
   memset(&CubicCte,0,sizeof(StCubicCte));
   TVisco=VISCO_None;
   TDeltaSph=DELTA_None; DeltaSph=0;
@@ -453,6 +453,7 @@ void JSph::LoadCaseConfig(){
   switch(eparms.GetValueInt("Kernel",true,2)){
     case 1:  TKernel=KERNEL_Cubic;     break;
     case 2:  TKernel=KERNEL_Wendland;  break;
+    case 3:  TKernel=KERNEL_Gaussian;  break;
     default: RunException(met,"Kernel choice is not valid.");
   }
   switch(eparms.GetValueInt("ViscoTreatment",true,1)){
@@ -786,6 +787,13 @@ void JSph::ConfigConstants(bool simulate2d){
       Awen=float(0.557/(h*h));
       Bwen=float(-2.7852/(h*h*h));
     }
+    else if(TKernel==KERNEL_Gaussian){
+      const double a1=4./PI;
+      const double a2=a1/(h*h);
+      const double aa=a1/(h*h*h);
+      Agau=float(a2);
+      Bgau=float(-8.*aa);
+    }
     else if(TKernel==KERNEL_Cubic){
       const double a1=10./(PI*7.);
       const double a2=a1/(h*h);
@@ -806,6 +814,13 @@ void JSph::ConfigConstants(bool simulate2d){
     if(TKernel==KERNEL_Wendland){
       Awen=float(0.41778/(h*h*h));
       Bwen=float(-2.08891/(h*h*h*h));
+    }
+    else if(TKernel==KERNEL_Gaussian){
+      const double a1=8./5.5683;
+      const double a2=a1/(h*h*h);
+      const double aa=a1/(h*h*h*h); 
+      Agau=float(a2);
+      Bgau=float(-8.*aa);
     }
     else if(TKernel==KERNEL_Cubic){
       const double a1=1./PI;
@@ -889,8 +904,12 @@ void JSph::VisuConfig()const{
   Log->Print(fun::VarStr("MassFluid",MassFluid));
   Log->Print(fun::VarStr("MassBound",MassBound));
   if(TKernel==KERNEL_Wendland){
-    Log->Print(fun::VarStr("Awen (wendland)",Awen));
-    Log->Print(fun::VarStr("Bwen (wendland)",Bwen));
+    Log->Print(fun::VarStr("Awen (Wendland)",Awen));
+    Log->Print(fun::VarStr("Bwen (Wendland)",Bwen));
+  }
+  else if(TKernel==KERNEL_Gaussian){
+    Log->Print(fun::VarStr("Agau (Gaussian)",Agau));
+    Log->Print(fun::VarStr("Bgau (Gaussian)",Bgau));
   }
   else if(TKernel==KERNEL_Cubic){
     Log->Print(fun::VarStr("CubicCte.a1",CubicCte.a1));
@@ -1684,6 +1703,7 @@ std::string JSph::GetKernelName(TpKernel tkernel){
   string tx;
   if(tkernel==KERNEL_Cubic)tx="Cubic";
   else if(tkernel==KERNEL_Wendland)tx="Wendland";
+  else if(tkernel==KERNEL_Gaussian)tx="Gaussian";
   else tx="???";
   return(tx);
 }

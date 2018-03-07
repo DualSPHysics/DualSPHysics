@@ -456,6 +456,9 @@ void JSphGpu::ConstantDataUp(){
   if(TKernel==KERNEL_Wendland){
     ctes.awen=Awen; ctes.bwen=Bwen;
   }
+  else if(TKernel==KERNEL_Gaussian){
+    ctes.agau=Agau; ctes.bgau=Bgau;
+  }
   else if(TKernel==KERNEL_Cubic){
     ctes.cubic_a1=CubicCte.a1; ctes.cubic_a2=CubicCte.a2; ctes.cubic_aa=CubicCte.aa; ctes.cubic_a24=CubicCte.a24;
     ctes.cubic_c1=CubicCte.c1; ctes.cubic_c2=CubicCte.c2; ctes.cubic_d1=CubicCte.d1; ctes.cubic_odwdeltap=CubicCte.od_wdeltap;
@@ -823,7 +826,7 @@ void JSphGpu::InitRun(){
   }
 
   //-Shows configuration of JGaugeSystem.
-  if(GaugeSystem->GetCount())GaugeSystem->VisuConfig("GaugeSystem configuration"," ");
+  if(GaugeSystem->GetCount())GaugeSystem->VisuConfig("GaugeSystem configuration:"," ");
 
   //-Shows configuration of JTimeOut.
   if(TimeOut->UseSpecialConfig())TimeOut->VisuConfig(Log,"TimeOut configuration:"," ");
@@ -1086,7 +1089,7 @@ void JSphGpu::RunMotion(double stepdt){
       tmatrix4d matmov,matmov2;
       unsigned nparts,idbegin;
       //-Get movement data.
-      const bool svdata=TimeStep>=TimePartNext;
+      const bool svdata=(TimeStep+stepdt>=TimePartNext);
       if(motsim)typesimple=WaveGen->GetMotion   (svdata,c,TimeStep+MotionTimeMod,stepdt,simplemov,simplevel,matmov,nparts,idbegin);
       else      typesimple=WaveGen->GetMotionAce(svdata,c,TimeStep+MotionTimeMod,stepdt,simplemov,simplevel,simpleace,matmov,matmov2,nparts,idbegin);
       //-Applies movement to paddle particles.

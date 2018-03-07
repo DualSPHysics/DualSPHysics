@@ -21,6 +21,7 @@
 //:# =========
 //:# - Clase para gestionar la medicion de distintas magnitudes de forma 
 //:#   automatica y simple. (12-02-2017)
+//:# - Error corregido cargando <default><output>. (03-03-2017)
 //:#############################################################################
 
 /// \file JGaugeSystem.h \brief Declares the class \ref JGaugeSystem.

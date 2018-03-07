@@ -184,7 +184,7 @@ JGaugeItem::StDefault JGaugeSystem::ReadXmlCommon(JXml *sxml,TiXmlElement* ele)c
     cfg.computedt   =sxml->ReadElementDouble(ele,"computedt"  ,"value",true,CfgDefault.computedt);
     cfg.computestart=sxml->ReadElementDouble(ele,"computetime","start",true,CfgDefault.computestart);
     cfg.computeend  =sxml->ReadElementDouble(ele,"computetime","end"  ,true,CfgDefault.computeend);
-    cfg.output      =sxml->ReadElementBool  (ele,"savevtkpart","value",true,CfgDefault.output);
+    cfg.output      =sxml->ReadElementBool  (ele,"output"     ,"value",true,CfgDefault.output);
     cfg.outputdt    =sxml->ReadElementDouble(ele,"outputdt"   ,"value",true,CfgDefault.outputdt);
     cfg.outputstart =sxml->ReadElementDouble(ele,"outputtime" ,"start",true,CfgDefault.outputstart);
     cfg.outputend   =sxml->ReadElementDouble(ele,"outputtime" ,"end"  ,true,CfgDefault.outputend);

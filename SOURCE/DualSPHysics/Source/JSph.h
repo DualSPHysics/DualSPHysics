@@ -164,9 +164,11 @@ protected:
   //-Options for execution.
   TpStep TStep;               ///<Step Algorithm: Verlet or Symplectic.                                  | Algoritmo de paso: Verlet o Symplectic.
   int VerletSteps;            ///<Number of steps to apply Eulerian equations.
-  TpKernel TKernel;           ///<Kernel type: Cubic or Wendland.                                        | Tipo de kernel: Cubic o Wendland.
-  float Awen;                 ///<Wendland kernel constant (awen).                                       | Constante para kernel wendland (awen).
-  float Bwen;                 ///<Wendland kernel constant (bwen).                                       | Constante para kernel wendland (bwen).
+  TpKernel TKernel;           ///<Kernel type: Cubic, Wendland or Gaussian.                              | Tipo de kernel: Cubic, Wendland o Gaussian.
+  float Awen;                 ///<Wendland kernel constant (awen) to compute wab.                        | Constante para calcular wab con kernel Wendland.
+  float Bwen;                 ///<Wendland kernel constant (bwen) to compute fac (kernel derivative).    | Constante para calcular fac (derivada del kernel) con kernel Wendland.
+  float Agau;                 ///<Gaussian kernel constant to compute wab.                               | Constante para calcular wab con kernel Gaussian.
+  float Bgau;                 ///<Gaussian kernel constant to compute fac (kernel derivative).           | Constante para calcular fac (derivada del kernel) con kernel Gaussian.
   StCubicCte CubicCte;        ///<Constants for Cubic Spline Kernel.                                     | Constante para kernel cubic spline.
   TpVisco TVisco;             ///<Viscosity type: Artificial,...                                         | Tipo de viscosidad: Artificial,...
   TpDeltaSph TDeltaSph;       ///<Delta-SPH type: None, Basic or Dynamic.                                | Tipo de Delta-SPH: None, Basic o Dynamic. 
