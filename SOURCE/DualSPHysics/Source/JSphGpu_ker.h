@@ -37,8 +37,8 @@ typedef struct{
   float massf;              ///<Mass of a fluid particle.
   float h;                  ///<Smoothing length (=coef*sqrt(dx*dx+dy*dy+dz*dz))
   float fourh2;             ///< \ref h * \ref h * 4 
-  float awen;               ///<Cte. of Wendland kernel.
-  float bwen;               ///<Cte. of Wendland kernel.
+  float awen;               ///<Cte. of Wendland kernel to compute wab.
+  float bwen;               ///<Cte. of Wendland kernel to compute fac (kernel derivative).
   float cs0;                ///<Speed of sound of reference.
   float eta2;               ///<eta*eta being eta=0.1*\ref h
   float delta2h;            ///<delta2h=DeltaSph*H*2
@@ -56,6 +56,8 @@ typedef struct{
   //-Values depending on the assigned domain (can change). | Valores que dependen del dominio asignado (puden cambiar).
   unsigned cellcode;
   double domposminx,domposminy,domposminz;
+  //-Ctes. of Gaussian kernel.
+  float agau,bgau;
   //-Ctes. of Cubic Spline kernel.
   float cubic_a1,cubic_a2,cubic_aa,cubic_a24,cubic_c1,cubic_d1,cubic_c2,cubic_odwdeltap;
 }StCteInteraction; 

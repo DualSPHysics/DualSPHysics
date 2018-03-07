@@ -528,6 +528,22 @@ __device__ void KerGetKernelWendland(float rr2,float drx,float dry,float drz
 }
 
 //------------------------------------------------------------------------------
+/// Returns Gaussian kernel values: frx, fry and frz.
+/// Devuelve valores del kernel Gaussian: frx, fry y frz.
+//------------------------------------------------------------------------------
+__device__ void KerGetKernelGaussian(float rr2,float drx,float dry,float drz
+  ,float &frx,float &fry,float &frz)
+{
+  const float rad=sqrt(rr2);
+  const float qq=rad/CTE.h;
+  //-Gaussian kernel.
+  const float qqexp=-4.0f*qq*qq;
+  //const float wab=CTE.agau*expf(qqexp);
+  const float fac=CTE.bgau*qq*expf(qqexp)/rad;
+  frx=fac*drx; fry=fac*dry; frz=fac*drz;
+}
+
+//------------------------------------------------------------------------------
 /// Return values of kernel Cubic without tensil correction, gradients: frx, fry and frz.
 /// Devuelve valores de kernel Cubic sin correccion tensil, gradients: frx, fry y frz.
 //------------------------------------------------------------------------------
@@ -600,9 +616,10 @@ template<bool psingle,TpKernel tker,TpFtMode ftmode> __device__ void KerInteract
     KerGetParticlesDr<psingle>(p2,posxy,posz,pospress,posdp1,posp1,drx,dry,drz);
     float rr2=drx*drx+dry*dry+drz*drz;
     if(rr2<=CTE.fourh2 && rr2>=ALMOSTZERO){
-      //-Wendland or Cubic Spline kernel.
+      //-Cubic Spline, Wendland or Gaussian kernel.
       float frx,fry,frz;
       if(tker==KERNEL_Wendland)KerGetKernelWendland(rr2,drx,dry,drz,frx,fry,frz);
+      else if(tker==KERNEL_Gaussian)KerGetKernelGaussian(rr2,drx,dry,drz,frx,fry,frz);
       else if(tker==KERNEL_Cubic)KerGetKernelCubic(rr2,drx,dry,drz,frx,fry,frz);
 
       const float4 velrhop2=velrhop[p2];
@@ -699,9 +716,10 @@ template<bool psingle,TpKernel tker,TpFtMode ftmode,bool lamsps,TpDeltaSph tdelt
     KerGetParticlesDr<psingle> (p2,posxy,posz,pospress,posdp1,posp1,drx,dry,drz,pressp2);
     float rr2=drx*drx+dry*dry+drz*drz;
     if(rr2<=CTE.fourh2 && rr2>=ALMOSTZERO){
-      //-Wendland or Cubic Spline kernel.
+      //-Cubic Spline, Wendland or Gaussian kernel.
       float frx,fry,frz;
       if(tker==KERNEL_Wendland)KerGetKernelWendland(rr2,drx,dry,drz,frx,fry,frz);
+      else if(tker==KERNEL_Gaussian)KerGetKernelGaussian(rr2,drx,dry,drz,frx,fry,frz);
       else if(tker==KERNEL_Cubic)KerGetKernelCubic(rr2,drx,dry,drz,frx,fry,frz);
 
       //-Obtains mass of particle p2 if any floating bodies exist.
@@ -1120,6 +1138,16 @@ void Interaction_Forces(bool psingle,TpKernel tkernel,bool floating,bool usedem,
   ,bool simulate2d,StKerInfo *kerinfo,JBlockSizeAuto *bsauto)
 {
   if(tkernel==KERNEL_Wendland){    const TpKernel tker=KERNEL_Wendland;
+    if(psingle){      const bool psingle=true;
+      if(!floating)   Interaction_Forces_t1<psingle,tker,FTMODE_None> (lamsps,tdelta,cellmode,viscob,viscof,bsbound,bsfluid,np,npb,npbok,ncells,begincell,cellmin,dcell,posxy,posz,pospress,velrhop,code,idp,ftomassp,tau,gradvel,viscdt,ar,ace,delta,tshifting,shiftpos,shiftdetect,simulate2d,kerinfo,bsauto);
+      else if(!usedem)Interaction_Forces_t1<psingle,tker,FTMODE_Sph>  (lamsps,tdelta,cellmode,viscob,viscof,bsbound,bsfluid,np,npb,npbok,ncells,begincell,cellmin,dcell,posxy,posz,pospress,velrhop,code,idp,ftomassp,tau,gradvel,viscdt,ar,ace,delta,tshifting,shiftpos,shiftdetect,simulate2d,kerinfo,bsauto);
+      else            Interaction_Forces_t1<psingle,tker,FTMODE_Dem>  (lamsps,tdelta,cellmode,viscob,viscof,bsbound,bsfluid,np,npb,npbok,ncells,begincell,cellmin,dcell,posxy,posz,pospress,velrhop,code,idp,ftomassp,tau,gradvel,viscdt,ar,ace,delta,tshifting,shiftpos,shiftdetect,simulate2d,kerinfo,bsauto);
+    }else{            const bool psingle=false;
+      if(!floating)   Interaction_Forces_t1<psingle,tker,FTMODE_None> (lamsps,tdelta,cellmode,viscob,viscof,bsbound,bsfluid,np,npb,npbok,ncells,begincell,cellmin,dcell,posxy,posz,pospress,velrhop,code,idp,ftomassp,tau,gradvel,viscdt,ar,ace,delta,tshifting,shiftpos,shiftdetect,simulate2d,kerinfo,bsauto);
+      else if(!usedem)Interaction_Forces_t1<psingle,tker,FTMODE_Sph>  (lamsps,tdelta,cellmode,viscob,viscof,bsbound,bsfluid,np,npb,npbok,ncells,begincell,cellmin,dcell,posxy,posz,pospress,velrhop,code,idp,ftomassp,tau,gradvel,viscdt,ar,ace,delta,tshifting,shiftpos,shiftdetect,simulate2d,kerinfo,bsauto);
+      else            Interaction_Forces_t1<psingle,tker,FTMODE_Dem>  (lamsps,tdelta,cellmode,viscob,viscof,bsbound,bsfluid,np,npb,npbok,ncells,begincell,cellmin,dcell,posxy,posz,pospress,velrhop,code,idp,ftomassp,tau,gradvel,viscdt,ar,ace,delta,tshifting,shiftpos,shiftdetect,simulate2d,kerinfo,bsauto);
+    }
+  }else if(tkernel==KERNEL_Gaussian){ const TpKernel tker=KERNEL_Gaussian;
     if(psingle){      const bool psingle=true;
       if(!floating)   Interaction_Forces_t1<psingle,tker,FTMODE_None> (lamsps,tdelta,cellmode,viscob,viscof,bsbound,bsfluid,np,npb,npbok,ncells,begincell,cellmin,dcell,posxy,posz,pospress,velrhop,code,idp,ftomassp,tau,gradvel,viscdt,ar,ace,delta,tshifting,shiftpos,shiftdetect,simulate2d,kerinfo,bsauto);
       else if(!usedem)Interaction_Forces_t1<psingle,tker,FTMODE_Sph>  (lamsps,tdelta,cellmode,viscob,viscof,bsbound,bsfluid,np,npb,npbok,ncells,begincell,cellmin,dcell,posxy,posz,pospress,velrhop,code,idp,ftomassp,tau,gradvel,viscdt,ar,ace,delta,tshifting,shiftpos,shiftdetect,simulate2d,kerinfo,bsauto);
