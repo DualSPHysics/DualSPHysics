@@ -464,7 +464,7 @@ void JSphCpu::InitRun(){
   }
 
   //-Shows configuration of JGaugeSystem.
-  if(GaugeSystem->GetCount())GaugeSystem->VisuConfig("GaugeSystem configuration"," ");
+  if(GaugeSystem->GetCount())GaugeSystem->VisuConfig("GaugeSystem configuration:"," ");
 
   //-Shows configuration of JTimeOut.
   if(TimeOut->UseSpecialConfig())TimeOut->VisuConfig(Log,"TimeOut configuration:"," ");
