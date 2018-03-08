@@ -1,21 +1,23 @@
 @echo off
 
-rem "name" and "dirout" are named according to the testcase
+REM "name" and "dirout" are named according to the testcase
 
 set name=CaseDambreak
 set dirout=%name%_out
 
-rem "executables" are renamed and called from their directory
+REM "executables" are renamed and called from their directory
 
-set gencase="../../EXECS/GenCase4_win64.exe"
-set dualsphysics="../../EXECS/DualSPHysics4.2_win64.exe"
-set boundaryvtk="../../EXECS/BoundaryVTK4_win64.exe"
-set partvtk="../../EXECS/PartVTK4_win64.exe"
-set partvtkout="../../EXECS/PartVTKOut4_win64.exe"
-set measuretool="../../EXECS/MeasureTool4_win64.exe"
-set computeforces="../../EXECS/ComputeForces4_win64.exe"
-set isosurface="../../EXECS/IsoSurface4_win64.exe"
-set measureboxes="../../EXECS/MeasureBoxes4_win64.exe"
+set dirbin=../../../bin/windows
+set gencase="%dirbin%/GenCase4_win64.exe"
+set dualsphysicscpu="%dirbin%/DualSPHysics4.2CPU_win64.exe"
+set dualsphysicsgpu="%dirbin%/DualSPHysics4.2_win64.exe"
+set boundaryvtk="%dirbin%/BoundaryVTK4_win64.exe"
+set partvtk="%dirbin%/PartVTK4_win64.exe"
+set partvtkout="%dirbin%/PartVTKOut4_win64.exe"
+set measuretool="%dirbin%/MeasureTool4_win64.exe"
+set computeforces="%dirbin%/ComputeForces4_win64.exe"
+set isosurface="%dirbin%/IsoSurface4_win64.exe"
+set measureboxes="%dirbin%/MeasureBoxes4_win64.exe"
 
 REM "dirout" is created to store results or it is removed if it already exists
 
@@ -27,7 +29,7 @@ REM CODES are executed according the selected parameters of execution in this te
 %gencase% %name%_Def %dirout%/%name% -save:all
 if not "%ERRORLEVEL%" == "0" goto fail
 
-%dualsphysics% %dirout%/%name% %dirout% -svres -gpu 
+%dualsphysicsgpu% -gpu %dirout%/%name% %dirout% -svres
 if not "%ERRORLEVEL%" == "0" goto fail
 
 %partvtk% -dirin %dirout% -savevtk %dirout%/PartFluid -onlytype:-all,+fluid
@@ -56,6 +58,7 @@ if not "%ERRORLEVEL%" == "0" goto fail
 
 %measureboxes% -dirin %dirout% -fileboxes CaseDambreak_FileBoxes.txt -savecsv %dirout%/ResultBoxes.csv -savevtk %dirout%/Boxes.vtk
 if not "%ERRORLEVEL%" == "0" goto fail
+
 
 
 :success
