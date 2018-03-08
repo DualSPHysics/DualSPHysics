@@ -1,20 +1,24 @@
 #!/bin/bash
 
-
 # "name" and "dirout" are named according to the testcase
 
 name=CaseDambreakVal2D
 dirout=${name}_out
 
-
 # "executables" are renamed and called from their directory
 
-gencase="../../EXECS/GenCase4_linux64"
-dualsphysics="../../EXECS/DualSPHysics4.2_linux64"
-partvtk="../../EXECS/PartVTK4_linux64"
-partvtkout="../../EXECS/PartVTKOut4_linux64"
-measuretool="../../EXECS/MeasureTool4_linux64"
-isosurface="../../EXECS/IsoSurface4_linux64"
+dirbin=../../../bin/linux
+gencase="${dirbin}/GenCase4_linux64"
+dualsphysicscpu="${dirbin}/DualSPHysics4.2CPU_linux64"
+dualsphysicsgpu="${dirbin}/DualSPHysics4.2_linux64"
+boundaryvtk="${dirbin}/BoundaryVTK4_linux64"
+partvtk="${dirbin}/PartVTK4_linux64"
+partvtkout="${dirbin}/PartVTKOut4_linux64"
+measuretool="${dirbin}/MeasureTool4_linux64"
+computeforces="${dirbin}/ComputeForces4_linux64"
+isosurface="${dirbin}/IsoSurface4_linux64"
+measureboxes="${dirbin}/MeasureBoxes4_linux64"
+
 
 # Library path must be indicated properly
 
@@ -24,7 +28,8 @@ path_so=$(pwd)
 cd $current
 export LD_LIBRARY_PATH=$path_so
 
-# "dirout" is created to store results or it is removed if it already exists
+
+# "dirout" is created to store results or it is cleaned if it already exists
 
 if [ -e $dirout ]; then
   rm -f -r $dirout
@@ -33,7 +38,6 @@ mkdir $dirout
 
 
 # CODES are executed according the selected parameters of execution in this testcase
-
 errcode=0
 
 if [ $errcode -eq 0 ]; then
@@ -42,7 +46,7 @@ if [ $errcode -eq 0 ]; then
 fi
 
 if [ $errcode -eq 0 ]; then
-  $dualsphysics $dirout/$name $dirout -svres -gpu
+  $dualsphysicsgpu -gpu $dirout/$name $dirout -svres
   errcode=$?
 fi
 
@@ -60,6 +64,7 @@ if [ $errcode -eq 0 ]; then
   $isosurface -dirin $dirout -saveslice $dirout/Slices 
   errcode=$?
 fi
+
 
 if [ $errcode -eq 0 ]; then
   echo All done
