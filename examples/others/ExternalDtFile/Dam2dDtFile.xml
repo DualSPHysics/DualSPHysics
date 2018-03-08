@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<case>
+    <casedef>
+        <constantsdef>
+            <lattice bound="1" fluid="1" />			
+            <gravity x="0" y="0" z="-9.81" comment="Gravitational acceleration" units_comment="m/s^2" />
+            <rhop0 value="1000" comment="Reference density of the fluid" units_comment="kg/m^3" />
+            <hswl value="0" auto="true" comment="Maximum still water level to calculate speedofsound using coefsound" units_comment="metres (m)" />
+            <gamma value="7" comment="Polytropic constant for water used in the state equation" />
+            <speedsystem value="0" auto="true" comment="Maximum system speed (by default the dam-break propagation is used)" />
+            <coefsound value="20" comment="Coefficient to multiply speedsystem" />
+            <speedsound value="0" auto="true" comment="Speed of sound to use in the simulation (by default speedofsound=coefsound*speedsystem)" />
+            <coefh value="1.0" comment="Coefficient to calculate the smoothing length (h=coefh*sqrt(3*dp^2) in 3D)" />		
+            <cflnumber value="0.2" comment="Coefficient to multiply dt" />			
+        </constantsdef>
+        <mkconfig boundcount="240" fluidcount="10" />
+        <geometry>
+            <definition dp="0.01" units_comment="metres (m)">
+                <pointmin x="-1" y="0" z="-1" />
+                <pointmax x="4.5" y="0" z="3.5" />
+            </definition>
+            <commands>
+                <mainlist>
+                    <setdrawmode mode="full" />
+                    <setmkfluid mk="0" />
+                    <drawbox>
+                        <boxfill>solid</boxfill>
+                        <point x="0" y="-1" z="0" />
+                        <size x="1" y="2" z="2" />
+                    </drawbox>
+                    <setmkbound mk="0" />
+                    <drawbox>
+                        <boxfill>bottom | left | right | front | back</boxfill>
+                        <point x="0" y="-1" z="0" />
+                        <size x="4" y="2" z="3" />
+                    </drawbox>
+                </mainlist>
+            </commands>
+        </geometry>
+    </casedef>
+    <execution>
+        <special>
+            <savedt>
+                <start value="0.01" comment="Initial time (def=0)" />
+                <finish value="1" comment="End time (def=0, no limit)" />
+                <interval value="0.02" comment="Time between output data (def=TimeOut)" />
+                <fullinfo value="0" comment="Saves AceMax, ViscDtMax and VelMax (def=0)" />
+                <alldt value="0" comment="Saves file with all dt values (def=0)" />
+            </savedt>
+        </special>
+        <parameters>
+            <parameter key="PosDouble" value="1" comment="Precision in particle interaction 0:Simple, 1:Double, 2:Uses and saves double (default=0)" />		
+            <parameter key="StepAlgorithm" value="1" comment="Step Algorithm 1:Verlet, 2:Symplectic (default=1)" />
+            <parameter key="VerletSteps" value="40" comment="Verlet only: Number of steps to apply Euler timestepping (default=40)" />
+            <parameter key="Kernel" value="2" comment="Interaction Kernel 1:Cubic Spline, 2:Wendland (default=2)" />
+            <parameter key="ViscoTreatment" value="1" comment="Viscosity formulation 1:Artificial, 2:Laminar+SPS (default=1)" />
+            <parameter key="Visco" value="0.02" comment="Viscosity value" />
+            <parameter key="ViscoBoundFactor" value="1" comment="Multiply viscosity value with boundary (default=1)" />
+            <parameter key="DeltaSPH" value="0" comment="DeltaSPH value, 0.1 is the typical value, with 0 disabled (default=0)" />
+            <parameter key="#Shifting" value="0" comment="Shifting mode 0:None, 1:Ignore bound, 2:Ignore fixed, 3:Full (default=0)" />
+            <parameter key="#ShiftCoef" value="-2" comment="Coefficient for shifting computation (default=-2)" />
+            <parameter key="#ShiftTFS" value="1.5" comment="Threshold to detect free surface. Typically 1.5 for 2D and 2.75 for 3D (default=0)" />
+            <parameter key="RigidAlgorithm" value="1" comment="Rigid Algorithm 1:SPH, 2:DEM (default=1)" />
+            <parameter key="FtPause" value="0.0" comment="Time to freeze the floatings at simulation start (warmup) (default=0)" units_comment="seconds" />
+            <parameter key="CoefDtMin" value="0.05" comment="Coefficient to calculate minimum time step dtmin=coefdtmin*h/speedsound (default=0.05)" />
+            <parameter key="#DtIni" value="0.0001" comment="Initial time step (default=h/speedsound)" units_comment="seconds" />
+            <parameter key="#DtMin" value="0.00001" comment="Minimum time step (default=coefdtmin*h/speedsound)" units_comment="seconds" />
+            <parameter key="DtFixed" value="Dam2dDtFileData.txt" comment="Dt values are loaded from file (default=disabled)" />
+            <parameter key="DtAllParticles" value="0" comment="Velocity of particles used to calculate DT. 1:All, 0:Only fluid/floating (default=0)" />
+            <parameter key="TimeMax" value="1" comment="Time of simulation" units_comment="seconds" />
+            <parameter key="TimeOut" value="0.01" comment="Time out data" units_comment="seconds" />
+            <parameter key="IncZ" value="0.5" comment="Increase of Z+" units_comment="decimal" />
+            <parameter key="PartsOutMax" value="1" comment="%/100 of fluid particles allowed to be excluded from domain (default=1)" units_comment="decimal" />
+            <parameter key="RhopOutMin" value="700" comment="Minimum rhop valid (default=700)" units_comment="kg/m^3" />
+            <parameter key="RhopOutMax" value="1300" comment="Maximum rhop valid (default=1300)" units_comment="kg/m^3" />
+        </parameters>
+        <particles np="21001" nb="1001" nbf="1001" mkboundfirst="11" mkfluidfirst="1">
+            <fixed mkbound="0" mk="11" begin="0" count="1001" />
+            <fluid mkfluid="0" mk="1" begin="1001" count="20000" />
+        </particles>
+        <constants>
+            <gravity x="0" y="0" z="-9.81" units_comment="m/s^2" />
+            <cflnumber value="0.2" />
+            <gamma value="7" />
+            <rhop0 value="1000" units_comment="kg/m^3" />
+            <dp value="0.01" units_comment="metres (m)" />
+            <h value="1.4142135624E-002" units_comment="metres (m)" />
+            <b value="1.1155371429E+006" units_comment="metres (m)" />
+            <massbound value="1.0000000000E-001" units_comment="kg" />
+            <massfluid value="1.0000000000E-001" units_comment="kg" />
+        </constants>
+        <motion />
+    </execution>
+</case>

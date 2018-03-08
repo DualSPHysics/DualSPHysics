@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!-- *** DualSPHysics (27-12-2017) *** -->
+<!-- *** class: JSphInitialize *** -->
+<!------------------------------------------------------------------------------->
+<!------------------------------------------------------------------------------->
+<!-- *** Examples for Initialize *** -->
+<special>
+    <initialize>
+        <fluidvelocity mkfluid="0">
+            <direction x="1" y="0" z="0" />
+            <velocity v="2" comment="Uniform profile velocity" units_comment="m/s" />
+        </fluidvelocity>
+		<fluidvelocity mkfluid="1">
+			<direction x="1" y="0" z="0" />
+			<velocity2 v="1" v2="3" z="2" z2="3" comment="Linear profile velocity" units_comment="m/s" />
+		</fluidvelocity>
+		<fluidvelocity mkfluid="2">
+			<direction x="1" y="0" z="0" />
+			<velocity3 v="0" v2="0.608" v3="3" z="4" z2="4.5" z3="5" comment="Parabolic profile velocity" units_comment="m/s" />
+		</fluidvelocity>
+    </initialize>
+</special>

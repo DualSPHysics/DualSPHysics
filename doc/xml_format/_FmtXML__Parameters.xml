@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!-- *** DualSPHysics (08-08-2017) *** -->
+<!-- *** class: JSph (JSpaceEParms)  *** -->
+<!------------------------------------------------------------------------------->
+<!------------------------------------------------------------------------------->
+<!-- *** Example of available execution parameters. *** -->
+<execution>
+	<parameters>
+		<parameter key="PosDouble" value="1" comment="Precision in particle interaction 0:Simple, 1:Double, 2:Uses and saves double (default=0)" />
+		<parameter key="StepAlgorithm" value="1" comment="Step Algorithm 1:Verlet, 2:Symplectic (default=1)" />
+		<parameter key="VerletSteps" value="40" comment="Verlet only: Number of steps to apply Euler timestepping (default=40)" />
+		<parameter key="Kernel" value="2" comment="Interaction Kernel 1:Cubic Spline, 2:Wendland, 3:Gaussian (default=2)" />
+		<parameter key="ViscoTreatment" value="1" comment="Viscosity formulation 1:Artificial, 2:Laminar+SPS (default=1)" />
+		<parameter key="Visco" value="0.01" comment="Viscosity value" />
+		<parameter key="ViscoBoundFactor" value="1" comment="Multiply viscosity value with boundary (default=1)" />
+		<parameter key="DeltaSPH" value="0" comment="DeltaSPH value, 0.1 is the typical value, with 0 disabled (default=0)" />
+		<parameter key="#Shifting" value="0" comment="Shifting mode 0:None, 1:Ignore bound, 2:Ignore fixed, 3:Full (default=0)" />
+		<parameter key="#ShiftCoef" value="-2" comment="Coefficient for shifting computation (default=-2)" />
+		<parameter key="#ShiftTFS" value="1.5" comment="Threshold to detect free surface. Typically 1.5 for 2D and 2.75 for 3D (default=0)" />
+		<parameter key="RigidAlgorithm" value="1" comment="Rigid Algorithm 1:SPH, 2:DEM (default=1)" />
+		<parameter key="FtPause" value="0.0" comment="Time to freeze the floatings at simulation start (warmup) (default=0)" units_comment="seconds" />
+		<parameter key="CoefDtMin" value="0.05" comment="Coefficient to calculate minimum time step dtmin=coefdtmin*h/speedsound (default=0.05)" />
+		<parameter key="#DtIni" value="0.0001" comment="Initial time step (default=h/speedsound)" units_comment="seconds" />
+		<parameter key="#DtMin" value="0.00001" comment="Minimum time step (default=coefdtmin*h/speedsound)" units_comment="seconds" />
+		<parameter key="#DtFixed" value="DtFixed.dat" comment="Dt values are loaded from file (default=disabled)" />
+		<parameter key="DtAllParticles" value="0" comment="Velocity of particles used to calculate DT. 1:All, 0:Only fluid/floating (default=0)" />
+		<parameter key="TimeMax" value="1.5" comment="Time of simulation" units_comment="seconds" />
+		<parameter key="TimeOut" value="0.01" comment="Time out data" units_comment="seconds" />
+		<parameter key="RhopOutMin" value="700" comment="Minimum rhop valid (default=700)" units_comment="kg/m^3" />
+		<parameter key="RhopOutMax" value="1300" comment="Maximum rhop valid (default=1300)" units_comment="kg/m^3" />
+		<parameter key="PartsOutMax" value="1" comment="%/100 of fluid particles allowed to be excluded from domain (default=1)" units_comment="decimal" />
+		
+		<parameter key="IncZ" value="0.5" comment="Increase of Z+ (default=0)" units_comment="decimal" />
+        <parameter key="DomainFixed" value="0:0:0:1:1:1" comment="The domain is fixed with the specified values (xmin:ymin:zmin:xmax:ymax:zmax)" units_comment="metres (m)" />
+        <parameter key="DomainFixedXmin" value="0" comment="The domain is fixed in the specified limit (default=not applied)" units_comment="metres (m)" />
+        <parameter key="DomainFixedXmax" value="0" comment="The domain is fixed in the specified limit (default=not applied)" units_comment="metres (m)" />
+        <parameter key="DomainFixedYmin" value="0" comment="The domain is fixed in the specified limit (default=not applied)" units_comment="metres (m)" />
+        <parameter key="DomainFixedYmax" value="0" comment="The domain is fixed in the specified limit (default=not applied)" units_comment="metres (m)" />
+        <parameter key="DomainFixedZmin" value="0" comment="The domain is fixed in the specified limit (default=not applied)" units_comment="metres (m)" />
+        <parameter key="DomainFixedZmax" value="0" comment="The domain is fixed in the specified limit (default=not applied)" units_comment="metres (m)" />
+        <parameter key="DomainParticles" value="0:0:0:1:1:1" comment="The domain is fixed as a function of the initial particle limits plus specified values (xmin:ymin:zmin:xmax:ymax:zmax)" units_comment="metres (m)" />
+        <parameter key="DomainParticlesXmin" value="-1" comment="The domain is fixed as a function of the initial particle limits plus specified value (default=0)" units_comment="metres (m)" />
+        <parameter key="DomainParticlesXmax" value="-1" comment="The domain is fixed as a function of the initial particle limits plus specified value (default=0)" units_comment="metres (m)" />
+        <parameter key="DomainParticlesYmin" value="-1" comment="The domain is fixed as a function of the initial particle limits plus specified value (default=0)" units_comment="metres (m)" />
+        <parameter key="DomainParticlesYmax" value="1" comment="The domain is fixed as a function of the initial particle limits plus specified value (default=0)" units_comment="metres (m)" />
+        <parameter key="DomainParticlesZmin" value="1" comment="The domain is fixed as a function of the initial particle limits plus specified value (default=0)" units_comment="metres (m)" />
+        <parameter key="DomainParticlesZmax" value="1" comment="The domain is fixed as a function of the initial particle limits plus specified value (default=0)" units_comment="metres (m)" />
+  
+        <parameter key="XPeriodicIncZ" value="0" comment="Increase of Z with periodic BC in axis X" units_comment="metres (m)" />
+        <parameter key="XPeriodicIncY" value="0" comment="Increase of Y with periodic BC in axis X" units_comment="metres (m)" />
+        <parameter key="YPeriodicIncX" value="0" comment="Increase of X with periodic BC in axis Y" units_comment="metres (m)" />
+        <parameter key="YPeriodicIncZ" value="0" comment="Increase of Z with periodic BC in axis Y" units_comment="metres (m)" />
+        <parameter key="ZPeriodicIncX" value="0" comment="Increase of X with periodic BC in axis Z" units_comment="metres (m)" />
+        <parameter key="ZPeriodicIncY" value="0" comment="Increase of Y with periodic BC in axis Z" units_comment="metres (m)" />
+        <parameter key="XYPeriodic" value="0" comment="Periodic BC in axes X and Y" units_comment="metres (m)" />
+        <parameter key="XZPeriodic" value="0" comment="Periodic BC in axes X and Z" units_comment="metres (m)" />
+        <parameter key="YZPeriodic" value="0" comment="Periodic BC in axes Y and Z" units_comment="metres (m)" />
+	</parameters>
+</execution>
+
+
+

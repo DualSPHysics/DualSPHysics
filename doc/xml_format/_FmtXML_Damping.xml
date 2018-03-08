@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!-- *** DualSPHysics (08-08-2017) *** -->
+<!-- *** class: JDamping *** -->
+<!------------------------------------------------------------------------------->
+<!------------------------------------------------------------------------------->
+<!-- *** Example for Damping *** -->
+<special>
+    <damping>
+        <dampingzone>
+            <limitmin x="4" y="0" z="0" comment="Location where minimum reduction is applied" />
+            <limitmax x="4.5" y="0" z="0" comment="Location where maximum reduction is applied" />
+            <overlimit value="1" comment="The scope of maximum reduction over limitmax (def=0)" />
+            <redumax value="10" comment="Maximum reduction in location limitmax (def=10)" />
+            <factorxyz x="1" y="1" z="1" comment="Application factor in components (def x=1,y=1,z=1)" />
+        </dampingzone>
+    </damping>
+</special>
+
+
+
