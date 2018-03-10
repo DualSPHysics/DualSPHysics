@@ -915,7 +915,7 @@ void JSphCpuSingle::Run(std::string appname,JCfgRun *cfg,JLog2 *log){
     partoutstop=(Np<NpMinimum || !Np);
     if(TimeStep>=TimePartNext || partoutstop){
       if(partoutstop){
-        Log->Print("\n**** Particles OUT limit reached...\n");
+        Log->PrintWarning("Particles OUT limit reached...");
         TimeMax=TimeStep;
       }
       SaveData();
@@ -992,12 +992,14 @@ void JSphCpuSingle::SaveData(){
 void JSphCpuSingle::FinishRun(bool stop){
   float tsim=TimerSim.GetElapsedTimeF()/1000.f,ttot=TimerTot.GetElapsedTimeF()/1000.f;
   JSph::ShowResume(stop,tsim,ttot,true,"");
+  Log->Print(" ");
   string hinfo=";RunMode",dinfo=string(";")+RunMode;
   if(SvTimers){
     ShowTimers();
     GetTimersInfo(hinfo,dinfo);
+    Log->Print(" ");
   }
-  Log->Print(" ");
+  Log->PrintWarningList();
   if(SvRes)SaveRes(tsim,ttot,hinfo,dinfo);
 }
 

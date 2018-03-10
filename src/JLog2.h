@@ -31,6 +31,7 @@
 //:#   prefijo. (21-02-2017)
 //:# - New attribute CsvSepComa to configure separator in CSV files. (24-10-2017)
 //:# - Se incluye DirDataOut para facilitar su uso en distintos ambitos.. (19-02-2017)
+//:# - Funciones para gestion especial de warnings. (10-03-2018)
 //:#############################################################################
 
 /// \file JLog2.h \brief Declares the class \ref JLog2.
@@ -62,6 +63,9 @@ protected:
   bool MpiRun;
   int MpiRank,MpiLaunch;
   TpMode_Out ModeOutDef;
+
+  std::vector<std::string> Warnings; ///<List of warnings.
+
   //-General output configuration.
   bool CsvSepComa;         ///<Separator character in CSV files (0=semicolon, 1=coma).
   std::string DirOut;      ///<Specifies the general output directory.
@@ -90,6 +94,14 @@ public:
   void PrintpDbg(const std::string &prefix,const std::string &tx,TpMode_Out mode=Out_Default){ Printp(prefix,tx,mode,true); }
   void Printfp(const std::string &prefix,const char *format,...);
   void PrintfpDbg(const std::string &prefix,const char *format,...);
+
+  //-Warning system.
+  void PrintWarning(const std::string &tx,TpMode_Out mode=Out_Default,bool flush=false);
+  void PrintfWarning(const char *format,...);
+  unsigned WarningCount()const{ return(unsigned(Warnings.size())); }
+  void PrintWarningList(const std::string &txhead,const std::string &txfoot,TpMode_Out mode=Out_Default,bool flush=false);
+  void PrintWarningList(TpMode_Out mode=Out_Default,bool flush=false);
+  
 };
 
 #endif

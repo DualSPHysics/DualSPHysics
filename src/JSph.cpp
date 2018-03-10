@@ -133,6 +133,7 @@ void JSph::InitVars(){
   DtIni=DtMin=0; CoefDtMin=0; DtAllParticles=false;
   PartsOutMax=0;
   NpMinimum=0;
+  PartsOutWrn=1; PartsOutTotWrn=10;
 
   SvData=byte(SDAT_Binx)|byte(SDAT_Info);
   SvRes=false;
@@ -190,6 +191,7 @@ void JSph::InitVars(){
   TotalNp=0; IdMax=0;
 
   DtModif=0;
+  DtModifWrn=1;
   PartDtMin=DBL_MAX; PartDtMax=-DBL_MAX;
 
   MaxMemoryCpu=MaxMemoryGpu=MaxParticles=MaxCells=0;
@@ -544,7 +546,7 @@ void JSph::LoadCaseConfig(){
   if(eparms.Exists(key="DomainFixedZmax"))ConfigDomainFixedValue(key,eparms.GetValueDouble(key));
 
   //-Predefined constantes.
-  if(ctes.GetEps()!=0)Log->Print("\n*** Attention: Eps value is not used (this correction is deprecated).\n");
+  if(ctes.GetEps()!=0)Log->PrintWarning("Eps value is not used (this correction is deprecated).");
   H=(float)ctes.GetH();
   CteB=(float)ctes.GetB();
   Gamma=(float)ctes.GetGamma();
@@ -1129,7 +1131,7 @@ void JSph::ConfigCellDivision(){
   Log->Print(string("MapCells=(")+fun::Uint3Str(OrderDecode(Map_Cells))+")");
   //-Creates VTK file with map cells.
   if(SaveMapCellsVtkSize()<1024*1024*10)SaveMapCellsVtk(Scell);
-  else Log->Print("\n*** Attention: File CfgInit_MapCells.vtk was not created because number of cells is too high.\n");
+  else Log->PrintWarning("File CfgInit_MapCells.vtk was not created because number of cells is too high.");
 }
 
 //==============================================================================
@@ -1503,6 +1505,24 @@ void JSph::SaveData(unsigned npok,const unsigned *idp,const tdouble3 *pos,const 
     PartOut+=nout;
     Log->Printf("  Particles out: %u  (total: %u)",nout,PartOut);
   }
+
+  //-Cheks number of excluded particles.
+  if(nout){
+    //-Cheks number of excluded particles in one PART.
+    if(nout>=float(infoplus->npf)*(float(PartsOutWrn)/100.f)){
+      Log->PrintfWarning("More than %d%% of current fluid particles were excluded in one PART (t:%g, nstep:%u)",PartsOutWrn,TimeStep,Nstep);
+      if(PartsOutWrn==1)PartsOutWrn=2;
+      else if(PartsOutWrn==2)PartsOutWrn=5;
+      else if(PartsOutWrn==5)PartsOutWrn=10;
+      else PartsOutWrn+=10;
+    }
+    //-Cheks number of total excluded particles.
+    const unsigned noutt=GetOutPosCount()+GetOutRhopCount()+GetOutMoveCount();
+    if(PartsOutTotWrn<100 && noutt>=float(TotalNp)*(float(PartsOutTotWrn)/100.f)){
+      Log->PrintfWarning("More than %d%% of particles were excluded (t:%g, nstep:%u)",PartsOutTotWrn,TimeStep,Nstep);
+      PartsOutTotWrn+=10;
+    }
+  }  
 
   if(SvDomainVtk)SaveDomainVtk(ndom,vdom);
   if(SaveDt)SaveDt->SaveData();

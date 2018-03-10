@@ -1965,7 +1965,13 @@ double JSphCpu::DtVariable(bool final){
   //-dt new value of time step.
   double dt=double(CFLnumber)*min(dt1,dt2);
   if(DtFixed)dt=DtFixed->GetDt(float(TimeStep),float(dt));
-  if(dt<double(DtMin)){ dt=double(DtMin); DtModif++; }
+  if(dt<double(DtMin)){ 
+    dt=double(DtMin); DtModif++;
+    if(DtModif>=DtModifWrn){
+      Log->PrintfWarning("%d DTs adjusted to DtMin (t:%g, nstep:%u)",DtModif,TimeStep,Nstep);
+      DtModifWrn*=10;
+    }
+  }
   if(SaveDt && final)SaveDt->AddValues(TimeStep,dt,dt1*CFLnumber,dt2*CFLnumber,AceMax,ViscDtMax,VelMax);
   return(dt);
 }
@@ -2173,7 +2179,7 @@ void JSphCpu::InitFloating(){
 //==============================================================================
 void JSphCpu::ShowTimers(bool onlyfile){
   JLog2::TpMode_Out mode=(onlyfile? JLog2::Out_File: JLog2::Out_ScrFile);
-  Log->Print("\n[CPU Timers]",mode);
+  Log->Print("[CPU Timers]",mode);
   if(!SvTimers)Log->Print("none",mode);
   else for(unsigned c=0;c<TimerGetCount();c++)if(TimerIsActive(c))Log->Print(TimerToText(c),mode);
 }

@@ -60,9 +60,9 @@ typedef struct StrAppInfo{
   string Date;
   bool ModeMK65k;
   StrAppInfo(){
-    MainName="DualSPHysics4"; MainVer="v4.2.032";
+    MainName="DualSPHysics4"; MainVer="v4.2.033";
     //SubName="UserVersion"; SubVer="v1.0";
-    Date="08-03-2018";
+    Date="10-03-2018";
     #ifdef CODE_SIZE4
       ModeMK65k=true;
     #else

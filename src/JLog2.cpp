@@ -21,6 +21,7 @@
 #include "JLog2.h"
 #include "Functions.h"
 #include <stdarg.h>
+#include <algorithm>
 
 #pragma warning(disable : 4996) //Cancels sprintf() deprecated.
 
@@ -59,6 +60,7 @@ void JLog2::Reset(){
     if(Pf->is_open())Pf->close();
     delete Pf; Pf=NULL;
   }
+  Warnings.clear();
   CsvSepComa=false;
   DirOut="";
   DirDataOut="";
@@ -215,6 +217,62 @@ void JLog2::PrintfpDbg(const std::string &prefix,const char *format,...){
     if(rsize<0)Printp(prefix,"[***ERROR: Text is too long***]",JLog2::Out_Default,true);
   }
   va_end(args);
+}
+  
+//==============================================================================
+/// Visualises and stores warning.
+//==============================================================================
+void JLog2::PrintWarning(const std::string &tx,TpMode_Out mode,bool flush){
+  Warnings.push_back(tx);
+  Print(string("\n*** WARNING: ")+tx+"\n",mode,flush);
+}
+  
+//==============================================================================
+/// Visualises and stores warning.
+//==============================================================================
+void JLog2::PrintfWarning(const char *format,...){
+  const int SIZE=1024;
+  char buffer[SIZE+1];
+  va_list args;
+  va_start(args,format);
+  int size=vsnprintf(buffer,SIZE,format,args);
+  if(size>=0 && size<SIZE)PrintWarning(buffer);
+  else{
+    int rsize=-1;
+    int size2=SIZE+SIZE*2;
+    for(int c=0;c<10 && rsize<0;c++,size2+=SIZE*2){
+      char *buff2=new char[size2+1];
+      rsize=vsnprintf(buff2,size2,format,args);
+      if(rsize>=0)PrintWarning(buff2);
+      delete[] buff2;
+    }
+    if(rsize<0)Print("[***ERROR: Text is too long***]",Out_Default,true);
+  }
+  va_end(args);
+}
+  
+//==============================================================================
+/// Visualises list of warnings.
+//==============================================================================
+void JLog2::PrintWarningList(const std::string &txhead,const std::string &txfoot,TpMode_Out mode,bool flush){
+  const unsigned nw=WarningCount();
+  //Print(fun::PrintStr("[WARNINGS #:%u]",nw),mode,flush);
+  if(!txhead.empty())Print(txhead,mode,flush);
+  string fmt=fun::PrintStr("%%0%dd. ",std::max(1u,unsigned(fun::UintStr(nw).size())));
+  for(unsigned c=0;c<nw;c++){
+    string pref=fun::PrintStr(fmt.c_str(),c+1);
+    Print(pref+Warnings[c],mode,flush);
+  }
+  if(!txfoot.empty())Print(txfoot,mode,flush);
+}
+  
+//==============================================================================
+/// Visualises list of warnings.
+//==============================================================================
+void JLog2::PrintWarningList(TpMode_Out mode,bool flush){
+  const unsigned nw=WarningCount();
+  //if(nw)PrintWarningList(fun::PrintStr("[WARNINGS #:%u]",nw)," ",mode,flush);
+  if(nw)PrintWarningList("[WARNINGS]"," ",mode,flush);
 }
 
 

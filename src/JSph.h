@@ -199,6 +199,8 @@ protected:
 
   float PartsOutMax;         ///<Allowed percentage of fluid particles out of the domain. | Porcentaje maximo de particulas excluidas permitidas.                                  
   unsigned NpMinimum;        ///<Minimum number of particles allowed.                     | Numero minimo de particulas permitidas.                                                
+  unsigned PartsOutWrn;      ///<Limit percentage for warning generation about number of excluded particles in one PART.
+  unsigned PartsOutTotWrn;   ///<Limit percentage for warning generation about total excluded particles.
 
   //-Configuration for result output.
   bool CsvSepComa;           ///<Separator character in CSV files (0=semicolon, 1=coma).
@@ -318,6 +320,7 @@ protected:
 
   //-Monitors dt value.
   unsigned DtModif;       ///<Number of modifications on  dt computed when it is too low. | Numero de modificaciones del dt calculado por ser demasiado bajo.         
+  unsigned DtModifWrn;    ///<Limit number for warning generation.
   double PartDtMin;       ///<Minimum value of dt in the current PART. | Valor minimo de dt en el PART actual.
   double PartDtMax;       ///<Maximum value of dt in the current PART. | Valor maximo de dt en el PART actual.
 
