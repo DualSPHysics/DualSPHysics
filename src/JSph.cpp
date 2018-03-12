@@ -1326,6 +1326,8 @@ void JSph::ConfigSaveData(unsigned piece,unsigned pieces,std::string div){
     else if(div=="Y")DataBi4->ConfigSimDiv(JPartDataBi4::DIV_Y);
     else if(div=="Z")DataBi4->ConfigSimDiv(JPartDataBi4::DIV_Z);
     else RunException(met,"The division configuration is invalid.");
+    if(SvData&SDAT_Binx)Log->AddFileInfo(DirDataOut+"Part_????.bi4","Binary file with particle data in different instants.");
+    if(SvData&SDAT_Binx)Log->AddFileInfo(DirDataOut+"PartInfo.ibi4","Binary file with execution information for each instant (input for PartInfo program).");
   }
   //-Configures object to store excluded particles.  
   //-Configura objeto para grabacion de particulas excluidas.
@@ -1335,6 +1337,7 @@ void JSph::ConfigSaveData(unsigned piece,unsigned pieces,std::string div){
     DataOutBi4->ConfigParticles(CaseNp,CaseNfixed,CaseNmoving,CaseNfloat,CaseNfluid);
     DataOutBi4->ConfigLimits(OrderDecode(MapRealPosMin),OrderDecode(MapRealPosMax),(RhopOut? RhopOutMin: 0),(RhopOut? RhopOutMax: 0));
     DataOutBi4->SaveInitial();
+    Log->AddFileInfo(DirDataOut+"PartOut_???.obi4","Binary file with particles excluded during simulation (input for PartVtkOut program).");
   }
   //-Configures object to store data of floatings.
   //-Configura objeto para grabacion de datos de floatings.
@@ -1343,6 +1346,7 @@ void JSph::ConfigSaveData(unsigned piece,unsigned pieces,std::string div){
     DataFloatBi4->Config(AppName,DirDataOut,FtCount);
     for(unsigned cf=0;cf<FtCount;cf++)DataFloatBi4->AddHeadData(cf,FtObjs[cf].mkbound,FtObjs[cf].begin,FtObjs[cf].count,FtObjs[cf].mass,FtObjs[cf].radius);
     DataFloatBi4->SaveInitial();
+    Log->AddFileInfo(DirDataOut+"PartFloat.fbi4","Binary file with floating body information for each instant (input for FloatingInfo program).");
   }
   //-Creates object to store excluded particles until recordering. 
   //-Crea objeto para almacenar las particulas excluidas hasta su grabacion.
@@ -1561,7 +1565,9 @@ void JSph::SaveInitialDomainVtk()const{
     vdomf3[4]=ToTFloat3(Map_PosMin);
     vdomf3[5]=ToTFloat3(Map_PosMax);
   }
-  JFormatFiles2::SaveVtkBoxes(DirOut+"CfgInit_Domain.vtk",nbox,vdomf3,0);
+  const string file=DirOut+"CfgInit_Domain.vtk";
+  Log->AddFileInfo(file,"Saves boxes that represent the limits of the case and the simulation domain limits.");
+  JFormatFiles2::SaveVtkBoxes(file,nbox,vdomf3,0);
   delete[] vdomf3;
 }
 
@@ -1608,7 +1614,9 @@ void JSph::SaveMapCellsVtk(float scell)const{
     p1=TDouble3(pmin.x,pmin.y,pmax.z);
     for(unsigned cy=0;cy<=cells.y;cy++)shapes.push_back(JFormatFiles2::DefineShape_Line(p0+TDouble3(0,scell*cy,0),p1+TDouble3(0,scell*cy,0),2,0));
   }
-  JFormatFiles2::SaveVtkShapes(DirOut+"CfgInit_MapCells.vtk","axis","",shapes);
+  const string file=DirOut+"CfgInit_MapCells.vtk";
+  Log->AddFileInfo(file,"Saves the cell division of the simulation domain.");
+  JFormatFiles2::SaveVtkShapes(file,"axis","",shapes);
 }
 
 //==============================================================================
@@ -1637,7 +1645,8 @@ void JSph::GetResInfo(float tsim,float ttot,const std::string &headplus,const st
 //==============================================================================
 void JSph::SaveRes(float tsim,float ttot,const std::string &headplus,const std::string &detplus){
   const char* met="SaveRes";
-  string fname=DirOut+"Run.csv";
+  const string fname=DirOut+"Run.csv";
+  Log->AddFileInfo(fname,"One line CSV file with execution parameters, execution time, simulation steps, memory used...");
   ofstream pf;
   pf.open(fname.c_str());
   if(pf){

@@ -22,6 +22,7 @@
 #include "JLog2.h"
 #include "JXml.h"
 #include "Functions.h"
+#include "JSaveCsv2.h"
 #include <cfloat>
 #include <fstream>
 #include <iostream>
@@ -111,43 +112,42 @@ void JSaveDt::VisuConfig(std::string txhead,std::string txfoot){
 //==============================================================================
 void JSaveDt::SaveFileValues(){
   const char met[]="SaveFileValues";
-  const bool csvsepcoma=Log->GetCsvSepComa();
-  const char csvsep=(csvsepcoma? ',': ';');
-  string file=Log->GetDirOut()+"DtInfo.csv";
-  const bool fexists=fun::FileExists(file);
-  std::fstream pf;
-  if(fexists)pf.open(file.c_str(),ios::binary|ios::out|ios::in|ios::app);
-  else pf.open(file.c_str(),ios::binary|ios::out);
-  if(!pf)RunException(met,"File could not be opened.",file);
-  if(fexists)pf.seekp(0,pf.end);
-  else{
-    pf << "Time" << csvsep << "Values";
-    string tex;
-    tex="Dtf";       pf << fun::PrintStrCsv(csvsepcoma,";%s_mean;%s_min;%s_max",tex.c_str(),tex.c_str(),tex.c_str());
-    tex="Dt1";       pf << fun::PrintStrCsv(csvsepcoma,";%s_mean;%s_min;%s_max",tex.c_str(),tex.c_str(),tex.c_str());
-    tex="Dt2";       pf << fun::PrintStrCsv(csvsepcoma,";%s_mean;%s_min;%s_max",tex.c_str(),tex.c_str(),tex.c_str());
-    if(FullInfo){
-      tex="AceMax";    pf << fun::PrintStrCsv(csvsepcoma,";%s_mean;%s_min;%s_max",tex.c_str(),tex.c_str(),tex.c_str());
-      tex="ViscDtMax"; pf << fun::PrintStrCsv(csvsepcoma,";%s_mean;%s_min;%s_max",tex.c_str(),tex.c_str(),tex.c_str());
-      tex="VelMax";    pf << fun::PrintStrCsv(csvsepcoma,";%s_mean;%s_min;%s_max",tex.c_str(),tex.c_str(),tex.c_str());
-    }
-    pf << endl;
-    if(pf.fail())RunException(met,"File writing failure.",file);
+  const bool firstsv=FileDtInfo.empty();
+  if(firstsv){
+    FileDtInfo=Log->GetDirOut()+"DtInfo.csv";
+    Log->AddFileInfo(FileDtInfo,"Saves statistical information about DT values.");
   }
+  jcsv::JSaveCsv2 scsv(FileDtInfo,!firstsv,Log->GetCsvSepComa());
+  //-Saves head.
+  if(firstsv){
+    scsv.SetHead();
+    scsv << "Time;Values";
+    scsv << "Dtf_mean;Dtf_min;Dtf_max";
+    scsv << "Dt1_mean;Dt1_min;Dt1_max";
+    scsv << "Dt2_mean;Dt2_min;Dt2_max";
+    if(FullInfo){
+      scsv << "AceMax_mean;AceMax_min;AceMax_max";
+      scsv << "ViscDtMax_mean;ViscDtMax_min;ViscDtMax_max";
+      scsv << "VelMax_mean;VelMax_min;VelMax_max";
+    }
+    scsv << jcsv::Endl();
+  }
+  //-Saves data.
+  scsv.SetData();
+  scsv << jcsv::Fmt(jcsv::TpDouble1,"%20.12E");
   for(unsigned c=0;c<Count;c++){
     StValue v;
-    v=DtFinal[c];    pf << fun::PrintStrCsv(csvsepcoma,"%20.12E;%u;%20.12E;%20.12E;%20.12E",v.tini,v.num,v.vmean,v.vmin,v.vmax);
-    v=Dt1[c];        pf << fun::PrintStrCsv(csvsepcoma,";%20.12E;%20.12E;%20.12E",v.vmean,v.vmin,v.vmax);
-    v=Dt2[c];        pf << fun::PrintStrCsv(csvsepcoma,";%20.12E;%20.12E;%20.12E",v.vmean,v.vmin,v.vmax);
+    v=DtFinal[c];    scsv << v.tini << v.num << v.vmean << v.vmin << v.vmax;
+    v=Dt1[c];        scsv << v.vmean << v.vmin << v.vmax;
+    v=Dt2[c];        scsv << v.vmean << v.vmin << v.vmax;
     if(FullInfo){
-      v=AceMax[c];     pf << fun::PrintStrCsv(csvsepcoma,";%20.12E;%20.12E;%20.12E",v.vmean,v.vmin,v.vmax);
-      v=ViscDtMax[c];  pf << fun::PrintStrCsv(csvsepcoma,";%20.12E;%20.12E;%20.12E",v.vmean,v.vmin,v.vmax);
-      v=VelMax[c];     pf << fun::PrintStrCsv(csvsepcoma,";%20.12E;%20.12E;%20.12E",v.vmean,v.vmin,v.vmax);
+      v=AceMax[c];     scsv << v.vmean << v.vmin << v.vmax;
+      v=ViscDtMax[c];  scsv << v.vmean << v.vmin << v.vmax;
+      v=VelMax[c];     scsv << v.vmean << v.vmin << v.vmax;
     }
-    pf << endl;
+    scsv << jcsv::Endl();
   }
-  if(pf.fail())RunException(met,"File writing failure.",file);
-  pf.close();
+  scsv.SaveData();
   Count=0;
 }
 
@@ -166,24 +166,21 @@ void JSaveDt::SaveFileValuesEnd(){
 //==============================================================================
 void JSaveDt::SaveFileAllDts(){
   const char met[]="SaveFileAllDts";
-  const bool csvsepcoma=Log->GetCsvSepComa();
-  const char csvsep=(csvsepcoma? ',': ';');
-  string file=Log->GetDirOut()+"DtAllInfo.csv";
-  const bool fexists=fun::FileExists(file);
-  std::fstream pf;
-  if(fexists)pf.open(file.c_str(),ios::binary|ios::out|ios::in|ios::app);
-  else pf.open(file.c_str(),ios::binary|ios::out);
-  if(!pf)RunException(met,"File could not be opened.",file);
-  if(fexists)pf.seekp(0,pf.end);
-  else{
-    pf << "Time" << csvsep << "Dtf" << endl;
-    if(pf.fail())RunException(met,"File writing failure.",file);
+  const bool firstsv=FileDtAllInfo.empty();
+  if(firstsv){
+    FileDtAllInfo=Log->GetDirOut()+"DtAllInfo.csv";
+    Log->AddFileInfo(FileDtAllInfo,"Saves DT values for each simulation step.");
   }
-  for(unsigned c=0;c<CountAllDts;c++){
-    pf << fun::PrintStrCsv(csvsepcoma,"%20.12E;%20.12E",AllDts[c].x,AllDts[c].y) << endl;
+  jcsv::JSaveCsv2 scsv(FileDtAllInfo,!firstsv,Log->GetCsvSepComa());
+  //-Saves head.
+  if(firstsv){
+    scsv.SetHead();
+    scsv << "Time;Dtf" << jcsv::Endl();
   }
-  if(pf.fail())RunException(met,"File writing failure.",file);
-  pf.close();
+  //-Saves data.
+  scsv.SetData();
+  scsv << jcsv::Fmt(jcsv::TpDouble1,"%20.12E");
+  for(unsigned c=0;c<CountAllDts;c++)scsv << AllDts[c].x << AllDts[c].y << jcsv::Endl();
   CountAllDts=0;
 }
 

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<!-- *** DualSPHysics (08-08-2017) *** -->
+<!-- *** DualSPHysics (11-03-2018) *** -->
 <!-- *** class: JWaveAwasZsurf *** -->
 <!------------------------------------------------------------------------------->
 <!------------------------------------------------------------------------------->
@@ -20,7 +20,7 @@
 				<gaugezmax value="0.5" comment="Maximum position in Z to measure free-surface water (default=domain limits)" />
 				<gaugedp value="0.25" comment="Resolution to measure free-surface water, it uses Dp*gaugedp (default=0.1)" />
 				<_coefmasslimit value="0.4" comment="Coefficient to calculate mass of free-surface (default=0.5 on 3D and 0.4 on 2D)" />
-				<savedata value="1" comment="Saves CSV with information 1:by part, 2:by step (default=0)" />
+				<savedata value="1" comment="Saves CSV with information 1:by part, 2:more information, 3:by step (default=0)" />
 				<limitace value="2" comment="Factor to limit maximum value of acceleration, with 0 disabled (default=2)" />
 				<correction coefstroke="1.8" coefperiod="1" powerfunc="3" comment="Drift correction configuration (default=no applied)" />
 			</awas_zsurf>

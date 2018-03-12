@@ -56,6 +56,14 @@ class JLog2 : protected JObject
 {
 public:
   typedef enum{ Out_Default=4,Out_ScrFile=3,Out_File=2,Out_Screen=1,Out_None=0 }TpMode_Out;
+
+  ///Structure to save file descriptions.
+  typedef struct StrFileInfo{
+    std::string file;
+    std::string info;
+    StrFileInfo(const std::string &xfile,const std::string &xinfo){ file=xfile; info=xinfo; }
+  }StFileInfo;
+
 protected:
   std::string FileName;
   std::ofstream *Pf;
@@ -65,6 +73,8 @@ protected:
   TpMode_Out ModeOutDef;
 
   std::vector<std::string> Warnings; ///<List of warnings.
+
+  std::vector<StFileInfo> FileInfo; ///<List of file descriptions.
 
   //-General output configuration.
   bool CsvSepComa;         ///<Separator character in CSV files (0=semicolon, 1=coma).
@@ -96,12 +106,19 @@ public:
   void PrintfpDbg(const std::string &prefix,const char *format,...);
 
   //-Warning system.
+  void AddWarning(const std::string &tx);
   void PrintWarning(const std::string &tx,TpMode_Out mode=Out_Default,bool flush=false);
   void PrintfWarning(const char *format,...);
   unsigned WarningCount()const{ return(unsigned(Warnings.size())); }
   void PrintWarningList(const std::string &txhead,const std::string &txfoot,TpMode_Out mode=Out_Default,bool flush=false);
   void PrintWarningList(TpMode_Out mode=Out_Default,bool flush=false);
-  
+
+  //-File description.
+  void AddFileInfo(std::string fname,const std::string &finfo);
+  unsigned FilesCount()const{ return(unsigned(FileInfo.size())); }
+  void PrintFilesList(const std::string &txhead,const std::string &txfoot,TpMode_Out mode=Out_Default,bool flush=false);
+  void PrintFilesList(TpMode_Out mode=Out_Default,bool flush=false);
+
 };
 
 #endif

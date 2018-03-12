@@ -27,6 +27,7 @@
 //:# - New attribute CsvSepComa to configure separator in CSV files. (24-10-2017)
 //:# - New improved code to simplify CSV file creation. (08-11-2017)
 //:# - Error corregido: Reescribia fichero cuando ya estaba cerrado pos SaveData(). (02-03-2018)
+//:# - Opcion para activar o no el uso de SetSeparators((). (12-03-2018)
 //:#############################################################################
 
 /// \file JSaveCsv2.h \brief Declares the class \ref JSaveCsv2.
@@ -94,6 +95,25 @@ public:
   Sep(unsigned count=1):Count(count){};
 };
 
+//##############################################################################
+//# AutoSepOn
+//##############################################################################
+/// \brief Class to enable auto separator change according configuration.
+
+class AutoSepOn{
+public:
+  AutoSepOn(){};
+};
+
+//##############################################################################
+//# AutoSepOff
+//##############################################################################
+/// \brief Class to disables auto separator change according configuration.
+
+class AutoSepOff{
+public:
+  AutoSepOff(){};
+};
 
 //##############################################################################
 //# Endl
@@ -122,6 +142,8 @@ private:
   bool FileError;
   bool FirstSaveData;
 
+  bool AutoSepEnable; ///<Enable or disable auto separator change according configuration (def=true).
+
   static const unsigned SizeFmt=18;  ///<Number of different formats.
   std::string FmtDefault[SizeFmt];   ///<Default formats.
   std::string FmtCurrent[SizeFmt];   ///<Current formats.
@@ -133,11 +155,11 @@ private:
   bool DataLineEmpty;
 
   void InitFmt();
-  void AddStr(const std::string &tx);
+  void AddStr(std::string tx);
   void AddSeparator(unsigned count);
   void AddEndl();
   void Save(const std::string &tx);
-  void SetSeparators(std::string &tx);
+  void SetSeparators(std::string &tx)const;
 
 public:
   JSaveCsv2(std::string fname,bool app,bool csvsepcoma);
@@ -156,6 +178,8 @@ public:
   std::string ToStr(const char *format,...)const;
 
   JSaveCsv2& operator <<(const Sep &obj);
+  JSaveCsv2& operator <<(const AutoSepOn &obj);
+  JSaveCsv2& operator <<(const AutoSepOff &obj);
   JSaveCsv2& operator <<(const Endl &obj);
   JSaveCsv2& operator <<(const Fmt &obj);
 

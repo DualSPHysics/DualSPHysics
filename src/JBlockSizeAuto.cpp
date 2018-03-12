@@ -21,6 +21,7 @@
 #include "JBlockSizeAuto.h"
 #include "Functions.h"
 #include "JLog2.h"
+#include "JSaveCsv2.h"
 #include <climits>
 #include <cfloat>
 #include <cstring>
@@ -123,44 +124,37 @@ void JBlockSizeAutoKer::AllocateInfoData(unsigned nlines){
 //==============================================================================
 void JBlockSizeAutoKer::SaveFileInfoData(){ 
   const char* met="SaveFileInfoData";
-  const bool csvsepcoma=Log->GetCsvSepComa();
-  const char csvsep=(csvsepcoma? ',': ';');
-  const string fname=Log->GetDirOut()+Name+".csv";
-  fstream pf;
-  if(InfoDataSaved)pf.open(fname.c_str(),ios::binary|ios::out|ios::in|ios::app);
-  else pf.open(fname.c_str(),ios::binary|ios::out);
-  if(!pf)RunException(met,"File could not be opened.",fname);
-  if(InfoDataSaved)pf.seekp(0,pf.end);
-  else{//-Saves head of file.
-    //Step;Time;Bs;Time_X;Mexp_X;Mtot_X
-    string head="Step;Time;Bs";
-    for(int ct=0;ct<BsNum;ct++)head=head+fun::PrintStr(";Time_%d",BsMin+BsInc*ct);
-    for(int ct=0;ct<BsNum;ct++)head=head+fun::PrintStr(";Mexp_%d%%",BsMin+BsInc*ct);
-    for(int ct=0;ct<BsNum;ct++)head=head+fun::PrintStr(";Mtot_%d%%",BsMin+BsInc*ct);
-    head=fun::StrCsvSep(csvsepcoma,head)+"\n";
-    pf.write(head.c_str(),head.size());
+  const bool firstsv=!InfoDataSaved;
+  const string file=Log->GetDirOut()+Name+".csv";
+  if(firstsv)Log->AddFileInfo(file,"Saves information from the automatic block size calculation.");
+  jcsv::JSaveCsv2 scsv(file,!firstsv,Log->GetCsvSepComa());
+  //-Saves head.
+  if(firstsv){
+    scsv.SetHead();
+    scsv << "Step;Time;Bs";
+    for(int ct=0;ct<BsNum;ct++)scsv << fun::PrintStr("Time_%d",BsMin+BsInc*ct);
+    for(int ct=0;ct<BsNum;ct++)scsv << fun::PrintStr("Mexp_%d%%",BsMin+BsInc*ct);
+    for(int ct=0;ct<BsNum;ct++)scsv << fun::PrintStr("Mtot_%d%%",BsMin+BsInc*ct);
+    scsv << jcsv::Endl();
   }
   //-Saves lines in InfoData[].
+  scsv.SetData();
   unsigned cpos=0;
   //Log->Printf("%s] SaveInfoData lines:%u",Name.c_str(),InfoDataCount);
   for(unsigned c=0;c<InfoDataCount;c++){
-    string tx=fun::PrintStr("%g;%f;%g",InfoData[cpos],InfoData[cpos+1],InfoData[cpos+2]); cpos+=3;
+    scsv << fun::PrintStr("%g;%f;%g",InfoData[cpos],InfoData[cpos+1],InfoData[cpos+2]); cpos+=3;
     //Log->Printf("--[%s]--",tx.c_str());
     unsigned nv=BsNum*3;
     for(unsigned cv=0;cv<nv;cv++){ 
-      tx=tx+fun::PrintStr(";%f",InfoData[cpos]); cpos++;
+      scsv << InfoData[cpos]; cpos++;
     }
-    tx=fun::StrCsvSep(csvsepcoma,tx)+"\n";
-    pf.write(tx.c_str(),tx.size());
+    scsv << jcsv::Endl();
   }
-  pf.flush();
-  if(pf.fail())RunException(met,"File writing failure.",fname);
-  pf.close();
+  scsv.SaveData();
   InfoDataSaved=true;
   //-Clears buffer.
   InfoDataCount=0;
 }
-
 
 //==============================================================================
 /// Stores statistical data in InfoData[].

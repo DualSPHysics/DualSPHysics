@@ -64,6 +64,8 @@ public:
 
 private:
   JLog2* Log;
+  std::string FileDtInfo;
+  std::string FileDtAllInfo;
   double TimeStart;    ///<Time from which information about the DT begins to be collected. | Instante a partir del cual se empieza a recopilar informacion del dt.
   double TimeFinish;   ///<Time from which dt information is not collected. | Instante a partir del cual se deja de recopilar informacion del dt.
   double TimeInterval; ///<Time lapse every time dt information is saved. | Cada cuanto se guarda info del dt.

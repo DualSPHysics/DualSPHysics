@@ -999,8 +999,9 @@ void JSphCpuSingle::FinishRun(bool stop){
     GetTimersInfo(hinfo,dinfo);
     Log->Print(" ");
   }
-  Log->PrintWarningList();
   if(SvRes)SaveRes(tsim,ttot,hinfo,dinfo);
+  Log->PrintFilesList();
+  Log->PrintWarningList();
 }
 
 

@@ -20,6 +20,7 @@
 //:# Cambios:
 //:# =========
 //:# - Gestiona el calculo automatico de BlockSize para ejecucion de kernels GPU. (18-02-2016)
+//:# - Uso de JSaveCsv2 para generar ficheros csv. (12-03-2018)
 //:#############################################################################
 
 /// \file JBlockSizeAuto.h \brief Declares the class \ref JBlockSizeAuto.
@@ -67,12 +68,12 @@ protected:
   JMeanValue *MeanTot;
   JMeanMoving *MeanExp;
 
-  static const int SAVEINFO=0; //- Saves statistical data in CSV format or not.
-  bool InfoDataSaved;        ///< Indicates if data was saved.
-  unsigned InfoDataSizeLine; ///< Number of floats per line.
-  unsigned InfoDataLines;    ///< Number of lines for which memory was allocated.
-  unsigned InfoDataCount;    ///< Number of used lines.
-  float *InfoData;           ///< Buffer to store values [InfoDataSizeLine*InfoDataLines].
+  static const int SAVEINFO=0; ///< Saves statistical data in CSV format or not.
+  bool InfoDataSaved;          ///< Indicates if data was saved.
+  unsigned InfoDataSizeLine;   ///< Number of floats per line.
+  unsigned InfoDataLines;      ///< Number of lines for which memory was allocated.
+  unsigned InfoDataCount;      ///< Number of used lines.
+  float *InfoData;             ///< Buffer to store values [InfoDataSizeLine*InfoDataLines].
 
   void AllocateMemory(unsigned size);
   void AllocateInfoData(unsigned nlines);

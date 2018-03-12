@@ -718,6 +718,7 @@ void JSphGpuSingle::SaveData(){
 /// Muestra y graba resumen final de ejecucion.
 //==============================================================================
 void JSphGpuSingle::FinishRun(bool stop){
+  if(BsAuto){ delete BsAuto; BsAuto=NULL; }
   float tsim=TimerSim.GetElapsedTimeF()/1000.f,ttot=TimerTot.GetElapsedTimeF()/1000.f;
   JSph::ShowResume(stop,tsim,ttot,true,"");
   Log->Print(" ");
@@ -727,8 +728,9 @@ void JSphGpuSingle::FinishRun(bool stop){
     GetTimersInfo(hinfo,dinfo);
     Log->Print(" ");
   }
-  Log->PrintWarningList();
   if(SvRes)SaveRes(tsim,ttot,hinfo,dinfo);
+  Log->PrintFilesList();
+  Log->PrintWarningList();
 }
 
 

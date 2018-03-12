@@ -69,6 +69,7 @@ public:
 
 protected:
   JLog2* Log;
+  std::string FileInfo;
 
   //-Variables for calculation (they are constant).
   bool Simulate2D;     ///<Toggles 2D simulation (cancels forces in Y axis). | Activa o desactiva simulacion en 2D (anula fuerzas en eje Y).

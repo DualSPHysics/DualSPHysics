@@ -61,6 +61,7 @@ void JLog2::Reset(){
     delete Pf; Pf=NULL;
   }
   Warnings.clear();
+  FileInfo.clear();
   CsvSepComa=false;
   DirOut="";
   DirDataOut="";
@@ -220,10 +221,17 @@ void JLog2::PrintfpDbg(const std::string &prefix,const char *format,...){
 }
   
 //==============================================================================
+/// Adds warning to warning list.
+//==============================================================================
+void JLog2::AddWarning(const std::string &tx){
+  Warnings.push_back(tx);
+}
+  
+//==============================================================================
 /// Visualises and stores warning.
 //==============================================================================
 void JLog2::PrintWarning(const std::string &tx,TpMode_Out mode,bool flush){
-  Warnings.push_back(tx);
+  AddWarning(tx);
   Print(string("\n*** WARNING: ")+tx+"\n",mode,flush);
 }
   
@@ -273,6 +281,55 @@ void JLog2::PrintWarningList(TpMode_Out mode,bool flush){
   const unsigned nw=WarningCount();
   //if(nw)PrintWarningList(fun::PrintStr("[WARNINGS #:%u]",nw)," ",mode,flush);
   if(nw)PrintWarningList("[WARNINGS]"," ",mode,flush);
+}
+
+//==============================================================================
+/// Adds file description.
+//==============================================================================
+void JLog2::AddFileInfo(std::string fname,const std::string &finfo){
+  //-Removes execution path.
+  if(int(fname.find(GetDirOut()))==0)fname=fname.substr(GetDirOut().size());
+  //-Checks if it already exists.
+  const unsigned nf=FilesCount();
+  unsigned cf=0;
+  for(;cf<nf && FileInfo[cf].file!=fname;cf++);
+  //-Adds new file description.
+  if(cf==nf)FileInfo.push_back(StrFileInfo(fname,finfo));
+}
+
+//==============================================================================
+/// Sorts file descriptions.
+//==============================================================================
+bool SortFilesList(JLog2::StFileInfo a,JLog2::StFileInfo b){
+  return(a.file<b.file); 
+}
+
+//==============================================================================
+/// Visualises list of file descriptions.
+//==============================================================================
+void JLog2::PrintFilesList(const std::string &txhead,const std::string &txfoot,TpMode_Out mode,bool flush){
+  const unsigned nf=FilesCount();
+  if(!txhead.empty())Print(txhead,mode,flush);
+//  string fmt=fun::PrintStr("%%0%dd. ",std::max(1u,unsigned(fun::UintStr(nw).size())));
+  //-Compute maximum size of filenames.
+  unsigned sfile=0;
+  for(unsigned c=0;c<nf;c++)sfile=std::max(sfile,unsigned(FileInfo[c].file.size()));
+  //-Sorts refined list.
+  std::sort(FileInfo.begin(),FileInfo.end(),SortFilesList);
+  //-Prints file list.
+  for(unsigned cf=0;cf<nf;cf++){
+    const string file=FileInfo[cf].file;
+    Print(string("- ")+file+string(sfile-unsigned(file.size()),'.')+": "+FileInfo[cf].info,mode,flush);
+  }
+  if(!txfoot.empty())Print(txfoot,mode,flush);
+}
+  
+//==============================================================================
+/// Visualises list of file descriptions.
+//==============================================================================
+void JLog2::PrintFilesList(TpMode_Out mode,bool flush){
+  const unsigned nf=FilesCount();
+  if(nf)PrintFilesList("[Output files]"," ",mode,flush);
 }
 
 

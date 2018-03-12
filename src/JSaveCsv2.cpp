@@ -60,9 +60,8 @@ void JSaveCsv2::Reset(){
   FileName="";
   FileError=false;
   FirstSaveData=true;
-
+  AutoSepEnable=true;
   InitFmt();
-
   SetData();
   Head="";
   HeadLineEmpty=true;
@@ -97,7 +96,8 @@ void JSaveCsv2::InitFmt(){
 //==============================================================================
 /// Adds string to data or head.
 //==============================================================================
-void JSaveCsv2::AddStr(const std::string &tx){
+void JSaveCsv2::AddStr(std::string tx){
+  if(AutoSepEnable)SetSeparators(tx);
   const bool jump=(!tx.empty() && tx[0]=='\n');
   if(DataSelected){
     if(!(Data.empty() || Data[Data.size()-1]=='\n' || jump))Data.append(";");
@@ -162,6 +162,22 @@ JSaveCsv2& JSaveCsv2::operator <<(const Sep &obj){
 }
 
 //==============================================================================
+/// Operator: Enable auto separator change according configuration.
+//==============================================================================
+JSaveCsv2& JSaveCsv2::operator <<(const AutoSepOn &obj){
+  AutoSepEnable=true;
+  return(*this);
+}
+
+//==============================================================================
+/// Operator: Disable auto separator change according configuration.
+//==============================================================================
+JSaveCsv2& JSaveCsv2::operator <<(const AutoSepOff &obj){
+  AutoSepEnable=false;
+  return(*this);
+}
+
+//==============================================================================
 /// Operator: Adds end of line.
 //==============================================================================
 JSaveCsv2& JSaveCsv2::operator <<(const Endl &obj){
@@ -191,7 +207,7 @@ void JSaveCsv2::Save(const std::string &tx){
 /// Sets separators according configuration.
 /// Cambia separadores segun configuracion.
 //==============================================================================
-void JSaveCsv2::SetSeparators(std::string &tx){
+void JSaveCsv2::SetSeparators(std::string &tx)const{
   const char sep0=(CsvSepComa? ';': ',');
   const char sep1=(CsvSepComa? ',': ';');
   const unsigned size=unsigned(tx.size());
@@ -216,13 +232,13 @@ void JSaveCsv2::SaveData(bool closefile){
       }
       if(App && fexists)Pf->seekp(0,Pf->end);
       else{
-        SetSeparators(Head);
+        //SetSeparators(Head);
         Save(Head);
         if(Pf->fail())RunException(met,"File writing failure.",FileName);
       }
     }
     if(!FileError){
-      SetSeparators(Data);
+      //SetSeparators(Data);
       Save(Data);
       Data="";
       if(Pf->fail())RunException(met,"File writing failure.",FileName);

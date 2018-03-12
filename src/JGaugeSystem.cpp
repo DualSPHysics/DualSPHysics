@@ -365,7 +365,9 @@ void JGaugeSystem::SaveVtkInitPoints()const{
   if(vtype)fields.push_back(JFormatFiles2::DefineField("Type",JFormatFiles2::UInt32,1,vtype));
   if(vout) fields.push_back(JFormatFiles2::DefineField("Out" ,JFormatFiles2::UChar8,1,vout));
   //-Saves VTK file.
-  JFormatFiles2::SaveVtk(Log->GetDirOut()+"CfgGauge_InitPoints.vtk",ndata,points.data(),fields);
+  const string filevtk=Log->GetDirOut()+"CfgGauge_InitPoints.vtk";
+  JFormatFiles2::SaveVtk(filevtk,ndata,points.data(),fields);
+  Log->AddFileInfo(filevtk,"Saves points used for gauge calculations (by JGaugeSystem).");
   //-Frees memory.
   delete[] vidx;
   delete[] vtype;

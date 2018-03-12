@@ -60,9 +60,9 @@ typedef struct StrAppInfo{
   string Date;
   bool ModeMK65k;
   StrAppInfo(){
-    MainName="DualSPHysics4"; MainVer="v4.2.033";
+    MainName="DualSPHysics4"; MainVer="v4.2.034";
     //SubName="UserVersion"; SubVer="v1.0";
-    Date="10-03-2018";
+    Date="12-03-2018";
     #ifdef CODE_SIZE4
       ModeMK65k=true;
     #else
@@ -135,6 +135,7 @@ int main(int argc, char** argv){
     //cfg.VisuConfig();
     if(!cfg.PrintInfo){
       log.Init(cfg.DirOut+"/Run.out",cfg.DirDataOut,cfg.CsvSepComa);
+      log.AddFileInfo(cfg.DirOut+"/Run.out","Log file of the simulation.");
       log.Print(license,JLog2::Out_File);
       log.Print(appname,JLog2::Out_File);
       log.Print(appnamesub,JLog2::Out_File);

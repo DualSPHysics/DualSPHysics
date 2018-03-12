@@ -224,6 +224,7 @@ JGaugeVelocity::JGaugeVelocity(unsigned idx,std::string name,tdouble3 point,JLog
   :JGaugeItem(GAUGE_Vel,idx,name,log)
 {
   ClassName="JGaugeVel";
+  FileInfo=string("Saves velocity data measured from fluid particles (by ")+ClassName+").";
   Reset();
   SetPoint(point);
 }
@@ -270,7 +271,10 @@ void JGaugeVelocity::StoreResult(){
 void JGaugeVelocity::SaveResults(){
   if(OutCount){
     const bool first=OutFile.empty();
-    if(first)OutFile=GetResultsFileCsv();
+    if(first){
+      OutFile=GetResultsFileCsv();
+      Log->AddFileInfo(OutFile,FileInfo);
+    }
     jcsv::JSaveCsv2 scsv(OutFile,!first,Log->GetCsvSepComa());
     //-Saves head.
     if(first){
@@ -295,6 +299,7 @@ void JGaugeVelocity::SaveVtkResult(unsigned cpart){
   std::vector<JFormatFiles2::StScalarData> fields;
   fields.push_back(JFormatFiles2::DefineField("Vel",JFormatFiles2::Float32,3,&(Result.vel)));
   //-Saves VTK file.
+  Log->AddFileInfo(fun::FileNameSec(GetResultsFileVtk(),UINT_MAX),FileInfo);
   JFormatFiles2::SaveVtk(fun::FileNameSec(GetResultsFileVtk(),cpart),1,&(Result.point),fields);
 }
 
@@ -415,6 +420,7 @@ JGaugeSwl::JGaugeSwl(unsigned idx,std::string name,tdouble3 point0,tdouble3 poin
   :JGaugeItem(GAUGE_Swl,idx,name,log)
 {
   ClassName="JGaugeSwl";
+  FileInfo=string("Saves SWL data measured from fluid particles (by ")+ClassName+").";
   Reset();
   SetPoints(point0,point2,pointdp);
   MassLimit=masslimit;
@@ -486,7 +492,10 @@ void JGaugeSwl::StoreResult(){
 void JGaugeSwl::SaveResults(){
   if(OutCount){
     const bool first=OutFile.empty();
-    if(first)OutFile=GetResultsFileCsv();
+    if(first){
+      OutFile=GetResultsFileCsv();
+      Log->AddFileInfo(OutFile,FileInfo);
+    }
     jcsv::JSaveCsv2 scsv(OutFile,!first,Log->GetCsvSepComa());
     //-Saves head.
     if(first){
@@ -510,6 +519,7 @@ void JGaugeSwl::SaveResults(){
 void JGaugeSwl::SaveVtkResult(unsigned cpart){
   std::vector<JFormatFiles2::StScalarData> fields;
   //-Saves VTK file.
+  Log->AddFileInfo(fun::FileNameSec(GetResultsFileVtk(),UINT_MAX),FileInfo);
   JFormatFiles2::SaveVtk(fun::FileNameSec(GetResultsFileVtk(),cpart),1,&(Result.posswl),fields);
 }
 
@@ -647,6 +657,7 @@ JGaugeMaxZ::JGaugeMaxZ(unsigned idx,std::string name,tdouble3 point0,double heig
   :JGaugeItem(GAUGE_MaxZ,idx,name,log)
 {
   ClassName="JGaugeMaxZ";
+  FileInfo=string("Saves maximum Z position of fluid particles (by ")+ClassName+").";
   Reset();
   SetPoint0(point0);
   SetHeight(height);
@@ -697,7 +708,10 @@ void JGaugeMaxZ::StoreResult(){
 void JGaugeMaxZ::SaveResults(){
   if(OutCount){
     const bool first=OutFile.empty();
-    if(first)OutFile=GetResultsFileCsv();
+    if(first){
+      OutFile=GetResultsFileCsv();
+      Log->AddFileInfo(OutFile,FileInfo);
+    }
     jcsv::JSaveCsv2 scsv(OutFile,!first,Log->GetCsvSepComa());
     //-Saves head.
     if(first){
@@ -726,6 +740,7 @@ void JGaugeMaxZ::SaveVtkResult(unsigned cpart){
   std::vector<JFormatFiles2::StScalarData> fields;
   fields.push_back(JFormatFiles2::DefineField("Height",JFormatFiles2::Float32,1,&height));
   //-Saves VTK file.
+  Log->AddFileInfo(fun::FileNameSec(GetResultsFileVtk(),UINT_MAX),FileInfo);
   JFormatFiles2::SaveVtk(fun::FileNameSec(GetResultsFileVtk(),cpart),1,&ptz,fields);
 }
 

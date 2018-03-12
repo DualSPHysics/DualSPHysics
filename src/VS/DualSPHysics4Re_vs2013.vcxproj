@@ -541,7 +541,6 @@ rem %CudaNvcc% -ccbin "$(VCInstallDir)bin" %gpuhw% -use_fast_math -c %ptxinfo% -
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">true</ExcludedFromBuild>
     </ClInclude>
-    <ClInclude Include="..\JSaveCsv.h" />
     <ClInclude Include="..\JSaveCsv2.h" />
     <ClInclude Include="..\JSaveDt.h" />
     <ClInclude Include="..\JSpaceProperties.h" />
@@ -659,7 +658,6 @@ rem %CudaNvcc% -ccbin "$(VCInstallDir)bin" %gpuhw% -use_fast_math -c %ptxinfo% -
     <ClCompile Include="..\JRadixSort.cpp" />
     <ClCompile Include="..\JRangeFilter.cpp" />
     <ClCompile Include="..\JReadDatafile.cpp" />
-    <ClCompile Include="..\JSaveCsv.cpp" />
     <ClCompile Include="..\JSaveCsv2.cpp" />
     <ClCompile Include="..\JSaveDt.cpp" />
     <ClCompile Include="..\JSpaceProperties.cpp" />

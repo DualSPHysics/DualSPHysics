@@ -184,9 +184,6 @@
     <ClInclude Include="..\JReadDatafile.h">
       <Filter>Common</Filter>
     </ClInclude>
-    <ClInclude Include="..\JSaveCsv.h">
-      <Filter>Common</Filter>
-    </ClInclude>
     <ClInclude Include="..\JTimeControl.h">
       <Filter>Common</Filter>
     </ClInclude>
@@ -376,9 +373,6 @@
       <Filter>Common</Filter>
     </ClCompile>
     <ClCompile Include="..\JReadDatafile.cpp">
-      <Filter>Common</Filter>
-    </ClCompile>
-    <ClCompile Include="..\JSaveCsv.cpp">
       <Filter>Common</Filter>
     </ClCompile>
     <ClCompile Include="..\JTimeControl.cpp">

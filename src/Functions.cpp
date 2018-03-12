@@ -27,6 +27,7 @@
 #include <stdarg.h>
 #include <algorithm>
 #include <fstream>
+#include <climits>
 
 #ifdef WIN32
   #include <direct.h>
@@ -875,9 +876,13 @@ std::string AddExtension(const std::string &file,const std::string &ext){
 std::string FileNameSec(std::string fname,unsigned fnumber){
   std::string fext=GetExtension(fname);
   if(!fext.empty())fname=fname.substr(0,fname.size()-fext.size()-1);
-  char cad[64];
-  sprintf(cad,"_%04d.",fnumber);
-  return(fname+cad+fext);
+  if(fnumber!=UINT_MAX){
+    char cad[64];
+    sprintf(cad,"_%04d.",fnumber);
+    fname=fname+cad;
+  }
+  else fname=fname+"_????.";
+  return(fname+fext);
 }
 
 //==============================================================================
