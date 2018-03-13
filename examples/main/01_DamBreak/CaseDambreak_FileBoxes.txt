@@ -1,0 +1,39 @@
+Example_file_to_define_boxes...
+
+Definition_of_the_box:
+-------------------
+**If several boxes have the same name, they will be grouped in only one zone.
+
+"BOX" @name
+x1 y1 z1
+x2 y2 z2
+x3 y3 z3
+x4 y4 z4
+x5 y5 z5
+x6 y6 z6
+x7 y7 z7
+x8 y8 z8
+
+BOX @One
+1.1  0.67 0
+1.1  0  0
+1.2  0  0
+1.2  0.67  0
+1.1  0.67  0.4
+1.1  0  0.4
+1.2  0  0.4
+1.2  0.67  0.4
+
+Results in CSV:
+-------------------
+Nok:    particles not excluded from PART in the domain
+Nout:   excluded particles that in previous PART where in inside the domain
+Input:  number of particles that enter in the domain
+Output: number of particles that leave the domain
+InVel:  average of velocity modulus of the Input particles (not excluded)
+
+Nok:    Particulas no excluidas del PART en zona.
+Nout:   Particulas excluidas que en el PART anterior estaban en zona. Si no hay datos previos es cero.
+Input:  Particulas que entraron en zona, que en el PART anterior estaban en otra zona o son nuevas. Si no hay datos previos es cero.
+Output: Particulas que salieron de zona, que en el PART anterior estaban y ahora estan en otra zona o fueron excluidas. Si no hay datos previos es cero.
+InVel:  Media del modulo de la velocidad de las particulas input no excluidas.

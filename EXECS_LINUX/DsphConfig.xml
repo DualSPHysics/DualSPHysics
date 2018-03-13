@@ -1,6 +1,0 @@
-<?xml version="1.0" encoding="UTF-8" ?>
-<dsphconfig date="23-10-2017 17:42:00">
-    <common>
-		<csvseparator v="0" comment="Separator character in CSV files (0=semicolon, 1=coma)" />
-    </common>
-</dsphconfig>

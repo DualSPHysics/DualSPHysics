@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!-- *** DualSPHysics (11-03-2018) *** -->
+<!-- *** class: JWaveAwasZsurf *** -->
+<!------------------------------------------------------------------------------->
+<!------------------------------------------------------------------------------->
+<!-- *** Example for AWAS using regular or irregular PISTON *** -->
+<special>
+	<wavepaddles>
+		<piston>
+			...
+			<awas_zsurf>
+				<startawas value="0" comment="Time to start AWAS correction (default=start+ramp*waveperiod)" />
+				<swl value="0.266" comment="Still water level (free-surface water)" />
+				<elevation value="2" comment="Order wave to calculate elevation 1:1st order, 2:2nd order (default=2)" />
+				<gaugex value="0.05" comment="Position in X from piston to measure free-surface water (default=5*Dp)" />
+				<_gaugex valueh="3" comment="Position in X from piston to measure free-surface water (according H value)" />
+				<_gaugex valuedp="5" comment="Position in X from piston to measure free-surface water (according Dp value)" />
+				<gaugey value="1" comment="Position in Y to measure free-surface water" />
+				<gaugezmin value="0.05" comment="Minimum position in Z to measure free-surface water, it must be in water (default=domain limits)" />
+				<gaugezmax value="0.5" comment="Maximum position in Z to measure free-surface water (default=domain limits)" />
+				<gaugedp value="0.25" comment="Resolution to measure free-surface water, it uses Dp*gaugedp (default=0.1)" />
+				<_coefmasslimit value="0.4" comment="Coefficient to calculate mass of free-surface (default=0.5 on 3D and 0.4 on 2D)" />
+				<savedata value="1" comment="Saves CSV with information 1:by part, 2:more information, 3:by step (default=0)" />
+				<limitace value="2" comment="Factor to limit maximum value of acceleration, with 0 disabled (default=2)" />
+				<correction coefstroke="1.8" coefperiod="1" powerfunc="3" comment="Drift correction configuration (default=no applied)" />
+			</awas_zsurf>
+		</piston>
+		<piston_spectrum>
+			...
+			<awas_zsurf>
+				...        
+			</awas_zsurf>
+		</piston_spectrum>
+	</wavepaddles>
+</special>
+
+
+
