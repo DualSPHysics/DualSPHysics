@@ -943,6 +943,7 @@ template<bool psingle,TpKernel tker,TpFtMode ftmode,bool lamsps,TpDeltaSph tdelt
   }
 }
 
+#ifndef DISABLE_BSMODES
 //==============================================================================
 /// Collects kernel information.
 //==============================================================================
@@ -1046,6 +1047,7 @@ template<bool psingle,TpKernel tker,TpFtMode ftmode,bool lamsps,TpDeltaSph tdelt
     }
   }
 }
+#endif
 
 //==============================================================================
 /// Interaction for the force computation.
@@ -1063,9 +1065,11 @@ template<bool psingle,TpKernel tker,TpFtMode ftmode,bool lamsps,TpDeltaSph tdelt
   ,bool simulate2d,StKerInfo *kerinfo,JBlockSizeAuto *bsauto)
 {
   //-Collects kernel information.
+#ifndef DISABLE_BSMODES
   if(kerinfo)Interaction_ForcesT_KerInfo<psingle,tker,ftmode,lamsps,tdelta,shift>(kerinfo);
   else if(bsauto)Interaction_ForcesT_BsAuto<psingle,tker,ftmode,lamsps,tdelta,shift>(cellmode,viscob,viscof,bsbound,bsfluid,np,npb,npbok,ncells,begincell,cellmin,dcell,posxy,posz,pospress,velrhop,code,idp,ftomassp,tau,gradvel,viscdt,ar,ace,delta,tshifting,shiftpos,shiftdetect,simulate2d,bsauto);
   else{
+#endif
     //-Executes particle interactions.
     const unsigned npf=np-npb;
     const int hdiv=(cellmode==CELLMODE_H? 2: 1);
@@ -1084,7 +1088,9 @@ template<bool psingle,TpKernel tker,TpFtMode ftmode,bool lamsps,TpDeltaSph tdelt
       //printf("bsbound:%u\n",bsbound);
       KerInteractionForcesBound<psingle,tker,ftmode> <<<sgridb,bsbound>>> (npbok,hdiv,nc,begincell,cellzero,dcell,ftomassp,posxy,posz,pospress,velrhop,code,idp,viscdt,ar);
     }
+#ifndef DISABLE_BSMODES
   }
+#endif
 }
 //==============================================================================
 template<bool psingle,TpKernel tker,TpFtMode ftmode,bool lamsps> void Interaction_Forces_t2(TpDeltaSph tdelta,TpCellMode cellmode

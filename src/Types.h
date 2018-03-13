@@ -29,6 +29,8 @@
 
 //#define DISABLE_TIMERS     ///<Compiles without timers. | Compilado sin timers.
 
+//#define DISABLE_BSMODES    ///<compiles without advanced BlockSize modes.
+
 #define CELLDIV_OVERMEMORYNP 0.05f  ///<Memory that is reserved for the particle management in JCellDivGpu. | Memoria que se reserva de mas para la gestion de particulas en JCellDivGpu.
 #define CELLDIV_OVERMEMORYCELLS 1   ///<Number of cells in each dimension is increased to allocate memory for JCellDivGpu cells. | Numero celdas que se incrementa en cada dimension al reservar memoria para celdas en JCellDivGpu.
 #define PERIODIC_OVERMEMORYNP 0.05f ///<Memory reserved for the creation of periodic particles in JSphGpuSingle::RunPeriodic(). | Mermoria que se reserva de mas para la creacion de particulas periodicas en JSphGpuSingle::RunPeriodic().

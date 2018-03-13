@@ -44,7 +44,7 @@ void JCfgRun::Reset(){
   Stable=false;
   PosDouble=-1;
   OmpThreads=0;
-  BlockSizeMode=BSIZEMODE_Empirical;
+  BlockSizeMode=BSIZEMODE_Fixed;
   SvTimers=true;
   CellOrder=ORDER_None;
   CellMode=CELLMODE_2H;
@@ -102,9 +102,13 @@ void JCfgRun::VisuInfo()const{
   printf("                   cores of the device by default (or using zero value)\n\n");
 #endif
   printf("    -blocksize:<mode>  Defines BlockSize to use in particle interactions on GPU\n");
+#ifndef DISABLE_BSMODES
   printf("        0: Fixed value (128) is used\n");
   printf("        1: Optimum BlockSize indicated by Occupancy Calculator of CUDA\n");
   printf("        2: Optimum BlockSize is calculated empirically (option by default)\n\n");
+#else
+  printf("        0: Fixed value (128) is used\n\n");
+#endif
   //printf("    -cellorder:<axis> Indicates the order of the axes. (xyz/xzy/yxz/yzx/zxy/zyx)\n");
   printf("    -cellmode:<mode>  Specifies the cell division mode\n");
   printf("        2h        Lowest and the least expensive in memory (by default)\n");
@@ -328,8 +332,10 @@ void JCfgRun::LoadOpts(string *optlis,int optn,int lv,string file){
 #endif
       else if(txword=="BLOCKSIZE"){
         if(txoptfull=="0")BlockSizeMode=BSIZEMODE_Fixed;
+#ifndef DISABLE_BSMODES
         else if(txoptfull=="1")BlockSizeMode=BSIZEMODE_Occupancy;
         else if(txoptfull=="2")BlockSizeMode=BSIZEMODE_Empirical;
+#endif
         else ErrorParm(opt,c,lv,file);
       }
       //else if(txword=="CELLORDER"){
