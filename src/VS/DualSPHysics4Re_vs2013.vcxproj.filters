@@ -247,6 +247,9 @@
     <ClInclude Include="..\JSaveCsv2.h">
       <Filter>Common</Filter>
     </ClInclude>
+    <ClInclude Include="..\JWaveSpectrumGpu.h">
+      <Filter>Source</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\JCfgRun.cpp">
@@ -428,6 +431,9 @@
     </ClCompile>
     <ClCompile Include="..\JSaveCsv2.cpp">
       <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\JWaveSpectrumGpu.cpp">
+      <Filter>Source</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

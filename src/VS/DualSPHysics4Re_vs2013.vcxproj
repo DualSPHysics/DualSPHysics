@@ -267,7 +267,7 @@
       <SubSystem>Console</SubSystem>
       <OptimizeReferences>true</OptimizeReferences>
       <EnableCOMDATFolding>false</EnableCOMDATFolding>
-      <AdditionalDependencies>JWaveGen_$(PlatformName)_$(PlatformToolset)_ReleaseCPU.lib;JFormatFiles2_$(PlatformName)_$(PlatformToolset)_Release.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>JWaveGen_$(PlatformName)_$(PlatformToolset)_Release.lib;JFormatFiles2_$(PlatformName)_$(PlatformToolset)_Release.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <LinkStatus>
       </LinkStatus>
     </Link>
@@ -318,7 +318,7 @@
       </OptimizeReferences>
       <EnableCOMDATFolding>
       </EnableCOMDATFolding>
-      <AdditionalDependencies>JWaveGen_$(PlatformName)_$(PlatformToolset)_DebugCPU.lib;JFormatFiles2_$(PlatformName)_$(PlatformToolset)_Debug.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>JWaveGen_$(PlatformName)_$(PlatformToolset)_Debug.lib;JFormatFiles2_$(PlatformName)_$(PlatformToolset)_Debug.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <LinkStatus>
       </LinkStatus>
       <LinkTimeCodeGeneration>Default</LinkTimeCodeGeneration>
@@ -571,6 +571,7 @@ rem %CudaNvcc% -ccbin "$(VCInstallDir)bin" %gpuhw% -use_fast_math -c %ptxinfo% -
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">true</ExcludedFromBuild>
     </ClInclude>
+    <ClInclude Include="..\JWaveSpectrumGpu.h" />
     <ClInclude Include="..\JXml.h" />
     <ClInclude Include="..\OmpDefs.h" />
     <ClInclude Include="..\randomc.h" />
@@ -685,6 +686,7 @@ rem %CudaNvcc% -ccbin "$(VCInstallDir)bin" %gpuhw% -use_fast_math -c %ptxinfo% -
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">true</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="..\JWaveSpectrumGpu.cpp" />
     <ClCompile Include="..\JXml.cpp" />
     <ClCompile Include="..\main.cpp" />
     <ClCompile Include="..\randomc.cpp" />
