@@ -32,6 +32,7 @@
 
 FloatingInfo4 v4.0.014 (06-12-2017)
 ====================================
+LoadDsphConfig> .../bin/windows/DsphConfig.xml
 Information about parameters of execution:
 
   FloatingInfo4 <options>

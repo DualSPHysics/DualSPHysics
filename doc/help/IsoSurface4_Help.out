@@ -32,6 +32,7 @@
 
 IsoSurface v4.0.023 (06-12-2017)
 =================================
+LoadDsphConfig> .../bin/windows/DsphConfig.xml
 Information about parameters of execution:
 
   IsoSurface4 <options>

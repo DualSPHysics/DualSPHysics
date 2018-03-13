@@ -32,6 +32,7 @@
 
 MeasureBoxes4 v4.0.017 (06-12-2017)
 ====================================
+LoadDsphConfig> .../bin/windows/DsphConfig.xml
 Information about parameters of execution:
 
   MeasureBoxes <options>

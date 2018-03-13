@@ -32,6 +32,7 @@
 
 PartVtkOut4 v4.0.020 (06-12-2017)
 ==================================
+LoadDsphConfig> .../bin/windows/DsphConfig.xml
 Information about parameters of execution:
 
   PartVtkOut4 <options>

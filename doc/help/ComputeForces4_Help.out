@@ -32,6 +32,7 @@
 
 ComputeForces4 v4.0.027 (06-12-2017)
 =====================================
+LoadDsphConfig> .../bin/windows/DsphConfig.xml
 Information about parameters of execution:
 
   ComputeForces4 <options>

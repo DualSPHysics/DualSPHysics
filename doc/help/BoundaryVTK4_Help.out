@@ -32,6 +32,7 @@
 
 BoundaryVTK4 v4.0.028 (06-12-2017)
 ===================================
+LoadDsphConfig> .../bin/windows/DsphConfig.xml
 Information about parameters of execution:
 
   BoundaryVTK4 <options>
