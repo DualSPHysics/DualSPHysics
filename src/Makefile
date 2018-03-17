@@ -1,4 +1,4 @@
-#DualSPHysics GPU v4.2.035 (13-03-2018)
+#DualSPHysics GPU v4.2.037 (17-03-2018)
 
 #=============== Compilation Options ===============
 USE_DEBUG=NO
@@ -6,7 +6,7 @@ USE_FAST_MATH=YES
 USE_NATIVE_CPU_OPTIMIZATIONS=NO
 
 LIBS_DIRECTORIES=-L./
-LIBS_DIRECTORIES:=$(LIBS_DIRECTORIES) -Llib/linux/v4.2.035_gcc4
+LIBS_DIRECTORIES:=$(LIBS_DIRECTORIES) -Llib/linux/v4.2.037_gcc5
 
 EXECNAME=DualSPHysics4.2_linux64
 EXECS_DIRECTORY=../bin/linux
@@ -26,7 +26,7 @@ CC=g++
 CCLINKFLAGS=-fopenmp -lgomp
 
 #=============== CUDA selection ===============
-CUDAVER=75
+CUDAVER=91
 
 #=============== CUDA toolkit directory (make appropriate for local CUDA installation) ===============
 ifeq ($(CUDAVER),00)
@@ -35,8 +35,8 @@ endif
 ifeq ($(CUDAVER),75)
   DIRTOOLKIT=/exports/opt/NVIDIA/cuda-7.5
 endif
-ifeq ($(CUDAVER),80)
-  DIRTOOLKIT=/exports/opt/NVIDIA/cuda-8.0
+ifeq ($(CUDAVER),91)
+  DIRTOOLKIT=/exports/opt/NVIDIA/cuda-9.1
 endif
 
 #=============== Select GPU architectures ===============
@@ -53,13 +53,13 @@ ifeq ($(CUDAVER),75)
   GENCODE:=$(GENCODE) -gencode=arch=compute_50,code=\"sm_50,compute_50\"
   GENCODE:=$(GENCODE) -gencode=arch=compute_52,code=\"sm_52,compute_52\"
 endif
-ifeq ($(CUDAVER),80)
-  # GENCODE:=$(GENCODE) -gencode=arch=compute_20,code=\"sm_20,compute_20\"
-  # GENCODE:=$(GENCODE) -gencode=arch=compute_30,code=\"sm_30,compute_30\"
+ifeq ($(CUDAVER),91)
+  GENCODE:=$(GENCODE) -gencode=arch=compute_30,code=\"sm_30,compute_30\"
   GENCODE:=$(GENCODE) -gencode=arch=compute_35,code=\"sm_35,compute_35\"
-  # GENCODE:=$(GENCODE) -gencode=arch=compute_37,code=\"sm_37,compute_37\"
-  # GENCODE:=$(GENCODE) -gencode=arch=compute_50,code=\"sm_50,compute_50\"
-  # GENCODE:=$(GENCODE) -gencode=arch=compute_52,code=\"sm_52,compute_52\"
+  GENCODE:=$(GENCODE) -gencode=arch=compute_50,code=\"sm_50,compute_50\"
+  GENCODE:=$(GENCODE) -gencode=arch=compute_52,code=\"sm_52,compute_52\"
+  GENCODE:=$(GENCODE) -gencode=arch=compute_61,code=\"sm_61,compute_61\"
+  GENCODE:=$(GENCODE) -gencode=arch=compute_70,code=\"sm_70,compute_70\"
 endif
 
 

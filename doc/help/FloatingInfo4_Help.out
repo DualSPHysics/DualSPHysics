@@ -30,8 +30,9 @@
  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
 
 
-FloatingInfo4 v4.0.014 (06-12-2017)
+FloatingInfo4 v4.0.015 (16-03-2018)
 ====================================
+LoadDsphConfig> .../bin/windows/DsphConfig.xml
 Information about parameters of execution:
 
   FloatingInfo4 <options>

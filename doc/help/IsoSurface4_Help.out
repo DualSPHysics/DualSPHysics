@@ -30,8 +30,9 @@
  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
 
 
-IsoSurface v4.0.023 (06-12-2017)
+IsoSurface v4.0.024 (16-03-2018)
 =================================
+LoadDsphConfig> .../bin/windows/DsphConfig.xml
 Information about parameters of execution:
 
   IsoSurface4 <options>

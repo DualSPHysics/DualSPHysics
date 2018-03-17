@@ -30,8 +30,9 @@
  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
 
 
-BoundaryVTK4 v4.0.028 (06-12-2017)
+BoundaryVTK4 v4.0.030 (16-03-2018)
 ===================================
+LoadDsphConfig> .../bin/windows/DsphConfig.xml
 Information about parameters of execution:
 
   BoundaryVTK4 <options>
