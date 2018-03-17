@@ -1,6 +1,4 @@
-## Files selection to ignore...
-
-## Ignores all Visual Studio 2013 files except the basic one.
+## Ignores all Visual Studio 2015 files except the basic one.
 src/VS/*
 !src/VS/_ClearTempFiles.bat
 !src/VS/*.vcxproj
@@ -14,6 +12,6 @@ examples/main/01_DamBreak/*_out
 ## Ignores other directories.
 __Tools__
 
-
-
-
+## Ignores temporary files.
+bin/windows/*.iobj
+bin/windows/*.ipdb
