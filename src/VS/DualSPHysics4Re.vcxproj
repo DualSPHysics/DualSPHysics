@@ -331,11 +331,11 @@
     </CudaCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <CudaCompile Include="..\FunctionsMath_ker.cu">
+    <CudaCompile Include="..\src\FunctionsMath_ker.cu">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">true</ExcludedFromBuild>
     </CudaCompile>
-    <CudaCompile Include="..\JCellDivGpu_ker.cu">
+    <CudaCompile Include="..\src\JCellDivGpu_ker.cu">
       <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">rem ***Vars de compilacion
 set CudaPath=$(CUDA_PATH_V9_1)
 set CudaNvcc="%CudaPath%\bin\nvcc.exe"
@@ -372,7 +372,7 @@ rem ***Sentencia de compilacion
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">true</ExcludedFromBuild>
       <FileType>Document</FileType>
     </CudaCompile>
-    <CudaCompile Include="..\JCellDivGpuSingle_ker.cu">
+    <CudaCompile Include="..\src\JCellDivGpuSingle_ker.cu">
       <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">rem ***Vars de compilacion
 set CudaPath=$(CUDA_PATH_V9_1)
 set CudaNvcc="%CudaPath%\bin\nvcc.exe"
@@ -411,15 +411,15 @@ rem ***Sentencia de compilacion
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">true</ExcludedFromBuild>
       <FileType>Document</FileType>
     </CudaCompile>
-    <CudaCompile Include="..\JGauge_ker.cu">
+    <CudaCompile Include="..\src\JGauge_ker.cu">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">true</ExcludedFromBuild>
     </CudaCompile>
-    <CudaCompile Include="..\JReduSum_ker.cu">
+    <CudaCompile Include="..\src\JReduSum_ker.cu">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">true</ExcludedFromBuild>
     </CudaCompile>
-    <CudaCompile Include="..\JSphGpu_ker.cu">
+    <CudaCompile Include="..\src\JSphGpu_ker.cu">
       <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">rem ***Vars de compilacion
 set CudaPath=$(CUDA_PATH_V9_1)
 set CudaNvcc="%CudaPath%\bin\nvcc.exe"
@@ -466,234 +466,234 @@ rem %CudaNvcc% -ccbin "$(VCInstallDir)bin" %gpuhw% -use_fast_math -c %ptxinfo% -
       </AdditionalInputs>
       <FileType>Document</FileType>
     </CudaCompile>
-    <CudaCompile Include="..\JWaveOrder2_ker.cu">
+    <CudaCompile Include="..\src\JWaveOrder2_ker.cu">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">true</ExcludedFromBuild>
     </CudaCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\Functions.h" />
-    <ClInclude Include="..\FunctionsCuda.h">
+    <ClInclude Include="..\src\Functions.h" />
+    <ClInclude Include="..\src\FunctionsCuda.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">true</ExcludedFromBuild>
     </ClInclude>
-    <ClInclude Include="..\FunctionsMath.h" />
-    <ClInclude Include="..\JArraysCpu.h" />
-    <ClInclude Include="..\JBinaryData.h" />
-    <ClInclude Include="..\JBlockSizeAuto.h">
+    <ClInclude Include="..\src\FunctionsMath.h" />
+    <ClInclude Include="..\src\JArraysCpu.h" />
+    <ClInclude Include="..\src\JBinaryData.h" />
+    <ClInclude Include="..\src\JBlockSizeAuto.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">true</ExcludedFromBuild>
     </ClInclude>
-    <ClInclude Include="..\JCellDivCpu.h" />
-    <ClInclude Include="..\JCellDivCpuSingle.h" />
-    <ClInclude Include="..\JCellDivGpu.h">
+    <ClInclude Include="..\src\JCellDivCpu.h" />
+    <ClInclude Include="..\src\JCellDivCpuSingle.h" />
+    <ClInclude Include="..\src\JCellDivGpu.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">true</ExcludedFromBuild>
     </ClInclude>
-    <ClInclude Include="..\JCellDivGpuSingle.h">
+    <ClInclude Include="..\src\JCellDivGpuSingle.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">true</ExcludedFromBuild>
     </ClInclude>
-    <ClInclude Include="..\JCellDivGpuSingle_ker.h">
+    <ClInclude Include="..\src\JCellDivGpuSingle_ker.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">true</ExcludedFromBuild>
     </ClInclude>
-    <ClInclude Include="..\JCellDivGpu_ker.h">
+    <ClInclude Include="..\src\JCellDivGpu_ker.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">true</ExcludedFromBuild>
     </ClInclude>
-    <ClInclude Include="..\JDamping.h" />
-    <ClInclude Include="..\JDsphConfig.h" />
-    <ClInclude Include="..\JException.h" />
-    <ClInclude Include="..\JFormatFiles2.h" />
-    <ClInclude Include="..\JArraysGpu.h">
+    <ClInclude Include="..\src\JDamping.h" />
+    <ClInclude Include="..\src\JDsphConfig.h" />
+    <ClInclude Include="..\src\JException.h" />
+    <ClInclude Include="..\src\JFormatFiles2.h" />
+    <ClInclude Include="..\src\JArraysGpu.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">true</ExcludedFromBuild>
     </ClInclude>
-    <ClInclude Include="..\JGaugeItem.h" />
-    <ClInclude Include="..\JGaugeSystem.h" />
-    <ClInclude Include="..\JGauge_ker.h">
+    <ClInclude Include="..\src\JGaugeItem.h" />
+    <ClInclude Include="..\src\JGaugeSystem.h" />
+    <ClInclude Include="..\src\JGauge_ker.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">true</ExcludedFromBuild>
     </ClInclude>
-    <ClInclude Include="..\JLog2.h" />
-    <ClInclude Include="..\JMatrix4.h" />
-    <ClInclude Include="..\JMeanValues.h" />
-    <ClInclude Include="..\JMotion.h" />
-    <ClInclude Include="..\JMotionEvent.h" />
-    <ClInclude Include="..\JMotionList.h" />
-    <ClInclude Include="..\JMotionMov.h" />
-    <ClInclude Include="..\JMotionObj.h" />
-    <ClInclude Include="..\JMotionPos.h" />
-    <ClInclude Include="..\JObject.h" />
-    <ClInclude Include="..\JObjectGpu.h">
+    <ClInclude Include="..\src\JLog2.h" />
+    <ClInclude Include="..\src\JMatrix4.h" />
+    <ClInclude Include="..\src\JMeanValues.h" />
+    <ClInclude Include="..\src\JMotion.h" />
+    <ClInclude Include="..\src\JMotionEvent.h" />
+    <ClInclude Include="..\src\JMotionList.h" />
+    <ClInclude Include="..\src\JMotionMov.h" />
+    <ClInclude Include="..\src\JMotionObj.h" />
+    <ClInclude Include="..\src\JMotionPos.h" />
+    <ClInclude Include="..\src\JObject.h" />
+    <ClInclude Include="..\src\JObjectGpu.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">true</ExcludedFromBuild>
     </ClInclude>
-    <ClInclude Include="..\JPartDataBi4.h" />
-    <ClInclude Include="..\JPartFloatBi4.h" />
-    <ClInclude Include="..\JPartOutBi4Save.h" />
-    <ClInclude Include="..\JPartsLoad4.h" />
-    <ClInclude Include="..\JRadixSort.h" />
-    <ClInclude Include="..\JRangeFilter.h" />
-    <ClInclude Include="..\JReadDatafile.h" />
-    <ClInclude Include="..\JReduSum_ker.h">
+    <ClInclude Include="..\src\JPartDataBi4.h" />
+    <ClInclude Include="..\src\JPartFloatBi4.h" />
+    <ClInclude Include="..\src\JPartOutBi4Save.h" />
+    <ClInclude Include="..\src\JPartsLoad4.h" />
+    <ClInclude Include="..\src\JRadixSort.h" />
+    <ClInclude Include="..\src\JRangeFilter.h" />
+    <ClInclude Include="..\src\JReadDatafile.h" />
+    <ClInclude Include="..\src\JReduSum_ker.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">true</ExcludedFromBuild>
     </ClInclude>
-    <ClInclude Include="..\JSaveCsv2.h" />
-    <ClInclude Include="..\JSaveDt.h" />
-    <ClInclude Include="..\JSpaceProperties.h" />
-    <ClInclude Include="..\JSphAccInput.h" />
-    <ClInclude Include="..\JSphDtFixed.h" />
-    <ClInclude Include="..\JSphGpuSingle.h">
+    <ClInclude Include="..\src\JSaveCsv2.h" />
+    <ClInclude Include="..\src\JSaveDt.h" />
+    <ClInclude Include="..\src\JSpaceProperties.h" />
+    <ClInclude Include="..\src\JSphAccInput.h" />
+    <ClInclude Include="..\src\JSphDtFixed.h" />
+    <ClInclude Include="..\src\JSphGpuSingle.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">true</ExcludedFromBuild>
     </ClInclude>
-    <ClInclude Include="..\JSphGpu_ker.h">
+    <ClInclude Include="..\src\JSphGpu_ker.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">true</ExcludedFromBuild>
     </ClInclude>
-    <ClInclude Include="..\JSphInitialize.h" />
-    <ClInclude Include="..\JSphMk.h" />
-    <ClInclude Include="..\JSphMotion.h" />
-    <ClInclude Include="..\JSphVisco.h" />
-    <ClInclude Include="..\JPartsOut.h" />
-    <ClInclude Include="..\JSphCpuSingle.h" />
-    <ClInclude Include="..\JTimeControl.h" />
-    <ClInclude Include="..\JTimeOut.h" />
-    <ClInclude Include="..\JTimer.h" />
-    <ClInclude Include="..\JTimerCuda.h">
+    <ClInclude Include="..\src\JSphInitialize.h" />
+    <ClInclude Include="..\src\JSphMk.h" />
+    <ClInclude Include="..\src\JSphMotion.h" />
+    <ClInclude Include="..\src\JSphVisco.h" />
+    <ClInclude Include="..\src\JPartsOut.h" />
+    <ClInclude Include="..\src\JSphCpuSingle.h" />
+    <ClInclude Include="..\src\JTimeControl.h" />
+    <ClInclude Include="..\src\JTimeOut.h" />
+    <ClInclude Include="..\src\JTimer.h" />
+    <ClInclude Include="..\src\JTimerCuda.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">true</ExcludedFromBuild>
     </ClInclude>
-    <ClInclude Include="..\JWaveGen.h" />
-    <ClInclude Include="..\JWaveOrder2_ker.h">
+    <ClInclude Include="..\src\JWaveGen.h" />
+    <ClInclude Include="..\src\JWaveOrder2_ker.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">true</ExcludedFromBuild>
     </ClInclude>
-    <ClInclude Include="..\JWaveSpectrumGpu.h" />
-    <ClInclude Include="..\JXml.h" />
-    <ClInclude Include="..\OmpDefs.h" />
-    <ClInclude Include="..\randomc.h" />
-    <ClInclude Include="..\tinystr.h" />
-    <ClInclude Include="..\tinyxml.h" />
-    <ClInclude Include="..\Types.h" />
-    <ClInclude Include="..\TypesDef.h" />
-    <CustomBuildStep Include="..\_CudaSphApi.h">
+    <ClInclude Include="..\src\JWaveSpectrumGpu.h" />
+    <ClInclude Include="..\src\JXml.h" />
+    <ClInclude Include="..\src\OmpDefs.h" />
+    <ClInclude Include="..\src\randomc.h" />
+    <ClInclude Include="..\src\tinystr.h" />
+    <ClInclude Include="..\src\tinyxml.h" />
+    <ClInclude Include="..\src\Types.h" />
+    <ClInclude Include="..\src\TypesDef.h" />
+    <CustomBuildStep Include="..\src\_CudaSphApi.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
     </CustomBuildStep>
-    <CustomBuildStep Include="..\_radixsort.h">
+    <CustomBuildStep Include="..\src\_radixsort.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
     </CustomBuildStep>
-    <ClInclude Include="..\JSphTimersCpu.h" />
-    <CustomBuildStep Include="..\JSphTimersGpu.h">
+    <ClInclude Include="..\src\JSphTimersCpu.h" />
+    <CustomBuildStep Include="..\src\JSphTimersGpu.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">true</ExcludedFromBuild>
     </CustomBuildStep>
-    <ClInclude Include="..\JCfgRun.h" />
-    <ClInclude Include="..\JSpaceParts.h" />
-    <ClInclude Include="..\JSpaceCtes.h" />
-    <ClInclude Include="..\JSpaceEParms.h" />
-    <ClInclude Include="..\JSph.h" />
-    <ClInclude Include="..\JSphCpu.h" />
-    <CustomBuildStep Include="..\JSphGpu.h">
+    <ClInclude Include="..\src\JCfgRun.h" />
+    <ClInclude Include="..\src\JSpaceParts.h" />
+    <ClInclude Include="..\src\JSpaceCtes.h" />
+    <ClInclude Include="..\src\JSpaceEParms.h" />
+    <ClInclude Include="..\src\JSph.h" />
+    <ClInclude Include="..\src\JSphCpu.h" />
+    <CustomBuildStep Include="..\src\JSphGpu.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">true</ExcludedFromBuild>
     </CustomBuildStep>
-    <ClInclude Include="..\JTimerClock.h" />
+    <ClInclude Include="..\src\JTimerClock.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\Functions.cpp" />
-    <ClCompile Include="..\FunctionsCuda.cpp">
+    <ClCompile Include="..\src\Functions.cpp" />
+    <ClCompile Include="..\src\FunctionsCuda.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">true</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="..\FunctionsMath.cpp" />
-    <ClCompile Include="..\JArraysCpu.cpp" />
-    <ClCompile Include="..\JBinaryData.cpp" />
-    <ClCompile Include="..\JBlockSizeAuto.cpp">
+    <ClCompile Include="..\src\FunctionsMath.cpp" />
+    <ClCompile Include="..\src\JArraysCpu.cpp" />
+    <ClCompile Include="..\src\JBinaryData.cpp" />
+    <ClCompile Include="..\src\JBlockSizeAuto.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">true</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="..\JCellDivCpu.cpp" />
-    <ClCompile Include="..\JCellDivCpuSingle.cpp" />
-    <ClCompile Include="..\JCellDivGpu.cpp">
+    <ClCompile Include="..\src\JCellDivCpu.cpp" />
+    <ClCompile Include="..\src\JCellDivCpuSingle.cpp" />
+    <ClCompile Include="..\src\JCellDivGpu.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">true</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="..\JCellDivGpuSingle.cpp">
+    <ClCompile Include="..\src\JCellDivGpuSingle.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">true</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="..\JDamping.cpp" />
-    <ClCompile Include="..\JArraysGpu.cpp">
+    <ClCompile Include="..\src\JDamping.cpp" />
+    <ClCompile Include="..\src\JArraysGpu.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">true</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="..\JDsphConfig.cpp" />
-    <ClCompile Include="..\JException.cpp" />
-    <ClCompile Include="..\JGaugeItem.cpp" />
-    <ClCompile Include="..\JGaugeSystem.cpp" />
-    <ClCompile Include="..\JLog2.cpp" />
-    <ClCompile Include="..\JMeanValues.cpp" />
-    <ClCompile Include="..\JMotion.cpp" />
-    <ClCompile Include="..\JMotionList.cpp" />
-    <ClCompile Include="..\JMotionMov.cpp" />
-    <ClCompile Include="..\JMotionObj.cpp" />
-    <ClCompile Include="..\JMotionPos.cpp" />
-    <ClCompile Include="..\JObject.cpp" />
-    <ClCompile Include="..\JObjectGpu.cpp">
+    <ClCompile Include="..\src\JDsphConfig.cpp" />
+    <ClCompile Include="..\src\JException.cpp" />
+    <ClCompile Include="..\src\JGaugeItem.cpp" />
+    <ClCompile Include="..\src\JGaugeSystem.cpp" />
+    <ClCompile Include="..\src\JLog2.cpp" />
+    <ClCompile Include="..\src\JMeanValues.cpp" />
+    <ClCompile Include="..\src\JMotion.cpp" />
+    <ClCompile Include="..\src\JMotionList.cpp" />
+    <ClCompile Include="..\src\JMotionMov.cpp" />
+    <ClCompile Include="..\src\JMotionObj.cpp" />
+    <ClCompile Include="..\src\JMotionPos.cpp" />
+    <ClCompile Include="..\src\JObject.cpp" />
+    <ClCompile Include="..\src\JObjectGpu.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">true</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="..\JPartDataBi4.cpp" />
-    <ClCompile Include="..\JPartFloatBi4.cpp" />
-    <ClCompile Include="..\JPartOutBi4Save.cpp" />
-    <ClCompile Include="..\JPartsLoad4.cpp" />
-    <ClCompile Include="..\JRadixSort.cpp" />
-    <ClCompile Include="..\JRangeFilter.cpp" />
-    <ClCompile Include="..\JReadDatafile.cpp" />
-    <ClCompile Include="..\JSaveCsv2.cpp" />
-    <ClCompile Include="..\JSaveDt.cpp" />
-    <ClCompile Include="..\JSpaceProperties.cpp" />
-    <ClCompile Include="..\JSphAccInput.cpp" />
-    <ClCompile Include="..\JSphDtFixed.cpp" />
-    <ClCompile Include="..\JSphGpuSingle.cpp">
+    <ClCompile Include="..\src\JPartDataBi4.cpp" />
+    <ClCompile Include="..\src\JPartFloatBi4.cpp" />
+    <ClCompile Include="..\src\JPartOutBi4Save.cpp" />
+    <ClCompile Include="..\src\JPartsLoad4.cpp" />
+    <ClCompile Include="..\src\JRadixSort.cpp" />
+    <ClCompile Include="..\src\JRangeFilter.cpp" />
+    <ClCompile Include="..\src\JReadDatafile.cpp" />
+    <ClCompile Include="..\src\JSaveCsv2.cpp" />
+    <ClCompile Include="..\src\JSaveDt.cpp" />
+    <ClCompile Include="..\src\JSpaceProperties.cpp" />
+    <ClCompile Include="..\src\JSphAccInput.cpp" />
+    <ClCompile Include="..\src\JSphDtFixed.cpp" />
+    <ClCompile Include="..\src\JSphGpuSingle.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">true</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="..\JSphInitialize.cpp" />
-    <ClCompile Include="..\JSphMk.cpp" />
-    <ClCompile Include="..\JSphMotion.cpp" />
-    <ClCompile Include="..\JSphVisco.cpp" />
-    <ClCompile Include="..\JPartsOut.cpp" />
-    <ClCompile Include="..\JSphCpuSingle.cpp" />
-    <ClCompile Include="..\JTimeControl.cpp" />
-    <ClCompile Include="..\JTimeOut.cpp" />
-    <ClCompile Include="..\JCfgRun.cpp" />
-    <ClCompile Include="..\JSpaceParts.cpp" />
-    <ClCompile Include="..\JSpaceCtes.cpp" />
-    <ClCompile Include="..\JSpaceEParms.cpp" />
-    <ClCompile Include="..\JSph.cpp" />
-    <ClCompile Include="..\JSphCpu.cpp" />
-    <ClCompile Include="..\JSphGpu.cpp">
+    <ClCompile Include="..\src\JSphInitialize.cpp" />
+    <ClCompile Include="..\src\JSphMk.cpp" />
+    <ClCompile Include="..\src\JSphMotion.cpp" />
+    <ClCompile Include="..\src\JSphVisco.cpp" />
+    <ClCompile Include="..\src\JPartsOut.cpp" />
+    <ClCompile Include="..\src\JSphCpuSingle.cpp" />
+    <ClCompile Include="..\src\JTimeControl.cpp" />
+    <ClCompile Include="..\src\JTimeOut.cpp" />
+    <ClCompile Include="..\src\JCfgRun.cpp" />
+    <ClCompile Include="..\src\JSpaceParts.cpp" />
+    <ClCompile Include="..\src\JSpaceCtes.cpp" />
+    <ClCompile Include="..\src\JSpaceEParms.cpp" />
+    <ClCompile Include="..\src\JSph.cpp" />
+    <ClCompile Include="..\src\JSphCpu.cpp" />
+    <ClCompile Include="..\src\JSphGpu.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">true</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="..\JWaveSpectrumGpu.cpp" />
-    <ClCompile Include="..\JXml.cpp" />
-    <ClCompile Include="..\main.cpp" />
-    <ClCompile Include="..\randomc.cpp" />
-    <ClCompile Include="..\tinystr.cpp" />
-    <ClCompile Include="..\tinyxml.cpp" />
-    <ClCompile Include="..\tinyxmlerror.cpp" />
-    <ClCompile Include="..\tinyxmlparser.cpp" />
+    <ClCompile Include="..\src\JWaveSpectrumGpu.cpp" />
+    <ClCompile Include="..\src\JXml.cpp" />
+    <ClCompile Include="..\src\main.cpp" />
+    <ClCompile Include="..\src\randomc.cpp" />
+    <ClCompile Include="..\src\tinystr.cpp" />
+    <ClCompile Include="..\src\tinyxml.cpp" />
+    <ClCompile Include="..\src\tinyxmlerror.cpp" />
+    <ClCompile Include="..\src\tinyxmlparser.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

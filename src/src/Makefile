@@ -1,4 +1,4 @@
-#DualSPHysics GPU v4.2.037 (17-03-2018)
+#DualSPHysics GPU v4.2.037 (19-03-2018)
 
 #=============== Compilation Options ===============
 USE_DEBUG=NO
@@ -6,10 +6,10 @@ USE_FAST_MATH=YES
 USE_NATIVE_CPU_OPTIMIZATIONS=NO
 
 LIBS_DIRECTORIES=-L./
-LIBS_DIRECTORIES:=$(LIBS_DIRECTORIES) -Llib/linux/v4.2.037_gcc5
+LIBS_DIRECTORIES:=$(LIBS_DIRECTORIES) -L../lib/linux/v4.2.037_gcc5
 
 EXECNAME=DualSPHysics4.2_linux64
-EXECS_DIRECTORY=../bin/linux
+EXECS_DIRECTORY=../../bin/linux
 
 ifeq ($(USE_DEBUG), YES)
   CCFLAGS=-c -O0 -g -Wall -fopenmp -D_WITHGPU
