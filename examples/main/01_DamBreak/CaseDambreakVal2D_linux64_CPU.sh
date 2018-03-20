@@ -23,7 +23,7 @@ measureboxes="${dirbin}/MeasureBoxes4_linux64"
 # Library path must be indicated properly
 
 current=$(pwd)
-cd ../../EXECS
+cd $dirbin
 path_so=$(pwd)
 cd $current
 export LD_LIBRARY_PATH=$path_so
@@ -32,36 +32,44 @@ export LD_LIBRARY_PATH=$path_so
 # "dirout" is created to store results or it is cleaned if it already exists
 
 if [ -e $dirout ]; then
-  rm -f -r $dirout
+  rm -r $dirout
 fi
 mkdir $dirout
+diroutdata=${dirout}/data; mkdir $diroutdata
 
 
 # CODES are executed according the selected parameters of execution in this testcase
 errcode=0
 
+# Executes GenCase4 to create initial files for simulation.
 if [ $errcode -eq 0 ]; then
   $gencase ${name}_Def $dirout/$name -save:all
   errcode=$?
 fi
 
+# Executes DualSPHysics to simulate SPH method.
 if [ $errcode -eq 0 ]; then
-  $dualsphysicscpu -cpu $dirout/$name $dirout -svres
+  $dualsphysicscpu -cpu $dirout/$name $dirout -dirdataout data -svres -tmax:0.0005 -tout:0.0001
   errcode=$?
 fi
 
+# Executes PartVTK4 to create VTK files with particles.
+dirout2=${dirout}/particles; mkdir $dirout2
 if [ $errcode -eq 0 ]; then
-  $partvtk -dirin $dirout -filexml $dirout/${name}.xml -savevtk $dirout/PartFluid -onlytype:-all,fluid -vars:+idp,+vel,+rhop,+press,+vor
+  $partvtk -dirin $diroutdata -filexml $dirout/${name}.xml -savevtk $dirout2/PartFluid -onlytype:-all,fluid -vars:+idp,+vel,+rhop,+press,+vor
   errcode=$?
 fi
 
+# Executes PartVTKOut4 to create VTK files with excluded particles.
 if [ $errcode -eq 0 ]; then
-  $partvtkout -dirin $dirout -filexml $dirout/${name}.xml -savevtk $dirout/PartFluidOut -SaveResume $dirout/ResumeFluidOut
+  $partvtkout -dirin $diroutdata -filexml $dirout/${name}.xml -savevtk $dirout2/PartFluidOut -SaveResume $dirout/ResumeFluidOut
   errcode=$?
 fi
 
+# Executes IsoSurface4 to create VTK files with slices of surface.
+dirout2=${dirout}/surface; mkdir $dirout2
 if [ $errcode -eq 0 ]; then
-  $isosurface -dirin $dirout -saveslice $dirout/Slices 
+  $isosurface -dirin $diroutdata -saveslice $dirout2/Slices 
   errcode=$?
 fi
 
