@@ -1357,8 +1357,10 @@ void JSph::ConfigSaveData(unsigned piece,unsigned pieces,std::string div){
 /// Stores new excluded particles until recordering next PART.
 /// Almacena nuevas particulas excluidas hasta la grabacion del proximo PART.
 //==============================================================================
-void JSph::AddParticlesOut(unsigned nout,const unsigned *idp,const tdouble3* pos,const tfloat3 *vel,const float *rhop,unsigned noutrhop,unsigned noutmove){
-  PartsOut->AddParticles(nout,idp,pos,vel,rhop,noutrhop,noutmove);
+void JSph::AddParticlesOut(unsigned nout,const unsigned *idp,const tdouble3 *pos
+  ,const tfloat3 *vel,const float *rhop,const typecode *code)
+{
+  PartsOut->AddParticles(nout,idp,pos,vel,rhop,code);
 }
 
 //==============================================================================
@@ -1450,12 +1452,7 @@ void JSph::SavePartData(unsigned npok,unsigned nout,const unsigned *idp,const td
 
   //-Stores data of excluded particles.
   if(DataOutBi4 && PartsOut->GetCount()){
-    if(SvDouble)DataOutBi4->SavePartOut(Part,TimeStep,PartsOut->GetCount(),PartsOut->GetIdpOut(),PartsOut->GetPosOut(),PartsOut->GetVelOut(),PartsOut->GetRhopOut());
-    else{
-      const tfloat3* posf3=GetPointerDataFloat3(PartsOut->GetCount(),PartsOut->GetPosOut());
-      DataOutBi4->SavePartOut(Part,TimeStep,PartsOut->GetCount(),PartsOut->GetIdpOut(),posf3,PartsOut->GetVelOut(),PartsOut->GetRhopOut());
-      delete[] posf3;
-    }
+    DataOutBi4->SavePartOut(SvDouble,Part,TimeStep,PartsOut->GetCount(),PartsOut->GetIdpOut(),NULL,PartsOut->GetPosOut(),PartsOut->GetVelOut(),PartsOut->GetRhopOut(),PartsOut->GetMotiveOut());
   }
 
   //-Stores data of floating bodies.
@@ -1484,6 +1481,7 @@ void JSph::SaveData(unsigned npok,const unsigned *idp,const tdouble3 *pos,const 
   //-Contabiliza nuevas particulas excluidas.
   const unsigned noutpos=PartsOut->GetOutPosCount(),noutrhop=PartsOut->GetOutRhopCount(),noutmove=PartsOut->GetOutMoveCount();
   const unsigned nout=noutpos+noutrhop+noutmove;
+  if(nout!=PartsOut->GetCount())RunException(met,"Excluded particles with unknown reason.");
   AddOutCount(noutpos,noutrhop,noutmove);
 
   //-Stores data files of particles.
@@ -1566,7 +1564,7 @@ void JSph::SaveInitialDomainVtk()const{
     vdomf3[5]=ToTFloat3(Map_PosMax);
   }
   const string file=DirOut+"CfgInit_Domain.vtk";
-  Log->AddFileInfo(file,"Saves boxes that represent the limits of the case and the simulation domain limits.");
+  Log->AddFileInfo(file,"Saves the limits of the case and the simulation domain limits.");
   JFormatFiles2::SaveVtkBoxes(file,nbox,vdomf3,0);
   delete[] vdomf3;
 }
@@ -1646,7 +1644,7 @@ void JSph::GetResInfo(float tsim,float ttot,const std::string &headplus,const st
 void JSph::SaveRes(float tsim,float ttot,const std::string &headplus,const std::string &detplus){
   const char* met="SaveRes";
   const string fname=DirOut+"Run.csv";
-  Log->AddFileInfo(fname,"One line CSV file with execution parameters, execution time, simulation steps, memory used...");
+  Log->AddFileInfo(fname,"One line CSV file with execution parameters and other simulation data.");
   ofstream pf;
   pf.open(fname.c_str());
   if(pf){

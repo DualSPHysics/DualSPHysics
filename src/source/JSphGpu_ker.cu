@@ -1807,8 +1807,8 @@ template<bool periactive> __device__ void KerUpdatePos
   //-Stores cell and check. | Guarda celda y check.
   if(outrhop || outmove || out){//-Particle out. Only brands as excluded normal particles (not periodic). | Particle out. Solo las particulas normales (no periodicas) se pueden marcar como excluidas.
     typecode rcode=code[p];
-    if(outrhop)rcode=CODE_SetOutRhop(rcode);
-    else if(out)rcode=CODE_SetOutPos(rcode);
+    if(out)rcode=CODE_SetOutPos(rcode);
+    else if(outrhop)rcode=CODE_SetOutRhop(rcode);
     else rcode=CODE_SetOutMove(rcode);
     code[p]=rcode;
     dcell[p]=0xFFFFFFFF;

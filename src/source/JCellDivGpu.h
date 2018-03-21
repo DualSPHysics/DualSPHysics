@@ -94,7 +94,7 @@ protected:
   unsigned NpbOut,NpfOut,NpbOutIgnore,NpfOutIgnore;
   
   unsigned NpFinal,NpbFinal;
-  unsigned NpfOutRhop,NpfOutMove,NpbIgnore;
+  unsigned NpbIgnore;
 
   tuint3 CellDomainMin; ///<Lower domain limit in cells inside of DomCells. | Limite inferior del dominio en celdas dentro de DomCells.
   tuint3 CellDomainMax; ///<Upper domain limit in cells inside of DomCells. | Limite superior del dominio en celdas dentro de DomCells.
@@ -176,10 +176,6 @@ public:
   unsigned GetNpOut()const{ return(NpbOut+NpfOut); }
   unsigned GetNpbOutIgnore()const{ return(NpbOutIgnore); }
   unsigned GetNpfOutIgnore()const{ return(NpfOutIgnore); }
-
-  unsigned GetNpfOutPos()const{ return(NpfOut-(NpfOutMove+NpfOutRhop)); }
-  unsigned GetNpfOutMove()const{ return(NpfOutMove); }
-  unsigned GetNpfOutRhop()const{ return(NpfOutRhop); }
 
   //:const unsigned* GetCellPart()const{ return(CellPart); }
   const int2* GetBeginCell(){ return(BeginEndCell); }

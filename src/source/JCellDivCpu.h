@@ -105,7 +105,7 @@ protected:
   unsigned NpbOut,NpfOut,NpbOutIgnore,NpfOutIgnore;
   
   unsigned NpFinal,NpbFinal;
-  unsigned NpfOutRhop,NpfOutMove,NpbIgnore;
+  unsigned NpbIgnore;
 
   tuint3 CellDomainMin; ///<Lower domain limit in cells inside of DomCells. | Limite inferior del dominio en celdas dentro de DomCells.
   tuint3 CellDomainMax; ///<Upper domain limit in cells inside of DomCells. | Limite superior del dominio en celdas dentro de DomCells.
@@ -144,7 +144,7 @@ protected:
   //tuint3 GetMapCell(const tfloat3 &pos)const;
   void LimitsCellBound(unsigned n,unsigned pini,const unsigned* dcellc,const typecode *codec,const unsigned* idpc,const tdouble3* posc,tuint3 &cellmin,tuint3 &cellmax)const;
   void CalcCellDomainBound(unsigned n,unsigned pini,unsigned n2,unsigned pini2,const unsigned* dcellc,const typecode *codec,const unsigned* idpc,const tdouble3* posc,tuint3 &cellmin,tuint3 &cellmax);
-  void LimitsCellFluid(unsigned n,unsigned pini,const unsigned* dcellc,const typecode *codec,const unsigned* idpc,const tdouble3* posc,tuint3 &cellmin,tuint3 &cellmax,unsigned &npfoutrhop,unsigned &npfoutmove)const;
+  void LimitsCellFluid(unsigned n,unsigned pini,const unsigned* dcellc,const typecode *codec,const unsigned* idpc,const tdouble3* posc,tuint3 &cellmin,tuint3 &cellmax)const;
   void CalcCellDomainFluid(unsigned n,unsigned pini,unsigned n2,unsigned pini2,const unsigned* dcellc,const typecode *codec,const unsigned* idpc,const tdouble3* posc,tuint3 &cellmin,tuint3 &cellmax);
 
   unsigned CellSize(unsigned box)const{ return(BeginCell[box+1]-BeginCell[box]); }
@@ -184,10 +184,6 @@ public:
   unsigned GetNpOut()const{ return(NpbOut+NpfOut); }
   unsigned GetNpbOutIgnore()const{ return(NpbOutIgnore); }
   unsigned GetNpfOutIgnore()const{ return(NpfOutIgnore); }
-
-  unsigned GetNpfOutPos()const{ return(NpfOut-(NpfOutMove+NpfOutRhop)); }
-  unsigned GetNpfOutMove()const{ return(NpfOutMove); }
-  unsigned GetNpfOutRhop()const{ return(NpfOutRhop); }
 
   //:const unsigned* GetCellPart()const{ return(CellPart); }
   const unsigned* GetBeginCell(){ return(BeginCell); }

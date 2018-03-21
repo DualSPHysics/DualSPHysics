@@ -66,7 +66,7 @@ void JCellDivCpu::Reset(){
   MemAllocNp=MemAllocNct=0;
   NpbOut=NpfOut=NpbOutIgnore=NpfOutIgnore=0;
   NpFinal=NpbFinal=0;
-  NpfOutRhop=NpfOutMove=NpbIgnore=0;
+  NpbIgnore=0;
   CellDomainMin=TUint3(1);
   CellDomainMax=TUint3(0);
   Ncx=Ncy=Ncz=Nsheet=Nct=0;
@@ -332,9 +332,8 @@ void JCellDivCpu::CalcCellDomainBound(unsigned n,unsigned pini,unsigned n2,unsig
 //==============================================================================
 void JCellDivCpu::LimitsCellFluid(unsigned n,unsigned pini,const unsigned* dcellc
   ,const typecode *codec,const unsigned* idpc,const tdouble3* posc
-  ,tuint3 &cellmin,tuint3 &cellmax,unsigned &npfoutrhop,unsigned &npfoutmove)const
+  ,tuint3 &cellmin,tuint3 &cellmax)const
 {
-  unsigned noutrhop=0,noutmove=0;
   tuint3 cmin=TUint3(UINT_MAX);
   tuint3 cmax=TUint3(0);
   unsigned nerr=0;
@@ -355,19 +354,15 @@ void JCellDivCpu::LimitsCellFluid(unsigned n,unsigned pini,const unsigned* dcell
       if(cmax.z<cz)cmax.z=cz;
     }
     else if(rcodsp>CODE_OUTIGNORE){
-      if(Floating && CODE_IsFloating(rcode)){
+      if(Floating && CODE_IsFloating(rcode)){ //<<--CHECK
         if(nerr<100)VisuBoundaryOut(p,idpc[p],OrderDecodeValue(CellOrder,posc[p]),codec[p]);
         nerr++;
       }
-      if(rcodsp==CODE_OUTRHOP)noutrhop++;
-      else if(rcodsp==CODE_OUTMOVE)noutmove++;
     }
   }
   if(nerr)RunException("LimitsCellFluid","Some floating particle was found outside the domain.");
   cellmin=cmin;
   cellmax=cmax;
-  npfoutrhop+=noutrhop;
-  npfoutmove+=noutmove;
 }
 
 //==============================================================================
@@ -382,11 +377,11 @@ void JCellDivCpu::CalcCellDomainFluid(unsigned n,unsigned pini,unsigned n2,unsig
   ,tuint3 &cellmin,tuint3 &cellmax)
 {
   tuint3 cmin,cmax;
-  LimitsCellFluid(n,pini,dcellc,codec,idpc,posc,cmin,cmax,NpfOutRhop,NpfOutMove);
+  LimitsCellFluid(n,pini,dcellc,codec,idpc,posc,cmin,cmax);
   cellmin=(cmin.x>cmax.x? DomCells: cmin);
   cellmax=(cmin.x>cmax.x? TUint3(0): cmax);
   if(n2){
-    LimitsCellFluid(n2,pini2,dcellc,codec,idpc,posc,cmin,cmax,NpfOutRhop,NpfOutMove);
+    LimitsCellFluid(n2,pini2,dcellc,codec,idpc,posc,cmin,cmax);
     cmin=(cmin.x>cmax.x? DomCells: cmin);
     cmax=(cmin.x>cmax.x? TUint3(0): cmax);
     cellmin=MinValues(cellmin,cmin);

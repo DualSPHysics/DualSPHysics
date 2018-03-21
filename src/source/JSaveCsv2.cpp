@@ -37,18 +37,20 @@ namespace jcsv{
 //==============================================================================
 /// Constructor.
 //==============================================================================
-JSaveCsv2::JSaveCsv2(std::string fname,bool app,bool csvsepcoma):App(app),CsvSepComa(csvsepcoma){
+JSaveCsv2::JSaveCsv2(std::string fname,bool app,bool csvsepcoma):ExceptionThrown(false),App(app),CsvSepComa(csvsepcoma){
   ClassName="JSaveCsv2";
   Pf=NULL;
   Reset();
   FileName=fname;
+  OpenFile();
 }
 
 //==============================================================================
 /// Destructor.
 //==============================================================================
 JSaveCsv2::~JSaveCsv2(){ 
-  if(!FileError)SaveData(true);
+  DestructorActive=true;
+  if(!ExceptionThrown)SaveData(true);
   Reset();
 }
 
@@ -58,7 +60,6 @@ JSaveCsv2::~JSaveCsv2(){
 void JSaveCsv2::Reset(){
   delete Pf; Pf=NULL;
   FileName="";
-  FileError=false;
   FirstSaveData=true;
   AutoSepEnable=true;
   InitFmt();
@@ -67,6 +68,23 @@ void JSaveCsv2::Reset(){
   HeadLineEmpty=true;
   Data="";
   DataLineEmpty=true;
+}
+
+//==============================================================================
+/// Initialization of variables.
+//==============================================================================
+void JSaveCsv2::OpenFile(){
+  const char met[]="OpenFile";
+  if(Pf==NULL){
+    Pf=new fstream();
+    const bool fexists=fun::FileExists(FileName);
+    if(App && fexists)Pf->open(FileName.c_str(),ios::binary|ios::out|ios::in|ios::app);
+    else Pf->open(FileName.c_str(),ios::binary|ios::out);
+    if(!(*Pf)){
+      RunException(met,"File could not be opened.",FileName);
+    }
+    if(App && fexists)Pf->seekp(0,Pf->end);
+  }
 }
 
 //==============================================================================
@@ -201,6 +219,7 @@ void JSaveCsv2::Save(const std::string &tx){
   Pf->write(tx.c_str(),tx.size());
   Pf->flush();
   //fflush(NULL);//-Vacia todos los bufers
+  if(Pf->fail())RunException("Save","File writing failure.",FileName);
 }
 
 //==============================================================================
@@ -221,33 +240,15 @@ void JSaveCsv2::SetSeparators(std::string &tx)const{
 void JSaveCsv2::SaveData(bool closefile){
   const char met[]="SaveData";
   if(FirstSaveData || !Data.empty()){
-    if(Pf==NULL){
-      Pf=new fstream();
-      const bool fexists=fun::FileExists(FileName);
-      if(App && fexists)Pf->open(FileName.c_str(),ios::binary|ios::out|ios::in|ios::app);
-      else Pf->open(FileName.c_str(),ios::binary|ios::out);
-      if(!(*Pf)){
-        FileError=true;
-        RunException(met,"File could not be opened.",FileName);
-      }
-      if(App && fexists)Pf->seekp(0,Pf->end);
-      else{
-        //SetSeparators(Head);
-        Save(Head);
-        if(Pf->fail())RunException(met,"File writing failure.",FileName);
-      }
-    }
-    if(!FileError){
-      //SetSeparators(Data);
-      Save(Data);
-      Data="";
-      if(Pf->fail())RunException(met,"File writing failure.",FileName);
-      if(closefile){
-        Pf->close();
-        delete Pf; Pf=NULL;
-      }
-    }
+    if(Pf==NULL)OpenFile();
+    if(FirstSaveData)Save(Head);
+    Save(Data);
+    Data="";
     FirstSaveData=false;
+  }
+  if(Pf!=NULL && closefile){
+    Pf->close();
+    delete Pf; Pf=NULL;
   }
 }
 

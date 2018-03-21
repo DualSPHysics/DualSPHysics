@@ -23,6 +23,7 @@
 //:#   el siguiente part. (08-11-2011)
 //:# - Las funcion GetAllocMemory() devuelve long long. (05-04-2013)
 //:# - Pos pasa a ser tdouble3 en lugar de tfloat3. (24-11-2013)
+//:# - Se incluye el motivo de exclusion. (20-03-2018)
 //:#############################################################################
 
 /// \file JPartsOut.h \brief Declares the class \ref JPartsOut.
@@ -30,14 +31,14 @@
 #ifndef _JPartsOut_
 #define _JPartsOut_
 
-#include "TypesDef.h"
+#include "Types.h"
 #include "JObject.h"
 #include <cstring>
 
 //##############################################################################
 //# JPartsOut
 //##############################################################################
-/// \brief Stores excluded particles at each instant untill writing the output file. 
+/// \brief Stores excluded particles at each instant until writing the output file. 
 
 class JPartsOut : protected JObject
 {
@@ -53,7 +54,8 @@ protected:
   unsigned *Idp;
   tdouble3 *Pos;
   tfloat3 *Vel;
-  float* Rhop;
+  float *Rhop;
+  byte *Motive; ///<Motives for exclusion. 1:position, 2:rhop, 3:velocity.
 
   void AllocMemory(unsigned size,bool reset);
 
@@ -62,7 +64,7 @@ public:
   ~JPartsOut();
   void Reset();
   llong GetAllocMemory()const;
-  void AddParticles(unsigned np,const unsigned* idp,const tdouble3* pos,const tfloat3* vel,const float* rhop,unsigned outrhop,unsigned outmove);
+  void AddParticles(unsigned np,const unsigned* idp,const tdouble3* pos,const tfloat3* vel,const float* rhop,const typecode* code);
 
   unsigned GetSize()const{ return(Size); }
   unsigned GetCount()const{ return(Count); }
@@ -75,6 +77,7 @@ public:
   const tdouble3* GetPosOut(){ return(Pos); }
   const tfloat3* GetVelOut(){ return(Vel); }
   const float* GetRhopOut(){ return(Rhop); }
+  const byte* GetMotiveOut(){ return(Motive); }
 
   void Clear(){ Count=0; OutPosCount=OutRhopCount=OutMoveCount=0; };
 };

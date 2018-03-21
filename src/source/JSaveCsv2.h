@@ -28,6 +28,7 @@
 //:# - New improved code to simplify CSV file creation. (08-11-2017)
 //:# - Error corregido: Reescribia fichero cuando ya estaba cerrado pos SaveData(). (02-03-2018)
 //:# - Opcion para activar o no el uso de SetSeparators((). (12-03-2018)
+//:# - Control de excepciones en el destructor. (21-03-2018)
 //:#############################################################################
 
 /// \file JSaveCsv2.h \brief Declares the class \ref JSaveCsv2.
@@ -134,12 +135,12 @@ public:
 class JSaveCsv2 : protected JObject
 {
 private:
+  bool ExceptionThrown;    ///<An exception was thrown.
   std::string FileName;    ///<Name of file to store data.
   const bool App;          ///<Append mode enabled.
   const bool CsvSepComa;   ///<Separator character in CSV files (0=semicolon, 1=coma).
 
   std::fstream *Pf;
-  bool FileError;
   bool FirstSaveData;
 
   bool AutoSepEnable; ///<Enable or disable auto separator change according configuration (def=true).
@@ -160,6 +161,13 @@ private:
   void AddEndl();
   void Save(const std::string &tx);
   void SetSeparators(std::string &tx)const;
+  void OpenFile();
+  void RunException(const std::string &method,const std::string &msg){
+    ExceptionThrown=true; JObject::RunException(method,msg);
+  }
+  void RunException(const std::string &method,const std::string &msg,const std::string &file){
+    ExceptionThrown=true; JObject::RunException(method,msg,file);
+  }
 
 public:
   JSaveCsv2(std::string fname,bool app,bool csvsepcoma);

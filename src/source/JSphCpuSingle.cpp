@@ -472,12 +472,14 @@ void JSphCpuSingle::RunCellDivide(bool updateperiodic){
     tdouble3* pos=ArraysCpu->ReserveDouble3();
     tfloat3* vel=ArraysCpu->ReserveFloat3();
     float* rhop=ArraysCpu->ReserveFloat();
-    unsigned num=GetParticlesData(npfout,Np,true,false,idp,pos,vel,rhop,NULL);
-    AddParticlesOut(npfout,idp,pos,vel,rhop,CellDivSingle->GetNpfOutRhop(),CellDivSingle->GetNpfOutMove());
+    typecode* code=ArraysCpu->ReserveTypeCode();
+    unsigned num=GetParticlesData(npfout,Np,true,false,idp,pos,vel,rhop,code);
+    AddParticlesOut(npfout,idp,pos,vel,rhop,code);
     ArraysCpu->Free(idp);
     ArraysCpu->Free(pos);
     ArraysCpu->Free(vel);
     ArraysCpu->Free(rhop);
+    ArraysCpu->Free(code);
   }
   TmcStop(Timers,TMC_NlOutCheck);
   BoundChanged=false;

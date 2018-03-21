@@ -417,7 +417,7 @@ void JSphGpuSingle::RunCellDivide(bool updateperiodic){
   if(npout){
     ParticlesDataDown(npout,Np,true,true,false);
     CellDivSingle->CheckParticlesOut(npout,Idp,AuxPos,AuxRhop,Code);
-    AddParticlesOut(npout,Idp,AuxPos,AuxVel,AuxRhop,CellDivSingle->GetNpfOutRhop(),CellDivSingle->GetNpfOutMove());
+    AddParticlesOut(npout,Idp,AuxPos,AuxVel,AuxRhop,Code);
   }
   TmgStop(Timers,TMG_NlOutCheck);
   BoundChanged=false;

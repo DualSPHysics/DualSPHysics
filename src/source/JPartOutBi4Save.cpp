@@ -19,7 +19,6 @@
 /// \file JPartOutBi4Save.cpp \brief Implements the class \ref JPartOutBi4Save.
 
 #include "JPartOutBi4Save.h"
-//#include "JBinaryData.h"
 #include "Functions.h"
 #include <fstream>
 #include <cmath>
@@ -123,6 +122,7 @@ void JPartOutBi4Save::ConfigBasic(unsigned piece,unsigned npiece,std::string run
   Data->SetvText("Date",fun::GetDateTime());
   Data->SetvText("AppName",appname);
   Data->SetvBool("Data2d",data2d);
+  Data->SetvUint("FmtVersion",FmtVersion);
   Data->SetvUint("Block",Block);
   ConfigLimits(TDouble3(0),TDouble3(0),0,0);
 }
@@ -176,10 +176,13 @@ std::string JPartOutBi4Save::GetNamePart(unsigned cpart){
 /// Añade datos de particulas de de nuevo part.
 /// Adds data of particles to new part.
 //==============================================================================
-JBinaryData* JPartOutBi4Save::AddPartOut(unsigned cpart,double timestep,unsigned nout,const unsigned *idp,const ullong *idpd,const tfloat3 *pos,const tdouble3 *posd,const tfloat3 *vel,const float *rhop){
+JBinaryData* JPartOutBi4Save::AddPartOut(unsigned cpart,double timestep,unsigned nout
+  ,const unsigned *idp,const ullong *idpd,const tfloat3 *pos,const tdouble3 *posd
+  ,const tfloat3 *vel,const float *rhop,const byte *motive)
+{
   const char met[]="AddPartOut";
-  if(!idp&&!idpd)RunException(met,"The id of particles is invalid.");
-  if(!pos&&!posd)RunException(met,"The position of particles is invalid.");
+  if(!idp && !idpd)RunException(met,"The id of particles is invalid.");
+  if(!pos && !posd)RunException(met,"The position of particles is invalid.");
   //-Configura item Part. Configures item Part.
   Part->Clear();
   Cpart=cpart;
@@ -194,6 +197,7 @@ JBinaryData* JPartOutBi4Save::AddPartOut(unsigned cpart,double timestep,unsigned
   else    Part->CreateArray("Pos" ,JBinaryDataDef::DatFloat3,nout,pos,true);
   Part->CreateArray("Vel",JBinaryDataDef::DatFloat3,nout,vel,true);
   Part->CreateArray("Rhop",JBinaryDataDef::DatFloat,nout,rhop,true);
+  Part->CreateArray("Motive",JBinaryDataDef::DatUchar,nout,motive,true);
   return(Part);
 }
 
@@ -215,5 +219,35 @@ void JPartOutBi4Save::SavePartOut(){
     Part->RemoveArrays();
   }
 }
+
+//==============================================================================
+/// Graba particulas excluidas del PART.
+/// Records particles excluded from the PART.
+//==============================================================================
+void JPartOutBi4Save::SavePartOut(bool posdouble,unsigned cpart,double timestep,unsigned nout
+  ,const unsigned *idp,const tfloat3 *posf,const tdouble3 *posd,const tfloat3 *vel
+  ,const float *rhop,const byte *motive)
+{
+  if(!posf && !posd)RunException("SavePartOut","The position of particles is invalid.");
+  if(posdouble){
+    if(posd==NULL){
+      tdouble3 *xpos=new tdouble3[nout];
+      for(unsigned c=0;c<nout;c++)xpos[c]=ToTDouble3(posf[c]);
+      SavePartOut(cpart,timestep,nout,idp,xpos,vel,rhop,motive);
+      delete[] xpos; xpos=NULL;
+    }
+    else SavePartOut(cpart,timestep,nout,idp,posd,vel,rhop,motive);
+  }
+  else{
+    if(posf==NULL){
+      tfloat3 *xpos=new tfloat3[nout];
+      for(unsigned c=0;c<nout;c++)xpos[c]=ToTFloat3(posd[c]);
+      SavePartOut(cpart,timestep,nout,idp,xpos,vel,rhop,motive);
+      delete[] xpos; xpos=NULL;
+    }
+    else SavePartOut(cpart,timestep,nout,idp,posf,vel,rhop,motive);
+  }
+}
+
 
 

@@ -22,6 +22,7 @@
 #include "JException.h"
 
 #include <cstdlib>
+#include <cstdio>
 #include <ctime>
 
 //==============================================================================
@@ -31,6 +32,7 @@
 /// \throw JException 
 //==============================================================================
 void JObject::RunException(const std::string &method,const std::string &msg)const{
+  if(DestructorActive)PrintException(method,msg);
   throw JException(ClassName,method,msg,"");
 }
 
@@ -42,6 +44,7 @@ void JObject::RunException(const std::string &method,const std::string &msg)cons
 /// \throw JException 
 //==============================================================================
 void JObject::RunException(const std::string &method,const std::string &msg,const std::string &file)const{
+  if(DestructorActive)PrintException(method,msg,file);
   throw JException(ClassName,method,msg,file);
 }
 
@@ -62,6 +65,18 @@ std::string JObject::GetExceptionText(const std::string &method,const std::strin
 //==============================================================================
 std::string JObject::GetExceptionText(const std::string &method,const std::string &msg,const std::string &file)const{
   return(JException(ClassName,method,msg,file).ToStr());
+}
+
+//==============================================================================
+/// Prints exception related to a file or not.
+/// \param method Name of the method that throws an exception.
+/// \param msg Text of the exception.
+/// \param file Name of the file (is optional).
+//==============================================================================
+void JObject::PrintException(const std::string &method,const std::string &msg,const std::string &file)const{
+  std::string text=(file.empty()? GetExceptionText(method,msg): GetExceptionText(method,msg,file));
+  printf("\n*** %s\n",text.c_str());
+  fflush(stdout);
 }
 
 

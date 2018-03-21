@@ -28,6 +28,7 @@
 //:# Cambios:
 //:# =========
 //:# - Implementacion. (23-11-2013)
+//:# - Ahora se guarda tambien el motivo de exclusion. (20-03-2018)
 //:#############################################################################
 
 /// \file JPartOutBi4Save.h \brief Declares the class \ref JPartOutBi4Save.
@@ -55,8 +56,9 @@ class JPartOutBi4Save : protected JObject
   JBinaryData *Part;      ///<Pertenece a Data y almacena informacion de un part (incluyendo datos de particulas). Belongs to data and stores information of a part (including data for particles).
 
   //-Variables de gestion. Management of variables.
-  static const unsigned FormatVerDef=131122;    ///<Version de formato by default. Version of format by default.
-  unsigned FormatVer;        ///<Version de formato. Format version.
+  //static const unsigned FormatVerDef=131122;  ///<Version de formato by default. Version of format by default.
+  static const unsigned FmtVersion=180320;    ///<Version de formato by default. Version of format by default.
+  //unsigned FormatVer;        ///<Version de formato. Format version.
 
   std::string Dir;   ///<Directorio de datos. Data directory.
   unsigned Block;    ///<Numero de bloque. Block number.
@@ -75,7 +77,9 @@ class JPartOutBi4Save : protected JObject
 
 
   static std::string GetNamePart(unsigned cpart);
-  JBinaryData* AddPartOut(unsigned cpart,double timestep,unsigned nout,const unsigned *idp,const ullong *idpd,const tfloat3 *pos,const tdouble3 *posd,const tfloat3 *vel,const float *rhop);
+  JBinaryData* AddPartOut(unsigned cpart,double timestep,unsigned nout
+    ,const unsigned *idp,const ullong *idpd,const tfloat3 *pos,const tdouble3 *posd
+    ,const tfloat3 *vel,const float *rhop,const byte *motive);
 
  public:
   JPartOutBi4Save();
@@ -97,17 +101,20 @@ class JPartOutBi4Save : protected JObject
   void SaveInitial();
 
   //-Configuracion de parts. Configuration of parts.
-  JBinaryData* AddPartOut(unsigned cpart,double timestep,unsigned nout,const unsigned *idp,const tfloat3 *pos,const tfloat3 *vel,const float *rhop){   return(AddPartOut(cpart,timestep,nout,idp,NULL,pos,NULL,vel,rhop));   }
-  JBinaryData* AddPartOut(unsigned cpart,double timestep,unsigned nout,const unsigned *idp,const tdouble3 *posd,const tfloat3 *vel,const float *rhop){ return(AddPartOut(cpart,timestep,nout,idp,NULL,NULL,posd,vel,rhop));  }
-  JBinaryData* AddPartOut(unsigned cpart,double timestep,unsigned nout,const ullong *idpd,const tfloat3 *pos,const tfloat3 *vel,const float *rhop){    return(AddPartOut(cpart,timestep,nout,NULL,idpd,pos,NULL,vel,rhop));  }
-  JBinaryData* AddPartOut(unsigned cpart,double timestep,unsigned nout,const ullong *idpd,const tdouble3 *posd,const tfloat3 *vel,const float *rhop){  return(AddPartOut(cpart,timestep,nout,NULL,idpd,NULL,posd,vel,rhop)); }
+  JBinaryData* AddPartOut(unsigned cpart,double timestep,unsigned nout,const unsigned *idp,const tfloat3  *pos ,const tfloat3 *vel,const float *rhop,const byte *motive){  return(AddPartOut(cpart,timestep,nout,idp ,NULL,pos ,NULL,vel,rhop,motive));  }
+  JBinaryData* AddPartOut(unsigned cpart,double timestep,unsigned nout,const unsigned *idp,const tdouble3 *posd,const tfloat3 *vel,const float *rhop,const byte *motive){  return(AddPartOut(cpart,timestep,nout,idp ,NULL,NULL,posd,vel,rhop,motive));  }
+  JBinaryData* AddPartOut(unsigned cpart,double timestep,unsigned nout,const ullong  *idpd,const tfloat3  *pos ,const tfloat3 *vel,const float *rhop,const byte *motive){  return(AddPartOut(cpart,timestep,nout,NULL,idpd,pos ,NULL,vel,rhop,motive));  }
+  JBinaryData* AddPartOut(unsigned cpart,double timestep,unsigned nout,const ullong  *idpd,const tdouble3 *posd,const tfloat3 *vel,const float *rhop,const byte *motive){  return(AddPartOut(cpart,timestep,nout,NULL,idpd,NULL,posd,vel,rhop,motive));  }
 
   //-Grabacion de fichero. File recording.
   void SavePartOut();
-  void SavePartOut(unsigned cpart,double timestep,unsigned nout,const unsigned *idp,const tfloat3 *pos,const tfloat3 *vel,const float *rhop){   AddPartOut(cpart,timestep,nout,idp,NULL,pos,NULL,vel,rhop); SavePartOut();   }
-  void SavePartOut(unsigned cpart,double timestep,unsigned nout,const unsigned *idp,const tdouble3 *posd,const tfloat3 *vel,const float *rhop){ AddPartOut(cpart,timestep,nout,idp,NULL,NULL,posd,vel,rhop); SavePartOut();  }
-  void SavePartOut(unsigned cpart,double timestep,unsigned nout,const ullong *idpd,const tfloat3 *pos,const tfloat3 *vel,const float *rhop){    AddPartOut(cpart,timestep,nout,NULL,idpd,pos,NULL,vel,rhop); SavePartOut();  }
-  void SavePartOut(unsigned cpart,double timestep,unsigned nout,const ullong *idpd,const tdouble3 *posd,const tfloat3 *vel,const float *rhop){  AddPartOut(cpart,timestep,nout,NULL,idpd,NULL,posd,vel,rhop); SavePartOut(); }
+  void SavePartOut(unsigned cpart,double timestep,unsigned nout,const unsigned *idp,const tfloat3  *pos ,const tfloat3 *vel,const float *rhop,const byte *motive){  AddPartOut(cpart,timestep,nout,idp ,NULL,pos ,NULL,vel,rhop,motive); SavePartOut();  }
+  void SavePartOut(unsigned cpart,double timestep,unsigned nout,const unsigned *idp,const tdouble3 *posd,const tfloat3 *vel,const float *rhop,const byte *motive){  AddPartOut(cpart,timestep,nout,idp ,NULL,NULL,posd,vel,rhop,motive); SavePartOut();  }
+  void SavePartOut(unsigned cpart,double timestep,unsigned nout,const ullong  *idpd,const tfloat3  *pos ,const tfloat3 *vel,const float *rhop,const byte *motive){  AddPartOut(cpart,timestep,nout,NULL,idpd,pos ,NULL,vel,rhop,motive); SavePartOut();  }
+  void SavePartOut(unsigned cpart,double timestep,unsigned nout,const ullong  *idpd,const tdouble3 *posd,const tfloat3 *vel,const float *rhop,const byte *motive){  AddPartOut(cpart,timestep,nout,NULL,idpd,NULL,posd,vel,rhop,motive); SavePartOut();  }
+
+  //-Grabacion de fichero general. General file recording.
+  void SavePartOut(bool posdouble,unsigned cpart,double timestep,unsigned nout,const unsigned *idp,const tfloat3 *posf,const tdouble3 *posd,const tfloat3 *vel,const float *rhop,const byte *motive);
 
   unsigned GetBlockNoutMin()const{ return(BlockNoutMin); }
   unsigned GetBlockNoutMax()const{ return(BlockNoutMin); }

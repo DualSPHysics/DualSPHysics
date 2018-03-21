@@ -1711,8 +1711,8 @@ void JSphCpu::UpdatePos(tdouble3 rpos,double movx,double movy,double movz
   //-Keep cell and check. | Guarda celda y check.
   if(outrhop || outmove || out){//-Particle out.
     typecode rcode=code[p];
-    if(outrhop)rcode=CODE_SetOutRhop(rcode);
-    else if(out)rcode=CODE_SetOutPos(rcode);
+    if(out)rcode=CODE_SetOutPos(rcode);
+    else if(outrhop)rcode=CODE_SetOutRhop(rcode);
     else rcode=CODE_SetOutMove(rcode);
     code[p]=rcode;
     cell[p]=0xFFFFFFFF;

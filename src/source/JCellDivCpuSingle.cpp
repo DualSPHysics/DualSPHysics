@@ -264,7 +264,7 @@ void JCellDivCpuSingle::Divide(unsigned npb1,unsigned npf1,unsigned npb2,unsigne
   Nptot=Npb1+Npf1+Npb2+Npf2;
   NpbOut=NpfOut=NpbOutIgnore=NpfOutIgnore=0;
   NpFinal=NpbFinal=0;
-  NpfOutRhop=NpfOutMove=NpbIgnore=0;
+  NpbIgnore=0;
   //:printf("---> Npb1:%u  Npf1:%u  Npb2:%u  Npf2:%u\n",Npb1,Npf1,Npb2,Npf2);
 
   //-Check if there is memory reserved and if it sufficient for Nptot | Comprueba si hay memoria reservada y si es suficiente para Nptot.

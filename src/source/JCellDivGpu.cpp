@@ -64,7 +64,7 @@ void JCellDivGpu::Reset(){
   MemAllocGpuNp=MemAllocGpuNct=0;
   NpbOut=NpfOut=NpbOutIgnore=NpfOutIgnore=0;
   NpFinal=NpbFinal=0;
-  NpfOutRhop=NpfOutMove=NpbIgnore=0;
+  NpbIgnore=0;
   CellDomainMin=TUint3(1);
   CellDomainMax=TUint3(0);
   Ncx=Ncy=Ncz=Nsheet=Nct=0;
@@ -381,9 +381,6 @@ void JCellDivGpu::CheckParticlesOut(unsigned npout,const unsigned *idp,const tdo
      if(nerr<100)VisuBoundaryOut(p,idp[p],pos[p],code[p]);
       nerr++;
     }
-    typecode out=CODE_GetSpecialValue(code[p]);
-    if(out==CODE_OUTRHOP)NpfOutRhop++;
-    else if(out==CODE_OUTMOVE)NpfOutMove++;
   }
   if(nerr)RunException("CheckParticlesOut","A boundary particle was excluded.");
 }

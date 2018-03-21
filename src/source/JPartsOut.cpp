@@ -33,7 +33,7 @@ using namespace std;
 JPartsOut::JPartsOut(unsigned sizeini){
   ClassName="JPartsOut";
   SizeIni=sizeini;
-  Idp=NULL; Pos=NULL; Vel=NULL; Rhop=NULL;
+  Idp=NULL; Pos=NULL; Vel=NULL; Rhop=NULL; Motive=NULL;
   Reset();
 }
 
@@ -58,19 +58,21 @@ void JPartsOut::Reset(){
 void JPartsOut::AllocMemory(unsigned size,bool reset){
   if(reset){
     Count=0;
-    delete[] Idp;  Idp=NULL;
-    delete[] Pos;  Pos=NULL;
-    delete[] Vel;  Vel=NULL;
-    delete[] Rhop; Rhop=NULL;
+    delete[] Idp;    Idp=NULL;
+    delete[] Pos;    Pos=NULL;
+    delete[] Vel;    Vel=NULL;
+    delete[] Rhop;   Rhop=NULL;
+    delete[] Motive; Motive=NULL;
   }
   Size=(!Size && size<SizeIni? SizeIni: size);
   Count=min(Count,Size);
   if(Size){
     try{
-      Idp=fun::ResizeAlloc(Idp,Count,Size);
-      Pos=fun::ResizeAlloc(Pos,Count,Size);
-      Vel=fun::ResizeAlloc(Vel,Count,Size);
-      Rhop=fun::ResizeAlloc(Rhop,Count,Size);
+      Idp   =fun::ResizeAlloc(Idp,Count,Size);
+      Pos   =fun::ResizeAlloc(Pos,Count,Size);
+      Vel   =fun::ResizeAlloc(Vel,Count,Size);
+      Rhop  =fun::ResizeAlloc(Rhop,Count,Size);
+      Motive=fun::ResizeAlloc(Motive,Count,Size);
     }
     catch(const std::bad_alloc){
       RunException("AllocMemory","Could not allocate the requested memory.");
@@ -89,20 +91,33 @@ llong JPartsOut::GetAllocMemory()const{
   if(Pos)s+=sizeof(tdouble3)*Size;
   if(Vel)s+=sizeof(tfloat3)*Size;
   if(Rhop)s+=sizeof(float)*Size;
+  if(Motive)s+=sizeof(byte)*Size;
   return(s);
 }
 
 //==============================================================================
 /// Resizes arrays for particles.
 //==============================================================================
-void JPartsOut::AddParticles(unsigned np,const unsigned* idp,const tdouble3* pos,const tfloat3* vel,const float* rhop,unsigned outrhop,unsigned outmove){
+void JPartsOut::AddParticles(unsigned np,const unsigned* idp,const tdouble3* pos
+  ,const tfloat3* vel,const float* rhop,const typecode* code)
+{
   if(Count+np>Size)AllocMemory(Count+np+SizeIni,false);
   memcpy(Idp+Count,idp,sizeof(unsigned)*np);
   memcpy(Pos+Count,pos,sizeof(tdouble3)*np);
   memcpy(Vel+Count,vel,sizeof(tfloat3)*np);
   memcpy(Rhop+Count,rhop,sizeof(float)*np);
+  //-Checks reason for exclusion.
+  unsigned outpos=0,outrhop=0,outmove=0;
+  for(unsigned c=0;c<np;c++){
+    switch(CODE_GetSpecialValue(code[c])){
+      case CODE_OUTPOS:   Motive[Count+c]=1; outpos++;   break;
+      case CODE_OUTRHOP:  Motive[Count+c]=2; outrhop++;  break; 
+      case CODE_OUTMOVE:  Motive[Count+c]=3; outmove++;  break; 
+    }
+  }
+  //-Updates numbers.
   Count+=np;
-  OutPosCount+=np-(outrhop+outmove);
+  OutPosCount+=outpos;
   OutRhopCount+=outrhop;
   OutMoveCount+=outmove;
 }

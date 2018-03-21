@@ -16,6 +16,14 @@
  You should have received a copy of the GNU Lesser General Public License along with DualSPHysics. If not, see <http://www.gnu.org/licenses/>. 
 */
 
+//:NO_COMENTARIO
+//:#############################################################################
+//:# Cambios:
+//:# =========
+//:# - Uso de DestructorActive para controlar cuando esta el destructor en 
+//:#   ejecucion para la generacion de excepciones. (21-03-2018)
+//:#############################################################################
+
 /// \file JObject.h \brief Declares the class \ref JObject.
 
 #ifndef _JObject_
@@ -31,13 +39,16 @@
 class JObject
 {
 protected:
-  std::string ClassName;           ///<Name of the class.
+  std::string ClassName;   ///<Name of the class.
+  bool DestructorActive;   ///<Destructor of object in execution.
+
   void RunException(const std::string &method,const std::string &msg)const;
   void RunException(const std::string &method,const std::string &msg,const std::string &file)const;
   std::string GetExceptionText(const std::string &method,const std::string &msg)const;
   std::string GetExceptionText(const std::string &method,const std::string &msg,const std::string &file)const;
+  void PrintException(const std::string &method,const std::string &msg,const std::string &file="")const;
 public:  
-  JObject():ClassName("JObject"){} ///<Constructor of objects.
+  JObject():ClassName("JObject"),DestructorActive(false){} ///<Constructor of objects.
 };
 
 #endif
