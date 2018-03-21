@@ -43,6 +43,7 @@ JArraysGpuSize::JArraysGpuSize(unsigned elementsize):ElementSize(elementsize){
 /// Destructor.
 //==============================================================================
 JArraysGpuSize::~JArraysGpuSize(){
+  DestructorActive=true;
   Reset();
 }
  
@@ -163,6 +164,7 @@ JArraysGpu::JArraysGpu(){
 /// Destructor.
 //==============================================================================
 JArraysGpu::~JArraysGpu(){
+  DestructorActive=true;
   delete Arrays1b;
   delete Arrays2b;
   delete Arrays4b;

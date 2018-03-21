@@ -43,6 +43,7 @@ JArraysCpuSize::JArraysCpuSize(unsigned elementsize):ElementSize(elementsize){
 /// Destructor.
 //==============================================================================
 JArraysCpuSize::~JArraysCpuSize(){
+  DestructorActive=true;
   Reset();
 }
  
@@ -205,6 +206,7 @@ JArraysCpu::JArraysCpu(){
 /// Destructor.
 //==============================================================================
 JArraysCpu::~JArraysCpu(){
+  DestructorActive=true;
   delete Arrays1b;
   delete Arrays2b;
   delete Arrays4b;

@@ -1,4 +1,4 @@
-#DualSPHysics GPU v4.2.037 (19-03-2018)
+#DualSPHysics GPU v4.2.038 (21-03-2018)
 
 #=============== Compilation Options ===============
 USE_DEBUG=NO
@@ -6,7 +6,7 @@ USE_FAST_MATH=YES
 USE_NATIVE_CPU_OPTIMIZATIONS=NO
 
 LIBS_DIRECTORIES=-L./
-LIBS_DIRECTORIES:=$(LIBS_DIRECTORIES) -L../lib/linux/v4.2.037_gcc5
+LIBS_DIRECTORIES:=$(LIBS_DIRECTORIES) -L../lib/linux_gcc5
 
 EXECNAME=DualSPHysics4.2_linux64
 EXECS_DIRECTORY=../../bin/linux
@@ -45,7 +45,6 @@ ifeq ($(CUDAVER),00)
   GENCODE:=$(GENCODE) -gencode=arch=compute_30,code=\"sm_30,compute_30\"
 endif
 ifeq ($(CUDAVER),75)
-  # module load cuda/7.5
   GENCODE:=$(GENCODE) -gencode=arch=compute_20,code=\"sm_20,compute_20\"
   GENCODE:=$(GENCODE) -gencode=arch=compute_30,code=\"sm_30,compute_30\"
   GENCODE:=$(GENCODE) -gencode=arch=compute_35,code=\"sm_35,compute_35\"
@@ -54,6 +53,7 @@ ifeq ($(CUDAVER),75)
   GENCODE:=$(GENCODE) -gencode=arch=compute_52,code=\"sm_52,compute_52\"
 endif
 ifeq ($(CUDAVER),91)
+  # module load cuda/9.1
   GENCODE:=$(GENCODE) -gencode=arch=compute_30,code=\"sm_30,compute_30\"
   GENCODE:=$(GENCODE) -gencode=arch=compute_35,code=\"sm_35,compute_35\"
   GENCODE:=$(GENCODE) -gencode=arch=compute_50,code=\"sm_50,compute_50\"

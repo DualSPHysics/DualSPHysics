@@ -234,6 +234,7 @@ JSpaceParts::JSpaceParts(){
 /// Destructor.
 //==============================================================================
 JSpaceParts::~JSpaceParts(){
+  DestructorActive=true;
   Reset();
   delete Properties; Properties=NULL;
 }
@@ -546,6 +547,7 @@ JSpacePartsGetMk::JSpacePartsGetMk(const JSpaceParts *sparts,bool splitting):Spl
 /// Destructor.
 //==============================================================================
 JSpacePartsGetMk::~JSpacePartsGetMk(){
+  DestructorActive=true;
   Reset();
 }
 

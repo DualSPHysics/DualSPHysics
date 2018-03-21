@@ -64,6 +64,7 @@ JSphMk::JSphMk(){
 /// Destructor.
 //==============================================================================
 JSphMk::~JSphMk(){
+  DestructorActive=true;
   Reset();
 }
 

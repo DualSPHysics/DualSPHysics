@@ -49,6 +49,7 @@ JPartDataBi4::JPartDataBi4(){
 /// Destructor.
 //==============================================================================
 JPartDataBi4::~JPartDataBi4(){
+  DestructorActive=true;
   delete Data; Data=NULL;
 }
 

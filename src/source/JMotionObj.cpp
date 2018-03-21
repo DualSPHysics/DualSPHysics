@@ -47,6 +47,7 @@ JMotionMovActive::JMotionMovActive(double start,double eventfinish,JMotionMov* m
 // Destructor.
 //==============================================================================
 JMotionMovActive::~JMotionMovActive(){
+  DestructorActive=true;
   DfReset();
 }
 
@@ -219,6 +220,7 @@ JMotionObj::JMotionObj(unsigned id,JMotionObj* parent,int ref):Id(id),Parent(par
 // Destructor.
 //==============================================================================
 JMotionObj::~JMotionObj(){
+  DestructorActive=true;
   //printf("<DEL-obj:%d>\n",Ref);
   Reset();
 }

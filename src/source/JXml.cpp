@@ -44,6 +44,7 @@ JXml::JXml(){
 /// Destructor of objects.
 //==============================================================================
 JXml::~JXml(){
+  DestructorActive=true;
   Reset();
   delete Doc;
 }

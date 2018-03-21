@@ -41,6 +41,7 @@ JReadDatafile::JReadDatafile(){
 /// Destructor.
 //==============================================================================
 JReadDatafile::~JReadDatafile(){
+  DestructorActive=true;
   Reset();
 }
 //==============================================================================

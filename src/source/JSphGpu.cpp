@@ -58,6 +58,7 @@ JSphGpu::JSphGpu(bool withmpi):JSph(false,withmpi){
 /// Destructor.
 //==============================================================================
 JSphGpu::~JSphGpu(){
+  DestructorActive=true;
   FreeCpuMemoryParticles();
   FreeGpuMemoryParticles();
   FreeGpuMemoryFixed();

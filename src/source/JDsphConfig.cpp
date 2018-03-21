@@ -40,6 +40,7 @@ JDsphConfig::JDsphConfig(){
 /// Destructor.
 //==============================================================================
 JDsphConfig::~JDsphConfig(){
+  DestructorActive=true;
   Reset();
 }
 

@@ -40,6 +40,7 @@ JMeanMoving::JMeanMoving(unsigned size){
 /// Destructor.
 //==============================================================================
 JMeanMoving::~JMeanMoving(){
+  DestructorActive=true;
   Reset();
 }
  

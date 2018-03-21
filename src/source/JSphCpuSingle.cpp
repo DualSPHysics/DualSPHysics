@@ -49,6 +49,7 @@ JSphCpuSingle::JSphCpuSingle():JSphCpu(false){
 /// Destructor.
 //==============================================================================
 JSphCpuSingle::~JSphCpuSingle(){
+  DestructorActive=true;
   delete CellDivSingle; CellDivSingle=NULL;
   delete PartsLoaded;   PartsLoaded=NULL;
 }

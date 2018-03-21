@@ -48,7 +48,8 @@ JCellDivGpu::JCellDivGpu(bool stable,bool floating,byte periactive,TpCellOrder c
 /// Destructor.
 //==============================================================================
 JCellDivGpu::~JCellDivGpu(){
-  Log->Printf("---> DivideFull:%u/%u",NdivFull,Ndiv); //:del:
+  DestructorActive=true;
+  //Log->Printf("---> DivideFull:%u/%u",NdivFull,Ndiv); //:del:
   Reset();
 }
  

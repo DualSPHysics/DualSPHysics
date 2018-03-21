@@ -33,6 +33,7 @@ JSpaceEParms::JSpaceEParms(){
 /// Destructor.
 //==============================================================================
 JSpaceEParms::~JSpaceEParms(){
+  DestructorActive=true;
   Reset();
 }
 

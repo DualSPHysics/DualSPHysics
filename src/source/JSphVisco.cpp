@@ -40,6 +40,7 @@ JSphVisco::JSphVisco(){
 /// Destructor.
 //==============================================================================
 JSphVisco::~JSphVisco(){
+  DestructorActive=true;
   Reset();
 }
 

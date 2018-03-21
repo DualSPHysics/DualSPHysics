@@ -39,6 +39,7 @@ JTimeOut::JTimeOut(){
 /// Destructor.
 //==============================================================================
 JTimeOut::~JTimeOut(){
+  DestructorActive=true;
   Reset();
 }
 

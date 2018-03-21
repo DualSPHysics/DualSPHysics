@@ -79,6 +79,7 @@ JSph::JSph(bool cpu,bool withmpi):Cpu(cpu),WithMpi(withmpi){
 /// Destructor.
 //==============================================================================
 JSph::~JSph(){
+  DestructorActive=true;
   delete DataBi4;
   delete DataOutBi4;
   delete DataFloatBi4;

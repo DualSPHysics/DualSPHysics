@@ -41,6 +41,7 @@ JMotion::JMotion(){
 // Destructor.
 //==============================================================================
 JMotion::~JMotion(){
+  DestructorActive=true;
   Reset();
 }
 

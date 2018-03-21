@@ -47,6 +47,7 @@ JPartFloatBi4Save::JPartFloatBi4Save(){
 /// Destructor.
 //==============================================================================
 JPartFloatBi4Save::~JPartFloatBi4Save(){
+  DestructorActive=true;
   Reset();
   delete Data; Data=NULL;
 }
@@ -264,6 +265,7 @@ JPartFloatBi4Load::JPartFloatBi4Load(){
 /// Destructor.
 //==============================================================================
 JPartFloatBi4Load::~JPartFloatBi4Load(){
+  DestructorActive=true;
   Reset();
   delete Data; Data=NULL;
 }

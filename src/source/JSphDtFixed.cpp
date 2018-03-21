@@ -40,6 +40,7 @@ JSphDtFixed::JSphDtFixed(){
 /// Destructor.
 //==============================================================================
 JSphDtFixed::~JSphDtFixed(){
+  DestructorActive=true;
   Reset();
 }
 

@@ -43,6 +43,7 @@ JPartsLoad4::JPartsLoad4(bool useomp):UseOmp(useomp){
 /// Destructor.
 //==============================================================================
 JPartsLoad4::~JPartsLoad4(){
+  DestructorActive=true;
   AllocMemory(0);
 }
 

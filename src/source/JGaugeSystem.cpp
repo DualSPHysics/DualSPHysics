@@ -51,6 +51,7 @@ JGaugeSystem::JGaugeSystem(bool cpu,JLog2* log):Cpu(cpu),Log(log){
 /// Destructor.
 //==============================================================================
 JGaugeSystem::~JGaugeSystem(){
+  DestructorActive=true;
   Reset();
 }
 

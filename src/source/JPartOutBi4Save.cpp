@@ -47,6 +47,7 @@ JPartOutBi4Save::JPartOutBi4Save(){
 /// Destructor.
 //==============================================================================
 JPartOutBi4Save::~JPartOutBi4Save(){
+  DestructorActive=true;
   delete Data; Data=NULL;
 }
 

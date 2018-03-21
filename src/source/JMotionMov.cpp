@@ -242,6 +242,7 @@ JMotionDataFile::JMotionDataFile(std::string dirdata,std::string file,bool angde
 // Destructor.
 //==============================================================================
 JMotionDataFile::~JMotionDataFile(){
+  DestructorActive=true;
   //printf("--------> DELETE  JMotionDataFile\n");
   Reset();
 }

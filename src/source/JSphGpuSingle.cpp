@@ -48,6 +48,7 @@ JSphGpuSingle::JSphGpuSingle():JSphGpu(false){
 /// Destructor.
 //==============================================================================
 JSphGpuSingle::~JSphGpuSingle(){
+  DestructorActive=true;
   delete CellDivSingle; CellDivSingle=NULL;
   delete PartsLoaded;   PartsLoaded=NULL;
 }

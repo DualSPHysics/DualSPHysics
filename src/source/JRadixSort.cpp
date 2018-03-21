@@ -46,6 +46,7 @@ JRadixSort::JRadixSort(bool useomp):UseOmp(useomp && CompiledOMP()){
 /// Object destructor.
 //==============================================================================
 JRadixSort::~JRadixSort(){
+  DestructorActive=true;
   Reset();
 }
 

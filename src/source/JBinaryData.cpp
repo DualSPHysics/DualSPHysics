@@ -144,6 +144,7 @@ JBinaryDataArray::JBinaryDataArray(JBinaryData* parent,const std::string &name,J
 /// Destructor.
 //==============================================================================
 JBinaryDataArray::~JBinaryDataArray(){
+  DestructorActive=true;
   FreeMemory();
 }
 
@@ -541,6 +542,7 @@ JBinaryData::JBinaryData(const JBinaryData &src){
 /// Destructor.
 //==============================================================================
 JBinaryData::~JBinaryData(){
+  DestructorActive=true;
   Clear();
 }
 

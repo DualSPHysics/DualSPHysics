@@ -42,6 +42,7 @@ JSpacePropValue::JSpacePropValue(std::string name):Name(name){
 /// Destructor.
 //==============================================================================
 JSpacePropValue::~JSpacePropValue(){
+  DestructorActive=true;
   Clear();
 }
 
@@ -151,6 +152,7 @@ JSpacePropProperty::JSpacePropProperty(std::string name){
 /// Destructor.
 //==============================================================================
 JSpacePropProperty::~JSpacePropProperty(){
+  DestructorActive=true;
   Clear();
 }
 
@@ -300,6 +302,7 @@ JSpacePropLinks::JSpacePropLinks(){
 /// Destructor.
 //==============================================================================
 JSpacePropLinks::~JSpacePropLinks(){
+  DestructorActive=true;
   Reset();
 }
 
@@ -531,6 +534,7 @@ JSpaceProperties::JSpaceProperties(){
 /// Destructor.
 //==============================================================================
 JSpaceProperties::~JSpaceProperties(){
+  DestructorActive=true;
   Reset();
   delete Links; Links=NULL;
 }

@@ -50,7 +50,8 @@ JCellDivCpu::JCellDivCpu(bool stable,bool floating,byte periactive,TpCellOrder c
 /// Destructor.
 //==============================================================================
 JCellDivCpu::~JCellDivCpu(){
-  Log->Printf("---> DivideFull:%u/%u",NdivFull,Ndiv); //:del:
+  DestructorActive=true;
+  //Log->Printf("---> DivideFull:%u/%u",NdivFull,Ndiv); //:del:
   Reset();
 }
 

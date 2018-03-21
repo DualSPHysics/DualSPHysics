@@ -45,6 +45,7 @@ JLog2::JLog2(TpMode_Out modeoutdef):ModeOutDef(modeoutdef){
 /// Destructor.
 //==============================================================================
 JLog2::~JLog2(){
+  DestructorActive=true;
   Reset();
 }
 

@@ -45,6 +45,7 @@ JSaveDt::JSaveDt(JLog2* log):Log(log){
 /// Destructor.
 //==============================================================================
 JSaveDt::~JSaveDt(){
+  DestructorActive=true;
   Reset();
 }
 

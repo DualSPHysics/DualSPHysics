@@ -43,6 +43,7 @@ JDamping::JDamping(JLog2* log):Log(log){
 /// Destructor.
 //==============================================================================
 JDamping::~JDamping(){
+  DestructorActive=true;
   Reset();
 }
 

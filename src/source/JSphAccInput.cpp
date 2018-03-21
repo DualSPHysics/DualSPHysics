@@ -59,6 +59,7 @@ JSphAccInputMk::JSphAccInputMk(JLog2* log,word mkfluid,bool genabled,tfloat3 acc
 /// Destructor.
 //==============================================================================
 JSphAccInputMk::~JSphAccInputMk(){
+  DestructorActive=true;
   Reset();
 }
 
@@ -239,6 +240,7 @@ JSphAccInput::JSphAccInput(JLog2* log,const std::string &dirdata,JXml *sxml,cons
 /// Destructor.
 //==============================================================================
 JSphAccInput::~JSphAccInput(){
+  DestructorActive=true;
   Reset();
 }
 

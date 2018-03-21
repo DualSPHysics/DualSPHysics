@@ -52,6 +52,7 @@ JSphCpu::JSphCpu(bool withmpi):JSph(true,withmpi){
 /// Destructor.
 //==============================================================================
 JSphCpu::~JSphCpu(){
+  DestructorActive=true;
   FreeCpuMemoryParticles();
   FreeCpuMemoryFixed();
   delete ArraysCpu;

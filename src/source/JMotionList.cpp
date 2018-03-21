@@ -151,6 +151,7 @@ JMotionList::JMotionList(int nref):Nref(unsigned(nref)){
 // Destructor.
 //==============================================================================
 JMotionList::~JMotionList(){
+  DestructorActive=true;
   delete[] MotionData; MotionData=NULL;
 }
 

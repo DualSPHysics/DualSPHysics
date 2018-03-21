@@ -138,6 +138,7 @@ JSphInitialize::JSphInitialize(const std::string &file){
 /// Destructor.
 //==============================================================================
 JSphInitialize::~JSphInitialize(){
+  DestructorActive=true;
   Reset();
 }
 

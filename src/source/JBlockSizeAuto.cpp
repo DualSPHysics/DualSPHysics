@@ -55,6 +55,7 @@ JBlockSizeAutoKer::JBlockSizeAutoKer(JLog2 *log,std::string name,int bsmin,int b
 /// Destructor.
 //==============================================================================
 JBlockSizeAutoKer::~JBlockSizeAutoKer(){
+  DestructorActive=true;
   if(SAVEINFO)SaveFileInfoData();
   Reset();
   AllocateMemory(0);
@@ -267,6 +268,7 @@ JBlockSizeAuto::JBlockSizeAuto(JLog2 *log,unsigned steps):Log(log),StepsInterval
 /// Destructor.
 //==============================================================================
 JBlockSizeAuto::~JBlockSizeAuto(){
+  DestructorActive=true;
   Reset();
 }
  

@@ -41,6 +41,7 @@ JPartsOut::JPartsOut(unsigned sizeini){
 /// Destructor.
 //==============================================================================
 JPartsOut::~JPartsOut(){
+  DestructorActive=true;
   Reset();
 }
 

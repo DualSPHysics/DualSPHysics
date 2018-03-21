@@ -233,6 +233,7 @@ JGaugeVelocity::JGaugeVelocity(unsigned idx,std::string name,tdouble3 point,JLog
 /// Destructor.
 //==============================================================================
 JGaugeVelocity::~JGaugeVelocity(){
+  DestructorActive=true;
   Reset();
 }
 
@@ -431,6 +432,7 @@ JGaugeSwl::JGaugeSwl(unsigned idx,std::string name,tdouble3 point0,tdouble3 poin
 /// Destructor.
 //==============================================================================
 JGaugeSwl::~JGaugeSwl(){
+  DestructorActive=true;
   Reset();
 }
 
@@ -668,6 +670,7 @@ JGaugeMaxZ::JGaugeMaxZ(unsigned idx,std::string name,tdouble3 point0,double heig
 /// Destructor.
 //==============================================================================
 JGaugeMaxZ::~JGaugeMaxZ(){
+  DestructorActive=true;
   Reset();
 }
 
