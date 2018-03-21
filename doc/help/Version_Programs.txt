@@ -1,4 +1,4 @@
-DualSPHysics4    v4.2.037    17-03-2018
+DualSPHysics4    v4.2.038    21-03-2018
 BoundaryVTK4     v4.0.030    16-03-2018
 ComputeForces4   v4.0.028    16-03-2018
 FloatingInfo4    v4.0.015    16-03-2018
@@ -8,4 +8,4 @@ IsoSurface       v4.0.024    16-03-2018
 MeasureBoxes4    v4.0.018    16-03-2018
 MeasureTool4     v4.0.038    16-03-2018
 PartVtk4         v4.0.036    17-03-2018
-PartVTKOut4      v4.0.021    17-03-2018
+PartVTKOut4      v4.0.022    21-03-2018
