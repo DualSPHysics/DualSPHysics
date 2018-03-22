@@ -21,24 +21,36 @@ set measureboxes="%dirbin%/MeasureBoxes4_win64.exe"
 
 REM "dirout" is created to store results or it is removed if it already exists
 
-if exist %dirout% del /Q %dirout%\*.*
-if not exist %dirout% mkdir %dirout%
+if exist %dirout% rd /s /q %dirout%
+mkdir %dirout%
+if not "%ERRORLEVEL%" == "0" goto fail
+set diroutdata=%dirout%\data
+mkdir %diroutdata%
 
 REM CODES are executed according the selected parameters of execution in this testcase
 
+REM Executes GenCase4 to create initial files for simulation.
 %gencase% %name%_Def %dirout%/%name% -save:all
 if not "%ERRORLEVEL%" == "0" goto fail
 
-%dualsphysicsgpu% -gpu %dirout%/%name% %dirout% -svres
+REM Executes DualSPHysics to simulate SPH method.
+%dualsphysicsgpu% -gpu %dirout%/%name% %dirout% -dirdataout data -svres
 if not "%ERRORLEVEL%" == "0" goto fail
 
-%partvtk% -dirin %dirout% -filexml %dirout%/%name%.xml -savevtk %dirout%/PartFluid -onlytype:-all,fluid -vars:+idp,+vel,+rhop,+press,+vor
+REM Executes PartVTK4 to create VTK files with particles.
+set dirout2=%dirout%\particles
+mkdir %dirout2%
+%partvtk% -dirin %diroutdata% -filexml %dirout%/%name%.xml -savevtk %dirout2%/PartFluid -onlytype:-all,fluid -vars:+idp,+vel,+rhop,+press,+vor
 if not "%ERRORLEVEL%" == "0" goto fail
 
-%partvtkout% -dirin %dirout% -filexml %dirout%/%name%.xml -savevtk %dirout%/PartFluidOut -SaveResume %dirout%/ResumeFluidOut
+REM Executes PartVTKOut4 to create VTK files with excluded particles.
+%partvtkout% -dirin %diroutdata% -filexml %dirout%/%name%.xml -savevtk %dirout2%/PartFluidOut -SaveResume %dirout%/ResumeFluidOut
 if not "%ERRORLEVEL%" == "0" goto fail
 
-%isosurface% -dirin %dirout% -saveslice %dirout%/Slices 
+REM Executes IsoSurface4 to create VTK files with slices of surface.
+set dirout2=%dirout%\surface
+mkdir %dirout2%
+%isosurface% -dirin %diroutdata% -saveslice %dirout2%/Slices 
 if not "%ERRORLEVEL%" == "0" goto fail
 
 
