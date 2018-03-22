@@ -58,7 +58,7 @@ public:
   JSphInitializeOp(TpInitialize type,const char* name):Type(type){ 
     ClassName=std::string("JSphInitializeOp_")+name;
   } 
-  virtual ~JSphInitializeOp(){}
+  virtual ~JSphInitializeOp(){ DestructorActive=true; }
   virtual void ReadXml(JXml *sxml,TiXmlElement* ele)=0;
   virtual void Run(unsigned np,unsigned npb,const tdouble3 *pos,const unsigned *idp,const word *mktype,tfloat4 *velrhop)=0;
   virtual void GetConfig(std::vector<std::string> &lines)const=0;

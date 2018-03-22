@@ -46,7 +46,7 @@ public:
   }
   void SetNextMov(JMotionMov* nextmov){ NextMov=nextmov; }
   virtual void WriteXml(TiXmlNode* node)const=0;
-  virtual ~JMotionMov(){  /*printf("del JMotionMov\n");*/  }
+  virtual ~JMotionMov(){ DestructorActive=true; /*printf("del JMotionMov\n");*/  }
   //void Reset();
 };
 
@@ -276,7 +276,7 @@ public:
   JMotionMovRectFile(unsigned id,unsigned nextid,double time,const std::string *dirdata,const std::string &file,int fields,int fieldtime,int fieldx,int fieldy,int fieldz):JMotionMovBlock("JMotionMovRectFile",RectilinearFile,id,nextid,time),DirData(dirdata),File(file),Fields(fields),FieldTime(fieldtime),FieldX(fieldx),FieldY(fieldy),FieldZ(fieldz){
     DataFile=NULL;
   }
-  ~JMotionMovRectFile(){  delete DataFile; DataFile=NULL;  }
+  ~JMotionMovRectFile(){ DestructorActive=true; delete DataFile; DataFile=NULL;  }
   void WriteXml(TiXmlNode* node)const;
 
   void PrepareData(){  if(!DataFile)DataFile=new JMotionDataFile(*DirData,File,Fields,FieldTime,FieldX,FieldY,FieldZ);  }
@@ -300,7 +300,7 @@ public:
   JMotionMovRotFile(unsigned id,unsigned nextid,double time,bool angdegrees,const JMotionAxis* axis,const std::string *dirdata,const std::string &file):JMotionMovPart("JMotionMovRotFile",RotationFile,id,nextid,time),DirData(dirdata),AngDegrees(angdegrees),Axis(axis),File(file){
     DataFile=NULL;
   }
-  ~JMotionMovRotFile(){  delete DataFile; DataFile=NULL;  }
+  ~JMotionMovRotFile(){ DestructorActive=true; delete DataFile; DataFile=NULL;  }
   void WriteXml(TiXmlNode* node)const;
 
   void PrepareData(){  if(!DataFile)DataFile=new JMotionDataFile(*DirData,File,AngDegrees);  }

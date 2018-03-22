@@ -48,7 +48,7 @@ private:
 
 public:
   JWaveSpectrumGpu();
-  ~JWaveSpectrumGpu(){ FreeMemoryGpu(); }
+  ~JWaveSpectrumGpu(){ DestructorActive=true; FreeMemoryGpu(); }
 
   void AllocMemoryGpu(unsigned sizewavecoefs);
   void FreeMemoryGpu();

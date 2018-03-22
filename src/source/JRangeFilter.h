@@ -62,7 +62,7 @@ private:
 
 public:
   JRangeFilter(std::string filter="");
-  ~JRangeFilter(){ Reset(); }
+  ~JRangeFilter(){ DestructorActive=true; Reset(); }
   void Reset();
   void Config(std::string filter);
   bool CheckValue(unsigned v)const;

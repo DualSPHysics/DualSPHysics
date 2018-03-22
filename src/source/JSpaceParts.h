@@ -83,7 +83,7 @@ public:
   JSpacePartBlock(const JSpaceProperties* properties,TpParticles type,const char* name,bool bound,word mktype=0,unsigned begin=0,unsigned count=0):Properties(properties),Type(type),Bound(bound),MkType(mktype),Begin(begin),Count(count){ 
     ClassName=std::string("JSpacePartBlock_")+name;
   } 
-  virtual ~JSpacePartBlock(){}
+  virtual ~JSpacePartBlock(){ DestructorActive=true; }
   void UpdateProperty();
   void ConfigMk(word mkfirst){ Mk=MkType+mkfirst; }
   std::string GetNameXml()const;

@@ -582,7 +582,7 @@ public:
     Reset();
   }
   ///Destructor.
-  ~JFormatFiles2Data(){ Reset(); }
+  ~JFormatFiles2Data(){ DestructorActive=true; Reset(); }
   ///Initialization of variables.
   void Reset(){
     Np=0;  Posf=NULL;  Posd=NULL;
