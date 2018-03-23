@@ -100,7 +100,7 @@ protected:
   tuint3 CellDomainMax; ///<Upper domain limit in cells inside of DomCells. | Limite superior del dominio en celdas dentro de DomCells.
   unsigned Ncx,Ncy,Ncz,Nsheet,Nct;
   ullong Nctt;          ///<Total number of special cells included  Nctt=SizeBeginEndCell(). | Numero total de celdas incluyendo las especiales Nctt=SizeBeginEndCell().
-  unsigned BoxIgnore,BoxFluid,BoxBoundOut,BoxFluidOut,BoxBoundOutIgnore,BoxFluidOutIgnore;
+  unsigned BoxBoundIgnore,BoxFluid,BoxBoundOut,BoxFluidOut,BoxBoundOutIgnore,BoxFluidOutIgnore;
 
   bool BoundLimitOk;    ///<Indicate that the boundary limits are already calculated in BoundLimitCellMin & BoundLimitCellMax. | Indica que los limites del contorno ya estan calculados en BoundLimitCellMin y BoundLimitCellMax.
   tuint3 BoundLimitCellMin,BoundLimitCellMax;
@@ -128,7 +128,6 @@ protected:
   ullong GetAllocMemoryGpuNct()const{ return(MemAllocGpuNct); };
   ullong GetAllocMemoryGpu()const{ return(GetAllocMemoryGpuNp()+GetAllocMemoryGpuNct()); };
 
-  void VisuBoundaryOut(unsigned p,unsigned id,tdouble3 pos,typecode code)const;
   //:tuint3 GetMapCell(const tfloat3 &pos)const;
   void CalcCellDomainBound(unsigned n,unsigned pini,unsigned n2,unsigned pini2,const unsigned* dcellg,const typecode *codeg,tuint3 &cellmin,tuint3 &cellmax);
   void CalcCellDomainFluid(unsigned n,unsigned pini,unsigned n2,unsigned pini2,const unsigned* dcellg,const typecode *codeg,tuint3 &cellmin,tuint3 &cellmax);
@@ -150,7 +149,6 @@ public:
   void SortDataArrays(const double2 *a,const double *b,const float4 *c,double2 *a2,double *b2,float4 *c2);
   void SortDataArrays(const tsymatrix3f *a,tsymatrix3f *a2);
 
-  void CheckParticlesOut(unsigned npfout,const unsigned *idp,const tdouble3 *pos,const float *rhop,const typecode *code);
   float* GetAuxMem(unsigned size);
 
   TpCellMode GetCellMode()const{ return(CellMode); }
@@ -173,7 +171,8 @@ public:
   unsigned GetNpFinal()const{ return(NpFinal); }
   unsigned GetNpbFinal()const{ return(NpbFinal); }
   unsigned GetNpbIgnore()const{ return(NpbIgnore); }
-  unsigned GetNpOut()const{ return(NpbOut+NpfOut); }
+  unsigned GetNpbOut()const{ return(NpbOut); }
+  unsigned GetNpfOut()const{ return(NpfOut); }
   unsigned GetNpbOutIgnore()const{ return(NpbOutIgnore); }
   unsigned GetNpfOutIgnore()const{ return(NpfOutIgnore); }
 

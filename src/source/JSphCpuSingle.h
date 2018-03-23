@@ -55,6 +55,7 @@ protected:
   void RunPeriodic();
 
   void RunCellDivide(bool updateperiodic);
+  void AbortBoundOut();
 
   inline void GetInteractionCells(unsigned rcell
     ,int hdiv,const tint4 &nc,const tint3 &cellzero

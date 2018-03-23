@@ -111,7 +111,7 @@ protected:
   tuint3 CellDomainMax; ///<Upper domain limit in cells inside of DomCells. | Limite superior del dominio en celdas dentro de DomCells.
   unsigned Ncx,Ncy,Ncz,Nsheet,Nct;
   ullong Nctt;          ///<Total number of special cells included  Nctt=SizeBeginCell(). | Numero total de celdas incluyendo las especiales Nctt=SizeBeginCell().
-  unsigned BoxIgnore,BoxFluid,BoxBoundOut,BoxFluidOut,BoxBoundOutIgnore,BoxFluidOutIgnore;
+  unsigned BoxBoundIgnore,BoxFluid,BoxBoundOut,BoxFluidOut,BoxBoundOutIgnore,BoxFluidOutIgnore;
 
   bool BoundLimitOk;    ///<Indicate that the boundary limits are already calculated in BoundLimitCellMin & BoundLimitCellMax. | Indica que los limites del contorno ya estan calculados en BoundLimitCellMin y BoundLimitCellMax.
   tuint3 BoundLimitCellMin,BoundLimitCellMax;
@@ -140,12 +140,11 @@ protected:
   ullong GetAllocMemoryNct()const{ return(MemAllocNct); };
   ullong GetAllocMemory()const{ return(GetAllocMemoryNp()+GetAllocMemoryNct()); };
 
-  void VisuBoundaryOut(unsigned p,unsigned id,tdouble3 pos,typecode code)const;
   //tuint3 GetMapCell(const tfloat3 &pos)const;
-  void LimitsCellBound(unsigned n,unsigned pini,const unsigned* dcellc,const typecode *codec,const unsigned* idpc,const tdouble3* posc,tuint3 &cellmin,tuint3 &cellmax)const;
-  void CalcCellDomainBound(unsigned n,unsigned pini,unsigned n2,unsigned pini2,const unsigned* dcellc,const typecode *codec,const unsigned* idpc,const tdouble3* posc,tuint3 &cellmin,tuint3 &cellmax);
-  void LimitsCellFluid(unsigned n,unsigned pini,const unsigned* dcellc,const typecode *codec,const unsigned* idpc,const tdouble3* posc,tuint3 &cellmin,tuint3 &cellmax)const;
-  void CalcCellDomainFluid(unsigned n,unsigned pini,unsigned n2,unsigned pini2,const unsigned* dcellc,const typecode *codec,const unsigned* idpc,const tdouble3* posc,tuint3 &cellmin,tuint3 &cellmax);
+  void LimitsCellBound(unsigned n,unsigned pini,const unsigned* dcellc,const typecode *codec,tuint3 &cellmin,tuint3 &cellmax)const;
+  void CalcCellDomainBound(unsigned n,unsigned pini,unsigned n2,unsigned pini2,const unsigned* dcellc,const typecode *codec,tuint3 &cellmin,tuint3 &cellmax);
+  void LimitsCellFluid(unsigned n,unsigned pini,const unsigned* dcellc,const typecode *codec,tuint3 &cellmin,tuint3 &cellmax)const;
+  void CalcCellDomainFluid(unsigned n,unsigned pini,unsigned n2,unsigned pini2,const unsigned* dcellc,const typecode *codec,tuint3 &cellmin,tuint3 &cellmax);
 
   unsigned CellSize(unsigned box)const{ return(BeginCell[box+1]-BeginCell[box]); }
 
@@ -181,7 +180,8 @@ public:
   unsigned GetNpFinal()const{ return(NpFinal); }
   unsigned GetNpbFinal()const{ return(NpbFinal); }
   unsigned GetNpbIgnore()const{ return(NpbIgnore); }
-  unsigned GetNpOut()const{ return(NpbOut+NpfOut); }
+  unsigned GetNpbOut()const{ return(NpbOut); }
+  unsigned GetNpfOut()const{ return(NpfOut); }
   unsigned GetNpbOutIgnore()const{ return(NpbOutIgnore); }
   unsigned GetNpfOutIgnore()const{ return(NpfOutIgnore); }
 

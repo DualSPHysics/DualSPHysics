@@ -26,65 +26,88 @@
 namespace cudiv{
 
 //------------------------------------------------------------------------------
-/// Carga cellpart[] y sortpart[] para ordenar particulas con radixsort.
-/// Loads cellpart[] and sortpart[] to sort particles with radixsort.
+/// Processes bound and fluid particles that may be mixed.
+/// Computes cell of each boundary and fluid particle (cellpart[]) starting from its cell in 
+/// the map. all the excluded particles were already marked in code[].
+/// Excluded particles bound (fixed and moving) and floating are moved to BoxBoundOut.
+/// Assigns consecutive values to SortPart[].
+///
+/// Calcula celda de cada particula bound y fluid (cellpart[]) a partir de su celda en
+/// mapa. Todas las particulas excluidas ya fueron marcadas en code[].
+/// Las particulas excluidas de tipo bound (fixed and moving) and floating se mueven a BoxBoundOut.
+/// Asigna valores consecutivos a SortPart[].
 //------------------------------------------------------------------------------
-__global__ void KerPreSortFull(unsigned np,unsigned cellcode,const unsigned *dcell,const typecode *code
-  ,uint3 cellzero,uint3 ncells,unsigned *cellpart,unsigned *sortpart)
+__global__ void KerPreSortFull(unsigned np,unsigned cellcode,const unsigned *dcell
+  ,const typecode *code,uint3 cellzero,uint3 ncells,unsigned *cellpart,unsigned *sortpart)
 {
   unsigned p=blockIdx.y*gridDim.x*blockDim.x + blockIdx.x*blockDim.x + threadIdx.x; //-Particle number.
   if(p<np){
     sortpart[p]=p;
     const unsigned nsheet=ncells.x*ncells.y;
-    const unsigned cellignore=nsheet*ncells.z; //- cellignore==nct
-    const unsigned cellfluid=cellignore+1;
-    const unsigned cellboundout=cellfluid+cellignore;        //-For bound.
-    const unsigned cellfluidout=cellboundout+1;              //-For fluid and floatings.
+    const unsigned cellboundignore=nsheet*ncells.z;          //-cellboundignore==nct
+    const unsigned cellfluid=cellboundignore+1;
+    const unsigned cellboundout=cellfluid+cellboundignore;   //-For fixed, moving and floating.
+    const unsigned cellfluidout=cellboundout+1;              //-For fluid.
     const unsigned cellboundoutignore=cellfluidout+1;        //-For bound.
     const unsigned cellfluidoutignore=cellboundoutignore+1;  //-For fluid and floatings.
-    unsigned rcell=dcell[p];
-    unsigned cx=PC__Cellx(cellcode,rcell)-cellzero.x;
-    unsigned cy=PC__Celly(cellcode,rcell)-cellzero.y;
-    unsigned cz=PC__Cellz(cellcode,rcell)-cellzero.z;
+    //-Computes cell according position.
+    const unsigned rcell=dcell[p];
+    const unsigned cx=PC__Cellx(cellcode,rcell)-cellzero.x;
+    const unsigned cy=PC__Celly(cellcode,rcell)-cellzero.y;
+    const unsigned cz=PC__Cellz(cellcode,rcell)-cellzero.z;
     const unsigned cellsort=cx+cy*ncells.x+cz*nsheet;
+    //-Checks particle code.
     const typecode rcode=code[p];
-    const bool xbound=(CODE_GetType(rcode)<CODE_TYPE_FLOATING);
+    const typecode codetype=CODE_GetType(rcode);
     const typecode codeout=CODE_GetSpecialValue(rcode);
-    if(xbound){ //-Boundary particles but not floating. | Particulas bound no floating.
-      cellpart[p]=(codeout<CODE_OUTIGNORE? ((cx<ncells.x && cy<ncells.y && cz<ncells.z)? cellsort: cellignore): (codeout==CODE_OUTIGNORE? cellboundoutignore: cellboundout));
+    //-Assigns box.
+    if(codetype<CODE_TYPE_FLOATING){//-Bound particles (except floating) | Particulas bound (excepto floating).
+      cellpart[p]=(codeout<CODE_OUTIGNORE?   ((cx<ncells.x && cy<ncells.y && cz<ncells.z)? cellsort: cellboundignore):   (codeout==CODE_OUTIGNORE? cellboundoutignore: cellboundout));
     }
-    else{ //-Fluid and floating particles. | Particulas fluid and floating.
-      cellpart[p]=(codeout<CODE_OUTIGNORE? cellfluid+cellsort: (codeout==CODE_OUTIGNORE? cellfluidoutignore: cellfluidout));
+    else{//-Fluid and floating particles | Particulas fluid y floating.
+      cellpart[p]=(codeout<=CODE_OUTIGNORE?   (codeout<CODE_OUTIGNORE? cellfluid+cellsort: cellfluidoutignore):   (codetype==CODE_TYPE_FLOATING? cellboundout: cellfluidout));
     }
   }
 }
 
 //==============================================================================
 /// Processes bound and fluid particles that may be mixed.
-/// Computes cell of each particle (CellPart[]) from his cell in the map,
-/// all excluded particles were already marked in code[].
+/// Computes cell of each boundary and fluid particle (cellpart[]) starting from its cell in 
+/// the map. all the excluded particles were already marked in code[].
+/// Excluded particles bound (fixed and moving) and floating are moved to BoxBoundOut.
 /// Assigns consecutive values to SortPart[].
 ///
-/// Procesa particulas bound y fluid que pueden estar mezcladas.
-/// Calcula celda de cada particula (CellPart[]) a partir de su celda en mapa,
-/// todas las particulas excluidas ya fueron marcadas en code[].
+/// Calcula celda de cada particula bound y fluid (cellpart[]) a partir de su celda en
+/// mapa. Todas las particulas excluidas ya fueron marcadas en code[].
+/// Las particulas excluidas de tipo bound (fixed and moving) and floating se mueven a BoxBoundOut.
 /// Asigna valores consecutivos a SortPart[].
 //==============================================================================
 void PreSortFull(unsigned np,unsigned cellcode,const unsigned *dcell,const typecode *code
-  ,tuint3 cellmin,tuint3 ncells,unsigned *cellpart,unsigned *sortpart,JLog2 *log)
+  ,tuint3 cellmin,tuint3 ncells,unsigned *cellpart,unsigned *sortpart)
 {
   if(np){
+    const uint3 cellzero=make_uint3(cellmin.x,cellmin.y,cellmin.z);
+    const uint3 xncells=make_uint3(ncells.x,ncells.y,ncells.z);
     dim3 sgrid=GetGridSize(np,DIVBSIZE);
-    KerPreSortFull <<<sgrid,DIVBSIZE>>> (np,cellcode,dcell,code,make_uint3(cellmin.x,cellmin.y,cellmin.z),make_uint3(ncells.x,ncells.y,ncells.z),cellpart,sortpart);
+    KerPreSortFull <<<sgrid,DIVBSIZE>>> (np,cellcode,dcell,code,cellzero,xncells,cellpart,sortpart);
   }
 }
 
-//------------------------------------------------------------------------------
-/// Loads cellpart[] and sortpart[] to reorder fluid particles with radixsort.
-/// Carga cellpart[] y sortpart[] para ordenar particulas de fluido con radixsort.
-//------------------------------------------------------------------------------
-__global__ void KerPreSortFluid(unsigned n,unsigned pini,unsigned cellcode,const unsigned *dcell,const typecode *code
-  ,uint3 cellzero,uint3 ncells,unsigned *cellpart,unsigned *sortpart)
+//==============================================================================
+/// Processes only fluid particles.
+/// Computes cell of each fluid particle (cellpart[]) starting from its cell in 
+/// the map. all the excluded particles were already marked in code[].
+/// Excluded particles floating are moved to BoxBoundOut.
+/// Assigns consecutive values to SortPart[].
+///
+/// Calcula celda de cada particula fluid (cellpart[]) a partir de su celda en
+/// mapa. Todas las particulas excluidas ya fueron marcadas en code[].
+/// Las particulas excluidas de tipo floating se mueven a BoxBoundOut.
+/// Asigna valores consecutivos a SortPart[].
+//==============================================================================
+__global__ void KerPreSortFluid(unsigned n,unsigned pini,unsigned cellcode
+  ,const unsigned *dcell,const typecode *code,uint3 cellzero,uint3 ncells
+  ,unsigned *cellpart,unsigned *sortpart)
 {
   unsigned p=blockIdx.y*gridDim.x*blockDim.x + blockIdx.x*blockDim.x + threadIdx.x; //-Particle number.
   if(p<n){
@@ -92,36 +115,44 @@ __global__ void KerPreSortFluid(unsigned n,unsigned pini,unsigned cellcode,const
     sortpart[p]=p;
     const unsigned nsheet=ncells.x*ncells.y;
     const unsigned cellfluid=nsheet*ncells.z+1;
-    const unsigned cellfluidout=cellfluid+cellfluid;   //-For fluid and floatings.
+    const unsigned cellfluidout=cellfluid+cellfluid;   //-For fluid.
+    const unsigned cellboundout=cellfluidout-1;        //-For floatings.
     const unsigned cellfluidoutignore=cellfluidout+2;  //-For fluid and floatings.
-    unsigned rcell=dcell[p];
-    unsigned cx=PC__Cellx(cellcode,rcell)-cellzero.x;
-    unsigned cy=PC__Celly(cellcode,rcell)-cellzero.y;
-    unsigned cz=PC__Cellz(cellcode,rcell)-cellzero.z;
-    const unsigned cellsort=cellfluid+cx+cy*ncells.x+cz*nsheet;
-    const typecode codeout=CODE_GetSpecialValue(code[p]);
-    //-Fluid and floating particles. | Particulas fluid and floatings.
-    cellpart[p]=(codeout<CODE_OUTIGNORE? cellsort: (codeout==CODE_OUTIGNORE? cellfluidoutignore: cellfluidout));
+    //-Computes cell according position.
+    const unsigned rcell=dcell[p];
+    const unsigned cx=PC__Cellx(cellcode,rcell)-cellzero.x;
+    const unsigned cy=PC__Celly(cellcode,rcell)-cellzero.y;
+    const unsigned cz=PC__Cellz(cellcode,rcell)-cellzero.z;
+    const unsigned cellsortfluid=cellfluid+cx+cy*ncells.x+cz*nsheet;
+    //-Checks particle code.
+    const typecode rcode=code[p];
+    const typecode codetype=CODE_GetType(rcode);
+    const typecode codeout=CODE_GetSpecialValue(rcode);
+    //-Assigns box.
+    cellpart[p]=(codeout<=CODE_OUTIGNORE?   (codeout<CODE_OUTIGNORE? cellsortfluid: cellfluidoutignore):   (codetype==CODE_TYPE_FLOATING? cellboundout: cellfluidout));
   }
 }
 
 //==============================================================================
 /// Processes only fluid particles.
-/// Computes cell of each particle (CellPart[]) from his cell in the map,
-/// all excluded particles were already marked in code[].
+/// Computes cell of each fluid particle (cellpart[]) starting from its cell in 
+/// the map. all the excluded particles were already marked in code[].
+/// Excluded particles floating are moved to BoxBoundOut.
 /// Assigns consecutive values to SortPart[].
 ///
-/// Procesa solo particulas fluid.
-/// Calcula celda de cada particula (CellPart[]) a partir de su celda en mapa,
-/// todas las particulas excluidas ya fueron marcadas en code[].
+/// Calcula celda de cada particula fluid (cellpart[]) a partir de su celda en
+/// mapa. Todas las particulas excluidas ya fueron marcadas en code[].
+/// Las particulas excluidas de tipo floating se mueven a BoxBoundOut.
 /// Asigna valores consecutivos a SortPart[].
 //==============================================================================
 void PreSortFluid(unsigned npf,unsigned pini,unsigned cellcode,const unsigned *dcell,const typecode *code
-  ,tuint3 cellmin,tuint3 ncells,unsigned *cellpart,unsigned *sortpart,JLog2 *log)
+  ,tuint3 cellmin,tuint3 ncells,unsigned *cellpart,unsigned *sortpart)
 {
   if(npf){
+    const uint3 cellzero=make_uint3(cellmin.x,cellmin.y,cellmin.z);
+    const uint3 xncells=make_uint3(ncells.x,ncells.y,ncells.z);
     dim3 sgrid=GetGridSize(npf,DIVBSIZE);
-    KerPreSortFluid <<<sgrid,DIVBSIZE>>> (npf,pini,cellcode,dcell,code,make_uint3(cellmin.x,cellmin.y,cellmin.z),make_uint3(ncells.x,ncells.y,ncells.z),cellpart,sortpart);
+    KerPreSortFluid <<<sgrid,DIVBSIZE>>> (npf,pini,cellcode,dcell,code,cellzero,xncells,cellpart,sortpart);
   }
 }
 

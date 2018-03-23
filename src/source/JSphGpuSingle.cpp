@@ -350,7 +350,7 @@ void JSphGpuSingle::RunPeriodic(){
 }
 
 //==============================================================================
-/// Executes the division of particles in cells.
+/// Executes divide of particles in cells.
 /// Ejecuta divide de particulas en celdas.
 //==============================================================================
 void JSphGpuSingle::RunCellDivide(bool updateperiodic){
@@ -362,8 +362,7 @@ void JSphGpuSingle::RunCellDivide(bool updateperiodic){
   //-Initiates Divide.
   CellDivSingle->Divide(Npb,Np-Npb-NpbPer-NpfPer,NpbPer,NpfPer,BoundChanged,Dcellg,Codeg,Timers,Posxyg,Poszg,Idpg);
 
-  //-Sorts particle data.
-  //-Ordena datos de particulas.
+  //-Sorts particle data. | Ordena datos de particulas.
   TmgStart(Timers,TMG_NlSortData);
   {
     unsigned* idpg=ArraysGpu->ReserveUint();
@@ -401,27 +400,40 @@ void JSphGpuSingle::RunCellDivide(bool updateperiodic){
     swap(SpsTaug,spstaug);  ArraysGpu->Free(spstaug);
   }
 
-  //-Retrieves division data.
-  //-Recupera datos del divide.
+  //-Collect divide data. | Recupera datos del divide.
   Np=CellDivSingle->GetNpFinal();
   Npb=CellDivSingle->GetNpbFinal();
   NpbOk=Npb-CellDivSingle->GetNpbIgnore();
-  //-Retrieves positions of floating bodies.
-  //-Recupera posiciones de floatings.
+
+  //-Manages excluded particles fixed, moving and floating before aborting the execution.
+  if(CellDivSingle->GetNpbOut())AbortBoundOut();
+
+  //-Collect position of floating particles. | Recupera posiciones de floatings.
   if(CaseNfloat)cusph::CalcRidp(PeriActive!=0,Np-Npb,Npb,CaseNpb,CaseNpb+CaseNfloat,Codeg,Idpg,FtRidpg);
   TmgStop(Timers,TMG_NlSortData);
 
-  //-Manages excluded particles (boundary and fluid).
-  //-Gestion de particulas excluidas (contorno y fluid).
+  //-Control of excluded particles (only fluid because excluded boundary are checked before).
+  //-Gestion de particulas excluidas (solo fluid porque las boundary excluidas se comprueban antes).
   TmgStart(Timers,TMG_NlOutCheck);
-  unsigned npout=CellDivSingle->GetNpOut();
-  if(npout){
-    ParticlesDataDown(npout,Np,true,true,false);
-    CellDivSingle->CheckParticlesOut(npout,Idp,AuxPos,AuxRhop,Code);
-    AddParticlesOut(npout,Idp,AuxPos,AuxVel,AuxRhop,Code);
+  unsigned npfout=CellDivSingle->GetNpfOut();
+  if(npfout){
+    ParticlesDataDown(npfout,Np,true,true,false);
+    AddParticlesOut(npfout,Idp,AuxPos,AuxVel,AuxRhop,Code);
   }
   TmgStop(Timers,TMG_NlOutCheck);
   BoundChanged=false;
+}
+
+//------------------------------------------------------------------------------
+/// Manages excluded particles fixed, moving and floating before aborting the execution.
+/// Gestiona particulas excluidas fixed, moving y floating antes de abortar la ejecucion.
+//------------------------------------------------------------------------------
+void JSphGpuSingle::AbortBoundOut(){
+  const unsigned nboundout=CellDivSingle->GetNpbOut();
+  //-Get data of excluded boundary particles.
+  ParticlesDataDown(nboundout,Np,true,true,false);
+  //-Shows excluded particles information and aborts execution.
+  JSph::AbortBoundOut(nboundout,Idp,AuxPos,AuxVel,AuxRhop,Code);
 }
 
 //==============================================================================

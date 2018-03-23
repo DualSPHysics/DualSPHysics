@@ -51,6 +51,7 @@ protected:
   void ResizeParticlesSize(unsigned newsize,float oversize,bool updatedivide);
   void RunPeriodic();
   void RunCellDivide(bool updateperiodic);
+  void AbortBoundOut();
 
   void Interaction_Forces(TpInter tinter);
   double ComputeAceMax(float *auxmem);
