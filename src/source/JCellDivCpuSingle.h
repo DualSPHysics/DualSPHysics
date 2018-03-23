@@ -31,7 +31,7 @@
 class JCellDivCpuSingle : public JCellDivCpu
 {
 protected:
-  void CalcCellDomain(const unsigned *dcellc,const typecode *codec,const unsigned* idpc,const tdouble3* posc);
+  void CalcCellDomain(const unsigned *dcellc,const typecode *codec);
   void MergeMapCellBoundFluid(const tuint3 &celbmin,const tuint3 &celbmax,const tuint3 &celfmin,const tuint3 &celfmax,tuint3 &celmin,tuint3 &celmax)const;
   void PrepareNct();
 

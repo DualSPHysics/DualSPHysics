@@ -1365,6 +1365,57 @@ void JSph::AddParticlesOut(unsigned nout,const unsigned *idp,const tdouble3 *pos
 }
 
 //==============================================================================
+/// Manages excluded particles fixed, moving and floating before aborting the execution.
+/// Gestiona particulas excluidas fixed, moving y floating antes de abortar la ejecucion.
+//==============================================================================
+void JSph::AbortBoundOut(unsigned nout,const unsigned *idp,const tdouble3 *pos,const tfloat3 *vel,const float *rhop,const typecode *code){
+  //-Prepares data of excluded boundary particles.
+  byte* type=new byte[nout];
+  byte* motive=new byte[nout];
+  unsigned outfixed=0,outmoving=0,outfloat=0;
+  unsigned outpos=0,outrhop=0,outmove=0;
+  for(unsigned p=0;p<nout;p++){
+    //-Checks type of particle.
+    switch(CODE_GetType(code[p])){
+    case CODE_TYPE_FIXED:     type[p]=0;  outfixed++;   break;
+    case CODE_TYPE_MOVING:    type[p]=1;  outmoving++;  break; 
+    case CODE_TYPE_FLOATING:  type[p]=2;  outfloat++;   break; 
+    default:                  type[p]=99;               break; 
+    }
+    //-Checks reason for exclusion.
+    switch(CODE_GetSpecialValue(code[p])){
+    case CODE_OUTPOS:   motive[p]=1; outpos++;   break;
+    case CODE_OUTRHOP:  motive[p]=2; outrhop++;  break; 
+    case CODE_OUTMOVE:  motive[p]=3; outmove++;  break; 
+    default:            motive[p]=0;             break; 
+    }
+  }
+  //-Shows excluded particles information.
+  Log->Print(" ");
+  Log->Print("*** ERROR: Some boundary particle was excluded. ***");
+  Log->Printf("TimeStep: %f  (Nstep: %u)",TimeStep,Nstep);
+  unsigned npunknown=nout-outfixed-outmoving-outfloat;
+  if(!npunknown)Log->Printf("Total boundary: %u  (fixed=%u  moving=%u  floating=%u)",nout,outfixed,outmoving,outfloat);
+  else Log->Printf("Total boundary: %u  (fixed=%u  moving=%u  floating=%u  UNKNOWN=%u)",nout,outfixed,outmoving,outfloat,npunknown);
+  npunknown=nout-outpos-outrhop-outmove;
+  if(!npunknown)Log->Printf("Excluded for: position=%u  rhop=%u  velocity=%u",outpos,outrhop,outmove);
+  else Log->Printf("Excluded for: position=%u  rhop=%u  velocity=%u  UNKNOWN=%u",outpos,outrhop,outmove,npunknown);
+  Log->Print(" ");
+  //-Creates VTK file.
+  std::vector<JFormatFiles2::StScalarData> fields;
+  fields.push_back(JFormatFiles2::DefineField("Idp"   ,JFormatFiles2::UInt32 ,1,idp));
+  fields.push_back(JFormatFiles2::DefineField("Vel"   ,JFormatFiles2::Float32,3,vel));
+  fields.push_back(JFormatFiles2::DefineField("Rhop"  ,JFormatFiles2::Float32,1,rhop));
+  fields.push_back(JFormatFiles2::DefineField("Type"  ,JFormatFiles2::UChar8 ,1,type));
+  fields.push_back(JFormatFiles2::DefineField("Motive",JFormatFiles2::UChar8 ,1,motive));
+  const string file=DirOut+"Error_BoundaryOut.vtk";
+  Log->AddFileInfo(file,"Saves the excluded boundary particles.");
+  JFormatFiles2::SaveVtk(file,nout,pos,fields);
+  //-Aborts execution.
+  RunException("AbortBoundOut","Fixed, moving or floating particles were excluded. Checks VTK file Error_BoundaryOut.vtk with excluded particles.");
+}
+
+//==============================================================================
 /// Returns dynamic memory pointer with data transformed in tfloat3.
 /// THE POINTER MUST BE RELEASED AFTER USING IT.
 ///

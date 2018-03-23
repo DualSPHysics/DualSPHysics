@@ -210,25 +210,6 @@ void JCellDivGpu::DefineDomain(unsigned cellcode,tuint3 domcelini,tuint3 domcelf
   DomCells=DomCelFin-DomCelIni;
 }
 
-//==============================================================================
-/// Displays information for an excluded boundary particle.
-/// Visualiza la informacion de una particula de contorno excluida.
-//==============================================================================
-void JCellDivGpu::VisuBoundaryOut(unsigned p,unsigned id,tdouble3 pos,typecode code)const{
-  string info="particle boundary out> type:";
-  typecode tp=CODE_GetType(code);
-  if(tp==CODE_TYPE_FIXED)info=info+"Fixed";
-  else if(tp==CODE_TYPE_MOVING)info=info+"Moving";
-  else if(tp==CODE_TYPE_FLOATING)info=info+"Floating";
-  info=info+" cause:";
-  typecode out=CODE_GetSpecialValue(code);
-  if(out==CODE_OUTMOVE)info=info+"Speed";
-  else if(out==CODE_OUTPOS)info=info+"Position";
-  else if(out==CODE_OUTRHOP)info=info+"Rhop";
-  else info=info+"???";
-  Log->PrintDbg(info+fun::PrintStr(" p:%u id:%u pos:(%f,%f,%f)",p,id,pos.x,pos.y,pos.z));
-}
-
 /*:/==============================================================================
 // Devuelve coordenadas de celda a partir de una posicion.
 //==============================================================================
@@ -363,27 +344,6 @@ void JCellDivGpu::SortDataArrays(const double2 *a,const double *b,const float4 *
 void JCellDivGpu::SortDataArrays(const tsymatrix3f *a,tsymatrix3f *a2){
   const unsigned pini=(DivideFull? 0: NpbFinal);
   cudiv::SortDataParticles(Nptot,pini,SortPart,a,a2);
-}
-
-//==============================================================================
-/// Finalises Divide process: Checks that all excluded particles are fluid
-/// and computes the number of excluded by pos, rhop or mov.
-/// The data components are already in the original order.
-///
-/// Finaliza proceso de Divide: Revisando que todas las excluidas sean fluidas
-/// y calculando el numero de excluidas por pos, rhop o mov.
-/// Las componentes de los datos ya estan en el orden original.
-//==============================================================================
-void JCellDivGpu::CheckParticlesOut(unsigned npout,const unsigned *idp,const tdouble3 *pos,const float *rhop,const typecode *code){
-  unsigned nerr=0;
-  for(unsigned p=0;p<npout;p++){
-    typecode type=CODE_GetType(code[p]);
-    if(type==CODE_TYPE_FIXED || type==CODE_TYPE_MOVING || type==CODE_TYPE_FLOATING){ //-Hay alguna particula de contorno excluida.
-     if(nerr<100)VisuBoundaryOut(p,idp[p],pos[p],code[p]);
-      nerr++;
-    }
-  }
-  if(nerr)RunException("CheckParticlesOut","A boundary particle was excluded.");
 }
 
 //==============================================================================

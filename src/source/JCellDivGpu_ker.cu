@@ -412,25 +412,20 @@ void LimitsCellRedu(unsigned cellcode,unsigned nblocks,unsigned *aux,tuint3 &cel
 }
 
 //------------------------------------------------------------------------------
-/// Computes minimum and maximum cells for valid particles.
-/// Ignores the particles with check[p]!=0.
-/// The particles outside of the domain are marked with check[p]=CHECK_OUTPOS.
-/// If rhop!=NULL and the particle is outside the allowed range (rhopmin,rhopmax),
-/// it is marked with check[p]=CHECK_OUTRHOP.
+/// Computes minimun and maximum cell for valid particles.
+/// The excluded particles are already marked in code[].
+/// In case of having no valid particles the minimum value igreater than the maximum.
 /// In results[], each block stores cxmin,cymin,czmin,cxmax,cymax,czmax encodes
 /// the values as cells in 2 unsigned and groups them per block.
-/// In case of having no valid particles the minimum value igreater than the maximum.
 ///
 /// Calcula celda minima y maxima de las particulas validas.
-/// Ignora las particulas con check[p]!=0 
-/// Las particulas fuera del dominio ya estan marcadas con check[p]=CHECK_OUTPOS
-/// Si rhop!=NULL y la particula esta fuera del rango permitido (rhopmin,rhopmax)
-/// se marca check[p]=CHECK_OUTRHOP
+/// Las particulas excluidas ya estan marcadas en code[].
+/// En caso de no haber ninguna particula valida el minimo sera mayor que el maximo.
 /// En results[] cada bloque graba cxmin,cymin,czmin,cxmax,cymax,czmax codificando
 /// los valores como celdas en 2 unsigned y agrupando por bloque.
-/// En caso de no haber ninguna particula valida el minimo sera mayor que el maximo.
 //------------------------------------------------------------------------------
-template <unsigned int blockSize> __global__ void KerLimitsCell(unsigned n,unsigned pini,unsigned cellcode,const unsigned *dcell,const typecode *code,unsigned *results)
+template <unsigned int blockSize> __global__ void KerLimitsCell(unsigned n,unsigned pini
+  ,unsigned cellcode,const unsigned *dcell,const typecode *code,unsigned *results)
 {
   extern __shared__ unsigned scx1[];
   unsigned *scy1=scx1+blockDim.x;
@@ -443,11 +438,11 @@ template <unsigned int blockSize> __global__ void KerLimitsCell(unsigned n,unsig
   //-Loads shared memory values.
   if(p<n){
     const unsigned pp=p+pini;
-    unsigned rcell=dcell[pp];
+    const unsigned rcell=dcell[pp];
     const unsigned cx=PC__Cellx(cellcode,rcell);
     const unsigned cy=PC__Celly(cellcode,rcell);
     const unsigned cz=PC__Cellz(cellcode,rcell);
-    if(CODE_GetSpecialValue(code[pp])<CODE_OUTIGNORE){ //-Excluded particles.
+    if(CODE_GetSpecialValue(code[pp])<CODE_OUTIGNORE){ //-Particle not excluded | Particula no excluida.
       scx1[tid]=cx; scy1[tid]=cy; scz1[tid]=cz;
       scx2[tid]=cx; scy2[tid]=cy; scz2[tid]=cz;
     }
@@ -467,16 +462,16 @@ template <unsigned int blockSize> __global__ void KerLimitsCell(unsigned n,unsig
 
 //==============================================================================
 /// Computes minimun and maximum cell for valid particles.
-/// Ignores excluded particles with code[p].out!=CODE_OUT_OK
+/// The excluded particles are already marked in code[].
+/// In case of having no valid particles the minimum value igreater than the maximum.
 /// In results[], each block stores cxmin,cymin,czmin,cxmax,cymax,czmax encodes
 /// the values as cells in 2 unsigned and groups them per block.
-/// In case of having no valid particles the minimum value igreater than the maximum.
 ///
 /// Calcula celda minima y maxima de las particulas validas.
-/// Ignora las particulas excluidas con code[p].out!=CODE_OUT_OK 
+/// Las particulas excluidas ya estan marcadas en code[].
+/// En caso de no haber ninguna particula valida el minimo sera mayor que el maximo.
 /// En results[] cada bloque graba cxmin,cymin,czmin,cxmax,cymax,czmax codificando
 /// los valores como celdas en 2 unsigned y agrupando por bloque.
-/// En caso de no haber ninguna particula valida el minimo sera mayor que el maximo.
 //==============================================================================
 void LimitsCell(unsigned np,unsigned pini,unsigned cellcode,const unsigned *dcell,const typecode *code,unsigned *aux,tuint3 &celmin,tuint3 &celmax,JLog2 *log){
   if(!np){//-Execution is canceled when no particles.

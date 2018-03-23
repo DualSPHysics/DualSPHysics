@@ -21,6 +21,7 @@
 #include "JCellDivGpuSingle.h"
 #include "JCellDivGpuSingle_ker.h"
 #include "Functions.h"
+#include <climits>
 
 using namespace std;
 
@@ -48,12 +49,12 @@ void JCellDivGpuSingle::CalcCellDomain(const unsigned *dcellg,const typecode *co
     BoundLimitOk=true; BoundLimitCellMin=celbmin; BoundLimitCellMax=celbmax;
   } 
   else{ celbmin=BoundLimitCellMin; celbmax=BoundLimitCellMax; }
-  //Log->Printf("----->CalcCellDomain> BoundLimitCellMin/Max2:%s",fun::Uint3RangeStr(BoundLimitCellMin,BoundLimitCellMax).c_str());
+  //Log->Printf("----->CalcCellDomain> BoundLimitCellMin/Max:%s",fun::Uint3RangeStr(BoundLimitCellMin,BoundLimitCellMax).c_str());
   //-Calculate fluid domain | Calcula dominio del fluido.
   tuint3 celfmin,celfmax;
   CalcCellDomainFluid(Npf1,Npb1,Npf2,Npb1+Npf1+Npb2,dcellg,codeg,celfmin,celfmax);
   //Log->Printf("----->CalcCellDomain> celfmin/max:%s",fun::Uint3RangeStr(celfmin,celfmax).c_str());
-  //-Computes the domain adjusting to the boundary and the fluid ( with 2h halo).
+  //-Computes the domain adjusting to the boundary and the fluid (with 2h halo).
   //-Calcula dominio ajustando al contorno y al fluido (con halo de 2h). 
   MergeMapCellBoundFluid(celbmin,celbmax,celfmin,celfmax,CellDomainMin,CellDomainMax);
 }
@@ -94,8 +95,8 @@ void JCellDivGpuSingle::PrepareNct(){
   //Log->Printf("======  ncx:%u ncy:%u ncz:%u\n",Ncx,Ncy,Ncz);
   Nsheet=Ncx*Ncy; Nct=Nsheet*Ncz; Nctt=SizeBeginEndCell(Nct);
   if(Nctt!=unsigned(Nctt))RunException("PrepareNct","The number of cells is too big.");
-  BoxIgnore=Nct; 
-  BoxFluid=BoxIgnore+1; 
+  BoxBoundIgnore=Nct; 
+  BoxFluid=BoxBoundIgnore+1; 
   BoxBoundOut=BoxFluid+Nct; 
   BoxFluidOut=BoxBoundOut+1; 
   BoxBoundOutIgnore=BoxFluidOut+1;
@@ -105,8 +106,8 @@ void JCellDivGpuSingle::PrepareNct(){
 }
 
 //==============================================================================
-/// Computes cell of each particle (CellPart[]) from dcell[],
-/// all the excluded particles have been marked in the code.
+/// Computes cell of each particle (CellPart[]) from dcell[], all the excluded 
+/// particles have been marked  in code[].
 /// Assigns consecutive values to SortPart[].
 ///
 /// Calcula celda de cada particula (CellPart[]) a partir de dcell[], todas las
@@ -114,8 +115,8 @@ void JCellDivGpuSingle::PrepareNct(){
 /// Asigna valores consecutivos a SortPart[].
 //==============================================================================
 void JCellDivGpuSingle::PreSort(const unsigned *dcellg,const typecode *codeg){
-  if(DivideFull)cudiv::PreSortFull(Nptot,DomCellCode,dcellg,codeg,CellDomainMin,TUint3(Ncx,Ncy,Ncz),CellPart,SortPart,Log);
-  else cudiv::PreSortFluid(Npf1,Npb1,DomCellCode,dcellg,codeg,CellDomainMin,TUint3(Ncx,Ncy,Ncz),CellPart,SortPart,Log);
+  if(DivideFull)cudiv::PreSortFull(Nptot,DomCellCode,dcellg,codeg,CellDomainMin,TUint3(Ncx,Ncy,Ncz),CellPart,SortPart);
+  else cudiv::PreSortFluid(Npf1,Npb1,DomCellCode,dcellg,codeg,CellDomainMin,TUint3(Ncx,Ncy,Ncz),CellPart,SortPart);
 }
 
 //==============================================================================
@@ -158,7 +159,7 @@ void JCellDivGpuSingle::Divide(unsigned npb1,unsigned npf1,unsigned npb2,unsigne
 
   //-Calculate domain limits | Calcula limites del dominio.
   CalcCellDomain(dcellg,codeg);
-  //-Computes the number of cells to be divided and check the allocated memory for the cells. 
+  //-Calculate number of cells for divide and check reservation of memory for cells.
   //-Calcula numero de celdas para el divide y comprueba reserva de memoria para celdas.
   PrepareNct();
   //-Checks if the allocated memory is sufficient for Nptot.
@@ -167,7 +168,7 @@ void JCellDivGpuSingle::Divide(unsigned npb1,unsigned npf1,unsigned npb2,unsigne
   TmgStop(timers,TMG_NlLimits);
 
   //-Determines if the divide affects all the particles.
-  //-If BoundDivideOk becomes false, reserve free memory for particles or cells.
+  //-BoundDivideOk becomes false when the allocation memory changes for particles or cells.
   //-Determina si el divide afecta a todas las particulas.
   //-BoundDivideOk se vuelve false al reservar o liberar memoria para particulas o celdas.
   if(!BoundDivideOk || BoundDivideCellMin!=CellDomainMin || BoundDivideCellMax!=CellDomainMax){
@@ -175,8 +176,6 @@ void JCellDivGpuSingle::Divide(unsigned npb1,unsigned npf1,unsigned npb2,unsigne
     BoundDivideOk=true; BoundDivideCellMin=CellDomainMin; BoundDivideCellMax=CellDomainMax;
   }
   else DivideFull=false;
-//: if(DivideFull)Log->PrintDbg("--> DivideFull=TRUE"); else Log->PrintDbg("--> DivideFull=FALSE");
-//: Log->PrintDbg(string("--> CellDomain:%s")+fun::Uint3RangeStr(CellDomainMin,CellDomainMax));
 
   //-Computes CellPart[] and assigns consecutive values to SortPart[].
   //-Calcula CellPart[] y asigna valores consecutivos a SortPart[].
@@ -197,7 +196,7 @@ void JCellDivGpuSingle::Divide(unsigned npb1,unsigned npf1,unsigned npb2,unsigne
   cudiv::CalcBeginEndCell(DivideFull,Nptot,Npb1,unsigned(SizeBeginEndCell(Nct)),BoxFluid,CellPart,BeginEndCell);
 
   //-Calculate number of particles. | Calcula numeros de particulas.
-  NpbIgnore=CellSize(BoxIgnore);
+  NpbIgnore=CellSize(BoxBoundIgnore);
   unsigned beginendcell[8];
   CellBeginEnd(BoxBoundOut,8,beginendcell);
   NpbOut=beginendcell[1]-beginendcell[0];
@@ -207,7 +206,8 @@ void JCellDivGpuSingle::Divide(unsigned npb1,unsigned npf1,unsigned npb2,unsigne
   //:printf("---> Nct:%u  BoxBoundOut:%u  SizeBeginEndCell:%u\n",Nct,BoxBoundOut,SizeBeginEndCell(Nct));
   //:printf("---> NpbIgnore:%u  NpbOut:%u  NpfOut:%u  NpfOutIgnore:%u\n",NpbIgnore,NpbOut,NpfOut,NpfOutIgnore);
   NpFinal=Nptot-NpbOut-NpfOut-NpbOutIgnore-NpfOutIgnore;
-  NpbFinal=Npb1+Npb2-NpbOut-NpbOutIgnore;
+  NpbFinal=Npb1+Npb2-NpbOutIgnore;
+  if(NpbOut!=0 && DivideFull)NpbFinal=UINT_MAX; //-NpbOut can contain excluded particles fixed, moving and also floating.
 
   Ndiv++;
   if(DivideFull)NdivFull++;

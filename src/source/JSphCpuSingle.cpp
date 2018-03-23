@@ -428,18 +428,19 @@ void JSphCpuSingle::RunPeriodic(){
 }
 
 //==============================================================================
-/// Execute divide of particles in cells.
+/// Executes divide of particles in cells.
 /// Ejecuta divide de particulas en celdas.
 //==============================================================================
 void JSphCpuSingle::RunCellDivide(bool updateperiodic){
   const char met[]="RunCellDivide";
-  //-Create new periodic particles & mark the old ones to be ignored. | Crea nuevas particulas periodicas y marca las viejas para ignorarlas.
+  //-Creates new periodic particles and marks the old ones to be ignored.
+  //-Crea nuevas particulas periodicas y marca las viejas para ignorarlas.
   if(updateperiodic && PeriActive)RunPeriodic();
 
-  //-Initialises Divide. | Inicia Divide.
+  //-Initiates Divide.
   CellDivSingle->Divide(Npb,Np-Npb-NpbPer-NpfPer,NpbPer,NpfPer,BoundChanged,Dcellc,Codec,Idpc,Posc,Timers);
 
-  //-Order particle data. | Ordena datos de particulas
+  //-Sorts particle data. | Ordena datos de particulas.
   TmcStart(Timers,TMC_NlSortData);
   CellDivSingle->SortArray(Idpc);
   CellDivSingle->SortArray(Codec);
@@ -460,14 +461,18 @@ void JSphCpuSingle::RunCellDivide(bool updateperiodic){
   Np=CellDivSingle->GetNpFinal();
   Npb=CellDivSingle->GetNpbFinal();
   NpbOk=Npb-CellDivSingle->GetNpbIgnore();
+
+  //-Manages excluded particles fixed, moving and floating before aborting the execution.
+  if(CellDivSingle->GetNpbOut())AbortBoundOut();
+
   //-Collect position of floating particles. | Recupera posiciones de floatings.
   if(CaseNfloat)CalcRidp(PeriActive!=0,Np-Npb,Npb,CaseNpb,CaseNpb+CaseNfloat,Codec,Idpc,FtRidp);
   TmcStop(Timers,TMC_NlSortData);
 
-  //-Control of excluded particles (only fluid because if some bound is excluded ti generates an exception in Divide()).
-  //-Gestion de particulas excluidas (solo fluid pq si alguna bound es excluida se genera excepcion en Divide()).
+  //-Control of excluded particles (only fluid because excluded boundary are checked before).
+  //-Gestion de particulas excluidas (solo fluid porque las boundary excluidas se comprueban antes).
   TmcStart(Timers,TMC_NlOutCheck);
-  unsigned npfout=CellDivSingle->GetNpOut();
+  unsigned npfout=CellDivSingle->GetNpfOut();
   if(npfout){
     unsigned* idp=ArraysCpu->ReserveUint();
     tdouble3* pos=ArraysCpu->ReserveDouble3();
@@ -486,10 +491,27 @@ void JSphCpuSingle::RunCellDivide(bool updateperiodic){
   BoundChanged=false;
 }
 
-//------------------------------------------------------------------------------
+//==============================================================================
+/// Manages excluded particles fixed, moving and floating before aborting the execution.
+/// Gestiona particulas excluidas fixed, moving y floating antes de abortar la ejecucion.
+//==============================================================================
+void JSphCpuSingle::AbortBoundOut(){
+  const unsigned nboundout=CellDivSingle->GetNpbOut();
+  //-Get data of excluded boundary particles.
+  unsigned* idp=ArraysCpu->ReserveUint();
+  tdouble3* pos=ArraysCpu->ReserveDouble3();
+  tfloat3* vel=ArraysCpu->ReserveFloat3();
+  float* rhop=ArraysCpu->ReserveFloat();
+  typecode* code=ArraysCpu->ReserveTypeCode();
+  GetParticlesData(nboundout,Np,true,false,idp,pos,vel,rhop,code);
+  //-Shows excluded particles information and aborts execution.
+  JSph::AbortBoundOut(nboundout,idp,pos,vel,rhop,code);
+}
+
+//==============================================================================
 /// Returns cell limits for interaction.
 /// Devuelve limites de celdas para interaccion.
-//------------------------------------------------------------------------------
+//==============================================================================
 void JSphCpuSingle::GetInteractionCells(unsigned rcell
   ,int hdiv,const tint4 &nc,const tint3 &cellzero
   ,int &cxini,int &cxfin,int &yini,int &yfin,int &zini,int &zfin)const

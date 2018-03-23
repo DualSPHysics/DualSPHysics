@@ -223,25 +223,6 @@ void JCellDivCpu::DefineDomain(unsigned cellcode,tuint3 domcelini,tuint3 domcelf
   DomCells=DomCelFin-DomCelIni;
 }
 
-//==============================================================================
-/// Visualize information of a particle excluded from boundary.
-/// Visualiza la informacion de una particula de contorno excluida.
-//==============================================================================
-void JCellDivCpu::VisuBoundaryOut(unsigned p,unsigned id,tdouble3 pos,typecode code)const{
-  string info="particle boundary out> type:";
-  typecode tp=CODE_GetType(code);
-  if(tp==CODE_TYPE_FIXED)info=info+"Fixed";
-  else if(tp==CODE_TYPE_MOVING)info=info+"Moving";
-  else if(tp==CODE_TYPE_FLOATING)info=info+"Floating";
-  info=info+" cause:";
-  typecode out=CODE_GetSpecialValue(code);
-  if(out==CODE_OUTMOVE)info=info+"Speed";
-  else if(out==CODE_OUTPOS)info=info+"Position";
-  else if(out==CODE_OUTRHOP)info=info+"Rhop";
-  else info=info+"???";
-  Log->PrintDbg(info+fun::PrintStr(" p:%u id:%u pos:(%f,%f,%f)",p,id,pos.x,pos.y,pos.z));
-}
-
 /*:
 //==============================================================================
 // Devuelve coordenadas de celda a partir de una posicion.
@@ -253,26 +234,22 @@ void JCellDivCpu::VisuBoundaryOut(unsigned p,unsigned id,tdouble3 pos,typecode c
 //}:*/
 
 //==============================================================================
-/// Calculate minimum and maximum cells of valid particles.
-/// In code[] they are already marked as excluded.
+/// Computes minimum and maximum cells for valid particles.
+/// The excluded particles are already marked in code[]
 /// In case of there being no valid particles, the minimum is set to be greater than the maximum.
-/// If some excluded particles are encountered, generate an exception showing its info.
 ///
 /// Calcula celda minima y maxima de las particulas validas.
-/// En code[] ya estan marcadas las particulas excluidas.
+/// Las particulas excluidas ya estan marcadas en code[].
 /// En caso de no haber ninguna particula valida el minimo sera mayor que el maximo.
-/// Si encuentra alguna particula excluida genera excepcion mostrando su info.
 //==============================================================================
 void JCellDivCpu::LimitsCellBound(unsigned n,unsigned pini,const unsigned* dcellc
-  ,const typecode *codec,const unsigned* idpc,const tdouble3* posc
-  ,tuint3 &cellmin,tuint3 &cellmax)const
+  ,const typecode *codec,tuint3 &cellmin,tuint3 &cellmax)const
 {
   tuint3 cmin=TUint3(UINT_MAX);
   tuint3 cmax=TUint3(0);
-  unsigned nerr=0;
   const unsigned pfin=pini+n;
   for(unsigned p=pini;p<pfin;p++){
-    unsigned rcell=dcellc[p];
+    const unsigned rcell=dcellc[p];
     const unsigned cx=PC__Cellx(DomCellCode,rcell);
     const unsigned cy=PC__Celly(DomCellCode,rcell);
     const unsigned cz=PC__Cellz(DomCellCode,rcell);
@@ -286,33 +263,27 @@ void JCellDivCpu::LimitsCellBound(unsigned n,unsigned pini,const unsigned* dcell
       if(cmax.y<cy)cmax.y=cy;
       if(cmax.z<cz)cmax.z=cz;
     }
-    else if(rcodsp>CODE_OUTIGNORE){
-      if(nerr<100)VisuBoundaryOut(p,idpc[p],OrderDecodeValue(CellOrder,posc[p]),rcode);
-      nerr++;
-    }
   }
-  if(nerr)RunException("LimitsCellBound","Some boundary particle was found outside the domain.");
   cellmin=cmin;
   cellmax=cmax;
 }
 
 //==============================================================================
-/// Calculate max and min positions of the indicated Bound particle range.
-/// In code[] these particles are already marked as excluded.
+/// Computes the maximum and minimum postion for the indicated range of boundary particles.
+/// The excluded particles are already marked in code[].
 ///
 /// Calcula posiciones minimas y maximas del rango de particulas Bound indicado.
 /// En code[] ya estan marcadas las particulas excluidas.
 //==============================================================================
 void JCellDivCpu::CalcCellDomainBound(unsigned n,unsigned pini,unsigned n2,unsigned pini2
-  ,const unsigned* dcellc,const typecode *codec,const unsigned* idpc,const tdouble3* posc
-  ,tuint3 &cellmin,tuint3 &cellmax)
+  ,const unsigned* dcellc,const typecode *codec,tuint3 &cellmin,tuint3 &cellmax)
 {
   tuint3 cmin,cmax;
-  LimitsCellBound(n,pini,dcellc,codec,idpc,posc,cmin,cmax);
+  LimitsCellBound(n,pini,dcellc,codec,cmin,cmax);
   cellmin=(cmin.x>cmax.x? DomCells: cmin);
   cellmax=(cmin.x>cmax.x? TUint3(0): cmax);
   if(n2){
-    LimitsCellBound(n2,pini2,dcellc,codec,idpc,posc,cmin,cmax);
+    LimitsCellBound(n2,pini2,dcellc,codec,cmin,cmax);
     cmin=(cmin.x>cmax.x? DomCells: cmin);
     cmax=(cmin.x>cmax.x? TUint3(0): cmax);
     cellmin=MinValues(cellmin,cmin);
@@ -321,32 +292,26 @@ void JCellDivCpu::CalcCellDomainBound(unsigned n,unsigned pini,unsigned n2,unsig
 }
 
 //==============================================================================
-/// Calculate minimum and maximum cells of valid particles.
-/// In code[] they are already marked as excluded.
-/// In case of there being no valid particles, the minimum is set to be greater than the maximum.
-/// If some excluded particles are encountered, generate an exception showing its info.
+/// Computes minimun and maximum cell for valid particles.
+/// The excluded particles are already marked in code[].
+/// In case of having no valid particles the minimum value igreater than the maximum.
 ///
 /// Calcula celda minima y maxima de las particulas validas.
-/// En code[] ya estan marcadas las particulas excluidas.
+/// Las particulas excluidas ya estan marcadas en code[].
 /// En caso de no haber ninguna particula valida el minimo sera mayor que el maximo.
-/// Si encuentra alguna particula floating excluida genera excepcion mostrando su info.
 //==============================================================================
 void JCellDivCpu::LimitsCellFluid(unsigned n,unsigned pini,const unsigned* dcellc
-  ,const typecode *codec,const unsigned* idpc,const tdouble3* posc
-  ,tuint3 &cellmin,tuint3 &cellmax)const
+  ,const typecode *codec,tuint3 &cellmin,tuint3 &cellmax)const
 {
   tuint3 cmin=TUint3(UINT_MAX);
   tuint3 cmax=TUint3(0);
-  unsigned nerr=0;
   const unsigned pfin=pini+n;
   for(unsigned p=pini;p<pfin;p++){
-    unsigned rcell=dcellc[p];
+    const unsigned rcell=dcellc[p];
     const unsigned cx=PC__Cellx(DomCellCode,rcell);
     const unsigned cy=PC__Celly(DomCellCode,rcell);
     const unsigned cz=PC__Cellz(DomCellCode,rcell);
-    const typecode rcode=codec[p];
-    const typecode rcodsp=CODE_GetSpecialValue(rcode);
-    if(rcodsp<CODE_OUTIGNORE){ //-Particle not excluded | Particula no excluida.
+    if(CODE_GetSpecialValue(codec[p])<CODE_OUTIGNORE){ //-Particle not excluded | Particula no excluida.
       if(cmin.x>cx)cmin.x=cx;
       if(cmin.y>cy)cmin.y=cy;
       if(cmin.z>cz)cmin.z=cz;
@@ -354,40 +319,33 @@ void JCellDivCpu::LimitsCellFluid(unsigned n,unsigned pini,const unsigned* dcell
       if(cmax.y<cy)cmax.y=cy;
       if(cmax.z<cz)cmax.z=cz;
     }
-    else if(rcodsp>CODE_OUTIGNORE){
-      if(Floating && CODE_IsFloating(rcode)){ //<<--CHECK
-        if(nerr<100)VisuBoundaryOut(p,idpc[p],OrderDecodeValue(CellOrder,posc[p]),codec[p]);
-        nerr++;
-      }
-    }
   }
-  if(nerr)RunException("LimitsCellFluid","Some floating particle was found outside the domain.");
   cellmin=cmin;
   cellmax=cmax;
 }
 
 //==============================================================================
-/// Calculate max and min positions of the indicated Fluid particle range.
-/// Ignore excluded particles that are already marked in code[] 
+/// Computes the maximum and minimum postion for the indicated range of fluid particles.
+/// Ignores the excluded particles already marked in code[]
 ///
 /// Calcula posiciones minimas y maximas del rango de particulas Fluid indicado.
 /// Ignora particulas excluidas que ya estan marcadas en code[].
 //==============================================================================
 void JCellDivCpu::CalcCellDomainFluid(unsigned n,unsigned pini,unsigned n2,unsigned pini2
-  ,const unsigned* dcellc,const typecode *codec,const unsigned* idpc,const tdouble3* posc
-  ,tuint3 &cellmin,tuint3 &cellmax)
+  ,const unsigned* dcellc,const typecode *codec,tuint3 &cellmin,tuint3 &cellmax)
 {
   tuint3 cmin,cmax;
-  LimitsCellFluid(n,pini,dcellc,codec,idpc,posc,cmin,cmax);
+  LimitsCellFluid(n,pini,dcellc,codec,cmin,cmax);
   cellmin=(cmin.x>cmax.x? DomCells: cmin);
   cellmax=(cmin.x>cmax.x? TUint3(0): cmax);
   if(n2){
-    LimitsCellFluid(n2,pini2,dcellc,codec,idpc,posc,cmin,cmax);
+    LimitsCellFluid(n2,pini2,dcellc,codec,cmin,cmax);
     cmin=(cmin.x>cmax.x? DomCells: cmin);
     cmax=(cmin.x>cmax.x? TUint3(0): cmax);
     cellmin=MinValues(cellmin,cmin);
     cellmax=MaxValues(cellmax,cmax);
   }
+  //:Log->Printf("CalcDomainFluid> cell:(%s)-(%s)",fun::Uint3Str(cellmin).c_str(),fun::Uint3Str(cellmax).c_str());
 }
 
 //==============================================================================
