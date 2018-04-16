@@ -1,5 +1,5 @@
 DualSPHysics4    v4.2.039    23-03-2018
-BoundaryVTK4     v4.0.031    22-03-2018
+BoundaryVTK4     v4.0.032    16-04-2018
 ComputeForces4   v4.0.029    22-03-2018
 FloatingInfo4    v4.0.016    22-03-2018
 GenCase4         v4.0.062    22-03-2018
