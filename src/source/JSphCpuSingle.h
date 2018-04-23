@@ -26,7 +26,6 @@
 #include <string>
 
 class JCellDivCpuSingle;
-class JPartsLoad4;
 
 //##############################################################################
 //# JSphCpuSingle
@@ -37,12 +36,10 @@ class JSphCpuSingle : public JSphCpu
 {
 protected:
   JCellDivCpuSingle* CellDivSingle;
-  JPartsLoad4* PartsLoaded;
 
   llong GetAllocMemoryCpu()const;
   void UpdateMaxValues();
   void LoadConfig(JCfgRun *cfg);
-  void LoadCaseParticles();
   void ConfigDomain();
 
   void ResizeParticlesSize(unsigned newsize,float oversize,bool updatedivide);

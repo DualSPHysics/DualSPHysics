@@ -20,14 +20,14 @@
 
 #include "JSph.h"
 #include "Functions.h"
+#include "JPartDataHead.h"
 #include "JSphMk.h"
+#include "JPartsLoad4.h"
 #include "JSphMotion.h"
 #include "JXml.h"
 #include "JSpaceCtes.h"
 #include "JSpaceEParms.h"
 #include "JSpaceParts.h"
-#include "JFormatFiles2.h"
-#include "JCellDivCpu.h"
 #include "JFormatFiles2.h"
 #include "JSphDtFixed.h"
 #include "JSaveDt.h"
@@ -64,14 +64,14 @@ JSph::JSph(bool cpu,bool withmpi):Cpu(cpu),WithMpi(withmpi){
   SaveDt=NULL;
   TimeOut=NULL;
   MkInfo=NULL;
-  Motion=NULL;
-  MotionObjBegin=NULL;
+  SphMotion=NULL;
   FtObjs=NULL;
   DemData=NULL;
   GaugeSystem=NULL;
   WaveGen=NULL;
   Damping=NULL;
   AccInput=NULL;
+  PartsLoaded=NULL;
   InitVars();
 }
 
@@ -80,23 +80,23 @@ JSph::JSph(bool cpu,bool withmpi):Cpu(cpu),WithMpi(withmpi){
 //==============================================================================
 JSph::~JSph(){
   DestructorActive=true;
-  delete DataBi4;
-  delete DataOutBi4;
-  delete DataFloatBi4;
-  delete PartsOut;
-  delete ViscoTime;
-  delete DtFixed;
-  delete SaveDt;
-  delete TimeOut;
-  delete MkInfo;
-  delete Motion;
-  delete[] MotionObjBegin; MotionObjBegin=NULL;
+  delete DataBi4;      DataBi4=NULL;
+  delete DataOutBi4;   DataOutBi4=NULL;
+  delete DataFloatBi4; DataFloatBi4=NULL;
+  delete PartsOut;     PartsOut=NULL;
+  delete ViscoTime;    ViscoTime=NULL;
+  delete DtFixed;      DtFixed=NULL;
+  delete SaveDt;       SaveDt=NULL;
+  delete TimeOut;      TimeOut=NULL;
+  delete MkInfo;       MkInfo=NULL;
+  delete SphMotion;    SphMotion=NULL;
   AllocMemoryFloating(0);
-  delete[] DemData; DemData=NULL;
-  delete GaugeSystem;
-  delete WaveGen;
-  delete Damping;
-  delete AccInput;
+  delete[] DemData;    DemData=NULL;
+  delete GaugeSystem;  GaugeSystem=NULL;
+  delete WaveGen;      WaveGen=NULL;
+  delete Damping;      Damping=NULL;
+  delete AccInput;     AccInput=NULL; 
+  delete PartsLoaded;  PartsLoaded=NULL;
 }
 
 //==============================================================================
@@ -127,7 +127,6 @@ void JSph::InitVars(){
   TShifting=SHIFT_None; ShiftCoef=ShiftTFS=0;
   Visco=0; ViscoBoundFactor=1;
   UseDEM=false;  //(DEM)
-  DemDtForce=0;  //(DEM)
   delete[] DemData; DemData=NULL;  //(DEM)
   RhopOut=true; RhopOutMin=700; RhopOutMax=1300;
   TimeMax=TimePart=0;
@@ -163,12 +162,9 @@ void JSph::InitVars(){
   PartBeginTimeStep=0; 
   PartBeginTotalNp=0;
 
-  MotionTimeMod=0;
-  MotionObjCount=0;
-  delete[] MotionObjBegin; MotionObjBegin=NULL;
-
   FtCount=0;
   FtPause=0;
+  WithFloating=false;
 
   AllocMemoryFloating(0);
 
@@ -204,6 +200,10 @@ void JSph::InitVars(){
   TimeStepIni=0;
   TimeStep=TimeStepM1=0;
   TimePartNext=0;
+
+  VerletStep=0;
+  SymplecticDtPre=0;
+  DemDtForce=0;  //(DEM)
 }
 
 //==============================================================================
@@ -318,6 +318,7 @@ llong JSph::GetAllocMemoryCpu()const{
   if(ViscoTime)s+=ViscoTime->GetAllocMemory();
   if(DtFixed)s+=DtFixed->GetAllocMemory();
   if(AccInput)s+=AccInput->GetAllocMemory();
+  if(PartsLoaded)s+=PartsLoaded->GetAllocMemory();
   return(s);
 }
 
@@ -560,10 +561,10 @@ void JSph::LoadCaseConfig(){
 
   //-Particle data.
   CaseNp=parts.Count();
-  CaseNfixed=parts.Count(PT_Fixed);
-  CaseNmoving=parts.Count(PT_Moving);
-  CaseNfloat=parts.Count(PT_Floating);
-  CaseNfluid=parts.Count(PT_Fluid);
+  CaseNfixed=parts.Count(TpPartFixed);
+  CaseNmoving=parts.Count(TpPartMoving);
+  CaseNfloat=parts.Count(TpPartFloating);
+  CaseNfluid=parts.Count(TpPartFluid);
   CaseNbound=CaseNp-CaseNfluid;
   CaseNpb=CaseNbound-CaseNfloat;
   
@@ -577,6 +578,17 @@ void JSph::LoadCaseConfig(){
   //-Configuration of GaugeSystem.
   GaugeSystem=new JGaugeSystem(Cpu,Log);
 
+  //-Configuration of AccInput.
+  if(xml.GetNode("case.execution.special.accinputs",false)){
+    AccInput=new JSphAccInput(Log,DirCase,&xml,"case.execution.special.accinputs");
+  }
+
+  //-Loads and configures moving objects.
+  if(parts.CountBlocks(TpPartMoving)>0){
+    SphMotion=new JSphMotion();
+    SphMotion->Init(&parts,&xml,"case.execution.motion",DirCase);
+  }
+
   //-Configuration of WaveGen.
   if(xml.GetNode("case.execution.special.wavepaddles",false)){
     bool useomp=false,usegpu=false;
@@ -587,39 +599,9 @@ void JSph::LoadCaseConfig(){
       usegpu=!Cpu;
     #endif
     WaveGen=new JWaveGen(useomp,usegpu,Log,DirCase,&xml,"case.execution.special.wavepaddles");
-  }
-
-  //-Configuration of AccInput.
-  if(xml.GetNode("case.execution.special.accinputs",false)){
-    AccInput=new JSphAccInput(Log,DirCase,&xml,"case.execution.special.accinputs");
-  }
-
-  //-Loads and configures MOTION.
-  MotionObjCount=parts.CountBlocks(PT_Moving);
-  if(MotionObjCount){
-    if(MotionObjCount>CODE_MKRANGEMAX)RunException(met,"The number of mobile objects exceeds the maximum.");
-    //-Prepares memory.
-    MotionObjBegin=new unsigned[MotionObjCount+1];
-    memset(MotionObjBegin,0,sizeof(unsigned)*(MotionObjCount+1));
-    //-Loads configuration.
-    unsigned cmot=0;
-    for(unsigned c=0;c<parts.CountBlocks();c++){
-      const JSpacePartBlock &block=parts.GetBlock(c);
-      if(block.Type==PT_Moving){
-        if(cmot>=MotionObjCount)RunException(met,"The number of mobile objects exceeds the expected maximum.");
-        //:printf("block[%2d]=%d -> %d\n",c,block.GetBegin(),block.GetCount());
-        MotionObjBegin[cmot]=block.GetBegin();
-        MotionObjBegin[cmot+1]=MotionObjBegin[cmot]+block.GetCount();
-        if(WaveGen)WaveGen->ConfigPaddle(block.GetMkType(),cmot,block.GetBegin(),block.GetCount());
-        cmot++;
-      }
+    if(SphMotion)for(unsigned c=0;c<SphMotion->GetNumObjects();c++){
+      WaveGen->ConfigPaddle(SphMotion->GetObjMkBound(c),c,SphMotion->GetObjBegin(c),SphMotion->GetObjSize(c));
     }
-    if(cmot!=MotionObjCount)RunException(met,"The number of mobile objects is invalid.");
-  }
-
-  if(MotionObjCount){
-    Motion=new JSphMotion();
-    if(int(MotionObjCount)<Motion->Init(&xml,"case.execution.motion",DirCase))RunException(met,"The number of mobile objects is lower than expected.");
   }
 
   //-Configuration of damping zones.
@@ -629,14 +611,14 @@ void JSph::LoadCaseConfig(){
   }
 
   //-Loads floating objects.
-  FtCount=parts.CountBlocks(PT_Floating);
+  FtCount=parts.CountBlocks(TpPartFloating);
   if(FtCount){
     if(FtCount>CODE_MKRANGEMAX)RunException(met,"The number of floating objects exceeds the maximum.");
     AllocMemoryFloating(FtCount);
     unsigned cobj=0;
     for(unsigned c=0;c<parts.CountBlocks()&&cobj<FtCount;c++){
       const JSpacePartBlock &block=parts.GetBlock(c);
-      if(block.Type==PT_Floating){
+      if(block.Type==TpPartFloating){
         const JSpacePartBlock_Floating &fblock=(const JSpacePartBlock_Floating &)block;
         StFloatingData* fobj=FtObjs+cobj;
         fobj->mkbound=fblock.GetMkType();
@@ -662,12 +644,12 @@ void JSph::LoadCaseConfig(){
     memset(DemData,0,sizeof(StDemData)*DemDataSize);
     for(unsigned c=0;c<parts.CountBlocks();c++){
       const JSpacePartBlock &block=parts.GetBlock(c);
-      if(block.Type!=PT_Fluid){
+      if(IsBound(block.Type)){
         const unsigned cmk=MkInfo->GetMkBlockByMkBound(block.GetMkType());
         if(cmk>=MkInfo->Size())RunException(met,fun::PrintStr("Error loading DEM objects. Mkbound=%u is unknown.",block.GetMkType()));
         const unsigned tav=CODE_GetTypeAndValue(MkInfo->Mkblock(cmk)->Code);
         //:Log->Printf("___> tav[%u]:%u",cmk,tav);
-        if(block.Type==PT_Floating){
+        if(block.Type==TpPartFloating){
           const JSpacePartBlock_Floating &fblock=(const JSpacePartBlock_Floating &)block;
           DemData[tav].mass=(float)fblock.GetMassbody();
           DemData[tav].massp=(float)(fblock.GetMassbody()/fblock.GetCount());
@@ -990,18 +972,20 @@ void JSph::LoadDcellParticles(unsigned n,const typecode *code,const tdouble3 *po
 //==============================================================================
 void JSph::RunInitialize(unsigned np,unsigned npb,const tdouble3 *pos,const unsigned *idp,const typecode *code,tfloat4 *velrhop){
   const char met[]="RunInitialize";
-  JSphInitialize init(FileXml);
-  if(init.Count()){
-    //-Creates array with mktype value.
-    word *mktype=new word[np];
-    for(unsigned p=0;p<np;p++){
-      const unsigned cmk=MkInfo->GetMkBlockByCode(code[p]);
-      mktype[p]=(cmk<MkInfo->Size()? word(MkInfo->Mkblock(cmk)->MkType): USHRT_MAX);
+  if(!PartBegin){
+    JSphInitialize init(FileXml);
+    if(init.Count()){
+      //-Creates array with mktype value.
+      word *mktype=new word[np];
+      for(unsigned p=0;p<np;p++){
+        const unsigned cmk=MkInfo->GetMkBlockByCode(code[p]);
+        mktype[p]=(cmk<MkInfo->Size()? word(MkInfo->Mkblock(cmk)->MkType): USHRT_MAX);
+      }
+      init.Run(np,npb,pos,idp,mktype,velrhop);
+      init.GetConfig(InitializeInfo);
+      //-Frees memory.
+      delete[] mktype; mktype=NULL;
     }
-    init.Run(np,npb,pos,idp,mktype,velrhop);
-    init.GetConfig(InitializeInfo);
-    //-Frees memory.
-    delete[] mktype; mktype=NULL;
   }
 }
 
@@ -1280,6 +1264,170 @@ tdouble3 JSph::UpdatePeriodicPos(tdouble3 ps)const{
 }
 
 //==============================================================================
+/// Sets configuration for recordering of particles.
+/// Establece configuracion para grabacion de particulas.
+//==============================================================================
+void JSph::RestartCheckData(){
+  const char met[]="RestartCheckData";
+  if(PartBegin){
+    //-Loads particle blocks information.
+    JPartDataHead parthead;
+    parthead.LoadFile(PartBeginDir);
+    const string filehead=fun::GetDirWithSlash(PartBeginDir)+parthead.GetFileName();
+    //-Checks particle blocks information.
+    const unsigned nmk=MkInfo->Size();
+    if(nmk!=parthead.MkBlockCount())RunException(met,"Number of Mk blocks is invalid.",filehead);
+    for(unsigned c=0;c<nmk;c++){
+      const JSphMkBlock* pmk=MkInfo->Mkblock(c);
+      const JPartDataHeadMkBlock& mbk=parthead.Mkblock(c);
+      if(pmk->Type!=mbk.Type)RunException(met,fun::PrintStr("Type of Mk block %u does not match.",c),filehead);
+      if(pmk->Mk!=mbk.Mk)RunException(met,fun::PrintStr("Mk value of Mk block %u does not match.",c),filehead);
+      if(pmk->MkType!=mbk.MkType)RunException(met,fun::PrintStr("MkType value of Mk block %u does not match.",c),filehead);
+      if(pmk->Count!=mbk.Count)RunException(met,fun::PrintStr("Count value of Mk block %u does not match.",c),filehead);
+    }
+  }
+}
+
+//==============================================================================
+/// Load particles of case and process.
+/// Carga particulas del caso a procesar.
+//==============================================================================
+void JSph::LoadCaseParticles(){
+  Log->Print("Loading initial state of particles...");
+  PartsLoaded=new JPartsLoad4(Cpu);
+  PartsLoaded->LoadParticles(DirCase,CaseName,PartBegin,PartBeginDir);
+  PartsLoaded->CheckConfig(CaseNp,CaseNfixed,CaseNmoving,CaseNfloat,CaseNfluid,PeriX,PeriY,PeriZ);
+  if(PartBegin)RestartCheckData();
+  Log->Printf("Loaded particles: %u",PartsLoaded->GetCount());
+
+  //-Collect information of loaded particles.
+  //-Recupera informacion de las particulas cargadas.
+  Simulate2D=PartsLoaded->GetSimulate2D();
+  Simulate2DPosY=PartsLoaded->GetSimulate2DPosY();
+  if(Simulate2D&&PeriY)RunException("LoadCaseParticles","Cannot use periodic conditions in Y with 2D simulations");
+  CasePosMin=PartsLoaded->GetCasePosMin();
+  CasePosMax=PartsLoaded->GetCasePosMax();
+
+  //-Computes actual limits of simulation.
+  //-Calcula limites reales de la simulacion.
+  if(PartsLoaded->MapSizeLoaded())PartsLoaded->GetMapSize(MapRealPosMin,MapRealPosMax);
+  else{
+    PartsLoaded->CalculeLimits(double(H)*BORDER_MAP,Dp/2.,PeriX,PeriY,PeriZ,MapRealPosMin,MapRealPosMax);
+    ResizeMapLimits();
+  }
+  Log->Print(string("MapRealPos(final)=")+fun::Double3gRangeStr(MapRealPosMin,MapRealPosMax));
+  MapRealSize=MapRealPosMax-MapRealPosMin;
+  Log->Print("**Initial state of particles is loaded");
+
+  //-Configure limits of periodic axes. 
+  //-Configura limites de ejes periodicos.
+  if(PeriX)PeriXinc.x=-MapRealSize.x;
+  if(PeriY)PeriYinc.y=-MapRealSize.y;
+  if(PeriZ)PeriZinc.z=-MapRealSize.z;
+  //-Computes simulation limits with periodic boundaries.
+  //-Calcula limites de simulacion con bordes periodicos.
+  Map_PosMin=MapRealPosMin; Map_PosMax=MapRealPosMax;
+  float dosh=float(H*2);
+  if(PeriX){ Map_PosMin.x=Map_PosMin.x-dosh;  Map_PosMax.x=Map_PosMax.x+dosh; }
+  if(PeriY){ Map_PosMin.y=Map_PosMin.y-dosh;  Map_PosMax.y=Map_PosMax.y+dosh; }
+  if(PeriZ){ Map_PosMin.z=Map_PosMin.z-dosh;  Map_PosMax.z=Map_PosMax.z+dosh; }
+  Map_Size=Map_PosMax-Map_PosMin;
+  //-Saves initial domain in a VTK file (CasePosMin/Max, MapRealPosMin/Max and Map_PosMin/Max).
+  SaveInitialDomainVtk();
+}
+
+//==============================================================================
+/// Initialisation of variables and objects for execution.
+/// Inicializa variables y objetos para la ejecucion.
+//==============================================================================
+void JSph::InitRun(){
+  const char met[]="InitRun";
+  WithFloating=(CaseNfloat>0);
+  VerletStep=0;
+  if(TStep==STEP_Symplectic)SymplecticDtPre=DtIni;
+  if(UseDEM)DemDtForce=DtIni; //(DEM)
+  
+  //-Loads data from other simulation to restart it.
+  if(PartBegin){
+    PartBeginTimeStep=PartsLoaded->GetPartBeginTimeStep();
+    PartBeginTotalNp=PartsLoaded->GetPartBeginTotalNp();
+    if(TStep==STEP_Symplectic && PartsLoaded->GetSymplecticDtPre())SymplecticDtPre=PartsLoaded->GetSymplecticDtPre();
+    if(UseDEM  && PartsLoaded->GetDemDtForce())DemDtForce=PartsLoaded->GetDemDtForce(); //(DEM)
+  }
+  //-Free memory of PartsLoaded.
+  delete PartsLoaded; PartsLoaded=NULL;
+
+  //-Adjust paramaters to start.
+  PartIni=PartBeginFirst;
+  TimeStepIni=(!PartIni? 0: PartBeginTimeStep);
+  //-Adjust motion for the instant of the loaded PART.
+  if(SphMotion){
+    SphMotion->SetTimeMod(!PartIni? PartBeginTimeStep: 0);
+    SphMotion->ProcesTime(JSphMotion::MOMT_Simple,0,TimeStepIni);
+  }
+  //-Adjust motion paddles for the instant of the loaded PART.
+  if(WaveGen)WaveGen->SetTimeMod(!PartIni? PartBeginTimeStep: 0);
+
+  //-Uses Inlet information from PART read.
+  if(PartBeginTimeStep && PartBeginTotalNp){
+    TotalNp=PartBeginTotalNp;
+    IdMax=unsigned(TotalNp-1);
+  }
+
+  //-Shows Initialize configuration.
+  if(InitializeInfo.size()){
+    Log->Print("Initialization configuration:");
+    Log->Print(InitializeInfo);
+    Log->Print(" ");
+  }
+
+  //-Process Special configurations in XML.
+  JXml xml; xml.LoadFile(FileXml);
+
+  //-Configuration of GaugeSystem.
+  GaugeSystem->Config(Simulate2D,Simulate2DPosY,TimeMax,TimePart,Dp,DomPosMin,DomPosMax,Scell,Hdiv,H,MassFluid);
+  if(xml.GetNode("case.execution.special.gauges",false))GaugeSystem->LoadXml(&xml,"case.execution.special.gauges");
+
+  //-Prepares WaveGen configuration.
+  if(WaveGen){
+    Log->Print("Wave paddles configuration:");
+    WaveGen->Init(GaugeSystem,MkInfo,TimeMax,Gravity);
+    WaveGen->VisuConfig(""," ");
+  }
+
+  //-Prepares Damping configuration.
+  if(Damping){
+    Damping->Config(CellOrder);
+    Damping->VisuConfig("Damping configuration:"," ");
+  }
+
+  //-Prepares AccInput configuration.
+  if(AccInput){
+    Log->Print("AccInput configuration:");
+    AccInput->Init(TimeMax);
+    AccInput->VisuConfig(""," ");
+  }
+
+  //-Configuration of SaveDt.
+  if(xml.GetNode("case.execution.special.savedt",false)){
+    SaveDt=new JSaveDt(Log);
+    SaveDt->Config(&xml,"case.execution.special.savedt",TimeMax,TimePart);
+    SaveDt->VisuConfig("SaveDt configuration:"," ");
+  }
+
+  //-Shows configuration of JGaugeSystem.
+  if(GaugeSystem->GetCount())GaugeSystem->VisuConfig("GaugeSystem configuration:"," ");
+
+  //-Shows configuration of JTimeOut.
+  if(TimeOut->UseSpecialConfig())TimeOut->VisuConfig(Log,"TimeOut configuration:"," ");
+
+  Part=PartIni; Nstep=0; PartNstep=0; PartOut=0;
+  TimeStep=TimeStepIni; TimeStepM1=TimeStep;
+  if(DtFixed)DtIni=DtFixed->GetDt(TimeStep,DtIni);
+  TimePartNext=TimeOut->GetNextTime(TimeStep);
+}
+
+//==============================================================================
 /// Display a message with reserved memory for the basic data of particles.
 /// Muestra un mensaje con la memoria reservada para los datos basicos de las particulas.
 //==============================================================================
@@ -1303,32 +1451,33 @@ void JSph::PrintHeadPart(){
 //==============================================================================
 void JSph::ConfigSaveData(unsigned piece,unsigned pieces,std::string div){
   const char met[]="ConfigSaveData";
+  //-Stores basic information of simulation data.
+  JPartDataHead parthead;
+  parthead.ConfigBasic(RunCode,AppName,CaseName,CasePosMin,CasePosMax
+    ,Simulate2D,Simulate2DPosY);
+  MkInfo->ConfigPartDataHead(&parthead);
+  parthead.ConfigCtes(Dp,H,CteB,RhopZero,Gamma,MassBound,MassFluid,Gravity);
+  parthead.ConfigSimNp(NpDynamic,ReuseIds);
+  parthead.ConfigSimMap(OrderDecode(MapRealPosMin),OrderDecode(MapRealPosMax));
+  parthead.ConfigSimPeri(PeriodicConfig.PeriX,PeriodicConfig.PeriY,PeriodicConfig.PeriZ
+    ,PeriodicConfig.PeriXY,PeriodicConfig.PeriXZ,PeriodicConfig.PeriYZ
+    ,PeriodicConfig.PeriXinc,PeriodicConfig.PeriYinc,PeriodicConfig.PeriZinc);
+  if(SvData&SDAT_Binx){
+    Log->AddFileInfo(DirDataOut+"Part_Head.ibi4","Binary file with basic information of simulation data.");
+    parthead.SaveFile(DirDataOut);
+  }
   //-Configures object to store particles and information.  
   //-Configura objeto para grabacion de particulas e informacion.
   if(SvData&SDAT_Info || SvData&SDAT_Binx){
     DataBi4=new JPartDataBi4();
-    DataBi4->ConfigBasic(piece,pieces,RunCode,AppName,CaseName,Simulate2D,Simulate2DPosY,DirDataOut);
-    DataBi4->ConfigParticles(CaseNp,CaseNfixed,CaseNmoving,CaseNfloat,CaseNfluid,CasePosMin,CasePosMax,NpDynamic,ReuseIds);
-    DataBi4->ConfigCtes(Dp,H,CteB,RhopZero,Gamma,MassBound,MassFluid);
-    DataBi4->ConfigSimMap(OrderDecode(MapRealPosMin),OrderDecode(MapRealPosMax));
-    JPartDataBi4::TpPeri tperi=JPartDataBi4::PERI_None;
-    if(PeriodicConfig.PeriActive){
-      if(PeriodicConfig.PeriXY)tperi=JPartDataBi4::PERI_XY;
-      else if(PeriodicConfig.PeriXZ)tperi=JPartDataBi4::PERI_XZ;
-      else if(PeriodicConfig.PeriYZ)tperi=JPartDataBi4::PERI_YZ;
-      else if(PeriodicConfig.PeriX)tperi=JPartDataBi4::PERI_X;
-      else if(PeriodicConfig.PeriY)tperi=JPartDataBi4::PERI_Y;
-      else if(PeriodicConfig.PeriZ)tperi=JPartDataBi4::PERI_Z;
-      else RunException(met,"The periodic configuration is invalid.");
-    }
-    DataBi4->ConfigSimPeri(tperi,PeriodicConfig.PeriXinc,PeriodicConfig.PeriYinc,PeriodicConfig.PeriZinc);
+    DataBi4->Config(piece,pieces,DirDataOut,&parthead);
     if(div.empty())DataBi4->ConfigSimDiv(JPartDataBi4::DIV_None);
     else if(div=="X")DataBi4->ConfigSimDiv(JPartDataBi4::DIV_X);
     else if(div=="Y")DataBi4->ConfigSimDiv(JPartDataBi4::DIV_Y);
     else if(div=="Z")DataBi4->ConfigSimDiv(JPartDataBi4::DIV_Z);
     else RunException(met,"The division configuration is invalid.");
     if(SvData&SDAT_Binx)Log->AddFileInfo(DirDataOut+"Part_????.bi4","Binary file with particle data in different instants.");
-    if(SvData&SDAT_Binx)Log->AddFileInfo(DirDataOut+"PartInfo.ibi4","Binary file with execution information for each instant (input for PartInfo program).");
+    if(SvData&SDAT_Info)Log->AddFileInfo(DirDataOut+"PartInfo.ibi4","Binary file with execution information for each instant (input for PartInfo program).");
   }
   //-Configures object to store excluded particles.  
   //-Configura objeto para grabacion de particulas excluidas.
@@ -1344,8 +1493,10 @@ void JSph::ConfigSaveData(unsigned piece,unsigned pieces,std::string div){
   //-Configura objeto para grabacion de datos de floatings.
   if(SvData&SDAT_Binx && FtCount){
     DataFloatBi4=new JPartFloatBi4Save();
-    DataFloatBi4->Config(AppName,DirDataOut,FtCount);
-    for(unsigned cf=0;cf<FtCount;cf++)DataFloatBi4->AddHeadData(cf,FtObjs[cf].mkbound,FtObjs[cf].begin,FtObjs[cf].count,FtObjs[cf].mass,FtObjs[cf].radius);
+    DataFloatBi4->Config(AppName,DirDataOut,MkInfo->GetMkBoundFirst(),FtCount);
+    for(unsigned cf=0;cf<FtCount;cf++){
+      DataFloatBi4->AddHeadData(cf,FtObjs[cf].mkbound,FtObjs[cf].begin,FtObjs[cf].count,FtObjs[cf].mass,FtObjs[cf].radius);
+    }
     DataFloatBi4->SaveInitial();
     Log->AddFileInfo(DirDataOut+"PartFloat.fbi4","Binary file with floating body information for each instant (input for FloatingInfo program).");
   }
@@ -1439,6 +1590,8 @@ void JSph::SavePartData(unsigned npok,unsigned nout,const unsigned *idp,const td
     tfloat3* posf3=NULL;
     TimerPart.Stop();
     JBinaryData* bdpart=DataBi4->AddPartInfo(Part,TimeStep,npok,nout,Nstep,TimerPart.GetElapsedTimeD()/1000.,vdom[0],vdom[1],TotalNp);
+    if(TStep==STEP_Symplectic)bdpart->SetvDouble("SymplecticDtPre",SymplecticDtPre);
+    if(UseDEM)bdpart->SetvDouble("DemDtForce",DemDtForce); //(DEM)
     if(infoplus && SvData&SDAT_Info){
       bdpart->SetvDouble("dtmean",(!Nstep? 0: (TimeStep-TimeStepM1)/(Nstep-PartNstep)));
       bdpart->SetvDouble("dtmin",(!Nstep? 0: PartDtMin));

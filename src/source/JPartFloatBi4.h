@@ -24,11 +24,11 @@
 //:# Algunas de sus funcionalidades son:
 //:# - Graba datos de cabecera y de estado de floatings por PART.
 //:# - Comprueba cabecera y recupera datos de estado de floatings por PART.
-//:#
 //:# Cambios:
 //:# =========
 //:# - Implementacion. (04-12-2014)
 //:# - Implementacion independiente de StFloatingData en Types.h. (11-05-2015)
+//:# - Incluye informacion de MkBoundFirst (FormatVer=180423). (23-04-2018)
 //:#############################################################################
 
 /// \file JPartFloatBi4.h \brief Declares the classes \ref JPartFloatBi4Save and class \ref JPartFloatBi4Load.
@@ -56,13 +56,14 @@ class JPartFloatBi4Save : protected JObject
   JBinaryData *Part;      ///<Pertenece a Data y almacena informacion de un part (incluyendo datos de floatings). Belongs to data and stores information of a part (including data of floatings).
 
   //-Variables de gestion. Management of variables.
-  static const unsigned FormatVerDef=141204;    ///<Version de formato by default. Version of format by default.
+  static const unsigned FormatVerDef=180423;    ///<Version de formato by default. Version of format by default.
   unsigned FormatVer;    ///<Version de formato. Format version.
 
   bool InitialSaved;     ///<Indica si se grabo la informacion de cabecera. Indicates if header information is recorded.
 
   std::string AppName;   ///<Nombre de aplicacion. Application Name.
   std::string Dir;       ///<Directorio de datos. Data Directory.
+  word MkBoundFirst;     ///<First Mk for boundary blocks (Mk=MkBound+MkBoundFirst).
   unsigned FtCount;      ///<Numero de floatings. Number of floats.
 
   //-Datos constantes de floatings (head). Constant data of floats (head).
@@ -97,7 +98,7 @@ class JPartFloatBi4Save : protected JObject
   //Data recording:
   //====================
   //-Configuracion de objeto. Object Configuration.
-  void Config(std::string appname,const std::string &dir,unsigned ftcount);
+  void Config(std::string appname,const std::string &dir,word mkboundfirst,unsigned ftcount);
   void AddHeadData(unsigned cf,word mkbound,unsigned begin,unsigned count,float mass,float radius);
   void SaveInitial();
 
@@ -119,7 +120,13 @@ class JPartFloatBi4Save : protected JObject
 class JPartFloatBi4Load : protected JObject
 {
  private:
+  static const unsigned FormatVerDef=180423;    ///<Version de formato by default. Version of format by default.
+  unsigned FormatVer;    ///<Version de formato. Format version.
+   
   JBinaryData *Data;      ///<Almacena la informacion general de los datos (constante para cada PART). Stores general information of data (constant for each PART).
+
+  word MkBoundFirst;      ///<First Mk for boundary blocks (Mk=MkBound+MkBoundFirst).
+
   unsigned FtCount;       ///<Numero de floatings. Floating number
   unsigned PartCount;     ///<Numero de PARTs. PARTs number
   JBinaryData *Part;      ///<Pertenece a Data y almacena informacion de un part (incluyendo datos de floatings). Belongs to data and stores information of a part (including data of floatings).
@@ -155,11 +162,14 @@ class JPartFloatBi4Load : protected JObject
   void LoadFile(const std::string &dir);
   void CheckHeadData(unsigned cf,word mkbound,unsigned begin,unsigned count,float mass);
 
+  word GetMkBoundFirst()const{ return(MkBoundFirst); }
+
   unsigned GetFtCount()const{ return(FtCount); }
   unsigned GetCount()const{ return(PartCount); }
   unsigned GetFirstPart()const{ return(FirstPart); }
 
   word     GetHeadMkbound(unsigned cf)const{ CheckFloating(cf); return(HeadMkbound[cf]); }
+  word     GetHeadMk     (unsigned cf)const{ return(MkBoundFirst+GetHeadMkbound(cf)); }
   unsigned GetHeadBegin  (unsigned cf)const{ CheckFloating(cf); return(HeadBegin[cf]);   }
   unsigned GetHeadCount  (unsigned cf)const{ CheckFloating(cf); return(HeadCount[cf]);   }
   float    GetHeadMass   (unsigned cf)const{ CheckFloating(cf); return(HeadMass[cf]);    }

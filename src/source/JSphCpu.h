@@ -54,7 +54,6 @@ protected:
   unsigned NpfPerM1;  ///<Number of periodic floating-fluid particles (previous values). | Numero de particulas fluidas-floating periodicas (valores anteriores).
   unsigned NpbPerM1;  ///<Number of periodic boundary particles (previous values). | Numero de particulas contorno periodicas (valores anteriores).
 
-  bool WithFloating;
   bool BoundChanged;  ///<Indicates if selected boundary has changed since last call of divide. | Indica si el contorno seleccionado a cambiado desde el ultimo divide.
 
   unsigned CpuParticlesSize;  ///<Number of particles with reserved memory on the CPU. | Numero de particulas para las cuales se reservo memoria en cpu.
@@ -76,12 +75,10 @@ protected:
     
   //-Variables for compute step: VERLET. | Vars. para compute step: VERLET.
   tfloat4 *VelrhopM1c;  ///<Verlet: in order to keep previous values. | Verlet: para guardar valores anteriores.
-  int VerletStep;
 
   //-Variables for compute step: SYMPLECTIC. | Vars. para compute step: SYMPLECTIC.
   tdouble3 *PosPrec;    ///<Sympletic: in order to keep previous values. | Sympletic: para guardar valores en predictor.
   tfloat4 *VelrhopPrec;
-  double DtPre;   
 
   //-Variables for floating bodies.
   unsigned *FtRidp;             ///<Identifier to access to the particles of the floating object [CaseNfloat].
@@ -153,7 +150,7 @@ protected:
   void ConfigRunMode(const JCfgRun *cfg,std::string preinfo="");
   void ConfigCellDiv(JCellDivCpu* celldiv){ CellDiv=celldiv; }
   void InitFloating();
-  void InitRun();
+  void InitRunCpu();
 
   void AddAccInput();
 

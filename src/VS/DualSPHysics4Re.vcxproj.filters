@@ -23,7 +23,7 @@
     <Filter Include="Common\JXml">
       <UniqueIdentifier>{500b2f4e-f261-4bcf-9964-ac82f6f277bc}</UniqueIdentifier>
     </Filter>
-    <Filter Include="CommonDsph\JSphMotion">
+    <Filter Include="Common\JMotion">
       <UniqueIdentifier>{74f9f91d-50ee-4a68-a7fd-f3dae19dfbe4}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
@@ -209,25 +209,22 @@
       <Filter>Common\JXml</Filter>
     </ClInclude>
     <ClInclude Include="..\source\JMotion.h">
-      <Filter>CommonDsph\JSphMotion</Filter>
+      <Filter>Common\JMotion</Filter>
     </ClInclude>
     <ClInclude Include="..\source\JMotionEvent.h">
-      <Filter>CommonDsph\JSphMotion</Filter>
+      <Filter>Common\JMotion</Filter>
     </ClInclude>
     <ClInclude Include="..\source\JMotionList.h">
-      <Filter>CommonDsph\JSphMotion</Filter>
+      <Filter>Common\JMotion</Filter>
     </ClInclude>
     <ClInclude Include="..\source\JMotionMov.h">
-      <Filter>CommonDsph\JSphMotion</Filter>
+      <Filter>Common\JMotion</Filter>
     </ClInclude>
     <ClInclude Include="..\source\JMotionObj.h">
-      <Filter>CommonDsph\JSphMotion</Filter>
+      <Filter>Common\JMotion</Filter>
     </ClInclude>
     <ClInclude Include="..\source\JMotionPos.h">
-      <Filter>CommonDsph\JSphMotion</Filter>
-    </ClInclude>
-    <ClInclude Include="..\source\JSphMotion.h">
-      <Filter>CommonDsph\JSphMotion</Filter>
+      <Filter>Common\JMotion</Filter>
     </ClInclude>
     <ClInclude Include="..\source\JTimerClock.h">
       <Filter>Common</Filter>
@@ -248,6 +245,15 @@
       <Filter>Common</Filter>
     </ClInclude>
     <ClInclude Include="..\source\JWaveSpectrumGpu.h">
+      <Filter>Source</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JPartDataHead.h">
+      <Filter>CommonDsph</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JParticlesDef.h">
+      <Filter>CommonDsph</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JSphMotion.h">
       <Filter>Source</Filter>
     </ClInclude>
   </ItemGroup>
@@ -400,22 +406,19 @@
       <Filter>Common\JXml</Filter>
     </ClCompile>
     <ClCompile Include="..\source\JMotion.cpp">
-      <Filter>CommonDsph\JSphMotion</Filter>
+      <Filter>Common\JMotion</Filter>
     </ClCompile>
     <ClCompile Include="..\source\JMotionList.cpp">
-      <Filter>CommonDsph\JSphMotion</Filter>
+      <Filter>Common\JMotion</Filter>
     </ClCompile>
     <ClCompile Include="..\source\JMotionMov.cpp">
-      <Filter>CommonDsph\JSphMotion</Filter>
+      <Filter>Common\JMotion</Filter>
     </ClCompile>
     <ClCompile Include="..\source\JMotionObj.cpp">
-      <Filter>CommonDsph\JSphMotion</Filter>
+      <Filter>Common\JMotion</Filter>
     </ClCompile>
     <ClCompile Include="..\source\JMotionPos.cpp">
-      <Filter>CommonDsph\JSphMotion</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\JSphMotion.cpp">
-      <Filter>CommonDsph\JSphMotion</Filter>
+      <Filter>Common\JMotion</Filter>
     </ClCompile>
     <ClCompile Include="..\source\JSphInitialize.cpp">
       <Filter>Source</Filter>
@@ -433,6 +436,12 @@
       <Filter>Common</Filter>
     </ClCompile>
     <ClCompile Include="..\source\JWaveSpectrumGpu.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JPartDataHead.cpp">
+      <Filter>CommonDsph</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JSphMotion.cpp">
       <Filter>Source</Filter>
     </ClCompile>
   </ItemGroup>

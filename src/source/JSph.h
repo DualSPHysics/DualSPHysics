@@ -59,6 +59,7 @@ class JDamping;
 class JXml;
 class JTimeOut;
 class JGaugeSystem;
+class JPartsLoad4;
 
 //##############################################################################
 //# XML format of execution parameters in _FmtXML__Parameters.xml.
@@ -180,7 +181,7 @@ protected:
 
   float Visco;  
   float ViscoBoundFactor;     ///<For boundary interaction use Visco*ViscoBoundFactor.                  | Para interaccion con contorno usa Visco*ViscoBoundFactor.
-  JSphVisco* ViscoTime;       ///<Provides a viscosity value as a function of simulation time.          | Proporciona un valor de viscosidad en funcion del instante de la simulacion.
+  JSphVisco *ViscoTime;       ///<Provides a viscosity value as a function of simulation time.          | Proporciona un valor de viscosidad en funcion del instante de la simulacion.
 
   bool RhopOut;               ///<Indicates whether the RhopOut density correction is active or not.    | Indica si activa la correccion de densidad RhopOut o no.                       
   float RhopOutMin;           ///<Minimum limit for Rhopout correction.                                 | Limite minimo para la correccion de RhopOut.
@@ -194,8 +195,8 @@ protected:
   double DtMin;              ///<Minimum allowed Dt (if the calculated value is lower is replaced by DTmin).
   float CoefDtMin;           ///<Coefficient to calculate minimum time step. dtmin=coefdtmin*h/speedsound (def=0.03).
   bool DtAllParticles;       ///<Velocity of particles used to calculate DT. 1:All, 0:Only fluid/floating (def=0).
-  JSphDtFixed* DtFixed;
-  JSaveDt* SaveDt;
+  JSphDtFixed *DtFixed;
+  JSaveDt *SaveDt;
 
   float PartsOutMax;         ///<Allowed percentage of fluid particles out of the domain. | Porcentaje maximo de particulas excluidas permitidas.                                  
   unsigned NpMinimum;        ///<Minimum number of particles allowed.                     | Numero minimo de particulas permitidas.                                                
@@ -254,19 +255,16 @@ protected:
   ullong PartBeginTotalNp;    ///<Total number of simulated particles.
 
   //-Variables for predefined movement.
-  JSphMotion *Motion;
-  double MotionTimeMod;      ///<Modifies the timestep for motion | Modificador del TimeStep para Motion.
-  unsigned MotionObjCount;
-  unsigned *MotionObjBegin;  ///<Initial particle of each moving object. [MotionObjCount+1]
+  JSphMotion *SphMotion;      ///<Manages moving objects. It is NULL when there are not moving objects.
 
   //-Variables for floating bodies.
   StFloatingData *FtObjs;    ///<Data of floating objects. [ftcount]
   unsigned FtCount;          ///<Number of floating objects.
   float FtPause;             ///<Time to start floating bodies movement.
+  bool WithFloating;
 
   //-Variables for DEM (DEM).
   bool UseDEM;
-  double DemDtForce;            ///<Dt for tangencial acceleration.
   static const unsigned DemDataSize=CODE_TYPE_FLUID;
   StDemData *DemData;           ///<Data of DEM objects. [DemDataSize]
 
@@ -276,7 +274,7 @@ protected:
 
   JWaveGen *WaveGen;            ///<Object for wave generation.
 
-  JDamping* Damping;            ///<Object for damping zones.
+  JDamping *Damping;            ///<Object for damping zones.
 
   JSphAccInput *AccInput;  ///<Object for variable acceleration functionality.
 
@@ -346,6 +344,13 @@ protected:
   JTimer TimerTot;         ///<Measueres total runtime.                          | Mide el tiempo total de ejecucion.
   JTimer TimerSim;         ///<Measueres runtime since first step of simulation. | Mide el tiempo de ejecucion desde el primer paso de calculo.
   JTimer TimerPart;        ///<Measueres runtime since last PART.                | Mide el tiempo de ejecucion desde el ultimo PART.
+  
+  //-Execution variables.
+  JPartsLoad4 *PartsLoaded;
+  int VerletStep;
+  double SymplecticDtPre;  ///<Previous Dt to use with Symplectic.
+  double DemDtForce;       ///<Dt for tangencial acceleration.
+
 
   void AllocMemoryFloating(unsigned ftcount);
   llong GetAllocMemoryCpu()const;
@@ -385,6 +390,10 @@ protected:
   static unsigned CalcCellCode(tuint3 ncells);
   void CalcFloatingRadius(unsigned np,const tdouble3 *pos,const unsigned *idp);
   tdouble3 UpdatePeriodicPos(tdouble3 ps)const;
+
+  void RestartCheckData();
+  void LoadCaseParticles();
+  void InitRun();
 
   void PrintSizeNp(unsigned np,llong size)const;
   void PrintHeadPart();

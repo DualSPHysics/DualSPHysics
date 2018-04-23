@@ -21,6 +21,7 @@
 #include "JSphMk.h"
 #include "Functions.h"
 #include "JSpaceParts.h"
+#include "JPartDataHead.h"
 #include <algorithm>
 #include <climits>
 #include <cfloat>
@@ -33,8 +34,8 @@ using namespace std;
 //==============================================================================
 /// Constructor.
 //==============================================================================
-JSphMkBlock::JSphMkBlock(bool bound,unsigned mktype,unsigned mk,typecode code,unsigned begin,unsigned count)
-  :Bound(bound),MkType(mktype),Mk(mk),Code(code),Begin(begin),Count(count)
+JSphMkBlock::JSphMkBlock(TpParticles type,unsigned mktype,unsigned mk,typecode code,unsigned begin,unsigned count)
+  :Bound(IsBound(type)),Type(type),MkType(mktype),Mk(mk),Code(code),Begin(begin),Count(count)
 {
   ClassName="JSphMkBlock";
   Reset();
@@ -72,6 +73,7 @@ JSphMk::~JSphMk(){
 /// Initialisation of variables.
 //==============================================================================
 void JSphMk::Reset(){
+  MkBoundFirst=MkFluidFirst=0;
   for(unsigned c=0;c<MkList.size();c++)delete MkList[c];
   MkList.clear();
   MkListSize=MkListFixed=MkListMoving=MkListFloat=MkListBound=MkListFluid=0;
@@ -83,11 +85,13 @@ void JSphMk::Reset(){
 //==============================================================================
 void JSphMk::Config(const JSpaceParts *parts){
   const char met[]="Config";
+  MkBoundFirst=parts->GetMkBoundFirst();
+  MkFluidFirst=parts->GetMkFluidFirst();
   MkListSize=parts->CountBlocks();
-  MkListFixed=parts->CountBlocks(PT_Fixed);
-  MkListMoving=parts->CountBlocks(PT_Moving);
-  MkListFloat=parts->CountBlocks(PT_Floating);
-  MkListFluid=parts->CountBlocks(PT_Fluid);
+  MkListFixed=parts->CountBlocks(TpPartFixed);
+  MkListMoving=parts->CountBlocks(TpPartMoving);
+  MkListFloat=parts->CountBlocks(TpPartFloating);
+  MkListFluid=parts->CountBlocks(TpPartFluid);
   MkListBound=MkListFixed+MkListMoving+MkListFloat;
   //:Log->Printf("__MkInfo> MkListSize  :%u",MkListSize);
   //:Log->Printf("__MkInfo> MkListFixed :%u",MkListFixed);
@@ -103,19 +107,19 @@ void JSphMk::Config(const JSpaceParts *parts){
   //-Gets info for each block of particles.
   for(unsigned c=0;c<MkListSize;c++){
     const JSpacePartBlock &block=parts->GetBlock(c);
-    const bool bound=(block.Type!=PT_Fluid);
+    const bool bound=(block.Bound);
     typecode code=0;
     switch(block.Type){
-      case PT_Fixed:     code=CodeSetType(0,PART_BoundFx,c);                           break;
-      case PT_Moving:    code=CodeSetType(0,PART_BoundMv,c-MkListFixed);               break;
-      case PT_Floating:  code=CodeSetType(0,PART_BoundFt,c-MkListFixed-MkListMoving);  break;
-      case PT_Fluid:     code=CodeSetType(0,PART_Fluid,c-MkListBound);                 break;
+      case TpPartFixed:     code=CodeSetType(0,block.Type,c);                           break;
+      case TpPartMoving:    code=CodeSetType(0,block.Type,c-MkListFixed);               break;
+      case TpPartFloating:  code=CodeSetType(0,block.Type,c-MkListFixed-MkListMoving);  break;
+      case TpPartFluid:     code=CodeSetType(0,block.Type,c-MkListBound);               break;
     }
-    JSphMkBlock* pmk=new JSphMkBlock(bound,block.GetMkType(),block.GetMk(),code,block.GetBegin(),block.GetCount());
+    JSphMkBlock* pmk=new JSphMkBlock(block.Type,block.GetMkType(),block.GetMk(),code,block.GetBegin(),block.GetCount());
     MkList.push_back(pmk);
   }
   //-Checks number of fluid blocks.
-  CodeNewFluid=CodeSetType(0,PART_Fluid,MkListFluid);
+  CodeNewFluid=CodeSetType(0,TpPartFluid,MkListFluid);
   if(CODE_GetTypeValue(CodeNewFluid)>=CODE_GetTypeValue(CODE_TYPE_FLUID_LIMITFREE))RunException(met,"There are not free fluid codes for new particles created during the simulation.");
 }
 
@@ -186,14 +190,14 @@ unsigned JSphMk::GetMkBlockByCode(typecode code)const{
 //==============================================================================
 /// Returns the code of a particle according to the given parameters.
 //==============================================================================
-typecode JSphMk::CodeSetType(typecode code,TpParticle type,unsigned value)const{
+typecode JSphMk::CodeSetType(typecode code,TpParticles type,unsigned value)const{
   const char met[]="CodeSetType"; 
   //-Chooses type.
   typecode tp;
-  if(type==PART_BoundFx)tp=CODE_TYPE_FIXED;
-  else if(type==PART_BoundMv)tp=CODE_TYPE_MOVING;
-  else if(type==PART_BoundFt)tp=CODE_TYPE_FLOATING;
-  else if(type==PART_Fluid)tp=CODE_TYPE_FLUID;
+  if(type==TpPartFixed)tp=CODE_TYPE_FIXED;
+  else if(type==TpPartMoving)tp=CODE_TYPE_MOVING;
+  else if(type==TpPartFloating)tp=CODE_TYPE_FLOATING;
+  else if(type==TpPartFluid)tp=CODE_TYPE_FLUID;
   else RunException(met,"Type of particle is invalid.");
   //-Checks the value.
   typecode v=typecode(value&CODE_MASKVALUE);
@@ -256,4 +260,21 @@ void JSphMk::ComputeMkDomains(unsigned np,const tdouble3 *pos,const typecode *co
   delete[] pmax;
 }
 
+//==============================================================================
+/// Configures particle blocks in a JPartDataHead object.
+//==============================================================================
+void JSphMk::ConfigPartDataHead(JPartDataHead *parthead)const{
+  for(unsigned c=0;c<Size();c++){
+    const JSphMkBlock* pmbk=MkList[c];
+    TpParticles type;
+    switch(CODE_GetType(pmbk->Code)){
+      case CODE_TYPE_FIXED:     type=TpPartFixed;     break;
+      case CODE_TYPE_MOVING:    type=TpPartMoving;    break;
+      case CODE_TYPE_FLOATING:  type=TpPartFloating;  break;
+      case CODE_TYPE_FLUID:     type=TpPartFluid;     break;
+      default: RunException("ConfigPartDataHead","Type of particle block is invalid.");
+    }
+    parthead->ConfigParticles(type,pmbk->Mk,pmbk->MkType,pmbk->Begin,pmbk->Count);
+  }
+}
 

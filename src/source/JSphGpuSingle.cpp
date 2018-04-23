@@ -22,10 +22,10 @@
 #include "JCellDivGpuSingle.h"
 #include "JArraysGpu.h"
 #include "JSphMk.h"
+#include "JPartsLoad4.h"
 #include "Functions.h"
 #include "JXml.h"
 #include "JSphMotion.h"
-#include "JPartsLoad4.h"
 #include "JSphVisco.h"
 #include "JWaveGen.h"
 #include "JTimeOut.h"
@@ -41,7 +41,6 @@ using namespace std;
 JSphGpuSingle::JSphGpuSingle():JSphGpu(false){
   ClassName="JSphGpuSingle";
   CellDivSingle=NULL;
-  PartsLoaded=NULL;
 }
 
 //==============================================================================
@@ -50,7 +49,6 @@ JSphGpuSingle::JSphGpuSingle():JSphGpu(false){
 JSphGpuSingle::~JSphGpuSingle(){
   DestructorActive=true;
   delete CellDivSingle; CellDivSingle=NULL;
-  delete PartsLoaded;   PartsLoaded=NULL;
 }
 
 //==============================================================================
@@ -61,7 +59,6 @@ llong JSphGpuSingle::GetAllocMemoryCpu()const{
   llong s=JSphGpu::GetAllocMemoryCpu();
   //-Allocated in other objects.
   if(CellDivSingle)s+=CellDivSingle->GetAllocMemoryCpu();
-  if(PartsLoaded)s+=PartsLoaded->GetAllocMemory();
   return(s);
 }
 
@@ -123,56 +120,6 @@ void JSphGpuSingle::LoadConfig(JCfgRun *cfg){
 }
 
 //==============================================================================
-/// Loads particles of the case to be processed.
-/// Carga particulas del caso a procesar.
-//==============================================================================
-void JSphGpuSingle::LoadCaseParticles(){
-  Log->Print("Loading initial state of particles...");
-  PartsLoaded=new JPartsLoad4(false);
-  PartsLoaded->LoadParticles(DirCase,CaseName,PartBegin,PartBeginDir);
-  PartsLoaded->CheckConfig(CaseNp,CaseNfixed,CaseNmoving,CaseNfloat,CaseNfluid,PeriX,PeriY,PeriZ);
-  Log->Printf("Loaded particles: %u",PartsLoaded->GetCount());
-  //-Retrieves information of the loaded particles.
-  //-Recupera informacion de las particulas cargadas.
-  Simulate2D=PartsLoaded->GetSimulate2D();
-  Simulate2DPosY=PartsLoaded->GetSimulate2DPosY();
-  if(Simulate2D&&PeriY)RunException("LoadCaseParticles","Cannot use periodic conditions in Y with 2D simulations");
-  CasePosMin=PartsLoaded->GetCasePosMin();
-  CasePosMax=PartsLoaded->GetCasePosMax();
-
-  //-Computes the current limits of the simulation.
-  //-Calcula limites reales de la simulacion.
-  if(PartsLoaded->MapSizeLoaded())PartsLoaded->GetMapSize(MapRealPosMin,MapRealPosMax);
-  else{
-    PartsLoaded->CalculeLimits(double(H)*BORDER_MAP,Dp/2.,PeriX,PeriY,PeriZ,MapRealPosMin,MapRealPosMax);
-    ResizeMapLimits();
-  }
-  if(PartBegin){
-    PartBeginTimeStep=PartsLoaded->GetPartBeginTimeStep();
-    PartBeginTotalNp=PartsLoaded->GetPartBeginTotalNp();
-  }
-  Log->Print(string("MapRealPos(final)=")+fun::Double3gRangeStr(MapRealPosMin,MapRealPosMax));
-  MapRealSize=MapRealPosMax-MapRealPosMin;
-  Log->Print("**Initial state of particles is loaded");
-
-  //-Configures the limits of the periodic axis.
-  //-Configura limites de ejes periodicos.
-  if(PeriX)PeriXinc.x=-MapRealSize.x;
-  if(PeriY)PeriYinc.y=-MapRealSize.y;
-  if(PeriZ)PeriZinc.z=-MapRealSize.z;
-  //-Computes the limits of simulations with periodic edges.
-  //-Calcula limites de simulacion con bordes periodicos.
-  Map_PosMin=MapRealPosMin; Map_PosMax=MapRealPosMax;
-  float dosh=float(H*2);
-  if(PeriX){ Map_PosMin.x=Map_PosMin.x-dosh;  Map_PosMax.x=Map_PosMax.x+dosh; }
-  if(PeriY){ Map_PosMin.y=Map_PosMin.y-dosh;  Map_PosMax.y=Map_PosMax.y+dosh; }
-  if(PeriZ){ Map_PosMin.z=Map_PosMin.z-dosh;  Map_PosMax.z=Map_PosMax.z+dosh; }
-  Map_Size=Map_PosMax-Map_PosMin;
-  //-Saves initial domain in a VTK file (CasePosMin/Max, MapRealPosMin/Max and Map_PosMin/Max).
-  SaveInitialDomainVtk();
-}
-
-//==============================================================================
 /// Configuration of the current domain.
 /// Configuracion del dominio actual.
 //==============================================================================
@@ -205,8 +152,6 @@ void JSphGpuSingle::ConfigDomain(){
   //-Computes MK domain for boundary and fluid particles.
   MkInfo->ComputeMkDomains(Np,AuxPos,Code);
 
-  //-Frees memory of PartsLoaded.
-  delete PartsLoaded; PartsLoaded=NULL;
   //-Applies configuration of CellOrder.
   ConfigCellOrder(CellOrder,Np,AuxPos,Velrhop);
 
@@ -227,8 +172,9 @@ void JSphGpuSingle::ConfigDomain(){
   ConstantDataUp();
 
   //-Creates object for Celldiv on the GPU and selects a valid cellmode.
-  //-Crea objeto para divide en Gpu y selecciona un cellmode valido.
-  CellDivSingle=new JCellDivGpuSingle(Stable,FtCount!=0,PeriActive,CellOrder,CellMode,Scell,Map_PosMin,Map_PosMax,Map_Cells,CaseNbound,CaseNfixed,CaseNpb,Log,DirOut);
+  //-Crea objeto para divide en GPU y selecciona un cellmode valido.
+  CellDivSingle=new JCellDivGpuSingle(Stable,FtCount!=0,PeriActive,CellOrder,CellMode
+    ,Scell,Map_PosMin,Map_PosMax,Map_Cells,CaseNbound,CaseNfixed,CaseNpb,Log,DirOut);
   CellDivSingle->DefineDomain(DomCellCode,DomCelIni,DomCelFin,DomPosMin,DomPosMax);
   ConfigCellDiv((JCellDivGpu*)CellDivSingle);
 
@@ -521,7 +467,7 @@ double JSphGpuSingle::ComputeStep_Ver(){
 /// calculadas en la interaccion usando Symplectic.
 //==============================================================================
 double JSphGpuSingle::ComputeStep_Sym(){
-  const double dt=DtPre;
+  const double dt=SymplecticDtPre;
   //-Predictor
   //-----------
   DemDtForce=dt*0.5f;                     //(DEM)
@@ -543,7 +489,7 @@ double JSphGpuSingle::ComputeStep_Sym(){
   PosInteraction_Forces();                //-Free memory used for interaction.
   if(Damping)RunDamping(dt,Np,Npb,Posxyg,Poszg,Codeg,Velrhopg); //-Aplies Damping.
 
-  DtPre=min(ddt_p,ddt_c);                 //-Calculate dt for next ComputeStep.
+  SymplecticDtPre=min(ddt_p,ddt_c);       //-Calculate dt for next ComputeStep.
   return(dt);
 }
 
@@ -632,7 +578,7 @@ void JSphGpuSingle::Run(std::string appname,JCfgRun *cfg,JLog2 *log){
 
   //-Initialisation of execution variables. | Inicializacion de variables de ejecucion.
   //------------------------------------------------------------------------------------
-  InitRun();
+  InitRunGpu();
   RunGaugeSystem(TimeStep);
   UpdateMaxValues();
   PrintAllocMemory(GetAllocMemoryCpu(),GetAllocMemoryGpu());

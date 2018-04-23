@@ -33,6 +33,7 @@
 #include "Types.h"
 
 class JSpaceParts;
+class JPartDataHead;
 
 //##############################################################################
 //# JSphMkBlock
@@ -46,14 +47,15 @@ private:
   tdouble3 PosMax;
 
 public:
-  const bool Bound;      ///<Indicates whether a particle is boundary or not.
-  const unsigned MkType;
-  const unsigned Mk;
+  const bool Bound;       ///<Indicates whether a particle is boundary or not.
+  const TpParticles Type; ///<Type of particle.
+  const unsigned MkType;  ///<Label of block fluid or bound.
+  const unsigned Mk;      ///<Absolute label.
   const typecode Code;
-  const unsigned Begin;
-  const unsigned Count;
+  const unsigned Begin;   ///<Id of the first particle of the block.
+  const unsigned Count;   ///<Number of particles.
 
-  JSphMkBlock(bool bound,unsigned mktype,unsigned mk,typecode code,unsigned begin,unsigned count);
+  JSphMkBlock(TpParticles type,unsigned mktype,unsigned mk,typecode code,unsigned begin,unsigned count);
   void Reset();
 
   bool GetPosDefined()const{ return(PosDefined); }
@@ -71,6 +73,9 @@ public:
 class JSphMk : protected JObject
 {
 private:
+  word MkBoundFirst;     ///<First Mk for boundary blocks (Mk=MkBound+MkBoundFirst).
+  word MkFluidFirst;     ///<First Mk for fluid blocks (Mk=MkFluid+MkFluidFirst).
+
   std::vector<JSphMkBlock*> MkList;
 
   unsigned MkListSize;       ///<Total number of Mk blocks.
@@ -97,16 +102,21 @@ public:
   inline unsigned GetMkBlockById(unsigned id)const;
   typecode GetCodeById(unsigned id)const;
 
+  word GetMkBoundFirst()const{ return(MkBoundFirst); }
+  word GetMkFluidFirst()const{ return(MkFluidFirst); }
+
   unsigned GetMkBlockByMk(word mk)const;
   unsigned GetMkBlockByMkBound(word mkbound)const;
   unsigned GetMkBlockByMkFluid(word mkfluid)const;
 
   unsigned GetMkBlockByCode(typecode code)const;
 
-  typecode CodeSetType(typecode code,TpParticle type,unsigned value)const;
+  typecode CodeSetType(typecode code,TpParticles type,unsigned value)const;
 
   //void ComputeMkDomains(bool bound,const std::vector<unsigned> &mklist,unsigned np,const tdouble3 *pos,const typecode *code);
   void ComputeMkDomains(unsigned np,const tdouble3 *pos,const typecode *code);
+
+  void ConfigPartDataHead(JPartDataHead *parthead)const;
 };
 
 

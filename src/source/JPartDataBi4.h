@@ -60,6 +60,7 @@
 #include <fstream>
 #include <cfloat>
 
+class JPartDataHead;
 
 //##############################################################################
 //# JPartDataBi4
@@ -69,8 +70,8 @@
 class JPartDataBi4 : protected JObject
 {
  public:
-  typedef enum{ DIV_None=0,DIV_X=1,DIV_Y=2,DIV_Z=3,DIV_Unknown=99 }TpAxisDiv; 
   typedef enum{ PERI_None=0,PERI_X=1,PERI_Y=2,PERI_Z=4,PERI_XY=3,PERI_XZ=5,PERI_YZ=6,PERI_Unknown=96 }TpPeri; 
+  typedef enum{ DIV_None=0,DIV_X=1,DIV_Y=2,DIV_Z=3,DIV_Unknown=99 }TpAxisDiv; 
 
  private:
   JBinaryData *Data;      ///<Almacena la informacion general de los datos (constante para cada PART). Stores general information of data (constant for each PART).
@@ -109,14 +110,18 @@ class JPartDataBi4 : protected JObject
   //Grabacion de datos:
   //Recording of data
   //====================
-  //-Configuracion de objeto. Object Configuration
+  //-Object configuration from JPartDataHead object.
+  void Config(unsigned piece,unsigned npiece,std::string dir,const JPartDataHead* parthead);
+
+  //-Object configuration.
   void ConfigBasic(unsigned piece,unsigned npiece,std::string runcode,std::string appname,std::string casename,bool data2d,double data2dposy,const std::string &dir);
   void ConfigParticles(ullong casenp,ullong casenfixed,ullong casenmoving,ullong casenfloat,ullong casenfluid,tdouble3 caseposmin,tdouble3 caseposmax,bool npdynamic=false,bool reuseids=false);
   void ConfigCtes(double dp,double h,double b,double rhop0,double gamma,double massbound,double massfluid);
   void ConfigSimMap(tdouble3 mapposmin,tdouble3 mapposmax);
-  void ConfigSimPeri(TpPeri periactive,tdouble3 perixinc,tdouble3 periyinc,tdouble3 perizinc);
-  void ConfigSimDiv(TpAxisDiv axisdiv);
+  void ConfigSimPeri(bool peri_x,bool peri_y,bool peri_z,bool peri_xy,bool peri_xz,bool peri_yz,tdouble3 perixinc,tdouble3 periyinc,tdouble3 perizinc);
   void ConfigSplitting(bool splitting);
+
+  void ConfigSimDiv(TpAxisDiv axisdiv);
 
   //-Configuracion de parts. Configuration of parts.
   JBinaryData* AddPartInfo(unsigned cpart,double timestep,unsigned npok,unsigned nout,unsigned step,double runtime,tdouble3 domainmin,tdouble3 domainmax,ullong nptotal=0,ullong idmax=0);

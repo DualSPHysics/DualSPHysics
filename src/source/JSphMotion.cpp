@@ -17,6 +17,7 @@
 */
 
 #include "JSphMotion.h"
+#include "JSpaceParts.h"
 #include "JMotion.h"
 #include "JXml.h"
 
@@ -25,112 +26,121 @@ using namespace std;
 /// Constructor.
 //==============================================================================
 JSphMotion::JSphMotion(){
-  Mot=new JMotion();
+  ClassName="JSphMotion";
+  ObjBegin=NULL; ObjMkBound=NULL;
+  Mot=NULL;
+  Reset();
 }
 
 //==============================================================================
 /// Destructor.
 //==============================================================================
 JSphMotion::~JSphMotion(){
-  delete Mot;     Mot=NULL;
+  DestructorActive=true;
+  Reset();
 }
 
 //==============================================================================
 /// Initialization of variables.
 //==============================================================================
 void JSphMotion::Reset(){
-  Mot->Reset();
+  TimeMod=0;
+  ObjCount=0;
+  delete[] ObjBegin;   ObjBegin=NULL;
+  delete[] ObjMkBound; ObjMkBound=NULL;
+  delete Mot; Mot=NULL;
 }
 
 //==============================================================================
-/// Initialization of configuration and returns number of moving objects.
+/// Configures moving objects.
 //==============================================================================
-unsigned JSphMotion::Init(JXml *jxml,const std::string &path,const std::string &dirdata){
+void JSphMotion::ConfigObjects(const JSpaceParts *parts){
+  const char met[]="ConfigObjects";
+  ObjCount=parts->CountBlocks(TpPartMoving);
+  if(ObjCount>CODE_MKRANGEMAX)RunException(met,"The number of mobile objects exceeds the maximum.");
+  //-Prepares memory.
+  ObjBegin=new unsigned[ObjCount+1];
+  ObjMkBound=new word[ObjCount];
+  memset(ObjBegin,0,sizeof(unsigned)*(ObjCount+1));
+  memset(ObjMkBound,0,sizeof(word)*ObjCount);
+  //-Loads configuration.
+  unsigned cmot=0;
+  for(unsigned c=0;c<parts->CountBlocks();c++){
+    const JSpacePartBlock &block=parts->GetBlock(c);
+    if(block.Type==TpPartMoving){
+      if(cmot>=ObjCount)RunException(met,"The number of mobile objects exceeds the expected maximum.");
+      //:printf("block[%2d]=%d -> %d\n",c,block.GetBegin(),block.GetCount());
+      ObjBegin[cmot]=block.GetBegin();
+      ObjBegin[cmot+1]=ObjBegin[cmot]+block.GetCount();
+      ObjMkBound[cmot]=block.GetMkType();
+      cmot++;
+    }
+  }
+  if(cmot!=ObjCount)RunException(met,"The number of mobile objects is invalid.");
+}
+
+//==============================================================================
+/// Initialisation of configuration for moving objects.
+//==============================================================================
+void JSphMotion::Init(const JSpaceParts *parts,JXml *jxml,const std::string &path,const std::string &dirdata){
+  const char met[]="Init";
+  Reset();
+  //-Configures moving objects.
+  ConfigObjects(parts);
+  //-Configures predefined motion object.
+  Mot=new JMotion();
   Mot->ReadXml(dirdata,jxml,path,false);
   Mot->Prepare();
-  int numobjects=Mot->GetMaxRef()+1;
-  return(unsigned(numobjects));
+  if(ObjCount!=unsigned(Mot->GetMaxRef()+1))RunException(met,"The number of mobile objects do not match the predefined motions in XML file.");
 }
 
 //==============================================================================
-/// Returns number of moving objects.
+/// Returns MkBound of requested moving object.
 //==============================================================================
-unsigned JSphMotion::GetNumObjects()const{
-  const int numobjects=(Mot? Mot->GetMaxRef()+1: 0);
-  return(unsigned(numobjects));
+word JSphMotion::GetObjMkBound(unsigned idx)const{
+  if(idx>=ObjCount)RunException("GetObjMkBound","Moving object does not exist.");
+  return(ObjMkBound[idx]);
+}
+
+//==============================================================================
+/// Returns first particle of requested moving object.
+//==============================================================================
+unsigned JSphMotion::GetObjBegin(unsigned idx)const{
+  if(idx>=ObjCount)RunException("GetObjBegin","Moving object does not exist.");
+  return(ObjBegin[idx]);
+}
+
+//==============================================================================
+/// Returns number of particles of requested moving object.
+//==============================================================================
+unsigned JSphMotion::GetObjSize(unsigned idx)const{
+  if(idx>=ObjCount)RunException("GetObjSize","Moving object does not exist.");
+  return(ObjBegin[idx+1]-ObjBegin[idx]);
 }
 
 //==============================================================================
 /// Processes next time interval and returns true if there are active motions.
 //==============================================================================
 bool JSphMotion::ProcesTime(TpMotionMode mode,double timestep,double dt){
-  if(mode==MOMT_Simple)return(Mot->ProcesTimeSimple(timestep,dt));
-  if(mode==MOMT_Ace2dt)return(Mot->ProcesTimeAce(timestep,dt));
+  if(mode==MOMT_Simple)return(Mot->ProcesTimeSimple(timestep+TimeMod,dt));
+  if(mode==MOMT_Ace2dt)return(Mot->ProcesTimeAce(timestep+TimeMod,dt));
   return(false);
 }
 
 //==============================================================================
 /// Returns data of one moving object. Returns true when the motion is active.
 //==============================================================================
-bool JSphMotion::ProcesTimeGetData(unsigned ref,bool &typesimple,tdouble3 &simplemov,tdouble3 &simplevel,tdouble3 &simpleace,tmatrix4d &matmov,tmatrix4d &matmov2)const{
-  return(Mot->ProcesTimeGetData(ref,typesimple,simplemov,simplevel,simpleace,matmov,matmov2));
+bool JSphMotion::ProcesTimeGetData(unsigned ref,bool &typesimple,tdouble3 &simplemov
+  ,tdouble3 &simplevel,tdouble3 &simpleace,tmatrix4d &matmov,tmatrix4d &matmov2
+  ,unsigned &nparts,unsigned &idbegin)const
+{
+  const bool active=Mot->ProcesTimeGetData(ref,typesimple,simplemov,simplevel,simpleace,matmov,matmov2);
+  if(active){
+    idbegin=(ref<ObjCount? ObjBegin[ref]: 0);
+    nparts=(ref<ObjCount? ObjBegin[ref+1]-idbegin: 0);
+  }
+  return(active);
 }
 
-////==============================================================================
-///// Processes next time interval and returns true if there are active motions.
-////==============================================================================
-//bool JSphMotion::ProcesTime(double timestep,double dt){
-//  return(Mot->ProcesTime(timestep,dt));
-//}
-
-////==============================================================================
-///// Reinicia movimientos en objeto Mot para iniciar el calculo desde el principio.
-////==============================================================================
-//void JSphMotion::ResetTime(double timestep){
-//  Mot->ResetTime(timestep);
-//}
-
-////==============================================================================
-///// Returns the number of performed movements.
-////==============================================================================
-//unsigned JSphMotion::GetMovCount()const{
-//  return(Mot->GetMovCount());
-//}
-
-////==============================================================================
-///// Returns data of the motion of an object.
-////==============================================================================
-//bool JSphMotion::GetMov(unsigned mov,unsigned &ref,tfloat3 &mvsimple,tmatrix4f &mvmatrix)const{
-//  JMatrix4d aux;
-//  tdouble3 mvsimpled;
-//  bool ret=Mot->GetMov(mov,ref,mvsimpled,aux);
-//  mvsimple=ToTFloat3(mvsimpled);
-//  mvmatrix=aux.GetMatrix4f();
-//  return(ret);
-//}
-
-////==============================================================================
-///// Returns data of the motion of an object.
-////==============================================================================
-//bool JSphMotion::GetMov(unsigned mov,unsigned &ref,tdouble3 &mvsimple,tmatrix4d &mvmatrix)const{
-//  JMatrix4d aux;
-//  bool ret=Mot->GetMov(mov,ref,mvsimple,aux);
-//  mvmatrix=aux.GetMatrix4d();
-//  return(ret);
-//}
-
-////==============================================================================
-///// Returns the number of finished movements.
-////==============================================================================
-//unsigned JSphMotion::GetStopCount()const{
-//  return(Mot->GetStopCount());
-//}
-
-////==============================================================================
-///// Returns the reference of the stopped object.
-////==============================================================================
-//unsigned JSphMotion::GetStopRef(unsigned mov)const{
-//  return(Mot->GetStopRef(mov));
-//}
 
 
