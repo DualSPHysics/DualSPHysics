@@ -30,7 +30,7 @@
  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
 
 
-FloatingInfo4 v4.0.016 (22-03-2018)
+FloatingInfo4 v4.0.018 (23-04-2018)
 ====================================
 LoadDsphConfig> .../bin/windows/DsphConfig.xml
 Information about parameters of execution:
@@ -43,12 +43,10 @@ Information about parameters of execution:
     -opt <file>    Loads configuration from a file
 
   Define input data:
-    -filexml file.xml    Path and file XML with case of simulation.
-                         The word 'AUTO' or 'path/AUTO' can be used to
-                         load the xml used in the simulation.
-    -first:<int>         Indicates the first file to be computed
-    -last:<int>          Indicates the last file to be computed
-    -files:<values>      Indicates the number of files to be processed
+    -dirin <dir>     Directory with particles data
+    -first:<int>     Indicates the first file to be computed
+    -last:<int>      Indicates the last file to be computed
+    -files:<values>  Indicates the number of files to be processed
 
   Define output files:
     -savedata <file>    Generates CSV file with data of floating
@@ -58,6 +56,6 @@ Information about parameters of execution:
                         (value by default is read from DsphConfig.xml or 0)
 
   Examples:
-    FloatingInfo4 -filexml case/floatings.xml -savedata results -savemotion
-    FloatingInfo4 -filexml floatings.xml -onlymk:61-65 -savemotion
+    FloatingInfo4 -savedata results -savemotion
+    FloatingInfo4 -dirin . -onlymk:61-65 -savemotion
 
