@@ -30,7 +30,7 @@
  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
 
 
-ComputeForces4 v4.0.029 (22-03-2018)
+ComputeForces4 v4.0.030 (25-04-2018)
 =====================================
 LoadDsphConfig> .../bin/windows/DsphConfig.xml
 Information about parameters of execution:
@@ -45,13 +45,11 @@ Information about parameters of execution:
   Define input file:
     -dirin <dir>       Directory with particle data
     -filexml file.xml  Loads xml file with information of mk and
-                     type of particles, this is needed for the filter -onlymk 
-                     and for the variable -vars:mk. The word 'AUTO' can be
-                     used to load the xml used in the simulation. This file 
-                     should be in the same directory of files BI4.
-    -first:<int>     Indicates the first file to be computed
-    -last:<int>      Indicates the last file to be computed
-    -files:<values>  Indicates the number of files to be processed
+                       and other information. The word 'AUTO' can
+                       be used to load the xml used in the simulation.
+    -first:<int>       Indicates the first file to be computed
+    -last:<int>        Indicates the last file to be computed
+    -files:<values>    Indicates the number of files to be processed
 
     -threads:<int>  Indicates the number of threads for parallel execution of
      the interpolation, it takes the number of cores of the device by default
