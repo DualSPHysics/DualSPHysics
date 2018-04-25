@@ -2,8 +2,8 @@ DualSPHysics4    v4.2.043    25-04-2018
 BoundaryVTK4     v4.0.039    25-04-2018
 ComputeForces4   v4.0.030    25-04-2018
 FloatingInfo4    v4.0.020    25-04-2018
-GenCase4         v4.0.062    22-03-2018
-GenCase4 MkWord  v4.0.062    22-03-2018
+GenCase4         v4.0.066    25-04-2018
+GenCase4 MkWord  v4.0.066    25-04-2018
 IsoSurface       v4.0.025    22-03-2018
 MeasureBoxes4    v4.0.019    22-03-2018
 MeasureTool4     v4.0.039    22-03-2018
