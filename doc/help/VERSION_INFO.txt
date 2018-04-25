@@ -8,4 +8,4 @@ IsoSurface       v4.0.026    25-04-2018
 MeasureBoxes4    v4.0.020    25-04-2018
 MeasureTool4     v4.0.040    25-04-2018
 PartVtk4         v4.0.041    25-04-2018
-PartVTKOut4      v4.0.022    22-03-2018
+PartVTKOut4      v4.0.023    25-04-2018
