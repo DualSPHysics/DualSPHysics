@@ -44,6 +44,7 @@
 //:# - Define SPACEPARTS_USE_INERTIA_OLD para grabar el vector inertia como en  
 //:#   la version v4.0.055. (07-03-2018)
 //:# - Se pasa a usar los tipos de particulas definidos en JParticlesDef.h. (23-03-2018)
+//:# - Metodos para obtener informacion de particulas. (25-04-2018)
 //:#############################################################################
 
 /// \file JSpaceParts.h \brief Declares the class \ref JSpaceParts.
@@ -241,6 +242,9 @@ public:
   unsigned CountBlocks(TpParticles type)const;
   const JSpacePartBlock& GetBlock(unsigned pos)const;
 
+  bool CheckNparticles(unsigned casenfixed,unsigned casenmoving,unsigned casenfloat,unsigned casenfluid)const;
+  bool CheckNparticles(ullong casenfixed,ullong casenmoving,ullong casenfloat,ullong casenfluid)const;
+
   void LoadFileXml(const std::string &file,const std::string &path);
   void SaveFileXml(const std::string &file,const std::string &path,bool newfile=true)const;
   void LoadXml(JXml *sxml,const std::string &place);
@@ -263,6 +267,9 @@ public:
 
   JSpaceParts::StSummaryData GetSummaryData()const;
   void GetParticleSummary(std::vector<std::string> &out)const;
+
+  void GetParticlesInfo(std::vector<std::string> &out)const;
+  void VisuParticlesInfo()const;
 };
 
 

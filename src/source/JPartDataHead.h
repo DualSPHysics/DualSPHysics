@@ -20,6 +20,7 @@
 //:# Cambios:
 //:# =========
 //:# - Creacion de clase para gestionar informacion relativa a datos de simulacion. (23-03-2018)
+//:# - Metodos para obtener informacion de particulas. (25-04-2018)
 //:#############################################################################
 
 /// \file JPartDataHead.h \brief Declares the class \ref JPartDataHead.
@@ -59,10 +60,18 @@ public:
 class JPartDataHead : protected JObject
 {
 public:
+  ///Types of periodicity.
   typedef enum{ PERI_None=0,PERI_X=1,PERI_Y=2,PERI_Z=4,PERI_XY=3,PERI_XZ=5,PERI_YZ=6,PERI_Unknown=96 }TpPeri; 
 
+  ///Types of viscosity treatment.
+  typedef enum{ 
+    VISCO_LaminarSPS=2,        ///<Laminar viscosity and Sub-Partice Scale Turbulence.
+    VISCO_Artificial=1,        ///<Artificial viscosity.
+    VISCO_None=0 
+  }TpVisco;            
+
 private:
-  static const unsigned FmtVersionDef1=180324;    ///<Version de formato by default. Version of format by default.
+  static const unsigned FmtVersionDef=180324;    ///<Version de formato by default. Version of format by default.
   unsigned FmtVersion;    ///<Version de formato. Version of format.
 
   std::string DirData;
@@ -75,6 +84,9 @@ private:
   std::string CaseName;
   bool Data2d;           ///<Toggles 2D simulation.
   double Data2dPosY;     ///<Y value in 2D simulations.
+  unsigned Npiece;       ///<Total number of file pieces.
+  unsigned FirstPart;    ///<First PART number.
+
   tdouble3 CasePosMin;   ///<Lower particle limit of the case in the initial instant.
   tdouble3 CasePosMax;   ///<Upper particle limit of the case in the initial instant.
 
@@ -97,7 +109,11 @@ private:
   tdouble3 PeriXinc;     ///<Value that is added at the outer limit to modify the position.
   tdouble3 PeriYinc;     ///<Value that is added at the outer limit to modify the position.
   tdouble3 PeriZinc;     ///<Value that is added at the outer limit to modify the position.
-  
+
+  TpVisco ViscoType;     ///<Viscosity type: Artificial,... 
+  float ViscoValue;      ///<Viscosity value. 
+  float ViscoBoundFactor;///<For boundary interaction use ViscoValue*ViscoBoundFactor.
+
   bool Splitting;        ///<Use of Splitting.
 
   //-Mk blocks data.
@@ -108,6 +124,9 @@ private:
   unsigned MkListFloat;  ///<Number of Mk blocks of floating type.
   unsigned MkListBound;  ///<Number of Mk blocks of boundary types. MkListBound=MkListFixed+MkListMoving+MkListFloat
   unsigned MkListFluid;  ///<Number of Mk blocks of fluid type.
+
+  unsigned MkBoundFirst; ///<First Mk for boundary blocks (Mk=MkBound+MkBoundFirst).
+  unsigned MkFluidFirst; ///<First Mk for fluid blocks (Mk=MkFluid+MkFluidFirst).
 
   //-Number of particles.
   unsigned CaseNp;       ///<Number of total particles of initial PART.  
@@ -122,18 +141,26 @@ public:
   JPartDataHead();
   ~JPartDataHead();
   void Reset();
-  void ConfigBasic(std::string runcode,std::string appname,std::string casename,tdouble3 caseposmin,tdouble3 caseposmax,bool data2d,double data2dposy);
+  void ConfigBasic(std::string runcode,std::string appname
+    ,std::string casename,tdouble3 caseposmin,tdouble3 caseposmax
+    ,bool data2d,double data2dposy,unsigned npieces,unsigned firstpart);
   void ConfigParticles(TpParticles type,unsigned mk,unsigned mktype,unsigned begin,unsigned count);
-  void ConfigCtes(double dp,double h,double b,double rhop0,double gamma,double massbound,double massfluid,tfloat3 gravity);
+  void ConfigCtes(double dp,double h,double b,double rhop0,double gamma
+    ,double massbound,double massfluid,tfloat3 gravity);
   void ConfigSimNp(bool npdynamic=false,bool reuseids=false);
   void ConfigSimMap(tdouble3 mapposmin,tdouble3 mapposmax);
-  void ConfigSimPeri(bool peri_x,bool peri_y,bool peri_z,bool peri_xy,bool peri_xz,bool peri_yz,tdouble3 perixinc,tdouble3 periyinc,tdouble3 perizinc);
+  void ConfigSimPeri(bool peri_x,bool peri_y,bool peri_z,bool peri_xy,bool peri_xz,bool peri_yz
+    ,tdouble3 perixinc,tdouble3 periyinc,tdouble3 perizinc);
+  void ConfigVisco(JPartDataHead::TpVisco type,float value,float boundfactor);
   void ConfigSplitting(bool splitting);
 
-  static std::string GetFileName(){ return("Part_Head.ibi4"); }
+  static std::string GetFileName(std::string dir="");
+
   void LoadFile(std::string dir);
   void SaveFile(std::string dir);
 
+  void GetParticlesInfo(std::vector<std::string> &out)const;
+  void VisuParticlesInfo()const;
 
 //-Methods for Mk blocks.
 //------------------------
@@ -145,6 +172,8 @@ public:
   unsigned GetMkBlockByMkFluid(unsigned mkfluid)const;
   inline unsigned GetMkBlockById(unsigned id)const;
 
+  unsigned GetMkBoundFirst()const{ return(MkBoundFirst); }
+  unsigned GetMkFluidFirst()const{ return(MkFluidFirst); }
 
 //-Returns general values.
 //--------------------------
@@ -154,6 +183,9 @@ public:
   std::string GetCaseName()  const{ return(CaseName);   };
   bool        GetData2d()    const{ return(Data2d);     };
   double      GetData2dPosY()const{ return(Data2dPosY); };
+  unsigned    GetNpiece()    const{ return(Npiece);     };
+  unsigned    GetFirstPart() const{ return(FirstPart);  };
+
 
   unsigned GetCaseNp()     const{ return(CaseNp);      };
   unsigned GetCaseNfixed() const{ return(CaseNfixed);  };
@@ -173,6 +205,10 @@ public:
   tdouble3 GetPeriXinc()const{ return(PeriXinc);   };
   tdouble3 GetPeriYinc()const{ return(PeriYinc);   };
   tdouble3 GetPeriZinc()const{ return(PeriZinc);   };
+
+  TpVisco GetViscoType()       const{ return(ViscoType);        };
+  float   GetViscoValue()      const{ return(ViscoValue);       };
+  float   GetViscoBoundFactor()const{ return(ViscoBoundFactor); };
 
   bool GetSplitting()const{ return(Splitting); };
 

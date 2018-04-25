@@ -19,7 +19,6 @@
 /// \file JPartDataHead.cpp \brief Implements the class \ref JPartDataHead.
 
 #include "JPartDataHead.h"
-//#include "JSpaceParts.h"
 #include "JBinaryData.h"
 #include "Functions.h"
 #include <algorithm>
@@ -51,11 +50,13 @@ JPartDataHead::~JPartDataHead(){
 /// Initialisation of variables.
 //==============================================================================
 void JPartDataHead::Reset(){
+  FmtVersion=FmtVersionDef;
   DirData="";
   //-General variables.
-  ConfigBasic("","","",TDouble3(0),TDouble3(0),false,0);
+  ConfigBasic("","","",TDouble3(0),TDouble3(0),false,0,0,0);
   ConfigCtes(0,0,0,0,0,0,0,TFloat3(0));
   ConfigSimPeri(false,false,false,false,false,false,TDouble3(0),TDouble3(0),TDouble3(0));
+  ConfigVisco(VISCO_None,0,0);
   ConfigSplitting(false);
   //-Mk blocks data.
   MkList.clear();
@@ -68,7 +69,7 @@ void JPartDataHead::Reset(){
 //==============================================================================
 void JPartDataHead::ConfigBasic(std::string runcode,std::string appname
   ,std::string casename,tdouble3 caseposmin,tdouble3 caseposmax
-  ,bool data2d,double data2dposy)
+  ,bool data2d,double data2dposy,unsigned npieces,unsigned firstpart)
 {
   AppName=appname;
   Date=fun::GetDateTime();
@@ -76,6 +77,8 @@ void JPartDataHead::ConfigBasic(std::string runcode,std::string appname
   CaseName=casename;
   Data2d=data2d;
   Data2dPosY=data2dposy;
+  Npiece=npieces;
+  FirstPart=firstpart;
   CasePosMin=caseposmin;
   CasePosMax=caseposmax;
 }
@@ -107,6 +110,7 @@ void JPartDataHead::ConfigParticles(TpParticles type,unsigned mk,unsigned mktype
 void JPartDataHead::UptadeMkNumbers(){
   MkListSize=unsigned(MkList.size());
   MkListFixed=MkListMoving=MkListFloat=MkListBound=MkListFluid=0;
+  MkBoundFirst=MkFluidFirst=0;
   CaseNp=CaseNfixed=CaseNmoving=CaseNfloat=CaseNfluid=0;
   for(unsigned c=0;c<MkListSize;c++){
     const JPartDataHeadMkBlock& mbk=Mkblock(c);
@@ -120,6 +124,16 @@ void JPartDataHead::UptadeMkNumbers(){
   }
   MkListBound=MkListFixed+MkListMoving+MkListFloat;
   CaseNp=CaseNfixed+CaseNmoving+CaseNfloat+CaseNfluid;
+  for(unsigned c=0;c<MkListSize;c++){
+    const JPartDataHeadMkBlock& mbk=Mkblock(c);
+    switch(mbk.Type){
+    case TpPartFixed:     
+    case TpPartMoving:    
+    case TpPartFloating:  if(!MkBoundFirst)MkBoundFirst=mbk.Mk-mbk.MkType;   break;
+    case TpPartFluid:     if(!MkFluidFirst)MkFluidFirst=mbk.Mk-mbk.MkType;   break;
+    default: RunException("UptadeMkNumbers","Type is unknown.");
+    }
+  }
 }
 
 //==============================================================================
@@ -177,7 +191,13 @@ void JPartDataHead::ConfigSimPeri(bool peri_x,bool peri_y,bool peri_z
 }
 
 //==============================================================================
-/// Configuracion uso de Splitting.
+/// Configuration used for Viscosity.
+//==============================================================================
+void JPartDataHead::ConfigVisco(JPartDataHead::TpVisco type,float value,float boundfactor){
+  ViscoType=type; ViscoValue=value; ViscoBoundFactor=boundfactor;
+}
+
+//==============================================================================
 /// Configuration used for Splitting.
 //==============================================================================
 void JPartDataHead::ConfigSplitting(bool splitting){
@@ -198,6 +218,8 @@ void JPartDataHead::SaveFile(std::string dir){
   bdat.SetvText("CaseName",CaseName);
   bdat.SetvBool("Data2d",Data2d);
   bdat.SetvDouble("Data2dPosY",Data2dPosY);
+  bdat.SetvUint("Npiece",Npiece);
+  bdat.SetvUint("FirstPart",FirstPart);
 
   bdat.SetvDouble3("CasePosMin",CasePosMin);
   bdat.SetvDouble3("CasePosMax",CasePosMax);
@@ -212,6 +234,10 @@ void JPartDataHead::SaveFile(std::string dir){
   bdat.SetvDouble3("PeriXinc",PeriXinc);
   bdat.SetvDouble3("PeriYinc",PeriYinc);
   bdat.SetvDouble3("PeriZinc",PeriZinc);
+
+  bdat.SetvUint("ViscoType",unsigned(ViscoType));
+  bdat.SetvFloat("ViscoValue",ViscoValue);
+  bdat.SetvFloat("ViscoBoundFactor",ViscoBoundFactor);
 
   bdat.SetvBool("Splitting",Splitting);
 
@@ -246,6 +272,13 @@ void JPartDataHead::SaveFile(std::string dir){
 }
 
 //==============================================================================
+/// Returns file name and path.
+//==============================================================================
+std::string JPartDataHead::GetFileName(std::string dir){
+  return(fun::GetDirWithSlash(dir)+"Part_Head.ibi4");
+}
+
+//==============================================================================
 /// Loads binary file Part_Head.ibi4.
 //==============================================================================
 void JPartDataHead::LoadFile(std::string dir){
@@ -263,6 +296,8 @@ void JPartDataHead::LoadFile(std::string dir){
   CaseName  =bdat.GetvText("CaseName");
   Data2d    =bdat.GetvBool("Data2d");
   Data2dPosY=bdat.GetvDouble("Data2dPosY");
+  Npiece    =bdat.GetvUint("Npiece");
+  FirstPart =bdat.GetvUint("FirstPart");
 
   CasePosMin=bdat.GetvDouble3("CasePosMin");
   CasePosMax=bdat.GetvDouble3("CasePosMax");
@@ -277,6 +312,10 @@ void JPartDataHead::LoadFile(std::string dir){
   PeriXinc=bdat.GetvDouble3("PeriXinc");
   PeriYinc=bdat.GetvDouble3("PeriYinc");
   PeriZinc=bdat.GetvDouble3("PeriZinc");
+
+  ViscoType       =TpVisco(bdat.GetvUint("ViscoType"));
+  ViscoValue      =bdat.GetvFloat("ViscoValue");
+  ViscoBoundFactor=bdat.GetvFloat("ViscoBoundFactor");
 
   Splitting=bdat.GetvBool("Splitting");
 
@@ -341,5 +380,51 @@ unsigned JPartDataHead::GetMkBlockById(unsigned id)const{
   unsigned c=0;
   for(;c<MkListSize && id>=(MkList[c].Begin+MkList[c].Count);c++);
   return(c);
+}
+
+//==============================================================================
+/// Returns string with particles information.
+//==============================================================================
+void JPartDataHead::GetParticlesInfo(std::vector<std::string> &out)const{
+  out.push_back("");
+  out.push_back("Particles data:");
+  out.push_back("----------------");
+  const unsigned nfixed =GetCaseNfixed();
+  const unsigned nmoving=GetCaseNmoving();
+  const unsigned nfloat =GetCaseNfloat();
+  const unsigned nbound =nfixed+nmoving+nfloat;
+  const unsigned nfluid =GetCaseNfluid();
+  out.push_back(fun::PrintStr("Number of particles: %u",nbound+nfluid));
+  out.push_back(fun::PrintStr("- Boundary: %u",nbound));
+  const unsigned nc=MkBlockCount();
+  out.push_back(fun::PrintStr("  - Fixed: %u",nfixed));
+  for(unsigned c=0;c<nc;c++)if(Mkblock(c).Type==TpPartFixed){
+    const JPartDataHeadMkBlock& bk=Mkblock(c);
+    out.push_back(fun::PrintStr("      Mk[%d]: %u (%u-%u)",bk.Mk,bk.Count,bk.Begin,bk.Begin+bk.Count-1));
+  }
+  out.push_back(fun::PrintStr("  - Moving: %u",nmoving));
+  for(unsigned c=0;c<nc;c++)if(Mkblock(c).Type==TpPartMoving){
+    const JPartDataHeadMkBlock& bk=Mkblock(c);
+    out.push_back(fun::PrintStr("      Mk[%d]: %u (%u-%u)",bk.Mk,bk.Count,bk.Begin,bk.Begin+bk.Count-1));
+  }
+  out.push_back(fun::PrintStr("  - Floating: %u",nfloat));
+  for(unsigned c=0;c<nc;c++)if(Mkblock(c).Type==TpPartFloating){
+    const JPartDataHeadMkBlock& bk=Mkblock(c);
+    out.push_back(fun::PrintStr("      Mk[%d]: %u (%u-%u)",bk.Mk,bk.Count,bk.Begin,bk.Begin+bk.Count-1));
+  }
+  out.push_back(fun::PrintStr("- Fluid: %u",nfluid));
+  for(unsigned c=0;c<nc;c++)if(Mkblock(c).Type==TpPartFluid){
+    const JPartDataHeadMkBlock& bk=Mkblock(c);
+    out.push_back(fun::PrintStr("      Mk[%d]: %u (%u-%u)",bk.Mk,bk.Count,bk.Begin,bk.Begin+bk.Count-1));
+  }
+}
+
+//==============================================================================
+/// Prints particles information.
+//==============================================================================
+void JPartDataHead::VisuParticlesInfo()const{
+  std::vector<string> lines;
+  GetParticlesInfo(lines);
+  for(unsigned c=0;c<unsigned(lines.size());c++)printf("%s\n",lines[c].c_str());
 }
 

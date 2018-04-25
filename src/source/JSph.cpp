@@ -1454,7 +1454,7 @@ void JSph::ConfigSaveData(unsigned piece,unsigned pieces,std::string div){
   //-Stores basic information of simulation data.
   JPartDataHead parthead;
   parthead.ConfigBasic(RunCode,AppName,CaseName,CasePosMin,CasePosMax
-    ,Simulate2D,Simulate2DPosY);
+    ,Simulate2D,Simulate2DPosY,pieces,PartBeginFirst);
   MkInfo->ConfigPartDataHead(&parthead);
   parthead.ConfigCtes(Dp,H,CteB,RhopZero,Gamma,MassBound,MassFluid,Gravity);
   parthead.ConfigSimNp(NpDynamic,ReuseIds);
@@ -1462,6 +1462,12 @@ void JSph::ConfigSaveData(unsigned piece,unsigned pieces,std::string div){
   parthead.ConfigSimPeri(PeriodicConfig.PeriX,PeriodicConfig.PeriY,PeriodicConfig.PeriZ
     ,PeriodicConfig.PeriXY,PeriodicConfig.PeriXZ,PeriodicConfig.PeriYZ
     ,PeriodicConfig.PeriXinc,PeriodicConfig.PeriYinc,PeriodicConfig.PeriZinc);
+  switch(TVisco){
+    case VISCO_None:        parthead.ConfigVisco(JPartDataHead::VISCO_None      ,Visco,ViscoBoundFactor);  break;
+    case VISCO_Artificial:  parthead.ConfigVisco(JPartDataHead::VISCO_Artificial,Visco,ViscoBoundFactor);  break;
+    case VISCO_LaminarSPS:  parthead.ConfigVisco(JPartDataHead::VISCO_LaminarSPS,Visco,ViscoBoundFactor);  break;
+    default: RunException(met,"Viscosity type is unknown.");
+  }
   if(SvData&SDAT_Binx){
     Log->AddFileInfo(DirDataOut+"Part_Head.ibi4","Binary file with basic information of simulation data.");
     parthead.SaveFile(DirDataOut);

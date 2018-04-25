@@ -300,6 +300,20 @@ JSpacePartBlock* JSpaceParts::GetByMkType(bool bound,word mktype)const{
 }
 
 //==============================================================================
+/// Returns TRUE when number of particles match.
+//==============================================================================
+bool JSpaceParts::CheckNparticles(unsigned casenfixed,unsigned casenmoving,unsigned casenfloat,unsigned casenfluid)const{
+  return(casenfixed==Count(TpPartFixed) && casenmoving==Count(TpPartMoving) && casenfloat==Count(TpPartFloating) && casenfluid==Count(TpPartFluid));
+}
+
+//==============================================================================
+/// Returns TRUE when number of particles match.
+//==============================================================================
+bool JSpaceParts::CheckNparticles(ullong casenfixed,ullong casenmoving,ullong casenfloat,ullong casenfluid)const{
+  return(CheckNparticles(unsigned(casenfixed),unsigned(casenmoving),unsigned(casenfloat),unsigned(casenfluid)));
+}
+
+//==============================================================================
 /// Checks and adds a new block of particles.
 //==============================================================================
 void JSpaceParts::Add(JSpacePartBlock* block){
@@ -532,6 +546,56 @@ void JSpaceParts::GetParticleSummary(std::vector<std::string> &out)const{
   const unsigned mb=dat.nmk[0]+dat.nmk[1]+dat.nmk[2],mt=mb+dat.nmk[3];
   out.push_back(fun::PrintStr("Total particles: %u (bound=%u (fx=%u mv=%u ft=%u) fluid=%u)",nt,nb,dat.np[0],dat.np[1],dat.np[2],dat.np[3]));
   out.push_back(fun::PrintStr("Total MK blocks: %u (bound=%u (fx=%u mv=%u ft=%u) fluid=%u)",mt,mb,dat.nmk[0],dat.nmk[1],dat.nmk[2],dat.nmk[3]));
+}
+
+//==============================================================================
+/// Returns string with particles information.
+//==============================================================================
+void JSpaceParts::GetParticlesInfo(std::vector<std::string> &out)const{
+  out.push_back("");
+  out.push_back("Particles data:");
+  out.push_back("----------------");
+  const unsigned nfixed=Count(TpPartFixed);
+  const unsigned nmoving=Count(TpPartMoving);
+  const unsigned nfloat=Count(TpPartFloating);
+  const unsigned nbound=nfixed+nmoving+nfloat;
+  const unsigned nfluid=Count(TpPartFluid);
+  out.push_back(fun::PrintStr("Number of particles: %u",nbound+nfluid));
+  out.push_back(fun::PrintStr("- Boundary: %u",nbound));
+  const unsigned nc=CountBlocks();
+  out.push_back(fun::PrintStr("  - Fixed: %u",nfixed));
+  for(unsigned c=0;c<nc;c++)if(GetBlock(c).Type==TpPartFixed){
+    const JSpacePartBlock& bk=GetBlock(c);
+    const unsigned count=bk.GetCount(),begin=bk.GetBegin();
+    out.push_back(fun::PrintStr("      Mk[%d]: %u (%u-%u)",bk.GetMk(),count,begin,begin+count-1));
+  }
+  out.push_back(fun::PrintStr("  - Moving: %u",nmoving));
+  for(unsigned c=0;c<nc;c++)if(GetBlock(c).Type==TpPartMoving){
+    const JSpacePartBlock& bk=GetBlock(c);
+    const unsigned count=bk.GetCount(),begin=bk.GetBegin();
+    out.push_back(fun::PrintStr("      Mk[%d]: %u (%u-%u)",bk.GetMk(),count,begin,begin+count-1));
+  }
+  out.push_back(fun::PrintStr("  - Floating: %u",nfloat));
+  for(unsigned c=0;c<nc;c++)if(GetBlock(c).Type==TpPartFloating){
+    const JSpacePartBlock& bk=GetBlock(c);
+    const unsigned count=bk.GetCount(),begin=bk.GetBegin();
+    out.push_back(fun::PrintStr("      Mk[%d]: %u (%u-%u)",bk.GetMk(),count,begin,begin+count-1));
+  }
+  out.push_back(fun::PrintStr("- Fluid: %u",nfluid));
+  for(unsigned c=0;c<nc;c++)if(GetBlock(c).Type==TpPartFluid){
+    const JSpacePartBlock& bk=GetBlock(c);
+    const unsigned count=bk.GetCount(),begin=bk.GetBegin();
+    out.push_back(fun::PrintStr("      Mk[%d]: %u (%u-%u)",bk.GetMk(),count,begin,begin+count-1));
+  }
+}
+
+//==============================================================================
+/// Prints particles information.
+//==============================================================================
+void JSpaceParts::VisuParticlesInfo()const{
+  std::vector<string> lines;
+  GetParticlesInfo(lines);
+  for(unsigned c=0;c<unsigned(lines.size());c++)printf("%s\n",lines[c].c_str());
 }
 
 //##############################################################################
