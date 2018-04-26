@@ -82,7 +82,7 @@ void JCfgRun::LoadDsphConfig(std::string path){
 //==============================================================================
 void JCfgRun::VisuInfo()const{
   printf("Information about execution parameters:\n\n");
-  printf("  DualSPHysics4 <options>\n\n");
+  printf("  DualSPHysics4 [name_case [dir_out]] [options]\n\n");
   printf("  Options:\n");
   printf("    -h          Shows information about parameters\n");
   printf("    -ver        Shows version information\n");
@@ -160,6 +160,7 @@ void JCfgRun::VisuInfo()const{
   printf("    -domain_fixed:xmin:ymin:zmin:xmax:ymax:zmax    The domain is fixed\n");
   printf("     with the specified values\n\n");
   printf("  Examples:\n");
+  printf("    DualSPHysics4 case out_case -sv:binx,csv \n");
   printf("    DualSPHysics4 -name case -dirout out_case -sv:binx,csv \n");
 }
 
@@ -310,7 +311,11 @@ void JCfgRun::LoadOpts(string *optlis,int optn,int lv,string file){
   if(lv>=10)RunException(met,"No more than 10 levels of recursive configuration.");
   for(int c=0;c<optn;c++){
     string opt=optlis[c];
-    if(opt[0]!='-' && opt[0]!='#')ErrorParm(opt,c,lv,file);
+    if(opt[0]!='-' && opt[0]!='#'){
+      if(!DirsDef){ CaseName=opt; DirsDef++; }
+      else if(DirsDef==1){ DirOut=opt; DirsDef++; }
+      else ErrorParm(opt,c,lv,file);
+    }
     else if(opt[0]=='-'){
       //-Splits options in txoptfull, txopt1, txopt2, txopt3 and txopt4.
       string txword,txoptfull,txopt1,txopt2;

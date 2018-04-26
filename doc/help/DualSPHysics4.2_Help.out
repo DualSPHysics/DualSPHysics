@@ -24,12 +24,12 @@
  along with DualSPHysics. If not, see <http://www.gnu.org/licenses/>.
 
 
-DualSPHysics4 v4.2.043 (25-04-2018)
+DualSPHysics4 v4.2.044 (26-04-2018)
 ====================================
 LoadDsphConfig> .../bin/windows/DsphConfig.xml
 Information about execution parameters:
 
-  DualSPHysics4 <options>
+  DualSPHysics4 [name_case [dir_out]] [options]
 
   Options:
     -h          Shows information about parameters
@@ -114,4 +114,5 @@ Information about execution parameters:
      with the specified values
 
   Examples:
+    DualSPHysics4 case out_case -sv:binx,csv 
     DualSPHysics4 -name case -dirout out_case -sv:binx,csv 
