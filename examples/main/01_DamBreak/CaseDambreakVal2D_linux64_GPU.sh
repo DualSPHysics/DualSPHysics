@@ -56,20 +56,20 @@ fi
 # Executes PartVTK4 to create VTK files with particles.
 dirout2=${dirout}/particles; mkdir $dirout2
 if [ $errcode -eq 0 ]; then
-  $partvtk -dirin $diroutdata -filexml $dirout/${name}.xml -savevtk $dirout2/PartFluid -onlytype:-all,fluid -vars:+idp,+vel,+rhop,+press,+vor
+  $partvtk -dirin $diroutdatadata -filexml $dirout/${name}.xml -savevtk $dirout2/PartFluid -onlytype:-all,fluid -vars:+idp,+vel,+rhop,+press,+vor
   errcode=$?
 fi
 
 # Executes PartVTKOut4 to create VTK files with excluded particles.
 if [ $errcode -eq 0 ]; then
-  $partvtkout -dirin $diroutdata -filexml $dirout/${name}.xml -savevtk $dirout2/PartFluidOut -SaveResume $dirout/ResumeFluidOut
+  $partvtkout -dirin $diroutdatadata -filexml $dirout/${name}.xml -savevtk $dirout2/PartFluidOut -SaveResume $dirout/ResumeFluidOut
   errcode=$?
 fi
 
 # Executes IsoSurface4 to create VTK files with slices of surface.
 dirout2=${dirout}/surface; mkdir $dirout2
 if [ $errcode -eq 0 ]; then
-  $isosurface -dirin $diroutdata -saveslice $dirout2/Slices 
+  $isosurface -dirin $diroutdatadata -saveslice $dirout2/Slices 
   errcode=$?
 fi
 
