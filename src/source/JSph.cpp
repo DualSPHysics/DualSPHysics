@@ -1639,7 +1639,7 @@ void JSph::SavePartData(unsigned npok,unsigned nout,const unsigned *idp,const td
   }
 
   //-Stores VTK nd/or CSV files.
-  if((SvData&SDAT_Csv)||(SvData&SDAT_Vtk)){
+  if((SvData&SDAT_Csv) || (SvData&SDAT_Vtk)){
     //-Generates array with posf3 and type of particle.
     tfloat3* posf3=GetPointerDataFloat3(npok,pos);
     byte *type=new byte[npok];

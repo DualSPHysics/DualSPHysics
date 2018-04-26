@@ -21,6 +21,7 @@
 //:# =========
 //:# - Gestiona el calculo automatico de BlockSize para ejecucion de kernels GPU. (18-02-2016)
 //:# - Uso de JSaveCsv2 para generar ficheros csv. (12-03-2018)
+//:# - Se escriben las unidades en las cabeceras de los ficheros CSV. (26-04-2018)
 //:#############################################################################
 
 /// \file JBlockSizeAuto.h \brief Declares the class \ref JBlockSizeAuto.

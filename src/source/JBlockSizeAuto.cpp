@@ -132,8 +132,8 @@ void JBlockSizeAutoKer::SaveFileInfoData(){
   //-Saves head.
   if(firstsv){
     scsv.SetHead();
-    scsv << "Step;Time;Bs";
-    for(int ct=0;ct<BsNum;ct++)scsv << fun::PrintStr("Time_%d",BsMin+BsInc*ct);
+    scsv << "Step;Time [s];Bs";
+    for(int ct=0;ct<BsNum;ct++)scsv << fun::PrintStr("Time_%d [s]",BsMin+BsInc*ct);
     for(int ct=0;ct<BsNum;ct++)scsv << fun::PrintStr("Mexp_%d%%",BsMin+BsInc*ct);
     for(int ct=0;ct<BsNum;ct++)scsv << fun::PrintStr("Mtot_%d%%",BsMin+BsInc*ct);
     scsv << jcsv::Endl();

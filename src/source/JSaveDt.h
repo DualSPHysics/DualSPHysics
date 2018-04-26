@@ -24,6 +24,7 @@
 //:# - Se elimina el valor csound. (22-01-2015)
 //:# - Error corregido cuando TimeFinish=0. (22-01-2018)
 //:# - Error corregido al generar excepcion por error en fichero. (22-01-2018)
+//:# - Se escriben las unidades en las cabeceras de los ficheros CSV. (26-04-2018)
 //:#############################################################################
 
 /// \file JSaveDt.h \brief Declares the class \ref JSaveDt.

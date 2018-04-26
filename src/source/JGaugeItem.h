@@ -20,6 +20,7 @@
 //:# Cambios:
 //:# =========
 //:# - Clase para medir magnitudes fisicas durante la simulacion. (12-02-2018)
+//:# - Se escriben las unidades en las cabeceras de los ficheros CSV. (26-04-2018)
 //:#############################################################################
 
 /// \file JGaugeItem.h \brief Declares the class \ref JGaugeItem.
