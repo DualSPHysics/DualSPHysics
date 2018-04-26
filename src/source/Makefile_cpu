@@ -1,12 +1,13 @@
-#DualSPHysics CPU v4.2.040 (23-04-2018)
+#DualSPHysics CPU v4.2.043 (26-04-2018)
 
 #=============== Compilation Options ===============
+USE_GCC5=NO
 USE_DEBUG=NO
 USE_FAST_MATH=YES
 USE_NATIVE_CPU_OPTIMIZATIONS=NO
 
 LIBS_DIRECTORIES=-L./
-LIBS_DIRECTORIES:=$(LIBS_DIRECTORIES) -L../lib/linux_gcc5
+LIBS_DIRECTORIES:=$(LIBS_DIRECTORIES) -L../lib/linux_gcc
 
 EXECNAME=DualSPHysics4.2CPU_linux64
 EXECS_DIRECTORY=../../bin/linux
@@ -24,6 +25,12 @@ else
 endif
 CC=g++
 CCLINKFLAGS=-fopenmp -lgomp
+
+#Required for GCC versions >=5.0
+ifeq ($(USE_GCC5), YES)
+  CCFLAGS+=-D_GLIBCXX_USE_CXX11_ABI=0
+  CCLINKFLAGS+=-D_GLIBCXX_USE_CXX11_ABI=0
+endif
 
 #=============== Files to compile ===============
 OBJXML=JXml.o tinystr.o tinyxml.o tinyxmlerror.o tinyxmlparser.o
