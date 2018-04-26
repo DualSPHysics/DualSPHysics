@@ -30,7 +30,7 @@
  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
 
 
-MeasureTool4 v4.0.040 (25-04-2018)
+MeasureTool4 v4.0.041 (26-04-2018)
 ===================================
 LoadDsphConfig> .../bin/windows/DsphConfig.xml
 Information about parameters of execution:
@@ -129,10 +129,10 @@ Information about parameters of execution:
                        the selected particles; by default 0.5 in 3D (half 
                        the mass) and 0.4 in 2D
 
-    -heightlimit:<float> The same as -height but the reference mass is
-                         given by an absolute value
+    -heightlimit:<float>  The same as -height but the reference mass is
+                          given by an absolute value
 
-    -heightoutput:<float> Output files with height values (default value = time)
+    -heightoutput:<value> Output files with height values (default value = time)
        time:        Values of height for each time
        pos:         Values of height for each position (x,y)
        all:         Both output files.
