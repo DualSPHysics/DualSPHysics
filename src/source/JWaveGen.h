@@ -16,6 +16,12 @@
  You should have received a copy of the GNU Lesser General Public License along with DualSPHysics. If not, see <http://www.gnu.org/licenses/>. 
 */
 
+//:#############################################################################
+//:# Cambios:
+//:# =========
+//:# - Incluye la aplicacion de TimeMod. (23-04-2018)
+//:#############################################################################
+
 /// \file JWaveGen.h \brief Declares the class \ref JWaveGen.
 
 #ifndef _JWaveGen_
@@ -40,6 +46,7 @@ class JWaveGen
 private:
   const bool UseOmp;
   const bool UseGpu;
+  double TimeMod;       ///<Modifies the timestep for paddle motion.
   JWavePaddles* WavPad; 
   
   //-Vars. auxiliares cargadas tras Init().
@@ -70,7 +77,12 @@ public:
   /// Prepares paddle movement.
   //==============================================================================
   void Init(JGaugeSystem *gaugesystem,const JSphMk *mkinfo,double timemax,tfloat3 gravity);
- 
+
+  //==============================================================================
+  /// Adjust motion paddles for the first simulation instant.
+  //==============================================================================
+  void SetTimeMod(double timemod){ TimeMod=timemod; };
+
   //==============================================================================
   /// Shows object configuration using Log.
   //==============================================================================
@@ -80,13 +92,16 @@ public:
   /// Devuelve si es un movimiento lineal y los datos de movimiento para el intervalo indicado.
   /// Returns if it is a linear motion and the motion data for the specified interval.
   //==============================================================================
-  bool GetMotion(bool svdata,unsigned cp,double timestep,double dt,tdouble3 &simplemov,tdouble3 &simplevel,tmatrix4d &matmov,unsigned &np,unsigned &idbegin);
+  bool GetMotion(bool svdata,unsigned cp,double timestep,double dt
+    ,tdouble3 &simplemov,tdouble3 &simplevel,tmatrix4d &matmov
+    ,unsigned &np,unsigned &idbegin);
 
   //==============================================================================
   /// Devuelve si es un movimiento lineal y los datos de movimiento para el intervalo indicado.
   /// Returns if it is a linear motion and the motion data for the specified interval.
   //==============================================================================
-  bool GetMotionAce(bool svdata,unsigned cp,double timestep,double dt,tdouble3 &simplemov,tdouble3 &simplevel,tdouble3 &simpleace
+  bool GetMotionAce(bool svdata,unsigned cp,double timestep,double dt
+    ,tdouble3 &simplemov,tdouble3 &simplevel,tdouble3 &simpleace
     ,tmatrix4d &matmov,tmatrix4d &matmov2,unsigned &np,unsigned &idbegin);
 
 

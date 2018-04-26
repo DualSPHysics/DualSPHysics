@@ -26,7 +26,6 @@
 #include <string>
 
 class JCellDivGpuSingle;
-class JPartsLoad4;
 
 //##############################################################################
 //# JSphGpuSingle
@@ -37,7 +36,6 @@ class JSphGpuSingle : public JSphGpu
 {
 protected:
   JCellDivGpuSingle* CellDivSingle;
-  JPartsLoad4* PartsLoaded;
 
   llong GetAllocMemoryCpu()const;  
   llong GetAllocMemoryGpu()const;  
@@ -45,7 +43,6 @@ protected:
   llong GetMemoryGpuNct()const;
   void UpdateMaxValues();
   void LoadConfig(JCfgRun *cfg);
-  void LoadCaseParticles();
   void ConfigDomain();
 
   void ResizeParticlesSize(unsigned newsize,float oversize,bool updatedivide);

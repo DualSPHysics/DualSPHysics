@@ -58,7 +58,9 @@ JPartFloatBi4Save::~JPartFloatBi4Save(){
 void JPartFloatBi4Save::Reset(){
   ResizeFtData(0);
   ResetData();
+  FormatVer=FormatVerDef;
   Dir="";
+  MkBoundFirst=0;
   InitialSaved=false;
 }
 
@@ -163,10 +165,11 @@ std::string JPartFloatBi4Save::GetFileNamePart(){
 /// Configuracion de datos de cabecera.
 /// Configuration of header data.
 //==============================================================================
-void JPartFloatBi4Save::Config(std::string appname,const std::string &dir,unsigned ftcount){
+void JPartFloatBi4Save::Config(std::string appname,const std::string &dir,word mkboundfirst,unsigned ftcount){
   Reset();
-  Dir=fun::GetDirWithSlash(dir);
   AppName=appname;
+  Dir=fun::GetDirWithSlash(dir);
+  MkBoundFirst=mkboundfirst;
   ResizeFtData(ftcount);
 }
 
@@ -190,6 +193,8 @@ void JPartFloatBi4Save::AddHeadData(unsigned cf,word mkbound,unsigned begin,unsi
 void JPartFloatBi4Save::SaveInitial(){
   if(!InitialSaved){
     Data->SetvText("AppName",AppName);
+    Data->SetvUint("FormatVer",FormatVer);
+    Data->SetvUshort("MkBoundFirst",MkBoundFirst);
     Data->SetvUint("FtCount",FtCount);
     Data->CreateArray("mkbound",JBinaryDataDef::DatUshort,FtCount,HeadMkbound,false);
     Data->CreateArray("begin",JBinaryDataDef::DatUint,FtCount,HeadBegin,false);
@@ -274,8 +279,10 @@ JPartFloatBi4Load::~JPartFloatBi4Load(){
 /// Initialisation of variables.
 //==============================================================================
 void JPartFloatBi4Load::Reset(){
+  FormatVer=0;
   delete Data; 
   Data=new JBinaryData("JPartFloatBi4");
+  MkBoundFirst=0;
   FtCount=PartCount=0;
   ResizeFtData(0);
   Part=NULL;
@@ -358,7 +365,10 @@ void JPartFloatBi4Load::LoadFile(const std::string &dir){
   Reset();
   Data->LoadFileListApp(file,"JPartFloatBi4");
   JBinaryData *head=Data->GetItem("LS0000_JPartFloatBi4");
-  if(!head)RunException(met,"The head item is missing.");
+  if(!head)RunException(met,"The head item is missing.",file);
+  FormatVer=head->GetvUint("FormatVer",true,0);
+  if(FormatVer<FormatVerDef)RunException(met,fun::PrintStr("The data format version \'%u\' is not valid. Version \'%u\' required.",FormatVer,FormatVerDef),file);
+  MkBoundFirst=head->GetvUshort("MkBoundFirst",true,0);
   FtCount=head->GetvUint("FtCount",true,0);
   PartCount=Data->GetItemsCount()-1;
   FirstPart=(Data->GetItemsCount()>1? Data->GetItem(1)->GetvUint("Cpart",true,0): 0);

@@ -396,84 +396,11 @@ void JSphCpu::ConfigRunMode(const JCfgRun *cfg,std::string preinfo){
 /// Initialisation of arrays and variables for execution.
 /// Inicializa vectores y variables para la ejecucion.
 //==============================================================================
-void JSphCpu::InitRun(){
-  const char met[]="InitRun";
-  WithFloating=(CaseNfloat>0);
-  if(TStep==STEP_Verlet){
-    memcpy(VelrhopM1c,Velrhopc,sizeof(tfloat4)*Np);
-    VerletStep=0;
-  }
-  else if(TStep==STEP_Symplectic)DtPre=DtIni;
+void JSphCpu::InitRunCpu(){
+  InitRun();
+  if(TStep==STEP_Verlet)memcpy(VelrhopM1c,Velrhopc,sizeof(tfloat4)*Np);
   if(TVisco==VISCO_LaminarSPS)memset(SpsTauc,0,sizeof(tsymatrix3f)*Np);
-  if(UseDEM)DemDtForce=DtIni; //(DEM)
   if(CaseNfloat)InitFloating();
-
-  //-Adjust paramaters to start.
-  PartIni=PartBeginFirst;
-  TimeStepIni=(!PartIni? 0: PartBeginTimeStep);
-  //-Adjust motion for the instant of the loaded PART.
-  if(CaseNmoving){
-    MotionTimeMod=(!PartIni? PartBeginTimeStep: 0);
-    Motion->ProcesTime(JSphMotion::MOMT_Simple,0,TimeStepIni+MotionTimeMod);
-  }
-
-  //-Uses Inlet information from PART read.
-  if(PartBeginTimeStep && PartBeginTotalNp){
-    TotalNp=PartBeginTotalNp;
-    IdMax=unsigned(TotalNp-1);
-  }
-
-  //-Shows Initialize configuration.
-  if(InitializeInfo.size()){
-    Log->Print("Initialization configuration:");
-    Log->Print(InitializeInfo);
-    Log->Print(" ");
-  }
-  
-  //-Process Special configurations in XML.
-  JXml xml; xml.LoadFile(FileXml);
-
-  //-Configuration of GaugeSystem.
-  GaugeSystem->Config(Simulate2D,Simulate2DPosY,TimeMax,TimePart,Dp,DomPosMin,DomPosMax,Scell,Hdiv,H,MassFluid);
-  if(xml.GetNode("case.execution.special.gauges",false))GaugeSystem->LoadXml(&xml,"case.execution.special.gauges");
-
-  //-Prepares WaveGen configuration.
-  if(WaveGen){
-    Log->Print("Wave paddles configuration:");
-    WaveGen->Init(GaugeSystem,MkInfo,TimeMax,Gravity);
-    WaveGen->VisuConfig(""," ");
-  }
-
-  //-Prepares Damping configuration.
-  if(Damping){
-    Damping->Config(CellOrder);
-    Damping->VisuConfig("Damping configuration:"," ");
-  }
-
-  //-Prepares AccInput configuration.
-  if(AccInput){
-    Log->Print("AccInput configuration:");
-    AccInput->Init(TimeMax);
-    AccInput->VisuConfig(""," ");
-  }
-
-  //-Configuration of SaveDt.
-  if(xml.GetNode("case.execution.special.savedt",false)){
-    SaveDt=new JSaveDt(Log);
-    SaveDt->Config(&xml,"case.execution.special.savedt",TimeMax,TimePart);
-    SaveDt->VisuConfig("SaveDt configuration:"," ");
-  }
-
-  //-Shows configuration of JGaugeSystem.
-  if(GaugeSystem->GetCount())GaugeSystem->VisuConfig("GaugeSystem configuration:"," ");
-
-  //-Shows configuration of JTimeOut.
-  if(TimeOut->UseSpecialConfig())TimeOut->VisuConfig(Log,"TimeOut configuration:"," ");
-
-  Part=PartIni; Nstep=0; PartNstep=0; PartOut=0;
-  TimeStep=TimeStepIni; TimeStepM1=TimeStep;
-  if(DtFixed)DtIni=DtFixed->GetDt(TimeStep,DtIni);
-  TimePartNext=TimeOut->GetNextTime(TimeStep);
 }
 
 //==============================================================================
@@ -2094,22 +2021,24 @@ void JSphCpu::RunMotion(double stepdt){
   const bool motsim=true;
   const JSphMotion::TpMotionMode mode=(motsim? JSphMotion::MOMT_Simple: JSphMotion::MOMT_Ace2dt);
   BoundChanged=false;
-  if(Motion->ProcesTime(mode,TimeStep+MotionTimeMod,stepdt)){
+  if(SphMotion->ProcesTime(mode,TimeStep,stepdt)){
     CalcRidp(PeriActive!=0,Npb,0,CaseNfixed,CaseNfixed+CaseNmoving,Codec,Idpc,RidpMove);
     BoundChanged=true;
     bool typesimple;
     tdouble3 simplemov,simplevel,simpleace;
     tmatrix4d matmov,matmov2;
-    for(unsigned ref=0;ref<MotionObjCount;ref++)if(Motion->ProcesTimeGetData(ref,typesimple,simplemov,simplevel,simpleace,matmov,matmov2)){
-      const unsigned pini=MotionObjBegin[ref]-CaseNfixed,np=MotionObjBegin[ref+1]-MotionObjBegin[ref];
+    unsigned nparts,idbegin;
+    const unsigned nref=SphMotion->GetNumObjects();
+    for(unsigned ref=0;ref<nref;ref++)if(SphMotion->ProcesTimeGetData(ref,typesimple,simplemov,simplevel,simpleace,matmov,matmov2,nparts,idbegin)){
+      const unsigned pini=idbegin-CaseNfixed;
       if(typesimple){//-Simple movement. | Movimiento simple.
         if(Simulate2D)simplemov.y=simplevel.y=simpleace.y=0;
-        if(motsim)MoveLinBound   (np,pini,simplemov,ToTFloat3(simplevel),RidpMove,Posc,Dcellc,Velrhopc,Codec);
-        //else    MoveLinBoundAce(np,pini,simplemov,ToTFloat3(simplevel),ToTFloat3(simpleace),RidpMove,Posc,Dcellc,Velrhopc,Acec,Codec);
+        if(motsim)MoveLinBound   (nparts,pini,simplemov,ToTFloat3(simplevel),RidpMove,Posc,Dcellc,Velrhopc,Codec);
+        //else    MoveLinBoundAce(nparts,pini,simplemov,ToTFloat3(simplevel),ToTFloat3(simpleace),RidpMove,Posc,Dcellc,Velrhopc,Acec,Codec);
       }
       else{//-Movement using a matrix. | Movimiento con matriz.
-        if(motsim)MoveMatBound   (np,pini,matmov,stepdt,RidpMove,Posc,Dcellc,Velrhopc,Codec); 
-        //else    MoveMatBoundAce(np,pini,matmov,matmov2,stepdt,RidpMove,Posc,Dcellc,Velrhopc,Acec,Codec);
+        if(motsim)MoveMatBound   (nparts,pini,matmov,stepdt,RidpMove,Posc,Dcellc,Velrhopc,Codec); 
+        //else    MoveMatBoundAce(nparts,pini,matmov,matmov2,stepdt,RidpMove,Posc,Dcellc,Velrhopc,Acec,Codec);
       }
     }
   }
@@ -2125,8 +2054,8 @@ void JSphCpu::RunMotion(double stepdt){
       unsigned nparts,idbegin;
       //-Get movement data.
       const bool svdata=(TimeStep+stepdt>=TimePartNext);
-      if(motsim)typesimple=WaveGen->GetMotion   (svdata,c,TimeStep+MotionTimeMod,stepdt,simplemov,simplevel,matmov,nparts,idbegin);
-      else      typesimple=WaveGen->GetMotionAce(svdata,c,TimeStep+MotionTimeMod,stepdt,simplemov,simplevel,simpleace,matmov,matmov2,nparts,idbegin);
+      if(motsim)typesimple=WaveGen->GetMotion   (svdata,c,TimeStep,stepdt,simplemov,simplevel,matmov,nparts,idbegin);
+      else      typesimple=WaveGen->GetMotionAce(svdata,c,TimeStep,stepdt,simplemov,simplevel,simpleace,matmov,matmov2,nparts,idbegin);
       //-Applies movement to paddle particles.
       const unsigned np=nparts,pini=idbegin-CaseNfixed;
       if(typesimple){//-Simple movement. | Movimiento simple.

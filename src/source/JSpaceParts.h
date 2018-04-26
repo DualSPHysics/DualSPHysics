@@ -41,6 +41,10 @@
 //:# - Se graban los datos de floatingns con las unidades. (29-01-2016)
 //:# - Genera resumen de particulas y bloques de MK. (03-08-2017)
 //:# - Inertia de floatings se guarda como tmatrix3d. (29-11-2017)
+//:# - Define SPACEPARTS_USE_INERTIA_OLD para grabar el vector inertia como en  
+//:#   la version v4.0.055. (07-03-2018)
+//:# - Se pasa a usar los tipos de particulas definidos en JParticlesDef.h. (23-03-2018)
+//:# - Metodos para obtener informacion de particulas. (25-04-2018)
 //:#############################################################################
 
 /// \file JSpaceParts.h \brief Declares the class \ref JSpaceParts.
@@ -54,13 +58,13 @@
 #include <cmath>
 #include "JObject.h"
 #include "TypesDef.h"
+#include "JParticlesDef.h"
+
+//#define SPACEPARTS_USE_INERTIA_OLD  //-Saves the inertia vector as in GenCase v4.0.055.
 
 class JXml;
 class TiXmlElement;
 class JSpaceProperties;
-
-///<Types of particles.
-typedef enum{ PT_Fixed=1,PT_Moving=2,PT_Floating=4,PT_Fluid=5 }TpParticles; 
 
 //##############################################################################
 //# JSpacePartBlock
@@ -80,7 +84,10 @@ public:
   const TpParticles Type;    ///<Type of particle.
   const bool Bound;          ///<Indicates whether a particle is boundary or not.
 
-  JSpacePartBlock(const JSpaceProperties* properties,TpParticles type,const char* name,bool bound,word mktype=0,unsigned begin=0,unsigned count=0):Properties(properties),Type(type),Bound(bound),MkType(mktype),Begin(begin),Count(count){ 
+  JSpacePartBlock(const JSpaceProperties* properties,TpParticles type,const char* name
+    ,word mktype=0,unsigned begin=0,unsigned count=0)
+    :Properties(properties),Type(type),Bound(IsBound(type)),MkType(mktype),Begin(begin),Count(count)
+  { 
     ClassName=std::string("JSpacePartBlock_")+name;
   } 
   virtual ~JSpacePartBlock(){ DestructorActive=true; }
@@ -139,8 +146,8 @@ public:
 class JSpacePartBlock_Fixed : public JSpacePartBlock
 {
 public:
-  JSpacePartBlock_Fixed(const JSpaceProperties* properties,word mktype,unsigned begin,unsigned count):JSpacePartBlock(properties,PT_Fixed,"Fixed",true,mktype,begin,count){}
-  JSpacePartBlock_Fixed(const JSpaceProperties* properties,JXml *sxml,TiXmlElement* ele):JSpacePartBlock(properties,PT_Fixed,"Fixed",true){ ReadXml(sxml,ele); }
+  JSpacePartBlock_Fixed(const JSpaceProperties* properties,word mktype,unsigned begin,unsigned count):JSpacePartBlock(properties,TpPartFixed,"Fixed",mktype,begin,count){}
+  JSpacePartBlock_Fixed(const JSpaceProperties* properties,JXml *sxml,TiXmlElement* ele):JSpacePartBlock(properties,TpPartFixed,"Fixed"){ ReadXml(sxml,ele); }
 };  
 
 //##############################################################################
@@ -152,8 +159,8 @@ class JSpacePartBlock_Moving : public JSpacePartBlock
 private:
   unsigned RefMotion;
 public:
-  JSpacePartBlock_Moving(const JSpaceProperties* properties,word mktype,unsigned begin,unsigned count,unsigned refmotion):JSpacePartBlock(properties,PT_Moving,"Moving",true,mktype,begin,count),RefMotion(refmotion){}
-  JSpacePartBlock_Moving(const JSpaceProperties* properties,JXml *sxml,TiXmlElement* ele):JSpacePartBlock(properties,PT_Moving,"Moving",true){ ReadXml(sxml,ele); }
+  JSpacePartBlock_Moving(const JSpaceProperties* properties,word mktype,unsigned begin,unsigned count,unsigned refmotion):JSpacePartBlock(properties,TpPartMoving,"Moving",mktype,begin,count),RefMotion(refmotion){}
+  JSpacePartBlock_Moving(const JSpaceProperties* properties,JXml *sxml,TiXmlElement* ele):JSpacePartBlock(properties,TpPartMoving,"Moving"){ ReadXml(sxml,ele); }
   unsigned GetRefMotion()const{ return(RefMotion); }
   void ReadXml(JXml *sxml,TiXmlElement* ele);
   TiXmlElement* WriteXml(JXml *sxml,TiXmlElement* ele)const;
@@ -172,8 +179,8 @@ private:
   tdouble3 Velini;
   tdouble3 Omegaini;
 public:
-  JSpacePartBlock_Floating(const JSpaceProperties* properties,word mktype,unsigned begin,unsigned count,double massbody,const tdouble3& center,const tmatrix3d& inertia,const tdouble3& velini,const tdouble3& omegaini):JSpacePartBlock(properties,PT_Floating,"Floating",true,mktype,begin,count),Massbody(massbody),Center(center),Inertia(inertia),Velini(velini),Omegaini(omegaini){}
-  JSpacePartBlock_Floating(const JSpaceProperties* properties,JXml *sxml,TiXmlElement* ele):JSpacePartBlock(properties,PT_Floating,"Floating",true){ ReadXml(sxml,ele); }
+  JSpacePartBlock_Floating(const JSpaceProperties* properties,word mktype,unsigned begin,unsigned count,double massbody,const tdouble3& center,const tmatrix3d& inertia,const tdouble3& velini,const tdouble3& omegaini):JSpacePartBlock(properties,TpPartFloating,"Floating",mktype,begin,count),Massbody(massbody),Center(center),Inertia(inertia),Velini(velini),Omegaini(omegaini){}
+  JSpacePartBlock_Floating(const JSpaceProperties* properties,JXml *sxml,TiXmlElement* ele):JSpacePartBlock(properties,TpPartFloating,"Floating"){ ReadXml(sxml,ele); }
   double GetMassbody()const{ return(Massbody); }
   tdouble3 GetCenter()const{ return(Center); }
   tmatrix3d GetInertia()const{ return(Inertia); }
@@ -190,8 +197,8 @@ public:
 class JSpacePartBlock_Fluid : public JSpacePartBlock
 {
 public:
-  JSpacePartBlock_Fluid(const JSpaceProperties* properties,word mktype,unsigned begin,unsigned count):JSpacePartBlock(properties,PT_Fluid,"Fluid",false,mktype,begin,count){}
-  JSpacePartBlock_Fluid(const JSpaceProperties* properties,JXml *sxml,TiXmlElement* ele):JSpacePartBlock(properties,PT_Fluid,"Fluid",false){ ReadXml(sxml,ele); }
+  JSpacePartBlock_Fluid(const JSpaceProperties* properties,word mktype,unsigned begin,unsigned count):JSpacePartBlock(properties,TpPartFluid,"Fluid",mktype,begin,count){}
+  JSpacePartBlock_Fluid(const JSpaceProperties* properties,JXml *sxml,TiXmlElement* ele):JSpacePartBlock(properties,TpPartFluid,"Fluid"){ ReadXml(sxml,ele); }
 };  
 
 //##############################################################################
@@ -235,6 +242,9 @@ public:
   unsigned CountBlocks(TpParticles type)const;
   const JSpacePartBlock& GetBlock(unsigned pos)const;
 
+  bool CheckNparticles(unsigned casenfixed,unsigned casenmoving,unsigned casenfloat,unsigned casenfluid)const;
+  bool CheckNparticles(ullong casenfixed,ullong casenmoving,ullong casenfloat,ullong casenfluid)const;
+
   void LoadFileXml(const std::string &file,const std::string &path);
   void SaveFileXml(const std::string &file,const std::string &path,bool newfile=true)const;
   void LoadXml(JXml *sxml,const std::string &place);
@@ -257,6 +267,9 @@ public:
 
   JSpaceParts::StSummaryData GetSummaryData()const;
   void GetParticleSummary(std::vector<std::string> &out)const;
+
+  void GetParticlesInfo(std::vector<std::string> &out)const;
+  void VisuParticlesInfo()const;
 };
 
 

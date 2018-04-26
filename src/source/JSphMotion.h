@@ -21,6 +21,7 @@
 //:# =========
 //:# - Para los ficheros de datos usa ruta absoluta si el nombre contiene alguna
 //:#   barra de directorio. (11-09-2013)
+//:# - Incluye la gestion de objetos moving. (23-04-2018)
 //:#############################################################################
 
 /// \file JSphMotion.h \brief Declares the class \ref JSphMotion.
@@ -28,19 +29,20 @@
 #ifndef _JSphMotion_
 #define _JSphMotion_
 
-#include "TypesDef.h"
+#include "JObject.h"
+#include "Types.h"
 #include <string>
 
 class JMotion;
 class JXml;
-
+class JSpaceParts;
 
 //##############################################################################
 //# JSphMotion
 //##############################################################################
 /// \brief Provides the displacement of moving objects during a time interval.  
 
-class JSphMotion
+class JSphMotion : protected JObject
 {
 public:
 
@@ -51,70 +53,32 @@ public:
   }TpMotionMode;   
 
 private:
+  double TimeMod;       ///<Modifies the timestep for motion | Modificador del TimeStep para Motion.
+  unsigned ObjCount;    ///<Number of moving objects.
+  unsigned *ObjBegin;   ///<Initial particle of each moving object. [ObjCount+1]
+  word     *ObjMkBound; ///<MkBound of each moving object. [ObjCount]
+
   JMotion *Mot;
 
+  void ConfigObjects(const JSpaceParts *parts);
+
 public:
-
-  //==============================================================================
-  /// Constructor.
-  //==============================================================================
   JSphMotion();
-
-  //==============================================================================
-  /// Destructor.
-  //==============================================================================
   ~JSphMotion();
-
-  //==============================================================================
-  /// Initialisation of variables.
-  //==============================================================================
   void Reset();
+  void Init(const JSpaceParts *parts,JXml *jxml,const std::string &path,const std::string &dirdata);
 
-  //==============================================================================
-  /// Initialisation of configuration and returns number of moving objects.
-  //==============================================================================
-  unsigned Init(JXml *jxml,const std::string &path,const std::string &dirdata);
+  unsigned GetNumObjects()const{ return(ObjCount); };
+  word GetObjMkBound(unsigned idx)const;
+  unsigned GetObjBegin(unsigned idx)const;
+  unsigned GetObjSize(unsigned idx)const;
 
-  //==============================================================================
-  /// Returns number of moving objects.
-  //==============================================================================
-  unsigned GetNumObjects()const;
-
-  //==============================================================================
-  /// Processes next time interval and returns true if there are active motions.
-  //==============================================================================
+  void SetTimeMod(double timemod){ TimeMod=timemod; };
   bool ProcesTime(TpMotionMode mode,double timestep,double dt);
+  bool ProcesTimeGetData(unsigned ref,bool &typesimple,tdouble3 &simplemov
+    ,tdouble3 &simplevel,tdouble3 &simpleace,tmatrix4d &matmov,tmatrix4d &matmov2
+    ,unsigned &nparts,unsigned &idbegin)const;
 
-  //==============================================================================
-  /// Returns data of one moving object. Returns true when the motion is active.
-  //==============================================================================
-  bool ProcesTimeGetData(unsigned ref,bool &typesimple,tdouble3 &simplemov,tdouble3 &simplevel,tdouble3 &simpleace,tmatrix4d &matmov,tmatrix4d &matmov2)const;
-
-  ////==============================================================================
-  ///// Processes next time interval and returns true if there are active motions.
-  ////==============================================================================
-  //bool ProcesTime(double timestep,double dt);
-
-  ////==============================================================================
-  ///// Returns the number of performed movements.
-  ////==============================================================================
-  //unsigned GetMovCount()const;
-
-  ////==============================================================================
-  ///// Returns data of the motion of an object.
-  ////==============================================================================
-  //bool GetMov(unsigned mov,unsigned &ref,tfloat3 &mvsimple,tmatrix4f &mvmatrix)const;
-  //bool GetMov(unsigned mov,unsigned &ref,tdouble3 &mvsimple,tmatrix4d &mvmatrix)const;
-
-  ////==============================================================================
-  ///// Returns the number of finished movements.
-  ////==============================================================================
-  //unsigned GetStopCount()const;
-
-  ////==============================================================================
-  ///// Returns the reference of the stopped object.
-  ////==============================================================================
-  //unsigned GetStopRef(unsigned mov)const;
 };
 
 #endif

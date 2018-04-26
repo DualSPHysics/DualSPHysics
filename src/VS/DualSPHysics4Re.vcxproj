@@ -532,7 +532,9 @@ rem %CudaNvcc% -ccbin "$(VCInstallDir)bin" %gpuhw% -use_fast_math -c %ptxinfo% -
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">true</ExcludedFromBuild>
     </ClInclude>
     <ClInclude Include="..\source\JPartDataBi4.h" />
+    <ClInclude Include="..\source\JPartDataHead.h" />
     <ClInclude Include="..\source\JPartFloatBi4.h" />
+    <ClInclude Include="..\source\JParticlesDef.h" />
     <ClInclude Include="..\source\JPartOutBi4Save.h" />
     <ClInclude Include="..\source\JPartsLoad4.h" />
     <ClInclude Include="..\source\JRadixSort.h" />
@@ -654,6 +656,7 @@ rem %CudaNvcc% -ccbin "$(VCInstallDir)bin" %gpuhw% -use_fast_math -c %ptxinfo% -
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="..\source\JPartDataBi4.cpp" />
+    <ClCompile Include="..\source\JPartDataHead.cpp" />
     <ClCompile Include="..\source\JPartFloatBi4.cpp" />
     <ClCompile Include="..\source\JPartOutBi4Save.cpp" />
     <ClCompile Include="..\source\JPartsLoad4.cpp" />

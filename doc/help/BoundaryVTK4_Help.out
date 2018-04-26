@@ -30,7 +30,7 @@
  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
 
 
-BoundaryVTK4 v4.0.031 (22-03-2018)
+BoundaryVTK4 v4.0.039 (25-04-2018)
 ===================================
 LoadDsphConfig> .../bin/windows/DsphConfig.xml
 Information about parameters of execution:
@@ -61,8 +61,7 @@ Information about parameters of execution:
     -filexml file.xml    Loads xml file with information of the movement and
                          types of particles. The word 'AUTO' can be used to
                          load the xml used in the simulation when -motiondata
-                         or -motiondatatime is used. This file should be in 
-                         the same directory of files BI4.
+                         or -motiondatatime is used
 
     -motiontime:<time>:<step> Configures the duration and time step to
                          simulate the movement defined in the xml file, 
@@ -70,11 +69,16 @@ Information about parameters of execution:
 
     -motiondatatime <dir>  Indicates the directory where real times of the
                          simulation are loaded for the mobile boundary
-                         can not be used with -motiontime and -motiondata
+                         Can not be used with -motiontime and -motiondata
 
     -motiondata <dir>    Indicates the directory where position of particles
                          are loaded to generate the mobile boundary
-                         can not be used with -motiontime and -motiondatatime
+                         Can not be used with -motiontime and -motiondatatime
+
+    -motiondata0 <dir>   It is only for restart simulations. Indicates the
+                         directory where is the file Part_0000.bi4 to load
+                         initial positions of particles.
+                         Can not be used with -motiontime and -motiondatatime
 
   Define output files:
     -savevtk <file.vtk>  Generates vtk(polydata) files with the loaded shapes
@@ -84,6 +88,8 @@ Information about parameters of execution:
                          shapes including mk and shape code
 
     -savemotion <file>   Generates csv file with movement of the objects
+    -saveposmotion:<mk>:x:y:z <file>   Generates csv file with updated position
+                         according movement of mk boundary
     -csvsep:<0/1>        Separator character in CSV files (0=semicolon, 1=coma)
                          (value by default is read from DsphConfig.xml or 0)
 
@@ -98,6 +104,7 @@ Information about parameters of execution:
   Examples:
     BoundaryVtk4 -loadvtk bound.vtk -savevtk box.vtk -onlymk:10,12
 
-    BoundaryVtk4 -loadvtk bound.vtk -filexml case.xml -motiondata .
+    BoundaryVtk4 -loadvtk *_Actual.vtk -filexml AUTO -motiondata .
+    BoundaryVtk4 -loadvtk file.vtk -filexml case.xml -motiondata .
                 -saveply motion.ply
 

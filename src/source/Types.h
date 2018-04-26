@@ -22,6 +22,7 @@
 #define _Types_
 
 #include "TypesDef.h"
+#include "JParticlesDef.h"
 #include "OmpDefs.h"
 #include <algorithm>
 
@@ -154,10 +155,10 @@ typedef struct{ //(DEM)
 
 ///Controls the output of information on the screen and/or log.
 typedef enum{ 
-    MOUT_ScrFile=3,  ///<Output on the screen and log.
-    MOUT_File=2,     ///<Output in the log.
-    MOUT_Screen=1,   ///<Output on the screen.
-    MOUT_None=0      ///<No output.
+  MOUT_ScrFile=3,  ///<Output on the screen and log.
+  MOUT_File=2,     ///<Output in the log.
+  MOUT_Screen=1,   ///<Output on the screen.
+  MOUT_None=0      ///<No output.
 }TpModeOut;   
 
 ///Data output options.
@@ -211,16 +212,6 @@ typedef enum{
   SHIFT_NoBound=1,          ///<Shifting is applied to fluid particles except those that interact with all boundaries.
   SHIFT_None=0              ///<Shifting is not applied.
 }TpShifting; 
-
-///Types of particles.
-typedef enum{ 
-    PART_BoundFx=1,          ///<Fixed boundary particles.
-    PART_BoundMv=2,          ///<Moving boundary particles.
-    PART_BoundFx_BoundMv=3,  ///<Both fixed and moving boundary particles.
-    PART_BoundFt=4,          ///<Floating boundary particles.
-    PART_Fluid=8,            ///<Fluid particles.
-    PART_BoundFt_Fluid=12    ///<Both floating and fluid particles.
-}TpParticle;
 
 ///Interaction mode for floatings and boundaries.
 typedef enum{ 

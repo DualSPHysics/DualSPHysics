@@ -22,14 +22,13 @@
 #include "JCellDivCpuSingle.h"
 #include "JArraysCpu.h"
 #include "JSphMk.h"
+#include "JPartsLoad4.h"
 #include "Functions.h"
 #include "FunctionsMath.h"
 #include "JXml.h"
 #include "JSphMotion.h"
-#include "JPartsLoad4.h"
 #include "JSphVisco.h"
 #include "JWaveGen.h"
-#include "JDamping.h"
 #include "JTimeOut.h"
 #include "JTimeControl.h"
 #include "JGaugeSystem.h"
@@ -42,7 +41,6 @@ using namespace std;
 JSphCpuSingle::JSphCpuSingle():JSphCpu(false){
   ClassName="JSphCpuSingle";
   CellDivSingle=NULL;
-  PartsLoaded=NULL;
 }
 
 //==============================================================================
@@ -51,7 +49,6 @@ JSphCpuSingle::JSphCpuSingle():JSphCpu(false){
 JSphCpuSingle::~JSphCpuSingle(){
   DestructorActive=true;
   delete CellDivSingle; CellDivSingle=NULL;
-  delete PartsLoaded;   PartsLoaded=NULL;
 }
 
 //==============================================================================
@@ -62,7 +59,6 @@ llong JSphCpuSingle::GetAllocMemoryCpu()const{
   llong s=JSphCpu::GetAllocMemoryCpu();
   //-Allocated in other objects.
   if(CellDivSingle)s+=CellDivSingle->GetAllocMemory();
-  if(PartsLoaded)s+=PartsLoaded->GetAllocMemory();
   return(s);
 }
 
@@ -89,52 +85,6 @@ void JSphCpuSingle::LoadConfig(JCfgRun *cfg){
   JSph::LoadConfig(cfg);
   //-Checks compatibility of selected options.
   Log->Print("**Special case configuration is loaded");
-}
-
-//==============================================================================
-/// Load particles of case and process.
-/// Carga particulas del caso a procesar.
-//==============================================================================
-void JSphCpuSingle::LoadCaseParticles(){
-  Log->Print("Loading initial state of particles...");
-  PartsLoaded=new JPartsLoad4(true);
-  PartsLoaded->LoadParticles(DirCase,CaseName,PartBegin,PartBeginDir);
-  PartsLoaded->CheckConfig(CaseNp,CaseNfixed,CaseNmoving,CaseNfloat,CaseNfluid,PeriX,PeriY,PeriZ);
-  Log->Printf("Loaded particles: %u",PartsLoaded->GetCount());
-  //-Collect information of loaded particles. | Recupera informacion de las particulas cargadas.
-  Simulate2D=PartsLoaded->GetSimulate2D();
-  Simulate2DPosY=PartsLoaded->GetSimulate2DPosY();
-  if(Simulate2D&&PeriY)RunException("LoadCaseParticles","Cannot use periodic conditions in Y with 2D simulations");
-  CasePosMin=PartsLoaded->GetCasePosMin();
-  CasePosMax=PartsLoaded->GetCasePosMax();
-
-  //-Calculate actual limits of simulation. | Calcula limites reales de la simulacion.
-  if(PartsLoaded->MapSizeLoaded())PartsLoaded->GetMapSize(MapRealPosMin,MapRealPosMax);
-  else{
-    PartsLoaded->CalculeLimits(double(H)*BORDER_MAP,Dp/2.,PeriX,PeriY,PeriZ,MapRealPosMin,MapRealPosMax);
-    ResizeMapLimits();
-  }
-  if(PartBegin){
-    PartBeginTimeStep=PartsLoaded->GetPartBeginTimeStep();
-    PartBeginTotalNp=PartsLoaded->GetPartBeginTotalNp();
-  }
-  Log->Print(string("MapRealPos(final)=")+fun::Double3gRangeStr(MapRealPosMin,MapRealPosMax));
-  MapRealSize=MapRealPosMax-MapRealPosMin;
-  Log->Print("**Initial state of particles is loaded");
-
-  //-Configure limits of periodic axes. | Configura limites de ejes periodicos.
-  if(PeriX)PeriXinc.x=-MapRealSize.x;
-  if(PeriY)PeriYinc.y=-MapRealSize.y;
-  if(PeriZ)PeriZinc.z=-MapRealSize.z;
-  //-Calculate simulation limits with periodic boundaries. | Calcula limites de simulacion con bordes periodicos.
-  Map_PosMin=MapRealPosMin; Map_PosMax=MapRealPosMax;
-  float dosh=float(H*2);
-  if(PeriX){ Map_PosMin.x=Map_PosMin.x-dosh;  Map_PosMax.x=Map_PosMax.x+dosh; }
-  if(PeriY){ Map_PosMin.y=Map_PosMin.y-dosh;  Map_PosMax.y=Map_PosMax.y+dosh; }
-  if(PeriZ){ Map_PosMin.z=Map_PosMin.z-dosh;  Map_PosMax.z=Map_PosMax.z+dosh; }
-  Map_Size=Map_PosMax-Map_PosMin;
-  //-Saves initial domain in a VTK file (CasePosMin/Max, MapRealPosMin/Max and Map_PosMin/Max).
-  SaveInitialDomainVtk();
 }
 
 //==============================================================================
@@ -168,26 +118,29 @@ void JSphCpuSingle::ConfigDomain(){
   //-Computes MK domain for boundary and fluid particles.
   MkInfo->ComputeMkDomains(Np,Posc,Codec);
 
-  //-Free memory of PartsLoaded. | Libera memoria de PartsLoaded.
-  delete PartsLoaded; PartsLoaded=NULL;
   //-Apply configuration of CellOrder. | Aplica configuracion de CellOrder.
   ConfigCellOrder(CellOrder,Np,Posc,Velrhopc);
 
   //-Configure cells division. | Configura division celdas.
   ConfigCellDivision();
-  //-Establish local simulation domain inside of Map_Cells & calculate DomCellCode. | Establece dominio de simulacion local dentro de Map_Cells y calcula DomCellCode.
+  //-Sets local domain of the simulation within Map_Cells and computes DomCellCode.
+  //-Establece dominio de simulacion local dentro de Map_Cells y calcula DomCellCode.
   SelecDomain(TUint3(0,0,0),Map_Cells);
-  //-Calculate initial cell of particles and check if there are unexpected excluded particles. | Calcula celda inicial de particulas y comprueba si hay excluidas inesperadas.
+  //-Computes inital cell of the particles and checks if there are unexpected excluded particles.
+  //-Calcula celda inicial de particulas y comprueba si hay excluidas inesperadas.
   LoadDcellParticles(Np,Codec,Posc,Dcellc);
 
-  //-Create object for divide in CPU & select a valid cellmode. | Crea objeto para divide en Gpu y selecciona un cellmode valido.
-  CellDivSingle=new JCellDivCpuSingle(Stable,FtCount!=0,PeriActive,CellOrder,CellMode,Scell,Map_PosMin,Map_PosMax,Map_Cells,CaseNbound,CaseNfixed,CaseNpb,Log,DirOut);
+  //-Creates object for Celldiv on the CPU and selects a valid cellmode.
+  //-Crea objeto para divide en CPU y selecciona un cellmode valido.
+  CellDivSingle=new JCellDivCpuSingle(Stable,FtCount!=0,PeriActive,CellOrder,CellMode
+    ,Scell,Map_PosMin,Map_PosMax,Map_Cells,CaseNbound,CaseNfixed,CaseNpb,Log,DirOut);
   CellDivSingle->DefineDomain(DomCellCode,DomCelIni,DomCelFin,DomPosMin,DomPosMax);
   ConfigCellDiv((JCellDivCpu*)CellDivSingle);
 
   ConfigSaveData(0,1,"");
 
-  //-Reorder particles for cell. | Reordena particulas por celda.
+  //-Reorders particles according to cells.
+  //-Reordena particulas por celda.
   BoundChanged=true;
   RunCellDivide(true);
 }
@@ -664,7 +617,7 @@ double JSphCpuSingle::ComputeStep_Ver(){
 /// calculadas en la interaccion usando Symplectic.
 //==============================================================================
 double JSphCpuSingle::ComputeStep_Sym(){
-  const double dt=DtPre;
+  const double dt=SymplecticDtPre;
   //-Predictor
   //-----------
   DemDtForce=dt*0.5f;                     //(DEM)
@@ -686,7 +639,7 @@ double JSphCpuSingle::ComputeStep_Sym(){
   PosInteraction_Forces();                //-Free memory used for interaction.
   if(Damping)RunDamping(dt,Np,Npb,Posc,Codec,Velrhopc); //-Applies Damping.
 
-  DtPre=min(ddt_p,ddt_c);                 //-Calculate dt for next ComputeStep.
+  SymplecticDtPre=min(ddt_p,ddt_c);       //-Calculate dt for next ComputeStep.
   return(dt);
 }
 
@@ -912,7 +865,7 @@ void JSphCpuSingle::Run(std::string appname,JCfgRun *cfg,JLog2 *log){
 
   //-Initialisation of execution variables. | Inicializacion de variables de ejecucion.
   //------------------------------------------------------------------------------------
-  InitRun();
+  InitRunCpu();
   RunGaugeSystem(TimeStep);
   UpdateMaxValues();
   PrintAllocMemory(GetAllocMemoryCpu());

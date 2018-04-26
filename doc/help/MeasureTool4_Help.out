@@ -30,7 +30,7 @@
  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
 
 
-MeasureTool4 v4.0.039 (22-03-2018)
+MeasureTool4 v4.0.040 (25-04-2018)
 ===================================
 LoadDsphConfig> .../bin/windows/DsphConfig.xml
 Information about parameters of execution:
@@ -47,10 +47,8 @@ Information about parameters of execution:
     -casein <casename> Name of case file with particle data
 
     -filexml file.xml  Loads xml file with information of mk and
-                    type of particles, this is needed for the filter 
-                    -onlymk and for the variable -vars:mk. The word 'AUTO'
-                    can be used to load the xml used in the simulation. This
-                    file should be in the same directory of files BI4.
+                       and other information. The word 'AUTO' can
+                       be used to load the xml used in the simulation.
     -first:<int>    Indicates the first file to be computed
     -last:<int>     Indicates the last file to be computed
     -files:<values> Indicates the number of files to be processed

@@ -60,6 +60,8 @@ void JPartsLoad4::Reset(){
   MapPosMin=MapPosMax=TDouble3(0);
   PartBegin=0;
   PartBeginTimeStep=0;
+  SymplecticDtPre=0;
+  DemDtForce=0;
   AllocMemory(0);
 }
 
@@ -109,13 +111,27 @@ template<typename T> T* JPartsLoad4::SortParticles(const unsigned *vsort,unsigne
 }
 
 //==============================================================================
+/// Checks order of boundary particles.
+/// Comprubeba orden de particulas de contorno.
+//==============================================================================
+void JPartsLoad4::CheckSortParticles(){
+  const unsigned nbound=unsigned(CaseNfixed+CaseNmoving);
+  if(nbound){
+    unsigned lastbound=0;
+    //-Computes position of last boundary particle.
+    for(unsigned p=0;p<Count;p++)if(Idp[p]<nbound && p>lastbound)lastbound=p;
+    if(lastbound+1!=nbound)RunException("CheckSortParticles","Order of boundary (fixed and moving) particles is invalid.");
+  }
+}
+
+//==============================================================================
 /// Sorts values according to Idp[].
 /// Ordena particulas por Idp[].
 //==============================================================================
 void JPartsLoad4::SortParticles(){
   //-Checks order. | Comprueba orden.
   bool sorted=true;
-  for(unsigned p=1;p<Count&&sorted;p++)sorted=(Idp[p-1]<Idp[p]);
+  for(unsigned p=1;p<Count && sorted;p++)sorted=(Idp[p-1]<Idp[p]);
   if(!sorted){
     //-Sorts points according to id. | Ordena puntos segun id.
     JRadixSort rs(UseOmp);
@@ -129,7 +145,9 @@ void JPartsLoad4::SortParticles(){
 /// It loads particles of bi4 file and it orders them by Id.
 /// Carga particulas de fichero bi4 y las ordena por Id.
 //==============================================================================
-void JPartsLoad4::LoadParticles(const std::string &casedir,const std::string &casename,unsigned partbegin,const std::string &casedirbegin){
+void JPartsLoad4::LoadParticles(const std::string &casedir,const std::string &casename
+  ,unsigned partbegin,const std::string &casedirbegin)
+{
   const char met[]="LoadParticles";
   Reset();
   PartBegin=partbegin;
@@ -181,6 +199,11 @@ void JPartsLoad4::LoadParticles(const std::string &casedir,const std::string &ca
   CasePosMax=pd.Get_CasePosMax();
   const bool possingle=pd.Get_PosSimple();
   if(!pd.Get_IdpSimple())RunException(met,"Only Idp (32 bits) is valid at the moment.");
+  //-Loads data for restarting.
+  if(PartBegin){
+    SymplecticDtPre=pd.GetPart()->GetvDouble("SymplecticDtPre",true,0);
+    DemDtForce=pd.GetPart()->GetvDouble("DemDtForce",true,0);
+  }
   //-Calculates number of particles. | Calcula numero de particulas.
   unsigned sizetot=pd.Get_Npok();
   for(unsigned piece=1;piece<Npiece;piece++){
@@ -231,8 +254,10 @@ void JPartsLoad4::LoadParticles(const std::string &casedir,const std::string &ca
     if(!sizetot)RunException(met,"Number of particles is invalid to calculates Y in 2D simulations.");
     Simulate2DPosY=Pos[0].y;
   }
+  //-Checks order of boundary particles.
+  CheckSortParticles();
   //-Sorts particles according to Id. | Ordena particulas por Id.
-  SortParticles();
+  //SortParticles();
 }
 
 //==============================================================================
@@ -262,7 +287,7 @@ void JPartsLoad4::CheckConfig(ullong casenp,ullong casenfixed,ullong casenmoving
 void JPartsLoad4::CheckConfig(ullong casenp,ullong casenfixed,ullong casenmoving,ullong casenfloat,ullong casenfluid)const
 {
   const char met[]="CheckConfig";
-  if(casenp!=CaseNp || casenfixed!=CaseNfixed || casenmoving!=CaseNmoving || casenfloat!=CaseNfloat || casenfluid!=CaseNfluid)RunException(met,"Data file does not match the configuration of the case.");
+  if(casenp!=CaseNp || casenfixed!=CaseNfixed || casenmoving!=CaseNmoving || casenfloat!=CaseNfloat || casenfluid!=CaseNfluid)RunException(met,"Particle number does not match the configuration of the case.");
 }
 
 //==============================================================================

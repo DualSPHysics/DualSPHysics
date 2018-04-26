@@ -31,6 +31,7 @@
 //:# - Remplaza long long por llong. (01-10-2015)
 //:# - En el constructor se puede indicar si se usa OMP. (07-07-2016)
 //:# - Documentacion del codigo en ingles. (08-08-2017)
+//:# - No reordena paraticulas para reducir diferencias usando restart. (23-04-2018)
 //:#############################################################################
 
 /// \file JPartsLoad4.h \brief Declares the class \ref JPartsLoad4.
@@ -80,6 +81,10 @@ protected:
   double PartBeginTimeStep;
   ullong PartBeginTotalNp;        ///<Total number of simulated particles.
 
+  //-Variables to restart.
+  double SymplecticDtPre;        ///<Previous Dt to use with Symplectic.
+  double DemDtForce;             ///<Dt for tangencial acceleration in DEM calculations.
+
   //-Variables for particles.
   unsigned Count;    //-Number of particles.
   unsigned *Idp;
@@ -88,6 +93,7 @@ protected:
 
   void AllocMemory(unsigned count);
   template<typename T> T* SortParticles(const unsigned *vsort,unsigned count,T *v)const;
+  void CheckSortParticles();
   void SortParticles();
   void CalculateCasePos();
 
@@ -118,6 +124,9 @@ public:
 
   tdouble3 GetCasePosMin()const{ return(CasePosMin); }
   tdouble3 GetCasePosMax()const{ return(CasePosMax); }
+
+  double GetSymplecticDtPre()const{ return(SymplecticDtPre); }
+  double GetDemDtForce()const{ return(DemDtForce); }
 
   llong GetAllocMemory()const;
 };

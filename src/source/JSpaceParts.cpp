@@ -211,7 +211,11 @@ TiXmlElement* JSpacePartBlock_Floating::WriteXml(JXml *sxml,TiXmlElement* ele)co
   if(!Inertia.a12 && !Inertia.a13 && !Inertia.a21 && !Inertia.a23 && !Inertia.a31 && !Inertia.a32){
     sxml->AddAttribute(sxml->AddElementDouble3(ele,"inertia",TDouble3(Inertia.a11,Inertia.a22,Inertia.a33)),"units_comment","kg*m^2");
   }
+#ifndef SPACEPARTS_USE_INERTIA_OLD
   else sxml->AddAttribute(sxml->AddElementMatrix3d(ele,"inertia",Inertia),"units_comment","kg*m^2");
+#else
+  else sxml->AddAttribute(sxml->AddElementDouble3(ele,"inertia",TDouble3(Inertia.a11,Inertia.a22,Inertia.a33)),"units_comment","kg*m^2");
+#endif
   if(Velini!=TDouble3(0))sxml->AddAttribute(sxml->AddElementDouble3(ele,"velini",Velini),"units_comment","m/s");
   if(Omegaini!=TDouble3(0))sxml->AddAttribute(sxml->AddElementDouble3(ele,"omegaini",Omegaini),"units_comment","radians/s");
   return(ele);
@@ -246,7 +250,7 @@ void JSpaceParts::Reset(){
   for(unsigned c=0;c<Blocks.size();c++)delete Blocks[c];
   Blocks.clear();
   Begin=0;
-  LastType=PT_Fixed;
+  LastType=TpPartFixed;
   SetMkFirst(0,0);
   Properties->Reset();
 }
@@ -291,8 +295,22 @@ const JSpacePartBlock& JSpaceParts::GetBlock(unsigned pos)const{
 //==============================================================================
 JSpacePartBlock* JSpaceParts::GetByMkType(bool bound,word mktype)const{
   JSpacePartBlock* bk=NULL;
-  for(unsigned c=0;c<Blocks.size()&&!bk;c++)if((Blocks[c]->Type!=PT_Fluid)==bound && Blocks[c]->GetMkType()==mktype)bk=Blocks[c];
+  for(unsigned c=0;c<Blocks.size()&&!bk;c++)if(IsBound(Blocks[c]->Type)==bound && Blocks[c]->GetMkType()==mktype)bk=Blocks[c];
   return(bk);
+}
+
+//==============================================================================
+/// Returns TRUE when number of particles match.
+//==============================================================================
+bool JSpaceParts::CheckNparticles(unsigned casenfixed,unsigned casenmoving,unsigned casenfloat,unsigned casenfluid)const{
+  return(casenfixed==Count(TpPartFixed) && casenmoving==Count(TpPartMoving) && casenfloat==Count(TpPartFloating) && casenfluid==Count(TpPartFluid));
+}
+
+//==============================================================================
+/// Returns TRUE when number of particles match.
+//==============================================================================
+bool JSpaceParts::CheckNparticles(ullong casenfixed,ullong casenmoving,ullong casenfloat,ullong casenfluid)const{
+  return(CheckNparticles(unsigned(casenfixed),unsigned(casenmoving),unsigned(casenfloat),unsigned(casenfluid)));
 }
 
 //==============================================================================
@@ -301,7 +319,7 @@ JSpacePartBlock* JSpaceParts::GetByMkType(bool bound,word mktype)const{
 void JSpaceParts::Add(JSpacePartBlock* block){
   if(GetByMkType(block->Bound,block->GetMkType()))RunException("Add","Cannot add a block with a existing mk.");
   if(block->Type<LastType)RunException("Add","The block type is invalid after the last type added.");
-  block->ConfigMk(block->Type==PT_Fluid? MkFluidFirst: MkBoundFirst);
+  block->ConfigMk(block->Bound? MkBoundFirst: MkFluidFirst);
   Blocks.push_back(block);
   Begin+=block->GetCount();
   LastType=block->Type;
@@ -372,7 +390,7 @@ void JSpaceParts::ReadXml(JXml *sxml,TiXmlElement* lis){
     ele=ele->NextSiblingElement();
   }
   Begin=Count();
-  if(np!=Count()||nb!=np-Count(PT_Fluid)||nbf!=Count(PT_Fixed))RunException(met,"The amount of particles does not match the header.");
+  if(np!=Count()||nb!=np-Count(TpPartFluid)||nbf!=Count(TpPartFixed))RunException(met,"The amount of particles does not match the header.");
   //-Checks property info in blocks.
   for(unsigned c=0;c<Blocks.size();c++){
     if(Blocks[c]->GetProperty()!=Properties->GetPropertyMk(Blocks[c]->GetMk())){
@@ -388,8 +406,8 @@ void JSpaceParts::WriteXml(JXml *sxml,TiXmlElement* lis)const{
   unsigned np=Count();
   lis->Clear();
   JXml::AddAttribute(lis,"np",np);
-  JXml::AddAttribute(lis,"nb",np-Count(PT_Fluid));
-  JXml::AddAttribute(lis,"nbf",Count(PT_Fixed));
+  JXml::AddAttribute(lis,"nb",np-Count(TpPartFluid));
+  JXml::AddAttribute(lis,"nbf",Count(TpPartFixed));
   JXml::AddAttribute(lis,"mkboundfirst",GetMkBoundFirst());
   JXml::AddAttribute(lis,"mkfluidfirst",GetMkFluidFirst());
   WriteXmlSummary(sxml,lis);
@@ -426,7 +444,7 @@ void JSpaceParts::WriteXmlSummary(JXml *sxml,TiXmlElement* ele)const{
 //==============================================================================
 void JSpaceParts::SetMkFirst(word boundfirst,word fluidfirst){
   MkBoundFirst=boundfirst; MkFluidFirst=fluidfirst;
-  for(unsigned c=0;c<Blocks.size();c++)Blocks[c]->ConfigMk(Blocks[c]->Type==PT_Fluid? MkFluidFirst: MkBoundFirst);
+  for(unsigned c=0;c<Blocks.size();c++)Blocks[c]->ConfigMk(Blocks[c]->Bound? MkBoundFirst: MkFluidFirst);
 }
 
 //==============================================================================
@@ -477,8 +495,8 @@ std::string JSpaceParts::GetMkList(TpParticles type)const{
 /// Returns summary of particle data.
 //==============================================================================
 JSpaceParts::StSummaryData JSpaceParts::GetSummaryData()const{
-  const unsigned ntp=4;
-  TpParticles types[ntp]={PT_Fixed,PT_Moving,PT_Floating,PT_Fluid};
+  const unsigned ntp=TPPARTICLES_COUNT;
+  TpParticles types[ntp]={TpPartFixed,TpPartMoving,TpPartFloating,TpPartFluid};
   StSummaryData dat;
   unsigned idbegin=0;
   for(unsigned c=0;c<ntp;c++){
@@ -499,7 +517,7 @@ JSpaceParts::StSummaryData JSpaceParts::GetSummaryData()const{
 void JSpaceParts::GetParticleSummary(std::vector<std::string> &out)const{
   //-Loads summary data.
   StSummaryData dat=GetSummaryData();
-  const unsigned ntp=4;
+  const unsigned ntp=TPPARTICLES_COUNT;
   //-Configures output format.
   string fmt="%u  id:(%u-%u)   MKs:%u (%s)";
   const bool aligned=false;
@@ -528,6 +546,56 @@ void JSpaceParts::GetParticleSummary(std::vector<std::string> &out)const{
   const unsigned mb=dat.nmk[0]+dat.nmk[1]+dat.nmk[2],mt=mb+dat.nmk[3];
   out.push_back(fun::PrintStr("Total particles: %u (bound=%u (fx=%u mv=%u ft=%u) fluid=%u)",nt,nb,dat.np[0],dat.np[1],dat.np[2],dat.np[3]));
   out.push_back(fun::PrintStr("Total MK blocks: %u (bound=%u (fx=%u mv=%u ft=%u) fluid=%u)",mt,mb,dat.nmk[0],dat.nmk[1],dat.nmk[2],dat.nmk[3]));
+}
+
+//==============================================================================
+/// Returns string with particles information.
+//==============================================================================
+void JSpaceParts::GetParticlesInfo(std::vector<std::string> &out)const{
+  out.push_back("");
+  out.push_back("Particles data:");
+  out.push_back("----------------");
+  const unsigned nfixed=Count(TpPartFixed);
+  const unsigned nmoving=Count(TpPartMoving);
+  const unsigned nfloat=Count(TpPartFloating);
+  const unsigned nbound=nfixed+nmoving+nfloat;
+  const unsigned nfluid=Count(TpPartFluid);
+  out.push_back(fun::PrintStr("Number of particles: %u",nbound+nfluid));
+  out.push_back(fun::PrintStr("- Boundary: %u",nbound));
+  const unsigned nc=CountBlocks();
+  out.push_back(fun::PrintStr("  - Fixed: %u",nfixed));
+  for(unsigned c=0;c<nc;c++)if(GetBlock(c).Type==TpPartFixed){
+    const JSpacePartBlock& bk=GetBlock(c);
+    const unsigned count=bk.GetCount(),begin=bk.GetBegin();
+    out.push_back(fun::PrintStr("      Mk[%d]: %u (%u-%u)",bk.GetMk(),count,begin,begin+count-1));
+  }
+  out.push_back(fun::PrintStr("  - Moving: %u",nmoving));
+  for(unsigned c=0;c<nc;c++)if(GetBlock(c).Type==TpPartMoving){
+    const JSpacePartBlock& bk=GetBlock(c);
+    const unsigned count=bk.GetCount(),begin=bk.GetBegin();
+    out.push_back(fun::PrintStr("      Mk[%d]: %u (%u-%u)",bk.GetMk(),count,begin,begin+count-1));
+  }
+  out.push_back(fun::PrintStr("  - Floating: %u",nfloat));
+  for(unsigned c=0;c<nc;c++)if(GetBlock(c).Type==TpPartFloating){
+    const JSpacePartBlock& bk=GetBlock(c);
+    const unsigned count=bk.GetCount(),begin=bk.GetBegin();
+    out.push_back(fun::PrintStr("      Mk[%d]: %u (%u-%u)",bk.GetMk(),count,begin,begin+count-1));
+  }
+  out.push_back(fun::PrintStr("- Fluid: %u",nfluid));
+  for(unsigned c=0;c<nc;c++)if(GetBlock(c).Type==TpPartFluid){
+    const JSpacePartBlock& bk=GetBlock(c);
+    const unsigned count=bk.GetCount(),begin=bk.GetBegin();
+    out.push_back(fun::PrintStr("      Mk[%d]: %u (%u-%u)",bk.GetMk(),count,begin,begin+count-1));
+  }
+}
+
+//==============================================================================
+/// Prints particles information.
+//==============================================================================
+void JSpaceParts::VisuParticlesInfo()const{
+  std::vector<string> lines;
+  GetParticlesInfo(lines);
+  for(unsigned c=0;c<unsigned(lines.size());c++)printf("%s\n",lines[c].c_str());
 }
 
 //##############################################################################
@@ -570,7 +638,7 @@ void JSpacePartsGetMk::Config(const JSpaceParts *sparts){
   MkValue=new word[MkCount];
   for(unsigned c=0;c<sparts->CountBlocks();c++){
     const JSpacePartBlock &block=sparts->GetBlock(c);
-    if(Splitting && block.Type==PT_Fluid)MkSplitting=block.GetMk();
+    if(Splitting && block.Type==TpPartFluid)MkSplitting=block.GetMk();
     MkValue[c]=block.GetMk();
     MkRange[c]=block.GetBegin()+block.GetCount();
   }
