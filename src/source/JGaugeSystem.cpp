@@ -401,7 +401,6 @@ JGaugeItem* JGaugeSystem::GetGauge(unsigned c)const{
 void JGaugeSystem::CalculeCpu(double timestep,bool svpart,tuint3 ncells,tuint3 cellmin,const unsigned *begincell
   ,const tdouble3 *pos,const typecode *code,const tfloat4 *velrhop)
 {
-  //Log->Printf("AAA_000 t:%f",timestep);
   const unsigned ng=GetCount();
   for(unsigned cg=0;cg<ng;cg++){
     JGaugeItem* gau=Gauges[cg];
@@ -409,7 +408,6 @@ void JGaugeSystem::CalculeCpu(double timestep,bool svpart,tuint3 ncells,tuint3 c
       gau->CalculeCpu(timestep,ncells,cellmin,begincell,pos,code,velrhop);
     }
   }
-  //Log->Print("AAA_fin");
 }
 
 #ifdef _WITHGPU

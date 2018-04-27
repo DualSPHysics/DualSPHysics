@@ -97,20 +97,6 @@ public:
     llong memorynctused;
   }StInfoPartPlus;
 
-/// Structure with Periodic information.
-  typedef struct{
-    byte PeriActive;
-    bool PeriX;          ///<Periodic conditions in X.                                     | Condiciones periodicas en X.
-    bool PeriY;          ///<Periodic conditions in Y.                                     | Condiciones periodicas en Y.
-    bool PeriZ;          ///<Periodic conditions in Z.                                     | Condiciones periodicas en Z.
-    bool PeriXY;         ///<Periodic conditions in X-Y.                                   | Condiciones periodicas en X-Y.
-    bool PeriXZ;         ///<Periodic conditions in X-Z.                                   | Condiciones periodicas en X-Z.
-    bool PeriYZ;         ///<Periodic conditions in Y-Z.                                   | Condiciones periodicas en Y-Z.
-    tdouble3 PeriXinc;   ///<Value that is added at the outer limit to modify coordinates. | Valor que se suma al extremo final para modificar coordenadas.
-    tdouble3 PeriYinc;   ///<Value that is added at the outer limit to modify coordinates. | Valor que se suma al extremo final para modificar coordenadas.
-    tdouble3 PeriZinc;   ///<Value that is added at the outer limit to modify coordinates. | Valor que se suma al extremo final para modificar coordenadas.
-  }StPeriodic;
-
 private:
   //-Configuration variables to compute the case limits.
   //-Variables de configuracion para calcular el limite del caso.
@@ -235,14 +221,9 @@ protected:
   JSphMk *MkInfo;            ///<Stores information for the Mk of the particles.
 
   //-Variables for periodic conditions.
-  StPeriodic PeriodicConfig; ///<Stores configuration of periodic conditions before applying CellOrder. | Almacena la configuracion de condiciones periodicas antes de aplicar CellOrder. 
+  StPeriodic PeriodicConfig; ///<Stores initial configuration of periodic conditions (before applying CellOrder).
   byte PeriActive;
-  bool PeriX;           ///<Periodic conditions in X.
-  bool PeriY;           ///<Periodic conditions in Y.
-  bool PeriZ;           ///<Periodic conditions in Z.
-  bool PeriXY;          ///<Periodic conditions in X-Y.
-  bool PeriXZ;          ///<Periodic conditions in X-Z.
-  bool PeriYZ;          ///<Periodic conditions in Y-Z.
+  bool PeriX,PeriY,PeriZ;
   tdouble3 PeriXinc;    ///<Value that is added at the outer limit to modify the position.
   tdouble3 PeriYinc;    ///<Value that is added at the outer limit to modify the position.
   tdouble3 PeriZinc;    ///<Value that is added at the outer limit to modify the position.

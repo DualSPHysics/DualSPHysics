@@ -1615,22 +1615,21 @@ void JSphCpu::UpdatePos(tdouble3 rpos,double movx,double movy,double movz
   bool out=(dx!=dx || dy!=dy || dz!=dz || dx<0 || dy<0 || dz<0 || dx>=MapRealSize.x || dy>=MapRealSize.y || dz>=MapRealSize.z);
   //-Adjust position according to periodic conditions and compare domain limits. | Ajusta posicion segun condiciones periodicas y vuelve a comprobar los limites del dominio.
   if(PeriActive && out){
-    bool xperi=((PeriActive&1)!=0),yperi=((PeriActive&2)!=0),zperi=((PeriActive&4)!=0);
-    if(xperi){
+    if(PeriX){
       if(dx<0)             { dx-=PeriXinc.x; dy-=PeriXinc.y; dz-=PeriXinc.z; }
       if(dx>=MapRealSize.x){ dx+=PeriXinc.x; dy+=PeriXinc.y; dz+=PeriXinc.z; }
     }
-    if(yperi){
+    if(PeriY){
       if(dy<0)             { dx-=PeriYinc.x; dy-=PeriYinc.y; dz-=PeriYinc.z; }
       if(dy>=MapRealSize.y){ dx+=PeriYinc.x; dy+=PeriYinc.y; dz+=PeriYinc.z; }
     }
-    if(zperi){
+    if(PeriZ){
       if(dz<0)             { dx-=PeriZinc.x; dy-=PeriZinc.y; dz-=PeriZinc.z; }
       if(dz>=MapRealSize.z){ dx+=PeriZinc.x; dy+=PeriZinc.y; dz+=PeriZinc.z; }
     }
-    bool outx=!xperi && (dx<0 || dx>=MapRealSize.x);
-    bool outy=!yperi && (dy<0 || dy>=MapRealSize.y);
-    bool outz=!zperi && (dz<0 || dz>=MapRealSize.z);
+    bool outx=!PeriX && (dx<0 || dx>=MapRealSize.x);
+    bool outy=!PeriY && (dy<0 || dy>=MapRealSize.y);
+    bool outz=!PeriZ && (dz<0 || dz>=MapRealSize.z);
     out=(outx||outy||outz);
     rpos=TDouble3(dx,dy,dz)+MapRealPosMin;
   }

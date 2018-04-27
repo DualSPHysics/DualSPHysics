@@ -55,7 +55,7 @@ void JPartDataHead::Reset(){
   //-General variables.
   ConfigBasic("","","",TDouble3(0),TDouble3(0),false,0,0,0);
   ConfigCtes(0,0,0,0,0,0,0,TFloat3(0));
-  ConfigSimPeri(false,false,false,false,false,false,TDouble3(0),TDouble3(0),TDouble3(0));
+  ConfigSimPeri(PERI_Unknown,TDouble3(0),TDouble3(0),TDouble3(0));
   ConfigVisco(VISCO_None,0,0);
   ConfigSplitting(false);
   //-Mk blocks data.
@@ -173,18 +173,8 @@ void JPartDataHead::ConfigSimMap(tdouble3 mapposmin,tdouble3 mapposmax){
 /// Configuracion de variables de condiciones periodicas.
 /// Configuration of variables of periodic conditions.
 //==============================================================================
-void JPartDataHead::ConfigSimPeri(bool peri_x,bool peri_y,bool peri_z
-  ,bool peri_xy,bool peri_xz,bool peri_yz
-  ,tdouble3 perixinc,tdouble3 periyinc,tdouble3 perizinc)
-{
-  const char met[]="ConfigSimPeri";
-  PeriActive=PERI_None;
-  if(peri_xy)PeriActive=PERI_XY;
-  else if(peri_xz)PeriActive=PERI_XZ;
-  else if(peri_yz)PeriActive=PERI_YZ;
-  else if(peri_x)PeriActive=PERI_X;
-  else if(peri_y)PeriActive=PERI_Y;
-  else if(peri_z)PeriActive=PERI_Z;
+void JPartDataHead::ConfigSimPeri(TpPeri tperi,tdouble3 perixinc,tdouble3 periyinc,tdouble3 perizinc){
+  PeriMode=tperi;
   PeriXinc=perixinc;
   PeriYinc=periyinc;
   PeriZinc=perizinc;
@@ -230,7 +220,7 @@ void JPartDataHead::SaveFile(std::string dir){
   bdat.SetvDouble3("MapPosMin",MapPosMin);
   bdat.SetvDouble3("MapPosMax",MapPosMax);
 
-  bdat.SetvInt("PeriActive",int(PeriActive));
+  bdat.SetvInt("PeriMode",int(PeriMode));
   bdat.SetvDouble3("PeriXinc",PeriXinc);
   bdat.SetvDouble3("PeriYinc",PeriYinc);
   bdat.SetvDouble3("PeriZinc",PeriZinc);
@@ -308,7 +298,12 @@ void JPartDataHead::LoadFile(std::string dir){
   MapPosMin=bdat.GetvDouble3("MapPosMin");
   MapPosMax=bdat.GetvDouble3("MapPosMax");
 
-  PeriActive=(TpPeri)bdat.GetvInt("PeriActive");
+  {
+    string varname="PeriMode";
+    //-Maintains backwards compatibility with previous formats (27-04-2018).
+    if(!bdat.ExistsValue("PeriMode",JBinaryDataDef::DatInt) && bdat.ExistsValue("PeriActive",JBinaryDataDef::DatInt))varname="PeriActive";
+    PeriMode=(TpPeri)bdat.GetvInt(varname); 
+  }
   PeriXinc=bdat.GetvDouble3("PeriXinc");
   PeriYinc=bdat.GetvDouble3("PeriYinc");
   PeriZinc=bdat.GetvDouble3("PeriZinc");

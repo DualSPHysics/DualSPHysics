@@ -242,7 +242,7 @@ void JSphGpuSingle::RunPeriodic(){
     const unsigned num= (ctype? npf0: npb0);
     //-Searches for periodic zones on each axis (X, Y and Z).
     //-Busca periodicas en cada eje (X, Y e Z).
-    for(unsigned cper=0;cper<3;cper++)if((cper==0 && PeriActive&1) || (cper==1 && PeriActive&2) || (cper==2 && PeriActive&4)){
+    for(unsigned cper=0;cper<3;cper++)if((cper==0 && PeriX) || (cper==1 && PeriY) || (cper==2 && PeriZ)){
       tdouble3 perinc=(cper==0? PeriXinc: (cper==1? PeriYinc: PeriZinc));
       //-First searches in the list of new periodic particles and then in the initial particle list (necessary for periodic zones in more than one axis)
       //-Primero busca en la lista de periodicas nuevas y despues en la lista inicial de particulas (necesario para periodicas en mas de un eje).

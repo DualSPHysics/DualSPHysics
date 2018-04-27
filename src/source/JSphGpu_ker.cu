@@ -2099,15 +2099,15 @@ template<bool periactive> __device__ void KerFtPeriodicDist(double px,double py,
     double ddy=py-ceny;
     double ddz=pz-cenz;
     const unsigned peri=CTE.periactive;
-    if((peri&1) && fabs(ddx)>radius){
+    if(PERI_AxisX(peri) && fabs(ddx)>radius){
       if(ddx>0){ ddx+=CTE.xperincx; ddy+=CTE.xperincy; ddz+=CTE.xperincz; }
       else{      ddx-=CTE.xperincx; ddy-=CTE.xperincy; ddz-=CTE.xperincz; }
     }
-    if((peri&2) && fabs(ddy)>radius){
+    if(PERI_AxisY(peri) && fabs(ddy)>radius){
       if(ddy>0){ ddx+=CTE.yperincx; ddy+=CTE.yperincy; ddz+=CTE.yperincz; }
       else{      ddx-=CTE.yperincx; ddy-=CTE.yperincy; ddz-=CTE.yperincz; }
     }
-    if((peri&4) && fabs(ddz)>radius){
+    if(PERI_AxisZ(peri) && fabs(ddz)>radius){
       if(ddz>0){ ddx+=CTE.zperincx; ddy+=CTE.zperincy; ddz+=CTE.zperincz; }
       else{      ddx-=CTE.zperincx; ddy-=CTE.zperincy; ddz-=CTE.zperincz; }
     }

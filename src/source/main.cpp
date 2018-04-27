@@ -1,6 +1,6 @@
 /*
  <DUALSPHYSICS>  Copyright (c) 2018, 
- Dr Jose M. Dominguez, Dr Alejandro Crespo, Prof. Moncho Gomez Gesteira, Dr Anxo Barreiro,
+ Dr Jose M. Dominguez, Dr Alejandro Crespo, Prof. Moncho Gomez Gesteira, Orlando Garcia-Feal,
  Dr Benedict Rogers, Dr Georgios Fourtakas, Dr Athanasios Mokos,
  Dr Renato Vacondio, Dr Ricardo Canelas, Dr Stephen Longshaw, Dr Corrado Altomare.
 
@@ -29,7 +29,7 @@ School of Mechanical, Aerospace and Civil Engineering, University of Manchester,
 \section compile_sec Project files
 Please download source files and documentation from <a href="http://dual.sphysics.org">DualSPHysics website.</a> \n
 \author <a href="http://dual.sphysics.org/index.php/developers">DualSPHysics Developers.</a> 
-\version 4.2.046
+\version 4.2.047
 \date 27-04-2018
 \copyright GNU Lesser General Public License <a href="http://www.gnu.org/licenses/">GNU licenses.</a>
 */
@@ -60,7 +60,7 @@ typedef struct StrAppInfo{
   string Date;
   bool ModeMK65k;
   StrAppInfo(){
-    MainName="DualSPHysics4"; MainVer="v4.2.046";
+    MainName="DualSPHysics4"; MainVer="v4.2.047";
     //SubName="UserVersion"; SubVer="v1.0";
     Date="27-04-2018";
     #ifdef CODE_SIZE4
@@ -82,7 +82,7 @@ std::string getlicense_lgpl(const std::string &name,bool simple){
   std::string tx=(simple? "": "\n");
   tx=tx+"\n <"+fun::StrUpper(name)+"> Copyright (C) 2018 by"; 
   tx=tx+"\n Dr Jose M. Dominguez, Dr Alejandro Crespo,";
-  tx=tx+"\n Prof. Moncho Gomez Gesteira, Dr Anxo Barreiro,";
+  tx=tx+"\n Prof. Moncho Gomez Gesteira, Orlando Garcia-Feal,";
   tx=tx+"\n Dr Benedict Rogers, Dr Georgios Fourtakas, Dr Athanasios Mokos,";
   tx=tx+"\n Dr Renato Vacondio, Dr Ricardo Canelas,";
   tx=tx+"\n Dr Stephen Longshaw, Dr Corrado Altomare.\n";

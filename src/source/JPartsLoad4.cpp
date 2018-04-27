@@ -54,7 +54,7 @@ void JPartsLoad4::Reset(){
   Simulate2D=false;
   Simulate2DPosY=0;
   CaseNp=CaseNfixed=CaseNmoving=CaseNfloat=CaseNfluid=0;
-  PeriMode=PERI_None;
+  PeriMode=PERI_Unknown;
   PeriXinc=PeriYinc=PeriZinc=TDouble3(0);
   MapSize=false;
   MapPosMin=MapPosMax=TDouble3(0);
@@ -179,16 +179,7 @@ void JPartsLoad4::LoadParticles(const std::string &casedir,const std::string &ca
   CaseNmoving=pd.Get_CaseNmoving();
   CaseNfloat=pd.Get_CaseNfloat();
   CaseNfluid=pd.Get_CaseNfluid();
-  JPartDataBi4::TpPeri peri=pd.Get_PeriActive();
-  if(peri==JPartDataBi4::PERI_None)PeriMode=PERI_None;
-  else if(peri==JPartDataBi4::PERI_X)PeriMode=PERI_X;
-  else if(peri==JPartDataBi4::PERI_Y)PeriMode=PERI_Y;
-  else if(peri==JPartDataBi4::PERI_Z)PeriMode=PERI_Z;
-  else if(peri==JPartDataBi4::PERI_XY)PeriMode=PERI_XY;
-  else if(peri==JPartDataBi4::PERI_XZ)PeriMode=PERI_XZ;
-  else if(peri==JPartDataBi4::PERI_YZ)PeriMode=PERI_YZ;
-  else if(peri==JPartDataBi4::PERI_Unknown)PeriMode=PERI_Unknown;
-  else RunException(met,"Periodic configuration is invalid.");
+  PeriMode=(!PartBegin? PERI_Unknown: pd.Get_PeriMode());
   PeriXinc=pd.Get_PeriXinc();
   PeriYinc=pd.Get_PeriYinc();
   PeriZinc=pd.Get_PeriZinc();
@@ -264,19 +255,11 @@ void JPartsLoad4::LoadParticles(const std::string &casedir,const std::string &ca
 /// Check validity of loaded configuration or throw exception.
 /// Comprueba validez de la configuracion cargada o lanza excepcion.
 //==============================================================================
-void JPartsLoad4::CheckConfig(ullong casenp,ullong casenfixed,ullong casenmoving,ullong casenfloat,ullong casenfluid,bool perix,bool periy,bool periz)const
+void JPartsLoad4::CheckConfig(ullong casenp,ullong casenfixed,ullong casenmoving,ullong casenfloat,ullong casenfluid,TpPeri tperi)const
 {
   const char met[]="CheckConfig";
   CheckConfig(casenp,casenfixed,casenmoving,casenfloat,casenfluid);
   //-Obtains periodic mode and compares with loaded file.
-  //-Obtiene modo periodico y compara con el cargado del fichero.
-  TpPeri tperi=PERI_None;
-  if(perix&&periy)tperi=PERI_XY;
-  else if(perix&&periz)tperi=PERI_XZ;
-  else if(periy&&periz)tperi=PERI_YZ;
-  else if(perix)tperi=PERI_X;
-  else if(periy)tperi=PERI_Y;
-  else if(periz)tperi=PERI_Z;
   if(tperi!=PeriMode && PeriMode!=PERI_Unknown)RunException(met,"Data file does not match the periodic configuration of the case.");
 }
 

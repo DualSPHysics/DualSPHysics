@@ -23,6 +23,7 @@
 
 #include "TypesDef.h"
 #include "JParticlesDef.h"
+#include "JPerodicModeDef.h"
 #include "OmpDefs.h"
 #include <algorithm>
 
