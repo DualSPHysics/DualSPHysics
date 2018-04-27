@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2017 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2018 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -34,7 +34,7 @@
 //##############################################################################
 //# JWaveSpectrumGpu
 //##############################################################################
-/// \brief Manages the GPU computations of JWaveSpectrum class.
+/// \brief Manages the GPU computations for irregular wave generation (JWaveSpectrum class).
 
 class JWaveSpectrumGpu : protected JObject
 {

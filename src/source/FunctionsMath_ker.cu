@@ -1,6 +1,6 @@
 //HEAD_DSCODES
 /*
- <DUALSPHYSICS>  Copyright (c) 2017 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2018 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -16,7 +16,7 @@
  You should have received a copy of the GNU Lesser General Public License along with DualSPHysics. If not, see <http://www.gnu.org/licenses/>. 
 */
 
-/// \file FunctionsMath_ker.cu \brief Implements basic/general math functions.
+/// \file FunctionsMath_ker.cu \brief Implements basic/general math functions for the GPU executions.
 
 #include "TypesDef.h"
 #include <cuda_runtime_api.h>

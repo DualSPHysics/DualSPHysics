@@ -1,6 +1,6 @@
 //HEAD_DSCODES
 /*
- <DUALSPHYSICS>  Copyright (c) 2017 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2018 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -16,6 +16,8 @@
  You should have received a copy of the GNU Lesser General Public License along with DualSPHysics. If not, see <http://www.gnu.org/licenses/>. 
 */
 
+/// \file JMotionObj.cpp \brief Implements the classes \ref JMotionObj and \ref JMotionMovActive.
+
 #include "JMotionObj.h"
 #include "JMotionMov.h"
 #include "JMotionEvent.h"
@@ -29,6 +31,9 @@
 using namespace std;
 //using std::ios;
 
+//##############################################################################
+//# JMotionMovActive
+//##############################################################################
 //==============================================================================
 // Constructor.
 //==============================================================================
@@ -203,10 +208,10 @@ void JMotionMovActive::NextMov(){
   }
 }
 
-//==============================================================================
-//##############################################################################
-//==============================================================================
 
+//##############################################################################
+//# JMotionObj
+//##############################################################################
 //==============================================================================
 // Constructor.
 //==============================================================================

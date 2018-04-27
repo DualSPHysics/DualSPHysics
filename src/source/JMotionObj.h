@@ -1,6 +1,6 @@
 //HEAD_DSCODES
 /*
- <DUALSPHYSICS>  Copyright (c) 2017 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2018 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -15,6 +15,8 @@
 
  You should have received a copy of the GNU Lesser General Public License along with DualSPHysics. If not, see <http://www.gnu.org/licenses/>. 
 */
+
+/// \file JMotionObj.h \brief Declares the classes \ref JMotionObj and \ref JMotionMovActive.
 
 #ifndef _JMotionObj_
 #define _JMotionObj_
@@ -31,10 +33,11 @@ class JMotionMov;
 class JMotionAxis;
 class TiXmlNode;
 
-
-//==============================================================================
 //##############################################################################
-//==============================================================================
+//# JMotionMovActive
+//##############################################################################
+/// \brief Manages the active motions during a time interval.  
+
 class JMotionMovActive : protected JObject
 {
 public:
@@ -77,9 +80,12 @@ public:
 
 class JMotion;
 class JMotionEvent;
-//==============================================================================
+
 //##############################################################################
-//==============================================================================
+//# JMotionObj
+//##############################################################################
+/// \brief Manages the hierarchy of motions.
+
 class JMotionObj : protected JObject
 {
 private:

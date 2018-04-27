@@ -1,6 +1,6 @@
 //HEAD_DSCODES
 /*
- <DUALSPHYSICS>  Copyright (c) 2017 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2018 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -16,6 +16,8 @@
  You should have received a copy of the GNU Lesser General Public License along with DualSPHysics. If not, see <http://www.gnu.org/licenses/>. 
 */
 
+/// \file JMotionPos.h \brief Declares the class \ref JMotionPos.
+
 #ifndef _JMotionPos_
 #define _JMotionPos_
 
@@ -25,9 +27,11 @@
 #include <ctime>
 #include "JMatrix4.h"
 
-//==============================================================================
 //##############################################################################
-//==============================================================================
+//# JMotionPos
+//##############################################################################
+/// \brief Manages the position of objects.
+
 class JMotionPos
 {
 private:
