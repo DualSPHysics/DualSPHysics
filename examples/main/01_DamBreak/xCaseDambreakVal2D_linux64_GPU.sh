@@ -17,7 +17,7 @@ partvtkout="${dirbin}/PartVTKOut4_linux64"
 measuretool="${dirbin}/MeasureTool4_linux64"
 computeforces="${dirbin}/ComputeForces4_linux64"
 isosurface="${dirbin}/IsoSurface4_linux64"
-measureboxes="${dirbin}/MeasureBoxes4_linux64"
+flowtool="${dirbin}/FlowTool4_linux64"
 
 
 # Library path must be indicated properly
@@ -49,7 +49,7 @@ fi
 
 # Executes DualSPHysics to simulate SPH method.
 if [ $errcode -eq 0 ]; then
-  $dualsphysicscpu -cpu $dirout/$name $dirout -dirdataout data -svres -tmax:0.0005 -tout:0.0001
+  $dualsphysicsgpu -gpu $dirout/$name $dirout -dirdataout data -svres -tmax:0.0005 -tout:0.0001
   errcode=$?
 fi
 

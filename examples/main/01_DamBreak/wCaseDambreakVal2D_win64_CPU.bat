@@ -17,7 +17,7 @@ set partvtkout="%dirbin%/PartVTKOut4_win64.exe"
 set measuretool="%dirbin%/MeasureTool4_win64.exe"
 set computeforces="%dirbin%/ComputeForces4_win64.exe"
 set isosurface="%dirbin%/IsoSurface4_win64.exe"
-set measureboxes="%dirbin%/MeasureBoxes4_win64.exe"
+set flowtool="%dirbin%/FlowTool4_win64.exe"
 
 REM "dirout" is created to store results or it is removed if it already exists
 
@@ -34,7 +34,7 @@ REM Executes GenCase4 to create initial files for simulation.
 if not "%ERRORLEVEL%" == "0" goto fail
 
 REM Executes DualSPHysics to simulate SPH method.
-%dualsphysicsgpu% -gpu %dirout%/%name% %dirout% -dirdataout data -svres
+%dualsphysicscpu% -cpu %dirout%/%name% %dirout% -dirdataout data -svres
 if not "%ERRORLEVEL%" == "0" goto fail
 
 REM Executes PartVTK4 to create VTK files with particles.

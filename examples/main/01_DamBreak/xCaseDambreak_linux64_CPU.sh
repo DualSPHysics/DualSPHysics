@@ -17,7 +17,7 @@ partvtkout="${dirbin}/PartVTKOut4_linux64"
 measuretool="${dirbin}/MeasureTool4_linux64"
 computeforces="${dirbin}/ComputeForces4_linux64"
 isosurface="${dirbin}/IsoSurface4_linux64"
-measureboxes="${dirbin}/MeasureBoxes4_linux64"
+flowtool="${dirbin}/FlowTool4_linux64"
 
 
 # Library path must be indicated properly
@@ -101,10 +101,10 @@ if [ $errcode -eq 0 ]; then
   errcode=$?
 fi
 
-# Executes MeasureBoxes4 to create VTK files with particles assigned to different zones and a CSV file with information of each zone.
-dirout2=${dirout}/meaboxes; mkdir $dirout2
+# Executes FlowTool4 to create VTK files with particles assigned to different zones and a CSV file with information of each zone.
+dirout2=${dirout}/flow; mkdir $dirout2
 if [ $errcode -eq 0 ]; then
-  $measureboxes -dirin $diroutdatadata -fileboxes CaseDambreak_FileBoxes.txt -savecsv $dirout/ResultBoxes.csv -savevtk $dirout2/Boxes.vtk
+  $flowtool -dirin $diroutdatadata -fileboxes CaseDambreak_FileBoxes.txt -savecsv $dirout/ResultBoxes.csv -savevtk $dirout2/Boxes.vtk
   errcode=$?
 fi
 
