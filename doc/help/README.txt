@@ -1,5 +1,4 @@
 GenCase4_Help.out        	Includes the HELP about the execution parameters of the GenCase code
-CaseTemplate.xml  	     	This XML file contains all the options to create aparticles, define movements and describe parameters of execution that will help users to create their own testcases.
 
 DualSPHysics4_Help.out   	Includes the HELP about the execution parameters of the DualSPHysics code
 
@@ -18,5 +17,5 @@ ComputeForces4_Help.out		Includes the HELP about the execution parameters of the
 
 FloatingInfo4_Help.out		Includes the HELP about the execution parameters of the FloatingInfo code
 
-MeasureBoxes4_Help.out		Includes the HELP about the execution parameters of the MeasureBoxes code
+FlowTool4_Help.out          Includes the HELP about the execution parameters of the FlowTool code
 

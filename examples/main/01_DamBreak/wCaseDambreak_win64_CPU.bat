@@ -17,7 +17,7 @@ set partvtkout="%dirbin%/PartVTKOut4_win64.exe"
 set measuretool="%dirbin%/MeasureTool4_win64.exe"
 set computeforces="%dirbin%/ComputeForces4_win64.exe"
 set isosurface="%dirbin%/IsoSurface4_win64.exe"
-set measureboxes="%dirbin%/MeasureBoxes4_win64.exe"
+set flowtool="%dirbin%/FlowTool4_win64.exe"
 
 REM "dirout" is created to store results or it is removed if it already exists
 
@@ -34,7 +34,7 @@ REM Executes GenCase4 to create initial files for simulation.
 if not "%ERRORLEVEL%" == "0" goto fail
 
 REM Executes DualSPHysics to simulate SPH method.
-%dualsphysicsgpu% -gpu %dirout%/%name% %dirout% -dirdataout data -svres
+%dualsphysicscpu% -cpu %dirout%/%name% %dirout% -dirdataout data -svres
 if not "%ERRORLEVEL%" == "0" goto fail
 
 REM Executes PartVTK4 to create VTK files with particles.
@@ -76,10 +76,10 @@ set planesd="-slice3pt:0:0:0:1:0.7:0:1:0.7:1"
 %isosurface% -dirin %diroutdata% -saveiso %dirout2%/Surface -vars:-all,vel,rhop,idp,type -saveslice %dirout2%/Slices %planesy% %planesx% %planesd%
 if not "%ERRORLEVEL%" == "0" goto fail
 
-REM Executes MeasureBoxes4 to create VTK files with particles assigned to different zones and a CSV file with information of each zone.
-set dirout2=%dirout%\meaboxes
+REM Executes FlowTool4 to create VTK files with particles assigned to different zones and a CSV file with information of each zone.
+set dirout2=%dirout%\flow
 mkdir %dirout2%
-%measureboxes% -dirin %diroutdata% -fileboxes CaseDambreak_FileBoxes.txt -savecsv %dirout%/ResultBoxes.csv -savevtk %dirout2%/Boxes.vtk
+%flowtool% -dirin %diroutdata% -fileboxes CaseDambreak_FileBoxes.txt -savecsv %dirout%/ResultBoxes.csv -savevtk %dirout2%/Boxes.vtk
 if not "%ERRORLEVEL%" == "0" goto fail
 
 

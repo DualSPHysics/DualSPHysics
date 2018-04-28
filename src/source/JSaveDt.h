@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2017 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2018 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -24,6 +24,7 @@
 //:# - Se elimina el valor csound. (22-01-2015)
 //:# - Error corregido cuando TimeFinish=0. (22-01-2018)
 //:# - Error corregido al generar excepcion por error en fichero. (22-01-2018)
+//:# - Se escriben las unidades en las cabeceras de los ficheros CSV. (26-04-2018)
 //:#############################################################################
 
 /// \file JSaveDt.h \brief Declares the class \ref JSaveDt.

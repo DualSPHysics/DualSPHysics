@@ -1,6 +1,6 @@
 
 
- <MEASUREBOXES4>  Copyright (C) 2017 by Jose M. Dominguez
+ <FLOWTOOL4>  Copyright (C) 2018 by Dr Jose M. Dominguez
  All rights reserved.
 
  DualSPHysics is an international collaboration between University of Vigo 
@@ -30,12 +30,12 @@
  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
 
 
-MeasureBoxes4 v4.0.020 (25-04-2018)
-====================================
+FlowTool4 v4.0.024 (27-04-2018)
+================================
 LoadDsphConfig> .../bin/windows/DsphConfig.xml
 Information about parameters of execution:
 
-  MeasureBoxes <options>
+  FlowTool <options>
 
   Basic options:
     -h             Shows information about parameters
@@ -59,5 +59,5 @@ Information about parameters of execution:
     -savevtk <file.vtk>   Generates vtk(polydata) files with particles
 
   Examples:
-    MeasureBoxes -dirin . -fileboxes boxes.dat -savecsv resul.csv -savevtk dir/files.vtk
+    FlowTool4 -dirin . -fileboxes boxes.dat -savecsv resul.csv -savevtk dir/files.vtk
 

@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2017 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2018 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -111,7 +111,7 @@ void JSaveDt::VisuConfig(std::string txhead,std::string txfoot){
 /// Stores file buffer values.
 /// Graba valores de buffer en fichero.
 //==============================================================================
-void JSaveDt::SaveFileValues(){
+void JSaveDt::SaveFileValues(){ 
   const char met[]="SaveFileValues";
   const bool firstsv=FileDtInfo.empty();
   if(firstsv){
@@ -122,14 +122,14 @@ void JSaveDt::SaveFileValues(){
   //-Saves head.
   if(firstsv){
     scsv.SetHead();
-    scsv << "Time;Values";
-    scsv << "Dtf_mean;Dtf_min;Dtf_max";
-    scsv << "Dt1_mean;Dt1_min;Dt1_max";
-    scsv << "Dt2_mean;Dt2_min;Dt2_max";
+    scsv << "Time [s];Values";
+    scsv << "Dtf_mean [s];Dtf_min [s];Dtf_max [s]";
+    scsv << "Dt1_mean [s];Dt1_min [s];Dt1_max [s]";
+    scsv << "Dt2_mean [s];Dt2_min [s];Dt2_max [s]";
     if(FullInfo){
-      scsv << "AceMax_mean;AceMax_min;AceMax_max";
+      scsv << "AceMax_mean [m/s^2];AceMax_min [m/s^2];AceMax_max [m/s^2]";
       scsv << "ViscDtMax_mean;ViscDtMax_min;ViscDtMax_max";
-      scsv << "VelMax_mean;VelMax_min;VelMax_max";
+      scsv << "VelMax_mean [m/s];VelMax_min [m/s];VelMax_max [m/s]";
     }
     scsv << jcsv::Endl();
   }
@@ -176,7 +176,7 @@ void JSaveDt::SaveFileAllDts(){
   //-Saves head.
   if(firstsv){
     scsv.SetHead();
-    scsv << "Time;Dtf" << jcsv::Endl();
+    scsv << "Time [s];Dtf [s]" << jcsv::Endl();
   }
   //-Saves data.
   scsv.SetData();

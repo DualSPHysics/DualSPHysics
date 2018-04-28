@@ -17,7 +17,7 @@ partvtkout="${dirbin}/PartVTKOut4_linux64"
 measuretool="${dirbin}/MeasureTool4_linux64"
 computeforces="${dirbin}/ComputeForces4_linux64"
 isosurface="${dirbin}/IsoSurface4_linux64"
-measureboxes="${dirbin}/MeasureBoxes4_linux64"
+flowtool="${dirbin}/FlowTool4_linux64"
 
 
 # Library path must be indicated properly
@@ -49,27 +49,27 @@ fi
 
 # Executes DualSPHysics to simulate SPH method.
 if [ $errcode -eq 0 ]; then
-  $dualsphysicsgpu -gpu $dirout/$name $dirout -dirdataout data -svres -tmax:0.0005 -tout:0.0001
+  $dualsphysicscpu -cpu $dirout/$name $dirout -dirdataout data -svres -tmax:0.0005 -tout:0.0001
   errcode=$?
 fi
 
 # Executes PartVTK4 to create VTK files with particles.
 dirout2=${dirout}/particles; mkdir $dirout2
 if [ $errcode -eq 0 ]; then
-  $partvtk -dirin $diroutdata -filexml $dirout/${name}.xml -savevtk $dirout2/PartFluid -onlytype:-all,fluid -vars:+idp,+vel,+rhop,+press,+vor
+  $partvtk -dirin $diroutdatadata -filexml $dirout/${name}.xml -savevtk $dirout2/PartFluid -onlytype:-all,fluid -vars:+idp,+vel,+rhop,+press,+vor
   errcode=$?
 fi
 
 # Executes PartVTKOut4 to create VTK files with excluded particles.
 if [ $errcode -eq 0 ]; then
-  $partvtkout -dirin $diroutdata -filexml $dirout/${name}.xml -savevtk $dirout2/PartFluidOut -SaveResume $dirout/ResumeFluidOut
+  $partvtkout -dirin $diroutdatadata -filexml $dirout/${name}.xml -savevtk $dirout2/PartFluidOut -SaveResume $dirout/ResumeFluidOut
   errcode=$?
 fi
 
 # Executes IsoSurface4 to create VTK files with slices of surface.
 dirout2=${dirout}/surface; mkdir $dirout2
 if [ $errcode -eq 0 ]; then
-  $isosurface -dirin $diroutdata -saveslice $dirout2/Slices 
+  $isosurface -dirin $diroutdatadata -saveslice $dirout2/Slices 
   errcode=$?
 fi
 

@@ -1,6 +1,6 @@
 ﻿//HEAD_DSCODES
 /*
- <DUALSPHYSICS>  Copyright (c) 2017 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2018 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -21,6 +21,8 @@
 //:# =========
 //:# - Creacion de clase para gestionar informacion relativa a datos de simulacion. (23-03-2018)
 //:# - Metodos para obtener informacion de particulas. (25-04-2018)
+//:# - Establece PERI_Unknown por defecto. (27-04-2018)
+//:# - Improved definition of the periodic conditions. (27-04-2018)
 //:#############################################################################
 
 /// \file JPartDataHead.h \brief Declares the class \ref JPartDataHead.
@@ -33,6 +35,7 @@
 #include "JObject.h"
 #include "TypesDef.h"
 #include "JParticlesDef.h"
+#include "JPerodicModeDef.h"
 
 //##############################################################################
 //# JPartDataHeadMkBlock
@@ -60,9 +63,6 @@ public:
 class JPartDataHead : protected JObject
 {
 public:
-  ///Types of periodicity.
-  typedef enum{ PERI_None=0,PERI_X=1,PERI_Y=2,PERI_Z=4,PERI_XY=3,PERI_XZ=5,PERI_YZ=6,PERI_Unknown=96 }TpPeri; 
-
   ///Types of viscosity treatment.
   typedef enum{ 
     VISCO_LaminarSPS=2,        ///<Laminar viscosity and Sub-Partice Scale Turbulence.
@@ -105,7 +105,7 @@ private:
   tdouble3 MapPosMin;    ///<Lower limit of simulation + edge 2h if periodic conditions.
   tdouble3 MapPosMax;    ///<Upper limit of simulation + edge 2h if periodic conditions.
 
-  TpPeri PeriActive;
+  TpPeri PeriMode;
   tdouble3 PeriXinc;     ///<Value that is added at the outer limit to modify the position.
   tdouble3 PeriYinc;     ///<Value that is added at the outer limit to modify the position.
   tdouble3 PeriZinc;     ///<Value that is added at the outer limit to modify the position.
@@ -149,8 +149,7 @@ public:
     ,double massbound,double massfluid,tfloat3 gravity);
   void ConfigSimNp(bool npdynamic=false,bool reuseids=false);
   void ConfigSimMap(tdouble3 mapposmin,tdouble3 mapposmax);
-  void ConfigSimPeri(bool peri_x,bool peri_y,bool peri_z,bool peri_xy,bool peri_xz,bool peri_yz
-    ,tdouble3 perixinc,tdouble3 periyinc,tdouble3 perizinc);
+  void ConfigSimPeri(TpPeri tperi,tdouble3 perixinc,tdouble3 periyinc,tdouble3 perizinc);
   void ConfigVisco(JPartDataHead::TpVisco type,float value,float boundfactor);
   void ConfigSplitting(bool splitting);
 
@@ -201,7 +200,7 @@ public:
   tdouble3 GetMapPosMin()const{ return(MapPosMin); };
   tdouble3 GetMapPosMax()const{ return(MapPosMax); };
 
-  TpPeri GetPeriActive()const{ return(PeriActive); };
+  TpPeri GetPeriMode()const{ return(PeriMode); };
   tdouble3 GetPeriXinc()const{ return(PeriXinc);   };
   tdouble3 GetPeriYinc()const{ return(PeriYinc);   };
   tdouble3 GetPeriZinc()const{ return(PeriZinc);   };

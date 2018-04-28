@@ -1,6 +1,6 @@
 //HEAD_DSCODES
 /*
- <DUALSPHYSICS>  Copyright (c) 2017 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2018 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -16,6 +16,8 @@
  You should have received a copy of the GNU Lesser General Public License along with DualSPHysics. If not, see <http://www.gnu.org/licenses/>. 
 */
 
+/// \file JMotionMov.h \brief Declares the classes \ref JMotionMov.
+
 #ifndef _JMotionMov_
 #define _JMotionMov_
 
@@ -25,9 +27,11 @@
 class JXml;
 class TiXmlNode;
 
-//==============================================================================
 //##############################################################################
-//==============================================================================
+//# JMotionMov
+//##############################################################################
+/// \brief Defines data for each motion type.
+
 class JMotionMov : protected JObject
 {
 public:

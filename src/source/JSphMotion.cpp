@@ -1,6 +1,6 @@
 //HEAD_DSCODES
 /*
- <DUALSPHYSICS>  Copyright (c) 2017 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2018 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -16,12 +16,18 @@
  You should have received a copy of the GNU Lesser General Public License along with DualSPHysics. If not, see <http://www.gnu.org/licenses/>. 
 */
 
+/// \file JSphMotion.cpp \brief Implements the class \ref JSphMotion.
+
 #include "JSphMotion.h"
 #include "JSpaceParts.h"
 #include "JMotion.h"
 #include "JXml.h"
 
 using namespace std;
+
+//##############################################################################
+//# JSphMotion
+//##############################################################################
 //==============================================================================
 /// Constructor.
 //==============================================================================

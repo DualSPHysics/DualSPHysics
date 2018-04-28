@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2017 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2018 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -280,7 +280,7 @@ void JGaugeVelocity::SaveResults(){
     //-Saves head.
     if(first){
       scsv.SetHead();
-      scsv << "time;velx;vely;velz;posx;posy;posz" << jcsv::Endl();
+      scsv << "time [s];velx [m/s];vely [m/s];velz [m/s];posx [m];posy [m];posz [m]" << jcsv::Endl();
     }
     //-Saves data.
     scsv.SetData();
@@ -503,7 +503,7 @@ void JGaugeSwl::SaveResults(){
     if(first){
       //-Head of values.
       scsv.SetHead();
-      scsv <<"time;swlx;swly;swlz;pos0x;pos0y;pos0z;pos2x;pos2y;pos2z" << jcsv::Endl();
+      scsv <<"time [s];swlx [m];swly [m];swlz [m];pos0x [m];pos0y [m];pos0z [m];pos2x [m];pos2y [m];pos2z [m]" << jcsv::Endl();
     }
     //-Saves data.
     scsv.SetData();
@@ -719,7 +719,7 @@ void JGaugeMaxZ::SaveResults(){
     //-Saves head.
     if(first){
       scsv.SetHead();
-      scsv << "time;zmax;posx;posy;posz" << jcsv::Endl();
+      scsv << "time [s];zmax [m];posx [m];posy [m];posz [m]" << jcsv::Endl();
     }
     //-Saves data.
     scsv.SetData();

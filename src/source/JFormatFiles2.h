@@ -1,6 +1,6 @@
 //HEAD_DSCODES
 /*
- <DUALSPHYSICS>  Copyright (c) 2017 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2018 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -65,6 +65,7 @@
 //:# - New parameter csvsep to configure separator in CSV files. (23-10-2017)
 //:# - New functions to create shapes in VTK files. (25-01-2018)
 //:# - Functions to create VTK/CSV files starting from vector<StScalarData>. (25-01-2018)
+//:# - Se escriben las unidades en las cabeceras de los ficheros CSV. (26-04-2018)
 //:#############################################################################
 
 /// \file JFormatFiles2.h \brief Declares the class \ref JFormatFiles2.
@@ -142,6 +143,19 @@ public:
   /// Throws an exception related to a file.
   //==============================================================================  
   static void RunException(std::string method,std::string msg,std::string file);
+
+
+  //==============================================================================
+  /// Returns units according variable name. E.g.: Vel -> " [m/s]"
+  //==============================================================================
+  static std::string GetUnits(const std::string &varname);
+
+  //==============================================================================
+  /// Returns units according variable name. E.g.: Vel -> "Vel [m/s]"
+  //==============================================================================
+  static std::string GetVarWithUnits(const std::string &varname){
+    return(varname+GetUnits(varname));
+  }
 
   //==============================================================================
   /// Returns the definition of fields.

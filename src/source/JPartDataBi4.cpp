@@ -1,6 +1,6 @@
 //HEAD_DSCODES
 /*
- <DUALSPHYSICS>  Copyright (c) 2017 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2018 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -182,10 +182,7 @@ void JPartDataBi4::Config(unsigned piece,unsigned npiece,std::string dir,const J
   ConfigCtes(phead->GetDp(),phead->GetH(),phead->GetB(),phead->GetRhopZero()
     ,phead->GetGamma(),phead->GetMassBound(),phead->GetMassFluid());
   ConfigSimMap(phead->GetMapPosMin(),phead->GetMapPosMax());
-  const JPartDataHead::TpPeri pe=phead->GetPeriActive();
-  ConfigSimPeri(pe==JPartDataHead::PERI_X,pe==JPartDataHead::PERI_Y,pe==JPartDataHead::PERI_Z
-    ,pe==JPartDataHead::PERI_XY,pe==JPartDataHead::PERI_XZ,pe==JPartDataHead::PERI_YZ
-    ,phead->GetPeriXinc(),phead->GetPeriYinc(),phead->GetPeriZinc());
+  ConfigSimPeri(phead->GetPeriMode(),phead->GetPeriXinc(),phead->GetPeriYinc(),phead->GetPeriZinc());
   ConfigSplitting(phead->GetSplitting());
 }
 
@@ -208,7 +205,7 @@ void JPartDataBi4::ConfigBasic(unsigned piece,unsigned npiece,std::string runcod
   Data->SetvBool("Data2d",data2d);
   Data->SetvDouble("Data2dPosY",data2dposy);
   ConfigSimMap(TDouble3(0),TDouble3(0));
-  ConfigSimPeri(false,false,false,false,false,false,TDouble3(0),TDouble3(0),TDouble3(0));
+  ConfigSimPeri(PERI_Unknown,TDouble3(0),TDouble3(0),TDouble3(0));
   ConfigSimDiv(DIV_Unknown);
 }
 
@@ -256,22 +253,22 @@ void JPartDataBi4::ConfigSimMap(tdouble3 mapposmin,tdouble3 mapposmax){
 /// Configuracion de variables de condiciones periodicas.
 /// Configuration of variables of periodic conditions.
 //==============================================================================
-void JPartDataBi4::ConfigSimPeri(bool peri_x,bool peri_y,bool peri_z
-  ,bool peri_xy,bool peri_xz,bool peri_yz
-  ,tdouble3 perixinc,tdouble3 periyinc,tdouble3 perizinc)
-{
-  const char met[]="ConfigSimPeri";
-  TpPeri periactive=PERI_None;
-  if(peri_xy)periactive=PERI_XY;
-  else if(peri_xz)periactive=PERI_XZ;
-  else if(peri_yz)periactive=PERI_YZ;
-  else if(peri_x)periactive=PERI_X;
-  else if(peri_y)periactive=PERI_Y;
-  else if(peri_z)periactive=PERI_Z;
-  Data->SetvInt("PeriActive",int(periactive));
+void JPartDataBi4::ConfigSimPeri(TpPeri tperi,tdouble3 perixinc,tdouble3 periyinc,tdouble3 perizinc){
+  Data->SetvInt("PeriMode",int(tperi));
   Data->SetvDouble3("PeriXinc",perixinc);
   Data->SetvDouble3("PeriYinc",periyinc);
   Data->SetvDouble3("PeriZinc",perizinc);
+}
+
+//==============================================================================
+/// Devuelve configuracion de ejes periodicos.
+/// Returns configuration of periodic axes.
+//==============================================================================
+TpPeri JPartDataBi4::Get_PeriMode()const{
+  string varname="PeriMode";
+  //-Maintains backwards compatibility with previous formats (27-04-2018).
+  if(!GetData()->ExistsValue("PeriMode",JBinaryDataDef::DatInt) && GetData()->ExistsValue("PeriActive",JBinaryDataDef::DatInt))varname="PeriActive";
+  return((TpPeri)GetData()->GetvInt(varname)); 
 }
 
 //==============================================================================

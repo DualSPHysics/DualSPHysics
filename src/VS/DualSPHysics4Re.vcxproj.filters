@@ -256,6 +256,9 @@
     <ClInclude Include="..\source\JSphMotion.h">
       <Filter>Source</Filter>
     </ClInclude>
+    <ClInclude Include="..\source\JPerodicModeDef.h">
+      <Filter>CommonDsph</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\source\JCfgRun.cpp">

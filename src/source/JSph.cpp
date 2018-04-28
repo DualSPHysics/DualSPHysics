@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2017 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2018 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -153,8 +153,7 @@ void JSph::InitVars(){
   CaseNp=CaseNbound=CaseNfixed=CaseNmoving=CaseNfloat=CaseNfluid=CaseNpb=0;
 
   memset(&PeriodicConfig,0,sizeof(StPeriodic));
-  PeriActive=0;
-  PeriX=PeriY=PeriZ=PeriXY=PeriXZ=PeriYZ=false;
+  PeriActive=0; PeriX=PeriY=PeriZ=false;
   PeriXinc=PeriYinc=PeriZinc=TDouble3(0);
 
   PartBeginDir=""; 
@@ -507,16 +506,22 @@ void JSph::LoadCaseConfig(){
   PartsOutMax=eparms.GetValueFloat("PartsOutMax",true,1);
 
   //-Configuration of periodic boundaries.
-  if(eparms.Exists("XPeriodicIncY")){ PeriXinc.y=eparms.GetValueDouble("XPeriodicIncY"); PeriX=true; }
-  if(eparms.Exists("XPeriodicIncZ")){ PeriXinc.z=eparms.GetValueDouble("XPeriodicIncZ"); PeriX=true; }
-  if(eparms.Exists("YPeriodicIncX")){ PeriYinc.x=eparms.GetValueDouble("YPeriodicIncX"); PeriY=true; }
-  if(eparms.Exists("YPeriodicIncZ")){ PeriYinc.z=eparms.GetValueDouble("YPeriodicIncZ"); PeriY=true; }
-  if(eparms.Exists("ZPeriodicIncX")){ PeriZinc.x=eparms.GetValueDouble("ZPeriodicIncX"); PeriZ=true; }
-  if(eparms.Exists("ZPeriodicIncY")){ PeriZinc.y=eparms.GetValueDouble("ZPeriodicIncY"); PeriZ=true; }
-  if(eparms.Exists("XYPeriodic")){ PeriXY=PeriX=PeriY=true; PeriXZ=PeriYZ=false; PeriXinc=PeriYinc=TDouble3(0); }
-  if(eparms.Exists("XZPeriodic")){ PeriXZ=PeriX=PeriZ=true; PeriXY=PeriYZ=false; PeriXinc=PeriZinc=TDouble3(0); }
-  if(eparms.Exists("YZPeriodic")){ PeriYZ=PeriY=PeriZ=true; PeriXY=PeriXZ=false; PeriYinc=PeriZinc=TDouble3(0); }
-  PeriActive=(PeriX? 1: 0)+(PeriY? 2: 0)+(PeriZ? 4: 0);
+  {
+    PeriX=PeriY=PeriZ=false;
+    PeriXinc=PeriYinc=PeriZinc=TDouble3(0);
+    if(eparms.Exists("XPeriodicIncY")){ PeriXinc.y=eparms.GetValueDouble("XPeriodicIncY"); PeriX=true; }
+    if(eparms.Exists("XPeriodicIncZ")){ PeriXinc.z=eparms.GetValueDouble("XPeriodicIncZ"); PeriX=true; }
+    if(eparms.Exists("YPeriodicIncX")){ PeriYinc.x=eparms.GetValueDouble("YPeriodicIncX"); PeriY=true; }
+    if(eparms.Exists("YPeriodicIncZ")){ PeriYinc.z=eparms.GetValueDouble("YPeriodicIncZ"); PeriY=true; }
+    if(eparms.Exists("ZPeriodicIncX")){ PeriZinc.x=eparms.GetValueDouble("ZPeriodicIncX"); PeriZ=true; }
+    if(eparms.Exists("ZPeriodicIncY")){ PeriZinc.y=eparms.GetValueDouble("ZPeriodicIncY"); PeriZ=true; }
+    if(eparms.Exists("XYPeriodic")){ PeriX=true;  PeriY=true;  PeriZ=false;  PeriXinc=PeriYinc=PeriZinc=TDouble3(0); }
+    if(eparms.Exists("XZPeriodic")){ PeriX=true;  PeriY=false; PeriZ=true;   PeriXinc=PeriYinc=PeriZinc=TDouble3(0); }
+    if(eparms.Exists("YZPeriodic")){ PeriX=false; PeriY=true;  PeriZ=true;   PeriXinc=PeriYinc=PeriZinc=TDouble3(0); }
+    PeriActive=DefPeriActive(PeriX,PeriY,PeriZ);
+    //-Stores initial periodic configuration in PeriodicConfig.  
+    PeriodicConfig=StrPeriodic(PeriActive,PeriXinc,PeriYinc,PeriZinc);
+  }
 
   //-Configuration of domain size.
   float incz=eparms.GetValueFloat("IncZ",true,0.f);
@@ -867,10 +872,7 @@ void JSph::VisuConfig()const{
   Log->Print(fun::VarStr("CaseNmoving",CaseNmoving));
   Log->Print(fun::VarStr("CaseNfloat",CaseNfloat));
   Log->Print(fun::VarStr("CaseNfluid",CaseNfluid));
-  Log->Print(fun::VarStr("PeriodicActive",PeriActive));
-  if(PeriXY)Log->Print(fun::VarStr("PeriodicXY",PeriXY));
-  if(PeriXZ)Log->Print(fun::VarStr("PeriodicXZ",PeriXZ));
-  if(PeriYZ)Log->Print(fun::VarStr("PeriodicYZ",PeriYZ));
+  Log->Print(fun::VarStr("PeriodicActive",TpPeriName(TpPeri(PeriActive))));
   if(PeriX)Log->Print(fun::VarStr("PeriodicXinc",PeriXinc));
   if(PeriY)Log->Print(fun::VarStr("PeriodicYinc",PeriYinc));
   if(PeriZ)Log->Print(fun::VarStr("PeriodicZinc",PeriZinc));
@@ -994,18 +996,6 @@ void JSph::RunInitialize(unsigned np,unsigned npb,const tdouble3 *pos,const unsi
 /// Configura CellOrder y ajusta orden de componentes en datos.
 //==============================================================================
 void JSph::ConfigCellOrder(TpCellOrder order,unsigned np,tdouble3* pos,tfloat4* velrhop){
-  //-Stores periodic configuration in PeriodicConfig.  
-  //-Guarda configuracion periodica en PeriodicConfig.
-  PeriodicConfig.PeriActive=PeriActive;
-  PeriodicConfig.PeriX=PeriX;
-  PeriodicConfig.PeriY=PeriY;
-  PeriodicConfig.PeriZ=PeriZ;
-  PeriodicConfig.PeriXY=PeriXY;
-  PeriodicConfig.PeriXZ=PeriXZ;
-  PeriodicConfig.PeriYZ=PeriYZ;
-  PeriodicConfig.PeriXinc=PeriXinc;
-  PeriodicConfig.PeriYinc=PeriYinc;
-  PeriodicConfig.PeriZinc=PeriZinc;
   //-Applies CellOrder.  
   CellOrder=order;
   if(CellOrder==ORDER_None)CellOrder=ORDER_XYZ;
@@ -1025,7 +1015,7 @@ void JSph::ConfigCellOrder(TpCellOrder order,unsigned np,tdouble3* pos,tfloat4* 
     Map_Size=OrderCodeValue(CellOrder,Map_Size);
     //-Modifies periodic configuration. 
     bool perix=PeriX,periy=PeriY,periz=PeriZ;
-    bool perixy=PeriXY,perixz=PeriXZ,periyz=PeriYZ;
+    bool perixy=(perix && periy),perixz=(perix && periz),periyz=(periy && periz);
     tdouble3 perixinc=PeriXinc,periyinc=PeriYinc,perizinc=PeriZinc;
     tuint3 v={1,2,3};
     v=OrderCode(v);
@@ -1035,23 +1025,23 @@ void JSph::ConfigCellOrder(TpCellOrder order,unsigned np,tdouble3* pos,tfloat4* 
     if(v.y==3){ PeriY=periz; PeriYinc=OrderCode(perizinc); }
     if(v.z==1){ PeriZ=perix; PeriZinc=OrderCode(perixinc); }
     if(v.z==2){ PeriZ=periy; PeriZinc=OrderCode(periyinc); }
-    if(perixy){
-      PeriXY=(CellOrder==ORDER_XYZ||CellOrder==ORDER_YXZ);
-      PeriXZ=(CellOrder==ORDER_XZY||CellOrder==ORDER_YZX);
-      PeriYZ=(CellOrder==ORDER_ZXY||CellOrder==ORDER_ZYX);
-    }
-    if(perixz){
-      PeriXY=(CellOrder==ORDER_XZY||CellOrder==ORDER_ZXY);
-      PeriXZ=(CellOrder==ORDER_XYZ||CellOrder==ORDER_ZYX);
-      PeriYZ=(CellOrder==ORDER_YXZ||CellOrder==ORDER_YZX);
-    }
-    if(periyz){
-      PeriXY=(CellOrder==ORDER_YZX||CellOrder==ORDER_ZYX);
-      PeriXZ=(CellOrder==ORDER_YXZ||CellOrder==ORDER_ZXY);
-      PeriYZ=(CellOrder==ORDER_XYZ||CellOrder==ORDER_XZY);
-    }
+    //if(perixy){
+    //  PeriXY=(CellOrder==ORDER_XYZ||CellOrder==ORDER_YXZ);
+    //  PeriXZ=(CellOrder==ORDER_XZY||CellOrder==ORDER_YZX);
+    //  PeriYZ=(CellOrder==ORDER_ZXY||CellOrder==ORDER_ZYX);
+    //}
+    //if(perixz){
+    //  PeriXY=(CellOrder==ORDER_XZY||CellOrder==ORDER_ZXY);
+    //  PeriXZ=(CellOrder==ORDER_XYZ||CellOrder==ORDER_ZYX);
+    //  PeriYZ=(CellOrder==ORDER_YXZ||CellOrder==ORDER_YZX);
+    //}
+    //if(periyz){
+    //  PeriXY=(CellOrder==ORDER_YZX||CellOrder==ORDER_ZYX);
+    //  PeriXZ=(CellOrder==ORDER_YXZ||CellOrder==ORDER_ZXY);
+    //  PeriYZ=(CellOrder==ORDER_XYZ||CellOrder==ORDER_XZY);
+    //}
+    PeriActive=DefPeriActive(PeriX,PeriY,PeriZ);
   }
-  PeriActive=(PeriX? 1: 0)+(PeriY? 2: 0)+(PeriZ? 4: 0);
 }
 
 //==============================================================================
@@ -1245,16 +1235,15 @@ tdouble3 JSph::UpdatePeriodicPos(tdouble3 ps)const{
   //-Adjusts position according to periodic conditions and checks again domain limtis.
   //-Ajusta posicion segun condiciones periodicas y vuelve a comprobar los limites del dominio.
   if(PeriActive && out){
-    bool xperi=((PeriActive&1)!=0),yperi=((PeriActive&2)!=0),zperi=((PeriActive&4)!=0);
-    if(xperi){
+    if(PeriX){
       if(dx<0)             { dx-=PeriXinc.x; dy-=PeriXinc.y; dz-=PeriXinc.z; }
       if(dx>=MapRealSize.x){ dx+=PeriXinc.x; dy+=PeriXinc.y; dz+=PeriXinc.z; }
     }
-    if(yperi){
+    if(PeriY){
       if(dy<0)             { dx-=PeriYinc.x; dy-=PeriYinc.y; dz-=PeriYinc.z; }
       if(dy>=MapRealSize.y){ dx+=PeriYinc.x; dy+=PeriYinc.y; dz+=PeriYinc.z; }
     }
-    if(zperi){
+    if(PeriZ){
       if(dz<0)             { dx-=PeriZinc.x; dy-=PeriZinc.y; dz-=PeriZinc.z; }
       if(dz>=MapRealSize.z){ dx+=PeriZinc.x; dy+=PeriZinc.y; dz+=PeriZinc.z; }
     }
@@ -1296,7 +1285,7 @@ void JSph::LoadCaseParticles(){
   Log->Print("Loading initial state of particles...");
   PartsLoaded=new JPartsLoad4(Cpu);
   PartsLoaded->LoadParticles(DirCase,CaseName,PartBegin,PartBeginDir);
-  PartsLoaded->CheckConfig(CaseNp,CaseNfixed,CaseNmoving,CaseNfloat,CaseNfluid,PeriX,PeriY,PeriZ);
+  PartsLoaded->CheckConfig(CaseNp,CaseNfixed,CaseNmoving,CaseNfloat,CaseNfluid,TpPeri(PeriActive));
   if(PartBegin)RestartCheckData();
   Log->Printf("Loaded particles: %u",PartsLoaded->GetCount());
 
@@ -1304,7 +1293,7 @@ void JSph::LoadCaseParticles(){
   //-Recupera informacion de las particulas cargadas.
   Simulate2D=PartsLoaded->GetSimulate2D();
   Simulate2DPosY=PartsLoaded->GetSimulate2DPosY();
-  if(Simulate2D&&PeriY)RunException("LoadCaseParticles","Cannot use periodic conditions in Y with 2D simulations");
+  if(Simulate2D && PeriY)RunException("LoadCaseParticles","Cannot use periodic conditions in Y with 2D simulations");
   CasePosMin=PartsLoaded->GetCasePosMin();
   CasePosMax=PartsLoaded->GetCasePosMax();
 
@@ -1459,9 +1448,7 @@ void JSph::ConfigSaveData(unsigned piece,unsigned pieces,std::string div){
   parthead.ConfigCtes(Dp,H,CteB,RhopZero,Gamma,MassBound,MassFluid,Gravity);
   parthead.ConfigSimNp(NpDynamic,ReuseIds);
   parthead.ConfigSimMap(OrderDecode(MapRealPosMin),OrderDecode(MapRealPosMax));
-  parthead.ConfigSimPeri(PeriodicConfig.PeriX,PeriodicConfig.PeriY,PeriodicConfig.PeriZ
-    ,PeriodicConfig.PeriXY,PeriodicConfig.PeriXZ,PeriodicConfig.PeriYZ
-    ,PeriodicConfig.PeriXinc,PeriodicConfig.PeriYinc,PeriodicConfig.PeriZinc);
+  parthead.ConfigSimPeri(PeriodicConfig.PeriMode,PeriodicConfig.PeriXinc,PeriodicConfig.PeriYinc,PeriodicConfig.PeriZinc);
   switch(TVisco){
     case VISCO_None:        parthead.ConfigVisco(JPartDataHead::VISCO_None      ,Visco,ViscoBoundFactor);  break;
     case VISCO_Artificial:  parthead.ConfigVisco(JPartDataHead::VISCO_Artificial,Visco,ViscoBoundFactor);  break;
@@ -1639,7 +1626,7 @@ void JSph::SavePartData(unsigned npok,unsigned nout,const unsigned *idp,const td
   }
 
   //-Stores VTK nd/or CSV files.
-  if((SvData&SDAT_Csv)||(SvData&SDAT_Vtk)){
+  if((SvData&SDAT_Csv) || (SvData&SDAT_Vtk)){
     //-Generates array with posf3 and type of particle.
     tfloat3* posf3=GetPointerDataFloat3(npok,pos);
     byte *type=new byte[npok];

@@ -1,8 +1,8 @@
 
 
- <DUALSPHYSICS4> Copyright (C) 2017 by
+ <DUALSPHYSICS4> Copyright (C) 2018 by
  Dr Jose M. Dominguez, Dr Alejandro Crespo,
- Prof. Moncho Gomez Gesteira, Dr Anxo Barreiro,
+ Prof. Moncho Gomez Gesteira, Orlando Garcia-Feal,
  Dr Benedict Rogers, Dr Georgios Fourtakas, Dr Athanasios Mokos,
  Dr Renato Vacondio, Dr Ricardo Canelas,
  Dr Stephen Longshaw, Dr Corrado Altomare.
@@ -24,7 +24,7 @@
  along with DualSPHysics. If not, see <http://www.gnu.org/licenses/>.
 
 
-DualSPHysics4 v4.2.044 (26-04-2018)
+DualSPHysics4 v4.2.047 (27-04-2018)
 ====================================
 LoadDsphConfig> .../bin/windows/DsphConfig.xml
 Information about execution parameters:

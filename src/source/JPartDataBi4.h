@@ -1,6 +1,6 @@
 //HEAD_DSCODES
 /*
- <DUALSPHYSICS>  Copyright (c) 2017 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2018 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -45,6 +45,8 @@
 //:# - Almacena el nombre del caso. (11-05-2016)
 //:# - Se incorporo el parametro externalpointer en todas las funciones de AddPart. (09-09-2016)
 //:# - Nueva variable (Data2dPosY) con valor de Y en simulaciones 2D. (07-06-2017)
+//:# - Establece PERI_Unknown por defecto. (27-04-2018)
+//:# - Improved definition of the periodic conditions. (27-04-2018)
 //:#############################################################################
 
 /// \file JPartDataBi4.h \brief Declares the class \ref JPartDataBi4.
@@ -54,6 +56,7 @@
 
 #include "JObject.h"
 #include "TypesDef.h"
+#include "JPerodicModeDef.h"
 #include "JBinaryData.h"
 #include <string>
 #include <vector>
@@ -70,7 +73,6 @@ class JPartDataHead;
 class JPartDataBi4 : protected JObject
 {
  public:
-  typedef enum{ PERI_None=0,PERI_X=1,PERI_Y=2,PERI_Z=4,PERI_XY=3,PERI_XZ=5,PERI_YZ=6,PERI_Unknown=96 }TpPeri; 
   typedef enum{ DIV_None=0,DIV_X=1,DIV_Y=2,DIV_Z=3,DIV_Unknown=99 }TpAxisDiv; 
 
  private:
@@ -118,7 +120,7 @@ class JPartDataBi4 : protected JObject
   void ConfigParticles(ullong casenp,ullong casenfixed,ullong casenmoving,ullong casenfloat,ullong casenfluid,tdouble3 caseposmin,tdouble3 caseposmax,bool npdynamic=false,bool reuseids=false);
   void ConfigCtes(double dp,double h,double b,double rhop0,double gamma,double massbound,double massfluid);
   void ConfigSimMap(tdouble3 mapposmin,tdouble3 mapposmax);
-  void ConfigSimPeri(bool peri_x,bool peri_y,bool peri_z,bool peri_xy,bool peri_xz,bool peri_yz,tdouble3 perixinc,tdouble3 periyinc,tdouble3 perizinc);
+  void ConfigSimPeri(TpPeri tperi,tdouble3 perixinc,tdouble3 periyinc,tdouble3 perizinc);
   void ConfigSplitting(bool splitting);
 
   void ConfigSimDiv(TpAxisDiv axisdiv);
@@ -197,7 +199,8 @@ class JPartDataBi4 : protected JObject
   tdouble3 Get_MapPosMin()const{  return(GetData()->GetvDouble3("MapPosMin")); }
   tdouble3 Get_MapPosMax()const{  return(GetData()->GetvDouble3("MapPosMax")); }
 
-  TpPeri Get_PeriActive()const{   return((TpPeri)GetData()->GetvInt("PeriActive")); }
+  //TpPeri Get_PeriActive()const{   return((TpPeri)GetData()->GetvInt("PeriActive")); }
+  TpPeri Get_PeriMode()const;
   tdouble3 Get_PeriXinc()const{   return(GetData()->GetvDouble3("PeriXinc"));       }
   tdouble3 Get_PeriYinc()const{   return(GetData()->GetvDouble3("PeriYinc"));       }
   tdouble3 Get_PeriZinc()const{   return(GetData()->GetvDouble3("PeriZinc"));       }

@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2017 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2018 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -32,6 +32,7 @@
 //:# - En el constructor se puede indicar si se usa OMP. (07-07-2016)
 //:# - Documentacion del codigo en ingles. (08-08-2017)
 //:# - No reordena paraticulas para reducir diferencias usando restart. (23-04-2018)
+//:# - Improved definition of the periodic conditions. (27-04-2018)
 //:#############################################################################
 
 /// \file JPartsLoad4.h \brief Declares the class \ref JPartsLoad4.
@@ -40,6 +41,7 @@
 #define _JPartsLoad4_
 
 #include "TypesDef.h"
+#include "JPerodicModeDef.h"
 #include "JObject.h"
 #include <cstring>
 
@@ -50,9 +52,6 @@
 
 class JPartsLoad4 : protected JObject
 {
-public:
-  typedef enum{ PERI_None=0,PERI_X=1,PERI_Y=2,PERI_Z=4,PERI_XY=3,PERI_XZ=5,PERI_YZ=6,PERI_Unknown=96 }TpPeri; 
-
 protected:
   const bool UseOmp;
 
@@ -103,7 +102,7 @@ public:
   void Reset();
 
   void LoadParticles(const std::string &casedir,const std::string &casename,unsigned partbegin,const std::string &casedirbegin);
-  void CheckConfig(ullong casenp,ullong casenfixed,ullong casenmoving,ullong casenfloat,ullong casenfluid,bool perix,bool periy,bool periz)const;
+  void CheckConfig(ullong casenp,ullong casenfixed,ullong casenmoving,ullong casenfloat,ullong casenfluid,TpPeri tperi)const;
   void CheckConfig(ullong casenp,ullong casenfixed,ullong casenmoving,ullong casenfloat,ullong casenfluid)const;
   void RemoveBoundary();
 

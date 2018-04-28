@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2017 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2018 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -16,7 +16,7 @@
  You should have received a copy of the GNU Lesser General Public License along with DualSPHysics. If not, see <http://www.gnu.org/licenses/>. 
 */
 
-/// \file JGauge_ker.h \brief Declares functions and CUDA kernels for class JGauge.
+/// \file JGauge_ker.h \brief Declares functions and CUDA kernels for classes JGauge.
 
 #ifndef _JGauge_ker_
 #define _JGauge_ker_
@@ -24,7 +24,7 @@
 #include "Types.h"
 #include <cuda_runtime_api.h>
 
-/// Implements a set of functions and CUDA kernels for class JGauge.
+/// Implements a set of functions and CUDA kernels for classes that manage gauges.
 namespace cugauge{
 
 inline int4 Int4(const tint4& v){ int4 p={v.x,v.y,v.z,v.w}; return(p); }
