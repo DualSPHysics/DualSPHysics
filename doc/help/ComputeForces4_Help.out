@@ -1,6 +1,6 @@
 
 
- <COMPUTEFORCES4>  Copyright (C) 2017 by Jose M. Dominguez
+ <COMPUTEFORCES4>  Copyright (C) 2018 by Dr Jose M. Dominguez
  All rights reserved.
 
  DualSPHysics is an international collaboration between University of Vigo 
@@ -30,7 +30,7 @@
  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
 
 
-ComputeForces4 v4.0.031 (26-04-2018)
+ComputeForces4 v4.0.033 (27-04-2018)
 =====================================
 LoadDsphConfig> .../bin/windows/DsphConfig.xml
 Information about parameters of execution:

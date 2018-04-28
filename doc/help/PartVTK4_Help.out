@@ -1,6 +1,6 @@
 
 
- <PARTVTK4>  Copyright (C) 2017 by Jose M. Dominguez
+ <PARTVTK4>  Copyright (C) 2018 by Dr Jose M. Dominguez
  All rights reserved.
 
  DualSPHysics is an international collaboration between University of Vigo 
@@ -30,7 +30,7 @@
  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
 
 
-PartVtk4 v4.0.042 (26-04-2018)
+PartVtk4 v4.0.043 (27-04-2018)
 ===============================
 LoadDsphConfig> .../bin/windows/DsphConfig.xml
 Information about parameters of execution:
