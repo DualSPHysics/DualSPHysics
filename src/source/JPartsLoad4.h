@@ -41,7 +41,7 @@
 #define _JPartsLoad4_
 
 #include "TypesDef.h"
-#include "JPerodicModeDef.h"
+#include "JPeriodicDef.h"
 #include "JObject.h"
 #include <cstring>
 

@@ -22,10 +22,10 @@
 //:# - Se crea para unificar definiciones de condiciones periodicas. (27-04-2018)
 //:#############################################################################
 
-/// \file JPerodicModeDef.h \brief Defines type of periodic conditions and basic functionalities.
+/// \file JPeriodicDef.h \brief Defines type of periodic conditions and basic functionalities.
 
-#ifndef _JPerodicModeDef_
-#define _JPerodicModeDef_
+#ifndef _JPeriodicDef_
+#define _JPeriodicDef_
 
 #include "TypesDef.h"
 #include <string>

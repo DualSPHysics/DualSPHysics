@@ -537,7 +537,7 @@ rem %CudaNvcc% -ccbin "$(VCInstallDir)bin" %gpuhw% -use_fast_math -c %ptxinfo% -
     <ClInclude Include="..\source\JParticlesDef.h" />
     <ClInclude Include="..\source\JPartOutBi4Save.h" />
     <ClInclude Include="..\source\JPartsLoad4.h" />
-    <ClInclude Include="..\source\JPerodicModeDef.h" />
+    <ClInclude Include="..\source\JPeriodicDef.h" />
     <ClInclude Include="..\source\JRadixSort.h" />
     <ClInclude Include="..\source\JRangeFilter.h" />
     <ClInclude Include="..\source\JReadDatafile.h" />
