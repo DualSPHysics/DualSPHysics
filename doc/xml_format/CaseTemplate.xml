@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<case app="GenCase4 v4.0.068 (27-04-2018)" date="30-04-2018 16:14:26">
+<case app="GenCase4 v4.0.068 (27-04-2018)" date="30-04-2018 18:21:19">
     <casedef>
         <constantsdef>
             <lattice bound="2" fluid="1" />

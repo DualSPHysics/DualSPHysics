@@ -30,7 +30,7 @@
  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
 
 
-FlowTool4 v4.0.025 (30-04-2018)
+FlowTool4 v4.0.026 (30-04-2018)
 ================================
 LoadDsphConfig> .../bin/windows/DsphConfig.xml
 Information about parameters of execution:
@@ -52,6 +52,7 @@ Information about parameters of execution:
     -files:<values>  Indicates the number of files to be processed
 
   Defines output file:
+    -boxestemplate        Creates example file to be used with -fileboxes
     -savecsv <file.csv>   Generates CSV files with number of particles that
                           enter or leave the domains , volume and flow rates
     -csvsep:<0/1>         Separator character in CSV files (0=semicolon, 1=coma)
