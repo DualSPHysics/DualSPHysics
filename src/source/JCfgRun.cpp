@@ -103,9 +103,9 @@ void JCfgRun::VisuInfo()const{
 #endif
   printf("    -blocksize:<mode>  Defines BlockSize to use in particle interactions on GPU\n");
 #ifndef DISABLE_BSMODES
-  printf("        0: Fixed value (128) is used\n");
+  printf("        0: Fixed value (128) is used (option by default)\n");
   printf("        1: Optimum BlockSize indicated by Occupancy Calculator of CUDA\n");
-  printf("        2: Optimum BlockSize is calculated empirically (option by default)\n\n");
+  printf("        2: Optimum BlockSize is calculated empirically\n\n");
 #else
   printf("        0: Fixed value (128) is used\n\n");
 #endif

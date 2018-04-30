@@ -24,7 +24,7 @@
  along with DualSPHysics. If not, see <http://www.gnu.org/licenses/>.
 
 
-DualSPHysics4 v4.2.047 (27-04-2018)
+DualSPHysics4 v4.2.048 (30-04-2018)
 ====================================
 LoadDsphConfig> .../bin/windows/DsphConfig.xml
 Information about execution parameters:
@@ -50,9 +50,9 @@ Information about execution parameters:
                    cores of the device by default (or using zero value)
 
     -blocksize:<mode>  Defines BlockSize to use in particle interactions on GPU
-        0: Fixed value (128) is used
+        0: Fixed value (128) is used (option by default)
         1: Optimum BlockSize indicated by Occupancy Calculator of CUDA
-        2: Optimum BlockSize is calculated empirically (option by default)
+        2: Optimum BlockSize is calculated empirically
 
     -cellmode:<mode>  Specifies the cell division mode
         2h        Lowest and the least expensive in memory (by default)
