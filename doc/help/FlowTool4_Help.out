@@ -30,7 +30,7 @@
  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
 
 
-FlowTool4 v4.0.024 (27-04-2018)
+FlowTool4 v4.0.025 (30-04-2018)
 ================================
 LoadDsphConfig> .../bin/windows/DsphConfig.xml
 Information about parameters of execution:
@@ -46,15 +46,16 @@ Information about parameters of execution:
     -dirin <dir>       Directory with particle data bi4
     -filein <file>     File with particle data bi4
 
-    -fileboxes <file>  File with definition of boxes
+    -fileboxes <file>  File with definition of domains using prisms
     -first:<int>     Indicates the first file to be computed
     -last:<int>      Indicates the last file to be computed
     -files:<values>  Indicates the number of files to be processed
 
   Defines output file:
-    -savecsv <file.csv>   Generates CSV files with particles in volumes
-    -csvsep:<0/1>       Separator character in CSV files (0=semicolon, 1=coma)
-                        (value by default is read from DsphConfig.xml or 0)
+    -savecsv <file.csv>   Generates CSV files with number of particles that
+                          enter or leave the domains , volume and flow rates
+    -csvsep:<0/1>         Separator character in CSV files (0=semicolon, 1=coma)
+                          (value by default is read from DsphConfig.xml or 0)
 
     -savevtk <file.vtk>   Generates vtk(polydata) files with particles
 
