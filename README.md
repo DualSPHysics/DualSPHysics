@@ -23,6 +23,29 @@ Have in mind that DualSPHysics needs a generated case to execute the SPH solver,
 
 If you need help check out the wiki for this project, or you can also check the previously mentioned download page to get a PDF guide.
 
+# Instructions for docker
+
+You can build a Docker container of DualSPHysics using the provided Dockerfile. The Docker-container can be build with the following command:
+
+```
+docker build -t dualsphysics .
+```
+
+After a successful build, you can run DualSPHysics using docker:
+
+```
+docker run dualsphysics ./DualSPHysics4.2CPU_linux64
+```
+This command works similar for the other executables, e.g.:
+```
+docker run dualsphysics ./GenCase4_linux64
+```
+The Docker container runs a minimalized image of Ubuntu, thus only the `linux64` executables work.
+
+We haven't tested the GPU version of DualSPHysics which probably will not work with the current Dockerfile. Feel free to create a pull request with an improved version.
+
+You can run DualSPHysics on all platforms including Mac OS X with this Docker container but probably not with the optimal performance.
+
 # Instructions for developers
 
 If you are a developer and want to use this code check the following guides.
