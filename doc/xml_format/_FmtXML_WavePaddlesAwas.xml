@@ -3,7 +3,7 @@
 <!-- *** class: JWaveAwasZsurf *** -->
 <!------------------------------------------------------------------------------->
 <!------------------------------------------------------------------------------->
-<!-- *** Example for AWAS using regular or irregular PISTON *** -->
+<!-- *** Example for AWAS (only for Piston) with regular and irregular waves *** -->
 <special>
 	<wavepaddles>
 		<piston>

@@ -519,8 +519,6 @@ void JSph::LoadCaseConfig(){
     if(eparms.Exists("XZPeriodic")){ PeriX=true;  PeriY=false; PeriZ=true;   PeriXinc=PeriYinc=PeriZinc=TDouble3(0); }
     if(eparms.Exists("YZPeriodic")){ PeriX=false; PeriY=true;  PeriZ=true;   PeriXinc=PeriYinc=PeriZinc=TDouble3(0); }
     PeriActive=DefPeriActive(PeriX,PeriY,PeriZ);
-    //-Stores initial periodic configuration in PeriodicConfig.  
-    PeriodicConfig=StrPeriodic(PeriActive,PeriXinc,PeriYinc,PeriZinc);
   }
 
   //-Configuration of domain size.
@@ -996,6 +994,8 @@ void JSph::RunInitialize(unsigned np,unsigned npb,const tdouble3 *pos,const unsi
 /// Configura CellOrder y ajusta orden de componentes en datos.
 //==============================================================================
 void JSph::ConfigCellOrder(TpCellOrder order,unsigned np,tdouble3* pos,tfloat4* velrhop){
+  //-Stores initial periodic configuration in PeriodicConfig.  
+  PeriodicConfig=StrPeriodic(PeriActive,PeriXinc,PeriYinc,PeriZinc);
   //-Applies CellOrder.  
   CellOrder=order;
   if(CellOrder==ORDER_None)CellOrder=ORDER_XYZ;
