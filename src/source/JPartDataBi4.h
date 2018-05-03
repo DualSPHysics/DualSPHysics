@@ -56,7 +56,7 @@
 
 #include "JObject.h"
 #include "TypesDef.h"
-#include "JPerodicModeDef.h"
+#include "JPeriodicDef.h"
 #include "JBinaryData.h"
 #include <string>
 #include <vector>

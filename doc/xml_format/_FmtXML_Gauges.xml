@@ -23,19 +23,19 @@
 			<output value="true" comment="Creates CSV files of measurements (default=default.output)" />
 			<outputdt value="0" comment="Time between output measurements. 0:all steps (default=default.outputdt)" units_comment="s" />
 			<outputtime start="0" end="10" comment="Start and end of output measures. (default=default.outputtime)" units_comment="s" />
-			<point x="1.0" y="0" z="0.1" comment="Measuring position" units_comment="m" />
+			<point x="1.0" y="0" z="0.1" comment="Measurement position" units_comment="m" />
 		</velocity>
         <!-- Only "start" is defined in <compute> and <output>. -->
 		<velocity name="Vel_start">
 			<computetime start="0.1" comment="Start and end of measures. (default=default.computetime)" units_comment="s" />
 			<outputtime start="0" comment="Start and end of output measures. (default=default.outputtime)" units_comment="s" />
-			<point x="1.0" y="0" z="0.1" comment="Measuring position" units_comment="m" />
+			<point x="1.0" y="0" z="0.1" comment="Measurement position" units_comment="m" />
 		</velocity>
         <!-- Only "end" is defined in <compute> and <output>. -->
 		<velocity name="Vel_end">
 			<computetime end="0.5" comment="Start and end of measures. (default=default.computetime)" units_comment="s" />
 			<outputtime end="0.2" comment="Start and end of output measures. (default=default.outputtime)" units_comment="s" />
-			<point x="1.0" y="0" z="0.1" comment="Measuring position" units_comment="m" />
+			<point x="1.0" y="0" z="0.1" comment="Measurement position" units_comment="m" />
 		</velocity>
         <!-- Calculates Surface Water Level in a line of points. -->
 		<swl name="Swl_x09">

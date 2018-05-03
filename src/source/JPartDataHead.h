@@ -35,7 +35,7 @@
 #include "JObject.h"
 #include "TypesDef.h"
 #include "JParticlesDef.h"
-#include "JPerodicModeDef.h"
+#include "JPeriodicDef.h"
 
 //##############################################################################
 //# JPartDataHeadMkBlock
