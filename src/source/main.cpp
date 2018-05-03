@@ -1,6 +1,6 @@
 /*
  <DUALSPHYSICS>  Copyright (c) 2018, 
- Dr Jose M. Dominguez, Dr Alejandro Crespo, Prof. Moncho Gomez Gesteira, Orlando Garcia-Feal,
+ Dr Jose M. Dominguez, Dr Alejandro Crespo, Prof. Moncho Gomez Gesteira, Orlando Garcia-Feal, Dr Anxo Barreiro,
  Dr Benedict Rogers, Dr Georgios Fourtakas, Dr Athanasios Mokos,
  Dr Renato Vacondio, Dr Ricardo Canelas, Dr Stephen Longshaw, Dr Corrado Altomare.
 
@@ -82,7 +82,7 @@ std::string getlicense_lgpl(const std::string &name,bool simple){
   std::string tx=(simple? "": "\n");
   tx=tx+"\n <"+fun::StrUpper(name)+"> Copyright (C) 2018 by"; 
   tx=tx+"\n Dr Jose M. Dominguez, Dr Alejandro Crespo,";
-  tx=tx+"\n Prof. Moncho Gomez Gesteira, Orlando Garcia-Feal,";
+  tx=tx+"\n Prof. Moncho Gomez Gesteira, Orlando Garcia-Feal, Dr Anxo Barreiro";
   tx=tx+"\n Dr Benedict Rogers, Dr Georgios Fourtakas, Dr Athanasios Mokos,";
   tx=tx+"\n Dr Renato Vacondio, Dr Ricardo Canelas,";
   tx=tx+"\n Dr Stephen Longshaw, Dr Corrado Altomare.\n";
