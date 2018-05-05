@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<materials>  
+	<property name="soft-wood">
+		<Young_Modulus value="70000000.0" comment="Young Modulus (N/m2)" />
+        <PoissonRatio value="0.10" comment="Poisson Ratio (-)" />
+		<Restitution_Coefficient value="0.50" comment="Restitution Coefficient (-)" />
+        <Kfric value="0.75" comment="Kinetic friction coefficient" />
+	</property>
+	<property name="hard-wood">
+		<Young_Modulus value="200000000.0" comment="Young Modulus (N/m2)" />
+        <PoissonRatio value="0.20" comment="Poisson Ratio (-)" />
+		<Restitution_Coefficient value="0.60" comment="Restitution Coefficient (-)" />
+        <Kfric value="0.70" comment="Kinetic friction coefficient" />
+	</property>
+	<property name="steel">
+		<Young_Modulus value="210000000000.0" comment="Young Modulus (N/m2)" />
+        <PoissonRatio value="0.30" comment="Poisson Ratio (-)" />
+		<Restitution_Coefficient value="0.70" comment="Restitution Coefficient (-)" />
+        <Kfric value="0.45" comment="Kinetic friction coefficient" />
+	</property>
+	<property name="aluminium">
+		<Young_Modulus value="69000000000.0" comment="Young Modulus (N/m2)" />
+        <PoissonRatio value="0.33" comment="Poisson Ratio (-)" />
+		<Restitution_Coefficient value="0.65" comment="Restitution Coefficient (-)" />
+        <Kfric value="0.65" comment="Kinetic friction coefficient" />
+	</property>
+	<property name="pvc">
+		<Young_Modulus value="3000000000.0" comment="Young Modulus (N/m2)" />
+        <PoissonRatio value="0.30" comment="Poisson Ratio (-)" />
+		<Restitution_Coefficient value="0.60" comment="Restitution Coefficient (-)" />
+        <Kfric value="0.45" comment="Kinetic friction coefficient" />
+	</property>
+	<property name="glass">
+		<Young_Modulus value="65000000000.0" comment="Young Modulus (N/m2)" />
+        <PoissonRatio value="0.23" comment="Poisson Ratio (-)" />
+		<Restitution_Coefficient value="0.85" comment="Restitution Coefficient (-)" />
+        <Kfric value="0.40" comment="Kinetic friction coefficient" />
+	</property>
+	<property name="lime-stone">
+		<Young_Modulus value="8000000000.0" comment="Young Modulus (N/m2)" />
+        <PoissonRatio value="0.35" comment="Poisson Ratio (-)" />
+		<Restitution_Coefficient value="0.45" comment="Restitution Coefficient (-)" />
+        <Kfric value="0.35" comment="Kinetic friction coefficient" />
+	</property>
+</materials>

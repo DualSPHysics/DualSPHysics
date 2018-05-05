@@ -39,6 +39,30 @@
         </geometry>
     </casedef>
     <execution>
+        <special>
+            <gauges>
+                <default>
+					<savevtkpart value="true" comment="Creates VTK files for each PART (default=false)" />
+					<_computedt value="0.001" comment="Time between measurements. 0:all steps (default=TimeOut)" units_comment="s" />
+					<_computetime start="0.1" end="0.2" comment="Start and end of measures. (default=simulation time)" units_comment="s" />
+					<output value="true" comment="Creates CSV files of measurements (default=false)" />
+					<_outputdt value="0" comment="Time between output measurements. 0:all steps (default=TimeOut)" units_comment="s" />
+					<_outputtime start="0" end="10" comment="Start and end of output measures. (default=simulation time)" units_comment="s" />
+                </default>
+                <swl name="Swl_x02">
+                    <pointdp coefdp="0.5" comment="Distance between check points (value=coefdp*Dp)" />
+					<point0 x="0.2" y="0" z="-0.05" comment="Initial point" units_comment="m" />
+					<point2 x="0.2" y="0" z="2.1" comment="Final point" units_comment="m" />
+                </swl>
+                <swl name="Swl_z003">
+                    <computedt value="0.005" comment="Time between measurements. 0:all steps (default=default.computedt)" units_comment="s" />
+			        <outputdt value="0.005" comment="Time between output measurements. 0:all steps (default=default.outputdt)" units_comment="s" />
+                    <pointdp coefdp="0.5" comment="Distance between check points (value=coefdp*Dp)" />
+					<point0 x="-0.05" y="0" z="0.03" comment="Initial point" units_comment="m" />
+					<point2 x="4.05" y="0" z="0.03" comment="Final point" units_comment="m" />
+                </swl>
+            </gauges>
+        </special>
         <parameters>
             <parameter key="PosDouble" value="1" comment="Precision in particle interaction 0:Simple, 1:Double, 2:Uses and saves double (default=0)" />			
             <parameter key="StepAlgorithm" value="1" comment="Step Algorithm 1:Verlet, 2:Symplectic (default=1)" />

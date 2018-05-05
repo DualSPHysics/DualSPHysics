@@ -49,27 +49,32 @@ fi
 
 # Executes DualSPHysics to simulate SPH method.
 if [ $errcode -eq 0 ]; then
-  $dualsphysicscpu -cpu $dirout/$name $dirout -dirdataout data -svres -tmax:0.0005 -tout:0.0001
+  $dualsphysicscpu $dirout/$name $dirout -dirdataout data -svres
   errcode=$?
 fi
 
 # Executes PartVTK4 to create VTK files with particles.
 dirout2=${dirout}/particles; mkdir $dirout2
 if [ $errcode -eq 0 ]; then
-  $partvtk -dirin $diroutdatadata -filexml $dirout/${name}.xml -savevtk $dirout2/PartFluid -onlytype:-all,fluid -vars:+idp,+vel,+rhop,+press,+vor
+  $partvtk -dirin $diroutdata -savevtk $dirout2/PartFluid -onlytype:-all,fluid -vars:+idp,+vel,+rhop,+press,+vor
+  errcode=$?
+fi
+
+if [ $errcode -eq 0 ]; then
+  $partvtk -dirin $diroutdata -savevtk $dirout2/PartBound -onlytype:-all,bound -vars:-all -last:0
   errcode=$?
 fi
 
 # Executes PartVTKOut4 to create VTK files with excluded particles.
 if [ $errcode -eq 0 ]; then
-  $partvtkout -dirin $diroutdatadata -filexml $dirout/${name}.xml -savevtk $dirout2/PartFluidOut -SaveResume $dirout/ResumeFluidOut
+  $partvtkout -dirin $diroutdata -savevtk $dirout2/PartFluidOut -SaveResume $dirout2/_ResumeFluidOut
   errcode=$?
 fi
 
 # Executes IsoSurface4 to create VTK files with slices of surface.
 dirout2=${dirout}/surface; mkdir $dirout2
 if [ $errcode -eq 0 ]; then
-  $isosurface -dirin $diroutdatadata -saveslice $dirout2/Slices 
+  $isosurface -dirin $diroutdata -saveslice $dirout2/Slices 
   errcode=$?
 fi
 
