@@ -4,6 +4,7 @@
 
 name=CaseDambreak
 dirout=${name}_out
+diroutdata=${dirout}/data
 
 # "executables" are renamed and called from their directory
 
@@ -18,7 +19,7 @@ measuretool="${dirbin}/MeasureTool4_linux64"
 computeforces="${dirbin}/ComputeForces4_linux64"
 isosurface="${dirbin}/IsoSurface4_linux64"
 flowtool="${dirbin}/FlowTool4_linux64"
-
+floatinginfo="${dirbin}/FloatingInfo4_linux64"
 
 # Library path must be indicated properly
 
@@ -28,14 +29,14 @@ path_so=$(pwd)
 cd $current
 export LD_LIBRARY_PATH=$path_so
 
-
 # "dirout" is created to store results or it is cleaned if it already exists
 
 if [ -e $dirout ]; then
   rm -r $dirout
 fi
 mkdir $dirout
-diroutdata=${dirout}/data; mkdir $diroutdata
+mkdir $diroutdata
+
 
 # CODES are executed according the selected parameters of execution in this testcase
 errcode=0
@@ -107,8 +108,6 @@ if [ $errcode -eq 0 ]; then
   $flowtool -dirin $diroutdata -fileboxes CaseDambreak_FileBoxes.txt -savecsv $dirout/_ResultFlow.csv -savevtk $dirout2/Boxes.vtk
   errcode=$?
 fi
-
-
 
 if [ $errcode -eq 0 ]; then
   echo All done
