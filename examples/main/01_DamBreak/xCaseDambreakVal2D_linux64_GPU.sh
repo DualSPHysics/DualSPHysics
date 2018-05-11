@@ -4,6 +4,7 @@
 
 name=CaseDambreakVal2D
 dirout=${name}_out
+diroutdata=${dirout}/data
 
 # "executables" are renamed and called from their directory
 
@@ -18,7 +19,7 @@ measuretool="${dirbin}/MeasureTool4_linux64"
 computeforces="${dirbin}/ComputeForces4_linux64"
 isosurface="${dirbin}/IsoSurface4_linux64"
 flowtool="${dirbin}/FlowTool4_linux64"
-
+floatinginfo="${dirbin}/FloatingInfo4_linux64"
 
 # Library path must be indicated properly
 
@@ -28,14 +29,13 @@ path_so=$(pwd)
 cd $current
 export LD_LIBRARY_PATH=$path_so
 
-
 # "dirout" is created to store results or it is cleaned if it already exists
 
 if [ -e $dirout ]; then
   rm -r $dirout
 fi
 mkdir $dirout
-diroutdata=${dirout}/data; mkdir $diroutdata
+mkdir $diroutdata
 
 
 # CODES are executed according the selected parameters of execution in this testcase
@@ -49,27 +49,32 @@ fi
 
 # Executes DualSPHysics to simulate SPH method.
 if [ $errcode -eq 0 ]; then
-  $dualsphysicsgpu -gpu $dirout/$name $dirout -dirdataout data -svres -tmax:0.0005 -tout:0.0001
+  $dualsphysicsgpu -gpu $dirout/$name $dirout -dirdataout data -svres
   errcode=$?
 fi
 
 # Executes PartVTK4 to create VTK files with particles.
 dirout2=${dirout}/particles; mkdir $dirout2
 if [ $errcode -eq 0 ]; then
-  $partvtk -dirin $diroutdatadata -filexml $dirout/${name}.xml -savevtk $dirout2/PartFluid -onlytype:-all,fluid -vars:+idp,+vel,+rhop,+press,+vor
+  $partvtk -dirin $diroutdata -savevtk $dirout2/PartFluid -onlytype:-all,fluid -vars:+idp,+vel,+rhop,+press,+vor
+  errcode=$?
+fi
+
+if [ $errcode -eq 0 ]; then
+  $partvtk -dirin $diroutdata -savevtk $dirout2/PartBound -onlytype:-all,bound -vars:-all -last:0
   errcode=$?
 fi
 
 # Executes PartVTKOut4 to create VTK files with excluded particles.
 if [ $errcode -eq 0 ]; then
-  $partvtkout -dirin $diroutdatadata -filexml $dirout/${name}.xml -savevtk $dirout2/PartFluidOut -SaveResume $dirout/ResumeFluidOut
+  $partvtkout -dirin $diroutdata -savevtk $dirout2/PartFluidOut -SaveResume $dirout2/_ResumeFluidOut
   errcode=$?
 fi
 
 # Executes IsoSurface4 to create VTK files with slices of surface.
 dirout2=${dirout}/surface; mkdir $dirout2
 if [ $errcode -eq 0 ]; then
-  $isosurface -dirin $diroutdatadata -saveslice $dirout2/Slices 
+  $isosurface -dirin $diroutdata -saveslice $dirout2/Slices 
   errcode=$?
 fi
 

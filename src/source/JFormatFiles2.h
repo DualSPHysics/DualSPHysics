@@ -83,7 +83,7 @@
 //##############################################################################
 //# JFormatFiles2
 //##############################################################################
-/// \brief Provides functions to store particle data in formats VTK, CSV, ASCII.
+/// \brief Provides functions to store particle data in formats VTK, CSV, ASCII and geometric elements in VTK format.
 
 class JFormatFiles2
 {
