@@ -51,7 +51,7 @@ You can build the project in GNU/Linux using the [Makefile](Source/Makefile) inc
 
 1. Clone this repository into your system
 2. Ensure you have GCC version 4.X installed. Usually there are packages in your distro like `gcc49` that provides the `g++-4.9` executable.
-3. In a terminal, go to the folder `DualSPHysics/SOURCE/DualSPHysics/Source/`
+3. In a terminal, go to the folder `src/source/`
 4. Execute `make clean` to make sure the environment is clean and ready to compile
 5. Execute `make CC=g++-4.9 CPP=g++-4.9 CXX=g++-4.9 LD=g++-4.9 -f ./Makefile`. Be sure to replace `g++-4.9` for the executable name you have in your system (previously installed in step 2)
 
