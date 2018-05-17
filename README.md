@@ -7,11 +7,9 @@
   <br>
 </h1>
 
-<h4 align="center">A combined <a href="https://developer.nvidia.com/cuda-zone" target="_blank">CUDA</a> and <a href="http://www.openmp.org/" target="_blank">OpenMP</a> implementation of the Smoothed Particle Hydrodynamics method based on the advanced <a href="https://wiki.manchester.ac.uk/sphysics/index.php/Main_Page" target="_blank">SPHysics</a> code.</h4>
+<h4 align="center"><a href="https://http://www.dual.sphysics.org" target="_blank">DualSPHysics</a> is based on the Smoothed Particle Hydrodynamics model named <a href="https://http://www.sphysics.org" target="_blank">SPHysics</a>.</h4>
 
-<p align="center">
-<img src="http://design.sphysics.org/img/dualsphysics_demonstration.gif" alt="DualSPHysics" width="400">
-</p>
+<h4 align="center">The code is developed to study free-surface flow phenomena where Eulerian methods can be difficult to apply, such as waves or impact of dam-breaks on off-shore structures. DualSPHysics is a set of C++, <a href="https://developer.nvidia.com/cuda-zone" target="_blank">CUDA</a> and Java codes designed to deal with real-life engineering problems.</h4>
 
 # Instructions for regular users
 
@@ -78,6 +76,7 @@ Please read [CONTRIBUTING.md](CONTRIBUTING.md) if you want to make changes to th
 * **Prof. Moncho Gomez Gesteira**
 * **Dr Anxo Barreiro**
 * **Dr Benedict Rogers**
+* **Prof. Peter Stansby**
 * **Dr Georgios Fourtakas**
 * **Dr Athanasios Mokos**
 * **Dr Renato Vacondio**
