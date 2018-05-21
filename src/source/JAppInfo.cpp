@@ -34,25 +34,27 @@ using namespace std;
 //==============================================================================
 // Constructor.
 //==============================================================================
-JAppInfo::JAppInfo(std::string name,std::string ver,std::string date){
+JAppInfo::JAppInfo(std::string name,std::string extra,std::string ver,std::string date){
   ClassName="JAppInfo";
   #ifdef APP_DEFLOG
     Log=NULL;
   #endif
   Reset();
-  MainName=name; MainVer=ver; Date=date;
+  MainName=name; MainNameExtra=extra; MainVer=ver; Date=date;
 }
 
 //==============================================================================
 // Constructor with subname.
 //==============================================================================
-JAppInfo::JAppInfo(std::string name,std::string ver,std::string subname,std::string subver,std::string date){
+JAppInfo::JAppInfo(std::string name,std::string extra,std::string ver
+  ,std::string subname,std::string subver,std::string date)
+{
   ClassName="JAppInfo";
   #ifdef APP_DEFLOG
     Log=NULL;
   #endif
   Reset();
-  MainName=name; MainVer=ver; Date=date;
+  MainName=name; MainNameExtra=extra; MainVer=ver; Date=date;
   SubName=subname;
   SubVer=subver;
 }
@@ -70,8 +72,7 @@ JAppInfo::~JAppInfo(){
 //==============================================================================
 void JAppInfo::Reset(){
   //-Application information.
-  MainName=MainVer=Date="";
-  MainNameExtra="";
+  MainName=MainNameExtra=MainVer=Date="";
   SubName=SubVer="";
   //-Execution paths.
   RunCommand=RunPath=ProgramPath="";
@@ -80,7 +81,9 @@ void JAppInfo::Reset(){
   CsvSepComa=false;
   DirOut=DirDataOut="";
   //-Log definition.
-  delete Log; Log=NULL;
+  #ifdef APP_DEFLOG
+    delete Log; Log=NULL;
+  #endif
 }
 
 //==============================================================================
@@ -132,6 +135,24 @@ std::string JAppInfo::GetShortName()const{
 //==============================================================================
 std::string JAppInfo::GetFullName()const{
   return(GetShortName()+(!MainNameExtra.empty()? string(" ")+MainNameExtra: "")+(!SubName.empty()? string(" ")+SubVer+" ("+MainVer+")": string(" ")+MainVer)+" ("+Date+")"); 
+}
+
+//==============================================================================
+// Create directory path when necessary.
+//==============================================================================
+int JAppInfo::MkdirPath(const std::string &dir)const{
+  int ret=0;
+  if(AppInfo.GetCreateDirs())ret=fun::MkdirPath(dir);
+  return(ret);
+}
+
+//==============================================================================
+// Create file path when necessary.
+//==============================================================================
+int JAppInfo::MkdirPathFile(const std::string &file)const{
+  int ret=0;
+  if(AppInfo.GetCreateDirs())ret=fun::MkdirPath(fun::GetDirParent(file));
+  return(ret);
 }
 
 

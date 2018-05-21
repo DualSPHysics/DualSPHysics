@@ -54,12 +54,15 @@ Please download source files and documentation from <a href="http://dual.sphysic
 
 using namespace std;
 
-JAppInfo AppInfo("DualSPHysics4","v4.2.050","21-05-2018");
-//JAppInfo AppInfo("DualSPHysics4","v4.2.???","UserVersion","v1.0","??-??-????"); //-for user versions.
+
 #ifdef CODE_SIZE4
-  AppInfo.ConfigNameExtra("MK65k");
+  const char *appextraname="MK65k";
+#else
+  const char *appextraname="";
 #endif
 
+JAppInfo AppInfo("DualSPHysics4",appextraname,"v4.2.050","21-05-2018");
+//JAppInfo AppInfo("DualSPHysics4",appextraname,"v4.2.???","UserVersion","v1.0","??-??-????"); //-for user versions.
 
 //==============================================================================
 /// LGPL License.
@@ -114,7 +117,6 @@ int main(int argc, char** argv){
   std::string appnamesub;
   for(unsigned c=0;c<=unsigned(appname.size());c++)appnamesub=appnamesub+"=";
   printf("\n%s\n%s\n",appname.c_str(),appnamesub.c_str());
-
   JLog2 *log=NULL;
   JCfgRun cfg;
   try{
