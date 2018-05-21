@@ -25,7 +25,7 @@ If you need help check out the wiki for this project.
 
 If you are a developer and want to use this code check the following guides.
 
-Take into account that for pre- and post-processing you will need to use GenCase and the different post-processing tools included in the main DualSPHysics package, <a href="http://www.dual.sphysics.org/index.php/downloads/" target="_blank">downloadable here</a>. If you compile your own DualSPHyiscs version just overwrite the one in the package.
+Take into account that for pre- and post-processing you will need to use GenCase and the different post-processing tools included in the main DualSPHysics package, <a href="http://www.dual.sphysics.org/index.php/downloads/" target="_blank"> here</a>. If you compile your own DualSPHyiscs version just overwrite the one in the package.
 
 ## Developing a modified version to fit your own needs.
 
@@ -63,7 +63,7 @@ After compiling you should see a message like `--- Compiled Release GPU/CPU vers
 
 # Graphical user interface (GUI)
 
-Please check [DesingSPHysics website](http://design.sphysics.org/￼).
+Please check [DesignSPHysics website]( http://design.sphysics.org/).
 
 # Advanced visualisation with Blender
 
