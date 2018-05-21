@@ -63,32 +63,30 @@ void JLog2::Reset(){
   }
   Warnings.clear();
   FileInfo.clear();
-  CsvSepComa=false;
   DirOut="";
-  DirDataOut="";
 }
 
 //==============================================================================
 /// Initialisation of log file.
 //==============================================================================
-void JLog2::Init(std::string fname,std::string dirdataout,bool csvsepcoma,bool mpirun,int mpirank,int mpilaunch){
+void JLog2::Init(std::string fname,bool mpirun,int mpirank,int mpilaunch){
   Reset();
-  CsvSepComa=csvsepcoma;
   MpiRun=mpirun; MpiRank=mpirank; MpiLaunch=mpilaunch;
-  if(MpiRun){
-    string ext=fun::GetExtension(fname);
-    fname=fun::GetWithoutExtension(fname);
-    fname=fname+"_"+fun::IntStrFill(mpirank,MpiLaunch-1);
-    if(!ext.empty())fname=fname+"."+ext;
-  }
-  FileName=fname;
-  DirOut=fun::GetDirWithSlash(fun::GetDirParent(FileName));
-  DirDataOut=(!dirdataout.empty()? fun::GetDirWithSlash(DirOut+dirdataout): DirOut);
-  if(ModeOutDef&Out_File){
-    Pf=new ofstream; 
-    Pf->open(fname.c_str());
-    if(Pf)Ok=true;
-    else RunException("Init","Cannot open the file.",fname);
+  if(!fname.empty()){//-When file for log is defined.
+    if(MpiRun){
+      string ext=fun::GetExtension(fname);
+      fname=fun::GetWithoutExtension(fname);
+      fname=fname+"_"+fun::IntStrFill(mpirank,MpiLaunch-1);
+      if(!ext.empty())fname=fname+"."+ext;
+    }
+    FileName=fname;
+    DirOut=fun::GetDirWithSlash(fun::GetDirParent(FileName));
+    if(ModeOutDef&Out_File){
+      Pf=new ofstream; 
+      Pf->open(fname.c_str());
+      if(Pf)Ok=true;
+      else RunException("Init","Cannot open the file.",fname);
+    }
   }
 }
   
@@ -289,7 +287,7 @@ void JLog2::PrintWarningList(TpMode_Out mode,bool flush){
 //==============================================================================
 void JLog2::AddFileInfo(std::string fname,const std::string &finfo){
   //-Removes execution path.
-  if(int(fname.find(GetDirOut()))==0)fname=fname.substr(GetDirOut().size());
+  if(int(fname.find(DirOut))==0)fname=fname.substr(DirOut.size());
   //-Checks if it already exists.
   const unsigned nf=FilesCount();
   unsigned cf=0;

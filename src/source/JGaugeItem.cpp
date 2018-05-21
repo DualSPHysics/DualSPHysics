@@ -21,6 +21,7 @@
 #include "JGaugeItem.h"
 #include "JLog2.h"
 #include "JSaveCsv2.h"
+#include "JAppInfo.h"
 #include "Functions.h"
 #include "FunctionsMath.h"
 #include "JFormatFiles2.h"
@@ -143,14 +144,14 @@ void JGaugeItem::GetConfig(std::vector<std::string> &lines)const{
 /// Returns filename for output results for CSV files.
 //==============================================================================
 std::string JGaugeItem::GetResultsFileCsv()const{
-  return(Log->GetDirOut()+"Gauges"+GetNameType(Type)+"_"+Name)+".csv";
+  return(AppInfo.GetDirOut()+"Gauges"+GetNameType(Type)+"_"+Name)+".csv";
 }
 
 //==============================================================================
 /// Returns filename for output results for VTK files.
 //==============================================================================
 std::string JGaugeItem::GetResultsFileVtk()const{
-  return(Log->GetDirDataOut()+"Gauges"+GetNameType(Type)+"_"+Name)+".vtk";
+  return(AppInfo.GetDirDataOut()+"Gauges"+GetNameType(Type)+"_"+Name)+".vtk";
 }
 
 //==============================================================================
@@ -276,7 +277,7 @@ void JGaugeVelocity::SaveResults(){
       OutFile=GetResultsFileCsv();
       Log->AddFileInfo(OutFile,FileInfo);
     }
-    jcsv::JSaveCsv2 scsv(OutFile,!first,Log->GetCsvSepComa());
+    jcsv::JSaveCsv2 scsv(OutFile,!first,AppInfo.GetCsvSepComa());
     //-Saves head.
     if(first){
       scsv.SetHead();
@@ -498,7 +499,7 @@ void JGaugeSwl::SaveResults(){
       OutFile=GetResultsFileCsv();
       Log->AddFileInfo(OutFile,FileInfo);
     }
-    jcsv::JSaveCsv2 scsv(OutFile,!first,Log->GetCsvSepComa());
+    jcsv::JSaveCsv2 scsv(OutFile,!first,AppInfo.GetCsvSepComa());
     //-Saves head.
     if(first){
       //-Head of values.
@@ -715,7 +716,7 @@ void JGaugeMaxZ::SaveResults(){
       OutFile=GetResultsFileCsv();
       Log->AddFileInfo(OutFile,FileInfo);
     }
-    jcsv::JSaveCsv2 scsv(OutFile,!first,Log->GetCsvSepComa());
+    jcsv::JSaveCsv2 scsv(OutFile,!first,AppInfo.GetCsvSepComa());
     //-Saves head.
     if(first){
       scsv.SetHead();

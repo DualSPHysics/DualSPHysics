@@ -21,6 +21,7 @@
 #include "JGaugeSystem.h"
 #include "JLog2.h"
 #include "JXml.h"
+#include "JAppInfo.h"
 #include "Functions.h"
 #include "FunctionsMath.h"
 #include "JFormatFiles2.h"
@@ -366,7 +367,7 @@ void JGaugeSystem::SaveVtkInitPoints()const{
   if(vtype)fields.push_back(JFormatFiles2::DefineField("Type",JFormatFiles2::UInt32,1,vtype));
   if(vout) fields.push_back(JFormatFiles2::DefineField("Out" ,JFormatFiles2::UChar8,1,vout));
   //-Saves VTK file.
-  const string filevtk=Log->GetDirOut()+"CfgGauge_InitPoints.vtk";
+  const string filevtk=AppInfo.GetDirOut()+"CfgGauge_InitPoints.vtk";
   JFormatFiles2::SaveVtk(filevtk,ndata,points.data(),fields);
   Log->AddFileInfo(filevtk,"Saves points used for gauge calculations (by JGaugeSystem).");
   //-Frees memory.

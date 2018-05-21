@@ -60,9 +60,6 @@ protected:
   }
 
 public:
-  std::string RunCommand;
-  std::string RunPath;
-  std::string ProgramPath;
   bool PrintInfo;
 
   bool Cpu;
@@ -100,7 +97,9 @@ public:
   tdouble3 DomainParticlesPrcMin,DomainParticlesPrcMax;
   tdouble3 DomainFixedMin,DomainFixedMax;
 
-  bool CsvSepComa;   //Separator character in CSV files (0=semicolon, 1=coma).
+  //-General configuration from DsphConfig.xml
+  bool CreateDirs;   ///<Creates full path for output files (true by default).
+  bool CsvSepComa;   ///<Separator character in CSV files (false=semicolon, true=coma).
 
 public:
   JCfgRun();

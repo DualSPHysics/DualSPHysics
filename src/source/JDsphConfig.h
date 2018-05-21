@@ -20,6 +20,7 @@
 //:# Cambios:
 //:# =========
 //:# - Carga configuracion del fichero DsphConfig.xml. (23-10-2017)
+//:# - Carga nueva configuracion createdirs. (21-05-2018)
 //:#############################################################################
 
 /// \file JDsphConfig.h \brief Declares the class \ref JDsphConfig.
@@ -42,7 +43,8 @@ class JDsphConfig : protected JObject
 protected:
   std::string FileCfg;
 
-  int CsvSeparator; //-Separator character in CSV files (-1=undefined, 0=semicolon, 1=coma)
+  int CreateDirs;   ///<Creates full path for output files (-1=undefined, 0=no, 1=yes).
+  int CsvSeparator; ///<Separator character in CSV files (-1=undefined, 0=semicolon, 1=coma).
 
 public:
   JDsphConfig();
@@ -52,6 +54,7 @@ public:
 
   std::string GetFileCfg()const{ return(FileCfg); }
 
+  int GetCreateDirs()const{ return(CreateDirs); }
   int GetCsvSeparator()const{ return(CsvSeparator); }
 };
 

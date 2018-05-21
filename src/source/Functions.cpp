@@ -704,17 +704,23 @@ int Mkdir(const std::string &dirname){
 //==============================================================================
 int MkdirPath(std::string path){
   int ret=0;
-  //:printf("--> path: [%s]\n",path.c_str());
+  //:printf("\n--> path: [%s]\n",path.c_str());
   for(unsigned c=0;c<unsigned(path.size());c++)if(path[c]=='\\')path[c]='/';
-  //:printf("--> path: [%s]\n",path.c_str());
+  //:printf("----> path: [%s]\n",path.c_str());
   if(!path.empty() && !DirExists(path)){
     std::string path0;
     std::string aux=path;
+    #ifndef WIN32
+      const bool linuxroot=(path[0]=='/');
+    #else
+      const bool linuxroot=false;
+    #endif
     while(!aux.empty()){
       std::string dir=StrSplit("/",aux);
+      //:printf("------> dir: [%s]\n",dir.c_str());
       if(!dir.empty() && dir!="."){
-        if(path0.empty())path0=dir; else path0=path0+"/"+dir;
-        //:printf("--> path0: [%s]\n",path0.c_str());
+        if(path0.empty() && !linuxroot)path0=dir; else path0=path0+"/"+dir;
+        //:printf("------> path0: [%s]\n",path0.c_str());
         if(dir!=".." && dir[dir.size()-1]!=':' && !DirExists(path0)){
           int ret2=Mkdir(path0);
           if(!ret)ret=ret2;
@@ -722,7 +728,7 @@ int MkdirPath(std::string path){
       }
     }
   }
-  //:printf("--> MkdirPath: %d\n",ret);
+  //:printf("----> MkdirPath: %d\n",ret);
   return(ret);
 }
 

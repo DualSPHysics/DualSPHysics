@@ -21,6 +21,7 @@
 #include "JSaveDt.h"
 #include "JLog2.h"
 #include "JXml.h"
+#include "JAppInfo.h"
 #include "Functions.h"
 #include "JSaveCsv2.h"
 #include <cfloat>
@@ -115,10 +116,10 @@ void JSaveDt::SaveFileValues(){
   const char met[]="SaveFileValues";
   const bool firstsv=FileDtInfo.empty();
   if(firstsv){
-    FileDtInfo=Log->GetDirOut()+"DtInfo.csv";
+    FileDtInfo=AppInfo.GetDirOut()+"DtInfo.csv";
     Log->AddFileInfo(FileDtInfo,"Saves statistical information about DT values.");
   }
-  jcsv::JSaveCsv2 scsv(FileDtInfo,!firstsv,Log->GetCsvSepComa());
+  jcsv::JSaveCsv2 scsv(FileDtInfo,!firstsv,AppInfo.GetCsvSepComa());
   //-Saves head.
   if(firstsv){
     scsv.SetHead();
@@ -169,10 +170,10 @@ void JSaveDt::SaveFileAllDts(){
   const char met[]="SaveFileAllDts";
   const bool firstsv=FileDtAllInfo.empty();
   if(firstsv){
-    FileDtAllInfo=Log->GetDirOut()+"DtAllInfo.csv";
+    FileDtAllInfo=AppInfo.GetDirOut()+"DtAllInfo.csv";
     Log->AddFileInfo(FileDtAllInfo,"Saves DT values for each simulation step.");
   }
-  jcsv::JSaveCsv2 scsv(FileDtAllInfo,!firstsv,Log->GetCsvSepComa());
+  jcsv::JSaveCsv2 scsv(FileDtAllInfo,!firstsv,AppInfo.GetCsvSepComa());
   //-Saves head.
   if(firstsv){
     scsv.SetHead();

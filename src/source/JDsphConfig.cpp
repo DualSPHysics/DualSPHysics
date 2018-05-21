@@ -49,6 +49,7 @@ JDsphConfig::~JDsphConfig(){
 //==============================================================================
 void JDsphConfig::Reset(){
   FileCfg="";
+  CreateDirs=-1;
   CsvSeparator=-1;
 }
 
@@ -67,7 +68,10 @@ void JDsphConfig::Init(std::string path){
     TiXmlNode* node=sxml.GetNode(place,false);
     if(!node)RunException(met,string("Cannot find the element \'")+place+"\'.",file);
     //-Reads configuration values in XML file.
+    CreateDirs=sxml.ReadElementInt(node,"createdirs","v",true,-1);
     CsvSeparator=sxml.ReadElementInt(node,"csvseparator","v",true,-1);
+    //printf("JDsphConfig::CreateDirs: %d\n",CreateDirs);
+    //printf("JDsphConfig::csvseparator: %d\n",CsvSeparator);
     //-Stores name of configuration file.
     FileCfg=file;
   }

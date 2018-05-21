@@ -479,6 +479,7 @@ rem %CudaNvcc% -ccbin "$(VCInstallDir)bin" %gpuhw% -use_fast_math -c %ptxinfo% -
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">true</ExcludedFromBuild>
     </ClInclude>
     <ClInclude Include="..\source\FunctionsMath.h" />
+    <ClInclude Include="..\source\JAppInfo.h" />
     <ClInclude Include="..\source\JArraysCpu.h" />
     <ClInclude Include="..\source\JBinaryData.h" />
     <ClInclude Include="..\source\JBlockSizeAuto.h">
@@ -619,6 +620,7 @@ rem %CudaNvcc% -ccbin "$(VCInstallDir)bin" %gpuhw% -use_fast_math -c %ptxinfo% -
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="..\source\FunctionsMath.cpp" />
+    <ClCompile Include="..\source\JAppInfo.cpp" />
     <ClCompile Include="..\source\JArraysCpu.cpp" />
     <ClCompile Include="..\source\JBinaryData.cpp" />
     <ClCompile Include="..\source\JBlockSizeAuto.cpp">
