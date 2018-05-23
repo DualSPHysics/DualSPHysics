@@ -21,12 +21,8 @@ set isosurface="%dirbin%/IsoSurface4_win64.exe"
 set flowtool="%dirbin%/FlowTool4_win64.exe"
 set floatinginfo="%dirbin%/FloatingInfo4_win64.exe"
 
-rem "dirout" is created to store results or it is removed if it already exists
-
+rem "dirout" to store results is removed if it already exists
 if exist %dirout% rd /s /q %dirout%
-mkdir %dirout%
-if not "%ERRORLEVEL%" == "0" goto fail
-mkdir %diroutdata%
 
 rem CODES are executed according the selected parameters of execution in this testcase
 
@@ -40,7 +36,6 @@ if not "%ERRORLEVEL%" == "0" goto fail
 
 rem Executes PartVTK4 to create VTK files with particles.
 set dirout2=%dirout%\particles
-mkdir %dirout2%
 %partvtk% -dirin %diroutdata% -savevtk %dirout2%/PartFluid -onlytype:-all,fluid -vars:+idp,+vel,+rhop,+press,+vor
 if not "%ERRORLEVEL%" == "0" goto fail
 
@@ -53,7 +48,6 @@ if not "%ERRORLEVEL%" == "0" goto fail
 
 rem Executes IsoSurface4 to create VTK files with slices of surface.
 set dirout2=%dirout%\surface
-mkdir %dirout2%
 %isosurface% -dirin %diroutdata% -saveslice %dirout2%/Slices 
 if not "%ERRORLEVEL%" == "0" goto fail
 

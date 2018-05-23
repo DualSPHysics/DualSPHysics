@@ -29,13 +29,10 @@ path_so=$(pwd)
 cd $current
 export LD_LIBRARY_PATH=$path_so
 
-# "dirout" is created to store results or it is cleaned if it already exists
-
+# "dirout" to store results is removed if it already exists
 if [ -e $dirout ]; then
   rm -r $dirout
 fi
-mkdir $dirout
-mkdir $diroutdata
 
 
 # CODES are executed according the selected parameters of execution in this testcase
@@ -54,7 +51,7 @@ if [ $errcode -eq 0 ]; then
 fi
 
 # Executes PartVTK4 to create VTK files with particles.
-dirout2=${dirout}/particles; mkdir $dirout2
+dirout2=${dirout}/particles
 if [ $errcode -eq 0 ]; then
   $partvtk -dirin $diroutdata -savevtk $dirout2/PartFluid -onlytype:-all,fluid -vars:+idp,+vel,+rhop,+press,+vor
   errcode=$?
@@ -72,7 +69,7 @@ if [ $errcode -eq 0 ]; then
 fi
 
 # Executes IsoSurface4 to create VTK files with slices of surface.
-dirout2=${dirout}/surface; mkdir $dirout2
+dirout2=${dirout}/surface
 if [ $errcode -eq 0 ]; then
   $isosurface -dirin $diroutdata -saveslice $dirout2/Slices 
   errcode=$?
