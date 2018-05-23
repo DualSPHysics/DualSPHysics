@@ -39,7 +39,7 @@ We appreciate your efforts! But please, if you are trying to develop/implement a
 
 ## Microsoft Windows
 
-This application is being developed in Visual Studio Community 2015 since it is <a href="https://www.visualstudio.com/vs/older-downloads/" target="_blank">free</a>. The repository contains project files.
+This application is being developed in Visual Studio Community 2015 since it is free and compatible with CUDA 9.1 (<a href="https://www.visualstudio.com/vs/older-downloads/" target="_blank">download web</a>). The repository contains project files.
 
 Make sure that you install the CUDA SDK beforehand if you want to compile the GPU version, and configure the Visual Studio project to point to the CUDA libraries directory to compile (now prepared for CUDA 9.1).
 
