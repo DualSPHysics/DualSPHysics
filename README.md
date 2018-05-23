@@ -7,7 +7,7 @@
   <br>
 </h1>
 
-<h4 align="center"><a href="https://http://www.dual.sphysics.org" target="_blank">DualSPHysics</a> is based on the Smoothed Particle Hydrodynamics model named <a href="https://http://www.sphysics.org" target="_blank">SPHysics</a>.</h4>
+<h4 align="center"><a href="http://www.dual.sphysics.org" target="_blank">DualSPHysics</a> is based on the Smoothed Particle Hydrodynamics model named <a href="http://www.sphysics.org" target="_blank">SPHysics</a>.</h4>
 
 <h4 align="center">The code is developed to study free-surface flow phenomena where Eulerian methods can be difficult to apply, such as waves or impact of dam-breaks on off-shore structures. DualSPHysics is a set of C++, <a href="https://developer.nvidia.com/cuda-zone" target="_blank">CUDA</a> and Java codes designed to deal with real-life engineering problems.</h4>
 
@@ -39,7 +39,7 @@ We appreciate your efforts! But please, if you are trying to develop/implement a
 
 ## Microsoft Windows
 
-This application is being developed in Visual Studio 2013 and Visual Studio Community 2015. The repository contains project files.
+This application is being developed in Visual Studio Community 2015 since it is <a href="https://www.visualstudio.com/vs/older-downloads/" target="_blank">free</a>. The repository contains project files.
 
 Make sure that you install the CUDA SDK beforehand if you want to compile the GPU version, and configure the Visual Studio project to point to the CUDA libraries directory to compile (now prepared for CUDA 9.1).
 
@@ -63,11 +63,11 @@ After compiling you should see a message like `--- Compiled Release GPU/CPU vers
 
 # Graphical user interface (GUI)
 
-Please check [DesignSPHysics website]( http://design.sphysics.org/).
+Please check [DesignSPHysics website](http://design.sphysics.org/).
 
 # Advanced visualisation with Blender
 
-Please check [VisualSPHysics website](http://visual.sphysics.org/￼).
+Please check [VisualSPHysics website](http://visual.sphysics.org/).
 
 # Contributing
 
@@ -79,6 +79,7 @@ Please read [CONTRIBUTING.md](CONTRIBUTING.md) if you want to make changes to th
 * **Dr Alejandro Crespo**
 * **Prof. Moncho Gomez Gesteira**
 * **Dr Anxo Barreiro**
+* **Orlando G. Feal**
 * **Dr Benedict Rogers**
 * **Prof. Peter Stansby**
 * **Dr Georgios Fourtakas**
