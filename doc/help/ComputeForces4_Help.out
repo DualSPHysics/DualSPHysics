@@ -30,7 +30,7 @@
  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
 
 
-ComputeForces4 v4.0.033 (27-04-2018)
+ComputeForces4 v4.0.034 (21-05-2018)
 =====================================
 LoadDsphConfig> .../bin/windows/DsphConfig.xml
 Information about parameters of execution:
@@ -72,6 +72,8 @@ Information about parameters of execution:
                           with the time history of the obtained values
     -savevtk <file.vtk>   Generates VTK files with selected particles
 
+    -createdirs:<0/1>    Creates full path for output files
+                         (value by default is read from DsphConfig.xml or 1)
     -csvsep:<0/1>      Separator character in CSV files (0=semicolon, 1=coma)
                        (value by default is read from DsphConfig.xml or 0)
 

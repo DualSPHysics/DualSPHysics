@@ -30,7 +30,7 @@
  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
 
 
-FlowTool4 v4.0.026 (30-04-2018)
+FlowTool4 v4.0.027 (21-05-2018)
 ================================
 LoadDsphConfig> .../bin/windows/DsphConfig.xml
 Information about parameters of execution:
@@ -55,10 +55,12 @@ Information about parameters of execution:
     -boxestemplate        Creates example file to be used with -fileboxes
     -savecsv <file.csv>   Generates CSV files with number of particles that
                           enter or leave the domains , volume and flow rates
+    -savevtk <file.vtk>   Generates vtk(polydata) files with particles
+
+    -createdirs:<0/1>     Creates full path for output files
+                          (value by default is read from DsphConfig.xml or 1)
     -csvsep:<0/1>         Separator character in CSV files (0=semicolon, 1=coma)
                           (value by default is read from DsphConfig.xml or 0)
-
-    -savevtk <file.vtk>   Generates vtk(polydata) files with particles
 
   Examples:
     FlowTool4 -dirin . -fileboxes boxes.dat -savecsv resul.csv -savevtk dir/files.vtk

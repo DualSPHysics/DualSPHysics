@@ -30,7 +30,7 @@
  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
 
 
-PartVtk4 v4.0.043 (27-04-2018)
+PartVtk4 v4.0.044 (23-05-2018)
 ===============================
 LoadDsphConfig> .../bin/windows/DsphConfig.xml
 Information about parameters of execution:
@@ -78,6 +78,8 @@ Information about parameters of execution:
     -savecsv <file.csv>    Generates CSV files to use with calculation sheets
     -savestatscsv <file.csv>  Generates CSV files with statistics
 
+    -createdirs:<0/1>    Creates full path for output files
+                         (value by default is read from DsphConfig.xml or 1)
     -csvsep:<0/1>       Separator character in CSV files (0=semicolon, 1=coma)
                         (value by default is read from DsphConfig.xml or 0)
 

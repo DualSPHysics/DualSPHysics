@@ -30,7 +30,7 @@
  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
 
 
-PartVTKOut4 v4.0.025 (27-04-2018)
+PartVTKOut4 v4.0.026 (23-05-2018)
 ==================================
 LoadDsphConfig> .../bin/windows/DsphConfig.xml
 Information about parameters of execution:
@@ -54,6 +54,8 @@ Information about parameters of execution:
     -savecsv <file.csv>     Generates CSV file with particles info
     -SaveResume <file.csv>  Generates CSV file with resume info
 
+    -createdirs:<0/1>  Creates full path for output files
+                       (value by default is read from DsphConfig.xml or 1)
     -csvsep:<0/1>      Separator character in CSV files (0=semicolon, 1=coma)
                        (value by default is read from DsphConfig.xml or 0)
 

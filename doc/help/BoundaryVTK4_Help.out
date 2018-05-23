@@ -30,7 +30,7 @@
  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
 
 
-BoundaryVTK4 v4.0.042 (27-04-2018)
+BoundaryVTK4 v4.0.043 (21-05-2018)
 ===================================
 LoadDsphConfig> .../bin/windows/DsphConfig.xml
 Information about parameters of execution:
@@ -90,9 +90,6 @@ Information about parameters of execution:
     -savemotion <file>   Generates csv file with movement of the objects
     -saveposmotion:<mk>:x:y:z <file>   Generates csv file with updated position
                          according movement of mk boundary
-    -csvsep:<0/1>        Separator character in CSV files (0=semicolon, 1=coma)
-                         (value by default is read from DsphConfig.xml or 0)
-
     -onlymk:<values>     Indicates the mk of the shapes to be stored, affects
                          only the previous out option and
                          can not be used with -onlyid
@@ -100,6 +97,11 @@ Information about parameters of execution:
                          stored, affects only the previous out option
 
     -filemove <file>     Loads file with displacement
+
+    -createdirs:<0/1>    Creates full path for output files
+                         (value by default is read from DsphConfig.xml or 1)
+    -csvsep:<0/1>        Separator character in CSV files (0=semicolon, 1=coma)
+                         (value by default is read from DsphConfig.xml or 0)
 
   Examples:
     BoundaryVtk4 -loadvtk bound.vtk -savevtk box.vtk -onlymk:10,12

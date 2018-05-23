@@ -30,7 +30,7 @@
  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
 
 
-FloatingInfo4 v4.0.023 (27-04-2018)
+FloatingInfo4 v4.0.024 (21-05-2018)
 ====================================
 LoadDsphConfig> .../bin/windows/DsphConfig.xml
 Information about parameters of execution:
@@ -52,6 +52,9 @@ Information about parameters of execution:
     -savedata <file>    Generates CSV file with data of floating
     -savemotion         Includes motion data
     -onlymk:<values>    Indicates the mk of selected floatings
+
+    -createdirs:<0/1>   Creates full path for output files
+                        (value by default is read from DsphConfig.xml or 1)
     -csvsep:<0/1>       Separator character in CSV files (0=semicolon, 1=coma)
                         (value by default is read from DsphConfig.xml or 0)
 

@@ -30,7 +30,7 @@
  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
 
 
-MeasureTool4 v4.0.043 (27-04-2018)
+MeasureTool4 v4.0.044 (23-05-2018)
 ===================================
 LoadDsphConfig> .../bin/windows/DsphConfig.xml
 Information about parameters of execution:
@@ -146,8 +146,10 @@ Information about parameters of execution:
     -saveascii <file.asc> Generates one ASCII file without headers
                           with the time history of the obtained values
 
-    -csvsep:<0/1>       Separator character in CSV files (0=semicolon, 1=coma)
-                        (value by default is read from DsphConfig.xml or 0)
+    -createdirs:<0/1>     Creates full path for output files
+                          (value by default is read from DsphConfig.xml or 1)
+    -csvsep:<0/1>         Separator character in CSV files (0=semicolon, 1=coma)
+                          (value by default is read from DsphConfig.xml or 0)
 
   Examples:
     MeasureTool4 -points fpoints.txt -onlytype:-all,fluid -savecsv dataf
