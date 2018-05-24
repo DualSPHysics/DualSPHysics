@@ -47,19 +47,37 @@ You can also use the [Makefile](Source/Makefile). It is possible that you'll nee
 
 ## GNU/Linux
 
+### Using Makefile
+
 You can build the project in GNU/Linux using the [Makefile](Source/Makefile) included in the source folder. Follow these steps (for the GPU version):
 
-1. Clone this repository into your system
-2. Ensure you have GCC version 4.X installed. Usually there are packages in your distro like `gcc49` that provides the `g++-4.9` executable.
-3. In a terminal, go to the folder `src/source/`
-4. Execute `make clean` to make sure the environment is clean and ready to compile
-5. Execute `make CC=g++-4.9 CPP=g++-4.9 CXX=g++-4.9 LD=g++-4.9 -f ./Makefile`. Be sure to replace `g++-4.9` for the executable name you have in your system (previously installed in step 2)
+1. Clone this repository into your system `git clone https://github.com/DualSPHysics/DualSPHysics.git`
+2. In a terminal, go to the folder `cd DualSPHysics/src/source/`
+3. Edit the `Makefile` file with a text editor and then:
+   * Set the `DIRTOOLKIT` variable with the path to CUDA in your system e.g. `DIRTOOLKIT=/opt/cuda`
+   * Make sure that your `G++` compiler version is compatible with the CUDA version installed in your system (e.g. CUDA 9.1 only supports G++ versions up to 6.x). If you want to use an specific version, you should modify the variable `CC`, for example: `CC=/usr/local/bin/g++-6`
+   * If you are using G++ version 5 of greater make sure to set `USE_GCC5=YES`
+4. Execute `make clean` to make sure the environment is clean and ready to compile.
+5. Execute `make`
 
 After compiling you should see a message like `--- Compiled Release GPU/CPU version ---`. Go to `bin/linux/` to check that `DualSPHyiscs_linux64` or `DualSPHyiscsCPU_linux64` is there and build correctly.
 
-**For the GPU version**: Install the CUDA package and edit the makefile to point the CUDA libs directories to the paths on your system. Also, check the CUDA version and adapt the Makefile according to that.
+**For the CPU version**: If you want to compile de CPU version just ignore CUDA and use the makefile `Makefile_cpu`. To specify a different file to `make`, use the `-f` parameter: `make -f Makefile_cpu`
 
-**For the CPU version**: If you want to compile de CPU version just ignore CUDA and use the makefile `Makefile_cpu`
+### Using CMake
+
+Alternatively you can use [CMake](https://cmake.org) to compile DualSPHysics following these steps:
+
+1. Clone this repository into your system `git clone https://github.com/DualSPHysics/DualSPHysics.git`
+2. In a terminal, go to the folder `cd DualSPHysics/src/source/`
+3. Create a temporal directory were the build files will be placed `mkdir build`
+4. Make sure that your `GCC` compiler version is compatible with the CUDA version installed in your system (e.g. CUDA 9.1 only supports G++ versions up to 6.x). If you want to use an specific version, you should modify the environment variable `CC` and `CXX`, for example: `export CC=/usr/local/bin/gcc-6; export CXX=/usr/local/bin/g++6`
+4. Go to the build folder and execute cmake `cd build; cmake ..`
+5. Execute `make`
+
+If CUDA is not installed in your system, only the CPU version will be compiled.
+
+If you want the binaries be placed into `bin/linux` directory, just type `make install`
 
 # Graphical user interface (GUI)
 
