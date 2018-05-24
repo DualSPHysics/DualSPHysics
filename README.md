@@ -43,13 +43,13 @@ This application is being developed in Visual Studio Community 2015 since it is 
 
 Make sure that you install the CUDA SDK beforehand if you want to compile the GPU version, and configure the Visual Studio project to point to the CUDA libraries directory to compile (now prepared for CUDA 9.1).
 
-You can also use the [Makefile](Source/Makefile). It is possible that you'll need to edit it. Check the GNU/Linux guide on how to compile if you're using the makefile, as it is mostly the same, just installing the things manually by yourself.
+You can also use the [Makefile](src/source/Makefile). It is possible that you'll need to edit it. Check the GNU/Linux guide on how to compile if you're using the makefile, as it is mostly the same, just installing the things manually by yourself.
 
 ## GNU/Linux
 
 ### Using Makefile
 
-You can build the project in GNU/Linux using the [Makefile](Source/Makefile) included in the source folder. Follow these steps (for the GPU version):
+You can build the project in GNU/Linux using the [Makefile](src/source/Makefile) included in the source folder. Follow these steps (for the GPU version):
 
 1. Clone this repository into your system `git clone https://github.com/DualSPHysics/DualSPHysics.git`
 2. In a terminal, go to the folder `cd DualSPHysics/src/source/`
@@ -81,9 +81,17 @@ If you want the binaries be placed into `bin/linux` directory, just type `make i
 
 # Graphical user interface (GUI)
 
+<h1 align="center">
+  <a href="http://design.sphysics.org/"><img src="https://i.imgur.com/D5dabSD.png" alt="DualSPHysics" width="1000"></a>
+</h1>
+
 Please check [DesignSPHysics website](http://design.sphysics.org/).
 
 # Advanced visualisation with Blender
+
+<h1 align="center">
+  <a href="http://visual.sphysics.org/"><img src="https://i.imgur.com/I1psKiT.png" alt="DualSPHysics" width="1000"></a>
+</h1>
 
 Please check [VisualSPHysics website](http://visual.sphysics.org/).
 
