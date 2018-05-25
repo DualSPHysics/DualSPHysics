@@ -1,7 +1,7 @@
 #DualSPHysics GPU/CPU v4.2.043 (26-04-2018)
 
 #=============== Compilation Options ===============
-USE_GCC5=NO
+USE_GCC5=YES
 USE_DEBUG=NO
 USE_FAST_MATH=YES
 USE_NATIVE_CPU_OPTIMIZATIONS=NO
@@ -30,6 +30,7 @@ CCLINKFLAGS=-fopenmp -lgomp
 ifeq ($(USE_GCC5), YES)
   CCFLAGS+=-D_GLIBCXX_USE_CXX11_ABI=0
   CCLINKFLAGS+=-D_GLIBCXX_USE_CXX11_ABI=0
+  NCCFLAGS+=-D_GLIBCXX_USE_CXX11_ABI=0
 endif
 
 #=============== CUDA selection ===============
@@ -69,7 +70,6 @@ ifeq ($(CUDAVER),91)
   GENCODE:=$(GENCODE) -gencode=arch=compute_70,code=\"sm_70,compute_70\"
 endif
 
-
 #=============== Files to compile ===============
 OBJXML=JXml.o tinystr.o tinyxml.o tinyxmlerror.o tinyxmlparser.o
 OBJSPHMOTION=JMotion.o JMotionList.o JMotionMov.o JMotionObj.o JMotionPos.o JSphMotion.o
@@ -93,9 +93,9 @@ CCFLAGS := $(CCFLAGS) -I./ -I$(DIRTOOLKIT)/include
 CCLINKFLAGS := $(CCLINKFLAGS) -L$(DIRTOOLKIT)/lib64 -lcudart
 NCC=nvcc
 ifeq ($(USE_DEBUG), NO)
-  NCCFLAGS=-c $(GENCODE) -O3
+  NCCFLAGS+=-c $(GENCODE) -O3 -ccbin $(CC)
 else
-  NCCFLAGS=-c $(GENCODE) -O0 -g
+  NCCFLAGS+=-c $(GENCODE) -O0 -ccbin $(CC) -g 
 endif
 ifeq ($(USE_FAST_MATH), YES)
   NCCFLAGS+= -use_fast_math
