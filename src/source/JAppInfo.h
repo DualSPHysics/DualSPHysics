@@ -28,6 +28,7 @@ You should have received a copy of the GNU Lesser General Public License along w
 //:# funcionalidades transverales. (21-05-2018)
 //:# - Se incluye extraname en constructor y se elimina ConfigNameExtra(). (21-05-2018)
 //:# - Nuevos metodos MkdirPath() y MkdirPathFile(). (21-05-2018)
+//:# - Nuevos metodos ClearNameExtra() y AddNameExtra(). (23-05-2018)
 //:#############################################################################
 
 #define APP_DEFLOG  ///<Defines variables and functions for log.
@@ -72,10 +73,13 @@ private:
 #endif
 
 public:
-  JAppInfo(std::string name,std::string extra,std::string ver,std::string date);
-  JAppInfo(std::string name,std::string extra,std::string ver,std::string subname,std::string subver,std::string date);
+  JAppInfo(std::string name,std::string ver,std::string date);
+  JAppInfo(std::string name,std::string ver,std::string subname,std::string subver,std::string date);
   ~JAppInfo();
   void Reset();
+  void ClearNameExtra(){ MainNameExtra=""; };
+  void AddNameExtra(std::string extra);
+
   void ConfigRunPaths(std::string runcommand);
   void ConfigOutput(bool createdirs,bool csvsepcoma,std::string dirout,std::string dirdataout="");
 

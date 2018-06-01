@@ -55,14 +55,8 @@ Please download source files and documentation from <a href="http://dual.sphysic
 using namespace std;
 
 
-#ifdef CODE_SIZE4
-  const char *appextraname="MK65k";
-#else
-  const char *appextraname="";
-#endif
-
-JAppInfo AppInfo("DualSPHysics4",appextraname,"v4.2.050","21-05-2018");
-//JAppInfo AppInfo("DualSPHysics4",appextraname,"v4.2.???","UserVersion","v1.0","??-??-????"); //-for user versions.
+JAppInfo AppInfo("DualSPHysics4","v4.2.054","31-05-2018");
+//JAppInfo AppInfo("DualSPHysics4","v4.2.???","UserVersion","v1.0","??-??-????"); //-for user versions.
 
 //==============================================================================
 /// LGPL License.
@@ -109,6 +103,9 @@ bool ShowsVersion(int argc,char** argv){
 //==============================================================================
 int main(int argc, char** argv){
   int errcode=1;
+#ifdef CODE_SIZE4
+  AppInfo.AddNameExtra("MK65k");
+#endif
   AppInfo.ConfigRunPaths(argv[0]);
   if(ShowsVersion(argc,argv))return(errcode);
   std::string license=getlicense_lgpl(AppInfo.GetShortName(),false);

@@ -26,7 +26,7 @@
 #define OMP_USE  ///<Enables/Disables OpenMP.
 #ifdef OMP_USE
   //#define OMP_USE_RADIXSORT ///<Enables/disables OpenMP in JRadixSort.
-  #define OMP_USE_WAVEGEN ///<Enables/disables OpenMP in JWaveGen.
+  #define OMP_USE_WAVEGEN    ///<Enables/disables OpenMP in JWaveGen.
 #endif
 
 #ifdef OMP_USE
@@ -43,6 +43,7 @@
 #define OMP_LIMIT_COMPUTELIGHT 100000
 #define OMP_LIMIT_PREINTERACTION 100000
 #define OMP_LIMIT_TRIANGLESCELLS 3000
+#define OMP_LIMIT_LIGHT 100000
 
 #endif
 

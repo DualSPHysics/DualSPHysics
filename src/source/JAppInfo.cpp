@@ -34,19 +34,19 @@ using namespace std;
 //==============================================================================
 // Constructor.
 //==============================================================================
-JAppInfo::JAppInfo(std::string name,std::string extra,std::string ver,std::string date){
+JAppInfo::JAppInfo(std::string name,std::string ver,std::string date){
   ClassName="JAppInfo";
   #ifdef APP_DEFLOG
     Log=NULL;
   #endif
   Reset();
-  MainName=name; MainNameExtra=extra; MainVer=ver; Date=date;
+  MainName=name; MainVer=ver; Date=date;
 }
 
 //==============================================================================
 // Constructor with subname.
 //==============================================================================
-JAppInfo::JAppInfo(std::string name,std::string extra,std::string ver
+JAppInfo::JAppInfo(std::string name,std::string ver
   ,std::string subname,std::string subver,std::string date)
 {
   ClassName="JAppInfo";
@@ -54,7 +54,7 @@ JAppInfo::JAppInfo(std::string name,std::string extra,std::string ver
     Log=NULL;
   #endif
   Reset();
-  MainName=name; MainNameExtra=extra; MainVer=ver; Date=date;
+  MainName=name; MainVer=ver; Date=date;
   SubName=subname;
   SubVer=subver;
 }
@@ -84,6 +84,14 @@ void JAppInfo::Reset(){
   #ifdef APP_DEFLOG
     delete Log; Log=NULL;
   #endif
+}
+
+//==============================================================================
+// Adds extra name.
+//==============================================================================
+void JAppInfo::AddNameExtra(std::string extra){
+  if(!MainNameExtra.empty())MainNameExtra=MainNameExtra+"+";
+  MainNameExtra=MainNameExtra+extra;
 }
 
 //==============================================================================
@@ -134,7 +142,10 @@ std::string JAppInfo::GetShortName()const{
 // Returns full application name.
 //==============================================================================
 std::string JAppInfo::GetFullName()const{
-  return(GetShortName()+(!MainNameExtra.empty()? string(" ")+MainNameExtra: "")+(!SubName.empty()? string(" ")+SubVer+" ("+MainVer+")": string(" ")+MainVer)+" ("+Date+")"); 
+  string extra=(!MainNameExtra.empty()? string(" [")+MainNameExtra+"]": "");
+  string subnamever=string(" ")+(!SubName.empty()? SubVer+" ("+MainVer+")": MainVer);
+  string date=string(" (")+Date+")"; 
+  return(GetShortName()+extra+subnamever+date); 
 }
 
 //==============================================================================

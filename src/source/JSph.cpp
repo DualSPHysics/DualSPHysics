@@ -81,23 +81,23 @@ JSph::JSph(bool cpu,bool withmpi):Cpu(cpu),WithMpi(withmpi){
 //==============================================================================
 JSph::~JSph(){
   DestructorActive=true;
-  delete DataBi4;      DataBi4=NULL;
-  delete DataOutBi4;   DataOutBi4=NULL;
-  delete DataFloatBi4; DataFloatBi4=NULL;
-  delete PartsOut;     PartsOut=NULL;
-  delete ViscoTime;    ViscoTime=NULL;
-  delete DtFixed;      DtFixed=NULL;
-  delete SaveDt;       SaveDt=NULL;
-  delete TimeOut;      TimeOut=NULL;
-  delete MkInfo;       MkInfo=NULL;
-  delete SphMotion;    SphMotion=NULL;
+  delete DataBi4;       DataBi4=NULL;
+  delete DataOutBi4;    DataOutBi4=NULL;
+  delete DataFloatBi4;  DataFloatBi4=NULL;
+  delete PartsOut;      PartsOut=NULL;
+  delete ViscoTime;     ViscoTime=NULL;
+  delete DtFixed;       DtFixed=NULL;
+  delete SaveDt;        SaveDt=NULL;
+  delete TimeOut;       TimeOut=NULL;
+  delete MkInfo;        MkInfo=NULL;
+  delete SphMotion;     SphMotion=NULL;
   AllocMemoryFloating(0);
-  delete[] DemData;    DemData=NULL;
-  delete GaugeSystem;  GaugeSystem=NULL;
-  delete WaveGen;      WaveGen=NULL;
-  delete Damping;      Damping=NULL;
-  delete AccInput;     AccInput=NULL; 
-  delete PartsLoaded;  PartsLoaded=NULL;
+  delete[] DemData;     DemData=NULL;
+  delete GaugeSystem;   GaugeSystem=NULL;
+  delete WaveGen;       WaveGen=NULL;
+  delete Damping;       Damping=NULL;
+  delete AccInput;      AccInput=NULL; 
+  delete PartsLoaded;   PartsLoaded=NULL;
 }
 
 //==============================================================================
@@ -603,10 +603,7 @@ void JSph::LoadCaseConfig(){
     #ifdef OMP_USE_WAVEGEN
       useomp=(omp_get_max_threads()>1);
     #endif
-    #ifdef _WITHGPU
-      usegpu=!Cpu;
-    #endif
-    WaveGen=new JWaveGen(useomp,usegpu,Log,DirCase,&xml,"case.execution.special.wavepaddles");
+    WaveGen=new JWaveGen(useomp,!Cpu,Log,DirCase,&xml,"case.execution.special.wavepaddles");
     if(SphMotion)for(unsigned c=0;c<SphMotion->GetNumObjects();c++){
       WaveGen->ConfigPaddle(SphMotion->GetObjMkBound(c),c,SphMotion->GetObjBegin(c),SphMotion->GetObjSize(c));
     }
@@ -1007,6 +1004,7 @@ void JSph::ConfigCellOrder(TpCellOrder order,unsigned np,tdouble3* pos,tfloat4* 
   if(Simulate2D&&CellOrder!=ORDER_XYZ&&CellOrder!=ORDER_ZYX)RunException("ConfigCellOrder","In 2D simulations the value of CellOrder must be XYZ or ZYX.");
   Log->Print(fun::VarStr("CellOrder",string(GetNameCellOrder(CellOrder))));
   if(CellOrder!=ORDER_XYZ){
+    RunException("ConfigCellOrder","Only CellOrder==ORDER_XYZ is allowed.");
     //-Modifies initial particle data.
     OrderCodeData(CellOrder,np,pos);
     OrderCodeData(CellOrder,np,velrhop);
