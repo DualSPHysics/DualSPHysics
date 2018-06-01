@@ -19,6 +19,7 @@
 /// \file JBlockSizeAuto.cpp \brief Implements the class \ref JBlockSizeAuto.
 
 #include "JBlockSizeAuto.h"
+#include "JAppInfo.h"
 #include "Functions.h"
 #include "JLog2.h"
 #include "JSaveCsv2.h"
@@ -126,9 +127,9 @@ void JBlockSizeAutoKer::AllocateInfoData(unsigned nlines){
 void JBlockSizeAutoKer::SaveFileInfoData(){ 
   const char* met="SaveFileInfoData";
   const bool firstsv=!InfoDataSaved;
-  const string file=Log->GetDirOut()+Name+".csv";
+  const string file=AppInfo.GetDirOut()+Name+".csv";
   if(firstsv)Log->AddFileInfo(file,"Saves information from the automatic block size calculation.");
-  jcsv::JSaveCsv2 scsv(file,!firstsv,Log->GetCsvSepComa());
+  jcsv::JSaveCsv2 scsv(file,!firstsv,AppInfo.GetCsvSepComa());
   //-Saves head.
   if(firstsv){
     scsv.SetHead();

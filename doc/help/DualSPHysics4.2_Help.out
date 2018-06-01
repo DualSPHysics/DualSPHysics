@@ -24,7 +24,7 @@
  along with DualSPHysics. If not, see <http://www.gnu.org/licenses/>.
 
 
-DualSPHysics4 v4.2.049 (03-05-2018)
+DualSPHysics4 v4.2.054 (31-05-2018)
 ====================================
 LoadDsphConfig> .../bin/windows/DsphConfig.xml
 Information about execution parameters:
@@ -84,8 +84,10 @@ Information about execution parameters:
         info    Information about execution in .ibi4 format
         vtk     VTK files
         csv     CSV files
-    -csvsep:<0/1>    Separator character in CSV files (0=semicolon, 1=coma)
-                     (value by default is read from DsphConfig.xml or 0)
+    -createdirs:<0/1> Creates full path for output files
+                      (value by default is read from DsphConfig.xml or 1)
+    -csvsep:<0/1>     Separator character in CSV files (0=semicolon, 1=coma)
+                      (value by default is read from DsphConfig.xml or 0)
     -svres:<0/1>     Generates file that summarises the execution process
     -svtimers:<0/1>  Obtains timing for each individual process
     -svdomainvtk:<0/1>  Generates VTK file with domain limits

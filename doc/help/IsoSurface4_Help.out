@@ -1,6 +1,6 @@
 
 
- <ISOSURFACE>  Copyright (C) 2018 by Dr Jose M. Dominguez
+ <ISOSURFACE4>  Copyright (C) 2018 by Dr Jose M. Dominguez
  All rights reserved.
 
  DualSPHysics is an international collaboration between University of Vigo 
@@ -30,8 +30,8 @@
  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
 
 
-IsoSurface v4.0.028 (27-04-2018)
-=================================
+IsoSurface4 v4.0.029 (21-05-2018)
+==================================
 LoadDsphConfig> .../bin/windows/DsphConfig.xml
 Information about parameters of execution:
 
@@ -137,6 +137,9 @@ Information about parameters of execution:
        none          Discard the data
        nearest       Copy data from nearest vertex
        interpolate   Interpolate data (default)
+
+    -createdirs:<0/1>    Creates full path for output files
+                         (value by default is read from DsphConfig.xml or 1)
 
   Examples:
     IsoSurface4 -saveiso fileiso

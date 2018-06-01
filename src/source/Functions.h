@@ -64,6 +64,7 @@
 //:#   Windows. (24-10-2017)
 //:# - Nuevas funciones: Float3Str(),Float3xStr(),Float3xRangeStr(),DoublexStr()
 //:#   ,Double3xStr(),Double3xRangeStr(). (31-01-2018)
+//:# - Error corregido en MkdirPath(). No soportaba rutas absolutas de Linux. (21-05-2018)
 //:#############################################################################
 
 /// \file Functions.h \brief Declares basic/general functions for the entire application.

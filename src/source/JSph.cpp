@@ -19,6 +19,7 @@
 /// \file JSph.cpp \brief Implements the class \ref JSph.
 
 #include "JSph.h"
+#include "JAppInfo.h"
 #include "Functions.h"
 #include "JPartDataHead.h"
 #include "JSphMk.h"
@@ -80,23 +81,23 @@ JSph::JSph(bool cpu,bool withmpi):Cpu(cpu),WithMpi(withmpi){
 //==============================================================================
 JSph::~JSph(){
   DestructorActive=true;
-  delete DataBi4;      DataBi4=NULL;
-  delete DataOutBi4;   DataOutBi4=NULL;
-  delete DataFloatBi4; DataFloatBi4=NULL;
-  delete PartsOut;     PartsOut=NULL;
-  delete ViscoTime;    ViscoTime=NULL;
-  delete DtFixed;      DtFixed=NULL;
-  delete SaveDt;       SaveDt=NULL;
-  delete TimeOut;      TimeOut=NULL;
-  delete MkInfo;       MkInfo=NULL;
-  delete SphMotion;    SphMotion=NULL;
+  delete DataBi4;       DataBi4=NULL;
+  delete DataOutBi4;    DataOutBi4=NULL;
+  delete DataFloatBi4;  DataFloatBi4=NULL;
+  delete PartsOut;      PartsOut=NULL;
+  delete ViscoTime;     ViscoTime=NULL;
+  delete DtFixed;       DtFixed=NULL;
+  delete SaveDt;        SaveDt=NULL;
+  delete TimeOut;       TimeOut=NULL;
+  delete MkInfo;        MkInfo=NULL;
+  delete SphMotion;     SphMotion=NULL;
   AllocMemoryFloating(0);
-  delete[] DemData;    DemData=NULL;
-  delete GaugeSystem;  GaugeSystem=NULL;
-  delete WaveGen;      WaveGen=NULL;
-  delete Damping;      Damping=NULL;
-  delete AccInput;     AccInput=NULL; 
-  delete PartsLoaded;  PartsLoaded=NULL;
+  delete[] DemData;     DemData=NULL;
+  delete GaugeSystem;   GaugeSystem=NULL;
+  delete WaveGen;       WaveGen=NULL;
+  delete Damping;       Damping=NULL;
+  delete AccInput;      AccInput=NULL; 
+  delete PartsLoaded;   PartsLoaded=NULL;
 }
 
 //==============================================================================
@@ -112,7 +113,6 @@ void JSph::InitVars(){
   SvDouble=false;
   RunCode=CalcRunCode();
   RunTimeDate="";
-  RunCommand=""; RunPath="";
   CaseName=""; DirCase=""; RunName="";
   DirOut=""; 
   DirDataOut=""; 
@@ -329,8 +329,6 @@ void JSph::LoadConfig(const JCfgRun *cfg){
   TimerTot.Start();
   Stable=cfg->Stable;
   Psingle=true; SvDouble=false; //-Options by default.
-  RunCommand=cfg->RunCommand;
-  RunPath=cfg->RunPath;
   DirOut=fun::GetDirWithSlash(cfg->DirOut);
   DirDataOut=(!cfg->DirDataOut.empty()? fun::GetDirWithSlash(DirOut+cfg->DirDataOut): DirOut);
   CaseName=cfg->CaseName; 
@@ -357,11 +355,18 @@ void JSph::LoadConfig(const JCfgRun *cfg){
   RunTimeDate=fun::GetDateTime();
   Log->Printf("[Initialising %s  %s]",ClassName.c_str(),RunTimeDate.c_str());
 
-  Log->Printf("ProgramFile=\"%s\"",fun::GetPathLevels(fun::GetCanonicalPath(RunPath,RunCommand),3).c_str());
-  Log->Printf("ExecutionDir=\"%s\"",fun::GetPathLevels(RunPath,3).c_str());
-  Log->Printf("XmlFile=\"%s\"",fun::GetPathLevels(fun::GetCanonicalPath(RunPath,FileXml),3).c_str());
-  Log->Printf("OutputDir=\"%s\"",fun::GetPathLevels(fun::GetCanonicalPath(RunPath,DirOut),3).c_str());
-  Log->Printf("OutputDataDir=\"%s\"",fun::GetPathLevels(fun::GetCanonicalPath(RunPath,DirDataOut),3).c_str());
+  const string runpath=AppInfo.GetRunPath();
+  Log->Printf("ProgramFile=\"%s\"",fun::GetPathLevels(fun::GetCanonicalPath(runpath,AppInfo.GetRunCommand()),3).c_str());
+  Log->Printf("ExecutionDir=\"%s\"",fun::GetPathLevels(runpath,3).c_str());
+  Log->Printf("XmlFile=\"%s\"",fun::GetPathLevels(fun::GetCanonicalPath(runpath,FileXml),3).c_str());
+  Log->Printf("OutputDir=\"%s\"",fun::GetPathLevels(fun::GetCanonicalPath(runpath,DirOut),3).c_str());
+  Log->Printf("OutputDataDir=\"%s\"",fun::GetPathLevels(fun::GetCanonicalPath(runpath,DirDataOut),3).c_str());
+  
+  //-Creates Output directories when it is necessary.
+  if(AppInfo.GetCreateDirs()){
+    fun::MkdirPath(DirOut);
+    if(DirOut!=DirDataOut)fun::MkdirPath(DirDataOut);
+  }
 
   if(PartBegin){
     Log->Print(fun::VarStr("PartBegin",PartBegin));
@@ -598,10 +603,7 @@ void JSph::LoadCaseConfig(){
     #ifdef OMP_USE_WAVEGEN
       useomp=(omp_get_max_threads()>1);
     #endif
-    #ifdef _WITHGPU
-      usegpu=!Cpu;
-    #endif
-    WaveGen=new JWaveGen(useomp,usegpu,Log,DirCase,&xml,"case.execution.special.wavepaddles");
+    WaveGen=new JWaveGen(useomp,!Cpu,Log,DirCase,&xml,"case.execution.special.wavepaddles");
     if(SphMotion)for(unsigned c=0;c<SphMotion->GetNumObjects();c++){
       WaveGen->ConfigPaddle(SphMotion->GetObjMkBound(c),c,SphMotion->GetObjBegin(c),SphMotion->GetObjSize(c));
     }
@@ -1002,6 +1004,7 @@ void JSph::ConfigCellOrder(TpCellOrder order,unsigned np,tdouble3* pos,tfloat4* 
   if(Simulate2D&&CellOrder!=ORDER_XYZ&&CellOrder!=ORDER_ZYX)RunException("ConfigCellOrder","In 2D simulations the value of CellOrder must be XYZ or ZYX.");
   Log->Print(fun::VarStr("CellOrder",string(GetNameCellOrder(CellOrder))));
   if(CellOrder!=ORDER_XYZ){
+    RunException("ConfigCellOrder","Only CellOrder==ORDER_XYZ is allowed.");
     //-Modifies initial particle data.
     OrderCodeData(CellOrder,np,pos);
     OrderCodeData(CellOrder,np,velrhop);

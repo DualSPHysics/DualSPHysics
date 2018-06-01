@@ -100,13 +100,13 @@ void JSphCpuSingle::ConfigDomain(){
   //-Allocates memory in CPU for particles. | Reserva memoria en Cpu para particulas.
   AllocCpuMemoryParticles(Np,0);
 
-  //-Copy particle values. | Copia datos de particulas.
+  //-Copies particle data.
   ReserveBasicArraysCpu();
   memcpy(Posc,PartsLoaded->GetPos(),sizeof(tdouble3)*Np);
   memcpy(Idpc,PartsLoaded->GetIdp(),sizeof(unsigned)*Np);
   memcpy(Velrhopc,PartsLoaded->GetVelRhop(),sizeof(tfloat4)*Np);
 
-  //-Calculate floating radius. | Calcula radio de floatings.
+  //-Computes radius of floating bodies.
   if(CaseNfloat && PeriActive!=0 && !PartBegin)CalcFloatingRadius(Np,Posc,Idpc);
 
   //-Load particle code. | Carga code de particulas.

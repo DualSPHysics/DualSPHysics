@@ -21,12 +21,8 @@ set isosurface="%dirbin%/IsoSurface4_win64.exe"
 set flowtool="%dirbin%/FlowTool4_win64.exe"
 set floatinginfo="%dirbin%/FloatingInfo4_win64.exe"
 
-rem "dirout" is created to store results or it is removed if it already exists
-
+rem "dirout" to store results is removed if it already exists
 if exist %dirout% rd /s /q %dirout%
-mkdir %dirout%
-if not "%ERRORLEVEL%" == "0" goto fail
-mkdir %diroutdata%
 
 rem CODES are executed according the selected parameters of execution in this testcase
 
@@ -40,7 +36,6 @@ if not "%ERRORLEVEL%" == "0" goto fail
 
 rem Executes PartVTK4 to create VTK files with particles.
 set dirout2=%dirout%\particles
-mkdir %dirout2%
 %partvtk% -dirin %diroutdata% -savevtk %dirout2%/PartFluid -onlytype:-all,+fluid
 if not "%ERRORLEVEL%" == "0" goto fail
 
@@ -50,7 +45,6 @@ if not "%ERRORLEVEL%" == "0" goto fail
 
 rem Executes MeasureTool4 to create VTK files with velocity and a CSV file with velocity at each simulation time.
 set dirout2=%dirout%\measuretool
-mkdir %dirout2%
 %measuretool% -dirin %diroutdata% -points CaseDambreak_PointsVelocity.txt -onlytype:-all,+fluid -vars:-all,+vel.x,+vel.m -savevtk %dirout2%/PointsVelocity -savecsv %dirout2%/_PointsVelocity
 if not "%ERRORLEVEL%" == "0" goto fail
 
@@ -64,13 +58,11 @@ if not "%ERRORLEVEL%" == "0" goto fail
 
 rem Executes ComputeForces to create a CSV file with force at each simulation time.
 set dirout2=%dirout%\forces
-mkdir %dirout2%
 %computeforces% -dirin %diroutdata% -onlymk:21 -savecsv %dirout2%/_ForceBuilding
 if not "%ERRORLEVEL%" == "0" goto fail
 
 rem Executes IsoSurface4 to create VTK files with surface fluid and slices of surface.
 set dirout2=%dirout%\surface
-mkdir %dirout2%
 set planesy="-slicevec:0:0.1:0:0:1:0 -slicevec:0:0.2:0:0:1:0 -slicevec:0:0.3:0:0:1:0 -slicevec:0:0.4:0:0:1:0 -slicevec:0:0.5:0:0:1:0 -slicevec:0:0.6:0:0:1:0"
 set planesx="-slicevec:0.1:0:0:1:0:0 -slicevec:0.2:0:0:1:0:0 -slicevec:0.3:0:0:1:0:0 -slicevec:0.4:0:0:1:0:0 -slicevec:0.5:0:0:1:0:0 -slicevec:0.6:0:0:1:0:0 -slicevec:0.7:0:0:1:0:0 -slicevec:0.8:0:0:1:0:0 -slicevec:0.9:0:0:1:0:0 -slicevec:1.0:0:0:1:0:0"
 set planesd="-slice3pt:0:0:0:1:0.7:0:1:0.7:1"
@@ -79,7 +71,6 @@ if not "%ERRORLEVEL%" == "0" goto fail
 
 rem Executes FlowTool4 to create VTK files with particles assigned to different zones and a CSV file with information of each zone.
 set dirout2=%dirout%\flow
-mkdir %dirout2%
 %flowtool% -dirin %diroutdata% -fileboxes CaseDambreak_FileBoxes.txt -savecsv %dirout2%/_ResultFlow.csv -savevtk %dirout2%/Boxes.vtk
 if not "%ERRORLEVEL%" == "0" goto fail
 

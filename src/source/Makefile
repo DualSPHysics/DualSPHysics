@@ -1,7 +1,7 @@
-#DualSPHysics GPU/CPU v4.2.043 (26-04-2018)
+#DualSPHysics GPU/CPU v4.2.050 (21-05-2018)
 
 #=============== Compilation Options ===============
-USE_GCC5=YES
+USE_GCC5=NO
 USE_DEBUG=NO
 USE_FAST_MATH=YES
 USE_NATIVE_CPU_OPTIMIZATIONS=NO
@@ -70,10 +70,11 @@ ifeq ($(CUDAVER),91)
   GENCODE:=$(GENCODE) -gencode=arch=compute_70,code=\"sm_70,compute_70\"
 endif
 
+
 #=============== Files to compile ===============
 OBJXML=JXml.o tinystr.o tinyxml.o tinyxmlerror.o tinyxmlparser.o
 OBJSPHMOTION=JMotion.o JMotionList.o JMotionMov.o JMotionObj.o JMotionPos.o JSphMotion.o
-OBCOMMON=Functions.o FunctionsMath.o JBinaryData.o JException.o JLog2.o JMeanValues.o JObject.o JRadixSort.o JRangeFilter.o JReadDatafile.o JSaveCsv2.o JTimeControl.o randomc.o
+OBCOMMON=Functions.o FunctionsMath.o JAppInfo.o JBinaryData.o JException.o JLog2.o JMeanValues.o JObject.o JRadixSort.o JRangeFilter.o JReadDatafile.o JSaveCsv2.o JTimeControl.o randomc.o
 OBCOMMONDSPH=JDsphConfig.o JPartDataBi4.o JPartDataHead.o JPartFloatBi4.o JPartOutBi4Save.o JSpaceCtes.o JSpaceEParms.o JSpaceParts.o JSpaceProperties.o
 OBSPH=JArraysCpu.o JCellDivCpu.o JCfgRun.o JDamping.o JGaugeItem.o JGaugeSystem.o JPartsOut.o JSaveDt.o JSph.o JSphAccInput.o JSphCpu.o JSphInitialize.o JSphMk.o JSphDtFixed.o JSphVisco.o JTimeOut.o JWaveSpectrumGpu.o main.o
 OBSPHSINGLE=JCellDivCpuSingle.o JPartsLoad4.o JSphCpuSingle.o
@@ -95,7 +96,7 @@ NCC=nvcc
 ifeq ($(USE_DEBUG), NO)
   NCCFLAGS+=-c $(GENCODE) -O3 -ccbin $(CC)
 else
-  NCCFLAGS+=-c $(GENCODE) -O0 -ccbin $(CC) -g 
+  NCCFLAGS+=-c $(GENCODE) -O0 -ccbin $(CC) -g
 endif
 ifeq ($(USE_FAST_MATH), YES)
   NCCFLAGS+= -use_fast_math

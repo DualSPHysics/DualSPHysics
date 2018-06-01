@@ -141,8 +141,6 @@ protected:
   std::string Hardware;
   std::string RunCode;
   std::string RunTimeDate;
-  std::string RunCommand;
-  std::string RunPath;
   std::string CaseName,DirCase,RunName;
   std::string DirOut;         ///<Specifies the general output directory.
   std::string DirDataOut;     ///<Specifies the output subdirectory for binary data.

@@ -259,6 +259,9 @@
     <ClInclude Include="..\source\JPeriodicDef.h">
       <Filter>CommonDsph</Filter>
     </ClInclude>
+    <ClInclude Include="..\source\JAppInfo.h">
+      <Filter>Common</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\source\JCfgRun.cpp">
@@ -446,6 +449,9 @@
     </ClCompile>
     <ClCompile Include="..\source\JSphMotion.cpp">
       <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JAppInfo.cpp">
+      <Filter>Common</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

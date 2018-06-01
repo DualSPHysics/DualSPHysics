@@ -195,7 +195,7 @@ void JXml::ErrReadElement(const TiXmlNode* node,const std::string &element,bool 
 //==============================================================================
 void JXml::ErrReadAtrib(const TiXmlElement* ele,const std::string &atrib,bool missing,std::string errortext)const{
   std::string tex="Error reading xml - ";
-  if(missing)tex=tex+"Atribute \'"+atrib+"\' is missing";
+  if(missing)tex=tex+"Attribute \'"+atrib+"\' is missing";
   else{
     tex=tex+"Value of \'"+atrib+"\' invalid.";
     if(!errortext.empty())tex=tex+" "+errortext;

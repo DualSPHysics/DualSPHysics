@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<dsphconfig date="23-10-2017 17:42:00">
+<dsphconfig date="21-05-2018 19:24:00">
     <common>
+		<createdirs v="1" comment="Creates full path for output files (0=No, 1=Yes)" />
 		<csvseparator v="0" comment="Separator character in CSV files (0=semicolon, 1=coma)" />
     </common>
 </dsphconfig>

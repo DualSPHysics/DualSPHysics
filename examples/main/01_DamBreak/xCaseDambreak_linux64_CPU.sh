@@ -29,13 +29,10 @@ path_so=$(pwd)
 cd $current
 export LD_LIBRARY_PATH=$path_so
 
-# "dirout" is created to store results or it is cleaned if it already exists
-
+# "dirout" to store results is removed if it already exists
 if [ -e $dirout ]; then
   rm -r $dirout
 fi
-mkdir $dirout
-mkdir $diroutdata
 
 
 # CODES are executed according the selected parameters of execution in this testcase
@@ -54,7 +51,7 @@ if [ $errcode -eq 0 ]; then
 fi
 
 # Executes PartVTK4 to create VTK files with particles.
-dirout2=${dirout}/particles; mkdir $dirout2
+dirout2=${dirout}/particles
 if [ $errcode -eq 0 ]; then
   $partvtk -dirin $diroutdata -savevtk $dirout2/PartFluid -onlytype:-all,+fluid
   errcode=$?
@@ -67,14 +64,14 @@ if [ $errcode -eq 0 ]; then
 fi
 
 # Executes MeasureTool4 to create VTK files with velocity and a CSV file with velocity at each simulation time.
-dirout2=${dirout}/velocity; mkdir $dirout2
+dirout2=${dirout}/velocity
 if [ $errcode -eq 0 ]; then
   $measuretool -dirin $diroutdata -points CaseDambreak_PointsVelocity.txt -onlytype:-all,+fluid -vars:-all,+vel.x,+vel.m -savevtk $dirout2/PointsVelocity -savecsv $dirout/_PointsVelocity
   errcode=$?
 fi
 
 # Executes MeasureTool4 to create VTK files with incorrect pressure and a CSV file with value at each simulation time.
-dirout2=${dirout}/pressure; mkdir $dirout2
+dirout2=${dirout}/pressure
 if [ $errcode -eq 0 ]; then
   $measuretool -dirin $diroutdata -points CaseDambreak_PointsPressure_Incorrect.txt -onlytype:-all,+fluid -vars:-all,+press,+kcorr -kcusedummy:0 -kclimit:0.5 -savevtk $dirout2/PointsPressure_Incorrect -savecsv $dirout/_PointsPressure_Incorrect
   errcode=$?
@@ -93,7 +90,7 @@ if [ $errcode -eq 0 ]; then
 fi
 
 # Executes IsoSurface4 to create VTK files with surface fluid and slices of surface.
-dirout2=${dirout}/surface; mkdir $dirout2
+dirout2=${dirout}/surface
 planesy="-slicevec:0:0.1:0:0:1:0 -slicevec:0:0.2:0:0:1:0 -slicevec:0:0.3:0:0:1:0 -slicevec:0:0.4:0:0:1:0 -slicevec:0:0.5:0:0:1:0 -slicevec:0:0.6:0:0:1:0"
 planesx="-slicevec:0.1:0:0:1:0:0 -slicevec:0.2:0:0:1:0:0 -slicevec:0.3:0:0:1:0:0 -slicevec:0.4:0:0:1:0:0 -slicevec:0.5:0:0:1:0:0 -slicevec:0.6:0:0:1:0:0 -slicevec:0.7:0:0:1:0:0 -slicevec:0.8:0:0:1:0:0 -slicevec:0.9:0:0:1:0:0 -slicevec:1.0:0:0:1:0:0"
 planesd="-slice3pt:0:0:0:1:0.7:0:1:0.7:1"
@@ -103,7 +100,7 @@ if [ $errcode -eq 0 ]; then
 fi
 
 # Executes FlowTool4 to create VTK files with particles assigned to different zones and a CSV file with information of each zone.
-dirout2=${dirout}/flow; mkdir $dirout2
+dirout2=${dirout}/flow
 if [ $errcode -eq 0 ]; then
   $flowtool -dirin $diroutdata -fileboxes CaseDambreak_FileBoxes.txt -savecsv $dirout/_ResultFlow.csv -savevtk $dirout2/Boxes.vtk
   errcode=$?

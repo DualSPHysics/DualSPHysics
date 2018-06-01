@@ -19,6 +19,7 @@
 /// \file JCfgRun.cpp \brief Implements the class \ref JCfgRun.
 
 #include "JCfgRun.h"
+#include "JAppInfo.h"
 #include "JSpaceEParms.h"
 #include "JDsphConfig.h"
 
@@ -37,7 +38,6 @@ JCfgRun::JCfgRun(){
 /// Initialisation of variables.
 //==============================================================================
 void JCfgRun::Reset(){
-  RunCommand=""; RunPath=""; ProgramPath="";
   PrintInfo=false; SvDef=false; DirsDef=0;
   Cpu=false;
   Gpu=false; GpuId=-1; GpuFree=false;
@@ -64,16 +64,18 @@ void JCfgRun::Reset(){
   TimeMax=-1; TimePart=-1;
   RhopOutModif=false; RhopOutMin=700; RhopOutMax=1300;
   FtPause=-1;
+  CreateDirs=true;
   CsvSepComa=false;
 }
 
 //==============================================================================
-// Carga configuracion de DsphConfig.xml.
+// Loads general configuration from DsphConfig.xml.
 //==============================================================================
 void JCfgRun::LoadDsphConfig(std::string path){
   JDsphConfig dsphconfig;
   dsphconfig.Init(path);
   if(!dsphconfig.GetFileCfg().empty())printf("LoadDsphConfig> %s\n",fun::GetPathLevels(dsphconfig.GetFileCfg(),3).c_str());
+  if(dsphconfig.GetCreateDirs()!=-1)CreateDirs=(dsphconfig.GetCreateDirs()==1);
   if(dsphconfig.GetCsvSeparator()!=-1)CsvSepComa=(dsphconfig.GetCsvSeparator()==1);
 }
 
@@ -135,8 +137,10 @@ void JCfgRun::VisuInfo()const{
   printf("        info    Information about execution in .ibi4 format\n");
   printf("        vtk     VTK files\n");
   printf("        csv     CSV files\n");
-  printf("    -csvsep:<0/1>    Separator character in CSV files (0=semicolon, 1=coma)\n");
-  printf("                     (value by default is read from DsphConfig.xml or 0)\n");
+  printf("    -createdirs:<0/1> Creates full path for output files\n");
+  printf("                      (value by default is read from DsphConfig.xml or 1)\n");
+  printf("    -csvsep:<0/1>     Separator character in CSV files (0=semicolon, 1=coma)\n");
+  printf("                      (value by default is read from DsphConfig.xml or 0)\n");
   printf("    -svres:<0/1>     Generates file that summarises the execution process\n");
   printf("    -svtimers:<0/1>  Obtains timing for each individual process\n");
   printf("    -svdomainvtk:<0/1>  Generates VTK file with domain limits\n");
@@ -227,11 +231,8 @@ void JCfgRun::VisuConfig()const{
 void JCfgRun::LoadArgv(int argc,char** argv){
   const char met[]="LoadArgv";
   Reset();
-  //-Loads paths and configuration from DsphConfig.xml.
-  RunCommand=argv[0]; 
-  RunPath=fun::GetCurrentDir();
-  ProgramPath=fun::GetDirParent(fun::GetCanonicalPath(RunPath,RunCommand));
-  LoadDsphConfig(ProgramPath);
+  //-Loads configuration from DsphConfig.xml.
+  LoadDsphConfig(AppInfo.GetProgramPath());
   //-Loads execution parameters.
   const int MAXOPTS=100;
   string *optlis=new string[MAXOPTS];
@@ -422,6 +423,7 @@ void JCfgRun::LoadOpts(string *optlis,int optn,int lv,string file){
           else ErrorParm(opt,c,lv,file);
         }
       }
+      else if(txword=="CREATEDIRS")CreateDirs=(txoptfull!=""? atoi(txoptfull.c_str()): 1)!=0;
       else if(txword=="CSVSEP")CsvSepComa=(txoptfull!=""? atoi(txoptfull.c_str()): 1)!=0;
       else if(txword=="NAME"&&c+1<optn){ CaseName=optlis[c+1]; c++; }
       else if(txword=="RUNNAME"&&c+1<optn){ RunName=optlis[c+1]; c++; }

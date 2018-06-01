@@ -29,8 +29,8 @@ School of Mechanical, Aerospace and Civil Engineering, University of Manchester,
 \section compile_sec Project files
 Please download source files and documentation from <a href="http://dual.sphysics.org">DualSPHysics website.</a> \n
 \author <a href="http://dual.sphysics.org/index.php/developers">DualSPHysics Developers.</a> 
-\version 4.2.049
-\date 03-05-2018
+\version 4.2.050
+\date 21-05-2018
 \copyright GNU Lesser General Public License <a href="http://www.gnu.org/licenses/">GNU licenses.</a>
 */
 
@@ -41,6 +41,7 @@ Please download source files and documentation from <a href="http://dual.sphysic
 #include <iostream>
 #include <sstream>
 #include <fstream>
+#include "JAppInfo.h"
 #include "JLog2.h"
 #include "JCfgRun.h"
 #include "JException.h"
@@ -53,27 +54,9 @@ Please download source files and documentation from <a href="http://dual.sphysic
 
 using namespace std;
 
-///Program and version information.
-typedef struct StrAppInfo{
-  string MainName,MainVer;
-  string SubName,SubVer;
-  string Date;
-  bool ModeMK65k;
-  StrAppInfo(){
-    MainName="DualSPHysics4"; MainVer="v4.2.049";
-    //SubName="UserVersion"; SubVer="v1.0";
-    Date="03-05-2018";
-    #ifdef CODE_SIZE4
-      ModeMK65k=true;
-    #else
-      ModeMK65k=false;
-    #endif
-  }
-  string GetShortName(){ return(MainName+(!SubName.empty()? "-": "")+SubName); }
-  string GetFullName(){  return(GetShortName()+(ModeMK65k? " MK65k":"")+(!SubName.empty()? string(" ")+SubVer+" ("+MainVer+")": string(" ")+MainVer)+" ("+Date+")"); }
-}StAppInfo;
-StAppInfo AppInfo;
 
+JAppInfo AppInfo("DualSPHysics4","v4.2.054","31-05-2018");
+//JAppInfo AppInfo("DualSPHysics4","v4.2.???","UserVersion","v1.0","??-??-????"); //-for user versions.
 
 //==============================================================================
 /// LGPL License.
@@ -120,6 +103,10 @@ bool ShowsVersion(int argc,char** argv){
 //==============================================================================
 int main(int argc, char** argv){
   int errcode=1;
+#ifdef CODE_SIZE4
+  AppInfo.AddNameExtra("MK65k");
+#endif
+  AppInfo.ConfigRunPaths(argv[0]);
   if(ShowsVersion(argc,argv))return(errcode);
   std::string license=getlicense_lgpl(AppInfo.GetShortName(),false);
   printf("%s",license.c_str());
@@ -127,30 +114,31 @@ int main(int argc, char** argv){
   std::string appnamesub;
   for(unsigned c=0;c<=unsigned(appname.size());c++)appnamesub=appnamesub+"=";
   printf("\n%s\n%s\n",appname.c_str(),appnamesub.c_str());
-
+  JLog2 *log=NULL;
   JCfgRun cfg;
-  JLog2 log;
   try{
     cfg.LoadArgv(argc,argv);
     //cfg.VisuConfig();
     if(!cfg.PrintInfo){
-      log.Init(cfg.DirOut+"/Run.out",cfg.DirDataOut,cfg.CsvSepComa);
-      log.AddFileInfo(cfg.DirOut+"/Run.out","Log file of the simulation.");
-      log.Print(license,JLog2::Out_File);
-      log.Print(appname,JLog2::Out_File);
-      log.Print(appnamesub,JLog2::Out_File);
+      AppInfo.ConfigOutput(cfg.CreateDirs,cfg.CsvSepComa,cfg.DirOut,cfg.DirDataOut);
+      AppInfo.LogInit(AppInfo.GetDirOut()+"/Run.out");
+      log=AppInfo.LogPtr();
+      log->AddFileInfo(cfg.DirOut+"/Run.out","Log file of the simulation.");
+      log->Print(license,JLog2::Out_File);
+      log->Print(appname,JLog2::Out_File);
+      log->Print(appnamesub,JLog2::Out_File);
       //-SPH Execution.
       #ifndef _WITHGPU
         cfg.Cpu=true;
       #endif
       if(cfg.Cpu){
         JSphCpuSingle sph;
-        sph.Run(appname,&cfg,&log);
+        sph.Run(appname,&cfg,log);
       }
       #ifdef _WITHGPU
       else{
         JSphGpuSingle sph;
-        sph.Run(appname,&cfg,&log);
+        sph.Run(appname,&cfg,log);
       }
       #endif
     }
@@ -158,15 +146,15 @@ int main(int argc, char** argv){
   }
   catch(const char *cad){
     string tx=string("\n*** Exception: ")+cad+"\n";
-    if(log.IsOk())log.Print(tx); else printf("%s",tx.c_str());
+    if(log && log->IsOk())log->Print(tx); else printf("%s",tx.c_str());
   }
   catch(const string &e){
     string tx=string("\n*** Exception: ")+e+"\n";
-    if(log.IsOk())log.Print(tx); else printf("%s",tx.c_str());
+    if(log && log->IsOk())log->Print(tx); else printf("%s",tx.c_str());
   }
   catch (const exception &e){
     string tx=string("\n*** ")+e.what()+"\n";
-    if(log.IsOk())log.Print(tx); else printf("%s",tx.c_str());
+    if(log && log->IsOk())log->Print(tx); else printf("%s",tx.c_str());
   }
   catch(...){
     printf("\n*** Attention: Unknown exception...\n");

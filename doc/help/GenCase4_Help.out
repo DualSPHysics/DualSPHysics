@@ -30,8 +30,9 @@
  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
 
 
-GenCase4 v4.0.068 (27-04-2018) 
+GenCase4 v4.0.069 (21-05-2018) 
 ================================
+LoadDsphConfig> .../bin/windows/DsphConfig.xml
 Execution parameters information:
 
   GenCase4 config_in config_out [options]
@@ -55,6 +56,9 @@ Execution parameters information:
        (Preselected formats: bi,vtkcells)
 
     -debug:<int>         Debug level (-1:Off, 0:Explicit, n:Debug level)
+
+    -createdirs:<0/1> Creates full path for output files
+                      (value by default is read from DsphConfig.xml or 1)
 
   Examples:
     GenCase4 citydef city
