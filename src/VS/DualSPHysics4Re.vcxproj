@@ -518,6 +518,7 @@ rem %CudaNvcc% -ccbin "$(VCInstallDir)bin" %gpuhw% -use_fast_math -c %ptxinfo% -
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">true</ExcludedFromBuild>
     </ClInclude>
+    <ClInclude Include="..\source\JLinearValue.h" />
     <ClInclude Include="..\source\JLog2.h" />
     <ClInclude Include="..\source\JMatrix4.h" />
     <ClInclude Include="..\source\JMeanValues.h" />
@@ -646,6 +647,7 @@ rem %CudaNvcc% -ccbin "$(VCInstallDir)bin" %gpuhw% -use_fast_math -c %ptxinfo% -
     <ClCompile Include="..\source\JException.cpp" />
     <ClCompile Include="..\source\JGaugeItem.cpp" />
     <ClCompile Include="..\source\JGaugeSystem.cpp" />
+    <ClCompile Include="..\source\JLinearValue.cpp" />
     <ClCompile Include="..\source\JLog2.cpp" />
     <ClCompile Include="..\source\JMeanValues.cpp" />
     <ClCompile Include="..\source\JMotion.cpp" />
