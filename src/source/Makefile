@@ -1,4 +1,4 @@
-#DualSPHysics GPU/CPU v4.2.057 (03-06-2018)
+#DualSPHysics GPU/CPU v4.2.058 (04-06-2018)
 
 #=============== Compilation Options ===============
 USE_GCC5=NO
@@ -34,7 +34,7 @@ ifeq ($(USE_GCC5), YES)
 endif
 
 #=============== CUDA selection ===============
-CUDAVER=91
+CUDAVER=92
 
 #=============== CUDA toolkit directory (make appropriate for local CUDA installation) ===============
 ifeq ($(CUDAVER),00)
@@ -45,6 +45,9 @@ ifeq ($(CUDAVER),75)
 endif
 ifeq ($(CUDAVER),91)
   DIRTOOLKIT=/exports/opt/NVIDIA/cuda-9.1
+endif
+ifeq ($(CUDAVER),92)
+  DIRTOOLKIT=/exports/opt/NVIDIA/cuda-9.2
 endif
 
 #=============== Select GPU architectures ===============
@@ -61,7 +64,15 @@ ifeq ($(CUDAVER),75)
   GENCODE:=$(GENCODE) -gencode=arch=compute_52,code=\"sm_52,compute_52\"
 endif
 ifeq ($(CUDAVER),91)
-  # module load cuda/9.1
+  GENCODE:=$(GENCODE) -gencode=arch=compute_30,code=\"sm_30,compute_30\"
+  GENCODE:=$(GENCODE) -gencode=arch=compute_35,code=\"sm_35,compute_35\"
+  GENCODE:=$(GENCODE) -gencode=arch=compute_50,code=\"sm_50,compute_50\"
+  GENCODE:=$(GENCODE) -gencode=arch=compute_52,code=\"sm_52,compute_52\"
+  GENCODE:=$(GENCODE) -gencode=arch=compute_61,code=\"sm_61,compute_61\"
+  GENCODE:=$(GENCODE) -gencode=arch=compute_70,code=\"sm_70,compute_70\"
+endif
+ifeq ($(CUDAVER),92)
+  # module load cuda/9.2
   GENCODE:=$(GENCODE) -gencode=arch=compute_30,code=\"sm_30,compute_30\"
   GENCODE:=$(GENCODE) -gencode=arch=compute_35,code=\"sm_35,compute_35\"
   GENCODE:=$(GENCODE) -gencode=arch=compute_50,code=\"sm_50,compute_50\"
