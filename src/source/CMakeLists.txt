@@ -6,7 +6,7 @@ PROJECT(DualSPHysics)
 
 set(OBJXML JXml.cpp tinystr.cpp tinyxml.cpp tinyxmlerror.cpp tinyxmlparser.cpp)
 set(OBJSPHMOTION JMotion.cpp JMotionList.cpp JMotionMov.cpp JMotionObj.cpp JMotionPos.cpp JSphMotion.cpp)
-set(OBCOMMON Functions.cpp FunctionsMath.cpp JAppInfo.cpp JBinaryData.cpp JException.cpp JLinearValue.o JLog2.cpp JMeanValues.cpp JObject.cpp JRadixSort.cpp JRangeFilter.cpp JReadDatafile.cpp JSaveCsv2.cpp JTimeControl.cpp randomc.cpp)
+set(OBCOMMON Functions.cpp FunctionsMath.cpp JAppInfo.cpp JBinaryData.cpp JException.cpp JLinearValue.cpp JLog2.cpp JMeanValues.cpp JObject.cpp JRadixSort.cpp JRangeFilter.cpp JReadDatafile.cpp JSaveCsv2.cpp JTimeControl.cpp randomc.cpp)
 set(OBCOMMONDSPH JDsphConfig.cpp JPartDataBi4.cpp JPartDataHead.cpp JPartFloatBi4.cpp JPartOutBi4Save.cpp JSpaceCtes.cpp JSpaceEParms.cpp JSpaceParts.cpp JSpaceProperties.cpp)
 set(OBSPH JArraysCpu.cpp JCellDivCpu.cpp JCfgRun.cpp JDamping.cpp JGaugeItem.cpp JGaugeSystem.cpp JPartsOut.cpp JSaveDt.cpp JSph.cpp JSphAccInput.cpp JSphCpu.cpp JSphInitialize.cpp JSphMk.cpp JSphDtFixed.cpp JSphVisco.cpp JTimeOut.cpp JWaveSpectrumGpu.cpp main.cpp)
 set(OBSPHSINGLE JCellDivCpuSingle.cpp JPartsLoad4.cpp JSphCpuSingle.cpp)
@@ -67,8 +67,8 @@ endif()
 
 # Don't use C++11 ABI for compatibility between GCC v4.9 and >=5
 
-set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D_GLIBCXX_USE_CXX11_ABI=0")
-set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_GLIBCXX_USE_CXX11_ABI=0")
+set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D_GLIBCXX_USE_CXX11_ABI=0 -fPIC")
+set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_GLIBCXX_USE_CXX11_ABI=0 -fPIC")
 
 # Binaries
 
@@ -84,11 +84,11 @@ endif()
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
   target_link_libraries(DualSPHysics4.2CPU jformatfiles2_64 jwavegen_64)
-  set_target_properties(DualSPHysics4.2CPU PROPERTIES COMPILE_FLAGS "-use_fast_math -O3 -D_GLIBCXX_USE_CXX11_ABI=0")
+  set_target_properties(DualSPHysics4.2CPU PROPERTIES COMPILE_FLAGS "-use_fast_math -O3 -D_GLIBCXX_USE_CXX11_ABI=0 -fPIC")
   
   if (CUDA_FOUND)
      target_link_libraries(DualSPHysics4.2 jformatfiles2_64 jwavegen_64)
-     set_target_properties(DualSPHysics4.2 PROPERTIES COMPILE_FLAGS "-use_fast_math -O3 -D_WITHGPU -D_GLIBCXX_USE_CXX11_ABI=0")
+     set_target_properties(DualSPHysics4.2 PROPERTIES COMPILE_FLAGS "-use_fast_math -O3 -D_WITHGPU -D_GLIBCXX_USE_CXX11_ABI=0 -fPIC")
   endif()
   
 elseif(MSVC)
