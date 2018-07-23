@@ -289,6 +289,7 @@ void JMotionDataFile::Resize(unsigned size){
 void JMotionDataFile::LoadFilePos(std::string dirdata,std::string file,const int fields,const int fieldtime,const int fieldx,const int fieldy,const int fieldz){
   const char met[]="LoadFilePos";
   if(int(file.find("/"))<0 && int(file.find("\\"))<0)file=dirdata+file; //-If only name of file then add Dirin.
+  //printf("LoadFilePos>  file:[%s]\n",file.c_str());
 
   //-Carga datos del fichero.
   JReadDatafile rdat;

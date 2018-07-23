@@ -37,6 +37,8 @@
 
 #pragma warning(disable : 4996) //Cancels sprintf() deprecated.
 
+using namespace std;
+
 namespace fun{
 
 //==============================================================================
@@ -471,6 +473,60 @@ bool StrOnlyChars(const std::string &cad,const std::string &chars){
     if(c2>=nc)ok=false;
   }
   return(ok);
+}
+
+//==============================================================================
+/// Loads lines from text file. Returns error code (0 no error).
+//==============================================================================
+int StrFileToVector(const std::string &file,std::vector<std::string> &lines){
+  int error=0;
+  ifstream pf;
+  pf.open(file.c_str());
+  if(pf){
+    while(!pf.eof() && !error){
+      char buff[2048];
+      pf.getline(buff,2048);
+      string tx=buff;
+      lines.push_back(tx);
+    } 
+    if(!pf.eof()&&pf.fail())error=1; //-Error: Failure reading data from file.
+    pf.close();
+  }
+  else error=2; //-Error: Cannot open the file.
+  return(error);
+}
+
+//==============================================================================
+/// Saves lines in a new text file. Returns error code (0 no error).
+//==============================================================================
+int StrVectorToFile(const std::string &file,const std::vector<std::string> &lines){
+  int error=0;
+  fstream pf;
+  pf.open(file.c_str(),ios::binary|ios::out);
+  if(!pf)error=3; //-Error: File could not be opened.
+  else{
+    const unsigned rows=unsigned(lines.size());
+    for(unsigned r=0;r<rows && !error;r++){
+      string tx=lines[r]+"\n";
+      pf.write(tx.c_str(),tx.size());
+      if(pf.fail())error=4; //-Error: File writing failure.
+    }
+    pf.close();
+  }
+  return(error);
+}
+
+//==============================================================================
+/// Returns error code from StrFileToVector() or StrVectorToFile() in string.
+//==============================================================================
+std::string StrFileError(int error){
+  switch(error){
+    case 1: return("Error: Failure reading data from file.");
+    case 2: return("Error: Cannot open the file.");
+    case 3: return("Error: File could not be opened.");
+    case 4: return("Error: File writing failure.");
+  }
+  return("Error: ???");
 }
 
 //==============================================================================

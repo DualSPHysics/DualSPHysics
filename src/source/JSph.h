@@ -243,7 +243,7 @@ protected:
   bool WithFloating;
 
   //-Variables for DEM (DEM).
-  bool UseDEM;
+  bool UseDEM;        ///<Use DEM for boundary collisions.
   static const unsigned DemDataSize=CODE_TYPE_FLUID;
   StDemData *DemData;           ///<Data of DEM objects. [DemDataSize]
 

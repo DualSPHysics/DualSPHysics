@@ -863,7 +863,8 @@ void JSph::VisuConfig()const{
     Log->Print(fun::VarStr("ShiftCoef",ShiftCoef));
     if(ShiftTFS)Log->Print(fun::VarStr("ShiftTFS",ShiftTFS));
   }
-  Log->Print(fun::VarStr("RigidAlgorithm",(!FtCount? "None": (UseDEM? "SPH+DEM": "SPH"))));
+  string rigidalgorithm=(!FtCount? "None": (UseDEM? "SPH+DCDEM": "SPH"));
+  Log->Print(fun::VarStr("RigidAlgorithm",rigidalgorithm));
   Log->Print(fun::VarStr("FloatingCount",FtCount));
   if(FtCount)Log->Print(fun::VarStr("FtPause",FtPause));
   Log->Print(fun::VarStr("CaseNp",CaseNp));

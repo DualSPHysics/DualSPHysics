@@ -66,6 +66,7 @@
 //:# - New functions to create shapes in VTK files. (25-01-2018)
 //:# - Functions to create VTK/CSV files starting from vector<StScalarData>. (25-01-2018)
 //:# - Se escriben las unidades en las cabeceras de los ficheros CSV. (26-04-2018)
+//:# - Nuevo metodo AddShape_Sphere() para generar esferas a partir de quads. (06-07-2018)
 //:#############################################################################
 
 /// \file JFormatFiles2.h \brief Declares the class \ref JFormatFiles2.
@@ -118,7 +119,7 @@ public:
   }StStatistics;
 
   /// Types of shape.
-  typedef enum{ ShLine,ShTriangle,ShQuad,ShBox,ShNull }TpShape;
+  typedef enum{ ShLine,ShTriangle,ShQuad,ShBox,ShSphere,ShNull }TpShape;
 
   /// Structure with data of one shape to be stored in VTK format.
   typedef struct StrShapeData{
@@ -127,10 +128,18 @@ public:
     int value;
     float valuef;
     StrShapeData(){ reset(); }
-    StrShapeData(TpShape tsh,int vi,float vf,tfloat3 p0=TFloat3(0),tfloat3 p1=TFloat3(0),tfloat3 p2=TFloat3(0),tfloat3 p3=TFloat3(0),tfloat3 p4=TFloat3(0),tfloat3 p5=TFloat3(0),tfloat3 p6=TFloat3(0),tfloat3 p7=TFloat3(0)){ 
-      reset(); tshape=tsh; value=vi; valuef=vf; vpt[0]=p0; vpt[1]=p1; vpt[2]=p2; vpt[3]=p3; vpt[4]=p4; vpt[5]=p5; vpt[6]=p6; vpt[7]=p7;
+    StrShapeData(TpShape tsh,int vi,float vf,tfloat3 p0=TFloat3(0)
+      ,tfloat3 p1=TFloat3(0),tfloat3 p2=TFloat3(0),tfloat3 p3=TFloat3(0)
+      ,tfloat3 p4=TFloat3(0),tfloat3 p5=TFloat3(0),tfloat3 p6=TFloat3(0)
+      ,tfloat3 p7=TFloat3(0))
+    { 
+      reset(); tshape=tsh; value=vi; valuef=vf; vpt[0]=p0; vpt[1]=p1; 
+      vpt[2]=p2; vpt[3]=p3; vpt[4]=p4; vpt[5]=p5; vpt[6]=p6; vpt[7]=p7;
     }
-    void reset(){ tshape=ShNull; for(unsigned c=0;c<8;c++)vpt[c]=TFloat3(0); value=0; valuef=0; }
+    void reset(){ 
+      tshape=ShNull; for(unsigned c=0;c<8;c++)vpt[c]=TFloat3(0);
+      value=0; valuef=0; 
+    }
   }StShapeData;
 
 
@@ -560,6 +569,20 @@ public:
     ,const tdouble3 &vy,const tdouble3 &vz,int value,float valuef)
   {
     return(DefineShape_Box(ToTFloat3(pt1),ToTFloat3(vx),ToTFloat3(vy),ToTFloat3(vz),value,valuef));
+  }
+
+  //==============================================================================
+  /// Adds quads for the definition of a sphere.
+  //==============================================================================
+  static void AddShape_Sphere(std::vector<StShapeData> &shapes
+    ,const tfloat3 &pt,float radius,int nside,int value,float valuef);
+  //==============================================================================
+  /// Adds quads for the definition of a sphere.
+  //==============================================================================
+  static void AddShape_Sphere(std::vector<StShapeData> &shapes
+    ,const tdouble3 &pt,double radius,int nside,int value,float valuef)
+  {
+    AddShape_Sphere(shapes,ToTFloat3(pt),float(radius),nside,value,valuef);
   }
 
   //==============================================================================
