@@ -65,6 +65,7 @@
 //:# - Nuevas funciones: Float3Str(),Float3xStr(),Float3xRangeStr(),DoublexStr()
 //:#   ,Double3xStr(),Double3xRangeStr(). (31-01-2018)
 //:# - Error corregido en MkdirPath(). No soportaba rutas absolutas de Linux. (21-05-2018)
+//:# - Nuevas funciones StrFileToVector(), StrVectorToFile() y StrFileError(). (11-07-2018)
 //:#############################################################################
 
 /// \file Functions.h \brief Declares basic/general functions for the entire application.
@@ -156,6 +157,10 @@ std::string StrAddSlashes(const std::string &cad);
 std::string StrStripSlashes(const std::string &cad);
 
 bool StrOnlyChars(const std::string &cad,const std::string &chars);
+
+int StrFileToVector(const std::string &file,std::vector<std::string> &lines);
+int StrVectorToFile(const std::string &file,const std::vector<std::string> &lines);
+std::string StrFileError(int error);
 
 std::string StrSplit(const std::string mark,std::string &text);
 unsigned StrSplitCount(const std::string mark,std::string text);

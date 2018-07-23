@@ -307,4 +307,52 @@ tuint3 JReadDatafile::ReadNextUnsigned3(bool in_line){
   return(v);
 }
 
+//==============================================================================
+/// Returns line (and position inside the line) after firstline where key appears.
+//==============================================================================
+tint2 JReadDatafile::Find(std::string key,int firstline)const{
+  tint2 v=TInt2(-1);
+  for(int c=firstline;c<LineCount && v.x<0;c++){
+    const string line=GetLine(c);
+    const int pos=int(line.find(key));
+    if(pos>=0)v=TInt2(c,pos);
+  }
+  return(v);
+}
+
+//==============================================================================
+/// Returns string value after key string.
+//==============================================================================
+std::string JReadDatafile::FindValueStr(std::string key,bool optional,std::string valdef)const{
+  string ret=valdef;
+  tint2 res=Find(key);
+  if(res.x<0 && !optional)RunException("FindValueStr",fun::PrintStr("The KEY \'%s\' was not found.",key.c_str()),File);
+  if(res.x>=0){
+    //printf("--->Line[%s] res.y:%d \n",GetLine(res.x).c_str(),res.y);
+    string value=GetLine(res.x).substr(res.y+key.size());
+    //printf("--->1[%s]\n",value.c_str());
+    if(value.size()>1 && value[0]=='\"' && value[value.size()-1]=='\"')value=value.substr(1,value.size()-2);
+    //printf("--->2[%s]\n",value.c_str());
+    ret=value;
+  }
+  //printf("----->RetStr[%s]\n",ret.c_str());
+  return(ret);
+}
+
+//==============================================================================
+/// Returns double value after key string.
+//==============================================================================
+double JReadDatafile::FindValueDbl(std::string key,bool optional,double valdef)const{
+  double ret=valdef;
+  tint2 res=Find(key);
+  if(res.x<0 && !optional)RunException("FindValueDbl",fun::PrintStr("The KEY \'%s\' was not found.",key.c_str()),File);
+  if(res.x>=0){
+    string value=GetLine(res.x).substr(res.y+key.size());
+    ret=atof(value.c_str());
+  }
+  //printf("----->RetDouble[%f]\n",ret);
+  return(ret);
+}
+
+
 

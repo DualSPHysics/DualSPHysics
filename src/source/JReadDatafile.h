@@ -33,6 +33,7 @@
 //:# - Error corregido en ProcessSpaces(). (17-12-2015)
 //:# - Nuevos metodos: ReadNextInt3() y ReadNextUnsigned3(). (27-04-2016)
 //:# - Nuevos metodo: RemoveChar(). (20-06-2016)
+//:# - Nuevos metodo: Find(),FindValueStr(),FindValueDbl(). (02-07-2018)
 //:#############################################################################
 
 /// \file JReadDatafile.h \brief Declares the class \ref JReadDatafile.
@@ -107,6 +108,12 @@ public:
   int GetReadLin()const{           return(ReadLin);      }
   int GetReadLinValue()const{      return(ReadLinValue); }
   std::string GetReadValue()const{ return(ReadValue);    }
+
+
+  tint2 Find(std::string key,int firstline=0)const;
+  std::string FindValueStr(std::string key,bool optional=false,std::string valdef="")const;
+  double FindValueDbl(std::string key,bool optional=false,double valdef=0)const;
+
 };
 
 #endif
