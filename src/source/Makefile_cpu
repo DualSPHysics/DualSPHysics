@@ -1,7 +1,7 @@
 #DualSPHysics CPU v4.2.057 (03-06-2018)
 
 #=============== Compilation Options ===============
-USE_GCC5=YES
+USE_GCC5=NO
 USE_DEBUG=NO
 USE_FAST_MATH=YES
 USE_NATIVE_CPU_OPTIMIZATIONS=NO
