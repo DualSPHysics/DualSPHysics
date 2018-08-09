@@ -1017,9 +1017,12 @@ bool FileMask(std::string text,std::string mask){
 //==============================================================================
 int CpyFile(std::string src,const std::string dest){
   std::ifstream fsrc(src.c_str(),std::ios::binary);
-  std::ofstream fdest(dest.c_str(),std::ios::binary);
-  fdest << fsrc.rdbuf();
-  return(fsrc && fdest? 0: 1);
+  if(fsrc){
+    std::ofstream fdest(dest.c_str(),std::ios::binary);
+    fdest << fsrc.rdbuf();
+    return(fsrc && fdest? 0: 1);
+  }
+  return(1);
 }
 
 
@@ -1100,6 +1103,14 @@ tuint3* ResizeAlloc(tuint3 *data,unsigned ndata,unsigned newsize){
   tuint3* data2=new tuint3[newsize];
   ndata=std::min(ndata,newsize);
   if(ndata)memcpy(data2,data,sizeof(tuint3)*ndata);
+  delete[] data;
+  return(data2);
+}
+//==============================================================================
+tuint4* ResizeAlloc(tuint4 *data,unsigned ndata,unsigned newsize){
+  tuint4* data2=new tuint4[newsize];
+  ndata=std::min(ndata,newsize);
+  if(ndata)memcpy(data2,data,sizeof(tuint4)*ndata);
   delete[] data;
   return(data2);
 }

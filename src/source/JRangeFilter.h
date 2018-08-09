@@ -26,6 +26,7 @@
 //:#   no tener otro valor para devolver. (27-12-2013)
 //:# - Permite rangos con incremento configurable Ej:(1,4-10:2,99). (02-01-2017)
 //:# - Error corregido en Config(). (23-01-2017)
+//:# - Nueva funcion GetValues(). (30-07-2018)
 //:#############################################################################
 
 /// \file JRangeFilter.h \brief Declares the class \ref JRangeFilter.
@@ -36,6 +37,7 @@
 #include "TypesDef.h"
 #include "JObject.h"
 #include <string>
+#include <vector>
 
 //##############################################################################
 //# JRangeFilter
@@ -70,6 +72,7 @@ public:
   unsigned GetNextValue(unsigned v)const;
   bool Empty()const{ return(!Count); }
   std::string ToString()const;
+  void GetValues(std::vector<unsigned> &values)const;
 };
 
 #endif

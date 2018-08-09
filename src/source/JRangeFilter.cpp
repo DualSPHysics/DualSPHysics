@@ -230,4 +230,15 @@ unsigned JRangeFilter::GetNextValue(unsigned v)const{
   return(ret);
 }
 
+//==============================================================================
+/// Returns vector with values.
+//==============================================================================
+void JRangeFilter::GetValues(std::vector<unsigned> &values)const{
+  unsigned v=GetFirstValue();
+  while(v!=UINT_MAX){
+    values.push_back(v);
+    v=GetNextValue(v);
+  }
+}
+
 

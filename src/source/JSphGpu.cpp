@@ -79,7 +79,6 @@ void JSphGpu::InitVars(){
 
   Np=Npb=NpbOk=0;
   NpbPer=NpfPer=0;
-  WithFloating=false;
 
   FreeCpuMemoryParticles();
   FreeCpuMemoryFixed();
@@ -598,7 +597,6 @@ void JSphGpu::ConfigBlockSizes(bool usezone,bool useperi){
   Log->Print(" ");
   BlockSizesStr="";
   if(CellMode==CELLMODE_2H || CellMode==CELLMODE_H){
-    const TpFtMode ftmode=(CaseNfloat? (UseDEM? FTMODE_Dem: FTMODE_Sph): FTMODE_None);
     const bool lamsps=(TVisco==VISCO_LaminarSPS);
     const bool shift=(TShifting!=SHIFT_None);
     BlockSizes.forcesbound=BlockSizes.forcesfluid=BlockSizes.forcesdem=BSIZE_FIXED;
@@ -606,7 +604,7 @@ void JSphGpu::ConfigBlockSizes(bool usezone,bool useperi){
     StKerInfo kerinfo;
     memset(&kerinfo,0,sizeof(StKerInfo));
     #ifndef DISABLE_BSMODES
-      cusph::Interaction_Forces(Psingle,TKernel,(CaseNfloat>0),UseDEM,lamsps,TDeltaSph,CellMode,0,0,0,0,100,50,20,TUint3(0),NULL,TUint3(0),NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,TShifting,NULL,NULL,Simulate2D,&kerinfo,NULL);
+      cusph::Interaction_Forces(Psingle,TKernel,FtMode,lamsps,TDeltaSph,CellMode,0,0,0,0,100,50,20,TUint3(0),NULL,TUint3(0),NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,TShifting,NULL,NULL,Simulate2D,&kerinfo,NULL);
       if(UseDEM)cusph::Interaction_ForcesDem(Psingle,CellMode,BlockSizes.forcesdem,CaseNfloat,TUint3(0),NULL,TUint3(0),NULL,NULL,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,&kerinfo);
     #endif
     //Log->Printf("====> bound -> rg:%d  bs:%d  bsmax:%d",kerinfo.forcesbound_rg,kerinfo.forcesbound_bs,kerinfo.forcesbound_bsmax);

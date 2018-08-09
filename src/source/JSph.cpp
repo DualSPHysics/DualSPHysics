@@ -163,6 +163,7 @@ void JSph::InitVars(){
 
   FtCount=0;
   FtPause=0;
+  FtMode=FTMODE_None;
   WithFloating=false;
 
   AllocMemoryFloating(0);
@@ -448,8 +449,8 @@ void JSph::LoadCaseConfig(){
     default: RunException(met,"PosDouble value is not valid.");
   }
   switch(eparms.GetValueInt("RigidAlgorithm",true,1)){ //(DEM)
-    case 1:  UseDEM=false;  break;
-    case 2:  UseDEM=true;   break;
+    case 1:  UseDEM=false;    break;
+    case 2:  UseDEM=true;     break;
     default: RunException(met,"Rigid algorithm is not valid.");
   }
   switch(eparms.GetValueInt("StepAlgorithm",true,1)){
@@ -641,41 +642,70 @@ void JSph::LoadCaseConfig(){
       }
     }
   }
-  else UseDEM=false;
+  else{
+    if(UseDEM){
+      UseDEM=false;
+      Log->PrintWarning("The use of DEM was disabled because there are no floating objects...");
+    }
+  }
+  WithFloating=(FtCount>0);
+  FtMode=(WithFloating? FTMODE_Sph: FTMODE_None);
+  if(UseDEM)FtMode=FTMODE_Ext;
 
-  //-Loads DEM data for the objects. (DEM)
   if(UseDEM){
-    DemData=new StDemData[DemDataSize];
-    memset(DemData,0,sizeof(StDemData)*DemDataSize);
+    if(UseDEM){
+      DemData=new StDemData[DemDataSize];
+      memset(DemData,0,sizeof(StDemData)*DemDataSize);
+    }
     for(unsigned c=0;c<parts.CountBlocks();c++){
       const JSpacePartBlock &block=parts.GetBlock(c);
       if(IsBound(block.Type)){
-        const unsigned cmk=MkInfo->GetMkBlockByMkBound(block.GetMkType());
-        if(cmk>=MkInfo->Size())RunException(met,fun::PrintStr("Error loading DEM objects. Mkbound=%u is unknown.",block.GetMkType()));
-        const unsigned tav=CODE_GetTypeAndValue(MkInfo->Mkblock(cmk)->Code);
-        //:Log->Printf("___> tav[%u]:%u",cmk,tav);
-        if(block.Type==TpPartFloating){
-          const JSpacePartBlock_Floating &fblock=(const JSpacePartBlock_Floating &)block;
-          DemData[tav].mass=(float)fblock.GetMassbody();
-          DemData[tav].massp=(float)(fblock.GetMassbody()/fblock.GetCount());
+        const word mkbound=block.GetMkType();
+        const unsigned cmk=MkInfo->GetMkBlockByMkBound(mkbound);
+        if(cmk>=MkInfo->Size())RunException(met,fun::PrintStr("Error loading boundary objects. Mkbound=%u is unknown.",mkbound));
+        const StDemData data=LoadDemData(UseDEM,UseDEM,&block);
+        if(UseDEM){
+          const unsigned tav=CODE_GetTypeAndValue(MkInfo->Mkblock(cmk)->Code); //:Log->Printf("___> tav[%u]:%u",cmk,tav);
+          DemData[tav]=data;
         }
-        else DemData[tav].massp=MassBound;
-        if(!block.ExistsSubValue("Young_Modulus","value"))RunException(met,fun::PrintStr("Object mk=%u - Value of Young_Modulus is invalid.",block.GetMk()));
-        if(!block.ExistsSubValue("PoissonRatio","value"))RunException(met,fun::PrintStr("Object mk=%u - Value of PoissonRatio is invalid.",block.GetMk()));
-        if(!block.ExistsSubValue("Kfric","value"))RunException(met,fun::PrintStr("Object mk=%u - Value of Kfric is invalid.",block.GetMk()));
-        if(!block.ExistsSubValue("Restitution_Coefficient","value"))RunException(met,fun::PrintStr("Object mk=%u - Value of Restitution_Coefficient is invalid.",block.GetMk()));
-        DemData[tav].young=block.GetSubValueFloat("Young_Modulus","value",true,0);
-        DemData[tav].poisson=block.GetSubValueFloat("PoissonRatio","value",true,0);
-        DemData[tav].tau=(DemData[tav].young? (1-DemData[tav].poisson*DemData[tav].poisson)/DemData[tav].young: 0);
-        DemData[tav].kfric=block.GetSubValueFloat("Kfric","value",true,0);
-        DemData[tav].restitu=block.GetSubValueFloat("Restitution_Coefficient","value",true,0);
-        if(block.ExistsValue("Restitution_Coefficient_User"))DemData[tav].restitu=block.GetValueFloat("Restitution_Coefficient_User");
       }
     }
   }
 
   NpMinimum=CaseNp-unsigned(PartsOutMax*CaseNfluid);
   Log->Print("**Basic case configuration is loaded");
+}
+
+//==============================================================================
+/// Loads coefficients used for DEM or Chrono objects.
+//==============================================================================
+StDemData JSph::LoadDemData(bool basicdata,bool extradata,const JSpacePartBlock* block)const{
+  const char met[]="LoadDemData";
+  const word mk=block->GetMk();
+  const word mkbound=block->GetMkType();
+  StDemData data;
+  memset(&data,0,sizeof(StDemData));
+  if(basicdata){
+    if(!block->ExistsSubValue("Kfric","value"))RunException(met,fun::PrintStr("Object mk=%u (mkbound=%u) - Value of Kfric is invalid.",mk,mkbound));
+    if(!block->ExistsSubValue("Restitution_Coefficient","value"))RunException(met,fun::PrintStr("Object mk=%u (mkbound=%u) - Value of Restitution_Coefficient is invalid.",mk,mkbound));
+    data.kfric=block->GetSubValueFloat("Kfric","value",true,0);
+    data.restitu=block->GetSubValueFloat("Restitution_Coefficient","value",true,0);
+    if(block->ExistsValue("Restitution_Coefficient_User"))data.restitu=block->GetValueFloat("Restitution_Coefficient_User");
+  }
+  if(extradata){
+    data.massp=MassBound;
+    if(block->Type==TpPartFloating){
+      const JSpacePartBlock_Floating *fblock=(const JSpacePartBlock_Floating *)block;
+      data.mass=(float)fblock->GetMassbody();
+      data.massp=(float)(fblock->GetMassbody()/fblock->GetCount());
+    }
+    if(!block->ExistsSubValue("Young_Modulus","value"))RunException(met,fun::PrintStr("Object mk=%u (mkbound=%u) - Value of Young_Modulus is invalid.",mk,mkbound));
+    if(!block->ExistsSubValue("PoissonRatio","value"))RunException(met,fun::PrintStr("Object mk=%u (mkbound=%u) - Value of PoissonRatio is invalid.",mk,mkbound));
+    data.young=block->GetSubValueFloat("Young_Modulus","value",true,0);
+    data.poisson=block->GetSubValueFloat("PoissonRatio","value",true,0);
+    data.tau=(data.young? (1-data.poisson*data.poisson)/data.young: 0);
+  }
+  return(data);
 }
 
 //==============================================================================
@@ -1335,7 +1365,6 @@ void JSph::LoadCaseParticles(){
 //==============================================================================
 void JSph::InitRun(){
   const char met[]="InitRun";
-  WithFloating=(CaseNfloat>0);
   VerletStep=0;
   if(TStep==STEP_Symplectic)SymplecticDtPre=DtIni;
   if(UseDEM)DemDtForce=DtIni; //(DEM)
