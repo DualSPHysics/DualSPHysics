@@ -550,6 +550,7 @@ rem %CudaNvcc% -ccbin "$(VCInstallDir)bin" %gpuhw% -use_fast_math -c %ptxinfo% -
     <ClInclude Include="..\source\JSaveCsv2.h" />
     <ClInclude Include="..\source\JSaveDt.h" />
     <ClInclude Include="..\source\JSpaceProperties.h" />
+    <ClInclude Include="..\source\JSpaceVtkOut.h" />
     <ClInclude Include="..\source\JSphAccInput.h" />
     <ClInclude Include="..\source\JSphDtFixed.h" />
     <ClInclude Include="..\source\JSphGpuSingle.h">
@@ -671,6 +672,7 @@ rem %CudaNvcc% -ccbin "$(VCInstallDir)bin" %gpuhw% -use_fast_math -c %ptxinfo% -
     <ClCompile Include="..\source\JSaveCsv2.cpp" />
     <ClCompile Include="..\source\JSaveDt.cpp" />
     <ClCompile Include="..\source\JSpaceProperties.cpp" />
+    <ClCompile Include="..\source\JSpaceVtkOut.cpp" />
     <ClCompile Include="..\source\JSphAccInput.cpp" />
     <ClCompile Include="..\source\JSphDtFixed.cpp" />
     <ClCompile Include="..\source\JSphGpuSingle.cpp">

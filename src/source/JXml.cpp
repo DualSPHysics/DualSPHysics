@@ -97,6 +97,26 @@ TiXmlNode* JXml::GetNode(const std::string &path,bool createpath){
 }
 
 //==============================================================================
+/// Returns the requested node.
+/// \param path Path of the requested node.
+/// otherwise returns \a NULL.
+//==============================================================================
+TiXmlNode* JXml::GetNodeSimple(const std::string &path)const{
+  std::string pathx=path;
+  TiXmlNode* node=NULL;
+  TiXmlNode* base=Doc;
+  while(pathx.length()&&base){
+    int pos=int(pathx.find("."));
+    std::string txword=(pos>0? pathx.substr(0,pos): pathx);
+    pathx=(pos>0? pathx.substr(pos+1): "");
+    if(txword.length()){
+      node=base->FirstChild(txword.c_str());
+      base=node;
+    }
+  }
+  return(node);
+}
+//==============================================================================
 /// Returns the requested node and if does not exist an exception is thrown.
 /// \throw The requested node does not exist.
 //==============================================================================

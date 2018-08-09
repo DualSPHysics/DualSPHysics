@@ -67,7 +67,9 @@
 //:# - Functions to create VTK/CSV files starting from vector<StScalarData>. (25-01-2018)
 //:# - Se escriben las unidades en las cabeceras de los ficheros CSV. (26-04-2018)
 //:# - Nuevo metodo AddShape_Sphere() para generar esferas a partir de quads. (06-07-2018)
+//:# - Nuevos metodos CreateShapesMk(), DeleteShapesMk() y CreateOBJsByMk(). (06-08-2018)
 //:#############################################################################
+  
 
 /// \file JFormatFiles2.h \brief Declares the class \ref JFormatFiles2.
 
@@ -90,6 +92,10 @@ class JFormatFiles2
 {
 public:
 
+  /// Modes to define the normals.
+  typedef enum{ NorNULL,NorOriginal,NorInvert,NorTwoFace }TpModeNormal; 
+
+  /// Data types.
   typedef enum{ UChar8,Char8,UShort16,Short16,UInt32,Int32,Float32,Double64,ULlong64,Llong64,TpDataNull }TpData;
 
   /// Structure with the information of an array of particle data to be stored in CSV or VTK format.
@@ -590,6 +596,27 @@ public:
   //============================================================================== 
   static void SaveVtkShapes(std::string fname,const std::string &valuename
     ,const std::string &valuefname,const std::vector<StShapeData> &shapes);
+
+
+  //##############################################################################
+  //# Functions to create OBJ files starting from VTK files.
+  //##############################################################################
+  //==============================================================================
+  /// Creates object with geometry (triangles and quads) and mk data from VTK files.
+  //==============================================================================
+  static void* CreateShapesMk(const std::vector<std::string> &vtkfiles);
+
+  //==============================================================================
+  /// Frees object with geometry and mk data from VTK files.
+  //==============================================================================
+  static void DeleteShapesMk(void* ptr_vtksimple);
+
+
+  //==============================================================================
+  /// Creates OBJ file with MK geometry in VTK file. Returns not zero in case of error.
+  //==============================================================================
+  static void CreateOBJsByMk(void* ptr_vtksimple,std::string filein,std::string filesout
+    ,const std::vector<unsigned> &mkbounds,unsigned mkboundfirst,TpModeNormal normalmode);
 
 };
 

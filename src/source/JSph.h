@@ -60,6 +60,7 @@ class JXml;
 class JTimeOut;
 class JGaugeSystem;
 class JPartsLoad4;
+class JSpacePartBlock;
 
 //##############################################################################
 //# XML format of execution parameters in _FmtXML__Parameters.xml.
@@ -240,12 +241,13 @@ protected:
   StFloatingData *FtObjs;    ///<Data of floating objects. [ftcount]
   unsigned FtCount;          ///<Number of floating objects.
   float FtPause;             ///<Time to start floating bodies movement.
+  TpFtMode FtMode;           ///<Defines interaction mode for floatings and boundaries.
   bool WithFloating;
 
   //-Variables for DEM (DEM).
-  bool UseDEM;        ///<Use DEM for boundary collisions.
+  bool UseDEM;         ///<Use DEM for boundary collisions.
   static const unsigned DemDataSize=CODE_TYPE_FLUID;
-  StDemData *DemData;           ///<Data of DEM objects. [DemDataSize]
+  StDemData *DemData;  ///<Data of DEM objects. [DemDataSize]
 
   std::vector<std::string> InitializeInfo; ///<Stores information about initialize configuration applied.
 
@@ -337,6 +339,7 @@ protected:
   void LoadConfig(const JCfgRun *cfg);
   void LoadCaseConfig();
 
+  StDemData LoadDemData(bool basicdata,bool extradata,const JSpacePartBlock* block)const;
   void VisuDemCoefficients()const;
 
   void LoadCodeParticles(unsigned np,const unsigned *idp,typecode *code)const;

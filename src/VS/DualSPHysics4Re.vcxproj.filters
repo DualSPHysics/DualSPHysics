@@ -265,6 +265,9 @@
     <ClInclude Include="..\source\JLinearValue.h">
       <Filter>Common</Filter>
     </ClInclude>
+    <ClInclude Include="..\source\JSpaceVtkOut.h">
+      <Filter>CommonDsph</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\source\JCfgRun.cpp">
@@ -458,6 +461,9 @@
     </ClCompile>
     <ClCompile Include="..\source\JLinearValue.cpp">
       <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JSpaceVtkOut.cpp">
+      <Filter>CommonDsph</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

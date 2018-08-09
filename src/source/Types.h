@@ -214,27 +214,27 @@ typedef enum{
   SHIFT_None=0              ///<Shifting is not applied.
 }TpShifting; 
 
-///Interaction mode for floatings and boundaries.
+///Interaction mode for floatings.
 typedef enum{ 
-  FTMODE_None=0,              ///<No interaction between floatings.
-  FTMODE_Sph=1,               ///<Interaction between floatings and boundaries in terms of SPH.
-  FTMODE_Dem=2                ///<Interaction between floatings and boundaries in terms of DEM.
+  FTMODE_None=0,            ///<There are not floatings.
+  FTMODE_Sph=1,             ///<Interaction between floatings and boundaries in terms of SPH.
+  FTMODE_Ext=2              ///<Interaction between floatings and boundaries in terms of DEM or CHRONO.
 }TpFtMode;  
 
 
 #define USE_FLOATING (ftmode!=FTMODE_None)
 #define USE_NOFLOATING (ftmode==FTMODE_None)
-#define USE_DEM (ftmode==FTMODE_Dem)
+#define USE_FTEXTERNAL (ftmode==FTMODE_Ext)
 
 ///Order of the axis to reorder particles in cells.
 typedef enum{ 
-    ORDER_None=0,
-    ORDER_XYZ=1,
-    ORDER_XZY=2,
-    ORDER_YXZ=3,
-    ORDER_YZX=4,
-    ORDER_ZXY=5,
-    ORDER_ZYX=6 
+  ORDER_None=0,
+  ORDER_XYZ=1,
+  ORDER_XZY=2,
+  ORDER_YXZ=3,
+  ORDER_YZX=4,
+  ORDER_ZXY=5,
+  ORDER_ZYX=6 
 }TpCellOrder;  
 
 ///Returns the name of CellOrder in text.

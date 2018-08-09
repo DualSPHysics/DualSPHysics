@@ -103,7 +103,7 @@ void PreInteractionSingle(unsigned np,const double2 *posxy,const double *posz
   ,const float4 *velrhop,float4 *pospress,float cteb,float ctegamma);
 
 //-Kernels for the force calculation.
-void Interaction_Forces(bool psingle,TpKernel tkernel,bool floating,bool usedem,bool lamsps
+void Interaction_Forces(bool psingle,TpKernel tkernel,TpFtMode ftmode,bool lamsps
   ,TpDeltaSph tdelta,TpCellMode cellmode
   ,float viscob,float viscof,unsigned bsbound,unsigned bsfluid
   ,unsigned np,unsigned npb,unsigned npbok,tuint3 ncells
