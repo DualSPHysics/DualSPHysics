@@ -26,6 +26,9 @@
 #include "JArraysCpu.h"
 #include "JSphDtFixed.h"
 #include "JWaveGen.h"
+#include "JMLPistons.h"     //<vs_mlapiston>
+#include "JRelaxZones.h"    //<vs_rzone>
+#include "JChronoObjects.h" //<vs_chroono>
 #include "JDamping.h"
 #include "JXml.h"
 #include "JSaveDt.h"
@@ -274,6 +277,7 @@ llong JSphCpu::GetAllocMemoryCpu()const{
   //-Reserved in AllocCpuMemoryFixed().
   s+=MemCpuFixed;
   //-Reserved in other objects.
+  if(MLPistons)s+=MLPistons->GetAllocMemoryCpu();  //<vs_mlapiston>
   return(s);
 }
 
@@ -396,7 +400,8 @@ void JSphCpu::ConfigRunMode(const JCfgRun *cfg,std::string preinfo){
 /// Inicializa vectores y variables para la ejecucion.
 //==============================================================================
 void JSphCpu::InitRunCpu(){
-  InitRun();
+  InitRun(Np,Idpc,Posc);
+
   if(TStep==STEP_Verlet)memcpy(VelrhopM1c,Velrhopc,sizeof(tfloat4)*Np);
   if(TVisco==VISCO_LaminarSPS)memset(SpsTauc,0,sizeof(tsymatrix3f)*Np);
   if(CaseNfloat)InitFloating();
@@ -2038,6 +2043,9 @@ void JSphCpu::RunMotion(double stepdt){
         if(motsim)MoveMatBound   (nparts,pini,matmov,stepdt,RidpMove,Posc,Dcellc,Velrhopc,Codec); 
         //else    MoveMatBoundAce(nparts,pini,matmov,matmov2,stepdt,RidpMove,Posc,Dcellc,Velrhopc,Acec,Codec);
       }
+      if(ChronoObjects && ChronoObjects->GetWithMotion()){ //<vs_chroono_ini> 
+        ChronoObjects->SetMovingData(SphMotion->GetObjMkBound(ref),typesimple,simplemov,matmov,stepdt);
+      } //<vs_chroono_end>
     }
   }
   //-Process other modes of motion. | Procesa otros modos de motion.
@@ -2067,8 +2075,95 @@ void JSphCpu::RunMotion(double stepdt){
       }
     }
   }
+  //-Management of Multi-Layer Pistons.  //<vs_mlapiston_ini>
+  if(MLPistons){
+    if(CellOrder!=ORDER_XYZ)RunException(met,"Only CellOrder==ORDER_XYZ is valid.");
+    if(!BoundChanged)CalcRidp(PeriActive!=0,Npb,0,CaseNfixed,CaseNfixed+CaseNmoving,Codec,Idpc,RidpMove);
+    BoundChanged=true;
+    if(MLPistons->GetPiston1dCount()){//-Process motion for pistons 1D.
+      MLPistons->CalculateMotion1d(TimeStep+MLPistons->GetTimeMod()+stepdt);
+      MovePiston1d(CaseNmoving,0,MLPistons->GetPoszMin(),MLPistons->GetPoszCount()
+        ,MLPistons->GetPistonId(),MLPistons->GetMovx(),MLPistons->GetVelx()
+        ,RidpMove,Posc,Dcellc,Velrhopc,Codec);
+    }
+    for(unsigned cp=0;cp<MLPistons->GetPiston2dCount();cp++){//-Process motion for pistons 2D.
+      JMLPistons::StMotionInfoPiston2D mot=MLPistons->CalculateMotion2d(cp,TimeStep+MLPistons->GetTimeMod()+stepdt);
+      MovePiston2d(mot.np,mot.idbegin-CaseNfixed,mot.posymin,mot.poszmin,mot.poszcount,mot.movyz,mot.velyz
+        ,RidpMove,Posc,Dcellc,Velrhopc,Codec);
+    }
+  }  //<vs_mlapiston_end>
   TmcStop(Timers,TMC_SuMotion);
 }
+
+//<vs_mlapiston_ini>
+//==============================================================================
+/// Applies movement and velocity of piston 1D to a group of particles.
+/// Aplica movimiento y velocidad de piston 1D a conjunto de particulas.
+//==============================================================================
+void JSphCpu::MovePiston1d(unsigned np,unsigned ini
+  ,double poszmin,unsigned poszcount,const byte *pistonid,const double* movx,const double* velx
+  ,const unsigned *ridpmv,tdouble3 *pos,unsigned *dcell,tfloat4 *velrhop,typecode *code)const
+{
+  const int fin=int(ini+np);
+  #ifdef OMP_USE
+    #pragma omp parallel for schedule (static) if(fin>OMP_LIMIT_LIGHT)
+  #endif
+  for(int id=int(ini);id<fin;id++){
+    const unsigned pid=ridpmv[id];
+    if(pid!=UINT_MAX){
+      const unsigned pisid=pistonid[CODE_GetTypeValue(code[pid])];
+      if(pisid<255){
+        const unsigned cz=unsigned((pos[pid].z-poszmin)/Dp);
+        const double rmovx=(cz<poszcount? movx[pisid*poszcount+cz]: 0);
+        const float rvelx=float(cz<poszcount? velx[pisid*poszcount+cz]: 0);
+        //-Updates position.
+        UpdatePos(pos[pid],rmovx,0,0,false,pid,pos,dcell,code);
+        //-Updates velocity.
+        velrhop[pid].x=rvelx;
+      }
+    }
+  }
+}
+//==============================================================================
+/// Applies movement and velocity of piston 2D to a group of particles.
+/// Aplica movimiento y velocidad de piston 2D a conjunto de particulas.
+//==============================================================================
+void JSphCpu::MovePiston2d(unsigned np,unsigned ini
+  ,double posymin,double poszmin,unsigned poszcount,const double* movx,const double* velx
+  ,const unsigned *ridpmv,tdouble3 *pos,unsigned *dcell,tfloat4 *velrhop,typecode *code)const
+{
+  const int fin=int(ini+np);
+  #ifdef OMP_USE
+    #pragma omp parallel for schedule (static) if(fin>OMP_LIMIT_LIGHT)
+  #endif
+  for(int id=int(ini);id<fin;id++){
+    const unsigned pid=ridpmv[id];
+    if(pid!=UINT_MAX){
+      const tdouble3 ps=pos[pid];
+      const unsigned cy=unsigned((ps.y-posymin)/Dp);
+      const unsigned cz=unsigned((ps.z-poszmin)/Dp);
+      const double rmovx=(cz<poszcount? movx[cy*poszcount+cz]: 0);
+      const float rvelx=float(cz<poszcount? velx[cy*poszcount+cz]: 0);
+      //-Updates position.
+      UpdatePos(ps,rmovx,0,0,false,pid,pos,dcell,code);
+      //-Updates velocity.
+      velrhop[pid].x=rvelx;
+    }
+  }
+}
+//<vs_mlapiston_end>
+
+//<vs_rzone_ini>
+//==============================================================================
+/// Applies RelaxZone to selected particles.
+/// Aplica RelaxZone a las particulas indicadas.
+//==============================================================================
+void JSphCpu::RunRelaxZone(double dt){
+  TmcStart(Timers,TMC_SuMotion);
+  RelaxZones->SetFluidVel(TimeStep,dt,Np-Npb,Npb,Posc,Idpc,Velrhopc);
+  TmcStop(Timers,TMC_SuMotion);
+}
+//<vs_rzone_end>
 
 //==============================================================================
 /// Applies Damping to selected particles.

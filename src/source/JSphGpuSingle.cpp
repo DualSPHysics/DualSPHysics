@@ -28,6 +28,9 @@
 #include "JSphMotion.h"
 #include "JSphVisco.h"
 #include "JWaveGen.h"
+#include "JMLPistons.h"     //<vs_mlapiston>
+#include "JRelaxZones.h"    //<vs_rzone>
+#include "JChronoObjects.h" //<vs_chroono>
 #include "JTimeOut.h"
 #include "JTimeControl.h"
 #include "JSphGpu_ker.h"
@@ -142,6 +145,11 @@ void JSphGpuSingle::ConfigDomain(){
 
   //-Computes radius of floating bodies.
   if(CaseNfloat && PeriActive!=0 && !PartBegin)CalcFloatingRadius(Np,AuxPos,Idp);
+
+  //<vs_mlapiston_ini>
+  //-Configures Multi-Layer Pistons according particles. | Configura pistones Multi-Layer segun particulas.
+  if(MLPistons)MLPistons->PreparePiston(Dp,Np,Idp,AuxPos);
+  //<vs_mlapiston_end>
 
   //-Loads Code of the particles.
   LoadCodeParticles(Np,Idp,Code);
@@ -456,6 +464,7 @@ double JSphGpuSingle::ComputeStep_Ver(){
   if(CaseNfloat)RunFloating(dt,false); //-Control of floating bodies.
   PosInteraction_Forces();             //-Free memory used for interaction.
   if(Damping)RunDamping(dt,Np,Npb,Posxyg,Poszg,Codeg,Velrhopg); //-Aplies Damping.
+  if(RelaxZones)RunRelaxZone(dt);      //-Generate waves using RZ.  //<vs_rzone>
   return(dt);
 }
 
@@ -488,6 +497,7 @@ double JSphGpuSingle::ComputeStep_Sym(){
   if(CaseNfloat)RunFloating(dt,false);    //-Control of floating bodies.
   PosInteraction_Forces();                //-Free memory used for interaction.
   if(Damping)RunDamping(dt,Np,Npb,Posxyg,Poszg,Codeg,Velrhopg); //-Aplies Damping.
+  if(RelaxZones)RunRelaxZone(dt);         //-Generate waves using RZ.  //<vs_rzone>
 
   SymplecticDtPre=min(ddt_p,ddt_c);       //-Calculate dt for next ComputeStep.
   return(dt);
@@ -534,8 +544,26 @@ void JSphGpuSingle::RunFloating(double dt,bool predictor){
     //-Calculate data to update floatings / Calcula datos para actualizar floatings.
     cusph::FtCalcForcesRes(FtCount,Simulate2D,dt,FtoOmegag,FtoVelg,FtoCenterg,FtoForcesg,FtoForcesResg,FtoCenterResg);
 
+    //-Run floating with Chrono library. //<vs_chroono_ini>
+    if(ChronoObjects){      
+      //-Export data / Exporta datos.
+      tfloat3* ftoforces=FtoAuxFloat9;
+      cudaMemcpy(ftoforces,FtoForcesg,sizeof(tfloat3)*FtCount*2,cudaMemcpyDeviceToHost);
+      for(unsigned cf=0;cf<FtCount;cf++)if(FtObjs[cf].usechrono)ChronoObjects->SetFtData(FtObjs[cf].mkbound,ftoforces[cf*2],ftoforces[cf*2+1]);
+      //-Calculate data using Chrono / Calcula datos usando Chrono.
+      ChronoObjects->RunChrono(Nstep,TimeStep,dt,predictor);
+      //-Load calculated data by Chrono / Carga datos calculados por Chrono.
+      tdouble3* ftocenter=FtoAuxDouble6;
+      cudaMemcpy(ftocenter,FtoCenterResg,sizeof(tdouble3)*FtCount  ,cudaMemcpyDeviceToHost);//-Necesario para cargar datos de floatings sin chrono.
+      cudaMemcpy(ftoforces,FtoForcesResg,sizeof(tfloat3) *FtCount*2,cudaMemcpyDeviceToHost);//-Necesario para cargar datos de floatings sin chrono.
+      for(unsigned cf=0;cf<FtCount;cf++)if(FtObjs[cf].usechrono)ChronoObjects->GetFtData(FtObjs[cf].mkbound,ftocenter[cf],ftoforces[cf*2+1],ftoforces[cf*2]);
+      cudaMemcpy(FtoCenterResg,ftocenter,sizeof(tdouble3)*FtCount  ,cudaMemcpyHostToDevice);
+      cudaMemcpy(FtoForcesResg,ftoforces,sizeof(float3)  *FtCount*2,cudaMemcpyHostToDevice);
+    }//<vs_chroono_end> 
+
     //-Apply movement around floating objects / Aplica movimiento sobre floatings.
     cusph::FtUpdate(PeriActive!=0,predictor,FtCount,dt,FtoDatag,FtoForcesResg,FtoCenterResg,FtRidpg,FtoCenterg,FtoAnglesg,FtoVelg,FtoOmegag,Posxyg,Poszg,Dcellg,Velrhopg,Codeg);
+
     TmgStop(Timers,TMG_SuFloating);
   }
 }

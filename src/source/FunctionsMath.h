@@ -34,6 +34,7 @@
 //:# - En el calculo de la matriz inversa puedes pasarle el determinante. (08-02-2017)
 //:# - Nuevas funciones IntersecPlaneLine(). (08-09-2016)
 //:# - Nuevas funciones MulMatrix3x3(), TrasMatrix3x3() y RotMatrix3x3(). (29-11-2017)
+//:# - Nueva funcion VecOrthogonal(). (10-08-2018)
 //:#############################################################################
 
 /// \file FunctionsMath.h \brief Declares basic/general math functions.
@@ -222,6 +223,42 @@ inline tdouble3 VecUnitary(const tdouble3 &p1){
 inline tfloat3 VecUnitary(const tfloat3 &p1){
   return(p1/TFloat3(DistPoint(p1)));
 }
+
+
+//==============================================================================
+// Devuelve un vector ortogonal al dado con el modulo indicado.
+// Returns an orthogonal vector with indicated module.
+//==============================================================================
+inline tdouble3 VecOrthogonal(const tdouble3 &v,double module){
+  tdouble3 r=TDouble3(0.f,0.f,0.f);
+  if(v.x)r=TDouble3((-v.y-v.z)/v.x,1,1);
+  else if(v.y)r=TDouble3(1,(-v.x-v.z)/v.y,1);
+  else if(v.z)r=TDouble3(1,1,(-v.x-v.y)/v.z);
+  double m=sqrt(r.x*r.x+r.y*r.y+r.z*r.z);
+  if(m){
+    m=module/m;
+    r=TDouble3(r.x*m,r.y*m,r.z*m);
+  }
+  return(r);
+}
+
+//==============================================================================
+// Devuelve un vector ortogonal al dado con el modulo indicado.
+// Returns an orthogonal vector with indicated module.
+//==============================================================================
+inline tfloat3 VecOrthogonal(const tfloat3 &v,float module){
+  tfloat3 r=TFloat3(0.f,0.f,0.f);
+  if(v.x)r=TFloat3((-v.y-v.z)/v.x,1,1);
+  else if(v.y)r=TFloat3(1,(-v.x-v.z)/v.y,1);
+  else if(v.z)r=TFloat3(1,1,(-v.x-v.y)/v.z);
+  float m=sqrt(r.x*r.x+r.y*r.y+r.z*r.z);
+  if(m){
+    m=module/m;
+    r=TFloat3(r.x*m,r.y*m,r.z*m);
+  }
+  return(r);
+}
+
 
 //==============================================================================
 /// Devuelve la normal de un triangulo.

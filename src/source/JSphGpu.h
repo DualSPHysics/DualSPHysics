@@ -234,6 +234,7 @@ protected:
   void RunShifting(double dt);
 
   void RunMotion(double stepdt);
+  void RunRelaxZone(double dt);  //<vs_rzone>
   void RunDamping(double dt,unsigned np,unsigned npb,const double2 *posxy,const double *posz,const typecode *code,float4 *velrhop);
 
   void ShowTimers(bool onlyfile=false);

@@ -2086,6 +2086,97 @@ void MoveMatBound(byte periactive,bool simulate2d,unsigned np,unsigned ini,tmatr
   }
 }
 
+//<vs_mlapiston_ini>
+//##############################################################################
+//# Kernels for MLPistons motion.
+//##############################################################################
+//------------------------------------------------------------------------------
+/// Applies movement and velocity of piston 1D to a group of particles.
+/// Aplica movimiento y velocidad de piston 1D a conjunto de particulas.
+//------------------------------------------------------------------------------
+template<byte periactive> __global__ void KerMovePiston1d(unsigned n,unsigned idini
+  ,double dp,double poszmin,unsigned poszcount,const byte *pistonid,const double* movx,const double* velx
+  ,const unsigned *ridpmv,double2 *posxy,double *posz,unsigned *dcell,float4 *velrhop,typecode *code)
+{
+  unsigned p=blockIdx.y*gridDim.x*blockDim.x + blockIdx.x*blockDim.x + threadIdx.x; //-Nº de la partícula
+  if(p<n){
+    const unsigned id=p+idini;
+    int pid=ridpmv[id];
+    if(pid>=0){
+      const unsigned pisid=pistonid[CODE_GetTypeValue(code[pid])];
+      if(pisid<255){
+        const double2 rpxy=posxy[pid];
+        const double rpz=posz[pid];
+        const unsigned cz=unsigned((rpz-poszmin)/dp);
+        const double rmovx=(cz<poszcount? movx[pisid*poszcount+cz]: 0);
+        const float rvelx=float(cz<poszcount? velx[pisid*poszcount+cz]: 0);
+        //-Updates position.
+        KerUpdatePos<periactive>(rpxy,rpz,rmovx,0,0,false,pid,posxy,posz,dcell,code);
+        //-Updates velocity.
+        velrhop[pid].x=rvelx;
+      }
+    }
+  }
+}
+
+//==============================================================================
+/// Applies movement and velocity of piston 1D to a group of particles.
+/// Aplica movimiento y velocidad de piston 1D a conjunto de particulas.
+//==============================================================================
+void MovePiston1d(bool periactive,unsigned np,unsigned idini
+  ,double dp,double poszmin,unsigned poszcount,const byte *pistonid,const double* movx,const double* velx
+  ,const unsigned *ridpmv,double2 *posxy,double *posz,unsigned *dcell,float4 *velrhop,typecode *code)
+{
+  if(np){
+    dim3 sgrid=GetGridSize(np,SPHBSIZE);
+    if(periactive)KerMovePiston1d<true>  <<<sgrid,SPHBSIZE>>> (np,idini,dp,poszmin,poszcount,pistonid,movx,velx,ridpmv,posxy,posz,dcell,velrhop,code);
+    else          KerMovePiston1d<false> <<<sgrid,SPHBSIZE>>> (np,idini,dp,poszmin,poszcount,pistonid,movx,velx,ridpmv,posxy,posz,dcell,velrhop,code);
+  }
+}
+
+//------------------------------------------------------------------------------
+/// Applies movement and velocity of piston 2D to a group of particles.
+/// Aplica movimiento y velocidad de piston 2D a conjunto de particulas.
+//------------------------------------------------------------------------------
+template<byte periactive> __global__ void KerMovePiston2d(unsigned n,unsigned idini
+  ,double dp,double posymin,double poszmin,unsigned poszcount,const double* movx,const double* velx
+  ,const unsigned *ridpmv,double2 *posxy,double *posz,unsigned *dcell,float4 *velrhop,typecode *code)
+{
+  unsigned p=blockIdx.y*gridDim.x*blockDim.x + blockIdx.x*blockDim.x + threadIdx.x; //-Nº de la partícula
+  if(p<n){
+    const unsigned id=p+idini;
+    int pid=ridpmv[id];
+    if(pid>=0){
+      const double2 rpxy=posxy[pid];
+      const double rpz=posz[pid];
+      const unsigned cy=unsigned((rpxy.y-posymin)/dp);
+      const unsigned cz=unsigned((rpz-poszmin)/dp);
+      const double rmovx=(cz<poszcount? movx[cy*poszcount+cz]: 0);
+      const float rvelx=float(cz<poszcount? velx[cy*poszcount+cz]: 0);
+      //-Actualiza posicion.
+      KerUpdatePos<periactive>(rpxy,rpz,rmovx,0,0,false,pid,posxy,posz,dcell,code);
+      //-Actualiza velocidad.
+      velrhop[pid].x=rvelx;
+    }
+  }
+}
+
+//==============================================================================
+/// Applies movement and velocity of piston 2D to a group of particles.
+/// Aplica movimiento y velocidad de piston 2D a conjunto de particulas.
+//==============================================================================
+void MovePiston2d(bool periactive,unsigned np,unsigned idini
+  ,double dp,double posymin,double poszmin,unsigned poszcount,const double* movx,const double* velx
+  ,const unsigned *ridpmv,double2 *posxy,double *posz,unsigned *dcell,float4 *velrhop,typecode *code)
+{
+  if(np){
+    dim3 sgrid=GetGridSize(np,SPHBSIZE);
+    if(periactive)KerMovePiston2d<true>  <<<sgrid,SPHBSIZE>>> (np,idini,dp,posymin,poszmin,poszcount,movx,velx,ridpmv,posxy,posz,dcell,velrhop,code);
+    else          KerMovePiston2d<false> <<<sgrid,SPHBSIZE>>> (np,idini,dp,posymin,poszmin,poszcount,movx,velx,ridpmv,posxy,posz,dcell,velrhop,code);
+  }
+}
+//<vs_mlapiston_end>
+
 
 //##############################################################################
 //# Kernels for Floating bodies.

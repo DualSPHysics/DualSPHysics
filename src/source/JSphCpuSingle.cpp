@@ -29,6 +29,9 @@
 #include "JSphMotion.h"
 #include "JSphVisco.h"
 #include "JWaveGen.h"
+#include "JMLPistons.h"     //<vs_mlapiston>
+#include "JRelaxZones.h"    //<vs_rzone>
+#include "JChronoObjects.h" //<vs_chroono>
 #include "JTimeOut.h"
 #include "JTimeControl.h"
 #include "JGaugeSystem.h"
@@ -108,6 +111,11 @@ void JSphCpuSingle::ConfigDomain(){
 
   //-Computes radius of floating bodies.
   if(CaseNfloat && PeriActive!=0 && !PartBegin)CalcFloatingRadius(Np,Posc,Idpc);
+
+  //<vs_mlapiston_ini>
+  //-Configures Multi-Layer Pistons according particles. | Configura pistones Multi-Layer segun particulas.
+  if(MLPistons)MLPistons->PreparePiston(Dp,Np,Idpc,Posc);
+  //<vs_mlapiston_end>
 
   //-Load particle code. | Carga code de particulas.
   LoadCodeParticles(Np,Idpc,Codec);
@@ -606,6 +614,7 @@ double JSphCpuSingle::ComputeStep_Ver(){
   if(CaseNfloat)RunFloating(dt,false); //-Control of floating bodies.
   PosInteraction_Forces();             //-Free memory used for interaction.
   if(Damping)RunDamping(dt,Np,Npb,Posc,Codec,Velrhopc); //-Applies Damping.
+  if(RelaxZones)RunRelaxZone(dt);      //-Generate waves using RZ.  //<vs_rzone>
   return(dt);
 }
 
@@ -638,6 +647,7 @@ double JSphCpuSingle::ComputeStep_Sym(){
   if(CaseNfloat)RunFloating(dt,false);    //-Control of floating bodies.
   PosInteraction_Forces();                //-Free memory used for interaction.
   if(Damping)RunDamping(dt,Np,Npb,Posc,Codec,Velrhopc); //-Applies Damping.
+  if(RelaxZones)RunRelaxZone(dt);         //-Generate waves using RZ.  //<vs_rzone>
 
   SymplecticDtPre=min(ddt_p,ddt_c);       //-Calculate dt for next ComputeStep.
   return(dt);
@@ -786,6 +796,16 @@ void JSphCpuSingle::RunFloating(double dt,bool predictor){
     //-Calculate data to update floatings. | Calcula datos para actualizar floatings.
     FtCalcForcesRes(dt,FtoForces,FtoForcesRes);
 
+    //-Run floating with Chrono library. //<vs_chroono_ini>
+    if(ChronoObjects){
+      //-Export data / Exporta datos.
+      for(unsigned cf=0;cf<FtCount;cf++)if(FtObjs[cf].usechrono)ChronoObjects->SetFtData(FtObjs[cf].mkbound,FtoForces[cf].face,FtoForces[cf].fomegaace);
+      //-Calculate data using Chrono / Calcula datos usando Chrono.
+      ChronoObjects->RunChrono(Nstep,TimeStep,dt,predictor);
+      //-Load calculated data by Chrono / Carga datos calculados por Chrono.
+      for(unsigned cf=0;cf<FtCount;cf++)if(FtObjs[cf].usechrono)ChronoObjects->GetFtData(FtObjs[cf].mkbound,FtoForcesRes[cf].fcenterres,FtoForcesRes[cf].fvelres,FtoForcesRes[cf].fomegares);
+    }//<vs_chroono_end> 
+
     //-Apply movement around floating objects. | Aplica movimiento sobre floatings.
     const int ftcount=int(FtCount);
     #ifdef OMP_USE
@@ -827,6 +847,7 @@ void JSphCpuSingle::RunFloating(double dt,bool predictor){
         FtObjs[cf].fomega=fomega;
       }
     }
+
     TmcStop(Timers,TMC_SuFloating);
   }
 }

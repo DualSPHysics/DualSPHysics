@@ -245,7 +245,7 @@ void JSaveCsv2::SaveData(bool closefile){
   const char met[]="SaveData";
   if(FirstSaveData || !Data.empty()){
     if(Pf==NULL)OpenFile();
-    if(FirstSaveData)Save(Head);
+    if(FirstSaveData && !AppendMode)Save(Head);
     Save(Data);
     Data="";
     FirstSaveData=false;

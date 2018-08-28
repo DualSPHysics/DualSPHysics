@@ -36,6 +36,9 @@
 #include "JSphVisco.h"
 #include "JGaugeSystem.h"
 #include "JWaveGen.h"
+#include "JMLPistons.h"     //<vs_mlapiston>
+#include "JRelaxZones.h"    //<vs_rzone>
+#include "JChronoObjects.h" //<vs_chroono>
 #include "JSphAccInput.h"
 #include "JPartDataBi4.h"
 #include "JPartOutBi4Save.h"
@@ -70,6 +73,9 @@ JSph::JSph(bool cpu,bool withmpi):Cpu(cpu),WithMpi(withmpi){
   DemData=NULL;
   GaugeSystem=NULL;
   WaveGen=NULL;
+  MLPistons=NULL;     //<vs_mlapiston>
+  RelaxZones=NULL;    //<vs_rzone>
+  ChronoObjects=NULL; //<vs_chroono>
   Damping=NULL;
   AccInput=NULL;
   PartsLoaded=NULL;
@@ -95,6 +101,9 @@ JSph::~JSph(){
   delete[] DemData;     DemData=NULL;
   delete GaugeSystem;   GaugeSystem=NULL;
   delete WaveGen;       WaveGen=NULL;
+  delete MLPistons;     MLPistons=NULL;     //<vs_mlapiston>
+  delete RelaxZones;    RelaxZones=NULL;    //<vs_rzone>
+  delete ChronoObjects; ChronoObjects=NULL; //<vs_chroono>
   delete Damping;       Damping=NULL;
   delete AccInput;      AccInput=NULL; 
   delete PartsLoaded;   PartsLoaded=NULL;
@@ -128,6 +137,7 @@ void JSph::InitVars(){
   Visco=0; ViscoBoundFactor=1;
   UseDEM=false;  //(DEM)
   delete[] DemData; DemData=NULL;  //(DEM)
+  UseChrono=false; //<vs_chroono>
   RhopOut=true; RhopOutMin=700; RhopOutMax=1300;
   TimeMax=TimePart=0;
   DtIni=DtMin=0; CoefDtMin=0; DtAllParticles=false;
@@ -451,6 +461,7 @@ void JSph::LoadCaseConfig(){
   switch(eparms.GetValueInt("RigidAlgorithm",true,1)){ //(DEM)
     case 1:  UseDEM=false;    break;
     case 2:  UseDEM=true;     break;
+    case 3:  UseChrono=true;  break;  //<vs_chroono>
     default: RunException(met,"Rigid algorithm is not valid.");
   }
   switch(eparms.GetValueInt("StepAlgorithm",true,1)){
@@ -592,6 +603,17 @@ void JSph::LoadCaseConfig(){
     AccInput=new JSphAccInput(Log,DirCase,&xml,"case.execution.special.accinputs");
   }
 
+  //<vs_chroono_ini>
+  //-Configuration of ChronoObjects.
+  if(UseChrono){
+    if(xml.GetNode("case.execution.special.chrono",false)){
+      if(!JChronoObjects::Available())RunException(met,"DSPHChronoLib to use Chrono is not included in the current compilation.");
+      ChronoObjects=new JChronoObjects(Log,DirCase,CaseName,&xml,"case.execution.special.chrono",Dp,parts.GetMkBoundFirst());
+    }
+    else RunException(met,"Chrono configuration in XML file is missing.",FileXml);
+  }
+  //<vs_chroono_end>
+
   //-Loads and configures moving objects.
   if(parts.CountBlocks(TpPartMoving)>0){
     SphMotion=new JSphMotion();
@@ -609,6 +631,27 @@ void JSph::LoadCaseConfig(){
       WaveGen->ConfigPaddle(SphMotion->GetObjMkBound(c),c,SphMotion->GetObjBegin(c),SphMotion->GetObjSize(c));
     }
   }
+
+  //-Configuration of MLPistons.  //<vs_mlapiston_ini>
+  if(xml.GetNode("case.execution.special.mlayerpistons",false)){
+    bool useomp=false,usegpu=false;
+    MLPistons=new JMLPistons(!Cpu,Log,DirCase);
+    MLPistons->LoadXml(&xml,"case.execution.special.mlayerpistons");  
+    if(SphMotion)for(unsigned c=0;c<SphMotion->GetNumObjects();c++){
+      MLPistons->ConfigPiston(SphMotion->GetObjMkBound(c),c,SphMotion->GetObjBegin(c),SphMotion->GetObjSize(c),TimeMax);
+    }
+    MLPistons->CheckPistons();
+  }//<vs_mlapiston_end>
+
+  //-Configuration of RelaxZones.  //<vs_rzone_ini>
+  if(xml.GetNode("case.execution.special.relaxationzones",false)){
+    bool useomp=false,usegpu=false;
+    #ifdef OMP_USE_WAVEGEN
+      useomp=(omp_get_max_threads()>1);
+    #endif
+    RelaxZones=new JRelaxZones(useomp,!Cpu,Log,DirCase,CaseNfloat>0,CaseNbound);
+    RelaxZones->LoadXml(&xml,"case.execution.special.relaxationzones");
+  }//<vs_rzone_end>
 
   //-Configuration of damping zones.
   if(xml.GetNode("case.execution.special.damping",false)){
@@ -638,6 +681,9 @@ void JSph::LoadCaseConfig(){
         fobj->fvel=ToTFloat3(fblock.GetVelini());
         fobj->fomega=ToTFloat3(fblock.GetOmegaini());
         fobj->inertiaini=ToTMatrix3f(fblock.GetInertia());
+        //-Chrono configuration. //<vs_chroono_ini> 
+        fobj->usechrono=(ChronoObjects && ChronoObjects->ConfigBodyFloating(fblock.GetMkType(),fblock.GetMassbody(),fblock.GetCenter(),fblock.GetInertia()));
+        //<vs_chroono_end>
         cobj++;
       }
     }
@@ -647,12 +693,22 @@ void JSph::LoadCaseConfig(){
       UseDEM=false;
       Log->PrintWarning("The use of DEM was disabled because there are no floating objects...");
     }
+    if(UseChrono){ //<vs_chroono_ini> 
+      UseChrono=false;
+      Log->PrintWarning("The use of CHRONO was disabled because there are no floating objects...");
+      delete ChronoObjects; ChronoObjects=NULL;
+    } //<vs_chroono_end>
   }
   WithFloating=(FtCount>0);
   FtMode=(WithFloating? FTMODE_Sph: FTMODE_None);
   if(UseDEM)FtMode=FTMODE_Ext;
+  if(UseChrono)FtMode=FTMODE_Ext; //<vs_chroono>
 
+  //-Loads DEM and DVI data for boundary objects.   //<vs_chroono>
+  if(UseDEM || UseChrono){/*                        //<vs_chroono>
+  //-Loads DEM data for boundary objects. (DEM)
   if(UseDEM){
+  */                                                //<vs_chroono>
     if(UseDEM){
       DemData=new StDemData[DemDataSize];
       memset(DemData,0,sizeof(StDemData)*DemDataSize);
@@ -663,7 +719,15 @@ void JSph::LoadCaseConfig(){
         const word mkbound=block.GetMkType();
         const unsigned cmk=MkInfo->GetMkBlockByMkBound(mkbound);
         if(cmk>=MkInfo->Size())RunException(met,fun::PrintStr("Error loading boundary objects. Mkbound=%u is unknown.",mkbound));
+        const bool chronodata=(ChronoObjects && ChronoObjects->UseDataDVI(mkbound)); //<vs_chroono>
+        const StDemData data=LoadDemData(UseDEM ||chronodata,UseDEM,&block);/*       //<vs_chroono>
         const StDemData data=LoadDemData(UseDEM,UseDEM,&block);
+        */                                                                           //<vs_chroono>
+        if(chronodata){ //<vs_chroono_ini>
+          if(block.Type==TpPartFloating)ChronoObjects->ConfigDataDVIBodyFloating(mkbound,data.kfric,data.restitu);
+          if(block.Type==TpPartMoving)  ChronoObjects->ConfigDataDVIBodyMoving  (mkbound,data.kfric,data.restitu);
+          if(block.Type==TpPartFixed)   ChronoObjects->ConfigDataDVIBodyFixed   (mkbound,data.kfric,data.restitu);
+        } //<vs_chroono_end>
         if(UseDEM){
           const unsigned tav=CODE_GetTypeAndValue(MkInfo->Mkblock(cmk)->Code); //:Log->Printf("___> tav[%u]:%u",cmk,tav);
           DemData[tav]=data;
@@ -894,6 +958,7 @@ void JSph::VisuConfig()const{
     if(ShiftTFS)Log->Print(fun::VarStr("ShiftTFS",ShiftTFS));
   }
   string rigidalgorithm=(!FtCount? "None": (UseDEM? "SPH+DCDEM": "SPH"));
+  if(UseChrono)rigidalgorithm="SPH+CHRONO"; //<vs_chroono>
   Log->Print(fun::VarStr("RigidAlgorithm",rigidalgorithm));
   Log->Print(fun::VarStr("FloatingCount",FtCount));
   if(FtCount)Log->Print(fun::VarStr("FtPause",FtPause));
@@ -1363,7 +1428,7 @@ void JSph::LoadCaseParticles(){
 /// Initialisation of variables and objects for execution.
 /// Inicializa variables y objetos para la ejecucion.
 //==============================================================================
-void JSph::InitRun(){
+void JSph::InitRun(unsigned np,const unsigned *idp,const tdouble3 *pos){
   const char met[]="InitRun";
   VerletStep=0;
   if(TStep==STEP_Symplectic)SymplecticDtPre=DtIni;
@@ -1389,6 +1454,8 @@ void JSph::InitRun(){
   }
   //-Adjust motion paddles for the instant of the loaded PART.
   if(WaveGen)WaveGen->SetTimeMod(!PartIni? PartBeginTimeStep: 0);
+  //-Adjust Multi-layer pistons for the instant of the loaded PART.   //<vs_mlapiston>
+  if(MLPistons)MLPistons->SetTimeMod(!PartIni? PartBeginTimeStep: 0);     //<vs_mlapiston>
 
   //-Uses Inlet information from PART read.
   if(PartBeginTimeStep && PartBeginTotalNp){
@@ -1416,6 +1483,27 @@ void JSph::InitRun(){
     WaveGen->Init(GaugeSystem,MkInfo,TimeMax,Gravity);
     WaveGen->VisuConfig(""," ");
   }
+
+  //-Prepares MLPistons configuration.  //<vs_mlapiston_ini>
+  if(MLPistons){
+    Log->Printf("Multi-Layer Pistons configuration:");
+    //if(MLPistons->UseAwasZsurf())MLPistons->InitAwas(Gravity,Simulate2D,CellOrder,MassFluid,Dp,Dosh,Scell,Hdiv,DomPosMin,DomRealPosMin,DomRealPosMax); ->awaspdte
+    MLPistons->VisuConfig(""," ");
+  }  //<vs_mlapiston_end>
+
+  //-Prepares RelaxZones configuration.  //<vs_rzone_ini>
+  if(RelaxZones){
+    Log->Print("Relaxation Zones configuration:");
+    RelaxZones->Init(DirCase,TimeMax,Dp,Gravity);
+    RelaxZones->VisuConfig(""," ");
+  }  //<vs_rzone_end>
+
+  //-Prepares ChronoObjects configuration.  //<vs_chroono_ini>
+  if(ChronoObjects){
+    Log->Print("Chrono Objects configuration:");
+    ChronoObjects->Init(Simulate2D);
+    ChronoObjects->VisuConfig(""," ");
+  }  //<vs_chroono_end>
 
   //-Prepares Damping configuration.
   if(Damping){
@@ -1589,7 +1677,7 @@ void JSph::AbortBoundOut(unsigned nout,const unsigned *idp,const tdouble3 *pos,c
   Log->AddFileInfo(file,"Saves the excluded boundary particles.");
   JFormatFiles2::SaveVtk(file,nout,pos,fields);
   //-Aborts execution.
-  RunException("AbortBoundOut","Fixed, moving or floating particles were excluded. Checks VTK file Error_BoundaryOut.vtk with excluded particles.");
+  RunException("AbortBoundOut","Fixed, moving or floating particles were excluded. Check VTK file Error_BoundaryOut.vtk with excluded particles.");
 }
 
 //==============================================================================
@@ -1760,6 +1848,7 @@ void JSph::SaveData(unsigned npok,const unsigned *idp,const tdouble3 *pos,const 
   if(SvDomainVtk)SaveDomainVtk(ndom,vdom);
   if(SaveDt)SaveDt->SaveData();
   if(GaugeSystem)GaugeSystem->SaveResults(Part);
+  if(ChronoObjects)ChronoObjects->SavePart(Part); //<vs_chroono>
 }
 
 //==============================================================================

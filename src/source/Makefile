@@ -1,7 +1,7 @@
-#DualSPHysics GPU/CPU v4.2.068 (09-08-2018)
+#DualSPHysics GPU/CPU v4.2.074 For43 20-08-2018
 
 #=============== Compilation Options ===============
-USE_GCC5=NO
+USE_GCC5=YES
 USE_DEBUG=NO
 USE_FAST_MATH=YES
 USE_NATIVE_CPU_OPTIMIZATIONS=NO
@@ -9,7 +9,7 @@ USE_NATIVE_CPU_OPTIMIZATIONS=NO
 LIBS_DIRECTORIES=-L./
 LIBS_DIRECTORIES:=$(LIBS_DIRECTORIES) -L../lib/linux_gcc
 
-EXECNAME=DualSPHysics4.2_linux64
+EXECNAME=DualSPHysics4.3_linux64
 EXECS_DIRECTORY=../../bin/linux
 
 ifeq ($(USE_DEBUG), YES)
@@ -94,11 +94,16 @@ OBSPHGPU=JArraysGpu.o JBlockSizeAuto.o JCellDivGpu.o JSphGpu.o
 OBSPHSINGLEGPU=JCellDivGpuSingle.o JSphGpuSingle.o
 OBCUDA=JCellDivGpu_ker.o JCellDivGpuSingle_ker.o JGauge_ker.o JReduSum_ker.o JSphGpu_ker.o JWaveOrder2_ker.o
 
+OBWAVERZ=JMLPistonsGpu.o JRelaxZonesGpu.o
+OBWAVERZCUDA=JRelaxZone_ker.o
+OBCHRONO=JChronoObjects.o
+
 OBJECTS=$(OBJXML) $(OBJSPHMOTION) $(OBCOMMON) $(OBCOMMONDSPH) $(OBSPH) $(OBSPHSINGLE)
 OBJECTS:=$(OBJECTS) $(OBCOMMONGPU) $(OBSPHGPU) $(OBSPHSINGLEGPU) $(OBCUDA)
+OBJECTS:=$(OBJECTS) $(OBWAVERZ) $(OBWAVERZCUDA) $(OBCHRONO)
 
 #=============== DualSPHysics libs to be included ===============
-JLIBS=${LIBS_DIRECTORIES} -ljformatfiles2_64 -ljwavegen_64
+JLIBS=${LIBS_DIRECTORIES} -ljformatfiles2_64 -ljwavegen_64 -ljwave_mlp_rz_64 -ldsphchrono
 
 #=============== GPU Code Compilation ===============
 CCFLAGS := $(CCFLAGS) -I./ -I$(DIRTOOLKIT)/include
@@ -145,6 +150,9 @@ JWaveOrder2_ker.o: JWaveOrder2_ker.cu
 
 JReduSum_ker.o: JReduSum_ker.cu
 	$(NCC) $(NCCFLAGS) JReduSum_ker.cu
+
+JRelaxZone_ker.o: JRelaxZone_ker.cu
+	$(NCC) $(NCCFLAGS) JRelaxZone_ker.cu
 
 clean:
 	rm -rf *.o $(EXECNAME) $(EXECNAME)_debug

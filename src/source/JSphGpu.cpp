@@ -31,6 +31,9 @@
 #include "JSaveDt.h"
 #include "JTimeOut.h"
 #include "JWaveGen.h"
+#include "JMLPistons.h"   //<vs_mlapiston>
+#include "JRelaxZones.h"  //<vs_rzone>
+#include "JChronoObjects.h" //<vs_chroono>
 #include "JDamping.h"
 #include "JSphAccInput.h"
 #include "JXml.h"
@@ -417,6 +420,7 @@ llong JSphGpu::GetAllocMemoryCpu()const{
   //-Allocated in AllocMemoryParticles().
   s+=MemCpuParticles;
   //-Allocated in other objects.
+  if(MLPistons)s+=MLPistons->GetAllocMemoryCpu();  //<vs_mlapiston>
   return(s);
 }
 
@@ -431,6 +435,7 @@ llong JSphGpu::GetAllocMemoryGpu()const{
   //-Allocated in AllocGpuMemoryFixed().
   s+=MemGpuFixed;
   //-Allocated in ther objects.
+  if(MLPistons)s+=MLPistons->GetAllocMemoryGpu();  //<vs_mlapiston>
   return(s);
 }
 
@@ -759,7 +764,9 @@ void JSphGpu::InitFloating(){
 /// Inicializa vectores y variables para la ejecucion.
 //==============================================================================
 void JSphGpu::InitRunGpu(){
-  InitRun();
+  ParticlesDataDown(Np,0,false,false,false);
+  InitRun(Np,Idp,AuxPos);
+
   if(TStep==STEP_Verlet)cudaMemcpy(VelrhopM1g,Velrhopg,sizeof(float4)*Np,cudaMemcpyDeviceToDevice);
   if(TVisco==VISCO_LaminarSPS)cudaMemset(SpsTaug,0,sizeof(tsymatrix3f)*Np);
   if(CaseNfloat)InitFloating();
@@ -1012,6 +1019,9 @@ void JSphGpu::RunMotion(double stepdt){
         if(motsim)cusph::MoveMatBound   (PeriActive,Simulate2D,nparts,pini,matmov,stepdt,RidpMoveg,Posxyg,Poszg,Dcellg,Velrhopg,Codeg);
         //else    cusph::MoveMatBoundAce(PeriActive,Simulate2D,nparts,pini,matmov,matmov2,stepdt,RidpMoveg,Posxyg,Poszg,Dcellg,Velrhopg,Codeg);
       }
+      if(ChronoObjects && ChronoObjects->GetWithMotion()){ //<vs_chroono_ini> 
+        ChronoObjects->SetMovingData(SphMotion->GetObjMkBound(ref),typesimple,simplemov,matmov,stepdt);
+      } //<vs_chroono_end>
     }
   }
   //-Process other modes of motion. | Procesa otros modos de motion.
@@ -1041,8 +1051,34 @@ void JSphGpu::RunMotion(double stepdt){
       }
     }
   }
+  //-Management of Multi-Layer Pistons.  //<vs_mlapiston_ini>
+  if(MLPistons){
+    if(CellOrder!=ORDER_XYZ)RunException(met,"Only CellOrder==ORDER_XYZ is valid.");
+    if(!BoundChanged)cusph::CalcRidp(PeriActive!=0,Npb,0,CaseNfixed,CaseNfixed+CaseNmoving,Codeg,Idpg,RidpMoveg);
+    BoundChanged=true;
+    if(MLPistons->GetPiston1dCount()){//-Process motion for pistons 1D.
+      MLPistons->CalculateMotion1d(TimeStep+MLPistons->GetTimeMod()+stepdt);
+      cusph::MovePiston1d(PeriActive!=0,CaseNmoving,0,Dp,MLPistons->GetPoszMin(),MLPistons->GetPoszCount(),MLPistons->GetPistonIdGpu(),MLPistons->GetMovxGpu(),MLPistons->GetVelxGpu(),RidpMoveg,Posxyg,Poszg,Dcellg,Velrhopg,Codeg);
+    }
+    for(unsigned cp=0;cp<MLPistons->GetPiston2dCount();cp++){//-Process motion for pistons 2D.
+      JMLPistons::StMotionInfoPiston2D mot=MLPistons->CalculateMotion2d(cp,TimeStep+MLPistons->GetTimeMod()+stepdt);
+      cusph::MovePiston2d(PeriActive!=0,mot.np,mot.idbegin-CaseNfixed,Dp,mot.posymin,mot.poszmin,mot.poszcount,mot.movyz,mot.velyz,RidpMoveg,Posxyg,Poszg,Dcellg,Velrhopg,Codeg);
+    }
+  }  //<vs_mlapiston_end>
   TmgStop(Timers,TMG_SuMotion);
 }
+
+//<vs_rzone_ini>
+//==============================================================================
+/// Applies RelaxZone to selected particles.
+/// Aplica RelaxZone a las particulas indicadas.
+//==============================================================================
+void JSphGpu::RunRelaxZone(double dt){
+  TmgStart(Timers,TMG_SuMotion);
+  RelaxZones->SetFluidVelGpu(TimeStep,dt,Np-Npb,Npb,(const tdouble2*)Posxyg,Poszg,Idpg,(tfloat4*)Velrhopg);
+  TmgStop(Timers,TMG_SuMotion);
+}
+//<vs_rzone_end>
 
 //==============================================================================
 /// Applies Damping to indicated particles.

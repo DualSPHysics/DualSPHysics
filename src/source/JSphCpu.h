@@ -236,7 +236,17 @@ protected:
   void MoveLinBound(unsigned np,unsigned ini,const tdouble3 &mvpos,const tfloat3 &mvvel,const unsigned *ridp,tdouble3 *pos,unsigned *dcell,tfloat4 *velrhop,typecode *code)const;
   void MoveMatBound(unsigned np,unsigned ini,tmatrix4d m,double dt,const unsigned *ridpmv,tdouble3 *pos,unsigned *dcell,tfloat4 *velrhop,typecode *code)const;
   void RunMotion(double stepdt);
+  void RunRelaxZone(double dt);  //<vs_rzone>
   void RunDamping(double dt,unsigned np,unsigned npb,const tdouble3 *pos,const typecode *code,tfloat4 *velrhop)const;
+
+  //<vs_mlapiston_ini>
+  void MovePiston1d(unsigned np,unsigned ini,double poszmin,unsigned poszcount
+    ,const byte *pistonid,const double* movx,const double* velx
+    ,const unsigned *ridpmv,tdouble3 *pos,unsigned *dcell,tfloat4 *velrhop,typecode *code)const;
+  void MovePiston2d(unsigned np,unsigned ini
+    ,double posymin,double poszmin,unsigned poszcount,const double* movx,const double* velx
+    ,const unsigned *ridpmv,tdouble3 *pos,unsigned *dcell,tfloat4 *velrhop,typecode *code)const;
+  //<vs_mlapiston_end>
 
   void ShowTimers(bool onlyfile=false);
   void GetTimersInfo(std::string &hinfo,std::string &dinfo)const;

@@ -22,6 +22,7 @@
 //:# - Para los ficheros de datos usa ruta absoluta si el nombre contiene alguna
 //:#   barra de directorio. (11-09-2013)
 //:# - Incluye la gestion de objetos moving. (23-04-2018)
+//:# - Nuevo metodo GetObjIdxByMkBound(). (09-08-2018)
 //:#############################################################################
 
 /// \file JSphMotion.h \brief Declares the class \ref JSphMotion.
@@ -72,6 +73,8 @@ public:
   word GetObjMkBound(unsigned idx)const;
   unsigned GetObjBegin(unsigned idx)const;
   unsigned GetObjSize(unsigned idx)const;
+
+  unsigned GetObjIdxByMkBound(word mkbound)const;
 
   void SetTimeMod(double timemod){ TimeMod=timemod; };
   bool ProcesTime(TpMotionMode mode,double timestep,double dt);

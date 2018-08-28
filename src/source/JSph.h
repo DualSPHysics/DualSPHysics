@@ -49,6 +49,8 @@ class JSphDtFixed;
 class JSaveDt;
 class JSphVisco;
 class JWaveGen;
+class JMLPistons;  //<vs_mlapiston>
+class JRelaxZones;  //<vs_rzone>
 class JSphAccInput;
 class JSpaceParts;
 class JPartDataBi4;
@@ -61,6 +63,7 @@ class JTimeOut;
 class JGaugeSystem;
 class JPartsLoad4;
 class JSpacePartBlock;
+class JChronoObjects;  //<vs_chroono>
 
 //##############################################################################
 //# XML format of execution parameters in _FmtXML__Parameters.xml.
@@ -249,11 +252,21 @@ protected:
   static const unsigned DemDataSize=CODE_TYPE_FLUID;
   StDemData *DemData;  ///<Data of DEM objects. [DemDataSize]
 
+  //<vs_chroono_ini>
+  //-Variables for Chrono use.
+  bool UseChrono;  ///<Use Chrono library for rigid body dynamics.
+  JChronoObjects *ChronoObjects;  ///<Object for integration with Chrono Engine.
+  //<vs_chroono_end>
+
   std::vector<std::string> InitializeInfo; ///<Stores information about initialize configuration applied.
 
   JGaugeSystem *GaugeSystem;    ///<Object for automatic gauge system.
 
   JWaveGen *WaveGen;            ///<Object for wave generation.
+
+  JMLPistons *MLPistons;        ///<Object for Multi-Layer Pistons.   //<vs_mlapiston>
+
+  JRelaxZones *RelaxZones;      ///<Object for wave generation using Relaxation Zone (RZ).  //<vs_rzone>
 
   JDamping *Damping;            ///<Object for damping zones.
 
@@ -375,7 +388,7 @@ protected:
 
   void RestartCheckData();
   void LoadCaseParticles();
-  void InitRun();
+  void InitRun(unsigned np,const unsigned *idp,const tdouble3 *pos);
 
   void PrintSizeNp(unsigned np,llong size)const;
   void PrintHeadPart();

@@ -20,6 +20,7 @@
 //:# Cambios:
 //:# =========
 //:# - Creacion de clase para gestionar informacion relativa a MK de particulas. (25-01-2018)
+//:# - Nuevos metodos CountBlockType() y GetFirstBlockType(). (14-08-2018)
 //:#############################################################################
 
 /// \file JSphMk.h \brief Declares the class \ref JSphMk.
@@ -96,8 +97,10 @@ public:
   unsigned Size()const{ return(MkListSize); }
   const JSphMkBlock* Mkblock(unsigned c)const{ return(MkList[c]); }
 
-  typecode GetCodeNewFluid()const{ return(CodeNewFluid); }
+  unsigned CountBlockType(TpParticles type)const;
+  unsigned GetFirstBlockType(TpParticles type)const;
 
+  typecode GetCodeNewFluid()const{ return(CodeNewFluid); }
 
   inline unsigned GetMkBlockById(unsigned id)const;
   typecode GetCodeById(unsigned id)const;

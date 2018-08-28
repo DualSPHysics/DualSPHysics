@@ -158,6 +158,11 @@ void CalcRidp(bool periactive,unsigned np,unsigned pini,unsigned idini,unsigned 
 void MoveLinBound(byte periactive,unsigned np,unsigned ini,tdouble3 mvpos,tfloat3 mvvel,const unsigned *ridp,double2 *posxy,double *posz,unsigned *dcell,float4 *velrhop,typecode *code);
 void MoveMatBound(byte periactive,bool simulate2d,unsigned np,unsigned ini,tmatrix4d m,double dt,const unsigned *ridpmv,double2 *posxy,double *posz,unsigned *dcell,float4 *velrhop,typecode *code);
 
+//-Kernels for MLPistons motion.  //<vs_mlapiston_ini>
+void MovePiston1d(bool periactive,unsigned np,unsigned idini,double dp,double poszmin,unsigned poszcount,const byte *pistonid,const double* movx,const double* velx,const unsigned *ridpmv,double2 *posxy,double *posz,unsigned *dcell,float4 *velrhop,typecode *code);
+void MovePiston2d(bool periactive,unsigned np,unsigned idini,double dp,double posymin,double poszmin,unsigned poszcount,const double* movx,const double* velx,const unsigned *ridpmv,double2 *posxy,double *posz,unsigned *dcell,float4 *velrhop,typecode *code);
+//<vs_mlapiston_end>
+
 //-Kernels for Floating bodies.
 void FtCalcForcesSum(bool periactive,unsigned ftcount
   ,tfloat3 gravity,const float4 *ftodata,const double3 *ftocenter,const unsigned *ftridp

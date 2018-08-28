@@ -127,6 +127,7 @@ typedef struct{
   tfloat3 fvel;     ///<Linear velocity of the floating object (units:m/s).
   tfloat3 fomega;   ///<Angular velocity of the floating object (units:rad/s).
   tmatrix3f inertiaini; ///<Initial state inertia tensor in world coordinates (computed or user-given).
+  bool usechrono;   ///<Activates the use of Chrono library.  //<vs_chroono>
 }StFloatingData;
 
 ///Structure with the information of the floating object in forces calculation.
