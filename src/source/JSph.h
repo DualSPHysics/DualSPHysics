@@ -375,7 +375,7 @@ protected:
 
   void RestartCheckData();
   void LoadCaseParticles();
-  void InitRun();
+  void InitRun(unsigned np,const unsigned *idp,const tdouble3 *pos);
 
   void PrintSizeNp(unsigned np,llong size)const;
   void PrintHeadPart();

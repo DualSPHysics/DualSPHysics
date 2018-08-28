@@ -536,6 +536,7 @@ void JSphGpuSingle::RunFloating(double dt,bool predictor){
 
     //-Apply movement around floating objects / Aplica movimiento sobre floatings.
     cusph::FtUpdate(PeriActive!=0,predictor,FtCount,dt,FtoDatag,FtoForcesResg,FtoCenterResg,FtRidpg,FtoCenterg,FtoAnglesg,FtoVelg,FtoOmegag,Posxyg,Poszg,Dcellg,Velrhopg,Codeg);
+
     TmgStop(Timers,TMG_SuFloating);
   }
 }

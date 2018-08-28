@@ -396,7 +396,8 @@ void JSphCpu::ConfigRunMode(const JCfgRun *cfg,std::string preinfo){
 /// Inicializa vectores y variables para la ejecucion.
 //==============================================================================
 void JSphCpu::InitRunCpu(){
-  InitRun();
+  InitRun(Np,Idpc,Posc);
+
   if(TStep==STEP_Verlet)memcpy(VelrhopM1c,Velrhopc,sizeof(tfloat4)*Np);
   if(TVisco==VISCO_LaminarSPS)memset(SpsTauc,0,sizeof(tsymatrix3f)*Np);
   if(CaseNfloat)InitFloating();

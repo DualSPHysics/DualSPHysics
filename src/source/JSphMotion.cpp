@@ -22,6 +22,7 @@
 #include "JSpaceParts.h"
 #include "JMotion.h"
 #include "JXml.h"
+#include <climits>
 
 using namespace std;
 
@@ -122,6 +123,16 @@ unsigned JSphMotion::GetObjBegin(unsigned idx)const{
 unsigned JSphMotion::GetObjSize(unsigned idx)const{
   if(idx>=ObjCount)RunException("GetObjSize","Moving object does not exist.");
   return(ObjBegin[idx+1]-ObjBegin[idx]);
+}
+
+//==============================================================================
+/// Returns Idx of requested moving object accoring to MkBound.
+/// Returns UINT_MAX when it was not found.
+//==============================================================================
+unsigned JSphMotion::GetObjIdxByMkBound(word mkbound)const{
+  unsigned idx=0;
+  for(;idx<GetNumObjects() && GetObjMkBound(idx)!=mkbound;idx++);
+  return(idx<GetNumObjects()? idx: UINT_MAX);
 }
 
 //==============================================================================

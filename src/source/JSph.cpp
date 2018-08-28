@@ -652,6 +652,7 @@ void JSph::LoadCaseConfig(){
   FtMode=(WithFloating? FTMODE_Sph: FTMODE_None);
   if(UseDEM)FtMode=FTMODE_Ext;
 
+  //-Loads DEM data for boundary objects. (DEM)
   if(UseDEM){
     if(UseDEM){
       DemData=new StDemData[DemDataSize];
@@ -1363,7 +1364,7 @@ void JSph::LoadCaseParticles(){
 /// Initialisation of variables and objects for execution.
 /// Inicializa variables y objetos para la ejecucion.
 //==============================================================================
-void JSph::InitRun(){
+void JSph::InitRun(unsigned np,const unsigned *idp,const tdouble3 *pos){
   const char met[]="InitRun";
   VerletStep=0;
   if(TStep==STEP_Symplectic)SymplecticDtPre=DtIni;
@@ -1589,7 +1590,7 @@ void JSph::AbortBoundOut(unsigned nout,const unsigned *idp,const tdouble3 *pos,c
   Log->AddFileInfo(file,"Saves the excluded boundary particles.");
   JFormatFiles2::SaveVtk(file,nout,pos,fields);
   //-Aborts execution.
-  RunException("AbortBoundOut","Fixed, moving or floating particles were excluded. Checks VTK file Error_BoundaryOut.vtk with excluded particles.");
+  RunException("AbortBoundOut","Fixed, moving or floating particles were excluded. Check VTK file Error_BoundaryOut.vtk with excluded particles.");
 }
 
 //==============================================================================

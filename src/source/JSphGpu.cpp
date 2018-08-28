@@ -759,7 +759,9 @@ void JSphGpu::InitFloating(){
 /// Inicializa vectores y variables para la ejecucion.
 //==============================================================================
 void JSphGpu::InitRunGpu(){
-  InitRun();
+  ParticlesDataDown(Np,0,false,false,false);
+  InitRun(Np,Idp,AuxPos);
+
   if(TStep==STEP_Verlet)cudaMemcpy(VelrhopM1g,Velrhopg,sizeof(float4)*Np,cudaMemcpyDeviceToDevice);
   if(TVisco==VISCO_LaminarSPS)cudaMemset(SpsTaug,0,sizeof(tsymatrix3f)*Np);
   if(CaseNfloat)InitFloating();

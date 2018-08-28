@@ -68,6 +68,9 @@
 //:# - Se escriben las unidades en las cabeceras de los ficheros CSV. (26-04-2018)
 //:# - Nuevo metodo AddShape_Sphere() para generar esferas a partir de quads. (06-07-2018)
 //:# - Nuevos metodos CreateShapesMk(), DeleteShapesMk() y CreateOBJsByMk(). (06-08-2018)
+//:# - Nuevos metodos AddShape_Cylinder(), AddShape_Cross(). (10-08-2018)
+//:# - Nuevos metodos AddShape_Circle(), AddShape_Spring(). (13-08-2018)
+//:# - El metodo SaveVtkShapes() combina lineas consecutivas con mismos valores. (13-08-2018)
 //:#############################################################################
   
 
@@ -147,6 +150,29 @@ public:
       value=0; valuef=0; 
     }
   }StShapeData;
+
+  /// Structure with parameters to create spring.
+  typedef struct StrShapeSpring{
+    float cornersout; //-Size of corner.
+    float cornersin;  //-Size of corner (inside).
+    float radius;     //-Spring radius.
+    float length;     //-Length for each revolution.
+    int nside;        //-Number of sections for each revolution.
+
+    StrShapeSpring(){ reset(); }
+    StrShapeSpring(float xcornersout,float xcornersin,float xradius,float xlength,int xnside)
+    { 
+      reset(); cornersout=xcornersout; cornersin=xcornersin; 
+      radius=xradius; length=xlength; nside=xnside;
+    }
+    void reset(){ 
+      cornersout=0.75f;
+      cornersin=0.25f;
+      radius=3;
+      length=1.f;
+      nside=16;
+    }
+  }StShapeSpring;
 
 
   //==============================================================================
@@ -578,6 +604,20 @@ public:
   }
 
   //==============================================================================
+  /// Adds triangles/lines for the definition of a circle/circumference.
+  //==============================================================================
+  static void AddShape_Circle(std::vector<StShapeData> &shapes,bool circle
+    ,const tfloat3 &pt,float radius,const tfloat3 &vec,int nside,int value,float valuef);
+  //==============================================================================
+  /// Adds triangles/lines for the definition of a circle/circumference.
+  //==============================================================================
+  static void AddShape_Circle(std::vector<StShapeData> &shapes,bool circle
+    ,const tdouble3 &pt,double radius,const tdouble3 &vec,int nside,int value,float valuef)
+  {
+    AddShape_Circle(shapes,circle,ToTFloat3(pt),float(radius),ToTFloat3(vec),nside,value,valuef);
+  }
+
+  //==============================================================================
   /// Adds quads for the definition of a sphere.
   //==============================================================================
   static void AddShape_Sphere(std::vector<StShapeData> &shapes
@@ -589,6 +629,55 @@ public:
     ,const tdouble3 &pt,double radius,int nside,int value,float valuef)
   {
     AddShape_Sphere(shapes,ToTFloat3(pt),float(radius),nside,value,valuef);
+  }
+
+  //==============================================================================
+  /// Adds triangles and quads for the definition of a cylinder.
+  //==============================================================================
+  static void AddShape_Cylinder(std::vector<JFormatFiles2::StShapeData> &shapes
+    ,const tfloat3 &p1,const tfloat3 &p2,float radius,int nside,unsigned maskfaceshide,int value,float valuef);
+  //==============================================================================
+  /// Adds triangles and quads for the definition of a cylinder.
+  //==============================================================================
+  static void AddShape_Cylinder(std::vector<StShapeData> &shapes
+    ,const tdouble3 &p1,const tdouble3 &p2,double radius,int nside,unsigned maskfaceshide,int value,float valuef)
+  {
+    AddShape_Cylinder(shapes,ToTFloat3(p1),ToTFloat3(p2),float(radius),nside,maskfaceshide,value,valuef);
+  }
+
+  //==============================================================================
+  /// Adds lines for the definition of a cross.
+  //==============================================================================
+  static void AddShape_Cross(std::vector<StShapeData> &shapes
+    ,const tfloat3 &pt,float radius,int value,float valuef)
+  {
+    shapes.push_back(DefineShape_Line(TFloat3(pt.x-radius,pt.y,pt.z),TFloat3(pt.x+radius,pt.y,pt.z),value,valuef));
+    shapes.push_back(DefineShape_Line(TFloat3(pt.x,pt.y-radius,pt.z),TFloat3(pt.x,pt.y+radius,pt.z),value,valuef));
+    shapes.push_back(DefineShape_Line(TFloat3(pt.x,pt.y,pt.z-radius),TFloat3(pt.x,pt.y,pt.z+radius),value,valuef));
+  }
+  //==============================================================================
+  /// Adds lines for the definition of a cross.
+  //==============================================================================
+  static void AddShape_Cross(std::vector<StShapeData> &shapes
+    ,const tdouble3 &pt,double radius,int value,float valuef)
+  {
+    AddShape_Cross(shapes,ToTFloat3(pt),float(radius),value,valuef);
+  }
+  
+  //==============================================================================
+  /// Adds lines for the definition of a spring.
+  //==============================================================================
+  static void AddShape_Spring(std::vector<StShapeData> &shapes
+    ,const tfloat3 &pt1,const tfloat3 &p2,float restlength,float scalesize
+    ,StShapeSpring config,int value,float valuef);
+  //==============================================================================
+  /// Adds lines for the definition of a spring.
+  //==============================================================================
+  static void AddShape_Spring(std::vector<StShapeData> &shapes
+    ,const tdouble3 &pt1,const tdouble3 &pt2,double restlength,double scalesize
+    ,StShapeSpring config,int value,float valuef)
+  {
+    AddShape_Spring(shapes,ToTFloat3(pt1),ToTFloat3(pt2),float(restlength),float(scalesize),config,value,valuef);
   }
 
   //==============================================================================

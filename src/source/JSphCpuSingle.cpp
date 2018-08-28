@@ -827,6 +827,7 @@ void JSphCpuSingle::RunFloating(double dt,bool predictor){
         FtObjs[cf].fomega=fomega;
       }
     }
+
     TmcStop(Timers,TMC_SuFloating);
   }
 }
