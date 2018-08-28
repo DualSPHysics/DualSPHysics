@@ -102,7 +102,7 @@ public:
 
   typecode GetCodeNewFluid()const{ return(CodeNewFluid); }
 
-  inline unsigned GetMkBlockById(unsigned id)const;
+  unsigned GetMkBlockById(unsigned id)const;
   typecode GetCodeById(unsigned id)const;
 
   word GetMkBoundFirst()const{ return(MkBoundFirst); }

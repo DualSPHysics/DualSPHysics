@@ -258,7 +258,7 @@ std::string Float3Str(const tfloat3 &v,const char* fmt){
 /// Converts real value to string.
 //==============================================================================
 std::string DoubleStr(double v,const char* fmt){
-  char cad[256];
+  char cad[512];
   sprintf(cad,fmt,v);
   return(std::string(cad));
 }
@@ -267,7 +267,7 @@ std::string DoubleStr(double v,const char* fmt){
 /// Converts real value to string (-DBL_MAX=MIN and DBL_MAX=MAX).
 //==============================================================================
 std::string DoublexStr(double v,const char* fmt){
-  char cad[128];
+  char cad[512];
   sprintf(cad,fmt,v);
   return(v==-DBL_MAX? std::string("MIN"): (v==DBL_MAX? std::string("MAX"): std::string(cad)));
 }
@@ -276,7 +276,7 @@ std::string DoublexStr(double v,const char* fmt){
 /// Converts real value to string.
 //==============================================================================
 std::string Double3Str(const tdouble3 &v,const char* fmt){
-  char cad[1024];
+  char cad[2048];
   sprintf(cad,fmt,v.x,v.y,v.z);
   return(std::string(cad));
 }
@@ -285,7 +285,7 @@ std::string Double3Str(const tdouble3 &v,const char* fmt){
 /// Converts real value to string.
 //==============================================================================
 std::string Double4Str(const tdouble4 &v,const char* fmt){
-  char cad[1024];
+  char cad[2048];
   sprintf(cad,fmt,v.x,v.y,v.z,v.w);
   return(std::string(cad));
 }

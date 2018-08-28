@@ -35,6 +35,7 @@
 //:# - Nuevas funciones IntersecPlaneLine(). (08-09-2016)
 //:# - Nuevas funciones MulMatrix3x3(), TrasMatrix3x3() y RotMatrix3x3(). (29-11-2017)
 //:# - Nueva funcion VecOrthogonal(). (10-08-2018)
+//:# - Nueva funciones Rect3d2pt(), RectPosX(), RectPosY(), RectPosZ(). (21-08-2018)
 //:#############################################################################
 
 /// \file FunctionsMath.h \brief Declares basic/general math functions.
@@ -691,6 +692,42 @@ inline double AnglePlanes(tdouble4 v1,tdouble4 v2){
 inline float AnglePlanes(tfloat4 v1,tfloat4 v2){
   return(AngleVector(TFloat3(v1.x,v1.y,v1.z),TFloat3(v2.x,v2.y,v2.z)));
 }
+
+
+///Structure with two points to define a rect.
+typedef struct{
+  tdouble3 p; ///<Point of rect.
+  tdouble3 v; ///<Vector of rect.
+  tdouble3 p1; ///<Vector of rect.
+  tdouble3 p2; ///<Vector of rect.
+}StRect3d;
+
+//==============================================================================
+/// Devuelve recta definida por 2 puntos.
+/// Returns rect defined by 2 points.
+//==============================================================================
+inline StRect3d Rect3d2pt(tdouble3 p1,tdouble3 p2){
+  StRect3d r={p1,VecUnitary(p2-p1),p1,p2};
+  return(r);
+}
+
+//==============================================================================
+/// Devuelve posicion en la recta para un valor de X o DBL_MAX para posiciones no validas.
+/// Returns position on the rect for a X value or DBL_MAX for invalid positions.
+//==============================================================================
+tdouble3 RectPosX(const StRect3d &r,double x);
+
+//==============================================================================
+/// Devuelve posicion en la recta para un valor de Y o DBL_MAX para posiciones no validas.
+/// Returns position on the rect for a Y value or DBL_MAX for invalid positions.
+//==============================================================================
+tdouble3 RectPosY(const StRect3d &r,double y);
+
+//==============================================================================
+/// Devuelve posicion en la recta para un valor de Z o DBL_MAX para posiciones no validas.
+/// Returns position on the rect for a Z value or DBL_MAX for invalid positions.
+//==============================================================================
+tdouble3 RectPosZ(const StRect3d &r,double z);
 
 
 //==============================================================================

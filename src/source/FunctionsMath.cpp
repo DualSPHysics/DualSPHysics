@@ -292,6 +292,37 @@ float AreaTriangle(const tfloat3 &p1,const tfloat3 &p2,const tfloat3 &p3){
 }
 
 
+//==============================================================================
+/// Devuelve posicion en la recta para un valor de X o DBL_MAX para posiciones no validas.
+/// Returns position on the rect for a X value or DBL_MAX for invalid positions.
+//==============================================================================
+tdouble3 RectPosX(const StRect3d &r,double x){
+  if(r.v.x==0)return(TDouble3(DBL_MAX));
+  const double f=(x-r.p.x)/r.v.x;
+  return(TDouble3(x,r.p1.y+f*r.v.y,r.p1.z+f*r.v.z));
+}
+
+//==============================================================================
+/// Devuelve posicion en la recta para un valor de Y o DBL_MAX para posiciones no validas.
+/// Returns position on the rect for a Y value or DBL_MAX for invalid positions.
+//==============================================================================
+tdouble3 RectPosY(const StRect3d &r,double y){
+  if(r.v.y==0)return(TDouble3(DBL_MAX));
+  const double f=(y-r.p.y)/r.v.y;
+  return(TDouble3(r.p1.x+f*r.v.x,y,r.p1.z+f*r.v.z));
+}
+
+//==============================================================================
+/// Devuelve posicion en la recta para un valor de Z o DBL_MAX para posiciones no validas.
+/// Returns position on the rect for a Z value or DBL_MAX for invalid positions.
+//==============================================================================
+tdouble3 RectPosZ(const StRect3d &r,double z){
+  if(r.v.z==0)return(TDouble3(DBL_MAX));
+  const double f=(z-r.p.z)/r.v.z;
+  return(TDouble3(r.p1.x+f*r.v.x,r.p1.y+f*r.v.y,z));
+}
+
+
 
 
 
