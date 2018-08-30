@@ -32,6 +32,9 @@
     <Filter Include="Src_JWave_MLP_RZ">
       <UniqueIdentifier>{72be6522-7328-4bb5-9f5d-2dab35803c8a}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Src_Inlet">
+      <UniqueIdentifier>{55310fa5-8236-4088-a368-9d92edff8b87}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\source\JCellDivGpu_ker.h">
@@ -298,6 +301,21 @@
     <ClInclude Include="..\source\JSpaceVtkOut.h">
       <Filter>CommonDsph</Filter>
     </ClInclude>
+    <ClInclude Include="..\source\JSphBoundExtrap.h">
+      <Filter>Src_Inlet</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JSphGpu_InOut_ker.h">
+      <Filter>Cuda</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JSphInOut.h">
+      <Filter>Src_Inlet</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JSphInOutGridData.h">
+      <Filter>Src_Inlet</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JSphInOutPoints.h">
+      <Filter>Src_Inlet</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\source\JCfgRun.cpp">
@@ -504,6 +522,27 @@
     <ClCompile Include="..\source\JSpaceVtkOut.cpp">
       <Filter>CommonDsph</Filter>
     </ClCompile>
+    <ClCompile Include="..\source\JSphBoundExtrap.cpp">
+      <Filter>Src_Inlet</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JSphCpu_InOut.cpp">
+      <Filter>Src_Inlet</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JSphCpuSingle_InOut.cpp">
+      <Filter>Src_Inlet</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JSphGpuSingle_InOut.cpp">
+      <Filter>Src_Inlet</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JSphInOut.cpp">
+      <Filter>Src_Inlet</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JSphInOutGridData.cpp">
+      <Filter>Src_Inlet</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JSphInOutPoints.cpp">
+      <Filter>Src_Inlet</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <CustomBuildStep Include="..\source\JSphGpu.h">
@@ -536,6 +575,9 @@
       <Filter>Cuda</Filter>
     </CudaCompile>
     <CudaCompile Include="..\source\JRelaxZone_ker.cu">
+      <Filter>Cuda</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\source\JSphGpu_InOut_ker.cu">
       <Filter>Cuda</Filter>
     </CudaCompile>
   </ItemGroup>

@@ -49,7 +49,7 @@ class JSphDtFixed;
 class JSaveDt;
 class JSphVisco;
 class JWaveGen;
-class JMLPistons;  //<vs_mlapiston>
+class JMLPistons;   //<vs_mlapiston>
 class JRelaxZones;  //<vs_rzone>
 class JSphAccInput;
 class JSpaceParts;
@@ -63,7 +63,9 @@ class JTimeOut;
 class JGaugeSystem;
 class JPartsLoad4;
 class JSpacePartBlock;
-class JChronoObjects;  //<vs_chroono>
+class JChronoObjects;    //<vs_chroono>
+class JSphInOut;         //<vs_innlet>
+class JSphBoundExtrap;   //<vs_innlet>
 
 //##############################################################################
 //# XML format of execution parameters in _FmtXML__Parameters.xml.
@@ -271,6 +273,9 @@ protected:
   JDamping *Damping;            ///<Object for damping zones.
 
   JSphAccInput *AccInput;  ///<Object for variable acceleration functionality.
+
+  JSphInOut *InOut;             ///<Object for inlet/outlet conditions.  //<vs_innlet> 
+  JSphBoundExtrap *BoundExtrap; ///<Object for boundary extrapolated correction (used in combination with InOut).  //<vs_innlet>
 
   TpCellOrder CellOrder;   ///<Defines axes' ordination of particles in cells. | Orden de ejes en ordenacion de particulas en celdas.
 

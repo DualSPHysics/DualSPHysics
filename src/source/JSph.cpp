@@ -46,6 +46,8 @@
 #include "JPartsOut.h"
 #include "JDamping.h"
 #include "JSphInitialize.h"
+#include "JSphInOut.h"       //<vs_innlet> 
+#include "JSphBoundExtrap.h" //<vs_innlet> 
 #include <climits>
 
 //using namespace std;
@@ -79,6 +81,8 @@ JSph::JSph(bool cpu,bool withmpi):Cpu(cpu),WithMpi(withmpi){
   Damping=NULL;
   AccInput=NULL;
   PartsLoaded=NULL;
+  InOut=NULL;       //<vs_innlet>
+  BoundExtrap=NULL; //<vs_innlet>
   InitVars();
 }
 
@@ -107,6 +111,8 @@ JSph::~JSph(){
   delete Damping;       Damping=NULL;
   delete AccInput;      AccInput=NULL; 
   delete PartsLoaded;   PartsLoaded=NULL;
+  delete InOut;         InOut=NULL;       //<vs_innlet>
+  delete BoundExtrap;   BoundExtrap=NULL; //<vs_innlet>
 }
 
 //==============================================================================
@@ -603,16 +609,14 @@ void JSph::LoadCaseConfig(){
     AccInput=new JSphAccInput(Log,DirCase,&xml,"case.execution.special.accinputs");
   }
 
-  //<vs_chroono_ini>
-  //-Configuration of ChronoObjects.
+  //-Configuration of ChronoObjects. //<vs_chroono_ini>
   if(UseChrono){
     if(xml.GetNode("case.execution.special.chrono",false)){
       if(!JChronoObjects::Available())RunException(met,"DSPHChronoLib to use Chrono is not included in the current compilation.");
       ChronoObjects=new JChronoObjects(Log,DirCase,CaseName,&xml,"case.execution.special.chrono",Dp,parts.GetMkBoundFirst());
     }
     else RunException(met,"Chrono configuration in XML file is missing.",FileXml);
-  }
-  //<vs_chroono_end>
+  }//<vs_chroono_end>
 
   //-Loads and configures moving objects.
   if(parts.CountBlocks(TpPartMoving)>0){
@@ -736,6 +740,19 @@ void JSph::LoadCaseConfig(){
     }
   }
 
+  //-Configuration of Inlet/Outlet.  //<vs_innlet_ini> 
+  if(xml.GetNode("case.execution.special.inout",false)){
+    InOut=new JSphInOut(Cpu,Log,FileXml,&xml,"case.execution.special.inout",DirCase);
+    NpDynamic=true;
+    ReuseIds=InOut->GetReuseIds();
+    if(ReuseIds)RunException(met,"Inlet/Outlet with ReuseIds is not a valid option for now...");
+  }
+  
+  //-Configuration of boundary extrapolated correction.
+  if(xml.GetNode("case.execution.special.boundextrap",false)){
+    BoundExtrap=new JSphBoundExtrap(Log,&xml,"case.execution.special.boundextrap",MkInfo);
+  } //<vs_innlet_end> 
+ 
   NpMinimum=CaseNp-unsigned(PartsOutMax*CaseNfluid);
   Log->Print("**Basic case configuration is loaded");
 }
@@ -1525,6 +1542,13 @@ void JSph::InitRun(unsigned np,const unsigned *idp,const tdouble3 *pos){
     SaveDt->VisuConfig("SaveDt configuration:"," ");
   }
 
+  //-Prepares BoundExtrap configuration.  //<vs_innlet_ini>
+  if(BoundExtrap){
+    Log->Print("BoundExtrap configuration:");
+    BoundExtrap->RunAutoConfig(Dp,MkInfo);
+    BoundExtrap->VisuConfig(""," ");
+  }//<vs_innlet_end>
+
   //-Shows configuration of JGaugeSystem.
   if(GaugeSystem->GetCount())GaugeSystem->VisuConfig("GaugeSystem configuration:"," ");
 
@@ -1820,6 +1844,12 @@ void JSph::SaveData(unsigned npok,const unsigned *idp,const tdouble3 *pos,const 
     Log->Printf("Part%s  %12.6f  %12d  %7d  %9.2f  %14s",suffixpartx.c_str(),TimeStep,(Nstep+1),Nstep-PartNstep,tseg,fun::GetDateTimeAfter(int(tleft)).c_str());
   }
   else Log->Printf("Part%s        %u particles successfully stored",suffixpartx.c_str(),npok);   
+  
+  //-Shows info of the new inlet particles.  //<vs_innlet_ini> 
+  if(InOut && InOut->GetNewNpPart()){
+    Log->Printf("  Particles new: %u (total: %llu)",InOut->GetNewNpPart(),InOut->GetNewNpTotal());
+    InOut->ClearNewNpPart();
+  }  //<vs_innlet_end> 
   
   //-Shows info of the excluded particles.
   if(nout){
@@ -2134,6 +2164,10 @@ void JSph::DgSaveVtkParticlesCpu(std::string filename,int numfile,unsigned pini,
     xtype[p]=(t==CODE_TYPE_FIXED? 0: (t==CODE_TYPE_MOVING? 1: (t==CODE_TYPE_FLOATING? 2: 3)));
     typecode k=CODE_GetSpecialValue(code[p+pini]);
     xkind[p]=(k==CODE_NORMAL? 0: (k==CODE_PERIODIC? 1: (k==CODE_OUTIGNORE? 2: 3)));
+    {//-For InOut particles.  //<vs_innlet_ini> 
+      typecode tv=CODE_GetTypeAndValue(code[p+pini]);
+      if(tv>=CODE_TYPE_FLUID_INOUT)xkind[p]=byte(tv-CODE_TYPE_FLUID_INOUT+10);
+    }  //<vs_innlet_end> 
   }
   //-Generates VTK file.
   JFormatFiles2::StScalarData fields[10];

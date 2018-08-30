@@ -31,14 +31,16 @@
 #include "JSaveDt.h"
 #include "JTimeOut.h"
 #include "JWaveGen.h"
-#include "JMLPistons.h"   //<vs_mlapiston>
-#include "JRelaxZones.h"  //<vs_rzone>
+#include "JMLPistons.h"     //<vs_mlapiston>
+#include "JRelaxZones.h"    //<vs_rzone>
 #include "JChronoObjects.h" //<vs_chroono>
 #include "JDamping.h"
 #include "JSphAccInput.h"
 #include "JXml.h"
 #include "JFormatFiles2.h"
 #include "JGaugeSystem.h"
+#include "JSphBoundExtrap.h"  //<vs_innlet>
+#include <climits>
 
 using namespace std;
 
@@ -99,6 +101,7 @@ void JSphGpu::InitVars(){
   FtoCenterg=NULL; FtoAnglesg=NULL; FtoVelg=NULL; FtoOmegag=NULL;//-Management of floating bodies.
   FtoInertiaini8g=NULL; FtoInertiaini1g=NULL;//-Management of floating bodies.
   DemDatag=NULL; //(DEM)
+  InOutPartg=NULL;  InOutCount=0; //-InOut.  //<vs_innlet>
   FreeGpuMemoryParticles();
   FreeGpuMemoryFixed();
 }
@@ -301,6 +304,9 @@ void JSphGpu::AllocGpuMemoryParticles(unsigned np,float over){
     ArraysGpu->AddArrayCount(JArraysGpu::SIZE_12B,1); //-shiftpos
     if(ShiftTFS)ArraysGpu->AddArrayCount(JArraysGpu::SIZE_4B,1); //-shiftdetectc
   }
+  if(InOut){  //<vs_innlet_ini>
+    ArraysGpu->AddArrayCount(JArraysGpu::SIZE_4B,1);  //-InOutPartg
+  }  //<vs_innlet_end>
   //-Shows the allocated memory.
   MemGpuParticles=ArraysGpu->GetAllocMemoryGpu();
   PrintSizeNp(GpuParticlesSize,MemGpuParticles);
@@ -324,6 +330,7 @@ void JSphGpu::ResizeGpuMemoryParticles(unsigned npnew){
   double      *poszpre   =SaveArrayGpu(Np,PoszPreg);
   float4      *velrhoppre=SaveArrayGpu(Np,VelrhopPreg);
   tsymatrix3f *spstau    =SaveArrayGpu(Np,SpsTaug);
+  int         *inoutpart =SaveArrayGpu(Np,InOutPartg);  //<vs_innlet>
   //-Frees pointers.
   ArraysGpu->Free(Idpg);
   ArraysGpu->Free(Codeg);
@@ -336,6 +343,7 @@ void JSphGpu::ResizeGpuMemoryParticles(unsigned npnew){
   ArraysGpu->Free(PoszPreg);
   ArraysGpu->Free(VelrhopPreg);
   ArraysGpu->Free(SpsTaug);
+  ArraysGpu->Free(InOutPartg);  //<vs_innlet>
   //-Resizes GPU memory allocation.
   const double mbparticle=(double(MemGpuParticles)/(1024*1024))/GpuParticlesSize; //-MB por particula.
   Log->Printf("**JSphGpu: Requesting gpu memory for %u particles: %.1f MB.",npnew,mbparticle*npnew);
@@ -352,6 +360,7 @@ void JSphGpu::ResizeGpuMemoryParticles(unsigned npnew){
   if(poszpre)   PoszPreg   =ArraysGpu->ReserveDouble();
   if(velrhoppre)VelrhopPreg=ArraysGpu->ReserveFloat4();
   if(spstau)    SpsTaug    =ArraysGpu->ReserveSymatrix3f();
+  if(inoutpart) InOutPartg =ArraysGpu->ReserveInt();  //<vs_innlet>
   //-Restore data in GPU memory.
   RestoreArrayGpu(Np,idp,Idpg);
   RestoreArrayGpu(Np,code,Codeg);
@@ -364,6 +373,7 @@ void JSphGpu::ResizeGpuMemoryParticles(unsigned npnew){
   RestoreArrayGpu(Np,poszpre,PoszPreg);
   RestoreArrayGpu(Np,velrhoppre,VelrhopPreg);
   RestoreArrayGpu(Np,spstau,SpsTaug);
+  RestoreArrayGpu(Np,inoutpart,InOutPartg);  //<vs_innlet>
   //-Updates values.
   GpuParticlesSize=npnew;
   MemGpuParticles=ArraysGpu->GetAllocMemoryGpu();
@@ -407,6 +417,7 @@ void JSphGpu::ReserveBasicArraysGpu(){
   Velrhopg=ArraysGpu->ReserveFloat4();
   if(TStep==STEP_Verlet)VelrhopM1g=ArraysGpu->ReserveFloat4();
   if(TVisco==VISCO_LaminarSPS)SpsTaug=ArraysGpu->ReserveSymatrix3f();
+  if(InOut)InOutPartg=ArraysGpu->ReserveInt();  //<vs_innlet>
 }
 
 //==============================================================================
@@ -866,6 +877,8 @@ void JSphGpu::PosInteraction_Forces(){
 //==============================================================================
 void JSphGpu::ComputeVerlet(double dt){  //pdtedom
   TmgStart(Timers,TMG_SuComputeStep);
+  //const bool checkcode=(WithFloating);         //<vs_no_innlet>
+  const bool checkcode=(WithFloating || InOut);  //<vs_innlet>
   const bool shift=TShifting!=SHIFT_None;
   VerletStep++;
   //-Allocates memory to compute the displacement.
@@ -876,10 +889,10 @@ void JSphGpu::ComputeVerlet(double dt){  //pdtedom
   //-Calcula desplazamiento, velocidad y densidad.
   if(VerletStep<VerletSteps){
     const double twodt=dt+dt;
-    cusph::ComputeStepVerlet(WithFloating,shift,Np,Npb,Velrhopg,VelrhopM1g,Arg,Aceg,ShiftPosg,dt,twodt,RhopOutMin,RhopOutMax,Codeg,movxyg,movzg,VelrhopM1g);
+    cusph::ComputeStepVerlet(checkcode,shift,Np,Npb,Velrhopg,VelrhopM1g,Arg,Aceg,ShiftPosg,dt,twodt,RhopOutMin,RhopOutMax,Codeg,movxyg,movzg,VelrhopM1g);
   }
   else{
-    cusph::ComputeStepVerlet(WithFloating,shift,Np,Npb,Velrhopg,Velrhopg,Arg,Aceg,ShiftPosg,dt,dt,RhopOutMin,RhopOutMax,Codeg,movxyg,movzg,VelrhopM1g);
+    cusph::ComputeStepVerlet(checkcode,shift,Np,Npb,Velrhopg,Velrhopg,Arg,Aceg,ShiftPosg,dt,dt,RhopOutMin,RhopOutMax,Codeg,movxyg,movzg,VelrhopM1g);
     VerletStep=0;
   }
   //-The new values are calculated in VelRhopM1g.
@@ -900,6 +913,8 @@ void JSphGpu::ComputeVerlet(double dt){  //pdtedom
 //==============================================================================
 void JSphGpu::ComputeSymplecticPre(double dt){
   TmgStart(Timers,TMG_SuComputeStep);
+  //const bool checkcode=(WithFloating);         //<vs_no_innlet>
+  const bool checkcode=(WithFloating || InOut);  //<vs_innlet>
   const bool shift=TShifting!=SHIFT_None;
   //-Allocates memory to PRE variables.
   PosxyPreg=ArraysGpu->ReserveDouble2();
@@ -915,7 +930,7 @@ void JSphGpu::ComputeSymplecticPre(double dt){
   double *movzg=ArraysGpu->ReserveDouble();
   //-Compute displacement, velocity and density.
   const double dt05=dt*.5;
-  cusph::ComputeStepSymplecticPre(WithFloating,shift,Np,Npb,VelrhopPreg,Arg,Aceg,ShiftPosg,dt05,RhopOutMin,RhopOutMax,Codeg,movxyg,movzg,Velrhopg);
+  cusph::ComputeStepSymplecticPre(checkcode,shift,Np,Npb,VelrhopPreg,Arg,Aceg,ShiftPosg,dt05,RhopOutMin,RhopOutMax,Codeg,movxyg,movzg,Velrhopg);
   //-Applies displacement to non-periodic fluid particles.
   //-Aplica desplazamiento a las particulas fluid no periodicas.
   cusph::ComputeStepPos2(PeriActive,WithFloating,Np,Npb,PosxyPreg,PoszPreg,movxyg,movzg,Posxyg,Poszg,Dcellg,Codeg);
@@ -935,13 +950,15 @@ void JSphGpu::ComputeSymplecticPre(double dt){
 //==============================================================================
 void JSphGpu::ComputeSymplecticCorr(double dt){
   TmgStart(Timers,TMG_SuComputeStep);
+  //const bool checkcode=(WithFloating);         //<vs_no_innlet>
+  const bool checkcode=(WithFloating || InOut);  //<vs_innlet>
   const bool shift=TShifting!=SHIFT_None;
   //-Allocates memory to calculate the displacement.
   double2 *movxyg=ArraysGpu->ReserveDouble2();
   double *movzg=ArraysGpu->ReserveDouble();
   //-Computes displacement, velocity and density.
   const double dt05=dt*.5;
-  cusph::ComputeStepSymplecticCor(WithFloating,shift,Np,Npb,VelrhopPreg,Arg,Aceg,ShiftPosg,dt05,dt,RhopOutMin,RhopOutMax,Codeg,movxyg,movzg,Velrhopg);
+  cusph::ComputeStepSymplecticCor(checkcode,shift,Np,Npb,VelrhopPreg,Arg,Aceg,ShiftPosg,dt05,dt,RhopOutMin,RhopOutMax,Codeg,movxyg,movzg,Velrhopg);
   //-Applies displacement to non-periodic fluid particles.
   //-Aplica desplazamiento a las particulas fluid no periodicas.
   cusph::ComputeStepPos2(PeriActive,WithFloating,Np,Npb,PosxyPreg,PoszPreg,movxyg,movzg,Posxyg,Poszg,Dcellg,Codeg);
@@ -1129,6 +1146,33 @@ void JSphGpu::GetTimersInfo(std::string &hinfo,std::string &dinfo)const{
     hinfo=hinfo+";"+TimerGetName(c);
     dinfo=dinfo+";"+fun::FloatStr(TimerGetValue(c)/1000.f);
   }
+}
+
+//==============================================================================
+/// Saves VTK file with particle data (degug).
+/// Graba fichero VTK con datos de las particulas (degug).
+//==============================================================================
+void JSphGpu::DgSaveVtkParticlesGpu(std::string filename,int numfile,unsigned pini,unsigned pfin
+ ,const double2 *posxyg,const double *poszg,const typecode *codeg,const unsigned *idpg
+ ,const float4 *velrhopg)const
+{
+  const unsigned np=pfin-pini;
+  //-Copy data to CPU memory.
+  tdouble3 *posh=fcuda::ToHostPosd3(pini,np,posxyg,poszg);
+  #ifdef CODE_SIZE4
+    typecode *codeh=fcuda::ToHostUint(pini,np,codeg);
+  #else
+    typecode *codeh=fcuda::ToHostWord(pini,np,codeg);
+  #endif
+  unsigned *idph=fcuda::ToHostUint(pini,np,idpg);
+  tfloat4  *velrhoph=fcuda::ToHostFloat4(pini,np,velrhopg);
+  //-Creates VTK file.
+  DgSaveVtkParticlesCpu(filename,numfile,0,np,posh,codeh,idph,velrhoph);
+  //-Deallocates memory.
+  delete[] posh;  
+  delete[] codeh;
+  delete[] idph;
+  delete[] velrhoph;
 }
 
 //==============================================================================

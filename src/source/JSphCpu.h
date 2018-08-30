@@ -162,13 +162,20 @@ protected:
   void PosInteraction_Forces();
 
   inline void GetKernelWendland(float rr2,float drx,float dry,float drz,float &frx,float &fry,float &frz)const;
+  void GetKernelWendland(float rr2,float drx,float dry,float drz,float &frx,float &fry,float &frz,float &wab)const; //<vs_innlet>
   inline void GetKernelGaussian(float rr2,float drx,float dry,float drz,float &frx,float &fry,float &frz)const;
+  void GetKernelGaussian(float rr2,float drx,float dry,float drz,float &frx,float &fry,float &frz,float &wab)const; //<vs_innlet>
   inline void GetKernelCubic(float rr2,float drx,float dry,float drz,float &frx,float &fry,float &frz)const;
+  void GetKernelCubic(float rr2,float drx,float dry,float drz,float &frx,float &fry,float &frz,float &wab)const; //<vs_innlet>
   inline float GetKernelCubicTensil(float rr2,float rhopp1,float pressp1,float rhopp2,float pressp2)const;
 
   inline void GetInteractionCells(unsigned rcell
     ,int hdiv,const tint4 &nc,const tint3 &cellzero
     ,int &cxini,int &cxfin,int &yini,int &yfin,int &zini,int &zfin)const;
+
+  void GetInteractionCells(const tdouble3 &pos                            //<vs_innlet>
+    ,int hdiv,const tint4 &nc,const tint3 &cellzero                       //<vs_innlet>
+    ,int &cxini,int &cxfin,int &yini,int &yfin,int &zini,int &zfin)const; //<vs_innlet>
 
   template<bool psingle,TpKernel tker,TpFtMode ftmode> void InteractionForcesBound
     (unsigned n,unsigned pini,tint4 nc,int hdiv,unsigned cellinitial
@@ -262,6 +269,50 @@ public:
   ~JSphCpu();
 
   void UpdatePos(tdouble3 pos0,double dx,double dy,double dz,bool outrhop,unsigned p,tdouble3 *pos,unsigned *cell,typecode *code)const;
+
+//<vs_innlet_ini>
+//-Code for InOut in JSphCpu_InOut.cpp
+//--------------------------------------
+protected:
+  //-Variables for InOut.
+  unsigned InOutCount;     ///<Number of inout particles in InOutPartc[].
+  int *InOutPartc;         ///<InOut particle list.
+
+  tdouble3 Interaction_PosNoPeriodic(tdouble3 posp1)const;
+
+
+  template<TpKernel tker,bool sim2d> void InteractionInOutExtrap_Double
+    (unsigned inoutcount,const int *inoutpart,const byte *cfgzone
+    ,const tfloat4 *planes,const float* width,const tfloat3 *dirdata,float determlimit
+    ,tint4 nc,int hdiv,unsigned cellinitial
+    ,const unsigned *beginendcell,tint3 cellzero,const unsigned *dcell
+    ,const tdouble3 *pos,const typecode *code,const unsigned *idp
+    ,tfloat4 *velrhop);
+  
+  void Interaction_InOutExtrap(unsigned inoutcount,const int *inoutpart
+    ,const byte *cfgzone,const tfloat4 *planes
+    ,const float* width,const tfloat3 *dirdata,float determlimit
+    ,tuint3 ncells,const unsigned *begincell,tuint3 cellmin,const unsigned *dcell
+    ,const tdouble3 *pos,const typecode *code,const unsigned *idp
+    ,tfloat4 *velrhop);
+
+  float Interaction_InOutZsurf(unsigned nptz,const tfloat3 *ptzpos,float maxdist,float zbottom
+    ,tuint3 ncells,const unsigned *begincell,tuint3 cellmin
+    ,const tdouble3 *pos,const typecode *code);
+
+
+  template<TpKernel tker,bool sim2d> void InteractionBoundExtrap_Double
+    (unsigned npb,typecode boundcode,tfloat4 plane,tfloat3 direction,float determlimit
+    ,tint4 nc,int hdiv,unsigned cellinitial
+    ,const unsigned *beginendcell,tint3 cellzero
+    ,const tdouble3 *pos,const typecode *code,const unsigned *idp
+    ,tfloat4 *velrhop);
+
+  void Interaction_BoundExtrap(typecode boundcode,tfloat4 plane,tfloat3 direction,float determlimit
+    ,tuint3 ncells,const unsigned *begincell,tuint3 cellmin
+    ,const tdouble3 *pos,const typecode *code,const unsigned *idp
+    ,tfloat4 *velrhop);
+//<vs_innlet_end>
 };
 
 #endif

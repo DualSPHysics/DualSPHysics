@@ -36,6 +36,8 @@
 #include "JSphGpu_ker.h"
 #include "JBlockSizeAuto.h"
 #include "JGaugeSystem.h"
+#include "JSphInOut.h"  //<vs_innlet>
+#include <climits>
 
 using namespace std;
 //==============================================================================
@@ -376,6 +378,14 @@ void JSphGpuSingle::RunCellDivide(bool updateperiodic){
   }
   TmgStop(Timers,TMG_NlOutCheck);
   BoundChanged=false;
+  //-Creates list with particles in inout zones.  //<vs_innlet_ini>
+  if(InOut){
+    TmgStart(Timers,TMG_SuInOut);
+    TmgStart(Timers,TMG_SuInOut_CC);
+    InOutCount=InOut->CreateListGpu(Nstep,Np-Npb,Npb,Posxyg,Poszg,Codeg,GpuParticlesSize,InOutPartg);
+    TmgStop(Timers,TMG_SuInOut_CC);
+    TmgStop(Timers,TMG_SuInOut);
+  }  //<vs_innlet_end>
 }
 
 //------------------------------------------------------------------------------
@@ -429,8 +439,10 @@ void JSphGpuSingle::Interaction_Forces(TpInter tinter){
 
   //-Calculates maximum value of ViscDt.
   if(Np)ViscDtMax=cusph::ReduMaxFloat(Np,0,ViscDtg,CellDivSingle->GetAuxMem(cusph::ReduMaxFloatSize(Np)));
-  //-Calculates maximum value of Ace using ViscDtg like auxiliar memory.
+  ////-Calculates maximum value of Ace (periodic and inout particles are ignored).  //<vs_no_innlet>
+  //-Calculates maximum value of Ace (periodic and inout particles are ignored).  //<vs_innlet>
   AceMax=ComputeAceMax(ViscDtg); 
+
   CheckCudaError(met,"Failed in reduction of viscdt.");
   TmgStop(Timers,TMG_CfForces);
 }
@@ -442,8 +454,10 @@ void JSphGpuSingle::Interaction_Forces(TpInter tinter){
 double JSphGpuSingle::ComputeAceMax(float *auxmem){
   float acemax=0;
   const unsigned npf=Np-Npb;
-  if(!PeriActive)cusph::ComputeAceMod(npf,Aceg+Npb,auxmem);//-Without periodic conditions. | Sin condiciones periodicas. 
-  else cusph::ComputeAceMod(npf,Codeg+Npb,Aceg+Npb,auxmem);//-With periodic conditions ignores the periodic particles. | Con condiciones periodicas ignora las particulas periodicas. 
+  //if(!PeriActive)cusph::ComputeAceMod(npf,Aceg+Npb,auxmem);//-Without periodic conditions. | Sin condiciones periodicas.                                                               //<vs_no_innlet>
+  //else cusph::ComputeAceMod(npf,Codeg+Npb,Aceg+Npb,auxmem);//-With periodic conditions ignores the periodic particles. | Con condiciones periodicas ignora las particulas periodicas.  //<vs_no_innlet>
+  if(!PeriActive && !InOut)cusph::ComputeAceMod(npf,Aceg+Npb,auxmem);//-Without periodic conditions and no inout particles. | Sin condiciones periodicas ni particulas inout.            //<vs_innlet>
+  else cusph::ComputeAceMod(npf,Codeg+Npb,Aceg+Npb,auxmem);          //-Without periodic or inout particles. | Con particulas periodicas o inout.                                        //<vs_innlet> 
   if(npf)acemax=cusph::ReduMaxFloat(npf,0,auxmem,CellDivSingle->GetAuxMem(cusph::ReduMaxFloatSize(npf)));
   return(sqrt(double(acemax)));
 }
@@ -608,6 +622,8 @@ void JSphGpuSingle::Run(std::string appname,JCfgRun *cfg,JLog2 *log){
   //------------------------------------------------------------------------------------
   InitRunGpu();
   RunGaugeSystem(TimeStep);
+  if(InOut)InOutInit(TimeStepIni);        //<vs_innlet>
+  if(BoundExtrap)BoundExtrapolateData();  //<vs_innlet>
   UpdateMaxValues();
   PrintAllocMemory(GetAllocMemoryCpu(),GetAllocMemoryGpu());
   SaveData(); 
@@ -629,7 +645,10 @@ void JSphGpuSingle::Run(std::string appname,JCfgRun *cfg,JLog2 *log){
     RunGaugeSystem(TimeStep+stepdt);
     if(PartDtMin>stepdt)PartDtMin=stepdt; if(PartDtMax<stepdt)PartDtMax=stepdt;
     if(CaseNmoving)RunMotion(stepdt);
-    RunCellDivide(true);
+    //RunCellDivide(true);                  //<vs_no_innlet>
+    if(BoundExtrap)BoundExtrapolateData();  //<vs_innlet>
+    if(InOut)InOutComputeStep(stepdt);      //<vs_innlet>
+    else RunCellDivide(true);               //<vs_innlet>
     TimeStep+=stepdt;
     partoutstop=(Np<NpMinimum || !Np);
     if(TimeStep>=TimePartNext || partoutstop){
@@ -687,6 +706,7 @@ void JSphGpuSingle::SaveData(){
     infoplus.npf=Np-Npb;
     infoplus.npbper=NpbPer;
     infoplus.npfper=NpfPer;
+    infoplus.newnp=(InOut? InOut->GetNewNpPart(): 0);  //<vs_innlet>
     infoplus.memorycpualloc=this->GetAllocMemoryCpu();
     infoplus.gpudata=true;
     infoplus.memorynctalloc=infoplus.memorynctused=GetMemoryGpuNct();

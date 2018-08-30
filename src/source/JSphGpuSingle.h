@@ -69,6 +69,19 @@ public:
   JSphGpuSingle();
   ~JSphGpuSingle();
   void Run(std::string appname,JCfgRun *cfg,JLog2 *log);
+
+//<vs_innlet_ini>
+//-Code for InOut in JSphGpuSingle_InOut.cpp
+//--------------------------------------------
+protected:
+  void InOutInit(double timestepini);
+  void InOutIgnoreFluidDef(const std::vector<unsigned> &mkfluidlist,typecode *code);
+  void InOutComputeStep(double stepdt);
+  void InOutCalculeZsurf();
+  void InOutExtrapolateData();
+
+  void BoundExtrapolateData();
+//<vs_innlet_end>
 };
 
 #endif

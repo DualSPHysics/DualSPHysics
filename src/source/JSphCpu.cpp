@@ -35,7 +35,7 @@
 #include "JTimeOut.h"
 #include "JSphAccInput.h"
 #include "JGaugeSystem.h"
-
+#include "JSphBoundExtrap.h"  //<vs_innlet>
 #include <climits>
 
 using namespace std;
@@ -84,6 +84,7 @@ void JSphCpu::InitVars(){
   FtRidp=NULL;
   FtoForces=NULL;
   FtoForcesRes=NULL;
+  InOutPartc=NULL;  InOutCount=0; //-InOut.  //<vs_innlet>
   FreeCpuMemoryParticles();
   FreeCpuMemoryFixed();
 }
@@ -188,6 +189,7 @@ void JSphCpu::ResizeCpuMemoryParticles(unsigned npnew){
   tdouble3    *pospre    =SaveArrayCpu(Np,PosPrec);
   tfloat4     *velrhoppre=SaveArrayCpu(Np,VelrhopPrec);
   tsymatrix3f *spstau    =SaveArrayCpu(Np,SpsTauc);
+  int         *inoutpart =SaveArrayCpu(Np,InOutPartc);  //<vs_innlet>
   //-Frees pointers.
   ArraysCpu->Free(Idpc);
   ArraysCpu->Free(Codec);
@@ -198,6 +200,7 @@ void JSphCpu::ResizeCpuMemoryParticles(unsigned npnew){
   ArraysCpu->Free(PosPrec);
   ArraysCpu->Free(VelrhopPrec);
   ArraysCpu->Free(SpsTauc);
+  ArraysCpu->Free(InOutPartc);  //<vs_innlet>
   //-Resizes CPU memory allocation.
   const double mbparticle=(double(MemCpuParticles)/(1024*1024))/CpuParticlesSize; //-MB por particula.
   Log->Printf("**JSphCpu: Requesting cpu memory for %u particles: %.1f MB.",npnew,mbparticle*npnew);
@@ -212,6 +215,7 @@ void JSphCpu::ResizeCpuMemoryParticles(unsigned npnew){
   if(pospre)    PosPrec    =ArraysCpu->ReserveDouble3();
   if(velrhoppre)VelrhopPrec=ArraysCpu->ReserveFloat4();
   if(spstau)    SpsTauc    =ArraysCpu->ReserveSymatrix3f();
+  if(inoutpart) InOutPartc =ArraysCpu->ReserveInt();  //<vs_innlet>
   //-Restore data in CPU memory.
   RestoreArrayCpu(Np,idp,Idpc);
   RestoreArrayCpu(Np,code,Codec);
@@ -222,6 +226,7 @@ void JSphCpu::ResizeCpuMemoryParticles(unsigned npnew){
   RestoreArrayCpu(Np,pospre,PosPrec);
   RestoreArrayCpu(Np,velrhoppre,VelrhopPrec);
   RestoreArrayCpu(Np,spstau,SpsTauc);
+  RestoreArrayCpu(Np,inoutpart,InOutPartc);  //<vs_innlet>
   //-Updates values.
   CpuParticlesSize=npnew;
   MemCpuParticles=ArraysCpu->GetAllocMemoryCpu();
@@ -264,6 +269,7 @@ void JSphCpu::ReserveBasicArraysCpu(){
   Velrhopc=ArraysCpu->ReserveFloat4();
   if(TStep==STEP_Verlet)VelrhopM1c=ArraysCpu->ReserveFloat4();
   if(TVisco==VISCO_LaminarSPS)SpsTauc=ArraysCpu->ReserveSymatrix3f();
+  if(InOut)InOutPartc=ArraysCpu->ReserveInt();  //<vs_innlet>
 }
 
 //==============================================================================
@@ -607,6 +613,25 @@ void JSphCpu::GetKernelWendland(float rr2,float drx,float dry,float drz
   frx=fac*drx; fry=fac*dry; frz=fac*drz;
 }
 
+//<vs_innlet_ini>
+//============================================================================== 
+/// Returns values of kernel Wendland, gradients: frx, fry, frz and wab.
+/// Devuelve valores de kernel Wendland, gradients: frx, fry, frz y wab.
+//==============================================================================
+void JSphCpu::GetKernelWendland(float rr2,float drx,float dry,float drz
+  ,float &frx,float &fry,float &frz,float &wab)const
+{
+  const float rad=sqrt(rr2);
+  const float qq=rad/H;
+  //-Wendland kernel.
+  const float wqq1=1.f-0.5f*qq;
+  const float wqq2=wqq1*wqq1;
+  const float fac=Bwen*qq*wqq2*wqq1/rad;
+  frx=fac*drx; fry=fac*dry; frz=fac*drz;
+  const float wqq=2.f*qq+1.f;
+  wab=Awen*wqq*wqq2*wqq2;
+}  //<vs_innlet_end>
+
 //==============================================================================
 /// Returns values of kernel Gaussian, gradients: frx, fry and frz.
 /// Devuelve valores de kernel Gaussian, gradients: frx, fry y frz.
@@ -622,6 +647,24 @@ void JSphCpu::GetKernelGaussian(float rr2,float drx,float dry,float drz
   const float fac=Bgau*qq*expf(qqexp)/rad;
   frx=fac*drx; fry=fac*dry; frz=fac*drz;
 }
+
+//<vs_innlet_ini>
+//==============================================================================
+/// Returns values of kernel Gaussian, gradients: frx, fry, frz and wab.
+/// Devuelve valores de kernel Gaussian, gradients: frx, fry, frz y wab.
+//==============================================================================
+void JSphCpu::GetKernelGaussian(float rr2,float drx,float dry,float drz
+  ,float &frx,float &fry,float &frz,float &wab)const
+{
+  const float rad=sqrt(rr2);
+  const float qq=rad/H;
+  //-Gaussian kernel.
+  const float qqexp=-4.0f*qq*qq;
+  const float eqqexp=expf(qqexp);
+  wab=Agau*eqqexp;
+  const float fac=Bgau*qq*eqqexp/rad;
+  frx=fac*drx; fry=fac*dry; frz=fac*drz;
+}  //<vs_innlet_end>
 
 //==============================================================================
 /// Return values of kernel Cubic without tensil correction, gradients: frx, fry and frz.
@@ -646,6 +689,33 @@ void JSphCpu::GetKernelCubic(float rr2,float drx,float dry,float drz
   //-Gradients.
   frx=fac*drx; fry=fac*dry; frz=fac*drz;
 }
+
+//<vs_innlet_ini>
+//==============================================================================
+/// Return values of kernel Cubic without tensil correction, gradients: frx, fry, frz and wab.
+/// Devuelve valores de kernel Cubic sin correccion tensil, gradients: frx, fry,frz y wab.
+//==============================================================================
+void JSphCpu::GetKernelCubic(float rr2,float drx,float dry,float drz
+  ,float &frx,float &fry,float &frz,float &wab)const
+{
+  const float rad=sqrt(rr2);
+  const float qq=rad/H;
+  //-Cubic Spline kernel.
+  float fac;
+  if(rad>H){
+    float wqq1=2.0f-qq;
+    float wqq2=wqq1*wqq1;
+    fac=CubicCte.c2*wqq2/rad;
+    wab=CubicCte.a24*(wqq2*wqq1);
+  }
+  else{
+    float wqq2=qq*qq;
+    fac=(CubicCte.c1*qq+CubicCte.d1*wqq2)/rad;
+    wab=CubicCte.a2*(1.0f+(0.75f*qq-1.5f)*wqq2);
+  }
+  //-Gradients.
+  frx=fac*drx; fry=fac*dry; frz=fac*drz;
+}  //<vs_innlet_end>
 
 //==============================================================================
 /// Return tensil correction for kernel Cubic.
@@ -694,6 +764,27 @@ void JSphCpu::GetInteractionCells(unsigned rcell
   zini=cz-min(cz,hdiv);
   zfin=cz+min(nc.z-cz-1,hdiv)+1;
 }
+
+//============================================================================== //<vs_innlet_ini>
+/// Return cell limits for interaction starting from position.
+/// Devuelve limites de celdas para interaccion a partir de posicion.
+//==============================================================================
+void JSphCpu::GetInteractionCells(const tdouble3 &pos
+  ,int hdiv,const tint4 &nc,const tint3 &cellzero
+  ,int &cxini,int &cxfin,int &yini,int &yfin,int &zini,int &zfin)const
+{
+  //-Get cell coordinates of position pos.
+  const int cx=int((pos.x-DomPosMin.x)/Scell)-cellzero.x;
+  const int cy=int((pos.y-DomPosMin.y)/Scell)-cellzero.y;
+  const int cz=int((pos.z-DomPosMin.z)/Scell)-cellzero.z;
+  //-code for hdiv 1 or 2 but not zero. | Codigo para hdiv 1 o 2 pero no cero.
+  cxini=cx-min(cx,hdiv);
+  cxfin=cx+min(nc.x-cx-1,hdiv)+1;
+  yini=cy-min(cy,hdiv);
+  yfin=cy+min(nc.y-cy-1,hdiv)+1;
+  zini=cz-min(cz,hdiv);
+  zfin=cz+min(nc.z-cz-1,hdiv)+1;
+} //<vs_innlet_end>
 
 //==============================================================================
 /// Perform interaction between particles. Bound-Fluid/Float
@@ -1663,9 +1754,11 @@ void JSphCpu::UpdatePos(tdouble3 rpos,double movx,double movy,double movz
 /// Calculate new values of position, velocity & density for fluid (using Verlet).
 /// Calcula nuevos valores de posicion, velocidad y densidad para el fluido (usando Verlet).
 //==============================================================================
-template<bool shift> void JSphCpu::ComputeVerletVarsFluid(const tfloat4 *velrhop1,const tfloat4 *velrhop2,double dt,double dt2
+template<bool shift> void JSphCpu::ComputeVerletVarsFluid(
+  const tfloat4 *velrhop1,const tfloat4 *velrhop2,double dt,double dt2
   ,tdouble3 *pos,unsigned *dcell,typecode *code,tfloat4 *velrhopnew)const
 {
+  const bool checkcode=(WithFloating || InOut);  //<vs_innlet>
   const double dt205=0.5*dt*dt;
   const int pini=int(Npb),pfin=int(Np),npf=int(Np-Npb);
   #ifdef OMP_USE
@@ -1674,7 +1767,9 @@ template<bool shift> void JSphCpu::ComputeVerletVarsFluid(const tfloat4 *velrhop
   for(int p=pini;p<pfin;p++){
     //-Calculate density. | Calcula densidad.
     const float rhopnew=float(double(velrhop2[p].w)+dt2*Arc[p]);
-    if(!WithFloating || CODE_IsFluid(code[p])){//-Fluid Particles.
+    const typecode cod=(checkcode? code[p]: 0); //<vs_innlet>
+    //if(!WithFloating || CODE_IsFluid(code[p])){//-Fluid Particles.  //<vs_no_innlet>
+    if(!checkcode || CODE_IsFluidNotInout(cod)){//-Fluid Particles but not inout fluid particles.  //<vs_innlet>
       //-Calculate displacement and update position. | Calcula desplazamiento y actualiza posicion.
       double dx=double(velrhop1[p].x)*dt + double(Acec[p].x)*dt205;
       double dy=double(velrhop1[p].y)*dt + double(Acec[p].y)*dt205;
@@ -1692,9 +1787,11 @@ template<bool shift> void JSphCpu::ComputeVerletVarsFluid(const tfloat4 *velrhop
       velrhopnew[p].z=float(double(velrhop2[p].z)+double(Acec[p].z)*dt2);
       velrhopnew[p].w=rhopnew;
     }
-    else{//-Floating Particles.
+    //else{//-Floating Particles.  //<vs_no_innlet>
+    else{//-Floating particles or inout particles.  //<vs_innlet>
       velrhopnew[p]=velrhop1[p];
-      velrhopnew[p].w=(rhopnew<RhopZero? RhopZero: rhopnew); //-Avoid fluid particles being absorved by floating ones. | Evita q las floating absorvan a las fluidas.
+      //velrhopnew[p].w=(rhopnew<RhopZero? RhopZero: rhopnew); //-Avoid fluid particles being absorved by floating ones. | Evita q las floating absorvan a las fluidas.  //<vs_no_innlet>
+      if(CODE_IsFloating(cod))velrhopnew[p].w=(rhopnew<RhopZero? RhopZero: rhopnew); //-Avoid fluid particles being absorved by floating ones. | Evita q las floating absorvan a las fluidas.  //<vs_innlet>
     }
   }
 }
@@ -1777,6 +1874,7 @@ template<bool shift> void JSphCpu::ComputeSymplecticPreT(double dt){
   }
 
   //-Calculate new values of fluid. | Calcula nuevos datos del fluido.
+  const bool checkcode=(WithFloating || InOut);  //<vs_innlet>
   const int np=int(Np);
   #ifdef OMP_USE
     #pragma omp parallel for schedule (static) if(np>OMP_LIMIT_COMPUTESTEP)
@@ -1784,7 +1882,9 @@ template<bool shift> void JSphCpu::ComputeSymplecticPreT(double dt){
   for(int p=npb;p<np;p++){
     //-Calculate density.
     const float rhopnew=float(double(VelrhopPrec[p].w)+dt05*Arc[p]);
-    if(!WithFloating || CODE_IsFluid(Codec[p])){//-Fluid Particles.
+    const typecode rcode=(checkcode? Codec[p]: 0);  //<vs_innlet>
+    //if(!WithFloating || CODE_IsFluid(Codec[p])){//-Fluid Particles.  //<vs_no_innlet>
+    if(!checkcode || CODE_IsFluidNotInout(rcode)){ //-Fluid Particles but not inout fluid particles.  //<vs_innlet>
       //-Calculate displacement & update position. | Calcula desplazamiento y actualiza posicion.
       double dx=double(VelrhopPrec[p].x)*dt05;
       double dy=double(VelrhopPrec[p].y)*dt05;
@@ -1802,11 +1902,20 @@ template<bool shift> void JSphCpu::ComputeSymplecticPreT(double dt){
       Velrhopc[p].z=float(double(VelrhopPrec[p].z)+double(Acec[p].z)* dt05);
       Velrhopc[p].w=rhopnew;
     }
-    else{//-Floating Particles.
+    //else{//-Floating Particles.  //<vs_no_innlet>
+    else{//-Floating Particles or inout particles.  //<vs_innlet>
       Velrhopc[p]=VelrhopPrec[p];
-      Velrhopc[p].w=(rhopnew<RhopZero? RhopZero: rhopnew); //-Avoid fluid particles being absorbed by floating ones. | Evita q las floating absorvan a las fluidas.
+      Velrhopc[p].w=(rhopnew<RhopZero? RhopZero: rhopnew); //-Avoid fluid particles being absorbed by floating ones. | Evita q las floating absorvan a las fluidas.  //<vs_no_innlet>
+      if(CODE_IsFloating(rcode))Velrhopc[p].w=(rhopnew<RhopZero? RhopZero: rhopnew); //-Avoid fluid particles being absorbed by floating ones. | Evita q las floating absorvan a las fluidas.  //<vs_innlet>
       //-Copy position. | Copia posicion.
       Posc[p]=PosPrec[p];
+      //-For inout particles: Updates position according velocity.  //<vs_innlet_ini>
+      if(CODE_IsFluidInout(rcode)){
+        const double dx=double(VelrhopPrec[p].x)*dt05;
+        const double dy=double(VelrhopPrec[p].y)*dt05;
+        const double dz=double(VelrhopPrec[p].z)*dt05;
+        UpdatePos(PosPrec[p],dx,dy,dz,false,p,Posc,Dcellc,Codec);
+      }  //<vs_innlet_end>
     }
   }
 
@@ -1844,6 +1953,7 @@ template<bool shift> void JSphCpu::ComputeSymplecticCorrT(double dt){
   }
 
   //-Calculate fluid values. | Calcula datos de fluido.
+  const bool checkcode=(WithFloating || InOut);  //<vs_innlet>
   const double dt05=dt*.5;
   const int np=int(Np);
   #ifdef OMP_USE
@@ -1852,7 +1962,9 @@ template<bool shift> void JSphCpu::ComputeSymplecticCorrT(double dt){
   for(int p=npb;p<np;p++){
     const double epsilon_rdot=(-double(Arc[p])/double(Velrhopc[p].w))*dt;
     const float rhopnew=float(double(VelrhopPrec[p].w) * (2.-epsilon_rdot)/(2.+epsilon_rdot));
-    if(!WithFloating || CODE_IsFluid(Codec[p])){//-Fluid Particles.
+    const typecode rcode=(checkcode? Codec[p]: 0);  //<vs_innlet>
+    //if(!WithFloating || CODE_IsFluid(Codec[p])){//-Fluid Particles.  //<vs_no_innlet>
+    if(!checkcode || CODE_IsFluidNotInout(rcode)){//-Fluid Particles but not inout fluid particles.  //<vs_innlet>
       //-Update velocity & density. | Actualiza velocidad y densidad.
       Velrhopc[p].x=float(double(VelrhopPrec[p].x) + double(Acec[p].x) * dt); 
       Velrhopc[p].y=float(double(VelrhopPrec[p].y) + double(Acec[p].y) * dt); 
@@ -1870,9 +1982,11 @@ template<bool shift> void JSphCpu::ComputeSymplecticCorrT(double dt){
       bool outrhop=(rhopnew<RhopOutMin||rhopnew>RhopOutMax);
       UpdatePos(PosPrec[p],dx,dy,dz,outrhop,p,Posc,Dcellc,Codec);
     }
-    else{//-Floating Particles.
+    //else{//-Floating Particles.  //<vs_no_innlet>
+    else{//-Floating particles or inout particles.  //<vs_innlet>
       Velrhopc[p]=VelrhopPrec[p];
-      Velrhopc[p].w=(rhopnew<RhopZero? RhopZero: rhopnew); //-Avoid fluid particles being absorbed by floating ones. | Evita q las floating absorvan a las fluidas.
+      //Velrhopc[p].w=(rhopnew<RhopZero? RhopZero: rhopnew); //-Avoid fluid particles being absorbed by floating ones. | Evita q las floating absorvan a las fluidas.  //<vs_no_innlet>
+      if(CODE_IsFloating(rcode))Velrhopc[p].w=(rhopnew<RhopZero? RhopZero: rhopnew); //-Avoid fluid particles being absorbed by floating ones. | Evita q las floating absorvan a las fluidas.  //<vs_innlet>
       //-Copy position. | Copia posicion.
       Posc[p]=PosPrec[p];
     }

@@ -65,6 +65,7 @@
   #define CODE_MASKVALUE 0x00000ffff    //-Bits type-value: 0000 0111 1111 1111  Range:0-65535
 
   #define CODE_TYPE_FLUID_LIMITFREE 0x0003ffef //---Last normal fluid code: 262127
+  #define CODE_TYPE_FLUID_INOUT     0x0003fff0 //---First inlet/outlet code: 262128 (Allows 16 different codes for InOut particles). //<vs_innlet>
 #else
   #define CODE_MKRANGEMAX 2047      //-Maximum valid MK value. | Valor maximo de MK valido.
   typedef word typecode;            //-Type of the variable code using 2 bytes.
@@ -88,6 +89,7 @@
   #define CODE_MASKVALUE 0x7ff      //-Bits type-value: 0000 0111 1111 1111  Range:0-2047
 
   #define CODE_TYPE_FLUID_LIMITFREE 0x1fef  //---Last normal fluid code: 8175
+  #define CODE_TYPE_FLUID_INOUT     0x1ff0  //---First inlet/outlet code: 8176 (Allows 16 different codes for InOut particles). //<vs_innlet>
 #endif
 
 #define CODE_SetNormal(code)    (code&(~CODE_MASKSPECIAL))
@@ -112,6 +114,12 @@
 #define CODE_IsFloating(code) (CODE_GetType(code)==CODE_TYPE_FLOATING)
 #define CODE_IsFluid(code)    (CODE_GetType(code)==CODE_TYPE_FLUID)
 #define CODE_IsNotFluid(code) (CODE_GetType(code)!=CODE_TYPE_FLUID)
+
+#define CODE_IsFluidInout(code)    (CODE_IsFluid(code) && CODE_GetTypeAndValue(code)>=CODE_TYPE_FLUID_INOUT)  //<vs_innlet>
+#define CODE_IsFluidNotInout(code) (CODE_IsFluid(code) && CODE_GetTypeAndValue(code)< CODE_TYPE_FLUID_INOUT)  //<vs_innlet>
+
+#define CODE_ToFluidInout(code,izone) (code&(~CODE_MASKTYPEVALUE))|(CODE_TYPE_FLUID_INOUT+izone)  //<vs_innlet>
+#define CODE_GetIzoneFluidInout(code) (CODE_GetTypeAndValue(code)-CODE_TYPE_FLUID_INOUT)          //<vs_innlet>
 
 
 ///Structure with the information of the floating object.

@@ -60,8 +60,9 @@ protected:
 
   void Interaction_Forces(TpInter tinter);
   
-  template<bool checkcodenormal> double ComputeAceMaxSeq(unsigned np,const tfloat3* ace,const typecode *code)const;
-  template<bool checkcodenormal> double ComputeAceMaxOmp(unsigned np,const tfloat3* ace,const typecode *code)const;
+  double ComputeAceMax(unsigned np,const tfloat3* ace,const typecode *code)const;
+  template<bool checkperiodic,bool checkinout> double ComputeAceMaxSeq(unsigned np,const tfloat3* ace,const typecode *code)const;
+  template<bool checkperiodic,bool checkinout> double ComputeAceMaxOmp(unsigned np,const tfloat3* ace,const typecode *code)const;
   
   double ComputeStep(){ return(TStep==STEP_Verlet? ComputeStep_Ver(): ComputeStep_Sym()); }
   double ComputeStep_Ver();
@@ -82,6 +83,18 @@ public:
   ~JSphCpuSingle();
   void Run(std::string appname,JCfgRun *cfg,JLog2 *log);
 
+//<vs_innlet_ini>
+//-Code for InOut in JSphCpuSingle_InOut.cpp
+//--------------------------------------------
+protected:
+  void InOutInit(double timestepini);
+  void InOutIgnoreFluidDef(const std::vector<unsigned> &mkfluidlist);
+  void InOutComputeStep(double stepdt);
+  void InOutCalculeZsurf();
+  void InOutExtrapolateData();
+
+  void BoundExtrapolateData();
+//<vs_innlet_end>
 };
 
 #endif
