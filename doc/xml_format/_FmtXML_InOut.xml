@@ -1,0 +1,335 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!-- *** DualSPHysics (31-08-2018) *** -->
+<!-- *** class: JSphInOut *** -->
+<!------------------------------------------------------------------------------->
+<!------------------------------------------------------------------------------->
+<!-- *** Example simple and complete for 2D *** -->
+<special>
+	<inout reuseids="false" resizetime="0.5">
+		<useboxlimit value="true" comment="In/out process is only applied to InOut zones delimited by BoxLimit (default=true)">
+			<freecentre x="2" y="0" z="0" comment="Centre of zone where InOut is not applied (default=centre of simulation domain)" units_comment="m" />
+		</useboxlimit>
+		<userefilling value="true" comment="Use advanced refilling algorithm but slower. It is necessary when outflow becomes inflow (default=false)" />
+		<determlimit value="1e+3" comment="Use 1e-3 for first_order or 1e+3 for zeroth_order (default=1e+3)" />
+		<inoutzone>
+            <convertfluid value="true" comment="Converts fluid in inlet/outlet area (default=true)" />
+			<layers value="6" comment="Number of inlet/outlet particle layers" />
+			<zone2d comment="Input zone for 2-D simulations">
+				<line>
+					<point x="-1.1" z="0.1" />
+					<point2 x="-1.1" z="1.0" />
+					<direction x="1" z="0" comment="Direction to input fluid" />
+				</line>
+			</zone2d>
+			<imposevelocity mode="0" comment="Imposed velocity 0:fixed value, 1:variable value, 2:Extrapolated value (default=0)">
+				<velocity v="2" comment="Uniform velocity" units_comment="m/s" />
+			</imposevelocity>
+			<imposerhop mode="1" comment="Outlet rhop 0:Imposed fixed value, 1:Hydrostatic, 2:Extrapolated from ghost nodes (default=0)">
+				<zbottom value="0" comment="Bottom level of water (only for Hydrostatic option)" units_comment="m" />
+				<zsurf value="1" comment="Characteristic inlet Z-surface (only for Hydrostatic option)" units_comment="m" />
+			</imposerhop>
+		</inoutzone>
+		<inoutzone>
+            <convertfluid value="true" comment="Converts fluid in inlet/outlet area (default=true)" />
+			<layers value="8" comment="Number of inlet/outlet particle layers" />
+			<zone2d comment="Input zone for 2-D simulations">
+				<line>
+					<point x="3.1" z="0.1" />
+					<point2 x="3.1" z="1.0" />
+					<direction x="-1" z="0" comment="Direction to input fluid" />
+				</line>
+			</zone2d>
+			<imposevelocity mode="0" comment="Imposed velocity 0:fixed value, 1:variable value, 2:Extrapolated value (default=0)">
+				<velocity v="-2" comment="Uniform velocity" units_comment="m/s" />
+			</imposevelocity>
+			<imposerhop mode="1" comment="Outlet rhop 0:Imposed fixed value, 1:Hydrostatic, 2:Extrapolated from ghost nodes (default=0)">
+				<zbottom value="0" comment="Bottom level of water (only for Hydrostatic option)" units_comment="m" />
+				<zsurf value="1" comment="Characteristic inlet Z-surface (only for Hydrostatic option)" units_comment="m" />
+			</imposerhop>
+		</inoutzone>
+	</inout>
+</special>
+<!------------------------------------------------------------------------------->
+<!------------------------------------------------------------------------------->
+<!-- *** Point definitions for 2D starting from special fluid particles *** -->
+<geometry>
+	...
+	<commands>
+		<mainlist>
+			<setmkfluid mk="0" />
+			<drawbox>
+				<boxfill>solid</boxfill>
+				<point x="-1" y="-1" z="0" />
+				<size x="4" y="2" z="1" />
+			</drawbox>
+			<setmkfluid mk="1" />
+			<drawbox>
+				<boxfill>left</boxfill>
+				<point x="-1" y="-1" z="0" />
+				<size x="4" y="2" z="1" />
+			</drawbox>
+			<setmkfluid mk="2" />
+			<drawbox>
+				<boxfill>right</boxfill>
+				<point x="-1" y="-1" z="0" />
+				<size x="4" y="2" z="1" />
+			</drawbox>
+			<setmkbound mk="0" />
+			<drawline>
+				<point x="-1.5" y="0" z="0" />
+				<point x="3.8" y="0" z="0" />
+			</drawline>
+		</mainlist>
+	</commands>
+</geometry>
+...
+<special>
+	<inout reuseids="false" resizetime="0.5">
+		<inoutzone>
+			<zone2d comment="Input zone for 2-D simulations">
+				<particles mkfluid="1" direction="right" />
+                <!-- *** Direction values: left, right, front, back, top, bottom *** -->
+			</zone2d>
+		</inoutzone>
+		<inoutzone>
+			<zone2d comment="Input zone for 2-D simulations">
+				<particles mkfluid="2" direction="left" />
+			</zone2d>
+		</inoutzone>
+	</inout>
+</special>
+<!------------------------------------------------------------------------------->
+<!------------------------------------------------------------------------------->
+<!-- *** Point definitions for 3D starting from special fluid particles *** -->
+<geometry>
+	...
+	<commands>
+		<mainlist>
+			<setmkfluid mk="0" />
+			<drawbox>
+				<boxfill>solid</boxfill>
+				<point x="-1" y="-1" z="0" />
+				<size x="4" y="2" z="1" />
+			</drawbox>
+			<setmkfluid mk="1" />
+			<drawbox>
+				<boxfill>left</boxfill>
+				<point x="-1" y="-1" z="0" />
+				<size x="4" y="2" z="1" />
+			</drawbox>
+			<setmkfluid mk="2" />
+			<drawbox>
+				<boxfill>right</boxfill>
+				<point x="-1" y="-1" z="0" />
+				<size x="4" y="2" z="1" />
+			</drawbox>
+			<setmkbound mk="0" />
+			<drawbox>
+				<boxfill>bottom</boxfill>
+				<point x="-1.5" y="-1" z="0" />
+				<size x="5.3" y="2" z="0" />
+			</drawbox>
+		</mainlist>
+	</commands>
+</geometry>
+...
+<special>
+	<inout reuseids="false" resizetime="0.5">
+		<inoutzone>
+			<zone3d comment="Input zone for 2-D simulations">
+				<particles mkfluid="1" direction="right" />
+                <!-- *** Direction values: left, right, front, back, top, bottom *** -->
+			</zone3d>
+		</inoutzone>
+		<inoutzone>
+			<zone3d comment="Input zone for 2-D simulations">
+				<particles mkfluid="2" direction="left" />
+			</zone3d>
+		</inoutzone>
+	</inout>
+</special>
+<!------------------------------------------------------------------------------->
+<!------------------------------------------------------------------------------->
+<!-- *** Point definitions for 2D *** -->
+<special>
+	<inout reuseids="false" resizetime="0.5">
+        <useboxlimit value="true" comment="In/out process is only applied to InOut zones delimited by BoxLimit (default=true)"/>
+		<userefilling value="false" comment="Use advanced refilling algorithm but slower. It is necessary when outflow becomes inflow (default=false)" />
+		<determlimit value="1e+3" comment="Use 1e-3 for first_order or 1e+3 for zeroth_order (default=1e+3)" />
+		<inoutzone>
+			<zone2d comment="Input zone for 2-D simulations">
+				<line>
+					<point x="3" z="1.3" />
+					<point2 x="3" z="2" />
+					<direction x="-1" z="0" />
+					<rotate angle="-30" anglesunits="degrees" />
+				</line>
+			</zone2d>
+		</inoutzone>
+		<inoutzone>
+			<zone2d comment="Input zone for 2-D simulations">
+				<line>
+					<point x="-3.5" z="0.8" />
+					<point2 x="-3.5" z="2.4" />
+					<direction x="1" z="0" />
+				</line>
+				<line>
+					<point x="-1.5" z="1.5" />
+					<point2 x="-1.5" z="2.3" />
+				</line>
+			</zone2d>
+		</inoutzone>
+	</inout>
+</special>
+<!------------------------------------------------------------------------------->
+<!------------------------------------------------------------------------------->
+<!-- *** Point definitions for 3D *** -->
+<special>
+	<inout reuseids="false" resizetime="0.5">
+        <useboxlimit value="true" comment="In/out process is only applied to InOut zones delimited by BoxLimit (default=true)"/>
+		<userefilling value="false" comment="Use advanced refilling algorithm but slower. It is necessary when outflow becomes inflow (default=false)" />
+		<determlimit value="1e+3" comment="Use 1e-3 for first_order or 1e+3 for zeroth_order (default=1e+3)" />
+		<inoutzone>
+			<zone3d comment="Input zone for 3-D simulations">
+				<box>
+					<point x="0.3" y="2.8" z="0.5" />
+					<size x="0.5" y="0" z="0.4" />
+					<direction x="0" y="-1" z="0" />
+				</box>
+			</zone3d>
+		</inoutzone>
+		<inoutzone>
+			<zone3d comment="Input zone for 3-D simulations">
+				<box>
+					<point x="1.2" y="2.8" z="0.5" />
+					<size x="0.4" y="0" z="0.4" />
+					<direction x="0" y="-1" z="0" />
+					<rotateaxis angle="-45" anglesunits="degrees">
+						<point1 x="1.4" y="0" z="0.7" />
+						<point2 x="1.4" y="1" z="0.7" />
+					</rotateaxis>
+				</box>
+			</zone3d>
+		</inoutzone>
+		<inoutzone>
+			<zone3d comment="Input zone for 3-D simulations">
+				<circle>
+					<point x="2.2" y="2.8" z="0.7" />
+					<radius v="0.2" />
+					<direction x="0" y="-1" z="0" />
+				</circle>
+			</zone3d>
+		</inoutzone>
+	</inout>
+</special>
+<!------------------------------------------------------------------------------->
+<!------------------------------------------------------------------------------->
+<!-- *** Velocity definitions *** -->
+<!-- Fixed Constant velocity -->
+	<imposevelocity mode="0" comment="Imposed velocity 0:fixed value, 1:variable value, 2:Extrapolated velocity, 3:Interpolated velocity (default=0)">
+		<velocity v="2" comment="Uniform velocity" units_comment="m/s" />
+	</imposevelocity>
+<!-- Fixed Linear velocity -->
+	<imposevelocity mode="0" comment="Imposed velocity 0:fixed value, 1:variable value, 2:Extrapolated velocity, 3:Interpolated velocity (default=0)">
+		<velocity2 v="1" v2="3" z="2" z2="3" comment="Linear inlet velocity" units_comment="m/s" />
+	</imposevelocity>
+<!-- Fixed Parabolic velocity -->
+	<imposevelocity mode="0" comment="Imposed velocity 0:fixed value, 1:variable value, 2:Extrapolated velocity, 3:Interpolated velocity (default=0)">
+		<velocity3 v="0" v2="0.608" v3="3" z="4" z2="4.5" z3="5" comment="Parabolic inlet velocity" units_comment="m/s" />
+	</imposevelocity>
+<!-- Variable Uniform velocity using values in XML file-->
+	<imposevelocity mode="1" comment="Imposed velocity 0:fixed value, 1:variable value, 2:Extrapolated velocity, 3:Interpolated velocity (default=0)">
+		<velocitytimes comment="Uniform inlet velocity in time">
+			<timevalue time="0.0" v="2" />
+			<timevalue time="2.0" v="0" />
+			<timevalue time="2.5" v="0" />
+			<timevalue time="4.5" v="2" />
+		</velocitytimes>
+	</imposevelocity>
+<!-- Variable Linear velocity using values in XML file -->
+	<imposevelocity mode="1" comment="Imposed velocity 0:fixed value, 1:variable value, 2:Extrapolated velocity, 3:Interpolated velocity (default=0)">
+		<velocitytimes2 comment="Linear inlet velocity in time">
+			<timevalue time="0.0" v="1" v2="3" z="2" z2="3" />
+			<timevalue time="2.0" v="0" v2="0" z="2" z2="3" />
+			<timevalue time="2.5" v="0" v2="0" z="2" z2="3" />
+			<timevalue time="4.5" v="1" v2="3" z="2" z2="3" />
+		</velocitytimes2>
+	</imposevelocity>
+<!-- Variable Parabolic velocity using values in XML file -->
+	<imposevelocity mode="1" comment="Imposed velocity 0:fixed value, 1:variable value, 2:Extrapolated velocity, 3:Interpolated velocity (default=0)">
+		<velocitytimes3 comment="Parabolic inlet velocity in time">
+			<timevalue time="0.0" v="0" v2="0.608" v3="3" z="4" z2="4.5" z3="5" />
+			<timevalue time="2.0" v="0" v2="0" v3="0" z="4" z2="4.5" z3="5" />
+			<timevalue time="2.5" v="0" v2="0" v3="0" z="4" z2="4.5" z3="5" />
+			<timevalue time="4.5" v="0" v2="0.608" v3="3" z="4" z2="4.5" z3="5" />
+		</velocitytimes3>
+	</imposevelocity>
+<!-- Variable Uniform velocity using values in a external file-->
+	<imposevelocity mode="1" comment="Imposed velocity 0:fixed value, 1:variable value, 2:Extrapolated velocity, 3:Interpolated velocity (default=0)">
+		<velocityfile file="WavesREG_InOut_vx.csv" comment="Uniform inlet velocity data (time;v)"/>
+	</imposevelocity>
+<!-- Variable Linear velocity using values in a external file -->
+	<imposevelocity mode="1" comment="Imposed velocity 0:fixed value, 1:variable value, 2:Extrapolated velocity, 3:Interpolated velocity (default=0)">
+		<velocityfile2 file="WavesREG_InOut_vx2.csv" comment="Linear inlet velocity data (time;v;v2;z;z2)"/>
+	</imposevelocity>
+<!-- Variable Parabolic velocity using values in a external file -->
+	<imposevelocity mode="1" comment="Imposed velocity 0:fixed value, 1:variable value, 2:Extrapolated velocity, 3:Interpolated velocity (default=0)">
+		<velocityfile3 file="WavesREG_InOut_vx3.csv" comment="Parabolic inlet velocity data (time;v;v2;v3;z;z2;z3)"/>
+	</imposevelocity>
+<!-- Interpolated velocity from a CSV file -->
+	<imposevelocity mode="3" comment="Imposed velocity 0:fixed value, 1:variable value, 2:Extrapolated velocity, 3:Interpolated velocity (default=0)">
+		<gridveldata file="wave_h02t2d1r1o2Velxz.csv" comment="CSV file with velocity data in different times and positions" />
+		<gridresetvelz value="true" comment="Reset Z velocity after interaction (default=false)" />
+		<_gridposzero x="0" z="0" comment="Defines position of grid (default=0)" />
+	</imposevelocity>
+<!------------------------------------------------------------------------------->
+<!------------------------------------------------------------------------------->
+<!-- *** Rhop definitions *** -->
+<!-- Fixed Constant rhop -->
+	<imposerhop mode="0" comment="Outlet rhop 0:Imposed fixed value, 1:Hydrostatic, 2:Extrapolated from ghost nodes (default=0)">
+	</imposerhop>
+<!-- Fixed Hydrostatic rhop -->
+	<imposerhop mode="1" comment="Outlet rhop 0:Imposed fixed value, 1:Hydrostatic, 2:Extrapolated from ghost nodes (default=0)">
+		<zbottom value="0" comment="Bottom level of water (used for Hydrostatic option)" units_comment="m" />
+		<zsurf value="1" comment="Characteristic inlet Z-surface (used for Hydrostatic option)" units_comment="m" />
+	</imposerhop>
+<!-- Extrapolated rhop -->
+	<imposerhop mode="2" comment="Outlet rhop 0:Imposed fixed value, 1:Hydrostatic, 2:Extrapolated from ghost nodes (default=0)">
+<!------------------------------------------------------------------------------->
+<!------------------------------------------------------------------------------->
+<!-- *** Zsurf definitions *** -->
+<!-- Imposed fixed zsurf -->
+	<imposezsurf mode="0" comment="Inlet Z-surface 0:Imposed fixed value, 1:Imposed variable value, 2:Calculated from fluid domain (default=0)">
+		<zbottom value="0" comment="Bottom level of water (used for Hydrostatic option)" units_comment="m" />
+		<zsurf value="1" comment="Characteristic inlet Z-surface (used for Hydrostatic option)" units_comment="m" />
+	</imposezsurf>
+<!-- Imposed variable zsurf -->
+	<imposezsurf mode="1" comment="Inlet Z-surface 0:Imposed fixed value, 1:Imposed variable value, 2:Calculated from fluid domain (default=0)">
+        <savevtk value="true" comment="Creates VTK files with Zsurf for each PART (default=false)" />
+        <remove value="true" comment="Removes particles above the Zsurf limit using userefilling (default=false)" />
+		<zbottom value="0" comment="Bottom level of water (used for Hydrostatic option)" units_comment="m" />
+		<zsurftimes comment="Characteristic inlet Z-Surf changes in time" units_comment="m/s">
+			<timevalue time="0" zsurf="1" />
+			<timevalue time="1" zsurf="1" />
+			<timevalue time="2" zsurf="0.4" />
+			<timevalue time="3" zsurf="0.4" />
+			<timevalue time="5" zsurf="2" />
+			<timevalue time="7" zsurf="0.4" />
+		</zsurftimes>
+	</imposezsurf>
+<!-- Imposed variable zsurf using values in a external file-->
+	<imposezsurf mode="1" comment="Inlet Z-surface 0:Imposed fixed value, 1:Imposed variable value, 2:Calculated from fluid domain (default=0)">
+        <savevtk value="true" comment="Creates VTK files with Zsurf for each PART (default=false)" />
+        <remove value="false" comment="Removes particles above the Zsurf limit using userefilling (default=false)" />
+		<zbottom value="0" comment="Bottom level of water (used for Hydrostatic option)" units_comment="m" />
+		<zsurffile file="FileZsurf.csv" comment="Zsurf data (time;zsurf)"/>
+	</imposevelocity>
+<!-- Zsurf calculated from fluid -->
+	<imposezsurf mode="2" comment="Inlet Z-surface 0:Imposed fixed value, 1:Imposed variable value, 2:Calculated from fluid domain (default=0)">
+        <savevtk value="true" comment="Creates VTK files with Zsurf for each PART (default=false)" />
+        <remove value="false" comment="Removes particles above the Zsurf limit using userefilling (default=false)" />
+		<zbottom value="0" comment="Bottom level of water (used for Hydrostatic option)" units_comment="m" />
+		<zsurf value="1" comment="Initial Z-surface" units_comment="m" />
+	</imposezsurf>
+
+

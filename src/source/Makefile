@@ -1,7 +1,7 @@
-#DualSPHysics GPU/CPU v4.2.074 For43 20-08-2018
+#DualSPHysics GPU/CPU v4.2.075 For43 31-08-2018
 
 #=============== Compilation Options ===============
-USE_GCC5=YES
+USE_GCC5=NO
 USE_DEBUG=NO
 USE_FAST_MATH=YES
 USE_NATIVE_CPU_OPTIMIZATIONS=NO
@@ -97,10 +97,12 @@ OBCUDA=JCellDivGpu_ker.o JCellDivGpuSingle_ker.o JGauge_ker.o JReduSum_ker.o JSp
 OBWAVERZ=JMLPistonsGpu.o JRelaxZonesGpu.o
 OBWAVERZCUDA=JRelaxZone_ker.o
 OBCHRONO=JChronoObjects.o
+OBINOUT=JSphCpu_InOut.o JSphCpuSingle_InOut.o JSphBoundExtrap.o JSphInOut.o JSphInOutGridData.o JSphInOutPoints.o
+OBINOUTGPU=JSphGpuSingle_InOut.o
 
 OBJECTS=$(OBJXML) $(OBJSPHMOTION) $(OBCOMMON) $(OBCOMMONDSPH) $(OBSPH) $(OBSPHSINGLE)
 OBJECTS:=$(OBJECTS) $(OBCOMMONGPU) $(OBSPHGPU) $(OBSPHSINGLEGPU) $(OBCUDA)
-OBJECTS:=$(OBJECTS) $(OBWAVERZ) $(OBWAVERZCUDA) $(OBCHRONO)
+OBJECTS:=$(OBJECTS) $(OBWAVERZ) $(OBWAVERZCUDA) $(OBCHRONO) $(OBINOUT) $(OBINOUTGPU)
 
 #=============== DualSPHysics libs to be included ===============
 JLIBS=${LIBS_DIRECTORIES} -ljformatfiles2_64 -ljwavegen_64 -ljwave_mlp_rz_64 -ldsphchrono

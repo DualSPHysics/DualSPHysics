@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!-- *** DualSPHysics (31-08-2018) *** -->
+<!-- *** class: JSphBoundExtrap *** -->
+<!------------------------------------------------------------------------------->
+<!------------------------------------------------------------------------------->
+<!-- *** boundary extrapolated correction configuration (used in combination with InOut). *** -->
+<special>
+	<boundextrap>
+		<determlimit value="1e+3" comment="Use 1e-3 for first_order or 1e+3 for zeroth_order (default=1e+3)" />
+		<mkzone mkbound="1">
+			<limitpoint x="-1.1" y="0" z="0.1" />
+			<direction x="1" y="0" z="0" comment="Direction to fluid" />
+		</mkzone>
+		<mkzone mkbound="10">
+			<limitpoint x="0" y="0" z="0.1" />
+			<direction x="0" y="0" z="1" comment="Direction to fluid" />
+		</mkzone>
+		<mkzone mkbound="11">
+			<autoconfig direction="top" comment="Direction (top/bottom/left/right/front/back) to fluid using automatic configuration (only for parallel boxes)" />
+		</mkzone>
+	</boundextrap>
+</special>
