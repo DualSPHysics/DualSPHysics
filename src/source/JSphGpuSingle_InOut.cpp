@@ -149,6 +149,9 @@ void JSphGpuSingle::InOutInit(double timestepini){
 void JSphGpuSingle::InOutComputeStep(double stepdt){
   const char met[]="InOutComputeStep";
   //Log->Printf("%u>--------> [InOutComputeStep_000]",Nstep);
+  //Log->Printf("%u]%u> ======>> BB_ComputeStepA.vtk (Np:%u)",DgNum,Nstep,Np);
+  //DgSaveVtkParticlesGpu("BB_ComputeStepA.vtk",DgNum,0,Np,Posxyg,Poszg,Codeg,Idpg,Velrhopg);
+
   //DgSaveVtkParticlesGpu("_ComputeStep_XX.vtk",0,0,Np,Posxyg,Poszg,Codeg,Idpg,Velrhopg);
   TmgStart(Timers,TMG_SuInOut);
   //-Resizes memory when it is necessary. InOutCount is the maximum number of new inlet particles.
@@ -195,6 +198,7 @@ void JSphGpuSingle::InOutComputeStep(double stepdt){
   TmgStop(Timers,TMG_SuInOut_BB);
   //DgSaveVtkParticlesGpu("_ComputeStep_XX.vtk",3,0,Np,Posxyg,Poszg,Codeg,Idpg,Velrhopg);
   //DgSaveVtkParticlesGpu("_ComputeStep_BBB.vtk",Nstep,0,Np,Posxyg,Poszg,Codeg,Idpg,Velrhopg);
+
   //-Updates divide information.
   TmgStop(Timers,TMG_SuInOut);
   RunCellDivide(true);

@@ -900,7 +900,7 @@ void JSphGpu::ComputeVerlet(double dt){  //pdtedom
   swap(Velrhopg,VelrhopM1g);   //-Exchanges Velrhopg and VelrhopM1g. | Intercambia Velrhopg y VelrhopM1g.
   //-Applies displacement to non-periodic fluid particles.
   //-Aplica desplazamiento a las particulas fluid no periodicas.
-  cusph::ComputeStepPos(PeriActive,WithFloating,Np,Npb,movxyg,movzg,Posxyg,Poszg,Dcellg,Codeg);
+  cusph::ComputeStepPos(PeriActive,checkcode,Np,Npb,movxyg,movzg,Posxyg,Poszg,Dcellg,Codeg);
   //-Frees memory allocated for the diplacement.
   ArraysGpu->Free(movxyg);   movxyg=NULL;
   ArraysGpu->Free(movzg);    movzg=NULL;
@@ -933,7 +933,7 @@ void JSphGpu::ComputeSymplecticPre(double dt){
   cusph::ComputeStepSymplecticPre(checkcode,shift,Np,Npb,VelrhopPreg,Arg,Aceg,ShiftPosg,dt05,RhopOutMin,RhopOutMax,Codeg,movxyg,movzg,Velrhopg);
   //-Applies displacement to non-periodic fluid particles.
   //-Aplica desplazamiento a las particulas fluid no periodicas.
-  cusph::ComputeStepPos2(PeriActive,WithFloating,Np,Npb,PosxyPreg,PoszPreg,movxyg,movzg,Posxyg,Poszg,Dcellg,Codeg);
+  cusph::ComputeStepPos2(PeriActive,checkcode,Np,Npb,PosxyPreg,PoszPreg,movxyg,movzg,Posxyg,Poszg,Dcellg,Codeg);
   //-Frees memory allocated for the displacement
   ArraysGpu->Free(movxyg);   movxyg=NULL;
   ArraysGpu->Free(movzg);    movzg=NULL;
@@ -961,7 +961,7 @@ void JSphGpu::ComputeSymplecticCorr(double dt){
   cusph::ComputeStepSymplecticCor(checkcode,shift,Np,Npb,VelrhopPreg,Arg,Aceg,ShiftPosg,dt05,dt,RhopOutMin,RhopOutMax,Codeg,movxyg,movzg,Velrhopg);
   //-Applies displacement to non-periodic fluid particles.
   //-Aplica desplazamiento a las particulas fluid no periodicas.
-  cusph::ComputeStepPos2(PeriActive,WithFloating,Np,Npb,PosxyPreg,PoszPreg,movxyg,movzg,Posxyg,Poszg,Dcellg,Codeg);
+  cusph::ComputeStepPos2(PeriActive,checkcode,Np,Npb,PosxyPreg,PoszPreg,movxyg,movzg,Posxyg,Poszg,Dcellg,Codeg);
   //-Frees memory allocated for diplacement.
   ArraysGpu->Free(movxyg);   movxyg=NULL;
   ArraysGpu->Free(movzg);    movzg=NULL;

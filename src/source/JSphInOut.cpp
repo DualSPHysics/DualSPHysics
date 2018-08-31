@@ -1873,8 +1873,8 @@ void JSphInOut::SaveVtkZsurf(unsigned part){
     }
   }
   if(shapes.size()>0){
-    const string filevtk=AppInfo.GetDirDataOut()+fun::FileNameSec("InOut_Zsurf.vtk",part);
-    JFormatFiles2::SaveVtkShapes(filevtk,"izone","",shapes);
+    const string filevtk=AppInfo.GetDirDataOut()+"InOut_Zsurf.vtk";
+    JFormatFiles2::SaveVtkShapes(fun::FileNameSec(filevtk,part),"izone","",shapes);
     Log->AddFileInfo(filevtk,"Saves VTK files with Zsurf (by JSphInOut).");
   }
 }

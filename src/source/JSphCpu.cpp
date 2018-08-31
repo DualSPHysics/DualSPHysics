@@ -1905,7 +1905,7 @@ template<bool shift> void JSphCpu::ComputeSymplecticPreT(double dt){
     //else{//-Floating Particles.  //<vs_no_innlet>
     else{//-Floating Particles or inout particles.  //<vs_innlet>
       Velrhopc[p]=VelrhopPrec[p];
-      Velrhopc[p].w=(rhopnew<RhopZero? RhopZero: rhopnew); //-Avoid fluid particles being absorbed by floating ones. | Evita q las floating absorvan a las fluidas.  //<vs_no_innlet>
+      //Velrhopc[p].w=(rhopnew<RhopZero? RhopZero: rhopnew); //-Avoid fluid particles being absorbed by floating ones. | Evita q las floating absorvan a las fluidas.  //<vs_no_innlet>
       if(CODE_IsFloating(rcode))Velrhopc[p].w=(rhopnew<RhopZero? RhopZero: rhopnew); //-Avoid fluid particles being absorbed by floating ones. | Evita q las floating absorvan a las fluidas.  //<vs_innlet>
       //-Copy position. | Copia posicion.
       Posc[p]=PosPrec[p];
