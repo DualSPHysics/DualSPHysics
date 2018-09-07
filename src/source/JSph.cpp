@@ -47,7 +47,7 @@
 #include "JDamping.h"
 #include "JSphInitialize.h"
 #include "JSphInOut.h"       //<vs_innlet> 
-#include "JSphBoundExtrap.h" //<vs_innlet> 
+#include "JSphBoundCorr.h"   //<vs_innlet> 
 #include <climits>
 
 //using namespace std;
@@ -83,7 +83,7 @@ JSph::JSph(bool cpu,bool withmpi):Cpu(cpu),WithMpi(withmpi){
   AccInput=NULL;
   PartsLoaded=NULL;
   InOut=NULL;       //<vs_innlet>
-  BoundExtrap=NULL; //<vs_innlet>
+  BoundCorr=NULL;   //<vs_innlet>
   InitVars();
 }
 
@@ -113,7 +113,7 @@ JSph::~JSph(){
   delete AccInput;      AccInput=NULL; 
   delete PartsLoaded;   PartsLoaded=NULL;
   delete InOut;         InOut=NULL;       //<vs_innlet>
-  delete BoundExtrap;   BoundExtrap=NULL; //<vs_innlet>
+  delete BoundCorr;     BoundCorr=NULL;   //<vs_innlet>
 }
 
 //==============================================================================
@@ -750,8 +750,9 @@ void JSph::LoadCaseConfig(){
   }
   
   //-Configuration of boundary extrapolated correction.
-  if(xml.GetNode("case.execution.special.boundextrap",false)){
-    BoundExtrap=new JSphBoundExtrap(Log,&xml,"case.execution.special.boundextrap",MkInfo);
+  if(xml.GetNode("case.execution.special.boundextrap",false))RunException(met,"The XML section 'boundextrap' is obsolete.");
+  if(xml.GetNode("case.execution.special.boundcorr",false)){
+    BoundCorr=new JSphBoundCorr(Log,&xml,"case.execution.special.boundcorr",MkInfo);
   } //<vs_innlet_end> 
  
   NpMinimum=CaseNp-unsigned(PartsOutMax*CaseNfluid);
@@ -1543,11 +1544,11 @@ void JSph::InitRun(unsigned np,const unsigned *idp,const tdouble3 *pos){
     SaveDt->VisuConfig("SaveDt configuration:"," ");
   }
 
-  //-Prepares BoundExtrap configuration.  //<vs_innlet_ini>
-  if(BoundExtrap){
-    Log->Print("BoundExtrap configuration:");
-    BoundExtrap->RunAutoConfig(Dp,MkInfo);
-    BoundExtrap->VisuConfig(""," ");
+  //-Prepares BoundCorr configuration.  //<vs_innlet_ini>
+  if(BoundCorr){
+    Log->Print("BoundCorr configuration:");
+    BoundCorr->RunAutoConfig(Dp,MkInfo);
+    BoundCorr->VisuConfig(""," ");
   }//<vs_innlet_end>
 
   //-Shows configuration of JGaugeSystem.

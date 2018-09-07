@@ -1,4 +1,4 @@
-#DualSPHysics GPU/CPU v4.2.075 For43 31-08-2018
+#DualSPHysics GPU/CPU v4.2.076 For43 07-09-2018
 
 #=============== Compilation Options ===============
 USE_GCC5=NO
@@ -97,7 +97,7 @@ OBCUDA=JCellDivGpu_ker.o JCellDivGpuSingle_ker.o JGauge_ker.o JReduSum_ker.o JSp
 OBWAVERZ=JMLPistonsGpu.o JRelaxZonesGpu.o
 OBWAVERZCUDA=JRelaxZone_ker.o
 OBCHRONO=JChronoObjects.o
-OBINOUT=JSphCpu_InOut.o JSphCpuSingle_InOut.o JSphBoundExtrap.o JSphInOut.o JSphInOutGridData.o JSphInOutPoints.o
+OBINOUT=JSphCpu_InOut.o JSphCpuSingle_InOut.o JSphBoundCorr.o JSphInOut.o JSphInOutGridData.o JSphInOutPoints.o
 OBINOUTGPU=JSphGpuSingle_InOut.o
 
 OBJECTS=$(OBJXML) $(OBJSPHMOTION) $(OBCOMMON) $(OBCOMMONDSPH) $(OBSPH) $(OBSPHSINGLE)

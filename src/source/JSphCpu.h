@@ -301,14 +301,14 @@ protected:
     ,const tdouble3 *pos,const typecode *code);
 
 
-  template<TpKernel tker,bool sim2d> void InteractionBoundExtrap_Double
+  template<TpKernel tker,bool sim2d> void InteractionBoundCorr_Double
     (unsigned npb,typecode boundcode,tfloat4 plane,tfloat3 direction,float determlimit
     ,tint4 nc,int hdiv,unsigned cellinitial
     ,const unsigned *beginendcell,tint3 cellzero
     ,const tdouble3 *pos,const typecode *code,const unsigned *idp
     ,tfloat4 *velrhop);
 
-  void Interaction_BoundExtrap(typecode boundcode,tfloat4 plane,tfloat3 direction,float determlimit
+  void Interaction_BoundCorr(typecode boundcode,tfloat4 plane,tfloat3 direction,float determlimit
     ,tuint3 ncells,const unsigned *begincell,tuint3 cellmin
     ,const tdouble3 *pos,const typecode *code,const unsigned *idp
     ,tfloat4 *velrhop);

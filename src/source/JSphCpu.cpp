@@ -35,7 +35,7 @@
 #include "JTimeOut.h"
 #include "JSphAccInput.h"
 #include "JGaugeSystem.h"
-#include "JSphBoundExtrap.h"  //<vs_innlet>
+#include "JSphBoundCorr.h"  //<vs_innlet>
 #include <climits>
 
 using namespace std;

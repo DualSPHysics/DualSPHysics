@@ -23,7 +23,7 @@
 #include "JArraysGpu.h"
 #include "JSphMk.h"
 #include "JSphInOut.h"
-#include "JSphBoundExtrap.h"
+#include "JSphBoundCorr.h"
 #include "JSphGpu_InOut_ker.h"
 #include "JSphInOutPoints.h"
 #include <climits>
@@ -274,16 +274,16 @@ void JSphGpuSingle::InOutExtrapolateData(){
 /// Calculates extrapolated data for boundary particles from fluid domain.
 /// Calcula datos extrapolados en el contorno para las particulas inlet/outlet.
 //==============================================================================
-void JSphGpuSingle::BoundExtrapolateData(){
+void JSphGpuSingle::BoundCorrectionData(){
   TmgStart(Timers,TMG_SuInOutBExtrap);
-  const unsigned n=BoundExtrap->GetCount();
-  const float determlimit=BoundExtrap->GetDetermLimit();
+  const unsigned n=BoundCorr->GetCount();
+  const float determlimit=BoundCorr->GetDetermLimit();
   for(unsigned c=0;c<n;c++){
-    const JSphBoundExtrapZone* zo=BoundExtrap->GetMkZone(c);
+    const JSphBoundCorrZone* zo=BoundCorr->GetMkZone(c);
     const typecode boundcode=zo->GetBoundCode();
     const tfloat4 plane=zo->GetPlane();
     const tfloat3 direction=ToTFloat3(zo->GetDirection());
-    cusphinout::Interaction_BoundExtrap_Double(Simulate2D,TKernel,CellMode,NpbOk
+    cusphinout::Interaction_BoundCorr_Double(Simulate2D,TKernel,CellMode,NpbOk
       ,boundcode,plane,direction,determlimit
       ,CellDivSingle->GetNcells(),CellDivSingle->GetBeginCell(),CellDivSingle->GetCellDomainMin()
       ,Posxyg,Poszg,Codeg,Idpg,Velrhopg);

@@ -23,7 +23,7 @@
 #include "JArraysCpu.h"
 #include "JSphInOut.h"
 #include "JSphMk.h"
-#include "JSphBoundExtrap.h"
+#include "JSphBoundCorr.h"
 #include "JSphInOutPoints.h"
 #include <climits>
 
@@ -238,16 +238,16 @@ void JSphCpuSingle::InOutExtrapolateData(){
 /// Calculates extrapolated data for boundary particles from fluid domain.
 /// Calcula datos extrapolados en el contorno para las particulas inlet/outlet.
 //==============================================================================
-void JSphCpuSingle::BoundExtrapolateData(){
+void JSphCpuSingle::BoundCorrectionData(){
   TmcStart(Timers,TMC_SuInOutBExtrap);
-  const unsigned n=BoundExtrap->GetCount();
-  const float determlimit=BoundExtrap->GetDetermLimit();
+  const unsigned n=BoundCorr->GetCount();
+  const float determlimit=BoundCorr->GetDetermLimit();
   for(unsigned c=0;c<n;c++){
-    const JSphBoundExtrapZone* zo=BoundExtrap->GetMkZone(c);
+    const JSphBoundCorrZone* zo=BoundCorr->GetMkZone(c);
     const typecode boundcode=zo->GetBoundCode();
     const tfloat4 plane=zo->GetPlane();
     const tfloat3 direction=ToTFloat3(zo->GetDirection());
-    Interaction_BoundExtrap(boundcode,plane,direction,determlimit
+    Interaction_BoundCorr(boundcode,plane,direction,determlimit
       ,CellDivSingle->GetNcells(),CellDivSingle->GetBeginCell(),CellDivSingle->GetCellDomainMin()
       ,Posc,Codec,Idpc,Velrhopc);
   }

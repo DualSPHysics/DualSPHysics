@@ -65,7 +65,7 @@ class JPartsLoad4;
 class JSpacePartBlock;
 class JChronoObjects;    //<vs_chroono>
 class JSphInOut;         //<vs_innlet>
-class JSphBoundExtrap;   //<vs_innlet>
+class JSphBoundCorr;     //<vs_innlet>
 
 //##############################################################################
 //# XML format of execution parameters in _FmtXML__Parameters.xml.
@@ -274,8 +274,8 @@ protected:
 
   JSphAccInput *AccInput;  ///<Object for variable acceleration functionality.
 
-  JSphInOut *InOut;             ///<Object for inlet/outlet conditions.  //<vs_innlet> 
-  JSphBoundExtrap *BoundExtrap; ///<Object for boundary extrapolated correction (used in combination with InOut).  //<vs_innlet>
+  JSphInOut *InOut;         ///<Object for inlet/outlet conditions.  //<vs_innlet> 
+  JSphBoundCorr *BoundCorr; ///<Object for boundary extrapolated correction (used in combination with InOut).  //<vs_innlet>
 
   TpCellOrder CellOrder;   ///<Defines axes' ordination of particles in cells. | Orden de ejes en ordenacion de particulas en celdas.
 

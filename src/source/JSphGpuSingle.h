@@ -80,7 +80,7 @@ protected:
   void InOutCalculeZsurf();
   void InOutExtrapolateData();
 
-  void BoundExtrapolateData();
+  void BoundCorrectionData();
 //<vs_innlet_end>
 };
 

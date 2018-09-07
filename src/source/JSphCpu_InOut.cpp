@@ -324,14 +324,14 @@ float JSphCpu::Interaction_InOutZsurf(unsigned nptz,const tfloat3 *ptzpos,float 
 //==============================================================================
 /// Perform interaction between ghost node of selected boundary and fluid.
 //==============================================================================
-template<TpKernel tker,bool sim2d> void JSphCpu::InteractionBoundExtrap_Double
+template<TpKernel tker,bool sim2d> void JSphCpu::InteractionBoundCorr_Double
   (unsigned npb,typecode boundcode,tfloat4 plane,tfloat3 direction,float determlimit
   ,tint4 nc,int hdiv,unsigned cellinitial
   ,const unsigned *beginendcell,tint3 cellzero
   ,const tdouble3 *pos,const typecode *code,const unsigned *idp
   ,tfloat4 *velrhop)
 {
-  const char met[]="InteractionBoundExtrap_Double";
+  const char met[]="InteractionBoundCorr_Double";
   const int n=int(npb);
   #ifdef _WITHOMP				//DEBUG ANGELO 
     #pragma omp parallel for schedule (guided)
@@ -452,7 +452,7 @@ template<TpKernel tker,bool sim2d> void JSphCpu::InteractionBoundExtrap_Double
 /// Perform interaction between ghost inlet/outlet nodes and fluid particles. GhostNodes-Fluid
 /// Realiza interaccion entre ghost inlet/outlet nodes y particulas de fluido. GhostNodes-Fluid
 //==============================================================================
-void JSphCpu::Interaction_BoundExtrap(typecode boundcode,tfloat4 plane,tfloat3 direction,float determlimit
+void JSphCpu::Interaction_BoundCorr(typecode boundcode,tfloat4 plane,tfloat3 direction,float determlimit
   ,tuint3 ncells,const unsigned *begincell,tuint3 cellmin
   ,const tdouble3 *pos,const typecode *code,const unsigned *idp
   ,tfloat4 *velrhop)
@@ -462,12 +462,12 @@ void JSphCpu::Interaction_BoundExtrap(typecode boundcode,tfloat4 plane,tfloat3 d
   const unsigned cellfluid=nc.w*nc.z+1;
   const int hdiv=(CellMode==CELLMODE_H? 2: 1);
   if(TKernel==KERNEL_Wendland){ const TpKernel tker=KERNEL_Wendland;
-    if(Simulate2D)InteractionBoundExtrap_Double<tker,true >(NpbOk,boundcode,plane,direction,determlimit,nc,hdiv,cellfluid,begincell,cellzero,pos,code,idp,velrhop);
-    else          InteractionBoundExtrap_Double<tker,false>(NpbOk,boundcode,plane,direction,determlimit,nc,hdiv,cellfluid,begincell,cellzero,pos,code,idp,velrhop);
+    if(Simulate2D)InteractionBoundCorr_Double<tker,true >(NpbOk,boundcode,plane,direction,determlimit,nc,hdiv,cellfluid,begincell,cellzero,pos,code,idp,velrhop);
+    else          InteractionBoundCorr_Double<tker,false>(NpbOk,boundcode,plane,direction,determlimit,nc,hdiv,cellfluid,begincell,cellzero,pos,code,idp,velrhop);
   }
   else{                         const TpKernel tker=KERNEL_Cubic;
-    if(Simulate2D)InteractionBoundExtrap_Double<tker,true >(NpbOk,boundcode,plane,direction,determlimit,nc,hdiv,cellfluid,begincell,cellzero,pos,code,idp,velrhop);
-    else          InteractionBoundExtrap_Double<tker,false>(NpbOk,boundcode,plane,direction,determlimit,nc,hdiv,cellfluid,begincell,cellzero,pos,code,idp,velrhop);
+    if(Simulate2D)InteractionBoundCorr_Double<tker,true >(NpbOk,boundcode,plane,direction,determlimit,nc,hdiv,cellfluid,begincell,cellzero,pos,code,idp,velrhop);
+    else          InteractionBoundCorr_Double<tker,false>(NpbOk,boundcode,plane,direction,determlimit,nc,hdiv,cellfluid,begincell,cellzero,pos,code,idp,velrhop);
   }
 }
 

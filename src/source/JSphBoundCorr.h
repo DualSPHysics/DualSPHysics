@@ -22,14 +22,14 @@
 //:# =========
 //:# - Clase para extrapolar densidad en un determinado contorno. (03-05-2017)
 //:# - Simple configuration for parallel boxes of boundary particles. (13-06-2018)
-//:# - Saves VTK file (CfgBoundExtrap_Limit.vtk) with LimitPos and Direction 
+//:# - Saves VTK file (CfgBoundCorr_Limit.vtk) with LimitPos and Direction 
 //:#   configuration. (13-06-2018)
 //:#############################################################################
 
-/// \file JSphBoundExtrap.h \brief Declares the class \ref JSphBoundExtrap.
+/// \file JSphBoundCorr.h \brief Declares the class \ref JSphBoundCorr.
 
-#ifndef _JSphBoundExtrap_
-#define _JSphBoundExtrap_
+#ifndef _JSphBoundCorr_
+#define _JSphBoundCorr_
 
 #include <string>
 #include <vector>
@@ -44,14 +44,14 @@ class JSphCpu;
 class JSphMk;
 
 //##############################################################################
-//# XML format in _FmtXML_BoundExtrap.xml.
+//# XML format in _FmtXML_BoundCorr.xml.
 //##############################################################################
 
 //##############################################################################
-//# JSphBoundExtrapZone
+//# JSphBoundCorrZone
 //##############################################################################
 /// \brief Manages one configuration for boundary extrapolated correction.
-class JSphBoundExtrapZone : protected JObject
+class JSphBoundCorrZone : protected JObject
 {
 public:
 ///Direction mode.
@@ -83,9 +83,9 @@ public:
   const unsigned IdZone;
   const word MkBound;
 
-  JSphBoundExtrapZone(JLog2 *log,unsigned idzone,word mkbound
+  JSphBoundCorrZone(JLog2 *log,unsigned idzone,word mkbound
     ,TpDirection autodir,tdouble3 limitpos,tdouble3 direction);
-  ~JSphBoundExtrapZone();
+  ~JSphBoundCorrZone();
   void ConfigBoundCode(typecode boundcode);
   void ConfigAutoLimit(double halfdp,tdouble3 pmin,tdouble3 pmax);
 
@@ -99,17 +99,17 @@ public:
 };
 
 //##############################################################################
-//# JSphBoundExtrap
+//# JSphBoundCorr
 //##############################################################################
 /// \brief Manages configurations for boundary extrapolated correction.
-class JSphBoundExtrap : protected JObject
+class JSphBoundCorr : protected JObject
 {
 private:
   JLog2 *Log;
 
   float DetermLimit;   ///<Limit for determinant. Use 1e-3 for first_order or 1e+3 for zeroth_order (default=1e+3).
 
-  std::vector<JSphBoundExtrapZone*> List; ///<List of configurations.
+  std::vector<JSphBoundCorrZone*> List; ///<List of configurations.
 
   void Reset();
   bool ExistMk(word mkbound)const;
@@ -119,8 +119,8 @@ private:
   void SaveVtkConfig(double dp)const;
 
 public:
-  JSphBoundExtrap(JLog2 *log,JXml *sxml,const std::string &place,const JSphMk *mkinfo);
-  ~JSphBoundExtrap();
+  JSphBoundCorr(JLog2 *log,JXml *sxml,const std::string &place,const JSphMk *mkinfo);
+  ~JSphBoundCorr();
 
   void RunAutoConfig(double dp,const JSphMk *mkinfo);
 
@@ -129,7 +129,7 @@ public:
 
   float GetDetermLimit()const{ return(DetermLimit); };
 
-  const JSphBoundExtrapZone* GetMkZone(unsigned idx)const{ return(idx<GetCount()? List[idx]: NULL); }
+  const JSphBoundCorrZone* GetMkZone(unsigned idx)const{ return(idx<GetCount()? List[idx]: NULL); }
 
 };
 

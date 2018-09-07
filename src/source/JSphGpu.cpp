@@ -39,7 +39,7 @@
 #include "JXml.h"
 #include "JFormatFiles2.h"
 #include "JGaugeSystem.h"
-#include "JSphBoundExtrap.h"  //<vs_innlet>
+#include "JSphBoundCorr.h"  //<vs_innlet>
 #include <climits>
 
 using namespace std;

@@ -902,8 +902,8 @@ void JSphCpuSingle::Run(std::string appname,JCfgRun *cfg,JLog2 *log){
   //------------------------------------------------------------------------------------
   InitRunCpu();
   RunGaugeSystem(TimeStep);
-  if(InOut)InOutInit(TimeStepIni);        //<vs_innlet>
-  if(BoundExtrap)BoundExtrapolateData();  //<vs_innlet>
+  if(InOut)InOutInit(TimeStepIni);     //<vs_innlet>
+  if(BoundCorr)BoundCorrectionData();  //<vs_innlet>
   UpdateMaxValues();
   PrintAllocMemory(GetAllocMemoryCpu());
   SaveData(); 
@@ -926,7 +926,7 @@ void JSphCpuSingle::Run(std::string appname,JCfgRun *cfg,JLog2 *log){
     if(PartDtMin>stepdt)PartDtMin=stepdt; if(PartDtMax<stepdt)PartDtMax=stepdt;
     if(CaseNmoving)RunMotion(stepdt);
     //RunCellDivide(true);                  //<vs_no_innlet>
-    if(BoundExtrap)BoundExtrapolateData();  //<vs_innlet>
+    if(BoundCorr)BoundCorrectionData();     //<vs_innlet>
     if(InOut)InOutComputeStep(stepdt);      //<vs_innlet>
     else RunCellDivide(true);               //<vs_innlet>
     TimeStep+=stepdt;

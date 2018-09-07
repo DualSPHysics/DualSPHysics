@@ -970,13 +970,13 @@ void Interaction_InOutExtrap_Double(bool simulate2d,TpKernel tkernel,TpCellMode 
 
 
 //##############################################################################
-//# Kernels to extrapolate rhop on boundary particles (JSphBoundExtrap).
-//# Kernels para extrapolar rhop en las particulas de contorno (JSphBoundExtrap).
+//# Kernels to extrapolate rhop on boundary particles (JSphBoundCorr).
+//# Kernels para extrapolar rhop en las particulas de contorno (JSphBoundCorr).
 //##############################################################################
 //------------------------------------------------------------------------------
 /// Perform interaction between ghost node of selected boundary and fluid.
 //------------------------------------------------------------------------------
-template<bool sim2d,TpKernel tker> __global__ void KerInteractionBoundExtrap_Double
+template<bool sim2d,TpKernel tker> __global__ void KerInteractionBoundCorr_Double
   (unsigned npb,typecode boundcode,float4 plane,float3 direction,float determlimit
   ,int hdiv,int4 nc,unsigned cellfluid,const int2 *begincell,int3 cellzero
   ,const double2 *posxy,const double *posz,const typecode *code,const unsigned *idp
@@ -1100,7 +1100,7 @@ template<bool sim2d,TpKernel tker> __global__ void KerInteractionBoundExtrap_Dou
 //==============================================================================
 /// Perform interaction between ghost node of selected boundary and fluid.
 //==============================================================================
-void Interaction_BoundExtrap_Double(bool simulate2d,TpKernel tkernel,TpCellMode cellmode
+void Interaction_BoundCorr_Double(bool simulate2d,TpKernel tkernel,TpCellMode cellmode
   ,unsigned npbok,typecode boundcode,tfloat4 plane,tfloat3 direction,float determlimit
   ,tuint3 ncells,const int2 *begincell,tuint3 cellmin
   ,const double2 *posxy,const double *posz,const typecode *code,const unsigned *idp
@@ -1116,11 +1116,11 @@ void Interaction_BoundExtrap_Double(bool simulate2d,TpKernel tkernel,TpCellMode 
     const unsigned bsbound=128;
     dim3 sgridb=cusph::GetGridSize(npbok,bsbound);
     if(simulate2d){ const bool sim2d=true;
-      if(tkernel==KERNEL_Wendland)KerInteractionBoundExtrap_Double<sim2d,KERNEL_Wendland> <<<sgridb,bsbound>>> (npbok,boundcode,Float4(plane),Float3(direction),determlimit,hdiv,nc,cellfluid,begincell,cellzero,posxy,posz,code,idp,velrhop);
-      if(tkernel==KERNEL_Cubic)   KerInteractionBoundExtrap_Double<sim2d,KERNEL_Cubic>    <<<sgridb,bsbound>>> (npbok,boundcode,Float4(plane),Float3(direction),determlimit,hdiv,nc,cellfluid,begincell,cellzero,posxy,posz,code,idp,velrhop);
+      if(tkernel==KERNEL_Wendland)KerInteractionBoundCorr_Double<sim2d,KERNEL_Wendland> <<<sgridb,bsbound>>> (npbok,boundcode,Float4(plane),Float3(direction),determlimit,hdiv,nc,cellfluid,begincell,cellzero,posxy,posz,code,idp,velrhop);
+      if(tkernel==KERNEL_Cubic)   KerInteractionBoundCorr_Double<sim2d,KERNEL_Cubic>    <<<sgridb,bsbound>>> (npbok,boundcode,Float4(plane),Float3(direction),determlimit,hdiv,nc,cellfluid,begincell,cellzero,posxy,posz,code,idp,velrhop);
     }else{          const bool sim2d=false;
-      if(tkernel==KERNEL_Wendland)KerInteractionBoundExtrap_Double<sim2d,KERNEL_Wendland> <<<sgridb,bsbound>>> (npbok,boundcode,Float4(plane),Float3(direction),determlimit,hdiv,nc,cellfluid,begincell,cellzero,posxy,posz,code,idp,velrhop);
-      if(tkernel==KERNEL_Cubic)   KerInteractionBoundExtrap_Double<sim2d,KERNEL_Cubic>    <<<sgridb,bsbound>>> (npbok,boundcode,Float4(plane),Float3(direction),determlimit,hdiv,nc,cellfluid,begincell,cellzero,posxy,posz,code,idp,velrhop);
+      if(tkernel==KERNEL_Wendland)KerInteractionBoundCorr_Double<sim2d,KERNEL_Wendland> <<<sgridb,bsbound>>> (npbok,boundcode,Float4(plane),Float3(direction),determlimit,hdiv,nc,cellfluid,begincell,cellzero,posxy,posz,code,idp,velrhop);
+      if(tkernel==KERNEL_Cubic)   KerInteractionBoundCorr_Double<sim2d,KERNEL_Cubic>    <<<sgridb,bsbound>>> (npbok,boundcode,Float4(plane),Float3(direction),determlimit,hdiv,nc,cellfluid,begincell,cellzero,posxy,posz,code,idp,velrhop);
     }
   }
 }

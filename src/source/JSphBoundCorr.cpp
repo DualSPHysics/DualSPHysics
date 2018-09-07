@@ -16,9 +16,9 @@
  You should have received a copy of the GNU General Public License, along with DualSPHysics. If not, see <http://www.gnu.org/licenses/>. 
 */
 
-/// \file JSphBoundExtrap.cpp \brief Implements the class \ref JSphBoundExtrap.
+/// \file JSphBoundCorr.cpp \brief Implements the class \ref JSphBoundCorr.
 
-#include "JSphBoundExtrap.h"
+#include "JSphBoundCorr.h"
 #include "JSphCpu.h"
 #include "JSphMk.h"
 #include "JXml.h"
@@ -39,16 +39,16 @@
 using namespace std;
 
 //##############################################################################
-//# JSphBoundExtrapZone
+//# JSphBoundCorrZone
 //##############################################################################
 //==============================================================================
 /// Constructor.
 //==============================================================================
-JSphBoundExtrapZone::JSphBoundExtrapZone(JLog2 *log,unsigned idzone,word mkbound
+JSphBoundCorrZone::JSphBoundCorrZone(JLog2 *log,unsigned idzone,word mkbound
  ,TpDirection autodir,tdouble3 limitpos,tdouble3 direction)
  :Log(log),IdZone(idzone),MkBound(mkbound)
 {
-  ClassName="JSphBoundExtrapZone";
+  ClassName="JSphBoundCorrZone";
   Reset();
   AutoDir=autodir;
   LimitPos=limitpos;
@@ -59,7 +59,7 @@ JSphBoundExtrapZone::JSphBoundExtrapZone(JLog2 *log,unsigned idzone,word mkbound
 //==============================================================================
 /// Destructor.
 //==============================================================================
-JSphBoundExtrapZone::~JSphBoundExtrapZone(){
+JSphBoundCorrZone::~JSphBoundCorrZone(){
   DestructorActive=true;
   Reset();
 }
@@ -67,7 +67,7 @@ JSphBoundExtrapZone::~JSphBoundExtrapZone(){
 //==============================================================================
 /// Initialisation of variables.
 //==============================================================================
-void JSphBoundExtrapZone::Reset(){
+void JSphBoundCorrZone::Reset(){
   BoundCode=0;
   AutoDir=DIR_None;
   LimitPos=Direction=TDouble3(0);
@@ -77,7 +77,7 @@ void JSphBoundExtrapZone::Reset(){
 //==============================================================================
 /// Configures BoundCode.
 //==============================================================================
-void JSphBoundExtrapZone::ConfigBoundCode(typecode boundcode){
+void JSphBoundCorrZone::ConfigBoundCode(typecode boundcode){
   if(BoundCode)RunException("ConfigBoundCode",fun::PrintStr("BoundCode was already configured for mkbound=%u.",MkBound));
   BoundCode=boundcode;
 }
@@ -85,7 +85,7 @@ void JSphBoundExtrapZone::ConfigBoundCode(typecode boundcode){
 //==============================================================================
 /// Configures BoundCode.
 //==============================================================================
-void JSphBoundExtrapZone::ConfigAutoLimit(double halfdp,tdouble3 pmin,tdouble3 pmax){
+void JSphBoundCorrZone::ConfigAutoLimit(double halfdp,tdouble3 pmin,tdouble3 pmax){
   const tdouble3 pmed=(pmin+pmax)/2.;
   if(AutoDir!=DIR_None){
     switch(AutoDir){
@@ -121,7 +121,7 @@ void JSphBoundExtrapZone::ConfigAutoLimit(double halfdp,tdouble3 pmin,tdouble3 p
 //==============================================================================
 /// Loads lines with configuration information.
 //==============================================================================
-void JSphBoundExtrapZone::GetConfig(std::vector<std::string> &lines)const{
+void JSphBoundCorrZone::GetConfig(std::vector<std::string> &lines)const{
   if(AutoDir!=DIR_None){
     lines.push_back(fun::PrintStr("Limit position: (%g,%g,%g) (automatic)",LimitPos.x,LimitPos.y,LimitPos.z));
     lines.push_back(fun::PrintStr("Fluid Direction: (%g,%g,%g) (automatic)",Direction.x,Direction.y,Direction.z));
@@ -134,15 +134,15 @@ void JSphBoundExtrapZone::GetConfig(std::vector<std::string> &lines)const{
 
 
 //##############################################################################
-//# JSphBoundExtrap
+//# JSphBoundCorr
 //##############################################################################
 //==============================================================================
 /// Constructor.
 //==============================================================================
-JSphBoundExtrap::JSphBoundExtrap(JLog2 *log,JXml *sxml,const std::string &place,const JSphMk *mkinfo)
+JSphBoundCorr::JSphBoundCorr(JLog2 *log,JXml *sxml,const std::string &place,const JSphMk *mkinfo)
   :Log(log)
 {
-  ClassName="JSphBoundExtrap";
+  ClassName="JSphBoundCorr";
   Reset();
   LoadXml(sxml,place);
   UpdateMkCode(mkinfo);
@@ -151,14 +151,14 @@ JSphBoundExtrap::JSphBoundExtrap(JLog2 *log,JXml *sxml,const std::string &place,
 //==============================================================================
 /// Destructor.
 //==============================================================================
-JSphBoundExtrap::~JSphBoundExtrap(){
+JSphBoundCorr::~JSphBoundCorr(){
   Reset();
 }
 
 //==============================================================================
 /// Initialisation of variables.
 //==============================================================================
-void JSphBoundExtrap::Reset(){
+void JSphBoundCorr::Reset(){
   DetermLimit=0;
   for(int c=0;c<List.size();c++)delete List[c];
   List.clear();
@@ -167,7 +167,7 @@ void JSphBoundExtrap::Reset(){
 //==============================================================================
 /// Returns true if mkbound value is already configured.
 //==============================================================================
-bool JSphBoundExtrap::ExistMk(word mkbound)const{
+bool JSphBoundCorr::ExistMk(word mkbound)const{
   bool ret=false;
   for(unsigned c=0;c<List.size() && !ret;c++)ret=(List[c]->MkBound==mkbound);
   return(ret);
@@ -176,7 +176,7 @@ bool JSphBoundExtrap::ExistMk(word mkbound)const{
 //==============================================================================
 /// Loads initial conditions of XML object.
 //==============================================================================
-void JSphBoundExtrap::LoadXml(JXml *sxml,const std::string &place){
+void JSphBoundCorr::LoadXml(JXml *sxml,const std::string &place){
   TiXmlNode* node=sxml->GetNode(place,false);
   if(!node)RunException("LoadXml",std::string("Cannot find the element \'")+place+"\'.");
   ReadXml(sxml,node->ToElement());
@@ -185,7 +185,7 @@ void JSphBoundExtrap::LoadXml(JXml *sxml,const std::string &place){
 //==============================================================================
 /// Reads list of configurations in the XML node.
 //==============================================================================
-void JSphBoundExtrap::ReadXml(const JXml *sxml,TiXmlElement* lis){
+void JSphBoundCorr::ReadXml(const JXml *sxml,TiXmlElement* lis){
   const char met[]="ReadXml";
   //-Loads value determlimit.
   if(sxml->CountElements(lis,"determlimit")>1)sxml->ErrReadElement(lis,"determlimit",false,"Several definitions for this value.");
@@ -196,23 +196,23 @@ void JSphBoundExtrap::ReadXml(const JXml *sxml,TiXmlElement* lis){
     const word mkbound=sxml->GetAttributeWord(ele,"mkbound");
     tdouble3 limitpos=TDouble3(0);
     tdouble3 direction=TDouble3(0);
-    JSphBoundExtrapZone::TpDirection autodir=JSphBoundExtrapZone::DIR_None;
+    JSphBoundCorrZone::TpDirection autodir=JSphBoundCorrZone::DIR_None;
     string autodirtx=fun::StrLower(sxml->ReadElementStr(ele,"autoconfig","direction",true));
     if(autodirtx.empty()){
       limitpos=sxml->ReadElementDouble3(ele,"limitpoint");
       direction=sxml->ReadElementDouble3(ele,"direction");
     }
     else{
-      if     (autodirtx=="top"   )autodir=JSphBoundExtrapZone::DIR_Top;
-      else if(autodirtx=="bottom")autodir=JSphBoundExtrapZone::DIR_Bottom;
-      else if(autodirtx=="left"  )autodir=JSphBoundExtrapZone::DIR_Left;
-      else if(autodirtx=="right" )autodir=JSphBoundExtrapZone::DIR_Right;
-      else if(autodirtx=="front" )autodir=JSphBoundExtrapZone::DIR_Front;
-      else if(autodirtx=="back"  )autodir=JSphBoundExtrapZone::DIR_Back;
-      if(autodir==JSphBoundExtrapZone::DIR_None)sxml->ErrReadElement(ele,"autoconfig",false,"Direction label is invalid.");
+      if     (autodirtx=="top"   )autodir=JSphBoundCorrZone::DIR_Top;
+      else if(autodirtx=="bottom")autodir=JSphBoundCorrZone::DIR_Bottom;
+      else if(autodirtx=="left"  )autodir=JSphBoundCorrZone::DIR_Left;
+      else if(autodirtx=="right" )autodir=JSphBoundCorrZone::DIR_Right;
+      else if(autodirtx=="front" )autodir=JSphBoundCorrZone::DIR_Front;
+      else if(autodirtx=="back"  )autodir=JSphBoundCorrZone::DIR_Back;
+      if(autodir==JSphBoundCorrZone::DIR_None)sxml->ErrReadElement(ele,"autoconfig",false,"Direction label is invalid.");
     }
     if(ExistMk(mkbound))RunException(met,"An input already exists for the same mkbound.");
-    JSphBoundExtrapZone *zo=new JSphBoundExtrapZone(Log,GetCount(),mkbound,autodir,limitpos,direction);
+    JSphBoundCorrZone *zo=new JSphBoundCorrZone(Log,GetCount(),mkbound,autodir,limitpos,direction);
     List.push_back(zo);
     ele=ele->NextSiblingElement("mkzone");
   }
@@ -221,7 +221,7 @@ void JSphBoundExtrap::ReadXml(const JXml *sxml,TiXmlElement* lis){
 //==============================================================================
 /// Updates BoundCode of each configuration.
 //==============================================================================
-void JSphBoundExtrap::UpdateMkCode(const JSphMk *mkinfo){
+void JSphBoundCorr::UpdateMkCode(const JSphMk *mkinfo){
   const char met[]="UpdateMkCode";
   for(unsigned c=0;c<GetCount();c++){
     const word mkbound=List[c]->MkBound;
@@ -237,7 +237,7 @@ void JSphBoundExtrap::UpdateMkCode(const JSphMk *mkinfo){
 /// Run automatic configuration of LimitPos and Direction for each configuration
 /// and saves VTK file with limit configuration.
 //==============================================================================
-void JSphBoundExtrap::RunAutoConfig(double dp,const JSphMk *mkinfo){
+void JSphBoundCorr::RunAutoConfig(double dp,const JSphMk *mkinfo){
   const char met[]="RunAutoConfig";
   for(unsigned c=0;c<GetCount();c++){
     const word mkbound=List[c]->MkBound;
@@ -255,10 +255,10 @@ void JSphBoundExtrap::RunAutoConfig(double dp,const JSphMk *mkinfo){
 //==============================================================================
 /// Saves VTK file with LimitPos and Direction for each configuration.
 //==============================================================================
-void JSphBoundExtrap::SaveVtkConfig(double dp)const{
+void JSphBoundCorr::SaveVtkConfig(double dp)const{
   std::vector<JFormatFiles2::StShapeData> shapes;
   for(unsigned c=0;c<GetCount();c++){
-    const JSphBoundExtrapZone* zo=List[c];
+    const JSphBoundCorrZone* zo=List[c];
     const int mkbound=zo->MkBound;
     const tdouble3 ps=zo->GetLimitPos();
     const tdouble3 ps2=ps+(fmath::VecUnitary(zo->GetDirection())*(dp*3));
@@ -267,18 +267,18 @@ void JSphBoundExtrap::SaveVtkConfig(double dp)const{
     tdouble3 pt2=ps+TDouble3(dp/2.);
     const double dp2=dp*2;
     switch(zo->GetAutoDir()){
-      case JSphBoundExtrapZone::DIR_Top:
-      case JSphBoundExtrapZone::DIR_Bottom:
+      case JSphBoundCorrZone::DIR_Top:
+      case JSphBoundCorrZone::DIR_Bottom:
         pt1=pt1-TDouble3(dp2,dp2,0);
         pt2=pt2+TDouble3(dp2,dp2,0);
       break;
-      case JSphBoundExtrapZone::DIR_Left:
-      case JSphBoundExtrapZone::DIR_Right:
+      case JSphBoundCorrZone::DIR_Left:
+      case JSphBoundCorrZone::DIR_Right:
         pt1=pt1-TDouble3(0,dp2,dp2);
         pt2=pt2+TDouble3(0,dp2,dp2);
       break;
-      case JSphBoundExtrapZone::DIR_Front:
-      case JSphBoundExtrapZone::DIR_Back:
+      case JSphBoundCorrZone::DIR_Front:
+      case JSphBoundCorrZone::DIR_Back:
         pt1=pt1-TDouble3(dp2,0,dp2);
         pt2=pt2+TDouble3(dp2,0,dp2);
       break;
@@ -287,20 +287,20 @@ void JSphBoundExtrap::SaveVtkConfig(double dp)const{
     shapes.push_back(JFormatFiles2::DefineShape_Box(pt1,pt2-pt1,mkbound,0)); //-Limit box.
   }
   if(GetCount()){
-    const string filevtk=AppInfo.GetDirOut()+"CfgBoundExtrap_Limit.vtk";
+    const string filevtk=AppInfo.GetDirOut()+"CfgBoundCorr_Limit.vtk";
     JFormatFiles2::SaveVtkShapes(filevtk,"mkbound","",shapes);
-    Log->AddFileInfo(filevtk,"Saves VTK file with BoundExtrap configurations.");
+    Log->AddFileInfo(filevtk,"Saves VTK file with BoundCorr configurations.");
   }
 }
 
 //==============================================================================
 /// Shows object configuration using Log.
 //==============================================================================
-void JSphBoundExtrap::VisuConfig(std::string txhead,std::string txfoot)const{
+void JSphBoundCorr::VisuConfig(std::string txhead,std::string txfoot)const{
   if(!txhead.empty())Log->Print(txhead);
   Log->Printf("DetermLimit: %g",DetermLimit);
   for(unsigned c=0;c<GetCount();c++){
-    const JSphBoundExtrapZone* zo=List[c];
+    const JSphBoundCorrZone* zo=List[c];
     Log->Printf("MkZone_%u (mkfluid:%u)",zo->IdZone,zo->MkBound);
     std::vector<std::string> lines;
     zo->GetConfig(lines);

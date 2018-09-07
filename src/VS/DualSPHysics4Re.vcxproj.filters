@@ -301,9 +301,6 @@
     <ClInclude Include="..\source\JSpaceVtkOut.h">
       <Filter>CommonDsph</Filter>
     </ClInclude>
-    <ClInclude Include="..\source\JSphBoundExtrap.h">
-      <Filter>Src_Inlet</Filter>
-    </ClInclude>
     <ClInclude Include="..\source\JSphGpu_InOut_ker.h">
       <Filter>Cuda</Filter>
     </ClInclude>
@@ -314,6 +311,9 @@
       <Filter>Src_Inlet</Filter>
     </ClInclude>
     <ClInclude Include="..\source\JSphInOutPoints.h">
+      <Filter>Src_Inlet</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JSphBoundCorr.h">
       <Filter>Src_Inlet</Filter>
     </ClInclude>
   </ItemGroup>
@@ -522,9 +522,6 @@
     <ClCompile Include="..\source\JSpaceVtkOut.cpp">
       <Filter>CommonDsph</Filter>
     </ClCompile>
-    <ClCompile Include="..\source\JSphBoundExtrap.cpp">
-      <Filter>Src_Inlet</Filter>
-    </ClCompile>
     <ClCompile Include="..\source\JSphCpu_InOut.cpp">
       <Filter>Src_Inlet</Filter>
     </ClCompile>
@@ -541,6 +538,9 @@
       <Filter>Src_Inlet</Filter>
     </ClCompile>
     <ClCompile Include="..\source\JSphInOutPoints.cpp">
+      <Filter>Src_Inlet</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JSphBoundCorr.cpp">
       <Filter>Src_Inlet</Filter>
     </ClCompile>
   </ItemGroup>
