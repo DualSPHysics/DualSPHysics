@@ -47,6 +47,13 @@ void InOutUpdateData(unsigned n,const unsigned *listp
   ,float timestep,float zsurf,tfloat4 veldata,tfloat4 veldata2,tfloat3 dirdata
   ,float coefhydro,float rhopzero,float gamma
   ,const typecode *code,const double *posz,float4 *velrhop);
+
+void InoutClearInteractionVars(unsigned n,const int *inoutpart
+    ,float3 *ace,float *ar,float *viscdt,float3 *shiftpos);
+
+void InOutUpdateVelrhopM1(unsigned n,const int *inoutpart
+    ,const float4 *velrhop,float4 *velrhopm1);
+
 void InOutComputeStep(byte periactive,unsigned n,int *inoutpart
   ,double dt,const float4 *planes,const float *width,const float4 *velrhop
   ,double2 *posxy,double *posz,unsigned *dcell,typecode *code);

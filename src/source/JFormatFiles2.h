@@ -71,6 +71,9 @@
 //:# - Nuevos metodos AddShape_Cylinder(), AddShape_Cross(). (10-08-2018)
 //:# - Nuevos metodos AddShape_Circle(), AddShape_Spring(). (13-08-2018)
 //:# - El metodo SaveVtkShapes() combina lineas consecutivas con mismos valores. (13-08-2018)
+//:# - Se permite definir formato de salida y unidades en StScalarData. (12-09-2018)
+//:# - Nuevo metodo DeleteFields() para liberar memoria dinamica. (12-09-2018)
+//:# - Se elimina codigo JFormatFiles2Data por falta de uso. (12-09-2018)
 //:#############################################################################
   
 
@@ -103,10 +106,13 @@ public:
 
   /// Structure with the information of an array of particle data to be stored in CSV or VTK format.
   typedef struct {
-    std::string name;
+    std::string name; //"name:outputformat:units", e.g. "velocity:%f:m/s"
+    std::string fmt;
+    std::string units;
     TpData type;
     unsigned comp;
     const void *pointer;
+    bool delptr;
   }StScalarData;
 
   /// Strucutre with the information of an array to calculate and save statistic information.
@@ -192,17 +198,27 @@ public:
   static std::string GetUnits(const std::string &varname);
 
   //==============================================================================
-  /// Returns units according variable name. E.g.: Vel -> "Vel [m/s]"
+  /// Defines automatically the output format and units of field.
   //==============================================================================
-  static std::string GetVarWithUnits(const std::string &varname){
-    return(varname+GetUnits(varname));
-  }
+  static void DefineFieldFormat(StScalarData &field);
 
   //==============================================================================
   /// Returns the definition of fields.
   //==============================================================================
   static StScalarData DefineField(const std::string &name,TpData type,unsigned comp,const void *pointer=NULL){
-    StScalarData f; f.name=name; f.type=type; f.comp=comp; f.pointer=pointer;
+    StScalarData f; f.name=name; f.type=type; f.comp=comp; f.pointer=pointer; f.delptr=false;
+    f.fmt=f.units="";
+    DefineFieldFormat(f);
+    return(f);
+  }
+
+  //==============================================================================
+  /// Returns the definition of fields.
+  //==============================================================================
+  static StScalarData DefineFieldDel(const std::string &name,TpData type,unsigned comp,const void *pointer=NULL){
+    StScalarData f; f.name=name; f.type=type; f.comp=comp; f.pointer=pointer; f.delptr=true;
+    f.fmt=f.units="";
+    DefineFieldFormat(f);
     return(f);
   }
 
@@ -215,6 +231,11 @@ public:
   /// Checks the definition of fields.
   //==============================================================================
   static void CheckFields(const std::vector<StScalarData> &fields);
+
+  //==============================================================================
+  /// Delete dynamic memory of pointers with delptr=true.
+  //==============================================================================
+  static void DeleteFields(std::vector<StScalarData> &fields);
 
   //==============================================================================
   /// Stores data in VTK format.
@@ -709,7 +730,7 @@ public:
 
 };
 
-
+/*
 //##############################################################################
 //# JFormatFiles2Data
 //##############################################################################
@@ -804,7 +825,7 @@ public:
     if(Posd)JFormatFiles2::SaveCsv(file,CsvSepComa,Np,Posd,FieldsCount,Fields);
   }
 };
-
+*/
 
 #endif
 

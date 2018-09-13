@@ -259,8 +259,68 @@ void InOutUpdateData(unsigned n,const unsigned *inoutpart
   }
 }
 
+
 //------------------------------------------------------------------------------
-/// Move particles in/out according its velocity.
+/// Updates velocity and rhop of inlet/outlet particles when it is not extrapolated. 
+/// Actualiza velocidad y densidad de particulas inlet/outlet cuando no es extrapolada.
+//------------------------------------------------------------------------------
+__global__ void KerInoutClearInteractionVars(unsigned n,const int *inoutpart
+  ,float3 *ace,float *ar,float *viscdt,float3 *shiftpos)
+{
+  const unsigned cp=blockIdx.y*gridDim.x*blockDim.x + blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
+  if(cp<n){
+    const unsigned p=inoutpart[cp];
+    ace[p]=make_float3(0,0,0);
+    ar[p]=0;
+    viscdt[p]=0;
+    if(shiftpos!=NULL)shiftpos[p]=make_float3(0,0,0);
+  }
+}
+
+//==============================================================================
+/// Updates velocity and rhop of inlet/outlet particles when it is not extrapolated. 
+/// Actualiza velocidad y densidad de particulas inlet/outlet cuando no es extrapolada.
+//==============================================================================
+void InoutClearInteractionVars(unsigned n,const int *inoutpart
+  ,float3 *ace,float *ar,float *viscdt,float3 *shiftpos)
+{
+  if(n){
+    dim3 sgrid=cusph::GetGridSize(n,SPHBSIZE);
+    KerInoutClearInteractionVars <<<sgrid,SPHBSIZE>>> (n,inoutpart,ace,ar,viscdt,shiftpos);
+  }
+}
+
+
+//------------------------------------------------------------------------------
+/// Updates velocity and rhop for M1 variable when Verlet is used. 
+/// Actualiza velocidad y densidad de varible M1 cuando se usa Verlet.
+//------------------------------------------------------------------------------
+__global__ void KerInOutUpdateVelrhopM1(unsigned n,const int *inoutpart
+  ,const float4 *velrhop,float4 *velrhopm1)
+{
+  const unsigned cp=blockIdx.y*gridDim.x*blockDim.x + blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
+  if(cp<n){
+    const unsigned p=inoutpart[cp];
+    velrhopm1[p]=velrhop[p];
+  }
+}
+
+//==============================================================================
+/// Updates velocity and rhop for M1 variable when Verlet is used. 
+/// Actualiza velocidad y densidad de varible M1 cuando se usa Verlet.
+//==============================================================================
+void InOutUpdateVelrhopM1(unsigned n,const int *inoutpart
+  ,const float4 *velrhop,float4 *velrhopm1)
+{
+  if(n){
+    dim3 sgrid=cusph::GetGridSize(n,SPHBSIZE);
+    KerInOutUpdateVelrhopM1 <<<sgrid,SPHBSIZE>>> (n,inoutpart,velrhop,velrhopm1);
+  }
+}
+
+
+//------------------------------------------------------------------------------
+/// Checks particle position.
 /// If particle is moved to fluid zone then it changes to fluid particle and 
 /// it creates a new in/out particle.
 /// If particle is moved out the domain then it changes to ignore particle.
@@ -272,12 +332,6 @@ template<bool periactive> __global__ void KerInOutComputeStep(unsigned n,int *in
   const unsigned cp=blockIdx.y*gridDim.x*blockDim.x + blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
   if(cp<n){
     const int p=inoutpart[cp];
-    //-Updates position of particles.
-    const float4 rvelrhop=velrhop[p];
-    const double dx=double(rvelrhop.x)*dt;
-    const double dy=double(rvelrhop.y)*dt;
-    const double dz=double(rvelrhop.z)*dt;
-    cusph::KerUpdatePos<periactive>(posxy[p],posz[p],dx,dy,dz,false,p,posxy,posz,dcell,code);
     //-Checks if particle was moved to fluid domain.
     const typecode rcode=code[p];
     const byte izone=byte(CODE_GetIzoneFluidInout(rcode));
@@ -292,7 +346,7 @@ template<bool periactive> __global__ void KerInOutComputeStep(unsigned n,int *in
 }
 
 //==============================================================================
-/// Move particles in/out according its velocity.
+/// Checks particle position.
 /// If particle is moved to fluid zone then it changes to fluid particle and 
 /// it creates a new in/out particle.
 /// If particle is moved out the domain then it changes to ignore particle.

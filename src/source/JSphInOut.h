@@ -371,6 +371,13 @@ public:
     ,tdouble3 *pos,unsigned *dcell,typecode *code,unsigned *idp,tfloat4 *velrhop
     ,float *prodist,tdouble3 *propos);
 
+  void UpdateVelrhopM1Cpu(unsigned inoutcount,const int *inoutpart
+    ,const tfloat4 *velrhop,tfloat4 *velrhopm1);
+
+  void ClearInteractionVarsCpu(unsigned inoutcount,const int *inoutpart
+    ,tfloat3 *ace,float *ar,tfloat3 *shiftpos);
+
+
 //-Specific code for GPU.
 #ifdef _WITHGPU
   unsigned CreateListGpu(unsigned nstep,unsigned npf,unsigned pini
@@ -390,6 +397,12 @@ public:
     ,unsigned idnext,unsigned sizenp,unsigned np
     ,double2 *posxyg,double *poszg,unsigned *dcellg,typecode *codeg,unsigned *idpg,float4 *velrhopg
     ,float *prodistg,double2 *proposxyg,double *proposzg);
+
+  void UpdateVelrhopM1Gpu(unsigned inoutcount,const int *inoutpartg
+    ,const float4 *velrhopg,float4 *velrhopm1g);
+
+  void ClearInteractionVarsGpu(unsigned inoutcount,const int *inoutpartg
+    ,float3 *aceg,float *arg,float *viscdtg,float3 *shiftposg);
 #endif
 
 

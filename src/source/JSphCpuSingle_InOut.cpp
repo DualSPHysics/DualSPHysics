@@ -89,8 +89,6 @@ void JSphCpuSingle::InOutInit(double timestepini){
   //-Checks position of new particles and calculates cell.
   for(unsigned p=Np;p<Np+newnp;p++)UpdatePos(Posc[p],0,0,0,false,p,Posc,Dcellc,Codec);
 
-  //-Updates new particle values for Verlet.
-  if(VelrhopM1c)memset(VelrhopM1c+Np,0,sizeof(tfloat4)*+newnp);//-VelrhopM1c is not used for inlet particles.
   //-Updates new particle values for Laminar+SPS.
   if(SpsTauc)memset(SpsTauc+Np,0,sizeof(tsymatrix3f)*newnp);
   if(DBG_INOUT_PARTINIT)DgSaveVtkParticlesCpu("CfgInOut_InletIni.vtk",0,Np,Np+newnp,Posc,Codec,Idpc,Velrhopc);
@@ -115,6 +113,9 @@ void JSphCpuSingle::InOutInit(double timestepini){
 
   //-Calculates interpolated velocity for inlet/outlet particles.
   if(InOut->GetInterpolatedVel())InOut->InterpolateVelCpu(float(timestepini),InOutCount,InOutPartc,Posc,Codec,Idpc,Velrhopc);
+
+  //-Updates velocity and rhop of M1 variables starting from current velocity and rhop when Verlet is used. 
+  if(VelrhopM1c)InOut->UpdateVelrhopM1Cpu(InOutCount,InOutPartc,Velrhopc,VelrhopM1c);
 
   if(DBG_INOUT_PARTINIT)DgSaveVtkParticlesCpu("CfgInOut_InletIni.vtk",2,0,Np,Posc,Codec,Idpc,Velrhopc);
   TmcStop(Timers,TMC_SuInOut);
@@ -158,10 +159,9 @@ void JSphCpuSingle::InOutComputeStep(double stepdt){
   else newnp=InOut->ComputeStepCpu(Nstep,stepdt,InOutCount,InOutPartc,this,IdMax+1,CpuParticlesSize,Np,Posc,Dcellc,Codec,Idpc,Velrhopc);
   //DgSaveVtkParticlesCpu("_ComputeStep_XX.vtk",2,0,Np,Posc,Codec,Idpc,Velrhopc);
 
-  //-Updates new particle values for Verlet.
-  if(VelrhopM1c)memset(VelrhopM1c+Np,0,sizeof(tfloat4)*+newnp);//-VelrhopM1c is not used for inlet particles.
   //-Updates new particle values for Laminar+SPS.
   if(SpsTauc)memset(SpsTauc+Np,0,sizeof(tsymatrix3f)*newnp);
+
   //-Updates number of particles.
   if(newnp){
     Np+=newnp;
@@ -193,6 +193,9 @@ void JSphCpuSingle::InOutComputeStep(double stepdt){
 
   //-Calculates interpolated velocity for inlet/outlet particles.
   if(InOut->GetInterpolatedVel())InOut->InterpolateVelCpu(float(TimeStep+stepdt),InOutCount,InOutPartc,Posc,Codec,Idpc,Velrhopc);
+
+  //-Updates velocity and rhop of M1 variables starting from current velocity and rhop when Verlet is used. 
+  if(VelrhopM1c)InOut->UpdateVelrhopM1Cpu(InOutCount,InOutPartc,Velrhopc,VelrhopM1c);
 
   TmcStop(Timers,TMC_SuInOut);
   //Log->Printf("%u>--------> [InOutComputeStep_fin]",Nstep);

@@ -61,8 +61,8 @@ protected:
   void Interaction_Forces(TpInter tinter);
   
   double ComputeAceMax(unsigned np,const tfloat3* ace,const typecode *code)const;
-  template<bool checkperiodic,bool checkinout> double ComputeAceMaxSeq(unsigned np,const tfloat3* ace,const typecode *code)const;
-  template<bool checkperiodic,bool checkinout> double ComputeAceMaxOmp(unsigned np,const tfloat3* ace,const typecode *code)const;
+  template<bool checkperiodic> double ComputeAceMaxSeq(unsigned np,const tfloat3* ace,const typecode *code)const;
+  template<bool checkperiodic> double ComputeAceMaxOmp(unsigned np,const tfloat3* ace,const typecode *code)const;
   
   double ComputeStep(){ return(TStep==STEP_Verlet? ComputeStep_Ver(): ComputeStep_Sym()); }
   double ComputeStep_Ver();

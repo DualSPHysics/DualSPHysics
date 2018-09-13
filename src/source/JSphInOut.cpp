@@ -1576,7 +1576,6 @@ void JSphInOut::InterpolateResetZVelGpu(unsigned inoutcount,const int *inoutpart
 
 //==============================================================================
 /// ComputeStep over inout particles:
-/// - Move particles inout according its velocity.
 /// - If particle is moved to fluid zone then it changes to fluid particle and 
 ///   it creates a new inout particle.
 /// - If particle is moved out the domain then it changes to ignore particle.
@@ -1586,19 +1585,13 @@ unsigned JSphInOut::ComputeStepCpu(unsigned nstep,double dt,unsigned inoutcount,
   ,tdouble3 *pos,unsigned *dcell,typecode *code,unsigned *idp,tfloat4 *velrhop)
 {
   const char met[]="ComputeStepCpu";
-  //-Updates position of particles.
+  //-Checks particle position.
   const int ncp=int(inoutcount);
   #ifdef OMP_USE
     #pragma omp parallel for schedule (static)
   #endif
   for(int cp=0;cp<ncp;cp++){
     const unsigned p=(unsigned)inoutpart[cp];
-    //-Updates position of particles.
-    double dx=double(velrhop[p].x)*dt;
-    double dy=double(velrhop[p].y)*dt;
-    double dz=double(velrhop[p].z)*dt;
-    sphcpu->UpdatePos(pos[p],dx,dy,dz,false,p,pos,dcell,code);
-    //-Checks if particle was moved to fluid domain.
     typecode rcode=code[p];
     const unsigned izone=CODE_GetIzoneFluidInout(rcode);
     const tfloat3 ps=ToTFloat3(pos[p]);
@@ -1643,7 +1636,6 @@ unsigned JSphInOut::ComputeStepCpu(unsigned nstep,double dt,unsigned inoutcount,
 #ifdef _WITHGPU
 //==============================================================================
 /// ComputeStep over inlet/outlet particles:
-/// - Move particles in/out according its velocity.
 /// - If particle is moved to fluid zone then it changes to fluid particle and 
 ///   it creates a new in/out particle.
 /// - If particle is moved out the domain then it changes to ignore particle.
@@ -1653,7 +1645,7 @@ unsigned JSphInOut::ComputeStepGpu(unsigned nstep,double dt,unsigned inoutcount,
   ,double2 *posxyg,double *poszg,unsigned *dcellg,typecode *codeg,unsigned *idpg,float4 *velrhopg)
 {
   const char met[]="ComputeStepGpu";
-  //-Updates position of particles.
+  //-Checks particle position.
   cusphinout::InOutComputeStep(PeriActive,inoutcount,inoutpartg,dt,Planesg,Widthg,velrhopg,posxyg,poszg,dcellg,codeg);
   //-Create list for new inlet particles to create.
   const unsigned newnp=cusphinout::InOutListCreate(Stable,inoutcount,sizenp-1,inoutpartg);
@@ -1668,7 +1660,6 @@ unsigned JSphInOut::ComputeStepGpu(unsigned nstep,double dt,unsigned inoutcount,
 
 //==============================================================================
 /// ComputeStep over inout particles and filling inout domain:
-/// - Move particles inout according its velocity.
 /// - If particle is moved to fluid zone then it changes to fluid particle and 
 ///   it creates a new inout particle.
 /// - If particle is moved out the domain then it changes to ignore particle.
@@ -1688,10 +1679,6 @@ unsigned JSphInOut::ComputeStepFillingCpu(unsigned nstep,double dt,unsigned inou
   #endif
   for(int cp=0;cp<ncp;cp++){
     const unsigned p=(unsigned)inoutpart[cp];
-    double dx=double(velrhop[p].x)*dt;
-    double dy=double(velrhop[p].y)*dt;
-    double dz=double(velrhop[p].z)*dt;
-    sphcpu->UpdatePos(pos[p],dx,dy,dz,false,p,pos,dcell,code);
     const typecode rcode=code[p];
     const unsigned izone=CODE_GetIzoneFluidInout(rcode);
     const float displane=-fmath::DistPlaneSign(Planes[izone],ToTFloat3(pos[p]));
@@ -1785,7 +1772,6 @@ unsigned JSphInOut::ComputeStepFillingCpu(unsigned nstep,double dt,unsigned inou
 #ifdef _WITHGPU
 //==============================================================================
 /// ComputeStep over inlet/outlet particles:
-/// - Move particles in/out according its velocity.
 /// - If particle is moved to fluid zone then it changes to fluid particle and 
 ///   it creates a new in/out particle.
 /// - If particle is moved out the domain then it changes to ignore particle.
@@ -1796,8 +1782,6 @@ unsigned JSphInOut::ComputeStepFillingGpu(unsigned nstep,double dt,unsigned inou
   ,float *prodistg,double2 *proposxyg,double *proposzg)
 {
   const char met[]="ComputeStepFillingGpu";
-  //-Move particles in/out according its velocity.
-  cusphinout::InOutFillMove(PeriActive,inoutcount,(unsigned *)inoutpartg,dt,velrhopg,posxyg,poszg,dcellg,codeg);
   //-Computes projection data to filling mode.
   cusphinout::InOutFillProjection(inoutcount,(unsigned *)inoutpartg,CodeNewPart,Planesg,Widthg,posxyg,poszg
     ,codeg,prodistg,proposxyg,proposzg);
@@ -1826,6 +1810,71 @@ unsigned JSphInOut::ComputeStepFillingGpu(unsigned nstep,double dt,unsigned inou
   return(newnp);
 }
 #endif
+
+//==============================================================================
+/// Updates velocity and rhop for M1 variable when Verlet is used. 
+/// Actualiza velocidad y densidad de varible M1 cuando se usa Verlet.
+//==============================================================================
+void JSphInOut::UpdateVelrhopM1Cpu(unsigned inoutcount,const int *inoutpart
+  ,const tfloat4 *velrhop,tfloat4 *velrhopm1)
+{
+  const int ncp=int(inoutcount);
+  #ifdef OMP_USE
+    #pragma omp parallel for schedule (static) if(ncp>OMP_LIMIT_COMPUTELIGHT)
+  #endif
+  for(int cp=0;cp<ncp;cp++){
+    const unsigned p=(unsigned)inoutpart[cp];
+    velrhopm1[p]=velrhop[p];
+  }
+}
+
+#ifdef _WITHGPU
+//==============================================================================
+/// Updates velocity and rhop for M1 variable when Verlet is used. 
+/// Actualiza velocidad y densidad de varible M1 cuando se usa Verlet.
+//==============================================================================
+void JSphInOut::UpdateVelrhopM1Gpu(unsigned inoutcount,const int *inoutpartg
+  ,const float4 *velrhopg,float4 *velrhopm1g)
+{
+  cusphinout::InOutUpdateVelrhopM1(inoutcount,inoutpartg,velrhopg,velrhopm1g);
+}
+#endif
+
+
+//==============================================================================
+/// Reset interaction varibles (ace,ar,shiftpos) over inout particles.
+/// Pone a cero las variables de la interaccion (ace,ar,shiftpos) de las particulas inout.
+//==============================================================================
+void JSphInOut::ClearInteractionVarsCpu(unsigned inoutcount,const int *inoutpart
+    ,tfloat3 *ace,float *ar,tfloat3 *shiftpos)
+{
+  if(ace==NULL || ar==NULL)RunException("ClearInteractionVarsCpu","Some pointer is NULL.");
+  const tfloat3 zero3=TFloat3(0);
+  const int ncp=int(inoutcount);
+  #ifdef OMP_USE
+    #pragma omp parallel for schedule (static)
+  #endif
+  for(int cp=0;cp<ncp;cp++){
+    const unsigned p=(unsigned)inoutpart[cp];
+    ace[p]=zero3;
+    ar[p]=0;
+    if(shiftpos)shiftpos[p]=zero3;
+  }
+}
+
+#ifdef _WITHGPU
+//==============================================================================
+/// Reset interaction varibles (ace,ar,shiftpos) over inout particles.
+/// Pone a cero las variables de la interaccion (ace,ar,shiftpos) de las particulas inout.
+//==============================================================================
+void JSphInOut::ClearInteractionVarsGpu(unsigned inoutcount,const int *inoutpartg
+    ,float3 *aceg,float *arg,float *viscdtg,float3 *shiftposg)
+{
+  if(aceg==NULL || arg==NULL || viscdtg==NULL)RunException("ClearInteractionVarsGpu","Some pointer is NULL.");
+  cusphinout::InoutClearInteractionVars(inoutcount,inoutpartg,aceg,arg,viscdtg,shiftposg);
+}
+#endif
+
 
 //==============================================================================
 /// Shows object configuration using Log.

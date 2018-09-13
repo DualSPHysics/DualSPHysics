@@ -437,10 +437,12 @@ void JSphGpuSingle::Interaction_Forces(TpInter tinter){
   if(Deltag)cusph::AddDelta(Np-Npb,Deltag+Npb,Arg+Npb);//-Adds the Delta-SPH correction for the density. | Añade correccion de Delta-SPH a Arg[]. 
   CheckCudaError(met,"Failed while executing kernels of interaction.");
 
+  //-Reset interpolation varibles (ace,ar,shiftpos) over inout particles.                     //<vs_innlet>
+  if(InOut)InOut->ClearInteractionVarsGpu(InOutCount,InOutPartg,Aceg,Arg,ViscDtg,ShiftPosg);  //<vs_innlet>
+
   //-Calculates maximum value of ViscDt.
   if(Np)ViscDtMax=cusph::ReduMaxFloat(Np,0,ViscDtg,CellDivSingle->GetAuxMem(cusph::ReduMaxFloatSize(Np)));
-  ////-Calculates maximum value of Ace (periodic and inout particles are ignored).  //<vs_no_innlet>
-  //-Calculates maximum value of Ace (periodic and inout particles are ignored).  //<vs_innlet>
+  //-Calculates maximum value of Ace (periodic particles are ignored). ViscDtg is used like auxiliary memory.
   AceMax=ComputeAceMax(ViscDtg); 
 
   CheckCudaError(met,"Failed in reduction of viscdt.");
@@ -454,10 +456,8 @@ void JSphGpuSingle::Interaction_Forces(TpInter tinter){
 double JSphGpuSingle::ComputeAceMax(float *auxmem){
   float acemax=0;
   const unsigned npf=Np-Npb;
-  //if(!PeriActive)cusph::ComputeAceMod(npf,Aceg+Npb,auxmem);//-Without periodic conditions. | Sin condiciones periodicas.                                                               //<vs_no_innlet>
-  //else cusph::ComputeAceMod(npf,Codeg+Npb,Aceg+Npb,auxmem);//-With periodic conditions ignores the periodic particles. | Con condiciones periodicas ignora las particulas periodicas.  //<vs_no_innlet>
-  if(!PeriActive && !InOut)cusph::ComputeAceMod(npf,Aceg+Npb,auxmem);//-Without periodic conditions and no inout particles. | Sin condiciones periodicas ni particulas inout.            //<vs_innlet>
-  else cusph::ComputeAceMod(npf,Codeg+Npb,Aceg+Npb,auxmem);          //-Without periodic or inout particles. | Con particulas periodicas o inout.                                        //<vs_innlet> 
+  if(!PeriActive)cusph::ComputeAceMod(npf,Aceg+Npb,auxmem);//-Without periodic conditions. | Sin condiciones periodicas.                                                               //<vs_no_innlet>
+  else cusph::ComputeAceMod(npf,Codeg+Npb,Aceg+Npb,auxmem);//-With periodic conditions ignores the periodic particles. | Con condiciones periodicas ignora las particulas periodicas.  //<vs_no_innlet>
   if(npf)acemax=cusph::ReduMaxFloat(npf,0,auxmem,CellDivSingle->GetAuxMem(cusph::ReduMaxFloatSize(npf)));
   return(sqrt(double(acemax)));
 }

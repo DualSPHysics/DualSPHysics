@@ -106,9 +106,6 @@ void JSphGpuSingle::InOutInit(double timestepini){
   //-Checks position of new particles and calculates cell.
   cusphinout::UpdatePosFluid(PeriActive,newnp,Np,Posxyg,Poszg,Dcellg,Codeg);
 
-  //-Updates new particle values for Verlet.
-  if(VelrhopM1g)cudaMemset(VelrhopM1g+Np,0,sizeof(float4)*+newnp);//-VelrhopM1c is not used for inlet particles.
-  //if(VelrhopM1c)memcpy(VelrhopM1c+Np,Velrhopc+Np,sizeof(tfloat4)*+newnp);
   //-Updates new particle values for Laminar+SPS.
   if(SpsTaug)cudaMemset(SpsTaug+Np,0,sizeof(tsymatrix3f)*newnp);
   if(DBG_INOUT_PARTINIT)DgSaveVtkParticlesGpu("CfgInOut_InletIni.vtk",0,Np,Np+newnp,Posxyg,Poszg,Codeg,Idpg,Velrhopg);
@@ -133,6 +130,9 @@ void JSphGpuSingle::InOutInit(double timestepini){
 
   //-Calculates interpolated velocity for inlet/outlet particles.
   if(InOut->GetInterpolatedVel())InOut->InterpolateVelGpu(float(timestepini),InOutCount,InOutPartg,Posxyg,Poszg,Codeg,Idpg,Velrhopg);
+
+  //-Updates velocity and rhop of M1 variables starting from current velocity and rhop when Verlet is used. 
+  if(VelrhopM1g)InOut->UpdateVelrhopM1Gpu(InOutCount,InOutPartg,Velrhopg,VelrhopM1g);
 
   if(DBG_INOUT_PARTINIT)DgSaveVtkParticlesGpu("CfgInOut_InletIni.vtk",2,0,Np,Posxyg,Poszg,Codeg,Idpg,Velrhopg);
   TmgStop(Timers,TMG_SuInOut);
@@ -183,9 +183,7 @@ void JSphGpuSingle::InOutComputeStep(double stepdt){
   TmgStop(Timers,TMG_SuInOut_AA);
   //DgSaveVtkParticlesGpu("_ComputeStep_XX.vtk",2,0,Np,Posxyg,Poszg,Codeg,Idpg,Velrhopg);
 
-  //-Updates new particle values for Verlet.
   TmgStart(Timers,TMG_SuInOut_BB);
-  if(VelrhopM1g)cudaMemset(VelrhopM1g+Np,0,sizeof(tfloat4)*+newnp);//-VelrhopM1g is not used for inlet particles.
   //-Updates new particle values for Laminar+SPS.
   if(SpsTaug)cudaMemset(SpsTaug+Np,0,sizeof(tsymatrix3f)*newnp);
   //-Updates number of particles.
@@ -223,6 +221,9 @@ void JSphGpuSingle::InOutComputeStep(double stepdt){
 
   //-Calculates interpolated velocity for inlet/outlet particles.
   if(InOut->GetInterpolatedVel())InOut->InterpolateVelGpu(float(TimeStep+stepdt),InOutCount,InOutPartg,Posxyg,Poszg,Codeg,Idpg,Velrhopg);
+
+  //-Updates velocity and rhop of M1 variables starting from current velocity and rhop when Verlet is used. 
+  if(VelrhopM1g)InOut->UpdateVelrhopM1Gpu(InOutCount,InOutPartg,Velrhopg,VelrhopM1g);
 
   TmgStop(Timers,TMG_SuInOut);
   //Log->Printf("%u>--------> [InOutComputeStep_fin]",Nstep);
