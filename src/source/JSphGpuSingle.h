@@ -69,6 +69,7 @@ public:
   JSphGpuSingle();
   ~JSphGpuSingle();
   void Run(std::string appname,JCfgRun *cfg,JLog2 *log);
+
 };
 
 #endif

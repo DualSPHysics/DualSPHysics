@@ -357,6 +357,28 @@ std::string StrTrim(const std::string &cad){
 }
 
 //==============================================================================
+/// Gets string without spaces at the beginning.
+//==============================================================================
+std::string StrTrimBegin(const std::string &cad){
+  std::string ret;
+  int lsp=0;
+  for(int c=0;c<int(cad.length())&&cad[c]==' ';c++)lsp++;
+  int size=int(cad.length())-(lsp);
+  return(size>0? cad.substr(lsp,size): "");
+}
+
+//==============================================================================
+/// Gets string without spaces at the end.
+//==============================================================================
+std::string StrTrimEnd(const std::string &cad){
+  std::string ret;
+  int rsp=0;
+  for(int c=int(cad.length())-1;c<int(cad.length())&&cad[c]==' ';c--)rsp++;
+  int size=int(cad.length())-(rsp);
+  return(size>0? cad.substr(0,size): "");
+}
+
+//==============================================================================
 /// Gets string without repeated spaces.
 //==============================================================================
 std::string StrTrimRepeated(const std::string &cad){

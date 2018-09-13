@@ -55,6 +55,7 @@ using std::endl;
 //==============================================================================
 JSph::JSph(bool cpu,bool withmpi):Cpu(cpu),WithMpi(withmpi){
   ClassName="JSph";
+  DgNum=0;
   DataBi4=NULL;
   DataOutBi4=NULL;
   DataFloatBi4=NULL;

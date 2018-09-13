@@ -32,7 +32,6 @@
 #include "JTimeOut.h"
 #include "JSphAccInput.h"
 #include "JGaugeSystem.h"
-
 #include <climits>
 
 using namespace std;
@@ -1659,7 +1658,8 @@ void JSphCpu::UpdatePos(tdouble3 rpos,double movx,double movy,double movz
 /// Calculate new values of position, velocity & density for fluid (using Verlet).
 /// Calcula nuevos valores de posicion, velocidad y densidad para el fluido (usando Verlet).
 //==============================================================================
-template<bool shift> void JSphCpu::ComputeVerletVarsFluid(const tfloat4 *velrhop1,const tfloat4 *velrhop2,double dt,double dt2
+template<bool shift> void JSphCpu::ComputeVerletVarsFluid(
+  const tfloat4 *velrhop1,const tfloat4 *velrhop2,double dt,double dt2
   ,tdouble3 *pos,unsigned *dcell,typecode *code,tfloat4 *velrhopnew)const
 {
   const double dt205=0.5*dt*dt;

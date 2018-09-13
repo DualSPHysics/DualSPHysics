@@ -252,6 +252,7 @@ public:
   ~JSphCpu();
 
   void UpdatePos(tdouble3 pos0,double dx,double dy,double dz,bool outrhop,unsigned p,tdouble3 *pos,unsigned *cell,typecode *code)const;
+
 };
 
 #endif
