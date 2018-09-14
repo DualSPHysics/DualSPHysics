@@ -143,7 +143,7 @@ protected:
   llong GetAllocMemoryCpu()const;
   void PrintAllocMemory(llong mcpu)const;
 
-  unsigned GetParticlesData(unsigned n,unsigned pini,bool cellorderdecode,bool onlynormal
+  unsigned GetParticlesData(unsigned n,unsigned pini,bool onlynormal
     ,unsigned *idp,tdouble3 *pos,tfloat3 *vel,float *rhop,typecode *code);
   void ConfigOmp(const JCfgRun *cfg);
 

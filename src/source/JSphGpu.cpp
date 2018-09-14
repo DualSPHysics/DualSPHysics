@@ -501,16 +501,14 @@ void JSphGpu::ParticlesDataUp(unsigned n){
 /// Recovers particle data from the GPU and returns the particle number that
 /// are less than n if the paeriodic particles are removed.
 /// - code: Recovers data of Codeg.
-/// - cellorderdecode: Reordes position and velocity components according to CellOrder.
 /// - onlynormal: Onlly retains the normal particles, removes the periodic ones.
 ///
 /// Recupera datos de particulas de la GPU y devuelve el numero de particulas que
 /// sera menor que n si se eliminaron las periodicas.
 /// - code: Recupera datos de Codeg.
-/// - cellorderdecode: Reordena componentes de pos y vel segun CellOrder.
 /// - onlynormal: Solo se queda con las normales, elimina las particulas periodicas.
 //==============================================================================
-unsigned JSphGpu::ParticlesDataDown(unsigned n,unsigned pini,bool code,bool cellorderdecode,bool onlynormal){
+unsigned JSphGpu::ParticlesDataDown(unsigned n,unsigned pini,bool code,bool onlynormal){
   unsigned num=n;
   cudaMemcpy(Idp,Idpg+pini,sizeof(unsigned)*n,cudaMemcpyDeviceToHost);
   cudaMemcpy(Posxy,Posxyg+pini,sizeof(double2)*n,cudaMemcpyDeviceToHost);
@@ -540,8 +538,6 @@ unsigned JSphGpu::ParticlesDataDown(unsigned n,unsigned pini,bool code,bool cell
     AuxVel[p]=TFloat3(Velrhop[p].x,Velrhop[p].y,Velrhop[p].z);
     AuxRhop[p]=Velrhop[p].w;
   }
-  //-Reorder components in their original order. | Reordena componentes en su orden original.
-  if(cellorderdecode)DecodeCellOrder(n,AuxPos,AuxVel);
   return(num);
 }
 
@@ -682,9 +678,9 @@ void JSphGpu::InitFloating(){
     //-Loads PART data.
     ftdata.LoadPart(PartBegin);
     for(unsigned cf=0;cf<FtCount;cf++){
-      FtObjs[cf].center=OrderCodeValue(CellOrder,ftdata.GetPartCenter(cf));
-      FtObjs[cf].fvel=OrderCodeValue(CellOrder,ftdata.GetPartFvel(cf));
-      FtObjs[cf].fomega=OrderCodeValue(CellOrder,ftdata.GetPartFomega(cf));
+      FtObjs[cf].center=ftdata.GetPartCenter(cf);
+      FtObjs[cf].fvel=ftdata.GetPartFvel(cf);
+      FtObjs[cf].fomega=ftdata.GetPartFomega(cf);
       FtObjs[cf].radius=ftdata.GetHeadRadius(cf);
     }
     DemDtForce=ftdata.GetPartDemDtForce();
@@ -760,7 +756,7 @@ void JSphGpu::InitFloating(){
 /// Inicializa vectores y variables para la ejecucion.
 //==============================================================================
 void JSphGpu::InitRunGpu(){
-  ParticlesDataDown(Np,0,false,false,false);
+  ParticlesDataDown(Np,0,false,false);
   InitRun(Np,Idp,AuxPos);
 
   if(TStep==STEP_Verlet)cudaMemcpy(VelrhopM1g,Velrhopg,sizeof(float4)*Np,cudaMemcpyDeviceToDevice);
@@ -1252,7 +1248,7 @@ void JSphGpu::DgSaveVtkParticlesGpu(std::string filename,int numfile,unsigned pi
   filename=DirDataOut+filename;
   //-Allocates memory.
   const unsigned n=pfin-pini;
-  ParticlesDataDown(n,pini,code,true,false);
+  ParticlesDataDown(n,pini,code,false);
   tfloat3 *pos=new tfloat3[n];
   for(unsigned p=0;p<n;p++)pos[p]=ToTFloat3(AuxPos[p]);
   byte *type=new byte[n];

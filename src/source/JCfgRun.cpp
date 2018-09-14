@@ -46,7 +46,6 @@ void JCfgRun::Reset(){
   OmpThreads=0;
   BlockSizeMode=BSIZEMODE_Fixed;
   SvTimers=true;
-  CellOrder=ORDER_None;
   CellMode=CELLMODE_2H;
   DomainMode=0;
   DomainParticlesMin=DomainParticlesMax=TDouble3(0);
@@ -111,7 +110,6 @@ void JCfgRun::VisuInfo()const{
 #else
   printf("        0: Fixed value (128) is used\n\n");
 #endif
-  //printf("    -cellorder:<axis> Indicates the order of the axes. (xyz/xzy/yxz/yzx/zxy/zyx)\n");
   printf("    -cellmode:<mode>  Specifies the cell division mode\n");
   printf("        2h        Lowest and the least expensive in memory (by default)\n");
   printf("        h         Fastest and the most expensive in memory\n\n");
@@ -188,7 +186,6 @@ void JCfgRun::VisuConfig()const{
   PrintVar("  PosDouble",PosDouble,ln);
   PrintVar("  OmpThreads",OmpThreads,ln);
   PrintVar("  BlockSize",BlockSizeMode,ln);
-  PrintVar("  CellOrder",GetNameCellOrder(CellOrder),ln);
   PrintVar("  CellMode",GetNameCellMode(CellMode),ln);
   PrintVar("  TStep",TStep,ln);
   PrintVar("  VerletSteps",VerletSteps,ln);
@@ -346,21 +343,6 @@ void JCfgRun::LoadOpts(string *optlis,int optn,int lv,string file){
 #endif
         else ErrorParm(opt,c,lv,file);
       }
-      //else if(txword=="CELLORDER"){
-      //  bool ok=true;
-      //  if(!txopt.empty()){
-      //    txopt=StrUpper(txopt);
-      //    if(txopt=="XYZ")CellOrder=ORDER_XYZ;
-      //    else if(txopt=="XZY")CellOrder=ORDER_XZY;
-      //    else if(txopt=="YXZ")CellOrder=ORDER_YXZ;
-      //    else if(txopt=="YZX")CellOrder=ORDER_YZX;
-      //    else if(txopt=="ZXY")CellOrder=ORDER_ZXY;
-      //    else if(txopt=="ZYX")CellOrder=ORDER_ZYX;
-      //    else ok=false;
-      //  }
-      //  else ok=false;
-      //  if(!ok)ErrorParm(opt,c,lv,file);
-      //}
       else if(txword=="CELLMODE"){
         bool ok=true;
         if(!txoptfull.empty()){

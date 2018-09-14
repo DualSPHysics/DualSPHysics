@@ -118,9 +118,6 @@ void JSphCpuSingle::ConfigDomain(){
   //-Computes MK domain for boundary and fluid particles.
   MkInfo->ComputeMkDomains(Np,Posc,Codec);
 
-  //-Apply configuration of CellOrder. | Aplica configuracion de CellOrder.
-  ConfigCellOrder(CellOrder,Np,Posc,Velrhopc);
-
   //-Configure cells division. | Configura division celdas.
   ConfigCellDivision();
   //-Sets local domain of the simulation within Map_Cells and computes DomCellCode.
@@ -132,7 +129,7 @@ void JSphCpuSingle::ConfigDomain(){
 
   //-Creates object for Celldiv on the CPU and selects a valid cellmode.
   //-Crea objeto para divide en CPU y selecciona un cellmode valido.
-  CellDivSingle=new JCellDivCpuSingle(Stable,FtCount!=0,PeriActive,CellOrder,CellMode
+  CellDivSingle=new JCellDivCpuSingle(Stable,FtCount!=0,PeriActive,CellMode
     ,Scell,Map_PosMin,Map_PosMax,Map_Cells,CaseNbound,CaseNfixed,CaseNpb,Log,DirOut);
   CellDivSingle->DefineDomain(DomCellCode,DomCelIni,DomCelFin,DomPosMin,DomPosMax);
   ConfigCellDiv((JCellDivCpu*)CellDivSingle);
@@ -432,7 +429,7 @@ void JSphCpuSingle::RunCellDivide(bool updateperiodic){
     tfloat3* vel=ArraysCpu->ReserveFloat3();
     float* rhop=ArraysCpu->ReserveFloat();
     typecode* code=ArraysCpu->ReserveTypeCode();
-    unsigned num=GetParticlesData(npfout,Np,true,false,idp,pos,vel,rhop,code);
+    unsigned num=GetParticlesData(npfout,Np,false,idp,pos,vel,rhop,code);
     AddParticlesOut(npfout,idp,pos,vel,rhop,code);
     ArraysCpu->Free(idp);
     ArraysCpu->Free(pos);
@@ -456,7 +453,7 @@ void JSphCpuSingle::AbortBoundOut(){
   tfloat3* vel=ArraysCpu->ReserveFloat3();
   float* rhop=ArraysCpu->ReserveFloat();
   typecode* code=ArraysCpu->ReserveTypeCode();
-  GetParticlesData(nboundout,Np,true,false,idp,pos,vel,rhop,code);
+  GetParticlesData(nboundout,Np,false,idp,pos,vel,rhop,code);
   //-Shows excluded particles information and aborts execution.
   JSph::AbortBoundOut(nboundout,idp,pos,vel,rhop,code);
 }
@@ -927,7 +924,7 @@ void JSphCpuSingle::SaveData(){
     pos=ArraysCpu->ReserveDouble3();
     vel=ArraysCpu->ReserveFloat3();
     rhop=ArraysCpu->ReserveFloat();
-    unsigned npnormal=GetParticlesData(Np,0,true,PeriActive!=0,idp,pos,vel,rhop,NULL);
+    unsigned npnormal=GetParticlesData(Np,0,PeriActive!=0,idp,pos,vel,rhop,NULL);
     if(npnormal!=npsave)RunException("SaveData","The number of particles is invalid.");
   }
   //-Gather additional information. | Reune informacion adicional.
@@ -946,7 +943,7 @@ void JSphCpuSingle::SaveData(){
     infoplus.timesim=TimerSim.GetElapsedTimeD()/1000.;
   }
   //-Stores particle data. | Graba datos de particulas.
-  const tdouble3 vdom[2]={OrderDecode(CellDivSingle->GetDomainLimits(true)),OrderDecode(CellDivSingle->GetDomainLimits(false))};
+  const tdouble3 vdom[2]={CellDivSingle->GetDomainLimits(true),CellDivSingle->GetDomainLimits(false)};
   JSph::SaveData(npsave,idp,pos,vel,rhop,1,vdom,&infoplus);
   //-Free auxiliary memory for particle data. | Libera memoria auxiliar para datos de particulas.
   ArraysCpu->Free(idp);

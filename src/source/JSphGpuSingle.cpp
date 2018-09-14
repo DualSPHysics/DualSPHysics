@@ -153,9 +153,6 @@ void JSphGpuSingle::ConfigDomain(){
   //-Computes MK domain for boundary and fluid particles.
   MkInfo->ComputeMkDomains(Np,AuxPos,Code);
 
-  //-Applies configuration of CellOrder.
-  ConfigCellOrder(CellOrder,Np,AuxPos,Velrhop);
-
   //-Configure cell division.
   ConfigCellDivision();
   //-Sets local domain of the simulation within Map_Cells and computes DomCellCode.
@@ -174,7 +171,7 @@ void JSphGpuSingle::ConfigDomain(){
 
   //-Creates object for Celldiv on the GPU and selects a valid cellmode.
   //-Crea objeto para divide en GPU y selecciona un cellmode valido.
-  CellDivSingle=new JCellDivGpuSingle(Stable,FtCount!=0,PeriActive,CellOrder,CellMode
+  CellDivSingle=new JCellDivGpuSingle(Stable,FtCount!=0,PeriActive,CellMode
     ,Scell,Map_PosMin,Map_PosMax,Map_Cells,CaseNbound,CaseNfixed,CaseNpb,Log,DirOut);
   CellDivSingle->DefineDomain(DomCellCode,DomCelIni,DomCelFin,DomPosMin,DomPosMax);
   ConfigCellDiv((JCellDivGpu*)CellDivSingle);
@@ -364,7 +361,7 @@ void JSphGpuSingle::RunCellDivide(bool updateperiodic){
   TmgStart(Timers,TMG_NlOutCheck);
   unsigned npfout=CellDivSingle->GetNpfOut();
   if(npfout){
-    ParticlesDataDown(npfout,Np,true,true,false);
+    ParticlesDataDown(npfout,Np,true,false);
     AddParticlesOut(npfout,Idp,AuxPos,AuxVel,AuxRhop,Code);
   }
   TmgStop(Timers,TMG_NlOutCheck);
@@ -378,7 +375,7 @@ void JSphGpuSingle::RunCellDivide(bool updateperiodic){
 void JSphGpuSingle::AbortBoundOut(){
   const unsigned nboundout=CellDivSingle->GetNpbOut();
   //-Get data of excluded boundary particles.
-  ParticlesDataDown(nboundout,Np,true,true,false);
+  ParticlesDataDown(nboundout,Np,true,false);
   //-Shows excluded particles information and aborts execution.
   JSph::AbortBoundOut(nboundout,Idp,AuxPos,AuxVel,AuxRhop,Code);
 }
@@ -641,7 +638,7 @@ void JSphGpuSingle::SaveData(){
   //-Retrieves particle data from the GPU. | Recupera datos de particulas en GPU.
   if(save){
     TmgStart(Timers,TMG_SuDownData);
-    unsigned npnormal=ParticlesDataDown(Np,0,false,true,PeriActive!=0);
+    unsigned npnormal=ParticlesDataDown(Np,0,false,PeriActive!=0);
     if(npnormal!=npsave)RunException("SaveData","The number of particles is invalid.");
     TmgStop(Timers,TMG_SuDownData);
   }
@@ -670,7 +667,7 @@ void JSphGpuSingle::SaveData(){
     infoplus.timesim=TimerSim.GetElapsedTimeD()/1000.;
   }
   //-Stores particle data. | Graba datos de particulas.
-  const tdouble3 vdom[2]={OrderDecode(CellDivSingle->GetDomainLimits(true)),OrderDecode(CellDivSingle->GetDomainLimits(false))};
+  const tdouble3 vdom[2]={CellDivSingle->GetDomainLimits(true),CellDivSingle->GetDomainLimits(false)};
   JSph::SaveData(npsave,Idp,AuxPos,AuxVel,AuxRhop,1,vdom,&infoplus);
   TmgStop(Timers,TMG_SuSavePart);
 }

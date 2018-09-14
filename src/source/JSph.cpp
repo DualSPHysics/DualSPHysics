@@ -153,7 +153,6 @@ void JSph::InitVars(){
   CasePosMin=CasePosMax=TDouble3(0);
   CaseNp=CaseNbound=CaseNfixed=CaseNmoving=CaseNfloat=CaseNfluid=CaseNpb=0;
 
-  memset(&PeriodicConfig,0,sizeof(StPeriodic));
   PeriActive=0; PeriX=PeriY=PeriZ=false;
   PeriXinc=PeriYinc=PeriZinc=TDouble3(0);
 
@@ -169,7 +168,6 @@ void JSph::InitVars(){
 
   AllocMemoryFloating(0);
 
-  CellOrder=ORDER_None;
   CellMode=CELLMODE_None;
   Hdiv=0;
   Scell=0;
@@ -417,7 +415,6 @@ void JSph::LoadConfig(const JCfgRun *cfg){
   }
   else TimeOut->Config(FileXml,"case.execution.special.timeout",TimePart);
 
-  CellOrder=cfg->CellOrder;
   CellMode=cfg->CellMode;
   if(cfg->DomainMode==1){
     ConfigDomainParticles(cfg->DomainParticlesMin,cfg->DomainParticlesMax);
@@ -1025,109 +1022,6 @@ void JSph::RunInitialize(unsigned np,unsigned npb,const tdouble3 *pos,const unsi
 }
 
 //==============================================================================
-/// Configures CellOrder and adjusts order of components in data.
-/// Configura CellOrder y ajusta orden de componentes en datos.
-//==============================================================================
-void JSph::ConfigCellOrder(TpCellOrder order,unsigned np,tdouble3* pos,tfloat4* velrhop){
-  //-Stores initial periodic configuration in PeriodicConfig.  
-  PeriodicConfig=StrPeriodic(PeriActive,PeriXinc,PeriYinc,PeriZinc);
-  //-Applies CellOrder.  
-  CellOrder=order;
-  if(CellOrder==ORDER_None)CellOrder=ORDER_XYZ;
-  if(Simulate2D&&CellOrder!=ORDER_XYZ&&CellOrder!=ORDER_ZYX)RunException("ConfigCellOrder","In 2D simulations the value of CellOrder must be XYZ or ZYX.");
-  Log->Print(fun::VarStr("CellOrder",string(GetNameCellOrder(CellOrder))));
-  if(CellOrder!=ORDER_XYZ){
-    RunException("ConfigCellOrder","Only CellOrder==ORDER_XYZ is allowed.");
-    //-Modifies initial particle data.
-    OrderCodeData(CellOrder,np,pos);
-    OrderCodeData(CellOrder,np,velrhop);
-    //-Modifies other constants.
-    Gravity=OrderCodeValue(CellOrder,Gravity);
-    MapRealPosMin=OrderCodeValue(CellOrder,MapRealPosMin);
-    MapRealPosMax=OrderCodeValue(CellOrder,MapRealPosMax);
-    MapRealSize=OrderCodeValue(CellOrder,MapRealSize);
-    Map_PosMin=OrderCodeValue(CellOrder,Map_PosMin);
-    Map_PosMax=OrderCodeValue(CellOrder,Map_PosMax);
-    Map_Size=OrderCodeValue(CellOrder,Map_Size);
-    //-Modifies periodic configuration. 
-    bool perix=PeriX,periy=PeriY,periz=PeriZ;
-    bool perixy=(perix && periy),perixz=(perix && periz),periyz=(periy && periz);
-    tdouble3 perixinc=PeriXinc,periyinc=PeriYinc,perizinc=PeriZinc;
-    tuint3 v={1,2,3};
-    v=OrderCode(v);
-    if(v.x==2){ PeriX=periy; PeriXinc=OrderCode(periyinc); }
-    if(v.x==3){ PeriX=periz; PeriXinc=OrderCode(perizinc); }
-    if(v.y==1){ PeriY=perix; PeriYinc=OrderCode(perixinc); }
-    if(v.y==3){ PeriY=periz; PeriYinc=OrderCode(perizinc); }
-    if(v.z==1){ PeriZ=perix; PeriZinc=OrderCode(perixinc); }
-    if(v.z==2){ PeriZ=periy; PeriZinc=OrderCode(periyinc); }
-    //if(perixy){
-    //  PeriXY=(CellOrder==ORDER_XYZ||CellOrder==ORDER_YXZ);
-    //  PeriXZ=(CellOrder==ORDER_XZY||CellOrder==ORDER_YZX);
-    //  PeriYZ=(CellOrder==ORDER_ZXY||CellOrder==ORDER_ZYX);
-    //}
-    //if(perixz){
-    //  PeriXY=(CellOrder==ORDER_XZY||CellOrder==ORDER_ZXY);
-    //  PeriXZ=(CellOrder==ORDER_XYZ||CellOrder==ORDER_ZYX);
-    //  PeriYZ=(CellOrder==ORDER_YXZ||CellOrder==ORDER_YZX);
-    //}
-    //if(periyz){
-    //  PeriXY=(CellOrder==ORDER_YZX||CellOrder==ORDER_ZYX);
-    //  PeriXZ=(CellOrder==ORDER_YXZ||CellOrder==ORDER_ZXY);
-    //  PeriYZ=(CellOrder==ORDER_XYZ||CellOrder==ORDER_XZY);
-    //}
-    PeriActive=DefPeriActive(PeriX,PeriY,PeriZ);
-  }
-}
-
-//==============================================================================
-/// Converts pos[] and vel[] to the original dimension order.
-/// Convierte pos[] y vel[] al orden dimensional original.
-//==============================================================================
-void JSph::DecodeCellOrder(unsigned np,tdouble3 *pos,tfloat3 *vel)const{
-  if(CellOrder!=ORDER_XYZ){
-    OrderDecodeData(CellOrder,np,pos);
-    OrderDecodeData(CellOrder,np,vel);
-  }
-}
-
-//==============================================================================
-/// Modifies order of components of an array of type tfloat3.
-/// Modifica orden de componentes de un array de tipo tfloat3.
-//==============================================================================
-void JSph::OrderCodeData(TpCellOrder order,unsigned n,tfloat3 *v){
-  if(order==ORDER_XZY)for(unsigned c=0;c<n;c++)v[c]=ReOrderXZY(v[c]);
-  if(order==ORDER_YXZ)for(unsigned c=0;c<n;c++)v[c]=ReOrderYXZ(v[c]);
-  if(order==ORDER_YZX)for(unsigned c=0;c<n;c++)v[c]=ReOrderYZX(v[c]);
-  if(order==ORDER_ZXY)for(unsigned c=0;c<n;c++)v[c]=ReOrderZXY(v[c]);
-  if(order==ORDER_ZYX)for(unsigned c=0;c<n;c++)v[c]=ReOrderZYX(v[c]);
-}
-
-//==============================================================================
-/// Modifies order of components of an array of type tdouble3.
-/// Modifica orden de componentes de un array de tipo tdouble3.
-//==============================================================================
-void JSph::OrderCodeData(TpCellOrder order,unsigned n,tdouble3 *v){
-  if(order==ORDER_XZY)for(unsigned c=0;c<n;c++)v[c]=ReOrderXZY(v[c]);
-  if(order==ORDER_YXZ)for(unsigned c=0;c<n;c++)v[c]=ReOrderYXZ(v[c]);
-  if(order==ORDER_YZX)for(unsigned c=0;c<n;c++)v[c]=ReOrderYZX(v[c]);
-  if(order==ORDER_ZXY)for(unsigned c=0;c<n;c++)v[c]=ReOrderZXY(v[c]);
-  if(order==ORDER_ZYX)for(unsigned c=0;c<n;c++)v[c]=ReOrderZYX(v[c]);
-}
-
-//==============================================================================
-/// Modifies order of components of an array of type tfloat4.
-/// Modifica orden de componentes de un array de tipo tfloat4.
-//==============================================================================
-void JSph::OrderCodeData(TpCellOrder order,unsigned n,tfloat4 *v){
-  if(order==ORDER_XZY)for(unsigned c=0;c<n;c++)v[c]=ReOrderXZY(v[c]);
-  if(order==ORDER_YXZ)for(unsigned c=0;c<n;c++)v[c]=ReOrderYXZ(v[c]);
-  if(order==ORDER_YZX)for(unsigned c=0;c<n;c++)v[c]=ReOrderYZX(v[c]);
-  if(order==ORDER_ZXY)for(unsigned c=0;c<n;c++)v[c]=ReOrderZXY(v[c]);
-  if(order==ORDER_ZYX)for(unsigned c=0;c<n;c++)v[c]=ReOrderZYX(v[c]);
-}
-
-//==============================================================================
 /// Configures cell division.
 //==============================================================================
 void JSph::ConfigCellDivision(){
@@ -1139,7 +1033,7 @@ void JSph::ConfigCellDivision(){
   //-Prints configuration.
   Log->Print(fun::VarStr("CellMode",string(GetNameCellMode(CellMode))));
   Log->Print(fun::VarStr("Hdiv",Hdiv));
-  Log->Print(string("MapCells=(")+fun::Uint3Str(OrderDecode(Map_Cells))+")");
+  Log->Print(string("MapCells=(")+fun::Uint3Str(Map_Cells)+")");
   //-Creates VTK file with map cells.
   if(SaveMapCellsVtkSize()<1024*1024*10)SaveMapCellsVtk(Scell);
   else Log->PrintWarning("File CfgInit_MapCells.vtk was not created because number of cells is too high.");
@@ -1183,7 +1077,7 @@ void JSph::SelecDomain(tuint3 celini,tuint3 celfin){
   DomCellCode=CalcCellCode(DomCells+TUint3(1));
   if(!DomCellCode)RunException(met,string("Failed to select a valid CellCode for ")+fun::UintStr(DomCells.x)+"x"+fun::UintStr(DomCells.y)+"x"+fun::UintStr(DomCells.z)+" cells (CellMode="+GetNameCellMode(CellMode)+").");
   //-Prints configurantion.
-  Log->Print(string("DomCells=(")+fun::Uint3Str(OrderDecode(DomCells))+")");
+  Log->Print(string("DomCells=(")+fun::Uint3Str(DomCells)+")");
   Log->Print(fun::VarStr("DomCellCode",fun::UintStr(PC__GetSx(DomCellCode))+"_"+fun::UintStr(PC__GetSy(DomCellCode))+"_"+fun::UintStr(PC__GetSz(DomCellCode))));
 }
 
@@ -1421,7 +1315,6 @@ void JSph::InitRun(unsigned np,const unsigned *idp,const tdouble3 *pos){
 
   //-Prepares Damping configuration.
   if(Damping){
-    Damping->Config(CellOrder);
     Damping->VisuConfig("Damping configuration:"," ");
   }
 
@@ -1482,8 +1375,8 @@ void JSph::ConfigSaveData(unsigned piece,unsigned pieces,std::string div){
   MkInfo->ConfigPartDataHead(&parthead);
   parthead.ConfigCtes(Dp,H,CteB,RhopZero,Gamma,MassBound,MassFluid,Gravity);
   parthead.ConfigSimNp(NpDynamic,ReuseIds);
-  parthead.ConfigSimMap(OrderDecode(MapRealPosMin),OrderDecode(MapRealPosMax));
-  parthead.ConfigSimPeri(PeriodicConfig.PeriMode,PeriodicConfig.PeriXinc,PeriodicConfig.PeriYinc,PeriodicConfig.PeriZinc);
+  parthead.ConfigSimMap(MapRealPosMin,MapRealPosMax);
+  parthead.ConfigSimPeri(TpPeriFromPeriActive(PeriActive),PeriXinc,PeriYinc,PeriZinc);
   switch(TVisco){
     case VISCO_None:        parthead.ConfigVisco(JPartDataHead::VISCO_None      ,Visco,ViscoBoundFactor);  break;
     case VISCO_Artificial:  parthead.ConfigVisco(JPartDataHead::VISCO_Artificial,Visco,ViscoBoundFactor);  break;
@@ -1513,7 +1406,7 @@ void JSph::ConfigSaveData(unsigned piece,unsigned pieces,std::string div){
     DataOutBi4=new JPartOutBi4Save();
     DataOutBi4->ConfigBasic(piece,pieces,RunCode,AppName,Simulate2D,DirDataOut);
     DataOutBi4->ConfigParticles(CaseNp,CaseNfixed,CaseNmoving,CaseNfloat,CaseNfluid);
-    DataOutBi4->ConfigLimits(OrderDecode(MapRealPosMin),OrderDecode(MapRealPosMax),(RhopOut? RhopOutMin: 0),(RhopOut? RhopOutMax: 0));
+    DataOutBi4->ConfigLimits(MapRealPosMin,MapRealPosMax,(RhopOut? RhopOutMin: 0),(RhopOut? RhopOutMax: 0));
     DataOutBi4->SaveInitial();
     Log->AddFileInfo(DirDataOut+"PartOut_???.obi4","Binary file with particles excluded during simulation (input for PartVtkOut program).");
   }
@@ -1690,8 +1583,7 @@ void JSph::SavePartData(unsigned npok,unsigned nout,const unsigned *idp,const td
 
   //-Stores data of floating bodies.
   if(DataFloatBi4){
-    if(CellOrder==ORDER_XYZ)for(unsigned cf=0;cf<FtCount;cf++)DataFloatBi4->AddPartData(cf,FtObjs[cf].center,FtObjs[cf].fvel,FtObjs[cf].fomega);
-    else                    for(unsigned cf=0;cf<FtCount;cf++)DataFloatBi4->AddPartData(cf,OrderDecodeValue(CellOrder,FtObjs[cf].center),OrderDecodeValue(CellOrder,FtObjs[cf].fvel),OrderDecodeValue(CellOrder,FtObjs[cf].fomega));
+    for(unsigned cf=0;cf<FtCount;cf++)DataFloatBi4->AddPartData(cf,FtObjs[cf].center,FtObjs[cf].fvel,FtObjs[cf].fomega);
     DataFloatBi4->SavePartFloat(Part,TimeStep,(UseDEM? DemDtForce: 0));
   }
 
@@ -1807,7 +1699,7 @@ void JSph::SaveInitialDomainVtk()const{
 /// Devuelve tamaño de fichero VTK con las celdas del mapa.
 //==============================================================================
 unsigned JSph::SaveMapCellsVtkSize()const{
-  const tuint3 cells=OrderDecode(Map_Cells);
+  const tuint3 cells=Map_Cells;
   unsigned nlin=cells.x+cells.z+2;//-Back lines.
   if(!Simulate2D){
     nlin+=cells.x+cells.y+2;//-Bottom lines.
@@ -1822,8 +1714,8 @@ unsigned JSph::SaveMapCellsVtkSize()const{
 /// Genera fichero VTK con las celdas del mapa.
 //==============================================================================
 void JSph::SaveMapCellsVtk(float scell)const{
-  const tuint3 cells=OrderDecode(Map_Cells);
-  tdouble3 pmin=OrderDecode(MapRealPosMin);
+  const tuint3 cells=Map_Cells;
+  tdouble3 pmin=MapRealPosMin;
   tdouble3 pmax=pmin+TDouble3(scell*cells.x,scell*cells.y,scell*cells.z);
   if(Simulate2D)pmin.y=pmax.y=Simulate2DPosY;
   //-Creates lines.

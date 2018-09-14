@@ -287,15 +287,13 @@ void JSphCpu::PrintAllocMemory(llong mcpu)const{
 //==============================================================================
 /// Collect data from a range of particles and return the number of particles that 
 /// will be less than n and eliminate the periodic ones
-/// - cellorderdecode: Reorder components of position (pos) and velocity (vel) according to CellOrder.
 /// - onlynormal: Only keep the normal ones and eliminate the periodic particles.
 ///
 /// Recupera datos de un rango de particulas y devuelve el numero de particulas que
 /// sera menor que n si se eliminaron las periodicas.
-/// - cellorderdecode: Reordena componentes de pos y vel segun CellOrder.
 /// - onlynormal: Solo se queda con las normales, elimina las particulas periodicas.
 //==============================================================================
-unsigned JSphCpu::GetParticlesData(unsigned n,unsigned pini,bool cellorderdecode,bool onlynormal
+unsigned JSphCpu::GetParticlesData(unsigned n,unsigned pini,bool onlynormal
   ,unsigned *idp,tdouble3 *pos,tfloat3 *vel,float *rhop,typecode *code)
 {
   const char met[]="GetParticlesData";
@@ -339,8 +337,6 @@ unsigned JSphCpu::GetParticlesData(unsigned n,unsigned pini,bool cellorderdecode
     num-=ndel;
     if(!code)ArraysCpu->Free(code2);
   }
-  //-Reorder components in their original order. | Reordena componentes en su orden original.
-  if(cellorderdecode)DecodeCellOrder(n,pos,vel);
   return(num);
 }
 
@@ -2093,9 +2089,9 @@ void JSphCpu::InitFloating(){
     //-Load PART data. | Carga datos de PART.
     ftdata.LoadPart(PartBegin);
     for(unsigned cf=0;cf<FtCount;cf++){
-      FtObjs[cf].center=OrderCodeValue(CellOrder,ftdata.GetPartCenter(cf));
-      FtObjs[cf].fvel=OrderCodeValue(CellOrder,ftdata.GetPartFvel(cf));
-      FtObjs[cf].fomega=OrderCodeValue(CellOrder,ftdata.GetPartFomega(cf));
+      FtObjs[cf].center=ftdata.GetPartCenter(cf);
+      FtObjs[cf].fvel=ftdata.GetPartFvel(cf);
+      FtObjs[cf].fomega=ftdata.GetPartFomega(cf);
       FtObjs[cf].radius=ftdata.GetHeadRadius(cf);
     }
     DemDtForce=ftdata.GetPartDemDtForce();
