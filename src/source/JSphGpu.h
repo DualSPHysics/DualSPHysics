@@ -211,7 +211,7 @@ protected:
 
   void ConstantDataUp();
   void ParticlesDataUp(unsigned n);
-  unsigned ParticlesDataDown(unsigned n,unsigned pini,bool code,bool cellorderdecode,bool onlynormal);
+  unsigned ParticlesDataDown(unsigned n,unsigned pini,bool code,bool onlynormal);
   
   void SelecDevice(int gpuid);
   void ConfigBlockSizes(bool usezone,bool useperi);

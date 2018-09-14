@@ -225,7 +225,6 @@ protected:
   JSphMk *MkInfo;            ///<Stores information for the Mk of the particles.
 
   //-Variables for periodic conditions.
-  StPeriodic PeriodicConfig; ///<Stores initial configuration of periodic conditions (before applying CellOrder).
   byte PeriActive;
   bool PeriX,PeriY,PeriZ;
   tdouble3 PeriXinc;    ///<Value that is added at the outer limit to modify the position.
@@ -276,8 +275,6 @@ protected:
 
   JSphInOut *InOut;         ///<Object for inlet/outlet conditions.  //<vs_innlet> 
   JSphBoundCorr *BoundCorr; ///<Object for boundary extrapolated correction (used in combination with InOut).  //<vs_innlet>
-
-  TpCellOrder CellOrder;   ///<Defines axes' ordination of particles in cells. | Orden de ejes en ordenacion de particulas en celdas.
 
   //-Variables for division in cells.
   TpCellMode CellMode;     ///<Cell division mode. | Modo de division en celdas.
@@ -370,21 +367,6 @@ protected:
   void LoadDcellParticles(unsigned n,const typecode *code,const tdouble3 *pos,unsigned *dcell)const;
   void RunInitialize(unsigned np,unsigned npb,const tdouble3 *pos,const unsigned *idp,const typecode *code,tfloat4 *velrhop);
 
-  void ConfigCellOrder(TpCellOrder order,unsigned np,tdouble3* pos,tfloat4* velrhop);
-  void DecodeCellOrder(unsigned np,tdouble3 *pos,tfloat3 *vel)const;
-  tuint3 OrderCode(const tuint3 &v)const{ return(OrderCodeValue(CellOrder,v)); }
-  tfloat3 OrderCode(const tfloat3 &v)const{ return(OrderCodeValue(CellOrder,v)); }
-  tfloat3 OrderDecode(const tfloat3 &v)const{ return(OrderDecodeValue(CellOrder,v)); }
-  tdouble3 OrderCode(const tdouble3 &v)const{ return(OrderCodeValue(CellOrder,v)); }
-  tdouble3 OrderDecode(const tdouble3 &v)const{ return(OrderDecodeValue(CellOrder,v)); }
-  tuint3 OrderDecode(const tuint3 &v)const{ return(OrderDecodeValue(CellOrder,v)); }
-  tmatrix4d OrderCode(const tmatrix4d &v)const{ return(OrderCodeValue(CellOrder,v)); }
-  static void OrderCodeData(TpCellOrder order,unsigned n,tfloat3 *v);
-  static void OrderDecodeData(TpCellOrder order,unsigned n,tfloat3 *v){ OrderCodeData(GetDecodeOrder(order),n,v); }
-  static void OrderCodeData(TpCellOrder order,unsigned n,tdouble3 *v);
-  static void OrderDecodeData(TpCellOrder order,unsigned n,tdouble3 *v){ OrderCodeData(GetDecodeOrder(order),n,v); }
-  static void OrderCodeData(TpCellOrder order,unsigned n,tfloat4 *v);
-  static void OrderDecodeData(TpCellOrder order,unsigned n,tfloat4 *v){ OrderCodeData(GetDecodeOrder(order),n,v); }
   void ConfigCellDivision();
   void SelecDomain(tuint3 celini,tuint3 celfin);
   static unsigned CalcCellCode(tuint3 ncells);
@@ -449,7 +431,6 @@ Consideraciones sobre condiciones periodicas:
   condiciones periodicas esta holgura solo se aplica a MapPosMax.
 - El ajuste de tamaño de dominio realizado por ResizeMapLimits() no afecta a los
   ejes periodicos.
-- El CellOrder se aplica a la configuracion de condiciones periodicas.
 - El halo periodico tendrá una unica celda de grosor 2h aunque en los otros ejes
   se use celdas de tamaño h.
 - En la interaccion, una celda de tamaño 2h o dos celdas de tamaño h del extremo 
@@ -463,7 +444,6 @@ Considerations for periodic conditions:
    periodic conditions this space only applies to MapPosMax.
 - The adjustment of the domain size by ResizeMapLimits() does not affect the
    periodic edges.
-- The CellOrder applies to the configuration of periodic conditions.
 - The periodic halo will have a single cell thick 2h although in the other axes
    h cell size is used.
 - In the interaction, a cell of size 2h or two cells of size h in the

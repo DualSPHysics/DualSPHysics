@@ -62,8 +62,7 @@ void JSphGpuSingle::InOutInit(double timestepini){
   //-Prepares particle data to define inout points starting from special fluid particles.
   JSphInOutPointsParticles partdata;
   if(InOut->MkFluidList.size()>0){
-    if(CellOrder!=ORDER_XYZ)RunException(met,"Only order XYZ is valid for now...");
-    unsigned np=ParticlesDataDown(Np,0,true,false,false);
+    unsigned np=ParticlesDataDown(Np,0,true,false);
     if(np!=Np)RunException(met,"The number of particles is invalid.");
     partdata.Config(MkInfo,Np,AuxPos,Code);
   }

@@ -51,16 +51,7 @@ JDamping::~JDamping(){
 /// Initialisation of variables.
 //==============================================================================
 void JDamping::Reset(){
-  CellOrder=ORDER_None;
   List.clear();
-}
-
-//==============================================================================
-/// Configures object.
-//==============================================================================
-void JDamping::Config(TpCellOrder cellorder){
-  CellOrder=cellorder;
-  if(CellOrder!=ORDER_XYZ)RunException("ConfigOrder","Only order XYZ is valid for now...");
 }
 
 //==============================================================================
