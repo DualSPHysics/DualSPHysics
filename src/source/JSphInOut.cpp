@@ -209,8 +209,7 @@ void JSphInOutZone::ReadXml(JXml *sxml,TiXmlElement* ele,const std::string &dird
 
   //-Obtains information inlet/outlet points.
   Direction=Points->GetDirection();
-  //const tdouble3 ps0=Points->GetPoints()[0]+(Direction*(Dp/2)); //-Moves limit position dp/2 to fluid.
-  PtPlane=PtDom[8]; //-Moves limit position dp/2 to fluid.
+  PtPlane=PtDom[8];
   if(PtPlane==TDouble3(DBL_MAX))RunException(met,"Reference point in inout plane is invalid.");
   Plane=ToTFloat4(fmath::PlanePtVec(PtPlane,Direction));
   NptInit=Points->GetCount();
@@ -419,30 +418,6 @@ void JSphInOutZone::ReadXml(JXml *sxml,TiXmlElement* ele,const std::string &dird
     }
     #endif
   }
-  //-Loads wave configuration.
-  //if(VelMode==MVEL_WaveTheory || ZsurfMode==ZSURF_WaveTheory){
-  //  WaveReg=new JWaveTheoryReg();
-  //  TiXmlElement* elew=ele->FirstChildElement("waveregular");
-  //  if(!elew)RunException(met,"Wave configuration is missing.");
-  //  WaveReg->ReadXml(sxml,elew);
-  //  //-Creates CSV with theoretical data (example).
-  //  JSaveCsv sv(Log->GetDirOut()+fun::PrintStr("Inlet_%d_WaveTheoryExample.csv",IdZone),false);
-  //  sv.AddHead("time;eta;velx;velz");
-  //  const double tf=WaveReg->GetWavePeriod()*3;
-  //  const unsigned nt=100;
-  //  const double dt=tf/nt;
-  //  const double x=0;
-  //  const double z=-WaveReg->GetDepth()*0.5;
-  //  const bool order2=true;
-  //  for(unsigned ct=0;ct<=nt;ct++){
-  //    double t=dt*ct;
-  //    double eta=WaveReg->CalcElevation(t,0,x,order2);
-  //    tdouble3 vel=WaveReg->CalcVelocity(t,0,x,z,order2);
-  //    sv.AddValuesf("%g;%f;%f;%f",t,eta,vel.x,vel.z);
-  //    sv.AddEndl();
-  //  }
-  //  RunException(met,"The use of wave theory is not yet implemented. It is an example to use it...");
-  //}
 }
 
 //==============================================================================
@@ -821,7 +796,6 @@ void JSphInOut::ReadXml(JXml *sxml,TiXmlElement* lis,const JSphInOutPointsPartic
   //-Loads inflow elements.
   const unsigned idmax=CODE_MASKTYPEVALUE-CODE_TYPE_FLUID_INOUT;
   if(idmax!=MaxZones-1)RunException(met,"Maximum number of inlet/outlet zones is invalid.");
-  //Log->Printf("-----> idmax:%u",idmax);
   TiXmlElement* ele=lis->FirstChildElement("inoutzone"); 
   while(ele){
     const unsigned id=GetCount();

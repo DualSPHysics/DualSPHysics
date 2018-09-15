@@ -319,7 +319,6 @@ void JSphInOutPoints::Create3d_Box(JXml *sxml,TiXmlElement* ele){
     if(spt.z-dpz*npz>dpz*0.95){ npz++; dpz=spt.z/double(npz); }
     npx++; npy++; npz++;
     unsigned npt=npx*npy*npz;
-    //Log->Printf("------> npx:%u npt:%u npz:%u",npx,npy,npz);
     //-Resize memory when its size is not enough.
     ResizeMemory(npt);
     //-Calculates position of points.
@@ -333,11 +332,10 @@ void JSphInOutPoints::Create3d_Box(JXml *sxml,TiXmlElement* ele){
       Points[Count+p]=ps+inimove;
       p++;
     }
-    //Log->Printf("------> p:%u npt:%u",p,npt);
     if(p!=npt || Count+p>Size)RunException(met,"Error calculating number of points.");
     Count+=npt;
 
-    ////-Compute domain limits of zone.
+    //-Compute domain limits of zone.
     {
       tdouble3 vxx,vyy;
       if(npz==1){      vxx=vx*(npx); vyy=vy*(npy); } //-Adds one dp.
@@ -417,11 +415,10 @@ void JSphInOutPoints::Create3d_Circle(JXml *sxml,TiXmlElement* ele){
         p++;
       }
     }
-    //Log->Printf("------> p:%u npt:%u",p,npt);
     if(p!=npt || Count+p>Size)RunException(met,"Error calculating number of points.");
     Count+=npt;
 
-    ////-Compute domain limits of zone.
+    //-Compute domain limits of zone.
     {
       const double ra=rasum*nra;
       tdouble3 vxx=TDouble3(ra*cos(0),0,ra*sin(0))*2;
@@ -472,7 +469,6 @@ void JSphInOutPoints::CreatePoints(JXml *sxml,TiXmlElement* lis,const JSphInOutP
   }
   //-Checks direction and position of points in simulation domain.
   CheckPoints(xmlrow);
-  //-Compute domain limits of zone.
 }
 
 //==============================================================================

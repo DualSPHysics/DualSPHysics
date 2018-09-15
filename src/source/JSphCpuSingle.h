@@ -89,6 +89,7 @@ public:
 protected:
   void InOutInit(double timestepini);
   void InOutIgnoreFluidDef(const std::vector<unsigned> &mkfluidlist);
+  void InOutCheckProximity(unsigned newnp);
   void InOutComputeStep(double stepdt);
   void InOutCalculeZsurf();
   void InOutExtrapolateData();

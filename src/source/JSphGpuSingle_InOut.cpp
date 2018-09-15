@@ -26,6 +26,10 @@
 #include "JSphBoundCorr.h"
 #include "JSphGpu_InOut_ker.h"
 #include "JSphInOutPoints.h"
+#include "JSimpleNeigs.h"
+#include "FunctionsMath.h"
+#include "JFormatFiles2.h"
+#include "JAppInfo.h"
 #include <climits>
 
 using namespace std;
@@ -50,12 +54,86 @@ void JSphGpuSingle::InOutIgnoreFluidDef(const std::vector<unsigned> &mkfluidlist
 }
 
 //==============================================================================
+/// Checks proximity of inout particles to other particles and excludes fluid 
+/// particles near the inout particles.
+///
+/// Comprueba proximidad de particulas inout con otras particulas y excluye 
+/// particulas fluid cerca de particulas inout.
+//==============================================================================
+void JSphGpuSingle::InOutCheckProximity(unsigned newnp){
+  const char met[]="InOutCheckProximity";
+  //-Obtain particle data from GPU memory.
+  if(Np!=ParticlesDataDown(Np,0,true,false))RunException(met,"The number of particles is invalid.");
+  //-Look for nearby particles.
+  const double disterror=Dp*0.8;
+  JSimpleNeigs neigs(Np,AuxPos,Scell);
+  unsigned* errpart=(unsigned*)AuxRhop; //-Use AuxRhop like auxiliary memory.
+  memset(errpart,0,sizeof(int)*Np);
+  const unsigned pini=Np-newnp;
+  for(unsigned p=pini;p<Np;p++){//-Only inout particles.
+    const unsigned n=neigs.NearbyPositions(AuxPos[p],p,disterror);
+    const unsigned *selpos=neigs.GetSelectPos();
+    for(unsigned cp=0;cp<n;cp++)errpart[selpos[cp]]=1;
+  }
+  //-Obtain number and type of nearby particles.
+  unsigned nfluid=0,nfluidinout=0,nbound=0;
+  for(unsigned p=0;p<Np;p++)if(errpart[p]){
+    const typecode cod=Code[p];
+    if(CODE_IsFluid(cod)){
+      if(CODE_IsFluidNotInout(cod)){ //-Normal fluid.
+        errpart[p]=1;
+        nfluid++;
+      }
+      else{ //-Inout fluid.
+        errpart[p]=2;
+        nfluidinout++;
+      }
+    }
+    else{ //-Boundary.
+      errpart[p]=3;
+      nbound++;
+    } 
+  }
+  //-Saves VTK file with nearby particles and check errors.
+  if(nfluid+nfluidinout+nbound>0){
+    const unsigned n=nfluid+nfluidinout+nbound;
+    tfloat3* vpos=new tfloat3[n];
+    byte* vtype=new byte[n];
+    unsigned pp=0;
+    for(unsigned p=0;p<Np;p++)if(errpart[p]){
+      vpos[pp]=ToTFloat3(AuxPos[p]);
+      vtype[pp]=byte(errpart[p]);
+      pp++;
+    }
+    std::vector<JFormatFiles2::StScalarData> fields;
+    fields.push_back(JFormatFiles2::DefineField("ErrorType",JFormatFiles2::UChar8,1,vtype));
+    const string filevtk=AppInfo.GetDirOut()+(n>nfluid? "CfgInOut_ErrorParticles.vtk": "CfgInOut_ExcludedParticles.vtk");
+    JFormatFiles2::SaveVtk(filevtk,n,vpos,fields);
+    delete[] vpos;  vpos=NULL;
+    delete[] vtype; vtype=NULL;
+    if(n>nfluid){
+      Log->AddFileInfo(filevtk,"Saves error fluid and boundary particles too close to inout particles.");
+      RunException(met,"There are inout fluid or boundary particles too close to inout particles. Check VTK file CfgInOut_ErrorParticles.vtk with excluded particles.");
+    }
+    else{
+      Log->AddFileInfo(filevtk,"Saves excluded fluid particles too close to inout particles.");
+      Log->PrintfWarning("%u fluid particles were excluded since they are too close to inout particles. Check VTK file CfgInOut_ExcludedParticles.vtk",nfluid);
+      //-Mark fluid particles to ignore.
+      for(unsigned p=0;p<Np;p++)if(errpart[p]==1){
+        Code[p]=CODE_SetOutIgnore(Code[p]); //-Mark fluid particles to ignore.
+      }
+      //-Uploads updated code of particles to the GPU.
+      cudaMemcpy(Codeg,Code,sizeof(typecode)*Np,cudaMemcpyHostToDevice);
+    }
+  }
+}
+
+//==============================================================================
 /// Initialises inlet/outlet conditions.
 /// Inicia condiciones inlet/outlet.
 //==============================================================================
 void JSphGpuSingle::InOutInit(double timestepini){
   const char met[]="InOutInit";
-  //Log->Print("--------> [InOutInit_000]");
   TmgStart(Timers,TMG_SuInOut);
   Log->Print("InOut configuration:");
 
@@ -73,9 +151,6 @@ void JSphGpuSingle::InOutInit(double timestepini){
   //-Mark special fluid particles to ignore. | Marca las particulas fluidas especiales para ignorar.
   InOutIgnoreFluidDef(InOut->MkFluidList,Code);
   partdata.Reset();
-
-  //-Excludes fluid particles near the inlet particles.
-  Log->Print("**** PDTE: Excludes fluid particles near the inlet particles.");
 
   //Log->Printf("++> newnp:%u",newnp);
   //-Resizes memory when it is necessary.
@@ -114,6 +189,9 @@ void JSphGpuSingle::InOutInit(double timestepini){
   TotalNp+=newnp;
   InOut->AddNewNp(newnp);
   IdMax=unsigned(TotalNp-1);
+
+  //-Checks proximity of inout particles to other particles and excludes fluid particles near the inout particles.
+  InOutCheckProximity(newnp);
 
   //-Shows configuration.
   InOut->VisuConfig(""," ");
