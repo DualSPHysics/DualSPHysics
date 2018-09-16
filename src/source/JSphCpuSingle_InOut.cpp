@@ -29,6 +29,7 @@
 #include "FunctionsMath.h"
 #include "JFormatFiles2.h"
 #include "JAppInfo.h"
+#include "JTimeControl.h"
 #include <climits>
 
 using namespace std;
@@ -65,29 +66,34 @@ void JSphCpuSingle::InOutCheckProximity(unsigned newnp){
   unsigned* errpart=(unsigned*)InOutPartc; //-Use InOutPartc like auxiliary memory.
   memset(errpart,0,sizeof(int)*Np);
   const unsigned pini=Np-newnp;
+  JTimeControl tc(5,60);
   for(unsigned p=pini;p<Np;p++){//-Only inout particles.
     const unsigned n=neigs.NearbyPositions(Posc[p],p,disterror);
     const unsigned *selpos=neigs.GetSelectPos();
     for(unsigned cp=0;cp<n;cp++)errpart[selpos[cp]]=1;
+    if(tc.CheckTime())Log->Print(string("  ")+tc.GetInfoFinish(double(p-pini)/double(Np-pini)));
   }
   //-Obtain number and type of nearby particles.
   unsigned nfluid=0,nfluidinout=0,nbound=0;
   for(unsigned p=0;p<Np;p++)if(errpart[p]){
     const typecode cod=Codec[p];
-    if(CODE_IsFluid(cod)){
-      if(CODE_IsFluidNotInout(cod)){ //-Normal fluid.
-        errpart[p]=1;
-        nfluid++;
+    if(CODE_IsNormal(cod)){
+      if(CODE_IsFluid(cod)){
+        if(CODE_IsFluidNotInout(cod)){ //-Normal fluid.
+          errpart[p]=1;
+          nfluid++;
+        }
+        else{ //-Inout fluid.
+          errpart[p]=2;
+          nfluidinout++;
+        }
       }
-      else{ //-Inout fluid.
-        errpart[p]=2;
-        nfluidinout++;
-      }
+      else{ //-Boundary.
+        errpart[p]=3;
+        nbound++;
+      } 
     }
-    else{ //-Boundary.
-      errpart[p]=3;
-      nbound++;
-    } 
+    else errpart[p]=0; //-Ignores non-normal particles.
   }
   //-Saves VTK file with nearby particles and check errors.
   if(nfluid+nfluidinout+nbound>0){

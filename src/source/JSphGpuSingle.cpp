@@ -378,9 +378,9 @@ void JSphGpuSingle::RunCellDivide(bool updateperiodic){
   //-Creates list with particles in inout zones.  //<vs_innlet_ini>
   if(InOut){
     TmgStart(Timers,TMG_SuInOut);
-    TmgStart(Timers,TMG_SuInOut_CC);
+    TmgStart(Timers,TMG_SuInOut_List);
     InOutCount=InOut->CreateListGpu(Nstep,Np-Npb,Npb,Posxyg,Poszg,Codeg,GpuParticlesSize,InOutPartg);
-    TmgStop(Timers,TMG_SuInOut_CC);
+    TmgStop(Timers,TMG_SuInOut_List);
     TmgStop(Timers,TMG_SuInOut);
   }  //<vs_innlet_end>
 }

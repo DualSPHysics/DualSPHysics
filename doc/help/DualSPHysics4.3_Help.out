@@ -24,7 +24,7 @@
  along with DualSPHysics. If not, see <http://www.gnu.org/licenses/>.
 
 
-DualSPHysics4 [MLPistons+RZ+Chrono+Inlet] v4.2.079 (15-09-2018)
+DualSPHysics4 [MLPistons+RZ+Chrono+Inlet] v4.2.080 (16-09-2018)
 ================================================================
 LoadDsphConfig> .../bin/windows/DsphConfig.xml
 Information about execution parameters:
