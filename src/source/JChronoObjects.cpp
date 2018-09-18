@@ -687,6 +687,11 @@ void JChronoObjects::RunChrono(unsigned nstep, double timestep, double dt, bool 
     //-Saves forces for each body and link (link_forces.csv, body_forces.csv).
     ChronoLib->SaveForces();
   }
+  //if(1){
+  //  tdouble3 pcen;
+  //  ChronoLib->GetBodyCenter("ball",pcen);
+  //  Log->Printf("RunChrono----> timestep:%f  dt:%f  ball.center:(%f,%f,%f)",timestep,dt,pcen.x,pcen.y,pcen.z);
+  //}
 }
 
 //==============================================================================
