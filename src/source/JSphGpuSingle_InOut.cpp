@@ -378,12 +378,13 @@ void JSphGpuSingle::BoundCorrectionData(){
   TmgStart(Timers,TMG_SuBoundCorr);
   const unsigned n=BoundCorr->GetCount();
   const float determlimit=BoundCorr->GetDetermLimit();
+  const bool  usedouble  =BoundCorr->GetExtrapDouble();
   for(unsigned c=0;c<n;c++){
     const JSphBoundCorrZone* zo=BoundCorr->GetMkZone(c);
     const typecode boundcode=zo->GetBoundCode();
     const tfloat4 plane=zo->GetPlane();
     const tfloat3 direction=ToTFloat3(zo->GetDirection());
-    cusphinout::Interaction_BoundCorr_Double(Simulate2D,TKernel,CellMode,NpbOk
+    cusphinout::Interaction_BoundCorr(usedouble,Simulate2D,TKernel,CellMode,NpbOk
       ,boundcode,plane,direction,determlimit
       ,CellDivSingle->GetNcells(),CellDivSingle->GetBeginCell(),CellDivSingle->GetCellDomainMin()
       ,Posxyg,Poszg,Codeg,Idpg,Velrhopg);

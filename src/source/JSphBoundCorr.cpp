@@ -160,6 +160,7 @@ JSphBoundCorr::~JSphBoundCorr(){
 //==============================================================================
 void JSphBoundCorr::Reset(){
   DetermLimit=0;
+  ExtrapDouble=false;
   for(int c=0;c<List.size();c++)delete List[c];
   List.clear();
 }
@@ -190,6 +191,8 @@ void JSphBoundCorr::ReadXml(const JXml *sxml,TiXmlElement* lis){
   //-Loads value determlimit.
   if(sxml->CountElements(lis,"determlimit")>1)sxml->ErrReadElement(lis,"determlimit",false,"Several definitions for this value.");
   DetermLimit=sxml->ReadElementFloat(lis,"determlimit","value",true,1e+3f);
+  //-Loads ExtrapDouble.
+  ExtrapDouble=sxml->ReadElementBool(lis,"extrapolatedouble","value",true,false);
   //-Loads list of inputs.
   TiXmlElement* ele=lis->FirstChildElement("mkzone"); 
   while(ele){
@@ -299,6 +302,7 @@ void JSphBoundCorr::SaveVtkConfig(double dp)const{
 void JSphBoundCorr::VisuConfig(std::string txhead,std::string txfoot)const{
   if(!txhead.empty())Log->Print(txhead);
   Log->Printf("DetermLimit: %g",DetermLimit);
+  Log->Printf("ExtrapolateDouble: %s",(ExtrapDouble? "True": "False"));
   for(unsigned c=0;c<GetCount();c++){
     const JSphBoundCorrZone* zo=List[c];
     Log->Printf("MkZone_%u (mkfluid:%u)",zo->IdZone,zo->MkBound);

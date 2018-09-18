@@ -108,6 +108,7 @@ private:
   JLog2 *Log;
 
   float DetermLimit;   ///<Limit for determinant. Use 1e-3 for first_order or 1e+3 for zeroth_order (default=1e+3).
+  bool ExtrapDouble;   ///<Use double calculations for rhop extrapolation from ghost nodes (default=false).
 
   std::vector<JSphBoundCorrZone*> List; ///<List of configurations.
 
@@ -128,6 +129,7 @@ public:
   unsigned GetCount()const{ return(unsigned(List.size())); };
 
   float GetDetermLimit()const{ return(DetermLimit); };
+  bool GetExtrapDouble()const{ return(ExtrapDouble); };
 
   const JSphBoundCorrZone* GetMkZone(unsigned idx)const{ return(idx<GetCount()? List[idx]: NULL); }
 

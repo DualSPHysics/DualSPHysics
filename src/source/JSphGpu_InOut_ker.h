@@ -98,7 +98,7 @@ void Interaction_InOutExtrap(bool usedouble,bool simulate2d,TpKernel tkernel,TpC
   ,float4 *velrhop);
 
 //-Kernels to extrapolate rhop on boundary particles (JSphBoundCorr).
-void Interaction_BoundCorr_Double(bool simulate2d,TpKernel tkernel,TpCellMode cellmode
+void Interaction_BoundCorr(bool usedouble,bool simulate2d,TpKernel tkernel,TpCellMode cellmode
   ,unsigned npbok,typecode boundcode,tfloat4 plane,tfloat3 direction,float determlimit
   ,tuint3 ncells,const int2 *begincell,tuint3 cellmin
   ,const double2 *posxy,const double *posz,const typecode *code,const unsigned *idp

@@ -334,12 +334,13 @@ void JSphCpuSingle::BoundCorrectionData(){
   TmcStart(Timers,TMC_SuBoundCorr);
   const unsigned n=BoundCorr->GetCount();
   const float determlimit=BoundCorr->GetDetermLimit();
+  const bool  usedouble  =BoundCorr->GetExtrapDouble();
   for(unsigned c=0;c<n;c++){
     const JSphBoundCorrZone* zo=BoundCorr->GetMkZone(c);
     const typecode boundcode=zo->GetBoundCode();
     const tfloat4 plane=zo->GetPlane();
     const tfloat3 direction=ToTFloat3(zo->GetDirection());
-    Interaction_BoundCorr(boundcode,plane,direction,determlimit
+    Interaction_BoundCorr(usedouble,boundcode,plane,direction,determlimit
       ,CellDivSingle->GetNcells(),CellDivSingle->GetBeginCell(),CellDivSingle->GetCellDomainMin()
       ,Posc,Codec,Idpc,Velrhopc);
   }
