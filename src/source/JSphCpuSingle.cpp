@@ -448,12 +448,8 @@ void JSphCpuSingle::RunCellDivide(bool updateperiodic){
   }
   TmcStop(Timers,TMC_NlOutCheck);
   BoundChanged=false;
-  //-Creates list with particles in inout zones.  //<vs_innlet_ini>
-  if(InOut){
-    TmcStart(Timers,TMC_SuInOut);
-    InOutCount=InOut->CreateListCpu(Nstep,Np-Npb,Npb,Posc,Idpc,Codec,InOutPartc);
-    TmcStop(Timers,TMC_SuInOut);
-  }  //<vs_innlet_end>
+  //-Creates list with particles in inout zones.  //<vs_innlet>
+  if(InOut)InOutCreateList();                     //<vs_innlet>
 }
 
 //==============================================================================

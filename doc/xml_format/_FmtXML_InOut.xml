@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<!-- *** DualSPHysics (31-08-2018) *** -->
+<!-- *** DualSPHysics (18-09-2018) *** -->
 <!-- *** class: JSphInOut *** -->
 <!------------------------------------------------------------------------------->
 <!------------------------------------------------------------------------------->
@@ -11,6 +11,7 @@
 		</useboxlimit>
 		<userefilling value="true" comment="Use advanced refilling algorithm but slower. It is necessary when outflow becomes inflow (default=false)" />
 		<determlimit value="1e+3" comment="Use 1e-3 for first_order or 1e+3 for zeroth_order (default=1e+3)" />
+		<extrapolatedouble value="false" comment="Use double calculations for rhop and velocity extrapolation from ghost nodes (default=false)" />
 		<inoutzone>
             <convertfluid value="true" comment="Converts fluid in inlet/outlet area (default=true)" />
 			<layers value="6" comment="Number of inlet/outlet particle layers" />
@@ -156,6 +157,7 @@
         <useboxlimit value="true" comment="In/out process is only applied to InOut zones delimited by BoxLimit (default=true)"/>
 		<userefilling value="false" comment="Use advanced refilling algorithm but slower. It is necessary when outflow becomes inflow (default=false)" />
 		<determlimit value="1e+3" comment="Use 1e-3 for first_order or 1e+3 for zeroth_order (default=1e+3)" />
+		<extrapolatedouble value="false" comment="Use double calculations for rhop and velocity extrapolation from ghost nodes (default=false)" />
 		<inoutzone>
 			<zone2d comment="Input zone for 2-D simulations">
 				<line>
@@ -189,6 +191,7 @@
         <useboxlimit value="true" comment="In/out process is only applied to InOut zones delimited by BoxLimit (default=true)"/>
 		<userefilling value="false" comment="Use advanced refilling algorithm but slower. It is necessary when outflow becomes inflow (default=false)" />
 		<determlimit value="1e+3" comment="Use 1e-3 for first_order or 1e+3 for zeroth_order (default=1e+3)" />
+		<extrapolatedouble value="false" comment="Use double calculations for rhop and velocity extrapolation from ghost nodes (default=false)" />
 		<inoutzone>
 			<zone3d comment="Input zone for 3-D simulations">
 				<box>
@@ -295,6 +298,7 @@
 	</imposerhop>
 <!-- Extrapolated rhop -->
 	<imposerhop mode="2" comment="Outlet rhop 0:Imposed fixed value, 1:Hydrostatic, 2:Extrapolated from ghost nodes (default=0)">
+	</imposerhop>
 <!------------------------------------------------------------------------------->
 <!------------------------------------------------------------------------------->
 <!-- *** Zsurf definitions *** -->

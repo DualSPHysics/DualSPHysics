@@ -197,6 +197,10 @@ public:
   float GetInputZbottom()const{ return(InputZbottom); }
   unsigned GetNptInit()const{ return(NptInit); }
   unsigned GetNpartInit()const{ return(NpartInit); }
+
+  TpRhopMode GetRhopMode()const{ return(RhopMode); }
+  TpVelMode GetVelMode()const{ return(VelMode); }
+
   bool GetExtrapolatedData()const{ return(RhopMode==MRHOP_Extrapolated || VelMode==MVEL_Extrapolated); }
   bool GetNoExtrapolatedData()const{ return(RhopMode!=MRHOP_Extrapolated || VelMode!=MVEL_Extrapolated); }
   bool GetVariableVel()const{ return(VelMode==MVEL_Variable); }
@@ -256,6 +260,7 @@ private:
   bool ReuseIds;       ///<Id of particles excluded values ​​are reused.
   double ResizeTime;   ///<Time to calculate number of new particles.
   float DetermLimit;   ///<Limit for determinant. Use 1e-3 for first_order or 1e+3 for zeroth_order (default=1e+3).
+  bool ExtrapDouble;   ///<Use double calculations for rhop and velocity extrapolation from ghost nodes (default=false).
 
   bool UseBoxLimit;     ///<In/out process is only applied to InOut zones delimited by BoxLimit (default=true).
   tfloat3 FreeCentre;   ///<Centre of zone where InOut is not applied (default=centre of simulation domain).
@@ -412,6 +417,7 @@ public:
   void SaveVtkZsurf(unsigned part);
 
   unsigned GetCount()const{ return(unsigned(List.size())); }
+  const JSphInOutZone* GetZone(unsigned ci)const{ return(ci<ListSize? List[ci]: NULL); }
 
   bool GetNoExtrapolatedData()const{ return(NoExtrapolatedData); }
   bool GetExtrapolatedData()const{ return(ExtrapolatedData); }
@@ -440,6 +446,7 @@ public:
 
   bool GetReuseIds()const{ return(ReuseIds); }
   float GetDetermLimit()const{ return(DetermLimit); };
+  bool GetExtrapDouble()const{ return(ExtrapDouble); };
 
   const tfloat4* GetPlanes() const{ return(Planes);  };
   const byte*    GetCfgZone()const{ return(CfgZone); };

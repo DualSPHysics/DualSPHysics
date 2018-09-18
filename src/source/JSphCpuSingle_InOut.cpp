@@ -128,6 +128,16 @@ void JSphCpuSingle::InOutCheckProximity(unsigned newnp){
 }
 
 //==============================================================================
+/// Creates list with particles in inlet/outlet zones.
+/// Crea lista de particulas en zonas inlet/outlet.
+//==============================================================================
+void JSphCpuSingle::InOutCreateList(){
+  TmcStart(Timers,TMC_SuInOut);
+  InOutCount=InOut->CreateListCpu(Nstep,Np-Npb,Npb,Posc,Idpc,Codec,InOutPartc);
+  TmcStop(Timers,TMC_SuInOut);
+}
+
+//==============================================================================
 /// Initialises inlet/outlet conditions.
 /// Inicia condiciones inlet/outlet.
 //==============================================================================
@@ -305,16 +315,15 @@ void JSphCpuSingle::InOutCalculeZsurf(){
 /// Calcula datos extrapolados en el fluido para las particulas inlet/outlet.
 //==============================================================================
 void JSphCpuSingle::InOutExtrapolateData(){
-  TmcStart(Timers,TMC_SuInOutExtrap);
   const tfloat4 *planes =InOut->GetPlanes();
   const byte    *cfgzone=InOut->GetCfgZone();
   const float   *width  =InOut->GetWidth();
   const tfloat3 *dirdata=InOut->GetDirData();
   const float determlimit=InOut->GetDetermLimit();
-  Interaction_InOutExtrap(InOutCount,InOutPartc,cfgzone,planes,width,dirdata,determlimit
+  const bool  usedouble  =InOut->GetExtrapDouble();
+  Interaction_InOutExtrap(usedouble,InOutCount,InOutPartc,cfgzone,planes,width,dirdata,determlimit
     ,CellDivSingle->GetNcells(),CellDivSingle->GetBeginCell(),CellDivSingle->GetCellDomainMin()
     ,Dcellc,Posc,Codec,Idpc,Velrhopc);
-  TmcStop(Timers,TMC_SuInOutExtrap);
 }
 
 //==============================================================================
@@ -322,7 +331,7 @@ void JSphCpuSingle::InOutExtrapolateData(){
 /// Calcula datos extrapolados en el contorno para las particulas inlet/outlet.
 //==============================================================================
 void JSphCpuSingle::BoundCorrectionData(){
-  TmcStart(Timers,TMC_SuInOutBExtrap);
+  TmcStart(Timers,TMC_SuBoundCorr);
   const unsigned n=BoundCorr->GetCount();
   const float determlimit=BoundCorr->GetDetermLimit();
   for(unsigned c=0;c<n;c++){
@@ -334,7 +343,7 @@ void JSphCpuSingle::BoundCorrectionData(){
       ,CellDivSingle->GetNcells(),CellDivSingle->GetBeginCell(),CellDivSingle->GetCellDomainMin()
       ,Posc,Codec,Idpc,Velrhopc);
   }
-  TmcStop(Timers,TMC_SuInOutBExtrap);
+  TmcStop(Timers,TMC_SuBoundCorr);
 }
 
 

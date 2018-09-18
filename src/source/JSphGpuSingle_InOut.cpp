@@ -136,6 +136,18 @@ void JSphGpuSingle::InOutCheckProximity(unsigned newnp){
 }
 
 //==============================================================================
+/// Creates list with particles in inlet/outlet zones.
+/// Crea lista de particulas en zonas inlet/outlet.
+//==============================================================================
+void JSphGpuSingle::InOutCreateList(){
+  TmgStart(Timers,TMG_SuInOut);
+  TmgStart(Timers,TMG_SuInOut_List);
+  InOutCount=InOut->CreateListGpu(Nstep,Np-Npb,Npb,Posxyg,Poszg,Codeg,GpuParticlesSize,InOutPartg);
+  TmgStop(Timers,TMG_SuInOut_List);
+  TmgStop(Timers,TMG_SuInOut);
+}
+
+//==============================================================================
 /// Initialises inlet/outlet conditions.
 /// Inicia condiciones inlet/outlet.
 //==============================================================================
@@ -348,9 +360,10 @@ void JSphGpuSingle::InOutExtrapolateData(){
   const float  *widthg  =InOut->GetWidthg();
   const float3 *dirdatag=InOut->GetDirDatag();
   const float determlimit=InOut->GetDetermLimit();
+  const bool  usedouble  =InOut->GetExtrapDouble();
   const byte extraprhopmask=InOut->GetExtrapRhopMask();
   const byte extrapvelmask =InOut->GetExtrapVelMask();
-  cusphinout::Interaction_InOutExtrap_Double(Simulate2D,TKernel,CellMode
+  cusphinout::Interaction_InOutExtrap(usedouble,Simulate2D,TKernel,CellMode
     ,InOutCount,InOutPartg,cfgzoneg,extraprhopmask,extrapvelmask
     ,planesg,widthg,dirdatag,determlimit
     ,CellDivSingle->GetNcells(),CellDivSingle->GetBeginCell(),CellDivSingle->GetCellDomainMin()
@@ -362,7 +375,7 @@ void JSphGpuSingle::InOutExtrapolateData(){
 /// Calcula datos extrapolados en el contorno para las particulas inlet/outlet.
 //==============================================================================
 void JSphGpuSingle::BoundCorrectionData(){
-  TmgStart(Timers,TMG_SuInOutBExtrap);
+  TmgStart(Timers,TMG_SuBoundCorr);
   const unsigned n=BoundCorr->GetCount();
   const float determlimit=BoundCorr->GetDetermLimit();
   for(unsigned c=0;c<n;c++){
@@ -375,7 +388,7 @@ void JSphGpuSingle::BoundCorrectionData(){
       ,CellDivSingle->GetNcells(),CellDivSingle->GetBeginCell(),CellDivSingle->GetCellDomainMin()
       ,Posxyg,Poszg,Codeg,Idpg,Velrhopg);
   }
-  TmgStop(Timers,TMG_SuInOutBExtrap);
+  TmgStop(Timers,TMG_SuBoundCorr);
 }
 
 

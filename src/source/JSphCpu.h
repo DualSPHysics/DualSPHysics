@@ -281,7 +281,7 @@ protected:
   tdouble3 Interaction_PosNoPeriodic(tdouble3 posp1)const;
 
 
-  template<TpKernel tker,bool sim2d> void InteractionInOutExtrap_Double
+  template<bool sim2d,TpKernel tker> void InteractionInOutExtrap_Double
     (unsigned inoutcount,const int *inoutpart,const byte *cfgzone
     ,const tfloat4 *planes,const float* width,const tfloat3 *dirdata,float determlimit
     ,tint4 nc,int hdiv,unsigned cellinitial
@@ -289,7 +289,15 @@ protected:
     ,const tdouble3 *pos,const typecode *code,const unsigned *idp
     ,tfloat4 *velrhop);
   
-  void Interaction_InOutExtrap(unsigned inoutcount,const int *inoutpart
+  template<bool sim2d,TpKernel tker> void InteractionInOutExtrap_Single
+    (unsigned inoutcount,const int *inoutpart,const byte *cfgzone
+    ,const tfloat4 *planes,const float* width,const tfloat3 *dirdata,float determlimit
+    ,tint4 nc,int hdiv,unsigned cellinitial
+    ,const unsigned *beginendcell,tint3 cellzero,const unsigned *dcell
+    ,const tdouble3 *pos,const typecode *code,const unsigned *idp
+    ,tfloat4 *velrhop);
+  
+  void Interaction_InOutExtrap(bool usedouble,unsigned inoutcount,const int *inoutpart
     ,const byte *cfgzone,const tfloat4 *planes
     ,const float* width,const tfloat3 *dirdata,float determlimit
     ,tuint3 ncells,const unsigned *begincell,tuint3 cellmin,const unsigned *dcell

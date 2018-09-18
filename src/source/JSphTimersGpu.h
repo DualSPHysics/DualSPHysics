@@ -63,7 +63,7 @@ typedef enum{
   ,TMG_SuInOut_Zsurf=21      //<vs_innlet>
   ,TMG_SuInOut_Velrhop=22    //<vs_innlet>
   ,TMG_SuInOut_VelrhGhost=23 //<vs_innlet>
-  ,TMG_SuInOutBExtrap=24     //<vs_innlet>
+  ,TMG_SuBoundCorr=24        //<vs_innlet>
 }CsTypeTimerGPU;
 //#define TMG_COUNT 17       //<vs_no_innlet>
 #define TMG_COUNT 25         //<vs_innlet>
@@ -99,7 +99,7 @@ inline const char* TmgGetName(CsTypeTimerGPU ct){
     case TMG_SuInOut_Zsurf:       return("SU-InOut_Zsurf");      //<vs_innlet>
     case TMG_SuInOut_Velrhop:     return("SU-InOut_Velrhop");    //<vs_innlet>
     case TMG_SuInOut_VelrhGhost:  return("SU-InOut_VelrhGhost"); //<vs_innlet>
-    case TMG_SuInOutBExtrap:    return("SU-InOutBExtrap");       //<vs_innlet>
+    case TMG_SuBoundCorr:       return("SU-BoundCorr");          //<vs_innlet>
   }
   return("???");
 }

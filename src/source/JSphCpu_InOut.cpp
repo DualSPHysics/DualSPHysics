@@ -48,7 +48,7 @@ tdouble3 JSphCpu::Interaction_PosNoPeriodic(tdouble3 posp1)const{
 /// Perform interaction between ghost inlet/outlet nodes and fluid particles. GhostNodes-Fluid
 /// Realiza interaccion entre ghost inlet/outlet nodes y particulas de fluido. GhostNodes-Fluid
 //==============================================================================
-template<TpKernel tker,bool sim2d> void JSphCpu::InteractionInOutExtrap_Double
+template<bool sim2d,TpKernel tker> void JSphCpu::InteractionInOutExtrap_Double
   (unsigned inoutcount,const int *inoutpart,const byte *cfgzone
   ,const tfloat4 *planes,const float* width,const tfloat3 *dirdata,float determlimit
   ,tint4 nc,int hdiv,unsigned cellinitial
@@ -83,7 +83,7 @@ template<TpKernel tker,bool sim2d> void JSphCpu::InteractionInOutExtrap_Double
       //-Initializes variables for calculation.
       double rhopp1=0;
       tdouble3 gradrhopp1=TDouble3(0);
-      tdouble3 velp1=TDouble3(0);       //-Only for velocity.
+      tdouble3 velp1=TDouble3(0);
       tmatrix3d gradvelp1=TMatrix3d(0); //-Only for velocity.
       tmatrix3d a_corr2=TMatrix3d(0);   //-Only for 2D.
       tmatrix4d a_corr3=TMatrix4d(0);   //-Only for 3D.
@@ -187,8 +187,8 @@ template<TpKernel tker,bool sim2d> void JSphCpu::InteractionInOutExtrap_Double
             const double a13=-(velp1.z*invacorr2.a21 + gradvelp1.a31*invacorr2.a22 + gradvelp1.a33*invacorr2.a23);
             const double a31=-(velp1.x*invacorr2.a31 + gradvelp1.a11*invacorr2.a32 + gradvelp1.a13*invacorr2.a33);
             const double a33=-(velp1.z*invacorr2.a31 + gradvelp1.a31*invacorr2.a32 + gradvelp1.a33*invacorr2.a33);
-    	      velrhopfinal.x=float(velghost_x + a11*dpos.x + a31*dpos.z);
-    	      velrhopfinal.z=float(velghost_z + a13*dpos.x + a33*dpos.z);
+            velrhopfinal.x=float(velghost_x + a11*dpos.x + a31*dpos.z);
+            velrhopfinal.z=float(velghost_z + a13*dpos.x + a33*dpos.z);
             velrhopfinal.y=0;
    	      }
         }
@@ -250,7 +250,204 @@ template<TpKernel tker,bool sim2d> void JSphCpu::InteractionInOutExtrap_Double
 /// Perform interaction between ghost inlet/outlet nodes and fluid particles. GhostNodes-Fluid
 /// Realiza interaccion entre ghost inlet/outlet nodes y particulas de fluido. GhostNodes-Fluid
 //==============================================================================
-void JSphCpu::Interaction_InOutExtrap(unsigned inoutcount,const int *inoutpart
+template<bool sim2d,TpKernel tker> void JSphCpu::InteractionInOutExtrap_Single
+  (unsigned inoutcount,const int *inoutpart,const byte *cfgzone
+  ,const tfloat4 *planes,const float* width,const tfloat3 *dirdata,float determlimit
+  ,tint4 nc,int hdiv,unsigned cellinitial
+  ,const unsigned *beginendcell,tint3 cellzero,const unsigned *dcell
+  ,const tdouble3 *pos,const typecode *code,const unsigned *idp
+  ,tfloat4 *velrhop)
+{
+  const char met[]="InteractionInOutExtrap_Single";
+  //-Inicia ejecucion con OpenMP.
+  const int n=int(inoutcount);
+  #ifdef _WITHOMP
+    #pragma omp parallel for schedule (guided)
+  #endif
+  for(int p=0;p<n;p++){
+    const unsigned p1=(unsigned)inoutpart[p];
+    if(!CODE_IsFluidInout(code[p1]))RunException(met,"InOut particle is invalid.");
+    const unsigned izone=CODE_GetIzoneFluidInout(code[p1]);
+    const byte cfg=cfgzone[izone];
+    const bool computerhop=(JSphInOutZone::GetConfigRhopMode(cfg)==JSphInOutZone::MRHOP_Extrapolated);
+    const bool computevel=(JSphInOutZone::GetConfigVelMode(cfg)==JSphInOutZone::MVEL_Extrapolated);
+    if(computerhop || computevel){
+      //-Calculates ghost node position.
+      tdouble3 pos_p1=pos[p1];
+      if(CODE_IsPeriodic(code[p1]))pos_p1=Interaction_PosNoPeriodic(pos_p1);
+      const double displane=fmath::DistPlane(ToTDouble4(planes[izone]),pos_p1)*2;
+      const tdouble3 posp1=pos_p1+TDouble3(displane*dirdata[izone].x, displane*dirdata[izone].y, displane*dirdata[izone].z); //-Ghost node position.
+
+      //-Initializes variables for calculation.
+      float rhopp1=0;
+      tfloat3 gradrhopp1=TFloat3(0);
+      tfloat3 velp1=TFloat3(0);
+      tmatrix3f gradvelp1=TMatrix3f(0); //-Only for velocity.
+      tmatrix3d a_corr2=TMatrix3d(0);   //-Only for 2D.
+      tmatrix4d a_corr3=TMatrix4d(0);   //-Only for 3D.
+
+      //-Obtain limits of interaction.
+      int cxini,cxfin,yini,yfin,zini,zfin;
+      GetInteractionCells(posp1,hdiv,nc,cellzero,cxini,cxfin,yini,yfin,zini,zfin);
+      
+      //-Search for neighbours in adjacent cells. | Busqueda de vecinos en celdas adyacentes.
+      for(int z=zini;z<zfin;z++){
+        const int zmod=(nc.w)*z+cellinitial; //-Sum from start of fluid cells. | Le suma donde empiezan las celdas de fluido.
+        for(int y=yini;y<yfin;y++){
+          int ymod=zmod+nc.x*y;
+          const unsigned pini=beginendcell[cxini+ymod];
+          const unsigned pfin=beginendcell[cxfin+ymod];
+
+          //-Interaction of boundary with type Fluid/Float | Interaccion de Bound con varias Fluid/Float.
+          //---------------------------------------------------------------------------------------------
+          for(unsigned p2=pini;p2<pfin;p2++){
+            const float drx=float(posp1.x-pos[p2].x);
+            const float dry=float(posp1.y-pos[p2].y);
+            const float drz=float(posp1.z-pos[p2].z);
+            const float rr2=drx*drx+dry*dry+drz*drz;
+            if(rr2<=Fourh2 && rr2>=ALMOSTZERO && CODE_IsFluidNotInout(code[p2])){//-Only with fluid particles but not inout particles.
+              //-Wendland or Cubic Spline kernel.
+			  float frx,fry,frz,wab;
+			  if(tker==KERNEL_Wendland)GetKernelWendland(rr2,drx,dry,drz,frx,fry,frz,wab);
+			  else if(tker==KERNEL_Cubic)GetKernelCubic(rr2,drx,dry,drz,frx,fry,frz,wab);
+
+              const tfloat4 velrhopp2=velrhop[p2];
+              //===== Get mass and volume of particle p2 =====
+              float massp2=MassFluid;
+              float volp2=massp2/velrhopp2.w;
+
+              //===== Density and its gradient =====
+              rhopp1+=massp2*wab;
+              gradrhopp1.x+=massp2*frx;
+              gradrhopp1.y+=massp2*fry;
+              gradrhopp1.z+=massp2*frz;
+
+              //===== Kernel values multiplied by volume =====
+              const float vwab=wab*volp2;
+              const float vfrx=frx*volp2;
+              const float vfry=fry*volp2;
+              const float vfrz=frz*volp2;
+
+              //===== Velocity and its gradient =====
+              if(computevel){
+                velp1.x+=vwab*velrhopp2.x;
+                velp1.y+=vwab*velrhopp2.y;
+                velp1.z+=vwab*velrhopp2.z;
+                gradvelp1.a11+=vfrx*velrhopp2.x;	// du/dx
+                gradvelp1.a12+=vfry*velrhopp2.x;	// du/dy
+                gradvelp1.a13+=vfrz*velrhopp2.x;	// du/dz
+                gradvelp1.a21+=vfrx*velrhopp2.y;	// dv/dx
+                gradvelp1.a22+=vfry*velrhopp2.y;	// dv/dx
+                gradvelp1.a23+=vfrz*velrhopp2.y;	// dv/dx
+                gradvelp1.a31+=vfrx*velrhopp2.z;	// dw/dx
+                gradvelp1.a32+=vfry*velrhopp2.z;	// dw/dx
+                gradvelp1.a33+=vfrz*velrhopp2.z;	// dw/dx
+              }
+
+              //===== Matrix A for correction =====
+              if(sim2d){
+            	  a_corr2.a11+=vwab; 	a_corr2.a12+=drx*vwab;	a_corr2.a13+=drz*vwab;
+            	  a_corr2.a21+=vfrx; 	a_corr2.a22+=drx*vfrx; 	a_corr2.a23+=drz*vfrx;
+            	  a_corr2.a31+=vfrz; 	a_corr2.a32+=drx*vfrz;	a_corr2.a33+=drz*vfrz;
+              }
+              else{
+                a_corr3.a11+=vwab;  a_corr3.a12+=drx*vwab;  a_corr3.a13+=dry*vwab;  a_corr3.a14+=drz*vwab;
+                a_corr3.a21+=vfrx;  a_corr3.a22+=drx*vfrx;  a_corr3.a23+=dry*vfrx;  a_corr3.a24+=drz*vfrx;
+                a_corr3.a31+=vfry;  a_corr3.a32+=drx*vfry;  a_corr3.a33+=dry*vfry;  a_corr3.a34+=drz*vfry;
+                a_corr3.a41+=vfrz;  a_corr3.a42+=drx*vfrz;  a_corr3.a43+=dry*vfrz;  a_corr3.a44+=drz*vfrz;
+              }
+            }
+          }
+        }
+      }
+
+      //-Store the results.
+      //--------------------
+      tfloat4 velrhopfinal=velrhop[p1];
+      const tfloat3 dpos=ToTFloat3(pos_p1-posp1); //-Inlet/outlet particle position - ghost node position.
+      if(sim2d){
+        const double determ=fmath::Determinant3x3(a_corr2);
+        if(determ>=determlimit){//-Use 1e-3f (first_order) or 1e+3f (zeroth_order).
+          const tmatrix3d invacorr2=fmath::InverseMatrix3x3(a_corr2,determ);	//CHECKED
+          //-GHOST NODE DENSITY IS MIRRORED BACK TO THE INFLOW OR OUTFLOW PARTICLES.
+          if(computerhop){
+            const float rhoghost=float(invacorr2.a11*rhopp1 + invacorr2.a12*gradrhopp1.x + invacorr2.a13*gradrhopp1.z);
+            const float grx=    -float(invacorr2.a21*rhopp1 + invacorr2.a22*gradrhopp1.x + invacorr2.a23*gradrhopp1.z);
+            const float grz=    -float(invacorr2.a31*rhopp1 + invacorr2.a32*gradrhopp1.x + invacorr2.a33*gradrhopp1.z);
+            velrhopfinal.w=(rhoghost + grx*dpos.x + grz*dpos.z);
+          }
+          //-GHOST NODE VELOCITY ARE MIRRORED BACK TO THE OUTFLOW PARTICLES.
+          if(computevel){
+            const float velghost_x=float(invacorr2.a11*velp1.x + invacorr2.a12*gradvelp1.a11 + invacorr2.a13*gradvelp1.a13);
+            const float velghost_z=float(invacorr2.a11*velp1.z + invacorr2.a12*gradvelp1.a31 + invacorr2.a13*gradvelp1.a33);
+            const float a11=-float(invacorr2.a21*velp1.x + invacorr2.a22*gradvelp1.a11 + invacorr2.a23*gradvelp1.a13);
+            const float a13=-float(invacorr2.a21*velp1.z + invacorr2.a22*gradvelp1.a31 + invacorr2.a23*gradvelp1.a33);
+            const float a31=-float(invacorr2.a31*velp1.x + invacorr2.a32*gradvelp1.a11 + invacorr2.a33*gradvelp1.a13);
+            const float a33=-float(invacorr2.a31*velp1.z + invacorr2.a32*gradvelp1.a31 + invacorr2.a33*gradvelp1.a33);
+    	    velrhopfinal.x=(velghost_x + a11*dpos.x + a31*dpos.z);
+    	    velrhopfinal.z=(velghost_z + a13*dpos.x + a33*dpos.z);
+            velrhopfinal.y=0;
+   	      }
+        }
+        else if(a_corr2.a11>0){ // Determinant is small but a11 is nonzero, 0th order ANGELO
+          if(computerhop)velrhopfinal.w=float(rhopp1/a_corr2.a11);
+          if(computevel){
+            velrhopfinal.x=float(velp1.x/a_corr2.a11);
+            velrhopfinal.z=float(velp1.z/a_corr2.a11);
+            velrhopfinal.y=0;
+   	      }
+        }
+      }
+      else{
+        const double determ=fmath::Determinant4x4(a_corr3);
+        if(determ>=determlimit){
+          const tmatrix4d invacorr3=fmath::InverseMatrix4x4(a_corr3,determ);
+          //-GHOST NODE DENSITY IS MIRRORED BACK TO THE INFLOW OR OUTFLOW PARTICLES.
+          if(computerhop){
+            const float rhoghost=float(invacorr3.a11*rhopp1 + invacorr3.a12*gradrhopp1.x + invacorr3.a13*gradrhopp1.y + invacorr3.a14*gradrhopp1.z);
+            const float grx=    -float(invacorr3.a21*rhopp1 + invacorr3.a22*gradrhopp1.x + invacorr3.a23*gradrhopp1.y + invacorr3.a24*gradrhopp1.z);
+            const float gry=    -float(invacorr3.a31*rhopp1 + invacorr3.a32*gradrhopp1.x + invacorr3.a33*gradrhopp1.y + invacorr3.a34*gradrhopp1.z);
+            const float grz=    -float(invacorr3.a41*rhopp1 + invacorr3.a42*gradrhopp1.x + invacorr3.a43*gradrhopp1.y + invacorr3.a44*gradrhopp1.z);
+            velrhopfinal.w=(rhoghost + grx*dpos.x + gry*dpos.y + grz*dpos.z);
+          }
+          //-GHOST NODE VELOCITY ARE MIRRORED BACK TO THE OUTFLOW PARTICLES.
+          if(computevel){
+            const float velghost_x=float(invacorr3.a11*velp1.x + invacorr3.a12*gradvelp1.a11 + invacorr3.a13*gradvelp1.a12 + invacorr3.a14*gradvelp1.a13);
+      	    const float velghost_y=float(invacorr3.a11*velp1.y + invacorr3.a12*gradvelp1.a11 + invacorr3.a13*gradvelp1.a12 + invacorr3.a14*gradvelp1.a13);
+      	    const float velghost_z=float(invacorr3.a11*velp1.z + invacorr3.a12*gradvelp1.a31 + invacorr3.a13*gradvelp1.a32 + invacorr3.a14*gradvelp1.a33);
+            const float a11=      -float(invacorr3.a21*velp1.x + invacorr3.a22*gradvelp1.a11 + invacorr3.a23*gradvelp1.a12 + invacorr3.a24*gradvelp1.a13);
+        	const float a12=      -float(invacorr3.a21*velp1.y + invacorr3.a22*gradvelp1.a21 + invacorr3.a23*gradvelp1.a22 + invacorr3.a24*gradvelp1.a23);
+        	const float a13=      -float(invacorr3.a21*velp1.z + invacorr3.a22*gradvelp1.a31 + invacorr3.a23*gradvelp1.a32 + invacorr3.a24*gradvelp1.a33);
+        	const float a21=      -float(invacorr3.a31*velp1.x + invacorr3.a32*gradvelp1.a11 + invacorr3.a33*gradvelp1.a12 + invacorr3.a34*gradvelp1.a13);
+        	const float a22=      -float(invacorr3.a31*velp1.y + invacorr3.a32*gradvelp1.a21 + invacorr3.a33*gradvelp1.a22 + invacorr3.a34*gradvelp1.a23);
+        	const float a23=      -float(invacorr3.a31*velp1.z + invacorr3.a32*gradvelp1.a31 + invacorr3.a33*gradvelp1.a32 + invacorr3.a34*gradvelp1.a33);
+        	const float a31=      -float(invacorr3.a41*velp1.x + invacorr3.a42*gradvelp1.a11 + invacorr3.a43*gradvelp1.a12 + invacorr3.a44*gradvelp1.a13);
+        	const float a32=      -float(invacorr3.a41*velp1.y + invacorr3.a42*gradvelp1.a21 + invacorr3.a43*gradvelp1.a22 + invacorr3.a44*gradvelp1.a23);
+        	const float a33=      -float(invacorr3.a41*velp1.z + invacorr3.a42*gradvelp1.a31 + invacorr3.a43*gradvelp1.a32 + invacorr3.a44*gradvelp1.a33);
+            velrhopfinal.x=(velghost_x + a11*dpos.x + a21*dpos.y + a31*dpos.z);
+            velrhopfinal.y=(velghost_y + a12*dpos.x + a22*dpos.y + a32*dpos.z);
+      	    velrhopfinal.z=(velghost_z + a13*dpos.x + a23*dpos.y + a33*dpos.z);
+     	  }
+        }
+        else if(a_corr3.a11>0){ // Determinant is small but a11 is nonzero, 0th order ANGELO
+          if(computerhop)velrhopfinal.w=float(rhopp1/a_corr3.a11);
+          if(computevel){
+            velrhopfinal.x=float(velp1.x/a_corr3.a11);
+            velrhopfinal.y=float(velp1.y/a_corr3.a11);
+            velrhopfinal.z=float(velp1.z/a_corr3.a11);
+     	  }
+        }
+      }
+      velrhop[p1]=velrhopfinal;
+    }
+  }
+}
+
+//==============================================================================
+/// Perform interaction between ghost inlet/outlet nodes and fluid particles. GhostNodes-Fluid
+/// Realiza interaccion entre ghost inlet/outlet nodes y particulas de fluido. GhostNodes-Fluid
+//==============================================================================
+void JSphCpu::Interaction_InOutExtrap(bool usedouble,unsigned inoutcount,const int *inoutpart
   ,const byte *cfgzone,const tfloat4 *planes
   ,const float* width,const tfloat3 *dirdata,float determlimit
   ,tuint3 ncells,const unsigned *begincell,tuint3 cellmin,const unsigned *dcell
@@ -261,13 +458,24 @@ void JSphCpu::Interaction_InOutExtrap(unsigned inoutcount,const int *inoutpart
   const tint3 cellzero=TInt3(cellmin.x,cellmin.y,cellmin.z);
   const unsigned cellfluid=nc.w*nc.z+1;
   const int hdiv=(CellMode==CELLMODE_H? 2: 1);
-  if(TKernel==KERNEL_Wendland){ const TpKernel tker=KERNEL_Wendland;
-    if(Simulate2D)InteractionInOutExtrap_Double<tker,true >(inoutcount,inoutpart,cfgzone,planes,width,dirdata,determlimit,nc,hdiv,cellfluid,begincell,cellzero,dcell,pos,code,idp,velrhop);
-    else          InteractionInOutExtrap_Double<tker,false>(inoutcount,inoutpart,cfgzone,planes,width,dirdata,determlimit,nc,hdiv,cellfluid,begincell,cellzero,dcell,pos,code,idp,velrhop);
+  //-Interaction GhostBoundaryNodes-Fluid.
+  if(usedouble){
+    if(Simulate2D){ const bool sim2d=true;
+      if(TKernel==KERNEL_Wendland)InteractionInOutExtrap_Double<sim2d,KERNEL_Wendland> (inoutcount,inoutpart,cfgzone,planes,width,dirdata,determlimit,nc,hdiv,cellfluid,begincell,cellzero,dcell,pos,code,idp,velrhop);
+      if(TKernel==KERNEL_Cubic)   InteractionInOutExtrap_Double<sim2d,KERNEL_Cubic>    (inoutcount,inoutpart,cfgzone,planes,width,dirdata,determlimit,nc,hdiv,cellfluid,begincell,cellzero,dcell,pos,code,idp,velrhop);
+    }else{          const bool sim2d=false;
+      if(TKernel==KERNEL_Wendland)InteractionInOutExtrap_Double<sim2d,KERNEL_Wendland> (inoutcount,inoutpart,cfgzone,planes,width,dirdata,determlimit,nc,hdiv,cellfluid,begincell,cellzero,dcell,pos,code,idp,velrhop);
+      if(TKernel==KERNEL_Cubic)   InteractionInOutExtrap_Double<sim2d,KERNEL_Cubic>    (inoutcount,inoutpart,cfgzone,planes,width,dirdata,determlimit,nc,hdiv,cellfluid,begincell,cellzero,dcell,pos,code,idp,velrhop);
+    }
   }
-  else{                         const TpKernel tker=KERNEL_Cubic;
-    if(Simulate2D)InteractionInOutExtrap_Double<tker,true >(inoutcount,inoutpart,cfgzone,planes,width,dirdata,determlimit,nc,hdiv,cellfluid,begincell,cellzero,dcell,pos,code,idp,velrhop);
-    else          InteractionInOutExtrap_Double<tker,false>(inoutcount,inoutpart,cfgzone,planes,width,dirdata,determlimit,nc,hdiv,cellfluid,begincell,cellzero,dcell,pos,code,idp,velrhop);
+  else{
+    if(Simulate2D){ const bool sim2d=true;
+      if(TKernel==KERNEL_Wendland)InteractionInOutExtrap_Single<sim2d,KERNEL_Wendland> (inoutcount,inoutpart,cfgzone,planes,width,dirdata,determlimit,nc,hdiv,cellfluid,begincell,cellzero,dcell,pos,code,idp,velrhop);
+      if(TKernel==KERNEL_Cubic)   InteractionInOutExtrap_Single<sim2d,KERNEL_Cubic>    (inoutcount,inoutpart,cfgzone,planes,width,dirdata,determlimit,nc,hdiv,cellfluid,begincell,cellzero,dcell,pos,code,idp,velrhop);
+    }else{          const bool sim2d=false;
+      if(TKernel==KERNEL_Wendland)InteractionInOutExtrap_Single<sim2d,KERNEL_Wendland> (inoutcount,inoutpart,cfgzone,planes,width,dirdata,determlimit,nc,hdiv,cellfluid,begincell,cellzero,dcell,pos,code,idp,velrhop);
+      if(TKernel==KERNEL_Cubic)   InteractionInOutExtrap_Single<sim2d,KERNEL_Cubic>    (inoutcount,inoutpart,cfgzone,planes,width,dirdata,determlimit,nc,hdiv,cellfluid,begincell,cellzero,dcell,pos,code,idp,velrhop);
+    }
   }
 }
 

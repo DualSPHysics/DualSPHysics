@@ -32,7 +32,6 @@
 #include "JLinearValue.h"
 #include "JRangeFilter.h"
 #include "JFormatFiles2.h"
-//#include "JWaveTheory.h"
 
 #ifdef _WITHGPU
 #include "FunctionsCuda.h"
@@ -701,6 +700,7 @@ void JSphInOut::Reset(){
   ReuseIds=false;
   ResizeTime=0;
   DetermLimit=0;
+  ExtrapDouble=false;
 
   UseBoxLimit=true;
   FreeCentre=TFloat3(FLT_MAX);
@@ -742,6 +742,8 @@ void JSphInOut::LoadXmlInit(JXml *sxml,const std::string &place){
   //-Loads value determlimit.
   if(sxml->CountElements(ele,"determlimit")>1)sxml->ErrReadElement(ele,"determlimit",false,"Several definitions for this value.");
   DetermLimit=sxml->ReadElementFloat(ele,"determlimit","value",true,1e+3f);
+  //-Loads ExtrapDouble.
+  ExtrapDouble=sxml->ReadElementBool(ele,"extrapolatedouble","value",true,false);
   //-Loads UseBoxLimit.
   UseBoxLimit=sxml->ReadElementBool(ele,"useboxlimit","value",true,true);
   {
@@ -1859,6 +1861,7 @@ void JSphInOut::VisuConfig(std::string txhead,std::string txfoot)const{
   Log->Printf("UseBoxLimit: %s",(UseBoxLimit? "True": "False"));
   if(UseBoxLimit)Log->Printf("  FreeLimits:%s  FreeCentre:(%s)",fun::Float3xRangeStr(FreeLimitMin,FreeLimitMax,"%g").c_str(),fun::Float3gStr(FreeCentre).c_str());
   Log->Printf("DetermLimit.: %g %s",DetermLimit,(DetermLimit==1e-3f? "(1st order)": (DetermLimit==1e+3f? "(0th order)": " ")));
+  Log->Printf("ExtrapolateDouble: %s",(ExtrapDouble? "True": "False"));
   for(unsigned ci=0;ci<GetCount();ci++){
     JSphInOutZone *izone=List[ci];
     Log->Printf("InOut_%u",izone->GetIdZone());
