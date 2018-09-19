@@ -90,7 +90,7 @@ float InOutComputeZsurf(unsigned nptz,const float3 *ptzpos,float maxdist,float z
   ,float *resg,float *resh);
 
 //-Kernels to extrapolate rhop and velocity (JSphInOut).
-void Interaction_InOutExtrap(bool usedouble,bool simulate2d,TpKernel tkernel,TpCellMode cellmode
+void Interaction_InOutExtrap(byte doublemode,bool simulate2d,TpKernel tkernel,TpCellMode cellmode
   ,unsigned inoutcount,const int *inoutpart,const byte *cfgzone,byte computerhopmask,byte computevelmask
   ,const float4 *planes,const float* width,const float3 *dirdata,float determlimit
   ,tuint3 ncells,const int2 *begincell,tuint3 cellmin
@@ -98,7 +98,7 @@ void Interaction_InOutExtrap(bool usedouble,bool simulate2d,TpKernel tkernel,TpC
   ,float4 *velrhop);
 
 //-Kernels to extrapolate rhop on boundary particles (JSphBoundCorr).
-void Interaction_BoundCorr(bool usedouble,bool simulate2d,TpKernel tkernel,TpCellMode cellmode
+void Interaction_BoundCorr(byte doublemode,bool simulate2d,TpKernel tkernel,TpCellMode cellmode
   ,unsigned npbok,typecode boundcode,tfloat4 plane,tfloat3 direction,float determlimit
   ,tuint3 ncells,const int2 *begincell,tuint3 cellmin
   ,const double2 *posxy,const double *posz,const typecode *code,const unsigned *idp

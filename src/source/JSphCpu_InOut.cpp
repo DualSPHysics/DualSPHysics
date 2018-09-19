@@ -56,7 +56,7 @@ template<bool sim2d,TpKernel tker> void JSphCpu::InteractionInOutExtrap_Double
   ,const tdouble3 *pos,const typecode *code,const unsigned *idp
   ,tfloat4 *velrhop)
 {
-  const char met[]="InteractionInOutExtrap_Double";
+  const char met[]="InteractionInOutExtrap_Double3";
   //Log->Printf("%u>++> InteractionInOutGhost_Double",Nstep);
 
   //-Inicia ejecucion con OpenMP.
@@ -258,7 +258,7 @@ template<bool sim2d,TpKernel tker> void JSphCpu::InteractionInOutExtrap_Single
   ,const tdouble3 *pos,const typecode *code,const unsigned *idp
   ,tfloat4 *velrhop)
 {
-  const char met[]="InteractionInOutExtrap_Single";
+  const char met[]="InteractionInOutExtrap_Double2";
   //-Inicia ejecucion con OpenMP.
   const int n=int(inoutcount);
   #ifdef _WITHOMP
@@ -447,7 +447,7 @@ template<bool sim2d,TpKernel tker> void JSphCpu::InteractionInOutExtrap_Single
 /// Perform interaction between ghost inlet/outlet nodes and fluid particles. GhostNodes-Fluid
 /// Realiza interaccion entre ghost inlet/outlet nodes y particulas de fluido. GhostNodes-Fluid
 //==============================================================================
-void JSphCpu::Interaction_InOutExtrap(bool usedouble,unsigned inoutcount,const int *inoutpart
+void JSphCpu::Interaction_InOutExtrap(byte doublemode,unsigned inoutcount,const int *inoutpart
   ,const byte *cfgzone,const tfloat4 *planes
   ,const float* width,const tfloat3 *dirdata,float determlimit
   ,tuint3 ncells,const unsigned *begincell,tuint3 cellmin,const unsigned *dcell
@@ -459,16 +459,7 @@ void JSphCpu::Interaction_InOutExtrap(bool usedouble,unsigned inoutcount,const i
   const unsigned cellfluid=nc.w*nc.z+1;
   const int hdiv=(CellMode==CELLMODE_H? 2: 1);
   //-Interaction GhostBoundaryNodes-Fluid.
-  if(usedouble){
-    if(Simulate2D){ const bool sim2d=true;
-      if(TKernel==KERNEL_Wendland)InteractionInOutExtrap_Double<sim2d,KERNEL_Wendland> (inoutcount,inoutpart,cfgzone,planes,width,dirdata,determlimit,nc,hdiv,cellfluid,begincell,cellzero,dcell,pos,code,idp,velrhop);
-      if(TKernel==KERNEL_Cubic)   InteractionInOutExtrap_Double<sim2d,KERNEL_Cubic>    (inoutcount,inoutpart,cfgzone,planes,width,dirdata,determlimit,nc,hdiv,cellfluid,begincell,cellzero,dcell,pos,code,idp,velrhop);
-    }else{          const bool sim2d=false;
-      if(TKernel==KERNEL_Wendland)InteractionInOutExtrap_Double<sim2d,KERNEL_Wendland> (inoutcount,inoutpart,cfgzone,planes,width,dirdata,determlimit,nc,hdiv,cellfluid,begincell,cellzero,dcell,pos,code,idp,velrhop);
-      if(TKernel==KERNEL_Cubic)   InteractionInOutExtrap_Double<sim2d,KERNEL_Cubic>    (inoutcount,inoutpart,cfgzone,planes,width,dirdata,determlimit,nc,hdiv,cellfluid,begincell,cellzero,dcell,pos,code,idp,velrhop);
-    }
-  }
-  else{
+  if(doublemode==2){
     if(Simulate2D){ const bool sim2d=true;
       if(TKernel==KERNEL_Wendland)InteractionInOutExtrap_Single<sim2d,KERNEL_Wendland> (inoutcount,inoutpart,cfgzone,planes,width,dirdata,determlimit,nc,hdiv,cellfluid,begincell,cellzero,dcell,pos,code,idp,velrhop);
       if(TKernel==KERNEL_Cubic)   InteractionInOutExtrap_Single<sim2d,KERNEL_Cubic>    (inoutcount,inoutpart,cfgzone,planes,width,dirdata,determlimit,nc,hdiv,cellfluid,begincell,cellzero,dcell,pos,code,idp,velrhop);
@@ -477,6 +468,16 @@ void JSphCpu::Interaction_InOutExtrap(bool usedouble,unsigned inoutcount,const i
       if(TKernel==KERNEL_Cubic)   InteractionInOutExtrap_Single<sim2d,KERNEL_Cubic>    (inoutcount,inoutpart,cfgzone,planes,width,dirdata,determlimit,nc,hdiv,cellfluid,begincell,cellzero,dcell,pos,code,idp,velrhop);
     }
   }
+  else if(doublemode==3){
+    if(Simulate2D){ const bool sim2d=true;
+      if(TKernel==KERNEL_Wendland)InteractionInOutExtrap_Double<sim2d,KERNEL_Wendland> (inoutcount,inoutpart,cfgzone,planes,width,dirdata,determlimit,nc,hdiv,cellfluid,begincell,cellzero,dcell,pos,code,idp,velrhop);
+      if(TKernel==KERNEL_Cubic)   InteractionInOutExtrap_Double<sim2d,KERNEL_Cubic>    (inoutcount,inoutpart,cfgzone,planes,width,dirdata,determlimit,nc,hdiv,cellfluid,begincell,cellzero,dcell,pos,code,idp,velrhop);
+    }else{          const bool sim2d=false;
+      if(TKernel==KERNEL_Wendland)InteractionInOutExtrap_Double<sim2d,KERNEL_Wendland> (inoutcount,inoutpart,cfgzone,planes,width,dirdata,determlimit,nc,hdiv,cellfluid,begincell,cellzero,dcell,pos,code,idp,velrhop);
+      if(TKernel==KERNEL_Cubic)   InteractionInOutExtrap_Double<sim2d,KERNEL_Cubic>    (inoutcount,inoutpart,cfgzone,planes,width,dirdata,determlimit,nc,hdiv,cellfluid,begincell,cellzero,dcell,pos,code,idp,velrhop);
+    }
+  }
+  else RunException("Interaction_InOutExtrap","Double mode calculation is invalid.");
 }
 
 //==============================================================================
@@ -780,7 +781,7 @@ template<bool sim2d,TpKernel tker> void JSphCpu::InteractionBoundCorr_Single
 /// Perform interaction between ghost inlet/outlet nodes and fluid particles. GhostNodes-Fluid
 /// Realiza interaccion entre ghost inlet/outlet nodes y particulas de fluido. GhostNodes-Fluid
 //==============================================================================
-void JSphCpu::Interaction_BoundCorr(bool usedouble,typecode boundcode,tfloat4 plane,tfloat3 direction,float determlimit
+void JSphCpu::Interaction_BoundCorr(byte doublemode,typecode boundcode,tfloat4 plane,tfloat3 direction,float determlimit
   ,tuint3 ncells,const unsigned *begincell,tuint3 cellmin
   ,const tdouble3 *pos,const typecode *code,const unsigned *idp
   ,tfloat4 *velrhop)
@@ -790,16 +791,7 @@ void JSphCpu::Interaction_BoundCorr(bool usedouble,typecode boundcode,tfloat4 pl
   const unsigned cellfluid=nc.w*nc.z+1;
   const int hdiv=(CellMode==CELLMODE_H? 2: 1);
   //-Interaction GhostBoundaryNodes-Fluid.
-  if(usedouble){
-    if(Simulate2D){ const bool sim2d=true;
-      if(TKernel==KERNEL_Wendland)InteractionBoundCorr_Double<sim2d,KERNEL_Wendland>(NpbOk,boundcode,plane,direction,determlimit,nc,hdiv,cellfluid,begincell,cellzero,pos,code,idp,velrhop);
-      if(TKernel==KERNEL_Cubic)   InteractionBoundCorr_Double<sim2d,KERNEL_Cubic>   (NpbOk,boundcode,plane,direction,determlimit,nc,hdiv,cellfluid,begincell,cellzero,pos,code,idp,velrhop);
-    }else{          const bool sim2d=false;
-      if(TKernel==KERNEL_Wendland)InteractionBoundCorr_Double<sim2d,KERNEL_Wendland>(NpbOk,boundcode,plane,direction,determlimit,nc,hdiv,cellfluid,begincell,cellzero,pos,code,idp,velrhop);
-      if(TKernel==KERNEL_Cubic)   InteractionBoundCorr_Double<sim2d,KERNEL_Cubic>   (NpbOk,boundcode,plane,direction,determlimit,nc,hdiv,cellfluid,begincell,cellzero,pos,code,idp,velrhop);
-    }
-  }
-  else{
+  if(doublemode==2){
     if(Simulate2D){ const bool sim2d=true;
       if(TKernel==KERNEL_Wendland)InteractionBoundCorr_Single<sim2d,KERNEL_Wendland>(NpbOk,boundcode,plane,direction,determlimit,nc,hdiv,cellfluid,begincell,cellzero,pos,code,idp,velrhop);
       if(TKernel==KERNEL_Cubic)   InteractionBoundCorr_Single<sim2d,KERNEL_Cubic>   (NpbOk,boundcode,plane,direction,determlimit,nc,hdiv,cellfluid,begincell,cellzero,pos,code,idp,velrhop);
@@ -808,5 +800,15 @@ void JSphCpu::Interaction_BoundCorr(bool usedouble,typecode boundcode,tfloat4 pl
       if(TKernel==KERNEL_Cubic)   InteractionBoundCorr_Single<sim2d,KERNEL_Cubic>   (NpbOk,boundcode,plane,direction,determlimit,nc,hdiv,cellfluid,begincell,cellzero,pos,code,idp,velrhop);
     }
   }
+  else if(doublemode==3){
+    if(Simulate2D){ const bool sim2d=true;
+      if(TKernel==KERNEL_Wendland)InteractionBoundCorr_Double<sim2d,KERNEL_Wendland>(NpbOk,boundcode,plane,direction,determlimit,nc,hdiv,cellfluid,begincell,cellzero,pos,code,idp,velrhop);
+      if(TKernel==KERNEL_Cubic)   InteractionBoundCorr_Double<sim2d,KERNEL_Cubic>   (NpbOk,boundcode,plane,direction,determlimit,nc,hdiv,cellfluid,begincell,cellzero,pos,code,idp,velrhop);
+    }else{          const bool sim2d=false;
+      if(TKernel==KERNEL_Wendland)InteractionBoundCorr_Double<sim2d,KERNEL_Wendland>(NpbOk,boundcode,plane,direction,determlimit,nc,hdiv,cellfluid,begincell,cellzero,pos,code,idp,velrhop);
+      if(TKernel==KERNEL_Cubic)   InteractionBoundCorr_Double<sim2d,KERNEL_Cubic>   (NpbOk,boundcode,plane,direction,determlimit,nc,hdiv,cellfluid,begincell,cellzero,pos,code,idp,velrhop);
+    }
+  }
+  else RunException("Interaction_BoundCorr","Double mode calculation is invalid.");
 }
 

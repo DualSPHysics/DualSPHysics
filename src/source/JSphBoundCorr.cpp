@@ -139,8 +139,8 @@ void JSphBoundCorrZone::GetConfig(std::vector<std::string> &lines)const{
 //==============================================================================
 /// Constructor.
 //==============================================================================
-JSphBoundCorr::JSphBoundCorr(JLog2 *log,JXml *sxml,const std::string &place,const JSphMk *mkinfo)
-  :Log(log)
+JSphBoundCorr::JSphBoundCorr(bool cpu,JLog2 *log,JXml *sxml,const std::string &place,const JSphMk *mkinfo)
+  :Cpu(cpu),Log(log)
 {
   ClassName="JSphBoundCorr";
   Reset();
@@ -160,7 +160,7 @@ JSphBoundCorr::~JSphBoundCorr(){
 //==============================================================================
 void JSphBoundCorr::Reset(){
   DetermLimit=0;
-  ExtrapDouble=false;
+  ExtrapolateMode=0;
   for(int c=0;c<List.size();c++)delete List[c];
   List.clear();
 }
@@ -191,8 +191,12 @@ void JSphBoundCorr::ReadXml(const JXml *sxml,TiXmlElement* lis){
   //-Loads value determlimit.
   if(sxml->CountElements(lis,"determlimit")>1)sxml->ErrReadElement(lis,"determlimit",false,"Several definitions for this value.");
   DetermLimit=sxml->ReadElementFloat(lis,"determlimit","value",true,1e+3f);
-  //-Loads ExtrapDouble.
-  ExtrapDouble=sxml->ReadElementBool(lis,"extrapolatedouble","value",true,false);
+  //-Loads ExtrapolateMode.
+  ExtrapolateMode=sxml->ReadElementInt(lis,"extrapolatemode","value",true,1);
+  if(ExtrapolateMode>3)ExtrapolateMode=3;
+  if(ExtrapolateMode<1)ExtrapolateMode=1;
+  if(ExtrapolateMode<2 && Cpu)ExtrapolateMode=2;
+
   //-Loads list of inputs.
   TiXmlElement* ele=lis->FirstChildElement("mkzone"); 
   while(ele){
@@ -302,7 +306,7 @@ void JSphBoundCorr::SaveVtkConfig(double dp)const{
 void JSphBoundCorr::VisuConfig(std::string txhead,std::string txfoot)const{
   if(!txhead.empty())Log->Print(txhead);
   Log->Printf("DetermLimit: %g",DetermLimit);
-  Log->Printf("ExtrapolateDouble: %s",(ExtrapDouble? "True": "False"));
+  Log->Printf("ExtrapolateMode: %s",(ExtrapolateMode==1? "FastSingle": (ExtrapolateMode==2? "Single": (ExtrapolateMode==3? "Double": "???"))));
   for(unsigned c=0;c<GetCount();c++){
     const JSphBoundCorrZone* zo=List[c];
     Log->Printf("MkZone_%u (mkfluid:%u)",zo->IdZone,zo->MkBound);

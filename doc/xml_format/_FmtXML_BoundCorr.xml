@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<!-- *** DualSPHysics (18-09-2018) *** -->
+<!-- *** DualSPHysics (19-09-2018) *** -->
 <!-- *** class: JSphBoundCorr *** -->
 <!------------------------------------------------------------------------------->
 <!------------------------------------------------------------------------------->
@@ -7,7 +7,7 @@
 <special>
 	<boundcorr>
 		<determlimit value="1e+3" comment="Use 1e-3 for first_order or 1e+3 for zeroth_order (default=1e+3)" />
-		<extrapolatedouble value="false" comment="Use double calculations for rhop and velocity extrapolation from ghost nodes (default=false)" />
+		<extrapolatemode value="1" comment="Calculation mode for rhop extrapolation from ghost nodes 1:fast-single, 2:single, 3:double (default=1)" />
 		<mkzone mkbound="1">
 			<limitpoint x="-1.1" y="0" z="0.1" />
 			<direction x="1" y="0" z="0" comment="Direction to fluid" />

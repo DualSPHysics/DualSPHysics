@@ -700,7 +700,7 @@ void JSphInOut::Reset(){
   ReuseIds=false;
   ResizeTime=0;
   DetermLimit=0;
-  ExtrapDouble=false;
+  ExtrapolateMode=0;
 
   UseBoxLimit=true;
   FreeCentre=TFloat3(FLT_MAX);
@@ -742,8 +742,11 @@ void JSphInOut::LoadXmlInit(JXml *sxml,const std::string &place){
   //-Loads value determlimit.
   if(sxml->CountElements(ele,"determlimit")>1)sxml->ErrReadElement(ele,"determlimit",false,"Several definitions for this value.");
   DetermLimit=sxml->ReadElementFloat(ele,"determlimit","value",true,1e+3f);
-  //-Loads ExtrapDouble.
-  ExtrapDouble=sxml->ReadElementBool(ele,"extrapolatedouble","value",true,false);
+  //-Loads ExtrapolateMode.
+  ExtrapolateMode=sxml->ReadElementInt(ele,"extrapolatemode","value",true,1);
+  if(ExtrapolateMode>3)ExtrapolateMode=3;
+  if(ExtrapolateMode<1)ExtrapolateMode=1;
+  if(ExtrapolateMode<2 && Cpu)ExtrapolateMode=2;
   //-Loads UseBoxLimit.
   UseBoxLimit=sxml->ReadElementBool(ele,"useboxlimit","value",true,true);
   {
@@ -1861,7 +1864,7 @@ void JSphInOut::VisuConfig(std::string txhead,std::string txfoot)const{
   Log->Printf("UseBoxLimit: %s",(UseBoxLimit? "True": "False"));
   if(UseBoxLimit)Log->Printf("  FreeLimits:%s  FreeCentre:(%s)",fun::Float3xRangeStr(FreeLimitMin,FreeLimitMax,"%g").c_str(),fun::Float3gStr(FreeCentre).c_str());
   Log->Printf("DetermLimit.: %g %s",DetermLimit,(DetermLimit==1e-3f? "(1st order)": (DetermLimit==1e+3f? "(0th order)": " ")));
-  Log->Printf("ExtrapolateDouble: %s",(ExtrapDouble? "True": "False"));
+  Log->Printf("ExtrapolateMode: %s",(ExtrapolateMode==1? "FastSingle": (ExtrapolateMode==2? "Single": (ExtrapolateMode==3? "Double": "???"))));
   for(unsigned ci=0;ci<GetCount();ci++){
     JSphInOutZone *izone=List[ci];
     Log->Printf("InOut_%u",izone->GetIdZone());

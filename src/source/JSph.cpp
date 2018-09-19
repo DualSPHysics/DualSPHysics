@@ -749,7 +749,7 @@ void JSph::LoadCaseConfig(){
   //-Configuration of boundary extrapolated correction.
   if(xml.GetNode("case.execution.special.boundextrap",false))RunException(met,"The XML section 'boundextrap' is obsolete.");
   if(xml.GetNode("case.execution.special.boundcorr",false)){
-    BoundCorr=new JSphBoundCorr(Log,&xml,"case.execution.special.boundcorr",MkInfo);
+    BoundCorr=new JSphBoundCorr(Cpu,Log,&xml,"case.execution.special.boundcorr",MkInfo);
   } //<vs_innlet_end> 
  
   NpMinimum=CaseNp-unsigned(PartsOutMax*CaseNfluid);

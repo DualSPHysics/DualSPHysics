@@ -320,8 +320,8 @@ void JSphCpuSingle::InOutExtrapolateData(){
   const float   *width  =InOut->GetWidth();
   const tfloat3 *dirdata=InOut->GetDirData();
   const float determlimit=InOut->GetDetermLimit();
-  const bool  usedouble  =InOut->GetExtrapDouble();
-  Interaction_InOutExtrap(usedouble,InOutCount,InOutPartc,cfgzone,planes,width,dirdata,determlimit
+  const byte doublemode=InOut->GetExtrapolateMode();
+  Interaction_InOutExtrap(doublemode,InOutCount,InOutPartc,cfgzone,planes,width,dirdata,determlimit
     ,CellDivSingle->GetNcells(),CellDivSingle->GetBeginCell(),CellDivSingle->GetCellDomainMin()
     ,Dcellc,Posc,Codec,Idpc,Velrhopc);
 }
@@ -334,13 +334,13 @@ void JSphCpuSingle::BoundCorrectionData(){
   TmcStart(Timers,TMC_SuBoundCorr);
   const unsigned n=BoundCorr->GetCount();
   const float determlimit=BoundCorr->GetDetermLimit();
-  const bool  usedouble  =BoundCorr->GetExtrapDouble();
+  const byte doublemode=BoundCorr->GetExtrapolateMode();
   for(unsigned c=0;c<n;c++){
     const JSphBoundCorrZone* zo=BoundCorr->GetMkZone(c);
     const typecode boundcode=zo->GetBoundCode();
     const tfloat4 plane=zo->GetPlane();
     const tfloat3 direction=ToTFloat3(zo->GetDirection());
-    Interaction_BoundCorr(usedouble,boundcode,plane,direction,determlimit
+    Interaction_BoundCorr(doublemode,boundcode,plane,direction,determlimit
       ,CellDivSingle->GetNcells(),CellDivSingle->GetBeginCell(),CellDivSingle->GetCellDomainMin()
       ,Posc,Codec,Idpc,Velrhopc);
   }

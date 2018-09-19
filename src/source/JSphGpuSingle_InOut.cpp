@@ -360,10 +360,10 @@ void JSphGpuSingle::InOutExtrapolateData(){
   const float  *widthg  =InOut->GetWidthg();
   const float3 *dirdatag=InOut->GetDirDatag();
   const float determlimit=InOut->GetDetermLimit();
-  const bool  usedouble  =InOut->GetExtrapDouble();
+  const byte doublemode=InOut->GetExtrapolateMode();
   const byte extraprhopmask=InOut->GetExtrapRhopMask();
   const byte extrapvelmask =InOut->GetExtrapVelMask();
-  cusphinout::Interaction_InOutExtrap(usedouble,Simulate2D,TKernel,CellMode
+  cusphinout::Interaction_InOutExtrap(doublemode,Simulate2D,TKernel,CellMode
     ,InOutCount,InOutPartg,cfgzoneg,extraprhopmask,extrapvelmask
     ,planesg,widthg,dirdatag,determlimit
     ,CellDivSingle->GetNcells(),CellDivSingle->GetBeginCell(),CellDivSingle->GetCellDomainMin()
@@ -378,13 +378,13 @@ void JSphGpuSingle::BoundCorrectionData(){
   TmgStart(Timers,TMG_SuBoundCorr);
   const unsigned n=BoundCorr->GetCount();
   const float determlimit=BoundCorr->GetDetermLimit();
-  const bool  usedouble  =BoundCorr->GetExtrapDouble();
+  const byte doublemode=BoundCorr->GetExtrapolateMode();
   for(unsigned c=0;c<n;c++){
     const JSphBoundCorrZone* zo=BoundCorr->GetMkZone(c);
     const typecode boundcode=zo->GetBoundCode();
     const tfloat4 plane=zo->GetPlane();
     const tfloat3 direction=ToTFloat3(zo->GetDirection());
-    cusphinout::Interaction_BoundCorr(usedouble,Simulate2D,TKernel,CellMode,NpbOk
+    cusphinout::Interaction_BoundCorr(doublemode,Simulate2D,TKernel,CellMode,NpbOk
       ,boundcode,plane,direction,determlimit
       ,CellDivSingle->GetNcells(),CellDivSingle->GetBeginCell(),CellDivSingle->GetCellDomainMin()
       ,Posxyg,Poszg,Codeg,Idpg,Velrhopg);

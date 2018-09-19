@@ -257,10 +257,10 @@ private:
   tdouble3 MapRealPosMax;
   typecode CodeNewPart;   ///<Code for new fluid particles created starting from inlet particles.
 
-  bool ReuseIds;       ///<Id of particles excluded values ​​are reused.
-  double ResizeTime;   ///<Time to calculate number of new particles.
-  float DetermLimit;   ///<Limit for determinant. Use 1e-3 for first_order or 1e+3 for zeroth_order (default=1e+3).
-  bool ExtrapDouble;   ///<Use double calculations for rhop and velocity extrapolation from ghost nodes (default=false).
+  bool ReuseIds;         ///<Id of particles excluded values ​​are reused.
+  double ResizeTime;     ///<Time to calculate number of new particles.
+  float DetermLimit;     ///<Limit for determinant. Use 1e-3 for first_order or 1e+3 for zeroth_order (default=1e+3).
+  byte ExtrapolateMode;  ///<Calculation mode for rhop and velocity extrapolation from ghost nodes 1:fast-single, 2:single, 3:double (default=1).
 
   bool UseBoxLimit;     ///<In/out process is only applied to InOut zones delimited by BoxLimit (default=true).
   tfloat3 FreeCentre;   ///<Centre of zone where InOut is not applied (default=centre of simulation domain).
@@ -446,7 +446,7 @@ public:
 
   bool GetReuseIds()const{ return(ReuseIds); }
   float GetDetermLimit()const{ return(DetermLimit); };
-  bool GetExtrapDouble()const{ return(ExtrapDouble); };
+  byte GetExtrapolateMode()const{ return(ExtrapolateMode); };
 
   const tfloat4* GetPlanes() const{ return(Planes);  };
   const byte*    GetCfgZone()const{ return(CfgZone); };

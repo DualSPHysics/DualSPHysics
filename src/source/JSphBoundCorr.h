@@ -107,8 +107,8 @@ class JSphBoundCorr : protected JObject
 private:
   JLog2 *Log;
 
-  float DetermLimit;   ///<Limit for determinant. Use 1e-3 for first_order or 1e+3 for zeroth_order (default=1e+3).
-  bool ExtrapDouble;   ///<Use double calculations for rhop extrapolation from ghost nodes (default=false).
+  float DetermLimit;     ///<Limit for determinant. Use 1e-3 for first_order or 1e+3 for zeroth_order (default=1e+3).
+  byte ExtrapolateMode;  ///<Calculation mode for rhop extrapolation from ghost nodes 1:fast-single, 2:single, 3:double (default=1).
 
   std::vector<JSphBoundCorrZone*> List; ///<List of configurations.
 
@@ -120,7 +120,9 @@ private:
   void SaveVtkConfig(double dp)const;
 
 public:
-  JSphBoundCorr(JLog2 *log,JXml *sxml,const std::string &place,const JSphMk *mkinfo);
+  const bool Cpu;
+
+  JSphBoundCorr(bool cpu,JLog2 *log,JXml *sxml,const std::string &place,const JSphMk *mkinfo);
   ~JSphBoundCorr();
 
   void RunAutoConfig(double dp,const JSphMk *mkinfo);
@@ -129,7 +131,7 @@ public:
   unsigned GetCount()const{ return(unsigned(List.size())); };
 
   float GetDetermLimit()const{ return(DetermLimit); };
-  bool GetExtrapDouble()const{ return(ExtrapDouble); };
+  byte GetExtrapolateMode()const{ return(ExtrapolateMode); };
 
   const JSphBoundCorrZone* GetMkZone(unsigned idx)const{ return(idx<GetCount()? List[idx]: NULL); }
 

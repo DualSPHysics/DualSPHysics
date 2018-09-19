@@ -297,7 +297,7 @@ protected:
     ,const tdouble3 *pos,const typecode *code,const unsigned *idp
     ,tfloat4 *velrhop);
   
-  void Interaction_InOutExtrap(bool usedouble,unsigned inoutcount,const int *inoutpart
+  void Interaction_InOutExtrap(byte doublemode,unsigned inoutcount,const int *inoutpart
     ,const byte *cfgzone,const tfloat4 *planes
     ,const float* width,const tfloat3 *dirdata,float determlimit
     ,tuint3 ncells,const unsigned *begincell,tuint3 cellmin,const unsigned *dcell
@@ -323,7 +323,7 @@ protected:
     ,const tdouble3 *pos,const typecode *code,const unsigned *idp
     ,tfloat4 *velrhop);
 
-  void Interaction_BoundCorr(bool usedouble,typecode boundcode,tfloat4 plane,tfloat3 direction,float determlimit
+  void Interaction_BoundCorr(byte doublemode,typecode boundcode,tfloat4 plane,tfloat3 direction,float determlimit
     ,tuint3 ncells,const unsigned *begincell,tuint3 cellmin
     ,const tdouble3 *pos,const typecode *code,const unsigned *idp
     ,tfloat4 *velrhop);
