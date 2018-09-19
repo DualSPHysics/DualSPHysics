@@ -145,6 +145,7 @@ void JSphCpuSingle::InOutInit(double timestepini){
   const char met[]="InOutInit";
   TmcStart(Timers,TMC_SuInOut);
   Log->Print("InOut configuration:");
+  if(PartBegin)RunException(met,"Simulation restart not allowed when Inlet/Outlet is used.");
 
   //-Prepares particle data to define inout points starting from special fluid particles.
   JSphInOutPointsParticles partdata;

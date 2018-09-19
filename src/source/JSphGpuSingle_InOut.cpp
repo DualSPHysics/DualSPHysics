@@ -156,6 +156,7 @@ void JSphGpuSingle::InOutInit(double timestepini){
   //TmgStart(Timers,TMG_SuInOut);
   TmgStart(Timers,TMG_SuInOut_Init);
   Log->Print("InOut configuration:");
+  if(PartBegin)RunException(met,"Simulation restart not allowed when Inlet/Outlet is used.");
 
   //-Prepares particle data to define inout points starting from special fluid particles.
   JSphInOutPointsParticles partdata;

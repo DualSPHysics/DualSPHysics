@@ -1440,6 +1440,7 @@ void JSph::InitRun(unsigned np,const unsigned *idp,const tdouble3 *pos){
   //-Prepares BoundCorr configuration.  //<vs_innlet_ini>
   if(BoundCorr){
     Log->Print("BoundCorr configuration:");
+    if(PartBegin)RunException(met,"Simulation restart not allowed when BoundCorr is used.");
     BoundCorr->RunAutoConfig(Dp,MkInfo);
     BoundCorr->VisuConfig(""," ");
   }//<vs_innlet_end>
