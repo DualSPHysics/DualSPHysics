@@ -1754,7 +1754,7 @@ void JSph::SaveData(unsigned npok,const unsigned *idp,const tdouble3 *pos,const 
   //-Cheks number of excluded particles.
   if(nout){
     //-Cheks number of excluded particles in one PART.
-    if(nout>=float(infoplus->npf)*(float(PartsOutWrn)/100.f)){
+    if(PartsOutWrn<=100 && nout>=float(infoplus->npf)*(float(PartsOutWrn)/100.f)){
       Log->PrintfWarning("More than %d%% of current fluid particles were excluded in one PART (t:%g, nstep:%u)",PartsOutWrn,TimeStep,Nstep);
       if(PartsOutWrn==1)PartsOutWrn=2;
       else if(PartsOutWrn==2)PartsOutWrn=5;
@@ -1763,7 +1763,7 @@ void JSph::SaveData(unsigned npok,const unsigned *idp,const tdouble3 *pos,const 
     }
     //-Cheks number of total excluded particles.
     const unsigned noutt=GetOutPosCount()+GetOutRhopCount()+GetOutMoveCount();
-    if(PartsOutTotWrn<100 && noutt>=float(TotalNp)*(float(PartsOutTotWrn)/100.f)){
+    if(PartsOutTotWrn<=100 && noutt>=float(TotalNp)*(float(PartsOutTotWrn)/100.f)){
       Log->PrintfWarning("More than %d%% of particles were excluded (t:%g, nstep:%u)",PartsOutTotWrn,TimeStep,Nstep);
       PartsOutTotWrn+=10;
     }
