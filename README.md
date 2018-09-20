@@ -78,7 +78,8 @@ This application is being developed in Visual Studio Community 2015 since it is 
 
 Make sure that you install the CUDA SDK beforehand if you want to compile the GPU version, and configure the Visual Studio project to point to the CUDA libraries directory to compile (now prepared for CUDA 9.2).
 
-You can also use the [Makefile](src/source/Makefile). It is possible that you'll need to edit it. Check the GNU/Linux guide on how to compile if you're using the makefile, as it is mostly the same, just installing the things manually by yourself.
+You can also use CMake. It is possible that you'll need to edit it. Check the [Alternative building method via CMAKE
+](https://github.com/DualSPHysics/DualSPHysics/wiki/7.-Compiling-DualSPHysics#alternative-building-method-via-cmake)  section of the wiki for more details.
 
 ## GNU/Linux
 
