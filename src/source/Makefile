@@ -1,4 +1,4 @@
-#DualSPHysics GPU/CPU v4.2.079 For43 15-09-2018
+#DualSPHysics GPU/CPU v4.2.085 24-09-2018
 
 #=============== Compilation Options ===============
 USE_GCC5=NO

@@ -1124,7 +1124,7 @@ unsigned JSphInOut::Config(double timestep,bool stable,bool simulate2d,double si
   CteB=cteb;
   Gamma=gamma;
   GravityZ=gravity.z;
-  if(gravity.x!=0 || gravity.y!=0)RunException(met,"Only gravity in Z is allowed.");
+  if(gravity.x!=0 || gravity.y!=0)Log->PrintfWarning("Only gravity in Z (0,0,%g) is used in inlet/outlet code (e.g.: hydrostatic density or water elevation calculation).",GravityZ);
   CoefHydro=RhopZero*(-GravityZ)/CteB;
   Dp=dp;
   MapRealPosMin=posmin; MapRealPosMax=posmax;

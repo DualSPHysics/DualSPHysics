@@ -463,6 +463,7 @@ double JSphGpuSingle::ComputeAceMax(float *auxmem){
 double JSphGpuSingle::ComputeStep_Ver(){
   Interaction_Forces(INTER_Forces);    //-Interaction.
   const double dt=DtVariable(true);    //-Calculate new dt.
+  if(CaseNmoving)CalcMotion(dt);       //-Calculate motion for moving bodies.
   DemDtForce=dt;                       //(DEM)
   if(TShifting)RunShifting(dt);        //-Shifting.
   ComputeVerlet(dt);                   //-Update particles using Verlet.
@@ -482,6 +483,7 @@ double JSphGpuSingle::ComputeStep_Ver(){
 //==============================================================================
 double JSphGpuSingle::ComputeStep_Sym(){
   const double dt=SymplecticDtPre;
+  if(CaseNmoving)CalcMotion(dt);          //-Calculate motion for moving bodies.
   //-Predictor
   //-----------
   DemDtForce=dt*0.5f;                     //(DEM)

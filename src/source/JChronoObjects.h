@@ -38,6 +38,7 @@
 //#define DISABLE_CHRONO     ///<It allows compile without ChronoLib library.
 
 class JLog2;
+class JSphMk;
 class JXml;
 class TiXmlElement;
 class JChronoData;
@@ -120,6 +121,7 @@ protected:
   void ReadXml(const JXml *sxml, TiXmlElement* lis);
   void ReadXmlValues(const JXml *sxml,TiXmlElement* lis,JChValues* values);
   std::string ReadXmlModelFile(const JXml *sxml,TiXmlElement* ele)const;
+  void ConfigMovingBodies(const JSphMk* mkinfo);
 
   void VisuValues(const JChValues *values)const;
   void VisuBody(const JChBody *body)const;
@@ -139,7 +141,7 @@ public:
   void ConfigDataDVIBodyMoving  (word mkbound,float kfric,float restitu);
   void ConfigDataDVIBodyFixed   (word mkbound,float kfric,float restitu);
 
-  void Init(bool simulate2d);
+  void Init(bool simulate2d,const JSphMk* mkinfo);
   void VisuConfig(std::string txhead, std::string txfoot)const;
 
   bool GetWithMotion()const{ return(WithMotion); }
@@ -147,9 +149,9 @@ public:
   void SetFtData(word mkbound,const tfloat3 &face,const tfloat3 &fomegaace);
   void GetFtData(word mkbound,tdouble3 &fcenter,tfloat3 &fvel,tfloat3 &fomega)const;
 
-  void SetMovingData(word mkbound,bool simple,const tdouble3 &msimple,const tmatrix4d &mmatrix,double dt);
+  void SetMovingData(word mkbound,bool simple,const tdouble3 &msimple,const tmatrix4d &mmatrix,double stepdt);
 
-  void RunChrono(unsigned nstep, double timestep, double dt, bool predictor);
+  void RunChrono(unsigned nstep,double timestep,double dt,bool predictor);
 
   void SavePart(int part);
 };

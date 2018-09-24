@@ -1414,7 +1414,8 @@ void JSph::InitRun(unsigned np,const unsigned *idp,const tdouble3 *pos){
   //-Prepares ChronoObjects configuration.  //<vs_chroono_ini>
   if(ChronoObjects){
     Log->Print("Chrono Objects configuration:");
-    ChronoObjects->Init(Simulate2D);
+    if(PartBegin)RunException(met,"Simulation restart not allowed when Chrono is used.");
+    ChronoObjects->Init(Simulate2D,MkInfo);
     ChronoObjects->VisuConfig(""," ");
   }  //<vs_chroono_end>
 

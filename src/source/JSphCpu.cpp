@@ -169,6 +169,9 @@ void JSphCpu::AllocCpuMemoryParticles(unsigned np,float over){
   if(TShifting!=SHIFT_None){
     ArraysCpu->AddArrayCount(JArraysCpu::SIZE_12B,1); //-shiftpos
   }
+  if(InOut){  //<vs_innlet_ini>
+    ArraysCpu->AddArrayCount(JArraysCpu::SIZE_4B,1);  //-InOutPart
+  }  //<vs_innlet_end>
   //-Shows the allocated memory.
   MemCpuParticles=ArraysCpu->GetAllocMemoryCpu();
   PrintSizeNp(CpuParticlesSize,MemCpuParticles);
@@ -2103,6 +2106,29 @@ void JSphCpu::MoveMatBound(unsigned np,unsigned ini,tmatrix4d m,double dt
 }
 
 //==============================================================================
+/// Calculates predefined movement of boundary particles.
+/// Calcula movimiento predefinido de boundary particles.
+//==============================================================================
+void JSphCpu::CalcMotion(double stepdt){
+  TmcStart(Timers,TMC_SuMotion);
+  const bool motsim=true;
+  const JSphMotion::TpMotionMode mode=(motsim? JSphMotion::MOMT_Simple: JSphMotion::MOMT_Ace2dt);
+  SphMotion->ProcesTime(mode,TimeStep,stepdt);
+  if(ChronoObjects && ChronoObjects->GetWithMotion() && SphMotion->GetActiveMotion()){ //<vs_chroono_ini> 
+    word mkbound;
+    bool typesimple;
+    tdouble3 simplemov;
+    tmatrix4d matmov;
+    const unsigned nref=SphMotion->GetNumObjects();
+    for(unsigned ref=0;ref<nref;ref++)if(SphMotion->ProcesTimeGetData(ref,mkbound,typesimple,simplemov,matmov)){
+      if(Simulate2D && typesimple)simplemov.y=0;
+      ChronoObjects->SetMovingData(mkbound,typesimple,simplemov,matmov,stepdt);
+    }
+  } //<vs_chroono_end>
+  TmcStop(Timers,TMC_SuMotion);
+}
+
+//==============================================================================
 /// Process movement of boundary particles.
 /// Procesa movimiento de boundary particles.
 //==============================================================================
@@ -2110,9 +2136,8 @@ void JSphCpu::RunMotion(double stepdt){
   const char met[]="RunMotion";
   TmcStart(Timers,TMC_SuMotion);
   const bool motsim=true;
-  const JSphMotion::TpMotionMode mode=(motsim? JSphMotion::MOMT_Simple: JSphMotion::MOMT_Ace2dt);
   BoundChanged=false;
-  if(SphMotion->ProcesTime(mode,TimeStep,stepdt)){
+  if(SphMotion->GetActiveMotion()){
     CalcRidp(PeriActive!=0,Npb,0,CaseNfixed,CaseNfixed+CaseNmoving,Codec,Idpc,RidpMove);
     BoundChanged=true;
     bool typesimple;
@@ -2131,9 +2156,6 @@ void JSphCpu::RunMotion(double stepdt){
         if(motsim)MoveMatBound   (nparts,pini,matmov,stepdt,RidpMove,Posc,Dcellc,Velrhopc,Codec); 
         //else    MoveMatBoundAce(nparts,pini,matmov,matmov2,stepdt,RidpMove,Posc,Dcellc,Velrhopc,Acec,Codec);
       }
-      if(ChronoObjects && ChronoObjects->GetWithMotion()){ //<vs_chroono_ini> 
-        ChronoObjects->SetMovingData(SphMotion->GetObjMkBound(ref),typesimple,simplemov,matmov,stepdt);
-      } //<vs_chroono_end>
     }
   }
   //-Process other modes of motion. | Procesa otros modos de motion.

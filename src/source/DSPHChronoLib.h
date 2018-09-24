@@ -68,16 +68,19 @@ class DSPHChronoLib{
   bool GetFtData(word mkbound,tdouble3 &fcenter,tfloat3 &fvel,tfloat3 &fomega)const;
 
   ///Loads motion data to calculate coupling with Chrono.
-  bool SetMovingData(word mkbound,bool simple,const tdouble3 &msimple,const tmatrix4d &mmatrix,double dt);
+  bool SetMovingData(word mkbound,bool simple,const tdouble3 &msimple,const tmatrix4d &mmatrix,double stepdt);
 
-  ///Compute a single timestep for each floating body.
-  bool RunChrono(double timestep,double dt);
+  ///Compute a single timestep for each floating and moving body.
+  bool RunChrono(double timestep,double dt,bool predictor);
 
   ///Saves forces for each body and link (ChronoLink_forces.csv, ChronoBody_forces.csv).
   void SaveForces();
 
   ///Obtains positions of Spring link.
   bool GetSpringLinkPositions(const std::string &linkname,tdouble3 &p1,tdouble3 &p2)const;
+
+  ///Obtains center of body.
+  bool GetBodyCenter(const std::string &bodyname,tdouble3 &pcen)const;
 
 };
 

@@ -30,6 +30,7 @@
 #include "JFormatFiles2.h"
 #include "JRangeFilter.h"
 #include "JSpaceVtkOut.h"
+#include "JSphMk.h"
 #include <cstring>
 #include <cfloat>
 #include <climits>
@@ -482,10 +483,28 @@ void JChronoObjects::SaveVtkScheme()const{
 }
 
 //==============================================================================
+/// Configures center of moving bodies starting from particles domains.
+//==============================================================================
+void JChronoObjects::ConfigMovingBodies(const JSphMk* mkinfo){
+  const char met[]="ConfigMovingBodies";
+  for(unsigned c=0;c<ChronoDataXml->GetBodyCount();c++){
+    const JChBody* body=ChronoDataXml->GetBody(c);
+    if(body->Type==JChBody::BD_Moving){
+      unsigned cb=mkinfo->GetMkBlockByMkBound(body->MkBound);
+      if(cb>=mkinfo->Size())RunException(met,fun::PrintStr("Center of body \'%s\' (mkbound=%u) is not available.",body->IdName.c_str(),body->MkBound));
+      const tdouble3 pcen=(mkinfo->Mkblock(cb)->GetPosMin()+mkinfo->Mkblock(cb)->GetPosMax())/2.;
+      ((JChBodyMoving*)body)->SetInitialCenter(pcen);
+    }
+  }
+}
+
+//==============================================================================
 /// Configures and reads floating data from XML file.
 //==============================================================================
-void JChronoObjects::Init(bool simulate2d){
-  const char met[] = "Init";
+void JChronoObjects::Init(bool simulate2d,const JSphMk* mkinfo){
+  const char met[]="Init";
+  //-Updates center of moving objects.
+  ConfigMovingBodies(mkinfo);
   //-Checks data in ChronoData.
   ChronoDataXml->CheckData();
   //-Creates VTK file with the scheme of Chrono objects.
@@ -644,15 +663,15 @@ void JChronoObjects::GetFtData(word mkbound,tdouble3 &fcenter,tfloat3 &fvel,tflo
 //==============================================================================
 /// Loads motion data to calculate coupling with Chrono.
 //==============================================================================
-void JChronoObjects::SetMovingData(word mkbound,bool simple,const tdouble3 &msimple,const tmatrix4d &mmatrix,double dt){
-  if(!ChronoLib->SetMovingData(mkbound,simple,msimple,mmatrix,dt))RunException("SetMovingData","Error running Chrono library.");
+void JChronoObjects::SetMovingData(word mkbound,bool simple,const tdouble3 &msimple,const tmatrix4d &mmatrix,double stepdt){
+  if(!ChronoLib->SetMovingData(mkbound,simple,msimple,mmatrix,stepdt))RunException("SetMovingData","Error running Chrono library.");
 }
 
 //==============================================================================
 /// Computes a single timestep with Chrono for the system
 //==============================================================================
-void JChronoObjects::RunChrono(unsigned nstep, double timestep, double dt, bool predictor){
-  if(!ChronoLib->RunChrono(timestep,dt))RunException("RunChrono", "Error running Chrono library.");
+void JChronoObjects::RunChrono(unsigned nstep,double timestep,double dt,bool predictor){
+  if(!ChronoLib->RunChrono(timestep,dt,predictor))RunException("RunChrono", "Error running Chrono library.");
   //-Saves floating body data in CSV files.
   if((LastTimeOk==timestep || NextTime<=timestep) && (SaveDataTime==0 || !predictor)){
     const JChronoData* chdata=ChronoLib->GetChronoData();
@@ -687,6 +706,11 @@ void JChronoObjects::RunChrono(unsigned nstep, double timestep, double dt, bool 
     //-Saves forces for each body and link (link_forces.csv, body_forces.csv).
     ChronoLib->SaveForces();
   }
+  //if(1){
+  //  tdouble3 pcen;
+  //  ChronoLib->GetBodyCenter("ball",pcen);
+  //  Log->Printf("RunChrono----> timestep:%f  dt:%f  ball.center:(%f,%f,%f)",timestep,dt,pcen.x,pcen.y,pcen.z);
+  //}
 }
 
 //==============================================================================

@@ -1001,6 +1001,28 @@ void JSphGpu::RunShifting(double dt){
 }
 
 //==============================================================================
+/// Calculates predefined movement of boundary particles.
+/// Calcula movimiento predefinido de boundary particles.
+//==============================================================================
+void JSphGpu::CalcMotion(double stepdt){
+  TmgStart(Timers,TMG_SuMotion);
+  const bool motsim=true;
+  const JSphMotion::TpMotionMode mode=(motsim? JSphMotion::MOMT_Simple: JSphMotion::MOMT_Ace2dt);
+  SphMotion->ProcesTime(mode,TimeStep,stepdt);
+  if(ChronoObjects && ChronoObjects->GetWithMotion() && SphMotion->GetActiveMotion()){ //<vs_chroono_ini> 
+    word mkbound;
+    bool typesimple;
+    tdouble3 simplemov;
+    tmatrix4d matmov;
+    const unsigned nref=SphMotion->GetNumObjects();
+    for(unsigned ref=0;ref<nref;ref++)if(SphMotion->ProcesTimeGetData(ref,mkbound,typesimple,simplemov,matmov)){
+      if(Simulate2D && typesimple)simplemov.y=0;
+      ChronoObjects->SetMovingData(mkbound,typesimple,simplemov,matmov,stepdt);
+    }
+  } //<vs_chroono_end>
+}
+
+//==============================================================================
 /// Processes boundary particle movement.
 /// Procesa movimiento de boundary particles.
 //==============================================================================
@@ -1008,9 +1030,8 @@ void JSphGpu::RunMotion(double stepdt){
   const char met[]="RunMotion";
   TmgStart(Timers,TMG_SuMotion);
   const bool motsim=true;
-  const JSphMotion::TpMotionMode mode=(motsim? JSphMotion::MOMT_Simple: JSphMotion::MOMT_Ace2dt);
   BoundChanged=false;
-  if(SphMotion->ProcesTime(mode,TimeStep,stepdt)){
+  if(SphMotion->GetActiveMotion()){
     cusph::CalcRidp(PeriActive!=0,Npb,0,CaseNfixed,CaseNfixed+CaseNmoving,Codeg,Idpg,RidpMoveg);
     BoundChanged=true;
     bool typesimple;
@@ -1029,9 +1050,6 @@ void JSphGpu::RunMotion(double stepdt){
         if(motsim)cusph::MoveMatBound   (PeriActive,Simulate2D,nparts,pini,matmov,stepdt,RidpMoveg,Posxyg,Poszg,Dcellg,Velrhopg,Codeg);
         //else    cusph::MoveMatBoundAce(PeriActive,Simulate2D,nparts,pini,matmov,matmov2,stepdt,RidpMoveg,Posxyg,Poszg,Dcellg,Velrhopg,Codeg);
       }
-      if(ChronoObjects && ChronoObjects->GetWithMotion()){ //<vs_chroono_ini> 
-        ChronoObjects->SetMovingData(SphMotion->GetObjMkBound(ref),typesimple,simplemov,matmov,stepdt);
-      } //<vs_chroono_end>
     }
   }
   //-Process other modes of motion. | Procesa otros modos de motion.

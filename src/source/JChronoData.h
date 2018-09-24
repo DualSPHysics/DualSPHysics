@@ -249,15 +249,16 @@ public:
   typedef enum{ MV_None,MV_Simple,MV_Matrix }TpMotion; 
 
 protected:
-  TpMotion MotionType;
-  tdouble3 MotionSimple;
-  tmatrix4d MotionMatrix;
-  double MotionDt; 
+  TpMotion MotionType;    ///<Type of motion: linear or rotational.
+  tdouble3 MotionSimple;  ///<Linear displacement during dt.
+  tmatrix4d MotionMatrix; ///<Trasformation matrix for displacement during dt.
+  double MotionDt;        ///<Stores the total dt even a predictor-corrector is used.
 
 public:
   JChBodyMoving(unsigned idb,std::string idname,word mkbound,double mass);
   JChBodyMoving(const JChBodyMoving &src);
   void Reset();
+  void SetInitialCenter(const tdouble3  &center){ Center=center; }
 
   void ResetMotion(){ MotionType=MV_None; }
   void SetMotionSimple(double dt,const tdouble3  &msimple){ MotionType=MV_Simple; MotionDt=dt; MotionSimple=msimple; }

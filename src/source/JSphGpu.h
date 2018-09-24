@@ -233,6 +233,7 @@ protected:
   double DtVariable(bool final);
   void RunShifting(double dt);
 
+  void CalcMotion(double stepdt);
   void RunMotion(double stepdt);
   void RunRelaxZone(double dt);  //<vs_rzone>
   void RunDamping(double dt,unsigned np,unsigned npb,const double2 *posxy,const double *posz,const typecode *code,float4 *velrhop);
