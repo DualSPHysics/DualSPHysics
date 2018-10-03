@@ -5,7 +5,7 @@
  Prof. Moncho Gomez Gesteira, Orlando Garcia-Feal, Dr Anxo Barreiro
  Dr Benedict Rogers, Dr Georgios Fourtakas, Dr Athanasios Mokos,
  Prof. Peter Stansby, Dr Renato Vacondio, Dr Ricardo Canelas,
- Dr Stephen Longshaw, Dr Corrado Altomare.
+ Dr Stephen Longshaw, Dr Corrado Altomare, Dr Angelo Tafuni.
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester
@@ -24,7 +24,7 @@
  along with DualSPHysics. If not, see <http://www.gnu.org/licenses/>.
 
 
-DualSPHysics4 [MLPistons+RZ+Chrono+Inlet] v4.2.085 (24-09-2018)
+DualSPHysics4 [MLPistons+RZ+Chrono+Inlet] v4.2.086 (03-10-2018)
 ================================================================
 LoadDsphConfig> .../bin/windows/DsphConfig.xml
 Information about execution parameters:

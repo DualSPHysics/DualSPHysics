@@ -360,7 +360,7 @@ void JGaugeVelocity::CalculeCpu(double timestep,tuint3 ncells,tuint3 cellmin,con
               const float wqq=2.f*qq+1.f;
               const float wqq1=1.f-0.5f*qq;
               const float wqq2=wqq1*wqq1;
-              wab=Awen*wqq*wqq2*wqq2;
+              wab=Awen*wqq*wqq2*wqq2; //-Kernel.
             }
             wab*=MassFluid/velrhop[p2].w;
             sumwab+=wab;
@@ -582,7 +582,7 @@ float JGaugeSwl::CalculeMassCpu(const tdouble3 &ptpos,const tint4 &nc
             const float wqq=2.f*qq+1.f;
             const float wqq1=1.f-0.5f*qq;
             const float wqq2=wqq1*wqq1;
-            wab=Awen*wqq*wqq2*wqq2;
+            wab=Awen*wqq*wqq2*wqq2; //-Kernel.
           }
           //:Log->Printf("----> p2:%u  wab:%f  vol:%f",p2,wab,MassFluid/velrhop[p2].w);
           wab*=MassFluid/velrhop[p2].w;

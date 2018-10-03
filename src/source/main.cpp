@@ -2,7 +2,7 @@
  <DUALSPHYSICS>  Copyright (c) 2018, 
  Dr Jose M. Dominguez, Dr Alejandro Crespo, Prof. Moncho Gomez Gesteira, Orlando Garcia-Feal, Dr Anxo Barreiro,
  Dr Benedict Rogers, Dr Georgios Fourtakas, Dr Athanasios Mokos, Prof. Peter Stansby,
- Dr Renato Vacondio, Dr Ricardo Canelas, Dr Stephen Longshaw, Dr Corrado Altomare.
+ Dr Renato Vacondio, Dr Ricardo Canelas, Dr Stephen Longshaw, Dr Corrado Altomare, Dr Angelo Tafuni.
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -55,7 +55,7 @@ Please download source files and documentation from <a href="http://dual.sphysic
 using namespace std;
 
 
-JAppInfo AppInfo("DualSPHysics4","v4.2.085","24-09-2018");
+JAppInfo AppInfo("DualSPHysics4","v4.2.086","03-10-2018");
 //JAppInfo AppInfo("DualSPHysics4","v4.2.???","UserVersion","v1.0","??-??-????"); //-for user versions.
 
 //==============================================================================
@@ -68,7 +68,7 @@ std::string getlicense_lgpl(const std::string &name,bool simple){
   tx=tx+"\n Prof. Moncho Gomez Gesteira, Orlando Garcia-Feal, Dr Anxo Barreiro";
   tx=tx+"\n Dr Benedict Rogers, Dr Georgios Fourtakas, Dr Athanasios Mokos,";
   tx=tx+"\n Prof. Peter Stansby, Dr Renato Vacondio, Dr Ricardo Canelas,";
-  tx=tx+"\n Dr Stephen Longshaw, Dr Corrado Altomare.\n";
+  tx=tx+"\n Dr Stephen Longshaw, Dr Corrado Altomare, Dr Angelo Tafuni.\n";
   if(!simple){
     tx=tx+"\n EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo";
     tx=tx+"\n School of Mechanical, Aerospace and Civil Engineering, University of Manchester\n";

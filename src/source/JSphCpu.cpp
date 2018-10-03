@@ -608,7 +608,7 @@ void JSphCpu::GetKernelWendland(float rr2,float drx,float dry,float drz
   const float qq=rad/H;
   //-Wendland kernel.
   const float wqq1=1.f-0.5f*qq;
-  const float fac=Bwen*qq*wqq1*wqq1*wqq1/rad;
+  const float fac=Bwen*qq*wqq1*wqq1*wqq1/rad; //-Kernel derivative (divided by rad).
   frx=fac*drx; fry=fac*dry; frz=fac*drz;
 }
 
@@ -625,10 +625,10 @@ void JSphCpu::GetKernelWendland(float rr2,float drx,float dry,float drz
   //-Wendland kernel.
   const float wqq1=1.f-0.5f*qq;
   const float wqq2=wqq1*wqq1;
-  const float fac=Bwen*qq*wqq2*wqq1/rad;
+  const float fac=Bwen*qq*wqq2*wqq1/rad; //-Kernel derivative (divided by rad).
   frx=fac*drx; fry=fac*dry; frz=fac*drz;
   const float wqq=2.f*qq+1.f;
-  wab=Awen*wqq*wqq2*wqq2;
+  wab=Awen*wqq*wqq2*wqq2; //-Kernel.
 }  //<vs_innlet_end>
 
 //==============================================================================
@@ -642,8 +642,8 @@ void JSphCpu::GetKernelGaussian(float rr2,float drx,float dry,float drz
   const float qq=rad/H;
   //-Gaussian kernel.
   const float qqexp=-4.0f*qq*qq;
-  //const float wab=Agau*expf(qqexp);
-  const float fac=Bgau*qq*expf(qqexp)/rad;
+  //const float wab=Agau*expf(qqexp); //-Kernel.
+  const float fac=Bgau*qq*expf(qqexp)/rad; //-Kernel derivative (divided by rad).
   frx=fac*drx; fry=fac*dry; frz=fac*drz;
 }
 
@@ -660,8 +660,8 @@ void JSphCpu::GetKernelGaussian(float rr2,float drx,float dry,float drz
   //-Gaussian kernel.
   const float qqexp=-4.0f*qq*qq;
   const float eqqexp=expf(qqexp);
-  wab=Agau*eqqexp;
-  const float fac=Bgau*qq*eqqexp/rad;
+  wab=Agau*eqqexp; //-Kernel.
+  const float fac=Bgau*qq*eqqexp/rad; //-Kernel derivative (divided by rad).
   frx=fac*drx; fry=fac*dry; frz=fac*drz;
 }  //<vs_innlet_end>
 
@@ -679,11 +679,11 @@ void JSphCpu::GetKernelCubic(float rr2,float drx,float dry,float drz
   if(rad>H){
     float wqq1=2.0f-qq;
     float wqq2=wqq1*wqq1;
-    fac=CubicCte.c2*wqq2/rad;
+    fac=CubicCte.c2*wqq2/rad; //-Kernel derivative (divided by rad).
   }
   else{
     float wqq2=qq*qq;
-    fac=(CubicCte.c1*qq+CubicCte.d1*wqq2)/rad;
+    fac=(CubicCte.c1*qq+CubicCte.d1*wqq2)/rad; //-Kernel derivative (divided by rad).
   }
   //-Gradients.
   frx=fac*drx; fry=fac*dry; frz=fac*drz;
@@ -704,13 +704,13 @@ void JSphCpu::GetKernelCubic(float rr2,float drx,float dry,float drz
   if(rad>H){
     float wqq1=2.0f-qq;
     float wqq2=wqq1*wqq1;
-    fac=CubicCte.c2*wqq2/rad;
-    wab=CubicCte.a24*(wqq2*wqq1);
+    fac=CubicCte.c2*wqq2/rad; //-Kernel derivative (divided by rad).
+    wab=CubicCte.a24*(wqq2*wqq1); //-Kernel.
   }
   else{
     float wqq2=qq*qq;
-    fac=(CubicCte.c1*qq+CubicCte.d1*wqq2)/rad;
-    wab=CubicCte.a2*(1.0f+(0.75f*qq-1.5f)*wqq2);
+    fac=(CubicCte.c1*qq+CubicCte.d1*wqq2)/rad; //-Kernel derivative (divided by rad).
+    wab=CubicCte.a2*(1.0f+(0.75f*qq-1.5f)*wqq2); //-Kernel.
   }
   //-Gradients.
   frx=fac*drx; fry=fac*dry; frz=fac*drz;
@@ -728,12 +728,12 @@ float JSphCpu::GetKernelCubicTensil(float rr2,float rhopp1,float pressp1,float r
   if(rad>H){
     float wqq1=2.0f-qq;
     float wqq2=wqq1*wqq1;
-    wab=CubicCte.a24*(wqq2*wqq1);
+    wab=CubicCte.a24*(wqq2*wqq1); //-Kernel.
   }
   else{
     float wqq2=qq*qq;
     float wqq3=wqq2*qq;
-    wab=CubicCte.a2*(1.0f-1.5f*wqq2+0.75f*wqq3);
+    wab=CubicCte.a2*(1.0f-1.5f*wqq2+0.75f*wqq3); //-Kernel.
   }
   //-Tensile correction.
   float fab=wab*CubicCte.od_wdeltap;

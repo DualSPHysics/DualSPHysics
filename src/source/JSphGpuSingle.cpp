@@ -461,12 +461,13 @@ double JSphGpuSingle::ComputeAceMax(float *auxmem){
 /// calculadas en la interaccion usando Verlet.
 //==============================================================================
 double JSphGpuSingle::ComputeStep_Ver(){
+  if(BoundCorr)BoundCorrectionData();  //-Apply BoundCorrection.  //<vs_innlet>
   Interaction_Forces(INTER_Forces);    //-Interaction.
   const double dt=DtVariable(true);    //-Calculate new dt.
   if(CaseNmoving)CalcMotion(dt);       //-Calculate motion for moving bodies.
   DemDtForce=dt;                       //(DEM)
   if(TShifting)RunShifting(dt);        //-Shifting.
-  ComputeVerlet(dt);                   //-Update particles using Verlet.
+  ComputeVerlet(dt);                   //-Update particles using Verlet (periodic particles become invalid).
   if(CaseNfloat)RunFloating(dt,false); //-Control of floating bodies.
   PosInteraction_Forces();             //-Free memory used for interaction.
   if(Damping)RunDamping(dt,Np,Npb,Posxyg,Poszg,Codeg,Velrhopg); //-Aplies Damping.
@@ -487,10 +488,11 @@ double JSphGpuSingle::ComputeStep_Sym(){
   //-Predictor
   //-----------
   DemDtForce=dt*0.5f;                     //(DEM)
+  if(BoundCorr)BoundCorrectionData();     //-Apply BoundCorrection.  //<vs_innlet>
   Interaction_Forces(INTER_Forces);       //-Interaction.
   const double ddt_p=DtVariable(false);   //-Calculate dt of predictor step.
   if(TShifting)RunShifting(dt*.5);        //-Shifting.
-  ComputeSymplecticPre(dt);               //-Apply Symplectic-Predictor to particles.
+  ComputeSymplecticPre(dt);               //-Apply Symplectic-Predictor to particles (periodic particles become invalid).
   if(CaseNfloat)RunFloating(dt*.5,true);  //-Control of floating bodies.
   PosInteraction_Forces();                //-Free memory used for interaction.
   //-Corrector
@@ -500,7 +502,7 @@ double JSphGpuSingle::ComputeStep_Sym(){
   Interaction_Forces(INTER_ForcesCorr);   //Interaction.
   const double ddt_c=DtVariable(true);    //-Calculate dt of corrector step.
   if(TShifting)RunShifting(dt);           //-Shifting.
-  ComputeSymplecticCorr(dt);              //-Apply Symplectic-Corrector to particles.
+  ComputeSymplecticCorr(dt);              //-Apply Symplectic-Corrector to particles (periodic particles become invalid).
   if(CaseNfloat)RunFloating(dt,false);    //-Control of floating bodies.
   PosInteraction_Forces();                //-Free memory used for interaction.
   if(Damping)RunDamping(dt,Np,Npb,Posxyg,Poszg,Codeg,Velrhopg); //-Aplies Damping.
@@ -615,8 +617,7 @@ void JSphGpuSingle::Run(std::string appname,JCfgRun *cfg,JLog2 *log){
   //------------------------------------------------------------------------------------
   InitRunGpu();
   RunGaugeSystem(TimeStep);
-  if(InOut)InOutInit(TimeStepIni);     //<vs_innlet>
-  if(BoundCorr)BoundCorrectionData();  //<vs_innlet>
+  if(InOut)InOutInit(TimeStepIni);  //<vs_innlet>
   UpdateMaxValues();
   PrintAllocMemory(GetAllocMemoryCpu(),GetAllocMemoryGpu());
   SaveData(); 
@@ -639,7 +640,6 @@ void JSphGpuSingle::Run(std::string appname,JCfgRun *cfg,JLog2 *log){
     if(PartDtMin>stepdt)PartDtMin=stepdt; if(PartDtMax<stepdt)PartDtMax=stepdt;
     if(CaseNmoving)RunMotion(stepdt);
     //RunCellDivide(true);                  //<vs_no_innlet>
-    if(BoundCorr)BoundCorrectionData();     //<vs_innlet>
     if(InOut)InOutComputeStep(stepdt);      //<vs_innlet>
     else RunCellDivide(true);               //<vs_innlet>
     TimeStep+=stepdt;
