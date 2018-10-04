@@ -106,6 +106,20 @@ void JSphCpuSingle::ConfigDomain(){
   memcpy(Idpc,PartsLoaded->GetIdp(),sizeof(unsigned)*Np);
   memcpy(Velrhopc,PartsLoaded->GetVelRhop(),sizeof(tfloat4)*Np);
 
+  //==================================================
+  // Temperature: assign initial temperature
+  //==================================================
+  for (unsigned p = 0; p<Np; p++) Tempc[p] = HeatTempFluid;
+  for (unsigned c = 0; c<MkInfo->Size(); c++) {
+	  const JSphMkBlock* block = MkInfo->Mkblock(c);
+	  if (block->Mk == (MkConstTempWall + MkInfo->GetMkBoundFirst())) {
+		  for (unsigned p = block->Begin; p<block->Begin + block->Count; p++) {
+			  Tempc[p] = HeatTempBound;
+		  }
+	  }
+  }
+  //==================================================
+
   //-Computes radius of floating bodies.
   if(CaseNfloat && PeriActive!=0 && !PartBegin)CalcFloatingRadius(Np,Posc,Idpc);
 
@@ -170,7 +184,7 @@ void JSphCpuSingle::ResizeParticlesSize(unsigned newsize,float oversize,bool upd
 unsigned JSphCpuSingle::PeriodicMakeList(unsigned n,unsigned pini,bool stable,unsigned nmax,tdouble3 perinc,const tdouble3 *pos,const typecode *code,unsigned *listp)const{
   unsigned count=0;
   if(n){
-    //-Initialize size of list lsph to zero. | Inicializa tamaño de lista lspg a cero.
+    //-Initialize size of list lsph to zero. | Inicializa tamaï¿½o de lista lspg a cero.
     listp[nmax]=0;
     for(unsigned p=0;p<n;p++){
       const unsigned p2=p+pini;
@@ -242,7 +256,8 @@ void JSphCpuSingle::PeriodicDuplicatePos(unsigned pnew,unsigned pcopy,bool inver
 /// Este kernel vale para single-cpu y multi-cpu porque usa domposmin. 
 //==============================================================================
 void JSphCpuSingle::PeriodicDuplicateVerlet(unsigned np,unsigned pini,tuint3 cellmax,tdouble3 perinc,const unsigned *listp
-  ,unsigned *idp,typecode *code,unsigned *dcell,tdouble3 *pos,tfloat4 *velrhop,tsymatrix3f *spstau,tfloat4 *velrhopm1)const
+  ,unsigned *idp,typecode *code,unsigned *dcell,tdouble3 *pos,tfloat4 *velrhop,double *temp,tsymatrix3f *spstau,tfloat4 *velrhopm1
+  ,double *tempm1)const  // Temperature: add temp and tempm1 params
 {
   const int n=int(np);
   #ifdef OMP_USE
@@ -259,6 +274,8 @@ void JSphCpuSingle::PeriodicDuplicateVerlet(unsigned np,unsigned pini,tuint3 cel
     code[pnew]=CODE_SetPeriodic(code[pcopy]);
     velrhop[pnew]=velrhop[pcopy];
     velrhopm1[pnew]=velrhopm1[pcopy];
+    temp[pnew] = temp[pcopy]; // Temperature: copy
+	  tempm1[pnew] = tempm1[pcopy]; // Temperature: copy
     if(spstau)spstau[pnew]=spstau[pcopy];
   }
 }
@@ -273,7 +290,8 @@ void JSphCpuSingle::PeriodicDuplicateVerlet(unsigned np,unsigned pini,tuint3 cel
 /// Este kernel vale para single-cpu y multi-cpu porque usa domposmin. 
 //==============================================================================
 void JSphCpuSingle::PeriodicDuplicateSymplectic(unsigned np,unsigned pini,tuint3 cellmax,tdouble3 perinc,const unsigned *listp
-  ,unsigned *idp,typecode *code,unsigned *dcell,tdouble3 *pos,tfloat4 *velrhop,tsymatrix3f *spstau,tdouble3 *pospre,tfloat4 *velrhoppre)const
+  ,unsigned *idp,typecode *code,unsigned *dcell,tdouble3 *pos,tfloat4 *velrhop, double *temp,tsymatrix3f *spstau,tdouble3 *pospre
+  ,tfloat4 *velrhoppre, double *temppre)const  // Temperature: add temp and temppre params
 {
   const int n=int(np);
   #ifdef OMP_USE
@@ -289,8 +307,10 @@ void JSphCpuSingle::PeriodicDuplicateSymplectic(unsigned np,unsigned pini,tuint3
     idp[pnew]=idp[pcopy];
     code[pnew]=CODE_SetPeriodic(code[pcopy]);
     velrhop[pnew]=velrhop[pcopy];
+    temp[pnew] = temp[pcopy]; // Temperature
     if(pospre)pospre[pnew]=pospre[pcopy];
     if(velrhoppre)velrhoppre[pnew]=velrhoppre[pcopy];
+    if(temppre)temppre[pnew]=temppre[pcopy]; // Temperature
     if(spstau)spstau[pnew]=spstau[pcopy];
   }
 }
@@ -360,10 +380,10 @@ void JSphCpuSingle::RunPeriodic(){
             run=false;
             //-Create new duplicate periodic particles in the list
             //-Crea nuevas particulas periodicas duplicando las particulas de la lista.
-            if(TStep==STEP_Verlet)PeriodicDuplicateVerlet(count,Np,DomCells,perinc,listp,Idpc,Codec,Dcellc,Posc,Velrhopc,SpsTauc,VelrhopM1c);
+            if(TStep==STEP_Verlet)PeriodicDuplicateVerlet(count,Np,DomCells,perinc,listp,Idpc,Codec,Dcellc,Posc,Velrhopc,Tempc,SpsTauc,VelrhopM1c,TempM1c);
             if(TStep==STEP_Symplectic){
               if((PosPrec || VelrhopPrec) && (!PosPrec || !VelrhopPrec))RunException(met,"Symplectic data is invalid.") ;
-              PeriodicDuplicateSymplectic(count,Np,DomCells,perinc,listp,Idpc,Codec,Dcellc,Posc,Velrhopc,SpsTauc,PosPrec,VelrhopPrec);
+              PeriodicDuplicateSymplectic(count,Np,DomCells,perinc,listp,Idpc,Codec,Dcellc,Posc,Velrhopc,Tempc,SpsTauc,PosPrec,VelrhopPrec,TempPrec);
             }
 
             //-Free the list and update the number of particles. | Libera lista y actualiza numero de particulas.
@@ -400,13 +420,16 @@ void JSphCpuSingle::RunCellDivide(bool updateperiodic){
   CellDivSingle->SortArray(Dcellc);
   CellDivSingle->SortArray(Posc);
   CellDivSingle->SortArray(Velrhopc);
+  CellDivSingle->SortArray(Tempc);  // Temperature: sort Tempc array.
   if(TStep==STEP_Verlet){
     CellDivSingle->SortArray(VelrhopM1c);
+	CellDivSingle->SortArray(TempM1c); // Temperature: sort TempM1c array.
   }
   else if(TStep==STEP_Symplectic && (PosPrec || VelrhopPrec)){//-In reality, this is only necessary in divide for corrector, not in predictor??? | En realidad solo es necesario en el divide del corrector, no en el predictor???
     if(!PosPrec || !VelrhopPrec)RunException(met,"Symplectic data is invalid.") ;
     CellDivSingle->SortArray(PosPrec);
     CellDivSingle->SortArray(VelrhopPrec);
+	CellDivSingle->SortArray(TempPrec); // Temperature: sort TempPrec array.
   }
   if(TVisco==VISCO_LaminarSPS)CellDivSingle->SortArray(SpsTauc);
 
@@ -431,13 +454,15 @@ void JSphCpuSingle::RunCellDivide(bool updateperiodic){
     tdouble3* pos=ArraysCpu->ReserveDouble3();
     tfloat3* vel=ArraysCpu->ReserveFloat3();
     float* rhop=ArraysCpu->ReserveFloat();
+	double* temp=ArraysCpu->ReserveDouble(); // Temperature: memory allocation.
     typecode* code=ArraysCpu->ReserveTypeCode();
-    unsigned num=GetParticlesData(npfout,Np,true,false,idp,pos,vel,rhop,code);
+    unsigned num=GetParticlesData(npfout,Np,true,false,idp,pos,vel,rhop,temp,code); // Temperature: add temp param.
     AddParticlesOut(npfout,idp,pos,vel,rhop,code);
     ArraysCpu->Free(idp);
     ArraysCpu->Free(pos);
     ArraysCpu->Free(vel);
     ArraysCpu->Free(rhop);
+	ArraysCpu->Free(temp); // Temperature: free memory
     ArraysCpu->Free(code);
   }
   TmcStop(Timers,TMC_NlOutCheck);
@@ -455,8 +480,9 @@ void JSphCpuSingle::AbortBoundOut(){
   tdouble3* pos=ArraysCpu->ReserveDouble3();
   tfloat3* vel=ArraysCpu->ReserveFloat3();
   float* rhop=ArraysCpu->ReserveFloat();
+  double *temp= ArraysCpu->ReserveDouble();  // Temperature: reserve memory.
   typecode* code=ArraysCpu->ReserveTypeCode();
-  GetParticlesData(nboundout,Np,true,false,idp,pos,vel,rhop,code);
+  GetParticlesData(nboundout,Np,true,false,idp,pos,vel,rhop,temp,code); // Temperature: add temp param.
   //-Shows excluded particles information and aborts execution.
   JSph::AbortBoundOut(nboundout,idp,pos,vel,rhop,code);
 }
@@ -493,10 +519,10 @@ void JSphCpuSingle::Interaction_Forces(TpInter tinter){
 
   //-Interaction of Fluid-Fluid/Bound & Bound-Fluid (forces and DEM). | Interaccion Fluid-Fluid/Bound & Bound-Fluid (forces and DEM).
   float viscdt=0;
-  if(Psingle)JSphCpu::InteractionSimple_Forces(Np,Npb,NpbOk,CellDivSingle->GetNcells(),CellDivSingle->GetBeginCell(),CellDivSingle->GetCellDomainMin(),Dcellc,PsPosc,Velrhopc,Idpc,Codec,Pressc,viscdt,Arc,Acec,Deltac,SpsTauc,SpsGradvelc,ShiftPosc,ShiftDetectc);
-  else JSphCpu::Interaction_Forces(Np,Npb,NpbOk,CellDivSingle->GetNcells(),CellDivSingle->GetBeginCell(),CellDivSingle->GetCellDomainMin(),Dcellc,Posc,Velrhopc,Idpc,Codec,Pressc,viscdt,Arc,Acec,Deltac,SpsTauc,SpsGradvelc,ShiftPosc,ShiftDetectc);
+  if(Psingle)JSphCpu::InteractionSimple_Forces(Np,Npb,NpbOk,CellDivSingle->GetNcells(),CellDivSingle->GetBeginCell(),CellDivSingle->GetCellDomainMin(),Dcellc,PsPosc,Velrhopc,Tempc,Idpc,Codec,Pressc,viscdt,Arc,Acec,Atempc,Deltac,SpsTauc,SpsGradvelc,ShiftPosc,ShiftDetectc);
+  else JSphCpu::Interaction_Forces(Np,Npb,NpbOk,CellDivSingle->GetNcells(),CellDivSingle->GetBeginCell(),CellDivSingle->GetCellDomainMin(),Dcellc,Posc,Velrhopc,Tempc,Idpc,Codec,Pressc,viscdt,Arc,Acec,Atempc,Deltac,SpsTauc,SpsGradvelc,ShiftPosc,ShiftDetectc);
 
-  //-For 2-D simulations zero the 2nd component. | Para simulaciones 2D anula siempre la 2º componente.
+  //-For 2-D simulations zero the 2nd component. | Para simulaciones 2D anula siempre la 2ï¿½ componente.
   if(Simulate2D){
     const int ini=int(Npb),fin=int(Np),npf=int(Np-Npb);
     #ifdef OMP_USE
@@ -505,7 +531,7 @@ void JSphCpuSingle::Interaction_Forces(TpInter tinter){
     for(int p=ini;p<fin;p++)Acec[p].y=0;
   }
 
-  //-Add Delta-SPH correction to Arg[]. | Añade correccion de Delta-SPH a Arg[].
+  //-Add Delta-SPH correction to Arg[]. | Aï¿½ade correccion de Delta-SPH a Arg[].
   if(Deltac){
     const int ini=int(Npb),fin=int(Np),npf=int(Np-Npb);
     #ifdef OMP_USE
@@ -724,7 +750,7 @@ void JSphCpuSingle::FtCalcForces(StFtoForces *ftoforces)const{
       omegaace.z=(fomegaace.x*invinert.a31+fomegaace.y*invinert.a32+fomegaace.z*invinert.a33);
       fomegaace=omegaace;
     }
-    //-Add gravity and divide by mass. | Añade gravedad y divide por la masa.
+    //-Add gravity and divide by mass. | Aï¿½ade gravedad y divide por la masa.
     face.x=(face.x+fmass*Gravity.x)/fmass;
     face.y=(face.y+fmass*Gravity.y)/fmass;
     face.z=(face.z+fmass*Gravity.z)/fmass;
@@ -781,7 +807,7 @@ void JSphCpuSingle::RunFloating(double dt,bool predictor){
     //-Initialises forces of floatings.
     memset(FtoForces,0,sizeof(StFtoForces)*FtCount); 
 
-    //-Adds calculated forces around floating objects. | Añade fuerzas calculadas sobre floatings.
+    //-Adds calculated forces around floating objects. | Aï¿½ade fuerzas calculadas sobre floatings.
     FtCalcForces(FtoForces);
     //-Calculate data to update floatings. | Calcula datos para actualizar floatings.
     FtCalcForcesRes(dt,FtoForces,FtoForcesRes);
@@ -928,13 +954,15 @@ void JSphCpuSingle::SaveData(){
   tdouble3 *pos=NULL;
   tfloat3 *vel=NULL;
   float *rhop=NULL;
+  double *temp = NULL;  // Temperature: temporal array.
   if(save){
     //-Assign memory and collect particle values. | Asigna memoria y recupera datos de las particulas.
     idp=ArraysCpu->ReserveUint();
     pos=ArraysCpu->ReserveDouble3();
     vel=ArraysCpu->ReserveFloat3();
     rhop=ArraysCpu->ReserveFloat();
-    unsigned npnormal=GetParticlesData(Np,0,true,PeriActive!=0,idp,pos,vel,rhop,NULL);
+	temp = ArraysCpu->ReserveDouble();  // Temperature: allocate memory.
+    unsigned npnormal=GetParticlesData(Np,0,true,PeriActive!=0,idp,pos,vel,rhop,temp,NULL); // Temperature: new temp param
     if(npnormal!=npsave)RunException("SaveData","The number of particles is invalid.");
   }
   //-Gather additional information. | Reune informacion adicional.
@@ -954,12 +982,13 @@ void JSphCpuSingle::SaveData(){
   }
   //-Stores particle data. | Graba datos de particulas.
   const tdouble3 vdom[2]={OrderDecode(CellDivSingle->GetDomainLimits(true)),OrderDecode(CellDivSingle->GetDomainLimits(false))};
-  JSph::SaveData(npsave,idp,pos,vel,rhop,1,vdom,&infoplus);
+  JSph::SaveData(npsave,idp,pos,vel,rhop,temp,1,vdom,&infoplus); // Temperature: new temp param
   //-Free auxiliary memory for particle data. | Libera memoria auxiliar para datos de particulas.
   ArraysCpu->Free(idp);
   ArraysCpu->Free(pos);
   ArraysCpu->Free(vel);
-  ArraysCpu->Free(rhop);
+  ArraysCpu->Free(rhop);  
+  ArraysCpu->Free(temp);  // Temperature: free memory.
   TmcStop(Timers,TMC_SuSavePart);
 }
 

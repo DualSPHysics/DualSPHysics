@@ -120,6 +120,7 @@ void JCellDivCpu::SetMemoryVSort(byte *vsort){
   VSortFloat=(float*)VSort;    VSortFloat3=(tfloat3*)VSort;
   VSortFloat4=(tfloat4*)VSort; VSortDouble3=(tdouble3*)VSort;
   VSortSymmatrix3f=(tsymatrix3f*)VSort;
+  VSortDouble = (double*)VSort; // Temperature: add support for double arrays.
 }
 
 //==============================================================================
@@ -388,6 +389,21 @@ void JCellDivCpu::SortArray(float *vec){
   #endif
   for(int p=ini;p<n;p++)VSortFloat[p]=vec[SortPart[p]];
   memcpy(vec+ini,VSortFloat+ini,sizeof(float)*(n-ini));
+}
+
+// Temperature: this is needed to sort temperature arrays in double precission.
+//==============================================================================
+/// Reorder values of all particles (for type float).
+/// Reordena datos de todas las particulas (para tipo float).
+//==============================================================================
+void JCellDivCpu::SortArray(double *vec) {
+	const int n = int(Nptot);
+	const int ini = (DivideFull ? 0 : int(NpbFinal));
+#ifdef OMP_USE
+#pragma omp parallel for schedule (static) if(n>OMP_LIMIT_COMPUTELIGHT)
+#endif
+	for (int p = ini; p<n; p++)VSortDouble[p] = vec[SortPart[p]];
+	memcpy(vec + ini, VSortDouble + ini, sizeof(double)*(n - ini));
 }
 
 //==============================================================================

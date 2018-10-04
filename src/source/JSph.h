@@ -206,6 +206,20 @@ protected:
   float SpsSmag;             ///<Smagorinsky constant used in SPS turbulence model.
   float SpsBlin;             ///<Blin constant used in the SPS turbulence model.
 
+ //==================================================
+ // Temperature configuration variables
+ //==================================================
+  bool HeatTransfer;		///< Calculation of heat transfer 1:Yes, 0:False (default=0)
+  float HeatCpFluid;		///< Specific heat capacity of fluid particles (default 4.18 for water 293K) J/(kg*K)
+  float HeatCpBound;		///< Specific heat capacity of boundary particles (default 4.18 for water 293K) J/(kg*K)
+  float HeatKFluid;			///< Thermal conductivity of fluid particles(default 0.6 for water at 293K) W/(m*K)
+  float HeatKBound;			///< Thermal conductivity of boundary particles (default 54 for carbon steel at 293K) W/(m*K)
+  float HeatTempBound;      ///< Temperature of boundary particles K
+  float HeatTempFluid;		///< Temperature of fluid particles K
+  float DensityBound;		///< Density of boundary particles Kg/m^3
+  unsigned MkConstTempWall; ///< Mk of the constant temperature wall boundary
+  //==================================================
+
   //-General information about case.
   tdouble3 CasePosMin;       ///<Lower particle limit of the case in the initial instant. | Limite inferior de particulas del caso en instante inicial.
   tdouble3 CasePosMax;       ///<Upper particle limit of the case in the initial instant. | Limite superior de particulas del caso en instante inicial.
@@ -385,8 +399,8 @@ protected:
   void AbortBoundOut(unsigned nout,const unsigned *idp,const tdouble3 *pos,const tfloat3 *vel,const float *rhop,const typecode *code);
 
   tfloat3* GetPointerDataFloat3(unsigned n,const tdouble3* v)const;
-  void SavePartData(unsigned npok,unsigned nout,const unsigned *idp,const tdouble3 *pos,const tfloat3 *vel,const float *rhop,unsigned ndom,const tdouble3 *vdom,const StInfoPartPlus *infoplus);
-  void SaveData(unsigned npok,const unsigned *idp,const tdouble3 *pos,const tfloat3 *vel,const float *rhop,unsigned ndom,const tdouble3 *vdom,const StInfoPartPlus *infoplus);
+  void SavePartData(unsigned npok,unsigned nout,const unsigned *idp,const tdouble3 *pos,const tfloat3 *vel,const float *rhop,const double *temp,unsigned ndom,const tdouble3 *vdom,const StInfoPartPlus *infoplus); // Temperature: add temp param
+  void SaveData(unsigned npok,const unsigned *idp,const tdouble3 *pos,const tfloat3 *vel,const float *rhop,const double *temp,unsigned ndom,const tdouble3 *vdom,const StInfoPartPlus *infoplus); // Temperature: add temp param
   void SaveDomainVtk(unsigned ndom,const tdouble3 *vdom)const;
   void SaveInitialDomainVtk()const;
   unsigned SaveMapCellsVtkSize()const;

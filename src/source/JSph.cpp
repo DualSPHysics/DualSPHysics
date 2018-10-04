@@ -149,6 +149,20 @@ void JSph::InitVars(){
   Dosh=H2=Fourh2=Eta2=0;
   SpsSmag=SpsBlin=0;
 
+  //==================================================
+  // Initialization of Temperature
+  //==================================================
+  HeatTransfer = false;
+  HeatCpFluid = 0;
+  HeatCpBound = 0;
+  HeatKFluid = 0;
+  HeatKBound = 0;
+  HeatTempBound = 0;
+  HeatTempFluid = 0;
+  MkConstTempWall = 0;
+  DensityBound = 0;
+  //==================================================
+
   CasePosMin=CasePosMax=TDouble3(0);
   CaseNp=CaseNbound=CaseNfixed=CaseNmoving=CaseNfloat=CaseNfluid=CaseNpb=0;
 
@@ -584,6 +598,22 @@ void JSph::LoadCaseConfig(){
   MkInfo=new JSphMk();
   MkInfo->Config(&parts);
 
+  //==================================================
+  // Configuration of Temperature
+  //==================================================
+  if (xml.GetNode("case.execution.special.temperature", false)) {
+	JSpaceEParms tParams; tParams.LoadXml(&xml, "case.execution.special.temperature");
+	HeatCpFluid = tParams.GetValueFloat("HeatCpFluid");
+	HeatCpBound = tParams.GetValueFloat("HeatCpBound");
+	HeatKFluid = tParams.GetValueFloat("HeatKFluid");
+	HeatKBound = tParams.GetValueFloat("HeatKBound");
+	MkConstTempWall = tParams.GetValueInt("MkConstTempWall");
+	HeatTempBound = tParams.GetValueFloat("HeatTempBound");
+	HeatTempFluid = tParams.GetValueFloat("HeatTempFluid");
+	DensityBound = tParams.GetValueFloat("DensityBound");
+  }
+  //==================================================
+
   //-Configuration of GaugeSystem.
   GaugeSystem=new JGaugeSystem(Cpu,Log);
 
@@ -872,6 +902,24 @@ void JSph::ConfigConstants(bool simulate2d){
 //==============================================================================
 void JSph::VisuConfig()const{
   const char* met="VisuConfig";
+
+  //==================================================
+  // Temperature: log configuration variables
+  //==================================================
+  Log->Print(fun::VarStr("HeatTransfer", HeatTransfer));
+  if (HeatTransfer) {
+	  Log->Print(fun::VarStr("HeatCpFluid", HeatCpFluid));
+	  Log->Print(fun::VarStr("HeatCpBound", HeatCpBound));
+	  Log->Print(fun::VarStr("HeatKFluid", HeatKFluid));
+	  Log->Print(fun::VarStr("HeatKBound", HeatKBound));
+
+	  Log->Print(fun::VarStr("MkConstTempWall", MkConstTempWall));
+	  Log->Print(fun::VarStr("HeatTempBound", HeatTempBound));
+	  Log->Print(fun::VarStr("HeatTempFluid", HeatTempFluid));
+	  Log->Print(fun::VarStr("DensityBound", DensityBound));
+  }
+  //==================================================
+
   Log->Print(Simulate2D? "**2D-Simulation parameters:": "**3D-Simulation parameters:");
   Log->Print(fun::VarStr("CaseName",CaseName));
   Log->Print(fun::VarStr("RunName",RunName));
@@ -1016,6 +1064,7 @@ void JSph::RunInitialize(unsigned np,unsigned npb,const tdouble3 *pos,const unsi
       }
       init.Run(np,npb,pos,idp,mktype,velrhop);
       init.GetConfig(InitializeInfo);
+
       //-Frees memory.
       delete[] mktype; mktype=NULL;
     }
@@ -1609,7 +1658,7 @@ tfloat3* JSph::GetPointerDataFloat3(unsigned n,const tdouble3* v)const{
 /// Stores files of particle data.
 /// Graba los ficheros de datos de particulas.
 //==============================================================================
-void JSph::SavePartData(unsigned npok,unsigned nout,const unsigned *idp,const tdouble3 *pos,const tfloat3 *vel,const float *rhop,unsigned ndom,const tdouble3 *vdom,const StInfoPartPlus *infoplus){
+void JSph::SavePartData(unsigned npok,unsigned nout,const unsigned *idp,const tdouble3 *pos,const tfloat3 *vel,const float *rhop,const double *temp,unsigned ndom,const tdouble3 *vdom,const StInfoPartPlus *infoplus){  // Temperature: add temp param.
   //-Stores particle data and/or information in bi4 format.
   //-Graba datos de particulas y/o informacion en formato bi4.
   if(DataBi4){
@@ -1645,6 +1694,7 @@ void JSph::SavePartData(unsigned npok,unsigned nout,const unsigned *idp,const td
         posf3=GetPointerDataFloat3(npok,pos);
         DataBi4->AddPartData(npok,idp,posf3,vel,rhop);
       }
+	  if (temp)DataBi4->AddPartData("Temp", npok, temp);  // Temperature: add temperature data.
       float *press=NULL;
       if(0){//-Example saving a new array (Pressure) in files BI4.
         press=new float[npok];
@@ -1703,7 +1753,7 @@ void JSph::SavePartData(unsigned npok,unsigned nout,const unsigned *idp,const td
 /// Genera los ficheros de salida de datos.
 //==============================================================================
 void JSph::SaveData(unsigned npok,const unsigned *idp,const tdouble3 *pos,const tfloat3 *vel,const float *rhop
-  ,unsigned ndom,const tdouble3 *vdom,const StInfoPartPlus *infoplus)
+  ,const double *temp,unsigned ndom,const tdouble3 *vdom,const StInfoPartPlus *infoplus) // Temperature: add temp param
 {
   const char met[]="SaveData";
   string suffixpartx=fun::PrintStr("_%04d",Part);
@@ -1716,7 +1766,7 @@ void JSph::SaveData(unsigned npok,const unsigned *idp,const tdouble3 *pos,const 
   AddOutCount(noutpos,noutrhop,noutmove);
 
   //-Stores data files of particles.
-  SavePartData(npok,nout,idp,pos,vel,rhop,ndom,vdom,infoplus);
+  SavePartData(npok,nout,idp,pos,vel,rhop,temp,ndom,vdom,infoplus); // Temperature: add temp param.
 
   //-Reinitialises limits of dt. | Reinicia limites de dt.
   PartDtMin=DBL_MAX; PartDtMax=-DBL_MAX;

@@ -84,6 +84,7 @@ protected:
   word        *VSortWord;        ///<To order word vectors (write to VSort). | Para ordenar vectores word (apunta a VSort).
   int         *VSortInt;         ///<To order vectors int (write to VSort). | Para ordenar vectores int (apunta a VSort).
   float       *VSortFloat;       ///<To order vectors float (write to VSort). | Para ordenar vectores float (apunta a VSort).
+  double      *VSortDouble;      ///<To order vectors double (write to VSort). | Para ordenar vectores double (apunta a VSort). Only for Temperature.
   tfloat3     *VSortFloat3;      ///<To order vectors tfloat3 (write to VSort). | Para ordenar vectores tfloat3 (apunta a VSort).
   tfloat4     *VSortFloat4;      ///<To order vectors tfloat4 (write to VSort). | Para ordenar vectores tfloat4 (apunta a VSort).
   tdouble3    *VSortDouble3;     ///<To order vectors tdouble3 (write to VSort). | Para ordenar vectores tdouble3 (apunta a VSort).
@@ -157,6 +158,7 @@ public:
   void SortArray(word *vec);
   void SortArray(unsigned *vec);
   void SortArray(float *vec);
+  void SortArray(double * vec); // Temperature: this is needed to sort temperature arrays in double precission.
   void SortArray(tdouble3 *vec);
   void SortArray(tfloat3 *vec);
   void SortArray(tfloat4 *vec);
