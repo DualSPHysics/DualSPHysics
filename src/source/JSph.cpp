@@ -603,6 +603,7 @@ void JSph::LoadCaseConfig(){
   //==================================================
   if (xml.GetNode("case.execution.special.temperature", false)) {
 	JSpaceEParms tParams; tParams.LoadXml(&xml, "case.execution.special.temperature");
+	HeatTransfer = tParams.GetValueInt("HeatTransfer");
 	HeatCpFluid = tParams.GetValueFloat("HeatCpFluid");
 	HeatCpBound = tParams.GetValueFloat("HeatCpBound");
 	HeatKFluid = tParams.GetValueFloat("HeatKFluid");

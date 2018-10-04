@@ -275,7 +275,7 @@ void JSphCpuSingle::PeriodicDuplicateVerlet(unsigned np,unsigned pini,tuint3 cel
     velrhop[pnew]=velrhop[pcopy];
     velrhopm1[pnew]=velrhopm1[pcopy];
     temp[pnew] = temp[pcopy]; // Temperature: copy
-	  tempm1[pnew] = tempm1[pcopy]; // Temperature: copy
+	tempm1[pnew] = tempm1[pcopy]; // Temperature: copy
     if(spstau)spstau[pnew]=spstau[pcopy];
   }
 }

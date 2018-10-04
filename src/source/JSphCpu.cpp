@@ -230,9 +230,9 @@ void JSphCpu::ResizeCpuMemoryParticles(unsigned npnew){
   //=============================================
   // Temperature: Free all the temperature memory
   //=============================================
-  ArraysCpu->Free(Tempc); //Lokman
-  ArraysCpu->Free(TempM1c); //Lokman
-  ArraysCpu->Free(TempPrec); //Lokman
+  ArraysCpu->Free(Tempc);
+  ArraysCpu->Free(TempM1c);
+  ArraysCpu->Free(TempPrec);
   //=============================================
 
   //-Resizes CPU memory allocation.
@@ -249,6 +249,15 @@ void JSphCpu::ResizeCpuMemoryParticles(unsigned npnew){
   if(pospre)    PosPrec    =ArraysCpu->ReserveDouble3();
   if(velrhoppre)VelrhopPrec=ArraysCpu->ReserveFloat4();
   if(spstau)    SpsTauc    =ArraysCpu->ReserveSymatrix3f();
+
+  //================================================
+  // Temperature: reserve memory
+  //================================================
+  Tempc = ArraysCpu->ReserveDouble();
+  if (tempm1) TempM1c = ArraysCpu->ReserveDouble();
+  if (temppre)TempPrec = ArraysCpu->ReserveDouble();
+  //================================================
+
   //-Restore data in CPU memory.
   RestoreArrayCpu(Np,idp,Idpc);
   RestoreArrayCpu(Np,code,Codec);
@@ -259,6 +268,15 @@ void JSphCpu::ResizeCpuMemoryParticles(unsigned npnew){
   RestoreArrayCpu(Np,pospre,PosPrec);
   RestoreArrayCpu(Np,velrhoppre,VelrhopPrec);
   RestoreArrayCpu(Np,spstau,SpsTauc);
+
+  //================================================
+  // Temperature: Restore array for Tempc
+  //================================================
+  RestoreArrayCpu(Np, temp, Tempc);
+  RestoreArrayCpu(Np, tempm1, TempM1c);
+  RestoreArrayCpu(Np, temppre, TempPrec);
+  //================================================
+
   //-Updates values.
   CpuParticlesSize=npnew;
   MemCpuParticles=ArraysCpu->GetAllocMemoryCpu();
@@ -821,7 +839,6 @@ template<bool psingle,TpKernel tker,TpFtMode ftmode> void JSphCpu::InteractionFo
 			  //==================================================
 			  const double dtemp = tempp1 - temp[p2]; // Temperature: (dtemp=tempp1-tempp2)
 			  const float tempConst = (4 * massp2*HeatKFluid*HeatKBound) / (HeatCpBound*rhopp1*velrhop[p2].w*(HeatKFluid + HeatKBound));
-			  const float fabc = frx / drx;
 			  atempp1 += float(tempConst*dtemp*fabc);
 			  //==================================================
 
@@ -969,7 +986,6 @@ template<bool psingle,TpKernel tker,TpFtMode ftmode,bool lamsps,TpDeltaSph tdelt
 			  float rhopp2 = (boundp2 ? DensityBound : velrhop[p2].w); // Check if p2 is bound or fluid and assign the respective  density.
 			  const double dtemp = tempp1 - temp[p2]; // (dtemp=tempp1-tempp2)
 			  const float tempConst = (4 * massp2*HeatKFluid*heatKp2) / (HeatCpFluid*rhopp1*rhopp2*(HeatKFluid + heatKp2));
-			  const float fabc = frx / drx;
 			  atempp1 += float(tempConst*dtemp*fabc);
 			}
 			//==================================================
