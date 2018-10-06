@@ -36,6 +36,7 @@
 //:# - Nuevas funciones MulMatrix3x3(), TrasMatrix3x3() y RotMatrix3x3(). (29-11-2017)
 //:# - Nueva funcion VecOrthogonal(). (10-08-2018)
 //:# - Nueva funciones Rect3d2pt(), RectPosX(), RectPosY(), RectPosZ(). (21-08-2018)
+//:# - Nuevas funciones VecOrthogonal2(). (05-10-2018)
 //:#############################################################################
 
 /// \file FunctionsMath.h \brief Declares basic/general math functions.
@@ -223,6 +224,41 @@ inline tdouble3 VecUnitary(const tdouble3 &p1){
 //==============================================================================
 inline tfloat3 VecUnitary(const tfloat3 &p1){
   return(p1/TFloat3(DistPoint(p1)));
+}
+
+
+//==============================================================================
+// Devuelve un vector ortogonal al dado con el modulo indicado.
+// Returns an orthogonal vector with indicated module.
+//==============================================================================
+inline tdouble3 VecOrthogonal2(const tdouble3 &v,double module,bool first=true){
+  tdouble3 r=TDouble3(0.f,0.f,0.f);
+  if(v.x)r=(first? TDouble3(-v.z,0,v.x): TDouble3(-v.y,v.x,0));       //-When a!=0 in (a,b,c) => (-b,a,0)*y+(-c,0,a)*z 
+  else if(v.y)r=(first? TDouble3(0,-v.z,v.y): TDouble3(v.y,-v.x,0));  //-When b!=0 in (a,b,c) => (0,-c,b)*z+(b,-a,0)*x 
+  else if(v.z)r=(first? TDouble3(v.z,0,-v.x): TDouble3(0,v.z,-v.y));  //-When z!=0 in (a,b,c) => (c,0,-a)*x+(0,c,-b)*y 
+  double m=sqrt(r.x*r.x+r.y*r.y+r.z*r.z);
+  if(m){
+    m=module/m;
+    r=TDouble3(r.x*m,r.y*m,r.z*m);
+  }
+  return(r);
+}
+
+//==============================================================================
+// Devuelve un vector ortogonal al dado con el modulo indicado.
+// Returns an orthogonal vector with indicated module.
+//==============================================================================
+inline tfloat3 VecOrthogonal2(const tfloat3 &v,float module,bool first=true){
+  tfloat3 r=TFloat3(0.f,0.f,0.f);
+  if(v.x)r=(first? TFloat3(-v.z,0,v.x): TFloat3(-v.y,v.x,0));       //-When a!=0 in (a,b,c) => (-b,a,0)*y+(-c,0,a)*z 
+  else if(v.y)r=(first? TFloat3(0,-v.z,v.y): TFloat3(v.y,-v.x,0));  //-When b!=0 in (a,b,c) => (0,-c,b)*z+(b,-a,0)*x 
+  else if(v.z)r=(first? TFloat3(v.z,0,-v.x): TFloat3(0,v.z,-v.y));  //-When z!=0 in (a,b,c) => (c,0,-a)*x+(0,c,-b)*y 
+  float m=sqrt(r.x*r.x+r.y*r.y+r.z*r.z);
+  if(m){
+    m=module/m;
+    r=TFloat3(r.x*m,r.y*m,r.z*m);
+  }
+  return(r);
 }
 
 

@@ -2156,6 +2156,10 @@ void JSphCpu::RunMotion(double stepdt){
         if(motsim)MoveMatBound   (nparts,pini,matmov,stepdt,RidpMove,Posc,Dcellc,Velrhopc,Codec); 
         //else    MoveMatBoundAce(nparts,pini,matmov,matmov2,stepdt,RidpMove,Posc,Dcellc,Velrhopc,Acec,Codec);
       }
+      //-Applies predefined motion to BoundCorr configuration.  //<vs_innlet_ini> 
+      if(BoundCorr && BoundCorr->GetUseMotion()){
+        BoundCorr->RunMotion(SphMotion->GetObjMkBound(ref),typesimple,simplemov,matmov);
+      }  //<vs_innlet_end> 
     }
   }
   //-Process other modes of motion. | Procesa otros modos de motion.
@@ -2163,7 +2167,7 @@ void JSphCpu::RunMotion(double stepdt){
     if(!BoundChanged)CalcRidp(PeriActive!=0,Npb,0,CaseNfixed,CaseNfixed+CaseNmoving,Codec,Idpc,RidpMove);
     BoundChanged=true;
     //-Control of wave generation (WaveGen). | Gestion de WaveGen.
-    if(WaveGen)for(unsigned c=0;c<WaveGen->GetCount();c++){
+    for(unsigned c=0;c<WaveGen->GetCount();c++){
       bool typesimple;
       tdouble3 simplemov,simplevel,simpleace;
       tmatrix4d matmov,matmov2;
@@ -2183,6 +2187,10 @@ void JSphCpu::RunMotion(double stepdt){
         if(motsim)MoveMatBound   (np,pini,matmov,stepdt,RidpMove,Posc,Dcellc,Velrhopc,Codec);
         //else    MoveMatBoundAce(np,pini,matmov,matmov2,stepdt,RidpMove,Posc,Dcellc,Velrhopc,Acec,Codec);
       }
+      //-Applies predefined motion to BoundCorr configuration.  //<vs_innlet_ini> 
+      if(BoundCorr && BoundCorr->GetUseMotion()){
+        BoundCorr->RunMotion(WaveGen->GetPaddleMkbound(c),typesimple,simplemov,matmov);
+      }  //<vs_innlet_end> 
     }
   }
   //-Management of Multi-Layer Pistons.  //<vs_mlapiston_ini>

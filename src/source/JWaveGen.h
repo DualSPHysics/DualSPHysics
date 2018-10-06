@@ -104,6 +104,12 @@ public:
     ,tdouble3 &simplemov,tdouble3 &simplevel,tdouble3 &simpleace
     ,tmatrix4d &matmov,tmatrix4d &matmov2,unsigned &np,unsigned &idbegin);
 
+  //==============================================================================
+  /// Devuelve Mkbound de paddle.
+  /// Returns Mkbound of paddle.
+  //==============================================================================
+  word GetPaddleMkbound(unsigned cp)const;
+
 
   unsigned GetCount()const{ return(Count); }
   bool UseAwas()const{ return(Use_Awas); } 

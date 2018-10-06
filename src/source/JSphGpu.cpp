@@ -1050,6 +1050,10 @@ void JSphGpu::RunMotion(double stepdt){
         if(motsim)cusph::MoveMatBound   (PeriActive,Simulate2D,nparts,pini,matmov,stepdt,RidpMoveg,Posxyg,Poszg,Dcellg,Velrhopg,Codeg);
         //else    cusph::MoveMatBoundAce(PeriActive,Simulate2D,nparts,pini,matmov,matmov2,stepdt,RidpMoveg,Posxyg,Poszg,Dcellg,Velrhopg,Codeg);
       }
+      //-Applies predefined motion to BoundCorr configuration.  //<vs_innlet_ini> 
+      if(BoundCorr && BoundCorr->GetUseMotion()){
+        BoundCorr->RunMotion(SphMotion->GetObjMkBound(ref),typesimple,simplemov,matmov);
+      }  //<vs_innlet_end> 
     }
   }
   //-Process other modes of motion. | Procesa otros modos de motion.
@@ -1057,7 +1061,7 @@ void JSphGpu::RunMotion(double stepdt){
     if(!BoundChanged)cusph::CalcRidp(PeriActive!=0,Npb,0,CaseNfixed,CaseNfixed+CaseNmoving,Codeg,Idpg,RidpMoveg);
     BoundChanged=true;
     //-Control of wave generation (WaveGen). | Gestion de WaveGen.
-    if(WaveGen)for(unsigned c=0;c<WaveGen->GetCount();c++){
+    for(unsigned c=0;c<WaveGen->GetCount();c++){
       bool typesimple;
       tdouble3 simplemov,simplevel,simpleace;
       tmatrix4d matmov,matmov2;
@@ -1077,6 +1081,10 @@ void JSphGpu::RunMotion(double stepdt){
         if(motsim)cusph::MoveMatBound   (PeriActive,Simulate2D,np,pini,matmov,stepdt,RidpMoveg,Posxyg,Poszg,Dcellg,Velrhopg,Codeg);
         //else    cusph::MoveMatBoundAce(PeriActive,Simulate2D,np,pini,matmov,matmov2,stepdt,RidpMoveg,Posxyg,Poszg,Dcellg,Velrhopg,Codeg);
       }
+      //-Applies predefined motion to BoundCorr configuration.  //<vs_innlet_ini> 
+      if(BoundCorr && BoundCorr->GetUseMotion()){
+        BoundCorr->RunMotion(WaveGen->GetPaddleMkbound(c),typesimple,simplemov,matmov);
+      }  //<vs_innlet_end> 
     }
   }
   //-Management of Multi-Layer Pistons.  //<vs_mlapiston_ini>

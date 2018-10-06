@@ -119,6 +119,19 @@ void JSphBoundCorrZone::ConfigAutoLimit(double halfdp,tdouble3 pmin,tdouble3 pma
 }
 
 //==============================================================================
+/// Applies motion to direction data.
+//==============================================================================
+void JSphBoundCorrZone::RunMotion(bool simple,const tdouble3 &msimple,const tmatrix4d &mmatrix){
+  if(simple)LimitPos=LimitPos+msimple;
+  else{
+    const tdouble3 limitpos0=LimitPos;
+    LimitPos=MatrixMulPoint(mmatrix,limitpos0);
+    Direction=MatrixMulPoint(mmatrix,limitpos0+Direction)-LimitPos;
+  }
+  Plane=ToTFloat4(fmath::PlanePtVec(LimitPos,Direction));
+}
+
+//==============================================================================
 /// Loads lines with configuration information.
 //==============================================================================
 void JSphBoundCorrZone::GetConfig(std::vector<std::string> &lines)const{
@@ -139,8 +152,8 @@ void JSphBoundCorrZone::GetConfig(std::vector<std::string> &lines)const{
 //==============================================================================
 /// Constructor.
 //==============================================================================
-JSphBoundCorr::JSphBoundCorr(bool cpu,JLog2 *log,JXml *sxml,const std::string &place,const JSphMk *mkinfo)
-  :Cpu(cpu),Log(log)
+JSphBoundCorr::JSphBoundCorr(bool cpu,double dp,JLog2 *log,JXml *sxml,const std::string &place,const JSphMk *mkinfo)
+  :Cpu(cpu),Dp(dp),Log(log)
 {
   ClassName="JSphBoundCorr";
   Reset();
@@ -163,6 +176,7 @@ void JSphBoundCorr::Reset(){
   ExtrapolateMode=0;
   for(int c=0;c<List.size();c++)delete List[c];
   List.clear();
+  UseMotion=false;
 }
 
 //==============================================================================
@@ -235,6 +249,7 @@ void JSphBoundCorr::UpdateMkCode(const JSphMk *mkinfo){
     const unsigned cmk=mkinfo->GetMkBlockByMkBound(List[c]->MkBound);
     if(cmk<mkinfo->Size() && (CODE_IsFixed(mkinfo->Mkblock(cmk)->Code) || CODE_IsMoving(mkinfo->Mkblock(cmk)->Code))){
       List[c]->ConfigBoundCode(mkinfo->Mkblock(cmk)->Code);
+      if(CODE_IsMoving(mkinfo->Mkblock(cmk)->Code))UseMotion=true;
     }
     else RunException(met,fun::PrintStr("MkBound value (%u) is not a Mk fixed boundary valid.",List[c]->MkBound));
   }
@@ -244,7 +259,7 @@ void JSphBoundCorr::UpdateMkCode(const JSphMk *mkinfo){
 /// Run automatic configuration of LimitPos and Direction for each configuration
 /// and saves VTK file with limit configuration.
 //==============================================================================
-void JSphBoundCorr::RunAutoConfig(double dp,const JSphMk *mkinfo){
+void JSphBoundCorr::RunAutoConfig(const JSphMk *mkinfo){
   const char met[]="RunAutoConfig";
   for(unsigned c=0;c<GetCount();c++){
     const word mkbound=List[c]->MkBound;
@@ -252,51 +267,46 @@ void JSphBoundCorr::RunAutoConfig(double dp,const JSphMk *mkinfo){
     if(cmk<mkinfo->Size()){
       const tdouble3 pmin=mkinfo->Mkblock(cmk)->GetPosMin();
       const tdouble3 pmax=mkinfo->Mkblock(cmk)->GetPosMax();
-      List[c]->ConfigAutoLimit(dp/2.,pmin,pmax);
+      List[c]->ConfigAutoLimit(Dp/2.,pmin,pmax);
     }
     else RunException(met,fun::PrintStr("MkBound value (%u) is not a Mk fixed boundary valid.",List[c]->MkBound));
   }
-  SaveVtkConfig(dp);
+  SaveVtkConfig(Dp,-1);
 }
 
 //==============================================================================
 /// Saves VTK file with LimitPos and Direction for each configuration.
 //==============================================================================
-void JSphBoundCorr::SaveVtkConfig(double dp)const{
+void JSphBoundCorr::SaveVtkConfig(double dp,int part)const{
+  const double sizequad=dp*16;
+  const double sizedir=dp*4;
   std::vector<JFormatFiles2::StShapeData> shapes;
   for(unsigned c=0;c<GetCount();c++){
     const JSphBoundCorrZone* zo=List[c];
     const int mkbound=zo->MkBound;
     const tdouble3 ps=zo->GetLimitPos();
-    const tdouble3 ps2=ps+(fmath::VecUnitary(zo->GetDirection())*(dp*3));
-    shapes.push_back(JFormatFiles2::DefineShape_Line(ps,ps2,mkbound,0)); //-Direction line.
-    tdouble3 pt1=ps-TDouble3(dp/2.);
-    tdouble3 pt2=ps+TDouble3(dp/2.);
-    const double dp2=dp*2;
-    switch(zo->GetAutoDir()){
-      case JSphBoundCorrZone::DIR_Top:
-      case JSphBoundCorrZone::DIR_Bottom:
-        pt1=pt1-TDouble3(dp2,dp2,0);
-        pt2=pt2+TDouble3(dp2,dp2,0);
-      break;
-      case JSphBoundCorrZone::DIR_Left:
-      case JSphBoundCorrZone::DIR_Right:
-        pt1=pt1-TDouble3(0,dp2,dp2);
-        pt2=pt2+TDouble3(0,dp2,dp2);
-      break;
-      case JSphBoundCorrZone::DIR_Front:
-      case JSphBoundCorrZone::DIR_Back:
-        pt1=pt1-TDouble3(dp2,0,dp2);
-        pt2=pt2+TDouble3(dp2,0,dp2);
-      break;
-    }
-    List[c]->MkBound;
-    shapes.push_back(JFormatFiles2::DefineShape_Box(pt1,pt2-pt1,mkbound,0)); //-Limit box.
+    const tdouble3 ve=fmath::VecUnitary(zo->GetDirection());
+    const tdouble3 v1=fmath::VecOrthogonal2(ve,sizequad,true);
+    const tdouble3 v2=fmath::VecUnitary(fmath::ProductVec(ve,v1))*sizequad;
+    const tdouble3 p0=ps-(v1/2)-(v2/2);
+    const tdouble3 p1=p0+v1;
+    const tdouble3 p2=p0+v1+v2;
+    const tdouble3 p3=p0+v2;
+    //-Adds limit quad.
+    shapes.push_back(JFormatFiles2::DefineShape_Line(p0,p1,mkbound,0));
+    shapes.push_back(JFormatFiles2::DefineShape_Line(p1,p2,mkbound,0));
+    shapes.push_back(JFormatFiles2::DefineShape_Line(p2,p3,mkbound,0));
+    shapes.push_back(JFormatFiles2::DefineShape_Line(p3,p0,mkbound,0));
+    shapes.push_back(JFormatFiles2::DefineShape_Quad(p0,p1,p2,p3,mkbound,0));
+    //-Adds direction line.
+    shapes.push_back(JFormatFiles2::DefineShape_Line(ps,ps+(ve*sizedir),mkbound,0)); //-Direction line.
   }
   if(GetCount()){
-    const string filevtk=AppInfo.GetDirOut()+"CfgBoundCorr_Limit.vtk";
+    string filevtk;
+    if(part<0)filevtk=AppInfo.GetDirOut()+"CfgBoundCorr_Limit.vtk";
+    else filevtk=AppInfo.GetDirDataOut()+fun::FileNameSec("CfgBoundCorr_Limit.vtk",part);
     JFormatFiles2::SaveVtkShapes(filevtk,"mkbound","",shapes);
-    Log->AddFileInfo(filevtk,"Saves VTK file with BoundCorr configurations.");
+    if(part<0)Log->AddFileInfo(filevtk,"Saves VTK file with BoundCorr configurations.");
   }
 }
 
@@ -309,12 +319,26 @@ void JSphBoundCorr::VisuConfig(std::string txhead,std::string txfoot)const{
   Log->Printf("ExtrapolateMode: %s",(ExtrapolateMode==1? "FastSingle": (ExtrapolateMode==2? "Single": (ExtrapolateMode==3? "Double": "???"))));
   for(unsigned c=0;c<GetCount();c++){
     const JSphBoundCorrZone* zo=List[c];
-    Log->Printf("MkZone_%u (mkfluid:%u)",zo->IdZone,zo->MkBound);
+    Log->Printf("MkZone_%u (mkbound:%u)",zo->IdZone,zo->MkBound);
     std::vector<std::string> lines;
     zo->GetConfig(lines);
     for(unsigned i=0;i<unsigned(lines.size());i++)Log->Print(string("  ")+lines[i]);
   }
   if(!txfoot.empty())Log->Print(txfoot);
+}
+
+//==============================================================================
+/// Applies motion to direction data.
+//==============================================================================
+void JSphBoundCorr::RunMotion(word mkbound,bool simple,const tdouble3 &msimple,const tmatrix4d &mmatrix){
+  for(unsigned c=0;c<GetCount();c++)if(List[c]->MkBound==mkbound)List[c]->RunMotion(simple,msimple,mmatrix);
+}
+
+//==============================================================================
+/// Saves VTK file with configuration when motion is used.
+//==============================================================================
+void JSphBoundCorr::SaveData(int part)const{
+  if(UseMotion)SaveVtkConfig(Dp,part);
 }
 
 

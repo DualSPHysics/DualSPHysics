@@ -749,7 +749,7 @@ void JSph::LoadCaseConfig(){
   //-Configuration of boundary extrapolated correction.
   if(xml.GetNode("case.execution.special.boundextrap",false))RunException(met,"The XML section 'boundextrap' is obsolete.");
   if(xml.GetNode("case.execution.special.boundcorr",false)){
-    BoundCorr=new JSphBoundCorr(Cpu,Log,&xml,"case.execution.special.boundcorr",MkInfo);
+    BoundCorr=new JSphBoundCorr(Cpu,Dp,Log,&xml,"case.execution.special.boundcorr",MkInfo);
   } //<vs_innlet_end> 
  
   NpMinimum=CaseNp-unsigned(PartsOutMax*CaseNfluid);
@@ -1442,7 +1442,7 @@ void JSph::InitRun(unsigned np,const unsigned *idp,const tdouble3 *pos){
   if(BoundCorr){
     Log->Print("BoundCorr configuration:");
     if(PartBegin)RunException(met,"Simulation restart not allowed when BoundCorr is used.");
-    BoundCorr->RunAutoConfig(Dp,MkInfo);
+    BoundCorr->RunAutoConfig(MkInfo);
     BoundCorr->VisuConfig(""," ");
   }//<vs_innlet_end>
 
@@ -1775,6 +1775,7 @@ void JSph::SaveData(unsigned npok,const unsigned *idp,const tdouble3 *pos,const 
   if(SaveDt)SaveDt->SaveData();
   if(GaugeSystem)GaugeSystem->SaveResults(Part);
   if(ChronoObjects)ChronoObjects->SavePart(Part); //<vs_chroono>
+  if(BoundCorr && BoundCorr->GetUseMotion())BoundCorr->SaveData(Part);  //<vs_innlet>
 }
 
 //==============================================================================

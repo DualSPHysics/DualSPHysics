@@ -89,6 +89,8 @@ public:
   void ConfigBoundCode(typecode boundcode);
   void ConfigAutoLimit(double halfdp,tdouble3 pmin,tdouble3 pmax);
 
+  void RunMotion(bool simple,const tdouble3 &msimple,const tmatrix4d &mmatrix);
+
   void GetConfig(std::vector<std::string> &lines)const;
 
   TpDirection GetAutoDir()const{ return(AutoDir); }
@@ -106,26 +108,29 @@ class JSphBoundCorr : protected JObject
 {
 private:
   JLog2 *Log;
+  const double Dp;
 
   float DetermLimit;     ///<Limit for determinant. Use 1e-3 for first_order or 1e+3 for zeroth_order (default=1e+3).
   byte ExtrapolateMode;  ///<Calculation mode for rhop extrapolation from ghost nodes 1:fast-single, 2:single, 3:double (default=1).
 
   std::vector<JSphBoundCorrZone*> List; ///<List of configurations.
 
+  bool UseMotion; ///<Some boundary is moving boundary.
+
   void Reset();
   bool ExistMk(word mkbound)const;
   void LoadXml(JXml *sxml,const std::string &place);
   void ReadXml(const JXml *sxml,TiXmlElement* lis);
   void UpdateMkCode(const JSphMk *mkinfo);
-  void SaveVtkConfig(double dp)const;
+  void SaveVtkConfig(double dp,int part)const;
 
 public:
   const bool Cpu;
 
-  JSphBoundCorr(bool cpu,JLog2 *log,JXml *sxml,const std::string &place,const JSphMk *mkinfo);
+  JSphBoundCorr(bool cpu,double dp,JLog2 *log,JXml *sxml,const std::string &place,const JSphMk *mkinfo);
   ~JSphBoundCorr();
 
-  void RunAutoConfig(double dp,const JSphMk *mkinfo);
+  void RunAutoConfig(const JSphMk *mkinfo);
 
   void VisuConfig(std::string txhead,std::string txfoot)const;
   unsigned GetCount()const{ return(unsigned(List.size())); };
@@ -133,7 +138,12 @@ public:
   float GetDetermLimit()const{ return(DetermLimit); };
   byte GetExtrapolateMode()const{ return(ExtrapolateMode); };
 
+  bool GetUseMotion()const{ return(UseMotion); }
+  void RunMotion(word mkbound,bool simple,const tdouble3 &msimple,const tmatrix4d &mmatrix);
+
   const JSphBoundCorrZone* GetMkZone(unsigned idx)const{ return(idx<GetCount()? List[idx]: NULL); }
+
+  void SaveData(int part)const;
 
 };
 
