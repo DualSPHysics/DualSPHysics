@@ -555,6 +555,8 @@ void JSphGpuSingle::RunFloating(double dt,bool predictor){
 
     //-Run floating with Chrono library. //<vs_chroono_ini>
     if(ChronoObjects){      
+      TmgStop(Timers,TMG_SuFloating);
+      TmgStart(Timers,TMG_SuChrono);
       //-Export data / Exporta datos.
       tfloat3* ftoforces=FtoAuxFloat9;
       cudaMemcpy(ftoforces,FtoForcesg,sizeof(tfloat3)*FtCount*2,cudaMemcpyDeviceToHost);
@@ -568,6 +570,8 @@ void JSphGpuSingle::RunFloating(double dt,bool predictor){
       for(unsigned cf=0;cf<FtCount;cf++)if(FtObjs[cf].usechrono)ChronoObjects->GetFtData(FtObjs[cf].mkbound,ftocenter[cf],ftoforces[cf*2+1],ftoforces[cf*2]);
       cudaMemcpy(FtoCenterResg,ftocenter,sizeof(tdouble3)*FtCount  ,cudaMemcpyHostToDevice);
       cudaMemcpy(FtoForcesResg,ftoforces,sizeof(float3)  *FtCount*2,cudaMemcpyHostToDevice);
+      TmgStop(Timers,TMG_SuChrono);
+      TmgStart(Timers,TMG_SuFloating);
     }//<vs_chroono_end> 
 
     //-Apply movement around floating objects / Aplica movimiento sobre floatings.
@@ -623,6 +627,7 @@ void JSphGpuSingle::Run(std::string appname,JCfgRun *cfg,JLog2 *log){
   SaveData(); 
   TmgResetValues(Timers);
   TmgStop(Timers,TMG_Init);
+  if(Log->WarningCount())Log->PrintWarningList("\n[WARNINGS]","");
   PartNstep=-1; Part++;
 
   //-Main Loop.

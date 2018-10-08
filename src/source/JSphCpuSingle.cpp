@@ -796,12 +796,16 @@ void JSphCpuSingle::RunFloating(double dt,bool predictor){
 
     //-Run floating with Chrono library. //<vs_chroono_ini>
     if(ChronoObjects){
+      TmcStop(Timers,TMC_SuFloating);
+      TmcStart(Timers,TMC_SuChrono);
       //-Export data / Exporta datos.
       for(unsigned cf=0;cf<FtCount;cf++)if(FtObjs[cf].usechrono)ChronoObjects->SetFtData(FtObjs[cf].mkbound,FtoForces[cf].face,FtoForces[cf].fomegaace);
       //-Calculate data using Chrono / Calcula datos usando Chrono.
       ChronoObjects->RunChrono(Nstep,TimeStep,dt,predictor);
       //-Load calculated data by Chrono / Carga datos calculados por Chrono.
       for(unsigned cf=0;cf<FtCount;cf++)if(FtObjs[cf].usechrono)ChronoObjects->GetFtData(FtObjs[cf].mkbound,FtoForcesRes[cf].fcenterres,FtoForcesRes[cf].fvelres,FtoForcesRes[cf].fomegares);
+      TmcStop(Timers,TMC_SuChrono);
+      TmcStart(Timers,TMC_SuFloating);
     }//<vs_chroono_end> 
 
     //-Apply movement around floating objects. | Aplica movimiento sobre floatings.
@@ -892,6 +896,7 @@ void JSphCpuSingle::Run(std::string appname,JCfgRun *cfg,JLog2 *log){
   SaveData(); 
   TmcResetValues(Timers);
   TmcStop(Timers,TMC_Init);
+  if(Log->WarningCount())Log->PrintWarningList("\n[WARNINGS]","");
   PartNstep=-1; Part++;
 
   //-Main Loop.

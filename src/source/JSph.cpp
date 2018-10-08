@@ -705,6 +705,7 @@ void JSph::LoadCaseConfig(){
   FtMode=(WithFloating? FTMODE_Sph: FTMODE_None);
   if(UseDEM)FtMode=FTMODE_Ext;
   if(UseChrono)FtMode=FTMODE_Ext; //<vs_chroono>
+  if(UseChrono && PeriActive!=0)Log->PrintfWarning("The use of Chrono with open periodic limits is dangerous since Chrono objects should not go beyond the periodic limits."); //<vs_chroono>
 
   //-Loads DEM and DVI data for boundary objects.   //<vs_chroono>
   if(UseDEM || UseChrono){/*                        //<vs_chroono>
@@ -1579,6 +1580,7 @@ void JSph::AbortBoundOut(unsigned nout,const unsigned *idp,const tdouble3 *pos,c
   //-Shows excluded particles information.
   Log->Print(" ");
   Log->Print("*** ERROR: Some boundary particle was excluded. ***");
+  if(UseChrono && PeriActive!=0)Log->Print("*** Maybe some Chrono object went beyond the periodic limits. Be careful when combining the use of Chrono with periodic limits."); //<vs_chroono>
   Log->Printf("TimeStep: %f  (Nstep: %u)",TimeStep,Nstep);
   unsigned npunknown=nout-outfixed-outmoving-outfloat;
   if(!npunknown)Log->Printf("Total boundary: %u  (fixed=%u  moving=%u  floating=%u)",nout,outfixed,outmoving,outfloat);

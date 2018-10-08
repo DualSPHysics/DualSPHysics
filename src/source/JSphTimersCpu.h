@@ -53,11 +53,12 @@ typedef enum{
   ,TMC_SuPeriodic=11
   ,TMC_SuResizeNp=12
   ,TMC_SuSavePart=13
-  ,TMC_SuInOut=14       //<vs_innlet>
-  ,TMC_SuBoundCorr=15   //<vs_innlet>
+  ,TMC_SuChrono=14      //<vs_innlet>
+  ,TMC_SuInOut=15       //<vs_innlet>
+  ,TMC_SuBoundCorr=16   //<vs_innlet>
 }CsTypeTimerCPU;
 //#define TMC_COUNT 14   //<vs_no_innlet>
-#define TMC_COUNT 16     //<vs_innlet>
+#define TMC_COUNT 17     //<vs_innlet>
 
 typedef StSphTimerCpu TimersCpu[TMC_COUNT];
 
@@ -80,6 +81,7 @@ inline const char* TmcGetName(CsTypeTimerCPU ct){
     case TMC_SuPeriodic:        return("SU-Periodic");
     case TMC_SuResizeNp:        return("SU-ResizeNp");
     case TMC_SuSavePart:        return("SU-SavePart");
+    case TMC_SuChrono:          return("SU-Chrono");     //<vs_chroono>
     case TMC_SuInOut:           return("SU-InOut");      //<vs_innlet>
     case TMC_SuBoundCorr:       return("SU-BoundCorr");  //<vs_innlet>
   }
