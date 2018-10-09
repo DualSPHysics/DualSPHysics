@@ -204,7 +204,7 @@ void JSphBoundCorr::ReadXml(const JXml *sxml,TiXmlElement* lis){
   const char met[]="ReadXml";
   //-Loads value determlimit.
   if(sxml->CountElements(lis,"determlimit")>1)sxml->ErrReadElement(lis,"determlimit",false,"Several definitions for this value.");
-  DetermLimit=sxml->ReadElementFloat(lis,"determlimit","value",true,1e+3f);
+  DetermLimit=sxml->ReadElementFloat(lis,"determlimit","value",true,1e-3f);
   //-Loads ExtrapolateMode.
   ExtrapolateMode=sxml->ReadElementInt(lis,"extrapolatemode","value",true,1);
   if(ExtrapolateMode>3)ExtrapolateMode=3;

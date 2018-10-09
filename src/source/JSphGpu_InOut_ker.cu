@@ -1607,9 +1607,9 @@ template<bool sim2d,TpKernel tker> __global__ void KerInteractionBoundCorr_Singl
           const float rr2=drx*drx+dry*dry+drz*drz;
           if(rr2<=CTE.fourh2 && rr2>=ALMOSTZERO && CODE_IsFluid(code[p2])){//-Only with fluid particles (including inout).
             //-Wendland or Cubic Spline kernel.
-			float frx,fry,frz,wab;
-			if(tker==KERNEL_Wendland)cusph::KerGetKernelWendland(rr2,drx,dry,drz,frx,fry,frz,wab);
-			else if(tker==KERNEL_Cubic)cusph::KerGetKernelCubic(rr2,drx,dry,drz,frx,fry,frz,wab);
+            float frx,fry,frz,wab;
+            if(tker==KERNEL_Wendland)cusph::KerGetKernelWendland(rr2,drx,dry,drz,frx,fry,frz,wab);
+            else if(tker==KERNEL_Cubic)cusph::KerGetKernelCubic(rr2,drx,dry,drz,frx,fry,frz,wab);
 
             //===== Get mass and volume of particle p2 =====
             float massp2=CTE.massf;
@@ -1729,9 +1729,9 @@ template<bool sim2d,TpKernel tker> __global__ void KerInteractionBoundCorr_FastS
           const float rr2=drx*drx+dry*dry+drz*drz;
           if(rr2<=CTE.fourh2 && rr2>=ALMOSTZERO && CODE_IsFluid(code[p2])){//-Only with fluid particles (including inout).
             //-Wendland or Cubic Spline kernel.
-			float frx,fry,frz,wab;
-			if(tker==KERNEL_Wendland)cusph::KerGetKernelWendland(rr2,drx,dry,drz,frx,fry,frz,wab);
-			else if(tker==KERNEL_Cubic)cusph::KerGetKernelCubic(rr2,drx,dry,drz,frx,fry,frz,wab);
+            float frx,fry,frz,wab;
+            if(tker==KERNEL_Wendland)cusph::KerGetKernelWendland(rr2,drx,dry,drz,frx,fry,frz,wab);
+            else if(tker==KERNEL_Cubic)cusph::KerGetKernelCubic(rr2,drx,dry,drz,frx,fry,frz,wab);
 
             //===== Get mass and volume of particle p2 =====
             float massp2=CTE.massf;
