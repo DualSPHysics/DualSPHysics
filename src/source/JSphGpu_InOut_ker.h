@@ -35,6 +35,7 @@ inline double3 Double3(const tdouble3& v){ double3 p={v.x,v.y,v.z}; return(p); }
 inline double4 Double4(const tdouble4& v){ double4 p={v.x,v.y,v.z,v.w}; return(p); }
 
 //-Kernels for inlet/outlet (JSphInOut).
+void InOutIgnoreFluidDef(unsigned n,typecode cod,typecode codnew,typecode *code);
 void UpdatePosFluid(byte periactive,unsigned n,unsigned pini
   ,double2 *posxy,double *posz,unsigned *dcell,typecode *code);
 unsigned InOutCreateList(bool stable,unsigned n,unsigned pini

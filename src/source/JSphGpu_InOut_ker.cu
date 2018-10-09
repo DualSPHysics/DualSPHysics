@@ -30,6 +30,31 @@ namespace cusphinout{
 //# Kernels for inlet/outlet (JSphInOut).
 //# Kernels para inlet/outlet (JSphInOut).
 //##############################################################################
+
+//------------------------------------------------------------------------------
+/// Mark special fluid particles to ignore.
+/// Marca las particulas fluidas especiales para ignorar.
+//------------------------------------------------------------------------------
+__global__ void KerInOutIgnoreFluidDef(unsigned n,typecode cod,typecode codnew,typecode *code)
+{
+  unsigned p=blockIdx.y*gridDim.x*blockDim.x + blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
+  if(p<n){
+    if(code[p]==cod)code[p]=codnew;
+  }
+}
+
+//==============================================================================
+/// Mark special fluid particles to ignore.
+/// Marca las particulas fluidas especiales para ignorar.
+//==============================================================================
+void InOutIgnoreFluidDef(unsigned n,typecode cod,typecode codnew,typecode *code){
+  if(n){
+    dim3 sgrid=cusph::GetGridSize(n,SPHBSIZE);
+    KerInOutIgnoreFluidDef <<<sgrid,SPHBSIZE>>> (n,cod,codnew,code);
+  }
+}
+
+
 //------------------------------------------------------------------------------
 /// Returns original position of periodic particle.
 //------------------------------------------------------------------------------

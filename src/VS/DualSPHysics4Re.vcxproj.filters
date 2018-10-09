@@ -319,6 +319,9 @@
     <ClInclude Include="..\source\JSimpleNeigs.h">
       <Filter>Src_Inlet</Filter>
     </ClInclude>
+    <ClInclude Include="..\source\JSphPartsInit.h">
+      <Filter>Source</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\source\JCfgRun.cpp">
@@ -548,6 +551,9 @@
     </ClCompile>
     <ClCompile Include="..\source\JSimpleNeigs.cpp">
       <Filter>Src_Inlet</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JSphPartsInit.cpp">
+      <Filter>Source</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

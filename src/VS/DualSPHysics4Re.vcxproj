@@ -596,6 +596,7 @@ rem %CudaNvcc% -ccbin "$(VCInstallDir)bin" %gpuhw% -use_fast_math -c %ptxinfo% -
     <ClInclude Include="..\source\JSphInOutPoints.h" />
     <ClInclude Include="..\source\JSphMk.h" />
     <ClInclude Include="..\source\JSphMotion.h" />
+    <ClInclude Include="..\source\JSphPartsInit.h" />
     <ClInclude Include="..\source\JSphVisco.h" />
     <ClInclude Include="..\source\JPartsOut.h" />
     <ClInclude Include="..\source\JSphCpuSingle.h" />
@@ -728,6 +729,7 @@ rem %CudaNvcc% -ccbin "$(VCInstallDir)bin" %gpuhw% -use_fast_math -c %ptxinfo% -
     <ClCompile Include="..\source\JSphInOutPoints.cpp" />
     <ClCompile Include="..\source\JSphMk.cpp" />
     <ClCompile Include="..\source\JSphMotion.cpp" />
+    <ClCompile Include="..\source\JSphPartsInit.cpp" />
     <ClCompile Include="..\source\JSphVisco.cpp" />
     <ClCompile Include="..\source\JPartsOut.cpp" />
     <ClCompile Include="..\source\JSphCpuSingle.cpp" />

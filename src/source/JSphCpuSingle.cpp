@@ -124,6 +124,9 @@ void JSphCpuSingle::ConfigDomain(){
   //-Runs initialization operations from XML.
   RunInitialize(Np,Npb,Posc,Idpc,Codec,Velrhopc);
 
+  //-Creates PartsInit object with initial particle data for automatic configurations.
+  CreatePartsInit(Np,Posc,Codec);
+
   //-Computes MK domain for boundary and fluid particles.
   MkInfo->ComputeMkDomains(Np,Posc,Codec);
 
@@ -891,6 +894,7 @@ void JSphCpuSingle::Run(std::string appname,JCfgRun *cfg,JLog2 *log){
   InitRunCpu();
   RunGaugeSystem(TimeStep);
   if(InOut)InOutInit(TimeStepIni);  //<vs_innlet>
+  FreePartsInit();
   UpdateMaxValues();
   PrintAllocMemory(GetAllocMemoryCpu());
   SaveData(); 

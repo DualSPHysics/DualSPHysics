@@ -23,6 +23,7 @@
 #include "Functions.h"
 #include "JPartDataHead.h"
 #include "JSphMk.h"
+#include "JSphPartsInit.h"
 #include "JPartsLoad4.h"
 #include "JSphMotion.h"
 #include "JXml.h"
@@ -71,6 +72,7 @@ JSph::JSph(bool cpu,bool withmpi):Cpu(cpu),WithMpi(withmpi){
   SaveDt=NULL;
   TimeOut=NULL;
   MkInfo=NULL;
+  PartsInit=NULL;
   SphMotion=NULL;
   FtObjs=NULL;
   DemData=NULL;
@@ -101,6 +103,7 @@ JSph::~JSph(){
   delete SaveDt;        SaveDt=NULL;
   delete TimeOut;       TimeOut=NULL;
   delete MkInfo;        MkInfo=NULL;
+  delete PartsInit;     PartsInit=NULL;
   delete SphMotion;     SphMotion=NULL;
   AllocMemoryFloating(0);
   delete[] DemData;     DemData=NULL;
@@ -1102,6 +1105,26 @@ void JSph::RunInitialize(unsigned np,unsigned npb,const tdouble3 *pos,const unsi
       delete[] mktype; mktype=NULL;
     }
   }
+}
+
+//==============================================================================
+/// Creates PartsInit object with initial particle data for automatic 
+/// configurations.
+///
+/// Crea el objeto PartsInit con los datos iniciales de las particulas para 
+/// configuraciones automaticas.
+//==============================================================================
+void JSph::CreatePartsInit(unsigned np,const tdouble3 *pos,const typecode *code){
+  PartsInit=new JSphPartsInit(Simulate2D,Simulate2DPosY,Dp,MkInfo,np,pos,code);
+}
+
+//==============================================================================
+/// Free memory of PartsInit.
+///
+/// Libera memoria de PartsInit.
+//==============================================================================
+void JSph::FreePartsInit(){
+  delete PartsInit; PartsInit=NULL;
 }
 
 //==============================================================================

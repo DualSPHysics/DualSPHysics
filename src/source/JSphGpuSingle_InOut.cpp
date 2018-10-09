@@ -22,6 +22,7 @@
 #include "JCellDivGpuSingle.h"
 #include "JArraysGpu.h"
 #include "JSphMk.h"
+#include "JSphPartsInit.h"
 #include "JSphInOut.h"
 #include "JSphBoundCorr.h"
 #include "JSphGpu_InOut_ker.h"
@@ -39,7 +40,7 @@ using namespace std;
 /// Mark special fluid particles to ignore.
 /// Marca las particulas fluidas especiales para ignorar.
 //==============================================================================
-void JSphGpuSingle::InOutIgnoreFluidDef(const std::vector<unsigned> &mkfluidlist,typecode *code){
+void JSphGpuSingle::InOutIgnoreFluidDef(const std::vector<unsigned> &mkfluidlist){
   const unsigned nc=unsigned(mkfluidlist.size());
   for(unsigned c=0;c<nc;c++){
     const unsigned cmk=MkInfo->GetMkBlockByMkFluid(mkfluidlist[c]);
@@ -47,11 +48,9 @@ void JSphGpuSingle::InOutIgnoreFluidDef(const std::vector<unsigned> &mkfluidlist
       const typecode rcode=MkInfo->Mkblock(cmk)->Code;
       const typecode rcode2=CODE_SetOutIgnore(rcode);
       //-Mark special fluid particles to ignore.
-      for(unsigned p=0;p<Np;p++)if(code[p]==rcode)code[p]=rcode2;
+      cusphinout::InOutIgnoreFluidDef(Np,rcode,rcode2,Codeg);
     }
   }
-  //-Uploads updated code of particles to the GPU.
-  if(nc)cudaMemcpy(Codeg,code,sizeof(typecode)*Np,cudaMemcpyHostToDevice);
 }
 
 //==============================================================================
@@ -158,20 +157,11 @@ void JSphGpuSingle::InOutInit(double timestepini){
   Log->Print("InOut configuration:");
   if(PartBegin)RunException(met,"Simulation restart not allowed when Inlet/Outlet is used.");
 
-  //-Prepares particle data to define inout points starting from special fluid particles.
-  JSphInOutPointsParticles partdata;
-  if(InOut->MkFluidList.size()>0){
-    unsigned np=ParticlesDataDown(Np,0,true,false);
-    if(np!=Np)RunException(met,"The number of particles is invalid.");
-    partdata.Config(MkInfo,Np,AuxPos,Code);
-  }
-
   //-Configures InOut zones and prepares new inout particles to create.
-  const unsigned newnp=InOut->Config(timestepini,Stable,Simulate2D,Simulate2DPosY,PeriActive,RhopZero,CteB,Gamma,Gravity,Dp,MapRealPosMin,MapRealPosMax,MkInfo->GetCodeNewFluid(),&partdata);
+  const unsigned newnp=InOut->Config(timestepini,Stable,Simulate2D,Simulate2DPosY,PeriActive,RhopZero,CteB,Gamma,Gravity,Dp,MapRealPosMin,MapRealPosMax,MkInfo->GetCodeNewFluid(),PartsInit);
 
   //-Mark special fluid particles to ignore. | Marca las particulas fluidas especiales para ignorar.
-  InOutIgnoreFluidDef(InOut->MkFluidList,Code);
-  partdata.Reset();
+  InOutIgnoreFluidDef(InOut->MkFluidList);
 
   //Log->Printf("++> newnp:%u",newnp);
   //-Resizes memory when it is necessary.

@@ -43,36 +43,11 @@ class JSphMkBlock;
 class JXml;
 class TiXmlElement;
 class JLog2;
+class JSphPartsInit;
 
 //##############################################################################
 //# XML format in JSphInOut_fmt.xml.
 //##############################################################################
-
-//##############################################################################
-//# JSphInOutPointsParticles
-//##############################################################################
-/// \brief Stores particle information to define inout points.
-class JSphInOutPointsParticles
-{
-private:
-  const JSphMk* MkInfo;
-  unsigned Np;
-  const tdouble3 *Pos;
-  const typecode *Code;
-
-public:
-  JSphInOutPointsParticles(){ Reset(); }
-  ~JSphInOutPointsParticles(){ Reset(); }
-  void Reset(){ Config(NULL,0,NULL,NULL); }
-  void Config(const JSphMk* mkinfo,unsigned np,const tdouble3 *pos,const typecode *code){
-    MkInfo=mkinfo; Np=np; Pos=pos; Code=code;
-  }
-
-  unsigned GetNp()const{ return(Np); }
-  const JSphMk* GetMkInfo()const{ return(MkInfo); }
-  const typecode* GetCode()const{ return(Code); }
-  const tdouble3* GetPos()const{ return(Pos); }
-};
 
 //##############################################################################
 //# JSphInOutPoints
@@ -128,7 +103,7 @@ private:
   std::string CheckParticlesDirection(const JSphMkBlock *pmk,const tdouble3 &dir)const;
 
 
-  void Create2d3d_Particles(JXml *sxml,TiXmlElement* ele,const JSphInOutPointsParticles *partdata);
+  void Create2d3d_Particles(JXml *sxml,TiXmlElement* ele,const JSphPartsInit *partsdata);
   void Create2d_Line(JXml *sxml,TiXmlElement* ele);
   void Create3d_Box(JXml *sxml,TiXmlElement* ele);
   void Create3d_Circle(JXml *sxml,TiXmlElement* ele);
@@ -142,7 +117,7 @@ public:
   void Reset();
   void ResetPoints();
 
-  void CreatePoints(JXml *sxml,TiXmlElement* ele,const JSphInOutPointsParticles *partdata);
+  void CreatePoints(JXml *sxml,TiXmlElement* ele,const JSphPartsInit *partsdata);
 
   void GetConfig(std::vector<std::string> &lines)const;
 

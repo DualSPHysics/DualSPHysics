@@ -45,7 +45,7 @@ class JSphInOutGridData;
 class JSphCpu;
 class JWaveTheoryReg;
 class JSphMk;
-class JSphInOutPointsParticles;
+class JSphPartsInit;
 
 //##############################################################################
 //# XML format in _FmtXML_InOut.xml.
@@ -158,13 +158,13 @@ private:
   float  *PtzAux;        ///<Memory auxiliar to recude maximum zsurf on CPU memory [NptInit].
 #endif
 
-  void ReadXml(JXml *sxml,TiXmlElement* lis,const std::string &dirdatafile,const JSphInOutPointsParticles *partdata);
+  void ReadXml(JXml *sxml,TiXmlElement* lis,const std::string &dirdatafile,const JSphPartsInit *partsdata);
   void LoadDomain();
 
 public:
   JSphInOutZone(bool cpu,JLog2 *log,unsigned idzone,bool simulate2d,double simulate2dposy
     ,double dp,const tdouble3 &posmin,const tdouble3 &posmax,JXml *sxml,TiXmlElement* ele
-    ,const std::string &dirdatafile,const JSphInOutPointsParticles *partdata);
+    ,const std::string &dirdatafile,const JSphPartsInit *partsdata);
   ~JSphInOutZone();
   void Reset();
   void GetConfig(std::vector<std::string> &lines)const;
@@ -314,9 +314,9 @@ private:
 #endif
 
   void LoadXmlInit(JXml *sxml,const std::string &place);
-  void LoadFileXml(const std::string &file,const std::string &path,const JSphInOutPointsParticles *partdata);
-  void LoadXml(JXml *sxml,const std::string &place,const JSphInOutPointsParticles *partdata);
-  void ReadXml(JXml *sxml,TiXmlElement* ele,const JSphInOutPointsParticles *partdata);
+  void LoadFileXml(const std::string &file,const std::string &path,const JSphPartsInit *partsdata);
+  void LoadXml(JXml *sxml,const std::string &place,const JSphPartsInit *partsdata);
+  void ReadXml(JXml *sxml,TiXmlElement* ele,const JSphPartsInit *partsdata);
 
   void ComputeFreeDomain();
   void SaveVtkDomains();
@@ -352,7 +352,7 @@ public:
 
   unsigned Config(double timestep,bool stable,bool simulate2d,double simulate2dposy
     ,byte periactive,float rhopzero,float cteb,float gamma,tfloat3 gravity,double dp
-    ,tdouble3 posmin,tdouble3 posmax,typecode codenewpart,const JSphInOutPointsParticles *partdata);
+    ,tdouble3 posmin,tdouble3 posmax,typecode codenewpart,const JSphPartsInit *partsdata);
     
   void LoadInitPartsData(unsigned idpfirst,unsigned npart,unsigned* idp,typecode* code,tdouble3* pos,tfloat4* velrhop);
 

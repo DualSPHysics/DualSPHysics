@@ -20,6 +20,7 @@
 
 #include "JSphInOutPoints.h"
 #include "JSphMk.h"
+#include "JSphPartsInit.h"
 #include "JXml.h"
 #include "JLog2.h"
 #include "JAppInfo.h"
@@ -139,7 +140,7 @@ std::string JSphInOutPoints::CheckParticlesDirection(const JSphMkBlock *pmk,cons
 //==============================================================================
 /// Creates points starting from special fluid particles.
 //==============================================================================
-void JSphInOutPoints::Create2d3d_Particles(JXml *sxml,TiXmlElement* ele,const JSphInOutPointsParticles *partdata){
+void JSphInOutPoints::Create2d3d_Particles(JXml *sxml,TiXmlElement* ele,const JSphPartsInit *partsdata){
   const char met[]="Create2d3d_Particles";
   if(Count)RunException(met,"There are previous definitions of inout points.",sxml->ErrGetFileRow(ele));
   unsigned mkfluid=sxml->GetAttributeUint(ele,"mkfluid");
@@ -151,8 +152,8 @@ void JSphInOutPoints::Create2d3d_Particles(JXml *sxml,TiXmlElement* ele,const JS
   Direction=fmath::VecUnitary(dir);
 
   //-Check mkfluid information.
-  if(!partdata || partdata->GetNp()==0)RunException(met,"No particles data to define inout points.");
-  const JSphMk* mkinfo=partdata->GetMkInfo();
+  if(!partsdata || partsdata->GetNp()==0)RunException(met,"No particles data to define inout points.");
+  const JSphMk* mkinfo=partsdata->GetMkInfo();
   const unsigned cmk=mkinfo->GetMkBlockByMkFluid(mkfluid);
   const JSphMkBlock* pmk=(cmk<mkinfo->Size()? mkinfo->Mkblock(cmk): NULL);
   if(!pmk || !pmk->Count)sxml->ErrReadAtrib(ele,"mkfluid",false,fun::PrintStr("No particles data with mkfluid=%u to define inout points.",mkfluid));
@@ -172,9 +173,9 @@ void JSphInOutPoints::Create2d3d_Particles(JXml *sxml,TiXmlElement* ele,const JS
     ResizeMemory(npt);
     //-Get position of points.
     const typecode rcode=pmk->Code;
-    const unsigned np=partdata->GetNp();
-    const typecode* code=partdata->GetCode();
-    const tdouble3* pos=partdata->GetPos();
+    const unsigned np=partsdata->GetNp();
+    const typecode* code=partsdata->GetCode();
+    const tdouble3* pos=partsdata->GetPos();
     unsigned cp=0;
     for(unsigned p=0;p<np;p++)if(code[p]==rcode){
       if(cp<npt)Points[Count+cp]=pos[p];
@@ -446,7 +447,7 @@ void JSphInOutPoints::Create3d_Circle(JXml *sxml,TiXmlElement* ele){
 //==============================================================================
 /// Reads definition of inlet points in the XML node and creates points.
 //==============================================================================
-void JSphInOutPoints::CreatePoints(JXml *sxml,TiXmlElement* lis,const JSphInOutPointsParticles *partdata){
+void JSphInOutPoints::CreatePoints(JXml *sxml,TiXmlElement* lis,const JSphPartsInit *partsdata){
   const char met[]="ReadXml";
   string xmlrow=sxml->ErrGetFileRow(lis);
   TiXmlElement* ele=lis->FirstChildElement();
@@ -454,12 +455,12 @@ void JSphInOutPoints::CreatePoints(JXml *sxml,TiXmlElement* lis,const JSphInOutP
     string cmd=ele->Value();
     if(cmd.length()&&cmd[0]!='_'){
       if(Simulate2D){//-Loads inflow definition for 2D.
-        if(cmd=="particles")Create2d3d_Particles(sxml,ele,partdata);
+        if(cmd=="particles")Create2d3d_Particles(sxml,ele,partsdata);
         else if(cmd=="line")Create2d_Line(sxml,ele);
         else sxml->ErrReadElement(ele,cmd,false);
       }
       else{//-Loads inflow definition for 3D.
-        if(cmd=="particles")Create2d3d_Particles(sxml,ele,partdata);
+        if(cmd=="particles")Create2d3d_Particles(sxml,ele,partsdata);
         else if(cmd=="box")Create3d_Box(sxml,ele);
         else if(cmd=="circle")Create3d_Circle(sxml,ele);
         else sxml->ErrReadElement(ele,cmd,false);

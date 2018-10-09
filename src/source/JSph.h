@@ -66,6 +66,7 @@ class JSpacePartBlock;
 class JChronoObjects;    //<vs_chroono>
 class JSphInOut;         //<vs_innlet>
 class JSphBoundCorr;     //<vs_innlet>
+class JSphPartsInit;
 
 //##############################################################################
 //# XML format of execution parameters in _FmtXML__Parameters.xml.
@@ -223,6 +224,7 @@ protected:
   unsigned CaseNpb;          ///<Number of particles of the boundary block ( \ref Nbound - \ref Nfloat ) or ( \ref Nfixed + \ref Nmoving).
 
   JSphMk *MkInfo;            ///<Stores information for the Mk of the particles.
+  JSphPartsInit *PartsInit;  ///<Stores initial particles data for automatic configurations.
 
   //-Variables for periodic conditions.
   byte PeriActive;
@@ -366,6 +368,8 @@ protected:
   void VisuParticleSummary()const;
   void LoadDcellParticles(unsigned n,const typecode *code,const tdouble3 *pos,unsigned *dcell)const;
   void RunInitialize(unsigned np,unsigned npb,const tdouble3 *pos,const unsigned *idp,const typecode *code,tfloat4 *velrhop);
+  void CreatePartsInit(unsigned np,const tdouble3 *pos,const typecode *code);
+  void FreePartsInit();
 
   void ConfigCellDivision();
   void SelecDomain(tuint3 celini,tuint3 celfin);

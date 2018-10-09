@@ -52,7 +52,7 @@ using namespace std;
 //==============================================================================
 JSphInOutZone::JSphInOutZone(bool cpu,JLog2 *log,unsigned idzone,bool simulate2d,double simulate2dposy
   ,double dp,const tdouble3 &posmin,const tdouble3 &posmax,JXml *sxml,TiXmlElement* ele
-  ,const std::string &dirdatafile,const JSphInOutPointsParticles *partdata)
+  ,const std::string &dirdatafile,const JSphPartsInit *partsdata)
  :Cpu(cpu),Log(log),IdZone(idzone),Simulate2D(simulate2d),Simulate2DPosY(simulate2dposy)
  ,Dp(dp),MapRealPosMin(posmin),MapRealPosMax(posmax)
 {
@@ -67,7 +67,7 @@ JSphInOutZone::JSphInOutZone(bool cpu,JLog2 *log,unsigned idzone,bool simulate2d
   #endif
 
   Reset();
-  ReadXml(sxml,ele,dirdatafile,partdata);
+  ReadXml(sxml,ele,dirdatafile,partsdata);
 }
 
 //==============================================================================
@@ -181,7 +181,7 @@ void JSphInOutZone::LoadDomain(){
 /// Reads initial configuration in the XML node.
 //==============================================================================
 void JSphInOutZone::ReadXml(JXml *sxml,TiXmlElement* ele,const std::string &dirdatafile
-  ,const JSphInOutPointsParticles *partdata)
+  ,const JSphPartsInit *partsdata)
 {
   const char met[]="ReadXml";
   //-Loads ConvertFluid.
@@ -195,12 +195,12 @@ void JSphInOutZone::ReadXml(JXml *sxml,TiXmlElement* ele,const std::string &dird
   Points=new JSphInOutPoints(Log,Simulate2D,Simulate2DPosY,Layers,Dp,0,MapRealPosMin,MapRealPosMax);
   if(Simulate2D){
     TiXmlElement* zone2d=ele->FirstChildElement("zone2d"); 
-    if(zone2d)Points->CreatePoints(sxml,zone2d,partdata);
+    if(zone2d)Points->CreatePoints(sxml,zone2d,partsdata);
     else sxml->ErrReadElement(ele,"zone2d",true);
   }
   else{
     TiXmlElement* zone3d=ele->FirstChildElement("zone3d"); 
-    if(zone3d)Points->CreatePoints(sxml,zone3d,partdata);
+    if(zone3d)Points->CreatePoints(sxml,zone3d,partsdata);
     else sxml->ErrReadElement(ele,"zone3d",true);
   }
   //-Obtains domain data from Points object.
@@ -777,26 +777,26 @@ void JSphInOut::LoadXmlInit(JXml *sxml,const std::string &place){
 /// Loads data of a file in XML format.
 //==============================================================================
 void JSphInOut::LoadFileXml(const std::string &file,const std::string &path
-  ,const JSphInOutPointsParticles *partdata)
+  ,const JSphPartsInit *partsdata)
 {
   JXml jxml;
   jxml.LoadFile(file);
-  LoadXml(&jxml,path,partdata);
+  LoadXml(&jxml,path,partsdata);
 }
 
 //==============================================================================
 /// Loads initial conditions of XML object.
 //==============================================================================
-void JSphInOut::LoadXml(JXml *sxml,const std::string &place,const JSphInOutPointsParticles *partdata){
+void JSphInOut::LoadXml(JXml *sxml,const std::string &place,const JSphPartsInit *partsdata){
   TiXmlNode* node=sxml->GetNode(place,false);
   if(!node)RunException("LoadXml",std::string("Cannot find the element \'")+place+"\'.");
-  ReadXml(sxml,node->ToElement(),partdata);
+  ReadXml(sxml,node->ToElement(),partsdata);
 }
 
 //==============================================================================
 /// Reads list of initial conditions in the XML node.
 //==============================================================================
-void JSphInOut::ReadXml(JXml *sxml,TiXmlElement* lis,const JSphInOutPointsParticles *partdata){
+void JSphInOut::ReadXml(JXml *sxml,TiXmlElement* lis,const JSphPartsInit *partsdata){
   const char met[]="ReadXml";
   //-Loads inflow elements.
   const unsigned idmax=CODE_MASKTYPEVALUE-CODE_TYPE_FLUID_INOUT;
@@ -805,7 +805,7 @@ void JSphInOut::ReadXml(JXml *sxml,TiXmlElement* lis,const JSphInOutPointsPartic
   while(ele){
     const unsigned id=GetCount();
     if(id>idmax)RunException(met,"Maximum number of inlet/outlet zones has been reached.");
-    JSphInOutZone* iet=new JSphInOutZone(Cpu,Log,id,Simulate2D,Simulate2DPosY,Dp,MapRealPosMin,MapRealPosMax,sxml,ele,DirDataFile,partdata);
+    JSphInOutZone* iet=new JSphInOutZone(Cpu,Log,id,Simulate2D,Simulate2DPosY,Dp,MapRealPosMin,MapRealPosMax,sxml,ele,DirDataFile,partsdata);
     List.push_back(iet);
     ele=ele->NextSiblingElement("inoutzone");
   }
@@ -1113,7 +1113,7 @@ void JSphInOut::SaveVtkVelGrid(){
 //==============================================================================
 unsigned JSphInOut::Config(double timestep,bool stable,bool simulate2d,double simulate2dposy
   ,byte periactive,float rhopzero,float cteb,float gamma,tfloat3 gravity,double dp
-  ,tdouble3 posmin,tdouble3 posmax,typecode codenewpart,const JSphInOutPointsParticles *partdata)
+  ,tdouble3 posmin,tdouble3 posmax,typecode codenewpart,const JSphPartsInit *partsdata)
 {
   const char met[]="Config";
   Stable=stable;
@@ -1130,7 +1130,7 @@ unsigned JSphInOut::Config(double timestep,bool stable,bool simulate2d,double si
   MapRealPosMin=posmin; MapRealPosMax=posmax;
   CodeNewPart=codenewpart;
   //-Loads Xml configuration.
-  LoadFileXml(XmlFile,XmlPath,partdata);
+  LoadFileXml(XmlFile,XmlPath,partsdata);
   
   //-Calculates and saves domain zones.
   ComputeFreeDomain();

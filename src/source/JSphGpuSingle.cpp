@@ -156,6 +156,9 @@ void JSphGpuSingle::ConfigDomain(){
   //-Loads Code of the particles.
   LoadCodeParticles(Np,Idp,Code);
 
+  //-Creates PartsInit object with initial particle data for automatic configurations.
+  CreatePartsInit(Np,AuxPos,Code);
+
   //-Runs initialization operations from XML.
   RunInitialize(Np,Npb,AuxPos,Idp,Code,Velrhop);
 
@@ -622,6 +625,7 @@ void JSphGpuSingle::Run(std::string appname,JCfgRun *cfg,JLog2 *log){
   InitRunGpu();
   RunGaugeSystem(TimeStep);
   if(InOut)InOutInit(TimeStepIni);  //<vs_innlet>
+  FreePartsInit();
   UpdateMaxValues();
   PrintAllocMemory(GetAllocMemoryCpu(),GetAllocMemoryGpu());
   SaveData(); 

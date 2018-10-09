@@ -23,6 +23,7 @@
 #include "JArraysCpu.h"
 #include "JSphInOut.h"
 #include "JSphMk.h"
+#include "JSphPartsInit.h"
 #include "JSphBoundCorr.h"
 #include "JSphInOutPoints.h"
 #include "JSimpleNeigs.h"
@@ -147,18 +148,11 @@ void JSphCpuSingle::InOutInit(double timestepini){
   Log->Print("InOut configuration:");
   if(PartBegin)RunException(met,"Simulation restart not allowed when Inlet/Outlet is used.");
 
-  //-Prepares particle data to define inout points starting from special fluid particles.
-  JSphInOutPointsParticles partdata;
-  if(InOut->MkFluidList.size()>0){
-    partdata.Config(MkInfo,Np,Posc,Codec);
-  }
-
   //-Configures InOut zones and prepares new inout particles to create.
-  const unsigned newnp=InOut->Config(timestepini,Stable,Simulate2D,Simulate2DPosY,PeriActive,RhopZero,CteB,Gamma,Gravity,Dp,MapRealPosMin,MapRealPosMax,MkInfo->GetCodeNewFluid(),&partdata);
+  const unsigned newnp=InOut->Config(timestepini,Stable,Simulate2D,Simulate2DPosY,PeriActive,RhopZero,CteB,Gamma,Gravity,Dp,MapRealPosMin,MapRealPosMax,MkInfo->GetCodeNewFluid(),PartsInit);
 
   //-Mark special fluid particles to ignore. | Marca las particulas fluidas especiales para ignorar.
   InOutIgnoreFluidDef(InOut->MkFluidList);
-  partdata.Reset();
 
   //Log->Printf("++> newnp:%u",newnp);
   //-Resizes memory when it is necessary.
