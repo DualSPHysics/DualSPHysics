@@ -1466,7 +1466,7 @@ void JSph::InitRun(unsigned np,const unsigned *idp,const tdouble3 *pos){
   if(BoundCorr){
     Log->Print("BoundCorr configuration:");
     if(PartBegin)RunException(met,"Simulation restart not allowed when BoundCorr is used.");
-    BoundCorr->RunAutoConfig(MkInfo);
+    BoundCorr->RunAutoConfig(PartsInit);
     BoundCorr->VisuConfig(""," ");
   }//<vs_innlet_end>
 

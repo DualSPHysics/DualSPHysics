@@ -40,8 +40,8 @@ class JXml;
 class TiXmlElement;
 class JLog2;
 class JLinearValue;
-class JSphCpu;
 class JSphMk;
+class JSphPartsInit;
 
 //##############################################################################
 //# XML format in _FmtXML_BoundCorr.xml.
@@ -62,7 +62,8 @@ typedef enum{
     DIR_Left=3,
     DIR_Right=4,
     DIR_Front=5,
-    DIR_Back=6
+    DIR_Back=6,
+    DIR_Defined=10
 }TpDirection;  
 
 private:
@@ -73,6 +74,7 @@ private:
 
   //-Configuration parameters.
   TpDirection AutoDir; ///<Direction configuration for automatic definition.
+  double AutoDpFactor; ///<Point is calculated starting from bound particles at distance dp*AutoDpFactor.
   tdouble3 LimitPos;   ///<Limit between boundary and fluid.
   tdouble3 Direction;  ///<Direction to fluid particles.
   tfloat4 Plane;       ///<Plane in limit.
@@ -84,10 +86,10 @@ public:
   const word MkBound;
 
   JSphBoundCorrZone(JLog2 *log,unsigned idzone,word mkbound
-    ,TpDirection autodir,tdouble3 limitpos,tdouble3 direction);
+    ,TpDirection autodir,double autodpfactor,tdouble3 limitpos,tdouble3 direction);
   ~JSphBoundCorrZone();
   void ConfigBoundCode(typecode boundcode);
-  void ConfigAutoLimit(double halfdp,tdouble3 pmin,tdouble3 pmax);
+  void ConfigAuto(const JSphPartsInit *partsdata);
 
   void RunMotion(bool simple,const tdouble3 &msimple,const tmatrix4d &mmatrix);
 
@@ -130,7 +132,7 @@ public:
   JSphBoundCorr(bool cpu,double dp,JLog2 *log,JXml *sxml,const std::string &place,const JSphMk *mkinfo);
   ~JSphBoundCorr();
 
-  void RunAutoConfig(const JSphMk *mkinfo);
+  void RunAutoConfig(const JSphPartsInit *partsdata);
 
   void VisuConfig(std::string txhead,std::string txfoot)const;
   unsigned GetCount()const{ return(unsigned(List.size())); };

@@ -8,7 +8,7 @@ set(OBJXML JXml.cpp tinystr.cpp tinyxml.cpp tinyxmlerror.cpp tinyxmlparser.cpp)
 set(OBJSPHMOTION JMotion.cpp JMotionList.cpp JMotionMov.cpp JMotionObj.cpp JMotionPos.cpp JSphMotion.cpp)
 set(OBCOMMON Functions.cpp FunctionsMath.cpp JAppInfo.cpp JBinaryData.cpp JException.cpp JLinearValue.cpp JLog2.cpp JMeanValues.cpp JObject.cpp JRadixSort.cpp JRangeFilter.cpp JReadDatafile.cpp JSaveCsv2.cpp JTimeControl.cpp randomc.cpp)
 set(OBCOMMONDSPH JDsphConfig.cpp JPartDataBi4.cpp JPartDataHead.cpp JPartFloatBi4.cpp JPartOutBi4Save.cpp JSpaceCtes.cpp JSpaceEParms.cpp JSpaceParts.cpp JSpaceProperties.cpp JSpaceVtkOut.cpp)
-set(OBSPH JArraysCpu.cpp JCellDivCpu.cpp JCfgRun.cpp JDamping.cpp JGaugeItem.cpp JGaugeSystem.cpp JPartsOut.cpp JSaveDt.cpp JSph.cpp JSphAccInput.cpp JSphCpu.cpp JSphInitialize.cpp JSphMk.cpp JSphDtFixed.cpp JSphVisco.cpp JTimeOut.cpp JWaveSpectrumGpu.cpp main.cpp)
+set(OBSPH JArraysCpu.cpp JCellDivCpu.cpp JCfgRun.cpp JDamping.cpp JGaugeItem.cpp JGaugeSystem.cpp JPartsOut.cpp JSaveDt.cpp JSph.cpp JSphAccInput.cpp JSphCpu.cpp JSphInitialize.cpp JSphMk.cpp JSphPartsInit.cpp JSphDtFixed.cpp JSphVisco.cpp JTimeOut.cpp JWaveSpectrumGpu.cpp main.cpp)
 set(OBSPHSINGLE JCellDivCpuSingle.cpp JPartsLoad4.cpp JSphCpuSingle.cpp)
 
 # GPU Objects
@@ -23,6 +23,8 @@ set(OBCUDA JCellDivGpu_ker.cu JCellDivGpuSingle_ker.cu JGauge_ker.cu JReduSum_ke
 set(OBWAVERZ JMLPistonsGpu.cpp JRelaxZonesGpu.cpp)
 set(OBWAVERZCUDA JRelaxZone_ker.cu)
 set(OBCHRONO JChronoObjects.cpp)
+set(OBINOUT JSphCpu_InOut.cpp JSphCpuSingle_InOut.cpp JSphBoundCorr.cpp JSphInOut.cpp JSphInOutGridData.cpp JSphInOutPoints.cpp JSimpleNeigs.cpp)
+set(OBINOUTGPU JSphGpuSingle_InOut.cpp)
 
 find_package(CUDA QUIET)
 
@@ -78,36 +80,36 @@ set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_GLIBCXX_USE_CXX11_ABI=0 -fPIC")
 
 # Binaries
 
-add_executable(DualSPHysics4.2CPU ${OBJXML} ${OBJSPHMOTION} ${OBCOMMON} ${OBCOMMONDSPH} ${OBSPH} ${OBSPHSINGLE} ${OBWAVERZ} ${OBCHRONO})
-install(TARGETS	DualSPHysics4.2CPU DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/../../bin/linux)
+add_executable(DualSPHysics4.3CPU ${OBJXML} ${OBJSPHMOTION} ${OBCOMMON} ${OBCOMMONDSPH} ${OBSPH} ${OBSPHSINGLE} ${OBWAVERZ} ${OBCHRONO} ${OBINOUT})
+install(TARGETS	DualSPHysics4.3CPU DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/../../bin/linux)
 
 if (CUDA_FOUND)
-   cuda_add_executable(DualSPHysics4.2 ${OBJXML} ${OBJSPHMOTION} ${OBCOMMON} ${OBCOMMONDSPH} ${OBSPH} ${OBSPHSINGLE} ${OBCOMMONGPU} ${OBSPHGPU} ${OBSPHSINGLEGPU} ${OBCUDA} ${OBWAVERZ} ${OBWAVERZCUDA} ${OBCHRONO})
-   install(TARGETS DualSPHysics4.2 DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/../../bin/linux)
+   cuda_add_executable(DualSPHysics4.3 ${OBJXML} ${OBJSPHMOTION} ${OBCOMMON} ${OBCOMMONDSPH} ${OBSPH} ${OBSPHSINGLE} ${OBCOMMONGPU} ${OBSPHGPU} ${OBSPHSINGLEGPU} ${OBCUDA} ${OBWAVERZ} ${OBWAVERZCUDA} ${OBCHRONO} ${OBINOUT} ${OBINOUTGPU})
+   install(TARGETS DualSPHysics4.3 DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/../../bin/linux)
 endif()
 
 # Linker flags
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-  target_link_libraries(DualSPHysics4.2CPU jformatfiles2_64 jwavegen_64 jwave_mlp_rz_64 ChronoEngine dsphchrono)
-  set_target_properties(DualSPHysics4.2CPU PROPERTIES COMPILE_FLAGS "-use_fast_math -O3 -D_GLIBCXX_USE_CXX11_ABI=0 -fPIC")
+  target_link_libraries(DualSPHysics4.3CPU jformatfiles2_64 jwavegen_64 jwave_mlp_rz_64 ChronoEngine dsphchrono)
+  set_target_properties(DualSPHysics4.3CPU PROPERTIES COMPILE_FLAGS "-use_fast_math -O3 -D_GLIBCXX_USE_CXX11_ABI=0 -fPIC")
   
   if (CUDA_FOUND)
-     target_link_libraries(DualSPHysics4.2 jformatfiles2_64 jwavegen_64 jwave_mlp_rz_64 ChronoEngine dsphchrono)
-     set_target_properties(DualSPHysics4.2 PROPERTIES COMPILE_FLAGS "-use_fast_math -O3 -D_WITHGPU -D_GLIBCXX_USE_CXX11_ABI=0 -fPIC")
+     target_link_libraries(DualSPHysics4.3 jformatfiles2_64 jwavegen_64 jwave_mlp_rz_64 ChronoEngine dsphchrono)
+     set_target_properties(DualSPHysics4.3 PROPERTIES COMPILE_FLAGS "-use_fast_math -O3 -D_WITHGPU -D_GLIBCXX_USE_CXX11_ABI=0 -fPIC")
   endif()
   
 elseif(MSVC)
-  set_target_properties(DualSPHysics4.2 PROPERTIES COMPILE_FLAGS "/D _WITHGPU")
+  set_target_properties(DualSPHysics4.3 PROPERTIES COMPILE_FLAGS "/D _WITHGPU")
 
   if(MSVC_VERSION VERSION_EQUAL 1800)
     # MSVC 2013
-    target_link_libraries(DualSPHysics4.2CPU JFormatFiles2_x64_v120_Release JWaveGen_x64_v120_Release ChronoEngine dsphchrono)
-    target_link_libraries(DualSPHysics4.2 JFormatFiles2_x64_v120_Release JWaveGen_x64_v120_Release ChronoEngine dsphchrono)
+    target_link_libraries(DualSPHysics4.3CPU JFormatFiles2_x64_v120_Release JWaveGen_x64_v120_Release ChronoEngine dsphchrono)
+    target_link_libraries(DualSPHysics4.3 JFormatFiles2_x64_v120_Release JWaveGen_x64_v120_Release ChronoEngine dsphchrono)
   elseif(MSVC_VERSION VERSION_EQUAL 1900)
     # MSVC 2015
-    target_link_libraries(DualSPHysics4.2CPU JFormatFiles2_x64_v140_Release JWaveGen_x64_v140_Release ChronoEngine dsphchrono)
-    target_link_libraries(DualSPHysics4.2 JFormatFiles2_x64_v140_Release JWaveGen_x64_v140_Release ChronoEngine dsphchrono)
+    target_link_libraries(DualSPHysics4.3CPU JFormatFiles2_x64_v140_Release JWaveGen_x64_v140_Release ChronoEngine dsphchrono)
+    target_link_libraries(DualSPHysics4.3 JFormatFiles2_x64_v140_Release JWaveGen_x64_v140_Release ChronoEngine dsphchrono)
   endif()
   
   SET(CUDA_PROPAGATE_HOST_FLAGS OFF CACHE BOOL "Propagate C/CXX Flags and friends to the host compiler in NVCC via -Xompile  " FORCE)

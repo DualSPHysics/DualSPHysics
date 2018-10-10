@@ -21,6 +21,7 @@
 #include "JSphBoundCorr.h"
 #include "JSphCpu.h"
 #include "JSphMk.h"
+#include "JSphPartsInit.h"
 #include "JXml.h"
 #include "JLog2.h"
 #include "JAppInfo.h"
@@ -45,12 +46,13 @@ using namespace std;
 /// Constructor.
 //==============================================================================
 JSphBoundCorrZone::JSphBoundCorrZone(JLog2 *log,unsigned idzone,word mkbound
- ,TpDirection autodir,tdouble3 limitpos,tdouble3 direction)
+ ,TpDirection autodir,double autodpfactor,tdouble3 limitpos,tdouble3 direction)
  :Log(log),IdZone(idzone),MkBound(mkbound)
 {
   ClassName="JSphBoundCorrZone";
   Reset();
   AutoDir=autodir;
+  AutoDpFactor=autodpfactor;
   LimitPos=limitpos;
   Direction=direction;
   Plane=ToTFloat4(fmath::PlanePtVec(LimitPos,Direction));
@@ -70,6 +72,7 @@ JSphBoundCorrZone::~JSphBoundCorrZone(){
 void JSphBoundCorrZone::Reset(){
   BoundCode=0;
   AutoDir=DIR_None;
+  AutoDpFactor=0;
   LimitPos=Direction=TDouble3(0);
   Plane=TFloat4(0);
 }
@@ -83,36 +86,64 @@ void JSphBoundCorrZone::ConfigBoundCode(typecode boundcode){
 }
 
 //==============================================================================
-/// Configures BoundCode.
+/// Run automatic configuration of LimitPos and Direction.
 //==============================================================================
-void JSphBoundCorrZone::ConfigAutoLimit(double halfdp,tdouble3 pmin,tdouble3 pmax){
-  const tdouble3 pmed=(pmin+pmax)/2.;
+void JSphBoundCorrZone::ConfigAuto(const JSphPartsInit *partsdata){
+  const char met[]="ConfigAuto";
   if(AutoDir!=DIR_None){
-    switch(AutoDir){
-      case DIR_Top:
-        Direction=TDouble3(0,0,1);
-        LimitPos=TDouble3(pmed.x,pmed.y,pmax.z+halfdp);
-      break;
-      case DIR_Bottom:
-        Direction=TDouble3(0,0,-1);
-        LimitPos=TDouble3(pmed.x,pmed.y,pmin.z-halfdp);
-      break;
-      case DIR_Left:
-        Direction=TDouble3(-1,0,0);
-        LimitPos=TDouble3(pmin.x-halfdp,pmed.y,pmed.z);
-      break;
-      case DIR_Right:
-        Direction=TDouble3(1,0,0);
-        LimitPos=TDouble3(pmax.x+halfdp,pmed.y,pmed.z);
-      break;
-      case DIR_Front:
-        Direction=TDouble3(0,-1,0);
-        LimitPos=TDouble3(pmed.x,pmin.y-halfdp,pmed.z);
-      break;
-      case DIR_Back:
-        Direction=TDouble3(0,1,0);
-        LimitPos=TDouble3(pmed.x,pmax.y+halfdp,pmed.z);
-      break;
+    //-Calculates limits of MK particles.
+    tdouble3 pmin=TDouble3(0);
+    tdouble3 pmax=TDouble3(0);
+    const JSphMk* mkinfo=partsdata->GetMkInfo();
+    const unsigned cmk=mkinfo->GetMkBlockByMkBound(MkBound);
+    if(cmk<mkinfo->Size()){
+      pmin=mkinfo->Mkblock(cmk)->GetPosMin();
+      pmax=mkinfo->Mkblock(cmk)->GetPosMax();
+    }
+    else RunException(met,fun::PrintStr("MkBound value (%u) is not a Mk boundary valid.",MkBound));
+    const tdouble3 pmed=(pmin+pmax)/2.;
+    if(AutoDir==DIR_Defined){
+      const typecode codesel=mkinfo->Mkblock(cmk)->Code;
+      const tdouble4 pla=fmath::PlanePtVec(pmed,Direction);
+      const tdouble3* pos=partsdata->GetPos();
+      const typecode* code=partsdata->GetCode();
+      const unsigned np=partsdata->GetNp();
+      double dismax=-DBL_MAX;
+      for(unsigned p=0;p<np;p++)if(code[p]==codesel){
+        const double dist=fmath::DistPlaneSign(pla,pos[p]);
+        if(dist>dismax)dismax=dist;
+      }
+      if(dismax==-DBL_MAX)RunException(met,fun::PrintStr("It was not possible to calculate the limit position for MkBound=%u automatically.",MkBound));
+      LimitPos=pmed+(Direction*(dismax+(partsdata->Dp*AutoDpFactor)));
+    }
+    else{
+      const double halfdp=partsdata->Dp/2.;
+      switch(AutoDir){
+        case DIR_Top:
+          Direction=TDouble3(0,0,1);
+          LimitPos=TDouble3(pmed.x,pmed.y,pmax.z+halfdp);
+        break;
+        case DIR_Bottom:
+          Direction=TDouble3(0,0,-1);
+          LimitPos=TDouble3(pmed.x,pmed.y,pmin.z-halfdp);
+        break;
+        case DIR_Left:
+          Direction=TDouble3(-1,0,0);
+          LimitPos=TDouble3(pmin.x-halfdp,pmed.y,pmed.z);
+        break;
+        case DIR_Right:
+          Direction=TDouble3(1,0,0);
+          LimitPos=TDouble3(pmax.x+halfdp,pmed.y,pmed.z);
+        break;
+        case DIR_Front:
+          Direction=TDouble3(0,-1,0);
+          LimitPos=TDouble3(pmed.x,pmin.y-halfdp,pmed.z);
+        break;
+        case DIR_Back:
+          Direction=TDouble3(0,1,0);
+          LimitPos=TDouble3(pmed.x,pmax.y+halfdp,pmed.z);
+        break;
+      }
     }
     Plane=ToTFloat4(fmath::PlanePtVec(LimitPos,Direction));
   }
@@ -135,14 +166,12 @@ void JSphBoundCorrZone::RunMotion(bool simple,const tdouble3 &msimple,const tmat
 /// Loads lines with configuration information.
 //==============================================================================
 void JSphBoundCorrZone::GetConfig(std::vector<std::string> &lines)const{
-  if(AutoDir!=DIR_None){
-    lines.push_back(fun::PrintStr("Limit position: (%g,%g,%g) (automatic)",LimitPos.x,LimitPos.y,LimitPos.z));
-    lines.push_back(fun::PrintStr("Fluid Direction: (%g,%g,%g) (automatic)",Direction.x,Direction.y,Direction.z));
-  }
-  else{
-    lines.push_back(fun::PrintStr("Limit position: (%g,%g,%g)",LimitPos.x,LimitPos.y,LimitPos.z));
-    lines.push_back(fun::PrintStr("Fluid Direction: (%g,%g,%g)",Direction.x,Direction.y,Direction.z));
-  }
+  bool autodir=false;
+  bool autopos=false;
+  if(AutoDir==DIR_Defined)autopos=true;
+  if(AutoDir!=DIR_Defined && AutoDir!=DIR_None)autodir=autopos=true;
+  lines.push_back(fun::PrintStr("Limit position.: (%g,%g,%g)%s",LimitPos.x,LimitPos.y,LimitPos.z,(autopos? " (automatic)": "")));
+  lines.push_back(fun::PrintStr("Fluid direction: (%g,%g,%g)%s",Direction.x,Direction.y,Direction.z,(autodir? " (automatic)": "")));
 }
 
 
@@ -215,15 +244,15 @@ void JSphBoundCorr::ReadXml(const JXml *sxml,TiXmlElement* lis){
   TiXmlElement* ele=lis->FirstChildElement("mkzone"); 
   while(ele){
     const word mkbound=sxml->GetAttributeWord(ele,"mkbound");
-    tdouble3 limitpos=TDouble3(0);
+    const bool autoconfig=sxml->ExistsElement(ele,"autoconfig");
+    const bool autolimitpoint=sxml->ExistsElement(ele,"autolimitpoint");
+    if(autoconfig && autolimitpoint)sxml->ErrReadElement(lis,"determlimit",false,"Several configuration modes. \'autoconfig\' and \'autolimitpoint\' definitions are not compatible.");
+    double autodpfactor=0;
+    tdouble3 limitpoint=TDouble3(0);
     tdouble3 direction=TDouble3(0);
     JSphBoundCorrZone::TpDirection autodir=JSphBoundCorrZone::DIR_None;
-    string autodirtx=fun::StrLower(sxml->ReadElementStr(ele,"autoconfig","direction",true));
-    if(autodirtx.empty()){
-      limitpos=sxml->ReadElementDouble3(ele,"limitpoint");
-      direction=sxml->ReadElementDouble3(ele,"direction");
-    }
-    else{
+    if(autoconfig){
+      string autodirtx=fun::StrLower(sxml->ReadElementStr(ele,"autoconfig","direction",true));
       if     (autodirtx=="top"   )autodir=JSphBoundCorrZone::DIR_Top;
       else if(autodirtx=="bottom")autodir=JSphBoundCorrZone::DIR_Bottom;
       else if(autodirtx=="left"  )autodir=JSphBoundCorrZone::DIR_Left;
@@ -232,8 +261,21 @@ void JSphBoundCorr::ReadXml(const JXml *sxml,TiXmlElement* lis){
       else if(autodirtx=="back"  )autodir=JSphBoundCorrZone::DIR_Back;
       if(autodir==JSphBoundCorrZone::DIR_None)sxml->ErrReadElement(ele,"autoconfig",false,"Direction label is invalid.");
     }
-    if(ExistMk(mkbound))RunException(met,"An input already exists for the same mkbound.");
-    JSphBoundCorrZone *zo=new JSphBoundCorrZone(Log,GetCount(),mkbound,autodir,limitpos,direction);
+    else if(autolimitpoint){
+      direction=sxml->ReadElementDouble3(ele,"direction");
+      if(direction==TDouble3(0))sxml->ErrReadElement(ele,"direction",false,"Direction vector is invalid.");
+      else direction=fmath::VecUnitary(direction);
+      autodir=JSphBoundCorrZone::DIR_Defined;
+      autodpfactor=sxml->ReadElementDouble(ele,"autolimitpoint","dpfactor");
+    }
+    else{
+      direction=sxml->ReadElementDouble3(ele,"direction");
+      if(direction==TDouble3(0))sxml->ErrReadElement(ele,"direction",false,"Direction vector is invalid.");
+      else direction=fmath::VecUnitary(direction);
+      limitpoint=sxml->ReadElementDouble3(ele,"limitpoint");
+    }
+    if(ExistMk(mkbound))RunException(met,fun::PrintStr("An input already exists for the same mkbound=%u.",mkbound));
+    JSphBoundCorrZone *zo=new JSphBoundCorrZone(Log,GetCount(),mkbound,autodir,autodpfactor,limitpoint,direction);
     List.push_back(zo);
     ele=ele->NextSiblingElement("mkzone");
   }
@@ -259,18 +301,8 @@ void JSphBoundCorr::UpdateMkCode(const JSphMk *mkinfo){
 /// Run automatic configuration of LimitPos and Direction for each configuration
 /// and saves VTK file with limit configuration.
 //==============================================================================
-void JSphBoundCorr::RunAutoConfig(const JSphMk *mkinfo){
-  const char met[]="RunAutoConfig";
-  for(unsigned c=0;c<GetCount();c++){
-    const word mkbound=List[c]->MkBound;
-    const unsigned cmk=mkinfo->GetMkBlockByMkBound(List[c]->MkBound);
-    if(cmk<mkinfo->Size()){
-      const tdouble3 pmin=mkinfo->Mkblock(cmk)->GetPosMin();
-      const tdouble3 pmax=mkinfo->Mkblock(cmk)->GetPosMax();
-      List[c]->ConfigAutoLimit(Dp/2.,pmin,pmax);
-    }
-    else RunException(met,fun::PrintStr("MkBound value (%u) is not a Mk fixed boundary valid.",List[c]->MkBound));
-  }
+void JSphBoundCorr::RunAutoConfig(const JSphPartsInit *partsdata){
+  for(unsigned c=0;c<GetCount();c++)List[c]->ConfigAuto(partsdata);
   SaveVtkConfig(Dp,-1);
 }
 
