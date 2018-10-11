@@ -57,17 +57,11 @@ typedef enum{
   ,TMG_SuDownData=15
   ,TMG_SuSavePart=16
   ,TMG_SuChrono=17           //<vs_innlet>
-  ,TMG_SuInOut=18            //<vs_innlet>
-  ,TMG_SuInOut_Init=19       //<vs_innlet>
-  ,TMG_SuInOut_List=20       //<vs_innlet>
-  ,TMG_SuInOut_Update=21     //<vs_innlet>
-  ,TMG_SuInOut_Zsurf=22      //<vs_innlet>
-  ,TMG_SuInOut_Velrhop=23    //<vs_innlet>
-  ,TMG_SuInOut_VelrhGhost=24 //<vs_innlet>
-  ,TMG_SuBoundCorr=25        //<vs_innlet>
+  ,TMG_SuBoundCorr=18        //<vs_innlet>
+  ,TMG_SuInOut=19            //<vs_innlet>
 }CsTypeTimerGPU;
 //#define TMG_COUNT 17       //<vs_no_innlet>
-#define TMG_COUNT 26         //<vs_innlet>
+#define TMG_COUNT 20         //<vs_innlet>
 
 typedef StSphTimerGpu TimersGpu[TMG_COUNT];
 
@@ -94,14 +88,8 @@ inline const char* TmgGetName(CsTypeTimerGPU ct){
     case TMG_SuDownData:        return("SU-DownData");
     case TMG_SuSavePart:        return("SU-SavePart");
     case TMG_SuChrono:          return("SU-Chrono");             //<vs_chroono>
-    case TMG_SuInOut:           return("SU-InOut");              //<vs_innlet>
-    case TMG_SuInOut_Init:        return("SU-InOut_Init");       //<vs_innlet>
-    case TMG_SuInOut_List:        return("SU-InOut_List");       //<vs_innlet>
-    case TMG_SuInOut_Update:      return("SU-InOut_Update");     //<vs_innlet>
-    case TMG_SuInOut_Zsurf:       return("SU-InOut_Zsurf");      //<vs_innlet>
-    case TMG_SuInOut_Velrhop:     return("SU-InOut_Velrhop");    //<vs_innlet>
-    case TMG_SuInOut_VelrhGhost:  return("SU-InOut_VelrhGhost"); //<vs_innlet>
     case TMG_SuBoundCorr:       return("SU-BoundCorr");          //<vs_innlet>
+    case TMG_SuInOut:           return("SU-InOut");              //<vs_innlet>
   }
   return("???");
 }

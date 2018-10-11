@@ -204,7 +204,6 @@ void JSphCpuSingle::InOutInit(double timestepini){
 
   if(DBG_INOUT_PARTINIT)DgSaveVtkParticlesCpu("CfgInOut_InletIni.vtk",2,0,Np,Posc,Codec,Idpc,Velrhopc);
   TmcStop(Timers,TMC_SuInOut);
-  //Log->Print("--------> [InOutInit_fin]");
 }
 
 //==============================================================================
@@ -232,7 +231,6 @@ void JSphCpuSingle::InOutComputeStep(double stepdt){
   if(InOut->GetInterpolatedVel())InOut->InterpolateResetZVelCpu(InOutCount,InOutPartc,Codec,Velrhopc);
 
   //-Updates position of inout particles according its velocity and create new inlet particles.
-  //DgSaveVtkParticlesCpu("_ComputeStep_XX.vtk",1,0,Np,Posc,Codec,Idpc,Velrhopc);
   unsigned newnp=0;
   if(InOut->GetUseRefilling()){
     float    *prodist=ArraysCpu->ReserveFloat();
@@ -242,7 +240,6 @@ void JSphCpuSingle::InOutComputeStep(double stepdt){
     ArraysCpu->Free(propos);
   }
   else newnp=InOut->ComputeStepCpu(Nstep,stepdt,InOutCount,InOutPartc,this,IdMax+1,CpuParticlesSize,Np,Posc,Dcellc,Codec,Idpc,Velrhopc);
-  //DgSaveVtkParticlesCpu("_ComputeStep_XX.vtk",2,0,Np,Posc,Codec,Idpc,Velrhopc);
 
   //-Updates new particle values for Laminar+SPS.
   if(SpsTauc)memset(SpsTauc+Np,0,sizeof(tsymatrix3f)*newnp);
@@ -254,14 +251,11 @@ void JSphCpuSingle::InOutComputeStep(double stepdt){
     InOut->AddNewNp(newnp);
     IdMax=unsigned(TotalNp-1);
   }
-  //DgSaveVtkParticlesCpu("_ComputeStep_XX.vtk",3,0,Np,Posc,Codec,Idpc,Velrhopc);
-  //DgSaveVtkParticlesCpu("_ComputeStep_BBB.vtk",Nstep,0,Np,Posc,Codec,Idpc,Velrhopc);
+
   //-Updates divide information.
   TmcStop(Timers,TMC_SuInOut);
   RunCellDivide(true);
   TmcStart(Timers,TMC_SuInOut);
-  //DgSaveVtkParticlesCpu("_ComputeStep_CCC.vtk",Nstep,0,Np,Posc,Codec,Idpc,Velrhopc);
-  //RunException(met,"Stop");
 
   //-Updates zsurf.
   if(InOut->GetCalculatedZsurf())InOutCalculeZsurf();
@@ -271,7 +265,6 @@ void JSphCpuSingle::InOutComputeStep(double stepdt){
 
   //-Updates velocity and rhop (no extrapolated).
   if(InOut->GetNoExtrapolatedData())InOut->UpdateDataCpu(float(TimeStep+stepdt),true,InOutCount,InOutPartc,Posc,Codec,Idpc,Velrhopc);
-//  DgSaveVtkParticlesCpu("_ComputeStep_DDD.vtk",Nstep,0,Np,Posc,Codec,Idpc,Velrhopc);
 
   //-Calculates extrapolated velocity and/or rhop for inlet/outlet particles from fluid domain.
   if(InOut->GetExtrapolatedData())InOutExtrapolateData();
@@ -283,7 +276,6 @@ void JSphCpuSingle::InOutComputeStep(double stepdt){
   if(VelrhopM1c)InOut->UpdateVelrhopM1Cpu(InOutCount,InOutPartc,Velrhopc,VelrhopM1c);
 
   TmcStop(Timers,TMC_SuInOut);
-  //Log->Printf("%u>--------> [InOutComputeStep_fin]",Nstep);
 }
 
 //==============================================================================

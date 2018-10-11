@@ -140,9 +140,7 @@ void JSphGpuSingle::InOutCheckProximity(unsigned newnp){
 //==============================================================================
 void JSphGpuSingle::InOutCreateList(){
   TmgStart(Timers,TMG_SuInOut);
-  TmgStart(Timers,TMG_SuInOut_List);
   InOutCount=InOut->CreateListGpu(Nstep,Np-Npb,Npb,Posxyg,Poszg,Codeg,GpuParticlesSize,InOutPartg);
-  TmgStop(Timers,TMG_SuInOut_List);
   TmgStop(Timers,TMG_SuInOut);
 }
 
@@ -152,8 +150,7 @@ void JSphGpuSingle::InOutCreateList(){
 //==============================================================================
 void JSphGpuSingle::InOutInit(double timestepini){
   const char met[]="InOutInit";
-  //TmgStart(Timers,TMG_SuInOut);
-  TmgStart(Timers,TMG_SuInOut_Init);
+  TmgStart(Timers,TMG_SuInOut);
   Log->Print("InOut configuration:");
   if(PartBegin)RunException(met,"Simulation restart not allowed when Inlet/Outlet is used.");
 
@@ -167,10 +164,10 @@ void JSphGpuSingle::InOutInit(double timestepini){
   //-Resizes memory when it is necessary.
   if(!CheckGpuParticlesSize(Np+newnp)){
     const unsigned newnp2=newnp+InOut->CalcResizeNp(timestepini);
-    TmgStop(Timers,TMG_SuInOut_Init);
+    TmgStop(Timers,TMG_SuInOut);
     ResizeParticlesSize(Np+newnp2,0,false);
     CellDivSingle->SetIncreaseNp(newnp2);
-    TmgStart(Timers,TMG_SuInOut_Init);
+    TmgStart(Timers,TMG_SuInOut);
   }
 
   //-Creates initial inlet particles.
@@ -207,9 +204,9 @@ void JSphGpuSingle::InOutInit(double timestepini){
   //-Shows configuration.
   InOut->VisuConfig(""," ");
   //-Updates divide information.
-  TmgStop(Timers,TMG_SuInOut_Init);
+  TmgStop(Timers,TMG_SuInOut);
   RunCellDivide(true);
-  TmgStart(Timers,TMG_SuInOut_Init);
+  TmgStart(Timers,TMG_SuInOut);
   if(DBG_INOUT_PARTINIT)DgSaveVtkParticlesGpu("CfgInOut_InletIni.vtk",1,0,Np,Posxyg,Poszg,Codeg,Idpg,Velrhopg);
 
   //-Updates velocity and rhop (no extrapolated).
@@ -225,9 +222,7 @@ void JSphGpuSingle::InOutInit(double timestepini){
   if(VelrhopM1g)InOut->UpdateVelrhopM1Gpu(InOutCount,InOutPartg,Velrhopg,VelrhopM1g);
 
   if(DBG_INOUT_PARTINIT)DgSaveVtkParticlesGpu("CfgInOut_InletIni.vtk",2,0,Np,Posxyg,Poszg,Codeg,Idpg,Velrhopg);
-  TmgStop(Timers,TMG_SuInOut_Init);
-  //TmgStop(Timers,TMG_SuInOut);
-  //Log->Print("--------> [InOutInit_fin]");
+  TmgStop(Timers,TMG_SuInOut);
 }
 
 //==============================================================================
@@ -240,10 +235,7 @@ void JSphGpuSingle::InOutInit(double timestepini){
 void JSphGpuSingle::InOutComputeStep(double stepdt){
   const char met[]="InOutComputeStep";
   //Log->Printf("%u>--------> [InOutComputeStep_000]",Nstep);
-  //Log->Printf("%u]%u> ======>> BB_ComputeStepA.vtk (Np:%u)",DgNum,Nstep,Np);
   //DgSaveVtkParticlesGpu("BB_ComputeStepA.vtk",DgNum,0,Np,Posxyg,Poszg,Codeg,Idpg,Velrhopg);
-
-  //DgSaveVtkParticlesGpu("_ComputeStep_XX.vtk",0,0,Np,Posxyg,Poszg,Codeg,Idpg,Velrhopg);
   TmgStart(Timers,TMG_SuInOut);
   //-Resizes memory when it is necessary. InOutCount is the maximum number of new inlet particles.
   if(!CheckGpuParticlesSize(Np+InOutCount)){
@@ -258,8 +250,6 @@ void JSphGpuSingle::InOutComputeStep(double stepdt){
   if(InOut->GetInterpolatedVel())InOut->InterpolateResetZVelGpu(InOutCount,InOutPartg,Codeg,Velrhopg);
 
   //-Updates position of in/out particles according its velocity and create new inlet particles.
-  //DgSaveVtkParticlesGpu("_ComputeStep_XX.vtk",1,0,Np,Posxyg,Poszg,Codeg,Idpg,Velrhopg);
-  TmgStart(Timers,TMG_SuInOut_Update);
   unsigned newnp=0;
   if(InOut->GetUseRefilling()){
     float   *prodistg =ArraysGpu->ReserveFloat();
@@ -271,8 +261,6 @@ void JSphGpuSingle::InOutComputeStep(double stepdt){
     ArraysGpu->Free(proposzg);
   }
   else newnp=InOut->ComputeStepGpu(Nstep,stepdt,InOutCount,InOutPartg,IdMax+1,GpuParticlesSize,Np,Posxyg,Poszg,Dcellg,Codeg,Idpg,Velrhopg);
-  TmgStop(Timers,TMG_SuInOut_Update);
-  //DgSaveVtkParticlesGpu("_ComputeStep_XX.vtk",2,0,Np,Posxyg,Poszg,Codeg,Idpg,Velrhopg);
 
   //-Updates new particle values for Laminar+SPS.
   if(SpsTaug)cudaMemset(SpsTaug+Np,0,sizeof(tsymatrix3f)*newnp);
@@ -283,34 +271,23 @@ void JSphGpuSingle::InOutComputeStep(double stepdt){
     InOut->AddNewNp(newnp);
     IdMax=unsigned(TotalNp-1);
   }
-  //DgSaveVtkParticlesGpu("_ComputeStep_XX.vtk",3,0,Np,Posxyg,Poszg,Codeg,Idpg,Velrhopg);
-  //DgSaveVtkParticlesGpu("_ComputeStep_BBB.vtk",Nstep,0,Np,Posxyg,Poszg,Codeg,Idpg,Velrhopg);
 
   //-Updates divide information.
   TmgStop(Timers,TMG_SuInOut);
   RunCellDivide(true);
   TmgStart(Timers,TMG_SuInOut);
-  //DgSaveVtkParticlesGpu("_ComputeStep_CCC.vtk",Nstep,0,Np,Posxyg,Poszg,Codeg,Idpg,Velrhopg);
-  //RunException(met,"Stop");
 
   //-Updates zsurf.
-  TmgStart(Timers,TMG_SuInOut_Zsurf);
   if(InOut->GetCalculatedZsurf())InOutCalculeZsurf();
   if(InOut->GetCalculatedZsurf() || InOut->GetVariableZsurf())InOut->UpdateZsurf(TimeStep+stepdt);
-  TmgStop(Timers,TMG_SuInOut_Zsurf);
   //-Creates VTK file with Zsurf.
   if(TimeStep+stepdt>=TimePartNext)InOut->SaveVtkZsurf(Part);
 
   //-Updates velocity and rhop (no extrapolated).
-  TmgStart(Timers,TMG_SuInOut_Velrhop);
   if(InOut->GetNoExtrapolatedData())InOut->UpdateDataGpu(float(TimeStep+stepdt),true,InOutCount,InOutPartg,Posxyg,Poszg,Codeg,Idpg,Velrhopg);
-  TmgStop(Timers,TMG_SuInOut_Velrhop);
-//  DgSaveVtkParticlesGpu("_ComputeStep_DDD.vtk",Nstep,0,Np,Posxyg,Poszg,Codeg,Idpg,Velrhopg);
 
   //-Calculates extrapolated velocity and/or rhop for inlet/outlet particles from fluid domain.
-  TmgStart(Timers,TMG_SuInOut_VelrhGhost);
   if(InOut->GetExtrapolatedData())InOutExtrapolateData();
-  TmgStop(Timers,TMG_SuInOut_VelrhGhost);
 
   //-Calculates interpolated velocity for inlet/outlet particles.
   if(InOut->GetInterpolatedVel())InOut->InterpolateVelGpu(float(TimeStep+stepdt),InOutCount,InOutPartg,Posxyg,Poszg,Codeg,Idpg,Velrhopg);
@@ -319,7 +296,6 @@ void JSphGpuSingle::InOutComputeStep(double stepdt){
   if(VelrhopM1g)InOut->UpdateVelrhopM1Gpu(InOutCount,InOutPartg,Velrhopg,VelrhopM1g);
 
   TmgStop(Timers,TMG_SuInOut);
-  //Log->Printf("%u>--------> [InOutComputeStep_fin]",Nstep);
 }
 
 //==============================================================================

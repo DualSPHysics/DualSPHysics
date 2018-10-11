@@ -34,8 +34,8 @@
 #include "JMatrix4.h"
 #include "Types.h"
 
-#define DBG_INOUT_PTINIT 1   ///<JSphInOut: Saves VTK files (CfgInOut_PtInit.vtk and CfgInOut_PtInitZ.vtk) with initial inout points (0/1).
-#define DBG_INOUT_PARTINIT 1 ///<JSphInOut: Saves VTK files (CfgInOut_InletIni_XXXX.vtk) with initial inout particles (0/1).
+#define DBG_INOUT_PTINIT 0   ///<JSphInOut: Saves VTK files (CfgInOut_PtInit.vtk and CfgInOut_PtInitZ.vtk) with initial inout points (0/1).
+#define DBG_INOUT_PARTINIT 0 ///<JSphInOut: Saves VTK files (CfgInOut_InletIni_XXXX.vtk) with initial inout particles (0/1).
 
 
 class JSphMk;
