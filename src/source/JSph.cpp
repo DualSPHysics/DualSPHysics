@@ -708,7 +708,7 @@ void JSph::LoadCaseConfig(){
   FtMode=(WithFloating? FTMODE_Sph: FTMODE_None);
   if(UseDEM)FtMode=FTMODE_Ext;
   if(UseChrono)FtMode=FTMODE_Ext; //<vs_chroono>
-  if(UseChrono && PeriActive!=0)Log->PrintfWarning("The use of Chrono with open periodic limits is dangerous since Chrono objects should not go beyond the periodic limits."); //<vs_chroono>
+  if(UseChrono && PeriActive!=0)Log->PrintfWarning("The use of Chrono with periodic limits is only recommended when moving and floating objects do not move beyond those periodic limits."); //<vs_chroono>
 
   //-Loads DEM and DVI data for boundary objects.   //<vs_chroono>
   if(UseDEM || UseChrono){/*                        //<vs_chroono>
