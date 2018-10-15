@@ -1801,6 +1801,7 @@ template<bool sim2d,TpKernel tker> __global__ void KerInteractionBoundCorr_FastS
       //--------------------
       const float3 dpos=make_float3(float(pos_p1.x-posp1.x),float(pos_p1.y-posp1.y),float(pos_p1.z-posp1.z)); //-Boundary particle position - ghost node position.
       if(sim2d){
+//if(-a_corr2.a22-a_corr2.a33>0.9){ //-Suggested by Renato...
         const double determ=cumath::Determinant3x3dbl(a_corr2);
         if(determ>=determlimit){//-Use 1e-3f (first_order) or 1e+3f (zeroth_order).
           const tmatrix3f invacorr2=cumath::InverseMatrix3x3dbl(a_corr2,determ);
@@ -1813,6 +1814,7 @@ template<bool sim2d,TpKernel tker> __global__ void KerInteractionBoundCorr_FastS
         else if(a_corr2.a11>0){//-Determinant is small but a11 is nonzero, 0th order ANGELO.
           rhopfinal=float(rhopp1/a_corr2.a11);
         }
+//}
       }
       else{
         const double determ=cumath::Determinant4x4dbl(a_corr3);
