@@ -1474,114 +1474,116 @@ template<bool sim2d,TpKernel tker> __global__ void KerInteractionBoundCorr_Doubl
 {
   const unsigned p1=blockIdx.y*gridDim.x*blockDim.x + blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
   if(p1<npb && CODE_GetTypeAndValue(code[p1])==boundcode){
+    float rhopfinal=FLT_MAX;
     //-Calculates ghost node position.
     double3 pos_p1=make_double3(posxy[p1].x,posxy[p1].y,posz[p1]);
     if(CODE_IsPeriodic(code[p1]))pos_p1=KerInteraction_PosNoPeriodic(pos_p1);
     const double displane=cumath::DistPlane(plane,pos_p1)*2;
-    const double3 posp1=make_double3(pos_p1.x+displane*direction.x, pos_p1.y+displane*direction.y, pos_p1.z+displane*direction.z); //-Ghost node position.
-    //-Initializes variables for calculation.
-    double rhopp1=0;
-    double3 gradrhopp1=make_double3(0,0,0);
-    tmatrix3d a_corr2; if(sim2d) cumath::Tmatrix3dReset(a_corr2); //-Only for 2D.
-    tmatrix4d a_corr3; if(!sim2d)cumath::Tmatrix4dReset(a_corr3); //-Only for 3D.
+    if(displane<=CTE.h*4.f){
+      const double3 posp1=make_double3(pos_p1.x+displane*direction.x, pos_p1.y+displane*direction.y, pos_p1.z+displane*direction.z); //-Ghost node position.
+      //-Initializes variables for calculation.
+      double rhopp1=0;
+      double3 gradrhopp1=make_double3(0,0,0);
+      tmatrix3d a_corr2; if(sim2d) cumath::Tmatrix3dReset(a_corr2); //-Only for 2D.
+      tmatrix4d a_corr3; if(!sim2d)cumath::Tmatrix4dReset(a_corr3); //-Only for 3D.
 
-    //-Obtains interaction limits.
-    int cxini,cxfin,yini,yfin,zini,zfin;
-    cusph::KerGetInteractionCells(posp1.x,posp1.y,posp1.z,hdiv,nc,cellzero,cxini,cxfin,yini,yfin,zini,zfin);
+      //-Obtains interaction limits.
+      int cxini,cxfin,yini,yfin,zini,zfin;
+      cusph::KerGetInteractionCells(posp1.x,posp1.y,posp1.z,hdiv,nc,cellzero,cxini,cxfin,yini,yfin,zini,zfin);
 
-    //-Interaction with fluids.
-    for(int z=zini;z<zfin;z++){
-      int zmod=(nc.w)*z+cellfluid; //-The sum showing where fluid cells start. | Le suma donde empiezan las celdas de fluido.
-      for(int y=yini;y<yfin;y++){
-        int ymod=zmod+nc.x*y;
-        unsigned pini,pfin=0;
-        for(int x=cxini;x<cxfin;x++){
-          int2 cbeg=begincell[x+ymod];
-          if(cbeg.y){
-            if(!pfin)pini=cbeg.x;
-            pfin=cbeg.y;
-          }
-        }
-        if(pfin)for(unsigned p2=pini;p2<pfin;p2++){
-          const double2 p2xy=posxy[p2];
-          const double drx=double(posp1.x-p2xy.x);
-          const double dry=double(posp1.y-p2xy.y);
-          const double drz=double(posp1.z-posz[p2]);
-          const double rr2=drx*drx+dry*dry+drz*drz;
-          if(rr2<=CTE.fourh2 && rr2>=ALMOSTZERO && CODE_IsFluid(code[p2])){//-Only with fluid particles (including inout).
-            //-Wendland or Cubic Spline kernel.
-            float ffrx,ffry,ffrz,fwab;
-            if(tker==KERNEL_Wendland)cusph::KerGetKernelWendland(float(rr2),float(drx),float(dry),float(drz),ffrx,ffry,ffrz,fwab);
-            else if(tker==KERNEL_Cubic)cusph::KerGetKernelCubic(float(rr2),float(drx),float(dry),float(drz),ffrx,ffry,ffrz,fwab);
-            const double frx=ffrx,fry=ffry,frz=ffrz,wab=fwab;
-
-            //===== Get mass and volume of particle p2 =====
-            const double massp2=CTE.massf;
-            const double volp2=massp2/double(velrhop[p2].w);
-
-            //===== Density and its gradient =====
-            rhopp1+=massp2*wab;
-            gradrhopp1.x+=massp2*frx;
-            gradrhopp1.y+=massp2*fry;
-            gradrhopp1.z+=massp2*frz;
-
-            //===== Kernel values multiplied by volume =====
-            const double vwab=wab*volp2;
-            const double vfrx=frx*volp2;
-            const double vfry=fry*volp2;
-            const double vfrz=frz*volp2;
-
-            //===== Matrix A for correction =====
-            if(sim2d){
-              a_corr2.a11+=vwab;  a_corr2.a12+=drx*vwab;  a_corr2.a13+=drz*vwab;
-              a_corr2.a21+=vfrx;  a_corr2.a22+=drx*vfrx;  a_corr2.a23+=drz*vfrx;
-              a_corr2.a31+=vfrz;  a_corr2.a32+=drx*vfrz;  a_corr2.a33+=drz*vfrz;
-            }
-            else{
-              a_corr3.a11+=vwab;  a_corr3.a12+=drx*vwab;  a_corr3.a13+=dry*vwab;  a_corr3.a14+=drz*vwab;
-              a_corr3.a21+=vfrx;  a_corr3.a22+=drx*vfrx;  a_corr3.a23+=dry*vfrx;  a_corr3.a24+=drz*vfrx;
-              a_corr3.a31+=vfry;  a_corr3.a32+=drx*vfry;  a_corr3.a33+=dry*vfry;  a_corr3.a34+=drz*vfry;
-              a_corr3.a41+=vfrz;  a_corr3.a42+=drx*vfrz;  a_corr3.a43+=dry*vfrz;  a_corr3.a44+=drz*vfrz;
+      //-Interaction with fluids.
+      for(int z=zini;z<zfin;z++){
+        int zmod=(nc.w)*z+cellfluid; //-The sum showing where fluid cells start. | Le suma donde empiezan las celdas de fluido.
+        for(int y=yini;y<yfin;y++){
+          int ymod=zmod+nc.x*y;
+          unsigned pini,pfin=0;
+          for(int x=cxini;x<cxfin;x++){
+            int2 cbeg=begincell[x+ymod];
+            if(cbeg.y){
+              if(!pfin)pini=cbeg.x;
+              pfin=cbeg.y;
             }
           }
+          if(pfin)for(unsigned p2=pini;p2<pfin;p2++){
+            const double2 p2xy=posxy[p2];
+            const double drx=double(posp1.x-p2xy.x);
+            const double dry=double(posp1.y-p2xy.y);
+            const double drz=double(posp1.z-posz[p2]);
+            const double rr2=drx*drx+dry*dry+drz*drz;
+            if(rr2<=CTE.fourh2 && rr2>=ALMOSTZERO && CODE_IsFluid(code[p2])){//-Only with fluid particles (including inout).
+              //-Wendland or Cubic Spline kernel.
+              float ffrx,ffry,ffrz,fwab;
+              if(tker==KERNEL_Wendland)cusph::KerGetKernelWendland(float(rr2),float(drx),float(dry),float(drz),ffrx,ffry,ffrz,fwab);
+              else if(tker==KERNEL_Cubic)cusph::KerGetKernelCubic(float(rr2),float(drx),float(dry),float(drz),ffrx,ffry,ffrz,fwab);
+              const double frx=ffrx,fry=ffry,frz=ffrz,wab=fwab;
+
+              //===== Get mass and volume of particle p2 =====
+              const double massp2=CTE.massf;
+              const double volp2=massp2/double(velrhop[p2].w);
+
+              //===== Density and its gradient =====
+              rhopp1+=massp2*wab;
+              gradrhopp1.x+=massp2*frx;
+              gradrhopp1.y+=massp2*fry;
+              gradrhopp1.z+=massp2*frz;
+
+              //===== Kernel values multiplied by volume =====
+              const double vwab=wab*volp2;
+              const double vfrx=frx*volp2;
+              const double vfry=fry*volp2;
+              const double vfrz=frz*volp2;
+
+              //===== Matrix A for correction =====
+              if(sim2d){
+                a_corr2.a11+=vwab;  a_corr2.a12+=drx*vwab;  a_corr2.a13+=drz*vwab;
+                a_corr2.a21+=vfrx;  a_corr2.a22+=drx*vfrx;  a_corr2.a23+=drz*vfrx;
+                a_corr2.a31+=vfrz;  a_corr2.a32+=drx*vfrz;  a_corr2.a33+=drz*vfrz;
+              }
+              else{
+                a_corr3.a11+=vwab;  a_corr3.a12+=drx*vwab;  a_corr3.a13+=dry*vwab;  a_corr3.a14+=drz*vwab;
+                a_corr3.a21+=vfrx;  a_corr3.a22+=drx*vfrx;  a_corr3.a23+=dry*vfrx;  a_corr3.a24+=drz*vfrx;
+                a_corr3.a31+=vfry;  a_corr3.a32+=drx*vfry;  a_corr3.a33+=dry*vfry;  a_corr3.a34+=drz*vfry;
+                a_corr3.a41+=vfrz;  a_corr3.a42+=drx*vfrz;  a_corr3.a43+=dry*vfrz;  a_corr3.a44+=drz*vfrz;
+              }
+            }
+          }
+        }
+      }
+
+      //-Store the results.
+      //--------------------
+      const double3 dpos=make_double3(pos_p1.x-posp1.x, pos_p1.y-posp1.y, pos_p1.z-posp1.z); //-Boundary particle position - ghost node position.
+      if(sim2d){
+        const double determ=cumath::Determinant3x3(a_corr2);
+        if(determ>=determlimit){//-Use 1e-3f (first_order) or 1e+3f (zeroth_order).
+          const tmatrix3d invacorr2=cumath::InverseMatrix3x3(a_corr2,determ);
+          //-GHOST NODE DENSITY IS MIRRORED BACK TO THE INFLOW OR OUTFLOW PARTICLES.
+          const double rhoghost=rhopp1*invacorr2.a11 + gradrhopp1.x*invacorr2.a12 + gradrhopp1.z*invacorr2.a13;
+          const double grx=-(rhopp1*invacorr2.a21 + gradrhopp1.x*invacorr2.a22 + gradrhopp1.z*invacorr2.a23);
+          const double grz=-(rhopp1*invacorr2.a31 + gradrhopp1.x*invacorr2.a32 + gradrhopp1.z*invacorr2.a33);
+          rhopfinal=float(rhoghost + grx*dpos.x + grz*dpos.z);
+        }
+        else if(a_corr2.a11>0){//-Determinant is small but a11 is nonzero, 0th order ANGELO.
+          rhopfinal=float(rhopp1/a_corr2.a11);
+        }
+      }
+      else{
+        const double determ=cumath::Determinant4x4(a_corr3);
+        if(determ>=determlimit){
+          const tmatrix4d invacorr3=cumath::InverseMatrix4x4(a_corr3,determ);
+          //-GHOST NODE DENSITY IS MIRRORED BACK TO THE INFLOW OR OUTFLOW PARTICLES.
+          const double rhoghost=rhopp1*invacorr3.a11 + gradrhopp1.x*invacorr3.a12 + gradrhopp1.y*invacorr3.a13 + gradrhopp1.z*invacorr3.a14;
+          const double grx=   -(rhopp1*invacorr3.a21 + gradrhopp1.x*invacorr3.a22 + gradrhopp1.y*invacorr3.a23 + gradrhopp1.z*invacorr3.a24);
+          const double gry=   -(rhopp1*invacorr3.a31 + gradrhopp1.x*invacorr3.a32 + gradrhopp1.y*invacorr3.a33 + gradrhopp1.z*invacorr3.a34);
+          const double grz=   -(rhopp1*invacorr3.a41 + gradrhopp1.x*invacorr3.a42 + gradrhopp1.y*invacorr3.a43 + gradrhopp1.z*invacorr3.a44);
+          rhopfinal=float(rhoghost + grx*dpos.x + gry*dpos.y + grz*dpos.z);
+        }
+        else if(a_corr3.a11>0){//-Determinant is small but a11 is nonzero, 0th order ANGELO.
+          rhopfinal=float(rhopp1/a_corr3.a11);
         }
       }
     }
-
-    //-Store the results.
-    //--------------------
-    float rhopfinal=FLT_MAX;
-    const double3 dpos=make_double3(pos_p1.x-posp1.x, pos_p1.y-posp1.y, pos_p1.z-posp1.z); //-Boundary particle position - ghost node position.
-    if(sim2d){
-      const double determ=cumath::Determinant3x3(a_corr2);
-      if(determ>=determlimit){//-Use 1e-3f (first_order) or 1e+3f (zeroth_order).
-        const tmatrix3d invacorr2=cumath::InverseMatrix3x3(a_corr2,determ);
-        //-GHOST NODE DENSITY IS MIRRORED BACK TO THE INFLOW OR OUTFLOW PARTICLES.
-        const double rhoghost=rhopp1*invacorr2.a11 + gradrhopp1.x*invacorr2.a12 + gradrhopp1.z*invacorr2.a13;
-        const double grx=-(rhopp1*invacorr2.a21 + gradrhopp1.x*invacorr2.a22 + gradrhopp1.z*invacorr2.a23);
-        const double grz=-(rhopp1*invacorr2.a31 + gradrhopp1.x*invacorr2.a32 + gradrhopp1.z*invacorr2.a33);
-        rhopfinal=float(rhoghost + grx*dpos.x + grz*dpos.z);
-      }
-      else if(a_corr2.a11>0){//-Determinant is small but a11 is nonzero, 0th order ANGELO.
-      	rhopfinal=float(rhopp1/a_corr2.a11);
-      }
-    }
-    else{
-      const double determ=cumath::Determinant4x4(a_corr3);
-      if(determ>=determlimit){
-        const tmatrix4d invacorr3=cumath::InverseMatrix4x4(a_corr3,determ);
-        //-GHOST NODE DENSITY IS MIRRORED BACK TO THE INFLOW OR OUTFLOW PARTICLES.
-        const double rhoghost=rhopp1*invacorr3.a11 + gradrhopp1.x*invacorr3.a12 + gradrhopp1.y*invacorr3.a13 + gradrhopp1.z*invacorr3.a14;
-        const double grx=   -(rhopp1*invacorr3.a21 + gradrhopp1.x*invacorr3.a22 + gradrhopp1.y*invacorr3.a23 + gradrhopp1.z*invacorr3.a24);
-        const double gry=   -(rhopp1*invacorr3.a31 + gradrhopp1.x*invacorr3.a32 + gradrhopp1.y*invacorr3.a33 + gradrhopp1.z*invacorr3.a34);
-        const double grz=   -(rhopp1*invacorr3.a41 + gradrhopp1.x*invacorr3.a42 + gradrhopp1.y*invacorr3.a43 + gradrhopp1.z*invacorr3.a44);
-        rhopfinal=float(rhoghost + grx*dpos.x + gry*dpos.y + grz*dpos.z);
-      }
-      else if(a_corr3.a11>0){//-Determinant is small but a11 is nonzero, 0th order ANGELO.
-      	rhopfinal=float(rhopp1/a_corr3.a11);
-      }
-    }
-    if(rhopfinal!=FLT_MAX)velrhop[p1].w=rhopfinal;
+    velrhop[p1].w=(rhopfinal!=FLT_MAX? rhopfinal: CTE.rhopzero);
   }
 }
 
@@ -1596,113 +1598,115 @@ template<bool sim2d,TpKernel tker> __global__ void KerInteractionBoundCorr_Singl
 {
   const unsigned p1=blockIdx.y*gridDim.x*blockDim.x + blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
   if(p1<npb && CODE_GetTypeAndValue(code[p1])==boundcode){
+    float rhopfinal=FLT_MAX;
     //-Calculates ghost node position.
     double3 pos_p1=make_double3(posxy[p1].x,posxy[p1].y,posz[p1]);
     if(CODE_IsPeriodic(code[p1]))pos_p1=KerInteraction_PosNoPeriodic(pos_p1);
     const double displane=cumath::DistPlane(plane,pos_p1)*2;
-    const double3 posp1=make_double3(pos_p1.x+displane*direction.x, pos_p1.y+displane*direction.y, pos_p1.z+displane*direction.z); //-Ghost node position.
-    //-Initializes variables for calculation.
-    float rhopp1=0;
-    float3 gradrhopp1=make_float3(0,0,0);
-    tmatrix3d a_corr2; if(sim2d) cumath::Tmatrix3dReset(a_corr2); //-Only for 2D.
-    tmatrix4d a_corr3; if(!sim2d)cumath::Tmatrix4dReset(a_corr3); //-Only for 3D.
+    if(displane<=CTE.h*4.f){
+      const double3 posp1=make_double3(pos_p1.x+displane*direction.x, pos_p1.y+displane*direction.y, pos_p1.z+displane*direction.z); //-Ghost node position.
+      //-Initializes variables for calculation.
+      float rhopp1=0;
+      float3 gradrhopp1=make_float3(0,0,0);
+      tmatrix3d a_corr2; if(sim2d) cumath::Tmatrix3dReset(a_corr2); //-Only for 2D.
+      tmatrix4d a_corr3; if(!sim2d)cumath::Tmatrix4dReset(a_corr3); //-Only for 3D.
 
-    //-Obtains interaction limits.
-    int cxini,cxfin,yini,yfin,zini,zfin;
-    cusph::KerGetInteractionCells(posp1.x,posp1.y,posp1.z,hdiv,nc,cellzero,cxini,cxfin,yini,yfin,zini,zfin);
+      //-Obtains interaction limits.
+      int cxini,cxfin,yini,yfin,zini,zfin;
+      cusph::KerGetInteractionCells(posp1.x,posp1.y,posp1.z,hdiv,nc,cellzero,cxini,cxfin,yini,yfin,zini,zfin);
 
-    //-Interaction with fluids.
-    for(int z=zini;z<zfin;z++){
-      int zmod=(nc.w)*z+cellfluid; //-The sum showing where fluid cells start. | Le suma donde empiezan las celdas de fluido.
-      for(int y=yini;y<yfin;y++){
-        int ymod=zmod+nc.x*y;
-        unsigned pini,pfin=0;
-        for(int x=cxini;x<cxfin;x++){
-          int2 cbeg=begincell[x+ymod];
-          if(cbeg.y){
-            if(!pfin)pini=cbeg.x;
-            pfin=cbeg.y;
-          }
-        }
-        if(pfin)for(unsigned p2=pini;p2<pfin;p2++){
-          const double2 p2xy=posxy[p2];
-          const float drx=float(posp1.x-p2xy.x);
-          const float dry=float(posp1.y-p2xy.y);
-          const float drz=float(posp1.z-posz[p2]);
-          const float rr2=drx*drx+dry*dry+drz*drz;
-          if(rr2<=CTE.fourh2 && rr2>=ALMOSTZERO && CODE_IsFluid(code[p2])){//-Only with fluid particles (including inout).
-            //-Wendland or Cubic Spline kernel.
-            float frx,fry,frz,wab;
-            if(tker==KERNEL_Wendland)cusph::KerGetKernelWendland(rr2,drx,dry,drz,frx,fry,frz,wab);
-            else if(tker==KERNEL_Cubic)cusph::KerGetKernelCubic(rr2,drx,dry,drz,frx,fry,frz,wab);
-
-            //===== Get mass and volume of particle p2 =====
-            float massp2=CTE.massf;
-            const float volp2=massp2/velrhop[p2].w;
-
-            //===== Density and its gradient =====
-            rhopp1+=massp2*wab;
-            gradrhopp1.x+=massp2*frx;
-            gradrhopp1.y+=massp2*fry;
-            gradrhopp1.z+=massp2*frz;
-
-            //===== Kernel values multiplied by volume =====
-            const float vwab=wab*volp2;
-            const float vfrx=frx*volp2;
-            const float vfry=fry*volp2;
-            const float vfrz=frz*volp2;
-
-            //===== Matrix A for correction =====
-            if(sim2d){
-              a_corr2.a11+=vwab;  a_corr2.a12+=drx*vwab;  a_corr2.a13+=drz*vwab;
-              a_corr2.a21+=vfrx;  a_corr2.a22+=drx*vfrx;  a_corr2.a23+=drz*vfrx;
-              a_corr2.a31+=vfrz;  a_corr2.a32+=drx*vfrz;  a_corr2.a33+=drz*vfrz;
-            }
-            else{
-              a_corr3.a11+=vwab;  a_corr3.a12+=drx*vwab;  a_corr3.a13+=dry*vwab;  a_corr3.a14+=drz*vwab;
-              a_corr3.a21+=vfrx;  a_corr3.a22+=drx*vfrx;  a_corr3.a23+=dry*vfrx;  a_corr3.a24+=drz*vfrx;
-              a_corr3.a31+=vfry;  a_corr3.a32+=drx*vfry;  a_corr3.a33+=dry*vfry;  a_corr3.a34+=drz*vfry;
-              a_corr3.a41+=vfrz;  a_corr3.a42+=drx*vfrz;  a_corr3.a43+=dry*vfrz;  a_corr3.a44+=drz*vfrz;
+      //-Interaction with fluids.
+      for(int z=zini;z<zfin;z++){
+        int zmod=(nc.w)*z+cellfluid; //-The sum showing where fluid cells start. | Le suma donde empiezan las celdas de fluido.
+        for(int y=yini;y<yfin;y++){
+          int ymod=zmod+nc.x*y;
+          unsigned pini,pfin=0;
+          for(int x=cxini;x<cxfin;x++){
+            int2 cbeg=begincell[x+ymod];
+            if(cbeg.y){
+              if(!pfin)pini=cbeg.x;
+              pfin=cbeg.y;
             }
           }
+          if(pfin)for(unsigned p2=pini;p2<pfin;p2++){
+            const double2 p2xy=posxy[p2];
+            const float drx=float(posp1.x-p2xy.x);
+            const float dry=float(posp1.y-p2xy.y);
+            const float drz=float(posp1.z-posz[p2]);
+            const float rr2=drx*drx+dry*dry+drz*drz;
+            if(rr2<=CTE.fourh2 && rr2>=ALMOSTZERO && CODE_IsFluid(code[p2])){//-Only with fluid particles (including inout).
+              //-Wendland or Cubic Spline kernel.
+              float frx,fry,frz,wab;
+              if(tker==KERNEL_Wendland)cusph::KerGetKernelWendland(rr2,drx,dry,drz,frx,fry,frz,wab);
+              else if(tker==KERNEL_Cubic)cusph::KerGetKernelCubic(rr2,drx,dry,drz,frx,fry,frz,wab);
+
+              //===== Get mass and volume of particle p2 =====
+              float massp2=CTE.massf;
+              const float volp2=massp2/velrhop[p2].w;
+
+              //===== Density and its gradient =====
+              rhopp1+=massp2*wab;
+              gradrhopp1.x+=massp2*frx;
+              gradrhopp1.y+=massp2*fry;
+              gradrhopp1.z+=massp2*frz;
+
+              //===== Kernel values multiplied by volume =====
+              const float vwab=wab*volp2;
+              const float vfrx=frx*volp2;
+              const float vfry=fry*volp2;
+              const float vfrz=frz*volp2;
+
+              //===== Matrix A for correction =====
+              if(sim2d){
+                a_corr2.a11+=vwab;  a_corr2.a12+=drx*vwab;  a_corr2.a13+=drz*vwab;
+                a_corr2.a21+=vfrx;  a_corr2.a22+=drx*vfrx;  a_corr2.a23+=drz*vfrx;
+                a_corr2.a31+=vfrz;  a_corr2.a32+=drx*vfrz;  a_corr2.a33+=drz*vfrz;
+              }
+              else{
+                a_corr3.a11+=vwab;  a_corr3.a12+=drx*vwab;  a_corr3.a13+=dry*vwab;  a_corr3.a14+=drz*vwab;
+                a_corr3.a21+=vfrx;  a_corr3.a22+=drx*vfrx;  a_corr3.a23+=dry*vfrx;  a_corr3.a24+=drz*vfrx;
+                a_corr3.a31+=vfry;  a_corr3.a32+=drx*vfry;  a_corr3.a33+=dry*vfry;  a_corr3.a34+=drz*vfry;
+                a_corr3.a41+=vfrz;  a_corr3.a42+=drx*vfrz;  a_corr3.a43+=dry*vfrz;  a_corr3.a44+=drz*vfrz;
+              }
+            }
+          }
+        }
+      }
+
+      //-Store the results.
+      //--------------------
+      const float3 dpos=make_float3(float(pos_p1.x-posp1.x),float(pos_p1.y-posp1.y),float(pos_p1.z-posp1.z)); //-Boundary particle position - ghost node position.
+      if(sim2d){
+        const double determ=cumath::Determinant3x3(a_corr2);
+        if(determ>=determlimit){//-Use 1e-3f (first_order) or 1e+3f (zeroth_order).
+          const tmatrix3d invacorr2=cumath::InverseMatrix3x3(a_corr2,determ);
+          //-GHOST NODE DENSITY IS MIRRORED BACK TO THE INFLOW OR OUTFLOW PARTICLES.
+          const float rhoghost=float(invacorr2.a11*rhopp1 + invacorr2.a12*gradrhopp1.x + invacorr2.a13*gradrhopp1.z);
+          const float grx=    -float(invacorr2.a21*rhopp1 + invacorr2.a22*gradrhopp1.x + invacorr2.a23*gradrhopp1.z);
+          const float grz=    -float(invacorr2.a31*rhopp1 + invacorr2.a32*gradrhopp1.x + invacorr2.a33*gradrhopp1.z);
+          rhopfinal=(rhoghost + grx*dpos.x + grz*dpos.z);
+        }
+        else if(a_corr2.a11>0){//-Determinant is small but a11 is nonzero, 0th order ANGELO.
+          rhopfinal=float(rhopp1/a_corr2.a11);
+        }
+      }
+      else{
+        const double determ=cumath::Determinant4x4(a_corr3);
+        if(determ>=determlimit){
+          const tmatrix4d invacorr3=cumath::InverseMatrix4x4(a_corr3,determ);
+          //-GHOST NODE DENSITY IS MIRRORED BACK TO THE INFLOW OR OUTFLOW PARTICLES.
+          const float rhoghost=float(invacorr3.a11*rhopp1 + invacorr3.a12*gradrhopp1.x + invacorr3.a13*gradrhopp1.y + invacorr3.a14*gradrhopp1.z);
+          const float grx=    -float(invacorr3.a21*rhopp1 + invacorr3.a22*gradrhopp1.x + invacorr3.a23*gradrhopp1.y + invacorr3.a24*gradrhopp1.z);
+          const float gry=    -float(invacorr3.a31*rhopp1 + invacorr3.a32*gradrhopp1.x + invacorr3.a33*gradrhopp1.y + invacorr3.a34*gradrhopp1.z);
+          const float grz=    -float(invacorr3.a41*rhopp1 + invacorr3.a42*gradrhopp1.x + invacorr3.a43*gradrhopp1.y + invacorr3.a44*gradrhopp1.z);
+          rhopfinal=(rhoghost + grx*dpos.x + gry*dpos.y + grz*dpos.z);
+        }
+        else if(a_corr3.a11>0){//-Determinant is small but a11 is nonzero, 0th order ANGELO.
+          rhopfinal=float(rhopp1/a_corr3.a11);
         }
       }
     }
-
-    //-Store the results.
-    //--------------------
-    float rhopfinal=FLT_MAX;
-    const float3 dpos=make_float3(float(pos_p1.x-posp1.x),float(pos_p1.y-posp1.y),float(pos_p1.z-posp1.z)); //-Boundary particle position - ghost node position.
-    if(sim2d){
-      const double determ=cumath::Determinant3x3(a_corr2);
-      if(determ>=determlimit){//-Use 1e-3f (first_order) or 1e+3f (zeroth_order).
-        const tmatrix3d invacorr2=cumath::InverseMatrix3x3(a_corr2,determ);
-        //-GHOST NODE DENSITY IS MIRRORED BACK TO THE INFLOW OR OUTFLOW PARTICLES.
-        const float rhoghost=float(invacorr2.a11*rhopp1 + invacorr2.a12*gradrhopp1.x + invacorr2.a13*gradrhopp1.z);
-        const float grx=    -float(invacorr2.a21*rhopp1 + invacorr2.a22*gradrhopp1.x + invacorr2.a23*gradrhopp1.z);
-        const float grz=    -float(invacorr2.a31*rhopp1 + invacorr2.a32*gradrhopp1.x + invacorr2.a33*gradrhopp1.z);
-    	rhopfinal=(rhoghost + grx*dpos.x + grz*dpos.z);
-      }
-      else if(a_corr2.a11>0){//-Determinant is small but a11 is nonzero, 0th order ANGELO.
-      	rhopfinal=float(rhopp1/a_corr2.a11);
-      }
-    }
-    else{
-      const double determ=cumath::Determinant4x4(a_corr3);
-      if(determ>=determlimit){
-        const tmatrix4d invacorr3=cumath::InverseMatrix4x4(a_corr3,determ);
-        //-GHOST NODE DENSITY IS MIRRORED BACK TO THE INFLOW OR OUTFLOW PARTICLES.
-        const float rhoghost=float(invacorr3.a11*rhopp1 + invacorr3.a12*gradrhopp1.x + invacorr3.a13*gradrhopp1.y + invacorr3.a14*gradrhopp1.z);
-        const float grx=    -float(invacorr3.a21*rhopp1 + invacorr3.a22*gradrhopp1.x + invacorr3.a23*gradrhopp1.y + invacorr3.a24*gradrhopp1.z);
-        const float gry=    -float(invacorr3.a31*rhopp1 + invacorr3.a32*gradrhopp1.x + invacorr3.a33*gradrhopp1.y + invacorr3.a34*gradrhopp1.z);
-        const float grz=    -float(invacorr3.a41*rhopp1 + invacorr3.a42*gradrhopp1.x + invacorr3.a43*gradrhopp1.y + invacorr3.a44*gradrhopp1.z);
-        rhopfinal=(rhoghost + grx*dpos.x + gry*dpos.y + grz*dpos.z);
-      }
-      else if(a_corr3.a11>0){//-Determinant is small but a11 is nonzero, 0th order ANGELO.
-      	rhopfinal=float(rhopp1/a_corr3.a11);
-      }
-    }
-    if(rhopfinal!=FLT_MAX)velrhop[p1].w=rhopfinal;
+    velrhop[p1].w=(rhopfinal!=FLT_MAX? rhopfinal: CTE.rhopzero);
   }
 }
 
@@ -1718,113 +1722,115 @@ template<bool sim2d,TpKernel tker> __global__ void KerInteractionBoundCorr_FastS
 {
   const unsigned p1=blockIdx.y*gridDim.x*blockDim.x + blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
   if(p1<npb && CODE_GetTypeAndValue(code[p1])==boundcode){
+    float rhopfinal=FLT_MAX;
     //-Calculates ghost node position.
     double3 pos_p1=make_double3(posxy[p1].x,posxy[p1].y,posz[p1]);
     if(CODE_IsPeriodic(code[p1]))pos_p1=KerInteraction_PosNoPeriodic(pos_p1);
     const double displane=cumath::DistPlane(plane,pos_p1)*2;
-    const double3 posp1=make_double3(pos_p1.x+displane*direction.x, pos_p1.y+displane*direction.y, pos_p1.z+displane*direction.z); //-Ghost node position.
-    //-Initializes variables for calculation.
-    float rhopp1=0;
-    float3 gradrhopp1=make_float3(0,0,0);
-    tmatrix3f a_corr2; if(sim2d) cumath::Tmatrix3fReset(a_corr2); //-Only for 2D.
-    tmatrix4f a_corr3; if(!sim2d)cumath::Tmatrix4fReset(a_corr3); //-Only for 3D.
+    if(displane<=CTE.h*4.f){
+      const double3 posp1=make_double3(pos_p1.x+displane*direction.x, pos_p1.y+displane*direction.y, pos_p1.z+displane*direction.z); //-Ghost node position.
+      //-Initializes variables for calculation.
+      float rhopp1=0;
+      float3 gradrhopp1=make_float3(0,0,0);
+      tmatrix3f a_corr2; if(sim2d) cumath::Tmatrix3fReset(a_corr2); //-Only for 2D.
+      tmatrix4f a_corr3; if(!sim2d)cumath::Tmatrix4fReset(a_corr3); //-Only for 3D.
 
-    //-Obtains interaction limits.
-    int cxini,cxfin,yini,yfin,zini,zfin;
-    cusph::KerGetInteractionCells(posp1.x,posp1.y,posp1.z,hdiv,nc,cellzero,cxini,cxfin,yini,yfin,zini,zfin);
+      //-Obtains interaction limits.
+      int cxini,cxfin,yini,yfin,zini,zfin;
+      cusph::KerGetInteractionCells(posp1.x,posp1.y,posp1.z,hdiv,nc,cellzero,cxini,cxfin,yini,yfin,zini,zfin);
 
-    //-Interaction with fluids.
-    for(int z=zini;z<zfin;z++){
-      int zmod=(nc.w)*z+cellfluid; //-The sum showing where fluid cells start. | Le suma donde empiezan las celdas de fluido.
-      for(int y=yini;y<yfin;y++){
-        int ymod=zmod+nc.x*y;
-        unsigned pini,pfin=0;
-        for(int x=cxini;x<cxfin;x++){
-          int2 cbeg=begincell[x+ymod];
-          if(cbeg.y){
-            if(!pfin)pini=cbeg.x;
-            pfin=cbeg.y;
-          }
-        }
-        if(pfin)for(unsigned p2=pini;p2<pfin;p2++){
-          const double2 p2xy=posxy[p2];
-          const float drx=float(posp1.x-p2xy.x);
-          const float dry=float(posp1.y-p2xy.y);
-          const float drz=float(posp1.z-posz[p2]);
-          const float rr2=drx*drx+dry*dry+drz*drz;
-          if(rr2<=CTE.fourh2 && rr2>=ALMOSTZERO && CODE_IsFluid(code[p2])){//-Only with fluid particles (including inout).
-            //-Wendland or Cubic Spline kernel.
-            float frx,fry,frz,wab;
-            if(tker==KERNEL_Wendland)cusph::KerGetKernelWendland(rr2,drx,dry,drz,frx,fry,frz,wab);
-            else if(tker==KERNEL_Cubic)cusph::KerGetKernelCubic(rr2,drx,dry,drz,frx,fry,frz,wab);
-
-            //===== Get mass and volume of particle p2 =====
-            float massp2=CTE.massf;
-            const float volp2=massp2/velrhop[p2].w;
-
-            //===== Density and its gradient =====
-            rhopp1+=massp2*wab;
-            gradrhopp1.x+=massp2*frx;
-            gradrhopp1.y+=massp2*fry;
-            gradrhopp1.z+=massp2*frz;
-
-            //===== Kernel values multiplied by volume =====
-            const float vwab=wab*volp2;
-            const float vfrx=frx*volp2;
-            const float vfry=fry*volp2;
-            const float vfrz=frz*volp2;
-
-            //===== Matrix A for correction =====
-            if(sim2d){
-              a_corr2.a11+=vwab;  a_corr2.a12+=drx*vwab;  a_corr2.a13+=drz*vwab;
-              a_corr2.a21+=vfrx;  a_corr2.a22+=drx*vfrx;  a_corr2.a23+=drz*vfrx;
-              a_corr2.a31+=vfrz;  a_corr2.a32+=drx*vfrz;  a_corr2.a33+=drz*vfrz;
-            }
-            else{
-              a_corr3.a11+=vwab;  a_corr3.a12+=drx*vwab;  a_corr3.a13+=dry*vwab;  a_corr3.a14+=drz*vwab;
-              a_corr3.a21+=vfrx;  a_corr3.a22+=drx*vfrx;  a_corr3.a23+=dry*vfrx;  a_corr3.a24+=drz*vfrx;
-              a_corr3.a31+=vfry;  a_corr3.a32+=drx*vfry;  a_corr3.a33+=dry*vfry;  a_corr3.a34+=drz*vfry;
-              a_corr3.a41+=vfrz;  a_corr3.a42+=drx*vfrz;  a_corr3.a43+=dry*vfrz;  a_corr3.a44+=drz*vfrz;
+      //-Interaction with fluids.
+      for(int z=zini;z<zfin;z++){
+        int zmod=(nc.w)*z+cellfluid; //-The sum showing where fluid cells start. | Le suma donde empiezan las celdas de fluido.
+        for(int y=yini;y<yfin;y++){
+          int ymod=zmod+nc.x*y;
+          unsigned pini,pfin=0;
+          for(int x=cxini;x<cxfin;x++){
+            int2 cbeg=begincell[x+ymod];
+            if(cbeg.y){
+              if(!pfin)pini=cbeg.x;
+              pfin=cbeg.y;
             }
           }
+          if(pfin)for(unsigned p2=pini;p2<pfin;p2++){
+            const double2 p2xy=posxy[p2];
+            const float drx=float(posp1.x-p2xy.x);
+            const float dry=float(posp1.y-p2xy.y);
+            const float drz=float(posp1.z-posz[p2]);
+            const float rr2=drx*drx+dry*dry+drz*drz;
+            if(rr2<=CTE.fourh2 && rr2>=ALMOSTZERO && CODE_IsFluid(code[p2])){//-Only with fluid particles (including inout).
+              //-Wendland or Cubic Spline kernel.
+              float frx,fry,frz,wab;
+              if(tker==KERNEL_Wendland)cusph::KerGetKernelWendland(rr2,drx,dry,drz,frx,fry,frz,wab);
+              else if(tker==KERNEL_Cubic)cusph::KerGetKernelCubic(rr2,drx,dry,drz,frx,fry,frz,wab);
+
+              //===== Get mass and volume of particle p2 =====
+              float massp2=CTE.massf;
+              const float volp2=massp2/velrhop[p2].w;
+
+              //===== Density and its gradient =====
+              rhopp1+=massp2*wab;
+              gradrhopp1.x+=massp2*frx;
+              gradrhopp1.y+=massp2*fry;
+              gradrhopp1.z+=massp2*frz;
+
+              //===== Kernel values multiplied by volume =====
+              const float vwab=wab*volp2;
+              const float vfrx=frx*volp2;
+              const float vfry=fry*volp2;
+              const float vfrz=frz*volp2;
+
+              //===== Matrix A for correction =====
+              if(sim2d){
+                a_corr2.a11+=vwab;  a_corr2.a12+=drx*vwab;  a_corr2.a13+=drz*vwab;
+                a_corr2.a21+=vfrx;  a_corr2.a22+=drx*vfrx;  a_corr2.a23+=drz*vfrx;
+                a_corr2.a31+=vfrz;  a_corr2.a32+=drx*vfrz;  a_corr2.a33+=drz*vfrz;
+              }
+              else{
+                a_corr3.a11+=vwab;  a_corr3.a12+=drx*vwab;  a_corr3.a13+=dry*vwab;  a_corr3.a14+=drz*vwab;
+                a_corr3.a21+=vfrx;  a_corr3.a22+=drx*vfrx;  a_corr3.a23+=dry*vfrx;  a_corr3.a24+=drz*vfrx;
+                a_corr3.a31+=vfry;  a_corr3.a32+=drx*vfry;  a_corr3.a33+=dry*vfry;  a_corr3.a34+=drz*vfry;
+                a_corr3.a41+=vfrz;  a_corr3.a42+=drx*vfrz;  a_corr3.a43+=dry*vfrz;  a_corr3.a44+=drz*vfrz;
+              }
+            }
+          }
+        }
+      }
+
+      //-Store the results.
+      //--------------------
+      const float3 dpos=make_float3(float(pos_p1.x-posp1.x),float(pos_p1.y-posp1.y),float(pos_p1.z-posp1.z)); //-Boundary particle position - ghost node position.
+      if(sim2d){
+        const double determ=cumath::Determinant3x3dbl(a_corr2);
+        if(determ>=determlimit){//-Use 1e-3f (first_order) or 1e+3f (zeroth_order).
+          const tmatrix3f invacorr2=cumath::InverseMatrix3x3dbl(a_corr2,determ);
+          //-GHOST NODE DENSITY IS MIRRORED BACK TO THE INFLOW OR OUTFLOW PARTICLES.
+          const float rhoghost=float(invacorr2.a11*rhopp1 + invacorr2.a12*gradrhopp1.x + invacorr2.a13*gradrhopp1.z);
+          const float grx=    -float(invacorr2.a21*rhopp1 + invacorr2.a22*gradrhopp1.x + invacorr2.a23*gradrhopp1.z);
+          const float grz=    -float(invacorr2.a31*rhopp1 + invacorr2.a32*gradrhopp1.x + invacorr2.a33*gradrhopp1.z);
+          rhopfinal=(rhoghost + grx*dpos.x + grz*dpos.z);
+        }
+        else if(a_corr2.a11>0){//-Determinant is small but a11 is nonzero, 0th order ANGELO.
+          rhopfinal=float(rhopp1/a_corr2.a11);
+        }
+      }
+      else{
+        const double determ=cumath::Determinant4x4dbl(a_corr3);
+        if(determ>=determlimit){
+          const tmatrix4f invacorr3=cumath::InverseMatrix4x4dbl(a_corr3,determ);
+          //-GHOST NODE DENSITY IS MIRRORED BACK TO THE INFLOW OR OUTFLOW PARTICLES.
+          const float rhoghost=float(invacorr3.a11*rhopp1 + invacorr3.a12*gradrhopp1.x + invacorr3.a13*gradrhopp1.y + invacorr3.a14*gradrhopp1.z);
+          const float grx=    -float(invacorr3.a21*rhopp1 + invacorr3.a22*gradrhopp1.x + invacorr3.a23*gradrhopp1.y + invacorr3.a24*gradrhopp1.z);
+          const float gry=    -float(invacorr3.a31*rhopp1 + invacorr3.a32*gradrhopp1.x + invacorr3.a33*gradrhopp1.y + invacorr3.a34*gradrhopp1.z);
+          const float grz=    -float(invacorr3.a41*rhopp1 + invacorr3.a42*gradrhopp1.x + invacorr3.a43*gradrhopp1.y + invacorr3.a44*gradrhopp1.z);
+          rhopfinal=(rhoghost + grx*dpos.x + gry*dpos.y + grz*dpos.z);
+        }
+        else if(a_corr3.a11>0){//-Determinant is small but a11 is nonzero, 0th order ANGELO.
+          rhopfinal=float(rhopp1/a_corr3.a11);
         }
       }
     }
-
-    //-Store the results.
-    //--------------------
-    float rhopfinal=FLT_MAX;
-    const float3 dpos=make_float3(float(pos_p1.x-posp1.x),float(pos_p1.y-posp1.y),float(pos_p1.z-posp1.z)); //-Boundary particle position - ghost node position.
-    if(sim2d){
-      const double determ=cumath::Determinant3x3dbl(a_corr2);
-      if(determ>=determlimit){//-Use 1e-3f (first_order) or 1e+3f (zeroth_order).
-        const tmatrix3f invacorr2=cumath::InverseMatrix3x3dbl(a_corr2,determ);
-        //-GHOST NODE DENSITY IS MIRRORED BACK TO THE INFLOW OR OUTFLOW PARTICLES.
-        const float rhoghost=float(invacorr2.a11*rhopp1 + invacorr2.a12*gradrhopp1.x + invacorr2.a13*gradrhopp1.z);
-        const float grx=    -float(invacorr2.a21*rhopp1 + invacorr2.a22*gradrhopp1.x + invacorr2.a23*gradrhopp1.z);
-        const float grz=    -float(invacorr2.a31*rhopp1 + invacorr2.a32*gradrhopp1.x + invacorr2.a33*gradrhopp1.z);
-    	rhopfinal=(rhoghost + grx*dpos.x + grz*dpos.z);
-      }
-      else if(a_corr2.a11>0){//-Determinant is small but a11 is nonzero, 0th order ANGELO.
-      	rhopfinal=float(rhopp1/a_corr2.a11);
-      }
-    }
-    else{
-      const double determ=cumath::Determinant4x4dbl(a_corr3);
-      if(determ>=determlimit){
-        const tmatrix4f invacorr3=cumath::InverseMatrix4x4dbl(a_corr3,determ);
-        //-GHOST NODE DENSITY IS MIRRORED BACK TO THE INFLOW OR OUTFLOW PARTICLES.
-        const float rhoghost=float(invacorr3.a11*rhopp1 + invacorr3.a12*gradrhopp1.x + invacorr3.a13*gradrhopp1.y + invacorr3.a14*gradrhopp1.z);
-        const float grx=    -float(invacorr3.a21*rhopp1 + invacorr3.a22*gradrhopp1.x + invacorr3.a23*gradrhopp1.y + invacorr3.a24*gradrhopp1.z);
-        const float gry=    -float(invacorr3.a31*rhopp1 + invacorr3.a32*gradrhopp1.x + invacorr3.a33*gradrhopp1.y + invacorr3.a34*gradrhopp1.z);
-        const float grz=    -float(invacorr3.a41*rhopp1 + invacorr3.a42*gradrhopp1.x + invacorr3.a43*gradrhopp1.y + invacorr3.a44*gradrhopp1.z);
-        rhopfinal=(rhoghost + grx*dpos.x + gry*dpos.y + grz*dpos.z);
-      }
-      else if(a_corr3.a11>0){//-Determinant is small but a11 is nonzero, 0th order ANGELO.
-      	rhopfinal=float(rhopp1/a_corr3.a11);
-      }
-    }
-    if(rhopfinal!=FLT_MAX)velrhop[p1].w=rhopfinal;
+    velrhop[p1].w=(rhopfinal!=FLT_MAX? rhopfinal: CTE.rhopzero);
   }
 }
 
