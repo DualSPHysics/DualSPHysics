@@ -223,8 +223,8 @@ protected:
 
   void AddAccInput();
 
-  void PreInteractionVars_Forces(TpInter tinter,unsigned np,unsigned npb);
-  void PreInteraction_Forces(TpInter tinter);
+  void PreInteractionVars_Forces(unsigned np,unsigned npb);
+  void PreInteraction_Forces();
   void PosInteraction_Forces();
   
   void ComputeVerlet(double dt);
@@ -233,6 +233,7 @@ protected:
   double DtVariable(bool final);
   void RunShifting(double dt);
 
+  void CalcMotion(double stepdt);
   void RunMotion(double stepdt);
   void RunDamping(double dt,unsigned np,unsigned npb,const double2 *posxy,const double *posz,const typecode *code,float4 *velrhop);
 

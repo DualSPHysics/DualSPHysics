@@ -452,10 +452,10 @@ void JSphCpu::AddAccInput(){
 }
 
 //==============================================================================
-/// Prepare variables for interaction functions "INTER_Forces" or "INTER_ForcesCorr".
-/// Prepara variables para interaccion "INTER_Forces" o "INTER_ForcesCorr".
+/// Prepare variables for interaction functions.
+/// Prepara variables para interaccion.
 //==============================================================================
-void JSphCpu::PreInteractionVars_Forces(TpInter tinter,unsigned np,unsigned npb){
+void JSphCpu::PreInteractionVars_Forces(unsigned np,unsigned npb){
   //-Initialize Arrays.
   const unsigned npf=np-npb;
   memset(Arc,0,sizeof(float)*np);                                    //Arc[]=0
@@ -481,10 +481,10 @@ void JSphCpu::PreInteractionVars_Forces(TpInter tinter,unsigned np,unsigned npb)
 }
 
 //==============================================================================
-/// Prepare variables for interaction functions "INTER_Forces" or "INTER_ForcesCorr".
-/// Prepara variables para interaccion "INTER_Forces" o "INTER_ForcesCorr".
+/// Prepare variables for interaction functions.
+/// Prepara variables para interaccion.
 //==============================================================================
-void JSphCpu::PreInteraction_Forces(TpInter tinter){
+void JSphCpu::PreInteraction_Forces(){
   TmcStart(Timers,TMC_CfPreForces);
   //-Assign memory.
   Arc=ArraysCpu->ReserveFloat();
@@ -507,7 +507,7 @@ void JSphCpu::PreInteraction_Forces(TpInter tinter){
     for(int p=0;p<np;p++){ PsPosc[p]=ToTFloat3(Posc[p]); }
   }
   //-Initialize Arrays.
-  PreInteractionVars_Forces(tinter,Np,Npb);
+  PreInteractionVars_Forces(Np,Npb);
 
   //-Calculate VelMax: Floating object particles are included and do not affect use of periodic condition.
   //-Calcula VelMax: Se incluyen las particulas floatings y no afecta el uso de condiciones periodicas.
@@ -594,7 +594,7 @@ void JSphCpu::GetKernelWendland(float rr2,float drx,float dry,float drz
   const float qq=rad/H;
   //-Wendland kernel.
   const float wqq1=1.f-0.5f*qq;
-  const float fac=Bwen*qq*wqq1*wqq1*wqq1/rad;
+  const float fac=Bwen*qq*wqq1*wqq1*wqq1/rad; //-Kernel derivative (divided by rad).
   frx=fac*drx; fry=fac*dry; frz=fac*drz;
 }
 
@@ -609,8 +609,8 @@ void JSphCpu::GetKernelGaussian(float rr2,float drx,float dry,float drz
   const float qq=rad/H;
   //-Gaussian kernel.
   const float qqexp=-4.0f*qq*qq;
-  //const float wab=Agau*expf(qqexp);
-  const float fac=Bgau*qq*expf(qqexp)/rad;
+  //const float wab=Agau*expf(qqexp); //-Kernel.
+  const float fac=Bgau*qq*expf(qqexp)/rad; //-Kernel derivative (divided by rad).
   frx=fac*drx; fry=fac*dry; frz=fac*drz;
 }
 
@@ -628,11 +628,11 @@ void JSphCpu::GetKernelCubic(float rr2,float drx,float dry,float drz
   if(rad>H){
     float wqq1=2.0f-qq;
     float wqq2=wqq1*wqq1;
-    fac=CubicCte.c2*wqq2/rad;
+    fac=CubicCte.c2*wqq2/rad; //-Kernel derivative (divided by rad).
   }
   else{
     float wqq2=qq*qq;
-    fac=(CubicCte.c1*qq+CubicCte.d1*wqq2)/rad;
+    fac=(CubicCte.c1*qq+CubicCte.d1*wqq2)/rad; //-Kernel derivative (divided by rad).
   }
   //-Gradients.
   frx=fac*drx; fry=fac*dry; frz=fac*drz;
@@ -650,12 +650,12 @@ float JSphCpu::GetKernelCubicTensil(float rr2,float rhopp1,float pressp1,float r
   if(rad>H){
     float wqq1=2.0f-qq;
     float wqq2=wqq1*wqq1;
-    wab=CubicCte.a24*(wqq2*wqq1);
+    wab=CubicCte.a24*(wqq2*wqq1); //-Kernel.
   }
   else{
     float wqq2=qq*qq;
     float wqq3=wqq2*qq;
-    wab=CubicCte.a2*(1.0f-1.5f*wqq2+0.75f*wqq3);
+    wab=CubicCte.a2*(1.0f-1.5f*wqq2+0.75f*wqq3); //-Kernel.
   }
   //-Tensile correction.
   float fab=wab*CubicCte.od_wdeltap;
@@ -2007,6 +2007,18 @@ void JSphCpu::MoveMatBound(unsigned np,unsigned ini,tmatrix4d m,double dt
 }
 
 //==============================================================================
+/// Calculates predefined movement of boundary particles.
+/// Calcula movimiento predefinido de boundary particles.
+//==============================================================================
+void JSphCpu::CalcMotion(double stepdt){
+  TmcStart(Timers,TMC_SuMotion);
+  const bool motsim=true;
+  const JSphMotion::TpMotionMode mode=(motsim? JSphMotion::MOMT_Simple: JSphMotion::MOMT_Ace2dt);
+  SphMotion->ProcesTime(mode,TimeStep,stepdt);
+  TmcStop(Timers,TMC_SuMotion);
+}
+
+//==============================================================================
 /// Process movement of boundary particles.
 /// Procesa movimiento de boundary particles.
 //==============================================================================
@@ -2014,9 +2026,8 @@ void JSphCpu::RunMotion(double stepdt){
   const char met[]="RunMotion";
   TmcStart(Timers,TMC_SuMotion);
   const bool motsim=true;
-  const JSphMotion::TpMotionMode mode=(motsim? JSphMotion::MOMT_Simple: JSphMotion::MOMT_Ace2dt);
   BoundChanged=false;
-  if(SphMotion->ProcesTime(mode,TimeStep,stepdt)){
+  if(SphMotion->GetActiveMotion()){
     CalcRidp(PeriActive!=0,Npb,0,CaseNfixed,CaseNfixed+CaseNmoving,Codec,Idpc,RidpMove);
     BoundChanged=true;
     bool typesimple;
@@ -2042,7 +2053,7 @@ void JSphCpu::RunMotion(double stepdt){
     if(!BoundChanged)CalcRidp(PeriActive!=0,Npb,0,CaseNfixed,CaseNfixed+CaseNmoving,Codec,Idpc,RidpMove);
     BoundChanged=true;
     //-Control of wave generation (WaveGen). | Gestion de WaveGen.
-    if(WaveGen)for(unsigned c=0;c<WaveGen->GetCount();c++){
+    for(unsigned c=0;c<WaveGen->GetCount();c++){
       bool typesimple;
       tdouble3 simplemov,simplevel,simpleace;
       tmatrix4d matmov,matmov2;

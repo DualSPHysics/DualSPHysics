@@ -23,6 +23,7 @@
 #include "Functions.h"
 #include "JPartDataHead.h"
 #include "JSphMk.h"
+#include "JSphPartsInit.h"
 #include "JPartsLoad4.h"
 #include "JSphMotion.h"
 #include "JXml.h"
@@ -66,6 +67,7 @@ JSph::JSph(bool cpu,bool withmpi):Cpu(cpu),WithMpi(withmpi){
   SaveDt=NULL;
   TimeOut=NULL;
   MkInfo=NULL;
+  PartsInit=NULL;
   SphMotion=NULL;
   FtObjs=NULL;
   DemData=NULL;
@@ -91,6 +93,7 @@ JSph::~JSph(){
   delete SaveDt;        SaveDt=NULL;
   delete TimeOut;       TimeOut=NULL;
   delete MkInfo;        MkInfo=NULL;
+  delete PartsInit;     PartsInit=NULL;
   delete SphMotion;     SphMotion=NULL;
   AllocMemoryFloating(0);
   delete[] DemData;     DemData=NULL;
@@ -119,6 +122,7 @@ void JSph::InitVars(){
   DirDataOut=""; 
   FileXml="";
   TStep=STEP_None;
+  InterStep=INTERSTEP_None;
   VerletSteps=40;
   TKernel=KERNEL_Wendland;
   Awen=Bwen=Agau=Bgau=0;
@@ -1022,6 +1026,26 @@ void JSph::RunInitialize(unsigned np,unsigned npb,const tdouble3 *pos,const unsi
 }
 
 //==============================================================================
+/// Creates PartsInit object with initial particle data for automatic 
+/// configurations.
+///
+/// Crea el objeto PartsInit con los datos iniciales de las particulas para 
+/// configuraciones automaticas.
+//==============================================================================
+void JSph::CreatePartsInit(unsigned np,const tdouble3 *pos,const typecode *code){
+  PartsInit=new JSphPartsInit(Simulate2D,Simulate2DPosY,Dp,MkInfo,np,pos,code);
+}
+
+//==============================================================================
+/// Free memory of PartsInit.
+///
+/// Libera memoria de PartsInit.
+//==============================================================================
+void JSph::FreePartsInit(){
+  delete PartsInit; PartsInit=NULL;
+}
+
+//==============================================================================
 /// Configures cell division.
 //==============================================================================
 void JSph::ConfigCellDivision(){
@@ -1636,7 +1660,7 @@ void JSph::SaveData(unsigned npok,const unsigned *idp,const tdouble3 *pos,const 
   //-Cheks number of excluded particles.
   if(nout){
     //-Cheks number of excluded particles in one PART.
-    if(nout>=float(infoplus->npf)*(float(PartsOutWrn)/100.f)){
+    if(PartsOutWrn<=100 && nout>=float(infoplus->npf)*(float(PartsOutWrn)/100.f)){
       Log->PrintfWarning("More than %d%% of current fluid particles were excluded in one PART (t:%g, nstep:%u)",PartsOutWrn,TimeStep,Nstep);
       if(PartsOutWrn==1)PartsOutWrn=2;
       else if(PartsOutWrn==2)PartsOutWrn=5;
@@ -1645,7 +1669,7 @@ void JSph::SaveData(unsigned npok,const unsigned *idp,const tdouble3 *pos,const 
     }
     //-Cheks number of total excluded particles.
     const unsigned noutt=GetOutPosCount()+GetOutRhopCount()+GetOutMoveCount();
-    if(PartsOutTotWrn<100 && noutt>=float(TotalNp)*(float(PartsOutTotWrn)/100.f)){
+    if(PartsOutTotWrn<=100 && noutt>=float(TotalNp)*(float(PartsOutTotWrn)/100.f)){
       Log->PrintfWarning("More than %d%% of particles were excluded (t:%g, nstep:%u)",PartsOutTotWrn,TimeStep,Nstep);
       PartsOutTotWrn+=10;
     }

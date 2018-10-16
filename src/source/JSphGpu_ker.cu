@@ -525,7 +525,7 @@ __device__ void KerGetKernelWendland(float rr2,float drx,float dry,float drz
   const float qq=rad/CTE.h;
   //-Wendland kernel.
   const float wqq1=1.f-0.5f*qq;
-  const float fac=CTE.bwen*qq*wqq1*wqq1*wqq1/rad;
+  const float fac=CTE.bwen*qq*wqq1*wqq1*wqq1/rad; //-Kernel derivative (divided by rad).
   frx=fac*drx; fry=fac*dry; frz=fac*drz;
 }
 
@@ -540,8 +540,8 @@ __device__ void KerGetKernelGaussian(float rr2,float drx,float dry,float drz
   const float qq=rad/CTE.h;
   //-Gaussian kernel.
   const float qqexp=-4.0f*qq*qq;
-  //const float wab=CTE.agau*expf(qqexp);
-  const float fac=CTE.bgau*qq*expf(qqexp)/rad;
+  //const float wab=CTE.agau*expf(qqexp); //-Kernel.
+  const float fac=CTE.bgau*qq*expf(qqexp)/rad; //-Kernel derivative (divided by rad).
   frx=fac*drx; fry=fac*dry; frz=fac*drz;
 }
 
@@ -559,11 +559,11 @@ __device__ void KerGetKernelCubic(float rr2,float drx,float dry,float drz
   if(rad>CTE.h){
     float wqq1=2.0f-qq;
     float wqq2=wqq1*wqq1;
-    fac=CTE.cubic_c2*wqq2/rad;
+    fac=CTE.cubic_c2*wqq2/rad; //-Kernel derivative (divided by rad).
   }
   else{
     float wqq2=qq*qq;
-    fac=(CTE.cubic_c1*qq+CTE.cubic_d1*wqq2)/rad;
+    fac=(CTE.cubic_c1*qq+CTE.cubic_d1*wqq2)/rad; //-Kernel derivative (divided by rad).
   }
   //-Gradients.
   frx=fac*drx; fry=fac*dry; frz=fac*drz;
@@ -583,12 +583,12 @@ __device__ float KerGetKernelCubicTensil(float rr2
   if(rad>CTE.h){
     float wqq1=2.0f-qq;
     float wqq2=wqq1*wqq1;
-    wab=CTE.cubic_a24*(wqq2*wqq1);
+    wab=CTE.cubic_a24*(wqq2*wqq1); //-Kernel.
   }
   else{
     float wqq2=qq*qq;
     float wqq3=wqq2*qq;
-    wab=CTE.cubic_a2*(1.0f-1.5f*wqq2+0.75f*wqq3);
+    wab=CTE.cubic_a2*(1.0f-1.5f*wqq2+0.75f*wqq3); //-Kernel.
   }
   //-Tensile correction.
   float fab=wab*CTE.cubic_odwdeltap;

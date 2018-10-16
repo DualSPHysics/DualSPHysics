@@ -193,11 +193,13 @@ typedef enum{
   VISCO_None=0 
 }TpVisco;            
 
-///Types of interaction.
+///Types of interaction step.
 typedef enum{ 
-  INTER_ForcesCorr=2,        ///<Interaction to compute forces using the corrector step of Symplectic algorithm.
-  INTER_Forces=1             ///<Interaction to compute forces using the Verlet algorithm and the predictor step of Symplectic algorithm. 
-}TpInter;   
+  INTERSTEP_None=0,         
+  INTERSTEP_Verlet=1,       ///<Interaction to compute forces using the Verlet algorithm.
+  INTERSTEP_SymPredictor=2, ///<Interaction to compute forces using the Symplectic algorithm (predictor step). 
+  INTERSTEP_SymCorrector=3  ///<Interaction to compute forces using the Symplectic algorithm (corrector step). 
+}TpInterStep;
 
 ///Types of Delta-SPH. 
 typedef enum{ 

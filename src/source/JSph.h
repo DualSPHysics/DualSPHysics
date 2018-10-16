@@ -61,6 +61,7 @@ class JTimeOut;
 class JGaugeSystem;
 class JPartsLoad4;
 class JSpacePartBlock;
+class JSphPartsInit;
 
 //##############################################################################
 //# XML format of execution parameters in _FmtXML__Parameters.xml.
@@ -218,6 +219,7 @@ protected:
   unsigned CaseNpb;          ///<Number of particles of the boundary block ( \ref Nbound - \ref Nfloat ) or ( \ref Nfixed + \ref Nmoving).
 
   JSphMk *MkInfo;            ///<Stores information for the Mk of the particles.
+  JSphPartsInit *PartsInit;  ///<Stores initial particles data for automatic configurations.
 
   //-Variables for periodic conditions.
   byte PeriActive;
@@ -316,7 +318,7 @@ protected:
   double TimeStepIni;     ///<Initial instant of the simulation. | Instante inicial de la simulación.
   double TimeStep;        ///<Current instant of the simulation. | Instante actual de la simulación.                                 
   double TimeStepM1;      ///<Instant of the simulation when the last PART was stored. | Instante de la simulación en que se grabo el último PART.         
-  double TimePartNext;    ///<Instant to store next PART file.   | Instante para grabar siguiente fichero PART.                      
+  double TimePartNext;    ///<Instant to store next PART file.   | Instante para grabar siguiente fichero PART.
 
   //-Control of the execution times.
   JTimer TimerTot;         ///<Measueres total runtime.                          | Mide el tiempo total de ejecucion.
@@ -325,6 +327,7 @@ protected:
   
   //-Execution variables.
   JPartsLoad4 *PartsLoaded;
+  TpInterStep InterStep;
   int VerletStep;
   double SymplecticDtPre;  ///<Previous Dt to use with Symplectic.
   double DemDtForce;       ///<Dt for tangencial acceleration.
@@ -348,6 +351,8 @@ protected:
   void VisuParticleSummary()const;
   void LoadDcellParticles(unsigned n,const typecode *code,const tdouble3 *pos,unsigned *dcell)const;
   void RunInitialize(unsigned np,unsigned npb,const tdouble3 *pos,const unsigned *idp,const typecode *code,tfloat4 *velrhop);
+  void CreatePartsInit(unsigned np,const tdouble3 *pos,const typecode *code);
+  void FreePartsInit();
 
   void ConfigCellDivision();
   void SelecDomain(tuint3 celini,tuint3 celfin);

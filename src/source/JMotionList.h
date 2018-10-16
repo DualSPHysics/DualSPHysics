@@ -65,7 +65,9 @@ public:
 
   //bool GetActive()    const{ return(Active);     }
   //bool GetTypeSimple()const{ return(TypeSimple); }
-  bool GetData(bool &typesimple,tdouble3 &simplemov,tdouble3 &simplevel,tdouble3 &simpleace,tmatrix4d &matmov,tmatrix4d &matmov2)const;
+  bool GetData(bool &typesimple,tdouble3 &simplemov,tdouble3 &simplevel
+    ,tdouble3 &simpleace,tmatrix4d &matmov,tmatrix4d &matmov2)const;
+  bool GetData(bool &typesimple,tdouble3 &simplemov,tmatrix4d &matmov)const;
 };
 
 //##############################################################################
@@ -98,7 +100,9 @@ public:
   void Ace2_Move2dt(unsigned ref,const tmatrix4d &mvmatrix){  MotionData[ref].Ace2_Move2dt(mvmatrix);  }
   void Ace2_PosMotion(double dt){ for(unsigned c=0;c<Nref;c++)MotionData[c].Ace2_PosMotion(dt); }
 
-  bool GetData(unsigned ref,bool &typesimple,tdouble3 &simplemov,tdouble3 &simplevel,tdouble3 &simpleace,tmatrix4d &matmov,tmatrix4d &matmov2)const;
+  bool GetData(unsigned ref,bool &typesimple,tdouble3 &simplemov,tdouble3 &simplevel,tdouble3 &simpleace
+    ,tmatrix4d &matmov,tmatrix4d &matmov2)const;
+  bool GetData(unsigned ref,bool &typesimple,tdouble3 &simplemov,tmatrix4d &matmov)const;
 };
 
 

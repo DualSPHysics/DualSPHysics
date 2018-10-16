@@ -137,7 +137,7 @@ __global__ void KerInteractionGaugeVel(double3 ptpos
               const float wqq=2.f*qq+1.f;
               const float wqq1=1.f-0.5f*qq;
               const float wqq2=wqq1*wqq1;
-              wab=awen*wqq*wqq2*wqq2;
+              wab=awen*wqq*wqq2*wqq2; //-Kernel.
             }
             float4 velrhopp2=velrhop[p2];
             wab*=massf/velrhopp2.w;
@@ -224,7 +224,7 @@ __device__ float KerCalculeMass(double px,double py,double pz,float awen
             const float wqq=2.f*qq+1.f;
             const float wqq1=1.f-0.5f*qq;
             const float wqq2=wqq1*wqq1;
-            wab=awen*wqq*wqq2*wqq2;
+            wab=awen*wqq*wqq2*wqq2; //-Kernel.
           }
           wab*=massf/velrhop[p2].w;
           summass+=wab*massf;

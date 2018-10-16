@@ -147,6 +147,9 @@ void JSphGpuSingle::ConfigDomain(){
   //-Loads Code of the particles.
   LoadCodeParticles(Np,Idp,Code);
 
+  //-Creates PartsInit object with initial particle data for automatic configurations.
+  CreatePartsInit(Np,AuxPos,Code);
+
   //-Runs initialization operations from XML.
   RunInitialize(Np,Npb,AuxPos,Idp,Code,Velrhop);
 
@@ -384,9 +387,10 @@ void JSphGpuSingle::AbortBoundOut(){
 /// Interaction for force computation.
 /// Interaccion para el calculo de fuerzas.
 //==============================================================================
-void JSphGpuSingle::Interaction_Forces(TpInter tinter){
+void JSphGpuSingle::Interaction_Forces(TpInterStep interstep){
   const char met[]="Interaction_Forces";
-  PreInteraction_Forces(tinter);
+  InterStep=interstep;
+  PreInteraction_Forces();
   TmgStart(Timers,TMG_CfForces);
 
   const bool lamsps=(TVisco==VISCO_LaminarSPS);
@@ -395,7 +399,7 @@ void JSphGpuSingle::Interaction_Forces(TpInter tinter){
 
   if(BsAuto && !(Nstep%BsAuto->GetStepsInterval())){ //-Every certain number of steps. | Cada cierto numero de pasos.
     cusph::Interaction_Forces(Psingle,TKernel,FtMode,lamsps,TDeltaSph,CellMode,Visco*ViscoBoundFactor,Visco,bsbound,bsfluid,Np,Npb,NpbOk,CellDivSingle->GetNcells(),CellDivSingle->GetBeginCell(),CellDivSingle->GetCellDomainMin(),Dcellg,Posxyg,Poszg,PsPospressg,Velrhopg,Codeg,Idpg,FtoMasspg,SpsTaug,SpsGradvelg,ViscDtg,Arg,Aceg,Deltag,TShifting,ShiftPosg,ShiftDetectg,Simulate2D,NULL,BsAuto);
-    PreInteractionVars_Forces(tinter,Np,Npb);
+    PreInteractionVars_Forces(Np,Npb);
     BsAuto->ProcessTimes(TimeStep,Nstep);
     bsfluid=BlockSizes.forcesfluid=BsAuto->GetKernel(0)->GetOptimumBs();
     bsbound=BlockSizes.forcesbound=BsAuto->GetKernel(1)->GetOptimumBs();
@@ -447,13 +451,14 @@ double JSphGpuSingle::ComputeAceMax(float *auxmem){
 /// calculadas en la interaccion usando Verlet.
 //==============================================================================
 double JSphGpuSingle::ComputeStep_Ver(){
-  Interaction_Forces(INTER_Forces);    //-Interaction.
-  const double dt=DtVariable(true);    //-Calculate new dt.
-  DemDtForce=dt;                       //(DEM)
-  if(TShifting)RunShifting(dt);        //-Shifting.
-  ComputeVerlet(dt);                   //-Update particles using Verlet.
-  if(CaseNfloat)RunFloating(dt,false); //-Control of floating bodies.
-  PosInteraction_Forces();             //-Free memory used for interaction.
+  Interaction_Forces(INTERSTEP_Verlet);  //-Interaction.
+  const double dt=DtVariable(true);      //-Calculate new dt.
+  if(CaseNmoving)CalcMotion(dt);         //-Calculate motion for moving bodies.
+  DemDtForce=dt;                         //(DEM)
+  if(TShifting)RunShifting(dt);          //-Shifting.
+  ComputeVerlet(dt);                     //-Update particles using Verlet (periodic particles become invalid).
+  if(CaseNfloat)RunFloating(dt,false);   //-Control of floating bodies.
+  PosInteraction_Forces();               //-Free memory used for interaction.
   if(Damping)RunDamping(dt,Np,Npb,Posxyg,Poszg,Codeg,Velrhopg); //-Aplies Damping.
   return(dt);
 }
@@ -467,28 +472,29 @@ double JSphGpuSingle::ComputeStep_Ver(){
 //==============================================================================
 double JSphGpuSingle::ComputeStep_Sym(){
   const double dt=SymplecticDtPre;
+  if(CaseNmoving)CalcMotion(dt);               //-Calculate motion for moving bodies.
   //-Predictor
   //-----------
-  DemDtForce=dt*0.5f;                     //(DEM)
-  Interaction_Forces(INTER_Forces);       //-Interaction.
-  const double ddt_p=DtVariable(false);   //-Calculate dt of predictor step.
-  if(TShifting)RunShifting(dt*.5);        //-Shifting.
-  ComputeSymplecticPre(dt);               //-Apply Symplectic-Predictor to particles.
-  if(CaseNfloat)RunFloating(dt*.5,true);  //-Control of floating bodies.
-  PosInteraction_Forces();                //-Free memory used for interaction.
+  DemDtForce=dt*0.5f;                          //(DEM)
+  Interaction_Forces(INTERSTEP_SymPredictor);  //-Interaction.
+  const double ddt_p=DtVariable(false);        //-Calculate dt of predictor step.
+  if(TShifting)RunShifting(dt*.5);             //-Shifting.
+  ComputeSymplecticPre(dt);                    //-Apply Symplectic-Predictor to particles (periodic particles become invalid).
+  if(CaseNfloat)RunFloating(dt*.5,true);       //-Control of floating bodies.
+  PosInteraction_Forces();                     //-Free memory used for interaction.
   //-Corrector
   //-----------
-  DemDtForce=dt;                          //(DEM)
+  DemDtForce=dt;                               //(DEM)
   RunCellDivide(true);
-  Interaction_Forces(INTER_ForcesCorr);   //Interaction.
-  const double ddt_c=DtVariable(true);    //-Calculate dt of corrector step.
-  if(TShifting)RunShifting(dt);           //-Shifting.
-  ComputeSymplecticCorr(dt);              //-Apply Symplectic-Corrector to particles.
-  if(CaseNfloat)RunFloating(dt,false);    //-Control of floating bodies.
-  PosInteraction_Forces();                //-Free memory used for interaction.
+  Interaction_Forces(INTERSTEP_SymCorrector);  //-Interaction.
+  const double ddt_c=DtVariable(true);         //-Calculate dt of corrector step.
+  if(TShifting)RunShifting(dt);                //-Shifting.
+  ComputeSymplecticCorr(dt);                   //-Apply Symplectic-Corrector to particles (periodic particles become invalid).
+  if(CaseNfloat)RunFloating(dt,false);         //-Control of floating bodies.
+  PosInteraction_Forces();                     //-Free memory used for interaction.
   if(Damping)RunDamping(dt,Np,Npb,Posxyg,Poszg,Codeg,Velrhopg); //-Aplies Damping.
 
-  SymplecticDtPre=min(ddt_p,ddt_c);       //-Calculate dt for next ComputeStep.
+  SymplecticDtPre=min(ddt_p,ddt_c);            //-Calculate dt for next ComputeStep.
   return(dt);
 }
 
@@ -580,11 +586,13 @@ void JSphGpuSingle::Run(std::string appname,JCfgRun *cfg,JLog2 *log){
   //------------------------------------------------------------------------------------
   InitRunGpu();
   RunGaugeSystem(TimeStep);
+  FreePartsInit();
   UpdateMaxValues();
   PrintAllocMemory(GetAllocMemoryCpu(),GetAllocMemoryGpu());
   SaveData(); 
   TmgResetValues(Timers);
   TmgStop(Timers,TMG_Init);
+  if(Log->WarningCount())Log->PrintWarningList("\n[WARNINGS]","");
   PartNstep=-1; Part++;
 
   //-Main Loop.

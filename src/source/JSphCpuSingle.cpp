@@ -115,6 +115,9 @@ void JSphCpuSingle::ConfigDomain(){
   //-Runs initialization operations from XML.
   RunInitialize(Np,Npb,Posc,Idpc,Codec,Velrhopc);
 
+  //-Creates PartsInit object with initial particle data for automatic configurations.
+  CreatePartsInit(Np,Posc,Codec);
+
   //-Computes MK domain for boundary and fluid particles.
   MkInfo->ComputeMkDomains(Np,Posc,Codec);
 
@@ -483,9 +486,10 @@ void JSphCpuSingle::GetInteractionCells(unsigned rcell
 /// Interaction to calculate forces.
 /// Interaccion para el calculo de fuerzas.
 //==============================================================================
-void JSphCpuSingle::Interaction_Forces(TpInter tinter){
+void JSphCpuSingle::Interaction_Forces(TpInterStep interstep){
   const char met[]="Interaction_Forces";
-  PreInteraction_Forces(tinter);
+  InterStep=interstep;
+  PreInteraction_Forces();
   TmcStart(Timers,TMC_CfForces);
 
   //-Interaction of Fluid-Fluid/Bound & Bound-Fluid (forces and DEM). | Interaccion Fluid-Fluid/Bound & Bound-Fluid (forces and DEM).
@@ -587,13 +591,14 @@ template<bool checkperiodic> double JSphCpuSingle::ComputeAceMaxOmp(unsigned np,
 /// calculadas en la interaccion usando Verlet.
 //==============================================================================
 double JSphCpuSingle::ComputeStep_Ver(){
-  Interaction_Forces(INTER_Forces);    //-Interaction.
-  const double dt=DtVariable(true);    //-Calculate new dt.
-  DemDtForce=dt;                       //(DEM)
-  if(TShifting)RunShifting(dt);        //-Shifting.
-  ComputeVerlet(dt);                   //-Update particles using Verlet.
-  if(CaseNfloat)RunFloating(dt,false); //-Control of floating bodies.
-  PosInteraction_Forces();             //-Free memory used for interaction.
+  Interaction_Forces(INTERSTEP_Verlet);  //-Interaction.
+  const double dt=DtVariable(true);      //-Calculate new dt.
+  if(CaseNmoving)CalcMotion(dt);         //-Calculate motion for moving bodies.
+  DemDtForce=dt;                         //(DEM)
+  if(TShifting)RunShifting(dt);          //-Shifting.
+  ComputeVerlet(dt);                     //-Update particles using Verlet.
+  if(CaseNfloat)RunFloating(dt,false);   //-Control of floating bodies.
+  PosInteraction_Forces();               //-Free memory used for interaction.
   if(Damping)RunDamping(dt,Np,Npb,Posc,Codec,Velrhopc); //-Applies Damping.
   return(dt);
 }
@@ -607,28 +612,28 @@ double JSphCpuSingle::ComputeStep_Ver(){
 //==============================================================================
 double JSphCpuSingle::ComputeStep_Sym(){
   const double dt=SymplecticDtPre;
+  if(CaseNmoving)CalcMotion(dt);               //-Calculate motion for moving bodies.
   //-Predictor
   //-----------
-  DemDtForce=dt*0.5f;                     //(DEM)
-  Interaction_Forces(INTER_Forces);       //-Interaction.
-  const double ddt_p=DtVariable(false);   //-Calculate dt of predictor step.
-  if(TShifting)RunShifting(dt*.5);        //-Shifting.
-  ComputeSymplecticPre(dt);               //-Apply Symplectic-Predictor to particles.
-  if(CaseNfloat)RunFloating(dt*.5,true);  //-Control of floating bodies.
-  PosInteraction_Forces();                //-Free memory used for interaction.
+  DemDtForce=dt*0.5f;                          //(DEM)
+  Interaction_Forces(INTERSTEP_SymPredictor);  //-Interaction.
+  const double ddt_p=DtVariable(false);        //-Calculate dt of predictor step.
+  if(TShifting)RunShifting(dt*.5);             //-Shifting.
+  ComputeSymplecticPre(dt);                    //-Apply Symplectic-Predictor to particles (periodic particles become invalid).
+  if(CaseNfloat)RunFloating(dt*.5,true);       //-Control of floating bodies.
+  PosInteraction_Forces();                     //-Free memory used for interaction.
   //-Corrector
   //-----------
-  DemDtForce=dt;                          //(DEM)
+  DemDtForce=dt;                               //(DEM)
   RunCellDivide(true);
-  Interaction_Forces(INTER_ForcesCorr);   //Interaction.
-  const double ddt_c=DtVariable(true);    //-Calculate dt of corrector step.
-  if(TShifting)RunShifting(dt);           //-Shifting.
-  ComputeSymplecticCorr(dt);              //-Apply Symplectic-Corrector to particles.
-  if(CaseNfloat)RunFloating(dt,false);    //-Control of floating bodies.
-  PosInteraction_Forces();                //-Free memory used for interaction.
+  Interaction_Forces(INTERSTEP_SymCorrector);  //-Interaction.
+  const double ddt_c=DtVariable(true);         //-Calculate dt of corrector step.
+  if(TShifting)RunShifting(dt);                //-Shifting.
+  ComputeSymplecticCorr(dt);                   //-Apply Symplectic-Corrector to particles (periodic particles become invalid).
+  if(CaseNfloat)RunFloating(dt,false);         //-Control of floating bodies.
+  PosInteraction_Forces();                     //-Free memory used for interaction.
   if(Damping)RunDamping(dt,Np,Npb,Posc,Codec,Velrhopc); //-Applies Damping.
-
-  SymplecticDtPre=min(ddt_p,ddt_c);       //-Calculate dt for next ComputeStep.
+  SymplecticDtPre=min(ddt_p,ddt_c);            //-Calculate dt for next ComputeStep.
   return(dt);
 }
 
@@ -857,11 +862,13 @@ void JSphCpuSingle::Run(std::string appname,JCfgRun *cfg,JLog2 *log){
   //------------------------------------------------------------------------------------
   InitRunCpu();
   RunGaugeSystem(TimeStep);
+  FreePartsInit();
   UpdateMaxValues();
   PrintAllocMemory(GetAllocMemoryCpu());
   SaveData(); 
   TmcResetValues(Timers);
   TmcStop(Timers,TMC_Init);
+  if(Log->WarningCount())Log->PrintWarningList("\n[WARNINGS]","");
   PartNstep=-1; Part++;
 
   //-Main Loop.

@@ -780,10 +780,10 @@ void JSphGpu::AddAccInput(){
 }
 
 //==============================================================================
-/// Prepares variables for interaction "INTER_Forces" or "INTER_ForcesCorr".
-/// Prepara variables para interaccion "INTER_Forces" o "INTER_ForcesCorr".
+/// Prepares variables for interaction.
+/// Prepara variables para interaccion.
 //==============================================================================
-void JSphGpu::PreInteractionVars_Forces(TpInter tinter,unsigned np,unsigned npb){
+void JSphGpu::PreInteractionVars_Forces(unsigned np,unsigned npb){
   //-Initialises arrays.
   const unsigned npf=np-npb;
   cudaMemset(ViscDtg,0,sizeof(float)*np);                                //ViscDtg[]=0
@@ -800,10 +800,10 @@ void JSphGpu::PreInteractionVars_Forces(TpInter tinter,unsigned np,unsigned npb)
 }
 
 //==============================================================================
-/// Prepares variables for interaction "INTER_Forces" or "INTER_ForcesCorr".
-/// Prepara variables para interaccion "INTER_Forces" o "INTER_ForcesCorr".
+/// Prepares variables for interaction.
+/// Prepara variables para interaccion.
 //==============================================================================
-void JSphGpu::PreInteraction_Forces(TpInter tinter){
+void JSphGpu::PreInteraction_Forces(){
   TmgStart(Timers,TMG_CfPreForces);
   //-Allocates memory.
   ViscDtg=ArraysGpu->ReserveFloat();
@@ -822,7 +822,7 @@ void JSphGpu::PreInteraction_Forces(TpInter tinter){
     cusph::PreInteractionSingle(Np,Posxyg,Poszg,Velrhopg,PsPospressg,CteB,Gamma);
   }
   //-Initialises arrays.
-  PreInteractionVars_Forces(tinter,Np,Npb);
+  PreInteractionVars_Forces(Np,Npb);
 
   //-Computes VelMax: Includes the particles from floating bodies and does not affect the periodic conditions.
   //-Calcula VelMax: Se incluyen las particulas floatings y no afecta el uso de condiciones periodicas.
@@ -986,6 +986,17 @@ void JSphGpu::RunShifting(double dt){
 }
 
 //==============================================================================
+/// Calculates predefined movement of boundary particles.
+/// Calcula movimiento predefinido de boundary particles.
+//==============================================================================
+void JSphGpu::CalcMotion(double stepdt){
+  TmgStart(Timers,TMG_SuMotion);
+  const bool motsim=true;
+  const JSphMotion::TpMotionMode mode=(motsim? JSphMotion::MOMT_Simple: JSphMotion::MOMT_Ace2dt);
+  SphMotion->ProcesTime(mode,TimeStep,stepdt);
+}
+
+//==============================================================================
 /// Processes boundary particle movement.
 /// Procesa movimiento de boundary particles.
 //==============================================================================
@@ -993,9 +1004,8 @@ void JSphGpu::RunMotion(double stepdt){
   const char met[]="RunMotion";
   TmgStart(Timers,TMG_SuMotion);
   const bool motsim=true;
-  const JSphMotion::TpMotionMode mode=(motsim? JSphMotion::MOMT_Simple: JSphMotion::MOMT_Ace2dt);
   BoundChanged=false;
-  if(SphMotion->ProcesTime(mode,TimeStep,stepdt)){
+  if(SphMotion->GetActiveMotion()){
     cusph::CalcRidp(PeriActive!=0,Npb,0,CaseNfixed,CaseNfixed+CaseNmoving,Codeg,Idpg,RidpMoveg);
     BoundChanged=true;
     bool typesimple;
@@ -1021,7 +1031,7 @@ void JSphGpu::RunMotion(double stepdt){
     if(!BoundChanged)cusph::CalcRidp(PeriActive!=0,Npb,0,CaseNfixed,CaseNfixed+CaseNmoving,Codeg,Idpg,RidpMoveg);
     BoundChanged=true;
     //-Control of wave generation (WaveGen). | Gestion de WaveGen.
-    if(WaveGen)for(unsigned c=0;c<WaveGen->GetCount();c++){
+    for(unsigned c=0;c<WaveGen->GetCount();c++){
       bool typesimple;
       tdouble3 simplemov,simplevel,simpleace;
       tmatrix4d matmov,matmov2;
