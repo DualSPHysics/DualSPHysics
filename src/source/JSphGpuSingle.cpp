@@ -140,6 +140,20 @@ void JSphGpuSingle::ConfigDomain(){
   memcpy(Idp,PartsLoaded->GetIdp(),sizeof(unsigned)*Np);
   memcpy(Velrhop,PartsLoaded->GetVelRhop(),sizeof(tfloat4)*Np);
 
+  //==================================================
+  // Temperature: assign initial temperature
+  //==================================================
+  for (unsigned p = 0; p<Np; p++) Temp[p] = HeatTempFluid;
+  for (unsigned c = 0; c<MkInfo->Size(); c++) {
+	  const JSphMkBlock* block = MkInfo->Mkblock(c);
+	  if (block->Mk == (MkConstTempWall + MkInfo->GetMkBoundFirst())) {
+		  for (unsigned p = block->Begin; p<block->Begin + block->Count; p++) {
+			  Temp[p] = HeatTempBound;
+		  }
+	  }
+  }
+  //==================================================
+
   //-Computes radius of floating bodies.
   if(CaseNfloat && PeriActive!=0 && !PartBegin)CalcFloatingRadius(Np,AuxPos,Idp);
 
@@ -273,10 +287,10 @@ void JSphGpuSingle::RunPeriodic(){
             run=false;
             //-Create new periodic particles duplicating the particles from the list
             //-Crea nuevas particulas periodicas duplicando las particulas de la lista.
-            if(TStep==STEP_Verlet)cusph::PeriodicDuplicateVerlet(count,Np,DomCells,perinc,listpg,Idpg,Codeg,Dcellg,Posxyg,Poszg,Velrhopg,SpsTaug,VelrhopM1g);
+            if(TStep==STEP_Verlet)cusph::PeriodicDuplicateVerlet(count,Np,DomCells,perinc,listpg,Idpg,Codeg,Dcellg,Posxyg,Poszg,Velrhopg,Tempg,SpsTaug,VelrhopM1g,TempM1g);
             if(TStep==STEP_Symplectic){
               if((PosxyPreg || PoszPreg || VelrhopPreg) && (!PosxyPreg || !PoszPreg || !VelrhopPreg))RunException(met,"Symplectic data is invalid.") ;
-              cusph::PeriodicDuplicateSymplectic(count,Np,DomCells,perinc,listpg,Idpg,Codeg,Dcellg,Posxyg,Poszg,Velrhopg,SpsTaug,PosxyPreg,PoszPreg,VelrhopPreg);
+              cusph::PeriodicDuplicateSymplectic(count,Np,DomCells,perinc,listpg,Idpg,Codeg,Dcellg,Posxyg,Poszg,Velrhopg,Tempg,SpsTaug,PosxyPreg,PoszPreg,VelrhopPreg,TempPreg);
             }
             //-Frees memory and updates the particle number.
             //-Libera lista y actualiza numero de particulas.
@@ -317,18 +331,28 @@ void JSphGpuSingle::RunCellDivide(bool updateperiodic){
     double2*  posxyg=ArraysGpu->ReserveDouble2();
     double*   poszg=ArraysGpu->ReserveDouble();
     float4*   velrhopg=ArraysGpu->ReserveFloat4();
-    CellDivSingle->SortBasicArrays(Idpg,Codeg,Dcellg,Posxyg,Poszg,Velrhopg,idpg,codeg,dcellg,posxyg,poszg,velrhopg);
+	double*   tempg = ArraysGpu->ReserveDouble(); // Temperature
+    CellDivSingle->SortBasicArrays(Idpg,Codeg,Dcellg,Posxyg,Poszg,Velrhopg,Tempg,idpg,codeg,dcellg,posxyg,poszg,velrhopg,tempg); // Temperature: add temp and tempg params
     swap(Idpg,idpg);           ArraysGpu->Free(idpg);
     swap(Codeg,codeg);         ArraysGpu->Free(codeg);
     swap(Dcellg,dcellg);       ArraysGpu->Free(dcellg);
     swap(Posxyg,posxyg);       ArraysGpu->Free(posxyg);
     swap(Poszg,poszg);         ArraysGpu->Free(poszg);
     swap(Velrhopg,velrhopg);   ArraysGpu->Free(velrhopg);
+	swap(Tempg, tempg);        ArraysGpu->Free(tempg); // Temperature
   }
   if(TStep==STEP_Verlet){
     float4* velrhopg=ArraysGpu->ReserveFloat4();
     CellDivSingle->SortDataArrays(VelrhopM1g,velrhopg);
     swap(VelrhopM1g,velrhopg);   ArraysGpu->Free(velrhopg);
+	//==================================================
+	// Temperature: sort array TempM1g
+	//==================================================
+	double* tempg = ArraysGpu->ReserveDouble();
+	CellDivSingle->SortDataArrays(TempM1g, tempg); // Temperature: overloaded function
+	swap(TempM1g, tempg);
+	ArraysGpu->Free(tempg);
+	//==================================================
   }
   else if(TStep==STEP_Symplectic && (PosxyPreg || PoszPreg || VelrhopPreg)){ //-In reality, only necessary in the corrector not the predictor step??? | En realidad solo es necesario en el divide del corrector, no en el predictor??? 
     if(!PosxyPreg || !PoszPreg || !VelrhopPreg)RunException(met,"Symplectic data is invalid.") ;
@@ -339,6 +363,14 @@ void JSphGpuSingle::RunCellDivide(bool updateperiodic){
     swap(PosxyPreg,posxyg);      ArraysGpu->Free(posxyg);
     swap(PoszPreg,poszg);        ArraysGpu->Free(poszg);
     swap(VelrhopPreg,velrhopg);  ArraysGpu->Free(velrhopg);
+	//==================================================
+	// Temperature: sort array TempPreg
+	//==================================================
+	double* tempg = ArraysGpu->ReserveDouble();
+	CellDivSingle->SortDataArrays(TempPreg, tempg); // Temperature: overloaded function
+	swap(TempPreg, tempg);
+	ArraysGpu->Free(tempg);
+	//==================================================
   }
   if(TVisco==VISCO_LaminarSPS){
     tsymatrix3f *spstaug=ArraysGpu->ReserveSymatrix3f();
@@ -363,7 +395,7 @@ void JSphGpuSingle::RunCellDivide(bool updateperiodic){
   TmgStart(Timers,TMG_NlOutCheck);
   unsigned npfout=CellDivSingle->GetNpfOut();
   if(npfout){
-    ParticlesDataDown(npfout,Np,true,true,false);
+    ParticlesDataDown(npfout,Np,true,true,false); // Temperature
     AddParticlesOut(npfout,Idp,AuxPos,AuxVel,AuxRhop,Code);
   }
   TmgStop(Timers,TMG_NlOutCheck);
@@ -396,7 +428,7 @@ void JSphGpuSingle::Interaction_Forces(TpInter tinter){
   unsigned bsbound=BlockSizes.forcesbound;
 
   if(BsAuto && !(Nstep%BsAuto->GetStepsInterval())){ //-Every certain number of steps. | Cada cierto numero de pasos.
-    cusph::Interaction_Forces(Psingle,TKernel,FtMode,lamsps,TDeltaSph,CellMode,Visco*ViscoBoundFactor,Visco,bsbound,bsfluid,Np,Npb,NpbOk,CellDivSingle->GetNcells(),CellDivSingle->GetBeginCell(),CellDivSingle->GetCellDomainMin(),Dcellg,Posxyg,Poszg,PsPospressg,Velrhopg,Codeg,Idpg,FtoMasspg,SpsTaug,SpsGradvelg,ViscDtg,Arg,Aceg,Deltag,TShifting,ShiftPosg,ShiftDetectg,Simulate2D,NULL,BsAuto);
+    cusph::Interaction_Forces(Psingle,TKernel,FtMode,lamsps,TDeltaSph,CellMode,Visco*ViscoBoundFactor,Visco,bsbound,bsfluid,Np,Npb,NpbOk,CellDivSingle->GetNcells(),CellDivSingle->GetBeginCell(),CellDivSingle->GetCellDomainMin(),Dcellg,Posxyg,Poszg,PsPospressg,Velrhopg,Tempg,Codeg,Idpg,FtoMasspg,SpsTaug,SpsGradvelg,ViscDtg,Arg,Atempg,Aceg,Deltag,TShifting,ShiftPosg,ShiftDetectg,Simulate2D,NULL,BsAuto);
     PreInteractionVars_Forces(tinter,Np,Npb);
     BsAuto->ProcessTimes(TimeStep,Nstep);
     bsfluid=BlockSizes.forcesfluid=BsAuto->GetKernel(0)->GetOptimumBs();
@@ -404,7 +436,7 @@ void JSphGpuSingle::Interaction_Forces(TpInter tinter){
   }
 
   //-Interaction Fluid-Fluid/Bound & Bound-Fluid.
-  cusph::Interaction_Forces(Psingle,TKernel,FtMode,lamsps,TDeltaSph,CellMode,Visco*ViscoBoundFactor,Visco,bsbound,bsfluid,Np,Npb,NpbOk,CellDivSingle->GetNcells(),CellDivSingle->GetBeginCell(),CellDivSingle->GetCellDomainMin(),Dcellg,Posxyg,Poszg,PsPospressg,Velrhopg,Codeg,Idpg,FtoMasspg,SpsTaug,SpsGradvelg,ViscDtg,Arg,Aceg,Deltag,TShifting,ShiftPosg,ShiftDetectg,Simulate2D,NULL,NULL);
+  cusph::Interaction_Forces(Psingle,TKernel,FtMode,lamsps,TDeltaSph,CellMode,Visco*ViscoBoundFactor,Visco,bsbound,bsfluid,Np,Npb,NpbOk,CellDivSingle->GetNcells(),CellDivSingle->GetBeginCell(),CellDivSingle->GetCellDomainMin(),Dcellg,Posxyg,Poszg,PsPospressg,Velrhopg,Tempg,Codeg,Idpg,FtoMasspg,SpsTaug,SpsGradvelg,ViscDtg,Arg,Atempg,Aceg,Deltag,TShifting,ShiftPosg,ShiftDetectg,Simulate2D,NULL,NULL);
 
   //-Interaction DEM Floating-Bound & Floating-Floating. //(DEM)
   if(UseDEM)cusph::Interaction_ForcesDem(Psingle,CellMode,BlockSizes.forcesdem,CaseNfloat,CellDivSingle->GetNcells(),CellDivSingle->GetBeginCell(),CellDivSingle->GetCellDomainMin(),Dcellg,FtRidpg,DemDatag,float(DemDtForce),Posxyg,Poszg,PsPospressg,Velrhopg,Codeg,Idpg,ViscDtg,Aceg,NULL);
@@ -668,7 +700,7 @@ void JSphGpuSingle::SaveData(){
   }
   //-Stores particle data. | Graba datos de particulas.
   const tdouble3 vdom[2]={OrderDecode(CellDivSingle->GetDomainLimits(true)),OrderDecode(CellDivSingle->GetDomainLimits(false))};
-  JSph::SaveData(npsave,Idp,AuxPos,AuxVel,AuxRhop,1,vdom,&infoplus);
+  JSph::SaveData(npsave,Idp,AuxPos,AuxVel,AuxRhop,AuxTemp,1,vdom,&infoplus); // Temperature
   TmgStop(Timers,TMG_SuSavePart);
 }
 

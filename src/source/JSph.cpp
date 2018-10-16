@@ -1581,6 +1581,7 @@ void JSph::ConfigSaveData(unsigned piece,unsigned pieces,std::string div){
   PartsOut=new JPartsOut();
 }
 
+// Temperature: add temp param
 //==============================================================================
 /// Stores new excluded particles until recordering next PART.
 /// Almacena nuevas particulas excluidas hasta la grabacion del proximo PART.

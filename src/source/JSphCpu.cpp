@@ -172,13 +172,11 @@ void JSphCpu::AllocCpuMemoryParticles(unsigned np,float over){
   if(Psingle)ArraysCpu->AddArrayCount(JArraysCpu::SIZE_12B,1); //-pspos
   if(TStep==STEP_Verlet){
     ArraysCpu->AddArrayCount(JArraysCpu::SIZE_16B,1); //-velrhopm1
-
 	ArraysCpu->AddArrayCount(JArraysCpu::SIZE_8B, 1); // Temperature: TempM1
   }
   else if(TStep==STEP_Symplectic){
     ArraysCpu->AddArrayCount(JArraysCpu::SIZE_24B,1); //-pospre
     ArraysCpu->AddArrayCount(JArraysCpu::SIZE_16B,1); //-velrhoppre
-
 	ArraysCpu->AddArrayCount(JArraysCpu::SIZE_8B, 1); // Temperature: TempPrec
   }
   if(TVisco==VISCO_LaminarSPS){     
@@ -463,7 +461,7 @@ void JSphCpu::InitRunCpu(){
   InitRun();
   if (TStep == STEP_Verlet) {
 	  memcpy(VelrhopM1c, Velrhopc, sizeof(tfloat4)*Np);
-	  memcpy(TempM1c, Tempc, sizeof(double)*Np); // Temperature: Copy tempc to tempm1c
+	  memcpy(TempM1c, Tempc, sizeof(double)*Np); // Temperature: Copy TempM1c and Tempc
   }
   if(TVisco==VISCO_LaminarSPS)memset(SpsTauc,0,sizeof(tsymatrix3f)*Np);
   if(CaseNfloat)InitFloating();
@@ -936,10 +934,10 @@ template<bool psingle,TpKernel tker,TpFtMode ftmode,bool lamsps,TpDeltaSph tdelt
           const float rr2=drx*drx+dry*dry+drz*drz;
           if(rr2<=Fourh2 && rr2>=ALMOSTZERO){
             //-Cubic Spline, Wendland or Gaussian kernel.
-            float frx,fry,frz,fabc;
-            if(tker==KERNEL_Wendland)GetKernelWendland(rr2,drx,dry,drz,frx,fry,frz,fabc);
-            else if(tker==KERNEL_Gaussian)GetKernelGaussian(rr2,drx,dry,drz,frx,fry,frz,fabc);
-            else if(tker==KERNEL_Cubic)GetKernelCubic(rr2,drx,dry,drz,frx,fry,frz,fabc);
+            float frx,fry,frz,fabc; // Temperature: fabc
+            if(tker==KERNEL_Wendland)GetKernelWendland(rr2,drx,dry,drz,frx,fry,frz,fabc); // Temperature: fabc
+            else if(tker==KERNEL_Gaussian)GetKernelGaussian(rr2,drx,dry,drz,frx,fry,frz,fabc); // Temperature: fabc
+            else if(tker==KERNEL_Cubic)GetKernelCubic(rr2,drx,dry,drz,frx,fry,frz,fabc); // Temperature: fabc
 
             //===== Get mass of particle p2 ===== 
             float massp2=(boundp2? MassBound: MassFluid); //-Contiene masa de particula segun sea bound o fluid.
@@ -1829,13 +1827,13 @@ void JSphCpu::ComputeVerlet(double dt){
   VerletStep++;
   if(VerletStep<VerletSteps){
     const double twodt=dt+dt;
-    if(TShifting)ComputeVerletVarsFluid<true>  (Velrhopc,VelrhopM1c,TempM1c,dt,twodt,Posc,Dcellc,Codec,VelrhopM1c,TempM1c);
-    else         ComputeVerletVarsFluid<false> (Velrhopc,VelrhopM1c,TempM1c,dt,twodt,Posc,Dcellc,Codec,VelrhopM1c,TempM1c);
+    if(TShifting)ComputeVerletVarsFluid<true>  (Velrhopc,VelrhopM1c,TempM1c,dt,twodt,Posc,Dcellc,Codec,VelrhopM1c,TempM1c); // Temperature: Tempc TempM1c
+    else         ComputeVerletVarsFluid<false> (Velrhopc,VelrhopM1c,TempM1c,dt,twodt,Posc,Dcellc,Codec,VelrhopM1c,TempM1c); // Temperature: Tempc TempM1c
     ComputeVelrhopBound(VelrhopM1c,TempM1c,twodt,VelrhopM1c,TempM1c);
   }
   else{
-    if(TShifting)ComputeVerletVarsFluid<true>  (Velrhopc,Velrhopc,Tempc,dt,dt,Posc,Dcellc,Codec,VelrhopM1c,TempM1c);
-    else         ComputeVerletVarsFluid<false> (Velrhopc,Velrhopc,Tempc,dt,dt,Posc,Dcellc,Codec,VelrhopM1c,TempM1c);
+    if(TShifting)ComputeVerletVarsFluid<true>  (Velrhopc,Velrhopc,Tempc,dt,dt,Posc,Dcellc,Codec,VelrhopM1c,TempM1c); // Temperature: Tempc TempM1c
+    else         ComputeVerletVarsFluid<false> (Velrhopc,Velrhopc,Tempc,dt,dt,Posc,Dcellc,Codec,VelrhopM1c,TempM1c); // Temperature: Tempc TempM1c
     ComputeVelrhopBound(Velrhopc,Tempc,dt,VelrhopM1c,TempM1c);
     VerletStep=0;
   }
@@ -1949,6 +1947,7 @@ template<bool shift> void JSphCpu::ComputeSymplecticCorrT(double dt){
     const double epsilon_rdot=(-double(Arc[p])/double(Velrhopc[p].w))*dt;
     const float rhopnew=float(double(VelrhopPrec[p].w) * (2.-epsilon_rdot)/(2.+epsilon_rdot));
     Velrhopc[p]=TFloat4(0,0,0,(rhopnew<RhopZero? RhopZero: rhopnew));//-Avoid fluid particles being absorbed by boundary ones. | Evita q las boundary absorvan a las fluidas.
+	// Temperature: something missing?
   }
 
   //-Calculate fluid values. | Calcula datos de fluido.
