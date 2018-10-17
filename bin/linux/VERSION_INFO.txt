@@ -1,11 +1,11 @@
 DualSPHysics4      v4.2.103    16-10-2018
-BoundaryVTK4       v4.0.043    21-05-2018
-ComputeForces4     v4.0.034    21-05-2018
-FloatingInfo4      v4.0.024    21-05-2018
+BoundaryVTK4       v4.0.044    16-10-2018
+ComputeForces4     v4.0.035    16-10-2018
+FloatingInfo4      v4.0.025    16-10-2018
 GenCase4           v4.0.079    16-10-2018
 GenCase4 [MkWord]  v4.0.079    16-10-2018
-IsoSurface4        v4.0.030    02-07-2018
-FlowTool4          v4.0.027    21-05-2018
-MeasureTool4       v4.0.044    23-05-2018
-PartVtk4           v4.0.044    23-05-2018
-PartVTKOut4        v4.0.026    23-05-2018
+IsoSurface4        v4.0.031    17-10-2018
+FlowTool4          v4.0.028    17-10-2018
+MeasureTool4       v4.0.045    17-10-2018
+PartVtk4           v4.0.045    17-10-2018
+PartVTKOut4        v4.0.027    17-10-2018
