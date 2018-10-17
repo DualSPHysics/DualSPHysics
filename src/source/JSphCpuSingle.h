@@ -58,7 +58,7 @@ protected:
     ,int hdiv,const tint4 &nc,const tint3 &cellzero
     ,int &cxini,int &cxfin,int &yini,int &yfin,int &zini,int &zfin)const;
 
-  void Interaction_Forces(TpInter tinter);
+  void Interaction_Forces(TpInterStep tinterstep);
   
   double ComputeAceMax(unsigned np,const tfloat3* ace,const typecode *code)const;
   template<bool checkperiodic> double ComputeAceMaxSeq(unsigned np,const tfloat3* ace,const typecode *code)const;

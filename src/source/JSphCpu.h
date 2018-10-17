@@ -99,7 +99,7 @@ protected:
   double AceMax;        ///<Maximum value of Ace[] sqrt(ace.x^2 + ace.y^2 + ace.z^2) computed in Interaction_Forces().
   float ViscDtMax;      ///<Max value of ViscDt calculated in Interaction_Forces() / Valor maximo de ViscDt calculado en Interaction_Forces().
 
-  //-Variables for computing forces [INTER_Forces,INTER_ForcesCorr] | Vars. derivadas para computo de fuerzas [INTER_Forces,INTER_ForcesCorr]
+  //-Variables for computing forces. | Vars. derivadas para computo de fuerzas.
   float *Pressc;       ///< Press[]=B*((Rhop/Rhop0)^gamma-1)
 
   //-Variables for Laminar+SPS viscosity.  
@@ -157,8 +157,8 @@ protected:
   float CalcVelMaxSeq(unsigned np,const tfloat4* velrhop)const;
   float CalcVelMaxOmp(unsigned np,const tfloat4* velrhop)const;
 
-  void PreInteractionVars_Forces(TpInter tinter,unsigned np,unsigned npb);
-  void PreInteraction_Forces(TpInter tinter);
+  void PreInteractionVars_Forces(unsigned np,unsigned npb);
+  void PreInteraction_Forces();
   void PosInteraction_Forces();
 
   inline void GetKernelWendland(float rr2,float drx,float dry,float drz,float &frx,float &fry,float &frz)const;

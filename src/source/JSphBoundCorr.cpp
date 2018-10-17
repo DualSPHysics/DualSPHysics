@@ -347,7 +347,7 @@ void JSphBoundCorr::SaveVtkConfig(double dp,int part)const{
 //==============================================================================
 void JSphBoundCorr::VisuConfig(std::string txhead,std::string txfoot)const{
   if(!txhead.empty())Log->Print(txhead);
-  Log->Printf("DetermLimit.: %g %s",DetermLimit,(DetermLimit==1e-3f? "(1st order)": (DetermLimit==1e+3f? "(0th order)": " ")));
+  Log->Printf("DetermLimit....: %g %s",DetermLimit,(DetermLimit==1e-3f? "(1st order)": (DetermLimit==1e+3f? "(0th order)": " ")));
   Log->Printf("ExtrapolateMode: %s",(ExtrapolateMode==1? "FastSingle": (ExtrapolateMode==2? "Single": (ExtrapolateMode==3? "Double": "???"))));
   for(unsigned c=0;c<GetCount();c++){
     const JSphBoundCorrZone* zo=List[c];

@@ -795,10 +795,10 @@ void JSphGpu::AddAccInput(){
 }
 
 //==============================================================================
-/// Prepares variables for interaction "INTER_Forces" or "INTER_ForcesCorr".
-/// Prepara variables para interaccion "INTER_Forces" o "INTER_ForcesCorr".
+/// Prepares variables for interaction.
+/// Prepara variables para interaccion.
 //==============================================================================
-void JSphGpu::PreInteractionVars_Forces(TpInter tinter,unsigned np,unsigned npb){
+void JSphGpu::PreInteractionVars_Forces(unsigned np,unsigned npb){
   //-Initialises arrays.
   const unsigned npf=np-npb;
   cudaMemset(ViscDtg,0,sizeof(float)*np);                                //ViscDtg[]=0
@@ -815,10 +815,10 @@ void JSphGpu::PreInteractionVars_Forces(TpInter tinter,unsigned np,unsigned npb)
 }
 
 //==============================================================================
-/// Prepares variables for interaction "INTER_Forces" or "INTER_ForcesCorr".
-/// Prepara variables para interaccion "INTER_Forces" o "INTER_ForcesCorr".
+/// Prepares variables for interaction.
+/// Prepara variables para interaccion.
 //==============================================================================
-void JSphGpu::PreInteraction_Forces(TpInter tinter){
+void JSphGpu::PreInteraction_Forces(){
   TmgStart(Timers,TMG_CfPreForces);
   //-Allocates memory.
   ViscDtg=ArraysGpu->ReserveFloat();
@@ -837,7 +837,7 @@ void JSphGpu::PreInteraction_Forces(TpInter tinter){
     cusph::PreInteractionSingle(Np,Posxyg,Poszg,Velrhopg,PsPospressg,CteB,Gamma);
   }
   //-Initialises arrays.
-  PreInteractionVars_Forces(tinter,Np,Npb);
+  PreInteractionVars_Forces(Np,Npb);
 
   //-Computes VelMax: Includes the particles from floating bodies and does not affect the periodic conditions.
   //-Calcula VelMax: Se incluyen las particulas floatings y no afecta el uso de condiciones periodicas.

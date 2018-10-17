@@ -466,10 +466,10 @@ void JSphCpu::AddAccInput(){
 }
 
 //==============================================================================
-/// Prepare variables for interaction functions "INTER_Forces" or "INTER_ForcesCorr".
-/// Prepara variables para interaccion "INTER_Forces" o "INTER_ForcesCorr".
+/// Prepare variables for interaction functions.
+/// Prepara variables para interaccion.
 //==============================================================================
-void JSphCpu::PreInteractionVars_Forces(TpInter tinter,unsigned np,unsigned npb){
+void JSphCpu::PreInteractionVars_Forces(unsigned np,unsigned npb){
   //-Initialize Arrays.
   const unsigned npf=np-npb;
   memset(Arc,0,sizeof(float)*np);                                    //Arc[]=0
@@ -495,10 +495,10 @@ void JSphCpu::PreInteractionVars_Forces(TpInter tinter,unsigned np,unsigned npb)
 }
 
 //==============================================================================
-/// Prepare variables for interaction functions "INTER_Forces" or "INTER_ForcesCorr".
-/// Prepara variables para interaccion "INTER_Forces" o "INTER_ForcesCorr".
+/// Prepare variables for interaction functions.
+/// Prepara variables para interaccion.
 //==============================================================================
-void JSphCpu::PreInteraction_Forces(TpInter tinter){
+void JSphCpu::PreInteraction_Forces(){
   TmcStart(Timers,TMC_CfPreForces);
   //-Assign memory.
   Arc=ArraysCpu->ReserveFloat();
@@ -521,7 +521,7 @@ void JSphCpu::PreInteraction_Forces(TpInter tinter){
     for(int p=0;p<np;p++){ PsPosc[p]=ToTFloat3(Posc[p]); }
   }
   //-Initialize Arrays.
-  PreInteractionVars_Forces(tinter,Np,Npb);
+  PreInteractionVars_Forces(Np,Npb);
 
   //-Calculate VelMax: Floating object particles are included and do not affect use of periodic condition.
   //-Calcula VelMax: Se incluyen las particulas floatings y no afecta el uso de condiciones periodicas.

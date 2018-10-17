@@ -137,6 +137,7 @@ void JSph::InitVars(){
   DirDataOut=""; 
   FileXml="";
   TStep=STEP_None;
+  InterStep=INTERSTEP_None;
   VerletSteps=40;
   TKernel=KERNEL_Wendland;
   Awen=Bwen=Agau=Bgau=0;

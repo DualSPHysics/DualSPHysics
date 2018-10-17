@@ -336,7 +336,7 @@ protected:
   double TimeStepIni;     ///<Initial instant of the simulation. | Instante inicial de la simulación.
   double TimeStep;        ///<Current instant of the simulation. | Instante actual de la simulación.                                 
   double TimeStepM1;      ///<Instant of the simulation when the last PART was stored. | Instante de la simulación en que se grabo el último PART.         
-  double TimePartNext;    ///<Instant to store next PART file.   | Instante para grabar siguiente fichero PART.                      
+  double TimePartNext;    ///<Instant to store next PART file.   | Instante para grabar siguiente fichero PART.
 
   //-Control of the execution times.
   JTimer TimerTot;         ///<Measueres total runtime.                          | Mide el tiempo total de ejecucion.
@@ -345,6 +345,7 @@ protected:
   
   //-Execution variables.
   JPartsLoad4 *PartsLoaded;
+  TpInterStep InterStep;
   int VerletStep;
   double SymplecticDtPre;  ///<Previous Dt to use with Symplectic.
   double DemDtForce;       ///<Dt for tangencial acceleration.
