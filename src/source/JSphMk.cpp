@@ -124,6 +124,32 @@ void JSphMk::Config(const JSpaceParts *parts){
 }
 
 //==============================================================================
+/// Returns number of blocks with a give type.
+//==============================================================================
+unsigned JSphMk::CountBlockType(TpParticles type)const{
+  switch(type){
+    case TpPartFixed:     return(MkListFixed);   break;
+    case TpPartMoving:    return(MkListMoving);  break;
+    case TpPartFloating:  return(MkListFloat);   break;
+    case TpPartFluid:     return(MkListFluid);   break;
+  }
+  return(0);
+}
+
+//==============================================================================
+/// Returns the first block in MkList according to a given type.
+//==============================================================================
+unsigned JSphMk::GetFirstBlockType(TpParticles type)const{
+  switch(type){
+    case TpPartFixed:     return(0);                          break;
+    case TpPartMoving:    return(MkListFixed);                break;
+    case TpPartFloating:  return(MkListFixed+MkListMoving);   break;
+    case TpPartFluid:     return(MkListBound);                break;
+  }
+  return(MkListSize);
+}
+
+//==============================================================================
 /// Returns the block in MkList according to a given Id.
 //==============================================================================
 unsigned JSphMk::GetMkBlockById(unsigned id)const{

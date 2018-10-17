@@ -50,7 +50,7 @@ protected:
   void RunCellDivide(bool updateperiodic);
   void AbortBoundOut();
 
-  void Interaction_Forces(TpInter tinter);
+  void Interaction_Forces(TpInterStep interstep);
   double ComputeAceMax(float *auxmem);
 
   double ComputeStep(){ return(TStep==STEP_Verlet? ComputeStep_Ver(): ComputeStep_Sym()); }
@@ -69,6 +69,7 @@ public:
   JSphGpuSingle();
   ~JSphGpuSingle();
   void Run(std::string appname,JCfgRun *cfg,JLog2 *log);
+
 };
 
 #endif

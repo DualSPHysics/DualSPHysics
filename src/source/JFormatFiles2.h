@@ -68,6 +68,12 @@
 //:# - Se escriben las unidades en las cabeceras de los ficheros CSV. (26-04-2018)
 //:# - Nuevo metodo AddShape_Sphere() para generar esferas a partir de quads. (06-07-2018)
 //:# - Nuevos metodos CreateShapesMk(), DeleteShapesMk() y CreateOBJsByMk(). (06-08-2018)
+//:# - Nuevos metodos AddShape_Cylinder(), AddShape_Cross(). (10-08-2018)
+//:# - Nuevos metodos AddShape_Circle(), AddShape_Spring(). (13-08-2018)
+//:# - El metodo SaveVtkShapes() combina lineas consecutivas con mismos valores. (13-08-2018)
+//:# - Se permite definir formato de salida y unidades en StScalarData. (12-09-2018)
+//:# - Nuevo metodo DeleteFields() para liberar memoria dinamica. (12-09-2018)
+//:# - Se elimina codigo JFormatFiles2Data por falta de uso. (12-09-2018)
 //:#############################################################################
   
 
@@ -100,10 +106,13 @@ public:
 
   /// Structure with the information of an array of particle data to be stored in CSV or VTK format.
   typedef struct {
-    std::string name;
+    std::string name; //"name:outputformat:units", e.g. "velocity:%f:m/s"
+    std::string fmt;
+    std::string units;
     TpData type;
     unsigned comp;
     const void *pointer;
+    bool delptr;
   }StScalarData;
 
   /// Strucutre with the information of an array to calculate and save statistic information.
@@ -148,6 +157,29 @@ public:
     }
   }StShapeData;
 
+  /// Structure with parameters to create spring.
+  typedef struct StrShapeSpring{
+    float cornersout; //-Size of corner.
+    float cornersin;  //-Size of corner (inside).
+    float radius;     //-Spring radius.
+    float length;     //-Length for each revolution.
+    int nside;        //-Number of sections for each revolution.
+
+    StrShapeSpring(){ reset(); }
+    StrShapeSpring(float xcornersout,float xcornersin,float xradius,float xlength,int xnside)
+    { 
+      reset(); cornersout=xcornersout; cornersin=xcornersin; 
+      radius=xradius; length=xlength; nside=xnside;
+    }
+    void reset(){ 
+      cornersout=0.75f;
+      cornersin=0.25f;
+      radius=3;
+      length=1.f;
+      nside=16;
+    }
+  }StShapeSpring;
+
 
   //==============================================================================
   /// Throws a simple exception.
@@ -166,17 +198,27 @@ public:
   static std::string GetUnits(const std::string &varname);
 
   //==============================================================================
-  /// Returns units according variable name. E.g.: Vel -> "Vel [m/s]"
+  /// Defines automatically the output format and units of field.
   //==============================================================================
-  static std::string GetVarWithUnits(const std::string &varname){
-    return(varname+GetUnits(varname));
-  }
+  static void DefineFieldFormat(StScalarData &field);
 
   //==============================================================================
   /// Returns the definition of fields.
   //==============================================================================
   static StScalarData DefineField(const std::string &name,TpData type,unsigned comp,const void *pointer=NULL){
-    StScalarData f; f.name=name; f.type=type; f.comp=comp; f.pointer=pointer;
+    StScalarData f; f.name=name; f.type=type; f.comp=comp; f.pointer=pointer; f.delptr=false;
+    f.fmt=f.units="";
+    DefineFieldFormat(f);
+    return(f);
+  }
+
+  //==============================================================================
+  /// Returns the definition of fields.
+  //==============================================================================
+  static StScalarData DefineFieldDel(const std::string &name,TpData type,unsigned comp,const void *pointer=NULL){
+    StScalarData f; f.name=name; f.type=type; f.comp=comp; f.pointer=pointer; f.delptr=true;
+    f.fmt=f.units="";
+    DefineFieldFormat(f);
     return(f);
   }
 
@@ -189,6 +231,11 @@ public:
   /// Checks the definition of fields.
   //==============================================================================
   static void CheckFields(const std::vector<StScalarData> &fields);
+
+  //==============================================================================
+  /// Delete dynamic memory of pointers with delptr=true.
+  //==============================================================================
+  static void DeleteFields(std::vector<StScalarData> &fields);
 
   //==============================================================================
   /// Stores data in VTK format.
@@ -578,6 +625,20 @@ public:
   }
 
   //==============================================================================
+  /// Adds triangles/lines for the definition of a circle/circumference.
+  //==============================================================================
+  static void AddShape_Circle(std::vector<StShapeData> &shapes,bool circle
+    ,const tfloat3 &pt,float radius,const tfloat3 &vec,int nside,int value,float valuef);
+  //==============================================================================
+  /// Adds triangles/lines for the definition of a circle/circumference.
+  //==============================================================================
+  static void AddShape_Circle(std::vector<StShapeData> &shapes,bool circle
+    ,const tdouble3 &pt,double radius,const tdouble3 &vec,int nside,int value,float valuef)
+  {
+    AddShape_Circle(shapes,circle,ToTFloat3(pt),float(radius),ToTFloat3(vec),nside,value,valuef);
+  }
+
+  //==============================================================================
   /// Adds quads for the definition of a sphere.
   //==============================================================================
   static void AddShape_Sphere(std::vector<StShapeData> &shapes
@@ -589,6 +650,55 @@ public:
     ,const tdouble3 &pt,double radius,int nside,int value,float valuef)
   {
     AddShape_Sphere(shapes,ToTFloat3(pt),float(radius),nside,value,valuef);
+  }
+
+  //==============================================================================
+  /// Adds triangles and quads for the definition of a cylinder.
+  //==============================================================================
+  static void AddShape_Cylinder(std::vector<JFormatFiles2::StShapeData> &shapes
+    ,const tfloat3 &p1,const tfloat3 &p2,float radius,int nside,unsigned maskfaceshide,int value,float valuef);
+  //==============================================================================
+  /// Adds triangles and quads for the definition of a cylinder.
+  //==============================================================================
+  static void AddShape_Cylinder(std::vector<StShapeData> &shapes
+    ,const tdouble3 &p1,const tdouble3 &p2,double radius,int nside,unsigned maskfaceshide,int value,float valuef)
+  {
+    AddShape_Cylinder(shapes,ToTFloat3(p1),ToTFloat3(p2),float(radius),nside,maskfaceshide,value,valuef);
+  }
+
+  //==============================================================================
+  /// Adds lines for the definition of a cross.
+  //==============================================================================
+  static void AddShape_Cross(std::vector<StShapeData> &shapes
+    ,const tfloat3 &pt,float radius,int value,float valuef)
+  {
+    shapes.push_back(DefineShape_Line(TFloat3(pt.x-radius,pt.y,pt.z),TFloat3(pt.x+radius,pt.y,pt.z),value,valuef));
+    shapes.push_back(DefineShape_Line(TFloat3(pt.x,pt.y-radius,pt.z),TFloat3(pt.x,pt.y+radius,pt.z),value,valuef));
+    shapes.push_back(DefineShape_Line(TFloat3(pt.x,pt.y,pt.z-radius),TFloat3(pt.x,pt.y,pt.z+radius),value,valuef));
+  }
+  //==============================================================================
+  /// Adds lines for the definition of a cross.
+  //==============================================================================
+  static void AddShape_Cross(std::vector<StShapeData> &shapes
+    ,const tdouble3 &pt,double radius,int value,float valuef)
+  {
+    AddShape_Cross(shapes,ToTFloat3(pt),float(radius),value,valuef);
+  }
+  
+  //==============================================================================
+  /// Adds lines for the definition of a spring.
+  //==============================================================================
+  static void AddShape_Spring(std::vector<StShapeData> &shapes
+    ,const tfloat3 &pt1,const tfloat3 &p2,float restlength,float scalesize
+    ,StShapeSpring config,int value,float valuef);
+  //==============================================================================
+  /// Adds lines for the definition of a spring.
+  //==============================================================================
+  static void AddShape_Spring(std::vector<StShapeData> &shapes
+    ,const tdouble3 &pt1,const tdouble3 &pt2,double restlength,double scalesize
+    ,StShapeSpring config,int value,float valuef)
+  {
+    AddShape_Spring(shapes,ToTFloat3(pt1),ToTFloat3(pt2),float(restlength),float(scalesize),config,value,valuef);
   }
 
   //==============================================================================
@@ -620,7 +730,7 @@ public:
 
 };
 
-
+/*
 //##############################################################################
 //# JFormatFiles2Data
 //##############################################################################
@@ -715,7 +825,7 @@ public:
     if(Posd)JFormatFiles2::SaveCsv(file,CsvSepComa,Np,Posd,FieldsCount,Fields);
   }
 };
-
+*/
 
 #endif
 

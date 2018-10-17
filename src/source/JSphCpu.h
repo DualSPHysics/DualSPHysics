@@ -99,7 +99,7 @@ protected:
   double AceMax;        ///<Maximum value of Ace[] sqrt(ace.x^2 + ace.y^2 + ace.z^2) computed in Interaction_Forces().
   float ViscDtMax;      ///<Max value of ViscDt calculated in Interaction_Forces() / Valor maximo de ViscDt calculado en Interaction_Forces().
 
-  //-Variables for computing forces [INTER_Forces,INTER_ForcesCorr] | Vars. derivadas para computo de fuerzas [INTER_Forces,INTER_ForcesCorr]
+  //-Variables for computing forces. | Vars. derivadas para computo de fuerzas.
   float *Pressc;       ///< Press[]=B*((Rhop/Rhop0)^gamma-1)
 
   //-Variables for Laminar+SPS viscosity.  
@@ -143,7 +143,7 @@ protected:
   llong GetAllocMemoryCpu()const;
   void PrintAllocMemory(llong mcpu)const;
 
-  unsigned GetParticlesData(unsigned n,unsigned pini,bool cellorderdecode,bool onlynormal
+  unsigned GetParticlesData(unsigned n,unsigned pini,bool onlynormal
     ,unsigned *idp,tdouble3 *pos,tfloat3 *vel,float *rhop,typecode *code);
   void ConfigOmp(const JCfgRun *cfg);
 
@@ -157,8 +157,8 @@ protected:
   float CalcVelMaxSeq(unsigned np,const tfloat4* velrhop)const;
   float CalcVelMaxOmp(unsigned np,const tfloat4* velrhop)const;
 
-  void PreInteractionVars_Forces(TpInter tinter,unsigned np,unsigned npb);
-  void PreInteraction_Forces(TpInter tinter);
+  void PreInteractionVars_Forces(unsigned np,unsigned npb);
+  void PreInteraction_Forces();
   void PosInteraction_Forces();
 
   inline void GetKernelWendland(float rr2,float drx,float dry,float drz,float &frx,float &fry,float &frz)const;
@@ -235,6 +235,7 @@ protected:
   void CalcRidp(bool periactive,unsigned np,unsigned pini,unsigned idini,unsigned idfin,const typecode *code,const unsigned *idp,unsigned *ridp)const;
   void MoveLinBound(unsigned np,unsigned ini,const tdouble3 &mvpos,const tfloat3 &mvvel,const unsigned *ridp,tdouble3 *pos,unsigned *dcell,tfloat4 *velrhop,typecode *code)const;
   void MoveMatBound(unsigned np,unsigned ini,tmatrix4d m,double dt,const unsigned *ridpmv,tdouble3 *pos,unsigned *dcell,tfloat4 *velrhop,typecode *code)const;
+  void CalcMotion(double stepdt);
   void RunMotion(double stepdt);
   void RunDamping(double dt,unsigned np,unsigned npb,const tdouble3 *pos,const typecode *code,tfloat4 *velrhop)const;
 
@@ -252,6 +253,7 @@ public:
   ~JSphCpu();
 
   void UpdatePos(tdouble3 pos0,double dx,double dy,double dz,bool outrhop,unsigned p,tdouble3 *pos,unsigned *cell,typecode *code)const;
+
 };
 
 #endif

@@ -258,7 +258,7 @@ std::string Float3Str(const tfloat3 &v,const char* fmt){
 /// Converts real value to string.
 //==============================================================================
 std::string DoubleStr(double v,const char* fmt){
-  char cad[256];
+  char cad[512];
   sprintf(cad,fmt,v);
   return(std::string(cad));
 }
@@ -267,7 +267,7 @@ std::string DoubleStr(double v,const char* fmt){
 /// Converts real value to string (-DBL_MAX=MIN and DBL_MAX=MAX).
 //==============================================================================
 std::string DoublexStr(double v,const char* fmt){
-  char cad[128];
+  char cad[512];
   sprintf(cad,fmt,v);
   return(v==-DBL_MAX? std::string("MIN"): (v==DBL_MAX? std::string("MAX"): std::string(cad)));
 }
@@ -276,7 +276,7 @@ std::string DoublexStr(double v,const char* fmt){
 /// Converts real value to string.
 //==============================================================================
 std::string Double3Str(const tdouble3 &v,const char* fmt){
-  char cad[1024];
+  char cad[2048];
   sprintf(cad,fmt,v.x,v.y,v.z);
   return(std::string(cad));
 }
@@ -285,7 +285,7 @@ std::string Double3Str(const tdouble3 &v,const char* fmt){
 /// Converts real value to string.
 //==============================================================================
 std::string Double4Str(const tdouble4 &v,const char* fmt){
-  char cad[1024];
+  char cad[2048];
   sprintf(cad,fmt,v.x,v.y,v.z,v.w);
   return(std::string(cad));
 }
@@ -354,6 +354,28 @@ std::string StrTrim(const std::string &cad){
   for(int c=int(cad.length())-1;c<int(cad.length())&&cad[c]==' ';c--)rsp++;
   int size=int(cad.length())-(lsp+rsp);
   return(size>0? cad.substr(lsp,size): "");
+}
+
+//==============================================================================
+/// Gets string without spaces at the beginning.
+//==============================================================================
+std::string StrTrimBegin(const std::string &cad){
+  std::string ret;
+  int lsp=0;
+  for(int c=0;c<int(cad.length())&&cad[c]==' ';c++)lsp++;
+  int size=int(cad.length())-(lsp);
+  return(size>0? cad.substr(lsp,size): "");
+}
+
+//==============================================================================
+/// Gets string without spaces at the end.
+//==============================================================================
+std::string StrTrimEnd(const std::string &cad){
+  std::string ret;
+  int rsp=0;
+  for(int c=int(cad.length())-1;c<int(cad.length())&&cad[c]==' ';c--)rsp++;
+  int size=int(cad.length())-(rsp);
+  return(size>0? cad.substr(0,size): "");
 }
 
 //==============================================================================

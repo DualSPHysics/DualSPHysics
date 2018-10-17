@@ -266,6 +266,7 @@ void ComputeAceMod(unsigned n,const float3 *ace,float *acemod){
 
 //------------------------------------------------------------------------------
 /// Calculates module^2 of ace, comprobando que la particula sea normal.
+/// Uses zero for periodic particles.
 //------------------------------------------------------------------------------
 __global__ void KerComputeAceMod(unsigned n,const typecode *code,const float3 *ace,float *acemod)
 {
@@ -278,6 +279,7 @@ __global__ void KerComputeAceMod(unsigned n,const typecode *code,const float3 *a
 
 //==============================================================================
 /// Calculates module^2 of ace, comprobando que la particula sea normal.
+/// Uses zero for periodic particles.
 //==============================================================================
 void ComputeAceMod(unsigned n,const typecode *code,const float3 *ace,float *acemod){
   if(n){
@@ -523,7 +525,7 @@ __device__ void KerGetKernelWendland(float rr2,float drx,float dry,float drz
   const float qq=rad/CTE.h;
   //-Wendland kernel.
   const float wqq1=1.f-0.5f*qq;
-  const float fac=CTE.bwen*qq*wqq1*wqq1*wqq1/rad;
+  const float fac=CTE.bwen*qq*wqq1*wqq1*wqq1/rad; //-Kernel derivative (divided by rad).
   frx=fac*drx; fry=fac*dry; frz=fac*drz;
 }
 
@@ -538,8 +540,8 @@ __device__ void KerGetKernelGaussian(float rr2,float drx,float dry,float drz
   const float qq=rad/CTE.h;
   //-Gaussian kernel.
   const float qqexp=-4.0f*qq*qq;
-  //const float wab=CTE.agau*expf(qqexp);
-  const float fac=CTE.bgau*qq*expf(qqexp)/rad;
+  //const float wab=CTE.agau*expf(qqexp); //-Kernel.
+  const float fac=CTE.bgau*qq*expf(qqexp)/rad; //-Kernel derivative (divided by rad).
   frx=fac*drx; fry=fac*dry; frz=fac*drz;
 }
 
@@ -557,11 +559,11 @@ __device__ void KerGetKernelCubic(float rr2,float drx,float dry,float drz
   if(rad>CTE.h){
     float wqq1=2.0f-qq;
     float wqq2=wqq1*wqq1;
-    fac=CTE.cubic_c2*wqq2/rad;
+    fac=CTE.cubic_c2*wqq2/rad; //-Kernel derivative (divided by rad).
   }
   else{
     float wqq2=qq*qq;
-    fac=(CTE.cubic_c1*qq+CTE.cubic_d1*wqq2)/rad;
+    fac=(CTE.cubic_c1*qq+CTE.cubic_d1*wqq2)/rad; //-Kernel derivative (divided by rad).
   }
   //-Gradients.
   frx=fac*drx; fry=fac*dry; frz=fac*drz;
@@ -581,12 +583,12 @@ __device__ float KerGetKernelCubicTensil(float rr2
   if(rad>CTE.h){
     float wqq1=2.0f-qq;
     float wqq2=wqq1*wqq1;
-    wab=CTE.cubic_a24*(wqq2*wqq1);
+    wab=CTE.cubic_a24*(wqq2*wqq1); //-Kernel.
   }
   else{
     float wqq2=qq*qq;
     float wqq3=wqq2*qq;
-    wab=CTE.cubic_a2*(1.0f-1.5f*wqq2+0.75f*wqq3);
+    wab=CTE.cubic_a2*(1.0f-1.5f*wqq2+0.75f*wqq3); //-Kernel.
   }
   //-Tensile correction.
   float fab=wab*CTE.cubic_odwdeltap;
@@ -1515,7 +1517,7 @@ void RunShifting(unsigned np,unsigned npb,double dt
 /// Calcula nuevos valores de  Pos, Check, Vel y Rhop (usando Verlet).
 /// El valor de Vel para bound siempre se pone a cero.
 //------------------------------------------------------------------------------
-template<bool floating,bool shift> __global__ void KerComputeStepVerlet
+template<bool floatings,bool shift> __global__ void KerComputeStepVerlet
   (unsigned n,unsigned npb,float rhopoutmin,float rhopoutmax
   ,const float4 *velrhop1,const float4 *velrhop2
   ,const float *ar,const float3 *ace,const float3 *shiftpos
@@ -1534,7 +1536,7 @@ template<bool floating,bool shift> __global__ void KerComputeStepVerlet
       float4 rvelrhop2=velrhop2[p];
       rvelrhop2.w=float(double(rvelrhop2.w)+dt2*ar[p]);
       float4 rvel1=velrhop1[p];
-      if(!floating || CODE_IsFluid(code[p])){ //-Particles: Fluid.
+      if(!floatings || CODE_IsFluid(code[p])){ //-Particles: Fluid.
         //-Checks rhop limits.
         if(rvelrhop2.w<rhopoutmin||rvelrhop2.w>rhopoutmax){ //-Only brands as excluded normal particles (not periodic). | Solo marca como excluidas las normales (no periodicas).
           const typecode rcode=code[p];
@@ -1571,7 +1573,7 @@ template<bool floating,bool shift> __global__ void KerComputeStepVerlet
 /// Updates particles according to forces and dt using Verlet. 
 /// Actualizacion de particulas segun fuerzas y dt usando Verlet.
 //==============================================================================
-void ComputeStepVerlet(bool floating,bool shift,unsigned np,unsigned npb
+void ComputeStepVerlet(bool floatings,bool shift,unsigned np,unsigned npb
   ,const float4 *velrhop1,const float4 *velrhop2
   ,const float *ar,const float3 *ace,const float3 *shiftpos
   ,double dt,double dt2,float rhopoutmin,float rhopoutmax
@@ -1580,12 +1582,12 @@ void ComputeStepVerlet(bool floating,bool shift,unsigned np,unsigned npb
   double dt205=(0.5*dt*dt);
   if(np){
     dim3 sgrid=GetGridSize(np,SPHBSIZE);
-    if(shift){    const bool shift=true;
-      if(floating)KerComputeStepVerlet<true,shift>  <<<sgrid,SPHBSIZE>>> (np,npb,rhopoutmin,rhopoutmax,velrhop1,velrhop2,ar,ace,shiftpos,dt,dt205,dt2,movxy,movz,code,velrhopnew);
-      else        KerComputeStepVerlet<false,shift> <<<sgrid,SPHBSIZE>>> (np,npb,rhopoutmin,rhopoutmax,velrhop1,velrhop2,ar,ace,shiftpos,dt,dt205,dt2,movxy,movz,code,velrhopnew);
-    }else{        const bool shift=false;
-      if(floating)KerComputeStepVerlet<true,shift>  <<<sgrid,SPHBSIZE>>> (np,npb,rhopoutmin,rhopoutmax,velrhop1,velrhop2,ar,ace,shiftpos,dt,dt205,dt2,movxy,movz,code,velrhopnew);
-      else        KerComputeStepVerlet<false,shift> <<<sgrid,SPHBSIZE>>> (np,npb,rhopoutmin,rhopoutmax,velrhop1,velrhop2,ar,ace,shiftpos,dt,dt205,dt2,movxy,movz,code,velrhopnew);
+    if(shift){     const bool shift=true;
+      if(floatings)KerComputeStepVerlet<true,shift>  <<<sgrid,SPHBSIZE>>> (np,npb,rhopoutmin,rhopoutmax,velrhop1,velrhop2,ar,ace,shiftpos,dt,dt205,dt2,movxy,movz,code,velrhopnew);
+      else         KerComputeStepVerlet<false,shift> <<<sgrid,SPHBSIZE>>> (np,npb,rhopoutmin,rhopoutmax,velrhop1,velrhop2,ar,ace,shiftpos,dt,dt205,dt2,movxy,movz,code,velrhopnew);
+    }else{         const bool shift=false;
+      if(floatings)KerComputeStepVerlet<true,shift>  <<<sgrid,SPHBSIZE>>> (np,npb,rhopoutmin,rhopoutmax,velrhop1,velrhop2,ar,ace,shiftpos,dt,dt205,dt2,movxy,movz,code,velrhopnew);
+      else         KerComputeStepVerlet<false,shift> <<<sgrid,SPHBSIZE>>> (np,npb,rhopoutmin,rhopoutmax,velrhop1,velrhop2,ar,ace,shiftpos,dt,dt205,dt2,movxy,movz,code,velrhopnew);
     }
   }
 }
@@ -1594,7 +1596,7 @@ void ComputeStepVerlet(bool floating,bool shift,unsigned np,unsigned npb
 /// Computes new values for Pos, Check, Vel and Ros (used with Symplectic-Predictor).
 /// Calcula los nuevos valores de Pos, Vel y Rhop (usando para Symplectic-Predictor).
 //------------------------------------------------------------------------------
-template<bool floating,bool shift> __global__ void KerComputeStepSymplecticPre
+template<bool floatings,bool shift> __global__ void KerComputeStepSymplecticPre
   (unsigned n,unsigned npb
   ,const float4 *velrhoppre,const float *ar,const float3 *ace,const float3 *shiftpos
   ,double dtm,float rhopoutmin,float rhopoutmax
@@ -1612,7 +1614,7 @@ template<bool floating,bool shift> __global__ void KerComputeStepSymplecticPre
       //-Updates density.
       float4 rvelrhop=velrhoppre[p];
       rvelrhop.w=float(double(rvelrhop.w)+dtm*ar[p]);
-      if(!floating || CODE_IsFluid(code[p])){ //-Particles: Fluid.
+      if(!floatings || CODE_IsFluid(code[p])){ //-Particles: Fluid.
         //-Checks rhop limits.
         if(rvelrhop.w<rhopoutmin||rvelrhop.w>rhopoutmax){//-Only brands as excluded normal particles (not periodic). | Solo marca como excluidas las normales (no periodicas).
           const typecode rcode=code[p];
@@ -1649,19 +1651,19 @@ template<bool floating,bool shift> __global__ void KerComputeStepSymplecticPre
 /// Updates particles using Symplectic-Predictor.
 /// Actualizacion de particulas usando Symplectic-Predictor.
 //==============================================================================   
-void ComputeStepSymplecticPre(bool floating,bool shift,unsigned np,unsigned npb
+void ComputeStepSymplecticPre(bool floatings,bool shift,unsigned np,unsigned npb
   ,const float4 *velrhoppre,const float *ar,const float3 *ace,const float3 *shiftpos
   ,double dtm,float rhopoutmin,float rhopoutmax
   ,typecode *code,double2 *movxy,double *movz,float4 *velrhop)
 {
   if(np){
     dim3 sgrid=GetGridSize(np,SPHBSIZE);
-    if(shift){    const bool shift=false; //-We strongly recommend running the shifting correction only for the corrector. If you want to re-enable shifting in the predictor, change the value here to "true".
-      if(floating)KerComputeStepSymplecticPre<true ,shift> <<<sgrid,SPHBSIZE>>> (np,npb,velrhoppre,ar,ace,shiftpos,dtm,rhopoutmin,rhopoutmax,code,movxy,movz,velrhop);
-      else        KerComputeStepSymplecticPre<false,shift> <<<sgrid,SPHBSIZE>>> (np,npb,velrhoppre,ar,ace,shiftpos,dtm,rhopoutmin,rhopoutmax,code,movxy,movz,velrhop);
-    }else{        const bool shift=false;
-      if(floating)KerComputeStepSymplecticPre<true ,shift> <<<sgrid,SPHBSIZE>>> (np,npb,velrhoppre,ar,ace,shiftpos,dtm,rhopoutmin,rhopoutmax,code,movxy,movz,velrhop);
-      else        KerComputeStepSymplecticPre<false,shift> <<<sgrid,SPHBSIZE>>> (np,npb,velrhoppre,ar,ace,shiftpos,dtm,rhopoutmin,rhopoutmax,code,movxy,movz,velrhop);
+    if(shift){     const bool shift=false; //-We strongly recommend running the shifting correction only for the corrector. If you want to re-enable shifting in the predictor, change the value here to "true".
+      if(floatings)KerComputeStepSymplecticPre<true ,shift> <<<sgrid,SPHBSIZE>>> (np,npb,velrhoppre,ar,ace,shiftpos,dtm,rhopoutmin,rhopoutmax,code,movxy,movz,velrhop);
+      else         KerComputeStepSymplecticPre<false,shift> <<<sgrid,SPHBSIZE>>> (np,npb,velrhoppre,ar,ace,shiftpos,dtm,rhopoutmin,rhopoutmax,code,movxy,movz,velrhop);
+    }else{         const bool shift=false;
+      if(floatings)KerComputeStepSymplecticPre<true ,shift> <<<sgrid,SPHBSIZE>>> (np,npb,velrhoppre,ar,ace,shiftpos,dtm,rhopoutmin,rhopoutmax,code,movxy,movz,velrhop);
+      else         KerComputeStepSymplecticPre<false,shift> <<<sgrid,SPHBSIZE>>> (np,npb,velrhoppre,ar,ace,shiftpos,dtm,rhopoutmin,rhopoutmax,code,movxy,movz,velrhop);
     }
   }
 }
@@ -1673,7 +1675,7 @@ void ComputeStepSymplecticPre(bool floating,bool shift,unsigned np,unsigned npb
 /// Calcula los nuevos valores de Pos, Vel y Rhop (usandopara Symplectic-Corrector).
 /// Pone vel de contorno a cero.
 //------------------------------------------------------------------------------
-template<bool floating,bool shift> __global__ void KerComputeStepSymplecticCor
+template<bool floatings,bool shift> __global__ void KerComputeStepSymplecticCor
   (unsigned n,unsigned npb
   ,const float4 *velrhoppre,const float *ar,const float3 *ace,const float3 *shiftpos
   ,double dtm,double dt,float rhopoutmin,float rhopoutmax
@@ -1692,7 +1694,7 @@ template<bool floating,bool shift> __global__ void KerComputeStepSymplecticCor
       double epsilon_rdot=(-double(ar[p])/double(velrhop[p].w))*dt;
       float4 rvelrhop=velrhoppre[p];
       rvelrhop.w=float(double(rvelrhop.w) * (2.-epsilon_rdot)/(2.+epsilon_rdot));
-      if(!floating || CODE_IsFluid(code[p])){//-Particles: Fluid.
+      if(!floatings || CODE_IsFluid(code[p])){//-Particles: Fluid.
         float4 rvelp=rvelrhop;
         //-Updates velocity.
         float3 race=ace[p];
@@ -1730,19 +1732,19 @@ template<bool floating,bool shift> __global__ void KerComputeStepSymplecticCor
 /// Updates particles using Symplectic-Corrector.
 /// Actualizacion de particulas usando Symplectic-Corrector.
 //==============================================================================   
-void ComputeStepSymplecticCor(bool floating,bool shift,unsigned np,unsigned npb
+void ComputeStepSymplecticCor(bool floatings,bool shift,unsigned np,unsigned npb
   ,const float4 *velrhoppre,const float *ar,const float3 *ace,const float3 *shiftpos
   ,double dtm,double dt,float rhopoutmin,float rhopoutmax
   ,typecode *code,double2 *movxy,double *movz,float4 *velrhop)
 {
   if(np){
     dim3 sgrid=GetGridSize(np,SPHBSIZE);
-    if(shift){    const bool shift=true;
-      if(floating)KerComputeStepSymplecticCor<true,shift>  <<<sgrid,SPHBSIZE>>> (np,npb,velrhoppre,ar,ace,shiftpos,dtm,dt,rhopoutmin,rhopoutmax,code,movxy,movz,velrhop);
-      else        KerComputeStepSymplecticCor<false,shift> <<<sgrid,SPHBSIZE>>> (np,npb,velrhoppre,ar,ace,shiftpos,dtm,dt,rhopoutmin,rhopoutmax,code,movxy,movz,velrhop);
-    }else{        const bool shift=false;
-      if(floating)KerComputeStepSymplecticCor<true,shift>  <<<sgrid,SPHBSIZE>>> (np,npb,velrhoppre,ar,ace,shiftpos,dtm,dt,rhopoutmin,rhopoutmax,code,movxy,movz,velrhop);
-      else        KerComputeStepSymplecticCor<false,shift> <<<sgrid,SPHBSIZE>>> (np,npb,velrhoppre,ar,ace,shiftpos,dtm,dt,rhopoutmin,rhopoutmax,code,movxy,movz,velrhop);
+    if(shift){     const bool shift=true;
+      if(floatings)KerComputeStepSymplecticCor<true,shift>  <<<sgrid,SPHBSIZE>>> (np,npb,velrhoppre,ar,ace,shiftpos,dtm,dt,rhopoutmin,rhopoutmax,code,movxy,movz,velrhop);
+      else         KerComputeStepSymplecticCor<false,shift> <<<sgrid,SPHBSIZE>>> (np,npb,velrhoppre,ar,ace,shiftpos,dtm,dt,rhopoutmin,rhopoutmax,code,movxy,movz,velrhop);
+    }else{         const bool shift=false;
+      if(floatings)KerComputeStepSymplecticCor<true,shift>  <<<sgrid,SPHBSIZE>>> (np,npb,velrhoppre,ar,ace,shiftpos,dtm,dt,rhopoutmin,rhopoutmax,code,movxy,movz,velrhop);
+      else         KerComputeStepSymplecticCor<false,shift> <<<sgrid,SPHBSIZE>>> (np,npb,velrhoppre,ar,ace,shiftpos,dtm,dt,rhopoutmin,rhopoutmax,code,movxy,movz,velrhop);
     }
   }
 }
@@ -1859,7 +1861,7 @@ __device__ double3 KerUpdatePeriodicPos(double3 ps)
 /// Updates particle position according to displacement.
 /// Actualizacion de posicion de particulas segun desplazamiento.
 //------------------------------------------------------------------------------
-template<bool periactive,bool floating> __global__ void KerComputeStepPos(unsigned n,unsigned pini
+template<bool periactive,bool floatings> __global__ void KerComputeStepPos(unsigned n,unsigned pini
   ,const double2 *movxy,const double *movz
   ,double2 *posxy,double *posz,unsigned *dcell,typecode *code)
 {
@@ -1868,7 +1870,7 @@ template<bool periactive,bool floating> __global__ void KerComputeStepPos(unsign
     unsigned p=pt+pini;
     const typecode rcode=code[p];
     const bool outrhop=CODE_IsOutRhop(rcode);
-    const bool fluid=(!floating || CODE_IsFluid(rcode));
+    const bool fluid=(!floatings || CODE_IsFluid(rcode));
     const bool normal=(!periactive || outrhop || CODE_IsNormal(rcode));
     if(normal && fluid){ //-Does not apply to periodic or floating particles. | No se aplica a particulas periodicas o floating.
       const double2 rmovxy=movxy[p];
@@ -1883,7 +1885,7 @@ template<bool periactive,bool floating> __global__ void KerComputeStepPos(unsign
 /// Updates particle position according to displacement.
 /// Actualizacion de posicion de particulas segun desplazamiento.
 //==============================================================================
-void ComputeStepPos(byte periactive,bool floating,unsigned np,unsigned npb
+void ComputeStepPos(byte periactive,bool floatings,unsigned np,unsigned npb
   ,const double2 *movxy,const double *movz
   ,double2 *posxy,double *posz,unsigned *dcell,typecode *code)
 {
@@ -1892,12 +1894,12 @@ void ComputeStepPos(byte periactive,bool floating,unsigned np,unsigned npb
   if(npf){
     dim3 sgrid=GetGridSize(npf,SPHBSIZE);
     if(periactive){ const bool peri=true;
-      if(floating)KerComputeStepPos<peri,true>  <<<sgrid,SPHBSIZE>>> (npf,pini,movxy,movz,posxy,posz,dcell,code);
-      else        KerComputeStepPos<peri,false> <<<sgrid,SPHBSIZE>>> (npf,pini,movxy,movz,posxy,posz,dcell,code);
+      if(floatings)KerComputeStepPos<peri,true>  <<<sgrid,SPHBSIZE>>> (npf,pini,movxy,movz,posxy,posz,dcell,code);
+      else         KerComputeStepPos<peri,false> <<<sgrid,SPHBSIZE>>> (npf,pini,movxy,movz,posxy,posz,dcell,code);
     }
     else{ const bool peri=false;
-      if(floating)KerComputeStepPos<peri,true>  <<<sgrid,SPHBSIZE>>> (npf,pini,movxy,movz,posxy,posz,dcell,code);
-      else        KerComputeStepPos<peri,false> <<<sgrid,SPHBSIZE>>> (npf,pini,movxy,movz,posxy,posz,dcell,code);
+      if(floatings)KerComputeStepPos<peri,true>  <<<sgrid,SPHBSIZE>>> (npf,pini,movxy,movz,posxy,posz,dcell,code);
+      else         KerComputeStepPos<peri,false> <<<sgrid,SPHBSIZE>>> (npf,pini,movxy,movz,posxy,posz,dcell,code);
     }
   }
 }
@@ -1906,7 +1908,7 @@ void ComputeStepPos(byte periactive,bool floating,unsigned np,unsigned npb
 /// Updates particle position according to displacement.
 /// Actualizacion de posicion de particulas segun desplazamiento.
 //------------------------------------------------------------------------------
-template<bool periactive,bool floating> __global__ void KerComputeStepPos2(unsigned n,unsigned pini
+template<bool periactive,bool floatings> __global__ void KerComputeStepPos2(unsigned n,unsigned pini
   ,const double2 *posxypre,const double *poszpre,const double2 *movxy,const double *movz
   ,double2 *posxy,double *posz,unsigned *dcell,typecode *code)
 {
@@ -1915,7 +1917,7 @@ template<bool periactive,bool floating> __global__ void KerComputeStepPos2(unsig
     unsigned p=pt+pini;
     const typecode rcode=code[p];
     const bool outrhop=CODE_IsOutRhop(rcode);
-    const bool fluid=(!floating || CODE_IsFluid(rcode));
+    const bool fluid=(!floatings || CODE_IsFluid(rcode));
     const bool normal=(!periactive || outrhop || CODE_IsNormal(rcode));
     if(normal){//-Does not apply to periodic particles. | No se aplica a particulas periodicas
       if(fluid){//-Only applied for fluid displacement. | Solo se aplica desplazamiento al fluido.
@@ -1934,7 +1936,7 @@ template<bool periactive,bool floating> __global__ void KerComputeStepPos2(unsig
 /// Updates particle position according to displacement.
 /// Actualizacion de posicion de particulas segun desplazamiento.
 //==============================================================================
-void ComputeStepPos2(byte periactive,bool floating,unsigned np,unsigned npb
+void ComputeStepPos2(byte periactive,bool floatings,unsigned np,unsigned npb
   ,const double2 *posxypre,const double *poszpre,const double2 *movxy,const double *movz
   ,double2 *posxy,double *posz,unsigned *dcell,typecode *code)
 {
@@ -1943,12 +1945,12 @@ void ComputeStepPos2(byte periactive,bool floating,unsigned np,unsigned npb
   if(npf){
     dim3 sgrid=GetGridSize(npf,SPHBSIZE);
     if(periactive){ const bool peri=true;
-      if(floating)KerComputeStepPos2<peri,true>  <<<sgrid,SPHBSIZE>>> (npf,pini,posxypre,poszpre,movxy,movz,posxy,posz,dcell,code);
-      else        KerComputeStepPos2<peri,false> <<<sgrid,SPHBSIZE>>> (npf,pini,posxypre,poszpre,movxy,movz,posxy,posz,dcell,code);
+      if(floatings)KerComputeStepPos2<peri,true>  <<<sgrid,SPHBSIZE>>> (npf,pini,posxypre,poszpre,movxy,movz,posxy,posz,dcell,code);
+      else         KerComputeStepPos2<peri,false> <<<sgrid,SPHBSIZE>>> (npf,pini,posxypre,poszpre,movxy,movz,posxy,posz,dcell,code);
     }
     else{ const bool peri=false;
-      if(floating)KerComputeStepPos2<peri,true>  <<<sgrid,SPHBSIZE>>> (npf,pini,posxypre,poszpre,movxy,movz,posxy,posz,dcell,code);
-      else        KerComputeStepPos2<peri,false> <<<sgrid,SPHBSIZE>>> (npf,pini,posxypre,poszpre,movxy,movz,posxy,posz,dcell,code);
+      if(floatings)KerComputeStepPos2<peri,true>  <<<sgrid,SPHBSIZE>>> (npf,pini,posxypre,poszpre,movxy,movz,posxy,posz,dcell,code);
+      else         KerComputeStepPos2<peri,false> <<<sgrid,SPHBSIZE>>> (npf,pini,posxypre,poszpre,movxy,movz,posxy,posz,dcell,code);
     }
   }
 }
@@ -2910,5 +2912,6 @@ void ComputeDampingPla(double dt,tdouble4 plane,float dist,float over,tfloat3 fa
 
 
 }
+
 
 

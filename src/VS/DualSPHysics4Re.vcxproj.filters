@@ -268,6 +268,9 @@
     <ClInclude Include="..\source\JSpaceVtkOut.h">
       <Filter>CommonDsph</Filter>
     </ClInclude>
+    <ClInclude Include="..\source\JSphPartsInit.h">
+      <Filter>Source</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\source\JCfgRun.cpp">
@@ -464,6 +467,9 @@
     </ClCompile>
     <ClCompile Include="..\source\JSpaceVtkOut.cpp">
       <Filter>CommonDsph</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JSphPartsInit.cpp">
+      <Filter>Source</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

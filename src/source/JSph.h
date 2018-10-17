@@ -61,6 +61,7 @@ class JTimeOut;
 class JGaugeSystem;
 class JPartsLoad4;
 class JSpacePartBlock;
+class JSphPartsInit;
 
 //##############################################################################
 //# XML format of execution parameters in _FmtXML__Parameters.xml.
@@ -218,9 +219,9 @@ protected:
   unsigned CaseNpb;          ///<Number of particles of the boundary block ( \ref Nbound - \ref Nfloat ) or ( \ref Nfixed + \ref Nmoving).
 
   JSphMk *MkInfo;            ///<Stores information for the Mk of the particles.
+  JSphPartsInit *PartsInit;  ///<Stores initial particles data for automatic configurations.
 
   //-Variables for periodic conditions.
-  StPeriodic PeriodicConfig; ///<Stores initial configuration of periodic conditions (before applying CellOrder).
   byte PeriActive;
   bool PeriX,PeriY,PeriZ;
   tdouble3 PeriXinc;    ///<Value that is added at the outer limit to modify the position.
@@ -258,8 +259,6 @@ protected:
   JDamping *Damping;            ///<Object for damping zones.
 
   JSphAccInput *AccInput;  ///<Object for variable acceleration functionality.
-
-  TpCellOrder CellOrder;   ///<Defines axes' ordination of particles in cells. | Orden de ejes en ordenacion de particulas en celdas.
 
   //-Variables for division in cells.
   TpCellMode CellMode;     ///<Cell division mode. | Modo de division en celdas.
@@ -319,7 +318,7 @@ protected:
   double TimeStepIni;     ///<Initial instant of the simulation. | Instante inicial de la simulación.
   double TimeStep;        ///<Current instant of the simulation. | Instante actual de la simulación.                                 
   double TimeStepM1;      ///<Instant of the simulation when the last PART was stored. | Instante de la simulación en que se grabo el último PART.         
-  double TimePartNext;    ///<Instant to store next PART file.   | Instante para grabar siguiente fichero PART.                      
+  double TimePartNext;    ///<Instant to store next PART file.   | Instante para grabar siguiente fichero PART.
 
   //-Control of the execution times.
   JTimer TimerTot;         ///<Measueres total runtime.                          | Mide el tiempo total de ejecucion.
@@ -328,6 +327,7 @@ protected:
   
   //-Execution variables.
   JPartsLoad4 *PartsLoaded;
+  TpInterStep InterStep;
   int VerletStep;
   double SymplecticDtPre;  ///<Previous Dt to use with Symplectic.
   double DemDtForce;       ///<Dt for tangencial acceleration.
@@ -351,22 +351,9 @@ protected:
   void VisuParticleSummary()const;
   void LoadDcellParticles(unsigned n,const typecode *code,const tdouble3 *pos,unsigned *dcell)const;
   void RunInitialize(unsigned np,unsigned npb,const tdouble3 *pos,const unsigned *idp,const typecode *code,tfloat4 *velrhop);
+  void CreatePartsInit(unsigned np,const tdouble3 *pos,const typecode *code);
+  void FreePartsInit();
 
-  void ConfigCellOrder(TpCellOrder order,unsigned np,tdouble3* pos,tfloat4* velrhop);
-  void DecodeCellOrder(unsigned np,tdouble3 *pos,tfloat3 *vel)const;
-  tuint3 OrderCode(const tuint3 &v)const{ return(OrderCodeValue(CellOrder,v)); }
-  tfloat3 OrderCode(const tfloat3 &v)const{ return(OrderCodeValue(CellOrder,v)); }
-  tfloat3 OrderDecode(const tfloat3 &v)const{ return(OrderDecodeValue(CellOrder,v)); }
-  tdouble3 OrderCode(const tdouble3 &v)const{ return(OrderCodeValue(CellOrder,v)); }
-  tdouble3 OrderDecode(const tdouble3 &v)const{ return(OrderDecodeValue(CellOrder,v)); }
-  tuint3 OrderDecode(const tuint3 &v)const{ return(OrderDecodeValue(CellOrder,v)); }
-  tmatrix4d OrderCode(const tmatrix4d &v)const{ return(OrderCodeValue(CellOrder,v)); }
-  static void OrderCodeData(TpCellOrder order,unsigned n,tfloat3 *v);
-  static void OrderDecodeData(TpCellOrder order,unsigned n,tfloat3 *v){ OrderCodeData(GetDecodeOrder(order),n,v); }
-  static void OrderCodeData(TpCellOrder order,unsigned n,tdouble3 *v);
-  static void OrderDecodeData(TpCellOrder order,unsigned n,tdouble3 *v){ OrderCodeData(GetDecodeOrder(order),n,v); }
-  static void OrderCodeData(TpCellOrder order,unsigned n,tfloat4 *v);
-  static void OrderDecodeData(TpCellOrder order,unsigned n,tfloat4 *v){ OrderCodeData(GetDecodeOrder(order),n,v); }
   void ConfigCellDivision();
   void SelecDomain(tuint3 celini,tuint3 celfin);
   static unsigned CalcCellCode(tuint3 ncells);
@@ -375,7 +362,7 @@ protected:
 
   void RestartCheckData();
   void LoadCaseParticles();
-  void InitRun();
+  void InitRun(unsigned np,const unsigned *idp,const tdouble3 *pos);
 
   void PrintSizeNp(unsigned np,llong size)const;
   void PrintHeadPart();
@@ -416,6 +403,7 @@ public:
 //-Functions for debug.
 //----------------------
 public:
+  unsigned DgNum;
   void DgSaveVtkParticlesCpu(std::string filename,int numfile,unsigned pini,unsigned pfin,const tdouble3 *pos,const typecode *code,const unsigned *idp,const tfloat4 *velrhop,const tfloat3 *ace=NULL)const;
   void DgSaveVtkParticlesCpu(std::string filename,int numfile,unsigned pini,unsigned pfin,const tfloat3 *pos,const byte *check,const unsigned *idp,const tfloat3 *vel,const float *rhop);
   void DgSaveCsvParticlesCpu(std::string filename,int numfile,unsigned pini,unsigned pfin,std::string head,const tfloat3 *pos,const unsigned *idp=NULL,const tfloat3 *vel=NULL,const float *rhop=NULL,const float *ar=NULL,const tfloat3 *ace=NULL,const tfloat3 *vcorr=NULL);
@@ -430,7 +418,6 @@ Consideraciones sobre condiciones periodicas:
   condiciones periodicas esta holgura solo se aplica a MapPosMax.
 - El ajuste de tamaño de dominio realizado por ResizeMapLimits() no afecta a los
   ejes periodicos.
-- El CellOrder se aplica a la configuracion de condiciones periodicas.
 - El halo periodico tendrá una unica celda de grosor 2h aunque en los otros ejes
   se use celdas de tamaño h.
 - En la interaccion, una celda de tamaño 2h o dos celdas de tamaño h del extremo 
@@ -444,7 +431,6 @@ Considerations for periodic conditions:
    periodic conditions this space only applies to MapPosMax.
 - The adjustment of the domain size by ResizeMapLimits() does not affect the
    periodic edges.
-- The CellOrder applies to the configuration of periodic conditions.
 - The periodic halo will have a single cell thick 2h although in the other axes
    h cell size is used.
 - In the interaction, a cell of size 2h or two cells of size h in the

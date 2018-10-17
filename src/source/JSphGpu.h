@@ -211,7 +211,7 @@ protected:
 
   void ConstantDataUp();
   void ParticlesDataUp(unsigned n);
-  unsigned ParticlesDataDown(unsigned n,unsigned pini,bool code,bool cellorderdecode,bool onlynormal);
+  unsigned ParticlesDataDown(unsigned n,unsigned pini,bool code,bool onlynormal);
   
   void SelecDevice(int gpuid);
   void ConfigBlockSizes(bool usezone,bool useperi);
@@ -223,8 +223,8 @@ protected:
 
   void AddAccInput();
 
-  void PreInteractionVars_Forces(TpInter tinter,unsigned np,unsigned npb);
-  void PreInteraction_Forces(TpInter tinter);
+  void PreInteractionVars_Forces(unsigned np,unsigned npb);
+  void PreInteraction_Forces();
   void PosInteraction_Forces();
   
   void ComputeVerlet(double dt);
@@ -233,6 +233,7 @@ protected:
   double DtVariable(bool final);
   void RunShifting(double dt);
 
+  void CalcMotion(double stepdt);
   void RunMotion(double stepdt);
   void RunDamping(double dt,unsigned np,unsigned npb,const double2 *posxy,const double *posz,const typecode *code,float4 *velrhop);
 
@@ -248,17 +249,18 @@ protected:
 public:
   JSphGpu(bool withmpi);
   ~JSphGpu();
-  
+
 //-Functions for debug.
 //----------------------
 public:
+  friend class JSphDebugGpu;
+  void DgSaveVtkParticlesGpu(std::string filename,int numfile,unsigned pini,unsigned pfin,const double2 *posxyg,const double *poszg,const typecode *codeg,const unsigned *idpg,const float4 *velrhopg)const;
   void DgSaveVtkParticlesGpu(std::string filename,int numfile,unsigned pini,unsigned pfin,unsigned cellcode,const double2 *posxyg,const double *poszg,const unsigned *idpg,const unsigned *dcelg,const typecode *codeg,const float4 *velrhopg,const float4 *velrhopm1g,const float3 *aceg);
   void DgSaveVtkParticlesGpu(std::string filename,int numfile,unsigned pini,unsigned pfin,bool idp,bool vel,bool rhop,bool code);
   void DgSaveVtkParticlesGpu(std::string filename,int numfile,unsigned pini,unsigned pfin,const float3 *posg,const byte *checkg=NULL,const unsigned *idpg=NULL,const float3 *velg=NULL,const float *rhopg=NULL);
   void DgSaveCsvParticlesGpu(std::string filename,int numfile,unsigned pini,unsigned pfin,std::string head,const float3 *posg=NULL,const unsigned *idpg=NULL,const float3 *velg=NULL,const float *rhopg=NULL,const float *arg=NULL,const float3 *aceg=NULL,const float3 *vcorrg=NULL);
   void DgSaveCsvParticlesGpu2(std::string filename,int numfile,unsigned pini,unsigned pfin,std::string head,const float3 *posg=NULL,const unsigned *idpg=NULL,const float3 *velg=NULL,const float *rhopg=NULL,const float4 *pospres=NULL,const float4 *velrhop=NULL);
   void DgSaveCsvParticles2(std::string filename,int numfile,unsigned pini,unsigned pfin,std::string head,const tfloat3 *pos=NULL,const unsigned *idp=NULL,const tfloat3 *vel=NULL,const float *rhop=NULL,const tfloat4 *pospres=NULL,const tfloat4 *velrhop=NULL);
-
 };
 
 #endif

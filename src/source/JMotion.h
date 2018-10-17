@@ -159,6 +159,7 @@ public:
   //-Nuevo metodo para devolver resultados de ProcesTimeSimple() o ProcesTimeAce().
   bool ProcesTimeGetData(unsigned ref,bool &typesimple,tdouble3 &simplemov
     ,tdouble3 &simplevel,tdouble3 &simpleace,tmatrix4d &matmov,tmatrix4d &matmov2)const;
+  bool ProcesTimeGetData(unsigned ref,bool &typesimple,tdouble3 &simplemov,tmatrix4d &matmov)const;
 
   void CopyConfig(JMotion &mot)const;
   void CopyChangeRef(JMotion &mot,const int* ref,const int* refnew,unsigned refcount)const;
