@@ -599,19 +599,21 @@ void JSph::LoadCaseConfig(){
   MkInfo->Config(&parts);
 
   //==================================================
-  // Configuration of Temperature
+  // Configuration of Temperature Parameters
   //==================================================
-  if (xml.GetNode("case.execution.special.temperature", false)) {
-	JSpaceEParms tParams; tParams.LoadXml(&xml, "case.execution.special.temperature");
-	HeatTransfer = tParams.GetValueInt("HeatTransfer");
-	HeatCpFluid = tParams.GetValueFloat("HeatCpFluid");
-	HeatCpBound = tParams.GetValueFloat("HeatCpBound");
-	HeatKFluid = tParams.GetValueFloat("HeatKFluid");
-	HeatKBound = tParams.GetValueFloat("HeatKBound");
-	MkConstTempWall = tParams.GetValueInt("MkConstTempWall");
-	HeatTempBound = tParams.GetValueFloat("HeatTempBound");
-	HeatTempFluid = tParams.GetValueFloat("HeatTempFluid");
-	DensityBound = tParams.GetValueFloat("DensityBound");
+  TiXmlNode* tempNode = xml.GetNode("case.execution.special.temperature", false);
+  if (tempNode) {
+    HeatTransfer = true;
+    MkConstTempWall = xml.ReadElementInt(tempNode->ToElement(), "boundary", "mkbound");
+    TiXmlNode* tempBoundNode = xml.GetNode("case.execution.special.temperature.boundary", false);
+    HeatCpBound = xml.ReadElementFloat(tempBoundNode, "HeatCpBound", "value");
+    HeatKBound = xml.ReadElementFloat(tempBoundNode, "HeatKBound", "value");
+    HeatTempBound = xml.ReadElementFloat(tempBoundNode, "HeatTempBound", "value");
+    DensityBound = xml.ReadElementFloat(tempBoundNode, "DensityBound", "value");
+    TiXmlNode* tempFluidNode = xml.GetNode("case.execution.special.temperature.fluid", false);	
+    HeatCpFluid = xml.ReadElementFloat(tempFluidNode, "HeatCpFluid", "value");
+    HeatKFluid = xml.ReadElementFloat(tempFluidNode, "HeatKFluid", "value");
+    HeatTempFluid = xml.ReadElementFloat(tempFluidNode, "HeatTempFluid", "value");
   }
   //==================================================
 
@@ -1581,7 +1583,6 @@ void JSph::ConfigSaveData(unsigned piece,unsigned pieces,std::string div){
   PartsOut=new JPartsOut();
 }
 
-// Temperature: add temp param
 //==============================================================================
 /// Stores new excluded particles until recordering next PART.
 /// Almacena nuevas particulas excluidas hasta la grabacion del proximo PART.
@@ -1854,7 +1855,7 @@ void JSph::SaveInitialDomainVtk()const{
 
 //==============================================================================
 /// Returns size of VTK file with map cells.
-/// Devuelve tamaño de fichero VTK con las celdas del mapa.
+/// Devuelve tamaï¿½o de fichero VTK con las celdas del mapa.
 //==============================================================================
 unsigned JSph::SaveMapCellsVtkSize()const{
   const tuint3 cells=OrderDecode(Map_Cells);
@@ -1902,7 +1903,7 @@ void JSph::SaveMapCellsVtk(float scell)const{
 
 //==============================================================================
 /// Adds basic information of resume to hinfo & dinfo.
-/// Añade la informacion basica de resumen a hinfo y dinfo.
+/// Aï¿½ade la informacion basica de resumen a hinfo y dinfo.
 //==============================================================================
 void JSph::GetResInfo(float tsim,float ttot,const std::string &headplus,const std::string &detplus,std::string &hinfo,std::string &dinfo){
   hinfo=hinfo+"#RunName;RunCode;DateTime;Np;TSimul;TSeg;TTotal;MemCpu;MemGpu;Steps;PartFiles;PartsOut;MaxParticles;MaxCells;Hw;StepAlgo;Kernel;Viscosity;ViscoValue;DeltaSPH;TMax;Nbound;Nfixed;H;RhopOut;PartsRhopOut;PartsVelOut;CellMode"+headplus;

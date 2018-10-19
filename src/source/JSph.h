@@ -209,14 +209,14 @@ protected:
  //==================================================
  // Temperature configuration variables
  //==================================================
-  bool HeatTransfer;		///< Calculation of heat transfer 1:Yes, 0:False (default=0)
-  float HeatCpFluid;		///< Specific heat capacity of fluid particles (default 4.18 for water 293K) J/(kg*K)
-  float HeatCpBound;		///< Specific heat capacity of boundary particles (default 4.18 for water 293K) J/(kg*K)
-  float HeatKFluid;			///< Thermal conductivity of fluid particles(default 0.6 for water at 293K) W/(m*K)
-  float HeatKBound;			///< Thermal conductivity of boundary particles (default 54 for carbon steel at 293K) W/(m*K)
-  float HeatTempBound;      ///< Temperature of boundary particles K
-  float HeatTempFluid;		///< Temperature of fluid particles K
-  float DensityBound;		///< Density of boundary particles Kg/m^3
+  bool HeatTransfer;   ///< Enable heat transfer
+  float HeatCpFluid;   ///< Specific heat capacity of fluid particles
+  float HeatCpBound;   ///< Specific heat capacity of boundary particles
+  float HeatKFluid;    ///< Thermal conductivity of fluid particles
+  float HeatKBound;    ///< Thermal conductivity of boundary particles
+  float HeatTempBound; ///< Temperature of boundary particles K
+  float HeatTempFluid; ///< Temperature of fluid particles K
+  float DensityBound;  ///< Density of boundary particles Kg/m^3
   unsigned MkConstTempWall; ///< Mk of the constant temperature wall boundary
   //==================================================
 

@@ -832,13 +832,13 @@ template<bool psingle,TpKernel tker,TpFtMode ftmode> void JSphCpu::InteractionFo
               const float dvx=velp1.x-velrhop[p2].x, dvy=velp1.y-velrhop[p2].y, dvz=velp1.z-velrhop[p2].z;
               if(compute)arp1+=massp2*(dvx*frx+dvy*fry+dvz*frz);
 
-			  //==================================================
-			  // Temperature: compute temperature derivative
-			  //==================================================
-			  const double dtemp = tempp1 - temp[p2]; // Temperature: (dtemp=tempp1-tempp2)
-			  const float tempConst = (4 * massp2*HeatKFluid*HeatKBound) / (HeatCpBound*rhopp1*velrhop[p2].w*(HeatKFluid + HeatKBound));
-			  atempp1 += float(tempConst*dtemp*fabc);
-			  //==================================================
+			        //==================================================
+			        // Temperature: compute temperature derivative
+			        //==================================================
+			        const double dtemp = tempp1 - temp[p2]; // Temperature: (dtemp=tempp1-tempp2)
+			        const float tempConst = (4 * massp2*HeatKFluid*HeatKBound) / (HeatCpBound*rhopp1*velrhop[p2].w*(HeatKFluid + HeatKBound));
+			        atempp1 += float(tempConst*dtemp*fabc);
+			        //==================================================
 
               {//-Viscosity.
                 const float dot=drx*dvx + dry*dvy + drz*dvz;
@@ -1050,7 +1050,7 @@ template<bool psingle,TpKernel tker,TpFtMode ftmode,bool lamsps,TpDeltaSph tdelt
       ar[p1]+=arp1;
       ace[p1]=ace[p1]+acep1;
 
-	  atemp[p1] += atempp1; // Temperature: Add atemp for particle p1.
+	    atemp[p1] += atempp1; // Temperature: Add atemp for particle p1.
 
       const int th=omp_get_thread_num();
       if(visc>viscth[th*OMP_STRIDE])viscth[th*OMP_STRIDE]=visc;
