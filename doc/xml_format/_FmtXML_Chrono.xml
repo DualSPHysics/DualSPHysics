@@ -6,13 +6,13 @@
 <!-- *** Example to define the bodies and links using Chrono *** -->
 <casedef>
 	<!-- Define body materials  -->
-	<!-- Floating -->
+	<!-- Floating bodies -->
 	<floatings>
 		<floating mkbound="1" relativeweight="1.0" property="pvc" comment="Property for the floating bound" />
 	</floatings>
 	<properties>
 		<propertyfile file="Floating_Materials.xml" path="materials" />
-		<!-- Fixed -->
+		<!-- Fixed bodies -->
 		<links>
 			<link mkbound="0" property="pvc" comment="Property for the fixed bound" />
 		</links>
@@ -27,7 +27,7 @@
 			<bodyfixed id="domain" mkbound="0" modelfile="domain.obj" /> <!-- Link a mesh file to enable contact modelling -->
 			<!-- <bodymoving id="piston" mkbound="10" massbody="10" modelfile="piston.vtk" />  The use of predefined moving objects by Chrono is disabled for now -->
 			<bodyfloating id="box1" mkbound="1" modelfile="box.obj" />
-			<bodyfloating id="box2" mkbound="2"/> <!-- Don't link a mesh file to diable contact modelling -->
+			<bodyfloating id="box2" mkbound="2"/> <!-- Don't link a mesh file to disable contact modelling -->
 			<bodyfloating id="box3" mkbound="3"/>
 			<bodyfloating id="box4" mkbound="4"/>
 			<bodyfloating id="box5" mkbound="5"/>
