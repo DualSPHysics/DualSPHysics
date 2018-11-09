@@ -454,7 +454,7 @@ void JSphCpuSingle::RunCellDivide(bool updateperiodic){
     tdouble3* pos=ArraysCpu->ReserveDouble3();
     tfloat3* vel=ArraysCpu->ReserveFloat3();
     float* rhop=ArraysCpu->ReserveFloat();
-	double* temp=ArraysCpu->ReserveDouble(); // Temperature: memory allocation.
+	double* temp=ArraysCpu->ReserveDouble(); // Temperature: memory allocation (no needed)
     typecode* code=ArraysCpu->ReserveTypeCode();
     unsigned num=GetParticlesData(npfout,Np,true,false,idp,pos,vel,rhop,temp,code); // Temperature: add temp param.
     AddParticlesOut(npfout,idp,pos,vel,rhop,code);

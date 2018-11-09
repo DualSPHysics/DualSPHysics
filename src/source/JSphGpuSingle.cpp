@@ -332,7 +332,8 @@ void JSphGpuSingle::RunCellDivide(bool updateperiodic){
     double*   poszg=ArraysGpu->ReserveDouble();
     float4*   velrhopg=ArraysGpu->ReserveFloat4();
 	double*   tempg = ArraysGpu->ReserveDouble(); // Temperature
-    CellDivSingle->SortBasicArrays(Idpg,Codeg,Dcellg,Posxyg,Poszg,Velrhopg,Tempg,idpg,codeg,dcellg,posxyg,poszg,velrhopg,tempg); // Temperature: add temp and tempg params
+    CellDivSingle->SortBasicArrays(Idpg,Codeg,Dcellg,Posxyg,Poszg,Velrhopg,idpg,codeg,dcellg,posxyg,poszg,velrhopg);
+	CellDivSingle->SortDataArrays(Tempg, tempg);
     swap(Idpg,idpg);           ArraysGpu->Free(idpg);
     swap(Codeg,codeg);         ArraysGpu->Free(codeg);
     swap(Dcellg,dcellg);       ArraysGpu->Free(dcellg);

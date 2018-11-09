@@ -304,11 +304,10 @@ std::string JCellDivGpu::GetFileName(std::string name,std::string ext,int num)co
 /// Ordena arrays basicos segun SortPart. 
 //==============================================================================
 void JCellDivGpu::SortBasicArrays(const unsigned *idp, const typecode *code, const unsigned *dcell, const double2 *posxy, const double *posz
-, const float4 *velrhop, const double *temp, unsigned *idp2, typecode *code2, unsigned *dcell2, double2 *posxy2, double *posz2, float4 *velrhop2
-, double *temp2) // Temperature: add temp and temp2 params
+, const float4 *velrhop, unsigned *idp2, typecode *code2, unsigned *dcell2, double2 *posxy2, double *posz2, float4 *velrhop2)
 {
   const unsigned pini=(DivideFull? 0: NpbFinal);
-  cudiv::SortDataParticles(Nptot,pini,SortPart,idp,code,dcell,posxy,posz,velrhop,temp,idp2,code2,dcell2,posxy2,posz2,velrhop2,temp2);
+  cudiv::SortDataParticles(Nptot,pini,SortPart,idp,code,dcell,posxy,posz,velrhop,idp2,code2,dcell2,posxy2,posz2,velrhop2);
 }
 
 //==============================================================================
