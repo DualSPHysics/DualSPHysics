@@ -72,7 +72,6 @@ public:
   int OmpThreads;
   TpBlockSizeMode BlockSizeMode;
 
-  TpCellOrder CellOrder;
   TpCellMode  CellMode;
   TpStep TStep;
   int VerletSteps;

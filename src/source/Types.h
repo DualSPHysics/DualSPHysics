@@ -193,11 +193,13 @@ typedef enum{
   VISCO_None=0 
 }TpVisco;            
 
-///Types of interaction.
+///Types of interaction step.
 typedef enum{ 
-  INTER_ForcesCorr=2,        ///<Interaction to compute forces using the corrector step of Symplectic algorithm.
-  INTER_Forces=1             ///<Interaction to compute forces using the Verlet algorithm and the predictor step of Symplectic algorithm. 
-}TpInter;   
+  INTERSTEP_None=0,         
+  INTERSTEP_Verlet=1,       ///<Interaction to compute forces using the Verlet algorithm.
+  INTERSTEP_SymPredictor=2, ///<Interaction to compute forces using the Symplectic algorithm (predictor step). 
+  INTERSTEP_SymCorrector=3  ///<Interaction to compute forces using the Symplectic algorithm (corrector step). 
+}TpInterStep;
 
 ///Types of Delta-SPH. 
 typedef enum{ 
@@ -225,145 +227,6 @@ typedef enum{
 #define USE_FLOATING (ftmode!=FTMODE_None)
 #define USE_NOFLOATING (ftmode==FTMODE_None)
 #define USE_FTEXTERNAL (ftmode==FTMODE_Ext)
-
-///Order of the axis to reorder particles in cells.
-typedef enum{ 
-  ORDER_None=0,
-  ORDER_XYZ=1,
-  ORDER_XZY=2,
-  ORDER_YXZ=3,
-  ORDER_YZX=4,
-  ORDER_ZXY=5,
-  ORDER_ZYX=6 
-}TpCellOrder;  
-
-///Returns the name of CellOrder in text.
-inline const char* GetNameCellOrder(TpCellOrder cellorder){
-  switch(cellorder){
-    case ORDER_XYZ:   return("XYZ");
-    case ORDER_XZY:   return("XZY");
-    case ORDER_YXZ:   return("YXZ");
-    case ORDER_YZX:   return("YZX");
-    case ORDER_ZXY:   return("ZXY");
-    case ORDER_ZYX:   return("ZYX");
-  }
-  return("???");
-}
-
-///Returns the name of CellOrder in text.
-inline tuint3 GetCodeCellOrder(TpCellOrder cellorder){
-  switch(cellorder){
-    case ORDER_XYZ:   return(TUint3(1,2,3));
-    case ORDER_XZY:   return(TUint3(1,3,2));
-    case ORDER_YXZ:   return(TUint3(2,1,3));
-    case ORDER_YZX:   return(TUint3(2,3,1));
-    case ORDER_ZXY:   return(TUint3(3,1,2));
-    case ORDER_ZYX:   return(TUint3(3,2,1));
-  }
-  return(TUint3(1,2,3));
-}
-
-///Returns the name of CellOrder in text.
-inline TpCellOrder GetDecodeOrder(TpCellOrder order){
-  switch(order){
-    case ORDER_XYZ:   return(ORDER_XYZ);
-    case ORDER_XZY:   return(ORDER_XZY);
-    case ORDER_YXZ:   return(ORDER_YXZ);
-    case ORDER_YZX:   return(ORDER_ZXY);
-    case ORDER_ZXY:   return(ORDER_YZX);
-    case ORDER_ZYX:   return(ORDER_ZYX);
-  }
-  return(ORDER_None);
-}
-
-///Returns reordered tfloat3 value.
-inline tfloat3 ReOrderXZY(const tfloat3 &v){ return(TFloat3(v.x,v.z,v.y)); }
-inline tfloat3 ReOrderYXZ(const tfloat3 &v){ return(TFloat3(v.y,v.x,v.z)); }
-inline tfloat3 ReOrderYZX(const tfloat3 &v){ return(TFloat3(v.y,v.z,v.x)); }
-inline tfloat3 ReOrderZXY(const tfloat3 &v){ return(TFloat3(v.z,v.x,v.y)); }
-inline tfloat3 ReOrderZYX(const tfloat3 &v){ return(TFloat3(v.z,v.y,v.x)); }
-
-///Returns reordered tdouble3 value.
-inline tdouble3 ReOrderXZY(const tdouble3 &v){ return(TDouble3(v.x,v.z,v.y)); }
-inline tdouble3 ReOrderYXZ(const tdouble3 &v){ return(TDouble3(v.y,v.x,v.z)); }
-inline tdouble3 ReOrderYZX(const tdouble3 &v){ return(TDouble3(v.y,v.z,v.x)); }
-inline tdouble3 ReOrderZXY(const tdouble3 &v){ return(TDouble3(v.z,v.x,v.y)); }
-inline tdouble3 ReOrderZYX(const tdouble3 &v){ return(TDouble3(v.z,v.y,v.x)); }
-
-///Returns reordered tuint3 value.
-inline tuint3 ReOrderXZY(const tuint3 &v){ return(TUint3(v.x,v.z,v.y)); }
-inline tuint3 ReOrderYXZ(const tuint3 &v){ return(TUint3(v.y,v.x,v.z)); }
-inline tuint3 ReOrderYZX(const tuint3 &v){ return(TUint3(v.y,v.z,v.x)); }
-inline tuint3 ReOrderZXY(const tuint3 &v){ return(TUint3(v.z,v.x,v.y)); }
-inline tuint3 ReOrderZYX(const tuint3 &v){ return(TUint3(v.z,v.y,v.x)); }
-
-///Returns reordered tfloat4 value.
-inline tfloat4 ReOrderXZY(const tfloat4 &v){ return(TFloat4(v.x,v.z,v.y,v.w)); }
-inline tfloat4 ReOrderYXZ(const tfloat4 &v){ return(TFloat4(v.y,v.x,v.z,v.w)); }
-inline tfloat4 ReOrderYZX(const tfloat4 &v){ return(TFloat4(v.y,v.z,v.x,v.w)); }
-inline tfloat4 ReOrderZXY(const tfloat4 &v){ return(TFloat4(v.z,v.x,v.y,v.w)); }
-inline tfloat4 ReOrderZYX(const tfloat4 &v){ return(TFloat4(v.z,v.y,v.x,v.w)); }
-
-///Reorders tmatrix4f matrix.
-inline void ReOrderXZY(tmatrix4d &x){ std::swap(x.a12,x.a13); std::swap(x.a21,x.a31); std::swap(x.a22,x.a33); std::swap(x.a23,x.a32); std::swap(x.a24,x.a34); }
-inline void ReOrderYXZ(tmatrix4d &x){ std::swap(x.a11,x.a21); std::swap(x.a12,x.a22); std::swap(x.a13,x.a23); std::swap(x.a14,x.a24); std::swap(x.a11,x.a12); std::swap(x.a21,x.a22); std::swap(x.a31,x.a32); }
-inline void ReOrderYZX(tmatrix4d &x){ ReOrderYXZ(x); ReOrderXZY(x); }
-inline void ReOrderZXY(tmatrix4d &x){ ReOrderXZY(x); ReOrderYXZ(x); }
-inline void ReOrderZYX(tmatrix4d &x){ std::swap(x.a11,x.a31); std::swap(x.a12,x.a32); std::swap(x.a13,x.a33); std::swap(x.a14,x.a34); std::swap(x.a11,x.a13); std::swap(x.a21,x.a23); std::swap(x.a31,x.a33); }
-
-///Returns reordered tfloat3 value.
-inline tfloat3 OrderCodeValue(TpCellOrder order,const tfloat3 &v){
-  switch(order){
-    case ORDER_XZY:   return(ReOrderXZY(v));
-    case ORDER_YXZ:   return(ReOrderYXZ(v));
-    case ORDER_YZX:   return(ReOrderYZX(v));
-    case ORDER_ZXY:   return(ReOrderZXY(v));
-    case ORDER_ZYX:   return(ReOrderZYX(v));
-  }
-  return(v);
-}
-///Returns tfloat3 value in the original order.
-inline tfloat3 OrderDecodeValue(TpCellOrder order,const tfloat3 &v){ return(OrderCodeValue(GetDecodeOrder(order),v)); }
-
-///Returns the reordered tfloat3 value according to a given order.
-inline tdouble3 OrderCodeValue(TpCellOrder order,const tdouble3 &v){
-  switch(order){
-    case ORDER_XZY:   return(ReOrderXZY(v));
-    case ORDER_YXZ:   return(ReOrderYXZ(v));
-    case ORDER_YZX:   return(ReOrderYZX(v));
-    case ORDER_ZXY:   return(ReOrderZXY(v));
-    case ORDER_ZYX:   return(ReOrderZYX(v));
-  }
-  return(v);
-}
-///Retunrs the original order of tfloat3 value according to a given order.
-inline tdouble3 OrderDecodeValue(TpCellOrder order,const tdouble3 &v){ return(OrderCodeValue(GetDecodeOrder(order),v)); }
-
-///Returns the reordered tuint3 value according to a given order.
-inline tuint3 OrderCodeValue(TpCellOrder order,const tuint3 &v){
-  switch(order){
-    case ORDER_XZY:   return(ReOrderXZY(v));
-    case ORDER_YXZ:   return(ReOrderYXZ(v));
-    case ORDER_YZX:   return(ReOrderYZX(v));
-    case ORDER_ZXY:   return(ReOrderZXY(v));
-    case ORDER_ZYX:   return(ReOrderZYX(v));
-  }
-  return(v);
-}
-///Retunrs the original order of tuint3 value according to a given order.
-inline tuint3 OrderDecodeValue(TpCellOrder order,const tuint3 &v){ return(OrderCodeValue(GetDecodeOrder(order),v)); }
-
-///Returns the reordered tmatrix4d matrix according to a given order.
-inline tmatrix4d OrderCodeValue(TpCellOrder order,tmatrix4d x){
-  switch(order){
-    case ORDER_XZY:   ReOrderXZY(x);   break;
-    case ORDER_YXZ:   ReOrderYXZ(x);   break;
-    case ORDER_YZX:   ReOrderYZX(x);   break;
-    case ORDER_ZXY:   ReOrderZXY(x);   break;
-    case ORDER_ZYX:   ReOrderZYX(x);   break;
-  }
-  return(x);
-} 
 
 ///Modes of cells division.
 typedef enum{ 

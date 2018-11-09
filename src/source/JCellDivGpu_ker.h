@@ -36,22 +36,6 @@ class JLog2;
 /// Implements a set of functions and CUDA kernels to compute operations of the Neighbour List.
 namespace cudiv{
 
-/// Axes (X,Y,Z) order for the reordering of particles in cells. | Orden de ejes en ordenacion de particulas en celdas.
-typedef enum{ ORDER_XYZ=1,ORDER_YZX=2,ORDER_XZY=3 }TpCellOrder;  
-
-/*:
-//template <byte torder> __device__ float GetSortX(const float3 &v){ return(torder==2? v.y: v.x); }
-//template <byte torder> __device__ float GetSortY(const float3 &v){ return(torder==1? v.y: v.z); }
-//template <byte torder> __device__ float GetSortZ(const float3 &v){ return(torder==1? v.z: (torder==2? v.x: v.y)); }
-//template <byte torder> __host__ __device__ float3 GetSort(const float3 &v){ return(torder==2? make_float3(v.y,v.z,v.x): (torder==3? make_float3(v.x,v.z,v.y): v)); }
-//template <byte torder> __host__ __device__ float3 GetSort(const float3 &v){ 
-//  if(torder==2){ float3 r; r.x=v.y; r.y=v.z; r.z=v.x; return(r); }
-//  else if(torder==3){ float3 r; r.x=v.x; r.y=v.z; r.z=v.y; return(r); }
-//  else return(v);
-//}
-:*/
-
-
 inline float3 Float3(const tfloat3& v){ float3 p={v.x,v.y,v.z}; return(p); }
 inline float3 Float3(float x,float y,float z){ float3 p={x,y,z}; return(p); }
 inline tfloat3 ToTFloat3(const float3& v){ return(TFloat3(v.x,v.y,v.z)); }

@@ -42,7 +42,6 @@ protected:
   const bool Stable;
   const bool Floating;
   const byte PeriActive;
-  const TpCellOrder CellOrder;
   const TpCellMode CellMode;    ///<Mode of cell division. | Modo de division en celdas.
   const unsigned Hdiv;          ///<Value for those divided in DosH. | Valor por el que se divide a DosH.
   const float Scell,OvScell;
@@ -137,7 +136,10 @@ protected:
   unsigned CellSize(unsigned cell)const{ int2 v=CellBeginEnd(cell); return(unsigned(v.y-v.x)); }
 
 public:
-  JCellDivGpu(bool stable,bool floating,byte periactive,TpCellOrder cellorder,TpCellMode cellmode,float scell,tdouble3 mapposmin,tdouble3 mapposmax,tuint3 mapcells,unsigned casenbound,unsigned casenfixed,unsigned casenpb,JLog2 *log,std::string dirout,bool allocfullnct=true,float overmemorynp=CELLDIV_OVERMEMORYNP,word overmemorycells=CELLDIV_OVERMEMORYCELLS);
+  JCellDivGpu(bool stable,bool floating,byte periactive
+    ,TpCellMode cellmode,float scell,tdouble3 mapposmin,tdouble3 mapposmax,tuint3 mapcells
+    ,unsigned casenbound,unsigned casenfixed,unsigned casenpb,JLog2 *log,std::string dirout
+    ,bool allocfullnct=true,float overmemorynp=CELLDIV_OVERMEMORYNP,word overmemorycells=CELLDIV_OVERMEMORYCELLS);
   ~JCellDivGpu();
   void FreeMemoryGpu(){ FreeMemoryAll(); }
 

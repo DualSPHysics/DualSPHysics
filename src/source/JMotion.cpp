@@ -425,6 +425,15 @@ bool JMotion::ProcesTimeGetData(unsigned ref,bool &typesimple,tdouble3 &simplemo
 }
 
 //==============================================================================
+// Nuevo metodo para devolver resultados de ProcesTimeSimple() o ProcesTimeAce().
+// Returns data of one moving object. Returns true when the motion is active.
+//==============================================================================
+bool JMotion::ProcesTimeGetData(unsigned ref,bool &typesimple,tdouble3 &simplemov,tmatrix4d &matmov)const
+{
+  return(MotList->GetData(ref,typesimple,simplemov,matmov));
+}
+
+//==============================================================================
 // Reinicia ejecucion al timestep indicado.
 //==============================================================================
 void JMotion::ResetTime(double timestep){

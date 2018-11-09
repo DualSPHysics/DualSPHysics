@@ -28,11 +28,11 @@ using namespace std;
 //==============================================================================
 /// Constructor.
 //==============================================================================
-JCellDivGpu::JCellDivGpu(bool stable,bool floating,byte periactive,TpCellOrder cellorder
+JCellDivGpu::JCellDivGpu(bool stable,bool floating,byte periactive
   ,TpCellMode cellmode,float scell,tdouble3 mapposmin,tdouble3 mapposmax,tuint3 mapcells
   ,unsigned casenbound,unsigned casenfixed,unsigned casenpb,JLog2 *log,std::string dirout
   ,bool allocfullnct,float overmemorynp,word overmemorycells)
-  :Stable(stable),Floating(floating),PeriActive(periactive),CellOrder(cellorder)
+  :Stable(stable),Floating(floating),PeriActive(periactive)
   ,CellMode(cellmode),Hdiv(cellmode==CELLMODE_2H? 1: (cellmode==CELLMODE_H? 2: 0)),Scell(scell)
   ,OvScell(1.f/scell),Map_PosMin(mapposmin),Map_PosMax(mapposmax),Map_PosDif(mapposmax-mapposmin)
   ,Map_Cells(mapcells),CaseNbound(casenbound),CaseNfixed(casenfixed),CaseNpb(casenpb),Log(log)
