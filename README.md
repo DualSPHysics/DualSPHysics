@@ -7,7 +7,7 @@ The modifications for this branch were developed by O. Garcia-Feal and L. Hosain
 * The main modifications are pointed with the `[Temperature]` tag in the source files.
 * You can find the compiled executables in the `bin` folder.
 * There is an example case in `examples/main/99_Temperature`.
-* The slides of the presentationcan be found in `doc/Developing on DualSPHysics.pdf`
+* The slides of the presentation can be found in `doc/Developing on DualSPHysics.pdf`
 
 <h1 align="center">
   <br>
