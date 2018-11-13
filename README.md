@@ -1,3 +1,13 @@
+## Notes about this branch:
+
+The modifications for this branch were developed by O. Garcia-Feal and L. Hosain as part of the work: **"Developing on DualSPHysics: examples on code modification and extension"** presented during the *"4th DualSPHysics Users Workshop"* held at Instituto Superior Técnico from the University of Lisbon from 22nd to 24th October 2018.
+
+**This development was made for didactic purposes only.**
+
+* The main modifications are pointed with the `[Temperature]` tag in the source files.
+* You can find the compiled executables in the `bin` folder.
+* There is an example case in `examples/main/99_Temperature`.
+* The slides of the presentationcan be found in `doc/Developing on DualSPHysics.pdf`
 
 <h1 align="center">
   <br>
