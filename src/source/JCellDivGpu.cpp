@@ -16,6 +16,19 @@
  You should have received a copy of the GNU Lesser General Public License along with DualSPHysics. If not, see <http://www.gnu.org/licenses/>. 
 */
 
+/*
+This file was modified by O. Garcia-Feal and L. Hosain as part of the work:
+
+"Developing on DualSPHysics: examples on code modification and extension"
+
+Presented during the "4th DualSPHysics Users Workshop" held at Instituto Superior Técnico
+from the University of Lisbon from 22nd to 24th October 2018.
+
+This development was made for didactic purposes only.
+
+The main modifications are pointed with the [Temperature] tag.
+*/
+
 /// \file JCellDivGpu.cpp \brief Implements the class \ref JCellDivGpu.
 
 #include "JCellDivGpu.h"
@@ -319,7 +332,7 @@ void JCellDivGpu::SortDataArrays(const float4 *a,float4 *a2){
   cudiv::SortDataParticles(Nptot,pini,SortPart,a,a2);
 }
 
-// Temeprature: this is needed to sort temperature arrays in double precission.
+// [Temperature]: this is needed to sort temperature arrays in double precission.
 //==============================================================================
 /// Reorders data arrays according to SortPart (for type double).
 /// Ordena arrays de datos segun SortPart (para tipo double).

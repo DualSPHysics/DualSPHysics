@@ -16,6 +16,19 @@
  You should have received a copy of the GNU Lesser General Public License along with DualSPHysics. If not, see <http://www.gnu.org/licenses/>. 
 */
 
+/*
+This file was modified by O. Garcia-Feal and L. Hosain as part of the work:
+
+"Developing on DualSPHysics: examples on code modification and extension"
+
+Presented during the "4th DualSPHysics Users Workshop" held at Instituto Superior Técnico
+from the University of Lisbon from 22nd to 24th October 2018.
+
+This development was made for didactic purposes only.
+
+The main modifications are pointed with the [Temperature] tag.
+*/
+
 /// \file JSphGpu_ker.h \brief Declares functions and CUDA kernels for the Particle Interaction and System Update.
 
 #ifndef _JSphGpu_ker_
@@ -60,7 +73,7 @@ typedef struct{
   float agau,bgau;
   //-Ctes. of Cubic Spline kernel.
   float cubic_a1,cubic_a2,cubic_aa,cubic_a24,cubic_c1,cubic_d1,cubic_c2,cubic_odwdeltap;
-  // Temperature: constants for temperature
+  // [Temperature]: constants for temperature
   float HeatCpFluid,HeatCpBound,HeatKFluid,HeatKBound,DensityBound;
 }StCteInteraction; 
 
@@ -115,7 +128,7 @@ void Interaction_Forces(bool psingle,TpKernel tkernel,TpFtMode ftmode,bool lamsp
   ,const float *ftomassp,const tsymatrix3f *tau,tsymatrix3f *gradvel
   ,float *viscdt,float* ar,float *atemp,float3 *ace,float *delta
   ,TpShifting tshifting,float3 *shiftpos,float *shiftdetect
-  ,bool simulate2d,StKerInfo *kerinfo,JBlockSizeAuto *bsauto); // Temperature
+  ,bool simulate2d,StKerInfo *kerinfo,JBlockSizeAuto *bsauto); // [Temperature]
 
 //-Kernels for the calculation of the DEM forces.
 void Interaction_ForcesDem(bool psingle,TpCellMode cellmode,unsigned bsize

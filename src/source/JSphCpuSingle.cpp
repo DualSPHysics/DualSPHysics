@@ -16,6 +16,19 @@
  You should have received a copy of the GNU Lesser General Public License along with DualSPHysics. If not, see <http://www.gnu.org/licenses/>. 
 */
 
+/*
+  This file was modified by O. Garcia-Feal and L. Hosain as part of the work:
+  
+  "Developing on DualSPHysics: examples on code modification and extension"
+  
+  Presented during the "4th DualSPHysics Users Workshop" held at Instituto Superior Técnico 
+  from the University of Lisbon from 22nd to 24th October 2018.
+
+  This development was made for didactic purposes only.
+  
+  The main modifications are pointed with the [Temperature] tag.
+*/
+
 /// \file JSphCpuSingle.cpp \brief Implements the class \ref JSphCpuSingle.
 
 #include "JSphCpuSingle.h"
@@ -107,7 +120,7 @@ void JSphCpuSingle::ConfigDomain(){
   memcpy(Velrhopc,PartsLoaded->GetVelRhop(),sizeof(tfloat4)*Np);
 
   //==================================================
-  // Temperature: assign initial temperature
+  // [Temperature]: assign initial temperature
   //==================================================
   for (unsigned p = 0; p<Np; p++) 
     Tempc[p] = HeatTempFluid;
@@ -257,7 +270,7 @@ void JSphCpuSingle::PeriodicDuplicatePos(unsigned pnew,unsigned pcopy,bool inver
 //==============================================================================
 void JSphCpuSingle::PeriodicDuplicateVerlet(unsigned np,unsigned pini,tuint3 cellmax,tdouble3 perinc,const unsigned *listp
   ,unsigned *idp,typecode *code,unsigned *dcell,tdouble3 *pos,tfloat4 *velrhop,double *temp,tsymatrix3f *spstau,tfloat4 *velrhopm1
-  ,double *tempm1)const  // Temperature: add temp and tempm1 params
+  ,double *tempm1)const  // [Temperature]: add temp and tempm1 params
 {
   const int n=int(np);
   #ifdef OMP_USE
@@ -274,8 +287,8 @@ void JSphCpuSingle::PeriodicDuplicateVerlet(unsigned np,unsigned pini,tuint3 cel
     code[pnew]=CODE_SetPeriodic(code[pcopy]);
     velrhop[pnew]=velrhop[pcopy];
     velrhopm1[pnew]=velrhopm1[pcopy];
-    temp[pnew] = temp[pcopy]; // Temperature: copy
-	tempm1[pnew] = tempm1[pcopy]; // Temperature: copy
+    temp[pnew] = temp[pcopy]; // [Temperature]: copy
+	tempm1[pnew] = tempm1[pcopy]; // [Temperature]: copy
     if(spstau)spstau[pnew]=spstau[pcopy];
   }
 }
@@ -291,7 +304,7 @@ void JSphCpuSingle::PeriodicDuplicateVerlet(unsigned np,unsigned pini,tuint3 cel
 //==============================================================================
 void JSphCpuSingle::PeriodicDuplicateSymplectic(unsigned np,unsigned pini,tuint3 cellmax,tdouble3 perinc,const unsigned *listp
   ,unsigned *idp,typecode *code,unsigned *dcell,tdouble3 *pos,tfloat4 *velrhop, double *temp,tsymatrix3f *spstau,tdouble3 *pospre
-  ,tfloat4 *velrhoppre, double *temppre)const  // Temperature: add temp and temppre params
+  ,tfloat4 *velrhoppre, double *temppre)const  // [Temperature]: add temp and temppre params
 {
   const int n=int(np);
   #ifdef OMP_USE
@@ -307,10 +320,10 @@ void JSphCpuSingle::PeriodicDuplicateSymplectic(unsigned np,unsigned pini,tuint3
     idp[pnew]=idp[pcopy];
     code[pnew]=CODE_SetPeriodic(code[pcopy]);
     velrhop[pnew]=velrhop[pcopy];
-    temp[pnew] = temp[pcopy]; // Temperature
+    temp[pnew] = temp[pcopy]; // [Temperature]
     if(pospre)pospre[pnew]=pospre[pcopy];
     if(velrhoppre)velrhoppre[pnew]=velrhoppre[pcopy];
-    if(temppre)temppre[pnew]=temppre[pcopy]; // Temperature
+    if(temppre)temppre[pnew]=temppre[pcopy]; // [Temperature]
     if(spstau)spstau[pnew]=spstau[pcopy];
   }
 }
@@ -420,16 +433,16 @@ void JSphCpuSingle::RunCellDivide(bool updateperiodic){
   CellDivSingle->SortArray(Dcellc);
   CellDivSingle->SortArray(Posc);
   CellDivSingle->SortArray(Velrhopc);
-  CellDivSingle->SortArray(Tempc);  // Temperature: sort Tempc array.
+  CellDivSingle->SortArray(Tempc);  // [Temperature]: sort Tempc array.
   if(TStep==STEP_Verlet){
     CellDivSingle->SortArray(VelrhopM1c);
-	CellDivSingle->SortArray(TempM1c); // Temperature: sort TempM1c array.
+	CellDivSingle->SortArray(TempM1c); // [Temperature]: sort TempM1c array.
   }
   else if(TStep==STEP_Symplectic && (PosPrec || VelrhopPrec)){//-In reality, this is only necessary in divide for corrector, not in predictor??? | En realidad solo es necesario en el divide del corrector, no en el predictor???
     if(!PosPrec || !VelrhopPrec)RunException(met,"Symplectic data is invalid.") ;
     CellDivSingle->SortArray(PosPrec);
     CellDivSingle->SortArray(VelrhopPrec);
-	CellDivSingle->SortArray(TempPrec); // Temperature: sort TempPrec array.
+	CellDivSingle->SortArray(TempPrec); // [Temperature]: sort TempPrec array.
   }
   if(TVisco==VISCO_LaminarSPS)CellDivSingle->SortArray(SpsTauc);
 
@@ -454,16 +467,16 @@ void JSphCpuSingle::RunCellDivide(bool updateperiodic){
     tdouble3* pos=ArraysCpu->ReserveDouble3();
     tfloat3* vel=ArraysCpu->ReserveFloat3();
     float* rhop=ArraysCpu->ReserveFloat();
-	double* temp=ArraysCpu->ReserveDouble(); // Temperature: memory allocation (no needed)
+	double* temp=ArraysCpu->ReserveDouble(); // [Temperature]: memory allocation (no needed)
     typecode* code=ArraysCpu->ReserveTypeCode();
 
-    unsigned num=GetParticlesData(npfout,Np,false,idp,pos,vel,rhop,temp,code); // Temperature: add temp param.
+    unsigned num=GetParticlesData(npfout,Np,false,idp,pos,vel,rhop,temp,code); // [Temperature]: add temp param.
     AddParticlesOut(npfout,idp,pos,vel,rhop,code);
     ArraysCpu->Free(idp);
     ArraysCpu->Free(pos);
     ArraysCpu->Free(vel);
     ArraysCpu->Free(rhop);
-	ArraysCpu->Free(temp); // Temperature: free memory
+	ArraysCpu->Free(temp); // [Temperature]: free memory
     ArraysCpu->Free(code);
   }
   TmcStop(Timers,TMC_NlOutCheck);
@@ -481,10 +494,10 @@ void JSphCpuSingle::AbortBoundOut(){
   tdouble3* pos=ArraysCpu->ReserveDouble3();
   tfloat3* vel=ArraysCpu->ReserveFloat3();
   float* rhop=ArraysCpu->ReserveFloat();
-  double *temp= ArraysCpu->ReserveDouble();  // Temperature: reserve memory.
+  double *temp= ArraysCpu->ReserveDouble();  // [Temperature]: reserve memory.
   typecode* code=ArraysCpu->ReserveTypeCode();
 
-  GetParticlesData(nboundout,Np,false,idp,pos,vel,rhop,temp,code); // Temperature: add temp param.
+  GetParticlesData(nboundout,Np,false,idp,pos,vel,rhop,temp,code); // [Temperature]: add temp param.
   //-Shows excluded particles information and aborts execution.
   JSph::AbortBoundOut(nboundout,idp,pos,vel,rhop,code);
 }
@@ -953,19 +966,15 @@ void JSphCpuSingle::SaveData(){
   tdouble3 *pos=NULL;
   tfloat3 *vel=NULL;
   float *rhop=NULL;
-  double *temp = NULL;  // Temperature: temporal array.
+  double *temp = NULL;  // [Temperature]: temporal array.
   if(save){
     //-Assign memory and collect particle values. | Asigna memoria y recupera datos de las particulas.
     idp=ArraysCpu->ReserveUint();
     pos=ArraysCpu->ReserveDouble3();
     vel=ArraysCpu->ReserveFloat3();
     rhop=ArraysCpu->ReserveFloat();
-<<<<<<< HEAD
-	temp = ArraysCpu->ReserveDouble();  // Temperature: allocate memory.
-    unsigned npnormal=GetParticlesData(Np,0,true,PeriActive!=0,idp,pos,vel,rhop,temp,NULL); // Temperature: new temp param
-=======
-    unsigned npnormal=GetParticlesData(Np,0,PeriActive!=0,idp,pos,vel,rhop,NULL);
->>>>>>> master
+	temp = ArraysCpu->ReserveDouble();  // [Temperature]: allocate memory.
+    unsigned npnormal=GetParticlesData(Np,0,PeriActive!=0,idp,pos,vel,rhop,temp,NULL); // [Temperature]: new temp param
     if(npnormal!=npsave)RunException("SaveData","The number of particles is invalid.");
   }
   //-Gather additional information. | Reune informacion adicional.
@@ -984,19 +993,14 @@ void JSphCpuSingle::SaveData(){
     infoplus.timesim=TimerSim.GetElapsedTimeD()/1000.;
   }
   //-Stores particle data. | Graba datos de particulas.
-<<<<<<< HEAD
-  const tdouble3 vdom[2]={OrderDecode(CellDivSingle->GetDomainLimits(true)),OrderDecode(CellDivSingle->GetDomainLimits(false))};
-  JSph::SaveData(npsave,idp,pos,vel,rhop,temp,1,vdom,&infoplus); // Temperature: new temp param
-=======
   const tdouble3 vdom[2]={CellDivSingle->GetDomainLimits(true),CellDivSingle->GetDomainLimits(false)};
-  JSph::SaveData(npsave,idp,pos,vel,rhop,1,vdom,&infoplus);
->>>>>>> master
+  JSph::SaveData(npsave,idp,pos,vel,rhop,temp,1,vdom,&infoplus); // [Temperature]: new temp param
   //-Free auxiliary memory for particle data. | Libera memoria auxiliar para datos de particulas.
   ArraysCpu->Free(idp);
   ArraysCpu->Free(pos);
   ArraysCpu->Free(vel);
   ArraysCpu->Free(rhop);  
-  ArraysCpu->Free(temp);  // Temperature: free memory.
+  ArraysCpu->Free(temp);  // [Temperature]: free memory.
   TmcStop(Timers,TMC_SuSavePart);
 }
 

@@ -16,6 +16,19 @@
  You should have received a copy of the GNU Lesser General Public License along with DualSPHysics. If not, see <http://www.gnu.org/licenses/>. 
 */
 
+/*
+This file was modified by O. Garcia-Feal and L. Hosain as part of the work:
+
+"Developing on DualSPHysics: examples on code modification and extension"
+
+Presented during the "4th DualSPHysics Users Workshop" held at Instituto Superior Técnico
+from the University of Lisbon from 22nd to 24th October 2018.
+
+This development was made for didactic purposes only.
+
+The main modifications are pointed with the [Temperature] tag.
+*/
+
 /// \file JCellDivCpu.cpp \brief Implements the class \ref JCellDivCpu.
 
 #include "JCellDivCpu.h"
@@ -120,7 +133,7 @@ void JCellDivCpu::SetMemoryVSort(byte *vsort){
   VSortFloat=(float*)VSort;    VSortFloat3=(tfloat3*)VSort;
   VSortFloat4=(tfloat4*)VSort; VSortDouble3=(tdouble3*)VSort;
   VSortSymmatrix3f=(tsymatrix3f*)VSort;
-  VSortDouble = (double*)VSort; // Temperature: add support for double arrays.
+  VSortDouble = (double*)VSort; // [Temperature]: add support for double arrays.
 }
 
 //==============================================================================
@@ -391,7 +404,7 @@ void JCellDivCpu::SortArray(float *vec){
   memcpy(vec+ini,VSortFloat+ini,sizeof(float)*(n-ini));
 }
 
-// Temperature: this is needed to sort temperature arrays in double precission.
+// [Temperature]: this is needed to sort temperature arrays in double precission.
 //==============================================================================
 /// Reorder values of all particles (for type float).
 /// Reordena datos de todas las particulas (para tipo float).

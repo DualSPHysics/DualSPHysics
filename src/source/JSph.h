@@ -16,6 +16,19 @@
  You should have received a copy of the GNU Lesser General Public License along with DualSPHysics. If not, see <http://www.gnu.org/licenses/>. 
 */
 
+/*
+This file was modified by O. Garcia-Feal and L. Hosain as part of the work:
+
+"Developing on DualSPHysics: examples on code modification and extension"
+
+Presented during the "4th DualSPHysics Users Workshop" held at Instituto Superior Técnico
+from the University of Lisbon from 22nd to 24th October 2018.
+
+This development was made for didactic purposes only.
+
+The main modifications are pointed with the [Temperature] tag.
+*/
+
 //:#############################################################################
 //:# Cambios:
 //:# =========
@@ -208,7 +221,7 @@ protected:
   float SpsBlin;             ///<Blin constant used in the SPS turbulence model.
 
  //==================================================
- // Temperature configuration variables
+ // [Temperature]: Temperature configuration variables
  //==================================================
   bool HeatTransfer;   ///< Enable heat transfer
   float HeatCpFluid;   ///< Specific heat capacity of fluid particles
@@ -386,8 +399,8 @@ protected:
   void AbortBoundOut(unsigned nout,const unsigned *idp,const tdouble3 *pos,const tfloat3 *vel,const float *rhop,const typecode *code);
 
   tfloat3* GetPointerDataFloat3(unsigned n,const tdouble3* v)const;
-  void SavePartData(unsigned npok,unsigned nout,const unsigned *idp,const tdouble3 *pos,const tfloat3 *vel,const float *rhop,const double *temp,unsigned ndom,const tdouble3 *vdom,const StInfoPartPlus *infoplus); // Temperature: add temp param
-  void SaveData(unsigned npok,const unsigned *idp,const tdouble3 *pos,const tfloat3 *vel,const float *rhop,const double *temp,unsigned ndom,const tdouble3 *vdom,const StInfoPartPlus *infoplus); // Temperature: add temp param
+  void SavePartData(unsigned npok,unsigned nout,const unsigned *idp,const tdouble3 *pos,const tfloat3 *vel,const float *rhop,const double *temp,unsigned ndom,const tdouble3 *vdom,const StInfoPartPlus *infoplus); // [Temperature]: add temp param
+  void SaveData(unsigned npok,const unsigned *idp,const tdouble3 *pos,const tfloat3 *vel,const float *rhop,const double *temp,unsigned ndom,const tdouble3 *vdom,const StInfoPartPlus *infoplus); // [Temperature]: add temp param
   void SaveDomainVtk(unsigned ndom,const tdouble3 *vdom)const;
   void SaveInitialDomainVtk()const;
   unsigned SaveMapCellsVtkSize()const;

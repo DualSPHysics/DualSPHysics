@@ -16,6 +16,19 @@
  You should have received a copy of the GNU Lesser General Public License along with DualSPHysics. If not, see <http://www.gnu.org/licenses/>. 
 */
 
+/*
+This file was modified by O. Garcia-Feal and L. Hosain as part of the work:
+
+"Developing on DualSPHysics: examples on code modification and extension"
+
+Presented during the "4th DualSPHysics Users Workshop" held at Instituto Superior Técnico
+from the University of Lisbon from 22nd to 24th October 2018.
+
+This development was made for didactic purposes only.
+
+The main modifications are pointed with the [Temperature] tag.
+*/
+
 /// \file JSphGpu.h \brief Declares the class \ref JSphGpu.
 
 #ifndef _JSphGpu_
@@ -90,14 +103,14 @@ protected:
   tdouble2 *Posxy;
   double *Posz;
   tfloat4 *Velrhop;
-  double *Temp; ///< Temperature
+  double *Temp; ///< [Temperature]
 
   //-Auxiliary variables for the conversion (size=ParticlesSize).
   //-Variables auxiliares para conversion (size=ParticlesSize).
   tdouble3 *AuxPos;
   tfloat3 *AuxVel; 
   float *AuxRhop;
-  double *AuxTemp; ///< Temperature
+  double *AuxTemp; ///< [Temperature]
 
   unsigned GpuParticlesSize;  ///<Number of particles for which GPU memory was allocated. | Numero de particulas para las cuales se reservo memoria en gpu.
   llong MemGpuParticles;      ///<Allocated GPU memory for arrays with particle data. | Mermoria reservada para vectores de datos de particulas.
@@ -117,17 +130,17 @@ protected:
   double2 *Posxyg;
   double *Poszg;
   float4 *Velrhopg;
-  double *Tempg; ///< Temperature
+  double *Tempg; ///< [Temperature]
     
   //-Variables for compute step: VERLET.
   float4 *VelrhopM1g;  ///<Verlet: in order to keep previous values. | Verlet: para guardar valores anteriores.
-  double *TempM1g; // Temperature
+  double *TempM1g; // [Temperature]
 
   //-Variables for compute step: SYMPLECTIC.
   double2 *PosxyPreg;  ///<Sympletic: in order to keep previous values. | Sympletic: para guardar valores en predictor.
   double *PoszPreg;
   float4 *VelrhopPreg;
-  double *TempPreg; /// Temperature
+  double *TempPreg; /// [Temperature]
 
   //-Variables for floating bodies.
   unsigned *FtRidpg;      ///<Identifier to access to the particles of the floating object [CaseNfloat].
@@ -158,7 +171,7 @@ protected:
   float *ViscDtg;
   float3 *Aceg;      ///<Accumulates acceleration of the particles. | Acumula fuerzas de interaccion.
   float *Arg; 
-  float *Atempg; // Temperature
+  float *Atempg; // [Temperature]
   float *Deltag;     ///<Accumulates adjustment of Delta-SPH with DELTA_DynamicExt. | Acumula ajuste de Delta-SPH con DELTA_DynamicExt.
 
   float3 *ShiftPosg;    ///<Particle displacement using Shifting.

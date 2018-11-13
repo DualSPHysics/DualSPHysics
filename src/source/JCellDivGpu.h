@@ -16,6 +16,19 @@
  You should have received a copy of the GNU Lesser General Public License along with DualSPHysics. If not, see <http://www.gnu.org/licenses/>. 
 */
 
+/*
+This file was modified by O. Garcia-Feal and L. Hosain as part of the work:
+
+"Developing on DualSPHysics: examples on code modification and extension"
+
+Presented during the "4th DualSPHysics Users Workshop" held at Instituto Superior Técnico
+from the University of Lisbon from 22nd to 24th October 2018.
+
+This development was made for didactic purposes only.
+
+The main modifications are pointed with the [Temperature] tag.
+*/
+
 /// \file JCellDivGpu.h \brief Declares the class \ref JCellDivGpu.
 
 #ifndef _JCellDivGpu_
@@ -147,7 +160,7 @@ public:
 
   void SortBasicArrays(const unsigned *idp,const typecode *code,const unsigned *dcell,const double2 *posxy,const double *posz,const float4 *velrhop,unsigned *idp2,typecode *code2,unsigned *dcell2,double2 *posxy2,double *posz2,float4 *velrhop2);
   void SortDataArrays(const float4 *a,float4 *a2);
-  void SortDataArrays(const double *a, double *a2);
+  void SortDataArrays(const double *a, double *a2); // [Temperature]: this is needed to sort temperature arrays in double precission.
   void SortDataArrays(const float *a,const float *b,float *a2,float *b2);
   void SortDataArrays(const double2 *a,const double *b,const float4 *c,double2 *a2,double *b2,float4 *c2);
   void SortDataArrays(const tsymatrix3f *a,tsymatrix3f *a2);

@@ -16,6 +16,19 @@
  You should have received a copy of the GNU Lesser General Public License along with DualSPHysics. If not, see <http://www.gnu.org/licenses/>. 
 */
 
+/*
+This file was modified by O. Garcia-Feal and L. Hosain as part of the work:
+
+"Developing on DualSPHysics: examples on code modification and extension"
+
+Presented during the "4th DualSPHysics Users Workshop" held at Instituto Superior Técnico
+from the University of Lisbon from 22nd to 24th October 2018.
+
+This development was made for didactic purposes only.
+
+The main modifications are pointed with the [Temperature] tag.
+*/
+
 /// \file JSphCpu.cpp \brief Implements the class \ref JSphCpu.
 
 #include "JSphCpu.h"
@@ -82,7 +95,7 @@ void JSphCpu::InitVars(){
   FtoForcesRes=NULL;
 
   //==================================================
-  // Initialization of Temperature computation vars
+  // [Temperature] Initialization of Temperature computation vars
   //==================================================
   Tempc = NULL;
   TempM1c = NULL;
@@ -161,7 +174,7 @@ void JSphCpu::AllocCpuMemoryParticles(unsigned np,float over){
   ArraysCpu->AddArrayCount(JArraysCpu::SIZE_16B,1); //-velrhop
 
   //========================================================
-  // Temperature: AddArrayCount for Tempc & Atempc variable
+  // [Temperature]: AddArrayCount for Tempc & Atempc variable
   //========================================================
   ArraysCpu->AddArrayCount(JArraysCpu::SIZE_8B, 2); // Tempc
   ArraysCpu->AddArrayCount(JArraysCpu::SIZE_4B, 1); // Atempc
@@ -171,12 +184,12 @@ void JSphCpu::AllocCpuMemoryParticles(unsigned np,float over){
   if(Psingle)ArraysCpu->AddArrayCount(JArraysCpu::SIZE_12B,1); //-pspos
   if(TStep==STEP_Verlet){
     ArraysCpu->AddArrayCount(JArraysCpu::SIZE_16B,1); //-velrhopm1
-	ArraysCpu->AddArrayCount(JArraysCpu::SIZE_8B, 1); // Temperature: TempM1
+	ArraysCpu->AddArrayCount(JArraysCpu::SIZE_8B, 1); // [Temperature]: TempM1
   }
   else if(TStep==STEP_Symplectic){
     ArraysCpu->AddArrayCount(JArraysCpu::SIZE_24B,1); //-pospre
     ArraysCpu->AddArrayCount(JArraysCpu::SIZE_16B,1); //-velrhoppre
-	ArraysCpu->AddArrayCount(JArraysCpu::SIZE_8B, 1); // Temperature: TempPrec
+	ArraysCpu->AddArrayCount(JArraysCpu::SIZE_8B, 1); // [Temperature]: TempPrec
   }
   if(TVisco==VISCO_LaminarSPS){     
     ArraysCpu->AddArrayCount(JArraysCpu::SIZE_24B,1); //-SpsTau,SpsGradvel
@@ -206,7 +219,7 @@ void JSphCpu::ResizeCpuMemoryParticles(unsigned npnew){
   tsymatrix3f *spstau    =SaveArrayCpu(Np,SpsTauc);
 
   //==========================================================
-  // Temperature: Save array for temperature related variables
+  // [Temperature]: Save array for temperature related variables
   //==========================================================
   double *temp = SaveArrayCpu(Np, Tempc);
   double *tempm1 = SaveArrayCpu(Np, TempM1c);
@@ -225,7 +238,7 @@ void JSphCpu::ResizeCpuMemoryParticles(unsigned npnew){
   ArraysCpu->Free(SpsTauc);
 
   //=============================================
-  // Temperature: Free all the temperature memory
+  // [Temperature]: Free all the temperature memory
   //=============================================
   ArraysCpu->Free(Tempc);
   ArraysCpu->Free(TempM1c);
@@ -248,7 +261,7 @@ void JSphCpu::ResizeCpuMemoryParticles(unsigned npnew){
   if(spstau)    SpsTauc    =ArraysCpu->ReserveSymatrix3f();
 
   //================================================
-  // Temperature: reserve memory
+  // [Temperature]: reserve memory
   //================================================
   Tempc = ArraysCpu->ReserveDouble();
   if (tempm1) TempM1c = ArraysCpu->ReserveDouble();
@@ -267,7 +280,7 @@ void JSphCpu::ResizeCpuMemoryParticles(unsigned npnew){
   RestoreArrayCpu(Np,spstau,SpsTauc);
 
   //================================================
-  // Temperature: Restore array for Tempc
+  // [Temperature]: Restore array for Tempc
   //================================================
   RestoreArrayCpu(Np, temp, Tempc);
   RestoreArrayCpu(Np, tempm1, TempM1c);
@@ -314,10 +327,10 @@ void JSphCpu::ReserveBasicArraysCpu(){
   Dcellc=ArraysCpu->ReserveUint();
   Posc=ArraysCpu->ReserveDouble3();
   Velrhopc=ArraysCpu->ReserveFloat4();
-  Tempc = ArraysCpu->ReserveDouble();  // Temperature
+  Tempc = ArraysCpu->ReserveDouble();  // [Temperature]
   if (TStep == STEP_Verlet) {
 	  VelrhopM1c = ArraysCpu->ReserveFloat4();
-	  TempM1c = ArraysCpu->ReserveDouble(); // Temperature
+	  TempM1c = ArraysCpu->ReserveDouble(); // [Temperature]
   }
   if(TVisco==VISCO_LaminarSPS)SpsTauc=ArraysCpu->ReserveSymatrix3f();
 }
@@ -354,7 +367,7 @@ void JSphCpu::PrintAllocMemory(llong mcpu)const{
 /// - onlynormal: Solo se queda con las normales, elimina las particulas periodicas.
 //==============================================================================
 unsigned JSphCpu::GetParticlesData(unsigned n,unsigned pini,bool onlynormal
-  ,unsigned *idp,tdouble3 *pos,tfloat3 *vel,float *rhop,double *temp,typecode *code) // Temperature: add temperature parameter
+  ,unsigned *idp,tdouble3 *pos,tfloat3 *vel,float *rhop,double *temp,typecode *code) // [Temperature]: add temperature parameter
 {
   const char met[]="GetParticlesData";
   unsigned num=n;
@@ -373,7 +386,7 @@ unsigned JSphCpu::GetParticlesData(unsigned n,unsigned pini,bool onlynormal
     if(vel) for(unsigned p=0;p<n;p++){ tfloat4 vr=Velrhopc[p+pini]; vel[p]=TFloat3(vr.x,vr.y,vr.z); }
     if(rhop)for(unsigned p=0;p<n;p++)rhop[p]=Velrhopc[p+pini].w;
   }
-  if(temp)memcpy(temp, Tempc + pini, sizeof(double)*n);  // Temperature: copy values from Tempc.
+  if(temp)memcpy(temp, Tempc + pini, sizeof(double)*n);  // [Temperature]: copy values from Tempc.
   //-Eliminate non-normal particles (periodic & others). | Elimina particulas no normales (periodicas y otras).
   if(onlynormal){
     if(!idp || !pos || !vel || !rhop)RunException(met,"Pointers without data.");
@@ -391,7 +404,7 @@ unsigned JSphCpu::GetParticlesData(unsigned n,unsigned pini,bool onlynormal
         pos[pdel]  =pos[p];
         vel[pdel]  =vel[p];
         rhop[pdel] =rhop[p];
-		    temp[pdel] = temp[p];  // Temperature
+		temp[pdel] = temp[p];  // [Temperature]
         code2[pdel]=code2[p];
       }
       if(!normal)ndel++;
@@ -457,7 +470,7 @@ void JSphCpu::InitRunCpu(){
 
   if(TStep==STEP_Verlet){
     memcpy(VelrhopM1c,Velrhopc,sizeof(tfloat4)*Np);
-    memcpy(TempM1c, Tempc, sizeof(double)*Np); // Temperature: Copy TempM1c and Tempc
+    memcpy(TempM1c, Tempc, sizeof(double)*Np); // [Temperature]: Copy TempM1c and Tempc
   }
   if(TVisco==VISCO_LaminarSPS)memset(SpsTauc,0,sizeof(tsymatrix3f)*Np);
   if(CaseNfloat)InitFloating();
@@ -529,7 +542,7 @@ void JSphCpu::PreInteractionVars_Forces(unsigned np,unsigned npb){
   if(ShiftDetectc)memset(ShiftDetectc,0,sizeof(float)*np);           //ShiftDetectc[]=0
   memset(Acec,0,sizeof(tfloat3)*npb);                                //Acec[]=(0,0,0) for bound / para bound
   for(unsigned p=npb;p<np;p++)Acec[p]=Gravity;                       //Acec[]=Gravity for fluid / para fluid
-  memset(Atempc, 0, sizeof(float)*np);                               //Temperature: Atempc[]=0
+  memset(Atempc, 0, sizeof(float)*np);                               //[Temperature]: Atempc[]=0
   if(SpsGradvelc)memset(SpsGradvelc+npb,0,sizeof(tsymatrix3f)*npf);  //SpsGradvelc[]=(0,0,0,0,0,0).
 
   //-Apply the extra forces to the correct particle sets.
@@ -555,7 +568,7 @@ void JSphCpu::PreInteraction_Forces(){
   //-Assign memory.
   Arc=ArraysCpu->ReserveFloat();
   Acec=ArraysCpu->ReserveFloat3();
-  Atempc=ArraysCpu->ReserveFloat(); // Temperature: reserve memory for Atempc
+  Atempc=ArraysCpu->ReserveFloat(); // [Temperature]: reserve memory for Atempc
 
   if(TDeltaSph==DELTA_DynamicExt)Deltac=ArraysCpu->ReserveFloat();
   if(TShifting!=SHIFT_None){
@@ -650,7 +663,7 @@ void JSphCpu::PosInteraction_Forces(){
   ArraysCpu->Free(PsPosc);       PsPosc=NULL;
   ArraysCpu->Free(SpsGradvelc);  SpsGradvelc=NULL;
 
-  ArraysCpu->Free(Atempc);       Atempc = NULL; // Temperature: free Atempc and reset the pointer to NULL
+  ArraysCpu->Free(Atempc);       Atempc = NULL; // [Temperature]: free Atempc and reset the pointer to NULL
 }
 
 //==============================================================================
@@ -658,7 +671,7 @@ void JSphCpu::PosInteraction_Forces(){
 /// Devuelve valores de kernel Wendland, gradients: frx, fry y frz.
 //==============================================================================
 void JSphCpu::GetKernelWendland(float rr2,float drx,float dry,float drz
-  ,float &frx,float &fry,float &frz,float &fabc)const // Temperature
+  ,float &frx,float &fry,float &frz,float &fabc)const // [Temperature]
 {
   const float rad=sqrt(rr2);
   const float qq=rad/H;
@@ -666,7 +679,7 @@ void JSphCpu::GetKernelWendland(float rr2,float drx,float dry,float drz
   const float wqq1=1.f-0.5f*qq;
   const float fac=Bwen*qq*wqq1*wqq1*wqq1/rad; //-Kernel derivative (divided by rad).
   frx=fac*drx; fry=fac*dry; frz=fac*drz;
-  fabc=fac; // Temperature
+  fabc=fac; // [Temperature]
 }
 
 //==============================================================================
@@ -674,7 +687,7 @@ void JSphCpu::GetKernelWendland(float rr2,float drx,float dry,float drz
 /// Devuelve valores de kernel Gaussian, gradients: frx, fry y frz.
 //==============================================================================
 void JSphCpu::GetKernelGaussian(float rr2,float drx,float dry,float drz
-  ,float &frx,float &fry,float &frz,float &fabc)const // Temperature
+  ,float &frx,float &fry,float &frz,float &fabc)const // [Temperature]
 {
   const float rad=sqrt(rr2);
   const float qq=rad/H;
@@ -683,7 +696,7 @@ void JSphCpu::GetKernelGaussian(float rr2,float drx,float dry,float drz
   //const float wab=Agau*expf(qqexp); //-Kernel.
   const float fac=Bgau*qq*expf(qqexp)/rad; //-Kernel derivative (divided by rad).
   frx=fac*drx; fry=fac*dry; frz=fac*drz;
-  fabc=fac; // Temperature
+  fabc=fac; // [Temperature]
 }
 
 //==============================================================================
@@ -691,7 +704,7 @@ void JSphCpu::GetKernelGaussian(float rr2,float drx,float dry,float drz
 /// Devuelve valores de kernel Cubic sin correccion tensil, gradients: frx, fry y frz.
 //==============================================================================
 void JSphCpu::GetKernelCubic(float rr2,float drx,float dry,float drz
-  ,float &frx,float &fry,float &frz,float &fabc)const // Temperature
+  ,float &frx,float &fry,float &frz,float &fabc)const // [Temperature]
 {
   const float rad=sqrt(rr2);
   const float qq=rad/H;
@@ -708,7 +721,7 @@ void JSphCpu::GetKernelCubic(float rr2,float drx,float dry,float drz
   }
   //-Gradients.
   frx=fac*drx; fry=fac*dry; frz=fac*drz;
-  fabc=fac; // Temperature
+  fabc=fac; // [Temperature]
 }
 
 //==============================================================================
@@ -767,7 +780,7 @@ template<bool psingle,TpKernel tker,TpFtMode ftmode> void JSphCpu::InteractionFo
   (unsigned n,unsigned pinit,tint4 nc,int hdiv,unsigned cellinitial
   ,const unsigned *beginendcell,tint3 cellzero,const unsigned *dcell
   ,const tdouble3 *pos,const tfloat3 *pspos,const tfloat4 *velrhop,const double *temp,const typecode *code,const unsigned *idp
-  ,float &viscdt,float *ar, float *atemp)const // Temperature: add temp and atemp params.
+  ,float &viscdt,float *ar, float *atemp)const // [Temperature]: add temp and atemp params.
 {
   //-Initialize viscth to calculate max viscdt with OpenMP. | Inicializa viscth para calcular visdt maximo con OpenMP.
   float viscth[OMP_MAXTHREADS*OMP_STRIDE];
@@ -779,14 +792,14 @@ template<bool psingle,TpKernel tker,TpFtMode ftmode> void JSphCpu::InteractionFo
   #endif
   for(int p1=int(pinit);p1<pfin;p1++){
     float visc=0,arp1=0;
-	float atempp1 = 0; // Temperature: initialize temp derivative to 0 for particle p1.
+	float atempp1 = 0; // [Temperature]: initialize temp derivative to 0 for particle p1.
 
     //-Load data of particle p1. | Carga datos de particula p1.
     const tfloat3 velp1=TFloat3(velrhop[p1].x,velrhop[p1].y,velrhop[p1].z);
     const tfloat3 psposp1=(psingle? pspos[p1]: TFloat3(0));
     const tdouble3 posp1=(psingle? TDouble3(0): pos[p1]);
-	const double tempp1 = temp[p1]; // Temperature: load p1 temperature.
-	const float rhopp1 = DensityBound; // Temperature: load density for boundary.
+	const double tempp1 = temp[p1]; // [Temperature]: load p1 temperature.
+	const float rhopp1 = DensityBound; // [Temperature]: load density for boundary.
 
     //-Obtain limits of interaction. | Obtiene limites de interaccion.
     int cxini,cxfin,yini,yfin,zini,zfin;
@@ -829,9 +842,9 @@ template<bool psingle,TpKernel tker,TpFtMode ftmode> void JSphCpu::InteractionFo
               if(compute)arp1+=massp2*(dvx*frx+dvy*fry+dvz*frz);
 
 			        //==================================================
-			        // Temperature: compute temperature derivative
+			        // [Temperature]: compute temperature derivative
 			        //==================================================
-			        const double dtemp = tempp1 - temp[p2]; // Temperature: (dtemp=tempp1-tempp2)
+			        const double dtemp = tempp1 - temp[p2]; // [Temperature]: (dtemp=tempp1-tempp2)
 			        const float tempConst = (4 * massp2*HeatKFluid*HeatKBound) / (HeatCpBound*rhopp1*velrhop[p2].w*(HeatKFluid + HeatKBound));
 			        atempp1 += float(tempConst*dtemp*fabc);
 			        //==================================================
@@ -849,7 +862,7 @@ template<bool psingle,TpKernel tker,TpFtMode ftmode> void JSphCpu::InteractionFo
     //-Sum results together. | Almacena resultados.
     if(arp1||visc){
       ar[p1]+=arp1;
-	  atemp[p1] += atempp1; // Temperature: sum partial temperature.
+	  atemp[p1] += atempp1; // [Temperature]: sum partial temperature.
       const int th=omp_get_thread_num();
       if(visc>viscth[th*OMP_STRIDE])viscth[th*OMP_STRIDE]=visc;
     }
@@ -869,7 +882,7 @@ template<bool psingle,TpKernel tker,TpFtMode ftmode,bool lamsps,TpDeltaSph tdelt
   ,const tdouble3 *pos,const tfloat3 *pspos,const tfloat4 *velrhop,const double *temp,const typecode *code,const unsigned *idp
   ,const float *press 
   ,float &viscdt,float *ar,tfloat3 *ace,float *atemp,float *delta
-  ,TpShifting tshifting,tfloat3 *shiftpos,float *shiftdetect)const  // Temperature: add temp and atemp params.
+  ,TpShifting tshifting,tfloat3 *shiftpos,float *shiftdetect)const  // [Temperature]: add temp and atemp params.
 {
   const bool boundp2=(!cellinitial); //-Interaction with type boundary (Bound). | Interaccion con Bound.
   //-Initialize viscth to calculate viscdt maximo con OpenMP. | Inicializa viscth para calcular visdt maximo con OpenMP.
@@ -887,7 +900,7 @@ template<bool psingle,TpKernel tker,TpFtMode ftmode,bool lamsps,TpDeltaSph tdelt
     tfloat3 shiftposp1=TFloat3(0);
     float shiftdetectp1=0;
 
-	float atempp1 = 0.; // Temperature: declare local variable.
+	float atempp1 = 0.; // [Temperature]: declare local variable.
 
     //-Obtain data of particle p1 in case of floating objects. | Obtiene datos de particula p1 en caso de existir floatings.
     bool ftp1=false;     //-Indicate if it is floating. | Indica si es floating.
@@ -907,7 +920,7 @@ template<bool psingle,TpKernel tker,TpFtMode ftmode,bool lamsps,TpDeltaSph tdelt
     const float pressp1=press[p1];
     const tsymatrix3f taup1=(lamsps? tau[p1]: gradvelp1);
 
-	const double tempp1 = temp[p1]; // Temperature: load temperature of particle p1.
+	const double tempp1 = temp[p1]; // [Temperature]: load temperature of particle p1.
 
     //-Obtain interaction limits.
     int cxini,cxfin,yini,yfin,zini,zfin;
@@ -930,10 +943,10 @@ template<bool psingle,TpKernel tker,TpFtMode ftmode,bool lamsps,TpDeltaSph tdelt
           const float rr2=drx*drx+dry*dry+drz*drz;
           if(rr2<=Fourh2 && rr2>=ALMOSTZERO){
             //-Cubic Spline, Wendland or Gaussian kernel.
-            float frx,fry,frz,fabc; // Temperature: fabc
-            if(tker==KERNEL_Wendland)GetKernelWendland(rr2,drx,dry,drz,frx,fry,frz,fabc); // Temperature: fabc
-            else if(tker==KERNEL_Gaussian)GetKernelGaussian(rr2,drx,dry,drz,frx,fry,frz,fabc); // Temperature: fabc
-            else if(tker==KERNEL_Cubic)GetKernelCubic(rr2,drx,dry,drz,frx,fry,frz,fabc); // Temperature: fabc
+            float frx,fry,frz,fabc; // [Temperature]: fabc
+            if(tker==KERNEL_Wendland)GetKernelWendland(rr2,drx,dry,drz,frx,fry,frz,fabc); // [Temperature]: fabc
+            else if(tker==KERNEL_Gaussian)GetKernelGaussian(rr2,drx,dry,drz,frx,fry,frz,fabc); // [Temperature]: fabc
+            else if(tker==KERNEL_Cubic)GetKernelCubic(rr2,drx,dry,drz,frx,fry,frz,fabc); // [Temperature]: fabc
 
             //===== Get mass of particle p2 ===== 
             float massp2=(boundp2? MassBound: MassFluid); //-Contiene masa de particula segun sea bound o fluid.
@@ -973,7 +986,7 @@ template<bool psingle,TpKernel tker,TpFtMode ftmode,bool lamsps,TpDeltaSph tdelt
             }
 
 			//==================================================
-			// Temperature: compute temperature derivative
+			// [Temperature]: compute temperature derivative
 			//==================================================
 			if (compute) {
 			  float heatKp2 = (boundp2 ? HeatKBound : HeatKFluid); // Check if p2 is bound or fluid then assign the respective thermal conductivity K.
@@ -1046,7 +1059,7 @@ template<bool psingle,TpKernel tker,TpFtMode ftmode,bool lamsps,TpDeltaSph tdelt
       ar[p1]+=arp1;
       ace[p1]=ace[p1]+acep1;
 
-	    atemp[p1] += atempp1; // Temperature: Add atemp for particle p1.
+	    atemp[p1] += atempp1; // [Temperature]: Add atemp for particle p1.
 
       const int th=omp_get_thread_num();
       if(visc>viscth[th*OMP_STRIDE])viscth[th*OMP_STRIDE]=visc;
@@ -1760,7 +1773,7 @@ void JSphCpu::UpdatePos(tdouble3 rpos,double movx,double movy,double movz
 //==============================================================================
 template<bool shift> void JSphCpu::ComputeVerletVarsFluid(
   const tfloat4 *velrhop1,const tfloat4 *velrhop2,const double *tempp2,double dt,double dt2
-  ,tdouble3 *pos,unsigned *dcell,typecode *code,tfloat4 *velrhopnew,double *tempnew)const // Temperature: add tempp2 and tempnew params.
+  ,tdouble3 *pos,unsigned *dcell,typecode *code,tfloat4 *velrhopnew,double *tempnew)const // [Temperature]: add tempp2 and tempnew params.
 {
   const double dt205=0.5*dt*dt;
   const int pini=int(Npb),pfin=int(Np),npf=int(Np-Npb);
@@ -1770,7 +1783,7 @@ template<bool shift> void JSphCpu::ComputeVerletVarsFluid(
   for(int p=pini;p<pfin;p++){
     //-Calculate density. | Calcula densidad.
     const float rhopnew=float(double(velrhop2[p].w)+dt2*Arc[p]);
-    tempnew[p] = tempp2[p]+dt2*Atempc[p]; // Temperature: compute new temperature
+    tempnew[p] = tempp2[p]+dt2*Atempc[p]; // [Temperature]: compute new temperature
     if(!WithFloating || CODE_IsFluid(code[p])){//-Fluid Particles.
       //-Calculate displacement and update position. | Calcula desplazamiento y actualiza posicion.
       double dx=double(velrhop1[p].x)*dt + double(Acec[p].x)*dt205;
@@ -1811,7 +1824,7 @@ void JSphCpu::ComputeVelrhopBound(const tfloat4* velrhopold, const double* tempo
   for(int p=0;p<npb;p++){
     const float rhopnew=float(double(velrhopold[p].w)+armul*Arc[p]);
     velrhopnew[p]=TFloat4(0,0,0,(rhopnew<RhopZero? RhopZero: rhopnew));//-Avoid fluid particles being absorved by boundary ones. | Evita q las boundary absorvan a las fluidas.
-    tempnew[p]=tempold[p]/*+armul*Atempc[p]*/; // Temperature: constant temperature on boundaries for this implementation.
+    tempnew[p]=tempold[p]/*+armul*Atempc[p]*/; // [Temperature]: constant temperature on boundaries for this implementation.
   }
 }
 
@@ -1824,19 +1837,19 @@ void JSphCpu::ComputeVerlet(double dt){
   VerletStep++;
   if(VerletStep<VerletSteps){
     const double twodt=dt+dt;
-    if(TShifting)ComputeVerletVarsFluid<true>  (Velrhopc,VelrhopM1c,TempM1c,dt,twodt,Posc,Dcellc,Codec,VelrhopM1c,TempM1c); // Temperature: Tempc TempM1c
-    else         ComputeVerletVarsFluid<false> (Velrhopc,VelrhopM1c,TempM1c,dt,twodt,Posc,Dcellc,Codec,VelrhopM1c,TempM1c); // Temperature: Tempc TempM1c
+    if(TShifting)ComputeVerletVarsFluid<true>  (Velrhopc,VelrhopM1c,TempM1c,dt,twodt,Posc,Dcellc,Codec,VelrhopM1c,TempM1c); // [Temperature]: Tempc TempM1c
+    else         ComputeVerletVarsFluid<false> (Velrhopc,VelrhopM1c,TempM1c,dt,twodt,Posc,Dcellc,Codec,VelrhopM1c,TempM1c); // [Temperature]: Tempc TempM1c
     ComputeVelrhopBound(VelrhopM1c,TempM1c,twodt,VelrhopM1c,TempM1c);
   }
   else{
-    if(TShifting)ComputeVerletVarsFluid<true>  (Velrhopc,Velrhopc,Tempc,dt,dt,Posc,Dcellc,Codec,VelrhopM1c,TempM1c); // Temperature: Tempc TempM1c
-    else         ComputeVerletVarsFluid<false> (Velrhopc,Velrhopc,Tempc,dt,dt,Posc,Dcellc,Codec,VelrhopM1c,TempM1c); // Temperature: Tempc TempM1c
+    if(TShifting)ComputeVerletVarsFluid<true>  (Velrhopc,Velrhopc,Tempc,dt,dt,Posc,Dcellc,Codec,VelrhopM1c,TempM1c); // [Temperature]: Tempc TempM1c
+    else         ComputeVerletVarsFluid<false> (Velrhopc,Velrhopc,Tempc,dt,dt,Posc,Dcellc,Codec,VelrhopM1c,TempM1c); // [Temperature]: Tempc TempM1c
     ComputeVelrhopBound(Velrhopc,Tempc,dt,VelrhopM1c,TempM1c);
     VerletStep=0;
   }
   //-New values are calculated en VelrhopM1c. | Los nuevos valores se calculan en VelrhopM1c.
   swap(Velrhopc,VelrhopM1c);     //-Swap Velrhopc & VelrhopM1c. | Intercambia Velrhopc y VelrhopM1c.
-  swap(Tempc, TempM1c);          // Temperature: swap Tempc & TempM1c
+  swap(Tempc, TempM1c);          // [Temperature]: swap Tempc & TempM1c
   TmcStop(Timers,TMC_SuComputeStep);
 }
 
@@ -1858,11 +1871,11 @@ template<bool shift> void JSphCpu::ComputeSymplecticPreT(double dt){
   //-Assign memory to variables Pre. | Asigna memoria a variables Pre.
   PosPrec=ArraysCpu->ReserveDouble3();
   VelrhopPrec=ArraysCpu->ReserveFloat4();
-  TempPrec = ArraysCpu->ReserveDouble(); // Temperature: reserve memory
+  TempPrec = ArraysCpu->ReserveDouble(); // [Temperature]: reserve memory
   //-Change data to variables Pre to calculate new data. | Cambia datos a variables Pre para calcular nuevos datos.
   swap(PosPrec,Posc);         //Put value of Pos[] in PosPre[].         | Es decir... PosPre[] <= Pos[].
   swap(VelrhopPrec,Velrhopc); //Put value of Velrhop[] in VelrhopPre[]. | Es decir... VelrhopPre[] <= Velrhop[].
-  swap(TempPrec,Tempc); // Temperature
+  swap(TempPrec,Tempc); // [Temperature]
   //-Calculate new values of particles. | Calcula nuevos datos de particulas.
   const double dt05=dt*.5;
   
@@ -1875,7 +1888,7 @@ template<bool shift> void JSphCpu::ComputeSymplecticPreT(double dt){
     const tfloat4 vr=VelrhopPrec[p];
     const float rhopnew=float(double(vr.w)+dt05*Arc[p]);
     Velrhopc[p]=TFloat4(vr.x,vr.y,vr.z,(rhopnew<RhopZero? RhopZero: rhopnew));//-Avoid fluid particles being absorbed by boundary ones. | Evita q las boundary absorvan a las fluidas.
-    Tempc[p]=TempPrec[p]/*+dt05*Atempc[p]*/;  //Temperature: Calculate new temperature for the boundary
+    Tempc[p]=TempPrec[p]/*+dt05*Atempc[p]*/;  //[Temperature]: Calculate new temperature for the boundary
   }
 
   //-Calculate new values of fluid. | Calcula nuevos datos del fluido.
@@ -1886,7 +1899,7 @@ template<bool shift> void JSphCpu::ComputeSymplecticPreT(double dt){
   for(int p=npb;p<np;p++){
     //-Calculate density.
     const float rhopnew=float(double(VelrhopPrec[p].w)+dt05*Arc[p]);
-    Tempc[p]=TempPrec[p]+dt05*Atempc[p];  //Temperature: Calculate new temperature for the fluid
+    Tempc[p]=TempPrec[p]+dt05*Atempc[p];  //[Temperature]: Calculate new temperature for the fluid
     if(!WithFloating || CODE_IsFluid(Codec[p])){//-Fluid Particles.
       //-Calculate displacement & update position. | Calcula desplazamiento y actualiza posicion.
       double dx=double(VelrhopPrec[p].x)*dt05;
@@ -1944,7 +1957,7 @@ template<bool shift> void JSphCpu::ComputeSymplecticCorrT(double dt){
     const double epsilon_rdot=(-double(Arc[p])/double(Velrhopc[p].w))*dt;
     const float rhopnew=float(double(VelrhopPrec[p].w) * (2.-epsilon_rdot)/(2.+epsilon_rdot));
     Velrhopc[p]=TFloat4(0,0,0,(rhopnew<RhopZero? RhopZero: rhopnew));//-Avoid fluid particles being absorbed by boundary ones. | Evita q las boundary absorvan a las fluidas.
-	// Temperature: something missing?
+	// [Temperature]: something missing?
   }
 
   //-Calculate fluid values. | Calcula datos de fluido.
@@ -1957,7 +1970,7 @@ template<bool shift> void JSphCpu::ComputeSymplecticCorrT(double dt){
     const double epsilon_rdot=(-double(Arc[p])/double(Velrhopc[p].w))*dt;
     const float rhopnew=float(double(VelrhopPrec[p].w) * (2.-epsilon_rdot)/(2.+epsilon_rdot));
     //==================================================
-    // Temperature
+    // [Temperature]
     //==================================================
     const double epsilon_tdot=(-double(Atempc[p])/Tempc[p])*dt;
     Tempc[p]=TempPrec[p]*(2.-epsilon_tdot)/(2.+epsilon_tdot);
@@ -1991,7 +2004,7 @@ template<bool shift> void JSphCpu::ComputeSymplecticCorrT(double dt){
   //-Free memory assigned to variables Pre and ComputeSymplecticPre(). | Libera memoria asignada a variables Pre en ComputeSymplecticPre().
   ArraysCpu->Free(PosPrec);      PosPrec=NULL;
   ArraysCpu->Free(VelrhopPrec);  VelrhopPrec=NULL;
-  ArraysCpu->Free(TempPrec);     TempPrec= NULL; // Temperature: free memory
+  ArraysCpu->Free(TempPrec);     TempPrec= NULL; // [Temperature]: free memory
   TmcStop(Timers,TMC_SuComputeStep);
 }
 

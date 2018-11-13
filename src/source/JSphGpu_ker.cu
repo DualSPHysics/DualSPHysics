@@ -16,6 +16,19 @@
  You should have received a copy of the GNU Lesser General Public License along with DualSPHysics. If not, see <http://www.gnu.org/licenses/>. 
 */
 
+/*
+This file was modified by O. Garcia-Feal and L. Hosain as part of the work:
+
+"Developing on DualSPHysics: examples on code modification and extension"
+
+Presented during the "4th DualSPHysics Users Workshop" held at Instituto Superior Técnico
+from the University of Lisbon from 22nd to 24th October 2018.
+
+This development was made for didactic purposes only.
+
+The main modifications are pointed with the [Temperature] tag.
+*/
+
 /// \file JSphGpu_ker.cu \brief Implements functions and CUDA kernels for the Particle Interaction and System Update.
 
 #include "JSphGpu_ker.h"
@@ -519,7 +532,7 @@ __device__ void KerGetInteractionCells(double px,double py,double pz
 /// Devuelve valores del kernel Wendland: frx, fry y frz.
 //------------------------------------------------------------------------------
 __device__ void KerGetKernelWendland(float rr2,float drx,float dry,float drz
-  ,float &frx,float &fry,float &frz, float &fabc) // Temperature: fabc
+  ,float &frx,float &fry,float &frz, float &fabc) // [Temperature]: fabc
 {
   const float rad=sqrt(rr2);
   const float qq=rad/CTE.h;
@@ -527,7 +540,7 @@ __device__ void KerGetKernelWendland(float rr2,float drx,float dry,float drz
   const float wqq1=1.f-0.5f*qq;
   const float fac=CTE.bwen*qq*wqq1*wqq1*wqq1/rad; //-Kernel derivative (divided by rad).
   frx=fac*drx; fry=fac*dry; frz=fac*drz;
-  fabc = fac; // Temperature
+  fabc = fac; // [Temperature]
 }
 
 //------------------------------------------------------------------------------
@@ -535,7 +548,7 @@ __device__ void KerGetKernelWendland(float rr2,float drx,float dry,float drz
 /// Devuelve valores del kernel Gaussian: frx, fry y frz.
 //------------------------------------------------------------------------------
 __device__ void KerGetKernelGaussian(float rr2,float drx,float dry,float drz
-  ,float &frx,float &fry,float &frz, float &fabc) // Temperature: fabc
+  ,float &frx,float &fry,float &frz, float &fabc) // [Temperature]: fabc
 {
   const float rad=sqrt(rr2);
   const float qq=rad/CTE.h;
@@ -544,7 +557,7 @@ __device__ void KerGetKernelGaussian(float rr2,float drx,float dry,float drz
   //const float wab=CTE.agau*expf(qqexp); //-Kernel.
   const float fac=CTE.bgau*qq*expf(qqexp)/rad; //-Kernel derivative (divided by rad).
   frx=fac*drx; fry=fac*dry; frz=fac*drz;
-  fabc = fac; // Temperature
+  fabc = fac; // [Temperature]
 }
 
 //------------------------------------------------------------------------------
@@ -552,7 +565,7 @@ __device__ void KerGetKernelGaussian(float rr2,float drx,float dry,float drz
 /// Devuelve valores de kernel Cubic sin correccion tensil, gradients: frx, fry y frz.
 //------------------------------------------------------------------------------
 __device__ void KerGetKernelCubic(float rr2,float drx,float dry,float drz
-  ,float &frx,float &fry,float &frz, float &fabc) // Temperature: fabc
+  ,float &frx,float &fry,float &frz, float &fabc) // [Temperature]: fabc
 {
   const float rad=sqrt(rr2);
   const float qq=rad/CTE.h;
@@ -569,7 +582,7 @@ __device__ void KerGetKernelCubic(float rr2,float drx,float dry,float drz
   }
   //-Gradients.
   frx=fac*drx; fry=fac*dry; frz=fac*drz;
-  fabc = fac; // Temperature
+  fabc = fac; // [Temperature]
 }
 
 //------------------------------------------------------------------------------
@@ -614,7 +627,7 @@ template<bool psingle,TpKernel tker,TpFtMode ftmode> __device__ void KerInteract
   (unsigned p1,const unsigned &pini,const unsigned &pfin
   ,const float *ftomassp
   ,const double2 *posxy,const double *posz,const float4 *pospress,const float4 *velrhop,const double *temp,const typecode *code,const unsigned* idp
-  ,float massf,double3 posdp1,float3 posp1,float3 velp1, double tempp1,float &arp1,float &atempp1,float &visc) // Temperature: temp tempp1 atempp1
+  ,float massf,double3 posdp1,float3 posp1,float3 velp1, double tempp1,float &arp1,float &atempp1,float &visc) // [Temperature]: temp tempp1 atempp1
 {
   for(int p2=pini;p2<pfin;p2++){
     float drx,dry,drz;
@@ -622,7 +635,7 @@ template<bool psingle,TpKernel tker,TpFtMode ftmode> __device__ void KerInteract
     float rr2=drx*drx+dry*dry+drz*drz;
     if(rr2<=CTE.fourh2 && rr2>=ALMOSTZERO){
       //-Cubic Spline, Wendland or Gaussian kernel.
-      float frx,fry,frz,fabc; // Temperature
+      float frx,fry,frz,fabc; // [Temperature]
       if(tker==KERNEL_Wendland)KerGetKernelWendland(rr2,drx,dry,drz,frx,fry,frz,fabc);
       else if(tker==KERNEL_Gaussian)KerGetKernelGaussian(rr2,drx,dry,drz,frx,fry,frz,fabc);
       else if(tker==KERNEL_Cubic)KerGetKernelCubic(rr2,drx,dry,drz,frx,fry,frz,fabc);
@@ -645,9 +658,9 @@ template<bool psingle,TpKernel tker,TpFtMode ftmode> __device__ void KerInteract
         arp1+=(USE_FLOATING? ftmassp2: massf)*(dvx*frx+dvy*fry+dvz*frz);
 
 		//==================================================
-		// Temperature: compute temperature derivative
+		// [Temperature]: compute temperature derivative
 		//==================================================
-		const double dtemp = tempp1 - temp[p2]; // Temperature: (dtemp=tempp1-tempp2)
+		const double dtemp = tempp1 - temp[p2]; // [Temperature]: (dtemp=tempp1-tempp2)
 		const float tempConst = (4 * ftmassp2*CTE.HeatKFluid*CTE.HeatKBound) / (CTE.HeatCpBound*CTE.DensityBound*velrhop[p2].w*(CTE.HeatKFluid + CTE.HeatKBound));
 		atempp1 += float(tempConst*dtemp*fabc);
 		//==================================================
@@ -675,7 +688,7 @@ template<bool psingle,TpKernel tker,TpFtMode ftmode> __global__ void KerInteract
   unsigned p1=blockIdx.y*gridDim.x*blockDim.x + blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
   if(p1<n){
     float visc=0,arp1=0;
-	float atempp1 = 0; // Temperature
+	float atempp1 = 0; // [Temperature]
 
     //-Loads particle p1 data.
     double3 posdp1;
@@ -700,13 +713,13 @@ template<bool psingle,TpKernel tker,TpFtMode ftmode> __global__ void KerInteract
             pfin=cbeg.y;
           }
         }
-        if(pfin)KerInteractionForcesBoundBox<psingle,tker,ftmode> (p1,pini,pfin,ftomassp,posxy,posz,pospress,velrhop,temp,code,idp,CTE.massf,posdp1,posp1,velp1,tempp1,arp1,atempp1,visc); // Temperature: temp tempp1 atempp1
+        if(pfin)KerInteractionForcesBoundBox<psingle,tker,ftmode> (p1,pini,pfin,ftomassp,posxy,posz,pospress,velrhop,temp,code,idp,CTE.massf,posdp1,posp1,velp1,tempp1,arp1,atempp1,visc); // [Temperature]: temp tempp1 atempp1
       }
     }
     //-Stores results.
     if(arp1 || visc){
       ar[p1]+=arp1;
-	  atemp[p1] += atempp1; // Temperature
+	  atemp[p1] += atempp1; // [Temperature]
       if(visc>viscdt[p1])viscdt[p1]=visc;
     }
   }
@@ -725,7 +738,7 @@ template<bool psingle,TpKernel tker,TpFtMode ftmode,bool lamsps,TpDeltaSph tdelt
   ,const float2 &taup1_xx_xy,const float2 &taup1_xz_yy,const float2 &taup1_yz_zz
   ,float2 &grap1_xx_xy,float2 &grap1_xz_yy,float2 &grap1_yz_zz
   ,float3 &acep1,float &arp1,float &atempp1, float &visc,float &deltap1
-  ,TpShifting tshifting,float3 &shiftposp1,float &shiftdetectp1) // Temperature: temp tempp1 atempp1
+  ,TpShifting tshifting,float3 &shiftposp1,float &shiftdetectp1) // [Temperature]: temp tempp1 atempp1
 {
   for(int p2=pini;p2<pfin;p2++){
     float drx,dry,drz,pressp2;
@@ -733,10 +746,10 @@ template<bool psingle,TpKernel tker,TpFtMode ftmode,bool lamsps,TpDeltaSph tdelt
     float rr2=drx*drx+dry*dry+drz*drz;
     if(rr2<=CTE.fourh2 && rr2>=ALMOSTZERO){
       //-Cubic Spline, Wendland or Gaussian kernel.
-      float frx,fry,frz,fabc; // Temperature: fabc
-      if(tker==KERNEL_Wendland)KerGetKernelWendland(rr2,drx,dry,drz,frx,fry,frz,fabc); // Temperature: fabc
-      else if(tker==KERNEL_Gaussian)KerGetKernelGaussian(rr2,drx,dry,drz,frx,fry,frz,fabc); // Temperature: fabc
-      else if(tker==KERNEL_Cubic)KerGetKernelCubic(rr2,drx,dry,drz,frx,fry,frz,fabc); // Temperature: fabc
+      float frx,fry,frz,fabc; // [Temperature]: fabc
+      if(tker==KERNEL_Wendland)KerGetKernelWendland(rr2,drx,dry,drz,frx,fry,frz,fabc); // [Temperature]: fabc
+      else if(tker==KERNEL_Gaussian)KerGetKernelGaussian(rr2,drx,dry,drz,frx,fry,frz,fabc); // [Temperature]: fabc
+      else if(tker==KERNEL_Cubic)KerGetKernelCubic(rr2,drx,dry,drz,frx,fry,frz,fabc); // [Temperature]: fabc
 
       //-Obtains mass of particle p2 if any floating bodies exist.
       //-Obtiene masa de particula p2 en caso de existir floatings.
@@ -782,7 +795,7 @@ template<bool psingle,TpKernel tker,TpFtMode ftmode,bool lamsps,TpDeltaSph tdelt
       }
 
 	  //==================================================
-	  // Temperature: compute temperature derivative
+	  // [Temperature]: compute temperature derivative
 	  //==================================================
 	  if (compute) {
 		  float heatKp2 = (boundp2 ? CTE.HeatKBound : CTE.HeatKFluid); // Check if p2 is bound or fluid then assign the respective thermal conductivity K.
@@ -863,7 +876,7 @@ template<bool psingle,TpKernel tker,TpFtMode ftmode,bool lamsps,TpDeltaSph tdelt
   ,const float *ftomassp,const float2 *tauff,float2 *gradvelff
   ,const double2 *posxy,const double *posz,const float4 *pospress,const float4 *velrhop,const double *temp,const typecode *code,const unsigned *idp
   ,float *viscdt,float *ar,float *atemp, float3 *ace,float *delta
-  ,TpShifting tshifting,float3 *shiftpos,float *shiftdetect) // Temperature: add temp and atemp params.
+  ,TpShifting tshifting,float3 *shiftpos,float *shiftdetect) // [Temperature]: add temp and atemp params.
 {
   unsigned p=blockIdx.y*gridDim.x*blockDim.x + blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
   if(p<n){
@@ -871,7 +884,7 @@ template<bool psingle,TpKernel tker,TpFtMode ftmode,bool lamsps,TpDeltaSph tdelt
     float visc=0,arp1=0,deltap1=0;
     float3 acep1=make_float3(0,0,0);
 
-	float atempp1 = 0.; // Temperature: declare local variable.
+	float atempp1 = 0.; // [Temperature]: declare local variable.
 
     //-Variables for Shifting.
     float3 shiftposp1;
@@ -898,7 +911,7 @@ template<bool psingle,TpKernel tker,TpFtMode ftmode,bool lamsps,TpDeltaSph tdelt
     float3 posp1,velp1;
     float rhopp1,pressp1;
     KerGetParticleData<psingle>(p1,posxy,posz,pospress,velrhop,velp1,rhopp1,posdp1,posp1,pressp1);
-	double tempp1 = temp[p1]; // Temperature of particle p1.
+	double tempp1 = temp[p1]; // [Temperature]: temeperature of particle p1.
     
     //-Variables for Laminar+SPS.
     float2 taup1_xx_xy,taup1_xz_yy,taup1_yz_zz;
@@ -932,7 +945,7 @@ template<bool psingle,TpKernel tker,TpFtMode ftmode,bool lamsps,TpDeltaSph tdelt
             pfin=cbeg.y;
           }
         }
-        if(pfin)KerInteractionForcesFluidBox<psingle,tker,ftmode,lamsps,tdelta,shift> (false,p1,pini,pfin,viscof,ftomassp,tauff,posxy,posz,pospress,velrhop,temp,code,idp,CTE.massf,ftmassp1,ftp1,posdp1,posp1,velp1,pressp1,rhopp1,tempp1,taup1_xx_xy,taup1_xz_yy,taup1_yz_zz,grap1_xx_xy,grap1_xz_yy,grap1_yz_zz,acep1,arp1,atempp1,visc,deltap1,tshifting,shiftposp1,shiftdetectp1); // Temperature: temp tempp1 atempp1
+        if(pfin)KerInteractionForcesFluidBox<psingle,tker,ftmode,lamsps,tdelta,shift> (false,p1,pini,pfin,viscof,ftomassp,tauff,posxy,posz,pospress,velrhop,temp,code,idp,CTE.massf,ftmassp1,ftp1,posdp1,posp1,velp1,pressp1,rhopp1,tempp1,taup1_xx_xy,taup1_xz_yy,taup1_yz_zz,grap1_xx_xy,grap1_xz_yy,grap1_yz_zz,acep1,arp1,atempp1,visc,deltap1,tshifting,shiftposp1,shiftdetectp1); // [Temperature]: temp tempp1 atempp1
       }
     }
     //-Interaction with boundaries.
@@ -948,7 +961,7 @@ template<bool psingle,TpKernel tker,TpFtMode ftmode,bool lamsps,TpDeltaSph tdelt
             pfin=cbeg.y;
           }
         }
-        if(pfin)KerInteractionForcesFluidBox<psingle,tker,ftmode,lamsps,tdelta,shift> (true ,p1,pini,pfin,viscob,ftomassp,tauff,posxy,posz,pospress,velrhop,temp,code,idp,CTE.massb,ftmassp1,ftp1,posdp1,posp1,velp1,pressp1,rhopp1,tempp1,taup1_xx_xy,taup1_xz_yy,taup1_yz_zz,grap1_xx_xy,grap1_xz_yy,grap1_yz_zz,acep1,arp1,atempp1,visc,deltap1,tshifting,shiftposp1,shiftdetectp1); // Temperature: temp tempp1 atempp1
+        if(pfin)KerInteractionForcesFluidBox<psingle,tker,ftmode,lamsps,tdelta,shift> (true ,p1,pini,pfin,viscob,ftomassp,tauff,posxy,posz,pospress,velrhop,temp,code,idp,CTE.massb,ftmassp1,ftp1,posdp1,posp1,velp1,pressp1,rhopp1,tempp1,taup1_xx_xy,taup1_xz_yy,taup1_yz_zz,grap1_xx_xy,grap1_xz_yy,grap1_yz_zz,acep1,arp1,atempp1,visc,deltap1,tshifting,shiftposp1,shiftdetectp1); // [Temperature]: temp tempp1 atempp1
       }
     }
     //-Stores results.
@@ -1555,7 +1568,7 @@ template<bool floatings,bool shift> __global__ void KerComputeStepVerlet
   ,const double *temp1, const double *temp2
   ,const float *ar,const float *atemp,const float3 *ace,const float3 *shiftpos
   ,double dt,double dt205,double dt2
-  ,double2 *movxy,double *movz,typecode *code,float4 *velrhopnew,double *tempnew) // Temperature: temp1 temp2 tempnew
+  ,double2 *movxy,double *movz,typecode *code,float4 *velrhopnew,double *tempnew) // [Temperature]: temp1 temp2 tempnew
 {
   unsigned p=blockIdx.y*gridDim.x*blockDim.x + blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
   if(p<n){
@@ -1563,10 +1576,10 @@ template<bool floatings,bool shift> __global__ void KerComputeStepVerlet
       float rrhop=float(double(velrhop2[p].w)+dt2*ar[p]);
       rrhop=(rrhop<CTE.rhopzero? CTE.rhopzero: rrhop); //-To prevent absorption of fluid particles by boundaries. | Evita q las boundary absorvan a las fluidas.
       velrhopnew[p]=make_float4(0,0,0,rrhop);
-	  tempnew[p] = temp2[p]; // Temperature: constant temperature on boundaries for this implementation.
+	  tempnew[p] = temp2[p]; // [Temperature]: constant temperature on boundaries for this implementation.
     }
     else{ //-Particles: Floating & Fluid.	  
-	  tempnew[p] = temp2[p] + dt2 * atemp[p]; // Temperature: update temperature
+	  tempnew[p] = temp2[p] + dt2 * atemp[p]; // [Temperature]: update temperature
       //-Updates density.
       float4 rvelrhop2=velrhop2[p];
       rvelrhop2.w=float(double(rvelrhop2.w)+dt2*ar[p]);
@@ -1613,17 +1626,17 @@ void ComputeStepVerlet(bool floatings,bool shift,unsigned np,unsigned npb
   ,const double *temp1, const double *temp2
   ,const float *ar,const float *atemp,const float3 *ace,const float3 *shiftpos
   ,double dt,double dt2,float rhopoutmin,float rhopoutmax
-  ,typecode *code,double2 *movxy,double *movz,float4 *velrhopnew,double *tempnew) // Temperature: temp1 temp2 tempnew
+  ,typecode *code,double2 *movxy,double *movz,float4 *velrhopnew,double *tempnew) // [Temperature]: temp1 temp2 tempnew
 {
   double dt205=(0.5*dt*dt);
   if(np){
     dim3 sgrid=GetGridSize(np,SPHBSIZE);
     if(shift){     const bool shift=true;
-      if(floatings)KerComputeStepVerlet<true,shift>  <<<sgrid,SPHBSIZE>>> (np,npb,rhopoutmin,rhopoutmax,velrhop1,velrhop2,temp1,temp2,ar,atemp,ace,shiftpos,dt,dt205,dt2,movxy,movz,code,velrhopnew,tempnew); // Temperature: temp1 temp2 atemp tempnew
-      else         KerComputeStepVerlet<false,shift> <<<sgrid,SPHBSIZE>>> (np,npb,rhopoutmin,rhopoutmax,velrhop1,velrhop2,temp1,temp2,ar,atemp,ace,shiftpos,dt,dt205,dt2,movxy,movz,code,velrhopnew,tempnew); // Temperature: temp1 temp2 atemp tempnew
+      if(floatings)KerComputeStepVerlet<true,shift>  <<<sgrid,SPHBSIZE>>> (np,npb,rhopoutmin,rhopoutmax,velrhop1,velrhop2,temp1,temp2,ar,atemp,ace,shiftpos,dt,dt205,dt2,movxy,movz,code,velrhopnew,tempnew); // [Temperature]: temp1 temp2 atemp tempnew
+      else         KerComputeStepVerlet<false,shift> <<<sgrid,SPHBSIZE>>> (np,npb,rhopoutmin,rhopoutmax,velrhop1,velrhop2,temp1,temp2,ar,atemp,ace,shiftpos,dt,dt205,dt2,movxy,movz,code,velrhopnew,tempnew); // [Temperature]: temp1 temp2 atemp tempnew
     }else{         const bool shift=false;
-      if(floatings)KerComputeStepVerlet<true,shift>  <<<sgrid,SPHBSIZE>>> (np,npb,rhopoutmin,rhopoutmax,velrhop1,velrhop2,temp1,temp2,ar,atemp,ace,shiftpos,dt,dt205,dt2,movxy,movz,code,velrhopnew,tempnew); // Temperature: temp1 temp2 atemp tempnew
-      else         KerComputeStepVerlet<false,shift> <<<sgrid,SPHBSIZE>>> (np,npb,rhopoutmin,rhopoutmax,velrhop1,velrhop2,temp1,temp2,ar,atemp,ace,shiftpos,dt,dt205,dt2,movxy,movz,code,velrhopnew,tempnew); // Temperature: temp1 temp2 atemp tempnew
+      if(floatings)KerComputeStepVerlet<true,shift>  <<<sgrid,SPHBSIZE>>> (np,npb,rhopoutmin,rhopoutmax,velrhop1,velrhop2,temp1,temp2,ar,atemp,ace,shiftpos,dt,dt205,dt2,movxy,movz,code,velrhopnew,tempnew); // [Temperature]: temp1 temp2 atemp tempnew
+      else         KerComputeStepVerlet<false,shift> <<<sgrid,SPHBSIZE>>> (np,npb,rhopoutmin,rhopoutmax,velrhop1,velrhop2,temp1,temp2,ar,atemp,ace,shiftpos,dt,dt205,dt2,movxy,movz,code,velrhopnew,tempnew); // [Temperature]: temp1 temp2 atemp tempnew
     }
   }
 }
@@ -1645,13 +1658,13 @@ template<bool floatings,bool shift> __global__ void KerComputeStepSymplecticPre
       rvelrhop.w=float(double(rvelrhop.w)+dtm*ar[p]);
       rvelrhop.w=(rvelrhop.w<CTE.rhopzero? CTE.rhopzero: rvelrhop.w); //-To prevent absorption of fluid particles by boundaries. | Evita que las boundary absorvan a las fluidas.
       velrhop[p]=rvelrhop;
-	  temp[p] = temppre[p]; // Temperature: does not change in the boundaries.
+	  temp[p] = temppre[p]; // [Temperature]: does not change in the boundaries.
     }
     else{ //-Particles: Floating & Fluid.
       //-Updates density.
       float4 rvelrhop=velrhoppre[p];
       rvelrhop.w=float(double(rvelrhop.w)+dtm*ar[p]);
-      temp[p] = temppre[p] + dtm * atemp[p]; // Temperature: Calculate new temperature for the fluid
+      temp[p] = temppre[p] + dtm * atemp[p]; // [Temperature]: Calculate new temperature for the fluid
       if(!floatings || CODE_IsFluid(code[p])){ //-Particles: Fluid.
         //-Checks rhop limits.
         if(rvelrhop.w<rhopoutmin||rvelrhop.w>rhopoutmax){//-Only brands as excluded normal particles (not periodic). | Solo marca como excluidas las normales (no periodicas).
@@ -1692,7 +1705,7 @@ template<bool floatings,bool shift> __global__ void KerComputeStepSymplecticPre
 void ComputeStepSymplecticPre(bool floatings,bool shift,unsigned np,unsigned npb
   ,const float4 *velrhoppre,const double *temppre,const float *ar,const float *atemp,const float3 *ace,const float3 *shiftpos
   ,double dtm,float rhopoutmin,float rhopoutmax
-  ,typecode *code,double2 *movxy,double *movz,float4 *velrhop, double *temp) // Temperature: temppre atemp temp
+  ,typecode *code,double2 *movxy,double *movz,float4 *velrhop, double *temp) // [Temperature]: temppre atemp temp
 {
   if(np){
     dim3 sgrid=GetGridSize(np,SPHBSIZE);
@@ -1733,7 +1746,7 @@ template<bool floatings,bool shift> __global__ void KerComputeStepSymplecticCor
       float4 rvelrhop=velrhoppre[p];
       rvelrhop.w=float(double(rvelrhop.w) * (2.-epsilon_rdot)/(2.+epsilon_rdot));
 	  //==================================================
-	  // Temperature
+	  // [Temperature]
 	  //==================================================
 	  const double epsilon_tdot = (-double(atemp[p]) / temp[p])*dt;
 	  temp[p] = temppre[p] * (2. - epsilon_tdot) / (2. + epsilon_tdot);
@@ -1776,7 +1789,7 @@ template<bool floatings,bool shift> __global__ void KerComputeStepSymplecticCor
 /// Updates particles using Symplectic-Corrector.
 /// Actualizacion de particulas usando Symplectic-Corrector.
 //==============================================================================   
-void ComputeStepSymplecticCor(bool floating,bool shift,unsigned np,unsigned npb
+void ComputeStepSymplecticCor(bool floatings,bool shift,unsigned np,unsigned npb
   ,const float4 *velrhoppre,const double *temppre, const float *ar, const float *atemp, const float3 *ace,const float3 *shiftpos
   ,double dtm,double dt,float rhopoutmin,float rhopoutmax
   ,typecode *code,double2 *movxy,double *movz,float4 *velrhop,double *temp)
@@ -2627,7 +2640,7 @@ __device__ void KerPeriodicDuplicatePos(unsigned pnew,unsigned pcopy
 //------------------------------------------------------------------------------
 __global__ void KerPeriodicDuplicateVerlet(unsigned n,unsigned pini,uint3 cellmax,double3 perinc
   ,const unsigned *listp,unsigned *idp,typecode *code,unsigned *dcell
-  ,double2 *posxy,double *posz,float4 *velrhop,double *temp,tsymatrix3f *spstau,float4 *velrhopm1,double *tempm1) // Temperature: add temp tempm1
+  ,double2 *posxy,double *posz,float4 *velrhop,double *temp,tsymatrix3f *spstau,float4 *velrhopm1,double *tempm1) // [Temperature]: add temp tempm1
 {
   const unsigned p=blockIdx.y*gridDim.x*blockDim.x + blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
   if(p<n){
@@ -2643,8 +2656,8 @@ __global__ void KerPeriodicDuplicateVerlet(unsigned n,unsigned pini,uint3 cellma
     code[pnew]=CODE_SetPeriodic(code[pcopy]);
     velrhop[pnew]=velrhop[pcopy];
     velrhopm1[pnew]=velrhopm1[pcopy];
-	temp[pnew] = temp[pcopy];  // Temperature: copy
-	tempm1[pnew] = tempm1[pcopy]; // Temperature: copy
+	temp[pnew] = temp[pcopy];  // [Temperature]: copy
+	tempm1[pnew] = tempm1[pcopy]; // [Temperature]: copy
     if(spstau)spstau[pnew]=spstau[pcopy];
   }
 }
@@ -2655,12 +2668,12 @@ __global__ void KerPeriodicDuplicateVerlet(unsigned n,unsigned pini,uint3 cellma
 //==============================================================================
 void PeriodicDuplicateVerlet(unsigned n,unsigned pini,tuint3 domcells,tdouble3 perinc
   ,const unsigned *listp,unsigned *idp,typecode *code,unsigned *dcell
-  ,double2 *posxy,double *posz,float4 *velrhop,double *temp,tsymatrix3f *spstau,float4 *velrhopm1,double *tempm1) // Temperature
+  ,double2 *posxy,double *posz,float4 *velrhop,double *temp,tsymatrix3f *spstau,float4 *velrhopm1,double *tempm1) // [Temperature]
 {
   if(n){
     uint3 cellmax=make_uint3(domcells.x-1,domcells.y-1,domcells.z-1);
     dim3 sgrid=GetGridSize(n,SPHBSIZE);
-    KerPeriodicDuplicateVerlet <<<sgrid,SPHBSIZE>>> (n,pini,cellmax,Double3(perinc),listp,idp,code,dcell,posxy,posz,velrhop,temp,spstau,velrhopm1,tempm1); // Temperature
+    KerPeriodicDuplicateVerlet <<<sgrid,SPHBSIZE>>> (n,pini,cellmax,Double3(perinc),listp,idp,code,dcell,posxy,posz,velrhop,temp,spstau,velrhopm1,tempm1); // [Temperature]
   }
 }
 
@@ -2675,7 +2688,7 @@ void PeriodicDuplicateVerlet(unsigned n,unsigned pini,tuint3 domcells,tdouble3 p
 //------------------------------------------------------------------------------
 template<bool varspre> __global__ void KerPeriodicDuplicateSymplectic(unsigned n,unsigned pini
   ,uint3 cellmax,double3 perinc,const unsigned *listp,unsigned *idp,typecode *code,unsigned *dcell
-  ,double2 *posxy,double *posz,float4 *velrhop,double *temp,tsymatrix3f *spstau,double2 *posxypre,double *poszpre,float4 *velrhoppre,double *temppre) // Temperature: add temp and temppre
+  ,double2 *posxy,double *posz,float4 *velrhop,double *temp,tsymatrix3f *spstau,double2 *posxypre,double *poszpre,float4 *velrhoppre,double *temppre) // [Temperature]: add temp and temppre
 {
   const unsigned p=blockIdx.y*gridDim.x*blockDim.x + blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
   if(p<n){
@@ -2690,13 +2703,13 @@ template<bool varspre> __global__ void KerPeriodicDuplicateSymplectic(unsigned n
     idp[pnew]=idp[pcopy];
     code[pnew]=CODE_SetPeriodic(code[pcopy]);
     velrhop[pnew]=velrhop[pcopy];
-	temp[pnew] = temp[pcopy]; // Temperature
+	temp[pnew] = temp[pcopy]; // [Temperature]
     if(varspre){
       posxypre[pnew]=posxypre[pcopy];
       poszpre[pnew]=poszpre[pcopy];
       velrhoppre[pnew]=velrhoppre[pcopy];
     }
-	if(temppre)temppre[pnew] = temppre[pcopy]; // Temperature
+	if(temppre)temppre[pnew] = temppre[pcopy]; // [Temperature]
     if(spstau)spstau[pnew]=spstau[pcopy];
   }
 }

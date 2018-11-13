@@ -54,7 +54,7 @@ void CalcBeginEndCell(bool full,unsigned np,unsigned npb,unsigned sizebegcell,un
 
 void SortDataParticles(unsigned np,unsigned pini,const unsigned *sortpart,const unsigned *idp,const typecode *code,const unsigned *dcell,const double2 *posxy,const double *posz,const float4 *velrhop,unsigned *idp2,typecode *code2,unsigned *dcell2,double2 *posxy2,double *posz2,float4 *velrhop2);
 void SortDataParticles(unsigned np,unsigned pini,const unsigned *sortpart,const float4 *a,float4 *a2);
-void SortDataParticles(unsigned np,unsigned pini,const unsigned *sortpart,const double *a,double *a2);
+void SortDataParticles(unsigned np,unsigned pini,const unsigned *sortpart,const double *a,double *a2); // [Temperature]: overloaded function to order double arrays.
 void SortDataParticles(unsigned np,unsigned pini,const unsigned *sortpart,const float *a,const float *b,float *a2,float *b2);
 void SortDataParticles(unsigned np,unsigned pini,const unsigned *sortpart,const double2 *a,const double *b,const float4 *c,double2 *a2,double *b2,float4 *c2);
 void SortDataParticles(unsigned np,unsigned pini,const unsigned *sortpart,const tsymatrix3f *a,tsymatrix3f *a2);

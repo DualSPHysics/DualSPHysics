@@ -16,6 +16,19 @@
  You should have received a copy of the GNU Lesser General Public License along with DualSPHysics. If not, see <http://www.gnu.org/licenses/>. 
 */
 
+/*
+This file was modified by O. Garcia-Feal and L. Hosain as part of the work:
+
+"Developing on DualSPHysics: examples on code modification and extension"
+
+Presented during the "4th DualSPHysics Users Workshop" held at Instituto Superior Técnico
+from the University of Lisbon from 22nd to 24th October 2018.
+
+This development was made for didactic purposes only.
+
+The main modifications are pointed with the [Temperature] tag.
+*/
+
 /// \file JSphGpuSingle.cpp \brief Implements the class \ref JSphGpuSingle.
 
 #include "JSphGpuSingle.h"
@@ -142,7 +155,7 @@ void JSphGpuSingle::ConfigDomain(){
   memcpy(Velrhop,PartsLoaded->GetVelRhop(),sizeof(tfloat4)*Np);
 
   //==================================================
-  // Temperature: assign initial temperature
+  // [Temperature]: assign initial temperature
   //==================================================
   for (unsigned p = 0; p<Np; p++) Temp[p] = HeatTempFluid;
   for (unsigned c = 0; c<MkInfo->Size(); c++) {
@@ -332,7 +345,7 @@ void JSphGpuSingle::RunCellDivide(bool updateperiodic){
     double2*  posxyg=ArraysGpu->ReserveDouble2();
     double*   poszg=ArraysGpu->ReserveDouble();
     float4*   velrhopg=ArraysGpu->ReserveFloat4();
-	double*   tempg = ArraysGpu->ReserveDouble(); // Temperature
+	double*   tempg = ArraysGpu->ReserveDouble(); // [Temperature]
     CellDivSingle->SortBasicArrays(Idpg,Codeg,Dcellg,Posxyg,Poszg,Velrhopg,idpg,codeg,dcellg,posxyg,poszg,velrhopg);
 	CellDivSingle->SortDataArrays(Tempg, tempg);
     swap(Idpg,idpg);           ArraysGpu->Free(idpg);
@@ -341,17 +354,17 @@ void JSphGpuSingle::RunCellDivide(bool updateperiodic){
     swap(Posxyg,posxyg);       ArraysGpu->Free(posxyg);
     swap(Poszg,poszg);         ArraysGpu->Free(poszg);
     swap(Velrhopg,velrhopg);   ArraysGpu->Free(velrhopg);
-	swap(Tempg, tempg);        ArraysGpu->Free(tempg); // Temperature
+	swap(Tempg, tempg);        ArraysGpu->Free(tempg); // [Temperature]
   }
   if(TStep==STEP_Verlet){
     float4* velrhopg=ArraysGpu->ReserveFloat4();
     CellDivSingle->SortDataArrays(VelrhopM1g,velrhopg);
     swap(VelrhopM1g,velrhopg);   ArraysGpu->Free(velrhopg);
 	//==================================================
-	// Temperature: sort array TempM1g
+	// [Temperature]: sort array TempM1g
 	//==================================================
 	double* tempg = ArraysGpu->ReserveDouble();
-	CellDivSingle->SortDataArrays(TempM1g, tempg); // Temperature: overloaded function
+	CellDivSingle->SortDataArrays(TempM1g, tempg); // [Temperature]: overloaded function
 	swap(TempM1g, tempg);
 	ArraysGpu->Free(tempg);
 	//==================================================
@@ -366,10 +379,10 @@ void JSphGpuSingle::RunCellDivide(bool updateperiodic){
     swap(PoszPreg,poszg);        ArraysGpu->Free(poszg);
     swap(VelrhopPreg,velrhopg);  ArraysGpu->Free(velrhopg);
 	//==================================================
-	// Temperature: sort array TempPreg
+	// [Temperature]: sort array TempPreg
 	//==================================================
 	double* tempg = ArraysGpu->ReserveDouble();
-	CellDivSingle->SortDataArrays(TempPreg, tempg); // Temperature: overloaded function
+	CellDivSingle->SortDataArrays(TempPreg, tempg); // [Temperature]: overloaded function
 	swap(TempPreg, tempg);
 	ArraysGpu->Free(tempg);
 	//==================================================
@@ -709,7 +722,7 @@ void JSphGpuSingle::SaveData(){
   }
   //-Stores particle data. | Graba datos de particulas.
   const tdouble3 vdom[2]={CellDivSingle->GetDomainLimits(true),CellDivSingle->GetDomainLimits(false)};
-  JSph::SaveData(npsave,Idp,AuxPos,AuxVel,AuxRhop,AuxTemp,1,vdom,&infoplus); // Temperature
+  JSph::SaveData(npsave,Idp,AuxPos,AuxVel,AuxRhop,AuxTemp,1,vdom,&infoplus); // [Temperature]
   TmgStop(Timers,TMG_SuSavePart);
 }
 

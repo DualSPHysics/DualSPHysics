@@ -16,6 +16,19 @@
  You should have received a copy of the GNU Lesser General Public License along with DualSPHysics. If not, see <http://www.gnu.org/licenses/>. 
 */
 
+/*
+This file was modified by O. Garcia-Feal and L. Hosain as part of the work:
+
+"Developing on DualSPHysics: examples on code modification and extension"
+
+Presented during the "4th DualSPHysics Users Workshop" held at Instituto Superior Técnico
+from the University of Lisbon from 22nd to 24th October 2018.
+
+This development was made for didactic purposes only.
+
+The main modifications are pointed with the [Temperature] tag.
+*/
+
 /// \file JSphGpu.cpp \brief Implements the class \ref JSphGpu.
 
 #include "JSphGpu.h"
@@ -46,9 +59,9 @@ using namespace std;
 JSphGpu::JSphGpu(bool withmpi):JSph(false,withmpi){
   ClassName="JSphGpu";
   Idp=NULL; Code=NULL; Dcell=NULL; Posxy=NULL; Posz=NULL; Velrhop=NULL; 
-  Temp = NULL; // Temperature 
+  Temp = NULL; // [Temperature]
   AuxPos=NULL; AuxVel=NULL; AuxRhop=NULL;
-  AuxTemp = NULL; // Temperature
+  AuxTemp = NULL; // [Temperature]
   CellDiv=NULL;
   FtoAuxDouble6=NULL; FtoAuxFloat9=NULL; //-Calculates forces on floating bodies.
   ArraysGpu=new JArraysGpu;
@@ -101,7 +114,7 @@ void JSphGpu::InitVars(){
   DemDatag=NULL; //(DEM)
 
   //==================================================
-  // Initialization of Temperature computation vars
+  // [Temperature] Initialization of Temperature computation vars
   //==================================================
   Tempg = NULL;
   TempM1g = NULL;
@@ -229,11 +242,11 @@ void JSphGpu::FreeCpuMemoryParticles(){
   delete[] Posxy;      Posxy=NULL;
   delete[] Posz;       Posz=NULL;
   delete[] Velrhop;    Velrhop=NULL;
-  delete[] Temp;       Temp = NULL; // Temperature
+  delete[] Temp;       Temp = NULL; // [Temperature]
   delete[] AuxPos;     AuxPos=NULL;
   delete[] AuxVel;     AuxVel=NULL;
   delete[] AuxRhop;    AuxRhop=NULL;
-  delete[] AuxTemp;    AuxTemp = NULL; // Temperature
+  delete[] AuxTemp;    AuxTemp = NULL; // [Temperature]
 }
 
 //==============================================================================
@@ -257,7 +270,7 @@ void JSphGpu::AllocCpuMemoryParticles(unsigned np){
       AuxVel=new tfloat3[np];    MemCpuParticles+=sizeof(tfloat3)*np;
       AuxRhop=new float[np];     MemCpuParticles+=sizeof(float)*np;
 	  //==============================================================
-	  // Temperature: memory allocation for Temp and AuxTemp
+	  // [Temperature]: memory allocation for Temp and AuxTemp
 	  //==============================================================
 	  Temp = new double[np];     MemCpuParticles += sizeof(double)*np;
 	  AuxTemp = new double[np];  MemCpuParticles += sizeof(double)*np;
@@ -304,7 +317,7 @@ void JSphGpu::AllocGpuMemoryParticles(unsigned np,float over){
   ArraysGpu->AddArrayCount(JArraysGpu::SIZE_8B,2);  //-posz
 
   //========================================================
-  // Temperature: AddArrayCount for Tempc & Atempc variable
+  // [Temperature]: AddArrayCount for Tempc & Atempc variable
   //========================================================
   ArraysGpu->AddArrayCount(JArraysGpu::SIZE_8B, 2); // Tempg
   ArraysGpu->AddArrayCount(JArraysGpu::SIZE_4B, 1); // Atempg
@@ -312,12 +325,12 @@ void JSphGpu::AllocGpuMemoryParticles(unsigned np,float over){
 
   if(TStep==STEP_Verlet){
     ArraysGpu->AddArrayCount(JArraysGpu::SIZE_16B,1); //-velrhopm1
-	ArraysGpu->AddArrayCount(JArraysGpu::SIZE_8B, 1); // Temperature: TempM1
+	ArraysGpu->AddArrayCount(JArraysGpu::SIZE_8B, 1); // [Temperature]: TempM1
   }
   else if(TStep==STEP_Symplectic){
     ArraysGpu->AddArrayCount(JArraysGpu::SIZE_8B,1);  //-poszpre
     ArraysGpu->AddArrayCount(JArraysGpu::SIZE_16B,2); //-posxypre,velrhoppre
-	ArraysGpu->AddArrayCount(JArraysGpu::SIZE_8B, 1); // Temperature: TempPrec
+	ArraysGpu->AddArrayCount(JArraysGpu::SIZE_8B, 1); // [Temperature]: TempPrec
   }
   if(TVisco==VISCO_LaminarSPS){     
     ArraysGpu->AddArrayCount(JArraysGpu::SIZE_24B,2); //-SpsTau,SpsGradvel
@@ -354,7 +367,7 @@ void JSphGpu::ResizeGpuMemoryParticles(unsigned npnew){
   tsymatrix3f *spstau    =SaveArrayGpu(Np,SpsTaug);
 
   //==========================================================
-  // Temperature: Save array for temperature related variables
+  // [Temperature]: Save array for temperature related variables
   //==========================================================
   double *temp = SaveArrayGpu(Np, Tempg);
   double *tempm1 = SaveArrayGpu(Np, TempM1g);
@@ -375,7 +388,7 @@ void JSphGpu::ResizeGpuMemoryParticles(unsigned npnew){
   ArraysGpu->Free(SpsTaug);
 
   //=============================================
-  // Temperature: Free all the temperature memory
+  // [Temperature]: Free all the temperature memory
   //=============================================
   ArraysGpu->Free(Tempg);
   ArraysGpu->Free(TempM1g);
@@ -400,7 +413,7 @@ void JSphGpu::ResizeGpuMemoryParticles(unsigned npnew){
   if(spstau)    SpsTaug    =ArraysGpu->ReserveSymatrix3f();
 
   //================================================
-  // Temperature: reserve memory
+  // [Temperature]: reserve memory
   //================================================
   Tempg = ArraysGpu->ReserveDouble();
   if (tempm1) TempM1g = ArraysGpu->ReserveDouble();
@@ -421,7 +434,7 @@ void JSphGpu::ResizeGpuMemoryParticles(unsigned npnew){
   RestoreArrayGpu(Np,spstau,SpsTaug);
 
   //================================================
-  // Temperature: Restore array for Tempc
+  // [Temperature]: Restore array for Tempc
   //================================================
   RestoreArrayGpu(Np, temp, Tempg);
   RestoreArrayGpu(Np, tempm1, TempM1g);
@@ -469,10 +482,10 @@ void JSphGpu::ReserveBasicArraysGpu(){
   Posxyg=ArraysGpu->ReserveDouble2();
   Poszg=ArraysGpu->ReserveDouble();
   Velrhopg=ArraysGpu->ReserveFloat4();
-  Tempg= ArraysGpu->ReserveDouble();  // Temperature
+  Tempg= ArraysGpu->ReserveDouble();  // [Temperature]
   if (TStep == STEP_Verlet) {
 	  VelrhopM1g = ArraysGpu->ReserveFloat4();
-	  TempM1g = ArraysGpu->ReserveDouble();  // Temperature
+	  TempM1g = ArraysGpu->ReserveDouble();  // [Temperature]
   }
   if(TVisco==VISCO_LaminarSPS)SpsTaug=ArraysGpu->ReserveSymatrix3f();
 }
@@ -551,7 +564,7 @@ void JSphGpu::ConstantDataUp(){
   ctes.domposminx=DomPosMin.x; ctes.domposminy=DomPosMin.y; ctes.domposminz=DomPosMin.z;
 
   //==================================================
-  // Temperature: copy constants to GPU
+  // [Temperature]: copy constants to GPU
   //==================================================
   ctes.HeatCpFluid = HeatCpFluid;
   ctes.HeatCpBound = HeatCpBound;
@@ -575,7 +588,7 @@ void JSphGpu::ParticlesDataUp(unsigned n){
   cudaMemcpy(Posxyg  ,Posxy  ,sizeof(double2)*n ,cudaMemcpyHostToDevice);
   cudaMemcpy(Poszg   ,Posz   ,sizeof(double)*n  ,cudaMemcpyHostToDevice);
   cudaMemcpy(Velrhopg,Velrhop,sizeof(float4)*n  ,cudaMemcpyHostToDevice);
-  cudaMemcpy(Tempg   ,Temp   ,sizeof(double)*n  ,cudaMemcpyHostToDevice); // Temperature
+  cudaMemcpy(Tempg   ,Temp   ,sizeof(double)*n  ,cudaMemcpyHostToDevice); // [Temperature]
   CheckCudaError("ParticlesDataUp","Failed copying data to GPU.");
 }
 
@@ -596,7 +609,7 @@ unsigned JSphGpu::ParticlesDataDown(unsigned n,unsigned pini,bool code,bool only
   cudaMemcpy(Posxy,Posxyg+pini,sizeof(double2)*n,cudaMemcpyDeviceToHost);
   cudaMemcpy(Posz,Poszg+pini,sizeof(double)*n,cudaMemcpyDeviceToHost);
   cudaMemcpy(Velrhop,Velrhopg+pini,sizeof(float4)*n,cudaMemcpyDeviceToHost);
-  cudaMemcpy(Temp, Tempg + pini, sizeof(double)*n, cudaMemcpyDeviceToHost); // Temperature
+  cudaMemcpy(Temp, Tempg + pini, sizeof(double)*n, cudaMemcpyDeviceToHost); // [Temperature]
   if(code || onlynormal)cudaMemcpy(Code,Codeg+pini,sizeof(typecode)*n,cudaMemcpyDeviceToHost);
   CheckCudaError("ParticlesDataDown","Failed copying data from GPU.");
   //-Eliminates abnormal particles (periodic and others). | Elimina particulas no normales (periodicas y otras).
@@ -609,7 +622,7 @@ unsigned JSphGpu::ParticlesDataDown(unsigned n,unsigned pini,bool code,bool only
         Posxy[p-ndel]  =Posxy[p];
         Posz[p-ndel]   =Posz[p];
         Velrhop[p-ndel]=Velrhop[p];
-		Temp[p-ndel]   =Temp[p]; // Temperature
+		Temp[p-ndel]   =Temp[p]; // [Temperature]
         Code[p-ndel]   =Code[p];
       }
       if(!normal)ndel++;
@@ -621,7 +634,7 @@ unsigned JSphGpu::ParticlesDataDown(unsigned n,unsigned pini,bool code,bool only
     AuxPos[p]=TDouble3(Posxy[p].x,Posxy[p].y,Posz[p]);
     AuxVel[p]=TFloat3(Velrhop[p].x,Velrhop[p].y,Velrhop[p].z);
     AuxRhop[p]=Velrhop[p].w;
-	AuxTemp[p]=Temp[p]; // Temperature
+	AuxTemp[p]=Temp[p]; // [Temperature]
   }
   return(num);
 }
@@ -846,7 +859,7 @@ void JSphGpu::InitRunGpu(){
 
   if(TStep==STEP_Verlet){
     cudaMemcpy(VelrhopM1g,Velrhopg,sizeof(float4)*Np,cudaMemcpyDeviceToDevice);
-    cudaMemcpy(TempM1g, Tempg, sizeof(double)*Np, cudaMemcpyDeviceToDevice);  // Temperature: copy Tempg and TempM1g
+    cudaMemcpy(TempM1g, Tempg, sizeof(double)*Np, cudaMemcpyDeviceToDevice);  // [Temperature]: copy Tempg and TempM1g
   }
   if(TVisco==VISCO_LaminarSPS)cudaMemset(SpsTaug,0,sizeof(tsymatrix3f)*Np);
   if(CaseNfloat)InitFloating();
@@ -876,7 +889,7 @@ void JSphGpu::PreInteractionVars_Forces(unsigned np,unsigned npb){
   const unsigned npf=np-npb;
   cudaMemset(ViscDtg,0,sizeof(float)*np);                                //ViscDtg[]=0
   cudaMemset(Arg,0,sizeof(float)*np);                                    //Arg[]=0
-  cudaMemset(Atempg, 0, sizeof(float)*np);                               //Temperature: Atempg[]=0
+  cudaMemset(Atempg, 0, sizeof(float)*np);                               //[Temperature]: Atempg[]=0
   if(Deltag)cudaMemset(Deltag,0,sizeof(float)*np);                       //Deltag[]=0
   if(ShiftPosg)cudaMemset(ShiftPosg,0,sizeof(tfloat3)*np);               //ShiftPosg[]=0
   if(ShiftDetectg)cudaMemset(ShiftDetectg,0,sizeof(float)*np);           //ShiftDetectg[]=0
@@ -898,7 +911,7 @@ void JSphGpu::PreInteraction_Forces(){
   ViscDtg=ArraysGpu->ReserveFloat();
   Arg=ArraysGpu->ReserveFloat();
   Aceg=ArraysGpu->ReserveFloat3();
-  Atempg=ArraysGpu->ReserveFloat(); // Temperature
+  Atempg=ArraysGpu->ReserveFloat(); // [Temperature]
   if(TDeltaSph==DELTA_DynamicExt)Deltag=ArraysGpu->ReserveFloat();
   if(TShifting!=SHIFT_None){
     ShiftPosg=ArraysGpu->ReserveFloat3();
@@ -941,7 +954,7 @@ void JSphGpu::PosInteraction_Forces(){
   ArraysGpu->Free(PsPospressg);  PsPospressg=NULL;
   ArraysGpu->Free(SpsGradvelg);  SpsGradvelg=NULL;
 
-  ArraysGpu->Free(Atempg);		 Atempg = NULL; // Temperature: free Atempg and reset the pointer to NULL
+  ArraysGpu->Free(Atempg);		 Atempg = NULL; // [Temperature]: free Atempg and reset the pointer to NULL
 }
 
 //==============================================================================
@@ -961,16 +974,16 @@ void JSphGpu::ComputeVerlet(double dt){  //pdtedom
   //-Calcula desplazamiento, velocidad y densidad.
   if(VerletStep<VerletSteps){
     const double twodt=dt+dt;
-    cusph::ComputeStepVerlet(floatings,shift,Np,Npb,Velrhopg,VelrhopM1g,Tempg,TempM1g,Arg,Atempg,Aceg,ShiftPosg,dt,twodt,RhopOutMin,RhopOutMax,Codeg,movxyg,movzg,VelrhopM1g,TempM1g); // Temperature: Tempg TempM1g atempg
+    cusph::ComputeStepVerlet(floatings,shift,Np,Npb,Velrhopg,VelrhopM1g,Tempg,TempM1g,Arg,Atempg,Aceg,ShiftPosg,dt,twodt,RhopOutMin,RhopOutMax,Codeg,movxyg,movzg,VelrhopM1g,TempM1g); // [Temperature]: Tempg TempM1g atempg
   }
   else{
-    cusph::ComputeStepVerlet(floatings,shift,Np,Npb,Velrhopg,Velrhopg,Tempg,Tempg,Arg,Atempg,Aceg,ShiftPosg,dt,dt,RhopOutMin,RhopOutMax,Codeg,movxyg,movzg,VelrhopM1g,TempM1g); // Temperature: Tempg TempM1g
+    cusph::ComputeStepVerlet(floatings,shift,Np,Npb,Velrhopg,Velrhopg,Tempg,Tempg,Arg,Atempg,Aceg,ShiftPosg,dt,dt,RhopOutMin,RhopOutMax,Codeg,movxyg,movzg,VelrhopM1g,TempM1g); // [Temperature]: Tempg TempM1g
     VerletStep=0;
   }
   //-The new values are calculated in VelRhopM1g.
   //-Los nuevos valores se calculan en VelrhopM1g.
   swap(Velrhopg,VelrhopM1g);   //-Exchanges Velrhopg and VelrhopM1g. | Intercambia Velrhopg y VelrhopM1g.
-  swap(Tempg, TempM1g);  // Temperature: swap Tempg & TempM1g
+  swap(Tempg, TempM1g);  // [Temperature]: swap Tempg & TempM1g
   //-Applies displacement to non-periodic fluid particles.
   //-Aplica desplazamiento a las particulas fluid no periodicas.
   cusph::ComputeStepPos(PeriActive,floatings,Np,Npb,movxyg,movzg,Posxyg,Poszg,Dcellg,Codeg);
@@ -992,19 +1005,19 @@ void JSphGpu::ComputeSymplecticPre(double dt){
   PosxyPreg=ArraysGpu->ReserveDouble2();
   PoszPreg=ArraysGpu->ReserveDouble();
   VelrhopPreg=ArraysGpu->ReserveFloat4();
-  TempPreg=ArraysGpu->ReserveDouble(); // Temperature
+  TempPreg=ArraysGpu->ReserveDouble(); // [Temperature]
   //-Changes data of PRE variables for calculating the new data.
   //-Cambia datos a variables PRE para calcular nuevos datos.
   swap(PosxyPreg,Posxyg);      //-PosxyPre[] <= Posxy[]
   swap(PoszPreg,Poszg);        //-PoszPre[] <= Posz[]
   swap(VelrhopPreg,Velrhopg);  //-VelrhopPre[] <= Velrhop[]
-  swap(TempPreg, Tempg);       // Temperature
+  swap(TempPreg, Tempg);       // [Temperature]
   //-Allocate memory to compute the diplacement.
   double2 *movxyg=ArraysGpu->ReserveDouble2();
   double *movzg=ArraysGpu->ReserveDouble();
   //-Compute displacement, velocity and density.
   const double dt05=dt*.5;
-  cusph::ComputeStepSymplecticPre(floatings,shift,Np,Npb,VelrhopPreg,TempPreg,Arg,Atempg,Aceg,ShiftPosg,dt05,RhopOutMin,RhopOutMax,Codeg,movxyg,movzg,Velrhopg,Tempg);  // Temperature: TempPreg Atempg Tempg
+  cusph::ComputeStepSymplecticPre(floatings,shift,Np,Npb,VelrhopPreg,TempPreg,Arg,Atempg,Aceg,ShiftPosg,dt05,RhopOutMin,RhopOutMax,Codeg,movxyg,movzg,Velrhopg,Tempg);  // [Temperature]: TempPreg Atempg Tempg
   //-Applies displacement to non-periodic fluid particles.
   //-Aplica desplazamiento a las particulas fluid no periodicas.
   cusph::ComputeStepPos2(PeriActive,floatings,Np,Npb,PosxyPreg,PoszPreg,movxyg,movzg,Posxyg,Poszg,Dcellg,Codeg);
@@ -1042,7 +1055,7 @@ void JSphGpu::ComputeSymplecticCorr(double dt){
   ArraysGpu->Free(PosxyPreg);    PosxyPreg=NULL;
   ArraysGpu->Free(PoszPreg);     PoszPreg=NULL;
   ArraysGpu->Free(VelrhopPreg);  VelrhopPreg=NULL;
-  ArraysGpu->Free(TempPreg);	 TempPreg = NULL;  // Temperature
+  ArraysGpu->Free(TempPreg);	 TempPreg = NULL;  // [Temperature]
   TmgStop(Timers,TMG_SuComputeStep);
 }
 

@@ -16,6 +16,19 @@
  You should have received a copy of the GNU Lesser General Public License along with DualSPHysics. If not, see <http://www.gnu.org/licenses/>. 
 */
 
+/*
+This file was modified by O. Garcia-Feal and L. Hosain as part of the work:
+
+"Developing on DualSPHysics: examples on code modification and extension"
+
+Presented during the "4th DualSPHysics Users Workshop" held at Instituto Superior Técnico
+from the University of Lisbon from 22nd to 24th October 2018.
+
+This development was made for didactic purposes only.
+
+The main modifications are pointed with the [Temperature] tag.
+*/
+
 /// \file JCellDivGpu_ker.cu \brief Implements functions and CUDA kernels to compute operations of the Neighbour List.
 
 #include "JCellDivGpu_ker.h"
@@ -583,7 +596,7 @@ __global__ void KerSortDataParticles(unsigned n,unsigned pini,const unsigned *so
     a2[p]=a[oldpos];
   }
 }
-// Temperature: overloaded kernel to sort double arrays
+// [Temperature]: overloaded kernel to sort double arrays
 //------------------------------------------------------------------------------
 /// Reorders particle data according to sortpart[].
 /// Reordena datos de particulas segun sortpart[].
@@ -660,7 +673,7 @@ void SortDataParticles(unsigned np,unsigned pini,const unsigned *sortpart,const 
   }
 }
 
-// Temperature: overloaded function to order double arrays
+// [Temperature]: overloaded function to order double arrays.
 //==============================================================================
 /// Reorders particle data according to sortpart.
 /// Reordena datos de particulas segun sortpart.

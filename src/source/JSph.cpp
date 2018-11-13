@@ -16,6 +16,19 @@
  You should have received a copy of the GNU Lesser General Public License along with DualSPHysics. If not, see <http://www.gnu.org/licenses/>. 
 */
 
+/*
+This file was modified by O. Garcia-Feal and L. Hosain as part of the work:
+
+"Developing on DualSPHysics: examples on code modification and extension"
+
+Presented during the "4th DualSPHysics Users Workshop" held at Instituto Superior Técnico
+from the University of Lisbon from 22nd to 24th October 2018.
+
+This development was made for didactic purposes only.
+
+The main modifications are pointed with the [Temperature] tag.
+*/
+
 /// \file JSph.cpp \brief Implements the class \ref JSph.
 
 #include "JSph.h"
@@ -155,7 +168,7 @@ void JSph::InitVars(){
   SpsSmag=SpsBlin=0;
 
   //==================================================
-  // Initialization of Temperature
+  // [Temperature] Initialization of Temperature
   //==================================================
   HeatTransfer = false;
   HeatCpFluid = 0;
@@ -601,7 +614,7 @@ void JSph::LoadCaseConfig(){
   MkInfo->Config(&parts);
 
   //==================================================
-  // Configuration of Temperature Parameters
+  // [Temperature] Configuration of Temperature Parameters
   //==================================================
   TiXmlNode* tempNode = xml.GetNode("case.execution.special.temperature", false);
   if (tempNode) {
@@ -910,7 +923,7 @@ void JSph::VisuConfig()const{
   const char* met="VisuConfig";
 
   //==================================================
-  // Temperature: log configuration variables
+  // [Temperature]: log configuration variables
   //==================================================
   Log->Print(fun::VarStr("HeatTransfer", HeatTransfer));
   if (HeatTransfer) {
@@ -1580,7 +1593,7 @@ tfloat3* JSph::GetPointerDataFloat3(unsigned n,const tdouble3* v)const{
 /// Stores files of particle data.
 /// Graba los ficheros de datos de particulas.
 //==============================================================================
-void JSph::SavePartData(unsigned npok,unsigned nout,const unsigned *idp,const tdouble3 *pos,const tfloat3 *vel,const float *rhop,const double *temp,unsigned ndom,const tdouble3 *vdom,const StInfoPartPlus *infoplus){  // Temperature: add temp param.
+void JSph::SavePartData(unsigned npok,unsigned nout,const unsigned *idp,const tdouble3 *pos,const tfloat3 *vel,const float *rhop,const double *temp,unsigned ndom,const tdouble3 *vdom,const StInfoPartPlus *infoplus){  // [Temperature]: add temp param.
   //-Stores particle data and/or information in bi4 format.
   //-Graba datos de particulas y/o informacion en formato bi4.
   if(DataBi4){
@@ -1616,7 +1629,7 @@ void JSph::SavePartData(unsigned npok,unsigned nout,const unsigned *idp,const td
         posf3=GetPointerDataFloat3(npok,pos);
         DataBi4->AddPartData(npok,idp,posf3,vel,rhop);
       }
-	  if (temp)DataBi4->AddPartData("Temp", npok, temp);  // Temperature: add temperature data.
+	  if (temp)DataBi4->AddPartData("Temp", npok, temp);  // [Temperature]: add temperature data.
       float *press=NULL;
       if(0){//-Example saving a new array (Pressure) in files BI4.
         press=new float[npok];
@@ -1674,7 +1687,7 @@ void JSph::SavePartData(unsigned npok,unsigned nout,const unsigned *idp,const td
 /// Genera los ficheros de salida de datos.
 //==============================================================================
 void JSph::SaveData(unsigned npok,const unsigned *idp,const tdouble3 *pos,const tfloat3 *vel,const float *rhop
-  ,const double *temp,unsigned ndom,const tdouble3 *vdom,const StInfoPartPlus *infoplus) // Temperature: add temp param
+  ,const double *temp,unsigned ndom,const tdouble3 *vdom,const StInfoPartPlus *infoplus) // [Temperature]: add temp param
 {
   const char met[]="SaveData";
   string suffixpartx=fun::PrintStr("_%04d",Part);
@@ -1687,7 +1700,7 @@ void JSph::SaveData(unsigned npok,const unsigned *idp,const tdouble3 *pos,const 
   AddOutCount(noutpos,noutrhop,noutmove);
 
   //-Stores data files of particles.
-  SavePartData(npok,nout,idp,pos,vel,rhop,temp,ndom,vdom,infoplus); // Temperature: add temp param.
+  SavePartData(npok,nout,idp,pos,vel,rhop,temp,ndom,vdom,infoplus); // [Temperature]: add temp param.
 
   //-Reinitialises limits of dt. | Reinicia limites de dt.
   PartDtMin=DBL_MAX; PartDtMax=-DBL_MAX;

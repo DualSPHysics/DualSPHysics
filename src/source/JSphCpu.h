@@ -16,6 +16,19 @@
  You should have received a copy of the GNU Lesser General Public License along with DualSPHysics. If not, see <http://www.gnu.org/licenses/>. 
 */
 
+/*
+This file was modified by O. Garcia-Feal and L. Hosain as part of the work:
+
+"Developing on DualSPHysics: examples on code modification and extension"
+
+Presented during the "4th DualSPHysics Users Workshop" held at Instituto Superior Técnico
+from the University of Lisbon from 22nd to 24th October 2018.
+
+This development was made for didactic purposes only.
+
+The main modifications are pointed with the [Temperature] tag.
+*/
+
 /// \file JSphCpu.h \brief Declares the class \ref JSphCpu.
 
 #ifndef _JSphCpu_
@@ -73,18 +86,18 @@ protected:
   tdouble3 *Posc;
   tfloat4 *Velrhopc;
 
-  double *Tempc;     ///< Temperature: temperature for each particle.
+  double *Tempc;     ///< [Temperature]: temperature for each particle.
     
   //-Variables for compute step: VERLET. | Vars. para compute step: VERLET.
   tfloat4 *VelrhopM1c;  ///<Verlet: in order to keep previous values. | Verlet: para guardar valores anteriores.
 
-  double *TempM1c;   ///< Temperature: temperature array to keep previous values for Verlet.
+  double *TempM1c;   ///< [Temperature]: temperature array to keep previous values for Verlet.
 
   //-Variables for compute step: SYMPLECTIC. | Vars. para compute step: SYMPLECTIC.
   tdouble3 *PosPrec;    ///<Sympletic: in order to keep previous values. | Sympletic: para guardar valores en predictor.
   tfloat4 *VelrhopPrec;
 
-  double *TempPrec;  /// Temperature: temperature array to keep previous values for Symplectic.
+  double *TempPrec;  /// [Temperature]: temperature array to keep previous values for Symplectic.
 
   //-Variables for floating bodies.
   unsigned *FtRidp;             ///<Identifier to access to the particles of the floating object [CaseNfloat].
@@ -98,7 +111,7 @@ protected:
   float *Arc; 
   float *Deltac;         ///<Adjusted sum with Delta-SPH with DELTA_DynamicExt | Acumula ajuste de Delta-SPH con DELTA_DynamicExt
 
-  float *Atempc;         ///< Temperature: sum of temperatures.
+  float *Atempc;         ///< [Temperature]: sum of temperatures.
 
   tfloat3 *ShiftPosc;    ///<Particle displacement using Shifting.
   float *ShiftDetectc;   ///<Used to detect free surface with Shifting.
@@ -153,7 +166,7 @@ protected:
 
 
   unsigned GetParticlesData(unsigned n,unsigned pini,bool onlynormal
-    ,unsigned *idp,tdouble3 *pos,tfloat3 *vel,float *rhop,double *temp,typecode *code); // Temperature: add temp param
+    ,unsigned *idp,tdouble3 *pos,tfloat3 *vel,float *rhop,double *temp,typecode *code); // [Temperature]: add temp param
   void ConfigOmp(const JCfgRun *cfg);
 
   void ConfigRunMode(const JCfgRun *cfg,std::string preinfo="");
