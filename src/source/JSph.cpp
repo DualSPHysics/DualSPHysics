@@ -1412,8 +1412,8 @@ void JSph::InitRun(unsigned np,const unsigned *idp,const tdouble3 *pos){
   JXml xml; xml.LoadFile(FileXml);
 
   //-Configuration of GaugeSystem.
-  GaugeSystem->Config(Simulate2D,Simulate2DPosY,TimeMax,TimePart,Dp,DomPosMin,DomPosMax,Scell,Hdiv,H,MassFluid);
-  if(xml.GetNode("case.execution.special.gauges",false))GaugeSystem->LoadXml(&xml,"case.execution.special.gauges");
+  GaugeSystem->Config(Simulate2D,Simulate2DPosY,TimeMax,TimePart,Dp,DomPosMin,DomPosMax,Scell,Hdiv,H,MassFluid,MassBound,CteB,Gamma,RhopZero);
+  if(xml.GetNode("case.execution.special.gauges",false))GaugeSystem->LoadXml(&xml,"case.execution.special.gauges",MkInfo);
 
   //-Prepares WaveGen configuration.
   if(WaveGen){

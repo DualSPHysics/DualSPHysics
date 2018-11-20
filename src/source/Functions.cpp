@@ -50,9 +50,76 @@ std::string GetDateTimeFormat(const char* format,int nseg){
   time(&rawtime);
   rawtime+=nseg;
   timeinfo=localtime(&rawtime);
-  char bufftime[64];
-  strftime(bufftime,64,format,timeinfo);
+  //timeinfo=gmtime(&rawtime);
+  char bufftime[256];
+  strftime(bufftime,256,format,timeinfo);
   return(bufftime);
+}
+
+//==============================================================================
+/// Returns date and time of the system + nseg using the format.
+/// day=1-31, month=1-12, hour=0-23, min=0-59, sec=0-59
+//==============================================================================
+std::string GetDateTimeFormatUTC(const char* format,int day,int month,int year,int hour,int min,int sec){
+  time_t rawtime;
+  struct tm *timeinfo;
+  time(&rawtime);
+  timeinfo=gmtime(&rawtime);
+  timeinfo->tm_year=year-1900;
+  timeinfo->tm_mon=month - 1;
+  timeinfo->tm_mday=day;
+  timeinfo->tm_hour=hour;
+  timeinfo->tm_min=min;
+  timeinfo->tm_sec=sec;
+  mktime(timeinfo);
+  char bufftime[256];
+  strftime(bufftime,256,format,timeinfo);
+  return(bufftime);
+}
+
+//==============================================================================
+/// Returns weekday as a decimal number with Sunday as 0 (0-6).
+/// day=1-31, month=1-12, hour=0-23, min=0-59, sec=0-59
+//==============================================================================
+int GetWeekDay(int day,int month,int year){
+  time_t rawtime;
+  struct tm *timeinfo;
+  time(&rawtime);
+  timeinfo=gmtime(&rawtime);
+  timeinfo->tm_year=year-1900;
+  timeinfo->tm_mon=month - 1;
+  timeinfo->tm_mday=day;
+  timeinfo->tm_hour=timeinfo->tm_min=timeinfo->tm_sec=0;
+  mktime(timeinfo);
+  return(timeinfo->tm_wday);
+}
+
+//==============================================================================
+/// Returns days since January 1st).
+/// day=1-31, month=1-12, hour=0-23, min=0-59, sec=0-59
+//==============================================================================
+int GetYearDay(int day,int month,int year){
+  time_t rawtime;
+  struct tm *timeinfo;
+  time(&rawtime);
+  timeinfo=gmtime(&rawtime);
+  timeinfo->tm_year=year-1900;
+  timeinfo->tm_mon=month - 1;
+  timeinfo->tm_mday=day;
+  timeinfo->tm_hour=timeinfo->tm_min=timeinfo->tm_sec=0;
+  mktime(timeinfo);
+  return(timeinfo->tm_yday);
+}
+
+//==============================================================================
+/// Returns week number with the first Monday as the first day of week one (0-53).
+/// day=1-31, month=1-12, hour=0-23, min=0-59, sec=0-59
+//==============================================================================
+int GetWeekNumber(int day,int month,int year){
+  string tx=GetDateTimeFormatUTC("%W",day,month,year);
+  int v=-1;
+  if(tx.size()==2)v=int(unsigned(tx[0]-'0')*10+unsigned(tx[1]-'0'));
+  return(v);
 }
 
 //==============================================================================

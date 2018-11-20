@@ -591,7 +591,9 @@ void JSphGpuSingle::RunFloating(double dt,bool predictor){
 //==============================================================================
 void JSphGpuSingle::RunGaugeSystem(double timestep){
   const bool svpart=(TimeStep>=TimePartNext);
-  GaugeSystem->CalculeGpu(timestep,svpart,CellDivSingle->GetNcells(),CellDivSingle->GetCellDomainMin(),CellDivSingle->GetBeginCell(),Posxyg,Poszg,Codeg,Velrhopg);
+  GaugeSystem->CalculeGpu(timestep,svpart,CellDivSingle->GetNcells()
+    ,CellDivSingle->GetCellDomainMin(),CellDivSingle->GetBeginCell()
+    ,NpbOk,Npb,Np,Posxyg,Poszg,Codeg,Idpg,Velrhopg);
 }
 
 //==============================================================================

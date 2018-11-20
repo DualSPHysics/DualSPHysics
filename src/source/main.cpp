@@ -55,7 +55,7 @@ Please download source files and documentation from <a href="http://dual.sphysic
 using namespace std;
 
 
-JAppInfo AppInfo("DualSPHysics4","v4.3.004","19-10-2018");
+JAppInfo AppInfo("DualSPHysics4","v4.3.006","20-11-2018");
 //JAppInfo AppInfo("DualSPHysics4","v4.2.???","UserVersion","v1.0","??-??-????"); //-for user versions.
 
 //==============================================================================
@@ -107,6 +107,7 @@ int main(int argc, char** argv){
   AppInfo.AddNameExtra("RZ");         //<vs_rzone>
   AppInfo.AddNameExtra("Chrono");     //<vs_chroono>
   AppInfo.AddNameExtra("Inlet");      //<vs_innlet>
+  AppInfo.AddNameExtra("PosForces");  //<vs_posfoorces>
 #ifdef CODE_SIZE4
   AppInfo.AddNameExtra("MK65k");
 #endif
