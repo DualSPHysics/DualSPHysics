@@ -1,4 +1,4 @@
-DualSPHysics4 [MLPistons+RZ+Chrono+Inlet+PosForces]  v4.3.006            20-11-2018
+DualSPHysics4 [MLPistons+RZ+Chrono+Inlet+PosForces]  v4.3.008            18-12-2018
 BoundaryVTK4                                         v4.0.044            16-10-2018
 ComputeForces4                                       v4.0.035            16-10-2018
 FloatingInfo4                                        v4.0.025            16-10-2018
