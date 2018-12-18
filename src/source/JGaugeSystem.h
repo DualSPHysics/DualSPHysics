@@ -118,7 +118,7 @@ public:
   JGaugeVelocity* AddGaugeVel  (std::string name,double computestart,double computeend,double computedt,const tdouble3 &point);
   JGaugeSwl*      AddGaugeSwl  (std::string name,double computestart,double computeend,double computedt,tdouble3 point0,tdouble3 point2,double pointdp,float masslimit=0);
   JGaugeMaxZ*     AddGaugeMaxZ (std::string name,double computestart,double computeend,double computedt,tdouble3 point0,double height,float distlimit);
-  JGaugeForce*    AddGaugeForce(std::string name,double computestart,double computeend,double computedt,const JSphMk* mkinfo,word mkbound);  //<vs_posfoorces>
+  JGaugeForce*    AddGaugeForce(std::string name,double computestart,double computeend,double computedt,const JSphMk* mkinfo,word mkbound);
 
   unsigned GetCount()const{ return(unsigned(Gauges.size())); }
   unsigned GetGaugeIdx(const std::string &name)const;

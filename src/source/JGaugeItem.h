@@ -54,7 +54,7 @@ public:
      GAUGE_Vel
     ,GAUGE_Swl
     ,GAUGE_MaxZ
-    ,GAUGE_Force  //<vs_posfoorces>
+    ,GAUGE_Force
   }TpGauge;
 
   ///Structure with default configuration for JGaugeItem objects.
@@ -374,7 +374,7 @@ public:
  #endif
 };
 
-//<vs_posfoorces_ini>
+
 //##############################################################################
 //# JGaugeForce
 //##############################################################################
@@ -449,7 +449,6 @@ public:
     ,const double2 *posxy,const double *posz,const typecode *code,const unsigned *idp,const float4 *velrhop,float3 *aux);
  #endif
 };
-//<vs_posfoorces_end>
 
 
 #endif

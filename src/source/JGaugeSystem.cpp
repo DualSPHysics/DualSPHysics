@@ -262,10 +262,10 @@ void JGaugeSystem::ReadXml(JXml *sxml,TiXmlElement* lis,const JSphMk* mkinfo){
         if(distlimit<=0)RunException(met,fun::PrintStr("The distlimit (%f) is invalid.",distlimit),sxml->ErrGetFileRow(ele));
         gau=AddGaugeMaxZ(name,cfg.computestart,cfg.computeend,cfg.computedt,pt0,height,distlimit);
       }
-      else if(cmd=="force"){  //<vs_posfoorces_ini>  
+      else if(cmd=="force"){
         const word mkbound=(word)sxml->ReadElementUnsigned(ele,"target","mkbound");
         gau=AddGaugeForce(name,cfg.computestart,cfg.computeend,cfg.computedt,mkinfo,mkbound);
-      }  //<vs_posfoorces_end>
+      }
       else RunException(met,fun::PrintStr("Gauge type \'%s\' is invalid.",cmd.c_str()),sxml->ErrGetFileRow(ele));
       gau->SetSaveVtkPart(cfg.savevtkpart);
       //gau->ConfigComputeTiming(cfg.computestart,cfg.computeend,cfg.computedt);
@@ -334,7 +334,6 @@ JGaugeMaxZ* JGaugeSystem::AddGaugeMaxZ(std::string name,double computestart,doub
   return(gau);
 }
 
-//<vs_posfoorces_ini>
 //==============================================================================
 /// Creates new gauge-Force and returns pointer.
 //==============================================================================
@@ -363,7 +362,6 @@ JGaugeForce* JGaugeSystem::AddGaugeForce(std::string name,double computestart,do
   Gauges.push_back(gau);
   return(gau);
 }
-//<vs_posfoorces_end>
 
 //==============================================================================
 /// Shows object configuration using Log.

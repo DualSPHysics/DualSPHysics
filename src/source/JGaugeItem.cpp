@@ -115,7 +115,7 @@ std::string JGaugeItem::GetNameType(TpGauge type){
     case GAUGE_Vel:   return("Vel");
     case GAUGE_Swl:   return("SWL");
     case GAUGE_MaxZ:  return("MaxZ");
-    case GAUGE_Force: return("Force");  //<vs_posfoorces>
+    case GAUGE_Force: return("Force");
   }
   return("???");
 }
@@ -146,11 +146,11 @@ void JGaugeItem::GetConfig(std::vector<std::string> &lines)const{
     lines.push_back(fun::PrintStr("Point0.....: (%g,%g,%g)   Height:%g",gau->GetPoint0().x,gau->GetPoint0().y,gau->GetPoint0().z,gau->GetHeight()));
     lines.push_back(fun::PrintStr("DistLimit..: %g",gau->GetDistLimit()));
   }
-  else if(Type==GAUGE_Force){  //<vs_posfoorces_ini>
+  else if(Type==GAUGE_Force){
     const JGaugeForce* gau=(JGaugeForce*)this;
     lines.push_back(fun::PrintStr("MkBound.....: %u (%s particles)",gau->GetMkBound(),TpPartGetStrCode(gau->GetTypeParts())));
     lines.push_back(fun::PrintStr("Particles id: %u - %u",gau->GetIdBegin(),gau->GetIdBegin()+gau->GetCount()-1));
-  }  //<vs_posfoorces_end>
+  }
   else RunException(met,"Type unknown.");
 }
 
@@ -884,7 +884,6 @@ void JGaugeMaxZ::CalculeGpu(double timestep,tuint3 ncells,tuint3 cellmin
 }
 #endif
 
-//<vs_posfoorces_ini>
 //##############################################################################
 //# JGaugeForce
 //##############################################################################
@@ -1153,7 +1152,7 @@ void JGaugeForce::CalculeGpu(double timestep,tuint3 ncells,tuint3 cellmin
   if(Output(timestep))StoreResult();
 }
 #endif
-//<vs_posfoorces_end>
+
 
 
 
