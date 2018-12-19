@@ -325,6 +325,10 @@ protected:
 
   tdouble3 Pointfb0;  //-Point from fb0
   tdouble3 Pointfb1;  //-Point from fb1
+
+  tdouble3 SlidingVector; //-Vector direction for sliding axis (for pointline).  
+  tdouble3 RotVector2;    //-Second vector for rotation (for pointline).  
+
   double RestLength;  //-Rest length for spring.
   StSaveSpring SvSpring; //-Configuration to save vtk spring.
 
@@ -395,11 +399,15 @@ public:
   JChLinkPointLine(std::string name, unsigned idbody1, unsigned idbody2);
   JChLinkPointLine(const JChLinkPointLine &src);
 
+  tdouble3 GetSlidingVector()const{ return(SlidingVector); }  
   tdouble3 GetRotPoint() const{ return(RotPoint); } 
   tdouble3 GetRotVector()const{ return(RotVector); }  
+  tdouble3 GetRotVector2()const{ return(RotVector2); }  
 
+  void SetSlidingVector(tdouble3 v){ SlidingVector=v; }  
   void SetRotPoint (tdouble3 v){ RotPoint=v; }
   void SetRotVector(tdouble3 v){ RotVector=v; }  
+  void SetRotVector2(tdouble3 v){ RotVector2=v; }  
 };
 
 //##############################################################################

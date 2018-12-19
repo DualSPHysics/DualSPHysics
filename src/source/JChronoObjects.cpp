@@ -332,6 +332,15 @@ void JChronoObjects::ReadXml(const JXml *sxml,TiXmlElement* lis){
       if(name.empty()){
         if(idbody2!=UINT_MAX)name=fun::PrintStr("Link_%s_%s",idnamebody1.c_str(),idnamebody2.c_str());
         else name=fun::PrintStr("Link_%s",idnamebody1.c_str());
+        if(ChronoDataXml->LinkIndexByName(name)!=UINT_MAX){//-Adds number to name when the name already exists.
+          int num=2;
+          string name2=name+"_"+fun::IntStr(num);
+          while(ChronoDataXml->LinkIndexByName(name2)!=UINT_MAX){
+            num++;
+            name2=name+"_"+fun::IntStr(num);
+          }
+          name=name2;
+        }
       }
       //-Creates link object.
       if(elename=="link_hinge"){
@@ -350,9 +359,12 @@ void JChronoObjects::ReadXml(const JXml *sxml,TiXmlElement* lis){
         ReadXmlValues(sxml,ele->FirstChildElement("values"),link->GetValuesPtr());
       }
       else if(elename=="link_pointline"){
+        if(idnamebody2!="NULL")RunException(met,"Link-PointLine only uses one body.",xmlrow);
         JChLinkPointLine *link=ChronoDataXml->AddLinkPointLine(name,idbody1,idbody2,xmlrow);
+        link->SetSlidingVector(sxml->ReadElementDouble3(ele,"slidingvector"));
         link->SetRotPoint (sxml->ReadElementDouble3(ele,"rotpoint"));
-        link->SetRotVector(sxml->ReadElementDouble3(ele,"rotvector"));
+        link->SetRotVector(sxml->ExistsElement(ele,"rotvector")? sxml->ReadElementDouble3(ele,"rotvector"): TDouble3(0));
+        link->SetRotVector2(sxml->ExistsElement(ele,"rotvector") && sxml->ExistsElement(ele,"rotvector2")? sxml->ReadElementDouble3(ele,"rotvector2"): TDouble3(0));
         link->SetStiffness(sxml->ReadElementDouble (ele,"stiffness","value"));
         link->SetDamping  (sxml->ReadElementDouble (ele,"damping"  ,"value"));
         ReadXmlValues(sxml,ele->FirstChildElement("values"),link->GetValuesPtr());
@@ -444,7 +456,7 @@ void JChronoObjects::SaveVtkScheme()const{
       case JChLink::LK_Hinge:{
         const JChLinkHinge* linktype=(const JChLinkHinge*)link;
         const tdouble3 pt=linktype->GetRotPoint();
-        const tdouble3 v=fmath::VecUnitary(linktype->GetRotVector())*(ds*2);
+        const tdouble3 v=fmath::VecUnitarySafe(linktype->GetRotVector())*(ds*2);
         JFormatFiles2::AddShape_Cylinder(shapes,pt-v,pt+v,ds*1.5,16,0,mk,0);
       }break;
       case JChLink::LK_Spheric:{
@@ -454,8 +466,14 @@ void JChronoObjects::SaveVtkScheme()const{
       case JChLink::LK_PointLine:{
         const JChLinkPointLine* linktype=(const JChLinkPointLine*)link;
         const tdouble3 pt=linktype->GetRotPoint();
-        const tdouble3 v=fmath::VecUnitary(linktype->GetRotVector())*(ds*4);
-        JFormatFiles2::AddShape_Cylinder(shapes,pt-v,pt+v,ds*1.5,16,0,mk,0);
+        const tdouble3 v=fmath::VecUnitarySafe(linktype->GetSlidingVector())*(ds*4);
+        const tdouble3 vrot=fmath::VecUnitarySafe(linktype->GetRotVector())*(ds*4);
+        const tdouble3 vrot2=fmath::VecUnitarySafe(linktype->GetRotVector2())*(ds*4);
+        if(vrot==TDouble3(0))JFormatFiles2::AddShape_Sphere(shapes,linktype->GetRotPoint(),ds*2,16,mk,0);
+        else{ 
+          JFormatFiles2::AddShape_Cylinder(shapes,pt-vrot,pt+vrot,ds*1.5,16,0,mk,0);
+          if(vrot2!=TDouble3(0))JFormatFiles2::AddShape_Cylinder(shapes,pt-vrot2,pt+vrot2,ds*1.5,16,0,mk,0);
+        }
         shapes.push_back(JFormatFiles2::DefineShape_Line(pt-(v*4.),pt+(v*4.),mk,0));
       }break;
       case JChLink::LK_LinearSpring:{
@@ -610,8 +628,10 @@ void JChronoObjects::VisuLink(const JChLink *link)const{
     }break;
     case JChLink::LK_PointLine:{
       const JChLinkPointLine* linktype=(const JChLinkPointLine*)link;
+      Log->Printf("    Sliding vector: (%s)",fun::Double3gStr(linktype->GetSlidingVector()).c_str());
       Log->Printf("    Rotation point: (%s)",fun::Double3gStr(linktype->GetRotPoint()).c_str());
-      Log->Printf("    Rotation axis.: (%s)",fun::Double3gStr(linktype->GetRotVector()).c_str());
+      if(linktype->GetRotVector() !=TDouble3(0))Log->Printf("    Rotation axis.: (%s)",fun::Double3gStr(linktype->GetRotVector()).c_str());
+      if(linktype->GetRotVector2()!=TDouble3(0))Log->Printf("    Rotation axis2: (%s)",fun::Double3gStr(linktype->GetRotVector2()).c_str());
     }break;
     case JChLink::LK_LinearSpring:{
       const JChLinkLinearSpring* linktype=(const JChLinkLinearSpring*)link;
