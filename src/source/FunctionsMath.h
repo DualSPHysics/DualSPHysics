@@ -228,6 +228,25 @@ inline tfloat3 VecUnitary(const tfloat3 &p1){
 
 
 //==============================================================================
+/// Devuelve vector unitario valido del vector or (0,0,0).
+/// Returns a valid unit vector of the vector or (0,0,0).
+//==============================================================================
+inline tdouble3 VecUnitarySafe(const tdouble3 &v){
+  const double m=sqrt(v.x*v.x+v.y*v.y+v.z*v.z);
+  return(m? TDouble3(v.x/m,v.y/m,v.z/m): v);
+}
+
+//==============================================================================
+/// Devuelve vector unitario valido del vector or (0,0,0).
+/// Returns a valid unit vector of the vector or (0,0,0).
+//==============================================================================
+inline tfloat3 VecUnitarySafe(const tfloat3 &v){
+  const float m=sqrt(v.x*v.x+v.y*v.y+v.z*v.z);
+  return(m? TFloat3(v.x/m,v.y/m,v.z/m): v);
+}
+
+
+//==============================================================================
 // Devuelve un vector ortogonal al dado con el modulo indicado.
 // Returns an orthogonal vector with indicated module.
 //==============================================================================

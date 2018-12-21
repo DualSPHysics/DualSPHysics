@@ -24,6 +24,7 @@
 #include "JAppInfo.h"
 #include "Functions.h"
 #include "FunctionsMath.h"
+#include "JSphMk.h"
 #include "JFormatFiles2.h"
 #include <cfloat>
 #include <climits>
@@ -93,7 +94,8 @@ void JGaugeSystem::ResetCfgDefault(){
 /// Configures object.
 //==============================================================================
 void JGaugeSystem::Config(bool simulate2d,double simulate2dposy,double timemax,double timepart
-  ,double dp,tdouble3 posmin,tdouble3 posmax,float scell,unsigned hdiv,float h,float massfluid)
+  ,double dp,tdouble3 posmin,tdouble3 posmax,float scell,unsigned hdiv,float h
+  ,float massfluid,float massbound,float cteb,float gamma,float rhopzero)
 {
   Simulate2D=simulate2d;
   Simulate2DPosY=simulate2dposy;
@@ -106,16 +108,20 @@ void JGaugeSystem::Config(bool simulate2d,double simulate2dposy,double timemax,d
   Hdiv=int(hdiv);
   H=h;
   MassFluid=massfluid;
+  MassBound=massbound;
+  CteB=cteb;
+  Gamma=gamma;
+  RhopZero=rhopzero;
   Configured=true;
 }
 
 //==============================================================================
 /// Loads initial conditions of XML object.
 //==============================================================================
-void JGaugeSystem::LoadXml(JXml *sxml,const std::string &place){
+void JGaugeSystem::LoadXml(JXml *sxml,const std::string &place,const JSphMk* mkinfo){
   TiXmlNode* node=sxml->GetNode(place,false);
   if(!node)RunException("LoadXml",std::string("Cannot find the element \'")+place+"\'.");
-  ReadXml(sxml,node->ToElement());
+  ReadXml(sxml,node->ToElement(),mkinfo);
 }
 
 //==============================================================================
@@ -197,7 +203,7 @@ JGaugeItem::StDefault JGaugeSystem::ReadXmlCommon(JXml *sxml,TiXmlElement* ele)c
 //==============================================================================
 /// Reads list of initial conditions in the XML node.
 //==============================================================================
-void JGaugeSystem::ReadXml(JXml *sxml,TiXmlElement* lis){
+void JGaugeSystem::ReadXml(JXml *sxml,TiXmlElement* lis,const JSphMk* mkinfo){
   const char met[]="ReadXml";
   if(!Configured)RunException(met,"The object is not yet configured.");
   //-Loads default configuration.
@@ -256,6 +262,10 @@ void JGaugeSystem::ReadXml(JXml *sxml,TiXmlElement* lis){
         if(distlimit<=0)RunException(met,fun::PrintStr("The distlimit (%f) is invalid.",distlimit),sxml->ErrGetFileRow(ele));
         gau=AddGaugeMaxZ(name,cfg.computestart,cfg.computeend,cfg.computedt,pt0,height,distlimit);
       }
+      else if(cmd=="force"){
+        const word mkbound=(word)sxml->ReadElementUnsigned(ele,"target","mkbound");
+        gau=AddGaugeForce(name,cfg.computestart,cfg.computeend,cfg.computedt,mkinfo,mkbound);
+      }
       else RunException(met,fun::PrintStr("Gauge type \'%s\' is invalid.",cmd.c_str()),sxml->ErrGetFileRow(ele));
       gau->SetSaveVtkPart(cfg.savevtkpart);
       //gau->ConfigComputeTiming(cfg.computestart,cfg.computeend,cfg.computedt);
@@ -269,12 +279,14 @@ void JGaugeSystem::ReadXml(JXml *sxml,TiXmlElement* lis){
 //==============================================================================
 /// Creates new gauge-Velocity and returns pointer.
 //==============================================================================
-JGaugeVelocity* JGaugeSystem::AddGaugeVel(std::string name,double computestart,double computeend,double computedt,const tdouble3 &point){
+JGaugeVelocity* JGaugeSystem::AddGaugeVel(std::string name,double computestart,double computeend,double computedt
+  ,const tdouble3 &point)
+{
   const char met[]="AddGaugeVel";
   if(GetGaugeIdx(name)!=UINT_MAX)RunException(met,fun::PrintStr("The name \'%s\' already exists.",name.c_str()));
   //-Creates object.
-  JGaugeVelocity* gau=new JGaugeVelocity(GetCount(),name,point,Log);
-  gau->Config(Simulate2D,DomPosMin,DomPosMax,Scell,Hdiv,H,MassFluid);
+  JGaugeVelocity* gau=new JGaugeVelocity(GetCount(),name,point,Cpu,Log);
+  gau->Config(Simulate2D,DomPosMin,DomPosMax,Scell,Hdiv,H,MassFluid,MassBound,CteB,Gamma,RhopZero);
   gau->ConfigComputeTiming(computestart,computeend,computedt);
   //-Uses common configuration.
   gau->SetSaveVtkPart(CfgDefault.savevtkpart);
@@ -286,13 +298,15 @@ JGaugeVelocity* JGaugeSystem::AddGaugeVel(std::string name,double computestart,d
 //==============================================================================
 /// Creates new gauge-SWL and returns pointer.
 //==============================================================================
-JGaugeSwl* JGaugeSystem::AddGaugeSwl(std::string name,double computestart,double computeend,double computedt,tdouble3 point0,tdouble3 point2,double pointdp,float masslimit){
+JGaugeSwl* JGaugeSystem::AddGaugeSwl(std::string name,double computestart,double computeend,double computedt
+  ,tdouble3 point0,tdouble3 point2,double pointdp,float masslimit)
+{
   const char met[]="AddGaugeSwl";
   if(GetGaugeIdx(name)!=UINT_MAX)RunException(met,fun::PrintStr("The name \'%s\' already exists.",name.c_str()));
   if(masslimit<=0)masslimit=MassFluid*(Simulate2D? 0.4f: 0.5f);
   //-Creates object.
-  JGaugeSwl* gau=new JGaugeSwl(GetCount(),name,point0,point2,pointdp,masslimit,Log);
-  gau->Config(Simulate2D,DomPosMin,DomPosMax,Scell,Hdiv,H,MassFluid);
+  JGaugeSwl* gau=new JGaugeSwl(GetCount(),name,point0,point2,pointdp,masslimit,Cpu,Log);
+  gau->Config(Simulate2D,DomPosMin,DomPosMax,Scell,Hdiv,H,MassFluid,MassBound,CteB,Gamma,RhopZero);
   gau->ConfigComputeTiming(computestart,computeend,computedt);
   //-Uses common configuration.
   gau->SetSaveVtkPart(CfgDefault.savevtkpart);
@@ -304,12 +318,43 @@ JGaugeSwl* JGaugeSystem::AddGaugeSwl(std::string name,double computestart,double
 //==============================================================================
 /// Creates new gauge-MaxZ and returns pointer.
 //==============================================================================
-JGaugeMaxZ* JGaugeSystem::AddGaugeMaxZ(std::string name,double computestart,double computeend,double computedt,tdouble3 point0,double height,float distlimit){
-  const char met[]="JGaugeMaxZ";
+JGaugeMaxZ* JGaugeSystem::AddGaugeMaxZ(std::string name,double computestart,double computeend,double computedt
+  ,tdouble3 point0,double height,float distlimit)
+{
+  const char met[]="AddGaugeMaxZ";
   if(GetGaugeIdx(name)!=UINT_MAX)RunException(met,fun::PrintStr("The name \'%s\' already exists.",name.c_str()));
   //-Creates object.
-  JGaugeMaxZ* gau=new JGaugeMaxZ(GetCount(),name,point0,height,distlimit,Log);
-  gau->Config(Simulate2D,DomPosMin,DomPosMax,Scell,Hdiv,H,MassFluid);
+  JGaugeMaxZ* gau=new JGaugeMaxZ(GetCount(),name,point0,height,distlimit,Cpu,Log);
+  gau->Config(Simulate2D,DomPosMin,DomPosMax,Scell,Hdiv,H,MassFluid,MassBound,CteB,Gamma,RhopZero);
+  gau->ConfigComputeTiming(computestart,computeend,computedt);
+  //-Uses common configuration.
+  gau->SetSaveVtkPart(CfgDefault.savevtkpart);
+  gau->ConfigOutputTiming(CfgDefault.output,CfgDefault.outputstart,CfgDefault.outputend,CfgDefault.outputdt);
+  Gauges.push_back(gau);
+  return(gau);
+}
+
+//==============================================================================
+/// Creates new gauge-Force and returns pointer.
+//==============================================================================
+JGaugeForce* JGaugeSystem::AddGaugeForce(std::string name,double computestart,double computeend,double computedt
+  ,const JSphMk* mkinfo,word mkbound)
+{
+  const char met[]="AddGaugeForce";
+  if(GetGaugeIdx(name)!=UINT_MAX)RunException(met,fun::PrintStr("The name \'%s\' already exists.",name.c_str()));
+  //-Obtains data form mkboud particles.
+  const unsigned cmk=mkinfo->GetMkBlockByMkBound(mkbound);
+  if(cmk>=mkinfo->Size())RunException(met,fun::PrintStr("Error loading boundary objects. Mkbound=%u is unknown.",mkbound));
+  const JSphMkBlock* mkb=mkinfo->Mkblock(cmk);
+  const TpParticles typeparts=mkb->Type;
+  if(typeparts!=TpPartFixed && typeparts!=TpPartMoving)RunException(met,fun::PrintStr("Type of boundary particles (Mkbound=%u) is invalid. Only fixed or moving particles are allowed.",mkbound));
+  const unsigned idbegin=mkb->Begin;
+  const unsigned count=mkb->Count;
+  const typecode code=mkb->Code;
+  const tfloat3 center=ToTFloat3((mkb->GetPosMin()+mkb->GetPosMax())/TDouble3(2));
+  //-Creates object.
+  JGaugeForce* gau=new JGaugeForce(GetCount(),name,mkbound,typeparts,idbegin,count,code,center,Cpu,Log);
+  gau->Config(Simulate2D,DomPosMin,DomPosMax,Scell,Hdiv,H,MassFluid,MassBound,CteB,Gamma,RhopZero);
   gau->ConfigComputeTiming(computestart,computeend,computedt);
   //-Uses common configuration.
   gau->SetSaveVtkPart(CfgDefault.savevtkpart);
@@ -399,14 +444,15 @@ JGaugeItem* JGaugeSystem::GetGauge(unsigned c)const{
 //==============================================================================
 /// Updates results on gauges (on CPU).
 //==============================================================================
-void JGaugeSystem::CalculeCpu(double timestep,bool svpart,tuint3 ncells,tuint3 cellmin,const unsigned *begincell
-  ,const tdouble3 *pos,const typecode *code,const tfloat4 *velrhop)
+void JGaugeSystem::CalculeCpu(double timestep,bool svpart,tuint3 ncells
+  ,tuint3 cellmin,const unsigned *begincell,unsigned npbok,unsigned npb,unsigned np
+  ,const tdouble3 *pos,const typecode *code,const unsigned *idp,const tfloat4 *velrhop)
 {
   const unsigned ng=GetCount();
   for(unsigned cg=0;cg<ng;cg++){
     JGaugeItem* gau=Gauges[cg];
     if(gau->Update(timestep)){
-      gau->CalculeCpu(timestep,ncells,cellmin,begincell,pos,code,velrhop);
+      gau->CalculeCpu(timestep,ncells,cellmin,begincell,npbok,npb,np,pos,code,idp,velrhop);
     }
   }
 }
@@ -415,8 +461,9 @@ void JGaugeSystem::CalculeCpu(double timestep,bool svpart,tuint3 ncells,tuint3 c
 //==============================================================================
 /// Updates results on gauges (on GPU).
 //==============================================================================
-void JGaugeSystem::CalculeGpu(double timestep,bool svpart,tuint3 ncells,tuint3 cellmin,const int2 *beginendcell
-  ,const double2 *posxy,const double *posz,const typecode *code,const float4 *velrhop)
+void JGaugeSystem::CalculeGpu(double timestep,bool svpart,tuint3 ncells
+  ,tuint3 cellmin,const int2 *beginendcell,unsigned npbok,unsigned npb,unsigned np
+  ,const double2 *posxy,const double *posz,const typecode *code,const unsigned *idp,const float4 *velrhop)
 {
   //-Allocates GPU memory.
   if(!AuxMemoryg)fcuda::Malloc(&AuxMemoryg,1);
@@ -425,7 +472,7 @@ void JGaugeSystem::CalculeGpu(double timestep,bool svpart,tuint3 ncells,tuint3 c
   for(unsigned cg=0;cg<ng;cg++){
     JGaugeItem* gau=Gauges[cg];
     if(gau->Update(timestep)){
-      gau->CalculeGpu(timestep,ncells,cellmin,beginendcell,posxy,posz,code,velrhop,AuxMemoryg);
+      gau->CalculeGpu(timestep,ncells,cellmin,beginendcell,npbok,npb,np,posxy,posz,code,idp,velrhop,AuxMemoryg);
     }
   }
 

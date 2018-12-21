@@ -12,6 +12,7 @@ examples/main/01_DamBreak/*_out
 ## Ignores other directories.
 __Tools__
 _out_UpdateHelp
+_out_CompileLinux
 
 ## Ignores temporary files.
 bin/windows/*.iobj

@@ -24,6 +24,8 @@
 //:# - Muestra vector normal del plano para facilitar su comprension. (26-11-2014)
 //:# - Se puede aplicar un factor de amortiguacion para cada componente. (26-11-2014)
 //:# - Documentacion del codigo en ingles. (08-08-2017)
+//:# - Mejora configuracion XML para definir el dominio del damping. (21-12-2018)
+//:# - Genera VTK con esquema de configuraciones. (21-12-2018)
 //:#############################################################################
 
 /// \file JDamping.h \brief Declares the class \ref JDamping.
@@ -62,6 +64,10 @@ public:
     bool usedomain;     ///<Indicates use of domain planes. | Indica uso de planos del dominio.
     double domzmin;     ///<Domain definition - Z minimum. | Definicion de dominio - Z minima.
     double domzmax;     ///<Domain definition - Z maximum. | Definicion de dominio - Z maxima.
+    tdouble2 dompt0;    ///<Domain point.
+    tdouble2 dompt1;    ///<Domain point.
+    tdouble2 dompt2;    ///<Domain point.
+    tdouble2 dompt3;    ///<Domain point.
     tdouble4 dompla0;   ///<Domain definition - plane 0.
     tdouble4 dompla1;   ///<Domain definition - plane 1.
     tdouble4 dompla2;   ///<Domain definition - plane 2.
@@ -72,14 +78,16 @@ public:
 
 private:
   JLog2* Log;
+  const double Dp;
   std::vector<StDamping> List;
 
   void ReadXml(JXml *sxml,TiXmlElement* ele);
   void ComputeDamping(const JDamping::StDamping &da,double dt,unsigned n,unsigned pini,const tdouble3 *pos,const typecode *code,tfloat4 *velrhop)const;
   void ComputeDampingPla(const JDamping::StDamping &da,double dt,unsigned n,unsigned pini,const tdouble3 *pos,const typecode *code,tfloat4 *velrhop)const;
+  void SaveVtkConfig(double dp)const;
 
 public:
-  JDamping(JLog2* log);
+  JDamping(double dp,JLog2* log);
   ~JDamping();
   void Reset();
 

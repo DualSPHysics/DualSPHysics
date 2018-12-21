@@ -832,7 +832,9 @@ void JSphCpuSingle::RunFloating(double dt,bool predictor){
 //==============================================================================
 void JSphCpuSingle::RunGaugeSystem(double timestep){
   const bool svpart=(TimeStep>=TimePartNext);
-  GaugeSystem->CalculeCpu(timestep,svpart,CellDivSingle->GetNcells(),CellDivSingle->GetCellDomainMin(),CellDivSingle->GetBeginCell(),Posc,Codec,Velrhopc);
+  GaugeSystem->CalculeCpu(timestep,svpart,CellDivSingle->GetNcells()
+    ,CellDivSingle->GetCellDomainMin(),CellDivSingle->GetBeginCell()
+    ,NpbOk,Npb,Np,Posc,Codec,Idpc,Velrhopc);
 }
 
 //==============================================================================

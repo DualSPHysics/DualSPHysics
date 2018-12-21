@@ -26,7 +26,9 @@
 #include "FunctionsMath.h"
 #include "JFormatFiles2.h"
 #ifdef _WITHGPU
+  #include "FunctionsCuda.h"
   #include "JGauge_ker.h"
+  #include "JReduSum_ker.h"
 #endif
 #include <cmath>
 #include <cfloat>
@@ -41,8 +43,8 @@ using namespace std;
 //==============================================================================
 /// Constructor.
 //==============================================================================
-JGaugeItem::JGaugeItem(TpGauge type,unsigned idx,std::string name,JLog2* log)
-  :Type(type),Idx(idx),Name(name),Log(log)
+JGaugeItem::JGaugeItem(TpGauge type,unsigned idx,std::string name,bool cpu,JLog2* log)
+  :Type(type),Idx(idx),Name(name),Cpu(cpu),Log(log)
 {
   ClassName="JGaugeItem";
   Reset();
@@ -52,7 +54,7 @@ JGaugeItem::JGaugeItem(TpGauge type,unsigned idx,std::string name,JLog2* log)
 /// Initialisation of variables.
 //==============================================================================
 void JGaugeItem::Reset(){
-  Config(false,TDouble3(0),TDouble3(0),0,0,0,0);
+  Config(false,TDouble3(0),TDouble3(0),0,0,0,0,0,0,0,0);
   SaveVtkPart=false;
   ConfigComputeTiming(0,0,0);
   ConfigOutputTiming(false,0,0,0);
@@ -65,7 +67,8 @@ void JGaugeItem::Reset(){
 /// Configures object.
 //==============================================================================
 void JGaugeItem::Config(bool simulate2d,tdouble3 domposmin,tdouble3 domposmax
-  ,float scell,int hdiv,float h,float massfluid)
+  ,float scell,int hdiv,float h,float massfluid,float massbound
+  ,float cteb,float gamma,float rhopzero)
 {
   Simulate2D=simulate2d;
   DomPosMin=domposmin;
@@ -75,7 +78,12 @@ void JGaugeItem::Config(bool simulate2d,tdouble3 domposmin,tdouble3 domposmax
   H=h;
   Fourh2=float(h*h*4); 
   Awen=(h? float(Simulate2D? 0.557/(h*h): 0.41778/(h*h*h)): 0);
+  Bwen=(h? float(Simulate2D? -2.7852/(h*h*h): -2.08891/(h*h*h*h)): 0);
   MassFluid=massfluid;
+  MassBound=massbound;
+  CteB=cteb;
+  Gamma=gamma;
+  RhopZero=rhopzero;
 }
 
 //==============================================================================
@@ -104,9 +112,10 @@ void JGaugeItem::ConfigOutputTiming(bool save,double start,double end,double dt)
 //==============================================================================
 std::string JGaugeItem::GetNameType(TpGauge type){
   switch(type){
-    case GAUGE_Vel:  return("Vel");
-    case GAUGE_Swl:  return("SWL");
-    case GAUGE_MaxZ: return("MaxZ");
+    case GAUGE_Vel:   return("Vel");
+    case GAUGE_Swl:   return("SWL");
+    case GAUGE_MaxZ:  return("MaxZ");
+    case GAUGE_Force: return("Force");
   }
   return("???");
 }
@@ -136,6 +145,11 @@ void JGaugeItem::GetConfig(std::vector<std::string> &lines)const{
     const JGaugeMaxZ* gau=(JGaugeMaxZ*)this;
     lines.push_back(fun::PrintStr("Point0.....: (%g,%g,%g)   Height:%g",gau->GetPoint0().x,gau->GetPoint0().y,gau->GetPoint0().z,gau->GetHeight()));
     lines.push_back(fun::PrintStr("DistLimit..: %g",gau->GetDistLimit()));
+  }
+  else if(Type==GAUGE_Force){
+    const JGaugeForce* gau=(JGaugeForce*)this;
+    lines.push_back(fun::PrintStr("MkBound.....: %u (%s particles)",gau->GetMkBound(),TpPartGetStrCode(gau->GetTypeParts())));
+    lines.push_back(fun::PrintStr("Particles id: %u - %u",gau->GetIdBegin(),gau->GetIdBegin()+gau->GetCount()-1));
   }
   else RunException(met,"Type unknown.");
 }
@@ -221,8 +235,8 @@ void JGaugeItem::CheckCudaError(const std::string &method,const std::string &msg
 //==============================================================================
 /// Constructor.
 //==============================================================================
-JGaugeVelocity::JGaugeVelocity(unsigned idx,std::string name,tdouble3 point,JLog2* log)
-  :JGaugeItem(GAUGE_Vel,idx,name,log)
+JGaugeVelocity::JGaugeVelocity(unsigned idx,std::string name,tdouble3 point,bool cpu,JLog2* log)
+  :JGaugeItem(GAUGE_Vel,idx,name,cpu,log)
 {
   ClassName="JGaugeVel";
   FileInfo=string("Saves velocity data measured from fluid particles (by ")+ClassName+").";
@@ -316,8 +330,9 @@ unsigned JGaugeVelocity::GetPointDef(std::vector<tfloat3> &points)const{
 //==============================================================================
 /// Calculates velocity at indicated points (on CPU).
 //==============================================================================
-void JGaugeVelocity::CalculeCpu(double timestep,tuint3 ncells,tuint3 cellmin,const unsigned *begincell
-  ,const tdouble3 *pos,const typecode *code,const tfloat4 *velrhop)
+void JGaugeVelocity::CalculeCpu(double timestep,tuint3 ncells,tuint3 cellmin
+  ,const unsigned *begincell,unsigned npbok,unsigned npb,unsigned np
+  ,const tdouble3 *pos,const typecode *code,const unsigned *idp,const tfloat4 *velrhop)
 {
   SetTimeStep(timestep);
   //-Start measure.
@@ -392,8 +407,9 @@ void JGaugeVelocity::CalculeCpu(double timestep,tuint3 ncells,tuint3 cellmin,con
 //==============================================================================
 /// Calculates velocity at indicated points (on GPU).
 //==============================================================================
-void JGaugeVelocity::CalculeGpu(double timestep,tuint3 ncells,tuint3 cellmin,const int2 *beginendcell
-  ,const double2 *posxy,const double *posz,const typecode *code,const float4 *velrhop,float3 *aux)
+void JGaugeVelocity::CalculeGpu(double timestep,tuint3 ncells,tuint3 cellmin
+  ,const int2 *beginendcell,unsigned npbok,unsigned npb,unsigned np
+  ,const double2 *posxy,const double *posz,const typecode *code,const unsigned *idp,const float4 *velrhop,float3 *aux)
 {
   SetTimeStep(timestep);
   //-Start measure.
@@ -418,8 +434,8 @@ void JGaugeVelocity::CalculeGpu(double timestep,tuint3 ncells,tuint3 cellmin,con
 //==============================================================================
 /// Constructor.
 //==============================================================================
-JGaugeSwl::JGaugeSwl(unsigned idx,std::string name,tdouble3 point0,tdouble3 point2,double pointdp,float masslimit,JLog2* log)
-  :JGaugeItem(GAUGE_Swl,idx,name,log)
+JGaugeSwl::JGaugeSwl(unsigned idx,std::string name,tdouble3 point0,tdouble3 point2,double pointdp,float masslimit,bool cpu,JLog2* log)
+  :JGaugeItem(GAUGE_Swl,idx,name,cpu,log)
 {
   ClassName="JGaugeSwl";
   FileInfo=string("Saves SWL data measured from fluid particles (by ")+ClassName+").";
@@ -600,8 +616,9 @@ float JGaugeSwl::CalculeMassCpu(const tdouble3 &ptpos,const tint4 &nc
 //==============================================================================
 /// Calculates surface water level at indicated points (on CPU).
 //==============================================================================
-void JGaugeSwl::CalculeCpu(double timestep,tuint3 ncells,tuint3 cellmin,const unsigned *begincell
-  ,const tdouble3 *pos,const typecode *code,const tfloat4 *velrhop)
+void JGaugeSwl::CalculeCpu(double timestep,tuint3 ncells,tuint3 cellmin
+  ,const unsigned *begincell,unsigned npbok,unsigned npb,unsigned np
+  ,const tdouble3 *pos,const typecode *code,const unsigned *idp,const tfloat4 *velrhop)
 {
   SetTimeStep(timestep);
   const tint4 nc=TInt4(int(ncells.x),int(ncells.y),int(ncells.z),int(ncells.x*ncells.y));
@@ -633,8 +650,9 @@ void JGaugeSwl::CalculeCpu(double timestep,tuint3 ncells,tuint3 cellmin,const un
 //==============================================================================
 /// Calculates surface water level at indicated points (on GPU).
 //==============================================================================
-void JGaugeSwl::CalculeGpu(double timestep,tuint3 ncells,tuint3 cellmin,const int2 *beginendcell
-  ,const double2 *posxy,const double *posz,const typecode *code,const float4 *velrhop,float3 *aux)
+void JGaugeSwl::CalculeGpu(double timestep,tuint3 ncells,tuint3 cellmin
+  ,const int2 *beginendcell,unsigned npbok,unsigned npb,unsigned np
+  ,const double2 *posxy,const double *posz,const typecode *code,const unsigned *idp,const float4 *velrhop,float3 *aux)
 {
   SetTimeStep(timestep);
   //-Start measure.
@@ -656,8 +674,8 @@ void JGaugeSwl::CalculeGpu(double timestep,tuint3 ncells,tuint3 cellmin,const in
 //==============================================================================
 /// Constructor.
 //==============================================================================
-JGaugeMaxZ::JGaugeMaxZ(unsigned idx,std::string name,tdouble3 point0,double height,float distlimit,JLog2* log)
-  :JGaugeItem(GAUGE_MaxZ,idx,name,log)
+JGaugeMaxZ::JGaugeMaxZ(unsigned idx,std::string name,tdouble3 point0,double height,float distlimit,bool cpu,JLog2* log)
+  :JGaugeItem(GAUGE_MaxZ,idx,name,cpu,log)
 {
   ClassName="JGaugeMaxZ";
   FileInfo=string("Saves maximum Z position of fluid particles (by ")+ClassName+").";
@@ -791,8 +809,9 @@ void JGaugeMaxZ::GetInteractionCellsMaxZ(const tdouble3 &pos,const tint4 &nc,con
 //==============================================================================
 /// Calculates maximum z of fluid at distance of a vertical line (on CPU).
 //==============================================================================
-void JGaugeMaxZ::CalculeCpu(double timestep,tuint3 ncells,tuint3 cellmin,const unsigned *begincell
-  ,const tdouble3 *pos,const typecode *code,const tfloat4 *velrhop)
+void JGaugeMaxZ::CalculeCpu(double timestep,tuint3 ncells,tuint3 cellmin
+  ,const unsigned *begincell,unsigned npbok,unsigned npb,unsigned np
+  ,const tdouble3 *pos,const typecode *code,const unsigned *idp,const tfloat4 *velrhop)
 {
   //Log->Printf("JGaugeMaxZ----> timestep:%g  (%d)",timestep,(DG?1:0));
   SetTimeStep(timestep);
@@ -840,8 +859,9 @@ void JGaugeMaxZ::CalculeCpu(double timestep,tuint3 ncells,tuint3 cellmin,const u
 //==============================================================================
 /// Calculates maximum z of fluid at distance of a vertical line (on GPU).
 //==============================================================================
-void JGaugeMaxZ::CalculeGpu(double timestep,tuint3 ncells,tuint3 cellmin,const int2 *beginendcell
-  ,const double2 *posxy,const double *posz,const typecode *code,const float4 *velrhop,float3 *aux)
+void JGaugeMaxZ::CalculeGpu(double timestep,tuint3 ncells,tuint3 cellmin
+  ,const int2 *beginendcell,unsigned npbok,unsigned npb,unsigned np
+  ,const double2 *posxy,const double *posz,const typecode *code,const unsigned *idp,const float4 *velrhop,float3 *aux)
 {
   SetTimeStep(timestep);
   //-Compute auxiliary constants.
@@ -863,4 +883,276 @@ void JGaugeMaxZ::CalculeGpu(double timestep,tuint3 ncells,tuint3 cellmin,const i
   if(Output(timestep))StoreResult();
 }
 #endif
+
+//##############################################################################
+//# JGaugeForce
+//##############################################################################
+//==============================================================================
+/// Constructor.
+//==============================================================================
+JGaugeForce::JGaugeForce(unsigned idx,std::string name,word mkbound
+  ,TpParticles typeparts,unsigned idbegin,unsigned count,typecode code
+  ,tfloat3 center,bool cpu,JLog2* log)
+  :JGaugeItem(GAUGE_Force,idx,name,cpu,log)
+{
+  ClassName="JGaugeForce";
+  FileInfo=string("Saves Force data measured from boundary particles (by ")+ClassName+").";
+  PartAcec=NULL; 
+ #ifdef _WITHGPU
+  PartAceg=NULL;
+  Auxg=NULL;
+ #endif
+  Reset();
+  MkBound=mkbound;
+  TypeParts=typeparts;
+  IdBegin=idbegin;
+  Count=count;
+  Code=code;
+  InitialCenter=center;
+  //-Allocates memory to calculate acceleration in selected particles.
+  if(Cpu)PartAcec=new tfloat3[Count];
+ #ifdef _WITHGPU
+  if(!Cpu)fcuda::Malloc(&PartAceg,Count);
+  unsigned saux=curedus::GetAuxSize_ReduSumFloat3(Count);
+  if(!Cpu)fcuda::Malloc(&Auxg,saux);
+ #endif
+}
+
+//==============================================================================
+/// Destructor.
+//==============================================================================
+JGaugeForce::~JGaugeForce(){
+  DestructorActive=true;
+  Reset();
+}
+
+//==============================================================================
+/// Initialisation of variables.
+//==============================================================================
+void JGaugeForce::Reset(){
+  delete[] PartAcec; PartAcec=NULL;
+ #ifdef _WITHGPU
+  if(PartAceg)cudaFree(PartAceg); PartAceg=NULL;
+  if(Auxg)    cudaFree(Auxg);     Auxg=NULL;
+ #endif
+  MkBound=0;
+  TypeParts=TpPartUnknown;
+  IdBegin=Count=0;
+  Code=0;
+  InitialCenter=TFloat3(0);
+  JGaugeItem::Reset();
+}
+
+//==============================================================================
+/// Record the last measure result.
+//==============================================================================
+void JGaugeForce::StoreResult(){
+  if(OutputSave){
+    //-Allocates memory.
+    while(unsigned(OutBuff.size())<OutSize)OutBuff.push_back(StrGaugeForceRes());
+    //-Empty buffer.
+    if(OutCount+1>=OutSize)SaveResults();
+    //-Stores last results.
+    OutBuff[OutCount]=Result;
+    OutCount++;
+    //-Updates OutputNext.
+    if(OutputDt){
+      const unsigned nt=unsigned(TimeStep/OutputDt);
+      OutputNext=OutputDt*nt;
+      if(OutputNext<=TimeStep)OutputNext=OutputDt*(nt+1);
+    }
+  }
+}
+
+//==============================================================================
+/// Saves stored results in CSV file.
+//==============================================================================
+void JGaugeForce::SaveResults(){
+  if(OutCount){
+    const bool first=OutFile.empty();
+    if(first){
+      OutFile=GetResultsFileCsv();
+      Log->AddFileInfo(OutFile,FileInfo);
+    }
+    jcsv::JSaveCsv2 scsv(OutFile,!first,AppInfo.GetCsvSepComa());
+    //-Saves head.
+    if(first){
+      //-Head of values.
+      scsv.SetHead();
+      scsv <<"time [s];force [N];forcex [N];forcey [N];forcez [N]" << jcsv::Endl();
+    }
+    //-Saves data.
+    scsv.SetData();
+    scsv << jcsv::Fmt(jcsv::TpFloat1,"%g") << jcsv::Fmt(jcsv::TpFloat3,"%g;%g;%g");
+    for(unsigned c=0;c<OutCount;c++){
+      scsv << OutBuff[c].timestep << fmath::DistPoint(OutBuff[c].force) << OutBuff[c].force << jcsv::Endl();
+    }
+    OutCount=0;
+  }
+}
+
+//==============================================================================
+/// Saves last result in VTK file.
+//==============================================================================
+void JGaugeForce::SaveVtkResult(unsigned cpart){
+  std::vector<JFormatFiles2::StScalarData> fields;
+  fields.push_back(JFormatFiles2::DefineField("Force",JFormatFiles2::Float32,3,&(Result.force)));
+  //-Saves VTK file.
+  Log->AddFileInfo(fun::FileNameSec(GetResultsFileVtk(),UINT_MAX),FileInfo);
+  JFormatFiles2::SaveVtk(fun::FileNameSec(GetResultsFileVtk(),cpart),1,&InitialCenter,fields);
+}
+
+//==============================================================================
+/// Loads and returns number definition points.
+//==============================================================================
+unsigned JGaugeForce::GetPointDef(std::vector<tfloat3> &points)const{
+  points.push_back(InitialCenter);
+  return(1);
+}
+
+//==============================================================================
+/// Calculates force sumation on selected fixed or moving particles using only fluid particles (on CPU).
+/// Ignores periodic boundary particles to avoid race condition problems.
+//==============================================================================
+void JGaugeForce::CalculeCpu(double timestep,tuint3 ncells,tuint3 cellmin
+  ,const unsigned *begincell,unsigned npbok,unsigned npb,unsigned np
+  ,const tdouble3 *pos,const typecode *code,const unsigned *idp,const tfloat4 *velrhop)
+{
+  if(!Cpu)RunException("CalculeCpu","Method is not allowed for GPU executions.");
+  SetTimeStep(timestep);
+  const tint4 nc=TInt4(int(ncells.x),int(ncells.y),int(ncells.z),int(ncells.x*ncells.y));
+  const tint3 cellzero=TInt3(cellmin.x,cellmin.y,cellmin.z);
+  const unsigned cellfluid=nc.w*nc.z+1;
+
+  //-Computes acceleration in selected boundary particles.
+  memset(PartAcec,0,sizeof(tfloat3)*Count);
+  const int n=int(TypeParts==TpPartFixed || TypeParts==TpPartMoving? npbok: np);
+  #ifdef OMP_USE
+    #pragma omp parallel for schedule (guided)
+  #endif
+  for(int p1=0;p1<n;p1++)if(CODE_GetTypeAndValue(code[p1])==Code && CODE_IsNormal(code[p1])){//-Ignores periodic boundaries.
+    //-Obtain limits of interaction. | Obtiene limites de interaccion.
+    int cxini,cxfin,yini,yfin,zini,zfin;
+    const tdouble3 ptpos1=pos[p1];
+    const tfloat4 velrhop1=velrhop[p1];
+    const float press1=CteB*(pow(velrhop1.w/RhopZero,Gamma)-1.0f);
+
+    GetInteractionCells(ptpos1,nc,cellzero,cxini,cxfin,yini,yfin,zini,zfin);
+
+    //-Auxiliary variables.
+    tfloat3 ace=TFloat3(0);
+
+    //-Search for neighbors in adjacent cells. | Busqueda de vecinos en celdas adyacentes.
+    if(cxini<cxfin)for(int z=zini;z<zfin;z++){
+      const int zmod=(nc.w)*z+cellfluid; //-Sum from start of fluid cells. | Le suma donde empiezan las celdas de fluido.
+      for(int y=yini;y<yfin;y++){
+        int ymod=zmod+nc.x*y;
+        const unsigned pini=begincell[cxini+ymod];
+        const unsigned pfin=begincell[cxfin+ymod];
+
+        //-Interaction with Fluid/Floating | Interaccion con varias Fluid/Floating.
+        //--------------------------------------------------------------------------
+        for(unsigned p2=pini;p2<pfin;p2++){
+          const float drx=float(ptpos1.x-pos[p2].x);
+          const float dry=float(ptpos1.y-pos[p2].y);
+          const float drz=float(ptpos1.z-pos[p2].z);
+          const float rr2=(drx*drx+dry*dry+drz*drz);
+          //-Interaction with real neighboring particles. | Interaccion con particulas vecinas reales.
+          if(rr2<=Fourh2 && rr2>=ALMOSTZERO && CODE_IsFluid(code[p2])){
+            float frx,fry,frz;
+            {//-Wendland kernel.
+              const float rad=sqrt(rr2);
+              const float qq=rad/H;
+              const float wqq1=1.f-0.5f*qq;
+              const float fac=Bwen*qq*wqq1*wqq1*wqq1/rad; //-Kernel derivative (divided by rad).
+              frx=fac*drx; fry=fac*dry; frz=fac*drz;
+            }
+            const float mass2=MassFluid;
+            const tfloat4 velrhop2=velrhop[p2];
+            const float press2=CteB*(pow(velrhop2.w/RhopZero,Gamma)-1.0f);
+            const float prs=(press1+press2)/(velrhop1.w*velrhop2.w);
+            {//-Adds aceleration.
+              const float p_vpm1=-prs*mass2;
+              ace.x+=p_vpm1*frx;  ace.y+=p_vpm1*fry;  ace.z+=p_vpm1*frz;
+            }
+
+            //{//-Adds aceleration from viscosity.
+            //  const float dvx=(velrhop1.x)-velrhop2.x;
+            //  const float dvy=(velrhop1.y)-velrhop2.y;
+            //  const float dvz=(velrhop1.z)-velrhop2.z;
+            //  const float dot=drx*dvx + dry*dvy + drz*dvz;
+            //  if(TVisco==VISCO_Artificial){//-Artificial viscosity
+            //    if(dot<0){
+            //      const float robar=(velrhop1.w+velrhop2.w)*0.5f;
+            //      const float amubar=Dinter*dot/(rr2+Eta2_Dinter);
+            //      const float cbar=Cs0;
+            //      const float pi_visc=-Visco*cbar*amubar/robar;
+            //      const float v=-mass2*pi_visc;
+            //      ace.x+=v*frx;  ace.y+=v*fry;  ace.z+=v*frz;
+            //    }
+            //  }
+            //  else{//-Laminar viscosity
+            //    const float robar2=(velrhop1.w+velrhop2.w);
+            //    const float temp=4.*Visco/((rr2+Eta2_Dinter)*robar2);  //-Simplification of / Simplificacion de: temp=2.0f*visco/((rr2+CTE.eta2)*robar); robar=(rhopp1+velrhop2.w)*0.5f;
+            //    const float v=mass2*temp*(drx*frx+dry*fry+drz*frz);
+            //    ace.x+=v*dvx;  ace.y+=v*dvy;  ace.z+=v*dvz;
+            //  }
+            //}
+          }
+        }
+      }
+    }
+    //-Saves ace.
+    PartAcec[idp[p1]-IdBegin]=ace;
+  }
+  //-Computes total ace.
+  tfloat3 acesum=TFloat3(0);
+  for(unsigned p=0;p<Count;p++)acesum=acesum+PartAcec[p];
+
+  //-Stores result. | Guarda resultado.
+  Result.Set(timestep,acesum*MassBound);
+  //Log->Printf("------> t:%f",TimeStep);
+  if(Output(timestep))StoreResult();
+}
+
+#ifdef _WITHGPU
+//==============================================================================
+/// Calculates force sumation on selected fixed or moving particles using only fluid particles (on GPU).
+/// Ignores periodic boundary particles.
+//==============================================================================
+void JGaugeForce::CalculeGpu(double timestep,tuint3 ncells,tuint3 cellmin
+  ,const int2 *beginendcell,unsigned npbok,unsigned npb,unsigned np
+  ,const double2 *posxy,const double *posz,const typecode *code,const unsigned *idp,const float4 *velrhop,float3 *aux)
+{
+  SetTimeStep(timestep);
+  //-Initializes acceleration array to zero.
+  cudaMemset(PartAceg,0,sizeof(float3)*Count);
+  const int n=int(TypeParts==TpPartFixed || TypeParts==TpPartMoving? npbok: np);
+  //-Computes acceleration in selected boundary particles.
+  cugauge::Interaction_GaugeForce(n,IdBegin,Code
+    ,Fourh2,H,Bwen,MassFluid,CteB,RhopZero,Gamma
+    ,Hdiv,ncells,cellmin,beginendcell,DomPosMin,Scell
+    ,posxy,posz,code,idp,velrhop,PartAceg);
+  //-Computes total ace.
+  tfloat3 acesum=TFloat3(0);
+  if(1){//-Computes total ace on GPU.
+    const float3 result=curedus::ReduSumFloat3(Count,0,PartAceg,Auxg);
+    acesum=TFloat3(result.x,result.y,result.z);
+    CheckCudaError("CalculeGpu","Failed in Force calculation.");
+  }
+  else{//-Computes total ace on CPU.
+    tfloat3* aceh=fcuda::ToHostFloat3(0,Count,PartAceg);
+    for(unsigned p=0;p<Count;p++)acesum=acesum+aceh[p];
+    delete[] aceh; aceh=NULL;
+  }
+
+  //-Stores result. | Guarda resultado.
+  Result.Set(timestep,acesum*MassBound);
+  //Log->Printf("------> t:%f",TimeStep);
+  if(Output(timestep))StoreResult();
+}
+#endif
+
+
+
 
