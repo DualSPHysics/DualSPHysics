@@ -20,6 +20,7 @@
 //:# Cambios:
 //:# =========
 //:# - Documentacion del codigo en ingles. (08-08-2017)
+//:# - Nuevas funciones para ReduSumFloat3. (20-11-2018)
 //:#############################################################################
 
 /// \file JReduSum_ker.h \brief Declares functions and CUDA kernels for reduction using using the sum.
@@ -33,7 +34,7 @@
 #define REDUBSIZE 256
 #endif
 
-#define DG_curedus_Print            //-Displays information on the screen when it is active.
+//#define DG_curedus_Print          //-Displays information on the screen when it is active.
 //#define DG_curedus_ReduSumDouble  //-In ReduSumDouble() checks that the result is correct.
 //#define DG_curedus_ReduSumFloat   //-In ReduSumFloat() checks that the result is correct.
 //#define DG_curedus_ReduSumUint    //-In ReduSumUint() checks that the result is correct.
@@ -64,6 +65,14 @@ unsigned ReduSumUint(unsigned ndata,unsigned inidata,const unsigned* data,unsign
 void ReduSumUintAsyn(unsigned ndata,unsigned inidata,const unsigned* data,unsigned* resu,cudaStream_t stm);
 void ReduSumUintAsyn(unsigned ndata,unsigned inidata,const unsigned* data,unsigned* resu,unsigned *pim1_sum,cudaStream_t stm);
 unsigned DgReduSumUint(unsigned ndata,unsigned inidata,const unsigned* data);
+
+//-Kernels for ReduSumFloat3.
+unsigned GetAuxSize_ReduSumFloat3(unsigned ndata);
+
+float3 ReduSumFloat3(unsigned ndata,unsigned inidata,const float3* data,float3* resu);
+void ReduSumFloat3Asyn(unsigned ndata,unsigned inidata,const float3* data,float3* resu,cudaStream_t stm);
+void ReduSumFloat3Asyn(unsigned ndata,unsigned inidata,const float3* data,float3* resu,float3 *pim1_sum,cudaStream_t stm);
+float3 DgReduSumFloat3(unsigned ndata,unsigned inidata,const float3* data);
 
 
 }

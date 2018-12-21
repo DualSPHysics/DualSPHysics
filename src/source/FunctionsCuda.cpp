@@ -211,6 +211,7 @@ int _ConvertSMVer2Cores(int major, int minor){
     { 0x62, 128}, // Pascal Generation (SM 6.2) GP10x class
     { 0x70, 64 }, // Volta Generation (SM 7.0) GV100 class
     { 0x72, 64 }, // Volta Generation (SM 7.2) GV11b class
+    { 0x75, 64 }, // Turing Generation (SM 7.5) TU10X class
     { -1, -1 }
   };
 

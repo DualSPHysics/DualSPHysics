@@ -51,6 +51,8 @@ ifeq ($(CUDAVER),92)
 endif
 
 #=============== Select GPU architectures ===============
+# to customize compute capabilities please refer to
+# https://developer.nvidia.com/cuda-gpus (last accessed 10-11-2018)
 ifeq ($(CUDAVER),00)
   GENCODE:=$(GENCODE) -gencode=arch=compute_20,code=\"sm_20,compute_20\"
   GENCODE:=$(GENCODE) -gencode=arch=compute_30,code=\"sm_30,compute_30\"

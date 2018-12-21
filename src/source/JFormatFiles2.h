@@ -74,6 +74,7 @@
 //:# - Se permite definir formato de salida y unidades en StScalarData. (12-09-2018)
 //:# - Nuevo metodo DeleteFields() para liberar memoria dinamica. (12-09-2018)
 //:# - Se elimina codigo JFormatFiles2Data por falta de uso. (12-09-2018)
+//:# - Nuevos metodos AddShape_TriangleLines(), AddShape_QuadLines(). (21-12-2018)
 //:#############################################################################
   
 
@@ -134,7 +135,14 @@ public:
   }StStatistics;
 
   /// Types of shape.
-  typedef enum{ ShLine,ShTriangle,ShQuad,ShBox,ShSphere,ShNull }TpShape;
+  typedef enum{ 
+     ShLine
+    ,ShTriangle
+    ,ShQuad
+    ,ShBox
+    ,ShSphere
+    ,ShNull 
+  }TpShape;
 
   /// Structure with data of one shape to be stored in VTK format.
   typedef struct StrShapeData{
@@ -530,6 +538,21 @@ public:
   }
 
   //==============================================================================
+  /// Returns the definition of triangle using lines.
+  //==============================================================================
+  static void AddShape_TriangleLines(std::vector<StShapeData> &shapes
+    ,const tfloat3 &pt1,const tfloat3 &pt2,const tfloat3 &pt3,int value,float valuef);
+  
+  //==============================================================================
+  /// Returns the definition of triangle using lines.
+  //==============================================================================
+  static void AddShape_TriangleLines(std::vector<StShapeData> &shapes
+    ,const tdouble3 &pt1,const tdouble3 &pt2,const tdouble3 &pt3,int value,float valuef)
+  {
+    AddShape_TriangleLines(shapes,ToTFloat3(pt1),ToTFloat3(pt2),ToTFloat3(pt3),value,valuef);
+  }
+
+  //==============================================================================
   /// Returns the definition of shape quad.
   //==============================================================================
   static StShapeData DefineShape_Quad(const tfloat3 &pt1,const tfloat3 &pt2
@@ -545,6 +568,49 @@ public:
     ,const tdouble3 &pt3,const tdouble3 &pt4,int value,float valuef)
   {
     return(StrShapeData(ShQuad,value,valuef,ToTFloat3(pt1),ToTFloat3(pt2),ToTFloat3(pt3),ToTFloat3(pt4)));
+  }
+
+  //==============================================================================
+  /// Returns the definition of shape quad.
+  //==============================================================================
+  static StShapeData DefineShape_Quad(const tfloat3 &pt,const tfloat3 &vec,float size,int value,float valuef);
+  
+  //==============================================================================
+  /// Returns the definition of quad using lines.
+  //==============================================================================
+  static StShapeData DefineShape_Quad(const tdouble3 &pt,const tdouble3 &vec,double size,int value,float valuef)
+  {
+    return(DefineShape_Quad(ToTFloat3(pt),ToTFloat3(vec),float(size),value,valuef));
+  }
+
+  //==============================================================================
+  /// Returns the definition of quad using lines.
+  //==============================================================================
+  static void AddShape_QuadLines(std::vector<StShapeData> &shapes
+    ,const tfloat3 &pt1,const tfloat3 &pt2,const tfloat3 &pt3,const tfloat3 &pt4,int value,float valuef);
+  
+  //==============================================================================
+  /// Returns the definition of quad using lines.
+  //==============================================================================
+  static void AddShape_QuadLines(std::vector<StShapeData> &shapes
+    ,const tdouble3 &pt1,const tdouble3 &pt2,const tdouble3 &pt3,const tdouble3 &pt4,int value,float valuef)
+  {
+    AddShape_QuadLines(shapes,ToTFloat3(pt1),ToTFloat3(pt2),ToTFloat3(pt3),ToTFloat3(pt4),value,valuef);
+  }
+
+  //==============================================================================
+  /// Returns the definition of quad using lines.
+  //==============================================================================
+  static void AddShape_QuadLines(std::vector<StShapeData> &shapes
+    ,const tfloat3 &pt,const tfloat3 &vec,float size,int value,float valuef);
+  
+  //==============================================================================
+  /// Returns the definition of quad using lines.
+  //==============================================================================
+  static void AddShape_QuadLines(std::vector<StShapeData> &shapes
+    ,const tdouble3 &pt,const tdouble3 &vec,double size,int value,float valuef)
+  {
+    AddShape_QuadLines(shapes,ToTFloat3(pt),ToTFloat3(vec),float(size),value,valuef);
   }
 
   //==============================================================================

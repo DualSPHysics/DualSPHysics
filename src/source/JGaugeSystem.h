@@ -22,6 +22,7 @@
 //:# - Clase para gestionar la medicion de distintas magnitudes de forma 
 //:#   automatica y simple. (12-02-2017)
 //:# - Error corregido cargando <default><output>. (03-03-2017)
+//:# - Nueva opcion para calcular fuerzas sobre fixed o moving boundary. (20-11-2018)
 //:#############################################################################
 
 /// \file JGaugeSystem.h \brief Declares the class \ref JGaugeSystem.
@@ -38,6 +39,7 @@
 class JXml;
 class TiXmlElement;
 class JLog2;
+class JSphMk;
 
 //##############################################################################
 //# XML format in _FmtXML_Gauges.xml.
@@ -66,6 +68,10 @@ private:
   int Hdiv;               ///<Value to divide 2H. | Valor por el que se divide a DosH
   float H;
   float MassFluid;
+  float MassBound;
+  float CteB;
+  float Gamma;
+  float RhopZero;
 
   JGaugeItem::StDefault CfgDefault; ///<Default configuration.
 
@@ -82,7 +88,7 @@ private:
   void LoadLinePoints(unsigned count,const tdouble3 &point1,const tdouble3 &point2,std::vector<tdouble3> &points,const std::string &ref)const;
   void LoadPoints(JXml *sxml,TiXmlElement* lis,std::vector<tdouble3> &points)const;
   JGaugeItem::StDefault ReadXmlCommon(JXml *sxml,TiXmlElement* ele)const;
-  void ReadXml(JXml *sxml,TiXmlElement* ele);
+  void ReadXml(JXml *sxml,TiXmlElement* ele,const JSphMk* mkinfo);
   void SaveVtkInitPoints()const;
 
 public:
@@ -91,9 +97,10 @@ public:
   void Reset();
 
   void Config(bool simulate2d,double simulate2dposy,double timemax,double timepart
-    ,double dp,tdouble3 posmin,tdouble3 posmax,float scell,unsigned hdiv,float h,float massfluid);
+    ,double dp,tdouble3 posmin,tdouble3 posmax,float scell,unsigned hdiv,float h
+    ,float massfluid,float massbound,float cteb,float gamma,float rhopzero);
 
-  void LoadXml(JXml *sxml,const std::string &place);
+  void LoadXml(JXml *sxml,const std::string &place,const JSphMk* mkinfo);
   void VisuConfig(std::string txhead,std::string txfoot);
 
   bool GetSimulate2D()const{ return(Simulate2D); };
@@ -101,26 +108,30 @@ public:
   tdouble3 GetDomPosMin()const{ return(DomPosMin); }
   tdouble3 GetDomPosMax()const{ return(DomPosMax); }
   float GetMassFluid()const{ return(MassFluid); }
+  float GetMassBound()const{ return(MassBound); }
   float GetH()const{ return(H); }
   float GetScell()const{ return(Scell); }
 
   void LoadLinePoints(double coefdp,const tdouble3 &point1,const tdouble3 &point2,std::vector<tdouble3> &points)const{ LoadLinePoints(coefdp,point1,point2,points,""); }
   void LoadLinePoints(unsigned count,const tdouble3 &point1,const tdouble3 &point2,std::vector<tdouble3> &points)const{ LoadLinePoints(count,point1,point2,points,""); }
 
-  JGaugeVelocity* AddGaugeVel(std::string name,double computestart,double computeend,double computedt,const tdouble3 &point);
-  JGaugeSwl*      AddGaugeSwl(std::string name,double computestart,double computeend,double computedt,tdouble3 point0,tdouble3 point2,double pointdp,float masslimit=0);
-  JGaugeMaxZ*     AddGaugeMaxZ(std::string name,double computestart,double computeend,double computedt,tdouble3 point0,double height,float distlimit);
+  JGaugeVelocity* AddGaugeVel  (std::string name,double computestart,double computeend,double computedt,const tdouble3 &point);
+  JGaugeSwl*      AddGaugeSwl  (std::string name,double computestart,double computeend,double computedt,tdouble3 point0,tdouble3 point2,double pointdp,float masslimit=0);
+  JGaugeMaxZ*     AddGaugeMaxZ (std::string name,double computestart,double computeend,double computedt,tdouble3 point0,double height,float distlimit);
+  JGaugeForce*    AddGaugeForce(std::string name,double computestart,double computeend,double computedt,const JSphMk* mkinfo,word mkbound);
 
   unsigned GetCount()const{ return(unsigned(Gauges.size())); }
   unsigned GetGaugeIdx(const std::string &name)const;
   JGaugeItem* GetGauge(unsigned c)const;
 
-  void CalculeCpu(double timestep,bool svpart,tuint3 ncells,tuint3 cellmin,const unsigned *begincell
-    ,const tdouble3 *pos,const typecode *code,const tfloat4 *velrhop);
+  void CalculeCpu(double timestep,bool svpart,tuint3 ncells,tuint3 cellmin
+    ,const unsigned *begincell,unsigned npbok,unsigned npb,unsigned np
+    ,const tdouble3 *pos,const typecode *code,const unsigned *idp,const tfloat4 *velrhop);
 
  #ifdef _WITHGPU
-  void CalculeGpu(double timestep,bool svpart,tuint3 ncells,tuint3 cellmin,const int2 *beginendcell
-    ,const double2 *posxy,const double *posz,const typecode *code,const float4 *velrhop);
+  void CalculeGpu(double timestep,bool svpart,tuint3 ncells,tuint3 cellmin
+    ,const int2 *beginendcell,unsigned npbok,unsigned npb,unsigned np
+    ,const double2 *posxy,const double *posz,const typecode *code,const unsigned *idp,const float4 *velrhop);
  #endif
 
   void SaveResults(unsigned cpart);

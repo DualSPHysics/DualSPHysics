@@ -51,9 +51,10 @@ public:
 
   ///Types of gauges.
   typedef enum{ 
-    GAUGE_Vel,
-    GAUGE_Swl,
-    GAUGE_MaxZ
+     GAUGE_Vel
+    ,GAUGE_Swl
+    ,GAUGE_MaxZ
+    ,GAUGE_Force
   }TpGauge;
 
   ///Structure with default configuration for JGaugeItem objects.
@@ -70,6 +71,7 @@ public:
 
 protected:
   JLog2* Log;
+  const bool Cpu;
   std::string FileInfo;
 
   //-Variables for calculation (they are constant).
@@ -81,7 +83,12 @@ protected:
   float H;
   float Fourh2;
   float Awen;
+  float Bwen;
   float MassFluid;
+  float MassBound;
+  float CteB;
+  float Gamma;
+  float RhopZero;
 
   //-Configuration variables.
   bool SaveVtkPart; //-Creates VTK files for each PART.
@@ -103,7 +110,7 @@ protected:
   unsigned OutCount;                 ///<Number of stored results in buffer.
   std::string OutFile;
 
-  JGaugeItem(TpGauge type,unsigned idx,std::string name,JLog2* log);
+  JGaugeItem(TpGauge type,unsigned idx,std::string name,bool cpu,JLog2* log);
   void Reset();
   void SetTimeStep(double timestep);
 
@@ -127,7 +134,9 @@ public:
   const unsigned Idx;
   const std::string Name;
 
-  void Config(bool simulate2d,tdouble3 domposmin,tdouble3 domposmax,float scell,int hdiv,float h,float massfluid);
+  void Config(bool simulate2d,tdouble3 domposmin,tdouble3 domposmax
+    ,float scell,int hdiv,float h,float massfluid,float massbound
+    ,float cteb,float gamma,float rhopzero);
   void SetSaveVtkPart(bool save){ SaveVtkPart=save; }
   void ConfigComputeTiming(double start,double end,double dt);
   void ConfigOutputTiming(bool save,double start,double end,double dt);
@@ -154,11 +163,13 @@ public:
   bool Output(double timestep)const{ return(OutputSave && timestep>=OutputNext && OutputStart<=timestep && timestep<=OutputEnd); }
 
   virtual void CalculeCpu(double timestep,tuint3 ncells,tuint3 cellmin
-    ,const unsigned *begincell,const tdouble3 *pos,const typecode *code,const tfloat4 *velrhop)=0;
+    ,const unsigned *begincell,unsigned npbok,unsigned npb,unsigned np
+    ,const tdouble3 *pos,const typecode *code,const unsigned *idp,const tfloat4 *velrhop)=0;
 
  #ifdef _WITHGPU
-  virtual void CalculeGpu(double timestep,tuint3 ncells,tuint3 cellmin,const int2 *beginendcell
-    ,const double2 *posxy,const double *posz,const typecode *code,const float4 *velrhop,float3 *aux)=0;
+  virtual void CalculeGpu(double timestep,tuint3 ncells,tuint3 cellmin
+    ,const int2 *beginendcell,unsigned npbok,unsigned npb,unsigned np
+    ,const double2 *posxy,const double *posz,const typecode *code,const unsigned *idp,const float4 *velrhop,float3 *aux)=0;
  #endif
 };
 
@@ -199,7 +210,7 @@ protected:
   void StoreResult();
 
 public:
-  JGaugeVelocity(unsigned idx,std::string name,tdouble3 point,JLog2* log);
+  JGaugeVelocity(unsigned idx,std::string name,tdouble3 point,bool cpu,JLog2* log);
   ~JGaugeVelocity();
 
   void SaveResults();
@@ -211,12 +222,14 @@ public:
 
   void SetPoint(const tdouble3 &point){ ClearResult(); Point=point; }
 
-  void CalculeCpu(double timestep,tuint3 ncells,tuint3 cellmin,const unsigned *begincell
-    ,const tdouble3 *pos,const typecode *code,const tfloat4 *velrhop);
+  void CalculeCpu(double timestep,tuint3 ncells,tuint3 cellmin
+    ,const unsigned *begincell,unsigned npbok,unsigned npb,unsigned np
+    ,const tdouble3 *pos,const typecode *code,const unsigned *idp,const tfloat4 *velrhop);
 
  #ifdef _WITHGPU
-  void CalculeGpu(double timestep,tuint3 ncells,tuint3 cellmin,const int2 *beginendcell
-    ,const double2 *posxy,const double *posz,const typecode *code,const float4 *velrhop,float3 *aux);
+  void CalculeGpu(double timestep,tuint3 ncells,tuint3 cellmin
+    ,const int2 *beginendcell,unsigned npbok,unsigned npb,unsigned np
+    ,const double2 *posxy,const double *posz,const typecode *code,const unsigned *idp,const float4 *velrhop,float3 *aux);
  #endif
 };
 
@@ -267,7 +280,7 @@ protected:
     ,const tdouble3 *pos,const typecode *code,const tfloat4 *velrhop)const;
 
 public:
-  JGaugeSwl(unsigned idx,std::string name,tdouble3 point0,tdouble3 point2,double pointdp,float masslimit,JLog2* log);
+  JGaugeSwl(unsigned idx,std::string name,tdouble3 point0,tdouble3 point2,double pointdp,float masslimit,bool cpu,JLog2* log);
   ~JGaugeSwl();
 
   void SaveResults();
@@ -282,12 +295,14 @@ public:
 
   void SetPoints(const tdouble3 &point0,const tdouble3 &point2,double pointdp);
 
-  void CalculeCpu(double timestep,tuint3 ncells,tuint3 cellmin,const unsigned *begincell
-    ,const tdouble3 *pos,const typecode *code,const tfloat4 *velrhop);
+  void CalculeCpu(double timestep,tuint3 ncells,tuint3 cellmin
+    ,const unsigned *begincell,unsigned npbok,unsigned npb,unsigned np
+    ,const tdouble3 *pos,const typecode *code,const unsigned *idp,const tfloat4 *velrhop);
 
  #ifdef _WITHGPU
-  void CalculeGpu(double timestep,tuint3 ncells,tuint3 cellmin,const int2 *beginendcell
-    ,const double2 *posxy,const double *posz,const typecode *code,const float4 *velrhop,float3 *aux);
+  void CalculeGpu(double timestep,tuint3 ncells,tuint3 cellmin
+    ,const int2 *beginendcell,unsigned npbok,unsigned npb,unsigned np
+    ,const double2 *posxy,const double *posz,const typecode *code,const unsigned *idp,const float4 *velrhop,float3 *aux);
  #endif
 };
 
@@ -332,7 +347,7 @@ protected:
     ,int &cxini,int &cxfin,int &yini,int &yfin,int &zini,int &zfin)const;
 
 public:
-  JGaugeMaxZ(unsigned idx,std::string name,tdouble3 point0,double height,float distlimit,JLog2* log);
+  JGaugeMaxZ(unsigned idx,std::string name,tdouble3 point0,double height,float distlimit,bool cpu,JLog2* log);
   ~JGaugeMaxZ();
 
   void SaveResults();
@@ -348,15 +363,92 @@ public:
   void SetHeight   (double height){          ClearResult(); Height=height; }
   void SetDistLimit(float distlimit){        ClearResult(); DistLimit=distlimit; }
 
-  void CalculeCpu(double timestep,tuint3 ncells,tuint3 cellmin,const unsigned *begincell
-    ,const tdouble3 *pos,const typecode *code,const tfloat4 *velrhop);
+  void CalculeCpu(double timestep,tuint3 ncells,tuint3 cellmin
+    ,const unsigned *begincell,unsigned npbok,unsigned npb,unsigned np
+    ,const tdouble3 *pos,const typecode *code,const unsigned *idp,const tfloat4 *velrhop);
 
  #ifdef _WITHGPU
-  void CalculeGpu(double timestep,tuint3 ncells,tuint3 cellmin,const int2 *beginendcell
-    ,const double2 *posxy,const double *posz,const typecode *code,const float4 *velrhop,float3 *aux);
+  void CalculeGpu(double timestep,tuint3 ncells,tuint3 cellmin
+    ,const int2 *beginendcell,unsigned npbok,unsigned npb,unsigned np
+    ,const double2 *posxy,const double *posz,const typecode *code,const unsigned *idp,const float4 *velrhop,float3 *aux);
  #endif
 };
 
+
+//##############################################################################
+//# JGaugeForce
+//##############################################################################
+/// \brief Calculates force sumation on selected particles (using only fluid particles).
+class JGaugeForce : public JGaugeItem
+{
+public:
+  ///Structure with result of JGaugeForce object.
+  typedef struct StrGaugeForceRes{
+    double timestep;
+    word mkbound;
+    tfloat3 force;
+    bool modified;
+    StrGaugeForceRes(){ Reset(); }
+    void Reset(){
+      Set(0,TFloat3(0));
+      modified=false;
+    }
+    void Set(double t,const tfloat3 &forceres){
+      timestep=t; force=forceres; modified=true;
+    }
+  }StGaugeForceRes;
+
+protected:
+  //-Definition.
+  word MkBound;
+  TpParticles TypeParts;
+  unsigned IdBegin;
+  unsigned Count;
+  typecode Code;
+  tfloat3 InitialCenter;
+
+  //-Auxiliary variables.
+  tfloat3 *PartAcec;
+ #ifdef _WITHGPU
+  float3 *PartAceg;
+  float3 *Auxg;
+ #endif
+
+  StGaugeForceRes Result; ///<Result of the last measure.
+
+  std::vector<StGaugeForceRes> OutBuff; ///<Results in buffer.
+
+  void Reset();
+  void ClearResult(){ Result.Reset(); }
+  void StoreResult();
+
+public:
+  JGaugeForce(unsigned idx,std::string name,word mkbound,TpParticles typeparts
+    ,unsigned idbegin,unsigned count,typecode code,tfloat3 center,bool cpu,JLog2* log);
+  ~JGaugeForce();
+
+  void SaveResults();
+  void SaveVtkResult(unsigned cpart);
+  unsigned GetPointDef(std::vector<tfloat3> &points)const;
+
+  word        GetMkBound()  const{ return(MkBound); }
+  TpParticles GetTypeParts()const{ return(TypeParts); }
+  unsigned    GetIdBegin()  const{ return(IdBegin); }
+  unsigned    GetCount()    const{ return(Count); }
+  typecode    GetCode()     const{ return(Code); }
+  tfloat3     GetInitialCenter()const{ return(InitialCenter); }
+  const StGaugeForceRes& GetResult()const{ return(Result); }
+
+  void CalculeCpu(double timestep,tuint3 ncells,tuint3 cellmin
+    ,const unsigned *begincell,unsigned npbok,unsigned npb,unsigned np
+    ,const tdouble3 *pos,const typecode *code,const unsigned *idp,const tfloat4 *velrhop);
+
+ #ifdef _WITHGPU
+  void CalculeGpu(double timestep,tuint3 ncells,tuint3 cellmin
+    ,const int2 *beginendcell,unsigned npbok,unsigned npb,unsigned np
+    ,const double2 *posxy,const double *posz,const typecode *code,const unsigned *idp,const float4 *velrhop,float3 *aux);
+ #endif
+};
 
 
 #endif

@@ -369,6 +369,107 @@ void Interaction_GaugeMaxz(tdouble3 point0,float maxdist2
 }
 
 
+//------------------------------------------------------------------------------
+/// Calculates force on selected fixed or moving particles using only fluid particles.
+/// Ignores periodic boundary particles to avoid race condition problems.
+//------------------------------------------------------------------------------
+__global__ void KerInteractionGaugeForce(unsigned n,unsigned idbegin,typecode codesel
+  ,float fourh2,float h,float bwen,float massf,float cteb,float rhopzero,float gamma
+  ,int hdiv,int4 nc,int3 cellzero,unsigned cellfluid,const int2 *begincell,double3 domposmin,float scell
+  ,const double2 *posxy,const double *posz,const typecode *code,const unsigned *idp,const float4 *velrhop
+  ,float3 *partace)
+{
+  unsigned p=blockIdx.y*gridDim.x*blockDim.x + blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
+  if(p<n){
+    const typecode code1=code[p];
+    if(CODE_GetTypeAndValue(code1)==codesel && CODE_IsNormal(code1)){
+      const double2 ptposxy=posxy[p];
+      const double px=ptposxy.x;
+      const double py=ptposxy.y;
+      const double pz=posz[p];
+      const float rhop1=velrhop[p].w;
+      const float press1=cteb*(pow(rhop1/rhopzero,gamma)-1.0f);
+      float3 ace=make_float3(0,0,0);
+
+      //-Obtains interaction limits.
+      int cxini,cxfin,yini,yfin,zini,zfin;
+      KerGetInteractionCells(px,py,pz,hdiv,nc,cellzero,cxini,cxfin,yini,yfin,zini,zfin,domposmin,scell);
+   
+      //-Interaction with fluid particles. | Interaccion con fluidas.
+      for(int z=zini;z<zfin;z++){
+        int zmod=(nc.w)*z+cellfluid; //-Sum from start of fluid cells. | Le suma donde empiezan las celdas de fluido.
+        for(int y=yini;y<yfin;y++){
+          int ymod=zmod+nc.x*y;
+          unsigned pini,pfin=0;
+          for(int x=cxini;x<cxfin;x++){
+            int2 cbeg=begincell[x+ymod];
+            if(cbeg.y){
+              if(!pfin)pini=cbeg.x;
+              pfin=cbeg.y;
+            }
+          }
+          if(pfin)for(unsigned p2=pini;p2<pfin;p2++){
+            double2 pxy2=posxy[p2];
+            const float drx=float(px-pxy2.x);
+            const float dry=float(py-pxy2.y);
+            const float drz=float(pz-posz[p2]);
+            const float rr2=(drx*drx+dry*dry+drz*drz);
+            //-Interaction with real neighboring fluid particles.
+            if(rr2<=fourh2 && rr2>=ALMOSTZERO && CODE_IsFluid(code[p2])){
+              float frx,fry,frz;
+              {//-Wendland kernel.
+                const float rad=sqrt(rr2);
+                const float qq=rad/h;
+                const float wqq1=1.f-0.5f*qq;
+                const float fac=bwen*qq*wqq1*wqq1*wqq1/rad; //-Kernel derivative (divided by rad).
+                frx=fac*drx; fry=fac*dry; frz=fac*drz;
+              }
+              const float mass2=massf;
+              const float rhop2=velrhop[p2].w;
+              const float press2=cteb*(pow(rhop2/rhopzero,gamma)-1.0f);
+              const float prs=(press1+press2)/(rhop1*rhop2);
+              {//-Adds aceleration.
+               const float p_vpm1=-prs*mass2;
+                ace.x+=p_vpm1*frx;  ace.y+=p_vpm1*fry;  ace.z+=p_vpm1*frz;
+              }
+            }
+          }
+        }
+      }
+      //-Saves ace.
+      partace[idp[p]-idbegin]=ace;
+    }
+  }
+}
+
+//==============================================================================
+/// Calculates force on selected fixed or moving particles using only fluid particles.
+/// Ignores periodic boundary particles to avoid race condition problems.
+//==============================================================================
+void Interaction_GaugeForce(unsigned n,unsigned idbegin,typecode codesel
+  ,float fourh2,float h,float bwen,float massf,float cteb,float rhopzero,float gamma
+  ,int hdiv,tuint3 ncells,tuint3 cellmin,const int2 *begincell,tdouble3 domposmin,float scell
+//  ,int hdiv,int4 nc,int3 cellzero,unsigned cellfluid,const int2 *begincell,double3 domposmin,float scell
+  ,const double2 *posxy,const double *posz,const typecode *code,const unsigned *idp,const float4 *velrhop
+  ,float3 *partace)
+{
+  const int4 nc=make_int4(ncells.x,ncells.y,ncells.z,ncells.x*ncells.y);
+  const unsigned cellfluid=nc.w*nc.z+1;
+  const int3 cellzero=make_int3(cellmin.x,cellmin.y,cellmin.z);
+  //-Interaction bound-Fluid.
+  if(n){
+    const unsigned bsize=128;
+    dim3 sgrid=GetGridSize(n,bsize);
+    //:JDgKerPrint info;
+    //:byte* ik=NULL; //info.GetInfoPointer(sgridf,bsfluid);
+    KerInteractionGaugeForce <<<sgrid,bsize>>> (n,idbegin,codesel,fourh2,h,bwen,massf,cteb,rhopzero,gamma
+      ,hdiv,nc,cellzero,cellfluid,begincell,Double3(domposmin),scell
+      ,posxy,posz,code,idp,velrhop,partace);
+    //:info.PrintValuesFull(true); //info.PrintValuesInfo();
+  }
+}
+
+
 }
 
 
