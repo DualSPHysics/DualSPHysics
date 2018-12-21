@@ -325,11 +325,8 @@ void JSphBoundCorr::SaveVtkConfig(double dp,int part)const{
     const tdouble3 p2=p0+v1+v2;
     const tdouble3 p3=p0+v2;
     //-Adds limit quad.
-    shapes.push_back(JFormatFiles2::DefineShape_Line(p0,p1,mkbound,0));
-    shapes.push_back(JFormatFiles2::DefineShape_Line(p1,p2,mkbound,0));
-    shapes.push_back(JFormatFiles2::DefineShape_Line(p2,p3,mkbound,0));
-    shapes.push_back(JFormatFiles2::DefineShape_Line(p3,p0,mkbound,0));
     shapes.push_back(JFormatFiles2::DefineShape_Quad(p0,p1,p2,p3,mkbound,0));
+    JFormatFiles2::AddShape_QuadLines(shapes,p0,p1,p2,p3,mkbound,0);
     //-Adds direction line.
     shapes.push_back(JFormatFiles2::DefineShape_Line(ps,ps+(ve*sizedir),mkbound,0)); //-Direction line.
   }

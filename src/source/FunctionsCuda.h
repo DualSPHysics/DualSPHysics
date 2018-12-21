@@ -24,6 +24,7 @@
 //:# - Ahora GetCudaDevicesInfo() no cambia la seleccion de GPU. (01-07-2017)
 //:# - Documentacion del codigo en ingles. (08-08-2017)
 //:# - Nueva funcion ToHostInt(). (30-01-2018)
+//:# - Incluye cores para SM 75. (20-12-2018)
 //:#############################################################################
 
 /// \file FunctionsCuda.h \brief Declares basic/general GPU functions for the entire application.

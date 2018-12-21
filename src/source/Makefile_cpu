@@ -1,4 +1,4 @@
-#DualSPHysics CPU v4.2.092 09-10-2018
+#DualSPHysics CPU v4.3.010 21-12-2018
 
 #=============== Compilation Options ===============
 USE_GCC5=NO
@@ -48,7 +48,7 @@ OBJECTS=$(OBJXML) $(OBJSPHMOTION) $(OBCOMMON) $(OBCOMMONDSPH) $(OBSPH) $(OBSPHSI
 OBJECTS:=$(OBJECTS) $(OBWAVERZ) $(OBCHRONO) $(OBINOUT)
 
 #=============== DualSPHysics libs to be included ===============
-JLIBS=${LIBS_DIRECTORIES} -ljformatfiles2_64 -ljwavegen_64 -ljwave_mlp_rz_64 -ldsphchrono
+JLIBS=${LIBS_DIRECTORIES} -ljformatfiles2_64 -ljwavegen_64 -ljwave_mlp_rz_64 -ldsphchrono -lChronoEngine
 
 #=============== CPU Code Compilation ===============
 all:$(EXECS_DIRECTORY)/$(EXECNAME)
@@ -57,7 +57,7 @@ ifeq ($(USE_DEBUG), NO)
 	@echo "  --- Compiled Release CPU version ---"	
 else
 	@echo "  --- Compiled Debug CPU version ---"
-	mv $(EXECNAME) $(EXECNAME)_debug
+	mv $(EXECS_DIRECTORY)/$(EXECNAME) $(EXECNAME)_debug
 endif
 
 $(EXECS_DIRECTORY)/$(EXECNAME):  $(OBJECTS)

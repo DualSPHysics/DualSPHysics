@@ -1,4 +1,4 @@
-#DualSPHysics GPU/CPU v4.2.092 09-10-2018
+#DualSPHysics GPU/CPU v4.3.010 21-12-2018
 
 #=============== Compilation Options ===============
 USE_GCC5=NO
@@ -105,7 +105,7 @@ OBJECTS:=$(OBJECTS) $(OBCOMMONGPU) $(OBSPHGPU) $(OBSPHSINGLEGPU) $(OBCUDA)
 OBJECTS:=$(OBJECTS) $(OBWAVERZ) $(OBWAVERZCUDA) $(OBCHRONO) $(OBINOUT) $(OBINOUTGPU)
 
 #=============== DualSPHysics libs to be included ===============
-JLIBS=${LIBS_DIRECTORIES} -ljformatfiles2_64 -ljwavegen_64 -ljwave_mlp_rz_64 -ldsphchrono
+JLIBS=${LIBS_DIRECTORIES} -ljformatfiles2_64 -ljwavegen_64 -ljwave_mlp_rz_64 -ldsphchrono -lChronoEngine
 
 #=============== GPU Code Compilation ===============
 CCFLAGS := $(CCFLAGS) -I./ -I$(DIRTOOLKIT)/include
@@ -126,7 +126,7 @@ ifeq ($(USE_DEBUG), NO)
 	@echo "  --- Compiled Release GPU version ---"
 else
 	@echo "  --- Compiled Debug GPU version ---"
-	mv $(EXECNAME) $(EXECNAME)_debug
+	mv $(EXECS_DIRECTORY)/$(EXECNAME) $(EXECNAME)_debug
 endif
 
 $(EXECS_DIRECTORY)/$(EXECNAME):  $(OBJECTS)

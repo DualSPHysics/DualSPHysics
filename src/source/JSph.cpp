@@ -661,7 +661,7 @@ void JSph::LoadCaseConfig(){
 
   //-Configuration of damping zones.
   if(xml.GetNode("case.execution.special.damping",false)){
-    Damping=new JDamping(Log);
+    Damping=new JDamping(Dp,Log);
     Damping->LoadXml(&xml,"case.execution.special.damping");
   }
 
