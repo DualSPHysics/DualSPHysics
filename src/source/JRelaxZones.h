@@ -39,6 +39,8 @@
 #include <string>
 #include <vector>
 
+//#define DISABLE_RZ     ///<It allows compile without RZ library.
+
 class JXml;
 class TiXmlElement;
 class JLog2;
@@ -53,6 +55,36 @@ class JRelaxZoneUniform;
 //##############################################################################
 //# JRelaxZones
 //##############################################################################
+
+#ifdef DISABLE_RZ
+class JRelaxZones : protected JObject
+{
+public:
+  JRelaxZones(bool useomp,bool usegpu,JLog2* log,std::string dirdata
+    ,bool withfloatings,unsigned fluidbeginidp){}
+  ~JRelaxZones(){}
+  void Reset(){}
+  static bool Available(){ return(false); }
+
+  void LoadFileXml(const std::string &filexml,const std::string &place){}
+  void LoadXml(JXml *sxml,const std::string &place){}
+
+  void Init(std::string dircase,double timemax,double dp,tfloat3 gravity){}
+
+  void VisuConfig(std::string txhead,std::string txfoot){}
+
+  unsigned GetCount()const{ return(0); }
+  unsigned GetCountExternal()const{ return(0); }
+  unsigned GetCountUniform()const{ return(0); }
+
+  void SetFluidVel(double timestep,double dt,unsigned n,unsigned pini
+    ,const tdouble3 *pos,const unsigned *idp,tfloat4 *velrhop)const{}
+  void SetFluidVelGpu(double timestep,double dt,unsigned n,unsigned pini
+    ,const tdouble2 *posxy,const double *posz,const unsigned *idp,tfloat4 *velrhop)const{}
+};
+
+
+#else
 class JRelaxZones : protected JObject
 {
 private:
@@ -78,6 +110,7 @@ public:
     ,bool withfloatings,unsigned fluidbeginidp);
   ~JRelaxZones();
   void Reset();
+  static bool Available(){ return(true); }
 
   void LoadFileXml(const std::string &filexml,const std::string &place);
   void LoadXml(JXml *sxml,const std::string &place);
@@ -95,7 +128,7 @@ public:
   void SetFluidVelGpu(double timestep,double dt,unsigned n,unsigned pini
     ,const tdouble2 *posxy,const double *posz,const unsigned *idp,tfloat4 *velrhop)const;
 };
-
+#endif
 
 #endif
 

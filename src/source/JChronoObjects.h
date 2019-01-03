@@ -50,7 +50,7 @@ class DSPHChronoLib;
 //##############################################################################
 //# JChronoObjects
 //##############################################################################
-/// \brief Manages the use of prefixed values of DT loaded from an input file.
+/// \brief Manages Chrono objects.
 
 #ifdef DISABLE_CHRONO
 class JChronoObjects : protected JObject

@@ -1,11 +1,12 @@
-#DualSPHysics GPU/CPU v4.3.013 03-01-2019
+#DualSPHysics GPU/CPU v4.3.014 03-01-2019
 
 #=============== Compilation Options ===============
 USE_GCC5=NO
 USE_DEBUG=NO
 USE_FAST_MATH=YES
 USE_NATIVE_CPU_OPTIMIZATIONS=NO
-COMPILE_CHRONO=NO
+COMPILE_CHRONO=YES
+COMPILE_RZ_MLPISTONS=YES
 
 LIBS_DIRECTORIES=-L./
 LIBS_DIRECTORIES:=$(LIBS_DIRECTORIES) -L../lib/linux_gcc
@@ -36,6 +37,9 @@ endif
 
 ifeq ($(COMPILE_CHRONO), NO)
   CCFLAGS:=$(CCFLAGS) -DDISABLE_CHRONO
+endif
+ifeq ($(COMPILE_RZ_MLPISTONS), NO)
+  CCFLAGS:=$(CCFLAGS) -DDISABLE_RZ -DDISABLE_MLPISTONS
 endif
 
 #=============== CUDA selection ===============
@@ -79,11 +83,11 @@ endif
 ifeq ($(CUDAVER),92)
   # module load cuda/9.2
   GENCODE:=$(GENCODE) -gencode=arch=compute_30,code=\"sm_30,compute_30\"
-  # GENCODE:=$(GENCODE) -gencode=arch=compute_35,code=\"sm_35,compute_35\"
-  # GENCODE:=$(GENCODE) -gencode=arch=compute_50,code=\"sm_50,compute_50\"
-  # GENCODE:=$(GENCODE) -gencode=arch=compute_52,code=\"sm_52,compute_52\"
-  # GENCODE:=$(GENCODE) -gencode=arch=compute_61,code=\"sm_61,compute_61\"
-  # GENCODE:=$(GENCODE) -gencode=arch=compute_70,code=\"sm_70,compute_70\"
+  GENCODE:=$(GENCODE) -gencode=arch=compute_35,code=\"sm_35,compute_35\"
+  GENCODE:=$(GENCODE) -gencode=arch=compute_50,code=\"sm_50,compute_50\"
+  GENCODE:=$(GENCODE) -gencode=arch=compute_52,code=\"sm_52,compute_52\"
+  GENCODE:=$(GENCODE) -gencode=arch=compute_61,code=\"sm_61,compute_61\"
+  GENCODE:=$(GENCODE) -gencode=arch=compute_70,code=\"sm_70,compute_70\"
 endif
 
 
@@ -114,7 +118,9 @@ JLIBS=${LIBS_DIRECTORIES} -ljformatfiles2_64 -ljwavegen_64
 ifeq ($(COMPILE_CHRONO), YES)
   JLIBS:=$(JLIBS) -ldsphchrono -lChronoEngine
 endif
-JLIBS:=$(JLIBS) -ljwave_mlp_rz_64
+ifeq ($(COMPILE_RZ_MLPISTONS), YES)
+  JLIBS:=$(JLIBS) -ljwave_mlp_rz_64
+endif
 
 #=============== GPU Code Compilation ===============
 CCFLAGS := $(CCFLAGS) -I./ -I$(DIRTOOLKIT)/include

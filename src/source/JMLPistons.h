@@ -39,6 +39,8 @@
 #include <string>
 #include <vector>
 
+//#define DISABLE_MLPISTONS     ///<It allows compile without MLPistons library.
+
 class JXml;
 class TiXmlElement;
 class JLog2;
@@ -53,6 +55,67 @@ class JMLPistonsGpu;
 //##############################################################################
 //# JMLPistons
 //##############################################################################
+/// \brief Manages Multi-Layer Pistons.
+
+#ifdef DISABLE_MLPISTONS
+class JMLPistons : protected JObject
+{
+public:
+/// Structure with motion information of JMLPiston2D.
+  typedef struct {
+    unsigned np;
+    unsigned idbegin;
+    double posymin;
+    double poszmin;
+    unsigned poszcount;
+    const double *movyz;
+    const double *velyz;
+  }StMotionInfoPiston2D;
+
+public:
+  JMLPistons(bool usegpu,JLog2* log,std::string dirdata){}
+  ~JMLPistons(){}
+  void Reset(){}
+  static bool Available(){ return(false); }
+  llong GetAllocMemoryCpu()const{ return(0); }
+  llong GetAllocMemoryGpu()const{ return(0); }
+
+  void LoadFileXml(const std::string &filexml,const std::string &place){}
+  void LoadXml(JXml *sxml,const std::string &place){}
+  bool ConfigPiston(word mkbound,word pistonid,unsigned idbegin,unsigned np,double timemax){ return(false); }
+  bool ExistsPistonByMk(word mkbound){ return(false); }
+  void CheckPistons(){}
+  void PreparePiston(double dp,unsigned np,const unsigned *idp,const tdouble3 *pos){}
+
+  void VisuConfig(std::string txhead,std::string txfoot){}
+
+  void SetTimeMod(double timemod){}
+  double GetTimeMod()const{ return(0); }
+
+  void CalculateMotion1d(double time){}
+
+  unsigned GetPiston1dCount()const{ return(0); }
+  JMLPiston1D* GetPiston1d(unsigned num)const{ return(NULL); }
+
+  double GetPoszMin()const{ return(0); }
+  unsigned GetPoszCount()const{ return(0); }
+  const byte* GetPistonId()const{ return(NULL); }
+  const double* GetMovx()const{ return(NULL); }
+  const double* GetVelx()const{ return(NULL); }
+
+  const byte* GetPistonIdGpu()const{ return(NULL); }
+  const double* GetMovxGpu()const{ return(NULL); }
+  const double* GetVelxGpu()const{ return(NULL); }
+
+
+  unsigned GetPiston2dCount()const{ return(0); }
+  JMLPiston2D* GetPiston2d(unsigned num)const{ return(NULL); }
+
+  StMotionInfoPiston2D CalculateMotion2d(unsigned num,double time){ StMotionInfoPiston2D v; return(v); }
+};
+
+
+#else
 class JMLPistons : protected JObject
 {
 public:
@@ -99,6 +162,7 @@ public:
   JMLPistons(bool usegpu,JLog2* log,std::string dirdata);
   ~JMLPistons();
   void Reset();
+  static bool Available(){ return(true); }
   llong GetAllocMemoryCpu()const;
   llong GetAllocMemoryGpu()const;
 
@@ -134,17 +198,8 @@ public:
   JMLPiston2D* GetPiston2d(unsigned num)const;
 
   StMotionInfoPiston2D CalculateMotion2d(unsigned num,double time);
-
-//  bool UseAwasZsurf()const{ return(Use_AwasZsurf); }  ->awaspdte
-//  void InitAwas(tfloat3 gravity,bool simulate2d,TpCellOrder cellorder,float massfluid,double dp,float dosh,float scell,int hdiv,tdouble3 domposmin,tdouble3 domrealposmin,tdouble3 domrealposmax);
-//  void RunAwasCpu(double timestep,bool svdata,tuint3 ncells,tuint3 cellmin
-//    ,const unsigned *begincell,const tdouble3 *pos,const typecode *code,const tfloat4 *velrhop);
-//#ifdef _WITHGPU
-//  void RunAwasGpu(double timestep,bool svdata,tuint3 ncells,tuint3 cellmin
-//    ,const int2 *beginendcell,const double2 *posxy,const double *posz,const typecode *code,const float4 *velrhop,float3 *aux);
-//#endif
 };
-
+#endif
 
 #endif
 

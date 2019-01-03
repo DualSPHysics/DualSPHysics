@@ -640,6 +640,7 @@ void JSph::LoadCaseConfig(){
 
   //-Configuration of MLPistons.  //<vs_mlapiston_ini>
   if(xml.GetNode("case.execution.special.mlayerpistons",false)){
+    if(!JMLPistons::Available())RunException(met,"Code for Multi-Layer Pistons is not included in the current compilation.");
     bool useomp=false,usegpu=false;
     MLPistons=new JMLPistons(!Cpu,Log,DirCase);
     MLPistons->LoadXml(&xml,"case.execution.special.mlayerpistons");  
@@ -651,6 +652,7 @@ void JSph::LoadCaseConfig(){
 
   //-Configuration of RelaxZones.  //<vs_rzone_ini>
   if(xml.GetNode("case.execution.special.relaxationzones",false)){
+    if(!JRelaxZones::Available())RunException(met,"Code for Relaxation Zones is not included in the current compilation.");
     bool useomp=false,usegpu=false;
     #ifdef OMP_USE_WAVEGEN
       useomp=(omp_get_max_threads()>1);
