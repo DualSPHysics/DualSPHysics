@@ -1,10 +1,11 @@
-#DualSPHysics GPU/CPU v4.3.010 21-12-2018
+#DualSPHysics GPU/CPU v4.3.013 03-01-2019
 
 #=============== Compilation Options ===============
 USE_GCC5=NO
 USE_DEBUG=NO
 USE_FAST_MATH=YES
 USE_NATIVE_CPU_OPTIMIZATIONS=NO
+COMPILE_CHRONO=NO
 
 LIBS_DIRECTORIES=-L./
 LIBS_DIRECTORIES:=$(LIBS_DIRECTORIES) -L../lib/linux_gcc
@@ -31,6 +32,10 @@ ifeq ($(USE_GCC5), YES)
   CCFLAGS+=-D_GLIBCXX_USE_CXX11_ABI=0
   CCLINKFLAGS+=-D_GLIBCXX_USE_CXX11_ABI=0
   NCCFLAGS+=-D_GLIBCXX_USE_CXX11_ABI=0
+endif
+
+ifeq ($(COMPILE_CHRONO), NO)
+  CCFLAGS:=$(CCFLAGS) -DDISABLE_CHRONO
 endif
 
 #=============== CUDA selection ===============
@@ -74,11 +79,11 @@ endif
 ifeq ($(CUDAVER),92)
   # module load cuda/9.2
   GENCODE:=$(GENCODE) -gencode=arch=compute_30,code=\"sm_30,compute_30\"
-  GENCODE:=$(GENCODE) -gencode=arch=compute_35,code=\"sm_35,compute_35\"
-  GENCODE:=$(GENCODE) -gencode=arch=compute_50,code=\"sm_50,compute_50\"
-  GENCODE:=$(GENCODE) -gencode=arch=compute_52,code=\"sm_52,compute_52\"
-  GENCODE:=$(GENCODE) -gencode=arch=compute_61,code=\"sm_61,compute_61\"
-  GENCODE:=$(GENCODE) -gencode=arch=compute_70,code=\"sm_70,compute_70\"
+  # GENCODE:=$(GENCODE) -gencode=arch=compute_35,code=\"sm_35,compute_35\"
+  # GENCODE:=$(GENCODE) -gencode=arch=compute_50,code=\"sm_50,compute_50\"
+  # GENCODE:=$(GENCODE) -gencode=arch=compute_52,code=\"sm_52,compute_52\"
+  # GENCODE:=$(GENCODE) -gencode=arch=compute_61,code=\"sm_61,compute_61\"
+  # GENCODE:=$(GENCODE) -gencode=arch=compute_70,code=\"sm_70,compute_70\"
 endif
 
 
@@ -105,7 +110,11 @@ OBJECTS:=$(OBJECTS) $(OBCOMMONGPU) $(OBSPHGPU) $(OBSPHSINGLEGPU) $(OBCUDA)
 OBJECTS:=$(OBJECTS) $(OBWAVERZ) $(OBWAVERZCUDA) $(OBCHRONO) $(OBINOUT) $(OBINOUTGPU)
 
 #=============== DualSPHysics libs to be included ===============
-JLIBS=${LIBS_DIRECTORIES} -ljformatfiles2_64 -ljwavegen_64 -ljwave_mlp_rz_64 -ldsphchrono -lChronoEngine
+JLIBS=${LIBS_DIRECTORIES} -ljformatfiles2_64 -ljwavegen_64
+ifeq ($(COMPILE_CHRONO), YES)
+  JLIBS:=$(JLIBS) -ldsphchrono -lChronoEngine
+endif
+JLIBS:=$(JLIBS) -ljwave_mlp_rz_64
 
 #=============== GPU Code Compilation ===============
 CCFLAGS := $(CCFLAGS) -I./ -I$(DIRTOOLKIT)/include

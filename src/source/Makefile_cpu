@@ -1,10 +1,11 @@
-#DualSPHysics CPU v4.3.010 21-12-2018
+#DualSPHysics CPU v4.3.013 03-01-2019
 
 #=============== Compilation Options ===============
 USE_GCC5=NO
 USE_DEBUG=NO
 USE_FAST_MATH=YES
 USE_NATIVE_CPU_OPTIMIZATIONS=NO
+COMPILE_CHRONO=NO
 
 LIBS_DIRECTORIES=-L./
 LIBS_DIRECTORIES:=$(LIBS_DIRECTORIES) -L../lib/linux_gcc
@@ -32,6 +33,10 @@ ifeq ($(USE_GCC5), YES)
   CCLINKFLAGS+=-D_GLIBCXX_USE_CXX11_ABI=0
 endif
 
+ifeq ($(COMPILE_CHRONO), NO)
+  CCFLAGS:=$(CCFLAGS) -DDISABLE_CHRONO
+endif
+
 #=============== Files to compile ===============
 OBJXML=JXml.o tinystr.o tinyxml.o tinyxmlerror.o tinyxmlparser.o
 OBJSPHMOTION=JMotion.o JMotionList.o JMotionMov.o JMotionObj.o JMotionPos.o JSphMotion.o
@@ -48,7 +53,11 @@ OBJECTS=$(OBJXML) $(OBJSPHMOTION) $(OBCOMMON) $(OBCOMMONDSPH) $(OBSPH) $(OBSPHSI
 OBJECTS:=$(OBJECTS) $(OBWAVERZ) $(OBCHRONO) $(OBINOUT)
 
 #=============== DualSPHysics libs to be included ===============
-JLIBS=${LIBS_DIRECTORIES} -ljformatfiles2_64 -ljwavegen_64 -ljwave_mlp_rz_64 -ldsphchrono -lChronoEngine
+JLIBS=${LIBS_DIRECTORIES} -ljformatfiles2_64 -ljwavegen_64
+ifeq ($(COMPILE_CHRONO), YES)
+  JLIBS:=$(JLIBS) -ldsphchrono -lChronoEngine
+endif
+JLIBS:=$(JLIBS) -ljwave_mlp_rz_64
 
 #=============== CPU Code Compilation ===============
 all:$(EXECS_DIRECTORY)/$(EXECNAME)

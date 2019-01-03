@@ -63,13 +63,13 @@ public:
   void Reset(){};
   static bool Available(){ return(false); }
 
-  bool UseDataDVI(word mkbound)const{};
-  bool ConfigBodyFloating(word mkbound,double mass,const tdouble3 &center,const tmatrix3d &inertia){};
+  bool UseDataDVI(word mkbound)const{ return(false); };
+  bool ConfigBodyFloating(word mkbound,double mass,const tdouble3 &center,const tmatrix3d &inertia){ return(false); };
   void ConfigDataDVIBodyFloating(word mkbound,float kfric,float restitu){};
   void ConfigDataDVIBodyMoving  (word mkbound,float kfric,float restitu){};
   void ConfigDataDVIBodyFixed   (word mkbound,float kfric,float restitu){};
 
-  void Init(bool simulate2d){};
+  void Init(bool simulate2d,const JSphMk* mkinfo){};
   void VisuConfig(std::string txhead, std::string txfoot)const{};
 
   bool GetWithMotion()const{ return(false); }
