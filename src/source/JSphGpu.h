@@ -144,6 +144,8 @@ protected:
   float4  *FtoInertiaini8g; ///<Initial state inertia tensor in world coordinates (computed or user-given) (a11,...,a21,a22,...,a32) [Ftcount*2].
   float   *FtoInertiaini1g; ///<Initial state inertia tensor in world coordinates (computed or user-given) (a33) [Ftcount].
 
+  bool FtObjsOutdated;      ///<FtObjs[] was not updated with new GPU values.
+
   //-Variables for DEM. (DEM)
   float4 *DemDatag;       ///<Data of the object {mass, (1-poisson^2)/young, kfric, restitu} in GPU [DemObjsSize].
 

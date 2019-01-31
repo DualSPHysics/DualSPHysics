@@ -476,6 +476,7 @@ void JGaugeSwl::SetPoints(const tdouble3 &point0,const tdouble3 &point2,double p
     if(dis-(PointDp*PointNp)>=PointDp*0.1)PointNp++;
     if(PointNp<1)PointNp++;
     const double dp=dis/PointNp;
+    //printf("------> PointNp:%d dp:%f\n",PointNp,dp);
     PointDir=fmath::VecUnitary(Point2-Point0)*dp;
   }
   else{

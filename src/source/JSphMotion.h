@@ -24,6 +24,7 @@
 //:# - Incluye la gestion de objetos moving. (23-04-2018)
 //:# - Nuevo metodo GetObjIdxByMkBound(). (09-08-2018)
 //:# - Nuevos metodos GetActiveMotion() y ProcesTimeGetData() simple. (19-09-2018)
+//:# - Nuevo metodo SetMotionData(). (15-01-2019)
 //:#############################################################################
 
 /// \file JSphMotion.h \brief Declares the class \ref JSphMotion.
@@ -60,8 +61,13 @@ private:
   unsigned *ObjBegin;   ///<Initial particle of each moving object. [ObjCount+1]
   word     *ObjMkBound; ///<MkBound of each moving object. [ObjCount]
 
+  byte      *ObjTpmov;      ///<Type of motion (0:none, 1:linear, 2:matrix, 3:ignore). [ObjCount]
+  tdouble3  *ObjLinMov;    ///<Linear motion. [ObjCount]
+  tmatrix4d *ObjMatMov;    ///<Matrix motion. [ObjCount]
+
   JMotion *Mot;
   bool ActiveMotion;    ///<Indicates active motions after executing ProcesTime().
+  double LastDt;        ///<Dt used in last call to ProcesTime().
   void ConfigObjects(const JSpaceParts *parts);
 
 public:
@@ -85,6 +91,9 @@ public:
     ,unsigned &nparts,unsigned &idbegin)const;
   bool ProcesTimeGetData(unsigned ref,word &mkbound
     ,bool &typesimple,tdouble3 &simplemov,tmatrix4d &matmov)const;
+
+  void SetMotionData(unsigned idx,byte tpmov,const tdouble3 &simplemov,const tmatrix4d &matmov);
+
 };
 
 #endif

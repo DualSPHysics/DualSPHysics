@@ -298,7 +298,7 @@ void JCfgRun::ErrorParm(const std::string &opt,int optc,int lv,const std::string
   const char met[]="ErrorParm";
   std::string tx=fun::PrintStr("Parameter \"%s\" unrecognised or invalid. ",opt.c_str());
   tx=tx+fun::PrintStr("(Level cfg:%d, Parameter:%d)",lv,optc);
-  if(file!="")RunException(met,tx,file); else RunException(met,tx);
+  RunException(met,tx,file);
 }
 
 //==============================================================================

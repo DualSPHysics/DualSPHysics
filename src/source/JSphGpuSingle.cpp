@@ -521,7 +521,7 @@ double JSphGpuSingle::ComputeStep_Sym(){
 /// Actualiza informacion en FtObjs[] copiando los datos en GPU.
 //==============================================================================
 void JSphGpuSingle::UpdateFtObjs(){
-  if(FtCount){
+  if(FtCount && FtObjsOutdated){
     tdouble3 *fcen=FtoAuxDouble6;
     tfloat3  *fang=FtoAuxFloat9;
     tfloat3  *fvel=fang+FtCount;
@@ -537,6 +537,7 @@ void JSphGpuSingle::UpdateFtObjs(){
       FtObjs[cf].fomega=fome[cf];
     }
   }
+  FtObjsOutdated=false;
 }
 
 //==============================================================================
@@ -580,6 +581,7 @@ void JSphGpuSingle::RunFloating(double dt,bool predictor){
 
     //-Apply movement around floating objects / Aplica movimiento sobre floatings.
     cusph::FtUpdate(PeriActive!=0,predictor,FtCount,dt,FtoDatag,FtoForcesResg,FtoCenterResg,FtRidpg,FtoCenterg,FtoAnglesg,FtoVelg,FtoOmegag,Posxyg,Poszg,Dcellg,Velrhopg,Codeg);
+    if(!predictor)FtObjsOutdated=true;
 
     TmgStop(Timers,TMG_SuFloating);
   }
@@ -646,6 +648,7 @@ void JSphGpuSingle::Run(std::string appname,JCfgRun *cfg,JLog2 *log){
   Log->Print(string("\n[Initialising simulation (")+RunCode+")  "+fun::GetDateTime()+"]");
   PrintHeadPart();
   while(TimeStep<TimeMax){
+    InterStep=(TStep==STEP_Symplectic? INTERSTEP_SymPredictor: INTERSTEP_Verlet);
     if(ViscoTime)Visco=ViscoTime->GetVisco(float(TimeStep));
     double stepdt=ComputeStep();
     RunGaugeSystem(TimeStep+stepdt);
@@ -655,6 +658,7 @@ void JSphGpuSingle::Run(std::string appname,JCfgRun *cfg,JLog2 *log){
     if(InOut)InOutComputeStep(stepdt);      //<vs_innlet>
     else RunCellDivide(true);               //<vs_innlet>
     TimeStep+=stepdt;
+    LastDt=stepdt;
     partoutstop=(Np<NpMinimum || !Np);
     if(TimeStep>=TimePartNext || partoutstop){
       if(partoutstop){

@@ -138,6 +138,8 @@ private:
   bool RemoveZsurf;                 ///<Removes particles above the Zsurf limit (default=false)
   bool SvVtkZsurf;                  ///<Creates VTK files with Zsurf for each PART (default=false)
 
+  bool ExternalVarInput;            ///<Receives velocity and zsurf values from external sources. (default=false)
+
   JWaveTheoryReg *WaveReg;
 
   TpRhopMode RhopMode;          ///<Inflow rhop mode (fixed or extrapolated).
@@ -198,8 +200,10 @@ public:
   unsigned GetNptInit()const{ return(NptInit); }
   unsigned GetNpartInit()const{ return(NpartInit); }
 
-  TpRhopMode GetRhopMode()const{ return(RhopMode); }
-  TpVelMode GetVelMode()const{ return(VelMode); }
+  TpRhopMode   GetRhopMode()const{ return(RhopMode); }
+  TpVelMode    GetVelMode()const{ return(VelMode); }
+  TpVelProfile GetVelProfile()const{ return(VelProfile); }
+  TpZsurfMode  GetZsurfMode()const{ return(ZsurfMode); }
 
   bool GetExtrapolatedData()const{ return(RhopMode==MRHOP_Extrapolated || VelMode==MVEL_Extrapolated); }
   bool GetNoExtrapolatedData()const{ return(RhopMode!=MRHOP_Extrapolated || VelMode!=MVEL_Extrapolated); }
@@ -226,6 +230,15 @@ public:
   bool GetResetZVelGrid()const{ return(ResetZVelGrid); }
 
   void SaveVtkVelGrid(std::string filename)const;
+
+  bool IsVariableInput()const;
+  void SetExternalVarInput(bool active);
+  bool GetExternalVarInput()const{ return(ExternalVarInput); };
+  void InitExtVarInput();
+  tfloat4 GetExtVarVelocity1()const;
+  tfloat4 GetExtVarZsurf()const;
+  void SetExtVarVelocity1(double t1,double v1,double t2,double v2);
+  void SetExtVarZsurf(double t1,double z1,double t2,double z2);
 };
 
 //##############################################################################

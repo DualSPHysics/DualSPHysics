@@ -102,6 +102,7 @@ void JSphInOutZone::Reset(){
   InputZsurf=InputZbottom=FLT_MAX;
   RemoveZsurf=false;
   SvVtkZsurf=false;
+  ExternalVarInput=false;
   RevNewnpPerSec=true;
   NewnpPerSec=0;
   Direction=PtPlane=TDouble3(0);
@@ -655,6 +656,87 @@ void JSphInOutZone::SaveVtkVelGrid(std::string filename)const{
   if(InputVelGrid)InputVelGrid->SaveDataVtk(filename,0);
 }
 
+
+//==============================================================================
+/// Returns true when zone is MVEL_Variable, PVEL_Constant and ZSURF_Variable.
+//==============================================================================
+bool JSphInOutZone::IsVariableInput()const{
+  return(VelMode==MVEL_Variable && VelProfile==PVEL_Constant && ZsurfMode==ZSURF_Variable);
+}
+
+//==============================================================================
+/// Activate or deactivate use of external data (ExternalVarInput).
+//==============================================================================
+void JSphInOutZone::SetExternalVarInput(bool active){
+  if(!IsVariableInput())RunException("SetExternalVarInput","Input configuration is invalid.");
+  if(!ExternalVarInput && active)InitExtVarInput();
+  ExternalVarInput=active;
+}
+
+//==============================================================================
+/// Initialisation of TimeInputVelData and TimeInputZsurf.
+//==============================================================================
+void JSphInOutZone::InitExtVarInput(){
+  if(!IsVariableInput())RunException("InitExtVarInput","Input configuration is invalid.");
+  TimeInputVelData->Reset();
+  TimeInputVelData->AddTimeValue(0,0);
+  TimeInputVelData->AddTimeValue(DBL_MAX,0);
+  TimeInputZsurf->Reset();
+  TimeInputZsurf->AddTimeValue(0,0);
+  TimeInputZsurf->AddTimeValue(DBL_MAX,0);
+}
+
+//==============================================================================
+/// Returns velocity configuration in TimeInputVelData.
+/// Returns TFloat4(time1,vel1,time2,vel2).
+//==============================================================================
+tfloat4 JSphInOutZone::GetExtVarVelocity1()const{
+  if(VelMode!=MVEL_Variable || VelProfile!=PVEL_Constant)RunException("GetVariableVelocity1","Velocity mode or profile is invalid.");
+  const unsigned nt=TimeInputVelData->GetCount();
+  unsigned idx=0;
+  if(nt>2)idx=TimeInputVelData->GetPos();
+  const float t1=(idx<nt?   float(TimeInputVelData->GetTimeByIdx (idx))    : 0);
+  const float v1=(idx<nt?   float(TimeInputVelData->GetValueByIdx(idx,0))  : 0);
+  const float t2=(idx+1<nt? float(TimeInputVelData->GetTimeByIdx (idx+1))  : t1);
+  const float v2=(idx+1<nt? float(TimeInputVelData->GetValueByIdx(idx+1,0)): v1);
+  return(TFloat4(t1,v1,t2,v2));
+}
+
+//==============================================================================
+/// Returns zsurf configuration in TimeInputZsurf.
+/// Returns TFloat4(time1,z1,time2,z2).
+//==============================================================================
+tfloat4 JSphInOutZone::GetExtVarZsurf()const{
+  if(ZsurfMode!=ZSURF_Variable)RunException("GetVariableZsurf","Zsurf mode is not Variable.");
+  const unsigned nt=TimeInputZsurf->GetCount();
+  unsigned idx=0;
+  if(nt>2)idx=TimeInputZsurf->GetPos();
+  const float t1=(idx<nt?   float(TimeInputZsurf->GetTimeByIdx (idx))    : 0);
+  const float v1=(idx<nt?   float(TimeInputZsurf->GetValueByIdx(idx,0))  : 0);
+  const float t2=(idx+1<nt? float(TimeInputZsurf->GetTimeByIdx (idx+1))  : t1);
+  const float v2=(idx+1<nt? float(TimeInputZsurf->GetValueByIdx(idx+1,0)): v1);
+  return(TFloat4(t1,v1,t2,v2));
+}
+
+//==============================================================================
+/// Modify velocity configuration in TimeInputVelData.
+//==============================================================================
+void JSphInOutZone::SetExtVarVelocity1(double t1,double v1,double t2,double v2){
+  if(!ExternalVarInput)RunException("SetVarVelocity1","ExternalVarInput is not activated.");
+  TimeInputVelData->SetTimeValue(0,t1,v1);
+  TimeInputVelData->SetTimeValue(1,t2,v2);
+}
+
+//==============================================================================
+/// Modify zsurf configuration in TimeInputZsurf.
+//==============================================================================
+void JSphInOutZone::SetExtVarZsurf(double t1,double v1,double t2,double v2){
+  if(!ExternalVarInput)RunException("SetExtVarZsurf","ExternalVarInput is not activated.");
+  TimeInputZsurf->SetTimeValue(0,t1,v1);
+  TimeInputZsurf->SetTimeValue(1,t2,v2);
+}
+
+
 //##############################################################################
 //# JSphInOut
 //##############################################################################
@@ -689,6 +771,7 @@ JSphInOut::~JSphInOut(){
 /// Initialisation of variables.
 //==============================================================================
 void JSphInOut::Reset(){
+
   Stable=Simulate2D=false;
   Simulate2DPosY=0;
   PeriActive=0;

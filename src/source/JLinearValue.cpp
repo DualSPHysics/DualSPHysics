@@ -93,6 +93,23 @@ void JLinearValue::SetSize(unsigned size){
 }
 
 //==============================================================================
+/// Modify times and values.
+/// Modifica tiempos y valores.
+//==============================================================================
+void JLinearValue::SetTimeValue(unsigned idx,double time,double value){
+  const char met[]="SetTimeValue";
+  if(idx>=Count)RunException(met,"Index is invalid.");
+  //printf("\n=====>> SET t[%d]:%f\n",idx,time);
+  //if(idx>0)printf("=====>> t-1[%d]:%g\n",idx-1,Times[idx-1]);
+  //if(true) printf("=====>> t  [%d]:%g\n",idx,Times[idx]);
+  //if(idx+1<Count)printf("=====>> t+1[%d]:%g\n",idx+1,Times[idx+1]);
+  if((idx>0 && Times[idx-1]>time) || (idx+1<Count && Times[idx+1]<time))RunException(met,"New time values is lower than previous time or it is higher than next time.");
+  Times[idx]=time;
+  Values[Nvalues*idx]=value;
+  for(unsigned cv=1;cv<Nvalues;cv++)Values[Nvalues*idx+cv]=0;
+}
+
+//==============================================================================
 /// Adds values at the end of the list.
 /// Añade valores al final de la lista.
 //==============================================================================

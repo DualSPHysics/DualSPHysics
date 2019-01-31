@@ -68,6 +68,7 @@
 //:# - Nuevas funciones StrFileToVector(), StrVectorToFile() y StrFileError(). (11-07-2018)
 //:# - Nuevas funciones StrTrimBegin() y StrTrimEnd(). (29-08-2018)
 //:# - Nuevas funciones GetDateTimeFormatUTC(), GetWeekDay(), GetYearDay() y GetWeekNumber(). (24-10-2018)
+//:# - Nuevas funciones Delay() y GetRuntime(). (22-11-2018)
 //:#############################################################################
 
 /// \file Functions.h \brief Declares basic/general functions for the entire application.
@@ -92,6 +93,9 @@ std::string GetDateTimeFormatUTC(const char* format,int day,int month,int year,i
 int GetWeekDay(int day,int month,int year);
 int GetYearDay(int day,int month,int year);
 int GetWeekNumber(int day,int month,int year);
+
+void Delay(int ms);
+double GetRuntime();
 
 std::string GetHoursOfSeconds(double s);
 
