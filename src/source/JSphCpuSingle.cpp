@@ -739,14 +739,16 @@ void JSphCpuSingle::FtCalcForcesRes(double dt,const StFtoForces *ftoforces,StFto
     //-Compute fomega. | Calculo de fomega.
     tfloat3 fomega=fobj.fomega;
     {
-      const tfloat3 omegaace=FtoForces[cf].fomegaace;
+      const tfloat3 omegaace=ftoforces[cf].fomegaace;
       fomega.x=float(dt*omegaace.x+fomega.x);
       fomega.y=float(dt*omegaace.y+fomega.y);
       fomega.z=float(dt*omegaace.z+fomega.z);
     }
     tfloat3 fvel=fobj.fvel;
+    //if(!cf)printf("--->fvel  f%d(%f,%f,%f)\n",cf,fvel.x,fvel.y,fvel.z);
+
     //-Zero components for 2-D simulation. | Anula componentes para 2D.
-    tfloat3 face=FtoForces[cf].face;
+    tfloat3 face=ftoforces[cf].face;
     if(Simulate2D){ face.y=0; fomega.x=0; fomega.z=0; fvel.y=0; }
     //-Compute fcenter. | Calculo de fcenter.
     tdouble3 fcenter=fobj.center;
@@ -882,6 +884,7 @@ void JSphCpuSingle::Run(std::string appname,JCfgRun *cfg,JLog2 *log){
   Log->Print(string("\n[Initialising simulation (")+RunCode+")  "+fun::GetDateTime()+"]");
   PrintHeadPart();
   while(TimeStep<TimeMax){
+    InterStep=(TStep==STEP_Symplectic? INTERSTEP_SymPredictor: INTERSTEP_Verlet);
     if(ViscoTime)Visco=ViscoTime->GetVisco(float(TimeStep));
     double stepdt=ComputeStep();
     RunGaugeSystem(TimeStep+stepdt);
@@ -889,6 +892,7 @@ void JSphCpuSingle::Run(std::string appname,JCfgRun *cfg,JLog2 *log){
     if(CaseNmoving)RunMotion(stepdt);
     RunCellDivide(true);
     TimeStep+=stepdt;
+    LastDt=stepdt;
     partoutstop=(Np<NpMinimum || !Np);
     if(TimeStep>=TimePartNext || partoutstop){
       if(partoutstop){

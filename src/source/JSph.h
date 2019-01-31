@@ -319,6 +319,7 @@ protected:
   double TimeStep;        ///<Current instant of the simulation. | Instante actual de la simulación.                                 
   double TimeStepM1;      ///<Instant of the simulation when the last PART was stored. | Instante de la simulación en que se grabo el último PART.         
   double TimePartNext;    ///<Instant to store next PART file.   | Instante para grabar siguiente fichero PART.
+  double LastDt;          ///<Last dt value added to Instant to TimeStep. | Ultimo valor de dt sumado a TimeStep.
 
   //-Control of the execution times.
   JTimer TimerTot;         ///<Measueres total runtime.                          | Mide el tiempo total de ejecucion.

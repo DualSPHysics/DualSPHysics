@@ -123,6 +123,23 @@ int GetWeekNumber(int day,int month,int year){
 }
 
 //==============================================================================
+/// Pause for ms milliseconds.
+//==============================================================================
+void Delay(int ms){
+  const long pause=ms*(CLOCKS_PER_SEC/1000);
+  clock_t now,then;
+  now=then=clock();
+  while((now-then)<pause)now=clock();
+}
+
+//==============================================================================
+/// Returns the processor time (seconds) consumed by the program.
+//==============================================================================
+double GetRuntime(){
+  return(clock()/double(CLOCKS_PER_SEC));
+}
+
+//==============================================================================
 /// Returns duration in format xh ym zs.
 //==============================================================================
 std::string GetHoursOfSeconds(double s){

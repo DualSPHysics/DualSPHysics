@@ -96,6 +96,7 @@ void JSphGpu::InitVars(){
   FtoDatag=NULL;  FtoForcesSumg=NULL;  FtoForcesg=NULL;  FtoForcesResg=NULL;  FtoCenterResg=NULL; //-Calculates forces on floating bodies.
   FtoCenterg=NULL; FtoAnglesg=NULL; FtoVelg=NULL; FtoOmegag=NULL;//-Management of floating bodies.
   FtoInertiaini8g=NULL; FtoInertiaini1g=NULL;//-Management of floating bodies.
+  FtObjsOutdated=true;
   DemDatag=NULL; //(DEM)
   FreeGpuMemoryParticles();
   FreeGpuMemoryFixed();

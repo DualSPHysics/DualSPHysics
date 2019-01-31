@@ -203,6 +203,7 @@ void JSph::InitVars(){
   TimeStepIni=0;
   TimeStep=TimeStepM1=0;
   TimePartNext=0;
+  LastDt=0;
 
   VerletStep=0;
   SymplecticDtPre=0;
@@ -1285,6 +1286,7 @@ void JSph::LoadCaseParticles(){
 //==============================================================================
 void JSph::InitRun(unsigned np,const unsigned *idp,const tdouble3 *pos){
   const char met[]="InitRun";
+  InterStep=(TStep==STEP_Symplectic? INTERSTEP_SymPredictor: INTERSTEP_Verlet);
   VerletStep=0;
   if(TStep==STEP_Symplectic)SymplecticDtPre=DtIni;
   if(UseDEM)DemDtForce=DtIni; //(DEM)

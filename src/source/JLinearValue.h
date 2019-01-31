@@ -30,6 +30,7 @@
 //:# - La funcion GetNewInterval() indica cuando se cambia de intervalo. (25-01-2017)
 //:# - Puede gestionar varios valores para cada instante. (17-04-2017)
 //:# - Nuevos metodos para calcular interpolacion de forma externa. (17-04-2017)
+//:# - Nuevos metodos SetTimeValue() para modificar datos de la lista. (24-01-2018)
 //:#############################################################################
 
 #include "JObject.h"
@@ -86,6 +87,13 @@ public:
   unsigned AddTimeValue(double time,double value,double value2,double value3,double value4,double value5){ const unsigned idx=AddTimeValue(time,value,value2,value3,value4); SetValue(idx,4,value5); return(idx); }
   unsigned AddTimeValue(double time,double value,double value2,double value3,double value4,double value5,double value6){ const unsigned idx=AddTimeValue(time,value,value2,value3,value4,value5); SetValue(idx,5,value6); return(idx); }
   void SetValue(unsigned idx,unsigned cvalue,double value);
+
+  void SetTimeValue(unsigned idx,double time,double value);
+  void SetTimeValue(unsigned idx,double time,double value,double value2){  SetTimeValue(idx,time,value); SetValue(idx,1,value2);  }
+  void SetTimeValue(unsigned idx,double time,double value,double value2,double value3){  SetTimeValue(idx,time,value,value2); SetValue(idx,2,value3);  }
+  void SetTimeValue(unsigned idx,double time,double value,double value2,double value3,double value4){  SetTimeValue(idx,time,value,value2,value3); SetValue(idx,3,value4);  }
+  void SetTimeValue(unsigned idx,double time,double value,double value2,double value3,double value4,double value5){  SetTimeValue(idx,time,value,value2,value3,value4); SetValue(idx,4,value5);  }
+  void SetTimeValue(unsigned idx,double time,double value,double value2,double value3,double value4,double value5,double value6){  SetTimeValue(idx,time,value,value2,value3,value4,value5); SetValue(idx,5,value6);  }
 
   void LoadFile(std::string file);
   std::string GetFile()const{ return(File); };
