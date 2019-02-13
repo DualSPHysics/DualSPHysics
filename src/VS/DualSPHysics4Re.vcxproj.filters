@@ -271,6 +271,9 @@
     <ClInclude Include="..\source\JSphPartsInit.h">
       <Filter>Source</Filter>
     </ClInclude>
+    <ClInclude Include="..\source\FunctionsGeo3d.h">
+      <Filter>Common</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\source\JCfgRun.cpp">
@@ -367,9 +370,6 @@
       <Filter>Common</Filter>
     </ClCompile>
     <ClCompile Include="..\source\FunctionsCuda.cpp">
-      <Filter>Common</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\FunctionsMath.cpp">
       <Filter>Common</Filter>
     </ClCompile>
     <ClCompile Include="..\source\JBinaryData.cpp">
@@ -470,6 +470,9 @@
     </ClCompile>
     <ClCompile Include="..\source\JSphPartsInit.cpp">
       <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\FunctionsGeo3d.cpp">
+      <Filter>Common</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

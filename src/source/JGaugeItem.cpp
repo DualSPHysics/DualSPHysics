@@ -23,7 +23,7 @@
 #include "JSaveCsv2.h"
 #include "JAppInfo.h"
 #include "Functions.h"
-#include "FunctionsMath.h"
+#include "FunctionsGeo3d.h"
 #include "JFormatFiles2.h"
 #ifdef _WITHGPU
   #include "FunctionsCuda.h"
@@ -470,14 +470,14 @@ void JGaugeSwl::SetPoints(const tdouble3 &point0,const tdouble3 &point2,double p
   Point0=point0;
   Point2=point2;
   PointDp=pointdp;
-  const double dis=fmath::DistPoints(Point0,Point2);
+  const double dis=fgeo::PointsDist(Point0,Point2);
   if(dis>0 && PointDp>0){
     PointNp=unsigned(dis/PointDp);
     if(dis-(PointDp*PointNp)>=PointDp*0.1)PointNp++;
     if(PointNp<1)PointNp++;
     const double dp=dis/PointNp;
     //printf("------> PointNp:%d dp:%f\n",PointNp,dp);
-    PointDir=fmath::VecUnitary(Point2-Point0)*dp;
+    PointDir=fgeo::VecUnitary(Point2-Point0)*dp;
   }
   else{
     PointNp=0;
@@ -986,7 +986,7 @@ void JGaugeForce::SaveResults(){
     scsv.SetData();
     scsv << jcsv::Fmt(jcsv::TpFloat1,"%g") << jcsv::Fmt(jcsv::TpFloat3,"%g;%g;%g");
     for(unsigned c=0;c<OutCount;c++){
-      scsv << OutBuff[c].timestep << fmath::DistPoint(OutBuff[c].force) << OutBuff[c].force << jcsv::Endl();
+      scsv << OutBuff[c].timestep << fgeo::PointDist(OutBuff[c].force) << OutBuff[c].force << jcsv::Endl();
     }
     OutCount=0;
   }

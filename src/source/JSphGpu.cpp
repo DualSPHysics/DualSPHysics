@@ -1064,7 +1064,7 @@ void JSphGpu::RunMotion(double stepdt){
 void JSphGpu::RunDamping(double dt,unsigned np,unsigned npb,const double2 *posxy,const double *posz,const typecode *code,float4 *velrhop){
   for(unsigned c=0;c<Damping->GetCount();c++){
     const JDamping::StDamping* da=Damping->GetDampingZone(c);
-    const tdouble4 plane=da->plane;
+    const tdouble4 plane=TPlane3dToTDouble4(da->plane);
     const float dist=da->dist;
     const float over=da->overlimit;
     const tfloat3 factorxyz=da->factorxyz;
@@ -1076,10 +1076,10 @@ void JSphGpu::RunDamping(double dt,unsigned np,unsigned npb,const double2 *posxy
     else{
       const double zmin=da->domzmin;
       const double zmax=da->domzmax;
-      const tdouble4 pla0=da->dompla0;
-      const tdouble4 pla1=da->dompla1;
-      const tdouble4 pla2=da->dompla2;
-      const tdouble4 pla3=da->dompla3;
+      const tdouble4 pla0=TPlane3dToTDouble4(da->dompla0);
+      const tdouble4 pla1=TPlane3dToTDouble4(da->dompla1);
+      const tdouble4 pla2=TPlane3dToTDouble4(da->dompla2);
+      const tdouble4 pla3=TPlane3dToTDouble4(da->dompla3);
       if(CaseNfloat || PeriActive)cusph::ComputeDampingPla(dt,plane,dist,over,factorxyz,redumax,zmin,zmax,pla0,pla1,pla2,pla3,np-npb,npb,posxy,posz,code,velrhop);
       else cusph::ComputeDampingPla(dt,plane,dist,over,factorxyz,redumax,zmin,zmax,pla0,pla1,pla2,pla3,np-npb,npb,posxy,posz,NULL,velrhop);
     }

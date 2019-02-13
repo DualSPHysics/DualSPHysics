@@ -2820,7 +2820,7 @@ __global__ void KerComputeDamping(unsigned n,unsigned pini
     if(ok){
       const double2 rposxy=posxy[p1];
       const double rposz=posz[p1];
-      double vdis=KerPointPlane(plane,rposxy.x,rposxy.y,rposz);  //fmath::PointPlane(plane,ps);
+      double vdis=KerPointPlane(plane,rposxy.x,rposxy.y,rposz);  //fgeo::PlanePoint(plane,ps);
       if(0<vdis && vdis<=dist+over){
         const double fdis=(vdis>=dist? 1.: vdis/dist);
         const double redudt=dt*(fdis*fdis)*redumax;
@@ -2872,7 +2872,7 @@ __global__ void KerComputeDampingPla(unsigned n,unsigned pini
       const double2 rposxy=posxy[p1];
       const double rposz=posz[p1];
       const double3 ps=make_double3(rposxy.x,rposxy.y,rposz);
-      double vdis=KerPointPlane(plane,ps);  //fmath::PointPlane(plane,ps);
+      double vdis=KerPointPlane(plane,ps);  //fgeo::PlanePoint(plane,ps);
       if(0<vdis && vdis<=dist+over){
         if(ps.z>=zmin && ps.z<=zmax && KerPointPlane(pla0,ps)<=0 && KerPointPlane(pla1,ps)<=0 && KerPointPlane(pla2,ps)<=0 && KerPointPlane(pla3,ps)<=0){
           const double fdis=(vdis>=dist? 1.: vdis/dist);
