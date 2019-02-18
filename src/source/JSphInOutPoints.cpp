@@ -25,7 +25,7 @@
 #include "JLog2.h"
 #include "JAppInfo.h"
 #include "Functions.h"
-#include "FunctionsMath.h"
+#include "FunctionsGeo3d.h"
 #include "JMatrix4.h"
 #include "JFormatFiles2.h"
 
@@ -149,7 +149,7 @@ void JSphInOutPoints::Create2d3d_Particles(JXml *sxml,TiXmlElement* ele,const JS
   //-Load direction.
   const tdouble3 dir=DirectionFromStr(strdir);
   if(dir==TDouble3(0))sxml->ErrReadAtrib(ele,"direction",false);
-  Direction=fmath::VecUnitary(dir);
+  Direction=fgeo::VecUnitary(dir);
 
   //-Check mkfluid information.
   if(!partsdata || partsdata->GetNp()==0)RunException(met,"No particles data to define inout points.");
@@ -223,7 +223,7 @@ void JSphInOutPoints::Create2d_Line(JXml *sxml,TiXmlElement* ele){
   }
   //-Updates Direction.
   if(dir!=TDouble3(0)){
-    dir=fmath::VecUnitary(dir);
+    dir=fgeo::VecUnitary(dir);
     if(Direction!=TDouble3(0) && Direction!=dir)sxml->ErrReadElement(ele,"direction",false,"Direction is already defined.");
     Direction=dir;
   }
@@ -232,7 +232,7 @@ void JSphInOutPoints::Create2d_Line(JXml *sxml,TiXmlElement* ele){
     //-Calculates nunmber of inlet points.
     const tdouble3 pt1=TDouble3(px1,Simulate2DPosY,pz1);
     const tdouble3 pt2=TDouble3(px2,Simulate2DPosY,pz2);
-    const double dist=fmath::DistPoints(pt2,pt1);
+    const double dist=fgeo::PointsDist(pt2,pt1);
     double dppoints=Dp;
     unsigned npt=unsigned(dist/dppoints);
     if(dist-Dp*npt>Dp*0.95){
@@ -243,7 +243,7 @@ void JSphInOutPoints::Create2d_Line(JXml *sxml,TiXmlElement* ele){
     //-Resize memory when its size is not enough.
     ResizeMemory(npt);
     //-Calculates position of points.
-    const tdouble3 vec=fmath::VecUnitary(pt2-pt1)*dppoints;
+    const tdouble3 vec=fgeo::VecUnitary(pt2-pt1)*dppoints;
     const tdouble3 inimove=(Direction*InitialMove);
     for(unsigned p=0;p<npt;p++){
       const tdouble3 ps=pt1+(vec*TDouble3(p));
@@ -288,7 +288,7 @@ void JSphInOutPoints::Create3d_Box(JXml *sxml,TiXmlElement* ele){
   //-Adds config information.
   ConfigInfo.push_back(fun::PrintStr("Box: p0:(%s) size:(%s)",fun::Double3gStr(pt0).c_str(),fun::Double3gStr(spt).c_str()));
   //-Load direction.
-  tdouble3 dir=fmath::VecUnitary(sxml->ReadElementDouble3(ele,"direction"));
+  tdouble3 dir=fgeo::VecUnitary(sxml->ReadElementDouble3(ele,"direction"));
 
   //-Applies rotation to inlet definition.
   double rotate=sxml->ReadElementDouble(ele,"rotateaxis","angle",true);
@@ -304,7 +304,7 @@ void JSphInOutPoints::Create3d_Box(JXml *sxml,TiXmlElement* ele){
   }
   //-Updates Direction.
   if(dir!=TDouble3(0)){
-    dir=fmath::VecUnitary(dir);
+    dir=fgeo::VecUnitary(dir);
     if(Direction!=TDouble3(0) && Direction!=dir)sxml->ErrReadElement(ele,"direction",false,"Direction is already defined.");
     Direction=dir;
   }
@@ -323,9 +323,9 @@ void JSphInOutPoints::Create3d_Box(JXml *sxml,TiXmlElement* ele){
     //-Resize memory when its size is not enough.
     ResizeMemory(npt);
     //-Calculates position of points.
-    const tdouble3 vx=(spt.x? fmath::VecUnitary(ptx-pt0)*dpx: TDouble3(0));
-    const tdouble3 vy=(spt.y? fmath::VecUnitary(pty-pt0)*dpy: TDouble3(0));
-    const tdouble3 vz=(spt.z? fmath::VecUnitary(ptz-pt0)*dpz: TDouble3(0));
+    const tdouble3 vx=(spt.x? fgeo::VecUnitary(ptx-pt0)*dpx: TDouble3(0));
+    const tdouble3 vy=(spt.y? fgeo::VecUnitary(pty-pt0)*dpy: TDouble3(0));
+    const tdouble3 vz=(spt.z? fgeo::VecUnitary(ptz-pt0)*dpz: TDouble3(0));
     unsigned p=0;
     const tdouble3 inimove=(Direction*InitialMove);
     for(unsigned pz=0;pz<npz;pz++)for(unsigned py=0;py<npy;py++)for(unsigned px=0;px<npx;px++){
@@ -345,7 +345,7 @@ void JSphInOutPoints::Create3d_Box(JXml *sxml,TiXmlElement* ele){
       else RunException(met,"Configuration is invalid to calculate domain.");
       const tdouble3 dir1=Direction*(Dp/2);
       const unsigned nfar=2*(Layers)+1;
-      PtDom[0]=pt0+dir1-(fmath::VecUnitary(vxx)*(Dp/2))-(fmath::VecUnitary(vyy)*(Dp/2));
+      PtDom[0]=pt0+dir1-(fgeo::VecUnitary(vxx)*(Dp/2))-(fgeo::VecUnitary(vyy)*(Dp/2));
       PtDom[1]=PtDom[0]+vxx;
       PtDom[2]=PtDom[1]+vyy;
       PtDom[3]=PtDom[0]+vyy;
@@ -386,7 +386,7 @@ void JSphInOutPoints::Create3d_Circle(JXml *sxml,TiXmlElement* ele){
   ConfigInfo.push_back(fun::PrintStr("Circle: center:(%s) radius:%g",fun::Double3gStr(pcen).c_str(),radius));
   //-Updates Direction.
   if(dir!=TDouble3(0)){
-    dir=fmath::VecUnitary(dir);
+    dir=fgeo::VecUnitary(dir);
     if(Direction!=TDouble3(0) && Direction!=dir)sxml->ErrReadElement(ele,"direction",false,"Direction is already defined.");
     Direction=dir;
   }
@@ -424,9 +424,9 @@ void JSphInOutPoints::Create3d_Circle(JXml *sxml,TiXmlElement* ele){
       const double ra=rasum*nra;
       tdouble3 vxx=TDouble3(ra*cos(0),0,ra*sin(0))*2;
       tdouble3 vyy=TDouble3(ra*cos(PIHALF),0,ra*sin(PIHALF))*2;
-      PtDom[0]=pt0-(vxx/2)-(vyy/2)-(fmath::VecUnitary(vxx)*(Dp/2))-(fmath::VecUnitary(vyy)*(Dp/2));
-      vxx=vxx+(fmath::VecUnitary(vxx)*Dp);//-Adds one dp.
-      vyy=vyy+(fmath::VecUnitary(vyy)*Dp);//-Adds one dp.
+      PtDom[0]=pt0-(vxx/2)-(vyy/2)-(fgeo::VecUnitary(vxx)*(Dp/2))-(fgeo::VecUnitary(vyy)*(Dp/2));
+      vxx=vxx+(fgeo::VecUnitary(vxx)*Dp);//-Adds one dp.
+      vyy=vyy+(fgeo::VecUnitary(vyy)*Dp);//-Adds one dp.
       PtDom[1]=PtDom[0]+vxx;
       PtDom[2]=PtDom[1]+vyy;
       PtDom[3]=PtDom[0]+vyy;
@@ -491,7 +491,7 @@ void JSphInOutPoints::ComputeDomainFromPoints(){
   const tdouble3 dir1=Direction*(Dp/2); //-Vector direction.
   const unsigned nfar=2*(Layers)+1;
   if(Simulate2D){
-    const tdouble3 dir2=fmath::VecUnitary(pmax-pmin)*(Dp/2); //-Vector normal direction.
+    const tdouble3 dir2=fgeo::VecUnitary(pmax-pmin)*(Dp/2); //-Vector normal direction.
     tdouble3 pnearmin=pmin+dir1-dir2;
     tdouble3 pnearmax=pmax+dir1+dir2;
     tdouble3 pfarmin=pnearmin-(dir1*nfar);//-Increases one layer and adds other dp for borders.

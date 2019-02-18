@@ -302,7 +302,7 @@ void JSphCpuSingle::InOutCalculeZsurf(){
 /// Calcula datos extrapolados en el fluido para las particulas inlet/outlet.
 //==============================================================================
 void JSphCpuSingle::InOutExtrapolateData(){
-  const tfloat4 *planes =InOut->GetPlanes();
+  const tplane3f *planes=InOut->GetPlanes();
   const byte    *cfgzone=InOut->GetCfgZone();
   const float   *width  =InOut->GetWidth();
   const tfloat3 *dirdata=InOut->GetDirData();
@@ -325,7 +325,7 @@ void JSphCpuSingle::BoundCorrectionData(){
   for(unsigned c=0;c<n;c++){
     const JSphBoundCorrZone* zo=BoundCorr->GetMkZone(c);
     const typecode boundcode=zo->GetBoundCode();
-    const tfloat4 plane=zo->GetPlane();
+    const tplane3f plane=zo->GetPlane();
     const tfloat3 direction=ToTFloat3(zo->GetDirection());
     Interaction_BoundCorr(doublemode,boundcode,plane,direction,determlimit
       ,CellDivSingle->GetNcells(),CellDivSingle->GetBeginCell(),CellDivSingle->GetCellDomainMin()

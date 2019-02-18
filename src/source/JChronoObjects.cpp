@@ -21,7 +21,7 @@
 #include "DSPHChronoLib.h"
 #include "JChronoData.h"
 #include "Functions.h"
-#include "FunctionsMath.h"
+#include "FunctionsGeo3d.h"
 #include "JLog2.h"
 #include "JXml.h"
 #include "JSpaceParts.h"
@@ -94,10 +94,11 @@ bool JChronoObjects::UseDataDVI(word mkbound)const{
 /// Returns TRUE when it is a floating with Chrono.
 //==============================================================================
 bool JChronoObjects::ConfigBodyFloating(word mkbound,double mass
-  ,const tdouble3 &center,const tmatrix3d &inertia)
+  ,const tdouble3 &center,const tmatrix3d &inertia
+  ,const tint3 &translationfree,const tint3 &rotationfree)
 {
   JChBodyFloating* body=(JChBodyFloating*)ChronoDataXml->GetBodyFloating(mkbound);
-  if(body)body->SetFloatingData(mass,center,inertia);
+  if(body)body->SetFloatingData(mass,center,inertia,translationfree,rotationfree);
   return(body!=NULL);
 }
 
@@ -456,7 +457,7 @@ void JChronoObjects::SaveVtkScheme()const{
       case JChLink::LK_Hinge:{
         const JChLinkHinge* linktype=(const JChLinkHinge*)link;
         const tdouble3 pt=linktype->GetRotPoint();
-        const tdouble3 v=fmath::VecUnitarySafe(linktype->GetRotVector())*(ds*2);
+        const tdouble3 v=fgeo::VecUnitary(linktype->GetRotVector())*(ds*2);
         JFormatFiles2::AddShape_Cylinder(shapes,pt-v,pt+v,ds*1.5,16,0,mk,0);
       }break;
       case JChLink::LK_Spheric:{
@@ -466,9 +467,9 @@ void JChronoObjects::SaveVtkScheme()const{
       case JChLink::LK_PointLine:{
         const JChLinkPointLine* linktype=(const JChLinkPointLine*)link;
         const tdouble3 pt=linktype->GetRotPoint();
-        const tdouble3 v=fmath::VecUnitarySafe(linktype->GetSlidingVector())*(ds*4);
-        const tdouble3 vrot=fmath::VecUnitarySafe(linktype->GetRotVector())*(ds*4);
-        const tdouble3 vrot2=fmath::VecUnitarySafe(linktype->GetRotVector2())*(ds*4);
+        const tdouble3 v=fgeo::VecUnitary(linktype->GetSlidingVector())*(ds*4);
+        const tdouble3 vrot=fgeo::VecUnitary(linktype->GetRotVector())*(ds*4);
+        const tdouble3 vrot2=fgeo::VecUnitary(linktype->GetRotVector2())*(ds*4);
         if(vrot==TDouble3(0))JFormatFiles2::AddShape_Sphere(shapes,linktype->GetRotPoint(),ds*2,16,mk,0);
         else{ 
           JFormatFiles2::AddShape_Cylinder(shapes,pt-vrot,pt+vrot,ds*1.5,16,0,mk,0);
@@ -587,6 +588,11 @@ void JChronoObjects::VisuBody(const JChBody *body)const{
     const tmatrix3f inert=ToTMatrix3f(body->GetInertia());
     Log->Printf("    Inertia....: (%g,%g,%g) (xx,yy,zz)",inert.a11,inert.a22,inert.a33);
     Log->Printf("    Inertia....: (%g,%g,%g) (xy,yz,xz)",inert.a12,inert.a23,inert.a13);
+    if(!body->GetMotionFree()){
+      const tint3 m=body->GetTranslationFree();
+      const tint3 r=body->GetRotationFree();
+      Log->Printf("    MotionFree.: Transalation:(%d,%d,%d) Rotation:(%d,%d,%d)",m.x,m.y,m.z,r.x,r.y,r.z);
+    }
   }
   if(body->Type==JChBody::BD_Moving){
     Log->Printf("    MkBound....: %u",((const JChBodyFixed *)body)->MkBound);

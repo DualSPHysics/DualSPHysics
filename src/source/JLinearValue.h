@@ -31,6 +31,8 @@
 //:# - Puede gestionar varios valores para cada instante. (17-04-2017)
 //:# - Nuevos metodos para calcular interpolacion de forma externa. (17-04-2017)
 //:# - Nuevos metodos SetTimeValue() para modificar datos de la lista. (24-01-2018)
+//:# - Nuevo constructor con input file. (13-02-2018)
+//:# - Nuevo constructor de copias. (14-02-2018)
 //:#############################################################################
 
 #include "JObject.h"
@@ -40,7 +42,7 @@
 #include <iostream>
 #include <fstream>
 #include <cstdlib>
-
+#include <string>
 
 //##############################################################################
 //# JLinearValue
@@ -73,8 +75,11 @@ public:
   const unsigned Nvalues;
 
   JLinearValue(unsigned nvalues=1);
+  JLinearValue(const std::string &inputfile,unsigned nvalues=1);
+  JLinearValue(const JLinearValue &obj);
   ~JLinearValue();
   void Reset();
+  void CopyFrom(const JLinearValue &obj);
   unsigned GetAllocMemory()const;
 
   void SetSize(unsigned size);

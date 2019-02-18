@@ -20,6 +20,7 @@
 
 #include "JSphCpu.h"
 #include "FunctionsMath.h"
+#include "FunctionsGeo3d.h"
 #include "JSphInOut.h"
 #include <climits>
 
@@ -50,7 +51,7 @@ tdouble3 JSphCpu::Interaction_PosNoPeriodic(tdouble3 posp1)const{
 //==============================================================================
 template<bool sim2d,TpKernel tker> void JSphCpu::InteractionInOutExtrap_Double
   (unsigned inoutcount,const int *inoutpart,const byte *cfgzone
-  ,const tfloat4 *planes,const float* width,const tfloat3 *dirdata,float determlimit
+  ,const tplane3f *planes,const float* width,const tfloat3 *dirdata,float determlimit
   ,tint4 nc,int hdiv,unsigned cellinitial
   ,const unsigned *beginendcell,tint3 cellzero,const unsigned *dcell
   ,const tdouble3 *pos,const typecode *code,const unsigned *idp
@@ -75,7 +76,7 @@ template<bool sim2d,TpKernel tker> void JSphCpu::InteractionInOutExtrap_Double
       //-Calculates ghost node position.
       tdouble3 pos_p1=pos[p1];
       if(CODE_IsPeriodic(code[p1]))pos_p1=Interaction_PosNoPeriodic(pos_p1);
-      const double displane=fmath::DistPlane(ToTDouble4(planes[izone]),pos_p1)*2;
+      const double displane=fgeo::PlaneDist(TPlane3d(planes[izone]),pos_p1)*2;
       const tdouble3 posp1=pos_p1+TDouble3(displane*dirdata[izone].x, displane*dirdata[izone].y, displane*dirdata[izone].z); //-Ghost node position.
   //Log->Printf("%u>++> idp[%u]:%u posx(p1,node): %f %f",Nstep,p1,idp[p1],pos_p1.x,posp1.x);
   //Log->Printf("%u>++> idp[%u]:%u izone:%u rhop:%u vel:%u",Nstep,p1,idp[p1],izone,(computerhop? 1: 0),(computevel? 1: 0));
@@ -252,7 +253,7 @@ template<bool sim2d,TpKernel tker> void JSphCpu::InteractionInOutExtrap_Double
 //==============================================================================
 template<bool sim2d,TpKernel tker> void JSphCpu::InteractionInOutExtrap_Single
   (unsigned inoutcount,const int *inoutpart,const byte *cfgzone
-  ,const tfloat4 *planes,const float* width,const tfloat3 *dirdata,float determlimit
+  ,const tplane3f *planes,const float* width,const tfloat3 *dirdata,float determlimit
   ,tint4 nc,int hdiv,unsigned cellinitial
   ,const unsigned *beginendcell,tint3 cellzero,const unsigned *dcell
   ,const tdouble3 *pos,const typecode *code,const unsigned *idp
@@ -275,7 +276,7 @@ template<bool sim2d,TpKernel tker> void JSphCpu::InteractionInOutExtrap_Single
       //-Calculates ghost node position.
       tdouble3 pos_p1=pos[p1];
       if(CODE_IsPeriodic(code[p1]))pos_p1=Interaction_PosNoPeriodic(pos_p1);
-      const double displane=fmath::DistPlane(ToTDouble4(planes[izone]),pos_p1)*2;
+      const double displane=fgeo::PlaneDist(TPlane3d(planes[izone]),pos_p1)*2;
       const tdouble3 posp1=pos_p1+TDouble3(displane*dirdata[izone].x, displane*dirdata[izone].y, displane*dirdata[izone].z); //-Ghost node position.
 
       //-Initializes variables for calculation.
@@ -448,7 +449,7 @@ template<bool sim2d,TpKernel tker> void JSphCpu::InteractionInOutExtrap_Single
 /// Realiza interaccion entre ghost inlet/outlet nodes y particulas de fluido. GhostNodes-Fluid
 //==============================================================================
 void JSphCpu::Interaction_InOutExtrap(byte doublemode,unsigned inoutcount,const int *inoutpart
-  ,const byte *cfgzone,const tfloat4 *planes
+  ,const byte *cfgzone,const tplane3f *planes
   ,const float* width,const tfloat3 *dirdata,float determlimit
   ,tuint3 ncells,const unsigned *begincell,tuint3 cellmin,const unsigned *dcell
   ,const tdouble3 *pos,const typecode *code,const unsigned *idp
@@ -534,7 +535,7 @@ float JSphCpu::Interaction_InOutZsurf(unsigned nptz,const tfloat3 *ptzpos,float 
 /// Perform interaction between ghost node of selected boundary and fluid.
 //==============================================================================
 template<bool sim2d,TpKernel tker> void JSphCpu::InteractionBoundCorr_Double
-  (unsigned npb,typecode boundcode,tfloat4 plane,tfloat3 direction,float determlimit
+  (unsigned npb,typecode boundcode,tplane3f plane,tfloat3 direction,float determlimit
   ,tint4 nc,int hdiv,unsigned cellinitial
   ,const unsigned *beginendcell,tint3 cellzero
   ,const tdouble3 *pos,const typecode *code,const unsigned *idp
@@ -550,7 +551,7 @@ template<bool sim2d,TpKernel tker> void JSphCpu::InteractionBoundCorr_Double
     //-Calculates ghost node position.
     tdouble3 pos_p1=pos[p1];
     if(CODE_IsPeriodic(code[p1]))pos_p1=Interaction_PosNoPeriodic(pos_p1);
-    const double displane=fmath::DistPlane(ToTDouble4(plane),pos_p1)*2;
+    const double displane=fgeo::PlaneDist(TPlane3d(plane),pos_p1)*2;
     if(displane<=H*4.f){
       const tdouble3 posp1=pos_p1+TDouble3(displane*direction.x,displane*direction.y,displane*direction.z); //-Ghost node position.
       //-Initializes variables for calculation.
@@ -659,7 +660,7 @@ template<bool sim2d,TpKernel tker> void JSphCpu::InteractionBoundCorr_Double
 /// Perform interaction between ghost node of selected boundary and fluid.
 //==============================================================================
 template<bool sim2d,TpKernel tker> void JSphCpu::InteractionBoundCorr_Single
-  (unsigned npb,typecode boundcode,tfloat4 plane,tfloat3 direction,float determlimit
+  (unsigned npb,typecode boundcode,tplane3f plane,tfloat3 direction,float determlimit
   ,tint4 nc,int hdiv,unsigned cellinitial
   ,const unsigned *beginendcell,tint3 cellzero
   ,const tdouble3 *pos,const typecode *code,const unsigned *idp
@@ -675,7 +676,7 @@ template<bool sim2d,TpKernel tker> void JSphCpu::InteractionBoundCorr_Single
     //-Calculates ghost node position.
     tdouble3 pos_p1=pos[p1];
     if(CODE_IsPeriodic(code[p1]))pos_p1=Interaction_PosNoPeriodic(pos_p1);
-    const double displane=fmath::DistPlane(ToTDouble4(plane),pos_p1)*2;
+    const double displane=fgeo::PlaneDist(TPlane3d(plane),pos_p1)*2;
     if(displane<=H*4.f){
       const tdouble3 posp1=pos_p1+TDouble3(displane*direction.x,displane*direction.y,displane*direction.z); //-Ghost node position.
       //-Initializes variables for calculation.
@@ -783,7 +784,7 @@ template<bool sim2d,TpKernel tker> void JSphCpu::InteractionBoundCorr_Single
 /// Perform interaction between ghost inlet/outlet nodes and fluid particles. GhostNodes-Fluid
 /// Realiza interaccion entre ghost inlet/outlet nodes y particulas de fluido. GhostNodes-Fluid
 //==============================================================================
-void JSphCpu::Interaction_BoundCorr(byte doublemode,typecode boundcode,tfloat4 plane,tfloat3 direction,float determlimit
+void JSphCpu::Interaction_BoundCorr(byte doublemode,typecode boundcode,tplane3f plane,tfloat3 direction,float determlimit
   ,tuint3 ncells,const unsigned *begincell,tuint3 cellmin
   ,const tdouble3 *pos,const typecode *code,const unsigned *idp
   ,tfloat4 *velrhop)

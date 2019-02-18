@@ -28,6 +28,7 @@
 #include "JAppInfo.h"
 #include "Functions.h"
 #include "FunctionsMath.h"
+#include "FunctionsGeo3d.h"
 #include "JMatrix4.h"
 #include "JLinearValue.h"
 #include "JRangeFilter.h"
@@ -106,7 +107,7 @@ void JSphInOutZone::Reset(){
   RevNewnpPerSec=true;
   NewnpPerSec=0;
   Direction=PtPlane=TDouble3(0);
-  Plane=TFloat4(0);
+  Plane=TPlane3f(0);
   NptInit=NpartInit=0;
   delete[] PtzPos;  PtzPos=NULL;
   #ifdef _WITHGPU
@@ -211,7 +212,7 @@ void JSphInOutZone::ReadXml(JXml *sxml,TiXmlElement* ele,const std::string &dird
   Direction=Points->GetDirection();
   PtPlane=PtDom[8];
   if(PtPlane==TDouble3(DBL_MAX))RunException(met,"Reference point in inout plane is invalid.");
-  Plane=ToTFloat4(fmath::PlanePtVec(PtPlane,Direction));
+  Plane=TPlane3f(fgeo::PlanePtVec(PtPlane,Direction));
   NptInit=Points->GetCount();
   //-Velocity configuration.
   TiXmlElement* xele=ele->FirstChildElement("imposevelocity");
@@ -646,7 +647,7 @@ bool JSphInOutZone::InZoneBox(const tfloat3 &ps)const{
 /// Indicates if position is inside inlet zone, using plane and BoxLimitMin/Max.
 //==============================================================================
 bool JSphInOutZone::InZone(bool useboxlimit,const tfloat3 &ps)const{
-  return((!useboxlimit || InZoneBox(ps)) && fmath::PointPlane(Plane,ps)<0);
+  return((!useboxlimit || InZoneBox(ps)) && fgeo::PlanePoint(Plane,ps)<0);
 }
 
 //==============================================================================
@@ -901,13 +902,13 @@ void JSphInOut::AllocateMemory(unsigned listsize){
   const char met[]="AllocateMemory";
   ListSize=listsize;
   try{
-    Planes   =new tfloat4[ListSize];
-    CfgZone  =new byte   [ListSize];
-    Width    =new float  [ListSize];
-    DirData  =new tfloat3[ListSize];
-    VelData  =new tfloat4[ListSize*2];
-    Zbottom  =new float  [ListSize];
-    Zsurf    =new float  [ListSize];
+    Planes   =new tplane3f[ListSize];
+    CfgZone  =new byte    [ListSize];
+    Width    =new float   [ListSize];
+    DirData  =new tfloat3 [ListSize];
+    VelData  =new tfloat4 [ListSize*2];
+    Zbottom  =new float   [ListSize];
+    Zsurf    =new float   [ListSize];
   }
   catch(const std::bad_alloc){
     RunException(met,"Could not allocate the requested memory.");
@@ -1407,7 +1408,7 @@ unsigned JSphInOut::CreateListCpu(unsigned nstep,unsigned npf,unsigned pini
     }
     if(0){ //DG_INOUT
       Log->Printf("AAA_000 ListSize:%u",ListSize);
-      Log->Printf("AAA_000 Planes[0]:(%f,%f,%f,%f)",Planes[0].x,Planes[0].y,Planes[0].z,Planes[0].w);
+      Log->Printf("AAA_000 Planes[0]:(%f,%f,%f,%f)",Planes[0].a,Planes[0].b,Planes[0].c,Planes[0].d);
       const float xini=-5.f;
       const float dp=0.01f;
       const unsigned np=1000;
@@ -1416,9 +1417,9 @@ unsigned JSphInOut::CreateListCpu(unsigned nstep,unsigned npf,unsigned pini
       float vdis1[np];
       for(unsigned p=0;p<np;p++){
         vpos[p]=TFloat3(xini+dp*p,0,0);
-        const float dis0=fmath::PointPlane(Planes[0],vpos[p]);
+        const float dis0=fgeo::PlanePoint(Planes[0],vpos[p]);
         vdis0[p]=(dis0<0? -1.f: (dis0>0? 1.f: 0));
-        const float dis1=fmath::PointPlane(Planes[1],vpos[p]);
+        const float dis1=fgeo::PlanePoint(Planes[1],vpos[p]);
         vdis1[p]=(dis1<0? -1.f: (dis1>0? 1.f: 0));
       }
       //-Generates VTK file.
@@ -1657,7 +1658,7 @@ unsigned JSphInOut::ComputeStepCpu(unsigned nstep,double dt,unsigned inoutcount,
     typecode rcode=code[p];
     const unsigned izone=CODE_GetIzoneFluidInout(rcode);
     const tfloat3 ps=ToTFloat3(pos[p]);
-    const float displane=-fmath::DistPlaneSign(Planes[izone],ps);
+    const float displane=-fgeo::PlaneDistSign(Planes[izone],ps);
     if(displane>Width[izone]){//-Particle is moved out domain.
       code[p]=CODE_SetOutIgnore(rcode);
       inoutpart[cp]=INT_MAX;
@@ -1743,7 +1744,7 @@ unsigned JSphInOut::ComputeStepFillingCpu(unsigned nstep,double dt,unsigned inou
     const unsigned p=(unsigned)inoutpart[cp];
     const typecode rcode=code[p];
     const unsigned izone=CODE_GetIzoneFluidInout(rcode);
-    const float displane=-fmath::DistPlaneSign(Planes[izone],ToTFloat3(pos[p]));
+    const float displane=-fgeo::PlaneDistSign(Planes[izone],ToTFloat3(pos[p]));
 
     if(displane<0 || displane>Width[izone]){
       code[p]=(displane<0? CodeNewPart: CODE_SetOutIgnore(rcode));
@@ -1751,10 +1752,10 @@ unsigned JSphInOut::ComputeStepFillingCpu(unsigned nstep,double dt,unsigned inou
       //-if (displane>Width[izone])inoutpart[cp]=INT_MAX; Particle is moved out in/out zone.
     }
     else{
-      //prodist[cp]=(float)fmath::DistPlane(pla,pos[p]);
+      //prodist[cp]=(float)fgeo::PlaneDist(pla,pos[p]);
       prodist[cp]=displane;
-      const tdouble4 pla=ToTDouble4(Planes[izone]);
-      propos[cp]=fmath::PtOrthogonal(pos[p],pla);
+      const tplane3d pla=TPlane3d(Planes[izone]);
+      propos[cp]=fgeo::PlaneOrthogonalPoint(pos[p],pla);
     }
   }
 

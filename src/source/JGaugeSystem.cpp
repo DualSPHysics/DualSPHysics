@@ -23,7 +23,7 @@
 #include "JXml.h"
 #include "JAppInfo.h"
 #include "Functions.h"
-#include "FunctionsMath.h"
+#include "FunctionsGeo3d.h"
 #include "JSphMk.h"
 #include "JFormatFiles2.h"
 #include <cfloat>
@@ -68,6 +68,7 @@ void JGaugeSystem::Reset(){
   DomPosMin=DomPosMax=TDouble3(0);
   Scell=0;
   Hdiv=0;
+  H=MassFluid=MassBound=CteB=Gamma=RhopZero=0;
   ResetCfgDefault();
   for(unsigned c=0;c<Gauges.size();c++)delete Gauges[c];
   Gauges.clear();
@@ -130,7 +131,7 @@ void JGaugeSystem::LoadXml(JXml *sxml,const std::string &place,const JSphMk* mki
 void JGaugeSystem::LoadLinePoints(double coefdp,const tdouble3 &point1,const tdouble3 &point2
   ,std::vector<tdouble3> &points,const std::string &ref)const
 {
-  const double dis=fmath::DistPoints(point1,point2);
+  const double dis=fgeo::PointsDist(point1,point2);
   const double dp=Dp*coefdp;
   if(dis<dp)RunException("LoadLinePoints","The line length is less than the indicated dp.",ref);
   unsigned count=unsigned(dis/dp);
@@ -146,9 +147,9 @@ void JGaugeSystem::LoadLinePoints(double coefdp,const tdouble3 &point1,const tdo
 void JGaugeSystem::LoadLinePoints(unsigned count,const tdouble3 &point1,const tdouble3 &point2
   ,std::vector<tdouble3> &points,const std::string &ref)const
 {
-  const double dis=fmath::DistPoints(point1,point2);
+  const double dis=fgeo::PointsDist(point1,point2);
   const double dp=dis/(count-1);
-  const tdouble3 dir=fmath::VecUnitary(point2-point1);
+  const tdouble3 dir=fgeo::VecUnitary(point2-point1);
   for(unsigned c=0;c<count;c++){
     tdouble3 pt=point1+(dir*(dp*c));
     points.push_back(pt);
@@ -342,7 +343,7 @@ JGaugeForce* JGaugeSystem::AddGaugeForce(std::string name,double computestart,do
 {
   const char met[]="AddGaugeForce";
   if(GetGaugeIdx(name)!=UINT_MAX)RunException(met,fun::PrintStr("The name \'%s\' already exists.",name.c_str()));
-  //-Obtains data form mkboud particles.
+  //-Obtains data from mkbound particles.
   const unsigned cmk=mkinfo->GetMkBlockByMkBound(mkbound);
   if(cmk>=mkinfo->Size())RunException(met,fun::PrintStr("Error loading boundary objects. Mkbound=%u is unknown.",mkbound));
   const JSphMkBlock* mkb=mkinfo->Mkblock(cmk);

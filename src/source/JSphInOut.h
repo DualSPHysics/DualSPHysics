@@ -149,7 +149,7 @@ private:
 
   tdouble3 Direction;    ///<Inflow direction.
   tdouble3 PtPlane;      ///<Position to create Plane.
-  tfloat4 Plane;         ///<Inflow plane.
+  tplane3f Plane;        ///<Inflow plane.
   unsigned NptInit;      ///<Number of inout points at the begining (first layer).
   unsigned NpartInit;    ///<Number of inout particles at the begining.
 
@@ -188,7 +188,7 @@ public:
   unsigned GetIdZone()const{ return(IdZone); }
   byte GetLayers()const{ return(Layers); }
   tdouble3 GetDirection()const{ return(Direction); }
-  tfloat4 GetPlane()const{ return(Plane); }
+  tplane3f GetPlane()const{ return(Plane); }
 
   const tdouble3* GetPtDomain()const{ return(PtDom); };
   tfloat3 GetBoxLimitMin()const{ return(BoxLimitMin); };
@@ -293,13 +293,13 @@ private:
   unsigned ListSize;  ///<Number of inlet/outlet configurations.
 
   //-Data to manage all inlet/outlet conditions.
-  tfloat4 *Planes;    ///<Planes for inlet/outlet zones [ListSize].
-  byte    *CfgZone;   ///<Information about VelMode, VelProfile, RhopMode and ConvertFluid. [ListSize].
-  float   *Width;     ///<Zone width [ListSize].
-  tfloat3 *DirData;   ///<Inflow direction [ListSize].
-  tfloat4 *VelData;   ///<Velocity coefficients for imposed velocity [ListSize*2].
-  float   *Zbottom;   ///<Zbottom for hydrostatic rhop (it is constant) [ListSize].
-  float   *Zsurf;     ///<Zsurf (it can be variable) [ListSize].
+  tplane3f *Planes;    ///<Planes for inlet/outlet zones [ListSize].
+  byte     *CfgZone;   ///<Information about VelMode, VelProfile, RhopMode and ConvertFluid. [ListSize].
+  float    *Width;     ///<Zone width [ListSize].
+  tfloat3  *DirData;   ///<Inflow direction [ListSize].
+  tfloat4  *VelData;   ///<Velocity coefficients for imposed velocity [ListSize*2].
+  float    *Zbottom;   ///<Zbottom for hydrostatic rhop (it is constant) [ListSize].
+  float    *Zsurf;     ///<Zsurf (it can be variable) [ListSize].
   
 #ifdef _WITHGPU
   //-Data to manage all inlet/outlet conditions on GPU.
@@ -461,10 +461,10 @@ public:
   float GetDetermLimit()const{ return(DetermLimit); };
   byte GetExtrapolateMode()const{ return(ExtrapolateMode); };
 
-  const tfloat4* GetPlanes() const{ return(Planes);  };
-  const byte*    GetCfgZone()const{ return(CfgZone); };
-  const float*   GetWidth()  const{ return(Width);   };
-  const tfloat3* GetDirData()const{ return(DirData); };
+  const tplane3f* GetPlanes() const{ return(Planes);  };
+  const byte*     GetCfgZone()const{ return(CfgZone); };
+  const float*    GetWidth()  const{ return(Width);   };
+  const tfloat3*  GetDirData()const{ return(DirData); };
 #ifdef _WITHGPU
   const float4*  GetPlanesg() const{ return(Planesg);  };
   const byte*    GetCfgZoneg()const{ return(CfgZoneg); };

@@ -97,7 +97,7 @@ void JSphGpu::InitVars(){
   ShiftPosg=NULL; ShiftDetectg=NULL; //-Shifting.
   RidpMoveg=NULL;
   FtRidpg=NULL;   FtoMasspg=NULL;                      //-Floatings.
-  FtoDatag=NULL;  FtoForcesSumg=NULL;  FtoForcesg=NULL;  FtoForcesResg=NULL;  FtoCenterResg=NULL; //-Calculates forces on floating bodies.
+  FtoDatag=NULL;  FtoConstraintsg=NULL;  FtoForcesSumg=NULL;  FtoForcesg=NULL;  FtoForcesResg=NULL;  FtoCenterResg=NULL; //-Calculates forces on floating bodies.
   FtoCenterg=NULL; FtoAnglesg=NULL; FtoVelg=NULL; FtoOmegag=NULL;//-Management of floating bodies.
   FtoInertiaini8g=NULL; FtoInertiaini1g=NULL;//-Management of floating bodies.
   FtObjsOutdated=true;
@@ -165,6 +165,7 @@ void JSphGpu::FreeGpuMemoryFixed(){
   if(FtRidpg)        cudaFree(FtRidpg);         FtRidpg=NULL;
   if(FtoMasspg)      cudaFree(FtoMasspg);       FtoMasspg=NULL;
   if(FtoDatag)       cudaFree(FtoDatag);        FtoDatag=NULL;
+  if(FtoConstraintsg)cudaFree(FtoConstraintsg); FtoConstraintsg=NULL;
   if(FtoForcesSumg)  cudaFree(FtoForcesSumg);   FtoForcesSumg=NULL;
   if(FtoForcesg)     cudaFree(FtoForcesg);      FtoForcesg=NULL;
   if(FtoForcesResg)  cudaFree(FtoForcesResg);   FtoForcesResg=NULL;
@@ -193,6 +194,7 @@ void JSphGpu::AllocGpuMemoryFixed(){
     m=sizeof(unsigned)*CaseNfloat;  cudaMalloc((void**)&FtRidpg        ,m);  MemGpuFixed+=m;
     m=sizeof(float)   *FtCount;     cudaMalloc((void**)&FtoMasspg      ,m);  MemGpuFixed+=m;
     m=sizeof(float4)  *FtCount;     cudaMalloc((void**)&FtoDatag       ,m);  MemGpuFixed+=m;
+    m=sizeof(byte)    *FtCount;     cudaMalloc((void**)&FtoConstraintsg,m);  MemGpuFixed+=m;
     m=sizeof(float3)  *FtCount*2;   cudaMalloc((void**)&FtoForcesSumg  ,m);  MemGpuFixed+=m;
     m=sizeof(float3)  *FtCount*2;   cudaMalloc((void**)&FtoForcesg     ,m);  MemGpuFixed+=m;
     m=sizeof(float3)  *FtCount*2;   cudaMalloc((void**)&FtoForcesResg  ,m);  MemGpuFixed+=m;
@@ -718,6 +720,7 @@ void JSphGpu::InitFloating(){
     }stdata;
 
     stdata   *data  =new stdata  [FtCount];
+    byte     *constr=new byte    [FtCount];
     tdouble3 *center=new tdouble3[FtCount];
     tfloat3  *angles=new tfloat3 [FtCount];
     tfloat3  *vel   =new tfloat3 [FtCount];
@@ -725,20 +728,23 @@ void JSphGpu::InitFloating(){
     tfloat4  *inert8=new tfloat4 [FtCount*2];
     float    *inert1=new float   [FtCount];
     for(unsigned cf=0;cf<FtCount;cf++){
-      data[cf].pini=FtObjs[cf].begin-CaseNpb;
-      data[cf].np=FtObjs[cf].count;
-      data[cf].radius=FtObjs[cf].radius;
-      data[cf].mass=FtObjs[cf].mass;
-      center[cf]=FtObjs[cf].center;
-      angles[cf]=FtObjs[cf].angles;
-      vel   [cf]=FtObjs[cf].fvel;
-      omega [cf]=FtObjs[cf].fomega;
-      const tmatrix3f v=FtObjs[cf].inertiaini;
+      const StFloatingData &fobj=FtObjs[cf];
+      data[cf].pini=fobj.begin-CaseNpb;
+      data[cf].np=fobj.count;
+      data[cf].radius=fobj.radius;
+      data[cf].mass=fobj.mass;
+      constr[cf]=fobj.constraints;
+      center[cf]=fobj.center;
+      angles[cf]=fobj.angles;
+      vel   [cf]=fobj.fvel;
+      omega [cf]=fobj.fomega;
+      const tmatrix3f v=fobj.inertiaini;
       inert8[cf*2]  =TFloat4(v.a11,v.a12,v.a13,v.a21);
       inert8[cf*2+1]=TFloat4(v.a22,v.a23,v.a31,v.a32);
       inert1[cf]    =v.a33;
     }
     cudaMemcpy(FtoDatag       ,data  ,sizeof(float4)   *FtCount  ,cudaMemcpyHostToDevice);
+    cudaMemcpy(FtoConstraintsg,constr,sizeof(byte)     *FtCount  ,cudaMemcpyHostToDevice);
     cudaMemcpy(FtoCenterg     ,center,sizeof(double3)  *FtCount  ,cudaMemcpyHostToDevice);
     cudaMemcpy(FtoAnglesg     ,angles,sizeof(float3)   *FtCount  ,cudaMemcpyHostToDevice);
     cudaMemcpy(FtoVelg        ,vel   ,sizeof(float3)   *FtCount  ,cudaMemcpyHostToDevice);
@@ -1123,7 +1129,7 @@ void JSphGpu::RunRelaxZone(double dt){
 void JSphGpu::RunDamping(double dt,unsigned np,unsigned npb,const double2 *posxy,const double *posz,const typecode *code,float4 *velrhop){
   for(unsigned c=0;c<Damping->GetCount();c++){
     const JDamping::StDamping* da=Damping->GetDampingZone(c);
-    const tdouble4 plane=da->plane;
+    const tdouble4 plane=TPlane3dToTDouble4(da->plane);
     const float dist=da->dist;
     const float over=da->overlimit;
     const tfloat3 factorxyz=da->factorxyz;
@@ -1135,10 +1141,10 @@ void JSphGpu::RunDamping(double dt,unsigned np,unsigned npb,const double2 *posxy
     else{
       const double zmin=da->domzmin;
       const double zmax=da->domzmax;
-      const tdouble4 pla0=da->dompla0;
-      const tdouble4 pla1=da->dompla1;
-      const tdouble4 pla2=da->dompla2;
-      const tdouble4 pla3=da->dompla3;
+      const tdouble4 pla0=TPlane3dToTDouble4(da->dompla0);
+      const tdouble4 pla1=TPlane3dToTDouble4(da->dompla1);
+      const tdouble4 pla2=TPlane3dToTDouble4(da->dompla2);
+      const tdouble4 pla3=TPlane3dToTDouble4(da->dompla3);
       if(CaseNfloat || PeriActive)cusph::ComputeDampingPla(dt,plane,dist,over,factorxyz,redumax,zmin,zmax,pla0,pla1,pla2,pla3,np-npb,npb,posxy,posz,code,velrhop);
       else cusph::ComputeDampingPla(dt,plane,dist,over,factorxyz,redumax,zmin,zmax,pla0,pla1,pla2,pla3,np-npb,npb,posxy,posz,NULL,velrhop);
     }

@@ -557,6 +557,8 @@ void JSphGpuSingle::RunFloating(double dt,bool predictor){
     cusph::FtCalcForces(FtCount,Gravity,FtoDatag,FtoAnglesg,FtoInertiaini8g,FtoInertiaini1g,FtoForcesSumg,FtoForcesg);
     //-Calculate data to update floatings / Calcula datos para actualizar floatings.
     cusph::FtCalcForcesRes(FtCount,Simulate2D,dt,FtoOmegag,FtoVelg,FtoCenterg,FtoForcesg,FtoForcesResg,FtoCenterResg);
+    //-Applies motion constraints.
+    if(FtConstraints)cusph::FtApplyConstraints(FtCount,FtoConstraintsg,FtoForcesg,FtoForcesResg);
 
     //-Run floating with Chrono library. //<vs_chroono_ini>
     if(ChronoObjects){      

@@ -45,6 +45,27 @@ JLinearValue::JLinearValue(unsigned nvalues):Nvalues(max(1u,nvalues)){
 }
 
 //==============================================================================
+/// Constructor with input file.
+//==============================================================================
+JLinearValue::JLinearValue(const std::string &inputfile,unsigned nvalues):Nvalues(max(1u,nvalues)){
+  ClassName="JLinearValue";
+  Times=NULL;
+  Values=NULL;
+  Reset();
+  File=inputfile;
+}
+
+//==============================================================================
+/// Constructor for copy.
+//==============================================================================
+JLinearValue::JLinearValue(const JLinearValue &obj):Nvalues(obj.Nvalues){
+  ClassName="JLinearValue";
+  Times=NULL;
+  Values=NULL;
+  CopyFrom(obj);
+}
+
+//==============================================================================
 /// Destructor.
 //==============================================================================
 JLinearValue::~JLinearValue(){
@@ -60,6 +81,26 @@ void JLinearValue::Reset(){
   File="";
   NewInterval=false;
   TimeStep=TimePre=TimeNext=TimeFactor=0;
+}
+
+//==============================================================================
+/// Copy data from other object.
+//==============================================================================
+void JLinearValue::CopyFrom(const JLinearValue &obj){
+  if(Nvalues!=obj.Nvalues)RunException("CopyFrom","The copy is invalid since Nvalues does not match.");
+  Reset();
+  File=obj.File;
+  SetSize(obj.Size);
+  memcpy(Times,obj.Times,sizeof(double)*Size);
+  memcpy(Values,obj.Values,sizeof(double)*Nvalues*Size);
+  Count       =obj.Count;
+  NewInterval =obj.NewInterval;
+  TimeStep    =obj.TimeStep;
+  Position    =obj.Position;
+  PositionNext=obj.PositionNext;
+  TimePre     =obj.TimePre;
+  TimeNext    =obj.TimeNext;
+  TimeFactor  =obj.TimeFactor;
 }
 
 //==============================================================================

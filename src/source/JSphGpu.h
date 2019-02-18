@@ -128,11 +128,12 @@ protected:
   unsigned *FtRidpg;      ///<Identifier to access to the particles of the floating object [CaseNfloat].
   float *FtoMasspg;       ///<Mass of the particle for each floating body [FtCount] in GPU (used in interaction forces).
 
-  float4 *FtoDatag;       ///<Constant data of floatings {pini_u,np_u,radius_f,mass_f} [FtCount] //__device__ int __float_as_int(float x) //__device__ float __int_as_float(int x).
-  float3 *FtoForcesSumg;  ///<Stores forces summation for the floating bodies {sumface_f3,sumfomegaace_f3}[FtCount]. | Almacena sumatorio de fuerzas de floatings {sumface_f3,sumfomegaace_f3} [FtCount]. 
-  float3 *FtoForcesg;     ///<Stores forces for the floating bodies {face_f3,fomegaace_f3} equivalent to JSphCpu::FtoForces [FtCount]. | Almacena fuerzas de floatings {face_f3,fomegaace_f3} equivalente a JSphCpu::FtoForces [FtCount]. 
-  float3 *FtoForcesResg;  ///<Stores data to update floatings {fomegares_f3,fvelres_f3} equivalent to JSphCpu::FtoForcesRes. [FtCount]. | Almacena datos para actualizar floatings {fomegares_f3,fvelres_f3} equivalente a JSphCpu::FtoForcesRes. [FtCount].
-  double3 *FtoCenterResg; ///<Stores centre to update floatings. [Ftcount]. | Almacena centro para actualizar floatings. [FtCount]. 
+  float4 *FtoDatag;        ///<Constant data of floatings {pini_u,np_u,radius_f,mass_f} [FtCount] //__device__ int __float_as_int(float x) //__device__ float __int_as_float(int x).
+  byte   *FtoConstraintsg; ///<Constant value to define motion constraints.
+  float3 *FtoForcesSumg;   ///<Stores forces summation for the floating bodies {sumface_f3,sumfomegaace_f3}[FtCount]. | Almacena sumatorio de fuerzas de floatings {sumface_f3,sumfomegaace_f3} [FtCount]. 
+  float3 *FtoForcesg;      ///<Stores forces for the floating bodies {face_f3,fomegaace_f3} equivalent to JSphCpu::FtoForces [FtCount]. | Almacena fuerzas de floatings {face_f3,fomegaace_f3} equivalente a JSphCpu::FtoForces [FtCount]. 
+  float3 *FtoForcesResg;   ///<Stores data to update floatings {fomegares_f3,fvelres_f3} equivalent to JSphCpu::FtoForcesRes. [FtCount]. | Almacena datos para actualizar floatings {fomegares_f3,fvelres_f3} equivalente a JSphCpu::FtoForcesRes. [FtCount].
+  double3 *FtoCenterResg;  ///<Stores centre to update floatings. [Ftcount]. | Almacena centro para actualizar floatings. [FtCount]. 
 
   tdouble3 *FtoAuxDouble6; ///<Memory to swap floating data with GPU. [2*FtCount]. | Memoria para intercambiar datos de floatings con GPU. [2*FtCount].
   tfloat3  *FtoAuxFloat9;  ///<Memory to swap floating data with GPU. [3*FtCount]. | Memoria para intercambiar datos de floatings con GPU. [3*FtCount].

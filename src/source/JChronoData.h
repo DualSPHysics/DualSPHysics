@@ -164,6 +164,9 @@ protected:
   double Mass;
   tdouble3 Center;
   tmatrix3d Inertia;
+  bool MotionFree;
+  tint3 TranslationFree;
+  tint3 RotationFree;
   std::string ModelFile;
   TpModelNormal ModelNormal;
 
@@ -193,7 +196,12 @@ public:
 
   double      GetMass()       const{ return(Mass);        } 
   tdouble3    GetCenter()     const{ return(Center);      } 
-  tmatrix3d   GetInertia()    const{ return(Inertia);     }  
+  tmatrix3d   GetInertia()    const{ return(Inertia);     } 
+
+  bool        GetMotionFree()     const{ return(MotionFree);      }
+  tint3       GetTranslationFree()const{ return(TranslationFree); }
+  tint3       GetRotationFree()   const{ return(RotationFree);    }
+
   std::string GetModelFile()  const{ return(ModelFile);   }
   TpModelNormal GetModelNormal()const{ return(ModelNormal); }
 //float       GetYoung()      const{ return(Young);       }  //(DEM)
@@ -225,7 +233,7 @@ public:
   JChBodyFloating(unsigned idb,std::string idname,word mkbound);
   JChBodyFloating(const JChBodyFloating &src);
   void Reset();
-  void SetFloatingData(double mass,tdouble3 center,tmatrix3d inertia);
+  void SetFloatingData(double mass,tdouble3 center,tmatrix3d inertia,tint3 translationfree,tint3 rotationfree);
 
   void ResetInputData(){ InputData=false; }
   void SetInputData(const tfloat3 &face,const tfloat3 &fomegaace){ InputData=true; InputFace=face; InputFomegaAce=fomegaace; }

@@ -72,6 +72,7 @@ protected:
   void FtCalcForcesSum(unsigned cf,tfloat3 &face,tfloat3 &fomegaace)const;
   void FtCalcForces(StFtoForces *ftoforces)const;
   void FtCalcForcesRes(double dt,const StFtoForces *ftoforces,StFtoForcesRes *ftoforcesres)const;
+  void FtApplyConstraints(StFtoForces *ftoforces,StFtoForcesRes *ftoforcesres)const;
   void RunFloating(double dt,bool predictor);
   void RunGaugeSystem(double timestep);
   

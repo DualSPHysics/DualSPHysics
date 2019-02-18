@@ -537,7 +537,7 @@ __global__ void KerInOutFillProjection(unsigned n,const unsigned *inoutpart
     //-Compute distance to plane.
     const double v1=(rposxy.x*rplanes.x + rposxy.y*rplanes.y + rposz*rplanes.z + rplanes.w);
     const float v2=rplanes.x*rplanes.x+rplanes.y*rplanes.y+rplanes.z*rplanes.z;
-    const float displane=-float(v1/sqrt(v2));//-Equivalent to fmath::DistPlaneSign().
+    const float displane=-float(v1/sqrt(v2));//-Equivalent to fgeo::PlaneDistSign().
     //-Calculates point on plane and distance.
     float rprodis=0;
     double rpropx=0,rpropy=0,rpropz=0;

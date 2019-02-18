@@ -23,6 +23,7 @@
 #include "JRangeFilter.h"
 #include "Functions.h"
 #include "JXml.h"
+#include "JLinearValue.h"
 #include <algorithm>
 
 using std::string;
@@ -182,14 +183,49 @@ TiXmlElement* JSpacePartBlock_Moving::WriteXml(JXml *sxml,TiXmlElement* ele)cons
 //# JSpacePartBlock_Floating
 //##############################################################################
 //==============================================================================
+/// Constructor.
+//==============================================================================
+JSpacePartBlock_Floating::JSpacePartBlock_Floating(const JSpaceProperties* properties
+  ,word mktype,unsigned begin,unsigned count,double massbody
+  ,const tdouble3& center,const tmatrix3d& inertia
+  ,const tint3 &translationfree,const tint3 &rotationfree
+  ,const tdouble3 &linvelini,const tdouble3 &angvelini
+  ,const JLinearValue *linvel,const JLinearValue *angvel)
+  :JSpacePartBlock(properties,TpPartFloating,"Floating",mktype,begin,count)
+  ,Massbody(massbody),Center(center),Inertia(inertia)
+  ,TranslationFree(translationfree),RotationFree(rotationfree)
+  ,LinearVelini(linvelini),AngularVelini(angvelini)
+{
+   TranslationFree=TInt3((!TranslationFree.x? 0: 1),(!TranslationFree.y? 0: 1),(!TranslationFree.z? 0: 1));
+   RotationFree   =TInt3((!RotationFree.x? 0: 1),(!RotationFree.y? 0: 1),(!RotationFree.z? 0: 1));
+   LinearVel =(linvel? new JLinearValue(*linvel): NULL);
+   AngularVel=(angvel? new JLinearValue(*angvel): NULL);
+}
+//==============================================================================
+/// Constructor from XML data.
+//==============================================================================
+JSpacePartBlock_Floating::JSpacePartBlock_Floating(const JSpaceProperties* properties,JXml *sxml,TiXmlElement* ele)
+    :JSpacePartBlock(properties,TpPartFloating,"Floating")
+{
+  LinearVel=NULL; AngularVel=NULL;
+  ReadXml(sxml,ele);
+}
+//==============================================================================
+/// Destructor.
+//==============================================================================
+JSpacePartBlock_Floating::~JSpacePartBlock_Floating(){
+  DestructorActive=true;
+  delete LinearVel;  LinearVel=NULL;
+  delete AngularVel; AngularVel=NULL;
+}
+
+//==============================================================================
 /// Reads particles information in xml format.
 //==============================================================================
 void JSpacePartBlock_Floating::ReadXml(JXml *sxml,TiXmlElement* ele){
   JSpacePartBlock::ReadXml(sxml,ele);
   Massbody=sxml->ReadElementDouble(ele,"massbody","value");
   Center=sxml->ReadElementDouble3(ele,"center");
-  Velini=(sxml->GetFirstElement(ele,"velini",true)!=NULL? sxml->ReadElementDouble3(ele,"velini"): TDouble3(0));
-  Omegaini=(sxml->GetFirstElement(ele,"omegaini",true)!=NULL? sxml->ReadElementDouble3(ele,"omegaini"): TDouble3(0));
   //-Reads inertia data from double3 or tmatrix3d XML element.
   TiXmlElement *item=sxml->GetFirstElement(ele,"inertia");
   if(sxml->ExistsAttribute(item,"x") && sxml->ExistsAttribute(item,"y") && sxml->ExistsAttribute(item,"z")){
@@ -198,6 +234,14 @@ void JSpacePartBlock_Floating::ReadXml(JXml *sxml,TiXmlElement* ele){
     Inertia.a11=v3.x; Inertia.a22=v3.y; Inertia.a33=v3.z;
   }
   else Inertia=sxml->ReadElementMatrix3d(ele,"inertia");
+  //-Reads motion data.
+  TranslationFree=sxml->ReadElementInt3(ele,"translation",true,TInt3(1));
+  RotationFree   =sxml->ReadElementInt3(ele,"rotation"   ,true,TInt3(1));
+  TranslationFree=TInt3((!TranslationFree.x? 0: 1),(!TranslationFree.y? 0: 1),(!TranslationFree.z? 0: 1));
+  RotationFree   =TInt3((!RotationFree.x? 0: 1),(!RotationFree.y? 0: 1),(!RotationFree.z? 0: 1));
+
+  LinearVelini =sxml->ReadElementDouble3(ele,(sxml->ExistsElement(ele,"linearvelini" )? "linearvelini" : "velini"  ),true);
+  AngularVelini=sxml->ReadElementDouble3(ele,(sxml->ExistsElement(ele,"angularvelini")? "angularvelini": "omegaini"),true);
 }
 
 //==============================================================================
@@ -208,6 +252,7 @@ TiXmlElement* JSpacePartBlock_Floating::WriteXml(JXml *sxml,TiXmlElement* ele)co
   sxml->AddAttribute(sxml->AddElementAttrib(ele,"massbody","value",Massbody),"units_comment","kg");
   sxml->AddAttribute(sxml->AddElementAttrib(ele,"masspart","value",Massbody/GetCount()),"units_comment","kg");
   sxml->AddAttribute(sxml->AddElementDouble3(ele,"center",Center),"units_comment","metres (m)");
+  //-Writes inertia data from double3 or tmatrix3d XML element.
   if(!Inertia.a12 && !Inertia.a13 && !Inertia.a21 && !Inertia.a23 && !Inertia.a31 && !Inertia.a32){
     sxml->AddAttribute(sxml->AddElementDouble3(ele,"inertia",TDouble3(Inertia.a11,Inertia.a22,Inertia.a33)),"units_comment","kg*m^2");
   }
@@ -216,8 +261,11 @@ TiXmlElement* JSpacePartBlock_Floating::WriteXml(JXml *sxml,TiXmlElement* ele)co
 #else
   else sxml->AddAttribute(sxml->AddElementDouble3(ele,"inertia",TDouble3(Inertia.a11,Inertia.a22,Inertia.a33)),"units_comment","kg*m^2");
 #endif
-  if(Velini!=TDouble3(0))sxml->AddAttribute(sxml->AddElementDouble3(ele,"velini",Velini),"units_comment","m/s");
-  if(Omegaini!=TDouble3(0))sxml->AddAttribute(sxml->AddElementDouble3(ele,"omegaini",Omegaini),"units_comment","radians/s");
+  //-Writes motion data.
+  if(TranslationFree!=TInt3(1))JXml::AddAttribute(sxml->AddElementInt3(ele,"translation",TranslationFree),"comment","Use 0 for translation restriction in the acceleration calculation (default=(1,1,1))");
+  if(RotationFree   !=TInt3(1))JXml::AddAttribute(sxml->AddElementInt3(ele,"rotation"   ,RotationFree   ),"comment","Use 0 for rotation restriction in the acceleration calculation (default=(1,1,1))");
+  if(LinearVelini !=TDouble3(0))JXml::AddAttribute(sxml->AddElementDouble3(ele,"linearvelini" ,LinearVelini),"units_comment","m/s");
+  if(AngularVelini!=TDouble3(0))JXml::AddAttribute(sxml->AddElementDouble3(ele,"angularvelini",AngularVelini),"units_comment","rad/s");
   return(ele);
 }
 
@@ -247,7 +295,15 @@ JSpaceParts::~JSpaceParts(){
 /// Initialisation of variables.
 //==============================================================================
 void JSpaceParts::Reset(){
-  for(unsigned c=0;c<Blocks.size();c++)delete Blocks[c];
+  for(unsigned c=0;c<Blocks.size();c++){
+    switch(Blocks[c]->Type){
+      case TpPartFixed:   { JSpacePartBlock_Fixed    *ptr=(JSpacePartBlock_Fixed   *)Blocks[c]; delete ptr; }break;
+      case TpPartMoving:  { JSpacePartBlock_Moving   *ptr=(JSpacePartBlock_Moving  *)Blocks[c]; delete ptr; }break;
+      case TpPartFloating:{ JSpacePartBlock_Floating *ptr=(JSpacePartBlock_Floating*)Blocks[c]; delete ptr; }break;
+      case TpPartFluid:   { JSpacePartBlock_Fluid    *ptr=(JSpacePartBlock_Fluid   *)Blocks[c]; delete ptr; }break;
+      default: RunException("","Type of block is unknown.");
+    }
+  }
   Blocks.clear();
   Begin=0;
   LastType=TpPartFixed;

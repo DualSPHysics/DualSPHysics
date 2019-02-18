@@ -284,7 +284,7 @@ protected:
 
   template<bool sim2d,TpKernel tker> void InteractionInOutExtrap_Double
     (unsigned inoutcount,const int *inoutpart,const byte *cfgzone
-    ,const tfloat4 *planes,const float* width,const tfloat3 *dirdata,float determlimit
+    ,const tplane3f *planes,const float* width,const tfloat3 *dirdata,float determlimit
     ,tint4 nc,int hdiv,unsigned cellinitial
     ,const unsigned *beginendcell,tint3 cellzero,const unsigned *dcell
     ,const tdouble3 *pos,const typecode *code,const unsigned *idp
@@ -292,14 +292,14 @@ protected:
   
   template<bool sim2d,TpKernel tker> void InteractionInOutExtrap_Single
     (unsigned inoutcount,const int *inoutpart,const byte *cfgzone
-    ,const tfloat4 *planes,const float* width,const tfloat3 *dirdata,float determlimit
+    ,const tplane3f *planes,const float* width,const tfloat3 *dirdata,float determlimit
     ,tint4 nc,int hdiv,unsigned cellinitial
     ,const unsigned *beginendcell,tint3 cellzero,const unsigned *dcell
     ,const tdouble3 *pos,const typecode *code,const unsigned *idp
     ,tfloat4 *velrhop);
   
   void Interaction_InOutExtrap(byte doublemode,unsigned inoutcount,const int *inoutpart
-    ,const byte *cfgzone,const tfloat4 *planes
+    ,const byte *cfgzone,const tplane3f *planes
     ,const float* width,const tfloat3 *dirdata,float determlimit
     ,tuint3 ncells,const unsigned *begincell,tuint3 cellmin,const unsigned *dcell
     ,const tdouble3 *pos,const typecode *code,const unsigned *idp
@@ -311,20 +311,20 @@ protected:
 
 
   template<bool sim2d,TpKernel tker> void InteractionBoundCorr_Double
-    (unsigned npb,typecode boundcode,tfloat4 plane,tfloat3 direction,float determlimit
+    (unsigned npb,typecode boundcode,tplane3f plane,tfloat3 direction,float determlimit
     ,tint4 nc,int hdiv,unsigned cellinitial
     ,const unsigned *beginendcell,tint3 cellzero
     ,const tdouble3 *pos,const typecode *code,const unsigned *idp
     ,tfloat4 *velrhop);
 
   template<bool sim2d,TpKernel tker> void InteractionBoundCorr_Single
-    (unsigned npb,typecode boundcode,tfloat4 plane,tfloat3 direction,float determlimit
+    (unsigned npb,typecode boundcode,tplane3f plane,tfloat3 direction,float determlimit
     ,tint4 nc,int hdiv,unsigned cellinitial
     ,const unsigned *beginendcell,tint3 cellzero
     ,const tdouble3 *pos,const typecode *code,const unsigned *idp
     ,tfloat4 *velrhop);
 
-  void Interaction_BoundCorr(byte doublemode,typecode boundcode,tfloat4 plane,tfloat3 direction,float determlimit
+  void Interaction_BoundCorr(byte doublemode,typecode boundcode,tplane3f plane,tfloat3 direction,float determlimit
     ,tuint3 ncells,const unsigned *begincell,tuint3 cellmin
     ,const tdouble3 *pos,const typecode *code,const unsigned *idp
     ,tfloat4 *velrhop);

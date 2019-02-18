@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<case app="GenCase4 v4.0.079 (16-10-2018)" date="16-10-2018 10:43:17">
+<case app="GenCase4 v4.0.085 (17-02-2019)" date="18-02-2019 14:20:37">
     <casedef>
         <constantsdef>
             <lattice bound="2" fluid="1" />
@@ -417,33 +417,31 @@
         </initials>
         <floatings>
             <floating mkbound="0" rhopbody="1300" />
-            <floating mkbound="1" rhopbody="1300">
-                <velini x="1" y="3" z="2" />
-                <omegaini x="0.2" y="0.4" z="0.6" />
-            </floating>
+            <floating mkbound="1" rhopbody="1300" property="Material_1" />
             <floating mkbound="2">
-                <massbody value="1300" />
+                <massbody value="1.3" />
                 <center x="11" y="12" z="13" />
                 <inertia x="20" y="22" z="24" />
             </floating>
-            <floating mkbound="3">
-                <massbody value="1300" />
-                <center x="11" y="12" z="13" />
-                <inertia x="20" y="22" z="24" />
-                <velini x="1" y="3" z="2" />
-                <omegaini x="0.2" y="0.4" z="0.6" />
-            </floating>
-            <floating mkbound="4" property="Material_2">
-                <massbody value="1300" />
+            <floating mkbound="3" property="Material_2">
+                <massbody value="1.3" />
                 <inertia x="11" y="22" z="22" />
             </floating>
-            <floating mkbound="5" property="Material_2">
-                <massbody value="1300" />
+            <floating mkbound="4" property="Material_2">
+                <massbody value="1.3" />
                 <inertiafull>
                     <values v11="11" v12="0" v13="0" />
                     <values v21="0" v22="22" v23="0" />
                     <values v31="0" v32="0" v33="33" />
                 </inertiafull>
+            </floating>
+            <floating mkbound="5" rhopbody="1500">
+                <translation x="0" y="0" z="1" comment="Use 0 for translation restriction in the acceleration calculation (default=(1,1,1))" />
+                <rotation x="0" y="1" z="0" comment="Use 0 for rotation restriction in the acceleration calculation (default=(1,1,1))" />
+            </floating>
+            <floating mkbound="6" rhopbody="1500">
+                <linearvelini x="1" y="3" z="2" units_comment="m/s" />
+                <angularvelini x="0.2" y="0.4" z="0.6" units_comment="rad/s" />
             </floating>
         </floatings>
         <properties>

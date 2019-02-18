@@ -26,7 +26,7 @@
 #include "JLog2.h"
 #include "JAppInfo.h"
 #include "Functions.h"
-#include "FunctionsMath.h"
+#include "FunctionsGeo3d.h"
 #include "JMatrix4.h"
 #include "JLinearValue.h"
 #include "JSaveCsv2.h"
@@ -55,7 +55,7 @@ JSphBoundCorrZone::JSphBoundCorrZone(JLog2 *log,unsigned idzone,word mkbound
   AutoDpFactor=autodpfactor;
   LimitPos=limitpos;
   Direction=direction;
-  Plane=ToTFloat4(fmath::PlanePtVec(LimitPos,Direction));
+  Plane=TPlane3f(fgeo::PlanePtVec(LimitPos,Direction));
 }
 
 //==============================================================================
@@ -74,7 +74,7 @@ void JSphBoundCorrZone::Reset(){
   AutoDir=DIR_None;
   AutoDpFactor=0;
   LimitPos=Direction=TDouble3(0);
-  Plane=TFloat4(0);
+  Plane=TPlane3f(0);
 }
 
 //==============================================================================
@@ -104,13 +104,13 @@ void JSphBoundCorrZone::ConfigAuto(const JSphPartsInit *partsdata){
     const tdouble3 pmed=(pmin+pmax)/2.;
     if(AutoDir==DIR_Defined){
       const typecode codesel=mkinfo->Mkblock(cmk)->Code;
-      const tdouble4 pla=fmath::PlanePtVec(pmed,Direction);
+      const tplane3d pla=fgeo::PlanePtVec(pmed,Direction);
       const tdouble3* pos=partsdata->GetPos();
       const typecode* code=partsdata->GetCode();
       const unsigned np=partsdata->GetNp();
       double dismax=-DBL_MAX;
       for(unsigned p=0;p<np;p++)if(code[p]==codesel){
-        const double dist=fmath::DistPlaneSign(pla,pos[p]);
+        const double dist=fgeo::PlaneDistSign(pla,pos[p]);
         if(dist>dismax)dismax=dist;
       }
       if(dismax==-DBL_MAX)RunException(met,fun::PrintStr("It was not possible to calculate the limit position for MkBound=%u automatically.",MkBound));
@@ -145,7 +145,7 @@ void JSphBoundCorrZone::ConfigAuto(const JSphPartsInit *partsdata){
         break;
       }
     }
-    Plane=ToTFloat4(fmath::PlanePtVec(LimitPos,Direction));
+    Plane=TPlane3f(fgeo::PlanePtVec(LimitPos,Direction));
   }
 }
 
@@ -159,7 +159,7 @@ void JSphBoundCorrZone::RunMotion(bool simple,const tdouble3 &msimple,const tmat
     LimitPos=MatrixMulPoint(mmatrix,limitpos0);
     Direction=MatrixMulPoint(mmatrix,limitpos0+Direction)-LimitPos;
   }
-  Plane=ToTFloat4(fmath::PlanePtVec(LimitPos,Direction));
+  Plane=TPlane3f(fgeo::PlanePtVec(LimitPos,Direction));
 }
 
 //==============================================================================
@@ -264,14 +264,14 @@ void JSphBoundCorr::ReadXml(const JXml *sxml,TiXmlElement* lis){
     else if(autolimitpoint){
       direction=sxml->ReadElementDouble3(ele,"direction");
       if(direction==TDouble3(0))sxml->ErrReadElement(ele,"direction",false,"Direction vector is invalid.");
-      else direction=fmath::VecUnitary(direction);
+      else direction=fgeo::VecUnitary(direction);
       autodir=JSphBoundCorrZone::DIR_Defined;
       autodpfactor=sxml->ReadElementDouble(ele,"autolimitpoint","dpfactor");
     }
     else{
       direction=sxml->ReadElementDouble3(ele,"direction");
       if(direction==TDouble3(0))sxml->ErrReadElement(ele,"direction",false,"Direction vector is invalid.");
-      else direction=fmath::VecUnitary(direction);
+      else direction=fgeo::VecUnitary(direction);
       limitpoint=sxml->ReadElementDouble3(ele,"limitpoint");
     }
     if(ExistMk(mkbound))RunException(met,fun::PrintStr("An input already exists for the same mkbound=%u.",mkbound));
@@ -317,9 +317,9 @@ void JSphBoundCorr::SaveVtkConfig(double dp,int part)const{
     const JSphBoundCorrZone* zo=List[c];
     const int mkbound=zo->MkBound;
     const tdouble3 ps=zo->GetLimitPos();
-    const tdouble3 ve=fmath::VecUnitary(zo->GetDirection());
-    const tdouble3 v1=fmath::VecOrthogonal2(ve,sizequad,true);
-    const tdouble3 v2=fmath::VecUnitary(fmath::ProductVec(ve,v1))*sizequad;
+    const tdouble3 ve=fgeo::VecUnitary(zo->GetDirection());
+    const tdouble3 v1=fgeo::VecOrthogonal2(ve,sizequad,true);
+    const tdouble3 v2=fgeo::VecUnitary(fgeo::ProductVec(ve,v1))*sizequad;
     const tdouble3 p0=ps-(v1/2)-(v2/2);
     const tdouble3 p1=p0+v1;
     const tdouble3 p2=p0+v1+v2;

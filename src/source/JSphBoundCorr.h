@@ -77,7 +77,7 @@ private:
   double AutoDpFactor; ///<Point is calculated starting from bound particles at distance dp*AutoDpFactor.
   tdouble3 LimitPos;   ///<Limit between boundary and fluid.
   tdouble3 Direction;  ///<Direction to fluid particles.
-  tfloat4 Plane;       ///<Plane in limit.
+  tplane3f Plane;      ///<Plane in limit.
 
   void Reset();
 
@@ -98,7 +98,7 @@ public:
   TpDirection GetAutoDir()const{ return(AutoDir); }
   tdouble3 GetLimitPos()const{ return(LimitPos); }
   tdouble3 GetDirection()const{ return(Direction); }
-  tfloat4 GetPlane()const{ return(Plane); }
+  tplane3f GetPlane()const{ return(Plane); }
   typecode GetBoundCode()const{ return(BoundCode); }
 };
 

@@ -184,6 +184,7 @@ void JSph::InitVars(){
   FtCount=0;
   FtPause=0;
   FtMode=FTMODE_None;
+  FtConstraints=false;
   WithFloating=false;
 
   AllocMemoryFloating(0);
@@ -671,6 +672,7 @@ void JSph::LoadCaseConfig(){
   //-Loads floating objects.
   FtCount=parts.CountBlocks(TpPartFloating);
   if(FtCount){
+    FtConstraints=false;
     if(FtCount>CODE_MKRANGEMAX)RunException(met,"The number of floating objects exceeds the maximum.");
     AllocMemoryFloating(FtCount);
     unsigned cobj=0;
@@ -685,13 +687,15 @@ void JSph::LoadCaseConfig(){
         fobj->mass=(float)fblock.GetMassbody();
         fobj->massp=fobj->mass/fobj->count;
         fobj->radius=0;
+        fobj->constraints=ComputeConstraintsValue(fblock.GetTranslationFree(),fblock.GetRotationFree());
+        if(fobj->constraints!=FTCON_Free)FtConstraints=true;
         fobj->center=fblock.GetCenter();
         fobj->angles=TFloat3(0);
-        fobj->fvel=ToTFloat3(fblock.GetVelini());
-        fobj->fomega=ToTFloat3(fblock.GetOmegaini());
+        fobj->fvel=ToTFloat3(fblock.GetLinearVelini());
+        fobj->fomega=ToTFloat3(fblock.GetAngularVelini());
         fobj->inertiaini=ToTMatrix3f(fblock.GetInertia());
         //-Chrono configuration. //<vs_chroono_ini> 
-        fobj->usechrono=(ChronoObjects && ChronoObjects->ConfigBodyFloating(fblock.GetMkType(),fblock.GetMassbody(),fblock.GetCenter(),fblock.GetInertia()));
+        fobj->usechrono=(ChronoObjects && ChronoObjects->ConfigBodyFloating(fblock.GetMkType(),fblock.GetMassbody(),fblock.GetCenter(),fblock.GetInertia(),fblock.GetTranslationFree(),fblock.GetRotationFree()));
         //<vs_chroono_end>
         cobj++;
       }
@@ -986,6 +990,7 @@ void JSph::VisuConfig()const{
   Log->Print(fun::VarStr("RigidAlgorithm",rigidalgorithm));
   Log->Print(fun::VarStr("FloatingCount",FtCount));
   if(FtCount)Log->Print(fun::VarStr("FtPause",FtPause));
+  if(FtCount)Log->Print(fun::VarStr("FtConstraints",FtConstraints));
   Log->Print(fun::VarStr("CaseNp",CaseNp));
   Log->Print(fun::VarStr("CaseNbound",CaseNbound));
   Log->Print(fun::VarStr("CaseNfixed",CaseNfixed));

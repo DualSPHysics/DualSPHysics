@@ -681,7 +681,7 @@ tfloat3 JSphCpuSingle::FtPeriodicDist(const tdouble3 &pos,const tdouble3 &center
 /// Calcula suma de face y fomegaace a partir de particulas floating.
 //==============================================================================
 void JSphCpuSingle::FtCalcForcesSum(unsigned cf,tfloat3 &face,tfloat3 &fomegaace)const{
-  const StFloatingData fobj=FtObjs[cf];
+  const StFloatingData &fobj=FtObjs[cf];
   const unsigned fpini=fobj.begin-CaseNpb;
   const unsigned fpfin=fpini+fobj.count;
   const float fradius=fobj.radius;
@@ -785,6 +785,20 @@ void JSphCpuSingle::FtCalcForcesRes(double dt,const StFtoForces *ftoforces,StFto
 }
 
 //==============================================================================
+/// Applies motion constraints.
+/// Aplica restricciones de movimiento.
+//==============================================================================
+void JSphCpuSingle::FtApplyConstraints(StFtoForces *ftoforces,StFtoForcesRes *ftoforcesres)const{
+  for(unsigned cf=0;cf<FtCount;cf++){
+    const StFloatingData fobj=FtObjs[cf];
+    if(fobj.constraints!=FTCON_Free){
+      ApplyConstraints(fobj.constraints,ftoforces[cf].face,ftoforces[cf].fomegaace);
+      ApplyConstraints(fobj.constraints,ftoforcesres[cf].fvelres,ftoforcesres[cf].fomegares);
+    }
+  }
+}
+
+//==============================================================================
 /// Process floating objects
 /// Procesa floating objects.
 //==============================================================================
@@ -797,8 +811,11 @@ void JSphCpuSingle::RunFloating(double dt,bool predictor){
 
     //-Adds calculated forces around floating objects. | Añade fuerzas calculadas sobre floatings.
     FtCalcForces(FtoForces);
+
     //-Calculate data to update floatings. | Calcula datos para actualizar floatings.
     FtCalcForcesRes(dt,FtoForces,FtoForcesRes);
+    //-Applies motion constraints.
+    if(FtConstraints)FtApplyConstraints(FtoForces,FtoForcesRes);
 
     //-Run floating with Chrono library. //<vs_chroono_ini>
     if(ChronoObjects){

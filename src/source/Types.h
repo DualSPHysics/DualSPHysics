@@ -130,6 +130,7 @@ typedef struct{
   float mass;       ///<Mass of the floating object (units:Kg).
   float massp;      ///<Mass of the particle of the floating object (units:Kg).
   float radius;     ///<Maximum distance between particles and center (units:m).
+  byte constraints; ///<Translation and rotation restrictions (combination of TpFtConstrains values).
   tdouble3 center;  ///<Center of the floating object (units:m).
   tfloat3 angles;   ///<Rotation angles from center (angle xz, angle yz, angle xy) (units:Rad).
   tfloat3 fvel;     ///<Linear velocity of the floating object (units:m/s).
@@ -161,7 +162,6 @@ typedef struct{ //(DEM)
   float tau;          ///<Value of (1-poisson^2)/young (units:-).
   float restitu;      ///<Restitution Coefficient (units:-).
 }StDemData;
-
 
 ///Controls the output of information on the screen and/or log.
 typedef enum{ 
@@ -232,10 +232,42 @@ typedef enum{
   FTMODE_Ext=2              ///<Interaction between floatings and boundaries in terms of DEM or CHRONO.
 }TpFtMode;  
 
-
 #define USE_FLOATING (ftmode!=FTMODE_None)
 #define USE_NOFLOATING (ftmode==FTMODE_None)
 #define USE_FTEXTERNAL (ftmode==FTMODE_Ext)
+
+
+///Mask values for translation or rotation constraints applied to floating bodies.
+typedef enum{ 
+  FTCON_Free=0,     ///<No translation or rotation constraints.
+  FTCON_MoveX=1,    ///<Translation in X is avoided.
+  FTCON_MoveY=2,    ///<Translation in Y is avoided.
+  FTCON_MoveZ=4,    ///<Translation in Z is avoided.
+  FTCON_RotateX=8,  ///<Rotation in X is avoided.
+  FTCON_RotateY=16, ///<Rotation in Y is avoided.
+  FTCON_RotateZ=32  ///<Rotation in Z is avoided.
+}TpFtConstrains;
+
+///Returns combination of TpFtConstrains values to define the constraints.
+inline byte ComputeConstraintsValue(const tint3 &translationfree,const tint3 &rotationfree){
+  return((translationfree.x? 0: FTCON_MoveX)
+        +(translationfree.y? 0: FTCON_MoveY)
+        +(translationfree.z? 0: FTCON_MoveZ)
+        +(rotationfree.x   ? 0: FTCON_RotateX)
+        +(rotationfree.y   ? 0: FTCON_RotateY)
+        +(rotationfree.z   ? 0: FTCON_RotateZ));
+}
+
+///Applies constraints.
+inline void ApplyConstraints(byte constraints,tfloat3 &linear,tfloat3 &angular){
+  if(constraints&FTCON_MoveX  )linear.x=0;
+  if(constraints&FTCON_MoveY  )linear.y=0;
+  if(constraints&FTCON_MoveZ  )linear.z=0;
+  if(constraints&FTCON_RotateX)angular.x=0;
+  if(constraints&FTCON_RotateY)angular.y=0;
+  if(constraints&FTCON_RotateZ)angular.z=0;
+}
+
 
 ///Modes of cells division.
 typedef enum{ 

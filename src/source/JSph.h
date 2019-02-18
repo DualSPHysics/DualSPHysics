@@ -248,6 +248,7 @@ protected:
   unsigned FtCount;          ///<Number of floating objects.
   float FtPause;             ///<Time to start floating bodies movement.
   TpFtMode FtMode;           ///<Defines interaction mode for floatings and boundaries.
+  bool FtConstraints;        ///<Some floating motion constraint is defined.
   bool WithFloating;
 
   //-Variables for DEM (DEM).

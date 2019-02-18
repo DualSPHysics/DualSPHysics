@@ -68,11 +68,11 @@ public:
     tdouble2 dompt1;    ///<Domain point.
     tdouble2 dompt2;    ///<Domain point.
     tdouble2 dompt3;    ///<Domain point.
-    tdouble4 dompla0;   ///<Domain definition - plane 0.
-    tdouble4 dompla1;   ///<Domain definition - plane 1.
-    tdouble4 dompla2;   ///<Domain definition - plane 2.
-    tdouble4 dompla3;   ///<Domain definition - plane 3.
-    tdouble4 plane;     ///<Plane at the limitmin point. | Plano en el punto limitmin.
+    tplane3d dompla0;   ///<Domain definition - plane 0.
+    tplane3d dompla1;   ///<Domain definition - plane 1.
+    tplane3d dompla2;   ///<Domain definition - plane 2.
+    tplane3d dompla3;   ///<Domain definition - plane 3.
+    tplane3d plane;     ///<Plane at the limitmin point. | Plano en el punto limitmin.
     float dist;         ///<Distance between limitmin and limitmax points. | Distancia entre puntos limitmin y limitmax.
   }StDamping;
 

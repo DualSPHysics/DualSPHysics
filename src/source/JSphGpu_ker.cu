@@ -2386,8 +2386,9 @@ __device__ void KerLoadMatrix3f(unsigned c,const float4 *data8,const float *data
 /// Calculate forces around floating object particles.
 /// Calcula fuerzas sobre floatings.
 //------------------------------------------------------------------------------
-__global__ void KerFtCalcForces(unsigned ftcount,float3 gravity,const float4 *ftodata
-  ,const float3 *ftoangles,const float4 *ftoinertiaini8,const float *ftoinertiaini1
+__global__ void KerFtCalcForces(unsigned ftcount,float3 gravity
+  ,const float4 *ftodata,const float3 *ftoangles
+  ,const float4 *ftoinertiaini8,const float *ftoinertiaini1
   ,const float3 *ftoforcessum,float3 *ftoforces) //fdata={pini,np,radius,mass}
 {
   unsigned cf=blockIdx.y*gridDim.x*blockDim.x + blockIdx.x*blockDim.x + threadIdx.x; //-Number of floating.
@@ -2427,6 +2428,7 @@ __global__ void KerFtCalcForces(unsigned ftcount,float3 gravity,const float4 *ft
     const float3 rfome=ftoforcesc[1];
     face.x+=rface.x;      face.y+=rface.y;      face.z+=rface.z;
     fomegaace.x+=rfome.x; fomegaace.y+=rfome.y; fomegaace.z+=rfome.z;
+    //-Stores final results.
     ftoforcesc[0]=face;
     ftoforcesc[1]=fomegaace;
   }
@@ -2436,13 +2438,15 @@ __global__ void KerFtCalcForces(unsigned ftcount,float3 gravity,const float4 *ft
 /// Computes forces on floatings.
 /// Calcula fuerzas sobre floatings.
 //==============================================================================
-void FtCalcForces(unsigned ftcount,tfloat3 gravity,const float4 *ftodata
-  ,const float3 *ftoangles,const float4 *ftoinertiaini8,const float *ftoinertiaini1
+void FtCalcForces(unsigned ftcount,tfloat3 gravity
+  ,const float4 *ftodata,const float3 *ftoangles
+  ,const float4 *ftoinertiaini8,const float *ftoinertiaini1
   ,const float3 *ftoforcessum,float3 *ftoforces)
 {
   if(ftcount){
     dim3 sgrid=GetGridSize(ftcount,SPHBSIZE);
-    KerFtCalcForces <<<sgrid,SPHBSIZE>>> (ftcount,Float3(gravity),ftodata,ftoangles,ftoinertiaini8,ftoinertiaini1,ftoforcessum,ftoforces);
+    KerFtCalcForces <<<sgrid,SPHBSIZE>>> (ftcount,Float3(gravity),ftodata
+      ,ftoangles,ftoinertiaini8,ftoinertiaini1,ftoforcessum,ftoforces);
   }
 }
 
@@ -2498,6 +2502,61 @@ void FtCalcForcesRes(unsigned ftcount,bool simulate2d,double dt
     KerFtCalcForcesRes <<<sgrid,SPHBSIZE>>> (ftcount,simulate2d,dt,ftoomega,ftovel,ftocenter,ftoforces,ftoforcesres,ftocenterres);
   }
 }
+
+
+//------------------------------------------------------------------------------
+/// Applies motion constraints.
+/// Aplica restricciones de movimiento.
+//------------------------------------------------------------------------------
+__global__ void KerFtApplyConstraints(unsigned ftcount,const byte *ftoconstraints
+  ,float3 *ftoforces,float3 *ftoforcesres)
+{
+  const unsigned cf=blockIdx.y*gridDim.x*blockDim.x + blockIdx.x*blockDim.x + threadIdx.x; //-Floating number.
+  if(cf<ftcount){
+    //-Applies motion constraints.
+    const byte constr=ftoconstraints[cf];
+    if(constr!=0){
+      const unsigned cf2=cf*2;
+      const unsigned cf21=cf2+1;
+      float3 face=ftoforces[cf2];
+      float3 fomegaace=ftoforces[cf21];
+      float3 fomega=ftoforcesres[cf2];
+      float3 fvel=ftoforcesres[cf21];
+      //-Updates values.
+      face.x=(constr&FTCON_MoveX? 0: face.x);
+      face.y=(constr&FTCON_MoveY? 0: face.y);
+      face.z=(constr&FTCON_MoveZ? 0: face.z);
+      fomegaace.x=(constr&FTCON_RotateX? 0: fomegaace.x);
+      fomegaace.y=(constr&FTCON_RotateY? 0: fomegaace.y);
+      fomegaace.z=(constr&FTCON_RotateZ? 0: fomegaace.z);
+      fvel.x=(constr&FTCON_MoveX? 0: fvel.x);
+      fvel.y=(constr&FTCON_MoveY? 0: fvel.y);
+      fvel.z=(constr&FTCON_MoveZ? 0: fvel.z);
+      fomega.x=(constr&FTCON_RotateX? 0: fomega.x);
+      fomega.y=(constr&FTCON_RotateY? 0: fomega.y);
+      fomega.z=(constr&FTCON_RotateZ? 0: fomega.z);
+      //-Stores updated values.
+      ftoforces[cf2]=face;
+      ftoforces[cf21]=fomegaace;
+      ftoforcesres[cf2]=fomega;
+      ftoforcesres[cf21]=fvel;
+    }
+  }
+}
+
+//==============================================================================
+/// Applies motion constraints.
+/// Aplica restricciones de movimiento.
+//==============================================================================
+void FtApplyConstraints(unsigned ftcount,const byte *ftoconstraints
+  ,float3 *ftoforces,float3 *ftoforcesres)
+{
+  if(ftcount){
+    dim3 sgrid=GetGridSize(ftcount,SPHBSIZE);
+    KerFtApplyConstraints <<<sgrid,SPHBSIZE>>> (ftcount,ftoconstraints,ftoforces,ftoforcesres);
+  }
+}
+
 
 //------------------------------------------------------------------------------
 /// Updates information and particles of floating bodies.
@@ -2975,7 +3034,7 @@ __global__ void KerComputeDamping(unsigned n,unsigned pini
     if(ok){
       const double2 rposxy=posxy[p1];
       const double rposz=posz[p1];
-      double vdis=KerPointPlane(plane,rposxy.x,rposxy.y,rposz);  //fmath::PointPlane(plane,ps);
+      double vdis=KerPointPlane(plane,rposxy.x,rposxy.y,rposz);  //fgeo::PlanePoint(plane,ps);
       if(0<vdis && vdis<=dist+over){
         const double fdis=(vdis>=dist? 1.: vdis/dist);
         const double redudt=dt*(fdis*fdis)*redumax;
@@ -3027,7 +3086,7 @@ __global__ void KerComputeDampingPla(unsigned n,unsigned pini
       const double2 rposxy=posxy[p1];
       const double rposz=posz[p1];
       const double3 ps=make_double3(rposxy.x,rposxy.y,rposz);
-      double vdis=KerPointPlane(plane,ps);  //fmath::PointPlane(plane,ps);
+      double vdis=KerPointPlane(plane,ps);  //fgeo::PlanePoint(plane,ps);
       if(0<vdis && vdis<=dist+over){
         if(ps.z>=zmin && ps.z<=zmax && KerPointPlane(pla0,ps)<=0 && KerPointPlane(pla1,ps)<=0 && KerPointPlane(pla2,ps)<=0 && KerPointPlane(pla3,ps)<=0){
           const double fdis=(vdis>=dist? 1.: vdis/dist);
