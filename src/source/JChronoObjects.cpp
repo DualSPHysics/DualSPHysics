@@ -95,10 +95,11 @@ bool JChronoObjects::UseDataDVI(word mkbound)const{
 //==============================================================================
 bool JChronoObjects::ConfigBodyFloating(word mkbound,double mass
   ,const tdouble3 &center,const tmatrix3d &inertia
-  ,const tint3 &translationfree,const tint3 &rotationfree)
+  ,const tint3 &translationfree,const tint3 &rotationfree
+  ,const tfloat3 &linvelini,const tfloat3 &angvelini)
 {
   JChBodyFloating* body=(JChBodyFloating*)ChronoDataXml->GetBodyFloating(mkbound);
-  if(body)body->SetFloatingData(mass,center,inertia,translationfree,rotationfree);
+  if(body)body->SetFloatingData(mass,center,inertia,translationfree,rotationfree,linvelini,angvelini);
   return(body!=NULL);
 }
 
@@ -592,6 +593,12 @@ void JChronoObjects::VisuBody(const JChBody *body)const{
       const tint3 m=body->GetTranslationFree();
       const tint3 r=body->GetRotationFree();
       Log->Printf("    MotionFree.: Transalation:(%d,%d,%d) Rotation:(%d,%d,%d)",m.x,m.y,m.z,r.x,r.y,r.z);
+    }
+    if(body->GetLinearVelini()!=TFloat3(0) || body->GetAngularVelini()!=TFloat3(0)){
+      const tfloat3 v=body->GetLinearVelini();
+      const tfloat3 a=body->GetAngularVelini();
+      if(v!=TFloat3(0))Log->Printf("    LinearVel0.: (%g,%g,%g) [m/s]",v.x,v.y,v.z);
+      if(a!=TFloat3(0))Log->Printf("    AngularVel0: (%g,%g,%g) [rad/s]",a.x,a.y,a.z);
     }
   }
   if(body->Type==JChBody::BD_Moving){

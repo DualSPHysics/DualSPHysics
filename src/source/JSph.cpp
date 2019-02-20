@@ -695,7 +695,9 @@ void JSph::LoadCaseConfig(){
         fobj->fomega=ToTFloat3(fblock.GetAngularVelini());
         fobj->inertiaini=ToTMatrix3f(fblock.GetInertia());
         //-Chrono configuration. //<vs_chroono_ini> 
-        fobj->usechrono=(ChronoObjects && ChronoObjects->ConfigBodyFloating(fblock.GetMkType(),fblock.GetMassbody(),fblock.GetCenter(),fblock.GetInertia(),fblock.GetTranslationFree(),fblock.GetRotationFree()));
+        fobj->usechrono=(ChronoObjects && ChronoObjects->ConfigBodyFloating(fblock.GetMkType()
+          ,fblock.GetMassbody(),fblock.GetCenter(),fblock.GetInertia()
+          ,fblock.GetTranslationFree(),fblock.GetRotationFree(),fobj->fvel,fobj->fomega));
         //<vs_chroono_end>
         cobj++;
       }

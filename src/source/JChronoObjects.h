@@ -64,7 +64,10 @@ public:
   static bool Available(){ return(false); }
 
   bool UseDataDVI(word mkbound)const{ return(false); };
-  bool ConfigBodyFloating(word mkbound,double mass,const tdouble3 &center,const tmatrix3d &inertia,const tint3 &translationfree,const tint3 &rotationfree){ return(false); };
+  bool ConfigBodyFloating(word mkbound,double mass,const tdouble3 &center
+    ,const tmatrix3d &inertia,const tint3 &translationfree,const tint3 &rotationfree
+    ,const tfloat3 &linvelini,const tfloat3 &angvelini){ return(false); };
+
   void ConfigDataDVIBodyFloating(word mkbound,float kfric,float restitu){};
   void ConfigDataDVIBodyMoving  (word mkbound,float kfric,float restitu){};
   void ConfigDataDVIBodyFixed   (word mkbound,float kfric,float restitu){};
@@ -136,7 +139,9 @@ public:
   static bool Available(){ return(true); }
 
   bool UseDataDVI(word mkbound)const;
-  bool ConfigBodyFloating(word mkbound,double mass,const tdouble3 &center,const tmatrix3d &inertia,const tint3 &translationfree,const tint3 &rotationfree);
+  bool ConfigBodyFloating(word mkbound,double mass,const tdouble3 &center
+    ,const tmatrix3d &inertia,const tint3 &translationfree,const tint3 &rotationfree
+    ,const tfloat3 &linvelini,const tfloat3 &angvelini);
   void ConfigDataDVIBodyFloating(word mkbound,float kfric,float restitu);
   void ConfigDataDVIBodyMoving  (word mkbound,float kfric,float restitu);
   void ConfigDataDVIBodyFixed   (word mkbound,float kfric,float restitu);
