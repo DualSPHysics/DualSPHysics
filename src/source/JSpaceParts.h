@@ -49,7 +49,7 @@
 //:# - Permite definir restricciones al calcular aceleracion lineal (TranslationFree)
 //:#   y angular (RotationFree). (13-02-2019)
 //:# - Permite definir una lista de velocidades peredefinidas (lineal y angular) en el XML
-//:#   o en un fichero independiente. (13-02-2019)
+//:#   o en un fichero independiente. (21-02-2019)
 //:#############################################################################
 
 /// \file JSpaceParts.h \brief Declares the class \ref JSpaceParts.
@@ -191,8 +191,6 @@ private:
   tint3 RotationFree;
   tdouble3 LinearVelini;
   tdouble3 AngularVelini;
-  JLinearValue *LinearVel;
-  JLinearValue *AngularVel;
 
 public:
   JSpacePartBlock_Floating(const JSpaceProperties* properties
@@ -210,8 +208,6 @@ public:
   tint3         GetRotationFree()   const{ return(RotationFree); }
   tdouble3      GetLinearVelini()   const{ return(LinearVelini); }
   tdouble3      GetAngularVelini()  const{ return(AngularVelini); }
-  JLinearValue* GetLinearVel()      const{ return(LinearVel); }
-  JLinearValue* GetAngularVel()     const{ return(AngularVel); }
   void ReadXml(JXml *sxml,TiXmlElement* ele);
   TiXmlElement* WriteXml(JXml *sxml,TiXmlElement* ele)const;
 };  
@@ -315,6 +311,8 @@ public:
 
   void GetParticlesInfo(std::vector<std::string> &out)const;
   void VisuParticlesInfo()const;
+
+  bool UseImposedFtVel()const;
 };
 
 

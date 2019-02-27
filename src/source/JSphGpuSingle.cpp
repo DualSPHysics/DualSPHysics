@@ -37,6 +37,7 @@
 #include "JBlockSizeAuto.h"
 #include "JGaugeSystem.h"
 #include "JSphInOut.h"  //<vs_innlet>
+#include "JLinearValue.h"
 #include <climits>
 
 using namespace std;
@@ -567,7 +568,8 @@ void JSphGpuSingle::RunFloating(double dt,bool predictor){
       //-Export data / Exporta datos.
       tfloat3* ftoforces=FtoAuxFloat9;
       cudaMemcpy(ftoforces,FtoForcesg,sizeof(tfloat3)*FtCount*2,cudaMemcpyDeviceToHost);
-      for(unsigned cf=0;cf<FtCount;cf++)if(FtObjs[cf].usechrono)ChronoObjects->SetFtData(FtObjs[cf].mkbound,ftoforces[cf*2],ftoforces[cf*2+1]);
+      for(unsigned cf=0;cf<FtCount;cf++)if(FtObjs[cf].usechrono)
+        ChronoObjects->SetFtData(FtObjs[cf].mkbound,ftoforces[cf*2],ftoforces[cf*2+1]);
       //-Calculate data using Chrono / Calcula datos usando Chrono.
       ChronoObjects->RunChrono(Nstep,TimeStep,dt,predictor);
       //-Load calculated data by Chrono / Carga datos calculados por Chrono.

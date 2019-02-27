@@ -49,6 +49,7 @@
 #include "JSphInitialize.h"
 #include "JSphInOut.h"       //<vs_innlet> 
 #include "JSphBoundCorr.h"   //<vs_innlet> 
+#include "JLinearValue.h"
 #include <climits>
 
 //using namespace std;
@@ -105,7 +106,7 @@ JSph::~JSph(){
   delete MkInfo;        MkInfo=NULL;
   delete PartsInit;     PartsInit=NULL;
   delete SphMotion;     SphMotion=NULL;
-  AllocMemoryFloating(0);
+  AllocMemoryFloating(0,false);
   delete[] DemData;     DemData=NULL;
   delete GaugeSystem;   GaugeSystem=NULL;
   delete WaveGen;       WaveGen=NULL;
@@ -187,7 +188,7 @@ void JSph::InitVars(){
   FtConstraints=false;
   WithFloating=false;
 
-  AllocMemoryFloating(0);
+  AllocMemoryFloating(0,false);
 
   CellMode=CELLMODE_None;
   Hdiv=0;
@@ -321,9 +322,11 @@ void JSph::ConfigDomainParticlesPrcValue(std::string key,double v){
 //==============================================================================
 /// Allocates memory of floating objectcs.
 //==============================================================================
-void JSph::AllocMemoryFloating(unsigned ftcount){
+void JSph::AllocMemoryFloating(unsigned ftcount,bool imposedvel){
   delete[] FtObjs; FtObjs=NULL;
-  if(ftcount)FtObjs=new StFloatingData[ftcount];
+  if(ftcount){
+    FtObjs=new StFloatingData[ftcount];
+  }
 }
 
 //==============================================================================
@@ -674,7 +677,7 @@ void JSph::LoadCaseConfig(){
   if(FtCount){
     FtConstraints=false;
     if(FtCount>CODE_MKRANGEMAX)RunException(met,"The number of floating objects exceeds the maximum.");
-    AllocMemoryFloating(FtCount);
+    AllocMemoryFloating(FtCount,parts.UseImposedFtVel());
     unsigned cobj=0;
     for(unsigned c=0;c<parts.CountBlocks()&&cobj<FtCount;c++){
       const JSpacePartBlock &block=parts.GetBlock(c);

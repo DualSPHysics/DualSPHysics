@@ -67,6 +67,7 @@ class JChronoObjects;    //<vs_chroono>
 class JSphInOut;         //<vs_innlet>
 class JSphBoundCorr;     //<vs_innlet>
 class JSphPartsInit;
+class JLinearValue;
 
 //##############################################################################
 //# XML format of execution parameters in _FmtXML__Parameters.xml.
@@ -244,11 +245,11 @@ protected:
   JSphMotion *SphMotion;      ///<Manages moving objects. It is NULL when there are not moving objects.
 
   //-Variables for floating bodies.
-  StFloatingData *FtObjs;    ///<Data of floating objects. [ftcount]
-  unsigned FtCount;          ///<Number of floating objects.
-  float FtPause;             ///<Time to start floating bodies movement.
-  TpFtMode FtMode;           ///<Defines interaction mode for floatings and boundaries.
-  bool FtConstraints;        ///<Some floating motion constraint is defined.
+  StFloatingData *FtObjs;      ///<Data of floating objects. [FtCount]
+  unsigned FtCount;            ///<Number of floating objects.
+  float FtPause;               ///<Time to start floating bodies movement.
+  TpFtMode FtMode;             ///<Defines interaction mode for floatings and boundaries.
+  bool FtConstraints;          ///<Some floating motion constraint is defined.
   bool WithFloating;
 
   //-Variables for DEM (DEM).
@@ -353,7 +354,7 @@ protected:
   double DemDtForce;       ///<Dt for tangencial acceleration.
 
 
-  void AllocMemoryFloating(unsigned ftcount);
+  void AllocMemoryFloating(unsigned ftcount,bool imposedvel=false);
   llong GetAllocMemoryCpu()const;
 
   void LoadConfig(const JCfgRun *cfg);

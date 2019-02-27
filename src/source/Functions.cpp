@@ -681,6 +681,18 @@ std::string StrSplitValue(const std::string mark,std::string text,unsigned value
 }
 
 //==============================================================================
+/// Loads string list in a vector and returns size of vector.
+//==============================================================================
+unsigned VectorSplitStr(const std::string mark,const std::string &text,std::vector<std::string> &vec){
+  std::string aux=text;
+  while(!aux.empty()){
+    std::string txv=StrSplit(mark,aux);
+    if(!txv.empty())vec.push_back(txv.c_str());
+  }
+  return((unsigned)vec.size());
+}
+
+//==============================================================================
 /// Loads unsigned list in a vector and returns size of vector.
 //==============================================================================
 unsigned VectorSplitInt(const std::string mark,const std::string &text,std::vector<int> &vec){

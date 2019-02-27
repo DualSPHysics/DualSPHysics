@@ -108,6 +108,7 @@ protected:
   
   DSPHChronoLib *ChronoLib;   ///<Objeto para integracion con libreria de Chrono Engine.
 
+  float CollisionDp;   ///<Allowed collision overlap according Dp (default=0.5).
   double SchemeScale;  ///<Scale value to create initial scheme of configuration.
 
   double SaveDataTime;  ///<Saves CSV with data exchange (0=all steps, <0:none).

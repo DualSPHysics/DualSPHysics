@@ -245,12 +245,12 @@ public:
   void SetInputData(const tfloat3 &face,const tfloat3 &fomegaace){ InputData=true; InputFace=face; InputFomegaAce=fomegaace; }
   void SetOutputData(const tdouble3 &center,const tfloat3 &vel,const tfloat3 &omega){ OutputCenter=center; OutputVel=vel; OutputOmega=omega; }
 
-  bool     GetInputData()     const{ return(InputData);      }
-  tfloat3  GetInputFace()     const{ return(InputFace);      }
-  tfloat3  GetInputFomegaAce()const{ return(InputFomegaAce); }
-  tdouble3 GetOutputCenter()  const{ return(OutputCenter);   }
-  tfloat3  GetOutputVel()     const{ return(OutputVel);      }
-  tfloat3  GetOutputOmega()   const{ return(OutputOmega);    }
+  bool     GetInputData()      const{ return(InputData);       }
+  tfloat3  GetInputFace()      const{ return(InputFace);       }
+  tfloat3  GetInputFomegaAce() const{ return(InputFomegaAce);  }
+  tdouble3 GetOutputCenter()   const{ return(OutputCenter);    }
+  tfloat3  GetOutputVel()      const{ return(OutputVel);       }
+  tfloat3  GetOutputOmega()    const{ return(OutputOmega);     }
 };
 
 //##############################################################################
@@ -457,6 +457,7 @@ private:
   std::vector<JChBody*> LisBody;
   std::vector<JChLink*> LisLink;
   double Dp;
+  float CollisionDp;
 
 public:
   JChronoData();
@@ -473,8 +474,11 @@ public:
   void SetUseNSCChrono(bool useNSCchrono){ UseNSCChrono=useNSCchrono; }
   bool GetUseNSCChrono()const{ return(UseNSCChrono); }
 
-  void SetDP(double dp){ Dp = dp; }
+  void SetDp(double v){ Dp=v; }
   double GetDp()const{ return(Dp); }
+
+  void SetCollisionDp(float v){ CollisionDp=v; }
+  float GetCollisionDp()const{ return(CollisionDp); }
 
   std::string CheckAddBodyError(unsigned idb,std::string idname,word mkbound)const;
   

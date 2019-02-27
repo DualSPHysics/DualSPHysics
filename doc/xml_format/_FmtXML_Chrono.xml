@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<!-- *** DualSPHysics [Chrono] v4.3.010 (19-12-2018) *** -->
+<!-- *** DualSPHysics [Chrono] v4.3.038 (26-02-2019) *** -->
 <!-- *** class: JChronoObjects *** -->
 <!------------------------------------------------------------------------------->
 <!------------------------------------------------------------------------------->
@@ -23,6 +23,7 @@
 		<chrono>
 			<savedata value="-1" comment="Saves CSV with data exchange for each time interval (0=all steps)" />
             <schemescale value="1" comment="Scale used to create the initial scheme of Chrono objects (default=1)" />
+            <collisiondp value="0.5" comment="Allowed collision overlap according Dp (default=0.5)" />
 			<!-- Define the bodies for Chrono -->
 			<bodyfixed id="domain" mkbound="0" modelfile="domain.obj" /> <!-- Link a mesh file to enable contact modelling -->
 			<!-- <bodymoving id="piston" mkbound="10" massbody="10" modelfile="piston.vtk" />  The use of predefined moving objects by Chrono is disabled for now -->

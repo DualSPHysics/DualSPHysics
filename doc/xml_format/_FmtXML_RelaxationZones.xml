@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<!-- *** DualSPHysics5Full v5.1.062 (31-07-2017) *** -->
-<!-- *** class: JWaveFluids *** -->
+<!-- *** DualSPHysics (18-02-2019) *** -->
+<!-- *** class: JRelaxZones *** -->
 <!------------------------------------------------------------------------------->
 <!------------------------------------------------------------------------------->
 <!-- *** Example for REGULAR wave generation and absorption using Relaxation Zone (RZ)*** -->

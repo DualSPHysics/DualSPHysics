@@ -74,6 +74,7 @@ void JChronoObjects::Reset(){
   WithMotion=false;
   delete ChronoDataXml; ChronoDataXml=NULL;
   delete ChronoLib; ChronoLib=NULL;
+  CollisionDp=0;
   SchemeScale=1;
   SaveDataTime=NextTime=0;
   LastTimeOk=-1;
@@ -241,11 +242,11 @@ void JChronoObjects::ReadXml(const JXml *sxml,TiXmlElement* lis){
   const char met[]="ReadXml";
   Reset();
   //-Checks XML elements.
-  sxml->CheckElementNames(lis,false,"savedata schemescale bodyfloating bodymoving bodyfixed link_hinge link_spheric link_pointline link_linearspring");
+  sxml->CheckElementNames(lis,false,"savedata schemescale collisiondp bodyfloating bodymoving bodyfixed link_hinge link_spheric link_pointline link_linearspring");
 
   ChronoDataXml=new JChronoData;
   ChronoDataXml->SetUseNSCChrono(UseDVI);
-  ChronoDataXml->SetDP(Dp);
+  ChronoDataXml->SetDp(Dp);
   //-Create dir for OBJ files with geometry.
   const string diroutobj=AppInfo.GetDirOut()+"chrono_objs/";
   fun::MkdirPath(diroutobj);
@@ -253,6 +254,9 @@ void JChronoObjects::ReadXml(const JXml *sxml,TiXmlElement* lis){
   ChronoDataXml->SetDataDir(diroutobj);
   //-Loads configuration to save CSV file for debug.
   SaveDataTime=sxml->ReadElementFloat(lis,"savedata","value",true,-1.f);
+  //-Loads allowed collision overlap according Dp.
+  CollisionDp=sxml->ReadElementFloat(lis,"collisiondp","value",true,0.5f);
+  ChronoDataXml->SetCollisionDp(CollisionDp);
   //-Loads scale value to create initial scheme of configuration.
   SchemeScale=sxml->ReadElementFloat(lis,"schemescale","value",true,1);
 

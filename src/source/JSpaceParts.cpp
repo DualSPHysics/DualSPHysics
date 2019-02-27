@@ -25,6 +25,7 @@
 #include "JXml.h"
 #include "JLinearValue.h"
 #include <algorithm>
+#include <cfloat>
 
 using std::string;
 
@@ -198,8 +199,6 @@ JSpacePartBlock_Floating::JSpacePartBlock_Floating(const JSpaceProperties* prope
 {
    TranslationFree=TInt3((!TranslationFree.x? 0: 1),(!TranslationFree.y? 0: 1),(!TranslationFree.z? 0: 1));
    RotationFree   =TInt3((!RotationFree.x? 0: 1),(!RotationFree.y? 0: 1),(!RotationFree.z? 0: 1));
-   LinearVel =(linvel? new JLinearValue(*linvel): NULL);
-   AngularVel=(angvel? new JLinearValue(*angvel): NULL);
 }
 //==============================================================================
 /// Constructor from XML data.
@@ -207,7 +206,6 @@ JSpacePartBlock_Floating::JSpacePartBlock_Floating(const JSpaceProperties* prope
 JSpacePartBlock_Floating::JSpacePartBlock_Floating(const JSpaceProperties* properties,JXml *sxml,TiXmlElement* ele)
     :JSpacePartBlock(properties,TpPartFloating,"Floating")
 {
-  LinearVel=NULL; AngularVel=NULL;
   ReadXml(sxml,ele);
 }
 //==============================================================================
@@ -215,8 +213,6 @@ JSpacePartBlock_Floating::JSpacePartBlock_Floating(const JSpaceProperties* prope
 //==============================================================================
 JSpacePartBlock_Floating::~JSpacePartBlock_Floating(){
   DestructorActive=true;
-  delete LinearVel;  LinearVel=NULL;
-  delete AngularVel; AngularVel=NULL;
 }
 
 //==============================================================================
@@ -239,7 +235,6 @@ void JSpacePartBlock_Floating::ReadXml(JXml *sxml,TiXmlElement* ele){
   RotationFree   =sxml->ReadElementInt3(ele,"rotation"   ,true,TInt3(1));
   TranslationFree=TInt3((!TranslationFree.x? 0: 1),(!TranslationFree.y? 0: 1),(!TranslationFree.z? 0: 1));
   RotationFree   =TInt3((!RotationFree.x? 0: 1),(!RotationFree.y? 0: 1),(!RotationFree.z? 0: 1));
-
   LinearVelini =sxml->ReadElementDouble3(ele,(sxml->ExistsElement(ele,"linearvelini" )? "linearvelini" : "velini"  ),true);
   AngularVelini=sxml->ReadElementDouble3(ele,(sxml->ExistsElement(ele,"angularvelini")? "angularvelini": "omegaini"),true);
 }
@@ -262,8 +257,8 @@ TiXmlElement* JSpacePartBlock_Floating::WriteXml(JXml *sxml,TiXmlElement* ele)co
   else sxml->AddAttribute(sxml->AddElementDouble3(ele,"inertia",TDouble3(Inertia.a11,Inertia.a22,Inertia.a33)),"units_comment","kg*m^2");
 #endif
   //-Writes motion data.
-  if(TranslationFree!=TInt3(1))JXml::AddAttribute(sxml->AddElementInt3(ele,"translation",TranslationFree),"comment","Use 0 for translation restriction in the acceleration calculation (default=(1,1,1))");
-  if(RotationFree   !=TInt3(1))JXml::AddAttribute(sxml->AddElementInt3(ele,"rotation"   ,RotationFree   ),"comment","Use 0 for rotation restriction in the acceleration calculation (default=(1,1,1))");
+  if(TranslationFree!=TInt3(1))JXml::AddAttribute(sxml->AddElementInt3(ele,"translation",TranslationFree),"comment","Use 0 for translation restriction in the movement (default=(1,1,1))");
+  if(RotationFree   !=TInt3(1))JXml::AddAttribute(sxml->AddElementInt3(ele,"rotation"   ,RotationFree   ),"comment","Use 0 for rotation restriction in the movement (default=(1,1,1))");
   if(LinearVelini !=TDouble3(0))JXml::AddAttribute(sxml->AddElementDouble3(ele,"linearvelini" ,LinearVelini),"units_comment","m/s");
   if(AngularVelini!=TDouble3(0))JXml::AddAttribute(sxml->AddElementDouble3(ele,"angularvelini",AngularVelini),"units_comment","rad/s");
   return(ele);
@@ -652,6 +647,14 @@ void JSpaceParts::VisuParticlesInfo()const{
   std::vector<string> lines;
   GetParticlesInfo(lines);
   for(unsigned c=0;c<unsigned(lines.size());c++)printf("%s\n",lines[c].c_str());
+}
+
+//==============================================================================
+/// Returns true when imposed velocity was defined for some floating body.
+//==============================================================================
+bool JSpaceParts::UseImposedFtVel()const{
+  bool usevel=false;
+  return(usevel);
 }
 
 //##############################################################################

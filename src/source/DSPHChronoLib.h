@@ -43,7 +43,6 @@ class DSPHChronoLib{
   TpRunState RunState;
 
   static void RunException(std::string method,std::string msg,std::string file="");
-  void ConfigLink(const JChLink* link);
   void SaveForcesHead();
   static tdouble3 VecUnitarySafe(const tdouble3 &v);
 

@@ -533,6 +533,7 @@ rem %CudaNvcc% -ccbin "$(VCInstallDir)bin" %gpuhw% -use_fast_math -c %ptxinfo% -
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">true</ExcludedFromBuild>
     </ClInclude>
     <ClInclude Include="..\source\JLinearValue.h" />
+    <ClInclude Include="..\source\JLinearValueDef.h" />
     <ClInclude Include="..\source\JLog2.h" />
     <ClInclude Include="..\source\JMatrix4.h" />
     <ClInclude Include="..\source\JMeanValues.h" />

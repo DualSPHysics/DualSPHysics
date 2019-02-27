@@ -36,6 +36,7 @@
 #include "JTimeControl.h"
 #include "JGaugeSystem.h"
 #include "JSphInOut.h"  //<vs_innlet>
+#include "JLinearValue.h"
 #include <climits>
 
 using namespace std;
@@ -822,7 +823,8 @@ void JSphCpuSingle::RunFloating(double dt,bool predictor){
       TmcStop(Timers,TMC_SuFloating);
       TmcStart(Timers,TMC_SuChrono);
       //-Export data / Exporta datos.
-      for(unsigned cf=0;cf<FtCount;cf++)if(FtObjs[cf].usechrono)ChronoObjects->SetFtData(FtObjs[cf].mkbound,FtoForces[cf].face,FtoForces[cf].fomegaace);
+      for(unsigned cf=0;cf<FtCount;cf++)if(FtObjs[cf].usechrono)
+        ChronoObjects->SetFtData(FtObjs[cf].mkbound,FtoForces[cf].face,FtoForces[cf].fomegaace);
       //-Calculate data using Chrono / Calcula datos usando Chrono.
       ChronoObjects->RunChrono(Nstep,TimeStep,dt,predictor);
       //-Load calculated data by Chrono / Carga datos calculados por Chrono.

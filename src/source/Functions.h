@@ -69,6 +69,7 @@
 //:# - Nuevas funciones StrTrimBegin() y StrTrimEnd(). (29-08-2018)
 //:# - Nuevas funciones GetDateTimeFormatUTC(), GetWeekDay(), GetYearDay() y GetWeekNumber(). (24-10-2018)
 //:# - Nuevas funciones Delay() y GetRuntime(). (22-11-2018)
+//:# - Nuevas funcion VectorSplitStr().  (26-02-2019)
 //:#############################################################################
 
 /// \file Functions.h \brief Declares basic/general functions for the entire application.
@@ -179,6 +180,7 @@ std::string StrFileError(int error);
 std::string StrSplit(const std::string mark,std::string &text);
 unsigned StrSplitCount(const std::string mark,std::string text);
 std::string StrSplitValue(const std::string mark,std::string text,unsigned value);
+unsigned VectorSplitStr(const std::string mark,const std::string &text,std::vector<std::string> &vec);
 unsigned VectorSplitInt(const std::string mark,const std::string &text,std::vector<int> &vec);
 
 double GetFirstValueDouble(std::string tex,std::string pretex="");

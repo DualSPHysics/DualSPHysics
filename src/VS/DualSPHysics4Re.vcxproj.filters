@@ -325,6 +325,9 @@
     <ClInclude Include="..\source\FunctionsGeo3d.h">
       <Filter>Common</Filter>
     </ClInclude>
+    <ClInclude Include="..\source\JLinearValueDef.h">
+      <Filter>Common</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\source\JCfgRun.cpp">
