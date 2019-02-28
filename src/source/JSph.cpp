@@ -1599,20 +1599,36 @@ void JSph::AbortBoundOut(unsigned nout,const unsigned *idp,const tdouble3 *pos,c
   byte* motive=new byte[nout];
   unsigned outfixed=0,outmoving=0,outfloat=0;
   unsigned outpos=0,outrhop=0,outmove=0;
+  bool outxmin=false,outymin=false,outzmin=false;
+  bool outxmax=false,outymax=false,outzmax=false;
   for(unsigned p=0;p<nout;p++){
     //-Checks type of particle.
     switch(CODE_GetType(code[p])){
-    case CODE_TYPE_FIXED:     type[p]=0;  outfixed++;   break;
-    case CODE_TYPE_MOVING:    type[p]=1;  outmoving++;  break; 
-    case CODE_TYPE_FLOATING:  type[p]=2;  outfloat++;   break; 
-    default:                  type[p]=99;               break; 
+      case CODE_TYPE_FIXED:     type[p]=0;  outfixed++;   break;
+      case CODE_TYPE_MOVING:    type[p]=1;  outmoving++;  break; 
+      case CODE_TYPE_FLOATING:  type[p]=2;  outfloat++;   break; 
+      default:                  type[p]=99;               break; 
     }
     //-Checks reason for exclusion.
     switch(CODE_GetSpecialValue(code[p])){
-    case CODE_OUTPOS:   motive[p]=1; outpos++;   break;
-    case CODE_OUTRHOP:  motive[p]=2; outrhop++;  break; 
-    case CODE_OUTMOVE:  motive[p]=3; outmove++;  break; 
-    default:            motive[p]=0;             break; 
+      case CODE_OUTPOS:   motive[p]=1; outpos++;   break;
+      case CODE_OUTRHOP:  motive[p]=2; outrhop++;  break; 
+      case CODE_OUTMOVE:  motive[p]=3; outmove++;  break; 
+      default:            motive[p]=0;             break; 
+    }
+    //-Checks out-position limits.
+    if(CODE_GetSpecialValue(code[p])==CODE_OUTPOS){
+      const tdouble3 rpos=pos[p];
+      //-Check limits of real domain. | Comprueba limites del dominio reales.
+      const double dx=rpos.x-MapRealPosMin.x;
+      const double dy=rpos.y-MapRealPosMin.y;
+      const double dz=rpos.z-MapRealPosMin.z;
+      if(!PeriX && dx<0)outxmin=true;
+      if(!PeriX && dx>=MapRealSize.x)outxmax=true;
+      if(!PeriY && dy<0)outymin=true;
+      if(!PeriY && dy>=MapRealSize.y)outymax=true;
+      if(!PeriZ && dz<0)outzmin=true;
+      if(!PeriZ && dz>=MapRealSize.z)outzmax=true;
     }
   }
   //-Shows excluded particles information.
@@ -1626,6 +1642,12 @@ void JSph::AbortBoundOut(unsigned nout,const unsigned *idp,const tdouble3 *pos,c
   npunknown=nout-outpos-outrhop-outmove;
   if(!npunknown)Log->Printf("Excluded for: position=%u  rhop=%u  velocity=%u",outpos,outrhop,outmove);
   else Log->Printf("Excluded for: position=%u  rhop=%u  velocity=%u  UNKNOWN=%u",outpos,outrhop,outmove,npunknown);
+  if(outxmin)Log->Print("Some boundary particle exceeded the -X limit (left limit) of the simulation domain.");
+  if(outxmax)Log->Print("Some boundary particle exceeded the +X limit (right limit) of the simulation domain.");
+  if(outymin)Log->Print("Some boundary particle exceeded the -Y limit (front limit) of the simulation domain.");
+  if(outymax)Log->Print("Some boundary particle exceeded the +Y limit (back limit) of the simulation domain.");
+  if(outzmin)Log->Print("Some boundary particle exceeded the -Z limit (bottom limit) of the simulation domain.");
+  if(outzmax)Log->Print("Some boundary particle exceeded the +Z limit (top limit) of the simulation domain.");
   Log->Print(" ");
   //-Creates VTK file.
   std::vector<JFormatFiles2::StScalarData> fields;
