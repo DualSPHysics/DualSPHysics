@@ -243,7 +243,10 @@ void JSphBoundCorr::ReadXml(const JXml *sxml,TiXmlElement* lis){
   //-Loads list of inputs.
   TiXmlElement* ele=lis->FirstChildElement("mkzone"); 
   while(ele){
-    const word mkbound=sxml->GetAttributeWord(ele,"mkbound");
+    std::vector<unsigned> mkbounds;
+    JRangeFilter rg(sxml->GetAttributeStr(ele,"mkbound"));
+    rg.GetValues(mkbounds);
+    //const word mkbound=sxml->GetAttributeWord(ele,"mkbound");
     const bool autoconfig=sxml->ExistsElement(ele,"autoconfig");
     const bool autolimitpoint=sxml->ExistsElement(ele,"autolimitpoint");
     if(autoconfig && autolimitpoint)sxml->ErrReadElement(lis,"determlimit",false,"Several configuration modes. \'autoconfig\' and \'autolimitpoint\' definitions are not compatible.");
@@ -274,9 +277,13 @@ void JSphBoundCorr::ReadXml(const JXml *sxml,TiXmlElement* lis){
       else direction=fgeo::VecUnitary(direction);
       limitpoint=sxml->ReadElementDouble3(ele,"limitpoint");
     }
-    if(ExistMk(mkbound))RunException(met,fun::PrintStr("An input already exists for the same mkbound=%u.",mkbound));
-    JSphBoundCorrZone *zo=new JSphBoundCorrZone(Log,GetCount(),mkbound,autodir,autodpfactor,limitpoint,direction);
-    List.push_back(zo);
+    const unsigned nmkbounds=unsigned(mkbounds.size());
+    for(unsigned cmk=0;cmk<nmkbounds;cmk++){
+      const word mkbound=word(mkbounds[cmk]);
+      if(ExistMk(mkbound))RunException(met,fun::PrintStr("An input already exists for the same mkbound=%u.",mkbound));
+      JSphBoundCorrZone *zo=new JSphBoundCorrZone(Log,GetCount(),mkbound,autodir,autodpfactor,limitpoint,direction);
+      List.push_back(zo);
+    }
     ele=ele->NextSiblingElement("mkzone");
   }
 }

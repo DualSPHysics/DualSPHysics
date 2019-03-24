@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<!-- *** DualSPHysics (10-10-2018) *** -->
+<!-- *** DualSPHysics (24-03-2019) *** -->
 <!-- *** class: JSphBoundCorr *** -->
 <!------------------------------------------------------------------------------->
 <!------------------------------------------------------------------------------->
@@ -14,7 +14,7 @@
 			<direction x="1" y="0" z="0" comment="Direction to fluid" />
 		</mkzone>
 		<!-- limitpoint and direction are calculated automatically (for boxes). -->
-		<mkzone mkbound="2">
+		<mkzone mkbound="2,4-6">
 			<autoconfig direction="right" comment="Direction (top/bottom/left/right/front/back) to fluid using automatic configuration (only for parallel boxes)" />
 		</mkzone>
 		<!-- direction is defined and limitpoint is calculated automatically (for sloping surfaces). -->
