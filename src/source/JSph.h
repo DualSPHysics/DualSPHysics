@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2018 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2019 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -68,6 +68,7 @@ class JSphInOut;         //<vs_innlet>
 class JSphBoundCorr;     //<vs_innlet>
 class JSphPartsInit;
 class JLinearValue;
+class JSpaceEParms;
 
 //##############################################################################
 //# XML format of execution parameters in _FmtXML__Parameters.xml.
@@ -133,6 +134,7 @@ private:
   void ConfigDomainParticlesValue(std::string key,double v);
   void ConfigDomainParticlesPrc(tdouble3 vmin,tdouble3 vmax);
   void ConfigDomainParticlesPrcValue(std::string key,double v);
+  void ConfigDomainResize(std::string key,const JSpaceEParms *eparms);
 
 protected:
   const bool Cpu;

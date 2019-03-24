@@ -345,6 +345,7 @@ protected:
 
   double RestLength;  //-Rest length for spring.
   StSaveSpring SvSpring; //-Configuration to save vtk spring.
+  double CoulombDamping; //-Coulomb damping value. Not applied when it is zero. (default=0).
 
 protected:
   void CopyFrom(const JChLink &src);
@@ -438,11 +439,13 @@ public:
   tdouble3 GetPointfb1()const{ return(Pointfb1); }
   double GetRestLength()const{ return(RestLength); }
   StSaveSpring GetSvSpring()const{ return(SvSpring); }
+  double GetCoulombDamping()const{ return(CoulombDamping); }
 
   void SetPointfb0  (tdouble3 v){ Pointfb0 =v; }
   void SetPointfb1  (tdouble3 v){ Pointfb1 =v; }
   void SetRestLength(double   v){ RestLength=v; }
   void SetSvSpring  (const StSaveSpring &v){ SvSpring=v; }
+  void SetCoulombDamping(double v){ CoulombDamping=v; }
 };
 
 //##############################################################################

@@ -1,6 +1,6 @@
 //HEAD_DSCODES
 /*
- <DUALSPHYSICS>  Copyright (c) 2018 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2019 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -50,6 +50,7 @@
 //:#   y angular (RotationFree). (13-02-2019)
 //:# - Permite definir una lista de velocidades peredefinidas (lineal y angular) en el XML
 //:#   o en un fichero independiente. (21-02-2019)
+//:# - Gestiona posicion minima y maxima de particulas. (21-03-2019)
 //:#############################################################################
 
 /// \file JSpaceParts.h \brief Declares the class \ref JSpaceParts.
@@ -247,6 +248,9 @@ private:
   unsigned Begin;
   TpParticles LastType;
   word MkBoundFirst,MkFluidFirst;
+  tdouble3 Posmin;  ///<Minimum position of particles.
+  tdouble3 Posmax;  ///<Maximum position of particles.
+
   JSpaceProperties* Properties;
   
   unsigned GetBegin()const{ return(Begin); }
@@ -277,6 +281,10 @@ public:
   void SetMkFirst(word boundfirst,word fluidfirst);
   word GetMkBoundFirst()const{ return(MkBoundFirst); }
   word GetMkFluidFirst()const{ return(MkFluidFirst); }
+
+  void SetPosDomain(tdouble3 posmin,tdouble3 posmax){ Posmin=posmin; Posmax=posmax; }
+  tdouble3 GetPosmin()const{ return(Posmin); }
+  tdouble3 GetPosmax()const{ return(Posmax); }
 
   void AddFixed(word mktype,unsigned count){ 
     Add(new JSpacePartBlock_Fixed(Properties,mktype,GetBegin(),count));

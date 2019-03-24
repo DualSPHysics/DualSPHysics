@@ -382,6 +382,7 @@ void JChronoObjects::ReadXml(const JXml *sxml,TiXmlElement* lis){
         link->SetStiffness (sxml->ReadElementDouble (ele,"stiffness"  ,"value"));
         link->SetDamping   (sxml->ReadElementDouble (ele,"damping"    ,"value"));
         link->SetRestLength(sxml->ReadElementDouble (ele,"rest_length","value"));
+        link->SetCoulombDamping(sxml->ReadElementDouble(ele,"coulombdamping","value",true,0));
         ReadXmlValues(sxml,ele->FirstChildElement("values"),link->GetValuesPtr());
         TiXmlElement* ele2=ele->FirstChildElement("savevtk");
         if(ele2){//-Configuration to save vtk spring.
@@ -655,6 +656,7 @@ void JChronoObjects::VisuLink(const JChLink *link)const{
       Log->Printf("    Point Body 1..: (%s)",fun::Double3gStr(linktype->GetPointfb0()).c_str());
       Log->Printf("    Point Body 2..: (%s)",fun::Double3gStr(linktype->GetPointfb1()).c_str());
       Log->Printf("    Rest length...: %g", linktype->GetRestLength());
+      if(linktype->GetCoulombDamping())Log->Printf("    CoulombDamping: %g", linktype->GetCoulombDamping());
     }break;
     default: RunException(met,"Type of link is not supported.");
   }
@@ -776,7 +778,9 @@ void JChronoObjects::SavePart(int part){
         JFormatFiles2::StShapeSpring fcfg;
         fcfg.radius=cfg.radius;  fcfg.length=cfg.length;  fcfg.nside=cfg.nside;
         fcfg.cornersout=cfg.radius/2.f; fcfg.cornersin=cfg.radius/4.f;
-        JFormatFiles2::AddShape_Spring(shapes,p1,p2,linktype->GetRestLength(),ds,fcfg,mk,0);
+        //const double restlen=linktype->GetRestLength();
+        const double restlen=ChronoLib->GetSpringLinkRestLength(linktype->Name); //-Is necessary when it is variable.
+        JFormatFiles2::AddShape_Spring(shapes,p1,p2,restlen,ds,fcfg,mk,0);
         save=true;
       }
       else if(cfg.nside==1){

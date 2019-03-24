@@ -1,6 +1,6 @@
 //HEAD_DSCODES
 /*
- <DUALSPHYSICS>  Copyright (c) 2018 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2019 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -28,6 +28,8 @@
 #include <algorithm>
 #include <fstream>
 #include <climits>
+#include <iostream>
+#include <sstream>
 
 #ifdef WIN32
   #include <direct.h>
@@ -372,6 +374,16 @@ std::string Double4Str(const tdouble4 &v,const char* fmt){
   char cad[2048];
   sprintf(cad,fmt,v.x,v.y,v.z,v.w);
   return(std::string(cad));
+}
+
+//==============================================================================
+/// Returns true when v is a valid real number.
+//==============================================================================
+bool StrIsNumber(const std::string &v){
+  stringstream ss(v);
+  double d=0;
+  ss >> d;
+  return(!ss.fail());
 }
 
 //==============================================================================
@@ -842,6 +854,16 @@ int FileType(const std::string &name){
     if(stfileinfo.st_mode&S_IFREG)ret=2;
   }
   return(ret);
+}
+
+//==============================================================================
+/// Returns size of file or -1 in case of error.
+//==============================================================================
+llong FileSize(const std::string &name){
+  llong size=-1;
+  std::ifstream fsrc(name.c_str(),std::ifstream::ate|std::ios::binary);
+  if(fsrc)size=llong(fsrc.tellg());
+  return(size);
 }
 
 

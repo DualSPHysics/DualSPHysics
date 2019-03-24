@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<!-- *** DualSPHysics [Chrono] v4.3.038 (26-02-2019) *** -->
+<!-- *** DualSPHysics [Chrono] v4.3.044 (12-03-2019) *** -->
 <!-- *** class: JChronoObjects *** -->
 <!------------------------------------------------------------------------------->
 <!------------------------------------------------------------------------------->
@@ -40,6 +40,7 @@
 				<stiffness value="1000" comment="Stiffness [N/m]" />
 				<damping value="100" comment="Damping [-]" />
 				<rest_length value="5.0" comment="Spring equilibrium length [m]" />
+				<coulombdamping value="0" comment="Coulomb damping value. Not applied when it is zero. (default=0)" />
 				<savevtk>
 					<nside value="16" comment="number of sections for each revolution. 0=not saved, 1=line (default=16)" />
 					<radius value="3" comment="spring radius (default=3)" />

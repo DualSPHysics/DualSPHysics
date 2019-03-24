@@ -1,6 +1,6 @@
 ﻿//HEAD_DSCODES
 /*
- <DUALSPHYSICS>  Copyright (c) 2018 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2019 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -70,6 +70,8 @@
 //:# - Nuevas funciones GetDateTimeFormatUTC(), GetWeekDay(), GetYearDay() y GetWeekNumber(). (24-10-2018)
 //:# - Nuevas funciones Delay() y GetRuntime(). (22-11-2018)
 //:# - Nuevas funcion VectorSplitStr().  (26-02-2019)
+//:# - Nueva funcion StrIsNumber().  (21-03-2019)
+//:# - Nueva funcion FileSize().  (23-03-2019)
 //:#############################################################################
 
 /// \file Functions.h \brief Declares basic/general functions for the entire application.
@@ -148,10 +150,14 @@ std::string Double4Str(const tdouble4 &v,const char* fmt="%f,%f,%f");
 /// Converts range of tdouble4 values to string.  
 inline std::string Double4gStr(const tdouble4 &v){ return(Double4Str(v,"%g,%g,%g,%g")); }
 
+bool StrIsNumber(const std::string &v);
+
 int      StrToInt    (const std::string &v);
 tint3    StrToInt3   (std::string v);
+
 double   StrToDouble (const std::string &v);
 tdouble3 StrToDouble3(std::string v);
+
 inline byte     StrToByte   (const std::string &v){ return(byte(StrToInt(v)));          }
 inline word     StrToWord   (const std::string &v){ return(word(StrToInt(v)));          }
 inline unsigned StrToUint   (const std::string &v){ return(unsigned(StrToInt(v)));      }
@@ -217,6 +223,7 @@ void PrintVar(const std::string &name,unsigned value,const std::string &post="")
 int FileType(const std::string &name);
 inline bool FileExists(const std::string &name){ return(FileType(name)==2); }
 inline bool DirExists(const std::string &name){ return(FileType(name)==1); }
+llong FileSize(const std::string &name);
 
 std::string GetCurrentDir();
 int Mkdir(const std::string &dirname);

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<!-- *** DualSPHysics (27-08-2018) *** -->
+<!-- *** DualSPHysics (23-03-2019) *** -->
 <!-- *** class: JSph (JSpaceEParms)  *** -->
 <!------------------------------------------------------------------------------->
 <!------------------------------------------------------------------------------->
@@ -29,22 +29,6 @@
 		<parameter key="RhopOutMin" value="700" comment="Minimum rhop valid (default=700)" units_comment="kg/m^3" />
 		<parameter key="RhopOutMax" value="1300" comment="Maximum rhop valid (default=1300)" units_comment="kg/m^3" />
 		<parameter key="PartsOutMax" value="1" comment="%/100 of fluid particles allowed to be excluded from domain (default=1)" units_comment="decimal" />
-		
-		<parameter key="IncZ" value="0.5" comment="Increase of Z+ (default=0)" units_comment="decimal" />
-        <parameter key="DomainFixed" value="0:0:0:1:1:1" comment="The domain is fixed with the specified values (xmin:ymin:zmin:xmax:ymax:zmax)" units_comment="metres (m)" />
-        <parameter key="DomainFixedXmin" value="0" comment="The domain is fixed in the specified limit (default=not applied)" units_comment="metres (m)" />
-        <parameter key="DomainFixedXmax" value="0" comment="The domain is fixed in the specified limit (default=not applied)" units_comment="metres (m)" />
-        <parameter key="DomainFixedYmin" value="0" comment="The domain is fixed in the specified limit (default=not applied)" units_comment="metres (m)" />
-        <parameter key="DomainFixedYmax" value="0" comment="The domain is fixed in the specified limit (default=not applied)" units_comment="metres (m)" />
-        <parameter key="DomainFixedZmin" value="0" comment="The domain is fixed in the specified limit (default=not applied)" units_comment="metres (m)" />
-        <parameter key="DomainFixedZmax" value="0" comment="The domain is fixed in the specified limit (default=not applied)" units_comment="metres (m)" />
-        <parameter key="DomainParticles" value="0:0:0:1:1:1" comment="The domain is fixed as a function of the initial particle limits plus specified values (xmin:ymin:zmin:xmax:ymax:zmax)" units_comment="metres (m)" />
-        <parameter key="DomainParticlesXmin" value="-1" comment="The domain is fixed as a function of the initial particle limits plus specified value (default=0)" units_comment="metres (m)" />
-        <parameter key="DomainParticlesXmax" value="-1" comment="The domain is fixed as a function of the initial particle limits plus specified value (default=0)" units_comment="metres (m)" />
-        <parameter key="DomainParticlesYmin" value="-1" comment="The domain is fixed as a function of the initial particle limits plus specified value (default=0)" units_comment="metres (m)" />
-        <parameter key="DomainParticlesYmax" value="1" comment="The domain is fixed as a function of the initial particle limits plus specified value (default=0)" units_comment="metres (m)" />
-        <parameter key="DomainParticlesZmin" value="1" comment="The domain is fixed as a function of the initial particle limits plus specified value (default=0)" units_comment="metres (m)" />
-        <parameter key="DomainParticlesZmax" value="1" comment="The domain is fixed as a function of the initial particle limits plus specified value (default=0)" units_comment="metres (m)" />
   
         <parameter key="XPeriodicIncZ" value="0" comment="Increase of Z with periodic BC in axis X" units_comment="metres (m)" />
         <parameter key="XPeriodicIncY" value="0" comment="Increase of Y with periodic BC in axis X" units_comment="metres (m)" />
@@ -55,6 +39,19 @@
         <parameter key="XYPeriodic" value="0" comment="Periodic BC in axes X and Y" units_comment="metres (m)" />
         <parameter key="XZPeriodic" value="0" comment="Periodic BC in axes X and Z" units_comment="metres (m)" />
         <parameter key="YZPeriodic" value="0" comment="Periodic BC in axes Y and Z" units_comment="metres (m)" />
+		
+		<parameter key="IncZ" value="0.5" comment="**DEPRECATED** Increase of Z+ (default=0)" units_comment="decimal" />
+		<parameter key="DomainFixed" value="0:0:0:1:1:1" comment="**DEPRECATED** The domain is fixed with the specified values (xmin:ymin:zmin:xmax:ymax:zmax)" units_comment="metres (m)" />
+		<parameter key="DomainFixedXmin" value="0" comment="**DEPRECATED** The domain is fixed in the specified limit (default=not applied)" units_comment="metres (m)" />
+		<parameter key="DomainFixedXmax" value="0" comment="**DEPRECATED** The domain is fixed in the specified limit (default=not applied)" units_comment="metres (m)" />
+		<parameter key="DomainFixedYmin" value="0" comment="**DEPRECATED** The domain is fixed in the specified limit (default=not applied)" units_comment="metres (m)" />
+		<parameter key="DomainFixedYmax" value="0" comment="**DEPRECATED** The domain is fixed in the specified limit (default=not applied)" units_comment="metres (m)" />
+		<parameter key="DomainFixedZmin" value="0" comment="**DEPRECATED** The domain is fixed in the specified limit (default=not applied)" units_comment="metres (m)" />
+		<parameter key="DomainFixedZmax" value="0" comment="**DEPRECATED** The domain is fixed in the specified limit (default=not applied)" units_comment="metres (m)" />
+		<simulationdomain comment="Defines domain of simulation (default=Uses minimun and maximum position of the generated particles)">
+			<posmin x="0.5" y="default - 2" z="default - 20%" comment="e.g.: x=0.5, y=default-1, z=default-10%" />
+			<posmax x="default" y="default + 1" z="default + 10%" />
+		</simulationdomain>
 	</parameters>
 </execution>
 

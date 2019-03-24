@@ -1,9 +1,9 @@
 
 
- <DUALSPHYSICS4> Copyright (C) 2018 by
+ <DUALSPHYSICS4> Copyright (c) 2019 by
  Dr Jose M. Dominguez, Dr Alejandro Crespo,
  Prof. Moncho Gomez Gesteira, Orlando Garcia-Feal, Dr Anxo Barreiro
- Dr Benedict Rogers, Dr Georgios Fourtakas, Dr Athanasios Mokos,
+ Prof. Benedict Rogers, Dr Georgios Fourtakas, Dr Athanasios Mokos,
  Prof. Peter Stansby, Dr Renato Vacondio, Dr Ricardo Canelas,
  Dr Stephen Longshaw, Dr Corrado Altomare, Dr Angelo Tafuni.
 
@@ -24,7 +24,7 @@
  along with DualSPHysics. If not, see <http://www.gnu.org/licenses/>.
 
 
-DualSPHysics4 [MLPistons+RZ+Chrono+Inlet] v4.3.038 (26-02-2019)
+DualSPHysics4 [MLPistons+RZ+Chrono+Inlet] v4.3.048 (23-03-2019)
 ================================================================
 LoadDsphConfig> .../bin/windows/DsphConfig.xml
 Information about execution parameters:
@@ -101,17 +101,12 @@ Information about execution parameters:
      (begin) and located in the directory (dir), (first) indicates the
      number of the first PART to be generated
 
-    -incz:<float>    Allows increase in Z+ direction 
     -rhopout:min:max Excludes fluid particles out of these density limits
 
     -ftpause:<float> Time to start floating bodies movement. By default 0
     -tmax:<float>   Maximum time of simulation
     -tout:<float>   Time between output files
 
-    -domain_particles:xmin:ymin:zmin:xmax:ymax:zmax  The domain is fixed as
-     a function of the initial particle positions and modified for xmin,...
-    -domain_particles_prc:xmin:ymin:zmin:xmax:ymax:zmax  The values in 
-     proportion with the case dimensions according to the initial particles
     -domain_fixed:xmin:ymin:zmin:xmax:ymax:zmax    The domain is fixed
      with the specified values
 

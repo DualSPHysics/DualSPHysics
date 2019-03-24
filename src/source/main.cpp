@@ -1,7 +1,7 @@
 /*
- <DUALSPHYSICS>  Copyright (c) 2018, 
+ <DUALSPHYSICS>  Copyright (c) 2019, 
  Dr Jose M. Dominguez, Dr Alejandro Crespo, Prof. Moncho Gomez Gesteira, Orlando Garcia-Feal, Dr Anxo Barreiro,
- Dr Benedict Rogers, Dr Georgios Fourtakas, Dr Athanasios Mokos, Prof. Peter Stansby,
+ Prof. Benedict Rogers, Dr Georgios Fourtakas, Dr Athanasios Mokos, Prof. Peter Stansby,
  Dr Renato Vacondio, Dr Ricardo Canelas, Dr Stephen Longshaw, Dr Corrado Altomare, Dr Angelo Tafuni.
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
@@ -55,7 +55,7 @@ Please download source files and documentation from <a href="http://dual.sphysic
 using namespace std;
 
 
-JAppInfo AppInfo("DualSPHysics4","v4.3.039","27-02-2019");
+JAppInfo AppInfo("DualSPHysics4","v4.3.048","23-03-2019");
 //JAppInfo AppInfo("DualSPHysics4","v4.2.???","UserVersion","v1.0","??-??-????"); //-for user versions.
 
 //==============================================================================
@@ -63,10 +63,10 @@ JAppInfo AppInfo("DualSPHysics4","v4.3.039","27-02-2019");
 //==============================================================================
 std::string getlicense_lgpl(const std::string &name,bool simple){
   std::string tx=(simple? "": "\n");
-  tx=tx+"\n <"+fun::StrUpper(name)+"> Copyright (C) 2018 by"; 
+  tx=tx+"\n <"+fun::StrUpper(name)+"> Copyright (c) 2019 by"; 
   tx=tx+"\n Dr Jose M. Dominguez, Dr Alejandro Crespo,";
   tx=tx+"\n Prof. Moncho Gomez Gesteira, Orlando Garcia-Feal, Dr Anxo Barreiro";
-  tx=tx+"\n Dr Benedict Rogers, Dr Georgios Fourtakas, Dr Athanasios Mokos,";
+  tx=tx+"\n Prof. Benedict Rogers, Dr Georgios Fourtakas, Dr Athanasios Mokos,";
   tx=tx+"\n Prof. Peter Stansby, Dr Renato Vacondio, Dr Ricardo Canelas,";
   tx=tx+"\n Dr Stephen Longshaw, Dr Corrado Altomare, Dr Angelo Tafuni.\n";
   if(!simple){

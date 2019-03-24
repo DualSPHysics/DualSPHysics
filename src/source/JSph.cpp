@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2018 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2019 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -320,6 +320,32 @@ void JSph::ConfigDomainParticlesPrcValue(std::string key,double v){
 }
 
 //==============================================================================
+/// Loads the case configuration to be executed.
+//==============================================================================
+void JSph::ConfigDomainResize(std::string key,const JSpaceEParms *eparms){
+  const char met[]="ConfigDomainResize";
+  const char axis=fun::StrLower(key)[0];
+  if(axis!='x' && axis!='y' && axis!='z')RunException(met,"Axis value is invalid.");
+  if(key.substr(1,3)!="min" && key.substr(1,3)!="max")RunException(met,"Key value is invalid.");
+  if(key.substr(1,3)=="min"){
+    JSpaceEParms::JSpaceEParmsPos ps=eparms->GetPosminValue(axis);
+    switch(ps.mode){
+      case JSpaceEParms::DC_Fixed:     ConfigDomainFixedValue(string("DomainFixed")+key,ps.value);                     break;
+      case JSpaceEParms::DC_DefValue:  ConfigDomainParticlesValue(string("DomainParticles")+key,ps.value);             break;
+      case JSpaceEParms::DC_DefPrc:    ConfigDomainParticlesPrcValue(string("DomainParticlesPrc")+key,ps.value/100);   break;
+    }
+  }
+  else{
+    JSpaceEParms::JSpaceEParmsPos ps=eparms->GetPosmaxValue(axis);
+    switch(ps.mode){
+      case JSpaceEParms::DC_Fixed:     ConfigDomainFixedValue(string("DomainFixed")+key,ps.value);                     break;
+      case JSpaceEParms::DC_DefValue:  ConfigDomainParticlesValue(string("DomainParticles")+key,ps.value);             break;
+      case JSpaceEParms::DC_DefPrc:    ConfigDomainParticlesPrcValue(string("DomainParticlesPrc")+key,ps.value/100);   break;
+    }
+  }
+}
+
+//==============================================================================
 /// Allocates memory of floating objectcs.
 //==============================================================================
 void JSph::AllocMemoryFloating(unsigned ftcount,bool imposedvel){
@@ -441,11 +467,7 @@ void JSph::LoadConfig(const JCfgRun *cfg){
   else TimeOut->Config(FileXml,"case.execution.special.timeout",TimePart);
 
   CellMode=cfg->CellMode;
-  if(cfg->DomainMode==1){
-    ConfigDomainParticles(cfg->DomainParticlesMin,cfg->DomainParticlesMax);
-    ConfigDomainParticlesPrc(cfg->DomainParticlesPrcMin,cfg->DomainParticlesPrcMax);
-  }
-  else if(cfg->DomainMode==2)ConfigDomainFixed(cfg->DomainFixedMin,cfg->DomainFixedMax);
+  if(cfg->DomainMode==2)ConfigDomainFixed(cfg->DomainFixedMin,cfg->DomainFixedMax);
   if(cfg->RhopOutModif){
     RhopOutMin=cfg->RhopOutMin; RhopOutMax=cfg->RhopOutMax;
   }
@@ -552,33 +574,29 @@ void JSph::LoadCaseConfig(){
   }
 
   //-Configuration of domain size.
+  bool resizeold=false;
   float incz=eparms.GetValueFloat("IncZ",true,0.f);
   if(incz){
     ClearCfgDomain();
     CfgDomainParticlesPrcMax.z=incz;
+    resizeold=true;
   }
   string key;
-  if(eparms.Exists(key="DomainParticles"))ConfigDomainParticles(TDouble3(eparms.GetValueNumDouble(key,0),eparms.GetValueNumDouble(key,1),eparms.GetValueNumDouble(key,2)),TDouble3(eparms.GetValueNumDouble(key,3),eparms.GetValueNumDouble(key,4),eparms.GetValueNumDouble(key,5)));
-  if(eparms.Exists(key="DomainParticlesXmin"))ConfigDomainParticlesValue(key,-eparms.GetValueDouble(key));
-  if(eparms.Exists(key="DomainParticlesYmin"))ConfigDomainParticlesValue(key,-eparms.GetValueDouble(key));
-  if(eparms.Exists(key="DomainParticlesZmin"))ConfigDomainParticlesValue(key,-eparms.GetValueDouble(key));
-  if(eparms.Exists(key="DomainParticlesXmax"))ConfigDomainParticlesValue(key,eparms.GetValueDouble(key));
-  if(eparms.Exists(key="DomainParticlesYmax"))ConfigDomainParticlesValue(key,eparms.GetValueDouble(key));
-  if(eparms.Exists(key="DomainParticlesZmax"))ConfigDomainParticlesValue(key,eparms.GetValueDouble(key));
-  if(eparms.Exists(key="DomainParticlesPrc"))ConfigDomainParticlesPrc(TDouble3(eparms.GetValueNumDouble(key,0),eparms.GetValueNumDouble(key,1),eparms.GetValueNumDouble(key,2)),TDouble3(eparms.GetValueNumDouble(key,3),eparms.GetValueNumDouble(key,4),eparms.GetValueNumDouble(key,5)));
-  if(eparms.Exists(key="DomainParticlesPrcXmin"))ConfigDomainParticlesPrcValue(key,-eparms.GetValueDouble(key));
-  if(eparms.Exists(key="DomainParticlesPrcYmin"))ConfigDomainParticlesPrcValue(key,-eparms.GetValueDouble(key));
-  if(eparms.Exists(key="DomainParticlesPrcZmin"))ConfigDomainParticlesPrcValue(key,-eparms.GetValueDouble(key));
-  if(eparms.Exists(key="DomainParticlesPrcXmax"))ConfigDomainParticlesPrcValue(key,eparms.GetValueDouble(key));
-  if(eparms.Exists(key="DomainParticlesPrcYmax"))ConfigDomainParticlesPrcValue(key,eparms.GetValueDouble(key));
-  if(eparms.Exists(key="DomainParticlesPrcZmax"))ConfigDomainParticlesPrcValue(key,eparms.GetValueDouble(key));
-  if(eparms.Exists(key="DomainFixed"))ConfigDomainFixed(TDouble3(eparms.GetValueNumDouble(key,0),eparms.GetValueNumDouble(key,1),eparms.GetValueNumDouble(key,2)),TDouble3(eparms.GetValueNumDouble(key,3),eparms.GetValueNumDouble(key,4),eparms.GetValueNumDouble(key,5)));
-  if(eparms.Exists(key="DomainFixedXmin"))ConfigDomainFixedValue(key,eparms.GetValueDouble(key));
-  if(eparms.Exists(key="DomainFixedYmin"))ConfigDomainFixedValue(key,eparms.GetValueDouble(key));
-  if(eparms.Exists(key="DomainFixedZmin"))ConfigDomainFixedValue(key,eparms.GetValueDouble(key));
-  if(eparms.Exists(key="DomainFixedXmax"))ConfigDomainFixedValue(key,eparms.GetValueDouble(key));
-  if(eparms.Exists(key="DomainFixedYmax"))ConfigDomainFixedValue(key,eparms.GetValueDouble(key));
-  if(eparms.Exists(key="DomainFixedZmax"))ConfigDomainFixedValue(key,eparms.GetValueDouble(key));
+  if(eparms.Exists(key="DomainFixed")){ ConfigDomainFixed(TDouble3(eparms.GetValueNumDouble(key,0),eparms.GetValueNumDouble(key,1),eparms.GetValueNumDouble(key,2)),TDouble3(eparms.GetValueNumDouble(key,3),eparms.GetValueNumDouble(key,4),eparms.GetValueNumDouble(key,5))); resizeold=true; }
+  if(eparms.Exists(key="DomainFixedXmin")){ ConfigDomainFixedValue(key,eparms.GetValueDouble(key)); resizeold=true; }
+  if(eparms.Exists(key="DomainFixedYmin")){ ConfigDomainFixedValue(key,eparms.GetValueDouble(key)); resizeold=true; }
+  if(eparms.Exists(key="DomainFixedZmin")){ ConfigDomainFixedValue(key,eparms.GetValueDouble(key)); resizeold=true; }
+  if(eparms.Exists(key="DomainFixedXmax")){ ConfigDomainFixedValue(key,eparms.GetValueDouble(key)); resizeold=true; }
+  if(eparms.Exists(key="DomainFixedYmax")){ ConfigDomainFixedValue(key,eparms.GetValueDouble(key)); resizeold=true; }
+  if(eparms.Exists(key="DomainFixedZmax")){ ConfigDomainFixedValue(key,eparms.GetValueDouble(key)); resizeold=true; }
+  if(!eparms.IsPosDefault() && resizeold)RunException(met,"Combination of <simulationdomain> with IncZ or DomainFixedXXX in <parameters> section of XML is not allowed.",FileXml);
+  if(resizeold)Log->PrintWarning("The options IncZ and DomainFixedXXXX are deprecated.");
+  ConfigDomainResize("Xmin",&eparms);
+  ConfigDomainResize("Ymin",&eparms);
+  ConfigDomainResize("Zmin",&eparms);
+  ConfigDomainResize("Xmax",&eparms);
+  ConfigDomainResize("Ymax",&eparms);
+  ConfigDomainResize("Zmax",&eparms);
 
   //-Predefined constantes.
   if(ctes.GetEps()!=0)Log->PrintWarning("Eps value is not used (this correction is deprecated).");

@@ -1,6 +1,6 @@
 //HEAD_DSCODES
 /*
- <DUALSPHYSICS>  Copyright (c) 2018 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2019 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -303,6 +303,7 @@ void JSpaceParts::Reset(){
   Begin=0;
   LastType=TpPartFixed;
   SetMkFirst(0,0);
+  Posmin=Posmax=TDouble3(0);
   Properties->Reset();
 }
 
@@ -480,6 +481,11 @@ void JSpaceParts::WriteXmlSummary(JXml *sxml,TiXmlElement* ele)const{
   //-Writes summary data in XML.
   TiXmlElement items("_summary");
   ele=ele->InsertEndChild(items)->ToElement();
+  TiXmlElement positions("positions");
+  JXml::AddAttribute(&positions,"units_comment","metres (m)");
+  TiXmlElement* elep=ele->InsertEndChild(positions)->ToElement();
+  sxml->AddElementDouble3(elep,"posmin",Posmin);
+  sxml->AddElementDouble3(elep,"posmax",Posmax);
   for(unsigned c=0;c<ntp;c++)if(dat.np[c]){
     TiXmlElement item(txtp[c].c_str());
     JXml::AddAttribute(&item,"count",dat.np[c]);

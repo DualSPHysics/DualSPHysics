@@ -79,6 +79,11 @@ class DSPHChronoLib{
   ///Obtains positions of Spring link.
   bool GetSpringLinkPositions(const std::string &linkname,tdouble3 &p1,tdouble3 &p2)const;
 
+  /// Obtains RestLength of Spring link.
+  double GetSpringLinkRestLength(const std::string &linkname)const;
+  /// Modifies RestLength of Spring link.
+  void SetSpringLinkRestLength(const std::string &linkname,double restlength)const;
+
   ///Obtains center of body.
   bool GetBodyCenter(const std::string &bodyname,tdouble3 &pcen)const;
 
