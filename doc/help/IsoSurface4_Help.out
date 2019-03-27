@@ -1,6 +1,6 @@
 
 
- <ISOSURFACE4>  Copyright (C) 2018 by Dr Jose M. Dominguez
+ <ISOSURFACE4>  Copyright (c) 2019 by Dr Jose M. Dominguez
  All rights reserved.
 
  DualSPHysics is an international collaboration between University of Vigo 
@@ -30,7 +30,7 @@
  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
 
 
-IsoSurface4 v4.0.031 (17-10-2018)
+IsoSurface4 v4.0.033 (26-03-2019)
 ==================================
 LoadDsphConfig> .../bin/windows/DsphConfig.xml
 Information about parameters of execution:

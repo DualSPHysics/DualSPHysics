@@ -1,6 +1,6 @@
 
 
- <FLOATINGINFO4>  Copyright (C) 2018 by Dr Jose M. Dominguez
+ <FLOATINGINFO4>  Copyright (c) 2019 by Dr Jose M. Dominguez
  All rights reserved.
 
  DualSPHysics is an international collaboration between University of Vigo 
@@ -30,7 +30,7 @@
  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
 
 
-FloatingInfo4 v4.0.025 (16-10-2018)
+FloatingInfo4 v4.0.028 (26-03-2019)
 ====================================
 LoadDsphConfig> .../bin/windows/DsphConfig.xml
 Information about parameters of execution:
@@ -50,7 +50,7 @@ Information about parameters of execution:
 
   Define output files:
     -savedata <file>    Generates CSV file with data of floating
-    -savemotion         Includes motion data
+    -savemotion:<0/1>   Includes motion data (1 by default)
     -onlymk:<values>    Indicates the mk of selected floatings
 
     -createdirs:<0/1>   Creates full path for output files
@@ -59,6 +59,6 @@ Information about parameters of execution:
                         (value by default is read from DsphConfig.xml or 0)
 
   Examples:
-    FloatingInfo4 -savedata results -savemotion
-    FloatingInfo4 -dirin . -onlymk:61-65 -savemotion
+    FloatingInfo4 -savedata results
+    FloatingInfo4 -dirin . -onlymk:61-65 -savemotion:0
 
