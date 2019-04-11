@@ -21,41 +21,6 @@ Have in mind that DualSPHysics needs a case already created to execute the SPH s
 
 If you need help check out the wiki for this project.
 
-# Instructions for docker
-
-You can build a Docker container of DualSPHysics using the provided Dockerfile. The Docker-container can be build with the following command:
-
-```
-docker build -t dualsphysics .
-```
-
-After a successful build, you can run DualSPHysics using docker:
-
-```
-docker run dualsphysics ./DualSPHysics4.2CPU_linux64
-```
-This command works similar for the other executables, e.g.:
-```
-docker run dualsphysics ./GenCase4_linux64
-```
-The Docker container runs a minimalized image of Ubuntu, thus only the `linux64` executables work.
-
-It is necessary to mount the working directory to the Docker container. Suppose you want to simulate a case defined in the file `/path/to/CaseDef.xml`. You have to execute the following commands:
-
-```
-# executes GenCase
-docker run -v /path/to:/run dualsphysics ./GenCase4_linux64 /run/CaseDef /run/out/Simulation -save:all
-
-# executes DualSPHysics
-docker run -v /path/to:/run dualsphysics ./DualSPHysics4.2CPU_linux64 /run/out/Simulation /run/out -svres -cpu
-```
-
-On your system, the directory `/path/to/out/` must exists. Here all output files are stored. The parameter `-v` mounts all files in `path/to` to the container in the directory `/run`. 
-
-We haven't tested the GPU version of DualSPHysics which probably will not work with the current Dockerfile. Feel free to create a pull request with an improved version.
-
-You can run DualSPHysics on all platforms including Mac OS X with this Docker container but probably not with the optimal performance.
-
 # Instructions for developers
 
 If you are a developer and want to use this code check the following guides.
@@ -137,18 +102,23 @@ Please read [CONTRIBUTING.md](CONTRIBUTING.md) if you want to make changes to th
 # Authors and people involved
 
 * **Dr Jose M. Dominguez** - *Main Developer*
-* **Dr Alejandro Crespo**
+* **Dr Alejandro J.C. Crespo**
 * **Prof. Moncho Gomez Gesteira**
-* **Dr Anxo Barreiro**
-* **Orlando G. Feal**
-* **Dr Benedict Rogers**
-* **Prof. Peter Stansby**
+* **Prof. Benedict D. Rogers**
 * **Dr Georgios Fourtakas**
-* **Dr Athanasios Mokos**
-* **Dr Renato Vacondio**
+* **Prof. Peter Stansby**
 * **Dr Ricardo Canelas**
-* **Dr Stephen Longshaw**
+* **Dr Renato Vacondio**
 * **Dr Corrado Altomare**
+* **Dr Angelo Tafuni**
+* **Orlando Garcia-Feal**
+* **Dr Jose Gonzalez Cao**
+
+## Former people involved
+
+* **Dr Athanasios Mokos**
+* **Dr Stephen Longshaw**
+* **Dr Anxo Barreiro**
 
 See also the list of [contributors](https://github.com/dualsphysics/DualSPHysics/contributors) who participated in this project.
 
