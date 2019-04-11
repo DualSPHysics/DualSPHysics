@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2018 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2019 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -29,9 +29,14 @@
 #include "JSphMotion.h"
 #include "JSphVisco.h"
 #include "JWaveGen.h"
+#include "JMLPistons.h"     //<vs_mlapiston>
+#include "JRelaxZones.h"    //<vs_rzone>
+#include "JChronoObjects.h" //<vs_chroono>
 #include "JTimeOut.h"
 #include "JTimeControl.h"
 #include "JGaugeSystem.h"
+#include "JSphInOut.h"  //<vs_innlet>
+#include "JLinearValue.h"
 #include <climits>
 
 using namespace std;
@@ -108,6 +113,11 @@ void JSphCpuSingle::ConfigDomain(){
 
   //-Computes radius of floating bodies.
   if(CaseNfloat && PeriActive!=0 && !PartBegin)CalcFloatingRadius(Np,Posc,Idpc);
+
+  //<vs_mlapiston_ini>
+  //-Configures Multi-Layer Pistons according particles. | Configura pistones Multi-Layer segun particulas.
+  if(MLPistons)MLPistons->PreparePiston(Dp,Np,Idpc,Posc);
+  //<vs_mlapiston_end>
 
   //-Load particle code. | Carga code de particulas.
   LoadCodeParticles(Np,Idpc,Codec);
@@ -442,6 +452,8 @@ void JSphCpuSingle::RunCellDivide(bool updateperiodic){
   }
   TmcStop(Timers,TMC_NlOutCheck);
   BoundChanged=false;
+  //-Creates list with particles in inout zones.  //<vs_innlet>
+  if(InOut)InOutCreateList();                     //<vs_innlet>
 }
 
 //==============================================================================
@@ -514,6 +526,9 @@ void JSphCpuSingle::Interaction_Forces(TpInterStep interstep){
     #endif
     for(int p=ini;p<fin;p++)if(Deltac[p]!=FLT_MAX)Arc[p]+=Deltac[p];
   }
+
+  //-Reset interpolation varibles (ace,ar,shiftpos) over inout particles.             //<vs_innlet>
+  if(InOut)InOut->ClearInteractionVarsCpu(InOutCount,InOutPartc,Acec,Arc,ShiftPosc);  //<vs_innlet>
 
   //-Calculates maximum value of ViscDt.
   ViscDtMax=viscdt;
@@ -591,6 +606,7 @@ template<bool checkperiodic> double JSphCpuSingle::ComputeAceMaxOmp(unsigned np,
 /// calculadas en la interaccion usando Verlet.
 //==============================================================================
 double JSphCpuSingle::ComputeStep_Ver(){
+  if(BoundCorr)BoundCorrectionData();    //-Apply BoundCorrection.  //<vs_innlet>
   Interaction_Forces(INTERSTEP_Verlet);  //-Interaction.
   const double dt=DtVariable(true);      //-Calculate new dt.
   if(CaseNmoving)CalcMotion(dt);         //-Calculate motion for moving bodies.
@@ -600,6 +616,7 @@ double JSphCpuSingle::ComputeStep_Ver(){
   if(CaseNfloat)RunFloating(dt,false);   //-Control of floating bodies.
   PosInteraction_Forces();               //-Free memory used for interaction.
   if(Damping)RunDamping(dt,Np,Npb,Posc,Codec,Velrhopc); //-Applies Damping.
+  if(RelaxZones)RunRelaxZone(dt);        //-Generate waves using RZ.  //<vs_rzone>
   return(dt);
 }
 
@@ -616,6 +633,7 @@ double JSphCpuSingle::ComputeStep_Sym(){
   //-Predictor
   //-----------
   DemDtForce=dt*0.5f;                          //(DEM)
+  if(BoundCorr)BoundCorrectionData();          //-Apply BoundCorrection.  //<vs_innlet>
   Interaction_Forces(INTERSTEP_SymPredictor);  //-Interaction.
   const double ddt_p=DtVariable(false);        //-Calculate dt of predictor step.
   if(TShifting)RunShifting(dt*.5);             //-Shifting.
@@ -633,6 +651,7 @@ double JSphCpuSingle::ComputeStep_Sym(){
   if(CaseNfloat)RunFloating(dt,false);         //-Control of floating bodies.
   PosInteraction_Forces();                     //-Free memory used for interaction.
   if(Damping)RunDamping(dt,Np,Npb,Posc,Codec,Velrhopc); //-Applies Damping.
+  if(RelaxZones)RunRelaxZone(dt);              //-Generate waves using RZ.  //<vs_rzone>
   SymplecticDtPre=min(ddt_p,ddt_c);            //-Calculate dt for next ComputeStep.
   return(dt);
 }
@@ -663,7 +682,7 @@ tfloat3 JSphCpuSingle::FtPeriodicDist(const tdouble3 &pos,const tdouble3 &center
 /// Calcula suma de face y fomegaace a partir de particulas floating.
 //==============================================================================
 void JSphCpuSingle::FtCalcForcesSum(unsigned cf,tfloat3 &face,tfloat3 &fomegaace)const{
-  const StFloatingData fobj=FtObjs[cf];
+  const StFloatingData &fobj=FtObjs[cf];
   const unsigned fpini=fobj.begin-CaseNpb;
   const unsigned fpfin=fpini+fobj.count;
   const float fradius=fobj.radius;
@@ -739,14 +758,16 @@ void JSphCpuSingle::FtCalcForcesRes(double dt,const StFtoForces *ftoforces,StFto
     //-Compute fomega. | Calculo de fomega.
     tfloat3 fomega=fobj.fomega;
     {
-      const tfloat3 omegaace=FtoForces[cf].fomegaace;
+      const tfloat3 omegaace=ftoforces[cf].fomegaace;
       fomega.x=float(dt*omegaace.x+fomega.x);
       fomega.y=float(dt*omegaace.y+fomega.y);
       fomega.z=float(dt*omegaace.z+fomega.z);
     }
     tfloat3 fvel=fobj.fvel;
+    //if(!cf)printf("--->fvel  f%d(%f,%f,%f)\n",cf,fvel.x,fvel.y,fvel.z);
+
     //-Zero components for 2-D simulation. | Anula componentes para 2D.
-    tfloat3 face=FtoForces[cf].face;
+    tfloat3 face=ftoforces[cf].face;
     if(Simulate2D){ face.y=0; fomega.x=0; fomega.z=0; fvel.y=0; }
     //-Compute fcenter. | Calculo de fcenter.
     tdouble3 fcenter=fobj.center;
@@ -765,6 +786,20 @@ void JSphCpuSingle::FtCalcForcesRes(double dt,const StFtoForces *ftoforces,StFto
 }
 
 //==============================================================================
+/// Applies motion constraints.
+/// Aplica restricciones de movimiento.
+//==============================================================================
+void JSphCpuSingle::FtApplyConstraints(StFtoForces *ftoforces,StFtoForcesRes *ftoforcesres)const{
+  for(unsigned cf=0;cf<FtCount;cf++){
+    const StFloatingData fobj=FtObjs[cf];
+    if(fobj.constraints!=FTCON_Free){
+      ApplyConstraints(fobj.constraints,ftoforces[cf].face,ftoforces[cf].fomegaace);
+      ApplyConstraints(fobj.constraints,ftoforcesres[cf].fvelres,ftoforcesres[cf].fomegares);
+    }
+  }
+}
+
+//==============================================================================
 /// Process floating objects
 /// Procesa floating objects.
 //==============================================================================
@@ -777,8 +812,26 @@ void JSphCpuSingle::RunFloating(double dt,bool predictor){
 
     //-Adds calculated forces around floating objects. | Añade fuerzas calculadas sobre floatings.
     FtCalcForces(FtoForces);
+
     //-Calculate data to update floatings. | Calcula datos para actualizar floatings.
     FtCalcForcesRes(dt,FtoForces,FtoForcesRes);
+    //-Applies motion constraints.
+    if(FtConstraints)FtApplyConstraints(FtoForces,FtoForcesRes);
+
+    //-Run floating with Chrono library. //<vs_chroono_ini>
+    if(ChronoObjects){
+      TmcStop(Timers,TMC_SuFloating);
+      TmcStart(Timers,TMC_SuChrono);
+      //-Export data / Exporta datos.
+      for(unsigned cf=0;cf<FtCount;cf++)if(FtObjs[cf].usechrono)
+        ChronoObjects->SetFtData(FtObjs[cf].mkbound,FtoForces[cf].face,FtoForces[cf].fomegaace);
+      //-Calculate data using Chrono / Calcula datos usando Chrono.
+      ChronoObjects->RunChrono(Nstep,TimeStep,dt,predictor);
+      //-Load calculated data by Chrono / Carga datos calculados por Chrono.
+      for(unsigned cf=0;cf<FtCount;cf++)if(FtObjs[cf].usechrono)ChronoObjects->GetFtData(FtObjs[cf].mkbound,FtoForcesRes[cf].fcenterres,FtoForcesRes[cf].fvelres,FtoForcesRes[cf].fomegares);
+      TmcStop(Timers,TMC_SuChrono);
+      TmcStart(Timers,TMC_SuFloating);
+    }//<vs_chroono_end> 
 
     //-Apply movement around floating objects. | Aplica movimiento sobre floatings.
     const int ftcount=int(FtCount);
@@ -864,6 +917,7 @@ void JSphCpuSingle::Run(std::string appname,JCfgRun *cfg,JLog2 *log){
   //------------------------------------------------------------------------------------
   InitRunCpu();
   RunGaugeSystem(TimeStep);
+  if(InOut)InOutInit(TimeStepIni);  //<vs_innlet>
   FreePartsInit();
   UpdateMaxValues();
   PrintAllocMemory(GetAllocMemoryCpu());
@@ -882,13 +936,17 @@ void JSphCpuSingle::Run(std::string appname,JCfgRun *cfg,JLog2 *log){
   Log->Print(string("\n[Initialising simulation (")+RunCode+")  "+fun::GetDateTime()+"]");
   PrintHeadPart();
   while(TimeStep<TimeMax){
+    InterStep=(TStep==STEP_Symplectic? INTERSTEP_SymPredictor: INTERSTEP_Verlet);
     if(ViscoTime)Visco=ViscoTime->GetVisco(float(TimeStep));
     double stepdt=ComputeStep();
     RunGaugeSystem(TimeStep+stepdt);
     if(PartDtMin>stepdt)PartDtMin=stepdt; if(PartDtMax<stepdt)PartDtMax=stepdt;
     if(CaseNmoving)RunMotion(stepdt);
-    RunCellDivide(true);
+    //RunCellDivide(true);                  //<vs_no_innlet>
+    if(InOut)InOutComputeStep(stepdt);      //<vs_innlet>
+    else RunCellDivide(true);               //<vs_innlet>
     TimeStep+=stepdt;
+    LastDt=stepdt;
     partoutstop=(Np<NpMinimum || !Np);
     if(TimeStep>=TimePartNext || partoutstop){
       if(partoutstop){
@@ -946,6 +1004,7 @@ void JSphCpuSingle::SaveData(){
     infoplus.npf=Np-Npb;
     infoplus.npbper=NpbPer;
     infoplus.npfper=NpfPer;
+    infoplus.newnp=(InOut? InOut->GetNewNpPart(): 0);  //<vs_innlet>
     infoplus.memorycpualloc=this->GetAllocMemoryCpu();
     infoplus.gpudata=false;
     TimerSim.Stop();

@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2018 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2019 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -65,6 +65,7 @@
   #define CODE_MASKVALUE 0x00000ffff    //-Bits type-value: 0000 0111 1111 1111  Range:0-65535
 
   #define CODE_TYPE_FLUID_LIMITFREE 0x0003ffef //---Last normal fluid code: 262127
+  #define CODE_TYPE_FLUID_INOUT     0x0003fff0 //---First inlet/outlet code: 262128 (Allows 16 different codes for InOut particles). //<vs_innlet>
 #else
   #define CODE_MKRANGEMAX 2047      //-Maximum valid MK value. | Valor maximo de MK valido.
   typedef word typecode;            //-Type of the variable code using 2 bytes.
@@ -88,6 +89,7 @@
   #define CODE_MASKVALUE 0x7ff      //-Bits type-value: 0000 0111 1111 1111  Range:0-2047
 
   #define CODE_TYPE_FLUID_LIMITFREE 0x1fef  //---Last normal fluid code: 8175
+  #define CODE_TYPE_FLUID_INOUT     0x1ff0  //---First inlet/outlet code: 8176 (Allows 16 different codes for InOut particles). //<vs_innlet>
 #endif
 
 #define CODE_SetNormal(code)    (code&(~CODE_MASKSPECIAL))
@@ -113,6 +115,12 @@
 #define CODE_IsFluid(code)    (CODE_GetType(code)==CODE_TYPE_FLUID)
 #define CODE_IsNotFluid(code) (CODE_GetType(code)!=CODE_TYPE_FLUID)
 
+#define CODE_IsFluidInout(code)    (CODE_IsFluid(code) && CODE_GetTypeAndValue(code)>=CODE_TYPE_FLUID_INOUT)  //<vs_innlet>
+#define CODE_IsFluidNotInout(code) (CODE_IsFluid(code) && CODE_GetTypeAndValue(code)< CODE_TYPE_FLUID_INOUT)  //<vs_innlet>
+
+#define CODE_ToFluidInout(code,izone) (code&(~CODE_MASKTYPEVALUE))|(CODE_TYPE_FLUID_INOUT+izone)  //<vs_innlet>
+#define CODE_GetIzoneFluidInout(code) (CODE_GetTypeAndValue(code)-CODE_TYPE_FLUID_INOUT)          //<vs_innlet>
+
 
 ///Structure with the information of the floating object.
 typedef struct{
@@ -122,11 +130,13 @@ typedef struct{
   float mass;       ///<Mass of the floating object (units:Kg).
   float massp;      ///<Mass of the particle of the floating object (units:Kg).
   float radius;     ///<Maximum distance between particles and center (units:m).
+  byte constraints; ///<Translation and rotation restrictions (combination of TpFtConstrains values).
   tdouble3 center;  ///<Center of the floating object (units:m).
   tfloat3 angles;   ///<Rotation angles from center (angle xz, angle yz, angle xy) (units:Rad).
   tfloat3 fvel;     ///<Linear velocity of the floating object (units:m/s).
   tfloat3 fomega;   ///<Angular velocity of the floating object (units:rad/s).
   tmatrix3f inertiaini; ///<Initial state inertia tensor in world coordinates (computed or user-given).
+  bool usechrono;   ///<Activates the use of Chrono library.  //<vs_chroono>
 }StFloatingData;
 
 ///Structure with the information of the floating object in forces calculation.
@@ -152,7 +162,6 @@ typedef struct{ //(DEM)
   float tau;          ///<Value of (1-poisson^2)/young (units:-).
   float restitu;      ///<Restitution Coefficient (units:-).
 }StDemData;
-
 
 ///Controls the output of information on the screen and/or log.
 typedef enum{ 
@@ -223,10 +232,42 @@ typedef enum{
   FTMODE_Ext=2              ///<Interaction between floatings and boundaries in terms of DEM or CHRONO.
 }TpFtMode;  
 
-
 #define USE_FLOATING (ftmode!=FTMODE_None)
 #define USE_NOFLOATING (ftmode==FTMODE_None)
 #define USE_FTEXTERNAL (ftmode==FTMODE_Ext)
+
+
+///Mask values for translation or rotation constraints applied to floating bodies.
+typedef enum{ 
+  FTCON_Free=0,     ///<No translation or rotation constraints.
+  FTCON_MoveX=1,    ///<Translation in X is avoided.
+  FTCON_MoveY=2,    ///<Translation in Y is avoided.
+  FTCON_MoveZ=4,    ///<Translation in Z is avoided.
+  FTCON_RotateX=8,  ///<Rotation in X is avoided.
+  FTCON_RotateY=16, ///<Rotation in Y is avoided.
+  FTCON_RotateZ=32  ///<Rotation in Z is avoided.
+}TpFtConstrains;
+
+///Returns combination of TpFtConstrains values to define the constraints.
+inline byte ComputeConstraintsValue(const tint3 &translationfree,const tint3 &rotationfree){
+  return((translationfree.x? 0: FTCON_MoveX)
+        +(translationfree.y? 0: FTCON_MoveY)
+        +(translationfree.z? 0: FTCON_MoveZ)
+        +(rotationfree.x   ? 0: FTCON_RotateX)
+        +(rotationfree.y   ? 0: FTCON_RotateY)
+        +(rotationfree.z   ? 0: FTCON_RotateZ));
+}
+
+///Applies constraints.
+inline void ApplyConstraints(byte constraints,tfloat3 &linear,tfloat3 &angular){
+  if(constraints&FTCON_MoveX  )linear.x=0;
+  if(constraints&FTCON_MoveY  )linear.y=0;
+  if(constraints&FTCON_MoveZ  )linear.z=0;
+  if(constraints&FTCON_RotateX)angular.x=0;
+  if(constraints&FTCON_RotateY)angular.y=0;
+  if(constraints&FTCON_RotateZ)angular.z=0;
+}
+
 
 ///Modes of cells division.
 typedef enum{ 

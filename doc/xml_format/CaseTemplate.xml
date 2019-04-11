@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<case app="GenCase4 v4.0.079 (16-10-2018)" date="16-10-2018 19:06:37">
+<case app="GenCase4 v4.0.092 (26-03-2019)" date="27-03-2019 01:40:15">
     <casedef>
         <constantsdef>
             <lattice bound="2" fluid="1" />
@@ -364,6 +364,15 @@
                     <redrawnear targettp="fluid" bordertp="bound" />
                     <redrawnear times="2" targettp="fluid" bordertp="bound" />
                     <redrawnear targettp="void" bordertp="bound" />
+                    <redrawnear targettp="void" bordertp="bound">
+                        <dirfilter>all</dirfilter>
+                    </redrawnear>
+                    <redrawnear targettp="void" bordertp="bound">
+                        <dirfilter>top | right | back</dirfilter>
+                    </redrawnear>
+                    <redrawnear targettp="void" bordertp="bound">
+                        <dirfilter>bottom | left | front</dirfilter>
+                    </redrawnear>
                     <redrawnear targettp="fluid" targetmk="0" bordertp="bound" />
                     <redrawnear targettp="fluid" targetmk="0" bordertp="bound" bordermk="2" />
                     <redrawnearbox targettp="fluid" targetmk="0" bordertp="bound" bordermk="2">
@@ -374,10 +383,14 @@
                         <point x="0.1" y="1" z="1.1" />
                         <size x="3" y="4" z="2" />
                     </redrawnearbox>
+                    <redrawnearbox times="3" targettp="fluid" targetmk="0" bordertp="bound" bordermk="2">
+                        <dirfilter>bottom | top</dirfilter>
+                        <point x="0.1" y="1" z="1.1" />
+                        <size x="3" y="4" z="2" />
+                    </redrawnearbox>
                     <debugout />
                     <shapeout file="fshape_1" reset="false" />
                     <shapeout file="fshape_2" />
-                    <shapeout file="fshape_1" reset="false" saveobj="true" />
                     <cellsout file="filecellsAll" />
                     <cellsout file="filecellsBound5" mkbound="5" />
                     <cellsout file="filecellsFluid5" mkfluid="5" />
@@ -417,33 +430,31 @@
         </initials>
         <floatings>
             <floating mkbound="0" rhopbody="1300" />
-            <floating mkbound="1" rhopbody="1300">
-                <velini x="1" y="3" z="2" />
-                <omegaini x="0.2" y="0.4" z="0.6" />
-            </floating>
+            <floating mkbound="1" rhopbody="1300" property="Material_1" />
             <floating mkbound="2">
-                <massbody value="1300" />
+                <massbody value="1.3" />
                 <center x="11" y="12" z="13" />
                 <inertia x="20" y="22" z="24" />
             </floating>
-            <floating mkbound="3">
-                <massbody value="1300" />
-                <center x="11" y="12" z="13" />
-                <inertia x="20" y="22" z="24" />
-                <velini x="1" y="3" z="2" />
-                <omegaini x="0.2" y="0.4" z="0.6" />
-            </floating>
-            <floating mkbound="4" property="Material_2">
-                <massbody value="1300" />
+            <floating mkbound="3" property="Material_2">
+                <massbody value="1.3" />
                 <inertia x="11" y="22" z="22" />
             </floating>
-            <floating mkbound="5" property="Material_2">
-                <massbody value="1300" />
+            <floating mkbound="4" property="Material_2">
+                <massbody value="1.3" />
                 <inertiafull>
                     <values v11="11" v12="0" v13="0" />
                     <values v21="0" v22="22" v23="0" />
                     <values v31="0" v32="0" v33="33" />
                 </inertiafull>
+            </floating>
+            <floating mkbound="5" rhopbody="1500">
+                <translation x="0" y="0" z="1" comment="Use 0 for translation restriction in the movement (default=(1,1,1))" />
+                <rotation x="0" y="1" z="0" comment="Use 0 for rotation restriction in the movement (default=(1,1,1))" />
+            </floating>
+            <floating mkbound="6" rhopbody="1500">
+                <linearvelini x="1" y="3" z="2" units_comment="m/s" />
+                <angularvelini x="0.2" y="0.4" z="0.6" units_comment="rad/s" />
             </floating>
         </floatings>
         <properties>
@@ -676,21 +687,14 @@
             <parameter key="RhopOutMin" value="700" comment="Minimum rhop valid (default=700)" units_comment="kg/m^3" />
             <parameter key="RhopOutMax" value="1300" comment="Maximum rhop valid (default=1300)" units_comment="kg/m^3" />
             <parameter key="PartsOutMax" value="1" comment="%%/100 of fluid particles allowed to be excluded from domain (default=1)" units_comment="decimal" />
-            <parameter key="IncZ" value="0.5" comment="Increase of Z+ (default=0)" units_comment="decimal" />
-            <parameter key="DomainFixed" value="0:0:0:1:1:1" comment="The domain is fixed with the specified values (xmin:ymin:zmin:xmax:ymax:zmax)" units_comment="metres (m)" />
-            <parameter key="DomainFixedXmin" value="0" comment="The domain is fixed in the specified limit (default=not applied)" units_comment="metres (m)" />
-            <parameter key="DomainFixedXmax" value="0" comment="The domain is fixed in the specified limit (default=not applied)" units_comment="metres (m)" />
-            <parameter key="DomainFixedYmin" value="0" comment="The domain is fixed in the specified limit (default=not applied)" units_comment="metres (m)" />
-            <parameter key="DomainFixedYmax" value="0" comment="The domain is fixed in the specified limit (default=not applied)" units_comment="metres (m)" />
-            <parameter key="DomainFixedZmin" value="0" comment="The domain is fixed in the specified limit (default=not applied)" units_comment="metres (m)" />
-            <parameter key="DomainFixedZmax" value="0" comment="The domain is fixed in the specified limit (default=not applied)" units_comment="metres (m)" />
-            <parameter key="DomainParticles" value="0:0:0:1:1:1" comment="The domain is fixed as a function of the initial particle limits plus specified values (xmin:ymin:zmin:xmax:ymax:zmax)" units_comment="metres (m)" />
-            <parameter key="DomainParticlesXmin" value="-1" comment="The domain is fixed as a function of the initial particle limits plus specified value (default=0)" units_comment="metres (m)" />
-            <parameter key="DomainParticlesXmax" value="-1" comment="The domain is fixed as a function of the initial particle limits plus specified value (default=0)" units_comment="metres (m)" />
-            <parameter key="DomainParticlesYmin" value="-1" comment="The domain is fixed as a function of the initial particle limits plus specified value (default=0)" units_comment="metres (m)" />
-            <parameter key="DomainParticlesYmax" value="1" comment="The domain is fixed as a function of the initial particle limits plus specified value (default=0)" units_comment="metres (m)" />
-            <parameter key="DomainParticlesZmin" value="1" comment="The domain is fixed as a function of the initial particle limits plus specified value (default=0)" units_comment="metres (m)" />
-            <parameter key="DomainParticlesZmax" value="1" comment="The domain is fixed as a function of the initial particle limits plus specified value (default=0)" units_comment="metres (m)" />
+            <parameter key="IncZ" value="0.5" comment="**DEPRECATED** Increase of Z+ (default=0)" units_comment="decimal" />
+            <parameter key="DomainFixed" value="0:0:0:1:1:1" comment="**DEPRECATED** The domain is fixed with the specified values (xmin:ymin:zmin:xmax:ymax:zmax)" units_comment="metres (m)" />
+            <parameter key="DomainFixedXmin" value="0" comment="**DEPRECATED** The domain is fixed in the specified limit (default=not applied)" units_comment="metres (m)" />
+            <parameter key="DomainFixedXmax" value="0" comment="**DEPRECATED** The domain is fixed in the specified limit (default=not applied)" units_comment="metres (m)" />
+            <parameter key="DomainFixedYmin" value="0" comment="**DEPRECATED** The domain is fixed in the specified limit (default=not applied)" units_comment="metres (m)" />
+            <parameter key="DomainFixedYmax" value="0" comment="**DEPRECATED** The domain is fixed in the specified limit (default=not applied)" units_comment="metres (m)" />
+            <parameter key="DomainFixedZmin" value="0" comment="**DEPRECATED** The domain is fixed in the specified limit (default=not applied)" units_comment="metres (m)" />
+            <parameter key="DomainFixedZmax" value="0" comment="**DEPRECATED** The domain is fixed in the specified limit (default=not applied)" units_comment="metres (m)" />
             <parameter key="XPeriodicIncZ" value="0" comment="Increase of Z with periodic BC in axis X" units_comment="metres (m)" />
             <parameter key="XPeriodicIncY" value="0" comment="Increase of Y with periodic BC in axis X" units_comment="metres (m)" />
             <parameter key="YPeriodicIncX" value="0" comment="Increase of X with periodic BC in axis Y" units_comment="metres (m)" />
@@ -700,6 +704,10 @@
             <parameter key="XYPeriodic" value="0" comment="Periodic BC in axes X and Y" units_comment="metres (m)" />
             <parameter key="XZPeriodic" value="0" comment="Periodic BC in axes X and Z" units_comment="metres (m)" />
             <parameter key="YZPeriodic" value="0" comment="Periodic BC in axes Y and Z" units_comment="metres (m)" />
+            <simulationdomain comment="Defines domain of simulation (default=Uses minimun and maximum position of the generated particles)">
+                <posmin x="0.5" y="default - 2" z="default - 20%" comment="e.g.: x=0.5, y=default-1, z=default-10%" />
+                <posmax x="default" y="default + 1" z="default + 10%" />
+            </simulationdomain>
         </parameters>
     </execution>
 </case>

@@ -1,6 +1,6 @@
 //HEAD_DSCODES
 /*
- <DUALSPHYSICS>  Copyright (c) 2018 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2019 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -75,6 +75,7 @@
 //:# - Nuevo metodo DeleteFields() para liberar memoria dinamica. (12-09-2018)
 //:# - Se elimina codigo JFormatFiles2Data por falta de uso. (12-09-2018)
 //:# - Nuevos metodos AddShape_TriangleLines(), AddShape_QuadLines(). (21-12-2018)
+//:# - Cambia funciones de FunctionsMath.h a FunctionsGeo3d.h. (08-08-2019)
 //:#############################################################################
   
 

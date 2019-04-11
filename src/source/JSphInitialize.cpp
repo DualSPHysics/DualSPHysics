@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2018 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2019 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -22,6 +22,7 @@
 #include "JSpaceProperties.h"
 #include "Functions.h"
 #include "FunctionsMath.h"
+#include "FunctionsGeo3d.h"
 #include "JRangeFilter.h"
 #include "JXml.h"
 
@@ -78,7 +79,7 @@ void JSphInitializeOp_FluidVel::ReadXml(JXml *sxml,TiXmlElement* xele){
 //==============================================================================
 void JSphInitializeOp_FluidVel::Run(unsigned np,unsigned npb,const tdouble3 *pos,const unsigned *idp,const word *mktype,tfloat4 *velrhop){
   const char met[]="Run";
-  const tfloat3 dir=fmath::VecUnitary(Direction);
+  const tfloat3 dir=fgeo::VecUnitary(Direction);
   float m2=0,b2=0;
   float a3=0,b3=0,c3=3;
   float v=0;

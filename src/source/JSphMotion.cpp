@@ -1,6 +1,6 @@
 //HEAD_DSCODES
 /*
- <DUALSPHYSICS>  Copyright (c) 2018 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2019 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -35,6 +35,7 @@ using namespace std;
 JSphMotion::JSphMotion(){
   ClassName="JSphMotion";
   ObjBegin=NULL; ObjMkBound=NULL;
+  ObjTpmov=NULL; ObjLinMov=NULL; ObjMatMov=NULL;
   Mot=NULL;
   Reset();
 }
@@ -55,8 +56,12 @@ void JSphMotion::Reset(){
   ObjCount=0;
   delete[] ObjBegin;   ObjBegin=NULL;
   delete[] ObjMkBound; ObjMkBound=NULL;
+  delete[] ObjTpmov;   ObjTpmov=NULL;
+  delete[] ObjLinMov;  ObjLinMov=NULL;
+  delete[] ObjMatMov;  ObjMatMov=NULL;
   delete Mot; Mot=NULL;
   ActiveMotion=false;
+  LastDt=0;
 }
 
 //==============================================================================
@@ -71,6 +76,12 @@ void JSphMotion::ConfigObjects(const JSpaceParts *parts){
   ObjMkBound=new word[ObjCount];
   memset(ObjBegin,0,sizeof(unsigned)*(ObjCount+1));
   memset(ObjMkBound,0,sizeof(word)*ObjCount);
+  ObjTpmov=new byte[ObjCount+1];
+  ObjLinMov=new tdouble3[ObjCount];
+  ObjMatMov=new tmatrix4d[ObjCount];
+  memset(ObjTpmov,3,sizeof(byte)*ObjCount);
+  memset(ObjLinMov,3,sizeof(tdouble3)*ObjCount);
+  memset(ObjMatMov,3,sizeof(tmatrix4d)*ObjCount);
   //-Loads configuration.
   unsigned cmot=0;
   for(unsigned c=0;c<parts->CountBlocks();c++){
@@ -140,7 +151,8 @@ unsigned JSphMotion::GetObjIdxByMkBound(word mkbound)const{
 /// Processes next time interval and returns true if there are active motions.
 //==============================================================================
 bool JSphMotion::ProcesTime(TpMotionMode mode,double timestep,double dt){
-  ActiveMotion=false;
+  ActiveMotion=false; LastDt=dt;
+  memset(ObjTpmov,3,sizeof(byte)*ObjCount);
   if(mode==MOMT_Simple)ActiveMotion=Mot->ProcesTimeSimple(timestep+TimeMod,dt);
   if(mode==MOMT_Ace2dt)ActiveMotion=Mot->ProcesTimeAce(timestep+TimeMod,dt);
   return(ActiveMotion);
@@ -153,7 +165,27 @@ bool JSphMotion::ProcesTimeGetData(unsigned ref,bool &typesimple,tdouble3 &simpl
   ,tdouble3 &simplevel,tdouble3 &simpleace,tmatrix4d &matmov,tmatrix4d &matmov2
   ,unsigned &nparts,unsigned &idbegin)const
 {
-  const bool active=Mot->ProcesTimeGetData(ref,typesimple,simplemov,simplevel,simpleace,matmov,matmov2);
+  bool active;
+  const byte tpmov=ObjTpmov[ref];
+  if(tpmov<3){
+    switch(tpmov){
+      case 0:  
+        simplemov=simplevel=simpleace=TDouble3(0);
+      break;
+      case 1:  
+        simplemov=ObjLinMov[ref]; 
+        simplevel=simplemov/TDouble3(LastDt);
+        simpleace=TDouble3(0);
+      break;
+      case 2:  
+        matmov=ObjMatMov[ref];     
+        matmov2=TMatrix4d();     
+      break;
+    }
+    active=(tpmov>0);
+    typesimple=(tpmov<2);
+  }
+  else active=Mot->ProcesTimeGetData(ref,typesimple,simplemov,simplevel,simpleace,matmov,matmov2);
   if(active){
     idbegin=(ref<ObjCount? ObjBegin[ref]: 0);
     nparts=(ref<ObjCount? ObjBegin[ref+1]-idbegin: 0);
@@ -167,9 +199,35 @@ bool JSphMotion::ProcesTimeGetData(unsigned ref,bool &typesimple,tdouble3 &simpl
 bool JSphMotion::ProcesTimeGetData(unsigned ref,word &mkbound
   ,bool &typesimple,tdouble3 &simplemov,tmatrix4d &matmov)const
 {
+  bool active;
   mkbound=GetObjMkBound(ref);
-  const bool active=Mot->ProcesTimeGetData(ref,typesimple,simplemov,matmov);
+  const byte tpmov=ObjTpmov[ref];
+  if(tpmov<3){
+    switch(tpmov){
+      case 0:  simplemov=TDouble3(0);     break;
+      case 1:  simplemov=ObjLinMov[ref];  break;
+      case 2:  matmov=ObjMatMov[ref];     break;
+    }
+    active=(tpmov>0);
+    typesimple=(tpmov<2);
+  }
+  else active=Mot->ProcesTimeGetData(ref,typesimple,simplemov,matmov);
   return(active);
+}
+
+//==============================================================================
+/// Returns data of one moving object. Returns true when the motion is active.
+//==============================================================================
+void JSphMotion::SetMotionData(unsigned idx,byte tpmov,const tdouble3 &simplemov
+  ,const tmatrix4d &matmov)
+{
+  if(idx<GetNumObjects()){
+    //printf("JSphMotion::SetMotionData-> idx:%d tp:%d  motion:(%g,%g,%g)\n",idx,tpmov,simplemov.x,simplemov.y,simplemov.z);
+    ObjTpmov[idx]=tpmov;
+    if(tpmov==1)ObjLinMov[idx]=simplemov;
+    if(tpmov==2)ObjMatMov[idx]=matmov;
+    if(tpmov==1 || tpmov==2)ActiveMotion=true;
+  }
 }
 
 

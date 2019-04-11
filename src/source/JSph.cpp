@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2018 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2019 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -37,6 +37,9 @@
 #include "JSphVisco.h"
 #include "JGaugeSystem.h"
 #include "JWaveGen.h"
+#include "JMLPistons.h"     //<vs_mlapiston>
+#include "JRelaxZones.h"    //<vs_rzone>
+#include "JChronoObjects.h" //<vs_chroono>
 #include "JSphAccInput.h"
 #include "JPartDataBi4.h"
 #include "JPartOutBi4Save.h"
@@ -44,6 +47,9 @@
 #include "JPartsOut.h"
 #include "JDamping.h"
 #include "JSphInitialize.h"
+#include "JSphInOut.h"       //<vs_innlet> 
+#include "JSphBoundCorr.h"   //<vs_innlet> 
+#include "JLinearValue.h"
 #include <climits>
 
 //using namespace std;
@@ -73,9 +79,14 @@ JSph::JSph(bool cpu,bool withmpi):Cpu(cpu),WithMpi(withmpi){
   DemData=NULL;
   GaugeSystem=NULL;
   WaveGen=NULL;
+  MLPistons=NULL;     //<vs_mlapiston>
+  RelaxZones=NULL;    //<vs_rzone>
+  ChronoObjects=NULL; //<vs_chroono>
   Damping=NULL;
   AccInput=NULL;
   PartsLoaded=NULL;
+  InOut=NULL;       //<vs_innlet>
+  BoundCorr=NULL;   //<vs_innlet>
   InitVars();
 }
 
@@ -95,13 +106,18 @@ JSph::~JSph(){
   delete MkInfo;        MkInfo=NULL;
   delete PartsInit;     PartsInit=NULL;
   delete SphMotion;     SphMotion=NULL;
-  AllocMemoryFloating(0);
+  AllocMemoryFloating(0,false);
   delete[] DemData;     DemData=NULL;
   delete GaugeSystem;   GaugeSystem=NULL;
   delete WaveGen;       WaveGen=NULL;
+  delete MLPistons;     MLPistons=NULL;     //<vs_mlapiston>
+  delete RelaxZones;    RelaxZones=NULL;    //<vs_rzone>
+  delete ChronoObjects; ChronoObjects=NULL; //<vs_chroono>
   delete Damping;       Damping=NULL;
   delete AccInput;      AccInput=NULL; 
   delete PartsLoaded;   PartsLoaded=NULL;
+  delete InOut;         InOut=NULL;       //<vs_innlet>
+  delete BoundCorr;     BoundCorr=NULL;   //<vs_innlet>
 }
 
 //==============================================================================
@@ -133,6 +149,7 @@ void JSph::InitVars(){
   Visco=0; ViscoBoundFactor=1;
   UseDEM=false;  //(DEM)
   delete[] DemData; DemData=NULL;  //(DEM)
+  UseChrono=false; //<vs_chroono>
   RhopOut=true; RhopOutMin=700; RhopOutMax=1300;
   TimeMax=TimePart=0;
   DtIni=DtMin=0; CoefDtMin=0; DtAllParticles=false;
@@ -168,9 +185,10 @@ void JSph::InitVars(){
   FtCount=0;
   FtPause=0;
   FtMode=FTMODE_None;
+  FtConstraints=false;
   WithFloating=false;
 
-  AllocMemoryFloating(0);
+  AllocMemoryFloating(0,false);
 
   CellMode=CELLMODE_None;
   Hdiv=0;
@@ -203,6 +221,7 @@ void JSph::InitVars(){
   TimeStepIni=0;
   TimeStep=TimeStepM1=0;
   TimePartNext=0;
+  LastDt=0;
 
   VerletStep=0;
   SymplecticDtPre=0;
@@ -301,11 +320,39 @@ void JSph::ConfigDomainParticlesPrcValue(std::string key,double v){
 }
 
 //==============================================================================
+/// Loads the case configuration to be executed.
+//==============================================================================
+void JSph::ConfigDomainResize(std::string key,const JSpaceEParms *eparms){
+  const char met[]="ConfigDomainResize";
+  const char axis=fun::StrLower(key)[0];
+  if(axis!='x' && axis!='y' && axis!='z')RunException(met,"Axis value is invalid.");
+  if(key.substr(1,3)!="min" && key.substr(1,3)!="max")RunException(met,"Key value is invalid.");
+  if(key.substr(1,3)=="min"){
+    JSpaceEParms::JSpaceEParmsPos ps=eparms->GetPosminValue(axis);
+    switch(ps.mode){
+      case JSpaceEParms::DC_Fixed:     ConfigDomainFixedValue(string("DomainFixed")+key,ps.value);                     break;
+      case JSpaceEParms::DC_DefValue:  ConfigDomainParticlesValue(string("DomainParticles")+key,ps.value);             break;
+      case JSpaceEParms::DC_DefPrc:    ConfigDomainParticlesPrcValue(string("DomainParticlesPrc")+key,ps.value/100);   break;
+    }
+  }
+  else{
+    JSpaceEParms::JSpaceEParmsPos ps=eparms->GetPosmaxValue(axis);
+    switch(ps.mode){
+      case JSpaceEParms::DC_Fixed:     ConfigDomainFixedValue(string("DomainFixed")+key,ps.value);                     break;
+      case JSpaceEParms::DC_DefValue:  ConfigDomainParticlesValue(string("DomainParticles")+key,ps.value);             break;
+      case JSpaceEParms::DC_DefPrc:    ConfigDomainParticlesPrcValue(string("DomainParticlesPrc")+key,ps.value/100);   break;
+    }
+  }
+}
+
+//==============================================================================
 /// Allocates memory of floating objectcs.
 //==============================================================================
-void JSph::AllocMemoryFloating(unsigned ftcount){
+void JSph::AllocMemoryFloating(unsigned ftcount,bool imposedvel){
   delete[] FtObjs; FtObjs=NULL;
-  if(ftcount)FtObjs=new StFloatingData[ftcount];
+  if(ftcount){
+    FtObjs=new StFloatingData[ftcount];
+  }
 }
 
 //==============================================================================
@@ -420,11 +467,7 @@ void JSph::LoadConfig(const JCfgRun *cfg){
   else TimeOut->Config(FileXml,"case.execution.special.timeout",TimePart);
 
   CellMode=cfg->CellMode;
-  if(cfg->DomainMode==1){
-    ConfigDomainParticles(cfg->DomainParticlesMin,cfg->DomainParticlesMax);
-    ConfigDomainParticlesPrc(cfg->DomainParticlesPrcMin,cfg->DomainParticlesPrcMax);
-  }
-  else if(cfg->DomainMode==2)ConfigDomainFixed(cfg->DomainFixedMin,cfg->DomainFixedMax);
+  if(cfg->DomainMode==2)ConfigDomainFixed(cfg->DomainFixedMin,cfg->DomainFixedMax);
   if(cfg->RhopOutModif){
     RhopOutMin=cfg->RhopOutMin; RhopOutMax=cfg->RhopOutMax;
   }
@@ -453,6 +496,7 @@ void JSph::LoadCaseConfig(){
   switch(eparms.GetValueInt("RigidAlgorithm",true,1)){ //(DEM)
     case 1:  UseDEM=false;    break;
     case 2:  UseDEM=true;     break;
+    case 3:  UseChrono=true;  break;  //<vs_chroono>
     default: RunException(met,"Rigid algorithm is not valid.");
   }
   switch(eparms.GetValueInt("StepAlgorithm",true,1)){
@@ -530,33 +574,29 @@ void JSph::LoadCaseConfig(){
   }
 
   //-Configuration of domain size.
+  bool resizeold=false;
   float incz=eparms.GetValueFloat("IncZ",true,0.f);
   if(incz){
     ClearCfgDomain();
     CfgDomainParticlesPrcMax.z=incz;
+    resizeold=true;
   }
   string key;
-  if(eparms.Exists(key="DomainParticles"))ConfigDomainParticles(TDouble3(eparms.GetValueNumDouble(key,0),eparms.GetValueNumDouble(key,1),eparms.GetValueNumDouble(key,2)),TDouble3(eparms.GetValueNumDouble(key,3),eparms.GetValueNumDouble(key,4),eparms.GetValueNumDouble(key,5)));
-  if(eparms.Exists(key="DomainParticlesXmin"))ConfigDomainParticlesValue(key,-eparms.GetValueDouble(key));
-  if(eparms.Exists(key="DomainParticlesYmin"))ConfigDomainParticlesValue(key,-eparms.GetValueDouble(key));
-  if(eparms.Exists(key="DomainParticlesZmin"))ConfigDomainParticlesValue(key,-eparms.GetValueDouble(key));
-  if(eparms.Exists(key="DomainParticlesXmax"))ConfigDomainParticlesValue(key,eparms.GetValueDouble(key));
-  if(eparms.Exists(key="DomainParticlesYmax"))ConfigDomainParticlesValue(key,eparms.GetValueDouble(key));
-  if(eparms.Exists(key="DomainParticlesZmax"))ConfigDomainParticlesValue(key,eparms.GetValueDouble(key));
-  if(eparms.Exists(key="DomainParticlesPrc"))ConfigDomainParticlesPrc(TDouble3(eparms.GetValueNumDouble(key,0),eparms.GetValueNumDouble(key,1),eparms.GetValueNumDouble(key,2)),TDouble3(eparms.GetValueNumDouble(key,3),eparms.GetValueNumDouble(key,4),eparms.GetValueNumDouble(key,5)));
-  if(eparms.Exists(key="DomainParticlesPrcXmin"))ConfigDomainParticlesPrcValue(key,-eparms.GetValueDouble(key));
-  if(eparms.Exists(key="DomainParticlesPrcYmin"))ConfigDomainParticlesPrcValue(key,-eparms.GetValueDouble(key));
-  if(eparms.Exists(key="DomainParticlesPrcZmin"))ConfigDomainParticlesPrcValue(key,-eparms.GetValueDouble(key));
-  if(eparms.Exists(key="DomainParticlesPrcXmax"))ConfigDomainParticlesPrcValue(key,eparms.GetValueDouble(key));
-  if(eparms.Exists(key="DomainParticlesPrcYmax"))ConfigDomainParticlesPrcValue(key,eparms.GetValueDouble(key));
-  if(eparms.Exists(key="DomainParticlesPrcZmax"))ConfigDomainParticlesPrcValue(key,eparms.GetValueDouble(key));
-  if(eparms.Exists(key="DomainFixed"))ConfigDomainFixed(TDouble3(eparms.GetValueNumDouble(key,0),eparms.GetValueNumDouble(key,1),eparms.GetValueNumDouble(key,2)),TDouble3(eparms.GetValueNumDouble(key,3),eparms.GetValueNumDouble(key,4),eparms.GetValueNumDouble(key,5)));
-  if(eparms.Exists(key="DomainFixedXmin"))ConfigDomainFixedValue(key,eparms.GetValueDouble(key));
-  if(eparms.Exists(key="DomainFixedYmin"))ConfigDomainFixedValue(key,eparms.GetValueDouble(key));
-  if(eparms.Exists(key="DomainFixedZmin"))ConfigDomainFixedValue(key,eparms.GetValueDouble(key));
-  if(eparms.Exists(key="DomainFixedXmax"))ConfigDomainFixedValue(key,eparms.GetValueDouble(key));
-  if(eparms.Exists(key="DomainFixedYmax"))ConfigDomainFixedValue(key,eparms.GetValueDouble(key));
-  if(eparms.Exists(key="DomainFixedZmax"))ConfigDomainFixedValue(key,eparms.GetValueDouble(key));
+  if(eparms.Exists(key="DomainFixed")){ ConfigDomainFixed(TDouble3(eparms.GetValueNumDouble(key,0),eparms.GetValueNumDouble(key,1),eparms.GetValueNumDouble(key,2)),TDouble3(eparms.GetValueNumDouble(key,3),eparms.GetValueNumDouble(key,4),eparms.GetValueNumDouble(key,5))); resizeold=true; }
+  if(eparms.Exists(key="DomainFixedXmin")){ ConfigDomainFixedValue(key,eparms.GetValueDouble(key)); resizeold=true; }
+  if(eparms.Exists(key="DomainFixedYmin")){ ConfigDomainFixedValue(key,eparms.GetValueDouble(key)); resizeold=true; }
+  if(eparms.Exists(key="DomainFixedZmin")){ ConfigDomainFixedValue(key,eparms.GetValueDouble(key)); resizeold=true; }
+  if(eparms.Exists(key="DomainFixedXmax")){ ConfigDomainFixedValue(key,eparms.GetValueDouble(key)); resizeold=true; }
+  if(eparms.Exists(key="DomainFixedYmax")){ ConfigDomainFixedValue(key,eparms.GetValueDouble(key)); resizeold=true; }
+  if(eparms.Exists(key="DomainFixedZmax")){ ConfigDomainFixedValue(key,eparms.GetValueDouble(key)); resizeold=true; }
+  if(!eparms.IsPosDefault() && resizeold)RunException(met,"Combination of <simulationdomain> with IncZ or DomainFixedXXX in <parameters> section of XML is not allowed.",FileXml);
+  if(resizeold)Log->PrintWarning("The options IncZ and DomainFixedXXXX are deprecated.");
+  ConfigDomainResize("Xmin",&eparms);
+  ConfigDomainResize("Ymin",&eparms);
+  ConfigDomainResize("Zmin",&eparms);
+  ConfigDomainResize("Xmax",&eparms);
+  ConfigDomainResize("Ymax",&eparms);
+  ConfigDomainResize("Zmax",&eparms);
 
   //-Predefined constantes.
   if(ctes.GetEps()!=0)Log->PrintWarning("Eps value is not used (this correction is deprecated).");
@@ -594,6 +634,17 @@ void JSph::LoadCaseConfig(){
     AccInput=new JSphAccInput(Log,DirCase,&xml,"case.execution.special.accinputs");
   }
 
+  //-Configuration of ChronoObjects. //<vs_chroono_ini>
+  if(UseChrono){
+    if(xml.GetNode("case.execution.special.chrono",false)){
+      if(!JChronoObjects::Available())RunException(met,"DSPHChronoLib to use Chrono is not included in the current compilation.");
+      ChronoObjects=new JChronoObjects(Log,DirCase,CaseName,&xml,"case.execution.special.chrono",Dp,parts.GetMkBoundFirst());
+    }
+    else RunException(met,"Chrono configuration in XML file is missing.",FileXml);
+  }
+  else if(xml.GetNode("case.execution.special.chrono",false))Log->PrintfWarning("The use of Chrono is disabled (RigidAlgorithm is not 3) although XML file includes the Chrono configuration.");
+  //<vs_chroono_end>
+
   //-Loads and configures moving objects.
   if(parts.CountBlocks(TpPartMoving)>0){
     SphMotion=new JSphMotion();
@@ -612,6 +663,29 @@ void JSph::LoadCaseConfig(){
     }
   }
 
+  //-Configuration of MLPistons.  //<vs_mlapiston_ini>
+  if(xml.GetNode("case.execution.special.mlayerpistons",false)){
+    if(!JMLPistons::Available())RunException(met,"Code for Multi-Layer Pistons is not included in the current compilation.");
+    bool useomp=false,usegpu=false;
+    MLPistons=new JMLPistons(!Cpu,Log,DirCase);
+    MLPistons->LoadXml(&xml,"case.execution.special.mlayerpistons");  
+    if(SphMotion)for(unsigned c=0;c<SphMotion->GetNumObjects();c++){
+      MLPistons->ConfigPiston(SphMotion->GetObjMkBound(c),c,SphMotion->GetObjBegin(c),SphMotion->GetObjSize(c),TimeMax);
+    }
+    MLPistons->CheckPistons();
+  }//<vs_mlapiston_end>
+
+  //-Configuration of RelaxZones.  //<vs_rzone_ini>
+  if(xml.GetNode("case.execution.special.relaxationzones",false)){
+    if(!JRelaxZones::Available())RunException(met,"Code for Relaxation Zones is not included in the current compilation.");
+    bool useomp=false,usegpu=false;
+    #ifdef OMP_USE_WAVEGEN
+      useomp=(omp_get_max_threads()>1);
+    #endif
+    RelaxZones=new JRelaxZones(useomp,!Cpu,Log,DirCase,CaseNfloat>0,CaseNbound);
+    RelaxZones->LoadXml(&xml,"case.execution.special.relaxationzones");
+  }//<vs_rzone_end>
+
   //-Configuration of damping zones.
   if(xml.GetNode("case.execution.special.damping",false)){
     Damping=new JDamping(Dp,Log);
@@ -621,8 +695,9 @@ void JSph::LoadCaseConfig(){
   //-Loads floating objects.
   FtCount=parts.CountBlocks(TpPartFloating);
   if(FtCount){
+    FtConstraints=false;
     if(FtCount>CODE_MKRANGEMAX)RunException(met,"The number of floating objects exceeds the maximum.");
-    AllocMemoryFloating(FtCount);
+    AllocMemoryFloating(FtCount,parts.UseImposedFtVel());
     unsigned cobj=0;
     for(unsigned c=0;c<parts.CountBlocks()&&cobj<FtCount;c++){
       const JSpacePartBlock &block=parts.GetBlock(c);
@@ -635,11 +710,18 @@ void JSph::LoadCaseConfig(){
         fobj->mass=(float)fblock.GetMassbody();
         fobj->massp=fobj->mass/fobj->count;
         fobj->radius=0;
+        fobj->constraints=ComputeConstraintsValue(fblock.GetTranslationFree(),fblock.GetRotationFree());
+        if(fobj->constraints!=FTCON_Free)FtConstraints=true;
         fobj->center=fblock.GetCenter();
         fobj->angles=TFloat3(0);
-        fobj->fvel=ToTFloat3(fblock.GetVelini());
-        fobj->fomega=ToTFloat3(fblock.GetOmegaini());
+        fobj->fvel=ToTFloat3(fblock.GetLinearVelini());
+        fobj->fomega=ToTFloat3(fblock.GetAngularVelini());
         fobj->inertiaini=ToTMatrix3f(fblock.GetInertia());
+        //-Chrono configuration. //<vs_chroono_ini> 
+        fobj->usechrono=(ChronoObjects && ChronoObjects->ConfigBodyFloating(fblock.GetMkType()
+          ,fblock.GetMassbody(),fblock.GetCenter(),fblock.GetInertia()
+          ,fblock.GetTranslationFree(),fblock.GetRotationFree(),fobj->fvel,fobj->fomega));
+        //<vs_chroono_end>
         cobj++;
       }
     }
@@ -649,13 +731,23 @@ void JSph::LoadCaseConfig(){
       UseDEM=false;
       Log->PrintWarning("The use of DEM was disabled because there are no floating objects...");
     }
+    if(UseChrono){ //<vs_chroono_ini> 
+      UseChrono=false;
+      Log->PrintWarning("The use of CHRONO was disabled because there are no floating objects...");
+      delete ChronoObjects; ChronoObjects=NULL;
+    } //<vs_chroono_end>
   }
   WithFloating=(FtCount>0);
   FtMode=(WithFloating? FTMODE_Sph: FTMODE_None);
   if(UseDEM)FtMode=FTMODE_Ext;
+  if(UseChrono)FtMode=FTMODE_Ext; //<vs_chroono>
+  if(UseChrono && PeriActive!=0)Log->PrintfWarning("The use of Chrono with periodic limits is only recommended when moving and floating objects do not move beyond those periodic limits."); //<vs_chroono>
 
+  //-Loads DEM and DVI data for boundary objects.   //<vs_chroono>
+  if(UseDEM || UseChrono){/*                        //<vs_chroono>
   //-Loads DEM data for boundary objects. (DEM)
   if(UseDEM){
+  */                                                //<vs_chroono>
     if(UseDEM){
       DemData=new StDemData[DemDataSize];
       memset(DemData,0,sizeof(StDemData)*DemDataSize);
@@ -666,7 +758,15 @@ void JSph::LoadCaseConfig(){
         const word mkbound=block.GetMkType();
         const unsigned cmk=MkInfo->GetMkBlockByMkBound(mkbound);
         if(cmk>=MkInfo->Size())RunException(met,fun::PrintStr("Error loading boundary objects. Mkbound=%u is unknown.",mkbound));
+        const bool chronodata=(ChronoObjects && ChronoObjects->UseDataDVI(mkbound)); //<vs_chroono>
+        const StDemData data=LoadDemData(UseDEM ||chronodata,UseDEM,&block);/*       //<vs_chroono>
         const StDemData data=LoadDemData(UseDEM,UseDEM,&block);
+        */                                                                           //<vs_chroono>
+        if(chronodata){ //<vs_chroono_ini>
+          if(block.Type==TpPartFloating)ChronoObjects->ConfigDataDVIBodyFloating(mkbound,data.kfric,data.restitu);
+          if(block.Type==TpPartMoving)  ChronoObjects->ConfigDataDVIBodyMoving  (mkbound,data.kfric,data.restitu);
+          if(block.Type==TpPartFixed)   ChronoObjects->ConfigDataDVIBodyFixed   (mkbound,data.kfric,data.restitu);
+        } //<vs_chroono_end>
         if(UseDEM){
           const unsigned tav=CODE_GetTypeAndValue(MkInfo->Mkblock(cmk)->Code); //:Log->Printf("___> tav[%u]:%u",cmk,tav);
           DemData[tav]=data;
@@ -675,6 +775,20 @@ void JSph::LoadCaseConfig(){
     }
   }
 
+  //-Configuration of Inlet/Outlet.  //<vs_innlet_ini> 
+  if(xml.GetNode("case.execution.special.inout",false)){
+    InOut=new JSphInOut(Cpu,Log,FileXml,&xml,"case.execution.special.inout",DirCase);
+    NpDynamic=true;
+    ReuseIds=InOut->GetReuseIds();
+    if(ReuseIds)RunException(met,"Inlet/Outlet with ReuseIds is not a valid option for now...");
+  }
+  
+  //-Configuration of boundary extrapolated correction.
+  if(xml.GetNode("case.execution.special.boundextrap",false))RunException(met,"The XML section 'boundextrap' is obsolete.");
+  if(xml.GetNode("case.execution.special.boundcorr",false)){
+    BoundCorr=new JSphBoundCorr(Cpu,Dp,Log,&xml,"case.execution.special.boundcorr",MkInfo);
+  } //<vs_innlet_end> 
+ 
   NpMinimum=CaseNp-unsigned(PartsOutMax*CaseNfluid);
   Log->Print("**Basic case configuration is loaded");
 }
@@ -897,9 +1011,11 @@ void JSph::VisuConfig()const{
     if(ShiftTFS)Log->Print(fun::VarStr("ShiftTFS",ShiftTFS));
   }
   string rigidalgorithm=(!FtCount? "None": (UseDEM? "SPH+DCDEM": "SPH"));
+  if(UseChrono)rigidalgorithm="SPH+CHRONO"; //<vs_chroono>
   Log->Print(fun::VarStr("RigidAlgorithm",rigidalgorithm));
   Log->Print(fun::VarStr("FloatingCount",FtCount));
   if(FtCount)Log->Print(fun::VarStr("FtPause",FtPause));
+  if(FtCount)Log->Print(fun::VarStr("FtConstraints",FtConstraints));
   Log->Print(fun::VarStr("CaseNp",CaseNp));
   Log->Print(fun::VarStr("CaseNbound",CaseNbound));
   Log->Print(fun::VarStr("CaseNfixed",CaseNfixed));
@@ -1285,6 +1401,7 @@ void JSph::LoadCaseParticles(){
 //==============================================================================
 void JSph::InitRun(unsigned np,const unsigned *idp,const tdouble3 *pos){
   const char met[]="InitRun";
+  InterStep=(TStep==STEP_Symplectic? INTERSTEP_SymPredictor: INTERSTEP_Verlet);
   VerletStep=0;
   if(TStep==STEP_Symplectic)SymplecticDtPre=DtIni;
   if(UseDEM)DemDtForce=DtIni; //(DEM)
@@ -1309,6 +1426,8 @@ void JSph::InitRun(unsigned np,const unsigned *idp,const tdouble3 *pos){
   }
   //-Adjust motion paddles for the instant of the loaded PART.
   if(WaveGen)WaveGen->SetTimeMod(!PartIni? PartBeginTimeStep: 0);
+  //-Adjust Multi-layer pistons for the instant of the loaded PART.   //<vs_mlapiston>
+  if(MLPistons)MLPistons->SetTimeMod(!PartIni? PartBeginTimeStep: 0);     //<vs_mlapiston>
 
   //-Uses Inlet information from PART read.
   if(PartBeginTimeStep && PartBeginTotalNp){
@@ -1337,6 +1456,28 @@ void JSph::InitRun(unsigned np,const unsigned *idp,const tdouble3 *pos){
     WaveGen->VisuConfig(""," ");
   }
 
+  //-Prepares MLPistons configuration.  //<vs_mlapiston_ini>
+  if(MLPistons){
+    Log->Printf("Multi-Layer Pistons configuration:");
+    //if(MLPistons->UseAwasZsurf())MLPistons->InitAwas(Gravity,Simulate2D,CellOrder,MassFluid,Dp,Dosh,Scell,Hdiv,DomPosMin,DomRealPosMin,DomRealPosMax); ->awaspdte
+    MLPistons->VisuConfig(""," ");
+  }  //<vs_mlapiston_end>
+
+  //-Prepares RelaxZones configuration.  //<vs_rzone_ini>
+  if(RelaxZones){
+    Log->Print("Relaxation Zones configuration:");
+    RelaxZones->Init(DirCase,TimeMax,Dp,Gravity);
+    RelaxZones->VisuConfig(""," ");
+  }  //<vs_rzone_end>
+
+  //-Prepares ChronoObjects configuration.  //<vs_chroono_ini>
+  if(ChronoObjects){
+    Log->Print("Chrono Objects configuration:");
+    if(PartBegin)RunException(met,"Simulation restart not allowed when Chrono is used.");
+    ChronoObjects->Init(Simulate2D,MkInfo);
+    ChronoObjects->VisuConfig(""," ");
+  }  //<vs_chroono_end>
+
   //-Prepares Damping configuration.
   if(Damping){
     Damping->VisuConfig("Damping configuration:"," ");
@@ -1355,6 +1496,14 @@ void JSph::InitRun(unsigned np,const unsigned *idp,const tdouble3 *pos){
     SaveDt->Config(&xml,"case.execution.special.savedt",TimeMax,TimePart);
     SaveDt->VisuConfig("SaveDt configuration:"," ");
   }
+
+  //-Prepares BoundCorr configuration.  //<vs_innlet_ini>
+  if(BoundCorr){
+    Log->Print("BoundCorr configuration:");
+    if(PartBegin)RunException(met,"Simulation restart not allowed when BoundCorr is used.");
+    BoundCorr->RunAutoConfig(PartsInit);
+    BoundCorr->VisuConfig(""," ");
+  }//<vs_innlet_end>
 
   //-Shows configuration of JGaugeSystem.
   if(GaugeSystem->GetCount())GaugeSystem->VisuConfig("GaugeSystem configuration:"," ");
@@ -1470,25 +1619,42 @@ void JSph::AbortBoundOut(unsigned nout,const unsigned *idp,const tdouble3 *pos,c
   byte* motive=new byte[nout];
   unsigned outfixed=0,outmoving=0,outfloat=0;
   unsigned outpos=0,outrhop=0,outmove=0;
+  bool outxmin=false,outymin=false,outzmin=false;
+  bool outxmax=false,outymax=false,outzmax=false;
   for(unsigned p=0;p<nout;p++){
     //-Checks type of particle.
     switch(CODE_GetType(code[p])){
-    case CODE_TYPE_FIXED:     type[p]=0;  outfixed++;   break;
-    case CODE_TYPE_MOVING:    type[p]=1;  outmoving++;  break; 
-    case CODE_TYPE_FLOATING:  type[p]=2;  outfloat++;   break; 
-    default:                  type[p]=99;               break; 
+      case CODE_TYPE_FIXED:     type[p]=0;  outfixed++;   break;
+      case CODE_TYPE_MOVING:    type[p]=1;  outmoving++;  break; 
+      case CODE_TYPE_FLOATING:  type[p]=2;  outfloat++;   break; 
+      default:                  type[p]=99;               break; 
     }
     //-Checks reason for exclusion.
     switch(CODE_GetSpecialValue(code[p])){
-    case CODE_OUTPOS:   motive[p]=1; outpos++;   break;
-    case CODE_OUTRHOP:  motive[p]=2; outrhop++;  break; 
-    case CODE_OUTMOVE:  motive[p]=3; outmove++;  break; 
-    default:            motive[p]=0;             break; 
+      case CODE_OUTPOS:   motive[p]=1; outpos++;   break;
+      case CODE_OUTRHOP:  motive[p]=2; outrhop++;  break; 
+      case CODE_OUTMOVE:  motive[p]=3; outmove++;  break; 
+      default:            motive[p]=0;             break; 
+    }
+    //-Checks out-position limits.
+    if(CODE_GetSpecialValue(code[p])==CODE_OUTPOS){
+      const tdouble3 rpos=pos[p];
+      //-Check limits of real domain. | Comprueba limites del dominio reales.
+      const double dx=rpos.x-MapRealPosMin.x;
+      const double dy=rpos.y-MapRealPosMin.y;
+      const double dz=rpos.z-MapRealPosMin.z;
+      if(!PeriX && dx<0)outxmin=true;
+      if(!PeriX && dx>=MapRealSize.x)outxmax=true;
+      if(!PeriY && dy<0)outymin=true;
+      if(!PeriY && dy>=MapRealSize.y)outymax=true;
+      if(!PeriZ && dz<0)outzmin=true;
+      if(!PeriZ && dz>=MapRealSize.z)outzmax=true;
     }
   }
   //-Shows excluded particles information.
   Log->Print(" ");
   Log->Print("*** ERROR: Some boundary particle was excluded. ***");
+  if(UseChrono && PeriActive!=0)Log->Print("*** Maybe some Chrono object went beyond the periodic limits. Be careful when combining the use of Chrono with periodic limits."); //<vs_chroono>
   Log->Printf("TimeStep: %f  (Nstep: %u)",TimeStep,Nstep);
   unsigned npunknown=nout-outfixed-outmoving-outfloat;
   if(!npunknown)Log->Printf("Total boundary: %u  (fixed=%u  moving=%u  floating=%u)",nout,outfixed,outmoving,outfloat);
@@ -1496,6 +1662,12 @@ void JSph::AbortBoundOut(unsigned nout,const unsigned *idp,const tdouble3 *pos,c
   npunknown=nout-outpos-outrhop-outmove;
   if(!npunknown)Log->Printf("Excluded for: position=%u  rhop=%u  velocity=%u",outpos,outrhop,outmove);
   else Log->Printf("Excluded for: position=%u  rhop=%u  velocity=%u  UNKNOWN=%u",outpos,outrhop,outmove,npunknown);
+  if(outxmin)Log->Print("Some boundary particle exceeded the -X limit (left limit) of the simulation domain.");
+  if(outxmax)Log->Print("Some boundary particle exceeded the +X limit (right limit) of the simulation domain.");
+  if(outymin)Log->Print("Some boundary particle exceeded the -Y limit (front limit) of the simulation domain.");
+  if(outymax)Log->Print("Some boundary particle exceeded the +Y limit (back limit) of the simulation domain.");
+  if(outzmin)Log->Print("Some boundary particle exceeded the -Z limit (bottom limit) of the simulation domain.");
+  if(outzmax)Log->Print("Some boundary particle exceeded the +Z limit (top limit) of the simulation domain.");
   Log->Print(" ");
   //-Creates VTK file.
   std::vector<JFormatFiles2::StScalarData> fields;
@@ -1651,6 +1823,12 @@ void JSph::SaveData(unsigned npok,const unsigned *idp,const tdouble3 *pos,const 
   }
   else Log->Printf("Part%s        %u particles successfully stored",suffixpartx.c_str(),npok);   
   
+  //-Shows info of the new inlet particles.  //<vs_innlet_ini> 
+  if(InOut && InOut->GetNewNpPart()){
+    Log->Printf("  Particles new: %u (total: %llu)",InOut->GetNewNpPart(),InOut->GetNewNpTotal());
+    InOut->ClearNewNpPart();
+  }  //<vs_innlet_end> 
+  
   //-Shows info of the excluded particles.
   if(nout){
     PartOut+=nout;
@@ -1678,6 +1856,8 @@ void JSph::SaveData(unsigned npok,const unsigned *idp,const tdouble3 *pos,const 
   if(SvDomainVtk)SaveDomainVtk(ndom,vdom);
   if(SaveDt)SaveDt->SaveData();
   if(GaugeSystem)GaugeSystem->SaveResults(Part);
+  if(ChronoObjects)ChronoObjects->SavePart(Part); //<vs_chroono>
+  if(BoundCorr && BoundCorr->GetUseMotion())BoundCorr->SaveData(Part);  //<vs_innlet>
 }
 
 //==============================================================================
@@ -1963,6 +2143,10 @@ void JSph::DgSaveVtkParticlesCpu(std::string filename,int numfile,unsigned pini,
     xtype[p]=(t==CODE_TYPE_FIXED? 0: (t==CODE_TYPE_MOVING? 1: (t==CODE_TYPE_FLOATING? 2: 3)));
     typecode k=CODE_GetSpecialValue(code[p+pini]);
     xkind[p]=(k==CODE_NORMAL? 0: (k==CODE_PERIODIC? 1: (k==CODE_OUTIGNORE? 2: 3)));
+    {//-For InOut particles.  //<vs_innlet_ini> 
+      typecode tv=CODE_GetTypeAndValue(code[p+pini]);
+      if(tv>=CODE_TYPE_FLUID_INOUT)xkind[p]=byte(tv-CODE_TYPE_FLUID_INOUT+10);
+    }  //<vs_innlet_end> 
   }
   //-Generates VTK file.
   JFormatFiles2::StScalarData fields[10];

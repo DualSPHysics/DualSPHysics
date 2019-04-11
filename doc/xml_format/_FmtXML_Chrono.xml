@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!-- *** DualSPHysics [Chrono] v4.3.044 (12-03-2019) *** -->
+<!-- *** class: JChronoObjects *** -->
+<!------------------------------------------------------------------------------->
+<!------------------------------------------------------------------------------->
+<!-- *** Example to define the bodies and links using Chrono *** -->
+<casedef>
+	<!-- Define body materials  -->
+	<!-- Floating bodies -->
+	<floatings>
+		<floating mkbound="1" relativeweight="1.0" property="pvc" comment="Property for the floating bound" />
+	</floatings>
+	<properties>
+		<propertyfile file="Floating_Materials.xml" path="materials" />
+		<!-- Fixed bodies -->
+		<links>
+			<link mkbound="0" property="pvc" comment="Property for the fixed bound" />
+		</links>
+	</properties>
+</casedef>
+<execution>
+	<special>
+		<chrono>
+			<savedata value="-1" comment="Saves CSV with data exchange for each time interval (0=all steps)" />
+            <schemescale value="1" comment="Scale used to create the initial scheme of Chrono objects (default=1)" />
+            <collisiondp value="0.5" comment="Allowed collision overlap according Dp (default=0.5)" />
+			<!-- Define the bodies for Chrono -->
+			<bodyfixed id="domain" mkbound="0" modelfile="domain.obj" /> <!-- Link a mesh file to enable contact modelling -->
+			<!-- <bodymoving id="piston" mkbound="10" massbody="10" modelfile="piston.vtk" />  The use of predefined moving objects by Chrono is disabled for now -->
+			<bodyfloating id="box1" mkbound="1" modelfile="box.obj" />
+			<bodyfloating id="box2" mkbound="2"/> <!-- Don't link a mesh file to disable contact modelling -->
+			<bodyfloating id="box3" mkbound="3"/>
+			<bodyfloating id="box4" mkbound="4"/>
+			<bodyfloating id="box5" mkbound="5"/>
+			<!-- Define the restrictions between bodies  -->
+			<!-- Spring between two bodies -->
+			<link_linearspring idbody1="domain" idbody2="box1">
+				<point_fb1 x="1.0" y="1.0" z="1.0" comment="Point in body 1" />
+				<point_fb2 x="2.0" y="2.0" z="2.0" comment="Point in body 2" />
+				<stiffness value="1000" comment="Stiffness [N/m]" />
+				<damping value="100" comment="Damping [-]" />
+				<rest_length value="5.0" comment="Spring equilibrium length [m]" />
+				<coulombdamping value="0" comment="Coulomb damping value. Not applied when it is zero. (default=0)" />
+				<savevtk>
+					<nside value="16" comment="number of sections for each revolution. 0=not saved, 1=line (default=16)" />
+					<radius value="3" comment="spring radius (default=3)" />
+					<length value="1" comment="length for each revolution (default=1)" />
+				</savevtk>
+			</link_linearspring>
+			<!-- Hinge between two bodies -->
+			<link_hinge idbody1="box1" idbody2="box2">
+				<rotpoint x="1.0" y="1.0" z="1.0" comment="Point for rotation" />
+				<rotvector x="0" y="1" z="0" comment="Vector direction for rotation" />
+				<stiffness value="500" comment="Torsional stiffness [N/rad]" />
+				<damping   value="10" comment="Torsional damping [-]" />
+			</link_hinge>
+			<!-- Spheric joint between two bodies -->
+			<link_spheric idbody1="box2" idbody2="box3">
+				<rotpoint x="3.0" y="3.0" z="3.0" comment="Point for rotation" />
+				<stiffness value="20" comment="Torsional stiffness [N/rad]" />
+				<damping   value="10" comment="Torsional damping [-]" />
+			</link_spheric>
+			<!-- Define restrictions of a body to absolute space -->
+			<!-- Spheric joint or modified joint by rotvector and rotvector2 that can slide along an axis -->
+			<link_pointline idbody1="box4">
+				<slidingvector x="0" y="1" z="0" comment="Vector direction for sliding axis" />
+				<rotpoint x="4.0" y="0" z="4.0" comment="Point for rotation" />
+				<_rotvector x="0" y="1" z="0" comment="Vector direction for rotation, use (0,0,0) for spheric joint (default=(0,0,0))" />
+				<_rotvector2 x="0" y="0" z="1" comment="Second vector to avoid rotation (default=(0,0,0))" />
+				<stiffness value="400" comment="Torsional stiffness [N/rad]" />
+				<damping value="50" comment="Torsional damping [-]" />
+			</link_pointline>
+			<link_spheric idbody1="box5">
+				<rotpoint x="5.0" y="5.0" z="5.0" comment="Point for rotation" />
+				<stiffness value="20" comment="Torsional stiffness [N/rad]" />
+				<damping   value="10" comment="Torsional damping [-]" />
+			</link_spheric>
+		</chrono>
+	</special>
+	...
+</execution>
+<!------------------------------------------------------------------------------->
+<!------------------------------------------------------------------------------->
+<!-- *** Examples of defining the geometry of objects ***                      -->
+<!-- Note that geometry definition is only necessary when Chrono manages       -->
+<!-- collisions between boundary objects (fixed, moving or floating).          -->
+<chrono>
+	<savedata value="0.02" comment="Saves CSV with data exchange for each time interval (0=all steps)" />
+    <!-- Geometry files (OBJ or VTK files) is defined by "modelfile". -->
+    <bodyfloating id="box1" mkbound="1" modelfile="box.obj" />
+    <!-- [CaseName] is replaced by case name in DualSPHysics execution. -->
+    <bodyfloating id="ball" mkbound="4" modelfile="[CaseName]_WreckingBall_Actual.vtk" />
+    <!-- Several objects can be defined in one line using a list of mkbound values. -->
+    <!-- The geometry used by each object is according the mk of each object when   -->
+	<!-- the VTK file includes information about mk.                                -->
+    <bodyfloating id="box" mkbound="51-66,80,82" modelfile="[CaseName]_Boxes_Actual.vtk" />
+    <!-- modelfile="AutoActual" or modelfile="AutoDp" can be used to assign the geometry -->
+    <!-- automatically from the VTK files generated by GenCase v4.0.074 (or higher).     -->
+    <bodyfloating id="box" mkbound="51-66,80,82" modelfile="AutoActual" />
+    <!-- The normals of geometry can be changed using modelnormal="invert".             -->
+	<!-- The value of modelnormal is "original" by default. The use of "invert" inverts --> 
+	<!-- the normal ones. And "twoface" creates normals in both directions but this     --> 
+	<!-- option may effect the results of the simulation.                               -->
+    <bodyfixed id="domain" mkbound="10" modelfile="AutoActual" modelnormal="invert" />
+</chrono>
+
+
+

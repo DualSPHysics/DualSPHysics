@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2018 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2019 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -49,6 +49,8 @@ class JSphDtFixed;
 class JSaveDt;
 class JSphVisco;
 class JWaveGen;
+class JMLPistons;   //<vs_mlapiston>
+class JRelaxZones;  //<vs_rzone>
 class JSphAccInput;
 class JSpaceParts;
 class JPartDataBi4;
@@ -61,7 +63,12 @@ class JTimeOut;
 class JGaugeSystem;
 class JPartsLoad4;
 class JSpacePartBlock;
+class JChronoObjects;    //<vs_chroono>
+class JSphInOut;         //<vs_innlet>
+class JSphBoundCorr;     //<vs_innlet>
 class JSphPartsInit;
+class JLinearValue;
+class JSpaceEParms;
 
 //##############################################################################
 //# XML format of execution parameters in _FmtXML__Parameters.xml.
@@ -127,6 +134,7 @@ private:
   void ConfigDomainParticlesValue(std::string key,double v);
   void ConfigDomainParticlesPrc(tdouble3 vmin,tdouble3 vmax);
   void ConfigDomainParticlesPrcValue(std::string key,double v);
+  void ConfigDomainResize(std::string key,const JSpaceEParms *eparms);
 
 protected:
   const bool Cpu;
@@ -239,10 +247,11 @@ protected:
   JSphMotion *SphMotion;      ///<Manages moving objects. It is NULL when there are not moving objects.
 
   //-Variables for floating bodies.
-  StFloatingData *FtObjs;    ///<Data of floating objects. [ftcount]
-  unsigned FtCount;          ///<Number of floating objects.
-  float FtPause;             ///<Time to start floating bodies movement.
-  TpFtMode FtMode;           ///<Defines interaction mode for floatings and boundaries.
+  StFloatingData *FtObjs;      ///<Data of floating objects. [FtCount]
+  unsigned FtCount;            ///<Number of floating objects.
+  float FtPause;               ///<Time to start floating bodies movement.
+  TpFtMode FtMode;             ///<Defines interaction mode for floatings and boundaries.
+  bool FtConstraints;          ///<Some floating motion constraint is defined.
   bool WithFloating;
 
   //-Variables for DEM (DEM).
@@ -250,15 +259,28 @@ protected:
   static const unsigned DemDataSize=CODE_TYPE_FLUID;
   StDemData *DemData;  ///<Data of DEM objects. [DemDataSize]
 
+  //<vs_chroono_ini>
+  //-Variables for Chrono use.
+  bool UseChrono;  ///<Use Chrono library for rigid body dynamics.
+  JChronoObjects *ChronoObjects;  ///<Object for integration with Chrono Engine.
+  //<vs_chroono_end>
+
   std::vector<std::string> InitializeInfo; ///<Stores information about initialize configuration applied.
 
   JGaugeSystem *GaugeSystem;    ///<Object for automatic gauge system.
 
   JWaveGen *WaveGen;            ///<Object for wave generation.
 
+  JMLPistons *MLPistons;        ///<Object for Multi-Layer Pistons.   //<vs_mlapiston>
+
+  JRelaxZones *RelaxZones;      ///<Object for wave generation using Relaxation Zone (RZ).  //<vs_rzone>
+
   JDamping *Damping;            ///<Object for damping zones.
 
   JSphAccInput *AccInput;  ///<Object for variable acceleration functionality.
+
+  JSphInOut *InOut;         ///<Object for inlet/outlet conditions.  //<vs_innlet> 
+  JSphBoundCorr *BoundCorr; ///<Object for boundary extrapolated correction (used in combination with InOut).  //<vs_innlet>
 
   //-Variables for division in cells.
   TpCellMode CellMode;     ///<Cell division mode. | Modo de division en celdas.
@@ -319,6 +341,7 @@ protected:
   double TimeStep;        ///<Current instant of the simulation. | Instante actual de la simulación.                                 
   double TimeStepM1;      ///<Instant of the simulation when the last PART was stored. | Instante de la simulación en que se grabo el último PART.         
   double TimePartNext;    ///<Instant to store next PART file.   | Instante para grabar siguiente fichero PART.
+  double LastDt;          ///<Last dt value added to Instant to TimeStep. | Ultimo valor de dt sumado a TimeStep.
 
   //-Control of the execution times.
   JTimer TimerTot;         ///<Measueres total runtime.                          | Mide el tiempo total de ejecucion.
@@ -333,7 +356,7 @@ protected:
   double DemDtForce;       ///<Dt for tangencial acceleration.
 
 
-  void AllocMemoryFloating(unsigned ftcount);
+  void AllocMemoryFloating(unsigned ftcount,bool imposedvel=false);
   llong GetAllocMemoryCpu()const;
 
   void LoadConfig(const JCfgRun *cfg);

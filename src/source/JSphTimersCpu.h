@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2018 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2019 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -53,8 +53,12 @@ typedef enum{
   ,TMC_SuPeriodic=11
   ,TMC_SuResizeNp=12
   ,TMC_SuSavePart=13
+  ,TMC_SuChrono=14      //<vs_innlet>
+  ,TMC_SuBoundCorr=15   //<vs_innlet>
+  ,TMC_SuInOut=16       //<vs_innlet>
 }CsTypeTimerCPU;
-#define TMC_COUNT 14
+//#define TMC_COUNT 14   //<vs_no_innlet>
+#define TMC_COUNT 17     //<vs_innlet>
 
 typedef StSphTimerCpu TimersCpu[TMC_COUNT];
 
@@ -77,6 +81,9 @@ inline const char* TmcGetName(CsTypeTimerCPU ct){
     case TMC_SuPeriodic:        return("SU-Periodic");
     case TMC_SuResizeNp:        return("SU-ResizeNp");
     case TMC_SuSavePart:        return("SU-SavePart");
+    case TMC_SuChrono:          return("SU-Chrono");     //<vs_chroono>
+    case TMC_SuBoundCorr:       return("SU-BoundCorr");  //<vs_innlet>
+    case TMC_SuInOut:           return("SU-InOut");      //<vs_innlet>
   }
   return("???");
 }

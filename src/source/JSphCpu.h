@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2018 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2019 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -162,13 +162,20 @@ protected:
   void PosInteraction_Forces();
 
   inline void GetKernelWendland(float rr2,float drx,float dry,float drz,float &frx,float &fry,float &frz)const;
+  void GetKernelWendland(float rr2,float drx,float dry,float drz,float &frx,float &fry,float &frz,float &wab)const; //<vs_innlet>
   inline void GetKernelGaussian(float rr2,float drx,float dry,float drz,float &frx,float &fry,float &frz)const;
+  void GetKernelGaussian(float rr2,float drx,float dry,float drz,float &frx,float &fry,float &frz,float &wab)const; //<vs_innlet>
   inline void GetKernelCubic(float rr2,float drx,float dry,float drz,float &frx,float &fry,float &frz)const;
+  void GetKernelCubic(float rr2,float drx,float dry,float drz,float &frx,float &fry,float &frz,float &wab)const; //<vs_innlet>
   inline float GetKernelCubicTensil(float rr2,float rhopp1,float pressp1,float rhopp2,float pressp2)const;
 
   inline void GetInteractionCells(unsigned rcell
     ,int hdiv,const tint4 &nc,const tint3 &cellzero
     ,int &cxini,int &cxfin,int &yini,int &yfin,int &zini,int &zfin)const;
+
+  void GetInteractionCells(const tdouble3 &pos                            //<vs_innlet>
+    ,int hdiv,const tint4 &nc,const tint3 &cellzero                       //<vs_innlet>
+    ,int &cxini,int &cxfin,int &yini,int &yfin,int &zini,int &zfin)const; //<vs_innlet>
 
   template<bool psingle,TpKernel tker,TpFtMode ftmode> void InteractionForcesBound
     (unsigned n,unsigned pini,tint4 nc,int hdiv,unsigned cellinitial
@@ -237,7 +244,17 @@ protected:
   void MoveMatBound(unsigned np,unsigned ini,tmatrix4d m,double dt,const unsigned *ridpmv,tdouble3 *pos,unsigned *dcell,tfloat4 *velrhop,typecode *code)const;
   void CalcMotion(double stepdt);
   void RunMotion(double stepdt);
+  void RunRelaxZone(double dt);  //<vs_rzone>
   void RunDamping(double dt,unsigned np,unsigned npb,const tdouble3 *pos,const typecode *code,tfloat4 *velrhop)const;
+
+  //<vs_mlapiston_ini>
+  void MovePiston1d(unsigned np,unsigned ini,double poszmin,unsigned poszcount
+    ,const byte *pistonid,const double* movx,const double* velx
+    ,const unsigned *ridpmv,tdouble3 *pos,unsigned *dcell,tfloat4 *velrhop,typecode *code)const;
+  void MovePiston2d(unsigned np,unsigned ini
+    ,double posymin,double poszmin,unsigned poszcount,const double* movx,const double* velx
+    ,const unsigned *ridpmv,tdouble3 *pos,unsigned *dcell,tfloat4 *velrhop,typecode *code)const;
+  //<vs_mlapiston_end>
 
   void ShowTimers(bool onlyfile=false);
   void GetTimersInfo(std::string &hinfo,std::string &dinfo)const;
@@ -254,6 +271,64 @@ public:
 
   void UpdatePos(tdouble3 pos0,double dx,double dy,double dz,bool outrhop,unsigned p,tdouble3 *pos,unsigned *cell,typecode *code)const;
 
+//<vs_innlet_ini>
+//-Code for InOut in JSphCpu_InOut.cpp
+//--------------------------------------
+protected:
+  //-Variables for InOut.
+  unsigned InOutCount;     ///<Number of inout particles in InOutPartc[].
+  int *InOutPartc;         ///<InOut particle list.
+
+  tdouble3 Interaction_PosNoPeriodic(tdouble3 posp1)const;
+
+
+  template<bool sim2d,TpKernel tker> void InteractionInOutExtrap_Double
+    (unsigned inoutcount,const int *inoutpart,const byte *cfgzone
+    ,const tplane3f *planes,const float* width,const tfloat3 *dirdata,float determlimit
+    ,tint4 nc,int hdiv,unsigned cellinitial
+    ,const unsigned *beginendcell,tint3 cellzero,const unsigned *dcell
+    ,const tdouble3 *pos,const typecode *code,const unsigned *idp
+    ,tfloat4 *velrhop);
+  
+  template<bool sim2d,TpKernel tker> void InteractionInOutExtrap_Single
+    (unsigned inoutcount,const int *inoutpart,const byte *cfgzone
+    ,const tplane3f *planes,const float* width,const tfloat3 *dirdata,float determlimit
+    ,tint4 nc,int hdiv,unsigned cellinitial
+    ,const unsigned *beginendcell,tint3 cellzero,const unsigned *dcell
+    ,const tdouble3 *pos,const typecode *code,const unsigned *idp
+    ,tfloat4 *velrhop);
+  
+  void Interaction_InOutExtrap(byte doublemode,unsigned inoutcount,const int *inoutpart
+    ,const byte *cfgzone,const tplane3f *planes
+    ,const float* width,const tfloat3 *dirdata,float determlimit
+    ,tuint3 ncells,const unsigned *begincell,tuint3 cellmin,const unsigned *dcell
+    ,const tdouble3 *pos,const typecode *code,const unsigned *idp
+    ,tfloat4 *velrhop);
+
+  float Interaction_InOutZsurf(unsigned nptz,const tfloat3 *ptzpos,float maxdist,float zbottom
+    ,tuint3 ncells,const unsigned *begincell,tuint3 cellmin
+    ,const tdouble3 *pos,const typecode *code);
+
+
+  template<bool sim2d,TpKernel tker> void InteractionBoundCorr_Double
+    (unsigned npb,typecode boundcode,tplane3f plane,tfloat3 direction,float determlimit
+    ,tint4 nc,int hdiv,unsigned cellinitial
+    ,const unsigned *beginendcell,tint3 cellzero
+    ,const tdouble3 *pos,const typecode *code,const unsigned *idp
+    ,tfloat4 *velrhop);
+
+  template<bool sim2d,TpKernel tker> void InteractionBoundCorr_Single
+    (unsigned npb,typecode boundcode,tplane3f plane,tfloat3 direction,float determlimit
+    ,tint4 nc,int hdiv,unsigned cellinitial
+    ,const unsigned *beginendcell,tint3 cellzero
+    ,const tdouble3 *pos,const typecode *code,const unsigned *idp
+    ,tfloat4 *velrhop);
+
+  void Interaction_BoundCorr(byte doublemode,typecode boundcode,tplane3f plane,tfloat3 direction,float determlimit
+    ,tuint3 ncells,const unsigned *begincell,tuint3 cellmin
+    ,const tdouble3 *pos,const typecode *code,const unsigned *idp
+    ,tfloat4 *velrhop);
+//<vs_innlet_end>
 };
 
 #endif

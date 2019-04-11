@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2018 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2019 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -91,9 +91,7 @@ public:
   bool RhopOutModif;              ///<Indicates whether \ref RhopOutMin or RhopOutMax is changed.
   float RhopOutMin,RhopOutMax;    ///<Limits for \ref RhopOut density correction.
 
-  byte DomainMode;  ///<Domain configuration 0:No configured, 1:Particles, 2:Fixed
-  tdouble3 DomainParticlesMin,DomainParticlesMax;
-  tdouble3 DomainParticlesPrcMin,DomainParticlesPrcMax;
+  byte DomainMode;  ///<Domain configuration 0:No configured, 2:Fixed
   tdouble3 DomainFixedMin,DomainFixedMax;
 
   //-General configuration from DsphConfig.xml

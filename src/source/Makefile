@@ -1,15 +1,17 @@
-#DualSPHysics GPU/CPU v4.2.103 (16-10-2018)
+#DualSPHysics GPU/CPU v4.4.000 27-03-2019
 
 #=============== Compilation Options ===============
 USE_GCC5=NO
 USE_DEBUG=NO
 USE_FAST_MATH=YES
 USE_NATIVE_CPU_OPTIMIZATIONS=NO
+COMPILE_CHRONO=YES
+COMPILE_RZ_MLPISTONS=YES
 
 LIBS_DIRECTORIES=-L./
 LIBS_DIRECTORIES:=$(LIBS_DIRECTORIES) -L../lib/linux_gcc
 
-EXECNAME=DualSPHysics4.2_linux64
+EXECNAME=DualSPHysics4.4_linux64
 EXECS_DIRECTORY=../../bin/linux
 
 ifeq ($(USE_DEBUG), YES)
@@ -33,6 +35,13 @@ ifeq ($(USE_GCC5), YES)
   NCCFLAGS+=-D_GLIBCXX_USE_CXX11_ABI=0
 endif
 
+ifeq ($(COMPILE_CHRONO), NO)
+  CCFLAGS:=$(CCFLAGS) -DDISABLE_CHRONO
+endif
+ifeq ($(COMPILE_RZ_MLPISTONS), NO)
+  CCFLAGS:=$(CCFLAGS) -DDISABLE_RZ -DDISABLE_MLPISTONS
+endif
+
 #=============== CUDA selection ===============
 CUDAVER=92
 
@@ -51,8 +60,6 @@ ifeq ($(CUDAVER),92)
 endif
 
 #=============== Select GPU architectures ===============
-# to customize compute capabilities please refer to
-# https://developer.nvidia.com/cuda-gpus (last accessed 10-11-2018)
 ifeq ($(CUDAVER),00)
   GENCODE:=$(GENCODE) -gencode=arch=compute_20,code=\"sm_20,compute_20\"
   GENCODE:=$(GENCODE) -gencode=arch=compute_30,code=\"sm_30,compute_30\"
@@ -87,7 +94,7 @@ endif
 #=============== Files to compile ===============
 OBJXML=JXml.o tinystr.o tinyxml.o tinyxmlerror.o tinyxmlparser.o
 OBJSPHMOTION=JMotion.o JMotionList.o JMotionMov.o JMotionObj.o JMotionPos.o JSphMotion.o
-OBCOMMON=Functions.o FunctionsMath.o JAppInfo.o JBinaryData.o JException.o JLinearValue.o JLog2.o JMeanValues.o JObject.o JRadixSort.o JRangeFilter.o JReadDatafile.o JSaveCsv2.o JTimeControl.o randomc.o
+OBCOMMON=Functions.o FunctionsGeo3d.o JAppInfo.o JBinaryData.o JException.o JLinearValue.o JLog2.o JMeanValues.o JObject.o JRadixSort.o JRangeFilter.o JReadDatafile.o JSaveCsv2.o JTimeControl.o randomc.o
 OBCOMMONDSPH=JDsphConfig.o JPartDataBi4.o JPartDataHead.o JPartFloatBi4.o JPartOutBi4Save.o JSpaceCtes.o JSpaceEParms.o JSpaceParts.o JSpaceProperties.o JSpaceVtkOut.o
 OBSPH=JArraysCpu.o JCellDivCpu.o JCfgRun.o JDamping.o JGaugeItem.o JGaugeSystem.o JPartsOut.o JSaveDt.o JSph.o JSphAccInput.o JSphCpu.o JSphInitialize.o JSphMk.o JSphPartsInit.o JSphDtFixed.o JSphVisco.o JTimeOut.o JWaveSpectrumGpu.o main.o
 OBSPHSINGLE=JCellDivCpuSingle.o JPartsLoad4.o JSphCpuSingle.o
@@ -96,15 +103,28 @@ OBSPHGPU=JArraysGpu.o JBlockSizeAuto.o JCellDivGpu.o JSphGpu.o
 OBSPHSINGLEGPU=JCellDivGpuSingle.o JSphGpuSingle.o
 OBCUDA=JCellDivGpu_ker.o JCellDivGpuSingle_ker.o JGauge_ker.o JReduSum_ker.o JSphGpu_ker.o JWaveOrder2_ker.o
 
+OBWAVERZ=JMLPistonsGpu.o JRelaxZonesGpu.o
+OBWAVERZCUDA=JRelaxZone_ker.o
+OBCHRONO=JChronoObjects.o
+OBINOUT=JSphCpu_InOut.o JSphCpuSingle_InOut.o JSphBoundCorr.o JSphInOut.o JSphInOutGridData.o JSphInOutPoints.o JSimpleNeigs.o
+OBINOUTGPU=JSphGpuSingle_InOut.o
+
 OBJECTS=$(OBJXML) $(OBJSPHMOTION) $(OBCOMMON) $(OBCOMMONDSPH) $(OBSPH) $(OBSPHSINGLE)
 OBJECTS:=$(OBJECTS) $(OBCOMMONGPU) $(OBSPHGPU) $(OBSPHSINGLEGPU) $(OBCUDA)
+OBJECTS:=$(OBJECTS) $(OBWAVERZ) $(OBWAVERZCUDA) $(OBCHRONO) $(OBINOUT) $(OBINOUTGPU)
 
 #=============== DualSPHysics libs to be included ===============
 JLIBS=${LIBS_DIRECTORIES} -ljformatfiles2_64 -ljwavegen_64
+ifeq ($(COMPILE_CHRONO), YES)
+  JLIBS:=$(JLIBS) -ldsphchrono -lChronoEngine
+endif
+ifeq ($(COMPILE_RZ_MLPISTONS), YES)
+  JLIBS:=$(JLIBS) -ljwave_mlp_rz_64
+endif
 
 #=============== GPU Code Compilation ===============
 CCFLAGS := $(CCFLAGS) -I./ -I$(DIRTOOLKIT)/include
-CCLINKFLAGS := $(CCLINKFLAGS) -L$(DIRTOOLKIT)/lib64 -lcudart
+CCLINKFLAGS := $(CCLINKFLAGS) -L$(DIRTOOLKIT)/lib64 -lcudart_static -ldl -lrt
 NCC=nvcc
 ifeq ($(USE_DEBUG), NO)
   NCCFLAGS+=-c $(GENCODE) -O3 -ccbin $(CC)
@@ -121,7 +141,7 @@ ifeq ($(USE_DEBUG), NO)
 	@echo "  --- Compiled Release GPU version ---"
 else
 	@echo "  --- Compiled Debug GPU version ---"
-	mv $(EXECNAME) $(EXECNAME)_debug
+	mv $(EXECS_DIRECTORY)/$(EXECNAME) $(EXECNAME)_debug
 endif
 
 $(EXECS_DIRECTORY)/$(EXECNAME):  $(OBJECTS)
@@ -147,6 +167,9 @@ JWaveOrder2_ker.o: JWaveOrder2_ker.cu
 
 JReduSum_ker.o: JReduSum_ker.cu
 	$(NCC) $(NCCFLAGS) JReduSum_ker.cu
+
+JRelaxZone_ker.o: JRelaxZone_ker.cu
+	$(NCC) $(NCCFLAGS) JRelaxZone_ker.cu
 
 clean:
 	rm -rf *.o $(EXECNAME) $(EXECNAME)_debug

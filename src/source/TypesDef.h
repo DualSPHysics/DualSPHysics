@@ -1,6 +1,6 @@
 //HEAD_DSCODES
 /*
- <DUALSPHYSICS>  Copyright (c) 2018 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2019 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -214,6 +214,8 @@ inline tdouble2 operator +(const tdouble2& a, const double& b){ return(TDouble2(
 inline tdouble2 operator -(const tdouble2& a, const double& b){ return(TDouble2(a.x-b,a.y-b)); }
 inline tdouble2 operator *(const tdouble2& a, const double& b){ return(TDouble2(a.x*b,a.y*b)); }
 inline tdouble2 operator /(const tdouble2& a, const double& b){ return(TDouble2(a.x/b,a.y/b)); }
+inline tdouble2 MinValues (const tdouble2& a, const tdouble2& b){ return(TDouble2((a.x<=b.x? a.x: b.x),(a.y<=b.y? a.y: b.y))); }
+inline tdouble2 MaxValues (const tdouble2& a, const tdouble2& b){ return(TDouble2((a.x>=b.x? a.x: b.x),(a.y>=b.y? a.y: b.y))); }
 
 
 ///Structure of 3 variables of type double.
@@ -391,7 +393,68 @@ inline tfloat3 MatrixMulPointNormal(const tmatrix4d &m,const tfloat3 &p){ return
 typedef struct{
   float xx,xy,xz,yy,yz,zz;
 }tsymatrix3f;
+inline tsymatrix3f TSymMatrix3f(){ tsymatrix3f m={0,0,0,0,0,0}; return(m); }
 
+///Symmetric matrix 4x4 of 10 values of type float.
+typedef struct{
+  float a11,a12,a13,a14 ,a22,a23,a24 ,a33,a34 ,a44;
+}tsymatrix4f;
+inline tsymatrix4f TSymMatrix4f(){ tsymatrix4f m={0,0,0,0,0,0,0,0,0,0}; return(m); }
+
+
+
+//##############################################################################
+//# Geometry type and functions
+//##############################################################################
+inline tdouble3 Point3dxy(const tdouble2 &p){ return(TDouble3(p.x,p.y,0)); }
+inline tdouble3 Point3dxz(const tdouble2 &p){ return(TDouble3(p.x,0,p.y)); }
+inline tdouble3 Point3dxy(const tfloat2  &p){ return(TDouble3(p.x,p.y,0)); }
+inline tdouble3 Point3dxz(const tfloat2  &p){ return(TDouble3(p.x,0,p.y)); }
+inline tfloat3  Point3fxy(const tfloat2  &p){ return(TFloat3 (p.x,p.y,0)); }
+inline tfloat3  Point3fxz(const tfloat2  &p){ return(TFloat3 (p.x,0,p.y)); }
+inline tfloat3  Point3fxy(const tdouble2 &p){ return(TFloat3 (float(p.x),float(p.y),0)); }
+inline tfloat3  Point3fxz(const tdouble2 &p){ return(TFloat3 (float(p.x),0,float(p.y))); }
+
+///Plane definition on 3D using double values.
+typedef struct{
+  double a,b,c,d;
+}tplane3d;
+
+///Plane definition on 3D using float values.
+typedef struct{
+  float a,b,c,d;
+}tplane3f;
+
+
+inline tplane3d TPlane3d(double v){ tplane3d p={v,v,v,v}; return(p); }
+inline tplane3d TPlane3d(double a,double b,double c,double d){ tplane3d p={a,b,c,d}; return(p); }
+inline tplane3d TPlane3d(const tdouble4 &v){ return(TPlane3d(v.x,v.y,v.z,v.w)); }
+inline tplane3d TPlane3d(const tplane3f &v){ return(TPlane3d(v.a,v.b,v.c,v.d)); }
+
+inline tplane3f TPlane3f(float v){ tplane3f p={v,v,v,v}; return(p); }
+inline tplane3f TPlane3f(float a,float b,float c,float d){ tplane3f p={a,b,c,d}; return(p); }
+inline tplane3f TPlane3f(const tfloat4 &v){ return(TPlane3f(v.x,v.y,v.z,v.w)); }
+inline tplane3f TPlane3f(const tplane3d &v){ return(TPlane3f(float(v.a),float(v.b),float(v.c),float(v.d))); }
+
+inline tfloat4  TPlane3fToTFloat4 (const tplane3f &v){ return(TFloat4(v.a,v.b,v.c,v.d)); }
+inline tfloat4  TPlane3dToTFloat4 (const tplane3d &v){ return(TPlane3fToTFloat4(TPlane3f(v))); }
+inline tdouble4 TPlane3fToTDouble4(const tplane3f &v){ return(TDouble4(v.a,v.b,v.c,v.d)); }
+inline tdouble4 TPlane3dToTDouble4(const tplane3d &v){ return(TDouble4(v.a,v.b,v.c,v.d)); }
+
+///Line definition on 3D using double values.
+typedef struct{
+  tdouble3 p; ///<Point of rect.
+  tdouble3 v; ///<Vector of rect.
+}tline3d;
+
+inline tline3d TLine3d(tdouble3 pp,tdouble3 vv){ tline3d r={pp,vv}; return(r); }
+
+///Line definition on 2D using double values.
+typedef struct{
+  double a,b,c;
+}tline2d;
+
+inline tline2d TLine2d(double a,double b,double c){ tline2d r={a,b,c}; return(r); }
 
 
 //##############################################################################

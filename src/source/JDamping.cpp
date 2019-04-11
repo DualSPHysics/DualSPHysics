@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2018 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2019 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -23,7 +23,7 @@
 #include "JAppInfo.h"
 #include "JXml.h"
 #include "Functions.h"
-#include "FunctionsMath.h"
+#include "FunctionsGeo3d.h"
 #include "JFormatFiles2.h"
 #include <cfloat>
 #include <algorithm>
@@ -131,17 +131,17 @@ void JDamping::ReadXml(JXml *sxml,TiXmlElement* lis){
       const tdouble3 vp1=TDouble3(vp[1].x,vp[1].y,0);
       const tdouble3 vp2=TDouble3(vp[2].x,vp[2].y,0);
       const tdouble3 vp3=TDouble3(vp[3].x,vp[3].y,0);
-      da.dompla0=fmath::Plane3Pt(vp0,vp1,TDouble3(vp1.x,vp1.y,1));
-      da.dompla1=fmath::Plane3Pt(vp1,vp2,TDouble3(vp2.x,vp2.y,1));
-      da.dompla2=fmath::Plane3Pt(vp2,vp3,TDouble3(vp3.x,vp3.y,1));
-      da.dompla3=fmath::Plane3Pt(vp3,vp0,TDouble3(vp0.x,vp0.y,1));
+      da.dompla0=fgeo::Plane3Pt(vp0,vp1,TDouble3(vp1.x,vp1.y,1));
+      da.dompla1=fgeo::Plane3Pt(vp1,vp2,TDouble3(vp2.x,vp2.y,1));
+      da.dompla2=fgeo::Plane3Pt(vp2,vp3,TDouble3(vp3.x,vp3.y,1));
+      da.dompla3=fgeo::Plane3Pt(vp3,vp0,TDouble3(vp0.x,vp0.y,1));
       //:tdouble3 pt=sxml->ReadElementDouble3(ele,"pt");
       //:printf("++> pt=(%s)\n",fun::Double3Str(pt).c_str());
-      //:printf("++> pla0:%f\n",fmath::PointPlane(da.dompla0,pt));
-      //:printf("++> pla1:%f\n",fmath::PointPlane(da.dompla1,pt));
-      //:printf("++> pla2:%f\n",fmath::PointPlane(da.dompla2,pt));
-      //:printf("++> pla3:%f\n",fmath::PointPlane(da.dompla3,pt));
-      //:bool inside=(fmath::PointPlane(da.dompla0,pt)<=0 && fmath::PointPlane(da.dompla1,pt)<=0 && fmath::PointPlane(da.dompla2,pt)<=0 && fmath::PointPlane(da.dompla3,pt)<=0);
+      //:printf("++> pla0:%f\n",fgeo::PlanePoint(da.dompla0,pt));
+      //:printf("++> pla1:%f\n",fgeo::PlanePoint(da.dompla1,pt));
+      //:printf("++> pla2:%f\n",fgeo::PlanePoint(da.dompla2,pt));
+      //:printf("++> pla3:%f\n",fgeo::PlanePoint(da.dompla3,pt));
+      //:bool inside=(fgeo::PlanePoint(da.dompla0,pt)<=0 && fgeo::PlanePoint(da.dompla1,pt)<=0 && fgeo::PlanePoint(da.dompla2,pt)<=0 && fgeo::PlanePoint(da.dompla3,pt)<=0);
       //:if(inside)printf("++> DENTRO\n"); else printf("++> fuera\n");
       //:exit(1);
     }
@@ -150,8 +150,8 @@ void JDamping::ReadXml(JXml *sxml,TiXmlElement* lis){
     {
       tdouble3 pt=da.limitmin;
       tdouble3 vec=da.limitmax-da.limitmin;
-      da.dist=(float)fmath::DistPoint(vec);
-      da.plane=fmath::PlanePtVec(pt,vec);
+      da.dist=(float)fgeo::PointDist(vec);
+      da.plane=fgeo::PlanePtVec(pt,vec);
     }
     List.push_back(da);
     ele=ele->NextSiblingElement("dampingzone");
@@ -187,7 +187,7 @@ void JDamping::SaveVtkConfig(double dp)const{
     const int cv=int(c);
     const StDamping &zo=List[c];
     const tdouble3 ps=zo.limitmin;
-    const tdouble3 ve=fmath::VecUnitarySafe(zo.limitmax-ps);
+    const tdouble3 ve=fgeo::VecUnitary(zo.limitmax-ps);
     //-Adds limit quad.
     shapes.push_back(JFormatFiles2::DefineShape_Quad(zo.limitmin,ve,sizequad,cv,0));
     JFormatFiles2::AddShape_QuadLines(shapes,zo.limitmin,ve,sizequad,cv,0);
@@ -240,7 +240,7 @@ const JDamping::StDamping* JDamping::GetDampingZone(unsigned c)const{
 void JDamping::ComputeDamping(const JDamping::StDamping &da,double dt,unsigned n,unsigned pini
   ,const tdouble3 *pos,const typecode *code,tfloat4 *velrhop)const
 {
-  const tdouble4 plane=da.plane;
+  const tplane3d plane=da.plane;
   const float dist=da.dist;
   const float over=da.overlimit;
   const tfloat3 factorxyz=da.factorxyz;
@@ -258,7 +258,7 @@ void JDamping::ComputeDamping(const JDamping::StDamping &da,double dt,unsigned n
     }
     if(ok){
       const tdouble3 ps=pos[p1];
-      double vdis=fmath::PointPlane(plane,ps);
+      double vdis=fgeo::PlanePoint(plane,ps);
       if(0<vdis && vdis<=dist+over){
         const double fdis=(vdis>=dist? 1.: vdis/dist);
         const double redudt=dt*(fdis*fdis)*redumax;
@@ -288,11 +288,11 @@ void JDamping::ComputeDampingPla(const JDamping::StDamping &da,double dt,unsigne
 {
   const double zmin=da.domzmin;
   const double zmax=da.domzmax;
-  const tdouble4 pla0=da.dompla0;
-  const tdouble4 pla1=da.dompla1;
-  const tdouble4 pla2=da.dompla2;
-  const tdouble4 pla3=da.dompla3;
-  const tdouble4 plane=da.plane;
+  const tplane3d pla0=da.dompla0;
+  const tplane3d pla1=da.dompla1;
+  const tplane3d pla2=da.dompla2;
+  const tplane3d pla3=da.dompla3;
+  const tplane3d plane=da.plane;
   const float dist=da.dist;
   const float over=da.overlimit;
   const tfloat3 factorxyz=da.factorxyz;
@@ -311,9 +311,9 @@ void JDamping::ComputeDampingPla(const JDamping::StDamping &da,double dt,unsigne
     if(ok){
       const tdouble3 ps=pos[p1];
       //-Check if it is within the domain. | Comprueba si esta dentro del dominio.
-      double vdis=fmath::PointPlane(plane,ps);
+      double vdis=fgeo::PlanePoint(plane,ps);
       if(0<vdis && vdis<=dist+over){
-        if(ps.z>=zmin && ps.z<=zmax && fmath::PointPlane(pla0,ps)<=0 && fmath::PointPlane(pla1,ps)<=0 && fmath::PointPlane(pla2,ps)<=0 && fmath::PointPlane(pla3,ps)<=0){
+        if(ps.z>=zmin && ps.z<=zmax && fgeo::PlanePoint(pla0,ps)<=0 && fgeo::PlanePoint(pla1,ps)<=0 && fgeo::PlanePoint(pla2,ps)<=0 && fgeo::PlanePoint(pla3,ps)<=0){
           const double fdis=(vdis>=dist? 1.: vdis/dist);
           const double redudt=dt*(fdis*fdis)*redumax;
           double redudtx=(1.-redudt*factorxyz.x);

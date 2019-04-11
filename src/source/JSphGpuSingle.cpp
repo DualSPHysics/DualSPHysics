@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2018 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2019 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -28,11 +28,16 @@
 #include "JSphMotion.h"
 #include "JSphVisco.h"
 #include "JWaveGen.h"
+#include "JMLPistons.h"     //<vs_mlapiston>
+#include "JRelaxZones.h"    //<vs_rzone>
+#include "JChronoObjects.h" //<vs_chroono>
 #include "JTimeOut.h"
 #include "JTimeControl.h"
 #include "JSphGpu_ker.h"
 #include "JBlockSizeAuto.h"
 #include "JGaugeSystem.h"
+#include "JSphInOut.h"  //<vs_innlet>
+#include "JLinearValue.h"
 #include <climits>
 
 using namespace std;
@@ -143,6 +148,11 @@ void JSphGpuSingle::ConfigDomain(){
 
   //-Computes radius of floating bodies.
   if(CaseNfloat && PeriActive!=0 && !PartBegin)CalcFloatingRadius(Np,AuxPos,Idp);
+
+  //<vs_mlapiston_ini>
+  //-Configures Multi-Layer Pistons according particles. | Configura pistones Multi-Layer segun particulas.
+  if(MLPistons)MLPistons->PreparePiston(Dp,Np,Idp,AuxPos);
+  //<vs_mlapiston_end>
 
   //-Loads Code of the particles.
   LoadCodeParticles(Np,Idp,Code);
@@ -369,6 +379,8 @@ void JSphGpuSingle::RunCellDivide(bool updateperiodic){
   }
   TmgStop(Timers,TMG_NlOutCheck);
   BoundChanged=false;
+  //-Creates list with particles in inout zones.  //<vs_innlet>
+  if(InOut)InOutCreateList();                     //<vs_innlet>
 }
 
 //------------------------------------------------------------------------------
@@ -421,6 +433,9 @@ void JSphGpuSingle::Interaction_Forces(TpInterStep interstep){
   if(Deltag)cusph::AddDelta(Np-Npb,Deltag+Npb,Arg+Npb);//-Adds the Delta-SPH correction for the density. | Añade correccion de Delta-SPH a Arg[]. 
   CheckCudaError(met,"Failed while executing kernels of interaction.");
 
+  //-Reset interpolation varibles (ace,ar,shiftpos) over inout particles.                     //<vs_innlet>
+  if(InOut)InOut->ClearInteractionVarsGpu(InOutCount,InOutPartg,Aceg,Arg,ViscDtg,ShiftPosg);  //<vs_innlet>
+
   //-Calculates maximum value of ViscDt.
   if(Np)ViscDtMax=cusph::ReduMaxFloat(Np,0,ViscDtg,CellDivSingle->GetAuxMem(cusph::ReduMaxFloatSize(Np)));
   //-Calculates maximum value of Ace (periodic particles are ignored). ViscDtg is used like auxiliary memory.
@@ -437,8 +452,8 @@ void JSphGpuSingle::Interaction_Forces(TpInterStep interstep){
 double JSphGpuSingle::ComputeAceMax(float *auxmem){
   float acemax=0;
   const unsigned npf=Np-Npb;
-  if(!PeriActive)cusph::ComputeAceMod(npf,Aceg+Npb,auxmem);//-Without periodic conditions. | Sin condiciones periodicas.
-  else cusph::ComputeAceMod(npf,Codeg+Npb,Aceg+Npb,auxmem);//-With periodic conditions ignores the periodic particles. | Con condiciones periodicas ignora las particulas periodicas.
+  if(!PeriActive)cusph::ComputeAceMod(npf,Aceg+Npb,auxmem);//-Without periodic conditions. | Sin condiciones periodicas.                                                               //<vs_no_innlet>
+  else cusph::ComputeAceMod(npf,Codeg+Npb,Aceg+Npb,auxmem);//-With periodic conditions ignores the periodic particles. | Con condiciones periodicas ignora las particulas periodicas.  //<vs_no_innlet>
   if(npf)acemax=cusph::ReduMaxFloat(npf,0,auxmem,CellDivSingle->GetAuxMem(cusph::ReduMaxFloatSize(npf)));
   return(sqrt(double(acemax)));
 }
@@ -451,6 +466,7 @@ double JSphGpuSingle::ComputeAceMax(float *auxmem){
 /// calculadas en la interaccion usando Verlet.
 //==============================================================================
 double JSphGpuSingle::ComputeStep_Ver(){
+  if(BoundCorr)BoundCorrectionData();    //-Apply BoundCorrection.  //<vs_innlet>
   Interaction_Forces(INTERSTEP_Verlet);  //-Interaction.
   const double dt=DtVariable(true);      //-Calculate new dt.
   if(CaseNmoving)CalcMotion(dt);         //-Calculate motion for moving bodies.
@@ -460,6 +476,7 @@ double JSphGpuSingle::ComputeStep_Ver(){
   if(CaseNfloat)RunFloating(dt,false);   //-Control of floating bodies.
   PosInteraction_Forces();               //-Free memory used for interaction.
   if(Damping)RunDamping(dt,Np,Npb,Posxyg,Poszg,Codeg,Velrhopg); //-Aplies Damping.
+  if(RelaxZones)RunRelaxZone(dt);        //-Generate waves using RZ.  //<vs_rzone>
   return(dt);
 }
 
@@ -476,6 +493,7 @@ double JSphGpuSingle::ComputeStep_Sym(){
   //-Predictor
   //-----------
   DemDtForce=dt*0.5f;                          //(DEM)
+  if(BoundCorr)BoundCorrectionData();          //-Apply BoundCorrection.  //<vs_innlet>
   Interaction_Forces(INTERSTEP_SymPredictor);  //-Interaction.
   const double ddt_p=DtVariable(false);        //-Calculate dt of predictor step.
   if(TShifting)RunShifting(dt*.5);             //-Shifting.
@@ -493,6 +511,7 @@ double JSphGpuSingle::ComputeStep_Sym(){
   if(CaseNfloat)RunFloating(dt,false);         //-Control of floating bodies.
   PosInteraction_Forces();                     //-Free memory used for interaction.
   if(Damping)RunDamping(dt,Np,Npb,Posxyg,Poszg,Codeg,Velrhopg); //-Aplies Damping.
+  if(RelaxZones)RunRelaxZone(dt);              //-Generate waves using RZ.  //<vs_rzone>
 
   SymplecticDtPre=min(ddt_p,ddt_c);            //-Calculate dt for next ComputeStep.
   return(dt);
@@ -503,7 +522,7 @@ double JSphGpuSingle::ComputeStep_Sym(){
 /// Actualiza informacion en FtObjs[] copiando los datos en GPU.
 //==============================================================================
 void JSphGpuSingle::UpdateFtObjs(){
-  if(FtCount){
+  if(FtCount && FtObjsOutdated){
     tdouble3 *fcen=FtoAuxDouble6;
     tfloat3  *fang=FtoAuxFloat9;
     tfloat3  *fvel=fang+FtCount;
@@ -519,6 +538,7 @@ void JSphGpuSingle::UpdateFtObjs(){
       FtObjs[cf].fomega=fome[cf];
     }
   }
+  FtObjsOutdated=false;
 }
 
 //==============================================================================
@@ -538,9 +558,34 @@ void JSphGpuSingle::RunFloating(double dt,bool predictor){
     cusph::FtCalcForces(FtCount,Gravity,FtoDatag,FtoAnglesg,FtoInertiaini8g,FtoInertiaini1g,FtoForcesSumg,FtoForcesg);
     //-Calculate data to update floatings / Calcula datos para actualizar floatings.
     cusph::FtCalcForcesRes(FtCount,Simulate2D,dt,FtoOmegag,FtoVelg,FtoCenterg,FtoForcesg,FtoForcesResg,FtoCenterResg);
+    //-Applies motion constraints.
+    if(FtConstraints)cusph::FtApplyConstraints(FtCount,FtoConstraintsg,FtoForcesg,FtoForcesResg);
+
+    //-Run floating with Chrono library. //<vs_chroono_ini>
+    if(ChronoObjects){      
+      TmgStop(Timers,TMG_SuFloating);
+      TmgStart(Timers,TMG_SuChrono);
+      //-Export data / Exporta datos.
+      tfloat3* ftoforces=FtoAuxFloat9;
+      cudaMemcpy(ftoforces,FtoForcesg,sizeof(tfloat3)*FtCount*2,cudaMemcpyDeviceToHost);
+      for(unsigned cf=0;cf<FtCount;cf++)if(FtObjs[cf].usechrono)
+        ChronoObjects->SetFtData(FtObjs[cf].mkbound,ftoforces[cf*2],ftoforces[cf*2+1]);
+      //-Calculate data using Chrono / Calcula datos usando Chrono.
+      ChronoObjects->RunChrono(Nstep,TimeStep,dt,predictor);
+      //-Load calculated data by Chrono / Carga datos calculados por Chrono.
+      tdouble3* ftocenter=FtoAuxDouble6;
+      cudaMemcpy(ftocenter,FtoCenterResg,sizeof(tdouble3)*FtCount  ,cudaMemcpyDeviceToHost);//-Necesario para cargar datos de floatings sin chrono.
+      cudaMemcpy(ftoforces,FtoForcesResg,sizeof(tfloat3) *FtCount*2,cudaMemcpyDeviceToHost);//-Necesario para cargar datos de floatings sin chrono.
+      for(unsigned cf=0;cf<FtCount;cf++)if(FtObjs[cf].usechrono)ChronoObjects->GetFtData(FtObjs[cf].mkbound,ftocenter[cf],ftoforces[cf*2+1],ftoforces[cf*2]);
+      cudaMemcpy(FtoCenterResg,ftocenter,sizeof(tdouble3)*FtCount  ,cudaMemcpyHostToDevice);
+      cudaMemcpy(FtoForcesResg,ftoforces,sizeof(float3)  *FtCount*2,cudaMemcpyHostToDevice);
+      TmgStop(Timers,TMG_SuChrono);
+      TmgStart(Timers,TMG_SuFloating);
+    }//<vs_chroono_end> 
 
     //-Apply movement around floating objects / Aplica movimiento sobre floatings.
     cusph::FtUpdate(PeriActive!=0,predictor,FtCount,dt,FtoDatag,FtoForcesResg,FtoCenterResg,FtRidpg,FtoCenterg,FtoAnglesg,FtoVelg,FtoOmegag,Posxyg,Poszg,Dcellg,Velrhopg,Codeg);
+    if(!predictor)FtObjsOutdated=true;
 
     TmgStop(Timers,TMG_SuFloating);
   }
@@ -588,6 +633,7 @@ void JSphGpuSingle::Run(std::string appname,JCfgRun *cfg,JLog2 *log){
   //------------------------------------------------------------------------------------
   InitRunGpu();
   RunGaugeSystem(TimeStep);
+  if(InOut)InOutInit(TimeStepIni);  //<vs_innlet>
   FreePartsInit();
   UpdateMaxValues();
   PrintAllocMemory(GetAllocMemoryCpu(),GetAllocMemoryGpu());
@@ -606,13 +652,17 @@ void JSphGpuSingle::Run(std::string appname,JCfgRun *cfg,JLog2 *log){
   Log->Print(string("\n[Initialising simulation (")+RunCode+")  "+fun::GetDateTime()+"]");
   PrintHeadPart();
   while(TimeStep<TimeMax){
+    InterStep=(TStep==STEP_Symplectic? INTERSTEP_SymPredictor: INTERSTEP_Verlet);
     if(ViscoTime)Visco=ViscoTime->GetVisco(float(TimeStep));
     double stepdt=ComputeStep();
     RunGaugeSystem(TimeStep+stepdt);
     if(PartDtMin>stepdt)PartDtMin=stepdt; if(PartDtMax<stepdt)PartDtMax=stepdt;
     if(CaseNmoving)RunMotion(stepdt);
-    RunCellDivide(true);
+    //RunCellDivide(true);                  //<vs_no_innlet>
+    if(InOut)InOutComputeStep(stepdt);      //<vs_innlet>
+    else RunCellDivide(true);               //<vs_innlet>
     TimeStep+=stepdt;
+    LastDt=stepdt;
     partoutstop=(Np<NpMinimum || !Np);
     if(TimeStep>=TimePartNext || partoutstop){
       if(partoutstop){
@@ -669,6 +719,7 @@ void JSphGpuSingle::SaveData(){
     infoplus.npf=Np-Npb;
     infoplus.npbper=NpbPer;
     infoplus.npfper=NpfPer;
+    infoplus.newnp=(InOut? InOut->GetNewNpPart(): 0);  //<vs_innlet>
     infoplus.memorycpualloc=this->GetAllocMemoryCpu();
     infoplus.gpudata=true;
     infoplus.memorynctalloc=infoplus.memorynctused=GetMemoryGpuNct();

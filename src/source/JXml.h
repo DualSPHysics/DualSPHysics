@@ -1,6 +1,6 @@
 //HEAD_DSCODES
 /*
- <DUALSPHYSICS>  Copyright (c) 2018 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2019 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -38,6 +38,7 @@
 //:# - Nuevo metodo CountElement() para contar numero de apariciones de un elemento. (24-01-2018)
 //:# - Nuevos metodos CheckElementAttributes() y CheckAttributes(). (15-02-2018)
 //:# - Se elimino CountElement() porque ya existia CountElements(). (15-02-2018)
+//:# - Permite valores por defecto en funciones ReadElementDouble3(), ReadElementInt3(), ReadElementFloat3(). (13-02-2019)
 //:#############################################################################
 
 /// \file JXml.h \brief Declares the class \ref JXml.
@@ -338,27 +339,39 @@ public:
   //==============================================================================
   /// Calls \ref ReadElementDouble3() with the same parameters.
   //==============================================================================
-  tfloat3 ReadElementFloat3(TiXmlNode* node,const std::string &name)const{ return(ToTFloat3(ReadElementDouble3(node,name))); }
+  tfloat3 ReadElementFloat3(TiXmlNode* node,const std::string &name,bool optional=false,tdouble3 valdef=TDouble3(0))const{ 
+    return(ToTFloat3(ReadElementDouble3(node,name,optional,valdef)));
+  }
   
   //==============================================================================
   /// Checks and returns value of type double3 of the first xml element 
   /// of a node with a given name.
   /// \param name Name of the element to be reached.
   /// \param node Xml node where the element is reached.
+  /// \param optional If it does not exist,
+  /// \param valdef Value by default if it does not exist and \a optional was activated. 
   /// \throw JException Element is not found...
   /// \throw JException Format not valid for the requested type...
   //==============================================================================
-  tdouble3 ReadElementDouble3(TiXmlNode* node,const std::string &name)const{ return(GetAttributeDouble3(GetFirstElement(node,name))); }
+  tdouble3 ReadElementDouble3(TiXmlNode* node,const std::string &name,bool optional=false,tdouble3 valdef=TDouble3(0))const{ 
+    TiXmlElement* ele=GetFirstElement(node,name,optional); 
+    return(ele? GetAttributeDouble3(ele): valdef);
+  }
   
   //==============================================================================
   /// Checks and returns value of type int3 of the first xml element 
   /// of a node with a given name.
   /// \param name Name of the element to be reached.
   /// \param node Xml node where the element is reached.
+  /// \param optional If it does not exist,
+  /// \param valdef Value by default if it does not exist and \a optional was activated. 
   /// \throw JException Element is not found...
   /// \throw JException Format not valid for the requested type...
   //==============================================================================
-  tint3 ReadElementInt3(TiXmlNode* node,const std::string &name)const{ return(GetAttributeInt3(GetFirstElement(node,name))); }
+  tint3 ReadElementInt3(TiXmlNode* node,const std::string &name,bool optional=false,tint3 valdef=TInt3(0))const{ 
+    TiXmlElement* ele=GetFirstElement(node,name,optional); 
+    return(ele? GetAttributeInt3(ele): valdef);
+  }
   
   //==============================================================================
   /// Calls \ref ReadElementDouble() with the same parameters.

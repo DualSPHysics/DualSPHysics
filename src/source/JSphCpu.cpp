@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2018 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2019 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -26,12 +26,16 @@
 #include "JArraysCpu.h"
 #include "JSphDtFixed.h"
 #include "JWaveGen.h"
+#include "JMLPistons.h"     //<vs_mlapiston>
+#include "JRelaxZones.h"    //<vs_rzone>
+#include "JChronoObjects.h" //<vs_chroono>
 #include "JDamping.h"
 #include "JXml.h"
 #include "JSaveDt.h"
 #include "JTimeOut.h"
 #include "JSphAccInput.h"
 #include "JGaugeSystem.h"
+#include "JSphBoundCorr.h"  //<vs_innlet>
 #include <climits>
 
 using namespace std;
@@ -80,6 +84,7 @@ void JSphCpu::InitVars(){
   FtRidp=NULL;
   FtoForces=NULL;
   FtoForcesRes=NULL;
+  InOutPartc=NULL;  InOutCount=0; //-InOut.  //<vs_innlet>
   FreeCpuMemoryParticles();
   FreeCpuMemoryFixed();
 }
@@ -164,6 +169,9 @@ void JSphCpu::AllocCpuMemoryParticles(unsigned np,float over){
   if(TShifting!=SHIFT_None){
     ArraysCpu->AddArrayCount(JArraysCpu::SIZE_12B,1); //-shiftpos
   }
+  if(InOut){  //<vs_innlet_ini>
+    ArraysCpu->AddArrayCount(JArraysCpu::SIZE_4B,1);  //-InOutPart
+  }  //<vs_innlet_end>
   //-Shows the allocated memory.
   MemCpuParticles=ArraysCpu->GetAllocMemoryCpu();
   PrintSizeNp(CpuParticlesSize,MemCpuParticles);
@@ -184,6 +192,7 @@ void JSphCpu::ResizeCpuMemoryParticles(unsigned npnew){
   tdouble3    *pospre    =SaveArrayCpu(Np,PosPrec);
   tfloat4     *velrhoppre=SaveArrayCpu(Np,VelrhopPrec);
   tsymatrix3f *spstau    =SaveArrayCpu(Np,SpsTauc);
+  int         *inoutpart =SaveArrayCpu(Np,InOutPartc);  //<vs_innlet>
   //-Frees pointers.
   ArraysCpu->Free(Idpc);
   ArraysCpu->Free(Codec);
@@ -194,6 +203,7 @@ void JSphCpu::ResizeCpuMemoryParticles(unsigned npnew){
   ArraysCpu->Free(PosPrec);
   ArraysCpu->Free(VelrhopPrec);
   ArraysCpu->Free(SpsTauc);
+  ArraysCpu->Free(InOutPartc);  //<vs_innlet>
   //-Resizes CPU memory allocation.
   const double mbparticle=(double(MemCpuParticles)/(1024*1024))/CpuParticlesSize; //-MB por particula.
   Log->Printf("**JSphCpu: Requesting cpu memory for %u particles: %.1f MB.",npnew,mbparticle*npnew);
@@ -208,6 +218,7 @@ void JSphCpu::ResizeCpuMemoryParticles(unsigned npnew){
   if(pospre)    PosPrec    =ArraysCpu->ReserveDouble3();
   if(velrhoppre)VelrhopPrec=ArraysCpu->ReserveFloat4();
   if(spstau)    SpsTauc    =ArraysCpu->ReserveSymatrix3f();
+  if(inoutpart) InOutPartc =ArraysCpu->ReserveInt();  //<vs_innlet>
   //-Restore data in CPU memory.
   RestoreArrayCpu(Np,idp,Idpc);
   RestoreArrayCpu(Np,code,Codec);
@@ -218,6 +229,7 @@ void JSphCpu::ResizeCpuMemoryParticles(unsigned npnew){
   RestoreArrayCpu(Np,pospre,PosPrec);
   RestoreArrayCpu(Np,velrhoppre,VelrhopPrec);
   RestoreArrayCpu(Np,spstau,SpsTauc);
+  RestoreArrayCpu(Np,inoutpart,InOutPartc);  //<vs_innlet>
   //-Updates values.
   CpuParticlesSize=npnew;
   MemCpuParticles=ArraysCpu->GetAllocMemoryCpu();
@@ -260,6 +272,7 @@ void JSphCpu::ReserveBasicArraysCpu(){
   Velrhopc=ArraysCpu->ReserveFloat4();
   if(TStep==STEP_Verlet)VelrhopM1c=ArraysCpu->ReserveFloat4();
   if(TVisco==VISCO_LaminarSPS)SpsTauc=ArraysCpu->ReserveSymatrix3f();
+  if(InOut)InOutPartc=ArraysCpu->ReserveInt();  //<vs_innlet>
 }
 
 //==============================================================================
@@ -273,6 +286,7 @@ llong JSphCpu::GetAllocMemoryCpu()const{
   //-Reserved in AllocCpuMemoryFixed().
   s+=MemCpuFixed;
   //-Reserved in other objects.
+  if(MLPistons)s+=MLPistons->GetAllocMemoryCpu();  //<vs_mlapiston>
   return(s);
 }
 
@@ -598,6 +612,25 @@ void JSphCpu::GetKernelWendland(float rr2,float drx,float dry,float drz
   frx=fac*drx; fry=fac*dry; frz=fac*drz;
 }
 
+//<vs_innlet_ini>
+//============================================================================== 
+/// Returns values of kernel Wendland, gradients: frx, fry, frz and wab.
+/// Devuelve valores de kernel Wendland, gradients: frx, fry, frz y wab.
+//==============================================================================
+void JSphCpu::GetKernelWendland(float rr2,float drx,float dry,float drz
+  ,float &frx,float &fry,float &frz,float &wab)const
+{
+  const float rad=sqrt(rr2);
+  const float qq=rad/H;
+  //-Wendland kernel.
+  const float wqq1=1.f-0.5f*qq;
+  const float wqq2=wqq1*wqq1;
+  const float fac=Bwen*qq*wqq2*wqq1/rad; //-Kernel derivative (divided by rad).
+  frx=fac*drx; fry=fac*dry; frz=fac*drz;
+  const float wqq=2.f*qq+1.f;
+  wab=Awen*wqq*wqq2*wqq2; //-Kernel.
+}  //<vs_innlet_end>
+
 //==============================================================================
 /// Returns values of kernel Gaussian, gradients: frx, fry and frz.
 /// Devuelve valores de kernel Gaussian, gradients: frx, fry y frz.
@@ -613,6 +646,24 @@ void JSphCpu::GetKernelGaussian(float rr2,float drx,float dry,float drz
   const float fac=Bgau*qq*expf(qqexp)/rad; //-Kernel derivative (divided by rad).
   frx=fac*drx; fry=fac*dry; frz=fac*drz;
 }
+
+//<vs_innlet_ini>
+//==============================================================================
+/// Returns values of kernel Gaussian, gradients: frx, fry, frz and wab.
+/// Devuelve valores de kernel Gaussian, gradients: frx, fry, frz y wab.
+//==============================================================================
+void JSphCpu::GetKernelGaussian(float rr2,float drx,float dry,float drz
+  ,float &frx,float &fry,float &frz,float &wab)const
+{
+  const float rad=sqrt(rr2);
+  const float qq=rad/H;
+  //-Gaussian kernel.
+  const float qqexp=-4.0f*qq*qq;
+  const float eqqexp=expf(qqexp);
+  wab=Agau*eqqexp; //-Kernel.
+  const float fac=Bgau*qq*eqqexp/rad; //-Kernel derivative (divided by rad).
+  frx=fac*drx; fry=fac*dry; frz=fac*drz;
+}  //<vs_innlet_end>
 
 //==============================================================================
 /// Return values of kernel Cubic without tensil correction, gradients: frx, fry and frz.
@@ -637,6 +688,33 @@ void JSphCpu::GetKernelCubic(float rr2,float drx,float dry,float drz
   //-Gradients.
   frx=fac*drx; fry=fac*dry; frz=fac*drz;
 }
+
+//<vs_innlet_ini>
+//==============================================================================
+/// Return values of kernel Cubic without tensil correction, gradients: frx, fry, frz and wab.
+/// Devuelve valores de kernel Cubic sin correccion tensil, gradients: frx, fry,frz y wab.
+//==============================================================================
+void JSphCpu::GetKernelCubic(float rr2,float drx,float dry,float drz
+  ,float &frx,float &fry,float &frz,float &wab)const
+{
+  const float rad=sqrt(rr2);
+  const float qq=rad/H;
+  //-Cubic Spline kernel.
+  float fac;
+  if(rad>H){
+    float wqq1=2.0f-qq;
+    float wqq2=wqq1*wqq1;
+    fac=CubicCte.c2*wqq2/rad; //-Kernel derivative (divided by rad).
+    wab=CubicCte.a24*(wqq2*wqq1); //-Kernel.
+  }
+  else{
+    float wqq2=qq*qq;
+    fac=(CubicCte.c1*qq+CubicCte.d1*wqq2)/rad; //-Kernel derivative (divided by rad).
+    wab=CubicCte.a2*(1.0f+(0.75f*qq-1.5f)*wqq2); //-Kernel.
+  }
+  //-Gradients.
+  frx=fac*drx; fry=fac*dry; frz=fac*drz;
+}  //<vs_innlet_end>
 
 //==============================================================================
 /// Return tensil correction for kernel Cubic.
@@ -685,6 +763,27 @@ void JSphCpu::GetInteractionCells(unsigned rcell
   zini=cz-min(cz,hdiv);
   zfin=cz+min(nc.z-cz-1,hdiv)+1;
 }
+
+//============================================================================== //<vs_innlet_ini>
+/// Return cell limits for interaction starting from position.
+/// Devuelve limites de celdas para interaccion a partir de posicion.
+//==============================================================================
+void JSphCpu::GetInteractionCells(const tdouble3 &pos
+  ,int hdiv,const tint4 &nc,const tint3 &cellzero
+  ,int &cxini,int &cxfin,int &yini,int &yfin,int &zini,int &zfin)const
+{
+  //-Get cell coordinates of position pos.
+  const int cx=int((pos.x-DomPosMin.x)/Scell)-cellzero.x;
+  const int cy=int((pos.y-DomPosMin.y)/Scell)-cellzero.y;
+  const int cz=int((pos.z-DomPosMin.z)/Scell)-cellzero.z;
+  //-code for hdiv 1 or 2 but not zero. | Codigo para hdiv 1 o 2 pero no cero.
+  cxini=cx-min(cx,hdiv);
+  cxfin=cx+min(nc.x-cx-1,hdiv)+1;
+  yini=cy-min(cy,hdiv);
+  yfin=cy+min(nc.y-cy-1,hdiv)+1;
+  zini=cz-min(cz,hdiv);
+  zfin=cz+min(nc.z-cz-1,hdiv)+1;
+} //<vs_innlet_end>
 
 //==============================================================================
 /// Perform interaction between particles. Bound-Fluid/Float
@@ -2015,6 +2114,17 @@ void JSphCpu::CalcMotion(double stepdt){
   const bool motsim=true;
   const JSphMotion::TpMotionMode mode=(motsim? JSphMotion::MOMT_Simple: JSphMotion::MOMT_Ace2dt);
   SphMotion->ProcesTime(mode,TimeStep,stepdt);
+  if(ChronoObjects && ChronoObjects->GetWithMotion() && SphMotion->GetActiveMotion()){ //<vs_chroono_ini> 
+    word mkbound;
+    bool typesimple;
+    tdouble3 simplemov;
+    tmatrix4d matmov;
+    const unsigned nref=SphMotion->GetNumObjects();
+    for(unsigned ref=0;ref<nref;ref++)if(SphMotion->ProcesTimeGetData(ref,mkbound,typesimple,simplemov,matmov)){
+      if(Simulate2D && typesimple)simplemov.y=0;
+      ChronoObjects->SetMovingData(mkbound,typesimple,simplemov,matmov,stepdt);
+    }
+  } //<vs_chroono_end>
   TmcStop(Timers,TMC_SuMotion);
 }
 
@@ -2046,6 +2156,10 @@ void JSphCpu::RunMotion(double stepdt){
         if(motsim)MoveMatBound   (nparts,pini,matmov,stepdt,RidpMove,Posc,Dcellc,Velrhopc,Codec); 
         //else    MoveMatBoundAce(nparts,pini,matmov,matmov2,stepdt,RidpMove,Posc,Dcellc,Velrhopc,Acec,Codec);
       }
+      //-Applies predefined motion to BoundCorr configuration.  //<vs_innlet_ini> 
+      if(BoundCorr && BoundCorr->GetUseMotion()){
+        BoundCorr->RunMotion(SphMotion->GetObjMkBound(ref),typesimple,simplemov,matmov);
+      }  //<vs_innlet_end> 
     }
   }
   //-Process other modes of motion. | Procesa otros modos de motion.
@@ -2073,10 +2187,100 @@ void JSphCpu::RunMotion(double stepdt){
         if(motsim)MoveMatBound   (np,pini,matmov,stepdt,RidpMove,Posc,Dcellc,Velrhopc,Codec);
         //else    MoveMatBoundAce(np,pini,matmov,matmov2,stepdt,RidpMove,Posc,Dcellc,Velrhopc,Acec,Codec);
       }
+      //-Applies predefined motion to BoundCorr configuration.  //<vs_innlet_ini> 
+      if(BoundCorr && BoundCorr->GetUseMotion()){
+        BoundCorr->RunMotion(WaveGen->GetPaddleMkbound(c),typesimple,simplemov,matmov);
+      }  //<vs_innlet_end> 
     }
   }
+  //-Management of Multi-Layer Pistons.  //<vs_mlapiston_ini>
+  if(MLPistons){
+    if(!BoundChanged)CalcRidp(PeriActive!=0,Npb,0,CaseNfixed,CaseNfixed+CaseNmoving,Codec,Idpc,RidpMove);
+    BoundChanged=true;
+    if(MLPistons->GetPiston1dCount()){//-Process motion for pistons 1D.
+      MLPistons->CalculateMotion1d(TimeStep+MLPistons->GetTimeMod()+stepdt);
+      MovePiston1d(CaseNmoving,0,MLPistons->GetPoszMin(),MLPistons->GetPoszCount()
+        ,MLPistons->GetPistonId(),MLPistons->GetMovx(),MLPistons->GetVelx()
+        ,RidpMove,Posc,Dcellc,Velrhopc,Codec);
+    }
+    for(unsigned cp=0;cp<MLPistons->GetPiston2dCount();cp++){//-Process motion for pistons 2D.
+      JMLPistons::StMotionInfoPiston2D mot=MLPistons->CalculateMotion2d(cp,TimeStep+MLPistons->GetTimeMod()+stepdt);
+      MovePiston2d(mot.np,mot.idbegin-CaseNfixed,mot.posymin,mot.poszmin,mot.poszcount,mot.movyz,mot.velyz
+        ,RidpMove,Posc,Dcellc,Velrhopc,Codec);
+    }
+  }  //<vs_mlapiston_end>
   TmcStop(Timers,TMC_SuMotion);
 }
+
+//<vs_mlapiston_ini>
+//==============================================================================
+/// Applies movement and velocity of piston 1D to a group of particles.
+/// Aplica movimiento y velocidad de piston 1D a conjunto de particulas.
+//==============================================================================
+void JSphCpu::MovePiston1d(unsigned np,unsigned ini
+  ,double poszmin,unsigned poszcount,const byte *pistonid,const double* movx,const double* velx
+  ,const unsigned *ridpmv,tdouble3 *pos,unsigned *dcell,tfloat4 *velrhop,typecode *code)const
+{
+  const int fin=int(ini+np);
+  #ifdef OMP_USE
+    #pragma omp parallel for schedule (static) if(fin>OMP_LIMIT_LIGHT)
+  #endif
+  for(int id=int(ini);id<fin;id++){
+    const unsigned pid=ridpmv[id];
+    if(pid!=UINT_MAX){
+      const unsigned pisid=pistonid[CODE_GetTypeValue(code[pid])];
+      if(pisid<255){
+        const unsigned cz=unsigned((pos[pid].z-poszmin)/Dp);
+        const double rmovx=(cz<poszcount? movx[pisid*poszcount+cz]: 0);
+        const float rvelx=float(cz<poszcount? velx[pisid*poszcount+cz]: 0);
+        //-Updates position.
+        UpdatePos(pos[pid],rmovx,0,0,false,pid,pos,dcell,code);
+        //-Updates velocity.
+        velrhop[pid].x=rvelx;
+      }
+    }
+  }
+}
+//==============================================================================
+/// Applies movement and velocity of piston 2D to a group of particles.
+/// Aplica movimiento y velocidad de piston 2D a conjunto de particulas.
+//==============================================================================
+void JSphCpu::MovePiston2d(unsigned np,unsigned ini
+  ,double posymin,double poszmin,unsigned poszcount,const double* movx,const double* velx
+  ,const unsigned *ridpmv,tdouble3 *pos,unsigned *dcell,tfloat4 *velrhop,typecode *code)const
+{
+  const int fin=int(ini+np);
+  #ifdef OMP_USE
+    #pragma omp parallel for schedule (static) if(fin>OMP_LIMIT_LIGHT)
+  #endif
+  for(int id=int(ini);id<fin;id++){
+    const unsigned pid=ridpmv[id];
+    if(pid!=UINT_MAX){
+      const tdouble3 ps=pos[pid];
+      const unsigned cy=unsigned((ps.y-posymin)/Dp);
+      const unsigned cz=unsigned((ps.z-poszmin)/Dp);
+      const double rmovx=(cz<poszcount? movx[cy*poszcount+cz]: 0);
+      const float rvelx=float(cz<poszcount? velx[cy*poszcount+cz]: 0);
+      //-Updates position.
+      UpdatePos(ps,rmovx,0,0,false,pid,pos,dcell,code);
+      //-Updates velocity.
+      velrhop[pid].x=rvelx;
+    }
+  }
+}
+//<vs_mlapiston_end>
+
+//<vs_rzone_ini>
+//==============================================================================
+/// Applies RelaxZone to selected particles.
+/// Aplica RelaxZone a las particulas indicadas.
+//==============================================================================
+void JSphCpu::RunRelaxZone(double dt){
+  TmcStart(Timers,TMC_SuMotion);
+  RelaxZones->SetFluidVel(TimeStep,dt,Np-Npb,Npb,Posc,Idpc,Velrhopc);
+  TmcStop(Timers,TMC_SuMotion);
+}
+//<vs_rzone_end>
 
 //==============================================================================
 /// Applies Damping to selected particles.

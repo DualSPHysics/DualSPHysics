@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!-- *** DualSPHysics4Full v4.2.051 (30-05-2018) *** -->
+<!-- *** class: JMLPistons *** -->
+<!------------------------------------------------------------------------------->
+<!------------------------------------------------------------------------------->
+<!-- *** Example for Multi-Layer Pistons using external velocity data (e.g. from SWASH) to create waves 1D *** -->
+<special>
+	<mlayerpistons>
+		<piston1d>
+			<mkbound value="10" comment="Mk-Bound of selected particles" />
+			<filevelx value="AwaReg1L_velx_x10_y00.csv" comment="File name with X velocity" />
+			<incz value="0" comment="Z offset (def=0)" />
+			<timedataini value="0" comment="Time offset (def=0)" />
+			<smooth value="5" comment="Smooth motion level (def=0)" />
+			<!-- No available for now.
+			<filezsurf value="AwaReg1L_zsurf.csv" comment="File name with Z surface (necessary for AWAS)" />
+			<awas_zsurf>
+				<startawas value="0.5" comment="Time to start AWAS correction (def=ramp*waveperiod)" />
+				<swl value="0" comment="Still water level (free-surface water)" />
+				<_gaugex value="0.05" comment="Position in X from piston to measure free-surface water (def=5*Dp)" />
+				<gaugey value="1" comment="Position in Y to measure free-surface water" />
+				<gaugezmin value="-0.26" comment="Minimum position in Z to measure free-surface water, it must be in water (def=domain limits)" />
+				<gaugezmax value="0.5" comment="Maximum position in Z to measure free-surface water (def=domain limits)" />
+				<gaugedp value="0.25" comment="Resolution to measure free-surface water, it uses Dp*gaugedp (def=0.1)" />
+				<_coefmasslimit value="0.4" comment="Coefficient to calculate mass of free-surface (def=0.5 on 3D and 0.4 on 2D)" />
+				<savedata value="1" comment="Saves CSV with information (def=0)" />
+			</awas_zsurf>
+			-->
+		</piston1d>
+	</mlayerpistons>
+</special>
+<!------------------------------------------------------------------------------->
+<!------------------------------------------------------------------------------->
+<!-- *** Example for Multi-Layer Pistons using external velocity data (e.g. from SWASH) to create waves 2D *** -->
+<special>
+	<mlayerpistons>
+		<piston2d>
+			<mkbound value="10" comment="Mk-Bound of selected particles" />
+			<incz value="2" comment="Z offset (def=0)" />
+			<smoothz value="7" comment="Smooth motion level in Z (def=0)" />
+			<smoothy value="5" comment="Smooth motion level in Y (def=0)" />
+			<veldata>
+				<filevelx value="scandura_cr_velx_x05_y00.csv" comment="File name with X velocity" />
+				<posy value="0.18" comment="Position Y of data" />
+				<timedataini value="0" comment="Time offset (def=0)" />
+			</veldata>
+			<veldata>
+				<filevelx value="scandura_cr_velx_x05_y01.csv" comment="File name with X velocity" />
+				<posy value="1.25" comment="Position Y of data" />
+				<timedataini value="0.38" comment="Time offset (def=0)" />
+			</veldata>
+			<veldata>
+				<filevelx value="scandura_cr_velx_x05_y02.csv" comment="File name with X velocity" />
+				<posy value="2.32" comment="Position Y of data" />
+				<timedataini value="0.76" comment="Time offset (def=0)" />
+			</veldata>
+		</piston2d>
+	</mlayerpistons>
+</special>
+
