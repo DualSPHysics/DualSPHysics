@@ -1,4 +1,4 @@
-#DualSPHysics GPU/CPU v4.3.031 13-02-2019
+#DualSPHysics GPU/CPU v4.4.000 27-03-2019
 
 #=============== Compilation Options ===============
 USE_GCC5=NO
@@ -11,7 +11,7 @@ COMPILE_RZ_MLPISTONS=YES
 LIBS_DIRECTORIES=-L./
 LIBS_DIRECTORIES:=$(LIBS_DIRECTORIES) -L../lib/linux_gcc
 
-EXECNAME=DualSPHysics4.3_linux64
+EXECNAME=DualSPHysics4.4_linux64
 EXECS_DIRECTORY=../../bin/linux
 
 ifeq ($(USE_DEBUG), YES)
@@ -124,7 +124,7 @@ endif
 
 #=============== GPU Code Compilation ===============
 CCFLAGS := $(CCFLAGS) -I./ -I$(DIRTOOLKIT)/include
-CCLINKFLAGS := $(CCLINKFLAGS) -L$(DIRTOOLKIT)/lib64 -lcudart
+CCLINKFLAGS := $(CCLINKFLAGS) -L$(DIRTOOLKIT)/lib64 -lcudart_static -ldl -lrt
 NCC=nvcc
 ifeq ($(USE_DEBUG), NO)
   NCCFLAGS+=-c $(GENCODE) -O3 -ccbin $(CC)

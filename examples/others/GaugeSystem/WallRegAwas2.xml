@@ -117,10 +117,13 @@
             <parameter key="#DtFixed" value="DtFixed.dat" comment="Dt values are loaded from file (def=disabled)" />
             <parameter key="TimeMax" value="20" comment="Time of simulation" />
             <parameter key="TimeOut" value="0.02" comment="Time between output files" />
-            <parameter key="IncZ" value="0" comment="Increase of Z+" />
             <parameter key="PartsOutMax" value="1" comment="Allowed percentage of fluid particles out the domain (def=1)" />
             <parameter key="RhopOutMin" value="700" comment="Minimum rhop valid (def=700)" />
             <parameter key="RhopOutMax" value="1300" comment="Maximum rhop valid (def=1300)" />
+            <simulationdomain comment="Defines domain of simulation (default=Uses minimun and maximum position of the generated particles)">
+                <posmin x="default" y="default" z="default" comment="e.g.: x=0.5, y=default-1, z=default-10%" />
+                <posmax x="default" y="default" z="default" />
+            </simulationdomain>
         </parameters>
         <particles np="22492" nb="1035" nbf="635" mkboundfirst="11" mkfluidfirst="1">
             <_summary>

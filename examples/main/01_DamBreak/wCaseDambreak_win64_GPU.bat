@@ -10,8 +10,8 @@ rem "executables" are renamed and called from their directory
 
 set dirbin=../../../bin/windows
 set gencase="%dirbin%/GenCase4_win64.exe"
-set dualsphysicscpu="%dirbin%/DualSPHysics4.2CPU_win64.exe"
-set dualsphysicsgpu="%dirbin%/DualSPHysics4.2_win64.exe"
+set dualsphysicscpu="%dirbin%/DualSPHysics4.4CPU_win64.exe"
+set dualsphysicsgpu="%dirbin%/DualSPHysics4.4_win64.exe"
 set boundaryvtk="%dirbin%/BoundaryVTK4_win64.exe"
 set partvtk="%dirbin%/PartVTK4_win64.exe"
 set partvtkout="%dirbin%/PartVTKOut4_win64.exe"

@@ -72,6 +72,7 @@
 //:# - Nuevas funcion VectorSplitStr().  (26-02-2019)
 //:# - Nueva funcion StrIsNumber().  (21-03-2019)
 //:# - Nueva funcion FileSize().  (23-03-2019)
+//:# - Nuevas funciones IsEqual(), IsGtEqual(), IsLtEqual().  (08-04-2019)
 //:#############################################################################
 
 /// \file Functions.h \brief Declares basic/general functions for the entire application.
@@ -270,11 +271,19 @@ tfloat4*  ResizeAlloc(tfloat4  *data,unsigned ndata,unsigned newsize);
 double*   ResizeAlloc(double   *data,unsigned ndata,unsigned newsize);
 tdouble2* ResizeAlloc(tdouble2 *data,unsigned ndata,unsigned newsize);
 tdouble3* ResizeAlloc(tdouble3 *data,unsigned ndata,unsigned newsize);
+tdouble4* ResizeAlloc(tdouble4 *data,unsigned ndata,unsigned newsize);
 
 bool IsInfinity(float v);
 bool IsInfinity(double v);
 bool IsNAN(float v);
 bool IsNAN(double v);
+
+bool IsEqual(float  v1,float  v2,float  tolerance);
+bool IsEqual(double v1,double v2,double tolerance);
+bool IsGtEqual(float  v1,float  v2,float  tolerance);
+bool IsGtEqual(double v1,double v2,double tolerance);
+bool IsLtEqual(float  v1,float  v2,float  tolerance);
+bool IsLtEqual(double v1,double v2,double tolerance);
 
 }
 

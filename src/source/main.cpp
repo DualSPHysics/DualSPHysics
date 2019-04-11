@@ -1,8 +1,10 @@
 /*
  <DUALSPHYSICS>  Copyright (c) 2019, 
- Dr Jose M. Dominguez, Dr Alejandro Crespo, Prof. Moncho Gomez Gesteira, Orlando Garcia-Feal, Dr Anxo Barreiro,
- Prof. Benedict Rogers, Dr Georgios Fourtakas, Dr Athanasios Mokos, Prof. Peter Stansby,
- Dr Renato Vacondio, Dr Ricardo Canelas, Dr Stephen Longshaw, Dr Corrado Altomare, Dr Angelo Tafuni.
+ Dr Jose M. Dominguez, Dr Alejandro Crespo, 
+ Prof. Moncho Gomez Gesteira, Prof. Benedict Rogers, 
+ Dr Georgios Fourtakas, Prof. Peter Stansby, Dr Ricardo Canelas, 
+ Dr Renato Vacondio, Dr Corrado Altomare, Dr Angelo Tafuni, 
+ Orlando Garcia-Feal, Dr Jose Gonzalez Cao
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -29,8 +31,8 @@ School of Mechanical, Aerospace and Civil Engineering, University of Manchester,
 \section compile_sec Project files
 Please download source files and documentation from <a href="http://dual.sphysics.org">DualSPHysics website.</a> \n
 \author <a href="http://dual.sphysics.org/index.php/developers">DualSPHysics Developers.</a> 
-\version 4.3.000
-\date 13-10-2018
+\version 4.4.001
+\date 27-03-2019
 \copyright GNU Lesser General Public License <a href="http://www.gnu.org/licenses/">GNU licenses.</a>
 */
 
@@ -55,7 +57,7 @@ Please download source files and documentation from <a href="http://dual.sphysic
 using namespace std;
 
 
-JAppInfo AppInfo("DualSPHysics4","v4.3.049","24-03-2019");
+JAppInfo AppInfo("DualSPHysics4","v4.4.003","10-04-2019");
 //JAppInfo AppInfo("DualSPHysics4","v4.2.???","UserVersion","v1.0","??-??-????"); //-for user versions.
 
 //==============================================================================
@@ -65,10 +67,10 @@ std::string getlicense_lgpl(const std::string &name,bool simple){
   std::string tx=(simple? "": "\n");
   tx=tx+"\n <"+fun::StrUpper(name)+"> Copyright (c) 2019 by"; 
   tx=tx+"\n Dr Jose M. Dominguez, Dr Alejandro Crespo,";
-  tx=tx+"\n Prof. Moncho Gomez Gesteira, Orlando Garcia-Feal, Dr Anxo Barreiro";
-  tx=tx+"\n Prof. Benedict Rogers, Dr Georgios Fourtakas, Dr Athanasios Mokos,";
-  tx=tx+"\n Prof. Peter Stansby, Dr Renato Vacondio, Dr Ricardo Canelas,";
-  tx=tx+"\n Dr Stephen Longshaw, Dr Corrado Altomare, Dr Angelo Tafuni.\n";
+  tx=tx+"\n Prof. Moncho Gomez Gesteira,  Prof. Benedict Rogers,";
+  tx=tx+"\n Dr Georgios Fourtakas, Prof. Peter Stansby, Dr Ricardo Canelas,";
+  tx=tx+"\n Dr Renato Vacondio, Dr Corrado Altomare, Dr Angelo Tafuni,";
+  tx=tx+"\n Orlando Garcia-Feal, Dr Jose Gonzalez Cao\n";
   if(!simple){
     tx=tx+"\n EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo";
     tx=tx+"\n School of Mechanical, Aerospace and Civil Engineering, University of Manchester\n";
@@ -103,10 +105,6 @@ bool ShowsVersion(int argc,char** argv){
 //==============================================================================
 int main(int argc, char** argv){
   int errcode=1;
-  AppInfo.AddNameExtra("MLPistons");  //<vs_mlapiston>
-  AppInfo.AddNameExtra("RZ");         //<vs_rzone>
-  AppInfo.AddNameExtra("Chrono");     //<vs_chroono>
-  AppInfo.AddNameExtra("Inlet");      //<vs_innlet>
 #ifdef CODE_SIZE4
   AppInfo.AddNameExtra("MK65k");
 #endif

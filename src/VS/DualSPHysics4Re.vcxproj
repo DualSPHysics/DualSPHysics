@@ -104,10 +104,10 @@
     <CodeAnalysisRules Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" />
     <CodeAnalysisRuleAssemblies Condition="'$(Configuration)|$(Platform)'=='Release|x64'" />
     <CodeAnalysisRuleAssemblies Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" />
-    <TargetName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(ProjectName)4.3_win64</TargetName>
-    <TargetName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(ProjectName)4.3_win64_debug</TargetName>
-    <TargetName Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">$(ProjectName)4.3CPU_win64</TargetName>
-    <TargetName Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">$(ProjectName)4.3CPU_win64_debug</TargetName>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(ProjectName)4.4_win64</TargetName>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(ProjectName)4.4_win64_debug</TargetName>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">$(ProjectName)4.4CPU_win64</TargetName>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">$(ProjectName)4.4CPU_win64_debug</TargetName>
     <PreBuildEventUseInBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</PreBuildEventUseInBuild>
     <PreBuildEventUseInBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</PreBuildEventUseInBuild>
     <PreLinkEventUseInBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</PreLinkEventUseInBuild>
@@ -146,7 +146,7 @@
       <CompileAs>CompileAsCpp</CompileAs>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>cudart.lib;dsphchrono.lib;JWaveGen_$(PlatformName)_$(PlatformToolset)_$(Configuration).lib;JFormatFiles2_$(PlatformName)_$(PlatformToolset)_$(Configuration).lib;JWave_MLP_RZ_$(PlatformName)_$(PlatformToolset)_$(Configuration).lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>cudart_static.lib;dsphchrono.lib;JWaveGen_$(PlatformName)_$(PlatformToolset)_$(Configuration).lib;JFormatFiles2_$(PlatformName)_$(PlatformToolset)_$(Configuration).lib;JWave_MLP_RZ_$(PlatformName)_$(PlatformToolset)_$(Configuration).lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>$(TargetPath)</OutputFile>
       <AdditionalLibraryDirectories>$(CUDA_PATH_V9_2)/lib/$(PlatformName);../lib/vs2015;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>false</GenerateDebugInformation>
@@ -203,7 +203,7 @@
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>cudart.lib;dsphchrono.lib;JWaveGen_$(PlatformName)_$(PlatformToolset)_$(Configuration).lib;JFormatFiles2_$(PlatformName)_$(PlatformToolset)_$(Configuration).lib;JWave_MLP_RZ_$(PlatformName)_$(PlatformToolset)_$(Configuration).lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>cudart_static.lib;dsphchrono.lib;JWaveGen_$(PlatformName)_$(PlatformToolset)_$(Configuration).lib;JFormatFiles2_$(PlatformName)_$(PlatformToolset)_$(Configuration).lib;JWave_MLP_RZ_$(PlatformName)_$(PlatformToolset)_$(Configuration).lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>$(TargetPath)</OutputFile>
       <AdditionalLibraryDirectories>$(CUDA_PATH_V9_2)/lib/$(PlatformName);../lib/vs2015;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>

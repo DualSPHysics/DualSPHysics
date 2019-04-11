@@ -100,6 +100,27 @@ inline float Determinant3x3(const tmatrix3f &d){
 }
 
 //==============================================================================
+/// Calcula el determinante de una matriz simetrica de 3x3.
+/// Returns the determinant of a 3x3 symmetric matrix.
+//==============================================================================
+inline float Determinant3x3(const tsymatrix3f &d){
+  return(d.xx * (d.yy*d.zz - d.yz*d.yz)+
+         d.xy * (d.yz*d.xz - d.xy*d.zz)+
+         d.xz * (d.xy*d.yz - d.yy*d.xz));
+}
+
+//==============================================================================
+/// Calcula el determinante de una matriz simetrica de 4x4.
+/// Returns the determinant of a 4x4 symmetric matrix.
+//==============================================================================
+inline float Determinant4x4(const tsymatrix4f &d){
+  return(d.a11 * (d.a22*d.a33*d.a44 + d.a23*d.a34*d.a24 + d.a24*d.a23*d.a34 - d.a22*d.a34*d.a34 - d.a23*d.a23*d.a44 - d.a24*d.a33*d.a24)+
+         d.a12 * (d.a12*d.a34*d.a34 + d.a23*d.a13*d.a44 + d.a24*d.a33*d.a14 - d.a12*d.a33*d.a44 - d.a23*d.a34*d.a14 - d.a24*d.a13*d.a34)+
+         d.a13 * (d.a12*d.a23*d.a44 + d.a22*d.a34*d.a14 + d.a24*d.a13*d.a24 - d.a12*d.a34*d.a24 - d.a22*d.a13*d.a44 - d.a24*d.a23*d.a14)+
+         d.a14 * (d.a12*d.a33*d.a24 + d.a22*d.a13*d.a34 + d.a23*d.a23*d.a14 - d.a12*d.a23*d.a34 - d.a22*d.a33*d.a14 - d.a23*d.a13*d.a24));
+}
+
+//==============================================================================
 /// Devuelve la matriz inversa de una matriz de 3x3.
 /// Returns the inverse matrix of a 3x3 matrix.
 //==============================================================================

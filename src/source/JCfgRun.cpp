@@ -80,6 +80,7 @@ void JCfgRun::LoadDsphConfig(std::string path){
 /// Shows information about execution parameters.
 //==============================================================================
 void JCfgRun::VisuInfo()const{
+/////////|---------1---------2---------3---------4---------5---------6---------7--------X8
   printf("Information about execution parameters:\n\n");
   printf("  DualSPHysics4 [name_case [dir_out]] [options]\n\n");
   printf("  Options:\n");

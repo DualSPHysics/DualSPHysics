@@ -24,6 +24,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <cfloat>
+#include <cmath>
 #include <stdarg.h>
 #include <algorithm>
 #include <fstream>
@@ -1326,6 +1327,14 @@ tdouble3* ResizeAlloc(tdouble3 *data,unsigned ndata,unsigned newsize){
   delete[] data;
   return(data2);
 }
+//==============================================================================
+tdouble4* ResizeAlloc(tdouble4 *data,unsigned ndata,unsigned newsize){
+  tdouble4* data2=new tdouble4[newsize];
+  ndata=std::min(ndata,newsize);
+  if(ndata)memcpy(data2,data,sizeof(tdouble4)*ndata);
+  delete[] data;
+  return(data2);
+}
 
 
 //==============================================================================
@@ -1357,6 +1366,49 @@ bool IsNAN(float v){
 bool IsNAN(double v){
  return(v!=v);
 }
+
+//==============================================================================
+/// Returns v1 is equal to v2 according a tolerance value.
+//==============================================================================
+bool IsEqual(float v1,float v2,float tolerance){
+  return(fabs(v1-v2)<=tolerance);
+}
+
+//==============================================================================
+/// Returns v1 is equal to v2 according a tolerance value.
+//==============================================================================
+bool IsEqual(double v1,double v2,double tolerance){
+  return(fabs(v1-v2)<=tolerance);
+}
+
+//==============================================================================
+/// Returns v1 is greater than v2 or equal to v2 according a tolerance value.
+//==============================================================================
+bool IsGtEqual(float v1,float v2,float tolerance){
+  return(v1>=v2 || fabs(v1-v2)<=tolerance);
+}
+
+//==============================================================================
+/// Returns v1 is greater than v2 or equal to v2 according a tolerance value.
+//==============================================================================
+bool IsGtEqual(double v1,double v2,double tolerance){
+  return(v1>=v2 || fabs(v1-v2)<=tolerance);
+}
+
+//==============================================================================
+/// Returns v1 is less than v2 or equal to v2 according a tolerance value.
+//==============================================================================
+bool IsLtEqual(float v1,float v2,float tolerance){
+  return(v1<=v2 || fabs(v1-v2)<=tolerance);
+}
+
+//==============================================================================
+/// Returns v1 is less than v2 or equal to v2 according a tolerance value.
+//==============================================================================
+bool IsLtEqual(double v1,double v2,double tolerance){
+  return(v1<=v2 || fabs(v1-v2)<=tolerance);
+}
+
 
 }
 

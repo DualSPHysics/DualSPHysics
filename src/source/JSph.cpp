@@ -641,7 +641,9 @@ void JSph::LoadCaseConfig(){
       ChronoObjects=new JChronoObjects(Log,DirCase,CaseName,&xml,"case.execution.special.chrono",Dp,parts.GetMkBoundFirst());
     }
     else RunException(met,"Chrono configuration in XML file is missing.",FileXml);
-  }//<vs_chroono_end>
+  }
+  else if(xml.GetNode("case.execution.special.chrono",false))Log->PrintfWarning("The use of Chrono is disabled (RigidAlgorithm is not 3) although XML file includes the Chrono configuration.");
+  //<vs_chroono_end>
 
   //-Loads and configures moving objects.
   if(parts.CountBlocks(TpPartMoving)>0){

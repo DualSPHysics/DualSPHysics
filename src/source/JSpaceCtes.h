@@ -32,6 +32,7 @@
 //:# - Ahora se puede definir <coefh> o <hdp> pero no ambos a la vez. (29-01-2016)
 //:# - Se cambio las unidades de la constante B a kg/(m*s^2). (08-06-2016)
 //:# - Se cambio las unidades de la constante B a Pascal (Pa). (07-06-2017)
+//:# - Save example of <hdp> in <constantsdef> of template. (07-04-2019)  
 //:#############################################################################
 
 /// \file JSpaceCtes.h \brief Declares the class \ref JSpaceCtes.
@@ -121,7 +122,7 @@ private:
   void WriteXmlElementComment(TiXmlElement* ele,std::string comment="",std::string unitscomment="")const;
 
   void ReadXmlDef(JXml *sxml,TiXmlElement* ele);
-  void WriteXmlDef(JXml *sxml,TiXmlElement* ele)const;
+  void WriteXmlDef(JXml *sxml,TiXmlElement* ele,bool svtemplate)const;
   void ReadXmlRun(JXml *sxml,TiXmlElement* ele);
   void WriteXmlRun(JXml *sxml,TiXmlElement* ele)const;
 
@@ -131,7 +132,7 @@ public:
   void Reset();
   void LoadDefault();
   void LoadXmlDef(JXml *sxml,const std::string &place);
-  void SaveXmlDef(JXml *sxml,const std::string &place)const;
+  void SaveXmlDef(JXml *sxml,const std::string &place,bool svtemplate=false)const;
   void LoadXmlRun(JXml *sxml,const std::string &place);
   void SaveXmlRun(JXml *sxml,const std::string &place)const;
 

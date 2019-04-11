@@ -634,6 +634,16 @@ bool PolygonInside(const tdouble3 &pt,const std::vector<tplane3d> &vpla);
 bool PolygonInside(const tfloat3 &pt,const std::vector<tplane3f> &vpla);
 
 
+//==============================================================================
+/// Devuelve true cuando el punto esta dentro de los planos.
+/// Returns true when the point is inside planes.
+bool PolygonInside(const tdouble3 &pt,unsigned npla,const tplane3d *vpla);
+
+  //==============================================================================
+/// Devuelve true cuando el punto esta dentro de los planos.
+/// Returns true when the point is inside planes.
+bool PolygonInside(const tfloat3 &pt,unsigned npla,const tplane3f *vpla);
+
 }
 
 #endif
