@@ -1,6 +1,6 @@
 ﻿//HEAD_DSCODES
 /*
- <DUALSPHYSICS>  Copyright (c) 2018 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2019 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -69,6 +69,10 @@
 //:# - Nuevas funciones StrTrimBegin() y StrTrimEnd(). (29-08-2018)
 //:# - Nuevas funciones GetDateTimeFormatUTC(), GetWeekDay(), GetYearDay() y GetWeekNumber(). (24-10-2018)
 //:# - Nuevas funciones Delay() y GetRuntime(). (22-11-2018)
+//:# - Nuevas funcion VectorSplitStr().  (26-02-2019)
+//:# - Nueva funcion StrIsNumber().  (21-03-2019)
+//:# - Nueva funcion FileSize().  (23-03-2019)
+//:# - Nuevas funciones IsEqual(), IsGtEqual(), IsLtEqual().  (08-04-2019)
 //:#############################################################################
 
 /// \file Functions.h \brief Declares basic/general functions for the entire application.
@@ -147,10 +151,14 @@ std::string Double4Str(const tdouble4 &v,const char* fmt="%f,%f,%f");
 /// Converts range of tdouble4 values to string.  
 inline std::string Double4gStr(const tdouble4 &v){ return(Double4Str(v,"%g,%g,%g,%g")); }
 
+bool StrIsNumber(const std::string &v);
+
 int      StrToInt    (const std::string &v);
 tint3    StrToInt3   (std::string v);
+
 double   StrToDouble (const std::string &v);
 tdouble3 StrToDouble3(std::string v);
+
 inline byte     StrToByte   (const std::string &v){ return(byte(StrToInt(v)));          }
 inline word     StrToWord   (const std::string &v){ return(word(StrToInt(v)));          }
 inline unsigned StrToUint   (const std::string &v){ return(unsigned(StrToInt(v)));      }
@@ -179,6 +187,7 @@ std::string StrFileError(int error);
 std::string StrSplit(const std::string mark,std::string &text);
 unsigned StrSplitCount(const std::string mark,std::string text);
 std::string StrSplitValue(const std::string mark,std::string text,unsigned value);
+unsigned VectorSplitStr(const std::string mark,const std::string &text,std::vector<std::string> &vec);
 unsigned VectorSplitInt(const std::string mark,const std::string &text,std::vector<int> &vec);
 
 double GetFirstValueDouble(std::string tex,std::string pretex="");
@@ -215,6 +224,7 @@ void PrintVar(const std::string &name,unsigned value,const std::string &post="")
 int FileType(const std::string &name);
 inline bool FileExists(const std::string &name){ return(FileType(name)==2); }
 inline bool DirExists(const std::string &name){ return(FileType(name)==1); }
+llong FileSize(const std::string &name);
 
 std::string GetCurrentDir();
 int Mkdir(const std::string &dirname);
@@ -261,11 +271,19 @@ tfloat4*  ResizeAlloc(tfloat4  *data,unsigned ndata,unsigned newsize);
 double*   ResizeAlloc(double   *data,unsigned ndata,unsigned newsize);
 tdouble2* ResizeAlloc(tdouble2 *data,unsigned ndata,unsigned newsize);
 tdouble3* ResizeAlloc(tdouble3 *data,unsigned ndata,unsigned newsize);
+tdouble4* ResizeAlloc(tdouble4 *data,unsigned ndata,unsigned newsize);
 
 bool IsInfinity(float v);
 bool IsInfinity(double v);
 bool IsNAN(float v);
 bool IsNAN(double v);
+
+bool IsEqual(float  v1,float  v2,float  tolerance);
+bool IsEqual(double v1,double v2,double tolerance);
+bool IsGtEqual(float  v1,float  v2,float  tolerance);
+bool IsGtEqual(double v1,double v2,double tolerance);
+bool IsLtEqual(float  v1,float  v2,float  tolerance);
+bool IsLtEqual(double v1,double v2,double tolerance);
 
 }
 

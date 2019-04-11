@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2018 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2019 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -70,6 +70,20 @@ public:
   ~JSphGpuSingle();
   void Run(std::string appname,JCfgRun *cfg,JLog2 *log);
 
+//<vs_innlet_ini>
+//-Code for InOut in JSphGpuSingle_InOut.cpp
+//--------------------------------------------
+protected:
+  void InOutInit(double timestepini);
+  void InOutIgnoreFluidDef(const std::vector<unsigned> &mkfluidlist);
+  void InOutCheckProximity(unsigned newnp);
+  void InOutCreateList();
+  void InOutComputeStep(double stepdt);
+  void InOutCalculeZsurf();
+  void InOutExtrapolateData();
+
+  void BoundCorrectionData();
+//<vs_innlet_end>
 };
 
 #endif

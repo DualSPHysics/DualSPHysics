@@ -26,6 +26,15 @@
     <Filter Include="Common\JMotion">
       <UniqueIdentifier>{74f9f91d-50ee-4a68-a7fd-f3dae19dfbe4}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Src_Chrono">
+      <UniqueIdentifier>{43f581fe-d4d4-445e-b4aa-71d3f8920b43}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Src_JWave_MLP_RZ">
+      <UniqueIdentifier>{72be6522-7328-4bb5-9f5d-2dab35803c8a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Src_Inlet">
+      <UniqueIdentifier>{55310fa5-8236-4088-a368-9d92edff8b87}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\source\JCellDivGpu_ker.h">
@@ -265,13 +274,58 @@
     <ClInclude Include="..\source\JLinearValue.h">
       <Filter>Common</Filter>
     </ClInclude>
+    <ClInclude Include="..\source\JChronoData.h">
+      <Filter>Src_Chrono</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JChronoObjects.h">
+      <Filter>Src_Chrono</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\DSPHChronoLib.h">
+      <Filter>Src_Chrono</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JMLPistons.h">
+      <Filter>Src_JWave_MLP_RZ</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JMLPistonsGpu.h">
+      <Filter>Src_JWave_MLP_RZ</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JRelaxZones.h">
+      <Filter>Src_JWave_MLP_RZ</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JRelaxZonesGpu.h">
+      <Filter>Src_JWave_MLP_RZ</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JRelaxZone_ker.h">
+      <Filter>Cuda</Filter>
+    </ClInclude>
     <ClInclude Include="..\source\JSpaceVtkOut.h">
       <Filter>CommonDsph</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JSphGpu_InOut_ker.h">
+      <Filter>Cuda</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JSphInOut.h">
+      <Filter>Src_Inlet</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JSphInOutGridData.h">
+      <Filter>Src_Inlet</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JSphInOutPoints.h">
+      <Filter>Src_Inlet</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JSphBoundCorr.h">
+      <Filter>Src_Inlet</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JSimpleNeigs.h">
+      <Filter>Src_Inlet</Filter>
     </ClInclude>
     <ClInclude Include="..\source\JSphPartsInit.h">
       <Filter>Source</Filter>
     </ClInclude>
     <ClInclude Include="..\source\FunctionsGeo3d.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JLinearValueDef.h">
       <Filter>Common</Filter>
     </ClInclude>
   </ItemGroup>
@@ -465,8 +519,41 @@
     <ClCompile Include="..\source\JLinearValue.cpp">
       <Filter>Common</Filter>
     </ClCompile>
+    <ClCompile Include="..\source\JChronoObjects.cpp">
+      <Filter>Src_Chrono</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JMLPistonsGpu.cpp">
+      <Filter>Src_JWave_MLP_RZ</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JRelaxZonesGpu.cpp">
+      <Filter>Src_JWave_MLP_RZ</Filter>
+    </ClCompile>
     <ClCompile Include="..\source\JSpaceVtkOut.cpp">
       <Filter>CommonDsph</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JSphCpu_InOut.cpp">
+      <Filter>Src_Inlet</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JSphCpuSingle_InOut.cpp">
+      <Filter>Src_Inlet</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JSphGpuSingle_InOut.cpp">
+      <Filter>Src_Inlet</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JSphInOut.cpp">
+      <Filter>Src_Inlet</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JSphInOutGridData.cpp">
+      <Filter>Src_Inlet</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JSphInOutPoints.cpp">
+      <Filter>Src_Inlet</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JSphBoundCorr.cpp">
+      <Filter>Src_Inlet</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JSimpleNeigs.cpp">
+      <Filter>Src_Inlet</Filter>
     </ClCompile>
     <ClCompile Include="..\source\JSphPartsInit.cpp">
       <Filter>Source</Filter>
@@ -503,6 +590,12 @@
       <Filter>Cuda</Filter>
     </CudaCompile>
     <CudaCompile Include="..\source\FunctionsMath_ker.cu">
+      <Filter>Cuda</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\source\JRelaxZone_ker.cu">
+      <Filter>Cuda</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\source\JSphGpu_InOut_ker.cu">
       <Filter>Cuda</Filter>
     </CudaCompile>
   </ItemGroup>

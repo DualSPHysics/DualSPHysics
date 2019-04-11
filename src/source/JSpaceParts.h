@@ -1,6 +1,6 @@
 //HEAD_DSCODES
 /*
- <DUALSPHYSICS>  Copyright (c) 2018 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2019 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -45,6 +45,12 @@
 //:#   la version v4.0.055. (07-03-2018)
 //:# - Se pasa a usar los tipos de particulas definidos en JParticlesDef.h. (23-03-2018)
 //:# - Metodos para obtener informacion de particulas. (25-04-2018)
+//:# - Se cambian variables Velini y Omegaini por LinearVelini y AngularVelini. (13-02-2019)
+//:# - Permite definir restricciones al calcular aceleracion lineal (TranslationFree)
+//:#   y angular (RotationFree). (13-02-2019)
+//:# - Permite definir una lista de velocidades peredefinidas (lineal y angular) en el XML
+//:#   o en un fichero independiente. (21-02-2019)
+//:# - Gestiona posicion minima y maxima de particulas. (21-03-2019)
 //:#############################################################################
 
 /// \file JSpaceParts.h \brief Declares the class \ref JSpaceParts.
@@ -65,6 +71,7 @@
 class JXml;
 class TiXmlElement;
 class JSpaceProperties;
+class JLinearValue;
 
 //##############################################################################
 //# JSpacePartBlock
@@ -146,8 +153,10 @@ public:
 class JSpacePartBlock_Fixed : public JSpacePartBlock
 {
 public:
-  JSpacePartBlock_Fixed(const JSpaceProperties* properties,word mktype,unsigned begin,unsigned count):JSpacePartBlock(properties,TpPartFixed,"Fixed",mktype,begin,count){}
-  JSpacePartBlock_Fixed(const JSpaceProperties* properties,JXml *sxml,TiXmlElement* ele):JSpacePartBlock(properties,TpPartFixed,"Fixed"){ ReadXml(sxml,ele); }
+  JSpacePartBlock_Fixed(const JSpaceProperties* properties,word mktype,unsigned begin,unsigned count)
+    :JSpacePartBlock(properties,TpPartFixed,"Fixed",mktype,begin,count){}
+  JSpacePartBlock_Fixed(const JSpaceProperties* properties,JXml *sxml,TiXmlElement* ele)
+    :JSpacePartBlock(properties,TpPartFixed,"Fixed"){ ReadXml(sxml,ele); }
 };  
 
 //##############################################################################
@@ -159,8 +168,11 @@ class JSpacePartBlock_Moving : public JSpacePartBlock
 private:
   unsigned RefMotion;
 public:
-  JSpacePartBlock_Moving(const JSpaceProperties* properties,word mktype,unsigned begin,unsigned count,unsigned refmotion):JSpacePartBlock(properties,TpPartMoving,"Moving",mktype,begin,count),RefMotion(refmotion){}
-  JSpacePartBlock_Moving(const JSpaceProperties* properties,JXml *sxml,TiXmlElement* ele):JSpacePartBlock(properties,TpPartMoving,"Moving"){ ReadXml(sxml,ele); }
+  JSpacePartBlock_Moving(const JSpaceProperties* properties,word mktype,unsigned begin
+    ,unsigned count,unsigned refmotion)
+    :JSpacePartBlock(properties,TpPartMoving,"Moving",mktype,begin,count),RefMotion(refmotion){}
+  JSpacePartBlock_Moving(const JSpaceProperties* properties,JXml *sxml,TiXmlElement* ele)
+    :JSpacePartBlock(properties,TpPartMoving,"Moving"){ ReadXml(sxml,ele); }
   unsigned GetRefMotion()const{ return(RefMotion); }
   void ReadXml(JXml *sxml,TiXmlElement* ele);
   TiXmlElement* WriteXml(JXml *sxml,TiXmlElement* ele)const;
@@ -176,16 +188,27 @@ private:
   double Massbody;
   tdouble3 Center;
   tmatrix3d Inertia;
-  tdouble3 Velini;
-  tdouble3 Omegaini;
+  tint3 TranslationFree;
+  tint3 RotationFree;
+  tdouble3 LinearVelini;
+  tdouble3 AngularVelini;
+
 public:
-  JSpacePartBlock_Floating(const JSpaceProperties* properties,word mktype,unsigned begin,unsigned count,double massbody,const tdouble3& center,const tmatrix3d& inertia,const tdouble3& velini,const tdouble3& omegaini):JSpacePartBlock(properties,TpPartFloating,"Floating",mktype,begin,count),Massbody(massbody),Center(center),Inertia(inertia),Velini(velini),Omegaini(omegaini){}
-  JSpacePartBlock_Floating(const JSpaceProperties* properties,JXml *sxml,TiXmlElement* ele):JSpacePartBlock(properties,TpPartFloating,"Floating"){ ReadXml(sxml,ele); }
-  double GetMassbody()const{ return(Massbody); }
-  tdouble3 GetCenter()const{ return(Center); }
-  tmatrix3d GetInertia()const{ return(Inertia); }
-  tdouble3 GetVelini()const{ return(Velini); }
-  tdouble3 GetOmegaini()const{ return(Omegaini); }
+  JSpacePartBlock_Floating(const JSpaceProperties* properties
+    ,word mktype,unsigned begin,unsigned count,double massbody
+    ,const tdouble3& center,const tmatrix3d& inertia
+    ,const tint3 &translationfree,const tint3 &rotationfree
+    ,const tdouble3 &linvelini,const tdouble3 &angvelini
+    ,const JLinearValue *linvel,const JLinearValue *angvel);
+  JSpacePartBlock_Floating(const JSpaceProperties* properties,JXml *sxml,TiXmlElement* ele);
+  ~JSpacePartBlock_Floating();
+  double        GetMassbody()       const{ return(Massbody); }
+  tdouble3      GetCenter()         const{ return(Center); }
+  tmatrix3d     GetInertia()        const{ return(Inertia); }
+  tint3         GetTranslationFree()const{ return(TranslationFree); }
+  tint3         GetRotationFree()   const{ return(RotationFree); }
+  tdouble3      GetLinearVelini()   const{ return(LinearVelini); }
+  tdouble3      GetAngularVelini()  const{ return(AngularVelini); }
   void ReadXml(JXml *sxml,TiXmlElement* ele);
   TiXmlElement* WriteXml(JXml *sxml,TiXmlElement* ele)const;
 };  
@@ -197,8 +220,10 @@ public:
 class JSpacePartBlock_Fluid : public JSpacePartBlock
 {
 public:
-  JSpacePartBlock_Fluid(const JSpaceProperties* properties,word mktype,unsigned begin,unsigned count):JSpacePartBlock(properties,TpPartFluid,"Fluid",mktype,begin,count){}
-  JSpacePartBlock_Fluid(const JSpaceProperties* properties,JXml *sxml,TiXmlElement* ele):JSpacePartBlock(properties,TpPartFluid,"Fluid"){ ReadXml(sxml,ele); }
+  JSpacePartBlock_Fluid(const JSpaceProperties* properties,word mktype,unsigned begin,unsigned count)
+    :JSpacePartBlock(properties,TpPartFluid,"Fluid",mktype,begin,count){}
+  JSpacePartBlock_Fluid(const JSpaceProperties* properties,JXml *sxml,TiXmlElement* ele)
+    :JSpacePartBlock(properties,TpPartFluid,"Fluid"){ ReadXml(sxml,ele); }
 };  
 
 //##############################################################################
@@ -223,6 +248,9 @@ private:
   unsigned Begin;
   TpParticles LastType;
   word MkBoundFirst,MkFluidFirst;
+  tdouble3 Posmin;  ///<Minimum position of particles.
+  tdouble3 Posmax;  ///<Maximum position of particles.
+
   JSpaceProperties* Properties;
   
   unsigned GetBegin()const{ return(Begin); }
@@ -254,10 +282,31 @@ public:
   word GetMkBoundFirst()const{ return(MkBoundFirst); }
   word GetMkFluidFirst()const{ return(MkFluidFirst); }
 
-  void AddFixed(word mktype,unsigned count){ Add(new JSpacePartBlock_Fixed(Properties,mktype,GetBegin(),count)); }
-  void AddMoving(word mktype,unsigned count,unsigned refmotion){ Add(new JSpacePartBlock_Moving(Properties,mktype,GetBegin(),count,refmotion)); }
-  void AddFloating(word mktype,unsigned count,double massbody,const tdouble3& center,const tmatrix3d& inertia,const tdouble3& velini,const tdouble3& omegaini){ Add(new JSpacePartBlock_Floating(Properties,mktype,GetBegin(),count,massbody,center,inertia,velini,omegaini)); }
-  void AddFluid(word mktype,unsigned count){ Add(new JSpacePartBlock_Fluid(Properties,mktype,GetBegin(),count)); }
+  void SetPosDomain(tdouble3 posmin,tdouble3 posmax){ Posmin=posmin; Posmax=posmax; }
+  tdouble3 GetPosmin()const{ return(Posmin); }
+  tdouble3 GetPosmax()const{ return(Posmax); }
+
+  void AddFixed(word mktype,unsigned count){ 
+    Add(new JSpacePartBlock_Fixed(Properties,mktype,GetBegin(),count));
+  }
+
+  void AddMoving(word mktype,unsigned count,unsigned refmotion){ 
+    Add(new JSpacePartBlock_Moving(Properties,mktype,GetBegin(),count,refmotion));
+  }
+
+  void AddFloating(word mktype,unsigned count,double massbody
+    ,const tdouble3 &center,const tmatrix3d &inertia
+    ,const tint3 &translationfree,const tint3 &rotationfree
+    ,const tdouble3 &linvelini,const tdouble3 &angvelini
+    ,const JLinearValue *linvel,const JLinearValue *angvel)
+  { 
+    Add(new JSpacePartBlock_Floating(Properties,mktype,GetBegin(),count,massbody
+      ,center,inertia,translationfree,rotationfree,linvelini,angvelini,linvel,angvel)); 
+  }
+
+  void AddFluid(word mktype,unsigned count){ 
+    Add(new JSpacePartBlock_Fluid(Properties,mktype,GetBegin(),count));
+  }
 
   void SetBlockSize(unsigned pos,unsigned np);
 
@@ -270,6 +319,8 @@ public:
 
   void GetParticlesInfo(std::vector<std::string> &out)const;
   void VisuParticlesInfo()const;
+
+  bool UseImposedFtVel()const;
 };
 
 

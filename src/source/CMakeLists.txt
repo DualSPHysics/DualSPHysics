@@ -14,9 +14,17 @@ set(OBSPHSINGLE JCellDivCpuSingle.cpp JPartsLoad4.cpp JSphCpuSingle.cpp)
 # GPU Objects
 
 set(OBCOMMONGPU FunctionsCuda.cpp JObjectGpu.cpp)
-set(OBSPHGPU JArraysGpu.cpp JBlockSizeAuto.cpp JCellDivGpu.cpp JSphGpu.cpp)
+set(OBSPHGPU JArraysGpu.cpp JBlockSizeAuto.cpp JCellDivGpu.cpp JSphGpu.cpp )
 set(OBSPHSINGLEGPU JCellDivGpuSingle.cpp JSphGpuSingle.cpp)
 set(OBCUDA JCellDivGpu_ker.cu JCellDivGpuSingle_ker.cu JGauge_ker.cu JReduSum_ker.cu JSphGpu_ker.cu JWaveOrder2_ker.cu)
+
+# Other Objects
+
+set(OBWAVERZ JMLPistonsGpu.cpp JRelaxZonesGpu.cpp)
+set(OBWAVERZCUDA JRelaxZone_ker.cu)
+set(OBCHRONO JChronoObjects.cpp)
+set(OBINOUT JSphCpu_InOut.cpp JSphCpuSingle_InOut.cpp JSphBoundCorr.cpp JSphInOut.cpp JSphInOutGridData.cpp JSphInOutPoints.cpp JSimpleNeigs.cpp)
+set(OBINOUTGPU JSphGpuSingle_InOut.cpp)
 
 find_package(CUDA QUIET)
 
@@ -45,15 +53,9 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
 elseif(MSVC)
   message("Windows version")
 
-  #if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS "your.required.msvc.version")
-  #  message(FATAL_ERROR "Insufficient msvc version")
-  #endif()
-  
-  if(MSVC_VERSION VERSION_EQUAL 1800)
-    LINK_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/../lib/vs2013)
-  elseif(MSVC_VERSION VERSION_EQUAL 1900)
+  #if(MSVC_VERSION VERSION_EQUAL 1900)
     LINK_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/../lib/vs2015)
-  endif()
+  #endif()
 endif()
 
 # OpenMP flags
@@ -72,37 +74,33 @@ set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_GLIBCXX_USE_CXX11_ABI=0 -fPIC")
 
 # Binaries
 
-add_executable(DualSPHysics4.2CPU ${OBJXML} ${OBJSPHMOTION} ${OBCOMMON} ${OBCOMMONDSPH} ${OBSPH} ${OBSPHSINGLE})
-install(TARGETS	DualSPHysics4.2CPU DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/../../bin/linux)
+add_executable(DualSPHysics4.4CPU ${OBJXML} ${OBJSPHMOTION} ${OBCOMMON} ${OBCOMMONDSPH} ${OBSPH} ${OBSPHSINGLE} ${OBWAVERZ} ${OBCHRONO} ${OBINOUT})
+install(TARGETS	DualSPHysics4.4CPU DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/../../bin/linux)
 
 if (CUDA_FOUND)
-   cuda_add_executable(DualSPHysics4.2 ${OBJXML} ${OBJSPHMOTION} ${OBCOMMON} ${OBCOMMONDSPH} ${OBSPH} ${OBSPHSINGLE} ${OBCOMMONGPU} ${OBSPHGPU} ${OBSPHSINGLEGPU} ${OBCUDA})
-   install(TARGETS DualSPHysics4.2 DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/../../bin/linux)
+   cuda_add_executable(DualSPHysics4.4 ${OBJXML} ${OBJSPHMOTION} ${OBCOMMON} ${OBCOMMONDSPH} ${OBSPH} ${OBSPHSINGLE} ${OBCOMMONGPU} ${OBSPHGPU} ${OBSPHSINGLEGPU} ${OBCUDA} ${OBWAVERZ} ${OBWAVERZCUDA} ${OBCHRONO} ${OBINOUT} ${OBINOUTGPU})
+   install(TARGETS DualSPHysics4.4 DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/../../bin/linux)
 endif()
 
 # Linker flags
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-  target_link_libraries(DualSPHysics4.2CPU jformatfiles2_64 jwavegen_64)
-  set_target_properties(DualSPHysics4.2CPU PROPERTIES COMPILE_FLAGS "-use_fast_math -O3 -D_GLIBCXX_USE_CXX11_ABI=0 -fPIC")
+  target_link_libraries(DualSPHysics4.4CPU jformatfiles2_64 jwavegen_64 jwave_mlp_rz_64 ChronoEngine dsphchrono)
+  set_target_properties(DualSPHysics4.4CPU PROPERTIES COMPILE_FLAGS "-use_fast_math -O3 -D_GLIBCXX_USE_CXX11_ABI=0 -fPIC")
   
   if (CUDA_FOUND)
-     target_link_libraries(DualSPHysics4.2 jformatfiles2_64 jwavegen_64)
-     set_target_properties(DualSPHysics4.2 PROPERTIES COMPILE_FLAGS "-use_fast_math -O3 -D_WITHGPU -D_GLIBCXX_USE_CXX11_ABI=0 -fPIC")
+     target_link_libraries(DualSPHysics4.4 jformatfiles2_64 jwavegen_64 jwave_mlp_rz_64 ChronoEngine dsphchrono)
+     set_target_properties(DualSPHysics4.4 PROPERTIES COMPILE_FLAGS "-use_fast_math -O3 -D_WITHGPU -D_GLIBCXX_USE_CXX11_ABI=0 -fPIC")
   endif()
   
 elseif(MSVC)
-  set_target_properties(DualSPHysics4.2 PROPERTIES COMPILE_FLAGS "/D _WITHGPU")
+  set_target_properties(DualSPHysics4.4 PROPERTIES COMPILE_FLAGS "/D _WITHGPU")
 
-  if(MSVC_VERSION VERSION_EQUAL 1800)
-    # MSVC 2013
-    target_link_libraries(DualSPHysics4.2CPU JFormatFiles2_x64_v120_Release JWaveGen_x64_v120_Release)
-    target_link_libraries(DualSPHysics4.2 JFormatFiles2_x64_v120_Release JWaveGen_x64_v120_Release)
-  elseif(MSVC_VERSION VERSION_EQUAL 1900)
+  #if(MSVC_VERSION VERSION_EQUAL 1900)
     # MSVC 2015
-    target_link_libraries(DualSPHysics4.2CPU JFormatFiles2_x64_v140_Release JWaveGen_x64_v140_Release)
-    target_link_libraries(DualSPHysics4.2 JFormatFiles2_x64_v140_Release JWaveGen_x64_v140_Release)
-  endif()
+    target_link_libraries(DualSPHysics4.4CPU JFormatFiles2_x64_v140_Release JWaveGen_x64_v140_Release JWave_MLP_RZ_x64_v140_Release dsphchrono)
+    target_link_libraries(DualSPHysics4.4 JFormatFiles2_x64_v140_Release JWaveGen_x64_v140_Release JWave_MLP_RZ_x64_v140_Release dsphchrono)
+  #endif()
   
   SET(CUDA_PROPAGATE_HOST_FLAGS OFF CACHE BOOL "Propagate C/CXX Flags and friends to the host compiler in NVCC via -Xompile  " FORCE)
   
@@ -112,4 +110,3 @@ elseif(MSVC)
     endif(${CPP_FLAGS} MATCHES "/MD")
   endforeach(CPP_FLAGS)
 endif()
- 

@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2018 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2019 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -31,16 +31,28 @@
 //:# - Puede gestionar varios valores para cada instante. (17-04-2017)
 //:# - Nuevos metodos para calcular interpolacion de forma externa. (17-04-2017)
 //:# - Nuevos metodos SetTimeValue() para modificar datos de la lista. (24-01-2018)
+//:# - Nuevo constructor con input file. (13-02-2019)
+//:# - Nuevo constructor de copias. (14-02-2019)
+//:# - Permite uso de DBL_MAX como valor especial. (21-02-2019)
+//:# - El uso de valores especiales se establece en el constructor. (25-02-2019)
+//:# - Permite cargar datos directamente del XML. (26-02-2019)
 //:#############################################################################
 
 #include "JObject.h"
 #include "TypesDef.h"
+#include "JLinearValueDef.h"
 #include <string>
 #include <sstream>
 #include <iostream>
 #include <fstream>
 #include <cstdlib>
+#include <string>
 
+class JReadDatafile;
+#ifdef JLinearValue_UseJXml
+class JXml;
+class TiXmlElement;
+#endif
 
 //##############################################################################
 //# JLinearValue
@@ -71,10 +83,14 @@ protected:
 
 public:
   const unsigned Nvalues;
+  const bool SpecialValues; //<Uses the special value DBL_MAX.
 
-  JLinearValue(unsigned nvalues=1);
+  JLinearValue(unsigned nvalues=1,bool specialvalues=false);
+  JLinearValue(const std::string &inputfile,unsigned nvalues=1,bool specialvalues=false);
+  JLinearValue(const JLinearValue &obj);
   ~JLinearValue();
   void Reset();
+  void CopyFrom(const JLinearValue &obj);
   unsigned GetAllocMemory()const;
 
   void SetSize(unsigned size);
@@ -95,6 +111,7 @@ public:
   void SetTimeValue(unsigned idx,double time,double value,double value2,double value3,double value4,double value5){  SetTimeValue(idx,time,value,value2,value3,value4); SetValue(idx,4,value5);  }
   void SetTimeValue(unsigned idx,double time,double value,double value2,double value3,double value4,double value5,double value6){  SetTimeValue(idx,time,value,value2,value3,value4,value5); SetValue(idx,5,value6);  }
 
+  double ReadNextDouble(JReadDatafile &rdat,bool in_line=false);
   void LoadFile(std::string file);
   std::string GetFile()const{ return(File); };
 
@@ -103,6 +120,9 @@ public:
 
   //-For simple use.
   double GetValue(double timestep,unsigned cvalue=0);
+  float GetValuef(double timestep,unsigned cvalue=0);
+  tdouble3 GetValue3d(double timestep);
+  tfloat3  GetValue3f(double timestep);
   bool GetNewInterval()const{ return(NewInterval); }
 
   //-For external use.
@@ -111,6 +131,14 @@ public:
   unsigned GetPosNext()const{ return(PositionNext); };
   double GetTimeByIdx(unsigned idx)const;
   double GetValueByIdx(unsigned idx,unsigned cvalue=0)const;
+
+  //-Loads or saves on XML file.
+#ifdef JLinearValue_UseJXml
+  void ReadXmlValues(JXml *sxml,TiXmlElement* ele,std::string name
+    ,std::string subname,std::string attributes);
+  TiXmlElement* WriteXmlValues(JXml *sxml,TiXmlElement* ele,std::string name
+    ,std::string subname,std::string attributes)const;
+#endif
 };
 
 #endif

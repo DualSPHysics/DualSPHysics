@@ -1,6 +1,6 @@
 //HEAD_DSCODES
 /*
- <DUALSPHYSICS>  Copyright (c) 2018 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2019 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -24,10 +24,13 @@
 #include <cstdlib>
 #include <cstring>
 #include <cfloat>
+#include <cmath>
 #include <stdarg.h>
 #include <algorithm>
 #include <fstream>
 #include <climits>
+#include <iostream>
+#include <sstream>
 
 #ifdef WIN32
   #include <direct.h>
@@ -375,6 +378,16 @@ std::string Double4Str(const tdouble4 &v,const char* fmt){
 }
 
 //==============================================================================
+/// Returns true when v is a valid real number.
+//==============================================================================
+bool StrIsNumber(const std::string &v){
+  stringstream ss(v);
+  double d=0;
+  ss >> d;
+  return(!ss.fail());
+}
+
+//==============================================================================
 /// Converts string to int value.
 //==============================================================================
 int StrToInt(const std::string &v){
@@ -681,6 +694,18 @@ std::string StrSplitValue(const std::string mark,std::string text,unsigned value
 }
 
 //==============================================================================
+/// Loads string list in a vector and returns size of vector.
+//==============================================================================
+unsigned VectorSplitStr(const std::string mark,const std::string &text,std::vector<std::string> &vec){
+  std::string aux=text;
+  while(!aux.empty()){
+    std::string txv=StrSplit(mark,aux);
+    if(!txv.empty())vec.push_back(txv.c_str());
+  }
+  return((unsigned)vec.size());
+}
+
+//==============================================================================
 /// Loads unsigned list in a vector and returns size of vector.
 //==============================================================================
 unsigned VectorSplitInt(const std::string mark,const std::string &text,std::vector<int> &vec){
@@ -830,6 +855,16 @@ int FileType(const std::string &name){
     if(stfileinfo.st_mode&S_IFREG)ret=2;
   }
   return(ret);
+}
+
+//==============================================================================
+/// Returns size of file or -1 in case of error.
+//==============================================================================
+llong FileSize(const std::string &name){
+  llong size=-1;
+  std::ifstream fsrc(name.c_str(),std::ifstream::ate|std::ios::binary);
+  if(fsrc)size=llong(fsrc.tellg());
+  return(size);
 }
 
 
@@ -1292,6 +1327,14 @@ tdouble3* ResizeAlloc(tdouble3 *data,unsigned ndata,unsigned newsize){
   delete[] data;
   return(data2);
 }
+//==============================================================================
+tdouble4* ResizeAlloc(tdouble4 *data,unsigned ndata,unsigned newsize){
+  tdouble4* data2=new tdouble4[newsize];
+  ndata=std::min(ndata,newsize);
+  if(ndata)memcpy(data2,data,sizeof(tdouble4)*ndata);
+  delete[] data;
+  return(data2);
+}
 
 
 //==============================================================================
@@ -1323,6 +1366,49 @@ bool IsNAN(float v){
 bool IsNAN(double v){
  return(v!=v);
 }
+
+//==============================================================================
+/// Returns v1 is equal to v2 according a tolerance value.
+//==============================================================================
+bool IsEqual(float v1,float v2,float tolerance){
+  return(fabs(v1-v2)<=tolerance);
+}
+
+//==============================================================================
+/// Returns v1 is equal to v2 according a tolerance value.
+//==============================================================================
+bool IsEqual(double v1,double v2,double tolerance){
+  return(fabs(v1-v2)<=tolerance);
+}
+
+//==============================================================================
+/// Returns v1 is greater than v2 or equal to v2 according a tolerance value.
+//==============================================================================
+bool IsGtEqual(float v1,float v2,float tolerance){
+  return(v1>=v2 || fabs(v1-v2)<=tolerance);
+}
+
+//==============================================================================
+/// Returns v1 is greater than v2 or equal to v2 according a tolerance value.
+//==============================================================================
+bool IsGtEqual(double v1,double v2,double tolerance){
+  return(v1>=v2 || fabs(v1-v2)<=tolerance);
+}
+
+//==============================================================================
+/// Returns v1 is less than v2 or equal to v2 according a tolerance value.
+//==============================================================================
+bool IsLtEqual(float v1,float v2,float tolerance){
+  return(v1<=v2 || fabs(v1-v2)<=tolerance);
+}
+
+//==============================================================================
+/// Returns v1 is less than v2 or equal to v2 according a tolerance value.
+//==============================================================================
+bool IsLtEqual(double v1,double v2,double tolerance){
+  return(v1<=v2 || fabs(v1-v2)<=tolerance);
+}
+
 
 }
 

@@ -1,6 +1,6 @@
 //HEAD_DSCODES
 /*
- <DUALSPHYSICS>  Copyright (c) 2018 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2019 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -160,7 +160,7 @@ void JSpaceCtes::WriteXmlElementComment(TiXmlElement* ele,std::string comment,st
 //==============================================================================
 /// Writes constants for definition of the case of xml node.
 //==============================================================================
-void JSpaceCtes::WriteXmlDef(JXml *sxml,TiXmlElement* node)const{
+void JSpaceCtes::WriteXmlDef(JXml *sxml,TiXmlElement* node,bool svtemplate)const{
   TiXmlElement lattice("lattice");
   JXml::AddAttribute(&lattice,"bound",GetLatticeBound());
   JXml::AddAttribute(&lattice,"fluid",GetLatticeFluid());
@@ -172,7 +172,10 @@ void JSpaceCtes::WriteXmlDef(JXml *sxml,TiXmlElement* node)const{
   WriteXmlElementAuto(sxml,node,"speedsystem",GetSpeedSystem(),GetSpeedSystemAuto(),"Maximum system speed (by default the dam-break propagation is used)");
   WriteXmlElementComment(JXml::AddElementAttrib(node,"coefsound","value",GetCoefSound()),"Coefficient to multiply speedsystem");
   WriteXmlElementAuto(sxml,node,"speedsound",GetSpeedSound(),GetSpeedSoundAuto(),"Speed of sound to use in the simulation (by default speedofsound=coefsound*speedsystem)");
-  if(GetCoefH()||!GetCoefHdp())WriteXmlElementComment(JXml::AddElementAttrib(node,"coefh","value",GetCoefH()),"Coefficient to calculate the smoothing length (h=coefh*sqrt(3*dp^2) in 3D)");
+  if(GetCoefH()||!GetCoefHdp()){
+    WriteXmlElementComment(JXml::AddElementAttrib(node,"coefh","value",GetCoefH()),"Coefficient to calculate the smoothing length (h=coefh*sqrt(3*dp^2) in 3D)");
+    if(svtemplate)WriteXmlElementComment(JXml::AddElementAttrib(node,"_hdp","value",2),"Coefficient to calculate the smoothing length (hdp=h/dp)");
+  }
   if(GetCoefHdp())WriteXmlElementComment(JXml::AddElementAttrib(node,"hdp","value",GetCoefHdp()),"Coefficient to calculate the smoothing length (hdp=h/dp)");
   WriteXmlElementComment(JXml::AddElementAttrib(node,"cflnumber","value",GetCFLnumber()),"Coefficient to multiply dt");
   WriteXmlElementAuto(sxml,node,"h",GetH(),GetHAuto(),"","metres (m)");
@@ -236,8 +239,8 @@ void JSpaceCtes::LoadXmlDef(JXml *sxml,const std::string &place){
 //==============================================================================
 /// Stores constants for execution of the case of xml node.
 //==============================================================================
-void JSpaceCtes::SaveXmlDef(JXml *sxml,const std::string &place)const{
-  WriteXmlDef(sxml,sxml->GetNode(place,true)->ToElement());
+void JSpaceCtes::SaveXmlDef(JXml *sxml,const std::string &place,bool svtemplate)const{
+  WriteXmlDef(sxml,sxml->GetNode(place,true)->ToElement(),svtemplate);
 }
 
 //==============================================================================

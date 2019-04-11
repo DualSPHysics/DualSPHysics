@@ -9,8 +9,8 @@ dirout=${name}_out
 
 dirbin=../../../bin/linux
 gencase="${dirbin}/GenCase4_linux64"
-dualsphysicscpu="${dirbin}/DualSPHysics4.2CPU_linux64"
-dualsphysicsgpu="${dirbin}/DualSPHysics4.2_linux64"
+dualsphysicscpu="${dirbin}/DualSPHysics4.4CPU_linux64"
+dualsphysicsgpu="${dirbin}/DualSPHysics4.4_linux64"
 boundaryvtk="${dirbin}/BoundaryVTK4_linux64"
 partvtk="${dirbin}/PartVTK4_linux64"
 partvtkout="${dirbin}/PartVTKOut4_linux64"

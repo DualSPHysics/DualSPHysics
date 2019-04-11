@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!-- *** DualSPHysics (02-04-2019) *** -->
+<!-- *** class: JWavePaddles (only solitary waves) *** -->
+<!------------------------------------------------------------------------------->
+<!------------------------------------------------------------------------------->
+<!-- *** Example to define the piston/flap particulas *** -->
+<case app="GenCase4 v4.0.045 (21-06-2017)" date="07-07-2017 14:03:16">
+	<casedef>
+		...
+		<motion>
+			<objreal ref="10">
+				<begin mov="1" start="0" />
+				<mvnull id="1" />
+			</objreal>
+		</motion>
+	</casedef>
+    <execution>
+		<special>
+			<wavepaddles>
+				<piston>
+					<mkbound value="10" comment="Mk-Bound of selected particles" />
+					...
+				</piston>
+				...
+			</wavepaddles>
+		</special>
+		...
+    </execution>
+</case>
+<!------------------------------------------------------------------------------->
+<!------------------------------------------------------------------------------->
+<!-- *** Example for PISTON to create SOLITARY waves *** -->
+<special>
+	<wavepaddles>
+		<piston_solitary>
+			<mkbound value="10" comment="Mk-Bound of selected particles" />
+			<theory value="1" comment="Theory of generation 1:Rayleigh (Serre 1953), 2: Boussinesq (Goring 1978) 3: KdV (Clamond and Germain 1999) (def=2)" />
+			<start value="0" comment="Start time (def=0)" />
+			<depth value="0.14" comment="Water depth" />
+			<pistondir x="1" y="0" z="0" comment="Movement direction (def=(1,0,0))" />
+			<durationcoef value="1" comment="Coefficient of movement duration (def=1)" />
+			<waveheight value="0.05" comment="Wave height" />
+			<waves value="3" comment="Number of solitary waves (def=1)" />
+			<startcoef2 value="0.8" comment="Defines start of next wave according to period of previous wave. (def=1)" />
+			<_durationcoef2 value="1.1" comment="Coefficient of movement duration for 2nd wave (def=value of previous wave)" />
+			<waveheight2 value="0.07" comment="Wave height for 2nd wave (def=value of previous wave" />
+			<startcoef3 value="0.7" comment="Defines start of next wave according to period of previous wave. (def=value of previous wave)" />
+			<_durationcoef3 value="1.1" comment="Coefficient of movement duration for 3rd wave (def=value of previous wave)" />
+			<_waveheight3 value="0.05" comment="Wave height for 3rd wave (def=value of previous wave" />
+			<savemotion time="16" timedt="0.02" xpos="18" comment="Saves motion data. xpos is optional for elevation calculation" />
+		</piston_solitary>
+	</wavepaddles>
+</special>
+
+
+
+

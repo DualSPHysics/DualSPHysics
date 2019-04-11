@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2018 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2019 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -158,17 +158,25 @@ void CalcRidp(bool periactive,unsigned np,unsigned pini,unsigned idini,unsigned 
 void MoveLinBound(byte periactive,unsigned np,unsigned ini,tdouble3 mvpos,tfloat3 mvvel,const unsigned *ridp,double2 *posxy,double *posz,unsigned *dcell,float4 *velrhop,typecode *code);
 void MoveMatBound(byte periactive,bool simulate2d,unsigned np,unsigned ini,tmatrix4d m,double dt,const unsigned *ridpmv,double2 *posxy,double *posz,unsigned *dcell,float4 *velrhop,typecode *code);
 
+//-Kernels for MLPistons motion.  //<vs_mlapiston_ini>
+void MovePiston1d(bool periactive,unsigned np,unsigned idini,double dp,double poszmin,unsigned poszcount,const byte *pistonid,const double* movx,const double* velx,const unsigned *ridpmv,double2 *posxy,double *posz,unsigned *dcell,float4 *velrhop,typecode *code);
+void MovePiston2d(bool periactive,unsigned np,unsigned idini,double dp,double posymin,double poszmin,unsigned poszcount,const double* movx,const double* velx,const unsigned *ridpmv,double2 *posxy,double *posz,unsigned *dcell,float4 *velrhop,typecode *code);
+//<vs_mlapiston_end>
+
 //-Kernels for Floating bodies.
 void FtCalcForcesSum(bool periactive,unsigned ftcount
   ,tfloat3 gravity,const float4 *ftodata,const double3 *ftocenter,const unsigned *ftridp
   ,const double2 *posxy,const double *posz,const float3 *ace
   ,float3 *ftoforcessum);
-void FtCalcForces(unsigned ftcount,tfloat3 gravity,const float4 *ftodata
-  ,const float3 *ftoangles,const float4 *ftoinertiaini8,const float *ftoinertiaini1
+void FtCalcForces(unsigned ftcount,tfloat3 gravity
+  ,const float4 *ftodata,const float3 *ftoangles
+  ,const float4 *ftoinertiaini8,const float *ftoinertiaini1
   ,const float3 *ftoforcessum,float3 *ftoforces);
 void FtCalcForcesRes(unsigned ftcount,bool simulate2d,double dt
   ,const float3 *ftoomega,const float3 *ftovel,const double3 *ftocenter,const float3 *ftoforces
   ,float3 *ftoforcesres,double3 *ftocenterres);
+void FtApplyConstraints(unsigned ftcount,const byte *ftoconstraints
+  ,float3 *ftoforces,float3 *ftoforcesres);
 void FtUpdate(bool periactive,bool predictor,unsigned ftcount,double dt
   ,const float4 *ftodata,const float3 *ftoforcesres,double3 *ftocenterres,const unsigned *ftridp
   ,double3 *ftocenter,float3 *ftoangles,float3 *ftovel,float3 *ftoomega

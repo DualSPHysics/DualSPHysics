@@ -1,6 +1,6 @@
 //HEAD_DSCODES
 /*
- <DUALSPHYSICS>  Copyright (c) 2018 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2019 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -97,6 +97,27 @@ inline double Determinant3x3(const tmatrix3d &d){
 //==============================================================================
 inline float Determinant3x3(const tmatrix3f &d){
   return(d.a11 * d.a22 * d.a33 + d.a12 * d.a23 * d.a31 + d.a13 * d.a21 * d.a32 - d.a31 * d.a22 * d.a13 - d.a32 * d.a23 * d.a11 - d.a33 * d.a21 * d.a12);
+}
+
+//==============================================================================
+/// Calcula el determinante de una matriz simetrica de 3x3.
+/// Returns the determinant of a 3x3 symmetric matrix.
+//==============================================================================
+inline float Determinant3x3(const tsymatrix3f &d){
+  return(d.xx * (d.yy*d.zz - d.yz*d.yz)+
+         d.xy * (d.yz*d.xz - d.xy*d.zz)+
+         d.xz * (d.xy*d.yz - d.yy*d.xz));
+}
+
+//==============================================================================
+/// Calcula el determinante de una matriz simetrica de 4x4.
+/// Returns the determinant of a 4x4 symmetric matrix.
+//==============================================================================
+inline float Determinant4x4(const tsymatrix4f &d){
+  return(d.a11 * (d.a22*d.a33*d.a44 + d.a23*d.a34*d.a24 + d.a24*d.a23*d.a34 - d.a22*d.a34*d.a34 - d.a23*d.a23*d.a44 - d.a24*d.a33*d.a24)+
+         d.a12 * (d.a12*d.a34*d.a34 + d.a23*d.a13*d.a44 + d.a24*d.a33*d.a14 - d.a12*d.a33*d.a44 - d.a23*d.a34*d.a14 - d.a24*d.a13*d.a34)+
+         d.a13 * (d.a12*d.a23*d.a44 + d.a22*d.a34*d.a14 + d.a24*d.a13*d.a24 - d.a12*d.a34*d.a24 - d.a22*d.a13*d.a44 - d.a24*d.a23*d.a14)+
+         d.a14 * (d.a12*d.a33*d.a24 + d.a22*d.a13*d.a34 + d.a23*d.a23*d.a14 - d.a12*d.a23*d.a34 - d.a22*d.a33*d.a14 - d.a23*d.a13*d.a24));
 }
 
 //==============================================================================

@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2018 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2019 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -21,6 +21,9 @@
 #include "JLinearValue.h"
 #include "Functions.h"
 #include "JReadDatafile.h"
+#ifdef JLinearValue_UseJXml
+  #include "JXml.h"
+#endif
 #include <cstring>
 #include <sstream>
 #include <iostream>
@@ -37,11 +40,38 @@ using namespace std;
 //==============================================================================
 /// Constructor.
 //==============================================================================
-JLinearValue::JLinearValue(unsigned nvalues):Nvalues(max(1u,nvalues)){
+JLinearValue::JLinearValue(unsigned nvalues,bool specialvalues)
+  :Nvalues(max(1u,nvalues)),SpecialValues(specialvalues)
+{
   ClassName="JLinearValue";
   Times=NULL;
   Values=NULL;
   Reset();
+}
+
+//==============================================================================
+/// Constructor with input file.
+//==============================================================================
+JLinearValue::JLinearValue(const std::string &inputfile,unsigned nvalues,bool specialvalues)
+  :Nvalues(max(1u,nvalues)),SpecialValues(specialvalues)
+{
+  ClassName="JLinearValue";
+  Times=NULL;
+  Values=NULL;
+  Reset();
+  File=inputfile;
+}
+
+//==============================================================================
+/// Constructor for copy.
+//==============================================================================
+JLinearValue::JLinearValue(const JLinearValue &obj)
+  :Nvalues(obj.Nvalues),SpecialValues(obj.SpecialValues)
+{
+  ClassName="JLinearValue";
+  Times=NULL;
+  Values=NULL;
+  CopyFrom(obj);
 }
 
 //==============================================================================
@@ -60,6 +90,27 @@ void JLinearValue::Reset(){
   File="";
   NewInterval=false;
   TimeStep=TimePre=TimeNext=TimeFactor=0;
+}
+
+//==============================================================================
+/// Copy data from other object.
+//==============================================================================
+void JLinearValue::CopyFrom(const JLinearValue &obj){
+  if(Nvalues!=obj.Nvalues)RunException("CopyFrom","The copy is invalid since Nvalues does not match.");
+  if(SpecialValues!=obj.SpecialValues)RunException("CopyFrom","The copy is invalid since SpecialValues does not match.");
+  Reset();
+  File=obj.File;
+  SetSize(obj.Size);
+  memcpy(Times,obj.Times,sizeof(double)*Size);
+  memcpy(Values,obj.Values,sizeof(double)*Nvalues*Size);
+  Count        =obj.Count;
+  NewInterval  =obj.NewInterval;
+  TimeStep     =obj.TimeStep;
+  Position     =obj.Position;
+  PositionNext =obj.PositionNext;
+  TimePre      =obj.TimePre;
+  TimeNext     =obj.TimeNext;
+  TimeFactor   =obj.TimeFactor;
 }
 
 //==============================================================================
@@ -107,6 +158,7 @@ void JLinearValue::SetTimeValue(unsigned idx,double time,double value){
   Times[idx]=time;
   Values[Nvalues*idx]=value;
   for(unsigned cv=1;cv<Nvalues;cv++)Values[Nvalues*idx+cv]=0;
+  //if(value==DBL_MAX)SpecialValues=true;
 }
 
 //==============================================================================
@@ -120,6 +172,7 @@ unsigned JLinearValue::AddTimeValue(double time,double value){
   Values[Nvalues*idx]=value;
   for(unsigned cv=1;cv<Nvalues;cv++)Values[Nvalues*idx+cv]=0;
   Count++;
+  //if(value==DBL_MAX)SpecialValues=true;
   return(idx);
 }
 
@@ -132,6 +185,7 @@ void JLinearValue::SetValue(unsigned idx,unsigned cvalue,double value){
   if(idx>=Count)RunException(met,"idx is not valid.");
   if(cvalue>=Nvalues)RunException(met,"cvalue is not valid.");
   Values[Nvalues*idx+cvalue]=value;
+  //if(value==DBL_MAX)SpecialValues=true;
 }
 
 //==============================================================================
@@ -174,7 +228,7 @@ void JLinearValue::FindTime(double timestep){
 }
 
 //==============================================================================
-/// Returns the interpolated value value for the time indicated.
+/// Returns the interpolated value for the time indicated.
 /// If no values always returns 0.
 /// If only one value always returns that value.
 /// If the indicated t is less than the minimum returns the first value.
@@ -196,8 +250,71 @@ double JLinearValue::GetValue(double timestep,unsigned cvalue){
     const double vini=Values[Nvalues*Position+cvalue];
     const double vnext=Values[Nvalues*PositionNext+cvalue];
     ret=(TimeFactor*(vnext-vini)+vini);
+    if(SpecialValues){
+      if(vini==DBL_MAX)ret=DBL_MAX;
+      else if(vnext==DBL_MAX)ret=vini;
+    }
   }
   return(ret);
+}
+
+//==============================================================================
+/// Returns result of GetValue() converted to float according special values.
+//==============================================================================
+float JLinearValue::GetValuef(double timestep,unsigned cvalue){
+  const double v=GetValue(timestep,cvalue);
+  return(v==DBL_MAX? FLT_MAX: float(v));
+}
+
+//==============================================================================
+/// Returns the interpolated values for the time indicated.
+/// If no values always returns 0.
+/// If only one value always returns that value.
+/// If the indicated t is less than the minimum returns the first value.
+/// If the indicated t is greater than the maximum returns the last value.
+/// 
+/// Devuelve valor el valor interpolado para el instante indicado.
+/// Si no hay valores siempre devuelve 0.
+/// Si solo hay un valor siempre devuelve ese valor.
+/// Si el t indicado es menor que el minimo devuelve el primer valor.
+/// Si el t indicado es mayor que el maximo devuelve el ultimo valor.
+//==============================================================================
+tdouble3 JLinearValue::GetValue3d(double timestep){
+  tdouble3 ret=TDouble3(0);
+  FindTime(timestep);
+  //printf("--> t:%f  [%u - %u]  [%f - %f]\n",timestep,Position,PositionNext,TimePre,TimeNext);
+  if(timestep<=TimePre){
+    const unsigned rpos=Nvalues*Position;
+    ret=TDouble3(Values[rpos],Values[rpos+1],Values[rpos+2]);
+  }
+  else if(timestep>=TimeNext){
+    const unsigned rpos=Nvalues*PositionNext;
+    ret=TDouble3(Values[rpos],Values[rpos+1],Values[rpos+2]);
+  }
+  else{
+    const unsigned rpos=Nvalues*Position;
+    const unsigned rpos2=Nvalues*PositionNext;
+    const tdouble3 vini=TDouble3(Values[rpos],Values[rpos+1],Values[rpos+2]);
+    const tdouble3 vnext=TDouble3(Values[rpos2],Values[rpos2+1],Values[rpos2+2]);
+    ret=((vnext-vini)*TimeFactor+vini);
+    if(SpecialValues){
+      if(vini.x==DBL_MAX)ret.x=DBL_MAX;
+      else if(vnext.x==DBL_MAX)ret.x=vini.x;
+      if(vini.y==DBL_MAX)ret.y=DBL_MAX;
+      else if(vnext.y==DBL_MAX)ret.y=vini.y;
+      if(vini.z==DBL_MAX)ret.z=DBL_MAX;
+      else if(vnext.z==DBL_MAX)ret.z=vini.z;
+    }
+  }
+  return(ret);
+}
+
+//==============================================================================
+/// Returns result of GetValue3d() converted to tfloat3 according special values.
+//==============================================================================
+tfloat3 JLinearValue::GetValue3f(double timestep){
+  const tdouble3 v=GetValue3d(timestep);
+  return(TFloat3((v.x==DBL_MAX? FLT_MAX: float(v.x)),(v.y==DBL_MAX? FLT_MAX: float(v.y)),(v.z==DBL_MAX? FLT_MAX: float(v.z))));
 }
 
 //==============================================================================
@@ -219,6 +336,18 @@ double JLinearValue::GetValueByIdx(unsigned idx,unsigned cvalue)const{
   return(Values[Nvalues*idx+cvalue]);
 }
 
+
+//==============================================================================
+/// Reads value and checks special values when SpecialValues is true.
+/// Lee un valor comprobando si es especial cuando SpecialValues es true.
+//==============================================================================
+double JLinearValue::ReadNextDouble(JReadDatafile &rdat,bool in_line){
+  const string value=rdat.ReadNextValue(in_line);
+  double v=atof(value.c_str());
+  if(SpecialValues && fun::StrLower(value)=="none")v=DBL_MAX;
+  return(v);
+}
+
 //==============================================================================
 /// Loads values for different times.
 /// Carga valores para diferentes instantes.
@@ -232,9 +361,9 @@ void JLinearValue::LoadFile(std::string file){
   SetSize(rows);
   for(unsigned r=0;r<rows;r++){
     const double atime=rdat.ReadNextDouble();  //-Time.
-    const double v=rdat.ReadNextDouble(true);  //-Value_1.
+    const double v=ReadNextDouble(rdat,true);  //-Value_1.
     const unsigned idx=AddTimeValue(atime,v);
-    for(unsigned cv=1;cv<Nvalues;cv++)SetValue(idx,cv,rdat.ReadNextDouble(true));
+    for(unsigned cv=1;cv<Nvalues;cv++)SetValue(idx,cv,ReadNextDouble(rdat,true));
   }
   if(Count<2)RunException(met,"Cannot be less than two values.",file);
   File=file;
@@ -254,5 +383,86 @@ void JLinearValue::VisuData(){
     printf("\n");
   }
 }
+
+#ifdef JLinearValue_UseJXml
+//==============================================================================
+/// Reads data from XML.
+/// Lee datos del XML.
+//==============================================================================
+void JLinearValue::ReadXmlValues(JXml *sxml,TiXmlElement* ele,std::string name
+  ,std::string subname,std::string attributes)
+{
+  const char met[]="ReadXmlValues";
+  Reset();
+  if(sxml->ExistsElement(ele,name)){
+    File=sxml->ReadElementStr(ele,name,"file",true);
+    if(File.empty()){
+      TiXmlElement* xlis=sxml->GetFirstElement(ele,name);
+      if(xlis){
+        vector<string> attr;
+        if(fun::VectorSplitStr(":",attributes,attr)!=Nvalues+1)RunException(met,"Number of values does not match.");
+        SetSize(sxml->CountElements(xlis,subname));
+        TiXmlElement* elet=xlis->FirstChildElement(subname.c_str()); 
+        while(elet){
+          double t=sxml->GetAttributeDouble(elet,attr[0]); //-Reads time.
+          if(SpecialValues){
+            unsigned idx=UINT_MAX;
+            for(unsigned ca=0;ca<Nvalues;ca++){
+              double v=sxml->GetAttributeDouble(elet,attr[ca+1],true,DBL_MAX);
+              if(!v && fun::StrLower(sxml->GetAttributeStr(elet,attr[ca+1]))=="none")v=DBL_MAX;
+              if(idx==UINT_MAX)idx=AddTimeValue(t,v);
+              else SetValue(idx,ca,v);
+            }
+          }
+          else{
+            const unsigned idx=AddTimeValue(t,sxml->GetAttributeDouble(elet,attr[1]));
+            for(unsigned ca=1;ca<Nvalues;ca++)SetValue(idx,ca,sxml->GetAttributeDouble(elet,attr[ca+1]));
+          }
+          elet=elet->NextSiblingElement(subname.c_str());
+        }
+      }
+    }
+  }
+}
+
+//==============================================================================
+/// Writes data on XML.
+/// Escribe datos en XML.
+//==============================================================================
+TiXmlElement* JLinearValue::WriteXmlValues(JXml *sxml,TiXmlElement* ele,std::string name
+  ,std::string subname,std::string attributes)const
+{
+  const char met[]="WriteXmlValues";
+  TiXmlElement* rele=NULL;
+  if(!GetFile().empty())rele=sxml->AddElementAttrib(ele,name,"file",GetFile());
+  else{
+    TiXmlElement* xlis=sxml->AddElement(ele,name);
+    const unsigned nv=GetCount();
+    //-Checks values.
+    bool *vvoid=new bool[Nvalues];
+    for(unsigned ca=0;ca<Nvalues;ca++)vvoid[ca]=true;
+    for(unsigned c=0;c<nv;c++){
+      for(unsigned ca=0;ca<Nvalues;ca++)if(vvoid[ca] && GetValueByIdx(c,ca)!=DBL_MAX)vvoid[ca]=false;
+    }
+    //-Write values.
+    vector<string> attr;
+    if(fun::VectorSplitStr(":",attributes,attr)!=Nvalues+1)RunException(met,"Number of values does not match.");
+    for(unsigned c=0;c<nv;c++){
+      const double t=GetTimeByIdx(c);
+      TiXmlElement* elet=sxml->AddElementAttrib(xlis,subname,attr[0],t);
+      for(unsigned ca=0;ca<Nvalues;ca++){
+        if(!vvoid[ca]){
+          const double v=GetValueByIdx(c,ca);
+          if(SpecialValues && v==DBL_MAX)sxml->AddAttribute(elet,attr[ca+1],string("none"));
+          else sxml->AddAttribute(elet,attr[ca+1],v);
+        }
+      }
+    }
+    rele=xlis;
+  }
+  return(rele);
+}
+
+#endif
 
 

@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!-- *** DualSPHysics (18-02-2019) *** -->
+<!-- *** class: JRelaxZones *** -->
+<!------------------------------------------------------------------------------->
+<!------------------------------------------------------------------------------->
+<!-- *** Example for REGULAR wave generation and absorption using Relaxation Zone (RZ)*** -->
+<special>
+	<relaxationzones>
+		<rzwaves_regular>
+			<start value="0" comment="Start time (default=0)" />
+			<duration value="0" comment="Movement duration, Zero is the end of simulation (default=0)" />
+			<waveorder value="2" comment="Order wave generation 1:1st order, 2:2nd order (default=1)" />
+			<waveheight value="0.16" comment="Wave height" />
+			<waveperiod value="2" comment="Wave period" />
+			<depth value="0.7" comment="Water depth for wave generation" />
+			<swl value="0.7" comment="Still water level (free-surface)" />
+			<center x="0" y="0" z="0" comment="Central point of application" />
+			<width value="0.2" comment="Width for generation" />
+			<phase value="0" comment="Initial wave phase in function of PI (default=0)" />
+			<ramp value="1" comment="Periods of ramp (default=0)" />
+			<savemotion periods="24" periodsteps="20" xpos="13" zpos="-0.5" comment="Saves motion data. xpos and zpos are optional. zpos=-depth of the measuring point" />
+			<coefdir x="1" y="0" z="0" comment="Coefficients for each direction (default=(1,0,0))" />
+			<coefdt value="1000" comment="Multiplies by dt value in the calculation (using 0 is not applied) (default=1000)" />
+			<function psi="0.9" beta="1" comment="Coefficients in funtion for velocity (def. psi=0.9, beta=1)" />
+			<driftcorrection value="1.0" comment="Coefficient of drift correction applied in velocity X. 0:Disabled, 1:Full correction (def=0)" />
+		</rzwaves_regular>
+	</relaxationzones>
+</special>
+<!------------------------------------------------------------------------------->
+<!------------------------------------------------------------------------------->
+<!-- *** Example for IRREGULAR wave generation and absorption using Relaxation Zone (RZ)*** -->
+<special>
+	<relaxationzones>
+		<rzwaves_spectrum>
+			<start value="0" comment="Start time (def=0)" />
+			<duration value="0" comment="Movement duration, Zero is the end of simulation (def=0)" />
+			<peakcoef value="3.3" comment="Peak enhancement coefficient (default=3.3)" />
+			<spectrum value="jonswap" comment="Spectrum type: jonswap,pierson-moskowitz" />
+			<discretization value="stretched" comment="Spectrum discretization: regular,random,stretched,cosstretched (default=stretched)" />
+			<waveorder value="1" comment="Order wave generation 1:1st order, 2:2nd order (default=1)" />
+			<waveheight value="0.1" comment="Significant Wave Height" />
+			<waveperiod value="3" comment="Peak Period" />
+			<waves value="1024" comment="Number of waves to create irregular waves (default=50)" />
+			<randomseed value="2" comment="Random seed to initialize a pseudorandom number generator" />
+			<depth value="0.7" comment="Water depth for wave generation" />
+			<swl value="0.7" comment="Still water level (free-surface)" />
+			<center x="0" y="0" z="0" comment="Central point of application" />
+			<width value="0.2" comment="Width for generation" />
+			<ramptime value="0" comment="Time of initial ramp (default=0)" />
+			<serieini value="0" comment="Initial time in irregular wave serie (default=0)" />
+			<savemotion time="50" timedt="0.1" xpos="14" zpos="-0.5" comment="Saves motion data. xpos and zpos are optional. zpos=-depth of the measuring point" />
+			<saveserie timemin="0" timemax="1000" timedt="0.1" xpos="0" comment="Saves serie data (optional)" />
+			<saveseriewaves timemin="0" timemax="1000" xpos="0" comment="Saves serie heights" />
+			<_calcserielength timemax="1000" comment="Calculates serie length (optional)" />
+			<coefdir x="1" y="0" z="0" comment="Coefficients for each direction (default=(1,0,0))" />
+			<coefdt value="1000" comment="Multiplies by dt value in the calculation (using 0 is not applied) (default=1000)" />
+			<function psi="0.9" beta="1" comment="Coefficients in funtion for velocity (def. psi=0.9, beta=1)" />
+			<driftcorrection value="1.0" comment="Coefficient of drift correction applied in velocity X. 0:Disabled, 1:Full correction (def=0)" />
+		</rzwaves_spectrum>
+	</relaxationzones>
+</special>
+<!------------------------------------------------------------------------------->
+<!------------------------------------------------------------------------------->
+<!-- *** Example for EXTERNAL wave generation and absorption using Relaxation Zone (RZ)*** -->
+<special>
+	<relaxationzones>
+		<rzwaves_external_1d>
+			<start value="0" comment="Start time (def=0)" />
+			<duration value="0" comment="Movement duration, Zero is the end of simulation (def=0)" />
+			<depth value="0.7" comment="Water depth. It is necessary for drift correction (def=0)" />
+			<swl value="0.7" comment="Still water level (free-surface). It is necessary for drift correction (def=0)" />
+			<filesvel value="SgWave4i3L_corr" comment="Main name of files with velocity to use" />
+			<filesvelx initial="2" count="5" comment="First file and count to use" />
+			<usevelz value="false" comment="Use velocity in Z or not (def=false)" />
+			<movedata x="1" y="0" z="0" comment="Movement of data in CSV files" />
+			<dpz valuedp="1" comment="Distance between key points in Z (def=2)" />
+			<smooth value="5" comment="Smooth motion level (def=0)" />
+			<center x="0" y="0" z="0" comment="Central point of application" />
+			<width value="0.2" comment="Width for generation" />
+			<coefdir x="1" y="0" z="0" comment="Coefficients for each direction (default=(1,0,0))" />
+			<coefdt value="1000" comment="Multiplies by dt value in the calculation (using 0 is not applied) (default=1000)" />
+			<function psi="0.9" beta="1" comment="Coefficients in funtion for velocity (def. psi=0.9, beta=1)" />
+			<driftcorrection value="1.0" comment="Coefficient of drift correction applied in velocity X. 0:Disabled, 1:Full correction (def=0)" />
+			<driftinitialramp value="10" comment="Ignore waves from external data in initial seconds (def=0)" />
+		</rzwaves_external_1d>
+	</relaxationzones>
+</special>
+<!------------------------------------------------------------------------------->
+<!------------------------------------------------------------------------------->
+<!-- *** Example for uniform velocity using Relaxation Zone (RZ)*** -->
+<special>
+	<relaxationzones>
+		<rzwaves_uniform>
+			<start value="0" comment="Start time (default=0)" />
+			<duration value="0" comment="Duration, Zero is the end of simulation (default=0)" />
+			<domainbox>
+				<point x="0.3" y="-0.05" z="0" />
+				<size x="0.4" y="0.1" z="0.2" />
+				<direction x="-1" y="0" z="0" />
+				<rotateaxis angle="-45" anglesunits="degrees">
+					<point1 x="0.3" y="0" z="0" />
+					<point2 x="0.3" y="1" z="0" />
+				</rotateaxis>
+			</domainbox>
+			<velocity value="0.3" comment="Velocity to impose (it is ignored when velocitytimes is defined)" />
+			<velocitytimes comment="Uniform velocity in time">
+				<timevalue time="0.0" v="0" />
+				<timevalue time="2.0" v="0.5" />
+				<timevalue time="4.0" v="0" />
+				<timevalue time="5.0" v="0" />
+				<timevalue time="7.0" v="0.4" />
+			</velocitytimes>
+			<coefdt value="1000" comment="Multiplies by dt value in the calculation (using 0 is not applied) (default=1000)" />
+			<function psi="0.9" beta="1" comment="Coefficients in funtion for velocity (def. psi=0.9, beta=1)" />
+		</rzwaves_uniform>
+	</relaxationzones>
+</special>

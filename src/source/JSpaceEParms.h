@@ -1,6 +1,6 @@
 //HEAD_DSCODES
 /*
- <DUALSPHYSICS>  Copyright (c) 2018 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2019 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -27,6 +27,7 @@
 //:# - Nuevo metodo GetValueNumStr() para leer atributos string. (10-11-2012)
 //:# - Nuevo metodo GetValueDouble3() para leer atributos tdouble3. (01-10-2015)
 //:# - Se muestran unidades de los parametros. (15-12-2015)
+//:# - Nueva definicion del dominio de simulacion. (22-03-2019)
 //:#############################################################################
 
 /// \file JSpaceEParms.h \brief Declares the class \ref JSpaceEParms.
@@ -57,11 +58,33 @@ public:
     std::string comment;
     std::string unitscomment;
   }JSpaceEParmsItem;
+
+  /// Domain configuration mode.
+  typedef enum{ 
+    DC_Fixed=0    ///< Fixed value.
+   ,DC_Default=1  ///< Default.
+   ,DC_DefValue=2 ///< Default +/- value.
+   ,DC_DefPrc=3   ///< Default +/- % of size.
+  }TpDomainMode;
+
+  /// Structure used to store information about default domain position.
+  typedef struct{
+    TpDomainMode mode;
+    double value;
+    std::string textmod;
+  }JSpaceEParmsPos;
+
 private:
   typedef std::vector<JSpaceEParmsItem> VecList;
   typedef std::vector<JSpaceEParmsItem>::iterator VecListIt;
-
+  
   VecList List;
+  //-Defines simulation domain.
+  std::string Posminx,Posminy,Posminz;
+  std::string Posmaxx,Posmaxy,Posmaxz;
+
+  int CheckPosValue(const std::string &value,bool isposmin,JSpaceEParmsPos &ps)const;
+  std::string ReadPosValue(JXml *sxml,TiXmlElement* ele,const std::string &name,const std::string &subname)const;
 
   JSpaceEParmsItem* GetItemPointer(const std::string &key);
   std::string GetValueNum(const std::string &key,int num);
@@ -72,10 +95,17 @@ public:
   JSpaceEParms();
   ~JSpaceEParms();
   void Reset();
+
   void Add(const std::string &key,const std::string &value,const std::string &comment,const std::string &unitscomment="");
   void SetValue(const std::string &key,const std::string &value);
   void SetComment(const std::string &key,const std::string &comment);
   bool Exists(const std::string &key){ return(GetItemPointer(key)!=NULL); }
+
+  void SetPosmin(std::string x,std::string y,std::string z);
+  void SetPosmax(std::string x,std::string y,std::string z);
+  JSpaceEParmsPos GetPosminValue(char key)const;
+  JSpaceEParmsPos GetPosmaxValue(char key)const;
+  bool IsPosDefault()const{ return(Posminx=="default" && Posminy=="default" && Posminz=="default" && Posmaxx=="default" && Posmaxy=="default" && Posmaxz=="default"); }
 
   int GetValueNumInt(const std::string &key,int num,bool optional=false,int valdef=0);
   double GetValueNumDouble(const std::string &key,int num,bool optional=false,double valdef=0);

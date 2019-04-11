@@ -3,7 +3,7 @@
 <!-- *** class: JTimeOut *** -->
 <!------------------------------------------------------------------------------->
 <!------------------------------------------------------------------------------->
-<!-- *** Example for special configuration to save dt values. *** -->
+<!-- *** Example to define a variable frequency to save results (PART_XXXX). *** -->
 <special>
 	<timeout>
 		<tout time="0" timeout="0.01" />

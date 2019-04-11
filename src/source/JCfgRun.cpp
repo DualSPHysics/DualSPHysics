@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2018 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2019 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -48,8 +48,6 @@ void JCfgRun::Reset(){
   SvTimers=true;
   CellMode=CELLMODE_2H;
   DomainMode=0;
-  DomainParticlesMin=DomainParticlesMax=TDouble3(0);
-  DomainParticlesPrcMin=DomainParticlesPrcMax=TDouble3(0);
   DomainFixedMin=DomainFixedMax=TDouble3(0);
   TStep=STEP_None; VerletSteps=-1;
   TKernel=KERNEL_None;
@@ -82,6 +80,7 @@ void JCfgRun::LoadDsphConfig(std::string path){
 /// Shows information about execution parameters.
 //==============================================================================
 void JCfgRun::VisuInfo()const{
+/////////|---------1---------2---------3---------4---------5---------6---------7--------X8
   printf("Information about execution parameters:\n\n");
   printf("  DualSPHysics4 [name_case [dir_out]] [options]\n\n");
   printf("  Options:\n");
@@ -150,15 +149,10 @@ void JCfgRun::VisuInfo()const{
   printf("     Specifies the beginning of the simulation starting from a given PART\n");
   printf("     (begin) and located in the directory (dir), (first) indicates the\n");
   printf("     number of the first PART to be generated\n\n");
-  printf("    -incz:<float>    Allows increase in Z+ direction \n");
   printf("    -rhopout:min:max Excludes fluid particles out of these density limits\n\n");
   printf("    -ftpause:<float> Time to start floating bodies movement. By default 0\n");
   printf("    -tmax:<float>   Maximum time of simulation\n");
   printf("    -tout:<float>   Time between output files\n\n");
-  printf("    -domain_particles:xmin:ymin:zmin:xmax:ymax:zmax  The domain is fixed as\n");
-  printf("     a function of the initial particle positions and modified for xmin,...\n");
-  printf("    -domain_particles_prc:xmin:ymin:zmin:xmax:ymax:zmax  The values in \n");
-  printf("     proportion with the case dimensions according to the initial particles\n");
   printf("    -domain_fixed:xmin:ymin:zmin:xmax:ymax:zmax    The domain is fixed\n");
   printf("     with the specified values\n\n");
   printf("  Examples:\n");
@@ -209,13 +203,7 @@ void JCfgRun::VisuConfig()const{
   }
   PrintVar("  TimeMax",TimeMax,ln);
   PrintVar("  TimePart",TimePart,ln);
-  if(DomainMode==1){
-    PrintVar("  DomainParticlesMin",DomainParticlesMin,ln);
-    PrintVar("  DomainParticlesMax",DomainParticlesMax,ln);
-    PrintVar("  DomainParticlesPrcMin",DomainParticlesPrcMin,ln);
-    PrintVar("  DomainParticlesPrcMax",DomainParticlesPrcMax,ln);
-  }
-  else if(DomainMode==2){
+  if(DomainMode==2){
     PrintVar("  DomainFixedMin",DomainFixedMin,ln);
     PrintVar("  DomainFixedMax",DomainFixedMax,ln);
   }
@@ -438,25 +426,9 @@ void JCfgRun::LoadOpts(string *optlis,int optn,int lv,string file){
         TimePart=float(atof(txoptfull.c_str())); 
         if(TimePart<0)ErrorParm(opt,c,lv,file);
       }
-      else if(txword=="DOMAIN_PARTICLES"){
-        LoadDouble6(txoptfull,0,DomainParticlesMin,DomainParticlesMax);
-        DomainMode=1;
-      }
-      else if(txword=="DOMAIN_PARTICLES_PRC"){
-        LoadDouble6(txoptfull,0,DomainParticlesPrcMin,DomainParticlesPrcMax);
-        DomainMode=1;
-      }
       else if(txword=="DOMAIN_FIXED"){
         LoadDouble6(txoptfull,0,DomainFixedMin,DomainFixedMax);
         DomainMode=2;
-      }
-      else if(txword=="INCZ"){ 
-        double incz=atof(txoptfull.c_str()); 
-        if(incz<0)ErrorParm(opt,c,lv,file);
-        DomainMode=1;
-        DomainParticlesMin=DomainParticlesMax=TDouble3(0);
-        DomainParticlesPrcMin=DomainParticlesPrcMax=TDouble3(0);
-        DomainParticlesPrcMax.z=incz;
       }
       else if(txword=="OPT"&&c+1<optn){ LoadFile(optlis[c+1],lv+1); c++; }
       else if(txword=="H"||txword=="HELP"||txword=="?")PrintInfo=true;

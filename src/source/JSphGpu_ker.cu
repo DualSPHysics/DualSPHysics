@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2018 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2019 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -529,6 +529,25 @@ __device__ void KerGetKernelWendland(float rr2,float drx,float dry,float drz
   frx=fac*drx; fry=fac*dry; frz=fac*drz;
 }
 
+//<vs_innlet_ini>
+//------------------------------------------------------------------------------
+/// Returns values of kernel Wendland, gradients: frx, fry, frz and wab.
+/// Devuelve valores de kernel Wendland, gradients: frx, fry, frz y wab.
+//------------------------------------------------------------------------------
+__device__ void KerGetKernelWendland(float rr2,float drx,float dry,float drz
+  ,float &frx,float &fry,float &frz,float &wab)
+{
+  const float rad=sqrt(rr2);
+  const float qq=rad/CTE.h;
+  //-Wendland kernel.
+  const float wqq1=1.f-0.5f*qq;
+  const float wqq2=wqq1*wqq1;
+  const float fac=CTE.bwen*qq*wqq2*wqq1/rad; //-Kernel derivative (divided by rad).
+  frx=fac*drx; fry=fac*dry; frz=fac*drz;
+  const float wqq=2.f*qq+1.f;
+  wab=CTE.awen*wqq*wqq2*wqq2; //-Kernel.
+}  //<vs_innlet_end>
+
 //------------------------------------------------------------------------------
 /// Returns Gaussian kernel values: frx, fry and frz.
 /// Devuelve valores del kernel Gaussian: frx, fry y frz.
@@ -544,6 +563,24 @@ __device__ void KerGetKernelGaussian(float rr2,float drx,float dry,float drz
   const float fac=CTE.bgau*qq*expf(qqexp)/rad; //-Kernel derivative (divided by rad).
   frx=fac*drx; fry=fac*dry; frz=fac*drz;
 }
+
+//<vs_innlet_ini>
+//------------------------------------------------------------------------------
+/// Returns values of kernel Gaussian, gradients: frx, fry, frz and wab.
+/// Devuelve valores de kernel Gaussian, gradients: frx, fry, frz y wab.
+//------------------------------------------------------------------------------
+__device__ void KerGetKernelGaussian(float rr2,float drx,float dry,float drz
+  ,float &frx,float &fry,float &frz,float &wab)
+{
+  const float rad=sqrt(rr2);
+  const float qq=rad/CTE.h;
+  //-Gaussian kernel.
+  const float qqexp=-4.0f*qq*qq;
+  const float eqqexp=expf(qqexp);
+  wab=CTE.agau*eqqexp; //-Kernel.
+  const float fac=CTE.bgau*qq*eqqexp/rad; //-Kernel derivative (divided by rad).
+  frx=fac*drx; fry=fac*dry; frz=fac*drz;
+}  //<vs_innlet_end>
 
 //------------------------------------------------------------------------------
 /// Return values of kernel Cubic without tensil correction, gradients: frx, fry and frz.
@@ -568,6 +605,33 @@ __device__ void KerGetKernelCubic(float rr2,float drx,float dry,float drz
   //-Gradients.
   frx=fac*drx; fry=fac*dry; frz=fac*drz;
 }
+
+//<vs_innlet_ini>
+//------------------------------------------------------------------------------
+/// Return values of kernel Cubic without tensil correction, gradients: frx, fry, frz and wab.
+/// Devuelve valores de kernel Cubic sin correccion tensil, gradients: frx, fry,frz y wab.
+//------------------------------------------------------------------------------
+__device__ void KerGetKernelCubic(float rr2,float drx,float dry,float drz
+  ,float &frx,float &fry,float &frz,float &wab)
+{
+  const float rad=sqrt(rr2);
+  const float qq=rad/CTE.h;
+  //-Cubic Spline kernel.
+  float fac;
+  if(rad>CTE.h){
+    float wqq1=2.0f-qq;
+    float wqq2=wqq1*wqq1;
+    fac=CTE.cubic_c2*wqq2/rad; //-Kernel derivative (divided by rad).
+    wab=CTE.cubic_a24*(wqq2*wqq1); //-Kernel.
+  }
+  else{
+    float wqq2=qq*qq;
+    fac=(CTE.cubic_c1*qq+CTE.cubic_d1*wqq2)/rad; //-Kernel derivative (divided by rad).
+    wab=CTE.cubic_a2*(1.0f+(0.75f*qq-1.5f)*wqq2); //-Kernel.
+  }
+  //-Gradients.
+  frx=fac*drx; fry=fac*dry; frz=fac*drz;
+}  //<vs_innlet_end>
 
 //------------------------------------------------------------------------------
 /// Return tensil correction for kernel Cubic.
@@ -2088,6 +2152,97 @@ void MoveMatBound(byte periactive,bool simulate2d,unsigned np,unsigned ini,tmatr
   }
 }
 
+//<vs_mlapiston_ini>
+//##############################################################################
+//# Kernels for MLPistons motion.
+//##############################################################################
+//------------------------------------------------------------------------------
+/// Applies movement and velocity of piston 1D to a group of particles.
+/// Aplica movimiento y velocidad de piston 1D a conjunto de particulas.
+//------------------------------------------------------------------------------
+template<byte periactive> __global__ void KerMovePiston1d(unsigned n,unsigned idini
+  ,double dp,double poszmin,unsigned poszcount,const byte *pistonid,const double* movx,const double* velx
+  ,const unsigned *ridpmv,double2 *posxy,double *posz,unsigned *dcell,float4 *velrhop,typecode *code)
+{
+  unsigned p=blockIdx.y*gridDim.x*blockDim.x + blockIdx.x*blockDim.x + threadIdx.x; //-Nº de la partícula
+  if(p<n){
+    const unsigned id=p+idini;
+    int pid=ridpmv[id];
+    if(pid>=0){
+      const unsigned pisid=pistonid[CODE_GetTypeValue(code[pid])];
+      if(pisid<255){
+        const double2 rpxy=posxy[pid];
+        const double rpz=posz[pid];
+        const unsigned cz=unsigned((rpz-poszmin)/dp);
+        const double rmovx=(cz<poszcount? movx[pisid*poszcount+cz]: 0);
+        const float rvelx=float(cz<poszcount? velx[pisid*poszcount+cz]: 0);
+        //-Updates position.
+        KerUpdatePos<periactive>(rpxy,rpz,rmovx,0,0,false,pid,posxy,posz,dcell,code);
+        //-Updates velocity.
+        velrhop[pid].x=rvelx;
+      }
+    }
+  }
+}
+
+//==============================================================================
+/// Applies movement and velocity of piston 1D to a group of particles.
+/// Aplica movimiento y velocidad de piston 1D a conjunto de particulas.
+//==============================================================================
+void MovePiston1d(bool periactive,unsigned np,unsigned idini
+  ,double dp,double poszmin,unsigned poszcount,const byte *pistonid,const double* movx,const double* velx
+  ,const unsigned *ridpmv,double2 *posxy,double *posz,unsigned *dcell,float4 *velrhop,typecode *code)
+{
+  if(np){
+    dim3 sgrid=GetGridSize(np,SPHBSIZE);
+    if(periactive)KerMovePiston1d<true>  <<<sgrid,SPHBSIZE>>> (np,idini,dp,poszmin,poszcount,pistonid,movx,velx,ridpmv,posxy,posz,dcell,velrhop,code);
+    else          KerMovePiston1d<false> <<<sgrid,SPHBSIZE>>> (np,idini,dp,poszmin,poszcount,pistonid,movx,velx,ridpmv,posxy,posz,dcell,velrhop,code);
+  }
+}
+
+//------------------------------------------------------------------------------
+/// Applies movement and velocity of piston 2D to a group of particles.
+/// Aplica movimiento y velocidad de piston 2D a conjunto de particulas.
+//------------------------------------------------------------------------------
+template<byte periactive> __global__ void KerMovePiston2d(unsigned n,unsigned idini
+  ,double dp,double posymin,double poszmin,unsigned poszcount,const double* movx,const double* velx
+  ,const unsigned *ridpmv,double2 *posxy,double *posz,unsigned *dcell,float4 *velrhop,typecode *code)
+{
+  unsigned p=blockIdx.y*gridDim.x*blockDim.x + blockIdx.x*blockDim.x + threadIdx.x; //-Nº de la partícula
+  if(p<n){
+    const unsigned id=p+idini;
+    int pid=ridpmv[id];
+    if(pid>=0){
+      const double2 rpxy=posxy[pid];
+      const double rpz=posz[pid];
+      const unsigned cy=unsigned((rpxy.y-posymin)/dp);
+      const unsigned cz=unsigned((rpz-poszmin)/dp);
+      const double rmovx=(cz<poszcount? movx[cy*poszcount+cz]: 0);
+      const float rvelx=float(cz<poszcount? velx[cy*poszcount+cz]: 0);
+      //-Actualiza posicion.
+      KerUpdatePos<periactive>(rpxy,rpz,rmovx,0,0,false,pid,posxy,posz,dcell,code);
+      //-Actualiza velocidad.
+      velrhop[pid].x=rvelx;
+    }
+  }
+}
+
+//==============================================================================
+/// Applies movement and velocity of piston 2D to a group of particles.
+/// Aplica movimiento y velocidad de piston 2D a conjunto de particulas.
+//==============================================================================
+void MovePiston2d(bool periactive,unsigned np,unsigned idini
+  ,double dp,double posymin,double poszmin,unsigned poszcount,const double* movx,const double* velx
+  ,const unsigned *ridpmv,double2 *posxy,double *posz,unsigned *dcell,float4 *velrhop,typecode *code)
+{
+  if(np){
+    dim3 sgrid=GetGridSize(np,SPHBSIZE);
+    if(periactive)KerMovePiston2d<true>  <<<sgrid,SPHBSIZE>>> (np,idini,dp,posymin,poszmin,poszcount,movx,velx,ridpmv,posxy,posz,dcell,velrhop,code);
+    else          KerMovePiston2d<false> <<<sgrid,SPHBSIZE>>> (np,idini,dp,posymin,poszmin,poszcount,movx,velx,ridpmv,posxy,posz,dcell,velrhop,code);
+  }
+}
+//<vs_mlapiston_end>
+
 
 //##############################################################################
 //# Kernels for Floating bodies.
@@ -2231,8 +2386,9 @@ __device__ void KerLoadMatrix3f(unsigned c,const float4 *data8,const float *data
 /// Calculate forces around floating object particles.
 /// Calcula fuerzas sobre floatings.
 //------------------------------------------------------------------------------
-__global__ void KerFtCalcForces(unsigned ftcount,float3 gravity,const float4 *ftodata
-  ,const float3 *ftoangles,const float4 *ftoinertiaini8,const float *ftoinertiaini1
+__global__ void KerFtCalcForces(unsigned ftcount,float3 gravity
+  ,const float4 *ftodata,const float3 *ftoangles
+  ,const float4 *ftoinertiaini8,const float *ftoinertiaini1
   ,const float3 *ftoforcessum,float3 *ftoforces) //fdata={pini,np,radius,mass}
 {
   unsigned cf=blockIdx.y*gridDim.x*blockDim.x + blockIdx.x*blockDim.x + threadIdx.x; //-Number of floating.
@@ -2272,6 +2428,7 @@ __global__ void KerFtCalcForces(unsigned ftcount,float3 gravity,const float4 *ft
     const float3 rfome=ftoforcesc[1];
     face.x+=rface.x;      face.y+=rface.y;      face.z+=rface.z;
     fomegaace.x+=rfome.x; fomegaace.y+=rfome.y; fomegaace.z+=rfome.z;
+    //-Stores final results.
     ftoforcesc[0]=face;
     ftoforcesc[1]=fomegaace;
   }
@@ -2281,13 +2438,15 @@ __global__ void KerFtCalcForces(unsigned ftcount,float3 gravity,const float4 *ft
 /// Computes forces on floatings.
 /// Calcula fuerzas sobre floatings.
 //==============================================================================
-void FtCalcForces(unsigned ftcount,tfloat3 gravity,const float4 *ftodata
-  ,const float3 *ftoangles,const float4 *ftoinertiaini8,const float *ftoinertiaini1
+void FtCalcForces(unsigned ftcount,tfloat3 gravity
+  ,const float4 *ftodata,const float3 *ftoangles
+  ,const float4 *ftoinertiaini8,const float *ftoinertiaini1
   ,const float3 *ftoforcessum,float3 *ftoforces)
 {
   if(ftcount){
     dim3 sgrid=GetGridSize(ftcount,SPHBSIZE);
-    KerFtCalcForces <<<sgrid,SPHBSIZE>>> (ftcount,Float3(gravity),ftodata,ftoangles,ftoinertiaini8,ftoinertiaini1,ftoforcessum,ftoforces);
+    KerFtCalcForces <<<sgrid,SPHBSIZE>>> (ftcount,Float3(gravity),ftodata
+      ,ftoangles,ftoinertiaini8,ftoinertiaini1,ftoforcessum,ftoforces);
   }
 }
 
@@ -2343,6 +2502,61 @@ void FtCalcForcesRes(unsigned ftcount,bool simulate2d,double dt
     KerFtCalcForcesRes <<<sgrid,SPHBSIZE>>> (ftcount,simulate2d,dt,ftoomega,ftovel,ftocenter,ftoforces,ftoforcesres,ftocenterres);
   }
 }
+
+
+//------------------------------------------------------------------------------
+/// Applies motion constraints.
+/// Aplica restricciones de movimiento.
+//------------------------------------------------------------------------------
+__global__ void KerFtApplyConstraints(unsigned ftcount,const byte *ftoconstraints
+  ,float3 *ftoforces,float3 *ftoforcesres)
+{
+  const unsigned cf=blockIdx.y*gridDim.x*blockDim.x + blockIdx.x*blockDim.x + threadIdx.x; //-Floating number.
+  if(cf<ftcount){
+    //-Applies motion constraints.
+    const byte constr=ftoconstraints[cf];
+    if(constr!=0){
+      const unsigned cf2=cf*2;
+      const unsigned cf21=cf2+1;
+      float3 face=ftoforces[cf2];
+      float3 fomegaace=ftoforces[cf21];
+      float3 fomega=ftoforcesres[cf2];
+      float3 fvel=ftoforcesres[cf21];
+      //-Updates values.
+      face.x=(constr&FTCON_MoveX? 0: face.x);
+      face.y=(constr&FTCON_MoveY? 0: face.y);
+      face.z=(constr&FTCON_MoveZ? 0: face.z);
+      fomegaace.x=(constr&FTCON_RotateX? 0: fomegaace.x);
+      fomegaace.y=(constr&FTCON_RotateY? 0: fomegaace.y);
+      fomegaace.z=(constr&FTCON_RotateZ? 0: fomegaace.z);
+      fvel.x=(constr&FTCON_MoveX? 0: fvel.x);
+      fvel.y=(constr&FTCON_MoveY? 0: fvel.y);
+      fvel.z=(constr&FTCON_MoveZ? 0: fvel.z);
+      fomega.x=(constr&FTCON_RotateX? 0: fomega.x);
+      fomega.y=(constr&FTCON_RotateY? 0: fomega.y);
+      fomega.z=(constr&FTCON_RotateZ? 0: fomega.z);
+      //-Stores updated values.
+      ftoforces[cf2]=face;
+      ftoforces[cf21]=fomegaace;
+      ftoforcesres[cf2]=fomega;
+      ftoforcesres[cf21]=fvel;
+    }
+  }
+}
+
+//==============================================================================
+/// Applies motion constraints.
+/// Aplica restricciones de movimiento.
+//==============================================================================
+void FtApplyConstraints(unsigned ftcount,const byte *ftoconstraints
+  ,float3 *ftoforces,float3 *ftoforcesres)
+{
+  if(ftcount){
+    dim3 sgrid=GetGridSize(ftcount,SPHBSIZE);
+    KerFtApplyConstraints <<<sgrid,SPHBSIZE>>> (ftcount,ftoconstraints,ftoforces,ftoforcesres);
+  }
+}
+
 
 //------------------------------------------------------------------------------
 /// Updates information and particles of floating bodies.
@@ -2913,5 +3127,13 @@ void ComputeDampingPla(double dt,tdouble4 plane,float dist,float over,tfloat3 fa
 
 }
 
+
+//<vs_innlet_ini>
+//##############################################################################
+//# Kernels for InOut (JSphInOut) and BoundCorr (JSphBoundCorr).
+//# Kernels para InOut (JSphInOut) y BoundCorr (JSphBoundCorr).
+//##############################################################################
+#include "JSphGpu_InOut_ker.cu"
+//<vs_innlet_end>
 
 

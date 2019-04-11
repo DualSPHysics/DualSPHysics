@@ -1,6 +1,6 @@
 //HEAD_DSCODES
 /*
- <DUALSPHYSICS>  Copyright (c) 2018 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2019 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -393,6 +393,15 @@ inline tfloat3 MatrixMulPointNormal(const tmatrix4d &m,const tfloat3 &p){ return
 typedef struct{
   float xx,xy,xz,yy,yz,zz;
 }tsymatrix3f;
+inline tsymatrix3f TSymMatrix3f(){ tsymatrix3f m={0,0,0,0,0,0}; return(m); }
+
+///Symmetric matrix 4x4 of 10 values of type float.
+typedef struct{
+  float a11,a12,a13,a14 ,a22,a23,a24 ,a33,a34 ,a44;
+}tsymatrix4f;
+inline tsymatrix4f TSymMatrix4f(){ tsymatrix4f m={0,0,0,0,0,0,0,0,0,0}; return(m); }
+
+
 
 //##############################################################################
 //# Geometry type and functions
