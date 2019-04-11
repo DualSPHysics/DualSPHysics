@@ -102,18 +102,23 @@ Please read [CONTRIBUTING.md](CONTRIBUTING.md) if you want to make changes to th
 # Authors and people involved
 
 * **Dr Jose M. Dominguez** - *Main Developer*
-* **Dr Alejandro Crespo**
+* **Dr Alejandro J.C. Crespo**
 * **Prof. Moncho Gomez Gesteira**
-* **Dr Anxo Barreiro**
-* **Orlando G. Feal**
-* **Dr Benedict Rogers**
-* **Prof. Peter Stansby**
+* **Prof. Benedict D. Rogers**
 * **Dr Georgios Fourtakas**
-* **Dr Athanasios Mokos**
-* **Dr Renato Vacondio**
+* **Prof. Peter Stansby**
 * **Dr Ricardo Canelas**
-* **Dr Stephen Longshaw**
+* **Dr Renato Vacondio**
 * **Dr Corrado Altomare**
+* **Dr Angelo Tafuni**
+* **Orlando Garcia-Feal**
+* **Dr Jose Gonzalez Cao**
+
+## Former people involved
+
+* **Dr Athanasios Mokos**
+* **Dr Stephen Longshaw**
+* **Dr Anxo Barreiro**
 
 See also the list of [contributors](https://github.com/dualsphysics/DualSPHysics/contributors) who participated in this project.
 
