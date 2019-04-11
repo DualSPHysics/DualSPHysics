@@ -9,6 +9,3 @@ FlowTool4                     v4.0.031            07-03-2019
 MeasureTool4                  v4.0.045            17-10-2018
 PartVtk4                      v4.0.045            17-10-2018
 PartVTKOut4                   v4.0.027            17-10-2018
-ReadSwash2                    v2.0.028            19-12-2018
-DualSPHysics4-LiquidGas       v1.010(v4.0.048)    04-06-2018
-DualSPHysics3-LiquidSediment  v1.003(v3.4)        04-06-2018
