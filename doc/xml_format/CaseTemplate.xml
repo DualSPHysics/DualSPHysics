@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<case app="GenCase4 v4.0.092 (26-03-2019)" date="27-03-2019 01:40:15">
+<case app="GenCase4 v4.0.099 (01-05-2019)" date="02-05-2019 08:11:07">
     <casedef>
         <constantsdef>
             <lattice bound="2" fluid="1" />
@@ -11,6 +11,7 @@
             <coefsound value="10" comment="Coefficient to multiply speedsystem" />
             <speedsound value="0" auto="true" comment="Speed of sound to use in the simulation (by default speedofsound=coefsound*speedsystem)" />
             <coefh value="0.866025" comment="Coefficient to calculate the smoothing length (h=coefh*sqrt(3*dp^2) in 3D)" />
+            <_hdp value="2" comment="Coefficient to calculate the smoothing length (hdp=h/dp)" />
             <cflnumber value="0.2" comment="Coefficient to multiply dt" />
             <h value="0" auto="true" units_comment="metres (m)" />
             <b value="0" auto="true" units_comment="Pascal (Pa)" />
