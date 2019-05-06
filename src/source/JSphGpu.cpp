@@ -619,7 +619,14 @@ void JSphGpu::ConfigBlockSizes(bool usezone,bool useperi){
     StKerInfo kerinfo;
     memset(&kerinfo,0,sizeof(StKerInfo));
     #ifndef DISABLE_BSMODES
-      cusph::Interaction_Forces(Psingle,TKernel,FtMode,lamsps,TDeltaSph,CellMode,0,0,0,0,100,50,20,TUint3(0),NULL,TUint3(0),NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,TShifting,NULL,NULL,Simulate2D,&kerinfo,NULL);
+      const stinterparmsg parms=StInterparmsg(Simulate2D,Psingle,TKernel
+        ,FtMode,lamsps,TDeltaSph,CellMode,0,0
+        ,0,0,100,50,20
+        ,TUint3(0),NULL,TUint3(0),NULL
+        ,NULL,NULL,NULL,NULL,NULL,NULL,NULL
+        ,NULL,NULL,NULL,NULL,NULL,NULL,TShifting,NULL,NULL
+        ,&kerinfo,NULL);
+      cusph::Interaction_Forces(parms);
       if(UseDEM)cusph::Interaction_ForcesDem(Psingle,CellMode,BlockSizes.forcesdem,CaseNfloat,TUint3(0),NULL,TUint3(0),NULL,NULL,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,&kerinfo);
     #endif
     //Log->Printf("====> bound -> rg:%d  bs:%d  bsmax:%d",kerinfo.forcesbound_rg,kerinfo.forcesbound_bs,kerinfo.forcesbound_bsmax);

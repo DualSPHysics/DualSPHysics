@@ -26,6 +26,51 @@
 #include "JSph.h"
 #include <string>
 
+
+///Structure with the parameters for particle interaction on CPU.
+typedef struct{
+  unsigned np,npb,npbok,npf; // npf=np-npb
+  tuint3 ncells;
+  const unsigned *begincell;
+  tuint3 cellmin;
+  const unsigned *dcell;
+  const tdouble3 *pdpos;
+  const tfloat3 *pspos;
+  const tfloat4 *velrhop;
+  const unsigned *idp;
+  const typecode *code;
+  const float *press;
+  float* ar;
+  tfloat3 *ace;
+  float *delta;
+  tsymatrix3f *spstau;
+  tsymatrix3f *spsgradvel;
+  TpShifting tshifting;
+  tfloat3 *shiftpos;
+  float *shiftdetect;
+}stinterparmsc;
+
+///Collects parameters for particle interaction on CPU.
+inline stinterparmsc StInterparmsc(unsigned np,unsigned npb,unsigned npbok
+  ,tuint3 ncells,const unsigned *begincell,tuint3 cellmin,const unsigned *dcell
+  ,const tdouble3 *pdpos,const tfloat3 *pspos
+  ,const tfloat4 *velrhop,const unsigned *idp,const typecode *code
+  ,const float *press
+  ,float* ar,tfloat3 *ace,float *delta
+  ,tsymatrix3f *spstau,tsymatrix3f *spsgradvel
+  ,TpShifting tshifting,tfloat3 *shiftpos,float *shiftdetect)
+{
+  stinterparmsc d={np,npb,npbok,(np-npb)
+    ,ncells,begincell,cellmin,dcell
+    ,pdpos,pspos,velrhop,idp,code
+    ,press
+    ,ar,ace,delta
+    ,spstau,spsgradvel
+    ,tshifting,shiftpos,shiftdetect};
+  return(d);
+}
+
+
 class JPartsOut;
 class JArraysCpu;
 class JCellDivCpu;
@@ -199,31 +244,14 @@ protected:
     ,const tdouble3 *pos,const tfloat3 *pspos,const tfloat4 *velrhop,const typecode *code,const unsigned *idp
     ,float &viscdt,tfloat3 *ace)const;
 
-  template<bool psingle,TpKernel tker,TpFtMode ftmode,bool lamsps,TpDeltaSph tdelta,bool shift> void Interaction_ForcesT
-    (unsigned np,unsigned npb,unsigned npbok
-    ,tuint3 ncells,const unsigned *begincell,tuint3 cellmin,const unsigned *dcell
-    ,const tdouble3 *pos,const tfloat3 *pspos,const tfloat4 *velrhop,const typecode *code,const unsigned *idp
-    ,const float *press
-    ,float &viscdt,float* ar,tfloat3 *ace,float *delta
-    ,tsymatrix3f *spstau,tsymatrix3f *spsgradvel
-    ,TpShifting tshifting,tfloat3 *shiftpos,float *shiftdetect)const;
-
-  void Interaction_Forces(unsigned np,unsigned npb,unsigned npbok
-    ,tuint3 ncells,const unsigned *begincell,tuint3 cellmin,const unsigned *dcell
-    ,const tdouble3 *pos,const tfloat4 *velrhop,const unsigned *idp,const typecode *code
-    ,const float *press
-    ,float &viscdt,float* ar,tfloat3 *ace,float *delta
-    ,tsymatrix3f *spstau,tsymatrix3f *spsgradvel
-    ,tfloat3 *shiftpos,float *shiftdetect)const;
-
-  void InteractionSimple_Forces(unsigned np,unsigned npb,unsigned npbok
-    ,tuint3 ncells,const unsigned *begincell,tuint3 cellmin,const unsigned *dcell
-    ,const tfloat3 *pspos,const tfloat4 *velrhop,const unsigned *idp,const typecode *code
-    ,const float *press
-    ,float &viscdt,float* ar,tfloat3 *ace,float *delta
-    ,tsymatrix3f *spstau,tsymatrix3f *spsgradvel
-    ,tfloat3 *shiftpos,float *shiftdetect)const;
-
+  template<bool psingle,TpKernel tker,TpFtMode ftmode,bool lamsps,TpDeltaSph tdelta,bool shift> 
+    void Interaction_ForcesCpuT(const stinterparmsc &t,float &viscdt)const;
+  template<bool psingle,TpKernel tker,TpFtMode ftmode,bool lamsps,TpDeltaSph tdelta> void Interaction_Forces_ct5(const stinterparmsc &t,float &viscdt)const;
+  template<bool psingle,TpKernel tker,TpFtMode ftmode,bool lamsps> void Interaction_Forces_ct4(const stinterparmsc &t,float &viscdt)const;
+  template<bool psingle,TpKernel tker,TpFtMode ftmode> void Interaction_Forces_ct3(const stinterparmsc &t,float &viscdt)const;
+  template<bool psingle,TpKernel tker> void Interaction_Forces_ct2(const stinterparmsc &t,float &viscdt)const;
+  template<bool psingle> void Interaction_Forces_ct1(const stinterparmsc &t,float &viscdt)const;
+  void Interaction_Forces_ct(const stinterparmsc &t,float &viscdt)const;
 
   void ComputeSpsTau(unsigned n,unsigned pini,const tfloat4 *velrhop,const tsymatrix3f *gradvel,tsymatrix3f *tau)const;
 

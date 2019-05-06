@@ -1013,8 +1013,8 @@ template<bool psingle,TpKernel tker,TpFtMode ftmode,bool lamsps,TpDeltaSph tdelt
 //==============================================================================
 /// Collects kernel information.
 //==============================================================================
-template<bool psingle,TpKernel tker,TpFtMode ftmode,bool lamsps,TpDeltaSph tdelta,bool shift> void Interaction_ForcesT_KerInfo
-  (StKerInfo *kerinfo)
+template<bool psingle,TpKernel tker,TpFtMode ftmode,bool lamsps,TpDeltaSph tdelta,bool shift> 
+  void Interaction_ForcesT_KerInfo(StKerInfo *kerinfo)
 {
 #if CUDART_VERSION >= 6050
   {
@@ -1049,35 +1049,28 @@ template<bool psingle,TpKernel tker,TpFtMode ftmode,bool lamsps,TpDeltaSph tdelt
 /// Interaction for the force computation.
 /// Interaccion para el calculo de fuerzas.
 //==============================================================================
-template<bool psingle,TpKernel tker,TpFtMode ftmode,bool lamsps,TpDeltaSph tdelta,bool shift> void Interaction_ForcesT_BsAuto
-  (TpCellMode cellmode,float viscob,float viscof,unsigned bsbound,unsigned bsfluid
-  ,unsigned np,unsigned npb,unsigned npbok,tuint3 ncells
-  ,const int2 *begincell,tuint3 cellmin,const unsigned *dcell
-  ,const double2 *posxy,const double *posz,const float4 *pospress
-  ,const float4 *velrhop,const typecode *code,const unsigned *idp
-  ,const float *ftomassp,const tsymatrix3f *tau,tsymatrix3f *gradvel
-  ,float *viscdt,float* ar,float3 *ace,float *delta
-  ,TpShifting tshifting,float3 *shiftpos,float *shiftdetect
-  ,bool simulate2d,JBlockSizeAuto *bsauto)
+template<bool psingle,TpKernel tker,TpFtMode ftmode,bool lamsps,TpDeltaSph tdelta,bool shift> 
+  void Interaction_ForcesT_BsAuto(const stinterparmsg &t)
 {
   if(1){
     //-Executes particle interactions.
-    const unsigned npf=np-npb;
-    const int hdiv=(cellmode==CELLMODE_H? 2: 1);
-    const int4 nc=make_int4(int(ncells.x),int(ncells.y),int(ncells.z),int(ncells.x*ncells.y));
+    const int4 nc=make_int4(int(t.ncells.x),int(t.ncells.y),int(t.ncells.z),int(t.ncells.x*t.ncells.y));
     const unsigned cellfluid=nc.w*nc.z+1;
-    const int3 cellzero=make_int3(cellmin.x,cellmin.y,cellmin.z);
+    const int3 cellzero=make_int3(t.cellmin.x,t.cellmin.y,t.cellmin.z);
     //-Interaction Fluid-Fluid & Fluid-Bound.
-    if(npf){
-      JBlockSizeAutoKer* ker=bsauto->GetKernel(0);
+    if(t.npf){
+      JBlockSizeAutoKer* ker=t.bsauto->GetKernel(0);
       for(int ct=0;ct<ker->BsNum;ct++)if(ker->IsActive(ct)){
         cudaEvent_t start,stop;
         cudaEventCreate(&start);
         cudaEventCreate(&stop);
         cudaEventRecord(start,0);
         unsigned bsize=ker->GetBs(ct);
-        dim3 sgridf=GetGridSize(npf,bsize);
-        KerInteractionForcesFluid<psingle,tker,ftmode,lamsps,tdelta,shift> <<<sgridf,bsize>>> (npf,npb,hdiv,nc,cellfluid,viscob,viscof,begincell,cellzero,dcell,ftomassp,(const float2*)tau,(float2*)gradvel,posxy,posz,pospress,velrhop,code,idp,viscdt,ar,ace,delta,tshifting,shiftpos,shiftdetect);
+        dim3 sgridf=GetGridSize(t.npf,bsize);
+        KerInteractionForcesFluid<psingle,tker,ftmode,lamsps,tdelta,shift> <<<sgridf,bsize>>> 
+          (t.npf,t.npb,t.hdiv,nc,cellfluid,t.viscob,t.viscof,t.begincell,cellzero,t.dcell
+          ,t.ftomassp,(const float2*)t.tau,(float2*)t.gradvel,t.posxy,t.posz,t.pospress
+          ,t.velrhop,t.code,t.idp,t.viscdt,t.ar,t.ace,t.delta,t.tshifting,t.shiftpos,t.shiftdetect);
         cudaEventRecord(stop,0);
         cudaEventSynchronize(stop);
         float time;
@@ -1090,16 +1083,18 @@ template<bool psingle,TpKernel tker,TpFtMode ftmode,bool lamsps,TpDeltaSph tdelt
       }
     }
     //-Interaction Boundary-Fluid.
-    if(npbok){
-      JBlockSizeAutoKer* ker=bsauto->GetKernel(1);
+    if(t.npbok){
+      JBlockSizeAutoKer* ker=t.bsauto->GetKernel(1);
       for(int ct=0;ct<ker->BsNum;ct++)if(ker->IsActive(ct)){
         cudaEvent_t start,stop;
         cudaEventCreate(&start);
         cudaEventCreate(&stop);
         cudaEventRecord(start,0);
         unsigned bsize=ker->GetBs(ct);
-        dim3 sgridb=GetGridSize(npbok,bsize);
-        KerInteractionForcesBound<psingle,tker,ftmode> <<<sgridb,bsize>>> (npbok,hdiv,nc,begincell,cellzero,dcell,ftomassp,posxy,posz,pospress,velrhop,code,idp,viscdt,ar);
+        dim3 sgridb=GetGridSize(t.npbok,bsize);
+        KerInteractionForcesBound<psingle,tker,ftmode> <<<sgridb,bsize>>> 
+          (t.npbok,t.hdiv,nc,t.begincell,cellzero,t.dcell,t.ftomassp
+          ,t.posxy,t.posz,t.pospress,t.velrhop,t.code,t.idp,t.viscdt,t.ar);
         cudaEventRecord(stop,0);
         cudaEventSynchronize(stop);
         float time;
@@ -1119,125 +1114,84 @@ template<bool psingle,TpKernel tker,TpFtMode ftmode,bool lamsps,TpDeltaSph tdelt
 /// Interaction for the force computation.
 /// Interaccion para el calculo de fuerzas.
 //==============================================================================
-template<bool psingle,TpKernel tker,TpFtMode ftmode,bool lamsps,TpDeltaSph tdelta,bool shift> void Interaction_ForcesT
-  (TpCellMode cellmode,float viscob,float viscof,unsigned bsbound,unsigned bsfluid
-  ,unsigned np,unsigned npb,unsigned npbok,tuint3 ncells
-  ,const int2 *begincell,tuint3 cellmin,const unsigned *dcell
-  ,const double2 *posxy,const double *posz,const float4 *pospress
-  ,const float4 *velrhop,const typecode *code,const unsigned *idp
-  ,const float *ftomassp,const tsymatrix3f *tau,tsymatrix3f *gradvel
-  ,float *viscdt,float* ar,float3 *ace,float *delta
-  ,TpShifting tshifting,float3 *shiftpos,float *shiftdetect
-  ,bool simulate2d,StKerInfo *kerinfo,JBlockSizeAuto *bsauto)
+template<bool psingle,TpKernel tker,TpFtMode ftmode,bool lamsps,TpDeltaSph tdelta,bool shift> 
+  void Interaction_ForcesGpuT(const stinterparmsg &t)
 {
   //-Collects kernel information.
 #ifndef DISABLE_BSMODES
-  if(kerinfo)Interaction_ForcesT_KerInfo<psingle,tker,ftmode,lamsps,tdelta,shift>(kerinfo);
-  else if(bsauto)Interaction_ForcesT_BsAuto<psingle,tker,ftmode,lamsps,tdelta,shift>(cellmode,viscob,viscof,bsbound,bsfluid,np,npb,npbok,ncells,begincell,cellmin,dcell,posxy,posz,pospress,velrhop,code,idp,ftomassp,tau,gradvel,viscdt,ar,ace,delta,tshifting,shiftpos,shiftdetect,simulate2d,bsauto);
+  if(t.kerinfo)Interaction_ForcesT_KerInfo<psingle,tker,ftmode,lamsps,tdelta,shift>(t.kerinfo);
+  else if(t.bsauto)Interaction_ForcesT_BsAuto<psingle,tker,ftmode,lamsps,tdelta,shift>(t);
   else{
 #endif
     //-Executes particle interactions.
-    const unsigned npf=np-npb;
-    const int hdiv=(cellmode==CELLMODE_H? 2: 1);
-    const int4 nc=make_int4(int(ncells.x),int(ncells.y),int(ncells.z),int(ncells.x*ncells.y));
+    const int4 nc=make_int4(int(t.ncells.x),int(t.ncells.y),int(t.ncells.z),int(t.ncells.x*t.ncells.y));
     const unsigned cellfluid=nc.w*nc.z+1;
-    const int3 cellzero=make_int3(cellmin.x,cellmin.y,cellmin.z);
+    const int3 cellzero=make_int3(t.cellmin.x,t.cellmin.y,t.cellmin.z);
     //-Interaction Fluid-Fluid & Fluid-Bound.
-    if(npf){
-      dim3 sgridf=GetGridSize(npf,bsfluid);
+    if(t.npf){
+      dim3 sgridf=GetGridSize(t.npf,t.bsfluid);
       //printf("---->bsfluid:%u   ",bsfluid);
-      KerInteractionForcesFluid<psingle,tker,ftmode,lamsps,tdelta,shift> <<<sgridf,bsfluid>>> (npf,npb,hdiv,nc,cellfluid,viscob,viscof,begincell,cellzero,dcell,ftomassp,(const float2*)tau,(float2*)gradvel,posxy,posz,pospress,velrhop,code,idp,viscdt,ar,ace,delta,tshifting,shiftpos,shiftdetect);
+      KerInteractionForcesFluid<psingle,tker,ftmode,lamsps,tdelta,shift> <<<sgridf,t.bsfluid>>> (t.npf,t.npb,t.hdiv,nc,cellfluid,t.viscob,t.viscof,t.begincell,cellzero,t.dcell,t.ftomassp,(const float2*)t.tau,(float2*)t.gradvel,t.posxy,t.posz,t.pospress,t.velrhop,t.code,t.idp,t.viscdt,t.ar,t.ace,t.delta,t.tshifting,t.shiftpos,t.shiftdetect);
     }
     //-Interaction Boundary-Fluid.
-    if(npbok){
-      dim3 sgridb=GetGridSize(npbok,bsbound);
+    if(t.npbok){
+      dim3 sgridb=GetGridSize(t.npbok,t.bsbound);
       //printf("bsbound:%u\n",bsbound);
-      KerInteractionForcesBound<psingle,tker,ftmode> <<<sgridb,bsbound>>> (npbok,hdiv,nc,begincell,cellzero,dcell,ftomassp,posxy,posz,pospress,velrhop,code,idp,viscdt,ar);
+      KerInteractionForcesBound<psingle,tker,ftmode> <<<sgridb,t.bsbound>>> (t.npbok,t.hdiv,nc,t.begincell,cellzero,t.dcell,t.ftomassp,t.posxy,t.posz,t.pospress,t.velrhop,t.code,t.idp,t.viscdt,t.ar);
     }
 #ifndef DISABLE_BSMODES
   }
 #endif
 }
 //==============================================================================
-template<bool psingle,TpKernel tker,TpFtMode ftmode,bool lamsps> void Interaction_Forces_t2(TpDeltaSph tdelta,TpCellMode cellmode
-  ,float viscob,float viscof,unsigned bsbound,unsigned bsfluid
-  ,unsigned np,unsigned npb,unsigned npbok,tuint3 ncells
-  ,const int2 *begincell,tuint3 cellmin,const unsigned *dcell
-  ,const double2 *posxy,const double *posz,const float4 *pospress
-  ,const float4 *velrhop,const typecode *code,const unsigned *idp
-  ,const float *ftomassp,const tsymatrix3f *tau,tsymatrix3f *gradvel
-  ,float *viscdt,float* ar,float3 *ace,float *delta
-  ,TpShifting tshifting,float3 *shiftpos,float *shiftdetect
-  ,bool simulate2d,StKerInfo *kerinfo,JBlockSizeAuto *bsauto)
-{
-  if(tshifting){                const bool shift=true;
-    if(tdelta==DELTA_None)      Interaction_ForcesT<psingle,tker,ftmode,lamsps,DELTA_None,shift>       (cellmode,viscob,viscof,bsbound,bsfluid,np,npb,npbok,ncells,begincell,cellmin,dcell,posxy,posz,pospress,velrhop,code,idp,ftomassp,tau,gradvel,viscdt,ar,ace,delta,tshifting,shiftpos,shiftdetect,simulate2d,kerinfo,bsauto);
-    if(tdelta==DELTA_Dynamic)   Interaction_ForcesT<psingle,tker,ftmode,lamsps,DELTA_Dynamic,shift>    (cellmode,viscob,viscof,bsbound,bsfluid,np,npb,npbok,ncells,begincell,cellmin,dcell,posxy,posz,pospress,velrhop,code,idp,ftomassp,tau,gradvel,viscdt,ar,ace,delta,tshifting,shiftpos,shiftdetect,simulate2d,kerinfo,bsauto);
-    if(tdelta==DELTA_DynamicExt)Interaction_ForcesT<psingle,tker,ftmode,lamsps,DELTA_DynamicExt,shift> (cellmode,viscob,viscof,bsbound,bsfluid,np,npb,npbok,ncells,begincell,cellmin,dcell,posxy,posz,pospress,velrhop,code,idp,ftomassp,tau,gradvel,viscdt,ar,ace,delta,tshifting,shiftpos,shiftdetect,simulate2d,kerinfo,bsauto);
+template<bool psingle,TpKernel tker,TpFtMode ftmode,bool lamsps> void Interaction_Forces_gt2(const stinterparmsg &t){
+  if(t.tshifting){                const bool shift=true;
+    if(t.tdelta==DELTA_None)      Interaction_ForcesGpuT<psingle,tker,ftmode,lamsps,DELTA_None,shift>       (t);
+    if(t.tdelta==DELTA_Dynamic)   Interaction_ForcesGpuT<psingle,tker,ftmode,lamsps,DELTA_Dynamic,shift>    (t);
+    if(t.tdelta==DELTA_DynamicExt)Interaction_ForcesGpuT<psingle,tker,ftmode,lamsps,DELTA_DynamicExt,shift> (t);
   }
-  else{                         const bool shift=false;
-    if(tdelta==DELTA_None)      Interaction_ForcesT<psingle,tker,ftmode,lamsps,DELTA_None,shift>       (cellmode,viscob,viscof,bsbound,bsfluid,np,npb,npbok,ncells,begincell,cellmin,dcell,posxy,posz,pospress,velrhop,code,idp,ftomassp,tau,gradvel,viscdt,ar,ace,delta,tshifting,shiftpos,shiftdetect,simulate2d,kerinfo,bsauto);
-    if(tdelta==DELTA_Dynamic)   Interaction_ForcesT<psingle,tker,ftmode,lamsps,DELTA_Dynamic,shift>    (cellmode,viscob,viscof,bsbound,bsfluid,np,npb,npbok,ncells,begincell,cellmin,dcell,posxy,posz,pospress,velrhop,code,idp,ftomassp,tau,gradvel,viscdt,ar,ace,delta,tshifting,shiftpos,shiftdetect,simulate2d,kerinfo,bsauto);
-    if(tdelta==DELTA_DynamicExt)Interaction_ForcesT<psingle,tker,ftmode,lamsps,DELTA_DynamicExt,shift> (cellmode,viscob,viscof,bsbound,bsfluid,np,npb,npbok,ncells,begincell,cellmin,dcell,posxy,posz,pospress,velrhop,code,idp,ftomassp,tau,gradvel,viscdt,ar,ace,delta,tshifting,shiftpos,shiftdetect,simulate2d,kerinfo,bsauto);
+  else{                           const bool shift=false;
+    if(t.tdelta==DELTA_None)      Interaction_ForcesGpuT<psingle,tker,ftmode,lamsps,DELTA_None,shift>       (t);
+    if(t.tdelta==DELTA_Dynamic)   Interaction_ForcesGpuT<psingle,tker,ftmode,lamsps,DELTA_Dynamic,shift>    (t);
+    if(t.tdelta==DELTA_DynamicExt)Interaction_ForcesGpuT<psingle,tker,ftmode,lamsps,DELTA_DynamicExt,shift> (t);
   }
 }
 //==============================================================================
-template<bool psingle,TpKernel tker,TpFtMode ftmode> void Interaction_Forces_t1(bool lamsps,TpDeltaSph tdelta,TpCellMode cellmode
-  ,float viscob,float viscof,unsigned bsbound,unsigned bsfluid
-  ,unsigned np,unsigned npb,unsigned npbok,tuint3 ncells
-  ,const int2 *begincell,tuint3 cellmin,const unsigned *dcell
-  ,const double2 *posxy,const double *posz,const float4 *pospress
-  ,const float4 *velrhop,const typecode *code,const unsigned *idp
-  ,const float *ftomassp,const tsymatrix3f *tau,tsymatrix3f *gradvel
-  ,float *viscdt,float* ar,float3 *ace,float *delta
-  ,TpShifting tshifting,float3 *shiftpos,float *shiftdetect
-  ,bool simulate2d,StKerInfo *kerinfo,JBlockSizeAuto *bsauto)
-{
-  if(lamsps)Interaction_Forces_t2<psingle,tker,ftmode,true>  (tdelta,cellmode,viscob,viscof,bsbound,bsfluid,np,npb,npbok,ncells,begincell,cellmin,dcell,posxy,posz,pospress,velrhop,code,idp,ftomassp,tau,gradvel,viscdt,ar,ace,delta,tshifting,shiftpos,shiftdetect,simulate2d,kerinfo,bsauto);
-  else      Interaction_Forces_t2<psingle,tker,ftmode,false> (tdelta,cellmode,viscob,viscof,bsbound,bsfluid,np,npb,npbok,ncells,begincell,cellmin,dcell,posxy,posz,pospress,velrhop,code,idp,ftomassp,tau,gradvel,viscdt,ar,ace,delta,tshifting,shiftpos,shiftdetect,simulate2d,kerinfo,bsauto);
+template<bool psingle,TpKernel tker,TpFtMode ftmode> void Interaction_Forces_gt1(const stinterparmsg &t){
+  if(t.lamsps)Interaction_Forces_gt2<psingle,tker,ftmode,true>  (t);
+  else        Interaction_Forces_gt2<psingle,tker,ftmode,false> (t);
 }
 //==============================================================================
-void Interaction_Forces(bool psingle,TpKernel tkernel,TpFtMode ftmode,bool lamsps
-  ,TpDeltaSph tdelta,TpCellMode cellmode
-  ,float viscob,float viscof,unsigned bsbound,unsigned bsfluid
-  ,unsigned np,unsigned npb,unsigned npbok,tuint3 ncells
-  ,const int2 *begincell,tuint3 cellmin,const unsigned *dcell
-  ,const double2 *posxy,const double *posz,const float4 *pospress
-  ,const float4 *velrhop,const typecode *code,const unsigned *idp
-  ,const float *ftomassp,const tsymatrix3f *tau,tsymatrix3f *gradvel
-  ,float *viscdt,float* ar,float3 *ace,float *delta
-  ,TpShifting tshifting,float3 *shiftpos,float *shiftdetect
-  ,bool simulate2d,StKerInfo *kerinfo,JBlockSizeAuto *bsauto)
-{
-  if(tkernel==KERNEL_Wendland){    const TpKernel tker=KERNEL_Wendland;
-    if(psingle){      const bool psingle=true;
-      if(ftmode==FTMODE_None)    Interaction_Forces_t1<psingle,tker,FTMODE_None> (lamsps,tdelta,cellmode,viscob,viscof,bsbound,bsfluid,np,npb,npbok,ncells,begincell,cellmin,dcell,posxy,posz,pospress,velrhop,code,idp,ftomassp,tau,gradvel,viscdt,ar,ace,delta,tshifting,shiftpos,shiftdetect,simulate2d,kerinfo,bsauto);
-      else if(ftmode==FTMODE_Sph)Interaction_Forces_t1<psingle,tker,FTMODE_Sph>  (lamsps,tdelta,cellmode,viscob,viscof,bsbound,bsfluid,np,npb,npbok,ncells,begincell,cellmin,dcell,posxy,posz,pospress,velrhop,code,idp,ftomassp,tau,gradvel,viscdt,ar,ace,delta,tshifting,shiftpos,shiftdetect,simulate2d,kerinfo,bsauto);
-      else if(ftmode==FTMODE_Ext)Interaction_Forces_t1<psingle,tker,FTMODE_Ext>  (lamsps,tdelta,cellmode,viscob,viscof,bsbound,bsfluid,np,npb,npbok,ncells,begincell,cellmin,dcell,posxy,posz,pospress,velrhop,code,idp,ftomassp,tau,gradvel,viscdt,ar,ace,delta,tshifting,shiftpos,shiftdetect,simulate2d,kerinfo,bsauto);
+void Interaction_Forces(const stinterparmsg &t){
+  if(t.tkernel==KERNEL_Wendland){    const TpKernel tker=KERNEL_Wendland;
+    if(t.psingle){      const bool psingle=true;
+      if(t.ftmode==FTMODE_None)    Interaction_Forces_gt1<psingle,tker,FTMODE_None> (t);
+      else if(t.ftmode==FTMODE_Sph)Interaction_Forces_gt1<psingle,tker,FTMODE_Sph>  (t);
+      else if(t.ftmode==FTMODE_Ext)Interaction_Forces_gt1<psingle,tker,FTMODE_Ext>  (t);
     }else{            const bool psingle=false;
-      if(ftmode==FTMODE_None)    Interaction_Forces_t1<psingle,tker,FTMODE_None> (lamsps,tdelta,cellmode,viscob,viscof,bsbound,bsfluid,np,npb,npbok,ncells,begincell,cellmin,dcell,posxy,posz,pospress,velrhop,code,idp,ftomassp,tau,gradvel,viscdt,ar,ace,delta,tshifting,shiftpos,shiftdetect,simulate2d,kerinfo,bsauto);
-      else if(ftmode==FTMODE_Sph)Interaction_Forces_t1<psingle,tker,FTMODE_Sph>  (lamsps,tdelta,cellmode,viscob,viscof,bsbound,bsfluid,np,npb,npbok,ncells,begincell,cellmin,dcell,posxy,posz,pospress,velrhop,code,idp,ftomassp,tau,gradvel,viscdt,ar,ace,delta,tshifting,shiftpos,shiftdetect,simulate2d,kerinfo,bsauto);
-      else if(ftmode==FTMODE_Ext)Interaction_Forces_t1<psingle,tker,FTMODE_Ext>  (lamsps,tdelta,cellmode,viscob,viscof,bsbound,bsfluid,np,npb,npbok,ncells,begincell,cellmin,dcell,posxy,posz,pospress,velrhop,code,idp,ftomassp,tau,gradvel,viscdt,ar,ace,delta,tshifting,shiftpos,shiftdetect,simulate2d,kerinfo,bsauto);
+      if(t.ftmode==FTMODE_None)    Interaction_Forces_gt1<psingle,tker,FTMODE_None> (t);
+      else if(t.ftmode==FTMODE_Sph)Interaction_Forces_gt1<psingle,tker,FTMODE_Sph>  (t);
+      else if(t.ftmode==FTMODE_Ext)Interaction_Forces_gt1<psingle,tker,FTMODE_Ext>  (t);
     }
-  }else if(tkernel==KERNEL_Gaussian){ const TpKernel tker=KERNEL_Gaussian;
-    if(psingle){      const bool psingle=true;
-      if(ftmode==FTMODE_None)    Interaction_Forces_t1<psingle,tker,FTMODE_None> (lamsps,tdelta,cellmode,viscob,viscof,bsbound,bsfluid,np,npb,npbok,ncells,begincell,cellmin,dcell,posxy,posz,pospress,velrhop,code,idp,ftomassp,tau,gradvel,viscdt,ar,ace,delta,tshifting,shiftpos,shiftdetect,simulate2d,kerinfo,bsauto);
-      else if(ftmode==FTMODE_Sph)Interaction_Forces_t1<psingle,tker,FTMODE_Sph>  (lamsps,tdelta,cellmode,viscob,viscof,bsbound,bsfluid,np,npb,npbok,ncells,begincell,cellmin,dcell,posxy,posz,pospress,velrhop,code,idp,ftomassp,tau,gradvel,viscdt,ar,ace,delta,tshifting,shiftpos,shiftdetect,simulate2d,kerinfo,bsauto);
-      else if(ftmode==FTMODE_Ext)Interaction_Forces_t1<psingle,tker,FTMODE_Ext>  (lamsps,tdelta,cellmode,viscob,viscof,bsbound,bsfluid,np,npb,npbok,ncells,begincell,cellmin,dcell,posxy,posz,pospress,velrhop,code,idp,ftomassp,tau,gradvel,viscdt,ar,ace,delta,tshifting,shiftpos,shiftdetect,simulate2d,kerinfo,bsauto);
+  }else if(t.tkernel==KERNEL_Gaussian){ const TpKernel tker=KERNEL_Gaussian;
+    if(t.psingle){      const bool psingle=true;
+      if(t.ftmode==FTMODE_None)    Interaction_Forces_gt1<psingle,tker,FTMODE_None> (t);
+      else if(t.ftmode==FTMODE_Sph)Interaction_Forces_gt1<psingle,tker,FTMODE_Sph>  (t);
+      else if(t.ftmode==FTMODE_Ext)Interaction_Forces_gt1<psingle,tker,FTMODE_Ext>  (t);
     }else{            const bool psingle=false;
-      if(ftmode==FTMODE_None)    Interaction_Forces_t1<psingle,tker,FTMODE_None> (lamsps,tdelta,cellmode,viscob,viscof,bsbound,bsfluid,np,npb,npbok,ncells,begincell,cellmin,dcell,posxy,posz,pospress,velrhop,code,idp,ftomassp,tau,gradvel,viscdt,ar,ace,delta,tshifting,shiftpos,shiftdetect,simulate2d,kerinfo,bsauto);
-      else if(ftmode==FTMODE_Sph)Interaction_Forces_t1<psingle,tker,FTMODE_Sph>  (lamsps,tdelta,cellmode,viscob,viscof,bsbound,bsfluid,np,npb,npbok,ncells,begincell,cellmin,dcell,posxy,posz,pospress,velrhop,code,idp,ftomassp,tau,gradvel,viscdt,ar,ace,delta,tshifting,shiftpos,shiftdetect,simulate2d,kerinfo,bsauto);
-      else if(ftmode==FTMODE_Ext)Interaction_Forces_t1<psingle,tker,FTMODE_Ext>  (lamsps,tdelta,cellmode,viscob,viscof,bsbound,bsfluid,np,npb,npbok,ncells,begincell,cellmin,dcell,posxy,posz,pospress,velrhop,code,idp,ftomassp,tau,gradvel,viscdt,ar,ace,delta,tshifting,shiftpos,shiftdetect,simulate2d,kerinfo,bsauto);
+      if(t.ftmode==FTMODE_None)    Interaction_Forces_gt1<psingle,tker,FTMODE_None> (t);
+      else if(t.ftmode==FTMODE_Sph)Interaction_Forces_gt1<psingle,tker,FTMODE_Sph>  (t);
+      else if(t.ftmode==FTMODE_Ext)Interaction_Forces_gt1<psingle,tker,FTMODE_Ext>  (t);
     }
-  }else if(tkernel==KERNEL_Cubic){ const TpKernel tker=KERNEL_Cubic;
-    if(psingle){      const bool psingle=true;
-      if(ftmode==FTMODE_None)    Interaction_Forces_t1<psingle,tker,FTMODE_None> (lamsps,tdelta,cellmode,viscob,viscof,bsbound,bsfluid,np,npb,npbok,ncells,begincell,cellmin,dcell,posxy,posz,pospress,velrhop,code,idp,ftomassp,tau,gradvel,viscdt,ar,ace,delta,tshifting,shiftpos,shiftdetect,simulate2d,kerinfo,bsauto);
-      else if(ftmode==FTMODE_Sph)Interaction_Forces_t1<psingle,tker,FTMODE_Sph>  (lamsps,tdelta,cellmode,viscob,viscof,bsbound,bsfluid,np,npb,npbok,ncells,begincell,cellmin,dcell,posxy,posz,pospress,velrhop,code,idp,ftomassp,tau,gradvel,viscdt,ar,ace,delta,tshifting,shiftpos,shiftdetect,simulate2d,kerinfo,bsauto);
-      else if(ftmode==FTMODE_Ext)Interaction_Forces_t1<psingle,tker,FTMODE_Ext>  (lamsps,tdelta,cellmode,viscob,viscof,bsbound,bsfluid,np,npb,npbok,ncells,begincell,cellmin,dcell,posxy,posz,pospress,velrhop,code,idp,ftomassp,tau,gradvel,viscdt,ar,ace,delta,tshifting,shiftpos,shiftdetect,simulate2d,kerinfo,bsauto);
+  }else if(t.tkernel==KERNEL_Cubic){ const TpKernel tker=KERNEL_Cubic;
+    if(t.psingle){      const bool psingle=true;
+      if(t.ftmode==FTMODE_None)    Interaction_Forces_gt1<psingle,tker,FTMODE_None> (t);
+      else if(t.ftmode==FTMODE_Sph)Interaction_Forces_gt1<psingle,tker,FTMODE_Sph>  (t);
+      else if(t.ftmode==FTMODE_Ext)Interaction_Forces_gt1<psingle,tker,FTMODE_Ext>  (t);
     }else{            const bool psingle=false;
-      if(ftmode==FTMODE_None)    Interaction_Forces_t1<psingle,tker,FTMODE_None> (lamsps,tdelta,cellmode,viscob,viscof,bsbound,bsfluid,np,npb,npbok,ncells,begincell,cellmin,dcell,posxy,posz,pospress,velrhop,code,idp,ftomassp,tau,gradvel,viscdt,ar,ace,delta,tshifting,shiftpos,shiftdetect,simulate2d,kerinfo,bsauto);
-      else if(ftmode==FTMODE_Sph)Interaction_Forces_t1<psingle,tker,FTMODE_Sph>  (lamsps,tdelta,cellmode,viscob,viscof,bsbound,bsfluid,np,npb,npbok,ncells,begincell,cellmin,dcell,posxy,posz,pospress,velrhop,code,idp,ftomassp,tau,gradvel,viscdt,ar,ace,delta,tshifting,shiftpos,shiftdetect,simulate2d,kerinfo,bsauto);
-      else if(ftmode==FTMODE_Ext)Interaction_Forces_t1<psingle,tker,FTMODE_Ext>  (lamsps,tdelta,cellmode,viscob,viscof,bsbound,bsfluid,np,npb,npbok,ncells,begincell,cellmin,dcell,posxy,posz,pospress,velrhop,code,idp,ftomassp,tau,gradvel,viscdt,ar,ace,delta,tshifting,shiftpos,shiftdetect,simulate2d,kerinfo,bsauto);
+      if(t.ftmode==FTMODE_None)    Interaction_Forces_gt1<psingle,tker,FTMODE_None> (t);
+      else if(t.ftmode==FTMODE_Sph)Interaction_Forces_gt1<psingle,tker,FTMODE_Sph>  (t);
+      else if(t.ftmode==FTMODE_Ext)Interaction_Forces_gt1<psingle,tker,FTMODE_Ext>  (t);
     }
   }
 }

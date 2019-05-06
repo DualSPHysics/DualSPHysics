@@ -118,6 +118,14 @@ unsigned JSpaceVtkOut::GetByFileName(std::string fname)const{
 }
 
 //==============================================================================
+/// Returns the requested file by number.
+//==============================================================================
+std::string JSpaceVtkOut::GetFile(unsigned idx)const{
+  if(idx>=Count())RunException("GetFile","Number of requested file is invalid.");
+  return(Files[idx]->File);
+}
+
+//==============================================================================
 /// Returns list of files with indicated key.
 //==============================================================================
 void JSpaceVtkOut::GetFiles(std::string key,std::vector<std::string> &list)const{
