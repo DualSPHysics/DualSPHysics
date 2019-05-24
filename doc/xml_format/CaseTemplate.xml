@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<case app="GenCase4 v4.0.099 (01-05-2019)" date="02-05-2019 08:11:07">
+<case app="GenCase4 v4.0.101 (22-05-2019)" date="24-05-2019 12:51:15">
     <casedef>
         <constantsdef>
             <lattice bound="2" fluid="1" />
@@ -705,6 +705,7 @@
             <parameter key="XYPeriodic" value="0" comment="Periodic BC in axes X and Y" units_comment="metres (m)" />
             <parameter key="XZPeriodic" value="0" comment="Periodic BC in axes X and Z" units_comment="metres (m)" />
             <parameter key="YZPeriodic" value="0" comment="Periodic BC in axes Y and Z" units_comment="metres (m)" />
+            <parameter key="Symmetry" value="0" comment="Activates symmetry in plane y=0 (default=0)" />
             <simulationdomain comment="Defines domain of simulation (default=Uses minimun and maximum position of the generated particles)">
                 <posmin x="0.5" y="default - 2" z="default - 20%" comment="e.g.: x=0.5, y=default-1, z=default-10%" />
                 <posmax x="default" y="default + 1" z="default + 10%" />
