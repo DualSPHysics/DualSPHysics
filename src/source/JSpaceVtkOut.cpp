@@ -118,6 +118,14 @@ unsigned JSpaceVtkOut::GetByFileName(std::string fname)const{
 }
 
 //==============================================================================
+/// Returns the requested file by number.
+//==============================================================================
+std::string JSpaceVtkOut::GetFile(unsigned idx)const{
+  if(idx>=Count())RunException("GetFile","Number of requested file is invalid.");
+  return(Files[idx]->File);
+}
+
+//==============================================================================
 /// Returns list of files with indicated key.
 //==============================================================================
 void JSpaceVtkOut::GetFiles(std::string key,std::vector<std::string> &list)const{
@@ -181,6 +189,15 @@ void JSpaceVtkOut::WriteXml(JXml *sxml,TiXmlElement* lis)const{
     if(!mklist.empty())JXml::AddAttribute(&item,"mkfluid",mklist);
     lis->InsertEndChild(item)->ToElement();
   }
+}
+
+//==============================================================================
+/// Loads data in XML format from a file.
+//==============================================================================
+void JSpaceVtkOut::LoadFileXml(const std::string &file,const std::string &path){
+  JXml jxml;
+  jxml.LoadFile(file);
+  LoadXml(&jxml,path,false);
 }
 
 //==============================================================================

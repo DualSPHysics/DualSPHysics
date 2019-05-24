@@ -54,7 +54,7 @@ JGaugeItem::JGaugeItem(TpGauge type,unsigned idx,std::string name,bool cpu,JLog2
 /// Initialisation of variables.
 //==============================================================================
 void JGaugeItem::Reset(){
-  Config(false,TDouble3(0),TDouble3(0),0,0,0,0,0,0,0,0);
+  Config(false,false,TDouble3(0),TDouble3(0),0,0,0,0,0,0,0,0);
   SaveVtkPart=false;
   ConfigComputeTiming(0,0,0);
   ConfigOutputTiming(false,0,0,0);
@@ -66,11 +66,13 @@ void JGaugeItem::Reset(){
 //==============================================================================
 /// Configures object.
 //==============================================================================
-void JGaugeItem::Config(bool simulate2d,tdouble3 domposmin,tdouble3 domposmax
+void JGaugeItem::Config(bool simulate2d,bool symmetry
+  ,tdouble3 domposmin,tdouble3 domposmax
   ,float scell,int hdiv,float h,float massfluid,float massbound
   ,float cteb,float gamma,float rhopzero)
 {
   Simulate2D=simulate2d;
+  Symmetry=symmetry;
   DomPosMin=domposmin;
   DomPosMax=domposmax;
   Scell=scell;
@@ -339,6 +341,7 @@ void JGaugeVelocity::CalculeCpu(double timestep,tuint3 ncells,tuint3 cellmin
   tfloat3 ptvel=TFloat3(0);
   const bool ptout=PointIsOut(Point.x,Point.y,Point.z);//-Verify that the point is within domain boundaries. | Comprueba que el punto este dentro de limites del dominio.
   if(!ptout){
+    const bool rsymp1=(Symmetry && (Point.y<=H+H)); //<vs_syymmetry>
     const tint4 nc=TInt4(int(ncells.x),int(ncells.y),int(ncells.z),int(ncells.x*ncells.y));
     const tint3 cellzero=TInt3(cellmin.x,cellmin.y,cellmin.z);
     const unsigned cellfluid=nc.w*nc.z+1;
@@ -361,9 +364,11 @@ void JGaugeVelocity::CalculeCpu(double timestep,tuint3 ncells,tuint3 cellmin
 
         //-Interaction with Fluid/Floating | Interaccion con varias Fluid/Floating.
         //--------------------------------------------------------------------------
+        bool rsym=false; //<vs_syymmetry>
         for(unsigned p2=pini;p2<pfin;p2++){
           const float drx=float(Point.x-pos[p2].x);
-          const float dry=float(Point.y-pos[p2].y);
+                float dry=float(Point.y-pos[p2].y);
+          if(rsym)    dry=float(Point.y+pos[p2].y); //<vs_syymmetry>
           const float drz=float(Point.z-pos[p2].z);
           const float rr2=(drx*drx+dry*dry+drz*drz);
           //-Interaction with real neighboring particles.
@@ -377,12 +382,17 @@ void JGaugeVelocity::CalculeCpu(double timestep,tuint3 ncells,tuint3 cellmin
               const float wqq2=wqq1*wqq1;
               wab=Awen*wqq*wqq2*wqq2; //-Kernel.
             }
-            wab*=MassFluid/velrhop[p2].w;
+            tfloat4 velrhop2=velrhop[p2];
+            if(rsym)velrhop2.y=-velrhop2.y; //<vs_syymmetry>
+            wab*=MassFluid/velrhop2.w;
             sumwab+=wab;
-            sumvel.x+=wab*velrhop[p2].x;
-            sumvel.y+=wab*velrhop[p2].y;
-            sumvel.z+=wab*velrhop[p2].z;
+            sumvel.x+=wab*velrhop2.x;
+            sumvel.y+=wab*velrhop2.y;
+            sumvel.z+=wab*velrhop2.z;
+            rsym=(rsymp1 && !rsym && float(Point.y-dry)<=H+H); //<vs_syymmetry>
+            if(rsym)p2--;                                      //<vs_syymmetry>
           }
+          else rsym=false;                                     //<vs_syymmetry>
         }
       }
     }
@@ -416,7 +426,7 @@ void JGaugeVelocity::CalculeGpu(double timestep,tuint3 ncells,tuint3 cellmin
   tfloat3 ptvel=TFloat3(0);
   const bool ptout=PointIsOut(Point.x,Point.y,Point.z);//-Verify that the point is within domain boundaries. | Comprueba que el punto este dentro de limites del dominio.
   if(!ptout){
-    cugauge::Interaction_GaugeVel(Point,Awen,Hdiv,ncells,cellmin,beginendcell,posxy,posz,code,velrhop,aux,DomPosMin,Scell,Fourh2,H,MassFluid);
+    cugauge::Interaction_GaugeVel(Symmetry,Point,Awen,Hdiv,ncells,cellmin,beginendcell,posxy,posz,code,velrhop,aux,DomPosMin,Scell,Fourh2,H,MassFluid);
     cudaMemcpy(&ptvel,aux,sizeof(float3),cudaMemcpyDeviceToHost);
     CheckCudaError("CalculeGpu","Failed in velocity calculation.");
   }
@@ -566,6 +576,7 @@ float JGaugeSwl::CalculeMassCpu(const tdouble3 &ptpos,const tint4 &nc
   ,const tint3 &cellzero,unsigned cellfluid,const unsigned *begincell
   ,const tdouble3 *pos,const typecode *code,const tfloat4 *velrhop)const
 {
+  const bool rsymp1=(Symmetry && (ptpos.y<=H+H)); //<vs_syymmetry>
   //-Obtain limits of interaction. | Obtiene limites de interaccion.
   int cxini,cxfin,yini,yfin,zini,zfin;
   GetInteractionCells(ptpos,nc,cellzero,cxini,cxfin,yini,yfin,zini,zfin);
@@ -585,9 +596,11 @@ float JGaugeSwl::CalculeMassCpu(const tdouble3 &ptpos,const tint4 &nc
 
       //-Interaction with Fluid/Floating | Interaccion con varias Fluid/Floating.
       //--------------------------------------------------------------------------
+      bool rsym=false; //<vs_syymmetry>
       for(unsigned p2=pini;p2<pfin;p2++){
         const float drx=float(ptpos.x-pos[p2].x);
-        const float dry=float(ptpos.y-pos[p2].y);
+              float dry=float(ptpos.y-pos[p2].y);
+        if(rsym)    dry=float(ptpos.y+pos[p2].y); //<vs_syymmetry>
         const float drz=float(ptpos.z-pos[p2].z);
         const float rr2=(drx*drx+dry*dry+drz*drz);
         //-Interaction with real neighboring particles.
@@ -605,7 +618,10 @@ float JGaugeSwl::CalculeMassCpu(const tdouble3 &ptpos,const tint4 &nc
           wab*=MassFluid/velrhop[p2].w;
           sumwab+=wab;
           summass+=wab*MassFluid;
+          rsym=(rsymp1 && !rsym && float(ptpos.y-dry)<=H+H); //<vs_syymmetry>
+          if(rsym)p2--;                                      //<vs_syymmetry>
         }
+        else rsym=false;                                     //<vs_syymmetry>
       }
     }
   }
@@ -657,7 +673,7 @@ void JGaugeSwl::CalculeGpu(double timestep,tuint3 ncells,tuint3 cellmin
 {
   SetTimeStep(timestep);
   //-Start measure.
-  cugauge::Interaction_GaugeSwl(Point0,PointDir,PointNp,MassLimit,Awen,Hdiv,ncells,cellmin,beginendcell,posxy,posz,code,velrhop,DomPosMin,Scell,Fourh2,H,MassFluid,aux);
+  cugauge::Interaction_GaugeSwl(Symmetry,Point0,PointDir,PointNp,MassLimit,Awen,Hdiv,ncells,cellmin,beginendcell,posxy,posz,code,velrhop,DomPosMin,Scell,Fourh2,H,MassFluid,aux);
   tfloat3 ptsurf=TFloat3(0);
   cudaMemcpy(&ptsurf,aux,sizeof(float3),cudaMemcpyDeviceToHost);
   CheckCudaError("CalculeGpu","Failed in Swl calculation.");

@@ -183,6 +183,7 @@ void JPartDataBi4::Config(unsigned piece,unsigned npiece,std::string dir,const J
     ,phead->GetGamma(),phead->GetMassBound(),phead->GetMassFluid());
   ConfigSimMap(phead->GetMapPosMin(),phead->GetMapPosMax());
   ConfigSimPeri(phead->GetPeriMode(),phead->GetPeriXinc(),phead->GetPeriYinc(),phead->GetPeriZinc());
+  ConfigSymmetry(phead->GetSymmetry());
   ConfigSplitting(phead->GetSplitting());
 }
 
@@ -277,6 +278,14 @@ TpPeri JPartDataBi4::Get_PeriMode()const{
 //==============================================================================
 void JPartDataBi4::ConfigSimDiv(TpAxisDiv axisdiv){
   Data->SetvInt("AxisDiv",int(axisdiv));
+}
+
+//==============================================================================
+/// Configuracion de variables de simetria con respecto al plano y=0.
+/// Configuration of variables of symmetry according plane y=0.
+//==============================================================================
+void JPartDataBi4::ConfigSymmetry(bool symmetry){
+  Data->SetvBool("Symmetry",symmetry);
 }
 
 //==============================================================================

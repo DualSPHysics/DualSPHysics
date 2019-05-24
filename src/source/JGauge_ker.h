@@ -36,14 +36,14 @@ inline double3 Double3(const tdouble3& v){ double3 p={v.x,v.y,v.z}; return(p); }
 dim3 GetGridSize(unsigned n,unsigned blocksize);
 
 //-Kernel for JGaugeVelocity.
-void Interaction_GaugeVel(tdouble3 ptpos
+void Interaction_GaugeVel(bool symm,tdouble3 ptpos
   ,float awen,int hdiv,tuint3 ncells,tuint3 cellmin,const int2 *begincell
   ,const double2 *posxy,const double *posz,const typecode *code,const float4 *velrhop
   ,float3 *ptvel
   ,tdouble3 domposmin,float scell,float fourh2,float h,float massf);
 
 //-Kernel for JGaugeSwl.
-void Interaction_GaugeSwl(tdouble3 point0,tdouble3 pointdir,unsigned pointnp,float masslimit
+void Interaction_GaugeSwl(bool symm,tdouble3 point0,tdouble3 pointdir,unsigned pointnp,float masslimit
   ,float awen,int hdiv,tuint3 ncells,tuint3 cellmin,const int2 *begincell
   ,const double2 *posxy,const double *posz,const typecode *code,const float4 *velrhop
   ,tdouble3 domposmin,float scell,float fourh2,float h,float massf,float3 *ptres);

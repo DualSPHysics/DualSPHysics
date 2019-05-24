@@ -410,7 +410,16 @@ void JSphGpuSingle::Interaction_Forces(TpInterStep interstep){
   unsigned bsbound=BlockSizes.forcesbound;
 
   if(BsAuto && !(Nstep%BsAuto->GetStepsInterval())){ //-Every certain number of steps. | Cada cierto numero de pasos.
-    cusph::Interaction_Forces(Psingle,TKernel,FtMode,lamsps,TDeltaSph,CellMode,Visco*ViscoBoundFactor,Visco,bsbound,bsfluid,Np,Npb,NpbOk,CellDivSingle->GetNcells(),CellDivSingle->GetBeginCell(),CellDivSingle->GetCellDomainMin(),Dcellg,Posxyg,Poszg,PsPospressg,Velrhopg,Codeg,Idpg,FtoMasspg,SpsTaug,SpsGradvelg,ViscDtg,Arg,Aceg,Deltag,TShifting,ShiftPosg,ShiftDetectg,Simulate2D,NULL,BsAuto);
+    const stinterparmsg parms=StInterparmsg(Simulate2D
+      ,Symmetry //<vs_syymmetry>
+      ,Psingle,TKernel
+      ,FtMode,lamsps,TDeltaSph,CellMode,Visco*ViscoBoundFactor,Visco
+      ,bsbound,bsfluid,Np,Npb,NpbOk
+      ,CellDivSingle->GetNcells(),CellDivSingle->GetBeginCell(),CellDivSingle->GetCellDomainMin(),Dcellg
+      ,Posxyg,Poszg,PsPospressg,Velrhopg,Idpg,Codeg,FtoMasspg
+      ,ViscDtg,Arg,Aceg,Deltag,SpsTaug,SpsGradvelg,TShifting,ShiftPosg,ShiftDetectg
+      ,NULL,BsAuto);
+    cusph::Interaction_Forces(parms);
     PreInteractionVars_Forces(Np,Npb);
     BsAuto->ProcessTimes(TimeStep,Nstep);
     bsfluid=BlockSizes.forcesfluid=BsAuto->GetKernel(0)->GetOptimumBs();
@@ -418,7 +427,16 @@ void JSphGpuSingle::Interaction_Forces(TpInterStep interstep){
   }
 
   //-Interaction Fluid-Fluid/Bound & Bound-Fluid.
-  cusph::Interaction_Forces(Psingle,TKernel,FtMode,lamsps,TDeltaSph,CellMode,Visco*ViscoBoundFactor,Visco,bsbound,bsfluid,Np,Npb,NpbOk,CellDivSingle->GetNcells(),CellDivSingle->GetBeginCell(),CellDivSingle->GetCellDomainMin(),Dcellg,Posxyg,Poszg,PsPospressg,Velrhopg,Codeg,Idpg,FtoMasspg,SpsTaug,SpsGradvelg,ViscDtg,Arg,Aceg,Deltag,TShifting,ShiftPosg,ShiftDetectg,Simulate2D,NULL,NULL);
+  const stinterparmsg parms=StInterparmsg(Simulate2D
+    ,Symmetry //<vs_syymmetry>
+    ,Psingle,TKernel
+    ,FtMode,lamsps,TDeltaSph,CellMode,Visco*ViscoBoundFactor,Visco
+    ,bsbound,bsfluid,Np,Npb,NpbOk
+    ,CellDivSingle->GetNcells(),CellDivSingle->GetBeginCell(),CellDivSingle->GetCellDomainMin(),Dcellg
+    ,Posxyg,Poszg,PsPospressg,Velrhopg,Idpg,Codeg,FtoMasspg
+    ,ViscDtg,Arg,Aceg,Deltag,SpsTaug,SpsGradvelg,TShifting,ShiftPosg,ShiftDetectg
+    ,NULL,NULL);
+  cusph::Interaction_Forces(parms);
 
   //-Interaction DEM Floating-Bound & Floating-Floating. //(DEM)
   if(UseDEM)cusph::Interaction_ForcesDem(Psingle,CellMode,BlockSizes.forcesdem,CaseNfloat,CellDivSingle->GetNcells(),CellDivSingle->GetBeginCell(),CellDivSingle->GetCellDomainMin(),Dcellg,FtRidpg,DemDatag,float(DemDtForce),Posxyg,Poszg,PsPospressg,Velrhopg,Codeg,Idpg,ViscDtg,Aceg,NULL);

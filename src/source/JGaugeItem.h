@@ -76,6 +76,7 @@ protected:
 
   //-Variables for calculation (they are constant).
   bool Simulate2D;     ///<Toggles 2D simulation (cancels forces in Y axis). | Activa o desactiva simulacion en 2D (anula fuerzas en eje Y).
+  bool Symmetry;       ///<Use of symmetry in plane y=0.
   tdouble3 DomPosMin;  ///<Lower limit of simulation + edge 2h if periodic conditions. DomPosMin=Map_PosMin+(DomCelIni*Scell); | Limite inferior de simulacion + borde 2h si hay condiciones periodicas. 
   tdouble3 DomPosMax;  ///<Upper limit of simulation + edge 2h if periodic conditions. DomPosMax=min(Map_PosMax,Map_PosMin+(DomCelFin*Scell)); | Limite inferior de simulacion + borde 2h si hay condiciones periodicas. 
   float Scell;         ///<Cell size: 2h or h. | Tamaño de celda: 2h o h.
@@ -134,7 +135,8 @@ public:
   const unsigned Idx;
   const std::string Name;
 
-  void Config(bool simulate2d,tdouble3 domposmin,tdouble3 domposmax
+  void Config(bool simulate2d,bool symmetry
+    ,tdouble3 domposmin,tdouble3 domposmax
     ,float scell,int hdiv,float h,float massfluid,float massbound
     ,float cteb,float gamma,float rhopzero);
   void SetSaveVtkPart(bool save){ SaveVtkPart=save; }

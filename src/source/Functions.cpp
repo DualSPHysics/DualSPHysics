@@ -1264,10 +1264,18 @@ int* ResizeAlloc(int *data,unsigned ndata,unsigned newsize){
   return(data2);
 }
 //==============================================================================
+tint2* ResizeAlloc(tint2 *data,unsigned ndata,unsigned newsize){
+  tint2* data2=new tint2[newsize];
+  ndata=std::min(ndata,newsize);
+  if(ndata)memcpy(data2,data,sizeof(tint2)*ndata);
+  delete[] data;
+  return(data2);
+}
+//==============================================================================
 tint3* ResizeAlloc(tint3 *data,unsigned ndata,unsigned newsize){
   tint3* data2=new tint3[newsize];
   ndata=std::min(ndata,newsize);
-  if(ndata)memcpy(data2,data,sizeof(tuint3)*ndata);
+  if(ndata)memcpy(data2,data,sizeof(tint3)*ndata);
   delete[] data;
   return(data2);
 }

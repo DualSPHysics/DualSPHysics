@@ -64,6 +64,7 @@ void JGaugeSystem::Reset(){
   Configured=false;
   Simulate2D=false;
   Simulate2DPosY=0;
+  Symmetry=false;
   TimeMax=TimePart=Dp=0;
   DomPosMin=DomPosMax=TDouble3(0);
   Scell=0;
@@ -94,12 +95,14 @@ void JGaugeSystem::ResetCfgDefault(){
 //==============================================================================
 /// Configures object.
 //==============================================================================
-void JGaugeSystem::Config(bool simulate2d,double simulate2dposy,double timemax,double timepart
+void JGaugeSystem::Config(bool simulate2d,double simulate2dposy,bool symmetry
+  ,double timemax,double timepart
   ,double dp,tdouble3 posmin,tdouble3 posmax,float scell,unsigned hdiv,float h
   ,float massfluid,float massbound,float cteb,float gamma,float rhopzero)
 {
   Simulate2D=simulate2d;
   Simulate2DPosY=simulate2dposy;
+  Symmetry=symmetry;
   TimeMax=timemax;
   TimePart=timepart;
   Dp=dp;
@@ -287,7 +290,7 @@ JGaugeVelocity* JGaugeSystem::AddGaugeVel(std::string name,double computestart,d
   if(GetGaugeIdx(name)!=UINT_MAX)RunException(met,fun::PrintStr("The name \'%s\' already exists.",name.c_str()));
   //-Creates object.
   JGaugeVelocity* gau=new JGaugeVelocity(GetCount(),name,point,Cpu,Log);
-  gau->Config(Simulate2D,DomPosMin,DomPosMax,Scell,Hdiv,H,MassFluid,MassBound,CteB,Gamma,RhopZero);
+  gau->Config(Simulate2D,Symmetry,DomPosMin,DomPosMax,Scell,Hdiv,H,MassFluid,MassBound,CteB,Gamma,RhopZero);
   gau->ConfigComputeTiming(computestart,computeend,computedt);
   //-Uses common configuration.
   gau->SetSaveVtkPart(CfgDefault.savevtkpart);
@@ -307,7 +310,7 @@ JGaugeSwl* JGaugeSystem::AddGaugeSwl(std::string name,double computestart,double
   if(masslimit<=0)masslimit=MassFluid*(Simulate2D? 0.4f: 0.5f);
   //-Creates object.
   JGaugeSwl* gau=new JGaugeSwl(GetCount(),name,point0,point2,pointdp,masslimit,Cpu,Log);
-  gau->Config(Simulate2D,DomPosMin,DomPosMax,Scell,Hdiv,H,MassFluid,MassBound,CteB,Gamma,RhopZero);
+  gau->Config(Simulate2D,Symmetry,DomPosMin,DomPosMax,Scell,Hdiv,H,MassFluid,MassBound,CteB,Gamma,RhopZero);
   gau->ConfigComputeTiming(computestart,computeend,computedt);
   //-Uses common configuration.
   gau->SetSaveVtkPart(CfgDefault.savevtkpart);
@@ -326,7 +329,7 @@ JGaugeMaxZ* JGaugeSystem::AddGaugeMaxZ(std::string name,double computestart,doub
   if(GetGaugeIdx(name)!=UINT_MAX)RunException(met,fun::PrintStr("The name \'%s\' already exists.",name.c_str()));
   //-Creates object.
   JGaugeMaxZ* gau=new JGaugeMaxZ(GetCount(),name,point0,height,distlimit,Cpu,Log);
-  gau->Config(Simulate2D,DomPosMin,DomPosMax,Scell,Hdiv,H,MassFluid,MassBound,CteB,Gamma,RhopZero);
+  gau->Config(Simulate2D,Symmetry,DomPosMin,DomPosMax,Scell,Hdiv,H,MassFluid,MassBound,CteB,Gamma,RhopZero);
   gau->ConfigComputeTiming(computestart,computeend,computedt);
   //-Uses common configuration.
   gau->SetSaveVtkPart(CfgDefault.savevtkpart);
@@ -355,7 +358,7 @@ JGaugeForce* JGaugeSystem::AddGaugeForce(std::string name,double computestart,do
   const tfloat3 center=ToTFloat3((mkb->GetPosMin()+mkb->GetPosMax())/TDouble3(2));
   //-Creates object.
   JGaugeForce* gau=new JGaugeForce(GetCount(),name,mkbound,typeparts,idbegin,count,code,center,Cpu,Log);
-  gau->Config(Simulate2D,DomPosMin,DomPosMax,Scell,Hdiv,H,MassFluid,MassBound,CteB,Gamma,RhopZero);
+  gau->Config(Simulate2D,Symmetry,DomPosMin,DomPosMax,Scell,Hdiv,H,MassFluid,MassBound,CteB,Gamma,RhopZero);
   gau->ConfigComputeTiming(computestart,computeend,computedt);
   //-Uses common configuration.
   gau->SetSaveVtkPart(CfgDefault.savevtkpart);

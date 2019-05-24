@@ -19,11 +19,15 @@
 /// \file JSpaceParts.cpp \brief Implements the class \ref JSpaceParts.
 
 #include "JSpaceParts.h"
-#include "JSpaceProperties.h"
+#ifdef JSpaceParts_UseProps
+  #include "JSpaceProperties.h"
+#endif
 #include "JRangeFilter.h"
 #include "Functions.h"
 #include "JXml.h"
-#include "JLinearValue.h"
+#ifdef JSpaceParts_UseProps
+  #include "JLinearValue.h"
+#endif
 #include <algorithm>
 #include <cfloat>
 
@@ -35,9 +39,11 @@ using std::string;
 //==============================================================================
 /// Updates attribute Props.
 //==============================================================================
+#ifdef JSpaceParts_UseProps
 void JSpacePartBlock::UpdateProperty(){
   Props=Properties->GetPropertyMk(Mk);
 }
+#endif
 
 //==============================================================================
 /// Returns name for XML file.
@@ -71,6 +77,7 @@ TiXmlElement* JSpacePartBlock::WriteXml(JXml *sxml,TiXmlElement* ele)const{
   return(ele->InsertEndChild(item)->ToElement());
 }
 
+#ifdef JSpaceParts_UseProps
 //==============================================================================
 /// Returns number of values.
 //==============================================================================
@@ -157,7 +164,7 @@ double JSpacePartBlock::GetSubValueDouble(std::string name,std::string subname,b
   if(optional && !Properties->ExistsSubValue(Props,name,subname))return(valdef);
   else return(atof(GetSubValueStr(name,subname).c_str()));
 }
-
+#endif
 
 //##############################################################################
 //# JSpacePartBlock_Moving
@@ -273,7 +280,9 @@ TiXmlElement* JSpacePartBlock_Floating::WriteXml(JXml *sxml,TiXmlElement* ele)co
 //==============================================================================
 JSpaceParts::JSpaceParts(){
   ClassName="JSpaceParts";
-  Properties=new JSpaceProperties;
+  #ifdef JSpaceParts_UseProps
+    Properties=new JSpaceProperties;
+  #endif
   Reset();
 }
 
@@ -283,7 +292,9 @@ JSpaceParts::JSpaceParts(){
 JSpaceParts::~JSpaceParts(){
   DestructorActive=true;
   Reset();
-  delete Properties; Properties=NULL;
+  #ifdef JSpaceParts_UseProps
+    delete Properties; Properties=NULL;
+  #endif
 }
 
 //==============================================================================
@@ -304,7 +315,9 @@ void JSpaceParts::Reset(){
   LastType=TpPartFixed;
   SetMkFirst(0,0);
   Posmin=Posmax=TDouble3(0);
+#ifdef JSpaceParts_UseProps
   Properties->Reset();
+#endif
 }
 
 //==============================================================================
@@ -425,9 +438,11 @@ void JSpaceParts::ReadXml(JXml *sxml,TiXmlElement* lis){
   word mkfluidfirst=(word)sxml->GetAttributeUnsigned(lis,"mkfluidfirst");
   SetMkFirst(mkboundfirst,mkfluidfirst);
   //-Loads properties information.
+#ifdef JSpaceParts_UseProps
   Properties->Reset();
   TiXmlElement* eprops=lis->FirstChildElement("properties"); 
   if(eprops)Properties->ReadXml(sxml,eprops);
+#endif
   //-Loads particles information.
   TiXmlElement* ele=lis->FirstChildElement(); 
   while(ele){
@@ -444,11 +459,13 @@ void JSpaceParts::ReadXml(JXml *sxml,TiXmlElement* lis){
   Begin=Count();
   if(np!=Count()||nb!=np-Count(TpPartFluid)||nbf!=Count(TpPartFixed))RunException(met,"The amount of particles does not match the header.");
   //-Checks property info in blocks.
+#ifdef JSpaceParts_UseProps
   for(unsigned c=0;c<Blocks.size();c++){
     if(Blocks[c]->GetProperty()!=Properties->GetPropertyMk(Blocks[c]->GetMk())){
       RunException(met,std::string("Property information of mk=")+fun::IntStr(Blocks[c]->GetMk())+" does not correspond to Links configuration.");
     }
   }
+#endif
 }
 
 //==============================================================================
@@ -464,10 +481,12 @@ void JSpaceParts::WriteXml(JXml *sxml,TiXmlElement* lis)const{
   JXml::AddAttribute(lis,"mkfluidfirst",GetMkFluidFirst());
   WriteXmlSummary(sxml,lis);
   for(unsigned c=0;c<Blocks.size();c++)Blocks[c]->WriteXml(sxml,lis);
+#ifdef JSpaceParts_UseProps
   if(Properties->GetPropertyCount()){
     TiXmlElement* eprops=JXml::AddElement(lis,"properties");
     Properties->WriteXml(sxml,eprops);
   }
+#endif
 }
 
 //==============================================================================
@@ -518,6 +537,7 @@ void JSpaceParts::SetBlockSize(unsigned pos,unsigned np){
   }
 }
 
+#ifdef JSpaceParts_UseProps
 //==============================================================================
 /// Load information of properties and filter data.
 //==============================================================================
@@ -537,6 +557,7 @@ void JSpaceParts::LoadProperties(const JSpaceProperties *props){
   //-Update property info in blocks.
   for(unsigned c=0;c<Blocks.size();c++)Blocks[c]->UpdateProperty();
 }
+#endif
 
 //==============================================================================
 /// Returns the list of MKs of a given type.

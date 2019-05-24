@@ -47,6 +47,7 @@ typedef struct{
   float rhopzero;           ///<rhopzero=RhopZero
   float ovrhopzero;         ///<ovrhopzero=1/RhopZero
   float movlimit;
+  unsigned symmetry;   //<vs_syymmetry>
   unsigned periactive;
   double xperincx,xperincy,xperincz;
   double yperincx,yperincy,yperincz;
@@ -74,6 +75,81 @@ typedef struct{
   int forcesdem_bs;
   int forcesdem_bsmax;
 }StKerInfo; 
+
+///Structure with the parameters for particle interaction on GPU.
+typedef struct{
+  bool simulate2d;
+  bool symmetry; //<vs_syymmetry>
+  bool psingle;
+  TpKernel tkernel;
+  TpFtMode ftmode;
+  bool lamsps;
+  TpDeltaSph tdelta;
+  int hdiv;  //hdiv=(cellmode==CELLMODE_H? 2: 1)
+  float viscob,viscof;
+  unsigned bsbound,bsfluid;
+  unsigned np,npb,npbok,npf; // npf=np-npb
+  tuint3 ncells;
+  const int2 *begincell;
+  tuint3 cellmin;
+  const unsigned *dcell;
+  const double2 *posxy;
+  const double *posz;
+  const float4 *pospress;
+  const float4 *velrhop;
+  const unsigned *idp;
+  const typecode *code;
+  const float *ftomassp;
+  float *viscdt;
+  float* ar;
+  float3 *ace;
+  float *delta;
+  const tsymatrix3f *tau;
+  tsymatrix3f *gradvel;
+  TpShifting tshifting;
+  float3 *shiftpos;
+  float *shiftdetect;
+  StKerInfo *kerinfo;
+  JBlockSizeAuto *bsauto;
+}stinterparmsg;
+
+///Collects parameters for particle interaction on CPU.
+inline stinterparmsg StInterparmsg(
+   bool simulate2d
+  ,bool symmetry //<vs_syymmetry>
+  ,bool psingle,TpKernel tkernel,TpFtMode ftmode
+  ,bool lamsps,TpDeltaSph tdelta,TpCellMode cellmode
+  ,float viscob,float viscof
+  ,unsigned bsbound,unsigned bsfluid
+  ,unsigned np,unsigned npb,unsigned npbok
+  ,tuint3 ncells,const int2 *begincell,tuint3 cellmin,const unsigned *dcell
+  ,const double2 *posxy,const double *posz,const float4 *pospress
+  ,const float4 *velrhop,const unsigned *idp,const typecode *code
+  ,const float *ftomassp
+  ,float *viscdt,float* ar,float3 *ace,float *delta
+  ,const tsymatrix3f *spstau,tsymatrix3f *spsgradvel
+  ,TpShifting tshifting,float3 *shiftpos,float *shiftdetect
+  ,StKerInfo *kerinfo,JBlockSizeAuto *bsauto)
+{
+  stinterparmsg d={
+     simulate2d
+    ,symmetry //<vs_syymmetry>
+    ,psingle,tkernel,ftmode
+    ,lamsps,tdelta,(cellmode==CELLMODE_H? 2: 1)
+    ,viscob,viscof
+    ,bsbound,bsfluid
+    ,np,npb,npbok,(np-npb)
+    ,ncells,begincell,cellmin,dcell
+    ,posxy,posz,pospress
+    ,velrhop,idp,code
+    ,ftomassp
+    ,viscdt,ar,ace,delta
+    ,spstau,spsgradvel
+    ,tshifting,shiftpos,shiftdetect
+    ,kerinfo,bsauto};
+  return(d);
+}
+
 
 /// Implements a set of functions and CUDA kernels for the particle interaction and system update.
 namespace cusph{
@@ -103,17 +179,7 @@ void PreInteractionSingle(unsigned np,const double2 *posxy,const double *posz
   ,const float4 *velrhop,float4 *pospress,float cteb,float ctegamma);
 
 //-Kernels for the force calculation.
-void Interaction_Forces(bool psingle,TpKernel tkernel,TpFtMode ftmode,bool lamsps
-  ,TpDeltaSph tdelta,TpCellMode cellmode
-  ,float viscob,float viscof,unsigned bsbound,unsigned bsfluid
-  ,unsigned np,unsigned npb,unsigned npbok,tuint3 ncells
-  ,const int2 *begincell,tuint3 cellmin,const unsigned *dcell
-  ,const double2 *posxy,const double *posz,const float4 *pospress
-  ,const float4 *velrhop,const typecode *code,const unsigned *idp
-  ,const float *ftomassp,const tsymatrix3f *tau,tsymatrix3f *gradvel
-  ,float *viscdt,float* ar,float3 *ace,float *delta
-  ,TpShifting tshifting,float3 *shiftpos,float *shiftdetect
-  ,bool simulate2d,StKerInfo *kerinfo,JBlockSizeAuto *bsauto);
+void Interaction_Forces(const stinterparmsg &t);
 
 //-Kernels for the calculation of the DEM forces.
 void Interaction_ForcesDem(bool psingle,TpCellMode cellmode,unsigned bsize

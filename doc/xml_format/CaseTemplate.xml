@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<case app="GenCase4 v4.0.092 (26-03-2019)" date="27-03-2019 01:40:15">
+<case app="GenCase4 v4.0.102 (24-05-2019)" date="24-05-2019 12:53:08">
     <casedef>
         <constantsdef>
             <lattice bound="2" fluid="1" />
@@ -11,6 +11,7 @@
             <coefsound value="10" comment="Coefficient to multiply speedsystem" />
             <speedsound value="0" auto="true" comment="Speed of sound to use in the simulation (by default speedofsound=coefsound*speedsystem)" />
             <coefh value="0.866025" comment="Coefficient to calculate the smoothing length (h=coefh*sqrt(3*dp^2) in 3D)" />
+            <_hdp value="2" comment="Coefficient to calculate the smoothing length (hdp=h/dp)" />
             <cflnumber value="0.2" comment="Coefficient to multiply dt" />
             <h value="0" auto="true" units_comment="metres (m)" />
             <b value="0" auto="true" units_comment="Pascal (Pa)" />
@@ -266,6 +267,7 @@
                         <size x="32" y="5" z="7" />
                     </drawwave>
                     <drawfilestl file="File.stl" />
+                    <drawfilestl file="File.stl" autofill="true" />
                     <drawfilestl file="File.stl">
                         <drawmove x="0.5" y="0" z="0" />
                         <drawrotate angx="10" angy="15" angz="30" />
@@ -279,7 +281,7 @@
                         <drawmove x="0.5" y="0" z="0" />
                         <drawrotate angx="10" angy="15" angz="30" />
                     </drawfileply>
-                    <drawfileply file="File.ply">
+                    <drawfileply file="File.ply" autofill="true">
                         <drawrotate angx="10" angy="15" angz="30" />
                     </drawfileply>
                     <drawfilevtk file="File.vtk" />
@@ -292,7 +294,7 @@
                     <drawfilevtk file="File.vtk">
                         <polyselec>triangles</polyselec>
                     </drawfilevtk>
-                    <drawfilevtk file="File.vtk">
+                    <drawfilevtk file="File.vtk" autofill="true">
                         <polyselec>quads</polyselec>
                     </drawfilevtk>
                     <drawfilevtk file="File.vtk">
@@ -704,6 +706,7 @@
             <parameter key="XYPeriodic" value="0" comment="Periodic BC in axes X and Y" units_comment="metres (m)" />
             <parameter key="XZPeriodic" value="0" comment="Periodic BC in axes X and Z" units_comment="metres (m)" />
             <parameter key="YZPeriodic" value="0" comment="Periodic BC in axes Y and Z" units_comment="metres (m)" />
+            <parameter key="Symmetry" value="0" comment="Activates symmetry in plane y=0 (default=0)" />
             <simulationdomain comment="Defines domain of simulation (default=Uses minimun and maximum position of the generated particles)">
                 <posmin x="0.5" y="default - 2" z="default - 20%" comment="e.g.: x=0.5, y=default-1, z=default-10%" />
                 <posmax x="default" y="default + 1" z="default + 10%" />

@@ -57,6 +57,7 @@ void JPartDataHead::Reset(){
   ConfigCtes(0,0,0,0,0,0,0,TFloat3(0));
   ConfigSimPeri(PERI_Unknown,TDouble3(0),TDouble3(0),TDouble3(0));
   ConfigVisco(VISCO_None,0,0);
+  ConfigSymmetry(false);
   ConfigSplitting(false);
   //-Mk blocks data.
   MkList.clear();
@@ -188,6 +189,14 @@ void JPartDataHead::ConfigVisco(JPartDataHead::TpVisco type,float value,float bo
 }
 
 //==============================================================================
+/// Configuracion de variables de simetria con respecto al plano y=0.
+/// Configuration of variables of symmetry according plane y=0.
+//==============================================================================
+void JPartDataHead::ConfigSymmetry(bool symmetry){
+  Symmetry=symmetry;
+}
+
+//==============================================================================
 /// Configuration used for Splitting.
 //==============================================================================
 void JPartDataHead::ConfigSplitting(bool splitting){
@@ -228,6 +237,8 @@ void JPartDataHead::SaveFile(std::string dir){
   bdat.SetvUint("ViscoType",unsigned(ViscoType));
   bdat.SetvFloat("ViscoValue",ViscoValue);
   bdat.SetvFloat("ViscoBoundFactor",ViscoBoundFactor);
+
+  bdat.SetvBool("Symmetry",Symmetry);
 
   bdat.SetvBool("Splitting",Splitting);
 

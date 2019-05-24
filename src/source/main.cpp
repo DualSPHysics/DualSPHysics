@@ -57,7 +57,7 @@ Please download source files and documentation from <a href="http://dual.sphysic
 using namespace std;
 
 
-JAppInfo AppInfo("DualSPHysics4","v4.4.003","10-04-2019");
+JAppInfo AppInfo("DualSPHysics4","v4.4.007","23-05-2019");
 //JAppInfo AppInfo("DualSPHysics4","v4.2.???","UserVersion","v1.0","??-??-????"); //-for user versions.
 
 //==============================================================================
@@ -105,6 +105,7 @@ bool ShowsVersion(int argc,char** argv){
 //==============================================================================
 int main(int argc, char** argv){
   int errcode=1;
+  AppInfo.AddNameExtra("Symmetry");   //<vs_syymmetry>
 #ifdef CODE_SIZE4
   AppInfo.AddNameExtra("MK65k");
 #endif

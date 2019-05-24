@@ -51,6 +51,8 @@
 //:# - Permite definir una lista de velocidades peredefinidas (lineal y angular) en el XML
 //:#   o en un fichero independiente. (21-02-2019)
 //:# - Gestiona posicion minima y maxima de particulas. (21-03-2019)
+//:# - Uso de JSpacePartsDef.h para omitir codigo de JSpaceProperties, 
+//:#   JLinearValue y JReadDatafile. (16-05-2019)
 //:#############################################################################
 
 /// \file JSpaceParts.h \brief Declares the class \ref JSpaceParts.
@@ -58,20 +60,31 @@
 #ifndef _JSpaceParts_
 #define _JSpaceParts_
 
+#include "JObject.h"
+#include "TypesDef.h"
+#include "JSpacePartsDef.h"
+#include "JParticlesDef.h"
+
 #include <string>
 #include <vector>
 #include <cstdlib>
 #include <cmath>
-#include "JObject.h"
-#include "TypesDef.h"
-#include "JParticlesDef.h"
 
 //#define SPACEPARTS_USE_INERTIA_OLD  //-Saves the inertia vector as in GenCase v4.0.055.
 
 class JXml;
 class TiXmlElement;
-class JSpaceProperties;
-class JLinearValue;
+#ifdef JSpaceParts_UseProps
+  class JSpaceProperties;
+#else
+  #define JSpaceProperties void
+#endif
+
+#ifdef JSpaceParts_UseLinearv
+  class JLinearValue;
+#else
+  #define JLinearValue void
+#endif
 
 //##############################################################################
 //# JSpacePartBlock
@@ -98,7 +111,9 @@ public:
     ClassName=std::string("JSpacePartBlock_")+name;
   } 
   virtual ~JSpacePartBlock(){ DestructorActive=true; }
+#ifdef JSpaceParts_UseProps
   void UpdateProperty();
+#endif
   void ConfigMk(word mkfirst){ Mk=MkType+mkfirst; }
   std::string GetNameXml()const;
   unsigned GetBegin()const{ return(Begin); }
@@ -112,6 +127,7 @@ public:
   void SetBegin(unsigned begin){ Begin=begin; }
   void SetCount(unsigned count){ Count=count; }
 
+#ifdef JSpaceParts_UseProps
   //-Returns values of properties.
   unsigned GetValuesCount()const;
   std::string GetValueName(unsigned idx)const;
@@ -144,6 +160,7 @@ public:
   float GetSubValueFloat(std::string name,std::string subname,bool optional=false,float valdef=0)const{  return(float(GetSubValueDouble(name,subname,optional,valdef)));  }
   tdouble3 GetSubValueDouble3(std::string name)const{ return(TDouble3(GetSubValueDouble(name,"x"),GetSubValueDouble(name,"y"),GetSubValueDouble(name,"z"))); }
   tfloat3 GetSubValueFloat3(std::string name)const{ return(ToTFloat3(GetSubValueDouble3(name))); }
+#endif
 };
 
 //##############################################################################
@@ -252,7 +269,7 @@ private:
   tdouble3 Posmax;  ///<Maximum position of particles.
 
   JSpaceProperties* Properties;
-  
+
   unsigned GetBegin()const{ return(Begin); }
   JSpacePartBlock* GetByMkType(bool bound,word mktype)const;
   void Add(JSpacePartBlock* block);
@@ -310,7 +327,9 @@ public:
 
   void SetBlockSize(unsigned pos,unsigned np);
 
+#ifdef JSpaceParts_UseProps
   void LoadProperties(const JSpaceProperties *props);
+#endif
 
   std::string GetMkList(TpParticles type)const;
 
