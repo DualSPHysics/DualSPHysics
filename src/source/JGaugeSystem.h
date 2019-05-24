@@ -59,6 +59,7 @@ private:
   bool Configured;
   bool Simulate2D;        ///<Toggles 2D simulation (cancels forces in Y axis). | Activa o desactiva simulacion en 2D (anula fuerzas en eje Y).
   double Simulate2DPosY;  ///<Y value in 2D simulations.                        | Valor de Y en simulaciones 2D.
+  bool Symmetry;          ///<Use of symmetry in plane y=0.
   double TimeMax;
   double TimePart;
   double Dp;              ///<Distance between particles.
@@ -96,7 +97,8 @@ public:
   ~JGaugeSystem();
   void Reset();
 
-  void Config(bool simulate2d,double simulate2dposy,double timemax,double timepart
+  void Config(bool simulate2d,double simulate2dposy,bool symmetry
+    ,double timemax,double timepart
     ,double dp,tdouble3 posmin,tdouble3 posmax,float scell,unsigned hdiv,float h
     ,float massfluid,float massbound,float cteb,float gamma,float rhopzero);
 

@@ -84,6 +84,39 @@ __device__ void KerGetInteractionCells(double px,double py,double pz
   zfin=cz+min(nc.z-cz-1,hdiv)+1;
 }
 
+
+//------------------------------------------------------------------------------
+/// Returns values of kernel Wendland, gradients: frx, fry, frz and wab.
+/// Devuelve valores de kernel Wendland, gradients: frx, fry, frz y wab.
+//------------------------------------------------------------------------------
+__device__ float KerGetKernelWendlandWab(const float &rr2,const float &h,const float &awen)
+{
+  const float rad=sqrt(rr2);
+  const float qq=rad/h;
+  //-Wendland kernel.
+  const float wqq1=1.f-0.5f*qq;
+  const float wqq2=wqq1*wqq1;
+  const float wqq=2.f*qq+1.f;
+  return(awen*wqq*wqq2*wqq2); //-Kernel wab.
+}
+
+
+//------------------------------------------------------------------------------
+__device__ void KerInteractionGaugeVelP2(bool symm,const unsigned &p2,const float &rr2
+  ,const float &h,const float &massf,const float &awen
+  ,const float4 *velrhop
+  ,double &sumwab,double3 &sumvel)
+{
+  float wab=KerGetKernelWendlandWab(rr2,h,awen); //-Wendland kernel.
+  float4 velrhopp2=velrhop[p2];
+  if(symm)velrhopp2.y=-velrhopp2.y; //<vs_syymmetry>
+  wab*=massf/velrhopp2.w;
+  sumwab+=wab;
+  sumvel.x+=wab*velrhopp2.x;
+  sumvel.y+=wab*velrhopp2.y;
+  sumvel.z+=wab*velrhopp2.z;
+}
+
 //------------------------------------------------------------------------------
 /// Performs interaction between particles. Fluid/Float-Fluid/Float or Fluid/Float-Bound
 /// It includes visco artificial/laminar and floatings SPH/DEM.
@@ -91,7 +124,7 @@ __device__ void KerGetInteractionCells(double px,double py,double pz
 /// Realiza interaccion entre particulas. Fluid/Float-Fluid/Float or Fluid/Float-Bound
 /// Incluye visco artificial/laminar y floatings SPH/DEM.
 //------------------------------------------------------------------------------
-__global__ void KerInteractionGaugeVel(double3 ptpos
+__global__ void KerInteractionGaugeVel(bool symm,double3 ptpos
   ,float awen,int hdiv,int4 nc,int3 cellzero,unsigned cellfluid,const int2 *begincell
   ,const double2 *posxy,const double *posz,const typecode *code,const float4 *velrhop
   ,float3 *ptvel
@@ -102,6 +135,7 @@ __global__ void KerInteractionGaugeVel(double3 ptpos
     const double px=ptpos.x;
     const double py=ptpos.y;
     const double pz=ptpos.z;
+    const bool rsymp1=(symm && (py<=h+h)); //<vs_syymmetry>
 
     //-Obtains interaction limits.
     int cxini,cxfin,yini,yfin,zini,zfin;
@@ -131,20 +165,14 @@ __global__ void KerInteractionGaugeVel(double3 ptpos
           //-Interaction with real neighboring particles. 
           //-Interaccion con particulas vecinas reales.
           if(rr2<=fourh2 && rr2>=ALMOSTZERO && CODE_IsFluid(code[p2])){
-            float wab;
-            {//-Wendland kernel.
-              const float qq=sqrt(rr2)/h;
-              const float wqq=2.f*qq+1.f;
-              const float wqq1=1.f-0.5f*qq;
-              const float wqq2=wqq1*wqq1;
-              wab=awen*wqq*wqq2*wqq2; //-Kernel.
-            }
-            float4 velrhopp2=velrhop[p2];
-            wab*=massf/velrhopp2.w;
-            sumwab+=wab;
-            sumvel.x+=wab*velrhopp2.x;
-            sumvel.y+=wab*velrhopp2.y;
-            sumvel.z+=wab*velrhopp2.z;
+            KerInteractionGaugeVelP2(false,p2,rr2,h,massf,awen,velrhop,sumwab,sumvel);
+            if(rsymp1 && float(pxy2.y)<=h+h){ //<vs_syymmetry_ini>
+              const float sdry=float(py+pxy2.y);
+              const float srr2=(drx*drx+sdry*sdry+drz*drz);
+              if(srr2<=fourh2 && srr2>=ALMOSTZERO){
+                KerInteractionGaugeVelP2(true,p2,srr2,h,massf,awen,velrhop,sumwab,sumvel);
+              }
+            } //<vs_syymmetry_end>
           }
         }
       }
@@ -162,7 +190,7 @@ __global__ void KerInteractionGaugeVel(double3 ptpos
 //==============================================================================
 /// Calculates velocity in indicated point.
 //==============================================================================
-void Interaction_GaugeVel(tdouble3 ptpos
+void Interaction_GaugeVel(bool symm,tdouble3 ptpos
   ,float awen,int hdiv,tuint3 ncells,tuint3 cellmin,const int2 *begincell
   ,const double2 *posxy,const double *posz,const typecode *code,const float4 *velrhop
   ,float3 *ptvel
@@ -177,20 +205,22 @@ void Interaction_GaugeVel(tdouble3 ptpos
     dim3 sgrid=GetGridSize(1,bsize);
     //:JDgKerPrint info;
     //:byte* ik=NULL; //info.GetInfoPointer(sgridf,bsfluid);
-    KerInteractionGaugeVel <<<sgrid,bsize>>> (Double3(ptpos),awen,hdiv,nc,cellzero,cellfluid,begincell,posxy,posz,code,velrhop,ptvel,Double3(domposmin),scell,fourh2,h,massf);
+    KerInteractionGaugeVel <<<sgrid,bsize>>> (symm,Double3(ptpos),awen,hdiv,nc,cellzero,cellfluid,begincell,posxy,posz,code,velrhop,ptvel,Double3(domposmin),scell,fourh2,h,massf);
     //:info.PrintValuesFull(true); //info.PrintValuesInfo();
   }
 }
+
 
 //------------------------------------------------------------------------------
 /// Calculates mass value at one point by interacting with the fluid.
 /// Calcula valor de masa en un punto mediante la interaccion con el fluido.
 //------------------------------------------------------------------------------
-__device__ float KerCalculeMass(double px,double py,double pz,float awen
+__device__ float KerCalculeMass(bool symm,double px,double py,double pz,float awen
   ,int hdiv,int4 nc,int3 cellzero,unsigned cellfluid,const int2 *begincell
   ,const double2 *posxy,const double *posz,const typecode *code,const float4 *velrhop
   ,double3 domposmin,float scell,float fourh2,float h,float massf)
 {
+  const bool rsymp1=(symm && (py<=h+h)); //<vs_syymmetry>
   //-Obtains interaction limits.
   int cxini,cxfin,yini,yfin,zini,zfin;
   KerGetInteractionCells(px,py,pz,hdiv,nc,cellzero,cxini,cxfin,yini,yfin,zini,zfin,domposmin,scell);
@@ -218,16 +248,18 @@ __device__ float KerCalculeMass(double px,double py,double pz,float awen
         //-Interaction with real neighboring particles. 
         //-Interaccion con particulas vecinas reales
         if(rr2<=fourh2 && rr2>=ALMOSTZERO && CODE_IsFluid(code[p2])){
-          float wab;
-          {//-Wendland kernel.
-            const float qq=sqrt(rr2)/h;
-            const float wqq=2.f*qq+1.f;
-            const float wqq1=1.f-0.5f*qq;
-            const float wqq2=wqq1*wqq1;
-            wab=awen*wqq*wqq2*wqq2; //-Kernel.
-          }
+          float wab=KerGetKernelWendlandWab(rr2,h,awen); //-Wendland kernel.
           wab*=massf/velrhop[p2].w;
           summass+=wab*massf;
+          if(rsymp1 && float(pxy2.y)<=h+h){ //<vs_syymmetry_ini>
+            const float sdry=float(py+pxy2.y);
+            const float srr2=(drx*drx+sdry*sdry+drz*drz);
+            if(srr2<=fourh2 && srr2>=ALMOSTZERO){
+              float swab=KerGetKernelWendlandWab(srr2,h,awen); //-Wendland kernel.
+              swab*=massf/velrhop[p2].w;
+              summass+=wab*massf;
+            }
+          } //<vs_syymmetry_end>
         }
       }
     }
@@ -238,7 +270,7 @@ __device__ float KerCalculeMass(double px,double py,double pz,float awen
 //------------------------------------------------------------------------------
 /// Calculates surface water level at indicated line.
 //------------------------------------------------------------------------------
-__global__ void KerInteractionGaugeSwl(double p0x,double p0y,double p0z
+__global__ void KerInteractionGaugeSwl(bool symm,double p0x,double p0y,double p0z
   ,double pdirx,double pdiry,double pdirz,unsigned pointnp,float masslimit
   ,float awen,int hdiv,int4 nc,int3 cellzero,unsigned cellfluid,const int2 *begincell
   ,const double2 *posxy,const double *posz,const typecode *code,const float4 *velrhop
@@ -253,7 +285,7 @@ __global__ void KerInteractionGaugeSwl(double p0x,double p0y,double p0z
     //-Saves mass values in shared memory.
     const unsigned cp=cpbase+tid;
     if(cp<=pointnp){
-      shmass[tid]=KerCalculeMass(p0x+pdirx*cp,p0y+pdiry*cp,p0z+pdirz*cp,awen,hdiv,nc,cellzero,cellfluid,begincell,posxy,posz,code,velrhop,domposmin,scell,fourh2,h,massf);
+      shmass[tid]=KerCalculeMass(symm,p0x+pdirx*cp,p0y+pdiry*cp,p0z+pdirz*cp,awen,hdiv,nc,cellzero,cellfluid,begincell,posxy,posz,code,velrhop,domposmin,scell,fourh2,h,massf);
     }
     else shmass[tid]=0;
     __syncthreads();
@@ -290,7 +322,7 @@ __global__ void KerInteractionGaugeSwl(double p0x,double p0y,double p0z
 //==============================================================================
 /// Calculates surface water level at indicated line.
 //==============================================================================
-void Interaction_GaugeSwl(tdouble3 point0,tdouble3 pointdir,unsigned pointnp,float masslimit
+void Interaction_GaugeSwl(bool symm,tdouble3 point0,tdouble3 pointdir,unsigned pointnp,float masslimit
   ,float awen,int hdiv,tuint3 ncells,tuint3 cellmin,const int2 *begincell
   ,const double2 *posxy,const double *posz,const typecode *code,const float4 *velrhop
   ,tdouble3 domposmin,float scell,float fourh2,float h,float massf,float3 *ptres)
@@ -304,7 +336,7 @@ void Interaction_GaugeSwl(tdouble3 point0,tdouble3 pointdir,unsigned pointnp,flo
     const unsigned smem=sizeof(float)*(bsize+1);
     //:JDgKerPrint info;
     //:byte* ik=NULL; //info.GetInfoPointer(sgrid,bsize);
-    KerInteractionGaugeSwl <<<sgrid,bsize,smem>>> (point0.x,point0.y,point0.z,pointdir.x,pointdir.y,pointdir.z,pointnp,masslimit,awen,hdiv,nc,cellzero,cellfluid,begincell,posxy,posz,code,velrhop,Double3(domposmin),scell,fourh2,h,massf,ptres);
+    KerInteractionGaugeSwl <<<sgrid,bsize,smem>>> (symm,point0.x,point0.y,point0.z,pointdir.x,pointdir.y,pointdir.z,pointnp,masslimit,awen,hdiv,nc,cellzero,cellfluid,begincell,posxy,posz,code,velrhop,Double3(domposmin),scell,fourh2,h,massf,ptres);
     //:info.PrintValuesFull(true); //info.PrintValuesInfo();
   }
 }

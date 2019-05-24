@@ -47,6 +47,7 @@ typedef struct{
   float rhopzero;           ///<rhopzero=RhopZero
   float ovrhopzero;         ///<ovrhopzero=1/RhopZero
   float movlimit;
+  unsigned symmetry;   //<vs_syymmetry>
   unsigned periactive;
   double xperincx,xperincy,xperincz;
   double yperincx,yperincy,yperincz;
@@ -78,6 +79,7 @@ typedef struct{
 ///Structure with the parameters for particle interaction on GPU.
 typedef struct{
   bool simulate2d;
+  bool symmetry; //<vs_syymmetry>
   bool psingle;
   TpKernel tkernel;
   TpFtMode ftmode;
@@ -113,7 +115,9 @@ typedef struct{
 
 ///Collects parameters for particle interaction on CPU.
 inline stinterparmsg StInterparmsg(
-   bool simulate2d,bool psingle,TpKernel tkernel,TpFtMode ftmode
+   bool simulate2d
+  ,bool symmetry //<vs_syymmetry>
+  ,bool psingle,TpKernel tkernel,TpFtMode ftmode
   ,bool lamsps,TpDeltaSph tdelta,TpCellMode cellmode
   ,float viscob,float viscof
   ,unsigned bsbound,unsigned bsfluid
@@ -128,7 +132,9 @@ inline stinterparmsg StInterparmsg(
   ,StKerInfo *kerinfo,JBlockSizeAuto *bsauto)
 {
   stinterparmsg d={
-     simulate2d,psingle,tkernel,ftmode
+     simulate2d
+    ,symmetry //<vs_syymmetry>
+    ,psingle,tkernel,ftmode
     ,lamsps,tdelta,(cellmode==CELLMODE_H? 2: 1)
     ,viscob,viscof
     ,bsbound,bsfluid

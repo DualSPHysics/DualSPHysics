@@ -328,6 +328,9 @@
     <ClInclude Include="..\source\JLinearValueDef.h">
       <Filter>Common</Filter>
     </ClInclude>
+    <ClInclude Include="..\source\JSpacePartsDef.h">
+      <Filter>CommonDsph</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\source\JCfgRun.cpp">

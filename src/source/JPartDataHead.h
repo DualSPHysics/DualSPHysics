@@ -23,6 +23,7 @@
 //:# - Metodos para obtener informacion de particulas. (25-04-2018)
 //:# - Establece PERI_Unknown por defecto. (27-04-2018)
 //:# - Improved definition of the periodic conditions. (27-04-2018)
+//:# - Incluye informacion de Symmetry. (13-05-2018)
 //:#############################################################################
 
 /// \file JPartDataHead.h \brief Declares the class \ref JPartDataHead.
@@ -114,6 +115,8 @@ private:
   float ViscoValue;      ///<Viscosity value. 
   float ViscoBoundFactor;///<For boundary interaction use ViscoValue*ViscoBoundFactor.
 
+  bool Symmetry;         ///<Use of symmetry according plane y=0.
+
   bool Splitting;        ///<Use of Splitting.
 
   //-Mk blocks data.
@@ -151,6 +154,7 @@ public:
   void ConfigSimMap(tdouble3 mapposmin,tdouble3 mapposmax);
   void ConfigSimPeri(TpPeri tperi,tdouble3 perixinc,tdouble3 periyinc,tdouble3 perizinc);
   void ConfigVisco(JPartDataHead::TpVisco type,float value,float boundfactor);
+  void ConfigSymmetry(bool symmetry);
   void ConfigSplitting(bool splitting);
 
   static std::string GetFileName(std::string dir="");
@@ -208,6 +212,8 @@ public:
   TpVisco GetViscoType()       const{ return(ViscoType);        };
   float   GetViscoValue()      const{ return(ViscoValue);       };
   float   GetViscoBoundFactor()const{ return(ViscoBoundFactor); };
+
+  bool GetSymmetry()const{ return(Symmetry); };
 
   bool GetSplitting()const{ return(Splitting); };
 

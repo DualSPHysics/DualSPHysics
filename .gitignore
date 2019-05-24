@@ -17,3 +17,5 @@ _out_CompileLinux
 ## Ignores temporary files.
 bin/windows/*.iobj
 bin/windows/*.ipdb
+bin/windows/*.lib
+bin/windows/*.exp

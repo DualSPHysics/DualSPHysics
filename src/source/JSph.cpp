@@ -128,6 +128,7 @@ void JSph::InitVars(){
   OutPosCount=OutRhopCount=OutMoveCount=0;
   Simulate2D=false;
   Simulate2DPosY=0;
+  Symmetry=false;
   Stable=false;
   Psingle=true;
   SvDouble=false;
@@ -557,6 +558,9 @@ void JSph::LoadCaseConfig(){
   if(eparms.Exists("RhopOutMax"))RhopOutMax=eparms.GetValueFloat("RhopOutMax");
   PartsOutMax=eparms.GetValueFloat("PartsOutMax",true,1);
 
+  //-Configuration of symmetry calculation.            //<vs_syymmetry>
+  Symmetry=(eparms.GetValueInt("Symmetry",true,0)!=0); //<vs_syymmetry>
+
   //-Configuration of periodic boundaries.
   {
     PeriX=PeriY=PeriZ=false;
@@ -789,6 +793,17 @@ void JSph::LoadCaseConfig(){
     BoundCorr=new JSphBoundCorr(Cpu,Dp,Log,&xml,"case.execution.special.boundcorr",MkInfo);
   } //<vs_innlet_end> 
  
+  //-Checks invalid options for symmetry. //<vs_syymmetry_ini>
+  if(Symmetry){
+    if(Simulate2D)  RunException(met,"Symmetry is not allowed with 2-D simulations.");
+    if(PeriY)       RunException(met,"Symmetry is not allowed with periodic conditions in axis Y.");
+    if(WithFloating)RunException(met,"Symmetry is not allowed with floating bodies.");
+    if(UseChrono)   RunException(met,"Symmetry is not allowed with Chrono objects.");
+    if(InOut)       RunException(met,"Symmetry is not allowed with inlet/outlet conditions.");
+    if(BoundCorr)   RunException(met,"Symmetry is not allowed with BoundCor.");
+    if(TVisco!=VISCO_Artificial)RunException(met,"Symmetry is only allowed with Artificial viscosity.");
+  } //<vs_syymmetry_end>
+
   NpMinimum=CaseNp-unsigned(PartsOutMax*CaseNfluid);
   Log->Print("**Basic case configuration is loaded");
 }
@@ -902,6 +917,8 @@ void JSph::ResizeMapLimits(){
   if(!PeriX){ MapRealPosMin.x=dmin.x; MapRealPosMax.x=dmax.x; }
   if(!PeriY){ MapRealPosMin.y=dmin.y; MapRealPosMax.y=dmax.y; }
   if(!PeriZ){ MapRealPosMin.z=dmin.z; MapRealPosMax.z=dmax.z; }
+  //-Symmetry domain configuration. //<vs_syymmetry>
+  if(Symmetry)MapRealPosMin.y=0;    //<vs_syymmetry>
 }
 
 //==============================================================================
@@ -993,6 +1010,7 @@ void JSph::VisuConfig()const{
   Log->Print(fun::VarStr("CaseName",CaseName));
   Log->Print(fun::VarStr("RunName",RunName));
   if(Simulate2D)Log->Print(fun::VarStr("Simulate2DPosY",Simulate2DPosY));
+  Log->Print(fun::VarStr("Symmetry",Symmetry));  //<vs_syymmetry>
   Log->Print(fun::VarStr("PosDouble",GetPosDoubleName(Psingle,SvDouble)));
   Log->Print(fun::VarStr("SvTimers",SvTimers));
   Log->Print(fun::VarStr("StepAlgorithm",GetStepName(TStep)));
@@ -1446,7 +1464,8 @@ void JSph::InitRun(unsigned np,const unsigned *idp,const tdouble3 *pos){
   JXml xml; xml.LoadFile(FileXml);
 
   //-Configuration of GaugeSystem.
-  GaugeSystem->Config(Simulate2D,Simulate2DPosY,TimeMax,TimePart,Dp,DomPosMin,DomPosMax,Scell,Hdiv,H,MassFluid,MassBound,CteB,Gamma,RhopZero);
+  GaugeSystem->Config(Simulate2D,Simulate2DPosY,Symmetry,TimeMax,TimePart
+    ,Dp,DomPosMin,DomPosMax,Scell,Hdiv,H,MassFluid,MassBound,CteB,Gamma,RhopZero);
   if(xml.GetNode("case.execution.special.gauges",false))GaugeSystem->LoadXml(&xml,"case.execution.special.gauges",MkInfo);
 
   //-Prepares WaveGen configuration.
@@ -1550,6 +1569,7 @@ void JSph::ConfigSaveData(unsigned piece,unsigned pieces,std::string div){
   parthead.ConfigSimNp(NpDynamic,ReuseIds);
   parthead.ConfigSimMap(MapRealPosMin,MapRealPosMax);
   parthead.ConfigSimPeri(TpPeriFromPeriActive(PeriActive),PeriXinc,PeriYinc,PeriZinc);
+  parthead.ConfigSymmetry(Symmetry); //<vs_syymmetry>
   switch(TVisco){
     case VISCO_None:        parthead.ConfigVisco(JPartDataHead::VISCO_None      ,Visco,ViscoBoundFactor);  break;
     case VISCO_Artificial:  parthead.ConfigVisco(JPartDataHead::VISCO_Artificial,Visco,ViscoBoundFactor);  break;

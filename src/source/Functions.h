@@ -263,6 +263,7 @@ tuint2*   ResizeAlloc(tuint2   *data,unsigned ndata,unsigned newsize);
 tuint3*   ResizeAlloc(tuint3   *data,unsigned ndata,unsigned newsize);
 tuint4*   ResizeAlloc(tuint4   *data,unsigned ndata,unsigned newsize);
 int*      ResizeAlloc(int      *data,unsigned ndata,unsigned newsize);
+tint2*    ResizeAlloc(tint2    *data,unsigned ndata,unsigned newsize);
 tint3*    ResizeAlloc(tint3    *data,unsigned ndata,unsigned newsize);
 float*    ResizeAlloc(float    *data,unsigned ndata,unsigned newsize);
 tfloat2*  ResizeAlloc(tfloat2  *data,unsigned ndata,unsigned newsize);

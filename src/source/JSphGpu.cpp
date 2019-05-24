@@ -491,6 +491,7 @@ void JSphGpu::ConstantDataUp(){
   ctes.movlimit=MovLimit;
   ctes.maprealposminx=MapRealPosMin.x; ctes.maprealposminy=MapRealPosMin.y; ctes.maprealposminz=MapRealPosMin.z;
   ctes.maprealsizex=MapRealSize.x; ctes.maprealsizey=MapRealSize.y; ctes.maprealsizez=MapRealSize.z;
+  ctes.symmetry=Symmetry; //<vs_syymmetry>
   ctes.periactive=PeriActive;
   ctes.xperincx=PeriXinc.x; ctes.xperincy=PeriXinc.y; ctes.xperincz=PeriXinc.z;
   ctes.yperincx=PeriYinc.x; ctes.yperincy=PeriYinc.y; ctes.yperincz=PeriYinc.z;
@@ -619,7 +620,9 @@ void JSphGpu::ConfigBlockSizes(bool usezone,bool useperi){
     StKerInfo kerinfo;
     memset(&kerinfo,0,sizeof(StKerInfo));
     #ifndef DISABLE_BSMODES
-      const stinterparmsg parms=StInterparmsg(Simulate2D,Psingle,TKernel
+      const stinterparmsg parms=StInterparmsg(Simulate2D
+        ,Symmetry  //<vs_syymmetry>
+        ,Psingle,TKernel
         ,FtMode,lamsps,TDeltaSph,CellMode,0,0
         ,0,0,100,50,20
         ,TUint3(0),NULL,TUint3(0),NULL

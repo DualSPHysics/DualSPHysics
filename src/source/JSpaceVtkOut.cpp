@@ -192,6 +192,15 @@ void JSpaceVtkOut::WriteXml(JXml *sxml,TiXmlElement* lis)const{
 }
 
 //==============================================================================
+/// Loads data in XML format from a file.
+//==============================================================================
+void JSpaceVtkOut::LoadFileXml(const std::string &file,const std::string &path){
+  JXml jxml;
+  jxml.LoadFile(file);
+  LoadXml(&jxml,path,false);
+}
+
+//==============================================================================
 /// Loads information from the object XML.
 //==============================================================================
 void JSpaceVtkOut::LoadXml(const JXml *sxml,const std::string &place,bool optional){

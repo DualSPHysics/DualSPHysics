@@ -89,6 +89,8 @@ public:
 
   std::string GetListMkType(bool bound,const std::string &mks)const;
 
+  void LoadFileXml(const std::string &file,const std::string &path);
+
   void LoadXml(const JXml *sxml,const std::string &place,bool optional);
   void SaveXml(JXml *sxml,const std::string &place)const;
 };

@@ -124,6 +124,7 @@ public:
   void SortData(unsigned size,const int *data,int *result);
   void SortData(unsigned size,const float *data,float *result);
   void SortData(unsigned size,const double *data,double *result);
+  void SortData(unsigned size,const tuint2 *data,tuint2 *result);
   void SortData(unsigned size,const tfloat2 *data,tfloat2 *result);
   void SortData(unsigned size,const tfloat3 *data,tfloat3 *result);
   void SortData(unsigned size,const tfloat4 *data,tfloat4 *result);

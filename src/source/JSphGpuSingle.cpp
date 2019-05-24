@@ -410,7 +410,9 @@ void JSphGpuSingle::Interaction_Forces(TpInterStep interstep){
   unsigned bsbound=BlockSizes.forcesbound;
 
   if(BsAuto && !(Nstep%BsAuto->GetStepsInterval())){ //-Every certain number of steps. | Cada cierto numero de pasos.
-    const stinterparmsg parms=StInterparmsg(Simulate2D,Psingle,TKernel
+    const stinterparmsg parms=StInterparmsg(Simulate2D
+      ,Symmetry //<vs_syymmetry>
+      ,Psingle,TKernel
       ,FtMode,lamsps,TDeltaSph,CellMode,Visco*ViscoBoundFactor,Visco
       ,bsbound,bsfluid,Np,Npb,NpbOk
       ,CellDivSingle->GetNcells(),CellDivSingle->GetBeginCell(),CellDivSingle->GetCellDomainMin(),Dcellg
@@ -425,7 +427,9 @@ void JSphGpuSingle::Interaction_Forces(TpInterStep interstep){
   }
 
   //-Interaction Fluid-Fluid/Bound & Bound-Fluid.
-  const stinterparmsg parms=StInterparmsg(Simulate2D,Psingle,TKernel
+  const stinterparmsg parms=StInterparmsg(Simulate2D
+    ,Symmetry //<vs_syymmetry>
+    ,Psingle,TKernel
     ,FtMode,lamsps,TDeltaSph,CellMode,Visco*ViscoBoundFactor,Visco
     ,bsbound,bsfluid,Np,Npb,NpbOk
     ,CellDivSingle->GetNcells(),CellDivSingle->GetBeginCell(),CellDivSingle->GetCellDomainMin(),Dcellg

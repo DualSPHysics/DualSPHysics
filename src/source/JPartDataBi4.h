@@ -47,6 +47,7 @@
 //:# - Nueva variable (Data2dPosY) con valor de Y en simulaciones 2D. (07-06-2017)
 //:# - Establece PERI_Unknown por defecto. (27-04-2018)
 //:# - Improved definition of the periodic conditions. (27-04-2018)
+//:# - Incluye informacion de Symmetry. (13-05-2018)
 //:#############################################################################
 
 /// \file JPartDataBi4.h \brief Declares the class \ref JPartDataBi4.
@@ -121,6 +122,7 @@ class JPartDataBi4 : protected JObject
   void ConfigCtes(double dp,double h,double b,double rhop0,double gamma,double massbound,double massfluid);
   void ConfigSimMap(tdouble3 mapposmin,tdouble3 mapposmax);
   void ConfigSimPeri(TpPeri tperi,tdouble3 perixinc,tdouble3 periyinc,tdouble3 perizinc);
+  void ConfigSymmetry(bool symmetry);
   void ConfigSplitting(bool splitting);
 
   void ConfigSimDiv(TpAxisDiv axisdiv);
@@ -176,6 +178,7 @@ class JPartDataBi4 : protected JObject
   std::string Get_CaseName()const{return(GetData()->GetvText("CaseName",true,"")); } 
   bool Get_Data2d()const{         return(GetData()->GetvBool("Data2d"));  } 
   double Get_Data2dPosY()const{   return(GetData()->GetvDouble("Data2dPosY",true,DBL_MAX));  } 
+  bool Get_Symmetry()const{       return(GetData()->GetvBool("Symmetry",true,false));  } 
   bool Get_Splitting()const{      return(GetData()->GetvBool("Splitting",true,false));  } 
 
   ullong Get_CaseNp()const{       return(GetData()->GetvUllong("CaseNp"));      } 
