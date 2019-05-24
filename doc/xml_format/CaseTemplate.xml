@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<case app="GenCase4 v4.0.101 (22-05-2019)" date="24-05-2019 12:51:15">
+<case app="GenCase4 v4.0.102 (24-05-2019)" date="24-05-2019 12:53:08">
     <casedef>
         <constantsdef>
             <lattice bound="2" fluid="1" />
@@ -267,6 +267,7 @@
                         <size x="32" y="5" z="7" />
                     </drawwave>
                     <drawfilestl file="File.stl" />
+                    <drawfilestl file="File.stl" autofill="true" />
                     <drawfilestl file="File.stl">
                         <drawmove x="0.5" y="0" z="0" />
                         <drawrotate angx="10" angy="15" angz="30" />
@@ -280,7 +281,7 @@
                         <drawmove x="0.5" y="0" z="0" />
                         <drawrotate angx="10" angy="15" angz="30" />
                     </drawfileply>
-                    <drawfileply file="File.ply">
+                    <drawfileply file="File.ply" autofill="true">
                         <drawrotate angx="10" angy="15" angz="30" />
                     </drawfileply>
                     <drawfilevtk file="File.vtk" />
@@ -293,7 +294,7 @@
                     <drawfilevtk file="File.vtk">
                         <polyselec>triangles</polyselec>
                     </drawfilevtk>
-                    <drawfilevtk file="File.vtk">
+                    <drawfilevtk file="File.vtk" autofill="true">
                         <polyselec>quads</polyselec>
                     </drawfilevtk>
                     <drawfilevtk file="File.vtk">

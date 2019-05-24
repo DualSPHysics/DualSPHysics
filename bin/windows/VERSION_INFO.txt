@@ -2,8 +2,8 @@ DualSPHysics4 [Symmetry]  v4.4.007    23-05-2019
 BoundaryVTK4              v4.0.050    22-05-2019
 ComputeForces4            v4.0.044    23-05-2019
 FloatingInfo4             v4.0.029    23-05-2019
-GenCase4                  v4.0.101    22-05-2019
-GenCase4 [MkWord]         v4.0.101    22-05-2019
+GenCase4                  v4.0.102    24-05-2019
+GenCase4 [MkWord]         v4.0.102    24-05-2019
 IsoSurface4               v4.0.034    23-05-2019
 FlowTool4                 v4.0.032    23-05-2019
 MeasureTool4              v4.0.048    23-05-2019
