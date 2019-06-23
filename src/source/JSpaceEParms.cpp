@@ -311,7 +311,7 @@ int JSpaceEParms::CheckPosValue(const std::string &value,bool isposmin,JSpaceEPa
         ps.value=atof(v.c_str());
         ps.textmod=v;
       }
-      if(!fun::StrIsNumber(v))error=3;  //-Invalid number.
+      if(!fun::StrIsRealNumber(v))error=3;  //-Invalid number.
     }
   }
   //printf("--------- [%s] --> [%s] --> [%s]\n",value.c_str(),v.c_str(),value2.c_str());

@@ -39,6 +39,7 @@
 //:# - Nuevos metodos CheckElementAttributes() y CheckAttributes(). (15-02-2018)
 //:# - Se elimino CountElement() porque ya existia CountElements(). (15-02-2018)
 //:# - Permite valores por defecto en funciones ReadElementDouble3(), ReadElementInt3(), ReadElementFloat3(). (13-02-2019)
+//:# - Comprueba que los valores enteros o reales del XML son validos.  (14-06-2019)
 //:#############################################################################
 
 /// \file JXml.h \brief Declares the class \ref JXml.

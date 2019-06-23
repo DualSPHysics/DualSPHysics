@@ -30,7 +30,7 @@
 #include <fstream>
 #include <climits>
 #include <iostream>
-#include <sstream>
+//#include <sstream>
 
 #ifdef WIN32
   #include <direct.h>
@@ -378,13 +378,87 @@ std::string Double4Str(const tdouble4 &v,const char* fmt){
 }
 
 //==============================================================================
-/// Returns true when v is a valid real number.
+/// Returns true when str is a valid integer number.
 //==============================================================================
-bool StrIsNumber(const std::string &v){
-  stringstream ss(v);
-  double d=0;
-  ss >> d;
-  return(!ss.fail());
+bool StrIsIntegerNumber(const std::string &str){
+  bool valid=true;
+  byte state=0;
+  const unsigned n=unsigned(str.size());
+  for(unsigned c=0;c<n && valid;c++){
+    const char let=str[c];
+    const bool num=('0'<=let && let<='9');
+    const bool sp=(let==' ' || let=='\t');
+    if(state==0){//-First character. Expected values:[\t, ,+,-,0-9].
+      if(let=='+' || let=='-')state=1;
+      else if(num)state=2;
+      else if(!sp)valid=false;
+    }
+    else if(state==1){//-After +/-. Expected values:[0-9]
+      if(num)state=2;
+      else valid=false;
+    }
+    else if(state==2){//-After +/- and some number. Expected values:[0-9\t, ]
+      if(sp)state=15;
+      else if(!num)valid=false;
+    }
+    else if(state==15 && !sp)valid=false; //-After some space. Expected values:[\t, ]
+  }
+  if(state==1)valid=false;
+  //printf("StrIsIntegerNumber(%s) => state:%d  %s  [%d]\n",str.c_str(),state,(valid? "Ok": "ERROR"),atoi(str.c_str()));
+  return(valid);
+}
+
+//==============================================================================
+/// Returns true when str is a valid real number.
+//==============================================================================
+bool StrIsRealNumber(const std::string &str){
+  bool valid=true;
+  byte state=0;
+  const unsigned n=unsigned(str.size());
+  for(unsigned c=0;c<n && valid;c++){
+    const char let=str[c];
+    const bool num=('0'<=let && let<='9');
+    const bool sp=(let==' ' || let=='\t');
+    if(state==0){//-First character. Expected values:[\t, ,+,-,0-9,.].
+      if(let=='+' || let=='-')state=1;
+      else if(num)state=2;
+      else if(let=='.')state=3;
+      else if(!sp)valid=false;
+    }
+    else if(state==1){//-After +/-. Expected values:[0-9,.]
+      if(num)state=2;
+      else if(let=='.')state=3;
+      else valid=false;
+    }
+    else if(state==2){//-After +/- and some number. Expected values:[0-9,.,e,E,\t, ]
+      if(let=='.')state=3;
+      else if(let=='e' || let=='E')state=10;
+      else if(sp)state=15;
+      else if(!num)valid=false;
+    }
+    else if(state==3){//-After decimal point. Expected values:[0-9,e,E,\t, ]
+      if(let=='e' || let=='E')state=10;
+      else if(sp)state=15;
+      else if(!num)valid=false;
+    }
+    else if(state==10){//-After e/E. Expected values:[+,-,0-9]
+      if(let=='+' || let=='-')state=11;
+      else if(num)state=12;
+      else valid=false;
+    }    
+    else if(state==11){//-After e/E and +/-. Expected values:[0-9]
+      if(num)state=12;
+      else valid=false;
+    }    
+    else if(state==12){//-After e/E and +/- and some number. Expected values:[0-9,\t, ]
+      if(sp)state=15;
+      else if(!num)valid=false;
+    }    
+    else if(state==15 && !sp)valid=false; //-After some space. Expected values:[\t, ]
+  }
+  if(state==1 || state==10 || state==11)valid=false;
+  //printf("StrIsRealNumber(%s) => state:%d  %s  [%g]\n",str.c_str(),state,(valid? "Ok": "ERROR"),atof(str.c_str()));
+  return(valid);
 }
 
 //==============================================================================
@@ -717,6 +791,18 @@ unsigned VectorSplitInt(const std::string mark,const std::string &text,std::vect
   return((unsigned)vec.size());
 }
 
+//==============================================================================
+/// Loads double list in a vector and returns size of vector.
+//==============================================================================
+unsigned VectorSplitDouble(const std::string mark,const std::string &text,std::vector<double> &vec){
+  std::string aux=text;
+  while(!aux.empty()){
+    std::string txv=StrSplit(mark,aux);
+    if(!txv.empty())vec.push_back(atof(txv.c_str()));
+  }
+  return((unsigned)vec.size());
+}
+
 
 
 //==============================================================================
@@ -854,6 +940,7 @@ int FileType(const std::string &name){
     if(stfileinfo.st_mode&S_IFDIR)ret=1;
     if(stfileinfo.st_mode&S_IFREG)ret=2;
   }
+  else if(FileSize(name)>=0)ret=2; //-Solution for 4GB files unsupported by stat().
   return(ret);
 }
 
@@ -1415,6 +1502,20 @@ bool IsLtEqual(float v1,float v2,float tolerance){
 //==============================================================================
 bool IsLtEqual(double v1,double v2,double tolerance){
   return(v1<=v2 || fabs(v1-v2)<=tolerance);
+}
+
+//==============================================================================
+/// Returns v1 is equal to v2 according a tolerance value.
+//==============================================================================
+bool IsEqual(const tdouble3 &v1,const tdouble3 &v2,double tolerance){
+  return(IsEqual(v1.x,v2.x,tolerance) && IsEqual(v1.y,v2.y,tolerance) && IsEqual(v1.z,v2.z,tolerance));
+}
+
+//==============================================================================
+/// Returns v1 is equal to v2 according a tolerance value.
+//==============================================================================
+bool IsEqual(const tdouble4 &v1,const tdouble4 &v2,double tolerance){
+  return(IsEqual(v1.x,v2.x,tolerance) && IsEqual(v1.y,v2.y,tolerance) && IsEqual(v1.z,v2.z,tolerance) && IsEqual(v1.w,v2.w,tolerance));
 }
 
 

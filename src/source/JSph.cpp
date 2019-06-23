@@ -799,7 +799,6 @@ void JSph::LoadCaseConfig(){
     if(PeriY)       RunException(met,"Symmetry is not allowed with periodic conditions in axis Y.");
     if(WithFloating)RunException(met,"Symmetry is not allowed with floating bodies.");
     if(UseChrono)   RunException(met,"Symmetry is not allowed with Chrono objects.");
-    if(InOut)       RunException(met,"Symmetry is not allowed with inlet/outlet conditions.");
     if(BoundCorr)   RunException(met,"Symmetry is not allowed with BoundCor.");
     if(TVisco!=VISCO_Artificial)RunException(met,"Symmetry is only allowed with Artificial viscosity.");
   } //<vs_syymmetry_end>
