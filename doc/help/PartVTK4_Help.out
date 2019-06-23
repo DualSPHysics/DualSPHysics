@@ -30,7 +30,7 @@
  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
 
 
-PartVtk4 v4.0.048 (23-05-2019)
+PartVtk4 v4.0.050 (21-06-2019)
 ===============================
 LoadDsphConfig> .../bin/windows/DsphConfig.xml
 Information about parameters of execution:
@@ -114,6 +114,9 @@ Information about parameters of execution:
        +/-vor:       Vorticity
        +/-XXX:       Variable defined by the user
        (Preselected variables: idp,vel,rhop,type)
+
+    -symparts:<0/1>  Adds mirrored particles from symmetry data to VKT files
+       (default value=0)
 
   Examples:
     PartVtk4 -savevtk partfluid.vtk -onlytype:-bound -filexml dir/AUTO
