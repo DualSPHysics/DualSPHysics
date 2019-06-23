@@ -394,9 +394,14 @@ unsigned JXml::GetAttributeUnsigned(TiXmlElement* ele,const std::string &name,bo
 //==============================================================================
 int JXml::GetAttributeInt(TiXmlElement* ele,const std::string &name,bool optional,int valdef)const{
   int ret;
-  if(ele->Attribute(name.c_str(),&ret)==NULL){
+  const char *vchar=ele->Attribute(name.c_str());
+  if(vchar==NULL){
     if(optional)ret=valdef;
     else ErrReadAtrib(ele,name,true);
+  }
+  else{
+    if(!fun::StrIsIntegerNumber(vchar))ErrReadAtrib(ele,name,false,"It is not a valid integer number.");
+    ret=atoi(vchar);
   }
   return(ret);
 }
@@ -412,9 +417,14 @@ int JXml::GetAttributeInt(TiXmlElement* ele,const std::string &name,bool optiona
 //==============================================================================
 double JXml::GetAttributeDouble(TiXmlElement* ele,const std::string &name,bool optional,double valdef)const{
   double ret;
-  if(ele->Attribute(name.c_str(),&ret)==NULL){
+  const char *vchar=ele->Attribute(name.c_str());
+  if(vchar==NULL){
     if(optional)ret=valdef;
     else ErrReadAtrib(ele,name,true);
+  }
+  else{
+    if(!fun::StrIsRealNumber(vchar))ErrReadAtrib(ele,name,false,"It is not a valid real number.");
+    ret=atof(vchar);
   }
   return(ret);
 }

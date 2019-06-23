@@ -186,6 +186,9 @@ void JSphCpuSingle::InOutInit(double timestepini){
 
   //-Shows configuration.
   InOut->VisuConfig(""," ");
+  //-Checks invalid options for symmetry. //<vs_syymmetry>
+  if(Symmetry && InOut->GetExtrapolatedData())RunException(met,"Symmetry is not allowed with inlet/outlet conditions when extrapolate option is enabled."); //<vs_syymmetry>
+
   //-Updates divide information and creates inout particles list.
   RunCellDivide(true);
   if(DBG_INOUT_PARTINIT)DgSaveVtkParticlesCpu("CfgInOut_InletIni.vtk",1,0,Np,Posc,Codec,Idpc,Velrhopc);

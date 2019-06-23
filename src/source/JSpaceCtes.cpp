@@ -82,7 +82,7 @@ void JSpaceCtes::LoadDefault(){
   SetCFLnumber(0.2);
   SetHSwlAuto(true);  SetHSwl(0);
   SetSpeedSystemAuto(true);  SetSpeedSystem(0);
-  SetCoefSound(10);
+  SetCoefSound(20);
   SetSpeedSoundAuto(true);  SetSpeedSound(0);
   SetCoefH(0.866025);
   SetGamma(7);

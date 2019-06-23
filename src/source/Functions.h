@@ -73,6 +73,9 @@
 //:# - Nueva funcion StrIsNumber().  (21-03-2019)
 //:# - Nueva funcion FileSize().  (23-03-2019)
 //:# - Nuevas funciones IsEqual(), IsGtEqual(), IsLtEqual().  (08-04-2019)
+//:# - Nueva funcion VectorSplitDouble().  (05-06-2019)
+//:# - Nuevas funciones StrIsIntegerNumber() and StrIsRealNumber().  (13-06-2019)
+//:# - Updates FileType() for files larger than 2GB.  (20-06-2019)
 //:#############################################################################
 
 /// \file Functions.h \brief Declares basic/general functions for the entire application.
@@ -151,7 +154,8 @@ std::string Double4Str(const tdouble4 &v,const char* fmt="%f,%f,%f");
 /// Converts range of tdouble4 values to string.  
 inline std::string Double4gStr(const tdouble4 &v){ return(Double4Str(v,"%g,%g,%g,%g")); }
 
-bool StrIsNumber(const std::string &v);
+bool StrIsIntegerNumber(const std::string &v);
+bool StrIsRealNumber(const std::string &v);
 
 int      StrToInt    (const std::string &v);
 tint3    StrToInt3   (std::string v);
@@ -189,6 +193,7 @@ unsigned StrSplitCount(const std::string mark,std::string text);
 std::string StrSplitValue(const std::string mark,std::string text,unsigned value);
 unsigned VectorSplitStr(const std::string mark,const std::string &text,std::vector<std::string> &vec);
 unsigned VectorSplitInt(const std::string mark,const std::string &text,std::vector<int> &vec);
+unsigned VectorSplitDouble(const std::string mark,const std::string &text,std::vector<double> &vec);
 
 double GetFirstValueDouble(std::string tex,std::string pretex="");
 double GetFirstValueDouble(std::string tex,std::string &endtex,std::string pretex);
@@ -285,6 +290,9 @@ bool IsGtEqual(float  v1,float  v2,float  tolerance);
 bool IsGtEqual(double v1,double v2,double tolerance);
 bool IsLtEqual(float  v1,float  v2,float  tolerance);
 bool IsLtEqual(double v1,double v2,double tolerance);
+
+bool IsEqual(const tdouble3 &v1,const tdouble3 &v2,double tolerance);
+bool IsEqual(const tdouble4 &v1,const tdouble4 &v2,double tolerance);
 
 }
 

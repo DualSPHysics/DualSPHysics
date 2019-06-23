@@ -25,6 +25,61 @@
 
 namespace fgeo{
 
+
+//==============================================================================
+/// Devuelve proyeccion ortogonal del punto en la linea (pr1,pr2).
+/// Returns orthogonal projection of the point in the line (pr1,pr2).
+//==============================================================================
+tdouble3 LineOrthogonalPoint(const tdouble3 &pt,const tdouble3 &pr1,const tdouble3 &pr2){
+  return(PlaneLineIntersec(PlanePtVec(pt,pr2-pr1),pr1,pr2));
+}
+
+//==============================================================================
+/// Devuelve proyeccion ortogonal del punto en la linea (pr1,pr2).
+/// Returns orthogonal projection of the point in the line (pr1,pr2).
+//==============================================================================
+tfloat3 LineOrthogonalPoint(const tfloat3 &pt,const tfloat3 &pr1,const tfloat3 &pr2){
+  return(PlaneLineIntersec(PlanePtVec(pt,pr2-pr1),pr1,pr2));
+}
+
+
+//==============================================================================
+/// Devuelve proyeccion ortogonal del punto en la linea (pr1,pr2).
+/// Returns orthogonal projection of the point in the line (pr1,pr2).
+//==============================================================================
+double LineOrthogonalPointFromPr1(const tdouble3 &pt,const tdouble3 &pr1,const tdouble3 &pr2){
+  const tdouble3 pr=LineOrthogonalPoint(pt,pr1,pr2);
+  const double vx=fabs(pr2.x-pr1.x);
+  const double vy=fabs(pr2.y-pr1.y);
+  const double vz=fabs(pr2.z-pr1.z);
+  double t=0;
+  if(vx>0 || vy>0 || vz>0){
+    if(vx>=vy && vx>=vz)t=(pr.x-pr1.x)/(pr2.x-pr1.x);
+    else if(vy>=vx && vy>=vz)t=(pr.y-pr1.y)/(pr2.y-pr1.y);
+    else t=(pr.z-pr1.z)/(pr2.z-pr1.z);
+  }
+  return(t);
+}
+
+//==============================================================================
+/// Devuelve proyeccion ortogonal del punto en la linea (pr1,pr2).
+/// Returns orthogonal projection of the point in the line (pr1,pr2).
+//==============================================================================
+float LineOrthogonalPointFromPr1(const tfloat3 &pt,const tfloat3 &pr1,const tfloat3 &pr2){
+  const tfloat3 pr=LineOrthogonalPoint(pt,pr1,pr2);
+  const float vx=fabs(pr2.x-pr1.x);
+  const float vy=fabs(pr2.y-pr1.y);
+  const float vz=fabs(pr2.z-pr1.z);
+  float t=0;
+  if(vx>0 || vy>0 || vz>0){
+    if(vx>=vy && vx>=vz)t=(pr.x-pr1.x)/(pr2.x-pr1.x);
+    else if(vy>=vx && vy>=vz)t=(pr.y-pr1.y)/(pr2.y-pr1.y);
+    else t=(pr.z-pr1.z)/(pr2.z-pr1.z);
+  }
+  return(t);
+}
+
+
 //==============================================================================
 /// Devuelve el plano formado por 3 puntos. La normal es (a,b,c)
 /// Returns the plane defined by 3 points. The normal is (a,b,c)

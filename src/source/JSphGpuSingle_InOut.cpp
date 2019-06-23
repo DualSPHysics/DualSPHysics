@@ -203,6 +203,9 @@ void JSphGpuSingle::InOutInit(double timestepini){
 
   //-Shows configuration.
   InOut->VisuConfig(""," ");
+  //-Checks invalid options for symmetry. //<vs_syymmetry>
+  if(Symmetry && InOut->GetExtrapolatedData())RunException(met,"Symmetry is not allowed with inlet/outlet conditions when extrapolate option is enabled."); //<vs_syymmetry>
+
   //-Updates divide information.
   TmgStop(Timers,TMG_SuInOut);
   RunCellDivide(true);
