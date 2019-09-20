@@ -80,8 +80,9 @@ public:
   float Visco;
   float ViscoBoundFactor;
   double TimeMax,TimePart;
-  float DeltaSph;
-  int Shifting;  ///<Shifting mode -1:no defined, 0:none, 1:nobound, 2:nofixed, 3:full
+  int TDensity;   ///<Density Diffusion Term 0:None, 1:Molteni, 2:Fourtakas, 3:Fourtakas(full) (default=0)
+  float DDTValue; ///<Value used with Density Diffusion Term (default=0.1)
+  int Shifting;   ///<Shifting mode -1:no defined, 0:none, 1:nobound, 2:nofixed, 3:full
   bool SvRes,SvTimers,SvDomainVtk;
   bool Sv_Binx,Sv_Info,Sv_Csv,Sv_Vtk;
   std::string CaseName,RunName,DirOut,DirDataOut;
@@ -93,6 +94,8 @@ public:
 
   byte DomainMode;  ///<Domain configuration 0:No configured, 2:Fixed
   tdouble3 DomainFixedMin,DomainFixedMax;
+
+  int NstepsBreak;  ///<Maximum number of steps allowed (debug).
 
   //-General configuration from DsphConfig.xml
   bool CreateDirs;   ///<Creates full path for output files (true by default).

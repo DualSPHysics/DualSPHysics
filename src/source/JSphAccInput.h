@@ -16,6 +16,13 @@
  You should have received a copy of the GNU Lesser General Public License along with DualSPHysics. If not, see <http://www.gnu.org/licenses/>. 
 */
 
+//:#############################################################################
+//:# Cambios:
+//:# =========
+//:# - GetAccValues() guarda entrada y salida para evitar calculos con llamadas 
+//:#   consecutivas iguales. (13-09-2019)
+//:#############################################################################
+
 /// \file JSphAccInput.h \brief Declares the class \ref JSphAccInput.
 
 #ifndef _JSphAccInput_
@@ -72,6 +79,8 @@ protected:
   tdouble3 CurrVelLin;        ///<The current interpolated values for linear velocity. SL
   tdouble3 CurrVelAng;        ///<The current interpolated values for angular velocity. SL
 
+  double LastTimestepInput;   ///<Saves the last value used with GetAccValues().
+  StAceInput LastOutput;      ///<Saves the last value returned by GetAccValues().
 
   void Reset();
   void Resize(unsigned size);
@@ -86,7 +95,7 @@ public:
   void GetConfig(std::vector<std::string> &lines)const;
 
   word GetMkFluid()const{ return(MkFluid); }
-  void GetAccValues(double timestep,unsigned &mkfluid,tdouble3 &acclin,tdouble3 &accang,tdouble3 &centre,tdouble3 &velang,tdouble3 &vellin,bool &setgravity); //SL: Added linear and angular velocity and set gravity flag
+  const StAceInput& GetAccValues(double timestep); //SL: Added linear and angular velocity and set gravity flag
 };
 
 //##############################################################################
@@ -116,7 +125,7 @@ public:
   void VisuConfig(std::string txhead,std::string txfoot)const;
 
   unsigned GetCount()const{ return(unsigned(Inputs.size())); };
-  void GetAccValues(unsigned cfile,double timestep,unsigned &mkfluid,tdouble3 &acclin,tdouble3 &accang,tdouble3 &centre,tdouble3 &velang,tdouble3 &vellin,bool &setgravity); //SL: Added linear and angular velocity and set gravity flag
+  const StAceInput& GetAccValues(unsigned cfile,double timestep); //SL: Added linear and angular velocity and set gravity flag
 };
 
 #endif

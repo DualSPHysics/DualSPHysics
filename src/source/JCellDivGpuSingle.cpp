@@ -94,7 +94,7 @@ void JCellDivGpuSingle::PrepareNct(){
   Ncz=CellDomainMax.z-CellDomainMin.z+1;
   //Log->Printf("======  ncx:%u ncy:%u ncz:%u\n",Ncx,Ncy,Ncz);
   Nsheet=Ncx*Ncy; Nct=Nsheet*Ncz; Nctt=SizeBeginEndCell(Nct);
-  if(Nctt!=unsigned(Nctt))RunException("PrepareNct","The number of cells is too big.");
+  if(Nctt!=unsigned(Nctt))Run_Exceptioon("The number of cells is too big.");
   BoxBoundIgnore=Nct; 
   BoxFluid=BoxBoundIgnore+1; 
   BoxBoundOut=BoxFluid+Nct; 
@@ -133,7 +133,6 @@ void JCellDivGpuSingle::PreSort(const unsigned *dcellg,const typecode *codeg){
 void JCellDivGpuSingle::Divide(unsigned npb1,unsigned npf1,unsigned npb2,unsigned npf2,bool boundchanged
   ,const unsigned *dcellg,const typecode *codeg,TimersGpu timers,const double2 *posxy,const double *posz,const unsigned *idp)
 {
-  const char met[]="Divide";
   DivideFull=false;
   TmgStart(timers,TMG_NlLimits);
 
@@ -211,7 +210,7 @@ void JCellDivGpuSingle::Divide(unsigned npb1,unsigned npf1,unsigned npb2,unsigne
 
   Ndiv++;
   if(DivideFull)NdivFull++;
-  CheckCudaError(met,"Error in NL construction.");
+  Check_CudaErroor("Error in NL construction.");
   TmgStop(timers,TMG_NlCellBegin);
 }
 

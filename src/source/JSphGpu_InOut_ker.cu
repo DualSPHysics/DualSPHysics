@@ -19,6 +19,8 @@
 /// \file JSphGpu_InOut_ker.cu \brief Implements functions and CUDA kernels for InOut feature.
 
 #include "JSphGpu_InOut_ker.h"
+#include "Functions.h"
+#include "FunctionsCuda.h"
 #include <cfloat>
 #include <math_constants.h>
 

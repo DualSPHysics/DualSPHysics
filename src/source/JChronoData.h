@@ -33,6 +33,14 @@
 #include <cmath>
 #include "TypesDef.h"
 
+//-Defines for normal exceptions.
+#ifndef Run_Exceptioon
+#define Run_Exceptioon(msg) RunExceptioon(__FILE__,__LINE__,ClassName,__func__,msg)
+#endif
+#ifndef Run_ExceptioonFile
+#define Run_ExceptioonFile(msg,file) RunExceptioon(__FILE__,__LINE__,ClassName,__func__,msg,file)
+#endif
+
 class JChBody;
 class JChLink;
 
@@ -44,8 +52,9 @@ class JChBase
 {
 protected:
   std::string ClassName;           ///<Name of the class.
-  void RunException(const std::string &method,const std::string &msg)const;
-  void RunException(const std::string &method,const std::string &msg,const std::string &file)const;
+  void RunExceptioon(const std::string &srcfile,int srcline
+    ,const std::string &classname,const std::string &method
+    ,const std::string &msg,const std::string &file="")const;
 public:  
   JChBase():ClassName("JChBase"){} ///<Constructor of objects.
 };

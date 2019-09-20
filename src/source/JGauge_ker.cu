@@ -19,6 +19,8 @@
 /// \file JSphGpu_ker.cu \brief Implements functions and CUDA kernels for classes JGauge.
 
 #include "JGauge_ker.h"
+#include "Functions.h"
+#include "FunctionsCuda.h"
 #include <float.h>
 #include <math_constants.h>
 //:#include "JDgKerPrint.h"
@@ -28,20 +30,6 @@
 
 
 namespace cugauge{
-
-//==============================================================================
-/// Checks error and ends execution.
-/// Comprueba error y finaliza ejecucion.
-//==============================================================================
-#define CheckErrorCuda(text)  __CheckErrorCuda(text,__FILE__,__LINE__)
-void __CheckErrorCuda(const char *text,const char *file,const int line){
-  cudaError_t err=cudaGetLastError();
-  if(cudaSuccess!=err){
-    char cad[2048]; 
-    sprintf(cad,"%s (CUDA error: %s -> %s:%i).\n",text,cudaGetErrorString(err),file,line); 
-    throw std::string(cad);
-  }
-}
 
 //==============================================================================
 /// Returns size of gridsize according to parameters.

@@ -23,6 +23,8 @@
 //:#   para determinados instantes en segundos, interpolando los valores 
 //:#   intermedios. (10-11-2012)
 //:# - Los datos float pasaron a double. (28-11-2013) 
+//:# - GetNextTime() guarda entrada y salida para evitar calculos con llamadas 
+//:#   consecutivas iguales. (02-09-2019)
 //:#############################################################################
 
 /// \file JSphDtFixed.h \brief Declares the class \ref JSphDtFixed.
@@ -56,6 +58,10 @@ protected:
   double *Times;
   double *Values;
   double DtError; //- max(DtFixed-DtVariable)
+
+  double LastTimestepInput;  ///<Saves the last value used with GetDt().
+  double LastDtInput;        ///<Saves the last value used with GetDt().
+  double LastDtOutput;       ///<Saves the last value returned by GetDt().
 
   void Resize(unsigned size);
 

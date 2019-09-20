@@ -52,6 +52,7 @@ void JSphVisco::Reset(){
   delete[] Values; Values=NULL;
   File="";
   Size=Count=Position=0;
+  LastTimestepInput=LastViscoOutput=-1;
 }
 
 //==============================================================================
@@ -101,6 +102,8 @@ void JSphVisco::LoadFile(std::string file){
 /// Returns the viscosity value for the indicated instant.
 //==============================================================================
 float JSphVisco::GetVisco(float timestep){
+  if(LastTimestepInput>=0 && timestep==LastTimestepInput)return(LastViscoOutput);
+  LastTimestepInput=timestep;
   float ret=0;
   //-Busca intervalo del instante indicado.
   //-Searches indicated interval of time.
@@ -120,6 +123,7 @@ float JSphVisco::GetVisco(float timestep){
     float vnext=Values[Position+1];
     ret=float(tfactor*(vnext-vini)+vini);
   }
+  LastViscoOutput=ret;
   return(ret);
 }
 

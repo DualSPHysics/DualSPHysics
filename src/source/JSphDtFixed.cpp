@@ -53,6 +53,7 @@ void JSphDtFixed::Reset(){
   File="";
   Size=Count=Position=0;
   GetDtError(true);
+  LastTimestepInput=LastDtInput=LastDtOutput=-1;
 }
 
 //==============================================================================
@@ -98,6 +99,9 @@ void JSphDtFixed::LoadFile(std::string file){
 /// Returns the value of dt (in SECONDS) for a given instant.
 //==============================================================================
 double JSphDtFixed::GetDt(double timestep,double dtvar){
+  if(LastTimestepInput>=0 && timestep==LastTimestepInput && dtvar==LastDtInput)return(LastDtOutput);
+  LastTimestepInput=timestep;
+  LastDtInput=dtvar;
   double ret=0;
   //-Busca intervalo del instante indicado.
   //-Searches indicated interval of time.
@@ -119,6 +123,7 @@ double JSphDtFixed::GetDt(double timestep,double dtvar){
   }
   double dterror=ret-dtvar;
   if(DtError<dterror)DtError=dterror;
+  LastDtOutput=ret;
   return(ret);
 }
 

@@ -30,7 +30,7 @@
  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
 
 
-GenCase4 v4.0.109 (21-06-2019) 
+GenCase4 v4.0.115 (19-09-2019) 
 ================================
 LoadDsphConfig> .../bin/windows/DsphConfig.xml
 Execution parameters information:
@@ -64,4 +64,7 @@ Execution parameters information:
   Examples:
     GenCase4 citydef city
     GenCase4 case case -dp:0.01
+
+
+Finished execution (code=0).
 

@@ -110,7 +110,8 @@
             <parameter key="ViscoTreatment" value="1" comment="Viscosity Formulation 1:Artificial, 2:Laminar+SPS (def=1)" />
             <parameter key="Visco" value="0.01" comment="Viscosity value" />
             <parameter key="ViscoBoundFactor" value="0" comment="Multiply viscosity value with boundary" />
-            <parameter key="DeltaSPH" value="0" comment="DeltaSPH value, with 0 disabled (def=0.1)" />
+            <parameter key="DensityDT" value="0" comment="Density Diffusion Term 0:None, 1:Molteni, 2:Fourtakas, 3:Fourtakas(full) (default=0)" />
+			<parameter key="DensityDTvalue" value="0.1" comment="DDT value (default=0.1)" />
             <parameter key="CoefDtMin" value="0.05" comment="Coefficient to calculate minimum time step dtmin=coefdtemin*h/speedsound (def=0.05)" />
             <parameter key="#DtIni" value="0.0001" comment="Initial time step (def=h/speedsound" />
             <parameter key="#DtMin" value="0.00001" comment="Minimum time step (def=coefdtmin*h/speedsound)" />

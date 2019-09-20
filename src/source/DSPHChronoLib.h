@@ -42,7 +42,6 @@ class DSPHChronoLib{
   JChronoData chData;
   TpRunState RunState;
 
-  static void RunException(std::string method,std::string msg,std::string file="");
   void SaveForcesHead();
   static tdouble3 VecUnitarySafe(const tdouble3 &v);
 

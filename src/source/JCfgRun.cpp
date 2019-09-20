@@ -52,7 +52,8 @@ void JCfgRun::Reset(){
   TStep=STEP_None; VerletSteps=-1;
   TKernel=KERNEL_None;
   TVisco=VISCO_None; Visco=0; ViscoBoundFactor=-1;
-  DeltaSph=-1;
+  TDensity=-1;
+  DDTValue=-1;
   Shifting=-1;
   SvRes=true; SvDomainVtk=false;
   Sv_Binx=false; Sv_Info=false; Sv_Vtk=false; Sv_Csv=false;
@@ -61,6 +62,7 @@ void JCfgRun::Reset(){
   TimeMax=-1; TimePart=-1;
   RhopOutModif=false; RhopOutMin=700; RhopOutMax=1300;
   FtPause=-1;
+  NstepsBreak=0;
   CreateDirs=true;
   CsvSepComa=false;
 }
@@ -86,9 +88,11 @@ void JCfgRun::VisuInfo()const{
   printf("  Options:\n");
   printf("    -h          Shows information about parameters\n");
   printf("    -ver        Shows version information\n");
+  printf("    -info       Shows version features in JSON format\n");
   printf("    -opt <file> Loads a file configuration\n\n");
   printf("    -cpu        Execution on CPU (option by default)\n");
   printf("    -gpu[:id]   Execution on GPU and id of the device\n");
+  printf("\n");
   printf("    -stable     The result is always the same but the execution is slower\n");
   printf("\n");
   printf("    -posdouble:<mode>  Precision used in position for particle interactions\n");
@@ -99,16 +103,18 @@ void JCfgRun::VisuInfo()const{
 #ifdef OMP_USE
   printf("    -ompthreads:<int>  Only for CPU execution, indicates the number of threads\n");
   printf("                   by host for parallel execution, this takes the number of \n");
-  printf("                   cores of the device by default (or using zero value)\n\n");
+  printf("                   cores of the device by default (or using zero value)\n");
+  printf("\n");
 #endif
   printf("    -blocksize:<mode>  Defines BlockSize to use in particle interactions on GPU\n");
 #ifndef DISABLE_BSMODES
   printf("        0: Fixed value (128) is used (option by default)\n");
   printf("        1: Optimum BlockSize indicated by Occupancy Calculator of CUDA\n");
-  printf("        2: Optimum BlockSize is calculated empirically\n\n");
+  printf("        2: Optimum BlockSize is calculated empirically\n");
 #else
-  printf("        0: Fixed value (128) is used\n\n");
+  printf("        0: Fixed value (128) is used\n");
 #endif
+  printf("\n");
   printf("    -cellmode:<mode>  Specifies the cell division mode\n");
   printf("        2h        Lowest and the least expensive in memory (by default)\n");
   printf("        h         Fastest and the most expensive in memory\n\n");
@@ -122,7 +128,12 @@ void JCfgRun::VisuInfo()const{
   printf("    -viscolamsps:<float>       Laminar+SPS viscosity [order of 1E-6]\n");  
   printf("    -viscoboundfactor:<float>  Multiplies the viscosity value of boundary\n");
   printf("\n");
-  printf("    -deltasph:<float> Constant for DeltaSPH. Typical value is 0.1 (0 by default)\n\n");
+  printf("    -ddt:<mode> Specifies the Density Diffusion Term to correct density\n");
+  printf("        none       Not used (by default)\n");
+  printf("        1          Diffusion term by Molteni and Colagrossi 2009\n");
+  printf("        2          Diffusion term by Fourtakas et al 2019 (inner fluid particles)\n");
+  printf("        3          Diffusion term by Fourtakas et al 2019 (all fluid particles)\n");
+  printf("    -ddtvalue:<float> Constant for DDT (0.1 by default)\n\n");
   printf("    -shifting:<mode> Specifies the use of Shifting correction\n");
   printf("        none       Shifting is disabled (by default)\n");
   printf("        nobound    Shifting is not applied near boundary\n");
@@ -153,6 +164,7 @@ void JCfgRun::VisuInfo()const{
   printf("    -ftpause:<float> Time to start floating bodies movement. By default 0\n");
   printf("    -tmax:<float>   Maximum time of simulation\n");
   printf("    -tout:<float>   Time between output files\n\n");
+  //printf("    -nsteps:<uint>  Maximum number of steps allowed (debug)\n\n");
   printf("    -domain_fixed:xmin:ymin:zmin:xmax:ymax:zmax    The domain is fixed\n");
   printf("     with the specified values\n\n");
   printf("  Examples:\n");
@@ -187,7 +199,8 @@ void JCfgRun::VisuConfig()const{
   PrintVar("  TVisco",TVisco,ln);
   PrintVar("  Visco",Visco,ln);
   PrintVar("  ViscoBoundFactor",ViscoBoundFactor,ln);
-  PrintVar("  DeltaSph",DeltaSph,ln);
+  PrintVar("  TDensity",TDensity,ln);
+  PrintVar("  DDTValue",DDTValue,ln);
   PrintVar("  Shifting",Shifting,ln);
   PrintVar("  SvRes",SvRes,ln);
   PrintVar("  SvTimers",SvTimers,ln);
@@ -363,9 +376,13 @@ void JCfgRun::LoadOpts(string *optlis,int optn,int lv,string file){
         ViscoBoundFactor=float(atof(txoptfull.c_str())); 
         if(ViscoBoundFactor<0)ErrorParm(opt,c,lv,file);
       }
-      else if(txword=="DELTASPH"){
-        DeltaSph=float(atof(txoptfull.c_str())); 
-        if(DeltaSph<0||DeltaSph>1)ErrorParm(opt,c,lv,file);
+      else if(txword=="DDT"){
+        TDensity=atoi(txoptfull.c_str()); 
+        if(TDensity<0 || TDensity>3)ErrorParm(opt,c,lv,file);
+      }
+      else if(txword=="DDTVALUE"){
+        DDTValue=float(atof(txoptfull.c_str())); 
+        if(DDTValue<0 || DDTValue>1)ErrorParm(opt,c,lv,file);
       }
       else if(txword=="SHIFTING"){
         const string tx=fun::StrUpper(txoptfull);
@@ -430,6 +447,7 @@ void JCfgRun::LoadOpts(string *optlis,int optn,int lv,string file){
         LoadDouble6(txoptfull,0,DomainFixedMin,DomainFixedMax);
         DomainMode=2;
       }
+      else if(txword=="NSTEPS")NstepsBreak=atoi(txoptfull.c_str()); 
       else if(txword=="OPT"&&c+1<optn){ LoadFile(optlis[c+1],lv+1); c++; }
       else if(txword=="H"||txword=="HELP"||txword=="?")PrintInfo=true;
       else ErrorParm(opt,c,lv,file);

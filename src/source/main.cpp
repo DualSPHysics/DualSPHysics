@@ -57,7 +57,7 @@ Please download source files and documentation from <a href="http://dual.sphysic
 using namespace std;
 
 
-JAppInfo AppInfo("DualSPHysics4","v4.4.010","21-06-2019");
+JAppInfo AppInfo("DualSPHysics4","v4.4.024","16-09-2019");
 //JAppInfo AppInfo("DualSPHysics4","v4.2.???","UserVersion","v1.0","??-??-????"); //-for user versions.
 
 //==============================================================================
@@ -89,16 +89,48 @@ std::string getlicense_lgpl(const std::string &name,bool simple){
 }
 
 //==============================================================================
-///  Shows program version and finishes the execution.
+///  Shows program version and JSON information and finishes the execution.
 //==============================================================================
-bool ShowsVersion(int argc,char** argv){
-  string ver=(argc==2? argv[1]: "");
-  bool ret=(ver=="-ver" || ver=="-VER");
-  if(ret){
+bool ShowsVersionInfo(int argc,char** argv){
+  const string option=fun::StrLower(argc==2? argv[1]: "");
+  bool finish=true;
+  if(option=="-ver"){
     printf("%s\n",AppInfo.GetFullName().c_str());
     printf("%s",getlicense_lgpl(AppInfo.GetShortName(),true).c_str());
   }
-  return(ret);
+  else if(option=="-info"){
+    //-Defines the features included in the program.
+    std::vector<std::string> features;
+    features.push_back(fun::JSONProperty("CPU",true));
+    #ifdef _WITHGPU
+      features.push_back(fun::JSONProperty("GPU",true));
+    #else
+      features.push_back(fun::JSONProperty("GPU",false));
+    #endif
+    bool ddtf=false;
+    features.push_back(fun::JSONProperty("DDT_Fourtakas",ddtf));
+    //-Defines main information about the version program.
+    std::vector<std::string> info;
+    info.push_back(fun::JSONProperty("ShortName",AppInfo.GetShortName()));
+    info.push_back(fun::JSONProperty("FullName" ,AppInfo.GetFullName()));
+    info.push_back(fun::JSONProperty("Version" ,AppInfo.GetMainVer()));
+    info.push_back(fun::JSONProperty("Date" ,AppInfo.GetDate()));
+    info.push_back(fun::JSONPropertyValue("Features",fun::JSONObject(features)));
+    printf("%s\n",fun::JSONObject(info).c_str());
+  }
+  else finish=false;
+  return(finish);
+}
+
+//==============================================================================
+///  Print exception message on screen and log file.
+//==============================================================================
+void PrintExceptionLog(const std::string &prefix,const std::string &text,JLog2 *log){
+  const bool prt=(text.empty() || text[0]!='#');
+  const string tx=(prt? prefix+text: text.substr(1));
+  if(prt)printf("%s\n",tx.c_str());
+  fflush(stdout);
+  if(log && log->IsOk())log->PrintFile(tx,true);
 }
 
 //==============================================================================
@@ -110,7 +142,7 @@ int main(int argc, char** argv){
   AppInfo.AddNameExtra("MK65k");
 #endif
   AppInfo.ConfigRunPaths(argv[0]);
-  if(ShowsVersion(argc,argv))return(errcode);
+  if(ShowsVersionInfo(argc,argv))return(errcode);
   std::string license=getlicense_lgpl(AppInfo.GetShortName(),false);
   printf("%s",license.c_str());
   std::string appname=AppInfo.GetFullName();
@@ -148,20 +180,21 @@ int main(int argc, char** argv){
     errcode=0;
   }
   catch(const char *cad){
-    string tx=string("\n*** Exception: ")+cad+"\n";
-    if(log && log->IsOk())log->Print(tx); else printf("%s",tx.c_str());
+    PrintExceptionLog("\n*** Exception(chr): ",cad,log);
   }
   catch(const string &e){
-    string tx=string("\n*** Exception: ")+e+"\n";
-    if(log && log->IsOk())log->Print(tx); else printf("%s",tx.c_str());
+    PrintExceptionLog("\n*** Exception(str): ",e,log);
+  }
+  catch (const JException &e){
+    if(log && log->IsOk())log->PrintFile(e.what());
   }
   catch (const exception &e){
-    string tx=string("\n*** ")+e.what()+"\n";
-    if(log && log->IsOk())log->Print(tx); else printf("%s",tx.c_str());
+    PrintExceptionLog("\n*** Exception(exc): ",e.what(),log);
   }
   catch(...){
-    printf("\n*** Attention: Unknown exception...\n");
+    PrintExceptionLog("","\n*** Attention: Unknown exception...",log);
   }
+  PrintExceptionLog("",fun::PrintStr("\nFinished execution (code=%d).\n",errcode),log);
   return(errcode);
 }
 

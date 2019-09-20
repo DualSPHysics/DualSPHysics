@@ -187,7 +187,6 @@ void JReadDatafile::ProcessLines(){
       }
     }
   }
-  //throw "finito...";
   //printf("++> LineCount:%u(%u)  Size:%u -> %u\n",LineCount,RemLineCount,SizeFile,Size);
 }
 

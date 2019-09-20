@@ -20,6 +20,7 @@
 //:# Cambios:
 //:# =========
 //:# - Incluye la aplicacion de TimeMod. (23-04-2018)
+//# - Ahora devuelve los datos de motion como StMotionData. (11-09-2019)
 //:#############################################################################
 
 /// \file JWaveGen.h \brief Declares the class \ref JWaveGen.
@@ -70,7 +71,7 @@ public:
   /// Configura paddle con datos de las particulas.
   /// Set paddle with the particle data.
   //==============================================================================
-  bool ConfigPaddle(word mkbound,word paddleid,unsigned idbegin,unsigned np);
+  bool ConfigPaddle(word mkbound,word motionref,unsigned idbegin,unsigned np);
 
   //==============================================================================
   /// Prepara movimiento de paddles.
@@ -89,20 +90,16 @@ public:
   void VisuConfig(std::string txhead,std::string txfoot);
 
   //==============================================================================
-  /// Devuelve si es un movimiento lineal y los datos de movimiento para el intervalo indicado.
-  /// Returns if it is a linear motion and the motion data for the specified interval.
+  /// Devuelve datos del movimiento lineal o matricial para el intervalo indicado.
+  /// Returns linear or matrix motion data for the specified interval.
   //==============================================================================
-  bool GetMotion(bool svdata,unsigned cp,double timestep,double dt
-    ,tdouble3 &simplemov,tdouble3 &simplevel,tmatrix4d &matmov
-    ,unsigned &np,unsigned &idbegin);
+  const StMotionData& GetMotion(bool svdata,unsigned cp,double timestep,double dt);
 
   //==============================================================================
-  /// Devuelve si es un movimiento lineal y los datos de movimiento para el intervalo indicado.
-  /// Returns if it is a linear motion and the motion data for the specified interval.
+  /// Devuelve datos del movimiento lineal o matricial para el intervalo indicado.
+  /// Returns linear or matrix motion data for the specified interval.
   //==============================================================================
-  bool GetMotionAce(bool svdata,unsigned cp,double timestep,double dt
-    ,tdouble3 &simplemov,tdouble3 &simplevel,tdouble3 &simpleace
-    ,tmatrix4d &matmov,tmatrix4d &matmov2,unsigned &np,unsigned &idbegin);
+  const StMotionData& GetMotionAce(bool svdata,unsigned cp,double timestep,double dt);
 
   //==============================================================================
   /// Devuelve Mkbound de paddle.

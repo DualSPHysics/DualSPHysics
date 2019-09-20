@@ -27,6 +27,19 @@
 namespace fcuda{
 
 //==============================================================================
+/// Checks error and throws exception.
+//==============================================================================
+void CheckCudaErroorFun(const char *const file,int const line,const char *const fun
+  ,std::string msg)
+{
+  const cudaError_t cuerr=cudaGetLastError();
+  if(cuerr!=cudaSuccess){
+    msg=msg+fun::PrintStr(" (CUDA error %d (%s)).\n",cuerr,cudaGetErrorString(cuerr)); 
+    fun::RunExceptioonFun(file,line,fun,msg);
+  }
+}
+
+//==============================================================================
 /// Returns information about selected GPU (code from deviceQuery example).
 //==============================================================================
 inline bool IsGPUCapableP2P(const cudaDeviceProp *pProp){
@@ -42,10 +55,10 @@ inline bool IsGPUCapableP2P(const cudaDeviceProp *pProp){
 //==============================================================================
 std::string GetCudaDeviceName(int gid){
   cudaSetDevice(gid);
-  CheckCudaErrors("Failed selecting device.");
+  Check_CudaErroorFun("Failed selecting device.");
   cudaDeviceProp deviceProp;
   cudaGetDeviceProperties(&deviceProp,gid);
-  CheckCudaErrors("Failed getting selected device info.");
+  Check_CudaErroorFun("Failed getting selected device info.");
   return(deviceProp.name);
 }
 
@@ -54,10 +67,10 @@ std::string GetCudaDeviceName(int gid){
 //==============================================================================
 StGpuInfo GetCudaDeviceInfo(int gid){
   cudaSetDevice(gid);
-  CheckCudaErrors("Failed selecting device.");
+  Check_CudaErroorFun("Failed selecting device.");
   cudaDeviceProp deviceProp;
   cudaGetDeviceProperties(&deviceProp,gid);
-  CheckCudaErrors("Failed getting selected device info.");
+  Check_CudaErroorFun("Failed getting selected device info.");
   StGpuInfo g;
   g.id=gid;
   g.name=deviceProp.name;
@@ -101,13 +114,13 @@ StGpuInfo GetCudaDeviceInfo(int gid){
   if(g.rdma){
     int deviceCount=0;
     cudaGetDeviceCount(&deviceCount);
-    CheckCudaErrors("Failed getting devices info.");
+    Check_CudaErroorFun("Failed getting devices info.");
     g.countp2pto=0;
     for(int cg=0;cg<deviceCount;cg++)if(cg!=gid){
       int can_access_peer;
       cudaDeviceCanAccessPeer(&can_access_peer,gid,cg);
       if(can_access_peer){
-        if(g.countp2pto>=g.sizep2pto)throw "StGpuInfo.sizep2pto is not enough.";
+        if(g.countp2pto>=g.sizep2pto)fun::Run_ExceptioonFun("StGpuInfo.sizep2pto is not enough.");
         g.p2pto[g.countp2pto++]=cg;
       }
     }
@@ -116,7 +129,7 @@ StGpuInfo GetCudaDeviceInfo(int gid){
       int can_access_peer;
       cudaDeviceCanAccessPeer(&can_access_peer,cg,gid);
       if(can_access_peer && (count2>=g.sizep2pto || g.p2pto[count2++]!=cg))
-        throw "There is no agreement between to and from peer access.";
+        fun::Run_ExceptioonFun("There is no agreement between to and from peer access.");
     }
   }
   return(g);
@@ -129,7 +142,7 @@ int GetCudaDevicesInfo(std::vector<std::string> *gpuinfo,std::vector<StGpuInfo> 
   if(gpuinfo)gpuinfo->push_back("[CUDA Capable device(s)]");
   int deviceCount=0;
   cudaGetDeviceCount(&deviceCount);
-  CheckCudaErrors("Failed getting devices info.");
+  Check_CudaErroorFun("Failed getting devices info.");
   if(gpuinfo){
     if(!deviceCount)gpuinfo->push_back("  There are no available device(s) that support CUDA");
     else gpuinfo->push_back(fun::PrintStr("  Detected %d CUDA Capable device(s)",deviceCount));
@@ -222,17 +235,6 @@ int _ConvertSMVer2Cores(int major, int minor){
   }
   // If we don't find the values, we default use the previous one to run properly
   return(0);
-}
-
-//==============================================================================
-/// Checks error and throws exception.
-//==============================================================================
-void CheckCudaError(const std::string &msg,const char *const file,int const line){
-  cudaError_t err=cudaGetLastError();
-  if(err!=cudaSuccess){
-    const std::string tx=fun::PrintStr("%s (CUDA error at %s:%d code=%d(%s)).\n",msg.c_str(),file,line,err,cudaGetErrorString(err)); 
-    throw tx;
-  }
 }
 
 
@@ -394,17 +396,15 @@ size_t HostAlloc(tdouble2 **ptr,unsigned count){
 /// Returns dynamic pointer with word data. (this pointer must be deleted)
 //==============================================================================
 word* ToHostWord(unsigned pini,unsigned n,const word *vg){
-  std::string met="ToHostWord: ";
-  CheckCudaErrors(met+"At the beginning.");
+  Check_CudaErroorFun("At the beginning.");
   try{
     word *v=new word[n];
     cudaMemcpy(v,vg+pini,sizeof(word)*n,cudaMemcpyDeviceToHost);
-    CheckCudaErrors(met+"After cudaMemcpy().");
+    Check_CudaErroorFun("After cudaMemcpy().");
     return(v);
   }
   catch(const std::bad_alloc){
-    const std::string tx=met+fun::PrintStr("Could not allocate the requested memory (np=%u).",n);
-    throw tx;
+    fun::Run_ExceptioonFun(fun::PrintStr("Could not allocate the requested memory (np=%u).",n));
   }
   return(NULL);
 }
@@ -413,17 +413,15 @@ word* ToHostWord(unsigned pini,unsigned n,const word *vg){
 /// Returns dynamic pointer with ushort4 data. (this pointer must be deleted)
 //==============================================================================
 ushort4* ToHostWord4(unsigned pini,unsigned n,const ushort4 *vg){
-  std::string met="ToHostWord4: ";
-  CheckCudaErrors(met+"At the beginning.");
+  Check_CudaErroorFun("At the beginning.");
   try{
     ushort4 *v=new ushort4[n];
     cudaMemcpy(v,vg+pini,sizeof(ushort4)*n,cudaMemcpyDeviceToHost);
-    CheckCudaErrors(met+"After cudaMemcpy().");
+    Check_CudaErroorFun("After cudaMemcpy().");
     return(v);
   }
   catch(const std::bad_alloc){
-    const std::string tx=met+fun::PrintStr("Could not allocate the requested memory (np=%u).",n);
-    throw tx;
+    fun::Run_ExceptioonFun(fun::PrintStr("Could not allocate the requested memory (np=%u).",n));
   }
   return(NULL);
 }
@@ -432,17 +430,15 @@ ushort4* ToHostWord4(unsigned pini,unsigned n,const ushort4 *vg){
 /// Returns dynamic pointer with int data. (this pointer must be deleted)
 //==============================================================================
 int* ToHostInt(unsigned pini,unsigned n,const int *vg){
-  std::string met="ToHostInt: ";
-  CheckCudaErrors(met+"At the beginning.");
+  Check_CudaErroorFun("At the beginning.");
   try{
     int *v=new int[n];
     cudaMemcpy(v,vg+pini,sizeof(int)*n,cudaMemcpyDeviceToHost);
-    CheckCudaErrors(met+"After cudaMemcpy().");
+    Check_CudaErroorFun("After cudaMemcpy().");
     return(v);
   }
   catch(const std::bad_alloc){
-    const std::string tx=met+fun::PrintStr("Could not allocate the requested memory (np=%u).",n);
-    throw tx;
+    fun::Run_ExceptioonFun(fun::PrintStr("Could not allocate the requested memory (np=%u).",n));
   }
   return(NULL);
 }
@@ -451,17 +447,15 @@ int* ToHostInt(unsigned pini,unsigned n,const int *vg){
 /// Returns dynamic pointer with unsigned data. (this pointer must be deleted)
 //==============================================================================
 unsigned* ToHostUint(unsigned pini,unsigned n,const unsigned *vg){
-  std::string met="ToHostUint: ";
-  CheckCudaErrors(met+"At the beginning.");
+  Check_CudaErroorFun("At the beginning.");
   try{
     unsigned *v=new unsigned[n];
     cudaMemcpy(v,vg+pini,sizeof(unsigned)*n,cudaMemcpyDeviceToHost);
-    CheckCudaErrors(met+"After cudaMemcpy().");
+    Check_CudaErroorFun("After cudaMemcpy().");
     return(v);
   }
   catch(const std::bad_alloc){
-    const std::string tx=met+fun::PrintStr("Could not allocate the requested memory (np=%u).",n);
-    throw tx;
+    fun::Run_ExceptioonFun(fun::PrintStr("Could not allocate the requested memory (np=%u).",n));
   }
   return(NULL);
 }
@@ -470,17 +464,15 @@ unsigned* ToHostUint(unsigned pini,unsigned n,const unsigned *vg){
 /// Returns dynamic pointer with tint2 data. (this pointer must be deleted)
 //==============================================================================
 tint2* ToHostInt2(unsigned pini,unsigned n,const int2 *vg){
-  std::string met="ToHostInt2: ";
-  CheckCudaErrors(met+"At the beginning.");
+  Check_CudaErroorFun("At the beginning.");
   try{
     tint2 *v=new tint2[n];
     cudaMemcpy(v,vg+pini,sizeof(tint2)*n,cudaMemcpyDeviceToHost);
-    CheckCudaErrors(met+"After cudaMemcpy().");
+    Check_CudaErroorFun("After cudaMemcpy().");
     return(v);
   }
   catch(const std::bad_alloc){
-    const std::string tx=met+fun::PrintStr("Could not allocate the requested memory (np=%u).",n);
-    throw tx;
+    fun::Run_ExceptioonFun(fun::PrintStr("Could not allocate the requested memory (np=%u).",n));
   }
   return(NULL);
 }
@@ -489,17 +481,15 @@ tint2* ToHostInt2(unsigned pini,unsigned n,const int2 *vg){
 /// Returns dynamic pointer with float data. (this pointer must be deleted)
 //==============================================================================
 float* ToHostFloat(unsigned pini,unsigned n,const float *vg){
-  std::string met="ToHostFloat: ";
-  CheckCudaErrors(met+"At the beginning.");
+  Check_CudaErroorFun("At the beginning.");
   try{
     float *v=new float[n];
     cudaMemcpy(v,vg+pini,sizeof(float)*n,cudaMemcpyDeviceToHost);
-    CheckCudaErrors(met+"After cudaMemcpy().");
+    Check_CudaErroorFun("After cudaMemcpy().");
     return(v);
   }
   catch(const std::bad_alloc){
-    const std::string tx=met+fun::PrintStr("Could not allocate the requested memory (np=%u).",n);
-    throw tx;
+    fun::Run_ExceptioonFun(fun::PrintStr("Could not allocate the requested memory (np=%u).",n));
   }
   return(NULL);
 }
@@ -508,17 +498,15 @@ float* ToHostFloat(unsigned pini,unsigned n,const float *vg){
 /// Returns dynamic pointer with tfloat3 data. (this pointer must be deleted)
 //==============================================================================
 tfloat3* ToHostFloat3(unsigned pini,unsigned n,const float3 *vg){
-  std::string met="ToHostFloat3: ";
-  CheckCudaErrors(met+"At the beginning.");
+  Check_CudaErroorFun("At the beginning.");
   try{
     tfloat3 *v=new tfloat3[n];
     cudaMemcpy(v,vg+pini,sizeof(tfloat3)*n,cudaMemcpyDeviceToHost);
-    CheckCudaErrors(met+"After cudaMemcpy().");
+    Check_CudaErroorFun("After cudaMemcpy().");
     return(v);
   }
   catch(const std::bad_alloc){
-    const std::string tx=met+fun::PrintStr("Could not allocate the requested memory (np=%u).",n);
-    throw tx;
+    fun::Run_ExceptioonFun(fun::PrintStr("Could not allocate the requested memory (np=%u).",n));
   }
   return(NULL);
 }
@@ -527,17 +515,15 @@ tfloat3* ToHostFloat3(unsigned pini,unsigned n,const float3 *vg){
 /// Returns dynamic pointer with tfloat4 data. (this pointer must be deleted)
 //==============================================================================
 tfloat4* ToHostFloat4(unsigned pini,unsigned n,const float4 *vg){
-  std::string met="ToHostFloat4: ";
-  CheckCudaErrors(met+"At the beginning.");
+  Check_CudaErroorFun("At the beginning.");
   try{
     tfloat4 *v=new tfloat4[n];
     cudaMemcpy(v,vg+pini,sizeof(tfloat4)*n,cudaMemcpyDeviceToHost);
-    CheckCudaErrors(met+"After cudaMemcpy().");
+    Check_CudaErroorFun("After cudaMemcpy().");
     return(v);
   }
   catch(const std::bad_alloc){
-    const std::string tx=met+fun::PrintStr("Could not allocate the requested memory (np=%u).",n);
-    throw tx;
+    fun::Run_ExceptioonFun(fun::PrintStr("Could not allocate the requested memory (np=%u).",n));
   }
   return(NULL);
 }
@@ -546,17 +532,15 @@ tfloat4* ToHostFloat4(unsigned pini,unsigned n,const float4 *vg){
 /// Returns dynamic pointer with double data. (this pointer must be deleted)
 //==============================================================================
 double* ToHostDouble(unsigned pini,unsigned n,const double *vg){
-  std::string met="ToHostDouble: ";
-  CheckCudaErrors(met+"At the beginning.");
+  Check_CudaErroorFun("At the beginning.");
   try{
     double *v=new double[n];
     cudaMemcpy(v,vg+pini,sizeof(double)*n,cudaMemcpyDeviceToHost);
-    CheckCudaErrors(met+"After cudaMemcpy().");
+    Check_CudaErroorFun("After cudaMemcpy().");
     return(v);
   }
   catch(const std::bad_alloc){
-    const std::string tx=met+fun::PrintStr("Could not allocate the requested memory (np=%u).",n);
-    throw tx;
+    fun::Run_ExceptioonFun(fun::PrintStr("Could not allocate the requested memory (np=%u).",n));
   }
   return(NULL);
 }
@@ -565,17 +549,15 @@ double* ToHostDouble(unsigned pini,unsigned n,const double *vg){
 /// Returns dynamic pointer with tdouble2 data. (this pointer must be deleted)
 //==============================================================================
 tdouble2* ToHostDouble2(unsigned pini,unsigned n,const double2 *vg){
-  std::string met="ToHostDouble2: ";
-  CheckCudaErrors(met+"At the beginning.");
+  Check_CudaErroorFun("At the beginning.");
   try{
     tdouble2 *v=new tdouble2[n];
     cudaMemcpy(v,vg+pini,sizeof(tdouble2)*n,cudaMemcpyDeviceToHost);
-    CheckCudaErrors(met+"After cudaMemcpy().");
+    Check_CudaErroorFun("After cudaMemcpy().");
     return(v);
   }
   catch(const std::bad_alloc){
-    const std::string tx=met+fun::PrintStr("Could not allocate the requested memory (np=%u).",n);
-    throw tx;
+    fun::Run_ExceptioonFun(fun::PrintStr("Could not allocate the requested memory (np=%u).",n));
   }
   return(NULL);
 }
@@ -586,8 +568,7 @@ tdouble2* ToHostDouble2(unsigned pini,unsigned n,const double2 *vg){
 /// Returns dynamic pointer with position in tfloat3. (this pointer must be deleted)
 //==============================================================================
 tfloat3* ToHostPosf3(unsigned pini,unsigned n,const double2 *posxyg,const double *poszg){
-  std::string met="ToHostPosf3: ";
-  CheckCudaErrors(met+"At the beginning.");
+  Check_CudaErroorFun("At the beginning.");
   try{
     tdouble2 *posxy=ToHostDouble2(pini,n,posxyg);
     double   *posz= ToHostDouble(pini,n,poszg);
@@ -598,8 +579,7 @@ tfloat3* ToHostPosf3(unsigned pini,unsigned n,const double2 *posxyg,const double
     return(posf);
   }
   catch(const std::bad_alloc){
-    const std::string tx=met+fun::PrintStr("Could not allocate the requested memory (np=%u).",n);
-    throw tx;
+    fun::Run_ExceptioonFun(fun::PrintStr("Could not allocate the requested memory (np=%u).",n));
   }
   return(NULL);
 }
@@ -608,8 +588,7 @@ tfloat3* ToHostPosf3(unsigned pini,unsigned n,const double2 *posxyg,const double
 /// Returns dynamic pointer with position in tfloat3. (this pointer must be deleted)
 //==============================================================================
 tdouble3* ToHostPosd3(unsigned pini,unsigned n,const double2 *posxyg,const double *poszg){
-  std::string met="ToHostPosd3: ";
-  CheckCudaErrors(met+"At the beginning.");
+  Check_CudaErroorFun("At the beginning.");
   try{
     tdouble2 *posxy=ToHostDouble2(pini,n,posxyg);
     double   *posz= ToHostDouble(pini,n,poszg);
@@ -620,8 +599,32 @@ tdouble3* ToHostPosd3(unsigned pini,unsigned n,const double2 *posxyg,const doubl
     return(posd);
   }
   catch(const std::bad_alloc){
-    const std::string tx=met+fun::PrintStr("Could not allocate the requested memory (np=%u).",n);
-    throw tx;
+    fun::Run_ExceptioonFun(fun::PrintStr("Could not allocate the requested memory (np=%u).",n));
+  }
+  return(NULL);
+}
+
+//==============================================================================
+/// Returns dynamic pointers with x,y,z data and w values are saved in ptr_w. (theses pointers must be deleted)
+//==============================================================================
+tfloat3* ToHostFloatXYZ_W(unsigned pini,unsigned n,const float4 *ptrg,float **ptr_w){
+  Check_CudaErroorFun("At the beginning.");
+  try{
+    const tfloat4 *v4=ToHostFloat4(pini,n,ptrg);
+    tfloat3 *vxyz=new tfloat3[n];
+    float   *vw  =new float[n];
+    for(unsigned p=0;p<n;p++){
+      const tfloat4 v=v4[p];
+      vxyz[p]=TFloat3(v.x,v.y,v.z);
+      vw  [p]=v.w;
+    }
+    delete[] v4; v4=NULL;
+    if(ptr_w)*ptr_w=vw;
+    else{ delete[] vw; vw=NULL; }
+    return(vxyz);
+  }
+  catch(const std::bad_alloc){
+    fun::Run_ExceptioonFun(fun::PrintStr("Could not allocate the requested memory (np=%u).",n));
   }
   return(NULL);
 }

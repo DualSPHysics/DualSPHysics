@@ -16,12 +16,12 @@
  You should have received a copy of the GNU Lesser General Public License along with DualSPHysics. If not, see <http://www.gnu.org/licenses/>. 
 */
 
-//:NO_COMENTARIO
 //:#############################################################################
 //:# Cambios:
 //:# =========
 //:# - Uso de DestructorActive para controlar cuando esta el destructor en 
 //:#   ejecucion para la generacion de excepciones. (21-03-2018)
+//:# - Gestion de excepciones mejorada.  (15-09-2019)
 //:#############################################################################
 
 /// \file JObject.h \brief Declares the class \ref JObject.
@@ -30,6 +30,20 @@
 #define _JObject_
 
 #include <string>
+
+//-Defines for normal exceptions.
+#ifndef Run_Exceptioon
+#define Run_Exceptioon(msg) RunExceptioon(__FILE__,__LINE__,ClassName,__func__,msg)
+#endif
+#ifndef Run_ExceptioonFile
+#define Run_ExceptioonFile(msg,file) RunExceptioon(__FILE__,__LINE__,ClassName,__func__,msg,file)
+#endif
+#ifndef Run_ExceptioonSta
+#define Run_ExceptioonSta(msg) RunExceptioonStatic(__FILE__,__LINE__,__func__,msg)
+#endif
+#ifndef Run_ExceptioonFileSta
+#define Run_ExceptioonFileSta(msg,file) RunExceptioonStatic(__FILE__,__LINE__,__func__,msg,file)
+#endif
 
 //##############################################################################
 //# JObject
@@ -42,13 +56,21 @@ protected:
   std::string ClassName;   ///<Name of the class.
   bool DestructorActive;   ///<Destructor of object in execution.
 
-  void RunException(const std::string &method,const std::string &msg)const;
-  void RunException(const std::string &method,const std::string &msg,const std::string &file)const;
-  std::string GetExceptionText(const std::string &method,const std::string &msg)const;
-  std::string GetExceptionText(const std::string &method,const std::string &msg,const std::string &file)const;
-  void PrintException(const std::string &method,const std::string &msg,const std::string &file="")const;
+  //static void RunExceptioonStatic(const std::string &srcfile,int srcline
+  //  ,const std::string &method
+  //  ,const std::string &msg,const std::string &file="");
+
+  void RunExceptioon(const std::string &srcfile,int srcline
+    ,const std::string &classname,const std::string &method
+    ,const std::string &msg,const std::string &file="")const;
+
+  void RunException(const std::string &method,const std::string &msg
+    ,const std::string &file="")const;
+
 public:  
   JObject():ClassName("JObject"),DestructorActive(false){} ///<Constructor of objects.
+
+
 };
 
 #endif

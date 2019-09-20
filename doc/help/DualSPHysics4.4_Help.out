@@ -24,7 +24,7 @@
  along with DualSPHysics. If not, see <http://www.gnu.org/licenses/>.
 
 
-DualSPHysics4 [Symmetry] v4.4.010 (21-06-2019)
+DualSPHysics4 [Symmetry] v4.4.024 (16-09-2019)
 ===============================================
 LoadDsphConfig> .../bin/windows/DsphConfig.xml
 Information about execution parameters:
@@ -34,10 +34,12 @@ Information about execution parameters:
   Options:
     -h          Shows information about parameters
     -ver        Shows version information
+    -info       Shows version features in JSON format
     -opt <file> Loads a file configuration
 
     -cpu        Execution on CPU (option by default)
     -gpu[:id]   Execution on GPU and id of the device
+
     -stable     The result is always the same but the execution is slower
 
     -posdouble:<mode>  Precision used in position for particle interactions
@@ -70,7 +72,12 @@ Information about execution parameters:
     -viscolamsps:<float>       Laminar+SPS viscosity [order of 1E-6]
     -viscoboundfactor:<float>  Multiplies the viscosity value of boundary
 
-    -deltasph:<float> Constant for DeltaSPH. Typical value is 0.1 (0 by default)
+    -ddt:<mode> Specifies the Density Diffusion Term to correct density
+        none       Not used (by default)
+        1          Diffusion term by Molteni and Colagrossi 2009
+        2          Diffusion term by Fourtakas et al 2019 (inner fluid particles)
+        3          Diffusion term by Fourtakas et al 2019 (all fluid particles)
+    -ddtvalue:<float> Constant for DDT (0.1 by default)
 
     -shifting:<mode> Specifies the use of Shifting correction
         none       Shifting is disabled (by default)
@@ -113,3 +120,6 @@ Information about execution parameters:
   Examples:
     DualSPHysics4 case out_case -sv:binx,csv 
     DualSPHysics4 -name case -dirout out_case -sv:binx,csv 
+
+Finished execution (code=0).
+

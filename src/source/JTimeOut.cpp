@@ -30,9 +30,10 @@ using namespace std;
 //==============================================================================
 /// Constructor.
 //==============================================================================
-JTimeOut::JTimeOut(){
+JTimeOut::JTimeOut(const JTimeOut* tout){
   ClassName="JTimeOut";
   Reset();
+  if(tout)CopyFrom(tout);
 }
 
 //==============================================================================
@@ -50,6 +51,20 @@ void JTimeOut::Reset(){
   Times.clear();
   TimeBase=0;
   SpecialConfig=false;
+  LastTimeInput=LastTimeOutput=-1;
+}
+
+//==============================================================================
+/// Copy data from other object.
+//==============================================================================
+void JTimeOut::CopyFrom(const JTimeOut* tout){
+  Reset();
+  const unsigned nt=unsigned(tout->Times.size());
+  for(unsigned c=0;c<nt;c++)Times.push_back(tout->Times[c]);
+  TimeBase=tout->TimeBase;
+  SpecialConfig=tout->SpecialConfig;
+  LastTimeInput=tout->LastTimeInput;
+  LastTimeOutput=tout->LastTimeOutput;
 }
 
 //==============================================================================
@@ -136,6 +151,8 @@ void JTimeOut::VisuConfig(JLog2 *log,std::string txhead,std::string txfoot){
 /// Returns next time to save PART file.
 //==============================================================================
 double JTimeOut::GetNextTime(double t){
+  if(LastTimeInput>=0 && t==LastTimeInput)return(LastTimeOutput);
+  LastTimeInput=t;
   //printf("\n++> GetNextTime(%f)\n",t);
   double nexttime=0;
   double tb=Times[TimeBase].time;
@@ -160,6 +177,7 @@ double JTimeOut::GetNextTime(double t){
     if(nexttime>tnext)nexttime=tnext;
   }
   //printf("++> nexttime:%f\n",nexttime);
+  LastTimeOutput=nexttime;
   return(nexttime);
 }
 

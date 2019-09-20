@@ -23,6 +23,8 @@
 //:#   para determinados instantes en segundos, interpolando los valores 
 //:#   intermedios. (12-04-2013)
 //:# - Usa JReadDatafile para cargar datos de fichero. (17-12-2015)
+//:# - GetVisco() guarda entrada y salida para evitar calculos con llamadas 
+//:#   consecutivas iguales. (08-09-2019)
 //:#############################################################################
 
 /// \file JSphVisco.h \brief Declares the class \ref JSphVisco.
@@ -55,6 +57,9 @@ protected:
   unsigned Position;
   float *Times;
   float *Values;
+
+  float LastTimestepInput;  ///<Saves the last value used with GetVisco().
+  float LastViscoOutput;    ///<Saves the last value returned by GetVisco().
 
   void Resize(unsigned size);
 

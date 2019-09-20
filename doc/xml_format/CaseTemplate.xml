@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<case app="GenCase4 v4.0.109 (21-06-2019)" date="23-06-2019 10:37:33">
+<case app="GenCase4 v4.0.115 (19-09-2019)" date="20-09-2019 18:45:51">
     <casedef>
         <constantsdef>
             <lattice bound="2" fluid="1" />
@@ -426,7 +426,7 @@
                     <pointsmkout file="points" />
                     <abort />
                     <runlist name="Hola" />
-                    <runlist name="Hola2" />
+                    <runlist name="Hola2" times="5" />
                 </mainlist>
             </commands>
         </geometry>
@@ -700,7 +700,8 @@
             <parameter key="ViscoTreatment" value="1" comment="Viscosity formulation 1:Artificial, 2:Laminar+SPS (default=1)" />
             <parameter key="Visco" value="0.01" comment="Viscosity value" />
             <parameter key="ViscoBoundFactor" value="1" comment="Multiply viscosity value with boundary (default=1)" />
-            <parameter key="DeltaSPH" value="0" comment="DeltaSPH value, 0.1 is the typical value, with 0 disabled (default=0)" />
+            <parameter key="DensityDT" value="0" comment="Density Diffusion Term 0:None, 1:Molteni, 2:Fourtakas, 3:Fourtakas(full) (default=0)" />
+            <parameter key="DensityDTvalue" value="0.1" comment="DDT value (default=0.1)" />
             <parameter key="#Shifting" value="0" comment="Shifting mode 0:None, 1:Ignore bound, 2:Ignore fixed, 3:Full (default=0)" />
             <parameter key="#ShiftCoef" value="-2" comment="Coefficient for shifting computation (default=-2)" />
             <parameter key="#ShiftTFS" value="1.5" comment="Threshold to detect free surface. Typically 1.5 for 2D and 2.75 for 3D (default=0)" />

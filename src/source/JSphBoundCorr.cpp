@@ -152,12 +152,12 @@ void JSphBoundCorrZone::ConfigAuto(const JSphPartsInit *partsdata){
 //==============================================================================
 /// Applies motion to direction data.
 //==============================================================================
-void JSphBoundCorrZone::RunMotion(bool simple,const tdouble3 &msimple,const tmatrix4d &mmatrix){
-  if(simple)LimitPos=LimitPos+msimple;
-  else{
+void JSphBoundCorrZone::RunMotion(const StMotionData& m){
+  if(m.type==MOTT_Linear)LimitPos=LimitPos+m.linmov;
+  if(m.type==MOTT_Matrix){
     const tdouble3 limitpos0=LimitPos;
-    LimitPos=MatrixMulPoint(mmatrix,limitpos0);
-    Direction=MatrixMulPoint(mmatrix,limitpos0+Direction)-LimitPos;
+    LimitPos=MatrixMulPoint(m.matmov,limitpos0);
+    Direction=MatrixMulPoint(m.matmov,limitpos0+Direction)-LimitPos;
   }
   Plane=TPlane3f(fgeo::PlanePtVec(LimitPos,Direction));
 }
@@ -366,8 +366,8 @@ void JSphBoundCorr::VisuConfig(std::string txhead,std::string txfoot)const{
 //==============================================================================
 /// Applies motion to direction data.
 //==============================================================================
-void JSphBoundCorr::RunMotion(word mkbound,bool simple,const tdouble3 &msimple,const tmatrix4d &mmatrix){
-  for(unsigned c=0;c<GetCount();c++)if(List[c]->MkBound==mkbound)List[c]->RunMotion(simple,msimple,mmatrix);
+void JSphBoundCorr::RunMotion(const StMotionData& motiondata){
+  for(unsigned c=0;c<GetCount();c++)if(List[c]->MkBound==motiondata.mkbound)List[c]->RunMotion(motiondata);
 }
 
 //==============================================================================

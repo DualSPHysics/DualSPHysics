@@ -75,14 +75,13 @@ void JSaveCsv2::Reset(){
 /// Initialization of variables.
 //==============================================================================
 void JSaveCsv2::OpenFile(){
-  const char met[]="OpenFile";
   if(Pf==NULL){
     Pf=new fstream();
     const bool fexists=fun::FileExists(FileName);
     if(App && fexists)Pf->open(FileName.c_str(),ios::binary|ios::out|ios::in|ios::app);
     else Pf->open(FileName.c_str(),ios::binary|ios::out);
     if(!(*Pf)){
-      RunException(met,"File could not be opened.",FileName);
+      Run_ExceptioonFile("File could not be opened.",FileName);
     }
     if(App && fexists){
       AppendMode=true;
@@ -169,7 +168,7 @@ std::string JSaveCsv2::ToStr(const char *format,...)const{
       if(rsize>=0)ret=buff2;
       delete[] buff2;
     }
-    if(rsize<0)throw "Error in JSaveCsv2::ToStr(): Output text is too long.";
+    if(rsize<0)Run_Exceptioon("Error in JSaveCsv2::ToStr(): Output text is too long.");
   }
   va_end(args);
   return(ret);
@@ -223,7 +222,7 @@ void JSaveCsv2::Save(const std::string &tx){
   Pf->write(tx.c_str(),tx.size());
   Pf->flush();
   //fflush(NULL);//-Vacia todos los bufers
-  if(Pf->fail())RunException("Save","File writing failure.",FileName);
+  if(Pf->fail())Run_ExceptioonFile("File writing failure.",FileName);
 }
 
 //==============================================================================
@@ -242,7 +241,6 @@ void JSaveCsv2::SetSeparators(std::string &tx)const{
 /// Graba datos en fichero.
 //==============================================================================
 void JSaveCsv2::SaveData(bool closefile){
-  const char met[]="SaveData";
   if(FirstSaveData || !Data.empty()){
     if(Pf==NULL)OpenFile();
     if(FirstSaveData && !AppendMode)Save(Head);

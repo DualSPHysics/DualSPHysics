@@ -117,7 +117,7 @@ protected:
   unsigned *Dcellc;  ///<Cells inside DomCells coded with DomCellCode. | Celda dentro de DomCells codificada con DomCellCode.
   tdouble3 *Posc;
   tfloat4 *Velrhopc;
-    
+
   //-Variables for compute step: VERLET. | Vars. para compute step: VERLET.
   tfloat4 *VelrhopM1c;  ///<Verlet: in order to keep previous values. | Verlet: para guardar valores anteriores.
 
@@ -171,6 +171,7 @@ protected:
   unsigned*    SaveArrayCpu(unsigned np,const unsigned    *datasrc)const{ return(TSaveArrayCpu<unsigned>   (np,datasrc)); }
   int*         SaveArrayCpu(unsigned np,const int         *datasrc)const{ return(TSaveArrayCpu<int>        (np,datasrc)); }
   float*       SaveArrayCpu(unsigned np,const float       *datasrc)const{ return(TSaveArrayCpu<float>      (np,datasrc)); }
+  tfloat3*     SaveArrayCpu(unsigned np,const tfloat3     *datasrc)const{ return(TSaveArrayCpu<tfloat3>    (np,datasrc)); }
   tfloat4*     SaveArrayCpu(unsigned np,const tfloat4     *datasrc)const{ return(TSaveArrayCpu<tfloat4>    (np,datasrc)); }
   double*      SaveArrayCpu(unsigned np,const double      *datasrc)const{ return(TSaveArrayCpu<double>     (np,datasrc)); }
   tdouble3*    SaveArrayCpu(unsigned np,const tdouble3    *datasrc)const{ return(TSaveArrayCpu<tdouble3>   (np,datasrc)); }
@@ -180,6 +181,7 @@ protected:
   void RestoreArrayCpu(unsigned np,unsigned    *data,unsigned    *datanew)const{ TRestoreArrayCpu<unsigned>   (np,data,datanew); }
   void RestoreArrayCpu(unsigned np,int         *data,int         *datanew)const{ TRestoreArrayCpu<int>        (np,data,datanew); }
   void RestoreArrayCpu(unsigned np,float       *data,float       *datanew)const{ TRestoreArrayCpu<float>      (np,data,datanew); }
+  void RestoreArrayCpu(unsigned np,tfloat3     *data,tfloat3     *datanew)const{ TRestoreArrayCpu<tfloat3>    (np,data,datanew); }
   void RestoreArrayCpu(unsigned np,tfloat4     *data,tfloat4     *datanew)const{ TRestoreArrayCpu<tfloat4>    (np,data,datanew); }
   void RestoreArrayCpu(unsigned np,double      *data,double      *datanew)const{ TRestoreArrayCpu<double>     (np,data,datanew); }
   void RestoreArrayCpu(unsigned np,tdouble3    *data,tdouble3    *datanew)const{ TRestoreArrayCpu<tdouble3>   (np,data,datanew); }
@@ -228,7 +230,7 @@ protected:
     ,const tdouble3 *pos,const tfloat3 *pspos,const tfloat4 *velrhopp,const typecode *code,const unsigned *id
     ,float &viscdt,float *ar)const;
 
-  template<bool psingle,TpKernel tker,TpFtMode ftmode,bool lamsps,TpDeltaSph tdelta,bool shift> void InteractionForcesFluid
+  template<bool psingle,TpKernel tker,TpFtMode ftmode,bool lamsps,TpDensity tdensity,bool shift> void InteractionForcesFluid
     (unsigned n,unsigned pini,tint4 nc,int hdiv,unsigned cellfluid,float visco
     ,const unsigned *beginendcell,tint3 cellzero,const unsigned *dcell
     ,const tsymatrix3f* tau,tsymatrix3f* gradvel
@@ -244,9 +246,9 @@ protected:
     ,const tdouble3 *pos,const tfloat3 *pspos,const tfloat4 *velrhop,const typecode *code,const unsigned *idp
     ,float &viscdt,tfloat3 *ace)const;
 
-  template<bool psingle,TpKernel tker,TpFtMode ftmode,bool lamsps,TpDeltaSph tdelta,bool shift> 
+  template<bool psingle,TpKernel tker,TpFtMode ftmode,bool lamsps,TpDensity tdensity,bool shift> 
     void Interaction_ForcesCpuT(const stinterparmsc &t,float &viscdt)const;
-  template<bool psingle,TpKernel tker,TpFtMode ftmode,bool lamsps,TpDeltaSph tdelta> void Interaction_Forces_ct5(const stinterparmsc &t,float &viscdt)const;
+  template<bool psingle,TpKernel tker,TpFtMode ftmode,bool lamsps,TpDensity tdensity> void Interaction_Forces_ct5(const stinterparmsc &t,float &viscdt)const;
   template<bool psingle,TpKernel tker,TpFtMode ftmode,bool lamsps> void Interaction_Forces_ct4(const stinterparmsc &t,float &viscdt)const;
   template<bool psingle,TpKernel tker,TpFtMode ftmode> void Interaction_Forces_ct3(const stinterparmsc &t,float &viscdt)const;
   template<bool psingle,TpKernel tker> void Interaction_Forces_ct2(const stinterparmsc &t,float &viscdt)const;
@@ -267,9 +269,12 @@ protected:
 
   void RunShifting(double dt);
 
-  void CalcRidp(bool periactive,unsigned np,unsigned pini,unsigned idini,unsigned idfin,const typecode *code,const unsigned *idp,unsigned *ridp)const;
-  void MoveLinBound(unsigned np,unsigned ini,const tdouble3 &mvpos,const tfloat3 &mvvel,const unsigned *ridp,tdouble3 *pos,unsigned *dcell,tfloat4 *velrhop,typecode *code)const;
-  void MoveMatBound(unsigned np,unsigned ini,tmatrix4d m,double dt,const unsigned *ridpmv,tdouble3 *pos,unsigned *dcell,tfloat4 *velrhop,typecode *code)const;
+  void CalcRidp(bool periactive,unsigned np,unsigned pini,unsigned idini,unsigned idfin
+    ,const typecode *code,const unsigned *idp,unsigned *ridp)const;
+  void MoveLinBound(unsigned np,unsigned ini,const tdouble3 &mvpos,const tfloat3 &mvvel
+    ,const unsigned *ridp,tdouble3 *pos,unsigned *dcell,tfloat4 *velrhop,typecode *code)const;
+  void MoveMatBound(unsigned np,unsigned ini,tmatrix4d m,double dt,const unsigned *ridpmv
+    ,tdouble3 *pos,unsigned *dcell,tfloat4 *velrhop,typecode *code,tfloat3 *boundnormal)const;
   void CalcMotion(double stepdt);
   void RunMotion(double stepdt);
   void RunRelaxZone(double dt);  //<vs_rzone>

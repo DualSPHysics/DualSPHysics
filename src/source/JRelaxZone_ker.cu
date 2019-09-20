@@ -25,6 +25,8 @@
 
 #include "JRelaxZone_ker.h"
 #include "JReduSum_ker.h"
+#include "Functions.h"
+#include "FunctionsCuda.h"
 #include <string>
 #include <cstdio>
 //:#include "JDgKerPrint.h"
@@ -33,19 +35,6 @@
 
 namespace curelaxzone{
 #include "FunctionsMath_ker.cu"
-
-//==============================================================================
-// Comprueba error y finaliza ejecución.
-//==============================================================================
-#define CheckErrorCuda(text)  __CheckErrorCuda(text,__FILE__,__LINE__)
-void __CheckErrorCuda(const char *text,const char *file,const int line){
-  cudaError_t err=cudaGetLastError();
-  if(cudaSuccess!=err){
-    char cad[2048]; 
-    sprintf(cad,"%s (CUDA error: %s -> %s:%i).\n",text,cudaGetErrorString(err),file,line); 
-    throw std::string(cad);
-  }
-}
 
 //==============================================================================
 // Devuelve tamaño de gridsize segun parametros.

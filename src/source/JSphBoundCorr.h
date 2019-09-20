@@ -91,7 +91,7 @@ public:
   void ConfigBoundCode(typecode boundcode);
   void ConfigAuto(const JSphPartsInit *partsdata);
 
-  void RunMotion(bool simple,const tdouble3 &msimple,const tmatrix4d &mmatrix);
+  void RunMotion(const StMotionData& motiondata);
 
   void GetConfig(std::vector<std::string> &lines)const;
 
@@ -141,7 +141,7 @@ public:
   byte GetExtrapolateMode()const{ return(ExtrapolateMode); };
 
   bool GetUseMotion()const{ return(UseMotion); }
-  void RunMotion(word mkbound,bool simple,const tdouble3 &msimple,const tmatrix4d &mmatrix);
+  void RunMotion(const StMotionData& motiondata);
 
   const JSphBoundCorrZone* GetMkZone(unsigned idx)const{ return(idx<GetCount()? List[idx]: NULL); }
 

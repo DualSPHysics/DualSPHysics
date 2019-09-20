@@ -20,6 +20,7 @@
 
 #include "JReduSum_ker.h"
 #include "Functions.h"
+#include "FunctionsCuda.h"
 #include <cstdio>
 #include <cfloat>
 //:#include "JDgKerPrint.h"
@@ -31,20 +32,6 @@ namespace curedus{
 //##############################################################################
 //## Basic functions.
 //##############################################################################
-
-//==============================================================================
-/// Checks error and ends execution.
-/// Comprueba error y finaliza ejecucion.
-//==============================================================================
-#define CheckErrorCuda(text)  __CheckErrorCuda(text,__FILE__,__LINE__)
-void __CheckErrorCuda(const char *text,const char *file,const int line){
-  cudaError_t err=cudaGetLastError();
-  if(cudaSuccess!=err){
-    std::string tex=fun::PrintStr("%s (CUDA error: %s -> %s:%i).\n",text,cudaGetErrorString(err),file,line); 
-    throw tex;
-  }
-}
-
 //==============================================================================
 /// Returns the dimensions of gridsize according to parameters.
 /// Devuelve tamaño de gridsize segun parametros.
@@ -164,7 +151,7 @@ double DgReduSumDouble(unsigned ndata,unsigned inidata,const double* datag){
     double *data=new double[ndata];
     //-Gets data from GPU.
     cudaMemcpy(data,datag+inidata,sizeof(double)*ndata,cudaMemcpyDeviceToHost);
-    CheckErrorCuda("DgReduSumDouble");
+    fcuda::Check_CudaErroorFun("DgReduSumDouble");
     //-Process data.
     for(unsigned p=0;p<ndata;p++)res=res+data[p];
     //-Frees GPU memory.
@@ -327,7 +314,7 @@ float DgReduSumFloat(unsigned ndata,unsigned inidata,const float* datag){
     float *data=new float[ndata];
     //-Gets data from GPU.
     cudaMemcpy(data,datag+inidata,sizeof(float)*ndata,cudaMemcpyDeviceToHost);
-    CheckErrorCuda("DgReduSumFloat");
+    fcuda::Check_CudaErroorFun("DgReduSumFloat");
     //-Process data.
     for(unsigned p=0;p<ndata;p++)res=res+data[p];
      //-Frees GPU memory.
@@ -493,7 +480,7 @@ unsigned DgReduSumUint(unsigned ndata,unsigned inidata,const unsigned* datag){
     unsigned *data=new unsigned[ndata];
     //-Gets data from GPU.
     cudaMemcpy(data,datag+inidata,sizeof(unsigned)*ndata,cudaMemcpyDeviceToHost);
-    CheckErrorCuda("DgReduSumUint");
+    fcuda::Check_CudaErroorFun("DgReduSumUint");
     //-Process data.
     for(unsigned p=0;p<ndata;p++)res=res+data[p];
     //-Frees GPU memory.
@@ -648,7 +635,7 @@ float3 DgReduSumFloat3(unsigned ndata,unsigned inidata,const float3* datag){
     float3 *data=new float3[ndata];
     //-Gets data from GPU.
     cudaMemcpy(data,datag+inidata,sizeof(float3)*ndata,cudaMemcpyDeviceToHost);
-    CheckErrorCuda("DgReduSumFloat3");
+    fcuda::Check_CudaErroorFun("DgReduSumFloat3");
     //-Process data.
     for(unsigned p=0;p<ndata;p++){
       res.x=res.x+data[p].x;

@@ -21,6 +21,7 @@
 //:# =========
 //:# - Documentacion del codigo en ingles. (08-08-2017)
 //:# - Nuevas funciones para ReduSumFloat3. (20-11-2018)
+//:# - Gestion de excepciones mejorada.  (15-09-2019)
 //:#############################################################################
 
 /// \file JReduSum_ker.h \brief Declares functions and CUDA kernels for reduction using using the sum.

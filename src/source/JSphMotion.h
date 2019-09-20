@@ -25,6 +25,7 @@
 //:# - Nuevo metodo GetObjIdxByMkBound(). (09-08-2018)
 //:# - Nuevos metodos GetActiveMotion() y ProcesTimeGetData() simple. (19-09-2018)
 //:# - Nuevo metodo SetMotionData(). (15-01-2019)
+//:# - Mejora interface usando la estructura StMotionData. (12-09-2019)
 //:#############################################################################
 
 /// \file JSphMotion.h \brief Declares the class \ref JSphMotion.
@@ -52,18 +53,23 @@ public:
   ///Controls the output of information on the screen and/or log.
   typedef enum{ 
     MOMT_Simple=0,  ///<Simple mode for only forward.
-    MOMT_Ace2dt=1,  ///<Calculates acceleration using one dt in the future (always from the beginning).
+    MOMT_Ace2dt=1   ///<Calculates acceleration using one dt in the future (always from the beginning).
   }TpMotionMode;   
 
 private:
-  double TimeMod;       ///<Modifies the timestep for motion | Modificador del TimeStep para Motion.
-  unsigned ObjCount;    ///<Number of moving objects.
-  unsigned *ObjBegin;   ///<Initial particle of each moving object. [ObjCount+1]
-  word     *ObjMkBound; ///<MkBound of each moving object. [ObjCount]
+  const bool Simulate2D;   ///<Toggles 2D simulation (cancels motion in Y axis).
 
-  byte      *ObjTpmov;      ///<Type of motion (0:none, 1:linear, 2:matrix, 3:ignore). [ObjCount]
-  tdouble3  *ObjLinMov;    ///<Linear motion. [ObjCount]
-  tmatrix4d *ObjMatMov;    ///<Matrix motion. [ObjCount]
+  double TimeMod;          ///<Modifies the timestep for motion | Modificador del TimeStep para Motion.
+  unsigned ObjCount;       ///<Number of moving objects.
+  StMotionData *ObjMotion; ///<Motion data of moving objects.
+  StMotionData MotionNull;
+
+  //unsigned *ObjBegin;   ///<Initial particle of each moving object. [ObjCount+1]
+  //word     *ObjMkBound; ///<MkBound of each moving object. [ObjCount]
+
+  //byte      *ObjTpmov;     ///<Type of motion (0:none, 1:linear, 2:matrix, 3:ignore). [ObjCount]
+  //tdouble3  *ObjLinMov;    ///<Linear motion. [ObjCount]
+  //tmatrix4d *ObjMatMov;    ///<Matrix motion. [ObjCount]
 
   JMotion *Mot;
   bool ActiveMotion;    ///<Indicates active motions after executing ProcesTime().
@@ -71,28 +77,27 @@ private:
   void ConfigObjects(const JSpaceParts *parts);
 
 public:
-  JSphMotion();
+  JSphMotion(bool simulate2d);
   ~JSphMotion();
   void Reset();
   void Init(const JSpaceParts *parts,JXml *jxml,const std::string &path,const std::string &dirdata);
 
   unsigned GetNumObjects()const{ return(ObjCount); };
-  word GetObjMkBound(unsigned idx)const;
-  unsigned GetObjBegin(unsigned idx)const;
-  unsigned GetObjSize(unsigned idx)const;
 
   unsigned GetObjIdxByMkBound(word mkbound)const;
 
   void SetTimeMod(double timemod){ TimeMod=timemod; };
   bool ProcesTime(TpMotionMode mode,double timestep,double dt);
   bool GetActiveMotion()const{ return(ActiveMotion); }
-  bool ProcesTimeGetData(unsigned ref,bool &typesimple,tdouble3 &simplemov
-    ,tdouble3 &simplevel,tdouble3 &simpleace,tmatrix4d &matmov,tmatrix4d &matmov2
-    ,unsigned &nparts,unsigned &idbegin)const;
-  bool ProcesTimeGetData(unsigned ref,word &mkbound
-    ,bool &typesimple,tdouble3 &simplemov,tmatrix4d &matmov)const;
 
-  void SetMotionData(unsigned idx,byte tpmov,const tdouble3 &simplemov,const tmatrix4d &matmov);
+  const StMotionData& GetMotionData(unsigned ref)const;
+
+  void SetMotionData   (const StMotionData& d);
+  void SetMotionDataAce(const StMotionData& d);
+
+  void SetMotionDataNone(unsigned idx);
+  void SetMotionDataLin (unsigned idx,const tdouble3 &linmov);
+  void SetMotionDataMat (unsigned idx,const tmatrix4d &matmov);
 
 };
 

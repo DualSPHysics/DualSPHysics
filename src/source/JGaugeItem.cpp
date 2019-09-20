@@ -19,6 +19,7 @@
 /// \file JGauge.cpp \brief Implements the class \ref JGauge.
 
 #include "JGaugeItem.h"
+#include "JException.h"
 #include "JLog2.h"
 #include "JSaveCsv2.h"
 #include "JAppInfo.h"
@@ -49,6 +50,31 @@ JGaugeItem::JGaugeItem(TpGauge type,unsigned idx,std::string name,bool cpu,JLog2
   ClassName="JGaugeItem";
   Reset();
 }
+
+#ifdef _WITHGPU
+//==============================================================================
+/// Throws exception related to a CUDA error.
+//==============================================================================
+void JGaugeItem::RunExceptioonCuda(const std::string &srcfile,int srcline
+  ,const std::string &classname,const std::string &method
+  ,cudaError_t cuerr,std::string msg)const
+{
+  msg=msg+fun::PrintStr(" (CUDA error %d (%s)).\n",cuerr,cudaGetErrorString(cuerr));
+  throw JException(srcfile,srcline,classname,method,msg,"");
+}
+
+//==============================================================================
+/// Checks CUDA error and throws exception.
+/// Comprueba error de CUDA y lanza excepcion si lo hubiera.
+//==============================================================================
+void JGaugeItem::CheckCudaErroor(const std::string &srcfile,int srcline
+  ,const std::string &classname,const std::string &method
+  ,std::string msg)const
+{
+  cudaError_t cuerr=cudaGetLastError();
+  if(cuerr!=cudaSuccess)RunExceptioonCuda(srcfile,srcline,classname,method,cuerr,msg);
+}
+#endif
 
 //==============================================================================
 /// Initialisation of variables.
@@ -126,7 +152,6 @@ std::string JGaugeItem::GetNameType(TpGauge type){
 /// Loads lines with configuration information.
 //==============================================================================
 void JGaugeItem::GetConfig(std::vector<std::string> &lines)const{
-  const char met[]="GetConfig";
   lines.push_back(fun::PrintStr("Type.......: %s",JGaugeItem::GetNameType(Type).c_str()));
   const string cpend=fun::DoublexStr(ComputeEnd,"%g");
   lines.push_back(fun::PrintStr("Compute....: %g - %s   dt:%g",ComputeStart,cpend.c_str(),ComputeDt));
@@ -153,7 +178,7 @@ void JGaugeItem::GetConfig(std::vector<std::string> &lines)const{
     lines.push_back(fun::PrintStr("MkBound.....: %u (%s particles)",gau->GetMkBound(),TpPartGetStrCode(gau->GetTypeParts())));
     lines.push_back(fun::PrintStr("Particles id: %u - %u",gau->GetIdBegin(),gau->GetIdBegin()+gau->GetCount()-1));
   }
-  else RunException(met,"Type unknown.");
+  else Run_Exceptioon("Type unknown.");
 }
 
 //==============================================================================
@@ -210,26 +235,6 @@ void JGaugeItem::GetInteractionCells(const tdouble3 &pos,const tint4 &nc,const t
   zfin=cz+min(nc.z-cz-1,Hdiv)+1;
 }
 
-#ifdef _WITHGPU
-//==============================================================================
-/// Throws exception for Cuda error.
-/// Lanza excepcion por un error Cuda.
-//==============================================================================
-void JGaugeItem::RunExceptionCuda(const std::string &method,const std::string &msg,cudaError_t error){
-  std::string tx=fun::PrintStr("%s (CUDA error: %s).\n",msg.c_str(),cudaGetErrorString(error)); 
-  Log->Print(GetExceptionText(method,tx));
-  RunException(method,msg);
-}
-
-//==============================================================================
-/// Check error and throw exception if there was one. 
-/// Comprueba error y lanza excepcion si lo hubiera.
-//==============================================================================
-void JGaugeItem::CheckCudaError(const std::string &method,const std::string &msg){
-  cudaError_t err=cudaGetLastError();
-  if(err!=cudaSuccess)RunExceptionCuda(method,msg,err);
-}
-#endif
 
 //##############################################################################
 //# JGaugeVelocity
@@ -428,7 +433,7 @@ void JGaugeVelocity::CalculeGpu(double timestep,tuint3 ncells,tuint3 cellmin
   if(!ptout){
     cugauge::Interaction_GaugeVel(Symmetry,Point,Awen,Hdiv,ncells,cellmin,beginendcell,posxy,posz,code,velrhop,aux,DomPosMin,Scell,Fourh2,H,MassFluid);
     cudaMemcpy(&ptvel,aux,sizeof(float3),cudaMemcpyDeviceToHost);
-    CheckCudaError("CalculeGpu","Failed in velocity calculation.");
+    Check_CudaErroor("Failed in velocity calculation.");
   }
   //-Stores result. | Guarda resultado.
   Result.Set(timestep,ToTFloat3(Point),ptvel);
@@ -476,7 +481,7 @@ void JGaugeSwl::Reset(){
 /// Changes points definition.
 //==============================================================================
 void JGaugeSwl::SetPoints(const tdouble3 &point0,const tdouble3 &point2,double pointdp){
-  //if(PointDp<=0)RunException("SetPoints",fun::PrintStr("The value of PointDp is <= zero in gauge \'%s\'.",Name.c_str()));
+  //if(PointDp<=0)Run_Exceptioon(fun::PrintStr("The value of PointDp is <= zero in gauge \'%s\'.",Name.c_str()));
   Point0=point0;
   Point2=point2;
   PointDp=pointdp;
@@ -676,7 +681,7 @@ void JGaugeSwl::CalculeGpu(double timestep,tuint3 ncells,tuint3 cellmin
   cugauge::Interaction_GaugeSwl(Symmetry,Point0,PointDir,PointNp,MassLimit,Awen,Hdiv,ncells,cellmin,beginendcell,posxy,posz,code,velrhop,DomPosMin,Scell,Fourh2,H,MassFluid,aux);
   tfloat3 ptsurf=TFloat3(0);
   cudaMemcpy(&ptsurf,aux,sizeof(float3),cudaMemcpyDeviceToHost);
-  CheckCudaError("CalculeGpu","Failed in Swl calculation.");
+  Check_CudaErroor("Failed in Swl calculation.");
   //-Stores result. | Guarda resultado.
   Result.Set(timestep,ToTFloat3(Point0),ToTFloat3(Point2),ptsurf);
   //Log->Printf("------> t:%f",TimeStep);
@@ -893,7 +898,7 @@ void JGaugeMaxZ::CalculeGpu(double timestep,tuint3 ncells,tuint3 cellmin
   cugauge::Interaction_GaugeMaxz(Point0,maxdist2,cxini,cxfin,yini,yfin,zini,zfin,cugauge::Int4(nc),cellfluid,beginendcell,posxy,posz,code,aux);
   tfloat3 ptsurf=TFloat3(0);
   cudaMemcpy(&ptsurf,aux,sizeof(float3),cudaMemcpyDeviceToHost);
-  CheckCudaError("CalculeGpu","Failed in MaxZ calculation.");
+  Check_CudaErroor("Failed in MaxZ calculation.");
   //-Stores result. | Guarda resultado.
   Result.Set(timestep,ToTFloat3(Point0),ptsurf.z);
   //Log->Printf("------> t:%f",TimeStep);
@@ -1035,7 +1040,7 @@ void JGaugeForce::CalculeCpu(double timestep,tuint3 ncells,tuint3 cellmin
   ,const unsigned *begincell,unsigned npbok,unsigned npb,unsigned np
   ,const tdouble3 *pos,const typecode *code,const unsigned *idp,const tfloat4 *velrhop)
 {
-  if(!Cpu)RunException("CalculeCpu","Method is not allowed for GPU executions.");
+  if(!Cpu)Run_Exceptioon("Method is not allowed for GPU executions.");
   SetTimeStep(timestep);
   const tint4 nc=TInt4(int(ncells.x),int(ncells.y),int(ncells.z),int(ncells.x*ncells.y));
   const tint3 cellzero=TInt3(cellmin.x,cellmin.y,cellmin.z);
@@ -1155,7 +1160,7 @@ void JGaugeForce::CalculeGpu(double timestep,tuint3 ncells,tuint3 cellmin
   if(1){//-Computes total ace on GPU.
     const float3 result=curedus::ReduSumFloat3(Count,0,PartAceg,Auxg);
     acesum=TFloat3(result.x,result.y,result.z);
-    CheckCudaError("CalculeGpu","Failed in Force calculation.");
+    Check_CudaErroor("Failed in Force calculation.");
   }
   else{//-Computes total ace on CPU.
     tfloat3* aceh=fcuda::ToHostFloat3(0,Count,PartAceg);
