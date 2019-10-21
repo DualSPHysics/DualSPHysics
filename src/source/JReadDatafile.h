@@ -34,6 +34,7 @@
 //:# - Nuevos metodos: ReadNextInt3() y ReadNextUnsigned3(). (27-04-2016)
 //:# - Nuevos metodo: RemoveChar(). (20-06-2016)
 //:# - Nuevos metodo: Find(),FindValueStr(),FindValueDbl(). (02-07-2018)
+//:# - Muestra extension maxima de fichero permitida en caso de ser insuficiente. (21-10-2019)
 //:#############################################################################
 
 /// \file JReadDatafile.h \brief Declares the class \ref JReadDatafile.

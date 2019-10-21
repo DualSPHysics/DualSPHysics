@@ -1281,7 +1281,7 @@ template<bool psingle,TpKernel tker,TpFtMode ftmode,bool lamsps,TpDensity tdensi
         KerInteractionForcesFluid<psingle,tker,ftmode,lamsps,tdensity,shift,false> <<<sgridf,t.bsfluid,0,t.stm>>> (t.fluidnum,t.fluidini,t.hdiv,t.nc,t.cellfluid,t.viscob,t.viscof,t.begincell,Int3(t.cellmin),t.dcell,t.ftomassp,(const float2*)t.tau,(float2*)t.gradvel,t.posxy,t.posz,t.pospress,t.velrhop,t.code,t.idp,t.viscdt,t.ar,t.ace,t.delta,t.tshifting,t.shiftpos,t.shiftdetect);
     }
     //-Interaction Boundary-Fluid.
-    if(t.boundnum && !t.usenormals){
+    if(t.boundnum){
       dim3 sgridb=GetGridSize(t.boundnum,t.bsbound);
       //printf("bsbound:%u\n",bsbound);
       if(t.symmetry) //<vs_syymmetry_ini>

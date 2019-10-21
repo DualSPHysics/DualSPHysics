@@ -99,7 +99,6 @@ typedef struct StrInterParmsg{
   //-Configuration options.
   bool simulate2d;
   bool symmetry; //<vs_syymmetry>
-  bool usenormals;
   bool psingle;
   TpKernel tkernel;
   TpFtMode ftmode;
@@ -149,7 +148,6 @@ typedef struct StrInterParmsg{
   StrInterParmsg(
      bool simulate2d_
     ,bool symmetry_ //<vs_syymmetry>
-    ,bool usenormals_
     ,bool psingle_,TpKernel tkernel_,TpFtMode ftmode_
     ,bool lamsps_,TpDensity tdensity_,TpShifting tshifting_
     ,TpCellMode cellmode_
@@ -171,7 +169,6 @@ typedef struct StrInterParmsg{
     //-Configuration options.
     simulate2d=simulate2d_;
     symmetry=symmetry_; //<vs_syymmetry>
-    usenormals=usenormals_;
     psingle=psingle_; tkernel=tkernel_; ftmode=ftmode_;
     lamsps=lamsps_; tdensity=tdensity_; tshifting=tshifting_;
     //-Execution values.

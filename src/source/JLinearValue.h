@@ -36,6 +36,7 @@
 //:# - Permite uso de DBL_MAX como valor especial. (21-02-2019)
 //:# - El uso de valores especiales se establece en el constructor. (25-02-2019)
 //:# - Permite cargar datos directamente del XML. (26-02-2019)
+//:# - Amplia SIZEMAX por defecto de 200k a 20M. (21-10-2019)
 //:#############################################################################
 
 #include "JObject.h"
@@ -62,7 +63,7 @@ class TiXmlElement;
 class JLinearValue : protected JObject
 {
 protected:
-  static const unsigned SIZEMAX=200000;
+  static const unsigned SIZEMAX=20000000;
   static const unsigned SIZEINITIAL=500;
 
   std::string File;

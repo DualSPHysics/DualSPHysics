@@ -68,7 +68,7 @@ void JReadDatafile::LoadFile(const std::string &file,unsigned maxsize){
   if(pf){
     pf.seekg(0,ios::end);
     SizeFile=unsigned(pf.tellg())+1;
-    if(SizeFile>maxsize)RunException(met,"File exceeds the maximum size allowed.",file);
+    if(SizeFile>maxsize)RunException(met,fun::PrintStr("File exceeds the maximum size allowed (%u bytes).",maxsize),file);
     Data=new char[SizeFile];
     pf.seekg(0,ios::beg);
     pf.read(Data,SizeFile-1);

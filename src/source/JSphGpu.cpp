@@ -652,7 +652,6 @@ void JSphGpu::ConfigBlockSizes(bool usezone,bool useperi){
     #ifndef DISABLE_BSMODES
       const StInterParmsg parms=StrInterParmsg(Simulate2D
         ,Symmetry  //<vs_syymmetry>
-        ,false
         ,Psingle,TKernel,FtMode
         ,lamsps,TDensity,TShifting
         ,CellMode

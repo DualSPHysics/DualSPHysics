@@ -1241,8 +1241,7 @@ template<bool psingle,TpKernel tker,TpFtMode ftmode,bool lamsps,TpDensity tdensi
     //-Computes tau for Laminar+SPS.
     if(lamsps)ComputeSpsTau(t.npf,t.npb,t.velrhop,t.spsgradvel,t.spstau);
   }
-  bool rundbc=true;
-  if(t.npbok && rundbc){
+  if(t.npbok){
     //-Interaction Bound-Fluid.
     InteractionForcesBound<psingle,tker,ftmode> (t.npbok,0,nc,hdiv,cellfluid,t.begincell,cellzero,t.dcell,t.pdpos,t.pspos,t.velrhop,t.code,t.idp,viscdt,t.ar);
   }

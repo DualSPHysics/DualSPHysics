@@ -409,12 +409,10 @@ void JSphGpuSingle::Interaction_Forces(TpInterStep interstep){
   const bool lamsps=(TVisco==VISCO_LaminarSPS);
   unsigned bsfluid=BlockSizes.forcesfluid;
   unsigned bsbound=BlockSizes.forcesbound;
-  bool usenormals=false;
 
   if(BsAuto && !(Nstep%BsAuto->GetStepsInterval())){ //-Every certain number of steps. | Cada cierto numero de pasos.
     const StInterParmsg parms=StrInterParmsg(Simulate2D
       ,Symmetry //<vs_syymmetry>
-      ,usenormals
       ,Psingle,TKernel,FtMode
       ,lamsps,TDensity,TShifting
       ,CellMode
@@ -440,7 +438,6 @@ void JSphGpuSingle::Interaction_Forces(TpInterStep interstep){
   //-Interaction Fluid-Fluid/Bound & Bound-Fluid.
   const StInterParmsg parms=StrInterParmsg(Simulate2D
     ,Symmetry //<vs_syymmetry>
-    ,usenormals
     ,Psingle,TKernel,FtMode
     ,lamsps,TDensity,TShifting
     ,CellMode

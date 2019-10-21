@@ -57,7 +57,7 @@ Please download source files and documentation from <a href="http://dual.sphysic
 using namespace std;
 
 
-JAppInfo AppInfo("DualSPHysics4","v4.4.024","16-09-2019");
+JAppInfo AppInfo("DualSPHysics4","v4.4.027","21-10-2019");
 //JAppInfo AppInfo("DualSPHysics4","v4.2.???","UserVersion","v1.0","??-??-????"); //-for user versions.
 
 //==============================================================================
