@@ -32,11 +32,11 @@
 /// Types of particles. Order must be maintained although specific values can be changed.
 /// Tipos de particulas. Se tiene que mantener el orden aunque se pueden cambiar los valores concretos.
 typedef enum{ 
-  TpPartFixed=0,      ///<Fixed boundary particles.
-  TpPartMoving=1,     ///<Moving boundary particles.
-  TpPartFloating=2,   ///<Floating boundary particles.
-  TpPartFluid=3,      ///<Fluid particles.
-  TpPartUnknown=9     ///<Unknown or undefined type of particles.
+  TpPartFixed=0       ///<Fixed boundary particles.
+ ,TpPartMoving=1      ///<Moving boundary particles.
+ ,TpPartFloating=2    ///<Floating boundary particles.
+ ,TpPartFluid=3       ///<Fluid particles.
+ ,TpPartUnknown=9     ///<Unknown or undefined type of particles.
 }TpParticles; 
 
 

@@ -171,7 +171,7 @@ template<bool sim2d,TpKernel tker> void JSphCpu::InteractionInOutExtrap_Double
       const tdouble3 dpos=(pos_p1-posp1); //-Inlet/outlet particle position - ghost node position.
       if(sim2d){
         const double determ=fmath::Determinant3x3(a_corr2);
-        if(determ>=determlimit){//-Use 1e-3f (first_order) or 1e+3f (zeroth_order).
+        if(fabs(determ)>=determlimit){//-Use 1e-3f (first_order) or 1e+3f (zeroth_order).
           const tmatrix3d invacorr2=fmath::InverseMatrix3x3(a_corr2,determ);	//CHECKED
           //-GHOST NODE DENSITY IS MIRRORED BACK TO THE INFLOW OR OUTFLOW PARTICLES.
           if(computerhop){
@@ -204,7 +204,7 @@ template<bool sim2d,TpKernel tker> void JSphCpu::InteractionInOutExtrap_Double
       }
       else{
         const double determ=fmath::Determinant4x4(a_corr3);
-        if(determ>=determlimit){
+        if(fabs(determ)>=determlimit){
           const tmatrix4d invacorr3=fmath::InverseMatrix4x4(a_corr3,determ);
           //-GHOST NODE DENSITY IS MIRRORED BACK TO THE INFLOW OR OUTFLOW PARTICLES.
           if(computerhop){
@@ -368,7 +368,7 @@ template<bool sim2d,TpKernel tker> void JSphCpu::InteractionInOutExtrap_Single
       const tfloat3 dpos=ToTFloat3(pos_p1-posp1); //-Inlet/outlet particle position - ghost node position.
       if(sim2d){
         const double determ=fmath::Determinant3x3(a_corr2);
-        if(determ>=determlimit){//-Use 1e-3f (first_order) or 1e+3f (zeroth_order).
+        if(fabs(determ)>=determlimit){//-Use 1e-3f (first_order) or 1e+3f (zeroth_order).
           const tmatrix3d invacorr2=fmath::InverseMatrix3x3(a_corr2,determ);	//CHECKED
           //-GHOST NODE DENSITY IS MIRRORED BACK TO THE INFLOW OR OUTFLOW PARTICLES.
           if(computerhop){
@@ -401,7 +401,7 @@ template<bool sim2d,TpKernel tker> void JSphCpu::InteractionInOutExtrap_Single
       }
       else{
         const double determ=fmath::Determinant4x4(a_corr3);
-        if(determ>=determlimit){
+        if(fabs(determ)>=determlimit){
           const tmatrix4d invacorr3=fmath::InverseMatrix4x4(a_corr3,determ);
           //-GHOST NODE DENSITY IS MIRRORED BACK TO THE INFLOW OR OUTFLOW PARTICLES.
           if(computerhop){
@@ -624,7 +624,7 @@ template<bool sim2d,TpKernel tker> void JSphCpu::InteractionBoundCorr_Double
       const tdouble3 dpos=(pos_p1-posp1); //-Boundary particle position - ghost node position.
       if(sim2d){
         const double determ=fmath::Determinant3x3(a_corr2);
-        if(determ>=determlimit){//-Use 1e-3f (first_order) or 1e+3f (zeroth_order).
+        if(fabs(determ)>=determlimit){//-Use 1e-3f (first_order) or 1e+3f (zeroth_order).
           const tmatrix3d invacorr2=fmath::InverseMatrix3x3(a_corr2,determ);
           //-GHOST NODE DENSITY IS MIRRORED BACK TO THE INFLOW OR OUTFLOW PARTICLES.
           const double rhoghost=rhopp1*invacorr2.a11 + gradrhopp1.x*invacorr2.a12 + gradrhopp1.z*invacorr2.a13;
@@ -638,7 +638,7 @@ template<bool sim2d,TpKernel tker> void JSphCpu::InteractionBoundCorr_Double
       }
       else{
         const double determ=fmath::Determinant4x4(a_corr3);
-        if(determ>=determlimit){
+        if(fabs(determ)>=determlimit){
           const tmatrix4d invacorr3=fmath::InverseMatrix4x4(a_corr3,determ);
           //-GHOST NODE DENSITY IS MIRRORED BACK TO THE INFLOW OR OUTFLOW PARTICLES.
           const double rhoghost=rhopp1*invacorr3.a11 + gradrhopp1.x*invacorr3.a12 + gradrhopp1.y*invacorr3.a13 + gradrhopp1.z*invacorr3.a14;
@@ -748,7 +748,7 @@ template<bool sim2d,TpKernel tker> void JSphCpu::InteractionBoundCorr_Single
       const tfloat3 dpos=ToTFloat3(pos_p1-posp1); //-Boundary particle position - ghost node position.
       if(sim2d){
         const double determ=fmath::Determinant3x3(a_corr2);
-        if(determ>=determlimit){//-Use 1e-3f (first_order) or 1e+3f (zeroth_order).
+        if(fabs(determ)>=determlimit){//-Use 1e-3f (first_order) or 1e+3f (zeroth_order).
           const tmatrix3d invacorr2=fmath::InverseMatrix3x3(a_corr2,determ);
           //-GHOST NODE DENSITY IS MIRRORED BACK TO THE INFLOW OR OUTFLOW PARTICLES.
           const float rhoghost=float(invacorr2.a11*rhopp1 + invacorr2.a12*gradrhopp1.x + invacorr2.a13*gradrhopp1.z);
@@ -762,7 +762,7 @@ template<bool sim2d,TpKernel tker> void JSphCpu::InteractionBoundCorr_Single
       }
       else{
         const double determ=fmath::Determinant4x4(a_corr3);
-        if(determ>=determlimit){
+        if(fabs(determ)>=determlimit){
           const tmatrix4d invacorr3=fmath::InverseMatrix4x4(a_corr3,determ);
           //-GHOST NODE DENSITY IS MIRRORED BACK TO THE INFLOW OR OUTFLOW PARTICLES.
           const float rhoghost=float(invacorr3.a11*rhopp1 + invacorr3.a12*gradrhopp1.x + invacorr3.a13*gradrhopp1.y + invacorr3.a14*gradrhopp1.z);
