@@ -93,7 +93,7 @@ void JCellDivCpuSingle::PrepareNct(){
   Ncz=CellDomainMax.z-CellDomainMin.z+1;
   //:printf("======  ncx:%u ncy:%u ncz:%u\n",Ncx,Ncy,Ncz);
   Nsheet=Ncx*Ncy; Nct=Nsheet*Ncz; Nctt=SizeBeginCell(Nct);
-  if(Nctt!=unsigned(Nctt))RunException("PrepareNct","The number of cells is too big.");
+  if(Nctt!=unsigned(Nctt))Run_Exceptioon("The number of cells is too big.");
   BoxBoundIgnore=Nct; 
   BoxFluid=BoxBoundIgnore+1; 
   BoxBoundOut=BoxFluid+Nct; 
@@ -260,7 +260,6 @@ void JCellDivCpuSingle::PreSort(const unsigned* dcellc,const typecode *codec){
 void JCellDivCpuSingle::Divide(unsigned npb1,unsigned npf1,unsigned npb2,unsigned npf2,bool boundchanged
   ,const unsigned *dcellc,const typecode* codec,const unsigned* idpc,const tdouble3* posc,TimersCpu timers)
 {
-  const char met[]="Divide";
   DivideFull=false;
   TmcStart(timers,TMC_NlLimits);
 

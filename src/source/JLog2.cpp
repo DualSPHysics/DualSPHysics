@@ -42,6 +42,17 @@ JLog2::JLog2(TpMode_Out modeoutdef):ModeOutDef(modeoutdef){
 }
 
 //==============================================================================
+/// Constructor.
+//==============================================================================
+JLog2::JLog2(JLog2 *parent,std::string prefix):ModeOutDef(parent->ModeOutDef){
+  ClassName="JLog2";
+  Pf=NULL;
+  Reset();
+  Parent=parent;
+  ParentPrefix=prefix;
+}
+
+//==============================================================================
 /// Destructor.
 //==============================================================================
 JLog2::~JLog2(){
@@ -53,6 +64,8 @@ JLog2::~JLog2(){
 /// Initialisation of variables.
 //==============================================================================
 void JLog2::Reset(){
+  Parent=NULL;
+  ParentPrefix="";
   FileName="";
   Ok=false;
   MpiRun=false;
@@ -70,6 +83,7 @@ void JLog2::Reset(){
 /// Initialisation of log file.
 //==============================================================================
 void JLog2::Init(std::string fname,bool mpirun,int mpirank,int mpilaunch){
+  if(Parent)RunException("Init","Method is not available for dependent log.");
   Reset();
   MpiRun=mpirun; MpiRank=mpirank; MpiLaunch=mpilaunch;
   if(!fname.empty()){//-When file for log is defined.
@@ -94,6 +108,7 @@ void JLog2::Init(std::string fname,bool mpirun,int mpirank,int mpilaunch){
 /// Visualises and/or stores information of the execution.
 //==============================================================================
 void JLog2::Print(const std::string &tx,TpMode_Out mode,bool flush){
+  if(Parent){ Parent->Print(ParentPrefix+tx,mode,flush); return; }
   if(mode==Out_Default)mode=ModeOutDef;
   if(mode&Out_Screen){
     if(MpiRun){
@@ -223,6 +238,7 @@ void JLog2::PrintfpDbg(const std::string &prefix,const char *format,...){
 /// Adds warning to warning list.
 //==============================================================================
 void JLog2::AddWarning(const std::string &tx){
+  if(Parent){ Parent->AddWarning(tx); return; }
   Warnings.push_back(tx);
 }
   
@@ -262,6 +278,7 @@ void JLog2::PrintfWarning(const char *format,...){
 /// Visualises list of warnings.
 //==============================================================================
 void JLog2::PrintWarningList(const std::string &txhead,const std::string &txfoot,TpMode_Out mode,bool flush){
+  if(Parent){ Parent->PrintWarningList(txhead,txfoot,mode,flush); return; }
   const unsigned nw=WarningCount();
   //Print(fun::PrintStr("[WARNINGS #:%u]",nw),mode,flush);
   if(!txhead.empty())Print(txhead,mode,flush);
@@ -286,6 +303,7 @@ void JLog2::PrintWarningList(TpMode_Out mode,bool flush){
 /// Adds file description.
 //==============================================================================
 void JLog2::AddFileInfo(std::string fname,const std::string &finfo){
+  if(Parent){ Parent->AddFileInfo(fname,finfo); return; }
   //-Removes execution path.
   if(int(fname.find(DirOut))==0)fname=fname.substr(DirOut.size());
   //-Checks if it already exists.
@@ -307,6 +325,7 @@ bool SortFilesList(JLog2::StFileInfo a,JLog2::StFileInfo b){
 /// Visualises list of file descriptions.
 //==============================================================================
 void JLog2::PrintFilesList(const std::string &txhead,const std::string &txfoot,TpMode_Out mode,bool flush){
+  if(Parent){ Parent->PrintFilesList(txhead,txfoot,mode,flush); return; }
   const unsigned nf=FilesCount();
   if(!txhead.empty())Print(txhead,mode,flush);
 //  string fmt=fun::PrintStr("%%0%dd. ",std::max(1u,unsigned(fun::UintStr(nw).size())));

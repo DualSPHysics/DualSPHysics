@@ -50,7 +50,9 @@ class JSphInitializeOp : public JObject
 {
 public:
   ///<Types of initializations.
-  typedef enum{ IT_FluidVel=1 }TpInitialize; 
+  typedef enum{ 
+    IT_FluidVel=1,
+  }TpInitialize; 
 
 public:
   const TpInitialize Type;   ///<Type of particle.
@@ -60,7 +62,8 @@ public:
   } 
   virtual ~JSphInitializeOp(){ DestructorActive=true; }
   virtual void ReadXml(JXml *sxml,TiXmlElement* ele)=0;
-  virtual void Run(unsigned np,unsigned npb,const tdouble3 *pos,const unsigned *idp,const word *mktype,tfloat4 *velrhop)=0;
+  virtual void Run(unsigned np,unsigned npb,unsigned nbound,const tdouble3 *pos
+    ,const unsigned *idp,const word *mktype,tfloat4 *velrhop,tfloat3 *boundnormal)=0;
   virtual void GetConfig(std::vector<std::string> &lines)const=0;
 };
 
@@ -77,22 +80,17 @@ private:
     TVEL_Linear=1,      ///<Velocity profile linear.
     TVEL_Parabolic=2    ///<Velocity profile parabolic.
   }TpVelocity;
-
 private:
   TpVelocity VelType;  ///<Type of velocity.
   std::string MkFluid;
   tfloat3 Direction;
   float Vel1,Vel2,Vel3;
   float Posz1,Posz2,Posz3;
-
 public:
-  JSphInitializeOp_FluidVel(JXml *sxml,TiXmlElement* ele):JSphInitializeOp(IT_FluidVel,"FluidVel"){ 
-    Reset();
-    ReadXml(sxml,ele); 
-  }
+  JSphInitializeOp_FluidVel(JXml *sxml,TiXmlElement* ele):JSphInitializeOp(IT_FluidVel,"FluidVel"){ Reset(); ReadXml(sxml,ele); }
   void Reset();
   void ReadXml(JXml *sxml,TiXmlElement* ele);
-  void Run(unsigned np,unsigned npb,const tdouble3 *pos,const unsigned *idp,const word *mktype,tfloat4 *velrhop);
+  void Run(unsigned np,unsigned npb,unsigned nbound,const tdouble3 *pos,const unsigned *idp,const word *mktype,tfloat4 *velrhop,tfloat3 *boundnormal);
   void GetConfig(std::vector<std::string> &lines)const;
 };  
 
@@ -104,6 +102,7 @@ public:
 class JSphInitialize  : protected JObject
 {
 private:
+  const bool BoundNormals;
   std::vector<JSphInitializeOp*> Opes;
 
   void LoadFileXml(const std::string &file,const std::string &path);
@@ -111,12 +110,13 @@ private:
   void ReadXml(JXml *sxml,TiXmlElement* lis);
 
 public:
-  JSphInitialize(const std::string &file);
+  JSphInitialize(const std::string &file,bool boundnormals);
   ~JSphInitialize();
   void Reset();
   unsigned Count()const{ return(unsigned(Opes.size())); }
 
-  void Run(unsigned np,unsigned npb,const tdouble3 *pos,const unsigned *idp,const word *mktype,tfloat4 *velrhop);
+  void Run(unsigned np,unsigned npb,unsigned nbound,const tdouble3 *pos
+    ,const unsigned *idp,const word *mktype,tfloat4 *velrhop,tfloat3 *boundnormal);
   void GetConfig(std::vector<std::string> &lines)const;
 
 };

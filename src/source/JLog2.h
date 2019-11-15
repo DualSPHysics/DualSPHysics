@@ -30,8 +30,10 @@
 //:# - Nuevas funciones Printp() y Printfp() a las que se le puede añadir un 
 //:#   prefijo. (21-02-2017)
 //:# - New attribute CsvSepComa to configure separator in CSV files. (24-10-2017)
-//:# - Se incluye DirDataOut para facilitar su uso en distintos ambitos.. (19-02-2017)
+//:# - Se incluye DirDataOut para facilitar su uso en distintos ambitos. (19-02-2017)
 //:# - Funciones para gestion especial de warnings. (10-03-2018)
+//:# - Permite usar un Mutex para sicronizar el acceso en multithreading ejecuciones. (22-08-2019)
+//:# - Permite crear un log como referencia a otro para incluir un prefijo de forma automatica. (06-09-2019)
 //:#############################################################################
 
 /// \file JLog2.h \brief Declares the class \ref JLog2.
@@ -39,13 +41,13 @@
 #ifndef _JLog2_
 #define _JLog2_
 
-
 #include "JObject.h"
 #include <string>
 #include <sstream>
 #include <iostream>
 #include <fstream>
 #include <vector>
+
 
 //##############################################################################
 //# JLog2
@@ -65,6 +67,9 @@ public:
   }StFileInfo;
 
 protected:
+  JLog2 *Parent;
+  std::string ParentPrefix;
+
   std::string FileName;
   std::ofstream *Pf;
   bool Ok;
@@ -81,14 +86,17 @@ protected:
 
 public:
   JLog2(TpMode_Out modeoutdef=Out_ScrFile);
+  JLog2(JLog2 *parent,std::string prefix);
   ~JLog2();
   void Reset();
   void Init(std::string fname,bool mpirun=false,int mpirank=0,int mpilaunch=0);
   void Print(const std::string &tx,TpMode_Out mode=Out_Default,bool flush=false);
   void Print(const std::vector<std::string> &lines,TpMode_Out mode=Out_Default,bool flush=false);
   void PrintDbg(const std::string &tx,TpMode_Out mode=Out_Default){ Print(tx,mode,true); }
+  void PrintFile(const std::string &tx,bool flush=false){ Print(tx,Out_File,flush); }
   bool IsOk()const{ return(Ok); }
   int GetMpiRank()const{ return(MpiRun? MpiRank: -1); }
+  std::string GetParentPrefix()const{ return(ParentPrefix); }
 
   //std::string GetDirOut()const{ return(DirOut); }
 

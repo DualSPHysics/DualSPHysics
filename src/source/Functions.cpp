@@ -45,6 +45,21 @@ using namespace std;
 namespace fun{
 
 //==============================================================================
+/// Throws an exception related to a file or not.
+//==============================================================================
+void RunExceptioonFun(const std::string &srcfile,int srcline,const std::string &fun
+  ,const std::string &msg,const std::string &file)
+{ // fun::RunExceptioonFun(__FILE__,__LINE__,__func__,"msg");
+  std::string tx;
+  tx=fun::PrintStr("\n*** Exception (%s::%s:%d)\n",GetPathLevels(srcfile,3).c_str(),fun.c_str(),srcline);
+  if(!msg.empty())tx=tx+fun::PrintStr("Text: %s\n",msg.c_str());
+  if(!file.empty())tx=tx+fun::PrintStr("File: %s\n",file.c_str());
+  printf("%s\n",tx.c_str());
+  fflush(stdout);
+  throw string("#")+tx;
+}
+
+//==============================================================================
 /// Returns date and time of the system + nseg using the format.
 //==============================================================================
 std::string GetDateTimeFormat(const char* format,int nseg){
@@ -171,7 +186,7 @@ std::string GetTextRandomCode(unsigned length){
   code[length]=0;
   return(code);
 }
-  
+
 //==============================================================================
 /// Returns string using the same parameters used in printf().
 //==============================================================================
@@ -192,7 +207,7 @@ std::string PrintStr(const char *format,...){
       if(rsize>=0)ret=buff2;
       delete[] buff2;
     }
-    if(rsize<0)throw "Error in fun::PrintStr(): Output text is too long.";
+    if(rsize<0)Run_ExceptioonFun("Output text is too long.");
   }
   va_end(args);
   return(ret);
@@ -221,7 +236,7 @@ std::string PrintStrCsv(bool csvsepcoma,const char *format,...){
       if(rsize>=0)ret=buff2;
       delete[] buff2;
     }
-    if(rsize<0)throw "Error in fun::PrintStrCsv(): Output text is too long.";
+    if(rsize<0)Run_ExceptioonFun("Output text is too long.");
   }
   va_end(args);
   return(ret);
@@ -383,7 +398,14 @@ std::string Double4Str(const tdouble4 &v,const char* fmt){
 bool StrIsIntegerNumber(const std::string &str){
   bool valid=true;
   byte state=0;
-  const unsigned n=unsigned(str.size());
+  unsigned n=unsigned(str.size());
+  //-Avoid decimal part when it is null.
+  int point=int(str.find_last_of("."));
+  if(point>0){
+    for(unsigned c=point+1;c<n && valid;c++)valid=(str[c]=='0');
+    if(valid)n=point;
+  }
+  //-Checks integer format.
   for(unsigned c=0;c<n && valid;c++){
     const char let=str[c];
     const bool num=('0'<=let && let<='9');
@@ -923,7 +945,37 @@ void PrintVar(const std::string &name,tdouble3 value,const std::string &post){ p
 void PrintVar(const std::string &name,bool value,const std::string &post){ printf("%s%s",VarStr(name,value).c_str(),post.c_str()); }
 void PrintVar(const std::string &name,int value,const std::string &post){ printf("%s%s",VarStr(name,value).c_str(),post.c_str()); }
 void PrintVar(const std::string &name,unsigned value,const std::string &post){ printf("%s%s",VarStr(name,value).c_str(),post.c_str()); }
-    
+
+//==============================================================================
+/// Returns JSON object as string.
+//==============================================================================
+std::string JSONObject(const std::vector<std::string> &properties){
+  const unsigned size=unsigned(properties.size());
+  if(!size)return("{ }");
+  string tx="{ ";
+  for(unsigned c=0;c<size;c++){
+    if(c)tx=tx+", ";
+    tx=tx+StrTrim(properties[c]);
+  }
+  tx=tx+" }";
+  return(tx);
+}
+
+//==============================================================================
+/// Returns JSON array as string.
+//==============================================================================
+std::string JSONArray(const std::vector<std::string> &values){
+  const unsigned size=unsigned(values.size());
+  if(!size)return("[ ]");
+  string tx="[ ";
+  for(unsigned c=0;c<size;c++){
+    if(c)tx=tx+", ";
+    tx=tx+StrTrim(values[c]);
+  }
+  tx=tx+" ]";
+  return(tx);
+}
+
 
 //##############################################################################
 //##############################################################################

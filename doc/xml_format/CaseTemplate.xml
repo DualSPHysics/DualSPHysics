@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<case app="GenCase4 v4.0.109 (21-06-2019)" date="23-06-2019 10:37:33">
-    <casedef>
+<case app="GenCase4 v4.0.123 (15-11-2019)" date="15-11-2019 19:42:28">
+    <casedef requiredversion="v4.0.123">
         <constantsdef>
             <lattice bound="2" fluid="1" />
             <gravity x="0" y="0" z="-9.81" comment="Gravitational acceleration" units_comment="m/s^2" />
@@ -53,7 +53,6 @@
                 <pointmin x="-0.25" y="-0.05" z="-0.05" />
                 <pointmax x="2" y="1" z="1" />
             </definition>
-            <externalpoints factormassbound="1" factormassfluid="1" />
             <commands>
                 <list name="Hola">
                     <debugout />
@@ -262,7 +261,7 @@
                     </drawbox>
                     <drawbox>
                         <boxfill>bottom | left | right | front | back</boxfill>
-                        <layers vdp="1,-1,3" />
+                        <layers vdp="1,-1*,3*" />
                         <point x="0" y="0" z="0" />
                         <size x="1" y="2" z="3" />
                     </drawbox>
@@ -274,6 +273,16 @@
                         <point x="5.5" y="3" z="0.5" />
                         <point x="5.5" y="3" z="1.2" />
                     </drawbeach>
+                    <drawextrude closed="false">
+                        <point x="0" y="0" z="1.2" />
+                        <point x="0" y="0" z="0" />
+                        <point x="1.7" y="1" z="0" />
+                        <point x="3.5" y="1" z="0.5" />
+                        <point x="5.5" y="2" z="0.5" />
+                        <point x="5.5" y="2" z="1.2" />
+                        <extrude x="0" y="3" z="0" />
+                        <layers vdp="-1*,0,1*" />
+                    </drawextrude>
                     <drawsphere radius="0.5">
                         <point x="1" y="1" z="0" />
                     </drawsphere>
@@ -326,6 +335,11 @@
                     <drawfilevtk file="File.vtk">
                         <polyselec>polygons</polyselec>
                     </drawfilevtk>
+                    <drawfilecsv file="Bathymetry.csv" mode="bathymetry">
+                        <drawmove x="0.5" y="0" z="0" />
+                        <drawrotate angx="10" angy="15" angz="30" />
+                        <drawscale x="1" y="1" z="0.8" />
+                    </drawfilecsv>
                     <fillvoidpoint x="3" y="2" z="1" />
                     <fillpoint x="3" y="2" z="1">
                         <modefill>void</modefill>
@@ -426,7 +440,7 @@
                     <pointsmkout file="points" />
                     <abort />
                     <runlist name="Hola" />
-                    <runlist name="Hola2" />
+                    <runlist name="Hola2" times="5" />
                 </mainlist>
             </commands>
         </geometry>
@@ -700,7 +714,8 @@
             <parameter key="ViscoTreatment" value="1" comment="Viscosity formulation 1:Artificial, 2:Laminar+SPS (default=1)" />
             <parameter key="Visco" value="0.01" comment="Viscosity value" />
             <parameter key="ViscoBoundFactor" value="1" comment="Multiply viscosity value with boundary (default=1)" />
-            <parameter key="DeltaSPH" value="0" comment="DeltaSPH value, 0.1 is the typical value, with 0 disabled (default=0)" />
+            <parameter key="DensityDT" value="0" comment="Density Diffusion Term 0:None, 1:Molteni, 2:Fourtakas, 3:Fourtakas(full) (default=0)" />
+            <parameter key="DensityDTvalue" value="0.1" comment="DDT value (default=0.1)" />
             <parameter key="#Shifting" value="0" comment="Shifting mode 0:None, 1:Ignore bound, 2:Ignore fixed, 3:Full (default=0)" />
             <parameter key="#ShiftCoef" value="-2" comment="Coefficient for shifting computation (default=-2)" />
             <parameter key="#ShiftTFS" value="1.5" comment="Threshold to detect free surface. Typically 1.5 for 2D and 2.75 for 3D (default=0)" />

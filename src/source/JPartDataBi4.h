@@ -47,7 +47,8 @@
 //:# - Nueva variable (Data2dPosY) con valor de Y en simulaciones 2D. (07-06-2017)
 //:# - Establece PERI_Unknown por defecto. (27-04-2018)
 //:# - Improved definition of the periodic conditions. (27-04-2018)
-//:# - Incluye informacion de Symmetry. (13-05-2018)
+//:# - Incluye informacion de Symmetry. (13-05-2019)
+//:# - Nuevo AddPartData() para tipos TpTypeData. (23-08-2019)
 //:#############################################################################
 
 /// \file JPartDataBi4.h \brief Declares the class \ref JPartDataBi4.
@@ -151,6 +152,8 @@ class JPartDataBi4 : protected JObject
   void AddPartData(const std::string &name,unsigned npok,const word     *v,bool externalpointer=true){  AddPartDataVar(name,JBinaryDataDef::DatUshort ,npok,(const void *)v,externalpointer);  }
   void AddPartData(const std::string &name,unsigned npok,const char     *v,bool externalpointer=true){  AddPartDataVar(name,JBinaryDataDef::DatChar   ,npok,(const void *)v,externalpointer);  }
   void AddPartData(const std::string &name,unsigned npok,const byte     *v,bool externalpointer=true){  AddPartDataVar(name,JBinaryDataDef::DatUchar  ,npok,(const void *)v,externalpointer);  }
+
+  void AddPartData(const std::string &name,unsigned npok,const void     *v,TpTypeData type,bool externalpointer=true);
 
   //-Grabacion de fichero. File recording.
   void SaveFileCase(std::string casename);

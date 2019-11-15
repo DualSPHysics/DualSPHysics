@@ -1780,7 +1780,7 @@ unsigned JSphInOut::ComputeStepFillingCpu(unsigned nstep,double dt,unsigned inou
   }
 
   //-Compute maximum distance to create points in each PtPos.
-  const bool checkzsurf=(VariableZsurf || CalculatedZsurf);
+  //const bool checkzsurf=(VariableZsurf || CalculatedZsurf);
   const float dpmin=float(Dp*1);
   const float dpmin2=dpmin*dpmin;
   const int npt=int(PtCount);
@@ -1790,7 +1790,7 @@ unsigned JSphInOut::ComputeStepFillingCpu(unsigned nstep,double dt,unsigned inou
   for(int cpt=0;cpt<npt;cpt++){
     const tdouble3 ps=PtPos[cpt];
     float distmax=FLT_MAX;
-    if(!checkzsurf || float(ps.z)<=Zsurf[PtZone[cpt]]){
+    if(float(ps.z)<=Zsurf[PtZone[cpt]]){
       distmax=0;
       for(int cp=0;cp<ncp;cp++){
         const tfloat3 dis=ToTFloat3(ps-propos[cp]);

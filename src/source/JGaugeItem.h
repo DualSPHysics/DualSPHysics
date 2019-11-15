@@ -21,6 +21,7 @@
 //:# =========
 //:# - Clase para medir magnitudes fisicas durante la simulacion. (12-02-2018)
 //:# - Se escriben las unidades en las cabeceras de los ficheros CSV. (26-04-2018)
+//:# - Gestion de excepciones mejorada.  (15-09-2019)
 //:#############################################################################
 
 /// \file JGaugeItem.h \brief Declares the class \ref JGaugeItem.
@@ -37,8 +38,17 @@
   #include <cuda_runtime_api.h>
 #endif
 
-class JLog2;
+//-Defines for CUDA exceptions.
+#ifdef _WITHGPU
+#ifndef Run_ExceptioonCuda
+#define Run_ExceptioonCuda(cuerr,msg) RunExceptioonCuda(__FILE__,__LINE__,ClassName,__func__,cuerr,msg)
+#endif
+#ifndef Check_CudaErroor
+#define Check_CudaErroor(msg) CheckCudaErroor(__FILE__,__LINE__,ClassName,__func__,msg)
+#endif
+#endif
 
+class JLog2;
 
 //##############################################################################
 //# JGaugeItem
@@ -47,6 +57,16 @@ class JLog2;
 
 class JGaugeItem : protected JObject
 {
+protected:
+ #ifdef _WITHGPU
+  void RunExceptioonCuda(const std::string &srcfile,int srcline
+    ,const std::string &classname,const std::string &method
+    ,cudaError_t cuerr,std::string msg)const;
+  void CheckCudaErroor(const std::string &srcfile,int srcline
+    ,const std::string &classname,const std::string &method
+    ,std::string msg)const;
+ #endif
+
 public:
 
   ///Types of gauges.
@@ -125,10 +145,6 @@ protected:
   virtual void ClearResult()=0;
   virtual void StoreResult()=0;
 
- #ifdef _WITHGPU
-  void RunExceptionCuda(const std::string &method,const std::string &msg,cudaError_t error);
-  void CheckCudaError(const std::string &method,const std::string &msg);
- #endif
 
 public:
   const TpGauge Type;

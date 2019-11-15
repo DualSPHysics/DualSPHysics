@@ -20,6 +20,8 @@
 
 #include "JCellDivGpu_ker.h"
 #include "Types.h"
+#include "Functions.h"
+#include "FunctionsCuda.h"
 #include <float.h>
 #include <cmath>
 #include "JLog2.h"
@@ -260,7 +262,7 @@ void ReduPosLimits(unsigned nblocks,float *aux,tfloat3 &pmin,tfloat3 &pmax,JLog2
     //:printf("##>ReduMaxF n:%d  n_blocks:%d]\n",n,n_blocks);
     //:printf("##>ReduMaxF>sgrid=(%d,%d,%d)\n",sgrid.x,sgrid.y,sgrid.z);
     KerReduPosLimits<DIVBSIZE><<<sgrid,DIVBSIZE,smemSize>>>(n,dat,res);
-    //:CheckErrorCuda("#>ReduMaxF Fallo en KerReduMaxF.");
+    //fcuda::Check_CudaError("#>ReduMaxF Fallo en KerReduMaxF.");
     n=n_blocks;
     sgrid=GetGridSize(n,DIVBSIZE);  
     n_blocks=sgrid.x*sgrid.y;
@@ -268,7 +270,7 @@ void ReduPosLimits(unsigned nblocks,float *aux,tfloat3 &pmin,tfloat3 &pmax,JLog2
   }
   float resf[6];
   cudaMemcpy(resf,dat,sizeof(float)*6,cudaMemcpyDeviceToHost);
-  //:CheckErrorCuda("#>ReduMaxF Fallo en cudaMemcpy.");
+  //fcuda::Check_CudaError("#>ReduMaxF Fallo en cudaMemcpy.");
   pmin=TFloat3(resf[0],resf[1],resf[2]);
   pmax=TFloat3(resf[3],resf[4],resf[5]);
 }
@@ -398,7 +400,7 @@ void LimitsCellRedu(unsigned cellcode,unsigned nblocks,unsigned *aux,tuint3 &cel
     //:printf("##>ReduMaxF n:%d  n_blocks:%d]\n",n,n_blocks);
     //:printf("##>ReduMaxF>sgrid=(%d,%d,%d)\n",sgrid.x,sgrid.y,sgrid.z);
     KerLimitsCellReduBase<DIVBSIZE><<<sgrid,DIVBSIZE,smemSize>>>(cellcode,n,dat,res);
-    //:CheckErrorCuda("#>ReduMaxF Fallo en KerReduMaxF.");
+    //fcuda::Check_CudaError("#>ReduMaxF Fallo en KerReduMaxF.");
     n=n_blocks;
     sgrid=GetGridSize(n,DIVBSIZE);  
     n_blocks=sgrid.x*sgrid.y;
@@ -406,7 +408,7 @@ void LimitsCellRedu(unsigned cellcode,unsigned nblocks,unsigned *aux,tuint3 &cel
   }
   unsigned resf[6];
   cudaMemcpy(resf,dat,sizeof(unsigned)*2,cudaMemcpyDeviceToHost);
-  //:CheckErrorCuda("#>ReduMaxF Fallo en cudaMemcpy.");
+  //fcuda::Check_CudaError("#>ReduMaxF Fallo en cudaMemcpy.");
   celmin=TUint3(PC__Cellx(cellcode,resf[0]),PC__Celly(cellcode,resf[0]),PC__Cellz(cellcode,resf[0]));
   celmax=TUint3(PC__Cellx(cellcode,resf[1]),PC__Celly(cellcode,resf[1]),PC__Cellz(cellcode,resf[1]));
 }
@@ -506,7 +508,7 @@ void LimitsCell(unsigned np,unsigned pini,unsigned cellcode,const unsigned *dcel
   if(celmin.x!=pminh.x||celmin.y!=pminh.y||celmin.z!=pminh.z||celmax.x!=pmaxh.x||celmax.y!=pmaxh.y||celmax.z!=pmaxh.z){
     sprintf(cad,"LimitsPos> GPU pmin= (%u,%u,%u)  pmax= (%u,%u,%u)",celmin.x,celmin.y,celmin.z,celmax.x,celmax.y,celmax.z); log->Print(cad);
     sprintf(cad,"LimitsPos> CPU pminh=(%u,%u,%u)  pmaxh=(%u,%u,%u)",pminh.x,pminh.y,pminh.z,pmaxh.x,pmaxh.y,pmaxh.z); log->Print(cad);
-    throw "Error en LimitsPos()...";
+    fun::Run_ExceptionStr("Error en LimitsPos()...");
   }
 #endif  //:delend:
 }
@@ -622,6 +624,18 @@ __global__ void KerSortDataParticles(unsigned n,unsigned pini,const unsigned *so
     a2[p]=a[oldpos];
   }
 }
+//------------------------------------------------------------------------------
+/// Reorders particle data according to sortpart[].
+/// Reordena datos de particulas segun sortpart[].
+//------------------------------------------------------------------------------
+__global__ void KerSortDataParticles(unsigned n,unsigned pini,const unsigned *sortpart,const float3 *a,float3 *a2)
+{
+  const unsigned p=blockIdx.y*gridDim.x*blockDim.x + blockIdx.x*blockDim.x + threadIdx.x; //-Particle number.
+  if(p<n){
+    const unsigned oldpos=(p<pini? p: sortpart[p]);
+    a2[p]=a[oldpos];
+  }
+}
 
 //==============================================================================
 /// Reorders particle data according to sortpart.
@@ -677,6 +691,17 @@ void SortDataParticles(unsigned np,unsigned pini,const unsigned *sortpart,const 
   }
 }
 
+//==============================================================================
+/// Reorders particle data according to sortpart.
+/// Reordena datos de particulas segun sortpart.
+//==============================================================================
+void SortDataParticles(unsigned np,unsigned pini,const unsigned *sortpart,const float3 *a,float3 *a2){
+  if(np){
+    dim3 sgrid=GetGridSize(np,DIVBSIZE);
+    KerSortDataParticles <<<sgrid,DIVBSIZE>>>(np,pini,sortpart,a,a2);
+  }
+}
+
 //------------------------------------------------------------------------------
 /// Compute minimum and maximum values starting from data[].
 /// Calcula valores minimo y maximo a partir de data[].
@@ -717,7 +742,7 @@ void ReduUintLimits(unsigned nblocks,unsigned *aux,unsigned &vmin,unsigned &vmax
     //:printf("##>ReduMaxF n:%d  n_blocks:%d]\n",n,n_blocks);
     //:printf("##>ReduMaxF>sgrid=(%d,%d,%d)\n",sgrid.x,sgrid.y,sgrid.z);
     KerReduUintLimits<DIVBSIZE><<<sgrid,DIVBSIZE,smemSize>>>(n,dat,res);
-    //:CheckErrorCuda("#>ReduMaxF Fallo en KerReduMaxF.");
+    //fcuda::Check_CudaError("#>ReduMaxF Fallo en KerReduMaxF.");
     n=n_blocks;
     sgrid=GetGridSize(n,DIVBSIZE);  
     n_blocks=sgrid.x*sgrid.y;
@@ -725,7 +750,7 @@ void ReduUintLimits(unsigned nblocks,unsigned *aux,unsigned &vmin,unsigned &vmax
   }
   unsigned resf[2];
   cudaMemcpy(resf,dat,sizeof(unsigned)*2,cudaMemcpyDeviceToHost);
-  //:CheckErrorCuda("#>ReduMaxF Fallo en cudaMemcpy.");
+  //fcuda::Check_CudaError("#>ReduMaxF Fallo en cudaMemcpy.");
   vmin=resf[0];
   vmax=resf[1];
 }
@@ -790,7 +815,7 @@ unsigned ReduUintSum(unsigned nblocks,unsigned *aux,JLog2 *log){
     //:printf("##>ReduMaxF n:%d  n_blocks:%d]\n",n,n_blocks);
     //:printf("##>ReduMaxF>sgrid=(%d,%d,%d)\n",sgrid.x,sgrid.y,sgrid.z);
     KerReduUintSum<DIVBSIZE><<<sgrid,DIVBSIZE,smemSize>>>(n,dat,res);
-    //:CheckErrorCuda("#>ReduMaxF Fallo en KerReduMaxF.");
+    //fcuda::Check_CudaError("#>ReduMaxF Fallo en KerReduMaxF.");
     n=n_blocks;
     sgrid=GetGridSize(n,DIVBSIZE);  
     n_blocks=sgrid.x*sgrid.y;
@@ -798,7 +823,7 @@ unsigned ReduUintSum(unsigned nblocks,unsigned *aux,JLog2 *log){
   }
   unsigned resf;
   cudaMemcpy(&resf,dat,sizeof(unsigned),cudaMemcpyDeviceToHost);
-  //:CheckErrorCuda("#>ReduMaxF Fallo en cudaMemcpy.");
+  //fcuda::Check_CudaError("#>ReduMaxF Fallo en cudaMemcpy.");
   return(resf);
 }
 
@@ -859,7 +884,7 @@ unsigned ReduUintSum(unsigned nblocks,unsigned *aux,JLog2 *log){
 //  if(pmin!=pminh||pmax!=pmaxh){
 //    sprintf(cad,"GetRangeParticlesCells> GPU pmin= (%u)  pmax= (%u)",pmin,pmax); log->Print(cad);
 //    sprintf(cad,"GetRangeParticlesCells> CPU pminh=(%u)  pmaxh=(%u)",pminh,pmaxh); log->Print(cad);
-//    throw "Error en GetRangeParticlesCells()...";
+//    fun::Run_ExceptionStr("Error en GetRangeParticlesCells()...");
 //  }
 //#endif
 //}
@@ -908,7 +933,7 @@ unsigned ReduUintSum(unsigned nblocks,unsigned *aux,JLog2 *log){
 //  if(sum!=sumh){
 //    sprintf(cad,"GetParticlesCells> GPU sum= (%u)",sum); log->PrintDbg(cad);
 //    sprintf(cad,"GetParticlesCells> CPU sumh=(%u)",sumh); log->PrintDbg(cad);
-//    throw "Error en GetParticlesCells()...";
+//    fun::Run_ExceptionStr("Error en GetParticlesCells()...");
 //  }
 //#endif
 //  return(sum);

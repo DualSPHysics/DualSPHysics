@@ -25,58 +25,69 @@
 #include <cstdio>
 #include <ctime>
 
+//##############################################################################
+//# JObject
+//##############################################################################
+////==============================================================================
+///// Throws exception related to a file from a static method.
+////==============================================================================
+//void JObject::RunExceptioonStatic(const std::string &srcfile,int srcline
+//  ,const std::string &method
+//  ,const std::string &msg,const std::string &file)
+//{
+//  throw JException(srcfile,srcline,"JObject",method,msg,file);
+//}
+
 //==============================================================================
-/// Throws simple exception.
-/// \param method Name of the method that throws an exception.
-/// \param msg Text of the exception.
-/// \throw JException 
+/// Throws exception related to a file or not.
 //==============================================================================
-void JObject::RunException(const std::string &method,const std::string &msg)const{
-  if(DestructorActive)PrintException(method,msg);
-  throw JException(ClassName,method,msg,"");
+void JObject::RunExceptioon(const std::string &srcfile,int srcline
+  ,const std::string &classname,const std::string &method
+  ,const std::string &msg,const std::string &file)const
+{
+  throw JException(srcfile,srcline,classname,method,msg,file);
 }
 
 //==============================================================================
-/// Throws exception related to a file.
-/// \param method Name of the method that throws an exception.
-/// \param msg Text of the exception.
-/// \param file Name of the file.
-/// \throw JException 
+/// Throws exception related to a file or not.
 //==============================================================================
-void JObject::RunException(const std::string &method,const std::string &msg,const std::string &file)const{
-  if(DestructorActive)PrintException(method,msg,file);
+void JObject::RunException(const std::string &method,const std::string &msg
+  ,const std::string &file)const
+{
+  //if(DestructorActive)PrintException(method,msg,file);
+  //PrintException(method,msg,file);
   throw JException(ClassName,method,msg,file);
 }
 
-//==============================================================================
-/// Returns thetext of the simple exception.
-/// \param method Name of the method that throws an exception.
-/// \param msg Text of the exception.
-//==============================================================================
-std::string JObject::GetExceptionText(const std::string &method,const std::string &msg)const{
-  return(JException(ClassName,method,msg,"").ToStr());
-}
-
-//==============================================================================
-/// Returns thetext of the exception related to a file.
-/// \param method Name of the method that throws an exception.
-/// \param msg Text of the exception.
-/// \param file Name of the file.
-//==============================================================================
-std::string JObject::GetExceptionText(const std::string &method,const std::string &msg,const std::string &file)const{
-  return(JException(ClassName,method,msg,file).ToStr());
-}
-
-//==============================================================================
-/// Prints exception related to a file or not.
-/// \param method Name of the method that throws an exception.
-/// \param msg Text of the exception.
-/// \param file Name of the file (is optional).
-//==============================================================================
-void JObject::PrintException(const std::string &method,const std::string &msg,const std::string &file)const{
-  std::string text=(file.empty()? GetExceptionText(method,msg): GetExceptionText(method,msg,file));
-  printf("\n*** %s\n",text.c_str());
-  fflush(stdout);
-}
+////==============================================================================
+///// Returns thetext of the simple exception.
+///// \param method Name of the method that throws an exception.
+///// \param msg Text of the exception.
+////==============================================================================
+//std::string JObject::GetExceptionText(const std::string &method,const std::string &msg)const{
+//  return(JException(ClassName,method,msg,"").ToStr());
+//}
+//
+////==============================================================================
+///// Returns thetext of the exception related to a file.
+///// \param method Name of the method that throws an exception.
+///// \param msg Text of the exception.
+///// \param file Name of the file.
+////==============================================================================
+//std::string JObject::GetExceptionText(const std::string &method,const std::string &msg,const std::string &file)const{
+//  return(JException(ClassName,method,msg,file).ToStr());
+//}
+//
+////==============================================================================
+///// Prints exception related to a file or not.
+///// \param method Name of the method that throws an exception.
+///// \param msg Text of the exception.
+///// \param file Name of the file (is optional).
+////==============================================================================
+//void JObject::PrintException(const std::string &method,const std::string &msg,const std::string &file)const{
+//  std::string text=(file.empty()? GetExceptionText(method,msg): GetExceptionText(method,msg,file));
+//  printf("\n*** %s\n",text.c_str());
+//  fflush(stdout);
+//}
 
 

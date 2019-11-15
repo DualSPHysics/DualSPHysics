@@ -59,7 +59,7 @@ protected:
     ,int &cxini,int &cxfin,int &yini,int &yfin,int &zini,int &zfin)const;
 
   void Interaction_Forces(TpInterStep tinterstep);
-  
+
   double ComputeAceMax(unsigned np,const tfloat3* ace,const typecode *code)const;
   template<bool checkperiodic> double ComputeAceMaxSeq(unsigned np,const tfloat3* ace,const typecode *code)const;
   template<bool checkperiodic> double ComputeAceMaxOmp(unsigned np,const tfloat3* ace,const typecode *code)const;

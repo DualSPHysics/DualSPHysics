@@ -77,7 +77,9 @@ void JSphInitializeOp_FluidVel::ReadXml(JXml *sxml,TiXmlElement* xele){
 //==============================================================================
 /// Initializes data of particles according XML configuration.
 //==============================================================================
-void JSphInitializeOp_FluidVel::Run(unsigned np,unsigned npb,const tdouble3 *pos,const unsigned *idp,const word *mktype,tfloat4 *velrhop){
+void JSphInitializeOp_FluidVel::Run(unsigned np,unsigned npb,unsigned nbound,const tdouble3 *pos
+  ,const unsigned *idp,const word *mktype,tfloat4 *velrhop,tfloat3 *boundnormal)
+{
   const char met[]="Run";
   const tfloat3 dir=fgeo::VecUnitary(Direction);
   float m2=0,b2=0;
@@ -98,8 +100,8 @@ void JSphInitializeOp_FluidVel::Run(unsigned np,unsigned npb,const tdouble3 *pos
   }
   else RunException(met,"Velocity profile is unknown.");
   JRangeFilter rg(MkFluid);
-  bool all=(MkFluid.empty());
-  for(unsigned p=npb;p<np;p++)if(all||rg.CheckValue(mktype[p])){
+  const bool all=(MkFluid.empty());
+  for(unsigned p=npb;p<np;p++)if(all || rg.CheckValue(mktype[p])){
     float v1=v;
     if(VelType==TVEL_Linear)v1=m2*float(pos[p].z)+b2;
     else if(VelType==TVEL_Parabolic)v1=a3*float(pos[p].z)*float(pos[p].z)+b3*float(pos[p].z)+c3;
@@ -115,12 +117,13 @@ void JSphInitializeOp_FluidVel::Run(unsigned np,unsigned npb,const tdouble3 *pos
 void JSphInitializeOp_FluidVel::GetConfig(std::vector<std::string> &lines)const{
   const char met[]="GetConfig";
   lines.push_back(fun::PrintStr("  Operation: %s",ClassName.substr(17).c_str()));
-  lines.push_back(fun::PrintStr("  MkFluid: %s",(MkFluid.empty()? "ALL": MkFluid.c_str())));
+  lines.push_back(fun::PrintStr("  MkFluid..: %s",(MkFluid.empty()? "ALL": MkFluid.c_str())));
   if(VelType==TVEL_Constant)lines.push_back(fun::PrintStr("  Constant velocity: %g",Vel1));
   else if(VelType==TVEL_Linear)lines.push_back(fun::PrintStr("  Linear velocity: %g(z=%g), %g(z=%g)",Vel1,Posz1,Vel2,Posz2));
   else if(VelType==TVEL_Parabolic)lines.push_back(fun::PrintStr("  Parabolic velocity: %g(z=%g), %g(z=%g), %g(z=%g)",Vel1,Posz1,Vel2,Posz2,Vel3,Posz3));
   else RunException(met,"  Velocity profile is unknown.");
 }
+
 
 
 //##############################################################################
@@ -129,7 +132,9 @@ void JSphInitializeOp_FluidVel::GetConfig(std::vector<std::string> &lines)const{
 //==============================================================================
 /// Constructor.
 //==============================================================================
-JSphInitialize::JSphInitialize(const std::string &file){
+JSphInitialize::JSphInitialize(const std::string &file,bool boundnormals)
+  :BoundNormals(boundnormals)
+{
   ClassName="JSphInitialize";
   Reset();
   LoadFileXml(file,"case.execution.special.initialize");
@@ -176,14 +181,12 @@ void JSphInitialize::LoadXml(JXml *sxml,const std::string &place){
 void JSphInitialize::ReadXml(JXml *sxml,TiXmlElement* lis){
   const char met[]="ReadXml";
   //-Loads fluidvelocity elements.
-  TiXmlElement* ele=lis->FirstChildElement("fluidvelocity"); 
+  TiXmlElement* ele=lis->FirstChildElement(); 
   while(ele){
     string cmd=ele->Value();
     if(cmd.length() && cmd[0]!='_'){
-      if(cmd=="fluidvelocity"){
-        JSphInitializeOp_FluidVel *ope=new JSphInitializeOp_FluidVel(sxml,ele);
-        Opes.push_back(ope);
-      }
+      //printf("-----------> [%s]\n",cmd.c_str());
+      if(cmd=="fluidvelocity"){ JSphInitializeOp_FluidVel *ope=new JSphInitializeOp_FluidVel(sxml,ele); Opes.push_back(ope); }
       else sxml->ErrReadElement(ele,cmd,false);
     }
     ele=ele->NextSiblingElement();
@@ -193,9 +196,11 @@ void JSphInitialize::ReadXml(JXml *sxml,TiXmlElement* lis){
 //==============================================================================
 /// Initializes data of particles according XML configuration.
 //==============================================================================
-void JSphInitialize::Run(unsigned np,unsigned npb,const tdouble3 *pos,const unsigned *idp,const word *mktype,tfloat4 *velrhop){
+void JSphInitialize::Run(unsigned np,unsigned npb,unsigned nbound,const tdouble3 *pos
+  ,const unsigned *idp,const word *mktype,tfloat4 *velrhop,tfloat3 *boundnormal)
+{
   for(unsigned c=0;c<Count();c++){
-    Opes[c]->Run(np,npb,pos,idp,mktype,velrhop);
+    Opes[c]->Run(np,npb,nbound,pos,idp,mktype,velrhop,boundnormal);
   }
 }
 

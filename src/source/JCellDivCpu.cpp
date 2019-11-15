@@ -127,12 +127,11 @@ void JCellDivCpu::SetMemoryVSort(byte *vsort){
 /// Asigna memoria segun numero de particulas. 
 //==============================================================================
 void JCellDivCpu::AllocMemoryNp(ullong np){
-  const char met[]="AllocMemoryNp";
   FreeMemoryNp();
   np=np+PARTICLES_OVERMEMORY_MIN;
   SizeNp=unsigned(np);
   //-Check number of particles | Comprueba numero de particulas.
-  if(np!=SizeNp)RunException(met,string("Failed memory allocation for ")+fun::UlongStr(np)+" particles.");
+  if(np!=SizeNp)Run_Exceptioon(string("Failed memory allocation for ")+fun::UlongStr(np)+" particles.");
   //-Reserve memory for particles | Reserva memoria para particulas.
   MemAllocNp=0;
   try{
@@ -141,7 +140,7 @@ void JCellDivCpu::AllocMemoryNp(ullong np){
     SetMemoryVSort(new byte[sizeof(tdouble3)*SizeNp]);  MemAllocNp+=sizeof(tdouble3)*SizeNp;
   }
   catch(const std::bad_alloc){
-    RunException(met,fun::PrintStr("Failed CPU memory allocation of %.1f MB for %u particles.",double(MemAllocNp)/(1024*1024),SizeNp));
+    Run_Exceptioon(fun::PrintStr("Failed CPU memory allocation of %.1f MB for %u particles.",double(MemAllocNp)/(1024*1024),SizeNp));
   }
   //-Show requested memory | Muestra la memoria solicitada.
   Log->Printf("**CellDiv: Requested cpu memory for %u particles: %.1f MB.",SizeNp,double(MemAllocNp)/(1024*1024));
@@ -152,11 +151,10 @@ void JCellDivCpu::AllocMemoryNp(ullong np){
 /// Asigna memoria segun numero de celdas. 
 //==============================================================================
 void JCellDivCpu::AllocMemoryNct(ullong nct){
-  const char met[]="AllocMemoryNct";
   FreeMemoryNct();
   SizeNct=unsigned(nct);
   //-Check number of cells | Comprueba numero de celdas.
-  if(nct!=SizeNct)RunException(met,string("Failed GPU memory allocation for ")+fun::UlongStr(nct)+" cells.");
+  if(nct!=SizeNct)Run_Exceptioon(string("Failed GPU memory allocation for ")+fun::UlongStr(nct)+" cells.");
   //-Reserve memory for cells | Reserva memoria para celdas.
   MemAllocNct=0;
   const unsigned nc=(unsigned)SizeBeginCell(nct);
@@ -165,7 +163,7 @@ void JCellDivCpu::AllocMemoryNct(ullong nct){
     BeginCell=new unsigned[nc];      MemAllocNct+=sizeof(unsigned)*(nc);
   }
   catch(const std::bad_alloc){
-    RunException(met,fun::PrintStr("Failed CPU memory allocation of %.1f MB for %u cells.",double(MemAllocNct)/(1024*1024),SizeNct));
+    Run_Exceptioon(fun::PrintStr("Failed CPU memory allocation of %.1f MB for %u cells.",double(MemAllocNct)/(1024*1024),SizeNct));
   }
   //-Show requested memory | Muestra la memoria solicitada.
   Log->Printf("**CellDiv: Requested cpu memory for %u cells (CellMode=%s): %.1f MB.",SizeNct,GetNameCellMode(CellMode),double(MemAllocNct)/(1024*1024));
@@ -202,7 +200,7 @@ void JCellDivCpu::CheckMemoryNct(unsigned nctmin){
     if(OverMemoryCells>0){
       ullong nct=ullong(Ncx+OverMemoryCells)*ullong(Ncy+OverMemoryCells)*ullong(Ncz+OverMemoryCells);
       ullong nctt=SizeBeginCell(nct);
-      if(nctt!=unsigned(nctt))RunException("CheckMemoryNct","The number of cells is too big.");
+      if(nctt!=unsigned(nctt))Run_Exceptioon("The number of cells is too big.");
       overnct=unsigned(nct);
     }
     AllocMemoryNct(nctmin>overnct? nctmin: overnct);
@@ -467,7 +465,7 @@ tdouble3 JCellDivCpu::GetDomainLimits(bool limitmin,unsigned slicecellmin)const{
 ////==============================================================================
 //bool JCellDivCpu::CellNoEmpty(unsigned box,byte kind)const{
 //#ifdef DBG_JCellDivCpu
-//  if(box>=Nct)RunException("CellNoEmpty","Celda no valida.");
+//  if(box>=Nct)Run_Exceptioon("Celda no valida.");
 //#endif
 //  if(kind==2)box+=BoxFluid;
 //  return(BeginCell[box]<BeginCell[box+1]);
@@ -478,7 +476,7 @@ tdouble3 JCellDivCpu::GetDomainLimits(bool limitmin,unsigned slicecellmin)const{
 ////==============================================================================
 //unsigned JCellDivCpu::CellBegin(unsigned box,byte kind)const{
 //#ifdef DBG_JCellDivCpu
-//  if(box>Nct)RunException("CellBegin","Celda no valida.");
+//  if(box>Nct)Run_Exceptioon("Celda no valida.");
 //#endif
 //  return(BeginCell[(kind==1? box: box+BoxFluid)]);
 //}
@@ -488,7 +486,7 @@ tdouble3 JCellDivCpu::GetDomainLimits(bool limitmin,unsigned slicecellmin)const{
 ////==============================================================================
 //unsigned JCellDivCpu::CellSize(unsigned box,byte kind)const{
 //#ifdef DBG_JCellDivCpu
-//  if(box>Nct)RunException("CellSize","Celda no valida.");
+//  if(box>Nct)Run_Exceptioon("Celda no valida.");
 //#endif
 //  if(kind==2)box+=BoxFluid;
 //  return(BeginCell[box+1]-BeginCell[box]);

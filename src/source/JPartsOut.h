@@ -24,6 +24,7 @@
 //:# - Las funcion GetAllocMemory() devuelve long long. (05-04-2013)
 //:# - Pos pasa a ser tdouble3 en lugar de tfloat3. (24-11-2013)
 //:# - Se incluye el motivo de exclusion. (20-03-2018)
+//:# - Mejoras para compatibilidad con Multi-GPU. (10-09-2019)
 //:#############################################################################
 
 /// \file JPartsOut.h \brief Declares the class \ref JPartsOut.
@@ -42,29 +43,37 @@
 
 class JPartsOut : protected JObject
 {
-public:
-
 protected:
-  unsigned SizeIni;
+  const unsigned SizeUnit;
   unsigned Size;
   unsigned Count;
   
   unsigned OutPosCount,OutRhopCount,OutMoveCount;
 
+  //-Normal CPU memory pointers.
   unsigned *Idp;
   tdouble3 *Pos;
   tfloat3 *Vel;
   float *Rhop;
   byte *Motive; ///<Motives for exclusion. 1:position, 2:rhop, 3:velocity.
 
+  unsigned MemAllocs;     ///<Number of allocations.
+  llong MemCpuParticles;  ///<Allocated normal CPU memory.
+
+
   void AllocMemory(unsigned size,bool reset);
+  void AddData(unsigned np,const typecode* code);
 
 public:
-  JPartsOut(unsigned sizeini=2000);
+  JPartsOut(unsigned sizeunit=1024);
   ~JPartsOut();
   void Reset();
-  llong GetAllocMemory()const;
-  void AddParticles(unsigned np,const unsigned* idp,const tdouble3* pos,const tfloat3* vel,const float* rhop,const typecode* code);
+
+  unsigned GetMemAllocs()const{ return(MemAllocs); }
+  llong GetAllocMemory()const{ return(MemCpuParticles); }
+
+  void AddParticles(unsigned np,const unsigned* idp,const tdouble3* pos
+    ,const tfloat3* vel,const float* rhop,const typecode* code);
 
   unsigned GetSize()const{ return(Size); }
   unsigned GetCount()const{ return(Count); }

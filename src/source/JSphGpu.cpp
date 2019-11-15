@@ -19,6 +19,7 @@
 /// \file JSphGpu.cpp \brief Implements the class \ref JSphGpu.
 
 #include "JSphGpu.h"
+#include "JException.h"
 #include "JSphGpu_ker.h"
 #include "JBlockSizeAuto.h"
 #include "JCellDivGpu.h"
@@ -47,7 +48,7 @@ using namespace std;
 //==============================================================================
 /// Constructor.
 //==============================================================================
-JSphGpu::JSphGpu(bool withmpi):JSph(false,withmpi){
+JSphGpu::JSphGpu(bool withmpi):JSph(false,false,withmpi),DivAxis(MGDIV_None){
   ClassName="JSphGpu";
   Idp=NULL; Code=NULL; Dcell=NULL; Posxy=NULL; Posz=NULL; Velrhop=NULL;
   AuxPos=NULL; AuxVel=NULL; AuxRhop=NULL;
@@ -71,6 +72,50 @@ JSphGpu::~JSphGpu(){
   TmgDestruction(Timers);
   cudaDeviceReset();
   delete BsAuto; BsAuto=NULL;
+}
+
+//==============================================================================
+/// Throws exception related to a CUDA error from a static method.
+//==============================================================================
+void JSphGpu::RunExceptioonCudaStatic(const std::string &srcfile,int srcline
+  ,const std::string &method
+  ,cudaError_t cuerr,std::string msg)
+{
+  msg=msg+fun::PrintStr(" (CUDA error %d (%s)).\n",cuerr,cudaGetErrorString(cuerr));
+  throw JException(srcfile,srcline,"JSphGpu",method,msg,"");
+}
+
+//==============================================================================
+/// Checks CUDA error and throws exception from a static method.
+//==============================================================================
+void JSphGpu::CheckCudaErroorStatic(const std::string &srcfile,int srcline
+  ,const std::string &method,std::string msg)
+{
+  const cudaError_t cuerr=cudaGetLastError();
+  if(cuerr!=cudaSuccess)RunExceptioonCudaStatic(srcfile,srcline,method,cuerr,msg);
+}
+
+//==============================================================================
+/// Throws exception related to a CUDA error.
+//==============================================================================
+void JSphGpu::RunExceptioonCuda(const std::string &srcfile,int srcline
+  ,const std::string &classname,const std::string &method
+  ,cudaError_t cuerr,std::string msg)const
+{
+  msg=msg+fun::PrintStr(" (CUDA error %d (%s)).\n",cuerr,cudaGetErrorString(cuerr));
+  throw JException(srcfile,srcline,classname,method,msg,"");
+}
+
+//==============================================================================
+/// Checks CUDA error and throws exception.
+/// Comprueba error de CUDA y lanza excepcion si lo hubiera.
+//==============================================================================
+void JSphGpu::CheckCudaErroor(const std::string &srcfile,int srcline
+  ,const std::string &classname,const std::string &method
+  ,std::string msg)const
+{
+  cudaError_t cuerr=cudaGetLastError();
+  if(cuerr!=cudaSuccess)RunExceptioonCuda(srcfile,srcline,classname,method,cuerr,msg);
 }
 
 //==============================================================================
@@ -103,27 +148,11 @@ void JSphGpu::InitVars(){
   FtObjsOutdated=true;
   DemDatag=NULL; //(DEM)
   InOutPartg=NULL;  InOutCount=0; //-InOut.  //<vs_innlet>
+  GpuParticlesAllocs=0;
+  GpuParticlesSize=0;
+  MemGpuParticles=MemGpuFixed=0;
   FreeGpuMemoryParticles();
   FreeGpuMemoryFixed();
-}
-
-//==============================================================================
-/// Throws exception for an error in the CUDA code.
-/// Lanza excepcion por un error Cuda.
-//==============================================================================
-void JSphGpu::RunExceptionCuda(const std::string &method,const std::string &msg,cudaError_t error){
-  std::string tx=fun::PrintStr("%s (CUDA error: %s).\n",msg.c_str(),cudaGetErrorString(error)); 
-  Log->Print(GetExceptionText(method,tx));
-  RunException(method,msg);
-}
-
-//==============================================================================
-/// Checks error and throws exception.
-/// Comprueba error y lanza excepcion si lo hubiera.
-//==============================================================================
-void JSphGpu::CheckCudaError(const std::string &method,const std::string &msg){
-  cudaError_t err=cudaGetLastError();
-  if(err!=cudaSuccess)RunExceptionCuda(method,msg,err);
 }
 
 //==============================================================================
@@ -141,8 +170,8 @@ void JSphGpu::FreeCpuMemoryFixed(){
 //==============================================================================
 void JSphGpu::AllocCpuMemoryFixed(){
   MemCpuFixed=0;
-  if(sizeof(tfloat3)*2!=sizeof(StFtoForces))RunException("AllocCpuMemoryFixed","Error: FtoForcesg and FtoForcesSumg does not match float3*2.");
-  if(sizeof(float)*9!=sizeof(tmatrix3f))RunException("AllocCpuMemoryFixed","Error: FtoInertiainig does not match float*9.");
+  if(sizeof(tfloat3)*2!=sizeof(StFtoForces))Run_Exceptioon("Error: FtoForcesg and FtoForcesSumg does not match float3*2.");
+  if(sizeof(float)*9!=sizeof(tmatrix3f))Run_Exceptioon("Error: FtoInertiainig does not match float*9.");
   try{
     //-Allocates memory for floating bodies.
     if(CaseNfloat){
@@ -151,7 +180,7 @@ void JSphGpu::AllocCpuMemoryFixed(){
     }
   }
   catch(const std::bad_alloc){
-    RunException("AllocCpuMemoryFixed","Could not allocate the requested memory.");
+    Run_Exceptioon("Could not allocate the requested memory.");
   }
 }
 
@@ -235,7 +264,6 @@ void JSphGpu::FreeCpuMemoryParticles(){
 /// Reserva memoria para datos principales de particulas.
 //==============================================================================
 void JSphGpu::AllocCpuMemoryParticles(unsigned np){
-  const char* met="AllocCpuMemoryParticles";
   FreeCpuMemoryParticles();
   if(np>0)np=np+PARTICLES_OVERMEMORY_MIN;
   CpuParticlesSize=np;
@@ -252,7 +280,7 @@ void JSphGpu::AllocCpuMemoryParticles(unsigned np){
       AuxRhop=new float[np];     MemCpuParticles+=sizeof(float)*np;
     }
     catch(const std::bad_alloc){
-      RunException(met,fun::PrintStr("Could not allocate the requested memory (np=%u).",np));
+      Run_Exceptioon(fun::PrintStr("Could not allocate the requested memory (np=%u).",np));
     }
   }
 }
@@ -262,6 +290,7 @@ void JSphGpu::AllocCpuMemoryParticles(unsigned np){
 /// Libera memoria en Gpu para particulas.
 //==============================================================================
 void JSphGpu::FreeGpuMemoryParticles(){
+  //GpuParticlesAllocs=0; This values is kept.
   GpuParticlesSize=0;
   MemGpuParticles=0;
   ArraysGpu->Reset();
@@ -272,7 +301,6 @@ void JSphGpu::FreeGpuMemoryParticles(){
 /// Reserva memoria en Gpu para las particulas. 
 //==============================================================================
 void JSphGpu::AllocGpuMemoryParticles(unsigned np,float over){
-  const char* met="AllocGpuMemoryParticles";
   FreeGpuMemoryParticles();
   //-Computes number of particles for which memory will be allocated.
   //-Calcula numero de particulas para las que se reserva memoria.
@@ -286,7 +314,7 @@ void JSphGpu::AllocGpuMemoryParticles(unsigned np,float over){
     ArraysGpu->AddArrayCount(JArraysGpu::SIZE_2B,2);  //-code,code2
   #endif
   ArraysGpu->AddArrayCount(JArraysGpu::SIZE_4B,4);  //-idp,ar,viscdt,dcell
-  if(TDeltaSph==DELTA_DynamicExt)ArraysGpu->AddArrayCount(JArraysGpu::SIZE_4B,1);  //-delta
+  if(DDTArray)ArraysGpu->AddArrayCount(JArraysGpu::SIZE_4B,1);  //-delta
   ArraysGpu->AddArrayCount(JArraysGpu::SIZE_12B,1); //-ace
   ArraysGpu->AddArrayCount(JArraysGpu::SIZE_16B,4); //-velrhop,posxy
   ArraysGpu->AddArrayCount(JArraysGpu::SIZE_8B,2);  //-posz
@@ -312,8 +340,8 @@ void JSphGpu::AllocGpuMemoryParticles(unsigned np,float over){
   }  //<vs_innlet_end>
   //-Shows the allocated memory.
   MemGpuParticles=ArraysGpu->GetAllocMemoryGpu();
-  PrintSizeNp(GpuParticlesSize,MemGpuParticles);
-  CheckCudaError(met,"Failed GPU memory allocation.");
+  PrintSizeNp(GpuParticlesSize,MemGpuParticles,GpuParticlesAllocs);
+  Check_CudaErroor("Failed GPU memory allocation.");
 }
 
 //==============================================================================
@@ -322,18 +350,18 @@ void JSphGpu::AllocGpuMemoryParticles(unsigned np,float over){
 void JSphGpu::ResizeGpuMemoryParticles(unsigned npnew){
   npnew=npnew+PARTICLES_OVERMEMORY_MIN;
   //-Saves current data from GPU.
-  unsigned    *idp       =SaveArrayGpu(Np,Idpg);
-  typecode    *code      =SaveArrayGpu(Np,Codeg);
-  unsigned    *dcell     =SaveArrayGpu(Np,Dcellg);
-  double2     *posxy     =SaveArrayGpu(Np,Posxyg);
-  double      *posz      =SaveArrayGpu(Np,Poszg);
-  float4      *velrhop   =SaveArrayGpu(Np,Velrhopg);
-  float4      *velrhopm1 =SaveArrayGpu(Np,VelrhopM1g);
-  double2     *posxypre  =SaveArrayGpu(Np,PosxyPreg);
-  double      *poszpre   =SaveArrayGpu(Np,PoszPreg);
-  float4      *velrhoppre=SaveArrayGpu(Np,VelrhopPreg);
-  tsymatrix3f *spstau    =SaveArrayGpu(Np,SpsTaug);
-  int         *inoutpart =SaveArrayGpu(Np,InOutPartg);  //<vs_innlet>
+  unsigned    *idp        =SaveArrayGpu(Np,Idpg);
+  typecode    *code       =SaveArrayGpu(Np,Codeg);
+  unsigned    *dcell      =SaveArrayGpu(Np,Dcellg);
+  double2     *posxy      =SaveArrayGpu(Np,Posxyg);
+  double      *posz       =SaveArrayGpu(Np,Poszg);
+  float4      *velrhop    =SaveArrayGpu(Np,Velrhopg);
+  float4      *velrhopm1  =SaveArrayGpu(Np,VelrhopM1g);
+  double2     *posxypre   =SaveArrayGpu(Np,PosxyPreg);
+  double      *poszpre    =SaveArrayGpu(Np,PoszPreg);
+  float4      *velrhoppre =SaveArrayGpu(Np,VelrhopPreg);
+  tsymatrix3f *spstau     =SaveArrayGpu(Np,SpsTaug);
+  int         *inoutpart  =SaveArrayGpu(Np,InOutPartg);   //<vs_innlet>
   //-Frees pointers.
   ArraysGpu->Free(Idpg);
   ArraysGpu->Free(Codeg);
@@ -346,7 +374,7 @@ void JSphGpu::ResizeGpuMemoryParticles(unsigned npnew){
   ArraysGpu->Free(PoszPreg);
   ArraysGpu->Free(VelrhopPreg);
   ArraysGpu->Free(SpsTaug);
-  ArraysGpu->Free(InOutPartg);  //<vs_innlet>
+  ArraysGpu->Free(InOutPartg);    //<vs_innlet>
   //-Resizes GPU memory allocation.
   const double mbparticle=(double(MemGpuParticles)/(1024*1024))/GpuParticlesSize; //-MB por particula.
   Log->Printf("**JSphGpu: Requesting gpu memory for %u particles: %.1f MB.",npnew,mbparticle*npnew);
@@ -358,12 +386,12 @@ void JSphGpu::ResizeGpuMemoryParticles(unsigned npnew){
   Posxyg  =ArraysGpu->ReserveDouble2();
   Poszg   =ArraysGpu->ReserveDouble();
   Velrhopg=ArraysGpu->ReserveFloat4();
-  if(velrhopm1) VelrhopM1g =ArraysGpu->ReserveFloat4();
-  if(posxypre)  PosxyPreg  =ArraysGpu->ReserveDouble2();
-  if(poszpre)   PoszPreg   =ArraysGpu->ReserveDouble();
-  if(velrhoppre)VelrhopPreg=ArraysGpu->ReserveFloat4();
-  if(spstau)    SpsTaug    =ArraysGpu->ReserveSymatrix3f();
-  if(inoutpart) InOutPartg =ArraysGpu->ReserveInt();  //<vs_innlet>
+  if(velrhopm1)  VelrhopM1g  =ArraysGpu->ReserveFloat4();
+  if(posxypre)   PosxyPreg   =ArraysGpu->ReserveDouble2();
+  if(poszpre)    PoszPreg    =ArraysGpu->ReserveDouble();
+  if(velrhoppre) VelrhopPreg =ArraysGpu->ReserveFloat4();
+  if(spstau)     SpsTaug     =ArraysGpu->ReserveSymatrix3f();
+  if(inoutpart)  InOutPartg  =ArraysGpu->ReserveInt();    //<vs_innlet>
   //-Restore data in GPU memory.
   RestoreArrayGpu(Np,idp,Idpg);
   RestoreArrayGpu(Np,code,Codeg);
@@ -376,8 +404,9 @@ void JSphGpu::ResizeGpuMemoryParticles(unsigned npnew){
   RestoreArrayGpu(Np,poszpre,PoszPreg);
   RestoreArrayGpu(Np,velrhoppre,VelrhopPreg);
   RestoreArrayGpu(Np,spstau,SpsTaug);
-  RestoreArrayGpu(Np,inoutpart,InOutPartg);  //<vs_innlet>
+  RestoreArrayGpu(Np,inoutpart,InOutPartg);     //<vs_innlet>
   //-Updates values.
+  GpuParticlesAllocs++;
   GpuParticlesSize=npnew;
   MemGpuParticles=ArraysGpu->GetAllocMemoryGpu();
 }
@@ -392,7 +421,7 @@ template<class T> T* JSphGpu::TSaveArrayGpu(unsigned np,const T *datasrc)const{
       data=new T[np];
     }
     catch(const std::bad_alloc){
-      RunException("TSaveArrayGpu","Could not allocate the requested memory.");
+      Run_Exceptioon("Could not allocate the requested memory.");
     }
     cudaMemcpy(data,datasrc,sizeof(T)*np,cudaMemcpyDeviceToHost);
   }
@@ -483,7 +512,8 @@ void JSphGpu::ConstantDataUp(){
     ctes.cubic_c1=CubicCte.c1; ctes.cubic_c2=CubicCte.c2; ctes.cubic_d1=CubicCte.d1; ctes.cubic_odwdeltap=CubicCte.od_wdeltap;
   }
   ctes.cs0=float(Cs0); ctes.eta2=Eta2;
-  ctes.delta2h=Delta2H;
+  ctes.ddt2h=DDT2h;
+  ctes.ddtgz=DDTgz;
   ctes.scell=Scell; ctes.dosh=Dosh; ctes.dp=float(Dp);
   ctes.cteb=CteB; ctes.gamma=Gamma;
   ctes.rhopzero=RhopZero;
@@ -491,29 +521,31 @@ void JSphGpu::ConstantDataUp(){
   ctes.movlimit=MovLimit;
   ctes.maprealposminx=MapRealPosMin.x; ctes.maprealposminy=MapRealPosMin.y; ctes.maprealposminz=MapRealPosMin.z;
   ctes.maprealsizex=MapRealSize.x; ctes.maprealsizey=MapRealSize.y; ctes.maprealsizez=MapRealSize.z;
-  ctes.symmetry=Symmetry; //<vs_syymmetry>
+  ctes.symmetry=Symmetry;   //<vs_syymmetry>
+  ctes.tboundary=unsigned(TBoundary);
   ctes.periactive=PeriActive;
   ctes.xperincx=PeriXinc.x; ctes.xperincy=PeriXinc.y; ctes.xperincz=PeriXinc.z;
   ctes.yperincx=PeriYinc.x; ctes.yperincy=PeriYinc.y; ctes.yperincz=PeriYinc.z;
   ctes.zperincx=PeriZinc.x; ctes.zperincy=PeriZinc.y; ctes.zperincz=PeriZinc.z;
+  ctes.axis=MGDIV_Z;//-Necessary to avoid errors in KerGetInteraction_Cells().
   ctes.cellcode=DomCellCode;
   ctes.domposminx=DomPosMin.x; ctes.domposminy=DomPosMin.y; ctes.domposminz=DomPosMin.z;
   cusph::CteInteractionUp(&ctes);
-  CheckCudaError("ConstantDataUp","Failed copying constants to GPU.");
+  Check_CudaErroor("Failed copying constants to GPU.");
 }
 
 //==============================================================================
 /// Uploads particle data to the GPU.
 /// Sube datos de particulas a la GPU.
 //==============================================================================
-void JSphGpu::ParticlesDataUp(unsigned n){
+void JSphGpu::ParticlesDataUp(unsigned n,const tfloat3 *boundnormal){
   cudaMemcpy(Idpg    ,Idp    ,sizeof(unsigned)*n,cudaMemcpyHostToDevice);
   cudaMemcpy(Codeg   ,Code   ,sizeof(typecode)*n,cudaMemcpyHostToDevice);
   cudaMemcpy(Dcellg  ,Dcell  ,sizeof(unsigned)*n,cudaMemcpyHostToDevice);
   cudaMemcpy(Posxyg  ,Posxy  ,sizeof(double2)*n ,cudaMemcpyHostToDevice);
   cudaMemcpy(Poszg   ,Posz   ,sizeof(double)*n  ,cudaMemcpyHostToDevice);
   cudaMemcpy(Velrhopg,Velrhop,sizeof(float4)*n  ,cudaMemcpyHostToDevice);
-  CheckCudaError("ParticlesDataUp","Failed copying data to GPU.");
+  Check_CudaErroor("Failed copying data to GPU.");
 }
 
 //==============================================================================
@@ -534,7 +566,7 @@ unsigned JSphGpu::ParticlesDataDown(unsigned n,unsigned pini,bool code,bool only
   cudaMemcpy(Posz,Poszg+pini,sizeof(double)*n,cudaMemcpyDeviceToHost);
   cudaMemcpy(Velrhop,Velrhopg+pini,sizeof(float4)*n,cudaMemcpyDeviceToHost);
   if(code || onlynormal)cudaMemcpy(Code,Codeg+pini,sizeof(typecode)*n,cudaMemcpyDeviceToHost);
-  CheckCudaError("ParticlesDataDown","Failed copying data from GPU.");
+  Check_CudaErroor("Failed copying data from GPU.");
   //-Eliminates abnormal particles (periodic and others). | Elimina particulas no normales (periodicas y otras).
   if(onlynormal){
     unsigned ndel=0;
@@ -565,7 +597,6 @@ unsigned JSphGpu::ParticlesDataDown(unsigned n,unsigned pini,bool code,bool only
 /// Inicializa dispositivo CUDA.
 //==============================================================================
 void JSphGpu::SelecDevice(int gpuid){
-  const char* met="SelecDevice";
   Log->Print("[Select CUDA Device]");
   //-Get and show GPU information.
   vector<string> gpuinfo;
@@ -602,14 +633,13 @@ void JSphGpu::SelecDevice(int gpuid){
     Log->Printf("Memory global: %d MB",int(GpuGlobalMem/(1024*1024)));
     Log->Printf("Memory shared: %u Bytes",GpuSharedMem);
   }
-  else RunException(met, "There are no available CUDA devices.");
+  else Run_Exceptioon("There are no available CUDA devices.");
 }
 
 //==============================================================================
 /// Configures BlockSizeMode to compute optimum size of CUDA blocks.
 //==============================================================================
 void JSphGpu::ConfigBlockSizes(bool usezone,bool useperi){
-  const char met[]="ConfigBlockSizes";
   Log->Print(" ");
   BlockSizesStr="";
   if(CellMode==CELLMODE_2H || CellMode==CELLMODE_H){
@@ -620,14 +650,22 @@ void JSphGpu::ConfigBlockSizes(bool usezone,bool useperi){
     StKerInfo kerinfo;
     memset(&kerinfo,0,sizeof(StKerInfo));
     #ifndef DISABLE_BSMODES
-      const stinterparmsg parms=StInterparmsg(Simulate2D
+      const StInterParmsg parms=StrInterParmsg(Simulate2D
         ,Symmetry  //<vs_syymmetry>
-        ,Psingle,TKernel
-        ,FtMode,lamsps,TDeltaSph,CellMode,0,0
-        ,0,0,100,50,20
-        ,TUint3(0),NULL,TUint3(0),NULL
-        ,NULL,NULL,NULL,NULL,NULL,NULL,NULL
-        ,NULL,NULL,NULL,NULL,NULL,NULL,TShifting,NULL,NULL
+        ,Psingle,TKernel,FtMode
+        ,lamsps,TDensity,TShifting
+        ,CellMode
+        ,0,0,0,0,100,0,0
+        ,0,DivAxis
+        ,TUint3(0),TUint3(0)
+        ,NULL,NULL
+        ,NULL,NULL,NULL
+        ,NULL,NULL,NULL
+        ,NULL,NULL
+        ,NULL,NULL,NULL,NULL
+        ,NULL
+        ,NULL,NULL
+        ,NULL
         ,&kerinfo,NULL);
       cusph::Interaction_Forces(parms);
       if(UseDEM)cusph::Interaction_ForcesDem(Psingle,CellMode,BlockSizes.forcesdem,CaseNfloat,TUint3(0),NULL,TUint3(0),NULL,NULL,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,&kerinfo);
@@ -668,7 +706,7 @@ void JSphGpu::ConfigBlockSizes(bool usezone,bool useperi){
     BlockSizesStr=BlockSizesStr+txb+" - "+txf;
     if(UseDEM)BlockSizesStr=BlockSizesStr+" - "+txd;
   }
-  else RunException(met,"CellMode unrecognised.");
+  else Run_Exceptioon("CellMode unrecognised.");
   Log->Print(" ");
 }
 
@@ -794,7 +832,7 @@ void JSphGpu::InitRunGpu(){
   if(TStep==STEP_Verlet)cudaMemcpy(VelrhopM1g,Velrhopg,sizeof(float4)*Np,cudaMemcpyDeviceToDevice);
   if(TVisco==VISCO_LaminarSPS)cudaMemset(SpsTaug,0,sizeof(tsymatrix3f)*Np);
   if(CaseNfloat)InitFloating();
-  CheckCudaError("InitRunGpu","Failed initializing variables for execution.");
+  Check_CudaErroor("Failed initializing variables for execution.");
 }
 
 //==============================================================================
@@ -802,12 +840,9 @@ void JSphGpu::InitRunGpu(){
 //==============================================================================
 void JSphGpu::AddAccInput(){
   for(unsigned c=0;c<AccInput->GetCount();c++){
-    unsigned mkfluid;
-    tdouble3 acclin,accang,centre,velang,vellin;
-    bool setgravity;
-    AccInput->GetAccValues(c,TimeStep,mkfluid,acclin,accang,centre,velang,vellin,setgravity);
-    const typecode codesel=typecode(mkfluid);
-    cusph::AddAccInput(Np-Npb,Npb,codesel,acclin,accang,centre,velang,vellin,setgravity,Gravity,Codeg,Posxyg,Poszg,Velrhopg,Aceg);
+    const StAceInput v=AccInput->GetAccValues(c,TimeStep);
+    const typecode codesel=typecode(v.mkfluid);
+    cusph::AddAccInput(Np-Npb,Npb,codesel,v.acclin,v.accang,v.centre,v.velang,v.vellin,v.setgravity,Gravity,Codeg,Posxyg,Poszg,Velrhopg,Aceg,NULL);
   }
 }
 
@@ -841,7 +876,7 @@ void JSphGpu::PreInteraction_Forces(){
   ViscDtg=ArraysGpu->ReserveFloat();
   Arg=ArraysGpu->ReserveFloat();
   Aceg=ArraysGpu->ReserveFloat3();
-  if(TDeltaSph==DELTA_DynamicExt)Deltag=ArraysGpu->ReserveFloat();
+  if(DDTArray)Deltag=ArraysGpu->ReserveFloat();
   if(TShifting!=SHIFT_None){
     ShiftPosg=ArraysGpu->ReserveFloat3();
     if(ShiftTFS)ShiftDetectg=ArraysGpu->ReserveFloat();
@@ -864,7 +899,7 @@ void JSphGpu::PreInteraction_Forces(){
   VelMax=sqrt(velmax);
   cudaMemset(ViscDtg,0,sizeof(float)*Np);           //ViscDtg[]=0
   ViscDtMax=0;
-  CheckCudaError("PreInteraction_Forces","Failed calculating VelMax.");
+  Check_CudaErroor("Failed calculating VelMax.");
   TmgStop(Timers,TMG_CfPreForces);
 }
 
@@ -994,7 +1029,7 @@ double JSphGpu::DtVariable(bool final){
   const double dt2=double(H)/(max(Cs0,VelMax*10.)+double(H)*ViscDtMax);
   //-dt new value of time step.
   double dt=double(CFLnumber)*min(dt1,dt2);
-  if(DtFixed)dt=DtFixed->GetDt(float(TimeStep),float(dt));
+  if(DtFixed)dt=DtFixed->GetDt(TimeStep,dt);
   if(dt<double(DtMin)){ 
     dt=double(DtMin); DtModif++;
     if(DtModif>=DtModifWrn){
@@ -1002,7 +1037,13 @@ double JSphGpu::DtVariable(bool final){
       DtModifWrn*=10;
     }
   }
-  if(SaveDt && final)SaveDt->AddValues(TimeStep,dt,dt1*CFLnumber,dt2*CFLnumber,AceMax,ViscDtMax,VelMax);
+  //-Saves information about dt.
+  if(final){
+    if(PartDtMin>dt)PartDtMin=dt;
+    if(PartDtMax<dt)PartDtMax=dt;
+    //-Saves detailed information about dt in SaveDt object.
+    if(SaveDt)SaveDt->AddValues(TimeStep,dt,dt1*CFLnumber,dt2*CFLnumber,AceMax,ViscDtMax,VelMax);
+  }
   return(dt);
 }
 
@@ -1023,20 +1064,8 @@ void JSphGpu::RunShifting(double dt){
 //==============================================================================
 void JSphGpu::CalcMotion(double stepdt){
   TmgStart(Timers,TMG_SuMotion);
-  const bool motsim=true;
-  const JSphMotion::TpMotionMode mode=(motsim? JSphMotion::MOMT_Simple: JSphMotion::MOMT_Ace2dt);
-  SphMotion->ProcesTime(mode,TimeStep,stepdt);
-  if(ChronoObjects && ChronoObjects->GetWithMotion() && SphMotion->GetActiveMotion()){ //<vs_chroono_ini> 
-    word mkbound;
-    bool typesimple;
-    tdouble3 simplemov;
-    tmatrix4d matmov;
-    const unsigned nref=SphMotion->GetNumObjects();
-    for(unsigned ref=0;ref<nref;ref++)if(SphMotion->ProcesTimeGetData(ref,mkbound,typesimple,simplemov,matmov)){
-      if(Simulate2D && typesimple)simplemov.y=0;
-      ChronoObjects->SetMovingData(mkbound,typesimple,simplemov,matmov,stepdt);
-    }
-  } //<vs_chroono_end>
+  JSph::CalcMotion(stepdt);
+  TmgStop(Timers,TMG_SuMotion);
 }
 
 //==============================================================================
@@ -1044,64 +1073,29 @@ void JSphGpu::CalcMotion(double stepdt){
 /// Procesa movimiento de boundary particles.
 //==============================================================================
 void JSphGpu::RunMotion(double stepdt){
-  const char met[]="RunMotion";
   TmgStart(Timers,TMG_SuMotion);
+  float3 *boundnormal=NULL;
   const bool motsim=true;
   BoundChanged=false;
+  //-Add motion from automatic wave generation.
+  if(WaveGen)CalcMotionWaveGen(stepdt);
+  //-Process particles motion.
   if(SphMotion->GetActiveMotion()){
     cusph::CalcRidp(PeriActive!=0,Npb,0,CaseNfixed,CaseNfixed+CaseNmoving,Codeg,Idpg,RidpMoveg);
     BoundChanged=true;
-    bool typesimple;
-    tdouble3 simplemov,simplevel,simpleace;
-    tmatrix4d matmov,matmov2;
-    unsigned nparts,idbegin;
     const unsigned nref=SphMotion->GetNumObjects();
-    for(unsigned ref=0;ref<nref;ref++)if(SphMotion->ProcesTimeGetData(ref,typesimple,simplemov,simplevel,simpleace,matmov,matmov2,nparts,idbegin)){
-      const unsigned pini=idbegin-CaseNfixed;
-      if(typesimple){//-Simple movement. | Movimiento simple.
-        if(Simulate2D)simplemov.y=simplevel.y=simpleace.y=0;
-        if(motsim)cusph::MoveLinBound(PeriActive,nparts,pini,simplemov,ToTFloat3(simplevel),RidpMoveg,Posxyg,Poszg,Dcellg,Velrhopg,Codeg);
-        //else    cusph::MoveLinBoundAce(PeriActive,nparts,pini,simplemov,ToTFloat3(simplevel),ToTFloat3(simpleace),RidpMoveg,Posxyg,Poszg,Dcellg,Velrhopg,Codeg);
+    for(unsigned ref=0;ref<nref;ref++){
+      const StMotionData& m=SphMotion->GetMotionData(ref);
+      if(m.type==MOTT_Linear){//-Linear movement.
+        if(motsim)cusph::MoveLinBound   (PeriActive,m.count,m.idbegin-CaseNfixed,m.linmov,ToTFloat3(m.linvel),RidpMoveg,Posxyg,Poszg,Dcellg,Velrhopg,Codeg);
+        //else    cusph::MoveLinBoundAce(PeriActive,m.count,m.idbegin-CaseNfixed,m.linmov,ToTFloat3(m.linvel),ToTFloat3(m.linace),RidpMoveg,Posxyg,Poszg,Dcellg,Velrhopg,Codeg);
       }
-      else{//-Movement using a matrix. | Movimiento con matriz.
-        if(motsim)cusph::MoveMatBound   (PeriActive,Simulate2D,nparts,pini,matmov,stepdt,RidpMoveg,Posxyg,Poszg,Dcellg,Velrhopg,Codeg);
-        //else    cusph::MoveMatBoundAce(PeriActive,Simulate2D,nparts,pini,matmov,matmov2,stepdt,RidpMoveg,Posxyg,Poszg,Dcellg,Velrhopg,Codeg);
-      }
-      //-Applies predefined motion to BoundCorr configuration.  //<vs_innlet_ini> 
-      if(BoundCorr && BoundCorr->GetUseMotion()){
-        BoundCorr->RunMotion(SphMotion->GetObjMkBound(ref),typesimple,simplemov,matmov);
-      }  //<vs_innlet_end> 
-    }
-  }
-  //-Process other modes of motion. | Procesa otros modos de motion.
-  if(WaveGen){
-    if(!BoundChanged)cusph::CalcRidp(PeriActive!=0,Npb,0,CaseNfixed,CaseNfixed+CaseNmoving,Codeg,Idpg,RidpMoveg);
-    BoundChanged=true;
-    //-Control of wave generation (WaveGen). | Gestion de WaveGen.
-    for(unsigned c=0;c<WaveGen->GetCount();c++){
-      bool typesimple;
-      tdouble3 simplemov,simplevel,simpleace;
-      tmatrix4d matmov,matmov2;
-      unsigned nparts,idbegin;
-      //-Get movement data.
-      const bool svdata=(TimeStep+stepdt>=TimePartNext);
-      if(motsim)typesimple=WaveGen->GetMotion   (svdata,c,TimeStep,stepdt,simplemov,simplevel,matmov,nparts,idbegin);
-      else      typesimple=WaveGen->GetMotionAce(svdata,c,TimeStep,stepdt,simplemov,simplevel,simpleace,matmov,matmov2,nparts,idbegin);
-      //-Applies movement to paddle particles.
-      const unsigned np=nparts,pini=idbegin-CaseNfixed;
-      if(typesimple){//-Simple movement. | Movimiento simple.
-        if(Simulate2D)simplemov.y=simplevel.y=simpleace.y=0;
-        if(motsim)cusph::MoveLinBound(PeriActive,np,pini,simplemov,ToTFloat3(simplevel),RidpMoveg,Posxyg,Poszg,Dcellg,Velrhopg,Codeg);
-        //else    cusph::MoveLinBoundAce(PeriActive,np,pini,simplemov,ToTFloat3(simplevel),ToTFloat3(simpleace),RidpMoveg,Posxyg,Poszg,Dcellg,Velrhopg,Codeg);
-      }
-      else{
-        if(motsim)cusph::MoveMatBound   (PeriActive,Simulate2D,np,pini,matmov,stepdt,RidpMoveg,Posxyg,Poszg,Dcellg,Velrhopg,Codeg);
-        //else    cusph::MoveMatBoundAce(PeriActive,Simulate2D,np,pini,matmov,matmov2,stepdt,RidpMoveg,Posxyg,Poszg,Dcellg,Velrhopg,Codeg);
-      }
-      //-Applies predefined motion to BoundCorr configuration.  //<vs_innlet_ini> 
-      if(BoundCorr && BoundCorr->GetUseMotion()){
-        BoundCorr->RunMotion(WaveGen->GetPaddleMkbound(c),typesimple,simplemov,matmov);
-      }  //<vs_innlet_end> 
+      if(m.type==MOTT_Matrix){//-Matrix movement (for rotations).
+        if(motsim)cusph::MoveMatBound   (PeriActive,Simulate2D,m.count,m.idbegin-CaseNfixed,m.matmov,stepdt,RidpMoveg,Posxyg,Poszg,Dcellg,Velrhopg,Codeg,boundnormal);
+        //else    cusph::MoveMatBoundAce(PeriActive,Simulate2D,m.count,m.idbegin-CaseNfixed,m.matmov,m.matmov2,stepdt,RidpMoveg,Posxyg,Poszg,Dcellg,Velrhopg,Codeg);
+      }      
+      //-Applies predefined motion to BoundCorr configuration.           //<vs_innlet> 
+      if(BoundCorr && BoundCorr->GetUseMotion())BoundCorr->RunMotion(m); //<vs_innlet> 
     }
   }
   //-Management of Multi-Layer Pistons.  //<vs_mlapiston_ini>
@@ -1406,7 +1400,6 @@ void JSphGpu::DgSaveVtkParticlesGpu(std::string filename,int numfile,unsigned pi
 /// Graba fichero CSV con datos de las particulas (debug).
 //==============================================================================
 void JSphGpu::DgSaveCsvParticlesGpu(std::string filename,int numfile,unsigned pini,unsigned pfin,std::string head,const float3 *posg,const unsigned *idpg,const float3 *velg,const float *rhopg,const float *arg,const float3 *aceg,const float3 *vcorrg){
-  const char met[]="DgSaveCsvParticlesGpu"; 
   //-Allocates memory.
   const unsigned n=pfin-pini;
   unsigned *idp=NULL;  if(idpg)idp=new unsigned[n];
@@ -1424,7 +1417,7 @@ void JSphGpu::DgSaveCsvParticlesGpu(std::string filename,int numfile,unsigned pi
   if(arg)cudaMemcpy(ar,arg+pini,sizeof(float)*n,cudaMemcpyDeviceToHost);
   if(aceg)cudaMemcpy(ace,aceg+pini,sizeof(float3)*n,cudaMemcpyDeviceToHost);
   if(vcorrg)cudaMemcpy(vcorr,vcorrg+pini,sizeof(float3)*n,cudaMemcpyDeviceToHost);
-  CheckCudaError(met,"Failed copying data from GPU.");
+  Check_CudaErroor("Failed copying data from GPU.");
   //-Generates CSV file.
   DgSaveCsvParticlesCpu(filename,numfile,0,n,head,pos,idp,vel,rhop,ar,ace,vcorr);
   //-Frees memory.
@@ -1442,7 +1435,6 @@ void JSphGpu::DgSaveCsvParticlesGpu(std::string filename,int numfile,unsigned pi
 /// Graba fichero CSV con datos de las particulas (debug).
 //==============================================================================
 void JSphGpu::DgSaveCsvParticlesGpu2(std::string filename,int numfile,unsigned pini,unsigned pfin,std::string head,const float3 *posg,const unsigned *idpg,const float3 *velg,const float *rhopg,const float4 *pospresg,const float4 *velrhopg){
-  const char met[]="DgSaveCsvParticlesGpu2";
   //-Allocates memory.
   const unsigned n=pfin-pini;
   unsigned *idp=NULL;  if(idpg)idp=new unsigned[n];
@@ -1458,7 +1450,7 @@ void JSphGpu::DgSaveCsvParticlesGpu2(std::string filename,int numfile,unsigned p
   if(rhopg)cudaMemcpy(rhop,rhopg+pini,sizeof(float)*n,cudaMemcpyDeviceToHost);
   if(pospresg)cudaMemcpy(pospres,pospresg+pini,sizeof(float4)*n,cudaMemcpyDeviceToHost);
   if(velrhopg)cudaMemcpy(velrhop,velrhopg+pini,sizeof(float4)*n,cudaMemcpyDeviceToHost);
-  CheckCudaError(met,"Failed copying data from GPU.");
+  Check_CudaErroor("Failed copying data from GPU.");
   //-Generates CSV file.
   DgSaveCsvParticles2(filename,numfile,0,n,head,pos,idp,vel,rhop,pospres,velrhop);
   //-Frees memory.
@@ -1475,7 +1467,6 @@ void JSphGpu::DgSaveCsvParticlesGpu2(std::string filename,int numfile,unsigned p
 /// Graba fichero CSV con datos de las particulas (debug).
 //==============================================================================
 void JSphGpu::DgSaveCsvParticles2(std::string filename,int numfile,unsigned pini,unsigned pfin,std::string head,const tfloat3 *pos,const unsigned *idp,const tfloat3 *vel,const float *rhop,const tfloat4 *pospres,const tfloat4 *velrhop){
-  const char met[]="DgSaveCsvParticlesCpu";
   int mpirank=Log->GetMpiRank();
   if(mpirank>=0)filename=string("p")+fun::IntStr(mpirank)+"_"+filename;
   if(numfile>=0)filename=fun::FileNameSec(filename,numfile);
@@ -1505,10 +1496,10 @@ void JSphGpu::DgSaveCsvParticles2(std::string filename,int numfile,unsigned pini
       if(velrhop)pf << ";" <<  fun::FloatStr(velrhop[p].x,fmt1) << ";" << fun::FloatStr(velrhop[p].y,fmt1) << ";" << fun::FloatStr(velrhop[p].z,fmt1) << ";" << fun::FloatStr(velrhop[p].w,fmt1);
       pf << endl;
     }
-    if(pf.fail())RunException(met,"Failed writing to file.",filename);
+    if(pf.fail())Run_ExceptioonFile("Failed writing to file.",filename);
     pf.close();
   }
-  else RunException(met,"File could not be opened.",filename);
+  else Run_ExceptioonFile("File could not be opened.",filename);
 }
 
 

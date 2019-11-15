@@ -30,11 +30,13 @@ using namespace std;
 //==============================================================================
 /// Constructor.
 //==============================================================================
-JPartsOut::JPartsOut(unsigned sizeini){
+JPartsOut::JPartsOut(unsigned sizeunit):SizeUnit(sizeunit)
+{
   ClassName="JPartsOut";
-  SizeIni=sizeini;
-  Idp=NULL; Pos=NULL; Vel=NULL; Rhop=NULL; Motive=NULL;
+  Idp=NULL; Pos=NULL; Vel=NULL; Rhop=NULL;
+  Motive=NULL;
   Reset();
+  AllocMemory(SizeUnit,true);
 }
 
 //==============================================================================
@@ -51,13 +53,16 @@ JPartsOut::~JPartsOut(){
 void JPartsOut::Reset(){
   Clear();
   AllocMemory(0,true);
+  MemAllocs=0;
 }
 
 //==============================================================================
 /// Resizes memory space for particles data.
 //==============================================================================
 void JPartsOut::AllocMemory(unsigned size,bool reset){
+  const char met[]="AllocMemory";
   if(reset){
+    MemCpuParticles=0;
     Count=0;
     delete[] Idp;    Idp=NULL;
     delete[] Pos;    Pos=NULL;
@@ -65,48 +70,27 @@ void JPartsOut::AllocMemory(unsigned size,bool reset){
     delete[] Rhop;   Rhop=NULL;
     delete[] Motive; Motive=NULL;
   }
-  Size=(!Size && size<SizeIni? SizeIni: size);
+  Size=unsigned((size+SizeUnit-1)/SizeUnit)*SizeUnit;
   Count=min(Count,Size);
   if(Size){
+    MemAllocs++;
     try{
-      Idp   =fun::ResizeAlloc(Idp,Count,Size);
-      Pos   =fun::ResizeAlloc(Pos,Count,Size);
-      Vel   =fun::ResizeAlloc(Vel,Count,Size);
-      Rhop  =fun::ResizeAlloc(Rhop,Count,Size);
-      Motive=fun::ResizeAlloc(Motive,Count,Size);
+      Idp   =fun::ResizeAlloc(Idp   ,Count,Size);  MemCpuParticles+=sizeof(unsigned)*Size;
+      Pos   =fun::ResizeAlloc(Pos   ,Count,Size);  MemCpuParticles+=sizeof(tdouble3)*Size;
+      Vel   =fun::ResizeAlloc(Vel   ,Count,Size);  MemCpuParticles+=sizeof(tfloat3) *Size;
+      Rhop  =fun::ResizeAlloc(Rhop  ,Count,Size);  MemCpuParticles+=sizeof(float)   *Size;
+      Motive=fun::ResizeAlloc(Motive,Count,Size);  MemCpuParticles+=sizeof(byte)    *Size;
     }
     catch(const std::bad_alloc){
-      RunException("AllocMemory","Could not allocate the requested memory.");
+      RunException(met,"Could not allocate the requested memory.");
     }
   }
 }
 
 //==============================================================================
-/// Returns the allocated memory in CPU.
+/// Adds motive information and updates numbers.
 //==============================================================================
-llong JPartsOut::GetAllocMemory()const{  
-  llong s=0;
-  //Reservada en AllocMemory()
-  //Allocated in AllocMemory()
-  if(Idp)s+=sizeof(unsigned)*Size;
-  if(Pos)s+=sizeof(tdouble3)*Size;
-  if(Vel)s+=sizeof(tfloat3)*Size;
-  if(Rhop)s+=sizeof(float)*Size;
-  if(Motive)s+=sizeof(byte)*Size;
-  return(s);
-}
-
-//==============================================================================
-/// Resizes arrays for particles.
-//==============================================================================
-void JPartsOut::AddParticles(unsigned np,const unsigned* idp,const tdouble3* pos
-  ,const tfloat3* vel,const float* rhop,const typecode* code)
-{
-  if(Count+np>Size)AllocMemory(Count+np+SizeIni,false);
-  memcpy(Idp+Count,idp,sizeof(unsigned)*np);
-  memcpy(Pos+Count,pos,sizeof(tdouble3)*np);
-  memcpy(Vel+Count,vel,sizeof(tfloat3)*np);
-  memcpy(Rhop+Count,rhop,sizeof(float)*np);
+void JPartsOut::AddData(unsigned np,const typecode* code){
   //-Checks reason for exclusion.
   unsigned outpos=0,outrhop=0,outmove=0;
   for(unsigned c=0;c<np;c++){
@@ -121,6 +105,24 @@ void JPartsOut::AddParticles(unsigned np,const unsigned* idp,const tdouble3* pos
   OutPosCount+=outpos;
   OutRhopCount+=outrhop;
   OutMoveCount+=outmove;
+  //printf("\n=====> count:%d outpos:%d\n",Count,OutPosCount);
 }
+
+//==============================================================================
+/// Adds out particles data.
+//==============================================================================
+void JPartsOut::AddParticles(unsigned np,const unsigned* idp,const tdouble3* pos
+  ,const tfloat3* vel,const float* rhop,const typecode* code)
+{
+  //const char met[]="AddParticles";
+  if(Count+np>Size)AllocMemory(Count+np+SizeUnit,false);
+  memcpy(Idp +Count,idp ,sizeof(unsigned)*np);
+  memcpy(Pos +Count,pos ,sizeof(tdouble3)*np);
+  memcpy(Vel +Count,vel ,sizeof(tfloat3 )*np);
+  memcpy(Rhop+Count,rhop,sizeof(float   )*np);
+  //-Adds motive information and updates numbers.
+  AddData(np,code);
+}
+
 
 

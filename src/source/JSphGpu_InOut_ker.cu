@@ -19,6 +19,8 @@
 /// \file JSphGpu_InOut_ker.cu \brief Implements functions and CUDA kernels for InOut feature.
 
 #include "JSphGpu_InOut_ker.h"
+#include "Functions.h"
+#include "FunctionsCuda.h"
 #include <cfloat>
 #include <math_constants.h>
 
@@ -941,7 +943,7 @@ template<bool sim2d,TpKernel tker> __global__ void KerInteractionInOutExtrap_Dou
       const double3 dpos=make_double3(pos_p1.x-posp1.x, pos_p1.y-posp1.y, pos_p1.z-posp1.z); //-Inlet/outlet particle position - ghost node position.
       if(sim2d){
         const double determ=cumath::Determinant3x3(a_corr2);
-        if(determ>=determlimit){//-Use 1e-3f (first_order) or 1e+3f (zeroth_order).
+        if(fabs(determ)>=determlimit){//-Use 1e-3f (first_order) or 1e+3f (zeroth_order).
           const tmatrix3d invacorr2=cumath::InverseMatrix3x3(a_corr2,determ);
           //-GHOST NODE DENSITY IS MIRRORED BACK TO THE INFLOW OR OUTFLOW PARTICLES.
           if(computerhop){
@@ -974,7 +976,7 @@ template<bool sim2d,TpKernel tker> __global__ void KerInteractionInOutExtrap_Dou
       }
       else{
         const double determ=cumath::Determinant4x4(a_corr3);
-        if(determ>=determlimit){
+        if(fabs(determ)>=determlimit){
           const tmatrix4d invacorr3=cumath::InverseMatrix4x4(a_corr3,determ);
           //-GHOST NODE DENSITY IS MIRRORED BACK TO THE INFLOW OR OUTFLOW PARTICLES.
           if(computerhop){
@@ -1136,7 +1138,7 @@ template<bool sim2d,TpKernel tker> __global__ void KerInteractionInOutExtrap_Sin
       const float3 dpos=make_float3(float(pos_p1.x-posp1.x),float(pos_p1.y-posp1.y),float(pos_p1.z-posp1.z)); //-Inlet/outlet particle position - ghost node position.
       if(sim2d){
         const double determ=cumath::Determinant3x3(a_corr2);
-        if(determ>=determlimit){//-Use 1e-3f (first_order) or 1e+3f (zeroth_order).
+        if(fabs(determ)>=determlimit){//-Use 1e-3f (first_order) or 1e+3f (zeroth_order).
           const tmatrix3d invacorr2=cumath::InverseMatrix3x3(a_corr2,determ);
           //-GHOST NODE DENSITY IS MIRRORED BACK TO THE INFLOW OR OUTFLOW PARTICLES.
           if(computerhop){
@@ -1169,7 +1171,7 @@ template<bool sim2d,TpKernel tker> __global__ void KerInteractionInOutExtrap_Sin
       }
       else{
         const double determ=cumath::Determinant4x4(a_corr3);
-        if(determ>=determlimit){
+        if(fabs(determ)>=determlimit){
           const tmatrix4d invacorr3=cumath::InverseMatrix4x4(a_corr3,determ);
           //-GHOST NODE DENSITY IS MIRRORED BACK TO THE INFLOW OR OUTFLOW PARTICLES.
           if(computerhop){
@@ -1332,7 +1334,7 @@ template<bool sim2d,TpKernel tker> __global__ void KerInteractionInOutExtrap_Fas
       const float3 dpos=make_float3(float(pos_p1.x-posp1.x),float(pos_p1.y-posp1.y),float(pos_p1.z-posp1.z)); //-Inlet/outlet particle position - ghost node position.
       if(sim2d){
         const double determ=cumath::Determinant3x3dbl(a_corr2);
-        if(determ>=determlimit){//-Use 1e-3f (first_order) or 1e+3f (zeroth_order).
+        if(fabs(determ)>=determlimit){//-Use 1e-3f (first_order) or 1e+3f (zeroth_order).
           const tmatrix3f invacorr2=cumath::InverseMatrix3x3dbl(a_corr2,determ);
           //-GHOST NODE DENSITY IS MIRRORED BACK TO THE INFLOW OR OUTFLOW PARTICLES.
           if(computerhop){
@@ -1365,7 +1367,7 @@ template<bool sim2d,TpKernel tker> __global__ void KerInteractionInOutExtrap_Fas
       }
       else{
         const double determ=cumath::Determinant4x4dbl(a_corr3);
-        if(determ>=determlimit){
+        if(fabs(determ)>=determlimit){
           const tmatrix4f invacorr3=cumath::InverseMatrix4x4dbl(a_corr3,determ);
           //-GHOST NODE DENSITY IS MIRRORED BACK TO THE INFLOW OR OUTFLOW PARTICLES.
           if(computerhop){
@@ -1555,7 +1557,7 @@ template<bool sim2d,TpKernel tker> __global__ void KerInteractionBoundCorr_Doubl
       const double3 dpos=make_double3(pos_p1.x-posp1.x, pos_p1.y-posp1.y, pos_p1.z-posp1.z); //-Boundary particle position - ghost node position.
       if(sim2d){
         const double determ=cumath::Determinant3x3(a_corr2);
-        if(determ>=determlimit){//-Use 1e-3f (first_order) or 1e+3f (zeroth_order).
+        if(fabs(determ)>=determlimit){//-Use 1e-3f (first_order) or 1e+3f (zeroth_order).
           const tmatrix3d invacorr2=cumath::InverseMatrix3x3(a_corr2,determ);
           //-GHOST NODE DENSITY IS MIRRORED BACK TO THE INFLOW OR OUTFLOW PARTICLES.
           const double rhoghost=rhopp1*invacorr2.a11 + gradrhopp1.x*invacorr2.a12 + gradrhopp1.z*invacorr2.a13;
@@ -1569,7 +1571,7 @@ template<bool sim2d,TpKernel tker> __global__ void KerInteractionBoundCorr_Doubl
       }
       else{
         const double determ=cumath::Determinant4x4(a_corr3);
-        if(determ>=determlimit){
+        if(fabs(determ)>=determlimit){
           const tmatrix4d invacorr3=cumath::InverseMatrix4x4(a_corr3,determ);
           //-GHOST NODE DENSITY IS MIRRORED BACK TO THE INFLOW OR OUTFLOW PARTICLES.
           const double rhoghost=rhopp1*invacorr3.a11 + gradrhopp1.x*invacorr3.a12 + gradrhopp1.y*invacorr3.a13 + gradrhopp1.z*invacorr3.a14;
@@ -1678,7 +1680,7 @@ template<bool sim2d,TpKernel tker> __global__ void KerInteractionBoundCorr_Singl
       const float3 dpos=make_float3(float(pos_p1.x-posp1.x),float(pos_p1.y-posp1.y),float(pos_p1.z-posp1.z)); //-Boundary particle position - ghost node position.
       if(sim2d){
         const double determ=cumath::Determinant3x3(a_corr2);
-        if(determ>=determlimit){//-Use 1e-3f (first_order) or 1e+3f (zeroth_order).
+        if(fabs(determ)>=determlimit){//-Use 1e-3f (first_order) or 1e+3f (zeroth_order).
           const tmatrix3d invacorr2=cumath::InverseMatrix3x3(a_corr2,determ);
           //-GHOST NODE DENSITY IS MIRRORED BACK TO THE INFLOW OR OUTFLOW PARTICLES.
           const float rhoghost=float(invacorr2.a11*rhopp1 + invacorr2.a12*gradrhopp1.x + invacorr2.a13*gradrhopp1.z);
@@ -1692,7 +1694,7 @@ template<bool sim2d,TpKernel tker> __global__ void KerInteractionBoundCorr_Singl
       }
       else{
         const double determ=cumath::Determinant4x4(a_corr3);
-        if(determ>=determlimit){
+        if(fabs(determ)>=determlimit){
           const tmatrix4d invacorr3=cumath::InverseMatrix4x4(a_corr3,determ);
           //-GHOST NODE DENSITY IS MIRRORED BACK TO THE INFLOW OR OUTFLOW PARTICLES.
           const float rhoghost=float(invacorr3.a11*rhopp1 + invacorr3.a12*gradrhopp1.x + invacorr3.a13*gradrhopp1.y + invacorr3.a14*gradrhopp1.z);
@@ -1803,7 +1805,7 @@ template<bool sim2d,TpKernel tker> __global__ void KerInteractionBoundCorr_FastS
       if(sim2d){
 //if(-a_corr2.a22-a_corr2.a33>0.9){ //-Suggested by Renato...
         const double determ=cumath::Determinant3x3dbl(a_corr2);
-        if(determ>=determlimit){//-Use 1e-3f (first_order) or 1e+3f (zeroth_order).
+        if(fabs(determ)>=determlimit){//-Use 1e-3f (first_order) or 1e+3f (zeroth_order).
           const tmatrix3f invacorr2=cumath::InverseMatrix3x3dbl(a_corr2,determ);
           //-GHOST NODE DENSITY IS MIRRORED BACK TO THE INFLOW OR OUTFLOW PARTICLES.
           const float rhoghost=float(invacorr2.a11*rhopp1 + invacorr2.a12*gradrhopp1.x + invacorr2.a13*gradrhopp1.z);
@@ -1818,7 +1820,7 @@ template<bool sim2d,TpKernel tker> __global__ void KerInteractionBoundCorr_FastS
       }
       else{
         const double determ=cumath::Determinant4x4dbl(a_corr3);
-        if(determ>=determlimit){
+        if(fabs(determ)>=determlimit){
           const tmatrix4f invacorr3=cumath::InverseMatrix4x4dbl(a_corr3,determ);
           //-GHOST NODE DENSITY IS MIRRORED BACK TO THE INFLOW OR OUTFLOW PARTICLES.
           const float rhoghost=float(invacorr3.a11*rhopp1 + invacorr3.a12*gradrhopp1.x + invacorr3.a13*gradrhopp1.y + invacorr3.a14*gradrhopp1.z);

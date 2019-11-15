@@ -22,6 +22,7 @@
 #include "JCellDivCpu.h"
 #include "JPartFloatBi4.h"
 #include "Functions.h"
+#include "FunctionsMath.h"
 #include "JSphMotion.h"
 #include "JArraysCpu.h"
 #include "JSphDtFixed.h"
@@ -43,7 +44,7 @@ using namespace std;
 //==============================================================================
 /// Constructor.
 //==============================================================================
-JSphCpu::JSphCpu(bool withmpi):JSph(true,withmpi){
+JSphCpu::JSphCpu(bool withmpi):JSph(true,false,withmpi){
   ClassName="JSphCpu";
   CellDiv=NULL;
   ArraysCpu=new JArraysCpu;
@@ -119,7 +120,7 @@ void JSphCpu::AllocCpuMemoryFixed(){
     }
   }
   catch(const std::bad_alloc){
-    RunException("AllocMemoryFixed","Could not allocate the requested memory.");
+    Run_Exceptioon("Could not allocate the requested memory.");
   }
 }
 
@@ -138,7 +139,6 @@ void JSphCpu::FreeCpuMemoryParticles(){
 /// Reserva memoria en Cpu para las particulas. 
 //==============================================================================
 void JSphCpu::AllocCpuMemoryParticles(unsigned np,float over){
-  const char* met="AllocCpuMemoryParticles";
   FreeCpuMemoryParticles();
   //-Calculate number of partices with reserved memory | Calcula numero de particulas para las que se reserva memoria.
   const unsigned np2=(over>0? unsigned(over*np): np);
@@ -151,7 +151,7 @@ void JSphCpu::AllocCpuMemoryParticles(unsigned np,float over){
     ArraysCpu->AddArrayCount(JArraysCpu::SIZE_2B,2);  //-code,code2
   #endif
   ArraysCpu->AddArrayCount(JArraysCpu::SIZE_4B,5);  //-idp,ar,viscdt,dcell,prrhop
-  if(TDeltaSph==DELTA_DynamicExt)ArraysCpu->AddArrayCount(JArraysCpu::SIZE_4B,1);  //-delta
+  if(DDTArray)ArraysCpu->AddArrayCount(JArraysCpu::SIZE_4B,1);  //-delta
   ArraysCpu->AddArrayCount(JArraysCpu::SIZE_12B,1); //-ace
   ArraysCpu->AddArrayCount(JArraysCpu::SIZE_16B,1); //-velrhop
   ArraysCpu->AddArrayCount(JArraysCpu::SIZE_24B,2); //-pos
@@ -174,7 +174,7 @@ void JSphCpu::AllocCpuMemoryParticles(unsigned np,float over){
   }  //<vs_innlet_end>
   //-Shows the allocated memory.
   MemCpuParticles=ArraysCpu->GetAllocMemoryCpu();
-  PrintSizeNp(CpuParticlesSize,MemCpuParticles);
+  PrintSizeNp(CpuParticlesSize,MemCpuParticles,0);
 }
 
 //==============================================================================
@@ -183,16 +183,16 @@ void JSphCpu::AllocCpuMemoryParticles(unsigned np,float over){
 void JSphCpu::ResizeCpuMemoryParticles(unsigned npnew){
   npnew=npnew+PARTICLES_OVERMEMORY_MIN;
   //-Saves current data from CPU.
-  unsigned    *idp       =SaveArrayCpu(Np,Idpc);
-  typecode    *code      =SaveArrayCpu(Np,Codec);
-  unsigned    *dcell     =SaveArrayCpu(Np,Dcellc);
-  tdouble3    *pos       =SaveArrayCpu(Np,Posc);
-  tfloat4     *velrhop   =SaveArrayCpu(Np,Velrhopc);
-  tfloat4     *velrhopm1 =SaveArrayCpu(Np,VelrhopM1c);
-  tdouble3    *pospre    =SaveArrayCpu(Np,PosPrec);
-  tfloat4     *velrhoppre=SaveArrayCpu(Np,VelrhopPrec);
-  tsymatrix3f *spstau    =SaveArrayCpu(Np,SpsTauc);
-  int         *inoutpart =SaveArrayCpu(Np,InOutPartc);  //<vs_innlet>
+  unsigned    *idp        =SaveArrayCpu(Np,Idpc);
+  typecode    *code       =SaveArrayCpu(Np,Codec);
+  unsigned    *dcell      =SaveArrayCpu(Np,Dcellc);
+  tdouble3    *pos        =SaveArrayCpu(Np,Posc);
+  tfloat4     *velrhop    =SaveArrayCpu(Np,Velrhopc);
+  tfloat4     *velrhopm1  =SaveArrayCpu(Np,VelrhopM1c);
+  tdouble3    *pospre     =SaveArrayCpu(Np,PosPrec);
+  tfloat4     *velrhoppre =SaveArrayCpu(Np,VelrhopPrec);
+  tsymatrix3f *spstau     =SaveArrayCpu(Np,SpsTauc);
+  int         *inoutpart  =SaveArrayCpu(Np,InOutPartc);   //<vs_innlet>
   //-Frees pointers.
   ArraysCpu->Free(Idpc);
   ArraysCpu->Free(Codec);
@@ -203,7 +203,7 @@ void JSphCpu::ResizeCpuMemoryParticles(unsigned npnew){
   ArraysCpu->Free(PosPrec);
   ArraysCpu->Free(VelrhopPrec);
   ArraysCpu->Free(SpsTauc);
-  ArraysCpu->Free(InOutPartc);  //<vs_innlet>
+  ArraysCpu->Free(InOutPartc);    //<vs_innlet>
   //-Resizes CPU memory allocation.
   const double mbparticle=(double(MemCpuParticles)/(1024*1024))/CpuParticlesSize; //-MB por particula.
   Log->Printf("**JSphCpu: Requesting cpu memory for %u particles: %.1f MB.",npnew,mbparticle*npnew);
@@ -214,11 +214,11 @@ void JSphCpu::ResizeCpuMemoryParticles(unsigned npnew){
   Dcellc  =ArraysCpu->ReserveUint();
   Posc    =ArraysCpu->ReserveDouble3();
   Velrhopc=ArraysCpu->ReserveFloat4();
-  if(velrhopm1) VelrhopM1c =ArraysCpu->ReserveFloat4();
-  if(pospre)    PosPrec    =ArraysCpu->ReserveDouble3();
-  if(velrhoppre)VelrhopPrec=ArraysCpu->ReserveFloat4();
-  if(spstau)    SpsTauc    =ArraysCpu->ReserveSymatrix3f();
-  if(inoutpart) InOutPartc =ArraysCpu->ReserveInt();  //<vs_innlet>
+  if(velrhopm1)  VelrhopM1c  =ArraysCpu->ReserveFloat4();
+  if(pospre)     PosPrec     =ArraysCpu->ReserveDouble3();
+  if(velrhoppre) VelrhopPrec =ArraysCpu->ReserveFloat4();
+  if(spstau)     SpsTauc     =ArraysCpu->ReserveSymatrix3f();
+  if(inoutpart)  InOutPartc  =ArraysCpu->ReserveInt();    //<vs_innlet>
   //-Restore data in CPU memory.
   RestoreArrayCpu(Np,idp,Idpc);
   RestoreArrayCpu(Np,code,Codec);
@@ -229,7 +229,7 @@ void JSphCpu::ResizeCpuMemoryParticles(unsigned npnew){
   RestoreArrayCpu(Np,pospre,PosPrec);
   RestoreArrayCpu(Np,velrhoppre,VelrhopPrec);
   RestoreArrayCpu(Np,spstau,SpsTauc);
-  RestoreArrayCpu(Np,inoutpart,InOutPartc);  //<vs_innlet>
+  RestoreArrayCpu(Np,inoutpart,InOutPartc);     //<vs_innlet>
   //-Updates values.
   CpuParticlesSize=npnew;
   MemCpuParticles=ArraysCpu->GetAllocMemoryCpu();
@@ -245,7 +245,7 @@ template<class T> T* JSphCpu::TSaveArrayCpu(unsigned np,const T *datasrc)const{
       data=new T[np];
     }
     catch(const std::bad_alloc){
-      RunException("TSaveArrayCpu","Could not allocate the requested memory.");
+      Run_Exceptioon("Could not allocate the requested memory.");
     }
     memcpy(data,datasrc,sizeof(T)*np);
   }
@@ -310,7 +310,6 @@ void JSphCpu::PrintAllocMemory(llong mcpu)const{
 unsigned JSphCpu::GetParticlesData(unsigned n,unsigned pini,bool onlynormal
   ,unsigned *idp,tdouble3 *pos,tfloat3 *vel,float *rhop,typecode *code)
 {
-  const char met[]="GetParticlesData";
   unsigned num=n;
   //-Copy selected values.
   if(code)memcpy(code,Codec+pini,sizeof(typecode)*n);
@@ -329,7 +328,7 @@ unsigned JSphCpu::GetParticlesData(unsigned n,unsigned pini,bool onlynormal
   }
   //-Eliminate non-normal particles (periodic & others). | Elimina particulas no normales (periodicas y otras).
   if(onlynormal){
-    if(!idp || !pos || !vel || !rhop)RunException(met,"Pointers without data.");
+    if(!idp || !pos || !vel || !rhop)Run_Exceptioon("Pointers without data.");
     typecode *code2=code;
     if(!code2){
       code2=ArraysCpu->ReserveTypeCode();
@@ -417,12 +416,9 @@ void JSphCpu::InitRunCpu(){
 //==============================================================================
 void JSphCpu::AddAccInput(){
   for(unsigned c=0;c<AccInput->GetCount();c++){
-    unsigned mkfluid;
-    tdouble3 acclin,accang,centre,velang,vellin;
-    bool setgravity;
-    AccInput->GetAccValues(c,TimeStep,mkfluid,acclin,accang,centre,velang,vellin,setgravity);
-    const bool withaccang=(accang.x!=0||accang.y!=0||accang.z!=0);
-    const typecode codesel=typecode(mkfluid);
+    const StAceInput v=AccInput->GetAccValues(c,TimeStep);
+    const bool withaccang=(v.accang.x!=0 || v.accang.y!=0 || v.accang.z!=0);
+    const typecode codesel=typecode(v.mkfluid);
     const int npb=int(Npb),np=int(Np);
     #ifdef OMP_USE
       #pragma omp parallel for schedule (static)
@@ -431,32 +427,32 @@ void JSphCpu::AddAccInput(){
       //-Checks if the current particle is part of the particle set by its MK.
       if(CODE_GetTypeValue(Codec[p])==codesel){
         tdouble3 acc=ToTDouble3(Acec[p]);
-        acc=acc+acclin;                             //-Adds linear acceleration.
-        if(!setgravity)acc=acc-ToTDouble3(Gravity); //-Subtract global gravity from the acceleration if it is set in the input file
+        acc=acc+v.acclin;                             //-Adds linear acceleration.
+        if(!v.setgravity)acc=acc-ToTDouble3(Gravity); //-Subtract global gravity from the acceleration if it is set in the input file
         if(withaccang){                             //-Adds angular acceleration.
-          const tdouble3 dc=Posc[p]-centre;
+          const tdouble3 dc=Posc[p]-v.centre;
           const tdouble3 vel=TDouble3(Velrhopc[p].x,Velrhopc[p].y,Velrhopc[p].z);//-Get the current particle's velocity
 
           //-Calculate angular acceleration ((Dw/Dt) x (r_i - r)) + (w x (w x (r_i - r))) + (2w x (v_i - v))
           //(Dw/Dt) x (r_i - r) (term1)
-          acc.x+=(accang.y*dc.z)-(accang.z*dc.y);
-          acc.y+=(accang.z*dc.x)-(accang.x*dc.z);
-          acc.z+=(accang.x*dc.y)-(accang.y*dc.x);
+          acc.x+=(v.accang.y*dc.z)-(v.accang.z*dc.y);
+          acc.y+=(v.accang.z*dc.x)-(v.accang.x*dc.z);
+          acc.z+=(v.accang.x*dc.y)-(v.accang.y*dc.x);
 
           //-Centripetal acceleration (term2)
           //-First find w x (r_i - r))
-          const double innerx=(velang.y*dc.z)-(velang.z*dc.y);
-          const double innery=(velang.z*dc.x)-(velang.x*dc.z);
-          const double innerz=(velang.x*dc.y)-(velang.y*dc.x);
+          const double innerx=(v.velang.y*dc.z)-(v.velang.z*dc.y);
+          const double innery=(v.velang.z*dc.x)-(v.velang.x*dc.z);
+          const double innerz=(v.velang.x*dc.y)-(v.velang.y*dc.x);
           //-Find w x inner.
-          acc.x+=(velang.y*innerz)-(velang.z*innery);
-          acc.y+=(velang.z*innerx)-(velang.x*innerz);
-          acc.z+=(velang.x*innery)-(velang.y*innerx);
+          acc.x+=(v.velang.y*innerz)-(v.velang.z*innery);
+          acc.y+=(v.velang.z*innerx)-(v.velang.x*innerz);
+          acc.z+=(v.velang.x*innery)-(v.velang.y*innerx);
 
           //-Coriolis acceleration 2w x (v_i - v) (term3)
-          acc.x+=((2.0*velang.y)*vel.z)-((2.0*velang.z)*(vel.y-vellin.y));
-          acc.y+=((2.0*velang.z)*vel.x)-((2.0*velang.x)*(vel.z-vellin.z));
-          acc.z+=((2.0*velang.x)*vel.y)-((2.0*velang.y)*(vel.x-vellin.x));
+          acc.x+=((2.0*v.velang.y)*vel.z)-((2.0*v.velang.z)*(vel.y-v.vellin.y));
+          acc.y+=((2.0*v.velang.z)*vel.x)-((2.0*v.velang.x)*(vel.z-v.vellin.z));
+          acc.z+=((2.0*v.velang.x)*vel.y)-((2.0*v.velang.y)*(vel.x-v.vellin.x));
         }
         //-Stores the new acceleration value.
         Acec[p]=ToTFloat3(acc);
@@ -503,7 +499,7 @@ void JSphCpu::PreInteraction_Forces(){
   //-Assign memory.
   Arc=ArraysCpu->ReserveFloat();
   Acec=ArraysCpu->ReserveFloat3();
-  if(TDeltaSph==DELTA_DynamicExt)Deltac=ArraysCpu->ReserveFloat();
+  if(DDTArray)Deltac=ArraysCpu->ReserveFloat();
   if(TShifting!=SHIFT_None){
     ShiftPosc=ArraysCpu->ReserveFloat3();
     if(ShiftTFS)ShiftDetectc=ArraysCpu->ReserveFloat();
@@ -550,12 +546,11 @@ float JSphCpu::CalcVelMaxSeq(unsigned np,const tfloat4* velrhop)const{
 /// Devuelve la velociad maxima de un array tfloat4 usando OpenMP.
 //==============================================================================
 float JSphCpu::CalcVelMaxOmp(unsigned np,const tfloat4* velrhop)const{
-  const char met[]="CalcVelMax";
   float velmax=0;
   #ifdef OMP_USE
     if(np>OMP_LIMIT_COMPUTELIGHT){
       const int n=int(np);
-      if(n<0)RunException(met,"Number of values is too big.");
+      if(n<0)Run_Exceptioon("Number of values is too big.");
       float vmax=0;
       #pragma omp parallel 
       {
@@ -885,7 +880,7 @@ template<bool psingle,TpKernel tker,TpFtMode ftmode> void JSphCpu::InteractionFo
 /// Perform interaction between particles: Fluid/Float-Fluid/Float or Fluid/Float-Bound
 /// Realiza interaccion entre particulas: Fluid/Float-Fluid/Float or Fluid/Float-Bound
 //==============================================================================
-template<bool psingle,TpKernel tker,TpFtMode ftmode,bool lamsps,TpDeltaSph tdelta,bool shift> void JSphCpu::InteractionForcesFluid
+template<bool psingle,TpKernel tker,TpFtMode ftmode,bool lamsps,TpDensity tdensity,bool shift> void JSphCpu::InteractionForcesFluid
   (unsigned n,unsigned pinit,tint4 nc,int hdiv,unsigned cellinitial,float visco
   ,const unsigned *beginendcell,tint3 cellzero,const unsigned *dcell
   ,const tsymatrix3f* tau,tsymatrix3f* gradvel
@@ -916,7 +911,7 @@ template<bool psingle,TpKernel tker,TpFtMode ftmode,bool lamsps,TpDeltaSph tdelt
     if(USE_FLOATING){
       ftp1=CODE_IsFloating(code[p1]);
       if(ftp1)ftmassp1=FtObjs[CODE_GetTypeValue(code[p1])].massp;
-      if(ftp1 && (tdelta==DELTA_Dynamic || tdelta==DELTA_DynamicExt))deltap1=FLT_MAX;
+      if(ftp1 && tdensity!=DDT_None)deltap1=FLT_MAX; //-DDT is not applied to floating particles.
       if(ftp1 && shift)shiftposp1.x=FLT_MAX;  //-For floating objects do not calculate shifting. | Para floatings no se calcula shifting.
     }
 
@@ -965,9 +960,9 @@ template<bool psingle,TpKernel tker,TpFtMode ftmode,bool lamsps,TpDeltaSph tdelt
               ftp2=CODE_IsFloating(code[p2]);
               if(ftp2)massp2=FtObjs[CODE_GetTypeValue(code[p2])].massp;
               #ifdef DELTA_HEAVYFLOATING
-                if(ftp2 && massp2<=(MassFluid*1.2f) && (tdelta==DELTA_Dynamic || tdelta==DELTA_DynamicExt))deltap1=FLT_MAX;
+                if(ftp2 && tdensity==DDT_DDT && massp2<=(MassFluid*1.2f))deltap1=FLT_MAX;
               #else
-                if(ftp2 && (tdelta==DELTA_Dynamic || tdelta==DELTA_DynamicExt))deltap1=FLT_MAX;
+                if(ftp2 && tdensity==DDT_DDT)deltap1=FLT_MAX;
               #endif
               if(ftp2 && shift && tshifting==SHIFT_NoBound)shiftposp1.x=FLT_MAX; //-With floating objects do not use shifting. | Con floatings anula shifting.
               compute=!(USE_FTEXTERNAL && ftp1 && (boundp2 || ftp2)); //-Deactivate when using DEM and if it is of type float-float or float-bound. | Se desactiva cuando se usa DEM y es float-float o float-bound.
@@ -987,13 +982,14 @@ template<bool psingle,TpKernel tker,TpFtMode ftmode,bool lamsps,TpDeltaSph tdelt
             if(compute)arp1+=massp2*(dvx*frx+dvy*fry+dvz*frz);
 
             const float cbar=(float)Cs0;
-            //-Density derivative (DeltaSPH Molteni).
-            if((tdelta==DELTA_Dynamic || tdelta==DELTA_DynamicExt) && deltap1!=FLT_MAX){
+            //-Density Diffusion Term (Molteni and Colagrossi 2009).
+            if(tdensity==DDT_DDT && deltap1!=FLT_MAX){
               const float rhop1over2=rhopp1/velrhop2.w;
-              const float visc_densi=Delta2H*cbar*(rhop1over2-1.f)/(rr2+Eta2);
+              const float visc_densi=DDT2h*cbar*(rhop1over2-1.f)/(rr2+Eta2);
               const float dot3=(drx*frx+dry*fry+drz*frz);
               const float delta=visc_densi*dot3*massp2;
-              deltap1=(boundp2? FLT_MAX: deltap1+delta);
+              //deltap1=(boundp2? FLT_MAX: deltap1+delta);
+              deltap1=(boundp2 && TBoundary==BC_DBC? FLT_MAX: deltap1+delta);
             }
 
             //-Shifting correction.
@@ -1056,8 +1052,10 @@ template<bool psingle,TpKernel tker,TpFtMode ftmode,bool lamsps,TpDeltaSph tdelt
     }
     //-Sum results together. | Almacena resultados.
     if(shift||arp1||acep1.x||acep1.y||acep1.z||visc){
-      if(tdelta==DELTA_Dynamic&&deltap1!=FLT_MAX)arp1+=deltap1;
-      if(tdelta==DELTA_DynamicExt)delta[p1]=(delta[p1]==FLT_MAX || deltap1==FLT_MAX? FLT_MAX: delta[p1]+deltap1);
+      if(tdensity!=DDT_None){
+        if(delta)delta[p1]=(delta[p1]==FLT_MAX || deltap1==FLT_MAX? FLT_MAX: delta[p1]+deltap1);
+        else if(deltap1!=FLT_MAX)arp1+=deltap1;
+      }
       ar[p1]+=arp1;
       ace[p1]=ace[p1]+acep1;
       const int th=omp_get_thread_num();
@@ -1223,7 +1221,7 @@ void JSphCpu::ComputeSpsTau(unsigned n,unsigned pini,const tfloat4 *velrhop,cons
 /// Interaction of Fluid-Fluid/Bound & Bound-Fluid (forces and DEM).
 /// Interaccion Fluid-Fluid/Bound & Bound-Fluid (forces and DEM).
 //==============================================================================
-template<bool psingle,TpKernel tker,TpFtMode ftmode,bool lamsps,TpDeltaSph tdelta,bool shift>
+template<bool psingle,TpKernel tker,TpFtMode ftmode,bool lamsps,TpDensity tdensity,bool shift>
   void JSphCpu::Interaction_ForcesCpuT(const stinterparmsc &t,float &viscdt)const
 {
   const tint4 nc=TInt4(int(t.ncells.x),int(t.ncells.y),int(t.ncells.z),int(t.ncells.x*t.ncells.y));
@@ -1233,9 +1231,9 @@ template<bool psingle,TpKernel tker,TpFtMode ftmode,bool lamsps,TpDeltaSph tdelt
   
   if(t.npf){
     //-Interaction Fluid-Fluid.
-    InteractionForcesFluid<psingle,tker,ftmode,lamsps,tdelta,shift> (t.npf,t.npb,nc,hdiv,cellfluid,Visco                 ,t.begincell,cellzero,t.dcell,t.spstau,t.spsgradvel,t.pdpos,t.pspos,t.velrhop,t.code,t.idp,t.press,viscdt,t.ar,t.ace,t.delta,t.tshifting,t.shiftpos,t.shiftdetect);
+    InteractionForcesFluid<psingle,tker,ftmode,lamsps,tdensity,shift> (t.npf,t.npb,nc,hdiv,cellfluid,Visco                 ,t.begincell,cellzero,t.dcell,t.spstau,t.spsgradvel,t.pdpos,t.pspos,t.velrhop,t.code,t.idp,t.press,viscdt,t.ar,t.ace,t.delta,t.tshifting,t.shiftpos,t.shiftdetect);
     //-Interaction Fluid-Bound.
-    InteractionForcesFluid<psingle,tker,ftmode,lamsps,tdelta,shift> (t.npf,t.npb,nc,hdiv,0        ,Visco*ViscoBoundFactor,t.begincell,cellzero,t.dcell,t.spstau,t.spsgradvel,t.pdpos,t.pspos,t.velrhop,t.code,t.idp,t.press,viscdt,t.ar,t.ace,t.delta,t.tshifting,t.shiftpos,t.shiftdetect);
+    InteractionForcesFluid<psingle,tker,ftmode,lamsps,tdensity,shift> (t.npf,t.npb,nc,hdiv,0        ,Visco*ViscoBoundFactor,t.begincell,cellzero,t.dcell,t.spstau,t.spsgradvel,t.pdpos,t.pspos,t.velrhop,t.code,t.idp,t.press,viscdt,t.ar,t.ace,t.delta,t.tshifting,t.shiftpos,t.shiftdetect);
 
     //-Interaction of DEM Floating-Bound & Floating-Floating. //(DEM)
     if(UseDEM)InteractionForcesDEM<psingle> (CaseNfloat,nc,hdiv,cellfluid,t.begincell,cellzero,t.dcell,FtRidp,DemData,t.pdpos,t.pspos,t.velrhop,t.code,t.idp,viscdt,t.ace);
@@ -1245,19 +1243,18 @@ template<bool psingle,TpKernel tker,TpFtMode ftmode,bool lamsps,TpDeltaSph tdelt
   }
   if(t.npbok){
     //-Interaction Bound-Fluid.
-    InteractionForcesBound      <psingle,tker,ftmode> (t.npbok,0,nc,hdiv,cellfluid,t.begincell,cellzero,t.dcell,t.pdpos,t.pspos,t.velrhop,t.code,t.idp,viscdt,t.ar);
+    InteractionForcesBound<psingle,tker,ftmode> (t.npbok,0,nc,hdiv,cellfluid,t.begincell,cellzero,t.dcell,t.pdpos,t.pspos,t.velrhop,t.code,t.idp,viscdt,t.ar);
   }
 }
 //==============================================================================
-template<bool psingle,TpKernel tker,TpFtMode ftmode,bool lamsps,TpDeltaSph tdelta> void JSphCpu::Interaction_Forces_ct5(const stinterparmsc &t,float &viscdt)const{
-  if(TShifting)Interaction_ForcesCpuT<psingle,tker,ftmode,lamsps,tdelta,true >(t,viscdt);
-  else         Interaction_ForcesCpuT<psingle,tker,ftmode,lamsps,tdelta,false>(t,viscdt);
+template<bool psingle,TpKernel tker,TpFtMode ftmode,bool lamsps,TpDensity tdensity> void JSphCpu::Interaction_Forces_ct5(const stinterparmsc &t,float &viscdt)const{
+  if(TShifting)Interaction_ForcesCpuT<psingle,tker,ftmode,lamsps,tdensity,true >(t,viscdt);
+  else         Interaction_ForcesCpuT<psingle,tker,ftmode,lamsps,tdensity,false>(t,viscdt);
 }
 //==============================================================================
 template<bool psingle,TpKernel tker,TpFtMode ftmode,bool lamsps> void JSphCpu::Interaction_Forces_ct4(const stinterparmsc &t,float &viscdt)const{
-       if(TDeltaSph==DELTA_None)      Interaction_Forces_ct5<psingle,tker,ftmode,lamsps,DELTA_None      >(t,viscdt);
-  else if(TDeltaSph==DELTA_Dynamic)   Interaction_Forces_ct5<psingle,tker,ftmode,lamsps,DELTA_Dynamic   >(t,viscdt);
-  else if(TDeltaSph==DELTA_DynamicExt)Interaction_Forces_ct5<psingle,tker,ftmode,lamsps,DELTA_DynamicExt>(t,viscdt);
+       if(TDensity==DDT_None)    Interaction_Forces_ct5<psingle,tker,ftmode,lamsps,DDT_None    >(t,viscdt);
+  else if(TDensity==DDT_DDT)     Interaction_Forces_ct5<psingle,tker,ftmode,lamsps,DDT_DDT     >(t,viscdt);
 }
 //==============================================================================
 template<bool psingle,TpKernel tker,TpFtMode ftmode> void JSphCpu::Interaction_Forces_ct3(const stinterparmsc &t,float &viscdt)const{
@@ -1587,7 +1584,7 @@ double JSphCpu::DtVariable(bool final){
   const double dt2=double(H)/(max(Cs0,VelMax*10.)+double(H)*ViscDtMax);
   //-dt new value of time step.
   double dt=double(CFLnumber)*min(dt1,dt2);
-  if(DtFixed)dt=DtFixed->GetDt(float(TimeStep),float(dt));
+  if(DtFixed)dt=DtFixed->GetDt(TimeStep,dt);
   if(dt<double(DtMin)){ 
     dt=double(DtMin); DtModif++;
     if(DtModif>=DtModifWrn){
@@ -1595,7 +1592,13 @@ double JSphCpu::DtVariable(bool final){
       DtModifWrn*=10;
     }
   }
-  if(SaveDt && final)SaveDt->AddValues(TimeStep,dt,dt1*CFLnumber,dt2*CFLnumber,AceMax,ViscDtMax,VelMax);
+  //-Saves information about dt.
+  if(final){
+    if(PartDtMin>dt)PartDtMin=dt;
+    if(PartDtMax<dt)PartDtMax=dt;
+    //-Saves detailed information about dt in SaveDt object.
+    if(SaveDt)SaveDt->AddValues(TimeStep,dt,dt1*CFLnumber,dt2*CFLnumber,AceMax,ViscDtMax,VelMax);
+  }
   return(dt);
 }
 
@@ -1689,14 +1692,14 @@ void JSphCpu::MoveLinBound(unsigned np,unsigned ini,const tdouble3 &mvpos,const 
 /// Applies a matrix movement to a group of particles.
 /// Aplica un movimiento matricial a un conjunto de particulas.
 //==============================================================================
-void JSphCpu::MoveMatBound(unsigned np,unsigned ini,tmatrix4d m,double dt
-  ,const unsigned *ridpmv,tdouble3 *pos,unsigned *dcell,tfloat4 *velrhop,typecode *code)const
+void JSphCpu::MoveMatBound(unsigned np,unsigned ini,tmatrix4d m,double dt,const unsigned *ridpmv
+  ,tdouble3 *pos,unsigned *dcell,tfloat4 *velrhop,typecode *code,tfloat3 *boundnormal)const
 {
   const unsigned fin=ini+np;
   for(unsigned id=ini;id<fin;id++){
     const unsigned pid=RidpMove[id];
     if(pid!=UINT_MAX){
-      tdouble3 ps=pos[pid];
+      const tdouble3 ps=pos[pid];
       tdouble3 ps2=MatrixMulPoint(m,ps);
       if(Simulate2D)ps2.y=ps.y;
       const double dx=ps2.x-ps.x, dy=ps2.y-ps.y, dz=ps2.z-ps.z;
@@ -1712,20 +1715,7 @@ void JSphCpu::MoveMatBound(unsigned np,unsigned ini,tmatrix4d m,double dt
 //==============================================================================
 void JSphCpu::CalcMotion(double stepdt){
   TmcStart(Timers,TMC_SuMotion);
-  const bool motsim=true;
-  const JSphMotion::TpMotionMode mode=(motsim? JSphMotion::MOMT_Simple: JSphMotion::MOMT_Ace2dt);
-  SphMotion->ProcesTime(mode,TimeStep,stepdt);
-  if(ChronoObjects && ChronoObjects->GetWithMotion() && SphMotion->GetActiveMotion()){ //<vs_chroono_ini> 
-    word mkbound;
-    bool typesimple;
-    tdouble3 simplemov;
-    tmatrix4d matmov;
-    const unsigned nref=SphMotion->GetNumObjects();
-    for(unsigned ref=0;ref<nref;ref++)if(SphMotion->ProcesTimeGetData(ref,mkbound,typesimple,simplemov,matmov)){
-      if(Simulate2D && typesimple)simplemov.y=0;
-      ChronoObjects->SetMovingData(mkbound,typesimple,simplemov,matmov,stepdt);
-    }
-  } //<vs_chroono_end>
+  JSph::CalcMotion(stepdt);
   TmcStop(Timers,TMC_SuMotion);
 }
 
@@ -1734,64 +1724,29 @@ void JSphCpu::CalcMotion(double stepdt){
 /// Procesa movimiento de boundary particles.
 //==============================================================================
 void JSphCpu::RunMotion(double stepdt){
-  const char met[]="RunMotion";
   TmcStart(Timers,TMC_SuMotion);
+  tfloat3 *boundnormal=NULL;
   const bool motsim=true;
   BoundChanged=false;
+  //-Add motion from automatic wave generation.
+  if(WaveGen)CalcMotionWaveGen(stepdt);
+  //-Process particles motion.
   if(SphMotion->GetActiveMotion()){
     CalcRidp(PeriActive!=0,Npb,0,CaseNfixed,CaseNfixed+CaseNmoving,Codec,Idpc,RidpMove);
     BoundChanged=true;
-    bool typesimple;
-    tdouble3 simplemov,simplevel,simpleace;
-    tmatrix4d matmov,matmov2;
-    unsigned nparts,idbegin;
     const unsigned nref=SphMotion->GetNumObjects();
-    for(unsigned ref=0;ref<nref;ref++)if(SphMotion->ProcesTimeGetData(ref,typesimple,simplemov,simplevel,simpleace,matmov,matmov2,nparts,idbegin)){
-      const unsigned pini=idbegin-CaseNfixed;
-      if(typesimple){//-Simple movement. | Movimiento simple.
-        if(Simulate2D)simplemov.y=simplevel.y=simpleace.y=0;
-        if(motsim)MoveLinBound   (nparts,pini,simplemov,ToTFloat3(simplevel),RidpMove,Posc,Dcellc,Velrhopc,Codec);
-        //else    MoveLinBoundAce(nparts,pini,simplemov,ToTFloat3(simplevel),ToTFloat3(simpleace),RidpMove,Posc,Dcellc,Velrhopc,Acec,Codec);
+    for(unsigned ref=0;ref<nref;ref++){
+      const StMotionData& m=SphMotion->GetMotionData(ref);
+      if(m.type==MOTT_Linear){//-Linear movement.
+        if(motsim)MoveLinBound   (m.count,m.idbegin-CaseNfixed,m.linmov,ToTFloat3(m.linvel),RidpMove,Posc,Dcellc,Velrhopc,Codec);
+        //else    MoveLinBoundAce(m.count,m.idbegin-CaseNfixed,m.linmov,ToTFloat3(m.linvel),ToTFloat3(m.linace),RidpMove,Posc,Dcellc,Velrhopc,Acec,Codec);
       }
-      else{//-Movement using a matrix. | Movimiento con matriz.
-        if(motsim)MoveMatBound   (nparts,pini,matmov,stepdt,RidpMove,Posc,Dcellc,Velrhopc,Codec); 
-        //else    MoveMatBoundAce(nparts,pini,matmov,matmov2,stepdt,RidpMove,Posc,Dcellc,Velrhopc,Acec,Codec);
-      }
-      //-Applies predefined motion to BoundCorr configuration.  //<vs_innlet_ini> 
-      if(BoundCorr && BoundCorr->GetUseMotion()){
-        BoundCorr->RunMotion(SphMotion->GetObjMkBound(ref),typesimple,simplemov,matmov);
-      }  //<vs_innlet_end> 
-    }
-  }
-  //-Process other modes of motion. | Procesa otros modos de motion.
-  if(WaveGen){
-    if(!BoundChanged)CalcRidp(PeriActive!=0,Npb,0,CaseNfixed,CaseNfixed+CaseNmoving,Codec,Idpc,RidpMove);
-    BoundChanged=true;
-    //-Control of wave generation (WaveGen). | Gestion de WaveGen.
-    for(unsigned c=0;c<WaveGen->GetCount();c++){
-      bool typesimple;
-      tdouble3 simplemov,simplevel,simpleace;
-      tmatrix4d matmov,matmov2;
-      unsigned nparts,idbegin;
-      //-Get movement data.
-      const bool svdata=(TimeStep+stepdt>=TimePartNext);
-      if(motsim)typesimple=WaveGen->GetMotion   (svdata,c,TimeStep,stepdt,simplemov,simplevel,matmov,nparts,idbegin);
-      else      typesimple=WaveGen->GetMotionAce(svdata,c,TimeStep,stepdt,simplemov,simplevel,simpleace,matmov,matmov2,nparts,idbegin);
-      //-Applies movement to paddle particles.
-      const unsigned np=nparts,pini=idbegin-CaseNfixed;
-      if(typesimple){//-Simple movement. | Movimiento simple.
-        if(Simulate2D)simplemov.y=simplevel.y=simpleace.y=0;
-        if(motsim)MoveLinBound   (np,pini,simplemov,ToTFloat3(simplevel),RidpMove,Posc,Dcellc,Velrhopc,Codec);    
-        //else    MoveLinBoundAce(np,pini,simplemov,ToTFloat3(simplevel),ToTFloat3(simpleace),RidpMove,Posc,Dcellc,Velrhopc,Acec,Codec);
-      }
-      else{
-        if(motsim)MoveMatBound   (np,pini,matmov,stepdt,RidpMove,Posc,Dcellc,Velrhopc,Codec);
-        //else    MoveMatBoundAce(np,pini,matmov,matmov2,stepdt,RidpMove,Posc,Dcellc,Velrhopc,Acec,Codec);
-      }
-      //-Applies predefined motion to BoundCorr configuration.  //<vs_innlet_ini> 
-      if(BoundCorr && BoundCorr->GetUseMotion()){
-        BoundCorr->RunMotion(WaveGen->GetPaddleMkbound(c),typesimple,simplemov,matmov);
-      }  //<vs_innlet_end> 
+      if(m.type==MOTT_Matrix){//-Matrix movement (for rotations).
+        if(motsim)MoveMatBound   (m.count,m.idbegin-CaseNfixed,m.matmov,stepdt,RidpMove,Posc,Dcellc,Velrhopc,Codec,boundnormal); 
+        //else    MoveMatBoundAce(m.count,m.idbegin-CaseNfixed,m.matmov,m.matmov2,stepdt,RidpMove,Posc,Dcellc,Velrhopc,Acec,Codec);
+      }      
+      //-Applies predefined motion to BoundCorr configuration.           //<vs_innlet> 
+      if(BoundCorr && BoundCorr->GetUseMotion())BoundCorr->RunMotion(m); //<vs_innlet> 
     }
   }
   //-Management of Multi-Layer Pistons.  //<vs_mlapiston_ini>

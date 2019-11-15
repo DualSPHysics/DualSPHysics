@@ -76,6 +76,9 @@
 //:# - Nueva funcion VectorSplitDouble().  (05-06-2019)
 //:# - Nuevas funciones StrIsIntegerNumber() and StrIsRealNumber().  (13-06-2019)
 //:# - Updates FileType() for files larger than 2GB.  (20-06-2019)
+//:# - StrIsIntegerNumber() tambien valida enteros con parte decimal nula.  (12-08-2019)
+//:# - Gestion de excepciones mejorada.  (15-09-2019)
+//:# - Output functions in JSON format.  (16-09-2019)
 //:#############################################################################
 
 /// \file Functions.h \brief Declares basic/general functions for the entire application.
@@ -89,8 +92,18 @@
 #include <sys/stat.h>
 #include "TypesDef.h"
 
+
+#ifndef Run_ExceptioonFun
+#define Run_ExceptioonFun(msg) RunExceptioonFun(__FILE__,__LINE__,__func__,msg)
+#endif
+#ifndef Run_ExceptioonFileFun
+#define Run_ExceptioonFileFun(msg,file) RunExceptioonFun(__FILE__,__LINE__,__func__,msg,file)
+#endif
+
 /// Implements a set of basic/general functions.
 namespace fun{
+void RunExceptioonFun(const std::string &srcfile,int srcline,const std::string &fun
+  ,const std::string &msg,const std::string &file="");
 
 std::string GetDateTimeFormat(const char* format,int nseg=0);
 inline std::string GetDateTime(){ return(GetDateTimeFormat("%d-%m-%Y %H:%M:%S",0)); }
@@ -225,6 +238,21 @@ void PrintVar(const std::string &name,tdouble3 value,const std::string &post="")
 void PrintVar(const std::string &name,bool value,const std::string &post="");
 void PrintVar(const std::string &name,int value,const std::string &post="");
 void PrintVar(const std::string &name,unsigned value,const std::string &post="");
+
+//-Output functions in JSON format.
+inline std::string JSONValue(const std::string &v){ return(std::string(" \"")+v+"\" "); }
+inline std::string JSONValue(bool     v){ return(v? " true ": " false "); }
+inline std::string JSONValue(int      v){ return(std::string(" ")+IntStr(v)+" "); }
+inline std::string JSONValue(unsigned v){ return(std::string(" ")+UintStr(v)+" "); }
+inline std::string JSONValue(double   v){ return(std::string(" ")+DoubleStr(v)+" "); }
+inline std::string JSONPropertyValue(const std::string &name,const std::string &v){ return(std::string(" \"")+name+"\" : "+StrTrimBegin(v)); }
+inline std::string JSONProperty(const std::string &name,const std::string &v){ return(JSONPropertyValue(name,JSONValue(v))); }
+inline std::string JSONProperty(const std::string &name,bool               v){ return(JSONPropertyValue(name,JSONValue(v))); }
+inline std::string JSONProperty(const std::string &name,int                v){ return(JSONPropertyValue(name,JSONValue(v))); }
+inline std::string JSONProperty(const std::string &name,unsigned           v){ return(JSONPropertyValue(name,JSONValue(v))); }
+inline std::string JSONProperty(const std::string &name,double             v){ return(JSONPropertyValue(name,JSONValue(v))); }
+std::string JSONObject(const std::vector<std::string> &properties);
+std::string JSONArray(const std::vector<std::string> &values);
 
 int FileType(const std::string &name);
 inline bool FileExists(const std::string &name){ return(FileType(name)==2); }

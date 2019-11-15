@@ -68,7 +68,8 @@
             <parameter key="ViscoTreatment" value="1" comment="Viscosity formulation 1:Artificial, 2:Laminar+SPS (default=1)" />
             <parameter key="Visco" value="0.1" comment="Viscosity value" /> % Note alpha can depend on the resolution. A value of 0.01 is recommended for near irrotational flows.
             <parameter key="ViscoBoundFactor" value="1" comment="Multiply viscosity value with boundary (default=1)" />
-            <parameter key="DeltaSPH" value="0" comment="DeltaSPH value, 0.1 is the typical value, with 0 disabled (default=0)" />
+			<parameter key="DensityDT" value="0" comment="Density Diffusion Term 0:None, 1:Molteni, 2:Fourtakas, 3:Fourtakas(full) (default=0)" />
+			<parameter key="DensityDTvalue" value="0.1" comment="DDT value (default=0.1)" />
             <parameter key="#Shifting" value="0" comment="Shifting mode 0:None, 1:Ignore bound, 2:Ignore fixed, 3:Full (default=0)" />
             <parameter key="#ShiftCoef" value="-2" comment="Coefficient for shifting computation (default=-2)" />
             <parameter key="#ShiftTFS" value="1.5" comment="Threshold to detect free surface. Typically 1.5 for 2D and 2.75 for 3D (default=0)" />
@@ -79,7 +80,7 @@
             <parameter key="#DtMin" value="0.00001" comment="Minimum time step (default=coefdtmin*h/speedsound)" units_comment="seconds" />
             <parameter key="#DtFixed" value="DtFixed.dat" comment="Dt values are loaded from file (default=disabled)" />
             <parameter key="DtAllParticles" value="0" comment="Velocity of particles used to calculate DT. 1:All, 0:Only fluid/floating (default=0)" />
-            <parameter key="TimeMax" value="1.5" comment="Time of simulation" units_comment="seconds" />
+            <parameter key="TimeMax" value="1.6" comment="Time of simulation" units_comment="seconds" />
             <parameter key="TimeOut" value="0.01" comment="Time out data" units_comment="seconds" />
             <parameter key="PartsOutMax" value="1" comment="%/100 of fluid particles allowed to be excluded from domain (default=1)" units_comment="decimal" />
             <parameter key="RhopOutMin" value="700" comment="Minimum rhop valid (default=700)" units_comment="kg/m^3" />

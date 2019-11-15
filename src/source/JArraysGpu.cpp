@@ -73,13 +73,12 @@ void JArraysGpuSize::FreeMemory(){
 /// If the count is less than the number of those in use raises an exception.
 //==============================================================================
 void JArraysGpuSize::SetArrayCount(unsigned count){
-  const char met[]="SetArrayCount";
-  if(count>MAXPOINTERS)RunException(met,"Number of requested arrays exceeds the maximum.");
-  if(count<CountUsed)RunException(met,"Unable to free arrays in use.");
+  if(count>MAXPOINTERS)Run_Exceptioon("Number of requested arrays exceeds the maximum.");
+  if(count<CountUsed)Run_Exceptioon("Unable to free arrays in use.");
   if(ArraySize){
     if(Count<count){//-Genera nuevos arrays. //-Generates new arrays
       for(unsigned c=Count;c<count;c++)cudaMalloc((void**)(Pointers+c),ElementSize*ArraySize);
-      CheckCudaError(met,"Failed GPU memory allocation.");
+      Check_CudaErroor("Failed GPU memory allocation.");
     }
     if(Count>count){//-Libera arrays. //-Frees arrays
       for(unsigned c=count;c<Count;c++){ cudaFree(Pointers[c]); Pointers[c]=NULL; }
@@ -96,7 +95,7 @@ void JArraysGpuSize::SetArrayCount(unsigned count){
 /// If there is any array in use raises an exception.
 //==============================================================================
 void JArraysGpuSize::SetArraySize(unsigned size){
-  if(CountUsed)RunException("SetArraySize","Unable to change the dimension of the arrays because some are in use.");
+  if(CountUsed)Run_Exceptioon("Unable to change the dimension of the arrays because some are in use.");
   if(ArraySize!=size){
     ArraySize=size;
     unsigned count=Count;
@@ -110,7 +109,7 @@ void JArraysGpuSize::SetArraySize(unsigned size){
 /// Requests allocating an array.
 //==============================================================================
 void* JArraysGpuSize::Reserve(){
-  if(CountUsed==Count||!ArraySize)RunException("Reserve",fun::PrintStr("There are no arrays available with %u bytes.",ElementSize));
+  if(CountUsed==Count||!ArraySize)Run_Exceptioon(fun::PrintStr("There are no arrays available with %u bytes.",ElementSize));
   CountUsed++;
   CountUsedMax=max(CountUsedMax,CountUsed);
   return(Pointers[CountUsed-1]);
@@ -133,7 +132,7 @@ unsigned JArraysGpuSize::FindPointerUsed(void *pointer)const{
 void JArraysGpuSize::Free(void *pointer){
   if(pointer){
     unsigned pos=FindPointerUsed(pointer);
-    if(pos==MAXPOINTERS)RunException("Free","The pointer indicated was not reserved.");
+    if(pos==MAXPOINTERS)Run_Exceptioon("The pointer indicated was not reserved.");
     if(pos+1<CountUsed){
       void *aux=Pointers[CountUsed-1]; Pointers[CountUsed-1]=Pointers[pos]; Pointers[pos]=aux;
     }

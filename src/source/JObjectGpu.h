@@ -16,6 +16,12 @@
  You should have received a copy of the GNU Lesser General Public License along with DualSPHysics. If not, see <http://www.gnu.org/licenses/>. 
 */
 
+//:#############################################################################
+//:# Cambios:
+//:# =========
+//:# - Gestion de excepciones mejorada.  (15-09-2019)
+//:#############################################################################
+
 /// \file JObjectGpu.h \brief Declares the class \ref JObjectGpu.
 
 #ifndef _JObjectGpu_
@@ -25,6 +31,20 @@
 #include <cuda_runtime_api.h>
 #include <string>
 
+//-Defines for CUDA exceptions.
+#ifndef Run_ExceptioonCuda
+#define Run_ExceptioonCuda(cuerr,msg) RunExceptioonCuda(__FILE__,__LINE__,ClassName,__func__,cuerr,msg)
+#endif
+#ifndef Run_ExceptioonCudaSta
+#define Run_ExceptioonCudaSta(cuerr,msg) RunExceptioonCudaStatic(__FILE__,__LINE__,__func__,cuerr,msg)
+#endif
+#ifndef Check_CudaErroor
+#define Check_CudaErroor(msg) CheckCudaErroor(__FILE__,__LINE__,ClassName,__func__,msg)
+#endif
+#ifndef Check_CudaErroorSta
+#define Check_CudaErroorSta(msg) CheckCudaErroorStatic(__FILE__,__LINE__,__func__,msg)
+#endif
+
 //##############################################################################
 //# JObjectGpu
 //##############################################################################
@@ -32,8 +52,19 @@
 class JObjectGpu : protected JObject
 {
 protected:
-  void RunExceptionCuda(const std::string &method,const std::string &msg,cudaError_t error)const;
-  void CheckCudaError(const std::string &method,const std::string &msg)const;
+  //static void RunExceptioonCudaStatic(const std::string &srcfile,int srcline
+  //  ,const std::string &method
+  //  ,cudaError_t cuerr,std::string msg);
+  //static void CheckCudaErroorStatic(const std::string &srcfile,int srcline
+  //  ,const std::string &method
+  //  ,std::string msg);
+
+  void RunExceptioonCuda(const std::string &srcfile,int srcline
+    ,const std::string &classname,const std::string &method
+    ,cudaError_t cuerr,std::string msg)const;
+  void CheckCudaErroor(const std::string &srcfile,int srcline
+    ,const std::string &classname,const std::string &method
+    ,std::string msg)const;
 public:  
   JObjectGpu(){ ClassName="JObjectGpu"; } ///<Constructor.
 };

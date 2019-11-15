@@ -16,6 +16,12 @@
  You should have received a copy of the GNU Lesser General Public License along with DualSPHysics. If not, see <http://www.gnu.org/licenses/>. 
 */
 
+//:#############################################################################
+//:# Cambios:
+//:# =========
+//:# - Gestion de excepciones mejorada.  (15-09-2019)
+//:#############################################################################
+
 /// \file JArraysGpu.h \brief Declares the class \ref JArraysGpu.
 
 #ifndef _JArraysGpu_

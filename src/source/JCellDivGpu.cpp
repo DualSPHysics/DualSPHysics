@@ -104,13 +104,12 @@ void JCellDivGpu::FreeMemoryAll(){
 /// Asigna memoria basica segun numero de particulas.
 //==============================================================================
 void JCellDivGpu::AllocMemoryNp(ullong np){
-  const char met[]="AllocMemoryNp";
   FreeMemoryAll();
   np=np+PARTICLES_OVERMEMORY_MIN;
   SizeNp=unsigned(np);
   //-Checks particle number.
   //-Comprueba numero de particulas.
-  if(np!=SizeNp)RunException(met,string("Failed GPU memory allocation for ")+fun::UlongStr(np)+" particles.");
+  if(np!=SizeNp)Run_Exceptioon(string("Failed GPU memory allocation for ")+fun::UlongStr(np)+" particles.");
   //-Allocates memory for the particles.
   //-Reserva memoria para particulas.
   MemAllocGpuNp=0;
@@ -124,7 +123,7 @@ void JCellDivGpu::AllocMemoryNp(ullong np){
   //-Comprueba reserva de memoria.
   cudaError_t cuerr=cudaGetLastError();
   if(cuerr!=cudaSuccess){
-    RunExceptionCuda(met,fun::PrintStr("Failed CPU memory allocation of %.1f MB for %u particles.",double(MemAllocGpuNp)/(1024*1024),SizeNp),cuerr);
+    Run_ExceptioonCuda(cuerr,fun::PrintStr("Failed CPU memory allocation of %.1f MB for %u particles.",double(MemAllocGpuNp)/(1024*1024),SizeNp));
   }
   //-Displays the requested memory.
   //-Muestra la memoria solicitada.
@@ -136,12 +135,11 @@ void JCellDivGpu::AllocMemoryNp(ullong np){
 /// Asigna memoria segun numero de celdas.
 //==============================================================================
 void JCellDivGpu::AllocMemoryNct(ullong nct){
-  const char met[]="AllocMemoryNct";
   FreeMemoryNct();
   SizeNct=unsigned(nct);
   //-Checks cell number.
   //-Comprueba numero de celdas.
-  if(nct!=SizeNct)RunException(met,string("Failed GPU memory allocation for ")+fun::UlongStr(nct)+" cells.");
+  if(nct!=SizeNct)Run_Exceptioon(string("Failed GPU memory allocation for ")+fun::UlongStr(nct)+" cells.");
   //-Allocates memory for cells.
   //-Reserva memoria para celdas.
   MemAllocGpuNct=0;
@@ -151,7 +149,7 @@ void JCellDivGpu::AllocMemoryNct(ullong nct){
   //-Comprueba reserva de memoria.
   cudaError_t cuerr=cudaGetLastError();
   if(cuerr!=cudaSuccess){
-    RunExceptionCuda(met,fun::PrintStr("Failed GPU memory allocation of %.1f MB for %u cells.",double(MemAllocGpuNct)/(1024*1024),SizeNct),cuerr);
+    Run_ExceptioonCuda(cuerr,fun::PrintStr("Failed GPU memory allocation of %.1f MB for %u cells.",double(MemAllocGpuNct)/(1024*1024),SizeNct));
   }
   //-Displays requested memory.
   //-Muestra la memoria solicitada.
@@ -189,7 +187,7 @@ void JCellDivGpu::CheckMemoryNct(unsigned nctmin){
     if(OverMemoryCells>0){
       ullong nct=ullong(Ncx+OverMemoryCells)*ullong(Ncy+OverMemoryCells)*ullong(Ncz+OverMemoryCells);
       ullong nctt=SizeBeginEndCell(nct);
-      if(nctt!=unsigned(nctt))RunException("CheckMemoryNct","The number of cells is too big.");
+      if(nctt!=unsigned(nctt))Run_Exceptioon("The number of cells is too big.");
       overnct=unsigned(nct);
     }
     AllocMemoryNct(nctmin>overnct? nctmin: overnct);
@@ -347,6 +345,15 @@ void JCellDivGpu::SortDataArrays(const tsymatrix3f *a,tsymatrix3f *a2){
 }
 
 //==============================================================================
+/// Reorders data arrays according to SortPart (for type float3).
+/// Ordena arrays de datos segun SortPart (para tipo float3).
+//==============================================================================
+void JCellDivGpu::SortDataArrays(const float3 *a,float3 *a2){
+  const unsigned pini=(DivideFull? 0: NpbFinal);
+  cudiv::SortDataParticles(Nptot,pini,SortPart,a,a2);
+}
+
+//==============================================================================
 /// Returns a pointer with the auxiliary memory allocated in the GPU, only
 /// used as intermediate in some tasks, in order to use it in other tasks.
 /// This memoery is resized according to the particle number thus its
@@ -360,7 +367,7 @@ void JCellDivGpu::SortDataArrays(const tsymatrix3f *a,tsymatrix3f *a2){
 //==============================================================================
 float* JCellDivGpu::GetAuxMem(unsigned size){
   //:printf("GetAuxMem> size:%u  SizeAuxMem:%u\n",size,SizeAuxMem);
-  if(size>SizeAuxMem)RunException("GetAuxMem","The requested memory is not available.");
+  if(size>SizeAuxMem)Run_Exceptioon("The requested memory is not available.");
   return(AuxMem);
 }
 

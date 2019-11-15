@@ -25,6 +25,8 @@
 //:# - Documentacion del codigo en ingles. (08-08-2017)
 //:# - Nueva funcion ToHostInt(). (30-01-2018)
 //:# - Incluye cores para SM 75. (20-12-2018)
+//:# - Nueva funcion ToHostFloatXYZ_W(). (10-09-2019)
+//:# - Gestion de excepciones mejorada.  (15-09-2019)
 //:#############################################################################
 
 /// \file FunctionsCuda.h \brief Declares basic/general GPU functions for the entire application.
@@ -37,7 +39,9 @@
 #include <cuda_runtime_api.h>
 #include "TypesDef.h"
 
-#define CheckCudaErrors(msg) CheckCudaError(msg,__FILE__,__LINE__)
+#ifndef Check_CudaErroorFun
+#define Check_CudaErroorFun(msg) CheckCudaErroorFun(__FILE__,__LINE__,__func__,msg)
+#endif
 
 /// Implements a set of basic/general GPU functions.
 namespace fcuda{
@@ -95,12 +99,13 @@ typedef struct StrGpuInfo{
   }
 }StGpuInfo;
 
+void CheckCudaErroorFun(const char *const file,int const line
+  ,const char *const fun,std::string msg);
+
 std::string GetCudaDeviceName(int gid);
 StGpuInfo GetCudaDeviceInfo(int gid);
 int GetCudaDevicesInfo(std::vector<std::string> *gpuinfo,std::vector<StGpuInfo> *gpuprops);
 int _ConvertSMVer2Cores(int major, int minor);
-
-void CheckCudaError(const std::string &msg,const char *const file,int const line);
 
 //-Functions to allocate GPU memory.
 size_t Malloc(byte     **,unsigned count);
@@ -142,6 +147,7 @@ tdouble2* ToHostDouble2(unsigned pini,unsigned n,const double2  *ptrg);
 
 tfloat3*  ToHostPosf3(unsigned pini,unsigned n,const double2 *posxyg,const double *poszg);
 tdouble3* ToHostPosd3(unsigned pini,unsigned n,const double2 *posxyg,const double *poszg);
+tfloat3*  ToHostFloatXYZ_W(unsigned pini,unsigned n,const float4 *ptrg,float **ptr_w);
 
 }
 

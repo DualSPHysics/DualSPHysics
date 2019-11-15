@@ -31,6 +31,7 @@
 //:# - Control de excepciones en el destructor. (21-03-2018)
 //:# - Nuevo metodo GetAppendMode() para saber si se va ampliar un fichero existente. (06-07-2018)
 //:# - Error corregido en SaveData() por el que siempre se grababa el head. (13-08-2018)
+//:# - Gestion de excepciones mejorada.  (15-09-2019)
 //:#############################################################################
 
 /// \file JSaveCsv2.h \brief Declares the class \ref JSaveCsv2.

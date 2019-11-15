@@ -331,6 +331,12 @@
     <ClInclude Include="..\source\JSpacePartsDef.h">
       <Filter>CommonDsph</Filter>
     </ClInclude>
+    <ClInclude Include="..\source\JDebugSphGpu.h">
+      <Filter>Source</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JDataArrays.h">
+      <Filter>Common</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\source\JCfgRun.cpp">
@@ -562,6 +568,12 @@
       <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="..\source\FunctionsGeo3d.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JDebugSphGpu.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JDataArrays.cpp">
       <Filter>Common</Filter>
     </ClCompile>
   </ItemGroup>

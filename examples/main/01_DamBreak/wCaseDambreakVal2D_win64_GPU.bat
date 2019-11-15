@@ -1,4 +1,8 @@
 @echo off
+setlocal EnableDelayedExpansion
+rem Don't remove the two jump line after than the next line [set NL=^]
+set NL=^
+
 
 rem "name" and "dirout" are named according to the testcase
 
@@ -21,6 +25,19 @@ set isosurface="%dirbin%/IsoSurface4_win64.exe"
 set flowtool="%dirbin%/FlowTool4_win64.exe"
 set floatinginfo="%dirbin%/FloatingInfo4_win64.exe"
 
+:menu
+if exist %dirout% ( 
+	set /p option="The folder "%dirout%" already exists. Choose an option.!NL!  [1]- Delete it and continue.!NL!  [2]- Execute post-processing.!NL!  [3]- Abort and exit.!NL!"
+	if "!option!" == "1" goto run else (
+		if "!option!" == "2" goto postprocessing else (
+			if "!option!" == "3" goto fail else ( 
+				goto menu
+			)
+		)
+	)
+)
+
+:run
 rem "dirout" to store results is removed if it already exists
 if exist %dirout% rd /s /q %dirout%
 
@@ -34,6 +51,7 @@ rem Executes DualSPHysics to simulate SPH method.
 %dualsphysicsgpu% -gpu %dirout%/%name% %dirout% -dirdataout data -svres
 if not "%ERRORLEVEL%" == "0" goto fail
 
+:postprocessing
 rem Executes PartVTK4 to create VTK files with particles.
 set dirout2=%dirout%\particles
 %partvtk% -dirin %diroutdata% -savevtk %dirout2%/PartFluid -onlytype:-all,fluid -vars:+idp,+vel,+rhop,+press,+vor

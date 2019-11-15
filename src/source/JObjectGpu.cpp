@@ -19,30 +19,56 @@
 /// \file JObjectGpu.cpp \brief Implements the class \ref JObjectGpu.
 
 #include "JObjectGpu.h"
+#include "JException.h"
 #include "Functions.h"
 #include <cstdio>
 #include <cstdlib>
 #include <ctime>
 
+//##############################################################################
+//# JObjectGpu
+//##############################################################################
+////==============================================================================
+///// Throws exception related to a CUDA error from a static method.
+////==============================================================================
+//void JObjectGpu::RunExceptioonCudaStatic(const std::string &srcfile,int srcline
+//  ,const std::string &method
+//  ,cudaError_t cuerr,std::string msg)
+//{
+//  msg=msg+fun::PrintStr(" (CUDA error %d (%s)).\n",cuerr,cudaGetErrorString(cuerr));
+//  throw JException(srcfile,srcline,"JObjectGpu",method,msg,"");
+//}
+////==============================================================================
+///// Checks CUDA error and throws exception from a static method.
+////==============================================================================
+//void JObjectGpu::CheckCudaErroorStatic(const std::string &srcfile,int srcline
+//  ,const std::string &method,std::string msg)
+//{
+//  cudaError_t cuerr=cudaGetLastError();
+//  if(cuerr!=cudaSuccess)RunExceptioonCudaStatic(srcfile,srcline,method,cuerr,msg);
+//}
+
 //==============================================================================
-/// Throws exception due to a Cuda error.
-/// \param method Name of the method that throws an exception.
-/// \param msg Text of the exception.
-/// \param error Code of the Cuda error.
-/// \throw JException 
+/// Throws exception related to a CUDA error.
 //==============================================================================
-void JObjectGpu::RunExceptionCuda(const std::string &method,const std::string &msg,cudaError_t error)const{
-  RunException(method,fun::PrintStr("%s (CUDA error: %s).\n",msg.c_str(),cudaGetErrorString(error)));
+void JObjectGpu::RunExceptioonCuda(const std::string &srcfile,int srcline
+  ,const std::string &classname,const std::string &method
+  ,cudaError_t cuerr,std::string msg)const
+{
+  msg=msg+fun::PrintStr(" (CUDA error %d (%s)).\n",cuerr,cudaGetErrorString(cuerr));
+  throw JException(srcfile,srcline,classname,method,msg,"");
 }
 
 //==============================================================================
-/// Checks error if there is a Cuda error and throws exception.
-/// \param method Name of the method that throws an exception.
-/// \param msg Text of the exception.
+/// Checks CUDA error and throws exception.
+/// Comprueba error de CUDA y lanza excepcion si lo hubiera.
 //==============================================================================
-void JObjectGpu::CheckCudaError(const std::string &method,const std::string &msg)const{
-  cudaError_t err=cudaGetLastError();
-  if(err!=cudaSuccess)RunExceptionCuda(method,msg,err);
+void JObjectGpu::CheckCudaErroor(const std::string &srcfile,int srcline
+  ,const std::string &classname,const std::string &method
+  ,std::string msg)const
+{
+  cudaError_t cuerr=cudaGetLastError();
+  if(cuerr!=cudaSuccess)RunExceptioonCuda(srcfile,srcline,classname,method,cuerr,msg);
 }
 
 

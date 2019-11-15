@@ -20,6 +20,7 @@
 //:# Cambios:
 //:# =========
 //:# - Documentacion del codigo en ingles. (08-08-2017)
+//:# - Gestion de excepciones mejorada.  (15-09-2019)
 //:#############################################################################
 
 /// \file JWaveOrder2_ker.h \brief Declares functions and CUDA kernels for second order irregular wave generation.

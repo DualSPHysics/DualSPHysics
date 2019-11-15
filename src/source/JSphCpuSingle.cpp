@@ -37,6 +37,7 @@
 #include "JGaugeSystem.h"
 #include "JSphInOut.h"  //<vs_innlet>
 #include "JLinearValue.h"
+#include "JDataArrays.h"
 #include <climits>
 
 using namespace std;
@@ -72,10 +73,11 @@ llong JSphCpuSingle::GetAllocMemoryCpu()const{
 /// Actualiza los valores maximos de memory, particles y cells.
 //==============================================================================
 void JSphCpuSingle::UpdateMaxValues(){
-  MaxParticles=max(MaxParticles,Np);
-  if(CellDivSingle)MaxCells=max(MaxCells,CellDivSingle->GetNct());
-  llong m=GetAllocMemoryCpu();
-  MaxMemoryCpu=max(MaxMemoryCpu,m);
+  const llong mcpu=GetAllocMemoryCpu();
+  MaxNumbers.memcpu=max(MaxNumbers.memcpu,mcpu);
+  MaxNumbers.memgpu=0;
+  MaxNumbers.particles=max(MaxNumbers.particles,Np);
+  if(CellDivSingle)MaxNumbers.cells=max(MaxNumbers.cells,CellDivSingle->GetNct());
 }
 
 //==============================================================================
@@ -83,7 +85,6 @@ void JSphCpuSingle::UpdateMaxValues(){
 /// Carga la configuracion de ejecucion.
 //==============================================================================
 void JSphCpuSingle::LoadConfig(JCfgRun *cfg){
-  const char met[]="LoadConfig";
   //-Load OpenMP configuraction. | Carga configuracion de OpenMP.
   ConfigOmp(cfg);
   //-Load basic general configuraction. | Carga configuracion basica general.
@@ -97,7 +98,6 @@ void JSphCpuSingle::LoadConfig(JCfgRun *cfg){
 /// Configuracion del dominio actual.
 //==============================================================================
 void JSphCpuSingle::ConfigDomain(){
-  const char* met="ConfigDomain";
   //-Calculate number of particles. | Calcula numero de particulas.
   Np=PartsLoaded->GetCount(); Npb=CaseNpb; NpbOk=Npb;
   //-Allocates fixed memory for moving & floating particles. | Reserva memoria fija para moving y floating.
@@ -123,7 +123,8 @@ void JSphCpuSingle::ConfigDomain(){
   LoadCodeParticles(Np,Idpc,Codec);
 
   //-Runs initialization operations from XML.
-  RunInitialize(Np,Npb,Posc,Idpc,Codec,Velrhopc);
+  tfloat3 *boundnormal=NULL;
+  RunInitialize(Np,Npb,Posc,Idpc,Codec,Velrhopc,boundnormal);
 
   //-Creates PartsInit object with initial particle data for automatic configurations.
   CreatePartsInit(Np,Posc,Codec);
@@ -319,7 +320,6 @@ void JSphCpuSingle::PeriodicDuplicateSymplectic(unsigned np,unsigned pini,tuint3
 /// nuevas periodicas.
 //==============================================================================
 void JSphCpuSingle::RunPeriodic(){
-  const char met[]="RunPeriodic";
   TmcStart(Timers,TMC_SuPeriodic);
   //-Keep number of present periodic. | Guarda numero de periodicas actuales.
   NpfPerM1=NpfPer;
@@ -356,7 +356,7 @@ void JSphCpuSingle::RunPeriodic(){
           unsigned* listp=ArraysCpu->ReserveUint();
           unsigned nmax=CpuParticlesSize-1; //-Maximmum number of particles that fit in the list. | Numero maximo de particulas que caben en la lista.
           //-Generate list of new periodic particles. | Genera lista de nuevas periodicas.
-          if(Np>=0x80000000)RunException(met,"The number of particles is too big.");//-Because the last bit is used to mark the direction in which a new periodic particle is created. | Porque el ultimo bit se usa para marcar el sentido en que se crea la nueva periodica.
+          if(Np>=0x80000000)Run_Exceptioon("The number of particles is too big.");//-Because the last bit is used to mark the direction in which a new periodic particle is created. | Porque el ultimo bit se usa para marcar el sentido en que se crea la nueva periodica.
           unsigned count=PeriodicMakeList(num2,pini2,Stable,nmax,perinc,Posc,Codec,listp);
           //-Redimension memory for particles if there is insufficient space and repeat the search process.
           //-Redimensiona memoria para particulas si no hay espacio suficiente y repite el proceso de busqueda.
@@ -372,7 +372,7 @@ void JSphCpuSingle::RunPeriodic(){
             //-Crea nuevas particulas periodicas duplicando las particulas de la lista.
             if(TStep==STEP_Verlet)PeriodicDuplicateVerlet(count,Np,DomCells,perinc,listp,Idpc,Codec,Dcellc,Posc,Velrhopc,SpsTauc,VelrhopM1c);
             if(TStep==STEP_Symplectic){
-              if((PosPrec || VelrhopPrec) && (!PosPrec || !VelrhopPrec))RunException(met,"Symplectic data is invalid.") ;
+              if((PosPrec || VelrhopPrec) && (!PosPrec || !VelrhopPrec))Run_Exceptioon("Symplectic data is invalid.") ;
               PeriodicDuplicateSymplectic(count,Np,DomCells,perinc,listp,Idpc,Codec,Dcellc,Posc,Velrhopc,SpsTauc,PosPrec,VelrhopPrec);
             }
 
@@ -395,7 +395,6 @@ void JSphCpuSingle::RunPeriodic(){
 /// Ejecuta divide de particulas en celdas.
 //==============================================================================
 void JSphCpuSingle::RunCellDivide(bool updateperiodic){
-  const char met[]="RunCellDivide";
   //-Creates new periodic particles and marks the old ones to be ignored.
   //-Crea nuevas particulas periodicas y marca las viejas para ignorarlas.
   if(updateperiodic && PeriActive)RunPeriodic();
@@ -414,7 +413,7 @@ void JSphCpuSingle::RunCellDivide(bool updateperiodic){
     CellDivSingle->SortArray(VelrhopM1c);
   }
   else if(TStep==STEP_Symplectic && (PosPrec || VelrhopPrec)){//-In reality, this is only necessary in divide for corrector, not in predictor??? | En realidad solo es necesario en el divide del corrector, no en el predictor???
-    if(!PosPrec || !VelrhopPrec)RunException(met,"Symplectic data is invalid.") ;
+    if(!PosPrec || !VelrhopPrec)Run_Exceptioon("Symplectic data is invalid.") ;
     CellDivSingle->SortArray(PosPrec);
     CellDivSingle->SortArray(VelrhopPrec);
   }
@@ -470,7 +469,7 @@ void JSphCpuSingle::AbortBoundOut(){
   typecode* code=ArraysCpu->ReserveTypeCode();
   GetParticlesData(nboundout,Np,false,idp,pos,vel,rhop,code);
   //-Shows excluded particles information and aborts execution.
-  JSph::AbortBoundOut(nboundout,idp,pos,vel,rhop,code);
+  JSph::AbortBoundOut(Log,nboundout,idp,pos,vel,rhop,code);
 }
 
 //==============================================================================
@@ -499,7 +498,6 @@ void JSphCpuSingle::GetInteractionCells(unsigned rcell
 /// Interaccion para el calculo de fuerzas.
 //==============================================================================
 void JSphCpuSingle::Interaction_Forces(TpInterStep interstep){
-  const char met[]="Interaction_Forces";
   InterStep=interstep;
   PreInteraction_Forces();
   TmcStart(Timers,TMC_CfForces);
@@ -570,12 +568,11 @@ template<bool checkperiodic> double JSphCpuSingle::ComputeAceMaxSeq(unsigned np,
 /// Devuelve el valor maximo de ace (modulo) using OpenMP, se deben ignorar las particulas periodicas.
 //==============================================================================
 template<bool checkperiodic> double JSphCpuSingle::ComputeAceMaxOmp(unsigned np,const tfloat3* ace,const typecode *code)const{
-  const char met[]="ComputeAceMaxOmp";
   double acemax=0;
   #ifdef OMP_USE
     if(np>OMP_LIMIT_COMPUTELIGHT){
       const int n=int(np);
-      if(n<0)RunException(met,"Number of values is too big.");
+      if(n<0)Run_Exceptioon("Number of values is too big.");
       float amax=0;
       #pragma omp parallel 
       {
@@ -609,17 +606,17 @@ template<bool checkperiodic> double JSphCpuSingle::ComputeAceMaxOmp(unsigned np,
 /// calculadas en la interaccion usando Verlet.
 //==============================================================================
 double JSphCpuSingle::ComputeStep_Ver(){
-  if(BoundCorr)BoundCorrectionData();    //-Apply BoundCorrection.  //<vs_innlet>
-  Interaction_Forces(INTERSTEP_Verlet);  //-Interaction.
-  const double dt=DtVariable(true);      //-Calculate new dt.
-  if(CaseNmoving)CalcMotion(dt);         //-Calculate motion for moving bodies.
-  DemDtForce=dt;                         //(DEM)
-  if(TShifting)RunShifting(dt);          //-Shifting.
-  ComputeVerlet(dt);                     //-Update particles using Verlet.
-  if(CaseNfloat)RunFloating(dt,false);   //-Control of floating bodies.
-  PosInteraction_Forces();               //-Free memory used for interaction.
+  if(BoundCorr)BoundCorrectionData();      //-Apply BoundCorrection.  //<vs_innlet>
+  Interaction_Forces(INTERSTEP_Verlet);    //-Interaction.
+  const double dt=DtVariable(true);        //-Calculate new dt.
+  if(CaseNmoving)CalcMotion(dt);           //-Calculate motion for moving bodies.
+  DemDtForce=dt;                           //(DEM)
+  if(TShifting)RunShifting(dt);            //-Shifting.
+  ComputeVerlet(dt);                       //-Update particles using Verlet.
+  if(CaseNfloat)RunFloating(dt,false);     //-Control of floating bodies.
+  PosInteraction_Forces();                 //-Free memory used for interaction.
   if(Damping)RunDamping(dt,Np,Npb,Posc,Codec,Velrhopc); //-Applies Damping.
-  if(RelaxZones)RunRelaxZone(dt);        //-Generate waves using RZ.  //<vs_rzone>
+  if(RelaxZones)RunRelaxZone(dt);          //-Generate waves using RZ.  //<vs_rzone>
   return(dt);
 }
 
@@ -807,7 +804,6 @@ void JSphCpuSingle::FtApplyConstraints(StFtoForces *ftoforces,StFtoForcesRes *ft
 /// Procesa floating objects.
 //==============================================================================
 void JSphCpuSingle::RunFloating(double dt,bool predictor){
-  const char met[]="RunFloating";
   if(TimeStep>=FtPause){//-Operator >= is used because when FtPause=0 in symplectic-predictor, code would not enter here. | Se usa >= pq si FtPause es cero en symplectic-predictor no entraria.
     TmcStart(Timers,TMC_SuFloating);
     //-Initialises forces of floatings.
@@ -898,7 +894,6 @@ void JSphCpuSingle::RunGaugeSystem(double timestep){
 /// Inicia ejecucion de simulacion.
 //==============================================================================
 void JSphCpuSingle::Run(std::string appname,JCfgRun *cfg,JLog2 *log){
-  const char* met="Run";
   if(!cfg||!log)return;
   AppName=appname; Log=log;
 
@@ -943,7 +938,6 @@ void JSphCpuSingle::Run(std::string appname,JCfgRun *cfg,JLog2 *log){
     if(ViscoTime)Visco=ViscoTime->GetVisco(float(TimeStep));
     double stepdt=ComputeStep();
     RunGaugeSystem(TimeStep+stepdt);
-    if(PartDtMin>stepdt)PartDtMin=stepdt; if(PartDtMax<stepdt)PartDtMax=stepdt;
     if(CaseNmoving)RunMotion(stepdt);
     //RunCellDivide(true);                  //<vs_no_innlet>
     if(InOut)InOutComputeStep(stepdt);      //<vs_innlet>
@@ -966,7 +960,7 @@ void JSphCpuSingle::Run(std::string appname,JCfgRun *cfg,JLog2 *log){
     UpdateMaxValues();
     Nstep++;
     if(Part<=PartIni+1 && tc.CheckTime())Log->Print(string("  ")+tc.GetInfoFinish((TimeStep-TimeStepIni)/(TimeMax-TimeStepIni)));
-    //if(Nstep>=3)break;
+    if(NstepsBreak && Nstep>=NstepsBreak)break; //-For debugging.
   }
   TimerSim.Stop(); TimerTot.Stop();
 
@@ -995,7 +989,7 @@ void JSphCpuSingle::SaveData(){
     vel=ArraysCpu->ReserveFloat3();
     rhop=ArraysCpu->ReserveFloat();
     unsigned npnormal=GetParticlesData(Np,0,PeriActive!=0,idp,pos,vel,rhop,NULL);
-    if(npnormal!=npsave)RunException("SaveData","The number of particles is invalid.");
+    if(npnormal!=npsave)Run_Exceptioon("The number of particles is invalid.");
   }
   //-Gather additional information. | Reune informacion adicional.
   StInfoPartPlus infoplus;
@@ -1014,8 +1008,10 @@ void JSphCpuSingle::SaveData(){
     infoplus.timesim=TimerSim.GetElapsedTimeD()/1000.;
   }
   //-Stores particle data. | Graba datos de particulas.
+  JDataArrays arrays;
+  AddBasicArrays(arrays,npsave,pos,idp,vel,rhop);
   const tdouble3 vdom[2]={CellDivSingle->GetDomainLimits(true),CellDivSingle->GetDomainLimits(false)};
-  JSph::SaveData(npsave,idp,pos,vel,rhop,1,vdom,&infoplus);
+  JSph::SaveData(npsave,arrays,1,vdom,&infoplus);
   //-Free auxiliary memory for particle data. | Libera memoria auxiliar para datos de particulas.
   ArraysCpu->Free(idp);
   ArraysCpu->Free(pos);

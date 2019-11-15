@@ -16,6 +16,12 @@
  You should have received a copy of the GNU Lesser General Public License along with DualSPHysics. If not, see <http://www.gnu.org/licenses/>. 
 */
 
+//:#############################################################################
+//:# Cambios:
+//:# =========
+//:# - Gestion de excepciones mejorada.  (15-09-2019)
+//:#############################################################################
+
 /// \file JSphGpu_ker.h \brief Declares functions and CUDA kernels for the Particle Interaction and System Update.
 
 #ifndef _JSphGpu_ker_
@@ -41,13 +47,15 @@ typedef struct{
   float bwen;               ///<Cte. of Wendland kernel to compute fac (kernel derivative).
   float cs0;                ///<Speed of sound of reference.
   float eta2;               ///<eta*eta being eta=0.1*\ref h
-  float delta2h;            ///<delta2h=DeltaSph*H*2
+  float ddt2h;              ///<Constant for DDT1 & DDT2. ddt2h=DDTValue*2*H
+  float ddtgz;              ///<Constant for DDT2.        ddtgz=RhopZero*Gravity.z/CteB
   float scell,dosh,dp;
   float cteb,gamma;
   float rhopzero;           ///<rhopzero=RhopZero
   float ovrhopzero;         ///<ovrhopzero=1/RhopZero
   float movlimit;
   unsigned symmetry;   //<vs_syymmetry>
+  unsigned tboundary;  
   unsigned periactive;
   double xperincx,xperincy,xperincz;
   double yperincx,yperincy,yperincz;
@@ -55,6 +63,7 @@ typedef struct{
   double maprealposminx,maprealposminy,maprealposminz;
   double maprealsizex,maprealsizey,maprealsizez;
   //-Values depending on the assigned domain (can change). | Valores que dependen del dominio asignado (puden cambiar).
+  unsigned axis;
   unsigned cellcode;
   double domposminx,domposminy,domposminz;
   //-Ctes. of Gaussian kernel.
@@ -76,22 +85,43 @@ typedef struct{
   int forcesdem_bsmax;
 }StKerInfo; 
 
+///Returns the reordered value according to a given axis.
+/// (x,y,z) in MGDIV_Z ---> (y,z,x) for MGDIV_X
+/// (x,y,z) in MGDIV_Z ---> (x,z,y) for MGDIV_Y
+inline tuint3 CodeAxisOrder(TpMgDivMode axis,tuint3 v){
+  if(axis==MGDIV_X)return(TUint3(v.y,v.z,v.x));
+  if(axis==MGDIV_Y)return(TUint3(v.x,v.z,v.y));
+  return(v);
+}
+
 ///Structure with the parameters for particle interaction on GPU.
-typedef struct{
+typedef struct StrInterParmsg{
+  //-Configuration options.
   bool simulate2d;
   bool symmetry; //<vs_syymmetry>
   bool psingle;
   TpKernel tkernel;
   TpFtMode ftmode;
   bool lamsps;
-  TpDeltaSph tdelta;
+  TpDensity tdensity;
+  TpShifting tshifting;
+  //-Execution values.
   int hdiv;  //hdiv=(cellmode==CELLMODE_H? 2: 1)
   float viscob,viscof;
   unsigned bsbound,bsfluid;
-  unsigned np,npb,npbok,npf; // npf=np-npb
+  unsigned vnp,vnpb,vnpbok;
+  unsigned boundini;
+  unsigned fluidini;
+  unsigned boundnum;
+  unsigned fluidnum;         
+  unsigned id;
+  TpMgDivMode axis;       ///<Axis used in current division. It is used to sort cells and particles.
   tuint3 ncells;
+  int4 nc;                ///<Number of cells according axis.
+  unsigned cellfluid;
+  tint3 cellmin;
+  //-Input data arrays.
   const int2 *begincell;
-  tuint3 cellmin;
   const unsigned *dcell;
   const double2 *posxy;
   const double *posz;
@@ -100,60 +130,81 @@ typedef struct{
   const unsigned *idp;
   const typecode *code;
   const float *ftomassp;
+  const tsymatrix3f *tau;
+  //-Output data arrays.
   float *viscdt;
   float* ar;
   float3 *ace;
   float *delta;
-  const tsymatrix3f *tau;
   tsymatrix3f *gradvel;
-  TpShifting tshifting;
   float3 *shiftpos;
   float *shiftdetect;
+  //-Other values and objects.
+  cudaStream_t stm;
   StKerInfo *kerinfo;
   JBlockSizeAuto *bsauto;
-}stinterparmsg;
 
-///Collects parameters for particle interaction on CPU.
-inline stinterparmsg StInterparmsg(
-   bool simulate2d
-  ,bool symmetry //<vs_syymmetry>
-  ,bool psingle,TpKernel tkernel,TpFtMode ftmode
-  ,bool lamsps,TpDeltaSph tdelta,TpCellMode cellmode
-  ,float viscob,float viscof
-  ,unsigned bsbound,unsigned bsfluid
-  ,unsigned np,unsigned npb,unsigned npbok
-  ,tuint3 ncells,const int2 *begincell,tuint3 cellmin,const unsigned *dcell
-  ,const double2 *posxy,const double *posz,const float4 *pospress
-  ,const float4 *velrhop,const unsigned *idp,const typecode *code
-  ,const float *ftomassp
-  ,float *viscdt,float* ar,float3 *ace,float *delta
-  ,const tsymatrix3f *spstau,tsymatrix3f *spsgradvel
-  ,TpShifting tshifting,float3 *shiftpos,float *shiftdetect
-  ,StKerInfo *kerinfo,JBlockSizeAuto *bsauto)
-{
-  stinterparmsg d={
-     simulate2d
-    ,symmetry //<vs_syymmetry>
-    ,psingle,tkernel,ftmode
-    ,lamsps,tdelta,(cellmode==CELLMODE_H? 2: 1)
-    ,viscob,viscof
-    ,bsbound,bsfluid
-    ,np,npb,npbok,(np-npb)
-    ,ncells,begincell,cellmin,dcell
-    ,posxy,posz,pospress
-    ,velrhop,idp,code
-    ,ftomassp
-    ,viscdt,ar,ace,delta
-    ,spstau,spsgradvel
-    ,tshifting,shiftpos,shiftdetect
-    ,kerinfo,bsauto};
-  return(d);
-}
+  ///Structure constructor.
+  StrInterParmsg(
+     bool simulate2d_
+    ,bool symmetry_ //<vs_syymmetry>
+    ,bool psingle_,TpKernel tkernel_,TpFtMode ftmode_
+    ,bool lamsps_,TpDensity tdensity_,TpShifting tshifting_
+    ,TpCellMode cellmode_
+    ,float viscob_,float viscof_
+    ,unsigned bsbound_,unsigned bsfluid_
+    ,unsigned np_,unsigned npb_,unsigned npbok_
+    ,unsigned id_,TpMgDivMode axis_
+    ,tuint3 ncells_,tuint3 cellmin_
+    ,const int2 *begincell_,const unsigned *dcell_
+    ,const double2 *posxy_,const double *posz_,const float4 *pospress_
+    ,const float4 *velrhop_,const unsigned *idp_,const typecode *code_
+    ,const float *ftomassp_,const tsymatrix3f *spstau_
+    ,float *viscdt_,float* ar_,float3 *ace_,float *delta_
+    ,tsymatrix3f *spsgradvel_
+    ,float3 *shiftpos_,float *shiftdetect_
+    ,cudaStream_t stm_
+    ,StKerInfo *kerinfo_,JBlockSizeAuto *bsauto_)
+  {
+    //-Configuration options.
+    simulate2d=simulate2d_;
+    symmetry=symmetry_; //<vs_syymmetry>
+    psingle=psingle_; tkernel=tkernel_; ftmode=ftmode_;
+    lamsps=lamsps_; tdensity=tdensity_; tshifting=tshifting_;
+    //-Execution values.
+    hdiv=(cellmode_==CELLMODE_H? 2: 1);
+    viscob=viscob_; viscof=viscof_;
+    bsbound=bsbound_; bsfluid=bsfluid_;
+    vnp=np_; vnpb=npb_; vnpbok=npbok_;
+    boundini=0;   boundnum=vnpbok;
+    fluidini=vnpb; fluidnum=vnp-vnpb;
+    id=id_; axis=axis_;
+    ncells=ncells_;
+    const tuint3 nc3=CodeAxisOrder(axis,ncells);
+    nc.x=int(nc3.x); nc.y=int(nc3.y); nc.z=int(nc3.z); nc.w=int(nc3.x*nc3.y);
+    cellfluid=nc.w*nc.z+1;
+    cellmin=TInt3(int(cellmin_.x),int(cellmin_.y),int(cellmin_.z));
+    //-Input data arrays.
+    begincell=begincell_; dcell=dcell_;
+    posxy=posxy_; posz=posz_; pospress=pospress_;
+    velrhop=velrhop_; idp=idp_; code=code_;
+    ftomassp=ftomassp_; tau=spstau_;
+    //-Output data arrays.
+    viscdt=viscdt_; ar=ar_; ace=ace_; delta=delta_;
+    gradvel=spsgradvel_;
+    shiftpos=shiftpos_; shiftdetect=shiftdetect_;
+    //-Other values and objects.
+    stm=stm_;
+    kerinfo=kerinfo_; bsauto=bsauto_;
+  }
+
+}StInterParmsg;
 
 
 /// Implements a set of functions and CUDA kernels for the particle interaction and system update.
 namespace cusph{
 
+inline int3 Int3(const tint3& v){ int3 p={v.x,v.y,v.z}; return(p); }
 inline float3 Float3(const tfloat3& v){ float3 p={v.x,v.y,v.z}; return(p); }
 inline float3 Float3(float x,float y,float z){ float3 p={x,y,z}; return(p); }
 inline tfloat3 ToTFloat3(const float3& v){ return(TFloat3(v.x,v.y,v.z)); }
@@ -179,7 +230,7 @@ void PreInteractionSingle(unsigned np,const double2 *posxy,const double *posz
   ,const float4 *velrhop,float4 *pospress,float cteb,float ctegamma);
 
 //-Kernels for the force calculation.
-void Interaction_Forces(const stinterparmsg &t);
+void Interaction_Forces(const StInterParmsg &t);
 
 //-Kernels for the calculation of the DEM forces.
 void Interaction_ForcesDem(bool psingle,TpCellMode cellmode,unsigned bsize
@@ -190,10 +241,10 @@ void Interaction_ForcesDem(bool psingle,TpCellMode cellmode,unsigned bsize
 
 //-Kernels for calculating the Laminar+SPS viscosity.
 void ComputeSpsTau(unsigned np,unsigned npb,float smag,float blin
-  ,const float4 *velrhop,const tsymatrix3f *gradvelg,tsymatrix3f *tau);
+  ,const float4 *velrhop,const tsymatrix3f *gradvelg,tsymatrix3f *tau,cudaStream_t stm=NULL);
 
 //-Kernels for Delta-SPH.
-void AddDelta(unsigned n,const float *delta,float *ar);
+void AddDelta(unsigned n,const float *delta,float *ar,cudaStream_t stm=NULL);
 
 //-Kernels for Shifting.
 void RunShifting(unsigned np,unsigned npb,double dt
@@ -216,13 +267,20 @@ void ComputeStepSymplecticCor(bool floatings,bool shift,unsigned np,unsigned npb
   ,typecode *code,double2 *movxy,double *movz,float4 *velrhop);
 
 //-Kernels for ComputeStep (position).
-void ComputeStepPos (byte periactive,bool floatings,unsigned np,unsigned npb,const double2 *movxy,const double *movz,double2 *posxy,double *posz,unsigned *dcell,typecode *code);
-void ComputeStepPos2(byte periactive,bool floatings,unsigned np,unsigned npb,const double2 *posxypre,const double *poszpre,const double2 *movxy,const double *movz,double2 *posxy,double *posz,unsigned *dcell,typecode *code);
+void ComputeStepPos (byte periactive,bool floatings,unsigned np,unsigned npb
+  ,const double2 *movxy,const double *movz,double2 *posxy,double *posz
+  ,unsigned *dcell,typecode *code);
+void ComputeStepPos2(byte periactive,bool floatings,unsigned np,unsigned npb
+  ,const double2 *posxypre,const double *poszpre,const double2 *movxy,const double *movz
+  ,double2 *posxy,double *posz,unsigned *dcell,typecode *code);
 
 //-Kernels for Motion.
-void CalcRidp(bool periactive,unsigned np,unsigned pini,unsigned idini,unsigned idfin,const typecode *code,const unsigned *idp,unsigned *ridp);
-void MoveLinBound(byte periactive,unsigned np,unsigned ini,tdouble3 mvpos,tfloat3 mvvel,const unsigned *ridp,double2 *posxy,double *posz,unsigned *dcell,float4 *velrhop,typecode *code);
-void MoveMatBound(byte periactive,bool simulate2d,unsigned np,unsigned ini,tmatrix4d m,double dt,const unsigned *ridpmv,double2 *posxy,double *posz,unsigned *dcell,float4 *velrhop,typecode *code);
+void CalcRidp(bool periactive,unsigned np,unsigned pini,unsigned idini,unsigned idfin
+  ,const typecode *code,const unsigned *idp,unsigned *ridp);
+void MoveLinBound(byte periactive,unsigned np,unsigned ini,tdouble3 mvpos,tfloat3 mvvel
+  ,const unsigned *ridp,double2 *posxy,double *posz,unsigned *dcell,float4 *velrhop,typecode *code);
+void MoveMatBound(byte periactive,bool simulate2d,unsigned np,unsigned ini,tmatrix4d m,double dt
+  ,const unsigned *ridpmv,double2 *posxy,double *posz,unsigned *dcell,float4 *velrhop,typecode *code,float3 *boundnormal);
 
 //-Kernels for MLPistons motion.  //<vs_mlapiston_ini>
 void MovePiston1d(bool periactive,unsigned np,unsigned idini,double dp,double poszmin,unsigned poszcount,const byte *pistonid,const double* movx,const double* velx,const unsigned *ridpmv,double2 *posxy,double *posz,unsigned *dcell,float4 *velrhop,typecode *code);
@@ -261,7 +319,7 @@ void PeriodicDuplicateSymplectic(unsigned n,unsigned pini
 //-Kernels for external forces (JSphAccInput).
 void AddAccInput(unsigned n,unsigned pini,typecode codesel
   ,tdouble3 acclin,tdouble3 accang,tdouble3 centre,tdouble3 velang,tdouble3 vellin,bool setgravity
-  ,tfloat3 gravity,const typecode *code,const double2 *posxy,const double *posz,const float4 *velrhop,float3 *ace);
+  ,tfloat3 gravity,const typecode *code,const double2 *posxy,const double *posz,const float4 *velrhop,float3 *ace,cudaStream_t stm);
 
 //-Kernels for Damping.
 void ComputeDamping(double dt,tdouble4 plane,float dist,float over,tfloat3 factorxyz,float redumax

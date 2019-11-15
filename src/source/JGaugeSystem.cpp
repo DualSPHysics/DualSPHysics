@@ -124,7 +124,7 @@ void JGaugeSystem::Config(bool simulate2d,double simulate2dposy,bool symmetry
 //==============================================================================
 void JGaugeSystem::LoadXml(JXml *sxml,const std::string &place,const JSphMk* mkinfo){
   TiXmlNode* node=sxml->GetNode(place,false);
-  if(!node)RunException("LoadXml",std::string("Cannot find the element \'")+place+"\'.");
+  if(!node)Run_Exceptioon(std::string("Cannot find the element \'")+place+"\'.");
   ReadXml(sxml,node->ToElement(),mkinfo);
 }
 
@@ -136,7 +136,7 @@ void JGaugeSystem::LoadLinePoints(double coefdp,const tdouble3 &point1,const tdo
 {
   const double dis=fgeo::PointsDist(point1,point2);
   const double dp=Dp*coefdp;
-  if(dis<dp)RunException("LoadLinePoints","The line length is less than the indicated dp.",ref);
+  if(dis<dp)Run_ExceptioonFile("The line length is less than the indicated dp.",ref);
   unsigned count=unsigned(dis/dp);
   if(dis-(dp*count)>=dp*0.1)count++;
   count++;
@@ -163,7 +163,6 @@ void JGaugeSystem::LoadLinePoints(unsigned count,const tdouble3 &point1,const td
 /// Reads list of initial conditions in the XML node.
 //==============================================================================
 void JGaugeSystem::LoadPoints(JXml *sxml,TiXmlElement* lis,std::vector<tdouble3> &points)const{
-  const char met[]="LoadPoints";
   //-Loads points.
   TiXmlElement* ele=lis->FirstChildElement("point"); 
   while(ele){
@@ -177,7 +176,7 @@ void JGaugeSystem::LoadPoints(JXml *sxml,TiXmlElement* lis,std::vector<tdouble3>
     unsigned count=sxml->GetAttributeUint(ele,"count",true,0);
     const tdouble3 pt1=sxml->ReadElementDouble3(ele,"point1");
     const tdouble3 pt2=sxml->ReadElementDouble3(ele,"point2");
-    if(count!=0 && coefdp!=DBL_MAX)RunException(met,"Only \'coefdp\' or \'count\' definition are valid, but not both.",sxml->ErrGetFileRow(ele));
+    if(count!=0 && coefdp!=DBL_MAX)Run_ExceptioonFile("Only \'coefdp\' or \'count\' definition are valid, but not both.",sxml->ErrGetFileRow(ele));
 
     if(!count)LoadLinePoints(coefdp,pt1,pt2,points,sxml->ErrGetFileRow(ele));
     else LoadLinePoints(count,pt1,pt2,points,sxml->ErrGetFileRow(ele));
@@ -208,8 +207,7 @@ JGaugeItem::StDefault JGaugeSystem::ReadXmlCommon(JXml *sxml,TiXmlElement* ele)c
 /// Reads list of initial conditions in the XML node.
 //==============================================================================
 void JGaugeSystem::ReadXml(JXml *sxml,TiXmlElement* lis,const JSphMk* mkinfo){
-  const char met[]="ReadXml";
-  if(!Configured)RunException(met,"The object is not yet configured.");
+  if(!Configured)Run_Exceptioon("The object is not yet configured.");
   //-Loads default configuration.
   ResetCfgDefault();
   CfgDefault=ReadXmlCommon(sxml,lis->FirstChildElement("default"));
@@ -219,7 +217,7 @@ void JGaugeSystem::ReadXml(JXml *sxml,TiXmlElement* lis,const JSphMk* mkinfo){
     string cmd=ele->Value();
     if(cmd.length() && cmd[0]!='_' && cmd!="default"){
       const string name=sxml->GetAttributeStr(ele,"name");
-      if(GetGaugeIdx(name)!=UINT_MAX)RunException(met,fun::PrintStr("The name \'%s\' already exists.",name.c_str()),sxml->ErrGetFileRow(ele));
+      if(GetGaugeIdx(name)!=UINT_MAX)Run_ExceptioonFile(fun::PrintStr("The name \'%s\' already exists.",name.c_str()),sxml->ErrGetFileRow(ele));
       const JGaugeItem::StDefault cfg=ReadXmlCommon(sxml,ele);
       //-Loads points
       //std::vector<tdouble3> points;
@@ -237,7 +235,7 @@ void JGaugeSystem::ReadXml(JXml *sxml,TiXmlElement* lis,const JSphMk* mkinfo){
           case 2:  masslimit=MassFluid*sxml->ReadElementFloat(ele,"masslimit","coef");  break;
           case 0:  masslimit=MassFluid*(Simulate2D? 0.4f: 0.5f);                        break;
         }
-        if(masslimit<=0)RunException(met,fun::PrintStr("The masslimit (%f) is invalid.",masslimit),sxml->ErrGetFileRow(ele));
+        if(masslimit<=0)Run_ExceptioonFile(fun::PrintStr("The masslimit (%f) is invalid.",masslimit),sxml->ErrGetFileRow(ele));
         //-Reads pointdp.
         double pointdp=0;
         switch(sxml->CheckElementAttributes(ele,"pointdp","value coefdp",true,true)){
@@ -245,7 +243,7 @@ void JGaugeSystem::ReadXml(JXml *sxml,TiXmlElement* lis,const JSphMk* mkinfo){
           case 1:  pointdp=sxml->ReadElementFloat(ele,"pointdp","value");      break;
           case 2:  pointdp=Dp*sxml->ReadElementFloat(ele,"pointdp","coefdp");  break;
         }
-        if(pointdp<=0)RunException(met,fun::PrintStr("The pointdp (%f) is invalid.",pointdp),sxml->ErrGetFileRow(ele));
+        if(pointdp<=0)Run_ExceptioonFile(fun::PrintStr("The pointdp (%f) is invalid.",pointdp),sxml->ErrGetFileRow(ele));
         //-Reads point0 and point2.
         const tdouble3 pt0=sxml->ReadElementDouble3(ele,"point0");
         const tdouble3 pt2=sxml->ReadElementDouble3(ele,"point2");
@@ -263,14 +261,14 @@ void JGaugeSystem::ReadXml(JXml *sxml,TiXmlElement* lis,const JSphMk* mkinfo){
           case 2:  distlimit=float(Dp*sxml->ReadElementFloat(ele,"distlimit","coefdp"));  break;
           case 3:  distlimit=float(H *sxml->ReadElementFloat(ele,"distlimit","coefh"));   break;
         }
-        if(distlimit<=0)RunException(met,fun::PrintStr("The distlimit (%f) is invalid.",distlimit),sxml->ErrGetFileRow(ele));
+        if(distlimit<=0)Run_ExceptioonFile(fun::PrintStr("The distlimit (%f) is invalid.",distlimit),sxml->ErrGetFileRow(ele));
         gau=AddGaugeMaxZ(name,cfg.computestart,cfg.computeend,cfg.computedt,pt0,height,distlimit);
       }
       else if(cmd=="force"){
         const word mkbound=(word)sxml->ReadElementUnsigned(ele,"target","mkbound");
         gau=AddGaugeForce(name,cfg.computestart,cfg.computeend,cfg.computedt,mkinfo,mkbound);
       }
-      else RunException(met,fun::PrintStr("Gauge type \'%s\' is invalid.",cmd.c_str()),sxml->ErrGetFileRow(ele));
+      else Run_ExceptioonFile(fun::PrintStr("Gauge type \'%s\' is invalid.",cmd.c_str()),sxml->ErrGetFileRow(ele));
       gau->SetSaveVtkPart(cfg.savevtkpart);
       //gau->ConfigComputeTiming(cfg.computestart,cfg.computeend,cfg.computedt);
       gau->ConfigOutputTiming (cfg.output,cfg.outputstart,cfg.outputend,cfg.outputdt);
@@ -286,8 +284,7 @@ void JGaugeSystem::ReadXml(JXml *sxml,TiXmlElement* lis,const JSphMk* mkinfo){
 JGaugeVelocity* JGaugeSystem::AddGaugeVel(std::string name,double computestart,double computeend,double computedt
   ,const tdouble3 &point)
 {
-  const char met[]="AddGaugeVel";
-  if(GetGaugeIdx(name)!=UINT_MAX)RunException(met,fun::PrintStr("The name \'%s\' already exists.",name.c_str()));
+  if(GetGaugeIdx(name)!=UINT_MAX)Run_Exceptioon(fun::PrintStr("The name \'%s\' already exists.",name.c_str()));
   //-Creates object.
   JGaugeVelocity* gau=new JGaugeVelocity(GetCount(),name,point,Cpu,Log);
   gau->Config(Simulate2D,Symmetry,DomPosMin,DomPosMax,Scell,Hdiv,H,MassFluid,MassBound,CteB,Gamma,RhopZero);
@@ -305,8 +302,7 @@ JGaugeVelocity* JGaugeSystem::AddGaugeVel(std::string name,double computestart,d
 JGaugeSwl* JGaugeSystem::AddGaugeSwl(std::string name,double computestart,double computeend,double computedt
   ,tdouble3 point0,tdouble3 point2,double pointdp,float masslimit)
 {
-  const char met[]="AddGaugeSwl";
-  if(GetGaugeIdx(name)!=UINT_MAX)RunException(met,fun::PrintStr("The name \'%s\' already exists.",name.c_str()));
+  if(GetGaugeIdx(name)!=UINT_MAX)Run_Exceptioon(fun::PrintStr("The name \'%s\' already exists.",name.c_str()));
   if(masslimit<=0)masslimit=MassFluid*(Simulate2D? 0.4f: 0.5f);
   //-Creates object.
   JGaugeSwl* gau=new JGaugeSwl(GetCount(),name,point0,point2,pointdp,masslimit,Cpu,Log);
@@ -325,8 +321,7 @@ JGaugeSwl* JGaugeSystem::AddGaugeSwl(std::string name,double computestart,double
 JGaugeMaxZ* JGaugeSystem::AddGaugeMaxZ(std::string name,double computestart,double computeend,double computedt
   ,tdouble3 point0,double height,float distlimit)
 {
-  const char met[]="AddGaugeMaxZ";
-  if(GetGaugeIdx(name)!=UINT_MAX)RunException(met,fun::PrintStr("The name \'%s\' already exists.",name.c_str()));
+  if(GetGaugeIdx(name)!=UINT_MAX)Run_Exceptioon(fun::PrintStr("The name \'%s\' already exists.",name.c_str()));
   //-Creates object.
   JGaugeMaxZ* gau=new JGaugeMaxZ(GetCount(),name,point0,height,distlimit,Cpu,Log);
   gau->Config(Simulate2D,Symmetry,DomPosMin,DomPosMax,Scell,Hdiv,H,MassFluid,MassBound,CteB,Gamma,RhopZero);
@@ -344,14 +339,13 @@ JGaugeMaxZ* JGaugeSystem::AddGaugeMaxZ(std::string name,double computestart,doub
 JGaugeForce* JGaugeSystem::AddGaugeForce(std::string name,double computestart,double computeend,double computedt
   ,const JSphMk* mkinfo,word mkbound)
 {
-  const char met[]="AddGaugeForce";
-  if(GetGaugeIdx(name)!=UINT_MAX)RunException(met,fun::PrintStr("The name \'%s\' already exists.",name.c_str()));
+  if(GetGaugeIdx(name)!=UINT_MAX)Run_Exceptioon(fun::PrintStr("The name \'%s\' already exists.",name.c_str()));
   //-Obtains data from mkbound particles.
   const unsigned cmk=mkinfo->GetMkBlockByMkBound(mkbound);
-  if(cmk>=mkinfo->Size())RunException(met,fun::PrintStr("Error loading boundary objects. Mkbound=%u is unknown.",mkbound));
+  if(cmk>=mkinfo->Size())Run_Exceptioon(fun::PrintStr("Error loading boundary objects. Mkbound=%u is unknown.",mkbound));
   const JSphMkBlock* mkb=mkinfo->Mkblock(cmk);
   const TpParticles typeparts=mkb->Type;
-  if(typeparts!=TpPartFixed && typeparts!=TpPartMoving)RunException(met,fun::PrintStr("Type of boundary particles (Mkbound=%u) is invalid. Only fixed or moving particles are allowed.",mkbound));
+  if(typeparts!=TpPartFixed && typeparts!=TpPartMoving)Run_Exceptioon(fun::PrintStr("Type of boundary particles (Mkbound=%u) is invalid. Only fixed or moving particles are allowed.",mkbound));
   const unsigned idbegin=mkb->Begin;
   const unsigned count=mkb->Count;
   const typecode code=mkb->Code;
@@ -387,7 +381,6 @@ void JGaugeSystem::VisuConfig(std::string txhead,std::string txfoot){
 /// Saves VTK file with points.
 //==============================================================================
 void JGaugeSystem::SaveVtkInitPoints()const{
-  const char met[]="SaveVtkInitPoints";
   unsigned *vidx=NULL;
   unsigned *vtype=NULL;
   byte *vout=NULL;
@@ -441,7 +434,7 @@ unsigned JGaugeSystem::GetGaugeIdx(const std::string &name)const{
 /// Devuelve el objeto gauge solicitado.
 //==============================================================================
 JGaugeItem* JGaugeSystem::GetGauge(unsigned c)const{
-  if(c>=GetCount())RunException("GetGauge","The requested gauge is not valid.");
+  if(c>=GetCount())Run_Exceptioon("The requested gauge is not valid.");
   return(Gauges[c]);
 }
 

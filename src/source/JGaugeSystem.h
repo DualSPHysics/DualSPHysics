@@ -23,6 +23,7 @@
 //:#   automatica y simple. (12-02-2017)
 //:# - Error corregido cargando <default><output>. (03-03-2017)
 //:# - Nueva opcion para calcular fuerzas sobre fixed o moving boundary. (20-11-2018)
+//:# - Gestion de excepciones mejorada.  (15-09-2019)
 //:#############################################################################
 
 /// \file JGaugeSystem.h \brief Declares the class \ref JGaugeSystem.

@@ -21,6 +21,7 @@
 #include "JSph.h"
 #include "JAppInfo.h"
 #include "Functions.h"
+#include "FunctionsGeo3d.h"
 #include "JPartDataHead.h"
 #include "JSphMk.h"
 #include "JSphPartsInit.h"
@@ -50,17 +51,15 @@
 #include "JSphInOut.h"       //<vs_innlet> 
 #include "JSphBoundCorr.h"   //<vs_innlet> 
 #include "JLinearValue.h"
-#include <climits>
+#include "JDataArrays.h"
 
-//using namespace std;
-using std::string;
-using std::ofstream;
-using std::endl;
+using namespace std;
 
 //==============================================================================
 /// Constructor.
 //==============================================================================
-JSph::JSph(bool cpu,bool withmpi):Cpu(cpu),WithMpi(withmpi){
+JSph::JSph(bool cpu,bool mgpu,bool withmpi):Cpu(cpu),Mgpu(mgpu),WithMpi(withmpi)
+{
   ClassName="JSph";
   DgNum=0;
   DataBi4=NULL;
@@ -145,14 +144,16 @@ void JSph::InitVars(){
   Awen=Bwen=Agau=Bgau=0;
   memset(&CubicCte,0,sizeof(StCubicCte));
   TVisco=VISCO_None;
-  TDeltaSph=DELTA_None; DeltaSph=0;
+  TDensity=DDT_None; DDTValue=0; DDTArray=false;
   TShifting=SHIFT_None; ShiftCoef=ShiftTFS=0;
   Visco=0; ViscoBoundFactor=1;
+  TBoundary=BC_DBC;
   UseDEM=false;  //(DEM)
   delete[] DemData; DemData=NULL;  //(DEM)
   UseChrono=false; //<vs_chroono>
   RhopOut=true; RhopOutMin=700; RhopOutMax=1300;
   TimeMax=TimePart=0;
+  NstepsBreak=0;
   DtIni=DtMin=0; CoefDtMin=0; DtAllParticles=false;
   PartsOutMax=0;
   NpMinimum=0;
@@ -166,7 +167,7 @@ void JSph::InitVars(){
   H=CteB=Gamma=RhopZero=CFLnumber=0;
   Dp=0;
   Cs0=0;
-  Delta2H=0;
+  DDT2h=DDTgz=0;
   MassFluid=MassBound=0;
   Gravity=TFloat3(0);
   Dosh=H2=Fourh2=Eta2=0;
@@ -213,8 +214,6 @@ void JSph::InitVars(){
   DtModifWrn=1;
   PartDtMin=DBL_MAX; PartDtMax=-DBL_MAX;
 
-  MaxMemoryCpu=MaxMemoryGpu=MaxParticles=MaxCells=0;
-
   PartIni=Part=0; 
   Nstep=0; PartNstep=-1;
   PartOut=0;
@@ -227,6 +226,7 @@ void JSph::InitVars(){
   VerletStep=0;
   SymplecticDtPre=0;
   DemDtForce=0;  //(DEM)
+  MaxNumbers.Clear();
 }
 
 //==============================================================================
@@ -437,12 +437,24 @@ void JSph::LoadConfig(const JCfgRun *cfg){
   if(cfg->TKernel)TKernel=cfg->TKernel;
   if(cfg->TVisco){ TVisco=cfg->TVisco; Visco=cfg->Visco; }
   if(cfg->ViscoBoundFactor>=0)ViscoBoundFactor=cfg->ViscoBoundFactor;
-  if(cfg->DeltaSph>=0){
-    DeltaSph=cfg->DeltaSph;
-    TDeltaSph=(DeltaSph? DELTA_Dynamic: DELTA_None);
-  }
-  if(TDeltaSph==DELTA_Dynamic && Cpu)TDeltaSph=DELTA_DynamicExt; //-It is necessary because the interaction is divided in two steps: fluid-fluid/float and fluid-bound.
 
+  //-Density Diffusion Term configuration.
+  if(cfg->TDensity>=0){
+    switch(cfg->TDensity){
+      case 0:  TDensity=DDT_None;     break;
+      case 1:  TDensity=DDT_DDT;      break;
+      default: 
+        if(cfg->TDensity==2 || cfg->TDensity==3)RunException(met,"Density Diffusion Term \'Fourtakas et al 2019\' is not available in this version.");
+        else RunException(met,"Density Diffusion Term mode is not valid.");
+    }
+    if(cfg->DDTValue>=0)DDTValue=cfg->DDTValue;
+    else if(DDTValue==0)DDTValue=0.1f;
+  }
+  if(TDensity==DDT_None)DDTValue=0;
+  else if(cfg->DDTValue>=0)DDTValue=cfg->DDTValue;
+  DDTArray=(TDensity!=DDT_None && Cpu); //-It is necessary because the interaction is divided in two steps: fluid-fluid/float and fluid-bound.
+
+  //-Shifting configuration.
   if(cfg->Shifting>=0){
     switch(cfg->Shifting){
       case 0:  TShifting=SHIFT_None;     break;
@@ -459,6 +471,8 @@ void JSph::LoadConfig(const JCfgRun *cfg){
 
   if(cfg->FtPause>=0)FtPause=cfg->FtPause;
   if(cfg->TimeMax>0)TimeMax=cfg->TimeMax;
+  NstepsBreak=cfg->NstepsBreak;
+  if(NstepsBreak)Log->PrintfWarning("The execution will be cancelled after %d simulation steps.",NstepsBreak);
   //-Configuration of JTimeOut with TimePart.
   TimeOut=new JTimeOut();
   if(cfg->TimePart>=0){
@@ -524,9 +538,37 @@ void JSph::LoadCaseConfig(){
     ViscoTime=new JSphVisco();
     ViscoTime->LoadFile(DirCase+filevisco);
   }
-  DeltaSph=eparms.GetValueFloat("DeltaSPH",true,0);
-  TDeltaSph=(DeltaSph? DELTA_Dynamic: DELTA_None);
 
+  //-Boundary configuration.
+  switch(eparms.GetValueInt("Boundary",true,1)){
+    case 1:  TBoundary=BC_DBC;      break;
+    default: RunException(met,"Boundary Condition method is not valid.");
+  }
+
+  //-Density Diffusion Term configuration.
+  if(eparms.Exists("DeltaSPH")){
+    if(eparms.Exists("DensityDT"))RunException(met,"The parameters \'DeltaSPH\' and \'DensityDT\' cannot be combined. Only \'DensityDT\' should be used.");
+    float v=eparms.GetValueFloat("DeltaSPH");
+    if(v>0){
+      TDensity=DDT_DDT;
+      DDTValue=v;
+    }
+    Log->PrintWarning("The parameter \'DeltaSPH\' is deprecated. It should be replaced by \'DensityDT\'.");
+  }
+  else{
+    const int tddt=eparms.GetValueInt("DensityDT",true,0);
+    switch(tddt){
+      case 0:  TDensity=DDT_None;     break;
+      case 1:  TDensity=DDT_DDT;      break;
+      default: 
+        if(tddt==2 || tddt==3)RunException(met,"Density Diffusion Term \'Fourtakas et al 2019\' is not available in this version.");
+        else RunException(met,"Density Diffusion Term mode is not valid.");
+    }
+    DDTValue=eparms.GetValueFloat("DensityDTvalue",true,0.1f);
+  }
+  DDTArray=false;
+
+  //-Shifting configuration.
   switch(eparms.GetValueInt("Shifting",true,0)){
     case 0:  TShifting=SHIFT_None;     break;
     case 1:  TShifting=SHIFT_NoBound;  break;
@@ -651,7 +693,7 @@ void JSph::LoadCaseConfig(){
 
   //-Loads and configures moving objects.
   if(parts.CountBlocks(TpPartMoving)>0){
-    SphMotion=new JSphMotion();
+    SphMotion=new JSphMotion(Simulate2D);
     SphMotion->Init(&parts,&xml,"case.execution.motion",DirCase);
   }
 
@@ -662,8 +704,9 @@ void JSph::LoadCaseConfig(){
       useomp=(omp_get_max_threads()>1);
     #endif
     WaveGen=new JWaveGen(useomp,!Cpu,Log,DirCase,&xml,"case.execution.special.wavepaddles");
-    if(SphMotion)for(unsigned c=0;c<SphMotion->GetNumObjects();c++){
-      WaveGen->ConfigPaddle(SphMotion->GetObjMkBound(c),c,SphMotion->GetObjBegin(c),SphMotion->GetObjSize(c));
+    if(SphMotion)for(unsigned ref=0;ref<SphMotion->GetNumObjects();ref++){
+      const StMotionData& m=SphMotion->GetMotionData(ref);
+      WaveGen->ConfigPaddle(m.mkbound,ref,m.idbegin,m.count);
     }
   }
 
@@ -674,7 +717,8 @@ void JSph::LoadCaseConfig(){
     MLPistons=new JMLPistons(!Cpu,Log,DirCase);
     MLPistons->LoadXml(&xml,"case.execution.special.mlayerpistons");  
     if(SphMotion)for(unsigned c=0;c<SphMotion->GetNumObjects();c++){
-      MLPistons->ConfigPiston(SphMotion->GetObjMkBound(c),c,SphMotion->GetObjBegin(c),SphMotion->GetObjSize(c),TimeMax);
+      const StMotionData& m=SphMotion->GetMotionData(c);
+      MLPistons->ConfigPiston(m.mkbound,c,m.idbegin,m.count,TimeMax);
     }
     MLPistons->CheckPistons();
   }//<vs_mlapiston_end>
@@ -921,13 +965,28 @@ void JSph::ResizeMapLimits(){
 }
 
 //==============================================================================
+/// Calculate Wendland constants.
+//==============================================================================
+void JSph::WendlandConstants(bool simulate2d,double h,float &awen,float &bwen){
+  if(simulate2d){
+    awen=float(0.557/(h*h));
+    bwen=float(-2.7852/(h*h*h));
+  }
+  else{
+    awen=float(0.41778/(h*h*h));
+    bwen=float(-2.08891/(h*h*h*h));
+  }
+}
+
+//==============================================================================
 /// Configures value of constants.
 //==============================================================================
 void JSph::ConfigConstants(bool simulate2d){
   const char* met="ConfigConstants";
   //-Computation of constants.
   const double h=H;
-  Delta2H=float(h*2*DeltaSph);
+  DDT2h=float(h*2*DDTValue);
+  DDTgz=float(double(RhopZero)*double(fabs(Gravity.z))/double(CteB));
   Cs0=sqrt(double(Gamma)*double(CteB)/double(RhopZero));
   if(!DtIni)DtIni=h/Cs0;
   if(!DtMin)DtMin=(h/Cs0)*CoefDtMin;
@@ -936,10 +995,7 @@ void JSph::ConfigConstants(bool simulate2d){
   Fourh2=float(h*h*4); 
   Eta2=float((h*0.1)*(h*0.1));
   if(simulate2d){
-    if(TKernel==KERNEL_Wendland){
-      Awen=float(0.557/(h*h));
-      Bwen=float(-2.7852/(h*h*h));
-    }
+    if(TKernel==KERNEL_Wendland)WendlandConstants(simulate2d,H,Awen,Bwen);
     else if(TKernel==KERNEL_Gaussian){
       const double a1=4./PI;
       const double a2=a1/(h*h);
@@ -964,10 +1020,7 @@ void JSph::ConfigConstants(bool simulate2d){
     }
   }
   else{
-    if(TKernel==KERNEL_Wendland){
-      Awen=float(0.41778/(h*h*h));
-      Bwen=float(-2.08891/(h*h*h*h));
-    }
+    if(TKernel==KERNEL_Wendland)WendlandConstants(simulate2d,H,Awen,Bwen);
     else if(TKernel==KERNEL_Gaussian){
       const double a1=8./5.5683;
       const double a2=a1/(h*h*h);
@@ -1012,6 +1065,7 @@ void JSph::VisuConfig()const{
   Log->Print(fun::VarStr("Symmetry",Symmetry));  //<vs_syymmetry>
   Log->Print(fun::VarStr("PosDouble",GetPosDoubleName(Psingle,SvDouble)));
   Log->Print(fun::VarStr("SvTimers",SvTimers));
+  Log->Print(fun::VarStr("Boundary",GetBoundName(TBoundary)));
   Log->Print(fun::VarStr("StepAlgorithm",GetStepName(TStep)));
   if(TStep==STEP_None)RunException(met,"StepAlgorithm value is invalid.");
   if(TStep==STEP_Verlet)Log->Print(fun::VarStr("VerletSteps",VerletSteps));
@@ -1020,8 +1074,11 @@ void JSph::VisuConfig()const{
   Log->Print(fun::VarStr("Visco",Visco));
   Log->Print(fun::VarStr("ViscoBoundFactor",ViscoBoundFactor));
   if(ViscoTime)Log->Print(fun::VarStr("ViscoTime",ViscoTime->GetFile()));
-  Log->Print(fun::VarStr("DeltaSph",GetDeltaSphName(TDeltaSph)));
-  if(TDeltaSph!=DELTA_None)Log->Print(fun::VarStr("DeltaSphValue",DeltaSph));
+  Log->Print(fun::VarStr("DensityDiffusion",GetDDTName(TDensity)));
+  if(TDensity!=DDT_None){
+    Log->Print(fun::VarStr("DensityDiffusionValue",DDTValue));
+    //Log->Print(fun::VarStr("DensityDiffusionArray",DDTArray));
+  }
   Log->Print(fun::VarStr("Shifting",GetShiftingName(TShifting)));
   if(TShifting!=SHIFT_None){
     Log->Print(fun::VarStr("ShiftCoef",ShiftCoef));
@@ -1127,10 +1184,10 @@ void JSph::LoadDcellParticles(unsigned n,const typecode *code,const tdouble3 *po
       }
       else{//-Particle out.
         RunException(met,"Found new particles out."); //-There can not be new particles excluded. | No puede haber nuevas particulas excluidas.
-        dcell[p]=PC__CodeOut;
+        dcell[p]=PC__CodeMapOut;
       }
     }
-    else dcell[p]=PC__CodeOut;
+    else dcell[p]=PC__CodeMapOut;
   }
 }
 
@@ -1139,10 +1196,12 @@ void JSph::LoadDcellParticles(unsigned n,const typecode *code,const tdouble3 *po
 ///
 /// Inicializa datos de las particulas a partir de la configuracion en el XML.
 //==============================================================================
-void JSph::RunInitialize(unsigned np,unsigned npb,const tdouble3 *pos,const unsigned *idp,const typecode *code,tfloat4 *velrhop){
+void JSph::RunInitialize(unsigned np,unsigned npb,const tdouble3 *pos,const unsigned *idp
+  ,const typecode *code,tfloat4 *velrhop,tfloat3 *boundnormal)
+{
   const char met[]="RunInitialize";
   if(!PartBegin){
-    JSphInitialize init(FileXml);
+    JSphInitialize init(FileXml,boundnormal!=NULL);
     if(init.Count()){
       //-Creates array with mktype value.
       word *mktype=new word[np];
@@ -1150,7 +1209,7 @@ void JSph::RunInitialize(unsigned np,unsigned npb,const tdouble3 *pos,const unsi
         const unsigned cmk=MkInfo->GetMkBlockByCode(code[p]);
         mktype[p]=(cmk<MkInfo->Size()? word(MkInfo->Mkblock(cmk)->MkType): USHRT_MAX);
       }
-      init.Run(np,npb,pos,idp,mktype,velrhop);
+      init.Run(np,npb,CaseNbound,pos,idp,mktype,velrhop,boundnormal);
       init.GetConfig(InitializeInfo);
       //-Frees memory.
       delete[] mktype; mktype=NULL;
@@ -1536,11 +1595,47 @@ void JSph::InitRun(unsigned np,const unsigned *idp,const tdouble3 *pos){
 }
 
 //==============================================================================
+/// Calculates predefined movement of boundary particles.
+/// Calcula movimiento predefinido de boundary particles.
+//==============================================================================
+bool JSph::CalcMotion(double stepdt){
+  const bool motsim=true;
+  const JSphMotion::TpMotionMode mode=(motsim? JSphMotion::MOMT_Simple: JSphMotion::MOMT_Ace2dt);
+  SphMotion->ProcesTime(mode,TimeStep,stepdt);
+  const bool active=SphMotion->GetActiveMotion();
+  if(ChronoObjects && ChronoObjects->GetWithMotion() && active){ //<vs_chroono_ini> 
+    const unsigned nref=SphMotion->GetNumObjects();
+    for(unsigned ref=0;ref<nref;ref++){
+      const StMotionData& m=SphMotion->GetMotionData(ref);
+      if(m.type!=MOTT_None)ChronoObjects->SetMovingData(m.mkbound,m.type==MOTT_Linear,m.linmov,m.matmov,stepdt);
+    }
+  } //<vs_chroono_end>
+  return(active);
+}
+
+//==============================================================================
+/// Add motion from automatic wave generation.
+/// Añade movimiento de paddles calculado por generacion automatica de olas.
+//==============================================================================
+void JSph::CalcMotionWaveGen(double stepdt){
+  const bool motsim=true;
+  if(WaveGen){
+    const bool svdata=(TimeStep+stepdt>=TimePartNext);
+    for(unsigned c=0;c<WaveGen->GetCount();c++){
+      if(motsim)SphMotion->SetMotionData   (WaveGen->GetMotion   (svdata,c,TimeStep,stepdt));
+      else      SphMotion->SetMotionDataAce(WaveGen->GetMotionAce(svdata,c,TimeStep,stepdt));
+    }
+  }
+}
+
+//==============================================================================
 /// Display a message with reserved memory for the basic data of particles.
 /// Muestra un mensaje con la memoria reservada para los datos basicos de las particulas.
 //==============================================================================
-void JSph::PrintSizeNp(unsigned np,llong size)const{
-  Log->Printf("**Requested %s memory for %u particles: %.1f MB.",(Cpu? "cpu": "gpu"),np,double(size)/(1024*1024));
+void JSph::PrintSizeNp(unsigned np,llong size,unsigned allocs)const{
+  const double s=double(size)/(1024*1024);
+  if(Cpu)Log->Printf("**Requested CPU memory for %u particles: %.1f MB.",np,s);
+  else   Log->Printf("**Requested GPU memory for %u particles: %.1f MB (%u times).",np,s,allocs);
 }
 
 //==============================================================================
@@ -1632,7 +1727,9 @@ void JSph::AddParticlesOut(unsigned nout,const unsigned *idp,const tdouble3 *pos
 /// Manages excluded particles fixed, moving and floating before aborting the execution.
 /// Gestiona particulas excluidas fixed, moving y floating antes de abortar la ejecucion.
 //==============================================================================
-void JSph::AbortBoundOut(unsigned nout,const unsigned *idp,const tdouble3 *pos,const tfloat3 *vel,const float *rhop,const typecode *code){
+void JSph::AbortBoundOut(JLog2 *log,unsigned nout,const unsigned *idp,const tdouble3 *pos
+  ,const tfloat3 *vel,const float *rhop,const typecode *code)
+{
   //-Prepares data of excluded boundary particles.
   byte* type=new byte[nout];
   byte* motive=new byte[nout];
@@ -1671,23 +1768,23 @@ void JSph::AbortBoundOut(unsigned nout,const unsigned *idp,const tdouble3 *pos,c
     }
   }
   //-Shows excluded particles information.
-  Log->Print(" ");
-  Log->Print("*** ERROR: Some boundary particle was excluded. ***");
-  if(UseChrono && PeriActive!=0)Log->Print("*** Maybe some Chrono object went beyond the periodic limits. Be careful when combining the use of Chrono with periodic limits."); //<vs_chroono>
-  Log->Printf("TimeStep: %f  (Nstep: %u)",TimeStep,Nstep);
+  log->Print(" ");
+  log->Print("*** ERROR: Some boundary particle was excluded. ***");
+  if(UseChrono && PeriActive!=0)log->Print("*** Maybe some Chrono object went beyond the periodic limits. Be careful when combining the use of Chrono with periodic limits."); //<vs_chroono>
+  log->Printf("TimeStep: %f  (Nstep: %u)",TimeStep,Nstep);
   unsigned npunknown=nout-outfixed-outmoving-outfloat;
-  if(!npunknown)Log->Printf("Total boundary: %u  (fixed=%u  moving=%u  floating=%u)",nout,outfixed,outmoving,outfloat);
-  else Log->Printf("Total boundary: %u  (fixed=%u  moving=%u  floating=%u  UNKNOWN=%u)",nout,outfixed,outmoving,outfloat,npunknown);
+  if(!npunknown)log->Printf("Total boundary: %u  (fixed=%u  moving=%u  floating=%u)",nout,outfixed,outmoving,outfloat);
+  else log->Printf("Total boundary: %u  (fixed=%u  moving=%u  floating=%u  UNKNOWN=%u)",nout,outfixed,outmoving,outfloat,npunknown);
   npunknown=nout-outpos-outrhop-outmove;
-  if(!npunknown)Log->Printf("Excluded for: position=%u  rhop=%u  velocity=%u",outpos,outrhop,outmove);
-  else Log->Printf("Excluded for: position=%u  rhop=%u  velocity=%u  UNKNOWN=%u",outpos,outrhop,outmove,npunknown);
-  if(outxmin)Log->Print("Some boundary particle exceeded the -X limit (left limit) of the simulation domain.");
-  if(outxmax)Log->Print("Some boundary particle exceeded the +X limit (right limit) of the simulation domain.");
-  if(outymin)Log->Print("Some boundary particle exceeded the -Y limit (front limit) of the simulation domain.");
-  if(outymax)Log->Print("Some boundary particle exceeded the +Y limit (back limit) of the simulation domain.");
-  if(outzmin)Log->Print("Some boundary particle exceeded the -Z limit (bottom limit) of the simulation domain.");
-  if(outzmax)Log->Print("Some boundary particle exceeded the +Z limit (top limit) of the simulation domain.");
-  Log->Print(" ");
+  if(!npunknown)log->Printf("Excluded for: position=%u  rhop=%u  velocity=%u",outpos,outrhop,outmove);
+  else log->Printf("Excluded for: position=%u  rhop=%u  velocity=%u  UNKNOWN=%u",outpos,outrhop,outmove,npunknown);
+  if(outxmin)log->Print("Some boundary particle exceeded the -X limit (left limit) of the simulation domain.");
+  if(outxmax)log->Print("Some boundary particle exceeded the +X limit (right limit) of the simulation domain.");
+  if(outymin)log->Print("Some boundary particle exceeded the -Y limit (front limit) of the simulation domain.");
+  if(outymax)log->Print("Some boundary particle exceeded the +Y limit (back limit) of the simulation domain.");
+  if(outzmin)log->Print("Some boundary particle exceeded the -Z limit (bottom limit) of the simulation domain.");
+  if(outzmax)log->Print("Some boundary particle exceeded the +Z limit (top limit) of the simulation domain.");
+  log->Print(" ");
   //-Creates VTK file.
   std::vector<JFormatFiles2::StScalarData> fields;
   fields.push_back(JFormatFiles2::DefineField("Idp"   ,JFormatFiles2::UInt32 ,1,idp));
@@ -1696,7 +1793,7 @@ void JSph::AbortBoundOut(unsigned nout,const unsigned *idp,const tdouble3 *pos,c
   fields.push_back(JFormatFiles2::DefineField("Type"  ,JFormatFiles2::UChar8 ,1,type));
   fields.push_back(JFormatFiles2::DefineField("Motive",JFormatFiles2::UChar8 ,1,motive));
   const string file=DirOut+"Error_BoundaryOut.vtk";
-  Log->AddFileInfo(file,"Saves the excluded boundary particles.");
+  log->AddFileInfo(file,"Saves the excluded boundary particles.");
   JFormatFiles2::SaveVtk(file,nout,pos,fields);
   //-Aborts execution.
   RunException("AbortBoundOut","Fixed, moving or floating particles were excluded. Check VTK file Error_BoundaryOut.vtk with excluded particles.");
@@ -1716,16 +1813,37 @@ tfloat3* JSph::GetPointerDataFloat3(unsigned n,const tdouble3* v)const{
 }
 
 //==============================================================================
+/// Adds basic data arrays in object JDataArrays.
+//==============================================================================
+void JSph::AddBasicArrays(JDataArrays &arrays,unsigned np,const tdouble3 *pos
+  ,const unsigned *idp,const tfloat3 *vel,const float *rhop)const
+{
+  arrays.AddArray("Pos" ,np,pos);
+  arrays.AddArray("Idp" ,np,idp);
+  arrays.AddArray("Vel" ,np,vel);
+  arrays.AddArray("Rhop",np,rhop);
+}
+
+//==============================================================================
 /// Stores files of particle data.
 /// Graba los ficheros de datos de particulas.
 //==============================================================================
-void JSph::SavePartData(unsigned npok,unsigned nout,const unsigned *idp,const tdouble3 *pos,const tfloat3 *vel,const float *rhop,unsigned ndom,const tdouble3 *vdom,const StInfoPartPlus *infoplus){
+void JSph::SavePartData(unsigned npok,unsigned nout,const JDataArrays& arrays
+  ,unsigned ndom,const tdouble3 *vdom,const StInfoPartPlus *infoplus)
+{
+  const char met[]="SavePartData";
   //-Stores particle data and/or information in bi4 format.
   //-Graba datos de particulas y/o informacion en formato bi4.
   if(DataBi4){
     tfloat3* posf3=NULL;
     TimerPart.Stop();
-    JBinaryData* bdpart=DataBi4->AddPartInfo(Part,TimeStep,npok,nout,Nstep,TimerPart.GetElapsedTimeD()/1000.,vdom[0],vdom[1],TotalNp);
+    tdouble3 domainmin=vdom[0];
+    tdouble3 domainmax=vdom[1];
+    for(unsigned c=1;c<ndom;c++){
+      domainmin=MinValues(domainmin,vdom[c*2  ]);
+      domainmax=MaxValues(domainmax,vdom[c*2+1]);
+    }
+    JBinaryData* bdpart=DataBi4->AddPartInfo(Part,TimeStep,npok,nout,Nstep,TimerPart.GetElapsedTimeD()/1000.,domainmin,domainmax,TotalNp);
     if(TStep==STEP_Symplectic)bdpart->SetvDouble("SymplecticDtPre",SymplecticDtPre);
     if(UseDEM)bdpart->SetvDouble("DemDtForce",DemDtForce); //(DEM)
     if(infoplus && SvData&SDAT_Info){
@@ -1748,9 +1866,27 @@ void JSph::SavePartData(unsigned npok,unsigned nout,const unsigned *idp,const td
         bdpart->SetvLlong("npalloc",infoplus->memorynpalloc);
         bdpart->SetvLlong("npused",infoplus->memorynpused);
       }
+      if(ndom>1){
+        bdpart->SetvUint("subdomain_count",ndom);
+        for(unsigned c=0;c<ndom;c++){
+          bdpart->SetvDouble3(fun::PrintStr("subdomainmin_%02u",c),vdom[c*2  ]);
+          bdpart->SetvDouble3(fun::PrintStr("subdomainmax_%02u",c),vdom[c*2+1]);
+        }
+      }
     }
     if(SvData&SDAT_Binx){
-      if(SvDouble)DataBi4->AddPartData(npok,idp,pos,vel,rhop);
+      string err;
+      if(!(err=arrays.CheckErrorArray("Pos" ,TypeDouble3,npok)).empty())RunException(met,err);
+      if(!(err=arrays.CheckErrorArray("Idp" ,TypeUint   ,npok)).empty())RunException(met,err);
+      if(!(err=arrays.CheckErrorArray("Vel" ,TypeFloat3 ,npok)).empty())RunException(met,err);
+      if(!(err=arrays.CheckErrorArray("Rhop",TypeFloat  ,npok)).empty())RunException(met,err);
+      const tdouble3 *pos =arrays.GetArrayDouble3("Pos");
+      const unsigned *idp =arrays.GetArrayUint   ("Idp");
+      const tfloat3  *vel =arrays.GetArrayFloat3 ("Vel");
+      const float    *rhop=arrays.GetArrayFloat  ("Rhop");
+      if(SvDouble){
+        DataBi4->AddPartData(npok,idp,pos,vel,rhop);
+      }
       else{
         posf3=GetPointerDataFloat3(npok,pos);
         DataBi4->AddPartData(npok,idp,posf3,vel,rhop);
@@ -1761,6 +1897,14 @@ void JSph::SavePartData(unsigned npok,unsigned nout,const unsigned *idp,const td
         for(unsigned p=0;p<npok;p++)press[p]=(idp[p]>=CaseNbound? CteB*(pow(rhop[p]/RhopZero,Gamma)-1.0f): 0.f);
         DataBi4->AddPartData("Pressure",npok,press);
       }
+      //-Adds other arrays.
+      const string arrignore=":Pos:Idp:Vel:Rhop:";
+      for(unsigned ca=0;ca<arrays.Count();ca++){
+        const JDataArrays::StDataArray arr=arrays.GetArrayData(ca);
+        if(int(arrignore.find(string(":")+arr.keyname+":"))<0){//-Ignore main arrays.
+          DataBi4->AddPartData(arr.keyname,npok,arr.ptr,arr.type);
+        }
+      }
       DataBi4->SaveFilePart();
       delete[] press; press=NULL;//-Memory must to be deallocated after saving file because DataBi4 uses this memory space.
     }
@@ -1770,6 +1914,14 @@ void JSph::SavePartData(unsigned npok,unsigned nout,const unsigned *idp,const td
 
   //-Stores VTK nd/or CSV files.
   if((SvData&SDAT_Csv) || (SvData&SDAT_Vtk)){
+    JDataArrays arrays2;
+    arrays2.CopyFrom(arrays);
+
+    string err;
+    if(!(err=arrays2.CheckErrorArray("Pos" ,TypeDouble3,npok)).empty())RunException(met,err);
+    if(!(err=arrays2.CheckErrorArray("Idp" ,TypeUint   ,npok)).empty())RunException(met,err);
+    const tdouble3 *pos =arrays2.GetArrayDouble3("Pos");
+    const unsigned *idp =arrays2.GetArrayUint   ("Idp");
     //-Generates array with posf3 and type of particle.
     tfloat3* posf3=GetPointerDataFloat3(npok,pos);
     byte *type=new byte[npok];
@@ -1777,15 +1929,14 @@ void JSph::SavePartData(unsigned npok,unsigned nout,const unsigned *idp,const td
       const unsigned id=idp[p];
       type[p]=(id>=CaseNbound? 3: (id<CaseNfixed? 0: (id<CaseNpb? 1: 2)));
     }
+    arrays2.DeleteArray("Pos");
+    arrays2.AddArray("Pos",npok,posf3);
+    arrays2.MoveArray(arrays2.Count()-1,0);
+    arrays2.AddArray("Type",npok,type);
+    arrays2.MoveArray(arrays2.Count()-1,4);
     //-Defines fields to be stored.
-    JFormatFiles2::StScalarData fields[8];
-    unsigned nfields=0;
-    if(idp){   fields[nfields]=JFormatFiles2::DefineField("Idp" ,JFormatFiles2::UInt32 ,1,idp);   nfields++; }
-    if(vel){   fields[nfields]=JFormatFiles2::DefineField("Vel" ,JFormatFiles2::Float32,3,vel);   nfields++; }
-    if(rhop){  fields[nfields]=JFormatFiles2::DefineField("Rhop",JFormatFiles2::Float32,1,rhop);  nfields++; }
-    if(type){  fields[nfields]=JFormatFiles2::DefineField("Type",JFormatFiles2::UChar8 ,1,type);  nfields++; }
-    if(SvData&SDAT_Vtk)JFormatFiles2::SaveVtk(DirDataOut+fun::FileNameSec("PartVtk.vtk",Part),npok,posf3,nfields,fields);
-    if(SvData&SDAT_Csv)JFormatFiles2::SaveCsv(DirDataOut+fun::FileNameSec("PartCsv.csv",Part),CsvSepComa,npok,posf3,nfields,fields);
+    if(SvData&SDAT_Vtk)JFormatFiles2::SaveVtk(DirDataOut+fun::FileNameSec("PartVtk.vtk",Part),arrays2,npok,"Pos");
+    if(SvData&SDAT_Csv)JFormatFiles2::SaveCsv(DirDataOut+fun::FileNameSec("PartCsv.csv",Part),CsvSepComa,arrays2,npok,"Pos");
     //-Deallocate of memory.
     delete[] posf3;
     delete[] type; 
@@ -1811,7 +1962,7 @@ void JSph::SavePartData(unsigned npok,unsigned nout,const unsigned *idp,const td
 /// Generates data output files.
 /// Genera los ficheros de salida de datos.
 //==============================================================================
-void JSph::SaveData(unsigned npok,const unsigned *idp,const tdouble3 *pos,const tfloat3 *vel,const float *rhop
+void JSph::SaveData(unsigned npok,const JDataArrays& arrays
   ,unsigned ndom,const tdouble3 *vdom,const StInfoPartPlus *infoplus)
 {
   const char met[]="SaveData";
@@ -1825,7 +1976,7 @@ void JSph::SaveData(unsigned npok,const unsigned *idp,const tdouble3 *pos,const 
   AddOutCount(noutpos,noutrhop,noutmove);
 
   //-Stores data files of particles.
-  SavePartData(npok,nout,idp,pos,vel,rhop,ndom,vdom,infoplus);
+  SavePartData(npok,nout,arrays,ndom,vdom,infoplus);
 
   //-Reinitialises limits of dt. | Reinicia limites de dt.
   PartDtMin=DBL_MAX; PartDtMax=-DBL_MAX;
@@ -1857,7 +2008,7 @@ void JSph::SaveData(unsigned npok,const unsigned *idp,const tdouble3 *pos,const 
   //-Cheks number of excluded particles.
   if(nout){
     //-Cheks number of excluded particles in one PART.
-    if(PartsOutWrn<=100 && nout>=float(infoplus->npf)*(float(PartsOutWrn)/100.f)){
+    if(PartsOutWrn<=100 && nout>=float(max(CaseNfluid,infoplus->npf))*(float(PartsOutWrn)/100.f)){
       Log->PrintfWarning("More than %d%% of current fluid particles were excluded in one PART (t:%g, nstep:%u)",PartsOutWrn,TimeStep,Nstep);
       if(PartsOutWrn==1)PartsOutWrn=2;
       else if(PartsOutWrn==2)PartsOutWrn=5;
@@ -1970,15 +2121,15 @@ void JSph::SaveMapCellsVtk(float scell)const{
 /// Añade la informacion basica de resumen a hinfo y dinfo.
 //==============================================================================
 void JSph::GetResInfo(float tsim,float ttot,const std::string &headplus,const std::string &detplus,std::string &hinfo,std::string &dinfo){
-  hinfo=hinfo+"#RunName;RunCode;DateTime;Np;TSimul;TSeg;TTotal;MemCpu;MemGpu;Steps;PartFiles;PartsOut;MaxParticles;MaxCells;Hw;StepAlgo;Kernel;Viscosity;ViscoValue;DeltaSPH;TMax;Nbound;Nfixed;H;RhopOut;PartsRhopOut;PartsVelOut;CellMode"+headplus;
+  hinfo=hinfo+"#RunName;RunCode;DateTime;Np;TSimul;TSeg;TTotal;MemCpu;MemGpu;Steps;PartFiles;PartsOut;MaxParticles;MaxCells;Hw;StepAlgo;Kernel;Viscosity;ViscoValue;DensityCorrection;TMax;Nbound;Nfixed;H;RhopOut;PartsRhopOut;PartsVelOut;CellMode"+headplus;
   dinfo=dinfo+ RunName+ ";"+ RunCode+ ";"+ RunTimeDate+ ";"+ fun::UintStr(CaseNp);
   dinfo=dinfo+ ";"+ fun::FloatStr(tsim)+ ";"+ fun::FloatStr(tsim/float(TimeStep))+ ";"+ fun::FloatStr(ttot);
-  dinfo=dinfo+ ";"+ fun::LongStr(MaxMemoryCpu)+ ";"+ fun::LongStr(MaxMemoryGpu);
+  dinfo=dinfo+ ";"+ fun::LongStr(MaxNumbers.memcpu)+ ";"+ fun::LongStr(MaxNumbers.memgpu);
   const unsigned nout=GetOutPosCount()+GetOutRhopCount()+GetOutMoveCount();
   dinfo=dinfo+ ";"+ fun::IntStr(Nstep)+ ";"+ fun::IntStr(Part)+ ";"+ fun::UintStr(nout);
-  dinfo=dinfo+ ";"+ fun::UintStr(MaxParticles)+ ";"+ fun::UintStr(MaxCells);
+  dinfo=dinfo+ ";"+ fun::UintStr(MaxNumbers.particles)+ ";"+ fun::UintStr(MaxNumbers.cells);
   dinfo=dinfo+ ";"+ Hardware+ ";"+ GetStepName(TStep)+ ";"+ GetKernelName(TKernel)+ ";"+ GetViscoName(TVisco)+ ";"+ fun::FloatStr(Visco);
-  dinfo=dinfo+ ";"+ fun::FloatStr(DeltaSph,"%G")+ ";"+ fun::FloatStr(float(TimeMax));
+  dinfo=dinfo+ ";"+ GetDDTConfig()+ ";"+ fun::FloatStr(float(TimeMax));
   dinfo=dinfo+ ";"+ fun::UintStr(CaseNbound)+ ";"+ fun::UintStr(CaseNfixed)+ ";"+ fun::FloatStr(H);
   std::string rhopcad;
   if(RhopOut)rhopcad=fun::PrintStr("(%G-%G)",RhopOutMin,RhopOutMax); else rhopcad="None";
@@ -2039,10 +2190,10 @@ void JSph::ShowResume(bool stop,float tsim,float ttot,bool all,std::string infop
       }
     }
   }
-  Log->Printf("Maximum number of particles......: %u",MaxParticles);
-  Log->Printf("Maximum number of cells..........: %u",MaxCells);
-  Log->Printf("CPU Memory.......................: %lld (%.2f MB)",MaxMemoryCpu,double(MaxMemoryCpu)/(1024*1024));
-  if(MaxMemoryGpu)Log->Printf("GPU Memory.......................: %lld (%.2f MB)",MaxMemoryGpu,double(MaxMemoryGpu)/(1024*1024));
+  Log->Printf("Maximum number of particles......: %u",MaxNumbers.particles);
+  Log->Printf("Maximum number of cells..........: %u",MaxNumbers.cells);
+  Log->Printf("CPU Memory.......................: %lld (%.2f MB)",MaxNumbers.memcpu,double(MaxNumbers.memcpu)/(1024*1024));
+  if(MaxNumbers.memgpu)Log->Printf("GPU Memory.......................: %lld (%.2f MB)",MaxNumbers.memgpu,double(MaxNumbers.memgpu)/(1024*1024));
 }
 
 //==============================================================================
@@ -2096,14 +2247,24 @@ std::string JSph::GetViscoName(TpVisco tvisco){
 }
 
 //==============================================================================
-/// Returns value of DeltaSPH in text format.
-/// Devuelve el valor de DeltaSPH en texto.
+/// Returns name of boundary method in text format.
+/// Devuelve nombre de condicioens de contorno en texto.
 //==============================================================================
-std::string JSph::GetDeltaSphName(TpDeltaSph tdelta){
+std::string JSph::GetBoundName(TpBoundary tboundary){
   string tx;
-  if(tdelta==DELTA_None)tx="None";
-  else if(tdelta==DELTA_Dynamic)tx="Dynamic";
-  else if(tdelta==DELTA_DynamicExt)tx="DynamicExt";
+  if(tboundary==BC_DBC)tx="DBC";
+  else tx="???";
+  return(tx);
+}
+
+//==============================================================================
+/// Returns name of Density Diffusion Term in text format.
+/// Devuelve nombre del Density Diffusion Term en texto.
+//==============================================================================
+std::string JSph::GetDDTName(TpDensity tdensity){
+  string tx;
+  if(tdensity==DDT_None)tx="None";
+  else if(tdensity==DDT_DDT)tx="Molteni and Colagrossi 2009";
   else tx="???";
   return(tx);
 }
@@ -2119,6 +2280,16 @@ std::string JSph::GetShiftingName(TpShifting tshift){
   else if(tshift==SHIFT_NoFixed)tx="NoFixed";
   else if(tshift==SHIFT_Full)tx="Full";
   else tx="???";
+  return(tx);
+}
+
+//==============================================================================
+/// Returns Density Diffusion Term configuration in text format.
+/// Devuelve configuracion de Density Diffusion Term en texto.
+//==============================================================================
+std::string JSph::GetDDTConfig()const{
+  string tx="None";
+  if(TDensity!=DDT_None)tx=GetDDTName(TDensity)+fun::PrintStr("(%g)",DDTValue);
   return(tx);
 }
 

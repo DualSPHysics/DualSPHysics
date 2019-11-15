@@ -94,6 +94,9 @@ public:
   std::string GetShortName()const;
   std::string GetFullName()const;
 
+  std::string GetMainVer()const{ return(MainVer); }
+  std::string GetDate()const{ return(Date); }
+
   std::string GetRunCommand()const{ return(RunCommand); };
   std::string GetRunPath()const{ return(RunPath); };
   std::string GetProgramPath()const{ return(ProgramPath); };

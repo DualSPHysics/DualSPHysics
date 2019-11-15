@@ -597,7 +597,7 @@ void JChronoObjects::VisuBody(const JChBody *body)const{
     if(!body->GetMotionFree()){
       const tint3 m=body->GetTranslationFree();
       const tint3 r=body->GetRotationFree();
-      Log->Printf("    MotionFree.: Transalation:(%d,%d,%d) Rotation:(%d,%d,%d)",m.x,m.y,m.z,r.x,r.y,r.z);
+      Log->Printf("    MotionFree.: Translation:(%d,%d,%d) Rotation:(%d,%d,%d)",m.x,m.y,m.z,r.x,r.y,r.z);
     }
     if(body->GetLinearVelini()!=TFloat3(0) || body->GetAngularVelini()!=TFloat3(0)){
       const tfloat3 v=body->GetLinearVelini();

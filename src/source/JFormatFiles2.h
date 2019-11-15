@@ -76,6 +76,9 @@
 //:# - Se elimina codigo JFormatFiles2Data por falta de uso. (12-09-2018)
 //:# - Nuevos metodos AddShape_TriangleLines(), AddShape_QuadLines(). (21-12-2018)
 //:# - Cambia funciones de FunctionsMath.h a FunctionsGeo3d.h. (08-08-2019)
+//:# - Nuevos metodos FieldsFromArrays(), ToTpData(), SaveVtk(), SaveCsv() para 
+//:#   gestionar datos en objetos JDataArrays. (23-08-2019)
+//:# - Gestion de excepciones mejorada.  (15-09-2019)
 //:#############################################################################
   
 
@@ -91,6 +94,16 @@
 #include <string>
 #include <vector>
 
+//-Defines for normal exceptions for static methods.
+#ifndef Run_ExceptioonSta
+#define Run_ExceptioonSta(msg) RunExceptioonStatic(__FILE__,__LINE__,__func__,msg)
+#endif
+#ifndef Run_ExceptioonFileSta
+#define Run_ExceptioonFileSta(msg,file) RunExceptioonStatic(__FILE__,__LINE__,__func__,msg,file)
+#endif
+
+class JDataArrays;
+
 //##############################################################################
 //# JFormatFiles2
 //##############################################################################
@@ -98,6 +111,14 @@
 
 class JFormatFiles2
 {
+public:
+  //==============================================================================
+  /// Throws exception related to a file from a static method.
+  //==============================================================================
+  static void RunExceptioonStatic(const std::string &srcfile,int srcline
+    ,const std::string &method
+    ,const std::string &msg,const std::string &file="");
+
 public:
 
   /// Modes to define the normals.
@@ -191,17 +212,6 @@ public:
 
 
   //==============================================================================
-  /// Throws a simple exception.
-  //==============================================================================
-  static void RunException(std::string method,std::string msg);
-  
-  //==============================================================================
-  /// Throws an exception related to a file.
-  //==============================================================================  
-  static void RunException(std::string method,std::string msg,std::string file);
-
-
-  //==============================================================================
   /// Returns units according variable name. E.g.: Vel -> " [m/s]"
   //==============================================================================
   static std::string GetUnits(const std::string &varname);
@@ -210,6 +220,12 @@ public:
   /// Defines automatically the output format and units of field.
   //==============================================================================
   static void DefineFieldFormat(StScalarData &field);
+
+
+  //==============================================================================
+  /// Returns TpData and comp value accoring TpTypeData value.
+  //==============================================================================
+  static JFormatFiles2::TpData ToTpData(TpTypeData type,unsigned &comp);
 
   //==============================================================================
   /// Returns the definition of fields.
@@ -247,6 +263,18 @@ public:
   static void DeleteFields(std::vector<StScalarData> &fields);
 
   //==============================================================================
+  /// Obtains fields from JDataArray object.
+  //==============================================================================
+  static void FieldsFromArrays(const JDataArrays &arrays,unsigned np,std::string posfield
+    ,tfloat3 **posf,tdouble3 **posd,std::vector<StScalarData> &fields);
+
+  //==============================================================================
+  /// Stores data in VTK format.
+  //============================================================================== 
+  static void SaveVtk(std::string fname,const JDataArrays &arrays,unsigned np
+    ,std::string posfield);
+
+  //==============================================================================
   /// Stores data in VTK format.
   //============================================================================== 
   static void SaveVtk(std::string fname,unsigned np
@@ -269,6 +297,12 @@ public:
   //============================================================================== 
   static void SaveVtk(std::string fname,unsigned np
     ,const tdouble3* pos,const std::vector<StScalarData> &fields);
+
+  //==============================================================================
+  /// Stores data in CSV format.
+  //============================================================================== 
+  static void SaveCsv(std::string fname,bool csvsepcoma,const JDataArrays &arrays
+    ,unsigned np,std::string posfield,std::string head="");
   
   //==============================================================================
   /// Stores data in CSV format.

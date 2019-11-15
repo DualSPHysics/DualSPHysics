@@ -23,6 +23,12 @@
  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+//:#############################################################################
+//:# Cambios:
+//:# =========
+//:# - Gestion de excepciones mejorada.  (15-09-2019)
+//:#############################################################################
+
 #ifndef _JRelaxZone_ker_
 #define _JRelaxZone_ker_
 

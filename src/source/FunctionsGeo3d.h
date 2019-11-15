@@ -368,13 +368,13 @@ inline float LinePointDist(const tfloat3 &pt,const tfloat3 &pr1,const tfloat3 &p
 /// Devuelve proyeccion ortogonal del punto en la linea (pr1,pr2).
 /// Returns orthogonal projection of the point in the line (pr1,pr2).
 //==============================================================================
-inline tdouble3 LineOrthogonalPoint(const tdouble3 &pt,const tdouble3 &pr1,const tdouble3 &pr2);
+tdouble3 LineOrthogonalPoint(const tdouble3 &pt,const tdouble3 &pr1,const tdouble3 &pr2);
 
 //==============================================================================
 /// Devuelve proyeccion ortogonal del punto en la linea (pr1,pr2).
 /// Returns orthogonal projection of the point in the line (pr1,pr2).
 //==============================================================================
-inline tfloat3 LineOrthogonalPoint(const tfloat3 &pt,const tfloat3 &pr1,const tfloat3 &pr2);
+tfloat3 LineOrthogonalPoint(const tfloat3 &pt,const tfloat3 &pr1,const tfloat3 &pr2);
 
 
 //==============================================================================

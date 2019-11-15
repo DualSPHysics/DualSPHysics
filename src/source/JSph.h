@@ -69,6 +69,7 @@ class JSphBoundCorr;     //<vs_innlet>
 class JSphPartsInit;
 class JLinearValue;
 class JSpaceEParms;
+class JDataArrays;
 
 //##############################################################################
 //# XML format of execution parameters in _FmtXML__Parameters.xml.
@@ -118,7 +119,6 @@ private:
   JPartDataBi4 *DataBi4;            ///<To store particles and info in bi4 format.      | Para grabar particulas e info en formato bi4.
   JPartOutBi4Save *DataOutBi4;      ///<To store excluded particles in bi4 format.      | Para grabar particulas excluidas en formato bi4.
   JPartFloatBi4Save *DataFloatBi4;  ///<To store floating data in bi4 format.           | Para grabar datos de floatings en formato bi4.
-  JPartsOut *PartsOut;              ///<Stores excluded particles until they are saved. | Almacena las particulas excluidas hasta su grabacion.
 
   //-Total number of excluded particles according to reason for exclusion.
   //-Numero acumulado de particulas excluidas segun motivo.
@@ -138,6 +138,7 @@ private:
 
 protected:
   const bool Cpu;
+  const bool Mgpu;
   const bool WithMpi;
   JLog2 *Log;
 
@@ -167,8 +168,10 @@ protected:
   float Bgau;                 ///<Gaussian kernel constant to compute fac (kernel derivative).           | Constante para calcular fac (derivada del kernel) con kernel Gaussian.
   StCubicCte CubicCte;        ///<Constants for Cubic Spline Kernel.                                     | Constante para kernel cubic spline.
   TpVisco TVisco;             ///<Viscosity type: Artificial,...                                         | Tipo de viscosidad: Artificial,...
-  TpDeltaSph TDeltaSph;       ///<Delta-SPH type: None, Basic or Dynamic.                                | Tipo de Delta-SPH: None, Basic o Dynamic. 
-  float DeltaSph;             ///<DeltaSPH constant. The default value is 0.1f, with 0 having no effect. | Constante para DeltaSPH. El valor por defecto es 0.1f, con 0 no tiene efecto.  
+
+  TpDensity TDensity;         ///<Density Diffusion Term 0:None, 1:Molteni, 2:Fourtakas, 3:Fourtakas(full) (default=0)
+  float DDTValue;             ///<Value used with Density Diffusion Term (default=0.1)
+  bool DDTArray;              ///<Use extra array to compute Density Diffusion Term. The correction is applied after particle interaction. 
 
   TpShifting TShifting;       ///<Type of Shifting: None, NoBound, NoFixed, Full.
   float ShiftCoef;            ///<Coefficient for shifting computation.
@@ -178,6 +181,8 @@ protected:
   float ViscoBoundFactor;     ///<For boundary interaction use Visco*ViscoBoundFactor.                  | Para interaccion con contorno usa Visco*ViscoBoundFactor.
   JSphVisco *ViscoTime;       ///<Provides a viscosity value as a function of simulation time.          | Proporciona un valor de viscosidad en funcion del instante de la simulacion.
 
+  TpBoundary TBoundary;       ///<Boundary condition: DBC, M-DBC.
+
   bool RhopOut;               ///<Indicates whether the RhopOut density correction is active or not.    | Indica si activa la correccion de densidad RhopOut o no.                       
   float RhopOutMin;           ///<Minimum limit for Rhopout correction.                                 | Limite minimo para la correccion de RhopOut.
   float RhopOutMax;           ///<Maximum limit for Rhopout correction.                                 | Limite maximo para la correccion de RhopOut.
@@ -185,6 +190,7 @@ protected:
   double TimeMax;
   double TimePart;
   JTimeOut *TimeOut;
+  int NstepsBreak;           ///<Maximum number of steps allowed (debug).
 
   double DtIni;              ///<Initial Dt
   double DtMin;              ///<Minimum allowed Dt (if the calculated value is lower is replaced by DTmin).
@@ -204,12 +210,14 @@ protected:
   bool SvRes;                ///<Creates file with execution summary.                            | Graba fichero con resumen de ejecucion.
   bool SvTimers;             ///<Computes the time for each process.                             | Obtiene tiempo para cada proceso.
   bool SvDomainVtk;          ///<Stores VTK file with the domain of particles of each PART file. | Graba fichero vtk con el dominio de las particulas en cada Part. 
+  //bool SvInterCount;       ///<Computes and saves number of interactions.                      | Calcula y graba el numero de interacciones.
 
   //-Constants for computation.
   float H,CteB,Gamma,CFLnumber,RhopZero;
   double Dp;
   double Cs0;
-  float Delta2H;             ///<Constant for DeltaSPH. Delta2H=DeltaSph*H*2
+  float DDT2h;             ///<Constant for DDT1 & DDT2. DDT2h=DDTValue*2*H
+  float DDTgz;             ///<Constant for DDT2.        DDTgz=RhopZero*Gravity.z/CteB
   float MassFluid,MassBound;  
   tfloat3 Gravity;
   float Dosh,H2,Fourh2,Eta2;
@@ -243,6 +251,8 @@ protected:
   unsigned PartBeginFirst;    ///<Indicates the number of the first PART to be generated. | Indica el numero del primer PART a generar.                                    
   double PartBeginTimeStep;   ///<initial instant of the simulation                       | Instante de inicio de la simulación.                                          
   ullong PartBeginTotalNp;    ///<Total number of simulated particles.
+
+  JPartsOut *PartsOut;        ///<Stores excluded particles until they are saved. | Almacena las particulas excluidas hasta su grabacion.
 
   //-Variables for predefined movement.
   JSphMotion *SphMotion;      ///<Manages moving objects. It is NULL when there are not moving objects.
@@ -324,14 +334,7 @@ protected:
   unsigned DtModifWrn;    ///<Limit number for warning generation.
   double PartDtMin;       ///<Minimum value of dt in the current PART. | Valor minimo de dt en el PART actual.
   double PartDtMax;       ///<Maximum value of dt in the current PART. | Valor maximo de dt en el PART actual.
-
-  //-Maximum values (or almost) achieved during the simulation.
-  //-Valores maximos (o casi) alcanzados durante la simulacion.
-  llong MaxMemoryCpu;     ///<Amount of reserved CPU memory. | Cantidad de memoria Cpu reservada.            
-  llong MaxMemoryGpu;     ///<Amount of reserved GPU memory. | Cantidad de memoria Gpu reservada.
-  unsigned MaxParticles;  ///<Maximum number of particles.   | Numero maximo de particulas.
-  unsigned MaxCells;      ///<Maximum number of cells.       | Numero maximo de celdas.                   
-
+  
   //-Variables for simulation of PARTs.
   int PartIni;            ///<First generated PART.  | Primer PART generado. 
   int Part;               ///<Saves subsequent PART. | Siguiente PART a guardar.                                          
@@ -355,7 +358,7 @@ protected:
   int VerletStep;
   double SymplecticDtPre;  ///<Previous Dt to use with Symplectic.
   double DemDtForce;       ///<Dt for tangencial acceleration.
-
+  StMaxNumbers MaxNumbers; ///<Maximum values (or almost) achieved during the simulation.
 
   void AllocMemoryFloating(unsigned ftcount,bool imposedvel=false);
   llong GetAllocMemoryCpu()const;
@@ -367,14 +370,17 @@ protected:
   void VisuDemCoefficients()const;
 
   void LoadCodeParticles(unsigned np,const unsigned *idp,typecode *code)const;
+
   void PrepareCfgDomainValues(tdouble3 &v,tdouble3 vdef=TDouble3(0))const;
   void ResizeMapLimits();
 
+  static void WendlandConstants(bool simulate2d,double h,float &awen,float &bwen);
   void ConfigConstants(bool simulate2d);
   void VisuConfig()const;
   void VisuParticleSummary()const;
   void LoadDcellParticles(unsigned n,const typecode *code,const tdouble3 *pos,unsigned *dcell)const;
-  void RunInitialize(unsigned np,unsigned npb,const tdouble3 *pos,const unsigned *idp,const typecode *code,tfloat4 *velrhop);
+  void RunInitialize(unsigned np,unsigned npb,const tdouble3 *pos,const unsigned *idp
+    ,const typecode *code,tfloat4 *velrhop,tfloat3 *boundnormal);
   void CreatePartsInit(unsigned np,const tdouble3 *pos,const typecode *code);
   void FreePartsInit();
 
@@ -387,21 +393,26 @@ protected:
   void RestartCheckData();
   void LoadCaseParticles();
   void InitRun(unsigned np,const unsigned *idp,const tdouble3 *pos);
+  bool CalcMotion(double stepdt);
+  void CalcMotionWaveGen(double stepdt);
 
-  void PrintSizeNp(unsigned np,llong size)const;
+  void PrintSizeNp(unsigned np,llong size,unsigned allocs)const;
   void PrintHeadPart();
 
   void ConfigSaveData(unsigned piece,unsigned pieces,std::string div);
   void AddParticlesOut(unsigned nout,const unsigned *idp,const tdouble3 *pos,const tfloat3 *vel,const float *rhop,const typecode *code);
-  void AbortBoundOut(unsigned nout,const unsigned *idp,const tdouble3 *pos,const tfloat3 *vel,const float *rhop,const typecode *code);
+  void AbortBoundOut(JLog2 *log,unsigned nout,const unsigned *idp,const tdouble3 *pos,const tfloat3 *vel,const float *rhop,const typecode *code);
 
   tfloat3* GetPointerDataFloat3(unsigned n,const tdouble3* v)const;
-  void SavePartData(unsigned npok,unsigned nout,const unsigned *idp,const tdouble3 *pos,const tfloat3 *vel,const float *rhop,unsigned ndom,const tdouble3 *vdom,const StInfoPartPlus *infoplus);
-  void SaveData(unsigned npok,const unsigned *idp,const tdouble3 *pos,const tfloat3 *vel,const float *rhop,unsigned ndom,const tdouble3 *vdom,const StInfoPartPlus *infoplus);
+  void AddBasicArrays(JDataArrays &arrays,unsigned np,const tdouble3 *pos
+    ,const unsigned *idp,const tfloat3 *vel,const float *rhop)const;
+  void SavePartData(unsigned npok,unsigned nout,const JDataArrays& arrays,unsigned ndom,const tdouble3 *vdom,const StInfoPartPlus *infoplus);
+  void SaveData(unsigned npok,const JDataArrays& arrays,unsigned ndom,const tdouble3 *vdom,const StInfoPartPlus *infoplus);
   void SaveDomainVtk(unsigned ndom,const tdouble3 *vdom)const;
   void SaveInitialDomainVtk()const;
   unsigned SaveMapCellsVtkSize()const;
   void SaveMapCellsVtk(float scell)const;
+
  
   void GetResInfo(float tsim,float ttot,const std::string &headplus,const std::string &detplus,std::string &hinfo,std::string &dinfo);
   void SaveRes(float tsim,float ttot,const std::string &headplus="",const std::string &detplus="");
@@ -412,15 +423,18 @@ protected:
   unsigned GetOutMoveCount()const{ return(OutMoveCount); }
 
 public:
-  JSph(bool cpu,bool withmpi);
+  JSph(bool cpu,bool mgpu,bool withmpi);
   ~JSph();
 
   static std::string GetPosDoubleName(bool psingle,bool svdouble);
   static std::string GetStepName(TpStep tstep);
   static std::string GetKernelName(TpKernel tkernel);
   static std::string GetViscoName(TpVisco tvisco);
-  static std::string GetDeltaSphName(TpDeltaSph tdelta);
+  static std::string GetBoundName(TpBoundary tboundary);
+  static std::string GetDDTName(TpDensity tdensity);
   static std::string GetShiftingName(TpShifting tshift);
+
+  std::string GetDDTConfig()const;
 
   static std::string TimerToText(const std::string &name,float value);
 

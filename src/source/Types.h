@@ -27,7 +27,7 @@
 #include "OmpDefs.h"
 #include <algorithm>
 
-#define DELTA_HEAVYFLOATING  ///<Applies DeltaSPH to fluid particles interacting with floatings with higher density (massp>MassFluid*1.2). | Aplica DeltaSPH a fluido que interaccionan con floatings pesados (massp>MassFluid*1.2). NO_COMENTARIO
+#define DELTA_HEAVYFLOATING  ///<Applies DDT to fluid particles interacting with floatings with higher density (massp>MassFluid*1.2). | Aplica DDT a fluido que interaccionan con floatings pesados (massp>MassFluid*1.2). NO_COMENTARIO
 
 //#define DISABLE_TIMERS     ///<Compiles without timers. | Compilado sin timers.
 
@@ -122,6 +122,27 @@
 #define CODE_GetIzoneFluidInout(code) (CODE_GetTypeAndValue(code)-CODE_TYPE_FLUID_INOUT)          //<vs_innlet>
 
 
+///Defines type of movement.
+typedef enum{ 
+  MOTT_None=0,    ///<No movement.
+  MOTT_Linear=1,  ///<Linear movement.
+  MOTT_Matrix=2   ///<Matrix movement (for rotations).
+}TpMotionType;   
+
+///Structure with the information for moving particles (lineal and matrix movement).
+typedef struct{
+  word ref;            ///<Idx of moving object.
+  word mkbound;        ///<MkBound of moving particles.
+  unsigned idbegin;    ///<First id of moving particles.
+  unsigned count;      ///<Number of moving particles.
+  TpMotionType type;   ///<Type of motion (none, linear, matrix).
+  tdouble3 linmov;     ///<Linear displacement to apply to the particles position.
+  tdouble3 linvel;     ///<Linear velocity for particles.
+  tdouble3 linace;     ///<Linear acceleration for particles (when acceleration movement is computed).
+  tmatrix4d matmov;    ///<Matrix transformation to apply to the particles position.
+  tmatrix4d matmov2;   ///Matrix transformation to compute acceleration of particles (when acceleration movement is computed).
+}StMotionData;
+
 ///Structure with the information of the floating object.
 typedef struct{
   word mkbound;     ///<MkBound of the floating object.
@@ -163,6 +184,32 @@ typedef struct{ //(DEM)
   float restitu;      ///<Restitution Coefficient (units:-).
 }StDemData;
 
+///Structure that stores the maximum values (or almost) achieved during the simulation.
+typedef struct StrMaxNumbers{
+  llong memcpu;       ///<Amount of reserved CPU memory. | Cantidad de memoria Cpu reservada.            
+  llong memgpu;       ///<Amount of reserved GPU memory. | Cantidad de memoria Gpu reservada.
+  unsigned particles; ///<Maximum number of particles.   | Numero maximo de particulas.
+  unsigned cells;     ///<Maximum number of cells.       | Numero maximo de celdas.                   
+  StrMaxNumbers(){ Clear(); }
+  StrMaxNumbers(llong vmemcpu,llong vmemgpu,unsigned vparticles,unsigned vcells){
+    memcpu=vmemcpu; memgpu=vmemgpu; particles=vparticles; cells=vcells;
+  }
+  void Clear(){ 
+    memcpu=memgpu=0; particles=cells=0;
+  }
+}StMaxNumbers;
+
+///Structure with values to apply external acceleration to fluid.
+typedef struct{
+  unsigned mkfluid;
+  tdouble3 acclin;
+  tdouble3 accang;
+  tdouble3 centre;
+  tdouble3 velang;
+  tdouble3 vellin;
+  bool setgravity;
+}StAceInput;
+
 ///Controls the output of information on the screen and/or log.
 typedef enum{ 
   MOUT_ScrFile=3,  ///<Output on the screen and log.
@@ -202,6 +249,11 @@ typedef enum{
   VISCO_None=0 
 }TpVisco;            
 
+///Types of boundary conditions.
+typedef enum{ 
+  BC_DBC=1     ///<Dynamic Boundary Condition (DBC).
+}TpBoundary;
+
 ///Types of interaction step.
 typedef enum{ 
   INTERSTEP_None=0,         
@@ -210,12 +262,11 @@ typedef enum{
   INTERSTEP_SymCorrector=3  ///<Interaction to compute forces using the Symplectic algorithm (corrector step). 
 }TpInterStep;
 
-///Types of Delta-SPH. 
+///Types of density diffussion term.
 typedef enum{ 
-  DELTA_DynamicExt=3,       ///<DeltaSPH approach applied in case of Periodic Boundary Conditions or new multiGPU implementation. 
-  DELTA_Dynamic=2,          ///<DeltaSPH approach applied only for fluid particles that are not interaction with boundaries (DBC). 
-  DELTA_None=0              ///<DeltaSPH is not applied
-}TpDeltaSph; 
+  DDT_DDT=1,      ///<Density Diffussion Term. It is only applied to inner fluid particles.
+  DDT_None=0 
+}TpDensity;
 
 ///Types of Shifting applied to fluid particles. 
 typedef enum{
@@ -285,6 +336,25 @@ inline const char* GetNameCellMode(TpCellMode cellmode){
   return("???");
 }
 
+///Domain division mode.
+typedef enum{ 
+  MGDIV_None=0,      ///<Not specified. 
+  MGDIV_X=1,         ///<Main division in X direction.
+  MGDIV_Y=2,         ///<Main division in Y direction.
+  MGDIV_Z=3          ///<Main division in Z direction.
+}TpMgDivMode;  
+
+///Returns the name of division mode in text.
+inline const char* GetNameDivision(TpMgDivMode axis){
+  switch(axis){
+    case MGDIV_None:  return("None");
+    case MGDIV_X:     return("X");
+    case MGDIV_Y:     return("Y");
+    case MGDIV_Z:     return("Z");
+  }
+  return("???");
+}
+
 ///Modes of BlockSize selection.
 #define BSIZE_FIXED 128
 typedef enum{ 
@@ -306,8 +376,11 @@ inline const char* GetNameBlockSizeMode(TpBlockSizeMode bsizemode){
 
 ///Codificacion de celdas para posicion.
 ///Codification of cells for position.
-#define PC__CodeOut 0xffffffff
-#define PC__GetCode(sx,sy,sz) ((sx<<25)|(sy<<20)|(sz<<15)|((sy+sz)<<10)|((sx+sz)<<5)|(sx+sy))  //-Clave de codificacion (orden de valores: sx,sy,sz,sy+sz,sx+sz,sx+sy). | Encryption key (order of values: sx,sy,sz,sy+sz,sz+sx,sx+sy).
+#define PC__CodeMapOut   0xffffffff
+#define PC__CodeSpecial  0x80000000
+#define PC__CodeDomLeft  0x80000000
+#define PC__CodeDomRight 0x80000001
+#define PC__GetCode(sx,sy,sz) (((sx+1)<<25)|(sy<<20)|(sz<<15)|((sy+sz)<<10)|((sx+1+sz)<<5)|(sx+1+sy))  //-Clave de codificacion (orden de valores: sx,sy,sz,sy+sz,sx+sz,sx+sy). | Encryption key (order of values: sx,sy,sz,sy+sz,sz+sx,sx+sy).
 #define PC__GetSx(cc) (cc>>25)       //-Numero de bits para coordenada X de celda. | Number of bits for X coordinate cell.
 #define PC__GetSy(cc) ((cc>>20)&31)  //-Numero de bits para coordenada Y de celda. | Number of bits for Y coordinate cell.
 #define PC__GetSz(cc) ((cc>>15)&31)  //-Numero de bits para coordenada Z de celda. | Number of bits for Z coordinate cell.
@@ -315,7 +388,7 @@ inline const char* GetNameBlockSizeMode(TpBlockSizeMode bsizemode){
 #define PC__Celly(cc,cel) (((*((unsigned*)&cel))<<(cc>>25))>>((cc>>5)&31))  //-Coordenada Y de celda. | Y coordinate of the cell.
 #define PC__Cellz(cc,cel) (((*((unsigned*)&cel))<<(cc&31))>>(cc&31))        //-Coordenada Z de celda. | Z coordinate of the cell.
 #define PC__Cell(cc,cx,cy,cz) ((cx<<((cc>>10)&31))|(cy<<((cc>>15)&31))|cz)  //-Valor de celda para cx, cy y cz. | Cell value for cx,cy and cz.
-#define PC__MaxCellx(cc) (0xffffffff>>((cc>>10)&31))                //-Coordenada X de celda maxima. | Maximum X coordinate of the cell.
+#define PC__MaxCellx(cc) ((0xffffffff>>((cc>>10)&31))>>1)           //-Coordenada X de celda maxima. | Maximum X coordinate of the cell.
 #define PC__MaxCelly(cc) ((0xffffffff<<(cc>>25))>>((cc>>5)&31))     //-Coordenada Y de celda maxima. | Maximum Y coordinate of the cell.
 #define PC__MaxCellz(cc) ((0xffffffff<<(cc&31))>>(cc&31))           //-Coordenada Z de celda maxima. | Maximum Z coordinate of the cell.
 

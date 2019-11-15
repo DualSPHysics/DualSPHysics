@@ -341,6 +341,26 @@ void JPartDataBi4::AddPartDataVar(const std::string &name,JBinaryDataDef::TpData
 }
 
 //==============================================================================
+/// Añade datos (definidos por el usuario) de particulas de de nuevo part.
+/// Add data (defined by user) of particles to new part.
+//==============================================================================
+void JPartDataBi4::AddPartData(const std::string &name,unsigned npok,const void *v
+  ,TpTypeData type,bool externalpointer)
+{
+  switch(type){
+    case TypeUchar:    AddPartData(name,npok,(byte    *)v,externalpointer);   break;
+    case TypeUshort:   AddPartData(name,npok,(word    *)v,externalpointer);   break;
+    case TypeUint:     AddPartData(name,npok,(unsigned*)v,externalpointer);   break;
+    case TypeFloat:    AddPartData(name,npok,(float   *)v,externalpointer);   break;
+    case TypeDouble:   AddPartData(name,npok,(double  *)v,externalpointer);   break;
+    case TypeUint3:    AddPartData(name,npok,(tuint3  *)v,externalpointer);   break;
+    case TypeFloat3:   AddPartData(name,npok,(tfloat3 *)v,externalpointer);   break;
+    case TypeDouble3:  AddPartData(name,npok,(tdouble3*)v,externalpointer);   break;
+    default: RunException("AddPartData","Type of pointer is unknown.");
+  }
+}
+
+//==============================================================================
 /// Añade datos de particulas de de nuevo part.
 /// Adds data of particles to new part.
 //==============================================================================

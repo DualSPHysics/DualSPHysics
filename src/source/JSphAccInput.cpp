@@ -75,6 +75,8 @@ void JSphAccInputMk::Reset(){
   delete[] VelAng;   VelAng=NULL;
   AccIndex=0;
   CurrAccLin=CurrAccAng=CurrVelLin=CurrVelAng=TDouble3(0);
+  LastTimestepInput=-1;
+  memset(&LastOutput,0,sizeof(StAceInput));
 }
 
 //==============================================================================
@@ -170,7 +172,9 @@ void JSphAccInputMk::GetConfig(std::vector<std::string> &lines)const{
 //=================================================================================================================
 /// Returns interpolation variable acceleration values. SL: Added angular and linear velocity and set gravity flag
 //=================================================================================================================
-void JSphAccInputMk::GetAccValues(double timestep,unsigned &mkfluid,tdouble3 &acclin,tdouble3 &accang,tdouble3 &centre,tdouble3 &velang,tdouble3 &vellin,bool &setgravity){
+const StAceInput& JSphAccInputMk::GetAccValues(double timestep){
+  if(LastTimestepInput>=0 && timestep==LastTimestepInput)return(LastOutput);
+  LastTimestepInput=timestep;
   double currtime=AccTime[AccIndex];
   //Find the next nearest time value compared to the current simulation time (current value used if still appropriate).
   while((AccIndex<(AccCount-1))&&(timestep>=currtime)){
@@ -215,13 +219,14 @@ void JSphAccInputMk::GetAccValues(double timestep,unsigned &mkfluid,tdouble3 &ac
     CurrVelAng=ToTDouble3(VelAng[index]);     //SL: Get the last position for angular velocity.
   }
   //Return values.
-  mkfluid=MkFluid;
-  acclin=CurrAccLin;
-  accang=CurrAccAng;
-  centre=ToTDouble3(AccCoG);
-  vellin=CurrVelLin; //SL: Added linear velocity
-  velang=CurrVelAng; //SL: Added angular velocity
-  setgravity=GravityEnabled; //SL: Added set gravity flag
+  LastOutput.mkfluid=MkFluid;
+  LastOutput.acclin=CurrAccLin;
+  LastOutput.accang=CurrAccAng;
+  LastOutput.centre=ToTDouble3(AccCoG);
+  LastOutput.vellin=CurrVelLin; //SL: Added linear velocity
+  LastOutput.velang=CurrVelAng; //SL: Added angular velocity
+  LastOutput.setgravity=GravityEnabled; //SL: Added set gravity flag
+  return(LastOutput);
 }
 
 //##############################################################################
@@ -319,9 +324,9 @@ void JSphAccInput::VisuConfig(std::string txhead,std::string txfoot)const{
 //=====================================================================================================================================================
 /// Returns interpolation variable acceleration values. SL: Corrected spelling mistake in exception and added angular velocity and global gravity flag
 //=====================================================================================================================================================
-void JSphAccInput::GetAccValues(unsigned cfile,double timestep,unsigned &mkfluid,tdouble3 &acclin,tdouble3 &accang,tdouble3 &centre,tdouble3 &velang,tdouble3 &vellin,bool &setgravity){
+const StAceInput& JSphAccInput::GetAccValues(unsigned cfile,double timestep){
   if(cfile>=GetCount())RunException("GetAccValues","The number of input file for variable acceleration is invalid.");
-  Inputs[cfile]->GetAccValues(timestep,mkfluid,acclin,accang,centre,velang,vellin,setgravity);
+  return(Inputs[cfile]->GetAccValues(timestep));
 }
 
 

@@ -20,6 +20,9 @@
 //:# Cambios:
 //:# =========
 //:# - Gestiona el uso tiempo de grabacion de PARTs variable. (26-03-2016)
+//:# - Ahora el constructor permite clonar otro objeto JTimeOut. (23-08-2019)
+//:# - GetNextTime() guarda entrada y salida para evitar calculos con llamadas 
+//:#   consecutivas iguales. (29-08-2019)
 //:#############################################################################
 
 /// \file JTimeOut.h \brief Declares the class \ref JTimeOut.
@@ -62,9 +65,13 @@ protected:
   void LoadXml(JXml *sxml,const std::string &place);
   unsigned GetCount()const{ return(unsigned(Times.size())); }
   bool AddTimeOut(double t,double tout);
+  void CopyFrom(const JTimeOut* tout);
+
+  double LastTimeInput;   ///<Saves the last value used with GetNextTime().
+  double LastTimeOutput;  ///<Saves the last value returned by GetNextTime().
 
 public:
-  JTimeOut();
+  JTimeOut(const JTimeOut* tout=NULL);
   ~JTimeOut();
   void Reset();
   void Config(double timeoutdef);

@@ -29,12 +29,40 @@
 /// \param text Text of the exception.
 /// \param file Name of the file related to the exception.
 //==============================================================================
-JException::JException(const std::string &classname,const std::string &method,const std::string &text,const std::string &file){
+JException::JException(const std::string &classname,const std::string &method
+  ,const std::string &text,const std::string &file)
+{
   ExName="JException";
+  SrcFile="";
+  SrcLine=0;
   ClassName=classname;
   Method=method;
   Text=text;
   File=file;
+  Print();
+}
+
+//==============================================================================
+/// Constructor.
+/// \param srcfile Name of the file that throws the exception.
+/// \param srcline Number of the line that throws the exception.
+/// \param classname Name of the class that throws the exception.
+/// \param method Name of the method that throws the exception.
+/// \param text Text of the exception.
+/// \param file Name of the file related to the exception.
+//==============================================================================
+JException::JException(const std::string &srcfile,int srcline
+  ,const std::string &classname,const std::string &method
+  ,const std::string &text,const std::string &file)
+{
+  ExName="JException";
+  SrcFile=srcfile;
+  SrcLine=srcline;
+  ClassName=classname;
+  Method=method;
+  Text=text;
+  File=file;
+  Print();
 }
 
 //==============================================================================
@@ -42,7 +70,8 @@ JException::JException(const std::string &classname,const std::string &method,co
 //==============================================================================
 std::string JException::ToStr()const{
   std::string tx;
-  tx=fun::PrintStr("Exception (%s::%s)\n",ClassName.c_str(),Method.c_str());
+  if(SrcFile.empty())tx=fun::PrintStr("\n*** Exception (%s::%s)\n",ClassName.c_str(),Method.c_str());
+  else tx=fun::PrintStr("\n*** Exception (%s::%s) at %s:%d\n",ClassName.c_str(),Method.c_str(),SrcFile.c_str(),SrcLine);
   if(!Text.empty())tx=tx+fun::PrintStr("Text: %s\n",Text.c_str());
   if(!File.empty())tx=tx+fun::PrintStr("File: %s\n",File.c_str());
   return(tx);
@@ -52,7 +81,8 @@ std::string JException::ToStr()const{
 /// Visualises the exception message in console.
 //==============================================================================
 void JException::Print()const{
-  printf("\n*** %s\n",ToStr().c_str());
+  printf("%s\n",ToStr().c_str());
+  fflush(stdout);
 }
 
 

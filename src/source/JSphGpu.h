@@ -31,6 +31,20 @@ class JArraysGpu;
 class JCellDivGpu;
 class JBlockSizeAuto;
 
+//-Defines for CUDA exceptions.
+#ifndef Run_ExceptioonCuda
+#define Run_ExceptioonCuda(cuerr,msg) RunExceptioonCuda(__FILE__,__LINE__,ClassName,__func__,cuerr,msg)
+#endif
+#ifndef Run_ExceptioonCudaSta
+#define Run_ExceptioonCudaSta(cuerr,msg) RunExceptioonCudaStatic(__FILE__,__LINE__,__func__,cuerr,msg)
+#endif
+#ifndef Check_CudaErroor
+#define Check_CudaErroor(msg) CheckCudaErroor(__FILE__,__LINE__,ClassName,__func__,msg)
+#endif
+#ifndef Check_CudaErroorSta
+#define Check_CudaErroorSta(msg) CheckCudaErroorStatic(__FILE__,__LINE__,__func__,msg)
+#endif
+
 //##############################################################################
 //# JSphGpu
 //##############################################################################
@@ -38,6 +52,22 @@ class JBlockSizeAuto;
 
 class JSphGpu : public JSph
 {
+  friend class JDebugSphGpu;
+
+protected:
+  static void RunExceptioonCudaStatic(const std::string &srcfile,int srcline
+    ,const std::string &method
+    ,cudaError_t cuerr,std::string msg);
+  static void CheckCudaErroorStatic(const std::string &srcfile,int srcline
+    ,const std::string &method
+    ,std::string msg);
+  void RunExceptioonCuda(const std::string &srcfile,int srcline
+    ,const std::string &classname,const std::string &method
+    ,cudaError_t cuerr,std::string msg)const;
+  void CheckCudaErroor(const std::string &srcfile,int srcline
+    ,const std::string &classname,const std::string &method
+    ,std::string msg)const;
+
 private:
   JCellDivGpu* CellDiv;
 
@@ -64,6 +94,8 @@ protected:
   unsigned GpuCompute;    ///<Compute capability: 10,11,12,20... 
 
   std::string RunMode;    ///<Stores execution mode (symmetry,OpenMP,balance...).
+
+  const TpMgDivMode DivAxis;  ///<Axis used in current division. It is used to sort particle data. MGDIV_Z is used for single GPU.
 
   //-Number of particles in the domain.
   //-Numero de particulas del dominio.
@@ -97,6 +129,7 @@ protected:
   tfloat3 *AuxVel; 
   float *AuxRhop;
 
+  unsigned GpuParticlesAllocs;///<Number of allocations.
   unsigned GpuParticlesSize;  ///<Number of particles for which GPU memory was allocated. | Numero de particulas para las cuales se reservo memoria en gpu.
   llong MemGpuParticles;      ///<Allocated GPU memory for arrays with particle data. | Mermoria reservada para vectores de datos de particulas.
   llong MemGpuFixed;          ///<Allocated memory in AllocGpuMemoryFixed. | Memoria reservada en AllocGpuMemoryFixed. 
@@ -115,7 +148,7 @@ protected:
   double2 *Posxyg;
   double *Poszg;
   float4 *Velrhopg;
-    
+
   //-Variables for compute step: VERLET.
   float4 *VelrhopM1g;  ///<Verlet: in order to keep previous values. | Verlet: para guardar valores anteriores.
 
@@ -172,8 +205,6 @@ protected:
   TimersGpu Timers;  ///<Declares an array with timers for CPU (type structure \ref StSphTimerGpu).
 
   void InitVars();
-  void RunExceptionCuda(const std::string &method,const std::string &msg,cudaError_t error);
-  void CheckCudaError(const std::string &method,const std::string &msg);
 
   void FreeCpuMemoryFixed();
   void AllocCpuMemoryFixed();
@@ -194,6 +225,7 @@ protected:
   unsigned*    SaveArrayGpu(unsigned np,const unsigned    *datasrc)const{ return(TSaveArrayGpu<unsigned>   (np,datasrc)); }
   int*         SaveArrayGpu(unsigned np,const int         *datasrc)const{ return(TSaveArrayGpu<int>        (np,datasrc)); }
   float*       SaveArrayGpu(unsigned np,const float       *datasrc)const{ return(TSaveArrayGpu<float>      (np,datasrc)); }
+  float3*      SaveArrayGpu(unsigned np,const float3      *datasrc)const{ return(TSaveArrayGpu<float3>     (np,datasrc)); }
   float4*      SaveArrayGpu(unsigned np,const float4      *datasrc)const{ return(TSaveArrayGpu<float4>     (np,datasrc)); }
   double*      SaveArrayGpu(unsigned np,const double      *datasrc)const{ return(TSaveArrayGpu<double>     (np,datasrc)); }
   double2*     SaveArrayGpu(unsigned np,const double2     *datasrc)const{ return(TSaveArrayGpu<double2>    (np,datasrc)); }
@@ -203,6 +235,7 @@ protected:
   void RestoreArrayGpu(unsigned np,unsigned    *data,unsigned    *datanew)const{ TRestoreArrayGpu<unsigned>   (np,data,datanew); }
   void RestoreArrayGpu(unsigned np,int         *data,int         *datanew)const{ TRestoreArrayGpu<int>        (np,data,datanew); }
   void RestoreArrayGpu(unsigned np,float       *data,float       *datanew)const{ TRestoreArrayGpu<float>      (np,data,datanew); }
+  void RestoreArrayGpu(unsigned np,float3      *data,float3      *datanew)const{ TRestoreArrayGpu<float3>     (np,data,datanew); }
   void RestoreArrayGpu(unsigned np,float4      *data,float4      *datanew)const{ TRestoreArrayGpu<float4>     (np,data,datanew); }
   void RestoreArrayGpu(unsigned np,double      *data,double      *datanew)const{ TRestoreArrayGpu<double>     (np,data,datanew); }
   void RestoreArrayGpu(unsigned np,double2     *data,double2     *datanew)const{ TRestoreArrayGpu<double2>    (np,data,datanew); }
@@ -213,7 +246,7 @@ protected:
   void PrintAllocMemory(llong mcpu,llong mgpu)const;
 
   void ConstantDataUp();
-  void ParticlesDataUp(unsigned n);
+  void ParticlesDataUp(unsigned n,const tfloat3 *boundnormal);
   unsigned ParticlesDataDown(unsigned n,unsigned pini,bool code,bool onlynormal);
   
   void SelecDevice(int gpuid);
@@ -266,7 +299,6 @@ protected:
 //-Functions for debug.
 //----------------------
 public:
-  friend class JSphDebugGpu;
   void DgSaveVtkParticlesGpu(std::string filename,int numfile,unsigned pini,unsigned pfin,const double2 *posxyg,const double *poszg,const typecode *codeg,const unsigned *idpg,const float4 *velrhopg)const;
   void DgSaveVtkParticlesGpu(std::string filename,int numfile,unsigned pini,unsigned pfin,unsigned cellcode,const double2 *posxyg,const double *poszg,const unsigned *idpg,const unsigned *dcelg,const typecode *codeg,const float4 *velrhopg,const float4 *velrhopm1g,const float3 *aceg);
   void DgSaveVtkParticlesGpu(std::string filename,int numfile,unsigned pini,unsigned pfin,bool idp,bool vel,bool rhop,bool code);
