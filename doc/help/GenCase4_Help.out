@@ -30,7 +30,7 @@
  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
 
 
-GenCase4 v4.0.115 (19-09-2019) 
+GenCase4 v4.0.123 (15-11-2019) 
 ================================
 LoadDsphConfig> .../bin/windows/DsphConfig.xml
 Execution parameters information:
@@ -50,10 +50,11 @@ Execution parameters information:
     -save:<values>  Indicates the format of output files
        +/-all:        To choose or reject all options
        +/-vtkcells:   VTK with simplified cells of the initial configuration
+       +/-vtkfreept:  VTK with free-particles of the initial configuration
        +/-vtkall:     VTK with all particles of the initial configuration
        +/-vtkbound:   VTK with boundary particles of the initial configuration
        +/-vtkfluid:   VTK with fluid particles of the initial configuration
-       (Preselected formats: bi,vtkcells)
+       (Preselected formats: bi,vtkcells,vtkfreept)
     -save3vtk:<0/1>   Creates 3 extra equal VTK files (default=0)
 
     -debug:<int>         Debug level (-1:Off, 0:Explicit, n:Debug level)

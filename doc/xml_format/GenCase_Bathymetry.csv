@@ -1,0 +1,12 @@
+#Example to use in <drawfilecsv file="GenCase_Bathymetry.csv" mode="bathymetry">
+#X-Values are defined in cells (B5:K5).
+#Y-Values are defined in cells (A6:A12).
+#Z-Values are defined in cells (B6:K12).
+Y \ X => Z;0;1;1.5;3;3.2;3.5;3.7;4;6;6.5
+0;0;0;0.5;1;1;1;1;1;0;0
+0.5;0;0;0.5;1;1;1;1;1;0;0
+1;0;0;0.5;1;2;2;1;1;0.5;0
+1.5;0;0;0.5;1;2;2;1;1;0.5;0
+2;0;0;0.5;1;2;2;1;1;0.5;0
+2.5;0;0;0.5;1;1;1;1;1;0;0
+3;0;0;0.5;1;1;1;1;1;0;0
