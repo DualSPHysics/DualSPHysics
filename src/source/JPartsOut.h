@@ -32,7 +32,7 @@
 #ifndef _JPartsOut_
 #define _JPartsOut_
 
-#include "Types.h"
+#include "DualSphDef.h"
 #include "JObject.h"
 #include <cstring>
 

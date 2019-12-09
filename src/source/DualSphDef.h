@@ -16,10 +16,10 @@
  You should have received a copy of the GNU Lesser General Public License along with DualSPHysics. If not, see <http://www.gnu.org/licenses/>. 
 */
 
-/// \file Types.h \brief Defines specific types for the SPH application.
+/// \file DualSphDef.h \brief Includes definitions and specific types for DualSPHysics program.
 
-#ifndef _Types_
-#define _Types_
+#ifndef _DualSphDef_
+#define _DualSphDef_
 
 #include "TypesDef.h"
 #include "JParticlesDef.h"

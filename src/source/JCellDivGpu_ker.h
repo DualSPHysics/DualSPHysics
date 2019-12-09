@@ -21,8 +21,7 @@
 #ifndef _JCellDivGpu_ker_
 #define _JCellDivGpu_ker_
 
-#include "TypesDef.h"
-#include "Types.h"
+#include "DualSphDef.h"
 #include <cuda_runtime_api.h>
 
 //:#define DG_LimitsCell //-En LimitsCell() comprueba que el resultado sea correcto.

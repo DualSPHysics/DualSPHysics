@@ -28,7 +28,7 @@
 #ifndef _JSph_
 #define _JSph_
 
-#include "Types.h"
+#include "DualSphDef.h"
 #include "JObject.h"
 #include "JCfgRun.h"
 #include "JLog2.h"

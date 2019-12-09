@@ -21,7 +21,7 @@
 #ifndef _JSphCpu_
 #define _JSphCpu_
 
-#include "Types.h"
+#include "DualSphDef.h"
 #include "JSphTimersCpu.h"
 #include "JSph.h"
 #include <string>

@@ -21,7 +21,7 @@
 #ifndef _JSphGpu_
 #define _JSphGpu_
 
-#include "Types.h"
+#include "DualSphDef.h"
 #include "JSphTimersGpu.h"
 #include "JSph.h"
 #include <string>

@@ -33,9 +33,8 @@
 #ifndef _JMLPistons_
 #define _JMLPistons_
 
-#include "TypesDef.h"
 #include "JObject.h"
-#include "Types.h"
+#include "DualSphDef.h"
 #include <string>
 #include <vector>
 

@@ -30,7 +30,7 @@
 #include <string>
 #include <vector>
 #include "JObject.h"
-#include "Types.h"
+#include "DualSphDef.h"
 #include "JMatrix4.h"
 #ifdef _WITHGPU
   #include <cuda_runtime_api.h>

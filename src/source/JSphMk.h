@@ -31,7 +31,7 @@
 #include <string>
 #include <vector>
 #include "JObject.h"
-#include "Types.h"
+#include "DualSphDef.h"
 
 class JSpaceParts;
 class JPartDataHead;

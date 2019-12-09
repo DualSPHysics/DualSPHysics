@@ -21,7 +21,7 @@
 #ifndef _JSphCpuSingle_
 #define _JSphCpuSingle_
 
-#include "Types.h"
+#include "DualSphDef.h"
 #include "JSphCpu.h"
 #include <string>
 

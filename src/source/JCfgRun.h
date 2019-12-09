@@ -21,7 +21,7 @@
 #ifndef _JCfgRun_
 #define _JCfgRun_
 
-#include "Types.h"
+#include "DualSphDef.h"
 #include "Functions.h"
 #include "JObject.h"
 #include <string>

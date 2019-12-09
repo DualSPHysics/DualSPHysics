@@ -27,7 +27,7 @@
 #ifndef _JSphGpu_ker_
 #define _JSphGpu_ker_
 
-#include "Types.h"
+#include "DualSphDef.h"
 #include "JSphTimersGpu.h"
 #include <cuda_runtime_api.h>
 

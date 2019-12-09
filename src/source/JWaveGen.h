@@ -28,7 +28,7 @@
 #ifndef _JWaveGen_
 #define _JWaveGen_
 
-#include "Types.h"
+#include "DualSphDef.h"
 #include <string>
 
 class JXml;

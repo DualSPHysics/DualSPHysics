@@ -27,7 +27,7 @@
 //:# Cambios:
 //:# =========
 //:# - Implementacion. (04-12-2014)
-//:# - Implementacion independiente de StFloatingData en Types.h. (11-05-2015)
+//:# - Implementacion independiente de StFloatingData en DualSphDef.h. (11-05-2015)
 //:# - Incluye informacion de MkBoundFirst (FormatVer=180423). (23-04-2018)
 //:#############################################################################
 

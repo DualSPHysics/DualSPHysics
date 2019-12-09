@@ -73,9 +73,6 @@
     <ClInclude Include="..\source\JSphTimersCpu.h">
       <Filter>Source</Filter>
     </ClInclude>
-    <ClInclude Include="..\source\Types.h">
-      <Filter>Source</Filter>
-    </ClInclude>
     <ClInclude Include="..\source\JCellDivCpuSingle.h">
       <Filter>Source\Single</Filter>
     </ClInclude>
@@ -341,6 +338,9 @@
       <Filter>Cuda</Filter>
     </ClInclude>
     <ClInclude Include="..\source\JShifting.h">
+      <Filter>Source</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\DualSphDef.h">
       <Filter>Source</Filter>
     </ClInclude>
   </ItemGroup>

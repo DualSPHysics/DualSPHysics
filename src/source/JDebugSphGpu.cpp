@@ -32,7 +32,7 @@
 #include "JFormatFiles2.h"
 #include "JDataArrays.h"
 
-#include "Types.h"
+#include "DualSphDef.h"
 #include "JSphGpuSingle.h"
 
 #pragma warning(disable : 4996) //Cancels sprintf() deprecated.

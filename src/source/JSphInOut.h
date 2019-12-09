@@ -31,7 +31,7 @@
 #include <string>
 #include <vector>
 #include "JObject.h"
-#include "Types.h"
+#include "DualSphDef.h"
 #ifdef _WITHGPU
   #include <cuda_runtime_api.h>
 #endif

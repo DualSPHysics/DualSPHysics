@@ -34,7 +34,7 @@
 #include <string>
 #include <vector>
 #include "JObject.h"
-#include "Types.h"
+#include "DualSphDef.h"
 #include "JGaugeItem.h"
 
 class JXml;

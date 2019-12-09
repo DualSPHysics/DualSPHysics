@@ -29,8 +29,7 @@
 #define _JArraysCpu_
 
 #include "JObject.h"
-#include "TypesDef.h"
-#include "Types.h"
+#include "DualSphDef.h"
 
 //##############################################################################
 //# JArraysCpuSize

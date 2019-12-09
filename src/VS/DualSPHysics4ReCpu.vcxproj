@@ -639,7 +639,7 @@ rem %CudaNvcc% -ccbin "$(VCInstallDir)bin" %gpuhw% -use_fast_math -c %ptxinfo% -
     <ClInclude Include="..\source\randomc.h" />
     <ClInclude Include="..\source\tinystr.h" />
     <ClInclude Include="..\source\tinyxml.h" />
-    <ClInclude Include="..\source\Types.h" />
+    <ClInclude Include="..\source\DualSphDef.h" />
     <ClInclude Include="..\source\TypesDef.h" />
     <CustomBuildStep Include="..\source\_CudaSphApi.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">true</ExcludedFromBuild>
