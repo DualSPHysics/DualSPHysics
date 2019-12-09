@@ -292,7 +292,7 @@ void InOutUpdateData(unsigned n,const unsigned *inoutpart
 /// Actualiza velocidad y densidad de particulas inlet/outlet cuando no es extrapolada.
 //------------------------------------------------------------------------------
 __global__ void KerInoutClearInteractionVars(unsigned n,const int *inoutpart
-  ,float3 *ace,float *ar,float *viscdt,float3 *shiftpos)
+  ,float3 *ace,float *ar,float *viscdt,float4 *shiftposfs)
 {
   const unsigned cp=blockIdx.y*gridDim.x*blockDim.x + blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
   if(cp<n){
@@ -300,7 +300,7 @@ __global__ void KerInoutClearInteractionVars(unsigned n,const int *inoutpart
     ace[p]=make_float3(0,0,0);
     ar[p]=0;
     viscdt[p]=0;
-    if(shiftpos!=NULL)shiftpos[p]=make_float3(0,0,0);
+    if(shiftposfs)shiftposfs[p]=make_float4(0,0,0,0);
   }
 }
 
@@ -309,11 +309,11 @@ __global__ void KerInoutClearInteractionVars(unsigned n,const int *inoutpart
 /// Actualiza velocidad y densidad de particulas inlet/outlet cuando no es extrapolada.
 //==============================================================================
 void InoutClearInteractionVars(unsigned n,const int *inoutpart
-  ,float3 *ace,float *ar,float *viscdt,float3 *shiftpos)
+  ,float3 *ace,float *ar,float *viscdt,float4 *shiftposfs)
 {
   if(n){
     dim3 sgrid=cusph::GetGridSize(n,SPHBSIZE);
-    KerInoutClearInteractionVars <<<sgrid,SPHBSIZE>>> (n,inoutpart,ace,ar,viscdt,shiftpos);
+    KerInoutClearInteractionVars <<<sgrid,SPHBSIZE>>> (n,inoutpart,ace,ar,viscdt,shiftposfs);
   }
 }
 

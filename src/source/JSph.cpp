@@ -46,6 +46,7 @@
 #include "JPartOutBi4Save.h"
 #include "JPartFloatBi4.h"
 #include "JPartsOut.h"
+#include "JShifting.h"
 #include "JDamping.h"
 #include "JSphInitialize.h"
 #include "JSphInOut.h"       //<vs_innlet> 
@@ -81,6 +82,7 @@ JSph::JSph(bool cpu,bool mgpu,bool withmpi):Cpu(cpu),Mgpu(mgpu),WithMpi(withmpi)
   MLPistons=NULL;     //<vs_mlapiston>
   RelaxZones=NULL;    //<vs_rzone>
   ChronoObjects=NULL; //<vs_chroono>
+  Shifting=NULL;
   Damping=NULL;
   AccInput=NULL;
   PartsLoaded=NULL;
@@ -112,6 +114,7 @@ JSph::~JSph(){
   delete MLPistons;     MLPistons=NULL;     //<vs_mlapiston>
   delete RelaxZones;    RelaxZones=NULL;    //<vs_rzone>
   delete ChronoObjects; ChronoObjects=NULL; //<vs_chroono>
+  delete Shifting;      Shifting=NULL;
   delete Damping;       Damping=NULL;
   delete AccInput;      AccInput=NULL; 
   delete PartsLoaded;   PartsLoaded=NULL;
@@ -145,7 +148,7 @@ void JSph::InitVars(){
   memset(&CubicCte,0,sizeof(StCubicCte));
   TVisco=VISCO_None;
   TDensity=DDT_None; DDTValue=0; DDTArray=false;
-  TShifting=SHIFT_None; ShiftCoef=ShiftTFS=0;
+  ShiftingMode=(Shifting? Shifting->GetShiftMode(): SHIFT_None);
   Visco=0; ViscoBoundFactor=1;
   TBoundary=BC_DBC;
   UseDEM=false;  //(DEM)
@@ -456,17 +459,22 @@ void JSph::LoadConfig(const JCfgRun *cfg){
 
   //-Shifting configuration.
   if(cfg->Shifting>=0){
+    TpShifting shiftmode=SHIFT_None;
     switch(cfg->Shifting){
-      case 0:  TShifting=SHIFT_None;     break;
-      case 1:  TShifting=SHIFT_NoBound;  break;
-      case 2:  TShifting=SHIFT_NoFixed;  break;
-      case 3:  TShifting=SHIFT_Full;     break;
+      case 0:  shiftmode=SHIFT_None;     break;
+      case 1:  shiftmode=SHIFT_NoBound;  break;
+      case 2:  shiftmode=SHIFT_NoFixed;  break;
+      case 3:  shiftmode=SHIFT_Full;     break;
       default: RunException(met,"Shifting mode is not valid.");
     }
-    if(TShifting!=SHIFT_None){
-      ShiftCoef=-2; ShiftTFS=0;
+    if(shiftmode!=SHIFT_None){
+      if(!Shifting)Shifting=new JShifting(Simulate2D,Dp,H,Log);
+      Shifting->ConfigBasic(shiftmode);
     }
-    else ShiftCoef=ShiftTFS=0;
+    else{
+      delete Shifting; Shifting=NULL;
+    }
+    ShiftingMode=(Shifting? Shifting->GetShiftMode(): SHIFT_None);
   }
 
   if(cfg->FtPause>=0)FtPause=cfg->FtPause;
@@ -500,6 +508,20 @@ void JSph::LoadCaseConfig(){
   JSpaceCtes ctes;     ctes.LoadXmlRun(&xml,"case.execution.constants");
   JSpaceEParms eparms; eparms.LoadXml(&xml,"case.execution.parameters");
   JSpaceParts parts;   parts.LoadXml(&xml,"case.execution.particles");
+
+  //-Predefined constantes.
+  Simulate2D=ctes.GetData2D();
+  Simulate2DPosY=ctes.GetData2DPosY();
+  H=(float)ctes.GetH();
+  CteB=(float)ctes.GetB();
+  Gamma=(float)ctes.GetGamma();
+  RhopZero=(float)ctes.GetRhop0();
+  CFLnumber=(float)ctes.GetCFLnumber();
+  Dp=ctes.GetDp();
+  Gravity=ToTFloat3(ctes.GetGravity());
+  MassFluid=(float)ctes.GetMassFluid();
+  MassBound=(float)ctes.GetMassBound();
+  if(ctes.GetEps()!=0)Log->PrintWarning("Eps value is not used (this correction is deprecated).");
 
   //-Execution parameters.
   switch(eparms.GetValueInt("PosDouble",true,0)){
@@ -568,18 +590,23 @@ void JSph::LoadCaseConfig(){
   }
   DDTArray=false;
 
-  //-Shifting configuration.
-  switch(eparms.GetValueInt("Shifting",true,0)){
-    case 0:  TShifting=SHIFT_None;     break;
-    case 1:  TShifting=SHIFT_NoBound;  break;
-    case 2:  TShifting=SHIFT_NoFixed;  break;
-    case 3:  TShifting=SHIFT_Full;     break;
-    default: RunException(met,"Shifting mode is not valid.");
-  }
-  if(TShifting!=SHIFT_None){
-    ShiftCoef=eparms.GetValueFloat("ShiftCoef",true,-2);
-    if(ShiftCoef==0)TShifting=SHIFT_None;
-    else ShiftTFS=eparms.GetValueFloat("ShiftTFS",true,0);
+  //-Old shifting configuration.
+  const bool shiftold=eparms.Exists("Shifting");
+  TpShifting shiftmode=SHIFT_None;
+  float shiftcoef=0,shifttfs=0;
+  if(shiftold){
+    switch(eparms.GetValueInt("Shifting",true,0)){
+      case 0:  shiftmode=SHIFT_None;     break;
+      case 1:  shiftmode=SHIFT_NoBound;  break;
+      case 2:  shiftmode=SHIFT_NoFixed;  break;
+      case 3:  shiftmode=SHIFT_Full;     break;
+      default: Run_ExceptioonFile("Shifting mode in <execution><parameters> is not valid.",FileXml);
+    }
+    if(shiftmode!=SHIFT_None){
+      shiftcoef=eparms.GetValueFloat("ShiftCoef",true,-2);
+      if(shiftcoef==0)shiftmode=SHIFT_None;
+      else shifttfs=eparms.GetValueFloat("ShiftTFS",true,0);
+    }
   }
 
   FtPause=eparms.GetValueFloat("FtPause",true,0);
@@ -617,6 +644,7 @@ void JSph::LoadCaseConfig(){
     if(eparms.Exists("XZPeriodic")){ PeriX=true;  PeriY=false; PeriZ=true;   PeriXinc=PeriYinc=PeriZinc=TDouble3(0); }
     if(eparms.Exists("YZPeriodic")){ PeriX=false; PeriY=true;  PeriZ=true;   PeriXinc=PeriYinc=PeriZinc=TDouble3(0); }
     PeriActive=DefPeriActive(PeriX,PeriY,PeriZ);
+    if(Simulate2D && PeriY)RunException(met,"Cannot use periodic conditions in Y with 2D simulations");
   }
 
   //-Configuration of domain size.
@@ -643,18 +671,6 @@ void JSph::LoadCaseConfig(){
   ConfigDomainResize("Xmax",&eparms);
   ConfigDomainResize("Ymax",&eparms);
   ConfigDomainResize("Zmax",&eparms);
-
-  //-Predefined constantes.
-  if(ctes.GetEps()!=0)Log->PrintWarning("Eps value is not used (this correction is deprecated).");
-  H=(float)ctes.GetH();
-  CteB=(float)ctes.GetB();
-  Gamma=(float)ctes.GetGamma();
-  RhopZero=(float)ctes.GetRhop0();
-  CFLnumber=(float)ctes.GetCFLnumber();
-  Dp=ctes.GetDp();
-  Gravity=ToTFloat3(ctes.GetGravity());
-  MassFluid=(float)ctes.GetMassFluid();
-  MassBound=(float)ctes.GetMassBound();
 
   //-Particle data.
   CaseNp=parts.Count();
@@ -733,6 +749,17 @@ void JSph::LoadCaseConfig(){
     RelaxZones=new JRelaxZones(useomp,!Cpu,Log,DirCase,CaseNfloat>0,CaseNbound);
     RelaxZones->LoadXml(&xml,"case.execution.special.relaxationzones");
   }//<vs_rzone_end>
+
+  //-Configuration of Shifting with zones.
+  if(shiftold && xml.GetNode("case.execution.special.shifting",false))Run_ExceptioonFile("Shifting is defined several times (in <special><shifting> and <execution><parameters>).",FileXml);
+  if(shiftold || xml.GetNode("case.execution.special.shifting",false)){
+    Shifting=new JShifting(Simulate2D,Dp,H,Log);
+    if(shiftold)Shifting->ConfigBasic(shiftmode,shiftcoef,shifttfs);
+    else Shifting->LoadXml(&xml,"case.execution.special.shifting");
+    if(!Shifting->GetShiftMode()){ delete Shifting; Shifting=NULL; }
+    ShiftingMode=(Shifting? Shifting->GetShiftMode(): SHIFT_None);
+  }
+
 
   //-Configuration of damping zones.
   if(xml.GetNode("case.execution.special.damping",false)){
@@ -1068,22 +1095,19 @@ void JSph::VisuConfig()const{
   Log->Print(fun::VarStr("Boundary",GetBoundName(TBoundary)));
   Log->Print(fun::VarStr("StepAlgorithm",GetStepName(TStep)));
   if(TStep==STEP_None)RunException(met,"StepAlgorithm value is invalid.");
-  if(TStep==STEP_Verlet)Log->Print(fun::VarStr("VerletSteps",VerletSteps));
+  if(TStep==STEP_Verlet)Log->Print(fun::VarStr("  VerletSteps",VerletSteps));
   Log->Print(fun::VarStr("Kernel",GetKernelName(TKernel)));
   Log->Print(fun::VarStr("Viscosity",GetViscoName(TVisco)));
-  Log->Print(fun::VarStr("Visco",Visco));
-  Log->Print(fun::VarStr("ViscoBoundFactor",ViscoBoundFactor));
+  Log->Print(fun::VarStr("  Visco",Visco));
+  Log->Print(fun::VarStr("  ViscoBoundFactor",ViscoBoundFactor));
   if(ViscoTime)Log->Print(fun::VarStr("ViscoTime",ViscoTime->GetFile()));
   Log->Print(fun::VarStr("DensityDiffusion",GetDDTName(TDensity)));
   if(TDensity!=DDT_None){
-    Log->Print(fun::VarStr("DensityDiffusionValue",DDTValue));
+    Log->Print(fun::VarStr("  DensityDiffusionValue",DDTValue));
     //Log->Print(fun::VarStr("DensityDiffusionArray",DDTArray));
   }
-  Log->Print(fun::VarStr("Shifting",GetShiftingName(TShifting)));
-  if(TShifting!=SHIFT_None){
-    Log->Print(fun::VarStr("ShiftCoef",ShiftCoef));
-    if(ShiftTFS)Log->Print(fun::VarStr("ShiftTFS",ShiftTFS));
-  }
+  if(Shifting)Shifting->VisuConfig();
+  else Log->Print(fun::VarStr("Shifting","None"));
   string rigidalgorithm=(!FtCount? "None": (UseDEM? "SPH+DCDEM": "SPH"));
   if(UseChrono)rigidalgorithm="SPH+CHRONO"; //<vs_chroono>
   Log->Print(fun::VarStr("RigidAlgorithm",rigidalgorithm));
@@ -1431,15 +1455,12 @@ void JSph::LoadCaseParticles(){
   Log->Print("Loading initial state of particles...");
   PartsLoaded=new JPartsLoad4(Cpu);
   PartsLoaded->LoadParticles(DirCase,CaseName,PartBegin,PartBeginDir);
-  PartsLoaded->CheckConfig(CaseNp,CaseNfixed,CaseNmoving,CaseNfloat,CaseNfluid,TpPeri(PeriActive));
+  PartsLoaded->CheckConfig(CaseNp,CaseNfixed,CaseNmoving,CaseNfloat,CaseNfluid,Simulate2D,Simulate2DPosY,TpPeri(PeriActive));
   if(PartBegin)RestartCheckData();
   Log->Printf("Loaded particles: %u",PartsLoaded->GetCount());
 
   //-Collect information of loaded particles.
   //-Recupera informacion de las particulas cargadas.
-  Simulate2D=PartsLoaded->GetSimulate2D();
-  Simulate2DPosY=PartsLoaded->GetSimulate2DPosY();
-  if(Simulate2D && PeriY)RunException("LoadCaseParticles","Cannot use periodic conditions in Y with 2D simulations");
   CasePosMin=PartsLoaded->GetCasePosMin();
   CasePosMax=PartsLoaded->GetCasePosMax();
 
@@ -2265,20 +2286,6 @@ std::string JSph::GetDDTName(TpDensity tdensity){
   string tx;
   if(tdensity==DDT_None)tx="None";
   else if(tdensity==DDT_DDT)tx="Molteni and Colagrossi 2009";
-  else tx="???";
-  return(tx);
-}
-
-//==============================================================================
-/// Returns value of Shifting in text format.
-/// Devuelve el valor de Shifting en texto.
-//==============================================================================
-std::string JSph::GetShiftingName(TpShifting tshift){
-  string tx;
-  if(tshift==SHIFT_None)tx="None";
-  else if(tshift==SHIFT_NoBound)tx="NoBound";
-  else if(tshift==SHIFT_NoFixed)tx="NoFixed";
-  else if(tshift==SHIFT_Full)tx="Full";
   else tx="???";
   return(tx);
 }

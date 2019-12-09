@@ -40,6 +40,7 @@
 #include "JLinearValue.h"
 #include "JDataArrays.h"
 #include "JDebugSphGpu.h"
+#include "JShifting.h"
 #include <climits>
 
 using namespace std;
@@ -414,7 +415,7 @@ void JSphGpuSingle::Interaction_Forces(TpInterStep interstep){
     const StInterParmsg parms=StrInterParmsg(Simulate2D
       ,Symmetry //<vs_syymmetry>
       ,Psingle,TKernel,FtMode
-      ,lamsps,TDensity,TShifting
+      ,lamsps,TDensity,ShiftingMode
       ,CellMode
       ,Visco*ViscoBoundFactor,Visco
       ,bsbound,bsfluid,Np,Npb,NpbOk
@@ -425,7 +426,7 @@ void JSphGpuSingle::Interaction_Forces(TpInterStep interstep){
       ,FtoMasspg,SpsTaug
       ,ViscDtg,Arg,Aceg,Deltag
       ,SpsGradvelg
-      ,ShiftPosg,ShiftDetectg
+      ,ShiftPosfsg
       ,NULL
       ,NULL,BsAuto);
     cusph::Interaction_Forces(parms);
@@ -439,7 +440,7 @@ void JSphGpuSingle::Interaction_Forces(TpInterStep interstep){
   const StInterParmsg parms=StrInterParmsg(Simulate2D
     ,Symmetry //<vs_syymmetry>
     ,Psingle,TKernel,FtMode
-    ,lamsps,TDensity,TShifting
+    ,lamsps,TDensity,ShiftingMode
     ,CellMode
     ,Visco*ViscoBoundFactor,Visco
     ,bsbound,bsfluid,Np,Npb,NpbOk
@@ -450,7 +451,7 @@ void JSphGpuSingle::Interaction_Forces(TpInterStep interstep){
     ,FtoMasspg,SpsTaug
     ,ViscDtg,Arg,Aceg,Deltag
     ,SpsGradvelg
-    ,ShiftPosg,ShiftDetectg
+    ,ShiftPosfsg
     ,NULL
     ,NULL,NULL);
   cusph::Interaction_Forces(parms);
@@ -469,8 +470,8 @@ void JSphGpuSingle::Interaction_Forces(TpInterStep interstep){
   if(Deltag)cusph::AddDelta(Np-Npb,Deltag+Npb,Arg+Npb);//-Adds the Delta-SPH correction for the density. | Añade correccion de Delta-SPH a Arg[]. 
   Check_CudaErroor("Failed while executing kernels of interaction.");
 
-  //-Reset interpolation varibles (ace,ar,shiftpos) over inout particles.                     //<vs_innlet>
-  if(InOut)InOut->ClearInteractionVarsGpu(InOutCount,InOutPartg,Aceg,Arg,ViscDtg,ShiftPosg);  //<vs_innlet>
+  //-Reset interpolation varibles (ace,ar,shiftpos) over inout particles.                       //<vs_innlet>
+  if(InOut)InOut->ClearInteractionVarsGpu(InOutCount,InOutPartg,Aceg,Arg,ViscDtg,ShiftPosfsg);  //<vs_innlet>
 
   //-Calculates maximum value of ViscDt.
   if(Np)ViscDtMax=cusph::ReduMaxFloat(Np,0,ViscDtg,CellDivSingle->GetAuxMem(cusph::ReduMaxFloatSize(Np)));
@@ -507,7 +508,7 @@ double JSphGpuSingle::ComputeStep_Ver(){
   const double dt=DtVariable(true);        //-Calculate new dt.
   if(CaseNmoving)CalcMotion(dt);           //-Calculate motion for moving bodies.
   DemDtForce=dt;                           //(DEM)
-  if(TShifting)RunShifting(dt);            //-Shifting.
+  if(Shifting)RunShifting(dt);             //-Shifting.
   ComputeVerlet(dt);                       //-Update particles using Verlet (periodic particles become invalid).
   if(CaseNfloat)RunFloating(dt,false);     //-Control of floating bodies.
   PosInteraction_Forces();                 //-Free memory used for interaction.
@@ -532,7 +533,7 @@ double JSphGpuSingle::ComputeStep_Sym(){
   if(BoundCorr)BoundCorrectionData();          //-Apply BoundCorrection.  //<vs_innlet>
   Interaction_Forces(INTERSTEP_SymPredictor);  //-Interaction.
   const double ddt_p=DtVariable(false);        //-Calculate dt of predictor step.
-  if(TShifting)RunShifting(dt*.5);             //-Shifting.
+  if(Shifting)RunShifting(dt*.5);              //-Shifting.
   ComputeSymplecticPre(dt);                    //-Apply Symplectic-Predictor to particles (periodic particles become invalid).
   if(CaseNfloat)RunFloating(dt*.5,true);       //-Control of floating bodies.
   PosInteraction_Forces();                     //-Free memory used for interaction.
@@ -542,7 +543,7 @@ double JSphGpuSingle::ComputeStep_Sym(){
   RunCellDivide(true);
   Interaction_Forces(INTERSTEP_SymCorrector);  //-Interaction.
   const double ddt_c=DtVariable(true);         //-Calculate dt of corrector step.
-  if(TShifting)RunShifting(dt);                //-Shifting.
+  if(Shifting)RunShifting(dt);                 //-Shifting.
   ComputeSymplecticCorr(dt);                   //-Apply Symplectic-Corrector to particles (periodic particles become invalid).
   if(CaseNfloat)RunFloating(dt,false);         //-Control of floating bodies.
   PosInteraction_Forces();                     //-Free memory used for interaction.

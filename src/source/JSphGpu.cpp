@@ -41,6 +41,7 @@
 #include "JFormatFiles2.h"
 #include "JGaugeSystem.h"
 #include "JSphBoundCorr.h"  //<vs_innlet>
+#include "JShifting.h"
 #include <climits>
 
 using namespace std;
@@ -139,9 +140,9 @@ void JSphGpu::InitVars(){
   SpsTaug=NULL; SpsGradvelg=NULL;                  //-Laminar+SPS. 
   ViscDtg=NULL; 
   Arg=NULL; Aceg=NULL; Deltag=NULL;
-  ShiftPosg=NULL; ShiftDetectg=NULL; //-Shifting.
+  ShiftPosfsg=NULL;                                //-Shifting.
   RidpMoveg=NULL;
-  FtRidpg=NULL;   FtoMasspg=NULL;                      //-Floatings.
+  FtRidpg=NULL;   FtoMasspg=NULL;                  //-Floatings.
   FtoDatag=NULL;  FtoConstraintsg=NULL;  FtoForcesSumg=NULL;  FtoForcesg=NULL;  FtoForcesResg=NULL;  FtoCenterResg=NULL; //-Calculates forces on floating bodies.
   FtoCenterg=NULL; FtoAnglesg=NULL; FtoVelg=NULL; FtoOmegag=NULL;//-Management of floating bodies.
   FtoInertiaini8g=NULL; FtoInertiaini1g=NULL;//-Management of floating bodies.
@@ -331,9 +332,8 @@ void JSphGpu::AllocGpuMemoryParticles(unsigned np,float over){
   if(CaseNfloat){
     ArraysGpu->AddArrayCount(JArraysGpu::SIZE_4B,4);  //-FtMasspg
   }
-  if(TShifting!=SHIFT_None){
-    ArraysGpu->AddArrayCount(JArraysGpu::SIZE_12B,1); //-shiftpos
-    if(ShiftTFS)ArraysGpu->AddArrayCount(JArraysGpu::SIZE_4B,1); //-shiftdetectc
+  if(Shifting){
+    ArraysGpu->AddArrayCount(JArraysGpu::SIZE_16B,1); //-shiftposfs
   }
   if(InOut){  //<vs_innlet_ini>
     ArraysGpu->AddArrayCount(JArraysGpu::SIZE_4B,1);  //-InOutPartg
@@ -644,7 +644,6 @@ void JSphGpu::ConfigBlockSizes(bool usezone,bool useperi){
   BlockSizesStr="";
   if(CellMode==CELLMODE_2H || CellMode==CELLMODE_H){
     const bool lamsps=(TVisco==VISCO_LaminarSPS);
-    const bool shift=(TShifting!=SHIFT_None);
     BlockSizes.forcesbound=BlockSizes.forcesfluid=BlockSizes.forcesdem=BSIZE_FIXED;
     //-Collects kernel information.
     StKerInfo kerinfo;
@@ -653,7 +652,7 @@ void JSphGpu::ConfigBlockSizes(bool usezone,bool useperi){
       const StInterParmsg parms=StrInterParmsg(Simulate2D
         ,Symmetry  //<vs_syymmetry>
         ,Psingle,TKernel,FtMode
-        ,lamsps,TDensity,TShifting
+        ,lamsps,TDensity,ShiftingMode
         ,CellMode
         ,0,0,0,0,100,0,0
         ,0,DivAxis
@@ -664,7 +663,7 @@ void JSphGpu::ConfigBlockSizes(bool usezone,bool useperi){
         ,NULL,NULL
         ,NULL,NULL,NULL,NULL
         ,NULL
-        ,NULL,NULL
+        ,NULL
         ,NULL
         ,&kerinfo,NULL);
       cusph::Interaction_Forces(parms);
@@ -856,11 +855,12 @@ void JSphGpu::PreInteractionVars_Forces(unsigned np,unsigned npb){
   cudaMemset(ViscDtg,0,sizeof(float)*np);                                //ViscDtg[]=0
   cudaMemset(Arg,0,sizeof(float)*np);                                    //Arg[]=0
   if(Deltag)cudaMemset(Deltag,0,sizeof(float)*np);                       //Deltag[]=0
-  if(ShiftPosg)cudaMemset(ShiftPosg,0,sizeof(tfloat3)*np);               //ShiftPosg[]=0
-  if(ShiftDetectg)cudaMemset(ShiftDetectg,0,sizeof(float)*np);           //ShiftDetectg[]=0
   cudaMemset(Aceg,0,sizeof(tfloat3)*npb);                                //Aceg[]=(0,0,0) para bound //Aceg[]=(0,0,0) for the boundary
   cusph::InitArray(npf,Aceg+npb,Gravity);                                //Aceg[]=Gravity para fluid //Aceg[]=Gravity for the fluid
   if(SpsGradvelg)cudaMemset(SpsGradvelg+npb,0,sizeof(tsymatrix3f)*npf);  //SpsGradvelg[]=(0,0,0,0,0,0).
+
+  //-Select particles for shifting.
+  if(ShiftPosfsg)Shifting->InitGpu(npf,npb,Posxyg,Poszg,ShiftPosfsg);
 
   //-Apply the extra forces to the correct particle sets.
   if(AccInput)AddAccInput();
@@ -877,10 +877,7 @@ void JSphGpu::PreInteraction_Forces(){
   Arg=ArraysGpu->ReserveFloat();
   Aceg=ArraysGpu->ReserveFloat3();
   if(DDTArray)Deltag=ArraysGpu->ReserveFloat();
-  if(TShifting!=SHIFT_None){
-    ShiftPosg=ArraysGpu->ReserveFloat3();
-    if(ShiftTFS)ShiftDetectg=ArraysGpu->ReserveFloat();
-  }   
+  if(Shifting)ShiftPosfsg=ArraysGpu->ReserveFloat4();
   if(TVisco==VISCO_LaminarSPS)SpsGradvelg=ArraysGpu->ReserveSymatrix3f();
 
   //-Prepares data for interation Pos-Single.
@@ -913,8 +910,7 @@ void JSphGpu::PosInteraction_Forces(){
   ArraysGpu->Free(Aceg);         Aceg=NULL;
   ArraysGpu->Free(ViscDtg);      ViscDtg=NULL;
   ArraysGpu->Free(Deltag);       Deltag=NULL;
-  ArraysGpu->Free(ShiftPosg);    ShiftPosg=NULL;
-  ArraysGpu->Free(ShiftDetectg); ShiftDetectg=NULL;
+  ArraysGpu->Free(ShiftPosfsg);  ShiftPosfsg=NULL;
   ArraysGpu->Free(PsPospressg);  PsPospressg=NULL;
   ArraysGpu->Free(SpsGradvelg);  SpsGradvelg=NULL;
 }
@@ -925,8 +921,7 @@ void JSphGpu::PosInteraction_Forces(){
 //==============================================================================
 void JSphGpu::ComputeVerlet(double dt){  //pdtedom
   TmgStart(Timers,TMG_SuComputeStep);
-  const bool floatings=(WithFloating);
-  const bool shift=TShifting!=SHIFT_None;
+  const bool shift=(ShiftingMode!=SHIFT_None);
   VerletStep++;
   //-Allocates memory to compute the displacement.
   //-Asigna memoria para calcular el desplazamiento.
@@ -935,11 +930,12 @@ void JSphGpu::ComputeVerlet(double dt){  //pdtedom
   //-Computes displacement, velocity and density.
   //-Calcula desplazamiento, velocidad y densidad.
   if(VerletStep<VerletSteps){
-    const double twodt=dt+dt;
-    cusph::ComputeStepVerlet(floatings,shift,Np,Npb,Velrhopg,VelrhopM1g,Arg,Aceg,ShiftPosg,dt,twodt,RhopOutMin,RhopOutMax,Codeg,movxyg,movzg,VelrhopM1g);
+    cusph::ComputeStepVerlet(WithFloating,shift,Np,Npb,Velrhopg,VelrhopM1g,Arg
+      ,Aceg,ShiftPosfsg,dt,dt+dt,RhopOutMin,RhopOutMax,Codeg,movxyg,movzg,VelrhopM1g);
   }
   else{
-    cusph::ComputeStepVerlet(floatings,shift,Np,Npb,Velrhopg,Velrhopg,Arg,Aceg,ShiftPosg,dt,dt,RhopOutMin,RhopOutMax,Codeg,movxyg,movzg,VelrhopM1g);
+    cusph::ComputeStepVerlet(WithFloating,shift,Np,Npb,Velrhopg,Velrhopg,Arg
+      ,Aceg,ShiftPosfsg,dt,dt,RhopOutMin,RhopOutMax,Codeg,movxyg,movzg,VelrhopM1g);
     VerletStep=0;
   }
   //-The new values are calculated in VelRhopM1g.
@@ -947,7 +943,7 @@ void JSphGpu::ComputeVerlet(double dt){  //pdtedom
   swap(Velrhopg,VelrhopM1g);   //-Exchanges Velrhopg and VelrhopM1g. | Intercambia Velrhopg y VelrhopM1g.
   //-Applies displacement to non-periodic fluid particles.
   //-Aplica desplazamiento a las particulas fluid no periodicas.
-  cusph::ComputeStepPos(PeriActive,floatings,Np,Npb,movxyg,movzg,Posxyg,Poszg,Dcellg,Codeg);
+  cusph::ComputeStepPos(PeriActive,WithFloating,Np,Npb,movxyg,movzg,Posxyg,Poszg,Dcellg,Codeg);
   //-Frees memory allocated for the diplacement.
   ArraysGpu->Free(movxyg);   movxyg=NULL;
   ArraysGpu->Free(movzg);    movzg=NULL;
@@ -960,8 +956,7 @@ void JSphGpu::ComputeVerlet(double dt){  //pdtedom
 //==============================================================================
 void JSphGpu::ComputeSymplecticPre(double dt){
   TmgStart(Timers,TMG_SuComputeStep);
-  const bool floatings=(WithFloating);
-  const bool shift=(TShifting!=SHIFT_None);
+  const bool shift=(ShiftingMode!=SHIFT_None);
   //-Allocates memory to PRE variables.
   PosxyPreg=ArraysGpu->ReserveDouble2();
   PoszPreg=ArraysGpu->ReserveDouble();
@@ -976,10 +971,11 @@ void JSphGpu::ComputeSymplecticPre(double dt){
   double *movzg=ArraysGpu->ReserveDouble();
   //-Compute displacement, velocity and density.
   const double dt05=dt*.5;
-  cusph::ComputeStepSymplecticPre(floatings,shift,Np,Npb,VelrhopPreg,Arg,Aceg,ShiftPosg,dt05,RhopOutMin,RhopOutMax,Codeg,movxyg,movzg,Velrhopg);
+  cusph::ComputeStepSymplecticPre(WithFloating,shift,Np,Npb,VelrhopPreg,Arg
+    ,Aceg,ShiftPosfsg,dt05,RhopOutMin,RhopOutMax,Codeg,movxyg,movzg,Velrhopg);
   //-Applies displacement to non-periodic fluid particles.
   //-Aplica desplazamiento a las particulas fluid no periodicas.
-  cusph::ComputeStepPos2(PeriActive,floatings,Np,Npb,PosxyPreg,PoszPreg,movxyg,movzg,Posxyg,Poszg,Dcellg,Codeg);
+  cusph::ComputeStepPos2(PeriActive,WithFloating,Np,Npb,PosxyPreg,PoszPreg,movxyg,movzg,Posxyg,Poszg,Dcellg,Codeg);
   //-Frees memory allocated for the displacement
   ArraysGpu->Free(movxyg);   movxyg=NULL;
   ArraysGpu->Free(movzg);    movzg=NULL;
@@ -996,17 +992,17 @@ void JSphGpu::ComputeSymplecticPre(double dt){
 //==============================================================================
 void JSphGpu::ComputeSymplecticCorr(double dt){
   TmgStart(Timers,TMG_SuComputeStep);
-  const bool floatings=(WithFloating);
-  const bool shift=(TShifting!=SHIFT_None);
+  const bool shift=(ShiftingMode!=SHIFT_None);
   //-Allocates memory to calculate the displacement.
   double2 *movxyg=ArraysGpu->ReserveDouble2();
   double *movzg=ArraysGpu->ReserveDouble();
   //-Computes displacement, velocity and density.
   const double dt05=dt*.5;
-  cusph::ComputeStepSymplecticCor(floatings,shift,Np,Npb,VelrhopPreg,Arg,Aceg,ShiftPosg,dt05,dt,RhopOutMin,RhopOutMax,Codeg,movxyg,movzg,Velrhopg);
+  cusph::ComputeStepSymplecticCor(WithFloating,shift,Np,Npb,VelrhopPreg
+    ,Arg,Aceg,ShiftPosfsg,dt05,dt,RhopOutMin,RhopOutMax,Codeg,movxyg,movzg,Velrhopg);
   //-Applies displacement to non-periodic fluid particles.
   //-Aplica desplazamiento a las particulas fluid no periodicas.
-  cusph::ComputeStepPos2(PeriActive,floatings,Np,Npb,PosxyPreg,PoszPreg,movxyg,movzg,Posxyg,Poszg,Dcellg,Codeg);
+  cusph::ComputeStepPos2(PeriActive,WithFloating,Np,Npb,PosxyPreg,PoszPreg,movxyg,movzg,Posxyg,Poszg,Dcellg,Codeg);
   //-Frees memory allocated for diplacement.
   ArraysGpu->Free(movxyg);   movxyg=NULL;
   ArraysGpu->Free(movzg);    movzg=NULL;
@@ -1053,8 +1049,7 @@ double JSphGpu::DtVariable(bool final){
 //==============================================================================
 void JSphGpu::RunShifting(double dt){
   TmgStart(Timers,TMG_SuShifting);
-  const double coeftfs=(Simulate2D? 2.0: 3.0)-ShiftTFS;
-  cusph::RunShifting(Np,Npb,dt,ShiftCoef,ShiftTFS,coeftfs,Velrhopg,ShiftDetectg,ShiftPosg);
+  Shifting->RunGpu(Np-Npb,Npb,dt,Velrhopg,ShiftPosfsg);
   TmgStop(Timers,TMG_SuShifting);
 }
 

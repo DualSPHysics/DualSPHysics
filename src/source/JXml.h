@@ -40,6 +40,8 @@
 //:# - Se elimino CountElement() porque ya existia CountElements(). (15-02-2018)
 //:# - Permite valores por defecto en funciones ReadElementDouble3(), ReadElementInt3(), ReadElementFloat3(). (13-02-2019)
 //:# - Comprueba que los valores enteros o reales del XML son validos.  (14-06-2019)
+//:# - Funcion CheckElementNames() mejorada. (25-11-2019)
+//:# - Funciones AddElementAttrib() y MakeElementAttrib() para bool. (08-12-2019)
 //:#############################################################################
 
 /// \file JXml.h \brief Declares the class \ref JXml.
@@ -124,6 +126,11 @@ public:
   /// Returns the filename of the current xml with row of the requested node.
   //==============================================================================
   std::string ErrGetFileRow(const TiXmlNode* node)const;
+
+  //==============================================================================
+  /// Returns the filename of the current xml with row of the first element in the node.
+  //==============================================================================
+  std::string ErrGetFileRow(const TiXmlNode* node,const std::string &firstelement)const;
 
   //==============================================================================
   /// Throws an exception with the xml node and the name of the element.
@@ -678,7 +685,19 @@ public:
   /// \param attrib Name of the attribute.
   /// \param v Value of the attribute.
   //==============================================================================
-  static TiXmlElement MakeElementAttrib(const std::string &name,const std::string &attrib,unsigned v){ return(MakeElementAttrib(name,attrib,v));}
+  static TiXmlElement MakeElementAttrib(const std::string &name,const std::string &attrib,unsigned v){ 
+    return(MakeElementAttrib(name,attrib,v));
+  }
+
+  //==============================================================================
+  /// Creates and returns an element with an attribute of type boolean.
+  /// \param name Name of the element.
+  /// \param attrib Name of the attribute.
+  /// \param v Value of the attribute.
+  //==============================================================================
+  static TiXmlElement MakeElementAttrib(const std::string &name,const std::string &attrib,bool v){ 
+    return(MakeElementAttrib(name,attrib,std::string(v? "true": "false")));
+  }
 
 
   //-Insertion of new element in node.
@@ -742,7 +761,9 @@ public:
   /// \param v Value of the element.
   /// \param fmt Format to be converted to text (used by printf()).
   //==============================================================================
-  static TiXmlElement* AddElementAttrib(TiXmlNode* node,const std::string &name,const std::string &attrib,double v,const char* fmt="%g"){ return(node->InsertEndChild(MakeElementAttrib(name,attrib,v,fmt))->ToElement()); }
+  static TiXmlElement* AddElementAttrib(TiXmlNode* node,const std::string &name,const std::string &attrib,double v,const char* fmt="%g"){ 
+    return(node->InsertEndChild(MakeElementAttrib(name,attrib,v,fmt))->ToElement()); 
+  }
   
   //==============================================================================
   /// Adds a new element of type unsigned to the node and returns the element.
@@ -751,7 +772,9 @@ public:
   /// \param attrib Name of the attribute.
   /// \param v Value of the element.
   //==============================================================================
-  static TiXmlElement* AddElementAttrib(TiXmlNode* node,const std::string &name,const std::string &attrib,unsigned v){ return(node->InsertEndChild(MakeElementAttrib(name,attrib,v))->ToElement()); }
+  static TiXmlElement* AddElementAttrib(TiXmlNode* node,const std::string &name,const std::string &attrib,unsigned v){ 
+    return(node->InsertEndChild(MakeElementAttrib(name,attrib,v))->ToElement()); 
+  }
   
   //==============================================================================
   /// Adds a new element of type int to the node and returns the element.
@@ -760,7 +783,9 @@ public:
   /// \param attrib Name of the attribute.
   /// \param v Value of the element.
   //==============================================================================
-  static TiXmlElement* AddElementAttrib(TiXmlNode* node,const std::string &name,const std::string &attrib,int v){ return(node->InsertEndChild(MakeElementAttrib(name,attrib,v))->ToElement()); }
+  static TiXmlElement* AddElementAttrib(TiXmlNode* node,const std::string &name,const std::string &attrib,int v){ 
+    return(node->InsertEndChild(MakeElementAttrib(name,attrib,v))->ToElement()); 
+  }
   
   //==============================================================================
   /// Adds a new element of type string to the node and returns the element.
@@ -769,14 +794,40 @@ public:
   /// \param attrib Name of the attribute.
   /// \param v Value of the element..
   //==============================================================================
-  static TiXmlElement* AddElementAttrib(TiXmlNode* node,const std::string &name,const std::string &attrib,const std::string &v){ return(node->InsertEndChild(MakeElementAttrib(name,attrib,v))->ToElement()); }
+  static TiXmlElement* AddElementAttrib(TiXmlNode* node,const std::string &name,const std::string &attrib,const std::string &v){ 
+    return(node->InsertEndChild(MakeElementAttrib(name,attrib,v))->ToElement()); 
+  }
+  
+  //==============================================================================
+  /// Adds a new element of type char* to the node and returns the element.
+  /// \param node Xml node to which the element node is created.
+  /// \param name Name of the element.
+  /// \param attrib Name of the attribute.
+  /// \param v Value of the element..
+  //==============================================================================
+  static TiXmlElement* AddElementAttrib(TiXmlNode* node,const std::string &name,const std::string &attrib,const char *v){ 
+    return(node->InsertEndChild(MakeElementAttrib(name,attrib,std::string(v)))->ToElement()); 
+  }
+  
+  //==============================================================================
+  /// Adds a new element of type boolean to the node and returns the element.
+  /// \param node Xml node to which the element node is created.
+  /// \param name Name of the element.
+  /// \param attrib Name of the attribute.
+  /// \param v Value of the element.
+  //==============================================================================
+  static TiXmlElement* AddElementAttrib(TiXmlNode* node,const std::string &name,const std::string &attrib,bool v){ 
+    return(node->InsertEndChild(MakeElementAttrib(name,attrib,v))->ToElement()); 
+  }
   
   //==============================================================================
   /// Adds a new element to the node and returns the element.
   /// \param node Xml node to which the element node is created.
   /// \param name Name of the element.
   //==============================================================================
-  static TiXmlElement* AddElement(TiXmlNode* node,const std::string &name){ TiXmlElement item(name.c_str()); return(node->InsertEndChild(item)->ToElement()); }
+  static TiXmlElement* AddElement(TiXmlNode* node,const std::string &name){ 
+    TiXmlElement item(name.c_str()); return(node->InsertEndChild(item)->ToElement()); 
+  }
 
 public:
   //==============================================================================

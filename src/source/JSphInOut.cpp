@@ -1909,19 +1909,18 @@ void JSphInOut::UpdateVelrhopM1Gpu(unsigned inoutcount,const int *inoutpartg
 /// Pone a cero las variables de la interaccion (ace,ar,shiftpos) de las particulas inout.
 //==============================================================================
 void JSphInOut::ClearInteractionVarsCpu(unsigned inoutcount,const int *inoutpart
-    ,tfloat3 *ace,float *ar,tfloat3 *shiftpos)
+    ,tfloat3 *ace,float *ar,tfloat4 *shiftposfs)
 {
   if(ace==NULL || ar==NULL)RunException("ClearInteractionVarsCpu","Some pointer is NULL.");
-  const tfloat3 zero3=TFloat3(0);
   const int ncp=int(inoutcount);
   #ifdef OMP_USE
     #pragma omp parallel for schedule (static)
   #endif
   for(int cp=0;cp<ncp;cp++){
     const unsigned p=(unsigned)inoutpart[cp];
-    ace[p]=zero3;
+    ace[p]=TFloat3(0);
     ar[p]=0;
-    if(shiftpos)shiftpos[p]=zero3;
+    if(shiftposfs)shiftposfs[p]=TFloat4(0);
   }
 }
 
@@ -1931,10 +1930,10 @@ void JSphInOut::ClearInteractionVarsCpu(unsigned inoutcount,const int *inoutpart
 /// Pone a cero las variables de la interaccion (ace,ar,shiftpos) de las particulas inout.
 //==============================================================================
 void JSphInOut::ClearInteractionVarsGpu(unsigned inoutcount,const int *inoutpartg
-    ,float3 *aceg,float *arg,float *viscdtg,float3 *shiftposg)
+    ,float3 *aceg,float *arg,float *viscdtg,float4 *shiftposfsg)
 {
   if(aceg==NULL || arg==NULL || viscdtg==NULL)RunException("ClearInteractionVarsGpu","Some pointer is NULL.");
-  cusphinout::InoutClearInteractionVars(inoutcount,inoutpartg,aceg,arg,viscdtg,shiftposg);
+  cusphinout::InoutClearInteractionVars(inoutcount,inoutpartg,aceg,arg,viscdtg,shiftposfsg);
 }
 #endif
 

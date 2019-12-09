@@ -57,6 +57,7 @@ class JPartDataBi4;
 class JPartOutBi4Save;
 class JPartFloatBi4Save;
 class JPartsOut;
+class JShifting;
 class JDamping;
 class JXml;
 class JTimeOut;
@@ -173,10 +174,6 @@ protected:
   float DDTValue;             ///<Value used with Density Diffusion Term (default=0.1)
   bool DDTArray;              ///<Use extra array to compute Density Diffusion Term. The correction is applied after particle interaction. 
 
-  TpShifting TShifting;       ///<Type of Shifting: None, NoBound, NoFixed, Full.
-  float ShiftCoef;            ///<Coefficient for shifting computation.
-  float ShiftTFS;             ///<Threshold to detect free surface. Typically 1.5 for 2D and 2.75 for 3D (def=0).
-
   float Visco;  
   float ViscoBoundFactor;     ///<For boundary interaction use Visco*ViscoBoundFactor.                  | Para interaccion con contorno usa Visco*ViscoBoundFactor.
   JSphVisco *ViscoTime;       ///<Provides a viscosity value as a function of simulation time.          | Proporciona un valor de viscosidad en funcion del instante de la simulacion.
@@ -214,7 +211,7 @@ protected:
 
   //-Constants for computation.
   float H,CteB,Gamma,CFLnumber,RhopZero;
-  double Dp;
+  double Dp;               ///<Initial distance between particles.
   double Cs0;
   float DDT2h;             ///<Constant for DDT1 & DDT2. DDT2h=DDTValue*2*H
   float DDTgz;             ///<Constant for DDT2.        DDTgz=RhopZero*Gravity.z/CteB
@@ -285,6 +282,9 @@ protected:
   JMLPistons *MLPistons;        ///<Object for Multi-Layer Pistons.   //<vs_mlapiston>
 
   JRelaxZones *RelaxZones;      ///<Object for wave generation using Relaxation Zone (RZ).  //<vs_rzone>
+
+  JShifting *Shifting;          ///<Object for shifting correction.
+  TpShifting ShiftingMode;      ///<Mode of Shifting: None, NoBound, NoFixed, Full.
 
   JDamping *Damping;            ///<Object for damping zones.
 
@@ -432,7 +432,6 @@ public:
   static std::string GetViscoName(TpVisco tvisco);
   static std::string GetBoundName(TpBoundary tboundary);
   static std::string GetDDTName(TpDensity tdensity);
-  static std::string GetShiftingName(TpShifting tshift);
 
   std::string GetDDTConfig()const;
 

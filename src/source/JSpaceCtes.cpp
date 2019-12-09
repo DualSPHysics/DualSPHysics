@@ -26,23 +26,23 @@
 //##############################################################################
 //# JSpaceCtes
 //##############################################################################
-//==============================================================================
-/// Compute constants using parameters nonzero.
-//==============================================================================
-JSpaceCtes::StConstants JSpaceCtes::CalcConstans(StConstants cte){
-  const double dim=(cte.data2d? 2: 3);
-  const double dpvol=(cte.data2d? cte.dp*cte.dp: cte.dp*cte.dp*cte.dp);
-  const double mg=sqrt((cte.gravity.x*cte.gravity.x)+(cte.gravity.y*cte.gravity.y)+(cte.gravity.z*cte.gravity.z));
-  if(cte.coefh)cte.coefhdp=cte.coefh*sqrt(dim);
-  else cte.coefh=cte.coefhdp/sqrt(dim);
-  if(!cte.cteh)cte.cteh=cte.coefh*sqrt(dim)*cte.dp;
-  if(!cte.massbound)cte.massbound=dpvol*cte.rhop0;
-  if(!cte.massfluid)cte.massfluid=dpvol*cte.rhop0;
-  if(!cte.speedsystem)cte.speedsystem=sqrt(mg*cte.hswl);
-  if(!cte.speedsound)cte.speedsound=std::max(cte.coefsound*cte.speedsystem,10.*sqrt(mg*cte.hswl));
-  if(!cte.cteb)cte.cteb=cte.speedsound*cte.speedsound*cte.rhop0/cte.gamma;
-  return(cte);
-}
+////==============================================================================
+///// Compute constants using parameters nonzero.
+////==============================================================================
+//JSpaceCtes::StConstants JSpaceCtes::CalcConstans(StConstants cte){
+//  const double dim=(cte.data2d? 2: 3);
+//  const double dpvol=(cte.data2d? cte.dp*cte.dp: cte.dp*cte.dp*cte.dp);
+//  const double mg=sqrt((cte.gravity.x*cte.gravity.x)+(cte.gravity.y*cte.gravity.y)+(cte.gravity.z*cte.gravity.z));
+//  if(cte.coefh)cte.coefhdp=cte.coefh*sqrt(dim);
+//  else cte.coefh=cte.coefhdp/sqrt(dim);
+//  if(!cte.cteh)cte.cteh=cte.coefh*sqrt(dim)*cte.dp;
+//  if(!cte.massbound)cte.massbound=dpvol*cte.rhop0;
+//  if(!cte.massfluid)cte.massfluid=dpvol*cte.rhop0;
+//  if(!cte.speedsystem)cte.speedsystem=sqrt(mg*cte.hswl);
+//  if(!cte.speedsound)cte.speedsound=std::max(cte.coefsound*cte.speedsystem,10.*sqrt(mg*cte.hswl));
+//  if(!cte.cteb)cte.cteb=cte.speedsound*cte.speedsound*cte.rhop0/cte.gamma;
+//  return(cte);
+//}
 
 //==============================================================================
 /// Constructor.
@@ -56,6 +56,8 @@ JSpaceCtes::JSpaceCtes(){
 /// Initialisation of variables.
 //==============================================================================
 void JSpaceCtes::Reset(){
+  SetData2D(false);
+  Data2DDefined=false;
   SetLatticeBound(true);
   SetLatticeFluid(true);
   Gravity=TDouble3(0);
@@ -188,6 +190,9 @@ void JSpaceCtes::WriteXmlDef(JXml *sxml,TiXmlElement* node,bool svtemplate)const
 /// Reads constants for execution of the case of xml node.
 //==============================================================================
 void JSpaceCtes::ReadXmlRun(JXml *sxml,TiXmlElement* node){
+  const bool data2d=sxml->ReadElementBool(node,"data2d","value");
+  const double data2dposy=(data2d? sxml->ReadElementDouble(node,"data2dposy","value"): 0);
+  SetData2D(data2d,data2dposy);
   SetGravity(sxml->ReadElementDouble3(node,"gravity"));
   SetCFLnumber(sxml->ReadElementDouble(node,"cflnumber","value"));
   SetGamma(sxml->ReadElementDouble(node,"gamma","value"));
@@ -204,6 +209,10 @@ void JSpaceCtes::ReadXmlRun(JXml *sxml,TiXmlElement* node){
 /// Writes constants for execution of the case of xml node.
 //==============================================================================
 void JSpaceCtes::WriteXmlRun(JXml *sxml,TiXmlElement* node)const{
+  if(Data2DDefined){
+    WriteXmlElementComment(JXml::AddElementAttrib(node,"data2d","value",GetData2D()));
+    if(GetData2D())WriteXmlElementComment(JXml::AddElementAttrib(node,"data2dposy","value",GetData2DPosY()),"","metres (m)");
+  }
   WriteXmlElementComment(JXml::AddElementDouble3(node,"gravity",GetGravity()),"","m/s^2");
   WriteXmlElementComment(JXml::AddElementAttrib(node,"cflnumber","value",GetCFLnumber()));
   WriteXmlElementComment(JXml::AddElementAttrib(node,"gamma","value",GetGamma()));

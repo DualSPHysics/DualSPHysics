@@ -21,6 +21,7 @@
 #include "JXml.h"
 #include "Functions.h"
 
+#include <climits>
 #include <ctime>
 #include <sys/stat.h>
 
@@ -186,8 +187,15 @@ void JXml::RemoveNode(const std::string &path){
 /// Returns the filename of the current xml with row of the requested node.
 //==============================================================================
 std::string JXml::ErrGetFileRow(const TiXmlNode* node)const{
-  char cad[128]; sprintf(cad,"(row:%d)",node->Row());
-  return(FileReading+cad);
+  return(FileReading+(node? fun::PrintStr("(row:%d)",node->Row()): string("(row:?)")));
+}
+
+//==============================================================================
+/// Returns the filename of the current xml with row of the first element in the node.
+//==============================================================================
+std::string JXml::ErrGetFileRow(const TiXmlNode* node,const std::string &firstelement)const{
+  TiXmlNode* ele=GetFirstElement(node,firstelement,true);
+  return(ErrGetFileRow(ele? ele: node));
 }
 
 //==============================================================================
@@ -230,25 +238,49 @@ void JXml::ErrReadAtrib(const TiXmlElement* ele,const std::string &atrib,bool mi
 //==============================================================================
 /// Throws an exception if there are unknown or repeated elements.
 /// \param lis Xml element to check.
-/// \param names List of valid names (separated by spaces).
+/// \param names List of valid names (separated by spaces and *name for repeatable names).
 /// \param checkrepeated Checks if there are repeated elements.
 //==============================================================================
 void JXml::CheckElementNames(TiXmlElement* lis,bool checkrepeated,std::string names)const{
-  std::string listenames=" ";
-  names=std::string(" ")+names+" ";
+  //-Create list of elements.
+  vector<string> vnames;
+  vector<string> vnamesr;
+  const unsigned nv=fun::VectorSplitStr(" ",fun::StrTrimRepeated(names),vnames);
+  for(unsigned c=0;c<nv;c++){
+    if(vnames[c][0]=='*'){
+      vnames[c]=vnames[c].substr(1);
+      vnamesr.push_back(vnames[c]);
+    }
+  }
+  vector<string> vused;
   TiXmlElement* ele=lis->FirstChildElement(); 
   while(ele){
     std::string ename=ele->Value();
     if(!ename.empty() && ename[0]!='_'){
-      //printf("++> ename:[%s]\n",ename.c_str());
-      if(int(names.find(std::string(" ")+ename+" "))<0)ErrReadElement(ele,ename,false); //-Error elemento desconocido.
+      if(fun::VectorFind(ename,vnames)==UINT_MAX)ErrReadElement(ele,ename,false); //-Error: unknown element.
       if(checkrepeated){
-        if(int(listenames.find(std::string(" ")+ename+" "))>=0)ErrReadElement(ele,ename,false); //-Error elemento repetido.
-        listenames=listenames+ename+" ";
+        const bool rname=(fun::VectorFind(ename,vnamesr)!=UINT_MAX); //-Repeatable element.
+        if(!rname && fun::VectorFind(ename,vused)!=UINT_MAX)ErrReadElement(ele,ename,false); //-Error: repeated element.
+        if(!rname)vused.push_back(ename);
       }
     }
     ele=ele->NextSiblingElement();
   }
+  //std::string listenames=" ";
+  //names=std::string(" ")+names+" ";
+  //TiXmlElement* ele=lis->FirstChildElement(); 
+  //while(ele){
+  //  std::string ename=ele->Value();
+  //  if(!ename.empty() && ename[0]!='_'){
+  //    //printf("++> ename:[%s]\n",ename.c_str());
+  //    if(int(names.find(std::string(" ")+ename+" "))<0)ErrReadElement(ele,ename,false); //-Error elemento desconocido.
+  //    if(checkrepeated){
+  //      if(int(listenames.find(std::string(" ")+ename+" "))>=0)ErrReadElement(ele,ename,false); //-Error elemento repetido.
+  //      listenames=listenames+ename+" ";
+  //    }
+  //  }
+  //  ele=ele->NextSiblingElement();
+  //}
 }
 
 //==============================================================================

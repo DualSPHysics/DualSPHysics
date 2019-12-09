@@ -37,6 +37,7 @@
 #include "JSphAccInput.h"
 #include "JGaugeSystem.h"
 #include "JSphBoundCorr.h"  //<vs_innlet>
+#include "JShifting.h"
 #include <climits>
 
 using namespace std;
@@ -79,7 +80,7 @@ void JSphCpu::InitVars(){
   PsPosc=NULL;                    //-Interaccion Pos-Single.
   SpsTauc=NULL; SpsGradvelc=NULL; //-Laminar+SPS. 
   Arc=NULL; Acec=NULL; Deltac=NULL;
-  ShiftPosc=NULL; ShiftDetectc=NULL; //-Shifting.
+  ShiftPosfsc=NULL;               //-Shifting.
   Pressc=NULL;
   RidpMove=NULL; 
   FtRidp=NULL;
@@ -166,8 +167,8 @@ void JSphCpu::AllocCpuMemoryParticles(unsigned np,float over){
   if(TVisco==VISCO_LaminarSPS){     
     ArraysCpu->AddArrayCount(JArraysCpu::SIZE_24B,1); //-SpsTau,SpsGradvel
   }
-  if(TShifting!=SHIFT_None){
-    ArraysCpu->AddArrayCount(JArraysCpu::SIZE_12B,1); //-shiftpos
+  if(Shifting){
+    ArraysCpu->AddArrayCount(JArraysCpu::SIZE_16B,1); //-shiftposfs
   }
   if(InOut){  //<vs_innlet_ini>
     ArraysCpu->AddArrayCount(JArraysCpu::SIZE_4B,1);  //-InOutPart
@@ -470,11 +471,12 @@ void JSphCpu::PreInteractionVars_Forces(unsigned np,unsigned npb){
   const unsigned npf=np-npb;
   memset(Arc,0,sizeof(float)*np);                                    //Arc[]=0
   if(Deltac)memset(Deltac,0,sizeof(float)*np);                       //Deltac[]=0
-  if(ShiftPosc)memset(ShiftPosc,0,sizeof(tfloat3)*np);               //ShiftPosc[]=0
-  if(ShiftDetectc)memset(ShiftDetectc,0,sizeof(float)*np);           //ShiftDetectc[]=0
   memset(Acec,0,sizeof(tfloat3)*npb);                                //Acec[]=(0,0,0) for bound / para bound
   for(unsigned p=npb;p<np;p++)Acec[p]=Gravity;                       //Acec[]=Gravity for fluid / para fluid
   if(SpsGradvelc)memset(SpsGradvelc+npb,0,sizeof(tsymatrix3f)*npf);  //SpsGradvelc[]=(0,0,0,0,0,0).
+
+  //-Select particles for shifting.
+  if(ShiftPosfsc)Shifting->InitCpu(npf,npb,Posc,ShiftPosfsc);
 
   //-Apply the extra forces to the correct particle sets.
   if(AccInput)AddAccInput();
@@ -500,10 +502,7 @@ void JSphCpu::PreInteraction_Forces(){
   Arc=ArraysCpu->ReserveFloat();
   Acec=ArraysCpu->ReserveFloat3();
   if(DDTArray)Deltac=ArraysCpu->ReserveFloat();
-  if(TShifting!=SHIFT_None){
-    ShiftPosc=ArraysCpu->ReserveFloat3();
-    if(ShiftTFS)ShiftDetectc=ArraysCpu->ReserveFloat();
-  }   
+  if(Shifting)ShiftPosfsc=ArraysCpu->ReserveFloat4();
   Pressc=ArraysCpu->ReserveFloat();
   if(TVisco==VISCO_LaminarSPS)SpsGradvelc=ArraysCpu->ReserveSymatrix3f();
 
@@ -585,8 +584,7 @@ void JSphCpu::PosInteraction_Forces(){
   ArraysCpu->Free(Arc);          Arc=NULL;
   ArraysCpu->Free(Acec);         Acec=NULL;
   ArraysCpu->Free(Deltac);       Deltac=NULL;
-  ArraysCpu->Free(ShiftPosc);    ShiftPosc=NULL;
-  ArraysCpu->Free(ShiftDetectc); ShiftDetectc=NULL;
+  ArraysCpu->Free(ShiftPosfsc);  ShiftPosfsc=NULL;
   ArraysCpu->Free(Pressc);       Pressc=NULL;
   ArraysCpu->Free(PsPosc);       PsPosc=NULL;
   ArraysCpu->Free(SpsGradvelc);  SpsGradvelc=NULL;
@@ -887,7 +885,7 @@ template<bool psingle,TpKernel tker,TpFtMode ftmode,bool lamsps,TpDensity tdensi
   ,const tdouble3 *pos,const tfloat3 *pspos,const tfloat4 *velrhop,const typecode *code,const unsigned *idp
   ,const float *press 
   ,float &viscdt,float *ar,tfloat3 *ace,float *delta
-  ,TpShifting tshifting,tfloat3 *shiftpos,float *shiftdetect)const
+  ,TpShifting shiftmode,tfloat4 *shiftposfs)const
 {
   const bool boundp2=(!cellinitial); //-Interaction with type boundary (Bound). | Interaccion con Bound.
   //-Initialize viscth to calculate viscdt maximo con OpenMP. | Inicializa viscth para calcular visdt maximo con OpenMP.
@@ -902,8 +900,10 @@ template<bool psingle,TpKernel tker,TpFtMode ftmode,bool lamsps,TpDensity tdensi
     float visc=0,arp1=0,deltap1=0;
     tfloat3 acep1=TFloat3(0);
     tsymatrix3f gradvelp1={0,0,0,0,0,0};
-    tfloat3 shiftposp1=TFloat3(0);
-    float shiftdetectp1=0;
+
+    //-Variables for Shifting.
+    tfloat4 shiftposfsp1;
+    if(shift)shiftposfsp1=shiftposfs[p1];
 
     //-Obtain data of particle p1 in case of floating objects. | Obtiene datos de particula p1 en caso de existir floatings.
     bool ftp1=false;     //-Indicate if it is floating. | Indica si es floating.
@@ -912,7 +912,7 @@ template<bool psingle,TpKernel tker,TpFtMode ftmode,bool lamsps,TpDensity tdensi
       ftp1=CODE_IsFloating(code[p1]);
       if(ftp1)ftmassp1=FtObjs[CODE_GetTypeValue(code[p1])].massp;
       if(ftp1 && tdensity!=DDT_None)deltap1=FLT_MAX; //-DDT is not applied to floating particles.
-      if(ftp1 && shift)shiftposp1.x=FLT_MAX;  //-For floating objects do not calculate shifting. | Para floatings no se calcula shifting.
+      if(ftp1 && shift)shiftposfsp1.x=FLT_MAX;  //-For floating objects do not calculate shifting. | Para floatings no se calcula shifting.
     }
 
     //-Obtain data of particle p1.
@@ -964,7 +964,7 @@ template<bool psingle,TpKernel tker,TpFtMode ftmode,bool lamsps,TpDensity tdensi
               #else
                 if(ftp2 && tdensity==DDT_DDT)deltap1=FLT_MAX;
               #endif
-              if(ftp2 && shift && tshifting==SHIFT_NoBound)shiftposp1.x=FLT_MAX; //-With floating objects do not use shifting. | Con floatings anula shifting.
+              if(ftp2 && shift && shiftmode==SHIFT_NoBound)shiftposfsp1.x=FLT_MAX; //-With floating objects do not use shifting. | Con floatings anula shifting.
               compute=!(USE_FTEXTERNAL && ftp1 && (boundp2 || ftp2)); //-Deactivate when using DEM and if it is of type float-float or float-bound. | Se desactiva cuando se usa DEM y es float-float o float-bound.
             }
 
@@ -993,13 +993,13 @@ template<bool psingle,TpKernel tker,TpFtMode ftmode,bool lamsps,TpDensity tdensi
             }
 
             //-Shifting correction.
-            if(shift && shiftposp1.x!=FLT_MAX){
+            if(shift && shiftposfsp1.x!=FLT_MAX){
               const float massrhop=massp2/velrhop2.w;
-              const bool noshift=(boundp2 && (tshifting==SHIFT_NoBound || (tshifting==SHIFT_NoFixed && CODE_IsFixed(code[p2]))));
-              shiftposp1.x=(noshift? FLT_MAX: shiftposp1.x+massrhop*frx); //-For boundary do not use shifting. | Con boundary anula shifting.
-              shiftposp1.y+=massrhop*fry;
-              shiftposp1.z+=massrhop*frz;
-              shiftdetectp1-=massrhop*(drx*frx+dry*fry+drz*frz);
+              const bool noshift=(boundp2 && (shiftmode==SHIFT_NoBound || (shiftmode==SHIFT_NoFixed && CODE_IsFixed(code[p2]))));
+              shiftposfsp1.x=(noshift? FLT_MAX: shiftposfsp1.x+massrhop*frx); //-For boundary do not use shifting. | Con boundary anula shifting.
+              shiftposfsp1.y+=massrhop*fry;
+              shiftposfsp1.z+=massrhop*frz;
+              shiftposfsp1.w-=massrhop*(drx*frx+dry*fry+drz*frz);
             }
 
             //===== Viscosity ===== 
@@ -1068,10 +1068,7 @@ template<bool psingle,TpKernel tker,TpFtMode ftmode,bool lamsps,TpDensity tdensi
         gradvel[p1].yz+=gradvelp1.yz;
         gradvel[p1].zz+=gradvelp1.zz;
       }
-      if(shift && shiftpos[p1].x!=FLT_MAX){
-        shiftpos[p1]=(shiftposp1.x==FLT_MAX? TFloat3(FLT_MAX,0,0): shiftpos[p1]+shiftposp1);
-        if(shiftdetect)shiftdetect[p1]+=shiftdetectp1;
-      }
+      if(shift)shiftposfs[p1]=shiftposfsp1;
     }
   }
   //-Keep max value in viscdt. | Guarda en viscdt el valor maximo.
@@ -1231,9 +1228,9 @@ template<bool psingle,TpKernel tker,TpFtMode ftmode,bool lamsps,TpDensity tdensi
   
   if(t.npf){
     //-Interaction Fluid-Fluid.
-    InteractionForcesFluid<psingle,tker,ftmode,lamsps,tdensity,shift> (t.npf,t.npb,nc,hdiv,cellfluid,Visco                 ,t.begincell,cellzero,t.dcell,t.spstau,t.spsgradvel,t.pdpos,t.pspos,t.velrhop,t.code,t.idp,t.press,viscdt,t.ar,t.ace,t.delta,t.tshifting,t.shiftpos,t.shiftdetect);
+    InteractionForcesFluid<psingle,tker,ftmode,lamsps,tdensity,shift> (t.npf,t.npb,nc,hdiv,cellfluid,Visco                 ,t.begincell,cellzero,t.dcell,t.spstau,t.spsgradvel,t.pdpos,t.pspos,t.velrhop,t.code,t.idp,t.press,viscdt,t.ar,t.ace,t.delta,t.shiftmode,t.shiftposfs);
     //-Interaction Fluid-Bound.
-    InteractionForcesFluid<psingle,tker,ftmode,lamsps,tdensity,shift> (t.npf,t.npb,nc,hdiv,0        ,Visco*ViscoBoundFactor,t.begincell,cellzero,t.dcell,t.spstau,t.spsgradvel,t.pdpos,t.pspos,t.velrhop,t.code,t.idp,t.press,viscdt,t.ar,t.ace,t.delta,t.tshifting,t.shiftpos,t.shiftdetect);
+    InteractionForcesFluid<psingle,tker,ftmode,lamsps,tdensity,shift> (t.npf,t.npb,nc,hdiv,0        ,Visco*ViscoBoundFactor,t.begincell,cellzero,t.dcell,t.spstau,t.spsgradvel,t.pdpos,t.pspos,t.velrhop,t.code,t.idp,t.press,viscdt,t.ar,t.ace,t.delta,t.shiftmode,t.shiftposfs);
 
     //-Interaction of DEM Floating-Bound & Floating-Floating. //(DEM)
     if(UseDEM)InteractionForcesDEM<psingle> (CaseNfloat,nc,hdiv,cellfluid,t.begincell,cellzero,t.dcell,FtRidp,DemData,t.pdpos,t.pspos,t.velrhop,t.code,t.idp,viscdt,t.ace);
@@ -1248,8 +1245,8 @@ template<bool psingle,TpKernel tker,TpFtMode ftmode,bool lamsps,TpDensity tdensi
 }
 //==============================================================================
 template<bool psingle,TpKernel tker,TpFtMode ftmode,bool lamsps,TpDensity tdensity> void JSphCpu::Interaction_Forces_ct5(const stinterparmsc &t,float &viscdt)const{
-  if(TShifting)Interaction_ForcesCpuT<psingle,tker,ftmode,lamsps,tdensity,true >(t,viscdt);
-  else         Interaction_ForcesCpuT<psingle,tker,ftmode,lamsps,tdensity,false>(t,viscdt);
+  if(Shifting)Interaction_ForcesCpuT<psingle,tker,ftmode,lamsps,tdensity,true >(t,viscdt);
+  else        Interaction_ForcesCpuT<psingle,tker,ftmode,lamsps,tdensity,false>(t,viscdt);
 }
 //==============================================================================
 template<bool psingle,TpKernel tker,TpFtMode ftmode,bool lamsps> void JSphCpu::Interaction_Forces_ct4(const stinterparmsc &t,float &viscdt)const{
@@ -1369,9 +1366,9 @@ template<bool shift> void JSphCpu::ComputeVerletVarsFluid(
       double dy=double(velrhop1[p].y)*dt + double(Acec[p].y)*dt205;
       double dz=double(velrhop1[p].z)*dt + double(Acec[p].z)*dt205;
       if(shift){
-        dx+=double(ShiftPosc[p].x);
-        dy+=double(ShiftPosc[p].y);
-        dz+=double(ShiftPosc[p].z);
+        dx+=double(ShiftPosfsc[p].x);
+        dy+=double(ShiftPosfsc[p].y);
+        dz+=double(ShiftPosfsc[p].z);
       }
       bool outrhop=(rhopnew<RhopOutMin||rhopnew>RhopOutMax);
       UpdatePos(pos[p],dx,dy,dz,outrhop,p,pos,dcell,code);
@@ -1415,13 +1412,13 @@ void JSphCpu::ComputeVerlet(double dt){
   VerletStep++;
   if(VerletStep<VerletSteps){
     const double twodt=dt+dt;
-    if(TShifting)ComputeVerletVarsFluid<true>  (Velrhopc,VelrhopM1c,dt,twodt,Posc,Dcellc,Codec,VelrhopM1c);
-    else         ComputeVerletVarsFluid<false> (Velrhopc,VelrhopM1c,dt,twodt,Posc,Dcellc,Codec,VelrhopM1c);
+    if(Shifting)ComputeVerletVarsFluid<true>  (Velrhopc,VelrhopM1c,dt,twodt,Posc,Dcellc,Codec,VelrhopM1c);
+    else        ComputeVerletVarsFluid<false> (Velrhopc,VelrhopM1c,dt,twodt,Posc,Dcellc,Codec,VelrhopM1c);
     ComputeVelrhopBound(VelrhopM1c,twodt,VelrhopM1c);
   }
   else{
-    if(TShifting)ComputeVerletVarsFluid<true>  (Velrhopc,Velrhopc,dt,dt,Posc,Dcellc,Codec,VelrhopM1c);
-    else         ComputeVerletVarsFluid<false> (Velrhopc,Velrhopc,dt,dt,Posc,Dcellc,Codec,VelrhopM1c);
+    if(Shifting)ComputeVerletVarsFluid<true>  (Velrhopc,Velrhopc,dt,dt,Posc,Dcellc,Codec,VelrhopM1c);
+    else        ComputeVerletVarsFluid<false> (Velrhopc,Velrhopc,dt,dt,Posc,Dcellc,Codec,VelrhopM1c);
     ComputeVelrhopBound(Velrhopc,dt,VelrhopM1c);
     VerletStep=0;
   }
@@ -1435,8 +1432,8 @@ void JSphCpu::ComputeVerlet(double dt){
 /// Actualizacion de particulas segun fuerzas y dt usando Symplectic-Predictor.
 //==============================================================================
 void JSphCpu::ComputeSymplecticPre(double dt){
-  if(TShifting)ComputeSymplecticPreT<false>(dt); //-We strongly recommend running the shifting correction only for the corrector. If you want to re-enable shifting in the predictor, change the value here to "true".
-  else         ComputeSymplecticPreT<false>(dt);
+  if(Shifting)ComputeSymplecticPreT<false>(dt); //-We strongly recommend running the shifting correction only for the corrector. If you want to re-enable shifting in the predictor, change the value here to "true".
+  else        ComputeSymplecticPreT<false>(dt);
 }
 
 //==============================================================================
@@ -1479,9 +1476,9 @@ template<bool shift> void JSphCpu::ComputeSymplecticPreT(double dt){
       double dy=double(VelrhopPrec[p].y)*dt05;
       double dz=double(VelrhopPrec[p].z)*dt05;
       if(shift){
-        dx+=double(ShiftPosc[p].x);
-        dy+=double(ShiftPosc[p].y);
-        dz+=double(ShiftPosc[p].z);
+        dx+=double(ShiftPosfsc[p].x);
+        dy+=double(ShiftPosfsc[p].y);
+        dz+=double(ShiftPosfsc[p].z);
       }
       bool outrhop=(rhopnew<RhopOutMin||rhopnew>RhopOutMax);
       UpdatePos(PosPrec[p],dx,dy,dz,outrhop,p,Posc,Dcellc,Codec);
@@ -1510,8 +1507,8 @@ template<bool shift> void JSphCpu::ComputeSymplecticPreT(double dt){
 /// Actualizacion de particulas segun fuerzas y dt usando Symplectic-Corrector.
 //==============================================================================
 void JSphCpu::ComputeSymplecticCorr(double dt){
-  if(TShifting)ComputeSymplecticCorrT<true> (dt);
-  else         ComputeSymplecticCorrT<false>(dt);
+  if(Shifting)ComputeSymplecticCorrT<true> (dt);
+  else        ComputeSymplecticCorrT<false>(dt);
 }
 
 //==============================================================================
@@ -1552,9 +1549,9 @@ template<bool shift> void JSphCpu::ComputeSymplecticCorrT(double dt){
       double dy=(double(VelrhopPrec[p].y)+double(Velrhopc[p].y)) * dt05; 
       double dz=(double(VelrhopPrec[p].z)+double(Velrhopc[p].z)) * dt05;
       if(shift){
-        dx+=double(ShiftPosc[p].x);
-        dy+=double(ShiftPosc[p].y);
-        dz+=double(ShiftPosc[p].z);
+        dx+=double(ShiftPosfsc[p].x);
+        dy+=double(ShiftPosfsc[p].y);
+        dz+=double(ShiftPosfsc[p].z);
       }
       bool outrhop=(rhopnew<RhopOutMin||rhopnew>RhopOutMax);
       UpdatePos(PosPrec[p],dx,dy,dz,outrhop,p,Posc,Dcellc,Codec);
@@ -1608,29 +1605,7 @@ double JSphCpu::DtVariable(bool final){
 //==============================================================================
 void JSphCpu::RunShifting(double dt){
   TmcStart(Timers,TMC_SuShifting);
-  const double coeftfs=(Simulate2D? 2.0: 3.0)-ShiftTFS;
-  const int pini=int(Npb),pfin=int(Np),npf=int(Np-Npb);
-  #ifdef OMP_USE
-    #pragma omp parallel for schedule (static) if(npf>OMP_LIMIT_COMPUTELIGHT)
-  #endif
-  for(int p=pini;p<pfin;p++){
-    double vx=double(Velrhopc[p].x);
-    double vy=double(Velrhopc[p].y);
-    double vz=double(Velrhopc[p].z);
-    double umagn=double(ShiftCoef)*double(H)*sqrt(vx*vx+vy*vy+vz*vz)*dt;
-    if(ShiftDetectc){
-      if(ShiftDetectc[p]<ShiftTFS)umagn=0;
-      else umagn*=(double(ShiftDetectc[p])-ShiftTFS)/coeftfs;
-    }
-    if(ShiftPosc[p].x==FLT_MAX)umagn=0; //-Zero shifting near boundary. | Anula shifting por proximidad del contorno.
-    const float maxdist=0.1f*float(Dp); //-Max shifting distance permitted (recommended).
-    const float shiftdistx=float(double(ShiftPosc[p].x)*umagn);
-    const float shiftdisty=float(double(ShiftPosc[p].y)*umagn);
-    const float shiftdistz=float(double(ShiftPosc[p].z)*umagn);
-    ShiftPosc[p].x=(shiftdistx<maxdist? shiftdistx: maxdist);
-    ShiftPosc[p].y=(shiftdisty<maxdist? shiftdisty: maxdist);
-    ShiftPosc[p].z=(shiftdistz<maxdist? shiftdistz: maxdist);
-  }
+  Shifting->RunCpu(Np-Npb,Npb,dt,Velrhopc,ShiftPosfsc);
   TmcStop(Timers,TMC_SuShifting);
 }
 

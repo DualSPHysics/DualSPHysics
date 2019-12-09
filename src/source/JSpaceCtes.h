@@ -56,34 +56,37 @@ class TiXmlElement;
 class JSpaceCtes : protected JObject 
 {
 public:
+  ///// Defines structure to calculate constants. 
+  //typedef struct StrConstants{
+  //  bool data2d;
+  //  double data2dposy;
+  //  tdouble3 gravity;
+  //  double dp,coefh,coefhdp;
+  //  double hswl,speedsystem,coefsound,speedsound;
+  //  double gamma,rhop0;
+  //  double cteh,cteb;
+  //  double massbound;
+  //  double massfluid;
 
-  /// Defines structure to calculate constants. 
-  typedef struct StrConstants{
-    bool data2d;
-    tdouble3 gravity;
-    double dp,coefh,coefhdp;
-    double hswl,speedsystem,coefsound,speedsound;
-    double gamma,rhop0;
-    double cteh,cteb;
-    double massbound;
-    double massfluid;
-
-    StrConstants(){ Clear(); }
-    StrConstants(bool vdata2d,tdouble3 vgravity,double vdp,double vcoefh,double vcoefhdp,double vhswl
-      ,double vspeedsystem,double vcoefsound,double vspeedsound,double vgamma,double vrhop0
-      ,double vcteh,double vcteb,double vmassbound,double vmassfluid)
-    {
-      data2d=vdata2d; gravity=vgravity; dp=vdp; coefh=vcoefh; coefhdp=vcoefhdp; hswl=vhswl;
-      speedsystem=vspeedsystem; coefsound=vcoefsound; speedsound=vspeedsound; gamma=vgamma; rhop0=vrhop0;
-      cteh=vcteh; cteb=vcteb; massbound=vmassbound; massfluid=vmassfluid;
-    }
-    void Clear(){ 
-      data2d=false; gravity=TDouble3(0);
-      dp=hswl=speedsystem=coefsound=speedsound=coefh=coefhdp=gamma=rhop0=cteh=cteb=massbound=massfluid=0;
-    }
-  }StConstants;
+  //  StrConstants(){ Clear(); }
+  //  StrConstants(bool vdata2d,double vdata2dposy,tdouble3 vgravity,double vdp,double vcoefh,double vcoefhdp,double vhswl
+  //    ,double vspeedsystem,double vcoefsound,double vspeedsound,double vgamma,double vrhop0
+  //    ,double vcteh,double vcteb,double vmassbound,double vmassfluid)
+  //  {
+  //    data2d=vdata2d; data2dposy=vdata2dposy; gravity=vgravity; dp=vdp; coefh=vcoefh; coefhdp=vcoefhdp;
+  //    hswl=vhswl; speedsystem=vspeedsystem; coefsound=vcoefsound; speedsound=vspeedsound; gamma=vgamma; 
+  //    rhop0=vrhop0; cteh=vcteh; cteb=vcteb; massbound=vmassbound; massfluid=vmassfluid;
+  //  }
+  //  void Clear(){ 
+  //    data2d=false; data2dposy=0; gravity=TDouble3(0);
+  //    dp=hswl=speedsystem=coefsound=speedsound=coefh=coefhdp=gamma=rhop0=cteh=cteb=massbound=massfluid=0;
+  //  }
+  //}StConstants;
 
 private:
+  bool Data2DDefined;     ///<Toggles 2D simulation (cancels forces in Y axis).
+  bool Data2D;            ///<Data dimension (2D, 3D)) 2D simulation (cancels forces in Y axis).
+  double Data2DPosY;      ///<Y value in 2D simulations.    
   int LatticeBound;       ///<Lattice to create boundary particles on its nodes.
   int LatticeFluid;       ///<Lattice to create fluid particles on its nodes.
   tdouble3 Gravity;       ///<Gravity acceleration.
@@ -127,7 +130,7 @@ private:
   void WriteXmlRun(JXml *sxml,TiXmlElement* ele)const;
 
 public:
-  static StConstants CalcConstans(StConstants cte);
+  //static StConstants CalcConstans(StConstants cte);
   JSpaceCtes();
   void Reset();
   void LoadDefault();
@@ -136,6 +139,8 @@ public:
   void LoadXmlRun(JXml *sxml,const std::string &place);
   void SaveXmlRun(JXml *sxml,const std::string &place)const;
 
+  bool GetData2D()const{ return(Data2D); }
+  double GetData2DPosY()const{ return(Data2DPosY); }
   int GetLatticeBound()const{ return(LatticeBound); }
   int GetLatticeFluid()const{ return(LatticeFluid); }
   tdouble3 GetGravity()const{ return(Gravity); }
@@ -154,6 +159,7 @@ public:
   double GetRhop0()const{ return(Rhop0); }
   double GetEps()const{ return(Eps); }
 
+  void SetData2D(bool data2d,double data2dposy=0){ Data2D=data2d; Data2DPosY=(data2d? data2dposy: 0); Data2DDefined=true; }
   void SetLatticeBound(bool simple){ LatticeBound=(simple? 1: 2); }
   void SetLatticeFluid(bool simple){ LatticeFluid=(simple? 1: 2); }
   void SetGravity(const tdouble3& g){ Gravity=g; }

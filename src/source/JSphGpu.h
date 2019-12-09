@@ -191,8 +191,7 @@ protected:
   float *Arg; 
   float *Deltag;     ///<Accumulates adjustment of Delta-SPH with DELTA_DynamicExt. | Acumula ajuste de Delta-SPH con DELTA_DynamicExt.
 
-  float3 *ShiftPosg;    ///<Particle displacement using Shifting.
-  float *ShiftDetectg;  ///<Used to detect free surface with Shifting.
+  float4 *ShiftPosfsg;  ///<Particle displacement and free surface detection for Shifting.
 
   double VelMax;      ///<Maximum value of Vel[] sqrt(vel.x^2 + vel.y^2 + vel.z^2) computed in PreInteraction_Forces().
   double AceMax;      ///<Maximum value of Ace[] (ace.x^2 + ace.y^2 + ace.z^2) computed in Interaction_Forces().
@@ -267,6 +266,7 @@ protected:
   void ComputeSymplecticPre(double dt);
   void ComputeSymplecticCorr(double dt);
   double DtVariable(bool final);
+
   void RunShifting(double dt);
 
   void CalcMotion(double stepdt);

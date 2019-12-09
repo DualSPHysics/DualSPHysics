@@ -393,7 +393,7 @@ public:
     ,const tfloat4 *velrhop,tfloat4 *velrhopm1);
 
   void ClearInteractionVarsCpu(unsigned inoutcount,const int *inoutpart
-    ,tfloat3 *ace,float *ar,tfloat3 *shiftpos);
+    ,tfloat3 *ace,float *ar,tfloat4 *shiftposfs);
 
 
 //-Specific code for GPU.
@@ -420,7 +420,7 @@ public:
     ,const float4 *velrhopg,float4 *velrhopm1g);
 
   void ClearInteractionVarsGpu(unsigned inoutcount,const int *inoutpartg
-    ,float3 *aceg,float *arg,float *viscdtg,float3 *shiftposg);
+    ,float3 *aceg,float *arg,float *viscdtg,float4 *shiftposfsg);
 #endif
 
 

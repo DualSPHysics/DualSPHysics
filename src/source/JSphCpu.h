@@ -45,9 +45,8 @@ typedef struct{
   float *delta;
   tsymatrix3f *spstau;
   tsymatrix3f *spsgradvel;
-  TpShifting tshifting;
-  tfloat3 *shiftpos;
-  float *shiftdetect;
+  TpShifting shiftmode;
+  tfloat4 *shiftposfs;
 }stinterparmsc;
 
 ///Collects parameters for particle interaction on CPU.
@@ -58,7 +57,7 @@ inline stinterparmsc StInterparmsc(unsigned np,unsigned npb,unsigned npbok
   ,const float *press
   ,float* ar,tfloat3 *ace,float *delta
   ,tsymatrix3f *spstau,tsymatrix3f *spsgradvel
-  ,TpShifting tshifting,tfloat3 *shiftpos,float *shiftdetect)
+  ,TpShifting shiftmode,tfloat4 *shiftposfs)
 {
   stinterparmsc d={np,npb,npbok,(np-npb)
     ,ncells,begincell,cellmin,dcell
@@ -66,7 +65,7 @@ inline stinterparmsc StInterparmsc(unsigned np,unsigned npb,unsigned npbok
     ,press
     ,ar,ace,delta
     ,spstau,spsgradvel
-    ,tshifting,shiftpos,shiftdetect};
+    ,shiftmode,shiftposfs};
   return(d);
 }
 
@@ -137,8 +136,7 @@ protected:
   float *Arc; 
   float *Deltac;         ///<Adjusted sum with Delta-SPH with DELTA_DynamicExt | Acumula ajuste de Delta-SPH con DELTA_DynamicExt
 
-  tfloat3 *ShiftPosc;    ///<Particle displacement using Shifting.
-  float *ShiftDetectc;   ///<Used to detect free surface with Shifting.
+  tfloat4 *ShiftPosfsc;    ///<Particle displacement and free surface detection for Shifting.
 
   double VelMax;        ///<Maximum value of Vel[] sqrt(vel.x^2 + vel.y^2 + vel.z^2) computed in PreInteraction_Forces().
   double AceMax;        ///<Maximum value of Ace[] sqrt(ace.x^2 + ace.y^2 + ace.z^2) computed in Interaction_Forces().
@@ -237,7 +235,7 @@ protected:
     ,const tdouble3 *pos,const tfloat3 *pspos,const tfloat4 *velrhop,const typecode *code,const unsigned *idp
     ,const float *press
     ,float &viscdt,float *ar,tfloat3 *ace,float *delta
-    ,TpShifting tshifting,tfloat3 *shiftpos,float *shiftdetect)const;
+    ,TpShifting shiftmode,tfloat4 *shiftposfs)const;
 
   template<bool psingle> void InteractionForcesDEM
     (unsigned nfloat,tint4 nc,int hdiv,unsigned cellfluid

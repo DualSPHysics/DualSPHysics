@@ -329,6 +329,14 @@
     </CudaCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <CudaCompile Include="..\source\FunctionsBasic_ker.cu">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">true</ExcludedFromBuild>
+    </CudaCompile>
+    <CudaCompile Include="..\source\FunctionsGeo3d_ker.cu">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">true</ExcludedFromBuild>
+    </CudaCompile>
     <CudaCompile Include="..\source\FunctionsMath_ker.cu">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">true</ExcludedFromBuild>
@@ -418,6 +426,10 @@ rem ***Sentencia de compilacion
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">true</ExcludedFromBuild>
     </CudaCompile>
     <CudaCompile Include="..\source\JRelaxZone_ker.cu">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">true</ExcludedFromBuild>
+    </CudaCompile>
+    <CudaCompile Include="..\source\JShifting_ker.cu">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">true</ExcludedFromBuild>
     </CudaCompile>
@@ -574,6 +586,11 @@ rem %CudaNvcc% -ccbin "$(VCInstallDir)bin" %gpuhw% -use_fast_math -c %ptxinfo% -
     </ClInclude>
     <ClInclude Include="..\source\JSaveCsv2.h" />
     <ClInclude Include="..\source\JSaveDt.h" />
+    <ClInclude Include="..\source\JShifting.h" />
+    <ClInclude Include="..\source\JShifting_ker.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">true</ExcludedFromBuild>
+    </ClInclude>
     <ClInclude Include="..\source\JSimpleNeigs.h" />
     <ClInclude Include="..\source\JSpacePartsDef.h" />
     <ClInclude Include="..\source\JSpaceProperties.h" />
@@ -717,6 +734,7 @@ rem %CudaNvcc% -ccbin "$(VCInstallDir)bin" %gpuhw% -use_fast_math -c %ptxinfo% -
     <ClCompile Include="..\source\JRelaxZonesGpu.cpp" />
     <ClCompile Include="..\source\JSaveCsv2.cpp" />
     <ClCompile Include="..\source\JSaveDt.cpp" />
+    <ClCompile Include="..\source\JShifting.cpp" />
     <ClCompile Include="..\source\JSimpleNeigs.cpp" />
     <ClCompile Include="..\source\JSpaceProperties.cpp" />
     <ClCompile Include="..\source\JSpaceVtkOut.cpp" />

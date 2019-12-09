@@ -38,6 +38,7 @@
 #include "JSphInOut.h"  //<vs_innlet>
 #include "JLinearValue.h"
 #include "JDataArrays.h"
+#include "JShifting.h"
 #include <climits>
 
 using namespace std;
@@ -507,7 +508,7 @@ void JSphCpuSingle::Interaction_Forces(TpInterStep interstep){
   const stinterparmsc parms=StInterparmsc(Np,Npb,NpbOk,CellDivSingle->GetNcells()
     ,CellDivSingle->GetBeginCell(),CellDivSingle->GetCellDomainMin(),Dcellc
     ,Posc,PsPosc,Velrhopc,Idpc,Codec,Pressc,Arc,Acec,Deltac
-    ,SpsTauc,SpsGradvelc,TShifting,ShiftPosc,ShiftDetectc);
+    ,SpsTauc,SpsGradvelc,ShiftingMode,ShiftPosfsc);
   JSphCpu::Interaction_Forces_ct(parms,viscdt);
 
   //-For 2-D simulations zero the 2nd component. | Para simulaciones 2D anula siempre la 2º componente.
@@ -528,8 +529,8 @@ void JSphCpuSingle::Interaction_Forces(TpInterStep interstep){
     for(int p=ini;p<fin;p++)if(Deltac[p]!=FLT_MAX)Arc[p]+=Deltac[p];
   }
 
-  //-Reset interpolation varibles (ace,ar,shiftpos) over inout particles.             //<vs_innlet>
-  if(InOut)InOut->ClearInteractionVarsCpu(InOutCount,InOutPartc,Acec,Arc,ShiftPosc);  //<vs_innlet>
+  //-Reset interpolation varibles (ace,ar,shiftpos) over inout particles.              //<vs_innlet>
+  if(InOut)InOut->ClearInteractionVarsCpu(InOutCount,InOutPartc,Acec,Arc,ShiftPosfsc); //<vs_innlet>
 
   //-Calculates maximum value of ViscDt.
   ViscDtMax=viscdt;
@@ -611,7 +612,7 @@ double JSphCpuSingle::ComputeStep_Ver(){
   const double dt=DtVariable(true);        //-Calculate new dt.
   if(CaseNmoving)CalcMotion(dt);           //-Calculate motion for moving bodies.
   DemDtForce=dt;                           //(DEM)
-  if(TShifting)RunShifting(dt);            //-Shifting.
+  if(Shifting)RunShifting(dt);             //-Shifting.
   ComputeVerlet(dt);                       //-Update particles using Verlet.
   if(CaseNfloat)RunFloating(dt,false);     //-Control of floating bodies.
   PosInteraction_Forces();                 //-Free memory used for interaction.
@@ -636,7 +637,7 @@ double JSphCpuSingle::ComputeStep_Sym(){
   if(BoundCorr)BoundCorrectionData();          //-Apply BoundCorrection.  //<vs_innlet>
   Interaction_Forces(INTERSTEP_SymPredictor);  //-Interaction.
   const double ddt_p=DtVariable(false);        //-Calculate dt of predictor step.
-  if(TShifting)RunShifting(dt*.5);             //-Shifting.
+  if(Shifting)RunShifting(dt*.5);              //-Shifting.
   ComputeSymplecticPre(dt);                    //-Apply Symplectic-Predictor to particles (periodic particles become invalid).
   if(CaseNfloat)RunFloating(dt*.5,true);       //-Control of floating bodies.
   PosInteraction_Forces();                     //-Free memory used for interaction.
@@ -646,7 +647,7 @@ double JSphCpuSingle::ComputeStep_Sym(){
   RunCellDivide(true);
   Interaction_Forces(INTERSTEP_SymCorrector);  //-Interaction.
   const double ddt_c=DtVariable(true);         //-Calculate dt of corrector step.
-  if(TShifting)RunShifting(dt);                //-Shifting.
+  if(Shifting)RunShifting(dt);                 //-Shifting.
   ComputeSymplecticCorr(dt);                   //-Apply Symplectic-Corrector to particles (periodic particles become invalid).
   if(CaseNfloat)RunFloating(dt,false);         //-Control of floating bodies.
   PosInteraction_Forces();                     //-Free memory used for interaction.

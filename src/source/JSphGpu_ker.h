@@ -104,7 +104,7 @@ typedef struct StrInterParmsg{
   TpFtMode ftmode;
   bool lamsps;
   TpDensity tdensity;
-  TpShifting tshifting;
+  TpShifting shiftmode;
   //-Execution values.
   int hdiv;  //hdiv=(cellmode==CELLMODE_H? 2: 1)
   float viscob,viscof;
@@ -137,8 +137,7 @@ typedef struct StrInterParmsg{
   float3 *ace;
   float *delta;
   tsymatrix3f *gradvel;
-  float3 *shiftpos;
-  float *shiftdetect;
+  float4 *shiftposfs;
   //-Other values and objects.
   cudaStream_t stm;
   StKerInfo *kerinfo;
@@ -149,7 +148,7 @@ typedef struct StrInterParmsg{
      bool simulate2d_
     ,bool symmetry_ //<vs_syymmetry>
     ,bool psingle_,TpKernel tkernel_,TpFtMode ftmode_
-    ,bool lamsps_,TpDensity tdensity_,TpShifting tshifting_
+    ,bool lamsps_,TpDensity tdensity_,TpShifting shiftmode_
     ,TpCellMode cellmode_
     ,float viscob_,float viscof_
     ,unsigned bsbound_,unsigned bsfluid_
@@ -162,7 +161,7 @@ typedef struct StrInterParmsg{
     ,const float *ftomassp_,const tsymatrix3f *spstau_
     ,float *viscdt_,float* ar_,float3 *ace_,float *delta_
     ,tsymatrix3f *spsgradvel_
-    ,float3 *shiftpos_,float *shiftdetect_
+    ,float4 *shiftposfs_
     ,cudaStream_t stm_
     ,StKerInfo *kerinfo_,JBlockSizeAuto *bsauto_)
   {
@@ -170,7 +169,7 @@ typedef struct StrInterParmsg{
     simulate2d=simulate2d_;
     symmetry=symmetry_; //<vs_syymmetry>
     psingle=psingle_; tkernel=tkernel_; ftmode=ftmode_;
-    lamsps=lamsps_; tdensity=tdensity_; tshifting=tshifting_;
+    lamsps=lamsps_; tdensity=tdensity_; shiftmode=shiftmode_;
     //-Execution values.
     hdiv=(cellmode_==CELLMODE_H? 2: 1);
     viscob=viscob_; viscof=viscof_;
@@ -192,7 +191,7 @@ typedef struct StrInterParmsg{
     //-Output data arrays.
     viscdt=viscdt_; ar=ar_; ace=ace_; delta=delta_;
     gradvel=spsgradvel_;
-    shiftpos=shiftpos_; shiftdetect=shiftdetect_;
+    shiftposfs=shiftposfs_;
     //-Other values and objects.
     stm=stm_;
     kerinfo=kerinfo_; bsauto=bsauto_;
@@ -246,23 +245,18 @@ void ComputeSpsTau(unsigned np,unsigned npb,float smag,float blin
 //-Kernels for Delta-SPH.
 void AddDelta(unsigned n,const float *delta,float *ar,cudaStream_t stm=NULL);
 
-//-Kernels for Shifting.
-void RunShifting(unsigned np,unsigned npb,double dt
-  ,double shiftcoef,float shifttfs,double coeftfs
-  ,const float4 *velrhop,const float *shiftdetect,float3 *shiftpos);
-
 //-Kernels for ComputeStep (vel & rhop).
 void ComputeStepVerlet(bool floatings,bool shift,unsigned np,unsigned npb
   ,const float4 *velrhop1,const float4 *velrhop2
-  ,const float *ar,const float3 *ace,const float3 *shiftpos
+  ,const float *ar,const float3 *ace,const float4 *shiftposfs
   ,double dt,double dt2,float rhopoutmin,float rhopoutmax
   ,typecode *code,double2 *movxy,double *movz,float4 *velrhopnew);
 void ComputeStepSymplecticPre(bool floatings,bool shift,unsigned np,unsigned npb
-  ,const float4 *velrhoppre,const float *ar,const float3 *ace,const float3 *shiftpos
+  ,const float4 *velrhoppre,const float *ar,const float3 *ace,const float4 *shiftposfs
   ,double dtm,float rhopoutmin,float rhopoutmax
   ,typecode *code,double2 *movxy,double *movz,float4 *velrhop);
 void ComputeStepSymplecticCor(bool floatings,bool shift,unsigned np,unsigned npb
-  ,const float4 *velrhoppre,const float *ar,const float3 *ace,const float3 *shiftpos
+  ,const float4 *velrhoppre,const float *ar,const float3 *ace,const float4 *shiftposfs
   ,double dtm,double dt,float rhopoutmin,float rhopoutmax
   ,typecode *code,double2 *movxy,double *movz,float4 *velrhop);
 

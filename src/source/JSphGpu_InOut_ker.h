@@ -50,7 +50,7 @@ void InOutUpdateData(unsigned n,const unsigned *listp
   ,const typecode *code,const double *posz,float4 *velrhop);
 
 void InoutClearInteractionVars(unsigned n,const int *inoutpart
-    ,float3 *ace,float *ar,float *viscdt,float3 *shiftpos);
+    ,float3 *ace,float *ar,float *viscdt,float4 *shiftposfs);
 
 void InOutUpdateVelrhopM1(unsigned n,const int *inoutpart
     ,const float4 *velrhop,float4 *velrhopm1);

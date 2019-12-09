@@ -913,7 +913,7 @@ template<bool psingle,TpKernel tker,TpFtMode ftmode,bool lamsps,TpDensity tdensi
   ,const float2 &taup1_xx_xy,const float2 &taup1_xz_yy,const float2 &taup1_yz_zz
   ,float2 &grap1_xx_xy,float2 &grap1_xz_yy,float2 &grap1_yz_zz
   ,float3 &acep1,float &arp1,float &visc,float &deltap1
-  ,TpShifting tshifting,float3 &shiftposp1,float &shiftdetectp1)
+  ,TpShifting shiftmode,float4 &shiftposfsp1)
 {
   for(int p2=pini;p2<pfin;p2++){
     float drx,dry,drz,pressp2;
@@ -941,7 +941,7 @@ template<bool psingle,TpKernel tker,TpFtMode ftmode,bool lamsps,TpDensity tdensi
         #else
           if(ftp2 && tdensity==DDT_DDT)deltap1=FLT_MAX;
         #endif
-        if(ftp2 && shift && tshifting==SHIFT_NoBound)shiftposp1.x=FLT_MAX; //-Cancels shifting with floating bodies. | Con floatings anula shifting.
+        if(ftp2 && shift && shiftmode==SHIFT_NoBound)shiftposfsp1.x=FLT_MAX; //-Cancels shifting with floating bodies. | Con floatings anula shifting.
         compute=!(USE_FTEXTERNAL && ftp1 && (boundp2 || ftp2)); //-Deactivated when DEM or Chrono is used and is float-float or float-bound. | Se desactiva cuando se usa DEM o Chrono y es float-float o float-bound.
       }
 
@@ -961,24 +961,24 @@ template<bool psingle,TpKernel tker,TpFtMode ftmode,bool lamsps,TpDensity tdensi
       if(compute)arp1+=(USE_FLOATING? ftmassp2: massp2)*(dvx*frx+dvy*fry+dvz*frz);
 
       const float cbar=CTE.cs0;
+      const float dot3=(tdensity!=DDT_None || shift? drx*frx+dry*fry+drz*frz: 0);
       //-Density Diffusion Term (Molteni and Colagrossi 2009).
       if(tdensity==DDT_DDT && deltap1!=FLT_MAX){
         const float rhop1over2=rhopp1/velrhop2.w;
         const float visc_densi=CTE.ddt2h*cbar*(rhop1over2-1.f)/(rr2+CTE.eta2);
-        const float dot3=(drx*frx+dry*fry+drz*frz);
         const float delta=visc_densi*dot3*(USE_FLOATING? ftmassp2: massp2);
         //deltap1=(boundp2? FLT_MAX: deltap1+delta);
         deltap1=(boundp2 && CTE.tboundary==BC_DBC? FLT_MAX: deltap1+delta);
       }
 
       //-Shifting correction.
-      if(shift && shiftposp1.x!=FLT_MAX){
+      if(shift && shiftposfsp1.x!=FLT_MAX){
         const float massrhop=(USE_FLOATING? ftmassp2: massp2)/velrhop2.w;
-        const bool noshift=(boundp2 && (tshifting==SHIFT_NoBound || (tshifting==SHIFT_NoFixed && CODE_IsFixed(code[p2]))));
-        shiftposp1.x=(noshift? FLT_MAX: shiftposp1.x+massrhop*frx); //-Removes shifting for the boundaries. | Con boundary anula shifting.
-        shiftposp1.y+=massrhop*fry;
-        shiftposp1.z+=massrhop*frz;
-        shiftdetectp1-=massrhop*(drx*frx+dry*fry+drz*frz);
+        const bool noshift=(boundp2 && (shiftmode==SHIFT_NoBound || (shiftmode==SHIFT_NoFixed && CODE_IsFixed(code[p2]))));
+        shiftposfsp1.x=(noshift? FLT_MAX: shiftposfsp1.x+massrhop*frx); //-Removes shifting for the boundaries. | Con boundary anula shifting.
+        shiftposfsp1.y+=massrhop*fry;
+        shiftposfsp1.z+=massrhop*frz;
+        shiftposfsp1.w-=massrhop*dot3;
       }
 
       //===== Viscosity ===== 
@@ -1043,7 +1043,7 @@ template<bool psingle,TpKernel tker,TpFtMode ftmode,bool lamsps,TpDensity tdensi
   ,const double2 *posxy,const double *posz,const float4 *pospress
   ,const float4 *velrhop,const typecode *code,const unsigned *idp
   ,float *viscdt,float *ar,float3 *ace,float *delta
-  ,TpShifting tshifting,float3 *shiftpos,float *shiftdetect)
+  ,TpShifting shiftmode,float4 *shiftposfs)
 {
   unsigned p=blockIdx.y*gridDim.x*blockDim.x + blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
   if(p<n){
@@ -1052,12 +1052,8 @@ template<bool psingle,TpKernel tker,TpFtMode ftmode,bool lamsps,TpDensity tdensi
     float3 acep1=make_float3(0,0,0);
 
     //-Variables for Shifting.
-    float3 shiftposp1;
-    float shiftdetectp1;
-    if(shift){
-      shiftposp1=make_float3(0,0,0);
-      shiftdetectp1=0;
-    }
+    float4 shiftposfsp1;
+    if(shift)shiftposfsp1=shiftposfs[p1];
 
     //-Obtains data of particle p1 in case there are floating bodies.
     //-Obtiene datos de particula p1 en caso de existir floatings.
@@ -1068,7 +1064,7 @@ template<bool psingle,TpKernel tker,TpFtMode ftmode,bool lamsps,TpDensity tdensi
       ftp1=CODE_IsFloating(cod);
       ftmassp1=(ftp1? ftomassp[CODE_GetTypeValue(cod)]: 1.f);
       if(ftp1 && tdensity!=DDT_None)deltap1=FLT_MAX; //-DDT is not applied to floating particles.
-      if(ftp1 && shift)shiftposp1.x=FLT_MAX; //-Shifting is not calculated for floating bodies. | Para floatings no se calcula shifting.
+      if(ftp1 && shift)shiftposfsp1.x=FLT_MAX; //-Shifting is not calculated for floating bodies. | Para floatings no se calcula shifting.
     }
 
     //-Obtains basic data of particle p1.
@@ -1111,8 +1107,8 @@ template<bool psingle,TpKernel tker,TpFtMode ftmode,bool lamsps,TpDensity tdensi
           }
         }
         if(pfin){
-                            KerInteractionForcesFluidBox<psingle,tker,ftmode,lamsps,tdensity,shift,false> (false,p1,pini,pfin,viscof,ftomassp,tauff,posxy,posz,pospress,velrhop,code,idp,CTE.massf,ftmassp1,ftp1,posdp1,posp1,velp1,pressp1,rhopp1,taup1_xx_xy,taup1_xz_yy,taup1_yz_zz,grap1_xx_xy,grap1_xz_yy,grap1_yz_zz,acep1,arp1,visc,deltap1,tshifting,shiftposp1,shiftdetectp1);
-          if(symm && rsymp1)KerInteractionForcesFluidBox<psingle,tker,ftmode,lamsps,tdensity,shift,true > (false,p1,pini,pfin,viscof,ftomassp,tauff,posxy,posz,pospress,velrhop,code,idp,CTE.massf,ftmassp1,ftp1,posdp1,posp1,velp1,pressp1,rhopp1,taup1_xx_xy,taup1_xz_yy,taup1_yz_zz,grap1_xx_xy,grap1_xz_yy,grap1_yz_zz,acep1,arp1,visc,deltap1,tshifting,shiftposp1,shiftdetectp1); //<vs_syymmetry>
+                            KerInteractionForcesFluidBox<psingle,tker,ftmode,lamsps,tdensity,shift,false> (false,p1,pini,pfin,viscof,ftomassp,tauff,posxy,posz,pospress,velrhop,code,idp,CTE.massf,ftmassp1,ftp1,posdp1,posp1,velp1,pressp1,rhopp1,taup1_xx_xy,taup1_xz_yy,taup1_yz_zz,grap1_xx_xy,grap1_xz_yy,grap1_yz_zz,acep1,arp1,visc,deltap1,shiftmode,shiftposfsp1);
+          if(symm && rsymp1)KerInteractionForcesFluidBox<psingle,tker,ftmode,lamsps,tdensity,shift,true > (false,p1,pini,pfin,viscof,ftomassp,tauff,posxy,posz,pospress,velrhop,code,idp,CTE.massf,ftmassp1,ftp1,posdp1,posp1,velp1,pressp1,rhopp1,taup1_xx_xy,taup1_xz_yy,taup1_yz_zz,grap1_xx_xy,grap1_xz_yy,grap1_yz_zz,acep1,arp1,visc,deltap1,shiftmode,shiftposfsp1); //<vs_syymmetry>
         }
       }
     }
@@ -1130,8 +1126,8 @@ template<bool psingle,TpKernel tker,TpFtMode ftmode,bool lamsps,TpDensity tdensi
           }
         }
         if(pfin){
-                            KerInteractionForcesFluidBox<psingle,tker,ftmode,lamsps,tdensity,shift,false> (true ,p1,pini,pfin,viscob,ftomassp,tauff,posxy,posz,pospress,velrhop,code,idp,CTE.massb,ftmassp1,ftp1,posdp1,posp1,velp1,pressp1,rhopp1,taup1_xx_xy,taup1_xz_yy,taup1_yz_zz,grap1_xx_xy,grap1_xz_yy,grap1_yz_zz,acep1,arp1,visc,deltap1,tshifting,shiftposp1,shiftdetectp1);
-          if(symm && rsymp1)KerInteractionForcesFluidBox<psingle,tker,ftmode,lamsps,tdensity,shift,true > (true ,p1,pini,pfin,viscob,ftomassp,tauff,posxy,posz,pospress,velrhop,code,idp,CTE.massb,ftmassp1,ftp1,posdp1,posp1,velp1,pressp1,rhopp1,taup1_xx_xy,taup1_xz_yy,taup1_yz_zz,grap1_xx_xy,grap1_xz_yy,grap1_yz_zz,acep1,arp1,visc,deltap1,tshifting,shiftposp1,shiftdetectp1);
+                            KerInteractionForcesFluidBox<psingle,tker,ftmode,lamsps,tdensity,shift,false> (true ,p1,pini,pfin,viscob,ftomassp,tauff,posxy,posz,pospress,velrhop,code,idp,CTE.massb,ftmassp1,ftp1,posdp1,posp1,velp1,pressp1,rhopp1,taup1_xx_xy,taup1_xz_yy,taup1_yz_zz,grap1_xx_xy,grap1_xz_yy,grap1_yz_zz,acep1,arp1,visc,deltap1,shiftmode,shiftposfsp1);
+          if(symm && rsymp1)KerInteractionForcesFluidBox<psingle,tker,ftmode,lamsps,tdensity,shift,true > (true ,p1,pini,pfin,viscob,ftomassp,tauff,posxy,posz,pospress,velrhop,code,idp,CTE.massb,ftmassp1,ftp1,posdp1,posp1,velp1,pressp1,rhopp1,taup1_xx_xy,taup1_xz_yy,taup1_yz_zz,grap1_xx_xy,grap1_xz_yy,grap1_yz_zz,acep1,arp1,visc,deltap1,shiftmode,shiftposfsp1);
         }
       }
     }
@@ -1153,10 +1149,7 @@ template<bool psingle,TpKernel tker,TpFtMode ftmode,bool lamsps,TpDensity tdensi
         rg=gradvelff[p1*3+1];  make_float2(rg.x+grap1_xz_yy.x,rg.y+grap1_xz_yy.y);  gradvelff[p1*3+1]=rg;
         rg=gradvelff[p1*3+2];  make_float2(rg.x+grap1_yz_zz.x,rg.y+grap1_yz_zz.y);  gradvelff[p1*3+2]=rg;
       }
-      if(shift){
-        shiftpos[p1]=shiftposp1;
-        if(shiftdetect)shiftdetect[p1]=shiftdetectp1;
-      }
+      if(shift)shiftposfs[p1]=shiftposfsp1;
     }
   }
 }
@@ -1170,7 +1163,7 @@ template<bool psingle,TpKernel tker,TpFtMode ftmode,bool lamsps,TpDensity tdensi
 {
 #if CUDART_VERSION >= 6050
   {
-    typedef void (*fun_ptr)(unsigned,unsigned,int,int4,unsigned,float,float,const int2*,int3,const unsigned*,const float*,const float2*,float2*,const double2*,const double*,const float4*,const float4*,const typecode*,const unsigned*,float*,float*,float3*,float*,TpShifting,float3*,float*);
+    typedef void (*fun_ptr)(unsigned,unsigned,int,int4,unsigned,float,float,const int2*,int3,const unsigned*,const float*,const float2*,float2*,const double2*,const double*,const float4*,const float4*,const typecode*,const unsigned*,float*,float*,float3*,float*,TpShifting,float4*);
     fun_ptr ptr=&KerInteractionForcesFluid<psingle,tker,ftmode,lamsps,tdensity,shift,symm>;
     int qblocksize=0,mingridsize=0;
     cudaOccupancyMaxPotentialBlockSize(&mingridsize,&qblocksize,(void*)ptr,0,0);
@@ -1218,7 +1211,7 @@ template<bool psingle,TpKernel tker,TpFtMode ftmode,bool lamsps,TpDensity tdensi
         KerInteractionForcesFluid<psingle,tker,ftmode,lamsps,tdensity,shift,symm> <<<sgridf,bsize>>> 
           (t.fluidnum,t.fluidini,t.hdiv,t.nc,t.cellfluid,t.viscob,t.viscof,t.begincell,Int3(t.cellmin),t.dcell
           ,t.ftomassp,(const float2*)t.tau,(float2*)t.gradvel,t.posxy,t.posz,t.pospress
-          ,t.velrhop,t.code,t.idp,t.viscdt,t.ar,t.ace,t.delta,t.tshifting,t.shiftpos,t.shiftdetect);
+          ,t.velrhop,t.code,t.idp,t.viscdt,t.ar,t.ace,t.delta,t.shiftmode,t.shiftposfs);
         cudaEventRecord(stop,0);
         cudaEventSynchronize(stop);
         float time;
@@ -1276,9 +1269,9 @@ template<bool psingle,TpKernel tker,TpFtMode ftmode,bool lamsps,TpDensity tdensi
       dim3 sgridf=GetGridSize(t.fluidnum,t.bsfluid);
       //printf("---->bsfluid:%u   ",bsfluid);
       if(t.symmetry) //<vs_syymmetry_ini>
-        KerInteractionForcesFluid<psingle,tker,ftmode,lamsps,tdensity,shift,true > <<<sgridf,t.bsfluid,0,t.stm>>> (t.fluidnum,t.fluidini,t.hdiv,t.nc,t.cellfluid,t.viscob,t.viscof,t.begincell,Int3(t.cellmin),t.dcell,t.ftomassp,(const float2*)t.tau,(float2*)t.gradvel,t.posxy,t.posz,t.pospress,t.velrhop,t.code,t.idp,t.viscdt,t.ar,t.ace,t.delta,t.tshifting,t.shiftpos,t.shiftdetect);
+        KerInteractionForcesFluid<psingle,tker,ftmode,lamsps,tdensity,shift,true > <<<sgridf,t.bsfluid,0,t.stm>>> (t.fluidnum,t.fluidini,t.hdiv,t.nc,t.cellfluid,t.viscob,t.viscof,t.begincell,Int3(t.cellmin),t.dcell,t.ftomassp,(const float2*)t.tau,(float2*)t.gradvel,t.posxy,t.posz,t.pospress,t.velrhop,t.code,t.idp,t.viscdt,t.ar,t.ace,t.delta,t.shiftmode,t.shiftposfs);
       else //<vs_syymmetry_end>
-        KerInteractionForcesFluid<psingle,tker,ftmode,lamsps,tdensity,shift,false> <<<sgridf,t.bsfluid,0,t.stm>>> (t.fluidnum,t.fluidini,t.hdiv,t.nc,t.cellfluid,t.viscob,t.viscof,t.begincell,Int3(t.cellmin),t.dcell,t.ftomassp,(const float2*)t.tau,(float2*)t.gradvel,t.posxy,t.posz,t.pospress,t.velrhop,t.code,t.idp,t.viscdt,t.ar,t.ace,t.delta,t.tshifting,t.shiftpos,t.shiftdetect);
+        KerInteractionForcesFluid<psingle,tker,ftmode,lamsps,tdensity,shift,false> <<<sgridf,t.bsfluid,0,t.stm>>> (t.fluidnum,t.fluidini,t.hdiv,t.nc,t.cellfluid,t.viscob,t.viscof,t.begincell,Int3(t.cellmin),t.dcell,t.ftomassp,(const float2*)t.tau,(float2*)t.gradvel,t.posxy,t.posz,t.pospress,t.velrhop,t.code,t.idp,t.viscdt,t.ar,t.ace,t.delta,t.shiftmode,t.shiftposfs);
     }
     //-Interaction Boundary-Fluid.
     if(t.boundnum){
@@ -1295,7 +1288,7 @@ template<bool psingle,TpKernel tker,TpFtMode ftmode,bool lamsps,TpDensity tdensi
 }
 //==============================================================================
 template<bool psingle,TpKernel tker,TpFtMode ftmode,bool lamsps> void Interaction_Forces_gt2(const StInterParmsg &t){
-  if(t.tshifting){               const bool shift=true;
+  if(t.shiftmode){               const bool shift=true;
     if(t.tdensity==DDT_None)    Interaction_ForcesGpuT<psingle,tker,ftmode,lamsps,DDT_None    ,shift> (t);
     if(t.tdensity==DDT_DDT)     Interaction_ForcesGpuT<psingle,tker,ftmode,lamsps,DDT_DDT     ,shift> (t);
   }
@@ -1620,59 +1613,6 @@ void AddDelta(unsigned n,const float *delta,float *ar,cudaStream_t stm){
 
 
 //##############################################################################
-//# Kernels for Shifting.
-//##############################################################################
-//------------------------------------------------------------------------------
-/// Computes final shifting for the particle position.
-/// Calcula Shifting final para posicion de particulas.
-//------------------------------------------------------------------------------
-__global__ void KerRunShifting(unsigned n,unsigned pini,double dt
-  ,float shiftcoef,float shifttfs,double coeftfs
-  ,const float4 *velrhop,const float *shiftdetect,float3 *shiftpos)
-{
-  unsigned p=blockIdx.y*gridDim.x*blockDim.x + blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
-  if(p<n){
-    const unsigned p1=p+pini;
-    const float4 rvel=velrhop[p1];
-    const double vx=double(rvel.x);
-    const double vy=double(rvel.y);
-    const double vz=double(rvel.z);
-    double umagn=double(shiftcoef)*double(CTE.h)*sqrt(vx*vx+vy*vy+vz*vz)*dt;
-    if(shiftdetect){
-      const float rdetect=shiftdetect[p1];
-      if(rdetect<shifttfs)umagn=0;
-      else umagn*=(double(rdetect)-shifttfs)/coeftfs;
-    }
-    float3 rshiftpos=shiftpos[p1];
-    if(rshiftpos.x==FLT_MAX)umagn=0; //-Cancels shifting close to the boundaries. | Anula shifting por proximidad del contorno. 
-    const float maxdist=0.1f*CTE.dp; //-Max shifting distance permitted (recommended).
-    const float shiftdistx=float(double(rshiftpos.x)*umagn);
-    const float shiftdisty=float(double(rshiftpos.y)*umagn);
-    const float shiftdistz=float(double(rshiftpos.z)*umagn);
-    rshiftpos.x=(shiftdistx<maxdist? shiftdistx: maxdist);
-    rshiftpos.y=(shiftdisty<maxdist? shiftdisty: maxdist);
-    rshiftpos.z=(shiftdistx<maxdist? shiftdistz: maxdist);
-    shiftpos[p1]=rshiftpos;
-  }
-}
-
-//==============================================================================
-/// Computes final shifting for the particle position.
-/// Calcula Shifting final para posicion de particulas.
-//==============================================================================
-void RunShifting(unsigned np,unsigned npb,double dt
-  ,double shiftcoef,float shifttfs,double coeftfs
-  ,const float4 *velrhop,const float *shiftdetect,float3 *shiftpos)
-{
-  const unsigned n=np-npb;
-  if(n){
-    dim3 sgrid=GetGridSize(n,SPHBSIZE);
-    KerRunShifting <<<sgrid,SPHBSIZE>>> (n,npb,dt,shiftcoef,shifttfs,coeftfs,velrhop,shiftdetect,shiftpos);
-  }
-}
-
-
-//##############################################################################
 //# Kernels for ComputeStep (vel & rhop).
 //# Kernels para ComputeStep (vel & rhop).
 //##############################################################################
@@ -1686,7 +1626,7 @@ void RunShifting(unsigned np,unsigned npb,double dt
 template<bool floatings,bool shift> __global__ void KerComputeStepVerlet
   (unsigned n,unsigned npb,float rhopoutmin,float rhopoutmax
   ,const float4 *velrhop1,const float4 *velrhop2
-  ,const float *ar,const float3 *ace,const float3 *shiftpos
+  ,const float *ar,const float3 *ace,const float4 *shiftposfs
   ,double dt,double dt205,double dt2
   ,double2 *movxy,double *movz,typecode *code,float4 *velrhopnew)
 {
@@ -1714,7 +1654,7 @@ template<bool floatings,bool shift> __global__ void KerComputeStepVerlet
         double dy=double(rvel1.y)*dt + double(race.y)*dt205;
         double dz=double(rvel1.z)*dt + double(race.z)*dt205;
         if(shift){
-          const float3 rshiftpos=shiftpos[p];
+          const float4 rshiftpos=shiftposfs[p];
           dx+=double(rshiftpos.x);
           dy+=double(rshiftpos.y);
           dz+=double(rshiftpos.z);
@@ -1741,7 +1681,7 @@ template<bool floatings,bool shift> __global__ void KerComputeStepVerlet
 //==============================================================================
 void ComputeStepVerlet(bool floatings,bool shift,unsigned np,unsigned npb
   ,const float4 *velrhop1,const float4 *velrhop2
-  ,const float *ar,const float3 *ace,const float3 *shiftpos
+  ,const float *ar,const float3 *ace,const float4 *shiftposfs
   ,double dt,double dt2,float rhopoutmin,float rhopoutmax
   ,typecode *code,double2 *movxy,double *movz,float4 *velrhopnew)
 {
@@ -1749,11 +1689,11 @@ void ComputeStepVerlet(bool floatings,bool shift,unsigned np,unsigned npb
   if(np){
     dim3 sgrid=GetGridSize(np,SPHBSIZE);
     if(shift){     const bool shift=true;
-      if(floatings)KerComputeStepVerlet<true,shift>  <<<sgrid,SPHBSIZE>>> (np,npb,rhopoutmin,rhopoutmax,velrhop1,velrhop2,ar,ace,shiftpos,dt,dt205,dt2,movxy,movz,code,velrhopnew);
-      else         KerComputeStepVerlet<false,shift> <<<sgrid,SPHBSIZE>>> (np,npb,rhopoutmin,rhopoutmax,velrhop1,velrhop2,ar,ace,shiftpos,dt,dt205,dt2,movxy,movz,code,velrhopnew);
+      if(floatings)KerComputeStepVerlet<true,shift>  <<<sgrid,SPHBSIZE>>> (np,npb,rhopoutmin,rhopoutmax,velrhop1,velrhop2,ar,ace,shiftposfs,dt,dt205,dt2,movxy,movz,code,velrhopnew);
+      else         KerComputeStepVerlet<false,shift> <<<sgrid,SPHBSIZE>>> (np,npb,rhopoutmin,rhopoutmax,velrhop1,velrhop2,ar,ace,shiftposfs,dt,dt205,dt2,movxy,movz,code,velrhopnew);
     }else{         const bool shift=false;
-      if(floatings)KerComputeStepVerlet<true,shift>  <<<sgrid,SPHBSIZE>>> (np,npb,rhopoutmin,rhopoutmax,velrhop1,velrhop2,ar,ace,shiftpos,dt,dt205,dt2,movxy,movz,code,velrhopnew);
-      else         KerComputeStepVerlet<false,shift> <<<sgrid,SPHBSIZE>>> (np,npb,rhopoutmin,rhopoutmax,velrhop1,velrhop2,ar,ace,shiftpos,dt,dt205,dt2,movxy,movz,code,velrhopnew);
+      if(floatings)KerComputeStepVerlet<true,shift>  <<<sgrid,SPHBSIZE>>> (np,npb,rhopoutmin,rhopoutmax,velrhop1,velrhop2,ar,ace,shiftposfs,dt,dt205,dt2,movxy,movz,code,velrhopnew);
+      else         KerComputeStepVerlet<false,shift> <<<sgrid,SPHBSIZE>>> (np,npb,rhopoutmin,rhopoutmax,velrhop1,velrhop2,ar,ace,shiftposfs,dt,dt205,dt2,movxy,movz,code,velrhopnew);
     }
   }
 }
@@ -1764,7 +1704,7 @@ void ComputeStepVerlet(bool floatings,bool shift,unsigned np,unsigned npb
 //------------------------------------------------------------------------------
 template<bool floatings,bool shift> __global__ void KerComputeStepSymplecticPre
   (unsigned n,unsigned npb
-  ,const float4 *velrhoppre,const float *ar,const float3 *ace,const float3 *shiftpos
+  ,const float4 *velrhoppre,const float *ar,const float3 *ace,const float4 *shiftposfs
   ,double dtm,float rhopoutmin,float rhopoutmax
   ,typecode *code,double2 *movxy,double *movz,float4 *velrhop)
 {
@@ -1791,7 +1731,7 @@ template<bool floatings,bool shift> __global__ void KerComputeStepSymplecticPre
         double dy=double(rvelrhop.y)*dtm;
         double dz=double(rvelrhop.z)*dtm;
         if(shift){
-          const float3 rshiftpos=shiftpos[p];
+          const float4 rshiftpos=shiftposfs[p];
           dx+=double(rshiftpos.x);
           dy+=double(rshiftpos.y);
           dz+=double(rshiftpos.z);
@@ -1818,18 +1758,18 @@ template<bool floatings,bool shift> __global__ void KerComputeStepSymplecticPre
 /// Actualizacion de particulas usando Symplectic-Predictor.
 //==============================================================================   
 void ComputeStepSymplecticPre(bool floatings,bool shift,unsigned np,unsigned npb
-  ,const float4 *velrhoppre,const float *ar,const float3 *ace,const float3 *shiftpos
+  ,const float4 *velrhoppre,const float *ar,const float3 *ace,const float4 *shiftposfs
   ,double dtm,float rhopoutmin,float rhopoutmax
   ,typecode *code,double2 *movxy,double *movz,float4 *velrhop)
 {
   if(np){
     dim3 sgrid=GetGridSize(np,SPHBSIZE);
     if(shift){     const bool shift=false; //-We strongly recommend running the shifting correction only for the corrector. If you want to re-enable shifting in the predictor, change the value here to "true".
-      if(floatings)KerComputeStepSymplecticPre<true ,shift> <<<sgrid,SPHBSIZE>>> (np,npb,velrhoppre,ar,ace,shiftpos,dtm,rhopoutmin,rhopoutmax,code,movxy,movz,velrhop);
-      else         KerComputeStepSymplecticPre<false,shift> <<<sgrid,SPHBSIZE>>> (np,npb,velrhoppre,ar,ace,shiftpos,dtm,rhopoutmin,rhopoutmax,code,movxy,movz,velrhop);
+      if(floatings)KerComputeStepSymplecticPre<true ,shift> <<<sgrid,SPHBSIZE>>> (np,npb,velrhoppre,ar,ace,shiftposfs,dtm,rhopoutmin,rhopoutmax,code,movxy,movz,velrhop);
+      else         KerComputeStepSymplecticPre<false,shift> <<<sgrid,SPHBSIZE>>> (np,npb,velrhoppre,ar,ace,shiftposfs,dtm,rhopoutmin,rhopoutmax,code,movxy,movz,velrhop);
     }else{         const bool shift=false;
-      if(floatings)KerComputeStepSymplecticPre<true ,shift> <<<sgrid,SPHBSIZE>>> (np,npb,velrhoppre,ar,ace,shiftpos,dtm,rhopoutmin,rhopoutmax,code,movxy,movz,velrhop);
-      else         KerComputeStepSymplecticPre<false,shift> <<<sgrid,SPHBSIZE>>> (np,npb,velrhoppre,ar,ace,shiftpos,dtm,rhopoutmin,rhopoutmax,code,movxy,movz,velrhop);
+      if(floatings)KerComputeStepSymplecticPre<true ,shift> <<<sgrid,SPHBSIZE>>> (np,npb,velrhoppre,ar,ace,shiftposfs,dtm,rhopoutmin,rhopoutmax,code,movxy,movz,velrhop);
+      else         KerComputeStepSymplecticPre<false,shift> <<<sgrid,SPHBSIZE>>> (np,npb,velrhoppre,ar,ace,shiftposfs,dtm,rhopoutmin,rhopoutmax,code,movxy,movz,velrhop);
     }
   }
 }
@@ -1843,7 +1783,7 @@ void ComputeStepSymplecticPre(bool floatings,bool shift,unsigned np,unsigned npb
 //------------------------------------------------------------------------------
 template<bool floatings,bool shift> __global__ void KerComputeStepSymplecticCor
   (unsigned n,unsigned npb
-  ,const float4 *velrhoppre,const float *ar,const float3 *ace,const float3 *shiftpos
+  ,const float4 *velrhoppre,const float *ar,const float3 *ace,const float4 *shiftposfs
   ,double dtm,double dt,float rhopoutmin,float rhopoutmax
   ,typecode *code,double2 *movxy,double *movz,float4 *velrhop)
 {
@@ -1877,7 +1817,7 @@ template<bool floatings,bool shift> __global__ void KerComputeStepSymplecticCor
         double dy=(double(rvelp.y)+double(rvelrhop.y))*dtm;
         double dz=(double(rvelp.z)+double(rvelrhop.z))*dtm;
         if(shift){
-          const float3 rshiftpos=shiftpos[p];
+          const float4 rshiftpos=shiftposfs[p];
           dx+=double(rshiftpos.x);
           dy+=double(rshiftpos.y);
           dz+=double(rshiftpos.z);
@@ -1899,18 +1839,18 @@ template<bool floatings,bool shift> __global__ void KerComputeStepSymplecticCor
 /// Actualizacion de particulas usando Symplectic-Corrector.
 //==============================================================================   
 void ComputeStepSymplecticCor(bool floatings,bool shift,unsigned np,unsigned npb
-  ,const float4 *velrhoppre,const float *ar,const float3 *ace,const float3 *shiftpos
+  ,const float4 *velrhoppre,const float *ar,const float3 *ace,const float4 *shiftposfs
   ,double dtm,double dt,float rhopoutmin,float rhopoutmax
   ,typecode *code,double2 *movxy,double *movz,float4 *velrhop)
 {
   if(np){
     dim3 sgrid=GetGridSize(np,SPHBSIZE);
     if(shift){     const bool shift=true;
-      if(floatings)KerComputeStepSymplecticCor<true,shift>  <<<sgrid,SPHBSIZE>>> (np,npb,velrhoppre,ar,ace,shiftpos,dtm,dt,rhopoutmin,rhopoutmax,code,movxy,movz,velrhop);
-      else         KerComputeStepSymplecticCor<false,shift> <<<sgrid,SPHBSIZE>>> (np,npb,velrhoppre,ar,ace,shiftpos,dtm,dt,rhopoutmin,rhopoutmax,code,movxy,movz,velrhop);
+      if(floatings)KerComputeStepSymplecticCor<true,shift>  <<<sgrid,SPHBSIZE>>> (np,npb,velrhoppre,ar,ace,shiftposfs,dtm,dt,rhopoutmin,rhopoutmax,code,movxy,movz,velrhop);
+      else         KerComputeStepSymplecticCor<false,shift> <<<sgrid,SPHBSIZE>>> (np,npb,velrhoppre,ar,ace,shiftposfs,dtm,dt,rhopoutmin,rhopoutmax,code,movxy,movz,velrhop);
     }else{         const bool shift=false;
-      if(floatings)KerComputeStepSymplecticCor<true,shift>  <<<sgrid,SPHBSIZE>>> (np,npb,velrhoppre,ar,ace,shiftpos,dtm,dt,rhopoutmin,rhopoutmax,code,movxy,movz,velrhop);
-      else         KerComputeStepSymplecticCor<false,shift> <<<sgrid,SPHBSIZE>>> (np,npb,velrhoppre,ar,ace,shiftpos,dtm,dt,rhopoutmin,rhopoutmax,code,movxy,movz,velrhop);
+      if(floatings)KerComputeStepSymplecticCor<true,shift>  <<<sgrid,SPHBSIZE>>> (np,npb,velrhoppre,ar,ace,shiftposfs,dtm,dt,rhopoutmin,rhopoutmax,code,movxy,movz,velrhop);
+      else         KerComputeStepSymplecticCor<false,shift> <<<sgrid,SPHBSIZE>>> (np,npb,velrhoppre,ar,ace,shiftposfs,dtm,dt,rhopoutmin,rhopoutmax,code,movxy,movz,velrhop);
     }
   }
 }

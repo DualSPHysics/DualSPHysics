@@ -79,6 +79,8 @@
 //:# - StrIsIntegerNumber() tambien valida enteros con parte decimal nula.  (12-08-2019)
 //:# - Gestion de excepciones mejorada.  (15-09-2019)
 //:# - Output functions in JSON format.  (16-09-2019)
+//:# - Nueva funcion VectorFind().  (25-11-2019)
+//:# - Nueva funcion CompareVersions().  (08-12-2019)
 //:#############################################################################
 
 /// \file Functions.h \brief Declares basic/general functions for the entire application.
@@ -207,11 +209,14 @@ std::string StrSplitValue(const std::string mark,std::string text,unsigned value
 unsigned VectorSplitStr(const std::string mark,const std::string &text,std::vector<std::string> &vec);
 unsigned VectorSplitInt(const std::string mark,const std::string &text,std::vector<int> &vec);
 unsigned VectorSplitDouble(const std::string mark,const std::string &text,std::vector<double> &vec);
+unsigned VectorFind(const std::string &key,const std::vector<std::string> &vec);
 
 double GetFirstValueDouble(std::string tex,std::string pretex="");
 double GetFirstValueDouble(std::string tex,std::string &endtex,std::string pretex);
 int GetFirstValueInt(std::string tex,std::string pretex="");
 int GetFirstValueInt(std::string tex,std::string &endtex,std::string pretex);
+
+int CompareVersions(std::string v1,std::string v2);
 
 std::string VarStr(const std::string &name,const char *value);
 std::string VarStr(const std::string &name,const std::string &value);

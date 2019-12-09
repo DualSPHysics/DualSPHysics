@@ -1,4 +1,4 @@
-#DualSPHysics GPU/CPU v4.4.024 16-09-2019
+#DualSPHysics GPU/CPU v4.4.029 09-12-2019
 
 #=============== Compilation Options ===============
 USE_GCC5=NO
@@ -96,12 +96,12 @@ OBJXML=JXml.o tinystr.o tinyxml.o tinyxmlerror.o tinyxmlparser.o
 OBJSPHMOTION=JMotion.o JMotionList.o JMotionMov.o JMotionObj.o JMotionPos.o JSphMotion.o
 OBCOMMON=Functions.o FunctionsGeo3d.o JAppInfo.o JBinaryData.o JDataArrays.o JException.o JLinearValue.o JLog2.o JMeanValues.o JObject.o JRadixSort.o JRangeFilter.o JReadDatafile.o JSaveCsv2.o JTimeControl.o randomc.o
 OBCOMMONDSPH=JDsphConfig.o JPartDataBi4.o JPartDataHead.o JPartFloatBi4.o JPartOutBi4Save.o JSpaceCtes.o JSpaceEParms.o JSpaceParts.o JSpaceProperties.o JSpaceVtkOut.o
-OBSPH=JArraysCpu.o JCellDivCpu.o JCfgRun.o JDamping.o JGaugeItem.o JGaugeSystem.o JPartsOut.o JSaveDt.o JSph.o JSphAccInput.o JSphCpu.o JSphInitialize.o JSphMk.o JSphPartsInit.o JSphDtFixed.o JSphVisco.o JTimeOut.o JWaveSpectrumGpu.o main.o
+OBSPH=JArraysCpu.o JCellDivCpu.o JCfgRun.o JDamping.o JGaugeItem.o JGaugeSystem.o JPartsOut.o JSaveDt.o JShifting.o JSph.o JSphAccInput.o JSphCpu.o JSphInitialize.o JSphMk.o JSphPartsInit.o JSphDtFixed.o JSphVisco.o JTimeOut.o JWaveSpectrumGpu.o main.o
 OBSPHSINGLE=JCellDivCpuSingle.o JPartsLoad4.o JSphCpuSingle.o
 OBCOMMONGPU=FunctionsCuda.o JObjectGpu.o 
 OBSPHGPU=JArraysGpu.o JBlockSizeAuto.o JDebugSphGpu.o JCellDivGpu.o JSphGpu.o 
 OBSPHSINGLEGPU=JCellDivGpuSingle.o JSphGpuSingle.o
-OBCUDA=JCellDivGpu_ker.o JCellDivGpuSingle_ker.o JGauge_ker.o JReduSum_ker.o JSphGpu_ker.o JWaveOrder2_ker.o
+OBCUDA=JCellDivGpu_ker.o JCellDivGpuSingle_ker.o JGauge_ker.o JReduSum_ker.o JShifting_ker.o JSphGpu_ker.o JWaveOrder2_ker.o
 
 OBWAVERZ=JMLPistonsGpu.o JRelaxZonesGpu.o
 OBWAVERZCUDA=JRelaxZone_ker.o
@@ -158,6 +158,9 @@ JCellDivGpu_ker.o: JCellDivGpu_ker.cu
 
 JCellDivGpuSingle_ker.o: JCellDivGpuSingle_ker.cu
 	$(NCC) $(NCCFLAGS) JCellDivGpuSingle_ker.cu
+
+JShifting_ker.o: JShifting_ker.cu
+	$(NCC) $(NCCFLAGS) JShifting_ker.cu
 
 JGauge_ker.o: JGauge_ker.cu
 	$(NCC) $(NCCFLAGS) JGauge_ker.cu

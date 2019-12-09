@@ -25,6 +25,7 @@
 #include <cstring>
 #include <cfloat>
 #include <cmath>
+#include <climits>
 #include <stdarg.h>
 #include <algorithm>
 #include <fstream>
@@ -825,6 +826,15 @@ unsigned VectorSplitDouble(const std::string mark,const std::string &text,std::v
   return((unsigned)vec.size());
 }
 
+//==============================================================================
+/// Loads string list in a vector and returns size of vector.
+//==============================================================================
+unsigned VectorFind(const std::string &key,const std::vector<std::string> &vec){
+  unsigned c=0;
+  const unsigned size=unsigned(vec.size());
+  for(;c<size && vec[c]!=key;c++);
+  return(c<size? c: UINT_MAX);
+}
 
 
 //==============================================================================
@@ -885,6 +895,33 @@ int GetFirstValueInt(std::string tex,std::string &endtex,std::string pretex){
   return(atoi(tex.substr(0,len).c_str()));
 }
 
+
+//==============================================================================
+/// Compares version numbers and returns -1:1<v2, 0:v1=v2, 1:v1>v2.
+//==============================================================================
+int CompareVersions(std::string v1,std::string v2){
+  int ret=0;
+  if(!v1.empty() && (v1[0]=='v' || v1[0]=='V'))v1=v1.substr(1);
+  if(!v2.empty() && (v2[0]=='v' || v2[0]=='V'))v2=v2.substr(1);
+  if(v1.empty() && v2.empty())ret=0;
+  else if(v1.empty())ret=-1;
+  else if(v2.empty())ret=1;
+  else{
+    vector<int> vv1,vv2;
+    fun::VectorSplitInt(".",v1,vv1);
+    fun::VectorSplitInt(".",v2,vv2);
+    const unsigned n1=unsigned(vv1.size());
+    const unsigned n2=unsigned(vv2.size());
+    const unsigned n=max(n1,n2);
+    for(unsigned c=0;c<n && !ret;c++){
+      const int a1=(c<n1? vv1[c]: 0);
+      const int a2=(c<n2? vv2[c]: 0);
+      if(a1<a2)ret=-1;
+      else if(a1>a2)ret=1;
+    }
+  }
+  return(ret);
+}
 
 
 //==============================================================================

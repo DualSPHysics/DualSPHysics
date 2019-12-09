@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!-- *** DualSPHysics (24-11-2019) *** -->
+<!-- *** class: JShifting *** -->
+<!------------------------------------------------------------------------------->
+<!------------------------------------------------------------------------------->
+<!-- *** Example for Shifting *** -->
+<special>
+    <shifting>
+		<mode value="0" comment="Shifting mode 0:None, 1:Ignore bound, 2:Ignore fixed, 3:Full" />
+		<coefficient value="-2" comment="Coefficient for shifting computation (default=-2)" />
+		<fsthreshold value="1.5" comment="Threshold to detect free surface. Typically 1.5 for 2D and 2.75 for 3D (default=0)" />
+        <shiftingzone>
+            <posref x="4" y="0" z="0" comment="Domain reference position" />
+            <size x="2" y="1" z="2" comment="Size from reference to define shifting domain" />
+        </shiftingzone>
+        <shiftingzone>
+            <posref x="4" y="0" z="0" comment="Domain reference position" />
+            <size x="2" y="1" z="2" comment="Vector to define shifting domain" />
+			<rotateaxis angle="-45" anglesunits="degrees">
+				<point1 x="1.4" y="0" z="0.7" />
+				<point2 x="1.4" y="1" z="0.7" />
+			</rotateaxis>		
+        </shiftingzone>
+        <shiftingzone>
+            <posref x="4" y="0" z="0" comment="Domain reference position" />
+            <vecx x="2" y="0" z="0" comment="Vector to define shifting domain" />
+            <vecy x="0" y="1" z="0" comment="Vector to define shifting domain" />
+            <vecz x="0" y="0" z="2" comment="Vector to define shifting domain" />
+        </shiftingzone>
+        <shiftingzone>
+            <posref x="4" y="0" z="0" comment="Domain reference position" />
+            <vecx x="2" y="0" z="0" comment="Vector to define shifting domain" />
+            <vecy x="0" y="1" z="0" comment="Vector to define shifting domain" />
+            <vecz x="0" y="0" z="2" comment="Vector to define shifting domain" />
+			<rotateaxis angle="-45" anglesunits="degrees">
+				<point1 x="1.4" y="0" z="0.7" />
+				<point2 x="1.4" y="1" z="0.7" />
+			</rotateaxis>		
+        </shiftingzone>
+    </shifting>
+</special>
+
+
+
