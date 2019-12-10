@@ -20,7 +20,8 @@
 //:# Cambios:
 //:# =========
 //:# - Incluye la aplicacion de TimeMod. (23-04-2018)
-//# - Ahora devuelve los datos de motion como StMotionData. (11-09-2019)
+//:# - Ahora devuelve los datos de motion como StMotionData. (11-09-2019)
+//:# - Permite compilar sin libreria WaveGen. (10-12-2019)
 //:#############################################################################
 
 /// \file JWaveGen.h \brief Declares the class \ref JWaveGen.
@@ -30,6 +31,8 @@
 
 #include "DualSphDef.h"
 #include <string>
+
+//#define DISABLE_WAVEGEN     ///<It allows compile without WaveGen library.
 
 class JXml;
 class JLog2;
@@ -42,6 +45,27 @@ class JSphMk;
 //##############################################################################
 /// \brief Implements wave generation for regular and irregular waves.
 
+#ifdef DISABLE_WAVEGEN
+class JWaveGen
+{
+public:
+  StMotionData MotionData;
+  JWaveGen(bool useomp,bool usegpu,JLog2* log,std::string dirdata,JXml *sxml,const std::string &place){}
+  ~JWaveGen(){}
+  static bool Available(){ return(false); }
+  bool ConfigPaddle(word mkbound,word motionref,unsigned idbegin,unsigned np){ return(false); }
+  void Init(JGaugeSystem *gaugesystem,const JSphMk *mkinfo,double timemax,tfloat3 gravity){}
+  void SetTimeMod(double timemod){}
+  void VisuConfig(std::string txhead,std::string txfoot){}
+  const StMotionData& GetMotion(bool svdata,unsigned cp,double timestep,double dt){ return(MotionData); }
+  const StMotionData& GetMotionAce(bool svdata,unsigned cp,double timestep,double dt){ return(MotionData); }
+  word GetPaddleMkbound(unsigned cp)const{ return(0); }
+  unsigned GetCount()const{ return(0); }
+  bool UseAwas()const{ return(false); }
+};
+
+
+#else
 class JWaveGen
 {
 private:
@@ -66,6 +90,11 @@ public:
   /// Destructor.
   //==============================================================================
   ~JWaveGen();
+
+  //==============================================================================
+  /// Returns true when this feature is available.
+  //==============================================================================
+  static bool Available(){ return(true); }
 
   //==============================================================================
   /// Configura paddle con datos de las particulas.
@@ -112,7 +141,7 @@ public:
   bool UseAwas()const{ return(Use_Awas); } 
 
 };
-
+#endif
 
 #endif
 

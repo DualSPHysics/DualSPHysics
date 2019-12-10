@@ -57,7 +57,7 @@ Please download source files and documentation from <a href="http://dual.sphysic
 using namespace std;
 
 
-JAppInfo AppInfo("DualSPHysics4","v4.4.030","09-12-2019");
+JAppInfo AppInfo("DualSPHysics4","v4.4.032","10-12-2019");
 //JAppInfo AppInfo("DualSPHysics4","v4.2.???","UserVersion","v1.0","??-??-????"); //-for user versions.
 
 //==============================================================================
@@ -100,15 +100,14 @@ bool ShowsVersionInfo(int argc,char** argv){
   }
   else if(option=="-info"){
     //-Defines the features included in the program.
+    bool d_ddtf=false;
     std::vector<std::string> features;
     features.push_back(fun::JSONProperty("CPU",true));
-    #ifdef _WITHGPU
-      features.push_back(fun::JSONProperty("GPU",true));
-    #else
-      features.push_back(fun::JSONProperty("GPU",false));
-    #endif
-    bool ddtf=false;
-    features.push_back(fun::JSONProperty("DDT_Fourtakas",ddtf));
+    features.push_back(fun::JSONProperty("GPU",AVAILABLE_GPU));
+    features.push_back(fun::JSONProperty("MultiGPU",AVAILABLE_MGPU));
+    features.push_back(fun::JSONProperty("CHRONO_Coupling",AVAILABLE_CHRONO));
+    features.push_back(fun::JSONProperty("WaveGen",AVAILABLE_WAVEGEN));
+    features.push_back(fun::JSONProperty("DDT_Fourtakas",d_ddtf));
     //-Defines main information about the version program.
     std::vector<std::string> info;
     info.push_back(fun::JSONProperty("ShortName",AppInfo.GetShortName()));

@@ -715,6 +715,7 @@ void JSph::LoadCaseConfig(){
 
   //-Configuration of WaveGen.
   if(xml.GetNode("case.execution.special.wavepaddles",false)){
+    if(!JWaveGen::Available())RunException(met,"Code for Wave-Paddles is not included in the current compilation.");
     bool useomp=false,usegpu=false;
     #ifdef OMP_USE_WAVEGEN
       useomp=(omp_get_max_threads()>1);

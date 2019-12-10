@@ -27,6 +27,43 @@
 #include "OmpDefs.h"
 #include <algorithm>
 
+
+//-Removes dependencies from precompiled libraries.
+//#define DISABLE_CHRONO     ///<It allows compile without ChronoLib library (dsphchrono.dll and ChronoEngine.dll).
+//#define DISABLE_WAVEGEN    ///<It allows compile without Wave-Paddles, Multi-Layer Pistons and Relaxation Zones libraries.
+
+
+//-Defines AVAILABLE_CHRONO when this feature is compiled.
+#ifdef DISABLE_CHRONO
+  #define AVAILABLE_CHRONO false
+#else
+  #define AVAILABLE_CHRONO true
+#endif
+
+//-Defines AVAILABLE_WAVEGEN when this feature is compiled.
+#ifdef DISABLE_WAVEGEN
+  #define AVAILABLE_WAVEGEN false
+  #define DISABLE_MLPISTONS
+  #define DISABLE_RZ
+#else
+  #define AVAILABLE_WAVEGEN true
+#endif
+
+//-Defines AVAILABLE_GPU when this feature is compiled.
+#ifdef _WITHGPU
+  #define AVAILABLE_GPU true
+#else
+  #define AVAILABLE_GPU false
+#endif
+
+//-Defines AVAILABLE_MGPU when this feature is compiled.
+#ifdef _WITHMGPU
+  #define AVAILABLE_MGPU true
+#else
+  #define AVAILABLE_MGPU false
+#endif
+
+
 #define DELTA_HEAVYFLOATING  ///<Applies DDT to fluid particles interacting with floatings with higher density (massp>MassFluid*1.2). | Aplica DDT a fluido que interaccionan con floatings pesados (massp>MassFluid*1.2). NO_COMENTARIO
 
 //#define DISABLE_TIMERS     ///<Compiles without timers. | Compilado sin timers.

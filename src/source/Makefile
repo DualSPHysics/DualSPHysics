@@ -1,4 +1,4 @@
-#DualSPHysics GPU/CPU v4.4.029 09-12-2019
+#DualSPHysics GPU/CPU v4.4.032 10-12-2019
 
 #=============== Compilation Options ===============
 USE_GCC5=NO
@@ -6,7 +6,7 @@ USE_DEBUG=NO
 USE_FAST_MATH=YES
 USE_NATIVE_CPU_OPTIMIZATIONS=NO
 COMPILE_CHRONO=YES
-COMPILE_RZ_MLPISTONS=YES
+COMPILE_WAVEGEN=YES
 
 LIBS_DIRECTORIES=-L./
 LIBS_DIRECTORIES:=$(LIBS_DIRECTORIES) -L../lib/linux_gcc
@@ -38,8 +38,8 @@ endif
 ifeq ($(COMPILE_CHRONO), NO)
   CCFLAGS:=$(CCFLAGS) -DDISABLE_CHRONO
 endif
-ifeq ($(COMPILE_RZ_MLPISTONS), NO)
-  CCFLAGS:=$(CCFLAGS) -DDISABLE_RZ -DDISABLE_MLPISTONS
+ifeq ($(COMPILE_WAVEGEN), NO)
+  CCFLAGS:=$(CCFLAGS) -DDISABLE_WAVEGEN
 endif
 
 #=============== CUDA selection ===============
@@ -118,8 +118,8 @@ JLIBS=${LIBS_DIRECTORIES} -ljformatfiles2_64 -ljwavegen_64
 ifeq ($(COMPILE_CHRONO), YES)
   JLIBS:=$(JLIBS) -ldsphchrono -lChronoEngine
 endif
-ifeq ($(COMPILE_RZ_MLPISTONS), YES)
-  JLIBS:=$(JLIBS) -ljwave_mlp_rz_64
+ifeq ($(COMPILE_WAVEGEN), YES)
+  JLIBS:=$(JLIBS) -ljwavegen_64
 endif
 
 #=============== GPU Code Compilation ===============

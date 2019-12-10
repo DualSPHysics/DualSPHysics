@@ -27,7 +27,7 @@
 //#############################################################################
 
 #include "JObject.h"
-#include "TypesDef.h"
+#include "DualSphDef.h"
 #include <string>
 #include <sstream>
 #include <iostream>
