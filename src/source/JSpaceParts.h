@@ -53,6 +53,8 @@
 //:# - Gestiona posicion minima y maxima de particulas. (21-03-2019)
 //:# - Uso de JSpacePartsDef.h para omitir codigo de JSpaceProperties, 
 //:#   JLinearValue y JReadDatafile. (16-05-2019)
+//:# - Cambia 'translation' y 'rotation' por 'translationDOF' y 'rotationDOF' 
+//:#   manteniendo compatibilidad. (14-12-2019)
 //:#############################################################################
 
 /// \file JSpaceParts.h \brief Declares the class \ref JSpaceParts.

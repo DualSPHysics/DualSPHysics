@@ -238,8 +238,12 @@ void JSpacePartBlock_Floating::ReadXml(JXml *sxml,TiXmlElement* ele){
   }
   else Inertia=sxml->ReadElementMatrix3d(ele,"inertia");
   //-Reads motion data.
-  TranslationFree=sxml->ReadElementInt3(ele,"translation",true,TInt3(1));
-  RotationFree   =sxml->ReadElementInt3(ele,"rotation"   ,true,TInt3(1));
+  if(sxml->ExistsElement(ele,"translation") && sxml->ExistsElement(ele,"translationDOF"))
+    Run_ExceptioonFile("Only \'translation\' or \'translationDOF\' must be defined.",sxml->ErrGetFileRow(ele));
+  if(sxml->ExistsElement(ele,"rotation")    && sxml->ExistsElement(ele,"rotationDOF"))
+    Run_ExceptioonFile("Only \'rotation\' or \'rotationDOF\' must be defined.",sxml->ErrGetFileRow(ele));
+  TranslationFree=sxml->ReadElementInt3(ele,(sxml->ExistsElement(ele,"translation")? "translation": "translationDOF"),true,TInt3(1));
+  RotationFree   =sxml->ReadElementInt3(ele,(sxml->ExistsElement(ele,"rotation")   ? "rotation":    "rotationDOF")   ,true,TInt3(1));
   TranslationFree=TInt3((!TranslationFree.x? 0: 1),(!TranslationFree.y? 0: 1),(!TranslationFree.z? 0: 1));
   RotationFree   =TInt3((!RotationFree.x? 0: 1),(!RotationFree.y? 0: 1),(!RotationFree.z? 0: 1));
   LinearVelini =sxml->ReadElementDouble3(ele,(sxml->ExistsElement(ele,"linearvelini" )? "linearvelini" : "velini"  ),true);
@@ -264,8 +268,8 @@ TiXmlElement* JSpacePartBlock_Floating::WriteXml(JXml *sxml,TiXmlElement* ele)co
   else sxml->AddAttribute(sxml->AddElementDouble3(ele,"inertia",TDouble3(Inertia.a11,Inertia.a22,Inertia.a33)),"units_comment","kg*m^2");
 #endif
   //-Writes motion data.
-  if(TranslationFree!=TInt3(1))JXml::AddAttribute(sxml->AddElementInt3(ele,"translation",TranslationFree),"comment","Use 0 for translation restriction in the movement (default=(1,1,1))");
-  if(RotationFree   !=TInt3(1))JXml::AddAttribute(sxml->AddElementInt3(ele,"rotation"   ,RotationFree   ),"comment","Use 0 for rotation restriction in the movement (default=(1,1,1))");
+  if(TranslationFree!=TInt3(1))JXml::AddAttribute(sxml->AddElementInt3(ele,"translationDOF",TranslationFree),"comment","Use 0 to restrict Degrees Of Freedon for translation (default=(1,1,1))");
+  if(RotationFree   !=TInt3(1))JXml::AddAttribute(sxml->AddElementInt3(ele,"rotationDOF"   ,RotationFree   ),"comment","Use 0 to restrict Degrees Of Freedon for rotation (default=(1,1,1))");
   if(LinearVelini !=TDouble3(0))JXml::AddAttribute(sxml->AddElementDouble3(ele,"linearvelini" ,LinearVelini),"units_comment","m/s");
   if(AngularVelini!=TDouble3(0))JXml::AddAttribute(sxml->AddElementDouble3(ele,"angularvelini",AngularVelini),"units_comment","rad/s");
   return(ele);

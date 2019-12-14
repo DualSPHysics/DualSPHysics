@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<case app="GenCase4 v4.0.129 (08-12-2019)" date="09-12-2019 15:45:05">
-    <casedef requiredversion="v4.0.129">
+<case app="GenCase4 v4.0.133 (14-12-2019)" date="14-12-2019 02:35:11">
+    <casedef requiredversion="v4.0.133">
         <constantsdef>
             <lattice bound="2" fluid="1" />
             <gravity x="0" y="0" z="-9.81" comment="Gravitational acceleration" units_comment="m/s^2" />
@@ -492,8 +492,8 @@
                 </inertiafull>
             </floating>
             <floating mkbound="5" rhopbody="1500">
-                <translation x="0" y="0" z="1" comment="Use 0 for translation restriction in the movement (default=(1,1,1))" />
-                <rotation x="0" y="1" z="0" comment="Use 0 for rotation restriction in the movement (default=(1,1,1))" />
+                <translationDOF x="0" y="0" z="1" comment="Use 0 to restrict Degrees Of Freedon for translation (default=(1,1,1))" />
+                <rotationDOF x="0" y="1" z="0" comment="Use 0 to restrict Degrees Of Freedon for rotation (default=(1,1,1))" />
             </floating>
             <floating mkbound="6" rhopbody="1500">
                 <linearvelini x="1" y="3" z="2" units_comment="m/s" />
