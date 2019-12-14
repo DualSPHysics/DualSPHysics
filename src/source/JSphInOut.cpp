@@ -32,7 +32,8 @@
 #include "JMatrix4.h"
 #include "JLinearValue.h"
 #include "JRangeFilter.h"
-#include "JFormatFiles2.h"
+#include "JDataArrays.h"
+#include "JVtkLib.h"
 
 #ifdef _WITHGPU
 #include "FunctionsCuda.h"
@@ -1084,9 +1085,9 @@ void JSphInOut::ComputeFreeDomain(){
             //  string tx;
             //  for(unsigned cc=0;cc<nzone;cc++)tx=tx+fun::PrintStr("-[%u]",sel[cc]);
             //  Log->Printf("-----> %u >---%s: %f",cd,tx.c_str(),size);cd++;
-            //  std::vector<JFormatFiles2::StShapeData> shapes;
-            //  shapes.push_back(JFormatFiles2::DefineShape_Box(pmin,pmax-pmin,cd,0));
-            //  JFormatFiles2::SaveVtkShapes(Log->GetDirOut()+fun::FileNameSec("CfgInOut_DG_FreeDomain.vtk",cd),"","",shapes);
+            //  JVtkLib sh;
+            //  sh.AddShapeBoxSize(pmin,pmax-pmin,cd);
+            //  sh.SaveShapeVtk(Log->GetDirOut()+fun::FileNameSec("CfgInOut_DG_FreeDomain.vtk",cd),"");
             //}
             bestsize=size;
             bestmin=pmin; bestmax=pmax;
@@ -1119,25 +1120,21 @@ void JSphInOut::SaveVtkDomains(){
   const char met[]="SaveVtkDomains";
   //-InOut real domains.
   {
-    std::vector<JFormatFiles2::StShapeData> shapes;
+    JVtkLib sh;
     for(unsigned ci=0;ci<GetCount();ci++){
       const JSphInOutZone *izone=List[ci];
       const tdouble3* ptdom=izone->GetPtDomain();
-      if(Simulate2D){
-        shapes.push_back(JFormatFiles2::DefineShape_Quad(ptdom[0],ptdom[1],ptdom[2],ptdom[3],ci,0));
-      }
-      else{
-        shapes.push_back(JFormatFiles2::DefineShape_Box(ptdom[0],ptdom[1],ptdom[2],ptdom[3],ptdom[4],ptdom[5],ptdom[6],ptdom[7],ci,0));
-      }
-      shapes.push_back(JFormatFiles2::DefineShape_Line(ptdom[8],ptdom[9],ci,0)); //-Normal line.
+      if(Simulate2D)sh.AddShapeQuad(ptdom[0],ptdom[1],ptdom[2],ptdom[3],ci);
+      else sh.AddShapeBoxFront(ptdom[0],ptdom[1],ptdom[2],ptdom[3],ptdom[4],ptdom[5],ptdom[6],ptdom[7],ci);
+      sh.AddShapeLine(ptdom[8],ptdom[9],ci); //-Normal line.
     }
     const string filevtk=AppInfo.GetDirOut()+"CfgInOut_DomainReal.vtk";
-    JFormatFiles2::SaveVtkShapes(filevtk,"izone","",shapes);
+    sh.SaveShapeVtk(filevtk,"izone");
     Log->AddFileInfo(filevtk,"Saves real domain of InOut configurations.");
   }
   //-InOut box domains.
   {
-    std::vector<JFormatFiles2::StShapeData> shapes;
+    JVtkLib sh;
     for(unsigned ci=0;ci<GetCount();ci++){
       tfloat3 boxmin=List[ci]->GetBoxLimitMin();
       tfloat3 boxmax=List[ci]->GetBoxLimitMax();
@@ -1145,9 +1142,9 @@ void JSphInOut::SaveVtkDomains(){
         boxmin.y=boxmax.y=float(Simulate2DPosY);
         const tfloat3 pt1=TFloat3(boxmax.x,boxmin.y,boxmin.z);
         const tfloat3 pt2=TFloat3(boxmin.x,boxmax.y,boxmax.z);
-        shapes.push_back(JFormatFiles2::DefineShape_Quad(boxmin,pt1,boxmax,pt2,ci,0));
+        sh.AddShapeQuad(boxmin,pt1,boxmax,pt2,ci);
       }
-      else shapes.push_back(JFormatFiles2::DefineShape_Box(boxmin,boxmax-boxmin,ci,0));
+      else sh.AddShapeBoxSize(boxmin,boxmax-boxmin,ci);
     }
     //-Draws FreeCentre.
     {
@@ -1157,9 +1154,9 @@ void JSphInOut::SaveVtkDomains(){
       tfloat3 pc3=TFloat3(pc0.x,pc2.y,pc2.z);
       if(Simulate2D){
         pc0.y=pc1.y=pc2.y=pc3.y=float(Simulate2DPosY);
-        shapes.push_back(JFormatFiles2::DefineShape_Quad(pc0,pc1,pc2,pc3,GetCount(),0));
+        sh.AddShapeQuad(pc0,pc1,pc2,pc3,GetCount());
       }
-      else shapes.push_back(JFormatFiles2::DefineShape_Box(pc0,pc2-pc0,GetCount(),0));
+      else sh.AddShapeBoxSize(pc0,pc2-pc0,GetCount());
     }
     //-Draws FreeLimitMin/Max.
     {
@@ -1169,12 +1166,12 @@ void JSphInOut::SaveVtkDomains(){
       tfloat3 pc3=TFloat3(pc0.x,pc2.y,pc2.z);
       if(Simulate2D){
         pc0.y=pc1.y=pc2.y=pc3.y=float(Simulate2DPosY);
-        shapes.push_back(JFormatFiles2::DefineShape_Quad(pc0,pc1,pc2,pc3,GetCount(),0));
+        sh.AddShapeQuad(pc0,pc1,pc2,pc3,GetCount());
       }
-      else shapes.push_back(JFormatFiles2::DefineShape_Box(pc0,pc2-pc0,GetCount(),0));
+      else sh.AddShapeBoxSize(pc0,pc2-pc0,GetCount());
     }
     const string filevtk=AppInfo.GetDirOut()+"CfgInOut_DomainBox.vtk";
-    JFormatFiles2::SaveVtkShapes(filevtk,"izone","",shapes);
+    sh.SaveShapeVtk(filevtk,"izone");
     Log->AddFileInfo(filevtk,"Saves box domain of InOut configurations.");
   }
 }
@@ -1296,11 +1293,11 @@ unsigned JSphInOut::Config(double timestep,bool stable,bool simulate2d,double si
 
     //-Creates VTK file.
     if(DBG_INOUT_PTINIT){
-      JFormatFiles2::StScalarData fields[8];
-      unsigned nfields=0;
-      if(PtZone){ fields[nfields]=JFormatFiles2::DefineField("PtZone"  ,JFormatFiles2::UChar8,1,PtZone);   nfields++; }
+      JDataArrays arrays;
+      arrays.AddArray("Pos",PtCount,PtPos,false);
+      if(PtZone)arrays.AddArray("PtZone",PtCount,PtZone,false);
       const string filevtk=AppInfo.GetDirOut()+"CfgInOut_PtInit.vtk";
-      JFormatFiles2::SaveVtk(filevtk,PtCount,PtPos,nfields,fields);
+      JVtkLib::SaveVtkData(filevtk,arrays,"Pos");
       Log->AddFileInfo(filevtk,"Saves initial InOut points for DEBUG (by JSphInOut).");
     }
     //-Creates VTK file.
@@ -1317,11 +1314,11 @@ unsigned JSphInOut::Config(double timestep,bool stable,bool simulate2d,double si
           memset(zone+npz,byte(ci),sizeof(byte)*n);
           npz+=n;
         }
-        JFormatFiles2::StScalarData fields[8];
-        unsigned nfields=0;
-        if(zone){ fields[nfields]=JFormatFiles2::DefineField("Zone"  ,JFormatFiles2::UChar8,1,zone);   nfields++; }
+        JDataArrays arrays;
+        arrays.AddArray("Pos",npz,pos,false);
+        if(zone)arrays.AddArray("Zone",npz,zone,false);
         const string filevtk=AppInfo.GetDirOut()+"CfgInOut_PtInitZ.vtk";
-        JFormatFiles2::SaveVtk(filevtk,npz,pos,nfields,fields);
+        JVtkLib::SaveVtkData(filevtk,arrays,"Pos");
         Log->AddFileInfo(filevtk,"Saves initial InOut points for DEBUG (by JSphInOut).");
         //-Frees memory.
         delete[] pos;  pos=NULL;
@@ -1423,12 +1420,18 @@ unsigned JSphInOut::CreateListCpu(unsigned nstep,unsigned npf,unsigned pini
         vdis1[p]=(dis1<0? -1.f: (dis1>0? 1.f: 0));
       }
       //-Generates VTK file.
-      JFormatFiles2::StScalarData fields[5];
-      unsigned nfields=0;
-      if(vdis0){ fields[nfields]=JFormatFiles2::DefineField("vdis0",JFormatFiles2::Float32,1,vdis0);    nfields++; }
-      if(vdis1){ fields[nfields]=JFormatFiles2::DefineField("vdis1",JFormatFiles2::Float32,1,vdis1);    nfields++; }
-      //string fname=DirOut+fun::FileNameSec("DgParts.vtk",numfile);
-      JFormatFiles2::SaveVtk(AppInfo.GetDirOut()+"_Planes.vtk",np,vpos,nfields,fields);
+      JDataArrays arrays;
+      arrays.AddArray("Pos",np,vpos,false);
+      if(vdis0)arrays.AddArray("vdis0",np,vdis0,false);
+      if(vdis1)arrays.AddArray("vdis1",np,vdis1,false);
+      JVtkLib::SaveVtkData(AppInfo.GetDirOut()+"_Planes.vtk",arrays,"Pos");
+      //-Old Style...
+      //JFormatFiles2::StScalarData fields[5];
+      //unsigned nfields=0;
+      //if(vdis0){ fields[nfields]=JFormatFiles2::DefineField("vdis0",JFormatFiles2::Float32,1,vdis0);    nfields++; }
+      //if(vdis1){ fields[nfields]=JFormatFiles2::DefineField("vdis1",JFormatFiles2::Float32,1,vdis1);    nfields++; }
+      ////string fname=DirOut+fun::FileNameSec("DgParts.vtk",numfile);
+      //JFormatFiles2::SaveVtk(AppInfo.GetDirOut()+"_Planes.vtk",np,vpos,nfields,fields);
     }
   }
   //Log->Printf("%u> -------->CreateListXXX>> InOutcount:%u",nstep,count);
@@ -1962,7 +1965,8 @@ void JSphInOut::VisuConfig(std::string txhead,std::string txfoot)const{
 /// Creates VTK files with Zsurf.
 //==============================================================================
 void JSphInOut::SaveVtkZsurf(unsigned part){
-  std::vector<JFormatFiles2::StShapeData> shapes;
+  JVtkLib sh;
+  bool usesh=false;
   for(unsigned ci=0;ci<GetCount();ci++){
     const JSphInOutZone *izone=List[ci];
     if(izone->GetSvVtkZsurf()){
@@ -1974,19 +1978,20 @@ void JSphInOut::SaveVtkZsurf(unsigned part){
         const float py=float(Simulate2DPosY);
         const tfloat3 pt1=TFloat3(boxmin.x,py,zsurf);
         const tfloat3 pt2=TFloat3(boxmax.x,py,zsurf);
-        shapes.push_back(JFormatFiles2::DefineShape_Line(pt1,pt2,ci,0));
+        sh.AddShapeLine(pt1,pt2,ci);
       }
       else{
         boxmin.z=boxmax.z=zsurf;
         const tfloat3 pt1=TFloat3(boxmax.x,boxmin.y,boxmin.z);
         const tfloat3 pt2=TFloat3(boxmin.x,boxmax.y,boxmax.z);
-        shapes.push_back(JFormatFiles2::DefineShape_Quad(boxmin,pt1,boxmax,pt2,ci,0));
+        sh.AddShapeQuad(boxmin,pt1,boxmax,pt2,ci);
       }
+      usesh=true;
     }
   }
-  if(shapes.size()>0){
+  if(usesh){
     const string filevtk=AppInfo.GetDirDataOut()+"InOut_Zsurf.vtk";
-    JFormatFiles2::SaveVtkShapes(fun::FileNameSec(filevtk,part),"izone","",shapes);
+    sh.SaveShapeVtk(fun::FileNameSec(filevtk,part),"izone");
     Log->AddFileInfo(filevtk,"Saves VTK files with Zsurf (by JSphInOut).");
   }
 }

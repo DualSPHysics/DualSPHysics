@@ -6,7 +6,7 @@ PROJECT(DualSPHysics)
 
 set(OBJXML JXml.cpp tinystr.cpp tinyxml.cpp tinyxmlerror.cpp tinyxmlparser.cpp)
 set(OBJSPHMOTION JMotion.cpp JMotionList.cpp JMotionMov.cpp JMotionObj.cpp JMotionPos.cpp JSphMotion.cpp)
-set(OBCOMMON Functions.cpp FunctionsGeo3d.cpp JAppInfo.cpp JBinaryData.cpp JDataArrays.cpp JException.cpp JLinearValue.cpp JLog2.cpp JMeanValues.cpp JObject.cpp JRadixSort.cpp JRangeFilter.cpp JReadDatafile.cpp JSaveCsv2.cpp JTimeControl.cpp randomc.cpp)
+set(OBCOMMON Functions.cpp FunctionsGeo3d.cpp JAppInfo.cpp JBinaryData.cpp JDataArrays.cpp JException.cpp JLinearValue.cpp JLog2.cpp JMeanValues.cpp JObject.cpp JOutputCsv.o JRadixSort.cpp JRangeFilter.cpp JReadDatafile.cpp JSaveCsv2.cpp JTimeControl.cpp randomc.cpp)
 set(OBCOMMONDSPH JDsphConfig.cpp JPartDataBi4.cpp JPartDataHead.cpp JPartFloatBi4.cpp JPartOutBi4Save.cpp JSpaceCtes.cpp JSpaceEParms.cpp JSpaceParts.cpp JSpaceProperties.cpp JSpaceVtkOut.cpp)
 set(OBSPH JArraysCpu.cpp JCellDivCpu.cpp JCfgRun.cpp JDamping.cpp JGaugeItem.cpp JGaugeSystem.cpp JPartsOut.cpp JSaveDt.cpp JShifting.cpp JSph.cpp JSphAccInput.cpp JSphCpu.cpp JSphInitialize.cpp JSphMk.cpp JSphPartsInit.cpp JSphDtFixed.cpp JSphVisco.cpp JTimeOut.cpp JWaveSpectrumGpu.cpp main.cpp)
 set(OBSPHSINGLE JCellDivCpuSingle.cpp JPartsLoad4.cpp JSphCpuSingle.cpp)
@@ -85,11 +85,11 @@ endif()
 # Linker flags
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-  target_link_libraries(DualSPHysics4.4CPU jformatfiles2_64 jwavegen_64 jwave_mlp_rz_64 ChronoEngine dsphchrono)
+  target_link_libraries(DualSPHysics4.4CPU jvtklib_64 jwavegen_64 ChronoEngine dsphchrono)
   set_target_properties(DualSPHysics4.4CPU PROPERTIES COMPILE_FLAGS "-use_fast_math -O3 -D_GLIBCXX_USE_CXX11_ABI=0 -fPIC")
   
   if (CUDA_FOUND)
-     target_link_libraries(DualSPHysics4.4 jformatfiles2_64 jwavegen_64 jwave_mlp_rz_64 ChronoEngine dsphchrono)
+     target_link_libraries(DualSPHysics4.4 jvtklib_64 jwavegen_64 ChronoEngine dsphchrono)
      set_target_properties(DualSPHysics4.4 PROPERTIES COMPILE_FLAGS "-use_fast_math -O3 -D_WITHGPU -D_GLIBCXX_USE_CXX11_ABI=0 -fPIC")
   endif()
   
@@ -98,8 +98,8 @@ elseif(MSVC)
 
   #if(MSVC_VERSION VERSION_EQUAL 1900)
     # MSVC 2015
-    target_link_libraries(DualSPHysics4.4CPU JFormatFiles2_x64_v140_Release JWaveGen_x64_v140_Release JWave_MLP_RZ_x64_v140_Release dsphchrono)
-    target_link_libraries(DualSPHysics4.4 JFormatFiles2_x64_v140_Release JWaveGen_x64_v140_Release JWave_MLP_RZ_x64_v140_Release dsphchrono)
+    target_link_libraries(DualSPHysics4.4CPU JVtkLib_x64_v140_Release JWaveGen_x64_v140_Release dsphchrono)
+    target_link_libraries(DualSPHysics4.4 JVtkLib_x64_v140_Release JWaveGen_x64_v140_Release dsphchrono)
   #endif()
   
   SET(CUDA_PROPAGATE_HOST_FLAGS OFF CACHE BOOL "Propagate C/CXX Flags and friends to the host compiler in NVCC via -Xompile  " FORCE)

@@ -29,9 +29,17 @@
 
 
 //-Removes dependencies from precompiled libraries.
+//#define DISABLE_VTKLIB     ///<It allows compile without VTK library.
 //#define DISABLE_CHRONO     ///<It allows compile without ChronoLib library (dsphchrono.dll and ChronoEngine.dll).
 //#define DISABLE_WAVEGEN    ///<It allows compile without Wave-Paddles, Multi-Layer Pistons and Relaxation Zones libraries.
 
+
+//-Defines AVAILABLE_VTKLIB when this feature is compiled.
+#ifdef DISABLE_VTKLIB
+  #define AVAILABLE_VTKLIB false
+#else
+  #define AVAILABLE_VTKLIB true
+#endif
 
 //-Defines AVAILABLE_CHRONO when this feature is compiled.
 #ifdef DISABLE_CHRONO

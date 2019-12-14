@@ -31,7 +31,7 @@
 #include "JLinearValue.h"
 #include "JSaveCsv2.h"
 #include "JRangeFilter.h"
-#include "JFormatFiles2.h"
+#include "JVtkLib.h"
 
 #include <cfloat>
 #include <climits>
@@ -319,7 +319,7 @@ void JSphBoundCorr::RunAutoConfig(const JSphPartsInit *partsdata){
 void JSphBoundCorr::SaveVtkConfig(double dp,int part)const{
   const double sizequad=dp*16;
   const double sizedir=dp*4;
-  std::vector<JFormatFiles2::StShapeData> shapes;
+  JVtkLib sh;
   for(unsigned c=0;c<GetCount();c++){
     const JSphBoundCorrZone* zo=List[c];
     const int mkbound=zo->MkBound;
@@ -332,16 +332,16 @@ void JSphBoundCorr::SaveVtkConfig(double dp,int part)const{
     const tdouble3 p2=p0+v1+v2;
     const tdouble3 p3=p0+v2;
     //-Adds limit quad.
-    shapes.push_back(JFormatFiles2::DefineShape_Quad(p0,p1,p2,p3,mkbound,0));
-    JFormatFiles2::AddShape_QuadLines(shapes,p0,p1,p2,p3,mkbound,0);
+    sh.AddShapeQuad(p0,p1,p2,p3,mkbound);
+    sh.AddShapeQuadWire(p0,p1,p2,p3,mkbound);
     //-Adds direction line.
-    shapes.push_back(JFormatFiles2::DefineShape_Line(ps,ps+(ve*sizedir),mkbound,0)); //-Direction line.
+    sh.AddShapeLine(ps,ps+(ve*sizedir),mkbound); //-Direction line.
   }
   if(GetCount()){
     string filevtk;
     if(part<0)filevtk=AppInfo.GetDirOut()+"CfgBoundCorr_Limit.vtk";
     else filevtk=AppInfo.GetDirDataOut()+fun::FileNameSec("CfgBoundCorr_Limit.vtk",part);
-    JFormatFiles2::SaveVtkShapes(filevtk,"mkbound","",shapes);
+    sh.SaveShapeVtk(filevtk,"MkBound");
     if(part<0)Log->AddFileInfo(filevtk,"Saves VTK file with BoundCorr configurations.");
   }
 }

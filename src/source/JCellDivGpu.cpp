@@ -21,7 +21,6 @@
 #include "JCellDivGpu.h"
 #include "JCellDivGpu_ker.h"
 #include "Functions.h"
-#include "JFormatFiles2.h"
 
 using namespace std;
 

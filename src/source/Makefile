@@ -1,10 +1,11 @@
-#DualSPHysics GPU/CPU v4.4.032 10-12-2019
+#DualSPHysics GPU/CPU v4.4.035 13-12-2019
 
-#=============== Compilation Options ===============
+#=============== Compilation Options (YES/NO) ===============
 USE_GCC5=NO
 USE_DEBUG=NO
 USE_FAST_MATH=YES
 USE_NATIVE_CPU_OPTIMIZATIONS=NO
+COMPILE_VTKLIB=YES
 COMPILE_CHRONO=YES
 COMPILE_WAVEGEN=YES
 
@@ -35,6 +36,9 @@ ifeq ($(USE_GCC5), YES)
   NCCFLAGS+=-D_GLIBCXX_USE_CXX11_ABI=0
 endif
 
+ifeq ($(COMPILE_VTKLIB), NO)
+  CCFLAGS:=$(CCFLAGS) -DDISABLE_VTKLIB
+endif
 ifeq ($(COMPILE_CHRONO), NO)
   CCFLAGS:=$(CCFLAGS) -DDISABLE_CHRONO
 endif
@@ -94,7 +98,7 @@ endif
 #=============== Files to compile ===============
 OBJXML=JXml.o tinystr.o tinyxml.o tinyxmlerror.o tinyxmlparser.o
 OBJSPHMOTION=JMotion.o JMotionList.o JMotionMov.o JMotionObj.o JMotionPos.o JSphMotion.o
-OBCOMMON=Functions.o FunctionsGeo3d.o JAppInfo.o JBinaryData.o JDataArrays.o JException.o JLinearValue.o JLog2.o JMeanValues.o JObject.o JRadixSort.o JRangeFilter.o JReadDatafile.o JSaveCsv2.o JTimeControl.o randomc.o
+OBCOMMON=Functions.o FunctionsGeo3d.o JAppInfo.o JBinaryData.o JDataArrays.o JException.o JLinearValue.o JLog2.o JMeanValues.o JObject.o JOutputCsv.o JRadixSort.o JRangeFilter.o JReadDatafile.o JSaveCsv2.o JTimeControl.o randomc.o
 OBCOMMONDSPH=JDsphConfig.o JPartDataBi4.o JPartDataHead.o JPartFloatBi4.o JPartOutBi4Save.o JSpaceCtes.o JSpaceEParms.o JSpaceParts.o JSpaceProperties.o JSpaceVtkOut.o
 OBSPH=JArraysCpu.o JCellDivCpu.o JCfgRun.o JDamping.o JGaugeItem.o JGaugeSystem.o JPartsOut.o JSaveDt.o JShifting.o JSph.o JSphAccInput.o JSphCpu.o JSphInitialize.o JSphMk.o JSphPartsInit.o JSphDtFixed.o JSphVisco.o JTimeOut.o JWaveSpectrumGpu.o main.o
 OBSPHSINGLE=JCellDivCpuSingle.o JPartsLoad4.o JSphCpuSingle.o
@@ -114,7 +118,10 @@ OBJECTS:=$(OBJECTS) $(OBCOMMONGPU) $(OBSPHGPU) $(OBSPHSINGLEGPU) $(OBCUDA)
 OBJECTS:=$(OBJECTS) $(OBWAVERZ) $(OBWAVERZCUDA) $(OBCHRONO) $(OBINOUT) $(OBINOUTGPU)
 
 #=============== DualSPHysics libs to be included ===============
-JLIBS=${LIBS_DIRECTORIES} -ljformatfiles2_64 -ljwavegen_64
+JLIBS=${LIBS_DIRECTORIES}
+ifeq ($(COMPILE_VTKLIB), YES)
+  JLIBS:=$(JLIBS) -ljvtklib_64
+endif
 ifeq ($(COMPILE_CHRONO), YES)
   JLIBS:=$(JLIBS) -ldsphchrono -lChronoEngine
 endif

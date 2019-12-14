@@ -29,7 +29,7 @@
 #include "JException.h"
 #include "Functions.h"
 #include "FunctionsCuda.h"
-#include "JFormatFiles2.h"
+#include "JVtkLib.h"
 #include "JDataArrays.h"
 
 #include "DualSphDef.h"
@@ -245,7 +245,7 @@ void JDebugSphGpu::SaveVtk(std::string filename,int numfile,unsigned pini,unsign
   const string file=GetFileName(filename,numfile);
   JDataArrays arrays;
   LoadParticlesData(gp,pini,pfin,vars,&arrays,file);
-  JFormatFiles2::SaveVtk(file,arrays,pfin-pini,"Pos");
+  JVtkLib::SaveVtkData(file,arrays,"Pos");
   arrays.Reset();
 }
 

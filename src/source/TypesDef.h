@@ -301,6 +301,8 @@ inline tfloat4 operator +(const tfloat4& a, const tfloat4& b){ return(TFloat4(a.
 inline tfloat4 operator -(const tfloat4& a, const tfloat4& b){ return(TFloat4(a.x-b.x,a.y-b.y,a.z-b.z,a.w-b.w)); }
 inline tfloat4 operator *(const tfloat4& a, const tfloat4& b){ return(TFloat4(a.x*b.x,a.y*b.y,a.z*b.z,a.w*b.w)); }
 inline tfloat4 operator /(const tfloat4& a, const tfloat4& b){ return(TFloat4(a.x/b.x,a.y/b.y,a.z/b.z,a.w/b.w)); }
+inline tfloat4 MinValues (const tfloat4& a, const tfloat4& b){ return(TFloat4((a.x<=b.x? a.x: b.x),(a.y<=b.y? a.y: b.y),(a.z<=b.z? a.z: b.z),(a.w<=b.w? a.w: b.w))); }
+inline tfloat4 MaxValues (const tfloat4& a, const tfloat4& b){ return(TFloat4((a.x>=b.x? a.x: b.x),(a.y>=b.y? a.y: b.y),(a.z>=b.z? a.z: b.z),(a.w>=b.w? a.w: b.w))); }
 
 
 ///Structure of 4 variables of type float.
@@ -316,6 +318,8 @@ inline tdouble4 operator +(const tdouble4& a, const tdouble4& b){ return(TDouble
 inline tdouble4 operator -(const tdouble4& a, const tdouble4& b){ return(TDouble4(a.x-b.x,a.y-b.y,a.z-b.z,a.w-b.w)); }
 inline tdouble4 operator *(const tdouble4& a, const tdouble4& b){ return(TDouble4(a.x*b.x,a.y*b.y,a.z*b.z,a.w*b.w)); }
 inline tdouble4 operator /(const tdouble4& a, const tdouble4& b){ return(TDouble4(a.x/b.x,a.y/b.y,a.z/b.z,a.w/b.w)); }
+inline tdouble4 MinValues (const tdouble4& a, const tdouble4& b){ return(TDouble4((a.x<=b.x? a.x: b.x),(a.y<=b.y? a.y: b.y),(a.z<=b.z? a.z: b.z),(a.w<=b.w? a.w: b.w))); }
+inline tdouble4 MaxValues (const tdouble4& a, const tdouble4& b){ return(TDouble4((a.x>=b.x? a.x: b.x),(a.y>=b.y? a.y: b.y),(a.z>=b.z? a.z: b.z),(a.w>=b.w? a.w: b.w))); }
 
 ///Converts \ref tdouble4 to \ref tfloat4.
 inline tfloat4 ToTFloat4(const tdouble4& v){ return(TFloat4(float(v.x),float(v.y),float(v.z),float(v.w))); }

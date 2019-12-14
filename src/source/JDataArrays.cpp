@@ -26,6 +26,9 @@
 
 using namespace std;
 
+//##############################################################################
+//# JDataArrays
+//##############################################################################
 //==============================================================================
 /// Constructor.
 //==============================================================================
@@ -101,6 +104,18 @@ void JDataArrays::FreeMemory(StDataArray &arr){
 void JDataArrays::FreeMemory(){
   const unsigned na=Count();
   for(unsigned c=0;c<na;c++)if(Arrays[c].delptr)FreeMemory(Arrays[c]);
+}
+
+//==============================================================================
+/// Returns maximum or minimum number of data values.
+//==============================================================================
+unsigned JDataArrays::GetDataCount(bool minimum)const{ 
+  unsigned smin=0,smax=0;
+  const unsigned na=Count();
+  if(na)smin=smax=Arrays[0].count;
+  if(minimum)for(unsigned c=1;c<na;c++)if(smin>Arrays[c].count)smin=Arrays[c].count;
+  else       for(unsigned c=1;c<na;c++)if(smax<Arrays[c].count)smax=Arrays[c].count;
+  return(minimum? smin: smax);
 }
 
 //==============================================================================
@@ -217,6 +232,23 @@ JDataArrays::StDataArray& JDataArrays::GetArray(const std::string &keyname){
 }
 
 //==============================================================================
+/// Returns constant reference to requested array by idx.
+//==============================================================================
+const JDataArrays::StDataArray& JDataArrays::GetArrayCte(unsigned idx)const{
+  if(idx>=Count())Run_Exceptioon("Array idx is invalid.");
+  return(Arrays[idx]);
+}
+
+//==============================================================================
+/// Returns constant reference to requested array by name.
+//==============================================================================
+const JDataArrays::StDataArray& JDataArrays::GetArrayCte(const std::string &keyname)const{
+  const unsigned idx=GetIdxName(keyname);
+  if(idx==UINT_MAX)Run_Exceptioon(fun::PrintStr("Array \'%s\' is missing.",keyname.c_str()));
+  return(Arrays[idx]);
+}
+
+//==============================================================================
 /// Returns data of requested array by idx.
 //==============================================================================
 JDataArrays::StDataArray JDataArrays::GetArrayData(unsigned idx)const{
@@ -231,6 +263,71 @@ JDataArrays::StDataArray JDataArrays::GetArrayData(const std::string &keyname)co
   const unsigned idx=GetIdxName(keyname);
   if(idx==UINT_MAX)Run_Exceptioon(fun::PrintStr("Array \'%s\' is missing.",keyname.c_str()));
   return(Arrays[idx]);
+}
+
+//==============================================================================
+/// Returns dimension of type of requested array by idx.
+//==============================================================================
+int JDataArrays::GetArrayDim(unsigned idx)const{
+  if(idx>=Count())Run_Exceptioon("Array idx is invalid.");
+  return(DimOfType(Arrays[idx].type));
+}
+
+//==============================================================================
+/// Returns units of requested array by idx.
+//==============================================================================
+std::string JDataArrays::GetArrayFmt(unsigned idx)const{
+  if(idx>=Count())Run_Exceptioon("Array idx is invalid.");
+  string fmt=fun::StrSplitValue(":",Arrays[idx].fullname,1);
+  if(fmt.empty())fmt=GetFmtByType(Arrays[idx].type);
+  return(fmt);
+}
+
+//==============================================================================
+/// Returns output format according type of array.
+//==============================================================================
+std::string JDataArrays::GetFmtByType(TpTypeData type){
+  string fmt;
+  switch(type){
+    case TypeUchar:  
+    case TypeUshort:
+    case TypeUint:     fmt="%u";       break;
+    case TypeFloat:    fmt="%15.7E";   break;
+    case TypeDouble:   fmt="%20.12E";  break;
+    case TypeUint3:    fmt="%u";       break;
+    case TypeFloat3:   fmt="%15.7E";   break;
+    case TypeDouble3:  fmt="%20.12E";  break;
+  }
+  if(fmt.empty())Run_ExceptioonSta(fun::PrintStr("Type \'%s\' without output-format.",TypeToStr(type)));
+  return(fmt);
+}
+
+//==============================================================================
+/// Returns units of requested array by idx.
+//==============================================================================
+std::string JDataArrays::GetArrayUnits(unsigned idx)const{
+  if(idx>=Count())Run_Exceptioon("Array idx is invalid.");
+  string units=fun::StrSplitValue(":",Arrays[idx].fullname,2);
+  if(units.empty())units=GetUnitsByName(Arrays[idx].keyname);
+  if(units=="NONE")units="";
+  return(units);
+}
+
+//==============================================================================
+/// Returns units according name of array.
+//==============================================================================
+std::string JDataArrays::GetUnitsByName(std::string keyname){
+  const string var=fun::StrLower(keyname);
+  if(var=="pos")return(" [m]");
+  else if(var=="vel")return(" [m/s]");
+  else if(var=="rhop")return(" [kg/m^3]");
+  else if(var=="mass")return(" [kg]");
+  else if(var=="press")return(" [Pa]");
+  else if(var=="vol")return(" [m^3]");
+  else if(var=="ace")return(" [m/s^2]");
+  else if(var=="vor")return(" [1/s]");
+  else if(var=="height")return(" [m]");
+  return("");
 }
 
 //==============================================================================

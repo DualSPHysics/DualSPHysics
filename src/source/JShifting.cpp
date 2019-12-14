@@ -25,7 +25,7 @@
 #include "Functions.h"
 #include "FunctionsGeo3d.h"
 #include "JDataArrays.h"
-#include "JFormatFiles2.h"
+#include "JVtkLib.h"
 #ifdef _WITHGPU
   #include "JShifting_ker.h"
   //#include "FunctionsCuda.h"
@@ -270,14 +270,14 @@ void JShifting::VisuConfig(std::string txhead,std::string txfoot){
 void JShifting::SaveVtkConfig()const{
   const unsigned nz=GetCount();
   if(nz){
-    std::vector<JFormatFiles2::StShapeData> shapes;
+    JVtkLib sh;
     const unsigned nz=GetCount();
     for(unsigned c=0;c<nz;c++){
       const JShiftingZone* zo=Zones[c];
-      shapes.push_back(JFormatFiles2::DefineShape_Box(zo->GetPosMin(),zo->GetVecx(),zo->GetVecy(),zo->GetVecz(),c,0));
+      sh.AddShapeBox(zo->GetPosMin(),zo->GetVecx(),zo->GetVecy(),zo->GetVecz(),c);
     }
-    string filevtk=AppInfo.GetDirOut()+"CfgShifting_Zones.vtk";
-    JFormatFiles2::SaveVtkShapes(filevtk,"ZoneId","",shapes);
+    const string filevtk=AppInfo.GetDirOut()+"CfgShifting_Zones.vtk";
+    sh.SaveShapeVtk(filevtk,"ZoneId");
     if(nz==ZonesXml || !ZonesXml)Log->AddFileInfo(filevtk,"Saves VTK file with Shifting zones.");
   }
 }

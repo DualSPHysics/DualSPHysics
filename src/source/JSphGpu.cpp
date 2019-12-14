@@ -38,10 +38,11 @@
 #include "JDamping.h"
 #include "JSphAccInput.h"
 #include "JXml.h"
-#include "JFormatFiles2.h"
 #include "JGaugeSystem.h"
 #include "JSphBoundCorr.h"  //<vs_innlet>
 #include "JShifting.h"
+#include "JDataArrays.h"
+#include "JVtkLib.h"
 #include <climits>
 
 using namespace std;
@@ -1284,32 +1285,19 @@ void JSphGpu::DgSaveVtkParticlesGpu(std::string filename,int numfile,unsigned pi
     }
     delete[] aux;
   }
-
-  //-Deifines fields.
-  JFormatFiles2::StScalarData fields[10];
-  unsigned nfields=0;
-  if(idp){    fields[nfields]=JFormatFiles2::DefineField("Idp"   ,JFormatFiles2::UInt32  ,1,idp);    nfields++; }
-  if(dcel){   fields[nfields]=JFormatFiles2::DefineField("Dcel"  ,JFormatFiles2::UInt32  ,3,dcel);   nfields++; }
-  if(vel){    fields[nfields]=JFormatFiles2::DefineField("Vel"   ,JFormatFiles2::Float32 ,3,vel);    nfields++; }
-  if(rhop){   fields[nfields]=JFormatFiles2::DefineField("Rhop"  ,JFormatFiles2::Float32 ,1,rhop);   nfields++; }
-  if(velm1){  fields[nfields]=JFormatFiles2::DefineField("Velm1" ,JFormatFiles2::Float32 ,3,velm1);  nfields++; }
-  if(rhopm1){ fields[nfields]=JFormatFiles2::DefineField("Rhopm1",JFormatFiles2::Float32 ,1,rhopm1); nfields++; }
-  if(ace){    fields[nfields]=JFormatFiles2::DefineField("Ace"   ,JFormatFiles2::Float32 ,3,ace);    nfields++; }
-  if(type){   fields[nfields]=JFormatFiles2::DefineField("Typex" ,JFormatFiles2::UChar8  ,1,type);   nfields++; }
-
-  //-Generates file.
-  JFormatFiles2::SaveVtk(fun::FileNameSec(filename,numfile),n,pos,nfields,fields);
-
-  //-Frees memory.
-  delete[] pos;
-  delete[] idp;
-  delete[] dcel;
-  delete[] vel;
-  delete[] rhop;
-  delete[] velm1;
-  delete[] rhopm1;
-  delete[] ace;
-  delete[] type;
+  //-Saves VTK file.
+  JDataArrays arrays;
+  arrays.AddArray("Pos",n,pos,true);
+  if(idp)   arrays.AddArray("Idp"   ,n,idp   ,true);
+  if(dcel)  arrays.AddArray("Dcel"  ,n,dcel  ,true);
+  if(vel)   arrays.AddArray("Vel"   ,n,vel   ,true);
+  if(rhop)  arrays.AddArray("Rhop"  ,n,rhop  ,true);
+  if(velm1) arrays.AddArray("Velm1" ,n,velm1 ,true);
+  if(rhopm1)arrays.AddArray("Rhopm1",n,rhopm1,true);
+  if(ace)   arrays.AddArray("Ace"   ,n,ace   ,true);
+  if(type)  arrays.AddArray("Typex" ,n,type  ,true);
+  JVtkLib::SaveVtkData(fun::FileNameSec(filename,numfile),arrays,"Pos");
+  arrays.Reset();
 }
 
 //==============================================================================
@@ -1340,22 +1328,20 @@ void JSphGpu::DgSaveVtkParticlesGpu(std::string filename,int numfile,unsigned pi
     else tp+=30;
     type[p]=tp;
   }
-  JFormatFiles2::StScalarData fields[8];
-  unsigned nfields=0;
-  if(idp){  fields[nfields]=JFormatFiles2::DefineField("Idp"  ,JFormatFiles2::UInt32  ,1,Idp);     nfields++; }
-  if(type){ fields[nfields]=JFormatFiles2::DefineField("Typex",JFormatFiles2::UChar8  ,1,type);    nfields++; }
-  if(vel){  fields[nfields]=JFormatFiles2::DefineField("Vel"  ,JFormatFiles2::Float32 ,3,AuxVel);  nfields++; }
-  if(rhop){ fields[nfields]=JFormatFiles2::DefineField("Rhop" ,JFormatFiles2::Float32 ,1,AuxRhop); nfields++; }
+  //-Saves VTK file.
+  JDataArrays arrays;
+  arrays.AddArray("Pos",n,pos,true);
+  if(idp) arrays.AddArray("Idp"  ,n,Idp    ,false);
+  if(type)arrays.AddArray("Typex",n,type   ,true);
+  if(vel) arrays.AddArray("Vel"  ,n,AuxVel ,false);
+  if(rhop)arrays.AddArray("Rhop" ,n,AuxRhop,false);
 #ifdef CODE_SIZE4
-  if(code){ fields[nfields]=JFormatFiles2::DefineField("Code" ,JFormatFiles2::UInt32  ,1,Code);    nfields++; }
+  if(code)arrays.AddArray("Code" ,n,(unsigned*)Code,false);
 #else
-  if(code){ fields[nfields]=JFormatFiles2::DefineField("Code" ,JFormatFiles2::UShort16,1,Code);    nfields++; }
+  if(code)arrays.AddArray("Code" ,n,(word*)    Code,false);
 #endif
-  //-Generates file.
-  JFormatFiles2::SaveVtk(filename,n,pos,nfields,fields);
-  //-Frees memory. 
-  delete[] pos;
-  delete[] type;
+  JVtkLib::SaveVtkData(filename,arrays,"Pos");
+  arrays.Reset();
 }
 
 //==============================================================================

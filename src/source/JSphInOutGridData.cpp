@@ -25,7 +25,8 @@
 #include "FunctionsMath.h"
 #include "JReadDatafile.h"
 #include "JSaveCsv2.h"
-#include "JFormatFiles2.h"
+#include "JDataArrays.h"
+#include "JVtkLib.h"
 #ifdef _WITHGPU
   #include "FunctionsCuda.h"
   #include "JSphGpu_InOut_ker.h"
@@ -557,14 +558,19 @@ void JSphInOutGridData::SaveVtk(const JSphInOutGridDataTime *gdt,std::string fil
   const float *velz=gdt->GetVelz();
   if(UseVelz)for(unsigned p=0;p<Npt;p++)vel[p]=TFloat3(velx[p],0,velz[p]);
   else       for(unsigned p=0;p<Npt;p++)vel[p]=TFloat3(velx[p],0,0);
-  //-Defines fields of VTK file.
-  std::vector<JFormatFiles2::StScalarData> fields;
-  fields.push_back(JFormatFiles2::DefineField("Vel",JFormatFiles2::Float32,3,vel));
   //-Saves VTK file.
-  JFormatFiles2::SaveVtk(filename,Npt,pos,fields);
-  //-Frees memory.
-  delete[] pos; pos=NULL;
-  delete[] vel; vel=NULL;
+  JDataArrays arrays;
+  arrays.AddArray("Pos",Npt,pos,true);
+  arrays.AddArray("Vel",Npt,vel,true);
+  JVtkLib::SaveVtkData(filename,arrays,"Pos");
+  arrays.Reset();
+  ////-Old style...
+  //std::vector<JFormatFiles2::StScalarData> fields;
+  //fields.push_back(JFormatFiles2::DefineField("Vel",JFormatFiles2::Float32,3,vel));
+  //JFormatFiles2::SaveVtk(filename,Npt,pos,fields);
+  ////-Frees memory.
+  //delete[] pos; pos=NULL;
+  //delete[] vel; vel=NULL;
 }
 
 //==============================================================================

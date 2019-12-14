@@ -23,6 +23,7 @@
 //:#   generacion de ficheros de salida. (23-08-2019)
 //:# - Nuevos metodos para crear arrays con memoria dinamica de forma automatica. (05-09-2019)
 //:# - Mejora la gestion de excepciones. (14-09-2019)
+//:# - Nuevos metodos GetDataCount(), GetArrayCte(), GetArrayDim()... (11-12-2019)
 //:#############################################################################
 
 /// \file JDataArrays.h \brief Declares the class \ref JDataArrays.
@@ -107,6 +108,8 @@ public:
 
   unsigned Count()const{ return(unsigned(Arrays.size())); }
 
+  unsigned GetDataCount(bool minimum)const;
+
   unsigned GetIdxName(const std::string &keyname)const;
   bool ExistsName(const std::string &keyname)const{ return(GetIdxName(keyname)!=UINT_MAX); }
 
@@ -116,8 +119,19 @@ public:
   JDataArrays::StDataArray& GetArray(unsigned idx);
   JDataArrays::StDataArray& GetArray(const std::string &keyname);
 
+  const JDataArrays::StDataArray& GetArrayCte(unsigned idx)const;
+  const JDataArrays::StDataArray& GetArrayCte(const std::string &keyname)const;
+
   JDataArrays::StDataArray GetArrayData(unsigned idx)const;
   JDataArrays::StDataArray GetArrayData(const std::string &keyname)const;
+
+  int GetArrayDim(unsigned idx)const;
+
+  std::string GetArrayFmt(unsigned idx)const;
+  static std::string GetFmtByType(TpTypeData type);
+
+  std::string GetArrayUnits(unsigned idx)const;
+  static std::string GetUnitsByName(std::string keyname);
 
   const void* GetArrayPtr(unsigned idx,TpTypeData type,unsigned count=0)const;
   const byte*     GetArrayByte   (unsigned idx,unsigned count=0)const{ return((byte*    )GetArrayPtr(idx,TypeUchar  ,count)); }

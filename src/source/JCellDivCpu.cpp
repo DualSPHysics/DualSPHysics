@@ -20,7 +20,6 @@
 
 #include "JCellDivCpu.h"
 #include "Functions.h"
-#include "JFormatFiles2.h"
 #include <cfloat>
 #include <climits>
 

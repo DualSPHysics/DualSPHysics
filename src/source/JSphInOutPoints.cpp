@@ -27,8 +27,9 @@
 #include "Functions.h"
 #include "FunctionsGeo3d.h"
 #include "JMatrix4.h"
-#include "JFormatFiles2.h"
-
+#include "JDataArrays.h"
+#include "JVtkLib.h"
+ 
 #include <cfloat>
 #include <algorithm>
 
@@ -603,12 +604,12 @@ void JSphInOutPoints::CheckPoints(const std::string &xmlrow){
       }
     }
     //-Creates VTK file.
-    JFormatFiles2::StScalarData fields[8];
-    unsigned nfields=0;
-    if(outside){ fields[nfields]=JFormatFiles2::DefineField("Outside",JFormatFiles2::UChar8,1,outside); nfields++; }
-    if(layer){   fields[nfields]=JFormatFiles2::DefineField("Layer"  ,JFormatFiles2::UChar8,1,layer);   nfields++; }
+    JDataArrays arrays;
+    arrays.AddArray("Pos",np,pos,false);
+    if(outside)arrays.AddArray("Outside",np,outside,false);
+    if(layer)  arrays.AddArray("Layer"  ,np,layer  ,false);
     const string file=AppInfo.GetDirOut()+"ErrorInOut_InoutPoints.vtk";
-    JFormatFiles2::SaveVtk(file,np,pos,nfields,fields);
+    JVtkLib::SaveVtkData(file,arrays,"Pos");
     Log->AddFileInfo(file,"Saves invalid InOut points (outside the domain).");
     //-Frees memory.
     delete[] pos;     pos=NULL;

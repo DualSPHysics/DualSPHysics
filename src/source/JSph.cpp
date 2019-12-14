@@ -31,7 +31,6 @@
 #include "JSpaceCtes.h"
 #include "JSpaceEParms.h"
 #include "JSpaceParts.h"
-#include "JFormatFiles2.h"
 #include "JSphDtFixed.h"
 #include "JSaveDt.h"
 #include "JTimeOut.h"
@@ -53,6 +52,8 @@
 #include "JSphBoundCorr.h"   //<vs_innlet> 
 #include "JLinearValue.h"
 #include "JDataArrays.h"
+#include "JOutputCsv.h"
+#include "JVtkLib.h"
 
 using namespace std;
 
@@ -409,6 +410,7 @@ void JSph::LoadConfig(const JCfgRun *cfg){
   printf("\n");
   RunTimeDate=fun::GetDateTime();
   Log->Printf("[Initialising %s  %s]",ClassName.c_str(),RunTimeDate.c_str());
+  if(!JVtkLib::Available())Log->PrintWarning("Code for VTK format files is not included in the current compilation, so no output VTK files will be created.");
 
   const string runpath=AppInfo.GetRunPath();
   Log->Printf("ProgramFile=\"%s\"",fun::GetPathLevels(fun::GetCanonicalPath(runpath,AppInfo.GetRunCommand()),3).c_str());
@@ -1808,15 +1810,18 @@ void JSph::AbortBoundOut(JLog2 *log,unsigned nout,const unsigned *idp,const tdou
   if(outzmax)log->Print("Some boundary particle exceeded the +Z limit (top limit) of the simulation domain.");
   log->Print(" ");
   //-Creates VTK file.
-  std::vector<JFormatFiles2::StScalarData> fields;
-  fields.push_back(JFormatFiles2::DefineField("Idp"   ,JFormatFiles2::UInt32 ,1,idp));
-  fields.push_back(JFormatFiles2::DefineField("Vel"   ,JFormatFiles2::Float32,3,vel));
-  fields.push_back(JFormatFiles2::DefineField("Rhop"  ,JFormatFiles2::Float32,1,rhop));
-  fields.push_back(JFormatFiles2::DefineField("Type"  ,JFormatFiles2::UChar8 ,1,type));
-  fields.push_back(JFormatFiles2::DefineField("Motive",JFormatFiles2::UChar8 ,1,motive));
-  const string file=DirOut+"Error_BoundaryOut.vtk";
-  log->AddFileInfo(file,"Saves the excluded boundary particles.");
-  JFormatFiles2::SaveVtk(file,nout,pos,fields);
+  if(JVtkLib::Available()){
+    JDataArrays arrays;
+    arrays.AddArray("Pos"   ,nout,pos   ,false);
+    arrays.AddArray("Idp"   ,nout,idp   ,false);
+    arrays.AddArray("Vel"   ,nout,vel   ,false);
+    arrays.AddArray("Rhop"  ,nout,rhop  ,false);
+    arrays.AddArray("Type"  ,nout,type  ,false);
+    arrays.AddArray("Motive",nout,motive,false);
+    const string file=DirOut+"Error_BoundaryOut.vtk";
+    log->AddFileInfo(file,"Saves the excluded boundary particles.");
+    JVtkLib::SaveVtkData(file,arrays,"Pos");
+  }
   //-Aborts execution.
   RunException("AbortBoundOut","Fixed, moving or floating particles were excluded. Check VTK file Error_BoundaryOut.vtk with excluded particles.");
 }
@@ -1957,8 +1962,8 @@ void JSph::SavePartData(unsigned npok,unsigned nout,const JDataArrays& arrays
     arrays2.AddArray("Type",npok,type);
     arrays2.MoveArray(arrays2.Count()-1,4);
     //-Defines fields to be stored.
-    if(SvData&SDAT_Vtk)JFormatFiles2::SaveVtk(DirDataOut+fun::FileNameSec("PartVtk.vtk",Part),arrays2,npok,"Pos");
-    if(SvData&SDAT_Csv)JFormatFiles2::SaveCsv(DirDataOut+fun::FileNameSec("PartCsv.csv",Part),CsvSepComa,arrays2,npok,"Pos");
+    if(SvData&SDAT_Vtk){ JVtkLib::SaveVtkData(DirDataOut+fun::FileNameSec("New/PartVtk.vtk",Part),arrays2,"Pos"); }
+    if(SvData&SDAT_Csv){ JOutputCsv ocsv;  ocsv.SaveCsv(DirDataOut+fun::FileNameSec("PartCsv.csv",Part),arrays2); }
     //-Deallocate of memory.
     delete[] posf3;
     delete[] type; 
@@ -2059,10 +2064,7 @@ void JSph::SaveData(unsigned npok,const JDataArrays& arrays
 void JSph::SaveDomainVtk(unsigned ndom,const tdouble3 *vdom)const{ 
   if(vdom){
     string fname=fun::FileNameSec("Domain.vtk",Part);
-    tfloat3 *vdomf3=new tfloat3[ndom*2];
-    for(unsigned c=0;c<ndom*2;c++)vdomf3[c]=ToTFloat3(vdom[c]);
-    JFormatFiles2::SaveVtkBoxes(DirDataOut+fname,ndom,vdomf3,H*0.5f);
-    delete[] vdomf3;
+    JVtkLib::SaveVtkBoxes(DirDataOut+fname,ndom,vdom,H*0.5f);
   }
 }
 
@@ -2086,7 +2088,7 @@ void JSph::SaveInitialDomainVtk()const{
   }
   const string file=DirOut+"CfgInit_Domain.vtk";
   Log->AddFileInfo(file,"Saves the limits of the case and the simulation domain limits.");
-  JFormatFiles2::SaveVtkBoxes(file,nbox,vdomf3,0);
+  JVtkLib::SaveVtkBoxes(file,nbox,vdomf3,0);
   delete[] vdomf3;
 }
 
@@ -2115,27 +2117,27 @@ void JSph::SaveMapCellsVtk(float scell)const{
   tdouble3 pmax=pmin+TDouble3(scell*cells.x,scell*cells.y,scell*cells.z);
   if(Simulate2D)pmin.y=pmax.y=Simulate2DPosY;
   //-Creates lines.
-  std::vector<JFormatFiles2::StShapeData> shapes;
+  JVtkLib sh;
   //-Back lines.
   tdouble3 p0=TDouble3(pmin.x,pmax.y,pmin.z),p1=TDouble3(pmin.x,pmax.y,pmax.z);
-  for(unsigned cx=0;cx<=cells.x;cx++)shapes.push_back(JFormatFiles2::DefineShape_Line(p0+TDouble3(scell*cx,0,0),p1+TDouble3(scell*cx,0,0),0,0));
+  for(unsigned cx=0;cx<=cells.x;cx++)sh.AddShapeLine(p0+TDouble3(scell*cx,0,0),p1+TDouble3(scell*cx,0,0),0);
   p1=TDouble3(pmax.x,pmax.y,pmin.z);
-  for(unsigned cz=0;cz<=cells.z;cz++)shapes.push_back(JFormatFiles2::DefineShape_Line(p0+TDouble3(0,0,scell*cz),p1+TDouble3(0,0,scell*cz),0,0));
+  for(unsigned cz=0;cz<=cells.z;cz++)sh.AddShapeLine(p0+TDouble3(0,0,scell*cz),p1+TDouble3(0,0,scell*cz),0);
   if(!Simulate2D){
     //-Bottom lines.
     p0=TDouble3(pmin.x,pmin.y,pmin.z),p1=TDouble3(pmax.x,pmin.y,pmin.z);
-    for(unsigned cy=0;cy<=cells.y;cy++)shapes.push_back(JFormatFiles2::DefineShape_Line(p0+TDouble3(0,scell*cy,0),p1+TDouble3(0,scell*cy,0),1,0));
+    for(unsigned cy=0;cy<=cells.y;cy++)sh.AddShapeLine(p0+TDouble3(0,scell*cy,0),p1+TDouble3(0,scell*cy,0),1);
     p1=TDouble3(pmin.x,pmax.y,pmin.z);
-    for(unsigned cx=0;cx<=cells.x;cx++)shapes.push_back(JFormatFiles2::DefineShape_Line(p0+TDouble3(scell*cx,0,0),p1+TDouble3(scell*cx,0,0),1,0));
+    for(unsigned cx=0;cx<=cells.x;cx++)sh.AddShapeLine(p0+TDouble3(scell*cx,0,0),p1+TDouble3(scell*cx,0,0),1);
     //-Left lines.
     p0=TDouble3(pmin.x,pmin.y,pmin.z),p1=TDouble3(pmin.x,pmax.y,pmin.z);
-    for(unsigned cz=0;cz<=cells.z;cz++)shapes.push_back(JFormatFiles2::DefineShape_Line(p0+TDouble3(0,0,scell*cz),p1+TDouble3(0,0,scell*cz),2,0));
+    for(unsigned cz=0;cz<=cells.z;cz++)sh.AddShapeLine(p0+TDouble3(0,0,scell*cz),p1+TDouble3(0,0,scell*cz),2);
     p1=TDouble3(pmin.x,pmin.y,pmax.z);
-    for(unsigned cy=0;cy<=cells.y;cy++)shapes.push_back(JFormatFiles2::DefineShape_Line(p0+TDouble3(0,scell*cy,0),p1+TDouble3(0,scell*cy,0),2,0));
+    for(unsigned cy=0;cy<=cells.y;cy++)sh.AddShapeLine(p0+TDouble3(0,scell*cy,0),p1+TDouble3(0,scell*cy,0),2);
   }
   const string file=DirOut+"CfgInit_MapCells.vtk";
   Log->AddFileInfo(file,"Saves the cell division of the simulation domain.");
-  JFormatFiles2::SaveVtkShapes(file,"axis","",shapes);
+  sh.SaveShapeVtk(file,"axis");
 }
 
 //==============================================================================
@@ -2347,23 +2349,16 @@ void JSph::DgSaveVtkParticlesCpu(std::string filename,int numfile,unsigned pini,
     }  //<vs_innlet_end> 
   }
   //-Generates VTK file.
-  JFormatFiles2::StScalarData fields[10];
-  unsigned nfields=0;
-  if(idp){   fields[nfields]=JFormatFiles2::DefineField("Idp" ,JFormatFiles2::UInt32 ,1,idp+pini); nfields++; }
-  if(xtype){ fields[nfields]=JFormatFiles2::DefineField("Type",JFormatFiles2::UChar8 ,1,xtype);    nfields++; }
-  if(xkind){ fields[nfields]=JFormatFiles2::DefineField("Kind",JFormatFiles2::UChar8 ,1,xkind);    nfields++; }
-  if(xvel){  fields[nfields]=JFormatFiles2::DefineField("Vel" ,JFormatFiles2::Float32,3,xvel);     nfields++; }
-  if(xrhop){ fields[nfields]=JFormatFiles2::DefineField("Rhop",JFormatFiles2::Float32,1,xrhop);    nfields++; }
-  if(xace){  fields[nfields]=JFormatFiles2::DefineField("Ace" ,JFormatFiles2::Float32,3,xace);     nfields++; }
-  //string fname=DirOut+fun::FileNameSec("DgParts.vtk",numfile);
-  JFormatFiles2::SaveVtk(filename,np,xpos,nfields,fields);
-  //-Deallocates memory.
-  delete[] xpos;
-  delete[] xtype;
-  delete[] xkind;
-  delete[] xvel;
-  delete[] xrhop;
-  delete[] xace;
+  JDataArrays arrays;
+  arrays.AddArray("Pos" ,np,xpos,true);
+  if(idp)  arrays.AddArray("Idp" ,np,idp+pini,false);
+  if(xtype)arrays.AddArray("Type",np,xtype,true);
+  if(xkind)arrays.AddArray("Kind",np,xkind,true);
+  if(xvel) arrays.AddArray("Vel" ,np,xvel ,true);
+  if(xrhop)arrays.AddArray("Rhop",np,xrhop,true);
+  if(xace) arrays.AddArray("Ace" ,np,xace ,true);
+  JVtkLib::SaveVtkData(filename,arrays,"Pos");
+  arrays.Reset();
 }
 
 //==============================================================================
@@ -2380,17 +2375,15 @@ void JSph::DgSaveVtkParticlesCpu(std::string filename,int numfile,unsigned pini,
   unsigned *num=new unsigned[n];
   for(unsigned p=0;p<n;p++)num[p]=p;
   //-Generates VTK file.
-  JFormatFiles2::StScalarData fields[10];
-  unsigned nfields=0;
-  if(idp){   fields[nfields]=JFormatFiles2::DefineField("Idp"  ,JFormatFiles2::UInt32 ,1,idp+pini);   nfields++; }
-  if(vel){   fields[nfields]=JFormatFiles2::DefineField("Vel"  ,JFormatFiles2::Float32,3,vel+pini);   nfields++; }
-  if(rhop){  fields[nfields]=JFormatFiles2::DefineField("Rhop" ,JFormatFiles2::Float32,1,rhop+pini);  nfields++; }
-  if(check){ fields[nfields]=JFormatFiles2::DefineField("Check",JFormatFiles2::UChar8 ,1,check+pini); nfields++; }
-  if(num){   fields[nfields]=JFormatFiles2::DefineField("Num"  ,JFormatFiles2::UInt32 ,1,num);        nfields++; }
-  //-Generates VTK file.
-  JFormatFiles2::SaveVtk(filename,n,pos+pini,nfields,fields);
-  //-Deallocates memory.
-  delete[] num;
+  JDataArrays arrays;
+  arrays.AddArray("Pos" ,n,pos+pini,false);
+  if(idp)  arrays.AddArray("Idp"  ,n,idp+pini,false);
+  if(vel)  arrays.AddArray("Vel"  ,n,vel+pini,false);
+  if(rhop) arrays.AddArray("Rhop" ,n,rhop+pini,false);
+  if(check)arrays.AddArray("Check",n,check+pini,false);
+  if(num)  arrays.AddArray("Num"  ,n,num,true);
+  JVtkLib::SaveVtkData(filename,arrays,"Pos");
+  arrays.Reset();
 }
 
 //==============================================================================

@@ -85,9 +85,6 @@
     <ClInclude Include="..\source\JSphGpuSingle.h">
       <Filter>Source\Single</Filter>
     </ClInclude>
-    <ClInclude Include="..\source\JFormatFiles2.h">
-      <Filter>Libs</Filter>
-    </ClInclude>
     <ClInclude Include="..\source\JSpaceParts.h">
       <Filter>CommonDsph</Filter>
     </ClInclude>
@@ -343,6 +340,21 @@
     <ClInclude Include="..\source\DualSphDef.h">
       <Filter>Source</Filter>
     </ClInclude>
+    <ClInclude Include="..\source\JChronoObjectsUndef.h">
+      <Filter>Src_Chrono</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JOutputCsv.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JVtkLib.h">
+      <Filter>Libs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JVtkLibUndef.h">
+      <Filter>Libs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JWaveGenUndef.h">
+      <Filter>Libs</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\source\JCfgRun.cpp">
@@ -584,6 +596,9 @@
     </ClCompile>
     <ClCompile Include="..\source\JShifting.cpp">
       <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JOutputCsv.cpp">
+      <Filter>Common</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

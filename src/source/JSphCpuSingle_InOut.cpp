@@ -28,9 +28,10 @@
 #include "JSphInOutPoints.h"
 #include "JSimpleNeigs.h"
 #include "FunctionsMath.h"
-#include "JFormatFiles2.h"
 #include "JAppInfo.h"
 #include "JTimeControl.h"
+#include "JDataArrays.h"
+#include "JVtkLib.h"
 #include <climits>
 
 using namespace std;
@@ -107,10 +108,11 @@ void JSphCpuSingle::InOutCheckProximity(unsigned newnp){
       vtype[pp]=byte(errpart[p]);
       pp++;
     }
-    std::vector<JFormatFiles2::StScalarData> fields;
-    fields.push_back(JFormatFiles2::DefineField("ErrorType",JFormatFiles2::UChar8,1,vtype));
+    JDataArrays arrays;
+    arrays.AddArray("Pos",n,vpos,false);
+    arrays.AddArray("ErrorType",n,vtype,false);
     const string filevtk=AppInfo.GetDirOut()+(n>nfluid? "CfgInOut_ErrorParticles.vtk": "CfgInOut_ExcludedParticles.vtk");
-    JFormatFiles2::SaveVtk(filevtk,n,vpos,fields);
+    JVtkLib::SaveVtkData(filevtk,arrays,"Pos");
     delete[] vpos;  vpos=NULL;
     delete[] vtype; vtype=NULL;
     if(n>nfluid){

@@ -24,7 +24,7 @@
 #include "JXml.h"
 #include "Functions.h"
 #include "FunctionsGeo3d.h"
-#include "JFormatFiles2.h"
+#include "JVtkLib.h"
 #include <cfloat>
 #include <algorithm>
 
@@ -182,24 +182,24 @@ void JDamping::VisuConfig(std::string txhead,std::string txfoot){
 void JDamping::SaveVtkConfig(double dp)const{
   const double sizequad=dp*16;
   const double sizedir=dp*4;
-  std::vector<JFormatFiles2::StShapeData> shapes;
+  JVtkLib sh;
   for(unsigned c=0;c<GetCount();c++){
     const int cv=int(c);
     const StDamping &zo=List[c];
     const tdouble3 ps=zo.limitmin;
     const tdouble3 ve=fgeo::VecUnitary(zo.limitmax-ps);
     //-Adds limit quad.
-    shapes.push_back(JFormatFiles2::DefineShape_Quad(zo.limitmin,ve,sizequad,cv,0));
-    JFormatFiles2::AddShape_QuadLines(shapes,zo.limitmin,ve,sizequad,cv,0);
+    sh.AddShapeQuad(zo.limitmin,ve,sizequad,cv);
+    sh.AddShapeQuadWire(zo.limitmin,ve,sizequad,cv);
     //-Adds limitmax quad.
-    shapes.push_back(JFormatFiles2::DefineShape_Quad(zo.limitmax,ve,sizequad/3,cv,0));
-    JFormatFiles2::AddShape_QuadLines(shapes,zo.limitmax,ve,sizequad/3,cv,0);
+    sh.AddShapeQuad(zo.limitmax,ve,sizequad/3,cv);
+    sh.AddShapeQuadWire(zo.limitmax,ve,sizequad/3,cv);
     //-Adds overlimit quad.
     const tdouble3 pt=zo.limitmax+(ve*double(zo.overlimit));
-    shapes.push_back(JFormatFiles2::DefineShape_Quad(pt,ve,sizequad/3,cv,0));
-    JFormatFiles2::AddShape_QuadLines(shapes,pt,ve,sizequad/3,cv,0);
+    sh.AddShapeQuad(pt,ve,sizequad/3,cv);
+    sh.AddShapeQuadWire(pt,ve,sizequad/3,cv);
     //-Adds direction line.
-    shapes.push_back(JFormatFiles2::DefineShape_Line(zo.limitmin,pt,cv,0));
+    sh.AddShapeLine(zo.limitmin,pt,cv);
     if(zo.usedomain){
       const tdouble3 p0=TDouble3(zo.dompt0.x,zo.dompt0.y,zo.domzmin);
       const tdouble3 p1=TDouble3(zo.dompt1.x,zo.dompt1.y,zo.domzmin);
@@ -209,17 +209,17 @@ void JDamping::SaveVtkConfig(double dp)const{
       const tdouble3 q1=TDouble3(zo.dompt1.x,zo.dompt1.y,zo.domzmax);
       const tdouble3 q2=TDouble3(zo.dompt2.x,zo.dompt2.y,zo.domzmax);
       const tdouble3 q3=TDouble3(zo.dompt3.x,zo.dompt3.y,zo.domzmax);
-      shapes.push_back(JFormatFiles2::DefineShape_Quad(p0,p1,p2,p3,cv,0)); //-Bottom.
-      shapes.push_back(JFormatFiles2::DefineShape_Quad(q3,q2,q1,q0,cv,0)); //-Top.
-      shapes.push_back(JFormatFiles2::DefineShape_Quad(p0,p1,q1,q0,cv,0));
-      shapes.push_back(JFormatFiles2::DefineShape_Quad(p1,p2,q2,q1,cv,0));
-      shapes.push_back(JFormatFiles2::DefineShape_Quad(p2,p3,q3,q2,cv,0));
-      shapes.push_back(JFormatFiles2::DefineShape_Quad(p3,p0,q0,q3,cv,0));
+      sh.AddShapeQuad(p0,p1,p2,p3,cv); //-Bottom.
+      sh.AddShapeQuad(q3,q2,q1,q0,cv); //-Top.
+      sh.AddShapeQuad(p0,p1,q1,q0,cv);
+      sh.AddShapeQuad(p1,p2,q2,q1,cv);
+      sh.AddShapeQuad(p2,p3,q3,q2,cv);
+      sh.AddShapeQuad(p3,p0,q0,q3,cv);
     }
   }
   if(GetCount()){
     string filevtk=AppInfo.GetDirOut()+"CfgDamping_Scheme.vtk";
-    JFormatFiles2::SaveVtkShapes(filevtk,(GetCount()>1? "num": ""),"",shapes);
+    sh.SaveShapeVtk(filevtk,(GetCount()>1? "num": ""));
     Log->AddFileInfo(filevtk,"Saves VTK file with Damping configurations.");
   }
 }
@@ -336,7 +336,6 @@ void JDamping::ComputeDampingPla(const JDamping::StDamping &da,double dt,unsigne
 /// Aplica Damping a las particulas indicadas.
 //==============================================================================
 //:#include "JSaveCsv.h"
-//:#include "JFormatFiles2.h"
 void JDamping::ComputeDamping(double timestep,double dt,unsigned n,unsigned pini
   ,const tdouble3 *pos,const typecode *code,tfloat4 *velrhop)const
 {
@@ -344,88 +343,6 @@ void JDamping::ComputeDamping(double timestep,double dt,unsigned n,unsigned pini
     if(!List[c].usedomain)ComputeDamping(List[c],dt,n,pini,pos,code,velrhop);
     else ComputeDampingPla(List[c],dt,n,pini,pos,code,velrhop);
   }
-  /*:
-  //if(0){//dg
-  //  tdouble3 pmin=TDouble3(0);
-  //  tdouble3 pmax=TDouble3(10,10,0);
-  //  double dp=0.01;
-  //  unsigned npx=unsigned((pmax.x-pmin.x)/dp)+1;
-  //  unsigned npy=unsigned((pmax.y-pmin.y)/dp)+1;
-  //  unsigned np=npx*npy;
-  //  tdouble3 *pos=new tdouble3[np];
-  //  tfloat4 *velrhop=new tfloat4[np];
-  //  unsigned cp=0;
-  //  for(unsigned cy=0;cy<npy;cy++)for(unsigned cx=0;cx<npx;cx++){
-  //    pos[cp]=TDouble3(dp*cx,dp*cy,0);
-  //    velrhop[cp]=TFloat4(1);
-  //    cp++;
-  //  }
-  //  for(unsigned cd=0;cd<GetCount();cd++){
-  //    if(!List[cd].usedomain)ComputeDamping(List[cd],1.f/List[cd].redumax,np,0,pos,NULL,velrhop);
-  //    else ComputeDampingPla(List[cd],1.f/List[cd].redumax,np,0,pos,NULL,velrhop);
-  //  }
-  //  //-Define campos a grabar.
-  //  tfloat3 *posf=new tfloat3[np];
-  //  tfloat3 *vel=new tfloat3[np];
-  //  tfloat3 *velx=new tfloat3[np];
-  //  tfloat3 *vely=new tfloat3[np];
-  //  tfloat3 *velz=new tfloat3[np];
-  //  for(unsigned c=0;c<np;c++){
-  //    tfloat3 ps=ToTFloat3(pos[c]);
-  //    ps.z=velrhop[c].x;
-  //    posf[c]=ps;
-  //    const tfloat3 v=TFloat3(velrhop[c].x,velrhop[c].y,velrhop[c].z);
-  //    vel[c]=v;
-  //    velx[c]=TFloat3(0,0,v.x);
-  //    vely[c]=TFloat3(0,0,v.y);
-  //    velz[c]=TFloat3(0,0,v.z);
-  //  }
-  //  JFormatFiles2::StScalarData fields[8];
-  //  unsigned nfields=0;
-  //  if(vel){   fields[nfields]=JFormatFiles2::DefineField("Vel" ,JFormatFiles2::Float32,3,vel);   nfields++; }
-  //  if(velx){  fields[nfields]=JFormatFiles2::DefineField("Velx",JFormatFiles2::Float32,3,velx);  nfields++; }
-  //  if(vely){  fields[nfields]=JFormatFiles2::DefineField("Vely",JFormatFiles2::Float32,3,vely);  nfields++; }
-  //  if(velz){  fields[nfields]=JFormatFiles2::DefineField("Velz",JFormatFiles2::Float32,3,velz);  nfields++; }
-  //  JFormatFiles2::SaveVtk("__Damping_00.vtk",np,posf,nfields,fields);
-  //  exit(0);
-  //}
-
-  //if(1){//dg
-  //  double x1=3,x2=7,ix=0.1;
-  //  unsigned np=unsigned((x2-x1)/ix+1);
-  //  tdouble3 *vpos=new tdouble3[np];
-  //  tfloat4 *vvel=new tfloat4[np];
-  //  for(unsigned p=0;p<np;p++){
-  //    vpos[p]=TDouble3(x1+ix*p,0,0);
-  //    vvel[p]=TFloat4(10.f,1.f,0.1f,1000.f);
-  //  }
-  //  if(1){
-  //    JSaveCsv sv(Log->GetDirOut()+"_Damping_0.csv",false);
-  //    sv.AddHead("X;VelX;VelY;VelZ");
-  //    ComputeDamping(List[c],1,np,0,vpos,NULL,vvel);
-  //    for(unsigned p=0;p<np;p++){
-  //      sv.AddValuesf("%g;%f;%f;%f",vpos[p].x,vvel[p].x,vvel[p].y,vvel[p].z);
-  //      sv.AddEndl();
-  //    }
-  //  }
-  //  JSaveCsv sv(Log->GetDirOut()+"_Damping_1.csv",false);
-  //  string txhead="time";
-  //  for(unsigned p=0;p<np;p++)txhead=txhead+fun::PrintStr(";x_%.1f",vpos[p].x);
-  //  sv.AddHead(txhead);
-  //  for(unsigned p=0;p<np;p++){
-  //    vpos[p]=TDouble3(x1+ix*p,0,0);
-  //    vvel[p]=TFloat4(10.f,1.f,0.1f,1000.f);
-  //  }
-  //  double tmax=10,dt=0.01;
-  //  for(double t=0;t<tmax+dt/2;t+=dt){
-  //    sv.AddValue(t);
-  //    for(unsigned p=0;p<np;p++)sv.AddValue(vvel[p].y);
-  //    sv.AddEndl();
-  //    ComputeDamping(List[c],dt,np,0,vpos,NULL,vvel);
-  //  }
-  //  exit(0);
-  //}
-  :*/
 }
 
 
