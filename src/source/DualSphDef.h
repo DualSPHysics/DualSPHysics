@@ -57,6 +57,9 @@
   #define AVAILABLE_WAVEGEN true
 #endif
 
+//-Defines AVAILABLE_MOORDYN when this feature is compiled.
+  #define AVAILABLE_MOORDYN false
+
 //-Defines AVAILABLE_GPU when this feature is compiled.
 #ifdef _WITHGPU
   #define AVAILABLE_GPU true

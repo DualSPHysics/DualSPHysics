@@ -16,6 +16,14 @@
  You should have received a copy of the GNU Lesser General Public License along with DualSPHysics. If not, see <http://www.gnu.org/licenses/>. 
 */
 
+//:#############################################################################
+//:# Cambios:
+//:# =========
+//:# - Clase para generacion de ficheros VTK de particulas o formas. (10-12-2019)
+//:# - Permite compilar sin libreria de VTK. (13-12-2019)
+//:# - Nuevas funciones AddShapePolyLine(). (23-12-2019)
+//:#############################################################################
+
 /// \file JVtkLibUndef.h \brief Declares the empty class \ref JVtkLib.
 
 #ifndef _JVtkLibUndef_
@@ -62,6 +70,8 @@ public:
   void SaveShapeVtk(std::string file,std::string varname,bool createpath=true){}
   void AddShapeLine(const tfloat3  &pt1,const tfloat3  &pt2,int value){}
   void AddShapeLine(const tdouble3 &pt1,const tdouble3 &pt2,int value){}
+  void AddShapePolyLine(unsigned np,const tfloat3  *vp,int value){}
+  void AddShapePolyLine(unsigned np,const tdouble3 *vp,int value){}
   void AddShapeQuad(const tfloat3  &pt1,const tfloat3  &pt2,const tfloat3  &pt3,const tfloat3  &pt4,int value){}
   void AddShapeQuad(const tdouble3 &pt1,const tdouble3 &pt2,const tdouble3 &pt3,const tdouble3 &pt4,int value){}
   void AddShapeQuad(const tfloat3  &pt,const tfloat3  &vec,float  size,int value){}

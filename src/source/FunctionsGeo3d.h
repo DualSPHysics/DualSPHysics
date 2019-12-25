@@ -56,6 +56,7 @@
 //:# - Nuevas funciones: TrianglePerimeter(), PolygonIsConcave() y PolygonConcave(). (28-11-2019)
 //:# - Nuevas funciones: PointInMinMax(). (01-12-2019)
 //:# - Error corregido en PolygonConcave(). (05-12-2019)
+//:# - Nuevas funciones: PlanePointsIn(). (17-12-2019)
 //:#############################################################################
 
 /// \file FunctionsGeo3d.h \brief Declares geometry functions for 3D.
@@ -554,6 +555,19 @@ inline tfloat3 PlaneOrthogonalPoint(const tfloat3 &pt,const tplane3f &pla){
   const float t=-(pla.a*pt.x+pla.b*pt.y+pla.c*pt.z+pla.d)/(pla.a*pla.a+pla.b*pla.b+pla.c*pla.c);
   return(TFloat3(pt.x+pla.a*t,pt.y+pla.b*t,pt.z+pla.c*t));
 }
+
+
+//==============================================================================
+/// Devuelve true cuando todos los puntos estan en el plano.
+/// Returns true when all points are in the plane.
+//==============================================================================
+bool PlanePointsIn(const tplane3d &pla,unsigned np,const tdouble3 *vpt,double tolerance);
+
+//==============================================================================
+/// Devuelve true cuando todos los puntos estan en el plano.
+/// Returns true when all points are in the plane.
+//==============================================================================
+bool PlanePointsIn(const tplane3f &pla,unsigned np,const tfloat3 *vpt,float tolerance);
 
 
 //==============================================================================

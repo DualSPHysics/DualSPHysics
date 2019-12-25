@@ -57,7 +57,7 @@ Please download source files and documentation from <a href="http://dual.sphysic
 using namespace std;
 
 
-JAppInfo AppInfo("DualSPHysics4","v4.4.037","22-12-2019");
+JAppInfo AppInfo("DualSPHysics4","v4.4.038","23-12-2019");
 //JAppInfo AppInfo("DualSPHysics4","v4.2.???","UserVersion","v1.0","??-??-????"); //-for user versions.
 
 //==============================================================================
@@ -107,6 +107,7 @@ bool ShowsVersionInfo(int argc,char** argv){
     features.push_back(fun::JSONProperty("MultiGPU",AVAILABLE_MGPU));
     features.push_back(fun::JSONProperty("VTK_Output",AVAILABLE_VTKLIB));
     features.push_back(fun::JSONProperty("CHRONO_Coupling",AVAILABLE_CHRONO));
+    features.push_back(fun::JSONProperty("MoorDyn_Coupling",AVAILABLE_MOORDYN));
     features.push_back(fun::JSONProperty("WaveGen",AVAILABLE_WAVEGEN));
     features.push_back(fun::JSONProperty("DDT_Fourtakas",d_ddtf));
     //-Defines main information about the version program.

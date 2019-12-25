@@ -216,6 +216,27 @@ bool TriangleInside(const tfloat3 &pt,const tplane3f &pla1,const tplane3f &pla2,
 
 
 //==============================================================================
+/// Devuelve true cuando todos los puntos estan en el plano.
+/// Returns true when all points are in the plane.
+//==============================================================================
+bool PlanePointsIn(const tplane3d &pla,unsigned np,const tdouble3 *vpt,double tolerance){
+  bool ret=true;
+  for(unsigned p=0;p<np && ret;p++)ret=(fgeo::PlaneDist(pla,vpt[p])<=tolerance);
+  return(ret);
+}
+
+//==============================================================================
+/// Devuelve true cuando todos los puntos estan en el plano.
+/// Returns true when all points are in the plane.
+//==============================================================================
+bool PlanePointsIn(const tplane3f &pla,unsigned np,const tfloat3 *vpt,float tolerance){
+  bool ret=true;
+  for(unsigned p=0;p<np && ret;p++)ret=(fgeo::PlaneDist(pla,vpt[p])<=tolerance);
+  return(ret);
+}
+
+
+//==============================================================================
 /// Devuelve punto de interseccion entre 3 planos no paralelos entre si usando
 /// la Regla de Cramer (para sistemas compatibles determinados).
 /// Returns point of intersection of three non-parallel planes using
@@ -283,6 +304,7 @@ tfloat3 PlaneLineIntersec(const tplane3f &pla,const tfloat3 &pt1,const tfloat3 &
   const float t=-(pla.a*x1+pla.b*y1+pla.c*z1+pla.d)/(pla.a*x2+pla.b*y2+pla.c*z2);
   return(TFloat3(x1+x2*t,y1+y2*t,z1+z2*t));
 }
+
 
 
 //==============================================================================

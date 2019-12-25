@@ -21,6 +21,7 @@
 //:# =========
 //:# - Clase para generacion de ficheros VTK de particulas o formas. (10-12-2019)
 //:# - Permite compilar sin libreria de VTK. (13-12-2019)
+//:# - Nuevas funciones AddShapePolyLine(). (23-12-2019)
 //:#############################################################################
 
 /// \file JVtkLib.h \brief Declares the class \ref JVtkLib.
@@ -105,6 +106,11 @@ public:
   void AddShapeLine(const tfloat3  &pt1,const tfloat3  &pt2,int value);
   /// Adds shape line.
   void AddShapeLine(const tdouble3 &pt1,const tdouble3 &pt2,int value);
+
+  /// Adds shape polyline.
+  void AddShapePolyLine(unsigned np,const tfloat3  *vp,int value);
+  /// Adds shape polyline.
+  void AddShapePolyLine(unsigned np,const tdouble3 *vp,int value);
 
   /// Adds shape quad using 4 points.
   void AddShapeQuad(const tfloat3  &pt1,const tfloat3  &pt2,const tfloat3  &pt3,const tfloat3  &pt4,int value);
