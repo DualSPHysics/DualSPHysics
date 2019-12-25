@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<case app="GenCase4 v4.0.134 (17-12-2019)" date="18-12-2019 00:14:07">
-    <casedef requiredversion="v4.0.134">
+<case app="GenCase4 v4.0.136 (24-12-2019)" date="24-12-2019 12:11:17">
+    <casedef requiredversion="v4.0.136">
         <constantsdef>
             <lattice bound="2" fluid="1" />
             <gravity x="0" y="0" z="-9.81" comment="Gravitational acceleration" units_comment="m/s^2" />
@@ -721,6 +721,7 @@
             <parameter key="#ShiftTFS" value="1.5" comment="Threshold to detect free surface. Typically 1.5 for 2D and 2.75 for 3D (default=0)" />
             <parameter key="RigidAlgorithm" value="1" comment="Rigid Algorithm 1:SPH, 2:DEM, 3:Chrono (default=1)" />
             <parameter key="FtPause" value="0.0" comment="Time to freeze the floatings at simulation start (warmup) (default=0)" units_comment="seconds" />
+            <parameter key="FtIgnoreRadius" value="0" comment="Ignores floating body radius with periodic conditions (default=0)" />
             <parameter key="CoefDtMin" value="0.05" comment="Coefficient to calculate minimum time step dtmin=coefdtmin*h/speedsound (default=0.05)" />
             <parameter key="#DtIni" value="0.0001" comment="Initial time step (default=h/speedsound)" units_comment="seconds" />
             <parameter key="#DtMin" value="0.00001" comment="Minimum time step (default=coefdtmin*h/speedsound)" units_comment="seconds" />
@@ -731,6 +732,7 @@
             <parameter key="RhopOutMin" value="700" comment="Minimum rhop valid (default=700)" units_comment="kg/m^3" />
             <parameter key="RhopOutMax" value="1300" comment="Maximum rhop valid (default=1300)" units_comment="kg/m^3" />
             <parameter key="PartsOutMax" value="1" comment="%%/100 of fluid particles allowed to be excluded from domain (default=1)" units_comment="decimal" />
+            <parameter key="WrnPartsOut" value="1" comment="Active warning according to number of out particles (default=1)" />
             <parameter key="IncZ" value="0.5" comment="**DEPRECATED** Increase of Z+ (default=0)" units_comment="decimal" />
             <parameter key="DomainFixed" value="0:0:0:1:1:1" comment="**DEPRECATED** The domain is fixed with the specified values (xmin:ymin:zmin:xmax:ymax:zmax)" units_comment="metres (m)" />
             <parameter key="DomainFixedXmin" value="0" comment="**DEPRECATED** The domain is fixed in the specified limit (default=not applied)" units_comment="metres (m)" />

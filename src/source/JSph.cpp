@@ -188,6 +188,8 @@ void JSph::InitVars(){
   PartBeginTimeStep=0; 
   PartBeginTotalNp=0;
 
+  WrnPartsOut=true;
+
   FtCount=0;
   FtPause=0;
   FtMode=FTMODE_None;
@@ -612,6 +614,7 @@ void JSph::LoadCaseConfig(){
     }
   }
 
+  WrnPartsOut=(eparms.GetValueInt("WrnPartsOut",true,1)!=0);
   FtPause=eparms.GetValueFloat("FtPause",true,0);
   FtIgnoreRadius=(eparms.GetValueInt("FtIgnoreRadius",true,0)!=0);
 
@@ -1090,7 +1093,6 @@ void JSph::ConfigConstants(bool simulate2d){
 /// Prints out configuration of the case.
 //==============================================================================
 void JSph::VisuConfig()const{
-  const char* met="VisuConfig";
   Log->Print(Simulate2D? "**2D-Simulation parameters:": "**3D-Simulation parameters:");
   Log->Print(fun::VarStr("CaseName",CaseName));
   Log->Print(fun::VarStr("RunName",RunName));
@@ -1100,7 +1102,7 @@ void JSph::VisuConfig()const{
   Log->Print(fun::VarStr("SvTimers",SvTimers));
   Log->Print(fun::VarStr("Boundary",GetBoundName(TBoundary)));
   Log->Print(fun::VarStr("StepAlgorithm",GetStepName(TStep)));
-  if(TStep==STEP_None)RunException(met,"StepAlgorithm value is invalid.");
+  if(TStep==STEP_None)Run_Exceptioon("StepAlgorithm value is invalid.");
   if(TStep==STEP_Verlet)Log->Print(fun::VarStr("  VerletSteps",VerletSteps));
   Log->Print(fun::VarStr("Kernel",GetKernelName(TKernel)));
   Log->Print(fun::VarStr("Viscosity",GetViscoName(TVisco)));
@@ -1120,6 +1122,7 @@ void JSph::VisuConfig()const{
   Log->Print(fun::VarStr("FloatingCount",FtCount));
   if(FtCount)Log->Print(fun::VarStr("FtPause",FtPause));
   if(FtCount)Log->Print(fun::VarStr("FtConstraints",FtConstraints));
+  if(FtCount)Log->Print(fun::VarStr("FtIgnoreRadius",FtIgnoreRadius));
   Log->Print(fun::VarStr("CaseNp",CaseNp));
   Log->Print(fun::VarStr("CaseNbound",CaseNbound));
   Log->Print(fun::VarStr("CaseNfixed",CaseNfixed));
@@ -1176,7 +1179,8 @@ void JSph::VisuConfig()const{
     Log->Print(fun::VarStr("RhopOutMin",RhopOutMin));
     Log->Print(fun::VarStr("RhopOutMax",RhopOutMax));
   }
-  if(CteB==0)RunException(met,"Constant \'b\' cannot be zero.\n\'b\' is zero when fluid height is zero (or fluid particles were not created)");
+  Log->Print(fun::VarStr("WrnPartsOut",WrnPartsOut));
+  if(CteB==0)Run_Exceptioon("Constant \'b\' cannot be zero.\n\'b\' is zero when fluid height is zero (or fluid particles were not created)");
 }
 
 //==============================================================================
@@ -2046,7 +2050,7 @@ void JSph::SaveData(unsigned npok,const JDataArrays& arrays
   }
 
   //-Cheks number of excluded particles.
-  if(nout){
+  if(WrnPartsOut && nout){
     //-Cheks number of excluded particles in one PART.
     if(PartsOutWrn<=100 && nout>=float(max(CaseNfluid,infoplus->npf))*(float(PartsOutWrn)/100.f)){
       Log->PrintfWarning("More than %d%% of current fluid particles were excluded in one PART (t:%g, nstep:%u)",PartsOutWrn,TimeStep,Nstep);

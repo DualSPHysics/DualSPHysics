@@ -250,6 +250,7 @@ protected:
   ullong PartBeginTotalNp;    ///<Total number of simulated particles.
 
   JPartsOut *PartsOut;        ///<Stores excluded particles until they are saved. | Almacena las particulas excluidas hasta su grabacion.
+  bool WrnPartsOut;           ///<Active warning according to number of out particles (default=1).
 
   //-Variables for predefined movement.
   JSphMotion *SphMotion;      ///<Manages moving objects. It is NULL when there are not moving objects.
