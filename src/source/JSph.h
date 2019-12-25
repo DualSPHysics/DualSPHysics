@@ -260,6 +260,7 @@ protected:
   float FtPause;               ///<Time to start floating bodies movement.
   TpFtMode FtMode;             ///<Defines interaction mode for floatings and boundaries.
   bool FtConstraints;          ///<Some floating motion constraint is defined.
+  bool FtIgnoreRadius;         ///<Ignores floating body radius with periodic boundary conditions (def=false).
   bool WithFloating;
 
   //-Variables for DEM (DEM).

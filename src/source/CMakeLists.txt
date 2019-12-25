@@ -98,8 +98,8 @@ elseif(MSVC)
 
   #if(MSVC_VERSION VERSION_EQUAL 1900)
     # MSVC 2015
-    target_link_libraries(DualSPHysics4.4CPU JVtkLib_x64_v140_Release JWaveGen_x64_v140_Release dsphchrono)
-    target_link_libraries(DualSPHysics4.4 JVtkLib_x64_v140_Release JWaveGen_x64_v140_Release dsphchrono)
+    target_link_libraries(DualSPHysics4.4CPU LibJVtkLib_x64_v140_Release LibJWaveGen_x64_v140_Release dsphchrono)
+    target_link_libraries(DualSPHysics4.4 LibJVtkLib_x64_v140_Release LibJWaveGen_x64_v140_Release dsphchrono)
   #endif()
   
   SET(CUDA_PROPAGATE_HOST_FLAGS OFF CACHE BOOL "Propagate C/CXX Flags and friends to the host compiler in NVCC via -Xompile  " FORCE)

@@ -192,6 +192,7 @@ void JSph::InitVars(){
   FtPause=0;
   FtMode=FTMODE_None;
   FtConstraints=false;
+  FtIgnoreRadius=false;
   WithFloating=false;
 
   AllocMemoryFloating(0,false);
@@ -612,6 +613,8 @@ void JSph::LoadCaseConfig(){
   }
 
   FtPause=eparms.GetValueFloat("FtPause",true,0);
+  FtIgnoreRadius=(eparms.GetValueInt("FtIgnoreRadius",true,0)!=0);
+
   TimeMax=eparms.GetValueDouble("TimeMax");
   TimePart=eparms.GetValueDouble("TimeOut");
 
@@ -1352,7 +1355,6 @@ unsigned JSph::CalcCellCode(tuint3 ncells){
 /// Calcula distancia maxima entre particulas y centro de cada floating.
 //==============================================================================
 void JSph::CalcFloatingRadius(unsigned np,const tdouble3 *pos,const unsigned *idp){
-  const char met[]="CalcFloatingsRadius";
   const float overradius=1.2f; //-Percentage of ration increase. | Porcentaje de incremento de radio. 
   unsigned *ridp=new unsigned[CaseNfloat];
   //-Assigns values UINT_MAX. 
@@ -1367,7 +1369,7 @@ void JSph::CalcFloatingRadius(unsigned np,const tdouble3 *pos,const unsigned *id
   //-Checks that all floating particles are located.  
   //-Comprueba que todas las particulas floating estan localizadas.
   for(unsigned fp=0;fp<CaseNfloat;fp++){
-    if(ridp[fp]==UINT_MAX)RunException(met,"There are floating particles not found.");
+    if(ridp[fp]==UINT_MAX)Run_Exceptioon("There are floating particles not found.");
   }
   //-Calculates maximum distance between particles and center of the floating (all are valid).  
   //-Calcula distancia maxima entre particulas y centro de floating (todas son validas).
@@ -1391,9 +1393,20 @@ void JSph::CalcFloatingRadius(unsigned np,const tdouble3 *pos,const unsigned *id
   delete[] ridp; ridp=NULL;
   //-Checks maximum radius < dimensions of the periodic domain.
   //-Comprueba que el radio maximo sea menor que las dimensiones del dominio periodico.
-  if(PeriX && fabs(PeriXinc.x)<=radiusmax)RunException(met,fun::PrintStr("The floating radius (%g) is too large for periodic distance in X (%g).",radiusmax,abs(PeriXinc.x)));
-  if(PeriY && fabs(PeriYinc.y)<=radiusmax)RunException(met,fun::PrintStr("The floating radius (%g) is too large for periodic distance in Y (%g).",radiusmax,abs(PeriYinc.y)));
-  if(PeriZ && fabs(PeriZinc.z)<=radiusmax)RunException(met,fun::PrintStr("The floating radius (%g) is too large for periodic distance in Z (%g).",radiusmax,abs(PeriZinc.z)));
+  const string errtex="The floating body radius (%g [m]) is too large for periodic distance in %c (%g [m]). If the floating body crosses the periodical limits, the simulation may be incorrect.";
+  if(PeriX && fabs(PeriXinc.x)<=radiusmax){
+    const string tx=fun::PrintStr(errtex.c_str(),radiusmax,'X',abs(PeriXinc.x));
+    if(FtIgnoreRadius)Log->PrintWarning(tx); else Run_Exceptioon(tx);
+  }
+  if(PeriY && fabs(PeriYinc.y)<=radiusmax){
+    const string tx=fun::PrintStr(errtex.c_str(),radiusmax,'Y',abs(PeriYinc.y));
+    if(FtIgnoreRadius)Log->PrintWarning(tx); else Run_Exceptioon(tx);
+  }
+  //Log->Printf("\nPeriYinc.y:%f <= %f:radiusmax",fabs(PeriYinc.y),radiusmax);
+  if(PeriZ && fabs(PeriZinc.z)<=radiusmax){
+    const string tx=fun::PrintStr(errtex.c_str(),radiusmax,'Z',abs(PeriZinc.z));
+    if(FtIgnoreRadius)Log->PrintWarning(tx); else Run_Exceptioon(tx);
+  }
 }
 
 //==============================================================================
