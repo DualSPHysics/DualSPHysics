@@ -19,33 +19,25 @@
 //:#############################################################################
 //:# Cambios:
 //:# =========
-//:# - Implementacion inical. (01-12-2019)
+//:# - Implementacion en fichero independiente. (22-12-2019)
 //:#############################################################################
 
-/// \file JShifting_ker.h \brief Declares functions and CUDA kernels for Shifting correction on GPU.
+/// \file JSphAccInput_ker.h \brief Declares functions and CUDA kernels for external forces (JSphAccInput) on GPU.
 
-#ifndef _JShifting_ker_
-#define _JShifting_ker_
+#ifndef _JSphAccInput_ker_
+#define _JSphAccInput_ker_
 
-#include "TypesDef.h"
+#include "DualSphDef.h"
 #include <cuda_runtime_api.h>
 
-/// Implements a set of functions and CUDA kernels for Shifting correction on GPU.
-namespace cushift{
+/// Implements a set of functions and CUDA kernels for external forces (JSphAccInput) on GPU.
+namespace cuaccin{
 
-//-Kernels for JShifting.
-void InitGpuPosMax(bool tfirst,bool tdbl,unsigned n,unsigned pini
-  ,const tdouble3& pmin1,const tdouble3& pmax1,const tdouble3& pmin2,const tdouble3& pmax2
-  ,const double2* posxy,const double* posz,float4* shiftposfs,cudaStream_t stm);
-
-void InitGpuPlanes(bool tfirst,bool tdbl,unsigned n,unsigned pini
-  ,const tplane3d& plax1,const tplane3d& play1,const tplane3d& plaz1,const tdouble3& pladis1
-  ,const tplane3d& plax2,const tplane3d& play2,const tplane3d& plaz2,const tdouble3& pladis2
-  ,const double2* posxy,const double* posz,float4* shiftposfs,cudaStream_t stm);
-
-void RunShifting(unsigned n,unsigned pini,double dt
-  ,double coefumagn,float shifttfs,double coeftfs,float maxdist
-  ,const float4 *velrhop,float4 *shiftposfs,cudaStream_t stm);
+//-Kernels for external forces (JSphAccInput).
+void AddAccInput(unsigned n,unsigned pini,typecode codesel
+  ,tdouble3 acclin,tdouble3 accang,tdouble3 centre,tdouble3 velang,tdouble3 vellin,bool setgravity
+  ,tfloat3 gravity,const typecode *code,const double2 *posxy,const double *posz
+  ,const float4 *velrhop,float3 *ace,cudaStream_t stm);
 
 }
 

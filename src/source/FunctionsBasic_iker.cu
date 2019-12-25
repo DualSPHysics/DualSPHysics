@@ -20,15 +20,16 @@
 //:# Cambios:
 //:# =========
 //:# - Implementacion inicial. (01-12-2019)
-//:# - Funciones: PointInMinMax(), PlanePoint() y PlanesDomainCheck(). (01-12-2019)
 //:#############################################################################
 
-/// \file FunctionsBasic_ker.cu \brief Implements basic functions for CUDA files.
+/// \file FunctionsBasic_iker.cu \brief Implements basic functions for CUDA files.
 
 #include "TypesDef.h"
 #include <cuda_runtime_api.h>
 
-//namespace cubas{
+#ifndef SPHBSIZE
+  #define SPHBSIZE 256  //-CUDA blocksize by default.
+#endif
 
 //==============================================================================
 // Basic conversion functions.
@@ -47,8 +48,5 @@ inline dim3 GetSimpleGridSize(unsigned n,unsigned blocksize){
   const unsigned nb=unsigned(n+blocksize-1)/blocksize;//-Numero total de bloques a lanzar.
   return(dim3(nb,1,1));
 }
-
-
-//}
 
 

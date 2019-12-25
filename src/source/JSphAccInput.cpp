@@ -23,17 +23,11 @@
 #include "JXml.h"
 #include "Functions.h"
 #include "JReadDatafile.h"
-#include <cstring>
-#include <sstream>
-#include <iostream>
-#include <fstream>
-#include <cfloat>
+#ifdef _WITHGPU
+  #include "JSphAccInput_ker.h"
+#endif
 
-//using namespace std;
-using std::string;
-using std::ios;
-using std::ifstream;
-using std::stringstream;
+using namespace std;
 
 //##############################################################################
 //# JSphAccInputMk
@@ -108,7 +102,6 @@ long long JSphAccInputMk::GetAllocMemory()const{
 /// Reads data from an external file to enable time-dependent acceleration of specific particles.
 //==============================================================================
 void JSphAccInputMk::LoadFile(std::string file,double tmax){
-  const char met[]="LoadFile";
   Reset();
   JReadDatafile rdat;
   rdat.LoadFile(file,SIZEMAX);
@@ -148,9 +141,9 @@ void JSphAccInputMk::LoadFile(std::string file,double tmax){
     AccCount++;      //Increment the global line counter.
   }
   //Check that at least 2 values were given or interpolation will be impossible.
-  if(AccCount<2)RunException(met,"Cannot be less than two positions in variable acceleration file.",file);
+  if(AccCount<2)Run_ExceptioonFile("Cannot be less than two positions in variable acceleration file.",file);
   //Check that the final value for time is not smaller than the final simulation time.
-  if(double(AccTime[AccCount-1])<tmax)RunException(met,fun::PrintStr("Final time (%g) is less than total simulation time in variable acceleration file.",AccTime[AccCount-1]),file);
+  if(double(AccTime[AccCount-1])<tmax)Run_ExceptioonFile(fun::PrintStr("Final time (%g) is less than total simulation time in variable acceleration file.",AccTime[AccCount-1]),file);
 }
 
 //==============================================================================
@@ -272,7 +265,7 @@ bool JSphAccInput::ExistMk(word mkfluid)const{
 //==============================================================================
 void JSphAccInput::LoadXml(JXml *sxml,const std::string &place){
   TiXmlNode* node=sxml->GetNode(place,false);
-  if(!node)RunException("LoadXml",std::string("Cannot find the element \'")+place+"\'.");
+  if(!node)Run_Exceptioon(std::string("Cannot find the element \'")+place+"\'.");
   ReadXml(sxml,node->ToElement());
 }
 
@@ -280,7 +273,6 @@ void JSphAccInput::LoadXml(JXml *sxml,const std::string &place){
 /// Reads list of initial conditions in the XML node.
 //==============================================================================
 void JSphAccInput::ReadXml(const JXml *sxml,TiXmlElement* lis){
-  const char met[]="ReadXml";
   //-Loads list of inputs.
   TiXmlElement* ele=lis->FirstChildElement("accinput"); 
   while(ele){
@@ -288,7 +280,7 @@ void JSphAccInput::ReadXml(const JXml *sxml,TiXmlElement* lis){
     tfloat3 acccentre=sxml->ReadElementFloat3(ele,"acccentre");
     bool genabled=sxml->ReadElementBool(ele,"globalgravity","value");
     std::string file=DirData+sxml->ReadElementStr(ele,"datafile","value");
-    if(ExistMk(mkfluid))RunException(met,"An input already exists for the same mkfluid.");
+    if(ExistMk(mkfluid))Run_Exceptioon("An input already exists for the same mkfluid.");
     JSphAccInputMk *input=new JSphAccInputMk(Log,mkfluid,genabled,acccentre,file);
     Inputs.push_back(input);
     ele=ele->NextSiblingElement("accinput");
@@ -325,8 +317,75 @@ void JSphAccInput::VisuConfig(std::string txhead,std::string txfoot)const{
 /// Returns interpolation variable acceleration values. SL: Corrected spelling mistake in exception and added angular velocity and global gravity flag
 //=====================================================================================================================================================
 const StAceInput& JSphAccInput::GetAccValues(unsigned cfile,double timestep){
-  if(cfile>=GetCount())RunException("GetAccValues","The number of input file for variable acceleration is invalid.");
+  if(cfile>=GetCount())Run_Exceptioon("The number of input file for variable acceleration is invalid.");
   return(Inputs[cfile]->GetAccValues(timestep));
 }
 
+//==============================================================================
+/// Adds variable acceleration from input configurations.
+//==============================================================================
+void JSphAccInput::RunCpu(double timestep,tfloat3 gravity,unsigned n,unsigned pini
+  ,const typecode *code,const tdouble3 *pos,const tfloat4 *velrhop,tfloat3 *ace)
+{
+  for(unsigned c=0;c<GetCount();c++){
+    const StAceInput v=GetAccValues(c,timestep);
+    const bool withaccang=(v.accang.x!=0 || v.accang.y!=0 || v.accang.z!=0);
+    const typecode codesel=typecode(v.mkfluid);
+    const int ppini=int(pini),ppfin=pini+int(n);
+    #ifdef OMP_USE
+      #pragma omp parallel for schedule (static)
+    #endif
+    for(int p=ppini;p<ppfin;p++){//-Iterates through the fluid particles.
+      //-Checks if the current particle is part of the particle set by its MK.
+      if(CODE_GetTypeValue(code[p])==codesel){
+        tdouble3 acc=ToTDouble3(ace[p]);
+        acc=acc+v.acclin;                             //-Adds linear acceleration.
+        if(!v.setgravity)acc=acc-ToTDouble3(gravity); //-Subtract global gravity from the acceleration if it is set in the input file
+        if(withaccang){                               //-Adds angular acceleration.
+          const tdouble3 dc=pos[p]-v.centre;
+          const tdouble3 vel=TDouble3(velrhop[p].x,velrhop[p].y,velrhop[p].z);//-Get the current particle's velocity
+
+          //-Calculate angular acceleration ((Dw/Dt) x (r_i - r)) + (w x (w x (r_i - r))) + (2w x (v_i - v))
+          //(Dw/Dt) x (r_i - r) (term1)
+          acc.x+=(v.accang.y*dc.z)-(v.accang.z*dc.y);
+          acc.y+=(v.accang.z*dc.x)-(v.accang.x*dc.z);
+          acc.z+=(v.accang.x*dc.y)-(v.accang.y*dc.x);
+
+          //-Centripetal acceleration (term2)
+          //-First find w x (r_i - r))
+          const double innerx=(v.velang.y*dc.z)-(v.velang.z*dc.y);
+          const double innery=(v.velang.z*dc.x)-(v.velang.x*dc.z);
+          const double innerz=(v.velang.x*dc.y)-(v.velang.y*dc.x);
+          //-Find w x inner.
+          acc.x+=(v.velang.y*innerz)-(v.velang.z*innery);
+          acc.y+=(v.velang.z*innerx)-(v.velang.x*innerz);
+          acc.z+=(v.velang.x*innery)-(v.velang.y*innerx);
+
+          //-Coriolis acceleration 2w x (v_i - v) (term3)
+          acc.x+=((2.0*v.velang.y)*vel.z)-((2.0*v.velang.z)*(vel.y-v.vellin.y));
+          acc.y+=((2.0*v.velang.z)*vel.x)-((2.0*v.velang.x)*(vel.z-v.vellin.z));
+          acc.z+=((2.0*v.velang.x)*vel.y)-((2.0*v.velang.y)*(vel.x-v.vellin.x));
+        }
+        //-Stores the new acceleration value.
+        ace[p]=ToTFloat3(acc);
+      }
+    }
+  }
+}
+
+#ifdef _WITHGPU
+//==============================================================================
+/// Adds variable acceleration from input configurations.
+//==============================================================================
+void JSphAccInput::RunGpu(double timestep,tfloat3 gravity,unsigned n,unsigned pini
+    ,const typecode *code,const double2 *posxy,const double *posz,const float4 *velrhop,float3 *ace)
+{
+  for(unsigned c=0;c<GetCount();c++){
+    const StAceInput v=GetAccValues(c,timestep);
+    const typecode codesel=typecode(v.mkfluid);
+    cuaccin::AddAccInput(n,pini,codesel,v.acclin,v.accang,v.centre,v.velang,v.vellin,v.setgravity,gravity
+      ,code,posxy,posz,velrhop,ace,NULL);
+  }
+}
+#endif
 

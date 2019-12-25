@@ -234,7 +234,7 @@ void Interaction_Forces(const StInterParmsg &t);
 //-Kernels for the calculation of the DEM forces.
 void Interaction_ForcesDem(bool psingle,TpCellMode cellmode,unsigned bsize
   ,unsigned nfloat,tuint3 ncells,const int2 *begincell,tuint3 cellmin,const unsigned *dcell
-  ,const unsigned *ftridp,const float4 *demdata,float dtforce
+  ,const unsigned *ftridp,const float4 *demdata,const float *ftomassp,float dtforce
   ,const double2 *posxy,const double *posz,const float4 *pospress,const float4 *velrhop
   ,const typecode *code,const unsigned *idp,float *viscdt,float3 *ace,StKerInfo *kerinfo);
 
@@ -244,21 +244,6 @@ void ComputeSpsTau(unsigned np,unsigned npb,float smag,float blin
 
 //-Kernels for Delta-SPH.
 void AddDelta(unsigned n,const float *delta,float *ar,cudaStream_t stm=NULL);
-
-//-Kernels for ComputeStep (vel & rhop).
-void ComputeStepVerlet(bool floatings,bool shift,unsigned np,unsigned npb
-  ,const float4 *velrhop1,const float4 *velrhop2
-  ,const float *ar,const float3 *ace,const float4 *shiftposfs
-  ,double dt,double dt2,float rhopoutmin,float rhopoutmax
-  ,typecode *code,double2 *movxy,double *movz,float4 *velrhopnew);
-void ComputeStepSymplecticPre(bool floatings,bool shift,unsigned np,unsigned npb
-  ,const float4 *velrhoppre,const float *ar,const float3 *ace,const float4 *shiftposfs
-  ,double dtm,float rhopoutmin,float rhopoutmax
-  ,typecode *code,double2 *movxy,double *movz,float4 *velrhop);
-void ComputeStepSymplecticCor(bool floatings,bool shift,unsigned np,unsigned npb
-  ,const float4 *velrhoppre,const float *ar,const float3 *ace,const float4 *shiftposfs
-  ,double dtm,double dt,float rhopoutmin,float rhopoutmax
-  ,typecode *code,double2 *movxy,double *movz,float4 *velrhop);
 
 //-Kernels for ComputeStep (position).
 void ComputeStepPos (byte periactive,bool floatings,unsigned np,unsigned npb
@@ -283,11 +268,11 @@ void MovePiston2d(bool periactive,unsigned np,unsigned idini,double dp,double po
 
 //-Kernels for Floating bodies.
 void FtCalcForcesSum(bool periactive,unsigned ftcount
-  ,tfloat3 gravity,const float4 *ftodata,const double3 *ftocenter,const unsigned *ftridp
+  ,const float4 *ftodata,const double3 *ftocenter,const unsigned *ftridp
   ,const double2 *posxy,const double *posz,const float3 *ace
   ,float3 *ftoforcessum);
 void FtCalcForces(unsigned ftcount,tfloat3 gravity
-  ,const float4 *ftodata,const float3 *ftoangles
+  ,const float *ftomass,const float3 *ftoangles
   ,const float4 *ftoinertiaini8,const float *ftoinertiaini1
   ,const float3 *ftoforcessum,float3 *ftoforces);
 void FtCalcForcesRes(unsigned ftcount,bool simulate2d,double dt
@@ -296,7 +281,7 @@ void FtCalcForcesRes(unsigned ftcount,bool simulate2d,double dt
 void FtApplyConstraints(unsigned ftcount,const byte *ftoconstraints
   ,float3 *ftoforces,float3 *ftoforcesres);
 void FtUpdate(bool periactive,bool predictor,unsigned ftcount,double dt
-  ,const float4 *ftodata,const float3 *ftoforcesres,double3 *ftocenterres,const unsigned *ftridp
+  ,const float4 *ftodatp,const float3 *ftoforcesres,double3 *ftocenterres,const unsigned *ftridp
   ,double3 *ftocenter,float3 *ftoangles,float3 *ftovel,float3 *ftoomega
   ,double2 *posxy,double *posz,unsigned *dcell,float4 *velrhop,typecode *code);
 
@@ -309,11 +294,6 @@ void PeriodicDuplicateVerlet(unsigned n,unsigned pini,tuint3 domcells,tdouble3 p
 void PeriodicDuplicateSymplectic(unsigned n,unsigned pini
   ,tuint3 domcells,tdouble3 perinc,const unsigned *listp,unsigned *idp,typecode *code,unsigned *dcell
   ,double2 *posxy,double *posz,float4 *velrhop,tsymatrix3f *spstau,double2 *posxypre,double *poszpre,float4 *velrhoppre);
-
-//-Kernels for external forces (JSphAccInput).
-void AddAccInput(unsigned n,unsigned pini,typecode codesel
-  ,tdouble3 acclin,tdouble3 accang,tdouble3 centre,tdouble3 velang,tdouble3 vellin,bool setgravity
-  ,tfloat3 gravity,const typecode *code,const double2 *posxy,const double *posz,const float4 *velrhop,float3 *ace,cudaStream_t stm);
 
 //-Kernels for Damping.
 void ComputeDamping(double dt,tdouble4 plane,float dist,float over,tfloat3 factorxyz,float redumax

@@ -21,6 +21,7 @@
 #include "JSphGpu.h"
 #include "JException.h"
 #include "JSphGpu_ker.h"
+#include "JSphGpuSimple_ker.h"
 #include "JBlockSizeAuto.h"
 #include "JCellDivGpu.h"
 #include "JPartFloatBi4.h"
@@ -144,7 +145,8 @@ void JSphGpu::InitVars(){
   ShiftPosfsg=NULL;                                //-Shifting.
   RidpMoveg=NULL;
   FtRidpg=NULL;   FtoMasspg=NULL;                  //-Floatings.
-  FtoDatag=NULL;  FtoConstraintsg=NULL;  FtoForcesSumg=NULL;  FtoForcesg=NULL;  FtoForcesResg=NULL;  FtoCenterResg=NULL; //-Calculates forces on floating bodies.
+  FtoDatpg=NULL;  FtoMassg=NULL;  FtoConstraintsg=NULL;                           //-Calculates forces on floating bodies.
+  FtoForcesSumg=NULL;  FtoForcesg=NULL;  FtoForcesResg=NULL;  FtoCenterResg=NULL; //-Calculates forces on floating bodies.
   FtoCenterg=NULL; FtoAnglesg=NULL; FtoVelg=NULL; FtoOmegag=NULL;//-Management of floating bodies.
   FtoInertiaini8g=NULL; FtoInertiaini1g=NULL;//-Management of floating bodies.
   FtObjsOutdated=true;
@@ -195,7 +197,8 @@ void JSphGpu::FreeGpuMemoryFixed(){
   if(RidpMoveg)      cudaFree(RidpMoveg);       RidpMoveg=NULL;
   if(FtRidpg)        cudaFree(FtRidpg);         FtRidpg=NULL;
   if(FtoMasspg)      cudaFree(FtoMasspg);       FtoMasspg=NULL;
-  if(FtoDatag)       cudaFree(FtoDatag);        FtoDatag=NULL;
+  if(FtoDatpg)       cudaFree(FtoDatpg);        FtoDatpg=NULL;
+  if(FtoMassg)       cudaFree(FtoMassg);        FtoMassg=NULL;
   if(FtoConstraintsg)cudaFree(FtoConstraintsg); FtoConstraintsg=NULL;
   if(FtoForcesSumg)  cudaFree(FtoForcesSumg);   FtoForcesSumg=NULL;
   if(FtoForcesg)     cudaFree(FtoForcesg);      FtoForcesg=NULL;
@@ -224,7 +227,8 @@ void JSphGpu::AllocGpuMemoryFixed(){
     size_t m=0;
     m=sizeof(unsigned)*CaseNfloat;  cudaMalloc((void**)&FtRidpg        ,m);  MemGpuFixed+=m;
     m=sizeof(float)   *FtCount;     cudaMalloc((void**)&FtoMasspg      ,m);  MemGpuFixed+=m;
-    m=sizeof(float4)  *FtCount;     cudaMalloc((void**)&FtoDatag       ,m);  MemGpuFixed+=m;
+    m=sizeof(float4)  *FtCount;     cudaMalloc((void**)&FtoDatpg       ,m);  MemGpuFixed+=m;
+    m=sizeof(float)   *FtCount;     cudaMalloc((void**)&FtoMassg       ,m);  MemGpuFixed+=m;
     m=sizeof(byte)    *FtCount;     cudaMalloc((void**)&FtoConstraintsg,m);  MemGpuFixed+=m;
     m=sizeof(float3)  *FtCount*2;   cudaMalloc((void**)&FtoForcesSumg  ,m);  MemGpuFixed+=m;
     m=sizeof(float3)  *FtCount*2;   cudaMalloc((void**)&FtoForcesg     ,m);  MemGpuFixed+=m;
@@ -668,7 +672,7 @@ void JSphGpu::ConfigBlockSizes(bool usezone,bool useperi){
         ,NULL
         ,&kerinfo,NULL);
       cusph::Interaction_Forces(parms);
-      if(UseDEM)cusph::Interaction_ForcesDem(Psingle,CellMode,BlockSizes.forcesdem,CaseNfloat,TUint3(0),NULL,TUint3(0),NULL,NULL,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,&kerinfo);
+      if(UseDEM)cusph::Interaction_ForcesDem(Psingle,CellMode,BlockSizes.forcesdem,CaseNfloat,TUint3(0),NULL,TUint3(0),NULL,NULL,NULL,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,&kerinfo);
     #endif
     //Log->Printf("====> bound -> rg:%d  bs:%d  bsmax:%d",kerinfo.forcesbound_rg,kerinfo.forcesbound_bs,kerinfo.forcesbound_bsmax);
     //Log->Printf("====> fluid -> rg:%d  bs:%d  bsmax:%d",kerinfo.forcesfluid_rg,kerinfo.forcesfluid_bs,kerinfo.forcesfluid_bsmax);
@@ -764,10 +768,11 @@ void JSphGpu::InitFloating(){
       unsigned pini;
       unsigned np;
       float radius;
-      float mass;
+      float massp;
     }stdata;
 
-    stdata   *data  =new stdata  [FtCount];
+    stdata   *datp  =new stdata  [FtCount];
+    float    *ftmass=new float   [FtCount];
     byte     *constr=new byte    [FtCount];
     tdouble3 *center=new tdouble3[FtCount];
     tfloat3  *angles=new tfloat3 [FtCount];
@@ -777,10 +782,11 @@ void JSphGpu::InitFloating(){
     float    *inert1=new float   [FtCount];
     for(unsigned cf=0;cf<FtCount;cf++){
       const StFloatingData &fobj=FtObjs[cf];
-      data[cf].pini=fobj.begin-CaseNpb;
-      data[cf].np=fobj.count;
-      data[cf].radius=fobj.radius;
-      data[cf].mass=fobj.mass;
+      datp[cf].pini=fobj.begin-CaseNpb;
+      datp[cf].np=fobj.count;
+      datp[cf].radius=fobj.radius;
+      datp[cf].massp=fobj.massp;
+      ftmass[cf]=fobj.mass;
       constr[cf]=fobj.constraints;
       center[cf]=fobj.center;
       angles[cf]=fobj.angles;
@@ -791,7 +797,8 @@ void JSphGpu::InitFloating(){
       inert8[cf*2+1]=TFloat4(v.a22,v.a23,v.a31,v.a32);
       inert1[cf]    =v.a33;
     }
-    cudaMemcpy(FtoDatag       ,data  ,sizeof(float4)   *FtCount  ,cudaMemcpyHostToDevice);
+    cudaMemcpy(FtoDatpg       ,datp  ,sizeof(float4)   *FtCount  ,cudaMemcpyHostToDevice);
+    cudaMemcpy(FtoMassg       ,ftmass,sizeof(float)    *FtCount  ,cudaMemcpyHostToDevice);
     cudaMemcpy(FtoConstraintsg,constr,sizeof(byte)     *FtCount  ,cudaMemcpyHostToDevice);
     cudaMemcpy(FtoCenterg     ,center,sizeof(double3)  *FtCount  ,cudaMemcpyHostToDevice);
     cudaMemcpy(FtoAnglesg     ,angles,sizeof(float3)   *FtCount  ,cudaMemcpyHostToDevice);
@@ -799,7 +806,8 @@ void JSphGpu::InitFloating(){
     cudaMemcpy(FtoOmegag      ,omega ,sizeof(float3)   *FtCount  ,cudaMemcpyHostToDevice);
     cudaMemcpy(FtoInertiaini8g,inert8,sizeof(float4)   *FtCount*2,cudaMemcpyHostToDevice);
     cudaMemcpy(FtoInertiaini1g,inert1,sizeof(float)    *FtCount  ,cudaMemcpyHostToDevice);
-    delete[] data;
+    delete[] datp;
+    delete[] ftmass;
     delete[] center;
     delete[] angles;
     delete[] vel;
@@ -836,17 +844,6 @@ void JSphGpu::InitRunGpu(){
 }
 
 //==============================================================================
-/// Adds variable acceleration from input files.
-//==============================================================================
-void JSphGpu::AddAccInput(){
-  for(unsigned c=0;c<AccInput->GetCount();c++){
-    const StAceInput v=AccInput->GetAccValues(c,TimeStep);
-    const typecode codesel=typecode(v.mkfluid);
-    cusph::AddAccInput(Np-Npb,Npb,codesel,v.acclin,v.accang,v.centre,v.velang,v.vellin,v.setgravity,Gravity,Codeg,Posxyg,Poszg,Velrhopg,Aceg,NULL);
-  }
-}
-
-//==============================================================================
 /// Prepares variables for interaction.
 /// Prepara variables para interaccion.
 //==============================================================================
@@ -856,15 +853,14 @@ void JSphGpu::PreInteractionVars_Forces(unsigned np,unsigned npb){
   cudaMemset(ViscDtg,0,sizeof(float)*np);                                //ViscDtg[]=0
   cudaMemset(Arg,0,sizeof(float)*np);                                    //Arg[]=0
   if(Deltag)cudaMemset(Deltag,0,sizeof(float)*np);                       //Deltag[]=0
-  cudaMemset(Aceg,0,sizeof(tfloat3)*npb);                                //Aceg[]=(0,0,0) para bound //Aceg[]=(0,0,0) for the boundary
-  cusph::InitArray(npf,Aceg+npb,Gravity);                                //Aceg[]=Gravity para fluid //Aceg[]=Gravity for the fluid
+  cudaMemset(Aceg,0,sizeof(tfloat3)*np);                                 //Aceg[]=(0,0,0)
   if(SpsGradvelg)cudaMemset(SpsGradvelg+npb,0,sizeof(tsymatrix3f)*npf);  //SpsGradvelg[]=(0,0,0,0,0,0).
 
   //-Select particles for shifting.
   if(ShiftPosfsg)Shifting->InitGpu(npf,npb,Posxyg,Poszg,ShiftPosfsg);
 
   //-Apply the extra forces to the correct particle sets.
-  if(AccInput)AddAccInput();
+  if(AccInput)AccInput->RunGpu(TimeStep,Gravity,npf,npb,Codeg,Posxyg,Poszg,Velrhopg,Aceg);
 }
 
 //==============================================================================
@@ -931,12 +927,12 @@ void JSphGpu::ComputeVerlet(double dt){  //pdtedom
   //-Computes displacement, velocity and density.
   //-Calcula desplazamiento, velocidad y densidad.
   if(VerletStep<VerletSteps){
-    cusph::ComputeStepVerlet(WithFloating,shift,Np,Npb,Velrhopg,VelrhopM1g,Arg
-      ,Aceg,ShiftPosfsg,dt,dt+dt,RhopOutMin,RhopOutMax,Codeg,movxyg,movzg,VelrhopM1g);
+    cusphs::ComputeStepVerlet(WithFloating,shift,Np,Npb,Velrhopg,VelrhopM1g,Arg
+      ,Aceg,ShiftPosfsg,dt,dt+dt,RhopZero,RhopOutMin,RhopOutMax,Gravity,Codeg,movxyg,movzg,VelrhopM1g,NULL);
   }
   else{
-    cusph::ComputeStepVerlet(WithFloating,shift,Np,Npb,Velrhopg,Velrhopg,Arg
-      ,Aceg,ShiftPosfsg,dt,dt,RhopOutMin,RhopOutMax,Codeg,movxyg,movzg,VelrhopM1g);
+    cusphs::ComputeStepVerlet(WithFloating,shift,Np,Npb,Velrhopg,Velrhopg,Arg
+      ,Aceg,ShiftPosfsg,dt,dt,RhopZero,RhopOutMin,RhopOutMax,Gravity,Codeg,movxyg,movzg,VelrhopM1g,NULL);
     VerletStep=0;
   }
   //-The new values are calculated in VelRhopM1g.
@@ -972,8 +968,8 @@ void JSphGpu::ComputeSymplecticPre(double dt){
   double *movzg=ArraysGpu->ReserveDouble();
   //-Compute displacement, velocity and density.
   const double dt05=dt*.5;
-  cusph::ComputeStepSymplecticPre(WithFloating,shift,Np,Npb,VelrhopPreg,Arg
-    ,Aceg,ShiftPosfsg,dt05,RhopOutMin,RhopOutMax,Codeg,movxyg,movzg,Velrhopg);
+  cusphs::ComputeStepSymplecticPre(WithFloating,shift,Np,Npb,VelrhopPreg,Arg
+    ,Aceg,ShiftPosfsg,dt05,RhopZero,RhopOutMin,RhopOutMax,Gravity,Codeg,movxyg,movzg,Velrhopg,NULL);
   //-Applies displacement to non-periodic fluid particles.
   //-Aplica desplazamiento a las particulas fluid no periodicas.
   cusph::ComputeStepPos2(PeriActive,WithFloating,Np,Npb,PosxyPreg,PoszPreg,movxyg,movzg,Posxyg,Poszg,Dcellg,Codeg);
@@ -999,8 +995,8 @@ void JSphGpu::ComputeSymplecticCorr(double dt){
   double *movzg=ArraysGpu->ReserveDouble();
   //-Computes displacement, velocity and density.
   const double dt05=dt*.5;
-  cusph::ComputeStepSymplecticCor(WithFloating,shift,Np,Npb,VelrhopPreg
-    ,Arg,Aceg,ShiftPosfsg,dt05,dt,RhopOutMin,RhopOutMax,Codeg,movxyg,movzg,Velrhopg);
+  cusphs::ComputeStepSymplecticCor(WithFloating,shift,Np,Npb,VelrhopPreg
+    ,Arg,Aceg,ShiftPosfsg,dt05,dt,RhopZero,RhopOutMin,RhopOutMax,Gravity,Codeg,movxyg,movzg,Velrhopg,NULL);
   //-Applies displacement to non-periodic fluid particles.
   //-Aplica desplazamiento a las particulas fluid no periodicas.
   cusph::ComputeStepPos2(PeriActive,WithFloating,Np,Npb,PosxyPreg,PoszPreg,movxyg,movzg,Posxyg,Poszg,Dcellg,Codeg);

@@ -457,7 +457,7 @@ void JSphGpuSingle::Interaction_Forces(TpInterStep interstep){
   cusph::Interaction_Forces(parms);
 
   //-Interaction DEM Floating-Bound & Floating-Floating. //(DEM)
-  if(UseDEM)cusph::Interaction_ForcesDem(Psingle,CellMode,BlockSizes.forcesdem,CaseNfloat,CellDivSingle->GetNcells(),CellDivSingle->GetBeginCell(),CellDivSingle->GetCellDomainMin(),Dcellg,FtRidpg,DemDatag,float(DemDtForce),Posxyg,Poszg,PsPospressg,Velrhopg,Codeg,Idpg,ViscDtg,Aceg,NULL);
+  if(UseDEM)cusph::Interaction_ForcesDem(Psingle,CellMode,BlockSizes.forcesdem,CaseNfloat,CellDivSingle->GetNcells(),CellDivSingle->GetBeginCell(),CellDivSingle->GetCellDomainMin(),Dcellg,FtRidpg,DemDatag,FtoMasspg,float(DemDtForce),Posxyg,Poszg,PsPospressg,Velrhopg,Codeg,Idpg,ViscDtg,Aceg,NULL);
 
   //-For 2D simulations always overrides the 2nd component (Y axis).
   //-Para simulaciones 2D anula siempre la 2º componente.
@@ -589,9 +589,9 @@ void JSphGpuSingle::RunFloating(double dt,bool predictor){
     cudaMemset(FtoForcesg,0,sizeof(StFtoForces)*FtCount);
 
     //-Calculate forces summation (face,fomegaace) starting from floating particles in ftoforcessum[].
-    cusph::FtCalcForcesSum(PeriActive!=0,FtCount,Gravity,FtoDatag,FtoCenterg,FtRidpg,Posxyg,Poszg,Aceg,FtoForcesSumg);
+    cusph::FtCalcForcesSum(PeriActive!=0,FtCount,FtoDatpg,FtoCenterg,FtRidpg,Posxyg,Poszg,Aceg,FtoForcesSumg);
     //-Adds calculated forces around floating objects / Añade fuerzas calculadas sobre floatings.
-    cusph::FtCalcForces(FtCount,Gravity,FtoDatag,FtoAnglesg,FtoInertiaini8g,FtoInertiaini1g,FtoForcesSumg,FtoForcesg);
+    cusph::FtCalcForces(FtCount,Gravity,FtoMassg,FtoAnglesg,FtoInertiaini8g,FtoInertiaini1g,FtoForcesSumg,FtoForcesg);
     //-Calculate data to update floatings / Calcula datos para actualizar floatings.
     cusph::FtCalcForcesRes(FtCount,Simulate2D,dt,FtoOmegag,FtoVelg,FtoCenterg,FtoForcesg,FtoForcesResg,FtoCenterResg);
     //-Applies motion constraints.
@@ -620,7 +620,7 @@ void JSphGpuSingle::RunFloating(double dt,bool predictor){
     }//<vs_chroono_end> 
 
     //-Apply movement around floating objects / Aplica movimiento sobre floatings.
-    cusph::FtUpdate(PeriActive!=0,predictor,FtCount,dt,FtoDatag,FtoForcesResg,FtoCenterResg,FtRidpg,FtoCenterg,FtoAnglesg,FtoVelg,FtoOmegag,Posxyg,Poszg,Dcellg,Velrhopg,Codeg);
+    cusph::FtUpdate(PeriActive!=0,predictor,FtCount,dt,FtoDatpg,FtoForcesResg,FtoCenterResg,FtRidpg,FtoCenterg,FtoAnglesg,FtoVelg,FtoOmegag,Posxyg,Poszg,Dcellg,Velrhopg,Codeg);
     if(!predictor)FtObjsOutdated=true;
 
     TmgStop(Timers,TMG_SuFloating);

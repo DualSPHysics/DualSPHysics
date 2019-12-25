@@ -23,7 +23,7 @@
 //:# - Funciones: PointInMinMax(), PlanePoint() y PlanesDomainCheck(). (01-12-2019)
 //:#############################################################################
 
-/// \file FunctionsGeo3d_ker.cu \brief Implements geometry functions for 3D on CUDA.
+/// \file FunctionsGeo3d_iker.cu \brief Implements geometry functions for 3D on CUDA.
 
 #include "TypesDef.h"
 #include <cuda_runtime_api.h>

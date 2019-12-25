@@ -27,8 +27,6 @@
 #ifndef _JShifting_
 #define _JShifting_
 
-#include <string>
-#include <vector>
 #include "JObject.h"
 #include "DualSphDef.h"
 #include "JMatrix4.h"
@@ -36,9 +34,12 @@
   #include <cuda_runtime_api.h>
 #endif
 
+#include <string>
+#include <vector>
+
+class JLog2;
 class JXml;
 class TiXmlElement;
-class JLog2;
 
 //##############################################################################
 //# XML format in _FmtXML_Shifting.xml.

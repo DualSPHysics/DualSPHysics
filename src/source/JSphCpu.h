@@ -197,8 +197,6 @@ protected:
   void InitFloating();
   void InitRunCpu();
 
-  void AddAccInput();
-
   float CalcVelMaxSeq(unsigned np,const tfloat4* velrhop)const;
   float CalcVelMaxOmp(unsigned np,const tfloat4* velrhop)const;
 

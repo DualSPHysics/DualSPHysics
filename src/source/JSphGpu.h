@@ -161,7 +161,8 @@ protected:
   unsigned *FtRidpg;      ///<Identifier to access to the particles of the floating object [CaseNfloat].
   float *FtoMasspg;       ///<Mass of the particle for each floating body [FtCount] in GPU (used in interaction forces).
 
-  float4 *FtoDatag;        ///<Constant data of floatings {pini_u,np_u,radius_f,mass_f} [FtCount] //__device__ int __float_as_int(float x) //__device__ float __int_as_float(int x).
+  float4 *FtoDatpg;        ///<Constant data of floatings {pini_u,np_u,radius_f,massp_f} [FtCount] //__device__ int __float_as_int(float x) //__device__ float __int_as_float(int x).
+  float  *FtoMassg;        ///<Constant data of floatings (mass_f) [FtCount] 
   byte   *FtoConstraintsg; ///<Constant value to define motion constraints.
   float3 *FtoForcesSumg;   ///<Stores forces summation for the floating bodies {sumface_f3,sumfomegaace_f3}[FtCount]. | Almacena sumatorio de fuerzas de floatings {sumface_f3,sumfomegaace_f3} [FtCount]. 
   float3 *FtoForcesg;      ///<Stores forces for the floating bodies {face_f3,fomegaace_f3} equivalent to JSphCpu::FtoForces [FtCount]. | Almacena fuerzas de floatings {face_f3,fomegaace_f3} equivalente a JSphCpu::FtoForces [FtCount]. 
@@ -255,8 +256,6 @@ protected:
   void ConfigCellDiv(JCellDivGpu* celldiv){ CellDiv=celldiv; }
   void InitFloating();
   void InitRunGpu();
-
-  void AddAccInput();
 
   void PreInteractionVars_Forces(unsigned np,unsigned npb);
   void PreInteraction_Forces();

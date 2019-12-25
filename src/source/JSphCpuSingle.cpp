@@ -688,19 +688,20 @@ void JSphCpuSingle::FtCalcForcesSum(unsigned cf,tfloat3 &face,tfloat3 &fomegaace
   const unsigned fpfin=fpini+fobj.count;
   const float fradius=fobj.radius;
   const tdouble3 fcenter=fobj.center;
+  const float fmassp=fobj.massp;
+
   //-Computes traslational and rotational velocities.
   face=TFloat3(0);
   fomegaace=TFloat3(0);
   //-Calculate summation: face, fomegaace. | Calcula sumatorios: face, fomegaace.
   for(unsigned fp=fpini;fp<fpfin;fp++){
     int p=FtRidp[fp];
-    //-Ace is initialised with the value of the gravity for all particles.
-    float acex=Acec[p].x-Gravity.x,acey=Acec[p].y-Gravity.y,acez=Acec[p].z-Gravity.z;
-    face.x+=acex; face.y+=acey; face.z+=acez;
-    tfloat3 dist=(PeriActive? FtPeriodicDist(Posc[p],fcenter,fradius): ToTFloat3(Posc[p]-fcenter)); 
-    fomegaace.x+= acez*dist.y - acey*dist.z;
-    fomegaace.y+= acex*dist.z - acez*dist.x;
-    fomegaace.z+= acey*dist.x - acex*dist.y;
+    const tfloat3 force=Acec[p]*fmassp;
+    face=face+force;
+    const tfloat3 dist=(PeriActive? FtPeriodicDist(Posc[p],fcenter,fradius): ToTFloat3(Posc[p]-fcenter)); 
+    fomegaace.x+= force.z*dist.y - force.y*dist.z;
+    fomegaace.y+= force.x*dist.z - force.z*dist.x;
+    fomegaace.z+= force.y*dist.x - force.x*dist.y;
   }
 }
 
@@ -738,10 +739,10 @@ void JSphCpuSingle::FtCalcForces(StFtoForces *ftoforces)const{
       omegaace.z=(fomegaace.x*invinert.a31+fomegaace.y*invinert.a32+fomegaace.z*invinert.a33);
       fomegaace=omegaace;
     }
-    //-Add gravity and divide by mass. | Añade gravedad y divide por la masa.
-    face.x=(face.x+fmass*Gravity.x)/fmass;
-    face.y=(face.y+fmass*Gravity.y)/fmass;
-    face.z=(face.z+fmass*Gravity.z)/fmass;
+    //-Add gravity force and divide by mass. | Suma fuerza de gravedad y divide por la masa.
+    face.x=(face.x + fmass*Gravity.x) / fmass;
+    face.y=(face.y + fmass*Gravity.y) / fmass;
+    face.z=(face.z + fmass*Gravity.z) / fmass;
     //-Keep result in ftoforces[]. | Guarda resultados en ftoforces[].
     ftoforces[cf].face=ftoforces[cf].face+face;
     ftoforces[cf].fomegaace=ftoforces[cf].fomegaace+fomegaace;

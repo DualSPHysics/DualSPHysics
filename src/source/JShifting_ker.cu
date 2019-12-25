@@ -28,8 +28,8 @@
 //:#include "JDgKerPrint_ker.h"
 
 namespace cushift{
-#include "FunctionsBasic_ker.cu"
-#include "FunctionsGeo3d_ker.cu"
+#include "FunctionsBasic_iker.cu"
+#include "FunctionsGeo3d_iker.cu"
 
 //##############################################################################
 //# Kernels for JShifting.
@@ -63,13 +63,13 @@ void InitGpuPosMax(bool tfirst,bool tdbl,unsigned n,unsigned pini
   ,const double2* posxy,const double* posz,float4* shiftposfs,cudaStream_t stm)
 {
   if(n){
-    const dim3 sgrid=GetSimpleGridSize(n,SHIFTBSIZE);
+    const dim3 sgrid=GetSimpleGridSize(n,SPHBSIZE);
     if(tfirst){ const bool first=true;
-      if(tdbl)KerInitGpuPosMax<first,true > <<<sgrid,SHIFTBSIZE,0,stm>>> (n,pini,Double3(pmin1),Double3(pmax1),Double3(pmin2),Double3(pmax2),posxy,posz,shiftposfs);
-      else    KerInitGpuPosMax<first,false> <<<sgrid,SHIFTBSIZE,0,stm>>> (n,pini,Double3(pmin1),Double3(pmax1),Double3(pmin2),Double3(pmax2),posxy,posz,shiftposfs);
+      if(tdbl)KerInitGpuPosMax<first,true > <<<sgrid,SPHBSIZE,0,stm>>> (n,pini,Double3(pmin1),Double3(pmax1),Double3(pmin2),Double3(pmax2),posxy,posz,shiftposfs);
+      else    KerInitGpuPosMax<first,false> <<<sgrid,SPHBSIZE,0,stm>>> (n,pini,Double3(pmin1),Double3(pmax1),Double3(pmin2),Double3(pmax2),posxy,posz,shiftposfs);
     }else{      const bool first=false;
-      if(tdbl)KerInitGpuPosMax<first,true > <<<sgrid,SHIFTBSIZE,0,stm>>> (n,pini,Double3(pmin1),Double3(pmax1),Double3(pmin2),Double3(pmax2),posxy,posz,shiftposfs);
-      else    KerInitGpuPosMax<first,false> <<<sgrid,SHIFTBSIZE,0,stm>>> (n,pini,Double3(pmin1),Double3(pmax1),Double3(pmin2),Double3(pmax2),posxy,posz,shiftposfs);
+      if(tdbl)KerInitGpuPosMax<first,true > <<<sgrid,SPHBSIZE,0,stm>>> (n,pini,Double3(pmin1),Double3(pmax1),Double3(pmin2),Double3(pmax2),posxy,posz,shiftposfs);
+      else    KerInitGpuPosMax<first,false> <<<sgrid,SPHBSIZE,0,stm>>> (n,pini,Double3(pmin1),Double3(pmax1),Double3(pmin2),Double3(pmax2),posxy,posz,shiftposfs);
     }
   }
 }
@@ -105,13 +105,13 @@ void InitGpuPlanes(bool tfirst,bool tdbl,unsigned n,unsigned pini
   ,const double2* posxy,const double* posz,float4* shiftposfs,cudaStream_t stm)
 {
   if(n){
-    const dim3 sgrid=GetSimpleGridSize(n,SHIFTBSIZE);
+    const dim3 sgrid=GetSimpleGridSize(n,SPHBSIZE);
     if(tfirst){ const bool first=true;
-      if(tdbl)KerInitGpuPlanes<first,true > <<<sgrid,SHIFTBSIZE,0,stm>>> (n,pini,Double4(plax1),Double4(play1),Double4(plaz1),Double3(pladis1),Double4(plax2),Double4(play2),Double4(plaz2),Double3(pladis2),posxy,posz,shiftposfs);
-      else    KerInitGpuPlanes<first,false> <<<sgrid,SHIFTBSIZE,0,stm>>> (n,pini,Double4(plax1),Double4(play1),Double4(plaz1),Double3(pladis1),Double4(plax2),Double4(play2),Double4(plaz2),Double3(pladis2),posxy,posz,shiftposfs);
+      if(tdbl)KerInitGpuPlanes<first,true > <<<sgrid,SPHBSIZE,0,stm>>> (n,pini,Double4(plax1),Double4(play1),Double4(plaz1),Double3(pladis1),Double4(plax2),Double4(play2),Double4(plaz2),Double3(pladis2),posxy,posz,shiftposfs);
+      else    KerInitGpuPlanes<first,false> <<<sgrid,SPHBSIZE,0,stm>>> (n,pini,Double4(plax1),Double4(play1),Double4(plaz1),Double3(pladis1),Double4(plax2),Double4(play2),Double4(plaz2),Double3(pladis2),posxy,posz,shiftposfs);
     }else{      const bool first=false;
-      if(tdbl)KerInitGpuPlanes<first,true > <<<sgrid,SHIFTBSIZE,0,stm>>> (n,pini,Double4(plax1),Double4(play1),Double4(plaz1),Double3(pladis1),Double4(plax2),Double4(play2),Double4(plaz2),Double3(pladis2),posxy,posz,shiftposfs);
-      else    KerInitGpuPlanes<first,false> <<<sgrid,SHIFTBSIZE,0,stm>>> (n,pini,Double4(plax1),Double4(play1),Double4(plaz1),Double3(pladis1),Double4(plax2),Double4(play2),Double4(plaz2),Double3(pladis2),posxy,posz,shiftposfs);
+      if(tdbl)KerInitGpuPlanes<first,true > <<<sgrid,SPHBSIZE,0,stm>>> (n,pini,Double4(plax1),Double4(play1),Double4(plaz1),Double3(pladis1),Double4(plax2),Double4(play2),Double4(plaz2),Double3(pladis2),posxy,posz,shiftposfs);
+      else    KerInitGpuPlanes<first,false> <<<sgrid,SPHBSIZE,0,stm>>> (n,pini,Double4(plax1),Double4(play1),Double4(plaz1),Double3(pladis1),Double4(plax2),Double4(play2),Double4(plaz2),Double3(pladis2),posxy,posz,shiftposfs);
     }
   }
 }
@@ -159,8 +159,8 @@ void RunShifting(unsigned n,unsigned pini,double dt
   ,const float4 *velrhop,float4 *shiftposfs,cudaStream_t stm)
 {
   if(n){
-    const dim3 sgrid=GetSimpleGridSize(n,SHIFTBSIZE);
-    KerRunShifting <<<sgrid,SHIFTBSIZE,0,stm>>> (n,pini,dt,coefumagn,shifttfs,coeftfs,maxdist,velrhop,shiftposfs);
+    const dim3 sgrid=GetSimpleGridSize(n,SPHBSIZE);
+    KerRunShifting <<<sgrid,SPHBSIZE,0,stm>>> (n,pini,dt,coefumagn,shifttfs,coeftfs,maxdist,velrhop,shiftposfs);
   }
 }
 
