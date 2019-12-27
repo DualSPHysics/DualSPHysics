@@ -27,7 +27,6 @@
 
 #include "JOutputCsv.h"
 #include "JDataArrays.h"
-#include "JAppInfo.h"
 #include "Functions.h"
 #include <iostream>
 #include <sstream>
@@ -43,11 +42,11 @@ using namespace std;
 //==============================================================================
 /// Constructor.
 //==============================================================================
-JOutputCsv::JOutputCsv(){
+JOutputCsv::JOutputCsv(bool csvsepcoma,bool createpath)
+  :CsvSepComa(csvsepcoma),CreatPath(createpath)
+{
   ClassName="JOutputCsv";
   Reset();
-  CreateDirs=AppInfo.GetCreateDirs();
-  CsvSepComa=AppInfo.GetCsvSepComa();
 }
 
 //==============================================================================
@@ -62,8 +61,6 @@ JOutputCsv::~JOutputCsv(){
 /// Initialization of variables.
 //==============================================================================
 void JOutputCsv::Reset(){
-  CreateDirs=true;
-  CsvSepComa=false;
   FileName="";
 }
 
@@ -76,7 +73,7 @@ void JOutputCsv::SaveCsv(std::string fname,const JDataArrays &arrays,std::string
   const unsigned nf=arrays.Count();
   const unsigned nv=arrays.GetDataCount(true);
   if(nv!=arrays.GetDataCount(false))Run_ExceptioonFile("The number of values in arrays is not the same.",fname);
-  if(CreateDirs)fun::MkdirPath(fun::GetDirParent(fname));
+  if(CreatPath)fun::MkdirPath(fun::GetDirParent(fname));
   ofstream pf;
   pf.open(fname.c_str());
   if(pf){

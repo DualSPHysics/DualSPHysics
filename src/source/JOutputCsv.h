@@ -21,6 +21,8 @@
 //:# =========
 //:# - Clase para grabar arrays de datos en distintos formatos. (05-07-2019)
 //:# - Codigo actualizado para trabajar con ultima version de JDataArrays. (10-12-2019)
+//:# - CsvSepComa se define en el constructor y por defecto es false. (27-12-2019)
+//:# - CreatPath se define en el constructor y por defecto es true. (27-12-2019)
 //:#############################################################################
 
 /// \file JOutputCsv.h \brief Declares the class \ref JOutputCsv.
@@ -45,8 +47,8 @@ class JOutputCsv : protected JObject
 {
 public:
   //-Output configuration.
-  bool CreateDirs;   ///<Creates full path for output files (true by default).
-  bool CsvSepComa;   ///<Separator character in CSV files (0=semicolon, 1=coma).
+  bool CreatPath;   ///<Creates full path for output files (true by default).
+  bool CsvSepComa;  ///<Separator character in CSV files (0=semicolon, 1=coma).
 
 protected:
   std::string FileName; ///<Last file generated.
@@ -56,7 +58,7 @@ protected:
     ,tdouble4 &valmin,tdouble4 &valmax,tdouble4 &valmean)const;
 
 public:
-  JOutputCsv();
+  JOutputCsv(bool csvsepcoma=false,bool createpath=true);
   ~JOutputCsv();
   void Reset();
 

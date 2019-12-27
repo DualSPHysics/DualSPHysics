@@ -59,10 +59,10 @@ public:
   //==============================================================================
   // Different functions to create special VTK files.
   //==============================================================================
-  static void SaveVtkData(std::string fname,const JDataArrays &arrays,std::string posfield){}
-  static void SaveVtkCells(const std::string &fname,const tfloat3 &posmin,const tuint3 &cells,float scell){}
-  static void SaveVtkBoxes(const std::string &fname,unsigned nbox,const tfloat3 *vbox,float sizemin=0){}
-  static void SaveVtkBoxes(const std::string &fname,unsigned nbox,const tdouble3 *vbox,float sizemin=0){}
+  static void SaveVtkData(std::string fname,const JDataArrays &arrays,std::string posfield,bool createpath=true){}
+  static void SaveVtkCells(const std::string &fname,const tfloat3 &posmin,const tuint3 &cells,float scell,bool createpath=true){}
+  static void SaveVtkBoxes(const std::string &fname,unsigned nbox,const tfloat3 *vbox,float sizemin=0,bool createpath=true){}
+  static void SaveVtkBoxes(const std::string &fname,unsigned nbox,const tdouble3 *vbox,float sizemin=0,bool createpath=true){}
 
   //==============================================================================
   // Functions to create VTK files with shapes.

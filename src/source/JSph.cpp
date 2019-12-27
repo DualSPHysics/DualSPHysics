@@ -1979,8 +1979,13 @@ void JSph::SavePartData(unsigned npok,unsigned nout,const JDataArrays& arrays
     arrays2.AddArray("Type",npok,type);
     arrays2.MoveArray(arrays2.Count()-1,4);
     //-Defines fields to be stored.
-    if(SvData&SDAT_Vtk){ JVtkLib::SaveVtkData(DirDataOut+fun::FileNameSec("PartVtk.vtk",Part),arrays2,"Pos"); }
-    if(SvData&SDAT_Csv){ JOutputCsv ocsv;  ocsv.SaveCsv(DirDataOut+fun::FileNameSec("PartCsv.csv",Part),arrays2); }
+    if(SvData&SDAT_Vtk){
+      JVtkLib::SaveVtkData(DirDataOut+fun::FileNameSec("PartVtk.vtk",Part),arrays2,"Pos");
+    }
+    if(SvData&SDAT_Csv){ 
+      JOutputCsv ocsv(AppInfo.GetCsvSepComa());
+      ocsv.SaveCsv(DirDataOut+fun::FileNameSec("PartCsv.csv",Part),arrays2);
+    }
     //-Deallocate of memory.
     delete[] posf3;
     delete[] type; 

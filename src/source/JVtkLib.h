@@ -22,6 +22,7 @@
 //:# - Clase para generacion de ficheros VTK de particulas o formas. (10-12-2019)
 //:# - Permite compilar sin libreria de VTK. (13-12-2019)
 //:# - Nuevas funciones AddShapePolyLine(). (23-12-2019)
+//:# - Parametro creatpath que por defecto es true. (27-12-2019)
 //:#############################################################################
 
 /// \file JVtkLib.h \brief Declares the class \ref JVtkLib.
@@ -86,15 +87,15 @@ public:
   // Different functions to create special VTK files.
   //==============================================================================
   /// Stores particle data in VTK file.
-  static void SaveVtkData(std::string fname,const JDataArrays &arrays,std::string posfield);
+  static void SaveVtkData(std::string fname,const JDataArrays &arrays,std::string posfield,bool createpath=true);
 
   /// Generates a VTK file with map cells.
-  static void SaveVtkCells(const std::string &fname,const tfloat3 &posmin,const tuint3 &cells,float scell);
+  static void SaveVtkCells(const std::string &fname,const tfloat3 &posmin,const tuint3 &cells,float scell,bool createpath=true);
 
   /// Generates a VTK file with boxes.
-  static void SaveVtkBoxes(const std::string &fname,unsigned nbox,const tfloat3 *vbox,float sizemin=0);
+  static void SaveVtkBoxes(const std::string &fname,unsigned nbox,const tfloat3 *vbox,float sizemin=0,bool createpath=true);
   /// Generates a VTK file with boxes.
-  static void SaveVtkBoxes(const std::string &fname,unsigned nbox,const tdouble3 *vbox,float sizemin=0);
+  static void SaveVtkBoxes(const std::string &fname,unsigned nbox,const tdouble3 *vbox,float sizemin=0,bool createpath=true);
 
   //==============================================================================
   // Functions to create VTK files with shapes.
