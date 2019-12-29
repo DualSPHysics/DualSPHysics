@@ -70,7 +70,6 @@ public:
   int PosDouble;  ///<Precision in particle interaction. 0:Simple, 1:Double, 2:Uses and save double (default=0).
 
   int OmpThreads;
-  TpBlockSizeMode BlockSizeMode;
 
   TpCellMode  CellMode;
   TpStep TStep;

@@ -32,7 +32,6 @@
 #include <cuda_runtime_api.h>
 
 class JLog2;
-class JBlockSizeAuto;
 
 #define SPHBSIZE 256
 
@@ -141,7 +140,6 @@ typedef struct StrInterParmsg{
   //-Other values and objects.
   cudaStream_t stm;
   StKerInfo *kerinfo;
-  JBlockSizeAuto *bsauto;
 
   ///Structure constructor.
   StrInterParmsg(
@@ -163,7 +161,7 @@ typedef struct StrInterParmsg{
     ,tsymatrix3f *spsgradvel_
     ,float4 *shiftposfs_
     ,cudaStream_t stm_
-    ,StKerInfo *kerinfo_,JBlockSizeAuto *bsauto_)
+    ,StKerInfo *kerinfo_)
   {
     //-Configuration options.
     simulate2d=simulate2d_;
@@ -194,7 +192,7 @@ typedef struct StrInterParmsg{
     shiftposfs=shiftposfs_;
     //-Other values and objects.
     stm=stm_;
-    kerinfo=kerinfo_; bsauto=bsauto_;
+    kerinfo=kerinfo_;
   }
 
 }StInterParmsg;

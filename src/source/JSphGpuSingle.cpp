@@ -34,7 +34,6 @@
 #include "JTimeOut.h"
 #include "JTimeControl.h"
 #include "JSphGpu_ker.h"
-#include "JBlockSizeAuto.h"
 #include "JGaugeSystem.h"
 #include "JSphInOut.h"  //<vs_innlet>
 #include "JLinearValue.h"
@@ -122,7 +121,6 @@ void JSphGpuSingle::UpdateMaxValues(){
 void JSphGpuSingle::LoadConfig(JCfgRun *cfg){
   //-Loads general configuration.
   JSph::LoadConfig(cfg);
-  BlockSizeMode=cfg->BlockSizeMode;
   //-Checks compatibility of selected options.
   Log->Print("**Special case configuration is loaded");
 }
@@ -411,31 +409,6 @@ void JSphGpuSingle::Interaction_Forces(TpInterStep interstep){
   unsigned bsfluid=BlockSizes.forcesfluid;
   unsigned bsbound=BlockSizes.forcesbound;
 
-  if(BsAuto && !(Nstep%BsAuto->GetStepsInterval())){ //-Every certain number of steps. | Cada cierto numero de pasos.
-    const StInterParmsg parms=StrInterParmsg(Simulate2D
-      ,Symmetry //<vs_syymmetry>
-      ,Psingle,TKernel,FtMode
-      ,lamsps,TDensity,ShiftingMode
-      ,CellMode
-      ,Visco*ViscoBoundFactor,Visco
-      ,bsbound,bsfluid,Np,Npb,NpbOk
-      ,0,DivAxis
-      ,CellDivSingle->GetNcells(),CellDivSingle->GetCellDomainMin()
-      ,CellDivSingle->GetBeginCell(),Dcellg
-      ,Posxyg,Poszg,PsPospressg,Velrhopg,Idpg,Codeg
-      ,FtoMasspg,SpsTaug
-      ,ViscDtg,Arg,Aceg,Deltag
-      ,SpsGradvelg
-      ,ShiftPosfsg
-      ,NULL
-      ,NULL,BsAuto);
-    cusph::Interaction_Forces(parms);
-    PreInteractionVars_Forces(Np,Npb);
-    BsAuto->ProcessTimes(TimeStep,Nstep);
-    bsfluid=BlockSizes.forcesfluid=BsAuto->GetKernel(0)->GetOptimumBs();
-    bsbound=BlockSizes.forcesbound=BsAuto->GetKernel(1)->GetOptimumBs();
-  }
-
   //-Interaction Fluid-Fluid/Bound & Bound-Fluid.
   const StInterParmsg parms=StrInterParmsg(Simulate2D
     ,Symmetry //<vs_syymmetry>
@@ -452,7 +425,6 @@ void JSphGpuSingle::Interaction_Forces(TpInterStep interstep){
     ,ViscDtg,Arg,Aceg,Deltag
     ,SpsGradvelg
     ,ShiftPosfsg
-    ,NULL
     ,NULL,NULL);
   cusph::Interaction_Forces(parms);
 
@@ -774,7 +746,6 @@ void JSphGpuSingle::SaveData(){
 /// Muestra y graba resumen final de ejecucion.
 //==============================================================================
 void JSphGpuSingle::FinishRun(bool stop){
-  if(BsAuto){ delete BsAuto; BsAuto=NULL; }
   float tsim=TimerSim.GetElapsedTimeF()/1000.f,ttot=TimerTot.GetElapsedTimeF()/1000.f;
   JSph::ShowResume(stop,tsim,ttot,true,"");
   Log->Print(" ");

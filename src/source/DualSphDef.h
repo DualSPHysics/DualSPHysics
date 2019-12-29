@@ -27,6 +27,8 @@
 #include "OmpDefs.h"
 #include <algorithm>
 
+//#define DISABLE_TIMERS     ///<Compiles without timers. | Compilado sin timers.
+//#define DISABLE_BSMODES    ///<compiles without advanced BlockSize modes.
 
 //-Removes dependencies from precompiled libraries.
 //#define DISABLE_VTKLIB     ///<It allows compile without VTK library.
@@ -77,10 +79,6 @@
 
 #define DELTA_HEAVYFLOATING  ///<Applies DDT to fluid particles interacting with floatings with higher density (massp>MassFluid*1.2). | Aplica DDT a fluido que interaccionan con floatings pesados (massp>MassFluid*1.2). NO_COMENTARIO
 
-//#define DISABLE_TIMERS     ///<Compiles without timers. | Compilado sin timers.
-
-//#define DISABLE_BSMODES    ///<compiles without advanced BlockSize modes.
-
 #define CELLDIV_OVERMEMORYNP 0.05f  ///<Memory that is reserved for the particle management in JCellDivGpu. | Memoria que se reserva de mas para la gestion de particulas en JCellDivGpu.
 #define CELLDIV_OVERMEMORYCELLS 1   ///<Number of cells in each dimension is increased to allocate memory for JCellDivGpu cells. | Numero celdas que se incrementa en cada dimension al reservar memoria para celdas en JCellDivGpu.
 #define PERIODIC_OVERMEMORYNP 0.05f ///<Memory reserved for the creation of periodic particles in JSphGpuSingle::RunPeriodic(). | Mermoria que se reserva de mas para la creacion de particulas periodicas en JSphGpuSingle::RunPeriodic().
@@ -90,6 +88,7 @@
 
 #define ALMOSTZERO 1e-18f
 
+#define BSIZE_FORCES 128  ///<Blocksize for particle interaction (default=128).
 
 //#define CODE_SIZE4  //-Enables or disables the use of unsigned type (32 bits) for code (allows valid 65530 MKs). | Activa o desactiva el uso de unsigned (32 bits) para code (permite 65530 MKs validos).
 #ifdef CODE_SIZE4
@@ -403,24 +402,6 @@ inline const char* GetNameDivision(TpMgDivMode axis){
   return("???");
 }
 
-///Modes of BlockSize selection.
-#define BSIZE_FIXED 128
-typedef enum{ 
-   BSIZEMODE_Fixed=0       ///<Uses fixed value (BSIZE_FIXED).
-  ,BSIZEMODE_Occupancy=1   ///<Uses Occupancy calculator of CUDA.
-  ,BSIZEMODE_Empirical=2   ///<Calculated empirically.
-}TpBlockSizeMode; 
-
-///Devuelve el nombre de seleccion de BlockSize en texto.
-///Returns the name of BlockSize selection in text format.
-inline const char* GetNameBlockSizeMode(TpBlockSizeMode bsizemode){
-  switch(bsizemode){
-    case BSIZEMODE_Fixed:      return("Fixed");
-    case BSIZEMODE_Occupancy:  return("Occupancy Calculator");
-    case BSIZEMODE_Empirical:  return("Empirical calculation");
-  }
-  return("???");
-}
 
 ///Codificacion de celdas para posicion.
 ///Codification of cells for position.

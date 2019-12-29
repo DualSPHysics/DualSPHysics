@@ -514,10 +514,6 @@ rem %CudaNvcc% -ccbin "$(VCInstallDir)bin" %gpuhw% -use_fast_math -c %ptxinfo% -
     <ClInclude Include="..\source\JAppInfo.h" />
     <ClInclude Include="..\source\JArraysCpu.h" />
     <ClInclude Include="..\source\JBinaryData.h" />
-    <ClInclude Include="..\source\JBlockSizeAuto.h">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">true</ExcludedFromBuild>
-    </ClInclude>
     <ClInclude Include="..\source\JCellDivCpu.h" />
     <ClInclude Include="..\source\JCellDivCpuSingle.h" />
     <ClInclude Include="..\source\JCellDivGpu.h">
@@ -703,10 +699,6 @@ rem %CudaNvcc% -ccbin "$(VCInstallDir)bin" %gpuhw% -use_fast_math -c %ptxinfo% -
     <ClCompile Include="..\source\JAppInfo.cpp" />
     <ClCompile Include="..\source\JArraysCpu.cpp" />
     <ClCompile Include="..\source\JBinaryData.cpp" />
-    <ClCompile Include="..\source\JBlockSizeAuto.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">true</ExcludedFromBuild>
-    </ClCompile>
     <ClCompile Include="..\source\JCellDivCpu.cpp" />
     <ClCompile Include="..\source\JCellDivCpuSingle.cpp" />
     <ClCompile Include="..\source\JCellDivGpu.cpp">

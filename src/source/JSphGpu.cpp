@@ -22,7 +22,6 @@
 #include "JException.h"
 #include "JSphGpu_ker.h"
 #include "JSphGpuSimple_ker.h"
-#include "JBlockSizeAuto.h"
 #include "JCellDivGpu.h"
 #include "JPartFloatBi4.h"
 #include "Functions.h"
@@ -60,7 +59,6 @@ JSphGpu::JSphGpu(bool withmpi):JSph(false,false,withmpi),DivAxis(MGDIV_None){
   ArraysGpu=new JArraysGpu;
   InitVars();
   TmgCreation(Timers,false);
-  BsAuto=NULL;
 }
 
 //==============================================================================
@@ -74,7 +72,6 @@ JSphGpu::~JSphGpu(){
   delete ArraysGpu;
   TmgDestruction(Timers);
   cudaDeviceReset();
-  delete BsAuto; BsAuto=NULL;
 }
 
 //==============================================================================
@@ -128,7 +125,6 @@ void JSphGpu::InitVars(){
   RunMode="";
   memset(&BlockSizes,0,sizeof(StBlockSizes));
   BlockSizesStr="";
-  BlockSizeMode=BSIZEMODE_Fixed;
 
   Np=Npb=NpbOk=0;
   NpbPer=NpfPer=0;
@@ -642,14 +638,14 @@ void JSphGpu::SelecDevice(int gpuid){
 }
 
 //==============================================================================
-/// Configures BlockSizeMode to compute optimum size of CUDA blocks.
+/// Configures BlockSize for main interaction CUDA kernels.
 //==============================================================================
 void JSphGpu::ConfigBlockSizes(bool usezone,bool useperi){
   Log->Print(" ");
   BlockSizesStr="";
   if(CellMode==CELLMODE_2H || CellMode==CELLMODE_H){
     const bool lamsps=(TVisco==VISCO_LaminarSPS);
-    BlockSizes.forcesbound=BlockSizes.forcesfluid=BlockSizes.forcesdem=BSIZE_FIXED;
+    BlockSizes.forcesbound=BlockSizes.forcesfluid=BlockSizes.forcesdem=BSIZE_FORCES;
     //-Collects kernel information.
     StKerInfo kerinfo;
     memset(&kerinfo,0,sizeof(StKerInfo));
@@ -669,40 +665,17 @@ void JSphGpu::ConfigBlockSizes(bool usezone,bool useperi){
         ,NULL,NULL,NULL,NULL
         ,NULL
         ,NULL
-        ,NULL
-        ,&kerinfo,NULL);
+        ,NULL,&kerinfo);
       cusph::Interaction_Forces(parms);
       if(UseDEM)cusph::Interaction_ForcesDem(Psingle,CellMode,BlockSizes.forcesdem,CaseNfloat,TUint3(0),NULL,TUint3(0),NULL,NULL,NULL,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,&kerinfo);
     #endif
     //Log->Printf("====> bound -> rg:%d  bs:%d  bsmax:%d",kerinfo.forcesbound_rg,kerinfo.forcesbound_bs,kerinfo.forcesbound_bsmax);
     //Log->Printf("====> fluid -> rg:%d  bs:%d  bsmax:%d",kerinfo.forcesfluid_rg,kerinfo.forcesfluid_bs,kerinfo.forcesfluid_bsmax);
-    //Log->Printf("====> dem   -> rg:%d  bs:%d  bsmax:%d",kerinfo.forcesdem_rg,kerinfo.forcesdem_bs,kerinfo.forcesdem_bsmax);
-    //-Defines blocsize according BlockSizeMode.
-    if(BlockSizeMode==BSIZEMODE_Occupancy){
-      if(!kerinfo.forcesbound_bs || !kerinfo.forcesfluid_bs){
-        Log->Printf("**BlockSize calculation mode %s is invalid.",GetNameBlockSizeMode(BlockSizeMode));
-        BlockSizeMode=BSIZEMODE_Fixed;
-      }
-      else{
-        if(kerinfo.forcesbound_bs)BlockSizes.forcesbound=kerinfo.forcesbound_bs;
-        if(kerinfo.forcesfluid_bs)BlockSizes.forcesfluid=kerinfo.forcesfluid_bs;
-        if(kerinfo.forcesdem_bs)BlockSizes.forcesdem=kerinfo.forcesdem_bs;
-      }
-    }
-    if(BlockSizeMode==BSIZEMODE_Empirical){
-      BsAuto=new JBlockSizeAuto(Log,500);
-      BsAuto->AddKernel("KerInteractionForcesFluid",64,31,32,BSIZE_FIXED);  //15:512 31:1024
-      BsAuto->AddKernel("KerInteractionForcesBound",64,31,32,BSIZE_FIXED);
-      BsAuto->AddKernel("KerInteractionForcesDem",64,31,32,BSIZE_FIXED);
-      if(kerinfo.forcesdem_bs)BlockSizes.forcesdem=kerinfo.forcesdem_bs;
-    }
-    Log->Printf("BlockSize calculation mode: %s.",GetNameBlockSizeMode(BlockSizeMode));
-    string txrb=(kerinfo.forcesbound_rg? fun::PrintStr("(%d regs)",kerinfo.forcesbound_rg): string("(? regs)"));
-    string txrf=(kerinfo.forcesbound_rg? fun::PrintStr("(%d regs)",kerinfo.forcesfluid_rg): string("(? regs)"));
-    string txrd=(kerinfo.forcesdem_rg  ? fun::PrintStr("(%d regs)",kerinfo.forcesdem_rg  ): string("(? regs)"));
-    string txb=string("BsForcesBound=")+(BlockSizeMode==BSIZEMODE_Empirical? string("Dynamic"): fun::IntStr(BlockSizes.forcesbound))+" "+txrb;
-    string txf=string("BsForcesFluid=")+(BlockSizeMode==BSIZEMODE_Empirical? string("Dynamic"): fun::IntStr(BlockSizes.forcesfluid))+" "+txrf;
-    string txd=string("BsForcesDem="  )+fun::IntStr(BlockSizes.forcesdem)+" "+txrd;
+    //Log->Printf("====> dem   -> rg:%d  bs:%d  bsmax:%d",kerinfo.forcesdem_rg  ,kerinfo.forcesdem_bs  ,kerinfo.forcesdem_bsmax);
+    Log->Printf("BlockSize calculation mode: Fixed.");
+    const string txb=fun::PrintStr("BsForcesBound=%d ",BlockSizes.forcesbound)+(kerinfo.forcesbound_rg? fun::PrintStr("(%d regs)",kerinfo.forcesbound_rg): string("(? regs)"));
+    const string txf=fun::PrintStr("BsForcesFluid=%d ",BlockSizes.forcesfluid)+(kerinfo.forcesfluid_rg? fun::PrintStr("(%d regs)",kerinfo.forcesfluid_rg): string("(? regs)"));
+    const string txd=fun::PrintStr("BsForcesDem=%d "  ,BlockSizes.forcesdem)  +(kerinfo.forcesdem_rg  ? fun::PrintStr("(%d regs)",kerinfo.forcesdem_rg  ): string("(? regs)"));
     Log->Print(string("  ")+txb);
     Log->Print(string("  ")+txf);
     if(UseDEM)Log->Print(string("  ")+txd);

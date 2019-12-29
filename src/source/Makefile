@@ -1,4 +1,4 @@
-#DualSPHysics GPU/CPU v4.4.037 22-12-2019
+#DualSPHysics GPU/CPU v4.4.044 29-12-2019
 
 #=============== Compilation Options (YES/NO) ===============
 USE_GCC5=NO
@@ -103,7 +103,7 @@ OBCOMMONDSPH=JDsphConfig.o JPartDataBi4.o JPartDataHead.o JPartFloatBi4.o JPartO
 OBSPH=JArraysCpu.o JCellDivCpu.o JCfgRun.o JDamping.o JGaugeItem.o JGaugeSystem.o JPartsOut.o JSaveDt.o JShifting.o JSph.o JSphAccInput.o JSphCpu.o JSphInitialize.o JSphMk.o JSphPartsInit.o JSphDtFixed.o JSphVisco.o JTimeOut.o JWaveSpectrumGpu.o main.o
 OBSPHSINGLE=JCellDivCpuSingle.o JPartsLoad4.o JSphCpuSingle.o
 OBCOMMONGPU=FunctionsCuda.o JObjectGpu.o 
-OBSPHGPU=JArraysGpu.o JBlockSizeAuto.o JDebugSphGpu.o JCellDivGpu.o JSphGpu.o 
+OBSPHGPU=JArraysGpu.o JDebugSphGpu.o JCellDivGpu.o JSphGpu.o 
 OBSPHSINGLEGPU=JCellDivGpuSingle.o JSphGpuSingle.o
 OBCUDA=JCellDivGpu_ker.o JCellDivGpuSingle_ker.o JGauge_ker.o JReduSum_ker.o JShifting_ker.o JSphAccInput_ker.o JSphGpu_ker.o JSphGpuSimple_ker.o JWaveOrder2_ker.o
 

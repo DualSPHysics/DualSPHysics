@@ -29,7 +29,6 @@
 class JPartsOut;
 class JArraysGpu;
 class JCellDivGpu;
-class JBlockSizeAuto;
 
 //-Defines for CUDA exceptions.
 #ifndef Run_ExceptioonCuda
@@ -82,8 +81,6 @@ public:
 protected:
   StBlockSizes BlockSizes;        ///<Stores configuration of BlockSizes. | Almacena configuracion de BlockSizes.
   std::string BlockSizesStr;      ///<Stores configuration of BlockSizes in text form. | Almacena configuracion de BlockSizes en texto.
-  TpBlockSizeMode BlockSizeMode;  ///<Modes for BlockSize selection.
-  JBlockSizeAuto *BsAuto;         ///<Object to calculate the optimum BlockSize for particle interactions.
 
   //-Variables with information for the GPU hardware.
   //-Variables con informacion del hardware GPU.

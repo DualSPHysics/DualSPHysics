@@ -19,7 +19,6 @@
 /// \file JSphGpu_ker.cu \brief Implements functions and CUDA kernels for the Particle Interaction and System Update.
 
 #include "JSphGpu_ker.h"
-#include "JBlockSizeAuto.h"
 #include "Functions.h"
 #include "FunctionsCuda.h"
 #include "JLog2.h"
@@ -1159,7 +1158,7 @@ template<bool psingle,TpKernel tker,TpFtMode ftmode,bool lamsps,TpDensity tdensi
 template<bool psingle,TpKernel tker,TpFtMode ftmode,bool lamsps,TpDensity tdensity,bool shift,bool symm> 
   void Interaction_ForcesT_KerInfo(StKerInfo *kerinfo)
 {
-#if CUDART_VERSION >= 6050
+ #if CUDART_VERSION >= 6050
   {
     typedef void (*fun_ptr)(unsigned,unsigned,int,int4,unsigned,float,float,const int2*,int3,const unsigned*,const float*,const float2*,float2*,const double2*,const double*,const float4*,const float4*,const typecode*,const unsigned*,float*,float*,float3*,float*,TpShifting,float4*);
     fun_ptr ptr=&KerInteractionForcesFluid<psingle,tker,ftmode,lamsps,tdensity,shift,symm>;
@@ -1185,67 +1184,7 @@ template<bool psingle,TpKernel tker,TpFtMode ftmode,bool lamsps,TpDensity tdensi
     //printf(">> KerInteractionForcesBound  blocksize:%u (%u)\n",qblocksize,0);
   }
   fcuda::Check_CudaErroorFun("Error collecting kernel information.");
-#endif
-}
-
-//==============================================================================
-/// Interaction for the force computation.
-/// Interaccion para el calculo de fuerzas.
-//==============================================================================
-template<bool psingle,TpKernel tker,TpFtMode ftmode,bool lamsps,TpDensity tdensity,bool shift,bool symm> 
-  void Interaction_ForcesT_BsAuto(const StInterParmsg &t)
-{
-  if(1){
-    //-Interaction Fluid-Fluid & Fluid-Bound.
-    if(t.fluidnum){
-      JBlockSizeAutoKer* ker=t.bsauto->GetKernel(0);
-      for(int ct=0;ct<ker->BsNum;ct++)if(ker->IsActive(ct)){
-        cudaEvent_t start,stop;
-        cudaEventCreate(&start);
-        cudaEventCreate(&stop);
-        cudaEventRecord(start,0);
-        unsigned bsize=ker->GetBs(ct);
-        dim3 sgridf=GetGridSize(t.fluidnum,bsize);
-        KerInteractionForcesFluid<psingle,tker,ftmode,lamsps,tdensity,shift,symm> <<<sgridf,bsize>>> 
-          (t.fluidnum,t.fluidini,t.hdiv,t.nc,t.cellfluid,t.viscob,t.viscof,t.begincell,Int3(t.cellmin),t.dcell
-          ,t.ftomassp,(const float2*)t.tau,(float2*)t.gradvel,t.posxy,t.posz,t.pospress
-          ,t.velrhop,t.code,t.idp,t.viscdt,t.ar,t.ace,t.delta,t.shiftmode,t.shiftposfs);
-        cudaEventRecord(stop,0);
-        cudaEventSynchronize(stop);
-        float time;
-        cudaEventElapsedTime(&time,start,stop);
-        cudaEventDestroy(start);
-        cudaEventDestroy(stop);
-        cudaError_t err=cudaGetLastError();
-        if(err!=cudaSuccess)time=FLT_MAX;
-        ker->SetTime(ct,time);
-      }
-    }
-    //-Interaction Boundary-Fluid.
-    if(t.boundnum){
-      JBlockSizeAutoKer* ker=t.bsauto->GetKernel(1);
-      for(int ct=0;ct<ker->BsNum;ct++)if(ker->IsActive(ct)){
-        cudaEvent_t start,stop;
-        cudaEventCreate(&start);
-        cudaEventCreate(&stop);
-        cudaEventRecord(start,0);
-        unsigned bsize=ker->GetBs(ct);
-        dim3 sgridb=GetGridSize(t.boundnum,bsize);
-        KerInteractionForcesBound<psingle,tker,ftmode,symm> <<<sgridb,bsize>>> 
-          (t.boundnum,t.boundini,t.hdiv,t.nc,t.begincell,Int3(t.cellmin),t.dcell,t.ftomassp
-          ,t.posxy,t.posz,t.pospress,t.velrhop,t.code,t.idp,t.viscdt,t.ar);
-        cudaEventRecord(stop,0);
-        cudaEventSynchronize(stop);
-        float time;
-        cudaEventElapsedTime(&time,start,stop);
-        cudaEventDestroy(start);
-        cudaEventDestroy(stop);
-        cudaError_t err=cudaGetLastError();
-        if(err!=cudaSuccess)time=FLT_MAX;
-        ker->SetTime(ct,time);
-      }
-    }
-  }
+ #endif
 }
 #endif
 
@@ -1258,31 +1197,29 @@ template<bool psingle,TpKernel tker,TpFtMode ftmode,bool lamsps,TpDensity tdensi
 {
   //-Collects kernel information.
 #ifndef DISABLE_BSMODES
-  if(t.kerinfo)   Interaction_ForcesT_KerInfo<psingle,tker,ftmode,lamsps,tdensity,shift,false>(t.kerinfo);
-  else if(t.bsauto)Interaction_ForcesT_BsAuto<psingle,tker,ftmode,lamsps,tdensity,shift,false>(t);
-  else{
-#endif
-    //-Interaction Fluid-Fluid & Fluid-Bound.
-    if(t.fluidnum){
-      dim3 sgridf=GetGridSize(t.fluidnum,t.bsfluid);
-      //printf("---->bsfluid:%u   ",bsfluid);
-      if(t.symmetry) //<vs_syymmetry_ini>
-        KerInteractionForcesFluid<psingle,tker,ftmode,lamsps,tdensity,shift,true > <<<sgridf,t.bsfluid,0,t.stm>>> (t.fluidnum,t.fluidini,t.hdiv,t.nc,t.cellfluid,t.viscob,t.viscof,t.begincell,Int3(t.cellmin),t.dcell,t.ftomassp,(const float2*)t.tau,(float2*)t.gradvel,t.posxy,t.posz,t.pospress,t.velrhop,t.code,t.idp,t.viscdt,t.ar,t.ace,t.delta,t.shiftmode,t.shiftposfs);
-      else //<vs_syymmetry_end>
-        KerInteractionForcesFluid<psingle,tker,ftmode,lamsps,tdensity,shift,false> <<<sgridf,t.bsfluid,0,t.stm>>> (t.fluidnum,t.fluidini,t.hdiv,t.nc,t.cellfluid,t.viscob,t.viscof,t.begincell,Int3(t.cellmin),t.dcell,t.ftomassp,(const float2*)t.tau,(float2*)t.gradvel,t.posxy,t.posz,t.pospress,t.velrhop,t.code,t.idp,t.viscdt,t.ar,t.ace,t.delta,t.shiftmode,t.shiftposfs);
-    }
-    //-Interaction Boundary-Fluid.
-    if(t.boundnum){
-      dim3 sgridb=GetGridSize(t.boundnum,t.bsbound);
-      //printf("bsbound:%u\n",bsbound);
-      if(t.symmetry) //<vs_syymmetry_ini>
-        KerInteractionForcesBound<psingle,tker,ftmode,true > <<<sgridb,t.bsbound,0,t.stm>>> (t.boundnum,t.boundini,t.hdiv,t.nc,t.begincell+t.cellfluid,Int3(t.cellmin),t.dcell,t.ftomassp,t.posxy,t.posz,t.pospress,t.velrhop,t.code,t.idp,t.viscdt,t.ar);
-      else //<vs_syymmetry_end>
-        KerInteractionForcesBound<psingle,tker,ftmode,false> <<<sgridb,t.bsbound,0,t.stm>>> (t.boundnum,t.boundini,t.hdiv,t.nc,t.begincell+t.cellfluid,Int3(t.cellmin),t.dcell,t.ftomassp,t.posxy,t.posz,t.pospress,t.velrhop,t.code,t.idp,t.viscdt,t.ar);
-    }
-#ifndef DISABLE_BSMODES
+  if(t.kerinfo){
+    Interaction_ForcesT_KerInfo<psingle,tker,ftmode,lamsps,tdensity,shift,false>(t.kerinfo);
+    return;
   }
 #endif
+  //-Interaction Fluid-Fluid & Fluid-Bound.
+  if(t.fluidnum){
+    dim3 sgridf=GetGridSize(t.fluidnum,t.bsfluid);
+    //printf("---->bsfluid:%u   ",bsfluid);
+    if(t.symmetry) //<vs_syymmetry_ini>
+      KerInteractionForcesFluid<psingle,tker,ftmode,lamsps,tdensity,shift,true > <<<sgridf,t.bsfluid,0,t.stm>>> (t.fluidnum,t.fluidini,t.hdiv,t.nc,t.cellfluid,t.viscob,t.viscof,t.begincell,Int3(t.cellmin),t.dcell,t.ftomassp,(const float2*)t.tau,(float2*)t.gradvel,t.posxy,t.posz,t.pospress,t.velrhop,t.code,t.idp,t.viscdt,t.ar,t.ace,t.delta,t.shiftmode,t.shiftposfs);
+    else //<vs_syymmetry_end>
+      KerInteractionForcesFluid<psingle,tker,ftmode,lamsps,tdensity,shift,false> <<<sgridf,t.bsfluid,0,t.stm>>> (t.fluidnum,t.fluidini,t.hdiv,t.nc,t.cellfluid,t.viscob,t.viscof,t.begincell,Int3(t.cellmin),t.dcell,t.ftomassp,(const float2*)t.tau,(float2*)t.gradvel,t.posxy,t.posz,t.pospress,t.velrhop,t.code,t.idp,t.viscdt,t.ar,t.ace,t.delta,t.shiftmode,t.shiftposfs);
+  }
+  //-Interaction Boundary-Fluid.
+  if(t.boundnum){
+    dim3 sgridb=GetGridSize(t.boundnum,t.bsbound);
+    //printf("bsbound:%u\n",bsbound);
+    if(t.symmetry) //<vs_syymmetry_ini>
+      KerInteractionForcesBound<psingle,tker,ftmode,true > <<<sgridb,t.bsbound,0,t.stm>>> (t.boundnum,t.boundini,t.hdiv,t.nc,t.begincell+t.cellfluid,Int3(t.cellmin),t.dcell,t.ftomassp,t.posxy,t.posz,t.pospress,t.velrhop,t.code,t.idp,t.viscdt,t.ar);
+    else //<vs_syymmetry_end>
+      KerInteractionForcesBound<psingle,tker,ftmode,false> <<<sgridb,t.bsbound,0,t.stm>>> (t.boundnum,t.boundini,t.hdiv,t.nc,t.begincell+t.cellfluid,Int3(t.cellmin),t.dcell,t.ftomassp,t.posxy,t.posz,t.pospress,t.velrhop,t.code,t.idp,t.viscdt,t.ar);
+  }
 }
 //==============================================================================
 template<bool psingle,TpKernel tker,TpFtMode ftmode,bool lamsps> void Interaction_Forces_gt2(const StInterParmsg &t){
@@ -1512,17 +1449,20 @@ template<bool psingle> void Interaction_ForcesDemT
   ,const typecode *code,const unsigned *idp,float *viscdt,float3 *ace,StKerInfo *kerinfo)
 {
   //-Collects kernel information.
-  if(kerinfo)Interaction_ForcesDemT_KerInfo<psingle>(kerinfo);
-  else{
-    const int hdiv=(cellmode==CELLMODE_H? 2: 1);
-    const int4 nc=make_int4(int(ncells.x),int(ncells.y),int(ncells.z),int(ncells.x*ncells.y));
-    const unsigned cellfluid=nc.w*nc.z+1;
-    const int3 cellzero=make_int3(cellmin.x,cellmin.y,cellmin.z);
-    //-Interaction Fluid-Fluid & Fluid-Bound.
-    if(nfloat){
-      dim3 sgrid=GetGridSize(nfloat,bsize);
-      KerInteractionForcesDem<psingle> <<<sgrid,bsize>>> (nfloat,hdiv,nc,cellfluid,begincell,cellzero,dcell,ftridp,demdata,ftomassp,dtforce,posxy,posz,pospress,velrhop,code,idp,viscdt,ace);
-    }
+#ifndef DISABLE_BSMODES
+  if(kerinfo){
+    Interaction_ForcesDemT_KerInfo<psingle>(kerinfo);
+    return;
+  }
+#endif
+  //-Interaction Fluid-Fluid & Fluid-Bound.
+  const int hdiv=(cellmode==CELLMODE_H? 2: 1);
+  const int4 nc=make_int4(int(ncells.x),int(ncells.y),int(ncells.z),int(ncells.x*ncells.y));
+  const unsigned cellfluid=nc.w*nc.z+1;
+  const int3 cellzero=make_int3(cellmin.x,cellmin.y,cellmin.z);
+  if(nfloat){
+    dim3 sgrid=GetGridSize(nfloat,bsize);
+    KerInteractionForcesDem<psingle> <<<sgrid,bsize>>> (nfloat,hdiv,nc,cellfluid,begincell,cellzero,dcell,ftridp,demdata,ftomassp,dtforce,posxy,posz,pospress,velrhop,code,idp,viscdt,ace);
   }
 }
 //==============================================================================

@@ -124,9 +124,6 @@
     <ClInclude Include="..\source\JSphAccInput.h">
       <Filter>Source</Filter>
     </ClInclude>
-    <ClInclude Include="..\source\JBlockSizeAuto.h">
-      <Filter>Source</Filter>
-    </ClInclude>
     <ClInclude Include="..\source\JTimeOut.h">
       <Filter>Source</Filter>
     </ClInclude>
@@ -439,9 +436,6 @@
       <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="..\source\JSphAccInput.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\JBlockSizeAuto.cpp">
       <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="..\source\JTimeOut.cpp">

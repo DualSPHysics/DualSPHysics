@@ -14,7 +14,7 @@ set(OBSPHSINGLE JCellDivCpuSingle.cpp JPartsLoad4.cpp JSphCpuSingle.cpp)
 # GPU Objects
 
 set(OBCOMMONGPU FunctionsCuda.cpp JObjectGpu.cpp)
-set(OBSPHGPU JArraysGpu.cpp JBlockSizeAuto.cpp JDebugSphGpu.cpp JCellDivGpu.cpp JSphGpu.cpp )
+set(OBSPHGPU JArraysGpu.cpp JDebugSphGpu.cpp JCellDivGpu.cpp JSphGpu.cpp )
 set(OBSPHSINGLEGPU JCellDivGpuSingle.cpp JSphGpuSingle.cpp)
 set(OBCUDA JCellDivGpu_ker.cu JCellDivGpuSingle_ker.cu JGauge_ker.cu JReduSum_ker.cu JShifting_ker.cu JSphAccInput_ker.cu JSphGpu_ker.cu JSphGpuSimple_ker.cu JWaveOrder2_ker.cu)
 

@@ -24,7 +24,7 @@
  along with DualSPHysics. If not, see <http://www.gnu.org/licenses/>.
 
 
-DualSPHysics4 [Symmetry] v4.4.043 (27-12-2019)
+DualSPHysics4 [Symmetry] v4.4.044 (29-12-2019)
 ===============================================
 LoadDsphConfig> .../bin/windows/DsphConfig.xml
 Information about execution parameters:
@@ -50,11 +50,6 @@ Information about execution parameters:
     -ompthreads:<int>  Only for CPU execution, indicates the number of threads
                    by host for parallel execution, this takes the number of 
                    cores of the device by default (or using zero value)
-
-    -blocksize:<mode>  Defines BlockSize to use in particle interactions on GPU
-        0: Fixed value (128) is used (option by default)
-        1: Optimum BlockSize indicated by Occupancy Calculator of CUDA
-        2: Optimum BlockSize is calculated empirically
 
     -cellmode:<mode>  Specifies the cell division mode
         2h        Lowest and the least expensive in memory (by default)
