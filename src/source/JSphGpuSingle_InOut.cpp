@@ -25,7 +25,7 @@
 #include "JSphPartsInit.h"
 #include "JSphInOut.h"
 #include "JSphBoundCorr.h"
-#include "JSphGpu_InOut_ker.h"
+#include "JSphGpu_InOut_iker.h"
 #include "JSphInOutPoints.h"
 #include "JSimpleNeigs.h"
 #include "FunctionsMath.h"

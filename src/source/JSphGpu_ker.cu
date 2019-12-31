@@ -2603,7 +2603,7 @@ void ComputeDampingPla(double dt,tdouble4 plane,float dist,float over,tfloat3 fa
 //# Kernels for InOut (JSphInOut) and BoundCorr (JSphBoundCorr).
 //# Kernels para InOut (JSphInOut) y BoundCorr (JSphBoundCorr).
 //##############################################################################
-#include "JSphGpu_InOut_ker.cu"
+#include "JSphGpu_InOut_iker.cu"
 //<vs_innlet_end>
 
 

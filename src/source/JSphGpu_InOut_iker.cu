@@ -16,16 +16,16 @@
  You should have received a copy of the GNU General Public License, along with DualSPHysics. If not, see <http://www.gnu.org/licenses/>. 
 */
 
-/// \file JSphGpu_InOut_ker.cu \brief Implements functions and CUDA kernels for InOut feature.
+/// \file JSphGpu_InOut_iker.cu \brief Implements functions and CUDA kernels for InOut feature.
 
-#include "JSphGpu_InOut_ker.h"
+#include "JSphGpu_InOut_iker.h"
 #include "Functions.h"
 #include "FunctionsCuda.h"
 #include <cfloat>
 #include <math_constants.h>
 
 namespace cusphinout{
-
+#include "FunctionsBasic_iker.cu"
 #include "FunctionsMath_ker.cu"
 
 //##############################################################################
@@ -39,7 +39,7 @@ namespace cusphinout{
 //------------------------------------------------------------------------------
 __global__ void KerInOutIgnoreFluidDef(unsigned n,typecode cod,typecode codnew,typecode *code)
 {
-  unsigned p=blockIdx.y*gridDim.x*blockDim.x + blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
+  const unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
   if(p<n){
     if(code[p]==cod)code[p]=codnew;
   }
@@ -51,7 +51,7 @@ __global__ void KerInOutIgnoreFluidDef(unsigned n,typecode cod,typecode codnew,t
 //==============================================================================
 void InOutIgnoreFluidDef(unsigned n,typecode cod,typecode codnew,typecode *code){
   if(n){
-    dim3 sgrid=cusph::GetGridSize(n,SPHBSIZE);
+    dim3 sgrid=GetSimpleGridSize(n,SPHBSIZE);
     KerInOutIgnoreFluidDef <<<sgrid,SPHBSIZE>>> (n,cod,codnew,code);
   }
 }
@@ -84,7 +84,7 @@ __device__ double3 KerInteraction_PosNoPeriodic(double3 posp1)
 template<bool periactive> __global__ void KerUpdatePosFluid(unsigned n,unsigned pini
   ,double2 *posxy,double *posz,unsigned *dcell,typecode *code)
 {
-  unsigned pp=blockIdx.y*gridDim.x*blockDim.x + blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
+  const unsigned pp=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
   if(pp<n){
     unsigned p=pp+pini;
     const typecode rcode=code[p];
@@ -101,7 +101,7 @@ void UpdatePosFluid(byte periactive,unsigned n,unsigned pini
   ,double2 *posxy,double *posz,unsigned *dcell,typecode *code)
 {
   if(n){
-    dim3 sgrid=cusph::GetGridSize(n,SPHBSIZE);
+    dim3 sgrid=GetSimpleGridSize(n,SPHBSIZE);
     if(periactive)KerUpdatePosFluid<true>  <<<sgrid,SPHBSIZE>>> (n,pini,posxy,posz,dcell,code);
     else          KerUpdatePosFluid<false> <<<sgrid,SPHBSIZE>>> (n,pini,posxy,posz,dcell,code);
   }
@@ -122,7 +122,7 @@ __global__ void KerInOutCreateList(unsigned n,unsigned pini
   //float *splanes=(float*)(slist+(n+1));
   if(!threadIdx.x)slist[0]=0;
   __syncthreads();
-  const unsigned pp=blockIdx.y*gridDim.x*blockDim.x + blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
+  const unsigned pp=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
   if(pp<n){
     const unsigned p=pp+pini;
     const typecode rcode=code[p];
@@ -187,7 +187,7 @@ unsigned InOutCreateList(bool stable,unsigned n,unsigned pini
     //-listp size list initialized to zero.
     //-Inicializa tamaño de lista listp a cero.
     cudaMemset(listp+n,0,sizeof(unsigned));
-    dim3 sgrid=cusph::GetGridSize(n,SPHBSIZE);
+    dim3 sgrid=GetSimpleGridSize(n,SPHBSIZE);
     const unsigned smem=(SPHBSIZE+1)*sizeof(unsigned); //-All fluid particles can be in in/out area and one position for counter.
     KerInOutCreateList <<<sgrid,SPHBSIZE,smem>>> (n,pini,convertfluidmask,nzone,cfgzone,planes,Float3(freemin),Float3(freemax),boxlimit,posxy,posz,code,listp);
     cudaMemcpy(&count,listp+n,sizeof(unsigned),cudaMemcpyDeviceToHost);
@@ -232,7 +232,7 @@ __global__ void KerInOutUpdateData(unsigned n,const unsigned *inoutpart
   ,float coefhydro,float rhopzero,float gamma
   ,const typecode *code,const double *posz,float4 *velrhop)
 {
-  const unsigned cp=blockIdx.y*gridDim.x*blockDim.x + blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
+  const unsigned cp=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
   if(cp<n){
     const unsigned p=inoutpart[cp];
     if(izone==byte(CODE_GetIzoneFluidInout(code[p]))){
@@ -280,7 +280,7 @@ void InOutUpdateData(unsigned n,const unsigned *inoutpart
   ,const typecode *code,const double *posz,float4 *velrhop)
 {
   if(n){
-    dim3 sgrid=cusph::GetGridSize(n,SPHBSIZE);
+    dim3 sgrid=GetSimpleGridSize(n,SPHBSIZE);
     KerInOutUpdateData <<<sgrid,SPHBSIZE>>> (n,inoutpart,izone,rmode,vmode,vprof
       ,timestep,zsurf,Float4(veldata),Float4(veldata2),Float3(dirdata),coefhydro,rhopzero,gamma,code,posz,velrhop);
   }
@@ -294,7 +294,7 @@ void InOutUpdateData(unsigned n,const unsigned *inoutpart
 __global__ void KerInoutClearInteractionVars(unsigned n,const int *inoutpart
   ,float3 *ace,float *ar,float *viscdt,float4 *shiftposfs)
 {
-  const unsigned cp=blockIdx.y*gridDim.x*blockDim.x + blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
+  const unsigned cp=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
   if(cp<n){
     const unsigned p=inoutpart[cp];
     ace[p]=make_float3(0,0,0);
@@ -312,7 +312,7 @@ void InoutClearInteractionVars(unsigned n,const int *inoutpart
   ,float3 *ace,float *ar,float *viscdt,float4 *shiftposfs)
 {
   if(n){
-    dim3 sgrid=cusph::GetGridSize(n,SPHBSIZE);
+    dim3 sgrid=GetSimpleGridSize(n,SPHBSIZE);
     KerInoutClearInteractionVars <<<sgrid,SPHBSIZE>>> (n,inoutpart,ace,ar,viscdt,shiftposfs);
   }
 }
@@ -325,7 +325,7 @@ void InoutClearInteractionVars(unsigned n,const int *inoutpart
 __global__ void KerInOutUpdateVelrhopM1(unsigned n,const int *inoutpart
   ,const float4 *velrhop,float4 *velrhopm1)
 {
-  const unsigned cp=blockIdx.y*gridDim.x*blockDim.x + blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
+  const unsigned cp=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
   if(cp<n){
     const unsigned p=inoutpart[cp];
     velrhopm1[p]=velrhop[p];
@@ -340,7 +340,7 @@ void InOutUpdateVelrhopM1(unsigned n,const int *inoutpart
   ,const float4 *velrhop,float4 *velrhopm1)
 {
   if(n){
-    dim3 sgrid=cusph::GetGridSize(n,SPHBSIZE);
+    dim3 sgrid=GetSimpleGridSize(n,SPHBSIZE);
     KerInOutUpdateVelrhopM1 <<<sgrid,SPHBSIZE>>> (n,inoutpart,velrhop,velrhopm1);
   }
 }
@@ -356,7 +356,7 @@ template<bool periactive> __global__ void KerInOutComputeStep(unsigned n,int *in
   ,double dt,const float4 *planes,const float *width,const float4 *velrhop
   ,double2 *posxy,double *posz,unsigned *dcell,typecode *code)
 {
-  const unsigned cp=blockIdx.y*gridDim.x*blockDim.x + blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
+  const unsigned cp=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
   if(cp<n){
     const int p=inoutpart[cp];
     //-Checks if particle was moved to fluid domain.
@@ -383,7 +383,7 @@ void InOutComputeStep(byte periactive,unsigned n,int *inoutpart
   ,double2 *posxy,double *posz,unsigned *dcell,typecode *code)
 {
   if(n){
-    dim3 sgrid=cusph::GetGridSize(n,SPHBSIZE);
+    dim3 sgrid=GetSimpleGridSize(n,SPHBSIZE);
     if(periactive)KerInOutComputeStep<true>  <<<sgrid,SPHBSIZE>>> (n,inoutpart,dt,planes,width,velrhop,posxy,posz,dcell,code);
     else          KerInOutComputeStep<false> <<<sgrid,SPHBSIZE>>> (n,inoutpart,dt,planes,width,velrhop,posxy,posz,dcell,code);
   }
@@ -399,7 +399,7 @@ __global__ void KerInOutListCreate(unsigned n,unsigned nmax,int *inoutpart)
   extern __shared__ unsigned slist[];
   if(!threadIdx.x)slist[0]=0;
   __syncthreads();
-  const unsigned cp=blockIdx.y*gridDim.x*blockDim.x + blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
+  const unsigned cp=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
   if(cp<n && inoutpart[cp]<0){
     slist[atomicAdd(slist,1)+1]=unsigned(-inoutpart[cp]); //-Add particle in the list.
   }
@@ -428,7 +428,7 @@ unsigned InOutListCreate(bool stable,unsigned n,unsigned nmax,int *inoutpart)
     //-inoutpart size list initialized to zero.
     //-Inicializa tamaño de lista inoutpart a cero.
     cudaMemset(inoutpart+nmax,0,sizeof(unsigned));
-    dim3 sgrid=cusph::GetGridSize(n,SPHBSIZE);
+    dim3 sgrid=GetSimpleGridSize(n,SPHBSIZE);
     const unsigned smem=(SPHBSIZE+1)*sizeof(unsigned); //-All fluid particles can be in in/out area and one position for counter.
     KerInOutListCreate <<<sgrid,SPHBSIZE,smem>>> (n,nmax,inoutpart);
     cudaMemcpy(&count,inoutpart+nmax,sizeof(unsigned),cudaMemcpyDeviceToHost);
@@ -450,7 +450,7 @@ template<bool periactive> __global__ void KerInOutCreateNewInlet(unsigned newn,c
   ,unsigned np,unsigned idnext,typecode codenewpart,const float3 *dirdata,const float *width
   ,double2 *posxy,double *posz,unsigned *dcell,typecode *code,unsigned *idp,float4 *velrhop)
 {
-  const unsigned cp=blockIdx.y*gridDim.x*blockDim.x + blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
+  const unsigned cp=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
   if(cp<newn){
     const int p=newinoutpart[cp];
     const byte izone=byte(CODE_GetIzoneFluidInout(code[p]));
@@ -478,7 +478,7 @@ void InOutCreateNewInlet(byte periactive,unsigned newn,const unsigned *newinoutp
   ,double2 *posxy,double *posz,unsigned *dcell,typecode *code,unsigned *idp,float4 *velrhop)
 {
   if(newn){
-    dim3 sgrid=cusph::GetGridSize(newn,SPHBSIZE);
+    dim3 sgrid=GetSimpleGridSize(newn,SPHBSIZE);
     if(periactive)KerInOutCreateNewInlet<true>  <<<sgrid,SPHBSIZE>>> (newn,newinoutpart,np,idnext,codenewpart,dirdata,width,posxy,posz,dcell,code,idp,velrhop);
     else          KerInOutCreateNewInlet<false> <<<sgrid,SPHBSIZE>>> (newn,newinoutpart,np,idnext,codenewpart,dirdata,width,posxy,posz,dcell,code,idp,velrhop);
   }
@@ -492,7 +492,7 @@ template<bool periactive> __global__ void KerInOutFillMove(unsigned n,const unsi
   ,double dt,const float4 *velrhop
   ,double2 *posxy,double *posz,unsigned *dcell,typecode *code)
 {
-  const unsigned cp=blockIdx.y*gridDim.x*blockDim.x + blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
+  const unsigned cp=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
   if(cp<n){
     const unsigned p=inoutpart[cp];
     //-Updates position of particles.
@@ -512,7 +512,7 @@ void InOutFillMove(byte periactive,unsigned n,const unsigned *inoutpart
   ,double2 *posxy,double *posz,unsigned *dcell,typecode *code)
 {
   if(n){
-    dim3 sgrid=cusph::GetGridSize(n,SPHBSIZE);
+    dim3 sgrid=GetSimpleGridSize(n,SPHBSIZE);
     if(periactive)KerInOutFillMove<true>  <<<sgrid,SPHBSIZE>>> (n,inoutpart,dt,velrhop,posxy,posz,dcell,code);
     else          KerInOutFillMove<false> <<<sgrid,SPHBSIZE>>> (n,inoutpart,dt,velrhop,posxy,posz,dcell,code);
   }
@@ -527,7 +527,7 @@ __global__ void KerInOutFillProjection(unsigned n,const unsigned *inoutpart
   ,const double2 *posxy,const double *posz
   ,typecode *code,float *prodist,double2 *proposxy,double *proposz)
 {
-  const unsigned cp=blockIdx.y*gridDim.x*blockDim.x + blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
+  const unsigned cp=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
   if(cp<n){
     const unsigned p=inoutpart[cp];
     //-Checks if particle was moved to fluid domain.
@@ -572,7 +572,7 @@ void InOutFillProjection(unsigned n,const unsigned *inoutpart
   ,typecode *code,float *prodist,double2 *proposxy,double *proposz)
 {
   if(n){
-    dim3 sgrid=cusph::GetGridSize(n,SPHBSIZE);
+    dim3 sgrid=GetSimpleGridSize(n,SPHBSIZE);
     KerInOutFillProjection <<<sgrid,SPHBSIZE>>> (n,inoutpart,codenewpart,planes,width,posxy,posz,code,prodist,proposxy,proposz);
   }
 }
@@ -585,7 +585,7 @@ __global__ void KerInOutRemoveZsurf(unsigned n,const unsigned *inoutpart
   ,typecode codezone,float zsurf,const double *posz
   ,typecode *code,float *prodist,double2 *proposxy,double *proposz)
 {
-  const unsigned cp=blockIdx.y*gridDim.x*blockDim.x + blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
+  const unsigned cp=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
   if(cp<n){
     const unsigned p=inoutpart[cp];
     if(code[p]==codezone && posz[p]>zsurf){
@@ -605,7 +605,7 @@ void InOutRemoveZsurf(unsigned n,const unsigned *inoutpart
   ,typecode *code,float *prodist,double2 *proposxy,double *proposz)
 {
   if(n){
-    dim3 sgrid=cusph::GetGridSize(n,SPHBSIZE);
+    dim3 sgrid=GetSimpleGridSize(n,SPHBSIZE);
     KerInOutRemoveZsurf <<<sgrid,SPHBSIZE>>> (n,inoutpart,codezone,zsurf,posz,code,prodist,proposxy,proposz);
   }
 }
@@ -625,7 +625,7 @@ __global__ void KerInOutFillListCreate(unsigned npt
   //float *sdist=(float*)(slist+(blockDim.x+1));
   if(!threadIdx.x)slist[0]=0;
   __syncthreads();
-  const unsigned cpt=blockIdx.y*gridDim.x*blockDim.x + blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
+  const unsigned cpt=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
   if(cpt<npt){
     const double2 rptxy=ptposxy[cpt];
     const double rptz=ptposz[cpt];
@@ -680,7 +680,7 @@ unsigned InOutFillListCreate(bool stable,unsigned npt
     //-inoutpart size list initialized to zero.
     //-Inicializa tamaño de lista inoutpart a cero.
     cudaMemset(inoutpart+nmax,0,sizeof(unsigned));
-    dim3 sgrid=cusph::GetGridSize(npt,SPHBSIZE);
+    dim3 sgrid=GetSimpleGridSize(npt,SPHBSIZE);
     const unsigned smem=(SPHBSIZE+1)*sizeof(unsigned); //-All fluid particles can be in in/out area and one position for counter.
     KerInOutFillListCreate <<<sgrid,SPHBSIZE,smem>>> (npt,ptposxy,ptposz,ptzone,zsurf,width,npropt,prodist,proposxy,proposz,dpmin,dpmin2,dp,ptdist,nmax,inoutpart);
     cudaMemcpy(&count,inoutpart+nmax,sizeof(unsigned),cudaMemcpyDeviceToHost);
@@ -703,7 +703,7 @@ template<bool periactive> __global__ void KerInOutFillCreate(unsigned newn,const
   ,unsigned np,unsigned idnext,typecode codenewpart,const float3 *dirdata
   ,double2 *posxy,double *posz,unsigned *dcell,typecode *code,unsigned *idp,float4 *velrhop)
 {
-  const unsigned cp=blockIdx.y*gridDim.x*blockDim.x + blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
+  const unsigned cp=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
   if(cp<newn){
     const unsigned cpt=newinoutpart[cp];
     const byte izone=ptzone[cpt];
@@ -731,7 +731,7 @@ void InOutFillCreate(byte periactive,unsigned newn,const unsigned *newinoutpart
   ,double2 *posxy,double *posz,unsigned *dcell,typecode *code,unsigned *idp,float4 *velrhop)
 {
   if(newn){
-    dim3 sgrid=cusph::GetGridSize(newn,SPHBSIZE);
+    dim3 sgrid=GetSimpleGridSize(newn,SPHBSIZE);
     if(periactive)KerInOutFillCreate<true>  <<<sgrid,SPHBSIZE>>> (newn,newinoutpart,ptposxy,ptposz,ptzone,ptauxdist,np,idnext,codenewpart,dirdata,posxy,posz,dcell,code,idp,velrhop);
     else          KerInOutFillCreate<false> <<<sgrid,SPHBSIZE>>> (newn,newinoutpart,ptposxy,ptposz,ptzone,ptauxdist,np,idnext,codenewpart,dirdata,posxy,posz,dcell,code,idp,velrhop);
   }
@@ -749,7 +749,7 @@ template<unsigned blockSize> __global__ void KerInOutComputeZsurf
   extern __shared__ float sfdat[];
   const unsigned tid=threadIdx.x;
 
-  const unsigned p1=blockIdx.y*gridDim.x*blockDim.x + blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
+  const unsigned p1=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
   if(p1<nptz){
     float zsurfmax=zbottom;
     //-Obtains basic data of particle p1.
@@ -794,7 +794,7 @@ template<unsigned blockSize> __global__ void KerInOutComputeZsurf
   if(blockSize>=256){ if(tid<128)sfdat[tid]=max(sfdat[tid],sfdat[tid+128]);  __syncthreads(); }
   if(blockSize>=128){ if(tid<64) sfdat[tid]=max(sfdat[tid],sfdat[tid+64] );  __syncthreads(); }
   if(tid<32)cusph::KerReduMaxFloatWarp<blockSize>(sfdat,tid);
-  if(tid==0)res[blockIdx.y*gridDim.x + blockIdx.x]=sfdat[0];
+  if(tid==0)res[blockIdx.x]=sfdat[0];
 }
 
 //==============================================================================
@@ -811,8 +811,8 @@ float InOutComputeZsurf(unsigned nptz,const float3 *ptzpos,float maxdist,float z
   const int3 cellzero=make_int3(cellmin.x,cellmin.y,cellmin.z);
   float zsurfmax=zbottom;
   if(nptz){
-    const unsigned bsize=256;
-    dim3 sgrid=cusph::GetGridSize(nptz,bsize);
+    const unsigned bsize=SPHBSIZE;
+    dim3 sgrid=GetSimpleGridSize(nptz,bsize);
     unsigned smem=sizeof(float)*bsize;
     KerInOutComputeZsurf<bsize> <<<sgrid,bsize,smem>>> (nptz,ptzpos,(maxdist*maxdist),zbottom,hdiv,nc,cellfluid,begincell,cellzero,posxy,posz,code,auxg);
     const unsigned nblocks=sgrid.x*sgrid.y;
@@ -834,7 +834,7 @@ template<bool sim2d,TpKernel tker> __global__ void KerInteractionInOutExtrap_Dou
   ,const double2 *posxy,const double *posz,const typecode *code,const unsigned *idp
   ,float4 *velrhop)
 {
-  const unsigned cp=blockIdx.y*gridDim.x*blockDim.x + blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
+  const unsigned cp=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
   if(cp<inoutcount){
     const unsigned p1=inoutpart[cp];
     const byte izone=byte(CODE_GetIzoneFluidInout(code[p1]));
@@ -882,10 +882,10 @@ template<bool sim2d,TpKernel tker> __global__ void KerInteractionInOutExtrap_Dou
             const double rr2=drx*drx+dry*dry+drz*drz;
             if(rr2<=CTE.fourh2 && rr2>=ALMOSTZERO && CODE_IsFluidNotInout(code[p2])){//-Only with fluid particles but not inout particles.
               //-Wendland or Cubic Spline kernel.
-			  float ffrx,ffry,ffrz,fwab;
-			  if(tker==KERNEL_Wendland)cusph::KerGetKernelWendland(float(rr2),float(drx),float(dry),float(drz),ffrx,ffry,ffrz,fwab);
-			  else if(tker==KERNEL_Cubic)cusph::KerGetKernelCubic(float(rr2),float(drx),float(dry),float(drz),ffrx,ffry,ffrz,fwab);
-  		      const double frx=ffrx,fry=ffry,frz=ffrz,wab=fwab;
+              float ffrx,ffry,ffrz,fwab;
+              if(tker==KERNEL_Wendland)cusph::KerGetKernelWendland(float(rr2),float(drx),float(dry),float(drz),ffrx,ffry,ffrz,fwab);
+              else if(tker==KERNEL_Cubic)cusph::KerGetKernelCubic(float(rr2),float(drx),float(dry),float(drz),ffrx,ffry,ffrz,fwab);
+              const double frx=ffrx,fry=ffry,frz=ffrz,wab=fwab;
 
               const float4 velrhopp2=velrhop[p2];
               //===== Get mass and volume of particle p2 =====
@@ -922,9 +922,9 @@ template<bool sim2d,TpKernel tker> __global__ void KerInteractionInOutExtrap_Dou
 
               //===== Matrix A for correction =====
               if(sim2d){
-                a_corr2.a11+=vwab; 	a_corr2.a12+=drx*vwab;	a_corr2.a13+=drz*vwab;
-                a_corr2.a21+=vfrx; 	a_corr2.a22+=drx*vfrx; 	a_corr2.a23+=drz*vfrx;
-                a_corr2.a31+=vfrz; 	a_corr2.a32+=drx*vfrz;	a_corr2.a33+=drz*vfrz;
+                a_corr2.a11+=vwab;  a_corr2.a12+=drx*vwab;  a_corr2.a13+=drz*vwab;
+                a_corr2.a21+=vfrx;  a_corr2.a22+=drx*vfrx;  a_corr2.a23+=drz*vfrx;
+                a_corr2.a31+=vfrz;  a_corr2.a32+=drx*vfrz;  a_corr2.a33+=drz*vfrz;
               }
               else{
                 a_corr3.a11+=vwab;  a_corr3.a12+=drx*vwab;  a_corr3.a13+=dry*vwab;  a_corr3.a14+=drz*vwab;
@@ -960,10 +960,10 @@ template<bool sim2d,TpKernel tker> __global__ void KerInteractionInOutExtrap_Dou
             const double a13=-(velp1.z*invacorr2.a21 + gradvelp1.a31*invacorr2.a22 + gradvelp1.a33*invacorr2.a23);
             const double a31=-(velp1.x*invacorr2.a31 + gradvelp1.a11*invacorr2.a32 + gradvelp1.a13*invacorr2.a33);
             const double a33=-(velp1.z*invacorr2.a31 + gradvelp1.a31*invacorr2.a32 + gradvelp1.a33*invacorr2.a33);
-    	    velrhopfinal.x=float(velghost_x + a11*dpos.x + a31*dpos.z);
-    	    velrhopfinal.z=float(velghost_z + a13*dpos.x + a33*dpos.z);
+            velrhopfinal.x=float(velghost_x + a11*dpos.x + a31*dpos.z);
+            velrhopfinal.z=float(velghost_z + a13*dpos.x + a33*dpos.z);
             velrhopfinal.y=0;
-   	      }
+          }
         }
         else if(a_corr2.a11>0){//-Determinant is small but a11 is nonzero, 0th order ANGELO.
           if(computerhop)velrhopfinal.w=float(rhopp1/a_corr2.a11);
@@ -971,7 +971,7 @@ template<bool sim2d,TpKernel tker> __global__ void KerInteractionInOutExtrap_Dou
             velrhopfinal.x=float(velp1.x/a_corr2.a11);
             velrhopfinal.z=float(velp1.z/a_corr2.a11);
             velrhopfinal.y=0;
-   	      }
+          }
         }
       }
       else{
@@ -989,20 +989,20 @@ template<bool sim2d,TpKernel tker> __global__ void KerInteractionInOutExtrap_Dou
           //-GHOST NODE VELOCITY ARE MIRRORED BACK TO THE OUTFLOW PARTICLES.
           if(computevel){
             const double velghost_x=velp1.x*invacorr3.a11 + gradvelp1.a11*invacorr3.a12 + gradvelp1.a12*invacorr3.a13 + gradvelp1.a13*invacorr3.a14;
-      	    const double velghost_y=velp1.y*invacorr3.a11 + gradvelp1.a11*invacorr3.a12 + gradvelp1.a12*invacorr3.a13 + gradvelp1.a13*invacorr3.a14;
-      	    const double velghost_z=velp1.z*invacorr3.a11 + gradvelp1.a31*invacorr3.a12 + gradvelp1.a32*invacorr3.a13 + gradvelp1.a33*invacorr3.a14;
+            const double velghost_y=velp1.y*invacorr3.a11 + gradvelp1.a11*invacorr3.a12 + gradvelp1.a12*invacorr3.a13 + gradvelp1.a13*invacorr3.a14;
+            const double velghost_z=velp1.z*invacorr3.a11 + gradvelp1.a31*invacorr3.a12 + gradvelp1.a32*invacorr3.a13 + gradvelp1.a33*invacorr3.a14;
             const double a11=-(velp1.x*invacorr3.a21 + gradvelp1.a11*invacorr3.a22 + gradvelp1.a12*invacorr3.a23 + gradvelp1.a13*invacorr3.a24);
-        	const double a12=-(velp1.y*invacorr3.a21 + gradvelp1.a21*invacorr3.a22 + gradvelp1.a22*invacorr3.a23 + gradvelp1.a23*invacorr3.a24);
-        	const double a13=-(velp1.z*invacorr3.a21 + gradvelp1.a31*invacorr3.a22 + gradvelp1.a32*invacorr3.a23 + gradvelp1.a33*invacorr3.a24);
-        	const double a21=-(velp1.x*invacorr3.a31 + gradvelp1.a11*invacorr3.a32 + gradvelp1.a12*invacorr3.a33 + gradvelp1.a13*invacorr3.a34);
-        	const double a22=-(velp1.y*invacorr3.a31 + gradvelp1.a21*invacorr3.a32 + gradvelp1.a22*invacorr3.a33 + gradvelp1.a23*invacorr3.a34);
-        	const double a23=-(velp1.z*invacorr3.a31 + gradvelp1.a31*invacorr3.a32 + gradvelp1.a32*invacorr3.a33 + gradvelp1.a33*invacorr3.a34);
-        	const double a31=-(velp1.x*invacorr3.a41 + gradvelp1.a11*invacorr3.a42 + gradvelp1.a12*invacorr3.a43 + gradvelp1.a13*invacorr3.a44);
-        	const double a32=-(velp1.y*invacorr3.a41 + gradvelp1.a21*invacorr3.a42 + gradvelp1.a22*invacorr3.a43 + gradvelp1.a23*invacorr3.a44);
-        	const double a33=-(velp1.z*invacorr3.a41 + gradvelp1.a31*invacorr3.a42 + gradvelp1.a32*invacorr3.a43 + gradvelp1.a33*invacorr3.a44);
+            const double a12=-(velp1.y*invacorr3.a21 + gradvelp1.a21*invacorr3.a22 + gradvelp1.a22*invacorr3.a23 + gradvelp1.a23*invacorr3.a24);
+            const double a13=-(velp1.z*invacorr3.a21 + gradvelp1.a31*invacorr3.a22 + gradvelp1.a32*invacorr3.a23 + gradvelp1.a33*invacorr3.a24);
+            const double a21=-(velp1.x*invacorr3.a31 + gradvelp1.a11*invacorr3.a32 + gradvelp1.a12*invacorr3.a33 + gradvelp1.a13*invacorr3.a34);
+            const double a22=-(velp1.y*invacorr3.a31 + gradvelp1.a21*invacorr3.a32 + gradvelp1.a22*invacorr3.a33 + gradvelp1.a23*invacorr3.a34);
+            const double a23=-(velp1.z*invacorr3.a31 + gradvelp1.a31*invacorr3.a32 + gradvelp1.a32*invacorr3.a33 + gradvelp1.a33*invacorr3.a34);
+            const double a31=-(velp1.x*invacorr3.a41 + gradvelp1.a11*invacorr3.a42 + gradvelp1.a12*invacorr3.a43 + gradvelp1.a13*invacorr3.a44);
+            const double a32=-(velp1.y*invacorr3.a41 + gradvelp1.a21*invacorr3.a42 + gradvelp1.a22*invacorr3.a43 + gradvelp1.a23*invacorr3.a44);
+            const double a33=-(velp1.z*invacorr3.a41 + gradvelp1.a31*invacorr3.a42 + gradvelp1.a32*invacorr3.a43 + gradvelp1.a33*invacorr3.a44);
             velrhopfinal.x=float(velghost_x + a11*dpos.x + a21*dpos.y + a31*dpos.z);
             velrhopfinal.y=float(velghost_y + a12*dpos.x + a22*dpos.y + a32*dpos.z);
-      	    velrhopfinal.z=float(velghost_z + a13*dpos.x + a23*dpos.y + a33*dpos.z);
+            velrhopfinal.z=float(velghost_z + a13*dpos.x + a23*dpos.y + a33*dpos.z);
           }
         }
         else if(a_corr3.a11>0){ // Determinant is small but a11 is nonzero, 0th order ANGELO
@@ -1011,7 +1011,7 @@ template<bool sim2d,TpKernel tker> __global__ void KerInteractionInOutExtrap_Dou
             velrhopfinal.x=float(velp1.x/a_corr3.a11);
             velrhopfinal.y=float(velp1.y/a_corr3.a11);
             velrhopfinal.z=float(velp1.z/a_corr3.a11);
-     	  }
+          }
         }
       }
       velrhop[p1]=velrhopfinal;
@@ -1030,7 +1030,7 @@ template<bool sim2d,TpKernel tker> __global__ void KerInteractionInOutExtrap_Sin
   ,const double2 *posxy,const double *posz,const typecode *code,const unsigned *idp
   ,float4 *velrhop)
 {
-  const unsigned cp=blockIdx.y*gridDim.x*blockDim.x + blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
+  const unsigned cp=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
   if(cp<inoutcount){
     const unsigned p1=inoutpart[cp];
     const byte izone=byte(CODE_GetIzoneFluidInout(code[p1]));
@@ -1078,9 +1078,9 @@ template<bool sim2d,TpKernel tker> __global__ void KerInteractionInOutExtrap_Sin
             const float rr2=drx*drx+dry*dry+drz*drz;
             if(rr2<=CTE.fourh2 && rr2>=ALMOSTZERO && CODE_IsFluidNotInout(code[p2])){//-Only with fluid particles but not inout particles.
               //-Wendland or Cubic Spline kernel.
-			  float frx,fry,frz,wab;
-			  if(tker==KERNEL_Wendland)cusph::KerGetKernelWendland(rr2,drx,dry,drz,frx,fry,frz,wab);
-			  else if(tker==KERNEL_Cubic)cusph::KerGetKernelCubic(rr2,drx,dry,drz,frx,fry,frz,wab);
+              float frx,fry,frz,wab;
+              if(tker==KERNEL_Wendland)cusph::KerGetKernelWendland(rr2,drx,dry,drz,frx,fry,frz,wab);
+              else if(tker==KERNEL_Cubic)cusph::KerGetKernelCubic(rr2,drx,dry,drz,frx,fry,frz,wab);
 
               const float4 velrhopp2=velrhop[p2];
               //===== Get mass and volume of particle p2 =====
@@ -1117,9 +1117,9 @@ template<bool sim2d,TpKernel tker> __global__ void KerInteractionInOutExtrap_Sin
 
               //===== Matrix A for correction =====
               if(sim2d){
-                a_corr2.a11+=vwab; 	a_corr2.a12+=drx*vwab;	a_corr2.a13+=drz*vwab;
-                a_corr2.a21+=vfrx; 	a_corr2.a22+=drx*vfrx; 	a_corr2.a23+=drz*vfrx;
-                a_corr2.a31+=vfrz; 	a_corr2.a32+=drx*vfrz;	a_corr2.a33+=drz*vfrz;
+                a_corr2.a11+=vwab;  a_corr2.a12+=drx*vwab;  a_corr2.a13+=drz*vwab;
+                a_corr2.a21+=vfrx;  a_corr2.a22+=drx*vfrx;  a_corr2.a23+=drz*vfrx;
+                a_corr2.a31+=vfrz;  a_corr2.a32+=drx*vfrz;  a_corr2.a33+=drz*vfrz;
               }
               else{
                 a_corr3.a11+=vwab;  a_corr3.a12+=drx*vwab;  a_corr3.a13+=dry*vwab;  a_corr3.a14+=drz*vwab;
@@ -1155,10 +1155,10 @@ template<bool sim2d,TpKernel tker> __global__ void KerInteractionInOutExtrap_Sin
             const float a13=-float(invacorr2.a21*velp1.z + invacorr2.a22*gradvelp1.a31 + invacorr2.a23*gradvelp1.a33);
             const float a31=-float(invacorr2.a31*velp1.x + invacorr2.a32*gradvelp1.a11 + invacorr2.a33*gradvelp1.a13);
             const float a33=-float(invacorr2.a31*velp1.z + invacorr2.a32*gradvelp1.a31 + invacorr2.a33*gradvelp1.a33);
-    	    velrhopfinal.x=(velghost_x + a11*dpos.x + a31*dpos.z);
-    	    velrhopfinal.z=(velghost_z + a13*dpos.x + a33*dpos.z);
+            velrhopfinal.x=(velghost_x + a11*dpos.x + a31*dpos.z);
+            velrhopfinal.z=(velghost_z + a13*dpos.x + a33*dpos.z);
             velrhopfinal.y=0;
-   	      }
+          }
         }
         else if(a_corr2.a11>0){//-Determinant is small but a11 is nonzero, 0th order ANGELO.
           if(computerhop)velrhopfinal.w=float(rhopp1/a_corr2.a11);
@@ -1166,7 +1166,7 @@ template<bool sim2d,TpKernel tker> __global__ void KerInteractionInOutExtrap_Sin
             velrhopfinal.x=float(velp1.x/a_corr2.a11);
             velrhopfinal.z=float(velp1.z/a_corr2.a11);
             velrhopfinal.y=0;
-   	      }
+          }
         }
       }
       else{
@@ -1184,20 +1184,20 @@ template<bool sim2d,TpKernel tker> __global__ void KerInteractionInOutExtrap_Sin
           //-GHOST NODE VELOCITY ARE MIRRORED BACK TO THE OUTFLOW PARTICLES.
           if(computevel){
             const float velghost_x=float(invacorr3.a11*velp1.x + invacorr3.a12*gradvelp1.a11 + invacorr3.a13*gradvelp1.a12 + invacorr3.a14*gradvelp1.a13);
-      	    const float velghost_y=float(invacorr3.a11*velp1.y + invacorr3.a12*gradvelp1.a11 + invacorr3.a13*gradvelp1.a12 + invacorr3.a14*gradvelp1.a13);
-      	    const float velghost_z=float(invacorr3.a11*velp1.z + invacorr3.a12*gradvelp1.a31 + invacorr3.a13*gradvelp1.a32 + invacorr3.a14*gradvelp1.a33);
+            const float velghost_y=float(invacorr3.a11*velp1.y + invacorr3.a12*gradvelp1.a11 + invacorr3.a13*gradvelp1.a12 + invacorr3.a14*gradvelp1.a13);
+            const float velghost_z=float(invacorr3.a11*velp1.z + invacorr3.a12*gradvelp1.a31 + invacorr3.a13*gradvelp1.a32 + invacorr3.a14*gradvelp1.a33);
             const float a11=      -float(invacorr3.a21*velp1.x + invacorr3.a22*gradvelp1.a11 + invacorr3.a23*gradvelp1.a12 + invacorr3.a24*gradvelp1.a13);
-        	const float a12=      -float(invacorr3.a21*velp1.y + invacorr3.a22*gradvelp1.a21 + invacorr3.a23*gradvelp1.a22 + invacorr3.a24*gradvelp1.a23);
-        	const float a13=      -float(invacorr3.a21*velp1.z + invacorr3.a22*gradvelp1.a31 + invacorr3.a23*gradvelp1.a32 + invacorr3.a24*gradvelp1.a33);
-        	const float a21=      -float(invacorr3.a31*velp1.x + invacorr3.a32*gradvelp1.a11 + invacorr3.a33*gradvelp1.a12 + invacorr3.a34*gradvelp1.a13);
-        	const float a22=      -float(invacorr3.a31*velp1.y + invacorr3.a32*gradvelp1.a21 + invacorr3.a33*gradvelp1.a22 + invacorr3.a34*gradvelp1.a23);
-        	const float a23=      -float(invacorr3.a31*velp1.z + invacorr3.a32*gradvelp1.a31 + invacorr3.a33*gradvelp1.a32 + invacorr3.a34*gradvelp1.a33);
-        	const float a31=      -float(invacorr3.a41*velp1.x + invacorr3.a42*gradvelp1.a11 + invacorr3.a43*gradvelp1.a12 + invacorr3.a44*gradvelp1.a13);
-        	const float a32=      -float(invacorr3.a41*velp1.y + invacorr3.a42*gradvelp1.a21 + invacorr3.a43*gradvelp1.a22 + invacorr3.a44*gradvelp1.a23);
-        	const float a33=      -float(invacorr3.a41*velp1.z + invacorr3.a42*gradvelp1.a31 + invacorr3.a43*gradvelp1.a32 + invacorr3.a44*gradvelp1.a33);
+            const float a12=      -float(invacorr3.a21*velp1.y + invacorr3.a22*gradvelp1.a21 + invacorr3.a23*gradvelp1.a22 + invacorr3.a24*gradvelp1.a23);
+            const float a13=      -float(invacorr3.a21*velp1.z + invacorr3.a22*gradvelp1.a31 + invacorr3.a23*gradvelp1.a32 + invacorr3.a24*gradvelp1.a33);
+            const float a21=      -float(invacorr3.a31*velp1.x + invacorr3.a32*gradvelp1.a11 + invacorr3.a33*gradvelp1.a12 + invacorr3.a34*gradvelp1.a13);
+            const float a22=      -float(invacorr3.a31*velp1.y + invacorr3.a32*gradvelp1.a21 + invacorr3.a33*gradvelp1.a22 + invacorr3.a34*gradvelp1.a23);
+            const float a23=      -float(invacorr3.a31*velp1.z + invacorr3.a32*gradvelp1.a31 + invacorr3.a33*gradvelp1.a32 + invacorr3.a34*gradvelp1.a33);
+            const float a31=      -float(invacorr3.a41*velp1.x + invacorr3.a42*gradvelp1.a11 + invacorr3.a43*gradvelp1.a12 + invacorr3.a44*gradvelp1.a13);
+            const float a32=      -float(invacorr3.a41*velp1.y + invacorr3.a42*gradvelp1.a21 + invacorr3.a43*gradvelp1.a22 + invacorr3.a44*gradvelp1.a23);
+            const float a33=      -float(invacorr3.a41*velp1.z + invacorr3.a42*gradvelp1.a31 + invacorr3.a43*gradvelp1.a32 + invacorr3.a44*gradvelp1.a33);
             velrhopfinal.x=(velghost_x + a11*dpos.x + a21*dpos.y + a31*dpos.z);
             velrhopfinal.y=(velghost_y + a12*dpos.x + a22*dpos.y + a32*dpos.z);
-      	    velrhopfinal.z=(velghost_z + a13*dpos.x + a23*dpos.y + a33*dpos.z);
+            velrhopfinal.z=(velghost_z + a13*dpos.x + a23*dpos.y + a33*dpos.z);
           }
         }
         else if(a_corr3.a11>0){ // Determinant is small but a11 is nonzero, 0th order ANGELO
@@ -1206,7 +1206,7 @@ template<bool sim2d,TpKernel tker> __global__ void KerInteractionInOutExtrap_Sin
             velrhopfinal.x=float(velp1.x/a_corr3.a11);
             velrhopfinal.y=float(velp1.y/a_corr3.a11);
             velrhopfinal.z=float(velp1.z/a_corr3.a11);
-     	  }
+          }
         }
       }
       velrhop[p1]=velrhopfinal;
@@ -1226,7 +1226,7 @@ template<bool sim2d,TpKernel tker> __global__ void KerInteractionInOutExtrap_Fas
   ,const double2 *posxy,const double *posz,const typecode *code,const unsigned *idp
   ,float4 *velrhop)
 {
-  const unsigned cp=blockIdx.y*gridDim.x*blockDim.x + blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
+  const unsigned cp=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
   if(cp<inoutcount){
     const unsigned p1=inoutpart[cp];
     const byte izone=byte(CODE_GetIzoneFluidInout(code[p1]));
@@ -1274,9 +1274,9 @@ template<bool sim2d,TpKernel tker> __global__ void KerInteractionInOutExtrap_Fas
             const float rr2=drx*drx+dry*dry+drz*drz;
             if(rr2<=CTE.fourh2 && rr2>=ALMOSTZERO && CODE_IsFluidNotInout(code[p2])){//-Only with fluid particles but not inout particles.
               //-Wendland or Cubic Spline kernel.
-			  float frx,fry,frz,wab;
-			  if(tker==KERNEL_Wendland)cusph::KerGetKernelWendland(rr2,drx,dry,drz,frx,fry,frz,wab);
-			  else if(tker==KERNEL_Cubic)cusph::KerGetKernelCubic(rr2,drx,dry,drz,frx,fry,frz,wab);
+              float frx,fry,frz,wab;
+              if(tker==KERNEL_Wendland)cusph::KerGetKernelWendland(rr2,drx,dry,drz,frx,fry,frz,wab);
+              else if(tker==KERNEL_Cubic)cusph::KerGetKernelCubic(rr2,drx,dry,drz,frx,fry,frz,wab);
 
               const float4 velrhopp2=velrhop[p2];
               //===== Get mass and volume of particle p2 =====
@@ -1313,9 +1313,9 @@ template<bool sim2d,TpKernel tker> __global__ void KerInteractionInOutExtrap_Fas
 
               //===== Matrix A for correction =====
               if(sim2d){
-                a_corr2.a11+=vwab; 	a_corr2.a12+=drx*vwab;	a_corr2.a13+=drz*vwab;
-                a_corr2.a21+=vfrx; 	a_corr2.a22+=drx*vfrx; 	a_corr2.a23+=drz*vfrx;
-                a_corr2.a31+=vfrz; 	a_corr2.a32+=drx*vfrz;	a_corr2.a33+=drz*vfrz;
+                a_corr2.a11+=vwab;  a_corr2.a12+=drx*vwab;  a_corr2.a13+=drz*vwab;
+                a_corr2.a21+=vfrx;  a_corr2.a22+=drx*vfrx;  a_corr2.a23+=drz*vfrx;
+                a_corr2.a31+=vfrz;  a_corr2.a32+=drx*vfrz;  a_corr2.a33+=drz*vfrz;
               }
               else{
                 a_corr3.a11+=vwab;  a_corr3.a12+=drx*vwab;  a_corr3.a13+=dry*vwab;  a_corr3.a14+=drz*vwab;
@@ -1351,10 +1351,10 @@ template<bool sim2d,TpKernel tker> __global__ void KerInteractionInOutExtrap_Fas
             const float a13=-float(invacorr2.a21*velp1.z + invacorr2.a22*gradvelp1.a31 + invacorr2.a23*gradvelp1.a33);
             const float a31=-float(invacorr2.a31*velp1.x + invacorr2.a32*gradvelp1.a11 + invacorr2.a33*gradvelp1.a13);
             const float a33=-float(invacorr2.a31*velp1.z + invacorr2.a32*gradvelp1.a31 + invacorr2.a33*gradvelp1.a33);
-    	    velrhopfinal.x=(velghost_x + a11*dpos.x + a31*dpos.z);
-    	    velrhopfinal.z=(velghost_z + a13*dpos.x + a33*dpos.z);
+            velrhopfinal.x=(velghost_x + a11*dpos.x + a31*dpos.z);
+            velrhopfinal.z=(velghost_z + a13*dpos.x + a33*dpos.z);
             velrhopfinal.y=0;
-   	      }
+          }
         }
         else if(a_corr2.a11>0){//-Determinant is small but a11 is nonzero, 0th order ANGELO.
           if(computerhop)velrhopfinal.w=float(rhopp1/a_corr2.a11);
@@ -1362,7 +1362,7 @@ template<bool sim2d,TpKernel tker> __global__ void KerInteractionInOutExtrap_Fas
             velrhopfinal.x=float(velp1.x/a_corr2.a11);
             velrhopfinal.z=float(velp1.z/a_corr2.a11);
             velrhopfinal.y=0;
-   	      }
+          }
         }
       }
       else{
@@ -1380,20 +1380,20 @@ template<bool sim2d,TpKernel tker> __global__ void KerInteractionInOutExtrap_Fas
           //-GHOST NODE VELOCITY ARE MIRRORED BACK TO THE OUTFLOW PARTICLES.
           if(computevel){
             const float velghost_x=float(invacorr3.a11*velp1.x + invacorr3.a12*gradvelp1.a11 + invacorr3.a13*gradvelp1.a12 + invacorr3.a14*gradvelp1.a13);
-      	    const float velghost_y=float(invacorr3.a11*velp1.y + invacorr3.a12*gradvelp1.a11 + invacorr3.a13*gradvelp1.a12 + invacorr3.a14*gradvelp1.a13);
-      	    const float velghost_z=float(invacorr3.a11*velp1.z + invacorr3.a12*gradvelp1.a31 + invacorr3.a13*gradvelp1.a32 + invacorr3.a14*gradvelp1.a33);
+            const float velghost_y=float(invacorr3.a11*velp1.y + invacorr3.a12*gradvelp1.a11 + invacorr3.a13*gradvelp1.a12 + invacorr3.a14*gradvelp1.a13);
+            const float velghost_z=float(invacorr3.a11*velp1.z + invacorr3.a12*gradvelp1.a31 + invacorr3.a13*gradvelp1.a32 + invacorr3.a14*gradvelp1.a33);
             const float a11=      -float(invacorr3.a21*velp1.x + invacorr3.a22*gradvelp1.a11 + invacorr3.a23*gradvelp1.a12 + invacorr3.a24*gradvelp1.a13);
-        	const float a12=      -float(invacorr3.a21*velp1.y + invacorr3.a22*gradvelp1.a21 + invacorr3.a23*gradvelp1.a22 + invacorr3.a24*gradvelp1.a23);
-        	const float a13=      -float(invacorr3.a21*velp1.z + invacorr3.a22*gradvelp1.a31 + invacorr3.a23*gradvelp1.a32 + invacorr3.a24*gradvelp1.a33);
-        	const float a21=      -float(invacorr3.a31*velp1.x + invacorr3.a32*gradvelp1.a11 + invacorr3.a33*gradvelp1.a12 + invacorr3.a34*gradvelp1.a13);
-        	const float a22=      -float(invacorr3.a31*velp1.y + invacorr3.a32*gradvelp1.a21 + invacorr3.a33*gradvelp1.a22 + invacorr3.a34*gradvelp1.a23);
-        	const float a23=      -float(invacorr3.a31*velp1.z + invacorr3.a32*gradvelp1.a31 + invacorr3.a33*gradvelp1.a32 + invacorr3.a34*gradvelp1.a33);
-        	const float a31=      -float(invacorr3.a41*velp1.x + invacorr3.a42*gradvelp1.a11 + invacorr3.a43*gradvelp1.a12 + invacorr3.a44*gradvelp1.a13);
-        	const float a32=      -float(invacorr3.a41*velp1.y + invacorr3.a42*gradvelp1.a21 + invacorr3.a43*gradvelp1.a22 + invacorr3.a44*gradvelp1.a23);
-        	const float a33=      -float(invacorr3.a41*velp1.z + invacorr3.a42*gradvelp1.a31 + invacorr3.a43*gradvelp1.a32 + invacorr3.a44*gradvelp1.a33);
+            const float a12=      -float(invacorr3.a21*velp1.y + invacorr3.a22*gradvelp1.a21 + invacorr3.a23*gradvelp1.a22 + invacorr3.a24*gradvelp1.a23);
+            const float a13=      -float(invacorr3.a21*velp1.z + invacorr3.a22*gradvelp1.a31 + invacorr3.a23*gradvelp1.a32 + invacorr3.a24*gradvelp1.a33);
+            const float a21=      -float(invacorr3.a31*velp1.x + invacorr3.a32*gradvelp1.a11 + invacorr3.a33*gradvelp1.a12 + invacorr3.a34*gradvelp1.a13);
+            const float a22=      -float(invacorr3.a31*velp1.y + invacorr3.a32*gradvelp1.a21 + invacorr3.a33*gradvelp1.a22 + invacorr3.a34*gradvelp1.a23);
+            const float a23=      -float(invacorr3.a31*velp1.z + invacorr3.a32*gradvelp1.a31 + invacorr3.a33*gradvelp1.a32 + invacorr3.a34*gradvelp1.a33);
+            const float a31=      -float(invacorr3.a41*velp1.x + invacorr3.a42*gradvelp1.a11 + invacorr3.a43*gradvelp1.a12 + invacorr3.a44*gradvelp1.a13);
+            const float a32=      -float(invacorr3.a41*velp1.y + invacorr3.a42*gradvelp1.a21 + invacorr3.a43*gradvelp1.a22 + invacorr3.a44*gradvelp1.a23);
+            const float a33=      -float(invacorr3.a41*velp1.z + invacorr3.a42*gradvelp1.a31 + invacorr3.a43*gradvelp1.a32 + invacorr3.a44*gradvelp1.a33);
             velrhopfinal.x=(velghost_x + a11*dpos.x + a21*dpos.y + a31*dpos.z);
             velrhopfinal.y=(velghost_y + a12*dpos.x + a22*dpos.y + a32*dpos.z);
-      	    velrhopfinal.z=(velghost_z + a13*dpos.x + a23*dpos.y + a33*dpos.z);
+            velrhopfinal.z=(velghost_z + a13*dpos.x + a23*dpos.y + a33*dpos.z);
           }
         }
         else if(a_corr3.a11>0){ // Determinant is small but a11 is nonzero, 0th order ANGELO
@@ -1402,7 +1402,7 @@ template<bool sim2d,TpKernel tker> __global__ void KerInteractionInOutExtrap_Fas
             velrhopfinal.x=float(velp1.x/a_corr3.a11);
             velrhopfinal.y=float(velp1.y/a_corr3.a11);
             velrhopfinal.z=float(velp1.z/a_corr3.a11);
-     	  }
+          }
         }
       }
       velrhop[p1]=velrhopfinal;
@@ -1429,7 +1429,7 @@ void Interaction_InOutExtrap(byte doublemode,bool simulate2d,TpKernel tkernel,Tp
   //-Interaction GhostBoundaryNodes-Fluid.
   if(inoutcount){
     const unsigned bsize=128;
-    dim3 sgrid=cusph::GetGridSize(inoutcount,bsize);
+    dim3 sgrid=GetSimpleGridSize(inoutcount,bsize);
     if(doublemode==1){
       if(simulate2d){ const bool sim2d=true;
         if(tkernel==KERNEL_Wendland)KerInteractionInOutExtrap_FastSingle<sim2d,KERNEL_Wendland> <<<sgrid,bsize>>> (inoutcount,inoutpart,cfgzone,computerhopmask,computevelmask,planes,width,dirdata,determlimit,hdiv,nc,cellfluid,begincell,cellzero,posxy,posz,code,idp,velrhop);
@@ -1474,7 +1474,7 @@ template<bool sim2d,TpKernel tker> __global__ void KerInteractionBoundCorr_Doubl
   ,const double2 *posxy,const double *posz,const typecode *code,const unsigned *idp
   ,float4 *velrhop)
 {
-  const unsigned p1=blockIdx.y*gridDim.x*blockDim.x + blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
+  const unsigned p1=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
   if(p1<npb && CODE_GetTypeAndValue(code[p1])==boundcode){
     float rhopfinal=FLT_MAX;
     //-Calculates ghost node position.
@@ -1598,7 +1598,7 @@ template<bool sim2d,TpKernel tker> __global__ void KerInteractionBoundCorr_Singl
   ,const double2 *posxy,const double *posz,const typecode *code,const unsigned *idp
   ,float4 *velrhop)
 {
-  const unsigned p1=blockIdx.y*gridDim.x*blockDim.x + blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
+  const unsigned p1=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
   if(p1<npb && CODE_GetTypeAndValue(code[p1])==boundcode){
     float rhopfinal=FLT_MAX;
     //-Calculates ghost node position.
@@ -1722,7 +1722,7 @@ template<bool sim2d,TpKernel tker> __global__ void KerInteractionBoundCorr_FastS
   ,const double2 *posxy,const double *posz,const typecode *code,const unsigned *idp
   ,float4 *velrhop)
 {
-  const unsigned p1=blockIdx.y*gridDim.x*blockDim.x + blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
+  const unsigned p1=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
   if(p1<npb && CODE_GetTypeAndValue(code[p1])==boundcode){
     float rhopfinal=FLT_MAX;
     //-Calculates ghost node position.
@@ -1855,7 +1855,7 @@ void Interaction_BoundCorr(byte doublemode,bool simulate2d,TpKernel tkernel,TpCe
   //-Interaction GhostBoundaryNodes-Fluid.
   if(npbok){
     const unsigned bsbound=128;
-    dim3 sgridb=cusph::GetGridSize(npbok,bsbound);
+    dim3 sgridb=GetSimpleGridSize(npbok,bsbound);
     if(doublemode==1){
       if(simulate2d){ const bool sim2d=true;
         if(tkernel==KERNEL_Wendland)KerInteractionBoundCorr_FastSingle<sim2d,KERNEL_Wendland> <<<sgridb,bsbound>>> (npbok,boundcode,Float4(plane),Float3(direction),determlimit,hdiv,nc,cellfluid,begincell,cellzero,posxy,posz,code,idp,velrhop);
@@ -1897,7 +1897,7 @@ void Interaction_BoundCorr(byte doublemode,bool simulate2d,TpKernel tkernel,TpCe
 __global__ void KerInOutInterpolateTime(unsigned npt,double fxtime
   ,const float *vel0,const float *vel1,float *vel)
 {
-  const unsigned p=blockIdx.y*gridDim.x*blockDim.x + blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
+  const unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
   if(p<npt){
     const float v0=vel0[p];
     vel[p]=float(fxtime*(vel1[p]-v0)+v0);
@@ -1913,7 +1913,7 @@ void InOutInterpolateTime(unsigned npt,double time,double t0,double t1
 {
   if(npt){
     const double fxtime=((time-t0)/(t1-t0));
-    dim3 sgrid=cusph::GetGridSize(npt,SPHBSIZE);
+    dim3 sgrid=GetSimpleGridSize(npt,SPHBSIZE);
     KerInOutInterpolateTime <<<sgrid,SPHBSIZE>>> (npt,fxtime,velx0,velx1,velx);
     if(velz0)KerInOutInterpolateTime <<<sgrid,SPHBSIZE>>> (npt,fxtime,velz0,velz1,velz);
   }
@@ -1926,7 +1926,7 @@ __global__ void KerInOutInterpolateZVel(unsigned izone,double posminz,double dpz
   ,const float *velx,const float *velz
   ,unsigned np,const int *plist,const double *posz,const typecode *code,float4 *velrhop)
 {
-  const unsigned cp=blockIdx.y*gridDim.x*blockDim.x + blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
+  const unsigned cp=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
   if(cp<np){
     const unsigned p=plist[cp];
     if(izone==CODE_GetIzoneFluidInout(code[p])){
@@ -1959,7 +1959,7 @@ void InOutInterpolateZVel(unsigned izone,double posminz,double dpz,int nz1
   ,unsigned np,const int *plist,const double *posz,const typecode *code,float4 *velrhop)
 {
   if(np){
-    dim3 sgrid=cusph::GetGridSize(np,SPHBSIZE);
+    dim3 sgrid=GetSimpleGridSize(np,SPHBSIZE);
     KerInOutInterpolateZVel <<<sgrid,SPHBSIZE>>> (izone,posminz,dpz,nz1,velx,velz,np,plist,posz,code,velrhop);
   }
 }
@@ -1970,7 +1970,7 @@ void InOutInterpolateZVel(unsigned izone,double posminz,double dpz,int nz1
 __global__ void KerInOutInterpolateResetZVel(unsigned izone,unsigned np,const int *plist
   ,const typecode *code,float4 *velrhop)
 {
-  const unsigned cp=blockIdx.y*gridDim.x*blockDim.x + blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
+  const unsigned cp=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
   if(cp<np){
     const unsigned p=plist[cp];
     if(izone==CODE_GetIzoneFluidInout(code[p]))velrhop[p].z=0;
@@ -1984,7 +1984,7 @@ void InOutInterpolateResetZVel(unsigned izone,unsigned np,const int *plist
   ,const typecode *code,float4 *velrhop)
 {
   if(np){
-    dim3 sgrid=cusph::GetGridSize(np,SPHBSIZE);
+    dim3 sgrid=GetSimpleGridSize(np,SPHBSIZE);
     KerInOutInterpolateResetZVel <<<sgrid,SPHBSIZE>>> (izone,np,plist,code,velrhop);
   }
 }

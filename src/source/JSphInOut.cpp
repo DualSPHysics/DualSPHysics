@@ -37,7 +37,7 @@
 
 #ifdef _WITHGPU
 #include "FunctionsCuda.h"
-  #include "JSphGpu_InOut_ker.h"
+  #include "JSphGpu_InOut_iker.h"
 #endif
 
 #include <cfloat>

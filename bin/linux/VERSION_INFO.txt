@@ -1,4 +1,4 @@
-DualSPHysics4 [Symmetry]      v4.4.046            30-12-2019
+DualSPHysics4 [Symmetry]      v4.4.047            31-12-2019
 BoundaryVTK4                  v4.0.051            21-06-2019
 ComputeForces4                v4.0.045            21-06-2019
 FloatingInfo4                 v4.0.031            11-08-2019

@@ -16,10 +16,10 @@
  You should have received a copy of the GNU Lesser General Public License along with DualSPHysics. If not, see <http://www.gnu.org/licenses/>. 
 */
 
-/// \file JSphGpu_InOut_ker.h \brief Declares functions and CUDA kernels for InOut feature.
+/// \file JSphGpu_InOut_iker.h \brief Declares functions and CUDA kernels for InOut feature.
 
-#ifndef _JSphGpu_InOut_ker_
-#define _JSphGpu_InOut_ker_
+#ifndef _JSphGpu_InOut_iker_
+#define _JSphGpu_InOut_iker_
 
 #include "DualSphDef.h"
 #include <cuda_runtime_api.h>
@@ -27,12 +27,7 @@
 /// Implements a set of functions and CUDA kernels for InOut feature.
 namespace cusphinout{
 
-inline float3 Float3(const tfloat3& v){ float3 p={v.x,v.y,v.z}; return(p); }
-inline float3 Float3(float x,float y,float z){ float3 p={x,y,z}; return(p); }
-inline float4 Float4(const tfloat4& v){ float4 p={v.x,v.y,v.z,v.w}; return(p); }
-inline tfloat3 ToTFloat3(const float3& v){ return(TFloat3(v.x,v.y,v.z)); }
-inline double3 Double3(const tdouble3& v){ double3 p={v.x,v.y,v.z}; return(p); }
-inline double4 Double4(const tdouble4& v){ double4 p={v.x,v.y,v.z,v.w}; return(p); }
+//inline tfloat3 ToTFloat3(const float3& v){ return(TFloat3(v.x,v.y,v.z)); }
 
 //-Kernels for inlet/outlet (JSphInOut).
 void InOutIgnoreFluidDef(unsigned n,typecode cod,typecode codnew,typecode *code);
