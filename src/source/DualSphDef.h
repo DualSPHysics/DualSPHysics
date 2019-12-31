@@ -403,8 +403,7 @@ inline const char* GetNameDivision(TpMgDivMode axis){
 }
 
 
-///Codificacion de celdas para posicion.
-///Codification of cells for position.
+///Codification of local cells according to the position.
 #define PC__CodeMapOut   0xffffffff
 #define PC__CodeSpecial  0x80000000
 #define PC__CodeDomLeft  0x80000000
@@ -420,6 +419,30 @@ inline const char* GetNameDivision(TpMgDivMode axis){
 #define PC__MaxCellx(cc) ((0xffffffff>>((cc>>10)&31))>>1)           //-Coordenada X de celda maxima. | Maximum X coordinate of the cell.
 #define PC__MaxCelly(cc) ((0xffffffff<<(cc>>25))>>((cc>>5)&31))     //-Coordenada Y de celda maxima. | Maximum Y coordinate of the cell.
 #define PC__MaxCellz(cc) ((0xffffffff<<(cc&31))>>(cc&31))           //-Coordenada Z de celda maxima. | Maximum Z coordinate of the cell.
+
+
+///Codification of global cells (size=dosh) according to the position for particle interaction usin pos-cell method.
+//-Cell configuration 1:
+#define CEL1_X 0xfff80000  //-Mask of bits for cell X: 13 bits for 8192 ->  1111 1111 1111 1000   0000 0000 0000 0000
+#define CEL1_Y 0x0007fe00  //-Mask of bits for cell Y: 10 bits for 1024 ->  0000 0000 0000 0111   1111 1110 0000 0000
+#define CEL1_Z 0x000001ff  //-Mask of bits for cell Z:  9 bits for  512 ->  0000 0000 0000 0000   0000 0001 1111 1111
+#define CEL1_MOVX 19       //-Displacement to obaint X cell.
+#define CEL1_MOVY 9        //-Displacement to obaint Y cell.
+//-Cell configuration in use:
+#define CEL_X CEL1_X        //-Selected mask of bits for cell X
+#define CEL_Y CEL1_Y        //-Selected mask of bits for cell Y
+#define CEL_Z CEL1_Z        //-Selected mask of bits for cell Z
+#define CEL_MOVX CEL1_MOVX  //-Selected displacement to obaint X cell.
+#define CEL_MOVY CEL1_MOVY  //-Selected displacement to obaint Y cell.
+//-Cell methods:
+#define CEL_GetPartX(cel)  (cel&CEL_X)                        //-Returns bits of X cell.
+#define CEL_GetPartY(cel)  (cel&CEL_Y)                        //-Returns bits of Y cell.
+#define CEL_GetPartZ(cel)  (cel&CEL_Z)                        //-Returns bits of Z cell.
+#define CEL_GetX(cel)      (cel>>CEL_MOVX)                    //-Returns X coordinate of the cell.
+#define CEL_GetY(cel)      (CEL_GetPartY(cel)>>CEL_MOVY)      //-Returns Y coordinate of the cell.
+#define CEL_GetZ(cel)      (cel&CEL_Z)                        //-Returns Z coordinate of the cell.
+#define CEL_Code(cx,cy,cz) ((cx<<CEL_MOVX)|(cy<<CEL_MOVY)|cz) //-Returns code for cell (cx,cy,cz).
+
 
 #endif
 

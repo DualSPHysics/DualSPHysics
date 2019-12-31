@@ -24,7 +24,7 @@
  along with DualSPHysics. If not, see <http://www.gnu.org/licenses/>.
 
 
-DualSPHysics4 [Symmetry] v4.4.044 (29-12-2019)
+DualSPHysics4 [Symmetry] v4.4.046 (30-12-2019)
 ===============================================
 LoadDsphConfig> .../bin/windows/DsphConfig.xml
 Information about execution parameters:
@@ -41,11 +41,7 @@ Information about execution parameters:
     -gpu[:id]   Execution on GPU and id of the device
 
     -stable     The result is always the same but the execution is slower
-
-    -posdouble:<mode>  Precision used in position for particle interactions
-        0: Use and store in single precision (option by default)
-        1: Use double precision but saves result in single precision
-        2: Use and store in double precision
+    -saveposdouble:<0/1>  Saves position using double precision (default=0)
 
     -ompthreads:<int>  Only for CPU execution, indicates the number of threads
                    by host for parallel execution, this takes the number of 

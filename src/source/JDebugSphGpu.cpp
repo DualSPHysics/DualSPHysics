@@ -131,12 +131,30 @@ tdouble3* JDebugSphGpu::GetPosd3(unsigned n,const tdouble2 *posxy,const double *
   return(posd);
 }
 
+//==============================================================================
+/// Returns dynamic pointer with relative position from PosCell. (this pointer must be deleted)
+//==============================================================================
+tfloat3* JDebugSphGpu::GetPosCell_Pos(unsigned n,const tfloat4 *poscell){
+  tfloat3 *posf=JDataArrays::NewArrayFloat3(n,false);
+  for(unsigned c=0;c<n;c++){
+    const tfloat4 ps=poscell[c];
+    posf[c]=TFloat3(ps.x,ps.y,ps.z);
+  }
+  return(posf);
+}
 
-
-
-
-
-
+//==============================================================================
+/// Returns dynamic pointer with cell coordinates from PosCell. (this pointer must be deleted)
+//==============================================================================
+tuint3* JDebugSphGpu::GetPosCell_Cell(unsigned n,const tfloat4 *poscell){
+  const tuint4* poscellu=(const tuint4*)poscell;
+  tuint3 *cell=JDataArrays::NewArrayUint3(n,false);
+  for(unsigned c=0;c<n;c++){
+    const unsigned cellu=poscellu[c].w;
+    cell[c]=TUint3(CEL_GetX(cellu),CEL_GetY(cellu),CEL_GetZ(cellu));
+  }
+  return(cell);
+}
 
 //==============================================================================
 /// Checks list of variables and returns the unknown variable.
@@ -149,7 +167,7 @@ std::string JDebugSphGpu::PrepareVars(const std::string &vlist){
 /// Checks list of variables and returns the unknown variable.
 //==============================================================================
 std::string JDebugSphGpu::CheckVars(std::string vlist){
-  const string allvars=",all,idp,gid,seq,cell,vel,rhop,ace,ar,";
+  const string allvars=",all,idp,gid,seq,cell,vel,rhop,ace,ar,poscell,";
   vlist=fun::StrLower(vlist);
   while(!vlist.empty()){
     string var=fun::StrSplit(",",vlist);
@@ -222,6 +240,17 @@ void JDebugSphGpu::LoadParticlesData(const JSphGpuSingle *gp,unsigned pini,unsig
     delete[] posxy; posxy=NULL;
     delete[] posz;  posz=NULL;
   }
+  //-Loads poscell. //<vs_tesmode_ini> 
+  if(all || FindVar("poscell",vars)){
+    const float4 *ptrg=gp->PosCellg;
+    if(ptrg){
+      const tfloat4 *poscell=fcuda::ToHostFloat4(pini,n,ptrg);
+      arrays->AddArray("poscell_Pos" ,n,GetPosCell_Pos (n,poscell),true);
+      arrays->AddArray("poscell_Cell",n,GetPosCell_Cell(n,poscell),true);
+      delete[] poscell; poscell=NULL;
+    }
+    else if(!all)Run_ExceptioonFileSta("The variable PosCellg is NULL.",file);
+  } //<vs_tesmode_end> 
   //-Loads ace.
   if(all || FindVar("ace",vars)){
     const float3 *ptrg=gp->Aceg;

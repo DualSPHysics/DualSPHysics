@@ -42,7 +42,7 @@ void JCfgRun::Reset(){
   Cpu=false;
   Gpu=false; GpuId=-1; GpuFree=false;
   Stable=false;
-  PosDouble=-1;
+  SvPosDouble=-1;
   OmpThreads=0;
   SvTimers=true;
   CellMode=CELLMODE_2H;
@@ -93,11 +93,7 @@ void JCfgRun::VisuInfo()const{
   printf("    -gpu[:id]   Execution on GPU and id of the device\n");
   printf("\n");
   printf("    -stable     The result is always the same but the execution is slower\n");
-  printf("\n");
-  printf("    -posdouble:<mode>  Precision used in position for particle interactions\n");
-  printf("        0: Use and store in single precision (option by default)\n");
-  printf("        1: Use double precision but saves result in single precision\n");
-  printf("        2: Use and store in double precision\n");
+  printf("    -saveposdouble:<0/1>  Saves position using double precision (default=0)\n");
   printf("\n");
 #ifdef OMP_USE
   printf("    -ompthreads:<int>  Only for CPU execution, indicates the number of threads\n");
@@ -179,7 +175,7 @@ void JCfgRun::VisuConfig()const{
   printf("  %s  %s\n",VarStr("Gpu",Gpu).c_str(),VarStr("GpuId",GpuId).c_str());
   PrintVar("  GpuFree",GpuFree,ln);
   PrintVar("  Stable",Stable,ln);
-  PrintVar("  PosDouble",PosDouble,ln);
+  PrintVar("  SvPosDouble",SvPosDouble,ln);
   PrintVar("  OmpThreads",OmpThreads,ln);
   PrintVar("  CellMode",GetNameCellMode(CellMode),ln);
   PrintVar("  TStep",TStep,ln);
@@ -234,7 +230,7 @@ void JCfgRun::LoadArgv(int argc,char** argv){
         if(divide){
           if(optn>=MAXOPTS)RunException(met,"Has exceeded the maximum configuration options.");
           optlis[optn]=tex.substr(0,pos); optn++;
-          tex=tex.substr(pos+1);
+          tex=StrTrim(tex.substr(pos+1)); //-StrTrim() removes spaces between options.
           pos=int(tex.find(" "));
         }
         else pos=int(tex.find(" ",pos+1));
@@ -314,11 +310,9 @@ void JCfgRun::LoadOpts(string *optlis,int optn,int lv,string file){
         if(txoptfull!="")GpuId=atoi(txoptfull.c_str()); 
       }
       else if(txword=="STABLE")Stable=(txoptfull!=""? atoi(txoptfull.c_str()): 1)!=0;
-      else if(txword=="POSDOUBLE"){
-        if(txoptfull=="0")PosDouble=0;
-        else if(txoptfull=="1")PosDouble=1;
-        else if(txoptfull=="2")PosDouble=2;
-        else ErrorParm(opt,c,lv,file);
+      else if(txword=="SAVEPOSDOUBLE"){
+        const int v=(txoptfull!=""? atoi(txoptfull.c_str()): 1);
+        SvPosDouble=(!v? 0: 1);
       }
 #ifdef OMP_USE
       else if(txword=="OMPTHREADS"){ 

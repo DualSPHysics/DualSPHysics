@@ -98,7 +98,6 @@ typedef struct StrInterParmsg{
   //-Configuration options.
   bool simulate2d;
   bool symmetry; //<vs_syymmetry>
-  bool psingle;
   TpKernel tkernel;
   TpFtMode ftmode;
   bool lamsps;
@@ -124,7 +123,7 @@ typedef struct StrInterParmsg{
   const unsigned *dcell;
   const double2 *posxy;
   const double *posz;
-  const float4 *pospress;
+  const float4 *poscell;
   const float4 *velrhop;
   const unsigned *idp;
   const typecode *code;
@@ -145,7 +144,7 @@ typedef struct StrInterParmsg{
   StrInterParmsg(
      bool simulate2d_
     ,bool symmetry_ //<vs_syymmetry>
-    ,bool psingle_,TpKernel tkernel_,TpFtMode ftmode_
+    ,TpKernel tkernel_,TpFtMode ftmode_
     ,bool lamsps_,TpDensity tdensity_,TpShifting shiftmode_
     ,TpCellMode cellmode_
     ,float viscob_,float viscof_
@@ -154,7 +153,7 @@ typedef struct StrInterParmsg{
     ,unsigned id_,TpMgDivMode axis_
     ,tuint3 ncells_,tuint3 cellmin_
     ,const int2 *begincell_,const unsigned *dcell_
-    ,const double2 *posxy_,const double *posz_,const float4 *pospress_
+    ,const double2 *posxy_,const double *posz_,const float4 *poscell_
     ,const float4 *velrhop_,const unsigned *idp_,const typecode *code_
     ,const float *ftomassp_,const tsymatrix3f *spstau_
     ,float *viscdt_,float* ar_,float3 *ace_,float *delta_
@@ -166,7 +165,7 @@ typedef struct StrInterParmsg{
     //-Configuration options.
     simulate2d=simulate2d_;
     symmetry=symmetry_; //<vs_syymmetry>
-    psingle=psingle_; tkernel=tkernel_; ftmode=ftmode_;
+    tkernel=tkernel_; ftmode=ftmode_;
     lamsps=lamsps_; tdensity=tdensity_; shiftmode=shiftmode_;
     //-Execution values.
     hdiv=(cellmode_==CELLMODE_H? 2: 1);
@@ -183,7 +182,7 @@ typedef struct StrInterParmsg{
     cellmin=TInt3(int(cellmin_.x),int(cellmin_.y),int(cellmin_.z));
     //-Input data arrays.
     begincell=begincell_; dcell=dcell_;
-    posxy=posxy_; posz=posz_; pospress=pospress_;
+    posxy=posxy_; posz=posz_; poscell=poscell_;
     velrhop=velrhop_; idp=idp_; code=code_;
     ftomassp=ftomassp_; tau=spstau_;
     //-Output data arrays.
@@ -201,13 +200,6 @@ typedef struct StrInterParmsg{
 /// Implements a set of functions and CUDA kernels for the particle interaction and system update.
 namespace cusph{
 
-inline int3 Int3(const tint3& v){ int3 p={v.x,v.y,v.z}; return(p); }
-inline float3 Float3(const tfloat3& v){ float3 p={v.x,v.y,v.z}; return(p); }
-inline float3 Float3(float x,float y,float z){ float3 p={x,y,z}; return(p); }
-inline tfloat3 ToTFloat3(const float3& v){ return(TFloat3(v.x,v.y,v.z)); }
-inline double3 Double3(const tdouble3& v){ double3 p={v.x,v.y,v.z}; return(p); }
-inline double4 Double4(const tdouble4& v){ double4 p={v.x,v.y,v.z,v.w}; return(p); }
-
 dim3 GetGridSize(unsigned n,unsigned blocksize);
 inline unsigned ReduMaxFloatSize(unsigned ndata){ return((ndata/SPHBSIZE+1)+(ndata/(SPHBSIZE*SPHBSIZE)+SPHBSIZE)); }
 float ReduMaxFloat(unsigned ndata,unsigned inidata,float* data,float* resu);
@@ -221,19 +213,14 @@ void ComputeAceMod(unsigned n,const typecode *code,const float3 *ace,float *acem
 
 void ComputeVelMod(unsigned n,const float4 *vel,float *velmod);
 
-//-Kernels for preparing the force calculation for Pos-Single.
-//-Kernels para preparar calculo de fuerzas con Pos-Single.
-void PreInteractionSingle(unsigned np,const double2 *posxy,const double *posz
-  ,const float4 *velrhop,float4 *pospress,float cteb,float ctegamma);
-
 //-Kernels for the force calculation.
 void Interaction_Forces(const StInterParmsg &t);
 
 //-Kernels for the calculation of the DEM forces.
-void Interaction_ForcesDem(bool psingle,TpCellMode cellmode,unsigned bsize
+void Interaction_ForcesDem(TpCellMode cellmode,unsigned bsize
   ,unsigned nfloat,tuint3 ncells,const int2 *begincell,tuint3 cellmin,const unsigned *dcell
   ,const unsigned *ftridp,const float4 *demdata,const float *ftomassp,float dtforce
-  ,const double2 *posxy,const double *posz,const float4 *pospress,const float4 *velrhop
+  ,const float4 *poscell,const float4 *velrhop
   ,const typecode *code,const unsigned *idp,float *viscdt,float3 *ace,StKerInfo *kerinfo);
 
 //-Kernels for calculating the Laminar+SPS viscosity.

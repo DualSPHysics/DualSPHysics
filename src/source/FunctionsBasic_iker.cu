@@ -34,7 +34,9 @@
 //==============================================================================
 // Basic conversion functions.
 //==============================================================================
+inline int3 Int3(const tint3& v){ int3 p={v.x,v.y,v.z}; return(p); }
 inline float3 Float3(const tfloat3& v){ float3 p={v.x,v.y,v.z}; return(p); }
+inline float3 Float3(float x,float y,float z){ float3 p={x,y,z}; return(p); }
 inline float4 Float4(const tfloat4& v){ float4 p={v.x,v.y,v.z,v.w}; return(p); }
 inline double3 Double3(const tdouble3& v){ double3 p={v.x,v.y,v.z}; return(p); }
 inline double4 Double4(const tdouble4& v){ double4 p={v.x,v.y,v.z,v.w}; return(p); }

@@ -67,7 +67,7 @@ public:
   int GpuId;
   bool GpuFree;
   bool Stable;
-  int PosDouble;  ///<Precision in particle interaction. 0:Simple, 1:Double, 2:Uses and save double (default=0).
+  int SvPosDouble;  ///<Saves particle position using double precision (default=0)
 
   int OmpThreads;
 

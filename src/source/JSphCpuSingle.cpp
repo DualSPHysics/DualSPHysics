@@ -507,7 +507,7 @@ void JSphCpuSingle::Interaction_Forces(TpInterStep interstep){
   float viscdt=0;
   const stinterparmsc parms=StInterparmsc(Np,Npb,NpbOk,CellDivSingle->GetNcells()
     ,CellDivSingle->GetBeginCell(),CellDivSingle->GetCellDomainMin(),Dcellc
-    ,Posc,PsPosc,Velrhopc,Idpc,Codec,Pressc,Arc,Acec,Deltac
+    ,Posc,Velrhopc,Idpc,Codec,Pressc,Arc,Acec,Deltac
     ,SpsTauc,SpsGradvelc,ShiftingMode,ShiftPosfsc);
   JSphCpu::Interaction_Forces_ct(parms,viscdt);
 

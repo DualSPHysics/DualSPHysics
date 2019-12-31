@@ -34,8 +34,7 @@ typedef struct{
   const unsigned *begincell;
   tuint3 cellmin;
   const unsigned *dcell;
-  const tdouble3 *pdpos;
-  const tfloat3 *pspos;
+  const tdouble3 *pos;
   const tfloat4 *velrhop;
   const unsigned *idp;
   const typecode *code;
@@ -52,8 +51,7 @@ typedef struct{
 ///Collects parameters for particle interaction on CPU.
 inline stinterparmsc StInterparmsc(unsigned np,unsigned npb,unsigned npbok
   ,tuint3 ncells,const unsigned *begincell,tuint3 cellmin,const unsigned *dcell
-  ,const tdouble3 *pdpos,const tfloat3 *pspos
-  ,const tfloat4 *velrhop,const unsigned *idp,const typecode *code
+  ,const tdouble3 *pos,const tfloat4 *velrhop,const unsigned *idp,const typecode *code
   ,const float *press
   ,float* ar,tfloat3 *ace,float *delta
   ,tsymatrix3f *spstau,tsymatrix3f *spsgradvel
@@ -61,7 +59,7 @@ inline stinterparmsc StInterparmsc(unsigned np,unsigned npb,unsigned npbok
 {
   stinterparmsc d={np,npb,npbok,(np-npb)
     ,ncells,begincell,cellmin,dcell
-    ,pdpos,pspos,velrhop,idp,code
+    ,pos,velrhop,idp,code
     ,press
     ,ar,ace,delta
     ,spstau,spsgradvel
@@ -130,8 +128,6 @@ protected:
   StFtoForcesRes *FtoForcesRes; ///<Stores data to update floatings [FtCount].
 
   //-Variables for computation of forces | Vars. para computo de fuerzas.
-  tfloat3 *PsPosc;       ///<Position and prrhop for Pos-Single interaction | Posicion y prrhop para interaccion Pos-Single.
-
   tfloat3 *Acec;         ///<Sum of interaction forces | Acumula fuerzas de interaccion
   float *Arc; 
   float *Deltac;         ///<Adjusted sum with Delta-SPH with DELTA_DynamicExt | Acumula ajuste de Delta-SPH con DELTA_DynamicExt
@@ -220,35 +216,33 @@ protected:
     ,int hdiv,const tint4 &nc,const tint3 &cellzero                       //<vs_innlet>
     ,int &cxini,int &cxfin,int &yini,int &yfin,int &zini,int &zfin)const; //<vs_innlet>
 
-  template<bool psingle,TpKernel tker,TpFtMode ftmode> void InteractionForcesBound
+  template<TpKernel tker,TpFtMode ftmode> void InteractionForcesBound
     (unsigned n,unsigned pini,tint4 nc,int hdiv,unsigned cellinitial
     ,const unsigned *beginendcell,tint3 cellzero,const unsigned *dcell
-    ,const tdouble3 *pos,const tfloat3 *pspos,const tfloat4 *velrhopp,const typecode *code,const unsigned *id
+    ,const tdouble3 *pos,const tfloat4 *velrhop,const typecode *code,const unsigned *id
     ,float &viscdt,float *ar)const;
 
-  template<bool psingle,TpKernel tker,TpFtMode ftmode,bool lamsps,TpDensity tdensity,bool shift> void InteractionForcesFluid
+  template<TpKernel tker,TpFtMode ftmode,bool lamsps,TpDensity tdensity,bool shift> void InteractionForcesFluid
     (unsigned n,unsigned pini,tint4 nc,int hdiv,unsigned cellfluid,float visco
     ,const unsigned *beginendcell,tint3 cellzero,const unsigned *dcell
     ,const tsymatrix3f* tau,tsymatrix3f* gradvel
-    ,const tdouble3 *pos,const tfloat3 *pspos,const tfloat4 *velrhop,const typecode *code,const unsigned *idp
+    ,const tdouble3 *pos,const tfloat4 *velrhop,const typecode *code,const unsigned *idp
     ,const float *press
     ,float &viscdt,float *ar,tfloat3 *ace,float *delta
     ,TpShifting shiftmode,tfloat4 *shiftposfs)const;
 
-  template<bool psingle> void InteractionForcesDEM
-    (unsigned nfloat,tint4 nc,int hdiv,unsigned cellfluid
+  void InteractionForcesDEM(unsigned nfloat,tint4 nc,int hdiv,unsigned cellfluid
     ,const unsigned *beginendcell,tint3 cellzero,const unsigned *dcell
     ,const unsigned *ftridp,const StDemData* demobjs
-    ,const tdouble3 *pos,const tfloat3 *pspos,const tfloat4 *velrhop,const typecode *code,const unsigned *idp
+    ,const tdouble3 *pos,const tfloat4 *velrhop,const typecode *code,const unsigned *idp
     ,float &viscdt,tfloat3 *ace)const;
 
-  template<bool psingle,TpKernel tker,TpFtMode ftmode,bool lamsps,TpDensity tdensity,bool shift> 
+  template<TpKernel tker,TpFtMode ftmode,bool lamsps,TpDensity tdensity,bool shift> 
     void Interaction_ForcesCpuT(const stinterparmsc &t,float &viscdt)const;
-  template<bool psingle,TpKernel tker,TpFtMode ftmode,bool lamsps,TpDensity tdensity> void Interaction_Forces_ct5(const stinterparmsc &t,float &viscdt)const;
-  template<bool psingle,TpKernel tker,TpFtMode ftmode,bool lamsps> void Interaction_Forces_ct4(const stinterparmsc &t,float &viscdt)const;
-  template<bool psingle,TpKernel tker,TpFtMode ftmode> void Interaction_Forces_ct3(const stinterparmsc &t,float &viscdt)const;
-  template<bool psingle,TpKernel tker> void Interaction_Forces_ct2(const stinterparmsc &t,float &viscdt)const;
-  template<bool psingle> void Interaction_Forces_ct1(const stinterparmsc &t,float &viscdt)const;
+  template<TpKernel tker,TpFtMode ftmode,bool lamsps,TpDensity tdensity> void Interaction_Forces_ct5(const stinterparmsc &t,float &viscdt)const;
+  template<TpKernel tker,TpFtMode ftmode,bool lamsps> void Interaction_Forces_ct4(const stinterparmsc &t,float &viscdt)const;
+  template<TpKernel tker,TpFtMode ftmode> void Interaction_Forces_ct3(const stinterparmsc &t,float &viscdt)const;
+  template<TpKernel tker> void Interaction_Forces_ct2(const stinterparmsc &t,float &viscdt)const;
   void Interaction_Forces_ct(const stinterparmsc &t,float &viscdt)const;
 
   void ComputeSpsTau(unsigned n,unsigned pini,const tfloat4 *velrhop,const tsymatrix3f *gradvel,tsymatrix3f *tau)const;

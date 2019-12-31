@@ -34,6 +34,7 @@
 #include "JTimeOut.h"
 #include "JTimeControl.h"
 #include "JSphGpu_ker.h"
+#include "JSphGpuSimple_ker.h"
 #include "JGaugeSystem.h"
 #include "JSphInOut.h"  //<vs_innlet>
 #include "JLinearValue.h"
@@ -363,6 +364,9 @@ void JSphGpuSingle::RunCellDivide(bool updateperiodic){
   Npb=CellDivSingle->GetNpbFinal();
   NpbOk=Npb-CellDivSingle->GetNpbIgnore();
 
+  //-Update PosCellg[] according to current position of particles.
+  cusphs::UpdatePosCell(Np,Map_PosMin,Dosh,Posxyg,Poszg,PosCellg,NULL);
+
   //-Manages excluded particles fixed, moving and floating before aborting the execution.
   if(CellDivSingle->GetNpbOut())AbortBoundOut();
 
@@ -412,7 +416,7 @@ void JSphGpuSingle::Interaction_Forces(TpInterStep interstep){
   //-Interaction Fluid-Fluid/Bound & Bound-Fluid.
   const StInterParmsg parms=StrInterParmsg(Simulate2D
     ,Symmetry //<vs_syymmetry>
-    ,Psingle,TKernel,FtMode
+    ,TKernel,FtMode
     ,lamsps,TDensity,ShiftingMode
     ,CellMode
     ,Visco*ViscoBoundFactor,Visco
@@ -420,7 +424,7 @@ void JSphGpuSingle::Interaction_Forces(TpInterStep interstep){
     ,0,DivAxis
     ,CellDivSingle->GetNcells(),CellDivSingle->GetCellDomainMin()
     ,CellDivSingle->GetBeginCell(),Dcellg
-    ,Posxyg,Poszg,PsPospressg,Velrhopg,Idpg,Codeg
+    ,Posxyg,Poszg,PosCellg,Velrhopg,Idpg,Codeg
     ,FtoMasspg,SpsTaug
     ,ViscDtg,Arg,Aceg,Deltag
     ,SpsGradvelg
@@ -429,7 +433,7 @@ void JSphGpuSingle::Interaction_Forces(TpInterStep interstep){
   cusph::Interaction_Forces(parms);
 
   //-Interaction DEM Floating-Bound & Floating-Floating. //(DEM)
-  if(UseDEM)cusph::Interaction_ForcesDem(Psingle,CellMode,BlockSizes.forcesdem,CaseNfloat,CellDivSingle->GetNcells(),CellDivSingle->GetBeginCell(),CellDivSingle->GetCellDomainMin(),Dcellg,FtRidpg,DemDatag,FtoMasspg,float(DemDtForce),Posxyg,Poszg,PsPospressg,Velrhopg,Codeg,Idpg,ViscDtg,Aceg,NULL);
+  if(UseDEM)cusph::Interaction_ForcesDem(CellMode,BlockSizes.forcesdem,CaseNfloat,CellDivSingle->GetNcells(),CellDivSingle->GetBeginCell(),CellDivSingle->GetCellDomainMin(),Dcellg,FtRidpg,DemDatag,FtoMasspg,float(DemDtForce),PosCellg,Velrhopg,Codeg,Idpg,ViscDtg,Aceg,NULL);
 
   //-For 2D simulations always overrides the 2nd component (Y axis).
   //-Para simulaciones 2D anula siempre la 2º componente.

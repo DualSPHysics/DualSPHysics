@@ -133,8 +133,7 @@ void JSph::InitVars(){
   Simulate2DPosY=0;
   Symmetry=false;
   Stable=false;
-  Psingle=true;
-  SvDouble=false;
+  SvPosDouble=false;
   RunCode=CalcRunCode();
   RunTimeDate="";
   CaseName=""; DirCase=""; RunName="";
@@ -387,7 +386,7 @@ void JSph::LoadConfig(const JCfgRun *cfg){
   const char* met="LoadConfig";
   TimerTot.Start();
   Stable=cfg->Stable;
-  Psingle=true; SvDouble=false; //-Options by default.
+  SvPosDouble=false; //-Options by default.
   DirOut=fun::GetDirWithSlash(cfg->DirOut);
   DirDataOut=(!cfg->DirDataOut.empty()? fun::GetDirWithSlash(DirOut+cfg->DirDataOut): DirOut);
   CaseName=cfg->CaseName; 
@@ -437,9 +436,7 @@ void JSph::LoadConfig(const JCfgRun *cfg){
   LoadCaseConfig();
 
   //-Aplies configuration using command line.
-  if(cfg->PosDouble==0){      Psingle=true;  SvDouble=false; }
-  else if(cfg->PosDouble==1){ Psingle=false; SvDouble=false; }
-  else if(cfg->PosDouble==2){ Psingle=false; SvDouble=true;  }
+  if(cfg->SvPosDouble>=0)SvPosDouble=(cfg->SvPosDouble!=0);
   if(cfg->TStep)TStep=cfg->TStep;
   if(cfg->VerletSteps>=0)VerletSteps=cfg->VerletSteps;
   if(cfg->TKernel)TKernel=cfg->TKernel;
@@ -529,12 +526,11 @@ void JSph::LoadCaseConfig(){
   if(ctes.GetEps()!=0)Log->PrintWarning("Eps value is not used (this correction is deprecated).");
 
   //-Execution parameters.
-  switch(eparms.GetValueInt("PosDouble",true,0)){
-    case 0:  Psingle=true;  SvDouble=false;  break;
-    case 1:  Psingle=false; SvDouble=false;  break;
-    case 2:  Psingle=false; SvDouble=true;   break;
-    default: RunException(met,"PosDouble value is not valid.");
+  if(eparms.Exists("PosDouble")){
+    Log->PrintWarning("The parameter \'PosDouble\' is deprecated.");
+    SvPosDouble=(eparms.GetValueInt("PosDouble")==2);
   }
+  if(eparms.Exists("SavePosDouble"))SvPosDouble=(eparms.GetValueInt("SavePosDouble",true,0)!=0);
   switch(eparms.GetValueInt("RigidAlgorithm",true,1)){ //(DEM)
     case 1:  UseDEM=false;    break;
     case 2:  UseDEM=true;     break;
@@ -1098,7 +1094,7 @@ void JSph::VisuConfig()const{
   Log->Print(fun::VarStr("RunName",RunName));
   if(Simulate2D)Log->Print(fun::VarStr("Simulate2DPosY",Simulate2DPosY));
   Log->Print(fun::VarStr("Symmetry",Symmetry));  //<vs_syymmetry>
-  Log->Print(fun::VarStr("PosDouble",GetPosDoubleName(Psingle,SvDouble)));
+  Log->Print(fun::VarStr("SavePosDouble",SvPosDouble));
   Log->Print(fun::VarStr("SvTimers",SvTimers));
   Log->Print(fun::VarStr("Boundary",GetBoundName(TBoundary)));
   Log->Print(fun::VarStr("StepAlgorithm",GetStepName(TStep)));
@@ -1294,13 +1290,12 @@ void JSph::ConfigCellDivision(){
 /// Establece dominio local de simulacion dentro de Map_Cells y calcula DomCellCode.
 //==============================================================================
 void JSph::SelecDomain(tuint3 celini,tuint3 celfin){
-  const char met[]="SelecDomain";
   DomCelIni=celini;
   DomCelFin=celfin;
   DomCells=DomCelFin-DomCelIni;
-  if(DomCelIni.x>=Map_Cells.x || DomCelIni.y>=Map_Cells.y || DomCelIni.z>=Map_Cells.z )RunException(met,"DomCelIni is invalid.");
-  if(DomCelFin.x>Map_Cells.x || DomCelFin.y>Map_Cells.y || DomCelFin.z>Map_Cells.z )RunException(met,"DomCelFin is invalid.");
-  if(DomCells.x<1 || DomCells.y<1 || DomCells.z<1 )RunException(met,"The domain of cells is invalid.");
+  if(DomCelIni.x>=Map_Cells.x || DomCelIni.y>=Map_Cells.y || DomCelIni.z>=Map_Cells.z )Run_Exceptioon("DomCelIni is invalid.");
+  if(DomCelFin.x>Map_Cells.x || DomCelFin.y>Map_Cells.y || DomCelFin.z>Map_Cells.z )Run_Exceptioon("DomCelFin is invalid.");
+  if(DomCells.x<1 || DomCells.y<1 || DomCells.z<1 )Run_Exceptioon("The domain of cells is invalid.");
   //-Computes local domain limits.
   DomPosMin.x=Map_PosMin.x+(DomCelIni.x*Scell);
   DomPosMin.y=Map_PosMin.y+(DomCelIni.y*Scell);
@@ -1325,10 +1320,29 @@ void JSph::SelecDomain(tuint3 celini,tuint3 celfin){
   //-Computes cofification of cells for the selected domain.
   //-Calcula codificacion de celdas para el dominio seleccionado.
   DomCellCode=CalcCellCode(DomCells+TUint3(1));
-  if(!DomCellCode)RunException(met,string("Failed to select a valid CellCode for ")+fun::UintStr(DomCells.x)+"x"+fun::UintStr(DomCells.y)+"x"+fun::UintStr(DomCells.z)+" cells (CellMode="+GetNameCellMode(CellMode)+").");
+  if(!DomCellCode)Run_Exceptioon(string("Failed to select a valid CellCode for ")+fun::UintStr(DomCells.x)+"x"+fun::UintStr(DomCells.y)+"x"+fun::UintStr(DomCells.z)+" cells (CellMode="+GetNameCellMode(CellMode)+").");
   //-Prints configurantion.
   Log->Print(string("DomCells=(")+fun::Uint3Str(DomCells)+")");
   Log->Print(fun::VarStr("DomCellCode",fun::UintStr(PC__GetSx(DomCellCode))+"_"+fun::UintStr(PC__GetSy(DomCellCode))+"_"+fun::UintStr(PC__GetSz(DomCellCode))));
+  //-Checks dimension for PosCell use.
+  if(!Cpu){
+    const unsigned bz=CEL_MOVY;
+    const unsigned by=CEL_MOVX-bz;
+    const unsigned bx=32-by-bz;
+    const unsigned nx=1<<bx,ny=1<<by,nz=1<<bz;
+    Log->Print(fun::VarStr("PosCellCode",fun::PrintStr("%d_%d_%d (%d,%d,%d)",bx,by,bz,nx,ny,nz)));
+    if(bx+by+bz!=32)Run_Exceptioon("Number of bits for cells is not 32.");
+    const unsigned maskx=(UINT_MAX>>(by+bz))<<(by+bz);
+    const unsigned maskz=(UINT_MAX<<(bx+by))>>(bx+by);
+    const unsigned masky=(UINT_MAX&(~(maskx|maskz)));
+    //Log->Printf("===> X(%02d):[%u]==[%u] cells:",bx,maskx,CEL_X);
+    //Log->Printf("===> Y(%02d):[%u]==[%u]",by,masky,CEL_Y);
+    //Log->Printf("===> Z(%02d):[%u]==[%u]",bz,maskz,CEL_Z);
+    if(maskx!=CEL_X)Run_Exceptioon("Mask for cell-X is wrong.");
+    if(masky!=CEL_Y)Run_Exceptioon("Mask for cell-Y is wrong.");
+    if(maskz!=CEL_Z)Run_Exceptioon("Mask for cell-Z is wrong.");
+    if(Map_Cells.x>nx || Map_Cells.y>ny || Map_Cells.z>nz)Run_Exceptioon("PosCellCode is invalid for MapCells.");
+  }
 }
 
 //==============================================================================
@@ -1928,7 +1942,7 @@ void JSph::SavePartData(unsigned npok,unsigned nout,const JDataArrays& arrays
       const unsigned *idp =arrays.GetArrayUint   ("Idp");
       const tfloat3  *vel =arrays.GetArrayFloat3 ("Vel");
       const float    *rhop=arrays.GetArrayFloat  ("Rhop");
-      if(SvDouble){
+      if(SvPosDouble){
         DataBi4->AddPartData(npok,idp,pos,vel,rhop);
       }
       else{
@@ -1993,7 +2007,7 @@ void JSph::SavePartData(unsigned npok,unsigned nout,const JDataArrays& arrays
 
   //-Stores data of excluded particles.
   if(DataOutBi4 && PartsOut->GetCount()){
-    DataOutBi4->SavePartOut(SvDouble,Part,TimeStep,PartsOut->GetCount(),PartsOut->GetIdpOut(),NULL,PartsOut->GetPosOut(),PartsOut->GetVelOut(),PartsOut->GetRhopOut(),PartsOut->GetMotiveOut());
+    DataOutBi4->SavePartOut(SvPosDouble,Part,TimeStep,PartsOut->GetCount(),PartsOut->GetIdpOut(),NULL,PartsOut->GetPosOut(),PartsOut->GetVelOut(),PartsOut->GetRhopOut(),PartsOut->GetMotiveOut());
   }
 
   //-Stores data of floating bodies.
@@ -2240,19 +2254,6 @@ void JSph::ShowResume(bool stop,float tsim,float ttot,bool all,std::string infop
   Log->Printf("Maximum number of cells..........: %u",MaxNumbers.cells);
   Log->Printf("CPU Memory.......................: %lld (%.2f MB)",MaxNumbers.memcpu,double(MaxNumbers.memcpu)/(1024*1024));
   if(MaxNumbers.memgpu)Log->Printf("GPU Memory.......................: %lld (%.2f MB)",MaxNumbers.memgpu,double(MaxNumbers.memgpu)/(1024*1024));
-}
-
-//==============================================================================
-/// Returns text about PosDouble configuration.
-/// Devuelve texto sobre la configuracion de PosDouble.
-//==============================================================================
-std::string JSph::GetPosDoubleName(bool psingle,bool svdouble){
-  string tx;
-  if(psingle && !svdouble)tx="0: Uses and stores in single precision";
-  else if(!psingle && !svdouble)tx="1: Uses double and stores in single precision";
-  else if(!psingle && svdouble)tx="2: Uses and stores in double precision";
-  else tx="???";
-  return(tx);
 }
 
 //==============================================================================

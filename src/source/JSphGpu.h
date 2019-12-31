@@ -144,6 +144,7 @@ protected:
   unsigned *Dcellg; ///<Cells inside DomCells coded with DomCellCode. | Celda dentro de DomCells codificada con DomCellCode.
   double2 *Posxyg;
   double *Poszg;
+  float4 *PosCellg; ///<Relative position and cell coordiantes for particle interaction {posx,posy,posz,cellxyz}
   float4 *Velrhopg;
 
   //-Variables for compute step: VERLET.
@@ -182,8 +183,6 @@ protected:
   float4 *DemDatag;       ///<Data of the object {mass, (1-poisson^2)/young, kfric, restitu} in GPU [DemObjsSize].
 
   //-Variables for computing forces
-  float4 *PsPospressg; ///<Position and pressure for the interaction Pos-Single press=cteb*(powf(rhop/rhopzero,gamma)-1.0f); | Posicion y press para interaccion Pos-Single. press=cteb*(powf(rhop/rhopzero,gamma)-1.0f); 
-
   float *ViscDtg;
   float3 *Aceg;      ///<Accumulates acceleration of the particles. | Acumula fuerzas de interaccion.
   float *Arg; 

@@ -31,6 +31,8 @@ namespace cusphs{
 
 //-Kernels to prepare data before Interaction_Forces().
 //-------------------------------------------------------
+void UpdatePosCell(unsigned np,tdouble3 posmin,float dosh
+  ,const double2 *posxy,const double *posz,float4 *poscell,cudaStream_t stm);
 void InitAceGravity(unsigned np,unsigned npb,tfloat3 gravity,float3 *ace,cudaStream_t stm);
 
 

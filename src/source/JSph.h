@@ -147,8 +147,7 @@ protected:
   double Simulate2DPosY; ///<Y value in 2D simulations.                        | Valor de Y en simulaciones 2D.
   bool Symmetry;         ///<Activates symmetry in plane y=0 (default=false).
   bool Stable;
-  bool Psingle;
-  bool SvDouble;     ///<Indicates whether Pos is saved as double in bi4 files. | Indica si en los ficheros bi4 se guarda Pos como double.
+  bool SvPosDouble;      ///<Indicates whether Pos is saved as double in bi4 files. | Indica si en los ficheros bi4 se guarda Pos como double.
 
   std::string AppName;
   std::string Hardware;
@@ -428,7 +427,6 @@ public:
   JSph(bool cpu,bool mgpu,bool withmpi);
   ~JSph();
 
-  static std::string GetPosDoubleName(bool psingle,bool svdouble);
   static std::string GetStepName(TpStep tstep);
   static std::string GetKernelName(TpKernel tkernel);
   static std::string GetViscoName(TpVisco tvisco);

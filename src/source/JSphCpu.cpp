@@ -77,7 +77,6 @@ void JSphCpu::InitVars(){
   Idpc=NULL; Codec=NULL; Dcellc=NULL; Posc=NULL; Velrhopc=NULL;
   VelrhopM1c=NULL;                //-Verlet
   PosPrec=NULL; VelrhopPrec=NULL; //-Symplectic
-  PsPosc=NULL;                    //-Interaccion Pos-Single.
   SpsTauc=NULL; SpsGradvelc=NULL; //-Laminar+SPS. 
   Arc=NULL; Acec=NULL; Deltac=NULL;
   ShiftPosfsc=NULL;               //-Shifting.
@@ -154,9 +153,8 @@ void JSphCpu::AllocCpuMemoryParticles(unsigned np,float over){
   ArraysCpu->AddArrayCount(JArraysCpu::SIZE_4B,5);  //-idp,ar,viscdt,dcell,prrhop
   if(DDTArray)ArraysCpu->AddArrayCount(JArraysCpu::SIZE_4B,1);  //-delta
   ArraysCpu->AddArrayCount(JArraysCpu::SIZE_12B,1); //-ace
-  ArraysCpu->AddArrayCount(JArraysCpu::SIZE_16B,1); //-velrhop
+  ArraysCpu->AddArrayCount(JArraysCpu::SIZE_16B,2); //-velrhop,poscell
   ArraysCpu->AddArrayCount(JArraysCpu::SIZE_24B,2); //-pos
-  if(Psingle)ArraysCpu->AddArrayCount(JArraysCpu::SIZE_12B,1); //-pspos
   if(TStep==STEP_Verlet){
     ArraysCpu->AddArrayCount(JArraysCpu::SIZE_16B,1); //-velrhopm1
   }
@@ -314,8 +312,8 @@ unsigned JSphCpu::GetParticlesData(unsigned n,unsigned pini,bool onlynormal
   unsigned num=n;
   //-Copy selected values.
   if(code)memcpy(code,Codec+pini,sizeof(typecode)*n);
-  if(idp)memcpy(idp,Idpc+pini,sizeof(unsigned)*n);
-  if(pos)memcpy(pos,Posc+pini,sizeof(tdouble3)*n);
+  if(idp) memcpy(idp ,Idpc +pini,sizeof(unsigned)*n);
+  if(pos) memcpy(pos ,Posc +pini,sizeof(tdouble3)*n);
   if(vel && rhop){
     for(unsigned p=0;p<n;p++){
       tfloat4 vr=Velrhopc[p+pini];
@@ -393,8 +391,7 @@ void JSphCpu::ConfigRunMode(const JCfgRun *cfg,std::string preinfo){
   else RunMode=string("OpenMP(Threads:")+fun::IntStr(OmpThreads)+")";
   if(!preinfo.empty())RunMode=preinfo+" - "+RunMode;
   if(Stable)RunMode=string("Stable - ")+RunMode;
-  if(Psingle)RunMode=string("Pos-Single - ")+RunMode;
-  else RunMode=string("Pos-Double - ")+RunMode;
+  RunMode=string("Pos-Double - ")+RunMode;
   Log->Print(" ");
   Log->Print(fun::VarStr("RunMode",RunMode));
   Log->Print(" ");
@@ -417,7 +414,7 @@ void JSphCpu::InitRunCpu(){
 /// Prepara variables para interaccion.
 //==============================================================================
 void JSphCpu::PreInteractionVars_Forces(unsigned np,unsigned npb){
-  //-Initialize Arrays.
+  //-Initialise arrays.
   const unsigned npf=np-npb;
   memset(Arc,0,sizeof(float)*np);                                    //Arc[]=0
   if(Deltac)memset(Deltac,0,sizeof(float)*np);                       //Deltac[]=0
@@ -430,7 +427,7 @@ void JSphCpu::PreInteractionVars_Forces(unsigned np,unsigned npb){
   //-Adds variable acceleration from input configuration.
   if(AccInput)AccInput->RunCpu(TimeStep,Gravity,npf,npb,Codec,Posc,Velrhopc,Acec);
 
-  //-Prepare values of rhop for interaction. | Prepara datos derivados de rhop para interaccion.
+  //-Prepare press values for interaction.
   const int n=int(np);
   #ifdef OMP_USE
     #pragma omp parallel for schedule (static) if(n>OMP_LIMIT_COMPUTELIGHT)
@@ -455,16 +452,7 @@ void JSphCpu::PreInteraction_Forces(){
   Pressc=ArraysCpu->ReserveFloat();
   if(TVisco==VISCO_LaminarSPS)SpsGradvelc=ArraysCpu->ReserveSymatrix3f();
 
-  //-Prepare values for interaction Pos-Simpe.
-  if(Psingle){
-    PsPosc=ArraysCpu->ReserveFloat3();
-    const int np=int(Np);
-    #ifdef OMP_USE
-      #pragma omp parallel for schedule (static) if(np>OMP_LIMIT_COMPUTELIGHT)
-    #endif
-    for(int p=0;p<np;p++){ PsPosc[p]=ToTFloat3(Posc[p]); }
-  }
-  //-Initialize Arrays.
+  //-Initialise arrays.
   PreInteractionVars_Forces(Np,Npb);
 
   //-Calculate VelMax: Floating object particles are included and do not affect use of periodic condition.
@@ -535,7 +523,6 @@ void JSphCpu::PosInteraction_Forces(){
   ArraysCpu->Free(Deltac);       Deltac=NULL;
   ArraysCpu->Free(ShiftPosfsc);  ShiftPosfsc=NULL;
   ArraysCpu->Free(Pressc);       Pressc=NULL;
-  ArraysCpu->Free(PsPosc);       PsPosc=NULL;
   ArraysCpu->Free(SpsGradvelc);  SpsGradvelc=NULL;
 }
 
@@ -731,10 +718,10 @@ void JSphCpu::GetInteractionCells(const tdouble3 &pos
 /// Perform interaction between particles. Bound-Fluid/Float
 /// Realiza interaccion entre particulas. Bound-Fluid/Float
 //==============================================================================
-template<bool psingle,TpKernel tker,TpFtMode ftmode> void JSphCpu::InteractionForcesBound
+template<TpKernel tker,TpFtMode ftmode> void JSphCpu::InteractionForcesBound
   (unsigned n,unsigned pinit,tint4 nc,int hdiv,unsigned cellinitial
   ,const unsigned *beginendcell,tint3 cellzero,const unsigned *dcell
-  ,const tdouble3 *pos,const tfloat3 *pspos,const tfloat4 *velrhop,const typecode *code,const unsigned *idp
+  ,const tdouble3 *pos,const tfloat4 *velrhop,const typecode *code,const unsigned *idp
   ,float &viscdt,float *ar)const
 {
   //-Initialize viscth to calculate max viscdt with OpenMP. | Inicializa viscth para calcular visdt maximo con OpenMP.
@@ -749,10 +736,9 @@ template<bool psingle,TpKernel tker,TpFtMode ftmode> void JSphCpu::InteractionFo
     float visc=0,arp1=0;
 
     //-Load data of particle p1. | Carga datos de particula p1.
+    const tdouble3 posp1=pos[p1];
+    const bool rsymp1=(Symmetry && posp1.y<=Dosh); //<vs_syymmetry>
     const tfloat3 velp1=TFloat3(velrhop[p1].x,velrhop[p1].y,velrhop[p1].z);
-    const tfloat3 psposp1=(psingle? pspos[p1]: TFloat3(0));
-    const tdouble3 posp1=(psingle? TDouble3(0): pos[p1]);
-    const bool rsymp1=(Symmetry && (psingle? psposp1.y<=Dosh: posp1.y<=Dosh)); //<vs_syymmetry>
 
     //-Obtain limits of interaction. | Obtiene limites de interaccion.
     int cxini,cxfin,yini,yfin,zini,zfin;
@@ -770,10 +756,10 @@ template<bool psingle,TpKernel tker,TpFtMode ftmode> void JSphCpu::InteractionFo
         //---------------------------------------------------------------------------------------------
         bool rsym=false; //<vs_syymmetry>
         for(unsigned p2=pini;p2<pfin;p2++){
-          const float drx=(psingle? psposp1.x-pspos[p2].x: float(posp1.x-pos[p2].x));
-                float dry=(psingle? psposp1.y-pspos[p2].y: float(posp1.y-pos[p2].y));
-          if(rsym)    dry=(psingle? psposp1.y+pspos[p2].y: float(posp1.y+pos[p2].y)); //<vs_syymmetry>
-          const float drz=(psingle? psposp1.z-pspos[p2].z: float(posp1.z-pos[p2].z));
+          const float drx=float(posp1.x-pos[p2].x);
+                float dry=float(posp1.y-pos[p2].y);
+          if(rsym)    dry=float(posp1.y+pos[p2].y); //<vs_syymmetry>
+          const float drz=float(posp1.z-pos[p2].z);
           const float rr2=drx*drx+dry*dry+drz*drz;
           if(rr2<=Fourh2 && rr2>=ALMOSTZERO){
             //-Cubic Spline, Wendland or Gaussian kernel.
@@ -805,10 +791,10 @@ template<bool psingle,TpKernel tker,TpFtMode ftmode> void JSphCpu::InteractionFo
                 visc=max(dot_rr2,visc);
               }
             }
-            rsym=(rsymp1 && !rsym && (psingle? psposp1.y-dry: float(posp1.y-dry))<=Dosh); //<vs_syymmetry>
-            if(rsym)p2--;                                                                 //<vs_syymmetry>
+            rsym=(rsymp1 && !rsym && float(posp1.y-dry)<=Dosh); //<vs_syymmetry>
+            if(rsym)p2--;                                       //<vs_syymmetry>
           }
-          else rsym=false;                                                                //<vs_syymmetry>
+          else rsym=false;                                      //<vs_syymmetry>
         }
       }
     }
@@ -827,11 +813,12 @@ template<bool psingle,TpKernel tker,TpFtMode ftmode> void JSphCpu::InteractionFo
 /// Perform interaction between particles: Fluid/Float-Fluid/Float or Fluid/Float-Bound
 /// Realiza interaccion entre particulas: Fluid/Float-Fluid/Float or Fluid/Float-Bound
 //==============================================================================
-template<bool psingle,TpKernel tker,TpFtMode ftmode,bool lamsps,TpDensity tdensity,bool shift> void JSphCpu::InteractionForcesFluid
+template<TpKernel tker,TpFtMode ftmode,bool lamsps,TpDensity tdensity,bool shift> 
+  void JSphCpu::InteractionForcesFluid
   (unsigned n,unsigned pinit,tint4 nc,int hdiv,unsigned cellinitial,float visco
   ,const unsigned *beginendcell,tint3 cellzero,const unsigned *dcell
   ,const tsymatrix3f* tau,tsymatrix3f* gradvel
-  ,const tdouble3 *pos,const tfloat3 *pspos,const tfloat4 *velrhop,const typecode *code,const unsigned *idp
+  ,const tdouble3 *pos,const tfloat4 *velrhop,const typecode *code,const unsigned *idp
   ,const float *press 
   ,float &viscdt,float *ar,tfloat3 *ace,float *delta
   ,TpShifting shiftmode,tfloat4 *shiftposfs)const
@@ -863,13 +850,12 @@ template<bool psingle,TpKernel tker,TpFtMode ftmode,bool lamsps,TpDensity tdensi
     }
 
     //-Obtain data of particle p1.
+    const tdouble3 posp1=pos[p1];
     const tfloat3 velp1=TFloat3(velrhop[p1].x,velrhop[p1].y,velrhop[p1].z);
     const float rhopp1=velrhop[p1].w;
-    const tfloat3 psposp1=(psingle? pspos[p1]: TFloat3(0));
-    const tdouble3 posp1=(psingle? TDouble3(0): pos[p1]);
     const float pressp1=press[p1];
     const tsymatrix3f taup1=(lamsps? tau[p1]: gradvelp1);
-    const bool rsymp1=(Symmetry && (psingle? psposp1.y<=Dosh: posp1.y<=Dosh)); //<vs_syymmetry>
+    const bool rsymp1=(Symmetry && posp1.y<=Dosh); //<vs_syymmetry>
 
     //-Obtain interaction limits.
     int cxini,cxfin,yini,yfin,zini,zfin;
@@ -887,10 +873,10 @@ template<bool psingle,TpKernel tker,TpFtMode ftmode,bool lamsps,TpDensity tdensi
         //------------------------------------------------------------------------------------------------
         bool rsym=false; //<vs_syymmetry>
         for(unsigned p2=pini;p2<pfin;p2++){
-          const float drx=(psingle? psposp1.x-pspos[p2].x: float(posp1.x-pos[p2].x));
-                float dry=(psingle? psposp1.y-pspos[p2].y: float(posp1.y-pos[p2].y));
-          if(rsym)    dry=(psingle? psposp1.y+pspos[p2].y: float(posp1.y+pos[p2].y)); //<vs_syymmetry>
-          const float drz=(psingle? psposp1.z-pspos[p2].z: float(posp1.z-pos[p2].z));
+          const float drx=float(posp1.x-pos[p2].x);
+                float dry=float(posp1.y-pos[p2].y);
+          if(rsym)    dry=float(posp1.y+pos[p2].y); //<vs_syymmetry>
+          const float drz=float(posp1.z-pos[p2].z);
           const float rr2=drx*drx+dry*dry+drz*drz;
           if(rr2<=Fourh2 && rr2>=ALMOSTZERO){
             //-Cubic Spline, Wendland or Gaussian kernel.
@@ -990,10 +976,10 @@ template<bool psingle,TpKernel tker,TpFtMode ftmode,bool lamsps,TpDensity tdensi
                 }
               }
             }
-            rsym=(rsymp1 && !rsym && (psingle? psposp1.y-dry: float(posp1.y-dry))<=Dosh); //<vs_syymmetry>
-            if(rsym)p2--;                                                                 //<vs_syymmetry>
+            rsym=(rsymp1 && !rsym && float(posp1.y-dry)<=Dosh); //<vs_syymmetry>
+            if(rsym)p2--;                                       //<vs_syymmetry>
           }
-          else rsym=false;                                                                //<vs_syymmetry>
+          else rsym=false;                                      //<vs_syymmetry>
         }
       }
     }
@@ -1026,11 +1012,11 @@ template<bool psingle,TpKernel tker,TpFtMode ftmode,bool lamsps,TpDensity tdensi
 /// Perform DEM interaction between particles Floating-Bound & Floating-Floating //(DEM)
 /// Realiza interaccion DEM entre particulas Floating-Bound & Floating-Floating //(DEM)
 //==============================================================================
-template<bool psingle> void JSphCpu::InteractionForcesDEM
+void JSphCpu::InteractionForcesDEM
   (unsigned nfloat,tint4 nc,int hdiv,unsigned cellfluid
   ,const unsigned *beginendcell,tint3 cellzero,const unsigned *dcell
   ,const unsigned *ftridp,const StDemData* demdata
-  ,const tdouble3 *pos,const tfloat3 *pspos,const tfloat4 *velrhop
+  ,const tdouble3 *pos,const tfloat4 *velrhop
   ,const typecode *code,const unsigned *idp
   ,float &viscdt,tfloat3 *ace)const
 {
@@ -1049,8 +1035,7 @@ template<bool psingle> void JSphCpu::InteractionForcesDEM
       tfloat3 acep1=TFloat3(0);
 
       //-Get data of particle p1.
-      const tfloat3 psposp1=(psingle? pspos[p1]: TFloat3(0));
-      const tdouble3 posp1=(psingle? TDouble3(0): pos[p1]);
+      const tdouble3 posp1=pos[p1];
       const typecode tavp1=CODE_GetTypeAndValue(code[p1]);
       const float masstotp1=demdata[tavp1].mass;
       const float taup1=demdata[tavp1].tau;
@@ -1074,9 +1059,9 @@ template<bool psingle> void JSphCpu::InteractionForcesDEM
             //-Interaction of Floating Object particles with type Fluid or Bound. | Interaccion de Floating con varias Fluid o Bound.
             //-----------------------------------------------------------------------------------------------------------------------
             for(unsigned p2=pini;p2<pfin;p2++)if(CODE_IsNotFluid(code[p2]) && tavp1!=CODE_GetTypeAndValue(code[p2])){
-              const float drx=(psingle? psposp1.x-pspos[p2].x: float(posp1.x-pos[p2].x));
-              const float dry=(psingle? psposp1.y-pspos[p2].y: float(posp1.y-pos[p2].y));
-              const float drz=(psingle? psposp1.z-pspos[p2].z: float(posp1.z-pos[p2].z));
+              const float drx=float(posp1.x-pos[p2].x);
+              const float dry=float(posp1.y-pos[p2].y);
+              const float drz=float(posp1.z-pos[p2].z);
               const float rr2=drx*drx+dry*dry+drz*drz;
               const float rad=sqrt(rr2);
 
@@ -1169,7 +1154,7 @@ void JSphCpu::ComputeSpsTau(unsigned n,unsigned pini,const tfloat4 *velrhop,cons
 /// Interaction of Fluid-Fluid/Bound & Bound-Fluid (forces and DEM).
 /// Interaccion Fluid-Fluid/Bound & Bound-Fluid (forces and DEM).
 //==============================================================================
-template<bool psingle,TpKernel tker,TpFtMode ftmode,bool lamsps,TpDensity tdensity,bool shift>
+template<TpKernel tker,TpFtMode ftmode,bool lamsps,TpDensity tdensity,bool shift>
   void JSphCpu::Interaction_ForcesCpuT(const stinterparmsc &t,float &viscdt)const
 {
   const tint4 nc=TInt4(int(t.ncells.x),int(t.ncells.y),int(t.ncells.z),int(t.ncells.x*t.ncells.y));
@@ -1179,52 +1164,47 @@ template<bool psingle,TpKernel tker,TpFtMode ftmode,bool lamsps,TpDensity tdensi
   
   if(t.npf){
     //-Interaction Fluid-Fluid.
-    InteractionForcesFluid<psingle,tker,ftmode,lamsps,tdensity,shift> (t.npf,t.npb,nc,hdiv,cellfluid,Visco                 ,t.begincell,cellzero,t.dcell,t.spstau,t.spsgradvel,t.pdpos,t.pspos,t.velrhop,t.code,t.idp,t.press,viscdt,t.ar,t.ace,t.delta,t.shiftmode,t.shiftposfs);
+    InteractionForcesFluid<tker,ftmode,lamsps,tdensity,shift> (t.npf,t.npb,nc,hdiv,cellfluid,Visco                 ,t.begincell,cellzero,t.dcell,t.spstau,t.spsgradvel,t.pos,t.velrhop,t.code,t.idp,t.press,viscdt,t.ar,t.ace,t.delta,t.shiftmode,t.shiftposfs);
     //-Interaction Fluid-Bound.
-    InteractionForcesFluid<psingle,tker,ftmode,lamsps,tdensity,shift> (t.npf,t.npb,nc,hdiv,0        ,Visco*ViscoBoundFactor,t.begincell,cellzero,t.dcell,t.spstau,t.spsgradvel,t.pdpos,t.pspos,t.velrhop,t.code,t.idp,t.press,viscdt,t.ar,t.ace,t.delta,t.shiftmode,t.shiftposfs);
+    InteractionForcesFluid<tker,ftmode,lamsps,tdensity,shift> (t.npf,t.npb,nc,hdiv,0        ,Visco*ViscoBoundFactor,t.begincell,cellzero,t.dcell,t.spstau,t.spsgradvel,t.pos,t.velrhop,t.code,t.idp,t.press,viscdt,t.ar,t.ace,t.delta,t.shiftmode,t.shiftposfs);
 
     //-Interaction of DEM Floating-Bound & Floating-Floating. //(DEM)
-    if(UseDEM)InteractionForcesDEM<psingle> (CaseNfloat,nc,hdiv,cellfluid,t.begincell,cellzero,t.dcell,FtRidp,DemData,t.pdpos,t.pspos,t.velrhop,t.code,t.idp,viscdt,t.ace);
+    if(UseDEM)InteractionForcesDEM(CaseNfloat,nc,hdiv,cellfluid,t.begincell,cellzero,t.dcell,FtRidp,DemData,t.pos,t.velrhop,t.code,t.idp,viscdt,t.ace);
 
     //-Computes tau for Laminar+SPS.
     if(lamsps)ComputeSpsTau(t.npf,t.npb,t.velrhop,t.spsgradvel,t.spstau);
   }
   if(t.npbok){
     //-Interaction Bound-Fluid.
-    InteractionForcesBound<psingle,tker,ftmode> (t.npbok,0,nc,hdiv,cellfluid,t.begincell,cellzero,t.dcell,t.pdpos,t.pspos,t.velrhop,t.code,t.idp,viscdt,t.ar);
+    InteractionForcesBound<tker,ftmode> (t.npbok,0,nc,hdiv,cellfluid,t.begincell,cellzero,t.dcell,t.pos,t.velrhop,t.code,t.idp,viscdt,t.ar);
   }
 }
 //==============================================================================
-template<bool psingle,TpKernel tker,TpFtMode ftmode,bool lamsps,TpDensity tdensity> void JSphCpu::Interaction_Forces_ct5(const stinterparmsc &t,float &viscdt)const{
-  if(Shifting)Interaction_ForcesCpuT<psingle,tker,ftmode,lamsps,tdensity,true >(t,viscdt);
-  else        Interaction_ForcesCpuT<psingle,tker,ftmode,lamsps,tdensity,false>(t,viscdt);
+template<TpKernel tker,TpFtMode ftmode,bool lamsps,TpDensity tdensity> void JSphCpu::Interaction_Forces_ct5(const stinterparmsc &t,float &viscdt)const{
+  if(Shifting)Interaction_ForcesCpuT<tker,ftmode,lamsps,tdensity,true >(t,viscdt);
+  else        Interaction_ForcesCpuT<tker,ftmode,lamsps,tdensity,false>(t,viscdt);
 }
 //==============================================================================
-template<bool psingle,TpKernel tker,TpFtMode ftmode,bool lamsps> void JSphCpu::Interaction_Forces_ct4(const stinterparmsc &t,float &viscdt)const{
-       if(TDensity==DDT_None)    Interaction_Forces_ct5<psingle,tker,ftmode,lamsps,DDT_None    >(t,viscdt);
-  else if(TDensity==DDT_DDT)     Interaction_Forces_ct5<psingle,tker,ftmode,lamsps,DDT_DDT     >(t,viscdt);
+template<TpKernel tker,TpFtMode ftmode,bool lamsps> void JSphCpu::Interaction_Forces_ct4(const stinterparmsc &t,float &viscdt)const{
+       if(TDensity==DDT_None)    Interaction_Forces_ct5<tker,ftmode,lamsps,DDT_None    >(t,viscdt);
+  else if(TDensity==DDT_DDT)     Interaction_Forces_ct5<tker,ftmode,lamsps,DDT_DDT     >(t,viscdt);
 }
 //==============================================================================
-template<bool psingle,TpKernel tker,TpFtMode ftmode> void JSphCpu::Interaction_Forces_ct3(const stinterparmsc &t,float &viscdt)const{
-  if(TVisco==VISCO_LaminarSPS)Interaction_Forces_ct4<psingle,tker,ftmode,true >(t,viscdt);
-  else                        Interaction_Forces_ct4<psingle,tker,ftmode,false>(t,viscdt);
+template<TpKernel tker,TpFtMode ftmode> void JSphCpu::Interaction_Forces_ct3(const stinterparmsc &t,float &viscdt)const{
+  if(TVisco==VISCO_LaminarSPS)Interaction_Forces_ct4<tker,ftmode,true >(t,viscdt);
+  else                        Interaction_Forces_ct4<tker,ftmode,false>(t,viscdt);
 }
 //==============================================================================
-template<bool psingle,TpKernel tker> void JSphCpu::Interaction_Forces_ct2(const stinterparmsc &t,float &viscdt)const{
-       if(FtMode==FTMODE_None)Interaction_Forces_ct3<psingle,tker,FTMODE_None>(t,viscdt);
-  else if(FtMode==FTMODE_Sph )Interaction_Forces_ct3<psingle,tker,FTMODE_Sph >(t,viscdt);
-  else if(FtMode==FTMODE_Ext )Interaction_Forces_ct3<psingle,tker,FTMODE_Ext >(t,viscdt);
-}
-//==============================================================================
-template<bool psingle> void JSphCpu::Interaction_Forces_ct1(const stinterparmsc &t,float &viscdt)const{
-       if(TKernel==KERNEL_Wendland)Interaction_Forces_ct2<psingle,KERNEL_Wendland>(t,viscdt);
-  else if(TKernel==KERNEL_Gaussian)Interaction_Forces_ct2<psingle,KERNEL_Gaussian>(t,viscdt);
-  else if(TKernel==KERNEL_Cubic)   Interaction_Forces_ct2<psingle,KERNEL_Cubic   >(t,viscdt);
+template<TpKernel tker> void JSphCpu::Interaction_Forces_ct2(const stinterparmsc &t,float &viscdt)const{
+       if(FtMode==FTMODE_None)Interaction_Forces_ct3<tker,FTMODE_None>(t,viscdt);
+  else if(FtMode==FTMODE_Sph )Interaction_Forces_ct3<tker,FTMODE_Sph >(t,viscdt);
+  else if(FtMode==FTMODE_Ext )Interaction_Forces_ct3<tker,FTMODE_Ext >(t,viscdt);
 }
 //==============================================================================
 void JSphCpu::Interaction_Forces_ct(const stinterparmsc &t,float &viscdt)const{
-  if(Psingle)Interaction_Forces_ct1<true >(t,viscdt);
-  else       Interaction_Forces_ct1<false>(t,viscdt);
+       if(TKernel==KERNEL_Wendland)Interaction_Forces_ct2<KERNEL_Wendland>(t,viscdt);
+  else if(TKernel==KERNEL_Gaussian)Interaction_Forces_ct2<KERNEL_Gaussian>(t,viscdt);
+  else if(TKernel==KERNEL_Cubic)   Interaction_Forces_ct2<KERNEL_Cubic   >(t,viscdt);
 }
 
 //==============================================================================

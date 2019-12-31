@@ -34,6 +34,40 @@ namespace cusphs{
 //# Kernels to prepare data before Interaction_Forces().
 //##############################################################################
 //------------------------------------------------------------------------------
+/// Update PosCellg[] according to current position of particles.
+/// Actualiza PosCellg[] segun la posicion de las particulas.
+//------------------------------------------------------------------------------
+__global__ void KerUpdatePosCell(unsigned np,double3 posmin,float dosh
+  ,const double2 *posxy,const double *posz,float4 *poscell)
+{
+  const unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
+  if(p<np){
+    const double2 rxy=posxy[p];
+    const double dx=rxy.x-posmin.x;
+    const double dy=rxy.y-posmin.y;
+    const double dz=posz[p]-posmin.z;
+    const unsigned cx=unsigned(dx/dosh);
+    const unsigned cy=unsigned(dy/dosh);
+    const unsigned cz=unsigned(dz/dosh);
+    const float px=float(dx-(double(dosh)*cx));
+    const float py=float(dy-(double(dosh)*cy));
+    const float pz=float(dz-(double(dosh)*cz));
+    const float pw=__uint_as_float(CEL_Code(cx,cy,cz));
+    poscell[p]=make_float4(px,py,pz,pw);
+  }
+}
+//==============================================================================
+/// Update PosCellg[] according to current position of particles.
+/// Actualiza PosCellg[] segun la posicion de las particulas.
+//==============================================================================
+void UpdatePosCell(unsigned np,tdouble3 posmin,float dosh
+  ,const double2 *posxy,const double *posz,float4 *poscell,cudaStream_t stm)
+{
+  const dim3 sgrid=GetSimpleGridSize(np,SPHBSIZE);
+  if(np)KerUpdatePosCell <<<sgrid,SPHBSIZE,0,stm>>> (np,Double3(posmin),dosh,posxy,posz,poscell);
+}
+
+//------------------------------------------------------------------------------
 /// Initialises ace array with 0 for bound and gravity for fluid.
 /// Inicializa el array ace con 0 para contorno y gravity para fluido.
 //------------------------------------------------------------------------------
