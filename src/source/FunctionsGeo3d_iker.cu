@@ -59,6 +59,22 @@ __device__ bool PlanesDomainCheck(const double3 &pt,const double4 &plax
   return(dx>=0 && dx<=pladist.x && dy>=0 && dy<=pladist.y && dz>=0 && dz<=pladist.z);
 }
 
+//------------------------------------------------------------------------------
+/// Resuelve punto en el plano.
+/// Solves point in the plane.
+//------------------------------------------------------------------------------
+__device__ float PlanePoint(const float4 &pla,const float &ptx,const float &pty,const float &ptz){ 
+  return(pla.x*ptx+pla.y*pty+pla.z*ptz+pla.w);
+}
+
+//------------------------------------------------------------------------------
+/// Devuelve la distancia entre un punto y un plano con signo.
+/// Returns the distance between a point and a plane with sign.
+//------------------------------------------------------------------------------
+__device__ float PlaneDistSign(const float4 &pla,const float &ptx,const float &pty,const float &ptz){ 
+  return(PlanePoint(pla,ptx,pty,ptz)/sqrt(pla.x*pla.x+pla.y*pla.y+pla.z*pla.z));
+}
+
 
 
 

@@ -205,7 +205,7 @@ void JSphInOutGridData::ConfigFromFile(const std::string &filename){
   string ext=fun::StrUpper(fun::GetExtension(filename));
   if(ext=="CSV")LoadDataCsv(filename);
   else if(ext=="BIN")LoadDataBin(filename);
-  else RunException("ConfigFromFile","Unknown file extension.",filename);
+  else Run_ExceptioonFile("Unknown file extension.",filename);
   File=filename;
 }
 
@@ -213,19 +213,18 @@ void JSphInOutGridData::ConfigFromFile(const std::string &filename){
 /// Configures and load data from CSV file.
 //==============================================================================
 void JSphInOutGridData::LoadDataCsv(const std::string &filename){
-  const char met[]="LoadDataCsv";
   JReadDatafile rdat;
   rdat.LoadFile(filename);
   //-Load and check fmtversion.
   const unsigned rows=rdat.Lines()-rdat.RemLines();
   //printf("==> rows: %u\n",rows);
-  if(rows<2)RunException(met,"Number of rows is invalid.",filename);
-  if(rdat.ReadNextValue()!="fmtversion")RunException(met,"fmtversion is missing.",filename);
+  if(rows<2)Run_ExceptioonFile("Number of rows is invalid.",filename);
+  if(rdat.ReadNextValue()!="fmtversion")Run_ExceptioonFile("fmtversion is missing.",filename);
   rdat.SetReadLine(1);
   const unsigned fmtver=rdat.ReadNextUnsigned(true);
-  if(fmtver!=FmtVersion)RunException(met,fun::PrintStr("fmtversion value (%u) is invalid. The expected format version is %u.",fmtver,FmtVersion),filename);
+  if(fmtver!=FmtVersion)Run_ExceptioonFile(fun::PrintStr("fmtversion value (%u) is invalid. The expected format version is %u.",fmtver,FmtVersion),filename);
   //-Load head data according FmtVersion.
-  if(rows<5)RunException(met,"Number of data rows is invalid.",filename);
+  if(rows<5)Run_ExceptioonFile("Number of data rows is invalid.",filename);
   rdat.SetReadLine(0); rdat.ReadNextValue(true);
   bool headerror=false;
   if(rdat.ReadNextValue(true)!="grid_dpx")headerror=true;
@@ -233,7 +232,7 @@ void JSphInOutGridData::LoadDataCsv(const std::string &filename){
   if(rdat.ReadNextValue(true)!="grid_nx") headerror=true;
   if(rdat.ReadNextValue(true)!="grid_nz") headerror=true;
   if(rdat.ReadNextValue(true)!="vars")    headerror=true;
-  if(headerror)RunException(met,"First line is invalid.",filename);
+  if(headerror)Run_ExceptioonFile("First line is invalid.",filename);
   rdat.ReadNextValue();
   const double dpx=rdat.ReadNextDouble(true);
   const double dpz=rdat.ReadNextDouble(true);
@@ -243,7 +242,7 @@ void JSphInOutGridData::LoadDataCsv(const std::string &filename){
   bool usevelz=false;
   if(vars=="velx")usevelz=false;
   else if(vars=="velx velz")usevelz=true;
-  else RunException(met,"Head value \'vars\' is invalid.",filename);
+  else Run_ExceptioonFile("Head value \'vars\' is invalid.",filename);
   ConfigGridData(nx,nz,dpx,dpz,usevelz);
   //-Load values data according FmtVersion.
   rdat.SetReadLine(4);
@@ -266,7 +265,7 @@ void JSphInOutGridData::LoadDataCsv(const std::string &filename){
 /// Configures and load data from BIN file.
 //==============================================================================
 void JSphInOutGridData::LoadDataBin(const std::string &filename){
-  RunException("LoadDataBin","NOT IMPLEMENTED...");
+  Run_Exceptioon("NOT IMPLEMENTED...");
 }
 
 //==============================================================================
@@ -274,7 +273,7 @@ void JSphInOutGridData::LoadDataBin(const std::string &filename){
 //==============================================================================
 void JSphInOutGridData::ConfigGridData(unsigned nx,unsigned nz,double dpx,double dpz,bool usevelz){
   Reset();
-  if(dpx<=0 || dpz<=0 || !nx || !nz || nx>30 || nz>1000)RunException("ConfigGridData","Grid configuration is invalid.");
+  if(dpx<=0 || dpz<=0 || !nx || !nz || nx>30 || nz>1000)Run_Exceptioon("Grid configuration is invalid.");
   Nx=nx; Nz=nz; Npt=Nx*Nz; 
   Dpx=dpx; Dpz=dpz;
   UseVelz=usevelz;
@@ -285,9 +284,8 @@ void JSphInOutGridData::ConfigGridData(unsigned nx,unsigned nz,double dpx,double
 /// Adds data for another time.
 //==============================================================================
 void JSphInOutGridData::AddDataTime(double time,unsigned npt,const float *velx,const float *velz){
-  const char met[]="AddDataTime";
-  if(CountTimes() && DataTimes[CountTimes()-1]->GetTime()>=time)RunException(met,"New time of data is not higher than previous one.");
-  if(npt!=Npt)RunException(met,"The number of points does not match.");
+  if(CountTimes() && DataTimes[CountTimes()-1]->GetTime()>=time)Run_Exceptioon("New time of data is not higher than previous one.");
+  if(npt!=Npt)Run_Exceptioon("The number of points does not match.");
   JSphInOutGridDataTime *gdt=new JSphInOutGridDataTime(Nx,Nz,time,velx,(UseVelz? velz: NULL));
   DataTimes.push_back(gdt);
 }
@@ -296,7 +294,6 @@ void JSphInOutGridData::AddDataTime(double time,unsigned npt,const float *velx,c
 /// Saves DataTimes in CSV file.
 //==============================================================================
 void JSphInOutGridData::SaveDataCsv(std::string filename)const{
-  const char met[]="SaveDataCsv";
   filename=fun::GetWithoutExtension(filename)+".csv";
   jcsv::JSaveCsv2 scsv(filename,false,AppInfo.GetCsvSepComa());
   //-Saves head in CSV file.
@@ -577,12 +574,11 @@ void JSphInOutGridData::SaveVtk(const JSphInOutGridDataTime *gdt,std::string fil
 /// Saves DataTimes in VTK file.
 //==============================================================================
 void JSphInOutGridData::SaveDataVtk(std::string filename,int ctime)const{
-  const char met[]="SaveDataVtk";
   const bool onefile=(ctime!=-1);
   filename=fun::GetWithoutExtension(filename)+".vtk";
   const unsigned ctini=(!onefile? 0: unsigned(ctime));
   const unsigned ctfin=(!onefile? CountTimes(): unsigned(ctime)+1);
-  if(ctini>=CountTimes())RunException(met,"Number of DataTime is invalid.");
+  if(ctini>=CountTimes())Run_Exceptioon("Number of DataTime is invalid.");
   if(onefile)SaveVtk(DataTimes[ctini],filename);
   else for(unsigned ct=ctini;ct<ctfin;ct++)SaveVtk(DataTimes[ct],fun::FileNameSec(filename,ct));
 }
@@ -591,7 +587,6 @@ void JSphInOutGridData::SaveDataVtk(std::string filename,int ctime)const{
 /// Saves interpolated values at time t in a VTK file.
 //==============================================================================
 void JSphInOutGridData::SaveDataVtkTime(std::string filename,double tmax,double dt){
-  const char met[]="SaveDataVtkTime";
   filename=fun::GetWithoutExtension(filename)+".vtk";
   const unsigned nt=max(unsigned(ceil(tmax/dt))+1,1u);
   for(unsigned ct=0;ct<nt;ct++){
@@ -605,7 +600,6 @@ void JSphInOutGridData::SaveDataVtkTime(std::string filename,double tmax,double 
 ///// Saves grid nodes in VTK file.
 ////==============================================================================
 //void JSphInOutGridData::SaveVtkGrid(std::string filename,tfloat3 pos0)const{
-//  const char met[]="SaveVtkGrid";
 //  std::vector<JFormatFiles2::StShapeData> shapes;
 //  tfloat3 pmin=pos0;
 //  tfloat3 pmax=pos0+TFloat3(float(Dpx*(Nx-1)),0,float(Dpz*(Nz-1)));
@@ -633,7 +627,7 @@ void JSphInOutGridData::SaveDataVtkTime(std::string filename,double tmax,double 
 //  filename=fun::GetWithoutExtension(filename)+".vtk";
 //  const unsigned ctini=(!onefile? 0: unsigned(ctime));
 //  const unsigned ctfin=(!onefile? CountTimes(): unsigned(ctime)+1);
-//  if(ctini>=CountTimes())RunException(met,"Number of DataTime is invalid.");
+//  if(ctini>=CountTimes())Run_Exceptioon("Number of DataTime is invalid.");
 //  if(onefile)SaveVtk(DataTimes[ctini],filename,pos0);
 //  else for(unsigned ct=ctini;ct<ctfin;ct++)SaveVtk(DataTimes[ct],fun::FileNameSec(filename,ct),pos0);
 //}

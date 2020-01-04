@@ -54,7 +54,7 @@ using namespace std;
 //==============================================================================
 JSphInOutZone::JSphInOutZone(bool cpu,JLog2 *log,unsigned idzone,bool simulate2d,double simulate2dposy
   ,double dp,const tdouble3 &posmin,const tdouble3 &posmax,JXml *sxml,TiXmlElement* ele
-  ,const std::string &dirdatafile,const JSphPartsInit *partsdata)
+  ,const std::string &dirdatafile,const JSphPartsInit *partsdata,bool userefillingdef)
  :Cpu(cpu),Log(log),IdZone(idzone),Simulate2D(simulate2d),Simulate2DPosY(simulate2dposy)
  ,Dp(dp),MapRealPosMin(posmin),MapRealPosMax(posmax)
 {
@@ -69,7 +69,7 @@ JSphInOutZone::JSphInOutZone(bool cpu,JLog2 *log,unsigned idzone,bool simulate2d
   #endif
 
   Reset();
-  ReadXml(sxml,ele,dirdatafile,partsdata);
+  ReadXml(sxml,ele,dirdatafile,partsdata,userefillingdef);
 }
 
 //==============================================================================
@@ -93,6 +93,7 @@ void JSphInOutZone::Reset(){
   delete TimeInputZsurf; TimeInputZsurf=NULL;
   Layers=0;
   ConvertFluid=false;
+  UseRefilling=false;
   for(unsigned c=0;c<10;c++)PtDom[c]=TDouble3(DBL_MAX);
   BoxLimitMin=BoxLimitMax=TFloat3(FLT_MAX);
   VelMode=MVEL_Fixed;
@@ -131,6 +132,7 @@ void JSphInOutZone::GetConfig(std::vector<std::string> &lines)const{
   lines.push_back(fun::PrintStr("Initial InOut particles: %u",NpartInit));
   lines.push_back(fun::PrintStr("Layers: %u",Layers));
   lines.push_back(fun::PrintStr("Convert fluid: %s",(ConvertFluid? "True": "False")));
+  lines.push_back(fun::PrintStr("UseRefilling: %s",(UseRefilling? "True": "False")));
   if(VelMode==MVEL_Fixed || VelMode==MVEL_Variable){
     lines.push_back(fun::PrintStr("Velocity mode: %s",(VelMode==MVEL_Fixed? "Fixed": "Variable")));
     if(VelMode==MVEL_Variable && !TimeInputVelData->GetFile().empty())lines.push_back(fun::PrintStr("  Velocity file: %s",TimeInputVelData->GetFile().c_str()));
@@ -184,11 +186,13 @@ void JSphInOutZone::LoadDomain(){
 /// Reads initial configuration in the XML node.
 //==============================================================================
 void JSphInOutZone::ReadXml(JXml *sxml,TiXmlElement* ele,const std::string &dirdatafile
-  ,const JSphPartsInit *partsdata)
+  ,const JSphPartsInit *partsdata,bool userefillingdef)
 {
-  const char met[]="ReadXml";
+  //-Checks element names.
+  sxml->CheckElementNames(ele,true,"convertfluid layers userefilling zone2d zone3d imposevelocity imposerhop imposezsurf");
   //-Loads ConvertFluid.
   ConvertFluid=sxml->ReadElementBool(ele,"convertfluid","value",true,true);
+  UseRefilling=sxml->ReadElementBool(ele,"userefilling","value",true,userefillingdef);
   //-Loads layers value.
   unsigned layers=sxml->ReadElementUnsigned(ele,"layers","value");
   if(layers<1)sxml->ErrReadElement(ele,"layers",false,"Minumum number of layers is 1.");
@@ -212,7 +216,7 @@ void JSphInOutZone::ReadXml(JXml *sxml,TiXmlElement* ele,const std::string &dird
   //-Obtains information inlet/outlet points.
   Direction=Points->GetDirection();
   PtPlane=PtDom[8];
-  if(PtPlane==TDouble3(DBL_MAX))RunException(met,"Reference point in inout plane is invalid.");
+  if(PtPlane==TDouble3(DBL_MAX))Run_Exceptioon("Reference point in inout plane is invalid.");
   Plane=TPlane3f(fgeo::PlanePtVec(PtPlane,Direction));
   NptInit=Points->GetCount();
   //-Velocity configuration.
@@ -251,6 +255,7 @@ void JSphInOutZone::ReadXml(JXml *sxml,TiXmlElement* ele,const std::string &dird
         InputVelPosz2=sxml->ReadElementFloat(xele,"velocity3","z2");
         InputVelPosz3=sxml->ReadElementFloat(xele,"velocity3","z3");
       }
+      sxml->CheckElementNames(xele,true,"*velocity *velocity2 *velocity3");
     }
     else if(VelMode==MVEL_Variable){
       const unsigned NTMIN=50;
@@ -324,9 +329,11 @@ void JSphInOutZone::ReadXml(JXml *sxml,TiXmlElement* ele,const std::string &dird
           TimeInputVelData->LoadFile(dirdatafile+sxml->ReadElementStr(xele,"velocityfile3","file"));
         }
       }
-      if(!TimeInputVelData || TimeInputVelData->GetCount()<1)RunException(met,"There are not inlet/outlet velocity values.");
+      if(!TimeInputVelData || TimeInputVelData->GetCount()<1)Run_Exceptioon("There are not inlet/outlet velocity values.");
+      sxml->CheckElementNames(xele,true,"*velocitytimes *velocitytimes2 *velocitytimes3 velocityfile velocityfile2 velocityfile3");
     }
     else if(VelMode==MVEL_Interpolated){
+      sxml->CheckElementNames(xele,true,"gridveldata gridresetvelz gridposzero");
       InputVelGrid=new JSphInOutGridData(Log);
       InputVelGrid->ConfigFromFile(dirdatafile+sxml->ReadElementStr(xele,"gridveldata","file"));
       ResetZVelGrid=sxml->ReadElementBool(xele,"gridresetvelz","value",true,false);
@@ -334,7 +341,7 @@ void JSphInOutZone::ReadXml(JXml *sxml,TiXmlElement* ele,const std::string &dird
       double zmin=sxml->ReadElementDouble(xele,"gridposzero","z",true,0);
       InputVelGrid->SetPosMin(TDouble3(xmin,(Simulate2D? Simulate2DPosY: MapRealPosMin.y),zmin));
     }
-    else if(VelMode!=MVEL_Extrapolated)RunException(met,"Inlet/outlet velocity profile is unknown.");
+    else if(VelMode!=MVEL_Extrapolated)Run_Exceptioon("Inlet/outlet velocity profile is unknown.");
   }
   else sxml->ErrReadElement(ele,"imposevelocity",true);
 
@@ -343,10 +350,21 @@ void JSphInOutZone::ReadXml(JXml *sxml,TiXmlElement* ele,const std::string &dird
   if(xele){
     const unsigned mode=sxml->GetAttributeUint(xele,"mode",true);
     switch(mode){
-      case 0:  ZsurfMode=ZSURF_Fixed;       break;
-      case 1:  ZsurfMode=ZSURF_Variable;    break;
-      case 2:  ZsurfMode=ZSURF_Calculated;  break;
-      case 3:  ZsurfMode=ZSURF_WaveTheory;  break;
+      case 0:  
+        ZsurfMode=ZSURF_Fixed;       
+        sxml->CheckElementNames(xele,true,"zbottom zsurf remove");
+      break;
+      case 1:  
+        ZsurfMode=ZSURF_Variable;    
+        sxml->CheckElementNames(xele,true,"zbottom savevtk remove zsurftimes zsurffile");
+      break;
+      case 2:  
+        ZsurfMode=ZSURF_Calculated;  
+        sxml->CheckElementNames(xele,true,"zbottom zsurf savevtk remove");
+      break;
+      case 3:  
+        ZsurfMode=ZSURF_WaveTheory;  
+      break;
       default: sxml->ErrReadAtrib(xele,"mode",false,"Value is not valid.");
     }
     InputZbottom=sxml->ReadElementFloat(xele,"zbottom","value");
@@ -392,9 +410,11 @@ void JSphInOutZone::ReadXml(JXml *sxml,TiXmlElement* ele,const std::string &dird
       default: sxml->ErrReadAtrib(xele,"mode",false,"Value is not valid.");
     }
     if(RhopMode==MRHOP_Hydrostatic && (InputZsurf==FLT_MAX || InputZbottom==FLT_MAX)){
+      sxml->CheckElementNames(xele,true,"zsurf zbottom");
       InputZsurf=sxml->ReadElementFloat(xele,"zsurf","value");
       InputZbottom=sxml->ReadElementFloat(xele,"zbottom","value");
     }
+    else sxml->CheckElementNames(xele,true," ");
   }
   else{//-Default configuration for rhop.
     RhopMode=MRHOP_Constant;
@@ -426,11 +446,10 @@ void JSphInOutZone::ReadXml(JXml *sxml,TiXmlElement* ele,const std::string &dird
 /// Returns a byte with information about VelMode, VelProfile and RhopMode.
 //==============================================================================
 byte JSphInOutZone::GetConfigZone()const{
-  const char met[]="GetConfigZone";
-  if((VelProfile&PVEL_MASK )!=VelProfile)RunException(met,"VelProfile value is invalid to code using mask.");
-  if((VelMode   &MVEL_MASK )!=VelMode)RunException(met,"VelMode value is invalid to code using mask.");
-  if((RhopMode  &MRHOP_MASK)!=RhopMode)RunException(met,"RhopMode value is invalid to code using mask.");
-  //if(byte(ZsurfMode) >3)RunException(met,"ZsurfMode value is invalid to code in 2 bits.");
+  if((VelProfile&PVEL_MASK )!=VelProfile)Run_Exceptioon("VelProfile value is invalid to code using mask.");
+  if((VelMode   &MVEL_MASK )!=VelMode)Run_Exceptioon("VelMode value is invalid to code using mask.");
+  if((RhopMode  &MRHOP_MASK)!=RhopMode)Run_Exceptioon("RhopMode value is invalid to code using mask.");
+  //if(byte(ZsurfMode) >3)Run_Exceptioon("ZsurfMode value is invalid to code in 2 bits.");
   byte ret=byte(VelProfile);
   ret|=byte(VelMode);
   ret|=byte(RhopMode);
@@ -441,16 +460,22 @@ byte JSphInOutZone::GetConfigZone()const{
   TpRhopMode   rmode=GetConfigRhopMode(ret);
   bool         convf=GetConfigConvertf(ret);
   //TpZsurfMode  zmode=GetConfigZsurfMode(ret);
-  //if(vprof!=VelProfile || vmode!=VelMode || rmode!=RhopMode || zmode!=ZsurfMode)RunException(met,"Coded configuration is not right.");
-  if(vprof!=VelProfile || vmode!=VelMode || rmode!=RhopMode || convf!=ConvertFluid)RunException(met,"Coded configuration is not right.");
+  //if(vprof!=VelProfile || vmode!=VelMode || rmode!=RhopMode || zmode!=ZsurfMode)Run_Exceptioon("Coded configuration is not right.");
+  if(vprof!=VelProfile || vmode!=VelMode || rmode!=RhopMode || convf!=ConvertFluid)Run_Exceptioon("Coded configuration is not right.");
   return(ret);
+}
+
+//==============================================================================
+/// Returns a byte with information about UseRefilling and RemoveZsurf.
+//==============================================================================
+byte JSphInOutZone::GetConfigUpdate()const{
+  return(byte((GetUseRefilling()? UseRefilling_MASK: 0)|(GetRemoveZsurf()? RemoveZsurf_MASK: 0)));
 }
 
 //==============================================================================
 /// Calculates number of particles to resize memory.
 //==============================================================================
 unsigned JSphInOutZone::CalcResizeNp(double timestep,double timeinterval){
-  const char met[]="CalcResizeNp";
   const float layerspersec=5;
   const unsigned newp=unsigned(timeinterval*layerspersec*NptInit);
   ////-Updates number of new fluid particles per second.
@@ -459,7 +484,7 @@ unsigned JSphInOutZone::CalcResizeNp(double timestep,double timeinterval){
   //  UpdateInputVel(timestep);
   //}
   //if(VelMode==MVEL_Fixed || VelMode==MVEL_Variable)newp=NptInit+unsigned(NewnpPerSec*timeinterval);
-  //else RunException(met,"Inflow velocity mode is unknown.");
+  //else Run_Exceptioon("Inflow velocity mode is unknown.");
   return(newp);
 }
 
@@ -515,7 +540,6 @@ float JSphInOutZone::CalcVel(JSphInOutZone::TpVelProfile vprof,const tfloat4 &vd
 /// Returns true when the data was changed.
 //==============================================================================
 bool JSphInOutZone::UpdateVelData(double timestep,bool full,tfloat4 &vel0,tfloat4 &vel1){
-  const char met[]="UpdateVelData";
   bool modified=full;
   if(VelMode==MVEL_Fixed){
     if(full){
@@ -557,7 +581,7 @@ bool JSphInOutZone::UpdateVelData(double timestep,bool full,tfloat4 &vel0,tfloat
         //  }
         //}
       }
-      else RunException(met,"Inlet/outlet velocity profile is unknown.");
+      else Run_Exceptioon("Inlet/outlet velocity profile is unknown.");
     }
   }
   else if(VelMode==MVEL_Variable){
@@ -606,10 +630,10 @@ bool JSphInOutZone::UpdateVelData(double timestep,bool full,tfloat4 &vel0,tfloat
           else   vel1=TFloat4(a,b,c,t2);
         }
       }
-      else RunException(met,"Inlet/outlet velocity profile is unknown.");
+      else Run_Exceptioon("Inlet/outlet velocity profile is unknown.");
     }
   }
-  else if(VelMode!=MVEL_Extrapolated && VelMode!=MVEL_Interpolated)RunException(met,"Inlet/outlet velocity mode is unknown.");
+  else if(VelMode!=MVEL_Extrapolated && VelMode!=MVEL_Interpolated)Run_Exceptioon("Inlet/outlet velocity mode is unknown.");
   return(modified);
 }
 
@@ -618,7 +642,6 @@ bool JSphInOutZone::UpdateVelData(double timestep,bool full,tfloat4 &vel0,tfloat
 /// Returns true when the data was changed.
 //==============================================================================
 bool JSphInOutZone::UpdateZsurf(double timestep,bool full,float &zsurf){
-  const char met[]="UpdateZsurf";
   bool modified=full;
   if(ZsurfMode==ZSURF_Undefined || ZsurfMode==ZSURF_Fixed){
     if(full)zsurf=InputZsurf;
@@ -633,7 +656,7 @@ bool JSphInOutZone::UpdateZsurf(double timestep,bool full,float &zsurf){
     modified|=(InputZsurf!=zsurf);
     if(modified)zsurf=InputZsurf;
   }
-  else RunException(met,"Inlet/outlet zsurf mode is unknown.");
+  else Run_Exceptioon("Inlet/outlet zsurf mode is unknown.");
   return(modified);
 }
 
@@ -670,7 +693,7 @@ bool JSphInOutZone::IsVariableInput()const{
 /// Activate or deactivate use of external data (ExternalVarInput).
 //==============================================================================
 void JSphInOutZone::SetExternalVarInput(bool active){
-  if(!IsVariableInput())RunException("SetExternalVarInput","Input configuration is invalid.");
+  if(!IsVariableInput())Run_Exceptioon("Input configuration is invalid.");
   if(!ExternalVarInput && active)InitExtVarInput();
   ExternalVarInput=active;
 }
@@ -679,7 +702,7 @@ void JSphInOutZone::SetExternalVarInput(bool active){
 /// Initialisation of TimeInputVelData and TimeInputZsurf.
 //==============================================================================
 void JSphInOutZone::InitExtVarInput(){
-  if(!IsVariableInput())RunException("InitExtVarInput","Input configuration is invalid.");
+  if(!IsVariableInput())Run_Exceptioon("Input configuration is invalid.");
   TimeInputVelData->Reset();
   TimeInputVelData->AddTimeValue(0,0);
   TimeInputVelData->AddTimeValue(DBL_MAX,0);
@@ -693,7 +716,7 @@ void JSphInOutZone::InitExtVarInput(){
 /// Returns TFloat4(time1,vel1,time2,vel2).
 //==============================================================================
 tfloat4 JSphInOutZone::GetExtVarVelocity1()const{
-  if(VelMode!=MVEL_Variable || VelProfile!=PVEL_Constant)RunException("GetVariableVelocity1","Velocity mode or profile is invalid.");
+  if(VelMode!=MVEL_Variable || VelProfile!=PVEL_Constant)Run_Exceptioon("Velocity mode or profile is invalid.");
   const unsigned nt=TimeInputVelData->GetCount();
   unsigned idx=0;
   if(nt>2)idx=TimeInputVelData->GetPos();
@@ -709,7 +732,7 @@ tfloat4 JSphInOutZone::GetExtVarVelocity1()const{
 /// Returns TFloat4(time1,z1,time2,z2).
 //==============================================================================
 tfloat4 JSphInOutZone::GetExtVarZsurf()const{
-  if(ZsurfMode!=ZSURF_Variable)RunException("GetVariableZsurf","Zsurf mode is not Variable.");
+  if(ZsurfMode!=ZSURF_Variable)Run_Exceptioon("Zsurf mode is not Variable.");
   const unsigned nt=TimeInputZsurf->GetCount();
   unsigned idx=0;
   if(nt>2)idx=TimeInputZsurf->GetPos();
@@ -724,7 +747,7 @@ tfloat4 JSphInOutZone::GetExtVarZsurf()const{
 /// Modify velocity configuration in TimeInputVelData.
 //==============================================================================
 void JSphInOutZone::SetExtVarVelocity1(double t1,double v1,double t2,double v2){
-  if(!ExternalVarInput)RunException("SetVarVelocity1","ExternalVarInput is not activated.");
+  if(!ExternalVarInput)Run_Exceptioon("ExternalVarInput is not activated.");
   TimeInputVelData->SetTimeValue(0,t1,v1);
   TimeInputVelData->SetTimeValue(1,t2,v2);
 }
@@ -733,7 +756,7 @@ void JSphInOutZone::SetExtVarVelocity1(double t1,double v1,double t2,double v2){
 /// Modify zsurf configuration in TimeInputZsurf.
 //==============================================================================
 void JSphInOutZone::SetExtVarZsurf(double t1,double v1,double t2,double v2){
-  if(!ExternalVarInput)RunException("SetExtVarZsurf","ExternalVarInput is not activated.");
+  if(!ExternalVarInput)Run_Exceptioon("ExternalVarInput is not activated.");
   TimeInputZsurf->SetTimeValue(0,t1,v1);
   TimeInputZsurf->SetTimeValue(1,t2,v2);
 }
@@ -750,10 +773,10 @@ JSphInOut::JSphInOut(bool cpu,JLog2 *log,std::string xmlfile,JXml *sxml,std::str
 {
   ClassName="JSphInOut";
   Planes=NULL;
-  CfgZone=NULL;  Width=NULL;  DirData=NULL;  VelData=NULL;  Zbottom=NULL; Zsurf=NULL;
+  CfgZone=NULL; CfgUpdate=NULL;  Width=NULL;  DirData=NULL;  VelData=NULL;  Zbottom=NULL; Zsurf=NULL;
   PtZone=NULL;  PtPos=NULL;  PtAuxDist=NULL;
   #ifdef _WITHGPU
-    Planesg=NULL; BoxLimitg=NULL; CfgZoneg=NULL; Widthg=NULL; DirDatag=NULL; Zsurfg=NULL;
+    Planesg=NULL; BoxLimitg=NULL; CfgZoneg=NULL; CfgUpdateg=NULL; Widthg=NULL; DirDatag=NULL; Zsurfg=NULL;
     PtZoneg=NULL; PtPosxyg=NULL; PtPoszg=NULL; PtAuxDistg=NULL;
   #endif
   Reset();
@@ -784,6 +807,7 @@ void JSphInOut::Reset(){
 
   ReuseIds=false;
   ResizeTime=0;
+  UseRefillingDef=false;
   DetermLimit=0;
   ExtrapolateMode=0;
 
@@ -795,6 +819,7 @@ void JSphInOut::Reset(){
   NewNpTotal=0;
   NewNpPart=0;
 
+  RefillingUse=false;
   VariableVel=false;
   VariableZsurf=false;
   CalculatedZsurf=false;
@@ -804,7 +829,6 @@ void JSphInOut::Reset(){
   List.clear();
   FreeMemory();
 
-  UseRefilling=false;
   FreePtMemory();
 }
 
@@ -812,20 +836,17 @@ void JSphInOut::Reset(){
 /// Loads initial conditions of XML object.
 //==============================================================================
 void JSphInOut::LoadXmlInit(JXml *sxml,const std::string &place){
-  const char met[]="LoadXmlInit";
   TiXmlNode* node=sxml->GetNode(place,false);
-  if(!node)RunException("LoadXmlInit",std::string("Cannot find the element \'")+place+"\'.");
+  if(!node)Run_Exceptioon(std::string("Cannot find the element \'")+place+"\'.");
   TiXmlElement* ele=node->ToElement();
+  //-Checks element names.
+  sxml->CheckElementNames(ele,true,"useboxlimit userefilling determlimit extrapolatemode *inoutzone");
   //-Loads general configuration.
-  ReuseIds=sxml->GetAttributeBool(ele,"reuseids",true,false);
+  ReuseIds=false; //sxml->GetAttributeBool(ele,"reuseids",true,false);//-Since ReuseIds=true is not implemented.
   ResizeTime=sxml->GetAttributeDouble(ele,"resizetime",true);
-  //-Loads value userefilling.
-  const unsigned nrefill=(sxml->ExistsAttribute(ele,"userefilling")? 1: 0)+sxml->CountElements(ele,"userefilling");
-  if(nrefill>1)sxml->ErrReadElement(ele,"userefilling",false,"Several definitions for this value.");
-  if(sxml->ExistsAttribute(ele,"userefilling"))UseRefilling=sxml->GetAttributeBool(ele,"userefilling",true,false);
-  else UseRefilling=sxml->ReadElementBool(ele,"userefilling","value",true,false);
+  //-Loads value userefilling by default.
+  UseRefillingDef=sxml->ReadElementBool(ele,"userefilling","value",true,false);
   //-Loads value determlimit.
-  if(sxml->CountElements(ele,"determlimit")>1)sxml->ErrReadElement(ele,"determlimit",false,"Several definitions for this value.");
   DetermLimit=sxml->ReadElementFloat(ele,"determlimit","value",true,1e+3f);
   //-Loads ExtrapolateMode.
   ExtrapolateMode=sxml->ReadElementInt(ele,"extrapolatemode","value",true,1);
@@ -850,7 +871,7 @@ void JSphInOut::LoadXmlInit(JXml *sxml,const std::string &place){
       if(mkfluid!=UINT_MAX){
         unsigned c=0;
         for(;c<unsigned(MkFluidList.size()) && mkfluid!=MkFluidList[c];c++);
-        if(c<unsigned(MkFluidList.size()))RunException(met,fun::PrintStr("Mkfluid=%u is used in several <inoutzone> definitions.",mkfluid));
+        if(c<unsigned(MkFluidList.size()))Run_Exceptioon(fun::PrintStr("Mkfluid=%u is used in several <inoutzone> definitions.",mkfluid));
         MkFluidList.push_back(mkfluid);
       }
     }
@@ -874,7 +895,7 @@ void JSphInOut::LoadFileXml(const std::string &file,const std::string &path
 //==============================================================================
 void JSphInOut::LoadXml(JXml *sxml,const std::string &place,const JSphPartsInit *partsdata){
   TiXmlNode* node=sxml->GetNode(place,false);
-  if(!node)RunException("LoadXml",std::string("Cannot find the element \'")+place+"\'.");
+  if(!node)Run_Exceptioon(std::string("Cannot find the element \'")+place+"\'.");
   ReadXml(sxml,node->ToElement(),partsdata);
 }
 
@@ -882,15 +903,14 @@ void JSphInOut::LoadXml(JXml *sxml,const std::string &place,const JSphPartsInit 
 /// Reads list of initial conditions in the XML node.
 //==============================================================================
 void JSphInOut::ReadXml(JXml *sxml,TiXmlElement* lis,const JSphPartsInit *partsdata){
-  const char met[]="ReadXml";
   //-Loads inflow elements.
   const unsigned idmax=CODE_MASKTYPEVALUE-CODE_TYPE_FLUID_INOUT;
-  if(idmax!=MaxZones-1)RunException(met,"Maximum number of inlet/outlet zones is invalid.");
+  if(idmax!=MaxZones-1)Run_Exceptioon("Maximum number of inlet/outlet zones is invalid.");
   TiXmlElement* ele=lis->FirstChildElement("inoutzone"); 
   while(ele){
     const unsigned id=GetCount();
-    if(id>idmax)RunException(met,"Maximum number of inlet/outlet zones has been reached.");
-    JSphInOutZone* iet=new JSphInOutZone(Cpu,Log,id,Simulate2D,Simulate2DPosY,Dp,MapRealPosMin,MapRealPosMax,sxml,ele,DirDataFile,partsdata);
+    if(id>idmax)Run_Exceptioon("Maximum number of inlet/outlet zones has been reached.");
+    JSphInOutZone* iet=new JSphInOutZone(Cpu,Log,id,Simulate2D,Simulate2DPosY,Dp,MapRealPosMin,MapRealPosMax,sxml,ele,DirDataFile,partsdata,UseRefillingDef);
     List.push_back(iet);
     ele=ele->NextSiblingElement("inoutzone");
   }
@@ -900,11 +920,11 @@ void JSphInOut::ReadXml(JXml *sxml,TiXmlElement* lis,const JSphPartsInit *partsd
 /// Allocates memory for inlet/outlet configurations.
 //==============================================================================
 void JSphInOut::AllocateMemory(unsigned listsize){
-  const char met[]="AllocateMemory";
   ListSize=listsize;
   try{
     Planes   =new tplane3f[ListSize];
     CfgZone  =new byte    [ListSize];
+    CfgUpdate=new byte    [ListSize];
     Width    =new float   [ListSize];
     DirData  =new tfloat3 [ListSize];
     VelData  =new tfloat4 [ListSize*2];
@@ -912,7 +932,7 @@ void JSphInOut::AllocateMemory(unsigned listsize){
     Zsurf    =new float   [ListSize];
   }
   catch(const std::bad_alloc){
-    RunException(met,"Could not allocate the requested memory.");
+    Run_Exceptioon("Could not allocate the requested memory.");
   }
   #ifdef _WITHGPU
     if(!Cpu)AllocateMemoryGpu(ListSize);
@@ -926,6 +946,7 @@ void JSphInOut::FreeMemory(){
   ListSize=0;
   delete[] Planes;    Planes=NULL;
   delete[] CfgZone;   CfgZone=NULL;
+  delete[] CfgUpdate; CfgUpdate=NULL;
   delete[] Width;     Width=NULL;
   delete[] DirData;   DirData=NULL;
   delete[] VelData;   VelData=NULL;
@@ -940,7 +961,6 @@ void JSphInOut::FreeMemory(){
 /// Allocates memory for reference points.
 //==============================================================================
 void JSphInOut::AllocatePtMemory(unsigned ptcount){
-  const char met[]="AllocatePtMemory";
   PtCount=ptcount;
   try{
     PtZone   =new byte    [ptcount];
@@ -948,7 +968,7 @@ void JSphInOut::AllocatePtMemory(unsigned ptcount){
     PtAuxDist=new float   [ptcount];
   }
   catch(const std::bad_alloc){
-    RunException(met,"Could not allocate the requested memory.");
+    Run_Exceptioon("Could not allocate the requested memory.");
   }
   #ifdef _WITHGPU
     if(!Cpu)AllocatePtMemoryGpu(PtCount);
@@ -993,17 +1013,17 @@ void JSphInOut::FreePtMemoryGpu(){
 /// Allocates memory on GPU for inlet/outlet configurations.
 //==============================================================================
 void JSphInOut::AllocateMemoryGpu(unsigned listsize){
-  const char met[]="AllocateMemoryGpu";
   try{
-    fcuda::Malloc(&Planesg  ,ListSize);
-    fcuda::Malloc(&BoxLimitg,ListSize*3);
-    fcuda::Malloc(&CfgZoneg ,ListSize);
-    fcuda::Malloc(&Widthg   ,ListSize);
-    fcuda::Malloc(&DirDatag ,ListSize);
-    fcuda::Malloc(&Zsurfg   ,ListSize);
+    fcuda::Malloc(&Planesg   ,ListSize);
+    fcuda::Malloc(&BoxLimitg ,ListSize*3);
+    fcuda::Malloc(&CfgZoneg  ,ListSize);
+    fcuda::Malloc(&CfgUpdateg,ListSize);
+    fcuda::Malloc(&Widthg    ,ListSize);
+    fcuda::Malloc(&DirDatag  ,ListSize);
+    fcuda::Malloc(&Zsurfg    ,ListSize);
   }
   catch(const std::bad_alloc){
-    RunException(met,"Could not allocate the requested memory.");
+    Run_Exceptioon("Could not allocate the requested memory.");
   }
 }
 
@@ -1011,12 +1031,13 @@ void JSphInOut::AllocateMemoryGpu(unsigned listsize){
 /// Frees allocated memory on GPU.
 //==============================================================================
 void JSphInOut::FreeMemoryGpu(){
-  if(Planesg)  cudaFree(Planesg);   Planesg=NULL;
-  if(BoxLimitg)cudaFree(BoxLimitg); BoxLimitg=NULL;
-  if(CfgZoneg) cudaFree(CfgZoneg);  CfgZoneg=NULL;
-  if(Widthg)   cudaFree(Widthg);    Widthg=NULL;
-  if(DirDatag) cudaFree(DirDatag);  DirDatag=NULL;
-  if(Zsurfg)   cudaFree(Zsurfg);    Zsurfg=NULL;
+  if(Planesg)   cudaFree(Planesg);     Planesg=NULL;
+  if(BoxLimitg) cudaFree(BoxLimitg);   BoxLimitg=NULL;
+  if(CfgZoneg)  cudaFree(CfgZoneg);    CfgZoneg=NULL;
+  if(CfgUpdateg)cudaFree(CfgUpdateg);  CfgUpdateg=NULL;
+  if(Widthg)    cudaFree(Widthg);      Widthg=NULL;
+  if(DirDatag)  cudaFree(DirDatag);    DirDatag=NULL;
+  if(Zsurfg)    cudaFree(Zsurfg);      Zsurfg=NULL;
 }
 #endif
 
@@ -1025,7 +1046,6 @@ void JSphInOut::FreeMemoryGpu(){
 /// Saves domain zones in VTK file.
 //==============================================================================
 void JSphInOut::ComputeFreeDomain(){
-  const char met[]="ComputeFreeDomain";
   //-Recalculates FreeCentre starting from domain simulation.
   if(FreeCentre==TFloat3(FLT_MAX))FreeCentre=ToTFloat3((MapRealPosMax+MapRealPosMin)/2);
   //Log->Printf("----> FreeCentre:(%g,%g,%g)",FreeCentre.x,FreeCentre.y,FreeCentre.z);
@@ -1044,7 +1064,7 @@ void JSphInOut::ComputeFreeDomain(){
     zolimit[ci].y=(FreeCentre.y<=boxmin.y? boxmin.y: (FreeCentre.y>=boxmax.y? boxmax.y: FLT_MAX));
     zolimit[ci].z=(FreeCentre.z<=boxmin.z? boxmin.z: (FreeCentre.z>=boxmax.z? boxmax.z: FLT_MAX));
     if(zolimit[ci].x==FLT_MAX && zolimit[ci].z==FLT_MAX && (Simulate2D || zolimit[ci].y==FLT_MAX))
-      RunException(met,fun::PrintStr("FreeCentre position (%g,%g,%g) is within the inout zone %d. FreeCentre must be changed in XML file.",FreeCentre.x,FreeCentre.y,FreeCentre.z,ci));
+      Run_Exceptioon(fun::PrintStr("FreeCentre position (%g,%g,%g) is within the inout zone %d. FreeCentre must be changed in XML file.",FreeCentre.x,FreeCentre.y,FreeCentre.z,ci));
   }
   //-Look for the best solution for FreeLimitMin/Max.
   const byte nsel=(Simulate2D? 2: 3);
@@ -1110,14 +1130,13 @@ void JSphInOut::ComputeFreeDomain(){
   FreeLimitMin=bestmin;
   FreeLimitMax=bestmax;
   //SaveVtkDomains();
-  //RunException(met,"Stop");
+  //Run_Exceptioon("Stop");
 }
 
 //==============================================================================
 /// Saves domain zones in VTK file.
 //==============================================================================
 void JSphInOut::SaveVtkDomains(){
-  const char met[]="SaveVtkDomains";
   //-InOut real domains.
   {
     JVtkLib sh;
@@ -1180,7 +1199,6 @@ void JSphInOut::SaveVtkDomains(){
 /// Saves VTK of InputVelGrid nodes.
 //==============================================================================
 void JSphInOut::SaveVtkVelGrid(){
-  const char met[]="SaveVtkVelGrid";
   for(unsigned ci=0;ci<GetCount();ci++)if(List[ci]->GetInterpolatedVel()){
     const string filevtk=AppInfo.GetDirOut()+fun::PrintStr("CfgInOut_VelGrid_i%d.vtk",ci);
     List[ci]->SaveVtkVelGrid(filevtk);
@@ -1196,7 +1214,6 @@ unsigned JSphInOut::Config(double timestep,bool stable,bool simulate2d,double si
   ,byte periactive,float rhopzero,float cteb,float gamma,tfloat3 gravity,double dp
   ,tdouble3 posmin,tdouble3 posmax,typecode codenewpart,const JSphPartsInit *partsdata)
 {
-  const char met[]="Config";
   Stable=stable;
   Simulate2D=simulate2d;
   Simulate2DPosY=simulate2dposy;
@@ -1223,22 +1240,26 @@ unsigned JSphInOut::Config(double timestep,bool stable,bool simulate2d,double si
   AllocateMemory(GetCount());
   //-Prepares data for inlet/outlet configurations.
   for(unsigned ci=0;ci<ListSize;ci++){
-    Planes [ci]=List[ci]->GetPlane();
-    CfgZone[ci]=List[ci]->GetConfigZone();
-    Width  [ci]=float(Dp*List[ci]->GetLayers());
-    DirData[ci]=ToTFloat3(List[ci]->GetDirection());
-    Zbottom[ci]=List[ci]->GetInputZbottom();
+    Planes   [ci]=List[ci]->GetPlane();
+    CfgZone  [ci]=List[ci]->GetConfigZone();
+    CfgUpdate[ci]=List[ci]->GetConfigUpdate();
+    Width    [ci]=float(Dp*List[ci]->GetLayers());
+    DirData  [ci]=ToTFloat3(List[ci]->GetDirection());
+    Zbottom  [ci]=List[ci]->GetInputZbottom();
   }
   UpdateVelData(timestep,true);
   UpdateZsurf(timestep,true);
 
   #ifdef _WITHGPU
+    if(INOUT_UseRefilling_MASK!=JSphInOutZone::UseRefilling_MASK)Run_Exceptioon("UseRefilling mask does not match.");
+    if(INOUT_RemoveZsurf_MASK !=JSphInOutZone::RemoveZsurf_MASK )Run_Exceptioon("RemoveZsurf mask does not match.");
     if(!Cpu){
       //-Copies data to GPU memory.
-      cudaMemcpy(Planesg ,Planes ,sizeof(float4)*ListSize,cudaMemcpyHostToDevice);
-      cudaMemcpy(CfgZoneg,CfgZone,sizeof(byte)  *ListSize,cudaMemcpyHostToDevice);
-      cudaMemcpy(Widthg  ,Width  ,sizeof(float) *ListSize,cudaMemcpyHostToDevice);
-      cudaMemcpy(DirDatag,DirData,sizeof(float3)*ListSize,cudaMemcpyHostToDevice);
+      cudaMemcpy(Planesg   ,Planes   ,sizeof(float4)*ListSize,cudaMemcpyHostToDevice);
+      cudaMemcpy(CfgZoneg  ,CfgZone  ,sizeof(byte)  *ListSize,cudaMemcpyHostToDevice);
+      cudaMemcpy(CfgUpdateg,CfgUpdate,sizeof(byte)  *ListSize,cudaMemcpyHostToDevice);
+      cudaMemcpy(Widthg    ,Width    ,sizeof(float) *ListSize,cudaMemcpyHostToDevice);
+      cudaMemcpy(DirDatag  ,DirData  ,sizeof(float3)*ListSize,cudaMemcpyHostToDevice);
       //cudaMemcpy(Zsurfg  ,Zsurf  ,sizeof(float) *ListSize,cudaMemcpyHostToDevice); //It is done in UpdateZsurf().
       //-Copies data for BoxLimitg to GPU memory.
       if(UseBoxLimit){
@@ -1263,8 +1284,29 @@ unsigned JSphInOut::Config(double timestep,bool stable,bool simulate2d,double si
     npart+=List[ci]->GetNpartInit();
   }
 
-  //-Prepares data of points to refilling.
-  if(UseRefilling){
+  //-Checks if some inlet configuration uses extrapolated data or variable velocity.
+  VariableVel=false;
+  VariableZsurf=false;
+  CalculatedZsurf=false;
+  ExtrapolatedData=false;
+  NoExtrapolatedData=false;
+  InterpolatedVel=false;
+  RefillingUse=false;
+  for(unsigned ci=0;ci<GetCount();ci++){
+    const JSphInOutZone* zo=List[ci];
+    if(zo->GetUseRefilling())RefillingUse=true; 
+    if(zo->GetInterpolatedVel())InterpolatedVel=true;
+    if(zo->GetExtrapolatedData())ExtrapolatedData=true;
+    if(zo->GetNoExtrapolatedData())NoExtrapolatedData=true;
+    if(zo->GetVariableVel())VariableVel=true;
+    if(zo->GetVariableZsurf())VariableZsurf=true;
+    if(zo->GetCalculatedZsurf())CalculatedZsurf=true;
+    if((zo->GetVariableZsurf() || zo->GetCalculatedZsurf()) && !zo->GetUseRefilling())
+      Run_Exceptioon(fun::PrintStr("Configuration of Inlet/outlet %d is invalid. Zsurf variable or calculated is only allowed with UseRefilling=True.",ci));
+  }
+
+  //-Prepares data of points to refilling or calculated zsurf.
+  if(RefillingUse || CalculatedZsurf){
     AllocatePtMemory(npt);
     npt=0;
     for(unsigned ci=0;ci<ListSize;ci++){
@@ -1326,24 +1368,6 @@ unsigned JSphInOut::Config(double timestep,bool stable,bool simulate2d,double si
       }
     }
   }
-
-  //-Checks if some inlet configuration uses extrapolated data or variable velocity.
-  VariableVel=false;
-  VariableZsurf=false;
-  CalculatedZsurf=false;
-  ExtrapolatedData=false;
-  NoExtrapolatedData=false;
-  InterpolatedVel=false;
-  for(unsigned ci=0;ci<GetCount();ci++){
-    if(List[ci]->GetInterpolatedVel())InterpolatedVel=true;
-    if(List[ci]->GetExtrapolatedData())ExtrapolatedData=true;
-    if(List[ci]->GetNoExtrapolatedData())NoExtrapolatedData=true;
-    if(List[ci]->GetVariableVel())VariableVel=true;
-    if(List[ci]->GetVariableZsurf())VariableZsurf=true;
-    if(List[ci]->GetCalculatedZsurf())CalculatedZsurf=true;
-    if(!UseRefilling && List[ci]->GetRemoveZsurf())RunException(met,"Remove option in Zsurf is only allowed with UseRefilling=True.");
-  }
-  if((VariableZsurf || CalculatedZsurf) && !UseRefilling)RunException(met,"Zsurf variable or calculated is only allowed with UseRefilling=True.");
   return(npart);
 }
 
@@ -1351,13 +1375,12 @@ unsigned JSphInOut::Config(double timestep,bool stable,bool simulate2d,double si
 /// Loads basic data (pos,idp,code,velrhop=0) for initial inout particles.
 //==============================================================================
 void JSphInOut::LoadInitPartsData(unsigned idpfirst,unsigned nparttot,unsigned* idp,typecode* code,tdouble3* pos,tfloat4* velrhop){
-  const char met[]="LoadInitPartsData";
   //Log->Printf(" LoadInitPartsData--> nparttot:%u",nparttot);
   unsigned npart=0;
   for(unsigned ci=0;ci<GetCount();ci++){
     const unsigned np=List[ci]->GetNpartInit();
     //Log->Printf(" LoadInitPartsData--> np:%u  npart:%u",np,npart);
-    if(npart+np>nparttot)RunException(met,"Number of initial inlet/outlet particles is invalid.");
+    if(npart+np>nparttot)Run_Exceptioon("Number of initial inlet/outlet particles is invalid.");
     List[ci]->LoadInletParticles(pos+npart);
     for(unsigned cp=0;cp<np;cp++){
       const unsigned p=npart+cp;
@@ -1368,7 +1391,7 @@ void JSphInOut::LoadInitPartsData(unsigned idpfirst,unsigned nparttot,unsigned* 
     npart+=np;
   }
   //Log->Printf(" LoadInitPartsData--> npart:%u",npart);
-  if(npart!=nparttot)RunException(met,"Number of initial inlet/outlet particles is invalid.");
+  if(npart!=nparttot)Run_Exceptioon("Number of initial inlet/outlet particles is invalid.");
 }
 
 //==============================================================================
@@ -1378,7 +1401,6 @@ void JSphInOut::LoadInitPartsData(unsigned idpfirst,unsigned nparttot,unsigned* 
 unsigned JSphInOut::CreateListCpu(unsigned nstep,unsigned npf,unsigned pini
   ,const tdouble3 *pos,const unsigned *idp,typecode *code,int *inoutpart)
 {
-  const char met[]="CreateListCpu";
   unsigned count=0;
   if(ListSize){
     const bool checkfreelimit=(UseBoxLimit && ListSize>2);
@@ -1446,10 +1468,9 @@ unsigned JSphInOut::CreateListCpu(unsigned nstep,unsigned npf,unsigned pini
 unsigned JSphInOut::CreateListGpu(unsigned nstep,unsigned npf,unsigned pini
   ,const double2 *posxyg,const double *poszg,typecode *codeg,unsigned size,int *inoutpartg)
 {
-  const char met[]="CreateListGpu";
   unsigned count=0;
   if(ListSize){
-    if(npf+2>=size)RunException(met,"GPU memory allocated is not enough.");
+    if(npf+2>=size)Run_Exceptioon("GPU memory allocated is not enough.");
     const tfloat3 freemin=(UseBoxLimit? FreeLimitMin: TFloat3(FLT_MAX));
     const tfloat3 freemax=(UseBoxLimit? FreeLimitMax: TFloat3(-FLT_MAX));
     count=cusphinout::InOutCreateList(Stable,npf,pini,byte(JSphInOutZone::ConvertFluid_MASK),byte(ListSize)
@@ -1482,7 +1503,6 @@ bool JSphInOut::UpdateVelData(double timestep,bool full){
 /// Returns true when the data was changed.
 //==============================================================================
 bool JSphInOut::UpdateZsurf(double timestep,bool full){
-  const char met[]="UpdateZsurf";
   bool modified=full;
   for(unsigned ci=0;ci<ListSize;ci++)if(full || List[ci]->GetVariableZsurf() || List[ci]->GetCalculatedZsurf()){
     modified|=List[ci]->UpdateZsurf(timestep,full,Zsurf[ci]);
@@ -1596,7 +1616,7 @@ void JSphInOut::InterpolateVelGpu(float timestep,unsigned inoutcount,const int *
   for(unsigned ci=0;ci<GetCount();ci++)if(List[ci]->GetInterpolatedVel()){
     JSphInOutGridData* gd=List[ci]->GetInputVelGrid();
     if(gd->GetNx()==1)gd->InterpolateZVelGpu(timestep,byte(ci),inoutcount,inoutpartg,posxyg,poszg,codeg,idpg,velrhopg);
-    else RunException("InterpolateVelGpu","GPU code was not implemented for nx>1.");
+    else Run_Exceptioon("GPU code was not implemented for nx>1.");
   }
 }
 #endif
@@ -1646,44 +1666,55 @@ void JSphInOut::InterpolateResetZVelGpu(unsigned inoutcount,const int *inoutpart
 ///   it creates a new inout particle.
 /// - If particle is moved out the domain then it changes to ignore particle.
 //==============================================================================
-unsigned JSphInOut::ComputeStepCpu(unsigned nstep,double dt,unsigned inoutcount,int *inoutpart
-  ,const JSphCpu *sphcpu,unsigned idnext,unsigned sizenp,unsigned np
-  ,tdouble3 *pos,unsigned *dcell,typecode *code,unsigned *idp,tfloat4 *velrhop)
+unsigned JSphInOut::ComputeStepCpu(unsigned nstep,double dt,unsigned inoutcount
+  ,int *inoutpart,const JSphCpu *sphcpu,unsigned idnext,unsigned sizenp,unsigned np
+  ,tdouble3 *pos,unsigned *dcell,typecode *code,unsigned *idp,tfloat4 *velrhop,byte *newizone)
 {
-  const char met[]="ComputeStepCpu";
-  //-Checks particle position.
+  //-Updates code according to particle position and define new particles to create.
   const int ncp=int(inoutcount);
   #ifdef OMP_USE
     #pragma omp parallel for schedule (static)
   #endif
   for(int cp=0;cp<ncp;cp++){
+    typecode cod=0;
+    byte newiz=255;
     const unsigned p=(unsigned)inoutpart[cp];
-    typecode rcode=code[p];
-    const unsigned izone=CODE_GetIzoneFluidInout(rcode);
-    const tfloat3 ps=ToTFloat3(pos[p]);
-    const float displane=-fgeo::PlaneDistSign(Planes[izone],ps);
-    if(displane>Width[izone]){//-Particle is moved out domain.
-      code[p]=CODE_SetOutIgnore(rcode);
-      inoutpart[cp]=INT_MAX;
+    const typecode rcode=code[p];
+    if(CODE_IsNormal(rcode)){
+      const unsigned izone=CODE_GetIzoneFluidInout(rcode);
+      const byte cfupdate=CfgUpdate[izone];
+      const bool refill     =(cfupdate&JSphInOutZone::UseRefilling_MASK)!=0;
+      const bool removezsurf=(cfupdate&JSphInOutZone::RemoveZsurf_MASK )!=0;
+      const tfloat3 ps=ToTFloat3(pos[p]);
+      const float displane=-fgeo::PlaneDistSign(Planes[izone],ps);
+      if(displane>Width[izone])cod=CODE_SetOutIgnore(rcode); //-Particle is moved out domain.
+      else if(removezsurf && ps.z>Zsurf[izone])cod=CODE_SetOutPos(rcode); //-Particle is over zsurf limit.
+      else if(displane<0){
+        cod=CodeNewPart;//-Particle changes to fluid particle.
+        if(ps.z<=Zsurf[izone] && !refill)newiz=byte(izone); //-A new particle is created.
+      }
     }
-    else if(displane<0)inoutpart[cp]=-int(p);//-Particle is moved to normal fluid domain.
+    newizone[cp]=newiz;
+    if(cod!=0)code[p]=cod;
   }
+
   //-Create list for new inlet particles to create.
   unsigned inoutcount2=inoutcount;
-  for(int cp=0;cp<ncp;cp++)if(inoutpart[cp]<0){
-    if(inoutcount2<sizenp)inoutpart[inoutcount2]=-inoutpart[cp];
+  for(int cp=0;cp<ncp;cp++)if(newizone[cp]<16){
+    if(inoutcount2<sizenp)inoutpart[inoutcount2]=cp;
     inoutcount2++;
   }
-  if(inoutcount2>=sizenp)RunException(met,"Allocated memory is not enough for new particles inlet.");
+  if(inoutcount2>=sizenp)Run_Exceptioon("Allocated memory is not enough for new particles inlet.");
+
   //-Creates new inlet particles to replace the particles moved to fluid domain.
   const int newnp=int(inoutcount2-inoutcount);
   #ifdef OMP_USE
     #pragma omp parallel for schedule (static)
   #endif
   for(int cp=0;cp<newnp;cp++){
-    const unsigned p=(unsigned)inoutpart[inoutcount+cp];
-    const unsigned izone=CODE_GetIzoneFluidInout(code[p]);
-    code[p]=CodeNewPart;//-Particle changes to fluid particle.
+    const unsigned cp0=(unsigned)inoutpart[inoutcount+cp];
+    const unsigned p=(unsigned)inoutpart[cp0];
+    const unsigned izone=newizone[cp0];
     const double dis=Width[izone];
     tdouble3 rpos=pos[p];
     rpos.x-=dis*DirData[izone].x;
@@ -1707,17 +1738,18 @@ unsigned JSphInOut::ComputeStepCpu(unsigned nstep,double dt,unsigned inoutcount,
 /// - If particle is moved out the domain then it changes to ignore particle.
 //==============================================================================
 unsigned JSphInOut::ComputeStepGpu(unsigned nstep,double dt,unsigned inoutcount,int *inoutpartg
-  ,unsigned idnext,unsigned sizenp,unsigned np
-  ,double2 *posxyg,double *poszg,unsigned *dcellg,typecode *codeg,unsigned *idpg,float4 *velrhopg)
+  ,unsigned idnext,unsigned sizenp,unsigned np,double2 *posxyg,double *poszg
+  ,unsigned *dcellg,typecode *codeg,unsigned *idpg,float4 *velrhopg,byte *newizoneg)
 {
-  const char met[]="ComputeStepGpu";
   //-Checks particle position.
-  cusphinout::InOutComputeStep(PeriActive,inoutcount,inoutpartg,dt,Planesg,Widthg,velrhopg,posxyg,poszg,dcellg,codeg);
+  cusphinout::InOutComputeStep(inoutcount,inoutpartg,Planesg,Widthg,CfgUpdateg,Zsurfg
+    ,CodeNewPart,posxyg,poszg,codeg,newizoneg);
   //-Create list for new inlet particles to create.
-  const unsigned newnp=cusphinout::InOutListCreate(Stable,inoutcount,sizenp-1,inoutpartg);
-  if(inoutcount+newnp>=sizenp)RunException(met,"Allocated memory is not enough for new particles inlet.");
+  const unsigned newnp=cusphinout::InOutListCreate(Stable,inoutcount,sizenp-1,newizoneg,inoutpartg);
+  if(inoutcount+newnp>=sizenp)Run_Exceptioon("Allocated memory is not enough for new particles inlet.");
   //-Creates new inlet particles to replace the particles moved to fluid domain.
-  cusphinout::InOutCreateNewInlet(PeriActive,newnp,((unsigned*)inoutpartg)+inoutcount,np,idnext,CodeNewPart,DirDatag,Widthg,posxyg,poszg,dcellg,codeg,idpg,velrhopg);
+  cusphinout::InOutCreateNewInlet(PeriActive,newnp,(unsigned*)inoutpartg,inoutcount,newizoneg,np,idnext
+    ,CodeNewPart,DirDatag,Widthg,posxyg,poszg,dcellg,codeg,idpg,velrhopg);
   //-Returns number of new inlet particles.
   //Log->Printf("%u> -------->ComputeStepXXX>> NewInletCount:%u",nstep,newnp);
   return(unsigned(newnp));
@@ -1735,7 +1767,6 @@ unsigned JSphInOut::ComputeStepFillingCpu(unsigned nstep,double dt,unsigned inou
   ,tdouble3 *pos,unsigned *dcell,typecode *code,unsigned *idp,tfloat4 *velrhop
   ,float *prodist,tdouble3 *propos)
 {
-  const char met[]="ComputeStepFillingCpu";
   //-Updates position of particles and computes projection data to filling mode.
   const int ncp=int(inoutcount);
   memset(prodist,0,sizeof(float)*ncp);
@@ -1746,38 +1777,18 @@ unsigned JSphInOut::ComputeStepFillingCpu(unsigned nstep,double dt,unsigned inou
   for(int cp=0;cp<ncp;cp++){
     const unsigned p=(unsigned)inoutpart[cp];
     const typecode rcode=code[p];
-    const unsigned izone=CODE_GetIzoneFluidInout(rcode);
-    const float displane=-fgeo::PlaneDistSign(Planes[izone],ToTFloat3(pos[p]));
-
-    if(displane<0 || displane>Width[izone]){
-      code[p]=(displane<0? CodeNewPart: CODE_SetOutIgnore(rcode));
-      //-if (displane<0)inoutpart[cp]=-int(p); Particle changes to fluid particle.
-      //-if (displane>Width[izone])inoutpart[cp]=INT_MAX; Particle is moved out in/out zone.
-    }
-    else{
-      //prodist[cp]=(float)fgeo::PlaneDist(pla,pos[p]);
-      prodist[cp]=displane;
-      const tplane3d pla=TPlane3d(Planes[izone]);
-      propos[cp]=fgeo::PlaneOrthogonalPoint(pos[p],pla);
-    }
-  }
-
-  //-Removes particles above the Zsurf limit.
-  if(UseRefilling)for(unsigned ci=0;ci<GetCount();ci++){
-    const JSphInOutZone *izone=List[ci];
-    if(izone->GetRemoveZsurf()){
-      const float zsurf=izone->GetInputZsurf();
-      const typecode codezone=CODE_ToFluidInout(CodeNewPart,ci);
-      #ifdef OMP_USE
-        #pragma omp parallel for schedule (static)
-      #endif
-      for(int cp=0;cp<ncp;cp++){
-        const unsigned p=(unsigned)inoutpart[cp];
-        if(code[p]==codezone && pos[p].z>zsurf){
-          code[p]=CODE_SetOutIgnore(code[p]);
-          prodist[cp]=0;
-          propos[cp]=TDouble3(0);
-        }
+    if(CODE_IsNotOut(rcode) && CODE_IsFluidInout(rcode)){
+      const unsigned izone=CODE_GetIzoneFluidInout(rcode);
+      if((CfgUpdate[izone]&JSphInOutZone::UseRefilling_MASK)!=0){
+        const tdouble3 rpos=pos[p];
+        const tplane3f rplanes=Planes[izone];
+        //-Compute distance to plane.
+        const double v1=rpos.x*rplanes.a + rpos.y*rplanes.b + rpos.z*rplanes.c + rplanes.d;
+        const double v2=rplanes.a*rplanes.a+rplanes.b*rplanes.b+rplanes.c*rplanes.c;
+        prodist[cp]=-float(v1/sqrt(v2));//-Equivalent to fgeo::PlaneDistSign().
+        //-Calculates point on plane.
+        const double t=-v1/v2;
+        propos[cp]=TDouble3(rpos.x+t*rplanes.a,rpos.y+t*rplanes.b,rpos.z+t*rplanes.c);
       }
     }
   }
@@ -1791,17 +1802,20 @@ unsigned JSphInOut::ComputeStepFillingCpu(unsigned nstep,double dt,unsigned inou
     #pragma omp parallel for schedule (static)
   #endif
   for(int cpt=0;cpt<npt;cpt++){
-    const tdouble3 ps=PtPos[cpt];
     float distmax=FLT_MAX;
-    if(float(ps.z)<=Zsurf[PtZone[cpt]]){
-      distmax=0;
-      for(int cp=0;cp<ncp;cp++){
-        const tfloat3 dis=ToTFloat3(ps-propos[cp]);
-        if(dis.x<=dpmin && dis.y<=dpmin && dis.z<=dpmin){//-particle near to ptpoint (approx.)
-          const float dist2=(dis.x*dis.x+dis.y*dis.y+dis.z*dis.z);
-          if(dist2<dpmin2){//-particle near to ptpoint.
-            const float dmax=prodist[cp]+sqrt(dpmin2-dist2);
-            distmax=max(distmax,dmax);
+    const byte izone=PtZone[cpt];
+    if((CfgUpdate[izone]&JSphInOutZone::UseRefilling_MASK)!=0){
+      const tdouble3 ps=PtPos[cpt];
+      if(float(ps.z)<=Zsurf[izone]){
+        distmax=0;
+        for(int cp=0;cp<ncp;cp++){
+          const tfloat3 dis=ToTFloat3(ps-propos[cp]);
+          if(dis.x<=dpmin && dis.y<=dpmin && dis.z<=dpmin){//-particle near to ptpoint (approx.)
+            const float dist2=(dis.x*dis.x+dis.y*dis.y+dis.z*dis.z);
+            if(dist2<dpmin2){//-particle near to ptpoint.
+              const float dmax=prodist[cp]+sqrt(dpmin2-dist2);
+              distmax=max(distmax,dmax);
+            }
           }
         }
       }
@@ -1828,13 +1842,13 @@ unsigned JSphInOut::ComputeStepFillingCpu(unsigned nstep,double dt,unsigned inou
     }
     newnp++;
   }
-  if(np+newnp>=sizenp)RunException(met,"Allocated memory is not enough for new particles inlet.");
+  if(np+newnp>=sizenp)Run_Exceptioon("Allocated memory is not enough for new particles inlet.");
 
   //-Returns number of new inlet particles.
   //Log->Printf("%u> -------->ComputeStepFillingXXX>> NewInletCount:%u",nstep,newnp);
   return(newnp);
 }
-  
+
 #ifdef _WITHGPU
 //==============================================================================
 /// ComputeStep over inlet/outlet particles:
@@ -1845,34 +1859,22 @@ unsigned JSphInOut::ComputeStepFillingCpu(unsigned nstep,double dt,unsigned inou
 unsigned JSphInOut::ComputeStepFillingGpu(unsigned nstep,double dt,unsigned inoutcount,int *inoutpartg
   ,unsigned idnext,unsigned sizenp,unsigned np
   ,double2 *posxyg,double *poszg,unsigned *dcellg,typecode *codeg,unsigned *idpg,float4 *velrhopg
-  ,float *prodistg,double2 *proposxyg,double *proposzg)
+  ,float *prodistg,double2 *proposxyg,double *proposzg,TimersGpu timers)
 {
-  const char met[]="ComputeStepFillingGpu";
   //-Computes projection data to filling mode.
-  cusphinout::InOutFillProjection(inoutcount,(unsigned *)inoutpartg,CodeNewPart,Planesg,Widthg,posxyg,poszg
+  cusphinout::InOutFillProjection(inoutcount,(unsigned *)inoutpartg,CfgUpdateg,Planesg,posxyg,poszg
     ,codeg,prodistg,proposxyg,proposzg);
-
-  //-Removes particles above the Zsurf limit.
-  if(UseRefilling)for(unsigned ci=0;ci<GetCount();ci++){
-    const JSphInOutZone *izone=List[ci];
-    if(izone->GetRemoveZsurf()){
-      const float zsurf=izone->GetInputZsurf();
-      const typecode codezone=CODE_ToFluidInout(CodeNewPart,ci);
-      cusphinout::InOutRemoveZsurf(inoutcount,(unsigned *)inoutpartg,codezone,zsurf,poszg,codeg,prodistg,proposxyg,proposzg);
-    }
-  }
 
   //-Create list of selected ptpoints and its distance to create new inlet/outlet particles.
   const float dpmin=float(Dp*1);
   const float dpmin2=dpmin*dpmin;
   const unsigned newnp=cusphinout::InOutFillListCreate(Stable,PtCount,PtPosxyg,PtPoszg
-    ,PtZoneg,Zsurfg,Widthg,inoutcount,prodistg,proposxyg,proposzg
+    ,PtZoneg,CfgUpdateg,Zsurfg,Widthg,inoutcount,prodistg,proposxyg,proposzg
     ,dpmin,dpmin2,float(Dp),PtAuxDistg,sizenp-1,(unsigned*)inoutpartg);
+
   //-Creates new inlet/outlet particles to fill inlet/outlet domain.
   cusphinout::InOutFillCreate(PeriActive,newnp,(unsigned *)inoutpartg,PtPosxyg,PtPoszg,PtZoneg,PtAuxDistg
     ,np,idnext,CodeNewPart,DirDatag,posxyg,poszg,dcellg,codeg,idpg,velrhopg);
-  //-Returns number of new inlet particles.
-  //Log->Printf("%u> -------->ComputeStepFillingXXX>> NewInletCount:%u",nstep,newnp);
   return(newnp);
 }
 #endif
@@ -1914,7 +1916,7 @@ void JSphInOut::UpdateVelrhopM1Gpu(unsigned inoutcount,const int *inoutpartg
 void JSphInOut::ClearInteractionVarsCpu(unsigned inoutcount,const int *inoutpart
     ,tfloat3 *ace,float *ar,tfloat4 *shiftposfs)
 {
-  if(ace==NULL || ar==NULL)RunException("ClearInteractionVarsCpu","Some pointer is NULL.");
+  if(ace==NULL || ar==NULL)Run_Exceptioon("Some pointer is NULL.");
   const int ncp=int(inoutcount);
   #ifdef OMP_USE
     #pragma omp parallel for schedule (static)
@@ -1935,7 +1937,7 @@ void JSphInOut::ClearInteractionVarsCpu(unsigned inoutcount,const int *inoutpart
 void JSphInOut::ClearInteractionVarsGpu(unsigned inoutcount,const int *inoutpartg
     ,float3 *aceg,float *arg,float *viscdtg,float4 *shiftposfsg)
 {
-  if(aceg==NULL || arg==NULL || viscdtg==NULL)RunException("ClearInteractionVarsGpu","Some pointer is NULL.");
+  if(aceg==NULL || arg==NULL || viscdtg==NULL)Run_Exceptioon("Some pointer is NULL.");
   cusphinout::InoutClearInteractionVars(inoutcount,inoutpartg,aceg,arg,viscdtg,shiftposfsg);
 }
 #endif
@@ -1946,7 +1948,6 @@ void JSphInOut::ClearInteractionVarsGpu(unsigned inoutcount,const int *inoutpart
 //==============================================================================
 void JSphInOut::VisuConfig(std::string txhead,std::string txfoot)const{
   if(!txhead.empty())Log->Print(txhead);
-  Log->Printf("UseRefilling: %s",(UseRefilling? "True": "False"));
   Log->Printf("UseBoxLimit: %s",(UseBoxLimit? "True": "False"));
   if(UseBoxLimit)Log->Printf("  FreeLimits:%s  FreeCentre:(%s)",fun::Float3xRangeStr(FreeLimitMin,FreeLimitMax,"%g").c_str(),fun::Float3gStr(FreeCentre).c_str());
   Log->Printf("DetermLimit.: %g %s",DetermLimit,(DetermLimit==1e-3f? "(1st order)": (DetermLimit==1e+3f? "(0th order)": " ")));
@@ -2000,7 +2001,6 @@ void JSphInOut::SaveVtkZsurf(unsigned part){
 /// Calculates number of particles to resize memory.
 //==============================================================================
 unsigned JSphInOut::CalcResizeNp(double timestep)const{
-  const char met[]="CalcResizeNp";
   unsigned newp=0;
   for(unsigned ci=0;ci<GetCount();ci++)newp+=List[ci]->CalcResizeNp(timestep,ResizeTime);
   return(newp);

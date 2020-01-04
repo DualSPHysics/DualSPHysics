@@ -61,7 +61,6 @@ void JSphCpuSingle::InOutIgnoreFluidDef(const std::vector<unsigned> &mkfluidlist
 /// particulas fluid cerca de particulas inout.
 //==============================================================================
 void JSphCpuSingle::InOutCheckProximity(unsigned newnp){
-  const char met[]="InOutCheckProximity";
   //-Look for nearby particles.
   const double disterror=Dp*0.8;
   JSimpleNeigs neigs(Np,Posc,Scell);
@@ -117,7 +116,7 @@ void JSphCpuSingle::InOutCheckProximity(unsigned newnp){
     delete[] vtype; vtype=NULL;
     if(n>nfluid){
       Log->AddFileInfo(filevtk,"Saves error fluid and boundary particles too close to inout particles.");
-      RunException(met,"There are inout fluid or boundary particles too close to inout particles. Check VTK file CfgInOut_ErrorParticles.vtk with excluded particles.");
+      Run_Exceptioon("There are inout fluid or boundary particles too close to inout particles. Check VTK file CfgInOut_ErrorParticles.vtk with excluded particles.");
     }
     else{
       Log->AddFileInfo(filevtk,"Saves excluded fluid particles too close to inout particles.");
@@ -145,10 +144,9 @@ void JSphCpuSingle::InOutCreateList(){
 /// Inicia condiciones inlet/outlet.
 //==============================================================================
 void JSphCpuSingle::InOutInit(double timestepini){
-  const char met[]="InOutInit";
   TmcStart(Timers,TMC_SuInOut);
   Log->Print("InOut configuration:");
-  if(PartBegin)RunException(met,"Simulation restart not allowed when Inlet/Outlet is used.");
+  if(PartBegin)Run_Exceptioon("Simulation restart not allowed when Inlet/Outlet is used.");
 
   //-Configures InOut zones and prepares new inout particles to create.
   const unsigned newnp=InOut->Config(timestepini,Stable,Simulate2D,Simulate2DPosY,PeriActive,RhopZero,CteB,Gamma,Gravity,Dp,MapRealPosMin,MapRealPosMax,MkInfo->GetCodeNewFluid(),PartsInit);
@@ -189,7 +187,7 @@ void JSphCpuSingle::InOutInit(double timestepini){
   //-Shows configuration.
   InOut->VisuConfig(""," ");
   //-Checks invalid options for symmetry. //<vs_syymmetry>
-  if(Symmetry && InOut->GetExtrapolatedData())RunException(met,"Symmetry is not allowed with inlet/outlet conditions when extrapolate option is enabled."); //<vs_syymmetry>
+  if(Symmetry && InOut->GetExtrapolatedData())Run_Exceptioon("Symmetry is not allowed with inlet/outlet conditions when extrapolate option is enabled."); //<vs_syymmetry>
 
   //-Updates divide information and creates inout particles list.
   RunCellDivide(true);
@@ -219,7 +217,6 @@ void JSphCpuSingle::InOutInit(double timestepini){
 /// - If particle is moved out the domain then it changes to ignore particle.
 //==============================================================================
 void JSphCpuSingle::InOutComputeStep(double stepdt){
-  const char met[]="InOutComputeStep";
   //Log->Printf("%u>--------> [InOutComputeStep_000]",Nstep);
   //DgSaveVtkParticlesCpu("_ComputeStep_XX.vtk",0,0,Np,Posc,Codec,Idpc,Velrhopc);
   TmcStart(Timers,TMC_SuInOut);
@@ -235,16 +232,20 @@ void JSphCpuSingle::InOutComputeStep(double stepdt){
   //-Removes interpolated Z velocity of inlet/outlet particles.
   if(InOut->GetInterpolatedVel())InOut->InterpolateResetZVelCpu(InOutCount,InOutPartc,Codec,Velrhopc);
 
-  //-Updates position of inout particles according its velocity and create new inlet particles.
-  unsigned newnp=0;
-  if(InOut->GetUseRefilling()){
+  //-Updates code of inout particles according its position and create new inlet particles when refilling=false.
+  byte *newizone=ArraysCpu->ReserveByte();
+  unsigned newnp=InOut->ComputeStepCpu(Nstep,stepdt,InOutCount,InOutPartc,this,IdMax+1,CpuParticlesSize,Np,Posc,Dcellc,Codec,Idpc,Velrhopc,newizone);
+  ArraysCpu->Free(newizone);  newizone=NULL;
+
+  //-Creates new inlet particles using refilling.
+  if(InOut->GetRefillingUse()){
     float    *prodist=ArraysCpu->ReserveFloat();
     tdouble3 *propos =ArraysCpu->ReserveDouble3();
-    newnp=InOut->ComputeStepFillingCpu(Nstep,stepdt,InOutCount,InOutPartc,this,IdMax+1,CpuParticlesSize,Np,Posc,Dcellc,Codec,Idpc,Velrhopc,prodist,propos);
+    newnp+=InOut->ComputeStepFillingCpu(Nstep,stepdt,InOutCount,InOutPartc
+      ,this,IdMax+1,CpuParticlesSize,Np,Posc,Dcellc,Codec,Idpc,Velrhopc,prodist,propos);
     ArraysCpu->Free(prodist);
     ArraysCpu->Free(propos);
   }
-  else newnp=InOut->ComputeStepCpu(Nstep,stepdt,InOutCount,InOutPartc,this,IdMax+1,CpuParticlesSize,Np,Posc,Dcellc,Codec,Idpc,Velrhopc);
 
   //-Updates new particle values for Laminar+SPS.
   if(SpsTauc)memset(SpsTauc+Np,0,sizeof(tsymatrix3f)*newnp);

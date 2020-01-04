@@ -24,6 +24,9 @@
 #include "DualSphDef.h"
 #include <cuda_runtime_api.h>
 
+#define INOUT_UseRefilling_MASK 0x01
+#define INOUT_RemoveZsurf_MASK 0x02
+
 /// Implements a set of functions and CUDA kernels for InOut feature.
 namespace cusphinout{
 
@@ -50,11 +53,12 @@ void InoutClearInteractionVars(unsigned n,const int *inoutpart
 void InOutUpdateVelrhopM1(unsigned n,const int *inoutpart
     ,const float4 *velrhop,float4 *velrhopm1);
 
-void InOutComputeStep(byte periactive,unsigned n,int *inoutpart
-  ,double dt,const float4 *planes,const float *width,const float4 *velrhop
-  ,double2 *posxy,double *posz,unsigned *dcell,typecode *code);
-unsigned InOutListCreate(bool stable,unsigned n,unsigned nmax,int *inoutpart);
-void InOutCreateNewInlet(byte periactive,unsigned newn,const unsigned *newinoutpart
+void InOutComputeStep(unsigned n,int *inoutpart,const float4 *planes
+  ,const float *width,const byte *cfgupdate,const float *zsurf,typecode codenewpart
+  ,const double2 *posxy,const double *posz,typecode *code,byte *newizone);
+unsigned InOutListCreate(bool stable,unsigned n,unsigned nmax,const byte *newizone,int *inoutpart);
+void InOutCreateNewInlet(byte periactive,unsigned newn
+  ,const unsigned *inoutpart,unsigned inoutcount,const byte *newizone
   ,unsigned np,unsigned idnext,typecode codenewpart,const float3 *dirdata,const float *width
   ,double2 *posxy,double *posz,unsigned *dcell,typecode *code,unsigned *idp,float4 *velrhop);
 
@@ -63,15 +67,11 @@ void InOutFillMove(byte periactive,unsigned n,const unsigned *inoutpart
   ,double dt,const float4 *velrhop
   ,double2 *posxy,double *posz,unsigned *dcell,typecode *code);
 void InOutFillProjection(unsigned n,const unsigned *inoutpart
-  ,typecode codenewpart,const float4 *planes,const float *width
-  ,const double2 *posxy,const double *posz
-  ,typecode *code,float *prodist,double2 *proposxy,double *proposz);
-void InOutRemoveZsurf(unsigned n,const unsigned *inoutpart
-  ,typecode codezone,float zsurf,const double *posz
-  ,typecode *code,float *prodist,double2 *proposxy,double *proposz);
+  ,const byte *cfgupdate,const float4 *planes,const double2 *posxy,const double *posz
+  ,const typecode *code,float *prodist,double2 *proposxy,double *proposz);
 unsigned InOutFillListCreate(bool stable,unsigned npt
   ,const double2 *ptposxy,const double *ptposz
-  ,const byte *ptzone,const float *zsurf,const float *width
+  ,const byte *ptzone,const byte *cfgupdate,const float *zsurf,const float *width
   ,unsigned npropt,const float *prodist,const double2 *proposxy,const double *proposz
   ,float dpmin,float dpmin2,float dp,float *ptdist,unsigned nmax,unsigned *inoutpart);
 void InOutFillCreate(byte periactive,unsigned newn,const unsigned *newinoutpart

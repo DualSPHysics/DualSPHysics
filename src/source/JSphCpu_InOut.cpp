@@ -57,7 +57,6 @@ template<bool sim2d,TpKernel tker> void JSphCpu::InteractionInOutExtrap_Double
   ,const tdouble3 *pos,const typecode *code,const unsigned *idp
   ,tfloat4 *velrhop)
 {
-  const char met[]="InteractionInOutExtrap_Double3";
   //Log->Printf("%u>++> InteractionInOutGhost_Double",Nstep);
 
   //-Inicia ejecucion con OpenMP.
@@ -67,7 +66,7 @@ template<bool sim2d,TpKernel tker> void JSphCpu::InteractionInOutExtrap_Double
   #endif
   for(int p=0;p<n;p++){
     const unsigned p1=(unsigned)inoutpart[p];
-    if(!CODE_IsFluidInout(code[p1]))RunException(met,"InOut particle is invalid.");
+    if(!CODE_IsFluidInout(code[p1]))Run_Exceptioon("InOut particle is invalid.");
     const unsigned izone=CODE_GetIzoneFluidInout(code[p1]);
     const byte cfg=cfgzone[izone];
     const bool computerhop=(JSphInOutZone::GetConfigRhopMode(cfg)==JSphInOutZone::MRHOP_Extrapolated);
@@ -259,7 +258,6 @@ template<bool sim2d,TpKernel tker> void JSphCpu::InteractionInOutExtrap_Single
   ,const tdouble3 *pos,const typecode *code,const unsigned *idp
   ,tfloat4 *velrhop)
 {
-  const char met[]="InteractionInOutExtrap_Double2";
   //-Inicia ejecucion con OpenMP.
   const int n=int(inoutcount);
   #ifdef _WITHOMP
@@ -267,7 +265,7 @@ template<bool sim2d,TpKernel tker> void JSphCpu::InteractionInOutExtrap_Single
   #endif
   for(int p=0;p<n;p++){
     const unsigned p1=(unsigned)inoutpart[p];
-    if(!CODE_IsFluidInout(code[p1]))RunException(met,"InOut particle is invalid.");
+    if(!CODE_IsFluidInout(code[p1]))Run_Exceptioon("InOut particle is invalid.");
     const unsigned izone=CODE_GetIzoneFluidInout(code[p1]);
     const byte cfg=cfgzone[izone];
     const bool computerhop=(JSphInOutZone::GetConfigRhopMode(cfg)==JSphInOutZone::MRHOP_Extrapolated);
@@ -478,7 +476,7 @@ void JSphCpu::Interaction_InOutExtrap(byte doublemode,unsigned inoutcount,const 
       if(TKernel==KERNEL_Cubic)   InteractionInOutExtrap_Double<sim2d,KERNEL_Cubic>    (inoutcount,inoutpart,cfgzone,planes,width,dirdata,determlimit,nc,hdiv,cellfluid,begincell,cellzero,dcell,pos,code,idp,velrhop);
     }
   }
-  else RunException("Interaction_InOutExtrap","Double mode calculation is invalid.");
+  else Run_Exceptioon("Double mode calculation is invalid.");
 }
 
 //==============================================================================
@@ -489,7 +487,6 @@ float JSphCpu::Interaction_InOutZsurf(unsigned nptz,const tfloat3 *ptzpos,float 
   ,tuint3 ncells,const unsigned *beginendcell,tuint3 cellmin
   ,const tdouble3 *pos,const typecode *code)
 {
-  const char met[]="Interaction_InOutZsurf";
   const tint4 nc=TInt4(int(ncells.x),int(ncells.y),int(ncells.z),int(ncells.x*ncells.y));
   const tint3 cellzero=TInt3(cellmin.x,cellmin.y,cellmin.z);
   const unsigned cellfluid=nc.w*nc.z+1;
@@ -541,7 +538,6 @@ template<bool sim2d,TpKernel tker> void JSphCpu::InteractionBoundCorr_Double
   ,const tdouble3 *pos,const typecode *code,const unsigned *idp
   ,tfloat4 *velrhop)
 {
-  const char met[]="InteractionBoundCorr_Double";
   const int n=int(npb);
   #ifdef _WITHOMP
     #pragma omp parallel for schedule (guided)
@@ -666,7 +662,6 @@ template<bool sim2d,TpKernel tker> void JSphCpu::InteractionBoundCorr_Single
   ,const tdouble3 *pos,const typecode *code,const unsigned *idp
   ,tfloat4 *velrhop)
 {
-  const char met[]="InteractionBoundCorr_Single";
   const int n=int(npb);
   #ifdef _WITHOMP
     #pragma omp parallel for schedule (guided)
@@ -812,6 +807,6 @@ void JSphCpu::Interaction_BoundCorr(byte doublemode,typecode boundcode,tplane3f 
       if(TKernel==KERNEL_Cubic)   InteractionBoundCorr_Double<sim2d,KERNEL_Cubic>   (NpbOk,boundcode,plane,direction,determlimit,nc,hdiv,cellfluid,begincell,cellzero,pos,code,idp,velrhop);
     }
   }
-  else RunException("Interaction_BoundCorr","Double mode calculation is invalid.");
+  else Run_Exceptioon("Double mode calculation is invalid.");
 }
 

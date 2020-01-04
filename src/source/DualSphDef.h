@@ -153,6 +153,7 @@
 
 #define CODE_IsNormal(code)    (CODE_GetSpecialValue(code)==CODE_NORMAL)
 #define CODE_IsPeriodic(code)  (CODE_GetSpecialValue(code)==CODE_PERIODIC)
+#define CODE_IsNotOut(code)    (CODE_GetSpecialValue(code)<=CODE_PERIODIC)
 #define CODE_IsOutRhop(code)   (CODE_GetSpecialValue(code)==CODE_OUTRHOP)
 #define CODE_IsOutIgnore(code) (CODE_GetSpecialValue(code)==CODE_OUTIGNORE)
 

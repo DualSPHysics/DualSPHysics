@@ -34,6 +34,7 @@
 #include "DualSphDef.h"
 #ifdef _WITHGPU
   #include <cuda_runtime_api.h>
+  #include "JSphTimersGpu.h"
 #endif
 
 class JXml;
@@ -95,6 +96,9 @@ public:
 
   static const unsigned ConvertFluid_MASK=0x80;  ///<Mask to obtain value (1000 0000).
 
+  static const unsigned UseRefilling_MASK=0x01;  ///<Mask to obtain value (0000 0001).
+  static const unsigned RemoveZsurf_MASK =0x02;  ///<Mask to obtain value (0000 0010).
+
 private:
   const bool Cpu;
   JLog2 *Log;
@@ -109,6 +113,7 @@ private:
   JSphInOutPoints *Points;  ///<Definition of inlet points.
   byte Layers;              ///<Number of inlet particle layers.
   bool ConvertFluid;        ///<Converts fluid in inlet/outlet area (default=true).
+  bool UseRefilling;        ///<Use advanced refilling algorithm but slower (default=UseRefillingDef).
 
   //-Domain data from Points object. PtDom[8] is the reference point in inout plane.
   tdouble3 PtDom[10];
@@ -160,13 +165,13 @@ private:
   float  *PtzAux;        ///<Memory auxiliar to recude maximum zsurf on CPU memory [NptInit].
 #endif
 
-  void ReadXml(JXml *sxml,TiXmlElement* lis,const std::string &dirdatafile,const JSphPartsInit *partsdata);
+  void ReadXml(JXml *sxml,TiXmlElement* lis,const std::string &dirdatafile,const JSphPartsInit *partsdata,bool userefillingdef);
   void LoadDomain();
 
 public:
   JSphInOutZone(bool cpu,JLog2 *log,unsigned idzone,bool simulate2d,double simulate2dposy
     ,double dp,const tdouble3 &posmin,const tdouble3 &posmax,JXml *sxml,TiXmlElement* ele
-    ,const std::string &dirdatafile,const JSphPartsInit *partsdata);
+    ,const std::string &dirdatafile,const JSphPartsInit *partsdata,bool userefillingdef);
   ~JSphInOutZone();
   void Reset();
   void GetConfig(std::vector<std::string> &lines)const;
@@ -177,6 +182,7 @@ public:
   static bool         GetConfigConvertf  (byte cfg){ return((cfg&ConvertFluid_MASK)!=0); }
   //static TpZsurfMode  GetConfigZsurfMode (byte cfg){ return((TpZsurfMode) ((cfg>>6)&3)); }
   byte GetConfigZone()const;
+  byte GetConfigUpdate()const;
 
   unsigned CalcResizeNp(double timestep,double timeinterval);
   unsigned LoadInletPoints(tdouble3 *pos);
@@ -205,6 +211,7 @@ public:
   TpVelProfile GetVelProfile()const{ return(VelProfile); }
   TpZsurfMode  GetZsurfMode()const{ return(ZsurfMode); }
 
+  bool GetUseRefilling()const{ return(UseRefilling); }
   bool GetExtrapolatedData()const{ return(RhopMode==MRHOP_Extrapolated || VelMode==MVEL_Extrapolated); }
   bool GetNoExtrapolatedData()const{ return(RhopMode!=MRHOP_Extrapolated || VelMode!=MVEL_Extrapolated); }
   bool GetVariableVel()const{ return(VelMode==MVEL_Variable); }
@@ -272,6 +279,7 @@ private:
 
   bool ReuseIds;         ///<Id of particles excluded values ​​are reused.
   double ResizeTime;     ///<Time to calculate number of new particles.
+  bool UseRefillingDef;  ///<Use advanced refilling algorithm by default (default=false).
   float DetermLimit;     ///<Limit for determinant. Use 1e-3 for first_order or 1e+3 for zeroth_order (default=1e+3).
   byte ExtrapolateMode;  ///<Calculation mode for rhop and velocity extrapolation from ghost nodes 1:fast-single, 2:single, 3:double (default=1).
 
@@ -283,6 +291,7 @@ private:
   ullong NewNpTotal;   ///<Total number of fluid particles created by inlet.
   unsigned NewNpPart;  ///<Number of fluid particles created by inlet since last PART.
 
+  bool RefillingUse;         ///<Indicates if some inlet configuration uses refilling method.
   bool VariableVel;          ///<Indicates if some inlet configuration uses variable velocity.
   bool VariableZsurf;        ///<Indicates if some inlet configuration uses variable zsurf.
   bool CalculatedZsurf;      ///<Indicates if some inlet configuration uses calculated zsurf.
@@ -295,6 +304,7 @@ private:
   //-Data to manage all inlet/outlet conditions.
   tplane3f *Planes;    ///<Planes for inlet/outlet zones [ListSize].
   byte     *CfgZone;   ///<Information about VelMode, VelProfile, RhopMode and ConvertFluid. [ListSize].
+  byte     *CfgUpdate; ///<Information about UseRefilling, RemoveZsurf. [ListSize].
   float    *Width;     ///<Zone width [ListSize].
   tfloat3  *DirData;   ///<Inflow direction [ListSize].
   tfloat4  *VelData;   ///<Velocity coefficients for imposed velocity [ListSize*2].
@@ -306,23 +316,23 @@ private:
   float4 *Planesg;    ///<Planes for inlet/outlet zones [ListSize].
   float2 *BoxLimitg;  ///<BoxLimitMin/Max for inlet/outlet zones [ListSize*(xmin,xmax),ListSize*(ymin,ymax),ListSize*(zmin,zmax)]=[3*ListSize].
   byte   *CfgZoneg;   ///<Information about VelMode, VelProfile, RhopMode and ConvertFluid. [ListSize].
+  byte   *CfgUpdateg; ///<Information about UseRefilling, RemoveZsurf. [ListSize].
   float  *Widthg;     ///<Zone width [ListSize].
   float3 *DirDatag;   ///<Inflow direction [ListSize].
   float  *Zsurfg;     ///<Zsurf (it can be variable) [ListSize].
 #endif
 
   //-Data to refill inlet/outlet zone.
-  bool UseRefilling; ///<Use advanced refilling algorithm but slower (default=false).
   unsigned PtCount;  ///<Number of points.
-  byte     *PtZone;  ///<Zone for each point [PtCount].
-  tdouble3 *PtPos;   ///<Position of points [PtCount].
+  byte     *PtZone;  ///<Zone for each point [PtCount]. Data is constant after configuration.
+  tdouble3 *PtPos;   ///<Position of points [PtCount]. Data is constant after configuration.
   float    *PtAuxDist;
 
 #ifdef _WITHGPU
   //-Data to refill inlet/outlet zone on GPU.
-  byte    *PtZoneg;   ///<Zone for each point [PtCount].
-  double2 *PtPosxyg;  ///<Position of points [PtCount].
-  double  *PtPoszg;   ///<Position of points [PtCount].
+  byte    *PtZoneg;   ///<Zone for each point [PtCount]. Data is constant after configuration.
+  double2 *PtPosxyg;  ///<Position of points [PtCount]. Data is constant after configuration.
+  double  *PtPoszg;   ///<Position of points [PtCount]. Data is constant after configuration.
   float   *PtAuxDistg;
 #endif
 
@@ -351,7 +361,6 @@ private:
 #ifdef _WITHGPU
   void AllocateMemoryGpu(unsigned listsize);
   void FreeMemoryGpu();
-  void PrepareDataGpu();
 #endif
 
 public:
@@ -383,7 +392,7 @@ public:
 
   unsigned ComputeStepCpu(unsigned nstep,double dt,unsigned inoutcount,int *inoutpart
     ,const JSphCpu *sphcpu,unsigned idnext,unsigned sizenp,unsigned np
-    ,tdouble3 *pos,unsigned *dcell,typecode *code,unsigned *idp,tfloat4 *velrhop);
+    ,tdouble3 *pos,unsigned *dcell,typecode *code,unsigned *idp,tfloat4 *velrhop,byte *newizone);
   unsigned ComputeStepFillingCpu(unsigned nstep,double dt,unsigned inoutcount,int *inoutpart
     ,const JSphCpu *sphcpu,unsigned idnext,unsigned sizenp,unsigned np
     ,tdouble3 *pos,unsigned *dcell,typecode *code,unsigned *idp,tfloat4 *velrhop
@@ -409,12 +418,12 @@ public:
     ,typecode *codeg,float4 *velrhopg);
 
   unsigned ComputeStepGpu(unsigned nstep,double dt,unsigned inoutcount,int *inoutpartg
-    ,unsigned idnext,unsigned sizenp,unsigned np
-    ,double2 *posxyg,double *poszg,unsigned *dcellg,typecode *codeg,unsigned *idpg,float4 *velrhopg);
+    ,unsigned idnext,unsigned sizenp,unsigned np,double2 *posxyg,double *poszg
+    ,unsigned *dcellg,typecode *codeg,unsigned *idpg,float4 *velrhopg,byte *newizoneg);
   unsigned ComputeStepFillingGpu(unsigned nstep,double dt,unsigned inoutcount,int *inoutpartg
     ,unsigned idnext,unsigned sizenp,unsigned np
     ,double2 *posxyg,double *poszg,unsigned *dcellg,typecode *codeg,unsigned *idpg,float4 *velrhopg
-    ,float *prodistg,double2 *proposxyg,double *proposzg);
+    ,float *prodistg,double2 *proposxyg,double *proposzg,TimersGpu timers);
 
   void UpdateVelrhopM1Gpu(unsigned inoutcount,const int *inoutpartg
     ,const float4 *velrhopg,float4 *velrhopm1g);
@@ -437,7 +446,7 @@ public:
   bool GetInterpolatedVel()const{ return(InterpolatedVel); }
   bool GetVariableZsurf()const{ return(VariableZsurf); }
   bool GetCalculatedZsurf()const{ return(CalculatedZsurf); }
-  bool GetUseRefilling()const{ return(UseRefilling); }
+  bool GetRefillingUse()const{ return(RefillingUse); }
 
   double GetDistPtzPos(unsigned ci)const{     return(ci<ListSize? List[ci]->GetDistPtzPos()  : 0); }
   unsigned GetCountPtzPos(unsigned ci)const{  return(ci<ListSize? List[ci]->GetCountPtzPos() : 0); }
