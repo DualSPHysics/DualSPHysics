@@ -42,6 +42,7 @@
 //:# - Comprueba que los valores enteros o reales del XML son validos.  (14-06-2019)
 //:# - Funcion CheckElementNames() mejorada. (25-11-2019)
 //:# - Funciones AddElementAttrib() y MakeElementAttrib() para bool. (08-12-2019)
+//:# - Nuevo metodo CheckAttributeNames() y ErrUnknownAtrib(). (07-01-2020)
 //:#############################################################################
 
 /// \file JXml.h \brief Declares the class \ref JXml.
@@ -150,6 +151,14 @@ public:
   //==============================================================================
   void ErrReadAtrib(const TiXmlElement* ele,const std::string &atrib,bool missing,std::string errortext="")const;
 
+  //==============================================================================
+  /// Throws an exception with the xml element and the name of the attribute.
+  /// \param ele Xml element of the error.
+  /// \param atrib Name of the attribute where the error appears.
+  /// \throw JException Error in element...
+  //==============================================================================
+  void ErrUnknownAtrib(const TiXmlElement* ele,const std::string &atrib)const;
+
   //-Checking child element of the element.
 
   //==============================================================================
@@ -186,6 +195,22 @@ public:
 
 
   //-Checking attributes of the element.
+
+  //==============================================================================
+  /// Throws an exception if there are unknown attribute.
+  /// \param ele Xml element to check.
+  /// \param names List of valid names (separated by spaces).
+  /// \param checkrepeated Checks if there are repeated elements.
+  //==============================================================================
+  void CheckAttributeNames(TiXmlElement* ele,std::string names)const;
+
+  //==============================================================================
+  /// Throws an exception if there are unknown attribute.
+  /// \param lis Xml element to look for element name.
+  /// \param names List of valid names (separated by spaces).
+  /// \param checkrepeated Checks if there are repeated elements.
+  //==============================================================================
+  void CheckAttributeNames(TiXmlElement* lis,std::string elementname,std::string names)const;
 
   //==============================================================================
   /// Checks if the requested attribute of an element already exists.

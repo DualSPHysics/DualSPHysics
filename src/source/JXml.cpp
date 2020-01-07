@@ -223,12 +223,24 @@ void JXml::ErrReadElement(const TiXmlNode* node,const std::string &element,bool 
 //==============================================================================
 void JXml::ErrReadAtrib(const TiXmlElement* ele,const std::string &atrib,bool missing,std::string errortext)const{
   std::string tex="Error reading xml - ";
-  if(missing)tex=tex+"Attribute \'"+atrib+"\' is missing";
+  if(missing)tex=tex+"Attribute \'"+atrib+"\' is missing.";
   else{
     tex=tex+"Value of \'"+atrib+"\' invalid.";
     if(!errortext.empty())tex=tex+" "+errortext;
   }
   RunException("ErrReadAtrib",tex,ErrGetFileRow(ele));
+}
+//==============================================================================
+/// Throws an exception with the xml element and the name of the attribute.
+/// \param ele Xml element of the error.
+/// \param atrib Name of the attribute where the error appears.
+/// \param missing Error because it does not exist.
+/// \throw JException Error in element...
+//==============================================================================
+void JXml::ErrUnknownAtrib(const TiXmlElement* ele,const std::string &atrib)const{
+  std::string tex="Error reading xml - ";
+  tex=tex+"Attribute \'"+atrib+"\' is unknown.";
+  RunException("ErrUnknownAtrib",tex,ErrGetFileRow(ele));
 }
 
 
@@ -302,6 +314,38 @@ int JXml::CheckElementAttributes(const TiXmlElement* ele,const std::string &name
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+//==============================================================================
+/// Throws an exception if there are unknown attribute.
+/// \param ele Xml element to check.
+/// \param names List of valid names (separated by spaces).
+/// \param checkrepeated Checks if there are repeated elements.
+//==============================================================================
+void JXml::CheckAttributeNames(TiXmlElement* ele,std::string names)const{
+  //-Create list of elements.
+  vector<string> vnames;
+  const unsigned nv=fun::VectorSplitStr(" ",fun::StrTrimRepeated(names),vnames);
+  vector<string> vused;
+  TiXmlAttribute* att=ele->FirstAttribute();
+  while(att){
+    std::string ename=att->Name();
+    if(!ename.empty() && ename[0]!='_'){
+      if(fun::VectorFind(ename,vnames)==UINT_MAX)ErrUnknownAtrib(ele,ename); //-Error: unknown attribute.
+    }
+    att=att->Next();
+  }
+}
+
+//==============================================================================
+/// Throws an exception if there are unknown attribute.
+/// \param lis Xml element to look for element name.
+/// \param names List of valid names (separated by spaces).
+/// \param checkrepeated Checks if there are repeated elements.
+//==============================================================================
+void JXml::CheckAttributeNames(TiXmlElement* lis,std::string elementname,std::string names)const{
+  TiXmlElement* ele=GetFirstElement(lis,elementname,true);
+  if(ele)CheckAttributeNames(ele,names);
+}
+
 //==============================================================================
 /// Checks if the requested attribute of an element already exists.
 /// \param ele Xml element of the error.

@@ -81,6 +81,7 @@
 //:# - Output functions in JSON format.  (16-09-2019)
 //:# - Nueva funcion VectorFind().  (25-11-2019)
 //:# - Nueva funcion CompareVersions().  (08-12-2019)
+//:# - Error corregido en StrStripSlashes().  (04-01-2020)
 //:#############################################################################
 
 /// \file Functions.h \brief Declares basic/general functions for the entire application.

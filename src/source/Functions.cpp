@@ -631,7 +631,8 @@ std::string StrReplace(const std::string &cad,const std::string &key,const std::
 //==============================================================================
 std::string StrAddSlashes(const std::string &cad){
   std::string ret;
-  for(int c=0;c<int(cad.length());c++){
+  const int len=int(cad.length());
+  for(int c=0;c<len;c++){
     switch(cad[c]){
       case '\a': ret=ret+"\\a"; break;
       case '\b': ret=ret+"\\b"; break;
@@ -655,8 +656,9 @@ std::string StrAddSlashes(const std::string &cad){
 //==============================================================================
 std::string StrStripSlashes(const std::string &cad){
   std::string ret;
-  for(int c=0;c<int(cad.length())-1;c++){
-    if(cad[c]=='\\'){
+  const int len=int(cad.length());
+  for(int c=0;c<len;c++){
+    if(cad[c]=='\\' && c+1<len){
       switch(cad[c+1]){
         case 'a':  ret=ret+"\a"; c++;  break;
         case 'b':  ret=ret+"\b"; c++;  break;

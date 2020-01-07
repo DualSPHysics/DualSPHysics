@@ -237,10 +237,12 @@ void JSphInOutZone::ReadXml(JXml *sxml,TiXmlElement* ele,const std::string &dird
       if(vel1+vel2+vel3>1)sxml->ErrReadElement(xele,"velocity",false,"Several definitions for velocity were found.");
       if(vel1 || vel1+vel2+vel3==0){
         VelProfile=PVEL_Constant;
+        sxml->CheckAttributeNames(xele,"velocity","time v comment units_comment");
         InputVel=sxml->ReadElementFloat(xele,"velocity","v");
       }
       if(vel2){
         VelProfile=PVEL_Linear;
+        sxml->CheckAttributeNames(xele,"velocity2","time v v2 z z2 comment units_comment");
         InputVel=sxml->ReadElementFloat(xele,"velocity2","v");
         InputVel2=sxml->ReadElementFloat(xele,"velocity2","v2");
         InputVelPosz=sxml->ReadElementFloat(xele,"velocity2","z");
@@ -248,6 +250,7 @@ void JSphInOutZone::ReadXml(JXml *sxml,TiXmlElement* ele,const std::string &dird
       }
       if(vel3){
         VelProfile=PVEL_Parabolic;
+        sxml->CheckAttributeNames(xele,"velocity3","time v v2 v3 z z2 z3 comment units_comment");
         InputVel =sxml->ReadElementFloat(xele,"velocity3","v");
         InputVel2=sxml->ReadElementFloat(xele,"velocity3","v2");
         InputVel3=sxml->ReadElementFloat(xele,"velocity3","v3");
@@ -275,6 +278,7 @@ void JSphInOutZone::ReadXml(JXml *sxml,TiXmlElement* ele,const std::string &dird
           TimeInputVelData->SetSize(NTMIN);
           TiXmlElement* elet=xlis->FirstChildElement("timevalue"); 
           while(elet){
+            sxml->CheckAttributeNames(elet,"time v");
             double t=sxml->GetAttributeDouble(elet,"time");
             double v=sxml->GetAttributeDouble(elet,"v");
             TimeInputVelData->AddTimeValue(t,v);
@@ -293,6 +297,7 @@ void JSphInOutZone::ReadXml(JXml *sxml,TiXmlElement* ele,const std::string &dird
           TimeInputVelData->SetSize(NTMIN);
           TiXmlElement* elet=xlis->FirstChildElement("timevalue"); 
           while(elet){
+            sxml->CheckAttributeNames(elet,"time v v2 z z2");
             double t=sxml->GetAttributeDouble(elet,"time");
             double v=sxml->GetAttributeDouble(elet,"v");
             double v2=sxml->GetAttributeDouble(elet,"v2");
@@ -314,6 +319,7 @@ void JSphInOutZone::ReadXml(JXml *sxml,TiXmlElement* ele,const std::string &dird
           TimeInputVelData->SetSize(NTMIN);
           TiXmlElement* elet=xlis->FirstChildElement("timevalue"); 
           while(elet){
+            sxml->CheckAttributeNames(elet,"time v v2 v3 z z2 z3");
             double t=sxml->GetAttributeDouble(elet,"time");
             double v=sxml->GetAttributeDouble(elet,"v");
             double v2=sxml->GetAttributeDouble(elet,"v2");

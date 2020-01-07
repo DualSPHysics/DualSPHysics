@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<case app="GenCase4 v4.0.136 (24-12-2019)" date="24-12-2019 12:11:17">
-    <casedef requiredversion="v4.0.136">
+<case app="GenCase4 v4.0.140 (07-01-2020)" date="07-01-2020 03:43:01">
+    <casedef requiredversion="v4.0.140">
         <constantsdef>
             <lattice bound="2" fluid="1" />
             <gravity x="0" y="0" z="-9.81" comment="Gravitational acceleration" units_comment="m/s^2" />
@@ -356,7 +356,7 @@
                     <fillbox x="0" y="1" z="0">
                         <modefill>border</modefill>
                         <point x="0.1" y="1" z="1.1" />
-                        <size x="3" y="4" z="2" />
+                        <size x="0.1" y="1" z="1.1" />
                     </fillbox>
                     <fillfigure x="0.1" y="1" z="1.1">
                         <points>
@@ -431,6 +431,16 @@
                     <newvar SizeX="0.25" SizeZ="(Dp+2)*2.8" dpd2="Dp/2" _rem="Some variables" />
                     <setvar SizeZ="SizeX+Cte1*Cte2" _rem="Changes value of SizeZ" />
                     <setvar dpd2="dpd2+Dp" SizeX="SizeX*dpd2" />
+                    <setvar v="eval(condition,a,b)" />
+                    <setvar v1="float(a)" v2="int(a)" v3="floor(a)" v4="ceil(a)" v5="round(a)" />
+                    <setvar v1="min(a,b)" v2="min(a,b,c)" v3="max(a,b)" v4="max(a,b,c)" />
+                    <setvar v1="abs(a)" v2="fmod(a,b)" v3="fmodr(a,b)" v4="sqrt(a)" v5="exp(a)" />
+                    <setvar v1="log(a)" v2="log10(a)" v3="pow(a,b)" />
+                    <setvar v1="sin(a)" v2="cos(a)" v3="tan(a)" />
+                    <setvar v1="sindg(a)" v2="cosdg(a)" v3="tandg(a)" />
+                    <setvar v1="sinh(a)" v2="cosh(a)" v3="tanh(a)" />
+                    <setvar v1="asin(a)" v2="acos(a)" v3="atan(a)" v4="atan2(a,b)" />
+                    <setvar v1="randinit(a)" v2="rand(a)" v3="randint(a,b)" />
                     <debugout />
                     <shapeout file="fshape_1" reset="false" />
                     <shapeout file="fshape_2" />
@@ -438,6 +448,9 @@
                     <cellsout file="filecellsBound5" mkbound="5" />
                     <cellsout file="filecellsFluid5" mkfluid="5" />
                     <pointsmkout file="points" />
+                    <printf text="Prints line 1\n and line 2" />
+                    <printf if="Dp!=0.1" text="Dp is not 0.1. It is #Dp#" />
+                    <abort if="Dp<0.1" text="Dp (#Dp#) is lower than 0.1 \n It is invalid." />
                     <abort />
                     <runlist name="Hola" />
                     <runlist name="Hola2" times="5" />
@@ -707,7 +720,8 @@
     </casedef>
     <execution>
         <parameters>
-            <parameter key="PosDouble" value="1" comment="Precision in particle interaction 0:Simple, 1:Double, 2:Uses and saves double (default=0)" />
+            <parameter key="SavePosDouble" value="0" comment="Saves particle position using double precision (default=0)" />
+            <parameter key="PosDouble" value="1" comment="**DEPRECATED** Precision in particle interaction 0:Simple, 1:Double, 2:Uses and saves double (default=0)" />
             <parameter key="StepAlgorithm" value="2" comment="Step Algorithm 1:Verlet, 2:Symplectic (default=1)" />
             <parameter key="VerletSteps" value="40" comment="Verlet only: Number of steps to apply Euler timestepping (default=40)" />
             <parameter key="Kernel" value="2" comment="Interaction Kernel 1:Cubic Spline, 2:Wendland, 3:Gaussian (default=2)" />
