@@ -61,82 +61,9 @@ void JSphCpuSingle::InOutIgnoreFluidDef(const std::vector<unsigned> &mkfluidlist
 /// particulas fluid cerca de particulas inout.
 //==============================================================================
 void JSphCpuSingle::InOutCheckProximity(unsigned newnp){
-  //-Look for nearby particles.
-  const double disterror=Dp*0.8;
-  JSimpleNeigs neigs(Np,Posc,Scell);
-  unsigned* errpart=(unsigned*)InOutPartc; //-Use InOutPartc like auxiliary memory.
-  memset(errpart,0,sizeof(int)*Np);
-  const unsigned pini=Np-newnp;
-  JTimeControl tc(5,60);
-  for(unsigned p=pini;p<Np;p++){//-Only inout particles.
-    const unsigned n=neigs.NearbyPositions(Posc[p],p,disterror);
-    const unsigned *selpos=neigs.GetSelectPos();
-    for(unsigned cp=0;cp<n;cp++)errpart[selpos[cp]]=1;
-    if(tc.CheckTime())Log->Print(string("  ")+tc.GetInfoFinish(double(p-pini)/double(Np-pini)));
+  if(Np && newnp){
+    InOut->InitCheckProximity(Np,newnp,Scell,Posc,Idpc,Codec);
   }
-  //-Obtain number and type of nearby particles.
-  unsigned nfluid=0,nfluidinout=0,nbound=0;
-  for(unsigned p=0;p<Np;p++)if(errpart[p]){
-    const typecode cod=Codec[p];
-    if(CODE_IsNormal(cod)){
-      if(CODE_IsFluid(cod)){
-        if(CODE_IsFluidNotInout(cod)){ //-Normal fluid.
-          errpart[p]=1;
-          nfluid++;
-        }
-        else{ //-Inout fluid.
-          errpart[p]=2;
-          nfluidinout++;
-        }
-      }
-      else{ //-Boundary.
-        errpart[p]=3;
-        nbound++;
-      } 
-    }
-    else errpart[p]=0; //-Ignores non-normal particles.
-  }
-  //-Saves VTK file with nearby particles and check errors.
-  if(nfluid+nfluidinout+nbound>0){
-    const unsigned n=nfluid+nfluidinout+nbound;
-    tfloat3* vpos=new tfloat3[n];
-    byte* vtype=new byte[n];
-    unsigned pp=0;
-    for(unsigned p=0;p<Np;p++)if(errpart[p]){
-      vpos[pp]=ToTFloat3(Posc[p]);
-      vtype[pp]=byte(errpart[p]);
-      pp++;
-    }
-    JDataArrays arrays;
-    arrays.AddArray("Pos",n,vpos,false);
-    arrays.AddArray("ErrorType",n,vtype,false);
-    const string filevtk=AppInfo.GetDirOut()+(n>nfluid? "CfgInOut_ErrorParticles.vtk": "CfgInOut_ExcludedParticles.vtk");
-    JVtkLib::SaveVtkData(filevtk,arrays,"Pos");
-    delete[] vpos;  vpos=NULL;
-    delete[] vtype; vtype=NULL;
-    if(n>nfluid){
-      Log->AddFileInfo(filevtk,"Saves error fluid and boundary particles too close to inout particles.");
-      Run_Exceptioon("There are inout fluid or boundary particles too close to inout particles. Check VTK file CfgInOut_ErrorParticles.vtk with excluded particles.");
-    }
-    else{
-      Log->AddFileInfo(filevtk,"Saves excluded fluid particles too close to inout particles.");
-      Log->PrintfWarning("%u fluid particles were excluded since they are too close to inout particles. Check VTK file CfgInOut_ExcludedParticles.vtk",nfluid);
-      //-Mark fluid particles to ignore.
-      for(unsigned p=0;p<Np;p++)if(errpart[p]==1){
-        Codec[p]=CODE_SetOutIgnore(Codec[p]); //-Mark fluid particles to ignore.
-      }
-    }
-  }
-}
-
-//==============================================================================
-/// Creates list with particles in inlet/outlet zones.
-/// Crea lista de particulas en zonas inlet/outlet.
-//==============================================================================
-void JSphCpuSingle::InOutCreateList(){
-  TmcStart(Timers,TMC_SuInOut);
-  InOutCount=InOut->CreateListCpu(Nstep,Np-Npb,Npb,Posc,Idpc,Codec,InOutPartc);
-  TmcStop(Timers,TMC_SuInOut);
 }
 
 //==============================================================================
@@ -190,20 +117,30 @@ void JSphCpuSingle::InOutInit(double timestepini){
   if(Symmetry && InOut->GetExtrapolatedData())Run_Exceptioon("Symmetry is not allowed with inlet/outlet conditions when extrapolate option is enabled."); //<vs_syymmetry>
 
   //-Updates divide information and creates inout particles list.
+  TmcStop(Timers,TMC_SuInOut);
   RunCellDivide(true);
+  TmcStart(Timers,TMC_SuInOut);
   if(DBG_INOUT_PARTINIT)DgSaveVtkParticlesCpu("CfgInOut_InletIni.vtk",1,0,Np,Posc,Codec,Idpc,Velrhopc);
 
+  //-Create list of current inout particles (normal and periodic).
+  int* inoutpart=ArraysCpu->ReserveInt();
+  const unsigned inoutcount=InOut->CreateListSimpleCpu(Nstep,Np-Npb,Npb,Codec,inoutpart);
+  InOut->SetCurrentNp(inoutcount);
+
   //-Updates velocity and rhop (no extrapolated).
-  if(InOut->GetNoExtrapolatedData())InOut->UpdateDataCpu(float(timestepini),true,InOutCount,InOutPartc,Posc,Codec,Idpc,Velrhopc);
+  if(InOut->GetNoExtrapolatedData())InOut->UpdateDataCpu(float(timestepini),true,inoutcount,inoutpart,Posc,Codec,Idpc,Velrhopc);
 
   //-Calculates extrapolated velocity and/or rhop for inlet/outlet particles from fluid domain.
-  if(InOut->GetExtrapolatedData())InOutExtrapolateData();
+  if(InOut->GetExtrapolatedData())InOutExtrapolateData(inoutcount,inoutpart);
 
   //-Calculates interpolated velocity for inlet/outlet particles.
-  if(InOut->GetInterpolatedVel())InOut->InterpolateVelCpu(float(timestepini),InOutCount,InOutPartc,Posc,Codec,Idpc,Velrhopc);
+  if(InOut->GetInterpolatedVel())InOut->InterpolateVelCpu(float(timestepini),inoutcount,inoutpart,Posc,Codec,Idpc,Velrhopc);
 
   //-Updates velocity and rhop of M1 variables starting from current velocity and rhop when Verlet is used. 
-  if(VelrhopM1c)InOut->UpdateVelrhopM1Cpu(InOutCount,InOutPartc,Velrhopc,VelrhopM1c);
+  if(VelrhopM1c)InOut->UpdateVelrhopM1Cpu(inoutcount,inoutpart,Velrhopc,VelrhopM1c);
+
+  //-Free array for inoutpart list.
+  ArraysCpu->Free(inoutpart); inoutpart=NULL;
 
   if(DBG_INOUT_PARTINIT)DgSaveVtkParticlesCpu("CfgInOut_InletIni.vtk",2,0,Np,Posc,Codec,Idpc,Velrhopc);
   TmcStop(Timers,TMC_SuInOut);
@@ -221,30 +158,38 @@ void JSphCpuSingle::InOutComputeStep(double stepdt){
   //DgSaveVtkParticlesCpu("_ComputeStep_XX.vtk",0,0,Np,Posc,Codec,Idpc,Velrhopc);
   TmcStart(Timers,TMC_SuInOut);
   //-Resizes memory when it is necessary. InOutCount is the maximum number of new inlet particles.
-  if(!CheckCpuParticlesSize(Np+InOutCount)){
-    const unsigned newnp2=InOutCount+InOut->CalcResizeNp(TimeStep+stepdt);
+  if(!CheckCpuParticlesSize(Np+InOut->GetCurrentNp())){
+    const unsigned newnp2=InOut->GetCurrentNp()+InOut->CalcResizeNp(TimeStep+stepdt);
     TmcStop(Timers,TMC_SuInOut);
     ResizeParticlesSize(Np+newnp2,0,false);
     CellDivSingle->SetIncreaseNp(newnp2);
     TmcStart(Timers,TMC_SuInOut);
   }
 
-  //-Removes interpolated Z velocity of inlet/outlet particles.
-  if(InOut->GetInterpolatedVel())InOut->InterpolateResetZVelCpu(InOutCount,InOutPartc,Codec,Velrhopc);
+  //-Create and remove inout particles.
+  unsigned newnp=0;
+  {
+    //-Creates list with current inout particles and normal fluid (no periodic) in inout zones.
+    int *inoutpart=ArraysCpu->ReserveInt();
+    const unsigned inoutcountpre=InOut->CreateListCpu(Nstep,Np-Npb,Npb,Posc,Idpc,Codec,inoutpart);
 
-  //-Updates code of inout particles according its position and create new inlet particles when refilling=false.
-  byte *newizone=ArraysCpu->ReserveByte();
-  unsigned newnp=InOut->ComputeStepCpu(Nstep,stepdt,InOutCount,InOutPartc,this,IdMax+1,CpuParticlesSize,Np,Posc,Dcellc,Codec,Idpc,Velrhopc,newizone);
-  ArraysCpu->Free(newizone);  newizone=NULL;
+    //-Updates code of inout particles according its position and create new inlet particles when refilling=false.
+    //if(1)for(unsigned p=0;p<Np;p++)if(Idpc[p]==4382)Log->Printf("%d>=CS_005>> vel[%d].x:%f",Nstep,p,Velrhopc[p].x);
+    byte *newizone=ArraysCpu->ReserveByte();
+    newnp=InOut->ComputeStepCpu(Nstep,stepdt,inoutcountpre,inoutpart,this,IdMax+1,CpuParticlesSize,Np,Posc,Dcellc,Codec,Idpc,Velrhopc,newizone);
+    ArraysCpu->Free(newizone);  newizone=NULL;
 
-  //-Creates new inlet particles using refilling.
-  if(InOut->GetRefillingUse()){
-    float    *prodist=ArraysCpu->ReserveFloat();
-    tdouble3 *propos =ArraysCpu->ReserveDouble3();
-    newnp+=InOut->ComputeStepFillingCpu(Nstep,stepdt,InOutCount,InOutPartc
-      ,this,IdMax+1,CpuParticlesSize,Np,Posc,Dcellc,Codec,Idpc,Velrhopc,prodist,propos);
-    ArraysCpu->Free(prodist);
-    ArraysCpu->Free(propos);
+    //-Creates new inlet particles using advanced refilling mode.
+    if(InOut->GetRefillAdvanced()){
+      float    *prodist=ArraysCpu->ReserveFloat();
+      tdouble3 *propos =ArraysCpu->ReserveDouble3();
+      newnp+=InOut->ComputeStepFillingCpu(Nstep,stepdt,inoutcountpre,inoutpart
+        ,this,IdMax+1+newnp,CpuParticlesSize,Np+newnp,Posc,Dcellc,Codec,Idpc,Velrhopc
+        ,prodist,propos);
+      ArraysCpu->Free(prodist);
+      ArraysCpu->Free(propos);
+    }
+    ArraysCpu->Free(inoutpart);
   }
 
   //-Updates new particle values for Laminar+SPS.
@@ -263,6 +208,11 @@ void JSphCpuSingle::InOutComputeStep(double stepdt){
   RunCellDivide(true);
   TmcStart(Timers,TMC_SuInOut);
 
+  //-Create list of current inout particles (normal and periodic).
+  int* inoutpart=ArraysCpu->ReserveInt();
+  const unsigned inoutcount=InOut->CreateListSimpleCpu(Nstep,Np-Npb,Npb,Codec,inoutpart);
+  InOut->SetCurrentNp(inoutcount);
+
   //-Updates zsurf.
   if(InOut->GetCalculatedZsurf())InOutCalculeZsurf();
   if(InOut->GetCalculatedZsurf() || InOut->GetVariableZsurf())InOut->UpdateZsurf(TimeStep+stepdt);
@@ -270,17 +220,26 @@ void JSphCpuSingle::InOutComputeStep(double stepdt){
   if(TimeStep+stepdt>=TimePartNext)InOut->SaveVtkZsurf(Part);
 
   //-Updates velocity and rhop (no extrapolated).
-  if(InOut->GetNoExtrapolatedData())InOut->UpdateDataCpu(float(TimeStep+stepdt),true,InOutCount,InOutPartc,Posc,Codec,Idpc,Velrhopc);
+  if(InOut->GetNoExtrapolatedData())InOut->UpdateDataCpu(float(TimeStep+stepdt),true
+    ,inoutcount,inoutpart,Posc,Codec,Idpc,Velrhopc);
 
   //-Calculates extrapolated velocity and/or rhop for inlet/outlet particles from fluid domain.
-  if(InOut->GetExtrapolatedData())InOutExtrapolateData();
+  if(InOut->GetExtrapolatedData())InOutExtrapolateData(inoutcount,inoutpart);
 
   //-Calculates interpolated velocity for inlet/outlet particles.
-  if(InOut->GetInterpolatedVel())InOut->InterpolateVelCpu(float(TimeStep+stepdt),InOutCount,InOutPartc,Posc,Codec,Idpc,Velrhopc);
+  if(InOut->GetInterpolatedVel())InOut->InterpolateVelCpu(float(TimeStep+stepdt)
+    ,inoutcount,inoutpart,Posc,Codec,Idpc,Velrhopc);
+
+  //-Removes interpolated Z velocity of inlet/outlet particles.
+  if(InOut->GetInterpolatedVel())InOut->InterpolateResetZVelCpu(inoutcount,inoutpart,Codec,Velrhopc);
 
   //-Updates velocity and rhop of M1 variables starting from current velocity and rhop when Verlet is used. 
-  if(VelrhopM1c)InOut->UpdateVelrhopM1Cpu(InOutCount,InOutPartc,Velrhopc,VelrhopM1c);
+  if(VelrhopM1c)InOut->UpdateVelrhopM1Cpu(inoutcount,inoutpart,Velrhopc,VelrhopM1c);
 
+  //-Free array for inoutpart list.
+  ArraysCpu->Free(inoutpart); inoutpart=NULL;
+
+  //if(1)for(unsigned p=0;p<Np;p++)if(Idpc[p]==4382)Log->Printf("%d>=CS_FIN>> vel[%d].x:%f",Nstep,p,Velrhopc[p].x);
   TmcStop(Timers,TMC_SuInOut);
 }
 
@@ -307,14 +266,14 @@ void JSphCpuSingle::InOutCalculeZsurf(){
 /// Calculates extrapolated data for inlet/outlet particles from fluid domain.
 /// Calcula datos extrapolados en el fluido para las particulas inlet/outlet.
 //==============================================================================
-void JSphCpuSingle::InOutExtrapolateData(){
+void JSphCpuSingle::InOutExtrapolateData(unsigned inoutcount,const int *inoutpart){
   const tplane3f *planes=InOut->GetPlanes();
   const byte    *cfgzone=InOut->GetCfgZone();
   const float   *width  =InOut->GetWidth();
   const tfloat3 *dirdata=InOut->GetDirData();
   const float determlimit=InOut->GetDetermLimit();
   const byte doublemode=InOut->GetExtrapolateMode();
-  Interaction_InOutExtrap(doublemode,InOutCount,InOutPartc,cfgzone,planes,width,dirdata,determlimit
+  Interaction_InOutExtrap(doublemode,inoutcount,inoutpart,cfgzone,planes,width,dirdata,determlimit
     ,CellDivSingle->GetNcells(),CellDivSingle->GetBeginCell(),CellDivSingle->GetCellDomainMin()
     ,Dcellc,Posc,Codec,Idpc,Velrhopc);
 }

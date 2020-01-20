@@ -85,7 +85,6 @@ void JSphCpu::InitVars(){
   FtRidp=NULL;
   FtoForces=NULL;
   FtoForcesRes=NULL;
-  InOutPartc=NULL;  InOutCount=0; //-InOut.  //<vs_innlet>
   FreeCpuMemoryParticles();
   FreeCpuMemoryFixed();
 }
@@ -169,7 +168,7 @@ void JSphCpu::AllocCpuMemoryParticles(unsigned np,float over){
     ArraysCpu->AddArrayCount(JArraysCpu::SIZE_16B,1); //-shiftposfs
   }
   if(InOut){  //<vs_innlet_ini>
-    ArraysCpu->AddArrayCount(JArraysCpu::SIZE_4B,1);  //-InOutPart
+    //ArraysCpu->AddArrayCount(JArraysCpu::SIZE_4B,1);  //-InOutPart
     ArraysCpu->AddArrayCount(JArraysCpu::SIZE_1B,1);  //-newizone
   }  //<vs_innlet_end>
   //-Shows the allocated memory.
@@ -192,7 +191,6 @@ void JSphCpu::ResizeCpuMemoryParticles(unsigned npnew){
   tdouble3    *pospre     =SaveArrayCpu(Np,PosPrec);
   tfloat4     *velrhoppre =SaveArrayCpu(Np,VelrhopPrec);
   tsymatrix3f *spstau     =SaveArrayCpu(Np,SpsTauc);
-  int         *inoutpart  =SaveArrayCpu(Np,InOutPartc);   //<vs_innlet>
   //-Frees pointers.
   ArraysCpu->Free(Idpc);
   ArraysCpu->Free(Codec);
@@ -203,7 +201,6 @@ void JSphCpu::ResizeCpuMemoryParticles(unsigned npnew){
   ArraysCpu->Free(PosPrec);
   ArraysCpu->Free(VelrhopPrec);
   ArraysCpu->Free(SpsTauc);
-  ArraysCpu->Free(InOutPartc);    //<vs_innlet>
   //-Resizes CPU memory allocation.
   const double mbparticle=(double(MemCpuParticles)/(1024*1024))/CpuParticlesSize; //-MB por particula.
   Log->Printf("**JSphCpu: Requesting cpu memory for %u particles: %.1f MB.",npnew,mbparticle*npnew);
@@ -218,7 +215,6 @@ void JSphCpu::ResizeCpuMemoryParticles(unsigned npnew){
   if(pospre)     PosPrec     =ArraysCpu->ReserveDouble3();
   if(velrhoppre) VelrhopPrec =ArraysCpu->ReserveFloat4();
   if(spstau)     SpsTauc     =ArraysCpu->ReserveSymatrix3f();
-  if(inoutpart)  InOutPartc  =ArraysCpu->ReserveInt();    //<vs_innlet>
   //-Restore data in CPU memory.
   RestoreArrayCpu(Np,idp,Idpc);
   RestoreArrayCpu(Np,code,Codec);
@@ -229,7 +225,6 @@ void JSphCpu::ResizeCpuMemoryParticles(unsigned npnew){
   RestoreArrayCpu(Np,pospre,PosPrec);
   RestoreArrayCpu(Np,velrhoppre,VelrhopPrec);
   RestoreArrayCpu(Np,spstau,SpsTauc);
-  RestoreArrayCpu(Np,inoutpart,InOutPartc);     //<vs_innlet>
   //-Updates values.
   CpuParticlesSize=npnew;
   MemCpuParticles=ArraysCpu->GetAllocMemoryCpu();
@@ -272,7 +267,6 @@ void JSphCpu::ReserveBasicArraysCpu(){
   Velrhopc=ArraysCpu->ReserveFloat4();
   if(TStep==STEP_Verlet)VelrhopM1c=ArraysCpu->ReserveFloat4();
   if(TVisco==VISCO_LaminarSPS)SpsTauc=ArraysCpu->ReserveSymatrix3f();
-  if(InOut)InOutPartc=ArraysCpu->ReserveInt();  //<vs_innlet>
 }
 
 //==============================================================================

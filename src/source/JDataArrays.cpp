@@ -543,5 +543,113 @@ float* JDataArrays::NewArrayFloat1w(unsigned count,const tfloat4 *data){
   return(v);
 }
 
+//==============================================================================
+/// Move array values according a reindex array.
+//==============================================================================
+template<class T> void JDataArrays::TReindexData(unsigned sreindex,const unsigned *reindex
+  ,unsigned ndata,T *data,T *aux)const
+{
+  if(aux)memcpy(aux,data,sizeof(T)*ndata); //-Copy current data in auxiliary memory.
+  else aux=data; //-Auxiliary memory is not used.
+  for(unsigned p=0;p<sreindex;p++){
+    const unsigned p0=reindex[p];
+    if(p0>=ndata || p>=ndata)Run_Exceptioon("Value number is invalid.");
+    if(p!=p0)data[p]=aux[p0];
+  }
+}
+
+//==============================================================================
+/// Apply filter array[count] (1:selected, 0:discarded).
+//==============================================================================
+unsigned JDataArrays::FilterApply(unsigned count,const byte *filter){
+  //-Create index to compact filtered data.
+  unsigned *reindex=NewArrayUint(count);
+  unsigned nsel=0;
+  for(unsigned p=0;p<count;p++)if(filter[p]!=0){
+    reindex[nsel++]=p;
+  }
+  //-Compact filtered data.
+  const unsigned na=Count();
+  for(unsigned c=0;c<na;c++){
+    StDataArray &arr=Arrays[c];
+    if(arr.count!=count)Run_Exceptioon(fun::PrintStr("Number of values of \'%s\' does not match size of filter.",arr.keyname.c_str()));
+    switch(arr.type){
+      case TypeUchar:    ReindexData(nsel,reindex,arr.count,(byte    *)arr.ptr,NULL);  break;
+      case TypeUshort:   ReindexData(nsel,reindex,arr.count,(word    *)arr.ptr,NULL);  break;
+      case TypeUint:     ReindexData(nsel,reindex,arr.count,(unsigned*)arr.ptr,NULL);  break;
+      case TypeFloat:    ReindexData(nsel,reindex,arr.count,(float   *)arr.ptr,NULL);  break;
+      case TypeDouble:   ReindexData(nsel,reindex,arr.count,(double  *)arr.ptr,NULL);  break;
+      case TypeUint3:    ReindexData(nsel,reindex,arr.count,(tuint3  *)arr.ptr,NULL);  break;
+      case TypeFloat3:   ReindexData(nsel,reindex,arr.count,(tfloat3 *)arr.ptr,NULL);  break;
+      case TypeDouble3:  ReindexData(nsel,reindex,arr.count,(tdouble3*)arr.ptr,NULL);  break;
+      default: Run_Exceptioon(fun::PrintStr("Type of pointer \'%s\' is invalid.",TypeToStr(arr.type)));
+    }
+    arr.count=nsel;
+  }
+  //-Free memory.
+  delete[] reindex; reindex=NULL;
+  return(nsel);
+}
+
+//==============================================================================
+/// Sort and cut data.
+//==============================================================================
+unsigned JDataArrays::SortData(unsigned count,const unsigned *reindex){
+  const unsigned na=Count();
+  //printf("00> count:%u \n",count);
+  //-Create auxiliary memory to sort data.
+  unsigned maxsize4b=0;
+  for(unsigned c=0;c<na;c++){
+    const unsigned s4b=(SizeOfType(Arrays[c].type)+3)/4;
+    //printf("00b> [%s].%s s4b:%u \n",Arrays[c].keyname.c_str(),TypeToStr(Arrays[c].type),s4b);
+    maxsize4b=(maxsize4b>=s4b? maxsize4b: s4b);
+  }
+  unsigned* aux=NewArrayUint(maxsize4b*GetDataCount(false));
+  //printf("01> maxsize4b:%u \n",maxsize4b);
+  //-Sort and cut each array data.
+  for(unsigned c=0;c<na;c++){
+    StDataArray &arr=Arrays[c];
+    //printf("01b> [%s].%s count:%u \n",arr.keyname.c_str(),TypeToStr(arr.type),arr.count);
+    switch(arr.type){
+      case TypeUchar:    ReindexData(count,reindex,arr.count,(byte    *)arr.ptr,(byte    *)aux);  break;
+      case TypeUshort:   ReindexData(count,reindex,arr.count,(word    *)arr.ptr,(word    *)aux);  break;
+      case TypeUint:     ReindexData(count,reindex,arr.count,(unsigned*)arr.ptr,(unsigned*)aux);  break;
+      case TypeFloat:    ReindexData(count,reindex,arr.count,(float   *)arr.ptr,(float   *)aux);  break;
+      case TypeDouble:   ReindexData(count,reindex,arr.count,(double  *)arr.ptr,(double  *)aux);  break;
+      case TypeUint3:    ReindexData(count,reindex,arr.count,(tuint3  *)arr.ptr,(tuint3  *)aux);  break;
+      case TypeFloat3:   ReindexData(count,reindex,arr.count,(tfloat3 *)arr.ptr,(tfloat3 *)aux);  break;
+      case TypeDouble3:  ReindexData(count,reindex,arr.count,(tdouble3*)arr.ptr,(tdouble3*)aux);  break;
+      default: Run_Exceptioon(fun::PrintStr("Type of pointer \'%s\' is invalid.",TypeToStr(arr.type)));
+    }
+    arr.count=count;
+  }
+  //-Free memory.
+  delete[] aux; aux=NULL;
+  return(count);
+}
+
+//==============================================================================
+/// Filter list of values according its memory position.
+//==============================================================================
+unsigned JDataArrays::FilterList(unsigned n,const unsigned *list){
+  const unsigned count=GetDataCount(false);
+  if(count!=GetDataCount(true))Run_Exceptioon("All arrays must have the same number of values.");
+  byte *filter=NewArrayByte(count,true);
+  for(unsigned c=0;c<n;c++)if(list[c]<count)filter[list[c]]=1;
+  const unsigned nfinal=FilterApply(count,filter);
+  delete[] filter; filter=NULL;
+  return(nfinal);
+}
+
+//==============================================================================
+/// Sort and filter list of values according its memory position.
+//==============================================================================
+unsigned JDataArrays::FilterSortList(unsigned n,const unsigned *list){
+  const unsigned count=GetDataCount(false);
+  if(count!=GetDataCount(true))Run_Exceptioon("All arrays must have the same number of values.");
+  if(n>count)Run_Exceptioon("Size of list is higher than number of values.");
+  SortData(n,list);
+  return(n);
+}
 
 

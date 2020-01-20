@@ -615,7 +615,7 @@ void JSphInOutPoints::CheckPoints(const std::string &xmlrow){
 /// Loads lines with configuration information.
 //==============================================================================
 void JSphInOutPoints::GetConfig(std::vector<std::string> &lines)const{
-  lines.push_back("Inlet point definition:");
+  lines.push_back("InOut point definition:");
   for(unsigned i=0;i<unsigned(ConfigInfo.size());i++)lines.push_back(string("  ")+ConfigInfo[i]);
 }
 

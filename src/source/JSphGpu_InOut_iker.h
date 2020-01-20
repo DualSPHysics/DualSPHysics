@@ -24,8 +24,11 @@
 #include "DualSphDef.h"
 #include <cuda_runtime_api.h>
 
-#define INOUT_UseRefilling_MASK 0x01
-#define INOUT_RemoveZsurf_MASK 0x02
+#define INOUT_RefillAdvanced_MASK 0x01
+#define INOUT_RefillSpFull_MASK 0x02
+#define INOUT_RemoveInput_MASK 0x04
+#define INOUT_RemoveZsurf_MASK 0x08
+#define INOUT_ConvertInput_MASK 0x10
 
 /// Implements a set of functions and CUDA kernels for InOut feature.
 namespace cusphinout{
@@ -36,18 +39,20 @@ namespace cusphinout{
 void InOutIgnoreFluidDef(unsigned n,typecode cod,typecode codnew,typecode *code);
 void UpdatePosFluid(byte periactive,unsigned n,unsigned pini
   ,double2 *posxy,double *posz,unsigned *dcell,typecode *code);
+unsigned InOutCreateListSimple(bool stable,unsigned n,unsigned pini
+  ,const typecode *code,unsigned *listp);
 unsigned InOutCreateList(bool stable,unsigned n,unsigned pini
-  ,byte convertfluidmask,byte nzone,const byte *cfgzone,const float4 *planes
+  ,byte chkinputmask,byte nzone,const byte *cfgzone,const float4 *planes
   ,tfloat3 freemin,tfloat3 freemax
   ,const float2 *boxlimit,const double2 *posxy,const double *posz
   ,typecode *code,unsigned *listp);
 void InOutUpdateData(unsigned n,const unsigned *listp
-  ,byte izone,byte rmode,byte vmode,byte vprof
+  ,byte izone,byte rmode,byte vmode,byte vprof,byte refillspfull
   ,float timestep,float zsurf,tfloat4 veldata,tfloat4 veldata2,tfloat3 dirdata
   ,float coefhydro,float rhopzero,float gamma
   ,const typecode *code,const double *posz,float4 *velrhop);
 
-void InoutClearInteractionVars(unsigned n,const int *inoutpart
+void InoutClearInteractionVars(unsigned npf,unsigned pini,const typecode *code
     ,float3 *ace,float *ar,float *viscdt,float4 *shiftposfs);
 
 void InOutUpdateVelrhopM1(unsigned n,const int *inoutpart

@@ -384,8 +384,6 @@ void JSphGpuSingle::RunCellDivide(bool updateperiodic){
   }
   TmgStop(Timers,TMG_NlOutCheck);
   BoundChanged=false;
-  //-Creates list with particles in inout zones.  //<vs_innlet>
-  if(InOut)InOutCreateList();                     //<vs_innlet>
 }
 
 //------------------------------------------------------------------------------
@@ -446,8 +444,8 @@ void JSphGpuSingle::Interaction_Forces(TpInterStep interstep){
   if(Deltag)cusph::AddDelta(Np-Npb,Deltag+Npb,Arg+Npb);//-Adds the Delta-SPH correction for the density. | Añade correccion de Delta-SPH a Arg[]. 
   Check_CudaErroor("Failed while executing kernels of interaction.");
 
-  //-Reset interpolation varibles (ace,ar,shiftpos) over inout particles.                       //<vs_innlet>
-  if(InOut)InOut->ClearInteractionVarsGpu(InOutCount,InOutPartg,Aceg,Arg,ViscDtg,ShiftPosfsg);  //<vs_innlet>
+  //-Reset interpolation varibles (ace,ar,shiftpos) over inout particles.                  //<vs_innlet>
+  if(InOut)InOut->ClearInteractionVarsGpu(Np-Npb,Npb,Codeg,Aceg,Arg,ViscDtg,ShiftPosfsg);  //<vs_innlet>
 
   //-Calculates maximum value of ViscDt.
   if(Np)ViscDtMax=cusph::ReduMaxFloat(Np,0,ViscDtg,CellDivSingle->GetAuxMem(cusph::ReduMaxFloatSize(Np)));

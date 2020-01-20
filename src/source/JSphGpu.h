@@ -282,15 +282,6 @@ public:
   JSphGpu(bool withmpi);
   ~JSphGpu();
 
-//<vs_innlet_ini>
-//-Code for InOut
-//-----------------
-protected:
-  //-Variables for InOut.
-  unsigned InOutCount;     ///<Number of inout particles in InOutPartg[].
-  int *InOutPartg;         ///<InOut particle list.
-//<vs_innlet_end>
-  
 //-Functions for debug.
 //----------------------
 public:

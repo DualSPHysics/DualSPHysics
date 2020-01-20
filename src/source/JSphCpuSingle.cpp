@@ -452,8 +452,6 @@ void JSphCpuSingle::RunCellDivide(bool updateperiodic){
   }
   TmcStop(Timers,TMC_NlOutCheck);
   BoundChanged=false;
-  //-Creates list with particles in inout zones.  //<vs_innlet>
-  if(InOut)InOutCreateList();                     //<vs_innlet>
 }
 
 //==============================================================================
@@ -529,8 +527,8 @@ void JSphCpuSingle::Interaction_Forces(TpInterStep interstep){
     for(int p=ini;p<fin;p++)if(Deltac[p]!=FLT_MAX)Arc[p]+=Deltac[p];
   }
 
-  //-Reset interpolation varibles (ace,ar,shiftpos) over inout particles.              //<vs_innlet>
-  if(InOut)InOut->ClearInteractionVarsCpu(InOutCount,InOutPartc,Acec,Arc,ShiftPosfsc); //<vs_innlet>
+  //-Reset interpolation varibles (ace,ar,shiftpos) over inout particles.         //<vs_innlet>
+  if(InOut)InOut->ClearInteractionVarsCpu(Np-Npb,Npb,Codec,Acec,Arc,ShiftPosfsc); //<vs_innlet>
 
   //-Calculates maximum value of ViscDt.
   ViscDtMax=viscdt;

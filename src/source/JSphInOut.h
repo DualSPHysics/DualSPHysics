@@ -47,6 +47,7 @@ class JSphCpu;
 class JWaveTheoryReg;
 class JSphMk;
 class JSphPartsInit;
+class JSphGpuSingle;
 
 //##############################################################################
 //# XML format in _FmtXML_InOut.xml.
@@ -59,6 +60,20 @@ class JSphPartsInit;
 class JSphInOutZone : protected JObject
 {
 public:
+
+  ///Defines the treatment of fluid particles entering a inlet/outlet zone.
+  typedef enum{ 
+     TIN_Free=0     ///<Free input mode (no changes).
+    ,TIN_Convert=1  ///<Convert fluid to inlet/outlet.
+    ,TIN_Remove=2   ///<Remove fluid.
+  }TpInput;
+
+  ///Defines refilling modes.
+  typedef enum{ 
+     TFI_SimpleFull=0   ///<It creates new inout particles when inout particles is moved to normal fluid.
+    ,TFI_SimpleZsurf=1  ///<It only creates new inout particles below zsurf.
+    ,TFI_Advanced=2     ///<Advanced for reverse flows (slow).
+  }TpRefilling;
 
   ///Controls imposed velocity.
   typedef enum{ 
@@ -94,10 +109,13 @@ public:
     ZSURF_WaveTheory=4    ///<Zsurf is calculated from wave theory.
   }TpZsurfMode;   
 
-  static const unsigned ConvertFluid_MASK=0x80;  ///<Mask to obtain value (1000 0000).
+  static const unsigned CheckInput_MASK  =0x80;  ///<Mask to obtain value (1000 0000).
 
-  static const unsigned UseRefilling_MASK=0x01;  ///<Mask to obtain value (0000 0001).
-  static const unsigned RemoveZsurf_MASK =0x02;  ///<Mask to obtain value (0000 0010).
+  static const unsigned RefillAdvanced_MASK=0x01;  ///<Mask to obtain value (0000 0001).
+  static const unsigned RefillSpFull_MASK  =0x02;  ///<Mask to obtain value (0000 0010).
+  static const unsigned RemoveInput_MASK   =0x04;  ///<Mask to obtain value (0000 0100).
+  static const unsigned RemoveZsurf_MASK   =0x08;  ///<Mask to obtain value (0000 1000).
+  static const unsigned ConvertInput_MASK  =0x10;  ///<Mask to obtain value (0001 0000).
 
 private:
   const bool Cpu;
@@ -112,8 +130,9 @@ private:
   //-Configuration parameters.
   JSphInOutPoints *Points;  ///<Definition of inlet points.
   byte Layers;              ///<Number of inlet particle layers.
-  bool ConvertFluid;        ///<Converts fluid in inlet/outlet area (default=true).
-  bool UseRefilling;        ///<Use advanced refilling algorithm but slower (default=UseRefillingDef).
+  TpInput InputMode;        ///<Defines the treatment of fluid particles entering a inlet/outlet zone (default=0).
+  bool InputCheck;          ///<Checks fluid input for RemoveZsurf=true or InputMode!=TIN_Free.
+  TpRefilling RefillingMode;  ///<Refilling mode. 0:Simple full, 1:Simple below zsurf, 2:Advanced for reverse flows (very slow) (default=1).
 
   //-Domain data from Points object. PtDom[8] is the reference point in inout plane.
   tdouble3 PtDom[10];
@@ -135,6 +154,9 @@ private:
 
   JSphInOutGridData *InputVelGrid;  ///<Input velocity is interpolated in time from a data grid (for VelMode==MVEL_Interpolated).
   bool ResetZVelGrid;               ///<Reset Z velocity after interaction (default=false).
+
+  float VelMin;        ///<Minimum input velocity or -FLT_MAX (when it is unknown).
+  float VelMax;        ///<Miximum input velocity or +FLT_MAX (when it is unknown).
 
   TpZsurfMode ZsurfMode;            ///<Inflow zsurf mode (fixed or variable).
   float InputZbottom;               ///<Bottom level of water (it is constant).
@@ -165,21 +187,23 @@ private:
   float  *PtzAux;        ///<Memory auxiliar to recude maximum zsurf on CPU memory [NptInit].
 #endif
 
-  void ReadXml(JXml *sxml,TiXmlElement* lis,const std::string &dirdatafile,const JSphPartsInit *partsdata,bool userefillingdef);
+  void ReadXml(JXml *sxml,TiXmlElement* lis,const std::string &dirdatafile,const JSphPartsInit *partsdata);
+  void CalculateVelMinMax(float &velmin,float &velmax)const;
   void LoadDomain();
 
 public:
   JSphInOutZone(bool cpu,JLog2 *log,unsigned idzone,bool simulate2d,double simulate2dposy
     ,double dp,const tdouble3 &posmin,const tdouble3 &posmax,JXml *sxml,TiXmlElement* ele
-    ,const std::string &dirdatafile,const JSphPartsInit *partsdata,bool userefillingdef);
+    ,const std::string &dirdatafile,const JSphPartsInit *partsdata);
   ~JSphInOutZone();
   void Reset();
   void GetConfig(std::vector<std::string> &lines)const;
+  void CheckConfig()const;
 
-  static TpVelProfile GetConfigVelProfile(byte cfg){ return((TpVelProfile)(cfg&PVEL_MASK));  }
-  static TpVelMode    GetConfigVelMode   (byte cfg){ return((TpVelMode)   (cfg&MVEL_MASK));  }
-  static TpRhopMode   GetConfigRhopMode  (byte cfg){ return((TpRhopMode)  (cfg&MRHOP_MASK)); }
-  static bool         GetConfigConvertf  (byte cfg){ return((cfg&ConvertFluid_MASK)!=0); }
+  static TpVelProfile GetConfigVelProfile  (byte cfg){ return((TpVelProfile)(cfg&PVEL_MASK));  }
+  static TpVelMode    GetConfigVelMode     (byte cfg){ return((TpVelMode)   (cfg&MVEL_MASK));  }
+  static TpRhopMode   GetConfigRhopMode    (byte cfg){ return((TpRhopMode)  (cfg&MRHOP_MASK)); }
+  static bool         GetConfigCheckInputDG(byte cfg){ return((cfg&CheckInput_MASK)!=0); }
   //static TpZsurfMode  GetConfigZsurfMode (byte cfg){ return((TpZsurfMode) ((cfg>>6)&3)); }
   byte GetConfigZone()const;
   byte GetConfigUpdate()const;
@@ -211,7 +235,7 @@ public:
   TpVelProfile GetVelProfile()const{ return(VelProfile); }
   TpZsurfMode  GetZsurfMode()const{ return(ZsurfMode); }
 
-  bool GetUseRefilling()const{ return(UseRefilling); }
+  bool GetRefillAdvanced()const{ return(RefillingMode==TFI_Advanced); }
   bool GetExtrapolatedData()const{ return(RhopMode==MRHOP_Extrapolated || VelMode==MVEL_Extrapolated); }
   bool GetNoExtrapolatedData()const{ return(RhopMode!=MRHOP_Extrapolated || VelMode!=MVEL_Extrapolated); }
   bool GetVariableVel()const{ return(VelMode==MVEL_Variable); }
@@ -219,7 +243,6 @@ public:
   bool GetVariableZsurf()const{ return(ZsurfMode==ZSURF_Variable); }
   bool GetCalculatedZsurf()const{ return(ZsurfMode==ZSURF_Calculated); }
   bool GetRemoveZsurf()const{ return(RemoveZsurf); }
-  bool GetConvertFluid()const{ return(ConvertFluid); }
 
   bool GetSvVtkZsurf()const{ return(SvVtkZsurf); }
 
@@ -259,7 +282,7 @@ private:
   JLog2 *Log;
   const std::string XmlFile;
   const std::string XmlPath;
-  static const unsigned MaxZones=16;  ///<Maximum number of inout configurations.
+  static const unsigned MaxZones=CODE_TYPE_FLUID_INOUTNUM;  ///<Maximum number of inout configurations.
 
   //-Basic simulation parameters.
   bool Stable;
@@ -280,7 +303,6 @@ private:
 
   bool ReuseIds;         ///<Id of particles excluded values ​​are reused.
   double ResizeTime;     ///<Time to calculate number of new particles.
-  bool UseRefillingDef;  ///<Use advanced refilling algorithm by default (default=false).
   float DetermLimit;     ///<Limit for determinant. Use 1e-3 for first_order or 1e+3 for zeroth_order (default=1e+3).
   byte ExtrapolateMode;  ///<Calculation mode for rhop and velocity extrapolation from ghost nodes 1:fast-single, 2:single, 3:double (default=1).
 
@@ -291,8 +313,9 @@ private:
 
   ullong NewNpTotal;   ///<Total number of fluid particles created by inlet.
   unsigned NewNpPart;  ///<Number of fluid particles created by inlet since last PART.
+  unsigned CurrentNp;  ///<Current number of inout particles (including periodic particles). 
 
-  bool RefillingUse;         ///<Indicates if some inlet configuration uses refilling method.
+  bool RefillAdvanced;       ///<Indicates if some inlet configuration uses advanced refilling method.
   bool VariableVel;          ///<Indicates if some inlet configuration uses variable velocity.
   bool VariableZsurf;        ///<Indicates if some inlet configuration uses variable zsurf.
   bool CalculatedZsurf;      ///<Indicates if some inlet configuration uses calculated zsurf.
@@ -305,7 +328,7 @@ private:
   //-Data to manage all inlet/outlet conditions.
   tplane3f *Planes;    ///<Planes for inlet/outlet zones [ListSize].
   byte     *CfgZone;   ///<Information about VelMode, VelProfile, RhopMode and ConvertFluid. [ListSize].
-  byte     *CfgUpdate; ///<Information about UseRefilling, RemoveZsurf. [ListSize].
+  byte     *CfgUpdate; ///<Information about refilling mode, InputMode and RemoveZsurf. [ListSize].
   float    *Width;     ///<Zone width [ListSize].
   tfloat3  *DirData;   ///<Inflow direction [ListSize].
   tfloat4  *VelData;   ///<Velocity coefficients for imposed velocity [ListSize*2].
@@ -317,7 +340,7 @@ private:
   float4 *Planesg;    ///<Planes for inlet/outlet zones [ListSize].
   float2 *BoxLimitg;  ///<BoxLimitMin/Max for inlet/outlet zones [ListSize*(xmin,xmax),ListSize*(ymin,ymax),ListSize*(zmin,zmax)]=[3*ListSize].
   byte   *CfgZoneg;   ///<Information about VelMode, VelProfile, RhopMode and ConvertFluid. [ListSize].
-  byte   *CfgUpdateg; ///<Information about UseRefilling, RemoveZsurf. [ListSize].
+  byte   *CfgUpdateg; ///<Information about refilling mode, InputMode and RemoveZsurf. [ListSize].
   float  *Widthg;     ///<Zone width [ListSize].
   float3 *DirDatag;   ///<Inflow direction [ListSize].
   float  *Zsurfg;     ///<Zsurf (it can be variable) [ListSize].
@@ -378,9 +401,12 @@ public:
     ,tdouble3 posmin,tdouble3 posmax,typecode codenewpart,const JSphPartsInit *partsdata);
     
   void LoadInitPartsData(unsigned idpfirst,unsigned npart,unsigned* idp,typecode* code,tdouble3* pos,tfloat4* velrhop);
+  void InitCheckProximity(unsigned np,unsigned newnp,float scell,const tdouble3* pos,const unsigned *idp,typecode *code);
 
 
 //-Specific code for CPU.
+  unsigned CreateListSimpleCpu(unsigned nstep,unsigned npf,unsigned pini
+    ,const typecode *code,int *inoutpart);
   unsigned CreateListCpu(unsigned nstep,unsigned npf,unsigned pini
     ,const tdouble3 *pos,const unsigned *idp,typecode *code,int *inoutpart);
   void UpdateDataCpu(float timestep,bool full,unsigned inoutcount,const int *inoutpart
@@ -391,6 +417,8 @@ public:
   void InterpolateResetZVelCpu(unsigned inoutcount,const int *inoutpart
     ,const typecode *code,tfloat4 *velrhop);
 
+
+  void CheckPartsIzone(std::string key,unsigned nstep,unsigned inoutcount,const int *inoutpart,typecode *code,unsigned *idp);
   unsigned ComputeStepCpu(unsigned nstep,double dt,unsigned inoutcount,int *inoutpart
     ,const JSphCpu *sphcpu,unsigned idnext,unsigned sizenp,unsigned np
     ,tdouble3 *pos,unsigned *dcell,typecode *code,unsigned *idp,tfloat4 *velrhop,byte *newizone);
@@ -402,12 +430,14 @@ public:
   void UpdateVelrhopM1Cpu(unsigned inoutcount,const int *inoutpart
     ,const tfloat4 *velrhop,tfloat4 *velrhopm1);
 
-  void ClearInteractionVarsCpu(unsigned inoutcount,const int *inoutpart
+  void ClearInteractionVarsCpu(unsigned npf,unsigned pini,const typecode *code
     ,tfloat3 *ace,float *ar,tfloat4 *shiftposfs);
 
 
 //-Specific code for GPU.
 #ifdef _WITHGPU
+  unsigned CreateListSimpleGpu(unsigned nstep,unsigned npf,unsigned pini
+    ,const typecode *codeg,unsigned size,int *inoutpartg);
   unsigned CreateListGpu(unsigned nstep,unsigned npf,unsigned pini
     ,const double2 *posxyg,const double *poszg,typecode *codeg,unsigned size,int *inoutpartg);
   void UpdateDataGpu(float timestep,bool full,unsigned inoutcount,const int *inoutpartg
@@ -420,7 +450,7 @@ public:
 
   unsigned ComputeStepGpu(unsigned nstep,double dt,unsigned inoutcount,int *inoutpartg
     ,unsigned idnext,unsigned sizenp,unsigned np,double2 *posxyg,double *poszg
-    ,unsigned *dcellg,typecode *codeg,unsigned *idpg,float4 *velrhopg,byte *newizoneg);
+    ,unsigned *dcellg,typecode *codeg,unsigned *idpg,float4 *velrhopg,byte *newizoneg,const JSphGpuSingle *gp);
   unsigned ComputeStepFillingGpu(unsigned nstep,double dt,unsigned inoutcount,int *inoutpartg
     ,unsigned idnext,unsigned sizenp,unsigned np
     ,double2 *posxyg,double *poszg,unsigned *dcellg,typecode *codeg,unsigned *idpg,float4 *velrhopg
@@ -429,7 +459,7 @@ public:
   void UpdateVelrhopM1Gpu(unsigned inoutcount,const int *inoutpartg
     ,const float4 *velrhopg,float4 *velrhopm1g);
 
-  void ClearInteractionVarsGpu(unsigned inoutcount,const int *inoutpartg
+  void ClearInteractionVarsGpu(unsigned npf,unsigned pini,const typecode *codeg
     ,float3 *aceg,float *arg,float *viscdtg,float4 *shiftposfsg);
 #endif
 
@@ -447,7 +477,7 @@ public:
   bool GetInterpolatedVel()const{ return(InterpolatedVel); }
   bool GetVariableZsurf()const{ return(VariableZsurf); }
   bool GetCalculatedZsurf()const{ return(CalculatedZsurf); }
-  bool GetRefillingUse()const{ return(RefillingUse); }
+  bool GetRefillAdvanced()const{ return(RefillAdvanced); }
 
   double GetDistPtzPos(unsigned ci)const{     return(ci<ListSize? List[ci]->GetDistPtzPos()  : 0); }
   unsigned GetCountPtzPos(unsigned ci)const{  return(ci<ListSize? List[ci]->GetCountPtzPos() : 0); }
@@ -466,6 +496,9 @@ public:
   void ClearNewNpPart(){ NewNpPart=0; }
   unsigned GetNewNpPart()const{ return(NewNpPart); }
   ullong GetNewNpTotal()const{ return(NewNpTotal); }
+
+  void SetCurrentNp(unsigned n){ CurrentNp=n; }
+  unsigned GetCurrentNp()const{ return(CurrentNp); }
 
   bool GetReuseIds()const{ return(ReuseIds); }
   float GetDetermLimit()const{ return(DetermLimit); };

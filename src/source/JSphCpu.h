@@ -298,12 +298,7 @@ public:
 //-Code for InOut in JSphCpu_InOut.cpp
 //--------------------------------------
 protected:
-  //-Variables for InOut.
-  unsigned InOutCount;     ///<Number of inout particles in InOutPartc[].
-  int *InOutPartc;         ///<InOut particle list.
-
   tdouble3 Interaction_PosNoPeriodic(tdouble3 posp1)const;
-
 
   template<bool sim2d,TpKernel tker> void InteractionInOutExtrap_Double
     (unsigned inoutcount,const int *inoutpart,const byte *cfgzone
