@@ -2045,7 +2045,7 @@ void JSph::SaveData(unsigned npok,const JDataArrays& arrays
   PartDtMin=DBL_MAX; PartDtMax=-DBL_MAX;
 
   //-Computation of time.
-  if(Part>PartIni||Nstep){
+  if(Part>PartIni || Nstep){
     TimerPart.Stop();
     double tpart=TimerPart.GetElapsedTimeD()/1000;
     double tseg=tpart/(TimeStep-TimeStepM1);
@@ -2057,15 +2057,18 @@ void JSph::SaveData(unsigned npok,const JDataArrays& arrays
   else Log->Printf("Part%s        %u particles successfully stored",suffixpartx.c_str(),npok);   
   
   //-Shows info of the new inlet particles.  //<vs_innlet_ini> 
+  bool printnp=true;
   if(InOut && InOut->GetNewNpPart()){
-    Log->Printf("  Particles new: %u (total: %llu)",InOut->GetNewNpPart(),InOut->GetNewNpTotal());
+    Log->Printf("  Particles new: %u (total new: %llu)  -  Current np: %u",InOut->GetNewNpPart(),InOut->GetNewNpTotal(),npok);
     InOut->ClearNewNpPart();
+    printnp=false;
   }  //<vs_innlet_end> 
   
   //-Shows info of the excluded particles.
   if(nout){
     PartOut+=nout;
-    Log->Printf("  Particles out: %u  (total: %u)",nout,PartOut);
+    if(printnp)Log->Printf("  Particles out: %u  (total out: %u)  -  Current np: %u",nout,PartOut,npok);
+    else       Log->Printf("  Particles out: %u  (total out: %u)",nout,PartOut);
   }
 
   //-Cheks number of excluded particles.

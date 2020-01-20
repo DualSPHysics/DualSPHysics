@@ -219,6 +219,7 @@ public:
   bool GetVariableZsurf()const{ return(ZsurfMode==ZSURF_Variable); }
   bool GetCalculatedZsurf()const{ return(ZsurfMode==ZSURF_Calculated); }
   bool GetRemoveZsurf()const{ return(RemoveZsurf); }
+  bool GetConvertFluid()const{ return(ConvertFluid); }
 
   bool GetSvVtkZsurf()const{ return(SvVtkZsurf); }
 

@@ -1309,6 +1309,8 @@ unsigned JSphInOut::Config(double timestep,bool stable,bool simulate2d,double si
     if(zo->GetCalculatedZsurf())CalculatedZsurf=true;
     if((zo->GetVariableZsurf() || zo->GetCalculatedZsurf()) && !zo->GetUseRefilling())
       Run_Exceptioon(fun::PrintStr("Configuration of Inlet/outlet %d is invalid. Zsurf variable or calculated is only allowed with UseRefilling=True.",ci));
+    if(zo->GetRemoveZsurf() && !zo->GetConvertFluid())
+      Run_Exceptioon(fun::PrintStr("Configuration of Inlet/outlet %d is invalid. Option RemoveZsurf=true does not work with ConvertFluid=false.",ci));
   }
 
   //-Prepares data of points to refilling or calculated zsurf.
@@ -1392,7 +1394,7 @@ void JSphInOut::LoadInitPartsData(unsigned idpfirst,unsigned nparttot,unsigned* 
       const unsigned p=npart+cp;
       idp[p]=idpfirst+p;
       code[p]=typecode(CODE_TYPE_FLUID_INOUT)+ci;
-      velrhop[p]=TFloat4(0);
+      velrhop[p]=TFloat4(0,0,0,1000);
     }
     npart+=np;
   }
@@ -1730,7 +1732,7 @@ unsigned JSphInOut::ComputeStepCpu(unsigned nstep,double dt,unsigned inoutcount
     code[p2]=CODE_ToFluidInout(CodeNewPart,izone);
     sphcpu->UpdatePos(rpos,0,0,0,false,p2,pos,dcell,code);
     idp[p2]=idnext+cp;
-    velrhop[p2]=TFloat4(0);
+    velrhop[p2]=TFloat4(0,0,0,1000);
   }
   //-Returns number of new inlet particles.
   return(unsigned(newnp));
@@ -1844,7 +1846,7 @@ unsigned JSphInOut::ComputeStepFillingCpu(unsigned nstep,double dt,unsigned inou
       rpos.z-=dis*DirData[izone].z;
       sphcpu->UpdatePos(rpos,0,0,0,false,p,pos,dcell,code);
       idp[p]=idnext+newnp;
-      velrhop[p]=TFloat4(0);
+      velrhop[p]=TFloat4(0,0,0,1000);
     }
     newnp++;
   }

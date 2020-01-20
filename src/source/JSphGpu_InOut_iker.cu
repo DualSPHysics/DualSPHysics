@@ -478,7 +478,7 @@ template<bool periactive> __global__ void KerInOutCreateNewInlet(unsigned newn
     code[p2]=CODE_ToFluidInout(codenewpart,izone);
     cusph::KerUpdatePos<periactive>(rposxy,rposz,0,0,0,false,p2,posxy,posz,dcell,code);
     idp[p2]=idnext+cp;
-    velrhop[p2]=make_float4(0,0,0,0);
+    velrhop[p2]=make_float4(0,0,0,1000);
   }
 }
 
@@ -695,7 +695,7 @@ template<bool periactive> __global__ void KerInOutFillCreate(unsigned newn,const
     code[p]=CODE_ToFluidInout(codenewpart,izone);
     cusph::KerUpdatePos<periactive>(rposxy,rposz,0,0,0,false,p,posxy,posz,dcell,code);
     idp[p]=idnext+cp;
-    velrhop[p]=make_float4(0,0,0,0);
+    velrhop[p]=make_float4(0,0,0,1000);
   }
 }
 

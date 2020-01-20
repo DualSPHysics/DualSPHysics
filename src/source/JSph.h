@@ -341,7 +341,7 @@ protected:
   int Part;               ///<Saves subsequent PART. | Siguiente PART a guardar.                                          
   int Nstep;              ///<Number of step in execution.             | Numero de paso en ejecucion.
   int PartNstep;          ///<Number of step when last PART was saved. | Numero de paso en el que se guardo el ultimo PART.
-  unsigned PartOut;       ///<Total number of excluded particles to be recorded to the last PART. | Numero total de particulas excluidas al grabar el ultimo PART.
+  unsigned PartOut;       ///<Total number of excluded particles. | Numero total de particulas excluidas al grabar el ultimo PART.
   double TimeStepIni;     ///<Initial instant of the simulation. | Instante inicial de la simulación.
   double TimeStep;        ///<Current instant of the simulation. | Instante actual de la simulación.                                 
   double TimeStepM1;      ///<Instant of the simulation when the last PART was stored. | Instante de la simulación en que se grabo el último PART.         
