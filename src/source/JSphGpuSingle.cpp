@@ -34,12 +34,13 @@
 #include "JTimeOut.h"
 #include "JTimeControl.h"
 #include "JSphGpu_ker.h"
-#include "JBlockSizeAuto.h"
+#include "JSphGpuSimple_ker.h"
 #include "JGaugeSystem.h"
 #include "JSphInOut.h"  //<vs_innlet>
 #include "JLinearValue.h"
 #include "JDataArrays.h"
 #include "JDebugSphGpu.h"
+#include "JShifting.h"
 #include <climits>
 
 using namespace std;
@@ -121,7 +122,6 @@ void JSphGpuSingle::UpdateMaxValues(){
 void JSphGpuSingle::LoadConfig(JCfgRun *cfg){
   //-Loads general configuration.
   JSph::LoadConfig(cfg);
-  BlockSizeMode=cfg->BlockSizeMode;
   //-Checks compatibility of selected options.
   Log->Print("**Special case configuration is loaded");
 }
@@ -364,6 +364,9 @@ void JSphGpuSingle::RunCellDivide(bool updateperiodic){
   Npb=CellDivSingle->GetNpbFinal();
   NpbOk=Npb-CellDivSingle->GetNpbIgnore();
 
+  //-Update PosCellg[] according to current position of particles.
+  cusphs::UpdatePosCell(Np,Map_PosMin,Dosh,Posxyg,Poszg,PosCellg,NULL);
+
   //-Manages excluded particles fixed, moving and floating before aborting the execution.
   if(CellDivSingle->GetNpbOut())AbortBoundOut();
 
@@ -381,8 +384,6 @@ void JSphGpuSingle::RunCellDivide(bool updateperiodic){
   }
   TmgStop(Timers,TMG_NlOutCheck);
   BoundChanged=false;
-  //-Creates list with particles in inout zones.  //<vs_innlet>
-  if(InOut)InOutCreateList();                     //<vs_innlet>
 }
 
 //------------------------------------------------------------------------------
@@ -410,53 +411,27 @@ void JSphGpuSingle::Interaction_Forces(TpInterStep interstep){
   unsigned bsfluid=BlockSizes.forcesfluid;
   unsigned bsbound=BlockSizes.forcesbound;
 
-  if(BsAuto && !(Nstep%BsAuto->GetStepsInterval())){ //-Every certain number of steps. | Cada cierto numero de pasos.
-    const StInterParmsg parms=StrInterParmsg(Simulate2D
-      ,Symmetry //<vs_syymmetry>
-      ,Psingle,TKernel,FtMode
-      ,lamsps,TDensity,TShifting
-      ,CellMode
-      ,Visco*ViscoBoundFactor,Visco
-      ,bsbound,bsfluid,Np,Npb,NpbOk
-      ,0,DivAxis
-      ,CellDivSingle->GetNcells(),CellDivSingle->GetCellDomainMin()
-      ,CellDivSingle->GetBeginCell(),Dcellg
-      ,Posxyg,Poszg,PsPospressg,Velrhopg,Idpg,Codeg
-      ,FtoMasspg,SpsTaug
-      ,ViscDtg,Arg,Aceg,Deltag
-      ,SpsGradvelg
-      ,ShiftPosg,ShiftDetectg
-      ,NULL
-      ,NULL,BsAuto);
-    cusph::Interaction_Forces(parms);
-    PreInteractionVars_Forces(Np,Npb);
-    BsAuto->ProcessTimes(TimeStep,Nstep);
-    bsfluid=BlockSizes.forcesfluid=BsAuto->GetKernel(0)->GetOptimumBs();
-    bsbound=BlockSizes.forcesbound=BsAuto->GetKernel(1)->GetOptimumBs();
-  }
-
   //-Interaction Fluid-Fluid/Bound & Bound-Fluid.
   const StInterParmsg parms=StrInterParmsg(Simulate2D
     ,Symmetry //<vs_syymmetry>
-    ,Psingle,TKernel,FtMode
-    ,lamsps,TDensity,TShifting
+    ,TKernel,FtMode
+    ,lamsps,TDensity,ShiftingMode
     ,CellMode
     ,Visco*ViscoBoundFactor,Visco
     ,bsbound,bsfluid,Np,Npb,NpbOk
     ,0,DivAxis
     ,CellDivSingle->GetNcells(),CellDivSingle->GetCellDomainMin()
     ,CellDivSingle->GetBeginCell(),Dcellg
-    ,Posxyg,Poszg,PsPospressg,Velrhopg,Idpg,Codeg
+    ,Posxyg,Poszg,PosCellg,Velrhopg,Idpg,Codeg
     ,FtoMasspg,SpsTaug
     ,ViscDtg,Arg,Aceg,Deltag
     ,SpsGradvelg
-    ,ShiftPosg,ShiftDetectg
-    ,NULL
+    ,ShiftPosfsg
     ,NULL,NULL);
   cusph::Interaction_Forces(parms);
 
   //-Interaction DEM Floating-Bound & Floating-Floating. //(DEM)
-  if(UseDEM)cusph::Interaction_ForcesDem(Psingle,CellMode,BlockSizes.forcesdem,CaseNfloat,CellDivSingle->GetNcells(),CellDivSingle->GetBeginCell(),CellDivSingle->GetCellDomainMin(),Dcellg,FtRidpg,DemDatag,float(DemDtForce),Posxyg,Poszg,PsPospressg,Velrhopg,Codeg,Idpg,ViscDtg,Aceg,NULL);
+  if(UseDEM)cusph::Interaction_ForcesDem(CellMode,BlockSizes.forcesdem,CaseNfloat,CellDivSingle->GetNcells(),CellDivSingle->GetBeginCell(),CellDivSingle->GetCellDomainMin(),Dcellg,FtRidpg,DemDatag,FtoMasspg,float(DemDtForce),PosCellg,Velrhopg,Codeg,Idpg,ViscDtg,Aceg,NULL);
 
   //-For 2D simulations always overrides the 2nd component (Y axis).
   //-Para simulaciones 2D anula siempre la 2º componente.
@@ -469,8 +444,8 @@ void JSphGpuSingle::Interaction_Forces(TpInterStep interstep){
   if(Deltag)cusph::AddDelta(Np-Npb,Deltag+Npb,Arg+Npb);//-Adds the Delta-SPH correction for the density. | Añade correccion de Delta-SPH a Arg[]. 
   Check_CudaErroor("Failed while executing kernels of interaction.");
 
-  //-Reset interpolation varibles (ace,ar,shiftpos) over inout particles.                     //<vs_innlet>
-  if(InOut)InOut->ClearInteractionVarsGpu(InOutCount,InOutPartg,Aceg,Arg,ViscDtg,ShiftPosg);  //<vs_innlet>
+  //-Reset interpolation varibles (ace,ar,shiftpos) over inout particles.                  //<vs_innlet>
+  if(InOut)InOut->ClearInteractionVarsGpu(Np-Npb,Npb,Codeg,Aceg,Arg,ViscDtg,ShiftPosfsg);  //<vs_innlet>
 
   //-Calculates maximum value of ViscDt.
   if(Np)ViscDtMax=cusph::ReduMaxFloat(Np,0,ViscDtg,CellDivSingle->GetAuxMem(cusph::ReduMaxFloatSize(Np)));
@@ -507,7 +482,7 @@ double JSphGpuSingle::ComputeStep_Ver(){
   const double dt=DtVariable(true);        //-Calculate new dt.
   if(CaseNmoving)CalcMotion(dt);           //-Calculate motion for moving bodies.
   DemDtForce=dt;                           //(DEM)
-  if(TShifting)RunShifting(dt);            //-Shifting.
+  if(Shifting)RunShifting(dt);             //-Shifting.
   ComputeVerlet(dt);                       //-Update particles using Verlet (periodic particles become invalid).
   if(CaseNfloat)RunFloating(dt,false);     //-Control of floating bodies.
   PosInteraction_Forces();                 //-Free memory used for interaction.
@@ -532,7 +507,7 @@ double JSphGpuSingle::ComputeStep_Sym(){
   if(BoundCorr)BoundCorrectionData();          //-Apply BoundCorrection.  //<vs_innlet>
   Interaction_Forces(INTERSTEP_SymPredictor);  //-Interaction.
   const double ddt_p=DtVariable(false);        //-Calculate dt of predictor step.
-  if(TShifting)RunShifting(dt*.5);             //-Shifting.
+  if(Shifting)RunShifting(dt*.5);              //-Shifting.
   ComputeSymplecticPre(dt);                    //-Apply Symplectic-Predictor to particles (periodic particles become invalid).
   if(CaseNfloat)RunFloating(dt*.5,true);       //-Control of floating bodies.
   PosInteraction_Forces();                     //-Free memory used for interaction.
@@ -542,7 +517,7 @@ double JSphGpuSingle::ComputeStep_Sym(){
   RunCellDivide(true);
   Interaction_Forces(INTERSTEP_SymCorrector);  //-Interaction.
   const double ddt_c=DtVariable(true);         //-Calculate dt of corrector step.
-  if(TShifting)RunShifting(dt);                //-Shifting.
+  if(Shifting)RunShifting(dt);                 //-Shifting.
   ComputeSymplecticCorr(dt);                   //-Apply Symplectic-Corrector to particles (periodic particles become invalid).
   if(CaseNfloat)RunFloating(dt,false);         //-Control of floating bodies.
   PosInteraction_Forces();                     //-Free memory used for interaction.
@@ -588,9 +563,9 @@ void JSphGpuSingle::RunFloating(double dt,bool predictor){
     cudaMemset(FtoForcesg,0,sizeof(StFtoForces)*FtCount);
 
     //-Calculate forces summation (face,fomegaace) starting from floating particles in ftoforcessum[].
-    cusph::FtCalcForcesSum(PeriActive!=0,FtCount,Gravity,FtoDatag,FtoCenterg,FtRidpg,Posxyg,Poszg,Aceg,FtoForcesSumg);
+    cusph::FtCalcForcesSum(PeriActive!=0,FtCount,FtoDatpg,FtoCenterg,FtRidpg,Posxyg,Poszg,Aceg,FtoForcesSumg);
     //-Adds calculated forces around floating objects / Añade fuerzas calculadas sobre floatings.
-    cusph::FtCalcForces(FtCount,Gravity,FtoDatag,FtoAnglesg,FtoInertiaini8g,FtoInertiaini1g,FtoForcesSumg,FtoForcesg);
+    cusph::FtCalcForces(FtCount,Gravity,FtoMassg,FtoAnglesg,FtoInertiaini8g,FtoInertiaini1g,FtoForcesSumg,FtoForcesg);
     //-Calculate data to update floatings / Calcula datos para actualizar floatings.
     cusph::FtCalcForcesRes(FtCount,Simulate2D,dt,FtoOmegag,FtoVelg,FtoCenterg,FtoForcesg,FtoForcesResg,FtoCenterResg);
     //-Applies motion constraints.
@@ -619,7 +594,7 @@ void JSphGpuSingle::RunFloating(double dt,bool predictor){
     }//<vs_chroono_end> 
 
     //-Apply movement around floating objects / Aplica movimiento sobre floatings.
-    cusph::FtUpdate(PeriActive!=0,predictor,FtCount,dt,FtoDatag,FtoForcesResg,FtoCenterResg,FtRidpg,FtoCenterg,FtoAnglesg,FtoVelg,FtoOmegag,Posxyg,Poszg,Dcellg,Velrhopg,Codeg);
+    cusph::FtUpdate(PeriActive!=0,predictor,FtCount,dt,FtoDatpg,FtoForcesResg,FtoCenterResg,FtRidpg,FtoCenterg,FtoAnglesg,FtoVelg,FtoOmegag,Posxyg,Poszg,Dcellg,Velrhopg,Codeg);
     if(!predictor)FtObjsOutdated=true;
 
     TmgStop(Timers,TMG_SuFloating);
@@ -773,7 +748,6 @@ void JSphGpuSingle::SaveData(){
 /// Muestra y graba resumen final de ejecucion.
 //==============================================================================
 void JSphGpuSingle::FinishRun(bool stop){
-  if(BsAuto){ delete BsAuto; BsAuto=NULL; }
   float tsim=TimerSim.GetElapsedTimeF()/1000.f,ttot=TimerTot.GetElapsedTimeF()/1000.f;
   JSph::ShowResume(stop,tsim,ttot,true,"");
   Log->Print(" ");

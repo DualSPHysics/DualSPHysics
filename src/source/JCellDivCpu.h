@@ -21,7 +21,7 @@
 #ifndef _JCellDivCpu_
 #define _JCellDivCpu_
 
-#include "Types.h"
+#include "DualSphDef.h"
 #include "JObject.h"
 #include "JSphTimersCpu.h"
 #include "JLog2.h"

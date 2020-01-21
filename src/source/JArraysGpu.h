@@ -29,8 +29,7 @@
 
 
 #include "JObjectGpu.h"
-#include "TypesDef.h"
-#include "Types.h"
+#include "DualSphDef.h"
 
 //##############################################################################
 //# JArraysGpuSize

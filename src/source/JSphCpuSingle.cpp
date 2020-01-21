@@ -38,6 +38,7 @@
 #include "JSphInOut.h"  //<vs_innlet>
 #include "JLinearValue.h"
 #include "JDataArrays.h"
+#include "JShifting.h"
 #include <climits>
 
 using namespace std;
@@ -451,8 +452,6 @@ void JSphCpuSingle::RunCellDivide(bool updateperiodic){
   }
   TmcStop(Timers,TMC_NlOutCheck);
   BoundChanged=false;
-  //-Creates list with particles in inout zones.  //<vs_innlet>
-  if(InOut)InOutCreateList();                     //<vs_innlet>
 }
 
 //==============================================================================
@@ -506,8 +505,8 @@ void JSphCpuSingle::Interaction_Forces(TpInterStep interstep){
   float viscdt=0;
   const stinterparmsc parms=StInterparmsc(Np,Npb,NpbOk,CellDivSingle->GetNcells()
     ,CellDivSingle->GetBeginCell(),CellDivSingle->GetCellDomainMin(),Dcellc
-    ,Posc,PsPosc,Velrhopc,Idpc,Codec,Pressc,Arc,Acec,Deltac
-    ,SpsTauc,SpsGradvelc,TShifting,ShiftPosc,ShiftDetectc);
+    ,Posc,Velrhopc,Idpc,Codec,Pressc,Arc,Acec,Deltac
+    ,SpsTauc,SpsGradvelc,ShiftingMode,ShiftPosfsc);
   JSphCpu::Interaction_Forces_ct(parms,viscdt);
 
   //-For 2-D simulations zero the 2nd component. | Para simulaciones 2D anula siempre la 2º componente.
@@ -528,8 +527,8 @@ void JSphCpuSingle::Interaction_Forces(TpInterStep interstep){
     for(int p=ini;p<fin;p++)if(Deltac[p]!=FLT_MAX)Arc[p]+=Deltac[p];
   }
 
-  //-Reset interpolation varibles (ace,ar,shiftpos) over inout particles.             //<vs_innlet>
-  if(InOut)InOut->ClearInteractionVarsCpu(InOutCount,InOutPartc,Acec,Arc,ShiftPosc);  //<vs_innlet>
+  //-Reset interpolation varibles (ace,ar,shiftpos) over inout particles.         //<vs_innlet>
+  if(InOut)InOut->ClearInteractionVarsCpu(Np-Npb,Npb,Codec,Acec,Arc,ShiftPosfsc); //<vs_innlet>
 
   //-Calculates maximum value of ViscDt.
   ViscDtMax=viscdt;
@@ -611,7 +610,7 @@ double JSphCpuSingle::ComputeStep_Ver(){
   const double dt=DtVariable(true);        //-Calculate new dt.
   if(CaseNmoving)CalcMotion(dt);           //-Calculate motion for moving bodies.
   DemDtForce=dt;                           //(DEM)
-  if(TShifting)RunShifting(dt);            //-Shifting.
+  if(Shifting)RunShifting(dt);             //-Shifting.
   ComputeVerlet(dt);                       //-Update particles using Verlet.
   if(CaseNfloat)RunFloating(dt,false);     //-Control of floating bodies.
   PosInteraction_Forces();                 //-Free memory used for interaction.
@@ -636,7 +635,7 @@ double JSphCpuSingle::ComputeStep_Sym(){
   if(BoundCorr)BoundCorrectionData();          //-Apply BoundCorrection.  //<vs_innlet>
   Interaction_Forces(INTERSTEP_SymPredictor);  //-Interaction.
   const double ddt_p=DtVariable(false);        //-Calculate dt of predictor step.
-  if(TShifting)RunShifting(dt*.5);             //-Shifting.
+  if(Shifting)RunShifting(dt*.5);              //-Shifting.
   ComputeSymplecticPre(dt);                    //-Apply Symplectic-Predictor to particles (periodic particles become invalid).
   if(CaseNfloat)RunFloating(dt*.5,true);       //-Control of floating bodies.
   PosInteraction_Forces();                     //-Free memory used for interaction.
@@ -646,7 +645,7 @@ double JSphCpuSingle::ComputeStep_Sym(){
   RunCellDivide(true);
   Interaction_Forces(INTERSTEP_SymCorrector);  //-Interaction.
   const double ddt_c=DtVariable(true);         //-Calculate dt of corrector step.
-  if(TShifting)RunShifting(dt);                //-Shifting.
+  if(Shifting)RunShifting(dt);                 //-Shifting.
   ComputeSymplecticCorr(dt);                   //-Apply Symplectic-Corrector to particles (periodic particles become invalid).
   if(CaseNfloat)RunFloating(dt,false);         //-Control of floating bodies.
   PosInteraction_Forces();                     //-Free memory used for interaction.
@@ -687,19 +686,20 @@ void JSphCpuSingle::FtCalcForcesSum(unsigned cf,tfloat3 &face,tfloat3 &fomegaace
   const unsigned fpfin=fpini+fobj.count;
   const float fradius=fobj.radius;
   const tdouble3 fcenter=fobj.center;
+  const float fmassp=fobj.massp;
+
   //-Computes traslational and rotational velocities.
   face=TFloat3(0);
   fomegaace=TFloat3(0);
   //-Calculate summation: face, fomegaace. | Calcula sumatorios: face, fomegaace.
   for(unsigned fp=fpini;fp<fpfin;fp++){
     int p=FtRidp[fp];
-    //-Ace is initialised with the value of the gravity for all particles.
-    float acex=Acec[p].x-Gravity.x,acey=Acec[p].y-Gravity.y,acez=Acec[p].z-Gravity.z;
-    face.x+=acex; face.y+=acey; face.z+=acez;
-    tfloat3 dist=(PeriActive? FtPeriodicDist(Posc[p],fcenter,fradius): ToTFloat3(Posc[p]-fcenter)); 
-    fomegaace.x+= acez*dist.y - acey*dist.z;
-    fomegaace.y+= acex*dist.z - acez*dist.x;
-    fomegaace.z+= acey*dist.x - acex*dist.y;
+    const tfloat3 force=Acec[p]*fmassp;
+    face=face+force;
+    const tfloat3 dist=(PeriActive? FtPeriodicDist(Posc[p],fcenter,fradius): ToTFloat3(Posc[p]-fcenter)); 
+    fomegaace.x+= force.z*dist.y - force.y*dist.z;
+    fomegaace.y+= force.x*dist.z - force.z*dist.x;
+    fomegaace.z+= force.y*dist.x - force.x*dist.y;
   }
 }
 
@@ -737,10 +737,10 @@ void JSphCpuSingle::FtCalcForces(StFtoForces *ftoforces)const{
       omegaace.z=(fomegaace.x*invinert.a31+fomegaace.y*invinert.a32+fomegaace.z*invinert.a33);
       fomegaace=omegaace;
     }
-    //-Add gravity and divide by mass. | Añade gravedad y divide por la masa.
-    face.x=(face.x+fmass*Gravity.x)/fmass;
-    face.y=(face.y+fmass*Gravity.y)/fmass;
-    face.z=(face.z+fmass*Gravity.z)/fmass;
+    //-Add gravity force and divide by mass. | Suma fuerza de gravedad y divide por la masa.
+    face.x=(face.x + fmass*Gravity.x) / fmass;
+    face.y=(face.y + fmass*Gravity.y) / fmass;
+    face.z=(face.z + fmass*Gravity.z) / fmass;
     //-Keep result in ftoforces[]. | Guarda resultados en ftoforces[].
     ftoforces[cf].face=ftoforces[cf].face+face;
     ftoforces[cf].fomegaace=ftoforces[cf].fomegaace+fomegaace;

@@ -25,7 +25,8 @@
 #include "JAppInfo.h"
 #include "Functions.h"
 #include "FunctionsGeo3d.h"
-#include "JFormatFiles2.h"
+#include "JDataArrays.h"
+#include "JVtkLib.h"
 #ifdef _WITHGPU
   #include "FunctionsCuda.h"
   #include "JGauge_ker.h"
@@ -192,7 +193,7 @@ std::string JGaugeItem::GetResultsFileCsv()const{
 /// Returns filename for output results for VTK files.
 //==============================================================================
 std::string JGaugeItem::GetResultsFileVtk()const{
-  return(AppInfo.GetDirDataOut()+"Gauges"+GetNameType(Type)+"_"+Name)+".vtk";
+  return(AppInfo.GetDirDataOut()+"Gauges"+GetNameType(Type)+"_"+Name+".vtk");
 }
 
 //==============================================================================
@@ -318,12 +319,14 @@ void JGaugeVelocity::SaveResults(){
 /// Saves last result in VTK file.
 //==============================================================================
 void JGaugeVelocity::SaveVtkResult(unsigned cpart){
-  //-Prepares data.
-  std::vector<JFormatFiles2::StScalarData> fields;
-  fields.push_back(JFormatFiles2::DefineField("Vel",JFormatFiles2::Float32,3,&(Result.vel)));
-  //-Saves VTK file.
-  Log->AddFileInfo(fun::FileNameSec(GetResultsFileVtk(),UINT_MAX),FileInfo);
-  JFormatFiles2::SaveVtk(fun::FileNameSec(GetResultsFileVtk(),cpart),1,&(Result.point),fields);
+  if(JVtkLib::Available()){
+    //-Prepares data.
+    JDataArrays arrays;
+    arrays.AddArray("Pos",1,&(Result.point),false);
+    arrays.AddArray("Vel",1,&(Result.vel),false);
+    Log->AddFileInfo(fun::FileNameSec(GetResultsFileVtk(),UINT_MAX),FileInfo);
+    JVtkLib::SaveVtkData(fun::FileNameSec(GetResultsFileVtk(),cpart),arrays,"Pos");
+  }
 }
 
 //==============================================================================
@@ -552,10 +555,12 @@ void JGaugeSwl::SaveResults(){
 /// Saves last result in VTK file.
 //==============================================================================
 void JGaugeSwl::SaveVtkResult(unsigned cpart){
-  std::vector<JFormatFiles2::StScalarData> fields;
-  //-Saves VTK file.
-  Log->AddFileInfo(fun::FileNameSec(GetResultsFileVtk(),UINT_MAX),FileInfo);
-  JFormatFiles2::SaveVtk(fun::FileNameSec(GetResultsFileVtk(),cpart),1,&(Result.posswl),fields);
+  if(JVtkLib::Available()){
+    JDataArrays arrays;
+    arrays.AddArray("Pos",1,&(Result.posswl),false);
+    Log->AddFileInfo(fun::FileNameSec(GetResultsFileVtk(),UINT_MAX),FileInfo);
+    JVtkLib::SaveVtkData(fun::FileNameSec(GetResultsFileVtk(),cpart),arrays,"Pos");
+  }
 }
 
 //==============================================================================
@@ -776,16 +781,18 @@ void JGaugeMaxZ::SaveResults(){
 /// Saves last result in VTK file.
 //==============================================================================
 void JGaugeMaxZ::SaveVtkResult(unsigned cpart){
-  //-Prepares data.
-  const tfloat3 pt0=Result.point0;
-  const tfloat3 ptz=TFloat3(pt0.x,pt0.y,Result.zmax);
-  const float height=ptz.z-pt0.z;
-  //Log->Printf("---->ptz:(%g,%g,%g)  h:%g",ptz.x,ptz.y,ptz.z,height);
-  std::vector<JFormatFiles2::StScalarData> fields;
-  fields.push_back(JFormatFiles2::DefineField("Height",JFormatFiles2::Float32,1,&height));
-  //-Saves VTK file.
-  Log->AddFileInfo(fun::FileNameSec(GetResultsFileVtk(),UINT_MAX),FileInfo);
-  JFormatFiles2::SaveVtk(fun::FileNameSec(GetResultsFileVtk(),cpart),1,&ptz,fields);
+  if(JVtkLib::Available()){
+    //-Prepares data.
+    const tfloat3 pt0=Result.point0;
+    const tfloat3 ptz=TFloat3(pt0.x,pt0.y,Result.zmax);
+    const float height=ptz.z-pt0.z;
+    //Log->Printf("---->ptz:(%g,%g,%g)  h:%g",ptz.x,ptz.y,ptz.z,height);
+    JDataArrays arrays;
+    arrays.AddArray("Pos",1,&ptz,false);
+    arrays.AddArray("Height",1,&height,false);
+    Log->AddFileInfo(fun::FileNameSec(GetResultsFileVtk(),UINT_MAX),FileInfo);
+    JVtkLib::SaveVtkData(fun::FileNameSec(GetResultsFileVtk(),cpart),arrays,"Pos");
+  }
 }
 
 //==============================================================================
@@ -1017,11 +1024,13 @@ void JGaugeForce::SaveResults(){
 /// Saves last result in VTK file.
 //==============================================================================
 void JGaugeForce::SaveVtkResult(unsigned cpart){
-  std::vector<JFormatFiles2::StScalarData> fields;
-  fields.push_back(JFormatFiles2::DefineField("Force",JFormatFiles2::Float32,3,&(Result.force)));
-  //-Saves VTK file.
-  Log->AddFileInfo(fun::FileNameSec(GetResultsFileVtk(),UINT_MAX),FileInfo);
-  JFormatFiles2::SaveVtk(fun::FileNameSec(GetResultsFileVtk(),cpart),1,&InitialCenter,fields);
+  if(JVtkLib::Available()){
+    JDataArrays arrays;
+    arrays.AddArray("Pos",1,&InitialCenter,false);
+    arrays.AddArray("Force",1,&(Result.force),false);
+    Log->AddFileInfo(fun::FileNameSec(GetResultsFileVtk(),UINT_MAX),FileInfo);
+    JVtkLib::SaveVtkData(fun::FileNameSec(GetResultsFileVtk(),cpart),arrays,"Pos");
+  }
 }
 
 //==============================================================================

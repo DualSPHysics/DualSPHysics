@@ -25,8 +25,6 @@
 #include <cstdlib>
 #include <stdarg.h>
 
-#pragma warning(disable : 4996) //Cancels sprintf() deprecated.
-
 using namespace std;
 
 namespace jcsv{

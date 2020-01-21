@@ -28,7 +28,7 @@
 #ifndef _JSph_
 #define _JSph_
 
-#include "Types.h"
+#include "DualSphDef.h"
 #include "JObject.h"
 #include "JCfgRun.h"
 #include "JLog2.h"
@@ -57,6 +57,7 @@ class JPartDataBi4;
 class JPartOutBi4Save;
 class JPartFloatBi4Save;
 class JPartsOut;
+class JShifting;
 class JDamping;
 class JXml;
 class JTimeOut;
@@ -146,8 +147,7 @@ protected:
   double Simulate2DPosY; ///<Y value in 2D simulations.                        | Valor de Y en simulaciones 2D.
   bool Symmetry;         ///<Activates symmetry in plane y=0 (default=false).
   bool Stable;
-  bool Psingle;
-  bool SvDouble;     ///<Indicates whether Pos is saved as double in bi4 files. | Indica si en los ficheros bi4 se guarda Pos como double.
+  bool SvPosDouble;      ///<Indicates whether Pos is saved as double in bi4 files. | Indica si en los ficheros bi4 se guarda Pos como double.
 
   std::string AppName;
   std::string Hardware;
@@ -172,10 +172,6 @@ protected:
   TpDensity TDensity;         ///<Density Diffusion Term 0:None, 1:Molteni, 2:Fourtakas, 3:Fourtakas(full) (default=0)
   float DDTValue;             ///<Value used with Density Diffusion Term (default=0.1)
   bool DDTArray;              ///<Use extra array to compute Density Diffusion Term. The correction is applied after particle interaction. 
-
-  TpShifting TShifting;       ///<Type of Shifting: None, NoBound, NoFixed, Full.
-  float ShiftCoef;            ///<Coefficient for shifting computation.
-  float ShiftTFS;             ///<Threshold to detect free surface. Typically 1.5 for 2D and 2.75 for 3D (def=0).
 
   float Visco;  
   float ViscoBoundFactor;     ///<For boundary interaction use Visco*ViscoBoundFactor.                  | Para interaccion con contorno usa Visco*ViscoBoundFactor.
@@ -214,7 +210,7 @@ protected:
 
   //-Constants for computation.
   float H,CteB,Gamma,CFLnumber,RhopZero;
-  double Dp;
+  double Dp;               ///<Initial distance between particles.
   double Cs0;
   float DDT2h;             ///<Constant for DDT1 & DDT2. DDT2h=DDTValue*2*H
   float DDTgz;             ///<Constant for DDT2.        DDTgz=RhopZero*Gravity.z/CteB
@@ -253,6 +249,7 @@ protected:
   ullong PartBeginTotalNp;    ///<Total number of simulated particles.
 
   JPartsOut *PartsOut;        ///<Stores excluded particles until they are saved. | Almacena las particulas excluidas hasta su grabacion.
+  bool WrnPartsOut;           ///<Active warning according to number of out particles (default=1).
 
   //-Variables for predefined movement.
   JSphMotion *SphMotion;      ///<Manages moving objects. It is NULL when there are not moving objects.
@@ -263,6 +260,7 @@ protected:
   float FtPause;               ///<Time to start floating bodies movement.
   TpFtMode FtMode;             ///<Defines interaction mode for floatings and boundaries.
   bool FtConstraints;          ///<Some floating motion constraint is defined.
+  bool FtIgnoreRadius;         ///<Ignores floating body radius with periodic boundary conditions (def=false).
   bool WithFloating;
 
   //-Variables for DEM (DEM).
@@ -285,6 +283,9 @@ protected:
   JMLPistons *MLPistons;        ///<Object for Multi-Layer Pistons.   //<vs_mlapiston>
 
   JRelaxZones *RelaxZones;      ///<Object for wave generation using Relaxation Zone (RZ).  //<vs_rzone>
+
+  JShifting *Shifting;          ///<Object for shifting correction.
+  TpShifting ShiftingMode;      ///<Mode of Shifting: None, NoBound, NoFixed, Full.
 
   JDamping *Damping;            ///<Object for damping zones.
 
@@ -340,7 +341,7 @@ protected:
   int Part;               ///<Saves subsequent PART. | Siguiente PART a guardar.                                          
   int Nstep;              ///<Number of step in execution.             | Numero de paso en ejecucion.
   int PartNstep;          ///<Number of step when last PART was saved. | Numero de paso en el que se guardo el ultimo PART.
-  unsigned PartOut;       ///<Total number of excluded particles to be recorded to the last PART. | Numero total de particulas excluidas al grabar el ultimo PART.
+  unsigned PartOut;       ///<Total number of excluded particles. | Numero total de particulas excluidas al grabar el ultimo PART.
   double TimeStepIni;     ///<Initial instant of the simulation. | Instante inicial de la simulación.
   double TimeStep;        ///<Current instant of the simulation. | Instante actual de la simulación.                                 
   double TimeStepM1;      ///<Instant of the simulation when the last PART was stored. | Instante de la simulación en que se grabo el último PART.         
@@ -426,13 +427,11 @@ public:
   JSph(bool cpu,bool mgpu,bool withmpi);
   ~JSph();
 
-  static std::string GetPosDoubleName(bool psingle,bool svdouble);
   static std::string GetStepName(TpStep tstep);
   static std::string GetKernelName(TpKernel tkernel);
   static std::string GetViscoName(TpVisco tvisco);
   static std::string GetBoundName(TpBoundary tboundary);
   static std::string GetDDTName(TpDensity tdensity);
-  static std::string GetShiftingName(TpShifting tshift);
 
   std::string GetDDTConfig()const;
 

@@ -20,7 +20,6 @@
 
 #include "JSimpleNeigs.h"
 #include "Functions.h"
-#include "JFormatFiles2.h"
 #include <cstring>
 #include <cmath>
 #include <cfloat>
@@ -155,36 +154,6 @@ void JSimpleNeigs::CreateMapCells(){
   //-Free auxiliary memory.
   delete[] poscell; poscell=NULL;
   delete[] npcell;  npcell=NULL;
-  ////-Create VTK file For debug.
-  //if(0){
-  //  tfloat3*  vpos=new tfloat3[Np];
-  //  unsigned* vnum=new unsigned[Np];
-  //  tint3*    vcel3=new tint3[Np];
-  //  unsigned* vcel=new unsigned[Np];
-  //  unsigned n=0;
-  //  for(int cel=0;cel<Nct;cel++){
-  //    const unsigned pini=BeginCell[cel];
-  //    const unsigned pfin=BeginCell[cel+1];
-  //    for(unsigned cp=pini;cp<pfin;cp++){
-  //      const unsigned p=PosInCell[cp]; 
-  //      vpos[n]=ToTFloat3(Pos[p]);
-  //      vnum[n]=n;
-  //      vcel[n]=cel;
-  //      vcel3[n]=GetCell3(Pos[p]);
-  //      if(cel!=GetCell(vcel3[n]))RunException(met,"Error in cell of position.");
-  //      n++;
-  //    }
-  //    std::vector<JFormatFiles2::StScalarData> fields;
-  //    fields.push_back(JFormatFiles2::DefineField("Num"  ,JFormatFiles2::UInt32,1,vnum));
-  //    fields.push_back(JFormatFiles2::DefineField("Cell3",JFormatFiles2::UInt32,3,vcel3));
-  //    fields.push_back(JFormatFiles2::DefineField("Cell" ,JFormatFiles2::UInt32,1,vcel));
-  //    JFormatFiles2::SaveVtk("Dg__PosCell.vtk",n,vpos,fields);
-  //  }
-  //  delete[] vpos;  vpos=NULL;
-  //  delete[] vnum;  vnum=NULL;
-  //  delete[] vcel3; vcel3=NULL;
-  //  delete[] vcel;  vcel=NULL;
-  //}
 }
 
 //============================================================================== //<vs_innlet_ini>

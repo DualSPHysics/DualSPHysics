@@ -33,9 +33,8 @@
 #ifndef _JRelaxZones_
 #define _JRelaxZones_
 
-#include "TypesDef.h"
 #include "JObject.h"
-#include "Types.h"
+#include "DualSphDef.h"
 #include <string>
 #include <vector>
 

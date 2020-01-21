@@ -21,7 +21,7 @@
 #ifndef _JSphGpuSingle_
 #define _JSphGpuSingle_
 
-#include "Types.h"
+#include "DualSphDef.h"
 #include "JSphGpu.h"
 #include <string>
 
@@ -78,10 +78,9 @@ protected:
   void InOutInit(double timestepini);
   void InOutIgnoreFluidDef(const std::vector<unsigned> &mkfluidlist);
   void InOutCheckProximity(unsigned newnp);
-  void InOutCreateList();
   void InOutComputeStep(double stepdt);
   void InOutCalculeZsurf();
-  void InOutExtrapolateData();
+  void InOutExtrapolateData(unsigned inoutcount,const int *inoutpart);
 
   void BoundCorrectionData();
 //<vs_innlet_end>

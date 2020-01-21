@@ -29,14 +29,17 @@
 #define _JSphAccInput_
 
 #include "JObject.h"
-#include "Types.h"
-#include "JTimer.h"
+#include "DualSphDef.h"
+#ifdef _WITHGPU
+  #include <cuda_runtime_api.h>
+#endif
+
 #include <string>
 #include <vector>
-#include <sstream>
-#include <iostream>
-#include <fstream>
-#include <cstdlib>
+//#include <sstream>
+//#include <iostream>
+//#include <fstream>
+//#include <cstdlib>
 
 class JLog2;
 class JXml;
@@ -56,7 +59,7 @@ class JSphAccInputMk : protected JObject
 protected:
   JLog2* Log;
 
-  static const unsigned SIZEMAX=104857600; ///<Maximum file size (100mb).
+  static const unsigned SIZEMAX=104857600; ///<Maximum file size (100MB).
   static const unsigned SIZEINITIAL=100;
 
   word MkFluid;              ///<The MK values stored in the acceleration input file.
@@ -126,6 +129,14 @@ public:
 
   unsigned GetCount()const{ return(unsigned(Inputs.size())); };
   const StAceInput& GetAccValues(unsigned cfile,double timestep); //SL: Added linear and angular velocity and set gravity flag
+
+  void RunCpu(double timestep,tfloat3 gravity,unsigned n,unsigned pini
+    ,const typecode *code,const tdouble3 *pos,const tfloat4 *velrhop,tfloat3 *ace);
+
+#ifdef _WITHGPU
+  void RunGpu(double timestep,tfloat3 gravity,unsigned n,unsigned pini
+    ,const typecode *code,const double2 *posxy,const double *posz,const float4 *velrhop,float3 *ace);
+#endif
 };
 
 #endif

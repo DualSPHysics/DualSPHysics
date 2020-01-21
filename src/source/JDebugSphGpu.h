@@ -81,6 +81,8 @@ public:
   static tfloat3*  GetPosf3(unsigned n,const tdouble3 *pos);
   static tfloat3*  GetPosf3(unsigned n,const tdouble2 *posxy,const double *posz);
   static tdouble3* GetPosd3(unsigned n,const tdouble2 *posxy,const double *posz);
+  static tfloat3*  GetPosCell_Pos (unsigned n,const tfloat4 *poscell);
+  static tuint3*   GetPosCell_Cell(unsigned n,const tfloat4 *poscell);
 
   static std::string PrepareVars(const std::string &vlist);
   static bool FindVar(const std::string &var,const std::string &vlist){ return(int(vlist.find(std::string(",")+var+","))>=0); }

@@ -23,6 +23,8 @@
 //:#   generacion de ficheros de salida. (23-08-2019)
 //:# - Nuevos metodos para crear arrays con memoria dinamica de forma automatica. (05-09-2019)
 //:# - Mejora la gestion de excepciones. (14-09-2019)
+//:# - Nuevos metodos GetDataCount(), GetArrayCte(), GetArrayDim()... (11-12-2019)
+//:# - Nuevos metodos FilterApply(), FilterList(), SortData(), FilterSortList()... (18-01-2020)
 //:#############################################################################
 
 /// \file JDataArrays.h \brief Declares the class \ref JDataArrays.
@@ -72,6 +74,18 @@ protected:
   void FreeMemory(StDataArray &arr);
   void FreeMemory();
 
+  template<class T> void TReindexData(unsigned sreindex,const unsigned *reindex,unsigned ndata,T *data,T *aux)const;
+  void ReindexData(unsigned sreindex,const unsigned *reindex,unsigned ndata,byte     *data,byte     *aux)const{ TReindexData<byte>    (sreindex,reindex,ndata,data,aux); }
+  void ReindexData(unsigned sreindex,const unsigned *reindex,unsigned ndata,word     *data,word     *aux)const{ TReindexData<word>    (sreindex,reindex,ndata,data,aux); }
+  void ReindexData(unsigned sreindex,const unsigned *reindex,unsigned ndata,unsigned *data,unsigned *aux)const{ TReindexData<unsigned>(sreindex,reindex,ndata,data,aux); }
+  void ReindexData(unsigned sreindex,const unsigned *reindex,unsigned ndata,float    *data,float    *aux)const{ TReindexData<float>   (sreindex,reindex,ndata,data,aux); }
+  void ReindexData(unsigned sreindex,const unsigned *reindex,unsigned ndata,double   *data,double   *aux)const{ TReindexData<double>  (sreindex,reindex,ndata,data,aux); }
+  void ReindexData(unsigned sreindex,const unsigned *reindex,unsigned ndata,tuint3   *data,tuint3   *aux)const{ TReindexData<tuint3>  (sreindex,reindex,ndata,data,aux); }
+  void ReindexData(unsigned sreindex,const unsigned *reindex,unsigned ndata,tfloat3  *data,tfloat3  *aux)const{ TReindexData<tfloat3> (sreindex,reindex,ndata,data,aux); }
+  void ReindexData(unsigned sreindex,const unsigned *reindex,unsigned ndata,tdouble3 *data,tdouble3 *aux)const{ TReindexData<tdouble3>(sreindex,reindex,ndata,data,aux); }
+
+  unsigned SortData(unsigned count,const unsigned *reindex);
+
 public:
   JDataArrays();
   ~JDataArrays();
@@ -107,6 +121,8 @@ public:
 
   unsigned Count()const{ return(unsigned(Arrays.size())); }
 
+  unsigned GetDataCount(bool minimum)const;
+
   unsigned GetIdxName(const std::string &keyname)const;
   bool ExistsName(const std::string &keyname)const{ return(GetIdxName(keyname)!=UINT_MAX); }
 
@@ -116,8 +132,19 @@ public:
   JDataArrays::StDataArray& GetArray(unsigned idx);
   JDataArrays::StDataArray& GetArray(const std::string &keyname);
 
+  const JDataArrays::StDataArray& GetArrayCte(unsigned idx)const;
+  const JDataArrays::StDataArray& GetArrayCte(const std::string &keyname)const;
+
   JDataArrays::StDataArray GetArrayData(unsigned idx)const;
   JDataArrays::StDataArray GetArrayData(const std::string &keyname)const;
+
+  int GetArrayDim(unsigned idx)const;
+
+  std::string GetArrayFmt(unsigned idx)const;
+  static std::string GetFmtByType(TpTypeData type);
+
+  std::string GetArrayUnits(unsigned idx)const;
+  static std::string GetUnitsByName(std::string keyname);
 
   const void* GetArrayPtr(unsigned idx,TpTypeData type,unsigned count=0)const;
   const byte*     GetArrayByte   (unsigned idx,unsigned count=0)const{ return((byte*    )GetArrayPtr(idx,TypeUchar  ,count)); }
@@ -156,6 +183,10 @@ public:
   static void ToFloat1w  (unsigned count,const tfloat4 *data,float   *dest);
   static tfloat3*  NewArrayFloat3xyz(unsigned count,const tfloat4 *data);
   static float*    NewArrayFloat1w  (unsigned count,const tfloat4 *data);
+
+  unsigned FilterApply(unsigned count,const byte *filter);
+  unsigned FilterList(unsigned n,const unsigned *list);
+  unsigned FilterSortList(unsigned n,const unsigned *list);
 
 };
 

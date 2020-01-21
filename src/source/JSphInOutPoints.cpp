@@ -27,8 +27,9 @@
 #include "Functions.h"
 #include "FunctionsGeo3d.h"
 #include "JMatrix4.h"
-#include "JFormatFiles2.h"
-
+#include "JDataArrays.h"
+#include "JVtkLib.h"
+ 
 #include <cfloat>
 #include <algorithm>
 
@@ -81,13 +82,12 @@ void JSphInOutPoints::ResetPoints(){
 /// Increases the allocated memory for points.
 //==============================================================================
 void JSphInOutPoints::ResizeMemory(unsigned newnpt){
-  const char met[]="ResizeMemory";
   if(Size-Count<newnpt){
     try{
       Points=fun::ResizeAlloc(Points,Count,Count+newnpt);
     }
     catch(const std::bad_alloc){
-      RunException(met,"Could not allocate the requested memory.");
+      Run_Exceptioon("Could not allocate the requested memory.");
     }
     Size=Count+newnpt;
   }
@@ -141,8 +141,7 @@ std::string JSphInOutPoints::CheckParticlesDirection(const JSphMkBlock *pmk,cons
 /// Creates points starting from special fluid particles.
 //==============================================================================
 void JSphInOutPoints::Create2d3d_Particles(JXml *sxml,TiXmlElement* ele,const JSphPartsInit *partsdata){
-  const char met[]="Create2d3d_Particles";
-  if(Count)RunException(met,"There are previous definitions of inout points.",sxml->ErrGetFileRow(ele));
+  if(Count)Run_ExceptioonFile("There are previous definitions of inout points.",sxml->ErrGetFileRow(ele));
   unsigned mkfluid=sxml->GetAttributeUint(ele,"mkfluid");
   string strdir=sxml->GetAttributeStr(ele,"direction");
 
@@ -152,13 +151,13 @@ void JSphInOutPoints::Create2d3d_Particles(JXml *sxml,TiXmlElement* ele,const JS
   Direction=fgeo::VecUnitary(dir);
 
   //-Check mkfluid information.
-  if(!partsdata || partsdata->GetNp()==0)RunException(met,"No particles data to define inout points.");
+  if(!partsdata || partsdata->GetNp()==0)Run_Exceptioon("No particles data to define inout points.");
   const JSphMk* mkinfo=partsdata->GetMkInfo();
   const unsigned cmk=mkinfo->GetMkBlockByMkFluid(mkfluid);
   const JSphMkBlock* pmk=(cmk<mkinfo->Size()? mkinfo->Mkblock(cmk): NULL);
   if(!pmk || !pmk->Count)sxml->ErrReadAtrib(ele,"mkfluid",false,fun::PrintStr("No particles data with mkfluid=%u to define inout points.",mkfluid));
   std::string error=CheckParticlesDirection(pmk,dir);
-  if(!error.empty())RunException(met,error,sxml->ErrGetFileRow(ele));
+  if(!error.empty())Run_ExceptioonFile(error,sxml->ErrGetFileRow(ele));
 
   //-Adds config information.
   const tdouble3 pmin=pmk->GetPosMin(),pmax=pmk->GetPosMax();
@@ -181,7 +180,7 @@ void JSphInOutPoints::Create2d3d_Particles(JXml *sxml,TiXmlElement* ele,const JS
       if(cp<npt)Points[Count+cp]=pos[p];
       cp++;
     }
-    if(cp!=npt)RunException(met,"Error in number of particles.",sxml->ErrGetFileRow(ele));
+    if(cp!=npt)Run_ExceptioonFile("Error in number of particles.",sxml->ErrGetFileRow(ele));
     Count+=npt;
   }
   //-Compute domain limits of zone starting from inout points.
@@ -192,8 +191,7 @@ void JSphInOutPoints::Create2d3d_Particles(JXml *sxml,TiXmlElement* ele,const JS
 /// Creates points in a line.
 //==============================================================================
 void JSphInOutPoints::Create2d_Line(JXml *sxml,TiXmlElement* ele){
-  const char met[]="Create2d_Line";
-  if(Count)RunException(met,"Only one description zone is allowed for inlet/outlet points.");
+  if(Count)Run_Exceptioon("Only one description zone is allowed for inlet/outlet points.");
   //-Load basic data.
   double px1=sxml->ReadElementFloat(ele,"point","x");
   double pz1=sxml->ReadElementFloat(ele,"point","z");
@@ -276,8 +274,7 @@ JMatrix4d JSphInOutPoints::ReadRotate3D(JXml *sxml,TiXmlElement* ele){
 /// Creates points in a box.
 //==============================================================================
 void JSphInOutPoints::Create3d_Box(JXml *sxml,TiXmlElement* ele){
-  const char met[]="Create3d_Box";
-  if(Count)RunException(met,"Only one description zone is allowed for inlet/outlet points.");
+  if(Count)Run_Exceptioon("Only one description zone is allowed for inlet/outlet points.");
   //-Load basic data.
   tdouble3 pt0=sxml->ReadElementDouble3(ele,"point");
   tdouble3 spt=sxml->ReadElementDouble3(ele,"size");
@@ -333,7 +330,7 @@ void JSphInOutPoints::Create3d_Box(JXml *sxml,TiXmlElement* ele){
       Points[Count+p]=ps+inimove;
       p++;
     }
-    if(p!=npt || Count+p>Size)RunException(met,"Error calculating number of points.");
+    if(p!=npt || Count+p>Size)Run_Exceptioon("Error calculating number of points.");
     Count+=npt;
 
     //-Compute domain limits of zone.
@@ -342,7 +339,7 @@ void JSphInOutPoints::Create3d_Box(JXml *sxml,TiXmlElement* ele){
       if(npz==1){      vxx=vx*(npx); vyy=vy*(npy); } //-Adds one dp.
       else if(npy==1){ vxx=vx*(npx); vyy=vz*(npz); } //-Adds one dp.
       else if(npx==1){ vxx=vy*(npy); vyy=vz*(npz); } //-Adds one dp.
-      else RunException(met,"Configuration is invalid to calculate domain.");
+      else Run_Exceptioon("Configuration is invalid to calculate domain.");
       const tdouble3 dir1=Direction*(Dp/2);
       const unsigned nfar=2*(Layers)+1;
       PtDom[0]=pt0+dir1-(fgeo::VecUnitary(vxx)*(Dp/2))-(fgeo::VecUnitary(vyy)*(Dp/2));
@@ -363,8 +360,7 @@ void JSphInOutPoints::Create3d_Box(JXml *sxml,TiXmlElement* ele){
 /// Creates points in a circle.
 //==============================================================================
 void JSphInOutPoints::Create3d_Circle(JXml *sxml,TiXmlElement* ele){
-  const char met[]="Create3d_Circle";
-  if(Count)RunException(met,"Only one description zone is allowed for inlet/outlet points.");
+  if(Count)Run_Exceptioon("Only one description zone is allowed for inlet/outlet points.");
   //-Load basic data.
   const tdouble3 pt0=sxml->ReadElementDouble3(ele,"point");
   const double radius=sxml->ReadElementDouble(ele,"radius","v");
@@ -416,7 +412,7 @@ void JSphInOutPoints::Create3d_Circle(JXml *sxml,TiXmlElement* ele){
         p++;
       }
     }
-    if(p!=npt || Count+p>Size)RunException(met,"Error calculating number of points.");
+    if(p!=npt || Count+p>Size)Run_Exceptioon("Error calculating number of points.");
     Count+=npt;
 
     //-Compute domain limits of zone.
@@ -448,7 +444,6 @@ void JSphInOutPoints::Create3d_Circle(JXml *sxml,TiXmlElement* ele){
 /// Reads definition of inlet points in the XML node and creates points.
 //==============================================================================
 void JSphInOutPoints::CreatePoints(JXml *sxml,TiXmlElement* lis,const JSphPartsInit *partsdata){
-  const char met[]="ReadXml";
   string xmlrow=sxml->ErrGetFileRow(lis);
   TiXmlElement* ele=lis->FirstChildElement();
   while(ele){
@@ -476,7 +471,6 @@ void JSphInOutPoints::CreatePoints(JXml *sxml,TiXmlElement* lis,const JSphPartsI
 /// Compute domain limits of zone from inout points (for 2D and particles-3D).
 //==============================================================================
 void JSphInOutPoints::ComputeDomainFromPoints(){
-  const char met[]="ComputeDomainFromPoints";
   tdouble3 pmin=TDouble3(DBL_MAX),pmax=TDouble3(-DBL_MAX);
   //-Calculates minimum and maximum position of inout points. 
   for(unsigned p=0;p<Count;p++){
@@ -518,7 +512,7 @@ void JSphInOutPoints::ComputeDomainFromPoints(){
     else if(Direction.x>Direction.y && Direction.x>Direction.z)dir=4;//-Right.
     else if(Direction.y<Direction.x && Direction.y<Direction.z)dir=5;//-Front.
     else if(Direction.y>Direction.x && Direction.y>Direction.z)dir=6;//-Back.
-    else RunException(met,"The direction is invalid.");
+    else Run_Exceptioon("The direction is invalid.");
     const double dph=Dp/2;
     tdouble3 p0=TDouble3(pmin.x-dph,pmin.y-dph,pmin.z-dph);
     double sx=pmax.x-pmin.x+Dp;
@@ -569,11 +563,10 @@ void JSphInOutPoints::ComputeDomainFromPoints(){
 /// Checks direction and position of points in simulation domain.
 //==============================================================================
 void JSphInOutPoints::CheckPoints(const std::string &xmlrow){
-  const char met[]="CheckPoints";
   //-Checks direction.
-  if(Simulate2D && Direction.y!=0)RunException(met,"Direction.y is not zero.",xmlrow);
-  if(Direction==TDouble3(0))RunException(met,"Direction vector is zero.",xmlrow);
-  if(Count==0)RunException(met,"There are not defined points.",xmlrow);
+  if(Simulate2D && Direction.y!=0)Run_ExceptioonFile("Direction.y is not zero.",xmlrow);
+  if(Direction==TDouble3(0))Run_ExceptioonFile("Direction vector is zero.",xmlrow);
+  if(Count==0)Run_ExceptioonFile("There are not defined points.",xmlrow);
   //-Checks domain using one layer more because it is the real limit.
   bool error=false;
   tdouble3 errpt;
@@ -603,18 +596,18 @@ void JSphInOutPoints::CheckPoints(const std::string &xmlrow){
       }
     }
     //-Creates VTK file.
-    JFormatFiles2::StScalarData fields[8];
-    unsigned nfields=0;
-    if(outside){ fields[nfields]=JFormatFiles2::DefineField("Outside",JFormatFiles2::UChar8,1,outside); nfields++; }
-    if(layer){   fields[nfields]=JFormatFiles2::DefineField("Layer"  ,JFormatFiles2::UChar8,1,layer);   nfields++; }
+    JDataArrays arrays;
+    arrays.AddArray("Pos",np,pos,false);
+    if(outside)arrays.AddArray("Outside",np,outside,false);
+    if(layer)  arrays.AddArray("Layer"  ,np,layer  ,false);
     const string file=AppInfo.GetDirOut()+"ErrorInOut_InoutPoints.vtk";
-    JFormatFiles2::SaveVtk(file,np,pos,nfields,fields);
+    JVtkLib::SaveVtkData(file,arrays,"Pos");
     Log->AddFileInfo(file,"Saves invalid InOut points (outside the domain).");
     //-Frees memory.
     delete[] pos;     pos=NULL;
     delete[] layer;   layer=NULL;
     delete[] outside; outside=NULL;
-    RunException(met,fun::PrintStr("Point for inlet conditions with position (%g,%g,%g) is outside the domain. Checks the VTK file \'%s\'.",errpt.x,errpt.y,errpt.z,file.c_str()),xmlrow);
+    Run_ExceptioonFile(fun::PrintStr("Point for inlet conditions with position (%g,%g,%g) is outside the domain. Checks the VTK file \'%s\'.",errpt.x,errpt.y,errpt.z,file.c_str()),xmlrow);
   }
 }
 
@@ -622,7 +615,7 @@ void JSphInOutPoints::CheckPoints(const std::string &xmlrow){
 /// Loads lines with configuration information.
 //==============================================================================
 void JSphInOutPoints::GetConfig(std::vector<std::string> &lines)const{
-  lines.push_back("Inlet point definition:");
+  lines.push_back("InOut point definition:");
   for(unsigned i=0;i<unsigned(ConfigInfo.size());i++)lines.push_back(string("  ")+ConfigInfo[i]);
 }
 

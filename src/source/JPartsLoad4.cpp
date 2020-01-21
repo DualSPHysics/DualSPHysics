@@ -255,10 +255,12 @@ void JPartsLoad4::LoadParticles(const std::string &casedir,const std::string &ca
 /// Check validity of loaded configuration or throw exception.
 /// Comprueba validez de la configuracion cargada o lanza excepcion.
 //==============================================================================
-void JPartsLoad4::CheckConfig(ullong casenp,ullong casenfixed,ullong casenmoving,ullong casenfloat,ullong casenfluid,TpPeri tperi)const
+void JPartsLoad4::CheckConfig(ullong casenp,ullong casenfixed,ullong casenmoving
+  ,ullong casenfloat,ullong casenfluid,bool simulate2d,double simulate2dposy,TpPeri tperi)const
 {
   const char met[]="CheckConfig";
   CheckConfig(casenp,casenfixed,casenmoving,casenfloat,casenfluid);
+  if(simulate2d!=Simulate2D || Simulate2DPosY!=simulate2dposy)RunException(met,"Data file does not match the dimension of the case (2D/3D).");
   //-Obtains periodic mode and compares with loaded file.
   if(tperi!=PeriMode && PeriMode!=PERI_Unknown)RunException(met,"Data file does not match the periodic configuration of the case.");
 }

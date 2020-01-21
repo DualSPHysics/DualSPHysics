@@ -1,0 +1,102 @@
+
+
+ <DUALSPHYSICS3-LIQUIDSEDIMENT> Copyright (C) 2018 by
+ Dr Georgios Fourtakas, Dr Jose M. Dominguez, Dr Benedict Rogers,
+ Prof. Peter Stansby, Dr Alejandro Crespo, Prof. Moncho Gomez Gesteira,
+ Orlando Garcia-Feal, Dr Athanasios Mokos,
+ Dr Renato Vacondio, Dr Ricardo Canelas,
+ Dr Stephen Longshaw, Dr Corrado Altomare.
+
+ School of Mechanical, Aerospace and Civil Engineering, University of Manchester
+ EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo
+
+ DualSPHysics is free software: you can redistribute it and/or
+ modify it under the terms of the GNU Lesser General Public License
+ as published by the Free Software Foundation, either version 2.1 of
+ the License, or (at your option) any later version.
+
+ DualSPHysics is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU Lesser General Public License for more details.
+
+ You should have received a copy of the GNU Lesser General Public License
+ along with DualSPHysics. If not, see <http://www.gnu.org/licenses/>.
+
+
+DualSPHysics3-LiquidSediment v1.003 (v3.4) (04-06-2018)
+========================================================
+Information about execution parameters:
+
+  DualSPHysics [name_case [dir_out]] [options]
+
+  Options:
+    -h          Shows information about parameters
+
+    -opt <file> Loads a file configuration
+
+    -cpu        Execution on Cpu (option by default)
+    -gpu[:id]   Execution on Gpu and id of the device
+    -stable     Ensures the same results when repeated the same simulation
+
+    -cellorder:<axis> Indicates the order of the axis. (xyz/xzy/yxz/yzx/zxy/zyx)
+    -cellmode:<mode>  Specifies the cell division mode, by default, the fastest
+     mode is chosen 
+        h         fastest and the most expensive in memory
+        2h        lowest and the least expensive in memory 
+
+    -symplectic      Symplectic algorithm as time step algorithm
+    -verlet[:steps]  Verlet algorithm as time step algorithm and number of
+                     time steps to switch equations
+
+    -cubic      Cubic spline kernel
+    -wendland   Wendland kernel
+
+    -viscoart:<float>      Artifitical viscosity [0-1]
+    -viscolamsps:<float>   Laminar+SPS viscosity [order of 1E-6]
+
+    -shepard:steps    Shepard filter and number of steps to be applied
+    -deltasph:<float> Constant for DeltaSPH. By default 0.1 and 0 to disable
+
+    -sv:[formas,...] Specifies the output formats
+        none    No files with particle data are generated
+        binx    Bynary files (option by default)
+        vtk     VTK files
+        info    Information about execution in ibi4 format
+        csv     CSV files
+    -svdt:<0/1>      Generates file with information about the time step dt
+    -svres:<0/1>     Generates file that summarizes the execution process
+    -svtimers:<0/1>  Obtains timing for each individual process
+    -svdomainvtk:<0/1>  Generate VTK file with domain limits
+    -name <string>      Specifies path and name of the case 
+    -runname <string>   Specifies name for case execution
+    -dirout <dir>       Specifies the out directory 
+
+    -partbegin:begin[:first] dir 
+     Specifies the beginning of the simulation starting from a given PART
+     (begin) and located in the directory (dir), (first) indicates the
+     number of the first PART to be generated
+
+    -incz:<float>    Allowable increase in Z+ direction 
+    -rhopout:min:max Excludes fluid particles out of these density limits
+
+    -ftpause:<float> Time to start floating bodies movement. By default 0
+    -tmax:<float>    Maximum time of simulation
+    -tout:<float>    Time between output files
+
+    -domain_particles[:xmin,ymin,zmin,xmax,ymax,zmax]  Case domain is
+     fixed as function of the initial particles and it is modified by xmin,...
+    -domain_particles_prc:xmin,ymin,zmin,xmax,ymax,zmax  Case domain is
+     fixed with values in proportion to the dimensions of the case 
+     according to the initial particles
+    -domain_fixed:xmin,ymin,zmin,xmax,ymax,zmax Case domain is fixed
+     with the given values
+
+    -ptxasfile <file> Indicates the file with information about the compilation
+     of kernels in CUDA to adjust the size of the blocks depending on the 
+     needed registers for each kernel (only for gpu)
+
+  Examples:
+    DualSPHysics case out_case -sv:binx2,csv 
+    DualSPHysics case -gpu -svdt:1 
+

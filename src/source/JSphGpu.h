@@ -21,7 +21,7 @@
 #ifndef _JSphGpu_
 #define _JSphGpu_
 
-#include "Types.h"
+#include "DualSphDef.h"
 #include "JSphTimersGpu.h"
 #include "JSph.h"
 #include <string>
@@ -29,7 +29,6 @@
 class JPartsOut;
 class JArraysGpu;
 class JCellDivGpu;
-class JBlockSizeAuto;
 
 //-Defines for CUDA exceptions.
 #ifndef Run_ExceptioonCuda
@@ -82,8 +81,6 @@ public:
 protected:
   StBlockSizes BlockSizes;        ///<Stores configuration of BlockSizes. | Almacena configuracion de BlockSizes.
   std::string BlockSizesStr;      ///<Stores configuration of BlockSizes in text form. | Almacena configuracion de BlockSizes en texto.
-  TpBlockSizeMode BlockSizeMode;  ///<Modes for BlockSize selection.
-  JBlockSizeAuto *BsAuto;         ///<Object to calculate the optimum BlockSize for particle interactions.
 
   //-Variables with information for the GPU hardware.
   //-Variables con informacion del hardware GPU.
@@ -147,6 +144,7 @@ protected:
   unsigned *Dcellg; ///<Cells inside DomCells coded with DomCellCode. | Celda dentro de DomCells codificada con DomCellCode.
   double2 *Posxyg;
   double *Poszg;
+  float4 *PosCellg; ///<Relative position and cell coordiantes for particle interaction {posx,posy,posz,cellxyz}
   float4 *Velrhopg;
 
   //-Variables for compute step: VERLET.
@@ -161,7 +159,8 @@ protected:
   unsigned *FtRidpg;      ///<Identifier to access to the particles of the floating object [CaseNfloat].
   float *FtoMasspg;       ///<Mass of the particle for each floating body [FtCount] in GPU (used in interaction forces).
 
-  float4 *FtoDatag;        ///<Constant data of floatings {pini_u,np_u,radius_f,mass_f} [FtCount] //__device__ int __float_as_int(float x) //__device__ float __int_as_float(int x).
+  float4 *FtoDatpg;        ///<Constant data of floatings {pini_u,np_u,radius_f,massp_f} [FtCount] //__device__ int __float_as_int(float x) //__device__ float __int_as_float(int x).
+  float  *FtoMassg;        ///<Constant data of floatings (mass_f) [FtCount] 
   byte   *FtoConstraintsg; ///<Constant value to define motion constraints.
   float3 *FtoForcesSumg;   ///<Stores forces summation for the floating bodies {sumface_f3,sumfomegaace_f3}[FtCount]. | Almacena sumatorio de fuerzas de floatings {sumface_f3,sumfomegaace_f3} [FtCount]. 
   float3 *FtoForcesg;      ///<Stores forces for the floating bodies {face_f3,fomegaace_f3} equivalent to JSphCpu::FtoForces [FtCount]. | Almacena fuerzas de floatings {face_f3,fomegaace_f3} equivalente a JSphCpu::FtoForces [FtCount]. 
@@ -184,15 +183,12 @@ protected:
   float4 *DemDatag;       ///<Data of the object {mass, (1-poisson^2)/young, kfric, restitu} in GPU [DemObjsSize].
 
   //-Variables for computing forces
-  float4 *PsPospressg; ///<Position and pressure for the interaction Pos-Single press=cteb*(powf(rhop/rhopzero,gamma)-1.0f); | Posicion y press para interaccion Pos-Single. press=cteb*(powf(rhop/rhopzero,gamma)-1.0f); 
-
   float *ViscDtg;
   float3 *Aceg;      ///<Accumulates acceleration of the particles. | Acumula fuerzas de interaccion.
   float *Arg; 
   float *Deltag;     ///<Accumulates adjustment of Delta-SPH with DELTA_DynamicExt. | Acumula ajuste de Delta-SPH con DELTA_DynamicExt.
 
-  float3 *ShiftPosg;    ///<Particle displacement using Shifting.
-  float *ShiftDetectg;  ///<Used to detect free surface with Shifting.
+  float4 *ShiftPosfsg;  ///<Particle displacement and free surface detection for Shifting.
 
   double VelMax;      ///<Maximum value of Vel[] sqrt(vel.x^2 + vel.y^2 + vel.z^2) computed in PreInteraction_Forces().
   double AceMax;      ///<Maximum value of Ace[] (ace.x^2 + ace.y^2 + ace.z^2) computed in Interaction_Forces().
@@ -257,8 +253,6 @@ protected:
   void InitFloating();
   void InitRunGpu();
 
-  void AddAccInput();
-
   void PreInteractionVars_Forces(unsigned np,unsigned npb);
   void PreInteraction_Forces();
   void PosInteraction_Forces();
@@ -267,6 +261,7 @@ protected:
   void ComputeSymplecticPre(double dt);
   void ComputeSymplecticCorr(double dt);
   double DtVariable(bool final);
+
   void RunShifting(double dt);
 
   void CalcMotion(double stepdt);
@@ -287,15 +282,6 @@ public:
   JSphGpu(bool withmpi);
   ~JSphGpu();
 
-//<vs_innlet_ini>
-//-Code for InOut
-//-----------------
-protected:
-  //-Variables for InOut.
-  unsigned InOutCount;     ///<Number of inout particles in InOutPartg[].
-  int *InOutPartg;         ///<InOut particle list.
-//<vs_innlet_end>
-  
 //-Functions for debug.
 //----------------------
 public:

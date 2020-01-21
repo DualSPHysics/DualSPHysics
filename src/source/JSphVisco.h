@@ -33,7 +33,7 @@
 #define _JSphVisco_
 
 #include "JObject.h"
-#include "Types.h"
+#include "DualSphDef.h"
 #include "JTimer.h"
 #include <string>
 #include <sstream>

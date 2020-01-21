@@ -34,7 +34,7 @@
 #define _JSphMotion_
 
 #include "JObject.h"
-#include "Types.h"
+#include "DualSphDef.h"
 #include <string>
 
 class JMotion;

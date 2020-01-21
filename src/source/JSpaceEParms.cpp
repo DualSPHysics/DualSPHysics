@@ -61,7 +61,7 @@ void JSpaceEParms::Add(const std::string &key,const std::string &value,const std
   //-Checks deprecated parameters.
   if(1){
     const string k=fun::StrLower(key);
-    if(k=="incz" || k.substr(0,11)=="domainfixed" || k.substr(0,15)=="domainparticles" || k=="deltasph"){
+    if(k=="incz" || k.substr(0,11)=="domainfixed" || k.substr(0,15)=="domainparticles" || k=="deltasph" || k=="posdouble"){
       if(int(fun::StrUpper(comment2).find("**DEPRECATED**"))<0)
         comment2=string("**DEPRECATED** ")+comment2;
     }

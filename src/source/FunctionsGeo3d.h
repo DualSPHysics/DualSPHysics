@@ -52,6 +52,11 @@
 //:# - Nuevas funciones TriangleInside(), PolygonNormalPlanes(), PolygonInside(). (08-02-2019)
 //:# - Nuevas funciones LineOrthogonalPoint(), LineOrthogonalPointFromPr1(). (29-05-2019)
 //:# - Nuevas funciones LineNearestPoint(). (04-06-2019)
+//:# - Nuevas funciones PlanesDomain() y PlanesDomainCheck(). (26-11-2019)
+//:# - Nuevas funciones: TrianglePerimeter(), PolygonIsConcave() y PolygonConcave(). (28-11-2019)
+//:# - Nuevas funciones: PointInMinMax(). (01-12-2019)
+//:# - Error corregido en PolygonConcave(). (05-12-2019)
+//:# - Nuevas funciones: PlanePointsIn(). (17-12-2019)
 //:#############################################################################
 
 /// \file FunctionsGeo3d.h \brief Declares geometry functions for 3D.
@@ -111,6 +116,23 @@ inline tfloat3 ProductVec(const tfloat3 &v1,const tfloat3 &v2){
   r.y=v1.z*v2.x - v1.x*v2.z;
   r.z=v1.x*v2.y - v1.y*v2.x;
   return(r);
+}
+
+
+//==============================================================================
+/// Devuelve true cuando pmin <= pt <= pmax.
+/// Returns true when pmin <= pt <= pmax.
+//==============================================================================
+inline bool PointInMinMax(const tdouble3 &pt,const tdouble3 &pmin,const tdouble3 &pmax){
+  return(pmin.x<=pt.x && pmin.y<=pt.y && pmin.z<=pt.z && pt.x<=pmax.x && pt.y<=pmax.x && pt.z<=pmax.z);
+}
+
+//==============================================================================
+/// Devuelve true cuando pmin <= pt <= pmax.
+/// Returns true when pmin <= pt <= pmax.
+//==============================================================================
+inline bool PointInMinMax(const tfloat3 &pt,const tfloat3 &pmin,const tfloat3 &pmax){
+  return(pmin.x<=pt.x && pmin.y<=pt.y && pmin.z<=pt.z && pt.x<=pmax.x && pt.y<=pmax.x && pt.z<=pmax.z);
 }
 
 
@@ -536,6 +558,19 @@ inline tfloat3 PlaneOrthogonalPoint(const tfloat3 &pt,const tplane3f &pla){
 
 
 //==============================================================================
+/// Devuelve true cuando todos los puntos estan en el plano.
+/// Returns true when all points are in the plane.
+//==============================================================================
+bool PlanePointsIn(const tplane3d &pla,unsigned np,const tdouble3 *vpt,double tolerance);
+
+//==============================================================================
+/// Devuelve true cuando todos los puntos estan en el plano.
+/// Returns true when all points are in the plane.
+//==============================================================================
+bool PlanePointsIn(const tplane3f &pla,unsigned np,const tfloat3 *vpt,float tolerance);
+
+
+//==============================================================================
 /// Devuelve punto de interseccion entre 3 planos no paralelos entre si.
 /// Returns intersection of three planes not parallel to each other.
 //==============================================================================
@@ -562,6 +597,21 @@ tfloat3 PlaneLineIntersec(const tplane3f &pla,const tfloat3 &pt1,const tfloat3 &
 
 
 //==============================================================================
+/// Devuelve planos y distancias para delimitar un dominio en forma de caja.
+/// Returns planes and distnaces to limit a box domain.
+//==============================================================================
+void PlanesDomain(const tdouble3 &pt,const tdouble3 &vx,const tdouble3 &vy
+  ,const tdouble3 &vz,tplane3d &plax,tplane3d &play,tplane3d &plaz,tdouble3 &pladist);
+
+//==============================================================================
+/// Comprueba si el punto esta dentro del dominio definido.
+/// Checks the point is inside the defined domain.
+//==============================================================================
+bool PlanesDomainCheck(const tdouble3 &pt,const tplane3d &plax,const tplane3d &play
+  ,const tplane3d &plaz,const tdouble3 &pladist);
+
+
+//==============================================================================
 /// Devuelve el area de un triangulo formado por 3 puntos.
 /// Returns the area of a triangle formed by 3 points.
 //==============================================================================
@@ -572,6 +622,23 @@ double TriangleArea(const tdouble3 &p1,const tdouble3 &p2,const tdouble3 &p3);
 /// Returns the area of a triangle formed by 3 points.
 //==============================================================================
 float TriangleArea(const tfloat3 &p1,const tfloat3 &p2,const tfloat3 &p3);
+
+
+//==============================================================================
+/// Devuelve perimetro de un triangulo formado por 3 puntos.
+/// Returns the perimeter of a triangle formed by 3 points.
+//==============================================================================
+inline double TrianglePerimeter(const tdouble3 &p1,const tdouble3 &p2,const tdouble3 &p3){
+  return(PointsDist(p1,p2)+PointsDist(p2,p3)+PointsDist(p3,p1));
+}
+
+//==============================================================================
+/// Devuelve perimetro de un triangulo formado por 3 puntos.
+/// Returns the perimeter of a triangle formed by 3 points.
+//==============================================================================
+inline float TrianglePerimeter(const tfloat3 &p1,const tfloat3 &p2,const tfloat3 &p3){
+  return(PointsDist(p1,p2)+PointsDist(p2,p3)+PointsDist(p3,p1));
+}
 
 
 //==============================================================================
@@ -673,6 +740,19 @@ void PolygonNormalPlanes(const std::vector<tdouble3> &vpt,double openingdist,std
 /// With openingdist you can open or close normal planes.
 //==============================================================================
 void PolygonNormalPlanes(const std::vector<tfloat3> &vpt,float openingdist,std::vector<tplane3f> &vpla);
+
+
+//==============================================================================
+/// Indica si un poligon es concavo.
+/// Returns true when the polygon is concave.
+//==============================================================================
+bool PolygonIsConcave(unsigned np,const tdouble3* vpt,double tolerance=0.01);
+
+//==============================================================================
+/// Devuelve poligono (convexo o concavo) como un conjunto de triangulos.
+/// Returns polygon (convex or concave) as a set of triangles.
+//==============================================================================
+void PolygonConcave(unsigned np,const tdouble3* vpt,std::vector<tint3> &vtri,double tolerance=0.01);
 
 
 //==============================================================================

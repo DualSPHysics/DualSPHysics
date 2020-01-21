@@ -29,8 +29,6 @@
 #include <iostream>
 #include <sstream>
 
-#pragma warning(disable : 4996) //Cancels sprintf() deprecated.
-
 using namespace std;
 
 //##############################################################################
@@ -98,13 +96,8 @@ long long JPartDataBi4::GetAllocMemory()const{
 //==============================================================================
 std::string JPartDataBi4::GetFileNamePart(unsigned cpart,unsigned piece,unsigned npiece){
   string fname="Part";
-  char cad[32];
-  if(npiece>1){
-    sprintf(cad,"_p%02d",piece);
-    fname=fname+cad;
-  }
-  sprintf(cad,"_%04u.bi4",cpart);
-  return(fname+cad);
+  if(npiece>1)fname=fname+fun::PrintStr("_p%02d",piece);
+  return(fname+fun::PrintStr("_%04u.bi4",cpart));
 }
 
 //==============================================================================
@@ -113,11 +106,7 @@ std::string JPartDataBi4::GetFileNamePart(unsigned cpart,unsigned piece,unsigned
 //==============================================================================
 std::string JPartDataBi4::GetFileNameCase(const std::string &casename,unsigned piece,unsigned npiece){
   string fname=casename;
-  if(npiece>1){
-    char cad[32];
-    sprintf(cad,"_p%02d",piece);
-    fname=fname+cad;
-  }
+  if(npiece>1)fname=fname+fun::PrintStr("_p%02d",piece);
   return(fname+".bi4");
 }
 
@@ -127,11 +116,7 @@ std::string JPartDataBi4::GetFileNameCase(const std::string &casename,unsigned p
 //==============================================================================
 std::string JPartDataBi4::GetFileNameInfo(unsigned piece,unsigned npiece){
   string fname="PartInfo";
-  if(npiece>1){
-    char cad[32];
-    sprintf(cad,"_p%02d",piece);
-    fname=fname+cad;
-  }
+  if(npiece>1)fname=fname+fun::PrintStr("_p%02d",piece);
   return(fname+".ibi4");
 }
 
@@ -301,9 +286,7 @@ void JPartDataBi4::ConfigSplitting(bool splitting){
 /// Returns name of part according to their number.
 //==============================================================================
 std::string JPartDataBi4::GetNamePart(unsigned cpart){
-  char cad[64];
-  sprintf(cad,"PART_%04u",cpart);
-  return(cad);
+  return(fun::PrintStr("PART_%04u",cpart));
 }
 
 //==============================================================================

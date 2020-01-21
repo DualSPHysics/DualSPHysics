@@ -19,7 +19,7 @@
 /// \file JCellDivGpuSingle_ker.cu \brief Implements functions and CUDA kernels to compute operations of the Neighbour List.
 
 #include "JCellDivGpuSingle_ker.h"
-#include "Types.h"
+#include "DualSphDef.h"
 #include <float.h>
 #include "JLog2.h"
 

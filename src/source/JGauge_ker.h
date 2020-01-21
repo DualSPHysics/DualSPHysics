@@ -21,7 +21,7 @@
 #ifndef _JGauge_ker_
 #define _JGauge_ker_
 
-#include "Types.h"
+#include "DualSphDef.h"
 #include <cuda_runtime_api.h>
 
 /// Implements a set of functions and CUDA kernels for classes that manage gauges.

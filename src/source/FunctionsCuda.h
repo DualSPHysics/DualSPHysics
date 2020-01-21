@@ -27,6 +27,7 @@
 //:# - Incluye cores para SM 75. (20-12-2018)
 //:# - Nueva funcion ToHostFloatXYZ_W(). (10-09-2019)
 //:# - Gestion de excepciones mejorada.  (15-09-2019)
+//:# - Nuevas funciones HostAlloc(byte), ToHostByte(). (18-01-2020)
 //:#############################################################################
 
 /// \file FunctionsCuda.h \brief Declares basic/general GPU functions for the entire application.
@@ -123,6 +124,7 @@ size_t Malloc(double3  **,unsigned count);
 //:cudaFree(GpuMem);
 
 //-Functions to allocate pinned CPU memory.
+size_t HostAlloc(byte     **,unsigned count);
 size_t HostAlloc(word     **,unsigned count);
 size_t HostAlloc(unsigned **,unsigned count);
 size_t HostAlloc(int      **,unsigned count);
@@ -134,6 +136,7 @@ size_t HostAlloc(tdouble2 **,unsigned count);
 //:cudaFreeHost(PinnedMem);
 
 //-Functions to copy data to Host (debug).
+byte*     ToHostByte   (unsigned pini,unsigned n,const byte     *ptrg);
 word*     ToHostWord   (unsigned pini,unsigned n,const word     *ptrg);
 ushort4*  ToHostWord4  (unsigned pini,unsigned n,const ushort4  *ptrg);
 int*      ToHostInt    (unsigned pini,unsigned n,const int      *ptrg);

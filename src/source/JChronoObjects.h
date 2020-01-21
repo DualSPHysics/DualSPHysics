@@ -15,19 +15,20 @@
  You should have received a copy of the GNU General Public License, along with DualSPHysics. If not, see <http://www.gnu.org/licenses/>. 
 */
 
+//#############################################################################
+//# Cambios:
+//# =========
+//# - Hace de interface con la libreria dsphchrono.dll. (03-05-2016)
+//# - Permite compilar sin librerias de CHRONO. (13-12-2019)
+//#############################################################################
+
 /// \file JChronoObjects.h \brief Declares the class \ref JChronoObjects.
 
 #ifndef _JChronoObjects_
 #define _JChronoObjects_
 
-//#############################################################################
-//# Cambios:
-//# =========
-//# - Hace de interface con la libreria dsphchrono.dll. (03-05-2016)
-//#############################################################################
-
 #include "JObject.h"
-#include "TypesDef.h"
+#include "DualSphDef.h"
 #include <string>
 #include <sstream>
 #include <iostream>
@@ -53,41 +54,7 @@ class DSPHChronoLib;
 /// \brief Manages Chrono objects.
 
 #ifdef DISABLE_CHRONO
-class JChronoObjects : protected JObject
-{
-protected:
-public:
-  JChronoObjects(JLog2* log,const std::string &dirdata,const std::string &casename
-    ,JXml *sxml,const std::string &place,double dp,word mkboundfirst){}
-  ~JChronoObjects(){};
-  void Reset(){};
-  static bool Available(){ return(false); }
-
-  bool UseDataDVI(word mkbound)const{ return(false); };
-  bool ConfigBodyFloating(word mkbound,double mass,const tdouble3 &center
-    ,const tmatrix3d &inertia,const tint3 &translationfree,const tint3 &rotationfree
-    ,const tfloat3 &linvelini,const tfloat3 &angvelini){ return(false); };
-
-  void ConfigDataDVIBodyFloating(word mkbound,float kfric,float restitu){};
-  void ConfigDataDVIBodyMoving  (word mkbound,float kfric,float restitu){};
-  void ConfigDataDVIBodyFixed   (word mkbound,float kfric,float restitu){};
-
-  void Init(bool simulate2d,const JSphMk* mkinfo){};
-  void VisuConfig(std::string txhead, std::string txfoot)const{};
-
-  bool GetWithMotion()const{ return(false); }
-
-  void SetFtData(word mkbound,const tfloat3 &face,const tfloat3 &fomegaace){};
-  void GetFtData(word mkbound,tdouble3 &fcenter,tfloat3 &fvel,tfloat3 &fomega)const{};
-
-  void SetMovingData(word mkbound,bool simple,const tdouble3 &msimple,const tmatrix4d &mmatrix,double dt){};
-
-  void RunChrono(unsigned nstep, double timestep, double dt, bool predictor){};
-
-  void SavePart(int part){};
-};
-
-
+#include "JChronoObjectsUndef.h"
 #else
 class JChronoObjects : protected JObject
 {
@@ -164,5 +131,4 @@ public:
 #endif
 
 #endif
-
 

@@ -1,12 +1,13 @@
-#DualSPHysics GPU/CPU v4.4.024 16-09-2019
+#DualSPHysics GPU/CPU v4.4.044 29-12-2019
 
-#=============== Compilation Options ===============
+#=============== Compilation Options (YES/NO) ===============
 USE_GCC5=NO
 USE_DEBUG=NO
 USE_FAST_MATH=YES
 USE_NATIVE_CPU_OPTIMIZATIONS=NO
+COMPILE_VTKLIB=YES
 COMPILE_CHRONO=YES
-COMPILE_RZ_MLPISTONS=YES
+COMPILE_WAVEGEN=YES
 
 LIBS_DIRECTORIES=-L./
 LIBS_DIRECTORIES:=$(LIBS_DIRECTORIES) -L../lib/linux_gcc
@@ -35,11 +36,14 @@ ifeq ($(USE_GCC5), YES)
   NCCFLAGS+=-D_GLIBCXX_USE_CXX11_ABI=0
 endif
 
+ifeq ($(COMPILE_VTKLIB), NO)
+  CCFLAGS:=$(CCFLAGS) -DDISABLE_VTKLIB
+endif
 ifeq ($(COMPILE_CHRONO), NO)
   CCFLAGS:=$(CCFLAGS) -DDISABLE_CHRONO
 endif
-ifeq ($(COMPILE_RZ_MLPISTONS), NO)
-  CCFLAGS:=$(CCFLAGS) -DDISABLE_RZ -DDISABLE_MLPISTONS
+ifeq ($(COMPILE_WAVEGEN), NO)
+  CCFLAGS:=$(CCFLAGS) -DDISABLE_WAVEGEN
 endif
 
 #=============== CUDA selection ===============
@@ -94,14 +98,14 @@ endif
 #=============== Files to compile ===============
 OBJXML=JXml.o tinystr.o tinyxml.o tinyxmlerror.o tinyxmlparser.o
 OBJSPHMOTION=JMotion.o JMotionList.o JMotionMov.o JMotionObj.o JMotionPos.o JSphMotion.o
-OBCOMMON=Functions.o FunctionsGeo3d.o JAppInfo.o JBinaryData.o JDataArrays.o JException.o JLinearValue.o JLog2.o JMeanValues.o JObject.o JRadixSort.o JRangeFilter.o JReadDatafile.o JSaveCsv2.o JTimeControl.o randomc.o
+OBCOMMON=Functions.o FunctionsGeo3d.o JAppInfo.o JBinaryData.o JDataArrays.o JException.o JLinearValue.o JLog2.o JMeanValues.o JObject.o JOutputCsv.o JRadixSort.o JRangeFilter.o JReadDatafile.o JSaveCsv2.o JTimeControl.o randomc.o
 OBCOMMONDSPH=JDsphConfig.o JPartDataBi4.o JPartDataHead.o JPartFloatBi4.o JPartOutBi4Save.o JSpaceCtes.o JSpaceEParms.o JSpaceParts.o JSpaceProperties.o JSpaceVtkOut.o
-OBSPH=JArraysCpu.o JCellDivCpu.o JCfgRun.o JDamping.o JGaugeItem.o JGaugeSystem.o JPartsOut.o JSaveDt.o JSph.o JSphAccInput.o JSphCpu.o JSphInitialize.o JSphMk.o JSphPartsInit.o JSphDtFixed.o JSphVisco.o JTimeOut.o JWaveSpectrumGpu.o main.o
+OBSPH=JArraysCpu.o JCellDivCpu.o JCfgRun.o JDamping.o JGaugeItem.o JGaugeSystem.o JPartsOut.o JSaveDt.o JShifting.o JSph.o JSphAccInput.o JSphCpu.o JSphInitialize.o JSphMk.o JSphPartsInit.o JSphDtFixed.o JSphVisco.o JTimeOut.o JWaveSpectrumGpu.o main.o
 OBSPHSINGLE=JCellDivCpuSingle.o JPartsLoad4.o JSphCpuSingle.o
 OBCOMMONGPU=FunctionsCuda.o JObjectGpu.o 
-OBSPHGPU=JArraysGpu.o JBlockSizeAuto.o JDebugSphGpu.o JCellDivGpu.o JSphGpu.o 
+OBSPHGPU=JArraysGpu.o JDebugSphGpu.o JCellDivGpu.o JSphGpu.o 
 OBSPHSINGLEGPU=JCellDivGpuSingle.o JSphGpuSingle.o
-OBCUDA=JCellDivGpu_ker.o JCellDivGpuSingle_ker.o JGauge_ker.o JReduSum_ker.o JSphGpu_ker.o JWaveOrder2_ker.o
+OBCUDA=JCellDivGpu_ker.o JCellDivGpuSingle_ker.o JGauge_ker.o JReduSum_ker.o JShifting_ker.o JSphAccInput_ker.o JSphGpu_ker.o JSphGpuSimple_ker.o JWaveOrder2_ker.o
 
 OBWAVERZ=JMLPistonsGpu.o JRelaxZonesGpu.o
 OBWAVERZCUDA=JRelaxZone_ker.o
@@ -114,12 +118,15 @@ OBJECTS:=$(OBJECTS) $(OBCOMMONGPU) $(OBSPHGPU) $(OBSPHSINGLEGPU) $(OBCUDA)
 OBJECTS:=$(OBJECTS) $(OBWAVERZ) $(OBWAVERZCUDA) $(OBCHRONO) $(OBINOUT) $(OBINOUTGPU)
 
 #=============== DualSPHysics libs to be included ===============
-JLIBS=${LIBS_DIRECTORIES} -ljformatfiles2_64 -ljwavegen_64
+JLIBS=${LIBS_DIRECTORIES}
+ifeq ($(COMPILE_VTKLIB), YES)
+  JLIBS:=$(JLIBS) -ljvtklib_64
+endif
 ifeq ($(COMPILE_CHRONO), YES)
   JLIBS:=$(JLIBS) -ldsphchrono -lChronoEngine
 endif
-ifeq ($(COMPILE_RZ_MLPISTONS), YES)
-  JLIBS:=$(JLIBS) -ljwave_mlp_rz_64
+ifeq ($(COMPILE_WAVEGEN), YES)
+  JLIBS:=$(JLIBS) -ljwavegen_64
 endif
 
 #=============== GPU Code Compilation ===============
@@ -153,11 +160,20 @@ $(EXECS_DIRECTORY)/$(EXECNAME):  $(OBJECTS)
 JSphGpu_ker.o: JSphGpu_ker.cu
 	$(NCC) $(NCCFLAGS) JSphGpu_ker.cu
 
+JSphGpuSimple_ker.o: JSphGpuSimple_ker.cu
+	$(NCC) $(NCCFLAGS) JSphGpuSimple_ker.cu
+
 JCellDivGpu_ker.o: JCellDivGpu_ker.cu
 	$(NCC) $(NCCFLAGS) JCellDivGpu_ker.cu
 
 JCellDivGpuSingle_ker.o: JCellDivGpuSingle_ker.cu
 	$(NCC) $(NCCFLAGS) JCellDivGpuSingle_ker.cu
+
+JShifting_ker.o: JShifting_ker.cu
+	$(NCC) $(NCCFLAGS) JShifting_ker.cu
+
+JSphAccInput_ker.o: JSphAccInput_ker.cu
+	$(NCC) $(NCCFLAGS) JSphAccInput_ker.cu
 
 JGauge_ker.o: JGauge_ker.cu
 	$(NCC) $(NCCFLAGS) JGauge_ker.cu

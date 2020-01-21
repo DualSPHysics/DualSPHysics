@@ -1,19 +1,19 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<!-- *** DualSPHysics (19-09-2018) *** -->
+<!-- *** DualSPHysics (19-01-2020) *** -->
 <!-- *** class: JSphInOut *** -->
 <!------------------------------------------------------------------------------->
 <!------------------------------------------------------------------------------->
 <!-- *** Example simple and complete for 2D *** -->
 <special>
-	<inout reuseids="false" resizetime="0.5">
+	<inout resizetime="0.5">
 		<useboxlimit value="true" comment="In/out process is only applied to InOut zones delimited by BoxLimit (default=true)">
 			<freecentre x="2" y="0" z="0" comment="Centre of zone where InOut is not applied (default=centre of simulation domain)" units_comment="m" />
 		</useboxlimit>
-		<userefilling value="true" comment="Use advanced refilling algorithm but slower. It is necessary when outflow becomes inflow (default=false)" />
 		<determlimit value="1e+3" comment="Use 1e-3 for first_order or 1e+3 for zeroth_order (default=1e+3)" />
 		<extrapolatemode value="1" comment="Calculation mode for rhop and velocity extrapolation from ghost nodes 1:fast-single, 2:single, 3:double (default=1)" />
 		<inoutzone>
-            <convertfluid value="true" comment="Converts fluid in inlet/outlet area (default=true)" />
+			<refilling value="0" comment="Refilling mode. 0:Simple full, 1:Simple below zsurf, 2:Advanced for reverse flows (very slow) (default=1)" />
+			<inputtreatment value="0" comment="Treatment of fluid entering the zone. 0:No changes, 1:Convert fluid (necessary for outlet), 2:Remove fluid (recommended for inlet)" />
 			<layers value="6" comment="Number of inlet/outlet particle layers" />
 			<zone2d comment="Input zone for 2-D simulations">
 				<line>
@@ -25,13 +25,11 @@
 			<imposevelocity mode="0" comment="Imposed velocity 0:fixed value, 1:variable value, 2:Extrapolated value (default=0)">
 				<velocity v="2" comment="Uniform velocity" units_comment="m/s" />
 			</imposevelocity>
-			<imposerhop mode="1" comment="Outlet rhop 0:Imposed fixed value, 1:Hydrostatic, 2:Extrapolated from ghost nodes (default=0)">
-				<zbottom value="0" comment="Bottom level of water (only for Hydrostatic option)" units_comment="m" />
-				<zsurf value="1" comment="Characteristic inlet Z-surface (only for Hydrostatic option)" units_comment="m" />
-			</imposerhop>
+			<imposerhop mode="2" comment="Outlet rhop 0:Imposed fixed value, 1:Hydrostatic, 2:Extrapolated from ghost nodes (default=0)"/>
 		</inoutzone>
 		<inoutzone>
-            <convertfluid value="true" comment="Converts fluid in inlet/outlet area (default=true)" />
+			<refilling value="1" comment="Refilling mode. 0:Simple full, 1:Simple below zsurf, 2:Advanced for reverse flows (very slow) (default=1)" />
+			<inputtreatment value="1" comment="Treatment of fluid entering the zone. 0:No changes, 1:Convert fluid (necessary for outlet), 2:Remove fluid (recommended for inlet)" />
 			<layers value="8" comment="Number of inlet/outlet particle layers" />
 			<zone2d comment="Input zone for 2-D simulations">
 				<line>
@@ -43,10 +41,7 @@
 			<imposevelocity mode="0" comment="Imposed velocity 0:fixed value, 1:variable value, 2:Extrapolated value (default=0)">
 				<velocity v="-2" comment="Uniform velocity" units_comment="m/s" />
 			</imposevelocity>
-			<imposerhop mode="1" comment="Outlet rhop 0:Imposed fixed value, 1:Hydrostatic, 2:Extrapolated from ghost nodes (default=0)">
-				<zbottom value="0" comment="Bottom level of water (only for Hydrostatic option)" units_comment="m" />
-				<zsurf value="1" comment="Characteristic inlet Z-surface (only for Hydrostatic option)" units_comment="m" />
-			</imposerhop>
+			<imposerhop mode="2" comment="Outlet rhop 0:Imposed fixed value, 1:Hydrostatic, 2:Extrapolated from ghost nodes (default=0)"/>
 		</inoutzone>
 	</inout>
 </special>
@@ -85,7 +80,7 @@
 </geometry>
 ...
 <special>
-	<inout reuseids="false" resizetime="0.5">
+	<inout resizetime="0.5">
 		<inoutzone>
 			<zone2d comment="Input zone for 2-D simulations">
 				<particles mkfluid="1" direction="right" />
@@ -135,7 +130,7 @@
 </geometry>
 ...
 <special>
-	<inout reuseids="false" resizetime="0.5">
+	<inout resizetime="0.5">
 		<inoutzone>
 			<zone3d comment="Input zone for 2-D simulations">
 				<particles mkfluid="1" direction="right" />
@@ -153,9 +148,8 @@
 <!------------------------------------------------------------------------------->
 <!-- *** Point definitions for 2D *** -->
 <special>
-	<inout reuseids="false" resizetime="0.5">
+	<inout resizetime="0.5">
         <useboxlimit value="true" comment="In/out process is only applied to InOut zones delimited by BoxLimit (default=true)"/>
-		<userefilling value="false" comment="Use advanced refilling algorithm but slower. It is necessary when outflow becomes inflow (default=false)" />
 		<determlimit value="1e+3" comment="Use 1e-3 for first_order or 1e+3 for zeroth_order (default=1e+3)" />
 		<extrapolatemode value="1" comment="Calculation mode for rhop and velocity extrapolation from ghost nodes 1:fast-single, 2:single, 3:double (default=1)" />
 		<inoutzone>
@@ -187,9 +181,8 @@
 <!------------------------------------------------------------------------------->
 <!-- *** Point definitions for 3D *** -->
 <special>
-	<inout reuseids="false" resizetime="0.5">
+	<inout resizetime="0.5">
         <useboxlimit value="true" comment="In/out process is only applied to InOut zones delimited by BoxLimit (default=true)"/>
-		<userefilling value="false" comment="Use advanced refilling algorithm but slower. It is necessary when outflow becomes inflow (default=false)" />
 		<determlimit value="1e+3" comment="Use 1e-3 for first_order or 1e+3 for zeroth_order (default=1e+3)" />
 		<extrapolatemode value="1" comment="Calculation mode for rhop and velocity extrapolation from ghost nodes 1:fast-single, 2:single, 3:double (default=1)" />
 		<inoutzone>
@@ -289,16 +282,11 @@
 <!------------------------------------------------------------------------------->
 <!-- *** Rhop definitions *** -->
 <!-- Fixed Constant rhop -->
-	<imposerhop mode="0" comment="Outlet rhop 0:Imposed fixed value, 1:Hydrostatic, 2:Extrapolated from ghost nodes (default=0)">
-	</imposerhop>
+	<imposerhop mode="0" comment="Outlet rhop 0:Imposed fixed value, 1:Hydrostatic, 2:Extrapolated from ghost nodes (default=0)"/>
 <!-- Fixed Hydrostatic rhop -->
-	<imposerhop mode="1" comment="Outlet rhop 0:Imposed fixed value, 1:Hydrostatic, 2:Extrapolated from ghost nodes (default=0)">
-		<zbottom value="0" comment="Bottom level of water (used for Hydrostatic option)" units_comment="m" />
-		<zsurf value="1" comment="Characteristic inlet Z-surface (used for Hydrostatic option)" units_comment="m" />
-	</imposerhop>
+	<imposerhop mode="1" comment="Outlet rhop 0:Imposed fixed value, 1:Hydrostatic, 2:Extrapolated from ghost nodes (default=0)"/>
 <!-- Extrapolated rhop -->
-	<imposerhop mode="2" comment="Outlet rhop 0:Imposed fixed value, 1:Hydrostatic, 2:Extrapolated from ghost nodes (default=0)">
-	</imposerhop>
+	<imposerhop mode="2" comment="Outlet rhop 0:Imposed fixed value, 1:Hydrostatic, 2:Extrapolated from ghost nodes (default=0)"/>
 <!------------------------------------------------------------------------------->
 <!------------------------------------------------------------------------------->
 <!-- *** Zsurf definitions *** -->
@@ -310,7 +298,7 @@
 <!-- Imposed variable zsurf -->
 	<imposezsurf mode="1" comment="Inlet Z-surface 0:Imposed fixed value, 1:Imposed variable value, 2:Calculated from fluid domain (default=0)">
         <savevtk value="true" comment="Creates VTK files with Zsurf for each PART (default=false)" />
-        <remove value="true" comment="Removes particles above the Zsurf limit using userefilling (default=false)" />
+        <remove value="true" comment="Removes particles above the Zsurf limit (default=false)" />
 		<zbottom value="0" comment="Bottom level of water (used for Hydrostatic option)" units_comment="m" />
 		<zsurftimes comment="Characteristic inlet Z-Surf changes in time" units_comment="m/s">
 			<timevalue time="0" zsurf="1" />
@@ -324,14 +312,14 @@
 <!-- Imposed variable zsurf using values in a external file-->
 	<imposezsurf mode="1" comment="Inlet Z-surface 0:Imposed fixed value, 1:Imposed variable value, 2:Calculated from fluid domain (default=0)">
         <savevtk value="true" comment="Creates VTK files with Zsurf for each PART (default=false)" />
-        <remove value="false" comment="Removes particles above the Zsurf limit using userefilling (default=false)" />
+        <remove value="false" comment="Removes particles above the Zsurf limit (default=false)" />
 		<zbottom value="0" comment="Bottom level of water (used for Hydrostatic option)" units_comment="m" />
 		<zsurffile file="FileZsurf.csv" comment="Zsurf data (time;zsurf)"/>
 	</imposevelocity>
 <!-- Zsurf calculated from fluid -->
 	<imposezsurf mode="2" comment="Inlet Z-surface 0:Imposed fixed value, 1:Imposed variable value, 2:Calculated from fluid domain (default=0)">
         <savevtk value="true" comment="Creates VTK files with Zsurf for each PART (default=false)" />
-        <remove value="false" comment="Removes particles above the Zsurf limit using userefilling (default=false)" />
+        <remove value="false" comment="Removes particles above the Zsurf limit (default=false)" />
 		<zbottom value="0" comment="Bottom level of water (used for Hydrostatic option)" units_comment="m" />
 		<zsurf value="1" comment="Initial Z-surface" units_comment="m" />
 	</imposezsurf>

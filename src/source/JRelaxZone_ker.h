@@ -32,7 +32,7 @@
 #ifndef _JRelaxZone_ker_
 #define _JRelaxZone_ker_
 
-#include "Types.h"
+#include "DualSphDef.h"
 #include <cuda_runtime_api.h>
 
 #define WAVEBSIZE 256

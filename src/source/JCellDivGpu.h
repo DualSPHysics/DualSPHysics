@@ -21,7 +21,7 @@
 #ifndef _JCellDivGpu_
 #define _JCellDivGpu_
 
-#include "Types.h"
+#include "DualSphDef.h"
 #include "JObjectGpu.h"
 #include "JSphTimersGpu.h"
 #include "JLog2.h"

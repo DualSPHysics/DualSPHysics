@@ -21,7 +21,7 @@
 #ifndef _JCfgRun_
 #define _JCfgRun_
 
-#include "Types.h"
+#include "DualSphDef.h"
 #include "Functions.h"
 #include "JObject.h"
 #include <string>
@@ -67,10 +67,9 @@ public:
   int GpuId;
   bool GpuFree;
   bool Stable;
-  int PosDouble;  ///<Precision in particle interaction. 0:Simple, 1:Double, 2:Uses and save double (default=0).
+  int SvPosDouble;  ///<Saves particle position using double precision (default=0)
 
   int OmpThreads;
-  TpBlockSizeMode BlockSizeMode;
 
   TpCellMode  CellMode;
   TpStep TStep;

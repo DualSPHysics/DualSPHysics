@@ -20,7 +20,8 @@
 //:# Cambios:
 //:# =========
 //:# - Incluye la aplicacion de TimeMod. (23-04-2018)
-//# - Ahora devuelve los datos de motion como StMotionData. (11-09-2019)
+//:# - Ahora devuelve los datos de motion como StMotionData. (11-09-2019)
+//:# - Permite compilar sin libreria WaveGen. (10-12-2019)
 //:#############################################################################
 
 /// \file JWaveGen.h \brief Declares the class \ref JWaveGen.
@@ -28,8 +29,10 @@
 #ifndef _JWaveGen_
 #define _JWaveGen_
 
-#include "Types.h"
+#include "DualSphDef.h"
 #include <string>
+
+//#define DISABLE_WAVEGEN     ///<It allows compile without WaveGen library.
 
 class JXml;
 class JLog2;
@@ -42,6 +45,9 @@ class JSphMk;
 //##############################################################################
 /// \brief Implements wave generation for regular and irregular waves.
 
+#ifdef DISABLE_WAVEGEN
+#include "JWaveGenUndef.h"
+#else
 class JWaveGen
 {
 private:
@@ -66,6 +72,11 @@ public:
   /// Destructor.
   //==============================================================================
   ~JWaveGen();
+
+  //==============================================================================
+  /// Returns true when this feature is available.
+  //==============================================================================
+  static bool Available(){ return(true); }
 
   //==============================================================================
   /// Configura paddle con datos de las particulas.
@@ -112,7 +123,7 @@ public:
   bool UseAwas()const{ return(Use_Awas); } 
 
 };
-
+#endif
 
 #endif
 

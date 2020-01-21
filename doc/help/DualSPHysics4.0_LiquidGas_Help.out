@@ -1,0 +1,112 @@
+
+
+ <DUALSPHYSICS4-LIQUIDGAS> Copyright (C) 2018 by
+ Dr Athanasios Mokos, Dr Jose M. Dominguez, Dr Benedict Rogers,
+ Prof. Peter Stansby, Dr Alejandro Crespo, Prof. Moncho Gomez Gesteira,
+ Orlando Garcia-Feal, Dr Georgios Fourtakas,
+ Dr Renato Vacondio, Dr Ricardo Canelas,
+ Dr Stephen Longshaw, Dr Corrado Altomare.
+
+ School of Mechanical, Aerospace and Civil Engineering, University of Manchester
+ EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo
+
+ DualSPHysics is free software: you can redistribute it and/or
+ modify it under the terms of the GNU Lesser General Public License
+ as published by the Free Software Foundation, either version 2.1 of
+ the License, or (at your option) any later version.
+
+ DualSPHysics is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU Lesser General Public License for more details.
+
+ You should have received a copy of the GNU Lesser General Public License
+ along with DualSPHysics. If not, see <http://www.gnu.org/licenses/>.
+
+
+DualSPHysics4-LiquidGas v1.010 (v4.0.048) (04-06-2018)
+=======================================================
+Information about execution parameters:
+
+  DualSPHysics4 [name_case [dir_out]] [options]
+
+  Options:
+    -h          Shows information about parameters
+
+    -opt <file> Loads a file configuration
+
+    -cpu        Execution on CPU (option by default)
+    -gpu[:id]   Execution on GPU and id of the device
+    -stable     The result is always the same but the execution is slower
+
+    -posdouble:<mode>  Precision used in position for particle interactions
+        0: Use and store in single precision (option by default)
+        1: Use double precision but saves result in single precision
+        2: Use and store in double precision
+
+    -ompthreads:<int>  Only for CPU execution, indicates the number of threads
+                   by host for parallel execution, this takes the number of 
+                   cores of the device by default (or using zero value)
+
+    -blocksize:<mode>  Defines BlockSize to use in particle interactions on GPU
+        0: Fixed value (128) is used (option by default)
+        1: Optimum BlockSize indicated by Occupancy Calculator of CUDA
+        2: Optimum BlockSize is calculated empirically
+
+    -cellmode:<mode>  Specifies the cell division mode
+        2h        Lowest and the least expensive in memory (by default)
+        h         Fastest and the most expensive in memory
+
+    -symplectic      Symplectic algorithm as time step algorithm
+    -verlet[:steps]  Verlet algorithm as time step algorithm and number of
+                     time steps to switch equations
+
+    -cubic           Cubic spline kernel
+    -wendland        Wendland kernel
+
+    -viscoart:<float>          Artificial viscosity [0-1]
+    -viscolamsps:<float>       Laminar+SPS viscosity [order of 1E-6]
+    -viscoboundfactor:<float>  Multiplies the viscosity value of boundary
+
+    -deltasph:<float> Constant for DeltaSPH. Typical value is 0.1 (0 by default)
+
+    -shifting:<mode> Specifies the use of Shifting correction
+        none       Shifting is disabled (by default)
+        nobound    Shifting is not applied near boundary
+        nofixed    Shifting is not applied near fixed boundary
+        full       Shifting is always applied
+
+    -sv:[formats,...] Specifies the output formats.
+        none    No particles files are generated
+        binx    Binary files (option by default)
+        info    Information about execution in .ibi4 format
+        vtk     VTK files
+        csv     CSV files
+    -svres:<0/1>     Generates file that summarises the execution process
+    -svtimers:<0/1>  Obtains timing for each individual process
+    -svdomainvtk:<0/1>  Generates VTK file with domain limits
+    -name <string>      Specifies path and name of the case 
+    -runname <string>   Specifies name for case execution
+    -dirout <dir>       Specifies the out directory 
+
+    -partbegin:begin[:first] dir 
+     Specifies the beginning of the simulation starting from a given PART
+     (begin) and located in the directory (dir), (first) indicates the
+     number of the first PART to be generated
+
+    -incz:<float>    Allows increase in Z+ direction 
+    -rhopout:min:max Excludes fluid particles out of these density limits
+
+    -ftpause:<float> Time to start floating bodies movement. By default 0
+    -tmax:<float>   Maximum time of simulation
+    -tout:<float>   Time between output files
+
+    -domain_particles[:xmin,ymin,zmin,xmax,ymax,zmax]  The domain is fixed as
+     a function of the initial article positions and modified for xmin,...
+    -domain_particles_prc:xmin,ymin,zmin,xmax,ymax,zmax  The values in 
+     proportion with the case dimensions according to the initial particles
+    -domain_fixed:xmin,ymin,zmin,xmax,ymax,zmax    The domain is fixed
+     with the specified values
+
+  Examples:
+    DualSPHysics4 case out_case -sv:binx,csv 
