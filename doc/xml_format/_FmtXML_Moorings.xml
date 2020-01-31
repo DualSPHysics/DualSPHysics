@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!-- *** DualSPHysics (03-10-2019) *** -->
+<!-- *** class: JMooredFloatings *** -->
+<!------------------------------------------------------------------------------->
+<!------------------------------------------------------------------------------->
+<!-- *** Example for configuration of moorings using coupling with MoorDyn. *** -->
+<special>
+    <moorings>
+        <savevtk_moorings value="true" comment="Saves vtk with moorings (default=true)" />
+        <savecsv_points value="true" comment="Saves csv with link points (default=true)" />
+        <savevtk_points value="false" comment="Saves vtk with link points (default=false)" />
+		<mooredfloatings>
+			<floating mkbound="45" comment="Mkbound of the Floating body the mooring is linked to" />
+			<floating mkbound="50" comment="Mkbound of the Floating body the mooring is linked to" />
+		</mooredfloatings>
+		<moordyn file="mooring.xml" comment="MoorDyn configuration"/>
+    </moorings>
+</special>
+<!---------------------------------------------------------------------------------------->
+<!---------------------------------------------------------------------------------------->
+<!-- *** Example using embedded MoorDyn configuration in XML file for DualSPHysics. *** -->
+<special>
+    <moorings>
+        <savevtk_moorings value="true" comment="Saves vtk with moorings (default=true)" />
+        <savecsv_points value="true" comment="Saves csv with link points (default=true)" />
+        <savevtk_points value="false" comment="Saves vtk with link points (default=false)" />
+		<mooredfloatings>
+			<floating mkbound="45" comment="Mkbound of the Floating body the mooring is linked to" />
+			<floating mkbound="50" comment="Mkbound of the Floating body the mooring is linked to" />
+		</mooredfloatings>
+		<moordyn comment="MoorDyn configuration"/>
+			<solverOptions>
+				<gravity value="9.81" comment="(m/s^2)"/>
+				<waterDepth value="0.5" comment="(m)"/>
+				<kBot value="3.0e6" comment="Stifness (Pa/m). (default=3.0e6)" />
+				<cBot value="3.0e5" comment="Damping Pa/m/s). (default=3.0e5)" />
+				<dtM value="0.0001" comment="time step to use in mooring integration. (default=0.0001)"/>
+				<waveKin value="0" comment="wave kinematics flag (0=neglect, the only option currently supported)"/>
+				<writeUnits value="yes" comment="write units line (default=yes) [yes no]" />
+				<frictionCoefficient value="0" comment="General bottom friction coefficient, as a start. (default=0.0)" />
+				<fricDamp value="200" comment="A damping coefficient used to model the friction at speeds near zero. (default=200.0)" />
+				<statDynFricScale value="1.0" comment="A ratio of static to dynamic friction ( = mu_static/mu_dynamic). (default=1.0)" />
+				<dtIC value="1.0" comment="[ICdt] convergence analysis time step. (default=1.0)"/>
+				<cdScaleIC value="5" comment="[ICDfac] factor by which to scale drag coefficients during dynamic relaxation IC gen. (default=5)" />	
+				<threshIC value="0.01" comment="threshold for IC convergence. (defaul=0.001)"/>
+				<tmaxIC value="2" comment="max time for IC generation.(default=10)"/>
+				<timeMax value="10" comment="Time of simulation(s)" />
+			</solverOptions>
+			<bodies>
+				<body ref="45"/> %body 0
+				<body ref="50"/> %body 1
+			</bodies>
+			<lines>
+				<linedefault>  
+					<ea value="2.9e3" comment="stiffness(N)" />
+					<diameter value="3.656E-3" comment="(m)" />
+					<massDenInAir value="0.0607" comment="massDenInAirDenInAir (kg/m)" />
+					<ba value="-0.8" comment="BA/-zeta – the line internal damping (Ns). (default=-0.8)" />
+					<can value="1.0" comment="Default= 1.0 "/>      
+					<cat value="0.0" comment="Default= 0.0 " />   
+					<cdn value="1.6" comment="Default= 1.6 " />    
+					<cdt value="0.05" comment="Default= 0.05" />  
+					<outputFlags value="pvc" comment="Node output properties.(default=-) [-=None, p=positions, v=velocities, U=waveVelocities, t=tension, D=HydrodynamicDragForce, c=internalDamping]" />
+				</linedefault>
+				<line>  %line 0
+					<vesselconnection bodyref="45" x="0.5" y="0.0" z="-2.0" />
+					<fixconnection x="-0.5" y="0.0" z="-2.50" />
+					<length value="1" comment="(m)"/>
+					<segments value="20" />
+					<ea value="3.1e3" comment="stiffness(N)" />
+				</line>
+				<line>  %line 1
+					<vesselconnection bodyref="50" x="-0.55" y="0" z="-2.0" />
+					<fixconnection x="0.5" y="0.0" z="-2.50" />
+					<length value="1" comment="(m)"/>
+					<segments value="20" />
+					<diameter value="2.956E-3" comment="(m)" />
+				</line>
+			</lines>
+			<output>
+					<time startTime="0" endTime="10" dtOut="0.01" comment="Default [startTime= 0; endTime= 0; dtOut=0.01]"/>
+					<tension type="all" comment="type=[fixed|vessel|all].(default: type=all)  "/>
+					<force type="all" comment="type=[fixed|vessel|all]. " />
+					<velocity type="all" comment="type=[fixed|vessel|all]." />
+					<position type="fixed" comment="type=[fixed|vessel|all]." />
+			</output>
+		</moordyn>
+    </moorings>
+</special>
+
+
+
+

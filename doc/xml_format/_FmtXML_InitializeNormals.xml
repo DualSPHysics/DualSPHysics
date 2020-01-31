@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!-- *** DualSPHysics (30-01-2020) *** -->
+<!-- *** class: JSphInitialize *** -->
+<!------------------------------------------------------------------------------->
+<!------------------------------------------------------------------------------->
+<!-- *** Examples for Initialize *** -->
+<special>
+	<initialize>
+		<boundnormal_set mkbound="1">
+			<normal x="1" y="0" z="0" />
+		</boundnormal_set>
+		<boundnormal_plane mkbound="2">
+			<point x="1" y="0" z="0" />
+			<normal x="1" y="0" z="0" />
+			<maxdisth v="2.0" comment="Maximum distance to boundary limit. It uses H*maxdisth (default=2)" />		
+		</boundnormal_plane>
+		<boundnormal_sphere mkbound="3">
+			<center x="1" y="0" z="0" /> 
+			<radius v="1" />
+			<inside v="true" comment="Boundary particles inside the sphere" />		
+			<maxdisth v="2.0" comment="Maximum distance to boundary limit. It uses H*maxdisth (default=2)" />		
+		</boundnormal_sphere>
+		<boundnormal_cylinder mkbound="4">
+			<center1 x="1" y="0" z="0" /> 
+			<center2 x="2" y="0" z="0" /> 
+			<radius v="1" />
+			<inside v="true" comment="Boundary particles inside the cylinder" />		
+			<maxdisth v="2.0" comment="Maximum distance to boundary limit. It uses H*maxdisth (default=2)" />		
+		</boundnormal_cylinder>
+	</initialize>
+</special>

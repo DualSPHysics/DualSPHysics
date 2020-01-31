@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<case app="GenCase4 v4.0.140 (07-01-2020)" date="07-01-2020 03:43:01">
-    <casedef requiredversion="v4.0.140">
+<case app="GenCase4 v4.0.144 (30-01-2020)" date="31-01-2020 16:46:27">
+    <casedef requiredversion="v4.0.144">
         <constantsdef>
             <lattice bound="2" fluid="1" />
             <gravity x="0" y="0" z="-9.81" comment="Gravitational acceleration" units_comment="m/s^2" />
@@ -286,6 +286,10 @@
                     <drawsphere radius="0.5">
                         <point x="1" y="1" z="0" />
                     </drawsphere>
+                    <drawsphere radius="0.8">
+                        <point x="1" y="1" z="0" />
+                        <layers vdp="-0.5*,-1.5" />
+                    </drawsphere>
                     <drawellipsoid radius="1.15">
                         <point x="1" y="0" z="0" />
                         <point x="1" y="1" z="1" />
@@ -293,6 +297,11 @@
                     <drawcylinder radius="0.85" mask="1">
                         <point x="1" y="1" z="0" />
                         <point x="1" y="1" z="1" />
+                    </drawcylinder>
+                    <drawcylinder radius="0.5" mask="1 | 3">
+                        <point x="1" y="1" z="0" />
+                        <point x="1" y="1" z="1" />
+                        <layers vdp="0*,0.5,1" />
                     </drawcylinder>
                     <drawwave depth="4" hmaxwave="3" x0="26" z0="5">
                         <point x="10" y="0" z="5" />
@@ -441,6 +450,7 @@
                     <setvar v1="sinh(a)" v2="cosh(a)" v3="tanh(a)" />
                     <setvar v1="asin(a)" v2="acos(a)" v3="atan(a)" v4="atan2(a,b)" />
                     <setvar v1="randinit(a)" v2="rand(a)" v3="randint(a,b)" />
+                    <setvar v1="wavelength(gravity,depth,period)" />
                     <debugout />
                     <shapeout file="fshape_1" reset="false" />
                     <shapeout file="fshape_2" />

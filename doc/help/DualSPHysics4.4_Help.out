@@ -24,8 +24,8 @@
  along with DualSPHysics. If not, see <http://www.gnu.org/licenses/>.
 
 
-DualSPHysics4 [Symmetry] v4.4.050 (07-01-2020)
-===============================================
+DualSPHysics4 [Moordyn+FtVel+Symmetry+MDBC+DDT2] v4.4.055 (31-01-2020)
+=======================================================================
 LoadDsphConfig> .../bin/windows/DsphConfig.xml
 Information about execution parameters:
 
