@@ -25,7 +25,7 @@
 		<parameter key="#ShiftTFS" value="1.5" comment="Threshold to detect free surface. Typically 1.5 for 2D and 2.75 for 3D (default=0)" />
 		<parameter key="RigidAlgorithm" value="1" comment="Rigid Algorithm 1:SPH, 2:DEM, 3:Chrono (default=1)" />
 		<parameter key="FtPause" value="0.0" comment="Time to freeze the floatings at simulation start (warmup) (default=0)" units_comment="seconds" />
-        <parameter key="FtIgnoreRadius" value="0" comment="Ignores floating body radius with periodic conditions (default=0)" />
+		<parameter key="FtIgnoreRadius" value="0" comment="Ignores floating body radius with periodic conditions (default=0)" />
 		<parameter key="CoefDtMin" value="0.05" comment="Coefficient to calculate minimum time step dtmin=coefdtmin*h/speedsound (default=0.05)" />
 		<parameter key="#DtIni" value="0.0001" comment="Initial time step (default=h/speedsound)" units_comment="seconds" />
 		<parameter key="#DtMin" value="0.00001" comment="Minimum time step (default=coefdtmin*h/speedsound)" units_comment="seconds" />
@@ -36,17 +36,17 @@
 		<parameter key="RhopOutMin" value="700" comment="Minimum rhop valid (default=700)" units_comment="kg/m^3" />
 		<parameter key="RhopOutMax" value="1300" comment="Maximum rhop valid (default=1300)" units_comment="kg/m^3" />
 		<parameter key="PartsOutMax" value="1" comment="%/100 of fluid particles allowed to be excluded from domain (default=1)" units_comment="decimal" />
-        <parameter key="WrnPartsOut" value="1" comment="Active warning according to number of out particles (default=1)" />
+		<parameter key="WrnPartsOut" value="1" comment="Active warning according to number of out particles (default=1)" />
   
-        <parameter key="XPeriodicIncZ" value="0" comment="Increase of Z with periodic BC in axis X" units_comment="metres (m)" />
-        <parameter key="XPeriodicIncY" value="0" comment="Increase of Y with periodic BC in axis X" units_comment="metres (m)" />
-        <parameter key="YPeriodicIncX" value="0" comment="Increase of X with periodic BC in axis Y" units_comment="metres (m)" />
-        <parameter key="YPeriodicIncZ" value="0" comment="Increase of Z with periodic BC in axis Y" units_comment="metres (m)" />
-        <parameter key="ZPeriodicIncX" value="0" comment="Increase of X with periodic BC in axis Z" units_comment="metres (m)" />
-        <parameter key="ZPeriodicIncY" value="0" comment="Increase of Y with periodic BC in axis Z" units_comment="metres (m)" />
-        <parameter key="XYPeriodic" value="0" comment="Periodic BC in axes X and Y" units_comment="metres (m)" />
-        <parameter key="XZPeriodic" value="0" comment="Periodic BC in axes X and Z" units_comment="metres (m)" />
-        <parameter key="YZPeriodic" value="0" comment="Periodic BC in axes Y and Z" units_comment="metres (m)" />
+		<parameter key="XPeriodicIncZ" value="0" comment="Increase of Z with periodic BC in axis X" units_comment="metres (m)" />
+		<parameter key="XPeriodicIncY" value="0" comment="Increase of Y with periodic BC in axis X" units_comment="metres (m)" />
+		<parameter key="YPeriodicIncX" value="0" comment="Increase of X with periodic BC in axis Y" units_comment="metres (m)" />
+		<parameter key="YPeriodicIncZ" value="0" comment="Increase of Z with periodic BC in axis Y" units_comment="metres (m)" />
+		<parameter key="ZPeriodicIncX" value="0" comment="Increase of X with periodic BC in axis Z" units_comment="metres (m)" />
+		<parameter key="ZPeriodicIncY" value="0" comment="Increase of Y with periodic BC in axis Z" units_comment="metres (m)" />
+		<parameter key="XYPeriodic" value="0" comment="Periodic BC in axes X and Y" units_comment="metres (m)" />
+		<parameter key="XZPeriodic" value="0" comment="Periodic BC in axes X and Z" units_comment="metres (m)" />
+		<parameter key="YZPeriodic" value="0" comment="Periodic BC in axes Y and Z" units_comment="metres (m)" />
 		
 		<parameter key="IncZ" value="0.5" comment="**DEPRECATED** Increase of Z+ (default=0)" units_comment="decimal" />
 		<parameter key="DomainFixed" value="0:0:0:1:1:1" comment="**DEPRECATED** The domain is fixed with the specified values (xmin:ymin:zmin:xmax:ymax:zmax)" units_comment="metres (m)" />

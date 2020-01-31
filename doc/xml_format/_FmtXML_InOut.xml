@@ -84,7 +84,7 @@
 		<inoutzone>
 			<zone2d comment="Input zone for 2-D simulations">
 				<particles mkfluid="1" direction="right" />
-                <!-- *** Direction values: left, right, front, back, top, bottom *** -->
+				<!-- *** Direction values: left, right, front, back, top, bottom *** -->
 			</zone2d>
 		</inoutzone>
 		<inoutzone>
@@ -134,7 +134,7 @@
 		<inoutzone>
 			<zone3d comment="Input zone for 2-D simulations">
 				<particles mkfluid="1" direction="right" />
-                <!-- *** Direction values: left, right, front, back, top, bottom *** -->
+				<!-- *** Direction values: left, right, front, back, top, bottom *** -->
 			</zone3d>
 		</inoutzone>
 		<inoutzone>
@@ -149,7 +149,7 @@
 <!-- *** Point definitions for 2D *** -->
 <special>
 	<inout resizetime="0.5">
-        <useboxlimit value="true" comment="In/out process is only applied to InOut zones delimited by BoxLimit (default=true)"/>
+		<useboxlimit value="true" comment="In/out process is only applied to InOut zones delimited by BoxLimit (default=true)"/>
 		<determlimit value="1e+3" comment="Use 1e-3 for first_order or 1e+3 for zeroth_order (default=1e+3)" />
 		<extrapolatemode value="1" comment="Calculation mode for rhop and velocity extrapolation from ghost nodes 1:fast-single, 2:single, 3:double (default=1)" />
 		<inoutzone>
@@ -182,7 +182,7 @@
 <!-- *** Point definitions for 3D *** -->
 <special>
 	<inout resizetime="0.5">
-        <useboxlimit value="true" comment="In/out process is only applied to InOut zones delimited by BoxLimit (default=true)"/>
+		<useboxlimit value="true" comment="In/out process is only applied to InOut zones delimited by BoxLimit (default=true)"/>
 		<determlimit value="1e+3" comment="Use 1e-3 for first_order or 1e+3 for zeroth_order (default=1e+3)" />
 		<extrapolatemode value="1" comment="Calculation mode for rhop and velocity extrapolation from ghost nodes 1:fast-single, 2:single, 3:double (default=1)" />
 		<inoutzone>
@@ -297,8 +297,8 @@
 	</imposezsurf>
 <!-- Imposed variable zsurf -->
 	<imposezsurf mode="1" comment="Inlet Z-surface 0:Imposed fixed value, 1:Imposed variable value, 2:Calculated from fluid domain (default=0)">
-        <savevtk value="true" comment="Creates VTK files with Zsurf for each PART (default=false)" />
-        <remove value="true" comment="Removes particles above the Zsurf limit (default=false)" />
+		<savevtk value="true" comment="Creates VTK files with Zsurf for each PART (default=false)" />
+		<remove value="true" comment="Removes particles above the Zsurf limit (default=false)" />
 		<zbottom value="0" comment="Bottom level of water (used for Hydrostatic option)" units_comment="m" />
 		<zsurftimes comment="Characteristic inlet Z-Surf changes in time" units_comment="m/s">
 			<timevalue time="0" zsurf="1" />
@@ -311,15 +311,15 @@
 	</imposezsurf>
 <!-- Imposed variable zsurf using values in a external file-->
 	<imposezsurf mode="1" comment="Inlet Z-surface 0:Imposed fixed value, 1:Imposed variable value, 2:Calculated from fluid domain (default=0)">
-        <savevtk value="true" comment="Creates VTK files with Zsurf for each PART (default=false)" />
-        <remove value="false" comment="Removes particles above the Zsurf limit (default=false)" />
+		<savevtk value="true" comment="Creates VTK files with Zsurf for each PART (default=false)" />
+		<remove value="false" comment="Removes particles above the Zsurf limit (default=false)" />
 		<zbottom value="0" comment="Bottom level of water (used for Hydrostatic option)" units_comment="m" />
 		<zsurffile file="FileZsurf.csv" comment="Zsurf data (time;zsurf)"/>
 	</imposevelocity>
 <!-- Zsurf calculated from fluid -->
 	<imposezsurf mode="2" comment="Inlet Z-surface 0:Imposed fixed value, 1:Imposed variable value, 2:Calculated from fluid domain (default=0)">
-        <savevtk value="true" comment="Creates VTK files with Zsurf for each PART (default=false)" />
-        <remove value="false" comment="Removes particles above the Zsurf limit (default=false)" />
+		<savevtk value="true" comment="Creates VTK files with Zsurf for each PART (default=false)" />
+		<remove value="false" comment="Removes particles above the Zsurf limit (default=false)" />
 		<zbottom value="0" comment="Bottom level of water (used for Hydrostatic option)" units_comment="m" />
 		<zsurf value="1" comment="Initial Z-surface" units_comment="m" />
 	</imposezsurf>

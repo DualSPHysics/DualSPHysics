@@ -5,21 +5,21 @@
 <!------------------------------------------------------------------------------->
 <!-- *** Example for Damping *** -->
 <special>
-    <damping>
-        <dampingzone>
-            <limitmin x="4" y="0" z="0" comment="Location where minimum reduction is applied" />
-            <limitmax x="4.5" y="0" z="0" comment="Location where maximum reduction is applied" />
-            <overlimit value="1" comment="The scope of maximum reduction over limitmax (default=0)" />
-            <redumax value="10" comment="Maximum reduction in location limitmax (default=10)" />
-            <factorxyz x="1" y="1" z="1" comment="Application factor in components (default x=1,y=1,z=1)" />
+	<damping>
+		<dampingzone>
+			<limitmin x="4" y="0" z="0" comment="Location where minimum reduction is applied" />
+			<limitmax x="4.5" y="0" z="0" comment="Location where maximum reduction is applied" />
+			<overlimit value="1" comment="The scope of maximum reduction over limitmax (default=0)" />
+			<redumax value="10" comment="Maximum reduction in location limitmax (default=10)" />
+			<factorxyz x="1" y="1" z="1" comment="Application factor in components (default x=1,y=1,z=1)" />
 			<domain zmin="-1.2" zmax="0" comment="Box domain to apply damping (default=all domain)">
 				<point1 x="5" y="2" />
 				<point2 x="10" y="2" />
 				<point3 x="10" y="8" />
 				<point4 x="5" y="8" />
 			</domain>
-        </dampingzone>
-    </damping>
+		</dampingzone>
+	</damping>
 </special>
 
 

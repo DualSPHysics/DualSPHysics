@@ -14,7 +14,7 @@
 			</objreal>
 		</motion>
 	</casedef>
-    <execution>
+	<execution>
 		<special>
 			<wavepaddles>
 				<piston>
@@ -25,7 +25,7 @@
 			</wavepaddles>
 		</special>
 		...
-    </execution>
+	</execution>
 </case>
 <!------------------------------------------------------------------------------->
 <!------------------------------------------------------------------------------->

@@ -5,25 +5,25 @@
 <!------------------------------------------------------------------------------->
 <!-- *** Example for configuration of moorings using coupling with MoorDyn. *** -->
 <special>
-    <moorings>
-        <savevtk_moorings value="true" comment="Saves vtk with moorings (default=true)" />
-        <savecsv_points value="true" comment="Saves csv with link points (default=true)" />
-        <savevtk_points value="false" comment="Saves vtk with link points (default=false)" />
+	<moorings>
+		<savevtk_moorings value="true" comment="Saves vtk with moorings (default=true)" />
+		<savecsv_points value="true" comment="Saves csv with link points (default=true)" />
+		<savevtk_points value="false" comment="Saves vtk with link points (default=false)" />
 		<mooredfloatings>
 			<floating mkbound="45" comment="Mkbound of the Floating body the mooring is linked to" />
 			<floating mkbound="50" comment="Mkbound of the Floating body the mooring is linked to" />
 		</mooredfloatings>
 		<moordyn file="mooring.xml" comment="MoorDyn configuration"/>
-    </moorings>
+	</moorings>
 </special>
 <!---------------------------------------------------------------------------------------->
 <!---------------------------------------------------------------------------------------->
 <!-- *** Example using embedded MoorDyn configuration in XML file for DualSPHysics. *** -->
 <special>
-    <moorings>
-        <savevtk_moorings value="true" comment="Saves vtk with moorings (default=true)" />
-        <savecsv_points value="true" comment="Saves csv with link points (default=true)" />
-        <savevtk_points value="false" comment="Saves vtk with link points (default=false)" />
+	<moorings>
+		<savevtk_moorings value="true" comment="Saves vtk with moorings (default=true)" />
+		<savecsv_points value="true" comment="Saves csv with link points (default=true)" />
+		<savevtk_points value="false" comment="Saves vtk with link points (default=false)" />
 		<mooredfloatings>
 			<floating mkbound="45" comment="Mkbound of the Floating body the mooring is linked to" />
 			<floating mkbound="50" comment="Mkbound of the Floating body the mooring is linked to" />
@@ -56,9 +56,9 @@
 					<diameter value="3.656E-3" comment="(m)" />
 					<massDenInAir value="0.0607" comment="massDenInAirDenInAir (kg/m)" />
 					<ba value="-0.8" comment="BA/-zeta – the line internal damping (Ns). (default=-0.8)" />
-					<can value="1.0" comment="Default= 1.0 "/>      
+					<can value="1.0" comment="Default= 1.0 "/>	  
 					<cat value="0.0" comment="Default= 0.0 " />   
-					<cdn value="1.6" comment="Default= 1.6 " />    
+					<cdn value="1.6" comment="Default= 1.6 " />	
 					<cdt value="0.05" comment="Default= 0.05" />  
 					<outputFlags value="pvc" comment="Node output properties.(default=-) [-=None, p=positions, v=velocities, U=waveVelocities, t=tension, D=HydrodynamicDragForce, c=internalDamping]" />
 				</linedefault>
@@ -85,7 +85,7 @@
 					<position type="fixed" comment="type=[fixed|vessel|all]." />
 			</output>
 		</moordyn>
-    </moorings>
+	</moorings>
 </special>
 
 
