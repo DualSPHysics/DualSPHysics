@@ -65,6 +65,8 @@ class JGaugeSystem;
 class JPartsLoad4;
 class JSpacePartBlock;
 class JChronoObjects;    //<vs_chroono>
+class JMooredFloatings;  //<vs_moordyyn>
+class JSphFtForcePoints; //<vs_moordyyn>
 class JSphInOut;         //<vs_innlet>
 class JSphBoundCorr;     //<vs_innlet>
 class JSphPartsInit;
@@ -178,6 +180,9 @@ protected:
   JSphVisco *ViscoTime;       ///<Provides a viscosity value as a function of simulation time.          | Proporciona un valor de viscosidad en funcion del instante de la simulacion.
 
   TpBoundary TBoundary;       ///<Boundary condition: DBC, M-DBC.
+  TpSlipMode SlipMode;        ///<Slip mode for mDBC 1:DBC vel=0, 2:No-slip, 3:Free slip (default=1).     //<vs_mddbc>
+  bool MdbcCorrector;         ///<mDBC correction is also applied in corrector of Symplectic (default=0). //<vs_mddbc>
+  bool UseNormals;            ///<Indicates use of normals for mDBC.                                      //<vs_mddbc>
 
   bool RhopOut;               ///<Indicates whether the RhopOut density correction is active or not.    | Indica si activa la correccion de densidad RhopOut o no.                       
   float RhopOutMin;           ///<Minimum limit for Rhopout correction.                                 | Limite minimo para la correccion de RhopOut.
@@ -260,6 +265,8 @@ protected:
   float FtPause;               ///<Time to start floating bodies movement.
   TpFtMode FtMode;             ///<Defines interaction mode for floatings and boundaries.
   bool FtConstraints;          ///<Some floating motion constraint is defined.
+  JLinearValue **FtLinearVel;  ///<Imposed linear velocity [FtCount].  //<vs_fttvel>
+  JLinearValue **FtAngularVel; ///<Imposed angular velocity [FtCount]. //<vs_fttvel>
   bool FtIgnoreRadius;         ///<Ignores floating body radius with periodic boundary conditions (def=false).
   bool WithFloating;
 
@@ -273,6 +280,11 @@ protected:
   bool UseChrono;  ///<Use Chrono library for rigid body dynamics.
   JChronoObjects *ChronoObjects;  ///<Object for integration with Chrono Engine.
   //<vs_chroono_end>
+
+  //<vs_moordyyn_ini>
+  JMooredFloatings* Moorings;     ///<Manages floating bodies with moorings. | Gestiona floating bodies con amarres.
+  JSphFtForcePoints* ForcePoints; ///<Manages forces to apply on floating bodies.
+  //<vs_moordyyn_end>
 
   std::vector<std::string> InitializeInfo; ///<Stores information about initialize configuration applied.
 
@@ -341,7 +353,7 @@ protected:
   int Part;               ///<Saves subsequent PART. | Siguiente PART a guardar.                                          
   int Nstep;              ///<Number of step in execution.             | Numero de paso en ejecucion.
   int PartNstep;          ///<Number of step when last PART was saved. | Numero de paso en el que se guardo el ultimo PART.
-  unsigned PartOut;       ///<Total number of excluded particles to be recorded to the last PART. | Numero total de particulas excluidas al grabar el ultimo PART.
+  unsigned PartOut;       ///<Total number of excluded particles. | Numero total de particulas excluidas al grabar el ultimo PART.
   double TimeStepIni;     ///<Initial instant of the simulation. | Instante inicial de la simulación.
   double TimeStep;        ///<Current instant of the simulation. | Instante actual de la simulación.                                 
   double TimeStepM1;      ///<Instant of the simulation when the last PART was stored. | Instante de la simulación en que se grabo el último PART.         
@@ -371,6 +383,8 @@ protected:
   void VisuDemCoefficients()const;
 
   void LoadCodeParticles(unsigned np,const unsigned *idp,typecode *code)const;
+  void LoadBoundNormals(unsigned npb,const unsigned *idp,const typecode *code,tfloat3 *boundnormal)const;  //<vs_mddbc>
+  void ConfigBoundNormals(unsigned npb,const tdouble3 *pos,const unsigned *idp,tfloat3 *boundnormal)const; //<vs_mddbc>
 
   void PrepareCfgDomainValues(tdouble3 &v,tdouble3 vdef=TDouble3(0))const;
   void ResizeMapLimits();
@@ -413,6 +427,8 @@ protected:
   void SaveInitialDomainVtk()const;
   unsigned SaveMapCellsVtkSize()const;
   void SaveMapCellsVtk(float scell)const;
+  void SaveVtkNormals(std::string filename,int numfile,unsigned pini,unsigned pfin   //<vs_mddbc>
+    ,const tdouble3 *pos,const unsigned *idp,const tfloat3 *boundnormal)const;       //<vs_mddbc>
 
  
   void GetResInfo(float tsim,float ttot,const std::string &headplus,const std::string &detplus,std::string &hinfo,std::string &dinfo);
@@ -431,6 +447,7 @@ public:
   static std::string GetKernelName(TpKernel tkernel);
   static std::string GetViscoName(TpVisco tvisco);
   static std::string GetBoundName(TpBoundary tboundary);
+  static std::string GetSlipName(TpSlipMode tslip);       //<vs_mddbc>
   static std::string GetDDTName(TpDensity tdensity);
 
   std::string GetDDTConfig()const;

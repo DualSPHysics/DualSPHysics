@@ -147,6 +147,9 @@ protected:
   float4 *PosCellg; ///<Relative position and cell coordiantes for particle interaction {posx,posy,posz,cellxyz}
   float4 *Velrhopg;
 
+  float3 *BoundNormalg;  ///<Normal (x,y,z) pointing from boundary particles to ghost nodes.  //<vs_mddbc>
+  float3 *MotionVelg;    ///<Velocity of a moving boundary particle.                          //<vs_mddbc>
+    
   //-Variables for compute step: VERLET.
   float4 *VelrhopM1g;  ///<Verlet: in order to keep previous values. | Verlet: para guardar valores anteriores.
 
@@ -269,6 +272,9 @@ protected:
   void RunRelaxZone(double dt);  //<vs_rzone>
   void RunDamping(double dt,unsigned np,unsigned npb,const double2 *posxy,const double *posz,const typecode *code,float4 *velrhop);
 
+  void SaveVtkNormalsGpu(std::string filename,int numfile,unsigned pini,unsigned pfin            //<vs_mddbc>
+    ,const double2 *posxyg,const double *poszg,const unsigned *idpg,const float3 *boundnormalg); //<vs_mddbc>
+
   void ShowTimers(bool onlyfile=false);
   void GetTimersInfo(std::string &hinfo,std::string &dinfo)const;
   unsigned TimerGetCount()const{ return(TmgGetCount()); }
@@ -282,15 +288,6 @@ public:
   JSphGpu(bool withmpi);
   ~JSphGpu();
 
-//<vs_innlet_ini>
-//-Code for InOut
-//-----------------
-protected:
-  //-Variables for InOut.
-  unsigned InOutCount;     ///<Number of inout particles in InOutPartg[].
-  int *InOutPartg;         ///<InOut particle list.
-//<vs_innlet_end>
-  
 //-Functions for debug.
 //----------------------
 public:

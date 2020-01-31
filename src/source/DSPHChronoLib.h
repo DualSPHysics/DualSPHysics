@@ -63,6 +63,9 @@ class DSPHChronoLib{
   ///Loads floating data to calculate coupling with Chrono.
   bool SetFtData(word mkbound,const tfloat3 &face,const tfloat3 &fomegaace);
 
+  ///Loads imposed velocity for floating to calculate coupling with Chrono.  //<vs_fttvel>
+  bool SetFtDataVel(word mkbound,const tfloat3 &vlin,const tfloat3 &vang);   //<vs_fttvel>
+
   ///Obtains floating data from coupling with Chrono.
   bool GetFtData(word mkbound,tdouble3 &fcenter,tfloat3 &fvel,tfloat3 &fomega)const;
 

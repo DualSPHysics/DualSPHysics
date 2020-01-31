@@ -62,87 +62,14 @@ void JSphGpuSingle::InOutIgnoreFluidDef(const std::vector<unsigned> &mkfluidlist
 /// particulas fluid cerca de particulas inout.
 //==============================================================================
 void JSphGpuSingle::InOutCheckProximity(unsigned newnp){
-  //-Obtain particle data from GPU memory.
-  if(Np!=ParticlesDataDown(Np,0,true,false))Run_Exceptioon("The number of particles is invalid.");
-  //-Look for nearby particles.
-  const double disterror=Dp*0.8;
-  JSimpleNeigs neigs(Np,AuxPos,Scell);
-  unsigned* errpart=(unsigned*)AuxRhop; //-Use AuxRhop like auxiliary memory.
-  memset(errpart,0,sizeof(int)*Np);
-  const unsigned pini=Np-newnp;
-  JTimeControl tc(5,60);
-  for(unsigned p=pini;p<Np;p++){//-Only inout particles.
-    //Log->Printf("==> InOutCheckProximity_000 ---------- p:%u",Np-p);
-    const unsigned n=neigs.NearbyPositions(AuxPos[p],p,disterror);
-    const unsigned *selpos=neigs.GetSelectPos();
-    for(unsigned cp=0;cp<n;cp++)errpart[selpos[cp]]=1;
-    if(tc.CheckTime())Log->Print(string("  ")+tc.GetInfoFinish(double(p-pini)/double(Np-pini)));
+  if(Np && newnp){
+    //-Obtain particle data from GPU memory.
+    if(Np!=ParticlesDataDown(Np,0,true,false))Run_Exceptioon("The number of particles is invalid.");
+    //-Check proximity on CPU.
+    InOut->InitCheckProximity(Np,newnp,Scell,AuxPos,Idp,Code);
+    //-Uploads updated code of particles to the GPU.
+    cudaMemcpy(Codeg,Code,sizeof(typecode)*Np,cudaMemcpyHostToDevice);
   }
-  //-Obtain number and type of nearby particles.
-  unsigned nfluid=0,nfluidinout=0,nbound=0;
-  for(unsigned p=0;p<Np;p++)if(errpart[p]){
-    const typecode cod=Code[p];
-    if(CODE_IsNormal(cod)){
-      if(CODE_IsFluid(cod)){
-        if(CODE_IsFluidNotInout(cod)){ //-Normal fluid.
-          errpart[p]=1;
-          nfluid++;
-        }
-        else{ //-Inout fluid.
-          errpart[p]=2;
-          nfluidinout++;
-        }
-      }
-      else{ //-Boundary.
-        errpart[p]=3;
-        nbound++;
-      } 
-    }
-    else errpart[p]=0; //-Ignores non-normal particles.
-  }
-  //-Saves VTK file with nearby particles and check errors.
-  if(nfluid+nfluidinout+nbound>0){
-    const unsigned n=nfluid+nfluidinout+nbound;
-    tfloat3* vpos=new tfloat3[n];
-    byte* vtype=new byte[n];
-    unsigned pp=0;
-    for(unsigned p=0;p<Np;p++)if(errpart[p]){
-      vpos[pp]=ToTFloat3(AuxPos[p]);
-      vtype[pp]=byte(errpart[p]);
-      pp++;
-    }
-    JDataArrays arrays;
-    arrays.AddArray("Pos",n,vpos,false);
-    arrays.AddArray("ErrorType",n,vtype,false);
-    const string filevtk=AppInfo.GetDirOut()+(n>nfluid? "CfgInOut_ErrorParticles.vtk": "CfgInOut_ExcludedParticles.vtk");
-    JVtkLib::SaveVtkData(filevtk,arrays,"Pos");
-    delete[] vpos;  vpos=NULL;
-    delete[] vtype; vtype=NULL;
-    if(n>nfluid){
-      Log->AddFileInfo(filevtk,"Saves error fluid and boundary particles too close to inout particles.");
-      Run_Exceptioon("There are inout fluid or boundary particles too close to inout particles. Check VTK file CfgInOut_ErrorParticles.vtk with excluded particles.");
-    }
-    else{
-      Log->AddFileInfo(filevtk,"Saves excluded fluid particles too close to inout particles.");
-      Log->PrintfWarning("%u fluid particles were excluded since they are too close to inout particles. Check VTK file CfgInOut_ExcludedParticles.vtk",nfluid);
-      //-Mark fluid particles to ignore.
-      for(unsigned p=0;p<Np;p++)if(errpart[p]==1){
-        Code[p]=CODE_SetOutIgnore(Code[p]); //-Mark fluid particles to ignore.
-      }
-      //-Uploads updated code of particles to the GPU.
-      cudaMemcpy(Codeg,Code,sizeof(typecode)*Np,cudaMemcpyHostToDevice);
-    }
-  }
-}
-
-//==============================================================================
-/// Creates list with particles in inlet/outlet zones.
-/// Crea lista de particulas en zonas inlet/outlet.
-//==============================================================================
-void JSphGpuSingle::InOutCreateList(){
-  TmgStart(Timers,TMG_SuInOut);
-  InOutCount=InOut->CreateListGpu(Nstep,Np-Npb,Npb,Posxyg,Poszg,Codeg,GpuParticlesSize,InOutPartg);
-  TmgStop(Timers,TMG_SuInOut);
 }
 
 //==============================================================================
@@ -212,17 +139,25 @@ void JSphGpuSingle::InOutInit(double timestepini){
   TmgStart(Timers,TMG_SuInOut);
   if(DBG_INOUT_PARTINIT)DgSaveVtkParticlesGpu("CfgInOut_InletIni.vtk",1,0,Np,Posxyg,Poszg,Codeg,Idpg,Velrhopg);
 
+  //-Create list of current inout particles (normal and periodic).
+  int* inoutpart=ArraysGpu->ReserveInt();
+  const unsigned inoutcount=InOut->CreateListSimpleGpu(Nstep,Np-Npb,Npb,Codeg,GpuParticlesSize,inoutpart);
+  InOut->SetCurrentNp(inoutcount);
+
   //-Updates velocity and rhop (no extrapolated).
-  if(InOut->GetNoExtrapolatedData())InOut->UpdateDataGpu(float(timestepini),true,InOutCount,InOutPartg,Posxyg,Poszg,Codeg,Idpg,Velrhopg);
+  if(InOut->GetNoExtrapolatedData())InOut->UpdateDataGpu(float(timestepini),true,inoutcount,inoutpart,Posxyg,Poszg,Codeg,Idpg,Velrhopg);
 
   //-Calculates extrapolated velocity and/or rhop for inlet/outlet particles from fluid domain.
-  if(InOut->GetExtrapolatedData())InOutExtrapolateData();
+  if(InOut->GetExtrapolatedData())InOutExtrapolateData(inoutcount,inoutpart);
 
   //-Calculates interpolated velocity for inlet/outlet particles.
-  if(InOut->GetInterpolatedVel())InOut->InterpolateVelGpu(float(timestepini),InOutCount,InOutPartg,Posxyg,Poszg,Codeg,Idpg,Velrhopg);
+  if(InOut->GetInterpolatedVel())InOut->InterpolateVelGpu(float(timestepini),inoutcount,inoutpart,Posxyg,Poszg,Codeg,Idpg,Velrhopg);
 
   //-Updates velocity and rhop of M1 variables starting from current velocity and rhop when Verlet is used. 
-  if(VelrhopM1g)InOut->UpdateVelrhopM1Gpu(InOutCount,InOutPartg,Velrhopg,VelrhopM1g);
+  if(VelrhopM1g)InOut->UpdateVelrhopM1Gpu(inoutcount,inoutpart,Velrhopg,VelrhopM1g);
+
+  //-Free array for inoutpart list.
+  ArraysGpu->Free(inoutpart); inoutpart=NULL;
 
   if(DBG_INOUT_PARTINIT)DgSaveVtkParticlesGpu("CfgInOut_InletIni.vtk",2,0,Np,Posxyg,Poszg,Codeg,Idpg,Velrhopg);
   TmgStop(Timers,TMG_SuInOut);
@@ -240,36 +175,44 @@ void JSphGpuSingle::InOutComputeStep(double stepdt){
   //DgSaveVtkParticlesGpu("BB_ComputeStepA.vtk",DgNum,0,Np,Posxyg,Poszg,Codeg,Idpg,Velrhopg);
   TmgStart(Timers,TMG_SuInOut);
   //-Resizes memory when it is necessary. InOutCount is the maximum number of new inlet particles.
-  if(!CheckGpuParticlesSize(Np+InOutCount)){
-    const unsigned newnp2=InOutCount+InOut->CalcResizeNp(TimeStep+stepdt);
+  if(!CheckGpuParticlesSize(Np+InOut->GetCurrentNp())){
+    const unsigned newnp2=InOut->GetCurrentNp()+InOut->CalcResizeNp(TimeStep+stepdt);
     TmgStop(Timers,TMG_SuInOut);
     ResizeParticlesSize(Np+newnp2,0,false);
     CellDivSingle->SetIncreaseNp(newnp2);
     TmgStart(Timers,TMG_SuInOut);
   }
 
-  //-Removes interpolated Z velocity of inlet/outlet particles.
-  if(InOut->GetInterpolatedVel())InOut->InterpolateResetZVelGpu(InOutCount,InOutPartg,Codeg,Velrhopg);
+  //-Create and remove inout particles.
+  unsigned newnp=0;
+  {
+    //-Creates list with current inout particles and normal fluid (no periodic) in inout zones.
+    int* inoutpart=ArraysGpu->ReserveInt();
+    const unsigned inoutcountpre=InOut->CreateListGpu(Nstep,Np-Npb,Npb,Posxyg,Poszg,Codeg,GpuParticlesSize,inoutpart);
 
-  //-Updates code of inout particles according its position and create new inlet particles when refilling=false.
-  byte *newizoneg=ArraysGpu->ReserveByte();
-  unsigned newnp=InOut->ComputeStepGpu(Nstep,stepdt,InOutCount,InOutPartg,IdMax+1,GpuParticlesSize,Np,Posxyg,Poszg,Dcellg,Codeg,Idpg,Velrhopg,newizoneg);
-  ArraysGpu->Free(newizoneg);  newizoneg=NULL;
+    //-Updates code of inout particles according its position and create new inlet particles when refilling=false.
+    byte *newizoneg=ArraysGpu->ReserveByte();
+    newnp=InOut->ComputeStepGpu(Nstep,stepdt,inoutcountpre,inoutpart,IdMax+1,GpuParticlesSize,Np,Posxyg,Poszg,Dcellg,Codeg,Idpg,Velrhopg,newizoneg,this);
+    ArraysGpu->Free(newizoneg);  newizoneg=NULL;
 
-  //-Creates new inlet particles using refilling.
-  if(InOut->GetRefillingUse()){
-    float   *prodistg =ArraysGpu->ReserveFloat();
-    double2 *proposxyg=ArraysGpu->ReserveDouble2();
-    double  *proposzg =ArraysGpu->ReserveDouble();
-    newnp+=InOut->ComputeStepFillingGpu(Nstep,stepdt,InOutCount,InOutPartg
-      ,IdMax+1,GpuParticlesSize,Np,Posxyg,Poszg,Dcellg,Codeg,Idpg,Velrhopg,prodistg,proposxyg,proposzg,Timers);
-    ArraysGpu->Free(prodistg);
-    ArraysGpu->Free(proposxyg);
-    ArraysGpu->Free(proposzg);
+    //-Creates new inlet particles using advanced refilling mode.
+    if(InOut->GetRefillAdvanced()){
+      float   *prodistg =ArraysGpu->ReserveFloat();
+      double2 *proposxyg=ArraysGpu->ReserveDouble2();
+      double  *proposzg =ArraysGpu->ReserveDouble();
+      newnp+=InOut->ComputeStepFillingGpu(Nstep,stepdt,inoutcountpre,inoutpart
+        ,IdMax+1+newnp,GpuParticlesSize,Np+newnp,Posxyg,Poszg,Dcellg,Codeg,Idpg,Velrhopg
+        ,prodistg,proposxyg,proposzg,Timers);
+      ArraysGpu->Free(prodistg);
+      ArraysGpu->Free(proposxyg);
+      ArraysGpu->Free(proposzg);
+    }
+    ArraysGpu->Free(inoutpart);
   }
 
   //-Updates new particle values for Laminar+SPS.
   if(SpsTaug)cudaMemset(SpsTaug+Np,0,sizeof(tsymatrix3f)*newnp);
+
   //-Updates number of particles.
   if(newnp){
     Np+=newnp;
@@ -283,6 +226,11 @@ void JSphGpuSingle::InOutComputeStep(double stepdt){
   RunCellDivide(true);
   TmgStart(Timers,TMG_SuInOut);
 
+  //-Create list of current inout particles (normal and periodic).
+  int* inoutpart=ArraysGpu->ReserveInt();
+  const unsigned inoutcount=InOut->CreateListSimpleGpu(Nstep,Np-Npb,Npb,Codeg,GpuParticlesSize,inoutpart);
+  InOut->SetCurrentNp(inoutcount);
+
   //-Updates zsurf.
   if(InOut->GetCalculatedZsurf())InOutCalculeZsurf();
   if(InOut->GetCalculatedZsurf() || InOut->GetVariableZsurf())InOut->UpdateZsurf(TimeStep+stepdt);
@@ -290,16 +238,24 @@ void JSphGpuSingle::InOutComputeStep(double stepdt){
   if(TimeStep+stepdt>=TimePartNext)InOut->SaveVtkZsurf(Part);
 
   //-Updates velocity and rhop (no extrapolated).
-  if(InOut->GetNoExtrapolatedData())InOut->UpdateDataGpu(float(TimeStep+stepdt),true,InOutCount,InOutPartg,Posxyg,Poszg,Codeg,Idpg,Velrhopg);
+  if(InOut->GetNoExtrapolatedData())InOut->UpdateDataGpu(float(TimeStep+stepdt),true
+    ,inoutcount,inoutpart,Posxyg,Poszg,Codeg,Idpg,Velrhopg);
 
   //-Calculates extrapolated velocity and/or rhop for inlet/outlet particles from fluid domain.
-  if(InOut->GetExtrapolatedData())InOutExtrapolateData();
+  if(InOut->GetExtrapolatedData())InOutExtrapolateData(inoutcount,inoutpart);
 
   //-Calculates interpolated velocity for inlet/outlet particles.
-  if(InOut->GetInterpolatedVel())InOut->InterpolateVelGpu(float(TimeStep+stepdt),InOutCount,InOutPartg,Posxyg,Poszg,Codeg,Idpg,Velrhopg);
+  if(InOut->GetInterpolatedVel())InOut->InterpolateVelGpu(float(TimeStep+stepdt)
+    ,inoutcount,inoutpart,Posxyg,Poszg,Codeg,Idpg,Velrhopg);
+
+  //-Removes interpolated Z velocity of inlet/outlet particles.
+  if(InOut->GetInterpolatedVel())InOut->InterpolateResetZVelGpu(inoutcount,inoutpart,Codeg,Velrhopg);
 
   //-Updates velocity and rhop of M1 variables starting from current velocity and rhop when Verlet is used. 
-  if(VelrhopM1g)InOut->UpdateVelrhopM1Gpu(InOutCount,InOutPartg,Velrhopg,VelrhopM1g);
+  if(VelrhopM1g)InOut->UpdateVelrhopM1Gpu(inoutcount,inoutpart,Velrhopg,VelrhopM1g);
+
+  //-Free array for inoutpart list.
+  ArraysGpu->Free(inoutpart); inoutpart=NULL;
 
   TmgStop(Timers,TMG_SuInOut);
 }
@@ -327,7 +283,7 @@ void JSphGpuSingle::InOutCalculeZsurf(){
 /// Calculates extrapolated data for inlet/outlet particles from fluid domain.
 /// Calcula datos extrapolados en el fluido para las particulas inlet/outlet.
 //==============================================================================
-void JSphGpuSingle::InOutExtrapolateData(){
+void JSphGpuSingle::InOutExtrapolateData(unsigned inoutcount,const int *inoutpart){
   const float4 *planesg =InOut->GetPlanesg();
   const byte   *cfgzoneg=InOut->GetCfgZoneg();
   const float  *widthg  =InOut->GetWidthg();
@@ -337,7 +293,7 @@ void JSphGpuSingle::InOutExtrapolateData(){
   const byte extraprhopmask=InOut->GetExtrapRhopMask();
   const byte extrapvelmask =InOut->GetExtrapVelMask();
   cusphinout::Interaction_InOutExtrap(doublemode,Simulate2D,TKernel,CellMode
-    ,InOutCount,InOutPartg,cfgzoneg,extraprhopmask,extrapvelmask
+    ,inoutcount,inoutpart,cfgzoneg,extraprhopmask,extrapvelmask
     ,planesg,widthg,dirdatag,determlimit
     ,CellDivSingle->GetNcells(),CellDivSingle->GetBeginCell(),CellDivSingle->GetCellDomainMin()
     ,Posxyg,Poszg,Codeg,Idpg,Velrhopg);

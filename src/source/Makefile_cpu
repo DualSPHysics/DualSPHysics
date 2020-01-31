@@ -1,4 +1,4 @@
-#DualSPHysics CPU v4.4.035 13-12-2019
+#DualSPHysics CPU v4.4.038 23-12-2019
 
 #=============== Compilation Options (YES/NO) ===============
 USE_GCC5=NO
@@ -8,6 +8,7 @@ USE_NATIVE_CPU_OPTIMIZATIONS=NO
 COMPILE_VTKLIB=YES
 COMPILE_CHRONO=YES
 COMPILE_WAVEGEN=YES
+COMPILE_MOORDYN=YES
 
 LIBS_DIRECTORIES=-L./
 LIBS_DIRECTORIES:=$(LIBS_DIRECTORIES) -L../lib/linux_gcc
@@ -44,6 +45,9 @@ endif
 ifeq ($(COMPILE_WAVEGEN), NO)
   CCFLAGS:=$(CCFLAGS) -DDISABLE_WAVEGEN
 endif
+ifeq ($(COMPILE_MOORDYN), NO)
+  CCFLAGS:=$(CCFLAGS) -DDISABLE_MOORDYN
+endif
 
 #=============== Files to compile ===============
 OBJXML=JXml.o tinystr.o tinyxml.o tinyxmlerror.o tinyxmlparser.o
@@ -55,10 +59,12 @@ OBSPHSINGLE=JCellDivCpuSingle.o JPartsLoad4.o JSphCpuSingle.o
 
 OBWAVERZ=JMLPistonsGpu.o JRelaxZonesGpu.o
 OBCHRONO=JChronoObjects.o
+OBMOORDYN=JMooredFloatings.o JSphFtForcePoints.o
 OBINOUT=JSphCpu_InOut.o JSphCpuSingle_InOut.o JSphBoundCorr.o JSphInOut.o JSphInOutGridData.o JSphInOutPoints.o JSimpleNeigs.o
+OBMDBC=JPartNormalData.o JNormalsMarrone.o
 
 OBJECTS=$(OBJXML) $(OBJSPHMOTION) $(OBCOMMON) $(OBCOMMONDSPH) $(OBSPH) $(OBSPHSINGLE)
-OBJECTS:=$(OBJECTS) $(OBWAVERZ) $(OBCHRONO) $(OBINOUT)
+OBJECTS:=$(OBJECTS) $(OBWAVERZ) $(OBCHRONO) $(OBMOORDYN) $(OBINOUT) $(OBMDBC)
 
 #=============== DualSPHysics libs to be included ===============
 JLIBS=${LIBS_DIRECTORIES}
@@ -70,6 +76,9 @@ ifeq ($(COMPILE_CHRONO), YES)
 endif
 ifeq ($(COMPILE_WAVEGEN), YES)
   JLIBS:=$(JLIBS) -ljwavegen_64
+endif
+ifeq ($(COMPILE_MOORDYN), YES)
+  JLIBS:=$(JLIBS) -ldsphmoordyn_64
 endif
 
 #=============== CPU Code Compilation ===============

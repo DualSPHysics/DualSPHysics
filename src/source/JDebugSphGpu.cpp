@@ -167,7 +167,7 @@ std::string JDebugSphGpu::PrepareVars(const std::string &vlist){
 /// Checks list of variables and returns the unknown variable.
 //==============================================================================
 std::string JDebugSphGpu::CheckVars(std::string vlist){
-  const string allvars=",all,idp,gid,seq,cell,vel,rhop,ace,ar,poscell,";
+  const string allvars=",all,idp,gid,seq,cell,code,vel,rhop,ace,ar,poscell,";
   vlist=fun::StrLower(vlist);
   while(!vlist.empty()){
     string var=fun::StrSplit(",",vlist);

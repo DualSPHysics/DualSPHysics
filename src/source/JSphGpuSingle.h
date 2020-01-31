@@ -51,6 +51,7 @@ protected:
   void AbortBoundOut();
 
   void Interaction_Forces(TpInterStep interstep);
+  void BoundCorrection(); //<vs_mddbc>
 
   double ComputeAceMax(float *auxmem);
 
@@ -60,6 +61,7 @@ protected:
   double ComputeStep_Sym();
 
   void UpdateFtObjs();
+  void FtApplyImposedVel(float3 *ftoforcesresg)const; //<vs_fttvel>
   void RunFloating(double dt,bool predictor);
   void RunGaugeSystem(double timestep);
 
@@ -78,10 +80,9 @@ protected:
   void InOutInit(double timestepini);
   void InOutIgnoreFluidDef(const std::vector<unsigned> &mkfluidlist);
   void InOutCheckProximity(unsigned newnp);
-  void InOutCreateList();
   void InOutComputeStep(double stepdt);
   void InOutCalculeZsurf();
-  void InOutExtrapolateData();
+  void InOutExtrapolateData(unsigned inoutcount,const int *inoutpart);
 
   void BoundCorrectionData();
 //<vs_innlet_end>

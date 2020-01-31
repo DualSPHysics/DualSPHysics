@@ -23,8 +23,10 @@ set(OBCUDA JCellDivGpu_ker.cu JCellDivGpuSingle_ker.cu JGauge_ker.cu JReduSum_ke
 set(OBWAVERZ JMLPistonsGpu.cpp JRelaxZonesGpu.cpp)
 set(OBWAVERZCUDA JRelaxZone_ker.cu)
 set(OBCHRONO JChronoObjects.cpp)
+set(OBMOORDYN JMooredFloatings.cpp JSphFtForcePoints.cpp)
 set(OBINOUT JSphCpu_InOut.cpp JSphCpuSingle_InOut.cpp JSphBoundCorr.cpp JSphInOut.cpp JSphInOutGridData.cpp JSphInOutPoints.cpp JSimpleNeigs.cpp)
 set(OBINOUTGPU JSphGpuSingle_InOut.cpp)
+set(OBMDBC JNormalsMarrone.cpp JPartNormalData.cpp)
 
 find_package(CUDA QUIET)
 
@@ -74,11 +76,11 @@ set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_GLIBCXX_USE_CXX11_ABI=0 -fPIC")
 
 # Binaries
 
-add_executable(DualSPHysics4.4CPU ${OBJXML} ${OBJSPHMOTION} ${OBCOMMON} ${OBCOMMONDSPH} ${OBSPH} ${OBSPHSINGLE} ${OBWAVERZ} ${OBCHRONO} ${OBINOUT})
+add_executable(DualSPHysics4.4CPU ${OBJXML} ${OBJSPHMOTION} ${OBCOMMON} ${OBCOMMONDSPH} ${OBSPH} ${OBSPHSINGLE} ${OBWAVERZ} ${OBCHRONO} ${OBMOORDYN} ${OBINOUT} ${OBMDBC})
 install(TARGETS	DualSPHysics4.4CPU DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/../../bin/linux)
 
 if (CUDA_FOUND)
-   cuda_add_executable(DualSPHysics4.4 ${OBJXML} ${OBJSPHMOTION} ${OBCOMMON} ${OBCOMMONDSPH} ${OBSPH} ${OBSPHSINGLE} ${OBCOMMONGPU} ${OBSPHGPU} ${OBSPHSINGLEGPU} ${OBCUDA} ${OBWAVERZ} ${OBWAVERZCUDA} ${OBCHRONO} ${OBINOUT} ${OBINOUTGPU})
+   cuda_add_executable(DualSPHysics4.4 ${OBJXML} ${OBJSPHMOTION} ${OBCOMMON} ${OBCOMMONDSPH} ${OBSPH} ${OBSPHSINGLE} ${OBCOMMONGPU} ${OBSPHGPU} ${OBSPHSINGLEGPU} ${OBCUDA} ${OBWAVERZ} ${OBWAVERZCUDA} ${OBCHRONO} ${OBMOORDYN} ${OBINOUT} ${OBINOUTGPU} ${OBMDBC})
    install(TARGETS DualSPHysics4.4 DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/../../bin/linux)
 endif()
 
@@ -98,8 +100,8 @@ elseif(MSVC)
 
   #if(MSVC_VERSION VERSION_EQUAL 1900)
     # MSVC 2015
-    target_link_libraries(DualSPHysics4.4CPU LibJVtkLib_x64_v140_Release LibJWaveGen_x64_v140_Release dsphchrono)
-    target_link_libraries(DualSPHysics4.4 LibJVtkLib_x64_v140_Release LibJWaveGen_x64_v140_Release dsphchrono)
+    target_link_libraries(DualSPHysics4.4CPU LibJVtkLib_x64_v140_Release LibJWaveGen_x64_v140_Release LibDSphMoorDyn_x64_v140_Release dsphchrono)
+    target_link_libraries(DualSPHysics4.4 LibJVtkLib_x64_v140_Release LibJWaveGen_x64_v140_Release LibDSphMoorDyn_x64_v140_Release dsphchrono)
   #endif()
   
   SET(CUDA_PROPAGATE_HOST_FLAGS OFF CACHE BOOL "Propagate C/CXX Flags and friends to the host compiler in NVCC via -Xompile  " FORCE)

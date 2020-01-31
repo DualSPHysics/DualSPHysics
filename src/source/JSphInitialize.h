@@ -52,6 +52,10 @@ public:
   ///<Types of initializations.
   typedef enum{ 
     IT_FluidVel=1,
+    IT_BoundNormalSet=2,       //<vs_mddbc>
+    IT_BoundNormalPlane=3,     //<vs_mddbc>
+    IT_BoundNormalSphere=4,    //<vs_mddbc>
+    IT_BoundNormalCylinder=5,  //<vs_mddbc>
   }TpInitialize; 
 
 public:
@@ -93,6 +97,80 @@ public:
   void Run(unsigned np,unsigned npb,unsigned nbound,const tdouble3 *pos,const unsigned *idp,const word *mktype,tfloat4 *velrhop,tfloat3 *boundnormal);
   void GetConfig(std::vector<std::string> &lines)const;
 };  
+
+//<vs_mddbc_ini>
+//##############################################################################
+//# JSphInitializeOp_BoundNormalSet
+//##############################################################################
+/// Initializes normals of boundary particles.
+class JSphInitializeOp_BoundNormalSet : public JSphInitializeOp
+{
+private:
+  std::string MkBound;
+  tfloat3 Normal;
+public:
+  JSphInitializeOp_BoundNormalSet(JXml *sxml,TiXmlElement* ele):JSphInitializeOp(IT_BoundNormalSet,"BoundNormalSet"){ Reset(); ReadXml(sxml,ele); }
+  void Reset(){ MkBound=""; Normal=TFloat3(0); }
+  void ReadXml(JXml *sxml,TiXmlElement* ele);
+  void Run(unsigned np,unsigned npb,unsigned nbound,const tdouble3 *pos,const unsigned *idp,const word *mktype,tfloat4 *velrhop,tfloat3 *boundnormal);
+  void GetConfig(std::vector<std::string> &lines)const;
+};  
+
+//##############################################################################
+//# JSphInitializeOp_BoundNormalPlane
+//##############################################################################
+/// Initializes normals of boundary particles.
+class JSphInitializeOp_BoundNormalPlane : public JSphInitializeOp
+{
+private:
+  std::string MkBound;
+  tfloat3 Point;
+  tfloat3 Normal;
+public:
+  JSphInitializeOp_BoundNormalPlane(JXml *sxml,TiXmlElement* ele):JSphInitializeOp(IT_BoundNormalPlane,"BoundNormalPlane"){ Reset(); ReadXml(sxml,ele); }
+  void Reset(){ MkBound=""; Point=Normal=TFloat3(0); }
+  void ReadXml(JXml *sxml,TiXmlElement* ele);
+  void Run(unsigned np,unsigned npb,unsigned nbound,const tdouble3 *pos,const unsigned *idp,const word *mktype,tfloat4 *velrhop,tfloat3 *boundnormal);
+  void GetConfig(std::vector<std::string> &lines)const;
+};  
+
+//##############################################################################
+//# JSphInitializeOp_BoundNormalSphere
+//##############################################################################
+/// Initializes normals of boundary particles.
+class JSphInitializeOp_BoundNormalSphere : public JSphInitializeOp
+{
+private:
+  std::string MkBound;
+  tfloat3 Center;
+  float Radius;
+public:
+  JSphInitializeOp_BoundNormalSphere(JXml *sxml,TiXmlElement* ele):JSphInitializeOp(IT_BoundNormalSphere,"BoundNormalSphere"){ Reset(); ReadXml(sxml,ele); }
+  void Reset(){ MkBound=""; Center=TFloat3(0); Radius=0; }
+  void ReadXml(JXml *sxml,TiXmlElement* ele);
+  void Run(unsigned np,unsigned npb,unsigned nbound,const tdouble3 *pos,const unsigned *idp,const word *mktype,tfloat4 *velrhop,tfloat3 *boundnormal);
+  void GetConfig(std::vector<std::string> &lines)const;
+};  
+
+//##############################################################################
+//# JSphInitializeOp_BoundNormalCylinder
+//##############################################################################
+/// Initializes normals of boundary particles.
+class JSphInitializeOp_BoundNormalCylinder : public JSphInitializeOp
+{
+private:
+  std::string MkBound;
+  tfloat3 Center1;
+  tfloat3 Center2;
+  float Radius;
+public:
+  JSphInitializeOp_BoundNormalCylinder(JXml *sxml,TiXmlElement* ele):JSphInitializeOp(IT_BoundNormalCylinder,"BoundNormalCylinder"){ Reset(); ReadXml(sxml,ele); }
+  void Reset(){ MkBound=""; Center1=Center2=TFloat3(0); Radius=0; }
+  void ReadXml(JXml *sxml,TiXmlElement* ele);
+  void Run(unsigned np,unsigned npb,unsigned nbound,const tdouble3 *pos,const unsigned *idp,const word *mktype,tfloat4 *velrhop,tfloat3 *boundnormal);
+  void GetConfig(std::vector<std::string> &lines)const;
+};  
+//<vs_mddbc_end>
 
 
 //##############################################################################

@@ -211,6 +211,8 @@ private:
   tint3 RotationFree;
   tdouble3 LinearVelini;
   tdouble3 AngularVelini;
+  JLinearValue *LinearVel;  //<vs_fttvel>
+  JLinearValue *AngularVel; //<vs_fttvel>
 
 public:
   JSpacePartBlock_Floating(const JSpaceProperties* properties
@@ -228,6 +230,8 @@ public:
   tint3         GetRotationFree()   const{ return(RotationFree); }
   tdouble3      GetLinearVelini()   const{ return(LinearVelini); }
   tdouble3      GetAngularVelini()  const{ return(AngularVelini); }
+  JLinearValue* GetLinearVel()      const{ return(LinearVel); }   //<vs_fttvel>
+  JLinearValue* GetAngularVel()     const{ return(AngularVel); }  //<vs_fttvel>
   void ReadXml(JXml *sxml,TiXmlElement* ele);
   TiXmlElement* WriteXml(JXml *sxml,TiXmlElement* ele)const;
 };  

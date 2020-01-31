@@ -1,4 +1,4 @@
-#DualSPHysics GPU/CPU v4.4.044 29-12-2019
+#DualSPHysics GPU/CPU v4.4.049 04-01-2020
 
 #=============== Compilation Options (YES/NO) ===============
 USE_GCC5=NO
@@ -8,6 +8,7 @@ USE_NATIVE_CPU_OPTIMIZATIONS=NO
 COMPILE_VTKLIB=YES
 COMPILE_CHRONO=YES
 COMPILE_WAVEGEN=YES
+COMPILE_MOORDYN=YES
 
 LIBS_DIRECTORIES=-L./
 LIBS_DIRECTORIES:=$(LIBS_DIRECTORIES) -L../lib/linux_gcc
@@ -44,6 +45,9 @@ ifeq ($(COMPILE_CHRONO), NO)
 endif
 ifeq ($(COMPILE_WAVEGEN), NO)
   CCFLAGS:=$(CCFLAGS) -DDISABLE_WAVEGEN
+endif
+ifeq ($(COMPILE_MOORDYN), NO)
+  CCFLAGS:=$(CCFLAGS) -DDISABLE_MOORDYN
 endif
 
 #=============== CUDA selection ===============
@@ -110,12 +114,14 @@ OBCUDA=JCellDivGpu_ker.o JCellDivGpuSingle_ker.o JGauge_ker.o JReduSum_ker.o JSh
 OBWAVERZ=JMLPistonsGpu.o JRelaxZonesGpu.o
 OBWAVERZCUDA=JRelaxZone_ker.o
 OBCHRONO=JChronoObjects.o
+OBMOORDYN=JMooredFloatings.o JSphFtForcePoints.o
 OBINOUT=JSphCpu_InOut.o JSphCpuSingle_InOut.o JSphBoundCorr.o JSphInOut.o JSphInOutGridData.o JSphInOutPoints.o JSimpleNeigs.o
 OBINOUTGPU=JSphGpuSingle_InOut.o
+OBMDBC=JPartNormalData.o JNormalsMarrone.o
 
 OBJECTS=$(OBJXML) $(OBJSPHMOTION) $(OBCOMMON) $(OBCOMMONDSPH) $(OBSPH) $(OBSPHSINGLE)
 OBJECTS:=$(OBJECTS) $(OBCOMMONGPU) $(OBSPHGPU) $(OBSPHSINGLEGPU) $(OBCUDA)
-OBJECTS:=$(OBJECTS) $(OBWAVERZ) $(OBWAVERZCUDA) $(OBCHRONO) $(OBINOUT) $(OBINOUTGPU)
+OBJECTS:=$(OBJECTS) $(OBWAVERZ) $(OBWAVERZCUDA) $(OBCHRONO) $(OBMOORDYN) $(OBINOUT) $(OBINOUTGPU) $(OBMDBC)
 
 #=============== DualSPHysics libs to be included ===============
 JLIBS=${LIBS_DIRECTORIES}
@@ -127,6 +133,9 @@ ifeq ($(COMPILE_CHRONO), YES)
 endif
 ifeq ($(COMPILE_WAVEGEN), YES)
   JLIBS:=$(JLIBS) -ljwavegen_64
+endif
+ifeq ($(COMPILE_MOORDYN), YES)
+  JLIBS:=$(JLIBS) -ldsphmoordyn_64
 endif
 
 #=============== GPU Code Compilation ===============

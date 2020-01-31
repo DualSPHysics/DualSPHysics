@@ -115,6 +115,9 @@ protected:
   tdouble3 *Posc;
   tfloat4 *Velrhopc;
 
+  tfloat3 *BoundNormalc;  ///<Normal (x,y,z) pointing from boundary particles to ghost nodes.  //<vs_mddbc>
+  tfloat3 *MotionVelc;    ///<Velocity of a moving boundary particle.                          //<vs_mddbc>
+    
   //-Variables for compute step: VERLET. | Vars. para compute step: VERLET.
   tfloat4 *VelrhopM1c;  ///<Verlet: in order to keep previous values. | Verlet: para guardar valores anteriores.
 
@@ -245,6 +248,18 @@ protected:
   template<TpKernel tker> void Interaction_Forces_ct2(const stinterparmsc &t,float &viscdt)const;
   void Interaction_Forces_ct(const stinterparmsc &t,float &viscdt)const;
 
+//<vs_mddbc_ini>
+  template<bool sim2d,TpSlipMode tslip> void InteractionBoundCorrection
+    (unsigned npb,float determlimit
+    ,tint4 nc,int hdiv,unsigned cellinitial,const unsigned *beginendcell,tint3 cellzero
+    ,const tdouble3 *pos,const typecode *code,const unsigned *idp
+    ,const tfloat3 *boundnormal,const tfloat3 *motionvel,tfloat4 *velrhop);
+  void Interaction_BoundCorrection(TpSlipMode slipmode
+    ,tuint3 ncells,const unsigned *begincell,tuint3 cellmin
+    ,const tdouble3 *pos,const typecode *code,const unsigned *idp
+    ,const tfloat3 *boundnormal,const tfloat3 *motionvel,tfloat4 *velrhop);
+//<vs_mddbc_end>
+
   void ComputeSpsTau(unsigned n,unsigned pini,const tfloat4 *velrhop,const tsymatrix3f *gradvel,tsymatrix3f *tau)const;
 
   template<bool shift> void ComputeVerletVarsFluid(const tfloat4 *velrhop1,const tfloat4 *velrhop2,double dt,double dt2,tdouble3 *pos,unsigned *cell,typecode *code,tfloat4 *velrhopnew)const;
@@ -265,6 +280,7 @@ protected:
     ,const unsigned *ridp,tdouble3 *pos,unsigned *dcell,tfloat4 *velrhop,typecode *code)const;
   void MoveMatBound(unsigned np,unsigned ini,tmatrix4d m,double dt,const unsigned *ridpmv
     ,tdouble3 *pos,unsigned *dcell,tfloat4 *velrhop,typecode *code,tfloat3 *boundnormal)const;
+  void CopyMotionVel(unsigned np,unsigned ini,const unsigned *ridp,const tfloat4 *velrhop,tfloat3 *motionvel)const; //<vs_mddbc>
   void CalcMotion(double stepdt);
   void RunMotion(double stepdt);
   void RunRelaxZone(double dt);  //<vs_rzone>
@@ -298,12 +314,7 @@ public:
 //-Code for InOut in JSphCpu_InOut.cpp
 //--------------------------------------
 protected:
-  //-Variables for InOut.
-  unsigned InOutCount;     ///<Number of inout particles in InOutPartc[].
-  int *InOutPartc;         ///<InOut particle list.
-
   tdouble3 Interaction_PosNoPeriodic(tdouble3 posp1)const;
-
 
   template<bool sim2d,TpKernel tker> void InteractionInOutExtrap_Double
     (unsigned inoutcount,const int *inoutpart,const byte *cfgzone

@@ -238,6 +238,8 @@ protected:
   bool InputData;
   tfloat3 InputFace;
   tfloat3 InputFomegaAce;
+  tfloat3 InputLinearVel;  //<vs_fttvel>
+  tfloat3 InputAngularVel; //<vs_fttvel>
 
   tdouble3 OutputCenter;
   tfloat3 OutputVel;
@@ -252,11 +254,14 @@ public:
 
   void ResetInputData(){ InputData=false; }
   void SetInputData(const tfloat3 &face,const tfloat3 &fomegaace){ InputData=true; InputFace=face; InputFomegaAce=fomegaace; }
+  void SetInputDataVel(const tfloat3 &vlin,const tfloat3 &vang){ InputLinearVel=vlin; InputAngularVel=vang; }  //<vs_fttvel>
   void SetOutputData(const tdouble3 &center,const tfloat3 &vel,const tfloat3 &omega){ OutputCenter=center; OutputVel=vel; OutputOmega=omega; }
 
   bool     GetInputData()      const{ return(InputData);       }
   tfloat3  GetInputFace()      const{ return(InputFace);       }
   tfloat3  GetInputFomegaAce() const{ return(InputFomegaAce);  }
+  tfloat3  GetInputLinearVel() const{ return(InputLinearVel);  } //<vs_fttvel>
+  tfloat3  GetInputAngularVel()const{ return(InputAngularVel); } //<vs_fttvel>
   tdouble3 GetOutputCenter()   const{ return(OutputCenter);    }
   tfloat3  GetOutputVel()      const{ return(OutputVel);       }
   tfloat3  GetOutputOmega()    const{ return(OutputOmega);     }

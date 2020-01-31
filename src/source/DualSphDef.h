@@ -34,6 +34,7 @@
 //#define DISABLE_VTKLIB     ///<It allows compile without VTK library.
 //#define DISABLE_CHRONO     ///<It allows compile without ChronoLib library (dsphchrono.dll and ChronoEngine.dll).
 //#define DISABLE_WAVEGEN    ///<It allows compile without Wave-Paddles, Multi-Layer Pistons and Relaxation Zones libraries.
+//#define DISABLE_MOORDYN    ///<It allows compile without LibDSphMoorDyn library.  //<vs_moordyyn>
 
 
 //-Defines AVAILABLE_VTKLIB when this feature is compiled.
@@ -60,7 +61,11 @@
 #endif
 
 //-Defines AVAILABLE_MOORDYN when this feature is compiled.
+#ifdef DISABLE_MOORDYN             //<vs_moordyyn>  
   #define AVAILABLE_MOORDYN false
+#else                              //<vs_moordyyn>
+  #define AVAILABLE_MOORDYN true   //<vs_moordyyn>
+#endif                             //<vs_moordyyn>
 
 //-Defines AVAILABLE_GPU when this feature is compiled.
 #ifdef _WITHGPU
@@ -111,8 +116,10 @@
   #define CODE_TYPE_FLUID 0x00030000    //---Particles fluid:  196608-262143
   #define CODE_MASKVALUE 0x00000ffff    //-Bits type-value: 0000 0111 1111 1111  Range:0-65535
 
-  #define CODE_TYPE_FLUID_LIMITFREE 0x0003ffef //---Last normal fluid code: 262127
-  #define CODE_TYPE_FLUID_INOUT     0x0003fff0 //---First inlet/outlet code: 262128 (Allows 16 different codes for InOut particles). //<vs_innlet>
+  #define CODE_TYPE_FLUID_LIMITFREE 0x0003ffdf //---Last normal fluid code: 262111
+  #define CODE_TYPE_FLUID_INOUT     0x0003ffe0 //---First inlet/outlet code: 262112 (16 different codes for InOut zones + 16 to select input particles). //<vs_innlet>
+  #define CODE_TYPE_FLUID_INOUTNUM  16      //---Maximum number of valid inlet/outlet zones.                                                             //<vs_innlet>
+  #define CODE_TYPE_FLUID_INOUTMASK 31      //---Mask to obtain zone value.                                                                              //<vs_innlet>
 #else
   #define CODE_MKRANGEMAX 2047      //-Maximum valid MK value. | Valor maximo de MK valido.
   typedef word typecode;            //-Type of the variable code using 2 bytes.
@@ -135,8 +142,10 @@
   #define CODE_TYPE_FLUID 0x1800    //---Particles fluid:  6144-8191                                      
   #define CODE_MASKVALUE 0x7ff      //-Bits type-value: 0000 0111 1111 1111  Range:0-2047
 
-  #define CODE_TYPE_FLUID_LIMITFREE 0x1fef  //---Last normal fluid code: 8175
-  #define CODE_TYPE_FLUID_INOUT     0x1ff0  //---First inlet/outlet code: 8176 (Allows 16 different codes for InOut particles). //<vs_innlet>
+  #define CODE_TYPE_FLUID_LIMITFREE 0x1fdf  //---Last normal fluid code: 8159
+  #define CODE_TYPE_FLUID_INOUT     0x1fe0  //---First inlet/outlet code: 8160 (16 different codes for InOut zones + 16 to select input particles). //<vs_innlet>
+  #define CODE_TYPE_FLUID_INOUTNUM  16      //---Maximum number of valid inlet/outlet zones.                                                        //<vs_innlet>
+  #define CODE_TYPE_FLUID_INOUTMASK 31      //---Mask to obtain zone value.                                                                         //<vs_innlet>
 #endif
 
 #define CODE_SetNormal(code)    (code&(~CODE_MASKSPECIAL))
@@ -163,11 +172,12 @@
 #define CODE_IsFluid(code)    (CODE_GetType(code)==CODE_TYPE_FLUID)
 #define CODE_IsNotFluid(code) (CODE_GetType(code)!=CODE_TYPE_FLUID)
 
-#define CODE_IsFluidInout(code)    (CODE_IsFluid(code) && CODE_GetTypeAndValue(code)>=CODE_TYPE_FLUID_INOUT)  //<vs_innlet>
+//#define CODE_IsFluidInout(code)    (CODE_IsFluid(code) && CODE_GetTypeAndValue(code)>=CODE_TYPE_FLUID_INOUT)  //<vs_innlet>
+#define CODE_IsFluidInout(code)    (CODE_GetTypeAndValue(code)>=CODE_TYPE_FLUID_INOUT)                        //<vs_innlet>
 #define CODE_IsFluidNotInout(code) (CODE_IsFluid(code) && CODE_GetTypeAndValue(code)< CODE_TYPE_FLUID_INOUT)  //<vs_innlet>
 
-#define CODE_ToFluidInout(code,izone) (code&(~CODE_MASKTYPEVALUE))|(CODE_TYPE_FLUID_INOUT+izone)  //<vs_innlet>
-#define CODE_GetIzoneFluidInout(code) (CODE_GetTypeAndValue(code)-CODE_TYPE_FLUID_INOUT)          //<vs_innlet>
+#define CODE_ToFluidInout(code,izone) (code&(~CODE_MASKTYPEVALUE))|(CODE_TYPE_FLUID_INOUT|izone)  //<vs_innlet>
+#define CODE_GetIzoneFluidInout(code) (code&CODE_TYPE_FLUID_INOUTMASK)                            //<vs_innlet>
 
 
 ///Defines type of movement.
@@ -299,8 +309,18 @@ typedef enum{
 
 ///Types of boundary conditions.
 typedef enum{ 
+  BC_MDBC=2,   ///<M-DBC.   //<vs_mddbc>
   BC_DBC=1     ///<Dynamic Boundary Condition (DBC).
 }TpBoundary;
+
+//<vs_mddbc_ini>
+///Types of boundary conditions. 
+typedef enum{ 
+  SLIP_FreeSlip=3,  ///<Free slip
+  SLIP_NoSlip=2,    ///<No-slip
+  SLIP_Vel0=1       ///<DBC vel=0
+}TpSlipMode;
+//<vs_mddbc_end>
 
 ///Types of interaction step.
 typedef enum{ 
@@ -312,6 +332,8 @@ typedef enum{
 
 ///Types of density diffussion term.
 typedef enum{ 
+  DDT_DDT2Full=3, ///<Density Diffussion Term 2 (Fourtakas et al 2019). It is applied to all fluid particles.         //<vs_dtt2>
+  DDT_DDT2=2,     ///<Density Diffussion Term 2 (Fourtakas et al 2019). It is only applied to inner fluid particles.  //<vs_dtt2>
   DDT_DDT=1,      ///<Density Diffussion Term. It is only applied to inner fluid particles.
   DDT_None=0 
 }TpDensity;

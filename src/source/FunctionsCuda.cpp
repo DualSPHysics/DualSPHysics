@@ -332,6 +332,13 @@ size_t Malloc(double3 **ptr,unsigned count){
 //##############################################################################
 
 //==============================================================================
+/// Allocates pinned memory for byte on CPU.
+//==============================================================================
+size_t HostAlloc(byte **ptr,unsigned count){
+  size_t size=sizeof(byte)*count;  cudaHostAlloc((void**)ptr,size,cudaHostAllocDefault);  return(size);
+}
+
+//==============================================================================
 /// Allocates pinned memory for word on CPU.
 //==============================================================================
 size_t HostAlloc(word **ptr,unsigned count){
@@ -391,6 +398,23 @@ size_t HostAlloc(tdouble2 **ptr,unsigned count){
 //##############################################################################
 //## Functions to copy data to Host (debug).
 //##############################################################################
+
+//==============================================================================
+/// Returns dynamic pointer with byte data. (this pointer must be deleted)
+//==============================================================================
+byte* ToHostByte(unsigned pini,unsigned n,const byte *vg){
+  Check_CudaErroorFun("At the beginning.");
+  try{
+    byte *v=new byte[n];
+    cudaMemcpy(v,vg+pini,sizeof(byte)*n,cudaMemcpyDeviceToHost);
+    Check_CudaErroorFun("After cudaMemcpy().");
+    return(v);
+  }
+  catch(const std::bad_alloc){
+    fun::Run_ExceptioonFun(fun::PrintStr("Could not allocate the requested memory (np=%u).",n));
+  }
+  return(NULL);
+}
 
 //==============================================================================
 /// Returns dynamic pointer with word data. (this pointer must be deleted)

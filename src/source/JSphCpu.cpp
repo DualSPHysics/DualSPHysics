@@ -30,6 +30,7 @@
 #include "JMLPistons.h"     //<vs_mlapiston>
 #include "JRelaxZones.h"    //<vs_rzone>
 #include "JChronoObjects.h" //<vs_chroono>
+#include "JSphFtForcePoints.h" //<vs_moordyyn>
 #include "JDamping.h"
 #include "JXml.h"
 #include "JSaveDt.h"
@@ -75,6 +76,7 @@ void JSphCpu::InitVars(){
   NpbPer=NpfPer=0;
 
   Idpc=NULL; Codec=NULL; Dcellc=NULL; Posc=NULL; Velrhopc=NULL;
+  BoundNormalc=NULL; MotionVelc=NULL; //-mDBC //<vs_mddbc>
   VelrhopM1c=NULL;                //-Verlet
   PosPrec=NULL; VelrhopPrec=NULL; //-Symplectic
   SpsTauc=NULL; SpsGradvelc=NULL; //-Laminar+SPS. 
@@ -85,7 +87,6 @@ void JSphCpu::InitVars(){
   FtRidp=NULL;
   FtoForces=NULL;
   FtoForcesRes=NULL;
-  InOutPartc=NULL;  InOutCount=0; //-InOut.  //<vs_innlet>
   FreeCpuMemoryParticles();
   FreeCpuMemoryFixed();
 }
@@ -168,8 +169,12 @@ void JSphCpu::AllocCpuMemoryParticles(unsigned np,float over){
   if(Shifting){
     ArraysCpu->AddArrayCount(JArraysCpu::SIZE_16B,1); //-shiftposfs
   }
+  if(UseNormals){ //<vs_mddbc_ini> 
+    ArraysCpu->AddArrayCount(JArraysCpu::SIZE_12B,1); //-BoundNormal
+    if(SlipMode!=SLIP_Vel0)ArraysCpu->AddArrayCount(JArraysCpu::SIZE_12B,1); //-MotionVel
+  } //<vs_mddbc_end> 
   if(InOut){  //<vs_innlet_ini>
-    ArraysCpu->AddArrayCount(JArraysCpu::SIZE_4B,1);  //-InOutPart
+    //ArraysCpu->AddArrayCount(JArraysCpu::SIZE_4B,1);  //-InOutPart
     ArraysCpu->AddArrayCount(JArraysCpu::SIZE_1B,1);  //-newizone
   }  //<vs_innlet_end>
   //-Shows the allocated memory.
@@ -192,7 +197,8 @@ void JSphCpu::ResizeCpuMemoryParticles(unsigned npnew){
   tdouble3    *pospre     =SaveArrayCpu(Np,PosPrec);
   tfloat4     *velrhoppre =SaveArrayCpu(Np,VelrhopPrec);
   tsymatrix3f *spstau     =SaveArrayCpu(Np,SpsTauc);
-  int         *inoutpart  =SaveArrayCpu(Np,InOutPartc);   //<vs_innlet>
+  tfloat3     *boundnormal=SaveArrayCpu(Np,BoundNormalc); //<vs_mddbc>
+  tfloat3     *motionvel  =SaveArrayCpu(Np,MotionVelc);   //<vs_mddbc>
   //-Frees pointers.
   ArraysCpu->Free(Idpc);
   ArraysCpu->Free(Codec);
@@ -203,7 +209,8 @@ void JSphCpu::ResizeCpuMemoryParticles(unsigned npnew){
   ArraysCpu->Free(PosPrec);
   ArraysCpu->Free(VelrhopPrec);
   ArraysCpu->Free(SpsTauc);
-  ArraysCpu->Free(InOutPartc);    //<vs_innlet>
+  ArraysCpu->Free(BoundNormalc);  //<vs_mddbc>
+  ArraysCpu->Free(MotionVelc);    //<vs_mddbc>
   //-Resizes CPU memory allocation.
   const double mbparticle=(double(MemCpuParticles)/(1024*1024))/CpuParticlesSize; //-MB por particula.
   Log->Printf("**JSphCpu: Requesting cpu memory for %u particles: %.1f MB.",npnew,mbparticle*npnew);
@@ -218,7 +225,8 @@ void JSphCpu::ResizeCpuMemoryParticles(unsigned npnew){
   if(pospre)     PosPrec     =ArraysCpu->ReserveDouble3();
   if(velrhoppre) VelrhopPrec =ArraysCpu->ReserveFloat4();
   if(spstau)     SpsTauc     =ArraysCpu->ReserveSymatrix3f();
-  if(inoutpart)  InOutPartc  =ArraysCpu->ReserveInt();    //<vs_innlet>
+  if(boundnormal)BoundNormalc=ArraysCpu->ReserveFloat3(); //<vs_mddbc>
+  if(motionvel)  MotionVelc  =ArraysCpu->ReserveFloat3(); //<vs_mddbc>
   //-Restore data in CPU memory.
   RestoreArrayCpu(Np,idp,Idpc);
   RestoreArrayCpu(Np,code,Codec);
@@ -229,7 +237,8 @@ void JSphCpu::ResizeCpuMemoryParticles(unsigned npnew){
   RestoreArrayCpu(Np,pospre,PosPrec);
   RestoreArrayCpu(Np,velrhoppre,VelrhopPrec);
   RestoreArrayCpu(Np,spstau,SpsTauc);
-  RestoreArrayCpu(Np,inoutpart,InOutPartc);     //<vs_innlet>
+  RestoreArrayCpu(Np,boundnormal,BoundNormalc); //<vs_mddbc>
+  RestoreArrayCpu(Np,motionvel,MotionVelc);     //<vs_mddbc>
   //-Updates values.
   CpuParticlesSize=npnew;
   MemCpuParticles=ArraysCpu->GetAllocMemoryCpu();
@@ -272,7 +281,10 @@ void JSphCpu::ReserveBasicArraysCpu(){
   Velrhopc=ArraysCpu->ReserveFloat4();
   if(TStep==STEP_Verlet)VelrhopM1c=ArraysCpu->ReserveFloat4();
   if(TVisco==VISCO_LaminarSPS)SpsTauc=ArraysCpu->ReserveSymatrix3f();
-  if(InOut)InOutPartc=ArraysCpu->ReserveInt();  //<vs_innlet>
+  if(UseNormals){ //<vs_mddbc_ini>
+    BoundNormalc=ArraysCpu->ReserveFloat3();
+    if(SlipMode!=SLIP_Vel0)MotionVelc=ArraysCpu->ReserveFloat3();
+  } //<vs_mddbc_end>
 }
 
 //==============================================================================
@@ -408,6 +420,7 @@ void JSphCpu::InitRunCpu(){
   if(TStep==STEP_Verlet)memcpy(VelrhopM1c,Velrhopc,sizeof(tfloat4)*Np);
   if(TVisco==VISCO_LaminarSPS)memset(SpsTauc,0,sizeof(tsymatrix3f)*Np);
   if(CaseNfloat)InitFloating();
+  if(MotionVelc)memset(MotionVelc,0,sizeof(tfloat3)*Np); //<vs_mddbc>
 }
 
 //==============================================================================
@@ -925,6 +938,15 @@ template<TpKernel tker,TpFtMode ftmode,bool lamsps,TpDensity tdensity,bool shift
               //deltap1=(boundp2? FLT_MAX: deltap1+delta);
               deltap1=(boundp2 && TBoundary==BC_DBC? FLT_MAX: deltap1+delta);
             }
+            //-Density Diffusion Term (Fourtakas et al 2019).  //<vs_dtt2_ini>
+            if((tdensity==DDT_DDT2 || (tdensity==DDT_DDT2Full && !boundp2)) && deltap1!=FLT_MAX && !ftp2){
+              const float rh=1.f+DDTgz*drz;
+              const float drhop=RhopZero*pow(rh,1.f/Gamma)-RhopZero;	
+              const float visc_densi=DDT2h*cbar*((velrhop2.w-rhopp1)-drhop)/(rr2+Eta2);
+              const float dot3=(drx*frx+dry*fry+drz*frz);
+              const float delta=visc_densi*dot3*massp2/velrhop2.w;
+              deltap1=(boundp2? FLT_MAX: deltap1-delta); //-blocks it makes it boil - bloody DBC
+            }  //<vs_dtt2_end>
 
             //-Shifting correction.
             if(shift && shiftposfsp1.x!=FLT_MAX){
@@ -1189,6 +1211,8 @@ template<TpKernel tker,TpFtMode ftmode,bool lamsps,TpDensity tdensity> void JSph
 template<TpKernel tker,TpFtMode ftmode,bool lamsps> void JSphCpu::Interaction_Forces_ct4(const stinterparmsc &t,float &viscdt)const{
        if(TDensity==DDT_None)    Interaction_Forces_ct5<tker,ftmode,lamsps,DDT_None    >(t,viscdt);
   else if(TDensity==DDT_DDT)     Interaction_Forces_ct5<tker,ftmode,lamsps,DDT_DDT     >(t,viscdt);
+  else if(TDensity==DDT_DDT2)    Interaction_Forces_ct5<tker,ftmode,lamsps,DDT_DDT2    >(t,viscdt);  //<vs_dtt2>
+  else if(TDensity==DDT_DDT2Full)Interaction_Forces_ct5<tker,ftmode,lamsps,DDT_DDT2Full>(t,viscdt);  //<vs_dtt2>
 }
 //==============================================================================
 template<TpKernel tker,TpFtMode ftmode> void JSphCpu::Interaction_Forces_ct3(const stinterparmsc &t,float &viscdt)const{
@@ -1207,6 +1231,186 @@ void JSphCpu::Interaction_Forces_ct(const stinterparmsc &t,float &viscdt)const{
   else if(TKernel==KERNEL_Gaussian)Interaction_Forces_ct2<KERNEL_Gaussian>(t,viscdt);
   else if(TKernel==KERNEL_Cubic)   Interaction_Forces_ct2<KERNEL_Cubic   >(t,viscdt);
 }
+
+//<vs_mddbc_ini>
+//==============================================================================
+/// Perform interaction between ghost nodes of boundaries and fluid.
+//==============================================================================
+template<bool sim2d,TpSlipMode tslip> void JSphCpu::InteractionBoundCorrection
+  (unsigned npb,float determlimit
+  ,tint4 nc,int hdiv,unsigned cellinitial,const unsigned *beginendcell,tint3 cellzero
+  ,const tdouble3 *pos,const typecode *code,const unsigned *idp
+  ,const tfloat3 *boundnormal,const tfloat3 *motionvel,tfloat4 *velrhop)
+{
+  if(tslip==SLIP_FreeSlip)Run_Exceptioon("SlipMode=\'Free slip\' is not yet implemented...");
+  const int n=int(npb);
+  #ifdef _WITHOMP
+    #pragma omp parallel for schedule (guided)
+  #endif
+  for(int p1=0;p1<n;p1++)if(boundnormal[p1]!=TFloat3(0)){
+    float rhopfinal=FLT_MAX;
+    tfloat3 velrhopfinal=TFloat3(0);
+
+    //-Calculates ghost node position.
+    tdouble3 gposp1=pos[p1]+ToTDouble3(boundnormal[p1]);
+    gposp1=(PeriActive!=0? UpdatePeriodicPos(gposp1): gposp1); //-Corrected interface Position.
+    //-Initializes variables for calculation.
+    float rhopp1=0;
+    tfloat3 gradrhopp1=TFloat3(0);
+    tdouble3 velp1=TDouble3(0);       //-Only for velocity.
+    tmatrix3d a_corr2=TMatrix3d(0);   //-Only for 2D.
+    tmatrix4d a_corr3=TMatrix4d(0);   //-Only for 3D.
+
+    //-Obtain limits of interaction.
+    int cxini,cxfin,yini,yfin,zini,zfin;
+    GetInteractionCells(gposp1,hdiv,nc,cellzero,cxini,cxfin,yini,yfin,zini,zfin);
+      
+    //-Search for neighbours in adjacent cells. | Busqueda de vecinos en celdas adyacentes.
+    for(int z=zini;z<zfin;z++){
+      const int zmod=(nc.w)*z+cellinitial; //-Sum from start of fluid cells. | Le suma donde empiezan las celdas de fluido.
+      for(int y=yini;y<yfin;y++){
+        int ymod=zmod+nc.x*y;
+        const unsigned pini=beginendcell[cxini+ymod];
+        const unsigned pfin=beginendcell[cxfin+ymod];
+
+        //-Interaction of boundary with type Fluid/Float | Interaccion de Bound con varias Fluid/Float.
+        //---------------------------------------------------------------------------------------------
+        for(unsigned p2=pini;p2<pfin;p2++){
+          const float drx=float(gposp1.x-pos[p2].x);
+          const float dry=float(gposp1.y-pos[p2].y);
+          const float drz=float(gposp1.z-pos[p2].z);
+          const float rr2=drx*drx+dry*dry+drz*drz;
+          if(rr2<=Fourh2 && rr2>=ALMOSTZERO && CODE_IsFluid(code[p2])){//-Only with fluid particles (including inout).
+            //-Wendland kernel.
+            float frx,fry,frz,wab;
+            GetKernelWendland(rr2,drx,dry,drz,frx,fry,frz,wab);
+
+            //===== Get mass and volume of particle p2 =====
+            const tfloat4 velrhopp2=velrhop[p2];
+            const float massp2=MassFluid;
+            const float volp2=massp2/velrhopp2.w;
+
+            //===== Density and its gradient =====
+            rhopp1+=massp2*wab;
+            gradrhopp1.x+=massp2*frx;
+            gradrhopp1.y+=massp2*fry;
+            gradrhopp1.z+=massp2*frz;
+
+            //===== Kernel values multiplied by volume =====
+            const float vwab=wab*volp2;
+            const float vfrx=frx*volp2;
+            const float vfry=fry*volp2;
+            const float vfrz=frz*volp2;
+
+            //===== Velocity =====
+            if(tslip!=SLIP_Vel0){
+              velp1.x+=vwab*velrhopp2.x;
+              velp1.y+=vwab*velrhopp2.y;
+              velp1.z+=vwab*velrhopp2.z;
+            }
+
+            //===== Matrix A for correction =====
+            if(sim2d){
+              a_corr2.a11+=vwab;  a_corr2.a12+=drx*vwab;  a_corr2.a13+=drz*vwab;
+              a_corr2.a21+=vfrx;  a_corr2.a22+=drx*vfrx;  a_corr2.a23+=drz*vfrx;
+              a_corr2.a31+=vfrz;  a_corr2.a32+=drx*vfrz;  a_corr2.a33+=drz*vfrz;
+            }
+            else{
+              a_corr3.a11+=vwab;  a_corr3.a12+=drx*vwab;  a_corr3.a13+=dry*vwab;  a_corr3.a14+=drz*vwab;
+              a_corr3.a21+=vfrx;  a_corr3.a22+=drx*vfrx;  a_corr3.a23+=dry*vfrx;  a_corr3.a24+=drz*vfrx;
+              a_corr3.a31+=vfry;  a_corr3.a32+=drx*vfry;  a_corr3.a33+=dry*vfry;  a_corr3.a34+=drz*vfry;
+              a_corr3.a41+=vfrz;  a_corr3.a42+=drx*vfrz;  a_corr3.a43+=dry*vfrz;  a_corr3.a44+=drz*vfrz;
+            }
+          }
+        }
+      }
+    }
+
+    //-Store the results.
+    //--------------------
+    const tfloat3 dpos=(boundnormal[p1]*(-1.f)); //-Boundary particle position - ghost node position.
+    if(sim2d){
+      const double determ=fmath::Determinant3x3(a_corr2);
+      if(fabs(determ)>=determlimit){//-Use 1e-3f (first_order) or 1e+3f (zeroth_order).
+        const tmatrix3d invacorr2=fmath::InverseMatrix3x3(a_corr2,determ);
+        //-GHOST NODE DENSITY IS MIRRORED BACK TO THE BOUNDARY PARTICLES.
+        const float rhoghost=float(invacorr2.a11*rhopp1 + invacorr2.a12*gradrhopp1.x + invacorr2.a13*gradrhopp1.z);
+        const float grx=    -float(invacorr2.a21*rhopp1 + invacorr2.a22*gradrhopp1.x + invacorr2.a23*gradrhopp1.z);
+        const float grz=    -float(invacorr2.a31*rhopp1 + invacorr2.a32*gradrhopp1.x + invacorr2.a33*gradrhopp1.z);
+        rhopfinal=(rhoghost + grx*dpos.x + grz*dpos.z);
+      }
+      else if(a_corr2.a11>0){//-Determinant is small but a11 is nonzero (0th order).
+        rhopfinal=float(rhopp1/a_corr2.a11);
+      }
+      //-Ghost node velocity (0th order).
+      if(tslip!=SLIP_Vel0){
+        velrhopfinal.x=float(velp1.x/a_corr2.a11);
+        velrhopfinal.z=float(velp1.z/a_corr2.a11);
+        velrhopfinal.y=0;
+      }
+    }
+    else{
+      const double determ=fmath::Determinant4x4(a_corr3);
+      if(fabs(determ)>=determlimit){
+        const tmatrix4d invacorr3=fmath::InverseMatrix4x4(a_corr3,determ);
+        //-GHOST NODE DENSITY IS MIRRORED BACK TO THE BOUNDARY PARTICLES.
+        const float rhoghost=float(invacorr3.a11*rhopp1 + invacorr3.a12*gradrhopp1.x + invacorr3.a13*gradrhopp1.y + invacorr3.a14*gradrhopp1.z);
+        const float grx=    -float(invacorr3.a21*rhopp1 + invacorr3.a22*gradrhopp1.x + invacorr3.a23*gradrhopp1.y + invacorr3.a24*gradrhopp1.z);
+        const float gry=    -float(invacorr3.a31*rhopp1 + invacorr3.a32*gradrhopp1.x + invacorr3.a33*gradrhopp1.y + invacorr3.a34*gradrhopp1.z);
+        const float grz=    -float(invacorr3.a41*rhopp1 + invacorr3.a42*gradrhopp1.x + invacorr3.a43*gradrhopp1.y + invacorr3.a44*gradrhopp1.z);
+        rhopfinal=(rhoghost + grx*dpos.x + gry*dpos.y + grz*dpos.z);
+      }
+      else if(a_corr3.a11>0){//-Determinant is small but a11 is nonzero (0th order).
+        rhopfinal=float(rhopp1/a_corr3.a11);
+      }
+      //-Ghost node velocity (0th order).
+      if(tslip!=SLIP_Vel0){
+        velrhopfinal.x=float(velp1.x/a_corr3.a11);
+        velrhopfinal.y=float(velp1.y/a_corr3.a11);
+        velrhopfinal.z=float(velp1.z/a_corr3.a11);
+      }
+    }
+    //-Store the results.
+    rhopfinal=(rhopfinal!=FLT_MAX? rhopfinal: RhopZero);
+    if(tslip==SLIP_Vel0){//-DBC vel=0
+      velrhop[p1].w=rhopfinal;
+    }
+    if(tslip==SLIP_NoSlip){//-No-Slip
+      const tfloat3 v=motionvel[p1];
+      velrhop[p1]=TFloat4(v.x+v.x-velrhopfinal.x,v.y+v.y-velrhopfinal.y,v.z+v.z-velrhopfinal.z,rhopfinal);
+    }
+    if(tslip==SLIP_FreeSlip){//-No-Penetration and free slip
+      velrhop[p1]=TFloat4(velrhopfinal.x,velrhopfinal.y,velrhopfinal.z,rhopfinal); //-It was not tested...
+    }
+  }
+}
+
+//==============================================================================
+/// Calculates extrapolated data on boundary particles from fluid domain for mDBC.
+/// Calcula datos extrapolados en el contorno para mDBC.
+//==============================================================================
+void JSphCpu::Interaction_BoundCorrection(TpSlipMode slipmode
+  ,tuint3 ncells,const unsigned *begincell,tuint3 cellmin
+  ,const tdouble3 *pos,const typecode *code,const unsigned *idp
+  ,const tfloat3 *boundnormal,const tfloat3 *motionvel,tfloat4 *velrhop)
+{
+  const float determlimit=1e-3f;
+  const tint4 nc=TInt4(int(ncells.x),int(ncells.y),int(ncells.z),int(ncells.x*ncells.y));
+  const tint3 cellzero=TInt3(cellmin.x,cellmin.y,cellmin.z);
+  const unsigned cellfluid=nc.w*nc.z+1;
+  const int hdiv=(CellMode==CELLMODE_H? 2: 1);
+  //-Interaction GhostBoundaryNodes-Fluid.
+  if(Simulate2D){ const bool sim2d=true;
+    if(slipmode==SLIP_Vel0    )InteractionBoundCorrection<sim2d,SLIP_Vel0    >(NpbOk,determlimit,nc,hdiv,cellfluid,begincell,cellzero,pos,code,idp,boundnormal,motionvel,velrhop);
+    if(slipmode==SLIP_NoSlip  )InteractionBoundCorrection<sim2d,SLIP_NoSlip  >(NpbOk,determlimit,nc,hdiv,cellfluid,begincell,cellzero,pos,code,idp,boundnormal,motionvel,velrhop);
+    if(slipmode==SLIP_FreeSlip)InteractionBoundCorrection<sim2d,SLIP_FreeSlip>(NpbOk,determlimit,nc,hdiv,cellfluid,begincell,cellzero,pos,code,idp,boundnormal,motionvel,velrhop);
+  }else{          const bool sim2d=false;
+    if(slipmode==SLIP_Vel0    )InteractionBoundCorrection<sim2d,SLIP_Vel0    >(NpbOk,determlimit,nc,hdiv,cellfluid,begincell,cellzero,pos,code,idp,boundnormal,motionvel,velrhop);
+    if(slipmode==SLIP_NoSlip  )InteractionBoundCorrection<sim2d,SLIP_NoSlip  >(NpbOk,determlimit,nc,hdiv,cellfluid,begincell,cellzero,pos,code,idp,boundnormal,motionvel,velrhop);
+    if(slipmode==SLIP_FreeSlip)InteractionBoundCorrection<sim2d,SLIP_FreeSlip>(NpbOk,determlimit,nc,hdiv,cellfluid,begincell,cellzero,pos,code,idp,boundnormal,motionvel,velrhop);
+  }
+}
+//<vs_mddbc_end>
 
 //==============================================================================
 /// Update pos, dcell and code to move with indicated displacement.
@@ -1614,9 +1818,33 @@ void JSphCpu::MoveMatBound(unsigned np,unsigned ini,tmatrix4d m,double dt,const 
       const double dx=ps2.x-ps.x, dy=ps2.y-ps.y, dz=ps2.z-ps.z;
       UpdatePos(ps,dx,dy,dz,false,pid,pos,dcell,code);
       velrhop[pid].x=float(dx/dt);  velrhop[pid].y=float(dy/dt);  velrhop[pid].z=float(dz/dt);
+      //-Computes normal. //<vs_mddbc_ini>
+      if(boundnormal){
+        const tdouble3 gs=ps+ToTDouble3(boundnormal[pid]);
+        const tdouble3 gs2=MatrixMulPoint(m,gs);
+        boundnormal[pid]=ToTFloat3(gs2-ps2);
+      }//<vs_mddbc_end>
     }
   }
 }
+
+//<vs_mddbc_ini>
+//==============================================================================
+/// Copy motion velocity to MotionVel[].
+/// Copia velocidad de movimiento a MotionVel[].
+//==============================================================================
+void JSphCpu::CopyMotionVel(unsigned np,unsigned ini,const unsigned *ridp
+  ,const tfloat4 *velrhop,tfloat3 *motionvel)const
+{
+  const unsigned fin=ini+np;
+  for(unsigned id=ini;id<fin;id++){
+    const unsigned pid=RidpMove[id];
+    if(pid!=UINT_MAX){
+      const tfloat4 v=velrhop[pid];
+      motionvel[pid]=TFloat3(v.x,v.y,v.z);
+    }
+  }
+} //<vs_mddbc_end>
 
 //==============================================================================
 /// Calculates predefined movement of boundary particles.
@@ -1635,6 +1863,7 @@ void JSphCpu::CalcMotion(double stepdt){
 void JSphCpu::RunMotion(double stepdt){
   TmcStart(Timers,TMC_SuMotion);
   tfloat3 *boundnormal=NULL;
+  boundnormal=BoundNormalc; //<vs_mddbc>
   const bool motsim=true;
   BoundChanged=false;
   //-Add motion from automatic wave generation.
@@ -1674,6 +1903,7 @@ void JSphCpu::RunMotion(double stepdt){
         ,RidpMove,Posc,Dcellc,Velrhopc,Codec);
     }
   }  //<vs_mlapiston_end>
+  if(MotionVelc)CopyMotionVel(CaseNmoving,CaseNfixed,RidpMove,Velrhopc,MotionVelc); //<vs_mddbc>
   TmcStop(Timers,TMC_SuMotion);
 }
 

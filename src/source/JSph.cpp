@@ -40,6 +40,8 @@
 #include "JMLPistons.h"     //<vs_mlapiston>
 #include "JRelaxZones.h"    //<vs_rzone>
 #include "JChronoObjects.h" //<vs_chroono>
+#include "JMooredFloatings.h"  //<vs_moordyyn>
+#include "JSphFtForcePoints.h" //<vs_moordyyn>
 #include "JSphAccInput.h"
 #include "JPartDataBi4.h"
 #include "JPartOutBi4Save.h"
@@ -51,6 +53,8 @@
 #include "JSphInOut.h"       //<vs_innlet> 
 #include "JSphBoundCorr.h"   //<vs_innlet> 
 #include "JLinearValue.h"
+#include "JPartNormalData.h" //<vs_mddbc>
+#include "JNormalsMarrone.h" //<vs_mddbc>
 #include "JDataArrays.h"
 #include "JOutputCsv.h"
 #include "JVtkLib.h"
@@ -77,12 +81,16 @@ JSph::JSph(bool cpu,bool mgpu,bool withmpi):Cpu(cpu),Mgpu(mgpu),WithMpi(withmpi)
   PartsInit=NULL;
   SphMotion=NULL;
   FtObjs=NULL;
+  FtLinearVel=NULL;  //<vs_fttvel>
+  FtAngularVel=NULL; //<vs_fttvel>
   DemData=NULL;
   GaugeSystem=NULL;
   WaveGen=NULL;
   MLPistons=NULL;     //<vs_mlapiston>
   RelaxZones=NULL;    //<vs_rzone>
   ChronoObjects=NULL; //<vs_chroono>
+  Moorings=NULL;    //<vs_moordyyn>
+  ForcePoints=NULL; //<vs_moordyyn>
   Shifting=NULL;
   Damping=NULL;
   AccInput=NULL;
@@ -115,6 +123,8 @@ JSph::~JSph(){
   delete MLPistons;     MLPistons=NULL;     //<vs_mlapiston>
   delete RelaxZones;    RelaxZones=NULL;    //<vs_rzone>
   delete ChronoObjects; ChronoObjects=NULL; //<vs_chroono>
+  delete Moorings;      Moorings=NULL;      //<vs_moordyyn>
+  delete ForcePoints;   ForcePoints=NULL;   //<vs_moordyyn>
   delete Shifting;      Shifting=NULL;
   delete Damping;       Damping=NULL;
   delete AccInput;      AccInput=NULL; 
@@ -151,6 +161,9 @@ void JSph::InitVars(){
   ShiftingMode=(Shifting? Shifting->GetShiftMode(): SHIFT_None);
   Visco=0; ViscoBoundFactor=1;
   TBoundary=BC_DBC;
+  SlipMode=SLIP_Vel0;  //<vs_mddbc>
+  MdbcCorrector=false; //<vs_mddbc>
+  UseNormals=false;    //<vs_mddbc>
   UseDEM=false;  //(DEM)
   delete[] DemData; DemData=NULL;  //(DEM)
   UseChrono=false; //<vs_chroono>
@@ -357,8 +370,21 @@ void JSph::ConfigDomainResize(std::string key,const JSpaceEParms *eparms){
 //==============================================================================
 void JSph::AllocMemoryFloating(unsigned ftcount,bool imposedvel){
   delete[] FtObjs; FtObjs=NULL;
+  if(FtLinearVel){ //<vs_fttvel_ini>
+    for(unsigned c=0;c<FtCount;c++)delete FtLinearVel[c];
+    delete[] FtLinearVel; FtLinearVel=NULL;
+  }
+  if(FtAngularVel){
+    for(unsigned c=0;c<FtCount;c++)delete FtAngularVel[c];
+    delete[] FtAngularVel; FtAngularVel=NULL;
+  } //<vs_fttvel_end>
   if(ftcount){
     FtObjs=new StFloatingData[ftcount];
+    if(imposedvel){ //<vs_fttvel_ini>
+      FtLinearVel =new JLinearValue*[ftcount];
+      FtAngularVel=new JLinearValue*[ftcount];
+      for(unsigned c=0;c<ftcount;c++)FtLinearVel[c]=FtAngularVel[c]=NULL;
+    } //<vs_fttvel_end>
   }
 }
 
@@ -448,6 +474,8 @@ void JSph::LoadConfig(const JCfgRun *cfg){
     switch(cfg->TDensity){
       case 0:  TDensity=DDT_None;     break;
       case 1:  TDensity=DDT_DDT;      break;
+      case 2:  TDensity=DDT_DDT2;     break;  //<vs_dtt2>
+      case 3:  TDensity=DDT_DDT2Full; break;  //<vs_dtt2>
       default: 
         if(cfg->TDensity==2 || cfg->TDensity==3)RunException(met,"Density Diffusion Term \'Fourtakas et al 2019\' is not available in this version.");
         else RunException(met,"Density Diffusion Term mode is not valid.");
@@ -565,8 +593,21 @@ void JSph::LoadCaseConfig(){
   //-Boundary configuration.
   switch(eparms.GetValueInt("Boundary",true,1)){
     case 1:  TBoundary=BC_DBC;      break;
+    case 2:  TBoundary=BC_MDBC;     break;   //<vs_mddbc>
     default: RunException(met,"Boundary Condition method is not valid.");
   }
+  if(TBoundary==BC_MDBC){ //<vs_mddbc_ini>
+    UseNormals=true;
+    switch(eparms.GetValueInt("SlipMode",true,1)){
+      case 1:  SlipMode=SLIP_Vel0;      break;
+      case 2:  SlipMode=SLIP_NoSlip;    break;
+      case 3:  SlipMode=SLIP_FreeSlip;  break;
+      default: RunException(met,"Slip mode is not valid.");
+    }
+    MdbcCorrector=(eparms.GetValueInt("MDBCCorrector",true,0)!=0);
+  } 
+  if(SlipMode==SLIP_FreeSlip)RunException(met,"SlipMode=\'Free slip\' is not available for now.");
+  //<vs_mddbc_end>
 
   //-Density Diffusion Term configuration.
   if(eparms.Exists("DeltaSPH")){
@@ -583,6 +624,8 @@ void JSph::LoadCaseConfig(){
     switch(tddt){
       case 0:  TDensity=DDT_None;     break;
       case 1:  TDensity=DDT_DDT;      break;
+      case 2:  TDensity=DDT_DDT2;     break;  //<vs_dtt2>
+      case 3:  TDensity=DDT_DDT2Full; break;  //<vs_dtt2>
       default: 
         if(tddt==2 || tddt==3)RunException(met,"Density Diffusion Term \'Fourtakas et al 2019\' is not available in this version.");
         else RunException(met,"Density Diffusion Term mode is not valid.");
@@ -792,6 +835,14 @@ void JSph::LoadCaseConfig(){
         fobj->radius=0;
         fobj->constraints=ComputeConstraintsValue(fblock.GetTranslationFree(),fblock.GetRotationFree());
         if(fobj->constraints!=FTCON_Free)FtConstraints=true;
+        if(fblock.GetLinearVel()){ //<vs_fttvel_ini>
+          FtLinearVel[cobj]=new JLinearValue(*fblock.GetLinearVel());
+          if(!FtLinearVel[cobj]->GetFile().empty())FtLinearVel[cobj]->LoadFile(DirCase+FtLinearVel[cobj]->GetFile());
+        }
+        if(fblock.GetAngularVel()){
+          FtAngularVel[cobj]=new JLinearValue(*fblock.GetAngularVel());
+          if(!FtAngularVel[cobj]->GetFile().empty())FtAngularVel[cobj]->LoadFile(DirCase+FtAngularVel[cobj]->GetFile());
+        } //<vs_fttvel_end>
         fobj->center=fblock.GetCenter();
         fobj->angles=TFloat3(0);
         fobj->fvel=ToTFloat3(fblock.GetLinearVelini());
@@ -869,6 +920,25 @@ void JSph::LoadCaseConfig(){
     BoundCorr=new JSphBoundCorr(Cpu,Dp,Log,&xml,"case.execution.special.boundcorr",MkInfo);
   } //<vs_innlet_end> 
  
+  //-Configuration of Moorings object. //<vs_moordyyn_ini>
+  if(xml.GetNode("case.execution.special.moorings",false)){
+    if(WithFloating){
+      if(!AVAILABLE_MOORDYN)RunException(met,"Code for moorings and MoorDyn+ coupling is not included in the current compilation.");
+      Moorings=new JMooredFloatings(Log,DirCase,CaseName);
+      Moorings->LoadXml(&xml,"case.execution.special.moorings");
+    }
+    else Log->PrintWarning("The use of Moorings was disabled because there are no floating objects...");
+  }
+
+  //-Configuration of FtForces object.
+  if(Moorings || xml.GetNode("case.execution.special.forcepoints",false)){
+    if(WithFloating){
+      ForcePoints=new JSphFtForcePoints(Log,Cpu,Dp,FtCount);
+      //FtForces->LoadXml(&xml,"case.execution.special.forcepoints");
+    }
+    else Log->PrintWarning("The use of impossed force to floatings was disabled because there are no floating objects...");
+  } //<vs_moordyyn_end>
+
   //-Checks invalid options for symmetry. //<vs_syymmetry_ini>
   if(Symmetry){
     if(Simulate2D)  RunException(met,"Symmetry is not allowed with 2-D simulations.");
@@ -948,6 +1018,74 @@ void JSph::LoadCodeParticles(unsigned np,const unsigned *idp,typecode *code)cons
   //-Assigns code to each group of particles.
   for(unsigned p=0;p<np;p++)code[p]=MkInfo->GetCodeById(idp[p]);
 }
+
+//<vs_mddbc_ini>
+//==============================================================================
+/// Load normals for boundary particles (fixed and moving).
+//==============================================================================
+void JSph::LoadBoundNormals(unsigned npb,const unsigned *idp,const typecode *code,tfloat3 *boundnormal)const{
+  const char met[]="LoadBoundNormals";
+  memset(boundnormal,0,sizeof(tfloat3)*npb);
+  string filenordata=JNormalsMarrone::GetNormalDataFile(DirCase+CaseName);
+  if(fun::FileExists(filenordata)){
+    //-Load or compute final normals.
+    const tdouble3 *pnor=NULL;
+    JPartNormalData nd;
+    JNormalsMarrone nmarrone;
+    nd.LoadFile(DirCase+CaseName);
+    if(nd.GetCountNormals()){
+      //-Compute Marrone normals starting from normal data in NBI4 file.
+      nd.Reset();
+      nmarrone.RunCase(DirCase+CaseName,true);
+      pnor=nmarrone.GetPartNor();
+    }
+    else{
+      //-Loads final normals in NBI4 file.
+      pnor=nd.GetPartNormals();
+      if(pnor==NULL)RunException(met,"Normal data and final normals are missing in NBI4 file.",filenordata);
+    }
+    //-Applies final normals.
+    for(unsigned p=0;p<npb;p++)boundnormal[p]=ToTFloat3(pnor[p]);  //-Normal from boundary particle to boundary limit.
+    Log->Printf("NormalDataFile=\"%s\"",filenordata.c_str());
+    //for(unsigned p=0;p<npb;p++)boundnormal[p]=ToTFloat3(pnor[p]*2.);  //-Normal from boundary particle to ghost node (full distance).
+    ////-Removes normal of unselected boundaries.
+    //if(BoundCorr && !BoundCorr->GetMkBoundList().empty()){
+    //  JRangeFilter rg(BoundCorr->GetMkBoundList());
+    //  const unsigned nc=MkInfo->Size();
+    //  for(unsigned c=0;c<nc;c++){
+    //    const JSphMkBlock* bk=MkInfo->Mkblock(c);
+    //    if(!rg.CheckValue(bk->MkType) && (bk->Type==TpPartFixed || bk->Type==TpPartMoving)){
+    //      for(unsigned p=0;p<bk->Count;p++)boundnormal[p+bk->Begin]=TFloat3(0);
+    //    }
+    //  }
+    //}
+  }
+  else Log->Print("**File with normal data not found.");
+}
+
+ //==============================================================================
+/// Config normals to point from boundary particle to ghost node (full distance).
+//==============================================================================
+void JSph::ConfigBoundNormals(unsigned npb,const tdouble3 *pos,const unsigned *idp
+  ,tfloat3 *boundnormal)const
+{
+  //-Saves normals from boundary particles to boundary limit.
+  const string file1="CfgInit_Normals.vtk";
+  Log->AddFileInfo(DirOut+file1,"Saves VTK file with initial normals (from boundary particles to boundary limit).");
+  SaveVtkNormals(file1,-1,0,npb,pos,idp,boundnormal);
+  //-Config normals.
+  unsigned nerr=0;
+  for(unsigned p=0;p<npb;p++){
+    if(boundnormal[p]==TFloat3(0))nerr++;
+    boundnormal[p]=(boundnormal[p]*2.f);
+  }
+  //-Saves normals from boundary particles to ghost node.
+  const string file2="CfgInit_NormalsGhost.vtk";
+  Log->AddFileInfo(DirOut+file2,"Saves VTK file with initial normals (from boundary particles to ghost node).");
+  SaveVtkNormals(file2,-1,0,npb,pos,idp,boundnormal);
+  if(nerr>0)Log->PrintfWarning("There are %u of %u boundary particles without normal data.",nerr,npb);
+}
+//<vs_mddbc_end>
 
 //==============================================================================
 /// Sets DBL_MAX values by indicated values.
@@ -1076,6 +1214,7 @@ void JSph::ConfigConstants(bool simulate2d){
       CubicCte.c2=float(-3.*aa/4.);
     }
   }
+  if(TBoundary==BC_MDBC)WendlandConstants(simulate2d,H,Awen,Bwen); //<vs_mddbc>
   //-Constants for Laminar viscosity + SPS turbulence model.
   if(TVisco==VISCO_LaminarSPS){  
     double dp_sps=(Simulate2D? sqrt(Dp*Dp*2.)/2.: sqrt(Dp*Dp*3.)/3.);  
@@ -1097,6 +1236,10 @@ void JSph::VisuConfig()const{
   Log->Print(fun::VarStr("SavePosDouble",SvPosDouble));
   Log->Print(fun::VarStr("SvTimers",SvTimers));
   Log->Print(fun::VarStr("Boundary",GetBoundName(TBoundary)));
+  if(TBoundary==BC_MDBC){ //<vs_mddbc_ini>
+    Log->Print(fun::VarStr("  SlipMode",GetSlipName(SlipMode)));
+    Log->Print(fun::VarStr("  mDBC-Corrector",MdbcCorrector));
+  } //<vs_mddbc_end>
   Log->Print(fun::VarStr("StepAlgorithm",GetStepName(TStep)));
   if(TStep==STEP_None)Run_Exceptioon("StepAlgorithm value is invalid.");
   if(TStep==STEP_Verlet)Log->Print(fun::VarStr("  VerletSteps",VerletSteps));
@@ -1110,6 +1253,7 @@ void JSph::VisuConfig()const{
     Log->Print(fun::VarStr("  DensityDiffusionValue",DDTValue));
     //Log->Print(fun::VarStr("DensityDiffusionArray",DDTArray));
   }
+  if(TDensity==DDT_DDT2Full && H/Dp>1.5)Log->PrintWarning("The selected DDT \'(Fourtakas et al 2019 (full)\' needs several boundary layers when h/dp>1.5");  //<vs_dtt2>
   if(Shifting)Shifting->VisuConfig();
   else Log->Print(fun::VarStr("Shifting","None"));
   string rigidalgorithm=(!FtCount? "None": (UseDEM? "SPH+DCDEM": "SPH"));
@@ -1610,6 +1754,23 @@ void JSph::InitRun(unsigned np,const unsigned *idp,const tdouble3 *pos){
     ChronoObjects->VisuConfig(""," ");
   }  //<vs_chroono_end>
 
+  //-Prepares Moorings configuration.  //<vs_moordyyn_ini>
+  if(Moorings){
+    Log->Print("Moorings configuration:");
+    if(!PartBegin)Moorings->Config(FtCount,FtObjs,ForcePoints);
+    else RunException(met,"Simulation restart not allowed when moorings are used.");
+    Moorings->VisuConfig(""," ");
+  }  //<vs_moordyyn_end>
+
+  //-Prepares ForcePoints configuration.  //<vs_moordyyn_ini>
+  if(ForcePoints){
+    Log->Printf("ForcePoints configuration:");
+    ForcePoints->Config(FtCount,FtObjs,PeriActive,PeriX,PeriY,PeriZ,PeriXinc,PeriYinc,PeriZinc);
+    if(!PartBegin)ForcePoints->CheckPoints(MkInfo,np,idp,pos);
+    else RunException(met,"Simulation restart not allowed when FtForces is used.");
+    ForcePoints->VisuConfig(""," ",FtCount,FtObjs);
+  }  //<vs_moordyyn_end>
+
   //-Prepares Damping configuration.
   if(Damping){
     Damping->VisuConfig("Damping configuration:"," ");
@@ -2045,7 +2206,7 @@ void JSph::SaveData(unsigned npok,const JDataArrays& arrays
   PartDtMin=DBL_MAX; PartDtMax=-DBL_MAX;
 
   //-Computation of time.
-  if(Part>PartIni||Nstep){
+  if(Part>PartIni || Nstep){
     TimerPart.Stop();
     double tpart=TimerPart.GetElapsedTimeD()/1000;
     double tseg=tpart/(TimeStep-TimeStepM1);
@@ -2057,15 +2218,18 @@ void JSph::SaveData(unsigned npok,const JDataArrays& arrays
   else Log->Printf("Part%s        %u particles successfully stored",suffixpartx.c_str(),npok);   
   
   //-Shows info of the new inlet particles.  //<vs_innlet_ini> 
+  bool printnp=true;
   if(InOut && InOut->GetNewNpPart()){
-    Log->Printf("  Particles new: %u (total: %llu)",InOut->GetNewNpPart(),InOut->GetNewNpTotal());
+    Log->Printf("  Particles new: %u (total new: %llu)  -  Current np: %u",InOut->GetNewNpPart(),InOut->GetNewNpTotal(),npok);
     InOut->ClearNewNpPart();
+    printnp=false;
   }  //<vs_innlet_end> 
   
   //-Shows info of the excluded particles.
   if(nout){
     PartOut+=nout;
-    Log->Printf("  Particles out: %u  (total: %u)",nout,PartOut);
+    if(printnp)Log->Printf("  Particles out: %u  (total out: %u)  -  Current np: %u",nout,PartOut,npok);
+    else       Log->Printf("  Particles out: %u  (total out: %u)",nout,PartOut);
   }
 
   //-Cheks number of excluded particles.
@@ -2090,6 +2254,8 @@ void JSph::SaveData(unsigned npok,const JDataArrays& arrays
   if(SaveDt)SaveDt->SaveData();
   if(GaugeSystem)GaugeSystem->SaveResults(Part);
   if(ChronoObjects)ChronoObjects->SavePart(Part); //<vs_chroono>
+  if(Moorings)Moorings->SaveData(Part);        //<vs_moordyyn>
+  if(ForcePoints)ForcePoints->SaveData(Part);  //<vs_moordyyn>
   if(BoundCorr && BoundCorr->GetUseMotion())BoundCorr->SaveData(Part);  //<vs_innlet>
 }
 
@@ -2175,6 +2341,33 @@ void JSph::SaveMapCellsVtk(float scell)const{
   Log->AddFileInfo(file,"Saves the cell division of the simulation domain.");
   sh.SaveShapeVtk(file,"axis");
 }
+
+//<vs_mddbc_ini>
+//==============================================================================
+/// Saves VTK file with particle data (degug).
+/// Graba fichero VTK con datos de las particulas (degug).
+//==============================================================================
+void JSph::SaveVtkNormals(std::string filename,int numfile,unsigned pini,unsigned pfin
+  ,const tdouble3 *pos,const unsigned *idp,const tfloat3 *boundnormal)const
+{
+  if(JVtkLib::Available()){
+    if(numfile>=0)filename=fun::FileNameSec(filename,numfile);
+    filename=DirOut+filename;
+    const unsigned n=pfin-pini;
+    //-Create array with module of normals.
+    float *normalsize=new float[n];
+    for(unsigned p=0;p<n;p++)normalsize[p]=fgeo::PointDist(boundnormal[p+pini]);
+    //-Generates VTK file.
+    JDataArrays arrays;
+    arrays.AddArray("Pos"       ,n,pos+pini,false);
+    arrays.AddArray("Idp"       ,n,idp+pini,false);
+    arrays.AddArray("Normal"    ,n,boundnormal+pini,false);
+    arrays.AddArray("NormalSize",n,normalsize,false);
+    JVtkLib::SaveVtkData(filename,arrays,"Pos");
+    //-Frees memory.
+    delete[] normalsize; normalsize=NULL;
+  }
+} //<vs_mddbc_end>
 
 //==============================================================================
 /// Adds basic information of resume to hinfo & dinfo.
@@ -2300,9 +2493,24 @@ std::string JSph::GetViscoName(TpVisco tvisco){
 std::string JSph::GetBoundName(TpBoundary tboundary){
   string tx;
   if(tboundary==BC_DBC)tx="DBC";
+  else if(tboundary==BC_MDBC)tx="mDBC"; //<vs_mddbc>
   else tx="???";
   return(tx);
 }
+
+//<vs_mddbc_ini>
+//==============================================================================
+/// Returns name of Slip mode for mDBC in text format.
+/// Devuelve nombre de modo Slip para mDBC en texto.
+//==============================================================================
+std::string JSph::GetSlipName(TpSlipMode tslip){
+  string tx;
+  if(tslip==SLIP_Vel0)tx="DBC vel=0";
+  else if(tslip==SLIP_NoSlip)tx="No-slip";
+  else if(tslip==SLIP_FreeSlip)tx="Free slip";
+  else tx="???";
+  return(tx);
+} //<vs_mddbc_end>
 
 //==============================================================================
 /// Returns name of Density Diffusion Term in text format.
@@ -2312,6 +2520,8 @@ std::string JSph::GetDDTName(TpDensity tdensity){
   string tx;
   if(tdensity==DDT_None)tx="None";
   else if(tdensity==DDT_DDT)tx="Molteni and Colagrossi 2009";
+  else if(tdensity==DDT_DDT2)tx="Fourtakas et al 2019 (inner)";     //<vs_dtt2>
+  else if(tdensity==DDT_DDT2Full)tx="Fourtakas et al 2019 (full)";  //<vs_dtt2>
   else tx="???";
   return(tx);
 }

@@ -206,6 +206,13 @@ JSpacePartBlock_Floating::JSpacePartBlock_Floating(const JSpaceProperties* prope
 {
    TranslationFree=TInt3((!TranslationFree.x? 0: 1),(!TranslationFree.y? 0: 1),(!TranslationFree.z? 0: 1));
    RotationFree   =TInt3((!RotationFree.x? 0: 1),(!RotationFree.y? 0: 1),(!RotationFree.z? 0: 1));
+  #ifdef JSpaceParts_UseLinearv   //<vs_fttvel_ini>
+   LinearVel =(linvel? new JLinearValue(*linvel): NULL); 
+   AngularVel=(angvel? new JLinearValue(*angvel): NULL); 
+  #else                                                  
+   LinearVel=NULL;                                        
+   AngularVel=NULL;
+  #endif                          //<vs_fttvel_end> 
 }
 //==============================================================================
 /// Constructor from XML data.
@@ -213,6 +220,7 @@ JSpacePartBlock_Floating::JSpacePartBlock_Floating(const JSpaceProperties* prope
 JSpacePartBlock_Floating::JSpacePartBlock_Floating(const JSpaceProperties* properties,JXml *sxml,TiXmlElement* ele)
     :JSpacePartBlock(properties,TpPartFloating,"Floating")
 {
+  LinearVel=NULL; AngularVel=NULL; //<vs_fttvel>
   ReadXml(sxml,ele);
 }
 //==============================================================================
@@ -220,6 +228,10 @@ JSpacePartBlock_Floating::JSpacePartBlock_Floating(const JSpaceProperties* prope
 //==============================================================================
 JSpacePartBlock_Floating::~JSpacePartBlock_Floating(){
   DestructorActive=true;
+ #ifdef JSpaceParts_UseLinearv        //<vs_fttvel>
+  delete LinearVel;  LinearVel=NULL;  //<vs_fttvel>
+  delete AngularVel; AngularVel=NULL; //<vs_fttvel>
+ #endif                               //<vs_fttvel>
 }
 
 //==============================================================================
@@ -248,6 +260,18 @@ void JSpacePartBlock_Floating::ReadXml(JXml *sxml,TiXmlElement* ele){
   RotationFree   =TInt3((!RotationFree.x? 0: 1),(!RotationFree.y? 0: 1),(!RotationFree.z? 0: 1));
   LinearVelini =sxml->ReadElementDouble3(ele,(sxml->ExistsElement(ele,"linearvelini" )? "linearvelini" : "velini"  ),true);
   AngularVelini=sxml->ReadElementDouble3(ele,(sxml->ExistsElement(ele,"angularvelini")? "angularvelini": "omegaini"),true);
+  //-Reads imposed velocity. //<vs_fttvel_ini>
+#ifdef JSpaceParts_UseLinearv
+  if(sxml->ExistsElement(ele,"linearvel")){
+    LinearVel=new JLinearValue(3,true);
+    LinearVel->ReadXmlValues(sxml,ele,"linearvel","vel","time:x:y:z");
+  }
+  if(sxml->ExistsElement(ele,"angularvel")){
+    AngularVel=new JLinearValue(3,true);
+    AngularVel->ReadXmlValues(sxml,ele,"angularvel","vel","time:x:y:z");
+  } 
+#endif
+  //<vs_fttvel_end>
 }
 
 //==============================================================================
@@ -272,6 +296,11 @@ TiXmlElement* JSpacePartBlock_Floating::WriteXml(JXml *sxml,TiXmlElement* ele)co
   if(RotationFree   !=TInt3(1))JXml::AddAttribute(sxml->AddElementInt3(ele,"rotationDOF"   ,RotationFree   ),"comment","Use 0 to restrict Degrees Of Freedon for rotation (default=(1,1,1))");
   if(LinearVelini !=TDouble3(0))JXml::AddAttribute(sxml->AddElementDouble3(ele,"linearvelini" ,LinearVelini),"units_comment","m/s");
   if(AngularVelini!=TDouble3(0))JXml::AddAttribute(sxml->AddElementDouble3(ele,"angularvelini",AngularVelini),"units_comment","rad/s");
+#ifdef JSpaceParts_UseLinearv                                                                                                     //<vs_fttvel>
+  //-Writes imposed velocity.                                                                                                     //<vs_fttvel>
+  if(LinearVel )JXml::AddAttribute(LinearVel ->WriteXmlValues(sxml,ele,"linearvel" ,"vel","time:x:y:z"),"units_comment","m/s");   //<vs_fttvel>
+  if(AngularVel)JXml::AddAttribute(AngularVel->WriteXmlValues(sxml,ele,"angularvel","vel","time:x:y:z"),"units_comment","rad/s"); //<vs_fttvel>
+#endif                                                                                                                            //<vs_fttvel>
   return(ele);
 }
 
@@ -685,6 +714,10 @@ void JSpaceParts::VisuParticlesInfo()const{
 //==============================================================================
 bool JSpaceParts::UseImposedFtVel()const{
   bool usevel=false;
+  for(unsigned c=0;c<CountBlocks() && !usevel;c++)if(GetBlock(c).Type==TpPartFloating){ //<vs_fttvel_ini>
+    const JSpacePartBlock_Floating &fblock=(const JSpacePartBlock_Floating &)GetBlock(c);
+    usevel=(fblock.GetLinearVel()!=NULL || fblock.GetAngularVel()!=NULL);
+  } //<vs_fttvel_end>
   return(usevel);
 }
 

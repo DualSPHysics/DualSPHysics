@@ -49,6 +49,8 @@ protected:
     ,unsigned *idp,typecode *code,unsigned *dcell,tdouble3 *pos,tfloat4 *velrhop,tsymatrix3f *spstau,tfloat4 *velrhopm1)const;
   void PeriodicDuplicateSymplectic(unsigned np,unsigned pini,tuint3 cellmax,tdouble3 perinc,const unsigned *listp
     ,unsigned *idp,typecode *code,unsigned *dcell,tdouble3 *pos,tfloat4 *velrhop,tsymatrix3f *spstau,tdouble3 *pospre,tfloat4 *velrhoppre)const;
+  void PeriodicDuplicateNormals(unsigned np,unsigned pini,tuint3 cellmax              //<vs_mddbc>
+    ,tdouble3 perinc,const unsigned *listp,tfloat3 *motionvel,tfloat3 *normals)const; //<vs_mddbc>
   void RunPeriodic();
 
   void RunCellDivide(bool updateperiodic);
@@ -59,6 +61,7 @@ protected:
     ,int &cxini,int &cxfin,int &yini,int &yfin,int &zini,int &zfin)const;
 
   void Interaction_Forces(TpInterStep tinterstep);
+  void BoundCorrection(); //<vs_mddbc>
 
   double ComputeAceMax(unsigned np,const tfloat3* ace,const typecode *code)const;
   template<bool checkperiodic> double ComputeAceMaxSeq(unsigned np,const tfloat3* ace,const typecode *code)const;
@@ -72,6 +75,7 @@ protected:
   void FtCalcForcesSum(unsigned cf,tfloat3 &face,tfloat3 &fomegaace)const;
   void FtCalcForces(StFtoForces *ftoforces)const;
   void FtCalcForcesRes(double dt,const StFtoForces *ftoforces,StFtoForcesRes *ftoforcesres)const;
+  void FtApplyImposedVel(StFtoForcesRes *ftoforcesres)const; //<vs_fttvel>
   void FtApplyConstraints(StFtoForces *ftoforces,StFtoForcesRes *ftoforcesres)const;
   void RunFloating(double dt,bool predictor);
   void RunGaugeSystem(double timestep);
@@ -91,10 +95,9 @@ protected:
   void InOutInit(double timestepini);
   void InOutIgnoreFluidDef(const std::vector<unsigned> &mkfluidlist);
   void InOutCheckProximity(unsigned newnp);
-  void InOutCreateList();
   void InOutComputeStep(double stepdt);
   void InOutCalculeZsurf();
-  void InOutExtrapolateData();
+  void InOutExtrapolateData(unsigned inoutcount,const int *inoutpart);
 
   void BoundCorrectionData();
 //<vs_innlet_end>

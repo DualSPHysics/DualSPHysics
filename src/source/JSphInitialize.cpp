@@ -125,6 +125,166 @@ void JSphInitializeOp_FluidVel::GetConfig(std::vector<std::string> &lines)const{
 }
 
 
+//<vs_mddbc_ini>
+//##############################################################################
+//# JSphInitializeOp_BoundNormalSet
+//##############################################################################
+//==============================================================================
+/// Reads particles information in xml format.
+//==============================================================================
+void JSphInitializeOp_BoundNormalSet::ReadXml(JXml *sxml,TiXmlElement* xele){
+  MkBound=sxml->GetAttributeStr(xele,"mkbound",true);
+  Normal=sxml->ReadElementFloat3(xele,"normal");
+}
+
+//==============================================================================
+/// Initializes data of particles according XML configuration.
+//==============================================================================
+void JSphInitializeOp_BoundNormalSet::Run(unsigned np,unsigned npb,unsigned nbound,const tdouble3 *pos
+  ,const unsigned *idp,const word *mktype,tfloat4 *velrhop,tfloat3 *boundnormal)
+{
+  const char met[]="Run";
+  JRangeFilter rg(MkBound);
+  const bool all=(MkBound.empty());
+  for(unsigned p=0;p<np;p++)if(idp[p]<nbound && ( all || rg.CheckValue(mktype[p]))){
+    boundnormal[p]=Normal;
+  }
+}
+
+//==============================================================================
+/// Returns strings with configuration.
+//==============================================================================
+void JSphInitializeOp_BoundNormalSet::GetConfig(std::vector<std::string> &lines)const{
+  const char met[]="GetConfig";
+  lines.push_back(fun::PrintStr("  Operation: %s",ClassName.substr(17).c_str()));
+  lines.push_back(fun::PrintStr("  MkBound..: %s",(MkBound.empty()? "ALL": MkBound.c_str())));
+  lines.push_back(fun::PrintStr("  Normal...: (%g,%g,%g)",Normal.x,Normal.y,Normal.z));
+}
+
+
+//##############################################################################
+//# JSphInitializeOp_BoundNormalPlane
+//##############################################################################
+//==============================================================================
+/// Reads particles information in xml format.
+//==============================================================================
+void JSphInitializeOp_BoundNormalPlane::ReadXml(JXml *sxml,TiXmlElement* xele){
+  MkBound=sxml->GetAttributeStr(xele,"mkbound",true);
+  Point=sxml->ReadElementFloat3(xele,"point");
+  Normal=sxml->ReadElementFloat3(xele,"normal");
+}
+
+//==============================================================================
+/// Initializes data of particles according XML configuration.
+//==============================================================================
+void JSphInitializeOp_BoundNormalPlane::Run(unsigned np,unsigned npb,unsigned nbound,const tdouble3 *pos
+  ,const unsigned *idp,const word *mktype,tfloat4 *velrhop,tfloat3 *boundnormal)
+{
+  const char met[]="Run";
+  const tplane3d pla=fgeo::PlanePtVec(ToTDouble3(Point),ToTDouble3(Normal));
+  JRangeFilter rg(MkBound);
+  const bool all=(MkBound.empty());
+  for(unsigned p=0;p<np;p++)if(idp[p]<nbound && ( all || rg.CheckValue(mktype[p]))){
+    const tdouble3 pt=fgeo::PlaneOrthogonalPoint(pos[p],pla);
+    boundnormal[p]=ToTFloat3(pt-pos[p]);
+  }
+}
+
+//==============================================================================
+/// Returns strings with configuration.
+//==============================================================================
+void JSphInitializeOp_BoundNormalPlane::GetConfig(std::vector<std::string> &lines)const{
+  const char met[]="GetConfig";
+  lines.push_back(fun::PrintStr("  Operation: %s",ClassName.substr(17).c_str()));
+  lines.push_back(fun::PrintStr("  MkBound..: %s",(MkBound.empty()? "ALL": MkBound.c_str())));
+  lines.push_back(fun::PrintStr("  Point....: (%g,%g,%g)",Point.x,Point.y,Point.z));
+  lines.push_back(fun::PrintStr("  Normal...: (%g,%g,%g)",Normal.x,Normal.y,Normal.z));
+}
+
+
+//##############################################################################
+//# JSphInitializeOp_BoundNormalSphere
+//##############################################################################
+//==============================================================================
+/// Reads particles information in xml format.
+//==============================================================================
+void JSphInitializeOp_BoundNormalSphere::ReadXml(JXml *sxml,TiXmlElement* xele){
+  MkBound=sxml->GetAttributeStr(xele,"mkbound",true);
+  Center=sxml->ReadElementFloat3(xele,"center");
+  Radius=sxml->ReadElementFloat(xele,"radius","v");
+}
+
+//==============================================================================
+/// Initializes data of particles according XML configuration.
+//==============================================================================
+void JSphInitializeOp_BoundNormalSphere::Run(unsigned np,unsigned npb,unsigned nbound,const tdouble3 *pos
+  ,const unsigned *idp,const word *mktype,tfloat4 *velrhop,tfloat3 *boundnormal)
+{
+  const char met[]="Run";
+  const tdouble3 cen=ToTDouble3(Center);
+  JRangeFilter rg(MkBound);
+  const bool all=(MkBound.empty());
+  for(unsigned p=0;p<np;p++)if(idp[p]<nbound && ( all || rg.CheckValue(mktype[p]))){
+    const tdouble3 pt=cen+(fgeo::VecUnitary(pos[p]-cen)*double(Radius));
+    boundnormal[p]=ToTFloat3(pt-pos[p]);
+  }
+}
+
+//==============================================================================
+/// Returns strings with configuration.
+//==============================================================================
+void JSphInitializeOp_BoundNormalSphere::GetConfig(std::vector<std::string> &lines)const{
+  const char met[]="GetConfig";
+  lines.push_back(fun::PrintStr("  Operation: %s",ClassName.substr(17).c_str()));
+  lines.push_back(fun::PrintStr("  MkBound..: %s",(MkBound.empty()? "ALL": MkBound.c_str())));
+  lines.push_back(fun::PrintStr("  Center...: (%g,%g,%g)",Center.x,Center.y,Center.z));
+  lines.push_back(fun::PrintStr("  Radius...: %g",Radius));
+}
+
+
+//##############################################################################
+//# JSphInitializeOp_BoundNormalCylinder
+//##############################################################################
+//==============================================================================
+/// Reads particles information in xml format.
+//==============================================================================
+void JSphInitializeOp_BoundNormalCylinder::ReadXml(JXml *sxml,TiXmlElement* xele){
+  MkBound=sxml->GetAttributeStr(xele,"mkbound",true);
+  Center1=sxml->ReadElementFloat3(xele,"center1");
+  Center2=sxml->ReadElementFloat3(xele,"center2");
+  Radius=sxml->ReadElementFloat(xele,"radius","v");
+}
+
+//==============================================================================
+/// Initializes data of particles according XML configuration.
+//==============================================================================
+void JSphInitializeOp_BoundNormalCylinder::Run(unsigned np,unsigned npb,unsigned nbound,const tdouble3 *pos
+  ,const unsigned *idp,const word *mktype,tfloat4 *velrhop,tfloat3 *boundnormal)
+{
+  const char met[]="Run";
+  const tdouble3 cen1=ToTDouble3(Center1);
+  const tdouble3 cen2=ToTDouble3(Center2);
+  JRangeFilter rg(MkBound);
+  const bool all=(MkBound.empty());
+  for(unsigned p=0;p<np;p++)if(idp[p]<nbound && ( all || rg.CheckValue(mktype[p]))){
+    const tdouble3 cen=fgeo::LineOrthogonalPoint(pos[p],cen1,cen2);
+    const tdouble3 pt=cen+(fgeo::VecUnitary(pos[p]-cen)*double(Radius));
+    boundnormal[p]=ToTFloat3(pt-pos[p]);
+  }
+}
+
+//==============================================================================
+/// Returns strings with configuration.
+//==============================================================================
+void JSphInitializeOp_BoundNormalCylinder::GetConfig(std::vector<std::string> &lines)const{
+  const char met[]="GetConfig";
+  lines.push_back(fun::PrintStr("  Operation: %s",ClassName.substr(17).c_str()));
+  lines.push_back(fun::PrintStr("  MkBound..: %s",(MkBound.empty()? "ALL": MkBound.c_str())));
+  lines.push_back(fun::PrintStr("  Centers..: (%g,%g,%g)-(%g,%g,%g)",Center1.x,Center1.y,Center1.z,Center2.x,Center2.y,Center2.z));
+  lines.push_back(fun::PrintStr("  Radius...: %g",Radius));
+}
+//<vs_mddbc_end>
+
 
 //##############################################################################
 //# JSphInitialize
@@ -187,6 +347,12 @@ void JSphInitialize::ReadXml(JXml *sxml,TiXmlElement* lis){
     if(cmd.length() && cmd[0]!='_'){
       //printf("-----------> [%s]\n",cmd.c_str());
       if(cmd=="fluidvelocity"){ JSphInitializeOp_FluidVel *ope=new JSphInitializeOp_FluidVel(sxml,ele); Opes.push_back(ope); }
+      //<vs_mddbc_ini>
+       else if(cmd=="boundnormal_set"     ){ if(BoundNormals){ JSphInitializeOp_BoundNormalSet      *ope=new JSphInitializeOp_BoundNormalSet     (sxml,ele); Opes.push_back(ope); } }
+       else if(cmd=="boundnormal_plane"   ){ if(BoundNormals){ JSphInitializeOp_BoundNormalPlane    *ope=new JSphInitializeOp_BoundNormalPlane   (sxml,ele); Opes.push_back(ope); } }
+       else if(cmd=="boundnormal_sphere"  ){ if(BoundNormals){ JSphInitializeOp_BoundNormalSphere   *ope=new JSphInitializeOp_BoundNormalSphere  (sxml,ele); Opes.push_back(ope); } }
+       else if(cmd=="boundnormal_cylinder"){ if(BoundNormals){ JSphInitializeOp_BoundNormalCylinder *ope=new JSphInitializeOp_BoundNormalCylinder(sxml,ele); Opes.push_back(ope); } }
+      //<vs_mddbc_end>
       else sxml->ErrReadElement(ele,cmd,false);
     }
     ele=ele->NextSiblingElement();
