@@ -469,6 +469,7 @@ void JNormalsMarrone::ComputeNormalsMarrone(){
       else{
         nor=TDouble3(0);
         for(unsigned cn=0;cn<ndismin;cn++)nor=nor+(vnor[cmin[cn]]*dnor[cmin[cn]]);
+        if(ndismin)nor=nor/double(ndismin);
         nordone=true;
       }
     }

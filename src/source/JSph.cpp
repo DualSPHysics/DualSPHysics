@@ -1375,7 +1375,7 @@ void JSph::RunInitialize(unsigned np,unsigned npb,const tdouble3 *pos,const unsi
 {
   const char met[]="RunInitialize";
   if(!PartBegin){
-    JSphInitialize init(FileXml,boundnormal!=NULL);
+    JSphInitialize init(FileXml,H,boundnormal!=NULL);
     if(init.Count()){
       //-Creates array with mktype value.
       word *mktype=new word[np];

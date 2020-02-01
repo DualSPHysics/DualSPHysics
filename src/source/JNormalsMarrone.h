@@ -30,6 +30,8 @@
 //:# - Genera excepcion cuando no hay datos de normales en el fichero NBI4. (07-08-2019)
 //:# - Cambia uso de JFormatFiles2 por JVtkLib. (12-12-2019)
 //:# - Usa macro para lanzar excepciones. (12-12-2019)
+//:# - Se corrigio un error calculando la normal cuando habia varias opciones 
+//:#   a la misma distancia. (01-02-2020)
 //:#############################################################################
 
 #include "JObject.h"
