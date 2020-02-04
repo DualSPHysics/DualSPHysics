@@ -188,8 +188,8 @@ protected:
   float RhopOutMin;           ///<Minimum limit for Rhopout correction.                                 | Limite minimo para la correccion de RhopOut.
   float RhopOutMax;           ///<Maximum limit for Rhopout correction.                                 | Limite maximo para la correccion de RhopOut.
 
-  double TimeMax;
-  double TimePart;
+  double TimeMax;             ///<Time of simulation.
+  double TimePart;            ///<Time of data.
   JTimeOut *TimeOut;
   int NstepsBreak;           ///<Maximum number of steps allowed (debug).
 

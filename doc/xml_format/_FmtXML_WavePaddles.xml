@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<!-- *** DualSPHysics (08-08-2017) *** -->
+<!-- *** DualSPHysics (04-02-2020) *** -->
 <!-- *** class: JWavePaddles *** -->
 <!------------------------------------------------------------------------------->
 <!------------------------------------------------------------------------------->
@@ -45,6 +45,10 @@
 			<phase value="0" comment="Initial wave phase in function of PI (default=0)" />
 			<ramp value="0" comment="Periods of ramp (default=0)" />
 			<_usefiledata file="PistonFile_WallRegLong.csv" swlmod="-0.266916" comment="Uses motion and elevation from file" />
+			<!-- Each <savemotion> line generates a different file with paddle motion and theoretical elevation and velocity. -->
+			<!-- In <savemotion> when "periods" is not defined, it is automatically calculated accoding to simulation time. -->
+			<!-- In <savemotion> when "periodsteps" is not defined, it is automatically calculated accoding to TimeOut of simulation. -->
+			<savemotion xpos="0" zpos="-0.5" comment="Saves motion data. xpos and zpos are optional. zpos=-depth of the measuring point" />
 			<savemotion periods="24" periodsteps="20" xpos="2" zpos="-0.5" comment="Saves motion data. xpos and zpos are optional. zpos=-depth of the measuring point" />
 		</piston>
 	</wavepaddles>
@@ -67,6 +71,10 @@
 			<gainstroke value="1" comment="Gain factor to amplify/reduce the paddle stroke (default=1)" />
 			<phase value="1" comment="Initial wave phase in function of PI (default=0)" />
 			<ramp value="3" comment="Periods of ramp (default=0)" />
+			<!-- Each <savemotion> line generates a different file with paddle motion and theoretical elevation and velocity. -->
+			<!-- In <savemotion> when "periods" is not defined, it is automatically calculated accoding to simulation time. -->
+			<!-- In <savemotion> when "periodsteps" is not defined, it is automatically calculated accoding to TimeOut of simulation. -->
+			<savemotion xpos="0" zpos="-0.5" comment="Saves motion data. xpos and zpos are optional. zpos=-depth of the measuring point" />
 			<savemotion periods="24" periodsteps="20" xpos="2" zpos="-0.5" comment="Saves motion data. xpos and zpos are optional. zpos=-depth of the measuring point" />
 		</flap>
 	</wavepaddles>
@@ -93,10 +101,14 @@
 			<randomseed value="2" comment="Random seed to initialize a pseudorandom number generator" />
 			<serieini value="0" autofit="true" comment="Initial time in irregular wave serie (default=0 and autofit=false)" />
 			<ramptime value="0" comment="Time of ramp (default=0)" />
-			<savemotion time="10" timedt="0.02" xpos="0.1" zpos="-0.5" comment="Saves motion data. xpos and zpos are optional. zpos=-depth of the measuring point" />
 			<saveserie timemin="0" timemax="300" timedt="0.05" xpos="0" comment="Saves serie data (optional)" />
 			<saveseriewaves timemin="0" timemax="1000" xpos="0" comment="Saves serie heights" />
 			<calcserielength timemax="1000" comment="Calculates serie length (optional)" />
+			<!-- Each <savemotion> line generates a different file with paddle motion and theoretical elevation and velocity. -->
+			<!-- In <savemotion> when "time" is not defined, it is automatically calculated accoding to simulation time. -->
+			<!-- In <savemotion> when "timedt" is not defined, it is automatically calculated accoding to TimeOut of simulation. -->
+			<savemotion xpos="0.1" zpos="-0.5" comment="Saves motion data. xpos and zpos are optional. zpos=-depth of the measuring point" />
+			<savemotion time="10" timedt="0.02" xpos="0.1" zpos="-0.5" comment="Saves motion data. xpos and zpos are optional. zpos=-depth of the measuring point" />
 		</piston_spectrum>
 	</wavepaddles>
 </special>
@@ -123,10 +135,14 @@
 			<randomseed value="2" comment="Random seed to initialize a pseudorandom number generator" />
 			<serieini value="0" autofit="true" comment="Initial time in irregular wave serie (default=0 and autofit=false)" />
 			<ramptime value="0" comment="Time of ramp (default=0)" />
-			<savemotion time="10" timedt="0.02" xpos="0.1" zpos="-0.5" comment="Saves motion data. xpos and zpos are optional. zpos=-depth of the measuring point" />
 			<saveserie timemin="0" timemax="300" timedt="0.05" xpos="0" comment="Saves serie data (optional)" />
 			<saveseriewaves timemin="0" timemax="1000" xpos="0" comment="Saves serie heights" />
 			<calcserielength timemax="1000" comment="Calculates serie length (optional)" />
+			<!-- Each <savemotion> line generates a different file with paddle motion and theoretical elevation and velocity. -->
+			<!-- In <savemotion> when "time" is not defined, it is automatically calculated accoding to simulation time. -->
+			<!-- In <savemotion> when "timedt" is not defined, it is automatically calculated accoding to TimeOut of simulation. -->
+			<savemotion xpos="0.1" zpos="-0.5" comment="Saves motion data. xpos and zpos are optional. zpos=-depth of the measuring point" />
+			<savemotion time="10" timedt="0.02" xpos="0.1" zpos="-0.5" comment="Saves motion data. xpos and zpos are optional. zpos=-depth of the measuring point" />
 		</flap_spectrum>
 	</wavepaddles>
 </special>

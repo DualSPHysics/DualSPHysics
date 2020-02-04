@@ -22,6 +22,9 @@
 //:# - Incluye la aplicacion de TimeMod. (23-04-2018)
 //:# - Ahora devuelve los datos de motion como StMotionData. (11-09-2019)
 //:# - Permite compilar sin libreria WaveGen. (10-12-2019)
+//:# - Usa el valor de gravity de la simuacion. (03-02-2020)
+//:# - Permite configurar varios <savemotion>. (04-02-2020)
+//:# - <savemotion> usa por defecto TimeMax y TimePart de la simulacion. (04-02-2020)
 //:#############################################################################
 
 /// \file JWaveGen.h \brief Declares the class \ref JWaveGen.
@@ -66,7 +69,8 @@ public:
   //==============================================================================
   /// Constructor.
   //==============================================================================
-  JWaveGen(bool useomp,bool usegpu,JLog2* log,std::string dirdata,JXml *sxml,const std::string &place);
+  JWaveGen(bool useomp,bool usegpu,JLog2* log,std::string dirdata,JXml *sxml
+    ,const std::string &place,tdouble3 gravity3);
 
   //==============================================================================
   /// Destructor.
@@ -88,7 +92,7 @@ public:
   /// Prepara movimiento de paddles.
   /// Prepares paddle movement.
   //==============================================================================
-  void Init(JGaugeSystem *gaugesystem,const JSphMk *mkinfo,double timemax,tfloat3 gravity);
+  void Init(JGaugeSystem *gaugesystem,const JSphMk *mkinfo,double timemax,double timepart);
 
   //==============================================================================
   /// Adjust motion paddles for the first simulation instant.

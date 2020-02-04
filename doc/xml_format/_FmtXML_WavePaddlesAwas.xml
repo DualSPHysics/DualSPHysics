@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<!-- *** DualSPHysics (11-03-2018) *** -->
+<!-- *** DualSPHysics (02-02-2020) *** -->
 <!-- *** class: JWaveAwasZsurf *** -->
 <!------------------------------------------------------------------------------->
 <!------------------------------------------------------------------------------->
 <!-- *** Example for AWAS (only for Piston) with regular and irregular waves *** -->
+<!-- Warning: AWAS can only be used when the piston only moves in direction X+. -->
 <special>
 	<wavepaddles>
 		<piston>

@@ -767,7 +767,7 @@ void JSph::LoadCaseConfig(){
     #ifdef OMP_USE_WAVEGEN
       useomp=(omp_get_max_threads()>1);
     #endif
-    WaveGen=new JWaveGen(useomp,!Cpu,Log,DirCase,&xml,"case.execution.special.wavepaddles");
+    WaveGen=new JWaveGen(useomp,!Cpu,Log,DirCase,&xml,"case.execution.special.wavepaddles",ToTDouble3(Gravity));
     if(SphMotion)for(unsigned ref=0;ref<SphMotion->GetNumObjects();ref++){
       const StMotionData& m=SphMotion->GetMotionData(ref);
       WaveGen->ConfigPaddle(m.mkbound,ref,m.idbegin,m.count);
@@ -794,7 +794,7 @@ void JSph::LoadCaseConfig(){
     #ifdef OMP_USE_WAVEGEN
       useomp=(omp_get_max_threads()>1);
     #endif
-    RelaxZones=new JRelaxZones(useomp,!Cpu,Log,DirCase,CaseNfloat>0,CaseNbound);
+    RelaxZones=new JRelaxZones(useomp,!Cpu,Log,DirCase,CaseNfloat>0,CaseNbound,ToTDouble3(Gravity));
     RelaxZones->LoadXml(&xml,"case.execution.special.relaxationzones");
   }//<vs_rzone_end>
 
@@ -1728,7 +1728,7 @@ void JSph::InitRun(unsigned np,const unsigned *idp,const tdouble3 *pos){
   //-Prepares WaveGen configuration.
   if(WaveGen){
     Log->Print("Wave paddles configuration:");
-    WaveGen->Init(GaugeSystem,MkInfo,TimeMax,Gravity);
+    WaveGen->Init(GaugeSystem,MkInfo,TimeMax,TimePart);
     WaveGen->VisuConfig(""," ");
   }
 
@@ -1742,7 +1742,7 @@ void JSph::InitRun(unsigned np,const unsigned *idp,const tdouble3 *pos){
   //-Prepares RelaxZones configuration.  //<vs_rzone_ini>
   if(RelaxZones){
     Log->Print("Relaxation Zones configuration:");
-    RelaxZones->Init(DirCase,TimeMax,Dp,Gravity);
+    RelaxZones->Init(DirCase,TimeMax,Dp);
     RelaxZones->VisuConfig(""," ");
   }  //<vs_rzone_end>
 

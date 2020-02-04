@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<!-- *** DualSPHysics (02-04-2019) *** -->
+<!-- *** DualSPHysics (04-02-2020) *** -->
 <!-- *** class: JWavePaddles (only solitary waves) *** -->
 <!------------------------------------------------------------------------------->
 <!------------------------------------------------------------------------------->
@@ -47,6 +47,10 @@
 			<startcoef3 value="0.7" comment="Defines start of next wave according to period of previous wave. (def=value of previous wave)" />
 			<_durationcoef3 value="1.1" comment="Coefficient of movement duration for 3rd wave (def=value of previous wave)" />
 			<_waveheight3 value="0.05" comment="Wave height for 3rd wave (def=value of previous wave" />
+			<!-- Each <savemotion> line generates a different file with paddle motion and theoretical elevation. -->
+			<!-- In <savemotion> when "time" is not defined, it is automatically calculated accoding to simulation time. -->
+			<!-- In <savemotion> when "timedt" is not defined, it is automatically calculated accoding to TimeOut of simulation. -->
+			<savemotion xpos="10" comment="Saves motion data. xpos is optional for elevation calculation" />
 			<savemotion time="16" timedt="0.02" xpos="18" comment="Saves motion data. xpos is optional for elevation calculation" />
 		</piston_solitary>
 	</wavepaddles>

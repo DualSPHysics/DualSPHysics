@@ -60,7 +60,7 @@ class JRelaxZones : protected JObject
 {
 public:
   JRelaxZones(bool useomp,bool usegpu,JLog2* log,std::string dirdata
-    ,bool withfloatings,unsigned fluidbeginidp){}
+    ,bool withfloatings,unsigned fluidbeginidp,tdouble3 gravity3){}
   ~JRelaxZones(){}
   void Reset(){}
   static bool Available(){ return(false); }
@@ -68,7 +68,7 @@ public:
   void LoadFileXml(const std::string &filexml,const std::string &place){}
   void LoadXml(JXml *sxml,const std::string &place){}
 
-  void Init(std::string dircase,double timemax,double dp,tfloat3 gravity){}
+  void Init(std::string dircase,double timemax,double dp){}
 
   void VisuConfig(std::string txhead,std::string txfoot){}
 
@@ -93,6 +93,7 @@ private:
   const std::string DirData;
   const bool WithFloatings;
   const unsigned FluidBeginIdp; ///<Idp for first fluid particle.
+  const double Gravity;    ///<Gravity value (always positive).
 
   std::vector<JRelaxZone*> List;
   std::vector<JRelaxZoneExternal*> ListExternal; //-For external velocity (SWASH).
@@ -106,7 +107,7 @@ private:
 
 public:
   JRelaxZones(bool useomp,bool usegpu,JLog2* log,std::string dirdata
-    ,bool withfloatings,unsigned fluidbeginidp);
+    ,bool withfloatings,unsigned fluidbeginidp,tdouble3 gravity3);
   ~JRelaxZones();
   void Reset();
   static bool Available(){ return(true); }
@@ -114,7 +115,7 @@ public:
   void LoadFileXml(const std::string &filexml,const std::string &place);
   void LoadXml(JXml *sxml,const std::string &place);
 
-  void Init(std::string dircase,double timemax,double dp,tfloat3 gravity);
+  void Init(std::string dircase,double timemax,double dp);
 
   void VisuConfig(std::string txhead,std::string txfoot);
 

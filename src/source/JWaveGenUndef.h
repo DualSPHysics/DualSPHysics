@@ -31,11 +31,11 @@ class JWaveGen
 {
 public:
   StMotionData MotionData;
-  JWaveGen(bool useomp,bool usegpu,JLog2* log,std::string dirdata,JXml *sxml,const std::string &place){}
+  JWaveGen(bool useomp,bool usegpu,JLog2* log,std::string dirdata,JXml *sxml,const std::string &place,tdouble3 gravity3){}
   ~JWaveGen(){}
   static bool Available(){ return(false); }
   bool ConfigPaddle(word mkbound,word motionref,unsigned idbegin,unsigned np){ return(false); }
-  void Init(JGaugeSystem *gaugesystem,const JSphMk *mkinfo,double timemax,tfloat3 gravity){}
+  void Init(JGaugeSystem *gaugesystem,const JSphMk *mkinfo,double timemax,double timepart){}
   void SetTimeMod(double timemod){}
   void VisuConfig(std::string txhead,std::string txfoot){}
   const StMotionData& GetMotion(bool svdata,unsigned cp,double timestep,double dt){ return(MotionData); }
