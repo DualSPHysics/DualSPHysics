@@ -408,8 +408,9 @@ void JLinearValue::ReadXmlValues(JXml *sxml,TiXmlElement* ele,std::string name
           if(SpecialValues){
             unsigned idx=UINT_MAX;
             for(unsigned ca=0;ca<Nvalues;ca++){
-              double v=sxml->GetAttributeDouble(elet,attr[ca+1],true,DBL_MAX);
-              if(!v && fun::StrLower(sxml->GetAttributeStr(elet,attr[ca+1]))=="none")v=DBL_MAX;
+              double v=0;
+              if(fun::StrLower(sxml->GetAttributeStr(elet,attr[ca+1],true))=="none")v=DBL_MAX;
+              else v=sxml->GetAttributeDouble(elet,attr[ca+1],true,DBL_MAX);
               if(idx==UINT_MAX)idx=AddTimeValue(t,v);
               else SetValue(idx,ca,v);
             }

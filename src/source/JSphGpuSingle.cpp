@@ -465,9 +465,6 @@ void JSphGpuSingle::Interaction_Forces(TpInterStep interstep){
   if(Deltag)cusph::AddDelta(Np-Npb,Deltag+Npb,Arg+Npb);//-Adds the Delta-SPH correction for the density. | Añade correccion de Delta-SPH a Arg[]. 
   Check_CudaErroor("Failed while executing kernels of interaction.");
 
-  //-Reset interpolation varibles (ace,ar,shiftpos) over inout particles.                  //<vs_innlet>
-  if(InOut)InOut->ClearInteractionVarsGpu(Np-Npb,Npb,Codeg,Aceg,Arg,ViscDtg,ShiftPosfsg);  //<vs_innlet>
-
   //-Calculates maximum value of ViscDt.
   if(Np)ViscDtMax=cusph::ReduMaxFloat(Np,0,ViscDtg,CellDivSingle->GetAuxMem(cusph::ReduMaxFloatSize(Np)));
   //-Calculates maximum value of Ace (periodic particles are ignored). ViscDtg is used like auxiliary memory.
@@ -496,9 +493,10 @@ void JSphGpuSingle::BoundCorrection(){
 /// Devuelve valor maximo de (ace.x^2 + ace.y^2 + ace.z^2) a partir de Acec[].
 //==============================================================================
 double JSphGpuSingle::ComputeAceMax(float *auxmem){
+  const bool check=(PeriActive!=0 || InOut!=NULL);
   float acemax=0;
   const unsigned npf=Np-Npb;
-  if(!PeriActive)cusph::ComputeAceMod(npf,Aceg+Npb,auxmem);//-Without periodic conditions. | Sin condiciones periodicas.                                                               //<vs_no_innlet>
+  if(!check)cusph::ComputeAceMod(npf,Aceg+Npb,auxmem);//-Without periodic conditions. | Sin condiciones periodicas.                                                               //<vs_no_innlet>
   else cusph::ComputeAceMod(npf,Codeg+Npb,Aceg+Npb,auxmem);//-With periodic conditions ignores the periodic particles. | Con condiciones periodicas ignora las particulas periodicas.  //<vs_no_innlet>
   if(npf)acemax=cusph::ReduMaxFloat(npf,0,auxmem,CellDivSingle->GetAuxMem(cusph::ReduMaxFloatSize(npf)));
   return(sqrt(double(acemax)));

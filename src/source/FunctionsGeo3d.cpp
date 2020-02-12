@@ -83,6 +83,7 @@ float LineOrthogonalPointFromPr1(const tfloat3 &pt,const tfloat3 &pr1,const tflo
 }
 
 
+
 //==============================================================================
 /// Devuelve el plano formado por 3 puntos. La normal es (a,b,c)
 /// Returns the plane defined by 3 points. The normal is (a,b,c)

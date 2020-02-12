@@ -905,6 +905,7 @@ void JSphGpu::PosInteraction_Forces(){
 void JSphGpu::ComputeVerlet(double dt){  //pdtedom
   TmgStart(Timers,TMG_SuComputeStep);
   const bool shift=(ShiftingMode!=SHIFT_None);
+  const bool inout=(InOut!=NULL);
   VerletStep++;
   //-Allocates memory to compute the displacement.
   //-Asigna memoria para calcular el desplazamiento.
@@ -913,11 +914,11 @@ void JSphGpu::ComputeVerlet(double dt){  //pdtedom
   //-Computes displacement, velocity and density.
   //-Calcula desplazamiento, velocidad y densidad.
   if(VerletStep<VerletSteps){
-    cusphs::ComputeStepVerlet(WithFloating,shift,Np,Npb,Velrhopg,VelrhopM1g,Arg
+    cusphs::ComputeStepVerlet(WithFloating,shift,inout,Np,Npb,Velrhopg,VelrhopM1g,Arg
       ,Aceg,ShiftPosfsg,dt,dt+dt,RhopZero,RhopOutMin,RhopOutMax,Gravity,Codeg,movxyg,movzg,VelrhopM1g,NULL);
   }
   else{
-    cusphs::ComputeStepVerlet(WithFloating,shift,Np,Npb,Velrhopg,Velrhopg,Arg
+    cusphs::ComputeStepVerlet(WithFloating,shift,inout,Np,Npb,Velrhopg,Velrhopg,Arg
       ,Aceg,ShiftPosfsg,dt,dt,RhopZero,RhopOutMin,RhopOutMax,Gravity,Codeg,movxyg,movzg,VelrhopM1g,NULL);
     VerletStep=0;
   }
@@ -939,7 +940,8 @@ void JSphGpu::ComputeVerlet(double dt){  //pdtedom
 //==============================================================================
 void JSphGpu::ComputeSymplecticPre(double dt){
   TmgStart(Timers,TMG_SuComputeStep);
-  const bool shift=(ShiftingMode!=SHIFT_None);
+  const bool shift=false; //(ShiftingMode!=SHIFT_None); //-We strongly recommend running the shifting correction only for the corrector. If you want to re-enable shifting in the predictor, change the value here to "true".
+  const bool inout=(InOut!=NULL);
   //-Allocates memory to PRE variables.
   PosxyPreg=ArraysGpu->ReserveDouble2();
   PoszPreg=ArraysGpu->ReserveDouble();
@@ -954,7 +956,7 @@ void JSphGpu::ComputeSymplecticPre(double dt){
   double *movzg=ArraysGpu->ReserveDouble();
   //-Compute displacement, velocity and density.
   const double dt05=dt*.5;
-  cusphs::ComputeStepSymplecticPre(WithFloating,shift,Np,Npb,VelrhopPreg,Arg
+  cusphs::ComputeStepSymplecticPre(WithFloating,shift,inout,Np,Npb,VelrhopPreg,Arg
     ,Aceg,ShiftPosfsg,dt05,RhopZero,RhopOutMin,RhopOutMax,Gravity,Codeg,movxyg,movzg,Velrhopg,NULL);
   //-Applies displacement to non-periodic fluid particles.
   //-Aplica desplazamiento a las particulas fluid no periodicas.
@@ -976,12 +978,13 @@ void JSphGpu::ComputeSymplecticPre(double dt){
 void JSphGpu::ComputeSymplecticCorr(double dt){
   TmgStart(Timers,TMG_SuComputeStep);
   const bool shift=(ShiftingMode!=SHIFT_None);
+  const bool inout=(InOut!=NULL);
   //-Allocates memory to calculate the displacement.
   double2 *movxyg=ArraysGpu->ReserveDouble2();
   double *movzg=ArraysGpu->ReserveDouble();
   //-Computes displacement, velocity and density.
   const double dt05=dt*.5;
-  cusphs::ComputeStepSymplecticCor(WithFloating,shift,Np,Npb,VelrhopPreg
+  cusphs::ComputeStepSymplecticCor(WithFloating,shift,inout,Np,Npb,VelrhopPreg
     ,Arg,Aceg,ShiftPosfsg,dt05,dt,RhopZero,RhopOutMin,RhopOutMax,Gravity,Codeg,movxyg,movzg,Velrhopg,NULL);
   //-Applies displacement to non-periodic fluid particles.
   //-Aplica desplazamiento a las particulas fluid no periodicas.

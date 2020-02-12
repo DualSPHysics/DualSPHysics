@@ -57,6 +57,7 @@
 //:# - Nuevas funciones: PointInMinMax(). (01-12-2019)
 //:# - Error corregido en PolygonConcave(). (05-12-2019)
 //:# - Nuevas funciones: PlanePointsIn(). (17-12-2019)
+//:# - Nuevas funciones: PointsLower(), PointsSortLower(). (11-02-2020)
 //:#############################################################################
 
 /// \file FunctionsGeo3d.h \brief Declares geometry functions for 3D.
@@ -133,6 +134,42 @@ inline bool PointInMinMax(const tdouble3 &pt,const tdouble3 &pmin,const tdouble3
 //==============================================================================
 inline bool PointInMinMax(const tfloat3 &pt,const tfloat3 &pmin,const tfloat3 &pmax){
   return(pmin.x<=pt.x && pmin.y<=pt.y && pmin.z<=pt.z && pt.x<=pmax.x && pt.y<=pmax.x && pt.z<=pmax.z);
+}
+
+
+//==============================================================================
+/// Devuelve verdadero cuando el punto a es menor que el b segun (z,y,x).
+/// Returns true when point a is lower than point b according to (z,y,x).
+//==============================================================================
+inline bool PointsLower(const tfloat3 &a,const tfloat3 b){
+  return((a.z<b.z) || (a.z==b.z && a.y<=b.y) || (a.z==b.z && a.y==b.y && a.x<=b.x));
+}
+//==============================================================================
+/// Devuelve verdadero cuando el punto a es menor que el b segun (z,y,x).
+/// Returns true when point a is lower than point b according to (z,y,x).
+//==============================================================================
+inline bool PointsLower(const tdouble3 &a,const tdouble3 b){
+  return((a.z<b.z) || (a.z==b.z && a.y<=b.y) || (a.z==b.z && a.y==b.y && a.x<=b.x));
+}
+
+
+//==============================================================================
+/// Reordena puntos de menor a mayor segun (z,y,x).
+/// Reorders points from lowest to highest according to (z,y,x).
+//==============================================================================
+inline bool PointsSortLower(tfloat3 &a,tfloat3 &b){
+  const bool sort=PointsLower(b,a);
+  if(sort){ tfloat3 p=a; a=b; b=p; }
+  return(sort);
+}
+//==============================================================================
+/// Reordena puntos de menor a mayor segun (z,y,x).
+/// Reorders points from lowest to highest according to (z,y,x).
+//==============================================================================
+inline bool PointsSortLower(tdouble3 &a,tdouble3 &b){
+  const bool sort=PointsLower(b,a);
+  if(sort){ tdouble3 p=a; a=b; b=p; }
+  return(sort);
 }
 
 
@@ -437,6 +474,8 @@ inline tfloat3 LineNearestPoint(const tfloat3 &pt,const tfloat3 &pr1,const tfloa
   if(t>=1.0)return(pr2);
   return(pr1+((pr2-pr1)*t));
 }
+
+
 
 //==============================================================================
 /// Devuelve el plano formado por 3 puntos.

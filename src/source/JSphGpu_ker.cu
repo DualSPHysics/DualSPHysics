@@ -260,7 +260,8 @@ __global__ void KerComputeAceMod(unsigned n,const typecode *code,const float3 *a
 {
   unsigned p=blockIdx.y*gridDim.x*blockDim.x + blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
   if(p<n){
-    const float3 r=(CODE_IsNormal(code[p])? ace[p]: make_float3(0,0,0));
+    const typecode rcod=code[p];
+    const float3 r=(CODE_IsNormal(rcod) && !CODE_IsFluidInout(rcod)? ace[p]: make_float3(0,0,0));
     acemod[p]=r.x*r.x+r.y*r.y+r.z*r.z;
   }
 }

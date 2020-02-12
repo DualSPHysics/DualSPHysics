@@ -2229,39 +2229,6 @@ void JSphInOut::UpdateVelrhopM1Gpu(unsigned inoutcount,const int *inoutpartg
 
 
 //==============================================================================
-/// Reset interaction varibles (ace,ar,shiftpos) over inout particles.
-/// Pone a cero las variables de la interaccion (ace,ar,shiftpos) de las particulas inout.
-//==============================================================================
-void JSphInOut::ClearInteractionVarsCpu(unsigned npf,unsigned pini,const typecode *code
-  ,tfloat3 *ace,float *ar,tfloat4 *shiftposfs)
-{
-  if(ace==NULL || ar==NULL)Run_Exceptioon("Some pointer is NULL.");
-  const int ini=int(pini),fin=ini+int(npf);
-  #ifdef OMP_USE
-    #pragma omp parallel for schedule (static)
-  #endif
-  for(int p=ini;p<fin;p++)if(CODE_IsFluidInout(code[p])){
-    ace[p]=TFloat3(0);
-    ar[p]=0;
-    if(shiftposfs)shiftposfs[p]=TFloat4(0);
-  }
-}
-
-#ifdef _WITHGPU
-//==============================================================================
-/// Reset interaction varibles (ace,ar,shiftpos) over inout particles.
-/// Pone a cero las variables de la interaccion (ace,ar,shiftpos) de las particulas inout.
-//==============================================================================
-void JSphInOut::ClearInteractionVarsGpu(unsigned npf,unsigned pini,const typecode *codeg
-    ,float3 *aceg,float *arg,float *viscdtg,float4 *shiftposfsg)
-{
-  if(aceg==NULL || arg==NULL || viscdtg==NULL)Run_Exceptioon("Some pointer is NULL.");
-  cusphinout::InoutClearInteractionVars(npf,pini,codeg,aceg,arg,viscdtg,shiftposfsg);
-}
-#endif
-
-
-//==============================================================================
 /// Shows object configuration using Log.
 //==============================================================================
 void JSphInOut::VisuConfig(std::string txhead,std::string txfoot)const{

@@ -1484,7 +1484,7 @@ void JSphCpu::UpdatePos(tdouble3 rpos,double movx,double movy,double movz
 /// Calculate new values of position, velocity & density for fluid (using Verlet).
 /// Calcula nuevos valores de posicion, velocidad y densidad para el fluido (usando Verlet).
 //==============================================================================
-template<bool shift> void JSphCpu::ComputeVerletVarsFluid(
+void JSphCpu::ComputeVerletVarsFluid(bool shift,
   const tfloat4 *velrhop1,const tfloat4 *velrhop2,double dt,double dt2
   ,tdouble3 *pos,unsigned *dcell,typecode *code,tfloat4 *velrhopnew)const
 {
@@ -1499,7 +1499,7 @@ template<bool shift> void JSphCpu::ComputeVerletVarsFluid(
     const float rhopnew=float(double(velrhop2[p].w)+dt2*Arc[p]);
     if(!WithFloating || CODE_IsFluid(code[p])){//-Fluid Particles.
       const tdouble3 acegr=ToTDouble3(Acec[p])+gravity; //-Adds gravity.
-      //-Calculate displacement and update position. | Calcula desplazamiento y actualiza posicion.
+      //-Calculate displacement. | Calcula desplazamiento.
       double dx=double(velrhop1[p].x)*dt + acegr.x*dt205;
       double dy=double(velrhop1[p].y)*dt + acegr.y*dt205;
       double dz=double(velrhop1[p].z)*dt + acegr.z*dt205;
@@ -1508,13 +1508,24 @@ template<bool shift> void JSphCpu::ComputeVerletVarsFluid(
         dy+=double(ShiftPosfsc[p].y);
         dz+=double(ShiftPosfsc[p].z);
       }
-      bool outrhop=(rhopnew<RhopOutMin||rhopnew>RhopOutMax);
+      bool outrhop=(rhopnew<RhopOutMin || rhopnew>RhopOutMax);
+      //-Calculate velocity & density. | Calcula velocidad y densidad.
+      tfloat4 rvelrhopnew=TFloat4(
+        float(double(velrhop2[p].x) + acegr.x*dt2),
+        float(double(velrhop2[p].y) + acegr.y*dt2),
+        float(double(velrhop2[p].z) + acegr.z*dt2),
+        rhopnew);
+      //-Restore data of inout particles.
+      if(InOut && CODE_IsFluidInout(Codec[p])){
+        dx=double(velrhop1[p].x)*dt;
+        dy=double(velrhop1[p].y)*dt;
+        dz=double(velrhop1[p].z)*dt;
+        outrhop=false;
+        rvelrhopnew=velrhop2[p];
+      }
+      //-Update particle data.
       UpdatePos(pos[p],dx,dy,dz,outrhop,p,pos,dcell,code);
-      //-Update velocity & density. | Actualiza velocidad y densidad.
-      velrhopnew[p].x=float(double(velrhop2[p].x) + acegr.x*dt2);
-      velrhopnew[p].y=float(double(velrhop2[p].y) + acegr.y*dt2);
-      velrhopnew[p].z=float(double(velrhop2[p].z) + acegr.z*dt2);
-      velrhopnew[p].w=rhopnew;
+      velrhopnew[p]=rvelrhopnew;
     }
     else{//-Floating Particles.
       velrhopnew[p]=velrhop1[p];
@@ -1547,16 +1558,15 @@ void JSphCpu::ComputeVelrhopBound(const tfloat4* velrhopold,double armul,tfloat4
 //==============================================================================
 void JSphCpu::ComputeVerlet(double dt){
   TmcStart(Timers,TMC_SuComputeStep);
+  const bool shift=(Shifting!=NULL);
   VerletStep++;
   if(VerletStep<VerletSteps){
     const double twodt=dt+dt;
-    if(Shifting)ComputeVerletVarsFluid<true>  (Velrhopc,VelrhopM1c,dt,twodt,Posc,Dcellc,Codec,VelrhopM1c);
-    else        ComputeVerletVarsFluid<false> (Velrhopc,VelrhopM1c,dt,twodt,Posc,Dcellc,Codec,VelrhopM1c);
+    ComputeVerletVarsFluid(shift,Velrhopc,VelrhopM1c,dt,twodt,Posc,Dcellc,Codec,VelrhopM1c);
     ComputeVelrhopBound(VelrhopM1c,twodt,VelrhopM1c);
   }
   else{
-    if(Shifting)ComputeVerletVarsFluid<true>  (Velrhopc,Velrhopc,dt,dt,Posc,Dcellc,Codec,VelrhopM1c);
-    else        ComputeVerletVarsFluid<false> (Velrhopc,Velrhopc,dt,dt,Posc,Dcellc,Codec,VelrhopM1c);
+    ComputeVerletVarsFluid(shift,Velrhopc,Velrhopc,dt,dt,Posc,Dcellc,Codec,VelrhopM1c);
     ComputeVelrhopBound(Velrhopc,dt,VelrhopM1c);
     VerletStep=0;
   }
@@ -1570,16 +1580,8 @@ void JSphCpu::ComputeVerlet(double dt){
 /// Actualizacion de particulas segun fuerzas y dt usando Symplectic-Predictor.
 //==============================================================================
 void JSphCpu::ComputeSymplecticPre(double dt){
-  if(Shifting)ComputeSymplecticPreT<false>(dt); //-We strongly recommend running the shifting correction only for the corrector. If you want to re-enable shifting in the predictor, change the value here to "true".
-  else        ComputeSymplecticPreT<false>(dt);
-}
-
-//==============================================================================
-/// Update of particles according to forces and dt using Symplectic-Predictor.
-/// Actualizacion de particulas segun fuerzas y dt usando Symplectic-Predictor.
-//==============================================================================
-template<bool shift> void JSphCpu::ComputeSymplecticPreT(double dt){
   TmcStart(Timers,TMC_SuComputeStep);
+  const bool shift=false; //(ShiftingMode!=SHIFT_None); //-We strongly recommend running the shifting correction only for the corrector. If you want to re-enable shifting in the predictor, change the value here to "true".
   //-Assign memory to variables Pre. | Asigna memoria a variables Pre.
   PosPrec=ArraysCpu->ReserveDouble3();
   VelrhopPrec=ArraysCpu->ReserveFloat4();
@@ -1609,7 +1611,7 @@ template<bool shift> void JSphCpu::ComputeSymplecticPreT(double dt){
     //-Calculate density.
     const float rhopnew=float(double(VelrhopPrec[p].w)+dt05*Arc[p]);
     if(!WithFloating || CODE_IsFluid(Codec[p])){//-Fluid Particles.
-      //-Calculate displacement & update position. | Calcula desplazamiento y actualiza posicion.
+      //-Calculate displacement. | Calcula desplazamiento.
       double dx=double(VelrhopPrec[p].x)*dt05;
       double dy=double(VelrhopPrec[p].y)*dt05;
       double dz=double(VelrhopPrec[p].z)*dt05;
@@ -1618,13 +1620,21 @@ template<bool shift> void JSphCpu::ComputeSymplecticPreT(double dt){
         dy+=double(ShiftPosfsc[p].y);
         dz+=double(ShiftPosfsc[p].z);
       }
-      bool outrhop=(rhopnew<RhopOutMin||rhopnew>RhopOutMax);
+      bool outrhop=(rhopnew<RhopOutMin || rhopnew>RhopOutMax);
+      //-Calculate velocity & density. | Calcula velocidad y densidad.
+      tfloat4 rvelrhopnew=TFloat4(
+        float(double(VelrhopPrec[p].x) + (double(Acec[p].x)+Gravity.x) * dt05),
+        float(double(VelrhopPrec[p].y) + (double(Acec[p].y)+Gravity.y) * dt05),
+        float(double(VelrhopPrec[p].z) + (double(Acec[p].z)+Gravity.z) * dt05),
+        rhopnew);
+      //-Restore data of inout particles.
+      if(InOut && CODE_IsFluidInout(Codec[p])){
+        outrhop=false;
+        rvelrhopnew=VelrhopPrec[p];
+      }
+      //-Update particle data.
       UpdatePos(PosPrec[p],dx,dy,dz,outrhop,p,Posc,Dcellc,Codec);
-      //-Update velocity & density. | Actualiza velocidad y densidad.
-      Velrhopc[p].x=float(double(VelrhopPrec[p].x) + (double(Acec[p].x)+Gravity.x) * dt05);
-      Velrhopc[p].y=float(double(VelrhopPrec[p].y) + (double(Acec[p].y)+Gravity.y) * dt05);
-      Velrhopc[p].z=float(double(VelrhopPrec[p].z) + (double(Acec[p].z)+Gravity.z) * dt05);
-      Velrhopc[p].w=rhopnew;
+      Velrhopc[p]=rvelrhopnew;
     }
     else{//-Floating Particles.
       Velrhopc[p]=VelrhopPrec[p];
@@ -1645,16 +1655,8 @@ template<bool shift> void JSphCpu::ComputeSymplecticPreT(double dt){
 /// Actualizacion de particulas segun fuerzas y dt usando Symplectic-Corrector.
 //==============================================================================
 void JSphCpu::ComputeSymplecticCorr(double dt){
-  if(Shifting)ComputeSymplecticCorrT<true> (dt);
-  else        ComputeSymplecticCorrT<false>(dt);
-}
-
-//==============================================================================
-/// Update particles according to forces and dt using Symplectic-Corrector.
-/// Actualizacion de particulas segun fuerzas y dt usando Symplectic-Corrector.
-//==============================================================================
-template<bool shift> void JSphCpu::ComputeSymplecticCorrT(double dt){
   TmcStart(Timers,TMC_SuComputeStep);
+  const bool shift=(Shifting!=NULL);
   
   //-Calculate rhop of boudary and set velocity=0. | Calcula rhop de contorno y vel igual a cero.
   const int npb=int(Npb);
@@ -1677,22 +1679,33 @@ template<bool shift> void JSphCpu::ComputeSymplecticCorrT(double dt){
     const double epsilon_rdot=(-double(Arc[p])/double(Velrhopc[p].w))*dt;
     const float rhopnew=float(double(VelrhopPrec[p].w) * (2.-epsilon_rdot)/(2.+epsilon_rdot));
     if(!WithFloating || CODE_IsFluid(Codec[p])){//-Fluid Particles.
-      //-Update velocity & density. | Actualiza velocidad y densidad.
-      Velrhopc[p].x=float(double(VelrhopPrec[p].x) + (double(Acec[p].x)+Gravity.x) * dt); 
-      Velrhopc[p].y=float(double(VelrhopPrec[p].y) + (double(Acec[p].y)+Gravity.y) * dt); 
-      Velrhopc[p].z=float(double(VelrhopPrec[p].z) + (double(Acec[p].z)+Gravity.z) * dt); 
-      Velrhopc[p].w=rhopnew;
-      //-Calculate displacement and update position. | Calcula desplazamiento y actualiza posicion.
-      double dx=(double(VelrhopPrec[p].x)+double(Velrhopc[p].x)) * dt05; 
-      double dy=(double(VelrhopPrec[p].y)+double(Velrhopc[p].y)) * dt05; 
-      double dz=(double(VelrhopPrec[p].z)+double(Velrhopc[p].z)) * dt05;
+      //-Calculate velocity & density. | Calcula velocidad y densidad.
+      tfloat4 rvelrhopnew=TFloat4(
+        float(double(VelrhopPrec[p].x) + (double(Acec[p].x)+Gravity.x) * dt), 
+        float(double(VelrhopPrec[p].y) + (double(Acec[p].y)+Gravity.y) * dt), 
+        float(double(VelrhopPrec[p].z) + (double(Acec[p].z)+Gravity.z) * dt),
+        rhopnew);
+      //-Calculate displacement. | Calcula desplazamiento.
+      double dx=(double(VelrhopPrec[p].x)+double(rvelrhopnew.x)) * dt05; 
+      double dy=(double(VelrhopPrec[p].y)+double(rvelrhopnew.y)) * dt05; 
+      double dz=(double(VelrhopPrec[p].z)+double(rvelrhopnew.z)) * dt05;
       if(shift){
         dx+=double(ShiftPosfsc[p].x);
         dy+=double(ShiftPosfsc[p].y);
         dz+=double(ShiftPosfsc[p].z);
       }
-      bool outrhop=(rhopnew<RhopOutMin||rhopnew>RhopOutMax);
+      bool outrhop=(rhopnew<RhopOutMin || rhopnew>RhopOutMax);
+      //-Restore data of inout particles.
+      if(InOut && CODE_IsFluidInout(Codec[p])){
+        rvelrhopnew=VelrhopPrec[p];
+        dx=(double(rvelrhopnew.x)+double(rvelrhopnew.x)) * dt05; 
+        dy=(double(rvelrhopnew.y)+double(rvelrhopnew.y)) * dt05; 
+        dz=(double(rvelrhopnew.z)+double(rvelrhopnew.z)) * dt05;
+        outrhop=false;
+      }
+      //-Update particle data.
       UpdatePos(PosPrec[p],dx,dy,dz,outrhop,p,Posc,Dcellc,Codec);
+      Velrhopc[p]=rvelrhopnew;
     }
     else{//-Floating Particles.
       Velrhopc[p]=VelrhopPrec[p];

@@ -37,6 +37,7 @@
 //:# - El uso de valores especiales se establece en el constructor. (25-02-2019)
 //:# - Permite cargar datos directamente del XML. (26-02-2019)
 //:# - Amplia SIZEMAX por defecto de 200k a 20M. (21-10-2019)
+//:# - Error corregido cuando se cargaban valores none del XML. (08-02-2020)
 //:#############################################################################
 
 #include "JObject.h"

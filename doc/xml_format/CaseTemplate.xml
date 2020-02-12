@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<case app="GenCase4 v4.0.145 (01-02-2020)" date="04-02-2020 16:08:47">
-    <casedef requiredversion="v4.0.145">
+<case app="GenCase4 v4.0.147 (11-02-2020)" date="12-02-2020 20:30:50">
+    <casedef requiredversion="v4.0.147">
         <constantsdef>
             <lattice bound="2" fluid="1" />
             <gravity x="0" y="0" z="-9.81" comment="Gravitational acceleration" units_comment="m/s^2" />

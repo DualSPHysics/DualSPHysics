@@ -567,9 +567,6 @@ void JSphCpuSingle::Interaction_Forces(TpInterStep interstep){
     for(int p=ini;p<fin;p++)if(Deltac[p]!=FLT_MAX)Arc[p]+=Deltac[p];
   }
 
-  //-Reset interpolation varibles (ace,ar,shiftpos) over inout particles.         //<vs_innlet>
-  if(InOut)InOut->ClearInteractionVarsCpu(Np-Npb,Npb,Codec,Acec,Arc,ShiftPosfsc); //<vs_innlet>
-
   //-Calculates maximum value of ViscDt.
   ViscDtMax=viscdt;
   //-Calculates maximum value of Ace (periodic particles are ignored).
@@ -597,19 +594,23 @@ void JSphCpuSingle::BoundCorrection(){
 /// Devuelve el valor maximo de ace (modulo), se deben ignorar las particulas periodicas e inout.
 //==============================================================================
 double JSphCpuSingle::ComputeAceMax(unsigned np,const tfloat3* ace,const typecode *code)const{
-  if(PeriActive!=0)return(ComputeAceMaxOmp<true >(Np-Npb,Acec+Npb,Codec+Npb));
-  else             return(ComputeAceMaxOmp<false>(Np-Npb,Acec+Npb,Codec+Npb));
+  const bool check=(PeriActive!=0 || InOut!=NULL);
+  if(check)return(ComputeAceMaxOmp<true >(Np-Npb,Acec+Npb,Codec+Npb));
+  else     return(ComputeAceMaxOmp<false>(Np-Npb,Acec+Npb,Codec+Npb));
 }
 
 //==============================================================================
 /// Returns maximum value of ace (modulus), periodic particles must be ignored.
 /// Devuelve el valor maximo de ace (modulo), se deben ignorar las particulas periodicas.
 //==============================================================================
-template<bool checkperiodic> double JSphCpuSingle::ComputeAceMaxSeq(unsigned np,const tfloat3* ace,const typecode *code)const{
+template<bool checkcode> double JSphCpuSingle::ComputeAceMaxSeq(unsigned np
+  ,const tfloat3* ace,const typecode *code)const
+{
   float acemax=0;
   const int n=int(np);
   for(int p=0;p<n;p++){
-    const tfloat3 a=((!checkperiodic || CODE_IsNormal(code[p]))? ace[p]: TFloat3(0));
+    const typecode cod=(checkcode? code[p]: 0);
+    const tfloat3 a=(!checkcode || (CODE_IsNormal(cod) && !CODE_IsFluidInout(cod))? ace[p]: TFloat3(0));
     const float a2=a.x*a.x+a.y*a.y+a.z*a.z;
     acemax=max(acemax,a2);
   }
@@ -620,7 +621,9 @@ template<bool checkperiodic> double JSphCpuSingle::ComputeAceMaxSeq(unsigned np,
 /// Returns maximum value of ace (modulus) using OpenMP, periodic particles must be ignored.
 /// Devuelve el valor maximo de ace (modulo) using OpenMP, se deben ignorar las particulas periodicas.
 //==============================================================================
-template<bool checkperiodic> double JSphCpuSingle::ComputeAceMaxOmp(unsigned np,const tfloat3* ace,const typecode *code)const{
+template<bool checkcode> double JSphCpuSingle::ComputeAceMaxOmp(unsigned np
+  ,const tfloat3* ace,const typecode *code)const
+{
   double acemax=0;
   #ifdef OMP_USE
     if(np>OMP_LIMIT_COMPUTELIGHT){
@@ -632,7 +635,8 @@ template<bool checkperiodic> double JSphCpuSingle::ComputeAceMaxOmp(unsigned np,
         float amax2=0;
         #pragma omp for nowait
         for(int p=0;p<n;++p){
-          const tfloat3 a=((!checkperiodic || CODE_IsNormal(code[p]))? ace[p]: TFloat3(0));
+          const typecode cod=(checkcode? code[p]: 0);
+          const tfloat3 a=(!checkcode || (CODE_IsNormal(cod) && !CODE_IsFluidInout(cod))? ace[p]: TFloat3(0));
           const float a2=a.x*a.x+a.y*a.y+a.z*a.z;
           if(amax2<a2)amax2=a2;
         }
@@ -644,9 +648,9 @@ template<bool checkperiodic> double JSphCpuSingle::ComputeAceMaxOmp(unsigned np,
       //-Saves result.
       acemax=sqrt(double(amax));
     }
-    else if(np)acemax=ComputeAceMaxSeq<checkperiodic>(np,ace,code);
+    else if(np)acemax=ComputeAceMaxSeq<checkcode>(np,ace,code);
   #else
-    if(np)acemax=ComputeAceMaxSeq<checkperiodic>(np,ace,code);
+    if(np)acemax=ComputeAceMaxSeq<checkcode>(np,ace,code);
   #endif
   return(acemax);
 }

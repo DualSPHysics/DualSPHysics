@@ -430,9 +430,6 @@ public:
   void UpdateVelrhopM1Cpu(unsigned inoutcount,const int *inoutpart
     ,const tfloat4 *velrhop,tfloat4 *velrhopm1);
 
-  void ClearInteractionVarsCpu(unsigned npf,unsigned pini,const typecode *code
-    ,tfloat3 *ace,float *ar,tfloat4 *shiftposfs);
-
 
 //-Specific code for GPU.
 #ifdef _WITHGPU
@@ -458,9 +455,6 @@ public:
 
   void UpdateVelrhopM1Gpu(unsigned inoutcount,const int *inoutpartg
     ,const float4 *velrhopg,float4 *velrhopm1g);
-
-  void ClearInteractionVarsGpu(unsigned npf,unsigned pini,const typecode *codeg
-    ,float3 *aceg,float *arg,float *viscdtg,float4 *shiftposfsg);
 #endif
 
 
