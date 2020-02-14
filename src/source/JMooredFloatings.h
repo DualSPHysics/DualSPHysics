@@ -105,6 +105,7 @@ class JMooredFloatings : protected JObject
 {
 private:
   JLog2 *Log;
+  tfloat3 Gravity;
   std::string DirCase;
   std::string CaseName;
   std::string FileLines;
@@ -150,6 +151,9 @@ public:
   void SaveData(unsigned numfile)const{ if(SvVtkMoorings)SaveVtkMoorings(numfile); }
 
   unsigned Count()const{ return(unsigned(Floatings.size())); }
+
+  void SetGravity(tfloat3 g){ Gravity=g; };
+
 };
 
 

@@ -253,7 +253,7 @@ void JMooredFloatings::Config(unsigned ftcount,const StFloatingData *ftdata,JSph
       filexml=DirCase+CaseName+".xml";
       nodexml="case.execution.special.moorings.moordyn";
     }
-    if(MoorDyn_LinesInit(filexml,nodexml,MoordynDir,nftm,ftmkb,ftvellin,ftvelang))
+    if(MoorDyn_LinesInit(filexml,nodexml,MoordynDir,nftm,ftmkb,ftvellin,ftvelang,Gravity))
       Run_Exceptioon("Error initializing moorings in MoorDyn library.");
     MoorDynReady=true;
     //-Free memory.
