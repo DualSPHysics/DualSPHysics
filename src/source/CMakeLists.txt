@@ -71,8 +71,8 @@ endif()
 
 # Don't use C++11 ABI for compatibility between GCC v4.9 and >=5
 
-set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D_GLIBCXX_USE_CXX11_ABI=0 -fPIC")
-set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_GLIBCXX_USE_CXX11_ABI=0 -fPIC")
+set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D_GLIBCXX_USE_CXX11_ABI=0 -D_PARALLEL_MODULE -fPIC")
+set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_GLIBCXX_USE_CXX11_ABI=0 -D_PARALLEL_MODULE -fPIC")
 
 # Binaries
 
@@ -88,11 +88,11 @@ endif()
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
   target_link_libraries(DualSPHysics4.4CPU jvtklib_64 jwavegen_64 ChronoEngine dsphchrono)
-  set_target_properties(DualSPHysics4.4CPU PROPERTIES COMPILE_FLAGS "-use_fast_math -O3 -D_GLIBCXX_USE_CXX11_ABI=0 -fPIC")
+  set_target_properties(DualSPHysics4.4CPU PROPERTIES COMPILE_FLAGS "-use_fast_math -O3 -D_GLIBCXX_USE_CXX11_ABI=0 -D_PARALLEL_MODULE -fPIC")
   
   if (CUDA_FOUND)
      target_link_libraries(DualSPHysics4.4 jvtklib_64 jwavegen_64 ChronoEngine dsphchrono)
-     set_target_properties(DualSPHysics4.4 PROPERTIES COMPILE_FLAGS "-use_fast_math -O3 -D_WITHGPU -D_GLIBCXX_USE_CXX11_ABI=0 -fPIC")
+     set_target_properties(DualSPHysics4.4 PROPERTIES COMPILE_FLAGS "-use_fast_math -O3 -D_WITHGPU -D_GLIBCXX_USE_CXX11_ABI=0 -D_PARALLEL_MODULE -fPIC")
   endif()
   
 elseif(MSVC)

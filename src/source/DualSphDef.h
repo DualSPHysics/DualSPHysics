@@ -49,6 +49,9 @@
   #define AVAILABLE_CHRONO false
 #else
   #define AVAILABLE_CHRONO true
+	#ifndef _PARALLEL_MODULE
+    #define _PARALLEL_MODULE true //<chrono_multicore> Used when the Parallel module of chrono is enabled
+  #endif  
 #endif
 
 //-Defines AVAILABLE_WAVEGEN when this feature is compiled.

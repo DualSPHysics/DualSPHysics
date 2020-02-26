@@ -7,6 +7,7 @@ USE_FAST_MATH=YES
 USE_NATIVE_CPU_OPTIMIZATIONS=NO
 COMPILE_VTKLIB=YES
 COMPILE_CHRONO=YES
+COMPILE_CHRONO_OPENMP=YES
 COMPILE_WAVEGEN=YES
 COMPILE_MOORDYN=YES
 
@@ -16,10 +17,11 @@ LIBS_DIRECTORIES:=$(LIBS_DIRECTORIES) -L../lib/linux_gcc
 EXECNAME=DualSPHysics4.4_linux64
 EXECS_DIRECTORY=../../bin/linux
 
+# -std=c++0x ---> Used to avoid errors for calls to enums
 ifeq ($(USE_DEBUG), YES)
-  CCFLAGS=-c -O0 -g -Wall -fopenmp -D_WITHGPU
+  CCFLAGS=-c -O0 -g -Wall -fopenmp -D_WITHGPU -std=c++0x
 else
-  CCFLAGS=-c -O3 -fopenmp -D_WITHGPU
+  CCFLAGS=-c -O3 -fopenmp -D_WITHGPU -std=c++0x
   ifeq ($(USE_FAST_MATH), YES)
     CCFLAGS+= -ffast-math
   endif
@@ -129,7 +131,11 @@ ifeq ($(COMPILE_VTKLIB), YES)
   JLIBS:=$(JLIBS) -ljvtklib_64
 endif
 ifeq ($(COMPILE_CHRONO), YES)
-  JLIBS:=$(JLIBS) -ldsphchrono -lChronoEngine
+  JLIBS:=$(JLIBS) -ldsphchrono -lChronoEngine 
+  ifeq ($(COMPILE_CHRONO_OPENMP), YES)
+    JLIBS:=$(JLIBS) -lChronoEngine_parallel
+    CCFLAGS:=$(CCFLAGS) -D_PARALLEL_MODULE
+  endif
 endif
 ifeq ($(COMPILE_WAVEGEN), YES)
   JLIBS:=$(JLIBS) -ljwavegen_64

@@ -7,19 +7,21 @@ USE_FAST_MATH=YES
 USE_NATIVE_CPU_OPTIMIZATIONS=NO
 COMPILE_VTKLIB=YES
 COMPILE_CHRONO=YES
+COMPILE_CHRONO_OPENMP=YES
 COMPILE_WAVEGEN=YES
 COMPILE_MOORDYN=YES
 
 LIBS_DIRECTORIES=-L./
-LIBS_DIRECTORIES:=$(LIBS_DIRECTORIES) -L../lib/linux_gcc
+LIBS_DIRECTORIES:=$(LIBS_DIRECTORIES) -L../lib/linux_gcc 
 
 EXECNAME=DualSPHysics4.4CPU_linux64
 EXECS_DIRECTORY=../../bin/linux
 
+# -std=c++0x ---> Used to avoid errors for calls to enums
 ifeq ($(USE_DEBUG), YES)
-  CCFLAGS=-c -O0 -g -Wall -fopenmp
+  CCFLAGS=-c -O0 -g -Wall -fopenmp -std=c++0x
 else
-  CCFLAGS=-c -O3 -fopenmp
+  CCFLAGS=-c -O3 -fopenmp -std=c++0x
   ifeq ($(USE_FAST_MATH), YES)
     CCFLAGS+= -ffast-math
   endif
@@ -32,15 +34,15 @@ CCLINKFLAGS=-fopenmp -lgomp
 
 #Required for GCC versions >=5.0
 ifeq ($(USE_GCC5), YES)
-  CCFLAGS+=-D_GLIBCXX_USE_CXX11_ABI=0
-  CCLINKFLAGS+=-D_GLIBCXX_USE_CXX11_ABI=0
+  CCFLAGS+=-D_GLIBCXX_USE_CXX11_ABI=0 
+  CCLINKFLAGS+=-D_GLIBCXX_USE_CXX11_ABI=0 
 endif
 
 ifeq ($(COMPILE_VTKLIB), NO)
   CCFLAGS:=$(CCFLAGS) -DDISABLE_VTKLIB
 endif
 ifeq ($(COMPILE_CHRONO), NO)
-  CCFLAGS:=$(CCFLAGS) -DDISABLE_CHRONO
+  CCFLAGS:=$(CCFLAGS) -DDISABLE_CHRONO 
 endif
 ifeq ($(COMPILE_WAVEGEN), NO)
   CCFLAGS:=$(CCFLAGS) -DDISABLE_WAVEGEN
@@ -73,6 +75,10 @@ ifeq ($(COMPILE_VTKLIB), YES)
 endif
 ifeq ($(COMPILE_CHRONO), YES)
   JLIBS:=$(JLIBS) -ldsphchrono -lChronoEngine
+    ifeq ($(COMPILE_CHRONO_OPENMP), YES)
+      JLIBS:=$(JLIBS) -lChronoEngine_parallel
+      CCFLAGS:=$(CCFLAGS) -D_PARALLEL_MODULE
+    endif
 endif
 ifeq ($(COMPILE_WAVEGEN), YES)
   JLIBS:=$(JLIBS) -ljwavegen_64

@@ -47,6 +47,7 @@ class JChValues;
 class JChBody;
 class JChLink;
 class DSPHChronoLib;
+class JChBodyFloating;
 
 //##############################################################################
 //# JChronoObjects
@@ -59,12 +60,15 @@ class DSPHChronoLib;
 class JChronoObjects : protected JObject
 {
 protected:
+	unsigned Solver; 
+  int OmpThreads;        ///<Max number of OpenMP threads in execution on CPU host (minimum 1). | Numero maximo de hilos OpenMP en ejecucion por host en CPU (minimo 1). <chrono_parallel>
   JLog2 *Log;
   std::string DirData;
   std::string CaseName;
   const double Dp;
   const word MkBoundFirst;
-  const bool UseDVI; ///<Uses Differential Variational Inequality (DVI) method.
+  const bool UseDVI;	///<Uses Differential Variational Inequality (DVI) method.
+	bool UseChronoSMC;		///<Uses DVI method and extra variables (Young's Modulus and Poisson Ratio).
   
   bool WithMotion;   ///<Some Chrono object with geometry is a moving object.
   
@@ -98,6 +102,7 @@ protected:
   void VisuBody(const JChBody *body)const;
   void VisuLink(const JChLink *link)const;
   void SaveVtkScheme()const;
+	void ConfigOmp();
 
 public:
   JChronoObjects(JLog2* log,const std::string &dirdata,const std::string &casename
@@ -110,9 +115,13 @@ public:
   bool ConfigBodyFloating(word mkbound,double mass,const tdouble3 &center
     ,const tmatrix3d &inertia,const tint3 &translationfree,const tint3 &rotationfree
     ,const tfloat3 &linvelini,const tfloat3 &angvelini);
-  void ConfigDataDVIBodyFloating(word mkbound,float kfric,float restitu);
-  void ConfigDataDVIBodyMoving  (word mkbound,float kfric,float restitu);
-  void ConfigDataDVIBodyFixed   (word mkbound,float kfric,float restitu);
+  void ConfigDataDVIBodyFloating(word mkbound,float kfric,float restitu); 
+  void ConfigDataDVIBodyMoving  (word mkbound,float kfric,float restitu);	
+  void ConfigDataDVIBodyFixed   (word mkbound,float kfric,float restitu);	
+
+	void ConfigDataBodyFloating(word mkbound,float kfric,float restitu,float young=0.0,float poisson=0.0);//<chrono_contacts>
+	void ConfigDataBodyMoving  (word mkbound,float kfric,float restitu,float young=0.0,float poisson=0.0);//<chrono_contacts>
+	void ConfigDataBodyFixed   (word mkbound,float kfric,float restitu,float young=0.0,float poisson=0.0);//<chrono_contacts>
 
   void Init(bool simulate2d,const JSphMk* mkinfo);
   void VisuConfig(std::string txhead, std::string txfoot)const;
@@ -128,6 +137,9 @@ public:
   void RunChrono(unsigned nstep,double timestep,double dt,bool predictor);
 
   void SavePart(int part);
+
+	//JChBodyFloating* ReadElementFEA(const JXml *sxml,TiXmlElement* ele,unsigned idb,const std::string idname,const word mkbound);
+
 };
 #endif
 

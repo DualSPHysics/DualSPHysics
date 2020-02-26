@@ -890,14 +890,16 @@ void JSph::LoadCaseConfig(){
         const unsigned cmk=MkInfo->GetMkBlockByMkBound(mkbound);
         if(cmk>=MkInfo->Size())RunException(met,fun::PrintStr("Error loading boundary objects. Mkbound=%u is unknown.",mkbound));
         const bool chronodata=(ChronoObjects && ChronoObjects->UseDataDVI(mkbound)); //<vs_chroono>
-        const StDemData data=LoadDemData(UseDEM ||chronodata,UseDEM,&block);/*       //<vs_chroono>
+				//-If chronodata then also reads extra data for DVI
+        const StDemData data=LoadDemData(UseDEM || chronodata,UseDEM || chronodata,&block);/* //<vs_chroono>
         const StDemData data=LoadDemData(UseDEM,UseDEM,&block);
         */                                                                           //<vs_chroono>
         if(chronodata){ //<vs_chroono_ini>
-          if(block.Type==TpPartFloating)ChronoObjects->ConfigDataDVIBodyFloating(mkbound,data.kfric,data.restitu);
-          if(block.Type==TpPartMoving)  ChronoObjects->ConfigDataDVIBodyMoving  (mkbound,data.kfric,data.restitu);
-          if(block.Type==TpPartFixed)   ChronoObjects->ConfigDataDVIBodyFixed   (mkbound,data.kfric,data.restitu);
-        } //<vs_chroono_end>
+					//-Reads young's modulus and poisson ratio
+          if(block.Type==TpPartFloating)ChronoObjects->ConfigDataBodyFloating(mkbound,data.kfric,data.restitu,data.young,data.poisson);	//<chrono_contacts>
+          if(block.Type==TpPartMoving)  ChronoObjects->ConfigDataBodyMoving  (mkbound,data.kfric,data.restitu,data.young,data.poisson);	//<chrono_contacts>
+          if(block.Type==TpPartFixed)   ChronoObjects->ConfigDataBodyFixed   (mkbound,data.kfric,data.restitu,data.young,data.poisson);	//<chrono_contacts>
+				} //<vs_chroono_end>
         if(UseDEM){
           const unsigned tav=CODE_GetTypeAndValue(MkInfo->Mkblock(cmk)->Code); //:Log->Printf("___> tav[%u]:%u",cmk,tav);
           DemData[tav]=data;

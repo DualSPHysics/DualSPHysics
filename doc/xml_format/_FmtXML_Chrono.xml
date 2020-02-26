@@ -23,7 +23,11 @@
 		<chrono>
 			<savedata value="-1" comment="Saves CSV with data exchange for each time interval (0=all steps)" />
 			<schemescale value="1" comment="Scale used to create the initial scheme of Chrono objects (default=1)" />
-			<collisiondp value="0.5" comment="Allowed collision overlap according Dp (default=0.5)" />
+            <collision>
+                <distancedp value="0.5" comment="Allowed collision overlap according Dp (default=0.5)" />
+                <ompthreads value="1" comment="Number of threads by host for parallel execution. 0:Muli Core, 1:Single Core (default=1)" />
+                <contactmethod value="0" comment="Contact method type. 0:NSC (Non Smooth Contacts), 1:SMC (SMooth Contacts). (default=0)" />
+            </collision>
 			<!-- Define the bodies for Chrono -->
 			<bodyfixed id="domain" mkbound="0" modelfile="domain.obj" /> <!-- Link a mesh file to enable contact modelling -->
 			<!-- <bodymoving id="piston" mkbound="10" massbody="10" modelfile="piston.vtk" />  The use of predefined moving objects by Chrono is disabled for now -->
@@ -38,15 +42,25 @@
 				<point_fb1 x="1.0" y="1.0" z="1.0" comment="Point in body 1" />
 				<point_fb2 x="2.0" y="2.0" z="2.0" comment="Point in body 2" />
 				<stiffness value="1000" comment="Stiffness [N/m]" />
-				<damping value="100" comment="Damping [-]" />
+				<damping value="100" comment="Damping [N]" />
 				<rest_length value="5.0" comment="Spring equilibrium length [m]" />
-				<coulombdamping value="0" comment="Coulomb damping value. Not applied when it is zero. (default=0)" />
 				<savevtk>
 					<nside value="16" comment="number of sections for each revolution. 0=not saved, 1=line (default=16)" />
 					<radius value="3" comment="spring radius (default=3)" />
 					<length value="1" comment="length for each revolution (default=1)" />
 				</savevtk>
 			</link_linearspring>
+			<link_coulombdamping  idbody1="domain" idbody2="box1">
+				<point_fb1 x="1.0" y="1.0" z="1.0" comment="Point in body 1" />
+				<point_fb2 x="2.0" y="2.0" z="2.0" comment="Point in body 2" />
+				<rest_length value="5.0" comment="Spring equilibrium length [m]" />
+				<damping value="100" comment="Damping [N]" />
+				<savevtk>
+					<nside value="16" comment="number of sections for each revolution. 0=not saved, 1=line (default=16)" />
+					<radius value="3" comment="spring radius (default=3)" />
+					<length value="1" comment="length for each revolution (default=1)" />
+				</savevtk>
+			</link_coulombdamping >
 			<!-- Hinge between two bodies -->
 			<link_hinge idbody1="box1" idbody2="box2">
 				<rotpoint x="1.0" y="1.0" z="1.0" comment="Point for rotation" />
