@@ -1,13 +1,13 @@
-DualSPHysics4 [Moordyn+FtVel+Symmetry+MDBC+DDT2]  v4.4.069            24-02-2020
-BoundaryVTK4                                      v4.0.051            21-06-2019
-ComputeForces4                                    v4.0.045            21-06-2019
-FloatingInfo4                                     v4.0.031            11-08-2019
-GenCase4                                          v4.0.147            11-02-2020
-GenCase4 [MkWord]                                 v4.0.147            11-02-2020
-IsoSurface4                                       v4.0.035            21-06-2019
-FlowTool4                                         v4.0.033            21-06-2019
-MeasureTool4                                      v4.0.049            21-06-2019
-PartVtk4                                          v4.0.050            21-06-2019
-PartVTKOut4                                       v4.0.031            20-09-2019
-ReadSwash2                                        v2.0.031            21-06-2019
+DualSPHysics4 [Moordyn+FtVel+Symmetry+MDBC+DDT2]  v4.4.069            26-02-2020
+BoundaryVTK                                       v5.0.052            26-02-2020
+ComputeForces                                     v5.0.046            26-02-2020
+FloatingInfo                                      v5.0.032            26-02-2020
+GenCase                                           v5.0.148            26-02-2020
+GenCase [MkWord]                                  v5.0.148            26-02-2020
+IsoSurface                                        v5.0.036            26-02-2020
+FlowTool                                          v5.0.034            26-02-2020
+MeasureTool                                       v5.0.050            26-02-2020
+PartVtk                                           v5.0.051            26-02-2020
+PartVTKOut                                        v5.0.032            26-02-2020
+ReadSwash                                         v5.0.032            26-02-2020
 
