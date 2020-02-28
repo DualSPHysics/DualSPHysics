@@ -1,6 +1,6 @@
 
 
- <DUALSPHYSICS4> Copyright (c) 2019 by
+ <DUALSPHYSICS5> Copyright (c) 2020 by
  Dr Jose M. Dominguez, Dr Alejandro Crespo,
  Prof. Moncho Gomez Gesteira,  Prof. Benedict Rogers,
  Dr Georgios Fourtakas, Prof. Peter Stansby, Dr Ricardo Canelas,
@@ -24,7 +24,7 @@
  along with DualSPHysics. If not, see <http://www.gnu.org/licenses/>.
 
 
-DualSPHysics4 [Moordyn+FtVel+Symmetry+MDBC+DDT2] v4.4.069 (26-02-2020)
+DualSPHysics5 [Moordyn+FtVel+Symmetry+MDBC+DDT2] v5.0.071 (28-02-2020)
 =======================================================================
 LoadDsphConfig> .../bin/windows/DsphConfig.xml
 Information about execution parameters:
