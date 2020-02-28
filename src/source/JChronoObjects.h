@@ -41,13 +41,14 @@
 class JLog2;
 class JSphMk;
 class JXml;
+class JVtkLib;
 class TiXmlElement;
 class JChronoData;
 class JChValues;
 class JChBody;
+class JChBodyFloating;
 class JChLink;
 class DSPHChronoLib;
-class JChBodyFloating;
 
 //##############################################################################
 //# JChronoObjects
@@ -60,15 +61,17 @@ class JChBodyFloating;
 class JChronoObjects : protected JObject
 {
 protected:
-	unsigned Solver; 
-  int OmpThreads;        ///<Max number of OpenMP threads in execution on CPU host (minimum 1). | Numero maximo de hilos OpenMP en ejecucion por host en CPU (minimo 1). <chrono_parallel>
   JLog2 *Log;
   std::string DirData;
   std::string CaseName;
   const double Dp;
   const word MkBoundFirst;
-  const bool UseDVI;	///<Uses Differential Variational Inequality (DVI) method.
-	bool UseChronoSMC;		///<Uses DVI method and extra variables (Young's Modulus and Poisson Ratio).
+
+  unsigned Solver; 
+  int OmpThreads;     ///<Max number of OpenMP threads in execution on CPU host (minimum 1).
+  const bool UseDVI;  ///<Uses Differential Variational Inequality (DVI) method.
+  bool UseChronoSMC;  ///<Uses Smooth Contacts for collisions.
+  bool UseCollision;  ///<Activates collisions between chrono objects.
   
   bool WithMotion;   ///<Some Chrono object with geometry is a moving object.
   
@@ -97,12 +100,15 @@ protected:
   void ReadXmlValues(const JXml *sxml,TiXmlElement* lis,JChValues* values);
   std::string ReadXmlModelFile(const JXml *sxml,TiXmlElement* ele)const;
   void ConfigMovingBodies(const JSphMk* mkinfo);
+  void ConfigOmp();
 
+  void CheckParams(const JChBody *body)const;
   void VisuValues(const JChValues *values)const;
   void VisuBody(const JChBody *body)const;
   void VisuLink(const JChLink *link)const;
+  void SaveVtkScheme_Spring(JVtkLib *sh,word mk,word mk1,tdouble3 pt0,tdouble3 pt1
+    ,double restlength,double radius,double revlength,int nside)const;
   void SaveVtkScheme()const;
-	void ConfigOmp();
 
 public:
   JChronoObjects(JLog2* log,const std::string &dirdata,const std::string &casename
@@ -112,16 +118,15 @@ public:
   static bool Available(){ return(true); }
 
   bool UseDataDVI(word mkbound)const;
+  bool GetUseCollision()const{ return(UseCollision); }
+
   bool ConfigBodyFloating(word mkbound,double mass,const tdouble3 &center
     ,const tmatrix3d &inertia,const tint3 &translationfree,const tint3 &rotationfree
     ,const tfloat3 &linvelini,const tfloat3 &angvelini);
-  void ConfigDataDVIBodyFloating(word mkbound,float kfric,float restitu); 
-  void ConfigDataDVIBodyMoving  (word mkbound,float kfric,float restitu);	
-  void ConfigDataDVIBodyFixed   (word mkbound,float kfric,float restitu);	
 
-	void ConfigDataBodyFloating(word mkbound,float kfric,float restitu,float young=0.0,float poisson=0.0);//<chrono_contacts>
-	void ConfigDataBodyMoving  (word mkbound,float kfric,float restitu,float young=0.0,float poisson=0.0);//<chrono_contacts>
-	void ConfigDataBodyFixed   (word mkbound,float kfric,float restitu,float young=0.0,float poisson=0.0);//<chrono_contacts>
+  void ConfigDataBodyFloating(word mkbound,float kfric,float restitu,float young,float poisson);
+  void ConfigDataBodyMoving  (word mkbound,float kfric,float restitu,float young,float poisson);
+  void ConfigDataBodyFixed   (word mkbound,float kfric,float restitu,float young,float poisson);
 
   void Init(bool simulate2d,const JSphMk* mkinfo);
   void VisuConfig(std::string txhead, std::string txfoot)const;
@@ -138,8 +143,9 @@ public:
 
   void SavePart(int part);
 
-	//JChBodyFloating* ReadElementFEA(const JXml *sxml,TiXmlElement* ele,unsigned idb,const std::string idname,const word mkbound);
-
+//<vs_chroonodev_ini>
+  //JChBodyFloating* ReadElementFEA(const JXml *sxml,TiXmlElement* ele,unsigned idb,const std::string idname,const word mkbound);
+//<vs_chroonodev_end>
 };
 #endif
 

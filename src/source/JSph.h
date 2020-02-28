@@ -379,7 +379,7 @@ protected:
   void LoadConfig(const JCfgRun *cfg);
   void LoadCaseConfig();
 
-  StDemData LoadDemData(bool basicdata,bool extradata,const JSpacePartBlock* block)const;
+  StDemData LoadDemData(bool checkdata,const JSpacePartBlock* block)const;
   void VisuDemCoefficients()const;
 
   void LoadCodeParticles(unsigned np,const unsigned *idp,typecode *code)const;

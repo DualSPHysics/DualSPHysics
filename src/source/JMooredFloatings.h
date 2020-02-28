@@ -141,6 +141,7 @@ public:
   ~JMooredFloatings();
   void Reset();
   void LoadXml(JXml *sxml,const std::string &place);
+  void SetGravity(tfloat3 g){ Gravity=g; };
   void Config(unsigned ftcount,const StFloatingData *ftdata,JSphFtForcePoints *forcepoints);
 
   void VisuConfig(std::string txhead,std::string txfoot)const;
@@ -151,9 +152,6 @@ public:
   void SaveData(unsigned numfile)const{ if(SvVtkMoorings)SaveVtkMoorings(numfile); }
 
   unsigned Count()const{ return(unsigned(Floatings.size())); }
-
-  void SetGravity(tfloat3 g){ Gravity=g; };
-
 };
 
 

@@ -32,7 +32,8 @@
 
 //-Removes dependencies from precompiled libraries.
 //#define DISABLE_VTKLIB     ///<It allows compile without VTK library.
-//#define DISABLE_CHRONO     ///<It allows compile without ChronoLib library (dsphchrono.dll and ChronoEngine.dll).
+//#define DISABLE_CHRONO     ///<It allows compile without ChronoLib library (dsphchrono.dll, ChronoEngine.dll and ChronoEngine_parallel.dll).
+//#define DISABLE_CHRONO_OMP ///<It allows compile without parallel module of Chrono (ignores ChronoEngine_parallel.dll).
 //#define DISABLE_WAVEGEN    ///<It allows compile without Wave-Paddles, Multi-Layer Pistons and Relaxation Zones libraries.
 //#define DISABLE_MOORDYN    ///<It allows compile without LibDSphMoorDyn library.  //<vs_moordyyn>
 
@@ -44,13 +45,17 @@
   #define AVAILABLE_VTKLIB true
 #endif
 
-//-Defines AVAILABLE_CHRONO when this feature is compiled.
+//-Defines AVAILABLE_CHRONO and AVAILABLE_CHRONO_OMP when these features are compiled.
 #ifdef DISABLE_CHRONO
+  #define DISABLE_CHRONO_OMP
   #define AVAILABLE_CHRONO false
+  #define AVAILABLE_CHRONO_OMP false
 #else
   #define AVAILABLE_CHRONO true
-	#ifndef _PARALLEL_MODULE
-    #define _PARALLEL_MODULE true //<chrono_multicore> Used when the Parallel module of chrono is enabled
+  #ifdef DISABLE_CHRONO_OMP
+    #define AVAILABLE_CHRONO_OMP false
+  #else
+    #define AVAILABLE_CHRONO_OMP true
   #endif  
 #endif
 

@@ -888,22 +888,19 @@ void JSph::LoadCaseConfig(){
       if(IsBound(block.Type)){
         const word mkbound=block.GetMkType();
         const unsigned cmk=MkInfo->GetMkBlockByMkBound(mkbound);
-        if(cmk>=MkInfo->Size())RunException(met,fun::PrintStr("Error loading boundary objects. Mkbound=%u is unknown.",mkbound));
-        const bool chronodata=(ChronoObjects && ChronoObjects->UseDataDVI(mkbound)); //<vs_chroono>
-				//-If chronodata then also reads extra data for DVI
-        const StDemData data=LoadDemData(UseDEM || chronodata,UseDEM || chronodata,&block);/* //<vs_chroono>
-        const StDemData data=LoadDemData(UseDEM,UseDEM,&block);
-        */                                                                           //<vs_chroono>
-        if(chronodata){ //<vs_chroono_ini>
-					//-Reads young's modulus and poisson ratio
-          if(block.Type==TpPartFloating)ChronoObjects->ConfigDataBodyFloating(mkbound,data.kfric,data.restitu,data.young,data.poisson);	//<chrono_contacts>
-          if(block.Type==TpPartMoving)  ChronoObjects->ConfigDataBodyMoving  (mkbound,data.kfric,data.restitu,data.young,data.poisson);	//<chrono_contacts>
-          if(block.Type==TpPartFixed)   ChronoObjects->ConfigDataBodyFixed   (mkbound,data.kfric,data.restitu,data.young,data.poisson);	//<chrono_contacts>
-				} //<vs_chroono_end>
+        if(cmk>=MkInfo->Size())Run_Exceptioon(fun::PrintStr("Error loading boundary objects. Mkbound=%u is unknown.",mkbound));
+        //-Loads data for collisions using DEM.
         if(UseDEM){
-          const unsigned tav=CODE_GetTypeAndValue(MkInfo->Mkblock(cmk)->Code); //:Log->Printf("___> tav[%u]:%u",cmk,tav);
-          DemData[tav]=data;
+          const unsigned tav=CODE_GetTypeAndValue(MkInfo->Mkblock(cmk)->Code);
+          DemData[tav]=LoadDemData(true,&block);
         }
+        //-Loads data for collisions using Chrono. //<vs_chroono_ini>
+        if(ChronoObjects && ChronoObjects->UseDataDVI(mkbound)){
+          const StDemData data=LoadDemData(false,&block);
+          if(block.Type==TpPartFloating)ChronoObjects->ConfigDataBodyFloating(mkbound,data.kfric,data.restitu,data.young,data.poisson);
+          if(block.Type==TpPartMoving)  ChronoObjects->ConfigDataBodyMoving  (mkbound,data.kfric,data.restitu,data.young,data.poisson);
+          if(block.Type==TpPartFixed)   ChronoObjects->ConfigDataBodyFixed   (mkbound,data.kfric,data.restitu,data.young,data.poisson);
+        } //<vs_chroono_end>
       }
     }
   }
@@ -959,32 +956,33 @@ void JSph::LoadCaseConfig(){
 //==============================================================================
 /// Loads coefficients used for DEM or Chrono objects.
 //==============================================================================
-StDemData JSph::LoadDemData(bool basicdata,bool extradata,const JSpacePartBlock* block)const{
-  const char met[]="LoadDemData";
+StDemData JSph::LoadDemData(bool checkdata,const JSpacePartBlock* block)const{
   const word mk=block->GetMk();
   const word mkbound=block->GetMkType();
   StDemData data;
   memset(&data,0,sizeof(StDemData));
-  if(basicdata){
-    if(!block->ExistsSubValue("Kfric","value"))RunException(met,fun::PrintStr("Object mk=%u (mkbound=%u) - Value of Kfric is invalid.",mk,mkbound));
-    if(!block->ExistsSubValue("Restitution_Coefficient","value"))RunException(met,fun::PrintStr("Object mk=%u (mkbound=%u) - Value of Restitution_Coefficient is invalid.",mk,mkbound));
-    data.kfric=block->GetSubValueFloat("Kfric","value",true,0);
-    data.restitu=block->GetSubValueFloat("Restitution_Coefficient","value",true,0);
-    if(block->ExistsValue("Restitution_Coefficient_User"))data.restitu=block->GetValueFloat("Restitution_Coefficient_User");
+  //-Checks necessary values for collisions using DEM or Chrono.
+  if(checkdata){
+    const string objdesc=fun::PrintStr("Object mk=%u (mkbound=%u)",mk,mkbound);
+    if(!block->ExistsSubValue("Kfric","value"))Run_Exceptioon(objdesc+" - Value of Kfric is invalid.");
+    if(!block->ExistsSubValue("Restitution_Coefficient","value"))Run_Exceptioon(objdesc+" - Value of Restitution_Coefficient is invalid.");
+    if(!block->ExistsSubValue("Young_Modulus","value"))Run_Exceptioon(objdesc+" - Value of Young_Modulus is invalid.");
+    if(!block->ExistsSubValue("PoissonRatio","value"))Run_Exceptioon(objdesc+" - Value of PoissonRatio is invalid.");
   }
-  if(extradata){
-    data.massp=MassBound;
-    if(block->Type==TpPartFloating){
-      const JSpacePartBlock_Floating *fblock=(const JSpacePartBlock_Floating *)block;
-      data.mass=(float)fblock->GetMassbody();
-      data.massp=(float)(fblock->GetMassbody()/fblock->GetCount());
-    }
-    if(!block->ExistsSubValue("Young_Modulus","value"))RunException(met,fun::PrintStr("Object mk=%u (mkbound=%u) - Value of Young_Modulus is invalid.",mk,mkbound));
-    if(!block->ExistsSubValue("PoissonRatio","value"))RunException(met,fun::PrintStr("Object mk=%u (mkbound=%u) - Value of PoissonRatio is invalid.",mk,mkbound));
-    data.young=block->GetSubValueFloat("Young_Modulus","value",true,0);
-    data.poisson=block->GetSubValueFloat("PoissonRatio","value",true,0);
-    data.tau=(data.young? (1-data.poisson*data.poisson)/data.young: 0);
+  //-Loads necessary values for collisions using DEM or Chrono.
+  data.kfric=block->GetSubValueFloat("Kfric","value",true,FLT_MAX);
+  data.restitu=block->GetSubValueFloat("Restitution_Coefficient","value",true,FLT_MAX);
+  if(block->ExistsValue("Restitution_Coefficient_User"))data.restitu=block->GetValueFloat("Restitution_Coefficient_User");
+  data.young=block->GetSubValueFloat("Young_Modulus","value",true,0);
+  data.poisson=block->GetSubValueFloat("PoissonRatio","value",true,0);
+  //-Loads necessary values for DEM.
+  data.massp=MassBound;
+  if(block->Type==TpPartFloating){
+    const JSpacePartBlock_Floating *fblock=(const JSpacePartBlock_Floating *)block;
+    data.mass=(float)fblock->GetMassbody();
+    data.massp=(float)(fblock->GetMassbody()/fblock->GetCount());
   }
+  data.tau=(data.young? (1-data.poisson*data.poisson)/data.young: 0);
   return(data);
 }
 

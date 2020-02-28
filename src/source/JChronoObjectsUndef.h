@@ -37,13 +37,15 @@ public:
   static bool Available(){ return(false); }
 
   bool UseDataDVI(word mkbound)const{ return(false); };
+  bool GetUseCollision()const{ return(false); };
+
   bool ConfigBodyFloating(word mkbound,double mass,const tdouble3 &center
     ,const tmatrix3d &inertia,const tint3 &translationfree,const tint3 &rotationfree
     ,const tfloat3 &linvelini,const tfloat3 &angvelini){ return(false); };
 
-  void ConfigDataDVIBodyFloating(word mkbound,float kfric,float restitu){};
-  void ConfigDataDVIBodyMoving  (word mkbound,float kfric,float restitu){};
-  void ConfigDataDVIBodyFixed   (word mkbound,float kfric,float restitu){};
+  void ConfigDataBodyFloating(word mkbound,float kfric,float restitu,float young,float poisson){};
+  void ConfigDataBodyMoving  (word mkbound,float kfric,float restitu,float young,float poisson){};
+  void ConfigDataBodyFixed   (word mkbound,float kfric,float restitu,float young,float poisson){};
 
   void Init(bool simulate2d,const JSphMk* mkinfo){};
   void VisuConfig(std::string txhead, std::string txfoot)const{};

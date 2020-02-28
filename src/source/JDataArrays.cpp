@@ -86,9 +86,11 @@ void JDataArrays::FreeMemory(StDataArray &arr){
       case TypeUchar:    delete[] (byte    *)ptr;  break;
       case TypeUshort:   delete[] (word    *)ptr;  break;
       case TypeUint:     delete[] (unsigned*)ptr;  break;
+      case TypeInt:      delete[] (int     *)ptr;  break;
       case TypeFloat:    delete[] (float   *)ptr;  break;
       case TypeDouble:   delete[] (double  *)ptr;  break;
       case TypeUint3:    delete[] (tuint3  *)ptr;  break;
+      case TypeInt3:     delete[] (tint3   *)ptr;  break;
       case TypeFloat3:   delete[] (tfloat3 *)ptr;  break;
       case TypeDouble3:  delete[] (tdouble3*)ptr;  break;
       default: Run_Exceptioon(fun::PrintStr("Type of pointer \'%s\' is invalid.",TypeToStr(arr.type)));
@@ -116,6 +118,16 @@ unsigned JDataArrays::GetDataCount(bool minimum)const{
   if(minimum)for(unsigned c=1;c<na;c++)if(smin>Arrays[c].count)smin=Arrays[c].count;
   else       for(unsigned c=1;c<na;c++)if(smax<Arrays[c].count)smax=Arrays[c].count;
   return(minimum? smin: smax);
+}
+
+//==============================================================================
+/// Returns number of data values and throws exception when they do not match.
+//==============================================================================
+unsigned JDataArrays::GetDataCount()const{ 
+  unsigned smin=GetDataCount(true );
+  unsigned smax=GetDataCount(false);
+  if(smin!=smax)Run_Exceptioon("The minimum data count does not match the maximum data count.");
+  return(smin);
 }
 
 //==============================================================================
@@ -292,9 +304,11 @@ std::string JDataArrays::GetFmtByType(TpTypeData type){
     case TypeUchar:  
     case TypeUshort:
     case TypeUint:     fmt="%u";       break;
+    case TypeInt:      fmt="%d";       break;
     case TypeFloat:    fmt="%15.7E";   break;
     case TypeDouble:   fmt="%20.12E";  break;
     case TypeUint3:    fmt="%u";       break;
+    case TypeInt3:     fmt="%d";       break;
     case TypeFloat3:   fmt="%15.7E";   break;
     case TypeDouble3:  fmt="%20.12E";  break;
   }
@@ -407,6 +421,23 @@ unsigned* JDataArrays::NewArrayUint(unsigned count,bool defvalue,unsigned value)
 }
 
 //==============================================================================
+/// Returns dynamic pointer with int array. (this pointer must be deleted)
+//==============================================================================
+int* JDataArrays::NewArrayInt(unsigned count,bool defvalue,int value){
+  try{
+    int *v=new int[count];
+    if(count && defvalue){
+      if(!value)memset(v,0,sizeof(int)*count);
+      else for(unsigned c=0;c<count;c++)v[c]=value;
+    }
+    return(v);
+  }
+  catch(const std::bad_alloc){
+    Run_ExceptioonSta(fun::PrintStr("Could not allocate the requested memory (size=%u).",count));
+  }
+}
+
+//==============================================================================
 /// Returns dynamic pointer with float array. (this pointer must be deleted)
 //==============================================================================
 float* JDataArrays::NewArrayFloat(unsigned count,bool defvalue,float value){
@@ -448,6 +479,23 @@ tuint3* JDataArrays::NewArrayUint3(unsigned count,bool defvalue,tuint3 value){
     tuint3 *v=new tuint3[count];
     if(count && defvalue){
       if(value==TUint3(0))memset(v,0,sizeof(tuint3)*count);
+      else for(unsigned c=0;c<count;c++)v[c]=value;
+    }
+    return(v);
+  }
+  catch(const std::bad_alloc){
+    Run_ExceptioonSta(fun::PrintStr("Could not allocate the requested memory (size=%u).",count));
+  }
+}
+
+//==============================================================================
+/// Returns dynamic pointer with tuint3 array. (this pointer must be deleted)
+//==============================================================================
+tint3* JDataArrays::NewArrayInt3(unsigned count,bool defvalue,tint3 value){
+  try{
+    tint3 *v=new tint3[count];
+    if(count && defvalue){
+      if(value==TInt3(0))memset(v,0,sizeof(tint3)*count);
       else for(unsigned c=0;c<count;c++)v[c]=value;
     }
     return(v);
@@ -577,9 +625,11 @@ unsigned JDataArrays::FilterApply(unsigned count,const byte *filter){
       case TypeUchar:    ReindexData(nsel,reindex,arr.count,(byte    *)arr.ptr,NULL);  break;
       case TypeUshort:   ReindexData(nsel,reindex,arr.count,(word    *)arr.ptr,NULL);  break;
       case TypeUint:     ReindexData(nsel,reindex,arr.count,(unsigned*)arr.ptr,NULL);  break;
+      case TypeInt:      ReindexData(nsel,reindex,arr.count,(int     *)arr.ptr,NULL);  break;
       case TypeFloat:    ReindexData(nsel,reindex,arr.count,(float   *)arr.ptr,NULL);  break;
       case TypeDouble:   ReindexData(nsel,reindex,arr.count,(double  *)arr.ptr,NULL);  break;
       case TypeUint3:    ReindexData(nsel,reindex,arr.count,(tuint3  *)arr.ptr,NULL);  break;
+      case TypeInt3:     ReindexData(nsel,reindex,arr.count,(tint3   *)arr.ptr,NULL);  break;
       case TypeFloat3:   ReindexData(nsel,reindex,arr.count,(tfloat3 *)arr.ptr,NULL);  break;
       case TypeDouble3:  ReindexData(nsel,reindex,arr.count,(tdouble3*)arr.ptr,NULL);  break;
       default: Run_Exceptioon(fun::PrintStr("Type of pointer \'%s\' is invalid.",TypeToStr(arr.type)));
@@ -614,9 +664,11 @@ unsigned JDataArrays::SortData(unsigned count,const unsigned *reindex){
       case TypeUchar:    ReindexData(count,reindex,arr.count,(byte    *)arr.ptr,(byte    *)aux);  break;
       case TypeUshort:   ReindexData(count,reindex,arr.count,(word    *)arr.ptr,(word    *)aux);  break;
       case TypeUint:     ReindexData(count,reindex,arr.count,(unsigned*)arr.ptr,(unsigned*)aux);  break;
+      case TypeInt:      ReindexData(count,reindex,arr.count,(int     *)arr.ptr,(int     *)aux);  break;
       case TypeFloat:    ReindexData(count,reindex,arr.count,(float   *)arr.ptr,(float   *)aux);  break;
       case TypeDouble:   ReindexData(count,reindex,arr.count,(double  *)arr.ptr,(double  *)aux);  break;
       case TypeUint3:    ReindexData(count,reindex,arr.count,(tuint3  *)arr.ptr,(tuint3  *)aux);  break;
+      case TypeInt3:     ReindexData(count,reindex,arr.count,(tint3   *)arr.ptr,(tint3   *)aux);  break;
       case TypeFloat3:   ReindexData(count,reindex,arr.count,(tfloat3 *)arr.ptr,(tfloat3 *)aux);  break;
       case TypeDouble3:  ReindexData(count,reindex,arr.count,(tdouble3*)arr.ptr,(tdouble3*)aux);  break;
       default: Run_Exceptioon(fun::PrintStr("Type of pointer \'%s\' is invalid.",TypeToStr(arr.type)));
