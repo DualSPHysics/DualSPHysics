@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<!-- *** DualSPHysics (26-12-2019) *** -->
+<!-- *** DualSPHysics (28-02-2020) *** -->
 <!-- *** class: JMooredFloatings *** -->
 <!------------------------------------------------------------------------------->
 <!------------------------------------------------------------------------------->
-<!-- *** Example for configuration of moorings using coupling with MoorDyn. *** -->
+<!-- *** Example for configuration of moorings using coupling with MoorDyn+. *** -->
 <special>
     <moorings>
         <savevtk_moorings value="true" comment="Saves vtk with moorings (default=true)" />
@@ -18,9 +18,9 @@
 </special>
 
 <?xml version="1.0" encoding="UTF-8" ?>
-<!-- *** MoorDyn (14-02-2020) *** -->
+<!-- *** MoorDyn+ (14-02-2020) *** -->
 <!------------------------------------------------------------------------------->
-<!-- *** Example for complete configuration of moorings using MoorDyn. *** ------>
+<!-- *** Example for complete configuration of moorings using MoorDyn+. *** ------>
 <moordyn>
 	<solverOptions>
 		<waterDepth value="0.5" comment="Water depth" units_comment="m"/>

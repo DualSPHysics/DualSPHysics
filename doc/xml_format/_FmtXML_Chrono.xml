@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<!-- *** DualSPHysics [Chrono] v4.3.044 (12-03-2019) *** -->
+<!-- *** DualSPHysics [Chrono] v5.0.071 (28-02-2020) *** -->
 <!-- *** class: JChronoObjects *** -->
 <!------------------------------------------------------------------------------->
 <!------------------------------------------------------------------------------->
@@ -24,11 +24,11 @@
 			<savedata value="-1" comment="Saves CSV with data exchange for each time interval (0=all steps)" />
 			<schemescale value="1" comment="Scale used to create the initial scheme of Chrono objects (default=1)" />
 			<!-- Enable collisions for chrono -->
-            <collision activate="true">
-                <distancedp value="0.5" comment="Allowed collision overlap according Dp (default=0.5)" />
-                <ompthreads value="1" comment="Number of threads by host for parallel execution. 0:Multi-Core, 1:Single-Core (default=1)" />
-                <contactmethod value="0" comment="Contact method type. 0:NSC (Non Smooth Contacts), 1:SMC (SMooth Contacts). (default=0)" />
-            </collision>
+			<collision activate="true">
+				<distancedp value="0.5" comment="Allowed collision overlap according Dp (default=0.5)" />
+				<ompthreads value="1" comment="Number of threads by host for parallel execution. 0:Multi-Core, 1:Single-Core (default=1)" />
+				<contactmethod value="0" comment="Contact method type. 0:NSC (Non Smooth Contacts), 1:SMC (SMooth Contacts). (default=0)" />
+			</collision>
 			<!-- Disable collisions for chrono -->
 			<collision activate="false" />
 			<!-- Define the bodies for Chrono -->
