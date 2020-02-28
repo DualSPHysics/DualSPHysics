@@ -332,6 +332,8 @@
     </CudaCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <CudaCompile Include="..\source\FunctionsBasic_iker.cu" />
+    <CudaCompile Include="..\source\FunctionsGeo3d_iker.cu" />
     <CudaCompile Include="..\source\FunctionsMath_ker.cu">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">true</ExcludedFromBuild>

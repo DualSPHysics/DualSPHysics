@@ -679,5 +679,11 @@
     <CudaCompile Include="..\source\JSphGpuSimple_ker.cu">
       <Filter>Cuda</Filter>
     </CudaCompile>
+    <CudaCompile Include="..\source\FunctionsBasic_iker.cu">
+      <Filter>Cuda</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\source\FunctionsGeo3d_iker.cu">
+      <Filter>Cuda</Filter>
+    </CudaCompile>
   </ItemGroup>
 </Project>

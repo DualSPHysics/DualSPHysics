@@ -23,11 +23,14 @@
 		<chrono>
 			<savedata value="-1" comment="Saves CSV with data exchange for each time interval (0=all steps)" />
 			<schemescale value="1" comment="Scale used to create the initial scheme of Chrono objects (default=1)" />
-            <collision>
+			<!-- Enable collisions for chrono -->
+            <collision activate="true">
                 <distancedp value="0.5" comment="Allowed collision overlap according Dp (default=0.5)" />
                 <ompthreads value="1" comment="Number of threads by host for parallel execution. 0:Multi-Core, 1:Single-Core (default=1)" />
                 <contactmethod value="0" comment="Contact method type. 0:NSC (Non Smooth Contacts), 1:SMC (SMooth Contacts). (default=0)" />
             </collision>
+			<!-- Disable collisions for chrono -->
+			<collision activate="false" />
 			<!-- Define the bodies for Chrono -->
 			<bodyfixed id="domain" mkbound="0" modelfile="domain.obj" /> <!-- Link a mesh file to enable contact modelling -->
 			<!-- <bodymoving id="piston" mkbound="10" massbody="10" modelfile="piston.vtk" />  The use of predefined moving objects by Chrono is disabled for now -->
