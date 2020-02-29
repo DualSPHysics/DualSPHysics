@@ -808,7 +808,6 @@ void JSph::LoadCaseConfig(){
     ShiftingMode=(Shifting? Shifting->GetShiftMode(): SHIFT_None);
   }
 
-
   //-Configuration of damping zones.
   if(xml.GetNode("case.execution.special.damping",false)){
     Damping=new JDamping(Dp,Log);
@@ -973,8 +972,8 @@ StDemData JSph::LoadDemData(bool checkdata,const JSpacePartBlock* block)const{
   data.kfric=block->GetSubValueFloat("Kfric","value",true,FLT_MAX);
   data.restitu=block->GetSubValueFloat("Restitution_Coefficient","value",true,FLT_MAX);
   if(block->ExistsValue("Restitution_Coefficient_User"))data.restitu=block->GetValueFloat("Restitution_Coefficient_User");
-  data.young=block->GetSubValueFloat("Young_Modulus","value",true,0);
-  data.poisson=block->GetSubValueFloat("PoissonRatio","value",true,0);
+  data.young=block->GetSubValueFloat("Young_Modulus","value",true,FLT_MAX);
+  data.poisson=block->GetSubValueFloat("PoissonRatio","value",true,FLT_MAX);
   //-Loads necessary values for DEM.
   data.massp=MassBound;
   if(block->Type==TpPartFloating){
