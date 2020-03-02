@@ -24,7 +24,7 @@
  along with DualSPHysics. If not, see <http://www.gnu.org/licenses/>.
 
 
-DualSPHysics5 [Moordyn+FtVel+Symmetry+MDBC+DDT2] v5.0.071 (28-02-2020)
+DualSPHysics5 [Moordyn+FtVel+Symmetry+MDBC+DDT2] v5.0.073 (02-03-2020)
 =======================================================================
 LoadDsphConfig> .../bin/windows/DsphConfig.xml
 Information about execution parameters:
