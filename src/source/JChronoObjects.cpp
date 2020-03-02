@@ -283,6 +283,16 @@ void JChronoObjects::ReadXml(const JXml *sxml,TiXmlElement* lis){
       if(contact_m<0 || contact_m>1)Run_ExceptioonFile(fun::PrintStr("The value \'%d\' is not allowed for contactmethod attribute. Only 0 or 1.",contact_m),sxml->ErrGetFileRow(lis)); 
       ChronoDataXml->SetContactMethod(contact_m==0? JChronoData::NSC: JChronoData::SMC);
       UseChronoSMC=(ChronoDataXml->GetContactMethod()==JChronoData::SMC);
+      //-Reads extra parameters for SMC
+      if(UseChronoSMC&&sxml->ExistsElement(collision,"contactmethod")){
+        TiXmlElement *smc=collision->FirstChildElement("contactmethod");
+        JChronoData::StMaterialSMC mSMC;
+        mSMC.kn=sxml->ReadElementFloat(smc,"kn","value",true,2e5);
+        mSMC.kt=sxml->ReadElementFloat(smc,"kt","value",true,2e5);
+        mSMC.gn=sxml->ReadElementFloat(smc,"gn","value",true,40);
+        mSMC.gt=sxml->ReadElementFloat(smc,"gt","value",true,20);
+        ChronoDataXml->SetMaterialSMC(mSMC);
+      }
     }
   }
   ConfigOmp();
@@ -755,7 +765,7 @@ void JChronoObjects::CheckParams(const JChBody *body)const{
   if(body->GetRestitu()==FLT_MAX)  Run_Exceptioon(objdesc+" - Value of Restitution_Coefficient is invalid.");
   if(UseChronoSMC){
     if(body->GetYoung()  ==FLT_MAX)Run_Exceptioon(objdesc+" - Value of Young_Modulus is invalid.");
-    if(body->GetPoisson()==FLT_MAX)Run_Exceptioon(objdesc+" - Value of Kfric is PoissonRatio.");
+    if(body->GetPoisson()==FLT_MAX)Run_Exceptioon(objdesc+" - Value of PoissonRatio is invalid.");
   } 
 }
 
