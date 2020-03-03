@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<case app="GenCase v5.0.150 (02-03-2020)" date="02-03-2020 20:08:59">
-    <casedef requiredversion="v5.0.150">
+<case app="GenCase v5.0.151 (03-03-2020)" date="03-03-2020 12:41:00">
+    <casedef requiredversion="v5.0.151">
         <constantsdef>
-            <lattice bound="2" fluid="1" />
+            <lattice bound="2" fluid="1" comment="Type of lattice to create the initial particles (default=1)" />
             <gravity x="0" y="0" z="-9.81" comment="Gravitational acceleration" units_comment="m/s^2" />
             <rhop0 value="1000" comment="Reference density of the fluid" units_comment="kg/m^3" />
             <hswl value="0" auto="true" comment="Maximum still water level to calculate speedofsound using coefsound" units_comment="metres (m)" />
