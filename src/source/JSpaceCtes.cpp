@@ -111,10 +111,9 @@ void JSpaceCtes::ReadXmlElementAuto(JXml *sxml,TiXmlElement* node,bool optional,
 /// Reads constants for definition of the case of xml node.
 //==============================================================================
 void JSpaceCtes::ReadXmlDef(JXml *sxml,TiXmlElement* node){
-  const char met[]="ReadXmlDef";
-  TiXmlElement* lattice=sxml->GetFirstElement(node,"lattice");
-  SetLatticeBound(sxml->GetAttributeInt(lattice,"bound")==1);
-  SetLatticeFluid(sxml->GetAttributeInt(lattice,"fluid")==1);
+  TiXmlElement* lattice=sxml->GetFirstElement(node,"lattice",true);
+  SetLatticeBound(lattice? sxml->GetAttributeInt(lattice,"bound")==1: true);
+  SetLatticeFluid(lattice? sxml->GetAttributeInt(lattice,"fluid")==1: true);
   SetGravity(sxml->ReadElementDouble3(node,"gravity"));
   SetCFLnumber(sxml->ReadElementDouble(node,"cflnumber","value"));
   ReadXmlElementAuto(sxml,node,false,"hswl",HSwl,HSwlAuto);
@@ -125,7 +124,7 @@ void JSpaceCtes::ReadXmlDef(JXml *sxml,TiXmlElement* node){
   if(!ch)ch=sxml->ReadElementDouble(node,"coefficient","value",true,0);
   double chdp=sxml->ReadElementDouble(node,"hdp","value",true,0);
   if(!ch && !chdp)ch=sxml->ReadElementDouble(node,"coefh","value");
-  if(ch!=0 && chdp!=0)RunException(met,"Only one constant must be defined (coefh or hdp).",sxml->ErrGetFileRow(node));
+  if(ch!=0 && chdp!=0)Run_ExceptioonFile("Only one constant must be defined (coefh or hdp).",sxml->ErrGetFileRow(node));
   if(ch)SetCoefH(ch); 
   if(chdp)SetCoefHdp(chdp);
   SetGamma(sxml->ReadElementDouble(node,"gamma","value"));
@@ -163,10 +162,13 @@ void JSpaceCtes::WriteXmlElementComment(TiXmlElement* ele,std::string comment,st
 /// Writes constants for definition of the case of xml node.
 //==============================================================================
 void JSpaceCtes::WriteXmlDef(JXml *sxml,TiXmlElement* node,bool svtemplate)const{
-  TiXmlElement lattice("lattice");
-  JXml::AddAttribute(&lattice,"bound",GetLatticeBound());
-  JXml::AddAttribute(&lattice,"fluid",GetLatticeFluid());
-  node->InsertEndChild(lattice);
+  if(svtemplate || !GetLatticeBound() || !GetLatticeFluid()){
+    TiXmlElement lattice("lattice");
+    JXml::AddAttribute(&lattice,"bound",GetLatticeBound());
+    JXml::AddAttribute(&lattice,"fluid",GetLatticeFluid());
+    WriteXmlElementComment(&lattice,"Type of lattice to create the initial particles (default=1)");
+    node->InsertEndChild(lattice);
+  }
   WriteXmlElementComment(JXml::AddElementDouble3(node,"gravity",GetGravity()),"Gravitational acceleration","m/s^2");
   WriteXmlElementComment(JXml::AddElementAttrib(node,"rhop0","value",GetRhop0()),"Reference density of the fluid","kg/m^3");
   WriteXmlElementAuto(sxml,node,"hswl",GetHSwl(),GetHSwlAuto(),"Maximum still water level to calculate speedofsound using coefsound","metres (m)");
@@ -241,7 +243,7 @@ void JSpaceCtes::WriteXmlRun(JXml *sxml,TiXmlElement* node)const{
 void JSpaceCtes::LoadXmlDef(JXml *sxml,const std::string &place){
   Reset();
   TiXmlNode* node=sxml->GetNode(place,false);
-  if(!node)RunException("LoadXmlDef",std::string("The item is not found \'")+place+"\'.");
+  if(!node)Run_Exceptioon(std::string("The item is not found \'")+place+"\'.");
   ReadXmlDef(sxml,node->ToElement());
 }
 
@@ -258,7 +260,7 @@ void JSpaceCtes::SaveXmlDef(JXml *sxml,const std::string &place,bool svtemplate)
 void JSpaceCtes::LoadXmlRun(JXml *sxml,const std::string &place){
   Reset();
   TiXmlNode* node=sxml->GetNode(place,false);
-  if(!node)RunException("LoadXmlRun",std::string("The item is not found \'")+place+"\'.");
+  if(!node)Run_Exceptioon(std::string("The item is not found \'")+place+"\'.");
   ReadXmlRun(sxml,node->ToElement());
 }
 

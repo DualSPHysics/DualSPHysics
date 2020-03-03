@@ -33,6 +33,8 @@
 //:# - Se cambio las unidades de la constante B a kg/(m*s^2). (08-06-2016)
 //:# - Se cambio las unidades de la constante B a Pascal (Pa). (07-06-2017)
 //:# - Save example of <hdp> in <constantsdef> of template. (07-04-2019)  
+//:# - <lattice> pasa a ser opcional con el valor 1 por defecto. (03-03-2020)  
+//:# - Mejora uso de excepciones. (03-03-2020)  
 //:#############################################################################
 
 /// \file JSpaceCtes.h \brief Declares the class \ref JSpaceCtes.
