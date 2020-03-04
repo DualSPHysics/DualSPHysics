@@ -27,6 +27,10 @@
 #include "OmpDefs.h"
 #include <algorithm>
 
+//<vs_praticalss_ini>
+//#define COMPILE_PRACTICALSS  ///<Codigo temporal para probar la practical session del DSWorkshop.
+//<vs_praticalss_end>
+
 //#define DISABLE_TIMERS     ///<Compiles without timers. | Compilado sin timers.
 //#define DISABLE_BSMODES    ///<compiles without advanced BlockSize modes.
 

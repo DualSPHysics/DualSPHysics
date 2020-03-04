@@ -142,7 +142,7 @@ protected:
   float ViscDtMax;      ///<Max value of ViscDt calculated in Interaction_Forces() / Valor maximo de ViscDt calculado en Interaction_Forces().
 
   //-Variables for computing forces. | Vars. derivadas para computo de fuerzas.
-  float *Pressc;       ///< Press[]=B*((Rhop/Rhop0)^gamma-1)
+  float *Pressc;       ///<Pressure computed starting from density for interaction. Press[]=ComputePress(Rhop,Rhop0,B,gamma)
 
   //-Variables for Laminar+SPS viscosity.  
   tsymatrix3f *SpsTauc;       ///<SPS sub-particle stress tensor.
@@ -199,6 +199,7 @@ protected:
   float CalcVelMaxSeq(unsigned np,const tfloat4* velrhop)const;
   float CalcVelMaxOmp(unsigned np,const tfloat4* velrhop)const;
 
+  inline float ComputePress(float rhop,float rhop0,float b,float gamma)const;
   void PreInteractionVars_Forces(unsigned np,unsigned npb);
   void PreInteraction_Forces();
   void PosInteraction_Forces();

@@ -26,6 +26,7 @@
 //:# - Nuevos metodos GetDataCount(), GetArrayCte(), GetArrayDim()... (11-12-2019)
 //:# - Nuevos metodos FilterApply(), FilterList(), SortData(), FilterSortList()... (18-01-2020)
 //:# - Nuevos tipos int e int3. (19-02-2020)
+//:# - Nuevos metodos CreateArrayPtrXXX(). (04-03-2020)
 //:#############################################################################
 
 /// \file JDataArrays.h \brief Declares the class \ref JDataArrays.
@@ -119,6 +120,16 @@ public:
   unsigned CreateArrayFloat3 (std::string fullname,unsigned count,tfloat3  value=TFloat3(0) ,bool delptr=true){ return(AddArray(fullname,count,NewArrayFloat3 (count,true,value),delptr)); }
   unsigned CreateArrayDouble3(std::string fullname,unsigned count,tdouble3 value=TDouble3(0),bool delptr=true){ return(AddArray(fullname,count,NewArrayDouble3(count,true,value),delptr)); }
 
+  byte*     CreateArrayPtrByte   (std::string fullname,unsigned count,byte     value=0          ,bool delptr=true){ return((byte*)    GetArrayByte   (CreateArrayByte   (fullname,count,value,delptr))); }
+  word*     CreateArrayPtrWord   (std::string fullname,unsigned count,word     value=0          ,bool delptr=true){ return((word*)    GetArrayWord   (CreateArrayWord   (fullname,count,value,delptr))); }
+  unsigned* CreateArrayPtrUint   (std::string fullname,unsigned count,unsigned value=0          ,bool delptr=true){ return((unsigned*)GetArrayUint   (CreateArrayUint   (fullname,count,value,delptr))); }
+  int*      CreateArrayPtrInt    (std::string fullname,unsigned count,int      value=0          ,bool delptr=true){ return((int*)     GetArrayInt    (CreateArrayInt    (fullname,count,value,delptr))); }
+  float*    CreateArrayPtrFloat  (std::string fullname,unsigned count,float    value=0          ,bool delptr=true){ return((float*)   GetArrayFloat  (CreateArrayFloat  (fullname,count,value,delptr))); }
+  double*   CreateArrayPtrDouble (std::string fullname,unsigned count,double   value=0          ,bool delptr=true){ return((double*)  GetArrayDouble (CreateArrayDouble (fullname,count,value,delptr))); }
+  tuint3*   CreateArrayPtrUint3  (std::string fullname,unsigned count,tuint3   value=TUint3(0)  ,bool delptr=true){ return((tuint3*)  GetArrayUint3  (CreateArrayUint3  (fullname,count,value,delptr))); }
+  tint3*    CreateArrayPtrInt3   (std::string fullname,unsigned count,tint3    value=TInt3(0)   ,bool delptr=true){ return((tint3*)   GetArrayInt3   (CreateArrayInt3   (fullname,count,value,delptr))); }
+  tfloat3*  CreateArrayPtrFloat3 (std::string fullname,unsigned count,tfloat3  value=TFloat3(0) ,bool delptr=true){ return((tfloat3*) GetArrayFloat3 (CreateArrayFloat3 (fullname,count,value,delptr))); }
+  tdouble3* CreateArrayPtrDouble3(std::string fullname,unsigned count,tdouble3 value=TDouble3(0),bool delptr=true){ return((tdouble3*)GetArrayDouble3(CreateArrayDouble3(fullname,count,value,delptr))); }
 
   void DeleteArray(unsigned idx);
   void DeleteArray(std::string keyname);

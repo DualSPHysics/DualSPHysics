@@ -139,6 +139,7 @@ protected:
   bool PointIsOut(double px,double py)const{ return(px!=px || py!=py || px<DomPosMin.x || py<DomPosMin.y || px>=DomPosMax.x || py>=DomPosMax.y); }
   inline void GetInteractionCells(const tdouble3 &pos,const tint4 &nc,const tint3 &cellzero
     ,int &cxini,int &cxfin,int &yini,int &yfin,int &zini,int &zfin)const;
+  inline float ComputePress(float rhop,float rhop0,float b,float gamma)const;
 
   static std::string GetNameType(TpGauge type);
 

@@ -421,115 +421,6 @@ __device__ double3 KerUpdatePeriodicPos(double3 ps)
 //# Kernels auxiliares para interaccion.
 //##############################################################################
 //------------------------------------------------------------------------------
-/// Returns position, vel, rhop and press of a particle.
-/// Devuelve posicion, vel, rhop y press de particula.
-//------------------------------------------------------------------------------
-template<bool psingle> __device__ void KerGetParticleData(unsigned p1
-  ,const double2 *posxy,const double *posz,const float4 *pospress,const float4 *velrhop
-  ,float3 &velp1,float &rhopp1,double3 &posdp1,float3 &posp1,float &pressp1)
-{
-  float4 r=velrhop[p1];
-  velp1=make_float3(r.x,r.y,r.z);
-  rhopp1=r.w;
-  if(psingle){
-    float4 pxy=pospress[p1];
-    posp1=make_float3(pxy.x,pxy.y,pxy.z);
-    pressp1=pxy.w;
-  }
-  else{
-    double2 pxy=posxy[p1];
-    posdp1=make_double3(pxy.x,pxy.y,posz[p1]);
-    pressp1=(CTE.cteb*(powf(rhopp1*CTE.ovrhopzero,CTE.gamma)-1.0f));
-  }
-}
-
-//------------------------------------------------------------------------------
-/// Returns postion and vel of a particle.
-/// Devuelve posicion y vel de particula.
-//------------------------------------------------------------------------------
-template<bool psingle> __device__ void KerGetParticleData(unsigned p1
-  ,const double2 *posxy,const double *posz,const float4 *pospress,const float4 *velrhop
-  ,float3 &velp1,double3 &posdp1,float3 &posp1)
-{
-  float4 r=velrhop[p1];
-  velp1=make_float3(r.x,r.y,r.z);
-  if(psingle){
-    float4 pxy=pospress[p1];
-    posp1=make_float3(pxy.x,pxy.y,pxy.z);
-  }
-  else{
-    double2 pxy=posxy[p1];
-    posdp1=make_double3(pxy.x,pxy.y,posz[p1]);
-  }
-}
-
-//------------------------------------------------------------------------------
-/// Returns particle postion.
-/// Devuelve posicion de particula.
-//------------------------------------------------------------------------------
-template<bool psingle> __device__ void KerGetParticleData(unsigned p1
-  ,const double2 *posxy,const double *posz,const float4 *pospress
-  ,double3 &posdp1,float3 &posp1)
-{
-  if(psingle){
-    float4 pxy=pospress[p1];
-    posp1=make_float3(pxy.x,pxy.y,pxy.z);
-  }
-  else{
-    double2 pxy=posxy[p1];
-    posdp1=make_double3(pxy.x,pxy.y,posz[p1]);
-  }
-}
-
-//------------------------------------------------------------------------------
-/// Returns drx, dry and drz between the particles.
-/// Devuelve drx, dry y drz entre dos particulas.
-//------------------------------------------------------------------------------
-template<bool psingle> __device__ void KerGetParticlesDr(int p2
-  ,const double2 *posxy,const double *posz,const float4 *pospress
-  ,const double3 &posdp1,const float3 &posp1
-  ,float &drx,float &dry,float &drz,float &pressp2)
-{
-  if(psingle){
-    float4 posp2=pospress[p2];
-    drx=posp1.x-posp2.x;
-    dry=posp1.y-posp2.y;
-    drz=posp1.z-posp2.z;
-    pressp2=posp2.w;
-  }
-  else{
-    double2 posp2=posxy[p2];
-    drx=float(posdp1.x-posp2.x);
-    dry=float(posdp1.y-posp2.y);
-    drz=float(posdp1.z-posz[p2]);
-    pressp2=0;
-  }
-}
-
-//------------------------------------------------------------------------------
-/// Returns drx, dry and drz between the particles.
-/// Devuelve drx, dry y drz entre dos particulas.
-//------------------------------------------------------------------------------
-template<bool psingle> __device__ void KerGetParticlesDr(int p2
-  ,const double2 *posxy,const double *posz,const float4 *pospress
-  ,const double3 &posdp1,const float3 &posp1
-  ,float &drx,float &dry,float &drz)
-{
-  if(psingle){
-    float4 posp2=pospress[p2];
-    drx=posp1.x-posp2.x;
-    dry=posp1.y-posp2.y;
-    drz=posp1.z-posp2.z;
-  }
-  else{
-    double2 posp2=posxy[p2];
-    drx=float(posdp1.x-posp2.x);
-    dry=float(posdp1.y-posp2.y);
-    drz=float(posdp1.z-posz[p2]);
-  }
-}
-
-//------------------------------------------------------------------------------
 /// Returns cell limits for the interaction.
 /// Devuelve limites de celdas para interaccion.
 //------------------------------------------------------------------------------
@@ -554,28 +445,6 @@ __device__ void KerGetInteraction_Cells(unsigned rcell
   ini3=c3-min(c3,hdiv);
   fin3=c3+min(nc.z-c3-1,hdiv)+1;
 }
-
-////------------------------------------------------------------------------------
-///// Returns cell limits for the interaction.
-///// Devuelve limites de celdas para interaccion.
-////------------------------------------------------------------------------------
-//__device__ void KerGetInteractionCells0(unsigned rcell
-//  ,int hdiv,const int4 &nc,const int3 &cellzero
-//  ,int &cxini,int &cxfin,int &yini,int &yfin,int &zini,int &zfin)
-//{
-//  //-Obtains interaction limits.
-//  const int cx=PC__Cellx(CTE.cellcode,rcell)-cellzero.x;
-//  const int cy=PC__Celly(CTE.cellcode,rcell)-cellzero.y;
-//  const int cz=PC__Cellz(CTE.cellcode,rcell)-cellzero.z;
-//  //-Code for hdiv 1 or 2 but not zero.
-//  //-Codigo para hdiv 1 o 2 pero no cero.
-//  cxini=cx-min(cx,hdiv);
-//  cxfin=cx+min(nc.x-cx-1,hdiv)+1;
-//  yini=cy-min(cy,hdiv);
-//  yfin=cy+min(nc.y-cy-1,hdiv)+1;
-//  zini=cz-min(cz,hdiv);
-//  zfin=cz+min(nc.z-cz-1,hdiv)+1;
-//}
 
 //------------------------------------------------------------------------------
 /// Returns cell limits for the interaction.
@@ -910,7 +779,7 @@ template<TpKernel tker,TpFtMode ftmode,bool lamsps,TpDensity tdensity,bool shift
       
       //===== Aceleration ===== 
       if(compute){
-        const float pressp2=(CTE.cteb*(powf(velrhop2.w*CTE.ovrhopzero,CTE.gamma)-1.0f));
+        const float pressp2=ComputePress(velrhop2.w,CTE.ovrhopzero,CTE.cteb,CTE.gamma);
         const float prs=(pressp1+pressp2)/(velrhop1.w*velrhop2.w) + (tker==KERNEL_Cubic? KerGetKernelCubicTensil(rr2,velrhop1.w,pressp1,velrhop2.w,pressp2): 0);
         const float p_vpm=-prs*(USE_FLOATING? ftmassp2: massp2);
         acep1.x+=p_vpm*frx; acep1.y+=p_vpm*fry; acep1.z+=p_vpm*frz;
@@ -1035,7 +904,7 @@ template<TpKernel tker,TpFtMode ftmode,bool lamsps,TpDensity tdensity,bool shift
     //-Obtains basic data of particle p1.
     const float4 pscellp1=poscell[p1];
     const float4 velrhop1=velrhop[p1];
-    const float pressp1=(CTE.cteb*(powf(velrhop1.w*CTE.ovrhopzero,CTE.gamma)-1.0f));
+    const float pressp1=ComputePress(velrhop1.w,CTE.ovrhopzero,CTE.cteb,CTE.gamma);
     const bool rsymp1=(symm && CEL_GetPartY(__float_as_uint(pscellp1.w))==0); //<vs_syymmetry>
 
     //-Variables for Laminar+SPS.

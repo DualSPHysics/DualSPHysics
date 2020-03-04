@@ -30,20 +30,7 @@
 
 
 namespace cugauge{
-
-//==============================================================================
-/// Returns size of gridsize according to parameters.
-/// Devuelve tamaño de gridsize segun parametros.
-//==============================================================================
-dim3 GetGridSize(unsigned n,unsigned blocksize){
-  dim3 sgrid;//=dim3(1,2,3);
-  unsigned nb=unsigned(n+blocksize-1)/blocksize;//-Numero total de bloques a lanzar.
-  sgrid.x=(nb<=65535? nb: unsigned(sqrt(float(nb))));
-  sgrid.y=(nb<=65535? 1: unsigned((nb+sgrid.x-1)/sgrid.x));
-  sgrid.z=1;
-  return(sgrid);
-}
-
+#include "FunctionsBasic_iker.cu"
 
 //##############################################################################
 //# Kernels for gauge interaction.
@@ -118,7 +105,7 @@ __global__ void KerInteractionGaugeVel(bool symm,double3 ptpos
   ,float3 *ptvel
   ,double3 domposmin,float scell,float fourh2,float h,float massf)
 {
-  unsigned p=blockIdx.y*gridDim.x*blockDim.x + blockIdx.x*blockDim.x + threadIdx.x; //-Nº de la partícula
+  unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Nº de la partícula
   if(!p){
     const double px=ptpos.x;
     const double py=ptpos.y;
@@ -190,7 +177,7 @@ void Interaction_GaugeVel(bool symm,tdouble3 ptpos
   //-Interaction Fluid-Fluid & Fluid-Bound.
   if(1){
     const unsigned bsize=32;
-    dim3 sgrid=GetGridSize(1,bsize);
+    dim3 sgrid=GetSimpleGridSize(1,bsize);
     //:JDgKerPrint info;
     //:byte* ik=NULL; //info.GetInfoPointer(sgridf,bsfluid);
     KerInteractionGaugeVel <<<sgrid,bsize>>> (symm,Double3(ptpos),awen,hdiv,nc,cellzero,cellfluid,begincell,posxy,posz,code,velrhop,ptvel,Double3(domposmin),scell,fourh2,h,massf);
@@ -320,7 +307,7 @@ void Interaction_GaugeSwl(bool symm,tdouble3 point0,tdouble3 pointdir,unsigned p
   const int3 cellzero=make_int3(cellmin.x,cellmin.y,cellmin.z);
   if(1){
     const unsigned bsize=128;
-    dim3 sgrid=GetGridSize(bsize,bsize);
+    dim3 sgrid=GetSimpleGridSize(bsize,bsize);
     const unsigned smem=sizeof(float)*(bsize+1);
     //:JDgKerPrint info;
     //:byte* ik=NULL; //info.GetInfoPointer(sgrid,bsize);
@@ -379,13 +366,13 @@ __global__ void KerInteractionGaugeMaxz(double p0x,double p0y,float maxdist2
 //==============================================================================
 void Interaction_GaugeMaxz(tdouble3 point0,float maxdist2
   ,int cxini,int cxfin,int yini,int yfin,int zini,int zfin
-  ,int4 nc,unsigned cellfluid,const int2 *begincell
+  ,tint4 nc,unsigned cellfluid,const int2 *begincell
   ,const double2 *posxy,const double *posz,const typecode *code
   ,float3 *ptres)
 {
   const unsigned bsize=128;
-  dim3 sgrid=GetGridSize(1,bsize);
-  KerInteractionGaugeMaxz <<<sgrid,bsize>>> (point0.x,point0.y,maxdist2,cxini,cxfin,yini,yfin,zini,zfin,nc,cellfluid,begincell,posxy,posz,code,ptres);
+  dim3 sgrid=GetSimpleGridSize(1,bsize);
+  KerInteractionGaugeMaxz <<<sgrid,bsize>>> (point0.x,point0.y,maxdist2,cxini,cxfin,yini,yfin,zini,zfin,Int4(nc),cellfluid,begincell,posxy,posz,code,ptres);
 }
 
 
@@ -394,12 +381,12 @@ void Interaction_GaugeMaxz(tdouble3 point0,float maxdist2
 /// Ignores periodic boundary particles to avoid race condition problems.
 //------------------------------------------------------------------------------
 __global__ void KerInteractionGaugeForce(unsigned n,unsigned idbegin,typecode codesel
-  ,float fourh2,float h,float bwen,float massf,float cteb,float rhopzero,float gamma
+  ,float fourh2,float h,float bwen,float massf,float cteb,float ovrhopzero,float gamma
   ,int hdiv,int4 nc,int3 cellzero,unsigned cellfluid,const int2 *begincell,double3 domposmin,float scell
   ,const double2 *posxy,const double *posz,const typecode *code,const unsigned *idp,const float4 *velrhop
   ,float3 *partace)
 {
-  unsigned p=blockIdx.y*gridDim.x*blockDim.x + blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
+  unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
   if(p<n){
     const typecode code1=code[p];
     if(CODE_GetTypeAndValue(code1)==codesel && CODE_IsNormal(code1)){
@@ -408,7 +395,7 @@ __global__ void KerInteractionGaugeForce(unsigned n,unsigned idbegin,typecode co
       const double py=ptposxy.y;
       const double pz=posz[p];
       const float rhop1=velrhop[p].w;
-      const float press1=cteb*(pow(rhop1/rhopzero,gamma)-1.0f);
+      const float press1=ComputePress(rhop1,ovrhopzero,cteb,gamma);
       float3 ace=make_float3(0,0,0);
 
       //-Obtains interaction limits.
@@ -446,7 +433,7 @@ __global__ void KerInteractionGaugeForce(unsigned n,unsigned idbegin,typecode co
               }
               const float mass2=massf;
               const float rhop2=velrhop[p2].w;
-              const float press2=cteb*(pow(rhop2/rhopzero,gamma)-1.0f);
+              const float press2=ComputePress(rhop2,ovrhopzero,cteb,gamma);
               const float prs=(press1+press2)/(rhop1*rhop2);
               {//-Adds aceleration.
                const float p_vpm1=-prs*mass2;
@@ -476,13 +463,15 @@ void Interaction_GaugeForce(unsigned n,unsigned idbegin,typecode codesel
   const int4 nc=make_int4(ncells.x,ncells.y,ncells.z,ncells.x*ncells.y);
   const unsigned cellfluid=nc.w*nc.z+1;
   const int3 cellzero=make_int3(cellmin.x,cellmin.y,cellmin.z);
+  const float ovrhopzero=1.f/rhopzero;
   //-Interaction bound-Fluid.
   if(n){
     const unsigned bsize=128;
-    dim3 sgrid=GetGridSize(n,bsize);
+    dim3 sgrid=GetSimpleGridSize(n,bsize);
     //:JDgKerPrint info;
     //:byte* ik=NULL; //info.GetInfoPointer(sgridf,bsfluid);
-    KerInteractionGaugeForce <<<sgrid,bsize>>> (n,idbegin,codesel,fourh2,h,bwen,massf,cteb,rhopzero,gamma
+    KerInteractionGaugeForce <<<sgrid,bsize>>> (n,idbegin,codesel,fourh2,h,bwen,massf
+      ,cteb,ovrhopzero,gamma
       ,hdiv,nc,cellzero,cellfluid,begincell,Double3(domposmin),scell
       ,posxy,posz,code,idp,velrhop,partace);
     //:info.PrintValuesFull(true); //info.PrintValuesInfo();

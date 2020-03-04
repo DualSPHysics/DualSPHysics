@@ -2110,12 +2110,6 @@ void JSph::SavePartData(unsigned npok,unsigned nout,const JDataArrays& arrays
         posf3=GetPointerDataFloat3(npok,pos);
         DataBi4->AddPartData(npok,idp,posf3,vel,rhop);
       }
-      float *press=NULL;
-      if(0){//-Example saving a new array (Pressure) in files BI4.
-        press=new float[npok];
-        for(unsigned p=0;p<npok;p++)press[p]=(idp[p]>=CaseNbound? CteB*(pow(rhop[p]/RhopZero,Gamma)-1.0f): 0.f);
-        DataBi4->AddPartData("Pressure",npok,press);
-      }
       //-Adds other arrays.
       const string arrignore=":Pos:Idp:Vel:Rhop:";
       for(unsigned ca=0;ca<arrays.Count();ca++){
@@ -2125,7 +2119,6 @@ void JSph::SavePartData(unsigned npok,unsigned nout,const JDataArrays& arrays
         }
       }
       DataBi4->SaveFilePart();
-      delete[] press; press=NULL;//-Memory must to be deallocated after saving file because DataBi4 uses this memory space.
     }
     if(SvData&SDAT_Info)DataBi4->SaveFileInfo();
     delete[] posf3;

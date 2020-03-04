@@ -824,10 +824,22 @@ void JSphGpuSingle::SaveData(){
     TimerSim.Stop();
     infoplus.timesim=TimerSim.GetElapsedTimeD()/1000.;
   }
+  //-Obtains current domain limits.
+  const tdouble3 vdom[2]={CellDivSingle->GetDomainLimits(true),CellDivSingle->GetDomainLimits(false)};
   //-Stores particle data. | Graba datos de particulas.
   JDataArrays arrays;
   AddBasicArrays(arrays,npsave,AuxPos,Idp,AuxVel,AuxRhop);
-  const tdouble3 vdom[2]={CellDivSingle->GetDomainLimits(true),CellDivSingle->GetDomainLimits(false)};
+//<vs_praticalss_ini>
+#ifdef COMPILE_PRACTICALSS
+  //-Adds extra arrays to include in output files (BI4, VTK and CSV).
+  float* press=arrays.CreateArrayPtrFloat("Pressure",npsave);//-Creates new array for pressure initialized to zero. 
+  for(unsigned p=0;p<npsave;p++){
+    if(Idp[p]>=CaseNbound){//-If particle is a fluid particle then...
+      press[p]=CteB*(pow(AuxRhop[p]/RhopZero,Gamma)-1.0f);//-Computes pressure starting from density. 
+    }
+  }
+#endif
+//<vs_praticalss_end>
   JSph::SaveData(npsave,arrays,1,vdom,&infoplus);
   //SaveVtkNormalsGpu("Normals.vtk",Part,0,Npb,Posxyg,Poszg,Idpg,BoundNormalg); //<vs_mddbc>
   TmgStop(Timers,TMG_SuSavePart);

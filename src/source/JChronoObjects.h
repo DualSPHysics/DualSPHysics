@@ -60,14 +60,13 @@ class DSPHChronoLib;
 #else
 class JChronoObjects : protected JObject
 {
-public: 
-
 protected:
   JLog2 *Log;
   std::string DirData;
   std::string CaseName;
   const double Dp;
   const word MkBoundFirst;
+
   unsigned Solver; 
   int OmpThreads;     ///<Max number of OpenMP threads in execution on CPU host (minimum 1).
   const bool UseDVI;  ///<Uses Differential Variational Inequality (DVI) method.

@@ -236,6 +236,14 @@ void JGaugeItem::GetInteractionCells(const tdouble3 &pos,const tint4 &nc,const t
   zfin=cz+min(nc.z-cz-1,Hdiv)+1;
 }
 
+//==============================================================================
+/// Returns pressure starting from density using equation of state 
+/// based on [Monaghan, 1994].
+//==============================================================================
+float JGaugeItem::ComputePress(float rhop,float rhop0,float b,float gamma)const{ 
+  return(b*(pow(rhop/rhop0,gamma)-1.0f));
+}
+
 
 //##############################################################################
 //# JGaugeVelocity
@@ -890,7 +898,8 @@ void JGaugeMaxZ::CalculeCpu(double timestep,tuint3 ncells,tuint3 cellmin
 //==============================================================================
 void JGaugeMaxZ::CalculeGpu(double timestep,tuint3 ncells,tuint3 cellmin
   ,const int2 *beginendcell,unsigned npbok,unsigned npb,unsigned np
-  ,const double2 *posxy,const double *posz,const typecode *code,const unsigned *idp,const float4 *velrhop,float3 *aux)
+  ,const double2 *posxy,const double *posz,const typecode *code
+  ,const unsigned *idp,const float4 *velrhop,float3 *aux)
 {
   SetTimeStep(timestep);
   //-Compute auxiliary constants.
@@ -902,7 +911,8 @@ void JGaugeMaxZ::CalculeGpu(double timestep,tuint3 ncells,tuint3 cellmin
   int cxini,cxfin,yini,yfin,zini,zfin;
   GetInteractionCellsMaxZ(Point0,nc,cellzero,cxini,cxfin,yini,yfin,zini,zfin);
   //-Start measure.
-  cugauge::Interaction_GaugeMaxz(Point0,maxdist2,cxini,cxfin,yini,yfin,zini,zfin,cugauge::Int4(nc),cellfluid,beginendcell,posxy,posz,code,aux);
+  cugauge::Interaction_GaugeMaxz(Point0,maxdist2,cxini,cxfin,yini,yfin,zini,zfin
+    ,nc,cellfluid,beginendcell,posxy,posz,code,aux);
   tfloat3 ptsurf=TFloat3(0);
   cudaMemcpy(&ptsurf,aux,sizeof(float3),cudaMemcpyDeviceToHost);
   Check_CudaErroor("Failed in MaxZ calculation.");
@@ -1066,8 +1076,7 @@ void JGaugeForce::CalculeCpu(double timestep,tuint3 ncells,tuint3 cellmin
     int cxini,cxfin,yini,yfin,zini,zfin;
     const tdouble3 ptpos1=pos[p1];
     const tfloat4 velrhop1=velrhop[p1];
-    const float press1=CteB*(pow(velrhop1.w/RhopZero,Gamma)-1.0f);
-
+    const float press1=ComputePress(velrhop1.w,RhopZero,CteB,Gamma);
     GetInteractionCells(ptpos1,nc,cellzero,cxini,cxfin,yini,yfin,zini,zfin);
 
     //-Auxiliary variables.
@@ -1100,7 +1109,7 @@ void JGaugeForce::CalculeCpu(double timestep,tuint3 ncells,tuint3 cellmin
             }
             const float mass2=MassFluid;
             const tfloat4 velrhop2=velrhop[p2];
-            const float press2=CteB*(pow(velrhop2.w/RhopZero,Gamma)-1.0f);
+            const float press2=ComputePress(velrhop2.w,RhopZero,CteB,Gamma);
             const float prs=(press1+press2)/(velrhop1.w*velrhop2.w);
             {//-Adds aceleration.
               const float p_vpm1=-prs*mass2;

@@ -1106,10 +1106,22 @@ void JSphCpuSingle::SaveData(){
     TimerSim.Stop();
     infoplus.timesim=TimerSim.GetElapsedTimeD()/1000.;
   }
+  //-Obtains current domain limits.
+  const tdouble3 vdom[2]={CellDivSingle->GetDomainLimits(true),CellDivSingle->GetDomainLimits(false)};
   //-Stores particle data. | Graba datos de particulas.
   JDataArrays arrays;
   AddBasicArrays(arrays,npsave,pos,idp,vel,rhop);
-  const tdouble3 vdom[2]={CellDivSingle->GetDomainLimits(true),CellDivSingle->GetDomainLimits(false)};
+//<vs_praticalss_ini>
+#ifdef COMPILE_PRACTICALSS
+  //-Adds extra arrays to include in output files (BI4, VTK and CSV).
+  float* press=arrays.CreateArrayPtrFloat("Pressure",npsave);//-Creates new array for pressure initialized to zero. 
+  for(unsigned p=0;p<npsave;p++){
+    if(idp[p]>=CaseNbound){//-If particle is a fluid particle then...
+      press[p]=CteB*(pow(rhop[p]/RhopZero,Gamma)-1.0f);//-Computes pressure starting from density. 
+    }
+  }
+#endif
+//<vs_praticalss_end>
   JSph::SaveData(npsave,arrays,1,vdom,&infoplus);
   //-Free auxiliary memory for particle data. | Libera memoria auxiliar para datos de particulas.
   ArraysCpu->Free(idp);

@@ -35,6 +35,7 @@
 // Basic conversion functions.
 //==============================================================================
 inline int3 Int3(const tint3& v){ int3 p={v.x,v.y,v.z}; return(p); }
+inline int4 Int4(const tint4& v){ int4 p={v.x,v.y,v.z,v.w}; return(p); }
 inline float3 Float3(const tfloat3& v){ float3 p={v.x,v.y,v.z}; return(p); }
 inline float3 Float3(float x,float y,float z){ float3 p={x,y,z}; return(p); }
 inline float4 Float4(const tfloat4& v){ float4 p={v.x,v.y,v.z,v.w}; return(p); }
@@ -51,4 +52,12 @@ inline dim3 GetSimpleGridSize(unsigned n,unsigned blocksize){
   return(dim3(nb,1,1));
 }
 
+
+//------------------------------------------------------------------------------
+/// Returns pressure starting from density using equation of state 
+/// based on [Monaghan, 1994].
+//------------------------------------------------------------------------------
+__device__ float ComputePress(float rhop,float ovrhop0,float b,float gamma){ 
+  return(b*(pow(rhop*ovrhop0,gamma)-1.0f));
+}
 

@@ -27,14 +27,6 @@
 /// Implements a set of functions and CUDA kernels for classes that manage gauges.
 namespace cugauge{
 
-inline int4 Int4(const tint4& v){ int4 p={v.x,v.y,v.z,v.w}; return(p); }
-inline float3 Float3(const tfloat3& v){ float3 p={v.x,v.y,v.z}; return(p); }
-inline float3 Float3(float x,float y,float z){ float3 p={x,y,z}; return(p); }
-inline tfloat3 ToTFloat3(const float3& v){ return(TFloat3(v.x,v.y,v.z)); }
-inline double3 Double3(const tdouble3& v){ double3 p={v.x,v.y,v.z}; return(p); }
-
-dim3 GetGridSize(unsigned n,unsigned blocksize);
-
 //-Kernel for JGaugeVelocity.
 void Interaction_GaugeVel(bool symm,tdouble3 ptpos
   ,float awen,int hdiv,tuint3 ncells,tuint3 cellmin,const int2 *begincell
@@ -51,7 +43,7 @@ void Interaction_GaugeSwl(bool symm,tdouble3 point0,tdouble3 pointdir,unsigned p
 //-Kernel for JGaugeMaxZ.
 void Interaction_GaugeMaxz(tdouble3 point0,float maxdist2
   ,int cxini,int cxfin,int yini,int yfin,int zini,int zfin
-  ,int4 nc,unsigned cellfluid,const int2 *begincell
+  ,tint4 nc,unsigned cellfluid,const int2 *begincell
   ,const double2 *posxy,const double *posz,const typecode *code
   ,float3 *ptres);
 

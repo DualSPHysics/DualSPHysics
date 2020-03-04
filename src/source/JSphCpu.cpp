@@ -424,6 +424,14 @@ void JSphCpu::InitRunCpu(){
 }
 
 //==============================================================================
+/// Returns pressure starting from density using equation of state 
+/// based on [Monaghan, 1994].
+//==============================================================================
+float JSphCpu::ComputePress(float rhop,float rhop0,float b,float gamma)const{ 
+  return(b*(pow(rhop/rhop0,gamma)-1.0f));
+}
+
+//==============================================================================
 /// Prepare variables for interaction functions.
 /// Prepara variables para interaccion.
 //==============================================================================
@@ -447,8 +455,7 @@ void JSphCpu::PreInteractionVars_Forces(unsigned np,unsigned npb){
     #pragma omp parallel for schedule (static) if(n>OMP_LIMIT_COMPUTELIGHT)
   #endif
   for(int p=0;p<n;p++){
-    const float rhop=Velrhopc[p].w,rhop_r0=rhop/RhopZero;
-    Pressc[p]=CteB*(pow(rhop_r0,Gamma)-1.0f);
+    Pressc[p]=ComputePress(Velrhopc[p].w,RhopZero,CteB,Gamma);
   }
 }
 
