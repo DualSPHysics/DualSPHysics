@@ -673,10 +673,10 @@ public:
   typedef enum{ NSC,SMC }               TpContactMethod; //<chrono_contacts>
   typedef enum{ BB=0,APGD=1,APGDREF=2}  DSolverType;      //Allowed Solvers
   typedef struct {
-    float kn = 2e5 ;  ///< user-specified normal stiffness coefficient
-    float kt = 2e5 ;  ///< user-specified tangential stiffness coefficient
-    float gn = 40;    ///< user-specified normal damping coefficient
-    float gt = 20;    ///< user-specified tangential damping coefficient
+    float kn;    ///< user-specified normal stiffness coefficient
+    float kt;    ///< user-specified tangential stiffness coefficient
+    float gn;    ///< user-specified normal damping coefficient
+    float gt;    ///< user-specified tangential damping coefficient
   } StMaterialSMC;
 
 private:

@@ -56,7 +56,7 @@ Please download source files and documentation from <a href="http://dual.sphysic
 
 using namespace std;
 
-JAppInfo AppInfo("DualSPHysics5","v5.0.073","02-03-2020");
+JAppInfo AppInfo("DualSPHysics5","v5.0.074","04-03-2020");
 //JAppInfo AppInfo("DualSPHysics5","v5.0.???","UserVersion","v1.0","??-??-????"); //-for user versions.
 
 //==============================================================================
@@ -138,11 +138,11 @@ void PrintExceptionLog(const std::string &prefix,const std::string &text,JLog2 *
 //==============================================================================
 int main(int argc, char** argv){
   int errcode=1;
-  AppInfo.AddNameExtra("Moordyn");    //<vs_moordyyn>
-  AppInfo.AddNameExtra("FtVel");      //<vs_fttvel>
-  AppInfo.AddNameExtra("Symmetry");   //<vs_syymmetry>
-  AppInfo.AddNameExtra("MDBC");       //<vs_mddbc>
-  AppInfo.AddNameExtra("DDT2");       //<vs_dtt2>
+  //AppInfo.AddNameExtra("Moordyn");    //<vs_moordyyn>
+  //AppInfo.AddNameExtra("FtVel");      //<vs_fttvel>
+  //AppInfo.AddNameExtra("Symmetry");   //<vs_syymmetry>
+  //AppInfo.AddNameExtra("MDBC");       //<vs_mddbc>
+  //AppInfo.AddNameExtra("DDT2");       //<vs_dtt2>
 #ifdef CODE_SIZE4
   AppInfo.AddNameExtra("MK65k");
 #endif
