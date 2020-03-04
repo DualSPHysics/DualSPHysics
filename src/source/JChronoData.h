@@ -672,12 +672,6 @@ class JChronoData : protected JChBase
 public:
   typedef enum{ NSC,SMC }               TpContactMethod; //<chrono_contacts>
   typedef enum{ BB=0,APGD=1,APGDREF=2}  DSolverType;      //Allowed Solvers
-  typedef struct {
-    float kn;    ///< user-specified normal stiffness coefficient
-    float kt;    ///< user-specified tangential stiffness coefficient
-    float gn;    ///< user-specified normal damping coefficient
-    float gt;    ///< user-specified tangential damping coefficient
-  } StMaterialSMC;
 
 private:
   std::string Mode;         //Chrono execution mode
@@ -692,7 +686,6 @@ private:
   int OmpThreads;
   bool UseFEA;                  //<chrono_fea>
   TpContactMethod ContactMethod;
-  StMaterialSMC * MaterialSMC;//<chrono_contacts>
 public:
   JChronoData();
   JChronoData(const JChronoData &src);
@@ -771,9 +764,6 @@ public:
   const JChBodyFloating* GetBodyFloating(word mkbound)const;
   const JChBodyMoving*   GetBodyMoving  (word mkbound)const;
   const JChBodyFixed*    GetBodyFixed   (word mkbound)const;
-
-  StMaterialSMC* GetMaterialSMC()const{return(MaterialSMC);}//<chrono_contacts>
-  void SetMaterialSMC(const StMaterialSMC &src);//<chrono_contacts>
 };
 
 
