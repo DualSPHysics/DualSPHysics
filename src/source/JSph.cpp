@@ -575,6 +575,7 @@ void JSph::LoadCaseConfig(){
     case 1:  TKernel=KERNEL_Cubic;     break;
     case 2:  TKernel=KERNEL_Wendland;  break;
     case 3:  TKernel=KERNEL_Gaussian;  break;
+    case 4:  TKernel=KERNEL_Quintic;   break;   //<vs_praticalsskq>
     default: RunException(met,"Kernel choice is not valid.");
   }
   switch(eparms.GetValueInt("ViscoTreatment",true,1)){
@@ -1157,9 +1158,10 @@ void JSph::ConfigConstants(bool simulate2d){
   const double h=H;
   DDT2h=float(h*2*DDTValue);
   DDTgz=float(double(RhopZero)*double(fabs(Gravity.z))/double(CteB));
-  Cs0=sqrt(double(Gamma)*double(CteB)/double(RhopZero));
-  if(!DtIni)DtIni=h/Cs0;
-  if(!DtMin)DtMin=(h/Cs0)*CoefDtMin;
+  const double cs0=sqrt(double(Gamma)*double(CteB)/double(RhopZero));
+  Cs0=cs0;
+  if(!DtIni)DtIni=h/cs0;
+  if(!DtMin)DtMin=(h/cs0)*CoefDtMin;
   Dosh=float(h*2); 
   H2=float(h*h);
   Fourh2=float(h*h*4); 
@@ -1188,6 +1190,9 @@ void JSph::ConfigConstants(bool simulate2d){
       CubicCte.d1=float(9.*aa/4.);
       CubicCte.c2=float(-3.*aa/4.);
     }
+    else if(TKernel==KERNEL_Quintic){  //<vs_praticalsskq_ini>
+      //Quintic_PDTE
+    }  //<vs_praticalsskq_end>
   }
   else{
     if(TKernel==KERNEL_Wendland)WendlandConstants(simulate2d,H,Awen,Bwen);
@@ -1213,6 +1218,9 @@ void JSph::ConfigConstants(bool simulate2d){
       CubicCte.d1=float(9.*aa/4.);
       CubicCte.c2=float(-3.*aa/4.);
     }
+    else if(TKernel==KERNEL_Quintic){  //<vs_praticalsskq_ini>
+      //Quintic_PDTE
+    }  //<vs_praticalsskq_end>
   }
   if(TBoundary==BC_MDBC)WendlandConstants(simulate2d,H,Awen,Bwen); //<vs_mddbc>
   //-Constants for Laminar viscosity + SPS turbulence model.
@@ -1304,6 +1312,9 @@ void JSph::VisuConfig()const{
     Log->Print(fun::VarStr("CubicCte.d1",CubicCte.d1));
     Log->Print(fun::VarStr("CubicCte.od_wdeltap",CubicCte.od_wdeltap));
   }
+  else if(TKernel==KERNEL_Quintic){ //<vs_praticalsskq_ini>
+    //Quintic_PDTE
+  } //<vs_praticalsskq_end>
   if(TVisco==VISCO_LaminarSPS){     
     Log->Print(fun::VarStr("SpsSmag",SpsSmag));
     Log->Print(fun::VarStr("SpsBlin",SpsBlin));
@@ -1722,7 +1733,7 @@ void JSph::InitRun(unsigned np,const unsigned *idp,const tdouble3 *pos){
 
   //-Configuration of GaugeSystem.
   GaugeSystem->Config(Simulate2D,Simulate2DPosY,Symmetry,TimeMax,TimePart
-    ,Dp,DomPosMin,DomPosMax,Scell,Hdiv,H,MassFluid,MassBound,CteB,Gamma,RhopZero);
+    ,Dp,DomPosMin,DomPosMax,Scell,Hdiv,H,MassFluid,MassBound,float(Cs0),CteB,Gamma,RhopZero);
   if(xml.GetNode("case.execution.special.gauges",false))GaugeSystem->LoadXml(&xml,"case.execution.special.gauges",MkInfo);
 
   //-Prepares WaveGen configuration.
@@ -2463,6 +2474,7 @@ std::string JSph::GetKernelName(TpKernel tkernel){
   if(tkernel==KERNEL_Cubic)tx="Cubic";
   else if(tkernel==KERNEL_Wendland)tx="Wendland";
   else if(tkernel==KERNEL_Gaussian)tx="Gaussian";
+  else if(tkernel==KERNEL_Quintic )tx="Quintic";  //<vs_praticalsskq>
   else tx="???";
   return(tx);
 }

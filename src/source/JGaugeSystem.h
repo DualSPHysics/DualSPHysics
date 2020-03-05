@@ -68,12 +68,13 @@ private:
   tdouble3 DomPosMax;     ///<Upper limit of simulation + edge 2h if periodic conditions. DomPosMax=min(Map_PosMax,Map_PosMin+(DomCelFin*Scell)); | Limite inferior de simulacion + borde 2h si hay condiciones periodicas. 
   float Scell;            ///<Cell size: 2h or h. | Tamaño de celda: 2h o h.
   int Hdiv;               ///<Value to divide 2H. | Valor por el que se divide a DosH
-  float H;
-  float MassFluid;
-  float MassBound;
-  float CteB;
-  float Gamma;
-  float RhopZero;
+  float H;                ///<The smoothing length [m].
+  float MassFluid;        ///<Reference mass of the fluid particle [kg].
+  float MassBound;        ///<Reference mass of the general boundary particle [kg].
+  float Cs0;              ///<Speed of sound at the reference density.
+  float CteB;             ///<Constant used in the state equation [Pa].
+  float Gamma;            ///<Politropic constant for water used in the state equation.  
+  float RhopZero;         ///<Reference density of the fluid [kg/m3].
 
   JGaugeItem::StDefault CfgDefault; ///<Default configuration.
 
@@ -101,7 +102,7 @@ public:
   void Config(bool simulate2d,double simulate2dposy,bool symmetry
     ,double timemax,double timepart
     ,double dp,tdouble3 posmin,tdouble3 posmax,float scell,unsigned hdiv,float h
-    ,float massfluid,float massbound,float cteb,float gamma,float rhopzero);
+    ,float massfluid,float massbound,float cs0,float cteb,float gamma,float rhopzero);
 
   void LoadXml(JXml *sxml,const std::string &place,const JSphMk* mkinfo);
   void VisuConfig(std::string txhead,std::string txfoot);

@@ -536,6 +536,39 @@ __device__ void KerGetKernelGaussian(float rr2,float drx,float dry,float drz
   frx=fac*drx; fry=fac*dry; frz=fac*drz;
 }  //<vs_innlet_end>
 
+//<vs_praticalsskq_ini>
+//------------------------------------------------------------------------------
+/// Returns Quintic kernel values: frx, fry and frz.
+/// Devuelve valores del kernel Quintic: frx, fry y frz.
+//------------------------------------------------------------------------------
+__device__ void KerGetKernelQuintic(float rr2,float drx,float dry,float drz
+  ,float &frx,float &fry,float &frz)
+{
+  const float rad=sqrt(rr2);
+  const float qq=rad/CTE.h;
+  //-Quintic kernel.
+  const float fac=0; //-Kernel derivative (divided by rad).
+  //Quintic_PDTE
+  frx=fac*drx; fry=fac*dry; frz=fac*drz;
+}
+
+//------------------------------------------------------------------------------
+/// Returns values of kernel Quintic, gradients: frx, fry, frz and wab.
+/// Devuelve valores de kernel Quintic, gradients: frx, fry, frz y wab.
+//------------------------------------------------------------------------------
+__device__ void KerGetKernelQuintic(float rr2,float drx,float dry,float drz
+  ,float &frx,float &fry,float &frz,float &wab)
+{
+  const float rad=sqrt(rr2);
+  const float qq=rad/CTE.h;
+  //-Quintic kernel.
+  wab=0; //-Kernel.
+  const float fac=0; //-Kernel derivative (divided by rad).
+  //Quintic_PDTE
+  frx=fac*drx; fry=fac*dry; frz=fac*drz;
+}
+//<vs_praticalsskq_end>
+
 //------------------------------------------------------------------------------
 /// Return values of kernel Cubic without tensil correction, gradients: frx, fry and frz.
 /// Devuelve valores de kernel Cubic sin correccion tensil, gradients: frx, fry y frz.
@@ -642,9 +675,10 @@ template<TpKernel tker,TpFtMode ftmode,bool symm>
     if(rr2<=CTE.fourh2 && rr2>=ALMOSTZERO){
       //-Cubic Spline, Wendland or Gaussian kernel.
       float frx,fry,frz;
-      if(tker==KERNEL_Wendland)KerGetKernelWendland(rr2,drx,dry,drz,frx,fry,frz);
+      if(tker==KERNEL_Wendland)     KerGetKernelWendland(rr2,drx,dry,drz,frx,fry,frz);
       else if(tker==KERNEL_Gaussian)KerGetKernelGaussian(rr2,drx,dry,drz,frx,fry,frz);
-      else if(tker==KERNEL_Cubic)KerGetKernelCubic(rr2,drx,dry,drz,frx,fry,frz);
+      else if(tker==KERNEL_Cubic)   KerGetKernelCubic   (rr2,drx,dry,drz,frx,fry,frz);
+      else if(tker==KERNEL_Quintic) KerGetKernelQuintic (rr2,drx,dry,drz,frx,fry,frz); //<vs_praticalsskq>
 
       float4 velp2=velrhop[p2];
       if(symm)velp2.y=-velp2.y; //<vs_syymmetry>
@@ -752,9 +786,10 @@ template<TpKernel tker,TpFtMode ftmode,bool lamsps,TpDensity tdensity,bool shift
     if(rr2<=CTE.fourh2 && rr2>=ALMOSTZERO){
       //-Cubic Spline, Wendland or Gaussian kernel.
       float frx,fry,frz;
-      if(tker==KERNEL_Wendland)KerGetKernelWendland(rr2,drx,dry,drz,frx,fry,frz);
+      if(tker==KERNEL_Wendland)     KerGetKernelWendland(rr2,drx,dry,drz,frx,fry,frz);
       else if(tker==KERNEL_Gaussian)KerGetKernelGaussian(rr2,drx,dry,drz,frx,fry,frz);
-      else if(tker==KERNEL_Cubic)KerGetKernelCubic(rr2,drx,dry,drz,frx,fry,frz);
+      else if(tker==KERNEL_Cubic)   KerGetKernelCubic   (rr2,drx,dry,drz,frx,fry,frz);
+      else if(tker==KERNEL_Quintic) KerGetKernelQuintic (rr2,drx,dry,drz,frx,fry,frz); //<vs_praticalsskq>
 
       //-Obtains mass of particle p2 if any floating bodies exist.
       //-Obtiene masa de particula p2 en caso de existir floatings.
@@ -779,7 +814,11 @@ template<TpKernel tker,TpFtMode ftmode,bool lamsps,TpDensity tdensity,bool shift
       
       //===== Aceleration ===== 
       if(compute){
+#ifdef PRASS2_EOS_MORRIS                                                                //<vs_praticalss>
+        const float pressp2=ComputePressMorris(velrhop2.w,CTE.rhopzero,CTE.cs0,0);      //<vs_praticalss>
+#else                                                                                   //<vs_praticalss>
         const float pressp2=ComputePress(velrhop2.w,CTE.ovrhopzero,CTE.cteb,CTE.gamma);
+#endif                                                                                  //<vs_praticalss>
         const float prs=(pressp1+pressp2)/(velrhop1.w*velrhop2.w) + (tker==KERNEL_Cubic? KerGetKernelCubicTensil(rr2,velrhop1.w,pressp1,velrhop2.w,pressp2): 0);
         const float p_vpm=-prs*(USE_FLOATING? ftmassp2: massp2);
         acep1.x+=p_vpm*frx; acep1.y+=p_vpm*fry; acep1.z+=p_vpm*frz;
@@ -904,7 +943,11 @@ template<TpKernel tker,TpFtMode ftmode,bool lamsps,TpDensity tdensity,bool shift
     //-Obtains basic data of particle p1.
     const float4 pscellp1=poscell[p1];
     const float4 velrhop1=velrhop[p1];
+#ifdef PRASS2_EOS_MORRIS                                                            //<vs_praticalss>
+    const float pressp1=ComputePressMorris(velrhop1.w,CTE.rhopzero,CTE.cs0,0);      //<vs_praticalss>
+#else                                                                               //<vs_praticalss>
     const float pressp1=ComputePress(velrhop1.w,CTE.ovrhopzero,CTE.cteb,CTE.gamma);
+#endif                                                                              //<vs_praticalss>
     const bool rsymp1=(symm && CEL_GetPartY(__float_as_uint(pscellp1.w))==0); //<vs_syymmetry>
 
     //-Variables for Laminar+SPS.
@@ -1078,20 +1121,17 @@ template<TpKernel tker,TpFtMode ftmode> void Interaction_Forces_gt1(const StInte
   else        Interaction_Forces_gt2<tker,ftmode,false> (t);
 }
 //==============================================================================
+template<TpKernel tker> void Interaction_Forces_gt0(const StInterParmsg &t){
+  if(t.ftmode==FTMODE_None)    Interaction_Forces_gt1<tker,FTMODE_None> (t);
+  else if(t.ftmode==FTMODE_Sph)Interaction_Forces_gt1<tker,FTMODE_Sph>  (t);
+  else if(t.ftmode==FTMODE_Ext)Interaction_Forces_gt1<tker,FTMODE_Ext>  (t);
+}
+//==============================================================================
 void Interaction_Forces(const StInterParmsg &t){
-  if(t.tkernel==KERNEL_Wendland){    const TpKernel tker=KERNEL_Wendland;
-    if(t.ftmode==FTMODE_None)    Interaction_Forces_gt1<tker,FTMODE_None> (t);
-    else if(t.ftmode==FTMODE_Sph)Interaction_Forces_gt1<tker,FTMODE_Sph>  (t);
-    else if(t.ftmode==FTMODE_Ext)Interaction_Forces_gt1<tker,FTMODE_Ext>  (t);
-  }else if(t.tkernel==KERNEL_Gaussian){ const TpKernel tker=KERNEL_Gaussian;
-    if(t.ftmode==FTMODE_None)    Interaction_Forces_gt1<tker,FTMODE_None> (t);
-    else if(t.ftmode==FTMODE_Sph)Interaction_Forces_gt1<tker,FTMODE_Sph>  (t);
-    else if(t.ftmode==FTMODE_Ext)Interaction_Forces_gt1<tker,FTMODE_Ext>  (t);
-  }else if(t.tkernel==KERNEL_Cubic){ const TpKernel tker=KERNEL_Cubic;
-    if(t.ftmode==FTMODE_None)    Interaction_Forces_gt1<tker,FTMODE_None> (t);
-    else if(t.ftmode==FTMODE_Sph)Interaction_Forces_gt1<tker,FTMODE_Sph>  (t);
-    else if(t.ftmode==FTMODE_Ext)Interaction_Forces_gt1<tker,FTMODE_Ext>  (t);
-  }
+  if(t.tkernel==KERNEL_Wendland)     Interaction_Forces_gt0<KERNEL_Wendland> (t);
+  else if(t.tkernel==KERNEL_Gaussian)Interaction_Forces_gt0<KERNEL_Gaussian> (t);
+  else if(t.tkernel==KERNEL_Cubic)   Interaction_Forces_gt0<KERNEL_Cubic   > (t);
+  else if(t.tkernel==KERNEL_Quintic) Interaction_Forces_gt0<KERNEL_Quintic > (t);  //<vs_praticalsskq>
 }
 
 //<vs_mddbc_ini>

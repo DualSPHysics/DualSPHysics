@@ -38,19 +38,22 @@ class JLog2;
 /// Structure with constants stored in the constant memory of GPU for the particle interactions.
 typedef struct{
   unsigned nbound;
-  float massb;              ///<Mass of a boundary particle.
-  float massf;              ///<Mass of a fluid particle.
-  float h;                  ///<Smoothing length (=coef*sqrt(dx*dx+dy*dy+dz*dz))
-  float fourh2;             ///< \ref h * \ref h * 4 
-  float awen;               ///<Cte. of Wendland kernel to compute wab.
-  float bwen;               ///<Cte. of Wendland kernel to compute fac (kernel derivative).
-  float cs0;                ///<Speed of sound of reference.
-  float eta2;               ///<eta*eta being eta=0.1*\ref h
+  float massb;              ///<Reference mass of the general boundary particle [kg].
+  float massf;              ///<Reference mass of the fluid particle [kg].
+  float h;                  ///<The smoothing length [m].
+  float fourh2;             ///<Constant related to H (Fourh2=H*H*4).
+  float awen;               ///<Wendland kernel constant (awen) to compute wab.
+  float bwen;               ///<Wendland kernel constant (bwen) to compute fac (kernel derivative).
+  float cs0;                ///<Speed of sound at the reference density.
+  float eta2;               ///<Constant related to H (Eta2=(h*0.1)*(h*0.1)).
   float ddt2h;              ///<Constant for DDT1 & DDT2. ddt2h=DDTValue*2*H
   float ddtgz;              ///<Constant for DDT2.        ddtgz=RhopZero*Gravity.z/CteB
-  float scell,dosh,dp;
-  float cteb,gamma;
-  float rhopzero;           ///<rhopzero=RhopZero
+  float scell;              ///<Cell size: 2h or h.
+  float dosh;               ///<Maximum interaction distance between particles (Dosh=H+H) [m].
+  float dp;                 ///<Initial distance between particles [m].
+  float cteb;               ///<Constant used in the state equation [Pa].
+  float gamma;              ///<Politropic constant for water used in the state equation.
+  float rhopzero;           ///<Reference density of the fluid [kg/m3].
   float ovrhopzero;         ///<ovrhopzero=1/RhopZero
   float movlimit;
   unsigned symmetry;   //<vs_syymmetry>

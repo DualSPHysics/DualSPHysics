@@ -200,6 +200,7 @@ protected:
   float CalcVelMaxOmp(unsigned np,const tfloat4* velrhop)const;
 
   inline float ComputePress(float rhop,float rhop0,float b,float gamma)const;
+  inline float ComputePressMorris(float rhop,float rhop0,float cs0,float press0)const; //<vs_praticalss>
   void PreInteractionVars_Forces(unsigned np,unsigned npb);
   void PreInteraction_Forces();
   void PosInteraction_Forces();
@@ -211,6 +212,8 @@ protected:
   inline void GetKernelCubic(float rr2,float drx,float dry,float drz,float &frx,float &fry,float &frz)const;
   void GetKernelCubic(float rr2,float drx,float dry,float drz,float &frx,float &fry,float &frz,float &wab)const; //<vs_innlet>
   inline float GetKernelCubicTensil(float rr2,float rhopp1,float pressp1,float rhopp2,float pressp2)const;
+  inline void GetKernelQuintic(float rr2,float drx,float dry,float drz,float &frx,float &fry,float &frz)const;     //<vs_praticalsskq>
+  void GetKernelQuintic(float rr2,float drx,float dry,float drz,float &frx,float &fry,float &frz,float &wab)const; //<vs_praticalsskq>
 
   inline void GetInteractionCells(unsigned rcell
     ,int hdiv,const tint4 &nc,const tint3 &cellzero

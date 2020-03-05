@@ -52,7 +52,6 @@ inline dim3 GetSimpleGridSize(unsigned n,unsigned blocksize){
   return(dim3(nb,1,1));
 }
 
-
 //------------------------------------------------------------------------------
 /// Returns pressure starting from density using equation of state 
 /// based on [Monaghan, 1994].
@@ -60,4 +59,14 @@ inline dim3 GetSimpleGridSize(unsigned n,unsigned blocksize){
 __device__ float ComputePress(float rhop,float ovrhop0,float b,float gamma){ 
   return(b*(pow(rhop*ovrhop0,gamma)-1.0f));
 }
+
+//<vs_praticalss_ini>
+//------------------------------------------------------------------------------
+/// Returns pressure starting from density using equation of state 
+/// based on [Morris et al., 1997].
+//------------------------------------------------------------------------------
+__device__ float ComputePressMorris(float rhop,float rhop0,float cs0,float press0){ 
+  return(cs0*cs0*(rhop-rhop0)+press0);
+}
+//<vs_praticalss_end>
 

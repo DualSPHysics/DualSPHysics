@@ -70,7 +70,7 @@ void JGaugeSystem::Reset(){
   DomPosMin=DomPosMax=TDouble3(0);
   Scell=0;
   Hdiv=0;
-  H=MassFluid=MassBound=CteB=Gamma=RhopZero=0;
+  H=MassFluid=MassBound=Cs0=CteB=Gamma=RhopZero=0;
   ResetCfgDefault();
   for(unsigned c=0;c<Gauges.size();c++)delete Gauges[c];
   Gauges.clear();
@@ -99,7 +99,7 @@ void JGaugeSystem::ResetCfgDefault(){
 void JGaugeSystem::Config(bool simulate2d,double simulate2dposy,bool symmetry
   ,double timemax,double timepart
   ,double dp,tdouble3 posmin,tdouble3 posmax,float scell,unsigned hdiv,float h
-  ,float massfluid,float massbound,float cteb,float gamma,float rhopzero)
+  ,float massfluid,float massbound,float cs0,float cteb,float gamma,float rhopzero)
 {
   Simulate2D=simulate2d;
   Simulate2DPosY=simulate2dposy;
@@ -114,6 +114,7 @@ void JGaugeSystem::Config(bool simulate2d,double simulate2dposy,bool symmetry
   H=h;
   MassFluid=massfluid;
   MassBound=massbound;
+  Cs0=cs0;
   CteB=cteb;
   Gamma=gamma;
   RhopZero=rhopzero;
@@ -282,13 +283,13 @@ void JGaugeSystem::ReadXml(JXml *sxml,TiXmlElement* lis,const JSphMk* mkinfo){
 //==============================================================================
 /// Creates new gauge-Velocity and returns pointer.
 //==============================================================================
-JGaugeVelocity* JGaugeSystem::AddGaugeVel(std::string name,double computestart,double computeend,double computedt
-  ,const tdouble3 &point)
+JGaugeVelocity* JGaugeSystem::AddGaugeVel(std::string name,double computestart
+  ,double computeend,double computedt,const tdouble3 &point)
 {
   if(GetGaugeIdx(name)!=UINT_MAX)Run_Exceptioon(fun::PrintStr("The name \'%s\' already exists.",name.c_str()));
   //-Creates object.
   JGaugeVelocity* gau=new JGaugeVelocity(GetCount(),name,point,Cpu,Log);
-  gau->Config(Simulate2D,Symmetry,DomPosMin,DomPosMax,Scell,Hdiv,H,MassFluid,MassBound,CteB,Gamma,RhopZero);
+  gau->Config(Simulate2D,Symmetry,DomPosMin,DomPosMax,Scell,Hdiv,H,MassFluid,MassBound,Cs0,CteB,Gamma,RhopZero);
   gau->ConfigComputeTiming(computestart,computeend,computedt);
   //-Uses common configuration.
   gau->SetSaveVtkPart(CfgDefault.savevtkpart);
@@ -300,14 +301,15 @@ JGaugeVelocity* JGaugeSystem::AddGaugeVel(std::string name,double computestart,d
 //==============================================================================
 /// Creates new gauge-SWL and returns pointer.
 //==============================================================================
-JGaugeSwl* JGaugeSystem::AddGaugeSwl(std::string name,double computestart,double computeend,double computedt
+JGaugeSwl* JGaugeSystem::AddGaugeSwl(std::string name,double computestart
+  ,double computeend,double computedt
   ,tdouble3 point0,tdouble3 point2,double pointdp,float masslimit)
 {
   if(GetGaugeIdx(name)!=UINT_MAX)Run_Exceptioon(fun::PrintStr("The name \'%s\' already exists.",name.c_str()));
   if(masslimit<=0)masslimit=MassFluid*(Simulate2D? 0.4f: 0.5f);
   //-Creates object.
   JGaugeSwl* gau=new JGaugeSwl(GetCount(),name,point0,point2,pointdp,masslimit,Cpu,Log);
-  gau->Config(Simulate2D,Symmetry,DomPosMin,DomPosMax,Scell,Hdiv,H,MassFluid,MassBound,CteB,Gamma,RhopZero);
+  gau->Config(Simulate2D,Symmetry,DomPosMin,DomPosMax,Scell,Hdiv,H,MassFluid,MassBound,Cs0,CteB,Gamma,RhopZero);
   gau->ConfigComputeTiming(computestart,computeend,computedt);
   //-Uses common configuration.
   gau->SetSaveVtkPart(CfgDefault.savevtkpart);
@@ -319,13 +321,13 @@ JGaugeSwl* JGaugeSystem::AddGaugeSwl(std::string name,double computestart,double
 //==============================================================================
 /// Creates new gauge-MaxZ and returns pointer.
 //==============================================================================
-JGaugeMaxZ* JGaugeSystem::AddGaugeMaxZ(std::string name,double computestart,double computeend,double computedt
-  ,tdouble3 point0,double height,float distlimit)
+JGaugeMaxZ* JGaugeSystem::AddGaugeMaxZ(std::string name,double computestart
+  ,double computeend,double computedt,tdouble3 point0,double height,float distlimit)
 {
   if(GetGaugeIdx(name)!=UINT_MAX)Run_Exceptioon(fun::PrintStr("The name \'%s\' already exists.",name.c_str()));
   //-Creates object.
   JGaugeMaxZ* gau=new JGaugeMaxZ(GetCount(),name,point0,height,distlimit,Cpu,Log);
-  gau->Config(Simulate2D,Symmetry,DomPosMin,DomPosMax,Scell,Hdiv,H,MassFluid,MassBound,CteB,Gamma,RhopZero);
+  gau->Config(Simulate2D,Symmetry,DomPosMin,DomPosMax,Scell,Hdiv,H,MassFluid,MassBound,Cs0,CteB,Gamma,RhopZero);
   gau->ConfigComputeTiming(computestart,computeend,computedt);
   //-Uses common configuration.
   gau->SetSaveVtkPart(CfgDefault.savevtkpart);
@@ -337,8 +339,8 @@ JGaugeMaxZ* JGaugeSystem::AddGaugeMaxZ(std::string name,double computestart,doub
 //==============================================================================
 /// Creates new gauge-Force and returns pointer.
 //==============================================================================
-JGaugeForce* JGaugeSystem::AddGaugeForce(std::string name,double computestart,double computeend,double computedt
-  ,const JSphMk* mkinfo,word mkbound)
+JGaugeForce* JGaugeSystem::AddGaugeForce(std::string name,double computestart
+  ,double computeend,double computedt,const JSphMk* mkinfo,word mkbound)
 {
   if(GetGaugeIdx(name)!=UINT_MAX)Run_Exceptioon(fun::PrintStr("The name \'%s\' already exists.",name.c_str()));
   //-Obtains data from mkbound particles.
@@ -353,7 +355,7 @@ JGaugeForce* JGaugeSystem::AddGaugeForce(std::string name,double computestart,do
   const tfloat3 center=ToTFloat3((mkb->GetPosMin()+mkb->GetPosMax())/TDouble3(2));
   //-Creates object.
   JGaugeForce* gau=new JGaugeForce(GetCount(),name,mkbound,typeparts,idbegin,count,code,center,Cpu,Log);
-  gau->Config(Simulate2D,Symmetry,DomPosMin,DomPosMax,Scell,Hdiv,H,MassFluid,MassBound,CteB,Gamma,RhopZero);
+  gau->Config(Simulate2D,Symmetry,DomPosMin,DomPosMax,Scell,Hdiv,H,MassFluid,MassBound,Cs0,CteB,Gamma,RhopZero);
   gau->ConfigComputeTiming(computestart,computeend,computedt);
   //-Uses common configuration.
   gau->SetSaveVtkPart(CfgDefault.savevtkpart);

@@ -214,16 +214,24 @@ protected:
   //bool SvInterCount;       ///<Computes and saves number of interactions.                      | Calcula y graba el numero de interacciones.
 
   //-Constants for computation.
-  float H,CteB,Gamma,CFLnumber,RhopZero;
-  double Dp;               ///<Initial distance between particles.
-  double Cs0;
+  float H;                 ///<The smoothing length [m].
+  float CteB;              ///<Constant used in the state equation [Pa].
+  float Gamma;             ///<Politropic constant for water used in the state equation.
+  float CFLnumber;         ///<Coefficient to multiply dt.
+  float RhopZero;          ///<Reference density of the fluid [kg/m3].
+  double Dp;               ///<Initial distance between particles [m].
+  double Cs0;              ///<Speed of sound at the reference density.
   float DDT2h;             ///<Constant for DDT1 & DDT2. DDT2h=DDTValue*2*H
   float DDTgz;             ///<Constant for DDT2.        DDTgz=RhopZero*Gravity.z/CteB
-  float MassFluid,MassBound;  
-  tfloat3 Gravity;
-  float Dosh,H2,Fourh2,Eta2;
-  float SpsSmag;             ///<Smagorinsky constant used in SPS turbulence model.
-  float SpsBlin;             ///<Blin constant used in the SPS turbulence model.
+  float MassFluid;         ///<Reference mass of the fluid particle [kg].
+  float MassBound;         ///<Reference mass of the general boundary particle [kg].
+  tfloat3 Gravity;         ///<Gravitational acceleration [m/s^2].
+  float Dosh;              ///<Maximum interaction distance between particles (Dosh=H+H) [m].
+  float H2;                ///<Constant related to H (H2=H*H).
+  float Fourh2;            ///<Constant related to H (Fourh2=H*H*4).
+  float Eta2;              ///<Constant related to H (Eta2=(h*0.1)*(h*0.1)).
+  float SpsSmag;           ///<Smagorinsky constant used in SPS turbulence model.
+  float SpsBlin;           ///<Blin constant used in the SPS turbulence model.
 
   //-General information about case.
   tdouble3 CasePosMin;       ///<Lower particle limit of the case in the initial instant. | Limite inferior de particulas del caso en instante inicial.

@@ -49,6 +49,7 @@ void Interaction_GaugeMaxz(tdouble3 point0,float maxdist2
 
 //-Kernel for JGaugeForce.
 void Interaction_GaugeForce(unsigned n,unsigned idbegin,typecode codesel
+  ,float cs0  //<vs_praticalss>
   ,float fourh2,float h,float bwen,float massf,float cteb,float rhopzero,float gamma
   ,int hdiv,tuint3 ncells,tuint3 cellmin,const int2 *begincell,tdouble3 domposmin,float scell
   ,const double2 *posxy,const double *posz,const typecode *code,const unsigned *idp,const float4 *velrhop

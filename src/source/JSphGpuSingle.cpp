@@ -830,7 +830,7 @@ void JSphGpuSingle::SaveData(){
   JDataArrays arrays;
   AddBasicArrays(arrays,npsave,AuxPos,Idp,AuxVel,AuxRhop);
 //<vs_praticalss_ini>
-#ifdef COMPILE_PRACTICALSS
+#ifdef PRASS1_SAVEPRESS
   //-Adds extra arrays to include in output files (BI4, VTK and CSV).
   float* press=arrays.CreateArrayPtrFloat("Pressure",npsave);//-Creates new array for pressure initialized to zero. 
   for(unsigned p=0;p<npsave;p++){

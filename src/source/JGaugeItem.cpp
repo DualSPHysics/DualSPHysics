@@ -81,7 +81,7 @@ void JGaugeItem::CheckCudaErroor(const std::string &srcfile,int srcline
 /// Initialisation of variables.
 //==============================================================================
 void JGaugeItem::Reset(){
-  Config(false,false,TDouble3(0),TDouble3(0),0,0,0,0,0,0,0,0);
+  Config(false,false,TDouble3(0),TDouble3(0),0,0,0,0,0,0,0,0,0);
   SaveVtkPart=false;
   ConfigComputeTiming(0,0,0);
   ConfigOutputTiming(false,0,0,0);
@@ -96,7 +96,7 @@ void JGaugeItem::Reset(){
 void JGaugeItem::Config(bool simulate2d,bool symmetry
   ,tdouble3 domposmin,tdouble3 domposmax
   ,float scell,int hdiv,float h,float massfluid,float massbound
-  ,float cteb,float gamma,float rhopzero)
+  ,float cs0,float cteb,float gamma,float rhopzero)
 {
   Simulate2D=simulate2d;
   Symmetry=symmetry;
@@ -110,6 +110,7 @@ void JGaugeItem::Config(bool simulate2d,bool symmetry
   Bwen=(h? float(Simulate2D? -2.7852/(h*h*h): -2.08891/(h*h*h*h)): 0);
   MassFluid=massfluid;
   MassBound=massbound;
+  Cs0=cs0;
   CteB=cteb;
   Gamma=gamma;
   RhopZero=rhopzero;
@@ -243,6 +244,16 @@ void JGaugeItem::GetInteractionCells(const tdouble3 &pos,const tint4 &nc,const t
 float JGaugeItem::ComputePress(float rhop,float rhop0,float b,float gamma)const{ 
   return(b*(pow(rhop/rhop0,gamma)-1.0f));
 }
+
+//<vs_praticalss_ini>
+//==============================================================================
+/// Returns pressure starting from density using equation of state 
+/// based on [Morris et al., 1997].
+//==============================================================================
+float JGaugeItem::ComputePressMorris(float rhop,float rhop0,float cs0,float press0)const{ 
+  return(cs0*cs0*(rhop-rhop0)+press0);
+}
+//<vs_praticalss_end>
 
 
 //##############################################################################
@@ -1076,7 +1087,11 @@ void JGaugeForce::CalculeCpu(double timestep,tuint3 ncells,tuint3 cellmin
     int cxini,cxfin,yini,yfin,zini,zfin;
     const tdouble3 ptpos1=pos[p1];
     const tfloat4 velrhop1=velrhop[p1];
+#ifdef PRASS2_EOS_MORRIS                                              //<vs_praticalss>
+    const float press1=ComputePressMorris(velrhop1.w,RhopZero,Cs0,0); //<vs_praticalss>
+#else                                                                 //<vs_praticalss>
     const float press1=ComputePress(velrhop1.w,RhopZero,CteB,Gamma);
+#endif                                                                //<vs_praticalss>
     GetInteractionCells(ptpos1,nc,cellzero,cxini,cxfin,yini,yfin,zini,zfin);
 
     //-Auxiliary variables.
@@ -1109,7 +1124,11 @@ void JGaugeForce::CalculeCpu(double timestep,tuint3 ncells,tuint3 cellmin
             }
             const float mass2=MassFluid;
             const tfloat4 velrhop2=velrhop[p2];
+#ifdef PRASS2_EOS_MORRIS                                                      //<vs_praticalss>
+            const float press2=ComputePressMorris(velrhop2.w,RhopZero,Cs0,0); //<vs_praticalss>
+#else                                                                         //<vs_praticalss>
             const float press2=ComputePress(velrhop2.w,RhopZero,CteB,Gamma);
+#endif                                                                        //<vs_praticalss>
             const float prs=(press1+press2)/(velrhop1.w*velrhop2.w);
             {//-Adds aceleration.
               const float p_vpm1=-prs*mass2;
@@ -1170,6 +1189,7 @@ void JGaugeForce::CalculeGpu(double timestep,tuint3 ncells,tuint3 cellmin
   const int n=int(TypeParts==TpPartFixed || TypeParts==TpPartMoving? npbok: np);
   //-Computes acceleration in selected boundary particles.
   cugauge::Interaction_GaugeForce(n,IdBegin,Code
+    ,Cs0  //<vs_praticalss>
     ,Fourh2,H,Bwen,MassFluid,CteB,RhopZero,Gamma
     ,Hdiv,ncells,cellmin,beginendcell,DomPosMin,Scell
     ,posxy,posz,code,idp,velrhop,PartAceg);

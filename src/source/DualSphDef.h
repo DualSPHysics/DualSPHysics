@@ -28,7 +28,8 @@
 #include <algorithm>
 
 //<vs_praticalss_ini>
-//#define COMPILE_PRACTICALSS  ///<Codigo temporal para probar la practical session del DSWorkshop.
+//#define PRASS1_SAVEPRESS   ///<Compiles code to save pressure.
+//#define PRASS2_EOS_MORRIS  ///<Compiles code to use equation of state Morris instead of the original.
 //<vs_praticalss_end>
 
 //#define DISABLE_TIMERS     ///<Compiles without timers. | Compilado sin timers.
@@ -306,6 +307,7 @@ typedef enum{
 
 ///Types of kernel function.
 typedef enum{ 
+  KERNEL_Quintic=4,   ///<Quintic Spline kernel. //<vs_praticalsskq>
   KERNEL_Gaussian=3,  ///<Gaussian kernel.
   KERNEL_Wendland=2,  ///<Wendland kernel.
   KERNEL_Cubic=1,     ///<Cubic Spline kernel.

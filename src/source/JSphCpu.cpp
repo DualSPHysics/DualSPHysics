@@ -431,6 +431,16 @@ float JSphCpu::ComputePress(float rhop,float rhop0,float b,float gamma)const{
   return(b*(pow(rhop/rhop0,gamma)-1.0f));
 }
 
+//<vs_praticalss_ini>
+//==============================================================================
+/// Returns pressure starting from density using equation of state 
+/// based on [Morris et al., 1997].
+//==============================================================================
+float JSphCpu::ComputePressMorris(float rhop,float rhop0,float cs0,float press0)const{ 
+  return(cs0*cs0*(rhop-rhop0)+press0);
+}
+//<vs_praticalss_end>
+
 //==============================================================================
 /// Prepare variables for interaction functions.
 /// Prepara variables para interaccion.
@@ -455,7 +465,11 @@ void JSphCpu::PreInteractionVars_Forces(unsigned np,unsigned npb){
     #pragma omp parallel for schedule (static) if(n>OMP_LIMIT_COMPUTELIGHT)
   #endif
   for(int p=0;p<n;p++){
+#ifdef PRASS2_EOS_MORRIS                                               //<vs_praticalss>
+    Pressc[p]=ComputePressMorris(Velrhopc[p].w,RhopZero,float(Cs0),0); //<vs_praticalss>
+#else                                                                  //<vs_praticalss>
     Pressc[p]=ComputePress(Velrhopc[p].w,RhopZero,CteB,Gamma);
+#endif                                                                 //<vs_praticalss>
   }
 }
 
@@ -614,6 +628,39 @@ void JSphCpu::GetKernelGaussian(float rr2,float drx,float dry,float drz
   const float fac=Bgau*qq*eqqexp/rad; //-Kernel derivative (divided by rad).
   frx=fac*drx; fry=fac*dry; frz=fac*drz;
 }  //<vs_innlet_end>
+
+//<vs_praticalsskq_ini>
+//==============================================================================
+/// Returns values of kernel Quintic, gradients: frx, fry and frz.
+/// Devuelve valores de kernel Quintic, gradients: frx, fry y frz.
+//==============================================================================
+void JSphCpu::GetKernelQuintic(float rr2,float drx,float dry,float drz
+  ,float &frx,float &fry,float &frz)const
+{
+  const float rad=sqrt(rr2);
+  const float qq=rad/H;
+  //-Quintic kernel.
+  const float fac=0; //-Kernel derivative (divided by rad).
+  //Quintic_PDTE
+  frx=fac*drx; fry=fac*dry; frz=fac*drz;
+}
+
+//==============================================================================
+/// Returns values of kernel Quintic, gradients: frx, fry, frz and wab.
+/// Devuelve valores de kernel Quintic, gradients: frx, fry, frz y wab.
+//==============================================================================
+void JSphCpu::GetKernelQuintic(float rr2,float drx,float dry,float drz
+  ,float &frx,float &fry,float &frz,float &wab)const
+{
+  const float rad=sqrt(rr2);
+  const float qq=rad/H;
+  //Quintic_PDTE
+  wab=0; //-Kernel.
+  const float fac=0; //-Kernel derivative (divided by rad).
+  //Quintic_PDTE
+  frx=fac*drx; fry=fac*dry; frz=fac*drz;
+}
+//<vs_praticalsskq_end>
 
 //==============================================================================
 /// Return values of kernel Cubic without tensil correction, gradients: frx, fry and frz.
@@ -785,9 +832,10 @@ template<TpKernel tker,TpFtMode ftmode> void JSphCpu::InteractionForcesBound
           if(rr2<=Fourh2 && rr2>=ALMOSTZERO){
             //-Cubic Spline, Wendland or Gaussian kernel.
             float frx,fry,frz;
-            if(tker==KERNEL_Wendland)GetKernelWendland(rr2,drx,dry,drz,frx,fry,frz);
+            if(tker==KERNEL_Wendland)     GetKernelWendland(rr2,drx,dry,drz,frx,fry,frz);
             else if(tker==KERNEL_Gaussian)GetKernelGaussian(rr2,drx,dry,drz,frx,fry,frz);
-            else if(tker==KERNEL_Cubic)GetKernelCubic(rr2,drx,dry,drz,frx,fry,frz);
+            else if(tker==KERNEL_Cubic)   GetKernelCubic   (rr2,drx,dry,drz,frx,fry,frz);
+            else if(tker==KERNEL_Quintic) GetKernelQuintic (rr2,drx,dry,drz,frx,fry,frz);  //<vs_praticalsskq>
 
             //===== Get mass of particle p2 ===== 
             float massp2=MassFluid; //-Contains particle mass of incorrect fluid. | Contiene masa de particula por defecto fluid.
@@ -902,9 +950,10 @@ template<TpKernel tker,TpFtMode ftmode,bool lamsps,TpDensity tdensity,bool shift
           if(rr2<=Fourh2 && rr2>=ALMOSTZERO){
             //-Cubic Spline, Wendland or Gaussian kernel.
             float frx,fry,frz;
-            if(tker==KERNEL_Wendland)GetKernelWendland(rr2,drx,dry,drz,frx,fry,frz);
+            if(tker==KERNEL_Wendland)     GetKernelWendland(rr2,drx,dry,drz,frx,fry,frz);
             else if(tker==KERNEL_Gaussian)GetKernelGaussian(rr2,drx,dry,drz,frx,fry,frz);
-            else if(tker==KERNEL_Cubic)GetKernelCubic(rr2,drx,dry,drz,frx,fry,frz);
+            else if(tker==KERNEL_Cubic)   GetKernelCubic   (rr2,drx,dry,drz,frx,fry,frz);
+            else if(tker==KERNEL_Quintic) GetKernelQuintic (rr2,drx,dry,drz,frx,fry,frz);  //<vs_praticalsskq>
 
             //===== Get mass of particle p2 ===== 
             float massp2=(boundp2? MassBound: MassFluid); //-Contiene masa de particula segun sea bound o fluid.
@@ -1237,6 +1286,7 @@ void JSphCpu::Interaction_Forces_ct(const stinterparmsc &t,float &viscdt)const{
        if(TKernel==KERNEL_Wendland)Interaction_Forces_ct2<KERNEL_Wendland>(t,viscdt);
   else if(TKernel==KERNEL_Gaussian)Interaction_Forces_ct2<KERNEL_Gaussian>(t,viscdt);
   else if(TKernel==KERNEL_Cubic)   Interaction_Forces_ct2<KERNEL_Cubic   >(t,viscdt);
+  else if(TKernel==KERNEL_Quintic) Interaction_Forces_ct2<KERNEL_Quintic >(t,viscdt);  //<vs_praticalsskq>
 }
 
 //<vs_mddbc_ini>

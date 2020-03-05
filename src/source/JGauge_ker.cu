@@ -381,9 +381,11 @@ void Interaction_GaugeMaxz(tdouble3 point0,float maxdist2
 /// Ignores periodic boundary particles to avoid race condition problems.
 //------------------------------------------------------------------------------
 __global__ void KerInteractionGaugeForce(unsigned n,unsigned idbegin,typecode codesel
+  ,float cs0  //<vs_praticalss>
   ,float fourh2,float h,float bwen,float massf,float cteb,float ovrhopzero,float gamma
-  ,int hdiv,int4 nc,int3 cellzero,unsigned cellfluid,const int2 *begincell,double3 domposmin,float scell
-  ,const double2 *posxy,const double *posz,const typecode *code,const unsigned *idp,const float4 *velrhop
+  ,int hdiv,int4 nc,int3 cellzero,unsigned cellfluid,const int2 *begincell
+  ,double3 domposmin,float scell,const double2 *posxy,const double *posz
+  ,const typecode *code,const unsigned *idp,const float4 *velrhop
   ,float3 *partace)
 {
   unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
@@ -395,7 +397,11 @@ __global__ void KerInteractionGaugeForce(unsigned n,unsigned idbegin,typecode co
       const double py=ptposxy.y;
       const double pz=posz[p];
       const float rhop1=velrhop[p].w;
+#ifdef PRASS2_EOS_MORRIS                                                 //<vs_praticalss>
+      const float press1=ComputePressMorris(rhop1,1.f/ovrhopzero,cs0,0); //<vs_praticalss>
+#else                                                                    //<vs_praticalss>
       const float press1=ComputePress(rhop1,ovrhopzero,cteb,gamma);
+#endif                                                                   //<vs_praticalss>
       float3 ace=make_float3(0,0,0);
 
       //-Obtains interaction limits.
@@ -433,7 +439,11 @@ __global__ void KerInteractionGaugeForce(unsigned n,unsigned idbegin,typecode co
               }
               const float mass2=massf;
               const float rhop2=velrhop[p2].w;
+#ifdef PRASS2_EOS_MORRIS                                                         //<vs_praticalss>
+              const float press2=ComputePressMorris(rhop2,1.f/ovrhopzero,cs0,0); //<vs_praticalss>
+#else                                                                            //<vs_praticalss>
               const float press2=ComputePress(rhop2,ovrhopzero,cteb,gamma);
+#endif                                                                           //<vs_praticalss>
               const float prs=(press1+press2)/(rhop1*rhop2);
               {//-Adds aceleration.
                const float p_vpm1=-prs*mass2;
@@ -454,6 +464,7 @@ __global__ void KerInteractionGaugeForce(unsigned n,unsigned idbegin,typecode co
 /// Ignores periodic boundary particles to avoid race condition problems.
 //==============================================================================
 void Interaction_GaugeForce(unsigned n,unsigned idbegin,typecode codesel
+  ,float cs0  //<vs_praticalss>
   ,float fourh2,float h,float bwen,float massf,float cteb,float rhopzero,float gamma
   ,int hdiv,tuint3 ncells,tuint3 cellmin,const int2 *begincell,tdouble3 domposmin,float scell
 //  ,int hdiv,int4 nc,int3 cellzero,unsigned cellfluid,const int2 *begincell,double3 domposmin,float scell
@@ -470,7 +481,9 @@ void Interaction_GaugeForce(unsigned n,unsigned idbegin,typecode codesel
     dim3 sgrid=GetSimpleGridSize(n,bsize);
     //:JDgKerPrint info;
     //:byte* ik=NULL; //info.GetInfoPointer(sgridf,bsfluid);
-    KerInteractionGaugeForce <<<sgrid,bsize>>> (n,idbegin,codesel,fourh2,h,bwen,massf
+    KerInteractionGaugeForce <<<sgrid,bsize>>> (n,idbegin,codesel
+      ,cs0   //<vs_praticalss>
+      ,fourh2,h,bwen,massf
       ,cteb,ovrhopzero,gamma
       ,hdiv,nc,cellzero,cellfluid,begincell,Double3(domposmin),scell
       ,posxy,posz,code,idp,velrhop,partace);

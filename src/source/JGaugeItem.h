@@ -101,15 +101,16 @@ protected:
   tdouble3 DomPosMax;  ///<Upper limit of simulation + edge 2h if periodic conditions. DomPosMax=min(Map_PosMax,Map_PosMin+(DomCelFin*Scell)); | Limite inferior de simulacion + borde 2h si hay condiciones periodicas. 
   float Scell;         ///<Cell size: 2h or h. | Tamaño de celda: 2h o h.
   int Hdiv;            ///<Value to divide 2H. | Valor por el que se divide a DosH
-  float H;
-  float Fourh2;
-  float Awen;
-  float Bwen;
-  float MassFluid;
-  float MassBound;
-  float CteB;
-  float Gamma;
-  float RhopZero;
+  float H;             ///<The smoothing length [m].
+  float Fourh2;        ///<Constant related to H (Fourh2=H*H*4).
+  float Awen;          ///<Wendland kernel constant (awen) to compute wab.
+  float Bwen;          ///<Wendland kernel constant (bwen) to compute fac (kernel derivative).
+  float MassFluid;     ///<Reference mass of the fluid particle [kg].
+  float MassBound;     ///<Reference mass of the general boundary particle [kg].
+  float Cs0;           ///<Speed of sound at the reference density.
+  float CteB;          ///<Constant used in the state equation [Pa].
+  float Gamma;         ///<Politropic constant for water used in the state equation.
+  float RhopZero;      ///<Reference density of the fluid [kg/m3].
 
   //-Configuration variables.
   bool SaveVtkPart; //-Creates VTK files for each PART.
@@ -140,12 +141,12 @@ protected:
   inline void GetInteractionCells(const tdouble3 &pos,const tint4 &nc,const tint3 &cellzero
     ,int &cxini,int &cxfin,int &yini,int &yfin,int &zini,int &zfin)const;
   inline float ComputePress(float rhop,float rhop0,float b,float gamma)const;
+  inline float ComputePressMorris(float rhop,float rhop0,float cs0,float press0)const; //<vs_praticalss>
 
   static std::string GetNameType(TpGauge type);
 
   virtual void ClearResult()=0;
   virtual void StoreResult()=0;
-
 
 public:
   const TpGauge Type;
@@ -155,7 +156,7 @@ public:
   void Config(bool simulate2d,bool symmetry
     ,tdouble3 domposmin,tdouble3 domposmax
     ,float scell,int hdiv,float h,float massfluid,float massbound
-    ,float cteb,float gamma,float rhopzero);
+    ,float cs0,float cteb,float gamma,float rhopzero);
   void SetSaveVtkPart(bool save){ SaveVtkPart=save; }
   void ConfigComputeTiming(double start,double end,double dt);
   void ConfigOutputTiming(bool save,double start,double end,double dt);

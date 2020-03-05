@@ -529,6 +529,9 @@ void JSphGpu::ConstantDataUp(){
     ctes.cubic_a1=CubicCte.a1; ctes.cubic_a2=CubicCte.a2; ctes.cubic_aa=CubicCte.aa; ctes.cubic_a24=CubicCte.a24;
     ctes.cubic_c1=CubicCte.c1; ctes.cubic_c2=CubicCte.c2; ctes.cubic_d1=CubicCte.d1; ctes.cubic_odwdeltap=CubicCte.od_wdeltap;
   }
+  else if(TKernel==KERNEL_Quintic){  //<vs_praticalsskq_ini>
+    //Quintic_PDTE
+  } //<vs_praticalsskq_end>
   if(TBoundary==BC_MDBC){ ctes.awen=Awen; ctes.bwen=Bwen; } //<vs_mddbc>
   ctes.cs0=float(Cs0); ctes.eta2=Eta2;
   ctes.ddt2h=DDT2h;
