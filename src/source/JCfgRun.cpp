@@ -110,7 +110,9 @@ void JCfgRun::VisuInfo()const{
   printf("    -cubic           Cubic spline kernel\n");
   printf("    -wendland        Wendland kernel\n");
   printf("    -gaussian        Gaussian kernel\n");
+#ifdef PRASS3_QUINTIC                                      //<vs_praticalsskq>
   printf("    -quintic         Quintic spline kernel\n");  //<vs_praticalsskq>
+#endif                                                     //<vs_praticalsskq>
   printf("\n");
   printf("    -viscoart:<float>          Artificial viscosity [0-1]\n");
   printf("    -viscolamsps:<float>       Laminar+SPS viscosity [order of 1E-6]\n");  
@@ -339,7 +341,9 @@ void JCfgRun::LoadOpts(string *optlis,int optn,int lv,string file){
       else if(txword=="CUBIC")TKernel=KERNEL_Cubic;
       else if(txword=="WENDLAND")TKernel=KERNEL_Wendland;
       else if(txword=="GAUSSIAN")TKernel=KERNEL_Gaussian;
+#ifdef PRASS3_QUINTIC                                     //<vs_praticalsskq>
       else if(txword=="QUINTIC" )TKernel=KERNEL_Quintic;  //<vs_praticalsskq>
+#endif                                                    //<vs_praticalsskq>
       else if(txword=="VISCOART"){ 
         Visco=float(atof(txoptfull.c_str())); 
         if(Visco>10)ErrorParm(opt,c,lv,file);

@@ -30,6 +30,7 @@
 //<vs_praticalss_ini>
 //#define PRASS1_SAVEPRESS   ///<Compiles code to save pressure.
 //#define PRASS2_EOS_MORRIS  ///<Compiles code to use equation of state Morris instead of the original.
+//#define PRASS3_QUINTIC     ///<Compiles code to use Quintic Spline kernel.
 //<vs_praticalss_end>
 
 //#define DISABLE_TIMERS     ///<Compiles without timers. | Compilado sin timers.

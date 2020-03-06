@@ -575,7 +575,9 @@ void JSph::LoadCaseConfig(){
     case 1:  TKernel=KERNEL_Cubic;     break;
     case 2:  TKernel=KERNEL_Wendland;  break;
     case 3:  TKernel=KERNEL_Gaussian;  break;
+#ifdef PRASS3_QUINTIC                           //<vs_praticalsskq>
     case 4:  TKernel=KERNEL_Quintic;   break;   //<vs_praticalsskq>
+#endif                                          //<vs_praticalsskq>
     default: RunException(met,"Kernel choice is not valid.");
   }
   switch(eparms.GetValueInt("ViscoTreatment",true,1)){
