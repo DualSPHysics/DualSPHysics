@@ -830,11 +830,11 @@ template<TpKernel tker,TpFtMode ftmode> void JSphCpu::InteractionForcesBound
           const float drz=float(posp1.z-pos[p2].z);
           const float rr2=drx*drx+dry*dry+drz*drz;
           if(rr2<=Fourh2 && rr2>=ALMOSTZERO){
-            //-Cubic Spline, Wendland or Gaussian kernel.
+            //-Wendland, Cubic Spline or Gaussian kernel.
             float frx,fry,frz;
             if(tker==KERNEL_Wendland)     GetKernelWendland(rr2,drx,dry,drz,frx,fry,frz);
-            else if(tker==KERNEL_Gaussian)GetKernelGaussian(rr2,drx,dry,drz,frx,fry,frz);
             else if(tker==KERNEL_Cubic)   GetKernelCubic   (rr2,drx,dry,drz,frx,fry,frz);
+            else if(tker==KERNEL_Gaussian)GetKernelGaussian(rr2,drx,dry,drz,frx,fry,frz);
             else if(tker==KERNEL_Quintic) GetKernelQuintic (rr2,drx,dry,drz,frx,fry,frz);  //<vs_praticalsskq>
 
             //===== Get mass of particle p2 ===== 
@@ -948,11 +948,11 @@ template<TpKernel tker,TpFtMode ftmode,bool lamsps,TpDensity tdensity,bool shift
           const float drz=float(posp1.z-pos[p2].z);
           const float rr2=drx*drx+dry*dry+drz*drz;
           if(rr2<=Fourh2 && rr2>=ALMOSTZERO){
-            //-Cubic Spline, Wendland or Gaussian kernel.
+            //-Wendland, Cubic Spline or Gaussian kernel.
             float frx,fry,frz;
             if(tker==KERNEL_Wendland)     GetKernelWendland(rr2,drx,dry,drz,frx,fry,frz);
-            else if(tker==KERNEL_Gaussian)GetKernelGaussian(rr2,drx,dry,drz,frx,fry,frz);
             else if(tker==KERNEL_Cubic)   GetKernelCubic   (rr2,drx,dry,drz,frx,fry,frz);
+            else if(tker==KERNEL_Gaussian)GetKernelGaussian(rr2,drx,dry,drz,frx,fry,frz);
             else if(tker==KERNEL_Quintic) GetKernelQuintic (rr2,drx,dry,drz,frx,fry,frz);  //<vs_praticalsskq>
 
             //===== Get mass of particle p2 ===== 
@@ -1284,8 +1284,8 @@ template<TpKernel tker> void JSphCpu::Interaction_Forces_ct2(const stinterparmsc
 //==============================================================================
 void JSphCpu::Interaction_Forces_ct(const stinterparmsc &t,float &viscdt)const{
        if(TKernel==KERNEL_Wendland)Interaction_Forces_ct2<KERNEL_Wendland>(t,viscdt);
-  else if(TKernel==KERNEL_Gaussian)Interaction_Forces_ct2<KERNEL_Gaussian>(t,viscdt);
   else if(TKernel==KERNEL_Cubic)   Interaction_Forces_ct2<KERNEL_Cubic   >(t,viscdt);
+  else if(TKernel==KERNEL_Gaussian)Interaction_Forces_ct2<KERNEL_Gaussian>(t,viscdt);
   else if(TKernel==KERNEL_Quintic) Interaction_Forces_ct2<KERNEL_Quintic >(t,viscdt);  //<vs_praticalsskq>
 }
 

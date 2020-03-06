@@ -923,7 +923,7 @@ template<bool sim2d,TpKernel tker> __global__ void KerInteractionInOutExtrap_Dou
             const double drz=double(posp1.z-posz[p2]);
             const double rr2=drx*drx+dry*dry+drz*drz;
             if(rr2<=CTE.fourh2 && rr2>=ALMOSTZERO && CODE_IsFluidNotInout(code[p2])){//-Only with fluid particles but not inout particles.
-              //-Wendland or Cubic Spline kernel.
+              //-Only Wendland or Cubic Spline kernel.
               float ffrx,ffry,ffrz,fwab;
               if(tker==KERNEL_Wendland)cusph::KerGetKernelWendland(float(rr2),float(drx),float(dry),float(drz),ffrx,ffry,ffrz,fwab);
               else if(tker==KERNEL_Cubic)cusph::KerGetKernelCubic(float(rr2),float(drx),float(dry),float(drz),ffrx,ffry,ffrz,fwab);
@@ -1119,7 +1119,7 @@ template<bool sim2d,TpKernel tker> __global__ void KerInteractionInOutExtrap_Sin
             const float drz=float(posp1.z-posz[p2]);
             const float rr2=drx*drx+dry*dry+drz*drz;
             if(rr2<=CTE.fourh2 && rr2>=ALMOSTZERO && CODE_IsFluidNotInout(code[p2])){//-Only with fluid particles but not inout particles.
-              //-Wendland or Cubic Spline kernel.
+              //-Only Wendland or Cubic Spline kernel.
               float frx,fry,frz,wab;
               if(tker==KERNEL_Wendland)cusph::KerGetKernelWendland(rr2,drx,dry,drz,frx,fry,frz,wab);
               else if(tker==KERNEL_Cubic)cusph::KerGetKernelCubic(rr2,drx,dry,drz,frx,fry,frz,wab);
@@ -1315,7 +1315,7 @@ template<bool sim2d,TpKernel tker> __global__ void KerInteractionInOutExtrap_Fas
             const float drz=float(posp1.z-posz[p2]);
             const float rr2=drx*drx+dry*dry+drz*drz;
             if(rr2<=CTE.fourh2 && rr2>=ALMOSTZERO && CODE_IsFluidNotInout(code[p2])){//-Only with fluid particles but not inout particles.
-              //-Wendland or Cubic Spline kernel.
+              //-Only Wendland or Cubic Spline kernel.
               float frx,fry,frz,wab;
               if(tker==KERNEL_Wendland)cusph::KerGetKernelWendland(rr2,drx,dry,drz,frx,fry,frz,wab);
               else if(tker==KERNEL_Cubic)cusph::KerGetKernelCubic(rr2,drx,dry,drz,frx,fry,frz,wab);
@@ -1464,6 +1464,7 @@ void Interaction_InOutExtrap(byte doublemode,bool simulate2d,TpKernel tkernel,Tp
   ,float4 *velrhop)
 {
   //-Executes particle interactions.
+  const TpKernel tkerinout=(tkernel==KERNEL_Cubic? KERNEL_Cubic: KERNEL_Wendland); //-Only Wendland or Cubic.
   const int hdiv=(cellmode==CELLMODE_H? 2: 1);
   const int4 nc=make_int4(int(ncells.x),int(ncells.y),int(ncells.z),int(ncells.x*ncells.y));
   const unsigned cellfluid=nc.w*nc.z+1;
@@ -1474,29 +1475,29 @@ void Interaction_InOutExtrap(byte doublemode,bool simulate2d,TpKernel tkernel,Tp
     dim3 sgrid=GetSimpleGridSize(inoutcount,bsize);
     if(doublemode==1){
       if(simulate2d){ const bool sim2d=true;
-        if(tkernel==KERNEL_Wendland)KerInteractionInOutExtrap_FastSingle<sim2d,KERNEL_Wendland> <<<sgrid,bsize>>> (inoutcount,inoutpart,cfgzone,computerhopmask,computevelmask,planes,width,dirdata,determlimit,hdiv,nc,cellfluid,begincell,cellzero,posxy,posz,code,idp,velrhop);
-        if(tkernel==KERNEL_Cubic)   KerInteractionInOutExtrap_FastSingle<sim2d,KERNEL_Cubic>    <<<sgrid,bsize>>> (inoutcount,inoutpart,cfgzone,computerhopmask,computevelmask,planes,width,dirdata,determlimit,hdiv,nc,cellfluid,begincell,cellzero,posxy,posz,code,idp,velrhop);
+        if(tkerinout==KERNEL_Wendland)KerInteractionInOutExtrap_FastSingle<sim2d,KERNEL_Wendland> <<<sgrid,bsize>>> (inoutcount,inoutpart,cfgzone,computerhopmask,computevelmask,planes,width,dirdata,determlimit,hdiv,nc,cellfluid,begincell,cellzero,posxy,posz,code,idp,velrhop);
+        if(tkerinout==KERNEL_Cubic)   KerInteractionInOutExtrap_FastSingle<sim2d,KERNEL_Cubic>    <<<sgrid,bsize>>> (inoutcount,inoutpart,cfgzone,computerhopmask,computevelmask,planes,width,dirdata,determlimit,hdiv,nc,cellfluid,begincell,cellzero,posxy,posz,code,idp,velrhop);
       }else{          const bool sim2d=false;
-        if(tkernel==KERNEL_Wendland)KerInteractionInOutExtrap_FastSingle<sim2d,KERNEL_Wendland> <<<sgrid,bsize>>> (inoutcount,inoutpart,cfgzone,computerhopmask,computevelmask,planes,width,dirdata,determlimit,hdiv,nc,cellfluid,begincell,cellzero,posxy,posz,code,idp,velrhop);
-        if(tkernel==KERNEL_Cubic)   KerInteractionInOutExtrap_FastSingle<sim2d,KERNEL_Cubic>    <<<sgrid,bsize>>> (inoutcount,inoutpart,cfgzone,computerhopmask,computevelmask,planes,width,dirdata,determlimit,hdiv,nc,cellfluid,begincell,cellzero,posxy,posz,code,idp,velrhop);
+        if(tkerinout==KERNEL_Wendland)KerInteractionInOutExtrap_FastSingle<sim2d,KERNEL_Wendland> <<<sgrid,bsize>>> (inoutcount,inoutpart,cfgzone,computerhopmask,computevelmask,planes,width,dirdata,determlimit,hdiv,nc,cellfluid,begincell,cellzero,posxy,posz,code,idp,velrhop);
+        if(tkerinout==KERNEL_Cubic)   KerInteractionInOutExtrap_FastSingle<sim2d,KERNEL_Cubic>    <<<sgrid,bsize>>> (inoutcount,inoutpart,cfgzone,computerhopmask,computevelmask,planes,width,dirdata,determlimit,hdiv,nc,cellfluid,begincell,cellzero,posxy,posz,code,idp,velrhop);
       }
     }
     else if(doublemode==2){
       if(simulate2d){ const bool sim2d=true;
-        if(tkernel==KERNEL_Wendland)KerInteractionInOutExtrap_Single<sim2d,KERNEL_Wendland> <<<sgrid,bsize>>> (inoutcount,inoutpart,cfgzone,computerhopmask,computevelmask,planes,width,dirdata,determlimit,hdiv,nc,cellfluid,begincell,cellzero,posxy,posz,code,idp,velrhop);
-        if(tkernel==KERNEL_Cubic)   KerInteractionInOutExtrap_Single<sim2d,KERNEL_Cubic>    <<<sgrid,bsize>>> (inoutcount,inoutpart,cfgzone,computerhopmask,computevelmask,planes,width,dirdata,determlimit,hdiv,nc,cellfluid,begincell,cellzero,posxy,posz,code,idp,velrhop);
+        if(tkerinout==KERNEL_Wendland)KerInteractionInOutExtrap_Single<sim2d,KERNEL_Wendland> <<<sgrid,bsize>>> (inoutcount,inoutpart,cfgzone,computerhopmask,computevelmask,planes,width,dirdata,determlimit,hdiv,nc,cellfluid,begincell,cellzero,posxy,posz,code,idp,velrhop);
+        if(tkerinout==KERNEL_Cubic)   KerInteractionInOutExtrap_Single<sim2d,KERNEL_Cubic>    <<<sgrid,bsize>>> (inoutcount,inoutpart,cfgzone,computerhopmask,computevelmask,planes,width,dirdata,determlimit,hdiv,nc,cellfluid,begincell,cellzero,posxy,posz,code,idp,velrhop);
       }else{          const bool sim2d=false;
-        if(tkernel==KERNEL_Wendland)KerInteractionInOutExtrap_Single<sim2d,KERNEL_Wendland> <<<sgrid,bsize>>> (inoutcount,inoutpart,cfgzone,computerhopmask,computevelmask,planes,width,dirdata,determlimit,hdiv,nc,cellfluid,begincell,cellzero,posxy,posz,code,idp,velrhop);
-        if(tkernel==KERNEL_Cubic)   KerInteractionInOutExtrap_Single<sim2d,KERNEL_Cubic>    <<<sgrid,bsize>>> (inoutcount,inoutpart,cfgzone,computerhopmask,computevelmask,planes,width,dirdata,determlimit,hdiv,nc,cellfluid,begincell,cellzero,posxy,posz,code,idp,velrhop);
+        if(tkerinout==KERNEL_Wendland)KerInteractionInOutExtrap_Single<sim2d,KERNEL_Wendland> <<<sgrid,bsize>>> (inoutcount,inoutpart,cfgzone,computerhopmask,computevelmask,planes,width,dirdata,determlimit,hdiv,nc,cellfluid,begincell,cellzero,posxy,posz,code,idp,velrhop);
+        if(tkerinout==KERNEL_Cubic)   KerInteractionInOutExtrap_Single<sim2d,KERNEL_Cubic>    <<<sgrid,bsize>>> (inoutcount,inoutpart,cfgzone,computerhopmask,computevelmask,planes,width,dirdata,determlimit,hdiv,nc,cellfluid,begincell,cellzero,posxy,posz,code,idp,velrhop);
       }
     }
     else if(doublemode==3){
       if(simulate2d){ const bool sim2d=true;
-        if(tkernel==KERNEL_Wendland)KerInteractionInOutExtrap_Double<sim2d,KERNEL_Wendland> <<<sgrid,bsize>>> (inoutcount,inoutpart,cfgzone,computerhopmask,computevelmask,planes,width,dirdata,determlimit,hdiv,nc,cellfluid,begincell,cellzero,posxy,posz,code,idp,velrhop);
-        if(tkernel==KERNEL_Cubic)   KerInteractionInOutExtrap_Double<sim2d,KERNEL_Cubic>    <<<sgrid,bsize>>> (inoutcount,inoutpart,cfgzone,computerhopmask,computevelmask,planes,width,dirdata,determlimit,hdiv,nc,cellfluid,begincell,cellzero,posxy,posz,code,idp,velrhop);
+        if(tkerinout==KERNEL_Wendland)KerInteractionInOutExtrap_Double<sim2d,KERNEL_Wendland> <<<sgrid,bsize>>> (inoutcount,inoutpart,cfgzone,computerhopmask,computevelmask,planes,width,dirdata,determlimit,hdiv,nc,cellfluid,begincell,cellzero,posxy,posz,code,idp,velrhop);
+        if(tkerinout==KERNEL_Cubic)   KerInteractionInOutExtrap_Double<sim2d,KERNEL_Cubic>    <<<sgrid,bsize>>> (inoutcount,inoutpart,cfgzone,computerhopmask,computevelmask,planes,width,dirdata,determlimit,hdiv,nc,cellfluid,begincell,cellzero,posxy,posz,code,idp,velrhop);
       }else{          const bool sim2d=false;
-        if(tkernel==KERNEL_Wendland)KerInteractionInOutExtrap_Double<sim2d,KERNEL_Wendland> <<<sgrid,bsize>>> (inoutcount,inoutpart,cfgzone,computerhopmask,computevelmask,planes,width,dirdata,determlimit,hdiv,nc,cellfluid,begincell,cellzero,posxy,posz,code,idp,velrhop);
-        if(tkernel==KERNEL_Cubic)   KerInteractionInOutExtrap_Double<sim2d,KERNEL_Cubic>    <<<sgrid,bsize>>> (inoutcount,inoutpart,cfgzone,computerhopmask,computevelmask,planes,width,dirdata,determlimit,hdiv,nc,cellfluid,begincell,cellzero,posxy,posz,code,idp,velrhop);
+        if(tkerinout==KERNEL_Wendland)KerInteractionInOutExtrap_Double<sim2d,KERNEL_Wendland> <<<sgrid,bsize>>> (inoutcount,inoutpart,cfgzone,computerhopmask,computevelmask,planes,width,dirdata,determlimit,hdiv,nc,cellfluid,begincell,cellzero,posxy,posz,code,idp,velrhop);
+        if(tkerinout==KERNEL_Cubic)   KerInteractionInOutExtrap_Double<sim2d,KERNEL_Cubic>    <<<sgrid,bsize>>> (inoutcount,inoutpart,cfgzone,computerhopmask,computevelmask,planes,width,dirdata,determlimit,hdiv,nc,cellfluid,begincell,cellzero,posxy,posz,code,idp,velrhop);
       }
     }
   }
@@ -1555,7 +1556,7 @@ template<bool sim2d,TpKernel tker> __global__ void KerInteractionBoundCorr_Doubl
             const double drz=double(posp1.z-posz[p2]);
             const double rr2=drx*drx+dry*dry+drz*drz;
             if(rr2<=CTE.fourh2 && rr2>=ALMOSTZERO && CODE_IsFluid(code[p2])){//-Only with fluid particles (including inout).
-              //-Wendland or Cubic Spline kernel.
+              //-Only Wendland or Cubic Spline kernel.
               float ffrx,ffry,ffrz,fwab;
               if(tker==KERNEL_Wendland)cusph::KerGetKernelWendland(float(rr2),float(drx),float(dry),float(drz),ffrx,ffry,ffrz,fwab);
               else if(tker==KERNEL_Cubic)cusph::KerGetKernelCubic(float(rr2),float(drx),float(dry),float(drz),ffrx,ffry,ffrz,fwab);
@@ -1679,7 +1680,7 @@ template<bool sim2d,TpKernel tker> __global__ void KerInteractionBoundCorr_Singl
             const float drz=float(posp1.z-posz[p2]);
             const float rr2=drx*drx+dry*dry+drz*drz;
             if(rr2<=CTE.fourh2 && rr2>=ALMOSTZERO && CODE_IsFluid(code[p2])){//-Only with fluid particles (including inout).
-              //-Wendland or Cubic Spline kernel.
+              //-Only Wendland or Cubic Spline kernel.
               float frx,fry,frz,wab;
               if(tker==KERNEL_Wendland)cusph::KerGetKernelWendland(rr2,drx,dry,drz,frx,fry,frz,wab);
               else if(tker==KERNEL_Cubic)cusph::KerGetKernelCubic(rr2,drx,dry,drz,frx,fry,frz,wab);
@@ -1803,7 +1804,7 @@ template<bool sim2d,TpKernel tker> __global__ void KerInteractionBoundCorr_FastS
             const float drz=float(posp1.z-posz[p2]);
             const float rr2=drx*drx+dry*dry+drz*drz;
             if(rr2<=CTE.fourh2 && rr2>=ALMOSTZERO && CODE_IsFluid(code[p2])){//-Only with fluid particles (including inout).
-              //-Wendland or Cubic Spline kernel.
+              //-Only Wendland or Cubic Spline kernel.
               float frx,fry,frz,wab;
               if(tker==KERNEL_Wendland)cusph::KerGetKernelWendland(rr2,drx,dry,drz,frx,fry,frz,wab);
               else if(tker==KERNEL_Cubic)cusph::KerGetKernelCubic(rr2,drx,dry,drz,frx,fry,frz,wab);
@@ -1890,6 +1891,7 @@ void Interaction_BoundCorr(byte doublemode,bool simulate2d,TpKernel tkernel,TpCe
   ,float4 *velrhop)
 {
   //-Executes particle interactions.
+  const TpKernel tkerbcr=(tkernel==KERNEL_Cubic? KERNEL_Cubic: KERNEL_Wendland); //-Only Wendland or Cubic.
   const int hdiv=(cellmode==CELLMODE_H? 2: 1);
   const int4 nc=make_int4(int(ncells.x),int(ncells.y),int(ncells.z),int(ncells.x*ncells.y));
   const unsigned cellfluid=nc.w*nc.z+1;
@@ -1900,29 +1902,29 @@ void Interaction_BoundCorr(byte doublemode,bool simulate2d,TpKernel tkernel,TpCe
     dim3 sgridb=GetSimpleGridSize(npbok,bsbound);
     if(doublemode==1){
       if(simulate2d){ const bool sim2d=true;
-        if(tkernel==KERNEL_Wendland)KerInteractionBoundCorr_FastSingle<sim2d,KERNEL_Wendland> <<<sgridb,bsbound>>> (npbok,boundcode,Float4(plane),Float3(direction),determlimit,hdiv,nc,cellfluid,begincell,cellzero,posxy,posz,code,idp,velrhop);
-        if(tkernel==KERNEL_Cubic)   KerInteractionBoundCorr_FastSingle<sim2d,KERNEL_Cubic>    <<<sgridb,bsbound>>> (npbok,boundcode,Float4(plane),Float3(direction),determlimit,hdiv,nc,cellfluid,begincell,cellzero,posxy,posz,code,idp,velrhop);
+        if(tkerbcr==KERNEL_Wendland)KerInteractionBoundCorr_FastSingle<sim2d,KERNEL_Wendland> <<<sgridb,bsbound>>> (npbok,boundcode,Float4(plane),Float3(direction),determlimit,hdiv,nc,cellfluid,begincell,cellzero,posxy,posz,code,idp,velrhop);
+        if(tkerbcr==KERNEL_Cubic)   KerInteractionBoundCorr_FastSingle<sim2d,KERNEL_Cubic>    <<<sgridb,bsbound>>> (npbok,boundcode,Float4(plane),Float3(direction),determlimit,hdiv,nc,cellfluid,begincell,cellzero,posxy,posz,code,idp,velrhop);
       }else{          const bool sim2d=false;
-        if(tkernel==KERNEL_Wendland)KerInteractionBoundCorr_FastSingle<sim2d,KERNEL_Wendland> <<<sgridb,bsbound>>> (npbok,boundcode,Float4(plane),Float3(direction),determlimit,hdiv,nc,cellfluid,begincell,cellzero,posxy,posz,code,idp,velrhop);
-        if(tkernel==KERNEL_Cubic)   KerInteractionBoundCorr_FastSingle<sim2d,KERNEL_Cubic>    <<<sgridb,bsbound>>> (npbok,boundcode,Float4(plane),Float3(direction),determlimit,hdiv,nc,cellfluid,begincell,cellzero,posxy,posz,code,idp,velrhop);
+        if(tkerbcr==KERNEL_Wendland)KerInteractionBoundCorr_FastSingle<sim2d,KERNEL_Wendland> <<<sgridb,bsbound>>> (npbok,boundcode,Float4(plane),Float3(direction),determlimit,hdiv,nc,cellfluid,begincell,cellzero,posxy,posz,code,idp,velrhop);
+        if(tkerbcr==KERNEL_Cubic)   KerInteractionBoundCorr_FastSingle<sim2d,KERNEL_Cubic>    <<<sgridb,bsbound>>> (npbok,boundcode,Float4(plane),Float3(direction),determlimit,hdiv,nc,cellfluid,begincell,cellzero,posxy,posz,code,idp,velrhop);
       }
     }
     else if(doublemode==2){
       if(simulate2d){ const bool sim2d=true;
-        if(tkernel==KERNEL_Wendland)KerInteractionBoundCorr_Single<sim2d,KERNEL_Wendland> <<<sgridb,bsbound>>> (npbok,boundcode,Float4(plane),Float3(direction),determlimit,hdiv,nc,cellfluid,begincell,cellzero,posxy,posz,code,idp,velrhop);
-        if(tkernel==KERNEL_Cubic)   KerInteractionBoundCorr_Single<sim2d,KERNEL_Cubic>    <<<sgridb,bsbound>>> (npbok,boundcode,Float4(plane),Float3(direction),determlimit,hdiv,nc,cellfluid,begincell,cellzero,posxy,posz,code,idp,velrhop);
+        if(tkerbcr==KERNEL_Wendland)KerInteractionBoundCorr_Single<sim2d,KERNEL_Wendland> <<<sgridb,bsbound>>> (npbok,boundcode,Float4(plane),Float3(direction),determlimit,hdiv,nc,cellfluid,begincell,cellzero,posxy,posz,code,idp,velrhop);
+        if(tkerbcr==KERNEL_Cubic)   KerInteractionBoundCorr_Single<sim2d,KERNEL_Cubic>    <<<sgridb,bsbound>>> (npbok,boundcode,Float4(plane),Float3(direction),determlimit,hdiv,nc,cellfluid,begincell,cellzero,posxy,posz,code,idp,velrhop);
       }else{          const bool sim2d=false;
-        if(tkernel==KERNEL_Wendland)KerInteractionBoundCorr_Single<sim2d,KERNEL_Wendland> <<<sgridb,bsbound>>> (npbok,boundcode,Float4(plane),Float3(direction),determlimit,hdiv,nc,cellfluid,begincell,cellzero,posxy,posz,code,idp,velrhop);
-        if(tkernel==KERNEL_Cubic)   KerInteractionBoundCorr_Single<sim2d,KERNEL_Cubic>    <<<sgridb,bsbound>>> (npbok,boundcode,Float4(plane),Float3(direction),determlimit,hdiv,nc,cellfluid,begincell,cellzero,posxy,posz,code,idp,velrhop);
+        if(tkerbcr==KERNEL_Wendland)KerInteractionBoundCorr_Single<sim2d,KERNEL_Wendland> <<<sgridb,bsbound>>> (npbok,boundcode,Float4(plane),Float3(direction),determlimit,hdiv,nc,cellfluid,begincell,cellzero,posxy,posz,code,idp,velrhop);
+        if(tkerbcr==KERNEL_Cubic)   KerInteractionBoundCorr_Single<sim2d,KERNEL_Cubic>    <<<sgridb,bsbound>>> (npbok,boundcode,Float4(plane),Float3(direction),determlimit,hdiv,nc,cellfluid,begincell,cellzero,posxy,posz,code,idp,velrhop);
       }
     }
     else if(doublemode==3){
       if(simulate2d){ const bool sim2d=true;
-        if(tkernel==KERNEL_Wendland)KerInteractionBoundCorr_Double<sim2d,KERNEL_Wendland> <<<sgridb,bsbound>>> (npbok,boundcode,Float4(plane),Float3(direction),determlimit,hdiv,nc,cellfluid,begincell,cellzero,posxy,posz,code,idp,velrhop);
-        if(tkernel==KERNEL_Cubic)   KerInteractionBoundCorr_Double<sim2d,KERNEL_Cubic>    <<<sgridb,bsbound>>> (npbok,boundcode,Float4(plane),Float3(direction),determlimit,hdiv,nc,cellfluid,begincell,cellzero,posxy,posz,code,idp,velrhop);
+        if(tkerbcr==KERNEL_Wendland)KerInteractionBoundCorr_Double<sim2d,KERNEL_Wendland> <<<sgridb,bsbound>>> (npbok,boundcode,Float4(plane),Float3(direction),determlimit,hdiv,nc,cellfluid,begincell,cellzero,posxy,posz,code,idp,velrhop);
+        if(tkerbcr==KERNEL_Cubic)   KerInteractionBoundCorr_Double<sim2d,KERNEL_Cubic>    <<<sgridb,bsbound>>> (npbok,boundcode,Float4(plane),Float3(direction),determlimit,hdiv,nc,cellfluid,begincell,cellzero,posxy,posz,code,idp,velrhop);
       }else{          const bool sim2d=false;
-        if(tkernel==KERNEL_Wendland)KerInteractionBoundCorr_Double<sim2d,KERNEL_Wendland> <<<sgridb,bsbound>>> (npbok,boundcode,Float4(plane),Float3(direction),determlimit,hdiv,nc,cellfluid,begincell,cellzero,posxy,posz,code,idp,velrhop);
-        if(tkernel==KERNEL_Cubic)   KerInteractionBoundCorr_Double<sim2d,KERNEL_Cubic>    <<<sgridb,bsbound>>> (npbok,boundcode,Float4(plane),Float3(direction),determlimit,hdiv,nc,cellfluid,begincell,cellzero,posxy,posz,code,idp,velrhop);
+        if(tkerbcr==KERNEL_Wendland)KerInteractionBoundCorr_Double<sim2d,KERNEL_Wendland> <<<sgridb,bsbound>>> (npbok,boundcode,Float4(plane),Float3(direction),determlimit,hdiv,nc,cellfluid,begincell,cellzero,posxy,posz,code,idp,velrhop);
+        if(tkerbcr==KERNEL_Cubic)   KerInteractionBoundCorr_Double<sim2d,KERNEL_Cubic>    <<<sgridb,bsbound>>> (npbok,boundcode,Float4(plane),Float3(direction),determlimit,hdiv,nc,cellfluid,begincell,cellzero,posxy,posz,code,idp,velrhop);
       }
     }
   }

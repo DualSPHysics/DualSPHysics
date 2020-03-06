@@ -1166,16 +1166,11 @@ void JSph::ConfigConstants(bool simulate2d){
   H2=float(h*h);
   Fourh2=float(h*h*4); 
   Eta2=float((h*0.1)*(h*0.1));
-  if(simulate2d){
-    if(TKernel==KERNEL_Wendland)WendlandConstants(simulate2d,H,Awen,Bwen);
-    else if(TKernel==KERNEL_Gaussian){
-      const double a1=4./PI;
-      const double a2=a1/(h*h);
-      const double aa=a1/(h*h*h);
-      Agau=float(a2);
-      Bgau=float(-8.*aa);
-    }
-    else if(TKernel==KERNEL_Cubic){
+  //-Wendland constants are always computed since this kernel is used in some parts where other kernels are not defined (e.g. mDBC, inlet/outlet, boundcorr...).
+  WendlandConstants(simulate2d,H,Awen,Bwen);
+  //-Computes constants for other kernels.
+  if(TKernel==KERNEL_Cubic){
+    if(simulate2d){
       const double a1=10./(PI*7.);
       const double a2=a1/(h*h);
       const double aa=a1/(h*h*h);
@@ -1190,20 +1185,7 @@ void JSph::ConfigConstants(bool simulate2d){
       CubicCte.d1=float(9.*aa/4.);
       CubicCte.c2=float(-3.*aa/4.);
     }
-    else if(TKernel==KERNEL_Quintic){  //<vs_praticalsskq_ini>
-      //Quintic_PDTE
-    }  //<vs_praticalsskq_end>
-  }
-  else{
-    if(TKernel==KERNEL_Wendland)WendlandConstants(simulate2d,H,Awen,Bwen);
-    else if(TKernel==KERNEL_Gaussian){
-      const double a1=8./5.5683;
-      const double a2=a1/(h*h*h);
-      const double aa=a1/(h*h*h*h); 
-      Agau=float(a2);
-      Bgau=float(-8.*aa);
-    }
-    else if(TKernel==KERNEL_Cubic){
+    else{
       const double a1=1./PI;
       const double a2=a1/(h*h*h);
       const double aa=a1/(h*h*h*h);
@@ -1218,11 +1200,31 @@ void JSph::ConfigConstants(bool simulate2d){
       CubicCte.d1=float(9.*aa/4.);
       CubicCte.c2=float(-3.*aa/4.);
     }
-    else if(TKernel==KERNEL_Quintic){  //<vs_praticalsskq_ini>
-      //Quintic_PDTE
-    }  //<vs_praticalsskq_end>
   }
-  if(TBoundary==BC_MDBC)WendlandConstants(simulate2d,H,Awen,Bwen); //<vs_mddbc>
+  else if(TKernel==KERNEL_Gaussian){
+    if(simulate2d){
+      const double a1=4./PI;
+      const double a2=a1/(h*h);
+      const double aa=a1/(h*h*h);
+      Agau=float(a2);
+      Bgau=float(-8.*aa);
+    }
+    else{
+      const double a1=8./5.5683;
+      const double a2=a1/(h*h*h);
+      const double aa=a1/(h*h*h*h); 
+      Agau=float(a2);
+      Bgau=float(-8.*aa);
+    }
+  }
+  else if(TKernel==KERNEL_Quintic){  //<vs_praticalsskq_ini>
+    if(simulate2d){
+      //Quintic_PDTE
+    }
+    else{
+      //Quintic_PDTE
+    }
+  }  //<vs_praticalsskq_end>
   //-Constants for Laminar viscosity + SPS turbulence model.
   if(TVisco==VISCO_LaminarSPS){  
     double dp_sps=(Simulate2D? sqrt(Dp*Dp*2.)/2.: sqrt(Dp*Dp*3.)/3.);  
@@ -1299,10 +1301,6 @@ void JSph::VisuConfig()const{
     Log->Print(fun::VarStr("Awen (Wendland)",Awen));
     Log->Print(fun::VarStr("Bwen (Wendland)",Bwen));
   }
-  else if(TKernel==KERNEL_Gaussian){
-    Log->Print(fun::VarStr("Agau (Gaussian)",Agau));
-    Log->Print(fun::VarStr("Bgau (Gaussian)",Bgau));
-  }
   else if(TKernel==KERNEL_Cubic){
     Log->Print(fun::VarStr("CubicCte.a1",CubicCte.a1));
     Log->Print(fun::VarStr("CubicCte.aa",CubicCte.aa));
@@ -1311,6 +1309,10 @@ void JSph::VisuConfig()const{
     Log->Print(fun::VarStr("CubicCte.c2",CubicCte.c2));
     Log->Print(fun::VarStr("CubicCte.d1",CubicCte.d1));
     Log->Print(fun::VarStr("CubicCte.od_wdeltap",CubicCte.od_wdeltap));
+  }
+  else if(TKernel==KERNEL_Gaussian){
+    Log->Print(fun::VarStr("Agau (Gaussian)",Agau));
+    Log->Print(fun::VarStr("Bgau (Gaussian)",Bgau));
   }
   else if(TKernel==KERNEL_Quintic){ //<vs_praticalsskq_ini>
     //Quintic_PDTE

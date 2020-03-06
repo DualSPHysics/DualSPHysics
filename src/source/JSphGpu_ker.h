@@ -68,10 +68,13 @@ typedef struct{
   unsigned axis;
   unsigned cellcode;
   double domposminx,domposminy,domposminz;
-  //-Ctes. of Gaussian kernel.
-  float agau,bgau;
   //-Ctes. of Cubic Spline kernel.
   float cubic_a1,cubic_a2,cubic_aa,cubic_a24,cubic_c1,cubic_d1,cubic_c2,cubic_odwdeltap;
+  //-Ctes. of Gaussian kernel.
+  float agau,bgau;
+  //-Ctes. of Quintic Spline kernel.  //<vs_praticalsskq_ini>
+  //Quintic_PDTE
+  //<vs_praticalsskq_end>
 }StCteInteraction; 
 
 /// Structure to collect kernel information.

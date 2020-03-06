@@ -169,12 +169,15 @@ protected:
   float Agau;                 ///<Gaussian kernel constant to compute wab.                               | Constante para calcular wab con kernel Gaussian.
   float Bgau;                 ///<Gaussian kernel constant to compute fac (kernel derivative).           | Constante para calcular fac (derivada del kernel) con kernel Gaussian.
   StCubicCte CubicCte;        ///<Constants for Cubic Spline Kernel.                                     | Constante para kernel cubic spline.
-  TpVisco TVisco;             ///<Viscosity type: Artificial,...                                         | Tipo de viscosidad: Artificial,...
+  //<vs_praticalsskq_ini>
+  //Quintic_PDTE
+  //<vs_praticalsskq_end>
 
   TpDensity TDensity;         ///<Density Diffusion Term 0:None, 1:Molteni, 2:Fourtakas, 3:Fourtakas(full) (default=0)
   float DDTValue;             ///<Value used with Density Diffusion Term (default=0.1)
   bool DDTArray;              ///<Use extra array to compute Density Diffusion Term. The correction is applied after particle interaction. 
 
+  TpVisco TVisco;             ///<Viscosity type: Artificial,...                                         | Tipo de viscosidad: Artificial,...
   float Visco;  
   float ViscoBoundFactor;     ///<For boundary interaction use Visco*ViscoBoundFactor.                  | Para interaccion con contorno usa Visco*ViscoBoundFactor.
   JSphVisco *ViscoTime;       ///<Provides a viscosity value as a function of simulation time.          | Proporciona un valor de viscosidad en funcion del instante de la simulacion.

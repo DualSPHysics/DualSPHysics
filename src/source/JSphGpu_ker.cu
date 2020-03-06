@@ -673,11 +673,11 @@ template<TpKernel tker,TpFtMode ftmode,bool symm>
     if(symm)dry=pscellp1.y+pscellp2.y + CTE.dosh*CEL_GetY(__float_as_int(pscellp2.w)); //<vs_syymmetry>
     const float rr2=drx*drx+dry*dry+drz*drz;
     if(rr2<=CTE.fourh2 && rr2>=ALMOSTZERO){
-      //-Cubic Spline, Wendland or Gaussian kernel.
+      //-Wendland, Cubic Spline or Gaussian kernel.
       float frx,fry,frz;
       if(tker==KERNEL_Wendland)     KerGetKernelWendland(rr2,drx,dry,drz,frx,fry,frz);
-      else if(tker==KERNEL_Gaussian)KerGetKernelGaussian(rr2,drx,dry,drz,frx,fry,frz);
       else if(tker==KERNEL_Cubic)   KerGetKernelCubic   (rr2,drx,dry,drz,frx,fry,frz);
+      else if(tker==KERNEL_Gaussian)KerGetKernelGaussian(rr2,drx,dry,drz,frx,fry,frz);
       else if(tker==KERNEL_Quintic) KerGetKernelQuintic (rr2,drx,dry,drz,frx,fry,frz); //<vs_praticalsskq>
 
       float4 velp2=velrhop[p2];
@@ -784,11 +784,11 @@ template<TpKernel tker,TpFtMode ftmode,bool lamsps,TpDensity tdensity,bool shift
     if(symm)dry=pscellp1.y+pscellp2.y + CTE.dosh*CEL_GetY(__float_as_int(pscellp2.w)); //<vs_syymmetry>
     const float rr2=drx*drx+dry*dry+drz*drz;
     if(rr2<=CTE.fourh2 && rr2>=ALMOSTZERO){
-      //-Cubic Spline, Wendland or Gaussian kernel.
+      //-Wendland, Cubic Spline or Gaussian kernel.
       float frx,fry,frz;
       if(tker==KERNEL_Wendland)     KerGetKernelWendland(rr2,drx,dry,drz,frx,fry,frz);
-      else if(tker==KERNEL_Gaussian)KerGetKernelGaussian(rr2,drx,dry,drz,frx,fry,frz);
       else if(tker==KERNEL_Cubic)   KerGetKernelCubic   (rr2,drx,dry,drz,frx,fry,frz);
+      else if(tker==KERNEL_Gaussian)KerGetKernelGaussian(rr2,drx,dry,drz,frx,fry,frz);
       else if(tker==KERNEL_Quintic) KerGetKernelQuintic (rr2,drx,dry,drz,frx,fry,frz); //<vs_praticalsskq>
 
       //-Obtains mass of particle p2 if any floating bodies exist.
@@ -1129,8 +1129,8 @@ template<TpKernel tker> void Interaction_Forces_gt0(const StInterParmsg &t){
 //==============================================================================
 void Interaction_Forces(const StInterParmsg &t){
   if(t.tkernel==KERNEL_Wendland)     Interaction_Forces_gt0<KERNEL_Wendland> (t);
-  else if(t.tkernel==KERNEL_Gaussian)Interaction_Forces_gt0<KERNEL_Gaussian> (t);
   else if(t.tkernel==KERNEL_Cubic)   Interaction_Forces_gt0<KERNEL_Cubic   > (t);
+  else if(t.tkernel==KERNEL_Gaussian)Interaction_Forces_gt0<KERNEL_Gaussian> (t);
   else if(t.tkernel==KERNEL_Quintic) Interaction_Forces_gt0<KERNEL_Quintic > (t);  //<vs_praticalsskq>
 }
 

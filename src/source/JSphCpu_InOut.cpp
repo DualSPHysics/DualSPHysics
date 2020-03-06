@@ -108,11 +108,11 @@ template<bool sim2d,TpKernel tker> void JSphCpu::InteractionInOutExtrap_Double
             const double drz=double(posp1.z-pos[p2].z);
             const double rr2=drx*drx+dry*dry+drz*drz;
             if(rr2<=Fourh2 && rr2>=ALMOSTZERO && CODE_IsFluidNotInout(code[p2])){//-Only with fluid particles but not inout particles.
-              //-Wendland or Cubic Spline kernel.
-			  float ffrx,ffry,ffrz,fwab;
-			  if(tker==KERNEL_Wendland)GetKernelWendland(float(rr2),float(drx),float(dry),float(drz),ffrx,ffry,ffrz,fwab);
-			  else if(tker==KERNEL_Cubic)GetKernelCubic (float(rr2),float(drx),float(dry),float(drz),ffrx,ffry,ffrz,fwab);
-  		      const double frx=ffrx,fry=ffry,frz=ffrz,wab=fwab;
+              //-Only Wendland or Cubic Spline kernel.
+              float ffrx,ffry,ffrz,fwab;
+              if(tker==KERNEL_Wendland)GetKernelWendland(float(rr2),float(drx),float(dry),float(drz),ffrx,ffry,ffrz,fwab);
+              else if(tker==KERNEL_Cubic)GetKernelCubic (float(rr2),float(drx),float(dry),float(drz),ffrx,ffry,ffrz,fwab);
+              const double frx=ffrx,fry=ffry,frz=ffrz,wab=fwab;
 
               const tfloat4 velrhopp2=velrhop[p2];
               //===== Get mass and volume of particle p2 =====
@@ -136,22 +136,22 @@ template<bool sim2d,TpKernel tker> void JSphCpu::InteractionInOutExtrap_Double
                 velp1.x+=vwab*velrhopp2.x;
                 velp1.y+=vwab*velrhopp2.y;
                 velp1.z+=vwab*velrhopp2.z;
-                gradvelp1.a11+=vfrx*velrhopp2.x;	// du/dx
-                gradvelp1.a12+=vfry*velrhopp2.x;	// du/dy
-                gradvelp1.a13+=vfrz*velrhopp2.x;	// du/dz
-                gradvelp1.a21+=vfrx*velrhopp2.y;	// dv/dx
-                gradvelp1.a22+=vfry*velrhopp2.y;	// dv/dx
-                gradvelp1.a23+=vfrz*velrhopp2.y;	// dv/dx
-                gradvelp1.a31+=vfrx*velrhopp2.z;	// dw/dx
-                gradvelp1.a32+=vfry*velrhopp2.z;	// dw/dx
-                gradvelp1.a33+=vfrz*velrhopp2.z;	// dw/dx
+                gradvelp1.a11+=vfrx*velrhopp2.x;    // du/dx
+                gradvelp1.a12+=vfry*velrhopp2.x;    // du/dy
+                gradvelp1.a13+=vfrz*velrhopp2.x;    // du/dz
+                gradvelp1.a21+=vfrx*velrhopp2.y;    // dv/dx
+                gradvelp1.a22+=vfry*velrhopp2.y;    // dv/dx
+                gradvelp1.a23+=vfrz*velrhopp2.y;    // dv/dx
+                gradvelp1.a31+=vfrx*velrhopp2.z;    // dw/dx
+                gradvelp1.a32+=vfry*velrhopp2.z;    // dw/dx
+                gradvelp1.a33+=vfrz*velrhopp2.z;    // dw/dx
               }
 
               //===== Matrix A for correction =====
               if(sim2d){
-            	  a_corr2.a11+=vwab;  a_corr2.a12+=drx*vwab;  a_corr2.a13+=drz*vwab;
-            	  a_corr2.a21+=vfrx;  a_corr2.a22+=drx*vfrx;  a_corr2.a23+=drz*vfrx;
-            	  a_corr2.a31+=vfrz;  a_corr2.a32+=drx*vfrz;  a_corr2.a33+=drz*vfrz;
+                  a_corr2.a11+=vwab;  a_corr2.a12+=drx*vwab;  a_corr2.a13+=drz*vwab;
+                  a_corr2.a21+=vfrx;  a_corr2.a22+=drx*vfrx;  a_corr2.a23+=drz*vfrx;
+                  a_corr2.a31+=vfrz;  a_corr2.a32+=drx*vfrz;  a_corr2.a33+=drz*vfrz;
               }
               else{
                 a_corr3.a11+=vwab;  a_corr3.a12+=drx*vwab;  a_corr3.a13+=dry*vwab;  a_corr3.a14+=drz*vwab;
@@ -171,7 +171,7 @@ template<bool sim2d,TpKernel tker> void JSphCpu::InteractionInOutExtrap_Double
       if(sim2d){
         const double determ=fmath::Determinant3x3(a_corr2);
         if(fabs(determ)>=determlimit){//-Use 1e-3f (first_order) or 1e+3f (zeroth_order).
-          const tmatrix3d invacorr2=fmath::InverseMatrix3x3(a_corr2,determ);	//CHECKED
+          const tmatrix3d invacorr2=fmath::InverseMatrix3x3(a_corr2,determ);    //CHECKED
           //-GHOST NODE DENSITY IS MIRRORED BACK TO THE INFLOW OR OUTFLOW PARTICLES.
           if(computerhop){
             const double rhoghost=rhopp1*invacorr2.a11 + gradrhopp1.x*invacorr2.a12 + gradrhopp1.z*invacorr2.a13;
@@ -190,7 +190,7 @@ template<bool sim2d,TpKernel tker> void JSphCpu::InteractionInOutExtrap_Double
             velrhopfinal.x=float(velghost_x + a11*dpos.x + a31*dpos.z);
             velrhopfinal.z=float(velghost_z + a13*dpos.x + a33*dpos.z);
             velrhopfinal.y=0;
-   	      }
+          }
         }
         else if(a_corr2.a11>0){ // Determinant is small but a11 is nonzero, 0th order ANGELO
           if(computerhop)velrhopfinal.w=float(rhopp1/a_corr2.a11);
@@ -198,7 +198,7 @@ template<bool sim2d,TpKernel tker> void JSphCpu::InteractionInOutExtrap_Double
             velrhopfinal.x=float(velp1.x/a_corr2.a11);
             velrhopfinal.z=float(velp1.z/a_corr2.a11);
             velrhopfinal.y=0;
-   	      }
+          }
         }
       }
       else{
@@ -216,21 +216,21 @@ template<bool sim2d,TpKernel tker> void JSphCpu::InteractionInOutExtrap_Double
           //-GHOST NODE VELOCITY ARE MIRRORED BACK TO THE OUTFLOW PARTICLES.
           if(computevel){
             const double velghost_x=velp1.x*invacorr3.a11 + gradvelp1.a11*invacorr3.a12 + gradvelp1.a12*invacorr3.a13 + gradvelp1.a13*invacorr3.a14;
-      	    const double velghost_y=velp1.y*invacorr3.a11 + gradvelp1.a11*invacorr3.a12 + gradvelp1.a12*invacorr3.a13 + gradvelp1.a13*invacorr3.a14;
-      	    const double velghost_z=velp1.z*invacorr3.a11 + gradvelp1.a31*invacorr3.a12 + gradvelp1.a32*invacorr3.a13 + gradvelp1.a33*invacorr3.a14;
+            const double velghost_y=velp1.y*invacorr3.a11 + gradvelp1.a11*invacorr3.a12 + gradvelp1.a12*invacorr3.a13 + gradvelp1.a13*invacorr3.a14;
+            const double velghost_z=velp1.z*invacorr3.a11 + gradvelp1.a31*invacorr3.a12 + gradvelp1.a32*invacorr3.a13 + gradvelp1.a33*invacorr3.a14;
             const double a11=-(velp1.x*invacorr3.a21 + gradvelp1.a11*invacorr3.a22 + gradvelp1.a12*invacorr3.a23 + gradvelp1.a13*invacorr3.a24);
-        	const double a12=-(velp1.y*invacorr3.a21 + gradvelp1.a21*invacorr3.a22 + gradvelp1.a22*invacorr3.a23 + gradvelp1.a23*invacorr3.a24);
-        	const double a13=-(velp1.z*invacorr3.a21 + gradvelp1.a31*invacorr3.a22 + gradvelp1.a32*invacorr3.a23 + gradvelp1.a33*invacorr3.a24);
-        	const double a21=-(velp1.x*invacorr3.a31 + gradvelp1.a11*invacorr3.a32 + gradvelp1.a12*invacorr3.a33 + gradvelp1.a13*invacorr3.a34);
-        	const double a22=-(velp1.y*invacorr3.a31 + gradvelp1.a21*invacorr3.a32 + gradvelp1.a22*invacorr3.a33 + gradvelp1.a23*invacorr3.a34);
-        	const double a23=-(velp1.z*invacorr3.a31 + gradvelp1.a31*invacorr3.a32 + gradvelp1.a32*invacorr3.a33 + gradvelp1.a33*invacorr3.a34);
-        	const double a31=-(velp1.x*invacorr3.a41 + gradvelp1.a11*invacorr3.a42 + gradvelp1.a12*invacorr3.a43 + gradvelp1.a13*invacorr3.a44);
-        	const double a32=-(velp1.y*invacorr3.a41 + gradvelp1.a21*invacorr3.a42 + gradvelp1.a22*invacorr3.a43 + gradvelp1.a23*invacorr3.a44);
-        	const double a33=-(velp1.z*invacorr3.a41 + gradvelp1.a31*invacorr3.a42 + gradvelp1.a32*invacorr3.a43 + gradvelp1.a33*invacorr3.a44);
+            const double a12=-(velp1.y*invacorr3.a21 + gradvelp1.a21*invacorr3.a22 + gradvelp1.a22*invacorr3.a23 + gradvelp1.a23*invacorr3.a24);
+            const double a13=-(velp1.z*invacorr3.a21 + gradvelp1.a31*invacorr3.a22 + gradvelp1.a32*invacorr3.a23 + gradvelp1.a33*invacorr3.a24);
+            const double a21=-(velp1.x*invacorr3.a31 + gradvelp1.a11*invacorr3.a32 + gradvelp1.a12*invacorr3.a33 + gradvelp1.a13*invacorr3.a34);
+            const double a22=-(velp1.y*invacorr3.a31 + gradvelp1.a21*invacorr3.a32 + gradvelp1.a22*invacorr3.a33 + gradvelp1.a23*invacorr3.a34);
+            const double a23=-(velp1.z*invacorr3.a31 + gradvelp1.a31*invacorr3.a32 + gradvelp1.a32*invacorr3.a33 + gradvelp1.a33*invacorr3.a34);
+            const double a31=-(velp1.x*invacorr3.a41 + gradvelp1.a11*invacorr3.a42 + gradvelp1.a12*invacorr3.a43 + gradvelp1.a13*invacorr3.a44);
+            const double a32=-(velp1.y*invacorr3.a41 + gradvelp1.a21*invacorr3.a42 + gradvelp1.a22*invacorr3.a43 + gradvelp1.a23*invacorr3.a44);
+            const double a33=-(velp1.z*invacorr3.a41 + gradvelp1.a31*invacorr3.a42 + gradvelp1.a32*invacorr3.a43 + gradvelp1.a33*invacorr3.a44);
             velrhopfinal.x=float(velghost_x + a11*dpos.x + a21*dpos.y + a31*dpos.z);
             velrhopfinal.y=float(velghost_y + a12*dpos.x + a22*dpos.y + a32*dpos.z);
-      	    velrhopfinal.z=float(velghost_z + a13*dpos.x + a23*dpos.y + a33*dpos.z);
-     	  }
+            velrhopfinal.z=float(velghost_z + a13*dpos.x + a23*dpos.y + a33*dpos.z);
+          }
         }
         else if(a_corr3.a11>0){ // Determinant is small but a11 is nonzero, 0th order ANGELO
           if(computerhop)velrhopfinal.w=float(rhopp1/a_corr3.a11);
@@ -238,7 +238,7 @@ template<bool sim2d,TpKernel tker> void JSphCpu::InteractionInOutExtrap_Double
             velrhopfinal.x=float(velp1.x/a_corr3.a11);
             velrhopfinal.y=float(velp1.y/a_corr3.a11);
             velrhopfinal.z=float(velp1.z/a_corr3.a11);
-     	  }
+          }
         }
       }
       velrhop[p1]=velrhopfinal;
@@ -305,10 +305,10 @@ template<bool sim2d,TpKernel tker> void JSphCpu::InteractionInOutExtrap_Single
             const float drz=float(posp1.z-pos[p2].z);
             const float rr2=drx*drx+dry*dry+drz*drz;
             if(rr2<=Fourh2 && rr2>=ALMOSTZERO && CODE_IsFluidNotInout(code[p2])){//-Only with fluid particles but not inout particles.
-              //-Wendland or Cubic Spline kernel.
-			  float frx,fry,frz,wab;
-			  if(tker==KERNEL_Wendland)GetKernelWendland(rr2,drx,dry,drz,frx,fry,frz,wab);
-			  else if(tker==KERNEL_Cubic)GetKernelCubic (rr2,drx,dry,drz,frx,fry,frz,wab);
+              //-Only Wendland or Cubic Spline kernel.
+              float frx,fry,frz,wab;
+              if(tker==KERNEL_Wendland)GetKernelWendland(rr2,drx,dry,drz,frx,fry,frz,wab);
+              else if(tker==KERNEL_Cubic)GetKernelCubic (rr2,drx,dry,drz,frx,fry,frz,wab);
 
               const tfloat4 velrhopp2=velrhop[p2];
               //===== Get mass and volume of particle p2 =====
@@ -332,22 +332,22 @@ template<bool sim2d,TpKernel tker> void JSphCpu::InteractionInOutExtrap_Single
                 velp1.x+=vwab*velrhopp2.x;
                 velp1.y+=vwab*velrhopp2.y;
                 velp1.z+=vwab*velrhopp2.z;
-                gradvelp1.a11+=vfrx*velrhopp2.x;	// du/dx
-                gradvelp1.a12+=vfry*velrhopp2.x;	// du/dy
-                gradvelp1.a13+=vfrz*velrhopp2.x;	// du/dz
-                gradvelp1.a21+=vfrx*velrhopp2.y;	// dv/dx
-                gradvelp1.a22+=vfry*velrhopp2.y;	// dv/dx
-                gradvelp1.a23+=vfrz*velrhopp2.y;	// dv/dx
-                gradvelp1.a31+=vfrx*velrhopp2.z;	// dw/dx
-                gradvelp1.a32+=vfry*velrhopp2.z;	// dw/dx
-                gradvelp1.a33+=vfrz*velrhopp2.z;	// dw/dx
+                gradvelp1.a11+=vfrx*velrhopp2.x;    // du/dx
+                gradvelp1.a12+=vfry*velrhopp2.x;    // du/dy
+                gradvelp1.a13+=vfrz*velrhopp2.x;    // du/dz
+                gradvelp1.a21+=vfrx*velrhopp2.y;    // dv/dx
+                gradvelp1.a22+=vfry*velrhopp2.y;    // dv/dx
+                gradvelp1.a23+=vfrz*velrhopp2.y;    // dv/dx
+                gradvelp1.a31+=vfrx*velrhopp2.z;    // dw/dx
+                gradvelp1.a32+=vfry*velrhopp2.z;    // dw/dx
+                gradvelp1.a33+=vfrz*velrhopp2.z;    // dw/dx
               }
 
               //===== Matrix A for correction =====
               if(sim2d){
-            	  a_corr2.a11+=vwab;  a_corr2.a12+=drx*vwab;  a_corr2.a13+=drz*vwab;
-            	  a_corr2.a21+=vfrx;  a_corr2.a22+=drx*vfrx;  a_corr2.a23+=drz*vfrx;
-            	  a_corr2.a31+=vfrz;  a_corr2.a32+=drx*vfrz;  a_corr2.a33+=drz*vfrz;
+                  a_corr2.a11+=vwab;  a_corr2.a12+=drx*vwab;  a_corr2.a13+=drz*vwab;
+                  a_corr2.a21+=vfrx;  a_corr2.a22+=drx*vfrx;  a_corr2.a23+=drz*vfrx;
+                  a_corr2.a31+=vfrz;  a_corr2.a32+=drx*vfrz;  a_corr2.a33+=drz*vfrz;
               }
               else{
                 a_corr3.a11+=vwab;  a_corr3.a12+=drx*vwab;  a_corr3.a13+=dry*vwab;  a_corr3.a14+=drz*vwab;
@@ -367,7 +367,7 @@ template<bool sim2d,TpKernel tker> void JSphCpu::InteractionInOutExtrap_Single
       if(sim2d){
         const double determ=fmath::Determinant3x3(a_corr2);
         if(fabs(determ)>=determlimit){//-Use 1e-3f (first_order) or 1e+3f (zeroth_order).
-          const tmatrix3d invacorr2=fmath::InverseMatrix3x3(a_corr2,determ);	//CHECKED
+          const tmatrix3d invacorr2=fmath::InverseMatrix3x3(a_corr2,determ);    //CHECKED
           //-GHOST NODE DENSITY IS MIRRORED BACK TO THE INFLOW OR OUTFLOW PARTICLES.
           if(computerhop){
             const float rhoghost=float(invacorr2.a11*rhopp1 + invacorr2.a12*gradrhopp1.x + invacorr2.a13*gradrhopp1.z);
@@ -383,10 +383,10 @@ template<bool sim2d,TpKernel tker> void JSphCpu::InteractionInOutExtrap_Single
             const float a13=-float(invacorr2.a21*velp1.z + invacorr2.a22*gradvelp1.a31 + invacorr2.a23*gradvelp1.a33);
             const float a31=-float(invacorr2.a31*velp1.x + invacorr2.a32*gradvelp1.a11 + invacorr2.a33*gradvelp1.a13);
             const float a33=-float(invacorr2.a31*velp1.z + invacorr2.a32*gradvelp1.a31 + invacorr2.a33*gradvelp1.a33);
-    	    velrhopfinal.x=(velghost_x + a11*dpos.x + a31*dpos.z);
-    	    velrhopfinal.z=(velghost_z + a13*dpos.x + a33*dpos.z);
+            velrhopfinal.x=(velghost_x + a11*dpos.x + a31*dpos.z);
+            velrhopfinal.z=(velghost_z + a13*dpos.x + a33*dpos.z);
             velrhopfinal.y=0;
-   	      }
+          }
         }
         else if(a_corr2.a11>0){ // Determinant is small but a11 is nonzero, 0th order ANGELO
           if(computerhop)velrhopfinal.w=float(rhopp1/a_corr2.a11);
@@ -394,7 +394,7 @@ template<bool sim2d,TpKernel tker> void JSphCpu::InteractionInOutExtrap_Single
             velrhopfinal.x=float(velp1.x/a_corr2.a11);
             velrhopfinal.z=float(velp1.z/a_corr2.a11);
             velrhopfinal.y=0;
-   	      }
+          }
         }
       }
       else{
@@ -412,21 +412,21 @@ template<bool sim2d,TpKernel tker> void JSphCpu::InteractionInOutExtrap_Single
           //-GHOST NODE VELOCITY ARE MIRRORED BACK TO THE OUTFLOW PARTICLES.
           if(computevel){
             const float velghost_x=float(invacorr3.a11*velp1.x + invacorr3.a12*gradvelp1.a11 + invacorr3.a13*gradvelp1.a12 + invacorr3.a14*gradvelp1.a13);
-      	    const float velghost_y=float(invacorr3.a11*velp1.y + invacorr3.a12*gradvelp1.a11 + invacorr3.a13*gradvelp1.a12 + invacorr3.a14*gradvelp1.a13);
-      	    const float velghost_z=float(invacorr3.a11*velp1.z + invacorr3.a12*gradvelp1.a31 + invacorr3.a13*gradvelp1.a32 + invacorr3.a14*gradvelp1.a33);
+            const float velghost_y=float(invacorr3.a11*velp1.y + invacorr3.a12*gradvelp1.a11 + invacorr3.a13*gradvelp1.a12 + invacorr3.a14*gradvelp1.a13);
+            const float velghost_z=float(invacorr3.a11*velp1.z + invacorr3.a12*gradvelp1.a31 + invacorr3.a13*gradvelp1.a32 + invacorr3.a14*gradvelp1.a33);
             const float a11=      -float(invacorr3.a21*velp1.x + invacorr3.a22*gradvelp1.a11 + invacorr3.a23*gradvelp1.a12 + invacorr3.a24*gradvelp1.a13);
-        	const float a12=      -float(invacorr3.a21*velp1.y + invacorr3.a22*gradvelp1.a21 + invacorr3.a23*gradvelp1.a22 + invacorr3.a24*gradvelp1.a23);
-        	const float a13=      -float(invacorr3.a21*velp1.z + invacorr3.a22*gradvelp1.a31 + invacorr3.a23*gradvelp1.a32 + invacorr3.a24*gradvelp1.a33);
-        	const float a21=      -float(invacorr3.a31*velp1.x + invacorr3.a32*gradvelp1.a11 + invacorr3.a33*gradvelp1.a12 + invacorr3.a34*gradvelp1.a13);
-        	const float a22=      -float(invacorr3.a31*velp1.y + invacorr3.a32*gradvelp1.a21 + invacorr3.a33*gradvelp1.a22 + invacorr3.a34*gradvelp1.a23);
-        	const float a23=      -float(invacorr3.a31*velp1.z + invacorr3.a32*gradvelp1.a31 + invacorr3.a33*gradvelp1.a32 + invacorr3.a34*gradvelp1.a33);
-        	const float a31=      -float(invacorr3.a41*velp1.x + invacorr3.a42*gradvelp1.a11 + invacorr3.a43*gradvelp1.a12 + invacorr3.a44*gradvelp1.a13);
-        	const float a32=      -float(invacorr3.a41*velp1.y + invacorr3.a42*gradvelp1.a21 + invacorr3.a43*gradvelp1.a22 + invacorr3.a44*gradvelp1.a23);
-        	const float a33=      -float(invacorr3.a41*velp1.z + invacorr3.a42*gradvelp1.a31 + invacorr3.a43*gradvelp1.a32 + invacorr3.a44*gradvelp1.a33);
+            const float a12=      -float(invacorr3.a21*velp1.y + invacorr3.a22*gradvelp1.a21 + invacorr3.a23*gradvelp1.a22 + invacorr3.a24*gradvelp1.a23);
+            const float a13=      -float(invacorr3.a21*velp1.z + invacorr3.a22*gradvelp1.a31 + invacorr3.a23*gradvelp1.a32 + invacorr3.a24*gradvelp1.a33);
+            const float a21=      -float(invacorr3.a31*velp1.x + invacorr3.a32*gradvelp1.a11 + invacorr3.a33*gradvelp1.a12 + invacorr3.a34*gradvelp1.a13);
+            const float a22=      -float(invacorr3.a31*velp1.y + invacorr3.a32*gradvelp1.a21 + invacorr3.a33*gradvelp1.a22 + invacorr3.a34*gradvelp1.a23);
+            const float a23=      -float(invacorr3.a31*velp1.z + invacorr3.a32*gradvelp1.a31 + invacorr3.a33*gradvelp1.a32 + invacorr3.a34*gradvelp1.a33);
+            const float a31=      -float(invacorr3.a41*velp1.x + invacorr3.a42*gradvelp1.a11 + invacorr3.a43*gradvelp1.a12 + invacorr3.a44*gradvelp1.a13);
+            const float a32=      -float(invacorr3.a41*velp1.y + invacorr3.a42*gradvelp1.a21 + invacorr3.a43*gradvelp1.a22 + invacorr3.a44*gradvelp1.a23);
+            const float a33=      -float(invacorr3.a41*velp1.z + invacorr3.a42*gradvelp1.a31 + invacorr3.a43*gradvelp1.a32 + invacorr3.a44*gradvelp1.a33);
             velrhopfinal.x=(velghost_x + a11*dpos.x + a21*dpos.y + a31*dpos.z);
             velrhopfinal.y=(velghost_y + a12*dpos.x + a22*dpos.y + a32*dpos.z);
-      	    velrhopfinal.z=(velghost_z + a13*dpos.x + a23*dpos.y + a33*dpos.z);
-     	  }
+            velrhopfinal.z=(velghost_z + a13*dpos.x + a23*dpos.y + a33*dpos.z);
+          }
         }
         else if(a_corr3.a11>0){ // Determinant is small but a11 is nonzero, 0th order ANGELO
           if(computerhop)velrhopfinal.w=float(rhopp1/a_corr3.a11);
@@ -434,7 +434,7 @@ template<bool sim2d,TpKernel tker> void JSphCpu::InteractionInOutExtrap_Single
             velrhopfinal.x=float(velp1.x/a_corr3.a11);
             velrhopfinal.y=float(velp1.y/a_corr3.a11);
             velrhopfinal.z=float(velp1.z/a_corr3.a11);
-     	  }
+          }
         }
       }
       velrhop[p1]=velrhopfinal;
@@ -453,6 +453,7 @@ void JSphCpu::Interaction_InOutExtrap(byte doublemode,unsigned inoutcount,const 
   ,const tdouble3 *pos,const typecode *code,const unsigned *idp
   ,tfloat4 *velrhop)
 {
+  const TpKernel tkerinout=(TKernel==KERNEL_Cubic? KERNEL_Cubic: KERNEL_Wendland); //-Only Wendland or Cubic.
   const tint4 nc=TInt4(int(ncells.x),int(ncells.y),int(ncells.z),int(ncells.x*ncells.y));
   const tint3 cellzero=TInt3(cellmin.x,cellmin.y,cellmin.z);
   const unsigned cellfluid=nc.w*nc.z+1;
@@ -460,20 +461,20 @@ void JSphCpu::Interaction_InOutExtrap(byte doublemode,unsigned inoutcount,const 
   //-Interaction GhostBoundaryNodes-Fluid.
   if(doublemode==2){
     if(Simulate2D){ const bool sim2d=true;
-      if(TKernel==KERNEL_Wendland)InteractionInOutExtrap_Single<sim2d,KERNEL_Wendland> (inoutcount,inoutpart,cfgzone,planes,width,dirdata,determlimit,nc,hdiv,cellfluid,begincell,cellzero,dcell,pos,code,idp,velrhop);
-      if(TKernel==KERNEL_Cubic)   InteractionInOutExtrap_Single<sim2d,KERNEL_Cubic>    (inoutcount,inoutpart,cfgzone,planes,width,dirdata,determlimit,nc,hdiv,cellfluid,begincell,cellzero,dcell,pos,code,idp,velrhop);
+      if(tkerinout==KERNEL_Wendland)InteractionInOutExtrap_Single<sim2d,KERNEL_Wendland> (inoutcount,inoutpart,cfgzone,planes,width,dirdata,determlimit,nc,hdiv,cellfluid,begincell,cellzero,dcell,pos,code,idp,velrhop);
+      if(tkerinout==KERNEL_Cubic)   InteractionInOutExtrap_Single<sim2d,KERNEL_Cubic>    (inoutcount,inoutpart,cfgzone,planes,width,dirdata,determlimit,nc,hdiv,cellfluid,begincell,cellzero,dcell,pos,code,idp,velrhop);
     }else{          const bool sim2d=false;
-      if(TKernel==KERNEL_Wendland)InteractionInOutExtrap_Single<sim2d,KERNEL_Wendland> (inoutcount,inoutpart,cfgzone,planes,width,dirdata,determlimit,nc,hdiv,cellfluid,begincell,cellzero,dcell,pos,code,idp,velrhop);
-      if(TKernel==KERNEL_Cubic)   InteractionInOutExtrap_Single<sim2d,KERNEL_Cubic>    (inoutcount,inoutpart,cfgzone,planes,width,dirdata,determlimit,nc,hdiv,cellfluid,begincell,cellzero,dcell,pos,code,idp,velrhop);
+      if(tkerinout==KERNEL_Wendland)InteractionInOutExtrap_Single<sim2d,KERNEL_Wendland> (inoutcount,inoutpart,cfgzone,planes,width,dirdata,determlimit,nc,hdiv,cellfluid,begincell,cellzero,dcell,pos,code,idp,velrhop);
+      if(tkerinout==KERNEL_Cubic)   InteractionInOutExtrap_Single<sim2d,KERNEL_Cubic>    (inoutcount,inoutpart,cfgzone,planes,width,dirdata,determlimit,nc,hdiv,cellfluid,begincell,cellzero,dcell,pos,code,idp,velrhop);
     }
   }
   else if(doublemode==3){
     if(Simulate2D){ const bool sim2d=true;
-      if(TKernel==KERNEL_Wendland)InteractionInOutExtrap_Double<sim2d,KERNEL_Wendland> (inoutcount,inoutpart,cfgzone,planes,width,dirdata,determlimit,nc,hdiv,cellfluid,begincell,cellzero,dcell,pos,code,idp,velrhop);
-      if(TKernel==KERNEL_Cubic)   InteractionInOutExtrap_Double<sim2d,KERNEL_Cubic>    (inoutcount,inoutpart,cfgzone,planes,width,dirdata,determlimit,nc,hdiv,cellfluid,begincell,cellzero,dcell,pos,code,idp,velrhop);
+      if(tkerinout==KERNEL_Wendland)InteractionInOutExtrap_Double<sim2d,KERNEL_Wendland> (inoutcount,inoutpart,cfgzone,planes,width,dirdata,determlimit,nc,hdiv,cellfluid,begincell,cellzero,dcell,pos,code,idp,velrhop);
+      if(tkerinout==KERNEL_Cubic)   InteractionInOutExtrap_Double<sim2d,KERNEL_Cubic>    (inoutcount,inoutpart,cfgzone,planes,width,dirdata,determlimit,nc,hdiv,cellfluid,begincell,cellzero,dcell,pos,code,idp,velrhop);
     }else{          const bool sim2d=false;
-      if(TKernel==KERNEL_Wendland)InteractionInOutExtrap_Double<sim2d,KERNEL_Wendland> (inoutcount,inoutpart,cfgzone,planes,width,dirdata,determlimit,nc,hdiv,cellfluid,begincell,cellzero,dcell,pos,code,idp,velrhop);
-      if(TKernel==KERNEL_Cubic)   InteractionInOutExtrap_Double<sim2d,KERNEL_Cubic>    (inoutcount,inoutpart,cfgzone,planes,width,dirdata,determlimit,nc,hdiv,cellfluid,begincell,cellzero,dcell,pos,code,idp,velrhop);
+      if(tkerinout==KERNEL_Wendland)InteractionInOutExtrap_Double<sim2d,KERNEL_Wendland> (inoutcount,inoutpart,cfgzone,planes,width,dirdata,determlimit,nc,hdiv,cellfluid,begincell,cellzero,dcell,pos,code,idp,velrhop);
+      if(tkerinout==KERNEL_Cubic)   InteractionInOutExtrap_Double<sim2d,KERNEL_Cubic>    (inoutcount,inoutpart,cfgzone,planes,width,dirdata,determlimit,nc,hdiv,cellfluid,begincell,cellzero,dcell,pos,code,idp,velrhop);
     }
   }
   else Run_Exceptioon("Double mode calculation is invalid.");
@@ -576,7 +577,7 @@ template<bool sim2d,TpKernel tker> void JSphCpu::InteractionBoundCorr_Double
             const double drz=double(posp1.z-pos[p2].z);
             const double rr2=drx*drx+dry*dry+drz*drz;
             if(rr2<=Fourh2 && rr2>=ALMOSTZERO && CODE_IsFluid(code[p2])){//-Only with fluid particles (including inout).
-              //-Wendland or Cubic Spline kernel.
+              //-Only Wendland or Cubic Spline kernel.
               float ffrx,ffry,ffrz,fwab;
               if(tker==KERNEL_Wendland)GetKernelWendland(float(rr2),float(drx),float(dry),float(drz),ffrx,ffry,ffrz,fwab);
               else if(tker==KERNEL_Cubic)GetKernelCubic(float(rr2),float(drx),float(dry),float(drz),ffrx,ffry,ffrz,fwab);
@@ -700,7 +701,7 @@ template<bool sim2d,TpKernel tker> void JSphCpu::InteractionBoundCorr_Single
             const float drz=float(posp1.z-pos[p2].z);
             const float rr2=drx*drx+dry*dry+drz*drz;
             if(rr2<=Fourh2 && rr2>=ALMOSTZERO && CODE_IsFluid(code[p2])){//-Only with fluid particles (including inout).
-              //-Wendland or Cubic Spline kernel.
+              //-Only Wendland or Cubic Spline kernel.
               float frx,fry,frz,wab;
               if(tker==KERNEL_Wendland)GetKernelWendland(rr2,drx,dry,drz,frx,fry,frz,wab);
               else if(tker==KERNEL_Cubic)GetKernelCubic (rr2,drx,dry,drz,frx,fry,frz,wab);
@@ -784,6 +785,7 @@ void JSphCpu::Interaction_BoundCorr(byte doublemode,typecode boundcode,tplane3f 
   ,const tdouble3 *pos,const typecode *code,const unsigned *idp
   ,tfloat4 *velrhop)
 {
+  const TpKernel tkerbcr=(TKernel==KERNEL_Cubic? KERNEL_Cubic: KERNEL_Wendland); //-Only Wendland or Cubic.
   const tint4 nc=TInt4(int(ncells.x),int(ncells.y),int(ncells.z),int(ncells.x*ncells.y));
   const tint3 cellzero=TInt3(cellmin.x,cellmin.y,cellmin.z);
   const unsigned cellfluid=nc.w*nc.z+1;
@@ -791,20 +793,20 @@ void JSphCpu::Interaction_BoundCorr(byte doublemode,typecode boundcode,tplane3f 
   //-Interaction GhostBoundaryNodes-Fluid.
   if(doublemode==2){
     if(Simulate2D){ const bool sim2d=true;
-      if(TKernel==KERNEL_Wendland)InteractionBoundCorr_Single<sim2d,KERNEL_Wendland>(NpbOk,boundcode,plane,direction,determlimit,nc,hdiv,cellfluid,begincell,cellzero,pos,code,idp,velrhop);
-      if(TKernel==KERNEL_Cubic)   InteractionBoundCorr_Single<sim2d,KERNEL_Cubic>   (NpbOk,boundcode,plane,direction,determlimit,nc,hdiv,cellfluid,begincell,cellzero,pos,code,idp,velrhop);
+      if(tkerbcr==KERNEL_Wendland)InteractionBoundCorr_Single<sim2d,KERNEL_Wendland>(NpbOk,boundcode,plane,direction,determlimit,nc,hdiv,cellfluid,begincell,cellzero,pos,code,idp,velrhop);
+      if(tkerbcr==KERNEL_Cubic)   InteractionBoundCorr_Single<sim2d,KERNEL_Cubic>   (NpbOk,boundcode,plane,direction,determlimit,nc,hdiv,cellfluid,begincell,cellzero,pos,code,idp,velrhop);
     }else{          const bool sim2d=false;
-      if(TKernel==KERNEL_Wendland)InteractionBoundCorr_Single<sim2d,KERNEL_Wendland>(NpbOk,boundcode,plane,direction,determlimit,nc,hdiv,cellfluid,begincell,cellzero,pos,code,idp,velrhop);
-      if(TKernel==KERNEL_Cubic)   InteractionBoundCorr_Single<sim2d,KERNEL_Cubic>   (NpbOk,boundcode,plane,direction,determlimit,nc,hdiv,cellfluid,begincell,cellzero,pos,code,idp,velrhop);
+      if(tkerbcr==KERNEL_Wendland)InteractionBoundCorr_Single<sim2d,KERNEL_Wendland>(NpbOk,boundcode,plane,direction,determlimit,nc,hdiv,cellfluid,begincell,cellzero,pos,code,idp,velrhop);
+      if(tkerbcr==KERNEL_Cubic)   InteractionBoundCorr_Single<sim2d,KERNEL_Cubic>   (NpbOk,boundcode,plane,direction,determlimit,nc,hdiv,cellfluid,begincell,cellzero,pos,code,idp,velrhop);
     }
   }
   else if(doublemode==3){
     if(Simulate2D){ const bool sim2d=true;
-      if(TKernel==KERNEL_Wendland)InteractionBoundCorr_Double<sim2d,KERNEL_Wendland>(NpbOk,boundcode,plane,direction,determlimit,nc,hdiv,cellfluid,begincell,cellzero,pos,code,idp,velrhop);
-      if(TKernel==KERNEL_Cubic)   InteractionBoundCorr_Double<sim2d,KERNEL_Cubic>   (NpbOk,boundcode,plane,direction,determlimit,nc,hdiv,cellfluid,begincell,cellzero,pos,code,idp,velrhop);
+      if(tkerbcr==KERNEL_Wendland)InteractionBoundCorr_Double<sim2d,KERNEL_Wendland>(NpbOk,boundcode,plane,direction,determlimit,nc,hdiv,cellfluid,begincell,cellzero,pos,code,idp,velrhop);
+      if(tkerbcr==KERNEL_Cubic)   InteractionBoundCorr_Double<sim2d,KERNEL_Cubic>   (NpbOk,boundcode,plane,direction,determlimit,nc,hdiv,cellfluid,begincell,cellzero,pos,code,idp,velrhop);
     }else{          const bool sim2d=false;
-      if(TKernel==KERNEL_Wendland)InteractionBoundCorr_Double<sim2d,KERNEL_Wendland>(NpbOk,boundcode,plane,direction,determlimit,nc,hdiv,cellfluid,begincell,cellzero,pos,code,idp,velrhop);
-      if(TKernel==KERNEL_Cubic)   InteractionBoundCorr_Double<sim2d,KERNEL_Cubic>   (NpbOk,boundcode,plane,direction,determlimit,nc,hdiv,cellfluid,begincell,cellzero,pos,code,idp,velrhop);
+      if(tkerbcr==KERNEL_Wendland)InteractionBoundCorr_Double<sim2d,KERNEL_Wendland>(NpbOk,boundcode,plane,direction,determlimit,nc,hdiv,cellfluid,begincell,cellzero,pos,code,idp,velrhop);
+      if(tkerbcr==KERNEL_Cubic)   InteractionBoundCorr_Double<sim2d,KERNEL_Cubic>   (NpbOk,boundcode,plane,direction,determlimit,nc,hdiv,cellfluid,begincell,cellzero,pos,code,idp,velrhop);
     }
   }
   else Run_Exceptioon("Double mode calculation is invalid.");

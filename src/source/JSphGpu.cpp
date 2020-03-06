@@ -519,15 +519,15 @@ void JSphGpu::ConstantDataUp(){
   ctes.nbound=CaseNbound;
   ctes.massb=MassBound; ctes.massf=MassFluid;
   ctes.fourh2=Fourh2; ctes.h=H;
-  if(TKernel==KERNEL_Wendland){
-    ctes.awen=Awen; ctes.bwen=Bwen;
+  //-Wendland constants are always computed since this kernel is used in some parts where other kernels are not defined (e.g. mDBC, inlet/outlet, boundcorr...).
+  ctes.awen=Awen; ctes.bwen=Bwen;
+  //-Copies constants for other kernels.
+  if(TKernel==KERNEL_Cubic){
+    ctes.cubic_a1=CubicCte.a1; ctes.cubic_a2=CubicCte.a2; ctes.cubic_aa=CubicCte.aa; ctes.cubic_a24=CubicCte.a24;
+    ctes.cubic_c1=CubicCte.c1; ctes.cubic_c2=CubicCte.c2; ctes.cubic_d1=CubicCte.d1; ctes.cubic_odwdeltap=CubicCte.od_wdeltap;
   }
   else if(TKernel==KERNEL_Gaussian){
     ctes.agau=Agau; ctes.bgau=Bgau;
-  }
-  else if(TKernel==KERNEL_Cubic){
-    ctes.cubic_a1=CubicCte.a1; ctes.cubic_a2=CubicCte.a2; ctes.cubic_aa=CubicCte.aa; ctes.cubic_a24=CubicCte.a24;
-    ctes.cubic_c1=CubicCte.c1; ctes.cubic_c2=CubicCte.c2; ctes.cubic_d1=CubicCte.d1; ctes.cubic_odwdeltap=CubicCte.od_wdeltap;
   }
   else if(TKernel==KERNEL_Quintic){  //<vs_praticalsskq_ini>
     //Quintic_PDTE
