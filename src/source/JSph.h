@@ -438,8 +438,8 @@ protected:
   void SaveInitialDomainVtk()const;
   unsigned SaveMapCellsVtkSize()const;
   void SaveMapCellsVtk(float scell)const;
-  void SaveVtkNormals(std::string filename,int numfile,unsigned pini,unsigned pfin   //<vs_mddbc>
-    ,const tdouble3 *pos,const unsigned *idp,const tfloat3 *boundnormal)const;       //<vs_mddbc>
+  void SaveVtkNormals(std::string filename,int numfile,unsigned pini,unsigned pfin            //<vs_mddbc>
+    ,const tdouble3 *pos,const unsigned *idp,const word *vmk,const tfloat3 *boundnormal)const; //<vs_mddbc>
 
  
   void GetResInfo(float tsim,float ttot,const std::string &headplus,const std::string &detplus,std::string &hinfo,std::string &dinfo);

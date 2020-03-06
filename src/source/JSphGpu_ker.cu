@@ -544,8 +544,8 @@ __device__ void KerGetKernelGaussian(float rr2,float drx,float dry,float drz
 __device__ void KerGetKernelQuintic(float rr2,float drx,float dry,float drz
   ,float &frx,float &fry,float &frz)
 {
-  const float rad=sqrt(rr2);
-  const float qq=rad/CTE.h;
+  //const float rad=sqrt(rr2);
+  //const float qq=rad/CTE.h;
   //-Quintic kernel.
   const float fac=0; //-Kernel derivative (divided by rad).
   //Quintic_PDTE
@@ -559,8 +559,8 @@ __device__ void KerGetKernelQuintic(float rr2,float drx,float dry,float drz
 __device__ void KerGetKernelQuintic(float rr2,float drx,float dry,float drz
   ,float &frx,float &fry,float &frz,float &wab)
 {
-  const float rad=sqrt(rr2);
-  const float qq=rad/CTE.h;
+  //const float rad=sqrt(rr2);
+  //const float qq=rad/CTE.h;
   //-Quintic kernel.
   wab=0; //-Kernel.
   const float fac=0; //-Kernel derivative (divided by rad).

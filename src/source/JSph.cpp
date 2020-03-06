@@ -1064,16 +1064,23 @@ void JSph::LoadBoundNormals(unsigned npb,const unsigned *idp,const typecode *cod
   else Log->Print("**File with normal data not found.");
 }
 
- //==============================================================================
+//==============================================================================
 /// Config normals to point from boundary particle to ghost node (full distance).
 //==============================================================================
 void JSph::ConfigBoundNormals(unsigned npb,const tdouble3 *pos,const unsigned *idp
   ,tfloat3 *boundnormal)const
 {
+  //-Obtains mk of boundary particles.
+  word* vmk=new word[npb];
+  for(unsigned p=0;p<npb;p++){
+    const unsigned cb=MkInfo->GetMkBlockById(idp[p]);
+    if(cb>=MkInfo->Size())Run_Exceptioon("MkBlock of particle is invalid.");
+    vmk[p]=(word)MkInfo->Mkblock(cb)->Mk;
+  }
   //-Saves normals from boundary particles to boundary limit.
   const string file1="CfgInit_Normals.vtk";
   Log->AddFileInfo(DirOut+file1,"Saves VTK file with initial normals (from boundary particles to boundary limit).");
-  SaveVtkNormals(file1,-1,0,npb,pos,idp,boundnormal);
+  SaveVtkNormals(file1,-1,0,npb,pos,idp,vmk,boundnormal);
   //-Config normals.
   unsigned nerr=0;
   for(unsigned p=0;p<npb;p++){
@@ -1083,8 +1090,10 @@ void JSph::ConfigBoundNormals(unsigned npb,const tdouble3 *pos,const unsigned *i
   //-Saves normals from boundary particles to ghost node.
   const string file2="CfgInit_NormalsGhost.vtk";
   Log->AddFileInfo(DirOut+file2,"Saves VTK file with initial normals (from boundary particles to ghost node).");
-  SaveVtkNormals(file2,-1,0,npb,pos,idp,boundnormal);
+  SaveVtkNormals(file2,-1,0,npb,pos,idp,vmk,boundnormal);
   if(nerr>0)Log->PrintfWarning("There are %u of %u boundary particles without normal data.",nerr,npb);
+  //-Frees allocated memory.
+  delete[] vmk; vmk=NULL;
 }
 //<vs_mddbc_end>
 
@@ -2354,7 +2363,7 @@ void JSph::SaveMapCellsVtk(float scell)const{
 /// Graba fichero VTK con datos de las particulas (degug).
 //==============================================================================
 void JSph::SaveVtkNormals(std::string filename,int numfile,unsigned pini,unsigned pfin
-  ,const tdouble3 *pos,const unsigned *idp,const tfloat3 *boundnormal)const
+  ,const tdouble3 *pos,const unsigned *idp,const word *vmk,const tfloat3 *boundnormal)const
 {
   if(JVtkLib::Available()){
     if(numfile>=0)filename=fun::FileNameSec(filename,numfile);
@@ -2367,6 +2376,7 @@ void JSph::SaveVtkNormals(std::string filename,int numfile,unsigned pini,unsigne
     JDataArrays arrays;
     arrays.AddArray("Pos"       ,n,pos+pini,false);
     arrays.AddArray("Idp"       ,n,idp+pini,false);
+    if(vmk)arrays.AddArray("Mk" ,n,vmk+pini,false);
     arrays.AddArray("Normal"    ,n,boundnormal+pini,false);
     arrays.AddArray("NormalSize",n,normalsize,false);
     JVtkLib::SaveVtkData(filename,arrays,"Pos");
