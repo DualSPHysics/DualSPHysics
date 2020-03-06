@@ -997,7 +997,7 @@ template<TpKernel tker,TpFtMode ftmode,bool lamsps,TpDensity tdensity,bool shift
             //-Density Diffusion Term (Fourtakas et al 2019).  //<vs_dtt2_ini>
             if((tdensity==DDT_DDT2 || (tdensity==DDT_DDT2Full && !boundp2)) && deltap1!=FLT_MAX && !ftp2){
               const float rh=1.f+DDTgz*drz;
-              const float drhop=RhopZero*pow(rh,1.f/Gamma)-RhopZero;	
+              const float drhop=RhopZero*pow(rh,1.f/Gamma)-RhopZero;    
               const float visc_densi=DDT2h*cbar*((velrhop2.w-rhopp1)-drhop)/(rr2+Eta2);
               const float dot3=(drx*frx+dry*fry+drz*frz);
               const float delta=visc_densi*dot3*massp2/velrhop2.w;

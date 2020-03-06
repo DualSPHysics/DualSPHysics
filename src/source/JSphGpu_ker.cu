@@ -841,7 +841,7 @@ template<TpKernel tker,TpFtMode ftmode,bool lamsps,TpDensity tdensity,bool shift
       //-Density Diffusion Term (Fourtakas et al 2019). //<vs_dtt2_ini>
       if((tdensity==DDT_DDT2 || (tdensity==DDT_DDT2Full && !boundp2)) && deltap1!=FLT_MAX && !ftp2){
         const float rh=1.f+CTE.ddtgz*drz;
-        const float drhop=CTE.rhopzero*pow(rh,1.f/CTE.gamma)-CTE.rhopzero;	
+        const float drhop=CTE.rhopzero*pow(rh,1.f/CTE.gamma)-CTE.rhopzero;  
         const float visc_densi=CTE.ddt2h*cbar*((velrhop2.w-velrhop1.w)-drhop)/(rr2+CTE.eta2);
         const float delta=visc_densi*dot3*massp2/velrhop2.w;
         deltap1=(boundp2? FLT_MAX: deltap1-delta); //-blocks it makes it boil - bloody DBC

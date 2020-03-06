@@ -178,7 +178,7 @@ public:
   //==============================================================================
   /// Throws an exception if there are unknown or repeated elements.
   /// \param lis Xml element to check.
-  /// \param names List of valid names (separated by spaces).
+  /// \param names List of valid names (separated by spaces and *name for repeatable names).
   /// \param checkrepeated Checks if there are repeated elements.
   //==============================================================================
   void CheckElementNames(TiXmlElement* lis,bool checkrepeated,std::string names)const;

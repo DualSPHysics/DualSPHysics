@@ -951,15 +951,15 @@ template<bool sim2d,TpKernel tker> __global__ void KerInteractionInOutExtrap_Dou
                 velp1.x+=vwab*velrhopp2.x;
                 velp1.y+=vwab*velrhopp2.y;
                 velp1.z+=vwab*velrhopp2.z;
-                gradvelp1.a11+=vfrx*velrhopp2.x;	// du/dx
-                gradvelp1.a12+=vfry*velrhopp2.x;	// du/dy
-                gradvelp1.a13+=vfrz*velrhopp2.x;	// du/dz
-                gradvelp1.a21+=vfrx*velrhopp2.y;	// dv/dx
-                gradvelp1.a22+=vfry*velrhopp2.y;	// dv/dx
-                gradvelp1.a23+=vfrz*velrhopp2.y;	// dv/dx
-                gradvelp1.a31+=vfrx*velrhopp2.z;	// dw/dx
-                gradvelp1.a32+=vfry*velrhopp2.z;	// dw/dx
-                gradvelp1.a33+=vfrz*velrhopp2.z;	// dw/dx
+                gradvelp1.a11+=vfrx*velrhopp2.x;    // du/dx
+                gradvelp1.a12+=vfry*velrhopp2.x;    // du/dy
+                gradvelp1.a13+=vfrz*velrhopp2.x;    // du/dz
+                gradvelp1.a21+=vfrx*velrhopp2.y;    // dv/dx
+                gradvelp1.a22+=vfry*velrhopp2.y;    // dv/dx
+                gradvelp1.a23+=vfrz*velrhopp2.y;    // dv/dx
+                gradvelp1.a31+=vfrx*velrhopp2.z;    // dw/dx
+                gradvelp1.a32+=vfry*velrhopp2.z;    // dw/dx
+                gradvelp1.a33+=vfrz*velrhopp2.z;    // dw/dx
               }
 
               //===== Matrix A for correction =====
@@ -1146,15 +1146,15 @@ template<bool sim2d,TpKernel tker> __global__ void KerInteractionInOutExtrap_Sin
                 velp1.x+=vwab*velrhopp2.x;
                 velp1.y+=vwab*velrhopp2.y;
                 velp1.z+=vwab*velrhopp2.z;
-                gradvelp1.a11+=vfrx*velrhopp2.x;	// du/dx
-                gradvelp1.a12+=vfry*velrhopp2.x;	// du/dy
-                gradvelp1.a13+=vfrz*velrhopp2.x;	// du/dz
-                gradvelp1.a21+=vfrx*velrhopp2.y;	// dv/dx
-                gradvelp1.a22+=vfry*velrhopp2.y;	// dv/dx
-                gradvelp1.a23+=vfrz*velrhopp2.y;	// dv/dx
-                gradvelp1.a31+=vfrx*velrhopp2.z;	// dw/dx
-                gradvelp1.a32+=vfry*velrhopp2.z;	// dw/dx
-                gradvelp1.a33+=vfrz*velrhopp2.z;	// dw/dx
+                gradvelp1.a11+=vfrx*velrhopp2.x;    // du/dx
+                gradvelp1.a12+=vfry*velrhopp2.x;    // du/dy
+                gradvelp1.a13+=vfrz*velrhopp2.x;    // du/dz
+                gradvelp1.a21+=vfrx*velrhopp2.y;    // dv/dx
+                gradvelp1.a22+=vfry*velrhopp2.y;    // dv/dx
+                gradvelp1.a23+=vfrz*velrhopp2.y;    // dv/dx
+                gradvelp1.a31+=vfrx*velrhopp2.z;    // dw/dx
+                gradvelp1.a32+=vfry*velrhopp2.z;    // dw/dx
+                gradvelp1.a33+=vfrz*velrhopp2.z;    // dw/dx
               }
 
               //===== Matrix A for correction =====
@@ -1342,15 +1342,15 @@ template<bool sim2d,TpKernel tker> __global__ void KerInteractionInOutExtrap_Fas
                 velp1.x+=vwab*velrhopp2.x;
                 velp1.y+=vwab*velrhopp2.y;
                 velp1.z+=vwab*velrhopp2.z;
-                gradvelp1.a11+=vfrx*velrhopp2.x;	// du/dx
-                gradvelp1.a12+=vfry*velrhopp2.x;	// du/dy
-                gradvelp1.a13+=vfrz*velrhopp2.x;	// du/dz
-                gradvelp1.a21+=vfrx*velrhopp2.y;	// dv/dx
-                gradvelp1.a22+=vfry*velrhopp2.y;	// dv/dx
-                gradvelp1.a23+=vfrz*velrhopp2.y;	// dv/dx
-                gradvelp1.a31+=vfrx*velrhopp2.z;	// dw/dx
-                gradvelp1.a32+=vfry*velrhopp2.z;	// dw/dx
-                gradvelp1.a33+=vfrz*velrhopp2.z;	// dw/dx
+                gradvelp1.a11+=vfrx*velrhopp2.x;    // du/dx
+                gradvelp1.a12+=vfry*velrhopp2.x;    // du/dy
+                gradvelp1.a13+=vfrz*velrhopp2.x;    // du/dz
+                gradvelp1.a21+=vfrx*velrhopp2.y;    // dv/dx
+                gradvelp1.a22+=vfry*velrhopp2.y;    // dv/dx
+                gradvelp1.a23+=vfrz*velrhopp2.y;    // dv/dx
+                gradvelp1.a31+=vfrx*velrhopp2.z;    // dw/dx
+                gradvelp1.a32+=vfry*velrhopp2.z;    // dw/dx
+                gradvelp1.a33+=vfrz*velrhopp2.z;    // dw/dx
               }
 
               //===== Matrix A for correction =====
