@@ -155,6 +155,7 @@ void JSph::InitVars(){
   VerletSteps=40;
   TKernel=KERNEL_Wendland;
   Awen=Bwen=Agau=Bgau=0;
+  Awc6=Bwc6=0;  //<vs_praticalsskq>
   memset(&CubicCte,0,sizeof(StCubicCte));
   TVisco=VISCO_None;
   TDensity=DDT_None; DDTValue=0; DDTArray=false;
@@ -575,8 +576,8 @@ void JSph::LoadCaseConfig(){
     case 1:  TKernel=KERNEL_Cubic;     break;
     case 2:  TKernel=KERNEL_Wendland;  break;
     case 3:  TKernel=KERNEL_Gaussian;  break;
-#ifdef PRASS3_QUINTIC                           //<vs_praticalsskq>
-    case 4:  TKernel=KERNEL_Quintic;   break;   //<vs_praticalsskq>
+#ifdef PRASS3_WENDLANDC6                        //<vs_praticalsskq>
+    case 4:  TKernel=KERNEL_WendlandC6; break;  //<vs_praticalsskq>
 #endif                                          //<vs_praticalsskq>
     default: RunException(met,"Kernel choice is not valid.");
   }
@@ -1228,12 +1229,14 @@ void JSph::ConfigConstants(bool simulate2d){
       Bgau=float(-8.*aa);
     }
   }
-  else if(TKernel==KERNEL_Quintic){  //<vs_praticalsskq_ini>
+  else if(TKernel==KERNEL_WendlandC6){  //<vs_praticalsskq_ini>
     if(simulate2d){
-      //Quintic_PDTE
+      Awc6=float(78./(28.*PI*h*h));
+      Bwc6=float(Awc6/h);
     }
     else{
-      //Quintic_PDTE
+      Awc6=float(1365./(512.*PI*h*h*h));
+      Bwc6=float(Awc6/h);
     }
   }  //<vs_praticalsskq_end>
   //-Constants for Laminar viscosity + SPS turbulence model.
@@ -1325,8 +1328,9 @@ void JSph::VisuConfig()const{
     Log->Print(fun::VarStr("Agau (Gaussian)",Agau));
     Log->Print(fun::VarStr("Bgau (Gaussian)",Bgau));
   }
-  else if(TKernel==KERNEL_Quintic){ //<vs_praticalsskq_ini>
-    //Quintic_PDTE
+  else if(TKernel==KERNEL_WendlandC6){ //<vs_praticalsskq_ini>
+    Log->Print(fun::VarStr("Awc6 (WendlandC6)",Awc6));
+    Log->Print(fun::VarStr("Bwc6 (WendlandC6)",Bwc6));
   } //<vs_praticalsskq_end>
   if(TVisco==VISCO_LaminarSPS){     
     Log->Print(fun::VarStr("SpsSmag",SpsSmag));
@@ -2488,7 +2492,7 @@ std::string JSph::GetKernelName(TpKernel tkernel){
   if(tkernel==KERNEL_Cubic)tx="Cubic";
   else if(tkernel==KERNEL_Wendland)tx="Wendland";
   else if(tkernel==KERNEL_Gaussian)tx="Gaussian";
-  else if(tkernel==KERNEL_Quintic )tx="Quintic";  //<vs_praticalsskq>
+  else if(tkernel==KERNEL_WendlandC6)tx="WendlandC6"; //<vs_praticalsskq>
   else tx="???";
   return(tx);
 }

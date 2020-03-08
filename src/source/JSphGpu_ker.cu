@@ -480,6 +480,7 @@ __device__ void KerGetKernelWendland(float rr2,float drx,float dry,float drz
   //-Wendland kernel.
   const float wqq1=1.f-0.5f*qq;
   const float fac=CTE.bwen*qq*wqq1*wqq1*wqq1/rad; //-Kernel derivative (divided by rad).
+  //-Gradients.
   frx=fac*drx; fry=fac*dry; frz=fac*drz;
 }
 
@@ -497,77 +498,12 @@ __device__ void KerGetKernelWendland(float rr2,float drx,float dry,float drz
   const float wqq1=1.f-0.5f*qq;
   const float wqq2=wqq1*wqq1;
   const float fac=CTE.bwen*qq*wqq2*wqq1/rad; //-Kernel derivative (divided by rad).
+  //-Gradients.
   frx=fac*drx; fry=fac*dry; frz=fac*drz;
+  //-Kernel (wab).
   const float wqq=2.f*qq+1.f;
-  wab=CTE.awen*wqq*wqq2*wqq2; //-Kernel.
+  wab=CTE.awen*wqq*wqq2*wqq2;
 }  //<vs_innlet_end>
-
-//------------------------------------------------------------------------------
-/// Returns Gaussian kernel values: frx, fry and frz.
-/// Devuelve valores del kernel Gaussian: frx, fry y frz.
-//------------------------------------------------------------------------------
-__device__ void KerGetKernelGaussian(float rr2,float drx,float dry,float drz
-  ,float &frx,float &fry,float &frz)
-{
-  const float rad=sqrt(rr2);
-  const float qq=rad/CTE.h;
-  //-Gaussian kernel.
-  const float qqexp=-4.0f*qq*qq;
-  //const float wab=CTE.agau*expf(qqexp); //-Kernel.
-  const float fac=CTE.bgau*qq*expf(qqexp)/rad; //-Kernel derivative (divided by rad).
-  frx=fac*drx; fry=fac*dry; frz=fac*drz;
-}
-
-//<vs_innlet_ini>
-//------------------------------------------------------------------------------
-/// Returns values of kernel Gaussian, gradients: frx, fry, frz and wab.
-/// Devuelve valores de kernel Gaussian, gradients: frx, fry, frz y wab.
-//------------------------------------------------------------------------------
-__device__ void KerGetKernelGaussian(float rr2,float drx,float dry,float drz
-  ,float &frx,float &fry,float &frz,float &wab)
-{
-  const float rad=sqrt(rr2);
-  const float qq=rad/CTE.h;
-  //-Gaussian kernel.
-  const float qqexp=-4.0f*qq*qq;
-  const float eqqexp=expf(qqexp);
-  wab=CTE.agau*eqqexp; //-Kernel.
-  const float fac=CTE.bgau*qq*eqqexp/rad; //-Kernel derivative (divided by rad).
-  frx=fac*drx; fry=fac*dry; frz=fac*drz;
-}  //<vs_innlet_end>
-
-//<vs_praticalsskq_ini>
-//------------------------------------------------------------------------------
-/// Returns Quintic kernel values: frx, fry and frz.
-/// Devuelve valores del kernel Quintic: frx, fry y frz.
-//------------------------------------------------------------------------------
-__device__ void KerGetKernelQuintic(float rr2,float drx,float dry,float drz
-  ,float &frx,float &fry,float &frz)
-{
-  //const float rad=sqrt(rr2);
-  //const float qq=rad/CTE.h;
-  //-Quintic kernel.
-  const float fac=0; //-Kernel derivative (divided by rad).
-  //Quintic_PDTE
-  frx=fac*drx; fry=fac*dry; frz=fac*drz;
-}
-
-//------------------------------------------------------------------------------
-/// Returns values of kernel Quintic, gradients: frx, fry, frz and wab.
-/// Devuelve valores de kernel Quintic, gradients: frx, fry, frz y wab.
-//------------------------------------------------------------------------------
-__device__ void KerGetKernelQuintic(float rr2,float drx,float dry,float drz
-  ,float &frx,float &fry,float &frz,float &wab)
-{
-  //const float rad=sqrt(rr2);
-  //const float qq=rad/CTE.h;
-  //-Quintic kernel.
-  wab=0; //-Kernel.
-  const float fac=0; //-Kernel derivative (divided by rad).
-  //Quintic_PDTE
-  frx=fac*drx; fry=fac*dry; frz=fac*drz;
-}
-//<vs_praticalsskq_end>
 
 //------------------------------------------------------------------------------
 /// Return values of kernel Cubic without tensil correction, gradients: frx, fry and frz.
@@ -649,6 +585,86 @@ __device__ float KerGetKernelCubicTensil(float rr2
   return(fab*(tensilp1+tensilp2));
 }
 
+//------------------------------------------------------------------------------
+/// Returns Gaussian kernel values: frx, fry and frz.
+/// Devuelve valores del kernel Gaussian: frx, fry y frz.
+//------------------------------------------------------------------------------
+__device__ void KerGetKernelGaussian(float rr2,float drx,float dry,float drz
+  ,float &frx,float &fry,float &frz)
+{
+  const float rad=sqrt(rr2);
+  const float qq=rad/CTE.h;
+  //-Gaussian kernel.
+  const float qqexp=-4.0f*qq*qq;
+  const float fac=CTE.bgau*qq*expf(qqexp)/rad; //-Kernel derivative (divided by rad).
+  //-Gradients.
+  frx=fac*drx; fry=fac*dry; frz=fac*drz;
+}
+
+//<vs_innlet_ini>
+//------------------------------------------------------------------------------
+/// Returns values of kernel Gaussian, gradients: frx, fry, frz and wab.
+/// Devuelve valores de kernel Gaussian, gradients: frx, fry, frz y wab.
+//------------------------------------------------------------------------------
+__device__ void KerGetKernelGaussian(float rr2,float drx,float dry,float drz
+  ,float &frx,float &fry,float &frz,float &wab)
+{
+  const float rad=sqrt(rr2);
+  const float qq=rad/CTE.h;
+  //-Gaussian kernel.
+  const float qqexp=-4.0f*qq*qq;
+  const float eqqexp=expf(qqexp);
+  const float fac=CTE.bgau*qq*eqqexp/rad; //-Kernel derivative (divided by rad).
+  //-Gradients.
+  frx=fac*drx; fry=fac*dry; frz=fac*drz;
+  wab=CTE.agau*eqqexp; //-Kernel (wab).
+}  //<vs_innlet_end>
+
+//<vs_praticalsskq_ini>
+//------------------------------------------------------------------------------
+/// Returns WendlandC6 kernel values: frx, fry and frz.
+/// Devuelve valores del kernel WendlandC6: frx, fry y frz.
+//------------------------------------------------------------------------------
+__device__ void KerGetKernelWendlandC6(float rr2,float drx,float dry,float drz
+  ,float &frx,float &fry,float &frz)
+{
+  const float rad=sqrt(rr2);
+  const float qq=rad/CTE.h;
+  //-WendlandC6 kernel.
+  const float qq2=qq*qq;
+  const float fqq4=(qq-2)*(qq-2)*(qq-2)*(qq-2);
+  const float fqq3=(qq-2)*(qq-2)*(qq-2);
+  const float fqq7=fqq4*fqq3;
+  const float fac=CTE.bwc6*11.f/512.f*fqq7*qq*(8.f*qq2+7.f*qq+2.f)/rad;//-Kernel derivative (divided by rad).
+  //-Gradients.
+  frx=fac*drx; fry=fac*dry; frz=fac*drz;
+}
+
+//------------------------------------------------------------------------------
+/// Returns values of kernel WendlandC6, gradients: frx, fry, frz and wab.
+/// Devuelve valores de kernel WendlandC6, gradients: frx, fry, frz y wab.
+//------------------------------------------------------------------------------
+__device__ void KerGetKernelWendlandC6(float rr2,float drx,float dry,float drz
+  ,float &frx,float &fry,float &frz,float &wab)
+{
+  const float rad=sqrt(rr2);
+  const float qq=rad/CTE.h;
+  //-WendlandC6 kernel.
+  const float qq2=qq*qq;
+  const float fqq4=(qq-2)*(qq-2)*(qq-2)*(qq-2);
+  const float fqq3=(qq-2)*(qq-2)*(qq-2);
+  const float fqq7=fqq4*fqq3;
+  const float fac=CTE.bwc6*11.f/512.f*fqq7*qq*(8.f*qq2+7.f*qq+2.f)/rad;//-Kernel derivative (divided by rad).
+  //-Gradients.
+  frx=fac*drx; fry=fac*dry; frz=fac*drz;
+  //-Kernel (wab).
+  const float wqq4=(1-qq/2)*(1-qq/2)*(1-qq/2)*(1-qq/2);
+  const float wqq8=wqq4*wqq4;
+  const float qq3=qq*qq*qq;
+  wab=CTE.awc6*wqq8*(4.f*qq3+6.25f*qq2+4.f*qq+1);
+}
+//<vs_praticalsskq_end>
+
 
 //##############################################################################
 //# Kernels for calculating forces (Pos-Double).
@@ -678,7 +694,7 @@ template<TpKernel tker,TpFtMode ftmode,bool symm>
       if(tker==KERNEL_Wendland)     KerGetKernelWendland(rr2,drx,dry,drz,frx,fry,frz);
       else if(tker==KERNEL_Cubic)   KerGetKernelCubic   (rr2,drx,dry,drz,frx,fry,frz);
       else if(tker==KERNEL_Gaussian)KerGetKernelGaussian(rr2,drx,dry,drz,frx,fry,frz);
-      else if(tker==KERNEL_Quintic) KerGetKernelQuintic (rr2,drx,dry,drz,frx,fry,frz); //<vs_praticalsskq>
+      else if(tker==KERNEL_WendlandC6)KerGetKernelWendlandC6(rr2,drx,dry,drz,frx,fry,frz); //<vs_praticalsskq>
 
       float4 velp2=velrhop[p2];
       if(symm)velp2.y=-velp2.y; //<vs_syymmetry>
@@ -789,7 +805,7 @@ template<TpKernel tker,TpFtMode ftmode,bool lamsps,TpDensity tdensity,bool shift
       if(tker==KERNEL_Wendland)     KerGetKernelWendland(rr2,drx,dry,drz,frx,fry,frz);
       else if(tker==KERNEL_Cubic)   KerGetKernelCubic   (rr2,drx,dry,drz,frx,fry,frz);
       else if(tker==KERNEL_Gaussian)KerGetKernelGaussian(rr2,drx,dry,drz,frx,fry,frz);
-      else if(tker==KERNEL_Quintic) KerGetKernelQuintic (rr2,drx,dry,drz,frx,fry,frz); //<vs_praticalsskq>
+      else if(tker==KERNEL_WendlandC6)KerGetKernelWendlandC6(rr2,drx,dry,drz,frx,fry,frz); //<vs_praticalsskq>
 
       //-Obtains mass of particle p2 if any floating bodies exist.
       //-Obtiene masa de particula p2 en caso de existir floatings.
@@ -1131,7 +1147,7 @@ void Interaction_Forces(const StInterParmsg &t){
   if(t.tkernel==KERNEL_Wendland)     Interaction_Forces_gt0<KERNEL_Wendland> (t);
   else if(t.tkernel==KERNEL_Cubic)   Interaction_Forces_gt0<KERNEL_Cubic   > (t);
   else if(t.tkernel==KERNEL_Gaussian)Interaction_Forces_gt0<KERNEL_Gaussian> (t);
-  else if(t.tkernel==KERNEL_Quintic) Interaction_Forces_gt0<KERNEL_Quintic > (t);  //<vs_praticalsskq>
+  else if(t.tkernel==KERNEL_WendlandC6)Interaction_Forces_gt0<KERNEL_WendlandC6> (t);  //<vs_praticalsskq>
 }
 
 //<vs_mddbc_ini>

@@ -529,9 +529,9 @@ void JSphGpu::ConstantDataUp(){
   else if(TKernel==KERNEL_Gaussian){
     ctes.agau=Agau; ctes.bgau=Bgau;
   }
-  else if(TKernel==KERNEL_Quintic){  //<vs_praticalsskq_ini>
-    //Quintic_PDTE
-  } //<vs_praticalsskq_end>
+  else if(TKernel==KERNEL_WendlandC6){  //<vs_praticalsskq>
+    ctes.awc6=Awc6; ctes.bwc6=Bwc6;     //<vs_praticalsskq>
+  }                                     //<vs_praticalsskq>
   if(TBoundary==BC_MDBC){ ctes.awen=Awen; ctes.bwen=Bwen; } //<vs_mddbc>
   ctes.cs0=float(Cs0); ctes.eta2=Eta2;
   ctes.ddt2h=DDT2h;

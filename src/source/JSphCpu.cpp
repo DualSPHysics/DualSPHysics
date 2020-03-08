@@ -573,6 +573,7 @@ void JSphCpu::GetKernelWendland(float rr2,float drx,float dry,float drz
   //-Wendland kernel.
   const float wqq1=1.f-0.5f*qq;
   const float fac=Bwen*qq*wqq1*wqq1*wqq1/rad; //-Kernel derivative (divided by rad).
+  //-Gradients.
   frx=fac*drx; fry=fac*dry; frz=fac*drz;
 }
 
@@ -590,77 +591,12 @@ void JSphCpu::GetKernelWendland(float rr2,float drx,float dry,float drz
   const float wqq1=1.f-0.5f*qq;
   const float wqq2=wqq1*wqq1;
   const float fac=Bwen*qq*wqq2*wqq1/rad; //-Kernel derivative (divided by rad).
+  //-Gradients.
   frx=fac*drx; fry=fac*dry; frz=fac*drz;
+  //-Kernel (wab).
   const float wqq=2.f*qq+1.f;
-  wab=Awen*wqq*wqq2*wqq2; //-Kernel.
+  wab=Awen*wqq*wqq2*wqq2;
 }  //<vs_innlet_end>
-
-//==============================================================================
-/// Returns values of kernel Gaussian, gradients: frx, fry and frz.
-/// Devuelve valores de kernel Gaussian, gradients: frx, fry y frz.
-//==============================================================================
-void JSphCpu::GetKernelGaussian(float rr2,float drx,float dry,float drz
-  ,float &frx,float &fry,float &frz)const
-{
-  const float rad=sqrt(rr2);
-  const float qq=rad/H;
-  //-Gaussian kernel.
-  const float qqexp=-4.0f*qq*qq;
-  //const float wab=Agau*expf(qqexp); //-Kernel.
-  const float fac=Bgau*qq*expf(qqexp)/rad; //-Kernel derivative (divided by rad).
-  frx=fac*drx; fry=fac*dry; frz=fac*drz;
-}
-
-//<vs_innlet_ini>
-//==============================================================================
-/// Returns values of kernel Gaussian, gradients: frx, fry, frz and wab.
-/// Devuelve valores de kernel Gaussian, gradients: frx, fry, frz y wab.
-//==============================================================================
-void JSphCpu::GetKernelGaussian(float rr2,float drx,float dry,float drz
-  ,float &frx,float &fry,float &frz,float &wab)const
-{
-  const float rad=sqrt(rr2);
-  const float qq=rad/H;
-  //-Gaussian kernel.
-  const float qqexp=-4.0f*qq*qq;
-  const float eqqexp=expf(qqexp);
-  wab=Agau*eqqexp; //-Kernel.
-  const float fac=Bgau*qq*eqqexp/rad; //-Kernel derivative (divided by rad).
-  frx=fac*drx; fry=fac*dry; frz=fac*drz;
-}  //<vs_innlet_end>
-
-//<vs_praticalsskq_ini>
-//==============================================================================
-/// Returns values of kernel Quintic, gradients: frx, fry and frz.
-/// Devuelve valores de kernel Quintic, gradients: frx, fry y frz.
-//==============================================================================
-void JSphCpu::GetKernelQuintic(float rr2,float drx,float dry,float drz
-  ,float &frx,float &fry,float &frz)const
-{
-  const float rad=sqrt(rr2);
-  const float qq=rad/H;
-  //-Quintic kernel.
-  const float fac=0; //-Kernel derivative (divided by rad).
-  //Quintic_PDTE
-  frx=fac*drx; fry=fac*dry; frz=fac*drz;
-}
-
-//==============================================================================
-/// Returns values of kernel Quintic, gradients: frx, fry, frz and wab.
-/// Devuelve valores de kernel Quintic, gradients: frx, fry, frz y wab.
-//==============================================================================
-void JSphCpu::GetKernelQuintic(float rr2,float drx,float dry,float drz
-  ,float &frx,float &fry,float &frz,float &wab)const
-{
-  const float rad=sqrt(rr2);
-  const float qq=rad/H;
-  //Quintic_PDTE
-  wab=0; //-Kernel.
-  const float fac=0; //-Kernel derivative (divided by rad).
-  //Quintic_PDTE
-  frx=fac*drx; fry=fac*dry; frz=fac*drz;
-}
-//<vs_praticalsskq_end>
 
 //==============================================================================
 /// Return values of kernel Cubic without tensil correction, gradients: frx, fry and frz.
@@ -739,6 +675,87 @@ float JSphCpu::GetKernelCubicTensil(float rr2,float rhopp1,float pressp1,float r
   const float tensilp2=(pressp2/(rhopp2*rhopp2))*(pressp2>0? 0.01f: -0.2f);
   return(fab*(tensilp1+tensilp2));
 }
+
+//==============================================================================
+/// Returns values of kernel Gaussian, gradients: frx, fry and frz.
+/// Devuelve valores de kernel Gaussian, gradients: frx, fry y frz.
+//==============================================================================
+void JSphCpu::GetKernelGaussian(float rr2,float drx,float dry,float drz
+  ,float &frx,float &fry,float &frz)const
+{
+  const float rad=sqrt(rr2);
+  const float qq=rad/H;
+  //-Gaussian kernel.
+  const float qqexp=-4.0f*qq*qq;
+  const float fac=Bgau*qq*expf(qqexp)/rad; //-Kernel derivative (divided by rad).
+  //-Gradients.
+  frx=fac*drx; fry=fac*dry; frz=fac*drz;
+}
+
+//<vs_innlet_ini>
+//==============================================================================
+/// Returns values of kernel Gaussian, gradients: frx, fry, frz and wab.
+/// Devuelve valores de kernel Gaussian, gradients: frx, fry, frz y wab.
+//==============================================================================
+void JSphCpu::GetKernelGaussian(float rr2,float drx,float dry,float drz
+  ,float &frx,float &fry,float &frz,float &wab)const
+{
+  const float rad=sqrt(rr2);
+  const float qq=rad/H;
+  //-Gaussian kernel.
+  const float qqexp=-4.0f*qq*qq;
+  const float eqqexp=expf(qqexp);
+  const float fac=Bgau*qq*eqqexp/rad; //-Kernel derivative (divided by rad).
+  //-Gradients.
+  frx=fac*drx; fry=fac*dry; frz=fac*drz; 
+  wab=Agau*eqqexp; //-Kernel (wab).
+}  //<vs_innlet_end>
+
+//<vs_praticalsskq_ini>
+//==============================================================================
+/// Returns values of kernel WendlandC6, gradients: frx, fry and frz.
+/// Devuelve valores de kernel WendlandC6, gradients: frx, fry y frz.
+//==============================================================================
+void JSphCpu::GetKernelWendlandC6(float rr2,float drx,float dry,float drz
+  ,float &frx,float &fry,float &frz)const
+{
+  const float rad=sqrt(rr2);
+  const float qq=rad/H;
+  //-WendlandC6 kernel.
+  const float qq2=qq*qq;
+  const float fqq4=(qq-2)*(qq-2)*(qq-2)*(qq-2);
+  const float fqq3=(qq-2)*(qq-2)*(qq-2);
+  const float fqq7=fqq4*fqq3;
+  const float fac=Bwc6*11.f/512.f*fqq7*qq*(8.f*qq2+7.f*qq+2.f)/rad;//-Kernel derivative (divided by rad).
+  //-Gradients.
+  frx=fac*drx; fry=fac*dry; frz=fac*drz;
+}
+
+//==============================================================================
+/// Returns values of kernel WendlandC6, gradients: frx, fry, frz and wab.
+/// Devuelve valores de kernel WendlandC6, gradients: frx, fry, frz y wab.
+//==============================================================================
+void JSphCpu::GetKernelWendlandC6(float rr2,float drx,float dry,float drz
+  ,float &frx,float &fry,float &frz,float &wab)const
+{
+  const float rad=sqrt(rr2);
+  const float qq=rad/H;
+  //-WendlandC6 kernel.
+  const float qq2=qq*qq;
+  const float fqq4=(qq-2)*(qq-2)*(qq-2)*(qq-2);
+  const float fqq3=(qq-2)*(qq-2)*(qq-2);
+  const float fqq7=fqq4*fqq3;
+  const float fac=Bwc6*11.f/512.f*fqq7*qq*(8.f*qq2+7.f*qq+2.f)/rad;//-Kernel derivative (divided by rad).
+  //-Gradients.
+  frx=fac*drx; fry=fac*dry; frz=fac*drz;
+  //-Kernel (wab).
+  const float wqq4=(1-qq/2)*(1-qq/2)*(1-qq/2)*(1-qq/2);
+  const float wqq8=wqq4*wqq4;
+  const float qq3=qq*qq*qq;
+  wab=Awc6*wqq8*(4.f*qq3+6.25f*qq2+4.f*qq+1);
+}
+//<vs_praticalsskq_end>
+
 
 //==============================================================================
 /// Return cell limits for interaction starting from cell coordinates.
@@ -835,7 +852,7 @@ template<TpKernel tker,TpFtMode ftmode> void JSphCpu::InteractionForcesBound
             if(tker==KERNEL_Wendland)     GetKernelWendland(rr2,drx,dry,drz,frx,fry,frz);
             else if(tker==KERNEL_Cubic)   GetKernelCubic   (rr2,drx,dry,drz,frx,fry,frz);
             else if(tker==KERNEL_Gaussian)GetKernelGaussian(rr2,drx,dry,drz,frx,fry,frz);
-            else if(tker==KERNEL_Quintic) GetKernelQuintic (rr2,drx,dry,drz,frx,fry,frz);  //<vs_praticalsskq>
+            else if(tker==KERNEL_WendlandC6)GetKernelWendlandC6(rr2,drx,dry,drz,frx,fry,frz);  //<vs_praticalsskq>
 
             //===== Get mass of particle p2 ===== 
             float massp2=MassFluid; //-Contains particle mass of incorrect fluid. | Contiene masa de particula por defecto fluid.
@@ -953,7 +970,7 @@ template<TpKernel tker,TpFtMode ftmode,bool lamsps,TpDensity tdensity,bool shift
             if(tker==KERNEL_Wendland)     GetKernelWendland(rr2,drx,dry,drz,frx,fry,frz);
             else if(tker==KERNEL_Cubic)   GetKernelCubic   (rr2,drx,dry,drz,frx,fry,frz);
             else if(tker==KERNEL_Gaussian)GetKernelGaussian(rr2,drx,dry,drz,frx,fry,frz);
-            else if(tker==KERNEL_Quintic) GetKernelQuintic (rr2,drx,dry,drz,frx,fry,frz);  //<vs_praticalsskq>
+            else if(tker==KERNEL_WendlandC6)GetKernelWendlandC6(rr2,drx,dry,drz,frx,fry,frz);  //<vs_praticalsskq>
 
             //===== Get mass of particle p2 ===== 
             float massp2=(boundp2? MassBound: MassFluid); //-Contiene masa de particula segun sea bound o fluid.
@@ -1286,7 +1303,7 @@ void JSphCpu::Interaction_Forces_ct(const stinterparmsc &t,float &viscdt)const{
        if(TKernel==KERNEL_Wendland)Interaction_Forces_ct2<KERNEL_Wendland>(t,viscdt);
   else if(TKernel==KERNEL_Cubic)   Interaction_Forces_ct2<KERNEL_Cubic   >(t,viscdt);
   else if(TKernel==KERNEL_Gaussian)Interaction_Forces_ct2<KERNEL_Gaussian>(t,viscdt);
-  else if(TKernel==KERNEL_Quintic) Interaction_Forces_ct2<KERNEL_Quintic >(t,viscdt);  //<vs_praticalsskq>
+  else if(TKernel==KERNEL_WendlandC6)Interaction_Forces_ct2<KERNEL_WendlandC6>(t,viscdt);  //<vs_praticalsskq>
 }
 
 //<vs_mddbc_ini>

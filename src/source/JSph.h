@@ -163,15 +163,15 @@ protected:
   //-Options for execution.
   TpStep TStep;               ///<Step Algorithm: Verlet or Symplectic.                                  | Algoritmo de paso: Verlet o Symplectic.
   int VerletSteps;            ///<Number of steps to apply Eulerian equations.
+
   TpKernel TKernel;           ///<Kernel type: Cubic, Wendland or Gaussian.                              | Tipo de kernel: Cubic, Wendland o Gaussian.
   float Awen;                 ///<Wendland kernel constant (awen) to compute wab.                        | Constante para calcular wab con kernel Wendland.
   float Bwen;                 ///<Wendland kernel constant (bwen) to compute fac (kernel derivative).    | Constante para calcular fac (derivada del kernel) con kernel Wendland.
   float Agau;                 ///<Gaussian kernel constant to compute wab.                               | Constante para calcular wab con kernel Gaussian.
   float Bgau;                 ///<Gaussian kernel constant to compute fac (kernel derivative).           | Constante para calcular fac (derivada del kernel) con kernel Gaussian.
   StCubicCte CubicCte;        ///<Constants for Cubic Spline Kernel.                                     | Constante para kernel cubic spline.
-  //<vs_praticalsskq_ini>
-  //Quintic_PDTE
-  //<vs_praticalsskq_end>
+  float Awc6;                 ///<WendlandC6 kernel constant to compute wab.                      //<vs_praticalsskq>
+  float Bwc6;                 ///<WendlandC6 kernel constant to compute fac (kernel derivative).  //<vs_praticalsskq>
 
   TpDensity TDensity;         ///<Density Diffusion Term 0:None, 1:Molteni, 2:Fourtakas, 3:Fourtakas(full) (default=0)
   float DDTValue;             ///<Value used with Density Diffusion Term (default=0.1)
