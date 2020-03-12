@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<case app="GenCase v5.0.151 (03-03-2020)" date="03-03-2020 12:41:00">
-    <casedef requiredversion="v5.0.151">
+<case app="GenCase v5.0.159 (10-03-2020)" date="12-03-2020 14:05:45">
+    <casedef requiredversion="v5.0.159">
         <constantsdef>
             <lattice bound="2" fluid="1" comment="Type of lattice to create the initial particles (default=1)" />
             <gravity x="0" y="0" z="-9.81" comment="Gravitational acceleration" units_comment="m/s^2" />
@@ -449,9 +449,9 @@
                         <point x="0.1" y="1" z="1.1" />
                         <size x="3" y="4" z="2" />
                     </redrawnearbox>
-                    <newvar Cte1="0.1" Cte2="0.2" Cte3="0.3" _cte="true" _rem="Constant values" />
+                    <newvar Cte1="0.1" Cte2="0.2" Cte3="0.3" _cte="true" _rem="Constant values" _print="1" />
                     <newvar SizeX="0.25" SizeZ="(Dp+2)*2.8" dpd2="Dp/2" _rem="Some variables" />
-                    <setvar SizeZ="SizeX+Cte1*Cte2" _rem="Changes value of SizeZ" />
+                    <setvar SizeZ="SizeX+Cte1*Cte2" _rem="Changes value of SizeZ" _print="0" />
                     <setvar dpd2="dpd2+Dp" SizeX="SizeX*dpd2" />
                     <setvar v="eval(condition,a,b)" />
                     <setvar v1="float(a)" v2="int(a)" v3="floor(a)" v4="ceil(a)" v5="round(a)" />
@@ -464,6 +464,11 @@
                     <setvar v1="asin(a)" v2="acos(a)" v3="atan(a)" v4="atan2(a,b)" />
                     <setvar v1="randinit(a)" v2="rand(a)" v3="randint(a,b)" />
                     <setvar v1="wavelength(gravity,depth,period)" />
+                    <newvarstr Text1="Hello" Text2="bye" _cte="true" _rem="Text values" _print="true" />
+                    <newvarstr Text3="AAAA" Text4="[Text1][Text2]_[Dp]" _rem="More text values" _print="0" />
+                    <setvarstr Text3="[Text1]" Text4="BBBB" _rem="Modify values" _print="1" />
+                    <exportvar vars="-all,Dp,Rhop0" />
+                    <exportvar vars="all,-Dp" />
                     <debugout />
                     <shapeout file="fshape_1" reset="false" />
                     <shapeout file="fshape_2" />
@@ -512,6 +517,7 @@
             <floating mkbound="1" rhopbody="1300" property="Material_1" />
             <floating mkbound="2">
                 <massbody value="1.3" />
+                <masspart value="0.15" />
                 <center x="11" y="12" z="13" />
                 <inertia x="20" y="22" z="24" />
             </floating>
