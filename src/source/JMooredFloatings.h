@@ -30,6 +30,8 @@
 //:# - Inclusion en codigo DualSPHysics v4.2.073. (13-08-2018)
 //:# - Actualiza coupling con MoorDyn. (23-12-2019)
 //:# - Saves VTK files in MooringsVtk directory. (24-12-2019)
+//:# - Muestra warning en el caso de que la gravedad no sea definida solo en Z
+//:#   y error en caso de ser cero. (12-03-2020)
 //:#############################################################################
 
 /// \file JMooredFloatings.h \brief Declares the class \ref JMooredFloatings.
@@ -105,9 +107,9 @@ class JMooredFloatings : protected JObject
 {
 private:
   JLog2 *Log;
-  tfloat3 Gravity;
-  std::string DirCase;
-  std::string CaseName;
+  const std::string DirCase;
+  const std::string CaseName;
+  const tfloat3 Gravity;
   std::string FileLines;
   std::string MoordynDir;   ///<Work directory for MoorDyn.
 
@@ -137,11 +139,10 @@ private:
   void FreeFairMemory();
 
 public:
-  JMooredFloatings(JLog2 *log,std::string dircase,std::string casename);
+  JMooredFloatings(JLog2 *log,std::string dircase,std::string casename,tfloat3 gravity);
   ~JMooredFloatings();
   void Reset();
   void LoadXml(JXml *sxml,const std::string &place);
-  void SetGravity(tfloat3 g){ Gravity=g; };
   void Config(unsigned ftcount,const StFloatingData *ftdata,JSphFtForcePoints *forcepoints);
 
   void VisuConfig(std::string txhead,std::string txfoot)const;

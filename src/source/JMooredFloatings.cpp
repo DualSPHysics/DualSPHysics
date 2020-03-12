@@ -115,8 +115,8 @@ JMooredFloating::StLinkData JMooredFloating::GetFairlead(unsigned fairnum)const{
 //==============================================================================
 /// Constructor.
 //==============================================================================
-JMooredFloatings::JMooredFloatings(JLog2 *log,std::string dircase,std::string casename)
-  :Log(log),DirCase(dircase),CaseName(casename)
+JMooredFloatings::JMooredFloatings(JLog2 *log,std::string dircase,std::string casename
+  ,tfloat3 gravity):Log(log),DirCase(dircase),CaseName(casename),Gravity(gravity)
 {
   ClassName="JMooredFloatings";
   MoorDynReady=false;
@@ -253,6 +253,8 @@ void JMooredFloatings::Config(unsigned ftcount,const StFloatingData *ftdata,JSph
       filexml=DirCase+CaseName+".xml";
       nodexml="case.execution.special.moorings.moordyn";
     }
+    if(Gravity.z==0)Run_Exceptioon("Gravity.z equal to zero is not allowed.");
+    if(Gravity.x || Gravity.y)Log->PrintfWarning("Gravity.x or Gravity.y are not zero but only gravity.z=%f is used for MoorDyn+.",fabs(Gravity.z));
     if(MoorDyn_LinesInit(filexml,nodexml,MoordynDir,nftm,ftmkb,ftvellin,ftvelang,Gravity))
       Run_Exceptioon("Error initializing moorings in MoorDyn library.");
     MoorDynReady=true;
