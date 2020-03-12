@@ -38,7 +38,8 @@ using namespace std;
 JPartFloatBi4Save::JPartFloatBi4Save(){
   ClassName="JPartFloatBi4Save";
   Data=NULL;
-  HeadMkbound=NULL; HeadBegin=NULL; HeadCount=NULL; HeadMass=NULL; HeadRadius=NULL;
+  HeadMkbound=NULL; HeadBegin=NULL; HeadCount=NULL; 
+  HeadMass=NULL; HeadMassp=NULL; HeadRadius=NULL;
   PartCenter=NULL; PartFvel=NULL; PartFomega=NULL;
   Reset();
 }
@@ -94,6 +95,7 @@ long long JPartFloatBi4Save::GetAllocMemory()const{
   if(HeadBegin)  s=s+sizeof(unsigned)*FtCount;
   if(HeadCount)  s=s+sizeof(unsigned)*FtCount;
   if(HeadMass)   s=s+sizeof(float)   *FtCount;
+  if(HeadMassp)  s=s+sizeof(float)   *FtCount;
   if(HeadRadius) s=s+sizeof(float)   *FtCount;
   if(PartCenter) s=s+sizeof(tdouble3)*FtCount;
   if(PartFvel)   s=s+sizeof(tfloat3) *FtCount;
@@ -112,6 +114,7 @@ void JPartFloatBi4Save::ResizeFtData(unsigned ftcount){
   delete[] HeadBegin;   HeadBegin=NULL;
   delete[] HeadCount;   HeadCount=NULL;
   delete[] HeadMass;    HeadMass=NULL;
+  delete[] HeadMassp;   HeadMassp=NULL;
   delete[] HeadRadius;  HeadRadius=NULL;
   delete[] PartCenter;  PartCenter=NULL;
   delete[] PartFvel;    PartFvel=NULL;
@@ -122,6 +125,7 @@ void JPartFloatBi4Save::ResizeFtData(unsigned ftcount){
     HeadBegin  =new unsigned[FtCount];
     HeadCount  =new unsigned[FtCount];
     HeadMass   =new float   [FtCount];
+    HeadMassp  =new float   [FtCount];
     HeadRadius =new float   [FtCount];
     PartCenter =new tdouble3[FtCount];
     PartFvel   =new tfloat3 [FtCount];
@@ -130,6 +134,7 @@ void JPartFloatBi4Save::ResizeFtData(unsigned ftcount){
     memset(HeadBegin  ,0,sizeof(unsigned)*FtCount);
     memset(HeadCount  ,0,sizeof(unsigned)*FtCount);
     memset(HeadMass   ,0,sizeof(float)   *FtCount);
+    memset(HeadMassp  ,0,sizeof(float)   *FtCount);
     memset(HeadRadius ,0,sizeof(float)   *FtCount);
     ClearPartData();
   }
@@ -177,13 +182,16 @@ void JPartFloatBi4Save::Config(std::string appname,const std::string &dir,word m
 /// Añade datos de cabecera de floatings.
 /// Adds data to floating header.
 //==============================================================================
-void JPartFloatBi4Save::AddHeadData(unsigned cf,word mkbound,unsigned begin,unsigned count,float mass,float radius){
+void JPartFloatBi4Save::AddHeadData(unsigned cf,word mkbound,unsigned begin
+  ,unsigned count,float mass,float massp,float radius)
+{
   if(cf>=FtCount)RunException("AddHeadData","Number of floating is invalid.");
   HeadMkbound[cf]=mkbound;
-  HeadBegin[cf]=begin;
-  HeadCount[cf]=count;
-  HeadMass[cf]=mass;
-  HeadRadius[cf]=radius;
+  HeadBegin  [cf]=begin;
+  HeadCount  [cf]=count;
+  HeadMass   [cf]=mass;
+  HeadMassp  [cf]=massp;
+  HeadRadius [cf]=radius;
 }
 
 //==============================================================================
@@ -197,10 +205,11 @@ void JPartFloatBi4Save::SaveInitial(){
     Data->SetvUshort("MkBoundFirst",MkBoundFirst);
     Data->SetvUint("FtCount",FtCount);
     Data->CreateArray("mkbound",JBinaryDataDef::DatUshort,FtCount,HeadMkbound,false);
-    Data->CreateArray("begin",JBinaryDataDef::DatUint,FtCount,HeadBegin,false);
-    Data->CreateArray("count",JBinaryDataDef::DatUint,FtCount,HeadCount,false);
-    Data->CreateArray("mass",JBinaryDataDef::DatFloat,FtCount,HeadMass,false);
-    Data->CreateArray("radius",JBinaryDataDef::DatFloat,FtCount,HeadRadius,false);
+    Data->CreateArray("begin"  ,JBinaryDataDef::DatUint  ,FtCount,HeadBegin  ,false);
+    Data->CreateArray("count"  ,JBinaryDataDef::DatUint  ,FtCount,HeadCount  ,false);
+    Data->CreateArray("mass"   ,JBinaryDataDef::DatFloat ,FtCount,HeadMass   ,false);
+    Data->CreateArray("massp"  ,JBinaryDataDef::DatFloat ,FtCount,HeadMassp  ,false);
+    Data->CreateArray("radius" ,JBinaryDataDef::DatFloat ,FtCount,HeadRadius ,false);
     Part->SetHide(true);
     Data->SaveFile(Dir+GetFileNamePart(),true,false);
     InitialSaved=true;
@@ -261,7 +270,8 @@ void JPartFloatBi4Save::SavePartFloat(){
 JPartFloatBi4Load::JPartFloatBi4Load(){
   ClassName="JPartFloatBi4Load";
   Data=NULL;
-  HeadMkbound=NULL; HeadBegin=NULL; HeadCount=NULL; HeadMass=NULL; HeadRadius=NULL;
+  HeadMkbound=NULL; HeadBegin=NULL; HeadCount=NULL; 
+  HeadMass=NULL; HeadMassp=NULL; HeadRadius=NULL;
   PartCenter=NULL; PartFvel=NULL; PartFomega=NULL;
   Reset();
 }
@@ -309,6 +319,7 @@ void JPartFloatBi4Load::ResizeFtData(unsigned ftcount){
   delete[] HeadBegin;   HeadBegin=NULL;
   delete[] HeadCount;   HeadCount=NULL;
   delete[] HeadMass;    HeadMass=NULL;
+  delete[] HeadMassp;   HeadMassp=NULL;
   delete[] HeadRadius;  HeadRadius=NULL;
   delete[] PartCenter;  PartCenter=NULL;
   delete[] PartFvel;    PartFvel=NULL;
@@ -319,6 +330,7 @@ void JPartFloatBi4Load::ResizeFtData(unsigned ftcount){
     HeadBegin  =new unsigned[FtCount];
     HeadCount  =new unsigned[FtCount];
     HeadMass   =new float   [FtCount];
+    HeadMassp  =new float   [FtCount];
     HeadRadius =new float   [FtCount];
     PartCenter =new tdouble3[FtCount];
     PartFvel   =new tfloat3 [FtCount];
@@ -327,6 +339,7 @@ void JPartFloatBi4Load::ResizeFtData(unsigned ftcount){
     memset(HeadBegin  ,0,sizeof(unsigned)*FtCount);
     memset(HeadCount  ,0,sizeof(unsigned)*FtCount);
     memset(HeadMass   ,0,sizeof(float)   *FtCount);
+    memset(HeadMassp  ,0,sizeof(float)   *FtCount);
     memset(HeadRadius ,0,sizeof(float)   *FtCount);
     memset(PartCenter ,0,sizeof(tdouble3)*FtCount);
     memset(PartFvel   ,0,sizeof(tfloat3) *FtCount);
@@ -346,7 +359,9 @@ std::string JPartFloatBi4Load::GetFileNamePart(){
 /// Carga datos de fichero sin comprobar cabecera.
 /// Load file data without checking header.
 //==============================================================================
-JBinaryDataArray* JPartFloatBi4Load::CheckArray(JBinaryData *bd,const std::string &name,JBinaryDataDef::TpData type){
+JBinaryDataArray* JPartFloatBi4Load::CheckArray(JBinaryData *bd,const std::string &name
+  ,JBinaryDataDef::TpData type)
+{
   const char met[]="CheckArray";
   JBinaryDataArray *ar=bd->GetArray(name);
   if(!ar)RunException(met,string("The array ")+name+" is missing.");
@@ -390,6 +405,15 @@ void JPartFloatBi4Load::LoadFile(const std::string &dir){
     JBinaryDataArray *ar=CheckArray(head,"mass",JBinaryDataDef::DatFloat);
     memcpy(HeadMass,(const float *)ar->GetDataPointer(),sizeof(float)*FtCount);
   }
+  {//-Loads array massp.
+    if(head->GetArray("massp")!=NULL){
+      JBinaryDataArray *ar=CheckArray(head,"massp",JBinaryDataDef::DatFloat);
+      memcpy(HeadMassp,(const float *)ar->GetDataPointer(),sizeof(float)*FtCount);
+    }
+    else{
+      for(unsigned cf=0;cf<FtCount;cf++)HeadMassp[cf]=HeadMass[cf]/HeadCount[cf];
+    }
+  }
   {//-Loads array radius.
     JBinaryDataArray *ar=CheckArray(head,"radius",JBinaryDataDef::DatFloat);
     memcpy(HeadRadius,(const float *)ar->GetDataPointer(),sizeof(float)*FtCount);
@@ -402,13 +426,16 @@ void JPartFloatBi4Load::LoadFile(const std::string &dir){
 /// Carga datos de fichero sin comprobar cabecera.
 /// Load file data without checking header.
 //==============================================================================
-void JPartFloatBi4Load::CheckHeadData(unsigned cf,word mkbound,unsigned begin,unsigned count,float mass){
+void JPartFloatBi4Load::CheckHeadData(unsigned cf,word mkbound,unsigned begin
+  ,unsigned count,float mass,float massp)
+{
   const char met[]="CheckHeadData";
   if(cf>=FtCount)RunException(met,"Number of floating is invalid.");
   if(HeadMkbound[cf]!=mkbound)RunException(met,"The mkbound does not match.");
   if(HeadBegin  [cf]!=begin)  RunException(met,"The begin does not match.");
   if(HeadCount  [cf]!=count)  RunException(met,"The count does not match.");
   if(HeadMass   [cf]!=mass)   RunException(met,"The mass does not match.");
+  if(HeadMassp  [cf]!=massp)  RunException(met,"The massp does not match.");
 }
 
 //==============================================================================

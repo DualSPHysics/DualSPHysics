@@ -170,6 +170,9 @@ std::string Double4Str(const tdouble4 &v,const char* fmt="%f,%f,%f");
 /// Converts range of tdouble4 values to string.  
 inline std::string Double4gStr(const tdouble4 &v){ return(Double4Str(v,"%g,%g,%g,%g")); }
 
+std::string VectorStr(const std::vector<std::string> &v);
+
+
 bool StrIsIntegerNumber(const std::string &v);
 bool StrIsRealNumber(const std::string &v);
 

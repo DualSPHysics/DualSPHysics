@@ -738,7 +738,10 @@ void JSphGpu::InitFloating(){
     ftdata.LoadFile(PartBeginDir);
     //-Checks if the constant data match.
     //-Comprueba coincidencia de datos constantes.
-    for(unsigned cf=0;cf<FtCount;cf++)ftdata.CheckHeadData(cf,FtObjs[cf].mkbound,FtObjs[cf].begin,FtObjs[cf].count,FtObjs[cf].mass);
+    for(unsigned cf=0;cf<FtCount;cf++){
+      const StFloatingData &ft=FtObjs[cf];
+      ftdata.CheckHeadData(cf,ft.mkbound,ft.begin,ft.count,ft.mass,ft.massp);
+    }
     //-Loads PART data.
     ftdata.LoadPart(PartBegin);
     for(unsigned cf=0;cf<FtCount;cf++){

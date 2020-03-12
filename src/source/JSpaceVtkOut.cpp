@@ -121,18 +121,39 @@ unsigned JSpaceVtkOut::GetByFileName(std::string fname)const{
 /// Returns the requested file by number.
 //==============================================================================
 std::string JSpaceVtkOut::GetFile(unsigned idx)const{
-  if(idx>=Count())RunException("GetFile","Number of requested file is invalid.");
+  if(idx>=Count())Run_Exceptioon("Number of requested file name is invalid.");
   return(Files[idx]->File);
+}
+
+//==============================================================================
+/// Returns the requested file by number.
+//==============================================================================
+std::string JSpaceVtkOut::GetFileListMk(unsigned idx)const{
+  if(idx>=Count())Run_Exceptioon("Number of requested file info is invalid.");
+  return(Files[idx]->GetMks());
 }
 
 //==============================================================================
 /// Returns list of files with indicated key.
 //==============================================================================
-void JSpaceVtkOut::GetFiles(std::string key,std::vector<std::string> &list)const{
+unsigned JSpaceVtkOut::GetFiles(std::string key,std::vector<std::string> &list)const{
   list.clear();
   for(unsigned ipos=0;ipos<Count();ipos++){
     if(int(Files[ipos]->File.find(key))>=0)list.push_back(Files[ipos]->File);
   }
+  return(unsigned(Files.size()));
+}
+
+//==============================================================================
+/// Returns list of files with requested mk.
+//==============================================================================
+unsigned JSpaceVtkOut::GetFilesByMk(bool bound,word mk,std::vector<std::string> &list)const{
+  list.clear();
+  for(unsigned ipos=0;ipos<Count();ipos++){
+    JRangeFilter rg(Files[ipos]->GetMks());
+    if(rg.CheckValue(mk))list.push_back(Files[ipos]->File);
+  }
+  return(unsigned(Files.size()));
 }
 
 //==============================================================================
@@ -157,7 +178,6 @@ std::string JSpaceVtkOut::GetListMkType(bool bound,const std::string &mks)const{
 /// Reads particles information in XML format.
 //==============================================================================
 void JSpaceVtkOut::ReadXml(const JXml *sxml,TiXmlElement* lis){
-  const char met[]="ReadXml";
   const word mkboundfirst=(word)sxml->GetAttributeUnsigned(lis,"mkboundfirst");
   const word mkfluidfirst=(word)sxml->GetAttributeUnsigned(lis,"mkfluidfirst");
   ConfigMkFirst(mkboundfirst,mkfluidfirst);
@@ -206,7 +226,7 @@ void JSpaceVtkOut::LoadFileXml(const std::string &file,const std::string &path){
 void JSpaceVtkOut::LoadXml(const JXml *sxml,const std::string &place,bool optional){
   Reset();
   TiXmlNode* node=sxml->GetNodeSimple(place);
-  if(!node && !optional)RunException("LoadXml",std::string("Cannot find the element \'")+place+"\'.");
+  if(!node && !optional)Run_Exceptioon(std::string("Cannot find the element \'")+place+"\'.");
   if(node)ReadXml(sxml,node->ToElement());
 }
 

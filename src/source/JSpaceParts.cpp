@@ -194,13 +194,13 @@ TiXmlElement* JSpacePartBlock_Moving::WriteXml(JXml *sxml,TiXmlElement* ele)cons
 /// Constructor.
 //==============================================================================
 JSpacePartBlock_Floating::JSpacePartBlock_Floating(const JSpaceProperties* properties
-  ,word mktype,unsigned begin,unsigned count,double massbody
+  ,word mktype,unsigned begin,unsigned count,double massbody,double masspart
   ,const tdouble3& center,const tmatrix3d& inertia
   ,const tint3 &translationfree,const tint3 &rotationfree
   ,const tdouble3 &linvelini,const tdouble3 &angvelini
   ,const JLinearValue *linvel,const JLinearValue *angvel)
   :JSpacePartBlock(properties,TpPartFloating,"Floating",mktype,begin,count)
-  ,Massbody(massbody),Center(center),Inertia(inertia)
+  ,Massbody(massbody),Masspart(masspart),Center(center),Inertia(inertia)
   ,TranslationFree(translationfree),RotationFree(rotationfree)
   ,LinearVelini(linvelini),AngularVelini(angvelini)
 {
@@ -217,8 +217,8 @@ JSpacePartBlock_Floating::JSpacePartBlock_Floating(const JSpaceProperties* prope
 //==============================================================================
 /// Constructor from XML data.
 //==============================================================================
-JSpacePartBlock_Floating::JSpacePartBlock_Floating(const JSpaceProperties* properties,JXml *sxml,TiXmlElement* ele)
-    :JSpacePartBlock(properties,TpPartFloating,"Floating")
+JSpacePartBlock_Floating::JSpacePartBlock_Floating(const JSpaceProperties* properties
+  ,JXml *sxml,TiXmlElement* ele):JSpacePartBlock(properties,TpPartFloating,"Floating")
 {
   LinearVel=NULL; AngularVel=NULL; //<vs_fttvel>
   ReadXml(sxml,ele);
@@ -240,6 +240,7 @@ JSpacePartBlock_Floating::~JSpacePartBlock_Floating(){
 void JSpacePartBlock_Floating::ReadXml(JXml *sxml,TiXmlElement* ele){
   JSpacePartBlock::ReadXml(sxml,ele);
   Massbody=sxml->ReadElementDouble(ele,"massbody","value");
+  Masspart=sxml->ReadElementDouble(ele,"masspart","value");
   Center=sxml->ReadElementDouble3(ele,"center");
   //-Reads inertia data from double3 or tmatrix3d XML element.
   TiXmlElement *item=sxml->GetFirstElement(ele,"inertia");
@@ -280,7 +281,7 @@ void JSpacePartBlock_Floating::ReadXml(JXml *sxml,TiXmlElement* ele){
 TiXmlElement* JSpacePartBlock_Floating::WriteXml(JXml *sxml,TiXmlElement* ele)const{
   ele=JSpacePartBlock::WriteXml(sxml,ele);
   sxml->AddAttribute(sxml->AddElementAttrib(ele,"massbody","value",Massbody),"units_comment","kg");
-  sxml->AddAttribute(sxml->AddElementAttrib(ele,"masspart","value",Massbody/GetCount()),"units_comment","kg");
+  sxml->AddAttribute(sxml->AddElementAttrib(ele,"masspart","value",Masspart),"units_comment","kg");
   sxml->AddAttribute(sxml->AddElementDouble3(ele,"center",Center),"units_comment","metres (m)");
   //-Writes inertia data from double3 or tmatrix3d XML element.
   if(!Inertia.a12 && !Inertia.a13 && !Inertia.a21 && !Inertia.a23 && !Inertia.a31 && !Inertia.a32){

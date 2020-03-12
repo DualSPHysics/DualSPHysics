@@ -2082,7 +2082,10 @@ void JSphCpu::InitFloating(){
     JPartFloatBi4Load ftdata;
     ftdata.LoadFile(PartBeginDir);
     //-Check cases of constant values. | Comprueba coincidencia de datos constantes.
-    for(unsigned cf=0;cf<FtCount;cf++)ftdata.CheckHeadData(cf,FtObjs[cf].mkbound,FtObjs[cf].begin,FtObjs[cf].count,FtObjs[cf].mass);
+    for(unsigned cf=0;cf<FtCount;cf++){
+      const StFloatingData &ft=FtObjs[cf];
+      ftdata.CheckHeadData(cf,ft.mkbound,ft.begin,ft.count,ft.mass,ft.massp);
+    }
     //-Load PART data. | Carga datos de PART.
     ftdata.LoadPart(PartBegin);
     for(unsigned cf=0;cf<FtCount;cf++){

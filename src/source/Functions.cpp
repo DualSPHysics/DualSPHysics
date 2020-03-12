@@ -394,6 +394,16 @@ std::string Double4Str(const tdouble4 &v,const char* fmt){
 }
 
 //==============================================================================
+/// Converts vector of strings to string list.
+//==============================================================================
+std::string VectorStr(const std::vector<std::string> &v){
+  string ret;
+  const unsigned n=unsigned(v.size());
+  for(unsigned c=0;c<n;c++)ret=ret+(c? string(",")+v[c]: v[c]);
+  return(ret);
+}
+
+//==============================================================================
 /// Returns true when str is a valid integer number.
 //==============================================================================
 bool StrIsIntegerNumber(const std::string &str){

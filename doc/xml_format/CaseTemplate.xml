@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<case app="GenCase v5.0.159 (10-03-2020)" date="12-03-2020 14:05:45">
+<case app="GenCase v5.0.159 (10-03-2020)" date="12-03-2020 14:11:08">
     <casedef requiredversion="v5.0.159">
         <constantsdef>
             <lattice bound="2" fluid="1" comment="Type of lattice to create the initial particles (default=1)" />

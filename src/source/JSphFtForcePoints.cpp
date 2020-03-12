@@ -222,7 +222,9 @@ word JSphFtForcePoints::GetIdx(word ptid)const{
 //==============================================================================
 /// Configures periodic parameters.
 //==============================================================================
-void JSphFtForcePoints::ConfigPeri(byte periactive,bool perix,bool periy,bool periz,tdouble3 perixinc,tdouble3 periyinc,tdouble3 perizinc){
+void JSphFtForcePoints::ConfigPeri(byte periactive,bool perix,bool periy,bool periz
+  ,tdouble3 perixinc,tdouble3 periyinc,tdouble3 perizinc)
+{
   PeriActive=periactive;
   PeriX=perix;
   PeriY=periy;
@@ -235,7 +237,10 @@ void JSphFtForcePoints::ConfigPeri(byte periactive,bool perix,bool periy,bool pe
 //==============================================================================
 /// Configures object for execution.
 //==============================================================================
-void JSphFtForcePoints::Config(unsigned ftcount,const StFloatingData *ftdata,byte periactive,bool perix,bool periy,bool periz,tdouble3 perixinc,tdouble3 periyinc,tdouble3 perizinc){
+void JSphFtForcePoints::Config(unsigned ftcount,const StFloatingData *ftdata
+  ,byte periactive,bool perix,bool periy,bool periz
+  ,tdouble3 perixinc,tdouble3 periyinc,tdouble3 perizinc)
+{
   if(ftcount!=unsigned(FtCount))Run_Exceptioon("Number of floating is invalid.");
   //-Configures periodic parameters.
   ConfigPeri(periactive,perix,periy,periz,perixinc,periyinc,perizinc);
@@ -304,7 +309,9 @@ void JSphFtForcePoints::CheckPoints(const JSphMk *mkinfo
 //==============================================================================
 /// Shows force points configuration.
 //==============================================================================
-void JSphFtForcePoints::VisuConfig(std::string txhead,std::string txfoot,unsigned ftcount,const StFloatingData *ftdata)const{
+void JSphFtForcePoints::VisuConfig(std::string txhead,std::string txfoot
+  ,unsigned ftcount,const StFloatingData *ftdata)const
+{
   if(!txhead.empty())Log->Print(txhead);
   for(word c=0;c<PtCount;c++){
     Log->Printf("  Point_%u(%g,%g,%g) in Floating_%u with mkbound=%u. Distance to particle: %g (%g x Dp)"

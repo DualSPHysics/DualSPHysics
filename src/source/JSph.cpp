@@ -834,7 +834,7 @@ void JSph::LoadCaseConfig(){
         fobj->begin=fblock.GetBegin();
         fobj->count=fblock.GetCount();
         fobj->mass=(float)fblock.GetMassbody();
-        fobj->massp=fobj->mass/fobj->count;
+        fobj->massp=(float)fblock.GetMasspart();
         fobj->radius=0;
         fobj->constraints=ComputeConstraintsValue(fblock.GetTranslationFree(),fblock.GetRotationFree());
         if(fobj->constraints!=FTCON_Free)FtConstraints=true;
@@ -983,7 +983,7 @@ StDemData JSph::LoadDemData(bool checkdata,const JSpacePartBlock* block)const{
   if(block->Type==TpPartFloating){
     const JSpacePartBlock_Floating *fblock=(const JSpacePartBlock_Floating *)block;
     data.mass=(float)fblock->GetMassbody();
-    data.massp=(float)(fblock->GetMassbody()/fblock->GetCount());
+    data.massp=(float)fblock->GetMasspart();
   }
   data.tau=(data.young? (1-data.poisson*data.poisson)/data.young: 0);
   return(data);
@@ -1947,7 +1947,8 @@ void JSph::ConfigSaveData(unsigned piece,unsigned pieces,std::string div){
     DataFloatBi4=new JPartFloatBi4Save();
     DataFloatBi4->Config(AppName,DirDataOut,MkInfo->GetMkBoundFirst(),FtCount);
     for(unsigned cf=0;cf<FtCount;cf++){
-      DataFloatBi4->AddHeadData(cf,FtObjs[cf].mkbound,FtObjs[cf].begin,FtObjs[cf].count,FtObjs[cf].mass,FtObjs[cf].radius);
+      const StFloatingData &ft=FtObjs[cf];
+      DataFloatBi4->AddHeadData(cf,ft.mkbound,ft.begin,ft.count,ft.mass,ft.massp,ft.radius);
     }
     DataFloatBi4->SaveInitial();
     Log->AddFileInfo(DirDataOut+"PartFloat.fbi4","Binary file with floating body information for each instant (input for FloatingInfo program).");

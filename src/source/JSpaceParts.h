@@ -55,6 +55,7 @@
 //:#   JLinearValue y JReadDatafile. (16-05-2019)
 //:# - Cambia 'translation' y 'rotation' por 'translationDOF' y 'rotationDOF' 
 //:#   manteniendo compatibilidad. (14-12-2019)
+//:# - Los floating incluyen el valor masspart. (10-03-2020)
 //:#############################################################################
 
 /// \file JSpaceParts.h \brief Declares the class \ref JSpaceParts.
@@ -205,6 +206,7 @@ class JSpacePartBlock_Floating : public JSpacePartBlock
 {
 private:
   double Massbody;
+  double Masspart;
   tdouble3 Center;
   tmatrix3d Inertia;
   tint3 TranslationFree;
@@ -216,7 +218,7 @@ private:
 
 public:
   JSpacePartBlock_Floating(const JSpaceProperties* properties
-    ,word mktype,unsigned begin,unsigned count,double massbody
+    ,word mktype,unsigned begin,unsigned count,double massbody,double masspart
     ,const tdouble3& center,const tmatrix3d& inertia
     ,const tint3 &translationfree,const tint3 &rotationfree
     ,const tdouble3 &linvelini,const tdouble3 &angvelini
@@ -224,6 +226,7 @@ public:
   JSpacePartBlock_Floating(const JSpaceProperties* properties,JXml *sxml,TiXmlElement* ele);
   ~JSpacePartBlock_Floating();
   double        GetMassbody()       const{ return(Massbody); }
+  double        GetMasspart()       const{ return(Masspart); }
   tdouble3      GetCenter()         const{ return(Center); }
   tmatrix3d     GetInertia()        const{ return(Inertia); }
   tint3         GetTranslationFree()const{ return(TranslationFree); }
@@ -317,14 +320,15 @@ public:
     Add(new JSpacePartBlock_Moving(Properties,mktype,GetBegin(),count,refmotion));
   }
 
-  void AddFloating(word mktype,unsigned count,double massbody
+  void AddFloating(word mktype,unsigned count,double massbody,double masspart
     ,const tdouble3 &center,const tmatrix3d &inertia
     ,const tint3 &translationfree,const tint3 &rotationfree
     ,const tdouble3 &linvelini,const tdouble3 &angvelini
     ,const JLinearValue *linvel,const JLinearValue *angvel)
   { 
-    Add(new JSpacePartBlock_Floating(Properties,mktype,GetBegin(),count,massbody
-      ,center,inertia,translationfree,rotationfree,linvelini,angvelini,linvel,angvel)); 
+    Add(new JSpacePartBlock_Floating(Properties,mktype,GetBegin(),count
+      ,massbody,masspart,center,inertia,translationfree,rotationfree
+      ,linvelini,angvelini,linvel,angvel)); 
   }
 
   void AddFluid(word mktype,unsigned count){ 

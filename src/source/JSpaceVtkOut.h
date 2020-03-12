@@ -22,6 +22,7 @@
 //:# - Gestiona lista de archivos VTK con geometria generados por GenCase. (30-07-2018)
 //:# - Nuevo metodo para obtener la lista de ficheros con una clave. (06-08-2018)
 //:# - Nuevo metodo para obtener el fichero segun su posicion. (01-05-2019)
+//:# - Nuevos metodos GetFileListMk() y GetListMkType(). (09-03-2020)
 //:#############################################################################
 
 /// \file JSpaceVtkOut.h \brief Declares the class \ref JSpaceVtkOut.
@@ -85,7 +86,10 @@ public:
   unsigned GetByFileName(std::string fname)const;
 
   std::string GetFile(unsigned idx)const;
-  void GetFiles(std::string key,std::vector<std::string> &list)const;
+  std::string GetFileListMk(unsigned idx)const;
+
+  unsigned GetFiles(std::string key,std::vector<std::string> &list)const;
+  unsigned GetFilesByMk(bool bound,word mk,std::vector<std::string> &list)const;
 
   std::string GetListMkType(bool bound,const std::string &mks)const;
 
