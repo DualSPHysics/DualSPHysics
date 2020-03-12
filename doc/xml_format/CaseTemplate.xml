@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<case app="GenCase v5.0.159 (10-03-2020)" date="12-03-2020 14:11:08">
-    <casedef requiredversion="v5.0.159">
+<case app="GenCase v5.0.160 (12-03-2020)" date="12-03-2020 20:13:25">
+    <casedef requiredversion="v5.0.160">
         <constantsdef>
             <lattice bound="2" fluid="1" comment="Type of lattice to create the initial particles (default=1)" />
             <gravity x="0" y="0" z="-9.81" comment="Gravitational acceleration" units_comment="m/s^2" />
@@ -764,6 +764,19 @@
                 </mvrotfile>
             </objreal>
         </motion>
+        <normals>
+            <distanceh value="2.0" comment="Maximum distance (H*distanceh) to compute normals data (default=2)" />
+            <geometryfile file="[CaseName]_hdp_Actual.vtk" comment="File with boundary geometry (VTK format)" />
+            <computenormals value="0" comment="Computes final normals for boundary particles 0:None, 1:Mean, 2:Marrone(unverified) (default=0)" />
+            <svnormaldata value="1" comment="Saves VTK with normal data for debug (default=0)" />
+            <svnormals value="0" comment="Saves VTK with particle normals according to <computenormals> for debug (default=0)" />
+            <svshapes value="0" comment="Saves VTK with geometry in triangles and quads with its normals for debug (default=0)" />
+            <dg_svopenshapes value="0" comment="Saves VTK with enlarged triangles and quads for debug (default=0)" />
+            <dg_svpartsnormal value="0" comment="Saves VTKs with normals and out-vectors for each particle (default=0)">
+                <onlypos xmin="-0.04" zmin="-0.04" xmax="0.06" zmax="0.06" />
+                <onlypos ymin="-0.1" ymax="0.1" />
+            </dg_svpartsnormal>
+        </normals>
     </casedef>
     <execution>
         <parameters>
