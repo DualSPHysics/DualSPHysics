@@ -1018,6 +1018,7 @@ double JSphGpu::DtVariable(bool final){
   //-dt new value of time step.
   double dt=double(CFLnumber)*min(dt1,dt2);
   if(DtFixed)dt=DtFixed->GetDt(TimeStep,dt);
+  if(fun::IsNAN(dt) || fun::IsInfinity(dt))Run_Exceptioon(fun::PrintStr("The computed Dt=%f (from AceMax=%f, VelMax=%f, ViscDtMax=%f) is NaN or infinity at nstep=%u.",dt,AceMax,VelMax,ViscDtMax,Nstep));
   if(dt<double(DtMin)){ 
     dt=double(DtMin); DtModif++;
     if(DtModif>=DtModifWrn){
@@ -1099,7 +1100,7 @@ void JSphGpu::RunMotion(double stepdt){
       cusph::MovePiston2d(PeriActive!=0,mot.np,mot.idbegin-CaseNfixed,Dp,mot.posymin,mot.poszmin,mot.poszcount,mot.movyz,mot.velyz,RidpMoveg,Posxyg,Poszg,Dcellg,Velrhopg,Codeg);
     }
   }  //<vs_mlapiston_end>
-  if(MotionVelg)cusph::CopyMotionVel(CaseNmoving,CaseNfixed,RidpMoveg,Velrhopg,MotionVelg); //<vs_mddbc>
+  if(MotionVelg)cusph::CopyMotionVel(CaseNmoving,RidpMoveg,Velrhopg,MotionVelg); //<vs_mddbc>
   TmgStop(Timers,TMG_SuMotion);
 }
 

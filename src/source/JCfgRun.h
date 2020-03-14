@@ -72,6 +72,7 @@ public:
   int OmpThreads;
 
   TpCellMode  CellMode;
+  int TBoundary;  ///<Boundary method: 0:None, 1:DBC (by default), 2:mDBC vel=0, 3:mDBC No-slip
   TpStep TStep;
   int VerletSteps;
   TpKernel TKernel;

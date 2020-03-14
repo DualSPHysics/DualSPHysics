@@ -282,7 +282,7 @@ protected:
     ,const unsigned *ridp,tdouble3 *pos,unsigned *dcell,tfloat4 *velrhop,typecode *code)const;
   void MoveMatBound(unsigned np,unsigned ini,tmatrix4d m,double dt,const unsigned *ridpmv
     ,tdouble3 *pos,unsigned *dcell,tfloat4 *velrhop,typecode *code,tfloat3 *boundnormal)const;
-  void CopyMotionVel(unsigned np,unsigned ini,const unsigned *ridp,const tfloat4 *velrhop,tfloat3 *motionvel)const; //<vs_mddbc>
+  void CopyMotionVel(unsigned nmoving,const unsigned *ridp,const tfloat4 *velrhop,tfloat3 *motionvel)const; //<vs_mddbc>
   void CalcMotion(double stepdt);
   void RunMotion(double stepdt);
   void RunRelaxZone(double dt);  //<vs_rzone>

@@ -464,6 +464,17 @@ void JSph::LoadConfig(const JCfgRun *cfg){
 
   //-Aplies configuration using command line.
   if(cfg->SvPosDouble>=0)SvPosDouble=(cfg->SvPosDouble!=0);
+  if(cfg->TBoundary){
+    TBoundary=BC_DBC;  SlipMode=SLIP_Vel0;  MdbcCorrector=false;
+    switch(cfg->TBoundary){
+      case 1:  TBoundary=BC_DBC;                          break;
+      case 2:  TBoundary=BC_MDBC;  SlipMode=SLIP_Vel0;    break;
+      case 3:  TBoundary=BC_MDBC;  SlipMode=SLIP_NoSlip;  break;
+      default: Run_Exceptioon("Boundary method is not valid.");
+    }
+    UseNormals=(TBoundary==BC_MDBC);
+  }
+  if(TBoundary==BC_MDBC && SlipMode!=SLIP_Vel0)Run_Exceptioon("Only the slip mode velocity=0 is allowed with mDBC conditions.");
   if(cfg->TStep)TStep=cfg->TStep;
   if(cfg->VerletSteps>=0)VerletSteps=cfg->VerletSteps;
   if(cfg->TKernel)TKernel=cfg->TKernel;

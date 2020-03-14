@@ -46,6 +46,7 @@ void JCfgRun::Reset(){
   OmpThreads=0;
   SvTimers=true;
   CellMode=CELLMODE_2H;
+  TBoundary=0;
   DomainMode=0;
   DomainFixedMin=DomainFixedMax=TDouble3(0);
   TStep=STEP_None; VerletSteps=-1;
@@ -103,7 +104,12 @@ void JCfgRun::VisuInfo()const{
 #endif
   printf("    -cellmode:<mode>  Specifies the cell division mode\n");
   printf("        2h        Lowest and the least expensive in memory (by default)\n");
-  printf("        h         Fastest and the most expensive in memory\n\n");
+  printf("        h         Fastest and the most expensive in memory\n");
+  printf("\n");
+  printf("    -dbc             Dynamic Boundary Condition DBC (by default)\n");
+  printf("    -mdbc            Modified Dynamic Boundary Condition mDBC vel=0\n");
+  //printf("    -mdbc_noslip     Modified Dynamic Boundary Condition mDBC No-slip\n");
+  printf("\n");
   printf("    -symplectic      Symplectic algorithm as time step algorithm\n");
   printf("    -verlet[:steps]  Verlet algorithm as time step algorithm and number of\n");
   printf("                     time steps to switch equations\n\n");
@@ -334,6 +340,9 @@ void JCfgRun::LoadOpts(string *optlis,int optn,int lv,string file){
         else ok=false;
         if(!ok)ErrorParm(opt,c,lv,file);
       }
+      else if(txword=="DBC")TBoundary=1;
+      else if(txword=="MDBC")TBoundary=2;
+      else if(txword=="MDBC_NOSLIP")TBoundary=3;
       else if(txword=="SYMPLECTIC")TStep=STEP_Symplectic;
       else if(txword=="VERLET"){ TStep=STEP_Verlet; 
         if(txoptfull!="")VerletSteps=atoi(txoptfull.c_str()); 

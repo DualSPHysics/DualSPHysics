@@ -1863,12 +1863,12 @@ void MoveMatBound(byte periactive,bool simulate2d,unsigned np,unsigned ini,tmatr
 /// Copy motion velocity to MotionVel[].
 /// Copia velocidad de movimiento a MotionVel[].
 //------------------------------------------------------------------------------
-template<bool periactive> __global__ void KerCopyMotionVel(unsigned n,unsigned ini
+template<bool periactive> __global__ void KerCopyMotionVel(unsigned n
   ,const unsigned *ridpmv,const float4 *velrhop,float3 *motionvel)
 {
   unsigned p=blockIdx.y*gridDim.x*blockDim.x + blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
   if(p<n){
-    int pid=ridpmv[p+ini];
+    int pid=ridpmv[p];
     if(pid>=0){
       //-Computes velocity.
       const float4 v=velrhop[pid];
@@ -1881,10 +1881,10 @@ template<bool periactive> __global__ void KerCopyMotionVel(unsigned n,unsigned i
 /// Copy motion velocity to MotionVel[].
 /// Copia velocidad de movimiento a MotionVel[].
 //==============================================================================
-void CopyMotionVel(unsigned np,unsigned ini,const unsigned *ridp,const float4 *velrhop,float3 *motionvel)
+void CopyMotionVel(unsigned nmoving,const unsigned *ridp,const float4 *velrhop,float3 *motionvel)
 {
-  dim3 sgrid=GetGridSize(np,SPHBSIZE);
-  KerCopyMotionVel<true>  <<<sgrid,SPHBSIZE>>> (np,ini,ridp,velrhop,motionvel);
+  dim3 sgrid=GetGridSize(nmoving,SPHBSIZE);
+  KerCopyMotionVel<true>  <<<sgrid,SPHBSIZE>>> (nmoving,ridp,velrhop,motionvel);
 }
 //<vs_mddbc_end>
 

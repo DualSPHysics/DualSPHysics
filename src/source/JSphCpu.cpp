@@ -1807,6 +1807,7 @@ double JSphCpu::DtVariable(bool final){
   //-dt new value of time step.
   double dt=double(CFLnumber)*min(dt1,dt2);
   if(DtFixed)dt=DtFixed->GetDt(TimeStep,dt);
+  if(fun::IsNAN(dt) || fun::IsInfinity(dt))Run_Exceptioon(fun::PrintStr("The computed Dt=%f (from AceMax=%f, VelMax=%f, ViscDtMax=%f) is NaN or infinity at nstep=%u.",dt,AceMax,VelMax,ViscDtMax,Nstep));
   if(dt<double(DtMin)){ 
     dt=double(DtMin); DtModif++;
     if(DtModif>=DtModifWrn){
@@ -1814,6 +1815,7 @@ double JSphCpu::DtVariable(bool final){
       DtModifWrn*=10;
     }
   }
+
   //-Saves information about dt.
   if(final){
     if(PartDtMin>dt)PartDtMin=dt;
@@ -1920,11 +1922,10 @@ void JSphCpu::MoveMatBound(unsigned np,unsigned ini,tmatrix4d m,double dt,const 
 /// Copy motion velocity to MotionVel[].
 /// Copia velocidad de movimiento a MotionVel[].
 //==============================================================================
-void JSphCpu::CopyMotionVel(unsigned np,unsigned ini,const unsigned *ridp
+void JSphCpu::CopyMotionVel(unsigned nmoving,const unsigned *ridp
   ,const tfloat4 *velrhop,tfloat3 *motionvel)const
 {
-  const unsigned fin=ini+np;
-  for(unsigned id=ini;id<fin;id++){
+  for(unsigned id=0;id<nmoving;id++){
     const unsigned pid=RidpMove[id];
     if(pid!=UINT_MAX){
       const tfloat4 v=velrhop[pid];
@@ -1990,7 +1991,7 @@ void JSphCpu::RunMotion(double stepdt){
         ,RidpMove,Posc,Dcellc,Velrhopc,Codec);
     }
   }  //<vs_mlapiston_end>
-  if(MotionVelc)CopyMotionVel(CaseNmoving,CaseNfixed,RidpMove,Velrhopc,MotionVelc); //<vs_mddbc>
+  if(MotionVelc)CopyMotionVel(CaseNmoving,RidpMove,Velrhopc,MotionVelc); //<vs_mddbc>
   TmcStop(Timers,TMC_SuMotion);
 }
 
