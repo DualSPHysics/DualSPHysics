@@ -316,6 +316,9 @@ tdouble2* ResizeAlloc(tdouble2 *data,unsigned ndata,unsigned newsize);
 tdouble3* ResizeAlloc(tdouble3 *data,unsigned ndata,unsigned newsize);
 tdouble4* ResizeAlloc(tdouble4 *data,unsigned ndata,unsigned newsize);
 
+float Magnitude(const tfloat3 &v);
+double Magnitude(const tdouble3 &v);
+
 bool IsInfinity(float v);
 bool IsInfinity(double v);
 bool IsNAN(float v);

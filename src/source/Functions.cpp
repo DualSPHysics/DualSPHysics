@@ -1534,6 +1534,21 @@ tdouble4* ResizeAlloc(tdouble4 *data,unsigned ndata,unsigned newsize){
 
 
 //==============================================================================
+/// Returns magnitude of vector.
+//==============================================================================
+float Magnitude(const tfloat3 &v){
+ return(sqrt(v.x*v.x+v.y*v.y+v.z*v.z));
+}
+
+//==============================================================================
+/// Returns magnitude of vector.
+//==============================================================================
+double Magnitude(const tdouble3 &v){
+ return(sqrt(v.x*v.x+v.y*v.y+v.z*v.z));
+}
+
+
+//==============================================================================
 /// Returns if float value is + or - infinity.
 //==============================================================================
 bool IsInfinity(float v){

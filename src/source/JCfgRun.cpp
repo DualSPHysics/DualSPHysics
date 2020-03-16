@@ -84,7 +84,7 @@ void JCfgRun::LoadDsphConfig(std::string path){
 void JCfgRun::VisuInfo()const{
 /////////|---------1---------2---------3---------4---------5---------6---------7--------X8
   printf("Information about execution parameters:\n\n");
-  printf("  DualSPHysics4 [name_case [dir_out]] [options]\n\n");
+  printf("  DualSPHysics [name_case [dir_out]] [options]\n\n");
   printf("  Options:\n");
   printf("    -h          Shows information about parameters\n");
   printf("    -ver        Shows version information\n");
@@ -164,8 +164,8 @@ void JCfgRun::VisuInfo()const{
   printf("    -domain_fixed:xmin:ymin:zmin:xmax:ymax:zmax    The domain is fixed\n");
   printf("     with the specified values\n\n");
   printf("  Examples:\n");
-  printf("    DualSPHysics4 case out_case -sv:binx,csv \n");
-  printf("    DualSPHysics4 -name case -dirout out_case -sv:binx,csv \n");
+  printf("    DualSPHysics case out_case -sv:binx,csv \n");
+  printf("    DualSPHysics -name case -dirout out_case -sv:binx,csv \n");
 }
 
 //==============================================================================
