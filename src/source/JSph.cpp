@@ -144,6 +144,7 @@ void JSph::InitVars(){
   Symmetry=false;
   Stable=false;
   SvPosDouble=false;
+  FtSaveAce=false;//<ft_face>
   RunCode=CalcRunCode();
   RunTimeDate="";
   CaseName=""; DirCase=""; RunName="";
@@ -248,6 +249,37 @@ void JSph::InitVars(){
   DemDtForce=0;  //(DEM)
   MaxNumbers.Clear();
 }
+
+//<ft_face_ini>
+//==============================================================================
+/// Saves the linear and angular acceleration of each floating object in a csv file
+//==============================================================================
+
+void JSph::SaveFtAce(double dt,bool predictor,StFtoForces *ftoforces) {
+  const unsigned nstep=Nstep;
+  const double timestep=TimeStep;
+  const bool savedata=!(timestep<(floor((timestep-dt)/TimePart)+1.0)*TimePart);
+  if(savedata && !predictor){
+    for (unsigned cf=0; cf<FtCount;cf++){
+      const string file=AppInfo.GetDirOut()+fun::PrintStr("FloatingAce_mkbound_%u.csv",FtObjs[cf].mkbound);
+          jcsv::JSaveCsv2 scsv(file,true,AppInfo.GetCsvSepComa());
+          if (!scsv.GetAppendMode()) {
+            Log->AddFileInfo("FloatingAce_mkbound_XX.csv", "Saves information of acceleration used to move the floating object.");
+            //-Saves head.
+            scsv.SetHead();
+            scsv << "nstep;time [s];dt [s];predictor;face.x [m/s^2];face.y [m/s^2];face.z [m/s^2]";
+            scsv << "fomegaace.x [rad/s^2];fomegaace.y [rad/s^2];fomegaace.z [rad/s^2]" << jcsv::Endl();
+          }
+          //-Saves data.
+          scsv.SetData();
+          scsv << nstep << timestep << dt << (predictor?"True":"False");
+          scsv << ftoforces[cf].face;
+          scsv << ftoforces[cf].fomegaace;
+          scsv << jcsv::Endl();
+          scsv.SaveData();
+    }
+  }
+}//<ft_face_end>
 
 //==============================================================================
 /// Generates a random code to identify the file of the results of the execution.
@@ -566,6 +598,8 @@ void JSph::LoadCaseConfig(){
   if(ctes.GetEps()!=0)Log->PrintWarning("Eps value is not used (this correction is deprecated).");
 
   //-Execution parameters.
+  if (eparms.Exists("FtSaveAce"))FtSaveAce=(eparms.GetValueInt("FtSaveAce",true,0)!=0);
+
   if(eparms.Exists("PosDouble")){
     Log->PrintWarning("The parameter \'PosDouble\' is deprecated.");
     SvPosDouble=(eparms.GetValueInt("PosDouble")==2);
@@ -840,7 +874,7 @@ void JSph::LoadCaseConfig(){
       const JSpacePartBlock &block=parts.GetBlock(c);
       if(block.Type==TpPartFloating){
         const JSpacePartBlock_Floating &fblock=(const JSpacePartBlock_Floating &)block;
-        StFloatingData* fobj=FtObjs+cobj;
+        StFloatingData* fobj=FtObjs+cobj; 
         fobj->mkbound=fblock.GetMkType();
         fobj->begin=fblock.GetBegin();
         fobj->count=fblock.GetCount();
@@ -1267,6 +1301,7 @@ void JSph::VisuConfig()const{
   Log->Print(fun::VarStr("RunName",RunName));
   if(Simulate2D)Log->Print(fun::VarStr("Simulate2DPosY",Simulate2DPosY));
   Log->Print(fun::VarStr("Symmetry",Symmetry));  //<vs_syymmetry>
+  Log->Print(fun::VarStr("FtSaveAce",FtSaveAce)); //<ft_face>
   Log->Print(fun::VarStr("SavePosDouble",SvPosDouble));
   Log->Print(fun::VarStr("SvTimers",SvTimers));
   Log->Print(fun::VarStr("Boundary",GetBoundName(TBoundary)));

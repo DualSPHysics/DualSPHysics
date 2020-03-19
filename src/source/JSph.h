@@ -150,6 +150,9 @@ protected:
   bool Symmetry;         ///<Activates symmetry in plane y=0 (default=false).
   bool Stable;
   bool SvPosDouble;      ///<Indicates whether Pos is saved as double in bi4 files. | Indica si en los ficheros bi4 se guarda Pos como double.
+  //<ft_face_ini>
+  bool FtSaveAce;		 ///<Indicates whether linear and angular accelerations of each floating objects are saved. | Indica si las aceleraciones lineales y angulares se guardan. 
+  //<ft_face_end>
 
   std::string AppName;
   std::string Hardware;
@@ -383,6 +386,8 @@ protected:
   double SymplecticDtPre;  ///<Previous Dt to use with Symplectic.
   double DemDtForce;       ///<Dt for tangencial acceleration.
   StMaxNumbers MaxNumbers; ///<Maximum values (or almost) achieved during the simulation.
+
+  void SaveFtAce(double dt,bool predictor,StFtoForces *ftoforces); //<ft_face>
 
   void AllocMemoryFloating(unsigned ftcount,bool imposedvel=false);
   llong GetAllocMemoryCpu()const;

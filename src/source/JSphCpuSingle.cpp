@@ -881,6 +881,7 @@ void JSphCpuSingle::FtApplyImposedVel(StFtoForcesRes *ftoforcesres)const{
   }
 }//<vs_fttvel_end>
 
+
 //==============================================================================
 /// Process floating objects
 /// Procesa floating objects.
@@ -903,6 +904,9 @@ void JSphCpuSingle::RunFloating(double dt,bool predictor){
     if(FtLinearVel!=NULL)FtApplyImposedVel(FtoForcesRes); //<vs_fttvel>
     //-Applies motion constraints.
     if(FtConstraints)FtApplyConstraints(FtoForces,FtoForcesRes);
+
+    //-Saves face and fomegace                       //<ft_face>
+    if(FtSaveAce)SaveFtAce(dt,predictor,FtoForces);  //<ft_face>
 
     //-Run floating with Chrono library. //<vs_chroono_ini>
     if(ChronoObjects){
