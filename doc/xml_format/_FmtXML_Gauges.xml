@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<!-- *** DualSPHysics (18-12-2018) *** -->
+<!-- *** DualSPHysics (19-03-2020) *** -->
 <!-- *** class: JGaugeSystem *** -->
 <!------------------------------------------------------------------------------->
 <!------------------------------------------------------------------------------->
@@ -74,6 +74,16 @@
 		</force>
 	</gauges>
 </special>
-
+<!-------------------------------------------------------------------------------------->
+<!-------------------------------------------------------------------------------------->
+<!-- *** Attribute "active" in elements <gauges> and its child elements to enable *** --> 
+<!-- *** (using active="true" or active="1") or disable (using active="false"     *** -->
+<!-- *** or active="0"). It is an optional attribute and true by default.         *** -->
+<gauges active="true">
+	<velocity active="true"/>
+	<swl active="true"/>
+	<maxz active="true"/>
+	<force active="true"/>
+</gauges>
 
 

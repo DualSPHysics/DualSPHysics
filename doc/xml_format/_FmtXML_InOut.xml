@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<!-- *** DualSPHysics (19-01-2020) *** -->
+<!-- *** DualSPHysics (19-03-2020) *** -->
 <!-- *** class: JSphInOut *** -->
 <!------------------------------------------------------------------------------->
 <!------------------------------------------------------------------------------->
@@ -323,5 +323,13 @@
 		<zbottom value="0" comment="Bottom level of water (used for Hydrostatic option)" units_comment="m" />
 		<zsurf value="1" comment="Initial Z-surface" units_comment="m" />
 	</imposezsurf>
+<!---------------------------------------------------------------------------------->
+<!---------------------------------------------------------------------------------->
+<!-- *** Attribute "active" in elements <inout> and <inoutzone> to enable     *** --> 
+<!-- *** (using active="true" or active="1") or disable (using active="false" *** -->
+<!-- *** or active="0"). It is an optional attribute and true by default.     *** -->
+<inout active="true">
+	<inoutzone active="true"/>
+</inout>
 
 

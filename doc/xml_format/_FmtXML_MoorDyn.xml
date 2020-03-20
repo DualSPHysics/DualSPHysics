@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<!-- *** DualSPHysics (28-02-2020) *** -->
+<!-- *** DualSPHysics (19-03-2020) *** -->
 <!-- *** class: JMooredFloatings *** -->
 <!------------------------------------------------------------------------------->
 <!------------------------------------------------------------------------------->
@@ -16,6 +16,18 @@
 		<moordyn file="moordyn.xml" comment="MoorDyn configuration"/>
     </moorings>
 </special>
+<!------------------------------------------------------------------------------------------->
+<!------------------------------------------------------------------------------------------->
+<!-- *** Attribute "active" in elements <moorings>, <floating> and <moordyn> to enable *** --> 
+<!-- *** (using active="true" or active="1") or disable (using active="false"          *** -->
+<!-- *** or active="0"). It is an optional attribute and true by default.              *** -->
+<moorings active="true">
+	<mooredfloatings>
+		<floating active="true"/>
+	</mooredfloatings>
+	<moordyn active="true"/>
+</moorings>
+
 
 <?xml version="1.0" encoding="UTF-8" ?>
 <!-- *** MoorDyn+ (14-02-2020) *** -->

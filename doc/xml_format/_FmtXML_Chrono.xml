@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<!-- *** DualSPHysics [Chrono] v5.0.071 (28-02-2020) *** -->
+<!-- *** DualSPHysics [Chrono] v5.0.071 (19-03-2020) *** -->
 <!-- *** class: JChronoObjects *** -->
 <!------------------------------------------------------------------------------->
 <!------------------------------------------------------------------------------->
@@ -125,6 +125,21 @@
 	<!-- the normal ones. And "twoface" creates normals in both directions but this	 --> 
 	<!-- option may effect the results of the simulation.							   -->
 	<bodyfixed id="domain" mkbound="10" modelfile="AutoActual" modelnormal="invert" />
+</chrono>
+<!----------------------------------------------------------------------------------------->
+<!----------------------------------------------------------------------------------------->
+<!-- *** Attribute "active" in elements <chrono>, <bodyXXX> and <link_XXX> to enable *** --> 
+<!-- *** (using active="true" or active="1") or disable (using active="false"        *** -->
+<!-- *** or active="0"). It is an optional attribute and true by default.            *** -->
+<chrono active="true">
+	<bodyfixed active="true"/>
+	<bodyfloating active="true"/>
+	<link_linearspring active="true"/>
+	<link_coulombdamping active="true"/>
+	<link_hinge active="true"/>
+	<link_pointline active="true"/>
+	<link_spheric active="true"/>
+	<link_pulley active="true"/>
 </chrono>
 
 

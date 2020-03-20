@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<!-- *** DualSPHysics (27-12-2017) *** -->
+<!-- *** DualSPHysics (19-03-2020) *** -->
 <!-- *** class: JSphInitialize *** -->
 <!------------------------------------------------------------------------------->
 <!------------------------------------------------------------------------------->
-<!-- *** Examples for Initialize *** -->
+<!-- *** Initialize examples for fluid particles *** -->
 <special>
 	<initialize>
 		<fluidvelocity mkfluid="0">
@@ -20,3 +20,43 @@
 		</fluidvelocity>
 	</initialize>
 </special>
+<!------------------------------------------------------------------------------->
+<!------------------------------------------------------------------------------->
+<!-- *** Initialize examples for boundary normals using mDBC *** -->
+<special>
+	<initialize>
+		<boundnormal_set mkbound="1">
+			<normal x="1" y="0" z="0" />
+		</boundnormal_set>
+		<boundnormal_plane mkbound="2">
+			<point x="1" y="0" z="0" />
+			<normal x="1" y="0" z="0" />
+			<maxdisth v="2.0" comment="Maximum distance to boundary limit. It uses H*maxdisth (default=2)" />		
+		</boundnormal_plane>
+		<boundnormal_sphere mkbound="3">
+			<center x="1" y="0" z="0" /> 
+			<radius v="1" />
+			<inside v="true" comment="Boundary particles inside the sphere" />		
+			<maxdisth v="2.0" comment="Maximum distance to boundary limit. It uses H*maxdisth (default=2)" />		
+		</boundnormal_sphere>
+		<boundnormal_cylinder mkbound="4">
+			<center1 x="1" y="0" z="0" /> 
+			<center2 x="2" y="0" z="0" /> 
+			<radius v="1" />
+			<inside v="true" comment="Boundary particles inside the cylinder" />		
+			<maxdisth v="2.0" comment="Maximum distance to boundary limit. It uses H*maxdisth (default=2)" />		
+		</boundnormal_cylinder>
+	</initialize>
+</special>
+<!------------------------------------------------------------------------------------------>
+<!------------------------------------------------------------------------------------------>
+<!-- *** Attribute "active" in elements <initialize> and its child elements to enable *** --> 
+<!-- *** (using active="true" or active="1") or disable (using active="false"         *** -->
+<!-- *** or active="0"). It is an optional attribute and true by default.             *** -->
+<initialize active="true">
+	<fluidvelocity active="true"/>
+	<boundnormal_set active="true"/>
+	<boundnormal_plane active="true"/>
+	<boundnormal_sphere active="true"/>
+	<boundnormal_cylinder active="true"/>
+</initialize>

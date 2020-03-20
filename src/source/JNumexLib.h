@@ -20,6 +20,7 @@
 //:# Cambios:
 //:# =========
 //:# - Interfaz simplificado de JNumex. (17-03-2020)
+//:# - CreateVar() permite remplazar variables y en ese caso devuelve true. (20-03-2020)
 //:#############################################################################
 
 /// \file JNumexLib.h \brief Declares the class \ref JNumexLib.
@@ -62,19 +63,19 @@ public:
   JNumex* GetNuxPtr()const{ return(Nux); }
 
   /// Creates a new double variable.
-  void CreateVar(const std::string &name,bool cte,double value,std::string errtext="");
+  bool CreateVar(const std::string &name,bool cte,bool replace,double value,std::string errtext="");
   /// Creates new double variables (x,y,z) from tdouble3 value.
-  void CreateVar(const std::string &name,bool cte,const tdouble3 &value,std::string errtext="");
+  bool CreateVar(const std::string &name,bool cte,bool replace,const tdouble3 &value,std::string errtext="");
   /// Creates new double variables (x,y,z) from tfloat3 value.
-  void CreateVar(const std::string &name,bool cte,const tfloat3 &value,std::string errtext=""){
-    CreateVar(name,cte,ToTDouble3(value),errtext);
+  bool CreateVar(const std::string &name,bool cte,bool replace,const tfloat3 &value,std::string errtext=""){
+    return(CreateVar(name,cte,replace,ToTDouble3(value),errtext));
   }
   /// Creates a new boolean variable.
-  void CreateVar(const std::string &name,bool cte,bool value,std::string errtext=""){
-    CreateVar(name,cte,(value? 1.: 0.),errtext);
+  bool CreateVar(const std::string &name,bool cte,bool replace,bool value,std::string errtext=""){
+    return(CreateVar(name,cte,replace,(value? 1.: 0.),errtext));
   };
   /// Creates a new string variable.
-  void CreateVar(const std::string &name,bool cte,const std::string &value,std::string errtext="");
+  bool CreateVar(const std::string &name,bool cte,bool replace,const std::string &value,std::string errtext="");
 
   /// Returns number of variables.
   unsigned CountVars()const;

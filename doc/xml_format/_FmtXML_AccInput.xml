@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<!-- *** DualSPHysics (08-08-2017) *** -->
+<!-- *** DualSPHysics (19-03-2020) *** -->
 <!-- *** class: JSphAccInput *** -->
 <!------------------------------------------------------------------------------->
 <!------------------------------------------------------------------------------->
@@ -20,7 +20,13 @@
 		</accinput>
 	</accinputs>
 </special>
-
-
+<!---------------------------------------------------------------------------------->
+<!---------------------------------------------------------------------------------->
+<!-- *** Attribute "active" in elements <accinputs> and <accinput> to enable  *** --> 
+<!-- *** (using active="true" or active="1") or disable (using active="false" *** -->
+<!-- *** or active="0"). It is an optional attribute and true by default.     *** -->
+<accinputs active="true">
+	<accinput active="true"/>
+</accinputs>
 
 

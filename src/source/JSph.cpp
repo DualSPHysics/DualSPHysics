@@ -781,29 +781,31 @@ void JSph::LoadConfigVars(const JXml *xml){
   if(!JNumexLib::Available())Log->PrintWarning("Code for JNumex libary is not included in the current compilation, so user-defined expresions in XML file are not evaluated.");
   else{
     NuxLib=new JNumexLib();
-    //-Defines basic constant values on NuxLib object.
-    NuxLib->CreateVar("CaseName"  ,true,CaseName);
-    NuxLib->CreateVar("Data2D"    ,true,Simulate2D);
-    NuxLib->CreateVar("Data2DPosy",true,Simulate2DPosY);
-    NuxLib->CreateVar("H"         ,true,H);
-    NuxLib->CreateVar("B"         ,true,CteB);
-    NuxLib->CreateVar("Gamma"     ,true,Gamma);
-    NuxLib->CreateVar("Rhop0"     ,true,RhopZero);
-    NuxLib->CreateVar("Dp"        ,true,Dp);
-    NuxLib->CreateVar("Gravity"   ,true,Gravity);
-    NuxLib->CreateVar("MassFluid" ,true,MassFluid);
-    NuxLib->CreateVar("MassBound" ,true,MassBound);
     //-Loads user variables from XML.
     JSpaceUserVars uvars;
     uvars.LoadXml(xml,"case.execution.uservars",true);
     for(unsigned c=0;c<uvars.CountVars();c++){
       const JSpaceUserVars::StVar v=uvars.GetVar(c);
-      if(v.isnum)NuxLib->CreateVar(v.name,true,v.valuenum);
-      else       NuxLib->CreateVar(v.name,true,v.valuestr);
+      if(v.isnum)NuxLib->CreateVar(v.name,true,false,v.valuenum);
+      else       NuxLib->CreateVar(v.name,true,false,v.valuestr);
     }
+    //-Defines basic constant values on NuxLib object.
+    bool rep=false;
+    rep|=NuxLib->CreateVar("CaseName"  ,true,true,CaseName);
+    rep|=NuxLib->CreateVar("Data2D"    ,true,true,Simulate2D);
+    rep|=NuxLib->CreateVar("Data2DPosy",true,true,Simulate2DPosY);
+    rep|=NuxLib->CreateVar("H"         ,true,true,H);
+    rep|=NuxLib->CreateVar("B"         ,true,true,CteB);
+    rep|=NuxLib->CreateVar("Gamma"     ,true,true,Gamma);
+    rep|=NuxLib->CreateVar("Rhop0"     ,true,true,RhopZero);
+    rep|=NuxLib->CreateVar("Dp"        ,true,true,Dp);
+    rep|=NuxLib->CreateVar("Gravity"   ,true,true,Gravity);
+    rep|=NuxLib->CreateVar("MassFluid" ,true,true,MassFluid);
+    rep|=NuxLib->CreateVar("MassBound" ,true,true,MassBound);
+    if(rep)Log->PrintWarning("Some user-defined variable from XML was replaced by values of constants.");
     //-Shows list of available variables.
     //Log->Printf("List of available variables for user expressions: %s\n",NuxLib->ListVarsToStr().c_str());
-    Log->Printf("XML-Vars (ctes + uservars): %s",NuxLib->ListVarsToStr().c_str());
+    Log->Printf("XML-Vars (uservars + ctes): %s",NuxLib->ListVarsToStr().c_str());
   }
 }
 
@@ -813,8 +815,10 @@ void JSph::LoadConfigVars(const JXml *xml){
 void JSph::LoadConfigVarsExec(){
   if(NuxLib){
     const unsigned nv=NuxLib->CountVars();
-    NuxLib->CreateVar("TimeMax",true,TimeMax);
-    NuxLib->CreateVar("TimeOut",true,TimePart);
+    bool rep=false;
+    rep|=NuxLib->CreateVar("TimeMax",true,true,TimeMax);
+    rep|=NuxLib->CreateVar("TimeOut",true,true,TimePart);
+    if(rep)Log->PrintWarning("Some user-defined variable from XML was replaced by values of parameters.");
     //-Shows list of available variables.
     //Log->Printf("List of available variables for user expressions: %s\n",NuxLib->ListVarsToStr().c_str());
     Log->Printf("XML-Vars (parameters): %s",NuxLib->ListVarsToStr(nv).c_str());

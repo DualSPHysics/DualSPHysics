@@ -47,15 +47,15 @@ public:
   JNumex* GetNuxPtr()const{ return(NULL); }
 
   /// Creates a new double variable.
-  void CreateVar(const std::string &name,bool cte,double value,std::string errtext=""){}
+  bool CreateVar(const std::string &name,bool cte,bool replace,double value,std::string errtext=""){ return(false); }
   /// Creates new double variables (x,y,z) from tdouble3 value.
-  void CreateVar(const std::string &name,bool cte,const tdouble3 &value,std::string errtext=""){}
+  bool CreateVar(const std::string &name,bool cte,bool replace,const tdouble3 &value,std::string errtext=""){ return(false); }
   /// Creates new double variables (x,y,z) from tfloat3 value.
-  void CreateVar(const std::string &name,bool cte,const tfloat3 &value,std::string errtext=""){}
+  bool CreateVar(const std::string &name,bool cte,bool replace,const tfloat3 &value,std::string errtext=""){ return(false); }
   /// Creates a new boolean variable.
-  void CreateVar(const std::string &name,bool cte,bool value,std::string errtext=""){}
+  bool CreateVar(const std::string &name,bool cte,bool replace,bool value,std::string errtext=""){ return(false); }
   /// Creates a new string variable.
-  void CreateVar(const std::string &name,bool cte,const std::string &value,std::string errtext=""){}
+  bool CreateVar(const std::string &name,bool cte,bool replace,const std::string &value,std::string errtext=""){ return(false); }
 
   /// Returns number of variables.
   unsigned CountVars()const{ return(0); }

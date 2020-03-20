@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<!-- *** DualSPHysics (18-02-2019) *** -->
+<!-- *** DualSPHysics (19-03-2020) *** -->
 <!-- *** class: JRelaxZones *** -->
 <!------------------------------------------------------------------------------->
 <!------------------------------------------------------------------------------->
@@ -115,3 +115,14 @@
 		</rzwaves_uniform>
 	</relaxationzones>
 </special>
+<!----------------------------------------------------------------------------------------->
+<!----------------------------------------------------------------------------------------->
+<!-- *** Attribute "active" in elements <relaxationzones> and its child elements to  *** --> 
+<!-- *** enable (using active="true" or active="1") or disable (using active="false" *** -->
+<!-- *** or active="0"). It is an optional attribute and true by default.            *** -->
+<relaxationzones active="true">
+	<rzwaves_regular active="true"/>
+	<rzwaves_spectrum active="true"/>
+	<rzwaves_external_1d active="true"/>
+	<rzwaves_uniform active="true"/>
+</relaxationzones>

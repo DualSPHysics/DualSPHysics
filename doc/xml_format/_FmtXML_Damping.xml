@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<!-- *** DualSPHysics (23-06-2019) *** -->
+<!-- *** DualSPHysics (19-03-2020) *** -->
 <!-- *** class: JDamping *** -->
 <!------------------------------------------------------------------------------->
 <!------------------------------------------------------------------------------->
@@ -21,6 +21,14 @@
 		</dampingzone>
 	</damping>
 </special>
+<!---------------------------------------------------------------------------------->
+<!---------------------------------------------------------------------------------->
+<!-- *** Attribute "active" in elements <damping> and <dampingzone> to enable *** --> 
+<!-- *** (using active="true" or active="1") or disable (using active="false" *** -->
+<!-- *** or active="0"). It is an optional attribute and true by default.     *** -->
+<damping active="true">
+	<dampingzone active="true"/>
+</damping>
 
 
 
