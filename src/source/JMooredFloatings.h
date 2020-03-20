@@ -32,6 +32,8 @@
 //:# - Saves VTK files in MooringsVtk directory. (24-12-2019)
 //:# - Muestra warning en el caso de que la gravedad no sea definida solo en Z
 //:#   y error en caso de ser cero. (12-03-2020)
+//:# - Objeto JXml pasado como const para operaciones de lectura. (19-03-2020)  
+//:# - Comprueba opcion active en elementos de primer y segundo nivel. (19-03-2020)  
 //:#############################################################################
 
 /// \file JMooredFloatings.h \brief Declares the class \ref JMooredFloatings.
@@ -133,7 +135,7 @@ private:
   //double LastTimeOk;
 
   unsigned GetFloatingByMk(word mkbound)const;
-  void ReadXml(JXml *sxml,TiXmlElement* ele);
+  void ReadXml(const JXml *sxml,TiXmlElement* ele);
   void ConfigFloatings(unsigned ftcount,const StFloatingData *ftdata);
   void AllocFairMemory();
   void FreeFairMemory();
@@ -142,7 +144,7 @@ public:
   JMooredFloatings(JLog2 *log,std::string dircase,std::string casename,tfloat3 gravity);
   ~JMooredFloatings();
   void Reset();
-  void LoadXml(JXml *sxml,const std::string &place);
+  void LoadXml(const JXml *sxml,const std::string &place);
   void Config(unsigned ftcount,const StFloatingData *ftdata,JSphFtForcePoints *forcepoints);
 
   void VisuConfig(std::string txhead,std::string txfoot)const;

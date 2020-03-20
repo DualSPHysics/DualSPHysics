@@ -57,7 +57,7 @@ std::string JSpacePartBlock::GetNameXml()const{
 //==============================================================================
 /// Reads particles information in xml format.
 //==============================================================================
-void JSpacePartBlock::ReadXml(JXml *sxml,TiXmlElement* ele){
+void JSpacePartBlock::ReadXml(const JXml *sxml,TiXmlElement* ele){
   MkType=(word)sxml->GetAttributeUnsigned(ele,(Bound? "mkbound": "mkfluid")); 
   Begin=sxml->GetAttributeUnsigned(ele,"begin");
   Count=sxml->GetAttributeUnsigned(ele,"count");
@@ -172,7 +172,7 @@ double JSpacePartBlock::GetSubValueDouble(std::string name,std::string subname,b
 //==============================================================================
 /// Reads particles information in xml format.
 //==============================================================================
-void JSpacePartBlock_Moving::ReadXml(JXml *sxml,TiXmlElement* ele){
+void JSpacePartBlock_Moving::ReadXml(const JXml *sxml,TiXmlElement* ele){
   JSpacePartBlock::ReadXml(sxml,ele);
   RefMotion=sxml->GetAttributeUnsigned(ele,"refmotion"); 
 }
@@ -218,7 +218,7 @@ JSpacePartBlock_Floating::JSpacePartBlock_Floating(const JSpaceProperties* prope
 /// Constructor from XML data.
 //==============================================================================
 JSpacePartBlock_Floating::JSpacePartBlock_Floating(const JSpaceProperties* properties
-  ,JXml *sxml,TiXmlElement* ele):JSpacePartBlock(properties,TpPartFloating,"Floating")
+  ,const JXml *sxml,TiXmlElement* ele):JSpacePartBlock(properties,TpPartFloating,"Floating")
 {
   LinearVel=NULL; AngularVel=NULL; //<vs_fttvel>
   ReadXml(sxml,ele);
@@ -237,7 +237,7 @@ JSpacePartBlock_Floating::~JSpacePartBlock_Floating(){
 //==============================================================================
 /// Reads particles information in xml format.
 //==============================================================================
-void JSpacePartBlock_Floating::ReadXml(JXml *sxml,TiXmlElement* ele){
+void JSpacePartBlock_Floating::ReadXml(const JXml *sxml,TiXmlElement* ele){
   JSpacePartBlock::ReadXml(sxml,ele);
   Massbody=sxml->ReadElementDouble(ele,"massbody","value");
   Masspart=sxml->ReadElementDouble(ele,"masspart","value");
@@ -446,9 +446,9 @@ void JSpaceParts::SaveFileXml(const std::string &file,const std::string &path,bo
 //==============================================================================
 /// Loads particles information from the object XML.
 //==============================================================================
-void JSpaceParts::LoadXml(JXml *sxml,const std::string &place){
+void JSpaceParts::LoadXml(const JXml *sxml,const std::string &place){
   Reset();
-  TiXmlNode* node=sxml->GetNode(place,false);
+  TiXmlNode* node=sxml->GetNodeSimple(place);
   if(!node)RunException("LoadXml",std::string("Cannot find the element \'")+place+"\'.");
   ReadXml(sxml,node->ToElement());
 }
@@ -463,7 +463,7 @@ void JSpaceParts::SaveXml(JXml *sxml,const std::string &place)const{
 //==============================================================================
 /// Reads particles information in XML format.
 //==============================================================================
-void JSpaceParts::ReadXml(JXml *sxml,TiXmlElement* lis){
+void JSpaceParts::ReadXml(const JXml *sxml,TiXmlElement* lis){
   const char met[]="ReadXml";
   unsigned np=sxml->GetAttributeUnsigned(lis,"np");
   unsigned nb=sxml->GetAttributeUnsigned(lis,"nb");

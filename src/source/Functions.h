@@ -82,6 +82,7 @@
 //:# - Nueva funcion VectorFind().  (25-11-2019)
 //:# - Nueva funcion CompareVersions().  (08-12-2019)
 //:# - Error corregido en StrStripSlashes().  (04-01-2020)
+//:# - Nueva funcion VectorFindMask().  (17-03-2020)
 //:#############################################################################
 
 /// \file Functions.h \brief Declares basic/general functions for the entire application.
@@ -213,7 +214,8 @@ std::string StrSplitValue(const std::string mark,std::string text,unsigned value
 unsigned VectorSplitStr(const std::string mark,const std::string &text,std::vector<std::string> &vec);
 unsigned VectorSplitInt(const std::string mark,const std::string &text,std::vector<int> &vec);
 unsigned VectorSplitDouble(const std::string mark,const std::string &text,std::vector<double> &vec);
-unsigned VectorFind(const std::string &key,const std::vector<std::string> &vec);
+unsigned VectorFind(const std::string &key,const std::vector<std::string> &vec,unsigned first=0);
+unsigned VectorFindMask(const std::string &keymask,const std::vector<std::string> &vec,unsigned first=0);
 
 double GetFirstValueDouble(std::string tex,std::string pretex="");
 double GetFirstValueDouble(std::string tex,std::string &endtex,std::string pretex);
@@ -315,9 +317,6 @@ double*   ResizeAlloc(double   *data,unsigned ndata,unsigned newsize);
 tdouble2* ResizeAlloc(tdouble2 *data,unsigned ndata,unsigned newsize);
 tdouble3* ResizeAlloc(tdouble3 *data,unsigned ndata,unsigned newsize);
 tdouble4* ResizeAlloc(tdouble4 *data,unsigned ndata,unsigned newsize);
-
-float Magnitude(const tfloat3 &v);
-double Magnitude(const tdouble3 &v);
 
 bool IsInfinity(float v);
 bool IsInfinity(double v);

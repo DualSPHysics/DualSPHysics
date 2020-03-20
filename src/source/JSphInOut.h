@@ -21,6 +21,9 @@
 //:# Cambios:
 //:# =========
 //:# - Clase para gestionar nuevas condiciones inlet/outlet. (08-04-2017)
+//:# - Objeto JXml pasado como const para operaciones de lectura. (18-03-2020)  
+//:# - Uso de JNumexLib para evaluar expresiones del XML. (18-03-2020)  
+//:# - Comprueba opcion active en elementos de primer y segundo nivel. (18-03-2020)  
 //:#############################################################################
 
 /// \file JSphInOut.h \brief Declares the class \ref JSphInOut.
@@ -48,6 +51,7 @@ class JWaveTheoryReg;
 class JSphMk;
 class JSphPartsInit;
 class JSphGpuSingle;
+class JNumexLib;
 
 //##############################################################################
 //# XML format in _FmtXML_InOut.xml.
@@ -187,13 +191,13 @@ private:
   float  *PtzAux;        ///<Memory auxiliar to recude maximum zsurf on CPU memory [NptInit].
 #endif
 
-  void ReadXml(JXml *sxml,TiXmlElement* lis,const std::string &dirdatafile,const JSphPartsInit *partsdata);
+  void ReadXml(const JXml *sxml,TiXmlElement* lis,const std::string &dirdatafile,const JSphPartsInit *partsdata);
   void CalculateVelMinMax(float &velmin,float &velmax)const;
   void LoadDomain();
 
 public:
   JSphInOutZone(bool cpu,JLog2 *log,unsigned idzone,bool simulate2d,double simulate2dposy
-    ,double dp,const tdouble3 &posmin,const tdouble3 &posmax,JXml *sxml,TiXmlElement* ele
+    ,double dp,const tdouble3 &posmin,const tdouble3 &posmax,const JXml *sxml,TiXmlElement* ele
     ,const std::string &dirdatafile,const JSphPartsInit *partsdata);
   ~JSphInOutZone();
   void Reset();
@@ -360,10 +364,10 @@ private:
   float   *PtAuxDistg;
 #endif
 
-  void LoadXmlInit(JXml *sxml,const std::string &place);
-  void LoadFileXml(const std::string &file,const std::string &path,const JSphPartsInit *partsdata);
-  void LoadXml(JXml *sxml,const std::string &place,const JSphPartsInit *partsdata);
-  void ReadXml(JXml *sxml,TiXmlElement* ele,const JSphPartsInit *partsdata);
+  void LoadXmlInit(const JXml *sxml,const std::string &place);
+  void LoadFileXml(const std::string &file,const std::string &path,JNumexLib *nuxlib,const JSphPartsInit *partsdata);
+  void LoadXml(const JXml *sxml,const std::string &place,const JSphPartsInit *partsdata);
+  void ReadXml(const JXml *sxml,TiXmlElement* ele,const JSphPartsInit *partsdata);
 
   void ComputeFreeDomain();
   void SaveVtkDomains();
@@ -398,7 +402,8 @@ public:
 
   unsigned Config(double timestep,bool stable,bool simulate2d,double simulate2dposy
     ,byte periactive,float rhopzero,float cteb,float gamma,tfloat3 gravity,double dp
-    ,tdouble3 posmin,tdouble3 posmax,typecode codenewpart,const JSphPartsInit *partsdata);
+    ,tdouble3 posmin,tdouble3 posmax,typecode codenewpart,const JSphPartsInit *partsdata
+    ,JNumexLib *nuxlib);
     
   void LoadInitPartsData(unsigned idpfirst,unsigned npart,unsigned* idp,typecode* code,tdouble3* pos,tfloat4* velrhop);
   void InitCheckProximity(unsigned np,unsigned newnp,float scell,const tdouble3* pos,const unsigned *idp,typecode *code);

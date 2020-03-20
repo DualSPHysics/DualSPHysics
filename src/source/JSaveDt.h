@@ -25,6 +25,9 @@
 //:# - Error corregido cuando TimeFinish=0. (22-01-2018)
 //:# - Error corregido al generar excepcion por error en fichero. (22-01-2018)
 //:# - Se escriben las unidades en las cabeceras de los ficheros CSV. (26-04-2018)
+//:# - Improved exception managment. (19-03-2020)  
+//:# - Objeto JXml pasado como const para operaciones de lectura. (19-03-2020)  
+//:# - Comprueba opcion active en elementos de primer y segundo nivel. (19-03-2020)  
 //:#############################################################################
 
 /// \file JSaveDt.h \brief Declares the class \ref JSaveDt.
@@ -95,8 +98,8 @@ private:
   StValue LastDtf,LastDt1,LastDt2;
   StValue LastAceMax,LastViscDtMax,LastVelMax;
 
-  void ReadXml(JXml *sxml,TiXmlElement* ele);
-  void LoadXml(JXml *sxml,const std::string &place);
+  void ReadXml(const JXml *sxml,TiXmlElement* ele);
+  void LoadXml(const JXml *sxml,const std::string &place);
   void SaveFileValues();
   void SaveFileValuesEnd();
   void SaveFileAllDts();
@@ -106,7 +109,7 @@ public:
   JSaveDt(JLog2* log);
   ~JSaveDt();
   void Reset();
-  void Config(JXml *sxml,const std::string &place,double timemax,double timeout);
+  void Config(const JXml *sxml,const std::string &place,double timemax,double timeout);
   void VisuConfig(std::string txhead,std::string txfoot);
   void AddValues(double timestep,double dtfinal,double dt1,double dt2,double acemax,double viscdtmax,double velmax);
   bool GetFullInfo()const{ return(FullInfo); }

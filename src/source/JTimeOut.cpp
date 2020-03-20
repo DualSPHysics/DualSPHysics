@@ -72,7 +72,7 @@ void JTimeOut::CopyFrom(const JTimeOut* tout){
 //==============================================================================
 void JTimeOut::Config(double timeoutdef){
   Reset();
-  if(timeoutdef<=0)RunException("Config","Value timeout by default is invalid.");
+  if(timeoutdef<=0)Run_Exceptioon("Value timeout by default is invalid. It is not greater than zero.");
   AddTimeOut(0,timeoutdef);
   SpecialConfig=false;
 }
@@ -109,8 +109,7 @@ bool JTimeOut::AddTimeOut(double t,double tout){
 //==============================================================================
 /// Reads configuration from the XML node.
 //==============================================================================
-void JTimeOut::ReadXml(JXml *sxml,TiXmlElement* ele){
-  const char met[]="ReadXml";
+void JTimeOut::ReadXml(const JXml *sxml,TiXmlElement* ele){
   TiXmlElement* elet=ele->FirstChildElement("tout"); 
   while(elet){
     double t=sxml->GetAttributeDouble(elet,"time");
@@ -123,10 +122,10 @@ void JTimeOut::ReadXml(JXml *sxml,TiXmlElement* ele){
 //==============================================================================
 /// Loads configuration from XML object.
 //==============================================================================
-void JTimeOut::LoadXml(JXml *sxml,const std::string &place){
-  TiXmlNode* node=sxml->GetNode(place,false);
-  //if(!node)RunException("LoadXml",std::string("Cannot find the element \'")+place+"\'.");
-  if(node)ReadXml(sxml,node->ToElement());
+void JTimeOut::LoadXml(const JXml *sxml,const std::string &place){
+  TiXmlNode* node=sxml->GetNodeSimple(place);
+  //if(!node)Run_Exception(string("Cannot find the element \'")+place+"\'.");
+  if(sxml->CheckNodeActive(node))ReadXml(sxml,node->ToElement());
 }
 
 //==============================================================================

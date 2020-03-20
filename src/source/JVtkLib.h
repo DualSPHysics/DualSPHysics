@@ -37,8 +37,7 @@
 #include <cstring>
 #include <string>
 #include <vector>
-
-//#define DISABLE_VTKLIB     ///<It allows compile without VTK library.
+#include "JVtkLibDef.h"      //Defines DISABLE_VTKLIB to compile without VTK library.
 
 //-Defines for normal exceptions for static methods.
 #ifndef Run_ExceptioonSta

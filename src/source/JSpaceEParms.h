@@ -28,6 +28,9 @@
 //:# - Nuevo metodo GetValueDouble3() para leer atributos tdouble3. (01-10-2015)
 //:# - Se muestran unidades de los parametros. (15-12-2015)
 //:# - Nueva definicion del dominio de simulacion. (22-03-2019)
+//:# - Objeto JXml pasado como const para operaciones de lectura. (17-03-2020)  
+//:# - Comprueba que los valores enteros y reales sean validos. (17-03-2020)  
+//:# - Improved exception managment. (18-03-2020)
 //:#############################################################################
 
 /// \file JSpaceEParms.h \brief Declares the class \ref JSpaceEParms.
@@ -84,12 +87,12 @@ private:
   std::string Posmaxx,Posmaxy,Posmaxz;
 
   int CheckPosValue(const std::string &value,bool isposmin,JSpaceEParmsPos &ps)const;
-  std::string ReadPosValue(JXml *sxml,TiXmlElement* ele,const std::string &name,const std::string &subname)const;
+  std::string ReadPosValue(const JXml *sxml,TiXmlElement* ele,const std::string &name,const std::string &subname)const;
 
   JSpaceEParmsItem* GetItemPointer(const std::string &key);
   std::string GetValueNum(const std::string &key,int num);
   std::string GetValue(const std::string &key);
-  void ReadXml(JXml *sxml,TiXmlElement* lis);
+  void ReadXml(const JXml *sxml,TiXmlElement* lis);
   void WriteXml(JXml *sxml,TiXmlElement* lis)const;
 public:
   JSpaceEParms();
@@ -123,7 +126,7 @@ public:
   JSpaceEParmsItem GetParm(unsigned pos)const;
   void LoadFileXml(const std::string &file,const std::string &path);
   void SaveFileXml(const std::string &file,const std::string &path,bool newfile=true)const;
-  void LoadXml(JXml *sxml,const std::string &place);
+  void LoadXml(const JXml *sxml,const std::string &place);
   void SaveXml(JXml *sxml,const std::string &place)const;
 };
 

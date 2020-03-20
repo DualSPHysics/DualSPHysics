@@ -24,12 +24,12 @@
  along with DualSPHysics. If not, see <http://www.gnu.org/licenses/>.
 
 
-DualSPHysics5 v5.0.082 (13-03-2020)
-====================================
+DualSPHysics5 [SaveFtAce] v5.0.085 (20-03-2020)
+================================================
 LoadDsphConfig> .../bin/windows/DsphConfig.xml
 Information about execution parameters:
 
-  DualSPHysics4 [name_case [dir_out]] [options]
+  DualSPHysics [name_case [dir_out]] [options]
 
   Options:
     -h          Shows information about parameters
@@ -112,8 +112,8 @@ Information about execution parameters:
      with the specified values
 
   Examples:
-    DualSPHysics4 case out_case -sv:binx,csv 
-    DualSPHysics4 -name case -dirout out_case -sv:binx,csv 
+    DualSPHysics case out_case -sv:binx,csv 
+    DualSPHysics -name case -dirout out_case -sv:binx,csv 
 
 Finished execution (code=0).
 

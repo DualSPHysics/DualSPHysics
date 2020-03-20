@@ -24,6 +24,8 @@
 //:# - Error corregido cargando <default><output>. (03-03-2017)
 //:# - Nueva opcion para calcular fuerzas sobre fixed o moving boundary. (20-11-2018)
 //:# - Gestion de excepciones mejorada.  (15-09-2019)
+//:# - Objeto JXml pasado como const para operaciones de lectura. (18-03-2020)  
+//:# - Comprueba opcion active en elementos de primer y segundo nivel. (18-03-2020)  
 //:#############################################################################
 
 /// \file JGaugeSystem.h \brief Declares the class \ref JGaugeSystem.
@@ -90,8 +92,8 @@ private:
   void LoadLinePoints(double coefdp,const tdouble3 &point1,const tdouble3 &point2,std::vector<tdouble3> &points,const std::string &ref)const;
   void LoadLinePoints(unsigned count,const tdouble3 &point1,const tdouble3 &point2,std::vector<tdouble3> &points,const std::string &ref)const;
   void LoadPoints(JXml *sxml,TiXmlElement* lis,std::vector<tdouble3> &points)const;
-  JGaugeItem::StDefault ReadXmlCommon(JXml *sxml,TiXmlElement* ele)const;
-  void ReadXml(JXml *sxml,TiXmlElement* ele,const JSphMk* mkinfo);
+  JGaugeItem::StDefault ReadXmlCommon(const JXml *sxml,TiXmlElement* ele)const;
+  void ReadXml(const JXml *sxml,TiXmlElement* ele,const JSphMk* mkinfo);
   void SaveVtkInitPoints()const;
 
 public:
@@ -104,7 +106,7 @@ public:
     ,double dp,tdouble3 posmin,tdouble3 posmax,float scell,unsigned hdiv,float h
     ,float massfluid,float massbound,float cs0,float cteb,float gamma,float rhopzero);
 
-  void LoadXml(JXml *sxml,const std::string &place,const JSphMk* mkinfo);
+  void LoadXml(const JXml *sxml,const std::string &place,const JSphMk* mkinfo);
   void VisuConfig(std::string txhead,std::string txfoot);
 
   bool GetSimulate2D()const{ return(Simulate2D); };

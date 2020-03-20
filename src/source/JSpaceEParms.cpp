@@ -78,7 +78,7 @@ void JSpaceEParms::Add(const std::string &key,const std::string &value,const std
 //==============================================================================
 void JSpaceEParms::SetValue(const std::string &key,const std::string &value){
   JSpaceEParmsItem* item=GetItemPointer(key);
-  if(!item)RunException("SetValue","The parameter to modify does not exist");
+  if(!item)Run_Exceptioon("The parameter to modify does not exist");
   item->value=value;
 }
 
@@ -87,7 +87,7 @@ void JSpaceEParms::SetValue(const std::string &key,const std::string &value){
 //==============================================================================
 void JSpaceEParms::SetComment(const std::string &key,const std::string &comment){
   JSpaceEParmsItem* item=GetItemPointer(key);
-  if(!item)RunException("SetComment","The parameter to modify does not exist");
+  if(!item)Run_Exceptioon("The parameter to modify does not exist");
   item->comment=comment;
 }
 
@@ -95,14 +95,13 @@ void JSpaceEParms::SetComment(const std::string &key,const std::string &comment)
 /// Modifies values Posminx, Posminy and Posminz.
 //==============================================================================
 void JSpaceEParms::SetPosmin(std::string x,std::string y,std::string z){
-  const char met[]="SetPosmin";
   const bool isposmin=true;
   JSpaceEParmsPos ps;
-  if(CheckPosValue(x,isposmin,ps))RunException(met,fun::PrintStr("The value posmin.x=\"%s\" is invalid.",x.c_str()));
+  if(CheckPosValue(x,isposmin,ps))Run_Exceptioon(fun::PrintStr("The value posmin.x=\"%s\" is invalid.",x.c_str()));
   Posminx=ps.textmod;
-  if(CheckPosValue(y,isposmin,ps))RunException(met,fun::PrintStr("The value posmin.y=\"%s\" is invalid.",y.c_str()));
+  if(CheckPosValue(y,isposmin,ps))Run_Exceptioon(fun::PrintStr("The value posmin.y=\"%s\" is invalid.",y.c_str()));
   Posminy=ps.textmod;
-  if(CheckPosValue(z,isposmin,ps))RunException(met,fun::PrintStr("The value posmin.z=\"%s\" is invalid.",z.c_str()));
+  if(CheckPosValue(z,isposmin,ps))Run_Exceptioon(fun::PrintStr("The value posmin.z=\"%s\" is invalid.",z.c_str()));
   Posminz=ps.textmod;
 }
 
@@ -110,14 +109,13 @@ void JSpaceEParms::SetPosmin(std::string x,std::string y,std::string z){
 /// Modifies values Posmaxx, Posmaxy and Posmaxz.
 //==============================================================================
 void JSpaceEParms::SetPosmax(std::string x,std::string y,std::string z){
-  const char met[]="SetPosmax";
   const bool isposmin=false;
   JSpaceEParmsPos ps;
-  if(CheckPosValue(x,isposmin,ps))RunException(met,fun::PrintStr("The value posmax.x=\"%s\" is invalid.",x.c_str()));
+  if(CheckPosValue(x,isposmin,ps))Run_Exceptioon(fun::PrintStr("The value posmax.x=\"%s\" is invalid.",x.c_str()));
   Posmaxx=ps.textmod;
-  if(CheckPosValue(y,isposmin,ps))RunException(met,fun::PrintStr("The value posmax.y=\"%s\" is invalid.",y.c_str()));
+  if(CheckPosValue(y,isposmin,ps))Run_Exceptioon(fun::PrintStr("The value posmax.y=\"%s\" is invalid.",y.c_str()));
   Posmaxy=ps.textmod;
-  if(CheckPosValue(z,isposmin,ps))RunException(met,fun::PrintStr("The value posmax.z=\"%s\" is invalid.",z.c_str()));
+  if(CheckPosValue(z,isposmin,ps))Run_Exceptioon(fun::PrintStr("The value posmax.z=\"%s\" is invalid.",z.c_str()));
   Posmaxz=ps.textmod;
 }
 
@@ -125,14 +123,13 @@ void JSpaceEParms::SetPosmax(std::string x,std::string y,std::string z){
 /// Returns values of Posminx, Posminy or Posminz.
 //==============================================================================
 JSpaceEParms::JSpaceEParmsPos JSpaceEParms::GetPosminValue(char key)const{
-  const char met[]="GetPosminValue";
   const bool isposmin=true;
   JSpaceEParmsPos ps;
   switch(key){
-    case 'x':  if(CheckPosValue(Posminx,isposmin,ps))RunException(met,fun::PrintStr("The value posmin.x=\"%s\" is invalid.",Posminx.c_str()));  break;
-    case 'y':  if(CheckPosValue(Posminy,isposmin,ps))RunException(met,fun::PrintStr("The value posmin.y=\"%s\" is invalid.",Posminy.c_str()));  break;
-    case 'z':  if(CheckPosValue(Posminz,isposmin,ps))RunException(met,fun::PrintStr("The value posmin.z=\"%s\" is invalid.",Posminz.c_str()));  break;
-    default:   RunException(met,fun::PrintStr("Key value \'%c\' is invalid.",key));
+    case 'x':  if(CheckPosValue(Posminx,isposmin,ps))Run_Exceptioon(fun::PrintStr("The value posmin.x=\"%s\" is invalid.",Posminx.c_str()));  break;
+    case 'y':  if(CheckPosValue(Posminy,isposmin,ps))Run_Exceptioon(fun::PrintStr("The value posmin.y=\"%s\" is invalid.",Posminy.c_str()));  break;
+    case 'z':  if(CheckPosValue(Posminz,isposmin,ps))Run_Exceptioon(fun::PrintStr("The value posmin.z=\"%s\" is invalid.",Posminz.c_str()));  break;
+    default:   Run_Exceptioon(fun::PrintStr("Key value \'%c\' is invalid.",key));
   }
   return(ps);
 }
@@ -141,14 +138,13 @@ JSpaceEParms::JSpaceEParmsPos JSpaceEParms::GetPosminValue(char key)const{
 /// Returns values of Posmaxx, Posmaxy or Posmaxz.
 //==============================================================================
 JSpaceEParms::JSpaceEParmsPos JSpaceEParms::GetPosmaxValue(char key)const{
-  const char met[]="GetPosmaxValue";
   const bool isposmin=false;
   JSpaceEParmsPos ps;
   switch(key){
-    case 'x':  if(CheckPosValue(Posmaxx,isposmin,ps))RunException(met,fun::PrintStr("The value posmax.x=\"%s\" is invalid.",Posminx.c_str()));  break;
-    case 'y':  if(CheckPosValue(Posmaxy,isposmin,ps))RunException(met,fun::PrintStr("The value posmax.y=\"%s\" is invalid.",Posminy.c_str()));  break;
-    case 'z':  if(CheckPosValue(Posmaxz,isposmin,ps))RunException(met,fun::PrintStr("The value posmax.z=\"%s\" is invalid.",Posminz.c_str()));  break;
-    default:   RunException(met,fun::PrintStr("Key value \'%c\' is invalid.",key));
+    case 'x':  if(CheckPosValue(Posmaxx,isposmin,ps))Run_Exceptioon(fun::PrintStr("The value posmax.x=\"%s\" is invalid.",Posminx.c_str()));  break;
+    case 'y':  if(CheckPosValue(Posmaxy,isposmin,ps))Run_Exceptioon(fun::PrintStr("The value posmax.y=\"%s\" is invalid.",Posminy.c_str()));  break;
+    case 'z':  if(CheckPosValue(Posmaxz,isposmin,ps))Run_Exceptioon(fun::PrintStr("The value posmax.z=\"%s\" is invalid.",Posminz.c_str()));  break;
+    default:   Run_Exceptioon(fun::PrintStr("Key value \'%c\' is invalid.",key));
   }
   return(ps);
 }
@@ -189,16 +185,22 @@ std::string JSpaceEParms::GetValue(const std::string &key){
 int JSpaceEParms::GetValueNumInt(const std::string &key,int num,bool optional,int valdef){
   int ret=valdef;
   std::string txval=GetValueNum(key,num);
-  if(!txval.empty())ret=atoi(txval.c_str());
-  else if(!optional)RunException("GetValueNumInt",std::string("The requested value \'")+key+"\' does not exist.");
+  if(!txval.empty()){
+    if(!fun::StrIsIntegerNumber(txval))Run_Exceptioon(string("The requested value \'")+key+"\' is not a valid integer number.");
+    ret=atoi(txval.c_str());
+  }
+  else if(!optional)Run_Exceptioon(string("The requested value \'")+key+"\' does not exist.");
   return(ret);
 }
 //==============================================================================
 double JSpaceEParms::GetValueNumDouble(const std::string &key,int num,bool optional,double valdef){
   double ret=valdef;
   std::string txval=GetValueNum(key,num);
-  if(!txval.empty())ret=atof(txval.c_str());
-  else if(!optional)RunException("GetValueNumDouble",std::string("The requested value \'")+key+"\' does not exist.");
+  if(!txval.empty()){
+    if(!fun::StrIsRealNumber(txval))Run_Exceptioon(string("The requested value \'")+key+"\' is not a valid real number.");
+    ret=atof(txval.c_str());
+  }
+  else if(!optional)Run_Exceptioon(string("The requested value \'")+key+"\' does not exist.");
   return(ret);
 }
 //==============================================================================
@@ -206,7 +208,7 @@ std::string JSpaceEParms::GetValueNumStr(const std::string &key,int num,bool opt
   std::string ret=valdef;
   std::string txval=GetValueNum(key,num);
   if(!txval.empty())ret=txval;
-  else if(!optional)RunException("GetValueNumStr",std::string("The requested value \'")+key+"\' does not exist.");
+  else if(!optional)Run_Exceptioon(string("The requested value \'")+key+"\' does not exist.");
   return(ret);
 }
 
@@ -222,7 +224,7 @@ JSpaceEParms::JSpaceEParmsItem* JSpaceEParms::GetItemPointer(const std::string &
 /// Returns a parameter in text format.
 //==============================================================================
 std::string JSpaceEParms::ToString(unsigned pos)const{
-  if(pos>=Count())RunException("ToString","The resquested parameter does not exist.");
+  if(pos>=Count())Run_Exceptioon("The resquested parameter does not exist.");
   JSpaceEParmsItem ite=List[pos];
   std::string tx=ite.key+"="+ite.value;
   if(ite.comment!=""){
@@ -236,7 +238,7 @@ std::string JSpaceEParms::ToString(unsigned pos)const{
 /// Returns the requested information of each parameter.
 //==============================================================================
 JSpaceEParms::JSpaceEParmsItem JSpaceEParms::GetParm(unsigned pos)const{
-  if(pos>=Count())RunException("GetParm","The requested parameter does not exist.");
+  if(pos>=Count())Run_Exceptioon("The requested parameter does not exist.");
   return(List[pos]);
 }
 //==============================================================================
@@ -261,10 +263,10 @@ void JSpaceEParms::SaveFileXml(const std::string &file,const std::string &path,b
 //==============================================================================
 /// Loads initial conditions of XML object.
 //==============================================================================
-void JSpaceEParms::LoadXml(JXml *sxml,const std::string &place){
+void JSpaceEParms::LoadXml(const JXml *sxml,const std::string &place){
   Reset();
-  TiXmlNode* node=sxml->GetNode(place,false);
-  if(!node)RunException("LoadXml",std::string("Cannot find the element \'")+place+"\'.");
+  TiXmlNode* node=sxml->GetNodeSimple(place);
+  if(!node)Run_Exceptioon(string("Cannot find the element \'")+place+"\'.");
   ReadXml(sxml,node->ToElement());
 }
 
@@ -321,10 +323,9 @@ int JSpaceEParms::CheckPosValue(const std::string &value,bool isposmin,JSpaceEPa
 //==============================================================================
 /// Checks format error and returns an improved string.
 //==============================================================================
-std::string JSpaceEParms::ReadPosValue(JXml *sxml,TiXmlElement* ele
+std::string JSpaceEParms::ReadPosValue(const JXml *sxml,TiXmlElement* ele
   ,const std::string &name,const std::string &subname)const
 {
-  const char met[]="ReadPosValue";
   const string value=sxml->ReadElementStr(ele,name,subname,true,"default");
   const bool isposmin=(name=="posmin");
   JSpaceEParmsPos ps;
@@ -332,14 +333,14 @@ std::string JSpaceEParms::ReadPosValue(JXml *sxml,TiXmlElement* ele
   if(error){
     const string errtext=fun::PrintStr("is invalid in %s=\"%s\"",(name+"."+subname).c_str(),value.c_str());
     const string errfile=sxml->ErrGetFileRow(ele);
-    if(error==1)RunException(met,fun::PrintStr("The use of default %s",errtext.c_str()),errfile);
-    else if(error==2)RunException(met,fun::PrintStr("The use of %% %s",errtext.c_str()),errfile);
-    else if(error==3)RunException(met,fun::PrintStr("Number %s",errtext.c_str()),errfile);
+    if(error==1)Run_ExceptioonFile(fun::PrintStr("The use of default %s",errtext.c_str()),errfile);
+    else if(error==2)Run_ExceptioonFile(fun::PrintStr("The use of %% %s",errtext.c_str()),errfile);
+    else if(error==3)Run_ExceptioonFile(fun::PrintStr("Number %s",errtext.c_str()),errfile);
     else if(error==4){
-      if(isposmin)RunException(met,fun::PrintStr("The sign + %s to increase the domain.",errtext.c_str()),errfile);
-      else        RunException(met,fun::PrintStr("The sign - %s to increase the domain.",errtext.c_str()),errfile);
+      if(isposmin)Run_ExceptioonFile(fun::PrintStr("The sign + %s to increase the domain.",errtext.c_str()),errfile);
+      else        Run_ExceptioonFile(fun::PrintStr("The sign - %s to increase the domain.",errtext.c_str()),errfile);
     }
-    else RunException(met,fun::PrintStr("Format error %s",errtext.c_str()),errfile);
+    else Run_ExceptioonFile(fun::PrintStr("Format error %s",errtext.c_str()),errfile);
   }
   return(ps.textmod);
 }
@@ -347,10 +348,20 @@ std::string JSpaceEParms::ReadPosValue(JXml *sxml,TiXmlElement* ele
 //==============================================================================
 /// Reads list of initial conditions in the XML node.
 //==============================================================================
-void JSpaceEParms::ReadXml(JXml *sxml,TiXmlElement* lis){
+void JSpaceEParms::ReadXml(const JXml *sxml,TiXmlElement* lis){
+  sxml->CheckElementNames(lis,true,"*parameter simulationdomain");
   TiXmlElement* ele=lis->FirstChildElement("parameter"); 
   while(ele){
-    Add(sxml->GetAttributeStr(ele,"key"),sxml->GetAttributeStr(ele,"value"),sxml->GetAttributeStr(ele,"comment",true),sxml->GetAttributeStr(ele,"units_comment",true));
+    const string key=sxml->GetAttributeStr(ele,"key");
+    const string comment=sxml->GetAttributeStr(ele,"comment",true);
+    const string units=sxml->GetAttributeStr(ele,"units_comment",true);
+    string valuestr=sxml->GetAttributeStr(ele,"value");
+    //-Reads numeric values from XML as double values.
+    if(!valuestr.empty() && valuestr[0]=='#' && int(valuestr.find(':'))<0){//-Ignores multiple values (v0:v1:v2).
+      double v=sxml->GetAttributeDouble(ele,"value");
+      valuestr=fun::DoubleStr(v);
+    }
+    Add(key,valuestr,comment,units);
     ele=ele->NextSiblingElement("parameter");
   }
   if(sxml->ExistsElement(lis,"simulationdomain")){

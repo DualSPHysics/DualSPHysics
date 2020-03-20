@@ -59,101 +59,102 @@ void JDamping::Reset(){
 //==============================================================================
 /// Loads initial conditions of XML object.
 //==============================================================================
-void JDamping::LoadXml(JXml *sxml,const std::string &place){
+void JDamping::LoadXml(const JXml *sxml,const std::string &place){
   List.clear();
-  TiXmlNode* node=sxml->GetNode(place,false);
-  if(!node)RunException("LoadXml",std::string("Cannot find the element \'")+place+"\'.");
-  ReadXml(sxml,node->ToElement());
+  TiXmlNode* node=sxml->GetNodeSimple(place,false);
+  if(!node)Run_Exceptioon(std::string("Cannot find the element \'")+place+"\'.");
+  if(sxml->CheckNodeActive(node))ReadXml(sxml,node->ToElement());
 }
 
 //==============================================================================
 /// Reads list of initial conditions in the XML node.
 //==============================================================================
-void JDamping::ReadXml(JXml *sxml,TiXmlElement* lis){
-  const char met[]="ReadXml";
+void JDamping::ReadXml(const JXml *sxml,TiXmlElement* lis){
   //-Loads damping zones.
   TiXmlElement* ele=lis->FirstChildElement("dampingzone"); 
   while(ele){
-    StDamping da;
-    memset(&da,0,sizeof(StDamping));
-    da.limitmin=sxml->ReadElementDouble3(ele,"limitmin");
-    da.limitmax=sxml->ReadElementDouble3(ele,"limitmax");
-    da.overlimit=sxml->ReadElementFloat(ele,"overlimit","value");
-    da.redumax=sxml->ReadElementFloat(ele,"redumax","value",true,10);
-    da.factorxyz=TFloat3(1);
-    if(sxml->ExistsElement(ele,"factorxyz")){
-      TiXmlElement* elec=sxml->GetFirstElement(ele,"factorxyz",true);
-      da.factorxyz.x=sxml->GetAttributeFloat(elec,"x",true,1.f);
-      da.factorxyz.y=sxml->GetAttributeFloat(elec,"y",true,1.f);
-      da.factorxyz.z=sxml->GetAttributeFloat(elec,"z",true,1.f);
-      da.factorxyz=MinValues(da.factorxyz,TFloat3(1.f));
-      da.factorxyz=MaxValues(da.factorxyz,TFloat3(0));
-    }
-    //-Loads domain limits.
-    da.usedomain=false;
-    TiXmlElement* dom=ele->FirstChildElement("domain");
-    if(dom){
-      da.usedomain=true;
-      //-Obtains minimum and maximum Z.
-      da.domzmin=sxml->ReadElementDouble(ele,"domain","zmin");
-      da.domzmax=sxml->ReadElementDouble(ele,"domain","zmax");
-      //-Obtains limit points.
-      tdouble2 vp[4];
-      vp[0].x=sxml->ReadElementDouble(dom,"point1","x");
-      vp[0].y=sxml->ReadElementDouble(dom,"point1","y");
-      vp[1].x=sxml->ReadElementDouble(dom,"point2","x");
-      vp[1].y=sxml->ReadElementDouble(dom,"point2","y");
-      vp[2].x=sxml->ReadElementDouble(dom,"point3","x");
-      vp[2].y=sxml->ReadElementDouble(dom,"point3","y");
-      vp[3].x=sxml->ReadElementDouble(dom,"point4","x");
-      vp[3].y=sxml->ReadElementDouble(dom,"point4","y");
-      da.dompt0=vp[0];
-      da.dompt1=vp[1];
-      da.dompt2=vp[2];
-      da.dompt3=vp[3];
-      //-Sorts points 1-3 depending on the angle with the point 0.
-      //-Ordena puntos 1-3 en funcion del angulo con el punto 0.
-      double angles[4];
-      for(unsigned c=1;c<4;c++){
-        angles[c]=atan2((vp[0].y-vp[c].y),(vp[0].x-vp[c].x))*TODEG; 
-        if(angles[c]<0)angles[c]+=360.;
-        //:printf(" pt=(%s) - pt_%d=(%s) ang:%g\n",fun::Double3Str(vp[0]).c_str(),c,fun::Double3Str(vp[c]).c_str(),angles[c]);
+    if(sxml->CheckElementActive(ele)){
+      StDamping da;
+      memset(&da,0,sizeof(StDamping));
+      da.limitmin=sxml->ReadElementDouble3(ele,"limitmin");
+      da.limitmax=sxml->ReadElementDouble3(ele,"limitmax");
+      da.overlimit=sxml->ReadElementFloat(ele,"overlimit","value");
+      da.redumax=sxml->ReadElementFloat(ele,"redumax","value",true,10);
+      da.factorxyz=TFloat3(1);
+      if(sxml->ExistsElement(ele,"factorxyz")){
+        TiXmlElement* elec=sxml->GetFirstElement(ele,"factorxyz",true);
+        da.factorxyz.x=sxml->GetAttributeFloat(elec,"x",true,1.f);
+        da.factorxyz.y=sxml->GetAttributeFloat(elec,"y",true,1.f);
+        da.factorxyz.z=sxml->GetAttributeFloat(elec,"z",true,1.f);
+        da.factorxyz=MinValues(da.factorxyz,TFloat3(1.f));
+        da.factorxyz=MaxValues(da.factorxyz,TFloat3(0));
       }
-      for(unsigned c=1;c<3;c++)for(unsigned c2=c+1;c2<4;c2++)if(angles[c]>angles[c2]){
-        double aux=angles[c]; angles[c]=angles[c2]; angles[c2]=aux;
-        tdouble2 pt=vp[c]; vp[c]=vp[c2]; vp[c2]=pt;
-      }
-      //:for(unsigned c=1;c<4;c++)printf("++ pt=(%s) - pt=(%s) ang:%g\n",fun::Double3Str(vp[0]).c_str(),fun::Double3Str(vp[c]).c_str(),angles[c]);
+      //-Loads domain limits.
+      da.usedomain=false;
+      TiXmlElement* dom=ele->FirstChildElement("domain");
+      if(dom){
+        da.usedomain=true;
+        //-Obtains minimum and maximum Z.
+        da.domzmin=sxml->ReadElementDouble(ele,"domain","zmin");
+        da.domzmax=sxml->ReadElementDouble(ele,"domain","zmax");
+        //-Obtains limit points.
+        tdouble2 vp[4];
+        vp[0].x=sxml->ReadElementDouble(dom,"point1","x");
+        vp[0].y=sxml->ReadElementDouble(dom,"point1","y");
+        vp[1].x=sxml->ReadElementDouble(dom,"point2","x");
+        vp[1].y=sxml->ReadElementDouble(dom,"point2","y");
+        vp[2].x=sxml->ReadElementDouble(dom,"point3","x");
+        vp[2].y=sxml->ReadElementDouble(dom,"point3","y");
+        vp[3].x=sxml->ReadElementDouble(dom,"point4","x");
+        vp[3].y=sxml->ReadElementDouble(dom,"point4","y");
+        da.dompt0=vp[0];
+        da.dompt1=vp[1];
+        da.dompt2=vp[2];
+        da.dompt3=vp[3];
+        //-Sorts points 1-3 depending on the angle with the point 0.
+        //-Ordena puntos 1-3 en funcion del angulo con el punto 0.
+        double angles[4];
+        for(unsigned c=1;c<4;c++){
+          angles[c]=atan2((vp[0].y-vp[c].y),(vp[0].x-vp[c].x))*TODEG; 
+          if(angles[c]<0)angles[c]+=360.;
+          //:printf(" pt=(%s) - pt_%d=(%s) ang:%g\n",fun::Double3Str(vp[0]).c_str(),c,fun::Double3Str(vp[c]).c_str(),angles[c]);
+        }
+        for(unsigned c=1;c<3;c++)for(unsigned c2=c+1;c2<4;c2++)if(angles[c]>angles[c2]){
+          double aux=angles[c]; angles[c]=angles[c2]; angles[c2]=aux;
+          tdouble2 pt=vp[c]; vp[c]=vp[c2]; vp[c2]=pt;
+        }
+        //:for(unsigned c=1;c<4;c++)printf("++ pt=(%s) - pt=(%s) ang:%g\n",fun::Double3Str(vp[0]).c_str(),fun::Double3Str(vp[c]).c_str(),angles[c]);
 
-      //-Calculates lateral planes.
-      //-Calcula planos laterales.
-      const tdouble3 vp0=TDouble3(vp[0].x,vp[0].y,0);
-      const tdouble3 vp1=TDouble3(vp[1].x,vp[1].y,0);
-      const tdouble3 vp2=TDouble3(vp[2].x,vp[2].y,0);
-      const tdouble3 vp3=TDouble3(vp[3].x,vp[3].y,0);
-      da.dompla0=fgeo::Plane3Pt(vp0,vp1,TDouble3(vp1.x,vp1.y,1));
-      da.dompla1=fgeo::Plane3Pt(vp1,vp2,TDouble3(vp2.x,vp2.y,1));
-      da.dompla2=fgeo::Plane3Pt(vp2,vp3,TDouble3(vp3.x,vp3.y,1));
-      da.dompla3=fgeo::Plane3Pt(vp3,vp0,TDouble3(vp0.x,vp0.y,1));
-      //:tdouble3 pt=sxml->ReadElementDouble3(ele,"pt");
-      //:printf("++> pt=(%s)\n",fun::Double3Str(pt).c_str());
-      //:printf("++> pla0:%f\n",fgeo::PlanePoint(da.dompla0,pt));
-      //:printf("++> pla1:%f\n",fgeo::PlanePoint(da.dompla1,pt));
-      //:printf("++> pla2:%f\n",fgeo::PlanePoint(da.dompla2,pt));
-      //:printf("++> pla3:%f\n",fgeo::PlanePoint(da.dompla3,pt));
-      //:bool inside=(fgeo::PlanePoint(da.dompla0,pt)<=0 && fgeo::PlanePoint(da.dompla1,pt)<=0 && fgeo::PlanePoint(da.dompla2,pt)<=0 && fgeo::PlanePoint(da.dompla3,pt)<=0);
-      //:if(inside)printf("++> DENTRO\n"); else printf("++> fuera\n");
-      //:exit(1);
+        //-Calculates lateral planes.
+        //-Calcula planos laterales.
+        const tdouble3 vp0=TDouble3(vp[0].x,vp[0].y,0);
+        const tdouble3 vp1=TDouble3(vp[1].x,vp[1].y,0);
+        const tdouble3 vp2=TDouble3(vp[2].x,vp[2].y,0);
+        const tdouble3 vp3=TDouble3(vp[3].x,vp[3].y,0);
+        da.dompla0=fgeo::Plane3Pt(vp0,vp1,TDouble3(vp1.x,vp1.y,1));
+        da.dompla1=fgeo::Plane3Pt(vp1,vp2,TDouble3(vp2.x,vp2.y,1));
+        da.dompla2=fgeo::Plane3Pt(vp2,vp3,TDouble3(vp3.x,vp3.y,1));
+        da.dompla3=fgeo::Plane3Pt(vp3,vp0,TDouble3(vp0.x,vp0.y,1));
+        //:tdouble3 pt=sxml->ReadElementDouble3(ele,"pt");
+        //:printf("++> pt=(%s)\n",fun::Double3Str(pt).c_str());
+        //:printf("++> pla0:%f\n",fgeo::PlanePoint(da.dompla0,pt));
+        //:printf("++> pla1:%f\n",fgeo::PlanePoint(da.dompla1,pt));
+        //:printf("++> pla2:%f\n",fgeo::PlanePoint(da.dompla2,pt));
+        //:printf("++> pla3:%f\n",fgeo::PlanePoint(da.dompla3,pt));
+        //:bool inside=(fgeo::PlanePoint(da.dompla0,pt)<=0 && fgeo::PlanePoint(da.dompla1,pt)<=0 && fgeo::PlanePoint(da.dompla2,pt)<=0 && fgeo::PlanePoint(da.dompla3,pt)<=0);
+        //:if(inside)printf("++> DENTRO\n"); else printf("++> fuera\n");
+        //:exit(1);
+      }
+      //-Processes data entry.
+      //-Procesa entrada de datos.
+      {
+        tdouble3 pt=da.limitmin;
+        tdouble3 vec=da.limitmax-da.limitmin;
+        da.dist=(float)fgeo::PointDist(vec);
+        da.plane=fgeo::PlanePtVec(pt,vec);
+      }
+      List.push_back(da);
     }
-    //-Processes data entry.
-    //-Procesa entrada de datos.
-    {
-      tdouble3 pt=da.limitmin;
-      tdouble3 vec=da.limitmax-da.limitmin;
-      da.dist=(float)fgeo::PointDist(vec);
-      da.plane=fgeo::PlanePtVec(pt,vec);
-    }
-    List.push_back(da);
     ele=ele->NextSiblingElement("dampingzone");
   }
   SaveVtkConfig(Dp);
@@ -229,7 +230,7 @@ void JDamping::SaveVtkConfig(double dp)const{
 /// Devuelve la informacion de un bloque de particulas.
 //==============================================================================
 const JDamping::StDamping* JDamping::GetDampingZone(unsigned c)const{
-  if(c>=GetCount())RunException("GetDampingZone","The requested damping zone is not valid.");
+  if(c>=GetCount())Run_Exceptioon("The requested damping zone is not valid.");
   return(&(List[c]));
 }
 

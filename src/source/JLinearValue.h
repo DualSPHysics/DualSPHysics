@@ -38,6 +38,7 @@
 //:# - Permite cargar datos directamente del XML. (26-02-2019)
 //:# - Amplia SIZEMAX por defecto de 200k a 20M. (21-10-2019)
 //:# - Error corregido cuando se cargaban valores none del XML. (08-02-2020)
+//:# - Objeto JXml pasado como const para operaciones de lectura. (17-03-2020)  
 //:#############################################################################
 
 #include "JObject.h"
@@ -136,7 +137,7 @@ public:
 
   //-Loads or saves on XML file.
 #ifdef JLinearValue_UseJXml
-  void ReadXmlValues(JXml *sxml,TiXmlElement* ele,std::string name
+  void ReadXmlValues(const JXml *sxml,TiXmlElement* ele,std::string name
     ,std::string subname,std::string attributes);
   TiXmlElement* WriteXmlValues(JXml *sxml,TiXmlElement* ele,std::string name
     ,std::string subname,std::string attributes)const;

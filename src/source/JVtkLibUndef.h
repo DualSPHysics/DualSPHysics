@@ -16,14 +16,6 @@
  You should have received a copy of the GNU Lesser General Public License along with DualSPHysics. If not, see <http://www.gnu.org/licenses/>. 
 */
 
-//:#############################################################################
-//:# Cambios:
-//:# =========
-//:# - Clase para generacion de ficheros VTK de particulas o formas. (10-12-2019)
-//:# - Permite compilar sin libreria de VTK. (13-12-2019)
-//:# - Nuevas funciones AddShapePolyLine(). (23-12-2019)
-//:#############################################################################
-
 /// \file JVtkLibUndef.h \brief Declares the empty class \ref JVtkLib.
 
 #ifndef _JVtkLibUndef_

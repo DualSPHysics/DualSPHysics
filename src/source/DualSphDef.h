@@ -37,7 +37,8 @@
 //#define DISABLE_BSMODES    ///<compiles without advanced BlockSize modes.
 
 //-Removes dependencies from precompiled libraries.
-//#define DISABLE_VTKLIB     ///<It allows compile without VTK library.
+#include "JNumexLibDef.h"    //Defines DISABLE_NUMEXLIB to compile without Numex library.
+#include "JVtkLibDef.h"      //Defines DISABLE_VTKLIB to compile without VTK library.
 //#define DISABLE_CHRONO     ///<It allows compile without ChronoLib library (dsphchrono.dll, ChronoEngine.dll and ChronoEngine_parallel.dll).
 //#define DISABLE_CHRONO_OMP ///<It allows compile without parallel module of Chrono (ignores ChronoEngine_parallel.dll).
 //#define DISABLE_WAVEGEN    ///<It allows compile without Wave-Paddles, Multi-Layer Pistons and Relaxation Zones libraries.
@@ -49,6 +50,13 @@
   #define AVAILABLE_VTKLIB false
 #else
   #define AVAILABLE_VTKLIB true
+#endif
+
+//-Defines AVAILABLE_NUMEXLIB when this feature is compiled.
+#ifdef DISABLE_NUMEXLIB
+  #define AVAILABLE_NUMEXLIB false
+#else
+  #define AVAILABLE_NUMEXLIB true
 #endif
 
 //-Defines AVAILABLE_CHRONO and AVAILABLE_CHRONO_OMP when these features are compiled.

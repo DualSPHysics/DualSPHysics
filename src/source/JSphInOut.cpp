@@ -36,6 +36,7 @@
 #include "JVtkLib.h"
 #include "JSimpleNeigs.h"
 #include "JTimeControl.h"
+#include "JNumexLib.h"
 
 #ifdef _WITHGPU
   #include "FunctionsCuda.h"
@@ -56,7 +57,7 @@ using namespace std;
 /// Constructor.
 //==============================================================================
 JSphInOutZone::JSphInOutZone(bool cpu,JLog2 *log,unsigned idzone,bool simulate2d,double simulate2dposy
-  ,double dp,const tdouble3 &posmin,const tdouble3 &posmax,JXml *sxml,TiXmlElement* ele
+  ,double dp,const tdouble3 &posmin,const tdouble3 &posmax,const JXml *sxml,TiXmlElement* ele
   ,const std::string &dirdatafile,const JSphPartsInit *partsdata)
  :Cpu(cpu),Log(log),IdZone(idzone),Simulate2D(simulate2d),Simulate2DPosY(simulate2dposy)
  ,Dp(dp),MapRealPosMin(posmin),MapRealPosMax(posmax)
@@ -219,8 +220,8 @@ void JSphInOutZone::LoadDomain(){
 //==============================================================================
 /// Reads initial configuration in the XML node.
 //==============================================================================
-void JSphInOutZone::ReadXml(JXml *sxml,TiXmlElement* ele,const std::string &dirdatafile
-  ,const JSphPartsInit *partsdata)
+void JSphInOutZone::ReadXml(const JXml *sxml,TiXmlElement* ele
+  ,const std::string &dirdatafile,const JSphPartsInit *partsdata)
 {
   //-Checks old configuration.
   if(sxml->ExistsElement(ele,"userefilling"))Run_ExceptioonFile(fun::PrintStr("Inlet/outlet zone %d: <userefilling> is not supported by current inlet/outlet version.",IdZone),sxml->ErrGetFileRow(ele,"userefilling"));
@@ -963,8 +964,8 @@ void JSphInOut::Reset(){
 //==============================================================================
 /// Loads initial conditions of XML object.
 //==============================================================================
-void JSphInOut::LoadXmlInit(JXml *sxml,const std::string &place){
-  TiXmlNode* node=sxml->GetNode(place,false);
+void JSphInOut::LoadXmlInit(const JXml *sxml,const std::string &place){
+  TiXmlNode* node=sxml->GetNodeSimple(place,true);
   if(!node)Run_Exceptioon(std::string("Cannot find the element \'")+place+"\'.");
   TiXmlElement* ele=node->ToElement();
   //-Checks old configuration.
@@ -992,15 +993,17 @@ void JSphInOut::LoadXmlInit(JXml *sxml,const std::string &place){
   MkFluidList.clear();
   TiXmlElement* ele2=ele->FirstChildElement("inoutzone"); 
   while(ele2){
-    TiXmlElement* zone=ele2->FirstChildElement("zone2d");
-    if(!zone)zone=ele2->FirstChildElement("zone3d");
-    if(zone){
-      const unsigned mkfluid=sxml->ReadElementUnsigned(zone,"particles","mkfluid",true,UINT_MAX);
-      if(mkfluid!=UINT_MAX){
-        unsigned c=0;
-        for(;c<unsigned(MkFluidList.size()) && mkfluid!=MkFluidList[c];c++);
-        if(c<unsigned(MkFluidList.size()))Run_Exceptioon(fun::PrintStr("Mkfluid=%u is used in several <inoutzone> definitions.",mkfluid));
-        MkFluidList.push_back(mkfluid);
+    if(sxml->CheckElementActive(ele2)){
+      TiXmlElement* zone=ele2->FirstChildElement("zone2d");
+      if(!zone)zone=ele2->FirstChildElement("zone3d");
+      if(zone){
+        const unsigned mkfluid=sxml->ReadElementUnsigned(zone,"particles","mkfluid",true,UINT_MAX);
+        if(mkfluid!=UINT_MAX){
+          unsigned c=0;
+          for(;c<unsigned(MkFluidList.size()) && mkfluid!=MkFluidList[c];c++);
+          if(c<unsigned(MkFluidList.size()))Run_Exceptioon(fun::PrintStr("Mkfluid=%u is used in several <inoutzone> definitions.",mkfluid));
+          MkFluidList.push_back(mkfluid);
+        }
       }
     }
     ele2=ele2->NextSiblingElement("inoutzone");
@@ -1011,35 +1014,38 @@ void JSphInOut::LoadXmlInit(JXml *sxml,const std::string &place){
 /// Loads data of a file in XML format.
 //==============================================================================
 void JSphInOut::LoadFileXml(const std::string &file,const std::string &path
-  ,const JSphPartsInit *partsdata)
+  ,JNumexLib *nuxlib,const JSphPartsInit *partsdata)
 {
   JXml jxml;
   jxml.LoadFile(file);
+  jxml.SetNuxLib(nuxlib); //-Enables the use of NuxLib in XML configuration.
   LoadXml(&jxml,path,partsdata);
 }
 
 //==============================================================================
 /// Loads initial conditions of XML object.
 //==============================================================================
-void JSphInOut::LoadXml(JXml *sxml,const std::string &place,const JSphPartsInit *partsdata){
-  TiXmlNode* node=sxml->GetNode(place,false);
+void JSphInOut::LoadXml(const JXml *sxml,const std::string &place,const JSphPartsInit *partsdata){
+  TiXmlNode* node=sxml->GetNodeSimple(place);
   if(!node)Run_Exceptioon(std::string("Cannot find the element \'")+place+"\'.");
-  ReadXml(sxml,node->ToElement(),partsdata);
+  if(sxml->CheckNodeActive(node))ReadXml(sxml,node->ToElement(),partsdata);
 }
 
 //==============================================================================
 /// Reads list of initial conditions in the XML node.
 //==============================================================================
-void JSphInOut::ReadXml(JXml *sxml,TiXmlElement* lis,const JSphPartsInit *partsdata){
+void JSphInOut::ReadXml(const JXml *sxml,TiXmlElement* lis,const JSphPartsInit *partsdata){
   //-Loads inflow elements.
   const unsigned idmax=CODE_MASKTYPEVALUE-CODE_TYPE_FLUID_INOUT;
   if(idmax-CODE_TYPE_FLUID_INOUTNUM!=MaxZones-1)Run_Exceptioon("Maximum number of inlet/outlet zones is invalid.");
   TiXmlElement* ele=lis->FirstChildElement("inoutzone"); 
   while(ele){
-    const unsigned id=GetCount();
-    if(id>idmax)Run_Exceptioon("Maximum number of inlet/outlet zones has been reached.");
-    JSphInOutZone* iet=new JSphInOutZone(Cpu,Log,id,Simulate2D,Simulate2DPosY,Dp,MapRealPosMin,MapRealPosMax,sxml,ele,DirDataFile,partsdata);
-    List.push_back(iet);
+    if(sxml->CheckElementActive(ele)){
+      const unsigned id=GetCount();
+      if(id>idmax)Run_Exceptioon("Maximum number of inlet/outlet zones has been reached.");
+      JSphInOutZone* iet=new JSphInOutZone(Cpu,Log,id,Simulate2D,Simulate2DPosY,Dp,MapRealPosMin,MapRealPosMax,sxml,ele,DirDataFile,partsdata);
+      List.push_back(iet);
+    }
     ele=ele->NextSiblingElement("inoutzone");
   }
 }
@@ -1351,7 +1357,8 @@ void JSphInOut::SaveVtkVelGrid(){
 //==============================================================================
 unsigned JSphInOut::Config(double timestep,bool stable,bool simulate2d,double simulate2dposy
   ,byte periactive,float rhopzero,float cteb,float gamma,tfloat3 gravity,double dp
-  ,tdouble3 posmin,tdouble3 posmax,typecode codenewpart,const JSphPartsInit *partsdata)
+  ,tdouble3 posmin,tdouble3 posmax,typecode codenewpart,const JSphPartsInit *partsdata
+  ,JNumexLib *nuxlib)
 {
   Stable=stable;
   Simulate2D=simulate2d;
@@ -1367,7 +1374,7 @@ unsigned JSphInOut::Config(double timestep,bool stable,bool simulate2d,double si
   MapRealPosMin=posmin; MapRealPosMax=posmax;
   CodeNewPart=codenewpart;
   //-Loads Xml configuration.
-  LoadFileXml(XmlFile,XmlPath,partsdata);
+  LoadFileXml(XmlFile,XmlPath,nuxlib,partsdata);
   
   //-Calculates and saves domain zones.
   ComputeFreeDomain();

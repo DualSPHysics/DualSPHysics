@@ -228,7 +228,9 @@ const StAceInput& JSphAccInputMk::GetAccValues(double timestep){
 //==============================================================================
 /// Constructor.
 //==============================================================================
-JSphAccInput::JSphAccInput(JLog2* log,const std::string &dirdata,JXml *sxml,const std::string &place):Log(log),DirData(dirdata){
+JSphAccInput::JSphAccInput(JLog2* log,const std::string &dirdata,const JXml *sxml
+  ,const std::string &place):Log(log),DirData(dirdata)
+{
   ClassName="JSphAccInput";
   Reset();
   LoadXml(sxml,place);
@@ -263,10 +265,10 @@ bool JSphAccInput::ExistMk(word mkfluid)const{
 //==============================================================================
 /// Loads initial conditions of XML object.
 //==============================================================================
-void JSphAccInput::LoadXml(JXml *sxml,const std::string &place){
-  TiXmlNode* node=sxml->GetNode(place,false);
+void JSphAccInput::LoadXml(const JXml *sxml,const std::string &place){
+  TiXmlNode* node=sxml->GetNodeSimple(place);
   if(!node)Run_Exceptioon(std::string("Cannot find the element \'")+place+"\'.");
-  ReadXml(sxml,node->ToElement());
+  if(sxml->CheckNodeActive(node))ReadXml(sxml,node->ToElement());
 }
 
 //==============================================================================
@@ -276,13 +278,15 @@ void JSphAccInput::ReadXml(const JXml *sxml,TiXmlElement* lis){
   //-Loads list of inputs.
   TiXmlElement* ele=lis->FirstChildElement("accinput"); 
   while(ele){
-    word mkfluid=(word)sxml->ReadElementUnsigned(ele,"mkfluid","value");
-    tfloat3 acccentre=sxml->ReadElementFloat3(ele,"acccentre");
-    bool genabled=sxml->ReadElementBool(ele,"globalgravity","value");
-    std::string file=DirData+sxml->ReadElementStr(ele,"datafile","value");
-    if(ExistMk(mkfluid))Run_Exceptioon("An input already exists for the same mkfluid.");
-    JSphAccInputMk *input=new JSphAccInputMk(Log,mkfluid,genabled,acccentre,file);
-    Inputs.push_back(input);
+    if(sxml->CheckElementActive(ele)){
+      word mkfluid=(word)sxml->ReadElementUnsigned(ele,"mkfluid","value");
+      tfloat3 acccentre=sxml->ReadElementFloat3(ele,"acccentre");
+      bool genabled=sxml->ReadElementBool(ele,"globalgravity","value");
+      std::string file=DirData+sxml->ReadElementStr(ele,"datafile","value");
+      if(ExistMk(mkfluid))Run_Exceptioon("An input already exists for the same mkfluid.");
+      JSphAccInputMk *input=new JSphAccInputMk(Log,mkfluid,genabled,acccentre,file);
+      Inputs.push_back(input);
+    }
     ele=ele->NextSiblingElement("accinput");
   }
 }

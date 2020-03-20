@@ -839,13 +839,36 @@ unsigned VectorSplitDouble(const std::string mark,const std::string &text,std::v
 }
 
 //==============================================================================
-/// Loads string list in a vector and returns size of vector.
+/// Find string in a string vector vector since first position. 
+/// Returns UINT_MAX when it was not found.
 //==============================================================================
-unsigned VectorFind(const std::string &key,const std::vector<std::string> &vec){
-  unsigned c=0;
+unsigned VectorFind(const std::string &key,const std::vector<std::string> &vec
+  ,unsigned first)
+{
+  unsigned c=first;
   const unsigned size=unsigned(vec.size());
   for(;c<size && vec[c]!=key;c++);
   return(c<size? c: UINT_MAX);
+}
+
+//==============================================================================
+/// Find string mask (using *, ?, |) in a string vector vector since first position. 
+/// Returns UINT_MAX when it was not found.
+//==============================================================================
+unsigned VectorFindMask(const std::string &keymask,const std::vector<std::string> &vec
+  ,unsigned first)
+{
+  unsigned ret=UINT_MAX;
+  const unsigned size=unsigned(vec.size());
+  for(unsigned c=first;c<size && ret==UINT_MAX;c++){
+    const string v=vec[c];
+    //printf("---> v:[%s]  keymask:[%s]\n",v.c_str(),keymask.c_str());
+    const bool usemask=(int(keymask.find('?'))>=0 || int(keymask.find('*'))>=0 || int(keymask.find('|'))>=0);
+    if(!usemask && v==keymask)ret=c;
+    if(usemask && FileMask(v,keymask))ret=c;
+    //printf("---> usemask:%d  FileMask:%d\n",(usemask?1:0),FileMask(v,keymask)?1:0);
+  }
+  return(ret);
 }
 
 
@@ -1530,21 +1553,6 @@ tdouble4* ResizeAlloc(tdouble4 *data,unsigned ndata,unsigned newsize){
   if(ndata)memcpy(data2,data,sizeof(tdouble4)*ndata);
   delete[] data;
   return(data2);
-}
-
-
-//==============================================================================
-/// Returns magnitude of vector.
-//==============================================================================
-float Magnitude(const tfloat3 &v){
- return(sqrt(v.x*v.x+v.y*v.y+v.z*v.z));
-}
-
-//==============================================================================
-/// Returns magnitude of vector.
-//==============================================================================
-double Magnitude(const tdouble3 &v){
- return(sqrt(v.x*v.x+v.y*v.y+v.z*v.z));
 }
 
 

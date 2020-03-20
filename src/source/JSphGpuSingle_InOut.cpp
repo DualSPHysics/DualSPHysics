@@ -82,7 +82,9 @@ void JSphGpuSingle::InOutInit(double timestepini){
   if(PartBegin)Run_Exceptioon("Simulation restart not allowed when Inlet/Outlet is used.");
 
   //-Configures InOut zones and prepares new inout particles to create.
-  const unsigned newnp=InOut->Config(timestepini,Stable,Simulate2D,Simulate2DPosY,PeriActive,RhopZero,CteB,Gamma,Gravity,Dp,MapRealPosMin,MapRealPosMax,MkInfo->GetCodeNewFluid(),PartsInit);
+  const unsigned newnp=InOut->Config(timestepini,Stable,Simulate2D,Simulate2DPosY,PeriActive
+    ,RhopZero,CteB,Gamma,Gravity,Dp,MapRealPosMin,MapRealPosMax,MkInfo->GetCodeNewFluid()
+    ,PartsInit,NuxLib);
 
   //-Mark special fluid particles to ignore. | Marca las particulas fluidas especiales para ignorar.
   InOutIgnoreFluidDef(InOut->MkFluidList);

@@ -45,7 +45,8 @@ void JSphInitializeOp_FluidVel::Reset(){
 //==============================================================================
 /// Reads particles information in xml format.
 //==============================================================================
-void JSphInitializeOp_FluidVel::ReadXml(JXml *sxml,TiXmlElement* xele){
+void JSphInitializeOp_FluidVel::ReadXml(const JXml *sxml,TiXmlElement* xele){
+  sxml->CheckElementNames(xele,true,"direction velocity velocity2 velocity3");
   MkFluid=sxml->GetAttributeStr(xele,"mkfluid",true);
   Direction=sxml->ReadElementFloat3(xele,"direction");
   const byte vel1=(sxml->ExistsElement(xele,"velocity" )? 1: 0);
@@ -130,7 +131,8 @@ void JSphInitializeOp_FluidVel::GetConfig(std::vector<std::string> &lines)const{
 //==============================================================================
 /// Reads particles information in xml format.
 //==============================================================================
-void JSphInitializeOp_BoundNormalSet::ReadXml(JXml *sxml,TiXmlElement* xele){
+void JSphInitializeOp_BoundNormalSet::ReadXml(const JXml *sxml,TiXmlElement* xele){
+  sxml->CheckElementNames(xele,true,"normal");
   MkBound=sxml->GetAttributeStr(xele,"mkbound",true);
   Normal=sxml->ReadElementFloat3(xele,"normal");
 }
@@ -164,9 +166,9 @@ void JSphInitializeOp_BoundNormalSet::GetConfig(std::vector<std::string> &lines)
 //==============================================================================
 /// Reads particles information in xml format.
 //==============================================================================
-void JSphInitializeOp_BoundNormalPlane::ReadXml(JXml *sxml,TiXmlElement* xele){
-  MkBound=sxml->GetAttributeStr(xele,"mkbound",true);
+void JSphInitializeOp_BoundNormalPlane::ReadXml(const JXml *sxml,TiXmlElement* xele){
   sxml->CheckElementNames(xele,true,"point normal maxdisth");
+  MkBound=sxml->GetAttributeStr(xele,"mkbound",true);
   Point=sxml->ReadElementFloat3(xele,"point");
   Normal=sxml->ReadElementFloat3(xele,"normal");
   MaxDisteH=sxml->ReadElementFloat(xele,"maxdisth","v",true,2.f);
@@ -208,9 +210,9 @@ void JSphInitializeOp_BoundNormalPlane::GetConfig(std::vector<std::string> &line
 //==============================================================================
 /// Reads particles information in xml format.
 //==============================================================================
-void JSphInitializeOp_BoundNormalSphere::ReadXml(JXml *sxml,TiXmlElement* xele){
-  MkBound=sxml->GetAttributeStr(xele,"mkbound",true);
+void JSphInitializeOp_BoundNormalSphere::ReadXml(const JXml *sxml,TiXmlElement* xele){
   sxml->CheckElementNames(xele,true,"center radius inside maxdisth");
+  MkBound=sxml->GetAttributeStr(xele,"mkbound",true);
   Center=sxml->ReadElementFloat3(xele,"center");
   Radius=sxml->ReadElementFloat(xele,"radius","v");
   Inside=sxml->ReadElementBool(xele,"inside","v");
@@ -261,9 +263,9 @@ void JSphInitializeOp_BoundNormalSphere::GetConfig(std::vector<std::string> &lin
 //==============================================================================
 /// Reads particles information in xml format.
 //==============================================================================
-void JSphInitializeOp_BoundNormalCylinder::ReadXml(JXml *sxml,TiXmlElement* xele){
-  MkBound=sxml->GetAttributeStr(xele,"mkbound",true);
+void JSphInitializeOp_BoundNormalCylinder::ReadXml(const JXml *sxml,TiXmlElement* xele){
   sxml->CheckElementNames(xele,true,"center1 center2 radius inside maxdisth");
+  MkBound=sxml->GetAttributeStr(xele,"mkbound",true);
   Center1=sxml->ReadElementFloat3(xele,"center1");
   Center2=sxml->ReadElementFloat3(xele,"center2");
   Radius=sxml->ReadElementFloat(xele,"radius","v");
@@ -345,12 +347,12 @@ void JSphInitializeOp_BoundNormalCylinder::GetConfig(std::vector<std::string> &l
 //==============================================================================
 /// Constructor.
 //==============================================================================
-JSphInitialize::JSphInitialize(const std::string &file,float h,bool boundnormals)
+JSphInitialize::JSphInitialize(const JXml *sxml,const std::string &place,float h,bool boundnormals)
   :H(h),BoundNormals(boundnormals)
 {
   ClassName="JSphInitialize";
   Reset();
-  LoadFileXml(file,"case.execution.special.initialize");
+  LoadXml(sxml,place);
 }
 
 //==============================================================================
@@ -381,29 +383,29 @@ void JSphInitialize::LoadFileXml(const std::string &file,const std::string &path
 //==============================================================================
 /// Loads particles information from the object XML.
 //==============================================================================
-void JSphInitialize::LoadXml(JXml *sxml,const std::string &place){
+void JSphInitialize::LoadXml(const JXml *sxml,const std::string &place){
   Reset();
-  TiXmlNode* node=sxml->GetNode(place,false);
+  TiXmlNode* node=sxml->GetNodeSimple(place);
   //if(!node)Run_Exceptioon(std::string("Cannot find the element \'")+place+"\'.");
-  if(node)ReadXml(sxml,node->ToElement());
+  if(sxml->CheckNodeActive(node))ReadXml(sxml,node->ToElement());
 }
 
 //==============================================================================
 /// Reads particles information in XML format.
 //==============================================================================
-void JSphInitialize::ReadXml(JXml *sxml,TiXmlElement* lis){
-  //-Loads fluidvelocity elements.
+void JSphInitialize::ReadXml(const JXml *sxml,TiXmlElement* lis){
+  //-Loads elements.
   TiXmlElement* ele=lis->FirstChildElement(); 
   while(ele){
     string cmd=ele->Value();
-    if(cmd.length() && cmd[0]!='_'){
+    if(cmd.length() && cmd[0]!='_' && sxml->CheckElementActive(ele)){
       //printf("-----------> [%s]\n",cmd.c_str());
       if(cmd=="fluidvelocity"){ JSphInitializeOp_FluidVel *ope=new JSphInitializeOp_FluidVel(sxml,ele); Opes.push_back(ope); }
       //<vs_mddbc_ini>
-       else if(cmd=="boundnormal_set"     ){ if(BoundNormals){ JSphInitializeOp_BoundNormalSet      *ope=new JSphInitializeOp_BoundNormalSet     (sxml,ele);   Opes.push_back(ope); } }
-       else if(cmd=="boundnormal_plane"   ){ if(BoundNormals){ JSphInitializeOp_BoundNormalPlane    *ope=new JSphInitializeOp_BoundNormalPlane   (sxml,ele,H); Opes.push_back(ope); } }
-       else if(cmd=="boundnormal_sphere"  ){ if(BoundNormals){ JSphInitializeOp_BoundNormalSphere   *ope=new JSphInitializeOp_BoundNormalSphere  (sxml,ele,H); Opes.push_back(ope); } }
-       else if(cmd=="boundnormal_cylinder"){ if(BoundNormals){ JSphInitializeOp_BoundNormalCylinder *ope=new JSphInitializeOp_BoundNormalCylinder(sxml,ele,H); Opes.push_back(ope); } }
+      else if(cmd=="boundnormal_set"     ){ if(BoundNormals){ JSphInitializeOp_BoundNormalSet      *ope=new JSphInitializeOp_BoundNormalSet     (sxml,ele);   Opes.push_back(ope); } }
+      else if(cmd=="boundnormal_plane"   ){ if(BoundNormals){ JSphInitializeOp_BoundNormalPlane    *ope=new JSphInitializeOp_BoundNormalPlane   (sxml,ele,H); Opes.push_back(ope); } }
+      else if(cmd=="boundnormal_sphere"  ){ if(BoundNormals){ JSphInitializeOp_BoundNormalSphere   *ope=new JSphInitializeOp_BoundNormalSphere  (sxml,ele,H); Opes.push_back(ope); } }
+      else if(cmd=="boundnormal_cylinder"){ if(BoundNormals){ JSphInitializeOp_BoundNormalCylinder *ope=new JSphInitializeOp_BoundNormalCylinder(sxml,ele,H); Opes.push_back(ope); } }
       //<vs_mddbc_end>
       else sxml->ErrReadElement(ele,cmd,false);
     }

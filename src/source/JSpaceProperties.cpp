@@ -340,7 +340,7 @@ void JSpacePropLinks::AddLink(JSpacePropLink::TpLink type,std::string mks,std::s
 //==============================================================================
 /// Reads the links section in XML format.
 //==============================================================================
-void JSpacePropLinks::ReadXml(JXml *sxml,TiXmlElement* eprops){
+void JSpacePropLinks::ReadXml(const JXml *sxml,TiXmlElement* eprops){
   Reset();
   TiXmlElement* elinks=eprops->FirstChildElement("links");
   if(elinks){
@@ -605,9 +605,9 @@ void JSpaceProperties::SaveFileXml(const std::string &file,const std::string &pa
 //==============================================================================
 /// Loads initial conditions from the XML object.
 //==============================================================================
-void JSpaceProperties::LoadXml(JXml *sxml,const std::string &place){
+void JSpaceProperties::LoadXml(const JXml *sxml,const std::string &place){
   Reset();
-  TiXmlNode* node=sxml->GetNode(place,false);
+  TiXmlNode* node=sxml->GetNodeSimple(place);
   if(node)ReadXml(sxml,node->ToElement());
 }
 
@@ -621,7 +621,7 @@ void JSpaceProperties::SaveXml(JXml *sxml,const std::string &place)const{
 //==============================================================================
 /// Reads property in XML format.
 //==============================================================================
-void JSpaceProperties::ReadXmlProperty(JXml *sxml,TiXmlElement* eprop){
+void JSpaceProperties::ReadXmlProperty(const JXml *sxml,TiXmlElement* eprop){
   //-Creates property if it does not exist.
   JSpacePropProperty *pro=AddProperty(sxml->GetAttributeStr(eprop,"name"));
   //-Loads values inline.
@@ -656,7 +656,7 @@ void JSpaceProperties::ReadXmlProperty(JXml *sxml,TiXmlElement* eprop){
 //==============================================================================
 /// Reads external file with properties in XML format.
 //==============================================================================
-void JSpaceProperties::ReadXmlPropertyFile(JXml *sxml,TiXmlElement* epropfile){
+void JSpaceProperties::ReadXmlPropertyFile(const JXml *sxml,TiXmlElement* epropfile){
   std::string file=sxml->GetAttributeStr(epropfile,"file");
   std::string path=sxml->GetAttributeStr(epropfile,"path");
   //-Loads XML file.
@@ -707,7 +707,7 @@ void JSpaceProperties::WriteXmlPropertyFile(JXml *sxml,TiXmlElement* eprops,StPr
 //==============================================================================
 /// Reads the list of initial conditions in XML format.
 //==============================================================================
-void JSpaceProperties::ReadXml(JXml *sxml,TiXmlElement* eprops){
+void JSpaceProperties::ReadXml(const JXml *sxml,TiXmlElement* eprops){
   const char met[]="ReadXml";
   //-Loads links.
   Links->ReadXml(sxml,eprops);

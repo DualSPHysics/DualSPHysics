@@ -35,6 +35,7 @@
 //:# - Save example of <hdp> in <constantsdef> of template. (07-04-2019)  
 //:# - <lattice> pasa a ser opcional con el valor 1 por defecto. (03-03-2020)  
 //:# - Mejora uso de excepciones. (03-03-2020)  
+//:# - Objeto JXml pasado como const para operaciones de lectura. (17-03-2020)  
 //:#############################################################################
 
 /// \file JSpaceCtes.h \brief Declares the class \ref JSpaceCtes.
@@ -128,7 +129,7 @@ private:
 
   void ReadXmlDef(JXml *sxml,TiXmlElement* ele);
   void WriteXmlDef(JXml *sxml,TiXmlElement* ele,bool svtemplate)const;
-  void ReadXmlRun(JXml *sxml,TiXmlElement* ele);
+  void ReadXmlRun(const JXml *sxml,TiXmlElement* ele);
   void WriteXmlRun(JXml *sxml,TiXmlElement* ele)const;
 
 public:
@@ -138,7 +139,7 @@ public:
   void LoadDefault();
   void LoadXmlDef(JXml *sxml,const std::string &place);
   void SaveXmlDef(JXml *sxml,const std::string &place,bool svtemplate=false)const;
-  void LoadXmlRun(JXml *sxml,const std::string &place);
+  void LoadXmlRun(const JXml *sxml,const std::string &place);
   void SaveXmlRun(JXml *sxml,const std::string &place)const;
 
   bool GetData2D()const{ return(Data2D); }

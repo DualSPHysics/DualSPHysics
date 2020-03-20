@@ -191,7 +191,7 @@ void JSpaceCtes::WriteXmlDef(JXml *sxml,TiXmlElement* node,bool svtemplate)const
 //==============================================================================
 /// Reads constants for execution of the case of xml node.
 //==============================================================================
-void JSpaceCtes::ReadXmlRun(JXml *sxml,TiXmlElement* node){
+void JSpaceCtes::ReadXmlRun(const JXml *sxml,TiXmlElement* node){
   const bool data2d=sxml->ReadElementBool(node,"data2d","value");
   const double data2dposy=(data2d? sxml->ReadElementDouble(node,"data2dposy","value"): 0);
   SetData2D(data2d,data2dposy);
@@ -257,9 +257,9 @@ void JSpaceCtes::SaveXmlDef(JXml *sxml,const std::string &place,bool svtemplate)
 //==============================================================================
 /// Loads constants for execution of the case of xml node.
 //==============================================================================
-void JSpaceCtes::LoadXmlRun(JXml *sxml,const std::string &place){
+void JSpaceCtes::LoadXmlRun(const JXml *sxml,const std::string &place){
   Reset();
-  TiXmlNode* node=sxml->GetNode(place,false);
+  TiXmlNode* node=sxml->GetNodeSimple(place);
   if(!node)Run_Exceptioon(std::string("The item is not found \'")+place+"\'.");
   ReadXmlRun(sxml,node->ToElement());
 }

@@ -21,6 +21,8 @@
 //:# =========
 //:# - GetAccValues() guarda entrada y salida para evitar calculos con llamadas 
 //:#   consecutivas iguales. (13-09-2019)
+//:# - Objeto JXml pasado como const para operaciones de lectura. (18-03-2020)  
+//:# - Comprueba opcion active en elementos de primer y segundo nivel. (18-03-2020)  
 //:#############################################################################
 
 /// \file JSphAccInput.h \brief Declares the class \ref JSphAccInput.
@@ -116,11 +118,11 @@ protected:
 
   void Reset();
   bool ExistMk(word mkfluid)const;
-  void LoadXml(JXml *sxml,const std::string &place);
+  void LoadXml(const JXml *sxml,const std::string &place);
   void ReadXml(const JXml *sxml,TiXmlElement* lis);
 
 public:
-  JSphAccInput(JLog2* log,const std::string &dirdata,JXml *sxml,const std::string &place);
+  JSphAccInput(JLog2* log,const std::string &dirdata,const JXml *sxml,const std::string &place);
   ~JSphAccInput();
   long long GetAllocMemory()const{ return(MemSize); }
 

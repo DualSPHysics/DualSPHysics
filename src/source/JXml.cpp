@@ -21,6 +21,10 @@
 #include "JXml.h"
 #include "Functions.h"
 
+#ifndef DISABLE_NUMEXLIB
+#include "JNumexLib.h"
+#endif
+
 #include <climits>
 #include <ctime>
 #include <sys/stat.h>
@@ -55,6 +59,7 @@ JXml::~JXml(){
 void JXml::Reset(){
   Doc->Clear();
   FileReading="";
+  NuxLib=NULL;
 }
 
 //==============================================================================
@@ -80,7 +85,7 @@ TiXmlNode* JXml::GetNode(const std::string &path,bool createpath){
   std::string pathx=path;
   TiXmlNode* node=NULL;
   TiXmlNode* base=Doc;
-  while(pathx.length()&&base){
+  while(pathx.length() && base){
     int pos=int(pathx.find("."));
     std::string txword=(pos>0? pathx.substr(0,pos): pathx);
     pathx=(pos>0? pathx.substr(pos+1): "");
@@ -100,13 +105,14 @@ TiXmlNode* JXml::GetNode(const std::string &path,bool createpath){
 //==============================================================================
 /// Returns the requested node.
 /// \param path Path of the requested node.
+  /// \param checkactive Checks if node is active.
 /// otherwise returns \a NULL.
 //==============================================================================
-TiXmlNode* JXml::GetNodeSimple(const std::string &path)const{
+TiXmlNode* JXml::GetNodeSimple(const std::string &path,bool checkactive)const{
   std::string pathx=path;
   TiXmlNode* node=NULL;
   TiXmlNode* base=Doc;
-  while(pathx.length()&&base){
+  while(pathx.length() && base){
     int pos=int(pathx.find("."));
     std::string txword=(pos>0? pathx.substr(0,pos): pathx);
     pathx=(pos>0? pathx.substr(pos+1): "");
@@ -115,6 +121,8 @@ TiXmlNode* JXml::GetNodeSimple(const std::string &path)const{
       base=node;
     }
   }
+  //Checks node is actived.
+  if(node && checkactive && !GetAttributeBool(node->ToElement(),"active",true,true))node=NULL;
   return(node);
 }
 //==============================================================================
@@ -141,7 +149,7 @@ TiXmlNode* JXml::GetNodeError(const std::string &path){
 //==============================================================================
 TiXmlElement* JXml::GetFirstElement(const TiXmlNode* node,const std::string &name,bool optional)const{
   TiXmlElement* ret=(TiXmlElement*)node->FirstChildElement(name.c_str());
-  if(!ret&&!optional)ErrReadElement(node,name,true);
+  if(!ret && !optional)ErrReadElement(node,name,true);
   return(ret);
 }
 
@@ -153,10 +161,10 @@ TiXmlElement* JXml::GetFirstElement(const TiXmlNode* node,const std::string &nam
 /// returns \a NULL instead of throwing an exception.
 /// \throw JException The requested element does not exist...
 //==============================================================================
-TiXmlElement* JXml::GetNextElement(TiXmlNode* node,const std::string &name,bool optional)const{
-  TiXmlElement* ret=node->NextSiblingElement(name.c_str());
-  if(!ret&&!optional)ErrReadElement(node,name,true);
-  return(ret);
+TiXmlElement* JXml::GetNextElement(const TiXmlNode* node,const std::string &name,bool optional)const{
+  const TiXmlElement* ret=node->NextSiblingElement(name.c_str());
+  if(!ret && !optional)ErrReadElement(node,name,true);
+  return((TiXmlElement*)ret);
 }
 
 //==============================================================================
@@ -172,6 +180,23 @@ unsigned JXml::CountElements(const TiXmlNode* node,const std::string &name)const
     ele=GetNextElement(ele,name,true);
   }
   return(count);
+}
+
+//==============================================================================
+/// Returns true when element is not deactivated.
+/// \param lis Xml element to look for requesed element name.
+/// \param name Element name to look for.
+//==============================================================================
+bool JXml::CheckElementActive(const TiXmlElement* lis,const std::string &name)const{
+  return(lis? ReadElementBool(lis,name,"active",true,true): false);
+}
+
+//==============================================================================
+/// Returns true when element is not deactivated.
+/// \param ele Xml element to check.
+//==============================================================================
+bool JXml::CheckElementActive(const TiXmlElement* ele)const{
+  return(ele? GetAttributeBool(ele,"active",true,true): false);
 }
 
 //==============================================================================
@@ -253,7 +278,7 @@ void JXml::ErrUnknownAtrib(const TiXmlElement* ele,const std::string &atrib)cons
 /// \param names List of valid names (separated by spaces and *name for repeatable names).
 /// \param checkrepeated Checks if there are repeated elements.
 //==============================================================================
-void JXml::CheckElementNames(TiXmlElement* lis,bool checkrepeated,std::string names)const{
+void JXml::CheckElementNames(const TiXmlElement* lis,bool checkrepeated,std::string names)const{
   //-Create list of elements.
   vector<string> vnames;
   vector<string> vnamesr;
@@ -265,7 +290,7 @@ void JXml::CheckElementNames(TiXmlElement* lis,bool checkrepeated,std::string na
     }
   }
   vector<string> vused;
-  TiXmlElement* ele=lis->FirstChildElement(); 
+  const TiXmlElement* ele=lis->FirstChildElement(); 
   while(ele){
     std::string ename=ele->Value();
     if(!ename.empty() && ename[0]!='_'){
@@ -377,6 +402,26 @@ int JXml::CheckAttributes(const TiXmlElement* ele,std::string names,bool checkma
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 //==============================================================================
+/// Checks and returns a value of type string of an xml element without any 
+/// special treatment.
+/// \param ele Xml element.
+/// \param name Name of the requested attribute.
+/// \param optional If it does not exist,
+/// returns \a valdef instead of throwing an exception.
+/// \param valdef Value by default if it does not exist and \a optional was activated. 
+/// \throw JException The requested attribute does not exist...
+//==============================================================================
+std::string JXml::GetAttributeStrSimple(const TiXmlElement* ele,const std::string &name
+  ,bool optional,const std::string &valdef)const
+{
+  std::string ret;
+  if(ele->Attribute(name.c_str()))ret=ele->Attribute(name.c_str());
+  else if(optional)ret=valdef;
+  else ErrReadAtrib(ele,name,true);
+  return(ret);
+}
+
+//==============================================================================
 /// Checks and returns a value of type string of an xml element.
 /// \param ele Xml element.
 /// \param name Name of the requested attribute.
@@ -385,11 +430,21 @@ int JXml::CheckAttributes(const TiXmlElement* ele,std::string names,bool checkma
 /// \param valdef Value by default if it does not exist and \a optional was activated. 
 /// \throw JException The requested attribute does not exist...
 //==============================================================================
-std::string JXml::GetAttributeStr(const TiXmlElement* ele,const std::string &name,bool optional,const std::string &valdef)const{
+std::string JXml::GetAttributeStr(const TiXmlElement* ele,const std::string &name
+  ,bool optional,const std::string &valdef)const
+{
   std::string ret;
   if(ele->Attribute(name.c_str()))ret=ele->Attribute(name.c_str());
   else if(optional)ret=valdef;
   else ErrReadAtrib(ele,name,true);
+  //-String should be evaluated.
+  if(NuxLib!=NULL && !ret.empty() && ret[0]=='$'){
+    #ifndef DISABLE_NUMEXLIB
+      ret=NuxLib->ComputeExprStr(ret,std::string("\nFile: ")+ErrGetFileRow(ele));
+    #endif
+  }
+  //-Checks first letter.
+  if(!ret.empty() && ret[0]=='$')ErrReadAtrib(ele,name,false,"It is not a valid string since it starts with '$' and should be evaluated.");
   return(ret);
 }
 
@@ -405,9 +460,14 @@ std::string JXml::GetAttributeStr(const TiXmlElement* ele,const std::string &nam
 bool JXml::GetAttributeBool(const TiXmlElement* ele,const std::string &name,bool optional,bool valdef)const{
   bool ret=false;
   if(ele->Attribute(name.c_str())){
-    std::string val=ele->Attribute(name.c_str());
-    if(val=="true"||val=="1")ret=true;
-    else if(val=="false"||val=="0")ret=false;
+    const string val=ele->Attribute(name.c_str());
+    if(NuxLib!=NULL && !val.empty() && val[0]=='#'){
+      #ifndef DISABLE_NUMEXLIB
+        ret=int(NuxLib->ComputeExprBool(val,std::string("\nFile: ")+ErrGetFileRow(ele)));
+      #endif
+    }
+    else if(fun::StrLower(val)=="true"  || val=="1")ret=true;
+    else if(fun::StrLower(val)=="false" || val=="0")ret=false;
     else ErrReadAtrib(ele,name,false);
   }
   else if(optional)ret=valdef;
@@ -476,8 +536,15 @@ int JXml::GetAttributeInt(TiXmlElement* ele,const std::string &name,bool optiona
     else ErrReadAtrib(ele,name,true);
   }
   else{
-    if(!fun::StrIsIntegerNumber(vchar))ErrReadAtrib(ele,name,false,"It is not a valid integer number.");
-    ret=atoi(vchar);
+    if(NuxLib!=NULL && vchar[0]=='#'){
+      #ifndef DISABLE_NUMEXLIB
+        ret=int(NuxLib->ComputeExpr(vchar,std::string("\nFile: ")+ErrGetFileRow(ele)));
+      #endif
+    }
+    else{
+      if(!fun::StrIsIntegerNumber(vchar))ErrReadAtrib(ele,name,false,"It is not a valid integer number.");
+      ret=atoi(vchar);
+    }
   }
   return(ret);
 }
@@ -491,7 +558,9 @@ int JXml::GetAttributeInt(TiXmlElement* ele,const std::string &name,bool optiona
 /// \param valdef Value by default if it does not exist and \a optional was activated. 
 /// \throw JException The requested attribute does not exist...
 //==============================================================================
-double JXml::GetAttributeDouble(TiXmlElement* ele,const std::string &name,bool optional,double valdef)const{
+double JXml::GetAttributeDouble(TiXmlElement* ele,const std::string &name
+  ,bool optional,double valdef)const
+{
   double ret;
   const char *vchar=ele->Attribute(name.c_str());
   if(vchar==NULL){
@@ -499,8 +568,15 @@ double JXml::GetAttributeDouble(TiXmlElement* ele,const std::string &name,bool o
     else ErrReadAtrib(ele,name,true);
   }
   else{
-    if(!fun::StrIsRealNumber(vchar))ErrReadAtrib(ele,name,false,"It is not a valid real number.");
-    ret=atof(vchar);
+    if(NuxLib!=NULL && vchar[0]=='#'){
+      #ifndef DISABLE_NUMEXLIB
+        ret=NuxLib->ComputeExpr(vchar,std::string("\nFile: ")+ErrGetFileRow(ele));
+      #endif
+    }
+    else{
+      if(!fun::StrIsRealNumber(vchar))ErrReadAtrib(ele,name,false,"It is not a valid real number.");
+      ret=atof(vchar);
+    }
   }
   return(ret);
 }
@@ -516,7 +592,9 @@ double JXml::GetAttributeDouble(TiXmlElement* ele,const std::string &name,bool o
 /// if there are less elements than the requested ones.
 /// \throw JException Values missing or any value is not valid...
 //==============================================================================
-unsigned JXml::ReadArrayFloat3(TiXmlNode* node,const std::string &name,tfloat3 *vec,unsigned count,bool readcount)const{
+unsigned JXml::ReadArrayFloat3(const TiXmlNode* node,const std::string &name
+  ,tfloat3 *vec,unsigned count,bool readcount)const
+{
   unsigned rcount=0;
   if(count){
     TiXmlElement* ele=GetFirstElement(node,name,!readcount);
@@ -539,7 +617,9 @@ unsigned JXml::ReadArrayFloat3(TiXmlNode* node,const std::string &name,tfloat3 *
 /// if there are less elements than the requested ones.
 /// \throw JException Values missing or any value is not valid...
 //==============================================================================
-unsigned JXml::ReadArrayDouble3(TiXmlNode* node,const std::string &name,tdouble3 *vec,unsigned count,bool readcount)const{
+unsigned JXml::ReadArrayDouble3(const TiXmlNode* node,const std::string &name
+  ,tdouble3 *vec,unsigned count,bool readcount)const
+{
   unsigned rcount=0;
   if(count){
     TiXmlElement* ele=GetFirstElement(node,name,!readcount);
@@ -562,7 +642,9 @@ unsigned JXml::ReadArrayDouble3(TiXmlNode* node,const std::string &name,tdouble3
 /// if there are less elements than the requested ones.
 /// \throw JException Values missing or any value is not valid...
 //==============================================================================
-unsigned JXml::ReadArrayInt3(TiXmlNode* node,const std::string &name,tint3 *vec,unsigned count,bool readcount)const{
+unsigned JXml::ReadArrayInt3(const TiXmlNode* node,const std::string &name
+  ,tint3 *vec,unsigned count,bool readcount)const
+{
   unsigned rcount=0;
   if(count){
     TiXmlElement* ele=GetFirstElement(node,name,!readcount);
@@ -588,7 +670,7 @@ unsigned JXml::ReadArrayInt3(TiXmlNode* node,const std::string &name,tint3 *vec,
 /// \throw JException Element is not found...
 /// \throw JException Values missing or any value is not valid...
 //==============================================================================
-unsigned JXml::ReadMatrixDouble(TiXmlNode* node,const std::string &name
+unsigned JXml::ReadMatrixDouble(const TiXmlNode* node,const std::string &name
   ,unsigned nrows,unsigned ncols,unsigned ndata,double *data
   ,bool optionalvalues,double valdef)const
 {

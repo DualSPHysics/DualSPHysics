@@ -646,12 +646,12 @@ void JSphGpuSingle::RunFloating(double dt,bool predictor){
     //-Applies motion constraints.
     if(FtConstraints)cusph::FtApplyConstraints(FtCount,FtoConstraintsg,FtoForcesg,FtoForcesResg);
     
-    //-Saves face and fomegace                       //<ft_face_ini>
-    if(FtSaveAce){
+    //-Saves face and fomegace for debug.
+    if(SaveFtAce){
       StFtoForces *ftoforces=(StFtoForces *)FtoAuxFloat9;
       cudaMemcpy(ftoforces,FtoForcesg,sizeof(tfloat3)*FtCount*2,cudaMemcpyDeviceToHost);
-      SaveFtAce(dt,predictor,ftoforces);
-    } //<ft_face_end>
+      SaveFtAceFun(dt,predictor,ftoforces);
+    }
 
     //-Run floating with Chrono library. //<vs_chroono_ini>
     if(ChronoObjects){      

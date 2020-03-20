@@ -124,10 +124,10 @@ void JGaugeSystem::Config(bool simulate2d,double simulate2dposy,bool symmetry
 //==============================================================================
 /// Loads initial conditions of XML object.
 //==============================================================================
-void JGaugeSystem::LoadXml(JXml *sxml,const std::string &place,const JSphMk* mkinfo){
-  TiXmlNode* node=sxml->GetNode(place,false);
+void JGaugeSystem::LoadXml(const JXml *sxml,const std::string &place,const JSphMk* mkinfo){
+  TiXmlNode* node=sxml->GetNodeSimple(place);
   if(!node)Run_Exceptioon(std::string("Cannot find the element \'")+place+"\'.");
-  ReadXml(sxml,node->ToElement(),mkinfo);
+  if(sxml->CheckNodeActive(node))ReadXml(sxml,node->ToElement(),mkinfo);
 }
 
 //==============================================================================
@@ -190,7 +190,7 @@ void JGaugeSystem::LoadPoints(JXml *sxml,TiXmlElement* lis,std::vector<tdouble3>
 //==============================================================================
 /// Reads list of initial conditions in the XML node.
 //==============================================================================
-JGaugeItem::StDefault JGaugeSystem::ReadXmlCommon(JXml *sxml,TiXmlElement* ele)const{
+JGaugeItem::StDefault JGaugeSystem::ReadXmlCommon(const JXml *sxml,TiXmlElement* ele)const{
   JGaugeItem::StDefault cfg=CfgDefault;
   if(ele){
     cfg.savevtkpart =sxml->ReadElementBool  (ele,"savevtkpart","value",true,CfgDefault.savevtkpart);
@@ -208,7 +208,7 @@ JGaugeItem::StDefault JGaugeSystem::ReadXmlCommon(JXml *sxml,TiXmlElement* ele)c
 //==============================================================================
 /// Reads list of initial conditions in the XML node.
 //==============================================================================
-void JGaugeSystem::ReadXml(JXml *sxml,TiXmlElement* lis,const JSphMk* mkinfo){
+void JGaugeSystem::ReadXml(const JXml *sxml,TiXmlElement* lis,const JSphMk* mkinfo){
   if(!Configured)Run_Exceptioon("The object is not yet configured.");
   //-Loads default configuration.
   ResetCfgDefault();
@@ -218,62 +218,64 @@ void JGaugeSystem::ReadXml(JXml *sxml,TiXmlElement* lis,const JSphMk* mkinfo){
   while(ele){
     string cmd=ele->Value();
     if(cmd.length() && cmd[0]!='_' && cmd!="default"){
-      const string name=sxml->GetAttributeStr(ele,"name");
-      if(GetGaugeIdx(name)!=UINT_MAX)Run_ExceptioonFile(fun::PrintStr("The name \'%s\' already exists.",name.c_str()),sxml->ErrGetFileRow(ele));
-      const JGaugeItem::StDefault cfg=ReadXmlCommon(sxml,ele);
-      //-Loads points
-      //std::vector<tdouble3> points;
-      //LoadPoints(sxml,ele,points);
-      JGaugeItem* gau=NULL;
-      if(cmd=="velocity"){
-        const tdouble3 point=sxml->ReadElementDouble3(ele,"point");
-        gau=AddGaugeVel(name,cfg.computestart,cfg.computeend,cfg.computedt,point);
-      }
-      else if(cmd=="swl"){
-        //-Reads masslimit.
-        float masslimit=0;
-        switch(sxml->CheckElementAttributes(ele,"masslimit","value coef",true,true)){
-          case 1:  masslimit=sxml->ReadElementFloat(ele,"masslimit","value");           break;
-          case 2:  masslimit=MassFluid*sxml->ReadElementFloat(ele,"masslimit","coef");  break;
-          case 0:  masslimit=MassFluid*(Simulate2D? 0.4f: 0.5f);                        break;
+      if(sxml->CheckElementActive(ele)){
+        const string name=sxml->GetAttributeStr(ele,"name");
+        if(GetGaugeIdx(name)!=UINT_MAX)Run_ExceptioonFile(fun::PrintStr("The name \'%s\' already exists.",name.c_str()),sxml->ErrGetFileRow(ele));
+        const JGaugeItem::StDefault cfg=ReadXmlCommon(sxml,ele);
+        //-Loads points
+        //std::vector<tdouble3> points;
+        //LoadPoints(sxml,ele,points);
+        JGaugeItem* gau=NULL;
+        if(cmd=="velocity"){
+          const tdouble3 point=sxml->ReadElementDouble3(ele,"point");
+          gau=AddGaugeVel(name,cfg.computestart,cfg.computeend,cfg.computedt,point);
         }
-        if(masslimit<=0)Run_ExceptioonFile(fun::PrintStr("The masslimit (%f) is invalid.",masslimit),sxml->ErrGetFileRow(ele));
-        //-Reads pointdp.
-        double pointdp=0;
-        switch(sxml->CheckElementAttributes(ele,"pointdp","value coefdp",true,true)){
-          case 0:
-          case 1:  pointdp=sxml->ReadElementFloat(ele,"pointdp","value");      break;
-          case 2:  pointdp=Dp*sxml->ReadElementFloat(ele,"pointdp","coefdp");  break;
+        else if(cmd=="swl"){
+          //-Reads masslimit.
+          float masslimit=0;
+          switch(sxml->CheckElementAttributes(ele,"masslimit","value coef",true,true)){
+            case 1:  masslimit=sxml->ReadElementFloat(ele,"masslimit","value");           break;
+            case 2:  masslimit=MassFluid*sxml->ReadElementFloat(ele,"masslimit","coef");  break;
+            case 0:  masslimit=MassFluid*(Simulate2D? 0.4f: 0.5f);                        break;
+          }
+          if(masslimit<=0)Run_ExceptioonFile(fun::PrintStr("The masslimit (%f) is invalid.",masslimit),sxml->ErrGetFileRow(ele));
+          //-Reads pointdp.
+          double pointdp=0;
+          switch(sxml->CheckElementAttributes(ele,"pointdp","value coefdp",true,true)){
+            case 0:
+            case 1:  pointdp=sxml->ReadElementFloat(ele,"pointdp","value");      break;
+            case 2:  pointdp=Dp*sxml->ReadElementFloat(ele,"pointdp","coefdp");  break;
+          }
+          if(pointdp<=0)Run_ExceptioonFile(fun::PrintStr("The pointdp (%f) is invalid.",pointdp),sxml->ErrGetFileRow(ele));
+          //-Reads point0 and point2.
+          const tdouble3 pt0=sxml->ReadElementDouble3(ele,"point0");
+          const tdouble3 pt2=sxml->ReadElementDouble3(ele,"point2");
+          gau=AddGaugeSwl(name,cfg.computestart,cfg.computeend,cfg.computedt,pt0,pt2,pointdp,masslimit);
         }
-        if(pointdp<=0)Run_ExceptioonFile(fun::PrintStr("The pointdp (%f) is invalid.",pointdp),sxml->ErrGetFileRow(ele));
-        //-Reads point0 and point2.
-        const tdouble3 pt0=sxml->ReadElementDouble3(ele,"point0");
-        const tdouble3 pt2=sxml->ReadElementDouble3(ele,"point2");
-        gau=AddGaugeSwl(name,cfg.computestart,cfg.computeend,cfg.computedt,pt0,pt2,pointdp,masslimit);
-      }
-      else if(cmd=="maxz"){
-        const tdouble3 pt0=sxml->ReadElementDouble3(ele,"point0");
-        const float height=sxml->ReadElementFloat(ele,"height","value");
+        else if(cmd=="maxz"){
+          const tdouble3 pt0=sxml->ReadElementDouble3(ele,"point0");
+          const float height=sxml->ReadElementFloat(ele,"height","value");
 
-        //-Reads distlimit.
-        float distlimit=0;
-        switch(sxml->CheckElementAttributes(ele,"distlimit","value coefdp coefh",true,true)){
-          case 0:
-          case 1:  distlimit=sxml->ReadElementFloat(ele,"distlimit","value");             break;
-          case 2:  distlimit=float(Dp*sxml->ReadElementFloat(ele,"distlimit","coefdp"));  break;
-          case 3:  distlimit=float(H *sxml->ReadElementFloat(ele,"distlimit","coefh"));   break;
+          //-Reads distlimit.
+          float distlimit=0;
+          switch(sxml->CheckElementAttributes(ele,"distlimit","value coefdp coefh",true,true)){
+            case 0:
+            case 1:  distlimit=sxml->ReadElementFloat(ele,"distlimit","value");             break;
+            case 2:  distlimit=float(Dp*sxml->ReadElementFloat(ele,"distlimit","coefdp"));  break;
+            case 3:  distlimit=float(H *sxml->ReadElementFloat(ele,"distlimit","coefh"));   break;
+          }
+          if(distlimit<=0)Run_ExceptioonFile(fun::PrintStr("The distlimit (%f) is invalid.",distlimit),sxml->ErrGetFileRow(ele));
+          gau=AddGaugeMaxZ(name,cfg.computestart,cfg.computeend,cfg.computedt,pt0,height,distlimit);
         }
-        if(distlimit<=0)Run_ExceptioonFile(fun::PrintStr("The distlimit (%f) is invalid.",distlimit),sxml->ErrGetFileRow(ele));
-        gau=AddGaugeMaxZ(name,cfg.computestart,cfg.computeend,cfg.computedt,pt0,height,distlimit);
+        else if(cmd=="force"){
+          const word mkbound=(word)sxml->ReadElementUnsigned(ele,"target","mkbound");
+          gau=AddGaugeForce(name,cfg.computestart,cfg.computeend,cfg.computedt,mkinfo,mkbound);
+        }
+        else Run_ExceptioonFile(fun::PrintStr("Gauge type \'%s\' is invalid.",cmd.c_str()),sxml->ErrGetFileRow(ele));
+        gau->SetSaveVtkPart(cfg.savevtkpart);
+        //gau->ConfigComputeTiming(cfg.computestart,cfg.computeend,cfg.computedt);
+        gau->ConfigOutputTiming (cfg.output,cfg.outputstart,cfg.outputend,cfg.outputdt);
       }
-      else if(cmd=="force"){
-        const word mkbound=(word)sxml->ReadElementUnsigned(ele,"target","mkbound");
-        gau=AddGaugeForce(name,cfg.computestart,cfg.computeend,cfg.computedt,mkinfo,mkbound);
-      }
-      else Run_ExceptioonFile(fun::PrintStr("Gauge type \'%s\' is invalid.",cmd.c_str()),sxml->ErrGetFileRow(ele));
-      gau->SetSaveVtkPart(cfg.savevtkpart);
-      //gau->ConfigComputeTiming(cfg.computestart,cfg.computeend,cfg.computedt);
-      gau->ConfigOutputTiming (cfg.output,cfg.outputstart,cfg.outputend,cfg.outputdt);
     }
     ele=ele->NextSiblingElement();
   }

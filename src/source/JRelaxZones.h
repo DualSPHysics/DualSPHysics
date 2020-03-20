@@ -28,6 +28,7 @@
 //# =========
 //# - Clase para la creacion de oleaje actuando sobre la velocidad de las 
 //#   particulas. (28-10-2016)
+//# - Comprueba opcion active en elementos de primer y segundo nivel. (19-03-2020)  
 //#############################################################################
 
 #ifndef _JRelaxZones_
@@ -66,7 +67,7 @@ public:
   static bool Available(){ return(false); }
 
   void LoadFileXml(const std::string &filexml,const std::string &place){}
-  void LoadXml(JXml *sxml,const std::string &place){}
+  void LoadXml(const JXml *sxml,const std::string &place){}
 
   void Init(std::string dircase,double timemax,double dp){}
 
@@ -113,7 +114,7 @@ public:
   static bool Available(){ return(true); }
 
   void LoadFileXml(const std::string &filexml,const std::string &place);
-  void LoadXml(JXml *sxml,const std::string &place);
+  void LoadXml(const JXml *sxml,const std::string &place);
 
   void Init(std::string dircase,double timemax,double dp);
 

@@ -28,6 +28,8 @@
 //# =========
 //# - Clase para gestionar uno o varios pistones de velocidad-X. (10-05-2014)
 //# - Remplaza long long por llong. (01-10-2015)
+//# - Improved exception managment. (19-03-2020)  
+//# - Comprueba opcion active en elementos de primer y segundo nivel. (19-03-2020)  
 //#############################################################################
 
 #ifndef _JMLPistons_
@@ -80,7 +82,7 @@ public:
   llong GetAllocMemoryGpu()const{ return(0); }
 
   void LoadFileXml(const std::string &filexml,const std::string &place){}
-  void LoadXml(JXml *sxml,const std::string &place){}
+  void LoadXml(const JXml *sxml,const std::string &place){}
   bool ConfigPiston(word mkbound,word pistonid,unsigned idbegin,unsigned np,double timemax){ return(false); }
   bool ExistsPistonByMk(word mkbound){ return(false); }
   void CheckPistons(){}
@@ -154,7 +156,7 @@ private:
 
   bool Use_AwasZsurf;  //-AWAS-Zsurf.
 
-  void ReadXml(JXml *sxml,TiXmlElement* lis);
+  void ReadXml(const JXml *sxml,TiXmlElement* lis);
   void PreparePiston1d(double dp,unsigned np,const unsigned *idp,const tdouble3 *pos);
 
 public:
@@ -166,7 +168,7 @@ public:
   llong GetAllocMemoryGpu()const;
 
   void LoadFileXml(const std::string &filexml,const std::string &place);
-  void LoadXml(JXml *sxml,const std::string &place);
+  void LoadXml(const JXml *sxml,const std::string &place);
   bool ConfigPiston(word mkbound,word pistonid,unsigned idbegin,unsigned np,double timemax);
   bool ExistsPistonByMk(word mkbound);
   void CheckPistons();

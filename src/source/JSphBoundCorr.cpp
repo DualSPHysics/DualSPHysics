@@ -181,7 +181,8 @@ void JSphBoundCorrZone::GetConfig(std::vector<std::string> &lines)const{
 //==============================================================================
 /// Constructor.
 //==============================================================================
-JSphBoundCorr::JSphBoundCorr(bool cpu,double dp,JLog2 *log,JXml *sxml,const std::string &place,const JSphMk *mkinfo)
+JSphBoundCorr::JSphBoundCorr(bool cpu,double dp,JLog2 *log,const JXml *sxml
+  ,const std::string &place,const JSphMk *mkinfo)
   :Cpu(cpu),Dp(dp),Log(log)
 {
   ClassName="JSphBoundCorr";
@@ -220,10 +221,10 @@ bool JSphBoundCorr::ExistMk(word mkbound)const{
 //==============================================================================
 /// Loads initial conditions of XML object.
 //==============================================================================
-void JSphBoundCorr::LoadXml(JXml *sxml,const std::string &place){
-  TiXmlNode* node=sxml->GetNode(place,false);
-  if(!node)RunException("LoadXml",std::string("Cannot find the element \'")+place+"\'.");
-  ReadXml(sxml,node->ToElement());
+void JSphBoundCorr::LoadXml(const JXml *sxml,const std::string &place){
+  TiXmlNode* node=sxml->GetNodeSimple(place);
+  if(!node)Run_Exceptioon(std::string("Cannot find the element \'")+place+"\'.");
+  if(sxml->CheckNodeActive(node))ReadXml(sxml,node->ToElement());
 }
 
 //==============================================================================
@@ -243,46 +244,48 @@ void JSphBoundCorr::ReadXml(const JXml *sxml,TiXmlElement* lis){
   //-Loads list of inputs.
   TiXmlElement* ele=lis->FirstChildElement("mkzone"); 
   while(ele){
-    std::vector<unsigned> mkbounds;
-    JRangeFilter rg(sxml->GetAttributeStr(ele,"mkbound"));
-    rg.GetValues(mkbounds);
-    //const word mkbound=sxml->GetAttributeWord(ele,"mkbound");
-    const bool autoconfig=sxml->ExistsElement(ele,"autoconfig");
-    const bool autolimitpoint=sxml->ExistsElement(ele,"autolimitpoint");
-    if(autoconfig && autolimitpoint)sxml->ErrReadElement(lis,"determlimit",false,"Several configuration modes. \'autoconfig\' and \'autolimitpoint\' definitions are not compatible.");
-    double autodpfactor=0;
-    tdouble3 limitpoint=TDouble3(0);
-    tdouble3 direction=TDouble3(0);
-    JSphBoundCorrZone::TpDirection autodir=JSphBoundCorrZone::DIR_None;
-    if(autoconfig){
-      string autodirtx=fun::StrLower(sxml->ReadElementStr(ele,"autoconfig","direction",true));
-      if     (autodirtx=="top"   )autodir=JSphBoundCorrZone::DIR_Top;
-      else if(autodirtx=="bottom")autodir=JSphBoundCorrZone::DIR_Bottom;
-      else if(autodirtx=="left"  )autodir=JSphBoundCorrZone::DIR_Left;
-      else if(autodirtx=="right" )autodir=JSphBoundCorrZone::DIR_Right;
-      else if(autodirtx=="front" )autodir=JSphBoundCorrZone::DIR_Front;
-      else if(autodirtx=="back"  )autodir=JSphBoundCorrZone::DIR_Back;
-      if(autodir==JSphBoundCorrZone::DIR_None)sxml->ErrReadElement(ele,"autoconfig",false,"Direction label is invalid.");
-    }
-    else if(autolimitpoint){
-      direction=sxml->ReadElementDouble3(ele,"direction");
-      if(direction==TDouble3(0))sxml->ErrReadElement(ele,"direction",false,"Direction vector is invalid.");
-      else direction=fgeo::VecUnitary(direction);
-      autodir=JSphBoundCorrZone::DIR_Defined;
-      autodpfactor=sxml->ReadElementDouble(ele,"autolimitpoint","dpfactor");
-    }
-    else{
-      direction=sxml->ReadElementDouble3(ele,"direction");
-      if(direction==TDouble3(0))sxml->ErrReadElement(ele,"direction",false,"Direction vector is invalid.");
-      else direction=fgeo::VecUnitary(direction);
-      limitpoint=sxml->ReadElementDouble3(ele,"limitpoint");
-    }
-    const unsigned nmkbounds=unsigned(mkbounds.size());
-    for(unsigned cmk=0;cmk<nmkbounds;cmk++){
-      const word mkbound=word(mkbounds[cmk]);
-      if(ExistMk(mkbound))RunException(met,fun::PrintStr("An input already exists for the same mkbound=%u.",mkbound));
-      JSphBoundCorrZone *zo=new JSphBoundCorrZone(Log,GetCount(),mkbound,autodir,autodpfactor,limitpoint,direction);
-      List.push_back(zo);
+    if(sxml->CheckElementActive(ele)){
+      std::vector<unsigned> mkbounds;
+      JRangeFilter rg(sxml->GetAttributeStr(ele,"mkbound"));
+      rg.GetValues(mkbounds);
+      //const word mkbound=sxml->GetAttributeWord(ele,"mkbound");
+      const bool autoconfig=sxml->ExistsElement(ele,"autoconfig");
+      const bool autolimitpoint=sxml->ExistsElement(ele,"autolimitpoint");
+      if(autoconfig && autolimitpoint)sxml->ErrReadElement(lis,"determlimit",false,"Several configuration modes. \'autoconfig\' and \'autolimitpoint\' definitions are not compatible.");
+      double autodpfactor=0;
+      tdouble3 limitpoint=TDouble3(0);
+      tdouble3 direction=TDouble3(0);
+      JSphBoundCorrZone::TpDirection autodir=JSphBoundCorrZone::DIR_None;
+      if(autoconfig){
+        string autodirtx=fun::StrLower(sxml->ReadElementStr(ele,"autoconfig","direction",true));
+        if     (autodirtx=="top"   )autodir=JSphBoundCorrZone::DIR_Top;
+        else if(autodirtx=="bottom")autodir=JSphBoundCorrZone::DIR_Bottom;
+        else if(autodirtx=="left"  )autodir=JSphBoundCorrZone::DIR_Left;
+        else if(autodirtx=="right" )autodir=JSphBoundCorrZone::DIR_Right;
+        else if(autodirtx=="front" )autodir=JSphBoundCorrZone::DIR_Front;
+        else if(autodirtx=="back"  )autodir=JSphBoundCorrZone::DIR_Back;
+        if(autodir==JSphBoundCorrZone::DIR_None)sxml->ErrReadElement(ele,"autoconfig",false,"Direction label is invalid.");
+      }
+      else if(autolimitpoint){
+        direction=sxml->ReadElementDouble3(ele,"direction");
+        if(direction==TDouble3(0))sxml->ErrReadElement(ele,"direction",false,"Direction vector is invalid.");
+        else direction=fgeo::VecUnitary(direction);
+        autodir=JSphBoundCorrZone::DIR_Defined;
+        autodpfactor=sxml->ReadElementDouble(ele,"autolimitpoint","dpfactor");
+      }
+      else{
+        direction=sxml->ReadElementDouble3(ele,"direction");
+        if(direction==TDouble3(0))sxml->ErrReadElement(ele,"direction",false,"Direction vector is invalid.");
+        else direction=fgeo::VecUnitary(direction);
+        limitpoint=sxml->ReadElementDouble3(ele,"limitpoint");
+      }
+      const unsigned nmkbounds=unsigned(mkbounds.size());
+      for(unsigned cmk=0;cmk<nmkbounds;cmk++){
+        const word mkbound=word(mkbounds[cmk]);
+        if(ExistMk(mkbound))RunException(met,fun::PrintStr("An input already exists for the same mkbound=%u.",mkbound));
+        JSphBoundCorrZone *zo=new JSphBoundCorrZone(Log,GetCount(),mkbound,autodir,autodpfactor,limitpoint,direction);
+        List.push_back(zo);
+      }
     }
     ele=ele->NextSiblingElement("mkzone");
   }

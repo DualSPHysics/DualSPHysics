@@ -20,6 +20,7 @@
 //# =========
 //# - Hace de interface con la libreria dsphchrono.dll. (03-05-2016)
 //# - Permite compilar sin librerias de CHRONO. (13-12-2019)
+//:# - Comprueba opcion active en elementos de primer y segundo nivel. (19-03-2020)  
 //#############################################################################
 
 /// \file JChronoObjects.h \brief Declares the class \ref JChronoObjects.
@@ -95,7 +96,7 @@ protected:
   void CreateObjFiles(std::string idname,const std::vector<unsigned> &mkbounds
     ,std::string datadir,std::string mfile,byte normalmode,std::string diroutobj,std::string xmlrow);
 
-  void LoadXml(JXml *sxml, const std::string &place);
+  void LoadXml(const JXml *sxml, const std::string &place);
   void ReadXml(const JXml *sxml, TiXmlElement* lis);
   void ReadXmlValues(const JXml *sxml,TiXmlElement* lis,JChValues* values);
   std::string ReadXmlModelFile(const JXml *sxml,TiXmlElement* ele)const;
@@ -112,7 +113,7 @@ protected:
 
 public:
   JChronoObjects(JLog2* log,const std::string &dirdata,const std::string &casename
-    ,JXml *sxml,const std::string &place,double dp,word mkboundfirst);
+    ,const JXml *sxml,const std::string &place,double dp,word mkboundfirst);
   ~JChronoObjects();
   void Reset();
   static bool Available(){ return(true); }

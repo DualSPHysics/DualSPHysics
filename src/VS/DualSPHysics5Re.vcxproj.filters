@@ -379,6 +379,21 @@
     <ClInclude Include="..\source\JSphFtForcePoints.h">
       <Filter>Src_Moorings</Filter>
     </ClInclude>
+    <ClInclude Include="..\source\JNumexLib.h">
+      <Filter>Libs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JNumexLibDef.h">
+      <Filter>Libs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JNumexLibUndef.h">
+      <Filter>Libs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JSpaceUserVars.h">
+      <Filter>CommonDsph</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JVtkLibDef.h">
+      <Filter>Libs</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\source\JCfgRun.cpp">
@@ -632,6 +647,9 @@
     </ClCompile>
     <ClCompile Include="..\source\JSphFtForcePoints.cpp">
       <Filter>Src_Moorings</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JSpaceUserVars.cpp">
+      <Filter>CommonDsph</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

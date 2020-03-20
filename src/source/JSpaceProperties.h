@@ -31,6 +31,7 @@
 //:# - Se utiliza JRangeFilter para unsigned en lugar de int. (27-12-2013)
 //:# - Pequeños cambios para evitar warnings al usar 32 bits. (13-01-2014)
 //:# - Mejora de rendimiento (200x) cuando el numero de Mks es muy alto. (14-07-2017)
+//:# - Objeto JXml pasado como const para operaciones de lectura. (17-03-2020)  
 //:#############################################################################
 
 /// \file JSpaceProperties.h \brief Declares the classes \ref JSpaceProperties.
@@ -164,7 +165,7 @@ public:
   unsigned GetCount()const{ return(unsigned(Links.size())); }
   
   void AddLink(JSpacePropLink::TpLink type,std::string mks,std::string props);
-  void ReadXml(JXml *sxml,TiXmlElement* eprops);
+  void ReadXml(const JXml *sxml,TiXmlElement* eprops);
   void WriteXml(JXml *sxml,TiXmlElement* eprops)const;
 
   void GetPropsList(std::vector<std::string> &vprops_mk,std::vector<std::string> &vprops_mkb,std::vector<std::string> &vprops_mkf)const;
@@ -203,8 +204,8 @@ private:
 
   const JSpacePropValue* GetValue(std::string props,unsigned idx)const;
   const JSpacePropValue* GetValue(std::string props,std::string name)const;
-  void ReadXmlProperty(JXml *sxml,TiXmlElement* eprop);
-  void ReadXmlPropertyFile(JXml *sxml,TiXmlElement* epropfile);
+  void ReadXmlProperty(const JXml *sxml,TiXmlElement* eprop);
+  void ReadXmlPropertyFile(const JXml *sxml,TiXmlElement* epropfile);
   void WriteXmlProperty(JXml *sxml,TiXmlElement* eprops,const JSpacePropProperty* prop)const;
   void WriteXmlPropertyFile(JXml *sxml,TiXmlElement* eprops,StPropertyFile propfile)const;
   void CheckLinks();
@@ -217,9 +218,9 @@ public:
 
   void LoadFileXml(const std::string &file,const std::string &path);
   void SaveFileXml(const std::string &file,const std::string &path,bool newfile=true)const;
-  void LoadXml(JXml *sxml,const std::string &place);
+  void LoadXml(const JXml *sxml,const std::string &place);
   void SaveXml(JXml *sxml,const std::string &place)const;
-  void ReadXml(JXml *sxml,TiXmlElement* eprops);
+  void ReadXml(const JXml *sxml,TiXmlElement* eprops);
   void WriteXml(JXml *sxml,TiXmlElement* eprops)const;
 
   void FilterMk(word mkboundfirst,word mkfluidfirst,std::string mkselect);

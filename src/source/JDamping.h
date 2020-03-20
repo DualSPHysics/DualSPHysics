@@ -26,6 +26,7 @@
 //:# - Documentacion del codigo en ingles. (08-08-2017)
 //:# - Mejora configuracion XML para definir el dominio del damping. (21-12-2018)
 //:# - Genera VTK con esquema de configuraciones. (21-12-2018)
+//:# - Comprueba opcion active en elementos de primer y segundo nivel. (18-03-2020)  
 //:#############################################################################
 
 /// \file JDamping.h \brief Declares the class \ref JDamping.
@@ -81,7 +82,7 @@ private:
   const double Dp;
   std::vector<StDamping> List;
 
-  void ReadXml(JXml *sxml,TiXmlElement* ele);
+  void ReadXml(const JXml *sxml,TiXmlElement* ele);
   void ComputeDamping(const JDamping::StDamping &da,double dt,unsigned n,unsigned pini,const tdouble3 *pos,const typecode *code,tfloat4 *velrhop)const;
   void ComputeDampingPla(const JDamping::StDamping &da,double dt,unsigned n,unsigned pini,const tdouble3 *pos,const typecode *code,tfloat4 *velrhop)const;
   void SaveVtkConfig(double dp)const;
@@ -91,7 +92,7 @@ public:
   ~JDamping();
   void Reset();
 
-  void LoadXml(JXml *sxml,const std::string &place);
+  void LoadXml(const JXml *sxml,const std::string &place);
   void VisuConfig(std::string txhead,std::string txfoot);
 
   unsigned GetCount()const{ return(unsigned(List.size())); }

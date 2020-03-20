@@ -20,6 +20,7 @@
 //:# Cambios:
 //:# =========
 //:# - Clase para gestionar la creacion de los puntos inlet. (25-01-2017)
+//:# - Objeto JXml pasado como const para operaciones de lectura. (18-03-2020)  
 //:#############################################################################
 
 /// \file JSphInOutPoints.h \brief Declares the class \ref JSphInOutPoints.
@@ -95,17 +96,17 @@ private:
   tdouble3 PtDom[10]; 
 
   void ResizeMemory(unsigned newnpt);
-  JMatrix4d ReadRotate2D(JXml *sxml,TiXmlElement* ele,const tdouble3 &pt);
-  JMatrix4d ReadRotate3D(JXml *sxml,TiXmlElement* ele);
+  JMatrix4d ReadRotate2D(const JXml *sxml,TiXmlElement* ele,const tdouble3 &pt);
+  JMatrix4d ReadRotate3D(const JXml *sxml,TiXmlElement* ele);
 
   tdouble3 DirectionFromStr(const std::string &strdir)const;
   std::string CheckParticlesDirection(const JSphMkBlock *pmk,const tdouble3 &dir)const;
 
 
-  void Create2d3d_Particles(JXml *sxml,TiXmlElement* ele,const JSphPartsInit *partsdata);
-  void Create2d_Line(JXml *sxml,TiXmlElement* ele);
-  void Create3d_Box(JXml *sxml,TiXmlElement* ele);
-  void Create3d_Circle(JXml *sxml,TiXmlElement* ele);
+  void Create2d3d_Particles(const JXml *sxml,TiXmlElement* ele,const JSphPartsInit *partsdata);
+  void Create2d_Line(const JXml *sxml,TiXmlElement* ele);
+  void Create3d_Box(const JXml *sxml,TiXmlElement* ele);
+  void Create3d_Circle(const JXml *sxml,TiXmlElement* ele);
   void CheckPoints(const std::string &xmlrow);
   void ComputeDomainFromPoints();
 
@@ -116,7 +117,7 @@ public:
   void Reset();
   void ResetPoints();
 
-  void CreatePoints(JXml *sxml,TiXmlElement* ele,const JSphPartsInit *partsdata);
+  void CreatePoints(const JXml *sxml,TiXmlElement* ele,const JSphPartsInit *partsdata);
 
   void GetConfig(std::vector<std::string> &lines)const;
 

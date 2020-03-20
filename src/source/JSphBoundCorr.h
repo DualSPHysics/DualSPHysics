@@ -24,6 +24,7 @@
 //:# - Simple configuration for parallel boxes of boundary particles. (13-06-2018)
 //:# - Saves VTK file (CfgBoundCorr_Limit.vtk) with LimitPos and Direction 
 //:#   configuration. (13-06-2018)
+//:# - Comprueba opcion active en elementos de primer y segundo nivel. (18-03-2020)  
 //:#############################################################################
 
 /// \file JSphBoundCorr.h \brief Declares the class \ref JSphBoundCorr.
@@ -121,7 +122,7 @@ private:
 
   void Reset();
   bool ExistMk(word mkbound)const;
-  void LoadXml(JXml *sxml,const std::string &place);
+  void LoadXml(const JXml *sxml,const std::string &place);
   void ReadXml(const JXml *sxml,TiXmlElement* lis);
   void UpdateMkCode(const JSphMk *mkinfo);
   void SaveVtkConfig(double dp,int part)const;
@@ -129,7 +130,7 @@ private:
 public:
   const bool Cpu;
 
-  JSphBoundCorr(bool cpu,double dp,JLog2 *log,JXml *sxml,const std::string &place,const JSphMk *mkinfo);
+  JSphBoundCorr(bool cpu,double dp,JLog2 *log,const JXml *sxml,const std::string &place,const JSphMk *mkinfo);
   ~JSphBoundCorr();
 
   void RunAutoConfig(const JSphPartsInit *partsdata);

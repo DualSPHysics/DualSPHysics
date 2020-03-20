@@ -389,7 +389,7 @@ void JLinearValue::VisuData(){
 /// Reads data from XML.
 /// Lee datos del XML.
 //==============================================================================
-void JLinearValue::ReadXmlValues(JXml *sxml,TiXmlElement* ele,std::string name
+void JLinearValue::ReadXmlValues(const JXml *sxml,TiXmlElement* ele,std::string name
   ,std::string subname,std::string attributes)
 {
   const char met[]="ReadXmlValues";

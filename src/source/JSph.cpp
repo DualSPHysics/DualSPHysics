@@ -58,6 +58,8 @@
 #include "JDataArrays.h"
 #include "JOutputCsv.h"
 #include "JVtkLib.h"
+#include "JNumexLib.h"
+#include "JSpaceUserVars.h"
 
 using namespace std;
 
@@ -97,6 +99,7 @@ JSph::JSph(bool cpu,bool mgpu,bool withmpi):Cpu(cpu),Mgpu(mgpu),WithMpi(withmpi)
   PartsLoaded=NULL;
   InOut=NULL;       //<vs_innlet>
   BoundCorr=NULL;   //<vs_innlet>
+  NuxLib=NULL;
   InitVars();
 }
 
@@ -131,6 +134,7 @@ JSph::~JSph(){
   delete PartsLoaded;   PartsLoaded=NULL;
   delete InOut;         InOut=NULL;       //<vs_innlet>
   delete BoundCorr;     BoundCorr=NULL;   //<vs_innlet>
+  delete NuxLib;        NuxLib=NULL;
 }
 
 //==============================================================================
@@ -144,7 +148,6 @@ void JSph::InitVars(){
   Symmetry=false;
   Stable=false;
   SvPosDouble=false;
-  FtSaveAce=false;//<ft_face>
   RunCode=CalcRunCode();
   RunTimeDate="";
   CaseName=""; DirCase=""; RunName="";
@@ -248,38 +251,38 @@ void JSph::InitVars(){
   SymplecticDtPre=0;
   DemDtForce=0;  //(DEM)
   MaxNumbers.Clear();
+
+  SaveFtAce=false;
 }
 
-//<ft_face_ini>
 //==============================================================================
 /// Saves the linear and angular acceleration of each floating object in a csv file
 //==============================================================================
-
-void JSph::SaveFtAce(double dt,bool predictor,StFtoForces *ftoforces) {
+void JSph::SaveFtAceFun(double dt,bool predictor,StFtoForces *ftoforces){
   const unsigned nstep=Nstep;
   const double timestep=TimeStep;
   const bool savedata=!(timestep<(floor((timestep-dt)/TimePart)+1.0)*TimePart);
   if(savedata && !predictor){
-    for (unsigned cf=0; cf<FtCount;cf++){
+    for(unsigned cf=0;cf<FtCount;cf++){
       const string file=AppInfo.GetDirOut()+fun::PrintStr("FloatingAce_mkbound_%u.csv",FtObjs[cf].mkbound);
-          jcsv::JSaveCsv2 scsv(file,true,AppInfo.GetCsvSepComa());
-          if (!scsv.GetAppendMode()) {
-            Log->AddFileInfo("FloatingAce_mkbound_XX.csv", "Saves information of acceleration used to move the floating object.");
-            //-Saves head.
-            scsv.SetHead();
-            scsv << "nstep;time [s];dt [s];predictor;face.x [m/s^2];face.y [m/s^2];face.z [m/s^2]";
-            scsv << "fomegaace.x [rad/s^2];fomegaace.y [rad/s^2];fomegaace.z [rad/s^2]" << jcsv::Endl();
-          }
-          //-Saves data.
-          scsv.SetData();
-          scsv << nstep << timestep << dt << (predictor?"True":"False");
-          scsv << ftoforces[cf].face;
-          scsv << ftoforces[cf].fomegaace;
-          scsv << jcsv::Endl();
-          scsv.SaveData();
+      jcsv::JSaveCsv2 scsv(file,true,AppInfo.GetCsvSepComa());
+      if(!scsv.GetAppendMode()){
+        Log->AddFileInfo("FloatingAce_mkbound_XX.csv", "Saves information of acceleration used to move the floating object.");
+        //-Saves head.
+        scsv.SetHead();
+        scsv << "nstep;time [s];dt [s];predictor;face.x [m/s^2];face.y [m/s^2];face.z [m/s^2]";
+        scsv << "fomegaace.x [rad/s^2];fomegaace.y [rad/s^2];fomegaace.z [rad/s^2]" << jcsv::Endl();
+      }
+      //-Saves data.
+      scsv.SetData();
+      scsv << nstep << timestep << dt << (predictor?"True":"False");
+      scsv << ftoforces[cf].face;
+      scsv << ftoforces[cf].fomegaace;
+      scsv << jcsv::Endl();
+      scsv.SaveData();
     }
   }
-}//<ft_face_end>
+}
 
 //==============================================================================
 /// Generates a random code to identify the file of the results of the execution.
@@ -442,8 +445,10 @@ llong JSph::GetAllocMemoryCpu()const{
 /// Loads the configuration of the execution.
 //==============================================================================
 void JSph::LoadConfig(const JCfgRun *cfg){
-  const char* met="LoadConfig";
   TimerTot.Start();
+
+  //-Loads basic configuration from execution parameters.
+  //------------------------------------------------------
   Stable=cfg->Stable;
   SvPosDouble=false; //-Options by default.
   DirOut=fun::GetDirWithSlash(cfg->DirOut);
@@ -451,11 +456,10 @@ void JSph::LoadConfig(const JCfgRun *cfg){
   CaseName=cfg->CaseName; 
   DirCase=fun::GetDirWithSlash(fun::GetDirParent(CaseName));
   CaseName=CaseName.substr(DirCase.length());
-  if(!CaseName.length())RunException(met,"Name of the case for execution was not indicated.");
+  if(!CaseName.length())Run_Exceptioon("Name of the case for execution was not indicated.");
   RunName=(cfg->RunName.length()? cfg->RunName: CaseName);
   FileXml=DirCase+CaseName+".xml";
   PartBeginDir=cfg->PartBeginDir; PartBegin=cfg->PartBegin; PartBeginFirst=cfg->PartBeginFirst;
-
   //-Output options:
   CsvSepComa=cfg->CsvSepComa;
   SvData=byte(SDAT_None); 
@@ -463,7 +467,6 @@ void JSph::LoadConfig(const JCfgRun *cfg){
   if(cfg->Sv_Binx)SvData|=byte(SDAT_Binx);
   if(cfg->Sv_Info)SvData|=byte(SDAT_Info);
   if(cfg->Sv_Vtk)SvData|=byte(SDAT_Vtk);
-
   SvRes=cfg->SvRes;
   SvTimers=cfg->SvTimers;
   SvDomainVtk=cfg->SvDomainVtk;
@@ -472,7 +475,6 @@ void JSph::LoadConfig(const JCfgRun *cfg){
   RunTimeDate=fun::GetDateTime();
   Log->Printf("[Initialising %s  %s]",ClassName.c_str(),RunTimeDate.c_str());
   if(!JVtkLib::Available())Log->PrintWarning("Code for VTK format files is not included in the current compilation, so no output VTK files will be created.");
-
   const string runpath=AppInfo.GetRunPath();
   Log->Printf("ProgramFile=\"%s\"",fun::GetPathLevels(fun::GetCanonicalPath(runpath,AppInfo.GetRunCommand()),3).c_str());
   Log->Printf("ExecutionDir=\"%s\"",fun::GetPathLevels(runpath,3).c_str());
@@ -492,98 +494,17 @@ void JSph::LoadConfig(const JCfgRun *cfg){
     Log->Print(fun::VarStr("PartBeginFirst",PartBeginFirst));
   }
 
-  LoadCaseConfig();
-
-  //-Aplies configuration using command line.
-  if(cfg->SvPosDouble>=0)SvPosDouble=(cfg->SvPosDouble!=0);
-  if(cfg->TBoundary){
-    TBoundary=BC_DBC;  SlipMode=SLIP_Vel0;  MdbcCorrector=false;
-    switch(cfg->TBoundary){
-      case 1:  TBoundary=BC_DBC;                          break;
-      case 2:  TBoundary=BC_MDBC;  SlipMode=SLIP_Vel0;    break;
-      case 3:  TBoundary=BC_MDBC;  SlipMode=SLIP_NoSlip;  break;
-      default: Run_Exceptioon("Boundary method is not valid.");
-    }
-    UseNormals=(TBoundary==BC_MDBC);
-  }
-  if(TBoundary==BC_MDBC && SlipMode!=SLIP_Vel0)Run_Exceptioon("Only the slip mode velocity=0 is allowed with mDBC conditions.");
-  if(cfg->TStep)TStep=cfg->TStep;
-  if(cfg->VerletSteps>=0)VerletSteps=cfg->VerletSteps;
-  if(cfg->TKernel)TKernel=cfg->TKernel;
-  if(cfg->TVisco){ TVisco=cfg->TVisco; Visco=cfg->Visco; }
-  if(cfg->ViscoBoundFactor>=0)ViscoBoundFactor=cfg->ViscoBoundFactor;
-
-  //-Density Diffusion Term configuration.
-  if(cfg->TDensity>=0){
-    switch(cfg->TDensity){
-      case 0:  TDensity=DDT_None;     break;
-      case 1:  TDensity=DDT_DDT;      break;
-      case 2:  TDensity=DDT_DDT2;     break;  //<vs_dtt2>
-      case 3:  TDensity=DDT_DDT2Full; break;  //<vs_dtt2>
-      default: 
-        if(cfg->TDensity==2 || cfg->TDensity==3)RunException(met,"Density Diffusion Term \'Fourtakas et al 2019\' is not available in this version.");
-        else RunException(met,"Density Diffusion Term mode is not valid.");
-    }
-    if(cfg->DDTValue>=0)DDTValue=cfg->DDTValue;
-    else if(DDTValue==0)DDTValue=0.1f;
-  }
-  if(TDensity==DDT_None)DDTValue=0;
-  else if(cfg->DDTValue>=0)DDTValue=cfg->DDTValue;
-  DDTArray=(TDensity!=DDT_None && Cpu); //-It is necessary because the interaction is divided in two steps: fluid-fluid/float and fluid-bound.
-
-  //-Shifting configuration.
-  if(cfg->Shifting>=0){
-    TpShifting shiftmode=SHIFT_None;
-    switch(cfg->Shifting){
-      case 0:  shiftmode=SHIFT_None;     break;
-      case 1:  shiftmode=SHIFT_NoBound;  break;
-      case 2:  shiftmode=SHIFT_NoFixed;  break;
-      case 3:  shiftmode=SHIFT_Full;     break;
-      default: RunException(met,"Shifting mode is not valid.");
-    }
-    if(shiftmode!=SHIFT_None){
-      if(!Shifting)Shifting=new JShifting(Simulate2D,Dp,H,Log);
-      Shifting->ConfigBasic(shiftmode);
-    }
-    else{
-      delete Shifting; Shifting=NULL;
-    }
-    ShiftingMode=(Shifting? Shifting->GetShiftMode(): SHIFT_None);
-  }
-
-  if(cfg->FtPause>=0)FtPause=cfg->FtPause;
-  if(cfg->TimeMax>0)TimeMax=cfg->TimeMax;
-  NstepsBreak=cfg->NstepsBreak;
-  if(NstepsBreak)Log->PrintfWarning("The execution will be cancelled after %d simulation steps.",NstepsBreak);
-  //-Configuration of JTimeOut with TimePart.
-  TimeOut=new JTimeOut();
-  if(cfg->TimePart>=0){
-    TimePart=cfg->TimePart;
-    TimeOut->Config(TimePart);
-  }
-  else TimeOut->Config(FileXml,"case.execution.special.timeout",TimePart);
-
-  CellMode=cfg->CellMode;
-  if(cfg->DomainMode==2)ConfigDomainFixed(cfg->DomainFixedMin,cfg->DomainFixedMax);
-  if(cfg->RhopOutModif){
-    RhopOutMin=cfg->RhopOutMin; RhopOutMax=cfg->RhopOutMax;
-  }
-  RhopOut=(RhopOutMin<RhopOutMax);
-  if(!RhopOut){ RhopOutMin=-FLT_MAX; RhopOutMax=FLT_MAX; }
+  //-Loads case configuration from XML and command line.
+  LoadCaseConfig(cfg);
 }
 
 //==============================================================================
-/// Loads the case configuration to be executed.
+/// Loads predefined constans from XML.
 //==============================================================================
-void JSph::LoadCaseConfig(){
-  const char* met="LoadCaseConfig";
-  if(!fun::FileExists(FileXml))RunException(met,"Case configuration was not found.",FileXml);
-  JXml xml; xml.LoadFile(FileXml);
-  JSpaceCtes ctes;     ctes.LoadXmlRun(&xml,"case.execution.constants");
-  JSpaceEParms eparms; eparms.LoadXml(&xml,"case.execution.parameters");
-  JSpaceParts parts;   parts.LoadXml(&xml,"case.execution.particles");
+void JSph::LoadConfigCtes(const JXml *xml){
+  JSpaceCtes ctes;
+  ctes.LoadXmlRun(xml,"case.execution.constants");
 
-  //-Predefined constantes.
   Simulate2D=ctes.GetData2D();
   Simulate2DPosY=ctes.GetData2DPosY();
   H=(float)ctes.GetH();
@@ -596,9 +517,16 @@ void JSph::LoadCaseConfig(){
   MassFluid=(float)ctes.GetMassFluid();
   MassBound=(float)ctes.GetMassBound();
   if(ctes.GetEps()!=0)Log->PrintWarning("Eps value is not used (this correction is deprecated).");
+}
 
-  //-Execution parameters.
-  if (eparms.Exists("FtSaveAce"))FtSaveAce=(eparms.GetValueInt("FtSaveAce",true,0)!=0);
+//==============================================================================
+/// Loads execution parameters from XML.
+//==============================================================================
+void JSph::LoadConfigParameters(const JXml *xml){
+  JSpaceEParms eparms;
+  eparms.LoadXml(xml,"case.execution.parameters");
+
+  if(eparms.Exists("FtSaveAce"))SaveFtAce=(eparms.GetValueInt("FtSaveAce",true,0)!=0);
 
   if(eparms.Exists("PosDouble")){
     Log->PrintWarning("The parameter \'PosDouble\' is deprecated.");
@@ -609,12 +537,12 @@ void JSph::LoadCaseConfig(){
     case 1:  UseDEM=false;    break;
     case 2:  UseDEM=true;     break;
     case 3:  UseChrono=true;  break;  //<vs_chroono>
-    default: RunException(met,"Rigid algorithm is not valid.");
+    default: Run_Exceptioon("Rigid algorithm is not valid.");
   }
   switch(eparms.GetValueInt("StepAlgorithm",true,1)){
     case 1:  TStep=STEP_Verlet;      break;
     case 2:  TStep=STEP_Symplectic;  break;
-    default: RunException(met,"Step algorithm is not valid.");
+    default: Run_Exceptioon("Step algorithm is not valid.");
   }
   VerletSteps=eparms.GetValueInt("VerletSteps",true,40);
   switch(eparms.GetValueInt("Kernel",true,2)){
@@ -624,12 +552,12 @@ void JSph::LoadCaseConfig(){
 #ifdef PRASS3_WENDLANDC6                        //<vs_praticalsskq>
     case 4:  TKernel=KERNEL_WendlandC6; break;  //<vs_praticalsskq>
 #endif                                          //<vs_praticalsskq>
-    default: RunException(met,"Kernel choice is not valid.");
+    default: Run_Exceptioon("Kernel choice is not valid.");
   }
   switch(eparms.GetValueInt("ViscoTreatment",true,1)){
     case 1:  TVisco=VISCO_Artificial;  break;
     case 2:  TVisco=VISCO_LaminarSPS;  break;
-    default: RunException(met,"Viscosity treatment is not valid.");
+    default: Run_Exceptioon("Viscosity treatment is not valid.");
   }
   Visco=eparms.GetValueFloat("Visco");
   ViscoBoundFactor=eparms.GetValueFloat("ViscoBoundFactor",true,1.f);
@@ -643,7 +571,7 @@ void JSph::LoadCaseConfig(){
   switch(eparms.GetValueInt("Boundary",true,1)){
     case 1:  TBoundary=BC_DBC;      break;
     case 2:  TBoundary=BC_MDBC;     break;   //<vs_mddbc>
-    default: RunException(met,"Boundary Condition method is not valid.");
+    default: Run_Exceptioon("Boundary Condition method is not valid.");
   }
   if(TBoundary==BC_MDBC){ //<vs_mddbc_ini>
     UseNormals=true;
@@ -651,16 +579,16 @@ void JSph::LoadCaseConfig(){
       case 1:  SlipMode=SLIP_Vel0;      break;
       case 2:  SlipMode=SLIP_NoSlip;    break;
       case 3:  SlipMode=SLIP_FreeSlip;  break;
-      default: RunException(met,"Slip mode is not valid.");
+      default: Run_Exceptioon("Slip mode is not valid.");
     }
     MdbcCorrector=(eparms.GetValueInt("MDBCCorrector",true,0)!=0);
   } 
-  if(SlipMode==SLIP_FreeSlip)RunException(met,"SlipMode=\'Free slip\' is not available for now.");
+  if(SlipMode==SLIP_FreeSlip)Run_Exceptioon("SlipMode=\'Free slip\' is not available for now.");
   //<vs_mddbc_end>
 
   //-Density Diffusion Term configuration.
   if(eparms.Exists("DeltaSPH")){
-    if(eparms.Exists("DensityDT"))RunException(met,"The parameters \'DeltaSPH\' and \'DensityDT\' cannot be combined. Only \'DensityDT\' should be used.");
+    if(eparms.Exists("DensityDT"))Run_Exceptioon("The parameters \'DeltaSPH\' and \'DensityDT\' cannot be combined. Only \'DensityDT\' should be used.");
     float v=eparms.GetValueFloat("DeltaSPH");
     if(v>0){
       TDensity=DDT_DDT;
@@ -676,18 +604,17 @@ void JSph::LoadCaseConfig(){
       case 2:  TDensity=DDT_DDT2;     break;  //<vs_dtt2>
       case 3:  TDensity=DDT_DDT2Full; break;  //<vs_dtt2>
       default: 
-        if(tddt==2 || tddt==3)RunException(met,"Density Diffusion Term \'Fourtakas et al 2019\' is not available in this version.");
-        else RunException(met,"Density Diffusion Term mode is not valid.");
+        if(tddt==2 || tddt==3)Run_Exceptioon("Density Diffusion Term \'Fourtakas et al 2019\' is not available in this version.");
+        else Run_Exceptioon("Density Diffusion Term mode is not valid.");
     }
     DDTValue=eparms.GetValueFloat("DensityDTvalue",true,0.1f);
   }
   DDTArray=false;
 
   //-Old shifting configuration.
-  const bool shiftold=eparms.Exists("Shifting");
-  TpShifting shiftmode=SHIFT_None;
-  float shiftcoef=0,shifttfs=0;
-  if(shiftold){
+  if(eparms.Exists("Shifting")){
+    TpShifting shiftmode=SHIFT_None;
+    float shiftcoef=0,shifttfs=0;
     switch(eparms.GetValueInt("Shifting",true,0)){
       case 0:  shiftmode=SHIFT_None;     break;
       case 1:  shiftmode=SHIFT_NoBound;  break;
@@ -700,6 +627,8 @@ void JSph::LoadCaseConfig(){
       if(shiftcoef==0)shiftmode=SHIFT_None;
       else shifttfs=eparms.GetValueFloat("ShiftTFS",true,0);
     }
+    Shifting=new JShifting(Simulate2D,Dp,H,Log);
+    Shifting->ConfigBasic(shiftmode,shiftcoef,shifttfs);
   }
 
   WrnPartsOut=(eparms.GetValueInt("WrnPartsOut",true,1)!=0);
@@ -740,7 +669,7 @@ void JSph::LoadCaseConfig(){
     if(eparms.Exists("XZPeriodic")){ PeriX=true;  PeriY=false; PeriZ=true;   PeriXinc=PeriYinc=PeriZinc=TDouble3(0); }
     if(eparms.Exists("YZPeriodic")){ PeriX=false; PeriY=true;  PeriZ=true;   PeriXinc=PeriYinc=PeriZinc=TDouble3(0); }
     PeriActive=DefPeriActive(PeriX,PeriY,PeriZ);
-    if(Simulate2D && PeriY)RunException(met,"Cannot use periodic conditions in Y with 2D simulations");
+    if(Simulate2D && PeriY)Run_Exceptioon("Cannot use periodic conditions in Y with 2D simulations");
   }
 
   //-Configuration of domain size.
@@ -759,7 +688,7 @@ void JSph::LoadCaseConfig(){
   if(eparms.Exists(key="DomainFixedXmax")){ ConfigDomainFixedValue(key,eparms.GetValueDouble(key)); resizeold=true; }
   if(eparms.Exists(key="DomainFixedYmax")){ ConfigDomainFixedValue(key,eparms.GetValueDouble(key)); resizeold=true; }
   if(eparms.Exists(key="DomainFixedZmax")){ ConfigDomainFixedValue(key,eparms.GetValueDouble(key)); resizeold=true; }
-  if(!eparms.IsPosDefault() && resizeold)RunException(met,"Combination of <simulationdomain> with IncZ or DomainFixedXXX in <parameters> section of XML is not allowed.",FileXml);
+  if(!eparms.IsPosDefault() && resizeold)Run_ExceptioonFile("Combination of <simulationdomain> with IncZ or DomainFixedXXX in <parameters> section of XML is not allowed.",FileXml);
   if(resizeold)Log->PrintWarning("The options IncZ and DomainFixedXXXX are deprecated.");
   ConfigDomainResize("Xmin",&eparms);
   ConfigDomainResize("Ymin",&eparms);
@@ -767,8 +696,158 @@ void JSph::LoadCaseConfig(){
   ConfigDomainResize("Xmax",&eparms);
   ConfigDomainResize("Ymax",&eparms);
   ConfigDomainResize("Zmax",&eparms);
+}
+
+//==============================================================================
+/// Loads the case configuration to be executed.
+//==============================================================================
+void JSph::LoadConfigCommands(const JCfgRun *cfg){
+  //-Aplies configuration using command line.
+  if(cfg->SvPosDouble>=0)SvPosDouble=(cfg->SvPosDouble!=0);
+  if(cfg->TBoundary){
+    TBoundary=BC_DBC;  SlipMode=SLIP_Vel0;  MdbcCorrector=false;
+    switch(cfg->TBoundary){
+      case 1:  TBoundary=BC_DBC;                          break;
+      case 2:  TBoundary=BC_MDBC;  SlipMode=SLIP_Vel0;    break;
+      case 3:  TBoundary=BC_MDBC;  SlipMode=SLIP_NoSlip;  break;
+      default: Run_Exceptioon("Boundary method is not valid.");
+    }
+    UseNormals=(TBoundary==BC_MDBC);
+  }
+  if(TBoundary==BC_MDBC && SlipMode!=SLIP_Vel0)Run_Exceptioon("Only the slip mode velocity=0 is allowed with mDBC conditions.");
+  if(cfg->TStep)TStep=cfg->TStep;
+  if(cfg->VerletSteps>=0)VerletSteps=cfg->VerletSteps;
+  if(cfg->TKernel)TKernel=cfg->TKernel;
+  if(cfg->TVisco){ TVisco=cfg->TVisco; Visco=cfg->Visco; }
+  if(cfg->ViscoBoundFactor>=0)ViscoBoundFactor=cfg->ViscoBoundFactor;
+
+  //-Density Diffusion Term configuration.
+  if(cfg->TDensity>=0){
+    switch(cfg->TDensity){
+      case 0:  TDensity=DDT_None;     break;
+      case 1:  TDensity=DDT_DDT;      break;
+      case 2:  TDensity=DDT_DDT2;     break;  //<vs_dtt2>
+      case 3:  TDensity=DDT_DDT2Full; break;  //<vs_dtt2>
+      default: 
+        if(cfg->TDensity==2 || cfg->TDensity==3)Run_Exceptioon("Density Diffusion Term \'Fourtakas et al 2019\' is not available in this version.");
+        else Run_Exceptioon("Density Diffusion Term mode is not valid.");
+    }
+    if(cfg->DDTValue>=0)DDTValue=cfg->DDTValue;
+    else if(DDTValue==0)DDTValue=0.1f;
+  }
+  if(TDensity==DDT_None)DDTValue=0;
+  else if(cfg->DDTValue>=0)DDTValue=cfg->DDTValue;
+  DDTArray=(TDensity!=DDT_None && Cpu); //-It is necessary because the interaction is divided in two steps: fluid-fluid/float and fluid-bound.
+
+  //-Shifting configuration.
+  if(cfg->Shifting>=0){
+    TpShifting shiftmode=SHIFT_None;
+    switch(cfg->Shifting){
+      case 0:  shiftmode=SHIFT_None;     break;
+      case 1:  shiftmode=SHIFT_NoBound;  break;
+      case 2:  shiftmode=SHIFT_NoFixed;  break;
+      case 3:  shiftmode=SHIFT_Full;     break;
+      default: Run_Exceptioon("Shifting mode is not valid.");
+    }
+    if(!Shifting)Shifting=new JShifting(Simulate2D,Dp,H,Log);
+    Shifting->ConfigBasic(shiftmode);
+  }
+
+  if(cfg->FtPause>=0)FtPause=cfg->FtPause;
+  if(cfg->TimeMax>0)TimeMax=cfg->TimeMax;
+  NstepsBreak=cfg->NstepsBreak;
+  if(NstepsBreak)Log->PrintfWarning("The execution will be cancelled after %d simulation steps.",NstepsBreak);
+  //-Configuration of JTimeOut with TimePart.
+  TimeOut=new JTimeOut();
+  if(cfg->TimePart>=0){
+    TimePart=cfg->TimePart;
+    TimeOut->Config(TimePart);
+  }
+  else TimeOut->Config(FileXml,"case.execution.special.timeout",TimePart);
+
+  CellMode=cfg->CellMode;
+  if(cfg->DomainMode==2)ConfigDomainFixed(cfg->DomainFixedMin,cfg->DomainFixedMax);
+  if(cfg->RhopOutModif){
+    RhopOutMin=cfg->RhopOutMin; RhopOutMax=cfg->RhopOutMax;
+  }
+  RhopOut=(RhopOutMin<RhopOutMax);
+  if(!RhopOut){ RhopOutMin=-FLT_MAX; RhopOutMax=FLT_MAX; }
+}
+
+//==============================================================================
+/// Creates and load NuxLib object to evaluate user-defined expressions.
+//==============================================================================
+void JSph::LoadConfigVars(const JXml *xml){
+  if(!JNumexLib::Available())Log->PrintWarning("Code for JNumex libary is not included in the current compilation, so user-defined expresions in XML file are not evaluated.");
+  else{
+    NuxLib=new JNumexLib();
+    //-Defines basic constant values on NuxLib object.
+    NuxLib->CreateVar("CaseName"  ,true,CaseName);
+    NuxLib->CreateVar("Data2D"    ,true,Simulate2D);
+    NuxLib->CreateVar("Data2DPosy",true,Simulate2DPosY);
+    NuxLib->CreateVar("H"         ,true,H);
+    NuxLib->CreateVar("B"         ,true,CteB);
+    NuxLib->CreateVar("Gamma"     ,true,Gamma);
+    NuxLib->CreateVar("Rhop0"     ,true,RhopZero);
+    NuxLib->CreateVar("Dp"        ,true,Dp);
+    NuxLib->CreateVar("Gravity"   ,true,Gravity);
+    NuxLib->CreateVar("MassFluid" ,true,MassFluid);
+    NuxLib->CreateVar("MassBound" ,true,MassBound);
+    //-Loads user variables from XML.
+    JSpaceUserVars uvars;
+    uvars.LoadXml(xml,"case.execution.uservars",true);
+    for(unsigned c=0;c<uvars.CountVars();c++){
+      const JSpaceUserVars::StVar v=uvars.GetVar(c);
+      if(v.isnum)NuxLib->CreateVar(v.name,true,v.valuenum);
+      else       NuxLib->CreateVar(v.name,true,v.valuestr);
+    }
+    //-Shows list of available variables.
+    //Log->Printf("List of available variables for user expressions: %s\n",NuxLib->ListVarsToStr().c_str());
+    Log->Printf("XML-Vars (ctes + uservars): %s",NuxLib->ListVarsToStr().c_str());
+  }
+}
+
+//==============================================================================
+/// Loads execution parameters in NuxLib object to evaluate user-defined expressions.
+//==============================================================================
+void JSph::LoadConfigVarsExec(){
+  if(NuxLib){
+    const unsigned nv=NuxLib->CountVars();
+    NuxLib->CreateVar("TimeMax",true,TimeMax);
+    NuxLib->CreateVar("TimeOut",true,TimePart);
+    //-Shows list of available variables.
+    //Log->Printf("List of available variables for user expressions: %s\n",NuxLib->ListVarsToStr().c_str());
+    Log->Printf("XML-Vars (parameters): %s",NuxLib->ListVarsToStr(nv).c_str());
+  }
+}
+
+//==============================================================================
+/// Loads the case configuration to be executed.
+//==============================================================================
+void JSph::LoadCaseConfig(const JCfgRun *cfg){
+  if(!fun::FileExists(FileXml))Run_ExceptioonFile("Case configuration was not found.",FileXml);
+  JXml xml; xml.LoadFile(FileXml);
+
+  //-Predefined constantes.
+  LoadConfigCtes(&xml);
+
+  //-Define variables on NuxLib object.
+  LoadConfigVars(&xml);
+  //-Enables the use of NuxLib in XML configuration.
+  xml.SetNuxLib(NuxLib);
+
+  //-Execution parameters from XML.
+  LoadConfigParameters(&xml);
+
+  //-Execution parameters from commands.
+  LoadConfigCommands(cfg);
+
+  //-Define variables of execution parameters and shows list of available variables.
+  LoadConfigVarsExec();
 
   //-Particle data.
+  JSpaceParts parts;
+  parts.LoadXml(&xml,"case.execution.particles");
   CaseNp=parts.Count();
   CaseNfixed=parts.Count(TpPartFixed);
   CaseNmoving=parts.Count(TpPartMoving);
@@ -788,19 +867,19 @@ void JSph::LoadCaseConfig(){
   GaugeSystem=new JGaugeSystem(Cpu,Log);
 
   //-Configuration of AccInput.
-  if(xml.GetNode("case.execution.special.accinputs",false)){
+  if(xml.GetNodeSimple("case.execution.special.accinputs",true)){
     AccInput=new JSphAccInput(Log,DirCase,&xml,"case.execution.special.accinputs");
   }
 
   //-Configuration of ChronoObjects. //<vs_chroono_ini>
   if(UseChrono){
-    if(xml.GetNode("case.execution.special.chrono",false)){
-      if(!JChronoObjects::Available())RunException(met,"DSPHChronoLib to use Chrono is not included in the current compilation.");
+    if(xml.GetNodeSimple("case.execution.special.chrono",true)){
+      if(!JChronoObjects::Available())Run_Exceptioon("DSPHChronoLib to use Chrono is not included in the current compilation.");
       ChronoObjects=new JChronoObjects(Log,DirCase,CaseName,&xml,"case.execution.special.chrono",Dp,parts.GetMkBoundFirst());
     }
-    else RunException(met,"Chrono configuration in XML file is missing.",FileXml);
+    else Run_ExceptioonFile("Chrono configuration in XML file is missing.",FileXml);
   }
-  else if(xml.GetNode("case.execution.special.chrono",false))Log->PrintfWarning("The use of Chrono is disabled (RigidAlgorithm is not 3) although XML file includes the Chrono configuration.");
+  else if(xml.GetNodeSimple("case.execution.special.chrono",true))Log->PrintfWarning("The use of Chrono is disabled (RigidAlgorithm is not 3) although XML file includes the Chrono configuration.");
   //<vs_chroono_end>
 
   //-Loads and configures moving objects.
@@ -810,8 +889,8 @@ void JSph::LoadCaseConfig(){
   }
 
   //-Configuration of WaveGen.
-  if(xml.GetNode("case.execution.special.wavepaddles",false)){
-    if(!JWaveGen::Available())RunException(met,"Code for Wave-Paddles is not included in the current compilation.");
+  if(xml.GetNodeSimple("case.execution.special.wavepaddles",true)){
+    if(!JWaveGen::Available())Run_Exceptioon("Code for Wave-Paddles is not included in the current compilation.");
     bool useomp=false,usegpu=false;
     #ifdef OMP_USE_WAVEGEN
       useomp=(omp_get_max_threads()>1);
@@ -824,8 +903,8 @@ void JSph::LoadCaseConfig(){
   }
 
   //-Configuration of MLPistons.  //<vs_mlapiston_ini>
-  if(xml.GetNode("case.execution.special.mlayerpistons",false)){
-    if(!JMLPistons::Available())RunException(met,"Code for Multi-Layer Pistons is not included in the current compilation.");
+  if(xml.GetNodeSimple("case.execution.special.mlayerpistons",true)){
+    if(!JMLPistons::Available())Run_Exceptioon("Code for Multi-Layer Pistons is not included in the current compilation.");
     bool useomp=false,usegpu=false;
     MLPistons=new JMLPistons(!Cpu,Log,DirCase);
     MLPistons->LoadXml(&xml,"case.execution.special.mlayerpistons");  
@@ -837,8 +916,8 @@ void JSph::LoadCaseConfig(){
   }//<vs_mlapiston_end>
 
   //-Configuration of RelaxZones.  //<vs_rzone_ini>
-  if(xml.GetNode("case.execution.special.relaxationzones",false)){
-    if(!JRelaxZones::Available())RunException(met,"Code for Relaxation Zones is not included in the current compilation.");
+  if(xml.GetNodeSimple("case.execution.special.relaxationzones",true)){
+    if(!JRelaxZones::Available())Run_Exceptioon("Code for Relaxation Zones is not included in the current compilation.");
     bool useomp=false,usegpu=false;
     #ifdef OMP_USE_WAVEGEN
       useomp=(omp_get_max_threads()>1);
@@ -848,17 +927,16 @@ void JSph::LoadCaseConfig(){
   }//<vs_rzone_end>
 
   //-Configuration of Shifting with zones.
-  if(shiftold && xml.GetNode("case.execution.special.shifting",false))Run_ExceptioonFile("Shifting is defined several times (in <special><shifting> and <execution><parameters>).",FileXml);
-  if(shiftold || xml.GetNode("case.execution.special.shifting",false)){
+  if(Shifting && xml.GetNodeSimple("case.execution.special.shifting",true))Run_ExceptioonFile("Shifting is defined several times (in <special><shifting> and <execution><parameters>).",FileXml);
+  if(xml.GetNodeSimple("case.execution.special.shifting",true)){
     Shifting=new JShifting(Simulate2D,Dp,H,Log);
-    if(shiftold)Shifting->ConfigBasic(shiftmode,shiftcoef,shifttfs);
-    else Shifting->LoadXml(&xml,"case.execution.special.shifting");
-    if(!Shifting->GetShiftMode()){ delete Shifting; Shifting=NULL; }
-    ShiftingMode=(Shifting? Shifting->GetShiftMode(): SHIFT_None);
+    Shifting->LoadXml(&xml,"case.execution.special.shifting");
   }
+  if(Shifting && !Shifting->GetShiftMode()){ delete Shifting; Shifting=NULL; }
+  ShiftingMode=(Shifting? Shifting->GetShiftMode(): SHIFT_None);
 
   //-Configuration of damping zones.
-  if(xml.GetNode("case.execution.special.damping",false)){
+  if(xml.GetNodeSimple("case.execution.special.damping",true)){
     Damping=new JDamping(Dp,Log);
     Damping->LoadXml(&xml,"case.execution.special.damping");
   }
@@ -867,14 +945,14 @@ void JSph::LoadCaseConfig(){
   FtCount=parts.CountBlocks(TpPartFloating);
   if(FtCount){
     FtConstraints=false;
-    if(FtCount>CODE_MKRANGEMAX)RunException(met,"The number of floating objects exceeds the maximum.");
+    if(FtCount>CODE_MKRANGEMAX)Run_Exceptioon("The number of floating objects exceeds the maximum.");
     AllocMemoryFloating(FtCount,parts.UseImposedFtVel());
     unsigned cobj=0;
     for(unsigned c=0;c<parts.CountBlocks()&&cobj<FtCount;c++){
       const JSpacePartBlock &block=parts.GetBlock(c);
       if(block.Type==TpPartFloating){
         const JSpacePartBlock_Floating &fblock=(const JSpacePartBlock_Floating &)block;
-        StFloatingData* fobj=FtObjs+cobj; 
+        StFloatingData* fobj=FtObjs+cobj;
         fobj->mkbound=fblock.GetMkType();
         fobj->begin=fblock.GetBegin();
         fobj->count=fblock.GetCount();
@@ -954,23 +1032,23 @@ void JSph::LoadCaseConfig(){
   }
 
   //-Configuration of Inlet/Outlet.  //<vs_innlet_ini> 
-  if(xml.GetNode("case.execution.special.inout",false)){
+  if(xml.GetNodeSimple("case.execution.special.inout",true)){
     InOut=new JSphInOut(Cpu,Log,FileXml,&xml,"case.execution.special.inout",DirCase);
     NpDynamic=true;
     ReuseIds=InOut->GetReuseIds();
-    if(ReuseIds)RunException(met,"Inlet/Outlet with ReuseIds is not a valid option for now...");
+    if(ReuseIds)Run_Exceptioon("Inlet/Outlet with ReuseIds is not a valid option for now...");
   }
   
   //-Configuration of boundary extrapolated correction.
-  if(xml.GetNode("case.execution.special.boundextrap",false))RunException(met,"The XML section 'boundextrap' is obsolete.");
-  if(xml.GetNode("case.execution.special.boundcorr",false)){
+  if(xml.GetNodeSimple("case.execution.special.boundextrap",false))Run_Exceptioon("The XML section 'boundextrap' is obsolete.");
+  if(xml.GetNodeSimple("case.execution.special.boundcorr",true)){
     BoundCorr=new JSphBoundCorr(Cpu,Dp,Log,&xml,"case.execution.special.boundcorr",MkInfo);
   } //<vs_innlet_end> 
  
   //-Configuration of Moorings object. //<vs_moordyyn_ini>
-  if(xml.GetNode("case.execution.special.moorings",false)){
+  if(xml.GetNodeSimple("case.execution.special.moorings",true)){
     if(WithFloating){
-      if(!AVAILABLE_MOORDYN)RunException(met,"Code for moorings and MoorDyn+ coupling is not included in the current compilation.");
+      if(!AVAILABLE_MOORDYN)Run_Exceptioon("Code for moorings and MoorDyn+ coupling is not included in the current compilation.");
       Moorings=new JMooredFloatings(Log,DirCase,CaseName,Gravity);
       Moorings->LoadXml(&xml,"case.execution.special.moorings");
     }
@@ -978,7 +1056,7 @@ void JSph::LoadCaseConfig(){
   }
 
   //-Configuration of FtForces object.
-  if(Moorings || xml.GetNode("case.execution.special.forcepoints",false)){
+  if(Moorings || xml.GetNodeSimple("case.execution.special.forcepoints",true)){
     if(WithFloating){
       ForcePoints=new JSphFtForcePoints(Log,Cpu,Dp,FtCount);
       //FtForces->LoadXml(&xml,"case.execution.special.forcepoints");
@@ -988,12 +1066,12 @@ void JSph::LoadCaseConfig(){
 
   //-Checks invalid options for symmetry. //<vs_syymmetry_ini>
   if(Symmetry){
-    if(Simulate2D)  RunException(met,"Symmetry is not allowed with 2-D simulations.");
-    if(PeriY)       RunException(met,"Symmetry is not allowed with periodic conditions in axis Y.");
-    if(WithFloating)RunException(met,"Symmetry is not allowed with floating bodies.");
-    if(UseChrono)   RunException(met,"Symmetry is not allowed with Chrono objects.");
-    if(BoundCorr)   RunException(met,"Symmetry is not allowed with BoundCor.");
-    if(TVisco!=VISCO_Artificial)RunException(met,"Symmetry is only allowed with Artificial viscosity.");
+    if(Simulate2D)  Run_Exceptioon("Symmetry is not allowed with 2-D simulations.");
+    if(PeriY)       Run_Exceptioon("Symmetry is not allowed with periodic conditions in axis Y.");
+    if(WithFloating)Run_Exceptioon("Symmetry is not allowed with floating bodies.");
+    if(UseChrono)   Run_Exceptioon("Symmetry is not allowed with Chrono objects.");
+    if(BoundCorr)   Run_Exceptioon("Symmetry is not allowed with BoundCor.");
+    if(TVisco!=VISCO_Artificial)Run_Exceptioon("Symmetry is only allowed with Artificial viscosity.");
   } //<vs_syymmetry_end>
 
   NpMinimum=CaseNp-unsigned(PartsOutMax*CaseNfluid);
@@ -1301,8 +1379,8 @@ void JSph::VisuConfig()const{
   Log->Print(fun::VarStr("RunName",RunName));
   if(Simulate2D)Log->Print(fun::VarStr("Simulate2DPosY",Simulate2DPosY));
   Log->Print(fun::VarStr("Symmetry",Symmetry));  //<vs_syymmetry>
-  Log->Print(fun::VarStr("FtSaveAce",FtSaveAce)); //<ft_face>
   Log->Print(fun::VarStr("SavePosDouble",SvPosDouble));
+  Log->Print(fun::VarStr("SaveFtAce",SaveFtAce));
   Log->Print(fun::VarStr("SvTimers",SvTimers));
   Log->Print(fun::VarStr("Boundary",GetBoundName(TBoundary)));
   if(TBoundary==BC_MDBC){ //<vs_mddbc_ini>
@@ -1446,20 +1524,23 @@ void JSph::LoadDcellParticles(unsigned n,const typecode *code,const tdouble3 *po
 void JSph::RunInitialize(unsigned np,unsigned npb,const tdouble3 *pos,const unsigned *idp
   ,const typecode *code,tfloat4 *velrhop,tfloat3 *boundnormal)
 {
-  const char met[]="RunInitialize";
   if(!PartBegin){
-    JSphInitialize init(FileXml,H,boundnormal!=NULL);
-    if(init.Count()){
-      //-Creates array with mktype value.
-      word *mktype=new word[np];
-      for(unsigned p=0;p<np;p++){
-        const unsigned cmk=MkInfo->GetMkBlockByCode(code[p]);
-        mktype[p]=(cmk<MkInfo->Size()? word(MkInfo->Mkblock(cmk)->MkType): USHRT_MAX);
+    JXml xml; xml.LoadFile(FileXml);
+    xml.SetNuxLib(NuxLib); //-Enables the use of NuxLib in XML configuration.
+    if(xml.GetNodeSimple("case.execution.special.initialize",true)){
+      JSphInitialize init(&xml,"case.execution.special.initialize",H,boundnormal!=NULL);
+      if(init.Count()){
+        //-Creates array with mktype value.
+        word *mktype=new word[np];
+        for(unsigned p=0;p<np;p++){
+          const unsigned cmk=MkInfo->GetMkBlockByCode(code[p]);
+          mktype[p]=(cmk<MkInfo->Size()? word(MkInfo->Mkblock(cmk)->MkType): USHRT_MAX);
+        }
+        init.Run(np,npb,CaseNbound,pos,idp,mktype,velrhop,boundnormal);
+        init.GetConfig(InitializeInfo);
+        //-Frees memory.
+        delete[] mktype; mktype=NULL;
       }
-      init.Run(np,npb,CaseNbound,pos,idp,mktype,velrhop,boundnormal);
-      init.GetConfig(InitializeInfo);
-      //-Frees memory.
-      delete[] mktype; mktype=NULL;
     }
   }
 }
@@ -1792,11 +1873,13 @@ void JSph::InitRun(unsigned np,const unsigned *idp,const tdouble3 *pos){
 
   //-Process Special configurations in XML.
   JXml xml; xml.LoadFile(FileXml);
+  xml.SetNuxLib(NuxLib); //-Enables the use of NuxLib in XML configuration.
 
   //-Configuration of GaugeSystem.
   GaugeSystem->Config(Simulate2D,Simulate2DPosY,Symmetry,TimeMax,TimePart
     ,Dp,DomPosMin,DomPosMax,Scell,Hdiv,H,MassFluid,MassBound,float(Cs0),CteB,Gamma,RhopZero);
-  if(xml.GetNode("case.execution.special.gauges",false))GaugeSystem->LoadXml(&xml,"case.execution.special.gauges",MkInfo);
+  if(xml.GetNodeSimple("case.execution.special.gauges",true))
+    GaugeSystem->LoadXml(&xml,"case.execution.special.gauges",MkInfo);
 
   //-Prepares WaveGen configuration.
   if(WaveGen){
@@ -1857,7 +1940,7 @@ void JSph::InitRun(unsigned np,const unsigned *idp,const tdouble3 *pos){
   }
 
   //-Configuration of SaveDt.
-  if(xml.GetNode("case.execution.special.savedt",false)){
+  if(xml.GetNodeSimple("case.execution.special.savedt",true)){
     SaveDt=new JSaveDt(Log);
     SaveDt->Config(&xml,"case.execution.special.savedt",TimeMax,TimePart);
     SaveDt->VisuConfig("SaveDt configuration:"," ");

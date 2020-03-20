@@ -43,6 +43,10 @@
 //:# - Funcion CheckElementNames() mejorada. (25-11-2019)
 //:# - Funciones AddElementAttrib() y MakeElementAttrib() para bool. (08-12-2019)
 //:# - Nuevo metodo CheckAttributeNames() y ErrUnknownAtrib(). (07-01-2020)
+//:# - Nuevos metodos SetNux() y GetNux() evaluar expresiones con JNumex. (07-03-2020)
+//:# - Permite la evaluacion automatica tambien de variables de texto con JNumex. (08-03-2020)
+//:# - Nuevos metodos GetAttributeStrSimple() y ReadElementStrSimple(). (08-03-2020)
+//:# - Nuevos metodos CheckElementActive() y  CheckNodeActive(). (18-03-2020)
 //:#############################################################################
 
 /// \file JXml.h \brief Declares the class \ref JXml.
@@ -53,7 +57,15 @@
 #include "TypesDef.h"
 #include "JObject.h"
 #include "tinyxml.h"
+#include "JNumexLibDef.h"   //Defines DISABLE_NUMEXLIB to compile without Numex library.
 #include <string>
+
+#ifndef DISABLE_NUMEXLIB
+  class JNumexLib;
+  typedef JNumexLib JNumx;
+#else
+  typedef void JNumx;
+#endif
 
 //##############################################################################
 //# JXml
@@ -65,6 +77,19 @@ class JXml : protected JObject
 public:
   TiXmlDocument* Doc;       ///<Pointer at the xml document.
   std::string FileReading;  ///<File to read the xml docuemnt.
+  JNumx* NuxLib;            ///<Pointer to JNumexLib object.
+
+
+  /// Returns NuxLib pointer.
+  JNumx* GetNuxLib()const{ return(NuxLib); }
+  /// Clear NuxLib pointer.
+  void ClearNuxLib(){ NuxLib=NULL; }
+  /// Sets NuxLib pointer to evaluate expressions in XML file.
+#ifdef DISABLE_NUMEXLIB
+  void SetNuxLib(JNumx* nux){ NuxLib=NULL; }
+#else
+  void SetNuxLib(JNumx* nux){ NuxLib=nux; }
+#endif
 
   //==============================================================================
   /// Returns date and time of the system in text format (dd-mm-yyyy hh:mm:ss)
@@ -82,9 +107,10 @@ public:
   //==============================================================================
   /// Returns the requested node.
   /// \param path Path of the requested node.
+  /// \param checkactive Checks if node is active.
   /// otherwise returns \a NULL.
   //==============================================================================
-  TiXmlNode* GetNodeSimple(const std::string &path)const;
+  TiXmlNode* GetNodeSimple(const std::string &path,bool checkactive=false)const;
 
   //==============================================================================
   /// Returns the root node.
@@ -115,7 +141,7 @@ public:
   /// returns \a NULL instead of throwing an exception.
   /// \throw JException The requested element does not exist...
   //==============================================================================
-  TiXmlElement* GetNextElement(TiXmlNode* node,const std::string &name,bool optional=false)const;
+  TiXmlElement* GetNextElement(const TiXmlNode* node,const std::string &name,bool optional=false)const;
 
   //==============================================================================
   /// Removes the requested node.
@@ -176,12 +202,31 @@ public:
   unsigned CountElements(const TiXmlNode* node,const std::string &name)const;
 
   //==============================================================================
+  /// Returns true when element is not deactivated.
+  /// \param lis Xml element to look for requesed element name.
+  /// \param name Element name to look for.
+  //==============================================================================
+  bool CheckElementActive(const TiXmlElement* lis,const std::string &name)const;
+
+  //==============================================================================
+  /// Returns true when element is not deactivated.
+  /// \param ele Xml element to check.
+  //==============================================================================
+  bool CheckElementActive(const TiXmlElement* ele)const;
+
+  //==============================================================================
+  /// Returns true when node is not deactivated.
+  /// \param node Xml node to check.
+  //==============================================================================
+  bool CheckNodeActive(const TiXmlNode* node)const{ return(node? CheckElementActive(node->ToElement()): false); }
+
+  //==============================================================================
   /// Throws an exception if there are unknown or repeated elements.
   /// \param lis Xml element to check.
   /// \param names List of valid names (separated by spaces and *name for repeatable names).
   /// \param checkrepeated Checks if there are repeated elements.
   //==============================================================================
-  void CheckElementNames(TiXmlElement* lis,bool checkrepeated,std::string names)const;
+  void CheckElementNames(const TiXmlElement* lis,bool checkrepeated,std::string names)const;
 
   //==============================================================================
   /// Checks if some or several attributes appers in the element. Returns number
@@ -232,6 +277,19 @@ public:
   //-Reading attributes of the element.
 
   //==============================================================================
+  /// Checks and returns a value of type string of an xml element without any 
+  /// special treatment.
+  /// \param ele Xml element.
+  /// \param name Name of the requested attribute.
+  /// \param optional If it does not exist,
+  /// returns \a valdef instead of throwing an exception.
+  /// \param valdef Value by default if it does not exist and \a optional was activated. 
+  /// \throw JException The requested attribute does not exist...
+  //==============================================================================
+  std::string GetAttributeStrSimple(const TiXmlElement* ele,const std::string &name
+    ,bool optional=false,const std::string &valdef="")const;
+
+  //==============================================================================
   /// Checks and returns a value of type string of an xml element.
   /// \param ele Xml element.
   /// \param name Name of the requested attribute.
@@ -240,7 +298,8 @@ public:
   /// \param valdef Value by default if it does not exist and \a optional was activated. 
   /// \throw JException The requested attribute does not exist...
   //==============================================================================
-  std::string GetAttributeStr(const TiXmlElement* ele,const std::string &name,bool optional=false,const std::string &valdef="")const;
+  std::string GetAttributeStr(const TiXmlElement* ele,const std::string &name
+    ,bool optional=false,const std::string &valdef="")const;
 
   //==============================================================================
   /// Checks and returns a value of type bool of an xml element, 
@@ -251,7 +310,8 @@ public:
   /// \param valdef Value by default if it does not exist and \a optional was activated. 
   /// \throw JException The requested attribute does not exist...
   //==============================================================================
-  bool GetAttributeBool(const TiXmlElement* ele,const std::string &name,bool optional=false,bool valdef=false)const;
+  bool GetAttributeBool(const TiXmlElement* ele,const std::string &name
+    ,bool optional=false,bool valdef=false)const;
 
   //==============================================================================
   /// Checks and returns a value of type byte of an xml element that must be (0-225).
@@ -356,6 +416,23 @@ public:
 
   //==============================================================================
   /// Checks and returns value of type string of the first xml element 
+  /// of a node with a given name without any special treatment.
+  /// \param name Name of the element to be reached.
+  /// \param node Xml node where the element is reached.
+  /// \param attrib Name of the requested attribute.
+  /// \param optional If it does not exist,
+  /// \param valdef Value by default if it does not exist and \a optional was activated. 
+  /// \throw JException The requested element or attribute does not exist...
+  //==============================================================================
+  std::string ReadElementStrSimple(const TiXmlNode* node,const std::string &name
+    ,const std::string &attrib,bool optional=false,const std::string &valdef="")const
+  {
+    TiXmlElement* ele=GetFirstElement(node,name,optional); 
+    return(ele? GetAttributeStrSimple(ele,attrib,optional,valdef): valdef);
+  }
+
+  //==============================================================================
+  /// Checks and returns value of type string of the first xml element 
   /// of a node with a given name.
   /// \param name Name of the element to be reached.
   /// \param node Xml node where the element is reached.
@@ -364,7 +441,9 @@ public:
   /// \param valdef Value by default if it does not exist and \a optional was activated. 
   /// \throw JException The requested element or attribute does not exist...
   //==============================================================================
-  std::string ReadElementStr(TiXmlNode* node,const std::string &name,const std::string &attrib,bool optional=false,const std::string &valdef="")const{
+  std::string ReadElementStr(const TiXmlNode* node,const std::string &name
+    ,const std::string &attrib,bool optional=false,const std::string &valdef="")const
+  {
     TiXmlElement* ele=GetFirstElement(node,name,optional); 
     return(ele? GetAttributeStr(ele,attrib,optional,valdef): valdef);
   }
@@ -372,7 +451,9 @@ public:
   //==============================================================================
   /// Calls \ref ReadElementDouble3() with the same parameters.
   //==============================================================================
-  tfloat3 ReadElementFloat3(TiXmlNode* node,const std::string &name,bool optional=false,tdouble3 valdef=TDouble3(0))const{ 
+  tfloat3 ReadElementFloat3(const TiXmlNode* node,const std::string &name
+    ,bool optional=false,tdouble3 valdef=TDouble3(0))const
+  { 
     return(ToTFloat3(ReadElementDouble3(node,name,optional,valdef)));
   }
   
@@ -386,7 +467,9 @@ public:
   /// \throw JException Element is not found...
   /// \throw JException Format not valid for the requested type...
   //==============================================================================
-  tdouble3 ReadElementDouble3(TiXmlNode* node,const std::string &name,bool optional=false,tdouble3 valdef=TDouble3(0))const{ 
+  tdouble3 ReadElementDouble3(const TiXmlNode* node,const std::string &name
+    ,bool optional=false,tdouble3 valdef=TDouble3(0))const
+  { 
     TiXmlElement* ele=GetFirstElement(node,name,optional); 
     return(ele? GetAttributeDouble3(ele): valdef);
   }
@@ -401,7 +484,9 @@ public:
   /// \throw JException Element is not found...
   /// \throw JException Format not valid for the requested type...
   //==============================================================================
-  tint3 ReadElementInt3(TiXmlNode* node,const std::string &name,bool optional=false,tint3 valdef=TInt3(0))const{ 
+  tint3 ReadElementInt3(const TiXmlNode* node,const std::string &name
+    ,bool optional=false,tint3 valdef=TInt3(0))const
+  { 
     TiXmlElement* ele=GetFirstElement(node,name,optional); 
     return(ele? GetAttributeInt3(ele): valdef);
   }
@@ -409,7 +494,9 @@ public:
   //==============================================================================
   /// Calls \ref ReadElementDouble() with the same parameters.
   //==============================================================================
-  float ReadElementFloat(TiXmlNode* node,const std::string &name,const std::string &attrib,bool optional=false,float valdef=0)const{ 
+  float ReadElementFloat(const TiXmlNode* node,const std::string &name
+    ,const std::string &attrib,bool optional=false,float valdef=0)const
+  { 
     return(float(ReadElementDouble(node,name,attrib,optional,valdef)));
   }
   
@@ -424,7 +511,9 @@ public:
   /// \throw JException Element is not found...
   /// \throw JException Format not valid for the requested type...
   //==============================================================================
-  double ReadElementDouble(TiXmlNode* node,const std::string &name,const std::string &attrib,bool optional=false,double valdef=0)const{ 
+  double ReadElementDouble(const TiXmlNode* node,const std::string &name
+    ,const std::string &attrib,bool optional=false,double valdef=0)const
+  { 
     TiXmlElement* ele=GetFirstElement(node,name,optional); 
     return(ele? GetAttributeDouble(ele,attrib,optional,valdef): valdef);
   }
@@ -440,7 +529,9 @@ public:
   /// \throw JException Element is not found...
   /// \throw JException Format not valid for the requested type...
   //==============================================================================
-  unsigned ReadElementUnsigned(TiXmlNode* node,const std::string &name,const std::string &attrib,bool optional=false,unsigned valdef=0)const{ 
+  unsigned ReadElementUnsigned(const TiXmlNode* node,const std::string &name
+    ,const std::string &attrib,bool optional=false,unsigned valdef=0)const
+  { 
     TiXmlElement* ele=GetFirstElement(node,name,optional); 
     return(ele? GetAttributeUnsigned(ele,attrib,optional,valdef): valdef);
   }
@@ -455,7 +546,9 @@ public:
   /// \throw JException Element is not found...
   /// \throw JException Format not valid for the requested type...
   //==============================================================================
-  int ReadElementInt(TiXmlNode* node,const std::string &name,const std::string &attrib,bool optional=false,int valdef=0)const{ 
+  int ReadElementInt(const TiXmlNode* node,const std::string &name
+    ,const std::string &attrib,bool optional=false,int valdef=0)const
+  { 
     TiXmlElement* ele=GetFirstElement(node,name,optional); 
     return(ele? GetAttributeInt(ele,attrib,optional,valdef): valdef);
   }
@@ -470,7 +563,9 @@ public:
   /// \throw JException Element is not found...
   /// \throw JException Format not valid for the requested type...
   //==============================================================================
-  bool ReadElementBool(TiXmlNode* node,const std::string &name,const std::string &attrib,bool optional=false,bool valdef=0)const{ 
+  bool ReadElementBool(const TiXmlNode* node,const std::string &name
+    ,const std::string &attrib,bool optional=false,bool valdef=0)const
+  { 
     TiXmlElement* ele=GetFirstElement(node,name,optional); 
     return(ele? GetAttributeBool(ele,attrib,optional,valdef): valdef);
   }
@@ -486,7 +581,9 @@ public:
   /// \throw JException Element is not found...
   /// \throw JException Values missing or any value is not valid...
   //==============================================================================
-  tmatrix3d ReadElementMatrix3d(TiXmlNode* node,const std::string &name,bool optionalvalues=false,double valdef=0)const{
+  tmatrix3d ReadElementMatrix3d(const TiXmlNode* node,const std::string &name
+    ,bool optionalvalues=false,double valdef=0)const
+  {
     tmatrix3d mat;
     ReadMatrixDouble(node,name,3,3,sizeof(mat)/sizeof(valdef),(double*)&mat,optionalvalues,valdef);
     return(mat);
@@ -505,7 +602,7 @@ public:
   /// if there are less elements than the requested ones.
   /// \throw JException Values missing or any value is not valid...
   //==============================================================================
-  unsigned ReadArrayFloat3(TiXmlNode* node,const std::string &name,tfloat3 *vec,unsigned count,bool readcount=true)const;
+  unsigned ReadArrayFloat3(const TiXmlNode* node,const std::string &name,tfloat3 *vec,unsigned count,bool readcount=true)const;
 
   //==============================================================================
   /// Loads a list of xml elements of type double3 in an array 
@@ -518,7 +615,7 @@ public:
   /// if there are less elements than the requested ones.
   /// \throw JException Values missing or any value is not valid...
   //==============================================================================
-  unsigned ReadArrayDouble3(TiXmlNode* node,const std::string &name,tdouble3 *vec,unsigned count,bool readcount=true)const;
+  unsigned ReadArrayDouble3(const TiXmlNode* node,const std::string &name,tdouble3 *vec,unsigned count,bool readcount=true)const;
 
   //==============================================================================
   /// Loads a list of xml elements of type int3 in an array 
@@ -531,7 +628,7 @@ public:
   /// if there are less elements than the requested ones.
   /// \throw JException Values missing or any value is not valid...
   //==============================================================================
-  unsigned ReadArrayInt3(TiXmlNode* node,const std::string &name,tint3 *vec,unsigned count,bool readcount=true)const;
+  unsigned ReadArrayInt3(const TiXmlNode* node,const std::string &name,tint3 *vec,unsigned count,bool readcount=true)const;
 
   //==============================================================================
   /// Loads a matrix from xml and returns the number of loaded elements.
@@ -546,7 +643,7 @@ public:
   /// \throw JException Element is not found...
   /// \throw JException Values missing or any value is not valid...
   //==============================================================================
-  unsigned ReadMatrixDouble(TiXmlNode* node,const std::string &name,unsigned nrows,unsigned ncols,unsigned ndata,double *data,bool optionalvalues=false,double valdef=0)const;
+  unsigned ReadMatrixDouble(const TiXmlNode* node,const std::string &name,unsigned nrows,unsigned ncols,unsigned ndata,double *data,bool optionalvalues=false,double valdef=0)const;
   
 
   //-Conversion to text.

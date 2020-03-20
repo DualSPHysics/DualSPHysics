@@ -25,6 +25,7 @@
 //:# - Usa el valor de gravity de la simuacion. (03-02-2020)
 //:# - Permite configurar varios <savemotion>. (04-02-2020)
 //:# - <savemotion> usa por defecto TimeMax y TimePart de la simulacion. (04-02-2020)
+//:# - Comprueba opcion active en elementos de primer, segundo nivel y AWAS. (19-03-2020)  
 //:#############################################################################
 
 /// \file JWaveGen.h \brief Declares the class \ref JWaveGen.
@@ -69,7 +70,7 @@ public:
   //==============================================================================
   /// Constructor.
   //==============================================================================
-  JWaveGen(bool useomp,bool usegpu,JLog2* log,std::string dirdata,JXml *sxml
+  JWaveGen(bool useomp,bool usegpu,JLog2* log,std::string dirdata,const JXml *sxml
     ,const std::string &place,tdouble3 gravity3);
 
   //==============================================================================

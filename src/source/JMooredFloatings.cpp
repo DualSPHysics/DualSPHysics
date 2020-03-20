@@ -166,15 +166,18 @@ unsigned JMooredFloatings::GetFloatingByMk(word mkbound)const{
 //==============================================================================
 /// Reads list of mooredfloatings in the XML node.
 //==============================================================================
-void JMooredFloatings::ReadXml(JXml *sxml,TiXmlElement* lis){
+void JMooredFloatings::ReadXml(const JXml *sxml,TiXmlElement* lis){
+  sxml->CheckElementNames(lis,true,"moordyn savevtk_moorings savecsv_points savevtk_points mooredfloatings");
   //-Loads configuration file for MoorDyn solver.
-  FileLines=sxml->ReadElementStr(lis,"moordyn","file",true);
-  if(FileLines.empty()){
-    FileLines=fun::StrReplace(FileLines,"[CaseName]",CaseName);
-    MoordynDir=AppInfo.GetDirOut()+"moordyn_data";
-    fun::Mkdir(MoordynDir);
-    MoordynDir=MoordynDir+"/";
-    //IME//if(fun::CpyFile(DirData+FileLines,MoordynDir+"lines.txt"))Run_ExceptioonFile("Error: File could not be created.",MoordynDir+"lines.txt");
+  if(sxml->CheckElementActive(lis,"moordyn")){
+    FileLines=sxml->ReadElementStr(lis,"moordyn","file",true);
+    if(FileLines.empty()){
+      FileLines=fun::StrReplace(FileLines,"[CaseName]",CaseName);
+      MoordynDir=AppInfo.GetDirOut()+"moordyn_data";
+      fun::Mkdir(MoordynDir);
+      MoordynDir=MoordynDir+"/";
+      //IME//if(fun::CpyFile(DirData+FileLines,MoordynDir+"lines.txt"))Run_ExceptioonFile("Error: File could not be created.",MoordynDir+"lines.txt");
+    }
   }
   //-Loads configuration to save VTK and CSV files.
   SvVtkMoorings=sxml->ReadElementBool(lis,"savevtk_moorings","value",true,true);
@@ -185,10 +188,12 @@ void JMooredFloatings::ReadXml(JXml *sxml,TiXmlElement* lis){
   if(mlis){
     TiXmlElement* ele=mlis->FirstChildElement("floating"); 
     while(ele){
-      word floatingmk=sxml->GetAttributeWord(ele,"mkbound");
-      if(GetFloatingByMk(floatingmk)!=UINT_MAX)Run_Exceptioon(fun::PrintStr("Floating mkbound=%d is already configured.",floatingmk));
-      JMooredFloating *mo=new JMooredFloating(Log,floatingmk);
-      Floatings.push_back(mo);
+      if(sxml->CheckElementActive(ele)){
+        word floatingmk=sxml->GetAttributeWord(ele,"mkbound");
+        if(GetFloatingByMk(floatingmk)!=UINT_MAX)Run_Exceptioon(fun::PrintStr("Floating mkbound=%d is already configured.",floatingmk));
+        JMooredFloating *mo=new JMooredFloating(Log,floatingmk);
+        Floatings.push_back(mo);
+      }
       ele=ele->NextSiblingElement("floating");
     }
   }
@@ -197,11 +202,11 @@ void JMooredFloatings::ReadXml(JXml *sxml,TiXmlElement* lis){
 //==============================================================================
 /// Loads initial conditions of XML object.
 //==============================================================================
-void JMooredFloatings::LoadXml(JXml *sxml,const std::string &place){
+void JMooredFloatings::LoadXml(const JXml *sxml,const std::string &place){
   Reset();
-  TiXmlNode* node=sxml->GetNode(place,false);
+  TiXmlNode* node=sxml->GetNodeSimple(place);
   if(!node)Run_Exceptioon(string("Cannot find the element \'")+place+"\'.");
-  ReadXml(sxml,node->ToElement());
+  if(sxml->CheckNodeActive(node))ReadXml(sxml,node->ToElement());
 }
 
 //==============================================================================

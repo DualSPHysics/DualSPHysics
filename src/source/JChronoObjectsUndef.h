@@ -31,7 +31,7 @@ class JChronoObjects : protected JObject
 protected:
 public:
   JChronoObjects(JLog2* log,const std::string &dirdata,const std::string &casename
-    ,JXml *sxml,const std::string &place,double dp,word mkboundfirst){}
+    ,const JXml *sxml,const std::string &place,double dp,word mkboundfirst){}
   ~JChronoObjects(){};
   void Reset(){};
   static bool Available(){ return(false); }

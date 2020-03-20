@@ -56,7 +56,7 @@ Please download source files and documentation from <a href="http://dual.sphysic
 
 using namespace std;
 
-JAppInfo AppInfo("DualSPHysics5","v5.0.083","19-03-2020");
+JAppInfo AppInfo("DualSPHysics5","v5.0.085","20-03-2020");
 //JAppInfo AppInfo("DualSPHysics5","v5.0.???","UserVersion","v1.0","??-??-????"); //-for user versions.
 
 //==============================================================================
@@ -106,6 +106,7 @@ bool ShowsVersionInfo(int argc,char** argv){
     features.push_back(fun::JSONProperty("GPU",AVAILABLE_GPU));
     features.push_back(fun::JSONProperty("MultiGPU",AVAILABLE_MGPU));
     features.push_back(fun::JSONProperty("VTK_Output",AVAILABLE_VTKLIB));
+    features.push_back(fun::JSONProperty("Numex_Expressions",AVAILABLE_NUMEXLIB));
     features.push_back(fun::JSONProperty("CHRONO_Coupling",AVAILABLE_CHRONO));
     features.push_back(fun::JSONProperty("MoorDyn_Coupling",AVAILABLE_MOORDYN));
     features.push_back(fun::JSONProperty("WaveGen",AVAILABLE_WAVEGEN));
@@ -143,6 +144,7 @@ int main(int argc, char** argv){
   //AppInfo.AddNameExtra("Symmetry");   //<vs_syymmetry>
   //AppInfo.AddNameExtra("MDBC");       //<vs_mddbc>
   //AppInfo.AddNameExtra("DDT2");       //<vs_dtt2>
+  AppInfo.AddNameExtra("SaveFtAce");
 #ifdef CODE_SIZE4
   AppInfo.AddNameExtra("MK65k");
 #endif

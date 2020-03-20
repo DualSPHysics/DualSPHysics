@@ -136,16 +136,16 @@ void JShifting::ConfigBasic(TpShifting shiftmode,float shiftcoef,float shifttfs)
 //==============================================================================
 /// Loads initial conditions of XML object.
 //==============================================================================
-void JShifting::LoadXml(JXml *sxml,const std::string &place){
-  TiXmlNode* node=sxml->GetNode(place,false);
-  if(!node)RunException("LoadXml",std::string("Cannot find the element \'")+place+"\'.");
-  ReadXml(sxml,node->ToElement());
+void JShifting::LoadXml(const JXml *sxml,const std::string &place){
+  TiXmlNode* node=sxml->GetNodeSimple(place);
+  if(!node)Run_Exceptioon(string("Cannot find the element \'")+place+"\'.");
+  if(sxml->CheckNodeActive(node))ReadXml(sxml,node->ToElement());
 }
 
 //==============================================================================
 /// Returns matrix for rotation in 3D.
 //==============================================================================
-JMatrix4d JShifting::ReadRotate3D(JXml *sxml,TiXmlElement* ele){
+JMatrix4d JShifting::ReadRotate3D(const JXml *sxml,TiXmlElement* ele){
   double rotate=sxml->ReadElementDouble(ele,"rotateaxis","angle",true);
   string angunits=fun::StrLower(sxml->ReadElementStr(ele,"rotateaxis","anglesunits"));
   if(angunits=="radians")rotate=rotate*TODEG;
@@ -161,7 +161,7 @@ JMatrix4d JShifting::ReadRotate3D(JXml *sxml,TiXmlElement* ele){
 //==============================================================================
 /// Reads list of initial conditions in the XML node.
 //==============================================================================
-void JShifting::ReadXml(JXml *sxml,TiXmlElement* lis){
+void JShifting::ReadXml(const JXml *sxml,TiXmlElement* lis){
   const int smode=sxml->ReadElementInt(lis,"mode","value");
   switch(smode){
     case 0:  ShiftMode=SHIFT_None;     break;
@@ -178,37 +178,39 @@ void JShifting::ReadXml(JXml *sxml,TiXmlElement* lis){
     //-Loads shifting zones.
     TiXmlElement* ele=lis->FirstChildElement("shiftingzone"); 
     while(ele){
-      JShiftingZone* pzo=NULL;
-      //StShifting zo;
-      //memset(&zo,0,sizeof(StShifting));
-      //zo.useposmax=false;
-      tdouble3 posref=sxml->ReadElementDouble3(ele,"posref");
-      tdouble3 vecx=TDouble3(0),vecy=TDouble3(0),vecz=TDouble3(0);
-      if(sxml->ExistsElement(ele,"size")){
-        sxml->CheckElementNames(ele,true,"posref size rotateaxis");
-        const tdouble3 size=sxml->ReadElementDouble3(ele,"size");
-        vecx=TDouble3(size.x,0,0);
-        vecy=TDouble3(0,size.y,0);
-        vecz=TDouble3(0,0,size.z);
+      if(sxml->CheckElementActive(ele)){
+        JShiftingZone* pzo=NULL;
+        //StShifting zo;
+        //memset(&zo,0,sizeof(StShifting));
+        //zo.useposmax=false;
+        tdouble3 posref=sxml->ReadElementDouble3(ele,"posref");
+        tdouble3 vecx=TDouble3(0),vecy=TDouble3(0),vecz=TDouble3(0);
+        if(sxml->ExistsElement(ele,"size")){
+          sxml->CheckElementNames(ele,true,"posref size rotateaxis");
+          const tdouble3 size=sxml->ReadElementDouble3(ele,"size");
+          vecx=TDouble3(size.x,0,0);
+          vecy=TDouble3(0,size.y,0);
+          vecz=TDouble3(0,0,size.z);
+        }
+        else{
+          sxml->CheckElementNames(ele,true,"posref vecx vecy vecz rotateaxis");
+          vecx=sxml->ReadElementDouble3(ele,"vecx");
+          vecy=sxml->ReadElementDouble3(ele,"vecy");
+          vecz=sxml->ReadElementDouble3(ele,"vecz");
+        }
+        //-Applies rotation to domain definition.
+        if(sxml->ReadElementDouble(ele,"rotateaxis","angle",true)){
+          const JMatrix4d m=ReadRotate3D(sxml,ele);
+          const tdouble3 px=m.MulPoint(posref+vecx);
+          const tdouble3 py=m.MulPoint(posref+vecy);
+          const tdouble3 pz=m.MulPoint(posref+vecz);
+          posref=m.MulPoint(posref);
+          vecx=px-posref;
+          vecy=py-posref;
+          vecz=pz-posref;
+        }
+        AddZone(true,posref,vecx,vecy,vecz);
       }
-      else{
-        sxml->CheckElementNames(ele,true,"posref vecx vecy vecz rotateaxis");
-        vecx=sxml->ReadElementDouble3(ele,"vecx");
-        vecy=sxml->ReadElementDouble3(ele,"vecy");
-        vecz=sxml->ReadElementDouble3(ele,"vecz");
-      }
-      //-Applies rotation to domain definition.
-      if(sxml->ReadElementDouble(ele,"rotateaxis","angle",true)){
-        const JMatrix4d m=ReadRotate3D(sxml,ele);
-        const tdouble3 px=m.MulPoint(posref+vecx);
-        const tdouble3 py=m.MulPoint(posref+vecy);
-        const tdouble3 pz=m.MulPoint(posref+vecz);
-        posref=m.MulPoint(posref);
-        vecx=px-posref;
-        vecy=py-posref;
-        vecz=pz-posref;
-      }
-      AddZone(true,posref,vecx,vecy,vecz);
       ele=ele->NextSiblingElement("shiftingzone");
     }
   }

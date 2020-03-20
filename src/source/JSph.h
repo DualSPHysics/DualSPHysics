@@ -73,6 +73,7 @@ class JSphPartsInit;
 class JLinearValue;
 class JSpaceEParms;
 class JDataArrays;
+class JNumexLib;
 
 //##############################################################################
 //# XML format of execution parameters in _FmtXML__Parameters.xml.
@@ -150,9 +151,6 @@ protected:
   bool Symmetry;         ///<Activates symmetry in plane y=0 (default=false).
   bool Stable;
   bool SvPosDouble;      ///<Indicates whether Pos is saved as double in bi4 files. | Indica si en los ficheros bi4 se guarda Pos como double.
-  //<ft_face_ini>
-  bool FtSaveAce;		 ///<Indicates whether linear and angular accelerations of each floating objects are saved. | Indica si las aceleraciones lineales y angulares se guardan. 
-  //<ft_face_end>
 
   std::string AppName;
   std::string Hardware;
@@ -302,6 +300,8 @@ protected:
 
   std::vector<std::string> InitializeInfo; ///<Stores information about initialize configuration applied.
 
+  JNumexLib *NuxLib;            ///<Object to evaluate user-defined expressions in XML.
+
   JGaugeSystem *GaugeSystem;    ///<Object for automatic gauge system.
 
   JWaveGen *WaveGen;            ///<Object for wave generation.
@@ -387,13 +387,21 @@ protected:
   double DemDtForce;       ///<Dt for tangencial acceleration.
   StMaxNumbers MaxNumbers; ///<Maximum values (or almost) achieved during the simulation.
 
-  void SaveFtAce(double dt,bool predictor,StFtoForces *ftoforces); //<ft_face>
+
+  bool SaveFtAce;    ///<Indicates whether linear and angular accelerations of each floating objects are saved.
+  void SaveFtAceFun(double dt,bool predictor,StFtoForces *ftoforces);
+
 
   void AllocMemoryFloating(unsigned ftcount,bool imposedvel=false);
   llong GetAllocMemoryCpu()const;
 
   void LoadConfig(const JCfgRun *cfg);
-  void LoadCaseConfig();
+  void LoadConfigCtes(const JXml *xml);
+  void LoadConfigVars(const JXml *xml);
+  void LoadConfigVarsExec();
+  void LoadConfigParameters(const JXml *xml);
+  void LoadConfigCommands(const JCfgRun *cfg);
+  void LoadCaseConfig(const JCfgRun *cfg);
 
   StDemData LoadDemData(bool checkdata,const JSpacePartBlock* block)const;
   void VisuDemCoefficients()const;

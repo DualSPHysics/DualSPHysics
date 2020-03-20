@@ -47,7 +47,7 @@ using namespace std;
 /// Constructor.
 //==============================================================================
 JChronoObjects::JChronoObjects(JLog2* log,const std::string &dirdata,const std::string &casename
- ,JXml *sxml,const std::string &place,double dp,word mkboundfirst)
+ ,const JXml *sxml,const std::string &place,double dp,word mkboundfirst)
  :Log(log),DirData(dirdata),CaseName(casename),Dp(dp),MkBoundFirst(mkboundfirst),UseDVI(true)
 {
   ClassName="JChronoObjects";
@@ -134,10 +134,10 @@ void JChronoObjects::ConfigDataBodyFixed(word mkbound,float kfric,float restitu,
 //==============================================================================
 /// Loads data from XML file.
 //==============================================================================
-void JChronoObjects::LoadXml(JXml *sxml,const std::string &place){
-  TiXmlNode* node=sxml->GetNode(place,false);
+void JChronoObjects::LoadXml(const JXml *sxml,const std::string &place){
+  TiXmlNode* node=sxml->GetNodeSimple(place);
   if(!node)Run_Exceptioon(std::string("Cannot find the element \'")+place+"\'.");
-  ReadXml(sxml,node->ToElement());
+  if(sxml->CheckNodeActive(node))ReadXml(sxml,node->ToElement());
 }
 
 //==============================================================================
@@ -293,7 +293,7 @@ void JChronoObjects::ReadXml(const JXml *sxml,TiXmlElement* lis){
   TiXmlElement* ele=lis->FirstChildElement(); 
   while(ele){
     const std::string elename=ele->Value();
-    if(elename.length()>4 && elename.substr(0,4)=="body"){
+    if(elename.length()>4 && elename.substr(0,4)=="body" && sxml->CheckElementActive(ele)){
       const string xmlrow=sxml->ErrGetFileRow(ele);
       string idnamebase=sxml->GetAttributeStr(ele,"id");
       //word mkbound=sxml->GetAttributeWord(ele,"mkbound");
@@ -357,7 +357,7 @@ void JChronoObjects::ReadXml(const JXml *sxml,TiXmlElement* lis){
   ele=lis->FirstChildElement(); 
   while(ele){
     const std::string elename=ele->Value();
-    if(elename.length()>5 && elename.substr(0,5)=="link_"){
+    if(elename.length()>5 && elename.substr(0,5)=="link_" && sxml->CheckElementActive(ele)){
       const string xmlrow=sxml->ErrGetFileRow(ele);
       //-Identify body1.
       const string idnamebody1=sxml->GetAttributeStr(ele,"idbody1");

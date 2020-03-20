@@ -56,6 +56,7 @@
 //:# - Cambia 'translation' y 'rotation' por 'translationDOF' y 'rotationDOF' 
 //:#   manteniendo compatibilidad. (14-12-2019)
 //:# - Los floating incluyen el valor masspart. (10-03-2020)
+//:# - Objeto JXml pasado como const para operaciones de lectura. (17-03-2020)  
 //:#############################################################################
 
 /// \file JSpaceParts.h \brief Declares the class \ref JSpaceParts.
@@ -124,7 +125,7 @@ public:
   word GetMkType()const{ return(MkType); }
   word GetMk()const{ return(Mk); }
   std::string GetProperty()const{ return(Props); }
-  virtual void ReadXml(JXml *sxml,TiXmlElement* ele);
+  virtual void ReadXml(const JXml *sxml,TiXmlElement* ele);
   virtual TiXmlElement* WriteXml(JXml *sxml,TiXmlElement* ele)const;
 
   void SetBegin(unsigned begin){ Begin=begin; }
@@ -175,7 +176,7 @@ class JSpacePartBlock_Fixed : public JSpacePartBlock
 public:
   JSpacePartBlock_Fixed(const JSpaceProperties* properties,word mktype,unsigned begin,unsigned count)
     :JSpacePartBlock(properties,TpPartFixed,"Fixed",mktype,begin,count){}
-  JSpacePartBlock_Fixed(const JSpaceProperties* properties,JXml *sxml,TiXmlElement* ele)
+  JSpacePartBlock_Fixed(const JSpaceProperties* properties,const JXml *sxml,TiXmlElement* ele)
     :JSpacePartBlock(properties,TpPartFixed,"Fixed"){ ReadXml(sxml,ele); }
 };  
 
@@ -191,10 +192,10 @@ public:
   JSpacePartBlock_Moving(const JSpaceProperties* properties,word mktype,unsigned begin
     ,unsigned count,unsigned refmotion)
     :JSpacePartBlock(properties,TpPartMoving,"Moving",mktype,begin,count),RefMotion(refmotion){}
-  JSpacePartBlock_Moving(const JSpaceProperties* properties,JXml *sxml,TiXmlElement* ele)
+  JSpacePartBlock_Moving(const JSpaceProperties* properties,const JXml *sxml,TiXmlElement* ele)
     :JSpacePartBlock(properties,TpPartMoving,"Moving"){ ReadXml(sxml,ele); }
   unsigned GetRefMotion()const{ return(RefMotion); }
-  void ReadXml(JXml *sxml,TiXmlElement* ele);
+  void ReadXml(const JXml *sxml,TiXmlElement* ele);
   TiXmlElement* WriteXml(JXml *sxml,TiXmlElement* ele)const;
 };  
 
@@ -223,7 +224,7 @@ public:
     ,const tint3 &translationfree,const tint3 &rotationfree
     ,const tdouble3 &linvelini,const tdouble3 &angvelini
     ,const JLinearValue *linvel,const JLinearValue *angvel);
-  JSpacePartBlock_Floating(const JSpaceProperties* properties,JXml *sxml,TiXmlElement* ele);
+  JSpacePartBlock_Floating(const JSpaceProperties* properties,const JXml *sxml,TiXmlElement* ele);
   ~JSpacePartBlock_Floating();
   double        GetMassbody()       const{ return(Massbody); }
   double        GetMasspart()       const{ return(Masspart); }
@@ -235,7 +236,7 @@ public:
   tdouble3      GetAngularVelini()  const{ return(AngularVelini); }
   JLinearValue* GetLinearVel()      const{ return(LinearVel); }   //<vs_fttvel>
   JLinearValue* GetAngularVel()     const{ return(AngularVel); }  //<vs_fttvel>
-  void ReadXml(JXml *sxml,TiXmlElement* ele);
+  void ReadXml(const JXml *sxml,TiXmlElement* ele);
   TiXmlElement* WriteXml(JXml *sxml,TiXmlElement* ele)const;
 };  
 
@@ -248,7 +249,7 @@ class JSpacePartBlock_Fluid : public JSpacePartBlock
 public:
   JSpacePartBlock_Fluid(const JSpaceProperties* properties,word mktype,unsigned begin,unsigned count)
     :JSpacePartBlock(properties,TpPartFluid,"Fluid",mktype,begin,count){}
-  JSpacePartBlock_Fluid(const JSpaceProperties* properties,JXml *sxml,TiXmlElement* ele)
+  JSpacePartBlock_Fluid(const JSpaceProperties* properties,const JXml *sxml,TiXmlElement* ele)
     :JSpacePartBlock(properties,TpPartFluid,"Fluid"){ ReadXml(sxml,ele); }
 };  
 
@@ -282,7 +283,7 @@ private:
   unsigned GetBegin()const{ return(Begin); }
   JSpacePartBlock* GetByMkType(bool bound,word mktype)const;
   void Add(JSpacePartBlock* block);
-  void ReadXml(JXml *sxml,TiXmlElement* lis);
+  void ReadXml(const JXml *sxml,TiXmlElement* lis);
   void WriteXml(JXml *sxml,TiXmlElement* lis)const;
   void WriteXmlSummary(JXml *sxml,TiXmlElement* ele)const;
 
@@ -301,7 +302,7 @@ public:
 
   void LoadFileXml(const std::string &file,const std::string &path);
   void SaveFileXml(const std::string &file,const std::string &path,bool newfile=true)const;
-  void LoadXml(JXml *sxml,const std::string &place);
+  void LoadXml(const JXml *sxml,const std::string &place);
   void SaveXml(JXml *sxml,const std::string &place)const;
 
   void SetMkFirst(word boundfirst,word fluidfirst);

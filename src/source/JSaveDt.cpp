@@ -67,7 +67,7 @@ void JSaveDt::Reset(){
 //==============================================================================
 /// Configures object.
 //==============================================================================
-void JSaveDt::Config(JXml *sxml,const std::string &place,double timemax,double timeout){
+void JSaveDt::Config(const JXml *sxml,const std::string &place,double timemax,double timeout){
   Reset();
   LoadXml(sxml,place);
   if(TimeFinish<=0)TimeFinish=DBL_MAX;
@@ -79,17 +79,16 @@ void JSaveDt::Config(JXml *sxml,const std::string &place,double timemax,double t
 //==============================================================================
 /// Loads initial conditions of XML object.
 //==============================================================================
-void JSaveDt::LoadXml(JXml *sxml,const std::string &place){
-  TiXmlNode* node=sxml->GetNode(place,false);
-  if(!node)RunException("LoadXml",std::string("Cannot find the element \'")+place+"\'.");
-  ReadXml(sxml,node->ToElement());
+void JSaveDt::LoadXml(const JXml *sxml,const std::string &place){
+  TiXmlNode* node=sxml->GetNodeSimple(place);
+  if(!node)Run_Exceptioon(string("Cannot find the element \'")+place+"\'.");
+  if(sxml->CheckNodeActive(node))ReadXml(sxml,node->ToElement());
 }
 
 //==============================================================================
 /// Reads list of initial conditions in the XML node.
 //==============================================================================
-void JSaveDt::ReadXml(JXml *sxml,TiXmlElement* ele){
-  const char met[]="ReadXml";
+void JSaveDt::ReadXml(const JXml *sxml,TiXmlElement* ele){
   TimeStart=sxml->ReadElementFloat(ele,"start","value",true);
   TimeFinish=sxml->ReadElementFloat(ele,"finish","value",true,-1);
   TimeInterval=sxml->ReadElementFloat(ele,"interval","value",true,-1);
@@ -113,7 +112,6 @@ void JSaveDt::VisuConfig(std::string txhead,std::string txfoot){
 /// Graba valores de buffer en fichero.
 //==============================================================================
 void JSaveDt::SaveFileValues(){ 
-  const char met[]="SaveFileValues";
   const bool firstsv=FileDtInfo.empty();
   if(firstsv){
     FileDtInfo=AppInfo.GetDirOut()+"DtInfo.csv";
@@ -167,7 +165,6 @@ void JSaveDt::SaveFileValuesEnd(){
 /// Graba valores de buffer en fichero.
 //==============================================================================
 void JSaveDt::SaveFileAllDts(){
-  const char met[]="SaveFileAllDts";
   const bool firstsv=FileDtAllInfo.empty();
   if(firstsv){
     FileDtAllInfo=AppInfo.GetDirOut()+"DtAllInfo.csv";
