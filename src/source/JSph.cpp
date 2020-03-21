@@ -738,7 +738,15 @@ void JSph::LoadConfigCommands(const JCfgRun *cfg){
   if(TDensity==DDT_None)DDTValue=0;
   else if(cfg->DDTValue>=0)DDTValue=cfg->DDTValue;
   DDTArray=(TDensity!=DDT_None && Cpu); //-It is necessary because the interaction is divided in two steps: fluid-fluid/float and fluid-bound.
-
+  //-Checks warnings of DDT according to gravity.
+  if(Gravity.z==0){
+    if(TDensity==DDT_DDT2)Log->PrintWarning("The option DDT:2 is equal to DDT:1 when gravity.z is zero.");
+    if(TDensity==DDT_DDT2Full)Log->PrintWarning("The option DDT:3 is equal to DDT:1 (but applied to the entire fluid) when gravity.z is zero.");
+  }
+  if((Gravity.x!=0 || Gravity.y!=0) && (TDensity==DDT_DDT2 || TDensity==DDT_DDT2Full)){
+    Log->PrintWarning("Gravity.x or Gravity.y is not zero, but only gravity.z is used in DDT:2 or DDT:3 calculations.");
+  }
+  
   //-Shifting configuration.
   if(cfg->Shifting>=0){
     TpShifting shiftmode=SHIFT_None;
