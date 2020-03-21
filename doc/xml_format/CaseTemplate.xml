@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<case app="GenCase v5.0.160 (12-03-2020)" date="12-03-2020 20:13:25">
-    <casedef requiredversion="v5.0.160">
+<case app="GenCase v5.0.163 (19-03-2020)" date="20-03-2020 23:54:44">
+    <casedef requiredversion="v5.0.163">
         <constantsdef>
             <lattice bound="2" fluid="1" comment="Type of lattice to create the initial particles (default=1)" />
             <gravity x="0" y="0" z="-9.81" comment="Gravitational acceleration" units_comment="m/s^2" />
@@ -467,8 +467,8 @@
                     <newvarstr Text1="Hello" Text2="bye" _cte="true" _rem="Text values" _print="true" />
                     <newvarstr Text3="AAAA" Text4="[Text1][Text2]_[Dp]" _rem="More text values" _print="0" />
                     <setvarstr Text3="[Text1]" Text4="BBBB" _rem="Modify values" _print="1" />
-                    <exportvar vars="-all,Dp,Rhop0" />
-                    <exportvar vars="all,-Dp" />
+                    <exportvar vars="-all,Dp,Rhop0,PosMax*" />
+                    <exportvar vars="all,-Dp,-PosMin_?" />
                     <debugout />
                     <shapeout file="fshape_1" reset="false" />
                     <shapeout file="fshape_2" />
@@ -477,7 +477,7 @@
                     <cellsout file="filecellsFluid5" mkfluid="5" />
                     <pointsmkout file="points" />
                     <printf text="Prints line 1\n and line 2" />
-                    <printf if="Dp!=0.1" text="Dp is not 0.1. It is #Dp#" />
+                    <printf if="Dp!=0.1==(true||false)" text="Dp is not 0.1. It is #Dp#" />
                     <abort if="Dp<0.1" text="Dp (#Dp#) is lower than 0.1 \n It is invalid." />
                     <abort />
                     <runlist name="Hola" />
@@ -768,7 +768,7 @@
             <distanceh value="2.0" comment="Maximum distance (H*distanceh) to compute normals data (default=2)" />
             <geometryfile file="[CaseName]_hdp_Actual.vtk" comment="File with boundary geometry (VTK format)" />
             <computenormals value="0" comment="Computes final normals for boundary particles 0:None, 1:Mean, 2:Marrone(unverified) (default=0)" />
-            <svnormaldata value="1" comment="Saves VTK with normal data for debug (default=0)" />
+            <svnormaldata value="0" comment="Saves VTK with normal data for debug (default=0)" />
             <svnormals value="0" comment="Saves VTK with particle normals according to <computenormals> for debug (default=0)" />
             <svshapes value="0" comment="Saves VTK with geometry in triangles and quads with its normals for debug (default=0)" />
             <dg_svopenshapes value="0" comment="Saves VTK with enlarged triangles and quads for debug (default=0)" />
@@ -782,6 +782,7 @@
         <parameters>
             <parameter key="SavePosDouble" value="0" comment="Saves particle position using double precision (default=0)" />
             <parameter key="PosDouble" value="1" comment="**DEPRECATED** Precision in particle interaction 0:Simple, 1:Double, 2:Uses and saves double (default=0)" />
+            <parameter key="Boundary" value="1" comment="Boundary method 1:DBC, 2:mDBC (default=1)" />
             <parameter key="StepAlgorithm" value="2" comment="Step Algorithm 1:Verlet, 2:Symplectic (default=1)" />
             <parameter key="VerletSteps" value="40" comment="Verlet only: Number of steps to apply Euler timestepping (default=40)" />
             <parameter key="Kernel" value="2" comment="Interaction Kernel 1:Cubic Spline, 2:Wendland, 3:Gaussian (default=2)" />
