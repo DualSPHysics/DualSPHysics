@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<case app="GenCase v5.0.163 (19-03-2020)" date="20-03-2020 23:54:44">
-    <casedef requiredversion="v5.0.163">
+<case app="GenCase v5.0.164 (21-03-2020)" date="21-03-2020 03:16:08">
+    <casedef requiredversion="v5.0.164">
         <constantsdef>
             <lattice bound="2" fluid="1" comment="Type of lattice to create the initial particles (default=1)" />
             <gravity x="0" y="0" z="-9.81" comment="Gravitational acceleration" units_comment="m/s^2" />
@@ -521,11 +521,15 @@
                 <center x="11" y="12" z="13" />
                 <inertia x="20" y="22" z="24" />
             </floating>
-            <floating mkbound="3" property="Material_2">
+            <floating mkbound="3" rhopbody="0" property="Material_1">
+                <massbody value="1.3" />
+                <masspart value="distributed_bodymass" />
+            </floating>
+            <floating mkbound="4" property="Material_2">
                 <massbody value="1.3" />
                 <inertia x="11" y="22" z="22" />
             </floating>
-            <floating mkbound="4" property="Material_2">
+            <floating mkbound="5" property="Material_2">
                 <massbody value="1.3" />
                 <inertiafull>
                     <values v11="11" v12="0" v13="0" />
@@ -533,13 +537,9 @@
                     <values v31="0" v32="0" v33="33" />
                 </inertiafull>
             </floating>
-            <floating mkbound="5" rhopbody="1500">
+            <floating mkbound="6" rhopbody="1500">
                 <translationDOF x="0" y="0" z="1" comment="Use 0 to restrict Degrees Of Freedon for translation (default=(1,1,1))" />
                 <rotationDOF x="0" y="1" z="0" comment="Use 0 to restrict Degrees Of Freedon for rotation (default=(1,1,1))" />
-            </floating>
-            <floating mkbound="6" rhopbody="1500">
-                <linearvelini x="1" y="3" z="2" units_comment="m/s" />
-                <angularvelini x="0.2" y="0.4" z="0.6" units_comment="rad/s" />
             </floating>
             <floating mkbound="7" rhopbody="1300">
                 <linearvel file="FileLinear.csv" units_comment="m/s" />
