@@ -28,7 +28,11 @@
 #ifndef _DSphMoorDyn_
 #define _DSphMoorDyn_
 
+#ifndef DISABLE_DSPH
 #include "DualSphDef.h"
+#endif // !DISABLE_DSPH
+
+#include "TypesDef.h"
 #include "JLog2.h"
 #include <string>
 
