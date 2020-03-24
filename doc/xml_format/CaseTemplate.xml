@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<case app="GenCase v5.0.164 (21-03-2020)" date="21-03-2020 03:16:08">
-    <casedef requiredversion="v5.0.164">
+<case app="GenCase v5.0.165 (24-03-2020)" date="24-03-2020 20:40:01">
+    <casedef requiredversion="v5.0.165">
         <constantsdef>
             <lattice bound="2" fluid="1" comment="Type of lattice to create the initial particles (default=1)" />
             <gravity x="0" y="0" z="-9.81" comment="Gravitational acceleration" units_comment="m/s^2" />
@@ -449,7 +449,7 @@
                         <point x="0.1" y="1" z="1.1" />
                         <size x="3" y="4" z="2" />
                     </redrawnearbox>
-                    <newvar Cte1="0.1" Cte2="0.2" Cte3="0.3" _cte="true" _rem="Constant values" _print="1" />
+                    <newvarcte Cte1="0.1" Cte2="0.2" Cte3="0.3" _rem="Constant values" _print="1" />
                     <newvar SizeX="0.25" SizeZ="(Dp+2)*2.8" dpd2="Dp/2" _rem="Some variables" />
                     <setvar SizeZ="SizeX+Cte1*Cte2" _rem="Changes value of SizeZ" _print="0" />
                     <setvar dpd2="dpd2+Dp" SizeX="SizeX*dpd2" />
@@ -464,7 +464,7 @@
                     <setvar v1="asin(a)" v2="acos(a)" v3="atan(a)" v4="atan2(a,b)" />
                     <setvar v1="randinit(a)" v2="rand(a)" v3="randint(a,b)" />
                     <setvar v1="wavelength(gravity,depth,period)" />
-                    <newvarstr Text1="Hello" Text2="bye" _cte="true" _rem="Text values" _print="true" />
+                    <newvarstrcte Text1="Hello" Text2="bye" _rem="Text values" _print="true" />
                     <newvarstr Text3="AAAA" Text4="[Text1][Text2]_[Dp]" _rem="More text values" _print="0" />
                     <setvarstr Text3="[Text1]" Text4="BBBB" _rem="Modify values" _print="1" />
                     <exportvar vars="-all,Dp,Rhop0,PosMax*" />
