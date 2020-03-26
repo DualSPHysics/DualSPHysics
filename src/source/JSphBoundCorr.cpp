@@ -377,7 +377,7 @@ void JSphBoundCorr::RunMotion(const StMotionData& motiondata){
 /// Saves VTK file with configuration when motion is used.
 //==============================================================================
 void JSphBoundCorr::SaveData(int part)const{
-  if(UseMotion)SaveVtkConfig(Dp,part);
+  if(UseMotion && SaveMotionVtk)SaveVtkConfig(Dp,part);
 }
 
 
