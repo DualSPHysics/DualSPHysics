@@ -1178,7 +1178,8 @@ void JSph::LoadBoundNormals(unsigned np,unsigned npb,const unsigned *idp
     if(nd.GetCountNormals()){
       //-Compute Marrone normals starting from normal data in NBI4 file.
       nd.Reset();
-      nmarrone.RunCase(DirCase+CaseName,true);
+      const bool savevtknor=false; //-Saves normals calculated starting from NBI4 file.
+      nmarrone.RunCase(DirCase+CaseName,DirOut,savevtknor);
       pnor=nmarrone.GetPartNor();
       pnorsize=nmarrone.GetPartNorSize();
     }

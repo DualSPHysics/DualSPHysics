@@ -63,6 +63,7 @@ JNormalsMarrone::~JNormalsMarrone(){
 void JNormalsMarrone::Reset(){
   CaseDir="";
   CaseName="";
+  DirOut="";
   ResetParts();
   ResetNormals();
   ExternalData=false;
@@ -215,11 +216,11 @@ void JNormalsMarrone::LoadBoundParticles(){
     JDataArrays arrays;
     arrays.AddArray("Pos",SizePart,PartPos,false);
     if(vidp)arrays.AddArray("Idp",SizePart,vidp,true);
-    JVtkLib::SaveVtkData(CaseDir+CaseName+"_DgParts.vtk",arrays,"Pos");
+    JVtkLib::SaveVtkData(DirOut+CaseName+"_DgParts.vtk",arrays,"Pos");
     ////-Old style...
     //std::vector<JFormatFiles2::StScalarData> fields;
     //if(vidp) fields.push_back(JFormatFiles2::DefineField("Idp",JFormatFiles2::UInt32,1,vidp));
-    //JFormatFiles2::SaveVtk(CaseDir+CaseName+"_DgParts.vtk",SizePart,PartPos,fields);
+    //JFormatFiles2::SaveVtk(DirOut+CaseName+"_DgParts.vtk",SizePart,PartPos,fields);
     //delete[] vidp;
   }
 }
@@ -248,7 +249,7 @@ void JNormalsMarrone::LoadNormalData(){
 /// Saves particles with normals (for debug).
 //==============================================================================
 void JNormalsMarrone::SaveVtkNormalData(){
-  const string file=CaseDir+CaseName+"_NorData.vtk";
+  const string file=DirOut+CaseName+"_NorData.vtk";
   //-Allocates memory.
   tfloat3  *vpos=new tfloat3[SizeNor];
   unsigned *vidp=new unsigned[SizeNor];
@@ -311,21 +312,22 @@ std::string JNormalsMarrone::GetNormalDataFile(std::string casename){
 //==============================================================================
 /// Computes normals of case according configuration in XML file.
 //==============================================================================
-void JNormalsMarrone::RunCase(std::string casename,bool savevtk){
+void JNormalsMarrone::RunCase(std::string casename,std::string dirout,bool savevtk){
   Reset();
   CaseDir=fun::GetDirWithSlash(fun::GetDirParent(casename));
   CaseName=fun::GetWithoutExtension(fun::GetFile(casename));
+  DirOut=fun::GetDirWithSlash(!dirout.empty()? dirout: CaseDir);
   LoadBoundParticles();
   LoadNormalData();
   if(0)SaveVtkNormalData(); //-For debug.
   ComputeNormalsMarrone();
-  if(savevtk)SaveVtkNormalFinal(CaseDir+CaseName+"_NorMarrone.vtk");
+  if(savevtk)SaveVtkNormalFinal(DirOut+CaseName+"_NorMarrone.vtk");
 }
 
 //==============================================================================
 /// Computes normals of case according parameters.
 //==============================================================================
-void JNormalsMarrone::RunData(std::string casename,bool savevtk
+void JNormalsMarrone::RunData(std::string casename,std::string dirout,bool savevtk
   ,bool data2d,double data2dposy,double h,double dp,unsigned sizepart,tdouble3 *partpos
   ,double dist,unsigned sizenor,unsigned *norbegin,tdouble3 *normals,double *normalsdist
   ,tdouble3 *outvecs,double *outvecsdist,tdouble3 *partnor)
@@ -333,6 +335,7 @@ void JNormalsMarrone::RunData(std::string casename,bool savevtk
   Reset();
   CaseDir=fun::GetDirWithSlash(fun::GetDirParent(casename));
   CaseName=fun::GetWithoutExtension(fun::GetFile(casename));
+  DirOut=fun::GetDirWithSlash(!dirout.empty()? dirout: CaseDir);
   ExternalData=true;
   //-Particle data.
   Data2D=data2d;
@@ -352,7 +355,7 @@ void JNormalsMarrone::RunData(std::string casename,bool savevtk
   OutVecsDist=outvecsdist;
   if(0)SaveVtkNormalData(); //-For debug.
   ComputeNormalsMarrone();
-  if(savevtk)SaveVtkNormalFinal(CaseDir+CaseName+"_NorMarrone.vtk");
+  if(savevtk)SaveVtkNormalFinal(DirOut+CaseName+"_NorMarrone.vtk");
 }
 
 //==============================================================================

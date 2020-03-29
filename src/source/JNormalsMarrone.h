@@ -32,6 +32,7 @@
 //:# - Usa macro para lanzar excepciones. (12-12-2019)
 //:# - Se corrigio un error calculando la normal cuando habia varias opciones 
 //:#   a la misma distancia. (01-02-2020)
+//:# - Se establece un directorio de salida DirOut independiente del de entrada. (29-03-2020)
 //:#############################################################################
 
 #include "JObject.h"
@@ -51,6 +52,7 @@ class JNormalsMarrone : protected JObject
 protected:
   std::string CaseDir;
   std::string CaseName;
+  std::string DirOut;
 
   bool ExternalData;
 
@@ -88,8 +90,8 @@ public:
   void Reset();
 
   static std::string GetNormalDataFile(std::string casename);
-  void RunCase(std::string casename,bool savevtk);
-  void RunData(std::string casename,bool savevtk
+  void RunCase(std::string casename,std::string dirout,bool savevtk);
+  void RunData(std::string casename,std::string dirout,bool savevtk
     ,bool data2d,double data2dposy,double h,double dp,unsigned sizepart,tdouble3 *partpos
     ,double dist,unsigned sizenor,unsigned *norbegin,tdouble3 *normals,double *normalsdist
     ,tdouble3 *outvecs,double *outvecsdist,tdouble3 *partnor);
