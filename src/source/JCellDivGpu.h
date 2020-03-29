@@ -151,6 +151,7 @@ public:
   void SortDataArrays(const double2 *a,const double *b,const float4 *c,double2 *a2,double *b2,float4 *c2);
   void SortDataArrays(const tsymatrix3f *a,tsymatrix3f *a2);
   void SortDataArrays(const float3 *a,float3 *a2);
+  void SortDataArrays(const float *a,float *a2);
 
   float* GetAuxMem(unsigned size);
 

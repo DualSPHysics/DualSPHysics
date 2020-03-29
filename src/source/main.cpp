@@ -66,7 +66,7 @@ std::string getlicense_lgpl(const std::string &name,bool simple){
   std::string tx=(simple? "": "\n");
   tx=tx+"\n <"+fun::StrUpper(name)+"> Copyright (c) 2020 by"; 
   tx=tx+"\n Dr Jose M. Dominguez, Dr Alejandro Crespo,";
-  tx=tx+"\n Prof. Moncho Gomez Gesteira,  Prof. Benedict Rogers,";
+  tx=tx+"\n Prof. Moncho Gomez Gesteira, Prof. Benedict Rogers,";
   tx=tx+"\n Dr Georgios Fourtakas, Prof. Peter Stansby, Dr Ricardo Canelas,";
   tx=tx+"\n Dr Renato Vacondio, Dr Corrado Altomare, Dr Angelo Tafuni,";
   tx=tx+"\n Orlando Garcia-Feal, Dr Jose Gonzalez Cao\n";
