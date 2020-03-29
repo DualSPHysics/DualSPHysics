@@ -37,7 +37,7 @@ namespace curelaxzone{
 #include "FunctionsMath_ker.cu"
 
 //==============================================================================
-// Devuelve tamaño de gridsize segun parametros.
+// Devuelve tamanho de gridsize segun parametros.
 //==============================================================================
 dim3 GetGridSize(unsigned n,unsigned blocksize){
   dim3 sgrid;//=dim3(1,2,3);

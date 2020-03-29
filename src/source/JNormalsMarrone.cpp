@@ -231,8 +231,11 @@ void JNormalsMarrone::LoadNormalData(){
   ResetNormals();
   JPartNormalData nd;
   nd.LoadFile(CaseDir+CaseName);
-  Dist=nd.GetDist();
   if(nd.GetCountNormals()==0)Run_ExceptioonFile("Normal data is missing in NBI4 file.",GetNormalDataFile(CaseDir+CaseName));
+  const unsigned nb=nd.GetNbound(); //-Number of particles with normal data.
+  if(nb>SizePart)Run_ExceptioonFile("Normal data for more particles than expected in NBI4 file.",GetNormalDataFile(CaseDir+CaseName));
+  if(nb<SizePart)SizePart=nb;
+  Dist=nd.GetDist();
   AllocNormals(nd.GetCountNormals());
   memcpy(NormalBegin,nd.GetNormalBegin(),sizeof(unsigned)*(SizePart+1));
   memcpy(Normals    ,nd.GetNormals()    ,sizeof(tdouble3)*SizeNor);

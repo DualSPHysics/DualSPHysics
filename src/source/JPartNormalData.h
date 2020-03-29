@@ -63,6 +63,7 @@ private:
   double Dp;
   double H;
   double Dist;           ///<Distance used for calculating normal data (tipically 2H).
+  bool FtSupport;        ///<Enables support for floating bodies.
 
   std::string PartNormalsName; ///<Name of normals approach used for PartNormals (Mean or Marrone).
   unsigned Nbound;       ///<Number boudary particles.
@@ -85,7 +86,7 @@ public:
   ~JPartNormalData();
   void Reset();
   void ConfigBasic(std::string appname,std::string casename
-    ,bool data2d,double data2dposy,double dp,double h,double dist);
+    ,bool data2d,double data2dposy,double dp,double h,double dist,bool ftsupport);
   void AddNormalData(
     std::string partnorname,unsigned nbound,const tdouble3 *partnor
     ,const unsigned *norbegin,unsigned countnor
@@ -113,6 +114,7 @@ public:
 //-Returns normal data.
 //-----------------------
   double      GetDist()      const{ return(Dist);       }
+  bool        GetFtSupport() const{ return(FtSupport);  }
   unsigned    GetNbound()    const{ return(Nbound);     }
   std::string GetPartNormalsName()const{ return(PartNormalsName); }
   const tdouble3* GetPartNormals()const{ return(PartNormals);     }

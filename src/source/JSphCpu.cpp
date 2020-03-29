@@ -1311,17 +1311,17 @@ void JSphCpu::Interaction_Forces_ct(const stinterparmsc &t,float &viscdt)const{
 /// Perform interaction between ghost nodes of boundaries and fluid.
 //==============================================================================
 template<bool sim2d,TpSlipMode tslip> void JSphCpu::InteractionBoundCorrection
-  (unsigned npb,float determlimit
+  (unsigned n,float determlimit
   ,tint4 nc,int hdiv,unsigned cellinitial,const unsigned *beginendcell,tint3 cellzero
   ,const tdouble3 *pos,const typecode *code,const unsigned *idp
   ,const tfloat3 *boundnormal,const tfloat3 *motionvel,tfloat4 *velrhop)
 {
   if(tslip==SLIP_FreeSlip)Run_Exceptioon("SlipMode=\'Free slip\' is not yet implemented...");
-  const int n=int(npb);
+  const int nn=int(n);
   #ifdef _WITHOMP
     #pragma omp parallel for schedule (guided)
   #endif
-  for(int p1=0;p1<n;p1++)if(boundnormal[p1]!=TFloat3(0)){
+  for(int p1=0;p1<nn;p1++)if(boundnormal[p1]!=TFloat3(0)){
     float rhopfinal=FLT_MAX;
     tfloat3 velrhopfinal=TFloat3(0);
 
@@ -1474,14 +1474,15 @@ void JSphCpu::Interaction_BoundCorrection(TpSlipMode slipmode
   const unsigned cellfluid=nc.w*nc.z+1;
   const int hdiv=(CellMode==CELLMODE_H? 2: 1);
   //-Interaction GhostBoundaryNodes-Fluid.
+  unsigned n=NpbOk;
   if(Simulate2D){ const bool sim2d=true;
-    if(slipmode==SLIP_Vel0    )InteractionBoundCorrection<sim2d,SLIP_Vel0    >(NpbOk,determlimit,nc,hdiv,cellfluid,begincell,cellzero,pos,code,idp,boundnormal,motionvel,velrhop);
-    if(slipmode==SLIP_NoSlip  )InteractionBoundCorrection<sim2d,SLIP_NoSlip  >(NpbOk,determlimit,nc,hdiv,cellfluid,begincell,cellzero,pos,code,idp,boundnormal,motionvel,velrhop);
-    if(slipmode==SLIP_FreeSlip)InteractionBoundCorrection<sim2d,SLIP_FreeSlip>(NpbOk,determlimit,nc,hdiv,cellfluid,begincell,cellzero,pos,code,idp,boundnormal,motionvel,velrhop);
+    if(slipmode==SLIP_Vel0    )InteractionBoundCorrection<sim2d,SLIP_Vel0    >(n,determlimit,nc,hdiv,cellfluid,begincell,cellzero,pos,code,idp,boundnormal,motionvel,velrhop);
+    if(slipmode==SLIP_NoSlip  )InteractionBoundCorrection<sim2d,SLIP_NoSlip  >(n,determlimit,nc,hdiv,cellfluid,begincell,cellzero,pos,code,idp,boundnormal,motionvel,velrhop);
+    if(slipmode==SLIP_FreeSlip)InteractionBoundCorrection<sim2d,SLIP_FreeSlip>(n,determlimit,nc,hdiv,cellfluid,begincell,cellzero,pos,code,idp,boundnormal,motionvel,velrhop);
   }else{          const bool sim2d=false;
-    if(slipmode==SLIP_Vel0    )InteractionBoundCorrection<sim2d,SLIP_Vel0    >(NpbOk,determlimit,nc,hdiv,cellfluid,begincell,cellzero,pos,code,idp,boundnormal,motionvel,velrhop);
-    if(slipmode==SLIP_NoSlip  )InteractionBoundCorrection<sim2d,SLIP_NoSlip  >(NpbOk,determlimit,nc,hdiv,cellfluid,begincell,cellzero,pos,code,idp,boundnormal,motionvel,velrhop);
-    if(slipmode==SLIP_FreeSlip)InteractionBoundCorrection<sim2d,SLIP_FreeSlip>(NpbOk,determlimit,nc,hdiv,cellfluid,begincell,cellzero,pos,code,idp,boundnormal,motionvel,velrhop);
+    if(slipmode==SLIP_Vel0    )InteractionBoundCorrection<sim2d,SLIP_Vel0    >(n,determlimit,nc,hdiv,cellfluid,begincell,cellzero,pos,code,idp,boundnormal,motionvel,velrhop);
+    if(slipmode==SLIP_NoSlip  )InteractionBoundCorrection<sim2d,SLIP_NoSlip  >(n,determlimit,nc,hdiv,cellfluid,begincell,cellzero,pos,code,idp,boundnormal,motionvel,velrhop);
+    if(slipmode==SLIP_FreeSlip)InteractionBoundCorrection<sim2d,SLIP_FreeSlip>(n,determlimit,nc,hdiv,cellfluid,begincell,cellzero,pos,code,idp,boundnormal,motionvel,velrhop);
   }
 }
 //<vs_mddbc_end>

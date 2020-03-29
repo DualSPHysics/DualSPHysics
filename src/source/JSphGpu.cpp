@@ -1150,16 +1150,16 @@ void JSphGpu::RunDamping(double dt,unsigned np,unsigned npb,const double2 *posxy
 /// Save VTK file with particle data (debug).
 /// Graba fichero VTK con datos de las particulas (debug).
 //==============================================================================
-void JSphGpu::SaveVtkNormalsGpu(std::string filename,int numfile,unsigned pini,unsigned pfin
+void JSphGpu::SaveVtkNormalsGpu(std::string filename,int numfile,unsigned np,unsigned npb
   ,const double2 *posxyg,const double *poszg,const unsigned *idpg,const float3 *boundnormalg)
 {
   //-Allocates memory.
-  const unsigned n=pfin-pini;
-  tdouble3 *pos=fcuda::ToHostPosd3(pini,n,posxyg,poszg);
-  unsigned *idp=fcuda::ToHostUint(pini,n,idpg);
-  tfloat3  *nor=fcuda::ToHostFloat3(pini,n,boundnormalg);
+  unsigned n=npb;
+  tdouble3 *pos=fcuda::ToHostPosd3(0,n,posxyg,poszg);
+  unsigned *idp=fcuda::ToHostUint(0,n,idpg);
+  tfloat3  *nor=fcuda::ToHostFloat3(0,n,boundnormalg);
   //-Generates VTK file.
-  SaveVtkNormals(filename,numfile,0,n,pos,idp,NULL,nor);
+  SaveVtkNormals(filename,numfile,np,npb,pos,idp,nor);
   //-Frees memory.
   delete[] pos;
   delete[] idp;

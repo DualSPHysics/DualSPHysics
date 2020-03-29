@@ -187,6 +187,7 @@ protected:
   TpSlipMode SlipMode;        ///<Slip mode for mDBC 1:DBC vel=0, 2:No-slip, 3:Free slip (default=1).     //<vs_mddbc>
   bool MdbcCorrector;         ///<mDBC correction is also applied in corrector of Symplectic (default=0). //<vs_mddbc>
   bool UseNormals;            ///<Indicates use of normals for mDBC.                                      //<vs_mddbc>
+  bool UseNormalsFt;          ///<Indicates use of normals of floating bodies for mDBC.                   //<vs_mddbc>
 
   bool RhopOut;               ///<Indicates whether the RhopOut density correction is active or not.    | Indica si activa la correccion de densidad RhopOut o no.                       
   float RhopOutMin;           ///<Minimum limit for Rhopout correction.                                 | Limite minimo para la correccion de RhopOut.
@@ -323,7 +324,7 @@ protected:
   //-Variables for division in cells.
   TpCellMode CellMode;     ///<Cell division mode. | Modo de division en celdas.
   unsigned Hdiv;           ///<Value to divide 2H. | Valor por el que se divide a DosH
-  float Scell;             ///<Cell size: 2h or h. | Tamaño de celda: 2h o h.
+  float Scell;             ///<Cell size: 2h or h. | Tamanho de celda: 2h o h.
   float MovLimit;          ///<Maximum distance a particle is allowed to move in one step (Scell*0.9) | Distancia maxima que se permite recorrer a una particula en un paso (Scell*0.9).
 
   //-Defines global domain of the simulation.
@@ -407,8 +408,8 @@ protected:
   void VisuDemCoefficients()const;
 
   void LoadCodeParticles(unsigned np,const unsigned *idp,typecode *code)const;
-  void LoadBoundNormals(unsigned npb,const unsigned *idp,const typecode *code,tfloat3 *boundnormal)const;  //<vs_mddbc>
-  void ConfigBoundNormals(unsigned npb,const tdouble3 *pos,const unsigned *idp,tfloat3 *boundnormal)const; //<vs_mddbc>
+  void LoadBoundNormals(unsigned np,unsigned npb,const unsigned *idp,const typecode *code,tfloat3 *boundnormal);  //<vs_mddbc>
+  void ConfigBoundNormals(unsigned np,unsigned npb,const tdouble3 *pos,const unsigned *idp,tfloat3 *boundnormal); //<vs_mddbc>
 
   void PrepareCfgDomainValues(tdouble3 &v,tdouble3 vdef=TDouble3(0))const;
   void ResizeMapLimits();
@@ -451,8 +452,8 @@ protected:
   void SaveInitialDomainVtk()const;
   unsigned SaveMapCellsVtkSize()const;
   void SaveMapCellsVtk(float scell)const;
-  void SaveVtkNormals(std::string filename,int numfile,unsigned pini,unsigned pfin            //<vs_mddbc>
-    ,const tdouble3 *pos,const unsigned *idp,const word *vmk,const tfloat3 *boundnormal)const; //<vs_mddbc>
+  void SaveVtkNormals(std::string filename,int numfile,unsigned np,unsigned npb                  //<vs_mddbc>
+    ,const tdouble3 *pos,const unsigned *idp,const tfloat3 *boundnormal)const;                    //<vs_mddbc>
 
  
   void GetResInfo(float tsim,float ttot,const std::string &headplus,const std::string &detplus,std::string &hinfo,std::string &dinfo);
@@ -492,13 +493,13 @@ ES:
 Consideraciones sobre condiciones periodicas:
 - Para cada eje periodico se define un valor tfloat3 para sumar a las particulas
   que se salgan por el extremo superior del dominio.
-- En MapPosMin/Max se el añade una holgura de H*BORDER_MAP, pero en el caso de
+- En MapPosMin/Max se el anhade una holgura de H*BORDER_MAP, pero en el caso de
   condiciones periodicas esta holgura solo se aplica a MapPosMax.
-- El ajuste de tamaño de dominio realizado por ResizeMapLimits() no afecta a los
+- El ajuste de tamanho de dominio realizado por ResizeMapLimits() no afecta a los
   ejes periodicos.
 - El halo periodico tendrá una unica celda de grosor 2h aunque en los otros ejes
-  se use celdas de tamaño h.
-- En la interaccion, una celda de tamaño 2h o dos celdas de tamaño h del extremo 
+  se use celdas de tamanho h.
+- En la interaccion, una celda de tamanho 2h o dos celdas de tamanho h del extremo 
   inferior interaccionan con el halo periodico. En el caso del extremo superior
   deben ser 2 celdas de 2h o 3 celdas de h.
 EN:

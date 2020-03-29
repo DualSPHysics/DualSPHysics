@@ -68,7 +68,7 @@ private:
   double Dp;              ///<Distance between particles.
   tdouble3 DomPosMin;     ///<Lower limit of simulation + edge 2h if periodic conditions. DomPosMin=Map_PosMin+(DomCelIni*Scell); | Limite inferior de simulacion + borde 2h si hay condiciones periodicas. 
   tdouble3 DomPosMax;     ///<Upper limit of simulation + edge 2h if periodic conditions. DomPosMax=min(Map_PosMax,Map_PosMin+(DomCelFin*Scell)); | Limite inferior de simulacion + borde 2h si hay condiciones periodicas. 
-  float Scell;            ///<Cell size: 2h or h. | Tamaño de celda: 2h o h.
+  float Scell;            ///<Cell size: 2h or h. | Tamanho de celda: 2h o h.
   int Hdiv;               ///<Value to divide 2H. | Valor por el que se divide a DosH
   float H;                ///<The smoothing length [m].
   float MassFluid;        ///<Reference mass of the fluid particle [kg].

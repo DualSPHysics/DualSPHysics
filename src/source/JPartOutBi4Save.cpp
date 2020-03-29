@@ -174,7 +174,7 @@ std::string JPartOutBi4Save::GetNamePart(unsigned cpart){
 }
 
 //==============================================================================
-/// Añade datos de particulas de de nuevo part.
+/// Anhade datos de particulas de de nuevo part.
 /// Adds data of particles to new part.
 //==============================================================================
 JBinaryData* JPartOutBi4Save::AddPartOut(unsigned cpart,double timestep,unsigned nout

@@ -362,7 +362,7 @@ void JCellDivGpu::SortDataArrays(const float3 *a,float3 *a2){
 /// como almacenamiento intermedio durante ciertos procesos. Asi es posible
 /// aprovechar esta memoria para otros usos.
 /// Esta memoria se redimensiona segun el numero de particulas por lo que su
-/// tamaño y direccion pueden variar.
+/// tamanho y direccion pueden variar.
 //==============================================================================
 float* JCellDivGpu::GetAuxMem(unsigned size){
   //:printf("GetAuxMem> size:%u  SizeAuxMem:%u\n",size,SizeAuxMem);

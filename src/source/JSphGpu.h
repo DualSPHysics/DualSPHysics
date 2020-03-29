@@ -272,7 +272,7 @@ protected:
   void RunRelaxZone(double dt);  //<vs_rzone>
   void RunDamping(double dt,unsigned np,unsigned npb,const double2 *posxy,const double *posz,const typecode *code,float4 *velrhop);
 
-  void SaveVtkNormalsGpu(std::string filename,int numfile,unsigned pini,unsigned pfin            //<vs_mddbc>
+  void SaveVtkNormalsGpu(std::string filename,int numfile,unsigned np,unsigned npb               //<vs_mddbc>
     ,const double2 *posxyg,const double *poszg,const unsigned *idpg,const float3 *boundnormalg); //<vs_mddbc>
 
   void ShowTimers(bool onlyfile=false);

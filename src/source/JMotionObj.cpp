@@ -302,7 +302,7 @@ int JMotionObj::GetPosMov(JMotionMov* mv)const{
 }
 
 //==============================================================================
-// Añade un objeto hijo, movimiento, evento o eje.
+// Anhade un objeto hijo, movimiento, evento o eje.
 //==============================================================================
 void JMotionObj::AddChild(JMotionObj* obj){   Children.push_back(obj); }
 void JMotionObj::AddMov(JMotionMov* mov){     Movs.push_back(mov);     }

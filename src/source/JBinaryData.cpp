@@ -66,7 +66,7 @@ std::string JBinaryDataDef::TypeToStr(TpData type){
 }
 
 //==============================================================================
-/// Devuelve tamaño del tipo de datos.
+/// Devuelve tamanho del tipo de datos.
 /// Returns size of the data type.
 //==============================================================================
 size_t JBinaryDataDef::SizeOfType(TpData type){
@@ -366,7 +366,7 @@ void JBinaryDataArray::ReadFileData(bool resize){
 }
 
 //==============================================================================
-/// Añade elementos al array de un fichero.
+/// Anhade elementos al array de un fichero.
 /// Si es ExternalPointer no permite redimensionar la memoria asignada.
 /// Add elements to the array of a file. 
 /// If ExternalPointer will not allow to resize the allocated memory.
@@ -394,7 +394,7 @@ void JBinaryDataArray::ReadData(unsigned count,unsigned size,std::ifstream *pf,b
 }
 
 //==============================================================================
-/// Añade elementos al array.
+/// Anhade elementos al array.
 /// Si es ExternalPointer no permite redimensionar la memoria asignada.
 /// Add elements to the array.
 /// If ExternalPointer will not allow to resize the allocated memory.
@@ -404,7 +404,7 @@ void JBinaryDataArray::AddData(unsigned count,const void* data,bool resize){
     //-Reserva memoria si fuese necesario.
     //-Allocates memory if necessary.
     CheckMemory(count,resize);
-    //-Añade datos al puntero.
+    //-Anhade datos al puntero.
     //-Add data to the pointer.
     if(Type==JBinaryDataDef::DatText){
       string *strings=(string*)Pointer;
@@ -437,7 +437,7 @@ void JBinaryDataArray::SetData(unsigned count,const void* data,bool externalpoin
 }
 
 //==============================================================================
-/// Añade un string al array.
+/// Anhade un string al array.
 /// Si es ExternalPointer no permite redimensionar la memoria asignada.
 /// Add a string to array.
 /// If ExternalPointer will not allow to resize the allocated memory.
@@ -449,7 +449,7 @@ void JBinaryDataArray::AddText(const std::string &str,bool resize){
     //-Reserva memoria si fuese necesario.
     //-Allocates memory if necessary.
     CheckMemory(count,resize);
-    //-Añade string al array.
+    //-Anhade string al array.
     //-Add string to array.
     string *strings=(string*)Pointer;
     strings[Count]=str;
@@ -458,7 +458,7 @@ void JBinaryDataArray::AddText(const std::string &str,bool resize){
 }
 
 //==============================================================================
-/// Añade array de strings al array.
+/// Anhade array de strings al array.
 /// Si es ExternalPointer no permite redimensionar la memoria asignada.
 /// Add array of strings to array.
 /// If ExternalPointer will not allow to resize the allocated memory.
@@ -980,7 +980,7 @@ void JBinaryData::OutItem(unsigned &count,unsigned size,const byte *ptr,bool cre
 }
 
 //==============================================================================
-/// Devuelve el tamaño necesario para almacenar todos los values del item.
+/// Devuelve el tamanho necesario para almacenar todos los values del item.
 /// Returns the size necessary to store all the values in the item 
 //==============================================================================
 unsigned JBinaryData::GetSizeValues()const{
@@ -1162,7 +1162,7 @@ JBinaryData::StHeadFmtBin JBinaryData::MakeFileHead(const std::string &filecode)
 }
 
 //==============================================================================
-/// Devuelve tamaño de fichero y su cabecera.
+/// Devuelve tamanho de fichero y su cabecera.
 /// Si el fichero no contiene una cabecera devuelve 0.
 /// Returns file size and its header.
 /// If the file does not contain a header returns 0.
@@ -1382,7 +1382,7 @@ void JBinaryData::SetFmtDouble(const std::string &fmt,bool down){
 }
 
 //==============================================================================
-/// Devuelve el tamaño necesario para almacenar todos los datos del item y descendientes.
+/// Devuelve el tamanho necesario para almacenar todos los datos del item y descendientes.
 /// Con all activado se incluyen tambien los elementos ocultos.
 /// Returns the size needed to store the data from the item and "descendants"
 /// With bool "all" true the hidden elements are also included. 
@@ -1407,7 +1407,7 @@ unsigned JBinaryData::SaveDataConst(unsigned size,byte* ptr,bool all)const{
 }
 
 //==============================================================================
-/// Devuelve el tamaño necesario para almacenar todos los del item y 
+/// Devuelve el tamanho necesario para almacenar todos los del item y 
 /// descendientes. Actualiza la cache de values  para mejorar el rendimiento en 
 /// operaciones posteriores.
 /// Con all activado se incluyen tambien los elementos ocultos.

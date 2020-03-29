@@ -41,7 +41,7 @@ namespace cusph{
 
 //==============================================================================
 /// Returns size of gridsize according to parameters.
-/// Devuelve tamaño de gridsize segun parametros.
+/// Devuelve tamanho de gridsize segun parametros.
 //==============================================================================
 dim3 GetGridSize(unsigned n,unsigned blocksize){
   dim3 sgrid;//=dim3(1,2,3);
@@ -91,7 +91,7 @@ template <unsigned blockSize> __global__ void KerReduMaxFloat(unsigned n,unsigne
 /// Returns the maximum of an array, using resu[] as auxiliar array.
 /// Size of resu[] must be >= a (N/SPHBSIZE+1)+(N/(SPHBSIZE*SPHBSIZE)+SPHBSIZE)
 ///
-/// Devuelve el maximo de un vector, usando resu[] como vector auxiliar. El tamaño
+/// Devuelve el maximo de un vector, usando resu[] como vector auxiliar. El tamanho
 /// de resu[] debe ser >= a (N/SPHBSIZE+1)+(N/(SPHBSIZE*SPHBSIZE)+SPHBSIZE)
 //==============================================================================
 float ReduMaxFloat(unsigned ndata,unsigned inidata,float* data,float* resu){
@@ -150,7 +150,7 @@ template <unsigned blockSize> __global__ void KerReduMaxFloat_w(unsigned n,unsig
 /// Size of resu[] must be >= a (N/SPHBSIZE+1)+(N/(SPHBSIZE*SPHBSIZE)+SPHBSIZE).
 ///
 /// Devuelve el maximo de la componente w de un vector float4, usando resu[] como 
-/// vector auxiliar. El tamaño de resu[] debe ser >= a (N/SPHBSIZE+1)+(N/(SPHBSIZE*SPHBSIZE)+SPHBSIZE).
+/// vector auxiliar. El tamanho de resu[] debe ser >= a (N/SPHBSIZE+1)+(N/(SPHBSIZE*SPHBSIZE)+SPHBSIZE).
 //==============================================================================
 float ReduMaxFloat_w(unsigned ndata,unsigned inidata,float4* data,float* resu){
   unsigned n=ndata,ini=inidata;
@@ -1155,13 +1155,13 @@ void Interaction_Forces(const StInterParmsg &t){
 /// Perform interaction between ghost node of selected bondary and fluid.
 //------------------------------------------------------------------------------
 template<bool sim2d,TpSlipMode tslip> __global__ void KerInteractionBoundCorrection
-  (unsigned npb,float determlimit
+  (unsigned n,unsigned nbound,float determlimit
   ,int4 nc,int hdiv,unsigned cellfluid,const int2 *begincell,int3 cellzero
   ,const double2 *posxy,const double *posz,const typecode *code,const unsigned *idp
   ,const float3 *boundnormal,const float3 *motionvel,float4 *velrhop)
 {
   const unsigned p1=blockIdx.y*gridDim.x*blockDim.x + blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
-  if(p1<npb){
+  if(p1<n){
     const float3 bnormalp1=boundnormal[p1];
     if(bnormalp1.x!=0 || bnormalp1.y!=0 || bnormalp1.z!=0){
       float rhopfinal=FLT_MAX;
@@ -1310,8 +1310,8 @@ template<bool sim2d,TpSlipMode tslip> __global__ void KerInteractionBoundCorrect
 /// Calculates extrapolated data on boundary particles from fluid domain for mDBC.
 /// Calcula datos extrapolados en el contorno para mDBC.
 //==============================================================================
-void Interaction_BoundCorrection(TpSlipMode slipmode,unsigned npbok,bool simulate2d
-  ,TpCellMode cellmode,tuint3 ncells,const int2 *begincell,tuint3 cellmin
+void Interaction_BoundCorrection(TpSlipMode slipmode,unsigned n,unsigned nbound
+  ,bool simulate2d,TpCellMode cellmode,tuint3 ncells,const int2 *begincell,tuint3 cellmin
   ,const double2 *posxy,const double *posz,const typecode *code,const unsigned *idp
   ,const float3 *boundnormal,const float3 *motionvel,float4 *velrhop)
 {
@@ -1322,17 +1322,17 @@ void Interaction_BoundCorrection(TpSlipMode slipmode,unsigned npbok,bool simulat
   const int3 cellzero=make_int3(cellmin.x,cellmin.y,cellmin.z);
 
   //-Interaction GhostBoundaryNodes-Fluid.
-  if(npbok){
+  if(n){
     const unsigned bsbound=128;
-    dim3 sgridb=cusph::GetGridSize(npbok,bsbound);
+    dim3 sgridb=cusph::GetGridSize(n,bsbound);
     if(simulate2d){ const bool sim2d=true;
-      if(slipmode==SLIP_Vel0    )KerInteractionBoundCorrection<sim2d,SLIP_Vel0    > <<<sgridb,bsbound>>> (npbok,determlimit,nc,hdiv,cellfluid,begincell,cellzero,posxy,posz,code,idp,boundnormal,motionvel,velrhop);
-      if(slipmode==SLIP_NoSlip  )KerInteractionBoundCorrection<sim2d,SLIP_NoSlip  > <<<sgridb,bsbound>>> (npbok,determlimit,nc,hdiv,cellfluid,begincell,cellzero,posxy,posz,code,idp,boundnormal,motionvel,velrhop);
-      if(slipmode==SLIP_FreeSlip)KerInteractionBoundCorrection<sim2d,SLIP_FreeSlip> <<<sgridb,bsbound>>> (npbok,determlimit,nc,hdiv,cellfluid,begincell,cellzero,posxy,posz,code,idp,boundnormal,motionvel,velrhop);
+      if(slipmode==SLIP_Vel0    )KerInteractionBoundCorrection<sim2d,SLIP_Vel0    > <<<sgridb,bsbound>>> (n,nbound,determlimit,nc,hdiv,cellfluid,begincell,cellzero,posxy,posz,code,idp,boundnormal,motionvel,velrhop);
+      if(slipmode==SLIP_NoSlip  )KerInteractionBoundCorrection<sim2d,SLIP_NoSlip  > <<<sgridb,bsbound>>> (n,nbound,determlimit,nc,hdiv,cellfluid,begincell,cellzero,posxy,posz,code,idp,boundnormal,motionvel,velrhop);
+      if(slipmode==SLIP_FreeSlip)KerInteractionBoundCorrection<sim2d,SLIP_FreeSlip> <<<sgridb,bsbound>>> (n,nbound,determlimit,nc,hdiv,cellfluid,begincell,cellzero,posxy,posz,code,idp,boundnormal,motionvel,velrhop);
     }else{          const bool sim2d=false;
-      if(slipmode==SLIP_Vel0    )KerInteractionBoundCorrection<sim2d,SLIP_Vel0    > <<<sgridb,bsbound>>> (npbok,determlimit,nc,hdiv,cellfluid,begincell,cellzero,posxy,posz,code,idp,boundnormal,motionvel,velrhop);
-      if(slipmode==SLIP_NoSlip  )KerInteractionBoundCorrection<sim2d,SLIP_NoSlip  > <<<sgridb,bsbound>>> (npbok,determlimit,nc,hdiv,cellfluid,begincell,cellzero,posxy,posz,code,idp,boundnormal,motionvel,velrhop);
-      if(slipmode==SLIP_FreeSlip)KerInteractionBoundCorrection<sim2d,SLIP_FreeSlip> <<<sgridb,bsbound>>> (npbok,determlimit,nc,hdiv,cellfluid,begincell,cellzero,posxy,posz,code,idp,boundnormal,motionvel,velrhop);
+      if(slipmode==SLIP_Vel0    )KerInteractionBoundCorrection<sim2d,SLIP_Vel0    > <<<sgridb,bsbound>>> (n,nbound,determlimit,nc,hdiv,cellfluid,begincell,cellzero,posxy,posz,code,idp,boundnormal,motionvel,velrhop);
+      if(slipmode==SLIP_NoSlip  )KerInteractionBoundCorrection<sim2d,SLIP_NoSlip  > <<<sgridb,bsbound>>> (n,nbound,determlimit,nc,hdiv,cellfluid,begincell,cellzero,posxy,posz,code,idp,boundnormal,motionvel,velrhop);
+      if(slipmode==SLIP_FreeSlip)KerInteractionBoundCorrection<sim2d,SLIP_FreeSlip> <<<sgridb,bsbound>>> (n,nbound,determlimit,nc,hdiv,cellfluid,begincell,cellzero,posxy,posz,code,idp,boundnormal,motionvel,velrhop);
     }
   }
 }
@@ -1590,7 +1590,7 @@ void ComputeSpsTau(unsigned np,unsigned npb,float smag,float blin
 //##############################################################################
 //------------------------------------------------------------------------------
 /// Adds value of delta[] to ar[] provided it is not FLT_MAX.
-/// Añade valor de delta[] a ar[] siempre que no sea FLT_MAX.
+/// Anhade valor de delta[] a ar[] siempre que no sea FLT_MAX.
 //------------------------------------------------------------------------------
 __global__ void KerAddDelta(unsigned n,const float *delta,float *ar)
 {
@@ -1603,7 +1603,7 @@ __global__ void KerAddDelta(unsigned n,const float *delta,float *ar)
 
 //==============================================================================
 /// Adds value of delta[] to ar[] provided it is not FLT_MAX.
-/// Añade valor de delta[] a ar[] siempre que no sea FLT_MAX.
+/// Anhade valor de delta[] a ar[] siempre que no sea FLT_MAX.
 //==============================================================================
 void AddDelta(unsigned n,const float *delta,float *ar,cudaStream_t stm){
   if(n){
@@ -1902,7 +1902,7 @@ template<byte periactive> __global__ void KerMovePiston1d(unsigned n,unsigned id
   ,double dp,double poszmin,unsigned poszcount,const byte *pistonid,const double* movx,const double* velx
   ,const unsigned *ridpmv,double2 *posxy,double *posz,unsigned *dcell,float4 *velrhop,typecode *code)
 {
-  unsigned p=blockIdx.y*gridDim.x*blockDim.x + blockIdx.x*blockDim.x + threadIdx.x; //-Nº de la partícula
+  unsigned p=blockIdx.y*gridDim.x*blockDim.x + blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle
   if(p<n){
     const unsigned id=p+idini;
     int pid=ridpmv[id];
@@ -1946,7 +1946,7 @@ template<byte periactive> __global__ void KerMovePiston2d(unsigned n,unsigned id
   ,double dp,double posymin,double poszmin,unsigned poszcount,const double* movx,const double* velx
   ,const unsigned *ridpmv,double2 *posxy,double *posz,unsigned *dcell,float4 *velrhop,typecode *code)
 {
-  unsigned p=blockIdx.y*gridDim.x*blockDim.x + blockIdx.x*blockDim.x + threadIdx.x; //-Nº de la partícula
+  unsigned p=blockIdx.y*gridDim.x*blockDim.x + blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle
   if(p<n){
     const unsigned id=p+idini;
     int pid=ridpmv[id];
@@ -2465,7 +2465,7 @@ unsigned PeriodicMakeList(unsigned n,unsigned pini,bool stable,unsigned nmax
   unsigned count=0;
   if(n){
     //-lspg size list initialized to zero.
-    //-Inicializa tamaño de lista lspg a cero.
+    //-Inicializa tamanho de lista lspg a cero.
     cudaMemset(listp+nmax,0,sizeof(unsigned));
     dim3 sgrid=GetGridSize(n,SPHBSIZE);
     const unsigned smem=(SPHBSIZE*2+1)*sizeof(unsigned); //-Each particle can leave two new periodic over the counter position. | De cada particula pueden salir 2 nuevas periodicas mas la posicion del contador.

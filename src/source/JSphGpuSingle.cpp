@@ -164,7 +164,7 @@ void JSphGpuSingle::ConfigDomain(){
   if(UseNormals){ //<vs_mddbc_ini>
     boundnormal=new tfloat3[Np];
     memset(boundnormal,0,sizeof(tfloat3)*Np);
-    LoadBoundNormals(Npb,Idp,Code,boundnormal);
+    LoadBoundNormals(Np,Npb,Idp,Code,boundnormal);
   } //<vs_mddbc_end>
 
   //-Creates PartsInit object with initial particle data for automatic configurations.
@@ -172,7 +172,7 @@ void JSphGpuSingle::ConfigDomain(){
 
   //-Runs initialization operations from XML.
   RunInitialize(Np,Npb,AuxPos,Idp,Code,Velrhop,boundnormal);
-  if(UseNormals)ConfigBoundNormals(Npb,AuxPos,Idp,boundnormal); //<vs_mddbc>
+  if(UseNormals)ConfigBoundNormals(Np,Npb,AuxPos,Idp,boundnormal); //<vs_mddbc>
 
   //-Computes MK domain for boundary and fluid particles.
   MkInfo->ComputeMkDomains(Np,AuxPos,Code);
@@ -455,14 +455,14 @@ void JSphGpuSingle::Interaction_Forces(TpInterStep interstep){
   if(UseDEM)cusph::Interaction_ForcesDem(CellMode,BlockSizes.forcesdem,CaseNfloat,CellDivSingle->GetNcells(),CellDivSingle->GetBeginCell(),CellDivSingle->GetCellDomainMin(),Dcellg,FtRidpg,DemDatag,FtoMasspg,float(DemDtForce),PosCellg,Velrhopg,Codeg,Idpg,ViscDtg,Aceg,NULL);
 
   //-For 2D simulations always overrides the 2nd component (Y axis).
-  //-Para simulaciones 2D anula siempre la 2º componente.
+  //-Para simulaciones 2D anula siempre la 2nd componente.
   if(Simulate2D)cusph::Resety(Np-Npb,Npb,Aceg);
 
   //-Computes Tau for Laminar+SPS.
   if(lamsps)cusph::ComputeSpsTau(Np,Npb,SpsSmag,SpsBlin,Velrhopg,SpsGradvelg,SpsTaug);
 
   //-Applies DDT.
-  if(Deltag)cusph::AddDelta(Np-Npb,Deltag+Npb,Arg+Npb);//-Adds the Delta-SPH correction for the density. | Añade correccion de Delta-SPH a Arg[]. 
+  if(Deltag)cusph::AddDelta(Np-Npb,Deltag+Npb,Arg+Npb);//-Adds the Delta-SPH correction for the density. | Anhade correccion de Delta-SPH a Arg[]. 
   Check_CudaErroor("Failed while executing kernels of interaction.");
 
   //-Calculates maximum value of ViscDt.
@@ -481,7 +481,8 @@ void JSphGpuSingle::Interaction_Forces(TpInterStep interstep){
 //==============================================================================
 void JSphGpuSingle::BoundCorrection(){
   TmgStart(Timers,TMG_CfPreForces);
-  cusph::Interaction_BoundCorrection(SlipMode,NpbOk,Simulate2D,CellMode
+  unsigned n=NpbOk;
+  cusph::Interaction_BoundCorrection(SlipMode,n,CaseNbound,Simulate2D,CellMode
     ,CellDivSingle->GetNcells(),CellDivSingle->GetBeginCell(),CellDivSingle->GetCellDomainMin()
     ,Posxyg,Poszg,Codeg,Idpg,BoundNormalg,MotionVelg,Velrhopg);
   TmgStop(Timers,TMG_CfPreForces);
@@ -637,7 +638,7 @@ void JSphGpuSingle::RunFloating(double dt,bool predictor){
 
     //-Calculate forces summation (face,fomegaace) starting from floating particles in ftoforcessum[].
     cusph::FtCalcForcesSum(PeriActive!=0,FtCount,FtoDatpg,FtoCenterg,FtRidpg,Posxyg,Poszg,Aceg,FtoForcesSumg);
-    //-Adds calculated forces around floating objects / Añade fuerzas calculadas sobre floatings.
+    //-Adds calculated forces around floating objects / Anhade fuerzas calculadas sobre floatings.
     cusph::FtCalcForces(FtCount,Gravity,FtoMassg,FtoAnglesg,FtoInertiaini8g,FtoInertiaini1g,FtoForcesSumg,FtoForcesg);
     //-Calculate data to update floatings / Calcula datos para actualizar floatings.
     cusph::FtCalcForcesRes(FtCount,Simulate2D,dt,FtoOmegag,FtoVelg,FtoCenterg,FtoForcesg,FtoForcesResg,FtoCenterResg);

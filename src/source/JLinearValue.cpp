@@ -163,7 +163,7 @@ void JLinearValue::SetTimeValue(unsigned idx,double time,double value){
 
 //==============================================================================
 /// Adds values at the end of the list.
-/// Añade valores al final de la lista.
+/// Anhade valores al final de la lista.
 //==============================================================================
 unsigned JLinearValue::AddTimeValue(double time,double value){
   if(Count==Size)SetSize(Size+SIZEINITIAL);

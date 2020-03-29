@@ -34,7 +34,7 @@ namespace curedus{
 //##############################################################################
 //==============================================================================
 /// Returns the dimensions of gridsize according to parameters.
-/// Devuelve tamaño de gridsize segun parametros.
+/// Devuelve tamanho de gridsize segun parametros.
 //==============================================================================
 dim3 GetGridSize(unsigned n,unsigned blocksize){
   dim3 sgrid;//=dim3(1,2,3);
@@ -87,7 +87,7 @@ template <unsigned blockSize> __global__ void KerReduSumDouble(unsigned n,unsign
 
 //==============================================================================
 /// Returns size of auxiliary memory for execution.
-/// Devuelve el tamaño minimo de la memoria auxiliar necesaria segun ndata.
+/// Devuelve el tamanho minimo de la memoria auxiliar necesaria segun ndata.
 //==============================================================================
 unsigned GetAuxSize_ReduSumDouble(unsigned ndata){
   const unsigned sizedata=1;
@@ -106,7 +106,7 @@ unsigned GetAuxSize_ReduSumDouble(unsigned ndata){
 /// Use ReduSumDouble() or ReduSumDoubleAsyn().
 ///
 /// Calcula suma de un vector, usando resu[] como vector auxiliar.
-/// El tamaño de resu[] debe ser >= a GetAuxSize_ReduSumDouble(ndata).
+/// El tamanho de resu[] debe ser >= a GetAuxSize_ReduSumDouble(ndata).
 /// La ejecucion puede ser sincrona o asincrona y el resultado puede grabarse en
 /// resu[], en pim1_sum o devolverse segun parametros de ejecucion.
 /// Usar ReduSumDouble() o ReduSumDoubleAsyn().
@@ -166,7 +166,7 @@ double DgReduSumDouble(unsigned ndata,unsigned inidata,const double* datag){
 /// Synchronous execution in stream 0.
 ///
 /// Devuelve la suma de un vector, usando resu[] como vector auxiliar.
-/// El tamaño de resu[] debe ser >= a GetAuxSize_ReduSumDouble(ndata).
+/// El tamanho de resu[] debe ser >= a GetAuxSize_ReduSumDouble(ndata).
 /// Ejecucion sincrona en el stream 0.
 //==============================================================================
 double ReduSumDouble(unsigned ndata,unsigned inidata,const double* data,double* resu){
@@ -188,7 +188,7 @@ double ReduSumDouble(unsigned ndata,unsigned inidata,const double* data,double* 
 /// the beginning of resu[].
 ///
 /// Calcula la suma de un vector, usando resu[] como vector auxiliar.
-/// El tamaño de resu[] debe ser >= a GetAuxSize_ReduSumDouble(ndata).
+/// El tamanho de resu[] debe ser >= a GetAuxSize_ReduSumDouble(ndata).
 /// Ejecucion asincrona en el stream stm y el resultado final se graba al inicio
 /// de resu[].
 //==============================================================================
@@ -205,7 +205,7 @@ void ReduSumDoubleAsyn(unsigned ndata,unsigned inidata,const double* data,double
 /// pim1_sum (IT MUST BE PINNED MEMORY).
 ///
 /// Calcula la suma de un vector, usando resu[] como vector auxiliar.
-/// El tamaño de resu[] debe ser >= a GetAuxSize_ReduSumDouble(ndata).
+/// El tamanho de resu[] debe ser >= a GetAuxSize_ReduSumDouble(ndata).
 /// Ejecucion asincrona en el stream stm y el resultado se graba en pim1_sum 
 /// (QUE DEBE SER PINNED MEMORY).
 //==============================================================================
@@ -257,7 +257,7 @@ template <unsigned blockSize> __global__ void KerReduSumFloat(unsigned n,unsigne
 
 //==============================================================================
 /// Returns size of auxiliary memory for execution.
-/// Devuelve el tamaño minimo de la memoria auxiliar necesaria segun ndata.
+/// Devuelve el tamanho minimo de la memoria auxiliar necesaria segun ndata.
 //==============================================================================
 unsigned GetAuxSize_ReduSumFloat(unsigned ndata){ return(GetAuxSize_ReduSumDouble(ndata)); }
 
@@ -269,7 +269,7 @@ unsigned GetAuxSize_ReduSumFloat(unsigned ndata){ return(GetAuxSize_ReduSumDoubl
 /// Use ReduSumFloat() or ReduSumFloatAsyn().
 ///
 /// Calcula suma de un vector, usando resu[] como vector auxiliar.
-/// El tamaño de resu[] debe ser >= a GetAuxSize_ReduSumFloat(ndata).
+/// El tamanho de resu[] debe ser >= a GetAuxSize_ReduSumFloat(ndata).
 /// La ejecucion puede ser sincrona o asincrona y el resultado puede grabarse en
 /// resu[], en pim1_sum o devolverse segun parametros de ejecucion.
 /// Usar ReduSumFloat() o ReduSumFloatAsyn().
@@ -329,7 +329,7 @@ float DgReduSumFloat(unsigned ndata,unsigned inidata,const float* datag){
 /// Synchronous execution in stream 0.
 ///
 /// Devuelve la suma de un vector, usando resu[] como vector auxiliar.
-/// El tamaño de resu[] debe ser >= a GetAuxSize_ReduSumFloat(ndata).
+/// El tamanho de resu[] debe ser >= a GetAuxSize_ReduSumFloat(ndata).
 /// Ejecucion sincrona en el stream 0.
 //==============================================================================
 float ReduSumFloat(unsigned ndata,unsigned inidata,const float* data,float* resu){
@@ -354,7 +354,7 @@ float ReduSumFloat(unsigned ndata,unsigned inidata,const float* data,float* resu
 /// the beginning of resu[].
 ///
 /// Calcula la suma de un vector, usando resu[] como vector auxiliar.
-/// El tamaño de resu[] debe ser >= a GetAuxSize_ReduSumFloat(ndata).
+/// El tamanho de resu[] debe ser >= a GetAuxSize_ReduSumFloat(ndata).
 /// Ejecucion asincrona en el stream stm y el resultado final se graba al inicio
 /// de resu[].
 //==============================================================================
@@ -371,7 +371,7 @@ void ReduSumFloatAsyn(unsigned ndata,unsigned inidata,const float* data,float* r
 /// pim1_sum (IT MUST BE PINNED MEMORY).
 ///
 /// Calcula la suma de un vector, usando resu[] como vector auxiliar.
-/// El tamaño de resu[] debe ser >= a GetAuxSize_ReduSumFloat(ndata).
+/// El tamanho de resu[] debe ser >= a GetAuxSize_ReduSumFloat(ndata).
 /// Ejecucion asincrona en el stream stm y el resultado se graba en pim1_sum 
 /// (QUE DEBE SER PINNED MEMORY).
 //==============================================================================
@@ -423,7 +423,7 @@ template <unsigned blockSize> __global__ void KerReduSumUint(unsigned n,unsigned
 
 //==============================================================================
 /// Returns size of auxiliary memory for execution.
-/// Devuelve el tamaño minimo de la memoria auxiliar necesaria segun ndata.
+/// Devuelve el tamanho minimo de la memoria auxiliar necesaria segun ndata.
 //==============================================================================
 unsigned GetAuxSize_ReduSumUint(unsigned ndata){ return(GetAuxSize_ReduSumDouble(ndata)); }
 
@@ -435,7 +435,7 @@ unsigned GetAuxSize_ReduSumUint(unsigned ndata){ return(GetAuxSize_ReduSumDouble
 /// Use ReduSumUint() or ReduSumUintAsyn().
 ///
 /// Calcula suma de un vector, usando resu[] como vector auxiliar.
-/// El tamaño de resu[] debe ser >= a GetAuxSize_ReduSumUint(ndata).
+/// El tamanho de resu[] debe ser >= a GetAuxSize_ReduSumUint(ndata).
 /// La ejecucion puede ser sincrona o asincrona y el resultado puede grabarse en
 /// resu[], en pim1_sum o devolverse segun parametros de ejecucion.
 /// Usar ReduSumUint() o ReduSumUintAsyn().
@@ -495,7 +495,7 @@ unsigned DgReduSumUint(unsigned ndata,unsigned inidata,const unsigned* datag){
 /// Synchronous execution in stream 0.
 ///
 /// Devuelve la suma de un vector, usando resu[] como vector auxiliar.
-/// El tamaño de resu[] debe ser >= a GetAuxSize_ReduSumUint(ndata).
+/// El tamanho de resu[] debe ser >= a GetAuxSize_ReduSumUint(ndata).
 /// Ejecucion sincrona en el stream 0.
 //==============================================================================
 unsigned ReduSumUint(unsigned ndata,unsigned inidata,const unsigned* data,unsigned* resu){
@@ -517,7 +517,7 @@ unsigned ReduSumUint(unsigned ndata,unsigned inidata,const unsigned* data,unsign
 /// the beginning of resu[].
 ///
 /// Calcula la suma de un vector, usando resu[] como vector auxiliar.
-/// El tamaño de resu[] debe ser >= a GetAuxSize_ReduSumUint(ndata).
+/// El tamanho de resu[] debe ser >= a GetAuxSize_ReduSumUint(ndata).
 /// Ejecucion asincrona en el stream stm y el resultado final se graba al inicio
 /// de resu[].
 //==============================================================================
@@ -534,7 +534,7 @@ void ReduSumUintAsyn(unsigned ndata,unsigned inidata,const unsigned* data,unsign
 /// pim1_sum (IT MUST BE PINNED MEMORY).
 ///
 /// Calcula la suma de un vector, usando resu[] como vector auxiliar.
-/// El tamaño de resu[] debe ser >= a GetAuxSize_ReduSumUint(ndata).
+/// El tamanho de resu[] debe ser >= a GetAuxSize_ReduSumUint(ndata).
 /// Ejecucion asincrona en el stream stm y el resultado se graba en pim1_sum 
 /// (QUE DEBE SER PINNED MEMORY).
 //==============================================================================
@@ -578,7 +578,7 @@ template <unsigned blockSize> __global__ void KerReduSumFloat3(unsigned n,unsign
 
 //==============================================================================
 /// Returns size of auxiliary memory for execution.
-/// Devuelve el tamaño minimo de la memoria auxiliar necesaria segun ndata.
+/// Devuelve el tamanho minimo de la memoria auxiliar necesaria segun ndata.
 //==============================================================================
 unsigned GetAuxSize_ReduSumFloat3(unsigned ndata){ return(GetAuxSize_ReduSumDouble(ndata)); }
 
@@ -590,7 +590,7 @@ unsigned GetAuxSize_ReduSumFloat3(unsigned ndata){ return(GetAuxSize_ReduSumDoub
 /// Use ReduSumFloat() or ReduSumFloatAsyn().
 ///
 /// Calcula suma de un vector, usando resu[] como vector auxiliar.
-/// El tamaño de resu[] debe ser >= a GetAuxSize_ReduSumFloat(ndata).
+/// El tamanho de resu[] debe ser >= a GetAuxSize_ReduSumFloat(ndata).
 /// La ejecucion puede ser sincrona o asincrona y el resultado puede grabarse en
 /// resu[], en pim1_sum o devolverse segun parametros de ejecucion.
 /// Usar ReduSumFloat() o ReduSumFloatAsyn().
@@ -654,7 +654,7 @@ float3 DgReduSumFloat3(unsigned ndata,unsigned inidata,const float3* datag){
 /// Synchronous execution in stream 0.
 ///
 /// Devuelve la suma de un vector, usando resu[] como vector auxiliar.
-/// El tamaño de resu[] debe ser >= a GetAuxSize_ReduSumFloat(ndata).
+/// El tamanho de resu[] debe ser >= a GetAuxSize_ReduSumFloat(ndata).
 /// Ejecucion sincrona en el stream 0.
 //==============================================================================
 float3 ReduSumFloat3(unsigned ndata,unsigned inidata,const float3* data,float3* resu){
@@ -681,7 +681,7 @@ float3 ReduSumFloat3(unsigned ndata,unsigned inidata,const float3* data,float3* 
 /// the beginning of resu[].
 ///
 /// Calcula la suma de un vector, usando resu[] como vector auxiliar.
-/// El tamaño de resu[] debe ser >= a GetAuxSize_ReduSumFloat(ndata).
+/// El tamanho de resu[] debe ser >= a GetAuxSize_ReduSumFloat(ndata).
 /// Ejecucion asincrona en el stream stm y el resultado final se graba al inicio
 /// de resu[].
 //==============================================================================
@@ -698,7 +698,7 @@ void ReduSumFloat3Asyn(unsigned ndata,unsigned inidata,const float3* data,float3
 /// pim1_sum (IT MUST BE PINNED MEMORY).
 ///
 /// Calcula la suma de un vector, usando resu[] como vector auxiliar.
-/// El tamaño de resu[] debe ser >= a GetAuxSize_ReduSumFloat(ndata).
+/// El tamanho de resu[] debe ser >= a GetAuxSize_ReduSumFloat(ndata).
 /// Ejecucion asincrona en el stream stm y el resultado se graba en pim1_sum 
 /// (QUE DEBE SER PINNED MEMORY).
 //==============================================================================

@@ -125,14 +125,14 @@ void JSphCpuSingle::ConfigDomain(){
   //-Load particle code. | Carga code de particulas.
   LoadCodeParticles(Np,Idpc,Codec);
 
-  //-Load normals for boundary particles (fixed and moving).    //<vs_mddbc>
-  if(UseNormals)LoadBoundNormals(Npb,Idpc,Codec,BoundNormalc);  //<vs_mddbc>
+  //-Load normals for boundary particles (fixed and moving).       //<vs_mddbc>
+  if(UseNormals)LoadBoundNormals(Np,Npb,Idpc,Codec,BoundNormalc);  //<vs_mddbc>
 
   //-Runs initialization operations from XML.
   tfloat3 *boundnormal=NULL;
   boundnormal=BoundNormalc;                                     //<vs_mddbc>
   RunInitialize(Np,Npb,Posc,Idpc,Codec,Velrhopc,boundnormal);
-  if(UseNormals)ConfigBoundNormals(Npb,Posc,Idpc,BoundNormalc); //<vs_mddbc>
+  if(UseNormals)ConfigBoundNormals(Np,Npb,Posc,Idpc,BoundNormalc); //<vs_mddbc>
 
   //-Creates PartsInit object with initial particle data for automatic configurations.
   CreatePartsInit(Np,Posc,Codec);
@@ -189,7 +189,7 @@ void JSphCpuSingle::ResizeParticlesSize(unsigned newsize,float oversize,bool upd
 unsigned JSphCpuSingle::PeriodicMakeList(unsigned n,unsigned pini,bool stable,unsigned nmax,tdouble3 perinc,const tdouble3 *pos,const typecode *code,unsigned *listp)const{
   unsigned count=0;
   if(n){
-    //-Initialize size of list lsph to zero. | Inicializa tamaño de lista lspg a cero.
+    //-Initialize size of list lsph to zero. | Inicializa tamanho de lista lspg a cero.
     listp[nmax]=0;
     for(unsigned p=0;p<n;p++){
       const unsigned p2=p+pini;
@@ -549,7 +549,7 @@ void JSphCpuSingle::Interaction_Forces(TpInterStep interstep){
     ,SpsTauc,SpsGradvelc,ShiftingMode,ShiftPosfsc);
   JSphCpu::Interaction_Forces_ct(parms,viscdt);
 
-  //-For 2-D simulations zero the 2nd component. | Para simulaciones 2D anula siempre la 2º componente.
+  //-For 2-D simulations zero the 2nd component. | Para simulaciones 2D anula siempre la 2nd componente.
   if(Simulate2D){
     const int ini=int(Npb),fin=int(Np),npf=int(Np-Npb);
     #ifdef OMP_USE
@@ -558,7 +558,7 @@ void JSphCpuSingle::Interaction_Forces(TpInterStep interstep){
     for(int p=ini;p<fin;p++)Acec[p].y=0;
   }
 
-  //-Add Delta-SPH correction to Arg[]. | Añade correccion de Delta-SPH a Arg[].
+  //-Add Delta-SPH correction to Arg[]. | Anhade correccion de Delta-SPH a Arg[].
   if(Deltac){
     const int ini=int(Npb),fin=int(Np),npf=int(Np-Npb);
     #ifdef OMP_USE
@@ -894,7 +894,7 @@ void JSphCpuSingle::RunFloating(double dt,bool predictor){
     //-Adds accelerations from ForcePoints and Moorings.     //<vs_moordyyn>
     if(ForcePoints)ForcePoints->GetFtMotionData(FtoForces);  //<vs_moordyyn>
 
-    //-Adds calculated forces around floating objects. | Añade fuerzas calculadas sobre floatings.
+    //-Adds calculated forces around floating objects. | Anhade fuerzas calculadas sobre floatings.
     FtCalcForces(FtoForces);
 
     //-Calculate data to update floatings. | Calcula datos para actualizar floatings.

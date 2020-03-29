@@ -222,8 +222,8 @@ void ComputeVelMod(unsigned n,const float4 *vel,float *velmod);
 void Interaction_Forces(const StInterParmsg &t);
 
 //-Kernels for the boundary correction (mDBC). //<vs_mddbc_ini>
-void Interaction_BoundCorrection(TpSlipMode slipmode,unsigned npbok,bool simulate2d
-  ,TpCellMode cellmode,tuint3 ncells,const int2 *begincell,tuint3 cellmin
+void Interaction_BoundCorrection(TpSlipMode slipmode,unsigned n,unsigned nbound
+  ,bool simulate2d,TpCellMode cellmode,tuint3 ncells,const int2 *begincell,tuint3 cellmin
   ,const double2 *posxy,const double *posz,const typecode *code,const unsigned *idp
   ,const float3 *boundnormal,const float3 *motionvel,float4 *velrhop);
 //<vs_mddbc_end>

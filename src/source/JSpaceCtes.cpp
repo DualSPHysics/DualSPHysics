@@ -271,4 +271,15 @@ void JSpaceCtes::SaveXmlRun(JXml *sxml,const std::string &place)const{
   WriteXmlRun(sxml,sxml->GetNode(place,true)->ToElement());
 }
 
+//==============================================================================
+/// Returns final H value accoding to current configuration.
+//==============================================================================
+double JSpaceCtes::ComputeFinalH(bool data2d,double dp)const{
+  double coefh=GetCoefH();
+  if(!coefh)coefh=GetCoefHdp()/sqrt(data2d? 2.: 3.);
+  const double h=(!GetHAuto()? GetH(): coefh*sqrt((dp*dp)*(data2d? 2: 3)) );
+  //printf("Coefh:%f (hdp:%f)",coefh,h/dp);
+  return(h);
+}
+
 

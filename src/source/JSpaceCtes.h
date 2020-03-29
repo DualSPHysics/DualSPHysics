@@ -22,8 +22,8 @@
 //:# - Se paso a usar double en lugar de float. (25-11-2013)
 //:# - El valor de Eps pasa a ser opcional para mantener compatibilidad. (08-01-2015)
 //:# - Se cambio Coefficient por CoefH pero manteniendo compatibilidad. (08-01-2015)
-//:# - Se añadio SpeedSound para asignar valor de forma explicita. (08-01-2015)
-//:# - Se añadieron comentarios al escribir el XML. (08-01-2015)
+//:# - Se anhadio SpeedSound para asignar valor de forma explicita. (08-01-2015)
+//:# - Se anhadieron comentarios al escribir el XML. (08-01-2015)
 //:# - Se ampliaron los limites de CFLnumber de (0.1-0.5) a (0.001-1). (08-01-2015)
 //:# - <speedsystem> y <speedsound> pasan a ser opcionales. (20-01-2015)
 //:# - <eps> solo se pasa a <constants> cuando este definido en <constantsdef>. (20-01-2015)
@@ -205,6 +205,8 @@ public:
 
   double GetDp()const{ return(Dp); }
   void SetDp(double v){ Dp=v; }
+
+  double ComputeFinalH(bool data2d,double dp)const;
 };
 
 #endif

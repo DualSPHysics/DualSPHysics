@@ -57,7 +57,7 @@ JPartNormalData::~JPartNormalData(){
 void JPartNormalData::Reset(){
   FmtVersion=FmtVersionDef;
   DirData="";
-  ConfigBasic("","",false,0,0,0,0);
+  ConfigBasic("","",false,0,0,0,0,false);
   PartNormalsName="";
   AllocNormals(0,0,false);
 }
@@ -95,7 +95,7 @@ JBinaryDataArray* JPartNormalData::GetArray(JBinaryData *bd,std::string name,JBi
 /// Configuration of basic variables.
 //==============================================================================
 void JPartNormalData::ConfigBasic(std::string appname,std::string casename
-  ,bool data2d,double data2dposy,double dp,double h,double dist)
+  ,bool data2d,double data2dposy,double dp,double h,double dist,bool ftsupport)
 {
   AppName=appname;
   Date=fun::GetDateTime();
@@ -105,6 +105,7 @@ void JPartNormalData::ConfigBasic(std::string appname,std::string casename
   Dp=dp;
   H=h;
   Dist=dist;
+  FtSupport=ftsupport;
 }
 
 //==============================================================================
@@ -189,6 +190,7 @@ void JPartNormalData::SaveFile(std::string dir){
   bdat.SetvDouble("H",H);
   //-Saves normal data.
   bdat.SetvDouble("Dist",Dist);
+  bdat.SetvBool("FtSupport",FtSupport);
   bdat.SetvText("PartNormalsName",PartNormalsName);
   bdat.SetvUint("Nbound",Nbound);
   bdat.SetvUint("CountNormals",CountNormals);
@@ -235,6 +237,7 @@ void JPartNormalData::LoadFile(std::string casename){
   H         =bdat.GetvDouble("H");
   //-Loads normal data.
   Dist           =bdat.GetvDouble("Dist");
+  FtSupport      =bdat.GetvBool("FtSupport",true,false);
   PartNormalsName=bdat.GetvText("PartNormalsName");
   Nbound         =bdat.GetvUint("Nbound");
   CountNormals   =bdat.GetvUint("CountNormals");

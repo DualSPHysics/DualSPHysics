@@ -123,7 +123,7 @@ void Sort(unsigned* keys,unsigned* values,unsigned size,bool stable){
 
 //==============================================================================
 /// Returns the dimensions of gridsize according to parameters.
-/// Devuelve tamaño de gridsize segun parametros.
+/// Devuelve tamanho de gridsize segun parametros.
 //==============================================================================
 dim3 GetGridSize(unsigned n,unsigned blocksize){
   dim3 sgrid;//=dim3(1,2,3);
@@ -836,7 +836,7 @@ unsigned ReduUintSum(unsigned nblocks,unsigned *aux,JLog2 *log){
 //  extern __shared__ unsigned sp1[];
 //  unsigned *sp2=sp1+blockDim.x;
 //  const unsigned tid=threadIdx.x;
-//  const unsigned cel=blockIdx.y*gridDim.x*blockDim.x + blockIdx.x*blockDim.x + threadIdx.x; //-Nº de celda
+//  const unsigned cel=blockIdx.y*gridDim.x*blockDim.x + blockIdx.x*blockDim.x + threadIdx.x; //-Number of cell
 //  //-Carga valores en memoria shared.
 //  if(cel<ncel){
 //    int2 rg=begcell[cel+ini];
@@ -896,7 +896,7 @@ unsigned ReduUintSum(unsigned nblocks,unsigned *aux,JLog2 *log){
 //{ //torder{ORDER_XYZ=1,ORDER_YZX=2,ORDER_XZY=3} 
 //  extern __shared__ unsigned sp1[];
 //  const unsigned tid=threadIdx.x;
-//  const unsigned cel=blockIdx.y*gridDim.x*blockDim.x + blockIdx.x*blockDim.x + threadIdx.x; //-Nº de celda
+//  const unsigned cel=blockIdx.y*gridDim.x*blockDim.x + blockIdx.x*blockDim.x + threadIdx.x; //-Number of cell
 //  //-Carga valores en memoria shared.
 //  if(cel<ncel){
 //    int2 rg=begcell[cel+ini];

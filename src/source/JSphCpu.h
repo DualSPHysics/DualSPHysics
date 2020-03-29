@@ -254,7 +254,7 @@ protected:
 
 //<vs_mddbc_ini>
   template<bool sim2d,TpSlipMode tslip> void InteractionBoundCorrection
-    (unsigned npb,float determlimit
+    (unsigned n,float determlimit
     ,tint4 nc,int hdiv,unsigned cellinitial,const unsigned *beginendcell,tint3 cellzero
     ,const tdouble3 *pos,const typecode *code,const unsigned *idp
     ,const tfloat3 *boundnormal,const tfloat3 *motionvel,tfloat4 *velrhop);

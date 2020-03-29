@@ -183,7 +183,7 @@ void JSphBoundCorrZone::GetConfig(std::vector<std::string> &lines)const{
 //==============================================================================
 JSphBoundCorr::JSphBoundCorr(bool cpu,double dp,JLog2 *log,const JXml *sxml
   ,const std::string &place,const JSphMk *mkinfo)
-  :Cpu(cpu),Dp(dp),Log(log)
+  :Cpu(cpu),Dp(dp),Log(log),SaveMotionVtk(false)
 {
   ClassName="JSphBoundCorr";
   Reset();

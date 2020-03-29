@@ -95,6 +95,7 @@ public:
     ,tdouble3 *outvecs,double *outvecsdist,tdouble3 *partnor);
 
   const tdouble3* GetPartNor()const{ return(PartNor); }
+  unsigned GetPartNorSize()const{ return(SizePart); }
 
 };
 

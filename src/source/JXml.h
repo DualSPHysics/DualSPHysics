@@ -21,7 +21,7 @@
 //:# =========
 //:# - Nuevo metodo ReadElementStr() para leer un atributo string de un elemento
 //:#   directamente. (14-10-2010)
-//:# - En metodos con datos int3, float3 y double3 se añadio la opcion de 
+//:# - En metodos con datos int3, float3 y double3 se anhadio la opcion de 
 //:#   indicar el nombre de los atributos (por defecto son x,y,z). (02-05-2011)
 //:# - Nuevo metodo ReadElementInt3(). (26-10-2011)
 //:# - Traduccion de comentarios al ingles. (10-02-2012)

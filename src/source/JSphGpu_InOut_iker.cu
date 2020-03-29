@@ -147,7 +147,7 @@ unsigned InOutCreateListSimple(bool stable,unsigned n,unsigned pini
   unsigned count=0;
   if(n){
     //-listp size list initialized to zero.
-    //-Inicializa tamaño de lista listp a cero.
+    //-Inicializa tamanho de lista listp a cero.
     cudaMemset(listp+n,0,sizeof(unsigned));
     dim3 sgrid=GetSimpleGridSize(n,SPHBSIZE);
     const unsigned smem=(SPHBSIZE+1)*sizeof(unsigned); //-All fluid particles can be in in/out area and one position for counter.
@@ -238,7 +238,7 @@ unsigned InOutCreateList(bool stable,unsigned n,unsigned pini
   unsigned count=0;
   if(n){
     //-listp size list initialized to zero.
-    //-Inicializa tamaño de lista listp a cero.
+    //-Inicializa tamanho de lista listp a cero.
     cudaMemset(listp+n,0,sizeof(unsigned));
     dim3 sgrid=GetSimpleGridSize(n,SPHBSIZE);
     const unsigned smem=(SPHBSIZE+1)*sizeof(unsigned); //-All fluid particles can be in in/out area and one position for counter.
@@ -502,7 +502,7 @@ unsigned InOutListCreate(bool stable,unsigned n,unsigned nmax,const byte *newizo
   unsigned count=0;
   if(n){
     //-inoutpart size list initialized to zero.
-    //-Inicializa tamaño de lista inoutpart a cero.
+    //-Inicializa tamanho de lista inoutpart a cero.
     cudaMemset(inoutpart+nmax,0,sizeof(unsigned));
     dim3 sgrid=GetSimpleGridSize(n,SPHBSIZE);
     const unsigned smem=(SPHBSIZE+1)*sizeof(unsigned); //-All fluid particles can be in in/out area and one position for counter.
@@ -720,7 +720,7 @@ unsigned InOutFillListCreate(bool stable,unsigned npt
   unsigned count=0;
   if(npt){
     //-inoutpart size list initialized to zero.
-    //-Inicializa tamaño de lista inoutpart a cero.
+    //-Inicializa tamanho de lista inoutpart a cero.
     cudaMemset(inoutpart+nmax,0,sizeof(unsigned));
     dim3 sgrid=GetSimpleGridSize(npt,SPHBSIZE);
     const unsigned smem=(SPHBSIZE+1)*sizeof(unsigned); //-All fluid particles can be in in/out area and one position for counter.

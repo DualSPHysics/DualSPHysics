@@ -118,7 +118,7 @@ private:
 
   std::vector<JSphBoundCorrZone*> List; ///<List of configurations.
 
-  const bool SaveMotionVtk=false;  ///<Saves CfgBoundCorr_Limit_XXXX.vtk for each part when motion is applied.
+  const bool SaveMotionVtk;  ///<Saves CfgBoundCorr_Limit_XXXX.vtk for each part when motion is applied.
   bool UseMotion; ///<Some boundary is moving boundary.
 
   void Reset();

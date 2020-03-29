@@ -31,7 +31,7 @@ namespace cuwave2{
 
 //==============================================================================
 /// Returns the dimensions of gridsize according to parameters.
-/// Devuelve tamaño de gridsize segun parametros.
+/// Devuelve tamanho de gridsize segun parametros.
 //==============================================================================
 dim3 GetGridSize(unsigned n,unsigned blocksize){
   dim3 sgrid;//=dim3(1,2,3);
@@ -48,7 +48,7 @@ dim3 GetGridSize(unsigned n,unsigned blocksize){
 //##############################################################################
 //==============================================================================
 /// Returns required size of auxiliary memory according to data to be processed.
-/// Devuelve tamaño necesario de memoria auxiliar segun datos a procesar.
+/// Devuelve tamanho necesario de memoria auxiliar segun datos a procesar.
 //==============================================================================
 unsigned GetSizeAux(unsigned n){
   return(curedus::GetAuxSize_ReduSumDouble(n)*2);
@@ -69,7 +69,7 @@ template <unsigned blockSize> __device__ void KerReduSumDoubleWarp(volatile doub
 
 //==============================================================================
 /// Calculates component of 2nd order for the piston position in irregular generation.
-/// Calcula componente de 2º orden para la posicion de piston en generacion irregular. 
+/// Calcula componente de 2nd orden para la posicion de piston en generacion irregular. 
 //==============================================================================
 template <unsigned blockSize> __global__ void KerCalcPosition(unsigned n,double time
   ,const double *dnm,const double2 *coefx,double *res)
@@ -94,7 +94,7 @@ template <unsigned blockSize> __global__ void KerCalcPosition(unsigned n,double 
 
 //==============================================================================
 /// Calculates component of 2nd order for the piston position in irregular generation.
-/// Calcula componente de 2º orden para la posicion de piston en generacion irregular. 
+/// Calcula componente de 2nd orden para la posicion de piston en generacion irregular. 
 //==============================================================================
 double CalcPosition(double time,unsigned n,const double *dnm,const double2 *coefx,double *aux)
 {
@@ -111,7 +111,7 @@ double CalcPosition(double time,unsigned n,const double *dnm,const double2 *coef
 
 //==============================================================================
 /// Calculates component of 2nd order for the elevation in irregular generation.
-/// Calcula componente de 2º orden para la elevacion en generacion irregular. 
+/// Calcula componente de 2nd orden para la elevacion en generacion irregular. 
 //==============================================================================
 template <unsigned blockSize> __global__ void KerCalcElevation(unsigned n,double time
   ,double x,const double4 *coefe,double *res)
@@ -136,7 +136,7 @@ template <unsigned blockSize> __global__ void KerCalcElevation(unsigned n,double
 
 //==============================================================================
 /// Calculates component of 2nd order for the elevation in irregular generation.
-/// Calcula componente de 2º orden para la elevacion en generacion irregular. 
+/// Calcula componente de 2nd orden para la elevacion en generacion irregular. 
 //==============================================================================
 double CalcElevation(double time,double x,unsigned n,const double4 *coefe,double *aux)
 {
@@ -154,12 +154,12 @@ double CalcElevation(double time,double x,unsigned n,const double4 *coefe,double
 
 /*:
 ////------------------------------------------------------------------------------
-//// Calcula componente de 2º orden para la posicion de piston en generacion irregular. 
+//// Calcula componente de 2nd orden para la posicion de piston en generacion irregular. 
 ////------------------------------------------------------------------------------
 //__global__ void  KerCalcPosition1(unsigned n,double time
 //  ,const double *dnm,const double2 *coefx,double *aux)
 //{
-//  unsigned c=blockIdx.y*gridDim.x*blockDim.x + blockIdx.x*blockDim.x + threadIdx.x; //-Nº de interaccion.
+//  unsigned c=blockIdx.y*gridDim.x*blockDim.x + blockIdx.x*blockDim.x + threadIdx.x; //-Number of interaction.
 //  if(c<n){
 //    const double v=dnm[c]*time;
 //    const double2 coef=coefx[c];
@@ -169,7 +169,7 @@ double CalcElevation(double time,double x,unsigned n,const double4 *coefe,double
 //}
 //
 ////==============================================================================
-//// Calcula componente de 2º orden para la posicion de piston en generacion irregular. 
+//// Calcula componente de 2nd orden para la posicion de piston en generacion irregular. 
 ////==============================================================================
 //double CalcPosition1(double time,unsigned n,const double *dnm,const double2 *coefx,double *aux)
 //{
@@ -186,7 +186,7 @@ double CalcElevation(double time,double x,unsigned n,const double4 *coefe,double
 //}
 //
 ////==============================================================================
-//// Calcula componente de 2º orden para la posicion de piston en generacion irregular. 
+//// Calcula componente de 2nd orden para la posicion de piston en generacion irregular. 
 ////==============================================================================
 //double CalcPosition2(double time,unsigned n,const double *dnm,const double2 *coefx,double *aux)
 //{

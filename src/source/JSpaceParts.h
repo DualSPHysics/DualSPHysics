@@ -25,7 +25,7 @@
 //:#   fichero xml de forma directa. (27-11-2010)
 //:# - Se guarda el Mk absoluto para cada bloque de particulas para facilitar
 //:#   su utilizacion en herramientas de postprocesing. (21-01-2011)
-//:# - Se añadieron dos nuevas variables para los floating bodies: Velini y 
+//:# - Se anhadieron dos nuevas variables para los floating bodies: Velini y 
 //:#   Omegaini. (25-01-2011)
 //:# - Cambio de nombre, de JParticles a JSpaceParts. (09-02-2012)
 //:# - Traduccion de comentarios al ingles. (10-02-2012)

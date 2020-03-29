@@ -27,7 +27,7 @@
 //:# - Nuevo metodo Print() para std::vector<std::string>. (01-02-2017)
 //:# - Error coregido en Printf() y PrintfDbg() cuando el string era demasiado 
 //:#   grande. (20-02-2017)
-//:# - Nuevas funciones Printp() y Printfp() a las que se le puede añadir un 
+//:# - Nuevas funciones Printp() y Printfp() a las que se le puede anhadir un 
 //:#   prefijo. (21-02-2017)
 //:# - New attribute CsvSepComa to configure separator in CSV files. (24-10-2017)
 //:# - Se incluye DirDataOut para facilitar su uso en distintos ambitos. (19-02-2017)

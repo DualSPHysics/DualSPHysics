@@ -19,8 +19,8 @@
 //:#############################################################################
 //:# Cambios:
 //:# =========
-//:# - Implementacion de una clase para medir con precision pequeños intervalos
-//:#   de tiempo mediante la GPU usando cudaEvent de CUDA. (10-01-2011)
+//:# - Implementacion de una clase para medir con precision intervalos de tiempo
+//:#   reducidos mediante la GPU usando cudaEvent de CUDA. (10-01-2011)
 //:# - Traduccion de comentarios al ingles. (10-02-2012)
 //:#############################################################################
 

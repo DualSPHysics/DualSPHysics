@@ -191,7 +191,7 @@ class JBinaryData : protected JObject
       tint3 vint3;
       tuint3 vuint3;
       tfloat3 vfloat3;
-      tdouble3 vdouble3;   //- Elemento de mayor tamaño utilizado para poner a Zero. Large item used to zero elements.
+      tdouble3 vdouble3;   //- Elemento de mayor tamanho utilizado para poner a Zero. Large item used to zero elements.
     };
   }StValue;
 

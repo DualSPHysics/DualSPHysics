@@ -179,7 +179,7 @@ void JPartFloatBi4Save::Config(std::string appname,const std::string &dir,word m
 }
 
 //==============================================================================
-/// Añade datos de cabecera de floatings.
+/// Anhade datos de cabecera de floatings.
 /// Adds data to floating header.
 //==============================================================================
 void JPartFloatBi4Save::AddHeadData(unsigned cf,word mkbound,unsigned begin
@@ -217,7 +217,7 @@ void JPartFloatBi4Save::SaveInitial(){
 }
 
 //==============================================================================
-/// Añade datos de particulas de de nuevo part.
+/// Anhade datos de particulas de de nuevo part.
 /// Adds data of particles to new part.
 //==============================================================================
 void JPartFloatBi4Save::AddPartData(unsigned cf,const tdouble3 &center,const tfloat3 &fvel,const tfloat3 &fomega){
@@ -229,7 +229,7 @@ void JPartFloatBi4Save::AddPartData(unsigned cf,const tdouble3 &center,const tfl
 
 
 //==============================================================================
-/// Añade datos de particulas de de nuevo part.
+/// Anhade datos de particulas de de nuevo part.
 /// Adds data of particles to new part.
 //==============================================================================
 JBinaryData* JPartFloatBi4Save::AddPartFloat(unsigned cpart,double timestep,double demdtforce){

@@ -169,6 +169,7 @@ void JSph::InitVars(){
   SlipMode=SLIP_Vel0;  //<vs_mddbc>
   MdbcCorrector=false; //<vs_mddbc>
   UseNormals=false;    //<vs_mddbc>
+  UseNormalsFt=false;  //<vs_mddbc>
   UseDEM=false;  //(DEM)
   delete[] DemData; DemData=NULL;  //(DEM)
   UseChrono=false; //<vs_chroono>
@@ -1161,29 +1162,35 @@ void JSph::LoadCodeParticles(unsigned np,const unsigned *idp,typecode *code)cons
 //==============================================================================
 /// Load normals for boundary particles (fixed and moving).
 //==============================================================================
-void JSph::LoadBoundNormals(unsigned npb,const unsigned *idp,const typecode *code,tfloat3 *boundnormal)const{
-  const char met[]="LoadBoundNormals";
-  memset(boundnormal,0,sizeof(tfloat3)*npb);
+void JSph::LoadBoundNormals(unsigned np,unsigned npb,const unsigned *idp
+  ,const typecode *code,tfloat3 *boundnormal)
+{
+  memset(boundnormal,0,sizeof(tfloat3)*np);
   string filenordata=JNormalsMarrone::GetNormalDataFile(DirCase+CaseName);
   if(fun::FileExists(filenordata)){
     //-Load or compute final normals.
     const tdouble3 *pnor=NULL;
+    unsigned pnorsize=0;
     JPartNormalData nd;
     JNormalsMarrone nmarrone;
     nd.LoadFile(DirCase+CaseName);
+    UseNormalsFt=nd.GetFtSupport();
     if(nd.GetCountNormals()){
       //-Compute Marrone normals starting from normal data in NBI4 file.
       nd.Reset();
       nmarrone.RunCase(DirCase+CaseName,true);
       pnor=nmarrone.GetPartNor();
+      pnorsize=nmarrone.GetPartNorSize();
     }
     else{
       //-Loads final normals in NBI4 file.
       pnor=nd.GetPartNormals();
-      if(pnor==NULL)RunException(met,"Normal data and final normals are missing in NBI4 file.",filenordata);
+      if(pnor==NULL)Run_ExceptioonFile("Normal data and final normals are missing in NBI4 file.",filenordata);
+      pnorsize=nd.GetNbound();
     }
-    //-Applies final normals.
-    for(unsigned p=0;p<npb;p++)boundnormal[p]=ToTFloat3(pnor[p]);  //-Normal from boundary particle to boundary limit.
+    //-Applies final normals. Loads normals from boundary particle to boundary limit.
+    if(pnorsize<npb)Run_ExceptioonFile("The number of final normals does not match fixed and moving particles.",filenordata);
+    for(unsigned p=0;p<npb;p++)boundnormal[p]=ToTFloat3(pnor[p]);  //-For fixed and moving particles.
     Log->Printf("NormalDataFile=\"%s\"",filenordata.c_str());
     //for(unsigned p=0;p<npb;p++)boundnormal[p]=ToTFloat3(pnor[p]*2.);  //-Normal from boundary particle to ghost node (full distance).
     ////-Removes normal of unselected boundaries.
@@ -1204,33 +1211,35 @@ void JSph::LoadBoundNormals(unsigned npb,const unsigned *idp,const typecode *cod
 //==============================================================================
 /// Config normals to point from boundary particle to ghost node (full distance).
 //==============================================================================
-void JSph::ConfigBoundNormals(unsigned npb,const tdouble3 *pos,const unsigned *idp
-  ,tfloat3 *boundnormal)const
+void JSph::ConfigBoundNormals(unsigned np,unsigned npb,const tdouble3 *pos
+  ,const unsigned *idp,tfloat3 *boundnormal)
 {
-  //-Obtains mk of boundary particles.
-  word* vmk=new word[npb];
-  for(unsigned p=0;p<npb;p++){
-    const unsigned cb=MkInfo->GetMkBlockById(idp[p]);
-    if(cb>=MkInfo->Size())Run_Exceptioon("MkBlock of particle is invalid.");
-    vmk[p]=(word)MkInfo->Mkblock(cb)->Mk;
+  //-Checks current normals.
+  bool ftnor=false;
+  for(unsigned p=0;p<np;p++)if(idp[p]<CaseNbound && boundnormal[p]!=TFloat3(0)){
+    if(idp[p]>=CaseNpb){
+      if(!UseNormalsFt)boundnormal[p]=TFloat3(0);
+    }
   }
+  UseNormalsFt=ftnor;
   //-Saves normals from boundary particles to boundary limit.
   const string file1="CfgInit_Normals.vtk";
   Log->AddFileInfo(DirOut+file1,"Saves VTK file with initial normals (from boundary particles to boundary limit).");
-  SaveVtkNormals(file1,-1,0,npb,pos,idp,vmk,boundnormal);
+  SaveVtkNormals(file1,-1,np,npb,pos,idp,boundnormal);
   //-Config normals.
-  unsigned nerr=0;
-  for(unsigned p=0;p<npb;p++){
-    if(boundnormal[p]==TFloat3(0))nerr++;
+  unsigned nerr=0,nerrft=0;
+  for(unsigned p=0;p<np;p++)if(idp[p]<CaseNbound){
+    if(boundnormal[p]==TFloat3(0)){
+      if(idp[p]<CaseNpb)nerr++;
+      else nerrft++;
+    }
     boundnormal[p]=(boundnormal[p]*2.f);
   }
   //-Saves normals from boundary particles to ghost node.
   const string file2="CfgInit_NormalsGhost.vtk";
   Log->AddFileInfo(DirOut+file2,"Saves VTK file with initial normals (from boundary particles to ghost node).");
-  SaveVtkNormals(file2,-1,0,npb,pos,idp,vmk,boundnormal);
-  if(nerr>0)Log->PrintfWarning("There are %u of %u boundary particles without normal data.",nerr,npb);
-  //-Frees allocated memory.
-  delete[] vmk; vmk=NULL;
+  SaveVtkNormals(file2,-1,np,npb,pos,idp,boundnormal);
+  if(nerr>0)Log->PrintfWarning("There are %u of %u fixed or moving boundary particles without normal data.",nerr,npb);
 }
 //<vs_mddbc_end>
 
@@ -1999,7 +2008,7 @@ bool JSph::CalcMotion(double stepdt){
 
 //==============================================================================
 /// Add motion from automatic wave generation.
-/// Añade movimiento de paddles calculado por generacion automatica de olas.
+/// Anhade movimiento de paddles calculado por generacion automatica de olas.
 //==============================================================================
 void JSph::CalcMotionWaveGen(double stepdt){
   const bool motsim=true;
@@ -2458,7 +2467,7 @@ void JSph::SaveInitialDomainVtk()const{
 
 //==============================================================================
 /// Returns size of VTK file with map cells.
-/// Devuelve tamaño de fichero VTK con las celdas del mapa.
+/// Devuelve tamanho de fichero VTK con las celdas del mapa.
 //==============================================================================
 unsigned JSph::SaveMapCellsVtkSize()const{
   const tuint3 cells=Map_Cells;
@@ -2506,35 +2515,45 @@ void JSph::SaveMapCellsVtk(float scell)const{
 
 //<vs_mddbc_ini>
 //==============================================================================
-/// Saves VTK file with particle data (degug).
-/// Graba fichero VTK con datos de las particulas (degug).
+/// Saves VTK file with normals of particles (degug).
+/// Only normal (non-periodic) particles are allowed.
+/// Graba fichero VTK con normales de las particulas (degug).
+/// Solo se permiten particulas normales (no periodicas).
 //==============================================================================
-void JSph::SaveVtkNormals(std::string filename,int numfile,unsigned pini,unsigned pfin
-  ,const tdouble3 *pos,const unsigned *idp,const word *vmk,const tfloat3 *boundnormal)const
+void JSph::SaveVtkNormals(std::string filename,int numfile,unsigned np,unsigned npb
+  ,const tdouble3 *pos,const unsigned *idp,const tfloat3 *boundnormal)const
 {
   if(JVtkLib::Available()){
     if(numfile>=0)filename=fun::FileNameSec(filename,numfile);
     filename=DirOut+filename;
-    const unsigned n=pfin-pini;
-    //-Create array with module of normals.
-    float *normalsize=new float[n];
-    for(unsigned p=0;p<n;p++)normalsize[p]=fgeo::PointDist(boundnormal[p+pini]);
-    //-Generates VTK file.
+    //-Find floating particles.
+    unsigned nfloat=0;
+    unsigned* ftidx=NULL;
+    //-Allocate memory for boundary particles.
+    const unsigned npsel=npb+nfloat;
     JDataArrays arrays;
-    arrays.AddArray("Pos"       ,n,pos+pini,false);
-    arrays.AddArray("Idp"       ,n,idp+pini,false);
-    if(vmk)arrays.AddArray("Mk" ,n,vmk+pini,false);
-    arrays.AddArray("Normal"    ,n,boundnormal+pini,false);
-    arrays.AddArray("NormalSize",n,normalsize,false);
+    tdouble3* vpos =arrays.CreateArrayPtrDouble3("Pos",npsel);
+    unsigned* vidp =arrays.CreateArrayPtrUint   ("Idp",npsel);
+    word*     vmk  =arrays.CreateArrayPtrWord   ("Mk" ,npsel);
+    tfloat3*  vnor =arrays.CreateArrayPtrFloat3 ("Normal",npsel);
+    float*    vsnor=arrays.CreateArrayPtrFloat  ("NormalSize",npsel);
+    //-Loads data of fixed and moving particles.
+    memcpy(vpos,pos,sizeof(tdouble3)*npb);
+    memcpy(vidp,idp,sizeof(unsigned)*npb);
+    MkInfo->GetMkByIds(npb,idp,vmk);
+    memcpy(vnor,boundnormal,sizeof(tfloat3)*npb);
+    //-Computes normalsize.
+    for(unsigned p=0;p<npsel;p++)vsnor[p]=fgeo::PointDist(vnor[p]);
+    //-Saves VTK file.
     JVtkLib::SaveVtkData(filename,arrays,"Pos");
     //-Frees memory.
-    delete[] normalsize; normalsize=NULL;
+    arrays.Reset();
   }
 } //<vs_mddbc_end>
 
 //==============================================================================
 /// Adds basic information of resume to hinfo & dinfo.
-/// Añade la informacion basica de resumen a hinfo y dinfo.
+/// Anhade la informacion basica de resumen a hinfo y dinfo.
 //==============================================================================
 void JSph::GetResInfo(float tsim,float ttot,const std::string &headplus,const std::string &detplus,std::string &hinfo,std::string &dinfo){
   hinfo=hinfo+"#RunName;RunCode;DateTime;Np;TSimul;TSeg;TTotal;MemCpu;MemGpu;Steps;PartFiles;PartsOut;MaxParticles;MaxCells;Hw;StepAlgo;Kernel;Viscosity;ViscoValue;DensityCorrection;TMax;Nbound;Nfixed;H;RhopOut;PartsRhopOut;PartsVelOut;CellMode"+headplus;

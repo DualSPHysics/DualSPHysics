@@ -21,6 +21,7 @@
 //:# =========
 //:# - Creacion de clase para gestionar informacion relativa a MK de particulas. (25-01-2018)
 //:# - Nuevos metodos CountBlockType() y GetFirstBlockType(). (14-08-2018)
+//:# - Nuevos metodos GetMkById(), GetMkByIds(), GetMkByCode() y GetMkByCodes(). (27-03-2020)
 //:#############################################################################
 
 /// \file JSphMk.h \brief Declares the class \ref JSphMk.
@@ -113,6 +114,26 @@ public:
   unsigned GetMkBlockByMkFluid(word mkfluid)const;
 
   unsigned GetMkBlockByCode(typecode code)const;
+
+  /// Returns Mk according to a given Idp (returns 0 when idp is invalid).
+  word GetMkById(unsigned idp)const{
+    const unsigned cb=GetMkBlockById(idp);
+    return(cb<Size()? MkList[cb]->Mk: 0);
+  }
+  /// Returns Mk values according to a given Idp values (returns 0 when idp is invalid).
+  void GetMkByIds(unsigned n,const unsigned *idp,word *mk)const{
+    for(unsigned p=0;p<n;p++)mk[p]=GetMkById(idp[p]);
+  }
+
+  /// Returns Mk according to a given Code (returns 0 when code is invalid).
+  word GetMkByCode(typecode code)const{
+    const unsigned cb=GetMkBlockByCode(code);
+    return(cb<Size()? MkList[cb]->Mk: 0);
+  }
+  /// Returns Mk values according to a given Code values (returns 0 when code is invalid).
+  void GetMkByCodes(unsigned n,const typecode *code,word *mk)const{
+    for(unsigned p=0;p<n;p++)mk[p]=GetMkByCode(code[p]);
+  }
 
   typecode CodeSetType(typecode code,TpParticles type,unsigned value)const;
 

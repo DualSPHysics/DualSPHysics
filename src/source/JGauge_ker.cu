@@ -105,7 +105,7 @@ __global__ void KerInteractionGaugeVel(bool symm,double3 ptpos
   ,float3 *ptvel
   ,double3 domposmin,float scell,float fourh2,float h,float massf)
 {
-  unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Nº de la partícula
+  unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle
   if(!p){
     const double px=ptpos.x;
     const double py=ptpos.y;
