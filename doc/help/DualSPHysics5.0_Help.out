@@ -2,7 +2,7 @@
 
  <DUALSPHYSICS5> Copyright (c) 2020 by
  Dr Jose M. Dominguez, Dr Alejandro Crespo,
- Prof. Moncho Gomez Gesteira,  Prof. Benedict Rogers,
+ Prof. Moncho Gomez Gesteira, Prof. Benedict Rogers,
  Dr Georgios Fourtakas, Prof. Peter Stansby, Dr Ricardo Canelas,
  Dr Renato Vacondio, Dr Corrado Altomare, Dr Angelo Tafuni,
  Orlando Garcia-Feal, Dr Jose Gonzalez Cao
@@ -24,8 +24,8 @@
  along with DualSPHysics. If not, see <http://www.gnu.org/licenses/>.
 
 
-DualSPHysics5 [SaveFtAce] v5.0.092 (29-03-2020)
-================================================
+DualSPHysics5 v5.0.093 (30-03-2020)
+====================================
 LoadDsphConfig> .../bin/windows/DsphConfig.xml
 Information about execution parameters:
 

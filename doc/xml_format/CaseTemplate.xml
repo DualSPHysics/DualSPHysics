@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<case app="GenCase v5.0.166 (28-03-2020)" date="29-03-2020 04:13:19">
-    <casedef requiredversion="v5.0.166">
+<case app="GenCase v5.0.168 (30-03-2020)" date="30-03-2020 20:40:09">
+    <casedef requiredversion="v5.0.168">
         <constantsdef>
             <lattice bound="2" fluid="1" comment="Type of lattice to create the initial particles (default=1)" />
             <gravity x="0" y="0" z="-9.81" comment="Gravitational acceleration" units_comment="m/s^2" />
@@ -454,6 +454,7 @@
                     <setvar SizeZ="SizeX+Cte1*Cte2" _rem="Changes value of SizeZ" _print="0" />
                     <setvar dpd2="dpd2+Dp" SizeX="SizeX*dpd2" />
                     <setvar v="eval(condition,a,b)" />
+                    <setvar v1="pi()" v2="e()" />
                     <setvar v1="float(a)" v2="int(a)" v3="floor(a)" v4="ceil(a)" v5="round(a)" />
                     <setvar v1="min(a,b)" v2="min(a,b,c)" v3="max(a,b)" v4="max(a,b,c)" />
                     <setvar v1="abs(a)" v2="fmod(a,b)" v3="fmodr(a,b)" v4="sqrt(a)" v5="exp(a)" />
