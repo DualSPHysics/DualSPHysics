@@ -26,6 +26,7 @@
 #define PIHALF 1.57079632679489661923  ///<Value of cte PI/2. 
 #define TORAD 0.017453292519943295769  ///<Constant for conversion to radians. rad=degrees*TORAD (TORAD=PI/180)
 #define TODEG 57.29577951308232087684  ///<Constant for conversion to degrees. degrees=rad*TODEG (TODEG=180/PI)
+#define EULER 2.71828182845904523536   ///<Value of cte E (Euler's number or Napier's constant), E=std::exp(1.0);
 
 typedef unsigned char byte;
 typedef unsigned short word;

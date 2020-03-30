@@ -56,7 +56,7 @@ Please download source files and documentation from <a href="http://dual.sphysic
 
 using namespace std;
 
-JAppInfo AppInfo("DualSPHysics5","v5.0.093","30-03-2020");
+JAppInfo AppInfo("DualSPHysics5","v5.0.094","30-03-2020");
 //JAppInfo AppInfo("DualSPHysics5","v5.0.???","UserVersion","v1.0","??-??-????"); //-for user versions.
 
 //==============================================================================
@@ -144,7 +144,8 @@ int main(int argc, char** argv){
   //AppInfo.AddNameExtra("Symmetry");   //<vs_syymmetry>
   //AppInfo.AddNameExtra("MDBC");       //<vs_mddbc>
   //AppInfo.AddNameExtra("DDT2");       //<vs_dtt2>
-  //AppInfo.AddNameExtra("SaveFtAce");  
+  //AppInfo.AddNameExtra("PraSS");      //<vs_praticalss>
+  //AppInfo.AddNameExtra("SaveFtAce");
 #ifdef CODE_SIZE4
   AppInfo.AddNameExtra("MK65k");
 #endif

@@ -1309,15 +1309,13 @@ void JSph::WendlandConstants(bool simulate2d,double h,float &awen,float &bwen){
 /// Configures value of constants.
 //==============================================================================
 void JSph::ConfigConstants(bool simulate2d){
-  const char* met="ConfigConstants";
   //-Computation of constants.
   const double h=H;
   DDT2h=float(h*2*DDTValue);
   DDTgz=float(double(RhopZero)*double(fabs(Gravity.z))/double(CteB));
-  const double cs0=sqrt(double(Gamma)*double(CteB)/double(RhopZero));
-  Cs0=cs0;
-  if(!DtIni)DtIni=h/cs0;
-  if(!DtMin)DtMin=(h/cs0)*CoefDtMin;
+  Cs0=sqrt(double(Gamma)*double(CteB)/double(RhopZero));
+  if(!DtIni)DtIni=h/Cs0;
+  if(!DtMin)DtMin=(h/Cs0)*CoefDtMin;
   Dosh=float(h*2); 
   H2=float(h*h);
   Fourh2=float(h*h*4); 

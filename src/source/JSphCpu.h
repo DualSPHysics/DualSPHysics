@@ -42,10 +42,10 @@ typedef struct{
   float* ar;
   tfloat3 *ace;
   float *delta;
-  tsymatrix3f *spstau;
-  tsymatrix3f *spsgradvel;
   TpShifting shiftmode;
   tfloat4 *shiftposfs;
+  tsymatrix3f *spstau;
+  tsymatrix3f *spsgradvel;
 }stinterparmsc;
 
 ///Collects parameters for particle interaction on CPU.
@@ -54,18 +54,26 @@ inline stinterparmsc StInterparmsc(unsigned np,unsigned npb,unsigned npbok
   ,const tdouble3 *pos,const tfloat4 *velrhop,const unsigned *idp,const typecode *code
   ,const float *press
   ,float* ar,tfloat3 *ace,float *delta
+  ,TpShifting shiftmode,tfloat4 *shiftposfs
   ,tsymatrix3f *spstau,tsymatrix3f *spsgradvel
-  ,TpShifting shiftmode,tfloat4 *shiftposfs)
+)
 {
   stinterparmsc d={np,npb,npbok,(np-npb)
     ,ncells,begincell,cellmin,dcell
     ,pos,velrhop,idp,code
     ,press
     ,ar,ace,delta
+    ,shiftmode,shiftposfs
     ,spstau,spsgradvel
-    ,shiftmode,shiftposfs};
+  };
   return(d);
 }
+
+
+///Structure to collect interaction results.
+typedef struct{
+  float viscdt;
+}StInterResultc;
 
 
 class JPartsOut;
@@ -139,7 +147,7 @@ protected:
 
   double VelMax;        ///<Maximum value of Vel[] sqrt(vel.x^2 + vel.y^2 + vel.z^2) computed in PreInteraction_Forces().
   double AceMax;        ///<Maximum value of Ace[] sqrt(ace.x^2 + ace.y^2 + ace.z^2) computed in Interaction_Forces().
-  float ViscDtMax;      ///<Max value of ViscDt calculated in Interaction_Forces() / Valor maximo de ViscDt calculado en Interaction_Forces().
+  float ViscDtMax;      ///<Max value of ViscDt calculated in Interaction_Forces().
 
   //-Variables for computing forces. | Vars. derivadas para computo de fuerzas.
   float *Pressc;       ///<Pressure computed starting from density for interaction. Press[]=ComputePress(Rhop,Rhop0,B,gamma)
@@ -229,7 +237,7 @@ protected:
     ,const tdouble3 *pos,const tfloat4 *velrhop,const typecode *code,const unsigned *id
     ,float &viscdt,float *ar)const;
 
-  template<TpKernel tker,TpFtMode ftmode,bool lamsps,TpDensity tdensity,bool shift> void InteractionForcesFluid
+  template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity,bool shift> void InteractionForcesFluid
     (unsigned n,unsigned pini,tint4 nc,int hdiv,unsigned cellfluid,float visco
     ,const unsigned *beginendcell,tint3 cellzero,const unsigned *dcell
     ,const tsymatrix3f* tau,tsymatrix3f* gradvel
@@ -244,13 +252,13 @@ protected:
     ,const tdouble3 *pos,const tfloat4 *velrhop,const typecode *code,const unsigned *idp
     ,float &viscdt,tfloat3 *ace)const;
 
-  template<TpKernel tker,TpFtMode ftmode,bool lamsps,TpDensity tdensity,bool shift> 
-    void Interaction_ForcesCpuT(const stinterparmsc &t,float &viscdt)const;
-  template<TpKernel tker,TpFtMode ftmode,bool lamsps,TpDensity tdensity> void Interaction_Forces_ct5(const stinterparmsc &t,float &viscdt)const;
-  template<TpKernel tker,TpFtMode ftmode,bool lamsps> void Interaction_Forces_ct4(const stinterparmsc &t,float &viscdt)const;
-  template<TpKernel tker,TpFtMode ftmode> void Interaction_Forces_ct3(const stinterparmsc &t,float &viscdt)const;
-  template<TpKernel tker> void Interaction_Forces_ct2(const stinterparmsc &t,float &viscdt)const;
-  void Interaction_Forces_ct(const stinterparmsc &t,float &viscdt)const;
+  template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity,bool shift> 
+    void Interaction_ForcesCpuT(const stinterparmsc &t,StInterResultc &res)const;
+  template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity> void Interaction_Forces_ct5(const stinterparmsc &t,StInterResultc &res)const;
+  template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco> void Interaction_Forces_ct4(const stinterparmsc &t,StInterResultc &res)const;
+  template<TpKernel tker,TpFtMode ftmode> void Interaction_Forces_ct3(const stinterparmsc &t,StInterResultc &res)const;
+  template<TpKernel tker> void Interaction_Forces_ct2(const stinterparmsc &t,StInterResultc &res)const;
+  void Interaction_Forces_ct(const stinterparmsc &t,StInterResultc &res)const;
 
 //<vs_mddbc_ini>
   template<bool sim2d,TpSlipMode tslip> void InteractionBoundCorrection
