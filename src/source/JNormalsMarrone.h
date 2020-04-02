@@ -33,6 +33,8 @@
 //:# - Se corrigio un error calculando la normal cuando habia varias opciones 
 //:#   a la misma distancia. (01-02-2020)
 //:# - Se establece un directorio de salida DirOut independiente del de entrada. (29-03-2020)
+//:# - Se corrigio un error calculando la normal cuando habia varias opciones 
+//:#   a la misma distancia buscando punto de interseccion mas cercano. (02-04-2020)
 //:#############################################################################
 
 #include "JObject.h"

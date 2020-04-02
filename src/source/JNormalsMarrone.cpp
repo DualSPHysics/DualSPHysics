@@ -475,7 +475,19 @@ void JNormalsMarrone::ComputeNormalsMarrone(){
       else{
         nor=TDouble3(0);
         for(unsigned cn=0;cn<ndismin;cn++)nor=nor+(vnor[cmin[cn]]*dnor[cmin[cn]]);
-        if(ndismin)nor=nor/double(ndismin);
+        if(ndismin){
+          nor=nor/double(ndismin);
+          const double snor=fgeo::PointDist(nor);
+          //printf("==> pos[%u]:(%g,%g,%g)\n",p,ps.x,ps.y,ps.z);
+          double snormin=DBL_MAX;
+          for(unsigned cn=0;cn<ndismin;cn++){
+            const unsigned cc=cmin[cn];
+            const double d=dnor[cc]*dnor[cc]/fgeo::ProductScalar(nor,vnor[cc]*dnor[cc])*snor;//-Distancia entre pos y interseccion de nor con plano de vnor[cn].
+            if(d>=0 && d<snormin)snormin=d;
+          }
+          if(snormin==DBL_MAX)snormin=0;
+          nor=fgeo::VecUnitary(nor)*snormin;
+        }
         nordone=true;
       }
     }
