@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<case app="GenCase v5.0.168 (30-03-2020)" date="30-03-2020 20:40:09">
-    <casedef requiredversion="v5.0.168">
+<case app="GenCase v5.0.171 (05-04-2020)" date="06-04-2020 11:48:04">
+    <casedef requiredversion="v5.0.171">
         <constantsdef>
             <lattice bound="2" fluid="1" comment="Type of lattice to create the initial particles (default=1)" />
             <gravity x="0" y="0" z="-9.81" comment="Gravitational acceleration" units_comment="m/s^2" />
@@ -542,11 +542,15 @@
                 <translationDOF x="0" y="0" z="1" comment="Use 0 to restrict Degrees Of Freedon for translation (default=(1,1,1))" />
                 <rotationDOF x="0" y="1" z="0" comment="Use 0 to restrict Degrees Of Freedon for rotation (default=(1,1,1))" />
             </floating>
-            <floating mkbound="7" rhopbody="1300">
+            <floating mkbound="7" rhopbody="1500">
+                <linearvelini x="1" y="3" z="2" units_comment="m/s" />
+                <angularvelini x="0.2" y="0.4" z="0.6" units_comment="rad/s" />
+            </floating>
+            <floating mkbound="8" rhopbody="1300">
                 <linearvel file="FileLinear.csv" units_comment="m/s" />
                 <angularvel file="FileAngular.csv" units_comment="rad/s" />
             </floating>
-            <floating mkbound="8" rhopbody="1300">
+            <floating mkbound="9" rhopbody="1300">
                 <linearvel units_comment="m/s">
                     <vel time="0" x="0" z="0" />
                     <vel time="0.1" x="1" z="11" />
@@ -765,7 +769,7 @@
                 </mvrotfile>
             </objreal>
         </motion>
-        <normals>
+        <normals active="true">
             <distanceh value="2.0" comment="Maximum distance (H*distanceh) to compute normals data (default=2)" />
             <geometryfile file="[CaseName]_hdp_Actual.vtk" comment="File with boundary geometry (VTK format)" />
             <computenormals value="0" comment="Computes final normals for boundary particles 0:None, 1:Mean, 2:Marrone(unverified) (default=0)" />
