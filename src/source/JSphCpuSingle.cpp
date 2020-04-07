@@ -965,7 +965,6 @@ void JSphCpuSingle::RunFloating(double dt,bool predictor){
 
       //-Stores floating data.
       if(!predictor){
-        //const tdouble3 centerold=FtObjs[cf].center;
         FtObjs[cf].center=(PeriActive? UpdatePeriodicPos(fcenter): fcenter);
         FtObjs[cf].angles=ToTFloat3(ToTDouble3(FtObjs[cf].angles)+ToTDouble3(fomega)*dt);
         FtObjs[cf].fvel=fvel;
@@ -1134,7 +1133,7 @@ void JSphCpuSingle::SaveData(){
   ArraysCpu->Free(pos);
   ArraysCpu->Free(vel);
   ArraysCpu->Free(rhop);
-  //SaveVtkNormals("Normals.vtk",Part,0,Npb,Posc,Idpc,BoundNormalc); //<vs_mddbc>
+  if(UseNormals && SvNormals)SaveVtkNormals("normals/Normals.vtk",Part,npsave,Npb,Posc,Idpc,BoundNormalc); //<vs_mddbc>
   TmcStop(Timers,TMC_SuSavePart);
 }
 

@@ -25,7 +25,6 @@
 #include "JVtkLib.h"
 #include "JDataArrays.h"
 
-#include "DualSphDef.h"
 #include "JSphGpuSingle.h"
 
 #pragma warning(disable : 4996) //Cancels sprintf() deprecated.
@@ -67,10 +66,10 @@ void JDebugSphGpu::CheckCudaErroorStatic(const std::string &srcfile,int srcline
 //==============================================================================
 /// Returns dynamic pointer with code-type of particles. (this pointer must be deleted)
 //==============================================================================
-byte* JDebugSphGpu::GetCodeType(unsigned n,const word *code){
+byte* JDebugSphGpu::GetCodeType(unsigned n,const typecode *code){
   byte *codetype=JDataArrays::NewArrayByte(n,false);
   for(unsigned p=0;p<n;p++){
-    const word type=CODE_GetType(code[p]);
+    const typecode type=CODE_GetType(code[p]);
     codetype[p]=(type==CODE_TYPE_FIXED? 0: (type==CODE_TYPE_MOVING? 1: (type==CODE_TYPE_FLOATING? 2: (type==CODE_TYPE_FLUID? 3: 99))));
   }
   return(codetype);
@@ -79,8 +78,12 @@ byte* JDebugSphGpu::GetCodeType(unsigned n,const word *code){
 //==============================================================================
 /// Returns dynamic pointer with code-typevalue of particles. (this pointer must be deleted)
 //==============================================================================
-word* JDebugSphGpu::GetCodeTypeValue(unsigned n,const word *code){
-  word *codetval=JDataArrays::NewArrayWord(n,false);
+typecode* JDebugSphGpu::GetCodeTypeValue(unsigned n,const typecode *code){
+  #ifdef CODE_SIZE4
+    typecode *codetval=JDataArrays::NewArrayUint(n,false);
+  #else
+    typecode *codetval=JDataArrays::NewArrayWord(n,false);
+  #endif
   for(unsigned c=0;c<n;c++)codetval[c]=CODE_GetTypeValue(code[c]);
   return(codetval);
 }
@@ -219,7 +222,11 @@ void JDebugSphGpu::LoadParticlesData(const JSphGpuSingle *gp,unsigned pini,unsig
   }
   //-Loads code.
   if(all || FindVar("code",vars)){
-    const word *code=fcuda::ToHostWord(pini,n,gp->Codeg);
+    #ifdef CODE_SIZE4
+      const typecode *code=fcuda::ToHostUint(pini,n,gp->Codeg);
+    #else
+      const typecode *code=fcuda::ToHostWord(pini,n,gp->Codeg);
+    #endif
     arrays->AddArray("Code",n,code,true);
     arrays->AddArray("Type",n,GetCodeType(n,code),true);
     arrays->AddArray("TypeValue",n,GetCodeTypeValue(n,code),true);

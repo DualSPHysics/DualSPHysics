@@ -23,6 +23,7 @@
 //:# - Clase para simplificar tareas de debug en GPU. (15-03-2017)
 //:# - Simplificacion de clase usando JDataArrays. (05-09-2019)
 //:# - Gestion de excepciones mejorada.  (15-09-2019)
+//:# - Cambios para soportar CODE_SIZE4. (07-04-2020)
 //:#############################################################################
 
 /// \file JDebugSphGpu.h \brief Declares the class \ref JDebugSphGpu.
@@ -31,9 +32,12 @@
 #define _JDebugSphGpu_
 
 #include "TypesDef.h"
+#include "DualSphDef.h"
+
 #include <string>
 #include <cstring>
 #include <cuda_runtime_api.h>
+
 
 //-Defines for normal exceptions for static methods.
 #ifndef Run_ExceptioonSta
@@ -75,8 +79,8 @@ protected:
 
 public:
 
-  static byte*     GetCodeType     (unsigned n,const word *code);
-  static word*     GetCodeTypeValue(unsigned n,const word *code);
+  static byte*     GetCodeType     (unsigned n,const typecode *code);
+  static typecode* GetCodeTypeValue(unsigned n,const typecode *code);
   static tuint3*   GetCell3(unsigned n,const unsigned *dcell,unsigned cellcode);
   static tfloat3*  GetPosf3(unsigned n,const tdouble3 *pos);
   static tfloat3*  GetPosf3(unsigned n,const tdouble2 *posxy,const double *posz);

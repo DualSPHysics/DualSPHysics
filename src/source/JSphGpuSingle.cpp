@@ -684,7 +684,11 @@ void JSphGpuSingle::RunFloating(double dt,bool predictor){
 
     //-Apply movement around floating objects / Aplica movimiento sobre floatings.
     cusph::FtUpdate(PeriActive!=0,predictor,FtCount,dt,FtoDatpg,FtoForcesResg,FtoCenterResg,FtRidpg,FtoCenterg,FtoAnglesg,FtoVelg,FtoOmegag,Posxyg,Poszg,Dcellg,Velrhopg,Codeg);
-    if(!predictor)FtObjsOutdated=true;
+
+    //-Stores floating data.
+    if(!predictor){
+      FtObjsOutdated=true;
+    }
 
     //-Update data of points in FtForces and calculates motion data of affected floatings.  //<vs_moordyyn_ini>
     if(!predictor && ForcePoints){
@@ -849,7 +853,7 @@ void JSphGpuSingle::SaveData(){
 #endif
 //<vs_praticalss_end>
   JSph::SaveData(npsave,arrays,1,vdom,&infoplus);
-  //SaveVtkNormalsGpu("Normals.vtk",Part,0,Npb,Posxyg,Poszg,Idpg,BoundNormalg); //<vs_mddbc>
+  if(UseNormals && SvNormals)SaveVtkNormalsGpu("normals/Normals.vtk",Part,npsave,Npb,Posxyg,Poszg,Idpg,BoundNormalg); //<vs_mddbc>
   TmgStop(Timers,TMG_SuSavePart);
 }
 

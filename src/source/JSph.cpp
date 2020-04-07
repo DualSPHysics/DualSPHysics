@@ -170,6 +170,7 @@ void JSph::InitVars(){
   MdbcCorrector=false; //<vs_mddbc>
   UseNormals=false;    //<vs_mddbc>
   UseNormalsFt=false;  //<vs_mddbc>
+  SvNormals=false;     //<vs_mddbc>
   UseDEM=false;  //(DEM)
   delete[] DemData; DemData=NULL;  //(DEM)
   UseChrono=false; //<vs_chroono>

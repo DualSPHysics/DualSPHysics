@@ -1886,6 +1886,7 @@ void CopyMotionVel(unsigned nmoving,const unsigned *ridp,const float4 *velrhop,f
   dim3 sgrid=GetGridSize(nmoving,SPHBSIZE);
   KerCopyMotionVel<true>  <<<sgrid,SPHBSIZE>>> (nmoving,ridp,velrhop,motionvel);
 }
+
 //<vs_mddbc_end>
 
 

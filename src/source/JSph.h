@@ -188,6 +188,7 @@ protected:
   bool MdbcCorrector;         ///<mDBC correction is also applied in corrector of Symplectic (default=0). //<vs_mddbc>
   bool UseNormals;            ///<Indicates use of normals for mDBC.                                      //<vs_mddbc>
   bool UseNormalsFt;          ///<Indicates use of normals of floating bodies for mDBC.                   //<vs_mddbc>
+  bool SvNormals;             ///<Saves normals VTK each PART (for debug).                                //<vs_mddbc>
 
   bool RhopOut;               ///<Indicates whether the RhopOut density correction is active or not.    | Indica si activa la correccion de densidad RhopOut o no.                       
   float RhopOutMin;           ///<Minimum limit for Rhopout correction.                                 | Limite minimo para la correccion de RhopOut.
