@@ -1,19 +1,19 @@
 //HEAD_DSCODES
 /*
- <DUALSPHYSICS>  Copyright (c) 2016, Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
 
  This file is part of DualSPHysics. 
 
- DualSPHysics is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by
- the Free Software Foundation, either version 3 of the License, or (at your option) any later version. 
-
+ DualSPHysics is free software: you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License 
+ as published by the Free Software Foundation; either version 2.1 of the License, or (at your option) any later version.
+ 
  DualSPHysics is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details. 
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details. 
 
- You should have received a copy of the GNU General Public License, along with DualSPHysics. If not, see <http://www.gnu.org/licenses/>. 
+ You should have received a copy of the GNU Lesser General Public License along with DualSPHysics. If not, see <http://www.gnu.org/licenses/>. 
 */
 
 //::NO_COMENTARIO
@@ -23,6 +23,7 @@
 //:# - Clase para simplificar tareas de debug en GPU. (15-03-2017)
 //:# - Simplificacion de clase usando JDataArrays. (05-09-2019)
 //:# - Gestion de excepciones mejorada.  (15-09-2019)
+//:# - Cambios para soportar CODE_SIZE4. (07-04-2020)
 //:#############################################################################
 
 /// \file JDebugSphGpu.h \brief Declares the class \ref JDebugSphGpu.
@@ -31,9 +32,12 @@
 #define _JDebugSphGpu_
 
 #include "TypesDef.h"
+#include "DualSphDef.h"
+
 #include <string>
 #include <cstring>
 #include <cuda_runtime_api.h>
+
 
 //-Defines for normal exceptions for static methods.
 #ifndef Run_ExceptioonSta
@@ -75,8 +79,8 @@ protected:
 
 public:
 
-  static byte*     GetCodeType     (unsigned n,const word *code);
-  static word*     GetCodeTypeValue(unsigned n,const word *code);
+  static byte*     GetCodeType     (unsigned n,const typecode *code);
+  static typecode* GetCodeTypeValue(unsigned n,const typecode *code);
   static tuint3*   GetCell3(unsigned n,const unsigned *dcell,unsigned cellcode);
   static tfloat3*  GetPosf3(unsigned n,const tdouble3 *pos);
   static tfloat3*  GetPosf3(unsigned n,const tdouble2 *posxy,const double *posz);

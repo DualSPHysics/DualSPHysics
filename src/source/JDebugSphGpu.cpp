@@ -1,26 +1,19 @@
-//HEAD_DSTOOLS
-/* 
- <DualSPHysics5 codes>  Copyright (c) 2016 by Dr. Jose M. Dominguez, Dr. Alejandro Crespo, Prof. M. Gomez Gesteira, Dr. Benedict Rogers
- All rights reserved.
+//HEAD_DSCODES
+/*
+ <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
- DualSPHysics is an international collaboration between:
- - EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
- - School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
+ EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
+ School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
 
- Redistribution and use in source and binary forms, with or without modification, are permitted provided that 
- the following conditions are met:
- * Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
- * Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer
-   in the documentation and/or other materials provided with the distribution.
- * Neither the name of the DualSPHysics nor the names of its contributors may be used to endorse or promote products derived 
-   from this software without specific prior written permission.
+ This file is part of DualSPHysics. 
+
+ DualSPHysics is free software: you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License 
+ as published by the Free Software Foundation; either version 2.1 of the License, or (at your option) any later version.
  
- THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, 
- BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT 
- SHALL THE COPYRIGHT OWNER BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES 
- (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
- ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ DualSPHysics is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details. 
+
+ You should have received a copy of the GNU Lesser General Public License along with DualSPHysics. If not, see <http://www.gnu.org/licenses/>. 
 */
 
 #include "JDebugSphGpu.h"
@@ -32,7 +25,6 @@
 #include "JVtkLib.h"
 #include "JDataArrays.h"
 
-#include "DualSphDef.h"
 #include "JSphGpuSingle.h"
 
 #pragma warning(disable : 4996) //Cancels sprintf() deprecated.
@@ -74,10 +66,10 @@ void JDebugSphGpu::CheckCudaErroorStatic(const std::string &srcfile,int srcline
 //==============================================================================
 /// Returns dynamic pointer with code-type of particles. (this pointer must be deleted)
 //==============================================================================
-byte* JDebugSphGpu::GetCodeType(unsigned n,const word *code){
+byte* JDebugSphGpu::GetCodeType(unsigned n,const typecode *code){
   byte *codetype=JDataArrays::NewArrayByte(n,false);
   for(unsigned p=0;p<n;p++){
-    const word type=CODE_GetType(code[p]);
+    const typecode type=CODE_GetType(code[p]);
     codetype[p]=(type==CODE_TYPE_FIXED? 0: (type==CODE_TYPE_MOVING? 1: (type==CODE_TYPE_FLOATING? 2: (type==CODE_TYPE_FLUID? 3: 99))));
   }
   return(codetype);
@@ -86,8 +78,12 @@ byte* JDebugSphGpu::GetCodeType(unsigned n,const word *code){
 //==============================================================================
 /// Returns dynamic pointer with code-typevalue of particles. (this pointer must be deleted)
 //==============================================================================
-word* JDebugSphGpu::GetCodeTypeValue(unsigned n,const word *code){
-  word *codetval=JDataArrays::NewArrayWord(n,false);
+typecode* JDebugSphGpu::GetCodeTypeValue(unsigned n,const typecode *code){
+  #ifdef CODE_SIZE4
+    typecode *codetval=JDataArrays::NewArrayUint(n,false);
+  #else
+    typecode *codetval=JDataArrays::NewArrayWord(n,false);
+  #endif
   for(unsigned c=0;c<n;c++)codetval[c]=CODE_GetTypeValue(code[c]);
   return(codetval);
 }
@@ -226,7 +222,11 @@ void JDebugSphGpu::LoadParticlesData(const JSphGpuSingle *gp,unsigned pini,unsig
   }
   //-Loads code.
   if(all || FindVar("code",vars)){
-    const word *code=fcuda::ToHostWord(pini,n,gp->Codeg);
+    #ifdef CODE_SIZE4
+      const typecode *code=fcuda::ToHostUint(pini,n,gp->Codeg);
+    #else
+      const typecode *code=fcuda::ToHostWord(pini,n,gp->Codeg);
+    #endif
     arrays->AddArray("Code",n,code,true);
     arrays->AddArray("Type",n,GetCodeType(n,code),true);
     arrays->AddArray("TypeValue",n,GetCodeTypeValue(n,code),true);
