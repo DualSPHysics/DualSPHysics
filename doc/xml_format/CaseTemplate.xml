@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<case app="GenCase v5.0.171 (05-04-2020)" date="06-04-2020 11:48:04">
-    <casedef requiredversion="v5.0.171">
+<case app="GenCase v5.0.174 (16-04-2020)" date="16-04-2020 03:35:23">
+    <casedef requiredversion="v5.0.174">
         <constantsdef>
             <lattice bound="2" fluid="1" comment="Type of lattice to create the initial particles (default=1)" />
             <gravity x="0" y="0" z="-9.81" comment="Gravitational acceleration" units_comment="m/s^2" />
@@ -796,9 +796,9 @@
             <parameter key="ViscoBoundFactor" value="1" comment="Multiply viscosity value with boundary (default=1)" />
             <parameter key="DensityDT" value="0" comment="Density Diffusion Term 0:None, 1:Molteni, 2:Fourtakas, 3:Fourtakas(full) (default=0)" />
             <parameter key="DensityDTvalue" value="0.1" comment="DDT value (default=0.1)" />
-            <parameter key="#Shifting" value="0" comment="Shifting mode 0:None, 1:Ignore bound, 2:Ignore fixed, 3:Full (default=0)" />
-            <parameter key="#ShiftCoef" value="-2" comment="Coefficient for shifting computation (default=-2)" />
-            <parameter key="#ShiftTFS" value="1.5" comment="Threshold to detect free surface. Typically 1.5 for 2D and 2.75 for 3D (default=0)" />
+            <parameter key="Shifting" value="0" comment="Shifting mode 0:None, 1:Ignore bound, 2:Ignore fixed, 3:Full (default=0)" />
+            <parameter key="ShiftCoef" value="-2" comment="Coefficient for shifting computation (default=-2)" />
+            <parameter key="ShiftTFS" value="0" comment="Threshold to detect free surface. Typically 1.5 for 2D and 2.75 for 3D (default=0)" />
             <parameter key="RigidAlgorithm" value="1" comment="Rigid Algorithm 1:SPH, 2:DEM, 3:Chrono (default=1)" />
             <parameter key="FtPause" value="0.0" comment="Time to freeze the floatings at simulation start (warmup) (default=0)" units_comment="seconds" />
             <parameter key="FtIgnoreRadius" value="0" comment="Ignores floating body radius with periodic conditions (default=0)" />
