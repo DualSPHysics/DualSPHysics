@@ -279,7 +279,6 @@ void JChronoObjects::ReadXml(const JXml *sxml,TiXmlElement* lis){
       OmpThreads=sxml->ReadElementInt(collision,"ompthreads","value",true,1); //-Default=Single-core
       //-Loads the contact method type [NSC|SMC]
       unsigned contact_m=sxml->ReadElementInt(collision,"contactmethod","value",true,0);
-      if(contact_m==1 && OmpThreads!=1)Run_Exceptioon(fun::PrintStr("SMooth Contacts are not allowed with Multi Core mode.")); 
       if(contact_m<0 || contact_m>1)Run_ExceptioonFile(fun::PrintStr("The value \'%d\' is not allowed for contactmethod attribute. Only 0 or 1.",contact_m),sxml->ErrGetFileRow(lis)); 
       ChronoDataXml->SetContactMethod(contact_m==0? JChronoData::NSC: JChronoData::SMC);
       UseChronoSMC=(ChronoDataXml->GetContactMethod()==JChronoData::SMC);
