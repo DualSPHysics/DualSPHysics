@@ -29,6 +29,8 @@
   #include "JSphAccInput_ker.h"
 #endif
 
+#include <climits>
+
 using namespace std;
 
 //##############################################################################
