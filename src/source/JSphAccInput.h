@@ -38,14 +38,12 @@
 
 #include <string>
 #include <vector>
-//#include <sstream>
-//#include <iostream>
-//#include <fstream>
-//#include <cstdlib>
 
 class JLog2;
 class JXml;
 class TiXmlElement;
+class JLinearValue;
+class JSphMk;
 
 //##############################################################################
 //# XML format in _FmtXML_AccInput.xml.
@@ -58,48 +56,44 @@ class TiXmlElement;
 
 class JSphAccInputMk : protected JObject
 {
+public:
+  const unsigned Idx;   ///<Index of configuration.
+  const bool Bound;     ///<Type of target particles (boundary floating or fluid).
+  const word MkType1;   ///<The MK bound or fluid to select the target particles.
+  const word MkType2;   ///<Final range of MK values to select the target particles.
+  const bool GravityEnabled;  ///<Determines whether global gravity is enabled or disabled for this particle set SL
+  const tfloat3 AccCoG;       ///<The centre of gravity that will be used for angular acceleration calculations.
+
 protected:
   JLog2* Log;
 
-  static const unsigned SIZEMAX=104857600; ///<Maximum file size (100MB).
-  static const unsigned SIZEINITIAL=100;
+  typecode CodeSel1; ///<First code of target particles (TypeAndValue).
+  typecode CodeSel2; ///<Last code of target particles (TypeAndValue).
 
-  word MkFluid;              ///<The MK values stored in the acceleration input file.
-  bool GravityEnabled;       ///<Determines whether global gravity is enabled or disabled for this particle set SL
-  tfloat3 AccCoG;            ///<The centre of gravity that will be used for angular acceleration calculations.
-  std::string File;          ///<File of data.
+  JLinearValue *AceData; ///<Input acceleration data.
+  JLinearValue *VelData; ///<Input velocity data.
 
-  unsigned AccSize;          ///<Number of acceleration values that were allocated.
-  unsigned AccCount;         ///<Number of acceleration values in each input file(s).
-  float *AccTime;            ///<Variable acceleration time evolution as detailed in the input file.
-  tfloat3 *AccLin;           ///<Linear acceleration variable to store values as they are read from the input files.
-  tfloat3 *AccAng;           ///<Angular acceleration variable to store values as they are read from the input files.
-  tfloat3 *VelAng;           ///<Angular velocity variable to store values as the angular acceleration values are read from the input files. SL
-  tfloat3 *VelLin;           ///<Linear velocity variable to store values as the linear acceleration values are read from the input files. SL
-
-  unsigned AccIndex;         ///<Current index for variable acceleration interpolation.
-
-  tdouble3 CurrAccLin;        ///<The current interpolated values for linear acceleration.
-  tdouble3 CurrAccAng;        ///<The current interpolated values for angular acceleration.
-  tdouble3 CurrVelLin;        ///<The current interpolated values for linear velocity. SL
-  tdouble3 CurrVelAng;        ///<The current interpolated values for angular velocity. SL
-
-  double LastTimestepInput;   ///<Saves the last value used with GetAccValues().
-  StAceInput LastOutput;      ///<Saves the last value returned by GetAccValues().
+  double LastTimestepInput; ///<Saves the last value used with GetAccValues().
+  StAceInput LastOutput;    ///<Saves the last value returned by GetAccValues().
 
   void Reset();
-  void Resize(unsigned size);
-  void LoadFile(std::string file,double tmax);
 
 public:
-  JSphAccInputMk(JLog2* log,word mkfluid,bool genabled,tfloat3 acccentre,std::string file);
+  JSphAccInputMk(JLog2* log,unsigned idx,bool bound,word mktype1,word mktype2
+    ,bool genabled,tfloat3 acccentre,const JLinearValue &acedata
+    ,const JLinearValue &veldata);
   ~JSphAccInputMk();
   long long GetAllocMemory()const;
 
-  void Init(double tmax);
+  void ConfigCodeSel(typecode codesel1,typecode codesel2){ 
+    CodeSel1=codesel1; CodeSel2=codesel2; 
+  }
+  typecode GetCodeSel1()const{ return(CodeSel1); };
+  typecode GetCodeSel2()const{ return(CodeSel2); };
+
   void GetConfig(std::vector<std::string> &lines)const;
 
-  word GetMkFluid()const{ return(MkFluid); }
+  //word GetMkFluid()const{ return(MkFluid); }
   const StAceInput& GetAccValues(double timestep); //SL: Added linear and angular velocity and set gravity flag
 };
 
@@ -117,20 +111,21 @@ protected:
   long long MemSize;
 
   void Reset();
-  bool ExistMk(word mkfluid)const;
+  bool ExistMk(bool bound,word mktype)const;
   void LoadXml(const JXml *sxml,const std::string &place);
   void ReadXml(const JXml *sxml,TiXmlElement* lis);
+  void ComputeVelocity(const JLinearValue &acedata,JLinearValue &veldata)const;
 
 public:
   JSphAccInput(JLog2* log,const std::string &dirdata,const JXml *sxml,const std::string &place);
   ~JSphAccInput();
   long long GetAllocMemory()const{ return(MemSize); }
 
-  void Init(double tmax);
   void VisuConfig(std::string txhead,std::string txfoot)const;
+  void Init(const JSphMk *mkinfo);
 
   unsigned GetCount()const{ return(unsigned(Inputs.size())); };
-  const StAceInput& GetAccValues(unsigned cfile,double timestep); //SL: Added linear and angular velocity and set gravity flag
+  const StAceInput& GetAccValues(unsigned cinput,double timestep); //SL: Added linear and angular velocity and set gravity flag
 
   void RunCpu(double timestep,tfloat3 gravity,unsigned n,unsigned pini
     ,const typecode *code,const tdouble3 *pos,const tfloat4 *velrhop,tfloat3 *ace);

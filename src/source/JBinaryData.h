@@ -41,6 +41,7 @@
 //:# - Ahora el metodo SaveFileListApp() graba los datos del Parent al principio
 //:#   del fichero. (12-01-2014)
 //:# - Opcion en SaveFileXml() para grabar datos de arrays. (04-12-2014)
+//:# - Nuevos metodos CheckCopyArrayData() y CopyArrayData(). (13-04-2020)
 //:#############################################################################
 
 /// \file JBinaryData.h \brief Declares the class \ref JBinaryData.
@@ -360,6 +361,21 @@ class JBinaryData : protected JObject
   JBinaryDataArray* CreateArray(const std::string &name,JBinaryDataDef::TpData type,unsigned count,const void *data,bool externalpointer);
   void RemoveArray(const std::string &name);
   void RemoveArrays();
+  JBinaryDataArray* CheckCopyArrayData(const std::string &name,unsigned size,JBinaryDataDef::TpData type);
+  void CopyArrayData(const std::string &name,unsigned size,char           *ptr);
+  void CopyArrayData(const std::string &name,unsigned size,unsigned char  *ptr);
+  void CopyArrayData(const std::string &name,unsigned size,short          *ptr);
+  void CopyArrayData(const std::string &name,unsigned size,unsigned short *ptr);
+  void CopyArrayData(const std::string &name,unsigned size,int            *ptr);
+  void CopyArrayData(const std::string &name,unsigned size,unsigned       *ptr);
+  void CopyArrayData(const std::string &name,unsigned size,llong          *ptr);
+  void CopyArrayData(const std::string &name,unsigned size,ullong         *ptr);
+  void CopyArrayData(const std::string &name,unsigned size,float          *ptr);
+  void CopyArrayData(const std::string &name,unsigned size,double         *ptr);
+  void CopyArrayData(const std::string &name,unsigned size,tint3          *ptr);
+  void CopyArrayData(const std::string &name,unsigned size,tuint3         *ptr);
+  void CopyArrayData(const std::string &name,unsigned size,tfloat3        *ptr);
+  void CopyArrayData(const std::string &name,unsigned size,tdouble3       *ptr);
 
   //-Gestion de values. Management of values.
   unsigned GetValuesCount()const{ return(unsigned(Values.size())); }

@@ -1957,8 +1957,8 @@ void JSph::InitRun(unsigned np,const unsigned *idp,const tdouble3 *pos){
   //-Prepares AccInput configuration.
   if(AccInput){
     Log->Print("AccInput configuration:");
-    AccInput->Init(TimeMax);
     AccInput->VisuConfig(""," ");
+    AccInput->Init(MkInfo);
   }
 
   //-Configuration of SaveDt.

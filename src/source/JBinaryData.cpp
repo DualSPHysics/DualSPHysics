@@ -1843,6 +1843,116 @@ void JBinaryData::RemoveArrays(){
 }
 
 //==============================================================================
+/// Comprueba copia datos de array despues de comprobar tipo y tamanho.
+/// Check copy data from array after checking type and size.
+//==============================================================================
+JBinaryDataArray* JBinaryData::CheckCopyArrayData(const std::string &name,unsigned size,JBinaryDataDef::TpData type){
+  JBinaryDataArray* ar=GetArray(name);
+  if(!ar)Run_Exceptioon(fun::PrintStr("Array \'%s\' is not available.",name.c_str()));
+  if(ar->GetType()!=type)Run_Exceptioon(fun::PrintStr("Type of array \'%s\' is not %s.",name.c_str(),JBinaryDataDef::TypeToStr(type).c_str()));
+  if(ar->GetCount()!=size)Run_Exceptioon(fun::PrintStr("Size of array \'%s\' does not match.",name.c_str()));
+  return(ar);
+}
+//==============================================================================
+/// Copia datos de array despues de comprobar tipo y tamanho.
+/// Copy data from array after checking type and size.
+//==============================================================================
+void JBinaryData::CopyArrayData(const std::string &name,unsigned size,char           *ptr){
+  CheckCopyArrayData(name,size,JBinaryDataDef::DatChar)->GetDataCopy(size,ptr);
+}
+//==============================================================================
+/// Copia datos de array despues de comprobar tipo y tamanho.
+/// Copy data from array after checking type and size.
+//==============================================================================
+void JBinaryData::CopyArrayData(const std::string &name,unsigned size,unsigned char  *ptr){
+  CheckCopyArrayData(name,size,JBinaryDataDef::DatUchar)->GetDataCopy(size,ptr);
+}
+//==============================================================================
+/// Copia datos de array despues de comprobar tipo y tamanho.
+/// Copy data from array after checking type and size.
+//==============================================================================
+void JBinaryData::CopyArrayData(const std::string &name,unsigned size,short          *ptr){
+  CheckCopyArrayData(name,size,JBinaryDataDef::DatShort)->GetDataCopy(size,ptr);
+}
+//==============================================================================
+/// Copia datos de array despues de comprobar tipo y tamanho.
+/// Copy data from array after checking type and size.
+//==============================================================================
+void JBinaryData::CopyArrayData(const std::string &name,unsigned size,unsigned short *ptr){
+  CheckCopyArrayData(name,size,JBinaryDataDef::DatUshort)->GetDataCopy(size,ptr);
+}
+//==============================================================================
+/// Copia datos de array despues de comprobar tipo y tamanho.
+/// Copy data from array after checking type and size.
+//==============================================================================
+void JBinaryData::CopyArrayData(const std::string &name,unsigned size,int            *ptr){
+  CheckCopyArrayData(name,size,JBinaryDataDef::DatInt)->GetDataCopy(size,ptr);
+}
+//==============================================================================
+/// Copia datos de array despues de comprobar tipo y tamanho.
+/// Copy data from array after checking type and size.
+//==============================================================================
+void JBinaryData::CopyArrayData(const std::string &name,unsigned size,unsigned       *ptr){
+  CheckCopyArrayData(name,size,JBinaryDataDef::DatUint)->GetDataCopy(size,ptr);
+}
+//==============================================================================
+/// Copia datos de array despues de comprobar tipo y tamanho.
+/// Copy data from array after checking type and size.
+//==============================================================================
+void JBinaryData::CopyArrayData(const std::string &name,unsigned size,llong          *ptr){
+  CheckCopyArrayData(name,size,JBinaryDataDef::DatLlong)->GetDataCopy(size,ptr);
+}
+//==============================================================================
+/// Copia datos de array despues de comprobar tipo y tamanho.
+/// Copy data from array after checking type and size.
+//==============================================================================
+void JBinaryData::CopyArrayData(const std::string &name,unsigned size,ullong         *ptr){
+  CheckCopyArrayData(name,size,JBinaryDataDef::DatUllong)->GetDataCopy(size,ptr);
+}
+//==============================================================================
+/// Copia datos de array despues de comprobar tipo y tamanho.
+/// Copy data from array after checking type and size.
+//==============================================================================
+void JBinaryData::CopyArrayData(const std::string &name,unsigned size,float          *ptr){
+  CheckCopyArrayData(name,size,JBinaryDataDef::DatFloat)->GetDataCopy(size,ptr);
+}
+//==============================================================================
+/// Copia datos de array despues de comprobar tipo y tamanho.
+/// Copy data from array after checking type and size.
+//==============================================================================
+void JBinaryData::CopyArrayData(const std::string &name,unsigned size,double         *ptr){
+  CheckCopyArrayData(name,size,JBinaryDataDef::DatDouble)->GetDataCopy(size,ptr);
+}
+//==============================================================================
+/// Copia datos de array despues de comprobar tipo y tamanho.
+/// Copy data from array after checking type and size.
+//==============================================================================
+void JBinaryData::CopyArrayData(const std::string &name,unsigned size,tint3          *ptr){
+  CheckCopyArrayData(name,size,JBinaryDataDef::DatInt3)->GetDataCopy(size,ptr);
+}
+//==============================================================================
+/// Copia datos de array despues de comprobar tipo y tamanho.
+/// Copy data from array after checking type and size.
+//==============================================================================
+void JBinaryData::CopyArrayData(const std::string &name,unsigned size,tuint3         *ptr){
+  CheckCopyArrayData(name,size,JBinaryDataDef::DatUint3)->GetDataCopy(size,ptr);
+}
+//==============================================================================
+/// Copia datos de array despues de comprobar tipo y tamanho.
+/// Copy data from array after checking type and size.
+//==============================================================================
+void JBinaryData::CopyArrayData(const std::string &name,unsigned size,tfloat3        *ptr){
+  CheckCopyArrayData(name,size,JBinaryDataDef::DatFloat3)->GetDataCopy(size,ptr);
+}
+//==============================================================================
+/// Copia datos de array despues de comprobar tipo y tamanho.
+/// Copy data from array after checking type and size.
+//==============================================================================
+void JBinaryData::CopyArrayData(const std::string &name,unsigned size,tdouble3       *ptr){
+  CheckCopyArrayData(name,size,JBinaryDataDef::DatDouble3)->GetDataCopy(size,ptr);
+}
+
+//==============================================================================
 /// Devuelve posicion de la variable solicitada, -1 en caso de no existir.
 /// Returns the requested position variable, -1 if does not exist.
 //==============================================================================

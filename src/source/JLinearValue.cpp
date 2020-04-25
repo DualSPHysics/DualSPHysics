@@ -40,38 +40,45 @@ using namespace std;
 //==============================================================================
 /// Constructor.
 //==============================================================================
-JLinearValue::JLinearValue(unsigned nvalues,bool specialvalues)
-  :Nvalues(max(1u,nvalues)),SpecialValues(specialvalues)
+JLinearValue::JLinearValue(unsigned nvalues,bool specialvalues,bool optionalvalues)
+  :Nvalues(max(1u,nvalues)),SpecialValues(specialvalues),OptionalValues(optionalvalues)
 {
   ClassName="JLinearValue";
   Times=NULL;
   Values=NULL;
   Reset();
+  if(SpecialValues && OptionalValues)
+    Run_Exceptioon("Options SpecialValues and OptionalValues at the same time are invalid.");
 }
 
 //==============================================================================
 /// Constructor with input file.
 //==============================================================================
-JLinearValue::JLinearValue(const std::string &inputfile,unsigned nvalues,bool specialvalues)
-  :Nvalues(max(1u,nvalues)),SpecialValues(specialvalues)
+JLinearValue::JLinearValue(const std::string &inputfile,unsigned nvalues
+  ,bool specialvalues,bool optionalvalues)
+  :Nvalues(max(1u,nvalues)),SpecialValues(specialvalues),OptionalValues(optionalvalues)
 {
   ClassName="JLinearValue";
   Times=NULL;
   Values=NULL;
   Reset();
   File=inputfile;
+  if(SpecialValues && OptionalValues)
+    Run_ExceptioonFile("Options SpecialValues and OptionalValues at the same time are invalid.",inputfile);
 }
 
 //==============================================================================
 /// Constructor for copy.
 //==============================================================================
 JLinearValue::JLinearValue(const JLinearValue &obj)
-  :Nvalues(obj.Nvalues),SpecialValues(obj.SpecialValues)
+  :Nvalues(obj.Nvalues),SpecialValues(obj.SpecialValues),OptionalValues(obj.OptionalValues)
 {
   ClassName="JLinearValue";
   Times=NULL;
   Values=NULL;
   CopyFrom(obj);
+  if(SpecialValues && OptionalValues)
+    Run_Exceptioon("Options SpecialValues and OptionalValues at the same time are invalid.");
 }
 
 //==============================================================================
@@ -96,8 +103,9 @@ void JLinearValue::Reset(){
 /// Copy data from other object.
 //==============================================================================
 void JLinearValue::CopyFrom(const JLinearValue &obj){
-  if(Nvalues!=obj.Nvalues)RunException("CopyFrom","The copy is invalid since Nvalues does not match.");
-  if(SpecialValues!=obj.SpecialValues)RunException("CopyFrom","The copy is invalid since SpecialValues does not match.");
+  if(Nvalues!=obj.Nvalues)Run_Exceptioon("The copy is invalid since Nvalues does not match.");
+  if(SpecialValues!=obj.SpecialValues)Run_Exceptioon("The copy is invalid since SpecialValues does not match.");
+  if(OptionalValues!=obj.OptionalValues)Run_Exceptioon("The copy is invalid since OptionalValues does not match.");
   Reset();
   File=obj.File;
   SetSize(obj.Size);
@@ -129,7 +137,7 @@ unsigned JLinearValue::GetAllocMemory()const{
 /// Ajusta al tamano indicado manteniendo el contenido.
 //==============================================================================
 void JLinearValue::SetSize(unsigned size){
-  if(size>=SIZEMAX)RunException("SetSize","It has reached the maximum size allowed.");
+  if(size>=SIZEMAX)Run_Exceptioon("It has reached the maximum size allowed.");
   Size=size;
   if(Count>Size)Count=Size;
   if(Size){
@@ -148,13 +156,13 @@ void JLinearValue::SetSize(unsigned size){
 /// Modifica tiempos y valores.
 //==============================================================================
 void JLinearValue::SetTimeValue(unsigned idx,double time,double value){
-  const char met[]="SetTimeValue";
-  if(idx>=Count)RunException(met,"Index is invalid.");
+  if(idx>=Count)Run_Exceptioon("Index is invalid.");
   //printf("\n=====>> SET t[%d]:%f\n",idx,time);
   //if(idx>0)printf("=====>> t-1[%d]:%g\n",idx-1,Times[idx-1]);
   //if(true) printf("=====>> t  [%d]:%g\n",idx,Times[idx]);
   //if(idx+1<Count)printf("=====>> t+1[%d]:%g\n",idx+1,Times[idx+1]);
-  if((idx>0 && Times[idx-1]>time) || (idx+1<Count && Times[idx+1]<time))RunException(met,"New time values is lower than previous time or it is higher than next time.");
+  if((idx>0 && Times[idx-1]>time) || (idx+1<Count && Times[idx+1]<time))
+    Run_Exceptioon("New time values is lower than previous time or it is higher than next time.");
   Times[idx]=time;
   Values[Nvalues*idx]=value;
   for(unsigned cv=1;cv<Nvalues;cv++)Values[Nvalues*idx+cv]=0;
@@ -181,9 +189,8 @@ unsigned JLinearValue::AddTimeValue(double time,double value){
 /// Modifica valor en la posicion indicada.
 //==============================================================================
 void JLinearValue::SetValue(unsigned idx,unsigned cvalue,double value){
-  const char met[]="SetValue";
-  if(idx>=Count)RunException(met,"idx is not valid.");
-  if(cvalue>=Nvalues)RunException(met,"cvalue is not valid.");
+  if(idx>=Count)Run_Exceptioon("Idx is not valid.");
+  if(cvalue>=Nvalues)Run_Exceptioon("Number of value is not valid.");
   Values[Nvalues*idx+cvalue]=value;
   //if(value==DBL_MAX)SpecialValues=true;
 }
@@ -193,7 +200,7 @@ void JLinearValue::SetValue(unsigned idx,unsigned cvalue,double value){
 /// Busca time anterior y posterior del instante indicado.
 //==============================================================================
 void JLinearValue::FindTime(double timestep){
-  if(!Count)RunException("FindTime","There are not times.");
+  if(!Count)Run_Exceptioon("There are not times.");
   NewInterval=false;
   if(timestep!=TimeStep || Position==UINT_MAX){
     unsigned pos=(Position==UINT_MAX? 0: Position);
@@ -310,6 +317,59 @@ tdouble3 JLinearValue::GetValue3d(double timestep){
 }
 
 //==============================================================================
+/// Returns the interpolated values for the time indicated.
+/// If no values always returns 0.
+/// If only one value always returns that value.
+/// If the indicated t is less than the minimum returns the first value.
+/// If the indicated t is greater than the maximum returns the last value.
+/// 
+/// Devuelve valor el valor interpolado para el instante indicado.
+/// Si no hay valores siempre devuelve 0.
+/// Si solo hay un valor siempre devuelve ese valor.
+/// Si el t indicado es menor que el minimo devuelve el primer valor.
+/// Si el t indicado es mayor que el maximo devuelve el ultimo valor.
+//==============================================================================
+void JLinearValue::GetValue3d3d(double timestep,tdouble3 &v1,tdouble3 &v2){
+  v1=v2=TDouble3(0);
+  FindTime(timestep);
+  //printf("--> t:%f  [%u - %u]  [%f - %f]\n",timestep,Position,PositionNext,TimePre,TimeNext);
+  if(timestep<=TimePre){
+    const unsigned rpos=Nvalues*Position;
+    v1=TDouble3(Values[rpos  ],Values[rpos+1],Values[rpos+2]);
+    v2=TDouble3(Values[rpos+3],Values[rpos+4],Values[rpos+5]);
+  }
+  else if(timestep>=TimeNext){
+    const unsigned rpos=Nvalues*PositionNext;
+    v1=TDouble3(Values[rpos  ],Values[rpos+1],Values[rpos+2]);
+    v2=TDouble3(Values[rpos+3],Values[rpos+4],Values[rpos+5]);
+  }
+  else{
+    const unsigned rpos =Nvalues*Position;
+    const unsigned rpos2=Nvalues*PositionNext;
+    const tdouble3 v1ini =TDouble3(Values[rpos   ],Values[rpos +1],Values[rpos +2]);
+    const tdouble3 v2ini =TDouble3(Values[rpos+3 ],Values[rpos +4],Values[rpos +5]);
+    const tdouble3 v1next=TDouble3(Values[rpos2  ],Values[rpos2+1],Values[rpos2+2]);
+    const tdouble3 v2next=TDouble3(Values[rpos2+3],Values[rpos2+4],Values[rpos2+5]);
+    v1=((v1next-v1ini)*TimeFactor+v1ini);
+    v2=((v2next-v2ini)*TimeFactor+v2ini);
+    if(SpecialValues){
+      if(v1ini.x==DBL_MAX)v1.x=DBL_MAX;
+      else if(v1next.x==DBL_MAX)v1.x=v1ini.x;
+      if(v1ini.y==DBL_MAX)v1.y=DBL_MAX;
+      else if(v1next.y==DBL_MAX)v1.y=v1ini.y;
+      if(v1ini.z==DBL_MAX)v1.z=DBL_MAX;
+      else if(v1next.z==DBL_MAX)v1.z=v1ini.z;
+      if(v2ini.x==DBL_MAX)v2.x=DBL_MAX;
+      else if(v2next.x==DBL_MAX)v2.x=v2ini.x;
+      if(v2ini.y==DBL_MAX)v2.y=DBL_MAX;
+      else if(v2next.y==DBL_MAX)v2.y=v2ini.y;
+      if(v2ini.z==DBL_MAX)v2.z=DBL_MAX;
+      else if(v2next.z==DBL_MAX)v2.z=v2ini.z;
+    }
+  }
+}
+
+//==============================================================================
 /// Returns result of GetValue3d() converted to tfloat3 according special values.
 //==============================================================================
 tfloat3 JLinearValue::GetValue3f(double timestep){
@@ -322,7 +382,7 @@ tfloat3 JLinearValue::GetValue3f(double timestep){
 /// Returns the indicated time.
 //==============================================================================
 double JLinearValue::GetTimeByIdx(unsigned idx)const{
-  if(idx>=Count)RunException("GetTimeByIdx","idx is not valid.");
+  if(idx>=Count)Run_Exceptioon("Idx is not valid.");
   return(Times[idx]);
 }
 
@@ -331,9 +391,20 @@ double JLinearValue::GetTimeByIdx(unsigned idx)const{
 /// Returns the indicated value.
 //==============================================================================
 double JLinearValue::GetValueByIdx(unsigned idx,unsigned cvalue)const{
-  if(idx>=Count)RunException("GetValueByIdx","idx is not valid.");
-  if(cvalue>=Nvalues)RunException("GetValueByIdx","cvalue is not valid.");
+  if(idx>=Count)Run_Exceptioon("Idx is not valid.");
+  if(cvalue>=Nvalues)Run_Exceptioon("Number of value is not valid.");
   return(Values[Nvalues*idx+cvalue]);
+}
+
+//==============================================================================
+/// Devuelve el valor indicado.
+/// Returns the indicated value.
+//==============================================================================
+tdouble3 JLinearValue::GetValue3ByIdx(unsigned idx,unsigned cvalue3)const{
+  if(idx>=Count)Run_Exceptioon("Idx is not valid.");
+  if(cvalue3*3+2>=Nvalues)Run_Exceptioon("Number of value3 is not valid.");
+  const unsigned cv=Nvalues*idx+cvalue3*3;
+  return(TDouble3(Values[cv],Values[cv+1],Values[cv+2]));
 }
 
 
@@ -353,7 +424,6 @@ double JLinearValue::ReadNextDouble(JReadDatafile &rdat,bool in_line){
 /// Carga valores para diferentes instantes.
 //==============================================================================
 void JLinearValue::LoadFile(std::string file){
-  const char met[]="LoadFile";
   Reset();
   JReadDatafile rdat;
   rdat.LoadFile(file,SIZEMAX);
@@ -365,7 +435,7 @@ void JLinearValue::LoadFile(std::string file){
     const unsigned idx=AddTimeValue(atime,v);
     for(unsigned cv=1;cv<Nvalues;cv++)SetValue(idx,cv,ReadNextDouble(rdat,true));
   }
-  if(Count<2)RunException(met,"Cannot be less than two values.",file);
+  if(Count<2)Run_ExceptioonFile("Cannot be less than two values.",file);
   File=file;
 }
 
@@ -392,7 +462,6 @@ void JLinearValue::VisuData(){
 void JLinearValue::ReadXmlValues(const JXml *sxml,TiXmlElement* ele,std::string name
   ,std::string subname,std::string attributes)
 {
-  const char met[]="ReadXmlValues";
   Reset();
   if(sxml->ExistsElement(ele,name)){
     File=sxml->ReadElementStr(ele,name,"file",true);
@@ -400,7 +469,7 @@ void JLinearValue::ReadXmlValues(const JXml *sxml,TiXmlElement* ele,std::string 
       TiXmlElement* xlis=sxml->GetFirstElement(ele,name);
       if(xlis){
         vector<string> attr;
-        if(fun::VectorSplitStr(":",attributes,attr)!=Nvalues+1)RunException(met,"Number of values does not match.");
+        if(fun::VectorSplitStr(":",attributes,attr)!=Nvalues+1)Run_Exceptioon("Number of values does not match.");
         SetSize(sxml->CountElements(xlis,subname));
         TiXmlElement* elet=xlis->FirstChildElement(subname.c_str()); 
         while(elet){
@@ -416,8 +485,8 @@ void JLinearValue::ReadXmlValues(const JXml *sxml,TiXmlElement* ele,std::string 
             }
           }
           else{
-            const unsigned idx=AddTimeValue(t,sxml->GetAttributeDouble(elet,attr[1]));
-            for(unsigned ca=1;ca<Nvalues;ca++)SetValue(idx,ca,sxml->GetAttributeDouble(elet,attr[ca+1]));
+            const unsigned idx=AddTimeValue(t,sxml->GetAttributeDouble(elet,attr[1],OptionalValues));
+            for(unsigned ca=1;ca<Nvalues;ca++)SetValue(idx,ca,sxml->GetAttributeDouble(elet,attr[ca+1],OptionalValues));
           }
           elet=elet->NextSiblingElement(subname.c_str());
         }
@@ -433,7 +502,6 @@ void JLinearValue::ReadXmlValues(const JXml *sxml,TiXmlElement* ele,std::string 
 TiXmlElement* JLinearValue::WriteXmlValues(JXml *sxml,TiXmlElement* ele,std::string name
   ,std::string subname,std::string attributes)const
 {
-  const char met[]="WriteXmlValues";
   TiXmlElement* rele=NULL;
   if(!GetFile().empty())rele=sxml->AddElementAttrib(ele,name,"file",GetFile());
   else{
@@ -447,7 +515,7 @@ TiXmlElement* JLinearValue::WriteXmlValues(JXml *sxml,TiXmlElement* ele,std::str
     }
     //-Write values.
     vector<string> attr;
-    if(fun::VectorSplitStr(":",attributes,attr)!=Nvalues+1)RunException(met,"Number of values does not match.");
+    if(fun::VectorSplitStr(":",attributes,attr)!=Nvalues+1)Run_Exceptioon("Number of values does not match.");
     for(unsigned c=0;c<nv;c++){
       const double t=GetTimeByIdx(c);
       TiXmlElement* elet=sxml->AddElementAttrib(xlis,subname,attr[0],t);

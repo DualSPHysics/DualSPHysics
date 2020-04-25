@@ -83,6 +83,7 @@
 //:# - Nueva funcion CompareVersions().  (08-12-2019)
 //:# - Error corregido en StrStripSlashes().  (04-01-2020)
 //:# - Nueva funcion VectorFindMask().  (17-03-2020)
+//:# - Nueva funcion NaturalFmt().  (15-04-2020)
 //:#############################################################################
 
 /// \file Functions.h \brief Declares basic/general functions for the entire application.
@@ -129,6 +130,8 @@ std::string PrintStr(const char *format,...);
 
 std::string PrintStrCsv(bool csvsepcoma,const char *format,...);
 std::string StrCsvSep(bool csvsepcoma,const std::string &cad);
+
+std::string NaturalFmt(double v,unsigned ndigits,bool removezeros);
 
 std::string IntStrFill(int v,int vmax);
 std::string UintStrFill(unsigned v,unsigned vmax,const char fillchar='0');

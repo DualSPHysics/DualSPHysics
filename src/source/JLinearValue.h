@@ -39,6 +39,10 @@
 //:# - Amplia SIZEMAX por defecto de 200k a 20M. (21-10-2019)
 //:# - Error corregido cuando se cargaban valores none del XML. (08-02-2020)
 //:# - Objeto JXml pasado como const para operaciones de lectura. (17-03-2020)  
+//:# - Mejora la gestion de excepciones. (23-04-2020)
+//:# - Nuevos metodos GetValue3ByIdx() y GetValue3d3d(). (23-04-2020)
+//:# - Con la opcion OptionalValues los valores que falten del XML se leen como 
+//:#   cero. No es compatible con la opcion SpecialValues. (24-04-2020)
 //:#############################################################################
 
 #include "JObject.h"
@@ -86,10 +90,11 @@ protected:
 
 public:
   const unsigned Nvalues;
-  const bool SpecialValues; //<Uses the special value DBL_MAX.
+  const bool SpecialValues;  //<Uses the special value DBL_MAX. Missing values in XML configuration are considered as DBL_MAX.
+  const bool OptionalValues; //<Only in ReadXmlValues() when SpecialValues=false, missing values are considered as zero. 
 
-  JLinearValue(unsigned nvalues=1,bool specialvalues=false);
-  JLinearValue(const std::string &inputfile,unsigned nvalues=1,bool specialvalues=false);
+  JLinearValue(unsigned nvalues=1,bool specialvalues=false,bool optionalvalues=false);
+  JLinearValue(const std::string &inputfile,unsigned nvalues=1,bool specialvalues=false,bool optionalvalues=false);
   JLinearValue(const JLinearValue &obj);
   ~JLinearValue();
   void Reset();
@@ -126,6 +131,8 @@ public:
   float GetValuef(double timestep,unsigned cvalue=0);
   tdouble3 GetValue3d(double timestep);
   tfloat3  GetValue3f(double timestep);
+  void     GetValue3d3d(double timestep,tdouble3 &v1,tdouble3 &v2);
+
   bool GetNewInterval()const{ return(NewInterval); }
 
   //-For external use.
@@ -134,6 +141,7 @@ public:
   unsigned GetPosNext()const{ return(PositionNext); };
   double GetTimeByIdx(unsigned idx)const;
   double GetValueByIdx(unsigned idx,unsigned cvalue=0)const;
+  tdouble3 GetValue3ByIdx(unsigned idx,unsigned cvalue=0)const;
 
   //-Loads or saves on XML file.
 #ifdef JLinearValue_UseJXml

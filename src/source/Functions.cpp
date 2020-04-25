@@ -256,6 +256,37 @@ std::string StrCsvSep(bool csvsepcoma,const std::string &cad){
 }
 
 //==============================================================================
+/// Returns format to obtain simplified number in a string.
+//==============================================================================
+std::string NaturalFmt(double v,unsigned ndigits,bool removezeros){
+  const string fmt0=string("%.")+IntStr(ndigits)+"f";
+  string tnat=DoubleStr(fabs(v),fmt0.c_str());
+  int pp=int(tnat.find("."));
+  int ne=(pp>=0? pp: int(tnat.length()));
+  if(ne==1 && tnat[0]=='0')ne=0;
+  //printf("----> tnat:[%s] ne:%d\n",tnat.c_str(),ne);
+  if(ne==0){
+    tnat=tnat.substr(pp+1);
+    for(int c=0;c<int(tnat.size()) && tnat[c]=='0';c++)ne--;
+    //printf("  --> tnat2:[%s] ne:%d\n",tnat.c_str(),ne);
+  }
+  int ndec=max(int(ndigits)-ne,0);
+  string fmt=string("%.")+IntStr(ndec)+"f";
+  if(removezeros){
+    string txv=DoubleStr(v,fmt.c_str());
+    for(int c=int(txv.size())-1;ndec>0 && c>=0 && txv[c]=='0';c--)ndec--;
+    fmt=string("%.")+IntStr(ndec)+"f";
+  }
+  //string txv=DoubleStr(v,fmt.c_str());
+  //printf("  --> fmt:[%s] v:%s \n",fmt.c_str(),txv.c_str());
+  //string txv1=DoubleStr(v,"%.10E");
+  //double v1=StrToDouble(txv1);
+  //double v2=StrToDouble(txv);
+  //printf("  --> Dif: v1:%s  v2:%s  dif:%g\n",txv1.c_str(),txv.c_str(),v2-v1);
+  return(fmt);
+}
+
+//==============================================================================
 /// Converts unsigned value to string filling with zeros.
 //==============================================================================
 std::string IntStrFill(int v,int vmax){
@@ -1228,7 +1259,7 @@ std::string GetFile(const std::string &ruta){
 //==============================================================================
 std::string GetDirWithSlash(const std::string &ruta){
   std::string rut=ruta;
-  if(ruta!=""){
+  if(!ruta.empty()){
     char last=ruta[ruta.length()-1];
     if(last!='\\'&&last!='/')rut=ruta+"/";
   }

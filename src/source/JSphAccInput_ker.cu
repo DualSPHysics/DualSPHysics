@@ -29,15 +29,16 @@ namespace cuaccin{
 //------------------------------------------------------
 /// Adds variable forces to particle sets.
 //------------------------------------------------------
-__global__ void KerAddAccInputAng(unsigned n,unsigned pini,typecode codesel,float3 gravity
-  ,bool setgravity,double3 acclin,double3 accang,double3 centre,double3 velang,double3 vellin
+__global__ void KerAddAccInputAng(unsigned n,unsigned pini,typecode codesel1,typecode codesel2
+  ,float3 gravity,bool setgravity,double3 acclin,double3 accang,double3 centre,double3 velang,double3 vellin
   ,const typecode *code,const double2 *posxy,const double *posz,const float4 *velrhop,float3 *ace)
 {
   const unsigned pp=blockIdx.x*blockDim.x + threadIdx.x;
   if(pp<n){
     const unsigned p=pp+pini;
     //Check if the current particle is part of the particle set by its Mk.
-    if(CODE_GetTypeValue(code[p])==codesel){
+    const typecode tav=CODE_GetTypeAndValue(code[p]);
+    if(codesel1<=tav && tav<=codesel2){
       const float3 accf=ace[p]; //-Gets the current particles acceleration value.
       double accx=accf.x,accy=accf.y,accz=accf.z;
       //-Adds linear acceleration.
@@ -88,14 +89,15 @@ __global__ void KerAddAccInputAng(unsigned n,unsigned pini,typecode codesel,floa
 //------------------------------------------------------
 /// Adds variable forces to particle sets.
 //------------------------------------------------------
-__global__ void KerAddAccInputLin(unsigned n,unsigned pini,typecode codesel,float3 gravity
-  ,bool setgravity,double3 acclin,const typecode *code,float3 *ace)
+__global__ void KerAddAccInputLin(unsigned n,unsigned pini,typecode codesel1,typecode codesel2
+  ,float3 gravity,bool setgravity,double3 acclin,const typecode *code,float3 *ace)
 {
   const unsigned pp=blockIdx.x*blockDim.x + threadIdx.x;
   if(pp<n){
     const unsigned p=pp+pini;
     //-Check if the current particle is part of the particle set by its Mk.
-    if(CODE_GetTypeValue(code[p])==codesel){
+    const typecode tav=CODE_GetTypeAndValue(code[p]);
+    if(codesel1<=tav && tav<=codesel2){
       const float3 accf=ace[p]; //-Gets the current particles acceleration value.
       double accx=accf.x,accy=accf.y,accz=accf.z;
       //-Adds linear acceleration.
@@ -113,15 +115,15 @@ __global__ void KerAddAccInputLin(unsigned n,unsigned pini,typecode codesel,floa
 //==================================================================================================
 /// Adds external variable acceleration forces for particles according MK.
 //==================================================================================================
-void AddAccInput(unsigned n,unsigned pini,typecode codesel
+void AddAccInput(unsigned n,unsigned pini,typecode codesel1,typecode codesel2
   ,tdouble3 acclin,tdouble3 accang,tdouble3 centre,tdouble3 velang,tdouble3 vellin,bool setgravity
   ,tfloat3 gravity,const typecode *code,const double2 *posxy,const double *posz,const float4 *velrhop,float3 *ace,cudaStream_t stm)
 {
   if(n){
     dim3 sgrid=GetSimpleGridSize(n,SPHBSIZE);
     const bool withaccang=(accang.x!=0 || accang.y!=0 || accang.z!=0);
-    if(withaccang)KerAddAccInputAng <<<sgrid,SPHBSIZE,0,stm>>> (n,pini,codesel,Float3(gravity),setgravity,Double3(acclin),Double3(accang),Double3(centre),Double3(velang),Double3(vellin),code,posxy,posz,velrhop,ace);
-    else          KerAddAccInputLin <<<sgrid,SPHBSIZE,0,stm>>> (n,pini,codesel,Float3(gravity),setgravity,Double3(acclin),code,ace);
+    if(withaccang)KerAddAccInputAng <<<sgrid,SPHBSIZE,0,stm>>> (n,pini,codesel1,codesel2,Float3(gravity),setgravity,Double3(acclin),Double3(accang),Double3(centre),Double3(velang),Double3(vellin),code,posxy,posz,velrhop,ace);
+    else          KerAddAccInputLin <<<sgrid,SPHBSIZE,0,stm>>> (n,pini,codesel1,codesel2,Float3(gravity),setgravity,Double3(acclin),code,ace);
   }
 }
 
