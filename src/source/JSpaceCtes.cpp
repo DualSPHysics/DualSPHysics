@@ -20,6 +20,7 @@
 
 #include "JSpaceCtes.h"
 #include "JXml.h"
+#include "Functions.h"
 #include <cmath>
 #include <algorithm>
 
@@ -221,10 +222,15 @@ void JSpaceCtes::WriteXmlRun(JXml *sxml,TiXmlElement* node)const{
   WriteXmlElementComment(JXml::AddElementAttrib(node,"rhop0","value",GetRhop0()),"","kg/m^3");
   if(EpsDefined)WriteXmlElementComment(JXml::AddElementAttrib(node,"eps","value",GetEps()),"","m/s^2");
   WriteXmlElementComment(JXml::AddElementAttrib(node,"dp","value",GetDp()),"","metres (m)");
-  WriteXmlElementComment(JXml::AddElementAttrib(node,"h","value",GetH(),"%.10E"),"","metres (m)");
-  WriteXmlElementComment(JXml::AddElementAttrib(node,"b","value",GetB(),"%.10E"),"","Pascal (Pa)");
-  WriteXmlElementComment(JXml::AddElementAttrib(node,"massbound","value",GetMassBound(),"%.10E"),"","kg");
-  WriteXmlElementComment(JXml::AddElementAttrib(node,"massfluid","value",GetMassFluid(),"%.10E"),"","kg");
+
+  std::string fmt=fun::NaturalFmt(GetH(),11,true); //-Same precision as "%.10E".
+  WriteXmlElementComment(JXml::AddElementAttrib(node,"h","value",GetH(),fmt.c_str()),"","metres (m)");
+  fmt=fun::NaturalFmt(GetB(),11,true);
+  WriteXmlElementComment(JXml::AddElementAttrib(node,"b","value",GetB(),fmt.c_str()),"","Pascal (Pa)");
+  fmt=fun::NaturalFmt(GetMassBound(),11,true);
+  WriteXmlElementComment(JXml::AddElementAttrib(node,"massbound","value",GetMassBound(),fmt.c_str()),"","kg");
+  fmt=fun::NaturalFmt(GetMassFluid(),11,true);
+  WriteXmlElementComment(JXml::AddElementAttrib(node,"massfluid","value",GetMassFluid(),fmt.c_str()),"","kg");
   //JXml::AddElementDouble3(node,"gravity",GetGravity());
   //JXml::AddElementAttrib(node,"cflnumber","value",GetCFLnumber());
   //JXml::AddElementAttrib(node,"gamma","value",GetGamma());

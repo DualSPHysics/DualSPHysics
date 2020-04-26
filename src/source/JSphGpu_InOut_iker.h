@@ -110,8 +110,8 @@ void InOutInterpolateTime(unsigned npt,double time,double t0,double t1
   ,const float *velx0,const float *velx1,float *velx
   ,const float *velz0,const float *velz1,float *velz);
 void InOutInterpolateZVel(unsigned izone,double posminz,double dpz,int nz1
-  ,const float *velx,const float *velz
-  ,unsigned np,const int *plist,const double *posz,const typecode *code,float4 *velrhop);
+  ,const float *velx,const float *velz,unsigned np,const int *plist
+  ,const double *posz,const typecode *code,float4 *velrhop,float velcorr);
 void InOutInterpolateResetZVel(unsigned izone,unsigned np,const int *plist
   ,const typecode *code,float4 *velrhop);
 

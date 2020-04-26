@@ -84,7 +84,7 @@ void JSphGpuSingle::InOutInit(double timestepini){
   //-Configures InOut zones and prepares new inout particles to create.
   const unsigned newnp=InOut->Config(timestepini,Stable,Simulate2D,Simulate2DPosY,PeriActive
     ,RhopZero,CteB,Gamma,Gravity,Dp,MapRealPosMin,MapRealPosMax,MkInfo->GetCodeNewFluid()
-    ,PartsInit,NuxLib);
+    ,PartsInit,GaugeSystem,NuxLib);
 
   //-Mark special fluid particles to ignore. | Marca las particulas fluidas especiales para ignorar.
   InOutIgnoreFluidDef(InOut->MkFluidList);
@@ -236,8 +236,6 @@ void JSphGpuSingle::InOutComputeStep(double stepdt){
   //-Updates zsurf.
   if(InOut->GetCalculatedZsurf())InOutCalculeZsurf();
   if(InOut->GetCalculatedZsurf() || InOut->GetVariableZsurf())InOut->UpdateZsurf(TimeStep+stepdt);
-  //-Creates VTK file with Zsurf.
-  if(TimeStep+stepdt>=TimePartNext)InOut->SaveVtkZsurf(Part);
 
   //-Updates velocity and rhop (no extrapolated).
   if(InOut->GetNoExtrapolatedData())InOut->UpdateDataGpu(float(TimeStep+stepdt),true
@@ -258,6 +256,9 @@ void JSphGpuSingle::InOutComputeStep(double stepdt){
 
   //-Free array for inoutpart list.
   ArraysGpu->Free(inoutpart); inoutpart=NULL;
+
+  //-Saves files per PART.
+  if(TimeStep+stepdt>=TimePartNext)InOut->SavePartFiles(Part);
 
   TmgStop(Timers,TMG_SuInOut);
 }

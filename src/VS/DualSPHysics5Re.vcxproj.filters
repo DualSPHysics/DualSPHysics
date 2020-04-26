@@ -394,6 +394,9 @@
     <ClInclude Include="..\source\JVtkLibDef.h">
       <Filter>Libs</Filter>
     </ClInclude>
+    <ClInclude Include="..\source\JSphInOutZone.h">
+      <Filter>Src_Inlet</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\source\JCfgRun.cpp">
@@ -650,6 +653,9 @@
     </ClCompile>
     <ClCompile Include="..\source\JSpaceUserVars.cpp">
       <Filter>CommonDsph</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JSphInOutZone.cpp">
+      <Filter>Src_Inlet</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

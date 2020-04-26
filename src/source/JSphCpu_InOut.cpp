@@ -22,6 +22,7 @@
 #include "FunctionsMath.h"
 #include "FunctionsGeo3d.h"
 #include "JSphInOut.h"
+#include "JSphInOutZone.h"
 #include <climits>
 
 using namespace std;

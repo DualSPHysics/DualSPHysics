@@ -110,6 +110,7 @@ public:
   void VisuConfig(std::string txhead,std::string txfoot);
 
   bool GetSimulate2D()const{ return(Simulate2D); };
+  double GetSimulate2DPosY()const{ return(Simulate2DPosY); };
   double GetDp()const{ return(Dp); }
   tdouble3 GetDomPosMin()const{ return(DomPosMin); }
   tdouble3 GetDomPosMax()const{ return(DomPosMax); }

@@ -1967,8 +1967,8 @@ void InOutInterpolateTime(unsigned npt,double time,double t0,double t1
 /// Interpolate velocity in time and Z-position of selected partiles in a list.
 //------------------------------------------------------------------------------
 __global__ void KerInOutInterpolateZVel(unsigned izone,double posminz,double dpz,int nz1
-  ,const float *velx,const float *velz
-  ,unsigned np,const int *plist,const double *posz,const typecode *code,float4 *velrhop)
+  ,const float *velx,const float *velz,unsigned np,const int *plist,const double *posz
+  ,const typecode *code,float4 *velrhop,float velcorr)
 {
   const unsigned cp=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
   if(cp<np){
@@ -1984,7 +1984,7 @@ __global__ void KerInOutInterpolateZVel(unsigned izone,double posminz,double dpz
       const float v00=velx[cp];
       const float v01=(cz<nz1? velx[cp+1]: v00);
       const float v=float(fz*(v01-v00)+v00);
-      velrhop[p]=make_float4(v,0,0,velrhop[p].w);
+      velrhop[p]=make_float4(v-velcorr,0,0,velrhop[p].w);
       if(velz!=NULL){
         const float v00=velz[cp];
         const float v01=(cz<nz1? velz[cp+1]:    v00);
@@ -1999,12 +1999,12 @@ __global__ void KerInOutInterpolateZVel(unsigned izone,double posminz,double dpz
 /// Interpolate velocity in time and Z-position of selected partiles in a list.
 //==============================================================================
 void InOutInterpolateZVel(unsigned izone,double posminz,double dpz,int nz1
-  ,const float *velx,const float *velz
-  ,unsigned np,const int *plist,const double *posz,const typecode *code,float4 *velrhop)
+  ,const float *velx,const float *velz,unsigned np,const int *plist
+  ,const double *posz,const typecode *code,float4 *velrhop,float velcorr)
 {
   if(np){
     dim3 sgrid=GetSimpleGridSize(np,SPHBSIZE);
-    KerInOutInterpolateZVel <<<sgrid,SPHBSIZE>>> (izone,posminz,dpz,nz1,velx,velz,np,plist,posz,code,velrhop);
+    KerInOutInterpolateZVel <<<sgrid,SPHBSIZE>>> (izone,posminz,dpz,nz1,velx,velz,np,plist,posz,code,velrhop,velcorr);
   }
 }
 

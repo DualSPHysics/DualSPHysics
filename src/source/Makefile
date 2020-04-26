@@ -1,4 +1,4 @@
-#DualSPHysics GPU/CPU v5.0.085 20-03-2020
+#DualSPHysics GPU/CPU v5.0.104 26-04-2020
 
 #=============== Compilation Options (YES/NO) ===============
 USE_GCC5=NO
@@ -121,7 +121,7 @@ OBWAVERZ=JMLPistonsGpu.o JRelaxZonesGpu.o
 OBWAVERZCUDA=JRelaxZone_ker.o
 OBCHRONO=JChronoObjects.o
 OBMOORDYN=JMooredFloatings.o JSphFtForcePoints.o
-OBINOUT=JSphCpu_InOut.o JSphCpuSingle_InOut.o JSphBoundCorr.o JSphInOut.o JSphInOutGridData.o JSphInOutPoints.o JSimpleNeigs.o
+OBINOUT=JSphCpu_InOut.o JSphCpuSingle_InOut.o JSphBoundCorr.o JSphInOut.o JSphInOutZone.o JSphInOutGridData.o JSphInOutPoints.o JSimpleNeigs.o
 OBINOUTGPU=JSphGpuSingle_InOut.o
 OBMDBC=JPartNormalData.o JNormalsMarrone.o
 

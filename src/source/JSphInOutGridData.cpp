@@ -344,53 +344,10 @@ void JSphInOutGridData::ComputeTime(double t){
 }
 
 //==============================================================================
-/// Interpolate velocity in time and position.
-//==============================================================================
-void JSphInOutGridData::InterpolateVel(double time,unsigned np,const tdouble3* pos,tfloat3 *vel){
-  ComputeTime(time);
-  const float *velx=SelData->GetVelx();
-  const float *velz=SelData->GetVelz();
-  const int nx1=Nx-1;
-  const int nz1=Nz-1;
-  for(unsigned p=0;p<np;p++){
-    const double px=pos[p].x-PosMin.x;
-    const double pz=pos[p].z-PosMin.z;
-    int cx=int(px/Dpx);
-    cx=max(cx,0);
-    cx=min(cx,nx1);
-    const double fx=(px/Dpx-cx);  //const double fx=(px-Dpx*cx)/Dpx;
-    int cz=int(pz/Dpz);
-    cz=max(cz,0);
-    cz=min(cz,nz1);
-    const double fz=(pz/Dpz-cz);  //const double fz=(pz-Dpz*cz)/Dpz;
-    //-Interpolation in Z.
-    const unsigned cp=Nz*cx+cz;
-    const float v00=velx[cp];
-    const float v01=(cz<nz1? velx[cp+1]:    v00);
-    const float v10=(cx<nx1? velx[cp+Nz]:   v00);
-    const float v11=(cx<nx1? (cz<nz1? velx[cp+Nz+1]: v10): v01);
-    const float v0=float(fz*(v01-v00)+v00);
-    const float v1=float(fz*(v11-v10)+v10);
-    const float v=float(fx*(v1-v0)+v0);
-    vel[p]=TFloat3(v,0,0);
-    if(UseVelz){
-      const float v00=velz[cp];
-      const float v01=(cz<nz1? velz[cp+1]:    v00);
-      const float v10=(cx<nx1? velz[cp+Nz]:   v00);
-      const float v11=(cx<nx1? (cz<nz1? velz[cp+Nz+1]: v10): v01);
-      const float v0=float(fz*(v01-v00)+v00);
-      const float v1=float(fz*(v11-v10)+v10);
-      const float v=float(fx*(v1-v0)+v0);
-      vel[p].z=v;
-    }
-  }
-}
-
-//==============================================================================
 /// Interpolate velocity in time and position of selected partiles in a list.
 //==============================================================================
 void JSphInOutGridData::InterpolateVelCpu(double time,unsigned izone,unsigned np,const int *plist
-  ,const tdouble3 *pos,const typecode *code,const unsigned *idp,tfloat4 *velrhop)
+  ,const tdouble3 *pos,const typecode *code,const unsigned *idp,tfloat4 *velrhop,float velcorr)
 {
   ComputeTime(time);
   const float *velx=SelData->GetVelx();
@@ -423,7 +380,7 @@ void JSphInOutGridData::InterpolateVelCpu(double time,unsigned izone,unsigned np
       const float v0=float(fz*(v01-v00)+v00);
       const float v1=float(fz*(v11-v10)+v10);
       const float v=float(fx*(v1-v0)+v0);
-      velrhop[p]=TFloat4(v,0,0,velrhop[p].w);
+      velrhop[p]=TFloat4(v-velcorr,0,0,velrhop[p].w);
       if(UseVelz){
         const float v00=velz[cp];
         const float v01=(cz<nz1? velz[cp+1]:    v00);
@@ -442,7 +399,7 @@ void JSphInOutGridData::InterpolateVelCpu(double time,unsigned izone,unsigned np
 /// Interpolate velocity in time and Z-position of selected partiles in a list.
 //==============================================================================
 void JSphInOutGridData::InterpolateZVelCpu(double time,unsigned izone,unsigned np,const int *plist
-  ,const tdouble3 *pos,const typecode *code,const unsigned *idp,tfloat4 *velrhop)
+  ,const tdouble3 *pos,const typecode *code,const unsigned *idp,tfloat4 *velrhop,float velcorr)
 {
   ComputeTime(time);
   const float *velx=SelData->GetVelx();
@@ -466,7 +423,7 @@ void JSphInOutGridData::InterpolateZVelCpu(double time,unsigned izone,unsigned n
       const float v00=velx[cp];
       const float v01=(cz<nz1? velx[cp+1]: v00);
       const float v=float(fz*(v01-v00)+v00);
-      velrhop[p]=TFloat4(v,0,0,velrhop[p].w);
+      velrhop[p]=TFloat4(v-velcorr,0,0,velrhop[p].w);
       if(UseVelz){
         const float v00=velz[cp];
         const float v01=(cz<nz1? velz[cp+1]:    v00);
@@ -530,10 +487,11 @@ void JSphInOutGridData::ComputeTimeGpu(double t){
 /// Interpolate velocity in time and Z-position of selected partiles in a list.
 //==============================================================================
 void JSphInOutGridData::InterpolateZVelGpu(double time,unsigned izone,unsigned np,const int *plist
-  ,const double2 *posxyg,const double *poszg,const typecode *codeg,const unsigned *idpg,float4 *velrhopg)
+  ,const double2 *posxyg,const double *poszg,const typecode *codeg,const unsigned *idpg
+  ,float4 *velrhopg,float velcorr)
 {
   ComputeTimeGpu(time);
-  cusphinout::InOutInterpolateZVel(izone,PosMin.z,Dpz,Nz-1,SelVelxg,SelVelzg,np,plist,poszg,codeg,velrhopg);
+  cusphinout::InOutInterpolateZVel(izone,PosMin.z,Dpz,Nz-1,SelVelxg,SelVelzg,np,plist,poszg,codeg,velrhopg,velcorr);
 }
 #endif
 

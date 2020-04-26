@@ -1,4 +1,4 @@
-DualSPHysics5             v5.0.102            24-04-2020
+DualSPHysics5             v5.0.104            26-04-2020
 BoundaryVTK               v5.0.057            15-04-2020
 ComputeForces             v5.0.049            16-03-2020
 FloatingInfo              v5.0.032            26-02-2020

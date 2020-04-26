@@ -78,7 +78,7 @@ void JSphCpuSingle::InOutInit(double timestepini){
   //-Configures InOut zones and prepares new inout particles to create.
   const unsigned newnp=InOut->Config(timestepini,Stable,Simulate2D,Simulate2DPosY,PeriActive
     ,RhopZero,CteB,Gamma,Gravity,Dp,MapRealPosMin,MapRealPosMax,MkInfo->GetCodeNewFluid()
-    ,PartsInit,NuxLib);
+    ,PartsInit,GaugeSystem,NuxLib);
 
   //-Mark special fluid particles to ignore. | Marca las particulas fluidas especiales para ignorar.
   InOutIgnoreFluidDef(InOut->MkFluidList);
@@ -218,8 +218,6 @@ void JSphCpuSingle::InOutComputeStep(double stepdt){
   //-Updates zsurf.
   if(InOut->GetCalculatedZsurf())InOutCalculeZsurf();
   if(InOut->GetCalculatedZsurf() || InOut->GetVariableZsurf())InOut->UpdateZsurf(TimeStep+stepdt);
-  //-Creates VTK file with Zsurf.
-  if(TimeStep+stepdt>=TimePartNext)InOut->SaveVtkZsurf(Part);
 
   //-Updates velocity and rhop (no extrapolated).
   if(InOut->GetNoExtrapolatedData())InOut->UpdateDataCpu(float(TimeStep+stepdt),true
@@ -240,6 +238,9 @@ void JSphCpuSingle::InOutComputeStep(double stepdt){
 
   //-Free array for inoutpart list.
   ArraysCpu->Free(inoutpart); inoutpart=NULL;
+
+  //-Saves files per PART.
+  if(TimeStep+stepdt>=TimePartNext)InOut->SavePartFiles(Part);
 
   //if(1)for(unsigned p=0;p<Np;p++)if(Idpc[p]==4382)Log->Printf("%d>=CS_FIN>> vel[%d].x:%f",Nstep,p,Velrhopc[p].x);
   TmcStop(Timers,TMC_SuInOut);
