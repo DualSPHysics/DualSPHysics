@@ -30,6 +30,7 @@
 #endif
 
 #include <climits>
+#include <cfloat>
 
 using namespace std;
 
@@ -40,8 +41,9 @@ using namespace std;
 /// Constructor.
 //==============================================================================
 JSphAccInputMk::JSphAccInputMk(JLog2* log,unsigned idx,bool bound,word mktype1,word mktype2
-  ,bool genabled,tfloat3 acccentre,const JLinearValue &acedata,const JLinearValue &veldata)
-  :Log(log),Idx(idx),Bound(bound),MkType1(mktype1),MkType2(mktype2)
+  ,double tini,double tend,bool genabled,tfloat3 acccentre,const JLinearValue &acedata
+  ,const JLinearValue &veldata)
+  :Log(log),Idx(idx),Bound(bound),MkType1(mktype1),MkType2(mktype2),TimeIni(tini),TimeEnd(tend)
   ,GravityEnabled(genabled),AccCoG(acccentre)
 {
   ClassName="JSphAccInputMk";
@@ -84,9 +86,10 @@ long long JSphAccInputMk::GetAllocMemory()const{
 void JSphAccInputMk::GetConfig(std::vector<std::string> &lines)const{
   if(MkType1==MkType2)lines.push_back(fun::PrintStr("Input_%u (%s:%u)",Idx,(Bound? "mkbound": "mkfluid"),MkType1));
   else                lines.push_back(fun::PrintStr("Input_%u (%s:%u - %u)",Idx,(Bound? "mkbound": "mkfluid"),MkType1,MkType2));
-  if(!AceData->GetFile().empty())lines.push_back(fun::PrintStr("  Datafile: %s",AceData->GetFile().c_str()));
+  if(!AceData->GetFile().empty())lines.push_back(fun::PrintStr("  Data file.....: %s",AceData->GetFile().c_str()));
+  lines.push_back(fun::PrintStr("  Time interval.: %g - %s [s]",TimeIni,fun::DoublexStr(TimeEnd).c_str()));
   lines.push_back(fun::PrintStr("  Global gravity: %s",(GravityEnabled? "True": "False")));
-  lines.push_back(fun::PrintStr("  Acc center: (%g,%g,%g)",AccCoG.x,AccCoG.y,AccCoG.z));
+  lines.push_back(fun::PrintStr("  Acc center....: (%g,%g,%g) [m]",AccCoG.x,AccCoG.y,AccCoG.z));
 }
 
 //=================================================================================================================
@@ -96,12 +99,15 @@ const StAceInput& JSphAccInputMk::GetAccValues(double timestep){
   if(LastTimestepInput>=0 && timestep==LastTimestepInput)return(LastOutput);
   LastTimestepInput=timestep;
   //Return values.
-  LastOutput.codesel1=CodeSel1;
-  LastOutput.codesel2=CodeSel2;
-  LastOutput.centre=ToTDouble3(AccCoG);
-  LastOutput.setgravity=GravityEnabled;
-  AceData->GetValue3d3d(timestep,LastOutput.acclin,LastOutput.accang);
-  VelData->GetValue3d3d(timestep,LastOutput.vellin,LastOutput.velang);
+  if(TimeIni<=timestep && timestep<=TimeEnd){
+    LastOutput.codesel1=CodeSel1;
+    LastOutput.codesel2=CodeSel2;
+    LastOutput.centre=ToTDouble3(AccCoG);
+    LastOutput.setgravity=GravityEnabled;
+    AceData->GetValue3d3d(timestep,LastOutput.acclin,LastOutput.accang);
+    VelData->GetValue3d3d(timestep,LastOutput.vellin,LastOutput.velang);
+  }
+  else LastOutput.codesel1=UINT_MAX;
   return(LastOutput);
 }
 
@@ -166,12 +172,14 @@ void JSphAccInput::ReadXml(const JXml *sxml,TiXmlElement* lis){
       //-Check XML configuration.
       if(sxml->ExistsElement(ele,"mkfluid" ))Run_ExceptioonFile("Element <mkfluid> is invalid for current version. Update the XML file.",sxml->ErrGetFileRow(ele));
       if(sxml->ExistsElement(ele,"datafile"))Run_ExceptioonFile("Element <datafile> is invalid for current version. Update the XML file.",sxml->ErrGetFileRow(ele));
-      sxml->CheckElementNames(ele,true,"acccentre globalgravity acctimes acctimesfile");
+      sxml->CheckElementNames(ele,true,"time acccentre globalgravity acctimes acctimesfile");
       if(sxml->ExistsElement(ele,"acctimes") && sxml->ExistsElement(ele,"acctimesfile"))
         Run_ExceptioonFile("Only <acctimes> or <acctimesfile> is valid but not both.",sxml->ErrGetFileRow(ele));
       if(sxml->ExistsAttribute(ele,"mkbound") && sxml->ExistsAttribute(ele,"mkfluid"))
         Run_ExceptioonFile("Only mkbound or mkfluid values is valid but not both.",sxml->ErrGetFileRow(ele));
       //-Load general configuration.
+      const double tini=sxml->ReadElementDouble(ele,"time","start",true,0);
+      const double tend=sxml->ReadElementDouble(ele,"time","end",true,DBL_MAX);
       const tfloat3 acccentre=sxml->ReadElementFloat3(ele,"acccentre");
       const bool genabled=sxml->ReadElementBool(ele,"globalgravity","value");
       const bool bound=sxml->ExistsAttribute(ele,"mkbound");
@@ -191,7 +199,7 @@ void JSphAccInput::ReadXml(const JXml *sxml,TiXmlElement* lis){
       //-Create input configurations.
       if(mktype1!=USHRT_MAX){
         if(ExistMk(bound,mktype1))Run_ExceptioonFile(fun::PrintStr("An input already exists for the same %s=%u.",(bound? "mkbound": "mkfluid"),mktype1),sxml->ErrGetFileRow(ele));
-        JSphAccInputMk *input=new JSphAccInputMk(Log,GetCount(),bound,mktype1,mktype2,genabled,acccentre,acedata,veldata);
+        JSphAccInputMk *input=new JSphAccInputMk(Log,GetCount(),bound,mktype1,mktype2,tini,tend,genabled,acccentre,acedata,veldata);
         Inputs.push_back(input);
       }
       else{//-Check range of mkvalues.
@@ -206,12 +214,12 @@ void JSphAccInput::ReadXml(const JXml *sxml,TiXmlElement* lis){
           word v=word(vmk[c]);
           if(mktype2+1==v)mktype2=v;
           else{
-            JSphAccInputMk *input=new JSphAccInputMk(Log,GetCount(),bound,mktype1,mktype2,genabled,acccentre,acedata,veldata);
+            JSphAccInputMk *input=new JSphAccInputMk(Log,GetCount(),bound,mktype1,mktype2,tini,tend,genabled,acccentre,acedata,veldata);
             Inputs.push_back(input);
             mktype1=mktype2=v;
           }
         }
-        JSphAccInputMk *input=new JSphAccInputMk(Log,GetCount(),bound,mktype1,mktype2,genabled,acccentre,acedata,veldata);
+        JSphAccInputMk *input=new JSphAccInputMk(Log,GetCount(),bound,mktype1,mktype2,tini,tend,genabled,acccentre,acedata,veldata);
         Inputs.push_back(input);
       }
     }
@@ -334,48 +342,50 @@ void JSphAccInput::RunCpu(double timestep,tfloat3 gravity,unsigned n,unsigned pi
 {
   for(unsigned c=0;c<GetCount();c++){
     const StAceInput v=GetAccValues(c,timestep);
-    const bool withaccang=(v.accang.x!=0 || v.accang.y!=0 || v.accang.z!=0);
-    //const typecode codesel=typecode(v.mkfluid);
-    const typecode codesel1=typecode(v.codesel1);
-    const typecode codesel2=typecode(v.codesel2);
-    const int ppini=int(pini),ppfin=pini+int(n);
-    #ifdef OMP_USE
-      #pragma omp parallel for schedule (static)
-    #endif
-    for(int p=ppini;p<ppfin;p++){//-Iterates through the fluid particles.
-      //-Checks if the current particle is part of the particle set by its MK.
-      const typecode tav=CODE_GetTypeAndValue(code[p]);
-      if(codesel1<=tav && tav<=codesel2){
-        tdouble3 acc=ToTDouble3(ace[p]);
-        acc=acc+v.acclin;                             //-Adds linear acceleration.
-        if(!v.setgravity)acc=acc-ToTDouble3(gravity); //-Subtract global gravity from the acceleration if it is set in the input file
-        if(withaccang){                               //-Adds angular acceleration.
-          const tdouble3 dc=pos[p]-v.centre;
-          const tdouble3 vel=TDouble3(velrhop[p].x,velrhop[p].y,velrhop[p].z);//-Get the current particle's velocity
+    if(v.codesel1!=UINT_MAX){
+      const bool withaccang=(v.accang.x!=0 || v.accang.y!=0 || v.accang.z!=0);
+      //const typecode codesel=typecode(v.mkfluid);
+      const typecode codesel1=typecode(v.codesel1);
+      const typecode codesel2=typecode(v.codesel2);
+      const int ppini=int(pini),ppfin=pini+int(n);
+      #ifdef OMP_USE
+        #pragma omp parallel for schedule (static)
+      #endif
+      for(int p=ppini;p<ppfin;p++){//-Iterates through the fluid particles.
+        //-Checks if the current particle is part of the particle set by its MK.
+        const typecode tav=CODE_GetTypeAndValue(code[p]);
+        if(codesel1<=tav && tav<=codesel2){
+          tdouble3 acc=ToTDouble3(ace[p]);
+          acc=acc+v.acclin;                             //-Adds linear acceleration.
+          if(!v.setgravity)acc=acc-ToTDouble3(gravity); //-Subtract global gravity from the acceleration if it is set in the input file
+          if(withaccang){                               //-Adds angular acceleration.
+            const tdouble3 dc=pos[p]-v.centre;
+            const tdouble3 vel=TDouble3(velrhop[p].x,velrhop[p].y,velrhop[p].z);//-Get the current particle's velocity
 
-          //-Calculate angular acceleration ((Dw/Dt) x (r_i - r)) + (w x (w x (r_i - r))) + (2w x (v_i - v))
-          //(Dw/Dt) x (r_i - r) (term1)
-          acc.x+=(v.accang.y*dc.z)-(v.accang.z*dc.y);
-          acc.y+=(v.accang.z*dc.x)-(v.accang.x*dc.z);
-          acc.z+=(v.accang.x*dc.y)-(v.accang.y*dc.x);
+            //-Calculate angular acceleration ((Dw/Dt) x (r_i - r)) + (w x (w x (r_i - r))) + (2w x (v_i - v))
+            //(Dw/Dt) x (r_i - r) (term1)
+            acc.x+=(v.accang.y*dc.z)-(v.accang.z*dc.y);
+            acc.y+=(v.accang.z*dc.x)-(v.accang.x*dc.z);
+            acc.z+=(v.accang.x*dc.y)-(v.accang.y*dc.x);
 
-          //-Centripetal acceleration (term2)
-          //-First find w x (r_i - r))
-          const double innerx=(v.velang.y*dc.z)-(v.velang.z*dc.y);
-          const double innery=(v.velang.z*dc.x)-(v.velang.x*dc.z);
-          const double innerz=(v.velang.x*dc.y)-(v.velang.y*dc.x);
-          //-Find w x inner.
-          acc.x+=(v.velang.y*innerz)-(v.velang.z*innery);
-          acc.y+=(v.velang.z*innerx)-(v.velang.x*innerz);
-          acc.z+=(v.velang.x*innery)-(v.velang.y*innerx);
+            //-Centripetal acceleration (term2)
+            //-First find w x (r_i - r))
+            const double innerx=(v.velang.y*dc.z)-(v.velang.z*dc.y);
+            const double innery=(v.velang.z*dc.x)-(v.velang.x*dc.z);
+            const double innerz=(v.velang.x*dc.y)-(v.velang.y*dc.x);
+            //-Find w x inner.
+            acc.x+=(v.velang.y*innerz)-(v.velang.z*innery);
+            acc.y+=(v.velang.z*innerx)-(v.velang.x*innerz);
+            acc.z+=(v.velang.x*innery)-(v.velang.y*innerx);
 
-          //-Coriolis acceleration 2w x (v_i - v) (term3)
-          acc.x+=((2.0*v.velang.y)*vel.z)-((2.0*v.velang.z)*(vel.y-v.vellin.y));
-          acc.y+=((2.0*v.velang.z)*vel.x)-((2.0*v.velang.x)*(vel.z-v.vellin.z));
-          acc.z+=((2.0*v.velang.x)*vel.y)-((2.0*v.velang.y)*(vel.x-v.vellin.x));
+            //-Coriolis acceleration 2w x (v_i - v) (term3)
+            acc.x+=((2.0*v.velang.y)*vel.z)-((2.0*v.velang.z)*(vel.y-v.vellin.y));
+            acc.y+=((2.0*v.velang.z)*vel.x)-((2.0*v.velang.x)*(vel.z-v.vellin.z));
+            acc.z+=((2.0*v.velang.x)*vel.y)-((2.0*v.velang.y)*(vel.x-v.vellin.x));
+          }
+          //-Stores the new acceleration value.
+          ace[p]=ToTFloat3(acc);
         }
-        //-Stores the new acceleration value.
-        ace[p]=ToTFloat3(acc);
       }
     }
   }
@@ -390,10 +400,12 @@ void JSphAccInput::RunGpu(double timestep,tfloat3 gravity,unsigned n,unsigned pi
 {
   for(unsigned c=0;c<GetCount();c++){
     const StAceInput v=GetAccValues(c,timestep);
-    const typecode codesel1=typecode(v.codesel1);
-    const typecode codesel2=typecode(v.codesel2);
-    cuaccin::AddAccInput(n,pini,codesel1,codesel2,v.acclin,v.accang,v.centre
-      ,v.velang,v.vellin,v.setgravity,gravity,code,posxy,posz,velrhop,ace,NULL);
+    if(v.codesel1!=UINT_MAX){
+      const typecode codesel1=typecode(v.codesel1);
+      const typecode codesel2=typecode(v.codesel2);
+      cuaccin::AddAccInput(n,pini,codesel1,codesel2,v.acclin,v.accang,v.centre
+        ,v.velang,v.vellin,v.setgravity,gravity,code,posxy,posz,velrhop,ace,NULL);
+    }
   }
 }
 #endif

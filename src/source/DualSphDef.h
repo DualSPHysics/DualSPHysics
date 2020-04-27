@@ -281,8 +281,8 @@ typedef struct StrMaxNumbers{
 
 ///Structure with values to apply external acceleration to fluid.
 typedef struct{
-  unsigned codesel1;
-  unsigned codesel2;
+  unsigned codesel1;  ///<First code for application (It is disabled with UINT_MAX).
+  unsigned codesel2;  ///<Last code for application.
   tdouble3 acclin;
   tdouble3 accang;
   tdouble3 centre;

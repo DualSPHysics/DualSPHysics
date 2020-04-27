@@ -23,6 +23,7 @@
 //:#   consecutivas iguales. (13-09-2019)
 //:# - Objeto JXml pasado como const para operaciones de lectura. (18-03-2020)  
 //:# - Comprueba opcion active en elementos de primer y segundo nivel. (18-03-2020)  
+//:# - Permite definir un intervalo de tiempo para su activacion. (26-04-2020)  
 //:#############################################################################
 
 /// \file JSphAccInput.h \brief Declares the class \ref JSphAccInput.
@@ -57,10 +58,12 @@ class JSphMk;
 class JSphAccInputMk : protected JObject
 {
 public:
-  const unsigned Idx;   ///<Index of configuration.
-  const bool Bound;     ///<Type of target particles (boundary floating or fluid).
-  const word MkType1;   ///<The MK bound or fluid to select the target particles.
-  const word MkType2;   ///<Final range of MK values to select the target particles.
+  const unsigned Idx;     ///<Index of configuration.
+  const bool Bound;       ///<Type of target particles (boundary floating or fluid).
+  const word MkType1;     ///<The MK bound or fluid to select the target particles.
+  const word MkType2;     ///<Final range of MK values to select the target particles.
+  const double TimeIni;   ///<Initial time of activation (default=0).
+  const double TimeEnd;   ///<Final time of activation (default=DBL_MAX).
   const bool GravityEnabled;  ///<Determines whether global gravity is enabled or disabled for this particle set SL
   const tfloat3 AccCoG;       ///<The centre of gravity that will be used for angular acceleration calculations.
 
@@ -80,8 +83,8 @@ protected:
 
 public:
   JSphAccInputMk(JLog2* log,unsigned idx,bool bound,word mktype1,word mktype2
-    ,bool genabled,tfloat3 acccentre,const JLinearValue &acedata
-    ,const JLinearValue &veldata);
+    ,double tini,double tend,bool genabled,tfloat3 acccentre
+    ,const JLinearValue &acedata,const JLinearValue &veldata);
   ~JSphAccInputMk();
   long long GetAllocMemory()const;
 
