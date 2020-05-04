@@ -1188,13 +1188,14 @@ void JSph::LoadBoundNormals(unsigned np,unsigned npb,const unsigned *idp
     else{
       //-Loads final normals in NBI4 file.
       pnor=nd.GetPartNormals();
-      if(pnor==NULL)Run_ExceptioonFile("Normal data and final normals are missing in NBI4 file.",filenordata);
       pnorsize=nd.GetNbound();
     }
     //-Applies final normals. Loads normals from boundary particle to boundary limit.
-    if(pnorsize<npb)Run_ExceptioonFile("The number of final normals does not match fixed and moving particles.",filenordata);
-    for(unsigned p=0;p<npb;p++)boundnormal[p]=ToTFloat3(pnor[p]);  //-For fixed and moving particles.
-    Log->Printf("NormalDataFile=\"%s\"",filenordata.c_str());
+    if(pnorsize){
+      if(pnorsize<npb)Run_ExceptioonFile("The number of final normals does not match fixed and moving particles.",filenordata);
+      for(unsigned p=0;p<npb;p++)boundnormal[p]=ToTFloat3(pnor[p]);  //-For fixed and moving particles.
+      Log->Printf("NormalDataFile=\"%s\"",filenordata.c_str());
+    }
     //for(unsigned p=0;p<npb;p++)boundnormal[p]=ToTFloat3(pnor[p]*2.);  //-Normal from boundary particle to ghost node (full distance).
     ////-Removes normal of unselected boundaries.
     //if(BoundCorr && !BoundCorr->GetMkBoundList().empty()){

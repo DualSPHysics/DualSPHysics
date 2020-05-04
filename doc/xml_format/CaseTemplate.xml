@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<case app="GenCase v5.0.174 (16-04-2020)" date="16-04-2020 03:35:23">
-    <casedef requiredversion="v5.0.174">
+<case app="GenCase v5.0.176 (03-05-2020)" date="04-05-2020 01:53:38">
+    <casedef requiredversion="v5.0.176">
         <constantsdef>
             <lattice bound="2" fluid="1" comment="Type of lattice to create the initial particles (default=1)" />
             <gravity x="0" y="0" z="-9.81" comment="Gravitational acceleration" units_comment="m/s^2" />
@@ -771,7 +771,7 @@
         </motion>
         <normals active="true">
             <distanceh value="2.0" comment="Maximum distance (H*distanceh) to compute normals data (default=2)" />
-            <geometryfile file="[CaseName]_hdp_Actual.vtk" comment="File with boundary geometry (VTK format)" />
+            <geometryfile file="[CaseName]_hdp_Actual.vtk" comment="File with boundary geometry (VTK format). Use NONE to ignore it." />
             <computenormals value="0" comment="Computes final normals for boundary particles 0:None, 1:Mean, 2:Marrone(unverified) (default=0)" />
             <svnormaldata value="0" comment="Saves VTK with normal data for debug (default=0)" />
             <svnormals value="0" comment="Saves VTK with particle normals according to <computenormals> for debug (default=0)" />
