@@ -89,17 +89,16 @@ void JPartDataHead::ConfigBasic(std::string runcode,std::string appname
 /// Setting information of each particle block.
 //==============================================================================
 void JPartDataHead::ConfigParticles(TpParticles type,unsigned mk,unsigned mktype,unsigned begin,unsigned count){
-  const char met[]="ConfigParticles";
   if(MkListSize){
     const JPartDataHeadMkBlock mbk0=MkList[MkListSize-1];
-    if(mbk0.Type>type)RunException(met,"Type of new particles block is invalid.");
-    if(mbk0.Begin+mbk0.Count!=begin)RunException(met,"Begin of new particles block is invalid.");
-    if(GetMkBlockByMk(mk)!=UINT_MAX)RunException(met,"Mk is already defined.");
-    if(IsBound(type) && GetMkBlockByMkBound(mktype)!=UINT_MAX)RunException(met,"MkBound is already defined.");
-    if(IsFluid(type) && GetMkBlockByMkFluid(mktype)!=UINT_MAX)RunException(met,"MkFluid is already defined.");
+    if(mbk0.Type>type)Run_Exceptioon("Type of new particles block is invalid.");
+    if(mbk0.Begin+mbk0.Count!=begin)Run_Exceptioon("Begin of new particles block is invalid.");
+    if(GetMkBlockByMk(mk)!=UINT_MAX)Run_Exceptioon("Mk is already defined.");
+    if(IsBound(type) && GetMkBlockByMkBound(mktype)!=UINT_MAX)Run_Exceptioon("MkBound is already defined.");
+    if(IsFluid(type) && GetMkBlockByMkFluid(mktype)!=UINT_MAX)Run_Exceptioon("MkFluid is already defined.");
   }
-  else if(begin)RunException(met,"Begin of first particles block is invalid.");
-  if(!count)RunException(met,"Count of new particles block is invalid.");
+  else if(begin)Run_Exceptioon("Begin of first particles block is invalid.");
+  if(!count)Run_Exceptioon("Count of new particles block is invalid.");
   MkList.push_back(JPartDataHeadMkBlock(type,mk,mktype,begin,count));
   UptadeMkNumbers();
 }
@@ -120,7 +119,7 @@ void JPartDataHead::UptadeMkNumbers(){
       case TpPartMoving:    MkListMoving++; CaseNmoving+=mbk.Count;  break;
       case TpPartFloating:  MkListFloat++;  CaseNfloat+=mbk.Count;   break;
       case TpPartFluid:     MkListFluid++;  CaseNfluid+=mbk.Count;   break;
-      default: RunException("UptadeMkNumbers","Type is unknown.");
+      default: Run_Exceptioon("Type is unknown.");
     }
   }
   MkListBound=MkListFixed+MkListMoving+MkListFloat;
@@ -132,7 +131,7 @@ void JPartDataHead::UptadeMkNumbers(){
     case TpPartMoving:    
     case TpPartFloating:  if(!MkBoundFirst)MkBoundFirst=mbk.Mk-mbk.MkType;   break;
     case TpPartFluid:     if(!MkFluidFirst)MkFluidFirst=mbk.Mk-mbk.MkType;   break;
-    default: RunException("UptadeMkNumbers","Type is unknown.");
+    default: Run_Exceptioon("Type is unknown.");
     }
   }
 }
@@ -283,7 +282,6 @@ std::string JPartDataHead::GetFileName(std::string dir){
 /// Loads binary file Part_Head.ibi4.
 //==============================================================================
 void JPartDataHead::LoadFile(std::string dir){
-  const char met[]="LoadFile";
   Reset();
   DirData=fun::GetDirWithSlash(dir);
   const string file=DirData+GetFileName();
@@ -336,12 +334,12 @@ void JPartDataHead::LoadFile(std::string dir){
 
   //-Loads information of particle blocks.
   JBinaryData* bdatamk=bdat.GetItem("MkBlocks");
-  if(!bdatamk)RunException(met,"Item \'MkBlocks\' is missing.",file);
+  if(!bdatamk)Run_ExceptioonFile("Item \'MkBlocks\' is missing.",file);
   const unsigned nmk=bdatamk->GetvUint("Count");
   unsigned begin=0;
   for(unsigned c=0;c<nmk;c++){
     const JBinaryData* item=bdatamk->GetItem(fun::PrintStr("MkBlock_%03u",c));
-    if(!item)RunException(met,fun::PrintStr("Item \'MkBlock_%03u\' is missing.",c),file);
+    if(!item)Run_ExceptioonFile(fun::PrintStr("Item \'MkBlock_%03u\' is missing.",c),file);
     const TpParticles type=TpPartGetType(item->GetvText("Type"));
     const unsigned mk=item->GetvUint("Mk");
     const unsigned mktype=item->GetvUint("MkType");

@@ -81,7 +81,7 @@ void JSphBoundCorrZone::Reset(){
 /// Configures BoundCode.
 //==============================================================================
 void JSphBoundCorrZone::ConfigBoundCode(typecode boundcode){
-  if(BoundCode)RunException("ConfigBoundCode",fun::PrintStr("BoundCode was already configured for mkbound=%u.",MkBound));
+  if(BoundCode)Run_Exceptioon(fun::PrintStr("BoundCode was already configured for mkbound=%u.",MkBound));
   BoundCode=boundcode;
 }
 
@@ -89,7 +89,6 @@ void JSphBoundCorrZone::ConfigBoundCode(typecode boundcode){
 /// Run automatic configuration of LimitPos and Direction.
 //==============================================================================
 void JSphBoundCorrZone::ConfigAuto(const JSphPartsInit *partsdata){
-  const char met[]="ConfigAuto";
   if(AutoDir!=DIR_None){
     //-Calculates limits of MK particles.
     tdouble3 pmin=TDouble3(0);
@@ -100,7 +99,7 @@ void JSphBoundCorrZone::ConfigAuto(const JSphPartsInit *partsdata){
       pmin=mkinfo->Mkblock(cmk)->GetPosMin();
       pmax=mkinfo->Mkblock(cmk)->GetPosMax();
     }
-    else RunException(met,fun::PrintStr("MkBound value (%u) is not a Mk boundary valid.",MkBound));
+    else Run_Exceptioon(fun::PrintStr("MkBound value (%u) is not a Mk boundary valid.",MkBound));
     const tdouble3 pmed=(pmin+pmax)/2.;
     if(AutoDir==DIR_Defined){
       const typecode codesel=mkinfo->Mkblock(cmk)->Code;
@@ -113,7 +112,7 @@ void JSphBoundCorrZone::ConfigAuto(const JSphPartsInit *partsdata){
         const double dist=fgeo::PlaneDistSign(pla,pos[p]);
         if(dist>dismax)dismax=dist;
       }
-      if(dismax==-DBL_MAX)RunException(met,fun::PrintStr("It was not possible to calculate the limit position for MkBound=%u automatically.",MkBound));
+      if(dismax==-DBL_MAX)Run_Exceptioon(fun::PrintStr("It was not possible to calculate the limit position for MkBound=%u automatically.",MkBound));
       LimitPos=pmed+(Direction*(dismax+(partsdata->Dp*AutoDpFactor)));
     }
     else{
@@ -231,7 +230,6 @@ void JSphBoundCorr::LoadXml(const JXml *sxml,const std::string &place){
 /// Reads list of configurations in the XML node.
 //==============================================================================
 void JSphBoundCorr::ReadXml(const JXml *sxml,TiXmlElement* lis){
-  const char met[]="ReadXml";
   //-Loads value determlimit.
   if(sxml->CountElements(lis,"determlimit")>1)sxml->ErrReadElement(lis,"determlimit",false,"Several definitions for this value.");
   DetermLimit=sxml->ReadElementFloat(lis,"determlimit","value",true,1e-3f);
@@ -282,7 +280,7 @@ void JSphBoundCorr::ReadXml(const JXml *sxml,TiXmlElement* lis){
       const unsigned nmkbounds=unsigned(mkbounds.size());
       for(unsigned cmk=0;cmk<nmkbounds;cmk++){
         const word mkbound=word(mkbounds[cmk]);
-        if(ExistMk(mkbound))RunException(met,fun::PrintStr("An input already exists for the same mkbound=%u.",mkbound));
+        if(ExistMk(mkbound))Run_Exceptioon(fun::PrintStr("An input already exists for the same mkbound=%u.",mkbound));
         JSphBoundCorrZone *zo=new JSphBoundCorrZone(Log,GetCount(),mkbound,autodir,autodpfactor,limitpoint,direction);
         List.push_back(zo);
       }
@@ -295,7 +293,6 @@ void JSphBoundCorr::ReadXml(const JXml *sxml,TiXmlElement* lis){
 /// Updates BoundCode of each configuration.
 //==============================================================================
 void JSphBoundCorr::UpdateMkCode(const JSphMk *mkinfo){
-  const char met[]="UpdateMkCode";
   for(unsigned c=0;c<GetCount();c++){
     const word mkbound=List[c]->MkBound;
     const unsigned cmk=mkinfo->GetMkBlockByMkBound(List[c]->MkBound);
@@ -303,7 +300,7 @@ void JSphBoundCorr::UpdateMkCode(const JSphMk *mkinfo){
       List[c]->ConfigBoundCode(mkinfo->Mkblock(cmk)->Code);
       if(CODE_IsMoving(mkinfo->Mkblock(cmk)->Code))UseMotion=true;
     }
-    else RunException(met,fun::PrintStr("MkBound value (%u) is not a Mk fixed boundary valid.",List[c]->MkBound));
+    else Run_Exceptioon(fun::PrintStr("MkBound value (%u) is not a Mk fixed boundary valid.",List[c]->MkBound));
   }
 }
 

@@ -57,6 +57,7 @@
 //:#   manteniendo compatibilidad. (14-12-2019)
 //:# - Los floating incluyen el valor masspart. (10-03-2020)
 //:# - Objeto JXml pasado como const para operaciones de lectura. (17-03-2020)  
+//:# - Mejora la gestion de excepciones. (06-05-2020)
 //:#############################################################################
 
 /// \file JSpaceParts.h \brief Declares the class \ref JSpaceParts.

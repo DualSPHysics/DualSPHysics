@@ -42,6 +42,7 @@
 //:#   del fichero. (12-01-2014)
 //:# - Opcion en SaveFileXml() para grabar datos de arrays. (04-12-2014)
 //:# - Nuevos metodos CheckCopyArrayData() y CopyArrayData(). (13-04-2020)
+//:# - Mejora la gestion de excepciones. (06-05-2020)
 //:#############################################################################
 
 /// \file JBinaryData.h \brief Declares the class \ref JBinaryData.

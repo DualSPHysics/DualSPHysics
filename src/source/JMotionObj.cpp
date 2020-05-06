@@ -94,7 +94,6 @@ void JMotionMovActive::ConfigData(){
 // Carga y configura datos del movimiento a partir de fichero de datos.
 //==============================================================================
 void JMotionMovActive::DfConfig(bool postype){
-  const char met[]="DfConfig";
   DfReset();
   DfPosType=postype;
   if(DfPosType){
@@ -297,7 +296,7 @@ JMotionAxis* JMotionObj::AxisGetPointer(const tdouble3 &p1,const tdouble3 &p2)co
 int JMotionObj::GetPosMov(JMotionMov* mv)const{
   int pos=-1;
   for(int c=0;c<int(Movs.size())&&pos<0;c++)if(Movs[c]==mv)pos=c;
-  if(pos<0)RunException("GetPosMov","Cannot find the requested movement.");
+  if(pos<0)Run_Exceptioon("Cannot find the requested movement.");
   return(pos);
 }
 
@@ -313,12 +312,11 @@ void JMotionObj::AddEvent(JMotionEvent* evt){ Events.push_back(evt);   }
 // Comprueba y establece enlaces entre movimientos.
 //==============================================================================
 void JMotionObj::LinkMovs(){
-  const char met[]="LinkMovs";
   for(unsigned c=0;c<Movs.size();c++){
     JMotionMov* mov=Movs[c];
     if(mov->NextId){
       mov->SetNextMov(MovGetPointer(mov->NextId));
-      if(!mov->NextMov)RunException(met,fun::PrintStr("The movement with id=%u refers to another non-existent movement (id=%u) within the object.",mov->Id,mov->NextId)); 
+      if(!mov->NextMov)Run_Exceptioon(fun::PrintStr("The movement with id=%u refers to another non-existent movement (id=%u) within the object.",mov->Id,mov->NextId)); 
     }
   }
   for(unsigned c=0;c<Children.size();c++)Children[c]->LinkMovs();
@@ -339,7 +337,7 @@ unsigned JMotionObj::ChildrenCount(){
 //==============================================================================
 void JMotionObj::BeginEvent(double start,double eventfinish,JMotionMov* mov){
   JMotionMovActive* amov=new JMotionMovActive(start,eventfinish,mov);
-  if(!amov)RunException("BeginEvent","Cannot allocate the requested memory.");
+  if(!amov)Run_Exceptioon("Cannot allocate the requested memory.");
   ActiveMovs.push_back(amov);
   //-Pasa a ser un objeto activo el y sus antecesores
   JMotionObj* obj=this;
@@ -673,7 +671,7 @@ void JMotionObj::CopyConfigMovs(JMotion &mot)const{
         JMotionMovNull *mv=(JMotionMovNull*)Movs[c];
         mot.MovAddNull(Id,mv->Id);
       }break;
-      default: RunException("CopyConfigMovs","Unrecognised movement type.");
+      default: Run_Exceptioon("Unrecognised movement type.");
     }
   }   
 }

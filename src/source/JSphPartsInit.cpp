@@ -85,7 +85,7 @@ void JSphPartsInit::LoadParticleData(unsigned np,const tdouble3 *pos,const typec
     memcpy(Code,code,sizeof(typecode)*Np);
   }
   catch(const std::bad_alloc){
-    RunException("LoadParticleData","Could not allocate the requested memory.");
+    Run_Exceptioon("Could not allocate the requested memory.");
   }
 }
 

@@ -21,6 +21,7 @@
 //:# =========
 //:# - El calculo de constantes en ConfigConstants() se hace usando double aunque
 //:#   despues se convierte a float (22-04-2013)
+//:# - Mejora la gestion de excepciones. (06-05-2020)
 //:#############################################################################
 
 /// \file JSph.h \brief Declares the class \ref JSph.

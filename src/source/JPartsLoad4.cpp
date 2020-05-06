@@ -81,7 +81,7 @@ void JPartsLoad4::AllocMemory(unsigned count){
       VelRhop=new tfloat4[Count];
     }
     catch(const std::bad_alloc){
-      RunException("AllocMemory","Could not allocate the requested memory.");
+      Run_Exceptioon("Could not allocate the requested memory.");
     }
   } 
 }
@@ -120,7 +120,7 @@ void JPartsLoad4::CheckSortParticles(){
     unsigned lastbound=0;
     //-Computes position of last boundary particle.
     for(unsigned p=0;p<Count;p++)if(Idp[p]<nbound && p>lastbound)lastbound=p;
-    if(lastbound+1!=nbound)RunException("CheckSortParticles","Order of boundary (fixed and moving) particles is invalid.");
+    if(lastbound+1!=nbound)Run_Exceptioon("Order of boundary (fixed and moving) particles is invalid.");
   }
 }
 
@@ -148,7 +148,6 @@ void JPartsLoad4::SortParticles(){
 void JPartsLoad4::LoadParticles(const std::string &casedir,const std::string &casename
   ,unsigned partbegin,const std::string &casedirbegin)
 {
-  const char met[]="LoadParticles";
   Reset();
   PartBegin=partbegin;
   JPartDataBi4 pd;
@@ -159,13 +158,13 @@ void JPartsLoad4::LoadParticles(const std::string &casedir,const std::string &ca
     const string file1=dir+JPartDataBi4::GetFileNameCase(casename,0,1);
     if(fun::FileExists(file1))pd.LoadFileCase(dir,casename,0,1);
     else if(fun::FileExists(dir+JPartDataBi4::GetFileNameCase(casename,0,2)))pd.LoadFileCase(dir,casename,0,2);
-    else RunException(met,"File of the particles was not found.",file1);
+    else Run_ExceptioonFile("File of the particles was not found.",file1);
   }
   else{
     const string file1=dir+JPartDataBi4::GetFileNamePart(PartBegin,0,1);
     if(fun::FileExists(file1))pd.LoadFilePart(dir,PartBegin,0,1);
     else if(fun::FileExists(dir+JPartDataBi4::GetFileNamePart(PartBegin,0,2)))pd.LoadFilePart(dir,PartBegin,0,2);
-    else RunException(met,"File of the particles was not found.",file1);
+    else Run_ExceptioonFile("File of the particles was not found.",file1);
   }
   //-Obtains configuration. | Obtiene configuracion.
   PartBeginTimeStep=(!PartBegin? 0: pd.Get_TimeStep());
@@ -189,7 +188,7 @@ void JPartsLoad4::LoadParticles(const std::string &casedir,const std::string &ca
   CasePosMin=pd.Get_CasePosMin();
   CasePosMax=pd.Get_CasePosMax();
   const bool possingle=pd.Get_PosSimple();
-  if(!pd.Get_IdpSimple())RunException(met,"Only Idp (32 bits) is valid at the moment.");
+  if(!pd.Get_IdpSimple())Run_Exceptioon("Only Idp (32 bits) is valid at the moment.");
   //-Loads data for restarting.
   if(PartBegin){
     SymplecticDtPre=pd.GetPart()->GetvDouble("SymplecticDtPre",true,0);
@@ -242,7 +241,7 @@ void JPartsLoad4::LoadParticles(const std::string &casedir,const std::string &ca
   }
   //-In simulations 2D, if PosY is invalid then calculates starting from position of particles.
   if(Simulate2DPosY==DBL_MAX){
-    if(!sizetot)RunException(met,"Number of particles is invalid to calculates Y in 2D simulations.");
+    if(!sizetot)Run_Exceptioon("Number of particles is invalid to calculates Y in 2D simulations.");
     Simulate2DPosY=Pos[0].y;
   }
   //-Checks order of boundary particles.
@@ -258,21 +257,21 @@ void JPartsLoad4::LoadParticles(const std::string &casedir,const std::string &ca
 void JPartsLoad4::CheckConfig(ullong casenp,ullong casenfixed,ullong casenmoving
   ,ullong casenfloat,ullong casenfluid,bool simulate2d,double simulate2dposy,TpPeri tperi)const
 {
-  const char met[]="CheckConfig";
   CheckConfig(casenp,casenfixed,casenmoving,casenfloat,casenfluid);
-  if(simulate2d!=Simulate2D || Simulate2DPosY!=simulate2dposy)RunException(met,"Data file does not match the dimension of the case (2D/3D).");
+  if(simulate2d!=Simulate2D || Simulate2DPosY!=simulate2dposy)Run_Exceptioon("Data file does not match the dimension of the case (2D/3D).");
   //-Obtains periodic mode and compares with loaded file.
-  if(tperi!=PeriMode && PeriMode!=PERI_Unknown)RunException(met,"Data file does not match the periodic configuration of the case.");
+  if(tperi!=PeriMode && PeriMode!=PERI_Unknown)Run_Exceptioon("Data file does not match the periodic configuration of the case.");
 }
 
 //==============================================================================
 /// Check validity of loaded configuration or throw exception.
 /// Comprueba validez de la configuracion cargada o lanza excepcion.
 //==============================================================================
-void JPartsLoad4::CheckConfig(ullong casenp,ullong casenfixed,ullong casenmoving,ullong casenfloat,ullong casenfluid)const
+void JPartsLoad4::CheckConfig(ullong casenp,ullong casenfixed,ullong casenmoving
+  ,ullong casenfloat,ullong casenfluid)const
 {
-  const char met[]="CheckConfig";
-  if(casenp!=CaseNp || casenfixed!=CaseNfixed || casenmoving!=CaseNmoving || casenfloat!=CaseNfloat || casenfluid!=CaseNfluid)RunException(met,"Particle number does not match the configuration of the case.");
+  if(casenp!=CaseNp || casenfixed!=CaseNfixed || casenmoving!=CaseNmoving || casenfloat!=CaseNfloat || casenfluid!=CaseNfluid)
+    Run_Exceptioon("Particle number does not match the configuration of the case.");
 }
 
 //==============================================================================
@@ -305,7 +304,7 @@ void JPartsLoad4::RemoveBoundary(){
 /// Devuelve los limites del mapa y si no son validos genera excepcion.
 //==============================================================================
 void JPartsLoad4::GetMapSize(tdouble3 &mapmin,tdouble3 &mapmax)const{
-  if(!MapSizeLoaded())RunException("GetMapSize","The MapSize information is invalid.");
+  if(!MapSizeLoaded())Run_Exceptioon("The MapSize information is invalid.");
   mapmin=MapPosMin; mapmax=MapPosMax;
 }
 
@@ -314,7 +313,7 @@ void JPartsLoad4::GetMapSize(tdouble3 &mapmin,tdouble3 &mapmax)const{
 /// Calcula limites de las particulas cargadas.
 //==============================================================================
 void JPartsLoad4::CalculateCasePos(){
-  if(!PartBegin)RunException("CalculateCasePos","The limits of the initial case cannot be calculated from a file PART.");
+  if(!PartBegin)Run_Exceptioon("The limits of the initial case cannot be calculated from a file PART.");
   tdouble3 pmin=TDouble3(DBL_MAX),pmax=TDouble3(-DBL_MAX);
   //-Calculates minimum and maximum position. 
   //-Calcula posicion minima y maxima. 

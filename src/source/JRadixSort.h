@@ -32,6 +32,7 @@
 //:# - Limpieza de codigo usado para debug. (30-01-2016)
 //:# - Se usa _WITHOMP_RADIXSORT para compilacion con OMP. (07-07-2016)
 //:# - Se usa OMP_USE_RADIXSORT definido en OmpDefs.h para compilacion con OMP. (04-01-2017)
+//:# - Mejora la gestion de excepciones. (06-05-2020)
 //:#############################################################################
 
 /// \file JRadixSort.h \brief Declares the class  \ref JRadixSort.

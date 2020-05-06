@@ -47,6 +47,7 @@
 //:# - Improved error messages about XML data in JMotion. (08-05-2017)
 //:# - Al usar ProcesTimeSimple() comprueba que el timestep solicitado sea mayor 
 //:#   o igual al tiempo final anterior. (11-05-2017)
+//:# - Mejora la gestion de excepciones. (06-05-2020)
 //:#############################################################################
 
 /// \file JMotion.h \brief Declares the class \ref JMotion.

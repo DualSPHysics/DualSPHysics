@@ -20,6 +20,7 @@
 //:# Cambios:
 //:# =========
 //:# - Clase para almacenar informacion inicial de particulas usada en configuraciones automaticas. (09-10-2018)
+//:# - Mejora la gestion de excepciones. (06-05-2020)
 //:#############################################################################
 
 /// \file JSphPartsInit.h \brief Declares the class \ref JSphPartsInit.

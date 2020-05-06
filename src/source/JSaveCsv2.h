@@ -166,12 +166,12 @@ private:
   void Save(const std::string &tx);
   void SetSeparators(std::string &tx)const;
   void OpenFile();
-  void RunException(const std::string &method,const std::string &msg){
-    ExceptionThrown=true; JObject::RunException(method,msg);
-  }
-  void RunException(const std::string &method,const std::string &msg,const std::string &file){
-    ExceptionThrown=true; JObject::RunException(method,msg,file);
-  }
+  //void R unException(const std::string &method,const std::string &msg){
+  //  ExceptionThrown=true; JObject::R unException(method,msg);
+  //}
+  //void R unException(const std::string &method,const std::string &msg,const std::string &file){
+  //  ExceptionThrown=true; JObject::R unException(method,msg,file);
+  //}
 
 public:
   JSaveCsv2(std::string fname,bool app,bool csvsepcoma);

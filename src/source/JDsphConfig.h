@@ -21,6 +21,7 @@
 //:# =========
 //:# - Carga configuracion del fichero DsphConfig.xml. (23-10-2017)
 //:# - Carga nueva configuracion createdirs. (21-05-2018)
+//:# - Mejora la gestion de excepciones. (06-05-2020)
 //:#############################################################################
 
 /// \file JDsphConfig.h \brief Declares the class \ref JDsphConfig.

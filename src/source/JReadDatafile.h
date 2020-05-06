@@ -35,6 +35,7 @@
 //:# - Nuevos metodo: RemoveChar(). (20-06-2016)
 //:# - Nuevos metodo: Find(),FindValueStr(),FindValueDbl(). (02-07-2018)
 //:# - Muestra extension maxima de fichero permitida en caso de ser insuficiente. (21-10-2019)
+//:# - Mejora la gestion de excepciones. (06-05-2020)
 //:#############################################################################
 
 /// \file JReadDatafile.h \brief Declares the class \ref JReadDatafile.

@@ -222,7 +222,6 @@ void JCfgRun::VisuConfig()const{
 /// Loads execution parameters from the command line.
 //==============================================================================
 void JCfgRun::LoadArgv(int argc,char** argv){
-  const char met[]="LoadArgv";
   Reset();
   //-Loads configuration from DsphConfig.xml.
   LoadDsphConfig(AppInfo.GetProgramPath());
@@ -238,7 +237,7 @@ void JCfgRun::LoadArgv(int argc,char** argv){
         bool divide=((tex[0]=='-' || tex[0]=='#') || (pos+2<tex.size() && ((tex[pos+1]=='-' && tex[pos+2]!=' ') || tex[pos+1]=='#')));
         //printf("  tex[%s]  pos:%d  divide=%d\n",tex.c_str(),pos,(divide? 1: 0));
         if(divide){
-          if(optn>=MAXOPTS)RunException(met,"Has exceeded the maximum configuration options.");
+          if(optn>=MAXOPTS)Run_Exceptioon("Has exceeded the maximum configuration options.");
           optlis[optn]=tex.substr(0,pos); optn++;
           tex=StrTrim(tex.substr(pos+1)); //-StrTrim() removes spaces between options.
           pos=int(tex.find(" "));
@@ -246,7 +245,7 @@ void JCfgRun::LoadArgv(int argc,char** argv){
         else pos=int(tex.find(" ",pos+1));
       }
     }
-    if(optn>=MAXOPTS)RunException(met,"Has exceeded the maximum configuration options.");
+    if(optn>=MAXOPTS)Run_Exceptioon("Has exceeded the maximum configuration options.");
     optlis[optn]=tex; optn++;
   }
   //for(int c=0;c<optn;c++)printf("[%d]=[%s]\n",c,optlis[c].c_str());
@@ -264,7 +263,6 @@ void JCfgRun::LoadArgv(int argc,char** argv){
 /// Loads execution parameters from a text file.
 //==============================================================================
 void JCfgRun::LoadFile(string fname,int lv){
-  const char met[]="LoadFile";
   const int MAXOPTS=50;
   int optn=0;
   string *optlis=new string[MAXOPTS];
@@ -278,11 +276,11 @@ void JCfgRun::LoadFile(string fname,int lv){
         optn++;
       }
     } 
-    if(!pf.eof()&&pf.fail())RunException(met,"Error reading data from the file.",fname);
+    if(!pf.eof()&&pf.fail())Run_ExceptioonFile("Error reading data from the file.",fname);
     pf.close();
   }
-  else RunException(met,"The file can not be opened.",fname);
-  if(optn>=MAXOPTS)RunException(met,fun::PrintStr("File with too many lines (Maximum=%d)",MAXOPTS),fname);
+  else Run_ExceptioonFile("The file can not be opened.",fname);
+  if(optn>=MAXOPTS)Run_ExceptioonFile(fun::PrintStr("File with too many lines (Maximum=%d)",MAXOPTS),fname);
   if(optn>0)LoadOpts(optlis,optn,lv,fname);
   delete[] optlis;
 }
@@ -291,18 +289,16 @@ void JCfgRun::LoadFile(string fname,int lv){
 /// Generates error of unknown parameter.
 //==============================================================================
 void JCfgRun::ErrorParm(const std::string &opt,int optc,int lv,const std::string &file)const{
-  const char met[]="ErrorParm";
   std::string tx=fun::PrintStr("Parameter \"%s\" unrecognised or invalid. ",opt.c_str());
   tx=tx+fun::PrintStr("(Level cfg:%d, Parameter:%d)",lv,optc);
-  RunException(met,tx,file);
+  Run_ExceptioonFile(tx,file);
 }
 
 //==============================================================================
 /// Loads execution parameters.
 //==============================================================================
 void JCfgRun::LoadOpts(string *optlis,int optn,int lv,string file){
-  const char met[]="LoadOpts";
-  if(lv>=10)RunException(met,"No more than 10 levels of recursive configuration.");
+  if(lv>=10)Run_Exceptioon("No more than 10 levels of recursive configuration.");
   for(int c=0;c<optn;c++){
     string opt=optlis[c];
     if(opt[0]!='-' && opt[0]!='#'){

@@ -25,6 +25,7 @@
 //:# - Usa JReadDatafile para cargar datos de fichero. (17-12-2015)
 //:# - GetVisco() guarda entrada y salida para evitar calculos con llamadas 
 //:#   consecutivas iguales. (08-09-2019)
+//:# - Mejora la gestion de excepciones. (06-05-2020)
 //:#############################################################################
 
 /// \file JSphVisco.h \brief Declares the class \ref JSphVisco.

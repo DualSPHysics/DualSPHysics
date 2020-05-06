@@ -60,7 +60,6 @@ void JPartsOut::Reset(){
 /// Resizes memory space for particles data.
 //==============================================================================
 void JPartsOut::AllocMemory(unsigned size,bool reset){
-  const char met[]="AllocMemory";
   if(reset){
     MemCpuParticles=0;
     Count=0;
@@ -82,7 +81,7 @@ void JPartsOut::AllocMemory(unsigned size,bool reset){
       Motive=fun::ResizeAlloc(Motive,Count,Size);  MemCpuParticles+=sizeof(byte)    *Size;
     }
     catch(const std::bad_alloc){
-      RunException(met,"Could not allocate the requested memory.");
+      Run_Exceptioon("Could not allocate the requested memory.");
     }
   }
 }
@@ -114,7 +113,6 @@ void JPartsOut::AddData(unsigned np,const typecode* code){
 void JPartsOut::AddParticles(unsigned np,const unsigned* idp,const tdouble3* pos
   ,const tfloat3* vel,const float* rhop,const typecode* code)
 {
-  //const char met[]="AddParticles";
   if(Count+np>Size)AllocMemory(Count+np+SizeUnit,false);
   memcpy(Idp +Count,idp ,sizeof(unsigned)*np);
   memcpy(Pos +Count,pos ,sizeof(tdouble3)*np);

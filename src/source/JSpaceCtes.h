@@ -36,6 +36,7 @@
 //:# - <lattice> pasa a ser opcional con el valor 1 por defecto. (03-03-2020)  
 //:# - Mejora uso de excepciones. (03-03-2020)  
 //:# - Objeto JXml pasado como const para operaciones de lectura. (17-03-2020)  
+//:# - Mejora la gestion de excepciones. (06-05-2020)
 //:#############################################################################
 
 /// \file JSpaceCtes.h \brief Declares the class \ref JSpaceCtes.
@@ -167,8 +168,8 @@ public:
   void SetLatticeFluid(bool simple){ LatticeFluid=(simple? 1: 2); }
   void SetGravity(const tdouble3& g){ Gravity=g; }
   void SetCFLnumber(double v){ 
-    if(!v)RunException("SetCFLnumber","Value cannot be zero.");
-    if(v>1)RunException("SetCFLnumber","Value cannot be greater than 1.");
+    if(!v)Run_Exceptioon("Value cannot be zero.");
+    if(v>1)Run_Exceptioon("Value cannot be greater than 1.");
     CFLnumber=v;
   }
   void SetHSwlAuto(bool on){ HSwlAuto=on; }

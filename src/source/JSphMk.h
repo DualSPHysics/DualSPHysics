@@ -22,6 +22,7 @@
 //:# - Creacion de clase para gestionar informacion relativa a MK de particulas. (25-01-2018)
 //:# - Nuevos metodos CountBlockType() y GetFirstBlockType(). (14-08-2018)
 //:# - Nuevos metodos GetMkById(), GetMkByIds(), GetMkByCode() y GetMkByCodes(). (27-03-2020)
+//:# - Mejora la gestion de excepciones. (06-05-2020)
 //:#############################################################################
 
 /// \file JSphMk.h \brief Declares the class \ref JSphMk.

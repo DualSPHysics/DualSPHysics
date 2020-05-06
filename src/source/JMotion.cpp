@@ -115,15 +115,14 @@ bool JMotion::ExistsObj(JMotionObj* obj)const{
 //   trata de objetos virtuales.
 //==============================================================================
 void JMotion::ObjAdd(unsigned id,unsigned idparent,int ref){
-  const char met[]="ObjAdd";
-  if(Prepared)RunException(met,"Invalid method in execution mode.");
-  if(!id)RunException(met,"Cannot add an object with zero id.");
-  if(ObjGetPointer(id))RunException(met,fun::PrintStr("Cannot add an object with an existing id=%u.",id));
-  if(ref>=0&&ObjGetPointerByRef(ref))RunException(met,fun::PrintStr("Cannot add a new object with an existing real reference (ref=%d) (higher than or equal to zero).",ref));
+  if(Prepared)Run_Exceptioon("Invalid method in execution mode.");
+  if(!id)Run_Exceptioon("Cannot add an object with zero id.");
+  if(ObjGetPointer(id))Run_Exceptioon(fun::PrintStr("Cannot add an object with an existing id=%u.",id));
+  if(ref>=0&&ObjGetPointerByRef(ref))Run_Exceptioon(fun::PrintStr("Cannot add a new object with an existing real reference (ref=%d) (higher than or equal to zero).",ref));
   JMotionObj* parent=(idparent? ObjGetPointer(idparent): NULL);
-  if(idparent&&!parent)RunException(met,fun::PrintStr("Parent object with id=%u is missing.",idparent));
+  if(idparent&&!parent)Run_Exceptioon(fun::PrintStr("Parent object with id=%u is missing.",idparent));
   JMotionObj* obj=new JMotionObj(id,parent,ref);
-  if(!obj)RunException(met,"Could not allocate the requested memory.");
+  if(!obj)Run_Exceptioon("Could not allocate the requested memory.");
   if(!parent)Objs.push_back(obj);
   else parent->AddChild(obj);
 }
@@ -134,14 +133,13 @@ void JMotion::ObjAdd(unsigned id,unsigned idparent,int ref){
 //   evento, si es menor que cero se ignora.
 //==============================================================================
 void JMotion::EventAdd(unsigned objid,unsigned movid,double timestart,double timefinish){
-  const char met[]="EventAdd";
-  if(Prepared)RunException(met,"Invalid method in execution mode.");
+  if(Prepared)Run_Exceptioon("Invalid method in execution mode.");
   JMotionObj* obj=ObjGetPointer(objid);
-  if(!obj)RunException(met,fun::PrintStr("Missing object with id=%u.",objid));
+  if(!obj)Run_Exceptioon(fun::PrintStr("Missing object with id=%u.",objid));
   JMotionMov* mov=obj->MovGetPointer(movid);
-  if(!mov)RunException(met,fun::PrintStr("Missing movement (id=%u) inside the object with id=%u.",movid,obj->Id));
+  if(!mov)Run_Exceptioon(fun::PrintStr("Missing movement (id=%u) inside the object with id=%u.",movid,obj->Id));
   JMotionEvent* evt=new JMotionEvent(obj,mov,timestart,timefinish);
-  if(!evt)RunException(met,"Cannot allocate the requested memory.");
+  if(!evt)Run_Exceptioon("Cannot allocate the requested memory.");
   obj->AddEvent(evt);
   Events.push_back(evt);
 }
@@ -150,15 +148,14 @@ void JMotion::EventAdd(unsigned objid,unsigned movid,double timestart,double tim
 // Anhade (si es necesario) un nuevo eje para un objeto y lo devuelve.
 //==============================================================================
 JMotionAxis* JMotion::AxisAdd(unsigned objid,const tdouble3 &p1,const tdouble3 &p2){
-  const char met[]="AxisAdd";
-  if(Prepared)RunException(met,"Invalid method in execution mode.");
+  if(Prepared)Run_Exceptioon("Invalid method in execution mode.");
   JMotionAxis* axis=NULL;
   JMotionObj* obj=ObjGetPointer(objid);
-  if(!obj)RunException(met,fun::PrintStr("Missing object with id=%u.",objid));
+  if(!obj)Run_Exceptioon(fun::PrintStr("Missing object with id=%u.",objid));
   if(p1!=p2)axis=obj->AxisGetPointer(p1,p2);//-No reutiliza ejes usados como referencia (p1==p2) pq esto se modifican.
   if(!axis){
     axis=new JMotionAxis(p1,p2);
-    if(!axis)RunException(met,"Cannot allocate the requested memory.");
+    if(!axis)Run_Exceptioon("Cannot allocate the requested memory.");
     obj->AddAxis(axis);
   }   
   return(axis);
@@ -168,13 +165,12 @@ JMotionAxis* JMotion::AxisAdd(unsigned objid,const tdouble3 &p1,const tdouble3 &
 // Anhade un nuevo movimiento
 //==============================================================================
 void JMotion::MovAdd(unsigned objid,JMotionMov* mov){
-  const char met[]="MovAdd";
-  if(Prepared)RunException(met,"Invalid method in execution mode.");
-  if(!mov)RunException(met,"Cannot allocated the requested memory.");
-  if(!mov->Id)RunException(met,"The movement id must be greater than zero.");
+  if(Prepared)Run_Exceptioon("Invalid method in execution mode.");
+  if(!mov)Run_Exceptioon("Cannot allocated the requested memory.");
+  if(!mov->Id)Run_Exceptioon("The movement id must be greater than zero.");
   JMotionObj* obj=ObjGetPointer(objid);
-  if(!obj)RunException(met,"Missing object.");
-  if(obj->MovGetPointer(mov->Id))RunException(met,"Cannot add a movement with a existing id inside the object.");
+  if(!obj)Run_Exceptioon("Missing object.");
+  if(obj->MovGetPointer(mov->Id))Run_Exceptioon("Cannot add a movement with a existing id inside the object.");
   obj->AddMov(mov);
 }
 
@@ -182,7 +178,7 @@ void JMotion::MovAdd(unsigned objid,JMotionMov* mov){
 // Anhade un tiempo de espera
 //==============================================================================
 void JMotion::MovAddWait(unsigned objid,unsigned id,unsigned nextid,double time){
-  if(time<0)RunException("MovAddWait","Wating times lenght lower than zero are not allowed.");
+  if(time<0)Run_Exceptioon("Wating times lenght lower than zero are not allowed.");
   MovAdd(objid,new JMotionMovWait(id,nextid,time));
 }
 //==============================================================================
@@ -269,13 +265,12 @@ void JMotion::MovAddCirSinu(unsigned objid,unsigned id,unsigned nextid,double ti
 // - fieldz: Posicion del campo z dentro de fields (menor que 0 se ignora).
 //==============================================================================
 void JMotion::MovAddRectilinearFile(unsigned objid,unsigned id,unsigned nextid,double time,const std::string &file,int fields,int fieldtime,int fieldx,int fieldy,int fieldz){
-  const char met[]="MovAddRectilinearFile";
-  if(fieldtime<0)RunException(met,"The \'time\' is not defined.");
-  if(fieldtime>=0 && fieldtime>=fields)RunException(met,"the position of field \'time\' is invalid.");
-  if(fieldx<0 && fieldy<0 && fieldz<0)RunException(met,"You need at least one position field.");
-  if(fieldx>=0 && fieldx>=fields)RunException(met,"the position of field \'x\' is invalid.");
-  if(fieldy>=0 && fieldy>=fields)RunException(met,"the position of field \'y\' is invalid.");
-  if(fieldz>=0 && fieldz>=fields)RunException(met,"the position of field \'z\' is invalid.");
+  if(fieldtime<0)Run_Exceptioon("The \'time\' is not defined.");
+  if(fieldtime>=0 && fieldtime>=fields)Run_Exceptioon("the position of field \'time\' is invalid.");
+  if(fieldx<0 && fieldy<0 && fieldz<0)Run_Exceptioon("You need at least one position field.");
+  if(fieldx>=0 && fieldx>=fields)Run_Exceptioon("the position of field \'x\' is invalid.");
+  if(fieldy>=0 && fieldy>=fields)Run_Exceptioon("the position of field \'y\' is invalid.");
+  if(fieldz>=0 && fieldz>=fields)Run_Exceptioon("the position of field \'z\' is invalid.");
   MovAdd(objid,new JMotionMovRectFile(id,nextid,time,&DirData,file,fields,fieldtime,fieldx,fieldy,fieldz));
 }
 //==============================================================================
@@ -306,8 +301,7 @@ void JMotion::CheckLinkMovs()const{
 // Prepara objeto revisando y actualizando vinculos.
 //==============================================================================
 void JMotion::Prepare(){
-  const char met[]="Prepare";
-  if(Prepared)RunException(met,"Invalid method in execution mode.");
+  if(Prepared)Run_Exceptioon("Invalid method in execution mode.");
   CheckLinkMovs();
   //-Ordena eventos de ultimo a primero.
   if(Events.size())for(unsigned c=0;c<Events.size()-1;c++)for(unsigned c2=c+1;c2<Events.size();c2++)if(Events[c]->TimeStart<Events[c2]->TimeStart)swap(Events[c],Events[c2]);
@@ -326,7 +320,6 @@ void JMotion::Prepare(){
 // Crea y prepara objeto MotList.
 //==============================================================================
 void JMotion::CreateMotList(){
-  const char met[]="CreateMotList";
   //-Carga lista de referencias.
   std::vector<int> refs;
   for(unsigned c=0;c<Objs.size();c++)Objs[c]->GetRefs(refs);
@@ -341,7 +334,7 @@ void JMotion::CreateMotList(){
     maxref=max(maxref,refs[c]);
     //printf("---> %d \n",refs[c]);
   }
-  if(maxref+1!=nref)RunException(met,"Motion references are no consecutives.");
+  if(maxref+1!=nref)Run_Exceptioon("Motion references are no consecutives.");
   //-Creates object MotList.
   MotList=new JMotionList(nref);
 }
@@ -355,7 +348,7 @@ bool JMotion::ProcesTimeSimple(double timestep,double dt){
   if(MotList==NULL)CreateMotList();
   MotList->PreMotion();
   bool movs=false;
-  if(MotList->TimeStep>timestep)RunException("ProcesTimeSimple","The previous timestep+dt is higher than the requested timestep. It is invalid for simple mode.");
+  if(MotList->TimeStep>timestep)Run_Exceptioon("The previous timestep+dt is higher than the requested timestep. It is invalid for simple mode.");
   //-Procesa primer movimiento de dt.
   if(ProcesTime(timestep,dt)){
     movs=true;
@@ -452,7 +445,7 @@ void JMotion::ResetTime(double timestep){
 //==============================================================================
 bool JMotion::ProcesTime(double timestep,double dt){
   //printf("ProcesTime> timestep:%f dt:%f  \n",timestep,dt);
-  if(!Prepared)RunException("ProcesEvent","Invalid method in initialization mode.");
+  if(!Prepared)Run_Exceptioon("Invalid method in initialization mode.");
   //-Comprueba eventos para activar nuevos movimientos.
   bool looking=true;
   if(EventNext>=0)for(int c=EventNext;c>=0&&looking;c--){
@@ -479,7 +472,7 @@ bool JMotion::ProcesTime(double timestep,double dt){
 // Devuelve datos de movimiento de un objeto.
 //==============================================================================
 bool JMotion::GetMov(unsigned pos,unsigned &ref,tdouble3 &mvsimple,JMatrix4d &mvmatrix)const{
-  if(pos>=LisMovCount)RunException("GetMov","The requested movement is invalid.");
+  if(pos>=LisMovCount)Run_Exceptioon("The requested movement is invalid.");
   return(LisMov[pos]->GetMov(ref,mvsimple,mvmatrix));
 }
 
@@ -487,7 +480,7 @@ bool JMotion::GetMov(unsigned pos,unsigned &ref,tdouble3 &mvsimple,JMatrix4d &mv
 // Devuelve la referencia del objeto parado.
 //==============================================================================
 unsigned JMotion::GetStopRef(unsigned pos)const{
-  if(pos>=LisStopCount)RunException("GetStopRef","End of invalid requested movement.");
+  if(pos>=LisStopCount)Run_Exceptioon("End of invalid requested movement.");
   return(LisStop[pos]->Ref);
 }
 
@@ -716,10 +709,7 @@ void JMotion::ReadXml(const std::string &dirdata,JXml *jxml,const std::string &p
     ReadXml(DirData,jxml,node,id,0);
     CheckLinkMovs();
   }
-  else if(checkexists){
-    string tex="Cannot fin the element \'"; tex=tex+path+"\'.";
-    RunException("ReadXml",tex);
-  }
+  else if(checkexists)Run_Exceptioon(string("Cannot fin the element \'")+path+"\'.");
 }
 
 //==============================================================================

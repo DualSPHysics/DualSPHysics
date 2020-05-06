@@ -185,7 +185,7 @@ void JPartFloatBi4Save::Config(std::string appname,const std::string &dir,word m
 void JPartFloatBi4Save::AddHeadData(unsigned cf,word mkbound,unsigned begin
   ,unsigned count,float mass,float massp,float radius)
 {
-  if(cf>=FtCount)RunException("AddHeadData","Number of floating is invalid.");
+  if(cf>=FtCount)Run_Exceptioon("Number of floating is invalid.");
   HeadMkbound[cf]=mkbound;
   HeadBegin  [cf]=begin;
   HeadCount  [cf]=count;
@@ -221,7 +221,7 @@ void JPartFloatBi4Save::SaveInitial(){
 /// Adds data of particles to new part.
 //==============================================================================
 void JPartFloatBi4Save::AddPartData(unsigned cf,const tdouble3 &center,const tfloat3 &fvel,const tfloat3 &fomega){
-  if(cf>=FtCount)RunException("AddPartData","Number of floating is invalid.");
+  if(cf>=FtCount)Run_Exceptioon("Number of floating is invalid.");
   PartCenter[cf]=center;
   PartFvel[cf]=fvel;
   PartFomega[cf]=fomega;
@@ -233,7 +233,6 @@ void JPartFloatBi4Save::AddPartData(unsigned cf,const tdouble3 &center,const tfl
 /// Adds data of particles to new part.
 //==============================================================================
 JBinaryData* JPartFloatBi4Save::AddPartFloat(unsigned cpart,double timestep,double demdtforce){
-  const char met[]="AddPartFloat";
   //-Configura item Part. Configures item Part.
   Part->Clear();
   Cpart=cpart;
@@ -362,11 +361,10 @@ std::string JPartFloatBi4Load::GetFileNamePart(){
 JBinaryDataArray* JPartFloatBi4Load::CheckArray(JBinaryData *bd,const std::string &name
   ,JBinaryDataDef::TpData type)
 {
-  const char met[]="CheckArray";
   JBinaryDataArray *ar=bd->GetArray(name);
-  if(!ar)RunException(met,string("The array ")+name+" is missing.");
-  if(ar->GetType()!=type)RunException(met,string("The type of array ")+name+" does not match.");
-  if(ar->GetCount()!=FtCount)RunException(met,string("The size of array ")+name+" does not match.");
+  if(!ar)Run_Exceptioon(string("The array ")+name+" is missing.");
+  if(ar->GetType()!=type)Run_Exceptioon(string("The type of array ")+name+" does not match.");
+  if(ar->GetCount()!=FtCount)Run_Exceptioon(string("The size of array ")+name+" does not match.");
   return(ar);
 }
 
@@ -375,14 +373,13 @@ JBinaryDataArray* JPartFloatBi4Load::CheckArray(JBinaryData *bd,const std::strin
 /// Loads data from file and verifies header.
 //==============================================================================
 void JPartFloatBi4Load::LoadFile(const std::string &dir){
-  const char met[]="LoadFile";
   string file=fun::GetDirWithSlash(dir)+GetFileNamePart();
   Reset();
   Data->LoadFileListApp(file,"JPartFloatBi4");
   JBinaryData *head=Data->GetItem("LS0000_JPartFloatBi4");
-  if(!head)RunException(met,"The head item is missing.",file);
+  if(!head)Run_ExceptioonFile("The head item is missing.",file);
   FormatVer=head->GetvUint("FormatVer",true,0);
-  if(FormatVer<FormatVerDef)RunException(met,fun::PrintStr("The data format version \'%u\' is not valid. Version \'%u\' required.",FormatVer,FormatVerDef),file);
+  if(FormatVer<FormatVerDef)Run_ExceptioonFile(fun::PrintStr("The data format version \'%u\' is not valid. Version \'%u\' required.",FormatVer,FormatVerDef),file);
   MkBoundFirst=head->GetvUshort("MkBoundFirst",true,0);
   FtCount=head->GetvUint("FtCount",true,0);
   PartCount=Data->GetItemsCount()-1;
@@ -429,13 +426,12 @@ void JPartFloatBi4Load::LoadFile(const std::string &dir){
 void JPartFloatBi4Load::CheckHeadData(unsigned cf,word mkbound,unsigned begin
   ,unsigned count,float mass,float massp)
 {
-  const char met[]="CheckHeadData";
-  if(cf>=FtCount)RunException(met,"Number of floating is invalid.");
-  if(HeadMkbound[cf]!=mkbound)RunException(met,"The mkbound does not match.");
-  if(HeadBegin  [cf]!=begin)  RunException(met,"The begin does not match.");
-  if(HeadCount  [cf]!=count)  RunException(met,"The count does not match.");
-  if(HeadMass   [cf]!=mass)   RunException(met,"The mass does not match.");
-  if(HeadMassp  [cf]!=massp)  RunException(met,"The massp does not match.");
+  if(cf>=FtCount)Run_Exceptioon("Number of floating is invalid.");
+  if(HeadMkbound[cf]!=mkbound)Run_Exceptioon("The mkbound does not match.");
+  if(HeadBegin  [cf]!=begin)  Run_Exceptioon("The begin does not match.");
+  if(HeadCount  [cf]!=count)  Run_Exceptioon("The count does not match.");
+  if(HeadMass   [cf]!=mass)   Run_Exceptioon("The mass does not match.");
+  if(HeadMassp  [cf]!=massp)  Run_Exceptioon("The massp does not match.");
 }
 
 //==============================================================================
@@ -443,9 +439,8 @@ void JPartFloatBi4Load::CheckHeadData(unsigned cf,word mkbound,unsigned begin
 /// Selects the indicated PART and returns false in case of error.
 //==============================================================================
 void JPartFloatBi4Load::LoadPart(unsigned cpart){
-  const char met[]="LoadPart";
   ResetPart();
-  if(!Data)RunException(met,"No loaded data.");
+  if(!Data)Run_Exceptioon("No loaded data.");
   string partname=fun::PrintStr("PART_%04u",cpart);
   unsigned spartname=unsigned(partname.size());
   const unsigned count=Data->GetItemsCount();
@@ -470,7 +465,7 @@ void JPartFloatBi4Load::LoadPart(unsigned cpart){
       memcpy(PartFomega,(const tfloat3 *)ar->GetDataPointer(),sizeof(tfloat3)*FtCount);
     }
   }
-  else RunException(met,"PART not found.");
+  else Run_Exceptioon("PART not found.");
 }
 
 //==============================================================================
@@ -478,7 +473,7 @@ void JPartFloatBi4Load::LoadPart(unsigned cpart){
 /// Select the indicated PART and returns false on error.
 //==============================================================================
 void JPartFloatBi4Load::CheckPart()const{
-  if(!Part)RunException("CheckPart","PART not found.");
+  if(!Part)Run_Exceptioon("PART not found.");
 }
 
 //==============================================================================
@@ -486,7 +481,7 @@ void JPartFloatBi4Load::CheckPart()const{
 /// Verifies that the number of floating is valid.
 //==============================================================================
 void JPartFloatBi4Load::CheckFloating(unsigned cf)const{
-  if(cf>=FtCount)RunException("CheckFloating","Number of floating is invalid.");
+  if(cf>=FtCount)Run_Exceptioon("Number of floating is invalid.");
 }
 
 

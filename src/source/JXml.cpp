@@ -134,7 +134,7 @@ TiXmlNode* JXml::GetNodeError(const std::string &path){
   if(!node){
     std::string tex="Error reading xml - can not find the element \'";
     tex=tex+path+"\'";
-    RunException("GetNode",tex,ErrGetFileRow(Doc));
+    Run_ExceptioonFile(tex,ErrGetFileRow(Doc));
   }
   return(node);
 }
@@ -237,7 +237,7 @@ void JXml::ErrReadElement(const TiXmlNode* node,const std::string &element,bool 
     tex=tex+"Element \'"+element+"\' is invalid.";
     if(!errortext.empty())tex=tex+" "+errortext;
   }
-  RunException("ErrReadElement",tex,ErrGetFileRow(node));
+  Run_ExceptioonFile(tex,ErrGetFileRow(node));
 }
 //==============================================================================
 /// Throws an exception with the xml element and the name of the attribute.
@@ -253,7 +253,7 @@ void JXml::ErrReadAtrib(const TiXmlElement* ele,const std::string &atrib,bool mi
     tex=tex+"Value of \'"+atrib+"\' invalid.";
     if(!errortext.empty())tex=tex+" "+errortext;
   }
-  RunException("ErrReadAtrib",tex,ErrGetFileRow(ele));
+  Run_ExceptioonFile(tex,ErrGetFileRow(ele));
 }
 //==============================================================================
 /// Throws an exception with the xml element and the name of the attribute.
@@ -265,7 +265,7 @@ void JXml::ErrReadAtrib(const TiXmlElement* ele,const std::string &atrib,bool mi
 void JXml::ErrUnknownAtrib(const TiXmlElement* ele,const std::string &atrib)const{
   std::string tex="Error reading xml - ";
   tex=tex+"Attribute \'"+atrib+"\' is unknown.";
-  RunException("ErrUnknownAtrib",tex,ErrGetFileRow(ele));
+  Run_ExceptioonFile(tex,ErrGetFileRow(ele));
 }
 
 
@@ -329,7 +329,7 @@ void JXml::CheckElementNames(const TiXmlElement* lis,bool checkrepeated,std::str
 /// \param checkmanyele Throw exception if several elements exist.
 //==============================================================================
 int JXml::CheckElementAttributes(const TiXmlElement* ele,const std::string &name,std::string attnames,bool checkmanyatt,bool checkmanyele)const{
-  if(checkmanyele && CountElements(ele,name)>1)RunException("CheckElementAttributes",string("Element \'"+name+"\' appears several times."),ErrGetFileRow(ele));
+  if(checkmanyele && CountElements(ele,name)>1)Run_ExceptioonFile(string("Element \'"+name+"\' appears several times."),ErrGetFileRow(ele));
   TiXmlElement* ele2=GetFirstElement(ele,name,true); 
   if(ele2)return(CheckAttributes(ele2,attnames,checkmanyatt));
   else return(0);
@@ -393,7 +393,7 @@ int JXml::CheckAttributes(const TiXmlElement* ele,std::string names,bool checkma
     string name=fun::StrSplit(" ",names);
     if(ExistsAttribute(ele,name))ret=(ret? -1: c);
   }
-  if(checkmanyatt && ret==-1)RunException("CheckAttributes",string("Several definitions for \'")+ele->Value()+"\'.",ErrGetFileRow(ele));
+  if(checkmanyatt && ret==-1)Run_ExceptioonFile(string("Several definitions for \'")+ele->Value()+"\'.",ErrGetFileRow(ele));
   return(ret);
 }
 
@@ -870,7 +870,7 @@ void JXml::SaveFile(const std::string &fname,const std::string &app,bool date){
     if(!app.empty())AddAttribute(ele,"app",app);
     if(date)AddAttribute(ele,"date",GetDateTime());
   }
-  if(!Doc->SaveFile(fname.c_str()))RunException("SaveFile","Cannot save the xml document.",fname);
+  if(!Doc->SaveFile(fname.c_str()))Run_ExceptioonFile("Cannot save the xml document.",fname);
   if(1)CorrectFile(fname);
 }
 //==============================================================================
@@ -879,7 +879,6 @@ void JXml::SaveFile(const std::string &fname,const std::string &app,bool date){
 /// \throw JException Problems with file access...
 //==============================================================================
 void JXml::LoadFile(const std::string &fname){
-  const char met[]="LoadFile";
   Reset();
   FileReading=fname;
   if(!Doc->LoadFile(FileReading.c_str())){
@@ -887,7 +886,7 @@ void JXml::LoadFile(const std::string &fname){
     tex=tex+Doc->ErrorDesc();
     char cad[256];
     sprintf(cad," (row:%d col:%d)",Doc->ErrorRow(),Doc->ErrorCol());
-    RunException(met,tex+cad,FileReading);
+    Run_ExceptioonFile(tex+cad,FileReading);
   }
 }
 
@@ -897,7 +896,6 @@ void JXml::LoadFile(const std::string &fname){
 /// \throw JException Problems with file access...
 //==============================================================================
 void JXml::CorrectFile(const std::string &fname){
-  const char met[]="CorrectFile";
   const unsigned sizemax=1024*1024*100;
   unsigned size=0;
   char *data=NULL;
@@ -914,10 +912,10 @@ void JXml::CorrectFile(const std::string &fname){
         data=new char[size];
         pf.read(data,size);
       }
-      else RunException(met,"File size is larger than 100 Mb.",fname);
+      else Run_ExceptioonFile("File size is larger than 100 Mb.",fname);
       pf.close();
     }
-    else RunException(met,"Cannot load the xml file.",fname);
+    else Run_ExceptioonFile("Cannot load the xml file.",fname);
     //-Procesa datos.
     bool open=false;
     unsigned cp=0;
@@ -946,7 +944,7 @@ void JXml::CorrectFile(const std::string &fname){
       pf2.write(data,size);
       pf2.close();
     }
-    else RunException(met,"Cannot modify the xml file.",fname);
+    else Run_ExceptioonFile("Cannot modify the xml file.",fname);
   }
   delete[] data;
 }

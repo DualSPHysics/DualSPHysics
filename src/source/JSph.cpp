@@ -322,7 +322,6 @@ void JSph::ConfigDomainFixed(tdouble3 vmin,tdouble3 vmax){
 /// Sets the configuration of the domain limits using given values.
 //==============================================================================
 void JSph::ConfigDomainFixedValue(std::string key,double v){
-  const char met[]="ConfigDomainFixedValue";
   const string keyend=(key.size()>=4? key.substr(key.size()-4,4): "");
        if(keyend=="Xmin")CfgDomainFixedMin.x=v;
   else if(keyend=="Ymin")CfgDomainFixedMin.y=v;
@@ -330,7 +329,7 @@ void JSph::ConfigDomainFixedValue(std::string key,double v){
   else if(keyend=="Xmax")CfgDomainFixedMax.x=v;
   else if(keyend=="Ymax")CfgDomainFixedMax.y=v;
   else if(keyend=="Zmax")CfgDomainFixedMax.z=v;
-  else RunException(met,"Key for limit is invalid.");
+  else Run_Exceptioon("Key for limit is invalid.");
 }
 
 //==============================================================================
@@ -344,7 +343,6 @@ void JSph::ConfigDomainParticles(tdouble3 vmin,tdouble3 vmax){
 /// Sets the configuration of the domain limits using positions of particles.
 //==============================================================================
 void JSph::ConfigDomainParticlesValue(std::string key,double v){
-  const char met[]="ConfigDomainParticlesValue";
   const string keyend=(key.size()>=4? key.substr(key.size()-4,4): "");
        if(keyend=="Xmin")CfgDomainParticlesMin.x=v;
   else if(keyend=="Ymin")CfgDomainParticlesMin.y=v;
@@ -352,7 +350,7 @@ void JSph::ConfigDomainParticlesValue(std::string key,double v){
   else if(keyend=="Xmax")CfgDomainParticlesMax.x=v;
   else if(keyend=="Ymax")CfgDomainParticlesMax.y=v;
   else if(keyend=="Zmax")CfgDomainParticlesMax.z=v;
-  else RunException(met,"Key for limit is invalid.");
+  else Run_Exceptioon("Key for limit is invalid.");
 }
 
 //==============================================================================
@@ -366,7 +364,6 @@ void JSph::ConfigDomainParticlesPrc(tdouble3 vmin,tdouble3 vmax){
 /// Sets the configuration of the domain limits using positions plus a percentage.
 //==============================================================================
 void JSph::ConfigDomainParticlesPrcValue(std::string key,double v){
-  const char met[]="ConfigDomainParticlesValue";
   const string keyend=(key.size()>=4? key.substr(key.size()-4,4): "");
        if(keyend=="Xmin")CfgDomainParticlesPrcMin.x=v;
   else if(keyend=="Ymin")CfgDomainParticlesPrcMin.y=v;
@@ -374,17 +371,16 @@ void JSph::ConfigDomainParticlesPrcValue(std::string key,double v){
   else if(keyend=="Xmax")CfgDomainParticlesPrcMax.x=v;
   else if(keyend=="Ymax")CfgDomainParticlesPrcMax.y=v;
   else if(keyend=="Zmax")CfgDomainParticlesPrcMax.z=v;
-  else RunException(met,"Key for limit is invalid.");
+  else Run_Exceptioon("Key for limit is invalid.");
 }
 
 //==============================================================================
 /// Loads the case configuration to be executed.
 //==============================================================================
 void JSph::ConfigDomainResize(std::string key,const JSpaceEParms *eparms){
-  const char met[]="ConfigDomainResize";
   const char axis=fun::StrLower(key)[0];
-  if(axis!='x' && axis!='y' && axis!='z')RunException(met,"Axis value is invalid.");
-  if(key.substr(1,3)!="min" && key.substr(1,3)!="max")RunException(met,"Key value is invalid.");
+  if(axis!='x' && axis!='y' && axis!='z')Run_Exceptioon("Axis value is invalid.");
+  if(key.substr(1,3)!="min" && key.substr(1,3)!="max")Run_Exceptioon("Key value is invalid.");
   if(key.substr(1,3)=="min"){
     JSpaceEParms::JSpaceEParmsPos ps=eparms->GetPosminValue(axis);
     switch(ps.mode){
@@ -1155,7 +1151,6 @@ void JSph::VisuDemCoefficients()const{
 /// particulas como excluidas.
 //==============================================================================
 void JSph::LoadCodeParticles(unsigned np,const unsigned *idp,typecode *code)const{
-  const char met[]="LoadCodeParticles"; 
   //-Assigns code to each group of particles.
   for(unsigned p=0;p<np;p++)code[p]=MkInfo->GetCodeById(idp[p]);
 }
@@ -1285,7 +1280,7 @@ void JSph::ResizeMapLimits(){
   dmax=CfgDomainFixedMax; 
   //-Checks domain limits.
   if(dmin.x>MapRealPosMin.x||dmin.y>MapRealPosMin.y||dmin.z>MapRealPosMin.z||dmax.x<MapRealPosMax.x||dmax.y<MapRealPosMax.y||dmax.z<MapRealPosMax.z)
-    RunException("ResizeMapLimits",fun::PrintStr("Domain limits %s are not valid.",fun::Double3gRangeStr(dmin,dmax).c_str()));
+    Run_Exceptioon(fun::PrintStr("Domain limits %s are not valid.",fun::Double3gRangeStr(dmin,dmax).c_str()));
   //-Periodic domain configuration.
   if(!PeriX){ MapRealPosMin.x=dmin.x; MapRealPosMax.x=dmax.x; }
   if(!PeriY){ MapRealPosMin.y=dmin.y; MapRealPosMax.y=dmax.y; }
@@ -1518,7 +1513,6 @@ void JSph::VisuParticleSummary()const{
 /// excluidas de las previstas.
 //==============================================================================
 void JSph::LoadDcellParticles(unsigned n,const typecode *code,const tdouble3 *pos,unsigned *dcell)const{
-  const char met[]="LoadDcellParticles";
   for(unsigned p=0;p<n;p++){
     typecode codeout=CODE_GetSpecialValue(code[p]);
     if(codeout<CODE_OUTIGNORE){
@@ -1531,7 +1525,7 @@ void JSph::LoadDcellParticles(unsigned n,const typecode *code,const tdouble3 *po
         dcell[p]=PC__Cell(DomCellCode,cx,cy,cz);
       }
       else{//-Particle out.
-        RunException(met,"Found new particles out."); //-There can not be new particles excluded. | No puede haber nuevas particulas excluidas.
+        Run_Exceptioon("Found new particles out."); //-There can not be new particles excluded. | No puede haber nuevas particulas excluidas.
         dcell[p]=PC__CodeMapOut;
       }
     }
@@ -1592,7 +1586,7 @@ void JSph::FreePartsInit(){
 /// Configures cell division.
 //==============================================================================
 void JSph::ConfigCellDivision(){
-  if(CellMode!=CELLMODE_2H && CellMode!=CELLMODE_H)RunException("ConfigCellDivision","The CellMode is invalid.");
+  if(CellMode!=CELLMODE_2H && CellMode!=CELLMODE_H)Run_Exceptioon("The CellMode is invalid.");
   Hdiv=(CellMode==CELLMODE_2H? 1: 2);
   Scell=Dosh/Hdiv;
   MovLimit=Scell*0.9f;
@@ -1782,7 +1776,6 @@ tdouble3 JSph::UpdatePeriodicPos(tdouble3 ps)const{
 /// Establece configuracion para grabacion de particulas.
 //==============================================================================
 void JSph::RestartCheckData(){
-  const char met[]="RestartCheckData";
   if(PartBegin){
     //-Loads particle blocks information.
     JPartDataHead parthead;
@@ -1790,14 +1783,14 @@ void JSph::RestartCheckData(){
     const string filehead=fun::GetDirWithSlash(PartBeginDir)+parthead.GetFileName();
     //-Checks particle blocks information.
     const unsigned nmk=MkInfo->Size();
-    if(nmk!=parthead.MkBlockCount())RunException(met,"Number of Mk blocks is invalid.",filehead);
+    if(nmk!=parthead.MkBlockCount())Run_ExceptioonFile("Number of Mk blocks is invalid.",filehead);
     for(unsigned c=0;c<nmk;c++){
       const JSphMkBlock* pmk=MkInfo->Mkblock(c);
       const JPartDataHeadMkBlock& mbk=parthead.Mkblock(c);
-      if(pmk->Type!=mbk.Type)RunException(met,fun::PrintStr("Type of Mk block %u does not match.",c),filehead);
-      if(pmk->Mk!=mbk.Mk)RunException(met,fun::PrintStr("Mk value of Mk block %u does not match.",c),filehead);
-      if(pmk->MkType!=mbk.MkType)RunException(met,fun::PrintStr("MkType value of Mk block %u does not match.",c),filehead);
-      if(pmk->Count!=mbk.Count)RunException(met,fun::PrintStr("Count value of Mk block %u does not match.",c),filehead);
+      if(pmk->Type!=mbk.Type)Run_ExceptioonFile(fun::PrintStr("Type of Mk block %u does not match.",c),filehead);
+      if(pmk->Mk!=mbk.Mk)Run_ExceptioonFile(fun::PrintStr("Mk value of Mk block %u does not match.",c),filehead);
+      if(pmk->MkType!=mbk.MkType)Run_ExceptioonFile(fun::PrintStr("MkType value of Mk block %u does not match.",c),filehead);
+      if(pmk->Count!=mbk.Count)Run_ExceptioonFile(fun::PrintStr("Count value of Mk block %u does not match.",c),filehead);
     }
   }
 }
@@ -1852,7 +1845,6 @@ void JSph::LoadCaseParticles(){
 /// Inicializa variables y objetos para la ejecucion.
 //==============================================================================
 void JSph::InitRun(unsigned np,const unsigned *idp,const tdouble3 *pos){
-  const char met[]="InitRun";
   InterStep=(TStep==STEP_Symplectic? INTERSTEP_SymPredictor: INTERSTEP_Verlet);
   VerletStep=0;
   if(TStep==STEP_Symplectic)SymplecticDtPre=DtIni;
@@ -1928,7 +1920,7 @@ void JSph::InitRun(unsigned np,const unsigned *idp,const tdouble3 *pos){
   //-Prepares ChronoObjects configuration.  //<vs_chroono_ini>
   if(ChronoObjects){
     Log->Print("Chrono Objects configuration:");
-    if(PartBegin)RunException(met,"Simulation restart not allowed when Chrono is used.");
+    if(PartBegin)Run_Exceptioon("Simulation restart not allowed when Chrono is used.");
     ChronoObjects->Init(Simulate2D,MkInfo);
     ChronoObjects->VisuConfig(""," ");
   }  //<vs_chroono_end>
@@ -1937,7 +1929,7 @@ void JSph::InitRun(unsigned np,const unsigned *idp,const tdouble3 *pos){
   if(Moorings){
     Log->Print("Moorings configuration:");
     if(!PartBegin)Moorings->Config(FtCount,FtObjs,ForcePoints);
-    else RunException(met,"Simulation restart not allowed when moorings are used.");
+    else Run_Exceptioon("Simulation restart not allowed when moorings are used.");
     Moorings->VisuConfig(""," ");
   }  //<vs_moordyyn_end>
 
@@ -1946,7 +1938,7 @@ void JSph::InitRun(unsigned np,const unsigned *idp,const tdouble3 *pos){
     Log->Printf("ForcePoints configuration:");
     ForcePoints->Config(FtCount,FtObjs,PeriActive,PeriX,PeriY,PeriZ,PeriXinc,PeriYinc,PeriZinc);
     if(!PartBegin)ForcePoints->CheckPoints(MkInfo,np,idp,pos);
-    else RunException(met,"Simulation restart not allowed when FtForces is used.");
+    else Run_Exceptioon("Simulation restart not allowed when FtForces is used.");
     ForcePoints->VisuConfig(""," ",FtCount,FtObjs);
   }  //<vs_moordyyn_end>
 
@@ -1972,7 +1964,7 @@ void JSph::InitRun(unsigned np,const unsigned *idp,const tdouble3 *pos){
   //-Prepares BoundCorr configuration.  //<vs_innlet_ini>
   if(BoundCorr){
     Log->Print("BoundCorr configuration:");
-    if(PartBegin)RunException(met,"Simulation restart not allowed when BoundCorr is used.");
+    if(PartBegin)Run_Exceptioon("Simulation restart not allowed when BoundCorr is used.");
     BoundCorr->RunAutoConfig(PartsInit);
     BoundCorr->VisuConfig(""," ");
   }//<vs_innlet_end>
@@ -2048,7 +2040,6 @@ void JSph::PrintHeadPart(){
 /// Establece configuracion para grabacion de particulas.
 //==============================================================================
 void JSph::ConfigSaveData(unsigned piece,unsigned pieces,std::string div){
-  const char met[]="ConfigSaveData";
   //-Stores basic information of simulation data.
   JPartDataHead parthead;
   parthead.ConfigBasic(RunCode,AppName,CaseName,CasePosMin,CasePosMax
@@ -2063,7 +2054,7 @@ void JSph::ConfigSaveData(unsigned piece,unsigned pieces,std::string div){
     case VISCO_None:        parthead.ConfigVisco(JPartDataHead::VISCO_None      ,Visco,ViscoBoundFactor);  break;
     case VISCO_Artificial:  parthead.ConfigVisco(JPartDataHead::VISCO_Artificial,Visco,ViscoBoundFactor);  break;
     case VISCO_LaminarSPS:  parthead.ConfigVisco(JPartDataHead::VISCO_LaminarSPS,Visco,ViscoBoundFactor);  break;
-    default: RunException(met,"Viscosity type is unknown.");
+    default: Run_Exceptioon("Viscosity type is unknown.");
   }
   if(SvData&SDAT_Binx){
     Log->AddFileInfo(DirDataOut+"Part_Head.ibi4","Binary file with basic information of simulation data.");
@@ -2078,7 +2069,7 @@ void JSph::ConfigSaveData(unsigned piece,unsigned pieces,std::string div){
     else if(div=="X")DataBi4->ConfigSimDiv(JPartDataBi4::DIV_X);
     else if(div=="Y")DataBi4->ConfigSimDiv(JPartDataBi4::DIV_Y);
     else if(div=="Z")DataBi4->ConfigSimDiv(JPartDataBi4::DIV_Z);
-    else RunException(met,"The division configuration is invalid.");
+    else Run_Exceptioon("The division configuration is invalid.");
     if(SvData&SDAT_Binx)Log->AddFileInfo(DirDataOut+"Part_????.bi4","Binary file with particle data in different instants.");
     if(SvData&SDAT_Info)Log->AddFileInfo(DirDataOut+"PartInfo.ibi4","Binary file with execution information for each instant (input for PartInfo program).");
   }
@@ -2195,7 +2186,7 @@ void JSph::AbortBoundOut(JLog2 *log,unsigned nout,const unsigned *idp,const tdou
     JVtkLib::SaveVtkData(file,arrays,"Pos");
   }
   //-Aborts execution.
-  RunException("AbortBoundOut","Fixed, moving or floating particles were excluded. Check VTK file Error_BoundaryOut.vtk with excluded particles.");
+  Run_Exceptioon("Fixed, moving or floating particles were excluded. Check VTK file Error_BoundaryOut.vtk with excluded particles.");
 }
 
 //==============================================================================
@@ -2230,7 +2221,6 @@ void JSph::AddBasicArrays(JDataArrays &arrays,unsigned np,const tdouble3 *pos
 void JSph::SavePartData(unsigned npok,unsigned nout,const JDataArrays& arrays
   ,unsigned ndom,const tdouble3 *vdom,const StInfoPartPlus *infoplus)
 {
-  const char met[]="SavePartData";
   //-Stores particle data and/or information in bi4 format.
   //-Graba datos de particulas y/o informacion en formato bi4.
   if(DataBi4){
@@ -2275,10 +2265,10 @@ void JSph::SavePartData(unsigned npok,unsigned nout,const JDataArrays& arrays
     }
     if(SvData&SDAT_Binx){
       string err;
-      if(!(err=arrays.CheckErrorArray("Pos" ,TypeDouble3,npok)).empty())RunException(met,err);
-      if(!(err=arrays.CheckErrorArray("Idp" ,TypeUint   ,npok)).empty())RunException(met,err);
-      if(!(err=arrays.CheckErrorArray("Vel" ,TypeFloat3 ,npok)).empty())RunException(met,err);
-      if(!(err=arrays.CheckErrorArray("Rhop",TypeFloat  ,npok)).empty())RunException(met,err);
+      if(!(err=arrays.CheckErrorArray("Pos" ,TypeDouble3,npok)).empty())Run_Exceptioon(err);
+      if(!(err=arrays.CheckErrorArray("Idp" ,TypeUint   ,npok)).empty())Run_Exceptioon(err);
+      if(!(err=arrays.CheckErrorArray("Vel" ,TypeFloat3 ,npok)).empty())Run_Exceptioon(err);
+      if(!(err=arrays.CheckErrorArray("Rhop",TypeFloat  ,npok)).empty())Run_Exceptioon(err);
       const tdouble3 *pos =arrays.GetArrayDouble3("Pos");
       const unsigned *idp =arrays.GetArrayUint   ("Idp");
       const tfloat3  *vel =arrays.GetArrayFloat3 ("Vel");
@@ -2310,8 +2300,8 @@ void JSph::SavePartData(unsigned npok,unsigned nout,const JDataArrays& arrays
     arrays2.CopyFrom(arrays);
 
     string err;
-    if(!(err=arrays2.CheckErrorArray("Pos" ,TypeDouble3,npok)).empty())RunException(met,err);
-    if(!(err=arrays2.CheckErrorArray("Idp" ,TypeUint   ,npok)).empty())RunException(met,err);
+    if(!(err=arrays2.CheckErrorArray("Pos" ,TypeDouble3,npok)).empty())Run_Exceptioon(err);
+    if(!(err=arrays2.CheckErrorArray("Idp" ,TypeUint   ,npok)).empty())Run_Exceptioon(err);
     const tdouble3 *pos =arrays2.GetArrayDouble3("Pos");
     const unsigned *idp =arrays2.GetArrayUint   ("Idp");
     //-Generates array with posf3 and type of particle.
@@ -2362,14 +2352,13 @@ void JSph::SavePartData(unsigned npok,unsigned nout,const JDataArrays& arrays
 void JSph::SaveData(unsigned npok,const JDataArrays& arrays
   ,unsigned ndom,const tdouble3 *vdom,const StInfoPartPlus *infoplus)
 {
-  const char met[]="SaveData";
   string suffixpartx=fun::PrintStr("_%04d",Part);
 
   //-Counts new excluded particles.
   //-Contabiliza nuevas particulas excluidas.
   const unsigned noutpos=PartsOut->GetOutPosCount(),noutrhop=PartsOut->GetOutRhopCount(),noutmove=PartsOut->GetOutMoveCount();
   const unsigned nout=noutpos+noutrhop+noutmove;
-  if(nout!=PartsOut->GetCount())RunException(met,"Excluded particles with unknown reason.");
+  if(nout!=PartsOut->GetCount())Run_Exceptioon("Excluded particles with unknown reason.");
   AddOutCount(noutpos,noutrhop,noutmove);
 
   //-Stores data files of particles.
@@ -2578,7 +2567,6 @@ void JSph::GetResInfo(float tsim,float ttot,const std::string &headplus,const st
 /// Genera fichero Run.csv con resumen de ejecucion.
 //==============================================================================
 void JSph::SaveRes(float tsim,float ttot,const std::string &headplus,const std::string &detplus){
-  const char* met="SaveRes";
   const string fname=DirOut+"Run.csv";
   Log->AddFileInfo(fname,"One line CSV file with execution parameters and other simulation data.");
   ofstream pf;
@@ -2587,10 +2575,10 @@ void JSph::SaveRes(float tsim,float ttot,const std::string &headplus,const std::
     string hinfo,dinfo;
     GetResInfo(tsim,ttot,headplus,detplus,hinfo,dinfo);
     pf << fun::StrCsvSep(CsvSepComa,hinfo) << endl << fun::StrCsvSep(CsvSepComa,dinfo) << endl;
-    if(pf.fail())RunException(met,"Failed writing to file.",fname);
+    if(pf.fail())Run_ExceptioonFile("Failed writing to file.",fname);
     pf.close();
   }
-  else RunException(met,"File could not be opened.",fname);
+  else Run_ExceptioonFile("File could not be opened.",fname);
 }
 
 //==============================================================================
@@ -2808,8 +2796,10 @@ void JSph::DgSaveVtkParticlesCpu(std::string filename,int numfile,unsigned pini,
 /// Saves CSV file with particle data (degug).
 /// Graba fichero CSV con datos de las particulas (degug).
 //==============================================================================
-void JSph::DgSaveCsvParticlesCpu(std::string filename,int numfile,unsigned pini,unsigned pfin,std::string head,const tfloat3 *pos,const unsigned *idp,const tfloat3 *vel,const float *rhop,const float *ar,const tfloat3 *ace,const tfloat3 *vcorr){
-  const char met[]="DgSaveCsvParticlesCpu";
+void JSph::DgSaveCsvParticlesCpu(std::string filename,int numfile,unsigned pini,unsigned pfin
+  ,std::string head,const tfloat3 *pos,const unsigned *idp,const tfloat3 *vel
+  ,const float *rhop,const float *ar,const tfloat3 *ace,const tfloat3 *vcorr)
+{
   int mpirank=Log->GetMpiRank();
   if(mpirank>=0)filename=string("p")+fun::IntStr(mpirank)+"_"+filename;
   if(numfile>=0)filename=fun::FileNameSec(filename,numfile);
@@ -2841,10 +2831,10 @@ void JSph::DgSaveCsvParticlesCpu(std::string filename,int numfile,unsigned pini,
       if(vcorr)pf << ";" << fun::Float3Str(vcorr[p],fmt3);
       pf << endl;
     }
-    if(pf.fail())RunException(met,"Failed writing to file.",filename);
+    if(pf.fail())Run_ExceptioonFile("Failed writing to file.",filename);
     pf.close();
   }
-  else RunException(met,"File could not be opened.",filename);
+  else Run_ExceptioonFile("File could not be opened.",filename);
 }
 
 

@@ -66,7 +66,7 @@ void JMeanMoving::Init(unsigned size,bool weighted){
       if(weighted)Weights=new double[SizeValues];
     }
     catch(const std::bad_alloc){
-      RunException("Init","Cannot allocate the requested memory.");
+      Run_Exceptioon("Cannot allocate the requested memory.");
     }
   }
 }

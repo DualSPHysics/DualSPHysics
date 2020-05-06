@@ -109,7 +109,6 @@ unsigned JRadixSort::BitsSize(ullong v)const{ return(TBitsSize<ullong>(v,64)); }
 /// Computes Nbits for the indicated data.
 //==============================================================================
 template<class T> unsigned JRadixSort::TCalcNbits(unsigned size,const T *data)const{
-  const char met[]="CalcNbits";
   const int threads=omp_get_max_threads();
   T mxdata=0;
 
@@ -122,7 +121,7 @@ template<class T> unsigned JRadixSort::TCalcNbits(unsigned size,const T *data)co
     //-Calcula bloques de ejecucion.
     //-Computes execution blocks.
     const int nk=int(size/OMPSIZE)+1;
-    if(nk<0)RunException(met,"Number of values is invalid.");
+    if(nk<0)Run_Exceptioon("Number of values is invalid.");
     const int rk=int(size%OMPSIZE);
     //-Calcula maximo de nk bloques con varios hilos.
     //-Calculate maximum of nk blocks with several threads.
@@ -173,7 +172,7 @@ void JRadixSort::AllocMemory(unsigned s){
     else Data64=new ullong[s];
   }
   catch(const std::bad_alloc){
-    RunException("AllocMemory","Cannot allocate the requested memory.");
+    Run_Exceptioon("Cannot allocate the requested memory.");
   }
 }
 
@@ -182,7 +181,6 @@ void JRadixSort::AllocMemory(unsigned s){
 /// Counts number of values for each key.
 //==============================================================================
 template<class T> void JRadixSort::LoadBeginKeys(const T* data){
-  const char met[]="LoadBeginKeys";
   const int threads=omp_get_max_threads();
   //-Reserva espacio para contadores de claves.
   //-Allocates space for key counters.
@@ -216,7 +214,7 @@ template<class T> void JRadixSort::LoadBeginKeys(const T* data){
     //-Calcula bloques de ejecucion.
     //-Computes execution blocks.
     const int nk=int(Size/OMPSIZE)+1;
-    if(nk<0)RunException(met,"Number of values is invalid.");
+    if(nk<0)Run_Exceptioon("Number of values is invalid.");
     const int rk=int(Size%OMPSIZE);
     //-Reserva memoria auxiliar para conteo.
     //-Allocates auxiliary memory for counting.
@@ -264,7 +262,6 @@ template<class T> void JRadixSort::LoadBeginKeys(const T* data){
 /// Performs a sorting step in an 1 bit function.
 //==============================================================================
 template<class T> void JRadixSort::SortStep(unsigned ck,const T* data,T* data2){
-  const char met[]="SortStep";
   unsigned p2[KEYSRANGE];
   memcpy(p2,BeginKeys+(ck*KEYSRANGE),sizeof(unsigned)*KEYSRANGE);
   const unsigned ckmov=ck*KEYSBITS;
@@ -280,7 +277,6 @@ template<class T> void JRadixSort::SortStep(unsigned ck,const T* data,T* data2){
 /// Performs a sorting step in an 1 bit function.
 //==============================================================================
 template<class T> void JRadixSort::SortStepIndex(unsigned ck,const T* data,T* data2,const unsigned *index,unsigned *index2){
-  const char met[]="SortStep";
   unsigned p2[KEYSRANGE];
   memcpy(p2,BeginKeys+(ck*KEYSRANGE),sizeof(unsigned)*KEYSRANGE);
   const unsigned ckmov=ck*KEYSBITS;
@@ -298,7 +294,6 @@ template<class T> void JRadixSort::SortStepIndex(unsigned ck,const T* data,T* da
 /// Creates and initializes the Index[] array.
 //==============================================================================
 void JRadixSort::IndexCreate(){
-  const char met[]="IndexCreate";
   const int threads=omp_get_max_threads();
   //-Reserva memoria.
   //-Allocates memeory.
@@ -307,7 +302,7 @@ void JRadixSort::IndexCreate(){
     PrevIndex=new unsigned[Size];
   }
   catch(const std::bad_alloc){
-    RunException(met,"Cannot allocate the requested memory.");
+    Run_Exceptioon("Cannot allocate the requested memory.");
   }
 
   //-Carga PrevIndex[] con valores consecutivos.
@@ -317,7 +312,7 @@ void JRadixSort::IndexCreate(){
   }
   else{//-con OpenMP.
     const int nk=int(Size/OMPSIZE)+1;
-    if(nk<0)RunException(met,"Number of values is invalid.");
+    if(nk<0)Run_Exceptioon("Number of values is invalid.");
     const int rk=int(Size%OMPSIZE);
     //-Realiza proceso con varios hilos.
     //-Performs process with several threads.
@@ -415,17 +410,16 @@ void JRadixSort::MakeIndex(unsigned size,const ullong *data,unsigned nbits){
 /// Reorders data arrays as a function of the previously calculated Index[].
 //==============================================================================
 template<class T> void JRadixSort::TSortData(unsigned size,const T *data,T *result){
-  const char met[]="TSortData";
   const int threads=omp_get_max_threads();
-  if(!Index)RunException(met,"There is no index to sort data.");
-  if(size!=Size)RunException(met,"The size of data is invalid.");
+  if(!Index)Run_Exceptioon("There is no index to sort data.");
+  if(size!=Size)Run_Exceptioon("The size of data is invalid.");
   T *res=result;
   if(data==res){//-Reserva vector auxiliar para la ordenacion. //-Allocates auxiliary array for sorting.
     try{
       res=new T[size];
     }
     catch(const std::bad_alloc){
-      RunException(met,"Cannot allocate the requested memory.");
+      Run_Exceptioon("Cannot allocate the requested memory.");
     }
   }
 
@@ -436,7 +430,7 @@ template<class T> void JRadixSort::TSortData(unsigned size,const T *data,T *resu
   }
   else{//-con OpenMP. //-with OpenMP
     const int nk=int(Size/OMPSIZE)+1;
-    if(nk<0)RunException(met,"Number of values is invalid.");
+    if(nk<0)Run_Exceptioon("Number of values is invalid.");
     const int rk=int(Size%OMPSIZE);
     #ifdef OMP_USE_RADIXSORT
       #pragma omp parallel for schedule (static)
@@ -534,7 +528,7 @@ void JRadixSort::SortData(unsigned size,const tdouble2 *data,tdouble2 *result){ 
 void JRadixSort::DgCheckResult32()const{
   unsigned p=1;
   for(;p<Size&&InitData32[p-1]<=InitData32[p];p++);
-  if(p!=Size)RunException("DgCheckResult32","The order is not correct");
+  if(p!=Size)Run_Exceptioon("The order is not correct");
 }
 //==============================================================================
 /// Comprueba ordenacion de datos.
@@ -543,7 +537,7 @@ void JRadixSort::DgCheckResult32()const{
 void JRadixSort::DgCheckResult64()const{
   unsigned p=1;
   for(;p<Size&&InitData64[p-1]<=InitData64[p];p++);
-  if(p!=Size)RunException("DgCheckResult64","The order is not correct");
+  if(p!=Size)Run_Exceptioon("The order is not correct");
 }
 
 

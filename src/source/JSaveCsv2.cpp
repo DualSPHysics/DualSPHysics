@@ -79,6 +79,7 @@ void JSaveCsv2::OpenFile(){
     if(App && fexists)Pf->open(FileName.c_str(),ios::binary|ios::out|ios::in|ios::app);
     else Pf->open(FileName.c_str(),ios::binary|ios::out);
     if(!(*Pf)){
+      ExceptionThrown=true;
       Run_ExceptioonFile("File could not be opened.",FileName);
     }
     if(App && fexists){

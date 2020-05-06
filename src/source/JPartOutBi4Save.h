@@ -29,6 +29,7 @@
 //:# =========
 //:# - Implementacion. (23-11-2013)
 //:# - Ahora se guarda tambien el motivo de exclusion. (20-03-2018)
+//:# - Mejora la gestion de excepciones. (06-05-2020)
 //:#############################################################################
 
 /// \file JPartOutBi4Save.h \brief Declares the class \ref JPartOutBi4Save.

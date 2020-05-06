@@ -79,7 +79,6 @@ unsigned JSimpleNeigs::GetAllocMemory()const{
 /// Definie la division del dominio en celdas.
 //==============================================================================
 void JSimpleNeigs::DefineMapCells(){
-  const char met[]="DefineMapCells";
   //-Calculates minimum and maximum position. 
   tdouble3 pmin=TDouble3(DBL_MAX),pmax=TDouble3(-DBL_MAX);
   for(unsigned p=0;p<Np;p++){
@@ -103,7 +102,7 @@ void JSimpleNeigs::DefineMapCells(){
   //printf("==>  ncx:%u ncy:%u ncz:%u\n",Ncx,Ncy,Ncz);
   Nsheet=Ncx*Ncy; Nct=Nsheet*Ncz;
   ullong nct0=ullong(Ncx)*ullong(Ncy)*ullong(Ncz);
-  if(ullong(Nct)!=nct0)RunException(met,fun::PrintStr("Number of cells (%d x %d x %d) is invalid.",Ncx,Ncy,Ncz));
+  if(ullong(Nct)!=nct0)Run_Exceptioon(fun::PrintStr("Number of cells (%d x %d x %d) is invalid.",Ncx,Ncy,Ncz));
 }
 
 //==============================================================================
@@ -111,9 +110,8 @@ void JSimpleNeigs::DefineMapCells(){
 /// Crea mapa de celdas.
 //==============================================================================
 void JSimpleNeigs::CreateMapCells(){
-  const char met[]="CreateMapCells";
-  if(Np==0)RunException(met,"Nummber of positions is zero.");
-  if(Scell<=0)RunException(met,"Size of cells is invalid.");
+  if(Np==0)Run_Exceptioon("Nummber of positions is zero.");
+  if(Scell<=0)Run_Exceptioon("Size of cells is invalid.");
   DefineMapCells();
   //-Allocate memory.
   unsigned *poscell=NULL;
@@ -127,7 +125,7 @@ void JSimpleNeigs::CreateMapCells(){
     SelectPos=new unsigned[SizeSelect];
   }
   catch(const std::bad_alloc){
-    RunException(met,"Could not allocate the requested memory.");
+    Run_Exceptioon("Could not allocate the requested memory.");
   }
   //-Computes cell of each particle and number of postions for each cell.
   memset(npcell,0,sizeof(unsigned)*Nct);
@@ -140,7 +138,7 @@ void JSimpleNeigs::CreateMapCells(){
     }
     else error=true;
   }
-  if(error)RunException(met,"Some position is outside the defined domain.");
+  if(error)Run_Exceptioon("Some position is outside the defined domain.");
   //-Computes BeginCell[].
   BeginCell[0]=0;
   for(int c=0;c<Nct;c++)BeginCell[c+1]=BeginCell[c]+npcell[c];
@@ -188,7 +186,6 @@ void JSimpleNeigs::SelectAdd(unsigned p){
 /// Guarda las posiciones cercanas en SelectPos[] y devuelve el numero de posiciones seleccionadas.
 //==============================================================================
 unsigned JSimpleNeigs::NearbyPositions(const tdouble3 &ps,unsigned pignore,double dist){
-  const char met[]="NearbyPositions";
   const double dist2=dist*dist;
   CountSelect=0;
   //printf("==> pos:(%f,%f,%f)\n",ps.x,ps.y,ps.z);

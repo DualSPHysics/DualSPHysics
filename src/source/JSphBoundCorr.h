@@ -25,6 +25,7 @@
 //:# - Saves VTK file (CfgBoundCorr_Limit.vtk) with LimitPos and Direction 
 //:#   configuration. (13-06-2018)
 //:# - Comprueba opcion active en elementos de primer y segundo nivel. (18-03-2020)  
+//:# - Mejora la gestion de excepciones. (06-05-2020)
 //:#############################################################################
 
 /// \file JSphBoundCorr.h \brief Declares the class \ref JSphBoundCorr.

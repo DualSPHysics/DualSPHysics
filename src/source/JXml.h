@@ -47,6 +47,7 @@
 //:# - Permite la evaluacion automatica tambien de variables de texto con JNumex. (08-03-2020)
 //:# - Nuevos metodos GetAttributeStrSimple() y ReadElementStrSimple(). (08-03-2020)
 //:# - Nuevos metodos CheckElementActive() y  CheckNodeActive(). (18-03-2020)
+//:# - Mejora la gestion de excepciones. (06-05-2020)
 //:#############################################################################
 
 /// \file JXml.h \brief Declares the class \ref JXml.

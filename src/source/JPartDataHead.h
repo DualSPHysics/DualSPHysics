@@ -24,6 +24,7 @@
 //:# - Establece PERI_Unknown por defecto. (27-04-2018)
 //:# - Improved definition of the periodic conditions. (27-04-2018)
 //:# - Incluye informacion de Symmetry. (13-05-2018)
+//:# - Mejora la gestion de excepciones. (06-05-2020)
 //:#############################################################################
 
 /// \file JPartDataHead.h \brief Declares the class \ref JPartDataHead.

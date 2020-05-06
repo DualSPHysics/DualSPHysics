@@ -161,10 +161,9 @@ llong JBinaryDataArray::GetAllocMemory()const{
 /// Exception to ensure that there is no duplictaes arrays or values.
 //==============================================================================
 void JBinaryDataArray::SetName(const std::string &name){
-  const char met[]="SetName";
-  if(Parent->ExistsValue(name))RunException(met,"There is already a value with the name given.");
-  if(Parent->GetArray(name)!=NULL)RunException(met,"There is already an array with the name given.");
-  if(Parent->GetItem(name)!=NULL)RunException(met,"There is already an item with the name given.");
+  if(Parent->ExistsValue(name))Run_Exceptioon("There is already a value with the name given.");
+  if(Parent->GetArray(name)!=NULL)Run_Exceptioon("There is already an array with the name given.");
+  if(Parent->GetItem(name)!=NULL)Run_Exceptioon("There is already an item with the name given.");
   Name=name;
 }
 
@@ -190,7 +189,7 @@ void JBinaryDataArray::FreePointer(void* ptr)const{
     case JBinaryDataDef::DatUint3:    delete[] (tuint3*)ptr;          break;
     case JBinaryDataDef::DatFloat3:   delete[] (tfloat3*)ptr;         break;
     case JBinaryDataDef::DatDouble3:  delete[] (tdouble3*)ptr;        break;
-    default: RunException("FreePointer","Type of array invalid.");
+    default: Run_Exceptioon("Type of array invalid.");
   }
 }
 
@@ -199,7 +198,6 @@ void JBinaryDataArray::FreePointer(void* ptr)const{
 /// Returns pointer to the allocated memory.
 //==============================================================================
 void* JBinaryDataArray::AllocPointer(unsigned size)const{
-  const char met[]="AllocPointer";
   void* ptr=NULL;
   if(size){
     try{
@@ -220,11 +218,11 @@ void* JBinaryDataArray::AllocPointer(unsigned size)const{
         case JBinaryDataDef::DatUint3:    ptr=new tuint3[size];          break;
         case JBinaryDataDef::DatFloat3:   ptr=new tfloat3[size];         break;
         case JBinaryDataDef::DatDouble3:  ptr=new tdouble3[size];        break;
-        default: RunException(met,"Type of array invalid.");
+        default: Run_Exceptioon("Type of array invalid.");
       }
     }
     catch(const std::bad_alloc){
-      RunException(met,"Cannot allocate the requested memory.");
+      Run_Exceptioon("Cannot allocate the requested memory.");
     }
   }
   return(ptr);
@@ -237,17 +235,16 @@ void* JBinaryDataArray::AllocPointer(unsigned size)const{
 /// If ExternalPointer will not allow to resize the allocated memory.
 //==============================================================================
 void JBinaryDataArray::CheckMemory(unsigned count,bool resize){
-  const char met[]="CheckMemory";
   if(count){
     //-Reserva memoria si fuese necesario.
     //-Allocates memory if necessary.
     if(!Pointer){
-      if(!resize)RunException(met,"Memory no allocated.");
+      if(!resize)Run_Exceptioon("Memory no allocated.");
       AllocMemory(count);
     }
     if(Count+count>Size){
-      if(ExternalPointer)RunException(met,"Allocated memory in external pointer is not enough.");
-      if(!resize)RunException(met,"Allocated memory is not enough.");
+      if(ExternalPointer)Run_Exceptioon("Allocated memory in external pointer is not enough.");
+      if(!resize)Run_Exceptioon("Allocated memory is not enough.");
       AllocMemory(Count+count,true);
     }
   }
@@ -259,7 +256,7 @@ void JBinaryDataArray::CheckMemory(unsigned count,bool resize){
 //==============================================================================
 void JBinaryDataArray::OutData(unsigned &count,unsigned size,const byte *ptr,byte *dat,unsigned sdat)const{
   const unsigned count2=count+sdat;
-  if(count2>size)RunException("OutData","Overflow in reading data.");
+  if(count2>size)Run_Exceptioon("Overflow in reading data.");
   memcpy(dat,ptr+count,sdat);
   count=count2;
 }
@@ -273,7 +270,7 @@ std::string JBinaryDataArray::OutStr(unsigned &count,unsigned size,const byte *p
   string tex;
   tex.resize(len);
   const unsigned count2=count+len;
-  if(count2>size)RunException("OutStr","Overflow in reading data.");
+  if(count2>size)Run_Exceptioon("Overflow in reading data.");
   memcpy((char*)tex.c_str(),ptr+count,len);
   count=count2;
   return(tex);
@@ -298,7 +295,7 @@ void JBinaryDataArray::FreeMemory(){
 //==============================================================================
 void JBinaryDataArray::AllocMemory(unsigned size,bool savedata){
   if(Count&&savedata&&size){
-    if(ExternalPointer)RunException("AllocMemory","External pointer can not be resized.");
+    if(ExternalPointer)Run_Exceptioon("External pointer can not be resized.");
     const unsigned count2=min(Count,size);
     void *ptr=AllocPointer(size);
     if(Type==JBinaryDataDef::DatText){//-String array.
@@ -353,14 +350,13 @@ void JBinaryDataArray::ClearFileData(){
 /// Load open file content with OpenFileStructure (). 
 //==============================================================================
 void JBinaryDataArray::ReadFileData(bool resize){
-  const char met[]="ReadFileData";
   //printf("ReadFileData Parent_name:[%s] p:%p\n",Parent->GetName().c_str(),Parent);
   //printf("ReadFileData Parent2_name:[%s] p:%p\n",(Parent->GetParent()? Parent->GetParent()->GetName().c_str(): "none"),Parent->GetParent());
   //printf("ReadFileData root_name:[%s] p:%p\n",Parent->GetItemRoot()->GetName().c_str(),Parent->GetItemRoot());
   ifstream *pf=Parent->GetItemRoot()->GetFileStructure();
-  if(!pf||!pf->is_open())RunException(met,"The file with data is not available.");
+  if(!pf||!pf->is_open())Run_Exceptioon("The file with data is not available.");
   //printf("ReadFileData[%s]> fpos:%llu count:%u size:%u\n",Name.c_str(),FileDataPos,FileDataCount,FileDataSize);
-  if(FileDataPos<0)RunException(met,"The access information to data file is not available.");
+  if(FileDataPos<0)Run_Exceptioon("The access information to data file is not available.");
   pf->seekg(FileDataPos,ios::beg);
   ReadData(FileDataCount,FileDataSize,pf,resize);
 }
@@ -443,7 +439,7 @@ void JBinaryDataArray::SetData(unsigned count,const void* data,bool externalpoin
 /// If ExternalPointer will not allow to resize the allocated memory.
 //==============================================================================
 void JBinaryDataArray::AddText(const std::string &str,bool resize){
-  if(Type!=JBinaryDataDef::DatText)RunException("AddText","Type of array is not Text.");
+  if(Type!=JBinaryDataDef::DatText)Run_Exceptioon("Type of array is not Text.");
   unsigned count=1;
   if(count){
     //-Reserva memoria si fuese necesario.
@@ -464,7 +460,7 @@ void JBinaryDataArray::AddText(const std::string &str,bool resize){
 /// If ExternalPointer will not allow to resize the allocated memory.
 //==============================================================================
 void JBinaryDataArray::AddTexts(unsigned count,const std::string *strs,bool resize){
-  if(Type!=JBinaryDataDef::DatText)RunException("AddTexts","Type of array is not Text.");
+  if(Type!=JBinaryDataDef::DatText)Run_Exceptioon("Type of array is not Text.");
   if(count)AddData(count,(const void*)strs,resize);
 }
 
@@ -473,7 +469,7 @@ void JBinaryDataArray::AddTexts(unsigned count,const std::string *strs,bool resi
 /// Returns pointer and check is pointer is populated with data.
 //==============================================================================
 const void* JBinaryDataArray::GetDataPointer()const{
-  if(!DataInPointer())RunException("GetDataPointer","There are not available data in pointer.");
+  if(!DataInPointer())Run_Exceptioon("There are not available data in pointer.");
   return(Pointer);
 }
 
@@ -484,10 +480,9 @@ const void* JBinaryDataArray::GetDataPointer()const{
 /// the number of elements.
 //==============================================================================
 unsigned JBinaryDataArray::GetDataCopy(unsigned size,void* pointer)const{
-  const char met[]="GetDataCopy";
-  if(!DataInPointer()&&!DataInFile())RunException(met,"There are not available data in Pointer or FileData.");
+  if(!DataInPointer()&&!DataInFile())Run_Exceptioon("There are not available data in Pointer or FileData.");
   const size_t stype=JBinaryDataDef::SizeOfType(GetType());
-  if(!stype)RunException(met,"Type of array is invalid for this function.");
+  if(!stype)Run_Exceptioon("Type of array is invalid for this function.");
   unsigned count=0;
   if(DataInPointer()){
     count=GetCount();
@@ -497,13 +492,13 @@ unsigned JBinaryDataArray::GetDataCopy(unsigned size,void* pointer)const{
     count=FileDataCount;
     if(size>=count){
       ifstream *pf=Parent->GetItemRoot()->GetFileStructure();
-      if(!pf||!pf->is_open())RunException(met,"The file with data is not available.");
+      if(!pf||!pf->is_open())Run_Exceptioon("The file with data is not available.");
       pf->seekg(FileDataPos,ios::beg);
       count=FileDataCount;
       pf->read((char*)pointer,stype*count);
     }
   }
-  if(size<count)RunException(met,"Size of array is not enough to store all data.");
+  if(size<count)Run_Exceptioon("Size of array is not enough to store all data.");
   return(count);
 }
 
@@ -616,11 +611,10 @@ void JBinaryData::ValuesCachePrepare(bool down){
 /// Check existence of value and type. Returns position (index) value (-1 if not exist).
 //==============================================================================
 int JBinaryData::CheckGetValue(const std::string &name,bool optional,JBinaryDataDef::TpData type)const{
-  const char met[]="CheckGetValue";
   int idx=GetValueIndex(name);
-  //if(idx<0&&GetArrayIndex(name)>=0)RunException(met,string("The value ")+name+" is an array.");
-  if(!optional&&idx<0)RunException(met,string("Value ")+name+" not found.");
-  if(idx>=0&&Values[idx].type!=type)RunException(met,string("Type of value ")+name+" invalid.");
+  //if(idx<0&&GetArrayIndex(name)>=0)Run_Exceptioon(string("The value ")+name+" is an array.");
+  if(!optional&&idx<0)Run_Exceptioon(string("Value ")+name+" not found.");
+  if(idx>=0&&Values[idx].type!=type)Run_Exceptioon(string("Type of value ")+name+" invalid.");
   return(idx);
 }
 
@@ -629,15 +623,14 @@ int JBinaryData::CheckGetValue(const std::string &name,bool optional,JBinaryData
 /// Check value type, create if it does not exists, Returns position value.
 //==============================================================================
 int JBinaryData::CheckSetValue(const std::string &name,JBinaryDataDef::TpData type){
-  const char met[]="CheckSetValue";
   int idx=GetValueIndex(name);
-  if(idx<0&&GetArray(name)!=NULL)RunException(met,string("The value ")+name+" is an array.");
-  if(idx<0&&GetItem(name)!=NULL)RunException(met,string("The value ")+name+" is an item.");
-  if(idx>=0&&Values[idx].type!=type)RunException(met,string("Type of value ")+name+" invalid.");
+  if(idx<0&&GetArray(name)!=NULL)Run_Exceptioon(string("The value ")+name+" is an array.");
+  if(idx<0&&GetItem(name)!=NULL)Run_Exceptioon(string("The value ")+name+" is an item.");
+  if(idx>=0&&Values[idx].type!=type)Run_Exceptioon(string("Type of value ")+name+" invalid.");
   if(idx<0){
     StValue v;
-    if(name.length()>120)RunException(met,string("The name of value ")+name+"  is too large.");
-    if(name.empty())RunException(met,string("The name of value ")+name+"  is empty.");
+    if(name.length()>120)Run_Exceptioon(string("The name of value ")+name+"  is too large.");
+    if(name.empty())Run_Exceptioon(string("The name of value ")+name+"  is empty.");
     ResetValue(name,type,v);
     Values.push_back(v);
     idx=int(Values.size())-1;
@@ -659,9 +652,8 @@ void JBinaryData::ResetValue(const std::string &name,JBinaryDataDef::TpData type
 /// Value returned in XML format.
 //==============================================================================
 std::string JBinaryData::ValueToXml(const StValue &v)const{
-  const char met[]="ValueToXml";
   string tx=JBinaryDataDef::TypeToStr(v.type);
-  if(tx.empty())RunException(met,"Name of type invalid.");
+  if(tx.empty())Run_Exceptioon("Name of type invalid.");
   tx=string("<")+tx+" name=\""+v.name+"\" ";
   switch(v.type){
     case JBinaryDataDef::DatText:     tx=tx+"v=\""+ v.vtext +"\" />";                         break;
@@ -680,7 +672,7 @@ std::string JBinaryData::ValueToXml(const StValue &v)const{
     case JBinaryDataDef::DatUint3:    tx=tx+"x=\""+ fun::UintStr(v.vuint3.x) +"\" y=\""+ fun::UintStr(v.vuint3.y) +"\" z=\""+ fun::UintStr(v.vuint3.z) +"\" />";                             break;
     case JBinaryDataDef::DatFloat3:   tx=tx+"x=\""+ fun::FloatStr(v.vfloat3.x,FmtFloat.c_str()) +"\" y=\""+ fun::FloatStr(v.vfloat3.y,FmtFloat.c_str()) +"\" z=\""+ fun::FloatStr(v.vfloat3.z,FmtFloat.c_str()) +"\" />";           break;  //"%.7E"
     case JBinaryDataDef::DatDouble3:  tx=tx+"x=\""+ fun::DoubleStr(v.vdouble3.x,FmtDouble.c_str()) +"\" y=\""+ fun::DoubleStr(v.vdouble3.y,FmtDouble.c_str()) +"\" z=\""+ fun::DoubleStr(v.vdouble3.z,FmtDouble.c_str()) +"\" />";  break;  //"%.15E"
-    default: RunException(met,"Type of value invalid.");
+    default: Run_Exceptioon("Type of value invalid.");
   }
   return(tx);
 }
@@ -693,7 +685,7 @@ std::string JBinaryData::ValueToXml(const StValue &v)const{
 //==============================================================================
 void JBinaryData::OutData(unsigned &count,unsigned size,const byte *ptr,byte *dat,unsigned sdat)const{
   const unsigned count2=count+sdat;
-  if(count2>size)RunException("OutData","Overflow in reading data.");
+  if(count2>size)Run_Exceptioon("Overflow in reading data.");
   memcpy(dat,ptr+count,sdat);
   count=count2;
 }
@@ -707,7 +699,7 @@ std::string JBinaryData::OutStr(unsigned &count,unsigned size,const byte *ptr)co
   string tex;
   tex.resize(len);
   const unsigned count2=count+len;
-  if(count2>size)RunException("OutStr","Overflow in reading data.");
+  if(count2>size)Run_Exceptioon("Overflow in reading data.");
   memcpy((char*)tex.c_str(),ptr+count,len);
   count=count2;
   return(tex);
@@ -718,12 +710,11 @@ std::string JBinaryData::OutStr(unsigned &count,unsigned size,const byte *ptr)co
 /// Put data in ptr.
 //==============================================================================
 void JBinaryData::InData(unsigned &count,unsigned size,byte *ptr,const byte *dat,unsigned sdat)const{
-  const char met[]="InData";
   if(ptr){
-    if(count+sdat>size)RunException(met,"Insufficient memory for data.");
+    if(count+sdat>size)Run_Exceptioon("Insufficient memory for data.");
     memcpy(ptr+count,dat,sdat);
   }
-  if(count+sdat<count)RunException(met,"Size of data is too huge.");
+  if(count+sdat<count)Run_Exceptioon("Size of data is too huge.");
   count+=sdat;
 }
 
@@ -760,7 +751,7 @@ void JBinaryData::InValue(unsigned &count,unsigned size,byte *ptr,const StValue 
     case JBinaryDataDef::DatUint3:    InUint3  (count,size,ptr,v.vuint3);    break;    
     case JBinaryDataDef::DatFloat3:   InFloat3 (count,size,ptr,v.vfloat3);   break;    
     case JBinaryDataDef::DatDouble3:  InDouble3(count,size,ptr,v.vdouble3);  break;    
-    default: RunException("InValue","Type of value invalid.");
+    default: Run_Exceptioon("Type of value invalid.");
   }
 }
 
@@ -788,7 +779,7 @@ void JBinaryData::OutValue(unsigned &count,unsigned size,const byte *ptr){
     case JBinaryDataDef::DatUint3:    SetvUint3  (name,OutUint3  (count,size,ptr));   break;
     case JBinaryDataDef::DatFloat3:   SetvFloat3 (name,OutFloat3 (count,size,ptr));   break;
     case JBinaryDataDef::DatDouble3:  SetvDouble3(name,OutDouble3(count,size,ptr));   break;
-    default: RunException("OutValue","Type of value invalid.");
+    default: Run_Exceptioon("Type of value invalid.");
   }
 }
 
@@ -815,7 +806,7 @@ void JBinaryData::InArrayData(unsigned &count,unsigned size,byte *ptr,const JBin
   const JBinaryDataDef::TpData type=ar->GetType();
   const unsigned num=ar->GetCount();
   const void* pointer=ar->GetPointer();
-  if(num&&!pointer)RunException("InArrayData","Pointer of array with data is invalid.");
+  if(num&&!pointer)Run_Exceptioon("Pointer of array with data is invalid.");
   if(type==JBinaryDataDef::DatText){//-Array de strings.
     const string *list=(string*)pointer;
     for(unsigned c=0;c<num;c++)InStr(count,size,ptr,list[c]);
@@ -885,14 +876,13 @@ void JBinaryData::InItem(unsigned &count,unsigned size,byte *ptr,bool all)const{
 /// Extract basic data from ptr Array 
 //==============================================================================
 JBinaryDataArray* JBinaryData::OutArrayBase(unsigned &count,unsigned size,const byte *ptr,unsigned &countdata,unsigned &sizedata){
-  const char met[]="OutArrayBase";
-  if(OutStr(count,size,ptr)!=CodeArrayDef)RunException(met,"Validation code is invalid.");
+  if(OutStr(count,size,ptr)!=CodeArrayDef)Run_Exceptioon("Validation code is invalid.");
   string name=OutStr(count,size,ptr);
   bool hide=OutBool(count,size,ptr);
   JBinaryDataDef::TpData type=(JBinaryDataDef::TpData)OutInt(count,size,ptr);
   countdata=OutUint(count,size,ptr);
   sizedata=OutUint(count,size,ptr);
-  if(type!=JBinaryDataDef::DatText&&sizedata!=JBinaryDataDef::SizeOfType(type)*countdata)RunException(met,"Size of data is invalid.");
+  if(type!=JBinaryDataDef::DatText&&sizedata!=JBinaryDataDef::SizeOfType(type)*countdata)Run_Exceptioon("Size of data is invalid.");
   //-Crea array.
   JBinaryDataArray *ar=CreateArray(name,type);
   ar->SetHide(hide);
@@ -912,7 +902,7 @@ void JBinaryData::OutArrayData(unsigned &count,unsigned size,const byte *ptr,JBi
     //-Comprueba que los datos del array estan disponibles.
     //-Checks that the data array is available.
     unsigned count2=count+sizedata;
-    if(count2>size)RunException("OutArrayData","Overflow in reading data.");
+    if(count2>size)Run_Exceptioon("Overflow in reading data.");
     //-Extrae datos para el array.
     //-Extracts the data for the array.
     ar->AddData(countdata,ptr+count,true);
@@ -940,7 +930,7 @@ void JBinaryData::OutArray(unsigned &count,unsigned size,const byte *ptr){
 /// Extracts basic properties from the ptr Item
 //==============================================================================
 JBinaryData* JBinaryData::OutItemBase(unsigned &count,unsigned size,const byte *ptr,bool create,unsigned &narrays,unsigned &nitems,unsigned &sizevalues){
-  if(OutStr(count,size,ptr)!=CodeItemDef)RunException("OutItem","Validation code is invalid.");
+  if(OutStr(count,size,ptr)!=CodeItemDef)Run_Exceptioon("Validation code is invalid.");
   JBinaryData* item=this;
   if(create)item=CreateItem(OutStr(count,size,ptr));
   else item->SetName(OutStr(count,size,ptr));
@@ -967,7 +957,7 @@ void JBinaryData::OutItem(unsigned &count,unsigned size,const byte *ptr,bool cre
   //-Extrae values del item.
   //-Extract values of the item.
   if(sizevalues){
-    if(OutStr(count,size,ptr)!=CodeValuesDef)RunException("OutItem","Validation code is invalid.");
+    if(OutStr(count,size,ptr)!=CodeValuesDef)Run_Exceptioon("Validation code is invalid.");
     unsigned num=OutUint(count,size,ptr);
     for(unsigned c=0;c<num;c++)item->OutValue(count,size,ptr);
   }
@@ -1010,7 +1000,7 @@ void JBinaryData::WriteArrayData(std::fstream *pf,const JBinaryDataArray *ar)con
   const JBinaryDataDef::TpData type=ar->GetType();
   const unsigned countdata=ar->GetCount();
   const void* pointer=ar->GetPointer();
-  if(countdata&&!pointer)RunException("WriteArrayData","Pointer of array with data is invalid.");
+  if(countdata&&!pointer)Run_Exceptioon("Pointer of array with data is invalid.");
   if(type==JBinaryDataDef::DatText){//-Array de strings. Stings Array
     const string *list=(string*)pointer;
     unsigned sbuf=0;
@@ -1132,7 +1122,7 @@ void JBinaryData::ReadItem(std::ifstream *pf,unsigned sbuf,byte *buf,bool create
     if(!buf2)buf2=new byte[sizevalues];
     pf->read((char*)buf2,sizevalues);
     unsigned cbuf2=0;
-    if(OutStr(cbuf2,sizevalues,buf2)!=CodeValuesDef)RunException("ReadItem","Validation code is invalid.");
+    if(OutStr(cbuf2,sizevalues,buf2)!=CodeValuesDef)Run_Exceptioon("Validation code is invalid.");
     unsigned num=OutUint(cbuf2,sizevalues,buf2);
     for(unsigned c=0;c<num;c++)item->OutValue(cbuf2,sizevalues,buf2);
     if(buf!=buf2)delete[] buf2;
@@ -1187,7 +1177,6 @@ unsigned JBinaryData::GetFileHead(std::ifstream *pf,JBinaryData::StHeadFmtBin &h
 /// Generates exception on error.
 //==============================================================================
 void JBinaryData::CheckHead(const std::string &file,const StHeadFmtBin &head,const std::string &filecode)const{
-  const char met[]="CheckHead";
   int err=0;
   //-Coprueba formato de cabecera y filecode.
   //-Check header format and filecode.
@@ -1205,9 +1194,9 @@ void JBinaryData::CheckHead(const std::string &file,const StHeadFmtBin &head,con
     byte byteorder=byte(fun::GetByteOrder());
     if(head.byteorder!=byte(fun::GetByteOrder()))err=1;
   }
-  if(err==1)RunException(met,"The byte-order in file is invalid.",file);
-  else if(err==2)RunException(met,"The format file JBinaryData is invalid.",file);
-  else if(err==3)RunException(met,"The file code is invalid.",file);
+  if(err==1)Run_ExceptioonFile("The byte-order in file is invalid.",file);
+  else if(err==2)Run_ExceptioonFile("The format file JBinaryData is invalid.",file);
+  else if(err==3)Run_ExceptioonFile("The file code is invalid.",file);
 }
 
 //==============================================================================
@@ -1238,7 +1227,6 @@ unsigned JBinaryData::CheckFileHead(const std::string &file,std::ifstream *pf,co
 /// Returns file size.
 //==============================================================================
 unsigned JBinaryData::CheckFileListHead(const std::string &file,std::fstream *pf,const std::string &filecode)const{
-  const char met[]="CheckFileHead";
   //-Obtiene size del fichero.
   //-Gets file size.
   pf->seekg(0,ios::end);
@@ -1260,12 +1248,11 @@ unsigned JBinaryData::CheckFileListHead(const std::string &file,std::fstream *pf
 /// Saves contents to XML file.
 //==============================================================================
 void JBinaryData::WriteFileXmlArray(const std::string &tabs,std::ofstream* pf,bool svarrays,const JBinaryDataArray* ar)const{
-  const char met[]="WriteFileXmlArray";
   const JBinaryDataDef::TpData type=ar->GetType();
   const unsigned size=ar->GetSize();
   const unsigned count=ar->GetCount();
   string tx=JBinaryDataDef::TypeToStr(type);
-  if(tx.empty())RunException(met,"Name of type invalid.");
+  if(tx.empty())Run_Exceptioon("Name of type invalid.");
   string res=string("<array_")+tx+" name=\""+ar->GetName()+"\" size=\""+fun::UintStr(size)+"\" count=\""+fun::UintStr(count)+"\" hide=\""+ (ar->GetHide()? '1': '0') +"\"";
   if(!svarrays){
     res=res+"/>";
@@ -1297,7 +1284,7 @@ void JBinaryData::WriteFileXmlArray(const std::string &tabs,std::ofstream* pf,bo
         case JBinaryDataDef::DatUint3:    v.vuint3=  ((const tuint3 *)       data)[c];   break;   
         case JBinaryDataDef::DatFloat3:   v.vfloat3= ((const tfloat3 *)      data)[c];   break;   
         case JBinaryDataDef::DatDouble3:  v.vdouble3=((const tdouble3 *)     data)[c];   break;   
-        default: RunException(met,"Type of value invalid.");
+        default: Run_Exceptioon("Type of value invalid.");
       }
       (*pf) << tabs << "\t" << ValueToXml(v) << endl;
     }
@@ -1323,11 +1310,10 @@ void JBinaryData::WriteFileXml(const std::string &tabs,std::ofstream* pf,bool sv
 /// the same name 
 //==============================================================================
 void JBinaryData::SetName(const std::string &name){
-  const char met[]="SetName";
   if(Parent){
-    if(Parent->ExistsValue(name))RunException(met,"There is already a value with the name given.");
-    if(Parent->GetArray(name)!=NULL)RunException(met,"There is already an array with the name given.");
-    if(Parent->GetItem(name)!=NULL)RunException(met,"There is already an item with the name given.");
+    if(Parent->ExistsValue(name))Run_Exceptioon("There is already a value with the name given.");
+    if(Parent->GetArray(name)!=NULL)Run_Exceptioon("There is already an array with the name given.");
+    if(Parent->GetItem(name)!=NULL)Run_Exceptioon("There is already an item with the name given.");
   }
   Name=name;
 }
@@ -1400,7 +1386,7 @@ unsigned JBinaryData::GetSizeDataConst(bool all)const{
 // With bool "all" true the hidden elements are also included.
 //==============================================================================
 unsigned JBinaryData::SaveDataConst(unsigned size,byte* ptr,bool all)const{
-  if(!ptr)RunException("SaveDataConst","The pointer is invalid.");
+  if(!ptr)Run_Exceptioon("The pointer is invalid.");
   unsigned count=0;
   InItem(count,size,ptr,all);
   return(count);
@@ -1432,7 +1418,7 @@ unsigned JBinaryData::GetSizeData(bool all){
 /// With bool "all" true  the hidden items are also included.
 //==============================================================================
 unsigned JBinaryData::SaveData(unsigned size,byte* ptr,bool all){
-  if(!ptr)RunException("SaveData","The pointer is invalid.");
+  if(!ptr)Run_Exceptioon("The pointer is invalid.");
   ValuesCachePrepare(true);
   unsigned count=0;
   InItem(count,size,ptr,all);
@@ -1444,7 +1430,7 @@ unsigned JBinaryData::SaveData(unsigned size,byte* ptr,bool all){
 /// Loads data from ptr.
 //==============================================================================
 void JBinaryData::LoadData(unsigned size,const byte* ptr){
-  if(!ptr)RunException("LoadData","The pointer is invalid.");
+  if(!ptr)Run_Exceptioon("The pointer is invalid.");
   Clear(); //-Limpia contenido de objeto. Clean object content.
   unsigned count=0;
   OutItem(count,size,ptr,false);
@@ -1494,16 +1480,15 @@ void JBinaryData::SaveFileData(std::fstream *pf,bool head,const std::string &fil
 /// With bool "all" true  the hidden items are also included.
 //==============================================================================
 void JBinaryData::SaveFile(const std::string &file,bool memory,bool all){
-  const char met[]="SaveFile";
   ValuesCachePrepare(true);
   fstream pf;
   pf.open(file.c_str(),ios::binary|ios::out);
   if(pf){
     SaveFileData(&pf,true,Name,memory,all);
-    if(pf.fail())RunException(met,"File writing failure.",file);
+    if(pf.fail())Run_ExceptioonFile("File writing failure.",file);
     pf.close();
   }
-  else RunException(met,"Cannot open the file.",file);
+  else Run_ExceptioonFile("Cannot open the file.",file);
 }
 
 //==============================================================================
@@ -1515,7 +1500,6 @@ void JBinaryData::SaveFile(const std::string &file,bool memory,bool all){
 /// it is faster if there are large arrays.
 //==============================================================================
 void JBinaryData::LoadFile(const std::string &file,const std::string &filecode,bool memory){
-  const char met[]="LoadFile";
   Clear(); //-Limpia contenido de objeto. Clean object content.
   ifstream pf;
   pf.open(file.c_str(),ios::binary|ios::in);
@@ -1537,7 +1521,7 @@ void JBinaryData::LoadFile(const std::string &file,const std::string &filecode,b
     }
     pf.close();
   }
-  else RunException(met,"Cannot open the file.",file);
+  else Run_ExceptioonFile("Cannot open the file.",file);
 }
 
 //==============================================================================
@@ -1552,7 +1536,6 @@ void JBinaryData::LoadFile(const std::string &file,const std::string &filecode,b
 /// With bool "all" true the hidden items are also included.
 //==============================================================================
 void JBinaryData::SaveFileListApp(const std::string &file,const std::string &filecode,bool memory,bool all){
-  const char met[]="SaveFile";
   ValuesCachePrepare(true);
   fstream pf;
   if(fun::FileExists(file))pf.open(file.c_str(),ios::binary|ios::out|ios::in|ios::app);
@@ -1564,10 +1547,10 @@ void JBinaryData::SaveFileListApp(const std::string &file,const std::string &fil
     if(!fsize)Parent->SaveFileData(&pf,true,filecode,memory,all);
     //-Graba datos de item. Save item data.
     SaveFileData(&pf,false,filecode,memory,all);
-    if(pf.fail())RunException(met,"File writing failure.",file);
+    if(pf.fail())Run_ExceptioonFile("File writing failure.",file);
     pf.close();
   }
-  else RunException(met,"Cannot open the file.",file);
+  else Run_ExceptioonFile("Cannot open the file.",file);
 }
 
 //==============================================================================
@@ -1579,7 +1562,6 @@ void JBinaryData::SaveFileListApp(const std::string &file,const std::string &fil
 /// it is faster if there are large arrays.
 //==============================================================================
 void JBinaryData::LoadFileListApp(const std::string &file,const std::string &filecode,bool memory){
-  const char met[]="LoadFileListApp";
   Clear(); //-Limpia contenido de objeto. Clean object content.
   ifstream pf;
   pf.open(file.c_str(),ios::binary|ios::in);
@@ -1617,7 +1599,7 @@ void JBinaryData::LoadFileListApp(const std::string &file,const std::string &fil
     }
     pf.close();
   }
-  else RunException(met,"Cannot open the file.",file);
+  else Run_ExceptioonFile("Cannot open the file.",file);
 }
 
 //==============================================================================
@@ -1627,8 +1609,7 @@ void JBinaryData::LoadFileListApp(const std::string &file,const std::string &fil
 /// arrays.
 //==============================================================================
 void JBinaryData::OpenFileStructure(const std::string &file,const std::string &filecode){
-  const char met[]="OpenFileStructure";
-  if(Parent)RunException(met,"Item is not root.");
+  if(Parent)Run_Exceptioon("Item is not root.");
   Clear(); //-Limpia contenido de objeto. Clean object content.
   FileStructure=new ifstream;
   FileStructure->open(file.c_str(),ios::binary|ios::in);
@@ -1640,7 +1621,7 @@ void JBinaryData::OpenFileStructure(const std::string &file,const std::string &f
   }
   else{
     CloseFileStructure();
-    RunException(met,"Cannot open the file.",file);
+    Run_ExceptioonFile("Cannot open the file.",file);
   }
 }
 
@@ -1658,7 +1639,7 @@ void JBinaryData::CloseFileStructure(){
 /// Returns pointer to open file with OpenFileStructure ().
 //==============================================================================
 std::ifstream* JBinaryData::GetFileStructure()const{
-  if(Parent)RunException("GetFileStructure","Item is not root.");
+  if(Parent)Run_Exceptioon("Item is not root.");
   return(FileStructure);
 }
 
@@ -1667,7 +1648,6 @@ std::ifstream* JBinaryData::GetFileStructure()const{
 /// Record XML file content.
 //==============================================================================
 void JBinaryData::SaveFileXml(std::string file,bool svarrays,const std::string &head)const{
-  const char* met="SaveFileXml";
   file=fun::GetWithoutExtension(file)+".xml";
   ofstream pf;
   pf.open(file.c_str());
@@ -1676,10 +1656,10 @@ void JBinaryData::SaveFileXml(std::string file,bool svarrays,const std::string &
     pf << "<data" << head <<" date=\"" << fun::GetDateTime() << "\">" << endl;
     WriteFileXml("\t",&pf,svarrays);
     pf << "</data>" << endl;
-    if(pf.fail())RunException(met,"Failed writing to file.",file);
+    if(pf.fail())Run_ExceptioonFile("Failed writing to file.",file);
     pf.close();
   }
-  else RunException(met,"File could not be opened.",file);
+  else Run_ExceptioonFile("File could not be opened.",file);
 }
 
 //==============================================================================
@@ -1732,7 +1712,7 @@ JBinaryData* JBinaryData::GetItem(unsigned index){
 /// Creates and returns item with the name. It generates exception if it already exists.
 //==============================================================================
 JBinaryData* JBinaryData::CreateItem(const std::string &name){
-  if(GetItem(name)!=NULL)RunException("CreateItem","There is already an item with the name given.");
+  if(GetItem(name)!=NULL)Run_Exceptioon("There is already an item with the name given.");
   JBinaryData *item=new JBinaryData(name);
   item->Parent=this;
   Items.push_back(item);
@@ -1804,7 +1784,7 @@ JBinaryDataArray* JBinaryData::GetArray(unsigned index){
 /// Creates and returns array with the name. It generates exception if it already exists.
 //==============================================================================
 JBinaryDataArray* JBinaryData::CreateArray(const std::string &name,JBinaryDataDef::TpData type){
-  if(GetItem(name)!=NULL)RunException("CreateArray","There is already an array with the name given.");
+  if(GetItem(name)!=NULL)Run_Exceptioon("There is already an array with the name given.");
   JBinaryDataArray *ar=new JBinaryDataArray(this,name,type);
   Arrays.push_back(ar);
   return(ar);

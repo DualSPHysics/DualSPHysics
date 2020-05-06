@@ -26,6 +26,7 @@
 //:# - Nuevos metodos GetActiveMotion() y ProcesTimeGetData() simple. (19-09-2018)
 //:# - Nuevo metodo SetMotionData(). (15-01-2019)
 //:# - Mejora interface usando la estructura StMotionData. (12-09-2019)
+//:# - Mejora la gestion de excepciones. (06-05-2020)
 //:#############################################################################
 
 /// \file JSphMotion.h \brief Declares the class \ref JSphMotion.

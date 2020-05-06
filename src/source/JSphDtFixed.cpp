@@ -79,7 +79,6 @@ unsigned JSphDtFixed::GetAllocMemory()const{
 /// Loads values of dt (MILISECONDS) for different instants (in SECONDS).
 //==============================================================================
 void JSphDtFixed::LoadFile(std::string file){
-  const char met[]="LoadFile";
   Reset();
   JReadDatafile rdat;
   rdat.LoadFile(file,FILESIZEMAX);
@@ -91,7 +90,7 @@ void JSphDtFixed::LoadFile(std::string file){
     //printf("FileData[%u]>  t:%f  ang:%f\n",r,Times[r],Values[r]);
   }
   Count=rows;
-  if(Count<2)RunException(met,"Cannot be less than two values.",file);
+  if(Count<2)Run_ExceptioonFile("Cannot be less than two values.",file);
   File=file;
 }
 

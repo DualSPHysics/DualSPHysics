@@ -25,6 +25,7 @@
 //:# - Pos pasa a ser tdouble3 en lugar de tfloat3. (24-11-2013)
 //:# - Se incluye el motivo de exclusion. (20-03-2018)
 //:# - Mejoras para compatibilidad con Multi-GPU. (10-09-2019)
+//:# - Mejora la gestion de excepciones. (06-05-2020)
 //:#############################################################################
 
 /// \file JPartsOut.h \brief Declares the class \ref JPartsOut.

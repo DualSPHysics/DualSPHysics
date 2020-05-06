@@ -30,6 +30,7 @@
 //:# - Implementacion independiente de StFloatingData en DualSphDef.h. (11-05-2015)
 //:# - Incluye informacion de MkBoundFirst (FormatVer=180423). (23-04-2018)
 //:# - Se guarda tambien Massp de floatings. (10-03-2020)
+//:# - Mejora la gestion de excepciones. (06-05-2020)
 //:#############################################################################
 
 /// \file JPartFloatBi4.h \brief Declares the classes \ref JPartFloatBi4Save and class \ref JPartFloatBi4Load.

@@ -69,7 +69,7 @@ void JSpacePropValue::SetValue(std::string v){
 //==============================================================================
 void JSpacePropValue::AddSubValue(std::string subname,std::string v){
   subname=fun::StrLower(subname);
-  if(ExistsSubName(subname))RunException("AddNameValue","Name-Value already exists.");
+  if(ExistsSubName(subname))Run_Exceptioon("Name-Value already exists.");
   if(Simple){ Value=""; Simple=false; }
   SubNames.push_back(subname);
   SubValues.push_back(v);
@@ -89,7 +89,7 @@ int JSpacePropValue::GetIndexSubName(std::string subname)const{
 /// Retunrs value inline.
 //==============================================================================
 std::string JSpacePropValue::GetValue()const{
-  if(!Simple)RunException("GetValue","Value has one or more several subvalues.");
+  if(!Simple)Run_Exceptioon("Value has one or more several subvalues.");
   return(Value);
 }
 
@@ -99,7 +99,7 @@ std::string JSpacePropValue::GetValue()const{
 std::string JSpacePropValue::GetSubValue(std::string subname)const{
   subname=fun::StrLower(subname);
   const int idx=GetIndexSubName(subname);
-  if(idx<0)RunException("GetSubValue","SubName not found.");
+  if(idx<0)Run_Exceptioon("SubName not found.");
   return(SubValues[idx]);
 }
 
@@ -107,7 +107,7 @@ std::string JSpacePropValue::GetSubValue(std::string subname)const{
 /// Returns name of the subvalue.
 //==============================================================================
 std::string JSpacePropValue::GetSubValueName(unsigned idx)const{
-  if(idx>=GetSubValuesCount())RunException("GetSubValueName","Index of subvalue is invalid.");
+  if(idx>=GetSubValuesCount())Run_Exceptioon("Index of subvalue is invalid.");
   return(SubNames[idx]);
 }
 
@@ -115,7 +115,7 @@ std::string JSpacePropValue::GetSubValueName(unsigned idx)const{
 /// Returns value of the subvalue.
 //==============================================================================
 std::string JSpacePropValue::GetSubValue(unsigned idx)const{
-  if(idx>=GetSubValuesCount())RunException("GetSubValue","Index of subvalue is invalid.");
+  if(idx>=GetSubValuesCount())Run_Exceptioon("Index of subvalue is invalid.");
   return(SubValues[idx]);
 }
 
@@ -194,8 +194,8 @@ int JSpacePropProperty::GetIndexValue(std::string name)const{
 /// Adds value.
 //==============================================================================
 void JSpacePropProperty::AddValue(std::string name,std::string v){
-  if(fun::StrLower(name)=="name")RunException("AddValue","The name of value cannot be \'name\'.");
-  if(ExistsNameValue(name))RunException("AddValue","Value already exists.");
+  if(fun::StrLower(name)=="name")Run_Exceptioon("The name of value cannot be \'name\'.");
+  if(ExistsNameValue(name))Run_Exceptioon("Value already exists.");
   JSpacePropValue *va=new JSpacePropValue(name);
   Values.push_back(va);
   va->SetValue(v);
@@ -220,7 +220,7 @@ void JSpacePropProperty::AddSubValue(std::string name,std::string subname,std::s
 /// Returns name of given value.
 //==============================================================================
 std::string JSpacePropProperty::GetValueName(unsigned idx)const{
-  if(idx>=GetValuesCount())RunException("GetValueName","Index of value is invalid.");
+  if(idx>=GetValuesCount())Run_Exceptioon("Index of value is invalid.");
   return(Values[idx]->GetName());
 }
 
@@ -228,7 +228,7 @@ std::string JSpacePropProperty::GetValueName(unsigned idx)const{
 /// Returns type of given value.
 //==============================================================================
 bool JSpacePropProperty::GetValueSimple(unsigned idx)const{
-  if(idx>=GetValuesCount())RunException("GetValueSimple","Index of value is invalid.");
+  if(idx>=GetValuesCount())Run_Exceptioon("Index of value is invalid.");
   return(Values[idx]->GetSimple());
 }
 
@@ -236,7 +236,7 @@ bool JSpacePropProperty::GetValueSimple(unsigned idx)const{
 /// Returns value of given value.
 //==============================================================================
 std::string JSpacePropProperty::GetValue(unsigned idx)const{
-  if(idx>=GetValuesCount())RunException("GetValue","Index of value is invalid.");
+  if(idx>=GetValuesCount())Run_Exceptioon("Index of value is invalid.");
   return(Values[idx]->GetValue());
 }
 
@@ -244,7 +244,7 @@ std::string JSpacePropProperty::GetValue(unsigned idx)const{
 /// Returns pointer to value.
 //==============================================================================
 const JSpacePropValue* JSpacePropProperty::GetValuePtr(unsigned idx)const{
-  if(idx>=GetValuesCount())RunException("GetValuePtr","Index of value is invalid.");
+  if(idx>=GetValuesCount())Run_Exceptioon("Index of value is invalid.");
   return(Values[idx]);
 }
 
@@ -252,7 +252,7 @@ const JSpacePropValue* JSpacePropProperty::GetValuePtr(unsigned idx)const{
 /// Returns number of subvalues of given value.
 //==============================================================================
 unsigned JSpacePropProperty::GetSubValuesCount(unsigned idx)const{
-  if(idx>=GetValuesCount())RunException("GetSubValuesCount","Index of value is invalid.");
+  if(idx>=GetValuesCount())Run_Exceptioon("Index of value is invalid.");
   return(Values[idx]->GetSubValuesCount());
 }
 
@@ -260,8 +260,8 @@ unsigned JSpacePropProperty::GetSubValuesCount(unsigned idx)const{
 /// Returns name of subvalues of given value.
 //==============================================================================
 std::string JSpacePropProperty::GetSubValueName(unsigned idx,unsigned subidx)const{
-  if(idx>=GetValuesCount())RunException("GetSubValueName","Index of value is invalid.");
-  if(subidx>=GetSubValuesCount(idx))RunException("GetSubValueName","Index of subvalue is invalid.");
+  if(idx>=GetValuesCount())Run_Exceptioon("Index of value is invalid.");
+  if(subidx>=GetSubValuesCount(idx))Run_Exceptioon("Index of subvalue is invalid.");
   return(Values[idx]->GetSubValueName(subidx));
 }
 
@@ -269,8 +269,8 @@ std::string JSpacePropProperty::GetSubValueName(unsigned idx,unsigned subidx)con
 /// Returns value of subvalues of given value.
 //==============================================================================
 std::string JSpacePropProperty::GetSubValue(unsigned idx,unsigned subidx)const{
-  if(idx>=GetValuesCount())RunException("GetSubValue","Index of value is invalid.");
-  if(subidx>=GetSubValuesCount(idx))RunException("GetSubValue","Index of subvalue is invalid.");
+  if(idx>=GetValuesCount())Run_Exceptioon("Index of value is invalid.");
+  if(subidx>=GetSubValuesCount(idx))Run_Exceptioon("Index of subvalue is invalid.");
   return(Values[idx]->GetSubValue(subidx));
 }
 
@@ -503,7 +503,7 @@ std::string JSpacePropLinks::GetProps(word mk)const{
     if(lk->GetType()==JSpacePropLink::LINK_Mk){
       if(rg.CheckValue(mk))props=props+lk->GetProps()+"+";
     }
-    else RunException("GetProps","Type of links (mkbound or mkfluid) is invalid.");
+    else Run_Exceptioon("Type of links (mkbound or mkfluid) is invalid.");
   }
   return(GetPropsSort(props));
 }
@@ -564,7 +564,7 @@ int JSpaceProperties::GetIndexProperty(std::string name)const{
 //==============================================================================
 const JSpacePropProperty* JSpaceProperties::GetProperty(std::string name)const{
   int idx=GetIndexProperty(name);
-  if(idx<0)RunException("GetProperty",string("Property \'")+name+"\' not found.");
+  if(idx<0)Run_Exceptioon(string("Property \'")+name+"\' not found.");
   return(Props[idx]);
 }
 
@@ -664,7 +664,7 @@ void JSpaceProperties::ReadXmlPropertyFile(const JXml *sxml,TiXmlElement* epropf
   jxml.LoadFile(file);
   //-Gets node with data.
   TiXmlNode* node=jxml.GetNode(path,false);
-  if(!node)RunException("ReadXmlPropertyFile",std::string("Cannot find the element \'")+path+"\'.",file);
+  if(!node)Run_ExceptioonFile(std::string("Cannot find the element \'")+path+"\'.",file);
   //-Loads properties of node.
   TiXmlElement *eprops=node->ToElement();
   TiXmlElement* ele=eprops->FirstChildElement(); 
@@ -708,7 +708,6 @@ void JSpaceProperties::WriteXmlPropertyFile(JXml *sxml,TiXmlElement* eprops,StPr
 /// Reads the list of initial conditions in XML format.
 //==============================================================================
 void JSpaceProperties::ReadXml(const JXml *sxml,TiXmlElement* eprops){
-  const char met[]="ReadXml";
   //-Loads links.
   Links->ReadXml(sxml,eprops);
   //-Loads properties.
@@ -745,7 +744,7 @@ void JSpaceProperties::CheckLinks(){
   string props=Links->GetAllProps();
   while(!props.empty()){
     string pro=fun::StrSplit("+",props);
-    if(!pro.empty() && GetIndexProperty(pro)<0)RunException("CheckLinks","Property \'"+pro+"\' not found.");
+    if(!pro.empty() && GetIndexProperty(pro)<0)Run_Exceptioon("Property \'"+pro+"\' not found.");
   }
 }
 
@@ -772,7 +771,7 @@ void JSpaceProperties::FilterMk(word mkboundfirst,word mkfluidfirst,std::string 
       //string props2=Links->GetProps(mk,mkboundfirst,mkfluidfirst);
       //if(props!=props2){
       //  printf("\nError mk: %d  [%s]!=[%s] \n",mk,props.c_str(),props2.c_str());
-      //  RunException("FilterMk","Error in result of GetPropsFast().");
+      //  Run_Exceptioon("Error in result of GetPropsFast().");
       //}
       if(!props.empty()){
         unsigned c=0;
@@ -892,7 +891,7 @@ const JSpacePropValue* JSpaceProperties::GetValuePtr(std::string props,std::stri
 //==============================================================================
 const JSpacePropValue* JSpaceProperties::GetValue(std::string props,unsigned idx)const{
   const JSpacePropValue* value=GetValuePtr(props,idx);
-  if(!value)RunException("GetValue","Index of value is invalid.");
+  if(!value)Run_Exceptioon("Index of value is invalid.");
   return(value);
 }
 
@@ -901,7 +900,7 @@ const JSpacePropValue* JSpaceProperties::GetValue(std::string props,unsigned idx
 //==============================================================================
 const JSpacePropValue* JSpaceProperties::GetValue(std::string props,std::string name)const{
   const JSpacePropValue* value=GetValuePtr(props,name);
-  if(!value)RunException("GetValue",string("Value \'")+name+"\' not found.");
+  if(!value)Run_Exceptioon(string("Value \'")+name+"\' not found.");
   return(value);
 }
 

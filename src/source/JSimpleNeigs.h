@@ -26,6 +26,7 @@
 //:# =========
 //:# - Clase para buscar posiciones cercanas de forma simple con un rendimiento
 //:#   aceptable. (15-09-2018)
+//:# - Mejora la gestion de excepciones. (06-05-2020)
 //:#############################################################################
 
 #include "JObject.h"

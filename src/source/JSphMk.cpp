@@ -84,7 +84,6 @@ void JSphMk::Reset(){
 /// Load MK information of particles.
 //==============================================================================
 void JSphMk::Config(const JSpaceParts *parts){
-  const char met[]="Config";
   MkBoundFirst=parts->GetMkBoundFirst();
   MkFluidFirst=parts->GetMkFluidFirst();
   MkListSize=parts->CountBlocks();
@@ -100,10 +99,10 @@ void JSphMk::Config(const JSpaceParts *parts){
   //:Log->Printf("__MkInfo> MkListFluid :%u",MkListFluid);
   //:Log->Printf("__MkInfo> MkListBound :%u",MkListBound);
   //-Checks number of objects for each type.
-  if(MkListFixed >CODE_MKRANGEMAX)RunException(met,"The number of fixed particle blocks exceeds the maximum.");
-  if(MkListMoving>CODE_MKRANGEMAX)RunException(met,"The number of moving particle blocks exceeds the maximum.");
-  if(MkListFloat >CODE_MKRANGEMAX)RunException(met,"The number of floating particle blocks exceeds the maximum.");
-  if(MkListFluid >CODE_MKRANGEMAX)RunException(met,"The number of fluid particle blocks exceeds the maximum.");
+  if(MkListFixed >CODE_MKRANGEMAX)Run_Exceptioon("The number of fixed particle blocks exceeds the maximum.");
+  if(MkListMoving>CODE_MKRANGEMAX)Run_Exceptioon("The number of moving particle blocks exceeds the maximum.");
+  if(MkListFloat >CODE_MKRANGEMAX)Run_Exceptioon("The number of floating particle blocks exceeds the maximum.");
+  if(MkListFluid >CODE_MKRANGEMAX)Run_Exceptioon("The number of fluid particle blocks exceeds the maximum.");
   //-Gets info for each block of particles.
   for(unsigned c=0;c<MkListSize;c++){
     const JSpacePartBlock &block=parts->GetBlock(c);
@@ -120,7 +119,7 @@ void JSphMk::Config(const JSpaceParts *parts){
   }
   //-Checks number of fluid blocks.
   CodeNewFluid=CodeSetType(0,TpPartFluid,MkListFluid);
-  if(CODE_GetTypeValue(CodeNewFluid)>=CODE_GetTypeValue(CODE_TYPE_FLUID_LIMITFREE))RunException(met,"There are not free fluid codes for new particles created during the simulation.");
+  if(CODE_GetTypeValue(CodeNewFluid)>=CODE_GetTypeValue(CODE_TYPE_FLUID_LIMITFREE))Run_Exceptioon("There are not free fluid codes for new particles created during the simulation.");
 }
 
 //==============================================================================
@@ -162,9 +161,8 @@ unsigned JSphMk::GetMkBlockById(unsigned id)const{
 /// Returns the particle code according to a given Id.
 //==============================================================================
 typecode JSphMk::GetCodeById(unsigned id)const{
-  const char met[]="GetCodeById";
   const unsigned cmk=GetMkBlockById(id);
-  if(cmk>=Size())RunException(met,fun::PrintStr("Mk block of particle (idp=%u) was not found.",id));
+  if(cmk>=Size())Run_Exceptioon(fun::PrintStr("Mk block of particle (idp=%u) was not found.",id));
   return(MkList[cmk]->Code);
 }
 
@@ -208,7 +206,7 @@ unsigned JSphMk::GetMkBlockByCode(typecode code)const{
     case CODE_TYPE_MOVING:   if(cblock<MkListMoving)ret=cblock+MkListFixed;               break;
     case CODE_TYPE_FLOATING: if(cblock<MkListFloat) ret=cblock+MkListFixed+MkListMoving;  break;
     case CODE_TYPE_FLUID:    if(cblock<MkListFluid) ret=cblock+MkListBound;               break;
-    default: RunException("GetMkBlockByCode","Type of particle is invalid.");
+    default: Run_Exceptioon("Type of particle is invalid.");
   }
   return(ret);
 }
@@ -217,17 +215,16 @@ unsigned JSphMk::GetMkBlockByCode(typecode code)const{
 /// Returns the code of a particle according to the given parameters.
 //==============================================================================
 typecode JSphMk::CodeSetType(typecode code,TpParticles type,unsigned value)const{
-  const char met[]="CodeSetType"; 
   //-Chooses type.
   typecode tp;
   if(type==TpPartFixed)tp=CODE_TYPE_FIXED;
   else if(type==TpPartMoving)tp=CODE_TYPE_MOVING;
   else if(type==TpPartFloating)tp=CODE_TYPE_FLOATING;
   else if(type==TpPartFluid)tp=CODE_TYPE_FLUID;
-  else RunException(met,"Type of particle is invalid.");
+  else Run_Exceptioon("Type of particle is invalid.");
   //-Checks the value.
   typecode v=typecode(value&CODE_MASKVALUE);
-  if(unsigned(v)!=value)RunException(met,"The value is invalid.");
+  if(unsigned(v)!=value)Run_Exceptioon("The value is invalid.");
   //-Returns the new code.
   return(code&(~CODE_MASKTYPEVALUE)|tp|v);
 }
@@ -298,7 +295,7 @@ void JSphMk::ConfigPartDataHead(JPartDataHead *parthead)const{
       case CODE_TYPE_MOVING:    type=TpPartMoving;    break;
       case CODE_TYPE_FLOATING:  type=TpPartFloating;  break;
       case CODE_TYPE_FLUID:     type=TpPartFluid;     break;
-      default: RunException("ConfigPartDataHead","Type of particle block is invalid.");
+      default: Run_Exceptioon("Type of particle block is invalid.");
     }
     parthead->ConfigParticles(type,pmbk->Mk,pmbk->MkType,pmbk->Begin,pmbk->Count);
   }

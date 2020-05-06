@@ -65,9 +65,8 @@ void JSphMotion::Reset(){
 /// Configures moving objects.
 //==============================================================================
 void JSphMotion::ConfigObjects(const JSpaceParts *parts){
-  const char met[]="ConfigObjects";
   ObjCount=parts->CountBlocks(TpPartMoving);
-  if(ObjCount>CODE_MKRANGEMAX)RunException(met,"The number of mobile objects exceeds the maximum.");
+  if(ObjCount>CODE_MKRANGEMAX)Run_Exceptioon("The number of mobile objects exceeds the maximum.");
   //-Prepares memory.
   ObjMotion=new StMotionData[ObjCount];
   memset(ObjMotion,0,sizeof(StMotionData)*ObjCount);
@@ -76,7 +75,7 @@ void JSphMotion::ConfigObjects(const JSpaceParts *parts){
   for(unsigned c=0;c<parts->CountBlocks();c++){
     const JSpacePartBlock &block=parts->GetBlock(c);
     if(block.Type==TpPartMoving){
-      if(cmot>=ObjCount)RunException(met,"The number of mobile objects exceeds the expected maximum.");
+      if(cmot>=ObjCount)Run_Exceptioon("The number of mobile objects exceeds the expected maximum.");
       //:printf("block[%2d]=%d -> %d\n",c,block.GetBegin(),block.GetCount());
       ObjMotion[cmot].ref=word(cmot);
       ObjMotion[cmot].mkbound=block.GetMkType();
@@ -86,14 +85,15 @@ void JSphMotion::ConfigObjects(const JSpaceParts *parts){
       cmot++;
     }
   }
-  if(cmot!=ObjCount)RunException(met,"The number of mobile objects is invalid.");
+  if(cmot!=ObjCount)Run_Exceptioon("The number of mobile objects is invalid.");
 }
 
 //==============================================================================
 /// Initialisation of configuration for moving objects.
 //==============================================================================
-void JSphMotion::Init(const JSpaceParts *parts,JXml *jxml,const std::string &path,const std::string &dirdata){
-  const char met[]="Init";
+void JSphMotion::Init(const JSpaceParts *parts,JXml *jxml,const std::string &path
+  ,const std::string &dirdata)
+{
   Reset();
   //-Configures moving objects.
   ConfigObjects(parts);
@@ -101,7 +101,8 @@ void JSphMotion::Init(const JSpaceParts *parts,JXml *jxml,const std::string &pat
   Mot=new JMotion();
   Mot->ReadXml(dirdata,jxml,path,false);
   Mot->Prepare();
-  if(ObjCount!=unsigned(Mot->GetMaxRef()+1))RunException(met,"The number of mobile objects do not match the predefined motions in XML file.");
+  if(ObjCount!=unsigned(Mot->GetMaxRef()+1))
+    Run_Exceptioon("The number of mobile objects do not match the predefined motions in XML file.");
 }
 
 //==============================================================================
@@ -147,7 +148,7 @@ const StMotionData& JSphMotion::GetMotionData(unsigned idx)const{
 /// Defines motion for indicated object.
 //==============================================================================
 void JSphMotion::SetMotionData(const StMotionData& d){
-  if(d.ref>=GetNumObjects())RunException("SetMotionData","Moving object does not exist.");
+  if(d.ref>=GetNumObjects())Run_Exceptioon("Moving object does not exist.");
   StMotionData &m=ObjMotion[d.ref];
   m.type=d.type;
   if(m.type==MOTT_Linear){

@@ -25,7 +25,7 @@
 #include "JRangeFilter.h"
 #include "Functions.h"
 #include "JXml.h"
-#ifdef JSpaceParts_UseProps
+#ifdef JSpaceParts_UseLinearv
   #include "JLinearValue.h"
 #endif
 #include <algorithm>
@@ -341,7 +341,7 @@ void JSpaceParts::Reset(){
       case TpPartMoving:  { JSpacePartBlock_Moving   *ptr=(JSpacePartBlock_Moving  *)Blocks[c]; delete ptr; }break;
       case TpPartFloating:{ JSpacePartBlock_Floating *ptr=(JSpacePartBlock_Floating*)Blocks[c]; delete ptr; }break;
       case TpPartFluid:   { JSpacePartBlock_Fluid    *ptr=(JSpacePartBlock_Fluid   *)Blocks[c]; delete ptr; }break;
-      default: RunException("","Type of block is unknown.");
+      default: Run_Exceptioon("Type of block is unknown.");
     }
   }
   Blocks.clear();
@@ -385,7 +385,7 @@ unsigned JSpaceParts::CountBlocks(TpParticles type)const{
 /// Returns the requested block.
 //==============================================================================
 const JSpacePartBlock& JSpaceParts::GetBlock(unsigned pos)const{
-  if(pos>=CountBlocks())RunException("GetBlock","The requested particles block is missing.");
+  if(pos>=CountBlocks())Run_Exceptioon("The requested particles block is missing.");
   return(*(Blocks[pos]));
 }
 
@@ -416,8 +416,8 @@ bool JSpaceParts::CheckNparticles(ullong casenfixed,ullong casenmoving,ullong ca
 /// Checks and adds a new block of particles.
 //==============================================================================
 void JSpaceParts::Add(JSpacePartBlock* block){
-  if(GetByMkType(block->Bound,block->GetMkType()))RunException("Add","Cannot add a block with a existing mk.");
-  if(block->Type<LastType)RunException("Add","The block type is invalid after the last type added.");
+  if(GetByMkType(block->Bound,block->GetMkType()))Run_Exceptioon("Cannot add a block with a existing mk.");
+  if(block->Type<LastType)Run_Exceptioon("The block type is invalid after the last type added.");
   block->ConfigMk(block->Bound? MkBoundFirst: MkFluidFirst);
   Blocks.push_back(block);
   Begin+=block->GetCount();
@@ -449,7 +449,7 @@ void JSpaceParts::SaveFileXml(const std::string &file,const std::string &path,bo
 void JSpaceParts::LoadXml(const JXml *sxml,const std::string &place){
   Reset();
   TiXmlNode* node=sxml->GetNodeSimple(place);
-  if(!node)RunException("LoadXml",std::string("Cannot find the element \'")+place+"\'.");
+  if(!node)Run_Exceptioon(std::string("Cannot find the element \'")+place+"\'.");
   ReadXml(sxml,node->ToElement());
 }
 
@@ -464,7 +464,6 @@ void JSpaceParts::SaveXml(JXml *sxml,const std::string &place)const{
 /// Reads particles information in XML format.
 //==============================================================================
 void JSpaceParts::ReadXml(const JXml *sxml,TiXmlElement* lis){
-  const char met[]="ReadXml";
   unsigned np=sxml->GetAttributeUnsigned(lis,"np");
   unsigned nb=sxml->GetAttributeUnsigned(lis,"nb");
   unsigned nbf=sxml->GetAttributeUnsigned(lis,"nbf");
@@ -491,12 +490,12 @@ void JSpaceParts::ReadXml(const JXml *sxml,TiXmlElement* lis){
     ele=ele->NextSiblingElement();
   }
   Begin=Count();
-  if(np!=Count()||nb!=np-Count(TpPartFluid)||nbf!=Count(TpPartFixed))RunException(met,"The amount of particles does not match the header.");
+  if(np!=Count()||nb!=np-Count(TpPartFluid)||nbf!=Count(TpPartFixed))Run_Exceptioon("The amount of particles does not match the header.");
   //-Checks property info in blocks.
 #ifdef JSpaceParts_UseProps
   for(unsigned c=0;c<Blocks.size();c++){
     if(Blocks[c]->GetProperty()!=Properties->GetPropertyMk(Blocks[c]->GetMk())){
-      RunException(met,std::string("Property information of mk=")+fun::IntStr(Blocks[c]->GetMk())+" does not correspond to Links configuration.");
+      Run_Exceptioon(std::string("Property information of mk=")+fun::IntStr(Blocks[c]->GetMk())+" does not correspond to Links configuration.");
     }
   }
 #endif
@@ -561,7 +560,7 @@ void JSpaceParts::SetMkFirst(word boundfirst,word fluidfirst){
 /// Changes particle number of block.
 //==============================================================================
 void JSpaceParts::SetBlockSize(unsigned pos,unsigned np){
-  if(pos>=CountBlocks())RunException("SetBlockSize","The requested particles block is missing.");
+  if(pos>=CountBlocks())Run_Exceptioon("The requested particles block is missing.");
   JSpacePartBlock* bk=Blocks[pos];
   if(bk->GetCount()!=np){
     const unsigned nsum=np-bk->GetCount();

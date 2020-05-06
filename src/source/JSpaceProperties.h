@@ -32,6 +32,7 @@
 //:# - Cambios menores para evitar warnings al usar 32 bits. (13-01-2014)
 //:# - Mejora de rendimiento (200x) cuando el numero de Mks es muy alto. (14-07-2017)
 //:# - Objeto JXml pasado como const para operaciones de lectura. (17-03-2020)  
+//:# - Mejora la gestion de excepciones. (06-05-2020)
 //:#############################################################################
 
 /// \file JSpaceProperties.h \brief Declares the classes \ref JSpaceProperties.
