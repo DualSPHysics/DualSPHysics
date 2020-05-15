@@ -33,7 +33,6 @@ typedef unsigned short word;
 typedef long long llong;
 typedef unsigned long long ullong;
 
-
 //##############################################################################
 //# Basic data type definitions.
 //##############################################################################
@@ -557,6 +556,11 @@ inline unsigned SizeOfType(TpTypeData type){
 inline int DimOfType(TpTypeData type){
   return(type<TypeChar? 0: (type<TypeInt2? 1: (type<TypeInt3? 2: (type<TypeInt4? 3: (type<TypeSyMatrix3f? 4: 6)))));
 }
+
+//-Standard vector types.
+#include <vector>
+typedef std::vector<tdouble2> vdouble2;
+typedef std::vector<tdouble3> vdouble3;
 
 #endif
 

@@ -72,7 +72,8 @@ public:
   int OmpThreads;
 
   TpCellMode  CellMode;
-  int TBoundary;  ///<Boundary method: 0:None, 1:DBC (by default), 2:mDBC vel=0, 3:mDBC No-slip
+  int TBoundary;  ///<Boundary method: 0:None, 1:DBC (by default), 2:mDBC (SlipMode: 1:DBC vel=0)
+  int SlipMode;   ///<Slip mode for mDBC: 0:None, 1:DBC vel=0, 2:No-slip, 3:Free slip (default=1).
   TpStep TStep;
   int VerletSteps;
   TpKernel TKernel;
@@ -96,6 +97,7 @@ public:
   tdouble3 DomainFixedMin,DomainFixedMax;
 
   int NstepsBreak;  ///<Maximum number of steps allowed (debug).
+  bool SvAllSteps;  ///<Saves a PART for each step (debug).
 
   //-General configuration from DsphConfig.xml
   bool CreateDirs;   ///<Creates full path for output files (true by default).

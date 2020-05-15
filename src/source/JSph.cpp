@@ -177,6 +177,7 @@ void JSph::InitVars(){
   RhopOut=true; RhopOutMin=700; RhopOutMax=1300;
   TimeMax=TimePart=0;
   NstepsBreak=0;
+  SvAllSteps=false;
   DtIni=DtMin=0; CoefDtMin=0; DtAllParticles=false;
   PartsOutMax=0;
   NpMinimum=0;
@@ -581,7 +582,6 @@ void JSph::LoadConfigParameters(const JXml *xml){
     }
     MdbcCorrector=(eparms.GetValueInt("MDBCCorrector",true,0)!=0);
   } 
-  if(SlipMode==SLIP_FreeSlip)Run_Exceptioon("SlipMode=\'Free slip\' is not available for now.");
   //<vs_mddbc_end>
 
   //-Density Diffusion Term configuration.
@@ -705,14 +705,20 @@ void JSph::LoadConfigCommands(const JCfgRun *cfg){
   if(cfg->TBoundary){
     TBoundary=BC_DBC;  SlipMode=SLIP_Vel0;  MdbcCorrector=false;
     switch(cfg->TBoundary){
-      case 1:  TBoundary=BC_DBC;                          break;
-      case 2:  TBoundary=BC_MDBC;  SlipMode=SLIP_Vel0;    break;
-      case 3:  TBoundary=BC_MDBC;  SlipMode=SLIP_NoSlip;  break;
+      case 1:  TBoundary=BC_DBC;   break;
+      case 2:  TBoundary=BC_MDBC;  break;
       default: Run_Exceptioon("Boundary method is not valid.");
+    }
+    if(TBoundary==BC_MDBC)switch(cfg->SlipMode){
+      case 1:  SlipMode=SLIP_Vel0;      break;
+      case 2:  SlipMode=SLIP_NoSlip;    break;
+      case 3:  SlipMode=SLIP_FreeSlip;  break;
+      default: Run_Exceptioon("Slip mode for mDBC is not valid.");
     }
     UseNormals=(TBoundary==BC_MDBC);
   }
-  if(TBoundary==BC_MDBC && SlipMode!=SLIP_Vel0)Run_Exceptioon("Only the slip mode velocity=0 is allowed with mDBC conditions.");
+  if(TBoundary==BC_MDBC && SlipMode!=SLIP_Vel0)
+    Run_Exceptioon("Only the slip mode velocity=0 is allowed with mDBC conditions."); //SHABA
   if(cfg->TStep)TStep=cfg->TStep;
   if(cfg->VerletSteps>=0)VerletSteps=cfg->VerletSteps;
   if(cfg->TKernel)TKernel=cfg->TKernel;
@@ -763,6 +769,7 @@ void JSph::LoadConfigCommands(const JCfgRun *cfg){
   if(cfg->TimeMax>0)TimeMax=cfg->TimeMax;
   NstepsBreak=cfg->NstepsBreak;
   if(NstepsBreak)Log->PrintfWarning("The execution will be cancelled after %d simulation steps.",NstepsBreak);
+  SvAllSteps=cfg->SvAllSteps;
   //-Configuration of JTimeOut with TimePart.
   TimeOut=new JTimeOut();
   if(cfg->TimePart>=0){
@@ -1978,7 +1985,7 @@ void JSph::InitRun(unsigned np,const unsigned *idp,const tdouble3 *pos){
   Part=PartIni; Nstep=0; PartNstep=0; PartOut=0;
   TimeStep=TimeStepIni; TimeStepM1=TimeStep;
   if(DtFixed)DtIni=DtFixed->GetDt(TimeStep,DtIni);
-  TimePartNext=TimeOut->GetNextTime(TimeStep);
+  TimePartNext=(SvAllSteps? TimeStep: TimeOut->GetNextTime(TimeStep));
 }
 
 //==============================================================================
@@ -2477,7 +2484,7 @@ unsigned JSph::SaveMapCellsVtkSize()const{
 //==============================================================================
 void JSph::SaveMapCellsVtk(float scell)const{
   const tuint3 cells=Map_Cells;
-  tdouble3 pmin=MapRealPosMin;
+  tdouble3 pmin=Map_PosMin; //MapRealPosMin;
   tdouble3 pmax=pmin+TDouble3(scell*cells.x,scell*cells.y,scell*cells.z);
   if(Simulate2D)pmin.y=pmax.y=Simulate2DPosY;
   //-Creates lines.

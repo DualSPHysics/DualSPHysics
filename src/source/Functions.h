@@ -84,6 +84,7 @@
 //:# - Error corregido en StrStripSlashes().  (04-01-2020)
 //:# - Nueva funcion VectorFindMask().  (17-03-2020)
 //:# - Nueva funcion NaturalFmt().  (15-04-2020)
+//:# - Nuevas funciones NewToTFloat3() y NewToTDouble3().  (09-05-2020)
 //:#############################################################################
 
 /// \file Functions.h \brief Declares basic/general functions for the entire application.
@@ -320,6 +321,9 @@ double*   ResizeAlloc(double   *data,unsigned ndata,unsigned newsize);
 tdouble2* ResizeAlloc(tdouble2 *data,unsigned ndata,unsigned newsize);
 tdouble3* ResizeAlloc(tdouble3 *data,unsigned ndata,unsigned newsize);
 tdouble4* ResizeAlloc(tdouble4 *data,unsigned ndata,unsigned newsize);
+
+tfloat3*  NewToTFloat3 (const tdouble3* data,unsigned ndata);
+tdouble3* NewToTDouble3(const tfloat3* data,unsigned ndata);
 
 bool IsInfinity(float v);
 bool IsInfinity(double v);

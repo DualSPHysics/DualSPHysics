@@ -323,7 +323,7 @@ void JMotionObj::LinkMovs(){
 }
 
 //==============================================================================
-// Devuelve el número total de objetos hijos (todos los niveles)
+// Devuelve el numero total de objetos hijos (todos los niveles)
 //==============================================================================
 unsigned JMotionObj::ChildrenCount(){
   unsigned n=0;

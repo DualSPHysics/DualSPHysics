@@ -1058,7 +1058,7 @@ void JSphCpuSingle::Run(std::string appname,JCfgRun *cfg,JLog2 *log){
       Part++;
       PartNstep=Nstep;
       TimeStepM1=TimeStep;
-      TimePartNext=TimeOut->GetNextTime(TimeStep);
+      TimePartNext=(SvAllSteps? TimeStep: TimeOut->GetNextTime(TimeStep));
       TimerPart.Start();
     }
     UpdateMaxValues();

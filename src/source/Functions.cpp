@@ -1588,6 +1588,25 @@ tdouble4* ResizeAlloc(tdouble4 *data,unsigned ndata,unsigned newsize){
 
 
 //==============================================================================
+/// Returns array converted to tfloat3 in allocated memory with new tfloat3[].
+//==============================================================================
+tfloat3* NewToTFloat3(const tdouble3* data,unsigned ndata){
+  tfloat3* v=new tfloat3[ndata];
+  for(unsigned c=0;c<ndata;c++)v[c]=ToTFloat3(data[c]);
+  return(v);
+}
+
+//==============================================================================
+/// Returns array converted to tdouble3 in allocated memory with new tdouble3[].
+//==============================================================================
+tdouble3* NewToTDouble3(const tfloat3* data,unsigned ndata){
+  tdouble3* v=new tdouble3[ndata];
+  for(unsigned c=0;c<ndata;c++)v[c]=ToTDouble3(data[c]);
+  return(v);
+}
+
+
+//==============================================================================
 /// Returns if float value is + or - infinity.
 //==============================================================================
 bool IsInfinity(float v){

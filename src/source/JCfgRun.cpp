@@ -46,7 +46,7 @@ void JCfgRun::Reset(){
   OmpThreads=0;
   SvTimers=true;
   CellMode=CELLMODE_2H;
-  TBoundary=0;
+  TBoundary=0; SlipMode=0;
   DomainMode=0;
   DomainFixedMin=DomainFixedMax=TDouble3(0);
   TStep=STEP_None; VerletSteps=-1;
@@ -63,6 +63,7 @@ void JCfgRun::Reset(){
   RhopOutModif=false; RhopOutMin=700; RhopOutMax=1300;
   FtPause=-1;
   NstepsBreak=0;
+  SvAllSteps=false;
   CreateDirs=true;
   CsvSepComa=false;
 }
@@ -106,9 +107,10 @@ void JCfgRun::VisuInfo()const{
   printf("        2h        Lowest and the least expensive in memory (by default)\n");
   printf("        h         Fastest and the most expensive in memory\n");
   printf("\n");
-  printf("    -dbc             Dynamic Boundary Condition DBC (by default)\n");
-  printf("    -mdbc            Modified Dynamic Boundary Condition mDBC vel=0\n");
-  //printf("    -mdbc_noslip     Modified Dynamic Boundary Condition mDBC No-slip\n");
+  printf("    -dbc           Dynamic Boundary Condition DBC (by default)\n");
+  printf("    -mdbc          Modified Dynamic Boundary Condition mDBC (mode: vel=0)\n");
+  printf("    -mdbc_noslip   Modified Dynamic Boundary Condition mDBC (mode: no-slip)\n");
+  printf("    -mdbc_freeslip Modified Dynamic Boundary Condition mDBC (mode: free-slip)\n");
   printf("\n");
   printf("    -symplectic      Symplectic algorithm as time step algorithm\n");
   printf("    -verlet[:steps]  Verlet algorithm as time step algorithm and number of\n");
@@ -160,7 +162,8 @@ void JCfgRun::VisuInfo()const{
   printf("    -ftpause:<float> Time to start floating bodies movement. By default 0\n");
   printf("    -tmax:<float>   Maximum time of simulation\n");
   printf("    -tout:<float>   Time between output files\n\n");
-  //printf("    -nsteps:<uint>  Maximum number of steps allowed (debug)\n\n");
+  //printf("    -nsteps:<uint>  Maximum number of steps allowed (debug)\n");
+  //printf("    -svsteps:<0/1>  Saves a PART for each step (debug)\n\n");
   printf("    -domain_fixed:xmin:ymin:zmin:xmax:ymax:zmax    The domain is fixed\n");
   printf("     with the specified values\n\n");
   printf("  Examples:\n");
@@ -336,9 +339,10 @@ void JCfgRun::LoadOpts(string *optlis,int optn,int lv,string file){
         else ok=false;
         if(!ok)ErrorParm(opt,c,lv,file);
       }
-      else if(txword=="DBC")TBoundary=1;
-      else if(txword=="MDBC")TBoundary=2;
-      else if(txword=="MDBC_NOSLIP")TBoundary=3;
+      else if(txword=="DBC")          { TBoundary=1; SlipMode=0; }
+      else if(txword=="MDBC")         { TBoundary=2; SlipMode=1; }
+      else if(txword=="MDBC_NOSLIP")  { TBoundary=2; SlipMode=2; }
+      else if(txword=="MDBC_FREESLIP"){ TBoundary=2; SlipMode=3; }
       else if(txword=="SYMPLECTIC")TStep=STEP_Symplectic;
       else if(txword=="VERLET"){ TStep=STEP_Verlet; 
         if(txoptfull!="")VerletSteps=atoi(txoptfull.c_str()); 
@@ -435,6 +439,7 @@ void JCfgRun::LoadOpts(string *optlis,int optn,int lv,string file){
         DomainMode=2;
       }
       else if(txword=="NSTEPS")NstepsBreak=atoi(txoptfull.c_str()); 
+      else if(txword=="SVSTEPS")SvAllSteps=(txoptfull!=""? atoi(txoptfull.c_str()): 1)!=0;
       else if(txword=="OPT"&&c+1<optn){ LoadFile(optlis[c+1],lv+1); c++; }
       else if(txword=="H"||txword=="HELP"||txword=="?")PrintInfo=true;
       else ErrorParm(opt,c,lv,file);

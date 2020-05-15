@@ -44,7 +44,11 @@
 #include "JShifting.h"
 #include "JDataArrays.h"
 #include "JVtkLib.h"
+
 #include <climits>
+#ifndef WIN32
+#include <unistd.h>
+#endif
 
 using namespace std;
 
@@ -714,12 +718,11 @@ void JSphGpu::ConfigBlockSizes(bool usezone,bool useperi){
 /// Configura modo de ejecucion en GPU.
 //==============================================================================
 void JSphGpu::ConfigRunMode(std::string preinfo){
-  //#ifndef WIN32  //-Error compilation when gcc5 is used.
-  //  const int len=128; char hname[len];
-  //  gethostname(hname,len);
-  //  if(!preinfo.empty())preinfo=preinfo+", ";
-  //  preinfo=preinfo+"HostName:"+hname;
-  //#endif
+  #ifndef WIN32
+    const int len=128; char hname[len];
+    gethostname(hname,len);
+    preinfo=preinfo+(!preinfo.empty()? ", ": "")+"HostName:"+hname;
+  #endif
   RunMode=preinfo+RunMode;
   if(Stable)RunMode=string("Stable - ")+RunMode;
   RunMode=string("Pos-Cell - ")+RunMode;

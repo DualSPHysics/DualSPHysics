@@ -469,12 +469,26 @@ inline const char* GetNameDivision(TpMgDivMode axis){
 
 
 ///Codification of global cells (size=dosh) according to the position for particle interaction usin pos-cell method.
-//-Cell configuration 1:
-#define CEL1_X 0xfff80000  //-Mask of bits for cell X: 13 bits for 8192 ->  1111 1111 1111 1000   0000 0000 0000 0000
-#define CEL1_Y 0x0007fe00  //-Mask of bits for cell Y: 10 bits for 1024 ->  0000 0000 0000 0111   1111 1110 0000 0000
-#define CEL1_Z 0x000001ff  //-Mask of bits for cell Z:  9 bits for  512 ->  0000 0000 0000 0000   0000 0001 1111 1111
-#define CEL1_MOVX 19       //-Displacement to obaint X cell.
-#define CEL1_MOVY 9        //-Displacement to obaint Y cell.
+#define CEL_CONFIG_13_10_9 //-Typical configuration of cells in X, Y and Z for 3-D simulations.
+//#define CEL_CONFIG_17_2_13 //-Configuration to maximize cells in X and Z for 2-D simulations.
+
+//-Cell configuration 13_10_9:
+#ifdef CEL_CONFIG_13_10_9
+  #define CEL1_X 0xfff80000  //-Mask of bits for cell X: 13 bits for 8,192 ->  1111 1111 1111 1000   0000 0000 0000 0000
+  #define CEL1_Y 0x0007fe00  //-Mask of bits for cell Y: 10 bits for 1,024 ->  0000 0000 0000 0111   1111 1110 0000 0000
+  #define CEL1_Z 0x000001ff  //-Mask of bits for cell Z:  9 bits for   512 ->  0000 0000 0000 0000   0000 0001 1111 1111
+  #define CEL1_MOVX 19       //-Displacement to obaint X cell.
+  #define CEL1_MOVY 9        //-Displacement to obaint Y cell.
+#endif
+//-Cell configuration 17_2_13:
+#ifdef CEL_CONFIG_17_2_13
+  #define CEL1_X 0xffff8000  //-Mask of bits for cell X: 17 bits for 131,072 ->  1111 1111 1111 1111   1000 0000 0000 0000
+  #define CEL1_Y 0x00006000  //-Mask of bits for cell Y:  2 bits for       4 ->  0000 0000 0000 0000   0110 0000 0000 0000
+  #define CEL1_Z 0x00001fff  //-Mask of bits for cell Z: 13 bits for   8,192 ->  0000 0000 0000 0000   0001 1111 1111 1111
+  #define CEL1_MOVX 15       //-Displacement to obaint X cell.
+  #define CEL1_MOVY 13       //-Displacement to obaint Y cell.
+#endif
+
 //-Cell configuration in use:
 #define CEL_X CEL1_X        //-Selected mask of bits for cell X
 #define CEL_Y CEL1_Y        //-Selected mask of bits for cell Y

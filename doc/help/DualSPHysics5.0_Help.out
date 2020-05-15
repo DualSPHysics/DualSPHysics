@@ -24,7 +24,7 @@
  along with DualSPHysics. If not, see <http://www.gnu.org/licenses/>.
 
 
-DualSPHysics5 v5.0.107 (06-05-2020)
+DualSPHysics5 v5.0.109 (15-05-2020)
 ====================================
 LoadDsphConfig> .../bin/windows/DsphConfig.xml
 Information about execution parameters:
@@ -51,8 +51,10 @@ Information about execution parameters:
         2h        Lowest and the least expensive in memory (by default)
         h         Fastest and the most expensive in memory
 
-    -dbc             Dynamic Boundary Condition DBC (by default)
-    -mdbc            Modified Dynamic Boundary Condition mDBC vel=0
+    -dbc           Dynamic Boundary Condition DBC (by default)
+    -mdbc          Modified Dynamic Boundary Condition mDBC (mode: vel=0)
+    -mdbc_noslip   Modified Dynamic Boundary Condition mDBC (mode: no-slip)
+    -mdbc_freeslip Modified Dynamic Boundary Condition mDBC (mode: free-slip)
 
     -symplectic      Symplectic algorithm as time step algorithm
     -verlet[:steps]  Verlet algorithm as time step algorithm and number of

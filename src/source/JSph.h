@@ -199,6 +199,7 @@ protected:
   double TimePart;            ///<Time of data.
   JTimeOut *TimeOut;
   int NstepsBreak;           ///<Maximum number of steps allowed (debug).
+  bool SvAllSteps;           ///<Saves a PART for each step (debug).
 
   double DtIni;              ///<Initial Dt
   double DtMin;              ///<Minimum allowed Dt (if the calculated value is lower is replaced by DTmin).

@@ -39,7 +39,11 @@
 #include "JGaugeSystem.h"
 #include "JSphBoundCorr.h"  //<vs_innlet>
 #include "JShifting.h"
+
 #include <climits>
+#ifndef WIN32
+#include <unistd.h>
+#endif
 
 using namespace std;
 
@@ -393,12 +397,11 @@ void JSphCpu::ConfigOmp(const JCfgRun *cfg){
 /// Configura modo de ejecucion en CPU.
 //==============================================================================
 void JSphCpu::ConfigRunMode(const JCfgRun *cfg,std::string preinfo){
-  //#ifndef WIN32  //-Error compilation when gcc5 is used.
-  //  const int len=128; char hname[len];
-  //  gethostname(hname,len);
-  //  if(!preinfo.empty())preinfo=preinfo+", ";
-  //  preinfo=preinfo+"HostName:"+hname;
-  //#endif
+  #ifndef WIN32
+    const int len=128; char hname[len];
+    gethostname(hname,len);
+    preinfo=preinfo+(!preinfo.empty()? ", ": "")+"HostName:"+hname;
+  #endif
   Hardware="Cpu";
   if(OmpThreads==1)RunMode="Single core";
   else RunMode=string("OpenMP(Threads:")+fun::IntStr(OmpThreads)+")";
@@ -1454,8 +1457,34 @@ template<bool sim2d,TpSlipMode tslip> void JSphCpu::InteractionBoundCorrection
       const tfloat3 v=motionvel[p1];
       velrhop[p1]=TFloat4(v.x+v.x-velrhopfinal.x,v.y+v.y-velrhopfinal.y,v.z+v.z-velrhopfinal.z,rhopfinal);
     }
-    if(tslip==SLIP_FreeSlip){//-No-Penetration and free slip
-      velrhop[p1]=TFloat4(velrhopfinal.x,velrhopfinal.y,velrhopfinal.z,rhopfinal); //-It was not tested...
+    if(tslip==SLIP_FreeSlip){//-No-Penetration and free slip    SHABA
+
+		tfloat3 FSVelFinal; // final free slip boundary velocity
+		const tfloat3 v = motionvel[p1];
+		float motion = sqrt(v.x*v.x + v.y*v.y + v.z*v.z); // to check if boundary moving
+		float norm = sqrt(boundnormal[p1].x*boundnormal[p1].x + boundnormal[p1].y*boundnormal[p1].y + boundnormal[p1].z*boundnormal[p1].z);
+		tfloat3 normal; // creating a normailsed boundary normal
+		normal.x = fabs(boundnormal[p1].x )/ norm; normal.y = fabs(boundnormal[p1].y) / norm; normal.z = fabs(boundnormal[p1].z) / norm;
+		
+		// finding the velocity componants normal and tangential to boundary 
+		tfloat3 normvel = TFloat3(velrhopfinal.x*normal.x, velrhopfinal.y*normal.y, velrhopfinal.z*normal.z); // velocity in direction of normal pointin ginto fluid)
+		tfloat3 tangvel = TFloat3(velrhopfinal.x - normvel.x, velrhopfinal.y - normvel.y, velrhopfinal.z - normvel.z); // velocity tangential to normal
+		
+		if (motion > 0.f) { // if moving boundary
+			tfloat3 normmot = TFloat3(v.x*normal.x, v.y*normal.y, v.z*normal.z); // boundary motion in direction normal to boundary 
+			FSVelFinal = TFloat3(normmot.x+normmot.x-normvel.x, normmot.y + normmot.y -normvel.y, normmot.z + normmot.z -normvel.z);
+			// only velocity in normal direction for no-penetration
+			// fluid sees zero velocity in the tangetial direction
+		}
+		else {
+			FSVelFinal = TFloat3(tangvel.x - normvel.x, tangvel.y - normvel.y, tangvel.z - normvel.z);
+			// tangential velocity equal to fluid velocity for free slip
+			// normal velocity reversed for no-penetration
+		}
+		
+		// Save the velocity and density
+		velrhop[p1]=TFloat4(FSVelFinal.x, FSVelFinal.y, FSVelFinal.z,rhopfinal); 
+
     }
   }
 }

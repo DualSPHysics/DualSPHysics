@@ -307,7 +307,7 @@ void JMotion::Prepare(){
   if(Events.size())for(unsigned c=0;c<Events.size()-1;c++)for(unsigned c2=c+1;c2<Events.size();c2++)if(Events[c]->TimeStart<Events[c2]->TimeStart)swap(Events[c],Events[c2]);
 //for(unsigned c=0;c<Events.size();c++)printf("Evt[%d].start: %G\n",c,Events[c]->TimeStart);
   EventNext=int(Events.size())-1;
-  //-Contabiliza el número de objetos totales
+  //-Contabiliza el numero de objetos totales
   ObjCount=0;
   for(unsigned c=0;c<Objs.size();c++)ObjCount+=1+Objs[c]->ChildrenCount(); 
   LisMov=new JMotionObj*[ObjCount];

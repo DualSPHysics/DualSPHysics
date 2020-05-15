@@ -1181,7 +1181,7 @@ template<bool sim2d,TpSlipMode tslip> __global__ void KerInteractionBoundCorrect
       int cxini,cxfin,yini,yfin,zini,zfin;
       cusph::KerGetInteractionCells(gposp1.x,gposp1.y,gposp1.z,hdiv,nc,cellzero,cxini,cxfin,yini,yfin,zini,zfin);
       
-    //-Search for neighbours in adjacent cells. | Busqueda de vecinos en celdas adyacentes.
+      //-Search for neighbours in adjacent cells. | Busqueda de vecinos en celdas adyacentes.
       for(int z=zini;z<zfin;z++){
         int zmod=(nc.w)*z+cellfluid; //-The sum showing where fluid cells start. | Le suma donde empiezan las celdas de fluido.
         for(int y=yini;y<yfin;y++){
@@ -1223,10 +1223,10 @@ template<bool sim2d,TpSlipMode tslip> __global__ void KerInteractionBoundCorrect
               const float vfrz=frz*volp2;
 
               //===== Velocity =====
-              if(tslip!=SLIP_Vel0){
-                velp1.x += vwab*velrhopp2.x;
-                velp1.y += vwab*velrhopp2.y;
-                velp1.z += vwab*velrhopp2.z;
+              if(tslip!=SLIP_Vel0) {
+                velp1.x+=vwab*velrhopp2.x;
+                velp1.y+=vwab*velrhopp2.y;
+                velp1.z+=vwab*velrhopp2.z;
               }
 
               //===== Matrix A for correction =====
@@ -1299,8 +1299,32 @@ template<bool sim2d,TpSlipMode tslip> __global__ void KerInteractionBoundCorrect
         const float3 v=motionvel[p1];
         velrhop[p1]=make_float4(v.x+v.x-velrhopfinal.x,v.y+v.y-velrhopfinal.y,v.z+v.z-velrhopfinal.z,rhopfinal);
       }
-      if(tslip==SLIP_FreeSlip){//-No-Penetration and free slip
-        velrhop[p1]=make_float4(velrhopfinal.x,velrhopfinal.y,velrhopfinal.z,rhopfinal); //-It was not tested...
+      if(tslip==SLIP_FreeSlip){//-No-Penetration and free slip    SHABA
+        float3 FSVelFinal; // final free slip boundary velocity
+        const float3 v=motionvel[p1];
+        float motion=sqrt(v.x*v.x+v.y*v.y+v.z*v.z); // to check if boundary moving
+        float norm=sqrt(bnormalp1.x*bnormalp1.x+bnormalp1.y*bnormalp1.y+bnormalp1.z*bnormalp1.z);
+        float3 normal; // creating a normailsed boundary normal
+        normal.x=fabs(bnormalp1.x)/norm; normal.y=fabs(bnormalp1.y)/norm; normal.z=fabs(bnormalp1.z)/norm;
+
+        // finding the velocity componants normal and tangential to boundary 
+        float3 normvel=make_float3(velrhopfinal.x*normal.x,velrhopfinal.y*normal.y,velrhopfinal.z*normal.z); // velocity in direction of normal pointin ginto fluid)
+        float3 tangvel=make_float3(velrhopfinal.x-normvel.x,velrhopfinal.y-normvel.y,velrhopfinal.z-normvel.z); // velocity tangential to normal
+
+        if (motion > 0) { // if moving boundary
+            float3 normmot=make_float3(v.x*normal.x,v.y*normal.y,v.z*normal.z); // boundary motion in direction normal to boundary 
+            FSVelFinal=make_float3(normmot.x+normmot.x-normvel.x,normmot.y+normmot.y-normvel.y,normmot.z+normmot.z-normvel.z);
+            // only velocity in normal direction for no-penetration
+            // fluid sees zero velocity in the tangetial direction
+        }
+        else {
+            FSVelFinal=make_float3(tangvel.x-normvel.x,tangvel.y-normvel.y,tangvel.z-normvel.z);
+            // tangential velocity equal to fluid velocity for free slip
+            // normal velocity reversed for no-penetration
+        }
+
+        // Save the velocity and density
+        velrhop[p1]=make_float4(FSVelFinal.x,FSVelFinal.y,FSVelFinal.z,rhopfinal);
       }
     }
   }
