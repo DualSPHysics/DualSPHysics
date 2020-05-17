@@ -168,6 +168,7 @@ void JSph::InitVars(){
   TBoundary=BC_DBC;
   SlipMode=SLIP_Vel0;  //<vs_mddbc>
   MdbcCorrector=false; //<vs_mddbc>
+  MdbcThreshold=0;     //<vs_mddbc>
   UseNormals=false;    //<vs_mddbc>
   UseNormalsFt=false;  //<vs_mddbc>
   SvNormals=false;     //<vs_mddbc>
@@ -703,7 +704,7 @@ void JSph::LoadConfigCommands(const JCfgRun *cfg){
   //-Aplies configuration using command line.
   if(cfg->SvPosDouble>=0)SvPosDouble=(cfg->SvPosDouble!=0);
   if(cfg->TBoundary){
-    TBoundary=BC_DBC;  SlipMode=SLIP_Vel0;  MdbcCorrector=false;
+    TBoundary=BC_DBC;  SlipMode=SLIP_Vel0;  MdbcCorrector=false;  MdbcThreshold=0;
     switch(cfg->TBoundary){
       case 1:  TBoundary=BC_DBC;   break;
       case 2:  TBoundary=BC_MDBC;  break;
@@ -717,6 +718,7 @@ void JSph::LoadConfigCommands(const JCfgRun *cfg){
     }
     UseNormals=(TBoundary==BC_MDBC);
   }
+  if(TBoundary==BC_MDBC && cfg->MdbcThreshold>=0)MdbcThreshold=cfg->MdbcThreshold;
   if(TBoundary==BC_MDBC && SlipMode!=SLIP_Vel0)
     Run_Exceptioon("Only the slip mode velocity=0 is allowed with mDBC conditions."); //SHABA
   if(cfg->TStep)TStep=cfg->TStep;
@@ -1411,6 +1413,7 @@ void JSph::VisuConfig()const{
   if(TBoundary==BC_MDBC){ //<vs_mddbc_ini>
     Log->Print(fun::VarStr("  SlipMode",GetSlipName(SlipMode)));
     Log->Print(fun::VarStr("  mDBC-Corrector",MdbcCorrector));
+    Log->Print(fun::VarStr("  mDBC-Threshold",MdbcThreshold));
   } //<vs_mddbc_end>
   Log->Print(fun::VarStr("StepAlgorithm",GetStepName(TStep)));
   if(TStep==STEP_None)Run_Exceptioon("StepAlgorithm value is invalid.");

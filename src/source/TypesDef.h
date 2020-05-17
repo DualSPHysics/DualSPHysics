@@ -559,6 +559,8 @@ inline int DimOfType(TpTypeData type){
 
 //-Standard vector types.
 #include <vector>
+typedef std::vector<tfloat2>  vfloat2;
+typedef std::vector<tfloat3>  vfloat3;
 typedef std::vector<tdouble2> vdouble2;
 typedef std::vector<tdouble3> vdouble3;
 

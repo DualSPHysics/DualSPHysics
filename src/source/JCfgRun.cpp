@@ -46,7 +46,7 @@ void JCfgRun::Reset(){
   OmpThreads=0;
   SvTimers=true;
   CellMode=CELLMODE_2H;
-  TBoundary=0; SlipMode=0;
+  TBoundary=0; SlipMode=0; MdbcThreshold=-1;
   DomainMode=0;
   DomainFixedMin=DomainFixedMax=TDouble3(0);
   TStep=STEP_None; VerletSteps=-1;
@@ -111,6 +111,7 @@ void JCfgRun::VisuInfo()const{
   printf("    -mdbc          Modified Dynamic Boundary Condition mDBC (mode: vel=0)\n");
   printf("    -mdbc_noslip   Modified Dynamic Boundary Condition mDBC (mode: no-slip)\n");
   printf("    -mdbc_freeslip Modified Dynamic Boundary Condition mDBC (mode: free-slip)\n");
+  printf("    -mdbc_threshold:<float> Kernel support limit to apply mDBC correction [0-1]\n");
   printf("\n");
   printf("    -symplectic      Symplectic algorithm as time step algorithm\n");
   printf("    -verlet[:steps]  Verlet algorithm as time step algorithm and number of\n");
@@ -343,6 +344,10 @@ void JCfgRun::LoadOpts(string *optlis,int optn,int lv,string file){
       else if(txword=="MDBC")         { TBoundary=2; SlipMode=1; }
       else if(txword=="MDBC_NOSLIP")  { TBoundary=2; SlipMode=2; }
       else if(txword=="MDBC_FREESLIP"){ TBoundary=2; SlipMode=3; }
+      else if(txword=="MDBC_THRESHOLD"){ 
+        MdbcThreshold=float(atof(txoptfull.c_str())); 
+        if(MdbcThreshold<0 || MdbcThreshold>1.f)ErrorParm(opt,c,lv,file);
+      }
       else if(txword=="SYMPLECTIC")TStep=STEP_Symplectic;
       else if(txword=="VERLET"){ TStep=STEP_Verlet; 
         if(txoptfull!="")VerletSteps=atoi(txoptfull.c_str()); 

@@ -187,6 +187,7 @@ protected:
   TpBoundary TBoundary;       ///<Boundary condition: DBC, M-DBC.
   TpSlipMode SlipMode;        ///<Slip mode for mDBC 1:DBC vel=0, 2:No-slip, 3:Free slip (default=1).     //<vs_mddbc>
   bool MdbcCorrector;         ///<mDBC correction is also applied in corrector of Symplectic (default=0). //<vs_mddbc>
+  float MdbcThreshold;        ///<Kernel support limit to apply mDBC correction (default=0).              //<vs_mddbc>
   bool UseNormals;            ///<Indicates use of normals for mDBC.                                      //<vs_mddbc>
   bool UseNormalsFt;          ///<Indicates use of normals of floating bodies for mDBC.                   //<vs_mddbc>
   bool SvNormals;             ///<Saves normals VTK each PART (for debug).                                //<vs_mddbc>

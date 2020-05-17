@@ -1315,7 +1315,7 @@ void JSphCpu::Interaction_Forces_ct(const stinterparmsc &t,StInterResultc &res)c
 /// Perform interaction between ghost nodes of boundaries and fluid.
 //==============================================================================
 template<bool sim2d,TpSlipMode tslip> void JSphCpu::InteractionBoundCorrection
-  (unsigned n,float determlimit
+  (unsigned n,float determlimit,float mdbcthreshold
   ,tint4 nc,int hdiv,unsigned cellinitial,const unsigned *beginendcell,tint3 cellzero
   ,const tdouble3 *pos,const typecode *code,const unsigned *idp
   ,const tfloat3 *boundnormal,const tfloat3 *motionvel,tfloat4 *velrhop)
@@ -1328,6 +1328,7 @@ template<bool sim2d,TpSlipMode tslip> void JSphCpu::InteractionBoundCorrection
   for(int p1=0;p1<nn;p1++)if(boundnormal[p1]!=TFloat3(0)){
     float rhopfinal=FLT_MAX;
     tfloat3 velrhopfinal=TFloat3(0);
+    float sumwab=0;
 
     //-Calculates ghost node position.
     tdouble3 gposp1=pos[p1]+ToTDouble3(boundnormal[p1]);
@@ -1376,6 +1377,7 @@ template<bool sim2d,TpSlipMode tslip> void JSphCpu::InteractionBoundCorrection
 
             //===== Kernel values multiplied by volume =====
             const float vwab=wab*volp2;
+            sumwab+=vwab;
             const float vfrx=frx*volp2;
             const float vfry=fry*volp2;
             const float vfrz=frz*volp2;
@@ -1406,58 +1408,59 @@ template<bool sim2d,TpSlipMode tslip> void JSphCpu::InteractionBoundCorrection
 
     //-Store the results.
     //--------------------
-    const tfloat3 dpos=(boundnormal[p1]*(-1.f)); //-Boundary particle position - ghost node position.
-    if(sim2d){
-      const double determ=fmath::Determinant3x3(a_corr2);
-      if(fabs(determ)>=determlimit){//-Use 1e-3f (first_order) or 1e+3f (zeroth_order).
-        const tmatrix3d invacorr2=fmath::InverseMatrix3x3(a_corr2,determ);
-        //-GHOST NODE DENSITY IS MIRRORED BACK TO THE BOUNDARY PARTICLES.
-        const float rhoghost=float(invacorr2.a11*rhopp1 + invacorr2.a12*gradrhopp1.x + invacorr2.a13*gradrhopp1.z);
-        const float grx=    -float(invacorr2.a21*rhopp1 + invacorr2.a22*gradrhopp1.x + invacorr2.a23*gradrhopp1.z);
-        const float grz=    -float(invacorr2.a31*rhopp1 + invacorr2.a32*gradrhopp1.x + invacorr2.a33*gradrhopp1.z);
-        rhopfinal=(rhoghost + grx*dpos.x + grz*dpos.z);
+    if(sumwab>=mdbcthreshold){
+      const tfloat3 dpos=(boundnormal[p1]*(-1.f)); //-Boundary particle position - ghost node position.
+      if(sim2d){
+        const double determ=fmath::Determinant3x3(a_corr2);
+        if(fabs(determ)>=determlimit){//-Use 1e-3f (first_order) or 1e+3f (zeroth_order).
+          const tmatrix3d invacorr2=fmath::InverseMatrix3x3(a_corr2,determ);
+          //-GHOST NODE DENSITY IS MIRRORED BACK TO THE BOUNDARY PARTICLES.
+          const float rhoghost=float(invacorr2.a11*rhopp1 + invacorr2.a12*gradrhopp1.x + invacorr2.a13*gradrhopp1.z);
+          const float grx=    -float(invacorr2.a21*rhopp1 + invacorr2.a22*gradrhopp1.x + invacorr2.a23*gradrhopp1.z);
+          const float grz=    -float(invacorr2.a31*rhopp1 + invacorr2.a32*gradrhopp1.x + invacorr2.a33*gradrhopp1.z);
+          rhopfinal=(rhoghost + grx*dpos.x + grz*dpos.z);
+        }
+        else if(a_corr2.a11>0){//-Determinant is small but a11 is nonzero (0th order).
+          rhopfinal=float(rhopp1/a_corr2.a11);
+        }
+        //-Ghost node velocity (0th order).
+        if(tslip!=SLIP_Vel0){
+          velrhopfinal.x=float(velp1.x/a_corr2.a11);
+          velrhopfinal.z=float(velp1.z/a_corr2.a11);
+          velrhopfinal.y=0;
+        }
       }
-      else if(a_corr2.a11>0){//-Determinant is small but a11 is nonzero (0th order).
-        rhopfinal=float(rhopp1/a_corr2.a11);
+      else{
+        const double determ=fmath::Determinant4x4(a_corr3);
+        if(fabs(determ)>=determlimit){
+          const tmatrix4d invacorr3=fmath::InverseMatrix4x4(a_corr3,determ);
+          //-GHOST NODE DENSITY IS MIRRORED BACK TO THE BOUNDARY PARTICLES.
+          const float rhoghost=float(invacorr3.a11*rhopp1 + invacorr3.a12*gradrhopp1.x + invacorr3.a13*gradrhopp1.y + invacorr3.a14*gradrhopp1.z);
+          const float grx=    -float(invacorr3.a21*rhopp1 + invacorr3.a22*gradrhopp1.x + invacorr3.a23*gradrhopp1.y + invacorr3.a24*gradrhopp1.z);
+          const float gry=    -float(invacorr3.a31*rhopp1 + invacorr3.a32*gradrhopp1.x + invacorr3.a33*gradrhopp1.y + invacorr3.a34*gradrhopp1.z);
+          const float grz=    -float(invacorr3.a41*rhopp1 + invacorr3.a42*gradrhopp1.x + invacorr3.a43*gradrhopp1.y + invacorr3.a44*gradrhopp1.z);
+          rhopfinal=(rhoghost + grx*dpos.x + gry*dpos.y + grz*dpos.z);
+        }
+        else if(a_corr3.a11>0){//-Determinant is small but a11 is nonzero (0th order).
+          rhopfinal=float(rhopp1/a_corr3.a11);
+        }
+        //-Ghost node velocity (0th order).
+        if(tslip!=SLIP_Vel0){
+          velrhopfinal.x=float(velp1.x/a_corr3.a11);
+          velrhopfinal.y=float(velp1.y/a_corr3.a11);
+          velrhopfinal.z=float(velp1.z/a_corr3.a11);
+        }
       }
-      //-Ghost node velocity (0th order).
-      if(tslip!=SLIP_Vel0){
-        velrhopfinal.x=float(velp1.x/a_corr2.a11);
-        velrhopfinal.z=float(velp1.z/a_corr2.a11);
-        velrhopfinal.y=0;
+      //-Store the results.
+      rhopfinal=(rhopfinal!=FLT_MAX? rhopfinal: RhopZero);
+      if(tslip==SLIP_Vel0){//-DBC vel=0
+        velrhop[p1].w=rhopfinal;
       }
-    }
-    else{
-      const double determ=fmath::Determinant4x4(a_corr3);
-      if(fabs(determ)>=determlimit){
-        const tmatrix4d invacorr3=fmath::InverseMatrix4x4(a_corr3,determ);
-        //-GHOST NODE DENSITY IS MIRRORED BACK TO THE BOUNDARY PARTICLES.
-        const float rhoghost=float(invacorr3.a11*rhopp1 + invacorr3.a12*gradrhopp1.x + invacorr3.a13*gradrhopp1.y + invacorr3.a14*gradrhopp1.z);
-        const float grx=    -float(invacorr3.a21*rhopp1 + invacorr3.a22*gradrhopp1.x + invacorr3.a23*gradrhopp1.y + invacorr3.a24*gradrhopp1.z);
-        const float gry=    -float(invacorr3.a31*rhopp1 + invacorr3.a32*gradrhopp1.x + invacorr3.a33*gradrhopp1.y + invacorr3.a34*gradrhopp1.z);
-        const float grz=    -float(invacorr3.a41*rhopp1 + invacorr3.a42*gradrhopp1.x + invacorr3.a43*gradrhopp1.y + invacorr3.a44*gradrhopp1.z);
-        rhopfinal=(rhoghost + grx*dpos.x + gry*dpos.y + grz*dpos.z);
+      if(tslip==SLIP_NoSlip){//-No-Slip
+        const tfloat3 v=motionvel[p1];
+        velrhop[p1]=TFloat4(v.x+v.x-velrhopfinal.x,v.y+v.y-velrhopfinal.y,v.z+v.z-velrhopfinal.z,rhopfinal);
       }
-      else if(a_corr3.a11>0){//-Determinant is small but a11 is nonzero (0th order).
-        rhopfinal=float(rhopp1/a_corr3.a11);
-      }
-      //-Ghost node velocity (0th order).
-      if(tslip!=SLIP_Vel0){
-        velrhopfinal.x=float(velp1.x/a_corr3.a11);
-        velrhopfinal.y=float(velp1.y/a_corr3.a11);
-        velrhopfinal.z=float(velp1.z/a_corr3.a11);
-      }
-    }
-    //-Store the results.
-    rhopfinal=(rhopfinal!=FLT_MAX? rhopfinal: RhopZero);
-    if(tslip==SLIP_Vel0){//-DBC vel=0
-      velrhop[p1].w=rhopfinal;
-    }
-    if(tslip==SLIP_NoSlip){//-No-Slip
-      const tfloat3 v=motionvel[p1];
-      velrhop[p1]=TFloat4(v.x+v.x-velrhopfinal.x,v.y+v.y-velrhopfinal.y,v.z+v.z-velrhopfinal.z,rhopfinal);
-    }
-    if(tslip==SLIP_FreeSlip){//-No-Penetration and free slip    SHABA
+      if(tslip==SLIP_FreeSlip){//-No-Penetration and free slip    SHABA
 
 		tfloat3 FSVelFinal; // final free slip boundary velocity
 		const tfloat3 v = motionvel[p1];
@@ -1485,6 +1488,7 @@ template<bool sim2d,TpSlipMode tslip> void JSphCpu::InteractionBoundCorrection
 		// Save the velocity and density
 		velrhop[p1]=TFloat4(FSVelFinal.x, FSVelFinal.y, FSVelFinal.z,rhopfinal); 
 
+      }
     }
   }
 }
@@ -1506,13 +1510,13 @@ void JSphCpu::Interaction_BoundCorrection(TpSlipMode slipmode
   //-Interaction GhostBoundaryNodes-Fluid.
   unsigned n=NpbOk;
   if(Simulate2D){ const bool sim2d=true;
-    if(slipmode==SLIP_Vel0    )InteractionBoundCorrection<sim2d,SLIP_Vel0    >(n,determlimit,nc,hdiv,cellfluid,begincell,cellzero,pos,code,idp,boundnormal,motionvel,velrhop);
-    if(slipmode==SLIP_NoSlip  )InteractionBoundCorrection<sim2d,SLIP_NoSlip  >(n,determlimit,nc,hdiv,cellfluid,begincell,cellzero,pos,code,idp,boundnormal,motionvel,velrhop);
-    if(slipmode==SLIP_FreeSlip)InteractionBoundCorrection<sim2d,SLIP_FreeSlip>(n,determlimit,nc,hdiv,cellfluid,begincell,cellzero,pos,code,idp,boundnormal,motionvel,velrhop);
+    if(slipmode==SLIP_Vel0    )InteractionBoundCorrection<sim2d,SLIP_Vel0    >(n,determlimit,MdbcThreshold,nc,hdiv,cellfluid,begincell,cellzero,pos,code,idp,boundnormal,motionvel,velrhop);
+    if(slipmode==SLIP_NoSlip  )InteractionBoundCorrection<sim2d,SLIP_NoSlip  >(n,determlimit,MdbcThreshold,nc,hdiv,cellfluid,begincell,cellzero,pos,code,idp,boundnormal,motionvel,velrhop);
+    if(slipmode==SLIP_FreeSlip)InteractionBoundCorrection<sim2d,SLIP_FreeSlip>(n,determlimit,MdbcThreshold,nc,hdiv,cellfluid,begincell,cellzero,pos,code,idp,boundnormal,motionvel,velrhop);
   }else{          const bool sim2d=false;
-    if(slipmode==SLIP_Vel0    )InteractionBoundCorrection<sim2d,SLIP_Vel0    >(n,determlimit,nc,hdiv,cellfluid,begincell,cellzero,pos,code,idp,boundnormal,motionvel,velrhop);
-    if(slipmode==SLIP_NoSlip  )InteractionBoundCorrection<sim2d,SLIP_NoSlip  >(n,determlimit,nc,hdiv,cellfluid,begincell,cellzero,pos,code,idp,boundnormal,motionvel,velrhop);
-    if(slipmode==SLIP_FreeSlip)InteractionBoundCorrection<sim2d,SLIP_FreeSlip>(n,determlimit,nc,hdiv,cellfluid,begincell,cellzero,pos,code,idp,boundnormal,motionvel,velrhop);
+    if(slipmode==SLIP_Vel0    )InteractionBoundCorrection<sim2d,SLIP_Vel0    >(n,determlimit,MdbcThreshold,nc,hdiv,cellfluid,begincell,cellzero,pos,code,idp,boundnormal,motionvel,velrhop);
+    if(slipmode==SLIP_NoSlip  )InteractionBoundCorrection<sim2d,SLIP_NoSlip  >(n,determlimit,MdbcThreshold,nc,hdiv,cellfluid,begincell,cellzero,pos,code,idp,boundnormal,motionvel,velrhop);
+    if(slipmode==SLIP_FreeSlip)InteractionBoundCorrection<sim2d,SLIP_FreeSlip>(n,determlimit,MdbcThreshold,nc,hdiv,cellfluid,begincell,cellzero,pos,code,idp,boundnormal,motionvel,velrhop);
   }
 }
 //<vs_mddbc_end>
