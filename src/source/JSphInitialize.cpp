@@ -26,7 +26,32 @@
 #include "JRangeFilter.h"
 #include "JXml.h"
 
+#include <climits>
+
 using namespace std;
+
+//##############################################################################
+//# JSphInitializeOp_FluidVel
+//##############################################################################
+//==============================================================================
+/// Calculates domain limits of MkType particles and returns number of particles.
+//==============================================================================
+unsigned JSphInitializeOp::ComputeDomainMk(bool bound,word mktp,unsigned np
+  ,const word *mktype,const unsigned *idp,const tdouble3 *pos
+  ,tdouble3 &posmin,tdouble3 &posmax)const
+{
+  tdouble3 pmin=TDouble3(DBL_MAX),pmax=TDouble3(-DBL_MAX);
+  unsigned n=0;
+  for(unsigned p=0;p<np;p++)if(mktype[p]==mktp && bound==(idp[p]<InitCt.nbound)){
+    const tdouble3 ps=pos[p];
+    pmin=MinValues(pmin,ps);
+    pmax=MaxValues(pmax,ps);
+    n++;
+  }
+  posmin=pmin;
+  posmax=pmax;
+  return(n);
+}
 
 //##############################################################################
 //# JSphInitializeOp_FluidVel
@@ -78,7 +103,7 @@ void JSphInitializeOp_FluidVel::ReadXml(const JXml *sxml,TiXmlElement* xele){
 //==============================================================================
 /// Initializes data of particles according XML configuration.
 //==============================================================================
-void JSphInitializeOp_FluidVel::Run(unsigned np,unsigned npb,unsigned nbound,const tdouble3 *pos
+void JSphInitializeOp_FluidVel::Run(unsigned np,unsigned npb,const tdouble3 *pos
   ,const unsigned *idp,const word *mktype,tfloat4 *velrhop,tfloat3 *boundnormal)
 {
   const tfloat3 dir=fgeo::VecUnitary(Direction);
@@ -140,12 +165,12 @@ void JSphInitializeOp_BoundNormalSet::ReadXml(const JXml *sxml,TiXmlElement* xel
 //==============================================================================
 /// Initializes data of particles according XML configuration.
 //==============================================================================
-void JSphInitializeOp_BoundNormalSet::Run(unsigned np,unsigned npb,unsigned nbound,const tdouble3 *pos
+void JSphInitializeOp_BoundNormalSet::Run(unsigned np,unsigned npb,const tdouble3 *pos
   ,const unsigned *idp,const word *mktype,tfloat4 *velrhop,tfloat3 *boundnormal)
 {
   JRangeFilter rg(MkBound);
   const bool all=(MkBound.empty());
-  for(unsigned p=0;p<np;p++)if(idp[p]<nbound && ( all || rg.CheckValue(mktype[p]))){
+  for(unsigned p=0;p<np;p++)if(idp[p]<InitCt.nbound && ( all || rg.CheckValue(mktype[p]))){
     boundnormal[p]=Normal;
   }
 }
@@ -167,9 +192,11 @@ void JSphInitializeOp_BoundNormalSet::GetConfig(std::vector<std::string> &lines)
 /// Reads particles information in xml format.
 //==============================================================================
 void JSphInitializeOp_BoundNormalPlane::ReadXml(const JXml *sxml,TiXmlElement* xele){
-  sxml->CheckElementNames(xele,true,"point normal maxdisth");
+  sxml->CheckElementNames(xele,true,"point limitdist normal maxdisth");
   MkBound=sxml->GetAttributeStr(xele,"mkbound",true);
-  Point=sxml->ReadElementFloat3(xele,"point");
+  PointAuto=sxml->ReadElementBool(xele,"point","auto",true,false);
+  if(!PointAuto)Point=sxml->ReadElementFloat3(xele,"point");
+  LimitDist=sxml->ReadElementFloat(xele,"limitdist","vdp",true,0.5f);
   Normal=sxml->ReadElementFloat3(xele,"normal");
   MaxDisteH=sxml->ReadElementFloat(xele,"maxdisth","v",true,2.f);
 }
@@ -177,18 +204,65 @@ void JSphInitializeOp_BoundNormalPlane::ReadXml(const JXml *sxml,TiXmlElement* x
 //==============================================================================
 /// Initializes data of particles according XML configuration.
 //==============================================================================
-void JSphInitializeOp_BoundNormalPlane::Run(unsigned np,unsigned npb,unsigned nbound,const tdouble3 *pos
+void JSphInitializeOp_BoundNormalPlane::Run(unsigned np,unsigned npb,const tdouble3 *pos
   ,const unsigned *idp,const word *mktype,tfloat4 *velrhop,tfloat3 *boundnormal)
 {
-  const tplane3d pla=fgeo::PlanePtVec(ToTDouble3(Point),ToTDouble3(Normal));
-  const double maxdist=(MaxDisteH>0? H*MaxDisteH: DBL_MAX);
+  const double maxdist=(MaxDisteH>0? InitCt.h*MaxDisteH: DBL_MAX);
+  const double limitdis=InitCt.dp*LimitDist;
+  const tdouble3 nor=fgeo::VecUnitary(ToTDouble3(Normal));
+  //-Define direction of normal (undefined, top, bottom, left, right...).
+  byte nordir=0;
+       if(fun::IsEqual(nor,TDouble3( 0, 0, 1),0.0000001))nordir=1;
+  else if(fun::IsEqual(nor,TDouble3( 0, 0,-1),0.0000001))nordir=2;
+  else if(fun::IsEqual(nor,TDouble3(-1, 0, 0),0.0000001))nordir=3;
+  else if(fun::IsEqual(nor,TDouble3( 1, 0, 0),0.0000001))nordir=4;
+  else if(fun::IsEqual(nor,TDouble3( 0,-1, 0),0.0000001))nordir=5;
+  else if(fun::IsEqual(nor,TDouble3( 0, 1, 0),0.0000001))nordir=6;
   //-Processes particles.
   JRangeFilter rg(MkBound);
-  const bool all=(MkBound.empty());
-  for(unsigned p=0;p<np;p++)if(idp[p]<nbound && ( all || rg.CheckValue(mktype[p]))){
-    const tdouble3 ps=pos[p];
-    const tdouble3 psb=fgeo::PlaneOrthogonalPoint(ps,pla);
-    boundnormal[p]=(fgeo::PointsDist(ps,psb)<maxdist? ToTFloat3(psb-ps): TFloat3(0));
+  unsigned v=rg.GetFirstValue();
+  while(v!=UINT_MAX){
+    const word mktp=word(v);
+    tdouble3 point=ToTDouble3(Point);
+    //-Calculates point when it is undefined.
+    if(PointAuto){
+      //-Calculates domain limits.
+      tdouble3 pmin,pmax;
+      const unsigned n=ComputeDomainMk(true,mktp,np,mktype,idp,pos,pmin,pmax);
+      if(n){
+        const tdouble3 pmed=(pmin+pmax)/2.;
+        //-Calculate point in boundary limit plane.
+        if(nordir){//-Defines point according to an orthogonal normal.
+          point=pmed;
+          switch(nordir){
+            case 1:  point.z=pmax.z+limitdis;  break;
+            case 2:  point.z=pmin.z-limitdis;  break;
+            case 3:  point.x=pmin.x-limitdis;  break;
+            case 4:  point.x=pmax.x+limitdis;  break;
+            case 5:  point.y=pmin.y-limitdis;  break;
+            case 6:  point.y=pmax.y+limitdis;  break;
+          }
+        }
+        else{//-Defines point according to an arbitrary normal.
+          const tplane3d pla=fgeo::PlanePtVec(pmed,nor);
+          double dismax=-DBL_MAX;
+          for(unsigned p=0;p<np;p++)if(mktype[p]==mktp && idp[p]<InitCt.nbound){
+            const double dist=fgeo::PlaneDistSign(pla,pos[p]);
+            if(dist>dismax)dismax=dist;
+          }
+          point=pmed+(nor*(dismax+limitdis));
+        }
+      }
+    }
+    //-Compute normals according to calculated plane.
+    const tplane3d pla=fgeo::PlanePtVec(point,nor);
+    for(unsigned p=0;p<np;p++)if(mktype[p]==mktp && idp[p]<InitCt.nbound){
+      const tdouble3 ps=pos[p];
+      const tdouble3 psb=fgeo::PlaneOrthogonalPoint(ps,pla);
+      boundnormal[p]=(fgeo::PointsDist(ps,psb)<maxdist? ToTFloat3(psb-ps): TFloat3(0));
+    }
+    //-Next mktp value.
+    v=rg.GetNextValue(v);
   }
 }
 
@@ -222,16 +296,16 @@ void JSphInitializeOp_BoundNormalSphere::ReadXml(const JXml *sxml,TiXmlElement* 
 //==============================================================================
 /// Initializes data of particles according XML configuration.
 //==============================================================================
-void JSphInitializeOp_BoundNormalSphere::Run(unsigned np,unsigned npb,unsigned nbound,const tdouble3 *pos
+void JSphInitializeOp_BoundNormalSphere::Run(unsigned np,unsigned npb,const tdouble3 *pos
   ,const unsigned *idp,const word *mktype,tfloat4 *velrhop,tfloat3 *boundnormal)
 {
   const tdouble3 pcen=ToTDouble3(Center);
   const double ra=double(Radius);
-  const double maxdist=(MaxDisteH>0? H*MaxDisteH: DBL_MAX);
+  const double maxdist=(MaxDisteH>0? InitCt.h*MaxDisteH: DBL_MAX);
   //-Processes particles.
   JRangeFilter rg(MkBound);
   const bool all=(MkBound.empty());
-  for(unsigned p=0;p<np;p++)if(idp[p]<nbound && ( all || rg.CheckValue(mktype[p]))){
+  for(unsigned p=0;p<np;p++)if(idp[p]<InitCt.nbound && ( all || rg.CheckValue(mktype[p]))){
     const tdouble3 ps=pos[p];
     const double dissurf=ra-fgeo::PointsDist(pcen,ps); //-Distance to surface of sphere (inside:+dis, outside:-dis).
     const bool ps_in =(dissurf>0);//-Particle inside the sphere.
@@ -276,14 +350,14 @@ void JSphInitializeOp_BoundNormalCylinder::ReadXml(const JXml *sxml,TiXmlElement
 //==============================================================================
 /// Initializes data of particles according XML configuration.
 //==============================================================================
-void JSphInitializeOp_BoundNormalCylinder::Run(unsigned np,unsigned npb,unsigned nbound,const tdouble3 *pos
+void JSphInitializeOp_BoundNormalCylinder::Run(unsigned np,unsigned npb,const tdouble3 *pos
   ,const unsigned *idp,const word *mktype,tfloat4 *velrhop,tfloat3 *boundnormal)
 {
   const tdouble3 cen1=ToTDouble3(Center1);
   const tdouble3 cen2=ToTDouble3(Center2);
   const double ra=double(Radius);
-  const double maxdist=(MaxDisteH>0? H*MaxDisteH: DBL_MAX);
-  const double tolerance=0.01*H;
+  const double maxdist=(MaxDisteH>0? InitCt.h*MaxDisteH: DBL_MAX);
+  const double tolerance=0.01*InitCt.h;
   const tdouble3 vbot=fgeo::VecUnitary(cen1-cen2);
   const tdouble3 vtop=fgeo::VecUnitary(cen2-cen1);
   const tplane3d platop=fgeo::PlanePtVec(cen2,vbot);
@@ -291,7 +365,7 @@ void JSphInitializeOp_BoundNormalCylinder::Run(unsigned np,unsigned npb,unsigned
   //-Processes particles.
   JRangeFilter rg(MkBound);
   const bool all=(MkBound.empty());
-  for(unsigned p=0;p<np;p++)if(idp[p]<nbound && ( all || rg.CheckValue(mktype[p]))){
+  for(unsigned p=0;p<np;p++)if(idp[p]<InitCt.nbound && ( all || rg.CheckValue(mktype[p]))){
     const tdouble3 ps=pos[p];
     const tdouble3 pcen=fgeo::LineOrthogonalPoint(pos[p],cen1,cen2);
     const double disbody=ra-fgeo::PointsDist(pcen,ps);    //-Distance to boundary limit of body.
@@ -347,8 +421,9 @@ void JSphInitializeOp_BoundNormalCylinder::GetConfig(std::vector<std::string> &l
 //==============================================================================
 /// Constructor.
 //==============================================================================
-JSphInitialize::JSphInitialize(const JXml *sxml,const std::string &place,float h,bool boundnormals)
-  :H(h),BoundNormals(boundnormals)
+JSphInitialize::JSphInitialize(const JXml *sxml,const std::string &place
+  ,float h,float dp,unsigned nbound,bool boundnormals)
+  :BoundNormals(boundnormals),InitCt(JSphInitializeOp::StrInitCt(h,dp,nbound))
 {
   ClassName="JSphInitialize";
   Reset();
@@ -400,12 +475,12 @@ void JSphInitialize::ReadXml(const JXml *sxml,TiXmlElement* lis){
     string cmd=ele->Value();
     if(cmd.length() && cmd[0]!='_' && sxml->CheckElementActive(ele)){
       //printf("-----------> [%s]\n",cmd.c_str());
-      if(cmd=="fluidvelocity"){ JSphInitializeOp_FluidVel *ope=new JSphInitializeOp_FluidVel(sxml,ele); Opes.push_back(ope); }
+      if(cmd=="fluidvelocity"){ JSphInitializeOp_FluidVel *ope=new JSphInitializeOp_FluidVel(sxml,ele,InitCt); Opes.push_back(ope); }
       //<vs_mddbc_ini>
-      else if(cmd=="boundnormal_set"     ){ if(BoundNormals){ JSphInitializeOp_BoundNormalSet      *ope=new JSphInitializeOp_BoundNormalSet     (sxml,ele);   Opes.push_back(ope); } }
-      else if(cmd=="boundnormal_plane"   ){ if(BoundNormals){ JSphInitializeOp_BoundNormalPlane    *ope=new JSphInitializeOp_BoundNormalPlane   (sxml,ele,H); Opes.push_back(ope); } }
-      else if(cmd=="boundnormal_sphere"  ){ if(BoundNormals){ JSphInitializeOp_BoundNormalSphere   *ope=new JSphInitializeOp_BoundNormalSphere  (sxml,ele,H); Opes.push_back(ope); } }
-      else if(cmd=="boundnormal_cylinder"){ if(BoundNormals){ JSphInitializeOp_BoundNormalCylinder *ope=new JSphInitializeOp_BoundNormalCylinder(sxml,ele,H); Opes.push_back(ope); } }
+      else if(cmd=="boundnormal_set"     ){ if(BoundNormals){ JSphInitializeOp_BoundNormalSet      *ope=new JSphInitializeOp_BoundNormalSet     (sxml,ele,InitCt); Opes.push_back(ope); } }
+      else if(cmd=="boundnormal_plane"   ){ if(BoundNormals){ JSphInitializeOp_BoundNormalPlane    *ope=new JSphInitializeOp_BoundNormalPlane   (sxml,ele,InitCt); Opes.push_back(ope); } }
+      else if(cmd=="boundnormal_sphere"  ){ if(BoundNormals){ JSphInitializeOp_BoundNormalSphere   *ope=new JSphInitializeOp_BoundNormalSphere  (sxml,ele,InitCt); Opes.push_back(ope); } }
+      else if(cmd=="boundnormal_cylinder"){ if(BoundNormals){ JSphInitializeOp_BoundNormalCylinder *ope=new JSphInitializeOp_BoundNormalCylinder(sxml,ele,InitCt); Opes.push_back(ope); } }
       //<vs_mddbc_end>
       else sxml->ErrReadElement(ele,cmd,false);
     }
@@ -416,11 +491,11 @@ void JSphInitialize::ReadXml(const JXml *sxml,TiXmlElement* lis){
 //==============================================================================
 /// Initializes data of particles according XML configuration.
 //==============================================================================
-void JSphInitialize::Run(unsigned np,unsigned npb,unsigned nbound,const tdouble3 *pos
+void JSphInitialize::Run(unsigned np,unsigned npb,const tdouble3 *pos
   ,const unsigned *idp,const word *mktype,tfloat4 *velrhop,tfloat3 *boundnormal)
 {
   for(unsigned c=0;c<Count();c++){
-    Opes[c]->Run(np,npb,nbound,pos,idp,mktype,velrhop,boundnormal);
+    Opes[c]->Run(np,npb,pos,idp,mktype,velrhop,boundnormal);
   }
 }
 

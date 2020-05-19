@@ -25,6 +25,7 @@
 //:# - Limita calculo de normales con MaxDisteH. (31-01-2020)
 //:# - Objeto JXml pasado como const para operaciones de lectura. (18-03-2020)  
 //:# - Comprueba opcion active en elementos de primer y segundo nivel. (19-03-2020)  
+//:# - Opcion para calcular boundary limit de forma automatica. (19-05-2020)  
 //:#############################################################################
 
 /// \file JSphInitialize.h \brief Declares the class \ref JSphInitialize.
@@ -53,7 +54,7 @@ class TiXmlElement;
 class JSphInitializeOp : public JObject
 {
 public:
-  ///<Types of initializations.
+  ///Types of initializations.
   typedef enum{ 
     IT_FluidVel=1,
     IT_BoundNormalSet=2,       //<vs_mddbc>
@@ -62,17 +63,33 @@ public:
     IT_BoundNormalCylinder=5,  //<vs_mddbc>
   }TpInitialize; 
 
+  ///Structure with constant values needed for initialization tasks.
+  typedef struct StrInitCt{
+    float h;          ///<The smoothing length [m].
+    float dp;         ///<Initial distance between particles [m].
+    unsigned nbound;  ///<Initial number of boundary particles (fixed+moving+floating).
+    StrInitCt(float h_,float dp_,unsigned nbound_){
+      h=h_; dp=dp_; nbound=nbound_;
+    }
+  }StInitCt;
+
 public:
   const TpInitialize Type;   ///<Type of particle.
+  const StInitCt InitCt;     ///<Constant values needed for initialization tasks.
 
-  JSphInitializeOp(TpInitialize type,const char* name):Type(type){ 
+public:
+  JSphInitializeOp(TpInitialize type,const char* name,StInitCt initct)
+    :Type(type),InitCt(initct)
+  { 
     ClassName=std::string("JSphInitializeOp_")+name;
   } 
   virtual ~JSphInitializeOp(){ DestructorActive=true; }
   virtual void ReadXml(const JXml *sxml,TiXmlElement* ele)=0;
-  virtual void Run(unsigned np,unsigned npb,unsigned nbound,const tdouble3 *pos
+  virtual void Run(unsigned np,unsigned npb,const tdouble3 *pos
     ,const unsigned *idp,const word *mktype,tfloat4 *velrhop,tfloat3 *boundnormal)=0;
   virtual void GetConfig(std::vector<std::string> &lines)const=0;
+  unsigned ComputeDomainMk(bool bound,word mktp,unsigned np,const word *mktype
+  ,const unsigned *idp,const tdouble3 *pos,tdouble3 &posmin,tdouble3 &posmax)const;
 };
 
 //##############################################################################
@@ -95,10 +112,12 @@ private:
   float Vel1,Vel2,Vel3;
   float Posz1,Posz2,Posz3;
 public:
-  JSphInitializeOp_FluidVel(const JXml *sxml,TiXmlElement* ele):JSphInitializeOp(IT_FluidVel,"FluidVel"){ Reset(); ReadXml(sxml,ele); }
+  JSphInitializeOp_FluidVel(const JXml *sxml,TiXmlElement* ele,StInitCt initct)
+    :JSphInitializeOp(IT_FluidVel,"FluidVel",initct){ Reset(); ReadXml(sxml,ele); }
   void Reset();
   void ReadXml(const JXml *sxml,TiXmlElement* ele);
-  void Run(unsigned np,unsigned npb,unsigned nbound,const tdouble3 *pos,const unsigned *idp,const word *mktype,tfloat4 *velrhop,tfloat3 *boundnormal);
+  void Run(unsigned np,unsigned npb,const tdouble3 *pos,const unsigned *idp
+    ,const word *mktype,tfloat4 *velrhop,tfloat3 *boundnormal);
   void GetConfig(std::vector<std::string> &lines)const;
 };  
 
@@ -113,11 +132,12 @@ private:
   std::string MkBound;
   tfloat3 Normal;
 public:
-  JSphInitializeOp_BoundNormalSet(const JXml *sxml,TiXmlElement* ele)
-    :JSphInitializeOp(IT_BoundNormalSet,"BoundNormalSet"){ Reset(); ReadXml(sxml,ele); }
+  JSphInitializeOp_BoundNormalSet(const JXml *sxml,TiXmlElement* ele,StInitCt initct)
+    :JSphInitializeOp(IT_BoundNormalSet,"BoundNormalSet",initct){ Reset(); ReadXml(sxml,ele); }
   void Reset(){ MkBound=""; Normal=TFloat3(0); }
   void ReadXml(const JXml *sxml,TiXmlElement* ele);
-  void Run(unsigned np,unsigned npb,unsigned nbound,const tdouble3 *pos,const unsigned *idp,const word *mktype,tfloat4 *velrhop,tfloat3 *boundnormal);
+  void Run(unsigned np,unsigned npb,const tdouble3 *pos,const unsigned *idp
+    ,const word *mktype,tfloat4 *velrhop,tfloat3 *boundnormal);
   void GetConfig(std::vector<std::string> &lines)const;
 };  
 
@@ -128,17 +148,19 @@ public:
 class JSphInitializeOp_BoundNormalPlane : public JSphInitializeOp
 {
 private:
-  const float H;
   std::string MkBound;
+  bool PointAuto;   ///<Point is calculated automatically accoding to normal configuration.
+  float LimitDist;  ///<Minimun distance (Dp*vdp) between particles and boundary limit to calculate the point (default=0.5).
   tfloat3 Point;
   tfloat3 Normal;
   float MaxDisteH;  ///<Maximum distance to boundary limit. It uses H*distanceh (default=2).
 public:
-  JSphInitializeOp_BoundNormalPlane(const JXml *sxml,TiXmlElement* ele,float h)
-    :JSphInitializeOp(IT_BoundNormalPlane,"BoundNormalPlane"),H(h){ Reset(); ReadXml(sxml,ele); }
-  void Reset(){ MkBound=""; Point=Normal=TFloat3(0); MaxDisteH=0; }
+  JSphInitializeOp_BoundNormalPlane(const JXml *sxml,TiXmlElement* ele,StInitCt initct)
+    :JSphInitializeOp(IT_BoundNormalPlane,"BoundNormalPlane",initct){ Reset(); ReadXml(sxml,ele); }
+  void Reset(){ MkBound=""; PointAuto=false; LimitDist=0; Point=Normal=TFloat3(0); MaxDisteH=0; }
   void ReadXml(const JXml *sxml,TiXmlElement* ele);
-  void Run(unsigned np,unsigned npb,unsigned nbound,const tdouble3 *pos,const unsigned *idp,const word *mktype,tfloat4 *velrhop,tfloat3 *boundnormal);
+  void Run(unsigned np,unsigned npb,const tdouble3 *pos,const unsigned *idp
+    ,const word *mktype,tfloat4 *velrhop,tfloat3 *boundnormal);
   void GetConfig(std::vector<std::string> &lines)const;
 };  
 
@@ -149,18 +171,18 @@ public:
 class JSphInitializeOp_BoundNormalSphere : public JSphInitializeOp
 {
 private:
-  const float H;
   std::string MkBound;
   tfloat3 Center;
   float Radius;
   bool Inside;      ///<Boundary particles inside the sphere.
   float MaxDisteH;  ///<Maximum distance to boundary limit. It uses H*distanceh (default=2).
 public:
-  JSphInitializeOp_BoundNormalSphere(const JXml *sxml,TiXmlElement* ele,float h)
-    :JSphInitializeOp(IT_BoundNormalSphere,"BoundNormalSphere"),H(h){ Reset(); ReadXml(sxml,ele); }
+  JSphInitializeOp_BoundNormalSphere(const JXml *sxml,TiXmlElement* ele,StInitCt initct)
+    :JSphInitializeOp(IT_BoundNormalSphere,"BoundNormalSphere",initct){ Reset(); ReadXml(sxml,ele); }
   void Reset(){ MkBound=""; Center=TFloat3(0); MaxDisteH=Radius=0; Inside=true; }
   void ReadXml(const JXml *sxml,TiXmlElement* ele);
-  void Run(unsigned np,unsigned npb,unsigned nbound,const tdouble3 *pos,const unsigned *idp,const word *mktype,tfloat4 *velrhop,tfloat3 *boundnormal);
+  void Run(unsigned np,unsigned npb,const tdouble3 *pos,const unsigned *idp
+    ,const word *mktype,tfloat4 *velrhop,tfloat3 *boundnormal);
   void GetConfig(std::vector<std::string> &lines)const;
 };  
 
@@ -171,7 +193,6 @@ public:
 class JSphInitializeOp_BoundNormalCylinder : public JSphInitializeOp
 {
 private:
-  const float H;
   std::string MkBound;
   tfloat3 Center1;
   tfloat3 Center2;
@@ -179,11 +200,12 @@ private:
   bool Inside;      ///<Boundary particles inside the cylinder.
   float MaxDisteH;  ///<Maximum distance to boundary limit. It uses H*distanceh (default=2).
 public:
-  JSphInitializeOp_BoundNormalCylinder(const JXml *sxml,TiXmlElement* ele,float h)
-    :JSphInitializeOp(IT_BoundNormalCylinder,"BoundNormalCylinder"),H(h){ Reset(); ReadXml(sxml,ele); }
+  JSphInitializeOp_BoundNormalCylinder(const JXml *sxml,TiXmlElement* ele,StInitCt initct)
+    :JSphInitializeOp(IT_BoundNormalCylinder,"BoundNormalCylinder",initct){ Reset(); ReadXml(sxml,ele); }
   void Reset(){ MkBound=""; Center1=Center2=TFloat3(0); MaxDisteH=Radius=0; Inside=true; }
   void ReadXml(const JXml *sxml,TiXmlElement* ele);
-  void Run(unsigned np,unsigned npb,unsigned nbound,const tdouble3 *pos,const unsigned *idp,const word *mktype,tfloat4 *velrhop,tfloat3 *boundnormal);
+  void Run(unsigned np,unsigned npb,const tdouble3 *pos,const unsigned *idp
+    ,const word *mktype,tfloat4 *velrhop,tfloat3 *boundnormal);
   void GetConfig(std::vector<std::string> &lines)const;
 };  
 //<vs_mddbc_end>
@@ -197,7 +219,7 @@ class JSphInitialize  : protected JObject
 {
 private:
   const bool BoundNormals;
-  const float H;
+  const JSphInitializeOp::StInitCt InitCt;  ///<Constant values needed for initialization tasks.
   std::vector<JSphInitializeOp*> Opes;
 
   void LoadFileXml(const std::string &file,const std::string &path);
@@ -205,12 +227,13 @@ private:
   void ReadXml(const JXml *sxml,TiXmlElement* lis);
 
 public:
-  JSphInitialize(const JXml *sxml,const std::string &place,float h,bool boundnormals);
+  JSphInitialize(const JXml *sxml,const std::string &place
+    ,float h,float dp,unsigned nbound,bool boundnormals);
   ~JSphInitialize();
   void Reset();
   unsigned Count()const{ return(unsigned(Opes.size())); }
 
-  void Run(unsigned np,unsigned npb,unsigned nbound,const tdouble3 *pos
+  void Run(unsigned np,unsigned npb,const tdouble3 *pos
     ,const unsigned *idp,const word *mktype,tfloat4 *velrhop,tfloat3 *boundnormal);
   void GetConfig(std::vector<std::string> &lines)const;
 

@@ -130,7 +130,7 @@ void JSphCpuSingle::ConfigDomain(){
 
   //-Runs initialization operations from XML.
   tfloat3 *boundnormal=NULL;
-  boundnormal=BoundNormalc;                                     //<vs_mddbc>
+  boundnormal=BoundNormalc;                                        //<vs_mddbc>
   RunInitialize(Np,Npb,Posc,Idpc,Codec,Velrhopc,boundnormal);
   if(UseNormals)ConfigBoundNormals(Np,Npb,Posc,Idpc,BoundNormalc); //<vs_mddbc>
 

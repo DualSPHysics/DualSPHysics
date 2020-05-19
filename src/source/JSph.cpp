@@ -1555,7 +1555,7 @@ void JSph::RunInitialize(unsigned np,unsigned npb,const tdouble3 *pos,const unsi
     JXml xml; xml.LoadFile(FileXml);
     xml.SetNuxLib(NuxLib); //-Enables the use of NuxLib in XML configuration.
     if(xml.GetNodeSimple("case.execution.special.initialize",true)){
-      JSphInitialize init(&xml,"case.execution.special.initialize",H,boundnormal!=NULL);
+      JSphInitialize init(&xml,"case.execution.special.initialize",H,float(Dp),CaseNbound,boundnormal!=NULL);
       if(init.Count()){
         //-Creates array with mktype value.
         word *mktype=new word[np];
@@ -1563,7 +1563,7 @@ void JSph::RunInitialize(unsigned np,unsigned npb,const tdouble3 *pos,const unsi
           const unsigned cmk=MkInfo->GetMkBlockByCode(code[p]);
           mktype[p]=(cmk<MkInfo->Size()? word(MkInfo->Mkblock(cmk)->MkType): USHRT_MAX);
         }
-        init.Run(np,npb,CaseNbound,pos,idp,mktype,velrhop,boundnormal);
+        init.Run(np,npb,pos,idp,mktype,velrhop,boundnormal);
         init.GetConfig(InitializeInfo);
         //-Frees memory.
         delete[] mktype; mktype=NULL;
