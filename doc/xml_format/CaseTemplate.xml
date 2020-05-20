@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<case app="GenCase v5.0.176 (03-05-2020)" date="04-05-2020 01:53:38">
-    <casedef requiredversion="v5.0.176">
+<case app="GenCase v5.0.184 (19-05-2020)" date="20-05-2020 02:13:40">
+    <casedef requiredversion="v5.0.184">
         <constantsdef>
             <lattice bound="2" fluid="1" comment="Type of lattice to create the initial particles (default=1)" />
             <gravity x="0" y="0" z="-9.81" comment="Gravitational acceleration" units_comment="m/s^2" />
@@ -61,6 +61,7 @@
                     <debugout />
                 </list>
                 <mainlist>
+                    <resetdraw />
                     <statesave />
                     <stateload />
                     <matrixsave />
@@ -69,7 +70,7 @@
                     <dpctessave />
                     <dpctesload />
                     <dpctesreset />
-                    <setdpctes cteline="1.5" ctetriangleweight="1.5" ctetrianglelimits="1.5" ctesphere="1.5" ctespherenumsides="24" cteellipsoid="1.5" ctecylindertube="1.5" ctecylindercover="1.5" ctecylindernumsides="24" />
+                    <setdpctes cteline="1.5" ctetriangleweight="1.5" ctetrianglelimits="1.5" ctesphere="1.5" ctespherenumsides="24" cteellipsoid="1.5" ctecylindertube="1.5" ctecylindercover="1.5" ctecylindernumsides="24" cterevolutionnumsides="24" />
                     <setdpctes cteline="0.1" />
                     <setdpctes ctetriangleweight="0.2" />
                     <setdpctes ctetrianglelimits="0.3" />
@@ -79,6 +80,7 @@
                     <setdpctes ctecylindertube="0.6" />
                     <setdpctes ctecylindercover="0.7" />
                     <setdpctes ctecylindernumsides="24" />
+                    <setdpctes cterevolutionnumsides="24" />
                     <move x="1" y="2" z="3" />
                     <scale x="0.1" y="0.2" z="0.3" />
                     <rotate ang="35" x="1.1" y="1.2" z="1.3" />
@@ -95,6 +97,9 @@
                     <setmknextbound next="true" />
                     <setmknextauto auto="false" />
                     <setnormalinvert invert="true" />
+                    <setactive drawpoints="true" drawshapes="true" vtkout="true" />
+                    <setactive drawpoints="false" />
+                    <setactive drawshapes="false" />
                     <setdrawmode mode="wire" />
                     <setdrawmode mode="face" />
                     <setdrawmode mode="solid" />
