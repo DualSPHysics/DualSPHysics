@@ -31,7 +31,7 @@
 using namespace std;
 
 //##############################################################################
-//# JSphInitializeOp_FluidVel
+//# JSphInitializeOp
 //##############################################################################
 //==============================================================================
 /// Calculates domain limits of MkType particles and returns number of particles.

@@ -22,7 +22,9 @@
 #define _DSphMoorDynUndef_
 
 #ifdef DISABLE_MOORDYN
-bool MoorDyn_LinesInit(const std::string filexml, const std::string nodexml, const std::string dirout, const unsigned numFts, const unsigned ftmkbound[], const tdouble3 vellin[], const tdouble3 velang[]){ return(true); }
+bool MoorDyn_LinesInit(const std::string filexml,const std::string nodexml
+  ,const std::string dirout,const unsigned numFts,const unsigned ftmkbound[]
+  ,const tdouble3 vellin[],const tdouble3 velang[],const tfloat3 gravity){ return(true); }
 bool MoorDyn_LinesClose(){ return(true); }
 bool MoorDyn_FairleadsCalc(const unsigned numFts, double*** fairpos, double*** fairvel, double*** fairforce, double t, double dt){ return(true); }
 double MoorDyn_GetFairTen(const unsigned line){ return(0); }
