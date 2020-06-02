@@ -1100,6 +1100,18 @@ int FileType(const std::string &name){
 }
 
 //==============================================================================
+/// Returns time of last modification in a file.
+/// 0:It is not a valid file.
+//==============================================================================
+ullong FileModifTime(const std::string &name){
+  ullong ret=0;
+  struct stat stfileinfo;
+  int intstat=stat(name.c_str(),&stfileinfo);
+  if(intstat==0 && stfileinfo.st_mode&S_IFREG)ret=ullong(stfileinfo.st_mtime);
+  return(ret);
+}
+
+//==============================================================================
 /// Returns size of file or -1 in case of error.
 //==============================================================================
 llong FileSize(const std::string &name){

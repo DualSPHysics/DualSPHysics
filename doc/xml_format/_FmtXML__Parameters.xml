@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<!-- *** DualSPHysics (16-04-2020) *** -->
+<!-- *** DualSPHysics (02-06-2020) *** -->
 <!-- *** class: JSph (JSpaceEParms)  *** -->
 <!------------------------------------------------------------------------------->
 <!------------------------------------------------------------------------------->
@@ -61,5 +61,11 @@
 	</parameters>
 </execution>
 
-
+<!------------------------------------------------------------------------------------------>
+<!-- TimeMax can be changed during the simulation execution (since v5.0.114) by creating  -->
+<!-- a file named TERMINATE in the output directory. The value in TERMINATE file replaces -->
+<!-- the current TimeMax. If TERMINATE is empty or its value is lower than current time   -->
+<!-- of the simulation then TimeMax changes to current simulation time.                   -->
+<!-- TERMINATE file is checked at the end of each PART.                                   -->
+<!------------------------------------------------------------------------------------------>
 

@@ -201,6 +201,7 @@ protected:
   JTimeOut *TimeOut;
   int NstepsBreak;           ///<Maximum number of steps allowed (debug).
   bool SvAllSteps;           ///<Saves a PART for each step (debug).
+  ullong TerminateMt;        ///<Modification time of file TERMINATE.
 
   double DtIni;              ///<Initial Dt
   double DtMin;              ///<Minimum allowed Dt (if the calculated value is lower is replaced by DTmin).
@@ -452,6 +453,7 @@ protected:
     ,const unsigned *idp,const tfloat3 *vel,const float *rhop)const;
   void SavePartData(unsigned npok,unsigned nout,const JDataArrays& arrays,unsigned ndom,const tdouble3 *vdom,const StInfoPartPlus *infoplus);
   void SaveData(unsigned npok,const JDataArrays& arrays,unsigned ndom,const tdouble3 *vdom,const StInfoPartPlus *infoplus);
+  void CheckTermination();
   void SaveDomainVtk(unsigned ndom,const tdouble3 *vdom)const;
   void SaveInitialDomainVtk()const;
   unsigned SaveMapCellsVtkSize()const;

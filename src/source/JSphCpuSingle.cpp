@@ -1078,7 +1078,7 @@ void JSphCpuSingle::Run(std::string appname,JCfgRun *cfg,JLog2 *log){
 /// Genera los ficheros de salida de datos.
 //==============================================================================
 void JSphCpuSingle::SaveData(){
-  const bool save=(SvData!=SDAT_None&&SvData!=SDAT_Info);
+  const bool save=(SvData!=SDAT_None && SvData!=SDAT_Info);
   const unsigned npsave=Np-NpbPer-NpfPer; //-Subtracts the periodic particles if they exist. | Resta las periodicas si las hubiera.
   TmcStart(Timers,TMC_SuSavePart);
   //-Collect particle values in original order. | Recupera datos de particulas en orden original.

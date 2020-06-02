@@ -803,7 +803,7 @@ void JSphGpuSingle::Run(std::string appname,JCfgRun *cfg,JLog2 *log){
 /// Genera los ficheros de salida de datos.
 //==============================================================================
 void JSphGpuSingle::SaveData(){
-  const bool save=(SvData!=SDAT_None&&SvData!=SDAT_Info);
+  const bool save=(SvData!=SDAT_None && SvData!=SDAT_Info);
   const unsigned npsave=Np-NpbPer-NpfPer; //-Subtracts the periodic particles if they exist. | Resta las periodicas si las hubiera.
   //-Retrieves particle data from the GPU. | Recupera datos de particulas en GPU.
   if(save){

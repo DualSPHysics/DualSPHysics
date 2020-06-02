@@ -179,6 +179,7 @@ void JSph::InitVars(){
   TimeMax=TimePart=0;
   NstepsBreak=0;
   SvAllSteps=false;
+  TerminateMt=0;
   DtIni=DtMin=0; CoefDtMin=0; DtAllParticles=false;
   PartsOutMax=0;
   NpMinimum=0;
@@ -2429,6 +2430,39 @@ void JSph::SaveData(unsigned npok,const JDataArrays& arrays
   if(Moorings)Moorings->SaveData(Part);        //<vs_moordyyn>
   if(ForcePoints)ForcePoints->SaveData(Part);  //<vs_moordyyn>
   if(BoundCorr && BoundCorr->GetUseMotion())BoundCorr->SaveData(Part);  //<vs_innlet>
+
+  //-Checks request for simulation termination.
+  CheckTermination();
+}
+
+//==============================================================================
+/// Checks request for simulation termination.
+/// Comprueba solicitud de terminar la simulacion.
+//==============================================================================
+void JSph::CheckTermination(){
+  const string file=DirOut+"TERMINATE";
+  const ullong tmodif=fun::FileModifTime(file);
+  if(tmodif && tmodif!=TerminateMt){
+    double tmax=0;
+    ifstream pf;
+    pf.open(file.c_str(),ios::binary);
+    if(pf){
+      pf.seekg(0,ios::end);
+      const unsigned fsize=min(127u,unsigned(pf.tellg()));
+      if(fsize){
+        char buff[128];
+        pf.seekg(0,ios::beg);
+        pf.read(buff,fsize);
+        buff[fsize]='\0';
+        tmax=atof(buff);
+      }
+      pf.close();
+    }
+    if(tmax<TimeStep)tmax=TimeStep;
+    Log->PrintfWarning("TERMINATE file has updated TimeMax from %gs to %gs (current time: %fs).",TimeMax,tmax,TimeStep);
+    TimeMax=tmax;
+  }
+  TerminateMt=tmodif;
 }
 
 //==============================================================================

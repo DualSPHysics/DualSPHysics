@@ -85,6 +85,7 @@
 //:# - Nueva funcion VectorFindMask().  (17-03-2020)
 //:# - Nueva funcion NaturalFmt().  (15-04-2020)
 //:# - Nuevas funciones NewToTFloat3() y NewToTDouble3().  (09-05-2020)
+//:# - Nueva funcion FileModifTime().  (02-06-2020)
 //:#############################################################################
 
 /// \file Functions.h \brief Declares basic/general functions for the entire application.
@@ -270,6 +271,7 @@ std::string JSONObject(const std::vector<std::string> &properties);
 std::string JSONArray(const std::vector<std::string> &values);
 
 int FileType(const std::string &name);
+ullong FileModifTime(const std::string &name);
 inline bool FileExists(const std::string &name){ return(FileType(name)==2); }
 inline bool DirExists(const std::string &name){ return(FileType(name)==1); }
 llong FileSize(const std::string &name);
