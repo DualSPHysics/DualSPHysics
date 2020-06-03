@@ -267,6 +267,18 @@ void JShifting::VisuConfig(std::string txhead,std::string txfoot){
 }
 
 //==============================================================================
+/// Returns configuration information in one string line.
+//==============================================================================
+std::string JShifting::GetConfigInfo()const{
+  string ret;
+  if(ShiftMode!=SHIFT_None){
+    ret=string("Shifting(")+GetShiftingModeStr()
+      +fun::PrintStr(",%g,%g,%s)",ShiftCoef,ShiftTFS,(GetCount()? "Zones": "Full"));
+  }
+  return(ret);
+}
+
+//==============================================================================
 /// Saves VTK file with zones configuration.
 //==============================================================================
 void JShifting::SaveVtkConfig()const{

@@ -154,7 +154,9 @@ protected:
   bool SvPosDouble;      ///<Indicates whether Pos is saved as double in bi4 files. | Indica si en los ficheros bi4 se guarda Pos como double.
 
   std::string AppName;
-  std::string Hardware;
+  std::string Hardware;  ///<Hardware description in short text.
+  std::string RunMode;   ///<Overall mode of execution in short text.
+  std::string ConfigInfo;  ///<Main configuration values in short text.
   std::string RunCode;
   std::string RunTimeDate;
   std::string CaseName,DirCase,RunName;
@@ -421,7 +423,7 @@ protected:
 
   static void WendlandConstants(bool simulate2d,double h,float &awen,float &bwen);
   void ConfigConstants(bool simulate2d);
-  void VisuConfig()const;
+  void VisuConfig();
   void VisuParticleSummary()const;
   void LoadDcellParticles(unsigned n,const typecode *code,const tdouble3 *pos,unsigned *dcell)const;
   void RunInitialize(unsigned np,unsigned npb,const tdouble3 *pos,const unsigned *idp
@@ -462,7 +464,7 @@ protected:
     ,const tdouble3 *pos,const unsigned *idp,const tfloat3 *boundnormal)const;                    //<vs_mddbc>
 
  
-  void GetResInfo(float tsim,float ttot,const std::string &headplus,const std::string &detplus,std::string &hinfo,std::string &dinfo);
+  void GetResInfo(float tsim,float ttot,std::string headplus,std::string detplus,std::string &hinfo,std::string &dinfo);
   void SaveRes(float tsim,float ttot,const std::string &headplus="",const std::string &detplus="");
   void ShowResume(bool stop,float tsim,float ttot,bool all,std::string infoplus);
 

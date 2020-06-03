@@ -90,8 +90,6 @@ protected:
   unsigned GpuSharedMem;  ///<Size of shared memory for each block in bytes.
   unsigned GpuCompute;    ///<Compute capability: 10,11,12,20... 
 
-  std::string RunMode;    ///<Stores execution mode (symmetry,OpenMP,balance...).
-
   const TpMgDivMode DivAxis;  ///<Axis used in current division. It is used to sort particle data. MGDIV_Z is used for single GPU.
 
   //-Number of particles in the domain.

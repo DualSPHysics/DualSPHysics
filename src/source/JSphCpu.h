@@ -92,7 +92,6 @@ private:
 
 protected:
   int OmpThreads;        ///<Max number of OpenMP threads in execution on CPU host (minimum 1). | Numero maximo de hilos OpenMP en ejecucion por host en CPU (minimo 1).
-  std::string RunMode;   ///<Overall mode of execution (symmetry, openmp, load balancing). |  Almacena modo de ejecucion (simetria,openmp,balanceo,...).
 
   //-Number of particles in domain | Numero de particulas del dominio.
   unsigned Np;        ///<Total number of particles (including periodic duplicates). | Numero total de particulas (incluidas las duplicadas periodicas).

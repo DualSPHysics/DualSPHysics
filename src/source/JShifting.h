@@ -23,6 +23,7 @@
 //:# - Improved exception managment. (19-03-2020)  
 //:# - Objeto JXml pasado como const para operaciones de lectura. (19-03-2020)  
 //:# - Comprueba opcion active en elementos de primer y segundo nivel. (19-03-2020)  
+//:# - Nuevo metodo GetConfigInfo(). (03-06-2020)  
 //:#############################################################################
 
 /// \file JShifting.h \brief Declares the class \ref JShifting.
@@ -136,6 +137,7 @@ public:
   void AddZone(bool fromxml,const tdouble3 &posref,const tdouble3 &vx,const tdouble3 &vy,const tdouble3 &vz);
 
   void VisuConfig(std::string txhead="",std::string txfoot="");
+  std::string GetConfigInfo()const;
   void SaveVtkConfig()const;
 
   unsigned GetCount()const{ return(unsigned(Zones.size())); }

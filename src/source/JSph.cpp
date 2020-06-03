@@ -1401,40 +1401,83 @@ void JSph::ConfigConstants(bool simulate2d){
 //==============================================================================
 /// Prints out configuration of the case.
 //==============================================================================
-void JSph::VisuConfig()const{
+void JSph::VisuConfig(){
+  const string sep=" - ";
   Log->Print(Simulate2D? "**2D-Simulation parameters:": "**3D-Simulation parameters:");
   Log->Print(fun::VarStr("CaseName",CaseName));
+  ConfigInfo=CaseName;
   Log->Print(fun::VarStr("RunName",RunName));
-  if(Simulate2D)Log->Print(fun::VarStr("Simulate2DPosY",Simulate2DPosY));
+  //-Simulation dimension.
+  if(Simulate2D){
+    Log->Print(fun::VarStr("Simulate2DPosY",Simulate2DPosY));
+    ConfigInfo=ConfigInfo+sep+"2D";
+  }
+  else ConfigInfo=ConfigInfo+sep+"3D";
+  //-Symmetry. 
   Log->Print(fun::VarStr("Symmetry",Symmetry));  //<vs_syymmetry>
+  if(Symmetry)ConfigInfo=ConfigInfo+sep+"Symmetry";
+  //-SavePosDouble. 
   Log->Print(fun::VarStr("SavePosDouble",SvPosDouble));
+  if(SvPosDouble)ConfigInfo=ConfigInfo+sep+"SvPosDouble";
+  //-Other configurations. 
   Log->Print(fun::VarStr("SaveFtAce",SaveFtAce));
   Log->Print(fun::VarStr("SvTimers",SvTimers));
+  //-Boundary. 
   Log->Print(fun::VarStr("Boundary",GetBoundName(TBoundary)));
+  ConfigInfo=ConfigInfo+sep+GetBoundName(TBoundary);
   if(TBoundary==BC_MDBC){ //<vs_mddbc_ini>
     Log->Print(fun::VarStr("  SlipMode",GetSlipName(SlipMode)));
     Log->Print(fun::VarStr("  mDBC-Corrector",MdbcCorrector));
     Log->Print(fun::VarStr("  mDBC-Threshold",MdbcThreshold));
+    ConfigInfo=ConfigInfo+"("+GetSlipName(SlipMode);
+    if(MdbcCorrector)ConfigInfo=ConfigInfo+",Corrector";
+    if(MdbcThreshold>0)ConfigInfo=ConfigInfo+fun::PrintStr(",Threshold=%g",MdbcThreshold);
+    ConfigInfo=ConfigInfo+")";
   } //<vs_mddbc_end>
+  //-StepAlgorithm. 
   Log->Print(fun::VarStr("StepAlgorithm",GetStepName(TStep)));
+  ConfigInfo=ConfigInfo+sep+GetStepName(TStep);
   if(TStep==STEP_None)Run_Exceptioon("StepAlgorithm value is invalid.");
-  if(TStep==STEP_Verlet)Log->Print(fun::VarStr("  VerletSteps",VerletSteps));
+  if(TStep==STEP_Verlet){
+    Log->Print(fun::VarStr("  VerletSteps",VerletSteps));
+    ConfigInfo=ConfigInfo+sep+fun::PrintStr("(%d)",VerletSteps);
+  }
+  //-Kernel. 
   Log->Print(fun::VarStr("Kernel",GetKernelName(TKernel)));
+  ConfigInfo=ConfigInfo+sep+GetKernelName(TKernel);
+  //-Viscosity.
   Log->Print(fun::VarStr("Viscosity",GetViscoName(TVisco)));
   Log->Print(fun::VarStr("  Visco",Visco));
   Log->Print(fun::VarStr("  ViscoBoundFactor",ViscoBoundFactor));
   if(ViscoTime)Log->Print(fun::VarStr("ViscoTime",ViscoTime->GetFile()));
+  ConfigInfo=ConfigInfo+sep+"Visco_"+GetViscoName(TVisco)+fun::PrintStr("(%gb%g)",Visco,ViscoBoundFactor);
+  //-DensityDiffusion.
   Log->Print(fun::VarStr("DensityDiffusion",GetDDTName(TDensity)));
+  ConfigInfo=ConfigInfo+sep+fun::PrintStr("DDT%d",int(TDensity));
   if(TDensity!=DDT_None){
     Log->Print(fun::VarStr("  DensityDiffusionValue",DDTValue));
     //Log->Print(fun::VarStr("DensityDiffusionArray",DDTArray));
+    ConfigInfo=ConfigInfo+fun::PrintStr("(%g)",DDTValue);
   }
   if(TDensity==DDT_DDT2Full && H/Dp>1.5)Log->PrintWarning("The selected DDT \'(Fourtakas et al 2019 (full)\' needs several boundary layers when h/dp>1.5");  //<vs_dtt2>
-  if(Shifting)Shifting->VisuConfig();
+  //-Shifting.
+  if(Shifting){
+    Shifting->VisuConfig();
+    ConfigInfo=ConfigInfo+sep+Shifting->GetConfigInfo();
+  }
   else Log->Print(fun::VarStr("Shifting","None"));
+  //-RigidAlgorithm.
   string rigidalgorithm=(!FtCount? "None": (UseDEM? "SPH+DCDEM": "SPH"));
   if(UseChrono)rigidalgorithm="SPH+CHRONO"; //<vs_chroono>
   Log->Print(fun::VarStr("RigidAlgorithm",rigidalgorithm));
+  if(FtCount){
+    if(UseChrono)ConfigInfo=ConfigInfo+sep+"Ft-Chrono";
+    else if(UseDEM)ConfigInfo=ConfigInfo+sep+"Ft-DCDEM";
+    else ConfigInfo=ConfigInfo+sep+"Ft-SPH";
+  }
+  //-Moorings.
+  if(Moorings)ConfigInfo=ConfigInfo+sep+"MoorDyn+";
+  //-Other configurations. 
   Log->Print(fun::VarStr("FloatingCount",FtCount));
   if(FtCount)Log->Print(fun::VarStr("FtPause",FtPause));
   if(FtCount)Log->Print(fun::VarStr("FtConstraints",FtConstraints));
@@ -1445,10 +1488,13 @@ void JSph::VisuConfig()const{
   Log->Print(fun::VarStr("CaseNmoving",CaseNmoving));
   Log->Print(fun::VarStr("CaseNfloat",CaseNfloat));
   Log->Print(fun::VarStr("CaseNfluid",CaseNfluid));
+  //-Periodic boundaries.
   Log->Print(fun::VarStr("PeriodicActive",TpPeriName(TpPeri(PeriActive))));
   if(PeriX)Log->Print(fun::VarStr("PeriodicXinc",PeriXinc));
   if(PeriY)Log->Print(fun::VarStr("PeriodicYinc",PeriYinc));
   if(PeriZ)Log->Print(fun::VarStr("PeriodicZinc",PeriZinc));
+  if(PeriActive)ConfigInfo=ConfigInfo+sep+"Periodic_"+TpPeriName(TpPeri(PeriActive));
+  //-Other configurations. 
   Log->Print(fun::VarStr("Dx",Dp));
   Log->Print(fun::VarStr("H",H));
   Log->Print(fun::VarStr("CoefficientH",H/(Dp*sqrt(Simulate2D? 2.f: 3.f))));
@@ -1494,12 +1540,15 @@ void JSph::VisuConfig()const{
   Log->Print(fun::VarStr("TimePart",TimePart));
   Log->Print(fun::VarStr("Gravity",Gravity));
   Log->Print(fun::VarStr("NpMinimum",NpMinimum));
+  //-RhopOut limits.
   Log->Print(fun::VarStr("RhopOut",RhopOut));
   if(RhopOut){
     Log->Print(fun::VarStr("RhopOutMin",RhopOutMin));
     Log->Print(fun::VarStr("RhopOutMax",RhopOutMax));
+    ConfigInfo=ConfigInfo+sep+fun::PrintStr("RhopOut(%G-%G)",RhopOutMin,RhopOutMax);
   }
   Log->Print(fun::VarStr("WrnPartsOut",WrnPartsOut));
+  //-Other configurations. 
   if(CteB==0)Run_Exceptioon("Constant \'b\' cannot be zero.\n\'b\' is zero when fluid height is zero (or fluid particles were not created)");
 }
 
@@ -2590,20 +2639,26 @@ void JSph::SaveVtkNormals(std::string filename,int numfile,unsigned np,unsigned 
 /// Adds basic information of resume to hinfo & dinfo.
 /// Anhade la informacion basica de resumen a hinfo y dinfo.
 //==============================================================================
-void JSph::GetResInfo(float tsim,float ttot,const std::string &headplus,const std::string &detplus,std::string &hinfo,std::string &dinfo){
-  hinfo=hinfo+"#RunName;RunCode;DateTime;Np;TSimul;TSeg;TTotal;MemCpu;MemGpu;Steps;PartFiles;PartsOut;MaxParticles;MaxCells;Hw;StepAlgo;Kernel;Viscosity;ViscoValue;DensityCorrection;TMax;Nbound;Nfixed;H;RhopOut;PartsRhopOut;PartsVelOut;CellMode"+headplus;
-  dinfo=dinfo+ RunName+ ";"+ RunCode+ ";"+ RunTimeDate+ ";"+ fun::UintStr(CaseNp);
+void JSph::GetResInfo(float tsim,float ttot,std::string headplus,std::string detplus
+  ,std::string &hinfo,std::string &dinfo)
+{
+  hinfo=hinfo+"#RunName;VersionInfo;DateTime;Np;TSimul;TSeg;TTotal;MemCpu;MemGpu";
+  dinfo=dinfo+ RunName+ ";"+ AppName+ ";"+ RunTimeDate+ ";"+ fun::UintStr(CaseNp);
   dinfo=dinfo+ ";"+ fun::FloatStr(tsim)+ ";"+ fun::FloatStr(tsim/float(TimeStep))+ ";"+ fun::FloatStr(ttot);
   dinfo=dinfo+ ";"+ fun::LongStr(MaxNumbers.memcpu)+ ";"+ fun::LongStr(MaxNumbers.memgpu);
+  hinfo=hinfo+";Steps;PhysicalTime;PartFiles;PartsOut;MaxParticles;MaxCells";
   const unsigned nout=GetOutPosCount()+GetOutRhopCount()+GetOutMoveCount();
-  dinfo=dinfo+ ";"+ fun::IntStr(Nstep)+ ";"+ fun::IntStr(Part)+ ";"+ fun::UintStr(nout);
+  dinfo=dinfo+ ";"+ fun::IntStr(Nstep)+ ";"+ fun::DoublexStr(TimeStep) + ";"+ fun::IntStr(Part)+ ";"+ fun::UintStr(nout);
   dinfo=dinfo+ ";"+ fun::UintStr(MaxNumbers.particles)+ ";"+ fun::UintStr(MaxNumbers.cells);
-  dinfo=dinfo+ ";"+ Hardware+ ";"+ GetStepName(TStep)+ ";"+ GetKernelName(TKernel)+ ";"+ GetViscoName(TVisco)+ ";"+ fun::FloatStr(Visco);
-  dinfo=dinfo+ ";"+ GetDDTConfig()+ ";"+ fun::FloatStr(float(TimeMax));
-  dinfo=dinfo+ ";"+ fun::UintStr(CaseNbound)+ ";"+ fun::UintStr(CaseNfixed)+ ";"+ fun::FloatStr(H);
-  std::string rhopcad;
-  if(RhopOut)rhopcad=fun::PrintStr("(%G-%G)",RhopOutMin,RhopOutMax); else rhopcad="None";
-  dinfo=dinfo+ ";"+ rhopcad+ ";"+ fun::UintStr(GetOutRhopCount())+ ";"+ fun::UintStr(GetOutMoveCount())+ ";"+ GetNameCellMode(CellMode)+ detplus;
+  hinfo=hinfo+";Hardware;RunMode;Configuration";
+  dinfo=dinfo+ ";"+ Hardware+ ";"+ "Cells"+GetNameCellMode(CellMode) + " - " + RunMode+ ";"+ ConfigInfo;
+  hinfo=hinfo+";Nbound;Nfixed;Dp;H";
+  dinfo=dinfo+ ";"+ fun::UintStr(CaseNbound)+ ";"+ fun::UintStr(CaseNfixed);
+  dinfo=dinfo+ ";"+ fun::FloatStr(float(Dp))+ ";"+ fun::FloatStr(H);
+  hinfo=hinfo+";PartsOutRhop;PartsOutVel";
+  dinfo=dinfo+ ";"+ fun::UintStr(GetOutRhopCount())+ ";"+ fun::UintStr(GetOutMoveCount());
+  hinfo=hinfo+";RunCode"+ headplus;
+  dinfo=dinfo+ ";"+ RunCode+ detplus;
 }
 
 //==============================================================================
