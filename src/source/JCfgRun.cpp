@@ -64,6 +64,7 @@ void JCfgRun::Reset(){
   FtPause=-1;
   NstepsBreak=0;
   SvAllSteps=false;
+  PipsMode=1; PipsSteps=100;
   CreateDirs=true;
   CsvSepComa=false;
 }
@@ -86,11 +87,15 @@ void JCfgRun::VisuInfo()const{
 /////////|---------1---------2---------3---------4---------5---------6---------7--------X8
   printf("Information about execution parameters:\n\n");
   printf("  DualSPHysics [name_case [dir_out]] [options]\n\n");
-  printf("  Options:\n");
+  printf("  General options:\n");
+//  printf("  Options:\n");
   printf("    -h          Shows information about parameters\n");
   printf("    -ver        Shows version information\n");
   printf("    -info       Shows version features in JSON format\n");
-  printf("    -opt <file> Loads a file configuration\n\n");
+  printf("    -opt <file> Loads a file configuration\n");
+  printf("\n");
+
+  printf("  Execution options:\n");
   printf("    -cpu        Execution on CPU (option by default)\n");
   printf("    -gpu[:id]   Execution on GPU and id of the device\n");
   printf("\n");
@@ -107,6 +112,8 @@ void JCfgRun::VisuInfo()const{
   printf("        2h        Lowest and the least expensive in memory (by default)\n");
   printf("        h         Fastest and the most expensive in memory\n");
   printf("\n");
+
+  printf("  Formulation options:\n");
   printf("    -dbc           Dynamic Boundary Condition DBC (by default)\n");
   printf("    -mdbc          Modified Dynamic Boundary Condition mDBC (mode: vel=0)\n");
   printf("    -mdbc_noslip   Modified Dynamic Boundary Condition mDBC (mode: no-slip)\n");
@@ -115,7 +122,8 @@ void JCfgRun::VisuInfo()const{
   printf("\n");
   printf("    -symplectic      Symplectic algorithm as time step algorithm\n");
   printf("    -verlet[:steps]  Verlet algorithm as time step algorithm and number of\n");
-  printf("                     time steps to switch equations\n\n");
+  printf("                     time steps to switch equations\n");
+  printf("\n");
   printf("    -cubic           Cubic spline kernel\n");
   printf("    -wendland        Wendland kernel\n");
   printf("    -gaussian        Gaussian kernel\n");
@@ -132,41 +140,60 @@ void JCfgRun::VisuInfo()const{
   printf("        1          Diffusion term by Molteni and Colagrossi 2009\n");
   printf("        2          Diffusion term by Fourtakas et al 2019 (inner fluid particles)\n");
   printf("        3          Diffusion term by Fourtakas et al 2019 (all fluid particles)\n");
-  printf("    -ddtvalue:<float> Constant for DDT (0.1 by default)\n\n");
+  printf("    -ddtvalue:<float> Constant for DDT (0.1 by default)\n");
+  printf("\n");
   printf("    -shifting:<mode> Specifies the use of Shifting correction\n");
   printf("        none       Shifting is disabled (by default)\n");
   printf("        nobound    Shifting is not applied near boundary\n");
   printf("        nofixed    Shifting is not applied near fixed boundary\n");
-  printf("        full       Shifting is always applied\n\n");
+  printf("        full       Shifting is always applied\n");
+  printf("\n");
+
+  printf("  Simulation options:\n");
+  printf("    -name <string>      Specifies path and name of the case \n");
+  printf("    -runname <string>   Specifies name for case execution\n");
+  printf("    -dirout <dir>       Specifies the general output directory \n");
+  printf("    -dirdataout <dir>   Specifies the output subdirectory for binary data \n");
+  printf("\n");
+  printf("    -partbegin:begin[:first] dir \n");
+  printf("     Specifies the beginning of the simulation starting from a given PART\n");
+  printf("     (begin) and located in the directory (dir), (first) indicates the\n");
+  printf("     number of the first PART to be generated\n\n");
+  printf("\n");
+  printf("    -tmax:<float>   Maximum time of simulation\n");
+  printf("    -tout:<float>   Time between output files\n");
+  printf("\n");
+  printf("    -ftpause:<float> Time to start floating bodies movement. By default 0\n");
+  printf("    -rhopout:min:max Excludes fluid particles out of these density limits\n");
+  printf("    -domain_fixed:xmin:ymin:zmin:xmax:ymax:zmax    The domain is fixed\n");
+  printf("     with the specified values\n");
+  printf("\n");
+
+  printf("  Output options:\n");
   printf("    -sv:[formats,...] Specifies the output formats.\n");
   printf("        none    No particles files are generated\n");
   printf("        binx    Binary files (option by default)\n");
   printf("        info    Information about execution in .ibi4 format\n");
   printf("        vtk     VTK files\n");
   printf("        csv     CSV files\n");
+  printf("    -svres:<0/1>     Generates file that summarises the execution process\n");
+  printf("    -svtimers:<0/1>  Obtains timing for each individual process\n");
+  printf("    -svdomainvtk:<0/1>  Generates VTK file with domain limits\n");
+/////////|---------1---------2---------3---------4---------5---------6---------7--------X8
+  printf("    -svpips:<mode>:n  Compute PIPS of simulation each n steps (100 by default),\n");
+  printf("       mode options: 0=disabled, 1=no save details (by default), 2=save details\n");
+  printf("\n");
   printf("    -createdirs:<0/1> Creates full path for output files\n");
   printf("                      (value by default is read from DsphConfig.xml or 1)\n");
   printf("    -csvsep:<0/1>     Separator character in CSV files (0=semicolon, 1=coma)\n");
   printf("                      (value by default is read from DsphConfig.xml or 0)\n");
-  printf("    -svres:<0/1>     Generates file that summarises the execution process\n");
-  printf("    -svtimers:<0/1>  Obtains timing for each individual process\n");
-  printf("    -svdomainvtk:<0/1>  Generates VTK file with domain limits\n");
-  printf("    -name <string>      Specifies path and name of the case \n");
-  printf("    -runname <string>   Specifies name for case execution\n");
-  printf("    -dirout <dir>       Specifies the general output directory \n");
-  printf("    -dirdataout <dir>   Specifies the output subdirectory for binary data \n\n");
-  printf("    -partbegin:begin[:first] dir \n");
-  printf("     Specifies the beginning of the simulation starting from a given PART\n");
-  printf("     (begin) and located in the directory (dir), (first) indicates the\n");
-  printf("     number of the first PART to be generated\n\n");
-  printf("    -rhopout:min:max Excludes fluid particles out of these density limits\n\n");
-  printf("    -ftpause:<float> Time to start floating bodies movement. By default 0\n");
-  printf("    -tmax:<float>   Maximum time of simulation\n");
-  printf("    -tout:<float>   Time between output files\n\n");
-  //printf("    -nsteps:<uint>  Maximum number of steps allowed (debug)\n");
-  //printf("    -svsteps:<0/1>  Saves a PART for each step (debug)\n\n");
-  printf("    -domain_fixed:xmin:ymin:zmin:xmax:ymax:zmax    The domain is fixed\n");
-  printf("     with the specified values\n\n");
+  printf("\n");
+
+  printf("  Debug options:\n");
+  printf("    -nsteps:<uint>  Maximum number of steps allowed (debug)\n");
+  printf("    -svsteps:<0/1>  Saves a PART for each step (debug)\n");
+  printf("\n");
+
   printf("  Examples:\n");
   printf("    DualSPHysics case out_case -sv:binx,csv \n");
   printf("    DualSPHysics -name case -dirout out_case -sv:binx,csv \n");
@@ -445,6 +472,11 @@ void JCfgRun::LoadOpts(string *optlis,int optn,int lv,string file){
       }
       else if(txword=="NSTEPS")NstepsBreak=atoi(txoptfull.c_str()); 
       else if(txword=="SVSTEPS")SvAllSteps=(txoptfull!=""? atoi(txoptfull.c_str()): 1)!=0;
+      else if(txword=="SVPIPS"){
+        PipsMode=(unsigned)atoi(txopt1.c_str());
+        if(PipsMode>2)ErrorParm(opt,c,lv,file);
+        if(!txopt2.empty())PipsSteps=(unsigned)atoi(txopt2.c_str());
+      }
       else if(txword=="OPT"&&c+1<optn){ LoadFile(optlis[c+1],lv+1); c++; }
       else if(txword=="H"||txword=="HELP"||txword=="?")PrintInfo=true;
       else ErrorParm(opt,c,lv,file);

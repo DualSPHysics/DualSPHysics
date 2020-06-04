@@ -41,6 +41,8 @@
 #include "JLinearValue.h"
 #include "JDataArrays.h"
 #include "JShifting.h"
+#include "JDsPips.h"
+
 #include <climits>
 
 using namespace std;
@@ -542,8 +544,8 @@ void JSphCpuSingle::Interaction_Forces(TpInterStep interstep){
   TmcStart(Timers,TMC_CfForces);
 
   //-Interaction of Fluid-Fluid/Bound & Bound-Fluid (forces and DEM). | Interaccion Fluid-Fluid/Bound & Bound-Fluid (forces and DEM).
-  const stinterparmsc parms=StInterparmsc(Np,Npb,NpbOk,CellDivSingle->GetNcells()
-    ,CellDivSingle->GetBeginCell(),CellDivSingle->GetCellDomainMin(),Dcellc
+  const stinterparmsc parms=StInterparmsc(Np,Npb,NpbOk
+    ,CellDivSingle->GetCellDivData(),Dcellc
     ,Posc,Velrhopc,Idpc,Codec,Pressc,Arc,Acec,Deltac
     ,ShiftingMode,ShiftPosfsc
     ,SpsTauc,SpsGradvelc
@@ -993,6 +995,18 @@ void JSphCpuSingle::RunGaugeSystem(double timestep){
     ,NpbOk,Npb,Np,Posc,Codec,Idpc,Velrhopc);
 }
 
+ //==============================================================================
+/// Compute PIPS information of current particles.
+/// Calcula datos de PIPS de particulas actuales.
+//==============================================================================
+void JSphCpuSingle::ComputePips(bool run){
+  if(run || DsPips->CheckRun(Nstep)){
+    TimerSim.Stop();
+    const double timesim=TimerSim.GetElapsedTimeD()/1000.;
+    DsPips->ComputeCpu(CSP,Nstep,TimeStep,timesim,OmpThreads,Np,Npb,NpbOk,CellDivSingle->GetCellDivData(),Dcellc,Posc);
+  }
+}
+
 //==============================================================================
 /// Initialises execution of simulation.
 /// Inicia ejecucion de simulacion.
@@ -1036,6 +1050,7 @@ void JSphCpuSingle::Run(std::string appname,JCfgRun *cfg,JLog2 *log){
   TimerSim.Start();
   TimerPart.Start();
   Log->Print(string("\n[Initialising simulation (")+RunCode+")  "+fun::GetDateTime()+"]");
+  if(DsPips)ComputePips(true);
   PrintHeadPart();
   while(TimeStep<TimeMax){
     InterStep=(TStep==STEP_Symplectic? INTERSTEP_SymPredictor: INTERSTEP_Verlet);
@@ -1063,6 +1078,8 @@ void JSphCpuSingle::Run(std::string appname,JCfgRun *cfg,JLog2 *log){
     }
     UpdateMaxValues();
     Nstep++;
+    const bool laststep=(TimeStep>=TimeMax || (NstepsBreak && Nstep>=NstepsBreak));
+    if(DsPips)ComputePips(laststep);
     if(Part<=PartIni+1 && tc.CheckTime())Log->Print(string("  ")+tc.GetInfoFinish((TimeStep-TimeStepIni)/(TimeMax-TimeStepIni)));
     if(NstepsBreak && Nstep>=NstepsBreak)break; //-For debugging.
   }

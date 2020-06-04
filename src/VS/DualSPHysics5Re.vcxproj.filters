@@ -397,6 +397,12 @@
     <ClInclude Include="..\source\JSphInOutZone.h">
       <Filter>Src_Inlet</Filter>
     </ClInclude>
+    <ClInclude Include="..\source\JDsNgSearchCpu.h">
+      <Filter>Source</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JDsPips.h">
+      <Filter>Source</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\source\JCfgRun.cpp">
@@ -656,6 +662,9 @@
     </ClCompile>
     <ClCompile Include="..\source\JSphInOutZone.cpp">
       <Filter>Src_Inlet</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JDsPips.cpp">
+      <Filter>Source</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

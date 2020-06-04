@@ -71,6 +71,7 @@ class JSphFtForcePoints; //<vs_moordyyn>
 class JSphInOut;         //<vs_innlet>
 class JSphBoundCorr;     //<vs_innlet>
 class JSphPartsInit;
+class JDsPips;
 class JLinearValue;
 class JSpaceEParms;
 class JDataArrays;
@@ -244,6 +245,7 @@ protected:
   float Eta2;              ///<Constant related to H (Eta2=(h*0.1)*(h*0.1)).
   float SpsSmag;           ///<Smagorinsky constant used in SPS turbulence model.
   float SpsBlin;           ///<Blin constant used in the SPS turbulence model.
+  StCteSph CSP;            ///<Structure data with SPH constants values.
 
   //-General information about case.
   tdouble3 CasePosMin;       ///<Lower particle limit of the case in the initial instant. | Limite inferior de particulas del caso en instante inicial.
@@ -327,6 +329,8 @@ protected:
 
   JSphInOut *InOut;         ///<Object for inlet/outlet conditions.  //<vs_innlet> 
   JSphBoundCorr *BoundCorr; ///<Object for boundary extrapolated correction (used in combination with InOut).  //<vs_innlet>
+
+  JDsPips *DsPips;          ///<Object for PIPS calculation.
 
   //-Variables for division in cells.
   TpCellMode CellMode;     ///<Cell division mode. | Modo de division en celdas.
@@ -464,7 +468,8 @@ protected:
     ,const tdouble3 *pos,const unsigned *idp,const tfloat3 *boundnormal)const;                    //<vs_mddbc>
 
  
-  void GetResInfo(float tsim,float ttot,std::string headplus,std::string detplus,std::string &hinfo,std::string &dinfo);
+  void GetResInfo(float tsim,float ttot,std::string headplus,std::string detplus
+    ,std::string &hinfo,std::string &dinfo)const;
   void SaveRes(float tsim,float ttot,const std::string &headplus="",const std::string &detplus="");
   void ShowResume(bool stop,float tsim,float ttot,bool all,std::string infoplus);
 

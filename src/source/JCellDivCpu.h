@@ -108,7 +108,9 @@ protected:
 
   tuint3 CellDomainMin; ///<Lower domain limit in cells inside of DomCells. | Limite inferior del dominio en celdas dentro de DomCells.
   tuint3 CellDomainMax; ///<Upper domain limit in cells inside of DomCells. | Limite superior del dominio en celdas dentro de DomCells.
-  unsigned Ncx,Ncy,Ncz,Nsheet,Nct;
+  unsigned Ncx,Ncy,Ncz;
+  unsigned Nsheet;      ///<Nsheet=Ncx*Ncy
+  unsigned Nct;         ///<Nct=Ncx*Ncy*Ncz
   ullong Nctt;          ///<Total number of special cells included  Nctt=SizeBeginCell(). | Numero total de celdas incluyendo las especiales Nctt=SizeBeginCell().
   unsigned BoxBoundIgnore,BoxFluid,BoxBoundOut,BoxFluidOut,BoxBoundOutIgnore,BoxFluidOutIgnore;
 
@@ -179,6 +181,8 @@ public:
   tuint3 GetCellDomainMax()const{ return(CellDomainMax); }
   tdouble3 GetDomainLimits(bool limitmin,unsigned slicecellmin=0)const;
 
+  StDivData GetCellDivData()const;
+
   unsigned GetNpFinal()const{ return(NpFinal); }
   unsigned GetNpbFinal()const{ return(NpbFinal); }
   unsigned GetNpbIgnore()const{ return(NpbIgnore); }
@@ -188,7 +192,7 @@ public:
   unsigned GetNpfOutIgnore()const{ return(NpfOutIgnore); }
 
   //:const unsigned* GetCellPart()const{ return(CellPart); }
-  const unsigned* GetBeginCell(){ return(BeginCell); }
+  const unsigned* GetBeginCell()const{ return(BeginCell); }
 
   void SetIncreaseNp(unsigned increasenp){ IncreaseNp=increasenp; }
 

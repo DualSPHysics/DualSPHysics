@@ -52,6 +52,7 @@
 #include "JSphInitialize.h"
 #include "JSphInOut.h"       //<vs_innlet> 
 #include "JSphBoundCorr.h"   //<vs_innlet> 
+#include "JDsPips.h"
 #include "JLinearValue.h"
 #include "JPartNormalData.h" //<vs_mddbc>
 #include "JNormalsMarrone.h" //<vs_mddbc>
@@ -99,6 +100,7 @@ JSph::JSph(bool cpu,bool mgpu,bool withmpi):Cpu(cpu),Mgpu(mgpu),WithMpi(withmpi)
   PartsLoaded=NULL;
   InOut=NULL;       //<vs_innlet>
   BoundCorr=NULL;   //<vs_innlet>
+  DsPips=NULL;
   NuxLib=NULL;
   InitVars();
 }
@@ -134,6 +136,7 @@ JSph::~JSph(){
   delete PartsLoaded;   PartsLoaded=NULL;
   delete InOut;         InOut=NULL;       //<vs_innlet>
   delete BoundCorr;     BoundCorr=NULL;   //<vs_innlet>
+  delete DsPips;        DsPips=NULL;
   delete NuxLib;        NuxLib=NULL;
 }
 
@@ -198,6 +201,7 @@ void JSph::InitVars(){
   Gravity=TFloat3(0);
   Dosh=H2=Fourh2=Eta2=0;
   SpsSmag=SpsBlin=0;
+  memset(&CSP,0,sizeof(StCteSph));
 
   CasePosMin=CasePosMax=TDouble3(0);
   CaseNp=CaseNbound=CaseNfixed=CaseNmoving=CaseNfloat=CaseNfluid=CaseNpb=0;
@@ -497,6 +501,9 @@ void JSph::LoadConfig(const JCfgRun *cfg){
 
   //-Loads case configuration from XML and command line.
   LoadCaseConfig(cfg);
+
+  //-PIPS configuration.
+  if(cfg->PipsMode)DsPips=new JDsPips(Cpu,cfg->PipsSteps,(cfg->PipsMode==2),(TStep==STEP_Symplectic? 2: 1),Log);
 }
 
 //==============================================================================
@@ -1395,6 +1402,7 @@ void JSph::ConfigConstants(bool simulate2d){
     SpsSmag=float(pow((0.12*dp_sps),2));
     SpsBlin=float((2./3.)*0.0066*dp_sps*dp_sps); 
   }
+  CSP={Fourh2};
   VisuConfig();
 }
 
@@ -1422,6 +1430,7 @@ void JSph::VisuConfig(){
   //-Other configurations. 
   Log->Print(fun::VarStr("SaveFtAce",SaveFtAce));
   Log->Print(fun::VarStr("SvTimers",SvTimers));
+  if(DsPips)Log->Print(fun::VarStr("PIPS-steps",DsPips->StepsNum));
   //-Boundary. 
   Log->Print(fun::VarStr("Boundary",GetBoundName(TBoundary)));
   ConfigInfo=ConfigInfo+sep+GetBoundName(TBoundary);
@@ -2479,6 +2488,7 @@ void JSph::SaveData(unsigned npok,const JDataArrays& arrays
   if(Moorings)Moorings->SaveData(Part);        //<vs_moordyyn>
   if(ForcePoints)ForcePoints->SaveData(Part);  //<vs_moordyyn>
   if(BoundCorr && BoundCorr->GetUseMotion())BoundCorr->SaveData(Part);  //<vs_innlet>
+  if(DsPips && DsPips->SvData && SvData!=SDAT_None)DsPips->SaveData();
 
   //-Checks request for simulation termination.
   CheckTermination();
@@ -2640,15 +2650,16 @@ void JSph::SaveVtkNormals(std::string filename,int numfile,unsigned np,unsigned 
 /// Anhade la informacion basica de resumen a hinfo y dinfo.
 //==============================================================================
 void JSph::GetResInfo(float tsim,float ttot,std::string headplus,std::string detplus
-  ,std::string &hinfo,std::string &dinfo)
+  ,std::string &hinfo,std::string &dinfo)const
 {
   hinfo=hinfo+"#RunName;VersionInfo;DateTime;Np;TSimul;TSeg;TTotal;MemCpu;MemGpu";
   dinfo=dinfo+ RunName+ ";"+ AppName+ ";"+ RunTimeDate+ ";"+ fun::UintStr(CaseNp);
   dinfo=dinfo+ ";"+ fun::FloatStr(tsim)+ ";"+ fun::FloatStr(tsim/float(TimeStep))+ ";"+ fun::FloatStr(ttot);
   dinfo=dinfo+ ";"+ fun::LongStr(MaxNumbers.memcpu)+ ";"+ fun::LongStr(MaxNumbers.memgpu);
-  hinfo=hinfo+";Steps;PhysicalTime;PartFiles;PartsOut;MaxParticles;MaxCells";
+  hinfo=hinfo+";Steps;GPIPS;PhysicalTime;PartFiles;PartsOut;MaxParticles;MaxCells";
   const unsigned nout=GetOutPosCount()+GetOutRhopCount()+GetOutMoveCount();
-  dinfo=dinfo+ ";"+ fun::IntStr(Nstep)+ ";"+ fun::DoublexStr(TimeStep) + ";"+ fun::IntStr(Part)+ ";"+ fun::UintStr(nout);
+  const string gpips=(DsPips? fun::DoublexStr(DsPips->GetGPIPS(tsim)): "");
+  dinfo=dinfo+ ";"+ fun::IntStr(Nstep)+ ";"+ gpips+ ";"+ fun::DoublexStr(TimeStep) + ";"+ fun::IntStr(Part)+ ";"+ fun::UintStr(nout);
   dinfo=dinfo+ ";"+ fun::UintStr(MaxNumbers.particles)+ ";"+ fun::UintStr(MaxNumbers.cells);
   hinfo=hinfo+";Hardware;RunMode;Configuration";
   dinfo=dinfo+ ";"+ Hardware+ ";"+ "Cells"+GetNameCellMode(CellMode) + " - " + RunMode+ ";"+ ConfigInfo;
@@ -2685,6 +2696,7 @@ void JSph::SaveRes(float tsim,float ttot,const std::string &headplus,const std::
 /// Muestra resumen de ejecucion.
 //==============================================================================
 void JSph::ShowResume(bool stop,float tsim,float ttot,bool all,std::string infoplus){
+  if(DsPips && DsPips->SvData)DsPips->SaveData();
   Log->Printf("\n[Simulation %s  %s]",(stop? "INTERRUPTED": "finished"),fun::GetDateTime().c_str());
   Log->Printf("Particles of simulation (initial): %u",CaseNp);
   if(NpDynamic)Log->Printf("Particles of simulation (total)..: %llu",TotalNp);
@@ -2700,9 +2712,14 @@ void JSph::ShowResume(bool stop,float tsim,float ttot,bool all,std::string infop
   if(all){
     float tseg=tsim/float(TimeStep);
     float nstepseg=float(Nstep)/tsim;
-    Log->Printf("Time per second of simulation....: %f sec.",tseg);
+    Log->Printf("Runtime per physical second......: %f sec.",tseg);
+    //Log->Printf("Time per second of simulation....: %f sec.",tseg);
     Log->Printf("Steps per second.................: %f",nstepseg);
     Log->Printf("Steps of simulation..............: %d",Nstep);
+    if(DsPips){
+      Log->Printf("Particle Interactions Per Second.: %f GPIPS",DsPips->GetGPIPS(tsim));
+      Log->Printf("Total particle interactions (f+b): %s",DsPips->GetTotalPIsInfo().c_str());
+    }
     Log->Printf("PART files.......................: %d",Part-PartIni);
     while(!infoplus.empty()){
       string lin=fun::StrSplit("#",infoplus);

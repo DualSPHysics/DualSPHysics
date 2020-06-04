@@ -264,6 +264,31 @@ typedef struct{ //(DEM)
   float restitu;      ///<Restitution Coefficient (units:-).
 }StDemData;
 
+///Structure with SPH constants values.
+typedef struct{
+  float fourh2;       ///<Constant related to H (Fourh2=H*H*4).
+}StCteSph;
+
+///Structure with data of cell division for neighborhood search.
+typedef struct{
+  int hdiv;
+  tint4 nc;
+  unsigned cellfluid;
+  tint3 cellzero;
+  const unsigned* begincell;
+  float scell;
+  unsigned domcellcode;
+  tdouble3 domposmin;
+}StDivData;
+
+///Structure with data for neighborhood search.
+typedef struct{
+  int cellinit;
+  int cxini,cxfin;
+  int yini,yfin;
+  int zini,zfin;
+}StNgSearch;
+
 ///Structure that stores the maximum values (or almost) achieved during the simulation.
 typedef struct StrMaxNumbers{
   llong memcpu;       ///<Amount of reserved CPU memory. | Cantidad de memoria Cpu reservada.            

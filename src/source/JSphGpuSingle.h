@@ -65,6 +65,8 @@ protected:
   void RunFloating(double dt,bool predictor);
   void RunGaugeSystem(double timestep);
 
+  void ComputePips(bool run);
+
   void SaveData();
   void FinishRun(bool stop);
 

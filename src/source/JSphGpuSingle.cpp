@@ -43,6 +43,8 @@
 #include "JDataArrays.h"
 #include "JDebugSphGpu.h"
 #include "JShifting.h"
+#include "JDsPips.h"
+
 #include <climits>
 
 using namespace std;
@@ -714,6 +716,18 @@ void JSphGpuSingle::RunGaugeSystem(double timestep){
     ,NpbOk,Npb,Np,Posxyg,Poszg,Codeg,Idpg,Velrhopg);
 }
 
+ //==============================================================================
+/// Compute PIPS information of current particles.
+/// Calcula datos de PIPS de particulas actuales.
+//==============================================================================
+void JSphGpuSingle::ComputePips(bool run){
+  if(run || DsPips->CheckRun(Nstep)){
+    TimerSim.Stop();
+    const double timesim=TimerSim.GetElapsedTimeD()/1000.;
+    //DsPips->ComputeCpu(CSP,Nstep,TimeStep,timesim,OmpThreads,Np,Npb,NpbOk,CellDivSingle->GetCellDivData(),Dcellc,Posc);
+  }
+}
+
 //==============================================================================
 /// Initialises execution of simulation.
 /// Inicia ejecucion de simulacion.
@@ -761,6 +775,7 @@ void JSphGpuSingle::Run(std::string appname,JCfgRun *cfg,JLog2 *log){
   TimerSim.Start();
   TimerPart.Start();
   Log->Print(string("\n[Initialising simulation (")+RunCode+")  "+fun::GetDateTime()+"]");
+  if(DsPips)ComputePips(true);
   PrintHeadPart();
   while(TimeStep<TimeMax){
     InterStep=(TStep==STEP_Symplectic? INTERSTEP_SymPredictor: INTERSTEP_Verlet);
@@ -788,6 +803,8 @@ void JSphGpuSingle::Run(std::string appname,JCfgRun *cfg,JLog2 *log){
     }
     UpdateMaxValues();
     Nstep++;
+    const bool laststep=(TimeStep>=TimeMax || (NstepsBreak && Nstep>=NstepsBreak));
+    if(DsPips)ComputePips(laststep);
     if(Part<=PartIni+1 && tc.CheckTime())Log->Print(string("  ")+tc.GetInfoFinish((TimeStep-TimeStepIni)/(TimeMax-TimeStepIni)));
     if(NstepsBreak && Nstep>=NstepsBreak)break; //-For debugging.
   }

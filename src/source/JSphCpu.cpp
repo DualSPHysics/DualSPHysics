@@ -19,6 +19,7 @@
 /// \file JSphCpu.cpp \brief Implements the class \ref JSphCpu.
 
 #include "JSphCpu.h"
+#include "JDsNgSearchCpu.h"
 #include "JCellDivCpu.h"
 #include "JPartFloatBi4.h"
 #include "Functions.h"
@@ -759,7 +760,6 @@ void JSphCpu::GetKernelWendlandC6(float rr2,float drx,float dry,float drz
 }
 //<vs_praticalsskq_end>
 
-
 //==============================================================================
 /// Return cell limits for interaction starting from cell coordinates.
 /// Devuelve limites de celdas para interaccion a partir de coordenadas de celda.
@@ -768,7 +768,7 @@ void JSphCpu::GetInteractionCells(unsigned rcell
   ,int hdiv,const tint4 &nc,const tint3 &cellzero
   ,int &cxini,int &cxfin,int &yini,int &yfin,int &zini,int &zfin)const
 {
-  //-Get interaction limits. | Obtiene limites de interaccion.
+  //-Get cell coordinates of cell number.
   const int cx=PC__Cellx(DomCellCode,rcell)-cellzero.x;
   const int cy=PC__Celly(DomCellCode,rcell)-cellzero.y;
   const int cz=PC__Cellz(DomCellCode,rcell)-cellzero.z;
@@ -807,8 +807,7 @@ void JSphCpu::GetInteractionCells(const tdouble3 &pos
 /// Realiza interaccion entre particulas. Bound-Fluid/Float
 //==============================================================================
 template<TpKernel tker,TpFtMode ftmode> void JSphCpu::InteractionForcesBound
-  (unsigned n,unsigned pinit,tint4 nc,int hdiv,unsigned cellinitial
-  ,const unsigned *beginendcell,tint3 cellzero,const unsigned *dcell
+  (unsigned n,unsigned pinit,StDivData divdata,const unsigned *dcell
   ,const tdouble3 *pos,const tfloat4 *velrhop,const typecode *code,const unsigned *idp
   ,float &viscdt,float *ar)const
 {
@@ -828,63 +827,55 @@ template<TpKernel tker,TpFtMode ftmode> void JSphCpu::InteractionForcesBound
     const bool rsymp1=(Symmetry && posp1.y<=Dosh); //<vs_syymmetry>
     const tfloat3 velp1=TFloat3(velrhop[p1].x,velrhop[p1].y,velrhop[p1].z);
 
-    //-Obtain limits of interaction. | Obtiene limites de interaccion.
-    int cxini,cxfin,yini,yfin,zini,zfin;
-    GetInteractionCells(dcell[p1],hdiv,nc,cellzero,cxini,cxfin,yini,yfin,zini,zfin);
+    //-Search for neighbours in adjacent cells.
+    const StNgSearch ngs=NgSearchInit(dcell[p1],false,divdata);
+    for(int z=ngs.zini;z<ngs.zfin;z++)for(int y=ngs.yini;y<ngs.yfin;y++){
+      const tuint2 pif=NgSearchParticleRange(y,z,ngs,divdata);
 
-    //-Search for neighbours in adjacent cells. | Busqueda de vecinos en celdas adyacentes.
-    for(int z=zini;z<zfin;z++){
-      const int zmod=(nc.w)*z+cellinitial; //-Sum from start of fluid cells. | Le suma donde empiezan las celdas de fluido.
-      for(int y=yini;y<yfin;y++){
-        int ymod=zmod+nc.x*y;
-        const unsigned pini=beginendcell[cxini+ymod];
-        const unsigned pfin=beginendcell[cxfin+ymod];
+      //-Interaction of boundary with type Fluid/Float | Interaccion de Bound con varias Fluid/Float.
+      //---------------------------------------------------------------------------------------------
+      bool rsym=false; //<vs_syymmetry>
+      for(unsigned p2=pif.x;p2<pif.y;p2++){
+        const float drx=float(posp1.x-pos[p2].x);
+              float dry=float(posp1.y-pos[p2].y);
+        if(rsym)    dry=float(posp1.y+pos[p2].y); //<vs_syymmetry>
+        const float drz=float(posp1.z-pos[p2].z);
+        const float rr2=drx*drx+dry*dry+drz*drz;
+        if(rr2<=Fourh2 && rr2>=ALMOSTZERO){
+          //-Wendland, Cubic Spline or Gaussian kernel.
+          float frx,fry,frz;
+          if(tker==KERNEL_Wendland)     GetKernelWendland(rr2,drx,dry,drz,frx,fry,frz);
+          else if(tker==KERNEL_Cubic)   GetKernelCubic   (rr2,drx,dry,drz,frx,fry,frz);
+          else if(tker==KERNEL_Gaussian)GetKernelGaussian(rr2,drx,dry,drz,frx,fry,frz);
+          else if(tker==KERNEL_WendlandC6)GetKernelWendlandC6(rr2,drx,dry,drz,frx,fry,frz);  //<vs_praticalsskq>
 
-        //-Interaction of boundary with type Fluid/Float | Interaccion de Bound con varias Fluid/Float.
-        //---------------------------------------------------------------------------------------------
-        bool rsym=false; //<vs_syymmetry>
-        for(unsigned p2=pini;p2<pfin;p2++){
-          const float drx=float(posp1.x-pos[p2].x);
-                float dry=float(posp1.y-pos[p2].y);
-          if(rsym)    dry=float(posp1.y+pos[p2].y); //<vs_syymmetry>
-          const float drz=float(posp1.z-pos[p2].z);
-          const float rr2=drx*drx+dry*dry+drz*drz;
-          if(rr2<=Fourh2 && rr2>=ALMOSTZERO){
-            //-Wendland, Cubic Spline or Gaussian kernel.
-            float frx,fry,frz;
-            if(tker==KERNEL_Wendland)     GetKernelWendland(rr2,drx,dry,drz,frx,fry,frz);
-            else if(tker==KERNEL_Cubic)   GetKernelCubic   (rr2,drx,dry,drz,frx,fry,frz);
-            else if(tker==KERNEL_Gaussian)GetKernelGaussian(rr2,drx,dry,drz,frx,fry,frz);
-            else if(tker==KERNEL_WendlandC6)GetKernelWendlandC6(rr2,drx,dry,drz,frx,fry,frz);  //<vs_praticalsskq>
-
-            //===== Get mass of particle p2 ===== 
-            float massp2=MassFluid; //-Contains particle mass of incorrect fluid. | Contiene masa de particula por defecto fluid.
-            bool compute=true;      //-Deactivate when using DEM and/or bound-float. | Se desactiva cuando se usa DEM y es bound-float.
-            if(USE_FLOATING){
-              bool ftp2=CODE_IsFloating(code[p2]);
-              if(ftp2)massp2=FtObjs[CODE_GetTypeValue(code[p2])].massp;
-              compute=!(USE_FTEXTERNAL && ftp2); //-Deactivate when using DEM/Chrono and/or bound-float. | Se desactiva cuando se usa DEM/Chrono y es bound-float.
-            }
-
-            if(compute){
-              //-Density derivative.
-              //const float dvx=velp1.x-velrhop[p2].x, dvy=velp1.y-velrhop[p2].y, dvz=velp1.z-velrhop[p2].z;
-              tfloat4 velrhop2=velrhop[p2];
-              if(rsym)velrhop2.y=-velrhop2.y; //<vs_syymmetry>
-              const float dvx=velp1.x-velrhop2.x, dvy=velp1.y-velrhop2.y, dvz=velp1.z-velrhop2.z;
-              if(compute)arp1+=massp2*(dvx*frx+dvy*fry+dvz*frz);
-
-              {//-Viscosity.
-                const float dot=drx*dvx + dry*dvy + drz*dvz;
-                const float dot_rr2=dot/(rr2+Eta2);
-                visc=max(dot_rr2,visc);
-              }
-            }
-            rsym=(rsymp1 && !rsym && float(posp1.y-dry)<=Dosh); //<vs_syymmetry>
-            if(rsym)p2--;                                       //<vs_syymmetry>
+          //===== Get mass of particle p2 ===== 
+          float massp2=MassFluid; //-Contains particle mass of incorrect fluid. | Contiene masa de particula por defecto fluid.
+          bool compute=true;      //-Deactivate when using DEM and/or bound-float. | Se desactiva cuando se usa DEM y es bound-float.
+          if(USE_FLOATING){
+            bool ftp2=CODE_IsFloating(code[p2]);
+            if(ftp2)massp2=FtObjs[CODE_GetTypeValue(code[p2])].massp;
+            compute=!(USE_FTEXTERNAL && ftp2); //-Deactivate when using DEM/Chrono and/or bound-float. | Se desactiva cuando se usa DEM/Chrono y es bound-float.
           }
-          else rsym=false;                                      //<vs_syymmetry>
+
+          if(compute){
+            //-Density derivative.
+            //const float dvx=velp1.x-velrhop[p2].x, dvy=velp1.y-velrhop[p2].y, dvz=velp1.z-velrhop[p2].z;
+            tfloat4 velrhop2=velrhop[p2];
+            if(rsym)velrhop2.y=-velrhop2.y; //<vs_syymmetry>
+            const float dvx=velp1.x-velrhop2.x, dvy=velp1.y-velrhop2.y, dvz=velp1.z-velrhop2.z;
+            if(compute)arp1+=massp2*(dvx*frx+dvy*fry+dvz*frz);
+
+            {//-Viscosity.
+              const float dot=drx*dvx + dry*dvy + drz*dvz;
+              const float dot_rr2=dot/(rr2+Eta2);
+              visc=max(dot_rr2,visc);
+            }
+          }
+          rsym=(rsymp1 && !rsym && float(posp1.y-dry)<=Dosh); //<vs_syymmetry>
+          if(rsym)p2--;                                       //<vs_syymmetry>
         }
+        else rsym=false;                                      //<vs_syymmetry>
       }
     }
     //-Sum results together. | Almacena resultados.
@@ -903,16 +894,14 @@ template<TpKernel tker,TpFtMode ftmode> void JSphCpu::InteractionForcesBound
 /// Realiza interaccion entre particulas: Fluid/Float-Fluid/Float or Fluid/Float-Bound
 //==============================================================================
 template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity,bool shift> 
-  void JSphCpu::InteractionForcesFluid
-  (unsigned n,unsigned pinit,tint4 nc,int hdiv,unsigned cellinitial,float visco
-  ,const unsigned *beginendcell,tint3 cellzero,const unsigned *dcell
+  void JSphCpu::InteractionForcesFluid(unsigned n,unsigned pinit,bool boundp2,float visco
+  ,StDivData divdata,const unsigned *dcell
   ,const tsymatrix3f* tau,tsymatrix3f* gradvel
   ,const tdouble3 *pos,const tfloat4 *velrhop,const typecode *code,const unsigned *idp
   ,const float *press 
   ,float &viscdt,float *ar,tfloat3 *ace,float *delta
   ,TpShifting shiftmode,tfloat4 *shiftposfs)const
 {
-  const bool boundp2=(!cellinitial); //-Interaction with type boundary (Bound). | Interaccion con Bound.
   //-Initialize viscth to calculate viscdt maximo con OpenMP. | Inicializa viscth para calcular visdt maximo con OpenMP.
   float viscth[OMP_MAXTHREADS*OMP_STRIDE];
   for(int th=0;th<OmpThreads;th++)viscth[th*OMP_STRIDE]=0;
@@ -946,140 +935,132 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity,bool sh
     const tsymatrix3f taup1=(tvisco==VISCO_Artificial? gradvelp1: tau[p1]);
     const bool rsymp1=(Symmetry && posp1.y<=Dosh); //<vs_syymmetry>
 
-    //-Obtain interaction limits.
-    int cxini,cxfin,yini,yfin,zini,zfin;
-    GetInteractionCells(dcell[p1],hdiv,nc,cellzero,cxini,cxfin,yini,yfin,zini,zfin);
-
     //-Search for neighbours in adjacent cells.
-    for(int z=zini;z<zfin;z++){
-      const int zmod=(nc.w)*z+cellinitial; //-Sum from start of fluid or boundary cells. | Le suma donde empiezan las celdas de fluido o bound.
-      for(int y=yini;y<yfin;y++){
-        int ymod=zmod+nc.x*y;
-        const unsigned pini=beginendcell[cxini+ymod];
-        const unsigned pfin=beginendcell[cxfin+ymod];
+    const StNgSearch ngs=NgSearchInit(dcell[p1],boundp2,divdata);
+    for(int z=ngs.zini;z<ngs.zfin;z++)for(int y=ngs.yini;y<ngs.yfin;y++){
+      const tuint2 pif=NgSearchParticleRange(y,z,ngs,divdata);
 
-        //-Interaction of Fluid with type Fluid or Bound. | Interaccion de Fluid con varias Fluid o Bound.
-        //------------------------------------------------------------------------------------------------
-        bool rsym=false; //<vs_syymmetry>
-        for(unsigned p2=pini;p2<pfin;p2++){
-          const float drx=float(posp1.x-pos[p2].x);
-                float dry=float(posp1.y-pos[p2].y);
-          if(rsym)    dry=float(posp1.y+pos[p2].y); //<vs_syymmetry>
-          const float drz=float(posp1.z-pos[p2].z);
-          const float rr2=drx*drx+dry*dry+drz*drz;
-          if(rr2<=Fourh2 && rr2>=ALMOSTZERO){
-            //-Wendland, Cubic Spline or Gaussian kernel.
-            float frx,fry,frz;
-            if(tker==KERNEL_Wendland)     GetKernelWendland(rr2,drx,dry,drz,frx,fry,frz);
-            else if(tker==KERNEL_Cubic)   GetKernelCubic   (rr2,drx,dry,drz,frx,fry,frz);
-            else if(tker==KERNEL_Gaussian)GetKernelGaussian(rr2,drx,dry,drz,frx,fry,frz);
-            else if(tker==KERNEL_WendlandC6)GetKernelWendlandC6(rr2,drx,dry,drz,frx,fry,frz);  //<vs_praticalsskq>
+      //-Interaction of Fluid with type Fluid or Bound. | Interaccion de Fluid con varias Fluid o Bound.
+      //------------------------------------------------------------------------------------------------
+      bool rsym=false; //<vs_syymmetry>
+      for(unsigned p2=pif.x;p2<pif.y;p2++){
+        const float drx=float(posp1.x-pos[p2].x);
+              float dry=float(posp1.y-pos[p2].y);
+        if(rsym)    dry=float(posp1.y+pos[p2].y); //<vs_syymmetry>
+        const float drz=float(posp1.z-pos[p2].z);
+        const float rr2=drx*drx+dry*dry+drz*drz;
+        if(rr2<=Fourh2 && rr2>=ALMOSTZERO){
+          //-Wendland, Cubic Spline or Gaussian kernel.
+          float frx,fry,frz;
+          if(tker==KERNEL_Wendland)     GetKernelWendland(rr2,drx,dry,drz,frx,fry,frz);
+          else if(tker==KERNEL_Cubic)   GetKernelCubic   (rr2,drx,dry,drz,frx,fry,frz);
+          else if(tker==KERNEL_Gaussian)GetKernelGaussian(rr2,drx,dry,drz,frx,fry,frz);
+          else if(tker==KERNEL_WendlandC6)GetKernelWendlandC6(rr2,drx,dry,drz,frx,fry,frz);  //<vs_praticalsskq>
 
-            //===== Get mass of particle p2 ===== 
-            float massp2=(boundp2? MassBound: MassFluid); //-Contiene masa de particula segun sea bound o fluid.
-            bool ftp2=false;    //-Indicate if it is floating | Indica si es floating.
-            bool compute=true;  //-Deactivate when using DEM and if it is of type float-float or float-bound | Se desactiva cuando se usa DEM y es float-float o float-bound.
-            if(USE_FLOATING){
-              ftp2=CODE_IsFloating(code[p2]);
-              if(ftp2)massp2=FtObjs[CODE_GetTypeValue(code[p2])].massp;
-              #ifdef DELTA_HEAVYFLOATING
-                if(ftp2 && tdensity==DDT_DDT && massp2<=(MassFluid*1.2f))deltap1=FLT_MAX;
-              #else
-                if(ftp2 && tdensity==DDT_DDT)deltap1=FLT_MAX;
-              #endif
-              if(ftp2 && shift && shiftmode==SHIFT_NoBound)shiftposfsp1.x=FLT_MAX; //-With floating objects do not use shifting. | Con floatings anula shifting.
-              compute=!(USE_FTEXTERNAL && ftp1 && (boundp2 || ftp2)); //-Deactivate when using DEM and if it is of type float-float or float-bound. | Se desactiva cuando se usa DEM y es float-float o float-bound.
-            }
-
-            tfloat4 velrhop2=velrhop[p2];
-            if(rsym)velrhop2.y=-velrhop2.y; //<vs_syymmetry>
-            //===== Acceleration ===== 
-            if(compute){
-              const float prs=(pressp1+press[p2])/(rhopp1*velrhop2.w) + (tker==KERNEL_Cubic? GetKernelCubicTensil(rr2,rhopp1,pressp1,velrhop2.w,press[p2]): 0);
-              const float p_vpm=-prs*massp2;
-              acep1.x+=p_vpm*frx; acep1.y+=p_vpm*fry; acep1.z+=p_vpm*frz;
-            }
-
-            //-Density derivative.
-            const float dvx=velp1.x-velrhop2.x, dvy=velp1.y-velrhop2.y, dvz=velp1.z-velrhop2.z;
-            if(compute)arp1+=massp2*(dvx*frx+dvy*fry+dvz*frz);
-
-            const float cbar=(float)Cs0;
-            //-Density Diffusion Term (Molteni and Colagrossi 2009).
-            if(tdensity==DDT_DDT && deltap1!=FLT_MAX){
-              const float rhop1over2=rhopp1/velrhop2.w;
-              const float visc_densi=DDT2h*cbar*(rhop1over2-1.f)/(rr2+Eta2);
-              const float dot3=(drx*frx+dry*fry+drz*frz);
-              const float delta=visc_densi*dot3*massp2;
-              //deltap1=(boundp2? FLT_MAX: deltap1+delta);
-              deltap1=(boundp2 && TBoundary==BC_DBC? FLT_MAX: deltap1+delta);
-            }
-            //-Density Diffusion Term (Fourtakas et al 2019).  //<vs_dtt2_ini>
-            if((tdensity==DDT_DDT2 || (tdensity==DDT_DDT2Full && !boundp2)) && deltap1!=FLT_MAX && !ftp2){
-              const float rh=1.f+DDTgz*drz;
-              const float drhop=RhopZero*pow(rh,1.f/Gamma)-RhopZero;    
-              const float visc_densi=DDT2h*cbar*((velrhop2.w-rhopp1)-drhop)/(rr2+Eta2);
-              const float dot3=(drx*frx+dry*fry+drz*frz);
-              const float delta=visc_densi*dot3*massp2/velrhop2.w;
-              deltap1=(boundp2? FLT_MAX: deltap1-delta); //-blocks it makes it boil - bloody DBC
-            }  //<vs_dtt2_end>
-
-            //-Shifting correction.
-            if(shift && shiftposfsp1.x!=FLT_MAX){
-              const float massrhop=massp2/velrhop2.w;
-              const bool noshift=(boundp2 && (shiftmode==SHIFT_NoBound || (shiftmode==SHIFT_NoFixed && CODE_IsFixed(code[p2]))));
-              shiftposfsp1.x=(noshift? FLT_MAX: shiftposfsp1.x+massrhop*frx); //-For boundary do not use shifting. | Con boundary anula shifting.
-              shiftposfsp1.y+=massrhop*fry;
-              shiftposfsp1.z+=massrhop*frz;
-              shiftposfsp1.w-=massrhop*(drx*frx+dry*fry+drz*frz);
-            }
-
-            //===== Viscosity ===== 
-            if(compute){
-              const float dot=drx*dvx + dry*dvy + drz*dvz;
-              const float dot_rr2=dot/(rr2+Eta2);
-              visc=max(dot_rr2,visc);
-              if(tvisco==VISCO_Artificial){//-Artificial viscosity.
-                if(dot<0){
-                  const float amubar=H*dot_rr2;  //amubar=CTE.h*dot/(rr2+CTE.eta2);
-                  const float robar=(rhopp1+velrhop2.w)*0.5f;
-                  const float pi_visc=(-visco*cbar*amubar/robar)*massp2;
-                  acep1.x-=pi_visc*frx; acep1.y-=pi_visc*fry; acep1.z-=pi_visc*frz;
-                }
-              }
-              else if(tvisco==VISCO_LaminarSPS){//-Laminar+SPS viscosity. 
-                {//-Laminar contribution.
-                  const float robar2=(rhopp1+velrhop2.w);
-                  const float temp=4.f*visco/((rr2+Eta2)*robar2);  //-Simplification of: temp=2.0f*visco/((rr2+CTE.eta2)*robar); robar=(rhopp1+velrhop2.w)*0.5f;
-                  const float vtemp=massp2*temp*(drx*frx+dry*fry+drz*frz);  
-                  acep1.x+=vtemp*dvx; acep1.y+=vtemp*dvy; acep1.z+=vtemp*dvz;
-                }
-                //-SPS turbulence model.
-                float tau_xx=taup1.xx,tau_xy=taup1.xy,tau_xz=taup1.xz; //-taup1 is always zero when p1 is not a fluid particle. | taup1 siempre es cero cuando p1 no es fluid.
-                float tau_yy=taup1.yy,tau_yz=taup1.yz,tau_zz=taup1.zz;
-                if(!boundp2 && !ftp2){//-When p2 is a fluid particle. 
-                  tau_xx+=tau[p2].xx; tau_xy+=tau[p2].xy; tau_xz+=tau[p2].xz;
-                  tau_yy+=tau[p2].yy; tau_yz+=tau[p2].yz; tau_zz+=tau[p2].zz;
-                }
-                acep1.x+=massp2*(tau_xx*frx + tau_xy*fry + tau_xz*frz);
-                acep1.y+=massp2*(tau_xy*frx + tau_yy*fry + tau_yz*frz);
-                acep1.z+=massp2*(tau_xz*frx + tau_yz*fry + tau_zz*frz);
-                //-Velocity gradients.
-                if(!ftp1){//-When p1 is a fluid particle. 
-                  const float volp2=-massp2/velrhop2.w;
-                  float dv=dvx*volp2; gradvelp1.xx+=dv*frx; gradvelp1.xy+=dv*fry; gradvelp1.xz+=dv*frz;
-                        dv=dvy*volp2; gradvelp1.xy+=dv*frx; gradvelp1.yy+=dv*fry; gradvelp1.yz+=dv*frz;
-                        dv=dvz*volp2; gradvelp1.xz+=dv*frx; gradvelp1.yz+=dv*fry; gradvelp1.zz+=dv*frz;
-                  //-To compute tau terms we assume that gradvel.xy=gradvel.dudy+gradvel.dvdx, gradvel.xz=gradvel.dudz+gradvel.dwdx, gradvel.yz=gradvel.dvdz+gradvel.dwdy
-                  //-so only 6 elements are needed instead of 3x3.
-                }
-              }
-            }
-            rsym=(rsymp1 && !rsym && float(posp1.y-dry)<=Dosh); //<vs_syymmetry>
-            if(rsym)p2--;                                       //<vs_syymmetry>
+          //===== Get mass of particle p2 ===== 
+          float massp2=(boundp2? MassBound: MassFluid); //-Contiene masa de particula segun sea bound o fluid.
+          bool ftp2=false;    //-Indicate if it is floating | Indica si es floating.
+          bool compute=true;  //-Deactivate when using DEM and if it is of type float-float or float-bound | Se desactiva cuando se usa DEM y es float-float o float-bound.
+          if(USE_FLOATING){
+            ftp2=CODE_IsFloating(code[p2]);
+            if(ftp2)massp2=FtObjs[CODE_GetTypeValue(code[p2])].massp;
+            #ifdef DELTA_HEAVYFLOATING
+              if(ftp2 && tdensity==DDT_DDT && massp2<=(MassFluid*1.2f))deltap1=FLT_MAX;
+            #else
+              if(ftp2 && tdensity==DDT_DDT)deltap1=FLT_MAX;
+            #endif
+            if(ftp2 && shift && shiftmode==SHIFT_NoBound)shiftposfsp1.x=FLT_MAX; //-With floating objects do not use shifting. | Con floatings anula shifting.
+            compute=!(USE_FTEXTERNAL && ftp1 && (boundp2 || ftp2)); //-Deactivate when using DEM and if it is of type float-float or float-bound. | Se desactiva cuando se usa DEM y es float-float o float-bound.
           }
-          else rsym=false;                                      //<vs_syymmetry>
+
+          tfloat4 velrhop2=velrhop[p2];
+          if(rsym)velrhop2.y=-velrhop2.y; //<vs_syymmetry>
+          //===== Acceleration ===== 
+          if(compute){
+            const float prs=(pressp1+press[p2])/(rhopp1*velrhop2.w) + (tker==KERNEL_Cubic? GetKernelCubicTensil(rr2,rhopp1,pressp1,velrhop2.w,press[p2]): 0);
+            const float p_vpm=-prs*massp2;
+            acep1.x+=p_vpm*frx; acep1.y+=p_vpm*fry; acep1.z+=p_vpm*frz;
+          }
+
+          //-Density derivative.
+          const float dvx=velp1.x-velrhop2.x, dvy=velp1.y-velrhop2.y, dvz=velp1.z-velrhop2.z;
+          if(compute)arp1+=massp2*(dvx*frx+dvy*fry+dvz*frz);
+
+          const float cbar=(float)Cs0;
+          //-Density Diffusion Term (Molteni and Colagrossi 2009).
+          if(tdensity==DDT_DDT && deltap1!=FLT_MAX){
+            const float rhop1over2=rhopp1/velrhop2.w;
+            const float visc_densi=DDT2h*cbar*(rhop1over2-1.f)/(rr2+Eta2);
+            const float dot3=(drx*frx+dry*fry+drz*frz);
+            const float delta=visc_densi*dot3*massp2;
+            //deltap1=(boundp2? FLT_MAX: deltap1+delta);
+            deltap1=(boundp2 && TBoundary==BC_DBC? FLT_MAX: deltap1+delta);
+          }
+          //-Density Diffusion Term (Fourtakas et al 2019).  //<vs_dtt2_ini>
+          if((tdensity==DDT_DDT2 || (tdensity==DDT_DDT2Full && !boundp2)) && deltap1!=FLT_MAX && !ftp2){
+            const float rh=1.f+DDTgz*drz;
+            const float drhop=RhopZero*pow(rh,1.f/Gamma)-RhopZero;    
+            const float visc_densi=DDT2h*cbar*((velrhop2.w-rhopp1)-drhop)/(rr2+Eta2);
+            const float dot3=(drx*frx+dry*fry+drz*frz);
+            const float delta=visc_densi*dot3*massp2/velrhop2.w;
+            deltap1=(boundp2? FLT_MAX: deltap1-delta); //-blocks it makes it boil - bloody DBC
+          }  //<vs_dtt2_end>
+
+          //-Shifting correction.
+          if(shift && shiftposfsp1.x!=FLT_MAX){
+            const float massrhop=massp2/velrhop2.w;
+            const bool noshift=(boundp2 && (shiftmode==SHIFT_NoBound || (shiftmode==SHIFT_NoFixed && CODE_IsFixed(code[p2]))));
+            shiftposfsp1.x=(noshift? FLT_MAX: shiftposfsp1.x+massrhop*frx); //-For boundary do not use shifting. | Con boundary anula shifting.
+            shiftposfsp1.y+=massrhop*fry;
+            shiftposfsp1.z+=massrhop*frz;
+            shiftposfsp1.w-=massrhop*(drx*frx+dry*fry+drz*frz);
+          }
+
+          //===== Viscosity ===== 
+          if(compute){
+            const float dot=drx*dvx + dry*dvy + drz*dvz;
+            const float dot_rr2=dot/(rr2+Eta2);
+            visc=max(dot_rr2,visc);
+            if(tvisco==VISCO_Artificial){//-Artificial viscosity.
+              if(dot<0){
+                const float amubar=H*dot_rr2;  //amubar=CTE.h*dot/(rr2+CTE.eta2);
+                const float robar=(rhopp1+velrhop2.w)*0.5f;
+                const float pi_visc=(-visco*cbar*amubar/robar)*massp2;
+                acep1.x-=pi_visc*frx; acep1.y-=pi_visc*fry; acep1.z-=pi_visc*frz;
+              }
+            }
+            else if(tvisco==VISCO_LaminarSPS){//-Laminar+SPS viscosity. 
+              {//-Laminar contribution.
+                const float robar2=(rhopp1+velrhop2.w);
+                const float temp=4.f*visco/((rr2+Eta2)*robar2);  //-Simplification of: temp=2.0f*visco/((rr2+CTE.eta2)*robar); robar=(rhopp1+velrhop2.w)*0.5f;
+                const float vtemp=massp2*temp*(drx*frx+dry*fry+drz*frz);  
+                acep1.x+=vtemp*dvx; acep1.y+=vtemp*dvy; acep1.z+=vtemp*dvz;
+              }
+              //-SPS turbulence model.
+              float tau_xx=taup1.xx,tau_xy=taup1.xy,tau_xz=taup1.xz; //-taup1 is always zero when p1 is not a fluid particle. | taup1 siempre es cero cuando p1 no es fluid.
+              float tau_yy=taup1.yy,tau_yz=taup1.yz,tau_zz=taup1.zz;
+              if(!boundp2 && !ftp2){//-When p2 is a fluid particle. 
+                tau_xx+=tau[p2].xx; tau_xy+=tau[p2].xy; tau_xz+=tau[p2].xz;
+                tau_yy+=tau[p2].yy; tau_yz+=tau[p2].yz; tau_zz+=tau[p2].zz;
+              }
+              acep1.x+=massp2*(tau_xx*frx + tau_xy*fry + tau_xz*frz);
+              acep1.y+=massp2*(tau_xy*frx + tau_yy*fry + tau_yz*frz);
+              acep1.z+=massp2*(tau_xz*frx + tau_yz*fry + tau_zz*frz);
+              //-Velocity gradients.
+              if(!ftp1){//-When p1 is a fluid particle. 
+                const float volp2=-massp2/velrhop2.w;
+                float dv=dvx*volp2; gradvelp1.xx+=dv*frx; gradvelp1.xy+=dv*fry; gradvelp1.xz+=dv*frz;
+                      dv=dvy*volp2; gradvelp1.xy+=dv*frx; gradvelp1.yy+=dv*fry; gradvelp1.yz+=dv*frz;
+                      dv=dvz*volp2; gradvelp1.xz+=dv*frx; gradvelp1.yz+=dv*fry; gradvelp1.zz+=dv*frz;
+                //-To compute tau terms we assume that gradvel.xy=gradvel.dudy+gradvel.dvdx, gradvel.xz=gradvel.dudz+gradvel.dwdx, gradvel.yz=gradvel.dvdz+gradvel.dwdy
+                //-so only 6 elements are needed instead of 3x3.
+              }
+            }
+          }
+          rsym=(rsymp1 && !rsym && float(posp1.y-dry)<=Dosh); //<vs_syymmetry>
+          if(rsym)p2--;                                       //<vs_syymmetry>
         }
+        else rsym=false;                                      //<vs_syymmetry>
       }
     }
     //-Sum results together. | Almacena resultados.
@@ -1111,9 +1092,7 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity,bool sh
 /// Perform DEM interaction between particles Floating-Bound & Floating-Floating //(DEM)
 /// Realiza interaccion DEM entre particulas Floating-Bound & Floating-Floating //(DEM)
 //==============================================================================
-void JSphCpu::InteractionForcesDEM
-  (unsigned nfloat,tint4 nc,int hdiv,unsigned cellfluid
-  ,const unsigned *beginendcell,tint3 cellzero,const unsigned *dcell
+void JSphCpu::InteractionForcesDEM(unsigned nfloat,StDivData divdata,const unsigned *dcell
   ,const unsigned *ftridp,const StDemData* demdata
   ,const tdouble3 *pos,const tfloat4 *velrhop
   ,const typecode *code,const unsigned *idp
@@ -1142,67 +1121,59 @@ void JSphCpu::InteractionForcesDEM
       const float restitup1=demdata[tavp1].restitu;
       const float ftmassp1=demdata[tavp1].massp;
 
-      //-Get interaction limits.
-      int cxini,cxfin,yini,yfin,zini,zfin;
-      GetInteractionCells(dcell[p1],hdiv,nc,cellzero,cxini,cxfin,yini,yfin,zini,zfin);
-
       //-Search for neighbours in adjacent cells (first bound and then fluid+floating).
-      for(unsigned cellinitial=0;cellinitial<=cellfluid;cellinitial+=cellfluid){
-        for(int z=zini;z<zfin;z++){
-          const int zmod=(nc.w)*z+cellinitial; //-Sum from start of fluid or boundary cells. | Le suma donde empiezan las celdas de fluido o bound.
-          for(int y=yini;y<yfin;y++){
-            int ymod=zmod+nc.x*y;
-            const unsigned pini=beginendcell[cxini+ymod];
-            const unsigned pfin=beginendcell[cxfin+ymod];
+      for(byte tpfluid=0;tpfluid<=1;tpfluid++){
+        const StNgSearch ngs=NgSearchInit(dcell[p1],!tpfluid,divdata);
+        for(int z=ngs.zini;z<ngs.zfin;z++)for(int y=ngs.yini;y<ngs.yfin;y++){
+          const tuint2 pif=NgSearchParticleRange(y,z,ngs,divdata);
 
-            //-Interaction of Floating Object particles with type Fluid or Bound. | Interaccion de Floating con varias Fluid o Bound.
-            //-----------------------------------------------------------------------------------------------------------------------
-            for(unsigned p2=pini;p2<pfin;p2++)if(CODE_IsNotFluid(code[p2]) && tavp1!=CODE_GetTypeAndValue(code[p2])){
-              const float drx=float(posp1.x-pos[p2].x);
-              const float dry=float(posp1.y-pos[p2].y);
-              const float drz=float(posp1.z-pos[p2].z);
-              const float rr2=drx*drx+dry*dry+drz*drz;
-              const float rad=sqrt(rr2);
+          //-Interaction of Floating Object particles with type Fluid or Bound. | Interaccion de Floating con varias Fluid o Bound.
+          //-----------------------------------------------------------------------------------------------------------------------
+          for(unsigned p2=pif.x;p2<pif.y;p2++)if(CODE_IsNotFluid(code[p2]) && tavp1!=CODE_GetTypeAndValue(code[p2])){
+            const float drx=float(posp1.x-pos[p2].x);
+            const float dry=float(posp1.y-pos[p2].y);
+            const float drz=float(posp1.z-pos[p2].z);
+            const float rr2=drx*drx+dry*dry+drz*drz;
+            const float rad=sqrt(rr2);
 
-              //-Calculate max value of demdt. | Calcula valor maximo de demdt.
-              const typecode tavp2=CODE_GetTypeAndValue(code[p2]);
-              const float masstotp2=demdata[tavp2].mass;
-              const float taup2=demdata[tavp2].tau;
-              const float kfricp2=demdata[tavp2].kfric;
-              const float restitup2=demdata[tavp2].restitu;
-              //const StDemData *demp2=demobjs+CODE_GetTypeAndValue(code[p2]);
+            //-Calculate max value of demdt. | Calcula valor maximo de demdt.
+            const typecode tavp2=CODE_GetTypeAndValue(code[p2]);
+            const float masstotp2=demdata[tavp2].mass;
+            const float taup2=demdata[tavp2].tau;
+            const float kfricp2=demdata[tavp2].kfric;
+            const float restitup2=demdata[tavp2].restitu;
+            //const StDemData *demp2=demobjs+CODE_GetTypeAndValue(code[p2]);
 
-              const float nu_mass=(!cellinitial? masstotp1/2: masstotp1*masstotp2/(masstotp1+masstotp2)); //-Con boundary toma la propia masa del floating 1.
-              const float kn=4/(3*(taup1+taup2))*sqrt(float(Dp)/4); //-Generalized rigidity - Lemieux 2008.
-              const float dvx=velrhop[p1].x-velrhop[p2].x, dvy=velrhop[p1].y-velrhop[p2].y, dvz=velrhop[p1].z-velrhop[p2].z; //vji
-              const float nx=drx/rad, ny=dry/rad, nz=drz/rad; //normal_ji               
-              const float vn=dvx*nx+dvy*ny+dvz*nz; //vji.nji
-              const float demvisc=0.2f/(3.21f*(pow(nu_mass/kn,0.4f)*pow(fabs(vn),-0.2f))/40.f);
-              if(demdtp1<demvisc)demdtp1=demvisc;
+            const float nu_mass=(!tpfluid? masstotp1/2: masstotp1*masstotp2/(masstotp1+masstotp2)); //-Con boundary toma la propia masa del floating 1.
+            const float kn=4/(3*(taup1+taup2))*sqrt(float(Dp)/4); //-Generalized rigidity - Lemieux 2008.
+            const float dvx=velrhop[p1].x-velrhop[p2].x, dvy=velrhop[p1].y-velrhop[p2].y, dvz=velrhop[p1].z-velrhop[p2].z; //vji
+            const float nx=drx/rad, ny=dry/rad, nz=drz/rad; //normal_ji               
+            const float vn=dvx*nx+dvy*ny+dvz*nz; //vji.nji
+            const float demvisc=0.2f/(3.21f*(pow(nu_mass/kn,0.4f)*pow(fabs(vn),-0.2f))/40.f);
+            if(demdtp1<demvisc)demdtp1=demvisc;
 
-              const float over_lap=1.0f*float(Dp)-rad; //-(ri+rj)-|dij|
-              if(over_lap>0.0f){ //-Contact.
-                //-Normal.
-                const float eij=(restitup1+restitup2)/2;
-                const float gn=-(2.0f*log(eij)*sqrt(nu_mass*kn))/(sqrt(float(PI)+log(eij)*log(eij))); //-Generalized damping - Cummins 2010.
-                //const float gn=0.08f*sqrt(nu_mass*sqrt(float(Dp)/2)/((taup1+taup2)/2)); //-Generalized damping - Lemieux 2008.
-                const float rep=kn*pow(over_lap,1.5f);
-                const float fn=rep-gn*pow(over_lap,0.25f)*vn;
-                float acef=fn/ftmassp1; //-Divides by the mass of particle to obtain the acceleration.
-                acep1.x+=(acef*nx); acep1.y+=(acef*ny); acep1.z+=(acef*nz); //-Force is applied in the normal between the particles.
-                //-Tangential.
-                const float dvxt=dvx-vn*nx, dvyt=dvy-vn*ny, dvzt=dvz-vn*nz; //Vji_t
-                const float vt=sqrt(dvxt*dvxt + dvyt*dvyt + dvzt*dvzt);
-                float tx=0, ty=0, tz=0; //-Tang vel unit vector.
-                if(vt!=0){ tx=dvxt/vt; ty=dvyt/vt; tz=dvzt/vt; }
-                const float ft_elast=2*(kn*float(DemDtForce)-gn)*vt/7; //-Elastic frictional string -->  ft_elast=2*(kn*fdispl-gn*vt)/7; fdispl=dtforce*vt;
-                const float kfric_ij=(kfricp1+kfricp2)/2;
-                float ft=kfric_ij*fn*tanh(8*vt);  //-Coulomb.
-                ft=(ft<ft_elast? ft: ft_elast);   //-Not above yield criteria, visco-elastic model.
-                acef=ft/ftmassp1; //-Divides by the mass of particle to obtain the acceleration.
-                acep1.x+=(acef*tx); acep1.y+=(acef*ty); acep1.z+=(acef*tz);
-              } 
-            }
+            const float over_lap=1.0f*float(Dp)-rad; //-(ri+rj)-|dij|
+            if(over_lap>0.0f){ //-Contact.
+              //-Normal.
+              const float eij=(restitup1+restitup2)/2;
+              const float gn=-(2.0f*log(eij)*sqrt(nu_mass*kn))/(sqrt(float(PI)+log(eij)*log(eij))); //-Generalized damping - Cummins 2010.
+              //const float gn=0.08f*sqrt(nu_mass*sqrt(float(Dp)/2)/((taup1+taup2)/2)); //-Generalized damping - Lemieux 2008.
+              const float rep=kn*pow(over_lap,1.5f);
+              const float fn=rep-gn*pow(over_lap,0.25f)*vn;
+              float acef=fn/ftmassp1; //-Divides by the mass of particle to obtain the acceleration.
+              acep1.x+=(acef*nx); acep1.y+=(acef*ny); acep1.z+=(acef*nz); //-Force is applied in the normal between the particles.
+              //-Tangential.
+              const float dvxt=dvx-vn*nx, dvyt=dvy-vn*ny, dvzt=dvz-vn*nz; //Vji_t
+              const float vt=sqrt(dvxt*dvxt + dvyt*dvyt + dvzt*dvzt);
+              float tx=0, ty=0, tz=0; //-Tang vel unit vector.
+              if(vt!=0){ tx=dvxt/vt; ty=dvyt/vt; tz=dvzt/vt; }
+              const float ft_elast=2*(kn*float(DemDtForce)-gn)*vt/7; //-Elastic frictional string -->  ft_elast=2*(kn*fdispl-gn*vt)/7; fdispl=dtforce*vt;
+              const float kfric_ij=(kfricp1+kfricp2)/2;
+              float ft=kfric_ij*fn*tanh(8*vt);  //-Coulomb.
+              ft=(ft<ft_elast? ft: ft_elast);   //-Not above yield criteria, visco-elastic model.
+              acef=ft/ftmassp1; //-Divides by the mass of particle to obtain the acceleration.
+              acep1.x+=(acef*tx); acep1.y+=(acef*ty); acep1.z+=(acef*tz);
+            } 
           }
         }
       }
@@ -1256,26 +1227,28 @@ void JSphCpu::ComputeSpsTau(unsigned n,unsigned pini,const tfloat4 *velrhop,cons
 template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity,bool shift>
   void JSphCpu::Interaction_ForcesCpuT(const stinterparmsc &t,StInterResultc &res)const
 {
-  const tint4 nc=TInt4(int(t.ncells.x),int(t.ncells.y),int(t.ncells.z),int(t.ncells.x*t.ncells.y));
-  const tint3 cellzero=TInt3(t.cellmin.x,t.cellmin.y,t.cellmin.z);
-  const unsigned cellfluid=nc.w*nc.z+1;
-  const int hdiv=(CellMode==CELLMODE_H? 2: 1);
   float viscdt=res.viscdt;
   if(t.npf){
     //-Interaction Fluid-Fluid.
-    InteractionForcesFluid<tker,ftmode,tvisco,tdensity,shift> (t.npf,t.npb,nc,hdiv,cellfluid,Visco                 ,t.begincell,cellzero,t.dcell,t.spstau,t.spsgradvel,t.pos,t.velrhop,t.code,t.idp,t.press,viscdt,t.ar,t.ace,t.delta,t.shiftmode,t.shiftposfs);
+    InteractionForcesFluid<tker,ftmode,tvisco,tdensity,shift> (t.npf,t.npb,false,Visco                 
+      ,t.divdata,t.dcell,t.spstau,t.spsgradvel,t.pos,t.velrhop,t.code,t.idp,t.press
+      ,viscdt,t.ar,t.ace,t.delta,t.shiftmode,t.shiftposfs);
     //-Interaction Fluid-Bound.
-    InteractionForcesFluid<tker,ftmode,tvisco,tdensity,shift> (t.npf,t.npb,nc,hdiv,0        ,Visco*ViscoBoundFactor,t.begincell,cellzero,t.dcell,t.spstau,t.spsgradvel,t.pos,t.velrhop,t.code,t.idp,t.press,viscdt,t.ar,t.ace,t.delta,t.shiftmode,t.shiftposfs);
+    InteractionForcesFluid<tker,ftmode,tvisco,tdensity,shift> (t.npf,t.npb,true ,Visco*ViscoBoundFactor
+      ,t.divdata,t.dcell,t.spstau,t.spsgradvel,t.pos,t.velrhop,t.code,t.idp,t.press
+      ,viscdt,t.ar,t.ace,t.delta,t.shiftmode,t.shiftposfs);
 
     //-Interaction of DEM Floating-Bound & Floating-Floating. //(DEM)
-    if(UseDEM)InteractionForcesDEM(CaseNfloat,nc,hdiv,cellfluid,t.begincell,cellzero,t.dcell,FtRidp,DemData,t.pos,t.velrhop,t.code,t.idp,viscdt,t.ace);
+    if(UseDEM)InteractionForcesDEM(CaseNfloat,t.divdata,t.dcell
+      ,FtRidp,DemData,t.pos,t.velrhop,t.code,t.idp,viscdt,t.ace);
 
     //-Computes tau for Laminar+SPS.
     if(tvisco==VISCO_LaminarSPS)ComputeSpsTau(t.npf,t.npb,t.velrhop,t.spsgradvel,t.spstau);
   }
   if(t.npbok){
     //-Interaction Bound-Fluid.
-    InteractionForcesBound<tker,ftmode> (t.npbok,0,nc,hdiv,cellfluid,t.begincell,cellzero,t.dcell,t.pos,t.velrhop,t.code,t.idp,viscdt,t.ar);
+    InteractionForcesBound<tker,ftmode> (t.npbok,0,t.divdata,t.dcell
+      ,t.pos,t.velrhop,t.code,t.idp,viscdt,t.ar);
   }
   res.viscdt=viscdt;
 }
