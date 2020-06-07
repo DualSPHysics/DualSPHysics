@@ -807,7 +807,7 @@ void JSphCpu::GetInteractionCells(const tdouble3 &pos
 /// Realiza interaccion entre particulas. Bound-Fluid/Float
 //==============================================================================
 template<TpKernel tker,TpFtMode ftmode> void JSphCpu::InteractionForcesBound
-  (unsigned n,unsigned pinit,StDivData divdata,const unsigned *dcell
+  (unsigned n,unsigned pinit,StDivDataCpu divdata,const unsigned *dcell
   ,const tdouble3 *pos,const tfloat4 *velrhop,const typecode *code,const unsigned *idp
   ,float &viscdt,float *ar)const
 {
@@ -895,7 +895,7 @@ template<TpKernel tker,TpFtMode ftmode> void JSphCpu::InteractionForcesBound
 //==============================================================================
 template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity,bool shift> 
   void JSphCpu::InteractionForcesFluid(unsigned n,unsigned pinit,bool boundp2,float visco
-  ,StDivData divdata,const unsigned *dcell
+  ,StDivDataCpu divdata,const unsigned *dcell
   ,const tsymatrix3f* tau,tsymatrix3f* gradvel
   ,const tdouble3 *pos,const tfloat4 *velrhop,const typecode *code,const unsigned *idp
   ,const float *press 
@@ -1092,7 +1092,7 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity,bool sh
 /// Perform DEM interaction between particles Floating-Bound & Floating-Floating //(DEM)
 /// Realiza interaccion DEM entre particulas Floating-Bound & Floating-Floating //(DEM)
 //==============================================================================
-void JSphCpu::InteractionForcesDEM(unsigned nfloat,StDivData divdata,const unsigned *dcell
+void JSphCpu::InteractionForcesDEM(unsigned nfloat,StDivDataCpu divdata,const unsigned *dcell
   ,const unsigned *ftridp,const StDemData* demdata
   ,const tdouble3 *pos,const tfloat4 *velrhop
   ,const typecode *code,const unsigned *idp

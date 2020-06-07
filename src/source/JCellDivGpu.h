@@ -45,6 +45,7 @@ protected:
   const TpCellMode CellMode;    ///<Mode of cell division. | Modo de division en celdas.
   const unsigned Hdiv;          ///<Value for those divided in DosH. | Valor por el que se divide a DosH.
   const float Scell,OvScell;
+  const float Dosh;
   const tdouble3 Map_PosMin,Map_PosMax,Map_PosDif;
   const tuint3 Map_Cells;
   const unsigned CaseNbound,CaseNfixed,CaseNpb;
@@ -137,7 +138,7 @@ protected:
 
 public:
   JCellDivGpu(bool stable,bool floating,byte periactive
-    ,TpCellMode cellmode,float scell,tdouble3 mapposmin,tdouble3 mapposmax,tuint3 mapcells
+    ,TpCellMode cellmode,float scell,float dosh,tdouble3 mapposmin,tdouble3 mapposmax,tuint3 mapcells
     ,unsigned casenbound,unsigned casenfixed,unsigned casenpb,JLog2 *log,std::string dirout
     ,bool allocfullnct=true,float overmemorynp=CELLDIV_OVERMEMORYNP,word overmemorycells=CELLDIV_OVERMEMORYCELLS);
   ~JCellDivGpu();
@@ -181,7 +182,7 @@ public:
   unsigned GetNpfOutIgnore()const{ return(NpfOutIgnore); }
 
   //:const unsigned* GetCellPart()const{ return(CellPart); }
-  const int2* GetBeginCell(){ return(BeginEndCell); }
+  const int2* GetBeginCell()const{ return(BeginEndCell); }
 
   void SetIncreaseNp(unsigned increasenp){ IncreaseNp=increasenp; }
 

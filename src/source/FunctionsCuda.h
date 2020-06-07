@@ -112,6 +112,7 @@ int _ConvertSMVer2Cores(int major, int minor);
 size_t Malloc(byte     **,unsigned count);
 size_t Malloc(word     **,unsigned count);
 size_t Malloc(unsigned **,unsigned count);
+size_t Malloc(uint4    **,unsigned count);
 size_t Malloc(int      **,unsigned count);
 size_t Malloc(int2     **,unsigned count);
 size_t Malloc(float    **,unsigned count);

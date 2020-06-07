@@ -199,7 +199,7 @@ void JSphGpuSingle::ConfigDomain(){
   //-Creates object for Celldiv on the GPU and selects a valid cellmode.
   //-Crea objeto para divide en GPU y selecciona un cellmode valido.
   CellDivSingle=new JCellDivGpuSingle(Stable,FtCount!=0,PeriActive,CellMode
-    ,Scell,Map_PosMin,Map_PosMax,Map_Cells,CaseNbound,CaseNfixed,CaseNpb,Log,DirOut);
+    ,Scell,Dosh,Map_PosMin,Map_PosMax,Map_Cells,CaseNbound,CaseNfixed,CaseNpb,Log,DirOut);
   CellDivSingle->DefineDomain(DomCellCode,DomCelIni,DomCelFin,DomPosMin,DomPosMax);
   ConfigCellDiv((JCellDivGpu*)CellDivSingle);
 
@@ -439,12 +439,9 @@ void JSphGpuSingle::Interaction_Forces(TpInterStep interstep){
     ,Symmetry //<vs_syymmetry>
     ,TKernel,FtMode
     ,lamsps,TDensity,ShiftingMode
-    ,CellMode
     ,Visco*ViscoBoundFactor,Visco
     ,bsbound,bsfluid,Np,Npb,NpbOk
-    ,0,DivAxis
-    ,CellDivSingle->GetNcells(),CellDivSingle->GetCellDomainMin()
-    ,CellDivSingle->GetBeginCell(),Dcellg
+    ,0,CellDivSingle->GetCellDivData(),Dcellg
     ,Posxyg,Poszg,PosCellg,Velrhopg,Idpg,Codeg
     ,FtoMasspg,SpsTaug
     ,ViscDtg,Arg,Aceg,Deltag
@@ -454,7 +451,9 @@ void JSphGpuSingle::Interaction_Forces(TpInterStep interstep){
   cusph::Interaction_Forces(parms);
 
   //-Interaction DEM Floating-Bound & Floating-Floating. //(DEM)
-  if(UseDEM)cusph::Interaction_ForcesDem(CellMode,BlockSizes.forcesdem,CaseNfloat,CellDivSingle->GetNcells(),CellDivSingle->GetBeginCell(),CellDivSingle->GetCellDomainMin(),Dcellg,FtRidpg,DemDatag,FtoMasspg,float(DemDtForce),PosCellg,Velrhopg,Codeg,Idpg,ViscDtg,Aceg,NULL);
+  if(UseDEM)cusph::Interaction_ForcesDem(BlockSizes.forcesdem,CaseNfloat
+    ,CellDivSingle->GetCellDivData(),Dcellg,FtRidpg,DemDatag,FtoMasspg,float(DemDtForce)
+    ,PosCellg,Velrhopg,Codeg,Idpg,ViscDtg,Aceg,NULL);
 
   //-For 2D simulations always overrides the 2nd component (Y axis).
   //-Para simulaciones 2D anula siempre la 2nd componente.
@@ -724,7 +723,11 @@ void JSphGpuSingle::ComputePips(bool run){
   if(run || DsPips->CheckRun(Nstep)){
     TimerSim.Stop();
     const double timesim=TimerSim.GetElapsedTimeD()/1000.;
-    //DsPips->ComputeCpu(CSP,Nstep,TimeStep,timesim,OmpThreads,Np,Npb,NpbOk,CellDivSingle->GetCellDivData(),Dcellc,Posc);
+    const unsigned sauxmemg=ArraysGpu->GetArraySize();
+    unsigned* auxmemg=ArraysGpu->ReserveUint();
+    DsPips->ComputeGpu(Nstep,TimeStep,timesim,Np,Npb,NpbOk
+      ,CellDivSingle->GetCellDivData(),Dcellg,PosCellg,sauxmemg,auxmemg);
+    ArraysGpu->Free(auxmemg);
   }
 }
 

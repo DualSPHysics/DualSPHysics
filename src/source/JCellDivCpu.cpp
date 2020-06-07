@@ -462,8 +462,8 @@ tdouble3 JCellDivCpu::GetDomainLimits(bool limitmin,unsigned slicecellmin)const{
 /// Returns cell division data for neighborhood search.
 /// Devuelve datis de division en celdas para busqueda de vecinos.
 //==============================================================================
-StDivData JCellDivCpu::GetCellDivData()const{
-  StDivData ret;
+StDivDataCpu JCellDivCpu::GetCellDivData()const{
+  StDivDataCpu ret;
   ret.hdiv=Hdiv;
   ret.nc=TInt4(int(Ncx),int(Ncy),int(Ncz),int(Nsheet));
   ret.cellfluid=Nct+1;

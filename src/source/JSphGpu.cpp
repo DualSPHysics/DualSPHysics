@@ -675,16 +675,15 @@ void JSphGpu::ConfigBlockSizes(bool usezone,bool useperi){
     //-Collects kernel information.
     StKerInfo kerinfo;
     memset(&kerinfo,0,sizeof(StKerInfo));
+    StDivDataGpu divdatag;
+    memset(&divdatag,0,sizeof(StDivDataGpu));
     #ifndef DISABLE_BSMODES
       const StInterParmsg parms=StrInterParmsg(Simulate2D
         ,Symmetry  //<vs_syymmetry>
         ,TKernel,FtMode
         ,lamsps,TDensity,ShiftingMode
-        ,CellMode
         ,0,0,0,0,100,0,0
-        ,0,DivAxis
-        ,TUint3(0),TUint3(0)
-        ,NULL,NULL
+        ,0,divdatag,NULL
         ,NULL,NULL,NULL
         ,NULL,NULL,NULL
         ,NULL,NULL
@@ -693,7 +692,7 @@ void JSphGpu::ConfigBlockSizes(bool usezone,bool useperi){
         ,NULL
         ,NULL,&kerinfo);
       cusph::Interaction_Forces(parms);
-      if(UseDEM)cusph::Interaction_ForcesDem(CellMode,BlockSizes.forcesdem,CaseNfloat,TUint3(0),NULL,TUint3(0),NULL,NULL,NULL,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,&kerinfo);
+      if(UseDEM)cusph::Interaction_ForcesDem(BlockSizes.forcesdem,CaseNfloat,divdatag,NULL,NULL,NULL,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,&kerinfo);
     #endif
     //Log->Printf("====> bound -> rg:%d  bs:%d  bsmax:%d",kerinfo.forcesbound_rg,kerinfo.forcesbound_bs,kerinfo.forcesbound_bsmax);
     //Log->Printf("====> fluid -> rg:%d  bs:%d  bsmax:%d",kerinfo.forcesfluid_rg,kerinfo.forcesfluid_bs,kerinfo.forcesfluid_bsmax);

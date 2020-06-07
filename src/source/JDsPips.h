@@ -30,8 +30,9 @@
 
 #include "JObject.h"
 #include "DualSphDef.h"
+#include "JCellDivDataCpu.h"
 #ifdef _WITHGPU
-  #include <cuda_runtime_api.h>
+  #include "JCellDivDataGpu.h"
 #endif
 
 #include <string>
@@ -63,13 +64,16 @@ protected:
 
   unsigned NextNstep;
   std::vector<StPipsInfo> Data;
-
   unsigned NewData;
+
+  unsigned SizeResultAux;
+  ullong* ResultAux;  //-To copy final result from GPU memory. [SizeResultAux]
+
 
   double GetGPIs(unsigned cdata)const;
   double GetGPIsType(unsigned cdata,bool fluid)const;
   double GetCheckGPIsType(unsigned cdata,bool fluid)const;
-  tdouble2 JDsPips::GetTotalPIs()const;
+  tdouble2 GetTotalPIs()const;
 
 public:
   const bool Cpu;
@@ -89,15 +93,17 @@ public:
 
   bool CheckRun(unsigned nstep)const{ return(nstep>=NextNstep); }
 
-  void ComputeCpu(const StCteSph &csp,unsigned nstep,double tstep,double tsim
-    ,int ompthreads,unsigned np,unsigned npb,unsigned npbok,StDivData divdata
-    ,const unsigned *dcell,const tdouble3 *pos);
+  void ComputeCpu(unsigned nstep,double tstep,double tsim
+    ,const StCteSph &csp,int ompthreads
+    ,unsigned np,unsigned npb,unsigned npbok
+    ,StDivDataCpu dvd,const unsigned *dcell,const tdouble3 *pos);
 
-
-//#ifdef _WITHGPU
-//  void RunGpu(double timestep,tfloat3 gravity,unsigned n,unsigned pini
-//    ,const typecode *code,const double2 *posxy,const double *posz,const float4 *velrhop,float3 *ace);
-//#endif
+#ifdef _WITHGPU
+  void ComputeGpu(unsigned nstep,double tstep,double tsim
+    ,unsigned np,unsigned npb,unsigned npbok
+    ,StDivDataGpu dvd,const unsigned *dcell,const float4 *poscell
+    ,unsigned sauxmem,unsigned *auxmem);
+#endif
 
 };
 

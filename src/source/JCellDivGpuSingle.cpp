@@ -29,9 +29,9 @@ using namespace std;
 /// Constructor.
 //==============================================================================
 JCellDivGpuSingle::JCellDivGpuSingle(bool stable,bool floating,byte periactive
-  ,TpCellMode cellmode,float scell,tdouble3 mapposmin,tdouble3 mapposmax,tuint3 mapcells
+  ,TpCellMode cellmode,float scell,float dosh,tdouble3 mapposmin,tdouble3 mapposmax,tuint3 mapcells
   ,unsigned casenbound,unsigned casenfixed,unsigned casenpb,JLog2 *log,std::string dirout)
-  :JCellDivGpu(stable,floating,periactive,cellmode,scell,mapposmin,mapposmax,mapcells
+  :JCellDivGpu(stable,floating,periactive,cellmode,scell,dosh,mapposmin,mapposmax,mapcells
   ,casenbound,casenfixed,casenpb,log,dirout)
 {
   ClassName="JCellDivGpuSingle";
@@ -212,6 +212,14 @@ void JCellDivGpuSingle::Divide(unsigned npb1,unsigned npf1,unsigned npb2,unsigne
   if(DivideFull)NdivFull++;
   Check_CudaErroor("Error in NL construction.");
   TmgStop(timers,TMG_NlCellBegin);
+}
+
+//==============================================================================
+/// Returns cell division data for neighborhood search.
+/// Devuelve datos de division en celdas para busqueda de vecinos.
+//==============================================================================
+StDivDataGpu JCellDivGpuSingle::GetCellDivData()const{
+  return(MakeDivDataGpu(Hdiv,GetNcells(),GetCellDomainMin(),GetBeginCell(),DomCellCode,Dosh));
 }
 
 

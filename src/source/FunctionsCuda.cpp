@@ -264,6 +264,13 @@ size_t Malloc(unsigned **ptr,unsigned count){
 }
 
 //==============================================================================
+/// Allocates memory for uint4 on GPU.
+//==============================================================================
+size_t Malloc(uint4 **ptr,unsigned count){
+  size_t size=sizeof(uint4)*count;  cudaMalloc((void**)ptr,size);  return(size);
+}
+
+//==============================================================================
 /// Allocates memory for int on GPU.
 //==============================================================================
 size_t Malloc(int **ptr,unsigned count){

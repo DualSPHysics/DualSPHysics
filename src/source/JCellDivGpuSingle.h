@@ -22,6 +22,7 @@
 #define _JCellDivGpuSingle_
 
 #include "JCellDivGpu.h"
+#include "JCellDivDataGpu.h"
 
 //##############################################################################
 //# JCellDivGpuSingle
@@ -39,10 +40,12 @@ protected:
 
 public:
   JCellDivGpuSingle(bool stable,bool floating,byte periactive,
-    TpCellMode cellmode,float scell,tdouble3 mapposmin,tdouble3 mapposmax,tuint3 mapcells
+    TpCellMode cellmode,float scell,float dosh,tdouble3 mapposmin,tdouble3 mapposmax,tuint3 mapcells
     ,unsigned casenbound,unsigned casenfixed,unsigned casenpb,JLog2 *log,std::string dirout);
 
   void Divide(unsigned npb1,unsigned npf1,unsigned npb2,unsigned npf2,bool boundchanged,const unsigned *dcellg,const typecode *codeg,TimersGpu timers,const double2 *posxy,const double *posz,const unsigned *idp);
+
+  StDivDataGpu GetCellDivData()const;
 
   ullong GetAllocMemoryCpu()const{ return(JCellDivGpu::GetAllocMemoryCpu()); }
   ullong GetAllocMemoryGpu()const{ return(JCellDivGpu::GetAllocMemoryGpu()); }

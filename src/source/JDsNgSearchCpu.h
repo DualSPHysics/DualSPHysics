@@ -21,13 +21,13 @@
 #ifndef _JDsNgSearchCpu_
 #define _JDsNgSearchCpu_
 
-#include "DualSphDef.h"
+#include "JCellDivDataCpu.h"
 
 //==============================================================================
 /// Return initial data for neighborhood search according to cell number of particle.
 /// Devuelve datos iniciales para busqueda de vecinos segun numero de celda de particula.
 //==============================================================================
-inline StNgSearch NgSearchInit(unsigned rcell,bool boundp2,const StDivData &dvd){
+inline StNgSearch NgSearchInit(unsigned rcell,bool boundp2,const StDivDataCpu &dvd){
   //-Get cell coordinates of cell number.
   const int cx=PC__Cellx(dvd.domcellcode,rcell)-dvd.cellzero.x;
   const int cy=PC__Celly(dvd.domcellcode,rcell)-dvd.cellzero.y;
@@ -48,7 +48,7 @@ inline StNgSearch NgSearchInit(unsigned rcell,bool boundp2,const StDivData &dvd)
 /// Return initial data for neighborhood search according to position.
 /// Devuelve datos iniciales para busqueda de vecinos segun posicion.
 //==============================================================================
-inline StNgSearch NgSearchInit(const tdouble3 &pos,bool boundp2,const StDivData &dvd){
+inline StNgSearch NgSearchInit(const tdouble3 &pos,bool boundp2,const StDivDataCpu &dvd){
   //-Get cell coordinates of position pos.
   const int cx=int((pos.x-dvd.domposmin.x)/dvd.scell)-dvd.cellzero.x;
   const int cy=int((pos.y-dvd.domposmin.y)/dvd.scell)-dvd.cellzero.y;
@@ -69,7 +69,7 @@ inline StNgSearch NgSearchInit(const tdouble3 &pos,bool boundp2,const StDivData 
 /// Returns range of particles for neighborhood search.
 /// Devuelve rango de particulas para busqueda de vecinos.
 //==============================================================================
-inline tuint2 NgSearchParticleRange(int y,int z,const StNgSearch &ngs,const StDivData &dvd){
+inline tuint2 NgSearchParticleRange(int y,int z,const StNgSearch &ngs,const StDivDataCpu &dvd){
   const int v=dvd.nc.w*z + dvd.nc.x*y + ngs.cellinit;
   const unsigned pini=dvd.begincell[v+ngs.cxini];
   const unsigned pfin=dvd.begincell[v+ngs.cxfin];

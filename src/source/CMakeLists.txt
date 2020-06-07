@@ -7,7 +7,7 @@ PROJECT(DualSPHysics)
 set(OBJXML JXml.cpp tinystr.cpp tinyxml.cpp tinyxmlerror.cpp tinyxmlparser.cpp)
 set(OBJSPHMOTION JMotion.cpp JMotionList.cpp JMotionMov.cpp JMotionObj.cpp JMotionPos.cpp JSphMotion.cpp)
 set(OBCOMMON Functions.cpp FunctionsGeo3d.cpp JAppInfo.cpp JBinaryData.cpp JDataArrays.cpp JException.cpp JLinearValue.cpp JLog2.cpp JMeanValues.cpp JObject.cpp JOutputCsv.cpp JRadixSort.cpp JRangeFilter.cpp JReadDatafile.cpp JSaveCsv2.cpp JTimeControl.cpp randomc.cpp)
-set(OBCOMMONDSPH JDsphConfig.cpp JPartDataBi4.cpp JPartDataHead.cpp JPartFloatBi4.cpp JPartOutBi4Save.cpp JSpaceCtes.cpp JSpaceEParms.cpp JSpaceParts.cpp JSpaceProperties.cpp JSpaceUserVars.cpp JSpaceVtkOut.cpp)
+set(OBCOMMONDSPH JDsphConfig.cpp JDsPips.cpp JPartDataBi4.cpp JPartDataHead.cpp JPartFloatBi4.cpp JPartOutBi4Save.cpp JSpaceCtes.cpp JSpaceEParms.cpp JSpaceParts.cpp JSpaceProperties.cpp JSpaceUserVars.cpp JSpaceVtkOut.cpp)
 set(OBSPH JArraysCpu.cpp JCellDivCpu.cpp JCfgRun.cpp JDamping.cpp JGaugeItem.cpp JGaugeSystem.cpp JPartsOut.cpp JSaveDt.cpp JShifting.cpp JSph.cpp JSphAccInput.cpp JSphCpu.cpp JSphInitialize.cpp JSphMk.cpp JSphPartsInit.cpp JSphDtFixed.cpp JSphVisco.cpp JTimeOut.cpp JWaveSpectrumGpu.cpp main.cpp)
 set(OBSPHSINGLE JCellDivCpuSingle.cpp JPartsLoad4.cpp JSphCpuSingle.cpp)
 
@@ -16,7 +16,7 @@ set(OBSPHSINGLE JCellDivCpuSingle.cpp JPartsLoad4.cpp JSphCpuSingle.cpp)
 set(OBCOMMONGPU FunctionsCuda.cpp JObjectGpu.cpp)
 set(OBSPHGPU JArraysGpu.cpp JDebugSphGpu.cpp JCellDivGpu.cpp JSphGpu.cpp )
 set(OBSPHSINGLEGPU JCellDivGpuSingle.cpp JSphGpuSingle.cpp)
-set(OBCUDA JCellDivGpu_ker.cu JCellDivGpuSingle_ker.cu JGauge_ker.cu JReduSum_ker.cu JShifting_ker.cu JSphAccInput_ker.cu JSphGpu_ker.cu JSphGpuSimple_ker.cu JWaveOrder2_ker.cu)
+set(OBCUDA JCellDivGpu_ker.cu JCellDivGpuSingle_ker.cu  JDsPips_ker.cu JGauge_ker.cu JReduSum_ker.cu JShifting_ker.cu JSphAccInput_ker.cu JSphGpu_ker.cu JSphGpuSimple_ker.cu JWaveOrder2_ker.cu)
 
 # Other Objects
 

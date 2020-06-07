@@ -403,6 +403,15 @@
     <ClInclude Include="..\source\JDsPips.h">
       <Filter>Source</Filter>
     </ClInclude>
+    <ClInclude Include="..\source\JCellDivDataCpu.h">
+      <Filter>Source</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JCellDivDataGpu.h">
+      <Filter>Source</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JDsPips_ker.h">
+      <Filter>Cuda</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\source\JCfgRun.cpp">
@@ -716,6 +725,9 @@
       <Filter>Cuda</Filter>
     </CudaCompile>
     <CudaCompile Include="..\source\FunctionsGeo3d_iker.cu">
+      <Filter>Cuda</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\source\JDsPips_ker.cu">
       <Filter>Cuda</Filter>
     </CudaCompile>
   </ItemGroup>

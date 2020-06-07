@@ -1,4 +1,4 @@
-#DualSPHysics GPU/CPU v5.0.115 05-06-2020
+#DualSPHysics GPU/CPU v5.0.117 07-06-2020
 
 #=============== Compilation Options (YES/NO) ===============
 USE_GCC5=NO
@@ -115,7 +115,7 @@ OBSPHSINGLE=JCellDivCpuSingle.o JPartsLoad4.o JSphCpuSingle.o
 OBCOMMONGPU=FunctionsCuda.o JObjectGpu.o 
 OBSPHGPU=JArraysGpu.o JDebugSphGpu.o JCellDivGpu.o JSphGpu.o 
 OBSPHSINGLEGPU=JCellDivGpuSingle.o JSphGpuSingle.o
-OBCUDA=JCellDivGpu_ker.o JCellDivGpuSingle_ker.o JGauge_ker.o JReduSum_ker.o JShifting_ker.o JSphAccInput_ker.o JSphGpu_ker.o JSphGpuSimple_ker.o JWaveOrder2_ker.o
+OBCUDA=JCellDivGpu_ker.o JCellDivGpuSingle_ker.o JDsPips_ker.o JGauge_ker.o JReduSum_ker.o JShifting_ker.o JSphAccInput_ker.o JSphGpu_ker.o JSphGpuSimple_ker.o JWaveOrder2_ker.o
 
 OBWAVERZ=JMLPistonsGpu.o JRelaxZonesGpu.o
 OBWAVERZCUDA=JRelaxZone_ker.o
@@ -197,6 +197,9 @@ JShifting_ker.o: JShifting_ker.cu
 
 JSphAccInput_ker.o: JSphAccInput_ker.cu
 	$(NCC) $(NCCFLAGS) JSphAccInput_ker.cu
+
+JDsPips_ker.o: JDsPips_ker.cu
+	$(NCC) $(NCCFLAGS) JDsPips_ker.cu
 
 JGauge_ker.o: JGauge_ker.cu
 	$(NCC) $(NCCFLAGS) JGauge_ker.cu

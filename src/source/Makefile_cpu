@@ -1,4 +1,4 @@
-#DualSPHysics CPU v5.0.115 05-06-2020
+#DualSPHysics CPU v5.0.117 07-06-2020
 
 #=============== Compilation Options (YES/NO) ===============
 USE_GCC5=NO

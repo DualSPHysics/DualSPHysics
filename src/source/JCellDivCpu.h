@@ -24,6 +24,7 @@
 #include "DualSphDef.h"
 #include "JObject.h"
 #include "JSphTimersCpu.h"
+#include "JCellDivDataCpu.h"
 #include "JLog2.h"
 #include <cmath>
 #include <cstring>
@@ -181,7 +182,7 @@ public:
   tuint3 GetCellDomainMax()const{ return(CellDomainMax); }
   tdouble3 GetDomainLimits(bool limitmin,unsigned slicecellmin=0)const;
 
-  StDivData GetCellDivData()const;
+  StDivDataCpu GetCellDivData()const;
 
   unsigned GetNpFinal()const{ return(NpFinal); }
   unsigned GetNpbFinal()const{ return(NpbFinal); }

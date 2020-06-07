@@ -25,11 +25,12 @@
 #include "Functions.h"
 #include "JSaveCsv2.h"
 #ifdef _WITHGPU
-  //#include "JDsPips_ker.h"
+  #include "JDsPips_ker.h"
 #endif
 
 #include <climits>
 #include <cfloat>
+#include <cstring>
 
 using namespace std;
 
@@ -45,6 +46,8 @@ JDsPips::JDsPips(bool cpu,unsigned stepsnum,bool svdata,unsigned ntimes,JLog2* l
   ClassName="JDsPips";
   NextNstep=0;
   NewData=0;
+  SizeResultAux=0;
+  ResultAux=NULL;
   //Reset();
 }
 
@@ -54,6 +57,8 @@ JDsPips::JDsPips(bool cpu,unsigned stepsnum,bool svdata,unsigned ntimes,JLog2* l
 JDsPips::~JDsPips(){
   DestructorActive=true;
   //Reset();
+  SizeResultAux=0;
+  delete[] ResultAux; ResultAux=NULL;
 }
 
 //==============================================================================
@@ -176,11 +181,12 @@ std::string JDsPips::GetTotalPIsInfo()const{
 }
 
 //==============================================================================
-/// Returns the allocated memory.
+/// Compute number of particle interactions on CPU.
 //==============================================================================
-void JDsPips::ComputeCpu(const StCteSph &csp,unsigned nstep,double tstep,double tsim
-   ,int ompthreads,unsigned np,unsigned npb,unsigned npbok,StDivData divdata
-  ,const unsigned *dcell,const tdouble3 *pos)
+void JDsPips::ComputeCpu(unsigned nstep,double tstep,double tsim
+  ,const StCteSph &csp,int ompthreads
+  ,unsigned np,unsigned npb,unsigned npbok
+  ,StDivDataCpu dvd,const unsigned *dcell,const tdouble3 *pos)
 {
   //-Compute bound & fluid PIs.
   ullong npith[OMP_MAXTHREADS*OMP_STRIDE];
@@ -194,9 +200,9 @@ void JDsPips::ComputeCpu(const StCteSph &csp,unsigned nstep,double tstep,double 
     unsigned picb=0,pirb=0;
     const tdouble3 posp1=pos[p1];
     //-Search for fluid neighbours in adjacent cells.
-    const StNgSearch ngs=NgSearchInit(dcell[p1],false,divdata);
+    const StNgSearch ngs=NgSearchInit(dcell[p1],false,dvd);
     for(int z=ngs.zini;z<ngs.zfin;z++)for(int y=ngs.yini;y<ngs.yfin;y++){
-      const tuint2 pif=NgSearchParticleRange(y,z,ngs,divdata);
+      const tuint2 pif=NgSearchParticleRange(y,z,ngs,dvd);
       for(unsigned p2=pif.x;p2<pif.y;p2++){
         tfloat4 dr; NgSearchDistance(posp1,pos[p2],dr);
         if(dr.w<=csp.fourh2 && dr.w>=ALMOSTZERO)pirb++;
@@ -219,9 +225,9 @@ void JDsPips::ComputeCpu(const StCteSph &csp,unsigned nstep,double tstep,double 
     const tdouble3 posp1=pos[p1];
     //-Search for bound & fluid neighbours in adjacent cells.
     for(byte tpfluid=0;tpfluid<=1;tpfluid++){
-      const StNgSearch ngs=NgSearchInit(dcell[p1],!tpfluid,divdata);
+      const StNgSearch ngs=NgSearchInit(dcell[p1],!tpfluid,dvd);
       for(int z=ngs.zini;z<ngs.zfin;z++)for(int y=ngs.yini;y<ngs.yfin;y++){
-        const tuint2 pif=NgSearchParticleRange(y,z,ngs,divdata);
+        const tuint2 pif=NgSearchParticleRange(y,z,ngs,dvd);
         for(unsigned p2=pif.x;p2<pif.y;p2++){
           tfloat4 dr; NgSearchDistance(posp1,pos[p2],dr);
           if(dr.w<=csp.fourh2 && dr.w>=ALMOSTZERO)pirf++;
@@ -251,29 +257,67 @@ void JDsPips::ComputeCpu(const StCteSph &csp,unsigned nstep,double tstep,double 
   Data.push_back(v);
   NextNstep+=StepsNum;
   
-  if(1){
-    Log->Printf("%u> PIf: %llu/%llu   PIb: %llu/%llu",v.nstep,v.pirf,v.picf,v.pirb,v.picb);
-  }
+  //if(1)Log->Printf("%u> PIf: %llu/%llu   PIb: %llu/%llu",v.nstep,v.pirf,v.picf,v.pirb,v.picb);
 }
-
-/*
 
 #ifdef _WITHGPU
 //==============================================================================
-/// Adds variable acceleration from input configurations.
+/// Compute number of particle interactions on GPU.
 //==============================================================================
-void JDsPips::RunGpu(double timestep,tfloat3 gravity,unsigned n,unsigned pini
-    ,const typecode *code,const double2 *posxy,const double *posz,const float4 *velrhop,float3 *ace)
+void JDsPips::ComputeGpu(unsigned nstep,double tstep,double tsim
+  ,unsigned np,unsigned npb,unsigned npbok
+  ,StDivDataGpu dvd,const unsigned *dcell,const float4 *poscell
+  ,unsigned sauxmem,unsigned *auxmem)
 {
-  for(unsigned c=0;c<GetCount();c++){
-    const StAceInput v=GetAccValues(c,timestep);
-    if(v.codesel1!=UINT_MAX){
-      const typecode codesel1=typecode(v.codesel1);
-      const typecode codesel2=typecode(v.codesel2);
-      cuaccin::AddAccInput(n,pini,codesel1,codesel2,v.acclin,v.accang,v.centre
-        ,v.velang,v.vellin,v.setgravity,gravity,code,posxy,posz,velrhop,ace,NULL);
-    }
+  //-First calculation with reduction and the result is saved as uint4.
+  const unsigned n1=npbok+(np-npb);
+  const unsigned n1size=cupips::InteractionNgSize_1st(n1);
+  if(n1size*4>sauxmem)Run_Exceptioon("Auxiliary memory is not enough for 1st calculation level.");
+  //Log->Printf("\n==> np:%u  npb:%u  npbok:%u  n1:%u  n1size:%u",np,npb,npbok,n1,n1size);
+  cupips::InteractionNg_1st(npbok,0,np-npb,npb,dvd,dcell,poscell,(uint4*)auxmem);
+
+  //-Second reduction and the result is saved as uint4.
+  const unsigned n2=n1size;
+  const unsigned n2size=cupips::InteractionNgSize_2nd(n2);
+  if((n1size+n2size)*4>sauxmem)Run_Exceptioon("Auxiliary memory is not enough for 2nd calculation level.");
+  unsigned *auxmem2=auxmem+(n1size*4);
+  cupips::InteractionNg_2nd(n2,(const uint4*)auxmem,(uint4*)auxmem2);
+
+  //-Last reduction and the result is saved as ullong*4.
+  const unsigned n3=n2size;
+  const unsigned n3size=cupips::InteractionNgSize_3th(n3);
+  if((n1size+n2size)*4+n3size*8>sauxmem)Run_Exceptioon("Auxiliary memory is not enough for 3th calculation level.");
+  ullong *auxmem3=(ullong*)(auxmem2+(n2size*4));
+  cupips::InteractionNg_3th(n3,(const uint4*)auxmem2,auxmem3);
+  //-Allocates memory to final results.
+  //Log->Printf("\n==> n3:%u  n3size:%u",n3,n3size);
+  if(SizeResultAux<n3size*4){
+    delete[] ResultAux; ResultAux=NULL;
+    SizeResultAux=n3size*4;
+    ResultAux=new ullong[SizeResultAux];
   }
+  //-Copy final results from GPU memory.
+  cudaMemcpy(ResultAux,auxmem3,sizeof(ullong)*n3size*4,cudaMemcpyDeviceToHost);
+  //-Sum total results.
+  ullong totnrf=0,totnrb=0,totncf=0,totncb=0;
+  for(unsigned c=0,c4=0;c<n3size;c++){
+    totnrf+=ResultAux[c4++];
+    totnrb+=ResultAux[c4++];
+    totncf+=ResultAux[c4++];
+    totncb+=ResultAux[c4++];
+  }
+  StPipsInfo v;
+  v.nstep=nstep;
+  v.tstep=tstep;
+  v.tsim= tsim;
+  v.pirf=totnrf;
+  v.pirb=totnrb;
+  v.picf=totncf;
+  v.picb=totncb;
+  //-Stores results.
+  Data.push_back(v);
+  NextNstep+=StepsNum;
+  
+  //if(1)Log->Printf("%u> PIf: %llu/%llu   PIb: %llu/%llu",v.nstep,v.pirf,v.picf,v.pirb,v.picb);
 }
 #endif
-*/

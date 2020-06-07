@@ -1003,7 +1003,8 @@ void JSphCpuSingle::ComputePips(bool run){
   if(run || DsPips->CheckRun(Nstep)){
     TimerSim.Stop();
     const double timesim=TimerSim.GetElapsedTimeD()/1000.;
-    DsPips->ComputeCpu(CSP,Nstep,TimeStep,timesim,OmpThreads,Np,Npb,NpbOk,CellDivSingle->GetCellDivData(),Dcellc,Posc);
+    DsPips->ComputeCpu(Nstep,TimeStep,timesim,CSP,OmpThreads,Np,Npb,NpbOk
+      ,CellDivSingle->GetCellDivData(),Dcellc,Posc);
   }
 }
 

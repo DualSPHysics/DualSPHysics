@@ -29,6 +29,7 @@
 
 #include "DualSphDef.h"
 #include "JSphTimersGpu.h"
+#include "JCellDivDataGpu.h"
 #include <cuda_runtime_api.h>
 
 class JLog2;
@@ -89,15 +90,6 @@ typedef struct{
   int forcesdem_bsmax;
 }StKerInfo; 
 
-///Returns the reordered value according to a given axis.
-/// (x,y,z) in MGDIV_Z ---> (y,z,x) for MGDIV_X
-/// (x,y,z) in MGDIV_Z ---> (x,z,y) for MGDIV_Y
-inline tuint3 CodeAxisOrder(TpMgDivMode axis,tuint3 v){
-  if(axis==MGDIV_X)return(TUint3(v.y,v.z,v.x));
-  if(axis==MGDIV_Y)return(TUint3(v.x,v.z,v.y));
-  return(v);
-}
-
 ///Structure with the parameters for particle interaction on GPU.
 typedef struct StrInterParmsg{
   //-Configuration options.
@@ -109,7 +101,6 @@ typedef struct StrInterParmsg{
   TpDensity tdensity;
   TpShifting shiftmode;
   //-Execution values.
-  int hdiv;  //hdiv=(cellmode==CELLMODE_H? 2: 1)
   float viscob,viscof;
   unsigned bsbound,bsfluid;
   unsigned vnp,vnpb,vnpbok;
@@ -118,13 +109,8 @@ typedef struct StrInterParmsg{
   unsigned boundnum;
   unsigned fluidnum;         
   unsigned id;
-  TpMgDivMode axis;       ///<Axis used in current division. It is used to sort cells and particles.
-  tuint3 ncells;
-  int4 nc;                ///<Number of cells according axis.
-  unsigned cellfluid;
-  tint3 cellmin;
+  StDivDataGpu divdatag;
   //-Input data arrays.
-  const int2 *begincell;
   const unsigned *dcell;
   const double2 *posxy;
   const double *posz;
@@ -151,13 +137,11 @@ typedef struct StrInterParmsg{
     ,bool symmetry_ //<vs_syymmetry>
     ,TpKernel tkernel_,TpFtMode ftmode_
     ,bool lamsps_,TpDensity tdensity_,TpShifting shiftmode_
-    ,TpCellMode cellmode_
     ,float viscob_,float viscof_
     ,unsigned bsbound_,unsigned bsfluid_
     ,unsigned np_,unsigned npb_,unsigned npbok_
-    ,unsigned id_,TpMgDivMode axis_
-    ,tuint3 ncells_,tuint3 cellmin_
-    ,const int2 *begincell_,const unsigned *dcell_
+    ,unsigned id_
+    ,const StDivDataGpu &divdatag_,const unsigned *dcell_
     ,const double2 *posxy_,const double *posz_,const float4 *poscell_
     ,const float4 *velrhop_,const unsigned *idp_,const typecode *code_
     ,const float *ftomassp_,const tsymatrix3f *spstau_
@@ -173,20 +157,15 @@ typedef struct StrInterParmsg{
     tkernel=tkernel_; ftmode=ftmode_;
     lamsps=lamsps_; tdensity=tdensity_; shiftmode=shiftmode_;
     //-Execution values.
-    hdiv=(cellmode_==CELLMODE_H? 2: 1);
     viscob=viscob_; viscof=viscof_;
     bsbound=bsbound_; bsfluid=bsfluid_;
     vnp=np_; vnpb=npb_; vnpbok=npbok_;
     boundini=0;   boundnum=vnpbok;
     fluidini=vnpb; fluidnum=vnp-vnpb;
-    id=id_; axis=axis_;
-    ncells=ncells_;
-    const tuint3 nc3=CodeAxisOrder(axis,ncells);
-    nc.x=int(nc3.x); nc.y=int(nc3.y); nc.z=int(nc3.z); nc.w=int(nc3.x*nc3.y);
-    cellfluid=nc.w*nc.z+1;
-    cellmin=TInt3(int(cellmin_.x),int(cellmin_.y),int(cellmin_.z));
+    id=id_; 
+    divdatag=divdatag_;
     //-Input data arrays.
-    begincell=begincell_; dcell=dcell_;
+    dcell=dcell_;
     posxy=posxy_; posz=posz_; poscell=poscell_;
     velrhop=velrhop_; idp=idp_; code=code_;
     ftomassp=ftomassp_; tau=spstau_;
@@ -229,8 +208,8 @@ void Interaction_BoundCorrection(TpSlipMode slipmode,unsigned n,unsigned nbound,
 //<vs_mddbc_end>
 
 //-Kernels for the calculation of the DEM forces.
-void Interaction_ForcesDem(TpCellMode cellmode,unsigned bsize
-  ,unsigned nfloat,tuint3 ncells,const int2 *begincell,tuint3 cellmin,const unsigned *dcell
+void Interaction_ForcesDem(unsigned bsize,unsigned nfloat
+  ,const StDivDataGpu &dvd,const unsigned *dcell
   ,const unsigned *ftridp,const float4 *demdata,const float *ftomassp,float dtforce
   ,const float4 *poscell,const float4 *velrhop
   ,const typecode *code,const unsigned *idp,float *viscdt,float3 *ace,StKerInfo *kerinfo);

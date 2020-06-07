@@ -23,6 +23,7 @@
 
 #include "DualSphDef.h"
 #include "JSphTimersCpu.h"
+#include "JCellDivDataCpu.h"
 #include "JSph.h"
 #include <string>
 
@@ -30,7 +31,7 @@
 ///Structure with the parameters for particle interaction on CPU.
 typedef struct{
   unsigned np,npb,npbok,npf; // npf=np-npb
-  StDivData divdata;
+  StDivDataCpu divdata;
   const unsigned *dcell;
   const tdouble3 *pos;
   const tfloat4 *velrhop;
@@ -48,7 +49,7 @@ typedef struct{
 
 ///Collects parameters for particle interaction on CPU.
 inline stinterparmsc StInterparmsc(unsigned np,unsigned npb,unsigned npbok
-  ,StDivData divdata,const unsigned *dcell
+  ,StDivDataCpu divdata,const unsigned *dcell
   ,const tdouble3 *pos,const tfloat4 *velrhop,const unsigned *idp,const typecode *code
   ,const float *press
   ,float* ar,tfloat3 *ace,float *delta
@@ -229,20 +230,20 @@ protected:
     ,int &cxini,int &cxfin,int &yini,int &yfin,int &zini,int &zfin)const; //<vs_innlet>
 
   template<TpKernel tker,TpFtMode ftmode> void InteractionForcesBound
-    (unsigned n,unsigned pini,StDivData divdata,const unsigned *dcell
+    (unsigned n,unsigned pini,StDivDataCpu divdata,const unsigned *dcell
     ,const tdouble3 *pos,const tfloat4 *velrhop,const typecode *code,const unsigned *id
     ,float &viscdt,float *ar)const;
 
   template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity,bool shift> 
     void InteractionForcesFluid(unsigned n,unsigned pini,bool boundp2,float visco
-    ,StDivData divdata,const unsigned *dcell
+    ,StDivDataCpu divdata,const unsigned *dcell
     ,const tsymatrix3f* tau,tsymatrix3f* gradvel
     ,const tdouble3 *pos,const tfloat4 *velrhop,const typecode *code,const unsigned *idp
     ,const float *press
     ,float &viscdt,float *ar,tfloat3 *ace,float *delta
     ,TpShifting shiftmode,tfloat4 *shiftposfs)const;
 
-  void InteractionForcesDEM(unsigned nfloat,StDivData divdata,const unsigned *dcell
+  void InteractionForcesDEM(unsigned nfloat,StDivDataCpu divdata,const unsigned *dcell
     ,const unsigned *ftridp,const StDemData* demobjs
     ,const tdouble3 *pos,const tfloat4 *velrhop,const typecode *code,const unsigned *idp
     ,float &viscdt,tfloat3 *ace)const;
