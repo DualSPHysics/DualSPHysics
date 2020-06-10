@@ -177,7 +177,8 @@ std::string JDsPips::GetTotalPIsInfo()const{
   if(v>1.e3){ v/=1.e3; unit='E'; }
   if(v>1.e3){ v/=1.e3; unit='Z'; }
   if(v>1.e3){ v/=1.e3; unit='Y'; }
-  return(fun::PrintStr("%f %cPIs (%.4e + %.4e)",v,unit,totgpis.x,totgpis.y));
+  string vn=fun::DoublexStr(v,fun::NaturalFmt(v,12,true).c_str());
+  return(fun::PrintStr("%s %cPIs (%.4e + %.4e)",vn.c_str(),unit,totgpis.x*1e9,totgpis.y*1e9));
 }
 
 //==============================================================================

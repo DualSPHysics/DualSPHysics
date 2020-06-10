@@ -2652,13 +2652,13 @@ void JSph::SaveVtkNormals(std::string filename,int numfile,unsigned np,unsigned 
 void JSph::GetResInfo(float tsim,float ttot,std::string headplus,std::string detplus
   ,std::string &hinfo,std::string &dinfo)const
 {
-  hinfo=hinfo+"#RunName;VersionInfo;DateTime;Np;TSimul;TSeg;TTotal;MemCpu;MemGpu";
-  dinfo=dinfo+ RunName+ ";"+ AppName+ ";"+ RunTimeDate+ ";"+ fun::UintStr(CaseNp);
+  hinfo=hinfo+"#RunName;Rcode-VersionInfo;DateTime;Np;TSimul;TSeg;TTotal;MemCpu;MemGpu";
+  dinfo=dinfo+ RunName+ ";"+ RunCode+ "-"+ AppName+ ";"+ RunTimeDate+ ";"+ fun::UintStr(CaseNp);
   dinfo=dinfo+ ";"+ fun::FloatStr(tsim)+ ";"+ fun::FloatStr(tsim/float(TimeStep))+ ";"+ fun::FloatStr(ttot);
   dinfo=dinfo+ ";"+ fun::LongStr(MaxNumbers.memcpu)+ ";"+ fun::LongStr(MaxNumbers.memgpu);
   hinfo=hinfo+";Steps;GPIPS;PhysicalTime;PartFiles;PartsOut;MaxParticles;MaxCells";
   const unsigned nout=GetOutPosCount()+GetOutRhopCount()+GetOutMoveCount();
-  const string gpips=(DsPips? fun::DoublexStr(DsPips->GetGPIPS(tsim)): "");
+  const string gpips=(DsPips? fun::DoublexStr(DsPips->GetGPIPS(tsim),"%.10f"): "");
   dinfo=dinfo+ ";"+ fun::IntStr(Nstep)+ ";"+ gpips+ ";"+ fun::DoublexStr(TimeStep) + ";"+ fun::IntStr(Part)+ ";"+ fun::UintStr(nout);
   dinfo=dinfo+ ";"+ fun::UintStr(MaxNumbers.particles)+ ";"+ fun::UintStr(MaxNumbers.cells);
   hinfo=hinfo+";Hardware;RunMode;Configuration";
@@ -2668,8 +2668,8 @@ void JSph::GetResInfo(float tsim,float ttot,std::string headplus,std::string det
   dinfo=dinfo+ ";"+ fun::FloatStr(float(Dp))+ ";"+ fun::FloatStr(H);
   hinfo=hinfo+";PartsOutRhop;PartsOutVel";
   dinfo=dinfo+ ";"+ fun::UintStr(GetOutRhopCount())+ ";"+ fun::UintStr(GetOutMoveCount());
-  hinfo=hinfo+";RunCode"+ headplus;
-  dinfo=dinfo+ ";"+ RunCode+ detplus;
+  hinfo=hinfo+ headplus;
+  dinfo=dinfo+ detplus;
 }
 
 //==============================================================================
@@ -2717,7 +2717,7 @@ void JSph::ShowResume(bool stop,float tsim,float ttot,bool all,std::string infop
     Log->Printf("Steps per second.................: %f",nstepseg);
     Log->Printf("Steps of simulation..............: %d",Nstep);
     if(DsPips){
-      Log->Printf("Particle Interactions Per Second.: %f GPIPS",DsPips->GetGPIPS(tsim));
+      Log->Printf("Particle Interactions Per Second.: %.8f GPIPS",DsPips->GetGPIPS(tsim));
       Log->Printf("Total particle interactions (f+b): %s",DsPips->GetTotalPIsInfo().c_str());
     }
     Log->Printf("PART files.......................: %d",Part-PartIni);
