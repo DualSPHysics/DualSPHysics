@@ -272,7 +272,8 @@ void JSphInitializeOp_BoundNormalPlane::Run(unsigned np,unsigned npb,const tdoub
 void JSphInitializeOp_BoundNormalPlane::GetConfig(std::vector<std::string> &lines)const{
   lines.push_back(fun::PrintStr("  Operation: %s",ClassName.substr(17).c_str()));
   lines.push_back(fun::PrintStr("  MkBound..: %s",(MkBound.empty()? "ALL": MkBound.c_str())));
-  lines.push_back(fun::PrintStr("  Point....: (%g,%g,%g)",Point.x,Point.y,Point.z));
+  if(PointAuto)      lines.push_back("  Point....: Automatic");
+  else lines.push_back(fun::PrintStr("  Point....: (%g,%g,%g)",Point.x,Point.y,Point.z));
   lines.push_back(fun::PrintStr("  Normal...: (%g,%g,%g)",Normal.x,Normal.y,Normal.z));
   lines.push_back(fun::PrintStr("  MaxDistH.: %g",MaxDisteH));
 }
