@@ -289,6 +289,7 @@ JPartFloatBi4Load::~JPartFloatBi4Load(){
 //==============================================================================
 void JPartFloatBi4Load::Reset(){
   FormatVer=0;
+  FileData="";
   delete Data; 
   Data=new JBinaryData("JPartFloatBi4");
   MkBoundFirst=0;
@@ -369,21 +370,39 @@ JBinaryDataArray* JPartFloatBi4Load::CheckArray(JBinaryData *bd,const std::strin
 }
 
 //==============================================================================
+/// Comprueba lista de PARTs cargados.
+/// Check list of loaded PARTs.
+//==============================================================================
+void JPartFloatBi4Load::CheckPartList()const{
+  unsigned nitem=Data->GetItemsCount();
+  if(nitem>1){
+    unsigned cpart=Data->GetItem(1)->GetvUint("Cpart");
+    for(unsigned c=2;c<nitem;c++){
+      const unsigned cpart2=Data->GetItem(c)->GetvUint("Cpart");
+      if(cpart2!=cpart+1)Run_ExceptioonFile("Loaded data is corrupted. The data could have been modified by several simultaneous executions.",FileData);
+      cpart=cpart2;
+    }
+  }
+}
+
+//==============================================================================
 /// Carga datos de fichero y comprueba cabecera.
 /// Loads data from file and verifies header.
 //==============================================================================
 void JPartFloatBi4Load::LoadFile(const std::string &dir){
-  string file=fun::GetDirWithSlash(dir)+GetFileNamePart();
   Reset();
-  Data->LoadFileListApp(file,"JPartFloatBi4");
+  FileData=fun::GetDirWithSlash(dir)+GetFileNamePart();
+  Data->LoadFileListApp(FileData,"JPartFloatBi4");
   JBinaryData *head=Data->GetItem("LS0000_JPartFloatBi4");
-  if(!head)Run_ExceptioonFile("The head item is missing.",file);
+  if(!head)Run_ExceptioonFile("The head item is missing.",FileData);
   FormatVer=head->GetvUint("FormatVer",true,0);
-  if(FormatVer<FormatVerDef)Run_ExceptioonFile(fun::PrintStr("The data format version \'%u\' is not valid. Version \'%u\' required.",FormatVer,FormatVerDef),file);
+  if(FormatVer<FormatVerDef)Run_ExceptioonFile(fun::PrintStr("The data format version \'%u\' is not valid. Version \'%u\' required.",FormatVer,FormatVerDef),FileData);
   MkBoundFirst=head->GetvUshort("MkBoundFirst",true,0);
   FtCount=head->GetvUint("FtCount",true,0);
   PartCount=Data->GetItemsCount()-1;
-  FirstPart=(Data->GetItemsCount()>1? Data->GetItem(1)->GetvUint("Cpart",true,0): 0);
+  FirstPart=(PartCount? Data->GetItem(1)->GetvUint("Cpart",true,0): 0);
+  CheckPartList();
+
   //-Carga datos constantes de floatings (head). Load constant data of floatings (head).
   ResizeFtData(FtCount);
   {//-Loads array mkbound.

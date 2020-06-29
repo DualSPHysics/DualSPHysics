@@ -16,11 +16,6 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General
 You should have received a copy of the GNU Lesser General Public License along with DualSPHysics. If not, see <http://www.gnu.org/licenses/>. 
 */
 
-/// \file JAppInfo.h \brief Declares the class \ref JAppInfo and the global object AppInfo.
-
-#ifndef _JAppInfo_
-#define _JAppInfo_
-
 //:#############################################################################
 //:# Cambios:
 //:# =========
@@ -29,14 +24,19 @@ You should have received a copy of the GNU Lesser General Public License along w
 //:# - Se incluye extraname en constructor y se elimina ConfigNameExtra(). (21-05-2018)
 //:# - Nuevos metodos MkdirPath() y MkdirPathFile(). (21-05-2018)
 //:# - Nuevos metodos ClearNameExtra() y AddNameExtra(). (23-05-2018)
+//:# - Nuevos metodos GetMainName(), GetMainVer() y GetDate(). (07-03-2019)
+//:# - El uso de JLog2 o no se define en JAppInfoDef.h. (17-06-2020)
 //:#############################################################################
 
-#define APP_DEFLOG  ///<Defines variables and functions for log.
+/// \file JAppInfo.h \brief Declares the class \ref JAppInfo and the global object AppInfo.
 
+#ifndef _JAppInfo_
+#define _JAppInfo_
+
+#include "JAppInfoDef.h"
+#include "JObject.h"
 
 #include <string>
-//#include <vector>
-#include "JObject.h"
 
 class JLog2;
 
@@ -68,7 +68,7 @@ private:
   std::string DirDataOut;
 
   //-Log definition.
-#ifdef APP_DEFLOG
+#ifdef JAppInfo_UseLog
   JLog2* Log;
 #endif
 
@@ -83,7 +83,9 @@ public:
   void ConfigRunPaths(std::string runcommand);
   void ConfigOutput(bool createdirs,bool csvsepcoma,std::string dirout,std::string dirdataout="");
 
-#ifdef APP_DEFLOG
+  void SetMainName(const std::string &mname){ MainName=mname; }
+
+#ifdef JAppInfo_UseLog
   void LogInit(std::string fname,bool mpirun=false,int mpirank=0,int mpilaunch=0);
   JLog2* LogPtr(){ return(Log); }
   bool LogDefined()const{ return(Log!=NULL); }
@@ -94,6 +96,7 @@ public:
   std::string GetShortName()const;
   std::string GetFullName()const;
 
+  std::string GetMainName()const{ return(MainName); }
   std::string GetMainVer()const{ return(MainVer); }
   std::string GetDate()const{ return(Date); }
 

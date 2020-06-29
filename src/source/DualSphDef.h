@@ -61,7 +61,9 @@
 
 //-Defines AVAILABLE_CHRONO and AVAILABLE_CHRONO_OMP when these features are compiled.
 #ifdef DISABLE_CHRONO
-  #define DISABLE_CHRONO_OMP
+  #ifndef DISABLE_CHRONO_OMP
+	  #define DISABLE_CHRONO_OMP
+  #endif
   #define AVAILABLE_CHRONO false
   #define AVAILABLE_CHRONO_OMP false
 #else

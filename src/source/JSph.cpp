@@ -1468,7 +1468,7 @@ void JSph::VisuConfig(){
     //Log->Print(fun::VarStr("DensityDiffusionArray",DDTArray));
     ConfigInfo=ConfigInfo+fun::PrintStr("(%g)",DDTValue);
   }
-  if(TDensity==DDT_DDT2Full && H/Dp>1.5)Log->PrintWarning("The selected DDT \'(Fourtakas et al 2019 (full)\' needs several boundary layers when h/dp>1.5");  //<vs_dtt2>
+  if(TDensity==DDT_DDT2Full && H/Dp>1.5)Log->PrintWarning("It is advised that selected DDT \'(Fourtakas et al 2019 (full)\' is used with several boundary layers of particles when h/dp>1.5 (2h <= layers*Dp)");  //<vs_dtt2>
   //-Shifting.
   if(Shifting){
     Shifting->VisuConfig();
@@ -1795,7 +1795,7 @@ void JSph::CalcFloatingRadius(unsigned np,const tdouble3 *pos,const unsigned *id
   delete[] ridp; ridp=NULL;
   //-Checks maximum radius < dimensions of the periodic domain.
   //-Comprueba que el radio maximo sea menor que las dimensiones del dominio periodico.
-  const string errtex="The floating body radius (%g [m]) is too large for periodic distance in %c (%g [m]). If the floating body crosses the periodical limits, the simulation may be incorrect.";
+  const string errtex="The floating body radius (%g [m]) is too large for periodic distance in %c (%g [m]). If the floating body crosses the periodical limits, the simulation may be incorrect. *** If you want to avoid this initial verification please use \'FtIgnoreRadius\' in the XML file (parameters section).";
   if(PeriX && fabs(PeriXinc.x)<=radiusmax){
     const string tx=fun::PrintStr(errtex.c_str(),radiusmax,'X',abs(PeriXinc.x));
     if(FtIgnoreRadius)Log->PrintWarning(tx); else Run_Exceptioon(tx);
@@ -1865,6 +1865,23 @@ void JSph::RestartCheckData(){
 }
 
 //==============================================================================
+/// Checks the initial density of fluid particles. If some particle is out of 
+/// limits throws an exception.
+/// Comprueba la densidad inicial de las particulas fluido. Si alguna particula 
+/// esta fuera de los limites, lanza una excepcion.
+//==============================================================================
+void JSph::CheckRhopLimits(){
+  const tfloat4 *velrhop=PartsLoaded->GetVelRhop(); ///<Velocity and density of each particle
+  const unsigned *idp   =PartsLoaded->GetIdp();     ///<Identifier of each particle
+  const unsigned n=PartsLoaded->GetCount();
+  //-Checks the initial density of each fluid particle
+  for(unsigned p=0;p<n;p++)if(idp[p]>=CaseNbound){
+    if(velrhop[p].w<RhopOutMin || RhopOutMax<velrhop[p].w)
+      Run_Exceptioon("Initial fluid density is out of limits. *** To change the limits modify the value of \'RhopOutMin\' and \'RhopOutMax\' in the XML file (parameters section).");
+  }
+}
+
+//==============================================================================
 /// Load particles of case and process.
 /// Carga particulas del caso a procesar.
 //==============================================================================
@@ -1873,8 +1890,13 @@ void JSph::LoadCaseParticles(){
   PartsLoaded=new JPartsLoad4(Cpu);
   PartsLoaded->LoadParticles(DirCase,CaseName,PartBegin,PartBeginDir);
   PartsLoaded->CheckConfig(CaseNp,CaseNfixed,CaseNmoving,CaseNfloat,CaseNfluid,Simulate2D,Simulate2DPosY,TpPeri(PeriActive));
+
   if(PartBegin)RestartCheckData();
   Log->Printf("Loaded particles: %u",PartsLoaded->GetCount());
+
+  //-Checks if the initial density of fluid particles is out of limits.
+  //-Comprueba si la densidad inicial de las particulas fluido esta fuera de los limites.
+  CheckRhopLimits();
 
   //-Collect information of loaded particles.
   //-Recupera informacion de las particulas cargadas.

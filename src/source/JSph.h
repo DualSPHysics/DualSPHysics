@@ -22,6 +22,8 @@
 //:# - El calculo de constantes en ConfigConstants() se hace usando double aunque
 //:#   despues se convierte a float (22-04-2013)
 //:# - Mejora la gestion de excepciones. (06-05-2020)
+//:# - Comprobacion de la densidad inicial de las particulas fluido en la funcion
+//:# CheckRhopLimits(). (24-06-2020)
 //:#############################################################################
 
 /// \file JSph.h \brief Declares the class \ref JSph.
@@ -141,7 +143,6 @@ private:
   void ConfigDomainParticlesPrc(tdouble3 vmin,tdouble3 vmax);
   void ConfigDomainParticlesPrcValue(std::string key,double v);
   void ConfigDomainResize(std::string key,const JSpaceEParms *eparms);
-
 protected:
   const bool Cpu;
   const bool Mgpu;
@@ -442,6 +443,7 @@ protected:
   tdouble3 UpdatePeriodicPos(tdouble3 ps)const;
 
   void RestartCheckData();
+  void CheckRhopLimits();
   void LoadCaseParticles();
   void InitRun(unsigned np,const unsigned *idp,const tdouble3 *pos);
   bool CalcMotion(double stepdt);

@@ -1,4 +1,4 @@
-#DualSPHysics CPU v5.0.117 07-06-2020
+#DualSPHysics CPU v5.0.120 22-06-2020
 
 #=============== Compilation Options (YES/NO) ===============
 USE_GCC5=NO
@@ -13,7 +13,7 @@ COMPILE_WAVEGEN=YES
 COMPILE_MOORDYN=YES
 
 LIBS_DIRECTORIES=-L./
-LIBS_DIRECTORIES:=$(LIBS_DIRECTORIES) -L../lib/linux_gcc 
+LIBS_DIRECTORIES:=$(LIBS_DIRECTORIES) -L../lib/linux_gcc
 
 EXECNAME=DualSPHysics5.0CPU_linux64
 EXECS_DIRECTORY=../../bin/linux
@@ -35,8 +35,8 @@ CCLINKFLAGS=-fopenmp -lgomp
 
 #Required for GCC versions >=5.0
 ifeq ($(USE_GCC5), YES)
-  CCFLAGS+=-D_GLIBCXX_USE_CXX11_ABI=0 
-  CCLINKFLAGS+=-D_GLIBCXX_USE_CXX11_ABI=0 
+  CCFLAGS+=-D_GLIBCXX_USE_CXX11_ABI=0
+  CCLINKFLAGS+=-D_GLIBCXX_USE_CXX11_ABI=0
 endif
 
 ifeq ($(COMPILE_VTKLIB), NO)
@@ -46,7 +46,11 @@ ifeq ($(COMPILE_NUMEXLIB), NO)
   CCMOREFLAGS:=$(CCMOREFLAGS) -DDISABLE_NUMEXLIB
 endif
 ifeq ($(COMPILE_CHRONO), NO)
-  CCFLAGS:=$(CCFLAGS) -DDISABLE_CHRONO 
+  COMPILE_CHRONO_OMP=NO
+  CCFLAGS:=$(CCFLAGS) -DDISABLE_CHRONO
+endif
+ifeq ($(COMPILE_CHRONO_OMP), NO)
+  CCFLAGS:=$(CCFLAGS) -DDISABLE_CHRONO_OMP
 endif
 ifeq ($(COMPILE_WAVEGEN), NO)
   CCFLAGS:=$(CCFLAGS) -DDISABLE_WAVEGEN
@@ -81,13 +85,11 @@ ifeq ($(COMPILE_NUMEXLIB), YES)
   JLIBS:=$(JLIBS) -ljnumexlib_64
 endif
 ifeq ($(COMPILE_CHRONO), YES)
-  JLIBS:=$(JLIBS) -ldsphchrono -lChronoEngine
-    ifeq ($(COMPILE_CHRONO_OMP), YES)
-      JLIBS:=$(JLIBS) -lChronoEngine_parallel
-	else 
-	    CCFLAGS:=$(CCFLAGS) -DDISABLE_CHRONO_OMP
-    endif
+  JLIBS:=$(JLIBS) -ldsphchrono -lChronoEngine 
 endif
+ifeq ($(COMPILE_CHRONO_OMP), YES)
+  JLIBS:=$(JLIBS) -lChronoEngine_parallel
+ endif
 ifeq ($(COMPILE_WAVEGEN), YES)
   JLIBS:=$(JLIBS) -ljwavegen_64
 endif
@@ -99,7 +101,7 @@ endif
 all:$(EXECS_DIRECTORY)/$(EXECNAME)
 	rm -rf *.o
 ifeq ($(USE_DEBUG), NO)
-	@echo "  --- Compiled Release CPU version ---"	
+	@echo "  --- Compiled Release CPU version ---"
 else
 	@echo "  --- Compiled Debug CPU version ---"
 	mv $(EXECS_DIRECTORY)/$(EXECNAME) $(EXECNAME)_debug

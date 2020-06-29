@@ -29,6 +29,7 @@
 //:# - Implementacion. (04-12-2014)
 //:# - Implementacion independiente de StFloatingData en DualSphDef.h. (11-05-2015)
 //:# - Incluye informacion de MkBoundFirst (FormatVer=180423). (23-04-2018)
+//:# - En JPartFloatBi4Load se comprueba que los PARTs cargados sean consecutivos. (11-08-2019)
 //:# - Se guarda tambien Massp de floatings. (10-03-2020)
 //:# - Mejora la gestion de excepciones. (06-05-2020)
 //:#############################################################################
@@ -126,6 +127,7 @@ class JPartFloatBi4Load : protected JObject
   static const unsigned FormatVerDef=180423;    ///<Version de formato by default. Version of format by default.
   unsigned FormatVer;    ///<Version de formato. Format version.
    
+  std::string FileData;   ///<Name of input file with data.
   JBinaryData *Data;      ///<Almacena la informacion general de los datos (constante para cada PART). Stores general information of data (constant for each PART).
 
   word MkBoundFirst;      ///<First Mk for boundary blocks (Mk=MkBound+MkBoundFirst).
@@ -155,6 +157,7 @@ class JPartFloatBi4Load : protected JObject
     ,JBinaryDataDef::TpData type);
   void ResetPart();
   void ResizeFtData(unsigned ftcount);
+  void CheckPartList()const;
   void CheckPart()const;
   void CheckFloating(unsigned cf)const;
 

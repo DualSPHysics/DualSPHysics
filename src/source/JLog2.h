@@ -34,6 +34,7 @@
 //:# - Funciones para gestion especial de warnings. (10-03-2018)
 //:# - Permite usar un Mutex para sicronizar el acceso en multithreading ejecuciones. (22-08-2019)
 //:# - Permite crear un log como referencia a otro para incluir un prefijo de forma automatica. (06-09-2019)
+//:# - El uso de mutex o no se define en JLog2Def.h. (17-06-2020)
 //:#############################################################################
 
 /// \file JLog2.h \brief Declares the class \ref JLog2.
@@ -42,12 +43,12 @@
 #define _JLog2_
 
 #include "JObject.h"
+
 #include <string>
 #include <sstream>
 #include <iostream>
 #include <fstream>
 #include <vector>
-
 
 //##############################################################################
 //# JLog2
@@ -90,6 +91,7 @@ public:
   ~JLog2();
   void Reset();
   void Init(std::string fname,bool mpirun=false,int mpirank=0,int mpilaunch=0);
+  void SetModeOutDef(TpMode_Out modeoutdef){ ModeOutDef=modeoutdef; }
   void Print(const std::string &tx,TpMode_Out mode=Out_Default,bool flush=false);
   void Print(const std::vector<std::string> &lines,TpMode_Out mode=Out_Default,bool flush=false);
   void PrintDbg(const std::string &tx,TpMode_Out mode=Out_Default){ Print(tx,mode,true); }

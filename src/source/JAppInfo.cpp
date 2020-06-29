@@ -22,7 +22,7 @@ You should have received a copy of the GNU Lesser General Public License along w
 #include "JAppInfo.h"
 #include "Functions.h"
 
-#ifdef APP_DEFLOG
+#ifdef JAppInfo_UseLog
   #include "JLog2.h"
 #endif
 
@@ -36,7 +36,7 @@ using namespace std;
 //==============================================================================
 JAppInfo::JAppInfo(std::string name,std::string ver,std::string date){
   ClassName="JAppInfo";
-  #ifdef APP_DEFLOG
+  #ifdef JAppInfo_UseLog
     Log=NULL;
   #endif
   Reset();
@@ -50,7 +50,7 @@ JAppInfo::JAppInfo(std::string name,std::string ver
   ,std::string subname,std::string subver,std::string date)
 {
   ClassName="JAppInfo";
-  #ifdef APP_DEFLOG
+  #ifdef JAppInfo_UseLog
     Log=NULL;
   #endif
   Reset();
@@ -81,7 +81,7 @@ void JAppInfo::Reset(){
   CsvSepComa=false;
   DirOut=DirDataOut="";
   //-Log definition.
-  #ifdef APP_DEFLOG
+  #ifdef JAppInfo_UseLog
     delete Log; Log=NULL;
   #endif
 }
@@ -113,7 +113,7 @@ void JAppInfo::ConfigOutput(bool createdirs,bool csvsepcoma,std::string dirout,s
   DirDataOut=(!dirdataout.empty()? fun::GetDirWithSlash(DirOut+dirdataout): DirOut);
 }
 
-#ifdef APP_DEFLOG
+#ifdef JAppInfo_UseLog
 //==============================================================================
 // Configures general output options.
 // When fname is empty, log file is not created.

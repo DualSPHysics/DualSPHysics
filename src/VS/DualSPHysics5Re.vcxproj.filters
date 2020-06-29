@@ -412,6 +412,9 @@
     <ClInclude Include="..\source\JDsPips_ker.h">
       <Filter>Cuda</Filter>
     </ClInclude>
+    <ClInclude Include="..\source\JAppInfoDef.h">
+      <Filter>Common</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\source\JCfgRun.cpp">

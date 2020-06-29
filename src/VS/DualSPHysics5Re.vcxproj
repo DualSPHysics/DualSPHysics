@@ -519,6 +519,7 @@ rem %CudaNvcc% -ccbin "$(VCInstallDir)bin" %gpuhw% -use_fast_math -c %ptxinfo% -
     <ClInclude Include="..\source\FunctionsGeo3d.h" />
     <ClInclude Include="..\source\FunctionsMath.h" />
     <ClInclude Include="..\source\JAppInfo.h" />
+    <ClInclude Include="..\source\JAppInfoDef.h" />
     <ClInclude Include="..\source\JArraysCpu.h" />
     <ClInclude Include="..\source\JBinaryData.h" />
     <ClInclude Include="..\source\JCellDivCpu.h" />

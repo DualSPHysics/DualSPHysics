@@ -1,4 +1,4 @@
-#DualSPHysics GPU/CPU v5.0.117 07-06-2020
+#DualSPHysics GPU/CPU v5.0.120 22-06-2020
 
 #=============== Compilation Options (YES/NO) ===============
 USE_GCC5=NO
@@ -47,7 +47,11 @@ ifeq ($(COMPILE_NUMEXLIB), NO)
   CCMOREFLAGS:=$(CCMOREFLAGS) -DDISABLE_NUMEXLIB
 endif
 ifeq ($(COMPILE_CHRONO), NO)
+  COMPILE_CHRONO_OMP=NO
   CCFLAGS:=$(CCFLAGS) -DDISABLE_CHRONO
+endif
+ifeq ($(COMPILE_CHRONO_OMP), NO)
+  CCFLAGS:=$(CCFLAGS) -DDISABLE_CHRONO_OMP
 endif
 ifeq ($(COMPILE_WAVEGEN), NO)
   CCFLAGS:=$(CCFLAGS) -DDISABLE_WAVEGEN
@@ -139,12 +143,10 @@ ifeq ($(COMPILE_NUMEXLIB), YES)
 endif
 ifeq ($(COMPILE_CHRONO), YES)
   JLIBS:=$(JLIBS) -ldsphchrono -lChronoEngine 
-    ifeq ($(COMPILE_CHRONO_OMP), YES)
-      JLIBS:=$(JLIBS) -lChronoEngine_parallel
-	else 
-	    CCFLAGS:=$(CCFLAGS) -DDISABLE_CHRONO_OMP
-    endif
 endif
+ifeq ($(COMPILE_CHRONO_OMP), YES)
+  JLIBS:=$(JLIBS) -lChronoEngine_parallel
+ endif
 ifeq ($(COMPILE_WAVEGEN), YES)
   JLIBS:=$(JLIBS) -ljwavegen_64
 endif
@@ -165,7 +167,7 @@ ifeq ($(USE_FAST_MATH), YES)
   NCCFLAGS+= -use_fast_math
 endif
 
-all:$(EXECS_DIRECTORY)/$(EXECNAME) 
+all:$(EXECS_DIRECTORY)/$(EXECNAME)
 	rm -rf *.o
 ifeq ($(USE_DEBUG), NO)
 	@echo "  --- Compiled Release GPU version ---"

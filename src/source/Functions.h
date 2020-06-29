@@ -86,6 +86,7 @@
 //:# - Nueva funcion NaturalFmt().  (15-04-2020)
 //:# - Nuevas funciones NewToTFloat3() y NewToTDouble3().  (09-05-2020)
 //:# - Nueva funcion FileModifTime().  (02-06-2020)
+//:# - Nueva funcion Length() para vectores.  (27-06-2020)
 //:#############################################################################
 
 /// \file Functions.h \brief Declares basic/general functions for the entire application.
@@ -326,6 +327,9 @@ tdouble4* ResizeAlloc(tdouble4 *data,unsigned ndata,unsigned newsize);
 
 tfloat3*  NewToTFloat3 (const tdouble3* data,unsigned ndata);
 tdouble3* NewToTDouble3(const tfloat3* data,unsigned ndata);
+
+float  Length(const tfloat3 &v);
+double Length(const tdouble3 &v);
 
 bool IsInfinity(float v);
 bool IsInfinity(double v);
