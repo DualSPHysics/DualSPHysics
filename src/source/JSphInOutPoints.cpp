@@ -20,7 +20,7 @@
 
 #include "JSphInOutPoints.h"
 #include "JSphMk.h"
-#include "JSphPartsInit.h"
+#include "JDsPartsInit.h"
 #include "JXml.h"
 #include "JLog2.h"
 #include "JAppInfo.h"
@@ -141,7 +141,7 @@ std::string JSphInOutPoints::CheckParticlesDirection(const JSphMkBlock *pmk,cons
 /// Creates points starting from special fluid particles.
 //==============================================================================
 void JSphInOutPoints::Create2d3d_Particles(const JXml *sxml,TiXmlElement* ele
-  ,const JSphPartsInit *partsdata)
+  ,const JDsPartsInit *partsdata)
 {
   if(Count)Run_ExceptioonFile("There are previous definitions of inout points.",sxml->ErrGetFileRow(ele));
   unsigned mkfluid=sxml->GetAttributeUint(ele,"mkfluid");
@@ -446,7 +446,7 @@ void JSphInOutPoints::Create3d_Circle(const JXml *sxml,TiXmlElement* ele){
 /// Reads definition of inlet points in the XML node and creates points.
 //==============================================================================
 void JSphInOutPoints::CreatePoints(const JXml *sxml,TiXmlElement* lis
-  ,const JSphPartsInit *partsdata)
+  ,const JDsPartsInit *partsdata)
 {
   string xmlrow=sxml->ErrGetFileRow(lis);
   TiXmlElement* ele=lis->FirstChildElement();

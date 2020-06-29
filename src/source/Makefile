@@ -1,4 +1,4 @@
-#DualSPHysics GPU/CPU v5.0.123 28-06-2020
+#DualSPHysics GPU/CPU v5.0.124 29-06-2020
 
 #=============== Compilation Options (YES/NO) ===============
 USE_GCC5=NO
@@ -111,20 +111,20 @@ endif
 
 #=============== Files to compile ===============
 OBJXML=JXml.o tinystr.o tinyxml.o tinyxmlerror.o tinyxmlparser.o
-OBJSPHMOTION=JMotion.o JMotionList.o JMotionMov.o JMotionObj.o JMotionPos.o JSphMotion.o
+OBJSPHMOTION=JMotion.o JMotionList.o JMotionMov.o JMotionObj.o JMotionPos.o JDsMotion.o
 OBCOMMON=Functions.o FunctionsGeo3d.o JAppInfo.o JBinaryData.o JCfgRunBase.o JDataArrays.o JException.o JLinearValue.o JLog2.o JMeanValues.o JObject.o JOutputCsv.o JRadixSort.o JRangeFilter.o JReadDatafile.o JSaveCsv2.o JTimeControl.o randomc.o
-OBCOMMONDSPH=JDsphConfig.o JDsPips.o JPartDataBi4.o JPartDataHead.o JPartFloatBi4.o JPartOutBi4Save.o JSpaceCtes.o JSpaceEParms.o JSpaceParts.o JSpaceProperties.o JSpaceUserVars.o JSpaceVtkOut.o
-OBSPH=JArraysCpu.o JCellDivCpu.o JGenCfgRun.o JDamping.o JGaugeItem.o JGaugeSystem.o JPartsOut.o JSaveDt.o JShifting.o JSph.o JSphAccInput.o JSphCpu.o JSphInitialize.o JSphMk.o JSphPartsInit.o JSphDtFixed.o JSphVisco.o JTimeOut.o JWaveSpectrumGpu.o main.o
+OBCOMMONDSPH=JDsphConfig.o JDsPips.o JPartDataBi4.o JPartDataHead.o JPartFloatBi4.o JPartOutBi4Save.o JCaseCtes.o JCaseEParms.o JCaseParts.o JCaseProperties.o JCaseUserVars.o JCaseVtkOut.o
+OBSPH=JArraysCpu.o JCellDivCpu.o JSphCfgRun.o JDsDamping.o JDsGaugeItem.o JDsGaugeSystem.o JDsPartsOut.o JDsSaveDt.o JSphShifting.o JSph.o JDsAccInput.o JSphCpu.o JDsInitialize.o JSphMk.o JDsPartsInit.o JDsFixedDt.o JDsViscoInput.o JDsOutputTime.o JWaveSpectrumGpu.o main.o
 OBSPHSINGLE=JCellDivCpuSingle.o JPartsLoad4.o JSphCpuSingle.o
 OBCOMMONGPU=FunctionsCuda.o JObjectGpu.o 
 OBSPHGPU=JArraysGpu.o JDebugSphGpu.o JCellDivGpu.o JSphGpu.o 
 OBSPHSINGLEGPU=JCellDivGpuSingle.o JSphGpuSingle.o
-OBCUDA=JCellDivGpu_ker.o JCellDivGpuSingle_ker.o JDsPips_ker.o JGauge_ker.o JReduSum_ker.o JShifting_ker.o JSphAccInput_ker.o JSphGpu_ker.o JSphGpuSimple_ker.o JWaveOrder2_ker.o
+OBCUDA=JCellDivGpu_ker.o JCellDivGpuSingle_ker.o JDsPips_ker.o JDsGauge_ker.o JReduSum_ker.o JSphShifting_ker.o JDsAccInput_ker.o JSphGpu_ker.o JSphGpuSimple_ker.o JWaveOrder2_ker.o
 
 OBWAVERZ=JMLPistonsGpu.o JRelaxZonesGpu.o
 OBWAVERZCUDA=JRelaxZone_ker.o
 OBCHRONO=JChronoObjects.o
-OBMOORDYN=JMooredFloatings.o JSphFtForcePoints.o
+OBMOORDYN=JDsMooredFloatings.o JDsFtForcePoints.o
 OBINOUT=JSphCpu_InOut.o JSphCpuSingle_InOut.o JSphBoundCorr.o JSphInOut.o JSphInOutZone.o JSphInOutGridData.o JSphInOutPoints.o JSimpleNeigs.o
 OBINOUTGPU=JSphGpuSingle_InOut.o
 OBMDBC=JPartNormalData.o JNormalsMarrone.o
@@ -194,17 +194,17 @@ JCellDivGpu_ker.o: JCellDivGpu_ker.cu
 JCellDivGpuSingle_ker.o: JCellDivGpuSingle_ker.cu
 	$(NCC) $(NCCFLAGS) JCellDivGpuSingle_ker.cu
 
-JShifting_ker.o: JShifting_ker.cu
-	$(NCC) $(NCCFLAGS) JShifting_ker.cu
+JSphShifting_ker.o: JSphShifting_ker.cu
+	$(NCC) $(NCCFLAGS) JSphShifting_ker.cu
 
-JSphAccInput_ker.o: JSphAccInput_ker.cu
-	$(NCC) $(NCCFLAGS) JSphAccInput_ker.cu
+JDsAccInput_ker.o: JDsAccInput_ker.cu
+	$(NCC) $(NCCFLAGS) JDsAccInput_ker.cu
 
 JDsPips_ker.o: JDsPips_ker.cu
 	$(NCC) $(NCCFLAGS) JDsPips_ker.cu
 
-JGauge_ker.o: JGauge_ker.cu
-	$(NCC) $(NCCFLAGS) JGauge_ker.cu
+JDsGauge_ker.o: JDsGauge_ker.cu
+	$(NCC) $(NCCFLAGS) JDsGauge_ker.cu
 
 JWaveOrder2_ker.o: JWaveOrder2_ker.cu
 	$(NCC) $(NCCFLAGS) JWaveOrder2_ker.cu

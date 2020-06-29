@@ -24,12 +24,12 @@
 #include "FunctionsGeo3d.h"
 #include "JLog2.h"
 #include "JXml.h"
-#include "JSpaceParts.h"
+#include "JCaseParts.h"
 #include "JAppInfo.h"
 #include "JSaveCsv2.h"
 #include "JVtkLib.h"
 #include "JRangeFilter.h"
-#include "JSpaceVtkOut.h"
+#include "JCaseVtkOut.h"
 #include "JSphMk.h"
 #include <cstring>
 #include <cfloat>
@@ -171,7 +171,7 @@ std::string JChronoObjects::ReadXmlModelFile(const JXml *sxml,TiXmlElement* ele)
 void JChronoObjects::LoadPtrAutoActual(const JXml *sxml,std::string xmlrow){
   if(!JVtkLib::Available())Run_Exceptioon("Code for VTK format files is not included in the current compilation, so CHRONO collisions according to VTK geometry are not supported.");
   if(Ptr_VtkSimple_AutoActual==NULL){
-    JSpaceVtkOut vtkout;
+    JCaseVtkOut vtkout;
     vtkout.LoadXml(sxml,"case.execution.vtkout",false);
     std::vector<std::string> vtkfiles;
     vtkout.GetFiles("_Actual.vtk",vtkfiles);
@@ -187,7 +187,7 @@ void JChronoObjects::LoadPtrAutoActual(const JXml *sxml,std::string xmlrow){
 void JChronoObjects::LoadPtrAutoDp(const JXml *sxml,std::string xmlrow){
   if(!JVtkLib::Available())Run_Exceptioon("Code for VTK format files is not included in the current compilation, so CHRONO collisions according to VTK geometry are not supported.");
   if(Ptr_VtkSimple_AutoDp==NULL){
-    JSpaceVtkOut vtkout;
+    JCaseVtkOut vtkout;
     vtkout.LoadXml(sxml,"case.execution.vtkout",false);
     std::vector<std::string> vtkfiles;
     vtkout.GetFiles("_Dp.vtk",vtkfiles);

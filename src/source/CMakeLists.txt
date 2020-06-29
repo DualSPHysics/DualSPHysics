@@ -1,5 +1,5 @@
 #==================================================================
-# DualSPHysics GPU/CPU v5.0.123 28-06-2020
+# DualSPHysics GPU/CPU v5.0.124 29-06-2020
 #==================================================================
 
 cmake_minimum_required(VERSION 2.8)
@@ -19,23 +19,23 @@ option(ENABLE_CHRONO_OMP "Enable the Chrono Parallel module" ON)
 
 # CPU Objects
 set(OBJXML JXml.cpp tinystr.cpp tinyxml.cpp tinyxmlerror.cpp tinyxmlparser.cpp)
-set(OBJSPHMOTION JMotion.cpp JMotionList.cpp JMotionMov.cpp JMotionObj.cpp JMotionPos.cpp JSphMotion.cpp)
+set(OBJSPHMOTION JMotion.cpp JMotionList.cpp JMotionMov.cpp JMotionObj.cpp JMotionPos.cpp JDsMotion.cpp)
 set(OBCOMMON Functions.cpp FunctionsGeo3d.cpp JAppInfo.cpp JBinaryData.cpp JCfgRunBase.cpp JDataArrays.cpp JException.cpp JLinearValue.cpp JLog2.cpp JMeanValues.cpp JObject.cpp JOutputCsv.cpp JRadixSort.cpp JRangeFilter.cpp JReadDatafile.cpp JSaveCsv2.cpp JTimeControl.cpp randomc.cpp)
-set(OBCOMMONDSPH JDsphConfig.cpp JDsPips.cpp JPartDataBi4.cpp JPartDataHead.cpp JPartFloatBi4.cpp JPartOutBi4Save.cpp JSpaceCtes.cpp JSpaceEParms.cpp JSpaceParts.cpp JSpaceProperties.cpp JSpaceUserVars.cpp JSpaceVtkOut.cpp)
-set(OBSPH JArraysCpu.cpp JCellDivCpu.cpp JGenCfgRun.cpp JDamping.cpp JGaugeItem.cpp JGaugeSystem.cpp JPartsOut.cpp JSaveDt.cpp JShifting.cpp JSph.cpp JSphAccInput.cpp JSphCpu.cpp JSphInitialize.cpp JSphMk.cpp JSphPartsInit.cpp JSphDtFixed.cpp JSphVisco.cpp JTimeOut.cpp JWaveSpectrumGpu.cpp main.cpp)
+set(OBCOMMONDSPH JDsphConfig.cpp JDsPips.cpp JPartDataBi4.cpp JPartDataHead.cpp JPartFloatBi4.cpp JPartOutBi4Save.cpp JCaseCtes.cpp JCaseEParms.cpp JCaseParts.cpp JCaseProperties.cpp JCaseUserVars.cpp JCaseVtkOut.cpp)
+set(OBSPH JArraysCpu.cpp JCellDivCpu.cpp JSphCfgRun.cpp JDsDamping.cpp JDsGaugeItem.cpp JDsGaugeSystem.cpp JDsPartsOut.cpp JDsSaveDt.cpp JSphShifting.cpp JSph.cpp JDsAccInput.cpp JSphCpu.cpp JDsInitialize.cpp JSphMk.cpp JDsPartsInit.cpp JDsFixedDt.cpp JDsViscoInput.cpp JDsOutputTime.cpp JWaveSpectrumGpu.cpp main.cpp)
 set(OBSPHSINGLE JCellDivCpuSingle.cpp JPartsLoad4.cpp JSphCpuSingle.cpp)
 
 # GPU Objects
 set(OBCOMMONGPU FunctionsCuda.cpp JObjectGpu.cpp)
 set(OBSPHGPU JArraysGpu.cpp JDebugSphGpu.cpp JCellDivGpu.cpp JSphGpu.cpp )
 set(OBSPHSINGLEGPU JCellDivGpuSingle.cpp JSphGpuSingle.cpp)
-set(OBCUDA JCellDivGpu_ker.cu JCellDivGpuSingle_ker.cu  JDsPips_ker.cu JGauge_ker.cu JReduSum_ker.cu JShifting_ker.cu JSphAccInput_ker.cu JSphGpu_ker.cu JSphGpuSimple_ker.cu JWaveOrder2_ker.cu)
+set(OBCUDA JCellDivGpu_ker.cu JCellDivGpuSingle_ker.cu  JDsPips_ker.cu JDsGauge_ker.cu JReduSum_ker.cu JSphShifting_ker.cu JDsAccInput_ker.cu JSphGpu_ker.cu JSphGpuSimple_ker.cu JWaveOrder2_ker.cu)
 
 # Other Objects
 set(OBWAVERZ JMLPistonsGpu.cpp JRelaxZonesGpu.cpp)
 set(OBWAVERZCUDA JRelaxZone_ker.cu)
 set(OBCHRONO JChronoObjects.cpp)
-set(OBMOORDYN JMooredFloatings.cpp JSphFtForcePoints.cpp)
+set(OBMOORDYN JDsMooredFloatings.cpp JDsFtForcePoints.cpp)
 set(OBINOUT JSphCpu_InOut.cpp JSphCpuSingle_InOut.cpp JSphBoundCorr.cpp JSphInOut.cpp JSphInOutZone.cpp JSphInOutGridData.cpp JSphInOutPoints.cpp JSimpleNeigs.cpp)
 set(OBINOUTGPU JSphGpuSingle_InOut.cpp)
 set(OBMDBC JNormalsMarrone.cpp JPartNormalData.cpp)

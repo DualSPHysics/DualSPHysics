@@ -24,32 +24,32 @@
 #include "FunctionsGeo3d.h"
 #include "JPartDataHead.h"
 #include "JSphMk.h"
-#include "JSphPartsInit.h"
+#include "JDsPartsInit.h"
 #include "JPartsLoad4.h"
-#include "JSphMotion.h"
+#include "JDsMotion.h"
 #include "JXml.h"
-#include "JSpaceCtes.h"
-#include "JSpaceEParms.h"
-#include "JSpaceParts.h"
-#include "JSphDtFixed.h"
-#include "JSaveDt.h"
-#include "JTimeOut.h"
-#include "JSphVisco.h"
-#include "JGaugeSystem.h"
+#include "JCaseCtes.h"
+#include "JCaseEParms.h"
+#include "JCaseParts.h"
+#include "JDsFixedDt.h"
+#include "JDsSaveDt.h"
+#include "JDsOutputTime.h"
+#include "JDsViscoInput.h"
+#include "JDsGaugeSystem.h"
 #include "JWaveGen.h"
 #include "JMLPistons.h"     //<vs_mlapiston>
 #include "JRelaxZones.h"    //<vs_rzone>
 #include "JChronoObjects.h" //<vs_chroono>
-#include "JMooredFloatings.h"  //<vs_moordyyn>
-#include "JSphFtForcePoints.h" //<vs_moordyyn>
-#include "JSphAccInput.h"
+#include "JDsMooredFloatings.h"  //<vs_moordyyn>
+#include "JDsFtForcePoints.h" //<vs_moordyyn>
+#include "JDsAccInput.h"
 #include "JPartDataBi4.h"
 #include "JPartOutBi4Save.h"
 #include "JPartFloatBi4.h"
-#include "JPartsOut.h"
-#include "JShifting.h"
-#include "JDamping.h"
-#include "JSphInitialize.h"
+#include "JDsPartsOut.h"
+#include "JSphShifting.h"
+#include "JDsDamping.h"
+#include "JDsInitialize.h"
 #include "JSphInOut.h"       //<vs_innlet> 
 #include "JSphBoundCorr.h"   //<vs_innlet> 
 #include "JDsPips.h"
@@ -60,7 +60,7 @@
 #include "JOutputCsv.h"
 #include "JVtkLib.h"
 #include "JNumexLib.h"
-#include "JSpaceUserVars.h"
+#include "JCaseUserVars.h"
 
 using namespace std;
 
@@ -77,12 +77,12 @@ JSph::JSph(bool cpu,bool mgpu,bool withmpi):Cpu(cpu),Mgpu(mgpu),WithMpi(withmpi)
   PartsOut=NULL;
   Log=NULL;
   ViscoTime=NULL;
-  DtFixed=NULL;
+  FixedDt=NULL;
   SaveDt=NULL;
-  TimeOut=NULL;
+  OutputTime=NULL;
   MkInfo=NULL;
   PartsInit=NULL;
-  SphMotion=NULL;
+  DsMotion=NULL;
   FtObjs=NULL;
   FtLinearVel=NULL;  //<vs_fttvel>
   FtAngularVel=NULL; //<vs_fttvel>
@@ -115,12 +115,12 @@ JSph::~JSph(){
   delete DataFloatBi4;  DataFloatBi4=NULL;
   delete PartsOut;      PartsOut=NULL;
   delete ViscoTime;     ViscoTime=NULL;
-  delete DtFixed;       DtFixed=NULL;
+  delete FixedDt;       FixedDt=NULL;
   delete SaveDt;        SaveDt=NULL;
-  delete TimeOut;       TimeOut=NULL;
+  delete OutputTime;    OutputTime=NULL;
   delete MkInfo;        MkInfo=NULL;
   delete PartsInit;     PartsInit=NULL;
-  delete SphMotion;     SphMotion=NULL;
+  delete DsMotion;      DsMotion=NULL;
   AllocMemoryFloating(0,false);
   delete[] DemData;     DemData=NULL;
   delete GaugeSystem;   GaugeSystem=NULL;
@@ -384,24 +384,24 @@ void JSph::ConfigDomainParticlesPrcValue(std::string key,double v){
 //==============================================================================
 /// Loads the case configuration to be executed.
 //==============================================================================
-void JSph::ConfigDomainResize(std::string key,const JSpaceEParms *eparms){
+void JSph::ConfigDomainResize(std::string key,const JCaseEParms *eparms){
   const char axis=fun::StrLower(key)[0];
   if(axis!='x' && axis!='y' && axis!='z')Run_Exceptioon("Axis value is invalid.");
   if(key.substr(1,3)!="min" && key.substr(1,3)!="max")Run_Exceptioon("Key value is invalid.");
   if(key.substr(1,3)=="min"){
-    JSpaceEParms::JSpaceEParmsPos ps=eparms->GetPosminValue(axis);
+    JCaseEParms::JCaseEParmsPos ps=eparms->GetPosminValue(axis);
     switch(ps.mode){
-      case JSpaceEParms::DC_Fixed:     ConfigDomainFixedValue(string("DomainFixed")+key,ps.value);                     break;
-      case JSpaceEParms::DC_DefValue:  ConfigDomainParticlesValue(string("DomainParticles")+key,ps.value);             break;
-      case JSpaceEParms::DC_DefPrc:    ConfigDomainParticlesPrcValue(string("DomainParticlesPrc")+key,ps.value/100);   break;
+      case JCaseEParms::DC_Fixed:     ConfigDomainFixedValue(string("DomainFixed")+key,ps.value);                     break;
+      case JCaseEParms::DC_DefValue:  ConfigDomainParticlesValue(string("DomainParticles")+key,ps.value);             break;
+      case JCaseEParms::DC_DefPrc:    ConfigDomainParticlesPrcValue(string("DomainParticlesPrc")+key,ps.value/100);   break;
     }
   }
   else{
-    JSpaceEParms::JSpaceEParmsPos ps=eparms->GetPosmaxValue(axis);
+    JCaseEParms::JCaseEParmsPos ps=eparms->GetPosmaxValue(axis);
     switch(ps.mode){
-      case JSpaceEParms::DC_Fixed:     ConfigDomainFixedValue(string("DomainFixed")+key,ps.value);                     break;
-      case JSpaceEParms::DC_DefValue:  ConfigDomainParticlesValue(string("DomainParticles")+key,ps.value);             break;
-      case JSpaceEParms::DC_DefPrc:    ConfigDomainParticlesPrcValue(string("DomainParticlesPrc")+key,ps.value/100);   break;
+      case JCaseEParms::DC_Fixed:     ConfigDomainFixedValue(string("DomainFixed")+key,ps.value);                     break;
+      case JCaseEParms::DC_DefValue:  ConfigDomainParticlesValue(string("DomainParticles")+key,ps.value);             break;
+      case JCaseEParms::DC_DefPrc:    ConfigDomainParticlesPrcValue(string("DomainParticlesPrc")+key,ps.value/100);   break;
     }
   }
 }
@@ -440,7 +440,7 @@ llong JSph::GetAllocMemoryCpu()const{
   //-Allocated in other objects.
   if(PartsOut)s+=PartsOut->GetAllocMemory();
   if(ViscoTime)s+=ViscoTime->GetAllocMemory();
-  if(DtFixed)s+=DtFixed->GetAllocMemory();
+  if(FixedDt)s+=FixedDt->GetAllocMemory();
   if(AccInput)s+=AccInput->GetAllocMemory();
   if(PartsLoaded)s+=PartsLoaded->GetAllocMemory();
   return(s);
@@ -510,7 +510,7 @@ void JSph::LoadConfig(const JSphCfgRun *cfg){
 /// Loads predefined constans from XML.
 //==============================================================================
 void JSph::LoadConfigCtes(const JXml *xml){
-  JSpaceCtes ctes;
+  JCaseCtes ctes;
   ctes.LoadXmlRun(xml,"case.execution.constants");
 
   Simulate2D=ctes.GetData2D();
@@ -531,7 +531,7 @@ void JSph::LoadConfigCtes(const JXml *xml){
 /// Loads execution parameters from XML.
 //==============================================================================
 void JSph::LoadConfigParameters(const JXml *xml){
-  JSpaceEParms eparms;
+  JCaseEParms eparms;
   eparms.LoadXml(xml,"case.execution.parameters");
 
   if(eparms.Exists("FtSaveAce"))SaveFtAce=(eparms.GetValueInt("FtSaveAce",true,0)!=0);
@@ -571,7 +571,7 @@ void JSph::LoadConfigParameters(const JXml *xml){
   ViscoBoundFactor=eparms.GetValueFloat("ViscoBoundFactor",true,1.f);
   string filevisco=eparms.GetValueStr("ViscoTime",true);
   if(!filevisco.empty()){
-    ViscoTime=new JSphVisco();
+    ViscoTime=new JDsViscoInput();
     ViscoTime->LoadFile(DirCase+filevisco);
   }
 
@@ -634,7 +634,7 @@ void JSph::LoadConfigParameters(const JXml *xml){
       if(shiftcoef==0)shiftmode=SHIFT_None;
       else shifttfs=eparms.GetValueFloat("ShiftTFS",true,0);
     }
-    Shifting=new JShifting(Simulate2D,Dp,H,Log);
+    Shifting=new JSphShifting(Simulate2D,Dp,H,Log);
     Shifting->ConfigBasic(shiftmode,shiftcoef,shifttfs);
   }
 
@@ -650,10 +650,10 @@ void JSph::LoadConfigParameters(const JXml *xml){
   CoefDtMin=eparms.GetValueFloat("CoefDtMin",true,0.05f);
   DtAllParticles=(eparms.GetValueInt("DtAllParticles",true,0)==1);
 
-  string filedtfixed=eparms.GetValueStr("DtFixed",true);
-  if(!filedtfixed.empty()){
-    DtFixed=new JSphDtFixed();
-    DtFixed->LoadFile(DirCase+filedtfixed);
+  string filefixeddt=eparms.GetValueStr("FixedDt",true);
+  if(!filefixeddt.empty()){
+    FixedDt=new JDsFixedDt();
+    FixedDt->LoadFile(DirCase+filefixeddt);
   }
   if(eparms.Exists("RhopOutMin"))RhopOutMin=eparms.GetValueFloat("RhopOutMin");
   if(eparms.Exists("RhopOutMax"))RhopOutMax=eparms.GetValueFloat("RhopOutMax");
@@ -771,7 +771,7 @@ void JSph::LoadConfigCommands(const JSphCfgRun *cfg){
       case 3:  shiftmode=SHIFT_Full;     break;
       default: Run_Exceptioon("Shifting mode is not valid.");
     }
-    if(!Shifting)Shifting=new JShifting(Simulate2D,Dp,H,Log);
+    if(!Shifting)Shifting=new JSphShifting(Simulate2D,Dp,H,Log);
     Shifting->ConfigBasic(shiftmode);
   }
 
@@ -780,13 +780,13 @@ void JSph::LoadConfigCommands(const JSphCfgRun *cfg){
   NstepsBreak=cfg->NstepsBreak;
   if(NstepsBreak)Log->PrintfWarning("The execution will be cancelled after %d simulation steps.",NstepsBreak);
   SvAllSteps=cfg->SvAllSteps;
-  //-Configuration of JTimeOut with TimePart.
-  TimeOut=new JTimeOut();
+  //-Configuration of JDsOutputTime with TimePart.
+  OutputTime=new JDsOutputTime();
   if(cfg->TimePart>=0){
     TimePart=cfg->TimePart;
-    TimeOut->Config(TimePart);
+    OutputTime->Config(TimePart);
   }
-  else TimeOut->Config(FileXml,"case.execution.special.timeout",TimePart);
+  else OutputTime->Config(FileXml,"case.execution.special.timeout",TimePart);
 
   CellMode=cfg->CellMode;
   if(cfg->DomainMode==2)ConfigDomainFixed(cfg->DomainFixedMin,cfg->DomainFixedMax);
@@ -805,10 +805,10 @@ void JSph::LoadConfigVars(const JXml *xml){
   else{
     NuxLib=new JNumexLib();
     //-Loads user variables from XML.
-    JSpaceUserVars uvars;
+    JCaseUserVars uvars;
     uvars.LoadXml(xml,"case.execution.uservars",true);
     for(unsigned c=0;c<uvars.CountVars();c++){
-      const JSpaceUserVars::StVar v=uvars.GetVar(c);
+      const JCaseUserVars::StVar v=uvars.GetVar(c);
       if(v.isnum)NuxLib->CreateVar(v.name,true,false,v.valuenum);
       else       NuxLib->CreateVar(v.name,true,false,v.valuestr);
     }
@@ -873,7 +873,7 @@ void JSph::LoadCaseConfig(const JSphCfgRun *cfg){
   LoadConfigVarsExec();
 
   //-Particle data.
-  JSpaceParts parts;
+  JCaseParts parts;
   parts.LoadXml(&xml,"case.execution.particles");
   CaseNp=parts.Count();
   CaseNfixed=parts.Count(TpPartFixed);
@@ -895,7 +895,7 @@ void JSph::LoadCaseConfig(const JSphCfgRun *cfg){
 
   //-Configuration of AccInput.
   if(xml.GetNodeSimple("case.execution.special.accinputs",true)){
-    AccInput=new JSphAccInput(Log,DirCase,&xml,"case.execution.special.accinputs");
+    AccInput=new JDsAccInput(Log,DirCase,&xml,"case.execution.special.accinputs");
   }
 
   //-Configuration of ChronoObjects. //<vs_chroono_ini>
@@ -911,8 +911,8 @@ void JSph::LoadCaseConfig(const JSphCfgRun *cfg){
 
   //-Loads and configures moving objects.
   if(parts.CountBlocks(TpPartMoving)>0){
-    SphMotion=new JSphMotion(Simulate2D);
-    SphMotion->Init(&parts,&xml,"case.execution.motion",DirCase);
+    DsMotion=new JDsMotion(Simulate2D);
+    DsMotion->Init(&parts,&xml,"case.execution.motion",DirCase);
   }
 
   //-Configuration of WaveGen.
@@ -923,8 +923,8 @@ void JSph::LoadCaseConfig(const JSphCfgRun *cfg){
       useomp=(omp_get_max_threads()>1);
     #endif
     WaveGen=new JWaveGen(useomp,!Cpu,Log,DirCase,&xml,"case.execution.special.wavepaddles",ToTDouble3(Gravity));
-    if(SphMotion)for(unsigned ref=0;ref<SphMotion->GetNumObjects();ref++){
-      const StMotionData& m=SphMotion->GetMotionData(ref);
+    if(DsMotion)for(unsigned ref=0;ref<DsMotion->GetNumObjects();ref++){
+      const StMotionData& m=DsMotion->GetMotionData(ref);
       WaveGen->ConfigPaddle(m.mkbound,ref,m.idbegin,m.count);
     }
   }
@@ -935,8 +935,8 @@ void JSph::LoadCaseConfig(const JSphCfgRun *cfg){
     bool useomp=false,usegpu=false;
     MLPistons=new JMLPistons(!Cpu,Log,DirCase);
     MLPistons->LoadXml(&xml,"case.execution.special.mlayerpistons");  
-    if(SphMotion)for(unsigned c=0;c<SphMotion->GetNumObjects();c++){
-      const StMotionData& m=SphMotion->GetMotionData(c);
+    if(DsMotion)for(unsigned c=0;c<DsMotion->GetNumObjects();c++){
+      const StMotionData& m=DsMotion->GetMotionData(c);
       MLPistons->ConfigPiston(m.mkbound,c,m.idbegin,m.count,TimeMax);
     }
     MLPistons->CheckPistons();
@@ -956,7 +956,7 @@ void JSph::LoadCaseConfig(const JSphCfgRun *cfg){
   //-Configuration of Shifting with zones.
   if(Shifting && xml.GetNodeSimple("case.execution.special.shifting",true))Run_ExceptioonFile("Shifting is defined several times (in <special><shifting> and <execution><parameters>).",FileXml);
   if(xml.GetNodeSimple("case.execution.special.shifting",true)){
-    Shifting=new JShifting(Simulate2D,Dp,H,Log);
+    Shifting=new JSphShifting(Simulate2D,Dp,H,Log);
     Shifting->LoadXml(&xml,"case.execution.special.shifting");
   }
   if(Shifting && !Shifting->GetShiftMode()){ delete Shifting; Shifting=NULL; }
@@ -964,7 +964,7 @@ void JSph::LoadCaseConfig(const JSphCfgRun *cfg){
 
   //-Configuration of damping zones.
   if(xml.GetNodeSimple("case.execution.special.damping",true)){
-    Damping=new JDamping(Dp,Log);
+    Damping=new JDsDamping(Dp,Log);
     Damping->LoadXml(&xml,"case.execution.special.damping");
   }
 
@@ -976,9 +976,9 @@ void JSph::LoadCaseConfig(const JSphCfgRun *cfg){
     AllocMemoryFloating(FtCount,parts.UseImposedFtVel());
     unsigned cobj=0;
     for(unsigned c=0;c<parts.CountBlocks()&&cobj<FtCount;c++){
-      const JSpacePartBlock &block=parts.GetBlock(c);
+      const JCasePartBlock &block=parts.GetBlock(c);
       if(block.Type==TpPartFloating){
-        const JSpacePartBlock_Floating &fblock=(const JSpacePartBlock_Floating &)block;
+        const JCasePartBlock_Floating &fblock=(const JCasePartBlock_Floating &)block;
         StFloatingData* fobj=FtObjs+cobj;
         fobj->mkbound=fblock.GetMkType();
         fobj->begin=fblock.GetBegin();
@@ -1037,7 +1037,7 @@ void JSph::LoadCaseConfig(const JSphCfgRun *cfg){
       memset(DemData,0,sizeof(StDemData)*DemDataSize);
     }
     for(unsigned c=0;c<parts.CountBlocks();c++){
-      const JSpacePartBlock &block=parts.GetBlock(c);
+      const JCasePartBlock &block=parts.GetBlock(c);
       if(IsBound(block.Type)){
         const word mkbound=block.GetMkType();
         const unsigned cmk=MkInfo->GetMkBlockByMkBound(mkbound);
@@ -1076,7 +1076,7 @@ void JSph::LoadCaseConfig(const JSphCfgRun *cfg){
   if(xml.GetNodeSimple("case.execution.special.moorings",true)){
     if(WithFloating){
       if(!AVAILABLE_MOORDYN)Run_Exceptioon("Code for moorings and MoorDyn+ coupling is not included in the current compilation.");
-      Moorings=new JMooredFloatings(Log,DirCase,CaseName,Gravity);
+      Moorings=new JDsMooredFloatings(Log,DirCase,CaseName,Gravity);
       Moorings->LoadXml(&xml,"case.execution.special.moorings");
     }
     else Log->PrintWarning("The use of Moorings was disabled because there are no floating objects...");
@@ -1085,7 +1085,7 @@ void JSph::LoadCaseConfig(const JSphCfgRun *cfg){
   //-Configuration of FtForces object.
   if(Moorings || xml.GetNodeSimple("case.execution.special.forcepoints",true)){
     if(WithFloating){
-      ForcePoints=new JSphFtForcePoints(Log,Cpu,Dp,FtCount);
+      ForcePoints=new JDsFtForcePoints(Log,Cpu,Dp,FtCount);
       //FtForces->LoadXml(&xml,"case.execution.special.forcepoints");
     }
     else Log->PrintWarning("The use of impossed force to floatings was disabled because there are no floating objects...");
@@ -1108,7 +1108,7 @@ void JSph::LoadCaseConfig(const JSphCfgRun *cfg){
 //==============================================================================
 /// Loads coefficients used for DEM or Chrono objects.
 //==============================================================================
-StDemData JSph::LoadDemData(bool checkdata,const JSpacePartBlock* block)const{
+StDemData JSph::LoadDemData(bool checkdata,const JCasePartBlock* block)const{
   const word mk=block->GetMk();
   const word mkbound=block->GetMkType();
   StDemData data;
@@ -1131,7 +1131,7 @@ StDemData JSph::LoadDemData(bool checkdata,const JSpacePartBlock* block)const{
   //-Loads necessary values for DEM.
   data.massp=MassBound;
   if(block->Type==TpPartFloating){
-    const JSpacePartBlock_Floating *fblock=(const JSpacePartBlock_Floating *)block;
+    const JCasePartBlock_Floating *fblock=(const JCasePartBlock_Floating *)block;
     data.mass=(float)fblock->GetMassbody();
     data.massp=(float)fblock->GetMasspart();
   }
@@ -1515,7 +1515,7 @@ void JSph::VisuConfig(){
   Log->Print(fun::VarStr("DtIni",DtIni));
   Log->Print(fun::VarStr("DtMin",DtMin));
   Log->Print(fun::VarStr("DtAllParticles",DtAllParticles));
-  if(DtFixed)Log->Print(fun::VarStr("DtFixed",DtFixed->GetFile()));
+  if(FixedDt)Log->Print(fun::VarStr("FixedDt",FixedDt->GetFile()));
   Log->Print(fun::VarStr("MassFluid",MassFluid));
   Log->Print(fun::VarStr("MassBound",MassBound));
   if(TKernel==KERNEL_Wendland){
@@ -1566,7 +1566,7 @@ void JSph::VisuConfig(){
 //==============================================================================
 void JSph::VisuParticleSummary()const{
   JXml xml; xml.LoadFile(FileXml);
-  JSpaceParts parts; 
+  JCaseParts parts; 
   parts.LoadXml(&xml,"case.execution.particles");
   std::vector<std::string> summary;
   parts.GetParticleSummary(summary);
@@ -1614,7 +1614,7 @@ void JSph::RunInitialize(unsigned np,unsigned npb,const tdouble3 *pos,const unsi
     JXml xml; xml.LoadFile(FileXml);
     xml.SetNuxLib(NuxLib); //-Enables the use of NuxLib in XML configuration.
     if(xml.GetNodeSimple("case.execution.special.initialize",true)){
-      JSphInitialize init(&xml,"case.execution.special.initialize",H,float(Dp),CaseNbound,boundnormal!=NULL);
+      JDsInitialize init(&xml,"case.execution.special.initialize",H,float(Dp),CaseNbound,boundnormal!=NULL);
       if(init.Count()){
         //-Creates array with mktype value.
         word *mktype=new word[np];
@@ -1639,7 +1639,7 @@ void JSph::RunInitialize(unsigned np,unsigned npb,const tdouble3 *pos,const unsi
 /// configuraciones automaticas.
 //==============================================================================
 void JSph::CreatePartsInit(unsigned np,const tdouble3 *pos,const typecode *code){
-  PartsInit=new JSphPartsInit(Simulate2D,Simulate2DPosY,Dp,MkInfo,np,pos,code);
+  PartsInit=new JDsPartsInit(Simulate2D,Simulate2DPosY,Dp,MkInfo,np,pos,code);
 }
 
 //==============================================================================
@@ -1955,9 +1955,9 @@ void JSph::InitRun(unsigned np,const unsigned *idp,const tdouble3 *pos){
   PartIni=PartBeginFirst;
   TimeStepIni=(!PartIni? 0: PartBeginTimeStep);
   //-Adjust motion for the instant of the loaded PART.
-  if(SphMotion){
-    SphMotion->SetTimeMod(!PartIni? PartBeginTimeStep: 0);
-    SphMotion->ProcesTime(JSphMotion::MOMT_Simple,0,TimeStepIni);
+  if(DsMotion){
+    DsMotion->SetTimeMod(!PartIni? PartBeginTimeStep: 0);
+    DsMotion->ProcesTime(JDsMotion::MOMT_Simple,0,TimeStepIni);
   }
   //-Adjust motion paddles for the instant of the loaded PART.
   if(WaveGen)WaveGen->SetTimeMod(!PartIni? PartBeginTimeStep: 0);
@@ -2047,7 +2047,7 @@ void JSph::InitRun(unsigned np,const unsigned *idp,const tdouble3 *pos){
 
   //-Configuration of SaveDt.
   if(xml.GetNodeSimple("case.execution.special.savedt",true)){
-    SaveDt=new JSaveDt(Log);
+    SaveDt=new JDsSaveDt(Log);
     SaveDt->Config(&xml,"case.execution.special.savedt",TimeMax,TimePart);
     SaveDt->VisuConfig("SaveDt configuration:"," ");
   }
@@ -2063,13 +2063,13 @@ void JSph::InitRun(unsigned np,const unsigned *idp,const tdouble3 *pos){
   //-Shows configuration of JGaugeSystem.
   if(GaugeSystem->GetCount())GaugeSystem->VisuConfig("GaugeSystem configuration:"," ");
 
-  //-Shows configuration of JTimeOut.
-  if(TimeOut->UseSpecialConfig())TimeOut->VisuConfig(Log,"TimeOut configuration:"," ");
+  //-Shows configuration of JDsOutputTime.
+  if(OutputTime->UseSpecialConfig())OutputTime->VisuConfig(Log,"TimeOut configuration:"," ");
 
   Part=PartIni; Nstep=0; PartNstep=0; PartOut=0;
   TimeStep=TimeStepIni; TimeStepM1=TimeStep;
-  if(DtFixed)DtIni=DtFixed->GetDt(TimeStep,DtIni);
-  TimePartNext=(SvAllSteps? TimeStep: TimeOut->GetNextTime(TimeStep));
+  if(FixedDt)DtIni=FixedDt->GetDt(TimeStep,DtIni);
+  TimePartNext=(SvAllSteps? TimeStep: OutputTime->GetNextTime(TimeStep));
 }
 
 //==============================================================================
@@ -2078,13 +2078,13 @@ void JSph::InitRun(unsigned np,const unsigned *idp,const tdouble3 *pos){
 //==============================================================================
 bool JSph::CalcMotion(double stepdt){
   const bool motsim=true;
-  const JSphMotion::TpMotionMode mode=(motsim? JSphMotion::MOMT_Simple: JSphMotion::MOMT_Ace2dt);
-  SphMotion->ProcesTime(mode,TimeStep,stepdt);
-  const bool active=SphMotion->GetActiveMotion();
+  const JDsMotion::TpMotionMode mode=(motsim? JDsMotion::MOMT_Simple: JDsMotion::MOMT_Ace2dt);
+  DsMotion->ProcesTime(mode,TimeStep,stepdt);
+  const bool active=DsMotion->GetActiveMotion();
   if(ChronoObjects && ChronoObjects->GetWithMotion() && active){ //<vs_chroono_ini> 
-    const unsigned nref=SphMotion->GetNumObjects();
+    const unsigned nref=DsMotion->GetNumObjects();
     for(unsigned ref=0;ref<nref;ref++){
-      const StMotionData& m=SphMotion->GetMotionData(ref);
+      const StMotionData& m=DsMotion->GetMotionData(ref);
       if(m.type!=MOTT_None)ChronoObjects->SetMovingData(m.mkbound,m.type==MOTT_Linear,m.linmov,m.matmov,stepdt);
     }
   } //<vs_chroono_end>
@@ -2100,8 +2100,8 @@ void JSph::CalcMotionWaveGen(double stepdt){
   if(WaveGen){
     const bool svdata=(TimeStep+stepdt>=TimePartNext);
     for(unsigned c=0;c<WaveGen->GetCount();c++){
-      if(motsim)SphMotion->SetMotionData   (WaveGen->GetMotion   (svdata,c,TimeStep,stepdt));
-      else      SphMotion->SetMotionDataAce(WaveGen->GetMotionAce(svdata,c,TimeStep,stepdt));
+      if(motsim)DsMotion->SetMotionData   (WaveGen->GetMotion   (svdata,c,TimeStep,stepdt));
+      else      DsMotion->SetMotionDataAce(WaveGen->GetMotionAce(svdata,c,TimeStep,stepdt));
     }
   }
 }
@@ -2188,7 +2188,7 @@ void JSph::ConfigSaveData(unsigned piece,unsigned pieces,std::string div){
   }
   //-Creates object to store excluded particles until recordering. 
   //-Crea objeto para almacenar las particulas excluidas hasta su grabacion.
-  PartsOut=new JPartsOut();
+  PartsOut=new JDsPartsOut();
 }
 
 //==============================================================================
@@ -2330,7 +2330,7 @@ void JSph::SavePartData(unsigned npok,unsigned nout,const JDataArrays& arrays
       bdpart->SetvDouble("dtmean",(!Nstep? 0: (TimeStep-TimeStepM1)/(Nstep-PartNstep)));
       bdpart->SetvDouble("dtmin",(!Nstep? 0: PartDtMin));
       bdpart->SetvDouble("dtmax",(!Nstep? 0: PartDtMax));
-      if(DtFixed)bdpart->SetvDouble("dterror",DtFixed->GetDtError(true));
+      if(FixedDt)bdpart->SetvDouble("dterror",FixedDt->GetDtError(true));
       bdpart->SetvDouble("timesim",infoplus->timesim);
       bdpart->SetvUint("nct",infoplus->nct);
       bdpart->SetvUint("npbin",infoplus->npbin);

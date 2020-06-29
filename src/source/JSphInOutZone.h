@@ -45,7 +45,7 @@ class JLinearValue;
 class JSphInOutPoints;
 class JSphInOutGridData;
 class JWaveTheoryReg;
-class JSphPartsInit;
+class JDsPartsInit;
 class JGaugeSystem;
 class JGaugeSwl;
 
@@ -250,7 +250,7 @@ private:
 #endif
 
   void ReadXml(const JXml *sxml,TiXmlElement* lis,const std::string &dirdatafile
-    ,const JSphPartsInit *partsdata,JGaugeSystem *gaugesystem);
+    ,const JDsPartsInit *partsdata,JGaugeSystem *gaugesystem);
   void CalculateVelMinMax(float &velmin,float &velmax)const;
   void LoadDomain();
 
@@ -258,7 +258,7 @@ public:
   JSphInOutZone(bool cpu,JLog2 *log,unsigned idzone,bool simulate2d,double simulate2dposy
     ,double dp,const tdouble3 &posmin,const tdouble3 &posmax,float gravityz
     ,const JXml *sxml,TiXmlElement* ele,const std::string &dirdatafile
-    ,const JSphPartsInit *partsdata,JGaugeSystem *gaugesystem);
+    ,const JDsPartsInit *partsdata,JGaugeSystem *gaugesystem);
   ~JSphInOutZone();
   void Reset();
   void GetConfig(std::vector<std::string> &lines)const;

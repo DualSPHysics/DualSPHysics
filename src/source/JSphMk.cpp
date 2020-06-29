@@ -20,7 +20,7 @@
 
 #include "JSphMk.h"
 #include "Functions.h"
-#include "JSpaceParts.h"
+#include "JCaseParts.h"
 #include "JPartDataHead.h"
 #include <algorithm>
 #include <climits>
@@ -83,7 +83,7 @@ void JSphMk::Reset(){
 //==============================================================================
 /// Load MK information of particles.
 //==============================================================================
-void JSphMk::Config(const JSpaceParts *parts){
+void JSphMk::Config(const JCaseParts *parts){
   MkBoundFirst=parts->GetMkBoundFirst();
   MkFluidFirst=parts->GetMkFluidFirst();
   MkListSize=parts->CountBlocks();
@@ -105,7 +105,7 @@ void JSphMk::Config(const JSpaceParts *parts){
   if(MkListFluid >CODE_MKRANGEMAX)Run_Exceptioon("The number of fluid particle blocks exceeds the maximum.");
   //-Gets info for each block of particles.
   for(unsigned c=0;c<MkListSize;c++){
-    const JSpacePartBlock &block=parts->GetBlock(c);
+    const JCasePartBlock &block=parts->GetBlock(c);
     const bool bound=(block.Bound);
     typecode code=0;
     switch(block.Type){

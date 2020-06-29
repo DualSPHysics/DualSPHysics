@@ -30,7 +30,7 @@
 #include "JVtkLib.h"
 #include "JSimpleNeigs.h"
 #include "JTimeControl.h"
-#include "JGaugeSystem.h"
+#include "JDsGaugeSystem.h"
 #include "JNumexLib.h"
 
 #ifdef _WITHGPU
@@ -168,7 +168,7 @@ void JSphInOut::LoadXmlInit(const JXml *sxml,const std::string &place){
 /// Loads data of a file in XML format.
 //==============================================================================
 void JSphInOut::LoadFileXml(const std::string &file,const std::string &path
-  ,JNumexLib *nuxlib,const JSphPartsInit *partsdata,JGaugeSystem *gaugesystem)
+  ,JNumexLib *nuxlib,const JDsPartsInit *partsdata,JGaugeSystem *gaugesystem)
 {
   JXml jxml;
   jxml.LoadFile(file);
@@ -180,7 +180,7 @@ void JSphInOut::LoadFileXml(const std::string &file,const std::string &path
 /// Loads initial conditions of XML object.
 //==============================================================================
 void JSphInOut::LoadXml(const JXml *sxml,const std::string &place
-  ,const JSphPartsInit *partsdata,JGaugeSystem *gaugesystem)
+  ,const JDsPartsInit *partsdata,JGaugeSystem *gaugesystem)
 {
   TiXmlNode* node=sxml->GetNodeSimple(place);
   if(!node)Run_Exceptioon(std::string("Cannot find the element \'")+place+"\'.");
@@ -191,7 +191,7 @@ void JSphInOut::LoadXml(const JXml *sxml,const std::string &place
 /// Reads list of initial conditions in the XML node.
 //==============================================================================
 void JSphInOut::ReadXml(const JXml *sxml,TiXmlElement* lis
-  ,const JSphPartsInit *partsdata,JGaugeSystem *gaugesystem)
+  ,const JDsPartsInit *partsdata,JGaugeSystem *gaugesystem)
 {
   //-Loads inflow elements.
   const unsigned idmax=CODE_MASKTYPEVALUE-CODE_TYPE_FLUID_INOUT;
@@ -516,7 +516,7 @@ void JSphInOut::SaveVtkVelGrid(){
 //==============================================================================
 unsigned JSphInOut::Config(double timestep,bool stable,bool simulate2d,double simulate2dposy
   ,byte periactive,float rhopzero,float cteb,float gamma,tfloat3 gravity,double dp
-  ,tdouble3 posmin,tdouble3 posmax,typecode codenewpart,const JSphPartsInit *partsdata
+  ,tdouble3 posmin,tdouble3 posmax,typecode codenewpart,const JDsPartsInit *partsdata
   ,JGaugeSystem *gaugesystem,JNumexLib *nuxlib)
 {
   Stable=stable;

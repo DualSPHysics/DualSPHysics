@@ -19,27 +19,27 @@
 /// \file JSphCpu.cpp \brief Implements the class \ref JSphCpu.
 
 #include "JSphCpu.h"
-#include "JDsNgSearchCpu.h"
+#include "JCellNgSearchCpu.h"
 #include "JCellDivCpu.h"
 #include "JPartFloatBi4.h"
 #include "Functions.h"
 #include "FunctionsMath.h"
-#include "JSphMotion.h"
+#include "JDsMotion.h"
 #include "JArraysCpu.h"
-#include "JSphDtFixed.h"
+#include "JDsFixedDt.h"
 #include "JWaveGen.h"
 #include "JMLPistons.h"     //<vs_mlapiston>
 #include "JRelaxZones.h"    //<vs_rzone>
 #include "JChronoObjects.h" //<vs_chroono>
-#include "JSphFtForcePoints.h" //<vs_moordyyn>
-#include "JDamping.h"
+#include "JDsFtForcePoints.h" //<vs_moordyyn>
+#include "JDsDamping.h"
 #include "JXml.h"
-#include "JSaveDt.h"
-#include "JTimeOut.h"
-#include "JSphAccInput.h"
-#include "JGaugeSystem.h"
+#include "JDsSaveDt.h"
+#include "JDsOutputTime.h"
+#include "JDsAccInput.h"
+#include "JDsGaugeSystem.h"
 #include "JSphBoundCorr.h"  //<vs_innlet>
-#include "JShifting.h"
+#include "JSphShifting.h"
 
 #include <climits>
 #ifndef WIN32
@@ -1814,7 +1814,7 @@ double JSphCpu::DtVariable(bool final){
   const double dt2=double(H)/(max(Cs0,VelMax*10.)+double(H)*ViscDtMax);
   //-dt new value of time step.
   double dt=double(CFLnumber)*min(dt1,dt2);
-  if(DtFixed)dt=DtFixed->GetDt(TimeStep,dt);
+  if(FixedDt)dt=FixedDt->GetDt(TimeStep,dt);
   if(fun::IsNAN(dt) || fun::IsInfinity(dt))Run_Exceptioon(fun::PrintStr("The computed Dt=%f (from AceMax=%f, VelMax=%f, ViscDtMax=%f) is NaN or infinity at nstep=%u.",dt,AceMax,VelMax,ViscDtMax,Nstep));
   if(dt<double(DtMin)){ 
     dt=double(DtMin); DtModif++;
@@ -1965,12 +1965,12 @@ void JSphCpu::RunMotion(double stepdt){
   //-Add motion from automatic wave generation.
   if(WaveGen)CalcMotionWaveGen(stepdt);
   //-Process particles motion.
-  if(SphMotion->GetActiveMotion()){
+  if(DsMotion->GetActiveMotion()){
     CalcRidp(PeriActive!=0,Npb,0,CaseNfixed,CaseNfixed+CaseNmoving,Codec,Idpc,RidpMove);
     BoundChanged=true;
-    const unsigned nref=SphMotion->GetNumObjects();
+    const unsigned nref=DsMotion->GetNumObjects();
     for(unsigned ref=0;ref<nref;ref++){
-      const StMotionData& m=SphMotion->GetMotionData(ref);
+      const StMotionData& m=DsMotion->GetMotionData(ref);
       if(m.type==MOTT_Linear){//-Linear movement.
         if(motsim)MoveLinBound   (m.count,m.idbegin-CaseNfixed,m.linmov,ToTFloat3(m.linvel),RidpMove,Posc,Dcellc,Velrhopc,Codec);
         //else    MoveLinBoundAce(m.count,m.idbegin-CaseNfixed,m.linmov,ToTFloat3(m.linvel),ToTFloat3(m.linace),RidpMove,Posc,Dcellc,Velrhopc,Acec,Codec);

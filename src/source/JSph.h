@@ -45,37 +45,37 @@
 #include <fstream>
 
 class JSphMk;
-class JSphMotion;
+class JDsMotion;
 class JPartData;
 class JPartPData;
-class JSphDtFixed;
-class JSaveDt;
-class JSphVisco;
+class JDsFixedDt;
+class JDsSaveDt;
+class JDsViscoInput;
 class JWaveGen;
 class JMLPistons;   //<vs_mlapiston>
 class JRelaxZones;  //<vs_rzone>
-class JSphAccInput;
-class JSpaceParts;
+class JDsAccInput;
+class JCaseParts;
 class JPartDataBi4;
 class JPartOutBi4Save;
 class JPartFloatBi4Save;
-class JPartsOut;
-class JShifting;
-class JDamping;
+class JDsPartsOut;
+class JSphShifting;
+class JDsDamping;
 class JXml;
-class JTimeOut;
+class JDsOutputTime;
 class JGaugeSystem;
 class JPartsLoad4;
-class JSpacePartBlock;
+class JCasePartBlock;
 class JChronoObjects;    //<vs_chroono>
-class JMooredFloatings;  //<vs_moordyyn>
-class JSphFtForcePoints; //<vs_moordyyn>
+class JDsMooredFloatings;  //<vs_moordyyn>
+class JDsFtForcePoints; //<vs_moordyyn>
 class JSphInOut;         //<vs_innlet>
 class JSphBoundCorr;     //<vs_innlet>
-class JSphPartsInit;
+class JDsPartsInit;
 class JDsPips;
 class JLinearValue;
-class JSpaceEParms;
+class JCaseEParms;
 class JDataArrays;
 class JNumexLib;
 
@@ -142,7 +142,7 @@ private:
   void ConfigDomainParticlesValue(std::string key,double v);
   void ConfigDomainParticlesPrc(tdouble3 vmin,tdouble3 vmax);
   void ConfigDomainParticlesPrcValue(std::string key,double v);
-  void ConfigDomainResize(std::string key,const JSpaceEParms *eparms);
+  void ConfigDomainResize(std::string key,const JCaseEParms *eparms);
 protected:
   const bool Cpu;
   const bool Mgpu;
@@ -186,7 +186,7 @@ protected:
   TpVisco TVisco;             ///<Viscosity type: Artificial,...                                         | Tipo de viscosidad: Artificial,...
   float Visco;  
   float ViscoBoundFactor;     ///<For boundary interaction use Visco*ViscoBoundFactor.                  | Para interaccion con contorno usa Visco*ViscoBoundFactor.
-  JSphVisco *ViscoTime;       ///<Provides a viscosity value as a function of simulation time.          | Proporciona un valor de viscosidad en funcion del instante de la simulacion.
+  JDsViscoInput *ViscoTime;   ///<Provides a viscosity value as a function of simulation time.          | Proporciona un valor de viscosidad en funcion del instante de la simulacion.
 
   TpBoundary TBoundary;       ///<Boundary condition: DBC, M-DBC.
   TpSlipMode SlipMode;        ///<Slip mode for mDBC 1:DBC vel=0, 2:No-slip, 3:Free slip (default=1).     //<vs_mddbc>
@@ -202,17 +202,17 @@ protected:
 
   double TimeMax;             ///<Time of simulation.
   double TimePart;            ///<Time of data.
-  JTimeOut *TimeOut;
-  int NstepsBreak;           ///<Maximum number of steps allowed (debug).
-  bool SvAllSteps;           ///<Saves a PART for each step (debug).
-  ullong TerminateMt;        ///<Modification time of file TERMINATE.
+  JDsOutputTime *OutputTime;  ///<Manage the use of variable output time to save PARTs.
+  int NstepsBreak;            ///<Maximum number of steps allowed (debug).
+  bool SvAllSteps;            ///<Saves a PART for each step (debug).
+  ullong TerminateMt;         ///<Modification time of file TERMINATE.
 
   double DtIni;              ///<Initial Dt
   double DtMin;              ///<Minimum allowed Dt (if the calculated value is lower is replaced by DTmin).
   float CoefDtMin;           ///<Coefficient to calculate minimum time step. dtmin=coefdtmin*h/speedsound (def=0.03).
   bool DtAllParticles;       ///<Velocity of particles used to calculate DT. 1:All, 0:Only fluid/floating (def=0).
-  JSphDtFixed *DtFixed;
-  JSaveDt *SaveDt;
+  JDsFixedDt *FixedDt;
+  JDsSaveDt *SaveDt;
 
   float PartsOutMax;         ///<Allowed percentage of fluid particles out of the domain. | Porcentaje maximo de particulas excluidas permitidas.                                  
   unsigned NpMinimum;        ///<Minimum number of particles allowed.                     | Numero minimo de particulas permitidas.                                                
@@ -260,7 +260,7 @@ protected:
   unsigned CaseNpb;          ///<Number of particles of the boundary block ( \ref Nbound - \ref Nfloat ) or ( \ref Nfixed + \ref Nmoving).
 
   JSphMk *MkInfo;            ///<Stores information for the Mk of the particles.
-  JSphPartsInit *PartsInit;  ///<Stores initial particles data for automatic configurations.
+  JDsPartsInit *PartsInit;  ///<Stores initial particles data for automatic configurations.
 
   //-Variables for periodic conditions.
   byte PeriActive;
@@ -276,11 +276,11 @@ protected:
   double PartBeginTimeStep;   ///<initial instant of the simulation                       | Instante de inicio de la simulación.                                          
   ullong PartBeginTotalNp;    ///<Total number of simulated particles.
 
-  JPartsOut *PartsOut;        ///<Stores excluded particles until they are saved. | Almacena las particulas excluidas hasta su grabacion.
+  JDsPartsOut *PartsOut;        ///<Stores excluded particles until they are saved. | Almacena las particulas excluidas hasta su grabacion.
   bool WrnPartsOut;           ///<Active warning according to number of out particles (default=1).
 
   //-Variables for predefined movement.
-  JSphMotion *SphMotion;      ///<Manages moving objects. It is NULL when there are not moving objects.
+  JDsMotion *DsMotion;      ///<Manages moving objects. It is NULL when there are not moving objects.
 
   //-Variables for floating bodies.
   StFloatingData *FtObjs;      ///<Data of floating objects. [FtCount]
@@ -305,8 +305,8 @@ protected:
   //<vs_chroono_end>
 
   //<vs_moordyyn_ini>
-  JMooredFloatings* Moorings;     ///<Manages floating bodies with moorings. | Gestiona floating bodies con amarres.
-  JSphFtForcePoints* ForcePoints; ///<Manages forces to apply on floating bodies.
+  JDsMooredFloatings* Moorings;     ///<Manages floating bodies with moorings. | Gestiona floating bodies con amarres.
+  JDsFtForcePoints* ForcePoints; ///<Manages forces to apply on floating bodies.
   //<vs_moordyyn_end>
 
   std::vector<std::string> InitializeInfo; ///<Stores information about initialize configuration applied.
@@ -321,12 +321,12 @@ protected:
 
   JRelaxZones *RelaxZones;      ///<Object for wave generation using Relaxation Zone (RZ).  //<vs_rzone>
 
-  JShifting *Shifting;          ///<Object for shifting correction.
+  JSphShifting *Shifting;       ///<Object for shifting correction.
   TpShifting ShiftingMode;      ///<Mode of Shifting: None, NoBound, NoFixed, Full.
 
-  JDamping *Damping;            ///<Object for damping zones.
+  JDsDamping *Damping;          ///<Object for damping zones.
 
-  JSphAccInput *AccInput;  ///<Object for variable acceleration functionality.
+  JDsAccInput *AccInput;    ///<Object for variable acceleration functionality.
 
   JSphInOut *InOut;         ///<Object for inlet/outlet conditions.  //<vs_innlet> 
   JSphBoundCorr *BoundCorr; ///<Object for boundary extrapolated correction (used in combination with InOut).  //<vs_innlet>
@@ -416,7 +416,7 @@ protected:
   void LoadConfigCommands(const JSphCfgRun *cfg);
   void LoadCaseConfig(const JSphCfgRun *cfg);
 
-  StDemData LoadDemData(bool checkdata,const JSpacePartBlock* block)const;
+  StDemData LoadDemData(bool checkdata,const JCasePartBlock* block)const;
   void VisuDemCoefficients()const;
 
   void LoadCodeParticles(unsigned np,const unsigned *idp,typecode *code)const;

@@ -35,7 +35,7 @@
 #include "JObject.h"
 #include "DualSphDef.h"
 
-class JSpaceParts;
+class JCaseParts;
 class JPartDataHead;
 
 //##############################################################################
@@ -94,7 +94,7 @@ public:
   JSphMk();
   ~JSphMk();
   void Reset();
-  void Config(const JSpaceParts *parts);
+  void Config(const JCaseParts *parts);
 
   unsigned Size()const{ return(MkListSize); }
   const JSphMkBlock* Mkblock(unsigned c)const{ return(MkList[c]); }

@@ -26,22 +26,22 @@
 #include "JPartFloatBi4.h"
 #include "Functions.h"
 #include "FunctionsCuda.h"
-#include "JSphMotion.h"
+#include "JDsMotion.h"
 #include "JArraysGpu.h"
-#include "JSphDtFixed.h"
-#include "JSaveDt.h"
-#include "JTimeOut.h"
+#include "JDsFixedDt.h"
+#include "JDsSaveDt.h"
+#include "JDsOutputTime.h"
 #include "JWaveGen.h"
 #include "JMLPistons.h"     //<vs_mlapiston>
 #include "JRelaxZones.h"    //<vs_rzone>
 #include "JChronoObjects.h" //<vs_chroono>
-#include "JSphFtForcePoints.h" //<vs_moordyyn>
-#include "JDamping.h"
-#include "JSphAccInput.h"
+#include "JDsFtForcePoints.h" //<vs_moordyyn>
+#include "JDsDamping.h"
+#include "JDsAccInput.h"
 #include "JXml.h"
-#include "JGaugeSystem.h"
+#include "JDsGaugeSystem.h"
 #include "JSphBoundCorr.h"  //<vs_innlet>
-#include "JShifting.h"
+#include "JSphShifting.h"
 #include "JDataArrays.h"
 #include "JVtkLib.h"
 
@@ -1019,7 +1019,7 @@ double JSphGpu::DtVariable(bool final){
   const double dt2=double(H)/(max(Cs0,VelMax*10.)+double(H)*ViscDtMax);
   //-dt new value of time step.
   double dt=double(CFLnumber)*min(dt1,dt2);
-  if(DtFixed)dt=DtFixed->GetDt(TimeStep,dt);
+  if(FixedDt)dt=FixedDt->GetDt(TimeStep,dt);
   if(fun::IsNAN(dt) || fun::IsInfinity(dt))Run_Exceptioon(fun::PrintStr("The computed Dt=%f (from AceMax=%f, VelMax=%f, ViscDtMax=%f) is NaN or infinity at nstep=%u.",dt,AceMax,VelMax,ViscDtMax,Nstep));
   if(dt<double(DtMin)){ 
     dt=double(DtMin); DtModif++;
@@ -1071,12 +1071,12 @@ void JSphGpu::RunMotion(double stepdt){
   //-Add motion from automatic wave generation.
   if(WaveGen)CalcMotionWaveGen(stepdt);
   //-Process particles motion.
-  if(SphMotion->GetActiveMotion()){
+  if(DsMotion->GetActiveMotion()){
     cusph::CalcRidp(PeriActive!=0,Npb,0,CaseNfixed,CaseNfixed+CaseNmoving,Codeg,Idpg,RidpMoveg);
     BoundChanged=true;
-    const unsigned nref=SphMotion->GetNumObjects();
+    const unsigned nref=DsMotion->GetNumObjects();
     for(unsigned ref=0;ref<nref;ref++){
-      const StMotionData& m=SphMotion->GetMotionData(ref);
+      const StMotionData& m=DsMotion->GetMotionData(ref);
       if(m.type==MOTT_Linear){//-Linear movement.
         if(motsim)cusph::MoveLinBound   (PeriActive,m.count,m.idbegin-CaseNfixed,m.linmov,ToTFloat3(m.linvel),RidpMoveg,Posxyg,Poszg,Dcellg,Velrhopg,Codeg);
         //else    cusph::MoveLinBoundAce(PeriActive,m.count,m.idbegin-CaseNfixed,m.linmov,ToTFloat3(m.linvel),ToTFloat3(m.linace),RidpMoveg,Posxyg,Poszg,Dcellg,Velrhopg,Codeg);
@@ -1124,7 +1124,7 @@ void JSphGpu::RunRelaxZone(double dt){
 //==============================================================================
 void JSphGpu::RunDamping(double dt,unsigned np,unsigned npb,const double2 *posxy,const double *posz,const typecode *code,float4 *velrhop){
   for(unsigned c=0;c<Damping->GetCount();c++){
-    const JDamping::StDamping* da=Damping->GetDampingZone(c);
+    const JDsDamping::StDamping* da=Damping->GetDampingZone(c);
     const tdouble4 plane=TPlane3dToTDouble4(da->plane);
     const float dist=da->dist;
     const float over=da->overlimit;

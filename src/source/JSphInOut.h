@@ -54,7 +54,7 @@ class JSphCpu;
 class JSphGpuSingle;
 //class JWaveTheoryReg;
 //class JSphMk;
-class JSphPartsInit;
+class JDsPartsInit;
 class JGaugeSystem;
 //class JGaugeSwl;
 class JNumexLib;
@@ -153,11 +153,11 @@ private:
 
   void LoadXmlInit(const JXml *sxml,const std::string &place);
   void LoadFileXml(const std::string &file,const std::string &path
-    ,JNumexLib *nuxlib,const JSphPartsInit *partsdata,JGaugeSystem *gaugesystem);
+    ,JNumexLib *nuxlib,const JDsPartsInit *partsdata,JGaugeSystem *gaugesystem);
   void LoadXml(const JXml *sxml,const std::string &place
-    ,const JSphPartsInit *partsdata,JGaugeSystem *gaugesystem);
+    ,const JDsPartsInit *partsdata,JGaugeSystem *gaugesystem);
   void ReadXml(const JXml *sxml,TiXmlElement* ele
-    ,const JSphPartsInit *partsdata,JGaugeSystem *gaugesystem);
+    ,const JDsPartsInit *partsdata,JGaugeSystem *gaugesystem);
 
   void ComputeFreeDomain();
   void SaveVtkDomains();
@@ -192,7 +192,7 @@ public:
 
   unsigned Config(double timestep,bool stable,bool simulate2d,double simulate2dposy
     ,byte periactive,float rhopzero,float cteb,float gamma,tfloat3 gravity,double dp
-    ,tdouble3 posmin,tdouble3 posmax,typecode codenewpart,const JSphPartsInit *partsdata
+    ,tdouble3 posmin,tdouble3 posmax,typecode codenewpart,const JDsPartsInit *partsdata
     ,JGaugeSystem *gaugesystem,JNumexLib *nuxlib);
     
   void LoadInitPartsData(unsigned idpfirst,unsigned npart,unsigned* idp,typecode* code,tdouble3* pos,tfloat4* velrhop);

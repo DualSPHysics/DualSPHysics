@@ -75,7 +75,7 @@ typedef struct{
 }StInterResultc;
 
 
-class JPartsOut;
+class JDsPartsOut;
 class JArraysCpu;
 class JCellDivCpu;
 

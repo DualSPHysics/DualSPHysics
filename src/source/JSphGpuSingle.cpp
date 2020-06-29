@@ -25,24 +25,24 @@
 #include "JPartsLoad4.h"
 #include "Functions.h"
 #include "JXml.h"
-#include "JSphMotion.h"
-#include "JSphVisco.h"
+#include "JDsMotion.h"
+#include "JDsViscoInput.h"
 #include "JWaveGen.h"
 #include "JMLPistons.h"     //<vs_mlapiston>
 #include "JRelaxZones.h"    //<vs_rzone>
 #include "JChronoObjects.h" //<vs_chroono>
-#include "JMooredFloatings.h"  //<vs_moordyyn>
-#include "JSphFtForcePoints.h" //<vs_moordyyn>
-#include "JTimeOut.h"
+#include "JDsMooredFloatings.h"  //<vs_moordyyn>
+#include "JDsFtForcePoints.h" //<vs_moordyyn>
+#include "JDsOutputTime.h"
 #include "JTimeControl.h"
 #include "JSphGpu_ker.h"
 #include "JSphGpuSimple_ker.h"
-#include "JGaugeSystem.h"
+#include "JDsGaugeSystem.h"
 #include "JSphInOut.h"  //<vs_innlet>
 #include "JLinearValue.h"
 #include "JDataArrays.h"
 #include "JDebugSphGpu.h"
-#include "JShifting.h"
+#include "JSphShifting.h"
 #include "JDsPips.h"
 
 #include <climits>
@@ -801,7 +801,7 @@ void JSphGpuSingle::Run(std::string appname,JSphCfgRun *cfg,JLog2 *log){
       Part++;
       PartNstep=Nstep;
       TimeStepM1=TimeStep;
-      TimePartNext=(SvAllSteps? TimeStep: TimeOut->GetNextTime(TimeStep));
+      TimePartNext=(SvAllSteps? TimeStep: OutputTime->GetNextTime(TimeStep));
       TimerPart.Start();
     }
     UpdateMaxValues();

@@ -36,7 +36,7 @@
 //#include "JVtkLib.h"
 //#include "JSimpleNeigs.h"
 //#include "JTimeControl.h"
-#include "JGaugeSystem.h"
+#include "JDsGaugeSystem.h"
 //#include "JNumexLib.h"
 
 #ifdef _WITHGPU
@@ -208,7 +208,7 @@ void JSphInOutAwas::SaveCsvData(){
 JSphInOutZone::JSphInOutZone(bool cpu,JLog2 *log,unsigned idzone,bool simulate2d
   ,double simulate2dposy,double dp,const tdouble3 &posmin,const tdouble3 &posmax
   ,float gravityz,const JXml *sxml,TiXmlElement* ele,const std::string &dirdatafile
-  ,const JSphPartsInit *partsdata,JGaugeSystem *gaugesystem)
+  ,const JDsPartsInit *partsdata,JGaugeSystem *gaugesystem)
  :Cpu(cpu),Log(log),IdZone(idzone),Simulate2D(simulate2d),Simulate2DPosY(simulate2dposy)
  ,Dp(dp),MapRealPosMin(posmin),MapRealPosMax(posmax),GravityZ(gravityz)
 {
@@ -374,7 +374,7 @@ void JSphInOutZone::LoadDomain(){
 /// Reads initial configuration in the XML node.
 //==============================================================================
 void JSphInOutZone::ReadXml(const JXml *sxml,TiXmlElement* ele,const std::string &dirdatafile
-  ,const JSphPartsInit *partsdata,JGaugeSystem *gaugesystem)
+  ,const JDsPartsInit *partsdata,JGaugeSystem *gaugesystem)
 {
   //-Checks old configuration.
   if(sxml->ExistsElement(ele,"userefilling"))Run_ExceptioonFile(fun::PrintStr("Inlet/outlet zone %d: <userefilling> is not supported by current inlet/outlet version.",IdZone),sxml->ErrGetFileRow(ele,"userefilling"));

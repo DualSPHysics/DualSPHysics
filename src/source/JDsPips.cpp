@@ -19,7 +19,7 @@
 /// \file JDsPips.cpp \brief Implements the class \ref JDsPips.
 
 #include "JDsPips.h"
-#include "JDsNgSearchCpu.h"
+#include "JCellNgSearchCpu.h"
 #include "JLog2.h"
 #include "JAppInfo.h"
 #include "Functions.h"

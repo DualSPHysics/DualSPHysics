@@ -43,7 +43,7 @@ class TiXmlElement;
 class JLog2;
 class JLinearValue;
 class JSphMk;
-class JSphPartsInit;
+class JDsPartsInit;
 
 //##############################################################################
 //# XML format in _FmtXML_BoundCorr.xml.
@@ -91,7 +91,7 @@ public:
     ,TpDirection autodir,double autodpfactor,tdouble3 limitpos,tdouble3 direction);
   ~JSphBoundCorrZone();
   void ConfigBoundCode(typecode boundcode);
-  void ConfigAuto(const JSphPartsInit *partsdata);
+  void ConfigAuto(const JDsPartsInit *partsdata);
 
   void RunMotion(const StMotionData& motiondata);
 
@@ -135,7 +135,7 @@ public:
   JSphBoundCorr(bool cpu,double dp,JLog2 *log,const JXml *sxml,const std::string &place,const JSphMk *mkinfo);
   ~JSphBoundCorr();
 
-  void RunAutoConfig(const JSphPartsInit *partsdata);
+  void RunAutoConfig(const JDsPartsInit *partsdata);
 
   void VisuConfig(std::string txhead,std::string txfoot)const;
   unsigned GetCount()const{ return(unsigned(List.size())); };

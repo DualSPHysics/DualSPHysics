@@ -23,7 +23,7 @@
 #include "JArraysCpu.h"
 #include "JSphInOut.h"
 #include "JSphMk.h"
-#include "JSphPartsInit.h"
+#include "JDsPartsInit.h"
 #include "JSphBoundCorr.h"
 #include "JSphInOutPoints.h"
 #include "JSimpleNeigs.h"

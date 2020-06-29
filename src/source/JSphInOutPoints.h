@@ -39,7 +39,7 @@ class JSphMkBlock;
 class JXml;
 class TiXmlElement;
 class JLog2;
-class JSphPartsInit;
+class JDsPartsInit;
 
 //##############################################################################
 //# XML format in JSphInOut_fmt.xml.
@@ -99,7 +99,7 @@ private:
   std::string CheckParticlesDirection(const JSphMkBlock *pmk,const tdouble3 &dir)const;
 
 
-  void Create2d3d_Particles(const JXml *sxml,TiXmlElement* ele,const JSphPartsInit *partsdata);
+  void Create2d3d_Particles(const JXml *sxml,TiXmlElement* ele,const JDsPartsInit *partsdata);
   void Create2d_Line(const JXml *sxml,TiXmlElement* ele);
   void Create3d_Box(const JXml *sxml,TiXmlElement* ele);
   void Create3d_Circle(const JXml *sxml,TiXmlElement* ele);
@@ -113,7 +113,7 @@ public:
   void Reset();
   void ResetPoints();
 
-  void CreatePoints(const JXml *sxml,TiXmlElement* ele,const JSphPartsInit *partsdata);
+  void CreatePoints(const JXml *sxml,TiXmlElement* ele,const JDsPartsInit *partsdata);
 
   void GetConfig(std::vector<std::string> &lines)const;
 

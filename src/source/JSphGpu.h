@@ -26,7 +26,7 @@
 #include "JSph.h"
 #include <string>
 
-class JPartsOut;
+class JDsPartsOut;
 class JArraysGpu;
 class JCellDivGpu;
 

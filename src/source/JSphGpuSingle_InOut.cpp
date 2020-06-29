@@ -22,7 +22,7 @@
 #include "JCellDivGpuSingle.h"
 #include "JArraysGpu.h"
 #include "JSphMk.h"
-#include "JSphPartsInit.h"
+#include "JDsPartsInit.h"
 #include "JSphInOut.h"
 #include "JSphBoundCorr.h"
 #include "JSphGpu_InOut_iker.h"

@@ -21,7 +21,7 @@
 #include "JSphBoundCorr.h"
 #include "JSphCpu.h"
 #include "JSphMk.h"
-#include "JSphPartsInit.h"
+#include "JDsPartsInit.h"
 #include "JXml.h"
 #include "JLog2.h"
 #include "JAppInfo.h"
@@ -88,7 +88,7 @@ void JSphBoundCorrZone::ConfigBoundCode(typecode boundcode){
 //==============================================================================
 /// Run automatic configuration of LimitPos and Direction.
 //==============================================================================
-void JSphBoundCorrZone::ConfigAuto(const JSphPartsInit *partsdata){
+void JSphBoundCorrZone::ConfigAuto(const JDsPartsInit *partsdata){
   if(AutoDir!=DIR_None){
     //-Calculates limits of MK particles.
     tdouble3 pmin=TDouble3(0);
@@ -308,7 +308,7 @@ void JSphBoundCorr::UpdateMkCode(const JSphMk *mkinfo){
 /// Run automatic configuration of LimitPos and Direction for each configuration
 /// and saves VTK file with limit configuration.
 //==============================================================================
-void JSphBoundCorr::RunAutoConfig(const JSphPartsInit *partsdata){
+void JSphBoundCorr::RunAutoConfig(const JDsPartsInit *partsdata){
   for(unsigned c=0;c<GetCount();c++)List[c]->ConfigAuto(partsdata);
   SaveVtkConfig(Dp,-1);
 }
