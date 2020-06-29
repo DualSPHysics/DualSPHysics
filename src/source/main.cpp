@@ -45,8 +45,8 @@ Please download source files and documentation from <a href="http://dual.sphysic
 #include <fstream>
 #include "JAppInfo.h"
 #include "JLog2.h"
-#include "JCfgRun.h"
 #include "JException.h"
+#include "JSphCfgRun.h"
 #include "JSphCpuSingle.h"
 #ifdef _WITHGPU
   #include "JSphGpuSingle.h"
@@ -57,7 +57,7 @@ Please download source files and documentation from <a href="http://dual.sphysic
 using namespace std;
 
 
-JAppInfo AppInfo("DualSPHysics5","v5.0.122","28-06-2020");
+JAppInfo AppInfo("DualSPHysics5","v5.0.123","28-06-2020");
 //JAppInfo AppInfo("DualSPHysics5","v5.0.???","UserVersion","v1.0","??-??-????"); //-for user versions.
 
 //==============================================================================
@@ -159,7 +159,7 @@ int main(int argc, char** argv){
   for(unsigned c=0;c<=unsigned(appname.size());c++)appnamesub=appnamesub+"=";
   printf("\n%s\n%s\n",appname.c_str(),appnamesub.c_str());
   JLog2 *log=NULL;
-  JCfgRun cfg;
+  JSphCfgRun cfg;
   try{
     cfg.LoadArgv(argc,argv);
     //cfg.VisuConfig();

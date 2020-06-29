@@ -195,9 +195,9 @@ protected:
 
   unsigned GetParticlesData(unsigned n,unsigned pini,bool onlynormal
     ,unsigned *idp,tdouble3 *pos,tfloat3 *vel,float *rhop,typecode *code);
-  void ConfigOmp(const JCfgRun *cfg);
+  void ConfigOmp(const JSphCfgRun *cfg);
 
-  void ConfigRunMode(const JCfgRun *cfg,std::string preinfo="");
+  void ConfigRunMode(const JSphCfgRun *cfg,std::string preinfo="");
   void ConfigCellDiv(JCellDivCpu* celldiv){ CellDiv=celldiv; }
   void InitFloating();
   void InitRunCpu();

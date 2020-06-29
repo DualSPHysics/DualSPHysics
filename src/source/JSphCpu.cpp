@@ -374,7 +374,7 @@ unsigned JSphCpu::GetParticlesData(unsigned n,unsigned pini,bool onlynormal
 /// Load the execution configuration with OpenMP.
 /// Carga la configuracion de ejecucion con OpenMP.
 //==============================================================================
-void JSphCpu::ConfigOmp(const JCfgRun *cfg){
+void JSphCpu::ConfigOmp(const JSphCfgRun *cfg){
 #ifdef OMP_USE
   //-Determine number of threads for host with OpenMP. | Determina numero de threads por host con OpenMP.
   if(Cpu && cfg->OmpThreads!=1){
@@ -397,7 +397,7 @@ void JSphCpu::ConfigOmp(const JCfgRun *cfg){
 /// Configures execution mode in CPU.
 /// Configura modo de ejecucion en CPU.
 //==============================================================================
-void JSphCpu::ConfigRunMode(const JCfgRun *cfg,std::string preinfo){
+void JSphCpu::ConfigRunMode(const JSphCfgRun *cfg,std::string preinfo){
   #ifndef WIN32
     const int len=128; char hname[len];
     gethostname(hname,len);

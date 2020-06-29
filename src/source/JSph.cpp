@@ -449,7 +449,7 @@ llong JSph::GetAllocMemoryCpu()const{
 //==============================================================================
 /// Loads the configuration of the execution.
 //==============================================================================
-void JSph::LoadConfig(const JCfgRun *cfg){
+void JSph::LoadConfig(const JSphCfgRun *cfg){
   TimerTot.Start();
 
   //-Loads basic configuration from execution parameters.
@@ -708,7 +708,7 @@ void JSph::LoadConfigParameters(const JXml *xml){
 //==============================================================================
 /// Loads the case configuration to be executed.
 //==============================================================================
-void JSph::LoadConfigCommands(const JCfgRun *cfg){
+void JSph::LoadConfigCommands(const JSphCfgRun *cfg){
   //-Aplies configuration using command line.
   if(cfg->SvPosDouble>=0)SvPosDouble=(cfg->SvPosDouble!=0);
   if(cfg->TBoundary){
@@ -851,7 +851,7 @@ void JSph::LoadConfigVarsExec(){
 //==============================================================================
 /// Loads the case configuration to be executed.
 //==============================================================================
-void JSph::LoadCaseConfig(const JCfgRun *cfg){
+void JSph::LoadCaseConfig(const JSphCfgRun *cfg){
   if(!fun::FileExists(FileXml))Run_ExceptioonFile("Case configuration was not found.",FileXml);
   JXml xml; xml.LoadFile(FileXml);
 

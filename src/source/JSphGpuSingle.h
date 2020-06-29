@@ -42,7 +42,7 @@ protected:
   llong GetMemoryGpuNp()const;
   llong GetMemoryGpuNct()const;
   void UpdateMaxValues();
-  void LoadConfig(JCfgRun *cfg);
+  void LoadConfig(JSphCfgRun *cfg);
   void ConfigDomain();
 
   void ResizeParticlesSize(unsigned newsize,float oversize,bool updatedivide);
@@ -73,7 +73,7 @@ protected:
 public:
   JSphGpuSingle();
   ~JSphGpuSingle();
-  void Run(std::string appname,JCfgRun *cfg,JLog2 *log);
+  void Run(std::string appname,JSphCfgRun *cfg,JLog2 *log);
 
 //<vs_innlet_ini>
 //-Code for InOut in JSphGpuSingle_InOut.cpp

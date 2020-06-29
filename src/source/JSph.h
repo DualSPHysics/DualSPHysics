@@ -33,7 +33,7 @@
 
 #include "DualSphDef.h"
 #include "JObject.h"
-#include "JCfgRun.h"
+#include "JSphCfgRun.h"
 #include "JLog2.h"
 #include "JTimer.h"
 #include <float.h>
@@ -408,13 +408,13 @@ protected:
   void AllocMemoryFloating(unsigned ftcount,bool imposedvel=false);
   llong GetAllocMemoryCpu()const;
 
-  void LoadConfig(const JCfgRun *cfg);
+  void LoadConfig(const JSphCfgRun *cfg);
   void LoadConfigCtes(const JXml *xml);
   void LoadConfigVars(const JXml *xml);
   void LoadConfigVarsExec();
   void LoadConfigParameters(const JXml *xml);
-  void LoadConfigCommands(const JCfgRun *cfg);
-  void LoadCaseConfig(const JCfgRun *cfg);
+  void LoadConfigCommands(const JSphCfgRun *cfg);
+  void LoadCaseConfig(const JSphCfgRun *cfg);
 
   StDemData LoadDemData(bool checkdata,const JSpacePartBlock* block)const;
   void VisuDemCoefficients()const;

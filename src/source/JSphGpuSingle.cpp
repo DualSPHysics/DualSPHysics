@@ -123,7 +123,7 @@ void JSphGpuSingle::UpdateMaxValues(){
 /// Loads the configuration of the execution.
 /// Carga la configuracion de ejecucion.
 //==============================================================================
-void JSphGpuSingle::LoadConfig(JCfgRun *cfg){
+void JSphGpuSingle::LoadConfig(JSphCfgRun *cfg){
   //-Loads general configuration.
   JSph::LoadConfig(cfg);
   //-Checks compatibility of selected options.
@@ -735,7 +735,7 @@ void JSphGpuSingle::ComputePips(bool run){
 /// Initialises execution of simulation.
 /// Inicia ejecucion de simulacion.
 //==============================================================================
-void JSphGpuSingle::Run(std::string appname,JCfgRun *cfg,JLog2 *log){
+void JSphGpuSingle::Run(std::string appname,JSphCfgRun *cfg,JLog2 *log){
   if(!cfg||!log)return;
   AppName=appname; Log=log;
 

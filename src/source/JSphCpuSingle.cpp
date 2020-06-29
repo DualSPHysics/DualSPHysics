@@ -89,7 +89,7 @@ void JSphCpuSingle::UpdateMaxValues(){
 /// Load the execution configuration.
 /// Carga la configuracion de ejecucion.
 //==============================================================================
-void JSphCpuSingle::LoadConfig(JCfgRun *cfg){
+void JSphCpuSingle::LoadConfig(JSphCfgRun *cfg){
   //-Load OpenMP configuraction. | Carga configuracion de OpenMP.
   ConfigOmp(cfg);
   //-Load basic general configuraction. | Carga configuracion basica general.
@@ -1012,7 +1012,7 @@ void JSphCpuSingle::ComputePips(bool run){
 /// Initialises execution of simulation.
 /// Inicia ejecucion de simulacion.
 //==============================================================================
-void JSphCpuSingle::Run(std::string appname,JCfgRun *cfg,JLog2 *log){
+void JSphCpuSingle::Run(std::string appname,JSphCfgRun *cfg,JLog2 *log){
   if(!cfg||!log)return;
   AppName=appname; Log=log;
 

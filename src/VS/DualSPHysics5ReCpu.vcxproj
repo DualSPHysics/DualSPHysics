@@ -516,6 +516,7 @@ rem %CudaNvcc% -ccbin "$(VCInstallDir)bin" %gpuhw% -use_fast_math -c %ptxinfo% -
     <ClInclude Include="..\source\FunctionsGeo3d.h" />
     <ClInclude Include="..\source\FunctionsMath.h" />
     <ClInclude Include="..\source\JAppInfo.h" />
+    <ClInclude Include="..\source\JAppInfoDef.h" />
     <ClInclude Include="..\source\JArraysCpu.h" />
     <ClInclude Include="..\source\JBinaryData.h" />
     <ClInclude Include="..\source\JCellDivCpu.h" />
@@ -543,6 +544,7 @@ rem %CudaNvcc% -ccbin "$(VCInstallDir)bin" %gpuhw% -use_fast_math -c %ptxinfo% -
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">true</ExcludedFromBuild>
     </ClInclude>
+    <ClInclude Include="..\source\JCfgRunBase.h" />
     <ClInclude Include="..\source\JChronoData.h" />
     <ClInclude Include="..\source\JChronoObjects.h" />
     <ClInclude Include="..\source\JChronoObjectsUndef.h" />
@@ -703,7 +705,7 @@ rem %CudaNvcc% -ccbin "$(VCInstallDir)bin" %gpuhw% -use_fast_math -c %ptxinfo% -
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">true</ExcludedFromBuild>
     </CustomBuildStep>
-    <ClInclude Include="..\source\JCfgRun.h" />
+    <ClInclude Include="..\source\JSphCfgRun.h" />
     <ClInclude Include="..\source\JSpaceParts.h" />
     <ClInclude Include="..\source\JSpaceCtes.h" />
     <ClInclude Include="..\source\JSpaceEParms.h" />
@@ -735,6 +737,7 @@ rem %CudaNvcc% -ccbin "$(VCInstallDir)bin" %gpuhw% -use_fast_math -c %ptxinfo% -
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">true</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="..\source\JCfgRunBase.cpp" />
     <ClCompile Include="..\source\JChronoObjects.cpp" />
     <ClCompile Include="..\source\JDamping.cpp" />
     <ClCompile Include="..\source\JArraysGpu.cpp">
@@ -812,7 +815,7 @@ rem %CudaNvcc% -ccbin "$(VCInstallDir)bin" %gpuhw% -use_fast_math -c %ptxinfo% -
     <ClCompile Include="..\source\JSphCpuSingle.cpp" />
     <ClCompile Include="..\source\JTimeControl.cpp" />
     <ClCompile Include="..\source\JTimeOut.cpp" />
-    <ClCompile Include="..\source\JCfgRun.cpp" />
+    <ClCompile Include="..\source\JSphCfgRun.cpp" />
     <ClCompile Include="..\source\JSpaceParts.cpp" />
     <ClCompile Include="..\source\JSpaceCtes.cpp" />
     <ClCompile Include="..\source\JSpaceEParms.cpp" />

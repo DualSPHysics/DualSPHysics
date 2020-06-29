@@ -16,52 +16,26 @@
  You should have received a copy of the GNU Lesser General Public License along with DualSPHysics. If not, see <http://www.gnu.org/licenses/>. 
 */
 
-/// \file JCfgRun.h \brief Declares the class \ref JCfgRun.
+/// \file JSphCfgRun.h \brief Declares the class \ref JSphCfgRun.
 
-#ifndef _JCfgRun_
-#define _JCfgRun_
+#ifndef _JSphCfgRun_
+#define _JSphCfgRun_
 
+#include "JCfgRunBase.h"
 #include "DualSphDef.h"
-#include "Functions.h"
-#include "JObject.h"
-#include <string>
-#include <sstream>
-#include <iostream>
-#include <fstream>
-#include <cstdlib>
 
 //##############################################################################
-//# JCfgRun
+//# JSphCfgRun
 //##############################################################################
 /// \brief Defines the class responsible for collecting the execution parameters by command line.
 
-class JCfgRun : protected JObject
+class JSphCfgRun : public JCfgRunBase
 {
-public:
 protected:
   bool SvDef;
   int DirsDef;
-  void LoadDsphConfig(std::string path);
-
-  static void LoadDouble3(std::string txopt,double def,tdouble3 &v1);
-  static void LoadFloat3(std::string txopt,float def,tfloat3 &v1);
-  static void LoadDouble6(std::string txopt,double def,tdouble3 &v1,tdouble3 &v2);
-  static void LoadFloat6(std::string txopt,float def,tfloat3 &v1,tfloat3 &v2);
-
-  void SplitsOpts(const std::string &opt,std::string &txword,std::string &txoptfull,std::string &txopt1,std::string &txopt2,std::string &txopt3,std::string &txopt4)const;
-  void SplitsOpts(const std::string &opt,std::string &txword,std::string &txoptfull,std::string &txopt1,std::string &txopt2,std::string &txopt3)const{
-    std::string tx4; SplitsOpts(opt,txword,txoptfull,txopt1,txopt2,txopt3,tx4);
-  }
-  void SplitsOpts(const std::string &opt,std::string &txword,std::string &txoptfull,std::string &txopt1,std::string &txopt2)const{
-    std::string tx3,tx4; SplitsOpts(opt,txword,txoptfull,txopt1,txopt2,tx3,tx4);
-  }
-  void SplitsOpts(const std::string &opt,std::string &txword,std::string &txoptfull)const{
-    std::string tx1,tx2,tx3,tx4; SplitsOpts(opt,txword,txoptfull,tx1,tx2,tx3,tx4);
-  }
 
 public:
-  bool PrintInfo;
-
   bool Cpu;
   bool Gpu;
   int GpuId;
@@ -103,19 +77,13 @@ public:
   unsigned PipsMode;   ///<Defines mode of PIPS calculation (0:No computed, 1:Computed (default), 2:computed and save detail).
   unsigned PipsSteps;  ///<Number of steps per interval to compute PIPS (100 by default).
 
-  //-General configuration from DsphConfig.xml
-  bool CreateDirs;   ///<Creates full path for output files (true by default).
-  bool CsvSepComa;   ///<Separator character in CSV files (false=semicolon, true=coma).
-
 public:
-  JCfgRun();
+  JSphCfgRun();
   void Reset();
   void VisuInfo()const;
   void VisuConfig()const;
-  void LoadArgv(int argc,char** argv);
-  void LoadFile(std::string fname,int lv);
-  void LoadOpts(std::string *optlis,int optn,int lv,std::string file);
-  void ErrorParm(const std::string &opt,int optc,int lv,const std::string &file)const;
+  void LoadOpts(std::string *optlis,int optn,int lv,const std::string &file);
+  void ValidaCfg(){}
 };
 
 #endif

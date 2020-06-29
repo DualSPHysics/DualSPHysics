@@ -16,30 +16,28 @@
  You should have received a copy of the GNU Lesser General Public License along with DualSPHysics. If not, see <http://www.gnu.org/licenses/>. 
 */
 
-/// \file JCfgRun.cpp \brief Implements the class \ref JCfgRun.
+/// \file JSphCfgRun.cpp \brief Implements the class \ref JSphCfgRun.
 
-#include "JCfgRun.h"
+#include "JSphCfgRun.h"
 #include "JAppInfo.h"
-#include "JSpaceEParms.h"
 #include "JDsphConfig.h"
 
 using namespace std;
-using namespace fun;
 
 //==============================================================================
 /// Constructor.
 //==============================================================================
-JCfgRun::JCfgRun(){
-  ClassName="JCfgRun";
+JSphCfgRun::JSphCfgRun():JCfgRunBase(){
+  ClassName="JSphCfgRun";
   Reset();
 }
 
 //==============================================================================
 /// Initialisation of variables.
 //==============================================================================
-void JCfgRun::Reset(){
-  PrintInfo=false; SvDef=false; DirsDef=0;
-  Cpu=false;
+void JSphCfgRun::Reset(){
+  PrintInfo=false; DirsDef=0;
+  Cpu=true;
   Gpu=false; GpuId=-1; GpuFree=false;
   Stable=false;
   SvPosDouble=-1;
@@ -56,7 +54,9 @@ void JCfgRun::Reset(){
   DDTValue=-1;
   Shifting=-1;
   SvRes=true; SvDomainVtk=false;
-  Sv_Binx=false; Sv_Info=false; Sv_Vtk=false; Sv_Csv=false;
+  SvDef=false;
+  Sv_Binx=true; Sv_Info=true;
+  Sv_Vtk=false; Sv_Csv=false;
   CaseName=""; RunName=""; DirOut=""; DirDataOut=""; 
   PartBegin=0; PartBeginFirst=0; PartBeginDir="";
   TimeMax=-1; TimePart=-1;
@@ -70,20 +70,9 @@ void JCfgRun::Reset(){
 }
 
 //==============================================================================
-// Loads general configuration from DsphConfig.xml.
-//==============================================================================
-void JCfgRun::LoadDsphConfig(std::string path){
-  JDsphConfig dsphconfig;
-  dsphconfig.Init(path);
-  if(!dsphconfig.GetFileCfg().empty())printf("LoadDsphConfig> %s\n",fun::GetPathLevels(dsphconfig.GetFileCfg(),3).c_str());
-  if(dsphconfig.GetCreateDirs()!=-1)CreateDirs=(dsphconfig.GetCreateDirs()==1);
-  if(dsphconfig.GetCsvSeparator()!=-1)CsvSepComa=(dsphconfig.GetCsvSeparator()==1);
-}
-
-//==============================================================================
 /// Shows information about execution parameters.
 //==============================================================================
-void JCfgRun::VisuInfo()const{
+void JSphCfgRun::VisuInfo()const{
 /////////|---------1---------2---------3---------4---------5---------6---------7--------X8
   printf("Information about execution parameters:\n\n");
   printf("  DualSPHysics [name_case [dir_out]] [options]\n\n");
@@ -202,133 +191,57 @@ void JCfgRun::VisuInfo()const{
 //==============================================================================
 /// Shows current configuration.
 //==============================================================================
-void JCfgRun::VisuConfig()const{
+void JSphCfgRun::VisuConfig()const{
   printf("\nConfiguration of execution:\n");
   string ln="\n";
-  PrintVar("  CaseName",CaseName,ln);
-  PrintVar("  RunName",RunName,ln);
-  PrintVar("  DirOut",DirOut,ln);
-  PrintVar("  DirDataOut",DirDataOut,ln);
-  PrintVar("  PartBegin",PartBegin,ln);
-  PrintVar("  PartBeginFirst",PartBeginFirst,ln);
-  PrintVar("  PartBeginDir",PartBeginDir,ln);
-  PrintVar("  Cpu",Cpu,ln);
-  printf("  %s  %s\n",VarStr("Gpu",Gpu).c_str(),VarStr("GpuId",GpuId).c_str());
-  PrintVar("  GpuFree",GpuFree,ln);
-  PrintVar("  Stable",Stable,ln);
-  PrintVar("  SvPosDouble",SvPosDouble,ln);
-  PrintVar("  OmpThreads",OmpThreads,ln);
-  PrintVar("  CellMode",GetNameCellMode(CellMode),ln);
-  PrintVar("  TStep",TStep,ln);
-  PrintVar("  VerletSteps",VerletSteps,ln);
-  PrintVar("  TKernel",TKernel,ln);
-  PrintVar("  TVisco",TVisco,ln);
-  PrintVar("  Visco",Visco,ln);
-  PrintVar("  ViscoBoundFactor",ViscoBoundFactor,ln);
-  PrintVar("  TDensity",TDensity,ln);
-  PrintVar("  DDTValue",DDTValue,ln);
-  PrintVar("  Shifting",Shifting,ln);
-  PrintVar("  SvRes",SvRes,ln);
-  PrintVar("  SvTimers",SvTimers,ln);
-  PrintVar("  SvDomainVtk",SvDomainVtk,ln);
-  PrintVar("  Sv_Binx",Sv_Binx,ln);
-  PrintVar("  Sv_Info",Sv_Info,ln);
-  PrintVar("  Sv_Vtk",Sv_Vtk,ln);
-  PrintVar("  Sv_Csv",Sv_Csv,ln);
-  PrintVar("  RhopOutModif",RhopOutModif,ln);
+  fun::PrintVar("  CaseName",CaseName,ln);
+  fun::PrintVar("  RunName",RunName,ln);
+  fun::PrintVar("  DirOut",DirOut,ln);
+  fun::PrintVar("  DirDataOut",DirDataOut,ln);
+  fun::PrintVar("  PartBegin",PartBegin,ln);
+  fun::PrintVar("  PartBeginFirst",PartBeginFirst,ln);
+  fun::PrintVar("  PartBeginDir",PartBeginDir,ln);
+  fun::PrintVar("  Cpu",Cpu,ln);
+  printf("  %s  %s\n",fun::VarStr("Gpu",Gpu).c_str(),fun::VarStr("GpuId",GpuId).c_str());
+  fun::PrintVar("  GpuFree",GpuFree,ln);
+  fun::PrintVar("  Stable",Stable,ln);
+  fun::PrintVar("  SvPosDouble",SvPosDouble,ln);
+  fun::PrintVar("  OmpThreads",OmpThreads,ln);
+  fun::PrintVar("  CellMode",GetNameCellMode(CellMode),ln);
+  fun::PrintVar("  TStep",TStep,ln);
+  fun::PrintVar("  VerletSteps",VerletSteps,ln);
+  fun::PrintVar("  TKernel",TKernel,ln);
+  fun::PrintVar("  TVisco",TVisco,ln);
+  fun::PrintVar("  Visco",Visco,ln);
+  fun::PrintVar("  ViscoBoundFactor",ViscoBoundFactor,ln);
+  fun::PrintVar("  TDensity",TDensity,ln);
+  fun::PrintVar("  DDTValue",DDTValue,ln);
+  fun::PrintVar("  Shifting",Shifting,ln);
+  fun::PrintVar("  SvRes",SvRes,ln);
+  fun::PrintVar("  SvTimers",SvTimers,ln);
+  fun::PrintVar("  SvDomainVtk",SvDomainVtk,ln);
+  fun::PrintVar("  Sv_Binx",Sv_Binx,ln);
+  fun::PrintVar("  Sv_Info",Sv_Info,ln);
+  fun::PrintVar("  Sv_Vtk",Sv_Vtk,ln);
+  fun::PrintVar("  Sv_Csv",Sv_Csv,ln);
+  fun::PrintVar("  RhopOutModif",RhopOutModif,ln);
   if(RhopOutModif){
-    PrintVar("  RhopOutMin",RhopOutMin,ln);
-    PrintVar("  RhopOutMax",RhopOutMax,ln);
+    fun::PrintVar("  RhopOutMin",RhopOutMin,ln);
+    fun::PrintVar("  RhopOutMax",RhopOutMax,ln);
   }
-  PrintVar("  TimeMax",TimeMax,ln);
-  PrintVar("  TimePart",TimePart,ln);
+  fun::PrintVar("  TimeMax",TimeMax,ln);
+  fun::PrintVar("  TimePart",TimePart,ln);
   if(DomainMode==2){
-    PrintVar("  DomainFixedMin",DomainFixedMin,ln);
-    PrintVar("  DomainFixedMax",DomainFixedMax,ln);
+    fun::PrintVar("  DomainFixedMin",DomainFixedMin,ln);
+    fun::PrintVar("  DomainFixedMax",DomainFixedMax,ln);
   }
-  PrintVar("  FtPause",FtPause,ln);
-}
-
-//==============================================================================
-/// Loads execution parameters from the command line.
-//==============================================================================
-void JCfgRun::LoadArgv(int argc,char** argv){
-  Reset();
-  //-Loads configuration from DsphConfig.xml.
-  LoadDsphConfig(AppInfo.GetProgramPath());
-  //-Loads execution parameters.
-  const int MAXOPTS=100;
-  string *optlis=new string[MAXOPTS];
-  int optn=0;
-  for(int c=0;c<argc-1;c++){
-    string tex=StrTrim(argv[c+1]);
-    int pos=int(tex.find(" "));
-    if(pos>0){
-      while(pos>0){
-        bool divide=((tex[0]=='-' || tex[0]=='#') || (pos+2<tex.size() && ((tex[pos+1]=='-' && tex[pos+2]!=' ') || tex[pos+1]=='#')));
-        //printf("  tex[%s]  pos:%d  divide=%d\n",tex.c_str(),pos,(divide? 1: 0));
-        if(divide){
-          if(optn>=MAXOPTS)Run_Exceptioon("Has exceeded the maximum configuration options.");
-          optlis[optn]=tex.substr(0,pos); optn++;
-          tex=StrTrim(tex.substr(pos+1)); //-StrTrim() removes spaces between options.
-          pos=int(tex.find(" "));
-        }
-        else pos=int(tex.find(" ",pos+1));
-      }
-    }
-    if(optn>=MAXOPTS)Run_Exceptioon("Has exceeded the maximum configuration options.");
-    optlis[optn]=tex; optn++;
-  }
-  //for(int c=0;c<optn;c++)printf("[%d]=[%s]\n",c,optlis[c].c_str());
-  if(optn)LoadOpts(optlis,optn,0,"");
-  delete[] optlis;
-  if(!optn)PrintInfo=true;
-  if(!PrintInfo){ //-Default configuration.
-    if(!Cpu&&!Gpu)Cpu=true;
-    if(!SvDef){ Sv_Binx=true; Sv_Info=true; }
-  }
-  else VisuInfo();
-}
-
-//==============================================================================
-/// Loads execution parameters from a text file.
-//==============================================================================
-void JCfgRun::LoadFile(string fname,int lv){
-  const int MAXOPTS=50;
-  int optn=0;
-  string *optlis=new string[MAXOPTS];
-  ifstream pf;
-  pf.open(fname.c_str());
-  if(pf){
-    while(!pf.eof()&&optn<MAXOPTS){
-      string tex;  pf >> tex;
-      if(tex!=""){
-        if(optn<MAXOPTS)optlis[optn]=tex;
-        optn++;
-      }
-    } 
-    if(!pf.eof()&&pf.fail())Run_ExceptioonFile("Error reading data from the file.",fname);
-    pf.close();
-  }
-  else Run_ExceptioonFile("The file can not be opened.",fname);
-  if(optn>=MAXOPTS)Run_ExceptioonFile(fun::PrintStr("File with too many lines (Maximum=%d)",MAXOPTS),fname);
-  if(optn>0)LoadOpts(optlis,optn,lv,fname);
-  delete[] optlis;
-}
-
-//==============================================================================
-/// Generates error of unknown parameter.
-//==============================================================================
-void JCfgRun::ErrorParm(const std::string &opt,int optc,int lv,const std::string &file)const{
-  std::string tx=fun::PrintStr("Parameter \"%s\" unrecognised or invalid. ",opt.c_str());
-  tx=tx+fun::PrintStr("(Level cfg:%d, Parameter:%d)",lv,optc);
-  Run_ExceptioonFile(tx,file);
+  fun::PrintVar("  FtPause",FtPause,ln);
 }
 
 //==============================================================================
 /// Loads execution parameters.
 //==============================================================================
-void JCfgRun::LoadOpts(string *optlis,int optn,int lv,string file){
+void JSphCfgRun::LoadOpts(string *optlis,int optn,int lv,const std::string &file){
   if(lv>=10)Run_Exceptioon("No more than 10 levels of recursive configuration.");
   for(int c=0;c<optn;c++){
     string opt=optlis[c];
@@ -359,7 +272,7 @@ void JCfgRun::LoadOpts(string *optlis,int optn,int lv,string file){
       else if(txword=="CELLMODE"){
         bool ok=true;
         if(!txoptfull.empty()){
-          txoptfull=StrUpper(txoptfull);
+          txoptfull=fun::StrUpper(txoptfull);
           if(txoptfull=="H")CellMode=CELLMODE_H;
           else if(txoptfull=="2H")CellMode=CELLMODE_2H;
           else ok=false;
@@ -419,10 +332,10 @@ void JCfgRun::LoadOpts(string *optlis,int optn,int lv,string file){
       else if(txword=="SVTIMERS")SvTimers=(txoptfull!=""? atoi(txoptfull.c_str()): 1)!=0;
       else if(txword=="SVDOMAINVTK")SvDomainVtk=(txoptfull!=""? atoi(txoptfull.c_str()): 1)!=0;
       else if(txword=="SV"){
-        string txop=StrUpper(txoptfull);
+        string txop=fun::StrUpper(txoptfull);
         while(!txop.empty()){
           string op=fun::StrSplit(",",txop);
-          if(op=="NONE"){ 
+          if(!SvDef || op=="NONE"){ 
             SvDef=true; Sv_Binx=false; Sv_Info=false; 
             Sv_Csv=false; Sv_Vtk=false;
           }
@@ -482,87 +395,5 @@ void JCfgRun::LoadOpts(string *optlis,int optn,int lv,string file){
       else ErrorParm(opt,c,lv,file);
     }
   }
-}
-
-//==============================================================================
-/// Load 1 value tdouble3 using command options.
-//==============================================================================
-void JCfgRun::LoadDouble3(std::string txopt,double def,tdouble3 &v1){
-  double values[3]={def,def,def};
-  string ttx=txopt;
-  for(int tc=0;ttx!=""&&tc<3;tc++){
-    int tpos=int(ttx.find(":"));
-    string ttxopt=(tpos>0? ttx.substr(0,tpos): ttx);
-    string ttxopt2;
-    if(tpos>0)ttxopt2=ttx.substr(tpos+1);
-    values[tc]=atof(ttxopt.c_str());
-    ttx=ttxopt2;
-  } 
-  v1=TDouble3(values[0],values[1],values[2]);
-}
-
-//==============================================================================
-/// Load 1 value tfloat3 using command options.
-//==============================================================================
-void JCfgRun::LoadFloat3(std::string txopt,float def,tfloat3 &v1){
-  tdouble3 v1d;
-  LoadDouble3(txopt,def,v1d);
-  v1=ToTFloat3(v1d);
-}
-
-//==============================================================================
-/// Load 2 values tdouble3 using command options.
-//==============================================================================
-void JCfgRun::LoadDouble6(std::string txopt,double def,tdouble3 &v1,tdouble3 &v2){
-  double values[6]={def,def,def,def,def,def};
-  string ttx=txopt;
-  for(int tc=0;ttx!=""&&tc<6;tc++){
-    int tpos=int(ttx.find(":"));
-    string ttxopt=(tpos>0? ttx.substr(0,tpos): ttx);
-    string ttxopt2;
-    if(tpos>0)ttxopt2=ttx.substr(tpos+1);
-    values[tc]=atof(ttxopt.c_str());
-    ttx=ttxopt2;
-  } 
-  v1=TDouble3(values[0],values[1],values[2]);
-  v2=TDouble3(values[3],values[4],values[5]);
-}
-
-//==============================================================================
-/// Load 2 values tfloat3 using command options.
-//==============================================================================
-void JCfgRun::LoadFloat6(std::string txopt,float def,tfloat3 &v1,tfloat3 &v2){
-  tdouble3 v1d,v2d;
-  LoadDouble6(txopt,def,v1d,v2d);
-  v1=ToTFloat3(v1d);
-  v2=ToTFloat3(v2d);
-}
-
-//==============================================================================
-// Splits options in txoptfull, txopt, txopt2, txopt3 and txopt4.
-//==============================================================================
-void JCfgRun::SplitsOpts(const std::string &opt,std::string &txword,std::string &txoptfull
-  ,std::string &txopt1,std::string &txopt2,std::string &txopt3,std::string &txopt4)const
-{
-  txword=txoptfull=txopt1=txopt2=txopt3=txopt4="";
-  string tx=opt.substr(1);
-  int pos=int(tx.find("#"));
-  if(pos>0)tx=tx.substr(0,pos);
-  pos=int(tx.find(":"));
-  txword=StrUpper(pos>0? tx.substr(0,pos): tx);
-  if(pos>=0)txopt1=tx.substr(pos+1);
-  txoptfull=txopt1;
-  tx=txopt1;
-  pos=int(tx.find(":"));
-  txopt1=(pos>=0? tx.substr(0,pos): tx);
-  if(pos>=0)txopt2=tx.substr(pos+1);
-  tx=txopt2;
-  pos=int(tx.find(":"));
-  txopt2=(pos>=0? tx.substr(0,pos): tx);
-  if(pos>=0)txopt3=tx.substr(pos+1);
-  tx=txopt3;
-  pos=int(tx.find(":"));
-  txopt3=(pos>=0? tx.substr(0,pos): tx);
-  if(pos>=0)txopt4=tx.substr(pos+1);
 }
 

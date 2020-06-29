@@ -61,9 +61,6 @@
     <ClInclude Include="..\source\JCellDivGpu.h">
       <Filter>Source</Filter>
     </ClInclude>
-    <ClInclude Include="..\source\JCfgRun.h">
-      <Filter>Source</Filter>
-    </ClInclude>
     <ClInclude Include="..\source\JPartsOut.h">
       <Filter>Source</Filter>
     </ClInclude>
@@ -415,11 +412,14 @@
     <ClInclude Include="..\source\JAppInfoDef.h">
       <Filter>Common</Filter>
     </ClInclude>
+    <ClInclude Include="..\source\JCfgRunBase.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JSphCfgRun.h">
+      <Filter>Source</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\source\JCfgRun.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
     <ClCompile Include="..\source\JSph.cpp">
       <Filter>Source</Filter>
     </ClCompile>
@@ -676,6 +676,12 @@
       <Filter>Src_Inlet</Filter>
     </ClCompile>
     <ClCompile Include="..\source\JDsPips.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JCfgRunBase.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JSphCfgRun.cpp">
       <Filter>Source</Filter>
     </ClCompile>
   </ItemGroup>
