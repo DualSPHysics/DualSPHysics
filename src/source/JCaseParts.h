@@ -59,6 +59,7 @@
 //:# - Objeto JXml pasado como const para operaciones de lectura. (17-03-2020)  
 //:# - Mejora la gestion de excepciones. (06-05-2020)
 //:# - Cambio de nombre de J.SpaceParts a J.CaseParts. (28-06-2020)
+//:# - Nuevas opciones LinearForce y AngularForce para floatings. (30-06-2020)
 //:#############################################################################
 
 /// \file JCaseParts.h \brief Declares the class \ref JCaseParts.
@@ -216,8 +217,10 @@ private:
   tint3 RotationFree;
   tdouble3 LinearVelini;
   tdouble3 AngularVelini;
-  JLinearValue *LinearVel;  //<vs_fttvel>
-  JLinearValue *AngularVel; //<vs_fttvel>
+  JLinearValue *LinearVel;    //<vs_fttvel>
+  JLinearValue *AngularVel;   //<vs_fttvel>
+  JLinearValue *LinearForce;  //<vs_fttvel>
+  JLinearValue *AngularForce; //<vs_fttvel>
 
 public:
   JCasePartBlock_Floating(const JCaseProperties* properties
@@ -225,7 +228,8 @@ public:
     ,const tdouble3& center,const tmatrix3d& inertia
     ,const tint3 &translationfree,const tint3 &rotationfree
     ,const tdouble3 &linvelini,const tdouble3 &angvelini
-    ,const JLinearValue *linvel,const JLinearValue *angvel);
+    ,const JLinearValue *linvel  ,const JLinearValue *angvel
+    ,const JLinearValue *linforce,const JLinearValue *angforce);
   JCasePartBlock_Floating(const JCaseProperties* properties,const JXml *sxml,TiXmlElement* ele);
   ~JCasePartBlock_Floating();
   double        GetMassbody()       const{ return(Massbody); }
@@ -236,8 +240,10 @@ public:
   tint3         GetRotationFree()   const{ return(RotationFree); }
   tdouble3      GetLinearVelini()   const{ return(LinearVelini); }
   tdouble3      GetAngularVelini()  const{ return(AngularVelini); }
-  JLinearValue* GetLinearVel()      const{ return(LinearVel); }   //<vs_fttvel>
-  JLinearValue* GetAngularVel()     const{ return(AngularVel); }  //<vs_fttvel>
+  JLinearValue* GetLinearVel()      const{ return(LinearVel); }    //<vs_fttvel>
+  JLinearValue* GetAngularVel()     const{ return(AngularVel); }   //<vs_fttvel>
+  JLinearValue* GetLinearForce()    const{ return(LinearForce); }  //<vs_fttvel>
+  JLinearValue* GetAngularForce()   const{ return(AngularForce); } //<vs_fttvel>
   void ReadXml(const JXml *sxml,TiXmlElement* ele);
   TiXmlElement* WriteXml(JXml *sxml,TiXmlElement* ele)const;
 };  
@@ -327,11 +333,12 @@ public:
     ,const tdouble3 &center,const tmatrix3d &inertia
     ,const tint3 &translationfree,const tint3 &rotationfree
     ,const tdouble3 &linvelini,const tdouble3 &angvelini
-    ,const JLinearValue *linvel,const JLinearValue *angvel)
+    ,const JLinearValue *linvel,const JLinearValue *angvel
+    ,const JLinearValue *linforce,const JLinearValue *angforce)
   { 
     Add(new JCasePartBlock_Floating(Properties,mktype,GetBegin(),count
       ,massbody,masspart,center,inertia,translationfree,rotationfree
-      ,linvelini,angvelini,linvel,angvel)); 
+      ,linvelini,angvelini,linvel,angvel,linforce,angforce)); 
   }
 
   void AddFluid(word mktype,unsigned count){ 
@@ -353,6 +360,7 @@ public:
   void VisuParticlesInfo()const;
 
   bool UseImposedFtVel()const;
+  bool UseAddedFtForce()const;
 };
 
 

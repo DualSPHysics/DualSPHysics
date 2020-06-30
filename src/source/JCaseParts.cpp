@@ -50,7 +50,7 @@ void JCasePartBlock::UpdateProperty(){
 //==============================================================================
 std::string JCasePartBlock::GetNameXml()const{
   std::string ret;
-  for(unsigned c=16;c<ClassName.length();c++)ret=ret+char(tolower(ClassName[c]));
+  for(unsigned c=15;c<ClassName.length();c++)ret=ret+char(tolower(ClassName[c]));
   return(ret);
 }
 
@@ -198,7 +198,8 @@ JCasePartBlock_Floating::JCasePartBlock_Floating(const JCaseProperties* properti
   ,const tdouble3& center,const tmatrix3d& inertia
   ,const tint3 &translationfree,const tint3 &rotationfree
   ,const tdouble3 &linvelini,const tdouble3 &angvelini
-  ,const JLinearValue *linvel,const JLinearValue *angvel)
+  ,const JLinearValue *linvel  ,const JLinearValue *angvel
+  ,const JLinearValue *linforce,const JLinearValue *angforce)
   :JCasePartBlock(properties,TpPartFloating,"Floating",mktype,begin,count)
   ,Massbody(massbody),Masspart(masspart),Center(center),Inertia(inertia)
   ,TranslationFree(translationfree),RotationFree(rotationfree)
@@ -209,9 +210,13 @@ JCasePartBlock_Floating::JCasePartBlock_Floating(const JCaseProperties* properti
   #ifdef JCaseParts_UseLinearv   //<vs_fttvel_ini>
    LinearVel =(linvel? new JLinearValue(*linvel): NULL); 
    AngularVel=(angvel? new JLinearValue(*angvel): NULL); 
+   LinearForce =(linforce? new JLinearValue(*linforce): NULL); 
+   AngularForce=(angforce? new JLinearValue(*angforce): NULL); 
   #else                                                  
    LinearVel=NULL;                                        
    AngularVel=NULL;
+   LinearForce=NULL;                                        
+   AngularForce=NULL;
   #endif                          //<vs_fttvel_end> 
 }
 //==============================================================================
@@ -220,7 +225,8 @@ JCasePartBlock_Floating::JCasePartBlock_Floating(const JCaseProperties* properti
 JCasePartBlock_Floating::JCasePartBlock_Floating(const JCaseProperties* properties
   ,const JXml *sxml,TiXmlElement* ele):JCasePartBlock(properties,TpPartFloating,"Floating")
 {
-  LinearVel=NULL; AngularVel=NULL; //<vs_fttvel>
+  LinearVel=NULL;   AngularVel=NULL; //<vs_fttvel>
+  LinearForce=NULL; AngularForce=NULL; //<vs_fttvel>
   ReadXml(sxml,ele);
 }
 //==============================================================================
@@ -228,10 +234,12 @@ JCasePartBlock_Floating::JCasePartBlock_Floating(const JCaseProperties* properti
 //==============================================================================
 JCasePartBlock_Floating::~JCasePartBlock_Floating(){
   DestructorActive=true;
- #ifdef JCaseParts_UseLinearv        //<vs_fttvel>
-  delete LinearVel;  LinearVel=NULL;  //<vs_fttvel>
-  delete AngularVel; AngularVel=NULL; //<vs_fttvel>
- #endif                               //<vs_fttvel>
+ #ifdef JCaseParts_UseLinearv             //<vs_fttvel>
+  delete LinearVel;  LinearVel=NULL;      //<vs_fttvel>
+  delete AngularVel; AngularVel=NULL;     //<vs_fttvel>
+  delete LinearForce;  LinearForce=NULL;  //<vs_fttvel>
+  delete AngularForce; AngularForce=NULL; //<vs_fttvel>
+ #endif                                   //<vs_fttvel>
 }
 
 //==============================================================================
@@ -271,6 +279,14 @@ void JCasePartBlock_Floating::ReadXml(const JXml *sxml,TiXmlElement* ele){
     AngularVel=new JLinearValue(3,true);
     AngularVel->ReadXmlValues(sxml,ele,"angularvel","vel","time:x:y:z");
   } 
+  if(sxml->ExistsElement(ele,"linearforce")){
+    LinearForce=new JLinearValue(3,false);
+    LinearForce->ReadXmlValues(sxml,ele,"linearforce","force","time:x:y:z");
+  }
+  if(sxml->ExistsElement(ele,"angularforce")){
+    AngularForce=new JLinearValue(3,false);
+    AngularForce->ReadXmlValues(sxml,ele,"angularforce","force","time:x:y:z");
+  } 
 #endif
   //<vs_fttvel_end>
 }
@@ -301,7 +317,10 @@ TiXmlElement* JCasePartBlock_Floating::WriteXml(JXml *sxml,TiXmlElement* ele)con
   //-Writes imposed velocity.                                                                                                     //<vs_fttvel>
   if(LinearVel )JXml::AddAttribute(LinearVel ->WriteXmlValues(sxml,ele,"linearvel" ,"vel","time:x:y:z"),"units_comment","m/s");   //<vs_fttvel>
   if(AngularVel)JXml::AddAttribute(AngularVel->WriteXmlValues(sxml,ele,"angularvel","vel","time:x:y:z"),"units_comment","rad/s"); //<vs_fttvel>
-#endif                                                                                                                            //<vs_fttvel>
+  //-Writes added force.                                                                                                                //<vs_fttvel>
+  if(LinearForce )JXml::AddAttribute(LinearForce ->WriteXmlValues(sxml,ele,"linearforce" ,"force","time:x:y:z"),"units_comment","N/s"); //<vs_fttvel>
+  if(AngularForce)JXml::AddAttribute(AngularForce->WriteXmlValues(sxml,ele,"angularforce","force","time:x:y:z"),"units_comment","N/s"); //<vs_fttvel>
+#endif                                                                                                                                  //<vs_fttvel>
   return(ele);
 }
 
@@ -719,6 +738,18 @@ bool JCaseParts::UseImposedFtVel()const{
     usevel=(fblock.GetLinearVel()!=NULL || fblock.GetAngularVel()!=NULL);
   } //<vs_fttvel_end>
   return(usevel);
+}
+
+//==============================================================================
+/// Returns true when added force was defined for some floating body.
+//==============================================================================
+bool JCaseParts::UseAddedFtForce()const{
+  bool useforce=false;
+  for(unsigned c=0;c<CountBlocks() && !useforce;c++)if(GetBlock(c).Type==TpPartFloating){ //<vs_fttvel_ini>
+    const JCasePartBlock_Floating &fblock=(const JCasePartBlock_Floating &)GetBlock(c);
+    useforce=(fblock.GetLinearForce()!=NULL || fblock.GetAngularForce()!=NULL);
+  } //<vs_fttvel_end>
+  return(useforce);
 }
 
 //##############################################################################
