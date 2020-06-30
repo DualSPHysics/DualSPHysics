@@ -71,8 +71,6 @@ typedef struct{
   double domposminx,domposminy,domposminz;
   //-Ctes. of Cubic Spline kernel.
   float cubic_a1,cubic_a2,cubic_aa,cubic_a24,cubic_c1,cubic_d1,cubic_c2,cubic_odwdeltap;
-  //-Ctes. of Gaussian kernel.
-  float agau,bgau;
   //-Ctes. of WendlandC6 kernel.  //<vs_praticalsskq>
   float awc6,bwc6;                //<vs_praticalsskq>
 }StCteInteraction; 

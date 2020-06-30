@@ -632,41 +632,6 @@ __device__ float KerGetKernelCubicTensil(float rr2
   return(fab*(tensilp1+tensilp2));
 }
 
-//------------------------------------------------------------------------------
-/// Returns Gaussian kernel values: frx, fry and frz.
-/// Devuelve valores del kernel Gaussian: frx, fry y frz.
-//------------------------------------------------------------------------------
-__device__ void KerGetKernelGaussian(float rr2,float drx,float dry,float drz
-  ,float &frx,float &fry,float &frz)
-{
-  const float rad=sqrt(rr2);
-  const float qq=rad/CTE.h;
-  //-Gaussian kernel.
-  const float qqexp=-4.0f*qq*qq;
-  const float fac=CTE.bgau*qq*expf(qqexp)/rad; //-Kernel derivative (divided by rad).
-  //-Gradients.
-  frx=fac*drx; fry=fac*dry; frz=fac*drz;
-}
-
-//<vs_innlet_ini>
-//------------------------------------------------------------------------------
-/// Returns values of kernel Gaussian, gradients: frx, fry, frz and wab.
-/// Devuelve valores de kernel Gaussian, gradients: frx, fry, frz y wab.
-//------------------------------------------------------------------------------
-__device__ void KerGetKernelGaussian(float rr2,float drx,float dry,float drz
-  ,float &frx,float &fry,float &frz,float &wab)
-{
-  const float rad=sqrt(rr2);
-  const float qq=rad/CTE.h;
-  //-Gaussian kernel.
-  const float qqexp=-4.0f*qq*qq;
-  const float eqqexp=expf(qqexp);
-  const float fac=CTE.bgau*qq*eqqexp/rad; //-Kernel derivative (divided by rad).
-  //-Gradients.
-  frx=fac*drx; fry=fac*dry; frz=fac*drz;
-  wab=CTE.agau*eqqexp; //-Kernel (wab).
-}  //<vs_innlet_end>
-
 //<vs_praticalsskq_ini>
 //------------------------------------------------------------------------------
 /// Returns WendlandC6 kernel values: frx, fry and frz.
@@ -736,11 +701,10 @@ template<TpKernel tker,TpFtMode ftmode,bool symm>
     if(symm)dry=pscellp1.y+pscellp2.y + CTE.dosh*CEL_GetY(__float_as_int(pscellp2.w)); //<vs_syymmetry>
     const float rr2=drx*drx+dry*dry+drz*drz;
     if(rr2<=CTE.fourh2 && rr2>=ALMOSTZERO){
-      //-Wendland, Cubic Spline or Gaussian kernel.
+      //-Wendland or Cubic Spline kernel.
       float frx,fry,frz;
       if(tker==KERNEL_Wendland)     KerGetKernelWendland(rr2,drx,dry,drz,frx,fry,frz);
       else if(tker==KERNEL_Cubic)   KerGetKernelCubic   (rr2,drx,dry,drz,frx,fry,frz);
-      else if(tker==KERNEL_Gaussian)KerGetKernelGaussian(rr2,drx,dry,drz,frx,fry,frz);
       else if(tker==KERNEL_WendlandC6)KerGetKernelWendlandC6(rr2,drx,dry,drz,frx,fry,frz); //<vs_praticalsskq>
 
       float4 velp2=velrhop[p2];
@@ -836,11 +800,10 @@ template<TpKernel tker,TpFtMode ftmode,bool lamsps,TpDensity tdensity,bool shift
     if(symm)dry=pscellp1.y+pscellp2.y + CTE.dosh*CEL_GetY(__float_as_int(pscellp2.w)); //<vs_syymmetry>
     const float rr2=drx*drx+dry*dry+drz*drz;
     if(rr2<=CTE.fourh2 && rr2>=ALMOSTZERO){
-      //-Wendland, Cubic Spline or Gaussian kernel.
+      //-Wendland or Cubic Spline kernel.
       float frx,fry,frz;
       if(tker==KERNEL_Wendland)     KerGetKernelWendland(rr2,drx,dry,drz,frx,fry,frz);
       else if(tker==KERNEL_Cubic)   KerGetKernelCubic   (rr2,drx,dry,drz,frx,fry,frz);
-      else if(tker==KERNEL_Gaussian)KerGetKernelGaussian(rr2,drx,dry,drz,frx,fry,frz);
       else if(tker==KERNEL_WendlandC6)KerGetKernelWendlandC6(rr2,drx,dry,drz,frx,fry,frz); //<vs_praticalsskq>
 
       //-Obtains mass of particle p2 if any floating bodies exist.
@@ -1193,7 +1156,6 @@ void Interaction_Forces(const StInterParmsg &t){
 #else
   if(t.tkernel==KERNEL_Wendland)     Interaction_Forces_gt0<KERNEL_Wendland> (t);
   else if(t.tkernel==KERNEL_Cubic)   Interaction_Forces_gt0<KERNEL_Cubic   > (t);
-  else if(t.tkernel==KERNEL_Gaussian)Interaction_Forces_gt0<KERNEL_Gaussian> (t);
   else if(t.tkernel==KERNEL_WendlandC6)Interaction_Forces_gt0<KERNEL_WendlandC6> (t);  //<vs_praticalsskq>
 #endif
 }

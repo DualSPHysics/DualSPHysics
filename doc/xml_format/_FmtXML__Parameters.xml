@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<!-- *** DualSPHysics (02-06-2020) *** -->
+<!-- *** DualSPHysics (30-06-2020) *** -->
 <!-- *** class: JSph (JSpaceEParms)  *** -->
 <!------------------------------------------------------------------------------->
 <!------------------------------------------------------------------------------->
@@ -10,7 +10,7 @@
 		<parameter key="Boundary" value="2" comment="Boundary method 1:DBC, 2:mDBC (default=1)" />
 		<parameter key="StepAlgorithm" value="1" comment="Step Algorithm 1:Verlet, 2:Symplectic (default=1)" />
 		<parameter key="VerletSteps" value="40" comment="Verlet only: Number of steps to apply Euler timestepping (default=40)" />
-		<parameter key="Kernel" value="2" comment="Interaction Kernel 1:Cubic Spline, 2:Wendland, 3:Gaussian (default=2)" />
+		<parameter key="Kernel" value="2" comment="Interaction Kernel 1:Cubic Spline, 2:Wendland (default=2)" />
 		<parameter key="ViscoTreatment" value="1" comment="Viscosity formulation 1:Artificial, 2:Laminar+SPS (default=1)" />
 		<parameter key="Visco" value="0.01" comment="Viscosity value" />
 		<parameter key="ViscoBoundFactor" value="1" comment="Multiply viscosity value with boundary (default=1)" />

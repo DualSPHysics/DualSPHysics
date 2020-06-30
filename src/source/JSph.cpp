@@ -161,7 +161,7 @@ void JSph::InitVars(){
   InterStep=INTERSTEP_None;
   VerletSteps=40;
   TKernel=KERNEL_Wendland;
-  Awen=Bwen=Agau=Bgau=0;
+  Awen=Bwen=0;
   Awc6=Bwc6=0;  //<vs_praticalsskq>
   memset(&CubicCte,0,sizeof(StCubicCte));
   TVisco=VISCO_None;
@@ -556,9 +556,8 @@ void JSph::LoadConfigParameters(const JXml *xml){
   switch(eparms.GetValueInt("Kernel",true,2)){
     case 1:  TKernel=KERNEL_Cubic;     break;
     case 2:  TKernel=KERNEL_Wendland;  break;
-    case 3:  TKernel=KERNEL_Gaussian;  break;
 #ifdef PRASS3_WENDLANDC6                        //<vs_praticalsskq>
-    case 4:  TKernel=KERNEL_WendlandC6; break;  //<vs_praticalsskq>
+    case 3:  TKernel=KERNEL_WendlandC6; break;  //<vs_praticalsskq>
 #endif                                          //<vs_praticalsskq>
     default: Run_Exceptioon("Kernel choice is not valid.");
   }
@@ -1370,22 +1369,6 @@ void JSph::ConfigConstants(bool simulate2d){
       CubicCte.c2=float(-3.*aa/4.);
     }
   }
-  else if(TKernel==KERNEL_Gaussian){
-    if(simulate2d){
-      const double a1=4./PI;
-      const double a2=a1/(h*h);
-      const double aa=a1/(h*h*h);
-      Agau=float(a2);
-      Bgau=float(-8.*aa);
-    }
-    else{
-      const double a1=8./5.5683;
-      const double a2=a1/(h*h*h);
-      const double aa=a1/(h*h*h*h); 
-      Agau=float(a2);
-      Bgau=float(-8.*aa);
-    }
-  }
   else if(TKernel==KERNEL_WendlandC6){  //<vs_praticalsskq_ini>
     if(simulate2d){
       Awc6=float(78./(28.*PI*h*h));
@@ -1530,10 +1513,6 @@ void JSph::VisuConfig(){
     Log->Print(fun::VarStr("CubicCte.c2",CubicCte.c2));
     Log->Print(fun::VarStr("CubicCte.d1",CubicCte.d1));
     Log->Print(fun::VarStr("CubicCte.od_wdeltap",CubicCte.od_wdeltap));
-  }
-  else if(TKernel==KERNEL_Gaussian){
-    Log->Print(fun::VarStr("Agau (Gaussian)",Agau));
-    Log->Print(fun::VarStr("Bgau (Gaussian)",Bgau));
   }
   else if(TKernel==KERNEL_WendlandC6){ //<vs_praticalsskq_ini>
     Log->Print(fun::VarStr("Awc6 (WendlandC6)",Awc6));
@@ -2779,7 +2758,6 @@ std::string JSph::GetKernelName(TpKernel tkernel){
   string tx;
   if(tkernel==KERNEL_Cubic)tx="Cubic";
   else if(tkernel==KERNEL_Wendland)tx="Wendland";
-  else if(tkernel==KERNEL_Gaussian)tx="Gaussian";
   else if(tkernel==KERNEL_WendlandC6)tx="WendlandC6"; //<vs_praticalsskq>
   else tx="???";
   return(tx);

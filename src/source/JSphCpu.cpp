@@ -680,41 +680,6 @@ float JSphCpu::GetKernelCubicTensil(float rr2,float rhopp1,float pressp1,float r
   return(fab*(tensilp1+tensilp2));
 }
 
-//==============================================================================
-/// Returns values of kernel Gaussian, gradients: frx, fry and frz.
-/// Devuelve valores de kernel Gaussian, gradients: frx, fry y frz.
-//==============================================================================
-void JSphCpu::GetKernelGaussian(float rr2,float drx,float dry,float drz
-  ,float &frx,float &fry,float &frz)const
-{
-  const float rad=sqrt(rr2);
-  const float qq=rad/H;
-  //-Gaussian kernel.
-  const float qqexp=-4.0f*qq*qq;
-  const float fac=Bgau*qq*expf(qqexp)/rad; //-Kernel derivative (divided by rad).
-  //-Gradients.
-  frx=fac*drx; fry=fac*dry; frz=fac*drz;
-}
-
-//<vs_innlet_ini>
-//==============================================================================
-/// Returns values of kernel Gaussian, gradients: frx, fry, frz and wab.
-/// Devuelve valores de kernel Gaussian, gradients: frx, fry, frz y wab.
-//==============================================================================
-void JSphCpu::GetKernelGaussian(float rr2,float drx,float dry,float drz
-  ,float &frx,float &fry,float &frz,float &wab)const
-{
-  const float rad=sqrt(rr2);
-  const float qq=rad/H;
-  //-Gaussian kernel.
-  const float qqexp=-4.0f*qq*qq;
-  const float eqqexp=expf(qqexp);
-  const float fac=Bgau*qq*eqqexp/rad; //-Kernel derivative (divided by rad).
-  //-Gradients.
-  frx=fac*drx; fry=fac*dry; frz=fac*drz; 
-  wab=Agau*eqqexp; //-Kernel (wab).
-}  //<vs_innlet_end>
-
 //<vs_praticalsskq_ini>
 //==============================================================================
 /// Returns values of kernel WendlandC6, gradients: frx, fry and frz.
@@ -842,11 +807,10 @@ template<TpKernel tker,TpFtMode ftmode> void JSphCpu::InteractionForcesBound
         const float drz=float(posp1.z-pos[p2].z);
         const float rr2=drx*drx+dry*dry+drz*drz;
         if(rr2<=Fourh2 && rr2>=ALMOSTZERO){
-          //-Wendland, Cubic Spline or Gaussian kernel.
+          //-Wendland or Cubic Spline kernel.
           float frx,fry,frz;
           if(tker==KERNEL_Wendland)     GetKernelWendland(rr2,drx,dry,drz,frx,fry,frz);
           else if(tker==KERNEL_Cubic)   GetKernelCubic   (rr2,drx,dry,drz,frx,fry,frz);
-          else if(tker==KERNEL_Gaussian)GetKernelGaussian(rr2,drx,dry,drz,frx,fry,frz);
           else if(tker==KERNEL_WendlandC6)GetKernelWendlandC6(rr2,drx,dry,drz,frx,fry,frz);  //<vs_praticalsskq>
 
           //===== Get mass of particle p2 ===== 
@@ -950,11 +914,10 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity,bool sh
         const float drz=float(posp1.z-pos[p2].z);
         const float rr2=drx*drx+dry*dry+drz*drz;
         if(rr2<=Fourh2 && rr2>=ALMOSTZERO){
-          //-Wendland, Cubic Spline or Gaussian kernel.
+          //-Wendland or Cubic Spline kernel.
           float frx,fry,frz;
           if(tker==KERNEL_Wendland)     GetKernelWendland(rr2,drx,dry,drz,frx,fry,frz);
           else if(tker==KERNEL_Cubic)   GetKernelCubic   (rr2,drx,dry,drz,frx,fry,frz);
-          else if(tker==KERNEL_Gaussian)GetKernelGaussian(rr2,drx,dry,drz,frx,fry,frz);
           else if(tker==KERNEL_WendlandC6)GetKernelWendlandC6(rr2,drx,dry,drz,frx,fry,frz);  //<vs_praticalsskq>
 
           //===== Get mass of particle p2 ===== 
@@ -1279,7 +1242,6 @@ template<TpKernel tker> void JSphCpu::Interaction_Forces_ct2(const stinterparmsc
 void JSphCpu::Interaction_Forces_ct(const stinterparmsc &t,StInterResultc &res)const{
        if(TKernel==KERNEL_Wendland)Interaction_Forces_ct2<KERNEL_Wendland>(t,res);
   else if(TKernel==KERNEL_Cubic)   Interaction_Forces_ct2<KERNEL_Cubic   >(t,res);
-  else if(TKernel==KERNEL_Gaussian)Interaction_Forces_ct2<KERNEL_Gaussian>(t,res);
   else if(TKernel==KERNEL_WendlandC6)Interaction_Forces_ct2<KERNEL_WendlandC6>(t,res);  //<vs_praticalsskq>
 }
 

@@ -324,8 +324,7 @@ typedef enum{
 
 ///Types of kernel function.
 typedef enum{ 
-  KERNEL_WendlandC6=4, ///<WendlandC6 kernel (5th order).  //<vs_praticalsskq>
-  KERNEL_Gaussian=3,   ///<Gaussian kernel.
+  KERNEL_WendlandC6=3, ///<WendlandC6 kernel (5th order).  //<vs_praticalsskq>
   KERNEL_Wendland=2,   ///<Wendland kernel.
   KERNEL_Cubic=1,      ///<Cubic Spline kernel.
   KERNEL_None=0 

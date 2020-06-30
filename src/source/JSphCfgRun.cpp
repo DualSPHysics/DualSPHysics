@@ -115,7 +115,6 @@ void JSphCfgRun::VisuInfo()const{
   printf("\n");
   printf("    -cubic           Cubic spline kernel\n");
   printf("    -wendland        Wendland kernel\n");
-  printf("    -gaussian        Gaussian kernel\n");
 #ifdef PRASS3_WENDLANDC6                                //<vs_praticalsskq>
   printf("    -wendlandc6      WendlandC6 kernel\n");   //<vs_praticalsskq>
 #endif                                                  //<vs_praticalsskq>
@@ -294,7 +293,6 @@ void JSphCfgRun::LoadOpts(string *optlis,int optn,int lv,const std::string &file
       }
       else if(txword=="CUBIC")TKernel=KERNEL_Cubic;
       else if(txword=="WENDLAND")TKernel=KERNEL_Wendland;
-      else if(txword=="GAUSSIAN")TKernel=KERNEL_Gaussian;
 #ifdef PRASS3_WENDLANDC6                                      //<vs_praticalsskq>
       else if(txword=="WENDLANDC6")TKernel=KERNEL_WendlandC6; //<vs_praticalsskq>
 #endif                                                        //<vs_praticalsskq>
