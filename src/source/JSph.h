@@ -438,7 +438,9 @@ protected:
 
   void ConfigCellDivision();
   void SelecDomain(tuint3 celini,tuint3 celfin);
+  static tuint3 CalcCellDistribution(tuint3 ncells);
   static unsigned CalcCellCode(tuint3 ncells);
+  void CheckConfigPosCellGpu();
   void CalcFloatingRadius(unsigned np,const tdouble3 *pos,const unsigned *idp);
   tdouble3 UpdatePeriodicPos(tdouble3 ps)const;
 
