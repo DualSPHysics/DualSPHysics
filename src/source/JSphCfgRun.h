@@ -32,7 +32,6 @@
 class JSphCfgRun : public JCfgRunBase
 {
 protected:
-  bool SvDef;
   int DirsDef;
 
 public:

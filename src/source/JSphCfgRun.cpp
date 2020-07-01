@@ -54,7 +54,6 @@ void JSphCfgRun::Reset(){
   DDTValue=-1;
   Shifting=-1;
   SvRes=true; SvDomainVtk=false;
-  SvDef=false;
   Sv_Binx=true; Sv_Info=true;
   Sv_Vtk=false; Sv_Csv=false;
   CaseName=""; RunName=""; DirOut=""; DirDataOut=""; 
@@ -160,8 +159,8 @@ void JSphCfgRun::VisuInfo()const{
   printf("  Output options:\n");
   printf("    -sv:[formats,...] Specifies the output formats.\n");
   printf("        none    No particles files are generated\n");
-  printf("        binx    Binary files (option by default)\n");
-  printf("        info    Information about execution in .ibi4 format\n");
+  printf("        binx    Binary files (by default)\n");
+  printf("        info    Information about execution in .ibi4 format (by default)\n");
   printf("        vtk     VTK files\n");
   printf("        csv     CSV files\n");
   printf("    -svres:<0/1>     Generates file that summarises the execution process\n");
@@ -333,14 +332,11 @@ void JSphCfgRun::LoadOpts(string *optlis,int optn,int lv,const std::string &file
         string txop=fun::StrUpper(txoptfull);
         while(!txop.empty()){
           string op=fun::StrSplit(",",txop);
-          if(!SvDef || op=="NONE"){ 
-            SvDef=true; Sv_Binx=false; Sv_Info=false; 
-            Sv_Csv=false; Sv_Vtk=false;
-          }
-          else if(op=="BINX"){    SvDef=true; Sv_Binx=true; }
-          else if(op=="INFO"){    SvDef=true; Sv_Info=true; }
-          else if(op=="VTK"){     SvDef=true; Sv_Vtk=true; }
-          else if(op=="CSV"){     SvDef=true; Sv_Csv=true; }
+          if(op=="NONE")Sv_Binx=Sv_Info=Sv_Csv=Sv_Vtk=false;
+          else if(op=="BINX" || op=="BIN")Sv_Binx=true;
+          else if(op=="INFO" || op=="INF")Sv_Info=true;
+          else if(op=="VTK")Sv_Vtk=true;
+          else if(op=="CSV")Sv_Csv=true;
           else ErrorParm(opt,c,lv,file);
         }
       }
