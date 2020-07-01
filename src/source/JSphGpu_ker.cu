@@ -2138,15 +2138,15 @@ __device__ void KerLoadMatrix3f(unsigned c,const float4 *data8,const float *data
 }
 
 //------------------------------------------------------------------------------
-/// Calculate forces around floating object particles.
-/// Calcula fuerzas sobre floatings.
+/// Adds acceleration from particles and from external forces to ftoforces[].
+/// Anhade aceleracion de particulas y de fuerzas externas en ftoforces[].
 //------------------------------------------------------------------------------
 __global__ void KerFtCalcForces(unsigned ftcount,float3 gravity
   ,const float *ftomass,const float3 *ftoangles
   ,const float4 *ftoinertiaini8,const float *ftoinertiaini1
-  ,const float3 *ftoforcessum,float3 *ftoforces) //fdata={pini,np,radius,mass}
+  ,const float3 *ftoforcessum,float3 *ftoforces,const float3 *ftoextforces) //fdata={pini,np,radius,mass}
 {
-  unsigned cf=blockIdx.y*gridDim.x*blockDim.x + blockIdx.x*blockDim.x + threadIdx.x; //-Number of floating.
+  const unsigned cf=blockIdx.y*gridDim.x*blockDim.x + blockIdx.x*blockDim.x + threadIdx.x; //-Number of floating.
   if(cf<ftcount){
     //-Loads floating data.
     const float fmass=ftomass[cf];
@@ -2162,8 +2162,23 @@ __global__ void KerFtCalcForces(unsigned ftcount,float3 gravity
     const tmatrix3f invinert=cumath::InverseMatrix3x3(inert);
 
     //-Loads traslational and rotational velocities.
-    float3 face=ftoforcessum[cf*2];
-    float3 fomegaace=ftoforcessum[cf*2+1];
+    const unsigned cf2=cf*2;
+    float3 face=ftoforcessum[cf2];
+    float3 fomegaace=ftoforcessum[cf2+1];
+
+    //-Sums the external forces.
+    if(ftoextforces!=NULL){
+      //-Linear force.
+      const float3 rflin=ftoextforces[cf2];
+      face.x=face.x+rflin.x; 
+      face.y=face.y+rflin.y; 
+      face.z=face.z+rflin.z; 
+      //-Angular force.
+      const float3 rfang=ftoextforces[cf2+1];
+      fomegaace.x=fomegaace.x+rfang.x; 
+      fomegaace.y=fomegaace.y+rfang.y; 
+      fomegaace.z=fomegaace.z+rfang.z; 
+    }
 
     //-Calculate omega starting from fomegaace & invinert. | Calcula omega a partir de fomegaace y invinert.
     {
@@ -2178,30 +2193,29 @@ __global__ void KerFtCalcForces(unsigned ftcount,float3 gravity
     face.y=(face.y + fmass*gravity.y) / fmass;
     face.z=(face.z + fmass*gravity.z) / fmass;
     //-Stores results in ftoforces[].
-    float3 *ftoforcesc=(ftoforces+(cf*2));
-    const float3 rface=ftoforcesc[0];
-    const float3 rfome=ftoforcesc[1];
+    const float3 rface=ftoforces[cf2];
+    const float3 rfome=ftoforces[cf2+1];
     face.x+=rface.x;      face.y+=rface.y;      face.z+=rface.z;
     fomegaace.x+=rfome.x; fomegaace.y+=rfome.y; fomegaace.z+=rfome.z;
     //-Stores final results.
-    ftoforcesc[0]=face;
-    ftoforcesc[1]=fomegaace;
+    ftoforces[cf2]  =face;
+    ftoforces[cf2+1]=fomegaace;
   }
 }
 
 //==============================================================================
-/// Computes forces on floatings.
-/// Calcula fuerzas sobre floatings.
+/// Adds acceleration from particles and from external forces to ftoforces[].
+/// Anhade aceleracion de particulas y de fuerzas externas en ftoforces[].
 //==============================================================================
 void FtCalcForces(unsigned ftcount,tfloat3 gravity
   ,const float *ftomass,const float3 *ftoangles
   ,const float4 *ftoinertiaini8,const float *ftoinertiaini1
-  ,const float3 *ftoforcessum,float3 *ftoforces)
+  ,const float3 *ftoforcessum,float3 *ftoforces,const float3 *ftoextforces)
 {
   if(ftcount){
     dim3 sgrid=GetGridSize(ftcount,SPHBSIZE);
     KerFtCalcForces <<<sgrid,SPHBSIZE>>> (ftcount,Float3(gravity),ftomass
-      ,ftoangles,ftoinertiaini8,ftoinertiaini1,ftoforcessum,ftoforces);
+      ,ftoangles,ftoinertiaini8,ftoinertiaini1,ftoforcessum,ftoforces,ftoextforces);
   }
 }
 

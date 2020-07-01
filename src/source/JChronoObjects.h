@@ -136,7 +136,6 @@ public:
 
   void SetFtData(word mkbound,const tfloat3 &face,const tfloat3 &fomegaace);
   void SetFtDataVel(word mkbound,const tfloat3 &vlin,const tfloat3 &vang);  //<vs_fttvel>
-  void SetFtDataForce(word mkbound,const tfloat3 &flin,const tfloat3 &fang);//<vs_fttforce>
   void GetFtData(word mkbound,tdouble3 &fcenter,tfloat3 &fvel,tfloat3 &fomega)const;
 
   void SetMovingData(word mkbound,bool simple,const tdouble3 &msimple,const tmatrix4d &mmatrix,double stepdt);
@@ -144,10 +143,6 @@ public:
   void RunChrono(unsigned nstep,double timestep,double dt,bool predictor);
 
   void SavePart(int part);
-
-//<vs_chroonodev_ini>
-  //JChBodyFloating* ReadElementFEA(const JXml *sxml,TiXmlElement* ele,unsigned idb,const std::string idname,const word mkbound);
-//<vs_chroonodev_end>
 };
 #endif
 

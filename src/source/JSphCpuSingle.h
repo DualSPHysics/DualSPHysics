@@ -76,6 +76,7 @@ protected:
   void FtCalcForces(StFtoForces *ftoforces)const;
   void FtCalcForcesRes(double dt,const StFtoForces *ftoforces,StFtoForcesRes *ftoforcesres)const;
   void FtApplyImposedVel(StFtoForcesRes *ftoforcesres)const; //<vs_fttvel>
+  void FtSumExternalForces(unsigned cf,tfloat3 &face,tfloat3 &fomegaace)const;//<vs_fttvel>
   void FtApplyConstraints(StFtoForces *ftoforces,StFtoForcesRes *ftoforcesres)const;
   void RunFloating(double dt,bool predictor);
   void RunGaugeSystem(double timestep);

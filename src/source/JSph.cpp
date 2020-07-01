@@ -437,11 +437,10 @@ void JSph::AllocMemoryFloating(unsigned ftcount,bool imposedvel,bool addedforce)
       for(unsigned c=0;c<ftcount;c++)FtLinearVel[c]=FtAngularVel[c]=NULL;
     } 
     if(addedforce){
-      FtLinearForce=new JLinearValue*[ftcount];
+      FtLinearForce =new JLinearValue*[ftcount];
       FtAngularForce=new JLinearValue*[ftcount];
       for(unsigned c=0;c<ftcount;c++)FtLinearForce[c]=FtAngularForce[c]=NULL;
     }
-    
   }//<vs_fttvel_end>
 }
 
@@ -2160,22 +2159,16 @@ void JSph::CalcMotionWaveGen(double stepdt){
 
 //<vs_fttvel_ini>
 //==============================================================================
-/// Adds the external velocities and forces to floaging bodies.
-/// Agrega las velocidades y fuerzas externas a objetos flotantes.
+/// Applies the external velocities to each floating body of Chrono.
+/// Aplica las velocidades externas a cada objeto flotante de Chrono.
 //==============================================================================
-void JSph::FloatingAddExternalData(){
+void JSph::ChronoFtApplyImposedVel(){
   //-Applies imposed velocity.
-  if(FtLinearVel!=NULL)for(unsigned cf=0;cf<FtCount;cf++)if(FtObjs[cf].usechrono){
+  for(unsigned cf=0;cf<FtCount;cf++)if(FtObjs[cf].usechrono){
     const tfloat3 v1=(FtLinearVel [cf]!=NULL? FtLinearVel [cf]->GetValue3f(TimeStep): TFloat3(FLT_MAX));
     const tfloat3 v2=(FtAngularVel[cf]!=NULL? FtAngularVel[cf]->GetValue3f(TimeStep): TFloat3(FLT_MAX));
     ChronoObjects->SetFtDataVel(FtObjs[cf].mkbound,v1,v2);
   } 
-  //-Adds external force.
-  if(FtLinearForce!=NULL)for(unsigned cf=0;cf<FtCount;cf++)if(FtObjs[cf].usechrono){
-    const tfloat3 f1=(FtLinearForce [cf]!=NULL? FtLinearForce [cf]->GetValue3f(TimeStep): TFloat3(FLT_MAX));
-    const tfloat3 f2=(FtAngularForce[cf]!=NULL? FtAngularForce[cf]->GetValue3f(TimeStep): TFloat3(FLT_MAX));
-    ChronoObjects->SetFtDataForce(FtObjs[cf].mkbound,f1,f2);
-  }
 }
 //<vs_fttvel_end>
 

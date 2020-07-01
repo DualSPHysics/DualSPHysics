@@ -23,7 +23,9 @@
 //:#   despues se convierte a float (22-04-2013)
 //:# - Mejora la gestion de excepciones. (06-05-2020)
 //:# - Comprobacion de la densidad inicial de las particulas fluido en la funcion
-//:# CheckRhopLimits(). (24-06-2020)
+//:#   CheckRhopLimits(). (24-06-2020)
+//:# - Funcion FtApplyExternalVel() para aplicar una velocidad externa a objetos
+//:#   flotantes usando Chrono. (01-07-2020)
 //:#############################################################################
 
 /// \file JSph.h \brief Declares the class \ref JSph.
@@ -451,8 +453,7 @@ protected:
 
   bool CalcMotion(double stepdt);
   void CalcMotionWaveGen(double stepdt);
-  void FloatingAddExternalData();  //<vs_fttvel>
-
+  void ChronoFtApplyImposedVel();  //<vs_fttvel>
   void PrintSizeNp(unsigned np,llong size,unsigned allocs)const;
   void PrintHeadPart();
 

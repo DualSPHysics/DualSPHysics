@@ -320,13 +320,6 @@ void JChronoObjects::ReadXml(const JXml *sxml,TiXmlElement* lis){
         const string idname=(nmkbounds>1? idnamebase+fun::UintStr(mkbound): idnamebase);
         const string mfile=(!mfilebase.empty()? idnamebase+fun::PrintStr("_mkb%04u.obj",mkbound): "");
         if(elename=="bodyfloating"){
-          //<vs_chroonodev_ini>
-          //Log->Printf("----> AddBodyFloating>> \'%s\' mkb:%u mf:[%s]",idname.c_str(),mkbound,mfile.c_str());
-          //const unsigned type=sxml->GetAttributeUnsigned(ele,"type",true,0);
-          //JChBodyFloating *body=NULL;
-          //if(type==0) body=ChronoDataXml->AddBodyFloating(idb,idname,mkbound,xmlrow); //-No Finite Element
-          //else        body=ReadElementFEA(sxml,ele,idb,idname,mkbound);               //-For Finite Elements
-          //<vs_chroonodev_end>
           JChBodyFloating *body=ChronoDataXml->AddBodyFloating(idb,idname,mkbound,xmlrow);
           if(UseCollision)body->SetModel(mfile,tnormal);
           ReadXmlValues(sxml,ele->FirstChildElement("values"),body->GetValuesPtr());
@@ -465,101 +458,6 @@ void JChronoObjects::ReadXml(const JXml *sxml,TiXmlElement* lis){
   NextTime=(SaveDataTime>=0? 0: DBL_MAX);
   LastTimeOk=-1;
 }
-
-//<vs_chroonodev_ini>
-//==============================================================================
-/// Reads the Finit Elements from the XML file
-//==============================================================================
-//JChBodyFloating* JChronoObjects::ReadElementFEA(const JXml *sxml,TiXmlElement* ele,unsigned idb,const std::string idname,const word mkbound) {
-//  const string xmlrow=sxml->ErrGetFileRow(ele);
-//  JChElementFEA* body_ret=NULL; //-Body to return
-//  TiXmlElement ele_fea=*ele; 
-//  //-Reading Finite Element Cable
-//  if(sxml->ExistsElement(&ele_fea,"cable")){
-//    JChCable *body=ChronoDataXml->AddCableFloating(idb,idname,mkbound,xmlrow);
-//    ChronoDataXml->SetUseFEA(true); //This configures the rigth solver for Finite Elements 
-//    body->SetUseFEA(true);
-//    ReadXmlValues(sxml,ele->FirstChildElement("values"),body->GetValuesPtr());
-//    //-Cable element
-//    TiXmlElement *ele_cable=ele_fea.FirstChildElement("cable");
-//    //-Cable properties
-//    body->SetSegments(sxml->ReadElementUnsigned(ele_cable,"segments","value",true,1));
-//    body->SetPointA(sxml->ReadElementFloat3(ele_cable,"pointA"));
-//    body->SetPointB(sxml->ReadElementFloat3(ele_cable,"pointB"));
-//    //-Section Cable properties
-//    TiXmlElement *ele_section=ele_cable->FirstChildElement("section");
-//    JChCable::StSection *section=body->GetSection();
-//    section->Area=sxml->ReadElementDouble(ele_section,"area","value",true,0.0);
-//    section->Diameter=sxml->ReadElementDouble(ele_section,"diameter","value",true,0.0);
-//    section->Density=sxml->ReadElementDouble(ele_section,"density","value",true,1000);
-//    section->RaleyghDamping=sxml->ReadElementDouble(ele_section,"raleyghdamping","value",true,0.0);
-//    if(section->Area==0.0&&section->Diameter==0.0)Run_ExceptioonFile(fun::PrintStr("Diameter and area values cannot be zero to create the section of cable. Introduce a value for one of them."),sxml->ErrGetFileRow(ele_section)); 
-//    body->SetSection(*section);
-//    body_ret=body;
-//  }
-//  //-Reading Finite Element Beam Euler-Bernoulli
-//  else if(sxml->ExistsElement(&ele_fea, "beamEuler")) {
-//    JChBeamEuler *body=ChronoDataXml->AddBeamEulerFloating(idb,idname,mkbound,xmlrow);
-//    ChronoDataXml->SetUseFEA(true); //This configures the rigth solver for Finite Elements 
-//    body->SetUseFEA(true);
-//    ReadXmlValues(sxml,ele->FirstChildElement("values"),body->GetValuesPtr());
-//    //-Beam element
-//    TiXmlElement *ele_cable=ele_fea.FirstChildElement("beamEuler");
-//    //-Beam properties
-//    body->SetSegments(sxml->ReadElementUnsigned(ele_cable,"segments","value",true,1));
-//    body->SetPointA(sxml->ReadElementFloat3(ele_cable,"pointA","value"));
-//    body->SetPointB(sxml->ReadElementFloat3(ele_cable,"pointB","value"));
-//    body->SetDirection(sxml->ReadElementFloat3(ele_cable,"direction"));
-//    //-Material Beam properties
-//    TiXmlElement *ele_section=ele_cable->FirstChildElement("section");
-//    JChBeamEuler::StSectionAdv *section=new JChBeamEuler::StSectionAdv();
-//    section->Alpha=sxml->ReadElementDouble(ele_section,"alpha","value",true,0);
-//    section->Width=sxml->ReadElementDouble(ele_section,"width","value");
-//    section->Height=sxml->ReadElementDouble(ele_section,"heigth","value");
-//    section->Density=sxml->ReadElementDouble(ele_section,"density","value",true,1000);
-//    section->Stiffness=sxml->ReadElementDouble(ele_section,"stiffness","value",true,0.01e9);
-//    section->RaleyghDamping=sxml->ReadElementDouble(ele_section,"raleyghdamping","value",true,0.0);
-//    section->Centroid=sxml->ReadElementDouble3(ele_section,"centroid",true,TDouble3(0));
-//    section->ShearCenter=sxml->ReadElementDouble3(ele_section,"shearCenter",true,TDouble3(0));
-//    body->SetSection(*section);
-//    body_ret=body;
-//  }
-//  //-Reading Finite Element Beam ANCF
-//  else if (sxml->ExistsElement(&ele_fea, "beamANCF")) {
-//    JChBeamANCF *body=ChronoDataXml->AddBeamANCFFloating(idb,idname,mkbound,xmlrow);
-//    ChronoDataXml->SetUseFEA(true); //This configures the rigth solver for Finite Elements 
-//    body->SetUseFEA(true);
-//    ReadXmlValues(sxml,ele->FirstChildElement("values"),body->GetValuesPtr());
-//    //-Beam element
-//    TiXmlElement *ele_cable=ele_fea.FirstChildElement("beamANCF");
-//    //-Beam properties
-//    body->SetSegments(sxml->ReadElementUnsigned(ele_cable,"segments","value",true,1));
-//    body->SetPointA(sxml->ReadElementFloat3(ele_cable,"pointA","value"));
-//    body->SetPointB(sxml->ReadElementFloat3(ele_cable,"pointB","value"));
-//    body->SetHeight(sxml->ReadElementDouble(ele_cable,"heigth","value"));
-//    body->SetWidth(sxml->ReadElementDouble(ele_cable,"width","value"));
-//    body->SetDamping(sxml->ReadElementDouble(ele_cable,"damping","value"));
-//    body->SetUseGravity(sxml->ReadElementUnsigned(ele_cable,"useGravity","value")==0?false:true);
-//    body->SetCurvature(sxml->ReadElementFloat3(ele_cable,"curvature"));
-//    body->SetDirection(sxml->ReadElementFloat3(ele_cable,"direction"));
-//    //-Material Beam properties
-//    TiXmlElement *ele_section=ele_cable->FirstChildElement("material");
-//    JChBeamANCF::StMaterial *material=new JChBeamANCF::StMaterial();
-//    material->Poisson=sxml->ReadElementDouble(ele_section,"poisson","value");
-//    material->Young=sxml->ReadElementDouble(ele_section,"young","value");
-//    material->Stiffness=sxml->ReadElementDouble(ele_section,"young","value");
-//    material->Density=sxml->ReadElementDouble(ele_section,"density","value",true,1000);
-//    material->K1=sxml->ReadElementDouble(ele_section,"k1","value",true,0.0);
-//    material->K2=sxml->ReadElementDouble(ele_section,"k2","value",true,0.0);
-//    body->SetMaterial(*material);
-//    //-Set the use of PoissonRatio
-//    body->SetUsePoisson(material->Poisson==0?false:true);
-//    body_ret=body;
-//  }else Run_ExceptioonFile(fun::PrintStr("The type of Finite Element introduced is not allowed."),sxml->ErrGetFileRow(ele)); 
-//
-//  return(body_ret);
-//}
-//<vs_chroonodev_end>
 
 //==============================================================================
 /// Reads list of values in the XML node.
@@ -951,14 +849,6 @@ void JChronoObjects::SetFtData(word mkbound,const tfloat3 &face,const tfloat3 &f
 void JChronoObjects::SetFtDataVel(word mkbound,const tfloat3 &vlin,const tfloat3 &vang){
   if(!ChronoLib->SetFtDataVel(mkbound,vlin,vang))Run_Exceptioon("Error running Chrono library.");
 }//<vs_fttvel_end>
-
-//<vs_ftforce_ini>
-//==============================================================================
-/// Loads added force for floating to calculate coupling with Chrono.
-//==============================================================================
-void JChronoObjects::SetFtDataForce(word mkbound,const tfloat3 &flin,const tfloat3 &fang){
-  if(!ChronoLib->SetFtDataForce(mkbound,flin,fang))Run_Exceptioon("Error running Chrono library.");
-}//<vs_ftforce_end>
 
 //==============================================================================
 /// Obtains floating data from coupling with Chrono.

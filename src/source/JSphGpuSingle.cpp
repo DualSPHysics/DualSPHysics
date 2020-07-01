@@ -616,7 +616,34 @@ void JSphGpuSingle::FtApplyImposedVel(float3 *ftoforcesresg)const{
   if(ftoforcesresc!=NULL){
     cudaMemcpy(ftoforcesresg,ftoforcesresc,sizeof(tfloat3)*FtCount*2,cudaMemcpyHostToDevice);
   }
-}//<vs_fttvel_end>
+}
+
+//==============================================================================
+/// Copies the external forces to FtoExtForcesg array for GPU.
+/// Copia las fuerzas externas al array FtoExtForcesg para GPU.
+//==============================================================================
+void JSphGpuSingle::FtCopyExternalForces(){
+  tfloat3 *ftoextforces=FtoAuxFloat9;
+  memset(ftoextforces,0,sizeof(tfloat3)*FtCount*2);
+  if(FtLinearForce!=NULL && FtAngularForce!=NULL)for(unsigned cf=0;cf<FtCount;cf++){
+    //-Adds external linear forces.
+    if(FtLinearForce[cf]!=NULL){
+      const tfloat3 flin=FtLinearForce[cf]->GetValue3f(TimeStep);
+      if(flin.x!=FLT_MAX)ftoextforces[cf*2].x=flin.x;
+      if(flin.y!=FLT_MAX)ftoextforces[cf*2].y=flin.y;
+      if(flin.z!=FLT_MAX)ftoextforces[cf*2].z=flin.z;
+    }
+    //-Adds external angular forces.
+    if(FtAngularForce[cf]!=NULL){
+      const tfloat3 fang=FtAngularForce[cf]->GetValue3f(TimeStep);
+      if(fang.x!=FLT_MAX)ftoextforces[cf*2+1].x=fang.x;
+      if(fang.y!=FLT_MAX)ftoextforces[cf*2+1].y=fang.y;
+      if(fang.z!=FLT_MAX)ftoextforces[cf*2+1].z=fang.z;
+    }
+  }
+  cudaMemcpy(FtoExtForcesg,ftoextforces,sizeof(tfloat3)*FtCount*2,cudaMemcpyHostToDevice);
+}
+//<vs_fttvel_end>
 
 //==============================================================================
 /// Process floating objects.
@@ -638,10 +665,14 @@ void JSphGpuSingle::RunFloating(double dt,bool predictor){
       cudaMemcpy(FtoForcesg,ftoforces,sizeof(StFtoForces)*FtCount,cudaMemcpyHostToDevice);
     }  //<vs_moordyyn_end>
 
+    //-Adds acceleration from particles and from external forces to FtoForces[].
+    //-Copies the external forces to FtoExtForcesg array.
+    if(FtLinearForce!=NULL)FtCopyExternalForces();
     //-Calculate forces summation (face,fomegaace) starting from floating particles in ftoforcessum[].
     cusph::FtCalcForcesSum(PeriActive!=0,FtCount,FtoDatpg,FtoCenterg,FtRidpg,Posxyg,Poszg,Aceg,FtoForcesSumg);
-    //-Adds calculated forces around floating objects / Anhade fuerzas calculadas sobre floatings.
-    cusph::FtCalcForces(FtCount,Gravity,FtoMassg,FtoAnglesg,FtoInertiaini8g,FtoInertiaini1g,FtoForcesSumg,FtoForcesg);
+    //-Adds acceleration from particles and from external forces to FtoForcesg[].
+    cusph::FtCalcForces(FtCount,Gravity,FtoMassg,FtoAnglesg,FtoInertiaini8g,FtoInertiaini1g,FtoForcesSumg,FtoForcesg,FtoExtForcesg);
+    
     //-Calculate data to update floatings / Calcula datos para actualizar floatings.
     cusph::FtCalcForcesRes(FtCount,Simulate2D,dt,FtoOmegag,FtoVelg,FtoCenterg,FtoForcesg,FtoForcesResg,FtoCenterResg);
     //-Applies imposed velocity.                           //<vs_fttvel>
@@ -665,8 +696,8 @@ void JSphGpuSingle::RunFloating(double dt,bool predictor){
       cudaMemcpy(ftoforces,FtoForcesg,sizeof(tfloat3)*FtCount*2,cudaMemcpyDeviceToHost);
       for(unsigned cf=0;cf<FtCount;cf++)if(FtObjs[cf].usechrono)
         ChronoObjects->SetFtData(FtObjs[cf].mkbound,ftoforces[cf*2],ftoforces[cf*2+1]);
-      //-Adds the external velocity and force. 
-      FloatingAddExternalData(); //<vs_fttvel>
+      //-Applies the external velocities to each floating body of Chrono.
+      ChronoFtApplyImposedVel(); //<vs_fttvel>
       //-Calculate data using Chrono / Calcula datos usando Chrono.
       ChronoObjects->RunChrono(Nstep,TimeStep,dt,predictor);
       //-Load calculated data by Chrono / Carga datos calculados por Chrono.

@@ -20,7 +20,6 @@
 //# =========
 //# - Clase creada para almacenar la configuracion de los distintos cuerpos y
 //#   sus uniones para usar con Chrono. (05-05-2016)
-//# - Funciones para aplicar fuerzas externas a los objetos flotantes (29-06-2020).
 //#############################################################################
 
 /// \file JChronoData.h \brief Declares the class \ref JChronoData.
@@ -217,13 +216,13 @@ public:
   tfloat3     GetLinearVelini()   const{ return(LinearVelini);    }
   tfloat3     GetAngularVelini()  const{ return(AngularVelini);   }
 
-  std::string GetModelFile()  const{ return(ModelFile);   }
-  TpModelNormal GetModelNormal()const{ return(ModelNormal); }
-  float       GetYoung()      const{ return(Young);       }
-  float       GetPoisson()    const{ return(Poisson);     }
-  float       GetKfric()      const{ return(Kfric);       }
-  float       GetRestitu()    const{ return(Restitu);     }
-  bool        GetUseFEA()     const{ return(UseFEA);      }    //<chrono_fea>
+  std::string   GetModelFile()    const{ return(ModelFile);  }
+  TpModelNormal GetModelNormal() const{ return(ModelNormal); }
+  float         GetYoung()       const{ return(Young);       }
+  float         GetPoisson()     const{ return(Poisson);     }
+  float         GetKfric()       const{ return(Kfric);       }
+  float         GetRestitu()     const{ return(Restitu);     }
+  bool          GetUseFEA()      const{ return(UseFEA);      }    //<chrono_fea>
 
   void SetModel(const std::string &file,TpModelNormal normal){ ModelFile=file; ModelNormal=normal; } 
   void SetUseFEA(const bool u){ UseFEA=u; }  //<chrono_fea>
@@ -242,8 +241,6 @@ protected:
   tfloat3 InputFomegaAce;
   tfloat3 InputLinearVel;   //<vs_fttvel>
   tfloat3 InputAngularVel;  //<vs_fttvel>
-  tfloat3 InputLinearForce; //<vs_fttvel>
-  tfloat3 InputAngularForce;//<vs_fttvel>
 
   tdouble3 OutputCenter;
   tfloat3 OutputVel;
@@ -259,7 +256,6 @@ public:
   void ResetInputData(){ InputData=false; }
   void SetInputData(const tfloat3 &face,const tfloat3 &fomegaace)  { InputData=true; InputFace=face; InputFomegaAce=fomegaace; }
   void SetInputDataVel(const tfloat3 &vlin,const tfloat3 &vang)    { InputLinearVel=vlin; InputAngularVel=vang; }      //<vs_fttvel>
-  void SetInputDataForce(const tfloat3 &flin,const tfloat3 &fang){ InputLinearForce=flin; InputAngularForce=fang; }  //<vs_fttvel>
   void SetOutputData(const tdouble3 &center,const tfloat3 &vel,const tfloat3 &omega){ OutputCenter=center; OutputVel=vel; OutputOmega=omega; }
 
   bool     GetInputData()        const{ return(InputData);        }
@@ -267,160 +263,10 @@ public:
   tfloat3  GetInputFomegaAce()   const{ return(InputFomegaAce);   }
   tfloat3  GetInputLinearVel()   const{ return(InputLinearVel);   } //<vs_fttvel>
   tfloat3  GetInputAngularVel()  const{ return(InputAngularVel);  } //<vs_fttvel>
-  tfloat3  GetInputLinearForce() const{ return(InputLinearForce); } //<vs_fttforce>
-  tfloat3  GetInputAngularForce()const{ return(InputAngularForce);} //<vs_fttforce>
   tdouble3 GetOutputCenter()     const{ return(OutputCenter);     }
   tfloat3  GetOutputVel()        const{ return(OutputVel);        }
   tfloat3  GetOutputOmega()      const{ return(OutputOmega);      }
 };
-
-//<vs_chroonodev_ini>
-//##############################################################################
-//# JChElementFEA
-//##############################################################################
-/// \brief Manages the info of a JChElementFEA.
-//-The Absolute Nodal Coordinate Formulation (ANCF) is a nonlinear finite element
-class JChElementFEA: public JChBodyFloating
-{
-public:
-  typedef enum {Cable, BeamANCF, BeamEuler} TpElementFEA;
-
-protected:
-  tfloat3 PointA;
-  tfloat3 PointB;
-  unsigned Segments;
-  TpElementFEA TypeFEA;
-  void Reset();
-
-public:
-  JChElementFEA(unsigned idb, std::string idname,TpElementFEA typeancf,word mkbound); 
-  //virtual ~JChElementFEA();
-  //virtual void Reset();
-
-  void SetPointA(const tfloat3 pa)        { PointA=pa;  }
-  void SetPointB(const tfloat3 pb)        { PointB=pb;  }
-  void SetSegments(const unsigned s)      { Segments=s; }
-  void SetTypeFEA(const TpElementFEA tp)  { TypeFEA=tp; }
-
-  tfloat3 GetPointA()       const { return(PointA);   }
-  tfloat3 GetPointB()       const { return(PointB);   }
-  unsigned GetSegments()    const { return(Segments); }
-  TpElementFEA GetTypeFEA() const { return(TypeFEA);  }
-};
-
-//##############################################################################
-//# JChCable
-//##############################################################################
-/// \brief Manages the info of a JChCable.
-class JChCable: public JChElementFEA
-{
-public:
-  typedef struct {
-    double Area;
-    double Diameter;
-    double Density;
-    double RaleyghDamping;
-  }StSection; //Section properties for the cable
-
-private:
-  StSection *Section;
-  void Reset();
-public:
-  JChCable(unsigned idb,std::string idname,word mkbound); 
-  void SetSection(const StSection &s);
-  StSection* GetSection()const{return(Section);}
-
-  //void SetDiameter(const double d){Diameter=d;}
-  //void SetDensity(const double d){Density=d; }
-  //void SetArea(const double a)    {Area=a;    }
-
-  //double GetDiameter()const{return (Diameter);}
-  //double GetDensity() const{return (Density); }
-  //double GetArea()    const{return (Area);    }
-};
-
-//##############################################################################
-//# JChBeamANCF
-//##############################################################################
-/// \brief Manages the info of a JChBeamANCF.
-class JChBeamANCF: public JChElementFEA
-{
-public:
-  typedef struct {
-    double Density;
-    double Poisson;
-    double Young;
-    double Stiffness;
-    double K1;    //ShearCenter correction factor along beam local y axis
-    double K2;    //ShearCenter correction factor along beam local z axis
-  }StMaterial;//Material properties for the beam
-
-private:
-  double Height; 
-  double Width; 
-  double Damping; 
-  bool UsePoisson;
-  bool UseGravity;
-  tfloat3 Curvature;
-  tfloat3 Direction;
-  StMaterial *Material;
-  void Reset();
-
-public:
-  JChBeamANCF(unsigned idb,std::string idname,word mkbound); 
-  void SetUsePoisson(const bool p)      { UsePoisson=p; }
-  void SetUseGravity(const bool g)      { UseGravity=g; }
-  void SetCurvature(const tfloat3 c)    { Curvature=c;  }
-  void SetDirection(const tfloat3 d)    { Direction=d;  }
-  void SetDamping(const double d)       { Damping=d;    }
-  void SetHeight(const double h)        { Height=h;     }
-  void SetWidth(const double w)         { Width=w;      }
-  void SetMaterial(const StMaterial &m);
-
-  bool        GetUsePoisson() const{return (UsePoisson);}
-  bool        GetUseGravity() const{return (UseGravity);}
-  tfloat3     GetCurvature()  const{return (Curvature); }
-  tfloat3     GetDirection()  const{return (Direction); }
-  StMaterial* GetMaterial()   const{return (Material);  } 
-  double      GetDamping()    const{return (Damping);   }
-  double      GetHeight()     const{return (Height);    }
-  double      GetWidth()      const{return (Width);     }
-};
-
-//##############################################################################
-//# JChBeamEuler
-//##############################################################################
-/// \brief Manages the info of a JChBeamEuler.
-class JChBeamEuler: public JChElementFEA
-{
-public:
-  typedef struct {
-    double Alpha;           // Rotation of Izz Iyy respect to reference line x
-    tdouble3 Centroid;      // Centroid (elastic center, tension center) (For Y and Z)
-    tdouble3 ShearCenter;   // ShearCenter center (For Y and Z)
-    double Height; 
-    double Width; 
-    double Stiffness; 
-    double Poisson;
-    double Young;
-    double RaleyghDamping;
-    double Density;
-  }StSectionAdv;//Section properties for the beam
-
-private:
-  tfloat3 Direction;
-  StSectionAdv *Section;
-  void Reset();
-
-public:
-  JChBeamEuler(unsigned idb,std::string idname,word mkbound); 
-  void SetDirection(const tfloat3 d)    { Direction=d;  }
-  void SetSection(const StSectionAdv &s);
-
-  tfloat3     GetDirection()  const{  return (Direction); }
-  StSectionAdv* GetSection()  const{  return (Section);   } 
-};
-//<vs_chroonodev_end>
 
 //##############################################################################
 //# JChBodyMoving
@@ -747,12 +593,6 @@ public:
   JChLinkLinearSpring*   AddLinkLinearSpring  (std::string name,unsigned idbody1,unsigned idbody2,std::string fileinfo="");
   JChLinkCoulombDamping* AddLinkCoulombDamping(std::string name,unsigned idbody1,unsigned idbody2,std::string fileinfo="");
   
-//<vs_chroonodev_ini>
-  JChCable* AddCableFloating(unsigned idb,std::string idname,word mkbound,std::string fileinfo="");
-  JChBeamANCF* AddBeamANCFFloating(unsigned idb,std::string idname,word mkbound,std::string fileinfo="");
-  JChBeamEuler* AddBeamEulerFloating(unsigned idb,std::string idname,word mkbound,std::string fileinfo="");
-//<vs_chroonodev_end>
-
   unsigned GetBodyCount()const{ return(unsigned(LisBody.size())); }
   unsigned GetLinkCount()const{ return(unsigned(LisLink.size())); }
 

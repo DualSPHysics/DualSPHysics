@@ -740,8 +740,8 @@ tfloat3 JSphCpuSingle::FtPeriodicDist(const tdouble3 &pos,const tdouble3 &center
 }
 
 //==============================================================================
-/// Calculate summation: face, fomegaace.
-/// Calcula suma de face y fomegaace a partir de particulas floating.
+/// Calculate summation of linear and angular forces starting from acceleration of particles.
+/// Calcula suma de fuerzas lineal y angular a partir de la aceleracion de las particulas.
 //==============================================================================
 void JSphCpuSingle::FtCalcForcesSum(unsigned cf,tfloat3 &face,tfloat3 &fomegaace)const{
   const StFloatingData &fobj=FtObjs[cf];
@@ -751,7 +751,7 @@ void JSphCpuSingle::FtCalcForcesSum(unsigned cf,tfloat3 &face,tfloat3 &fomegaace
   const tdouble3 fcenter=fobj.center;
   const float fmassp=fobj.massp;
 
-  //-Computes traslational and rotational velocities.
+  //-Computes sumation of forces starting from acceleration of particles.
   face=TFloat3(0);
   fomegaace=TFloat3(0);
   //-Calculate summation: face, fomegaace. | Calcula sumatorios: face, fomegaace.
@@ -767,8 +767,8 @@ void JSphCpuSingle::FtCalcForcesSum(unsigned cf,tfloat3 &face,tfloat3 &fomegaace
 }
 
 //==============================================================================
-/// Calculate forces around floating object particles.
-/// Calcula fuerzas sobre floatings.
+/// Adds acceleration from particles and from external forces to ftoforces[].
+/// Anhade aceleracion de particulas y de fuerzas externas en ftoforces[].
 //==============================================================================
 void JSphCpuSingle::FtCalcForces(StFtoForces *ftoforces)const{
   const int ftcount=int(FtCount);
@@ -788,9 +788,12 @@ void JSphCpuSingle::FtCalcForces(StFtoForces *ftoforces)const{
     //-Calculates the inverse of the intertia matrix to compute the I^-1 * L= W
     const tmatrix3f invinert=fmath::InverseMatrix3x3(inert);
 
-    //-Computes traslational and rotational velocities.
+    //-Compute summation of linear and angular forces starting from acceleration of particles.
     tfloat3 face,fomegaace;
     FtCalcForcesSum(cf,face,fomegaace);
+    
+    //-Adds the external forces.
+    if(FtLinearForce!=NULL || FtAngularForce!=NULL)FtSumExternalForces(cf,face,fomegaace);
 
     //-Calculate omega starting from fomegaace & invinert. | Calcula omega a partir de fomegaace y invinert.
     {
@@ -884,6 +887,21 @@ void JSphCpuSingle::FtApplyImposedVel(StFtoForcesRes *ftoforcesres)const{
       if(v.z!=FLT_MAX)FtoForcesRes[cf].fomegares.z=v.z;
     }
   }
+}
+
+//==============================================================================
+/// Sums the external forces for a floating body.
+/// Suma las fuerzas externas para un objeto flotante.
+//==============================================================================
+void JSphCpuSingle::FtSumExternalForces(unsigned cf,tfloat3 &face,tfloat3 &fomegaace)const{
+  //-Adds external linear forces.
+  if(FtLinearForce!=NULL && FtLinearForce[cf]!=NULL){
+    face=face+FtLinearForce[cf]->GetValue3f(TimeStep);
+  }
+  //-Adds external angular forces.
+  if(FtAngularForce!=NULL && FtAngularForce[cf]!=NULL){
+    fomegaace=fomegaace+FtAngularForce[cf]->GetValue3f(TimeStep);
+  }
 }//<vs_fttvel_end>
 
 //==============================================================================
@@ -899,7 +917,7 @@ void JSphCpuSingle::RunFloating(double dt,bool predictor){
     //-Adds accelerations from ForcePoints and Moorings.     //<vs_moordyyn>
     if(ForcePoints)ForcePoints->GetFtMotionData(FtoForces);  //<vs_moordyyn>
 
-    //-Adds calculated forces around floating objects. | Anhade fuerzas calculadas sobre floatings.
+    //-Adds acceleration from particles and from external forces to FtoForces[].
     FtCalcForces(FtoForces);
 
     //-Calculate data to update floatings. | Calcula datos para actualizar floatings.
@@ -919,8 +937,8 @@ void JSphCpuSingle::RunFloating(double dt,bool predictor){
       //-Export data / Exporta datos.
       for(unsigned cf=0;cf<FtCount;cf++)if(FtObjs[cf].usechrono)
         ChronoObjects->SetFtData(FtObjs[cf].mkbound,FtoForces[cf].face,FtoForces[cf].fomegaace);
-      //-Adds the external velocity and force 
-      FloatingAddExternalData(); //<vs_fttvel>
+      //-Applies the external velocities to each floating body of Chrono.
+      if(FtLinearVel!=NULL)ChronoFtApplyImposedVel(); //<vs_fttvel>
       //-Calculate data using Chrono / Calcula datos usando Chrono.
       ChronoObjects->RunChrono(Nstep,TimeStep,dt,predictor);
       //-Load calculated data by Chrono / Carga datos calculados por Chrono.

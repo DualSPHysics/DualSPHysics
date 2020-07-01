@@ -148,6 +148,7 @@ void JSphGpu::InitVars(){
   FtRidpg=NULL;   FtoMasspg=NULL;                  //-Floatings.
   FtoDatpg=NULL;  FtoMassg=NULL;  FtoConstraintsg=NULL;                           //-Calculates forces on floating bodies.
   FtoForcesSumg=NULL;  FtoForcesg=NULL;  FtoForcesResg=NULL;  FtoCenterResg=NULL; //-Calculates forces on floating bodies.
+  FtoExtForcesg=NULL;                                                             //-Calculates forces on floating bodies.
   FtoCenterg=NULL; FtoAnglesg=NULL; FtoVelg=NULL; FtoOmegag=NULL;//-Management of floating bodies.
   FtoInertiaini8g=NULL; FtoInertiaini1g=NULL;//-Management of floating bodies.
   FtObjsOutdated=true;
@@ -194,22 +195,23 @@ void JSphGpu::AllocCpuMemoryFixed(){
 //==============================================================================
 void JSphGpu::FreeGpuMemoryFixed(){
   MemGpuFixed=0;
-  if(RidpMoveg)      cudaFree(RidpMoveg);       RidpMoveg=NULL;
-  if(FtRidpg)        cudaFree(FtRidpg);         FtRidpg=NULL;
-  if(FtoMasspg)      cudaFree(FtoMasspg);       FtoMasspg=NULL;
-  if(FtoDatpg)       cudaFree(FtoDatpg);        FtoDatpg=NULL;
-  if(FtoMassg)       cudaFree(FtoMassg);        FtoMassg=NULL;
-  if(FtoConstraintsg)cudaFree(FtoConstraintsg); FtoConstraintsg=NULL;
-  if(FtoForcesSumg)  cudaFree(FtoForcesSumg);   FtoForcesSumg=NULL;
-  if(FtoForcesg)     cudaFree(FtoForcesg);      FtoForcesg=NULL;
-  if(FtoForcesResg)  cudaFree(FtoForcesResg);   FtoForcesResg=NULL;
-  if(FtoCenterg)     cudaFree(FtoCenterg);      FtoCenterg=NULL;
-  if(FtoAnglesg)     cudaFree(FtoAnglesg);      FtoAnglesg=NULL;
-  if(FtoVelg)        cudaFree(FtoVelg);         FtoVelg=NULL;
-  if(FtoOmegag)      cudaFree(FtoOmegag);       FtoOmegag=NULL;
-  if(FtoInertiaini8g)cudaFree(FtoInertiaini8g); FtoInertiaini8g=NULL;
-  if(FtoInertiaini1g)cudaFree(FtoInertiaini1g); FtoInertiaini1g=NULL;
-  if(DemDatag)       cudaFree(DemDatag);        DemDatag=NULL;
+  if(RidpMoveg)         cudaFree(RidpMoveg);          RidpMoveg=NULL;
+  if(FtRidpg)           cudaFree(FtRidpg);            FtRidpg=NULL;
+  if(FtoMasspg)         cudaFree(FtoMasspg);          FtoMasspg=NULL;
+  if(FtoDatpg)          cudaFree(FtoDatpg);           FtoDatpg=NULL;
+  if(FtoMassg)          cudaFree(FtoMassg);           FtoMassg=NULL;
+  if(FtoConstraintsg)   cudaFree(FtoConstraintsg);    FtoConstraintsg=NULL;
+  if(FtoForcesSumg)     cudaFree(FtoForcesSumg);      FtoForcesSumg=NULL;
+  if(FtoExtForcesg)     cudaFree(FtoExtForcesg);      FtoExtForcesg=NULL;
+  if(FtoForcesg)        cudaFree(FtoForcesg);         FtoForcesg=NULL;
+  if(FtoForcesResg)     cudaFree(FtoForcesResg);      FtoForcesResg=NULL;
+  if(FtoCenterg)        cudaFree(FtoCenterg);         FtoCenterg=NULL;
+  if(FtoAnglesg)        cudaFree(FtoAnglesg);         FtoAnglesg=NULL;
+  if(FtoVelg)           cudaFree(FtoVelg);            FtoVelg=NULL;
+  if(FtoOmegag)         cudaFree(FtoOmegag);          FtoOmegag=NULL;
+  if(FtoInertiaini8g)   cudaFree(FtoInertiaini8g);    FtoInertiaini8g=NULL;
+  if(FtoInertiaini1g)   cudaFree(FtoInertiaini1g);    FtoInertiaini1g=NULL;
+  if(DemDatag)          cudaFree(DemDatag);           DemDatag=NULL;
 }
 
 //==============================================================================
@@ -225,21 +227,22 @@ void JSphGpu::AllocGpuMemoryFixed(){
   //-Allocates memory for floating bodies.
   if(CaseNfloat){
     size_t m=0;
-    m=sizeof(unsigned)*CaseNfloat;  cudaMalloc((void**)&FtRidpg        ,m);  MemGpuFixed+=m;
-    m=sizeof(float)   *FtCount;     cudaMalloc((void**)&FtoMasspg      ,m);  MemGpuFixed+=m;
-    m=sizeof(float4)  *FtCount;     cudaMalloc((void**)&FtoDatpg       ,m);  MemGpuFixed+=m;
-    m=sizeof(float)   *FtCount;     cudaMalloc((void**)&FtoMassg       ,m);  MemGpuFixed+=m;
-    m=sizeof(byte)    *FtCount;     cudaMalloc((void**)&FtoConstraintsg,m);  MemGpuFixed+=m;
-    m=sizeof(float3)  *FtCount*2;   cudaMalloc((void**)&FtoForcesSumg  ,m);  MemGpuFixed+=m;
-    m=sizeof(float3)  *FtCount*2;   cudaMalloc((void**)&FtoForcesg     ,m);  MemGpuFixed+=m;
-    m=sizeof(float3)  *FtCount*2;   cudaMalloc((void**)&FtoForcesResg  ,m);  MemGpuFixed+=m;
-    m=sizeof(double3) *FtCount;     cudaMalloc((void**)&FtoCenterResg  ,m);  MemGpuFixed+=m;
-    m=sizeof(double3) *FtCount;     cudaMalloc((void**)&FtoCenterg     ,m);  MemGpuFixed+=m;
-    m=sizeof(float3)  *FtCount;     cudaMalloc((void**)&FtoAnglesg     ,m);  MemGpuFixed+=m;
-    m=sizeof(float3)  *FtCount;     cudaMalloc((void**)&FtoVelg        ,m);  MemGpuFixed+=m;
-    m=sizeof(float3)  *FtCount;     cudaMalloc((void**)&FtoOmegag      ,m);  MemGpuFixed+=m;
-    m=sizeof(float4)  *FtCount*2;   cudaMalloc((void**)&FtoInertiaini8g,m);  MemGpuFixed+=m;
-    m=sizeof(float)   *FtCount;     cudaMalloc((void**)&FtoInertiaini1g,m);  MemGpuFixed+=m;
+    m=sizeof(unsigned)*CaseNfloat;  cudaMalloc((void**)&FtRidpg           ,m);  MemGpuFixed+=m;
+    m=sizeof(float)   *FtCount;     cudaMalloc((void**)&FtoMasspg         ,m);  MemGpuFixed+=m;
+    m=sizeof(float4)  *FtCount;     cudaMalloc((void**)&FtoDatpg          ,m);  MemGpuFixed+=m;
+    m=sizeof(float)   *FtCount;     cudaMalloc((void**)&FtoMassg          ,m);  MemGpuFixed+=m;
+    m=sizeof(byte)    *FtCount;     cudaMalloc((void**)&FtoConstraintsg   ,m);  MemGpuFixed+=m;
+    m=sizeof(float3)  *FtCount*2;   cudaMalloc((void**)&FtoForcesSumg     ,m);  MemGpuFixed+=m;
+    m=sizeof(float3)  *FtCount*2;   cudaMalloc((void**)&FtoExtForcesg     ,m);  MemGpuFixed+=m;
+    m=sizeof(float3)  *FtCount*2;   cudaMalloc((void**)&FtoForcesg        ,m);  MemGpuFixed+=m;
+    m=sizeof(float3)  *FtCount*2;   cudaMalloc((void**)&FtoForcesResg     ,m);  MemGpuFixed+=m;
+    m=sizeof(double3) *FtCount;     cudaMalloc((void**)&FtoCenterResg     ,m);  MemGpuFixed+=m;
+    m=sizeof(double3) *FtCount;     cudaMalloc((void**)&FtoCenterg        ,m);  MemGpuFixed+=m;
+    m=sizeof(float3)  *FtCount;     cudaMalloc((void**)&FtoAnglesg        ,m);  MemGpuFixed+=m;
+    m=sizeof(float3)  *FtCount;     cudaMalloc((void**)&FtoVelg           ,m);  MemGpuFixed+=m;
+    m=sizeof(float3)  *FtCount;     cudaMalloc((void**)&FtoOmegag         ,m);  MemGpuFixed+=m;
+    m=sizeof(float4)  *FtCount*2;   cudaMalloc((void**)&FtoInertiaini8g   ,m);  MemGpuFixed+=m;
+    m=sizeof(float)   *FtCount;     cudaMalloc((void**)&FtoInertiaini1g   ,m);  MemGpuFixed+=m;
   }
   if(UseDEM){ //(DEM)
     size_t m=sizeof(float4)*DemDataSize;

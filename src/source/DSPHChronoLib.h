@@ -28,7 +28,6 @@
 //# - Se cambio el nombre de fomegavel por fomegaace. (27-05-2016)
 //# - Funciones ApplyInitialVel y ApplyImposedVel para aplicar velocidades
 //#  externas (29-06-2020).
-//# - Funcion AddForce para agregar fuerzas externas (30-06-2020).
 //#############################################################################
 
 /// \file DSPHChronoLib.h \brief Declares the class \ref DSPHChronoLib which is the interface between DualSPHysics and Chrono.
@@ -132,9 +131,6 @@ public:
 
   /// Adds the imposed velocity.
   void ApplyImposedVel(const JChBodyFloating &body,chrono::ChBody *chbody);
-
-  /// Adds the imposed force.
-  void AddForce(const JChBodyFloating &body,chrono::ChBody *chbody);
 };
 
 

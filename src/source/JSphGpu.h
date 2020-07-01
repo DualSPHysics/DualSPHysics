@@ -167,6 +167,7 @@ protected:
   float3 *FtoForcesg;      ///<Stores forces for the floating bodies {face_f3,fomegaace_f3} equivalent to JSphCpu::FtoForces [FtCount]. | Almacena fuerzas de floatings {face_f3,fomegaace_f3} equivalente a JSphCpu::FtoForces [FtCount]. 
   float3 *FtoForcesResg;   ///<Stores data to update floatings {fomegares_f3,fvelres_f3} equivalent to JSphCpu::FtoForcesRes. [FtCount]. | Almacena datos para actualizar floatings {fomegares_f3,fvelres_f3} equivalente a JSphCpu::FtoForcesRes. [FtCount].
   double3 *FtoCenterResg;  ///<Stores centre to update floatings. [Ftcount]. | Almacena centro para actualizar floatings. [FtCount]. 
+  float3  *FtoExtForcesg;  ///<Stores the external forces to sum of each floating body. [Ftcount].| Almacena las fuerzas externas para sumar a cada objeto flotante. [FtCount]. 
 
   tdouble3 *FtoAuxDouble6; ///<Memory to swap floating data with GPU. [2*FtCount]. | Memoria para intercambiar datos de floatings con GPU. [2*FtCount].
   tfloat3  *FtoAuxFloat9;  ///<Memory to swap floating data with GPU. [3*FtCount]. | Memoria para intercambiar datos de floatings con GPU. [3*FtCount].
