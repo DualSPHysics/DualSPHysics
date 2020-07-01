@@ -665,12 +665,8 @@ void JSphGpuSingle::RunFloating(double dt,bool predictor){
       cudaMemcpy(ftoforces,FtoForcesg,sizeof(tfloat3)*FtCount*2,cudaMemcpyDeviceToHost);
       for(unsigned cf=0;cf<FtCount;cf++)if(FtObjs[cf].usechrono)
         ChronoObjects->SetFtData(FtObjs[cf].mkbound,ftoforces[cf*2],ftoforces[cf*2+1]);
-      //-Applies imposed velocity. //<vs_fttvel_ini>
-      if(FtLinearVel!=NULL)for(unsigned cf=0;cf<FtCount;cf++)if(FtObjs[cf].usechrono){
-        const tfloat3 v1=(FtLinearVel [cf]!=NULL? FtLinearVel [cf]->GetValue3f(TimeStep): TFloat3(FLT_MAX));
-        const tfloat3 v2=(FtAngularVel[cf]!=NULL? FtAngularVel[cf]->GetValue3f(TimeStep): TFloat3(FLT_MAX));
-        ChronoObjects->SetFtDataVel(FtObjs[cf].mkbound,v1,v2);
-      } //<vs_fttvel_end>
+      //-Adds the external velocity and force. 
+      FloatingAddExternalData(); //<vs_fttvel>
       //-Calculate data using Chrono / Calcula datos usando Chrono.
       ChronoObjects->RunChrono(Nstep,TimeStep,dt,predictor);
       //-Load calculated data by Chrono / Carga datos calculados por Chrono.

@@ -84,8 +84,10 @@ JSph::JSph(bool cpu,bool mgpu,bool withmpi):Cpu(cpu),Mgpu(mgpu),WithMpi(withmpi)
   PartsInit=NULL;
   DsMotion=NULL;
   FtObjs=NULL;
-  FtLinearVel=NULL;  //<vs_fttvel>
-  FtAngularVel=NULL; //<vs_fttvel>
+  FtLinearVel=NULL;    //<vs_fttvel>
+  FtAngularVel=NULL;   //<vs_fttvel>
+  FtLinearForce=NULL;  //<vs_fttvel>
+  FtAngularForce=NULL; //<vs_fttvel>
   DemData=NULL;
   GaugeSystem=NULL;
   WaveGen=NULL;
@@ -409,7 +411,7 @@ void JSph::ConfigDomainResize(std::string key,const JCaseEParms *eparms){
 //==============================================================================
 /// Allocates memory of floating objectcs.
 //==============================================================================
-void JSph::AllocMemoryFloating(unsigned ftcount,bool imposedvel){
+void JSph::AllocMemoryFloating(unsigned ftcount,bool imposedvel,bool addedforce){
   delete[] FtObjs; FtObjs=NULL;
   if(FtLinearVel){ //<vs_fttvel_ini>
     for(unsigned c=0;c<FtCount;c++)delete FtLinearVel[c];
@@ -418,15 +420,29 @@ void JSph::AllocMemoryFloating(unsigned ftcount,bool imposedvel){
   if(FtAngularVel){
     for(unsigned c=0;c<FtCount;c++)delete FtAngularVel[c];
     delete[] FtAngularVel; FtAngularVel=NULL;
-  } //<vs_fttvel_end>
+  } 
+  if(FtLinearForce){
+    for(unsigned c=0;c<FtCount;c++)delete FtLinearForce[c];
+    delete[] FtLinearForce; FtLinearForce=NULL;
+  }
+  if(FtAngularForce){
+    for(unsigned c=0;c<FtCount;c++)delete FtAngularForce[c];
+    delete[] FtAngularForce; FtAngularForce=NULL;
+  }
   if(ftcount){
     FtObjs=new StFloatingData[ftcount];
-    if(imposedvel){ //<vs_fttvel_ini>
-      FtLinearVel =new JLinearValue*[ftcount];
-      FtAngularVel=new JLinearValue*[ftcount];
+    if(imposedvel){
+      FtLinearVel   =new JLinearValue*[ftcount];
+      FtAngularVel  =new JLinearValue*[ftcount];
       for(unsigned c=0;c<ftcount;c++)FtLinearVel[c]=FtAngularVel[c]=NULL;
-    } //<vs_fttvel_end>
-  }
+    } 
+    if(addedforce){
+      FtLinearForce=new JLinearValue*[ftcount];
+      FtAngularForce=new JLinearValue*[ftcount];
+      for(unsigned c=0;c<ftcount;c++)FtLinearForce[c]=FtAngularForce[c]=NULL;
+    }
+    
+  }//<vs_fttvel_end>
 }
 
 //==============================================================================
@@ -972,7 +988,7 @@ void JSph::LoadCaseConfig(const JSphCfgRun *cfg){
   if(FtCount){
     FtConstraints=false;
     if(FtCount>CODE_MKRANGEMAX)Run_Exceptioon("The number of floating objects exceeds the maximum.");
-    AllocMemoryFloating(FtCount,parts.UseImposedFtVel());
+    AllocMemoryFloating(FtCount,parts.UseImposedFtVel(),parts.UseAddedFtForce());
     unsigned cobj=0;
     for(unsigned c=0;c<parts.CountBlocks()&&cobj<FtCount;c++){
       const JCasePartBlock &block=parts.GetBlock(c);
@@ -994,7 +1010,16 @@ void JSph::LoadCaseConfig(const JSphCfgRun *cfg){
         if(fblock.GetAngularVel()){
           FtAngularVel[cobj]=new JLinearValue(*fblock.GetAngularVel());
           if(!FtAngularVel[cobj]->GetFile().empty())FtAngularVel[cobj]->LoadFile(DirCase+FtAngularVel[cobj]->GetFile());
-        } //<vs_fttvel_end>
+        } 
+        if(fblock.GetLinearForce()){
+          FtLinearForce[cobj]=new JLinearValue(*fblock.GetLinearForce());
+          if(!FtLinearForce[cobj]->GetFile().empty())FtLinearForce[cobj]->LoadFile(DirCase+FtLinearForce[cobj]->GetFile());
+        } 
+        if(fblock.GetAngularForce()){
+          FtAngularForce[cobj]=new JLinearValue(*fblock.GetAngularForce());
+          if(!FtAngularForce[cobj]->GetFile().empty())FtAngularForce[cobj]->LoadFile(DirCase+FtAngularForce[cobj]->GetFile());
+        } 
+        //<vs_fttvel_end>
         fobj->center=fblock.GetCenter();
         fobj->angles=TFloat3(0);
         fobj->fvel=ToTFloat3(fblock.GetLinearVelini());
@@ -1081,7 +1106,7 @@ void JSph::LoadCaseConfig(const JSphCfgRun *cfg){
     else Log->PrintWarning("The use of Moorings was disabled because there are no floating objects...");
   }
 
-  //-Configuration of FtForces object.
+  //-Configuration of ForcePoints object.
   if(Moorings || xml.GetNodeSimple("case.execution.special.forcepoints",true)){
     if(WithFloating){
       ForcePoints=new JDsFtForcePoints(Log,Cpu,Dp,FtCount);
@@ -2084,6 +2109,27 @@ void JSph::CalcMotionWaveGen(double stepdt){
     }
   }
 }
+
+//<vs_fttvel_ini>
+//==============================================================================
+/// Adds the external velocities and forces to floaging bodies.
+/// Agrega las velocidades y fuerzas externas a objetos flotantes.
+//==============================================================================
+void JSph::FloatingAddExternalData(){
+  //-Applies imposed velocity.
+  if(FtLinearVel!=NULL)for(unsigned cf=0;cf<FtCount;cf++)if(FtObjs[cf].usechrono){
+    const tfloat3 v1=(FtLinearVel [cf]!=NULL? FtLinearVel [cf]->GetValue3f(TimeStep): TFloat3(FLT_MAX));
+    const tfloat3 v2=(FtAngularVel[cf]!=NULL? FtAngularVel[cf]->GetValue3f(TimeStep): TFloat3(FLT_MAX));
+    ChronoObjects->SetFtDataVel(FtObjs[cf].mkbound,v1,v2);
+  } 
+  //-Adds external force.
+  if(FtLinearForce!=NULL)for(unsigned cf=0;cf<FtCount;cf++)if(FtObjs[cf].usechrono){
+    const tfloat3 f1=(FtLinearForce [cf]!=NULL? FtLinearForce [cf]->GetValue3f(TimeStep): TFloat3(FLT_MAX));
+    const tfloat3 f2=(FtAngularForce[cf]!=NULL? FtAngularForce[cf]->GetValue3f(TimeStep): TFloat3(FLT_MAX));
+    ChronoObjects->SetFtDataForce(FtObjs[cf].mkbound,f1,f2);
+  }
+}
+//<vs_fttvel_end>
 
 //==============================================================================
 /// Display a message with reserved memory for the basic data of particles.

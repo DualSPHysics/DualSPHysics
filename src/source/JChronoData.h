@@ -20,6 +20,7 @@
 //# =========
 //# - Clase creada para almacenar la configuracion de los distintos cuerpos y
 //#   sus uniones para usar con Chrono. (05-05-2016)
+//# - Funciones para aplicar fuerzas externas a los objetos flotantes (29-06-2020).
 //#############################################################################
 
 /// \file JChronoData.h \brief Declares the class \ref JChronoData.
@@ -239,8 +240,10 @@ protected:
   bool InputData;
   tfloat3 InputFace;
   tfloat3 InputFomegaAce;
-  tfloat3 InputLinearVel;  //<vs_fttvel>
-  tfloat3 InputAngularVel; //<vs_fttvel>
+  tfloat3 InputLinearVel;   //<vs_fttvel>
+  tfloat3 InputAngularVel;  //<vs_fttvel>
+  tfloat3 InputLinearForce; //<vs_fttvel>
+  tfloat3 InputAngularForce;//<vs_fttvel>
 
   tdouble3 OutputCenter;
   tfloat3 OutputVel;
@@ -254,18 +257,21 @@ public:
     ,tint3 translationfree,tint3 rotationfree,tfloat3 linvelini,tfloat3 angvelini);
 
   void ResetInputData(){ InputData=false; }
-  void SetInputData(const tfloat3 &face,const tfloat3 &fomegaace){ InputData=true; InputFace=face; InputFomegaAce=fomegaace; }
-  void SetInputDataVel(const tfloat3 &vlin,const tfloat3 &vang){ InputLinearVel=vlin; InputAngularVel=vang; }  //<vs_fttvel>
+  void SetInputData(const tfloat3 &face,const tfloat3 &fomegaace)  { InputData=true; InputFace=face; InputFomegaAce=fomegaace; }
+  void SetInputDataVel(const tfloat3 &vlin,const tfloat3 &vang)    { InputLinearVel=vlin; InputAngularVel=vang; }      //<vs_fttvel>
+  void SetInputDataForce(const tfloat3 &flin,const tfloat3 &fang){ InputLinearForce=flin; InputAngularForce=fang; }  //<vs_fttvel>
   void SetOutputData(const tdouble3 &center,const tfloat3 &vel,const tfloat3 &omega){ OutputCenter=center; OutputVel=vel; OutputOmega=omega; }
 
-  bool     GetInputData()      const{ return(InputData);       }
-  tfloat3  GetInputFace()      const{ return(InputFace);       }
-  tfloat3  GetInputFomegaAce() const{ return(InputFomegaAce);  }
-  tfloat3  GetInputLinearVel() const{ return(InputLinearVel);  } //<vs_fttvel>
-  tfloat3  GetInputAngularVel()const{ return(InputAngularVel); } //<vs_fttvel>
-  tdouble3 GetOutputCenter()   const{ return(OutputCenter);    }
-  tfloat3  GetOutputVel()      const{ return(OutputVel);       }
-  tfloat3  GetOutputOmega()    const{ return(OutputOmega);     }
+  bool     GetInputData()        const{ return(InputData);        }
+  tfloat3  GetInputFace()        const{ return(InputFace);        }
+  tfloat3  GetInputFomegaAce()   const{ return(InputFomegaAce);   }
+  tfloat3  GetInputLinearVel()   const{ return(InputLinearVel);   } //<vs_fttvel>
+  tfloat3  GetInputAngularVel()  const{ return(InputAngularVel);  } //<vs_fttvel>
+  tfloat3  GetInputLinearForce() const{ return(InputLinearForce); } //<vs_fttforce>
+  tfloat3  GetInputAngularForce()const{ return(InputAngularForce);} //<vs_fttforce>
+  tdouble3 GetOutputCenter()     const{ return(OutputCenter);     }
+  tfloat3  GetOutputVel()        const{ return(OutputVel);        }
+  tfloat3  GetOutputOmega()      const{ return(OutputOmega);      }
 };
 
 //<vs_chroonodev_ini>
@@ -325,7 +331,7 @@ public:
   StSection* GetSection()const{return(Section);}
 
   //void SetDiameter(const double d){Diameter=d;}
-  //void SetDensity(const double d) {Density=d; }
+  //void SetDensity(const double d){Density=d; }
   //void SetArea(const double a)    {Area=a;    }
 
   //double GetDiameter()const{return (Diameter);}

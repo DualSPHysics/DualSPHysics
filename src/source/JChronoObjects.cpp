@@ -952,6 +952,14 @@ void JChronoObjects::SetFtDataVel(word mkbound,const tfloat3 &vlin,const tfloat3
   if(!ChronoLib->SetFtDataVel(mkbound,vlin,vang))Run_Exceptioon("Error running Chrono library.");
 }//<vs_fttvel_end>
 
+//<vs_ftforce_ini>
+//==============================================================================
+/// Loads added force for floating to calculate coupling with Chrono.
+//==============================================================================
+void JChronoObjects::SetFtDataForce(word mkbound,const tfloat3 &flin,const tfloat3 &fang){
+  if(!ChronoLib->SetFtDataForce(mkbound,flin,fang))Run_Exceptioon("Error running Chrono library.");
+}//<vs_ftforce_end>
+
 //==============================================================================
 /// Obtains floating data from coupling with Chrono.
 //==============================================================================

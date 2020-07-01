@@ -281,14 +281,16 @@ protected:
   JDsMotion *DsMotion;      ///<Manages moving objects. It is NULL when there are not moving objects.
 
   //-Variables for floating bodies.
-  StFloatingData *FtObjs;      ///<Data of floating objects. [FtCount]
-  unsigned FtCount;            ///<Number of floating objects.
-  float FtPause;               ///<Time to start floating bodies movement.
-  TpFtMode FtMode;             ///<Defines interaction mode for floatings and boundaries.
-  bool FtConstraints;          ///<Some floating motion constraint is defined.
-  JLinearValue **FtLinearVel;  ///<Imposed linear velocity [FtCount].  //<vs_fttvel>
-  JLinearValue **FtAngularVel; ///<Imposed angular velocity [FtCount]. //<vs_fttvel>
-  bool FtIgnoreRadius;         ///<Ignores floating body radius with periodic boundary conditions (def=false).
+  StFloatingData *FtObjs;        ///<Data of floating objects. [FtCount]
+  unsigned FtCount;              ///<Number of floating objects.
+  float FtPause;                 ///<Time to start floating bodies movement.
+  TpFtMode FtMode;               ///<Defines interaction mode for floatings and boundaries.
+  bool FtConstraints;            ///<Some floating motion constraint is defined.
+  JLinearValue **FtLinearVel;    ///<Imposed linear velocity [FtCount].  //<vs_fttvel>
+  JLinearValue **FtAngularVel;   ///<Imposed angular velocity [FtCount]. //<vs_fttvel>
+  JLinearValue **FtLinearForce;  ///<Added linear force [FtCount].  //<vs_fttvel>
+  JLinearValue **FtAngularForce; ///<Added angular force [FtCount]. //<vs_fttvel>
+  bool FtIgnoreRadius;           ///<Ignores floating body radius with periodic boundary conditions (def=false).
   bool WithFloating;
 
   //-Variables for DEM (DEM).
@@ -403,7 +405,7 @@ protected:
   void SaveFtAceFun(double dt,bool predictor,StFtoForces *ftoforces);
 
 
-  void AllocMemoryFloating(unsigned ftcount,bool imposedvel=false);
+  void AllocMemoryFloating(unsigned ftcount,bool imposedvel=false,bool addedforce=false);
   llong GetAllocMemoryCpu()const;
 
   void LoadConfig(const JSphCfgRun *cfg);
@@ -444,8 +446,10 @@ protected:
   void CheckRhopLimits();
   void LoadCaseParticles();
   void InitRun(unsigned np,const unsigned *idp,const tdouble3 *pos);
+
   bool CalcMotion(double stepdt);
   void CalcMotionWaveGen(double stepdt);
+  void FloatingAddExternalData();  //<vs_fttvel>
 
   void PrintSizeNp(unsigned np,llong size,unsigned allocs)const;
   void PrintHeadPart();
