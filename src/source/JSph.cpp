@@ -220,7 +220,7 @@ void JSph::InitVars(){
 
   FtCount=0;
   FtPause=0;
-  FtMode=FTMODE_None;
+  FtMode=FTMODE_Sph;
   FtConstraints=false;
   FtIgnoreRadius=false;
   WithFloating=false;
@@ -558,9 +558,10 @@ void JSph::LoadConfigParameters(const JXml *xml){
   }
   if(eparms.Exists("SavePosDouble"))SvPosDouble=(eparms.GetValueInt("SavePosDouble",true,0)!=0);
   switch(eparms.GetValueInt("RigidAlgorithm",true,1)){ //(DEM)
-    case 1:  UseDEM=false;    break;
-    case 2:  UseDEM=true;     break;
-    case 3:  UseChrono=true;  break;  //<vs_chroono>
+    case 0:  FtMode=FTMODE_Ext;                   break;
+    case 1:  FtMode=FTMODE_Sph;                   break;
+    case 2:  FtMode=FTMODE_Ext;  UseDEM=true;     break;
+    case 3:  FtMode=FTMODE_Ext;  UseChrono=true;  break;  //<vs_chroono>
     default: Run_Exceptioon("Rigid algorithm is not valid.");
   }
   switch(eparms.GetValueInt("StepAlgorithm",true,1)){
@@ -1046,9 +1047,7 @@ void JSph::LoadCaseConfig(const JSphCfgRun *cfg){
     } //<vs_chroono_end>
   }
   WithFloating=(FtCount>0);
-  FtMode=(WithFloating? FTMODE_Sph: FTMODE_None);
-  if(UseDEM)FtMode=FTMODE_Ext;
-  if(UseChrono)FtMode=FTMODE_Ext; //<vs_chroono>
+  if(!WithFloating)FtMode=FTMODE_None; //-Disables floatings when there are not floating particles.
   if(UseChrono && PeriActive!=0)Log->PrintfWarning("The use of Chrono with periodic limits is only recommended when moving and floating objects do not move beyond those periodic limits."); //<vs_chroono>
 
   //-Loads DEM and DVI data for boundary objects.   //<vs_chroono>
@@ -1484,7 +1483,8 @@ void JSph::VisuConfig(){
   }
   else Log->Print(fun::VarStr("Shifting","None"));
   //-RigidAlgorithm.
-  string rigidalgorithm=(!FtCount? "None": (UseDEM? "SPH+DCDEM": "SPH"));
+  string rigidalgorithm=(!FtCount? "None": (FtMode==FTMODE_Sph? "SPH": "Collision-Free"));
+  if(UseDEM)rigidalgorithm="SPH+DCDEM";
   if(UseChrono)rigidalgorithm="SPH+CHRONO"; //<vs_chroono>
   Log->Print(fun::VarStr("RigidAlgorithm",rigidalgorithm));
   if(FtCount){

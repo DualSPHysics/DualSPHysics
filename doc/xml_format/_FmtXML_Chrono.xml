@@ -63,7 +63,7 @@
 				<point_fb1 x="1.0" y="1.0" z="1.0" comment="Point in body 1" />
 				<point_fb2 x="2.0" y="2.0" z="2.0" comment="Point in body 2" />
 				<rest_length value="5.0" comment="Spring equilibrium length [m]" />
-				<damping value="100" comment="Damping [N]" />
+				<damping value="100" comment="Coulomb force [N]" />
 				<savevtk>
 					<nside value="16" comment="number of sections for each revolution. 0=not saved, 1=line (default=16)" />
 					<radius value="3" comment="spring radius (default=3)" />
@@ -74,33 +74,33 @@
 			<link_hinge idbody1="box1" idbody2="box2">
 				<rotpoint x="1.0" y="1.0" z="1.0" comment="Point for rotation" />
 				<rotvector x="0" y="1" z="0" comment="Vector direction for rotation" />
-				<stiffness value="500" comment="Torsional stiffness [N/rad]" />
-				<damping   value="10" comment="Torsional damping [-]" />
+				<stiffness value="500" comment="Torsional stiffness [Nm/rad]" />
+				<damping   value="10" comment="Torsional damping [Nms/rad]" />
 			</link_hinge>
 			<!-- Spheric joint between two bodies -->
 			<link_spheric idbody1="box2" idbody2="box3">
 				<rotpoint x="3.0" y="3.0" z="3.0" comment="Point for rotation" />
-				<stiffness value="20" comment="Torsional stiffness [N/rad]" />
-				<damping   value="10" comment="Torsional damping [-]" />
+				<stiffness value="20" comment="Torsional stiffness [Nm/rad]" />
+				<damping   value="10" comment="Torsional damping [Nms/rad]" />
 			</link_spheric>
 			<!-- Define restrictions of a body to absolute space -->
 			<!-- Spheric joint or modified joint by rotvector and rotvector2 that can slide along an axis -->
 			<link_pointline idbody1="box4">
-				<slidingvector x="0" y="1" z="0" comment="Vector direction for sliding axis" />
-				<rotpoint x="4.0" y="0" z="4.0" comment="Point for rotation" />
+				<slidingvector x="0" y="1" z="0" comment="Sliding vector direction" />
+				<rotpoint x="4.0" y="0" z="4.0" comment="Sliding point in the body" />
 				<_rotvector x="0" y="1" z="0" comment="Vector direction for rotation, use (0,0,0) for spheric joint (default=(0,0,0))" />
 				<_rotvector2 x="0" y="0" z="1" comment="Second vector to avoid rotation (default=(0,0,0))" />
-				<stiffness value="400" comment="Torsional stiffness [N/rad]" />
-				<damping value="50" comment="Torsional damping [-]" />
+				<stiffness value="400" comment="Torsional stiffness [Nm/rad]" />
+				<damping value="50" comment="Torsional damping [Nms/rad]" />
 			</link_pointline>
 			<link_spheric idbody1="box5">
 				<rotpoint x="5.0" y="5.0" z="5.0" comment="Point for rotation" />
-				<stiffness value="20" comment="Torsional stiffness [N/rad]" />
-				<damping   value="10" comment="Torsional damping [-]" />
+				<stiffness value="20" comment="Torsional stiffness [Nm/rad]" />
+				<damping   value="10" comment="Torsional damping [Nms/rad]" />
 			</link_spheric>
 			<link_pulley idbody1="box1" idbody2="box5">
 				<rotpoint x="1.0" y="0" z="1.2" comment="Point for rotation" />
-				<rotvector x="0.0" y="1.0" z="0.0" comment="Vector direction for rotation" />
+				<rotvector x="0.0" y="1.0" z="0.0" comment="Rotation axis of the body" />
 				<radius value="0.3" comment="Radius of idbody1"/>
 				<radius2 value="0.05" comment="Radius of idbody2"/>
 			</link_pulley>

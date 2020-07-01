@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<case app="GenCase v5.0.184 (19-05-2020)" date="20-05-2020 02:13:40">
-    <casedef requiredversion="v5.0.184">
+<case app="GenCase v5.0.191 (01-07-2020)" date="01-07-2020 02:27:30">
+    <casedef requiredversion="v5.0.191">
         <constantsdef>
             <lattice bound="2" fluid="1" comment="Type of lattice to create the initial particles (default=1)" />
             <gravity x="0" y="0" z="-9.81" comment="Gravitational acceleration" units_comment="m/s^2" />
@@ -470,6 +470,8 @@
                     <setvar v1="asin(a)" v2="acos(a)" v3="atan(a)" v4="atan2(a,b)" />
                     <setvar v1="randinit(a)" v2="rand(a)" v3="randint(a,b)" />
                     <setvar v1="wavelength(gravity,depth,period)" />
+                    <setvar v1="roundpos(pos,posmin,dp)" />
+                    <setvar v1="roundposx(pos)" v2="roundposy(pos)" v3="roundposz(pos)" />
                     <newvarstrcte Text1="Hello" Text2="bye" _rem="Text values" _print="true" />
                     <newvarstr Text3="AAAA" Text4="[Text1][Text2]_[Dp]" _rem="More text values" _print="0" />
                     <setvarstr Text3="[Text1]" Text4="BBBB" _rem="Modify values" _print="1" />
@@ -568,6 +570,24 @@
                     <vel time="0.04" x="12" y="2" z="none" />
                     <vel time="0.08" x="13" y="none" z="4" />
                 </angularvel>
+            </floating>
+            <floating mkbound="10" rhopbody="1300">
+                <linearforce file="FileLinearForce.csv" units_comment="N/s" />
+                <angularforce file="FileAngularForce.csv" units_comment="N/s" />
+            </floating>
+            <floating mkbound="11" rhopbody="1300">
+                <linearforce units_comment="N/s">
+                    <force time="0" x="0" y="0" z="0" />
+                    <force time="0.1" x="1" y="0" z="11" />
+                    <force time="0.1" x="2" y="0" z="22" />
+                    <force time="0.3" x="3" y="0" z="33" />
+                </linearforce>
+                <angularforce units_comment="N/s">
+                    <force time="0" x="10" y="0" z="0" />
+                    <force time="0.02" x="11" y="1" z="0" />
+                    <force time="0.04" x="12" y="2" z="0" />
+                    <force time="0.08" x="13" y="0" z="4" />
+                </angularforce>
             </floating>
         </floatings>
         <properties>

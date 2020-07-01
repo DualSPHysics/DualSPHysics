@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<!-- *** DualSPHysics (30-06-2020) *** -->
+<!-- *** DualSPHysics (01-07-2020) *** -->
 <!-- *** class: JSph (JSpaceEParms)  *** -->
 <!------------------------------------------------------------------------------->
 <!------------------------------------------------------------------------------->
@@ -20,7 +20,7 @@
 		<parameter key="Shifting" value="0" comment="Shifting mode 0:None, 1:Ignore bound, 2:Ignore fixed, 3:Full (default=0)" />
 		<parameter key="ShiftCoef" value="-2" comment="Coefficient for shifting computation (default=-2)" />
 		<parameter key="ShiftTFS" value="0" comment="Threshold to detect free surface. Typically 1.5 for 2D and 2.75 for 3D (default=0)" />
-		<parameter key="RigidAlgorithm" value="1" comment="Rigid Algorithm 1:SPH, 2:DEM, 3:Chrono (default=1)" />
+		<parameter key="RigidAlgorithm" value="1" comment="Rigid Algorithm 0:collision-free, 1:SPH, 2:DEM, 3:Chrono (default=1)" />
 		<parameter key="FtPause" value="0.0" comment="Time to freeze the floatings at simulation start (warmup) (default=0)" units_comment="seconds" />
 		<parameter key="FtIgnoreRadius" value="0" comment="Ignores floating body radius with periodic conditions (default=0)" />
 		<parameter key="CoefDtMin" value="0.05" comment="Coefficient to calculate minimum time step dtmin=coefdtmin*h/speedsound (default=0.05)" />
