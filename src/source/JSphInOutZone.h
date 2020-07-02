@@ -233,9 +233,6 @@ private:
 
   TpRhopMode RhopMode;          ///<Inflow rhop mode (fixed or extrapolated).
 
-  bool RevNewnpPerSec;   ///<Indicate when NewnpPerSec should be calculate.
-  double NewnpPerSec;    ///<Number of new fluid particles per second.
-
   tdouble3 Direction;    ///<Inflow direction.
   tdouble3 PtPlane;      ///<Position to create Plane.
   tplane3f Plane;        ///<Inflow plane.
@@ -272,7 +269,6 @@ public:
   byte GetConfigZone()const;
   byte GetConfigUpdate()const;
 
-  unsigned CalcResizeNp(double timestep,double timeinterval);
   unsigned LoadInletPoints(tdouble3 *pos);
   void LoadInletParticles(tdouble3 *pos);
   static float CalcVel(JSphInOutZone::TpVelProfile vprof,const tfloat4 &vdata,double posz);

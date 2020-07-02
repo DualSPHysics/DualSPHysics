@@ -27,6 +27,7 @@
 //:# - Comprueba opcion active en elementos de primer y segundo nivel. (19-03-2020)  
 //:# - Opcion para calcular boundary limit de forma automatica. (19-05-2020)  
 //:# - Cambio de nombre de J.SphInitialize a J.DsInitialize. (28-06-2020)
+//:# - Error corregido al obtener nombre de operacion a partir de la clase. (02-07-2020)
 //:#############################################################################
 
 /// \file JDsInitialize.h \brief Declares the class \ref JDsInitialize.
@@ -77,10 +78,11 @@ public:
 public:
   const TpInitialize Type;   ///<Type of particle.
   const StInitCt InitCt;     ///<Constant values needed for initialization tasks.
+  const unsigned BaseNameSize;
 
 public:
   JDsInitializeOp(TpInitialize type,const char* name,StInitCt initct)
-    :Type(type),InitCt(initct)
+    :Type(type),InitCt(initct),BaseNameSize(unsigned(std::string("JDsInitializeOp_").size()))
   { 
     ClassName=std::string("JDsInitializeOp_")+name;
   } 

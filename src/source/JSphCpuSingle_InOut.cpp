@@ -72,7 +72,7 @@ void JSphCpuSingle::InOutCheckProximity(unsigned newnp){
 //==============================================================================
 void JSphCpuSingle::InOutInit(double timestepini){
   TmcStart(Timers,TMC_SuInOut);
-  Log->Print("InOut configuration:");
+  Log->Print("Initialising InOut...");
   if(PartBegin)Run_Exceptioon("Simulation restart not allowed when Inlet/Outlet is used.");
 
   //-Configures InOut zones and prepares new inout particles to create.
@@ -84,9 +84,9 @@ void JSphCpuSingle::InOutInit(double timestepini){
   InOutIgnoreFluidDef(InOut->MkFluidList);
 
   //Log->Printf("++> newnp:%u",newnp);
-  //-Resizes memory when it is necessary.
-  if(!CheckCpuParticlesSize(Np+newnp)){
-    const unsigned newnp2=newnp+InOut->CalcResizeNp(timestepini);
+  //-Resizes memory when it is necessary (always at the beginning).
+  if(true || !CheckCpuParticlesSize(Np+newnp)){
+    const unsigned newnp2=newnp+InOut->GetNpResizePlus0();
     TmcStop(Timers,TMC_SuInOut);
     ResizeParticlesSize(Np+newnp2,0,false);
     CellDivSingle->SetIncreaseNp(newnp2);
@@ -114,7 +114,7 @@ void JSphCpuSingle::InOutInit(double timestepini){
   InOutCheckProximity(newnp);
 
   //-Shows configuration.
-  InOut->VisuConfig(""," ");
+  InOut->VisuConfig("\nInOut configuration:"," ");
   //-Checks invalid options for symmetry. //<vs_syymmetry>
   if(Symmetry && InOut->GetExtrapolatedData())Run_Exceptioon("Symmetry is not allowed with inlet/outlet conditions when extrapolate option is enabled."); //<vs_syymmetry>
 
@@ -161,7 +161,8 @@ void JSphCpuSingle::InOutComputeStep(double stepdt){
   TmcStart(Timers,TMC_SuInOut);
   //-Resizes memory when it is necessary. InOutCount is the maximum number of new inlet particles.
   if(!CheckCpuParticlesSize(Np+InOut->GetCurrentNp())){
-    const unsigned newnp2=InOut->GetCurrentNp()+InOut->CalcResizeNp(TimeStep+stepdt);
+    if(!InOut->GetNpResizePlus1())Run_Exceptioon("Allocated memory is not enough and resizing is not allowed by XML configuration (check the value inout.memoryresize.size).");
+    const unsigned newnp2=InOut->GetCurrentNp()+InOut->GetNpResizePlus1();
     TmcStop(Timers,TMC_SuInOut);
     ResizeParticlesSize(Np+newnp2,0,false);
     CellDivSingle->SetIncreaseNp(newnp2);

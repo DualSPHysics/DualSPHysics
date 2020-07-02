@@ -140,7 +140,7 @@ void JDsInitializeOp_FluidVel::Run(unsigned np,unsigned npb,const tdouble3 *pos
 /// Returns strings with configuration.
 //==============================================================================
 void JDsInitializeOp_FluidVel::GetConfig(std::vector<std::string> &lines)const{
-  lines.push_back(fun::PrintStr("  Operation: %s",ClassName.substr(17).c_str()));
+  lines.push_back(fun::PrintStr("  Operation: %s",ClassName.substr(BaseNameSize).c_str()));
   lines.push_back(fun::PrintStr("  MkFluid..: %s",(MkFluid.empty()? "ALL": MkFluid.c_str())));
   if(VelType==TVEL_Constant)lines.push_back(fun::PrintStr("  Constant velocity: %g",Vel1));
   else if(VelType==TVEL_Linear)lines.push_back(fun::PrintStr("  Linear velocity: %g(z=%g), %g(z=%g)",Vel1,Posz1,Vel2,Posz2));
@@ -179,7 +179,7 @@ void JDsInitializeOp_BoundNormalSet::Run(unsigned np,unsigned npb,const tdouble3
 /// Returns strings with configuration.
 //==============================================================================
 void JDsInitializeOp_BoundNormalSet::GetConfig(std::vector<std::string> &lines)const{
-  lines.push_back(fun::PrintStr("  Operation: %s",ClassName.substr(17).c_str()));
+  lines.push_back(fun::PrintStr("  Operation: %s",ClassName.substr(BaseNameSize).c_str()));
   lines.push_back(fun::PrintStr("  MkBound..: %s",(MkBound.empty()? "ALL": MkBound.c_str())));
   lines.push_back(fun::PrintStr("  Normal...: (%g,%g,%g)",Normal.x,Normal.y,Normal.z));
 }
@@ -270,7 +270,7 @@ void JDsInitializeOp_BoundNormalPlane::Run(unsigned np,unsigned npb,const tdoubl
 /// Returns strings with configuration.
 //==============================================================================
 void JDsInitializeOp_BoundNormalPlane::GetConfig(std::vector<std::string> &lines)const{
-  lines.push_back(fun::PrintStr("  Operation: %s",ClassName.substr(17).c_str()));
+  lines.push_back(fun::PrintStr("  Operation: %s",ClassName.substr(BaseNameSize).c_str()));
   lines.push_back(fun::PrintStr("  MkBound..: %s",(MkBound.empty()? "ALL": MkBound.c_str())));
   if(PointAuto)      lines.push_back("  Point....: Automatic");
   else lines.push_back(fun::PrintStr("  Point....: (%g,%g,%g)",Point.x,Point.y,Point.z));
@@ -323,7 +323,7 @@ void JDsInitializeOp_BoundNormalSphere::Run(unsigned np,unsigned npb,const tdoub
 /// Returns strings with configuration.
 //==============================================================================
 void JDsInitializeOp_BoundNormalSphere::GetConfig(std::vector<std::string> &lines)const{
-  lines.push_back(fun::PrintStr("  Operation: %s",ClassName.substr(17).c_str()));
+  lines.push_back(fun::PrintStr("  Operation: %s",ClassName.substr(BaseNameSize).c_str()));
   lines.push_back(fun::PrintStr("  MkBound..: %s",(MkBound.empty()? "ALL": MkBound.c_str())));
   lines.push_back(fun::PrintStr("  Center...: (%g,%g,%g)",Center.x,Center.y,Center.z));
   lines.push_back(fun::PrintStr("  Radius...: %g",Radius));
@@ -406,7 +406,7 @@ void JDsInitializeOp_BoundNormalCylinder::Run(unsigned np,unsigned npb,const tdo
 /// Returns strings with configuration.
 //==============================================================================
 void JDsInitializeOp_BoundNormalCylinder::GetConfig(std::vector<std::string> &lines)const{
-  lines.push_back(fun::PrintStr("  Operation: %s",ClassName.substr(17).c_str()));
+  lines.push_back(fun::PrintStr("  Operation: %s",ClassName.substr(BaseNameSize).c_str()));
   lines.push_back(fun::PrintStr("  MkBound..: %s",(MkBound.empty()? "ALL": MkBound.c_str())));
   lines.push_back(fun::PrintStr("  Centers..: (%g,%g,%g)-(%g,%g,%g)",Center1.x,Center1.y,Center1.z,Center2.x,Center2.y,Center2.z));
   lines.push_back(fun::PrintStr("  Radius...: %g",Radius));

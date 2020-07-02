@@ -24,6 +24,7 @@
 //:# - Objeto JXml pasado como const para operaciones de lectura. (18-03-2020)  
 //:# - Uso de JNumexLib para evaluar expresiones del XML. (18-03-2020)  
 //:# - Comprueba opcion active en elementos de primer y segundo nivel. (18-03-2020)  
+//:# - Memory resizing configuration was improved. (02-07-2020)
 //:#############################################################################
 
 /// \file JSphInOut.h \brief Declares the class \ref JSphInOut.
@@ -92,8 +93,12 @@ private:
   tdouble3 MapRealPosMax;
   typecode CodeNewPart;   ///<Code for new fluid particles created starting from inlet particles.
 
-  bool ReuseIds;         ///<Id of particles excluded values ​​are reused.
-  double ResizeTime;     ///<Time to calculate number of new particles.
+  bool ReuseIds;          ///<Id of particles excluded values ​​are reused.
+  float MemoryResize0;    ///<Multipier to calculate the minimum initial resize (default=2).
+  float MemoryResize1;    ///<Multipier to calculate the following resizes (default=4).
+  unsigned NpResizePlus0; ///<Extra number of particles for initial resize memory.
+  unsigned NpResizePlus1; ///<Extra number of particles for resize memory (0 does not allow resizing).
+
   float DetermLimit;     ///<Limit for determinant. Use 1e-3 for first_order or 1e+3 for zeroth_order (default=1e+3).
   byte ExtrapolateMode;  ///<Calculation mode for rhop and velocity extrapolation from ghost nodes 1:fast-single, 2:single, 3:double (default=1).
 
@@ -262,6 +267,9 @@ public:
   unsigned GetCount()const{ return(unsigned(List.size())); }
   const JSphInOutZone* GetZone(unsigned ci)const{ return(ci<ListSize? List[ci]: NULL); }
 
+  unsigned GetNpResizePlus0()const{ return(NpResizePlus0); }
+  unsigned GetNpResizePlus1()const{ return(NpResizePlus1); }
+
   bool GetNoExtrapolatedData()const{ return(NoExtrapolatedData); }
   bool GetExtrapolatedData()const{ return(ExtrapolatedData); }
   bool GetInterpolatedVel()const{ return(InterpolatedVel); }
@@ -279,8 +287,6 @@ public:
 #endif
   void SetInputZsurf(unsigned ci,float zsurf);
   float GetZbottom(unsigned ci)const;
-
-  unsigned CalcResizeNp(double timestep)const;
 
   void AddNewNp(unsigned newnp){ NewNpPart+=newnp; NewNpTotal+=newnp; }
   void ClearNewNpPart(){ NewNpPart=0; }

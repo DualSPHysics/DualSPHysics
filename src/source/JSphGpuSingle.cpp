@@ -697,7 +697,7 @@ void JSphGpuSingle::RunFloating(double dt,bool predictor){
       for(unsigned cf=0;cf<FtCount;cf++)if(FtObjs[cf].usechrono)
         ChronoObjects->SetFtData(FtObjs[cf].mkbound,ftoforces[cf*2],ftoforces[cf*2+1]);
       //-Applies the external velocities to each floating body of Chrono.
-      ChronoFtApplyImposedVel(); //<vs_fttvel>
+      if(FtLinearVel!=NULL)ChronoFtApplyImposedVel(); //<vs_fttvel>
       //-Calculate data using Chrono / Calcula datos usando Chrono.
       ChronoObjects->RunChrono(Nstep,TimeStep,dt,predictor);
       //-Load calculated data by Chrono / Carga datos calculados por Chrono.

@@ -264,8 +264,6 @@ void JSphInOutZone::Reset(){
   RemoveZsurf=false;
   SvVtkZsurf=false;
   ExternalVarInput=false;
-  RevNewnpPerSec=true;
-  NewnpPerSec=0;
   Direction=PtPlane=TDouble3(0);
   Plane=TPlane3f(0);
   NptInit=NpartInit=0;
@@ -308,7 +306,6 @@ void JSphInOutZone::GetConfig(std::vector<std::string> &lines)const{
     if(AwasVel)AwasVel->GetConfig(lines); //<vs_inawwas>
   }
   else lines.push_back("???");
-//  if(VelMode==MVEL_Fixed)lines.push_back(fun::PrintStr("New particles per second: %.1f",NewnpPerSec));
   lines.push_back(fun::PrintStr("Density mode: %s",(RhopMode==MRHOP_Constant? "Constant": (RhopMode==MRHOP_Hydrostatic? "Hydrostatic": (RhopMode==MRHOP_Extrapolated? "Extrapolated": "???")))));
   lines.push_back(fun::PrintStr("Z-Surface mode: %s",(ZsurfMode==ZSURF_Undefined? "Undefined": (ZsurfMode==ZSURF_Fixed? "Fixed": (ZsurfMode==ZSURF_Variable? "Variable": (ZsurfMode==ZSURF_Calculated? "Calculated": "???"))))));
   if(ZsurfMode==ZSURF_Variable && !TimeInputZsurf->GetFile().empty())lines.push_back(fun::PrintStr("Zsurf file: %s",TimeInputZsurf->GetFile().c_str()));
@@ -766,22 +763,6 @@ byte JSphInOutZone::GetConfigUpdate()const{
   ret= ret|byte(GetRemoveZsurf()      ? RemoveZsurf_MASK : 0);
   ret= ret|byte(InputMode==TIN_Convert? ConvertInput_MASK: 0);
   return(ret);
-}
-
-//==============================================================================
-/// Calculates number of particles to resize memory.
-//==============================================================================
-unsigned JSphInOutZone::CalcResizeNp(double timestep,double timeinterval){
-  const float layerspersec=5;
-  const unsigned newp=unsigned(timeinterval*layerspersec*NptInit);
-  ////-Updates number of new fluid particles per second.
-  //if(VelMode==MVEL_Variable){
-  //  RevNewnpPerSec=true;
-  //  UpdateInputVel(timestep);
-  //}
-  //if(VelMode==MVEL_Fixed || VelMode==MVEL_Variable)newp=NptInit+unsigned(NewnpPerSec*timeinterval);
-  //else Run_Exceptioon("Inflow velocity mode is unknown.");
-  return(newp);
 }
 
 //==============================================================================

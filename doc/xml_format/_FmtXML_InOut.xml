@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<!-- *** DualSPHysics (19-03-2020) *** -->
+<!-- *** DualSPHysics (02-07-2020) *** -->
 <!-- *** class: JSphInOut *** -->
 <!------------------------------------------------------------------------------->
 <!------------------------------------------------------------------------------->
 <!-- *** Example simple and complete for 2D *** -->
 <special>
-	<inout resizetime="0.5">
+	<inout>
+		<memoryresize size0="2" size="4" comment="Initial memory resize (size0) and the following memory resizes according to initial inlet/outlet particles (default=2 and 4)"/>
 		<useboxlimit value="true" comment="In/out process is only applied to InOut zones delimited by BoxLimit (default=true)">
 			<freecentre x="2" y="0" z="0" comment="Centre of zone where InOut is not applied (default=centre of simulation domain)" units_comment="m" />
 		</useboxlimit>

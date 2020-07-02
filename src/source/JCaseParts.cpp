@@ -50,7 +50,7 @@ void JCasePartBlock::UpdateProperty(){
 //==============================================================================
 std::string JCasePartBlock::GetNameXml()const{
   std::string ret;
-  for(unsigned c=15;c<ClassName.length();c++)ret=ret+char(tolower(ClassName[c]));
+  for(unsigned c=BaseNameSize;c<ClassName.length();c++)ret=ret+char(tolower(ClassName[c]));
   return(ret);
 }
 

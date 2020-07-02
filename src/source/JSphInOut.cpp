@@ -89,7 +89,9 @@ void JSphInOut::Reset(){
   CodeNewPart=0;
 
   ReuseIds=false;
-  ResizeTime=0;
+  MemoryResize0=MemoryResize1=0;
+  NpResizePlus0=NpResizePlus1=0;
+
   DetermLimit=0;
   ExtrapolateMode=0;
 
@@ -125,10 +127,14 @@ void JSphInOut::LoadXmlInit(const JXml *sxml,const std::string &place){
   //-Checks old configuration.
   if(sxml->ExistsElement(ele,"userefilling"))Run_ExceptioonFile("Inlet/outlet: <userefilling> is not supported by current inlet/outlet version.",sxml->ErrGetFileRow(ele,"userefilling"));
   //-Checks element names.
-  sxml->CheckElementNames(ele,true,"useboxlimit determlimit extrapolatemode *inoutzone");
+  sxml->CheckElementNames(ele,true,"memoryresize useboxlimit determlimit extrapolatemode *inoutzone");
   //-Loads general configuration.
   ReuseIds=false; //sxml->GetAttributeBool(ele,"reuseids",true,false);//-Since ReuseIds=true is not implemented.
-  ResizeTime=sxml->GetAttributeDouble(ele,"resizetime",true);
+  //-Loads configuration for memoryresize.
+  MemoryResize0=sxml->ReadElementFloat(ele,"memoryresize","size0",true,2.f);
+  MemoryResize1=sxml->ReadElementFloat(ele,"memoryresize","size" ,true,4.f);
+  if(MemoryResize0<0)Run_ExceptioonFile("Value of memoryresize.size0 lower than zero is invalid.",sxml->ErrGetFileRow(ele,"memoryresize"));
+  if(MemoryResize1<0)Run_ExceptioonFile("Value of memoryresize.size lower than zero is invalid.",sxml->ErrGetFileRow(ele,"memoryresize"));
   //-Loads value determlimit.
   DetermLimit=sxml->ReadElementFloat(ele,"determlimit","value",true,1e+3f);
   //-Loads ExtrapolateMode.
@@ -584,6 +590,16 @@ unsigned JSphInOut::Config(double timestep,bool stable,bool simulate2d,double si
       }
     }
   #endif
+
+  //-Calculates number of particles for resize memory (NpResizePlus0 and NpResizePlus1).
+  {
+    unsigned npfull=0;
+    for(unsigned ci=0;ci<ListSize;ci++)npfull+=List[ci]->GetNptInit()*List[ci]->GetLayers();
+    NpResizePlus0=unsigned(MemoryResize0*npfull);
+    NpResizePlus1=unsigned(MemoryResize1*npfull);
+    //-NpResizePlus1 is only zero when MemoryResize1 is also zero, since MemoryResize1=0 does not allow resizing.
+    if(!NpResizePlus1 && MemoryResize1>0)NpResizePlus1=1;
+  }
 
   //-Calculates total number of inout points and total number of inout particles.
   unsigned npt=0,npart=0;
@@ -1399,14 +1415,17 @@ void JSphInOut::UpdateVelrhopM1Gpu(unsigned inoutcount,const int *inoutpartg
 }
 #endif
 
-
 //==============================================================================
 /// Shows object configuration using Log.
 //==============================================================================
 void JSphInOut::VisuConfig(std::string txhead,std::string txfoot)const{
   if(!txhead.empty())Log->Print(txhead);
+  Log->Printf("MemoryResizeNp: +%u particles (initial: +%u particles)",GetNpResizePlus1(),GetNpResizePlus0());
   Log->Printf("UseBoxLimit: %s",(UseBoxLimit? "True": "False"));
-  if(UseBoxLimit)Log->Printf("  FreeLimits:%s  FreeCentre:(%s)",fun::Float3xRangeStr(FreeLimitMin,FreeLimitMax,"%g").c_str(),fun::Float3gStr(FreeCentre).c_str());
+  if(UseBoxLimit){
+    Log->Printf("  FreeLimits:%s",fun::Float3xRangeStr(FreeLimitMin,FreeLimitMax,"%g").c_str());
+    Log->Printf("  FreeCentre:(%s)",fun::Float3gStr(FreeCentre).c_str());
+  }
   Log->Printf("DetermLimit.: %g %s",DetermLimit,(DetermLimit==1e-3f? "(1st order)": (DetermLimit==1e+3f? "(0th order)": " ")));
   Log->Printf("ExtrapolateMode: %s",(ExtrapolateMode==1? "FastSingle": (ExtrapolateMode==2? "Single": (ExtrapolateMode==3? "Double": "???"))));
   for(unsigned ci=0;ci<GetCount();ci++){
@@ -1466,15 +1485,6 @@ void JSphInOut::SaveVtkZsurf(unsigned part){
     sh.SaveShapeVtk(fun::FileNameSec(filevtk,part),"izone");
     Log->AddFileInfo(filevtk,"Saves VTK files with Zsurf (by JSphInOut).");
   }
-}
-
-//==============================================================================
-/// Calculates number of particles to resize memory.
-//==============================================================================
-unsigned JSphInOut::CalcResizeNp(double timestep)const{
-  unsigned newp=0;
-  for(unsigned ci=0;ci<GetCount();ci++)newp+=List[ci]->CalcResizeNp(timestep,ResizeTime);
-  return(newp);
 }
 
 //==============================================================================

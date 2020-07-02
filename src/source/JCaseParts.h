@@ -60,6 +60,7 @@
 //:# - Mejora la gestion de excepciones. (06-05-2020)
 //:# - Cambio de nombre de J.SpaceParts a J.CaseParts. (28-06-2020)
 //:# - Nuevas opciones LinearForce y AngularForce para floatings. (30-06-2020)
+//:# - Se definio BaseNameSize para obtener nombre de subclase. (02-07-2020)
 //:#############################################################################
 
 /// \file JCaseParts.h \brief Declares the class \ref JCaseParts.
@@ -108,12 +109,14 @@ private:
   unsigned Count;                       ///<Number of particles.
 
 public:
+  const unsigned BaseNameSize;
   const TpParticles Type;    ///<Type of particle.
   const bool Bound;          ///<Indicates whether a particle is boundary or not.
 
   JCasePartBlock(const JCaseProperties* properties,TpParticles type,const char* name
     ,word mktype=0,unsigned begin=0,unsigned count=0)
-    :Properties(properties),Type(type),Bound(IsBound(type)),MkType(mktype),Begin(begin),Count(count)
+    :BaseNameSize(unsigned(std::string("JCasePartBlock_").size()))
+    ,Properties(properties),Type(type),Bound(IsBound(type)),MkType(mktype),Begin(begin),Count(count)
   { 
     ClassName=std::string("JCasePartBlock_")+name;
   } 
