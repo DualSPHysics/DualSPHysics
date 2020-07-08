@@ -105,8 +105,8 @@ class JSphShifting : protected JObject
 private:
   JLog2* Log;
   const bool Simulate2D;
-  const double Dp;       ///<Initial distance between particles.
-  const float H;
+  const double Dp;       ///<Initial distance between particles [m].
+  float KernelH;         ///<The smoothing length of SPH kernel [m].
 
   TpShifting ShiftMode;  ///<Type of Shifting: None, NoBound, NoFixed, Full.
   float ShiftCoef;       ///<Coefficient for shifting computation.
@@ -129,7 +129,7 @@ private:
 
 
 public:
-  JSphShifting(bool simulate2d,double dp,float h,JLog2* log);
+  JSphShifting(bool simulate2d,double dp,float kernelh,JLog2* log);
   ~JSphShifting();
   void Reset();
 

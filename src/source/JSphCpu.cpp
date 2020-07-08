@@ -19,9 +19,11 @@
 /// \file JSphCpu.cpp \brief Implements the class \ref JSphCpu.
 
 #include "JSphCpu.h"
-#include "JCellNgSearchCpu.h"
+#include "JCellSearch_inline.h"
 #include "JCellDivCpu.h"
 #include "JPartFloatBi4.h"
+#include "FunSphKernel.h"
+#include "FunSphEos.h"
 #include "Functions.h"
 #include "FunctionsMath.h"
 #include "JDsMotion.h"
@@ -76,6 +78,8 @@ JSphCpu::~JSphCpu(){
 void JSphCpu::InitVars(){
   RunMode="";
   OmpThreads=1;
+
+  DivData=DivDataCpuNull();
 
   Np=Npb=NpbOk=0;
   NpbPer=NpfPer=0;
@@ -428,24 +432,6 @@ void JSphCpu::InitRunCpu(){
 }
 
 //==============================================================================
-/// Returns pressure starting from density using equation of state 
-/// based on [Monaghan, 1994].
-//==============================================================================
-float JSphCpu::ComputePress(float rhop,float rhop0,float b,float gamma)const{ 
-  return(b*(pow(rhop/rhop0,gamma)-1.0f));
-}
-
-//<vs_praticalss_ini>
-//==============================================================================
-/// Returns pressure starting from density using equation of state 
-/// based on [Morris et al., 1997].
-//==============================================================================
-float JSphCpu::ComputePressMorris(float rhop,float rhop0,float cs0,float press0)const{ 
-  return(cs0*cs0*(rhop-rhop0)+press0);
-}
-//<vs_praticalss_end>
-
-//==============================================================================
 /// Prepare variables for interaction functions.
 /// Prepara variables para interaccion.
 //==============================================================================
@@ -469,11 +455,7 @@ void JSphCpu::PreInteractionVars_Forces(unsigned np,unsigned npb){
     #pragma omp parallel for schedule (static) if(n>OMP_LIMIT_COMPUTELIGHT)
   #endif
   for(int p=0;p<n;p++){
-#ifdef PRASS2_EOS_MORRIS                                               //<vs_praticalss>
-    Pressc[p]=ComputePressMorris(Velrhopc[p].w,RhopZero,float(Cs0),0); //<vs_praticalss>
-#else                                                                  //<vs_praticalss>
-    Pressc[p]=ComputePress(Velrhopc[p].w,RhopZero,CteB,Gamma);
-#endif                                                                 //<vs_praticalss>
+    Pressc[p]=fsph::ComputePress(Velrhopc[p].w,CSP);
   }
 }
 
@@ -566,208 +548,6 @@ void JSphCpu::PosInteraction_Forces(){
 }
 
 //==============================================================================
-/// Returns values of kernel Wendland, gradients: frx, fry and frz.
-/// Devuelve valores de kernel Wendland, gradients: frx, fry y frz.
-//==============================================================================
-void JSphCpu::GetKernelWendland(float rr2,float drx,float dry,float drz
-  ,float &frx,float &fry,float &frz)const
-{
-  const float rad=sqrt(rr2);
-  const float qq=rad/H;
-  //-Wendland kernel.
-  const float wqq1=1.f-0.5f*qq;
-  const float fac=Bwen*qq*wqq1*wqq1*wqq1/rad; //-Kernel derivative (divided by rad).
-  //-Gradients.
-  frx=fac*drx; fry=fac*dry; frz=fac*drz;
-}
-
-//<vs_innlet_ini>
-//============================================================================== 
-/// Returns values of kernel Wendland, gradients: frx, fry, frz and wab.
-/// Devuelve valores de kernel Wendland, gradients: frx, fry, frz y wab.
-//==============================================================================
-void JSphCpu::GetKernelWendland(float rr2,float drx,float dry,float drz
-  ,float &frx,float &fry,float &frz,float &wab)const
-{
-  const float rad=sqrt(rr2);
-  const float qq=rad/H;
-  //-Wendland kernel.
-  const float wqq1=1.f-0.5f*qq;
-  const float wqq2=wqq1*wqq1;
-  const float fac=Bwen*qq*wqq2*wqq1/rad; //-Kernel derivative (divided by rad).
-  //-Gradients.
-  frx=fac*drx; fry=fac*dry; frz=fac*drz;
-  //-Kernel (wab).
-  const float wqq=2.f*qq+1.f;
-  wab=Awen*wqq*wqq2*wqq2;
-}  //<vs_innlet_end>
-
-//==============================================================================
-/// Return values of kernel Cubic without tensil correction, gradients: frx, fry and frz.
-/// Devuelve valores de kernel Cubic sin correccion tensil, gradients: frx, fry y frz.
-//==============================================================================
-void JSphCpu::GetKernelCubic(float rr2,float drx,float dry,float drz
-  ,float &frx,float &fry,float &frz)const
-{
-  const float rad=sqrt(rr2);
-  const float qq=rad/H;
-  //-Cubic Spline kernel.
-  float fac;
-  if(rad>H){
-    float wqq1=2.0f-qq;
-    float wqq2=wqq1*wqq1;
-    fac=CubicCte.c2*wqq2/rad; //-Kernel derivative (divided by rad).
-  }
-  else{
-    float wqq2=qq*qq;
-    fac=(CubicCte.c1*qq+CubicCte.d1*wqq2)/rad; //-Kernel derivative (divided by rad).
-  }
-  //-Gradients.
-  frx=fac*drx; fry=fac*dry; frz=fac*drz;
-}
-
-//<vs_innlet_ini>
-//==============================================================================
-/// Return values of kernel Cubic without tensil correction, gradients: frx, fry, frz and wab.
-/// Devuelve valores de kernel Cubic sin correccion tensil, gradients: frx, fry,frz y wab.
-//==============================================================================
-void JSphCpu::GetKernelCubic(float rr2,float drx,float dry,float drz
-  ,float &frx,float &fry,float &frz,float &wab)const
-{
-  const float rad=sqrt(rr2);
-  const float qq=rad/H;
-  //-Cubic Spline kernel.
-  float fac;
-  if(rad>H){
-    float wqq1=2.0f-qq;
-    float wqq2=wqq1*wqq1;
-    fac=CubicCte.c2*wqq2/rad; //-Kernel derivative (divided by rad).
-    wab=CubicCte.a24*(wqq2*wqq1); //-Kernel.
-  }
-  else{
-    float wqq2=qq*qq;
-    fac=(CubicCte.c1*qq+CubicCte.d1*wqq2)/rad; //-Kernel derivative (divided by rad).
-    wab=CubicCte.a2*(1.0f+(0.75f*qq-1.5f)*wqq2); //-Kernel.
-  }
-  //-Gradients.
-  frx=fac*drx; fry=fac*dry; frz=fac*drz;
-}  //<vs_innlet_end>
-
-//==============================================================================
-/// Return tensil correction for kernel Cubic.
-/// Devuelve correccion tensil para kernel Cubic.
-//==============================================================================
-float JSphCpu::GetKernelCubicTensil(float rr2,float rhopp1,float pressp1,float rhopp2,float pressp2)const{
-  const float rad=sqrt(rr2);
-  const float qq=rad/H;
-  //-Cubic Spline kernel.
-  float wab;
-  if(rad>H){
-    float wqq1=2.0f-qq;
-    float wqq2=wqq1*wqq1;
-    wab=CubicCte.a24*(wqq2*wqq1); //-Kernel.
-  }
-  else{
-    float wqq2=qq*qq;
-    float wqq3=wqq2*qq;
-    wab=CubicCte.a2*(1.0f-1.5f*wqq2+0.75f*wqq3); //-Kernel.
-  }
-  //-Tensile correction.
-  float fab=wab*CubicCte.od_wdeltap;
-  fab*=fab; fab*=fab; //fab=fab^4
-  const float tensilp1=(pressp1/(rhopp1*rhopp1))*(pressp1>0? 0.01f: -0.2f);
-  const float tensilp2=(pressp2/(rhopp2*rhopp2))*(pressp2>0? 0.01f: -0.2f);
-  return(fab*(tensilp1+tensilp2));
-}
-
-//<vs_praticalsskq_ini>
-//==============================================================================
-/// Returns values of kernel WendlandC6, gradients: frx, fry and frz.
-/// Devuelve valores de kernel WendlandC6, gradients: frx, fry y frz.
-//==============================================================================
-void JSphCpu::GetKernelWendlandC6(float rr2,float drx,float dry,float drz
-  ,float &frx,float &fry,float &frz)const
-{
-  const float rad=sqrt(rr2);
-  const float qq=rad/H;
-  //-WendlandC6 kernel.
-  const float qq2=qq*qq;
-  const float fqq4=(qq-2)*(qq-2)*(qq-2)*(qq-2);
-  const float fqq3=(qq-2)*(qq-2)*(qq-2);
-  const float fqq7=fqq4*fqq3;
-  const float fac=Bwc6*11.f/512.f*fqq7*qq*(8.f*qq2+7.f*qq+2.f)/rad;//-Kernel derivative (divided by rad).
-  //-Gradients.
-  frx=fac*drx; fry=fac*dry; frz=fac*drz;
-}
-
-//==============================================================================
-/// Returns values of kernel WendlandC6, gradients: frx, fry, frz and wab.
-/// Devuelve valores de kernel WendlandC6, gradients: frx, fry, frz y wab.
-//==============================================================================
-void JSphCpu::GetKernelWendlandC6(float rr2,float drx,float dry,float drz
-  ,float &frx,float &fry,float &frz,float &wab)const
-{
-  const float rad=sqrt(rr2);
-  const float qq=rad/H;
-  //-WendlandC6 kernel.
-  const float qq2=qq*qq;
-  const float fqq4=(qq-2)*(qq-2)*(qq-2)*(qq-2);
-  const float fqq3=(qq-2)*(qq-2)*(qq-2);
-  const float fqq7=fqq4*fqq3;
-  const float fac=Bwc6*11.f/512.f*fqq7*qq*(8.f*qq2+7.f*qq+2.f)/rad;//-Kernel derivative (divided by rad).
-  //-Gradients.
-  frx=fac*drx; fry=fac*dry; frz=fac*drz;
-  //-Kernel (wab).
-  const float wqq4=(1-qq/2)*(1-qq/2)*(1-qq/2)*(1-qq/2);
-  const float wqq8=wqq4*wqq4;
-  const float qq3=qq*qq*qq;
-  wab=Awc6*wqq8*(4.f*qq3+6.25f*qq2+4.f*qq+1);
-}
-//<vs_praticalsskq_end>
-
-//==============================================================================
-/// Return cell limits for interaction starting from cell coordinates.
-/// Devuelve limites de celdas para interaccion a partir de coordenadas de celda.
-//==============================================================================
-void JSphCpu::GetInteractionCells(unsigned rcell
-  ,int hdiv,const tint4 &nc,const tint3 &cellzero
-  ,int &cxini,int &cxfin,int &yini,int &yfin,int &zini,int &zfin)const
-{
-  //-Get cell coordinates of cell number.
-  const int cx=PC__Cellx(DomCellCode,rcell)-cellzero.x;
-  const int cy=PC__Celly(DomCellCode,rcell)-cellzero.y;
-  const int cz=PC__Cellz(DomCellCode,rcell)-cellzero.z;
-  //-Code for hdiv 1 or 2 but not zero. | Codigo para hdiv 1 o 2 pero no cero.
-  cxini=cx-min(cx,hdiv);
-  cxfin=cx+min(nc.x-cx-1,hdiv)+1;
-  yini=cy-min(cy,hdiv);
-  yfin=cy+min(nc.y-cy-1,hdiv)+1;
-  zini=cz-min(cz,hdiv);
-  zfin=cz+min(nc.z-cz-1,hdiv)+1;
-}
-
-//============================================================================== //<vs_innlet_ini>
-/// Return cell limits for interaction starting from position.
-/// Devuelve limites de celdas para interaccion a partir de posicion.
-//==============================================================================
-void JSphCpu::GetInteractionCells(const tdouble3 &pos
-  ,int hdiv,const tint4 &nc,const tint3 &cellzero
-  ,int &cxini,int &cxfin,int &yini,int &yfin,int &zini,int &zfin)const
-{
-  //-Get cell coordinates of position pos.
-  const int cx=int((pos.x-DomPosMin.x)/Scell)-cellzero.x;
-  const int cy=int((pos.y-DomPosMin.y)/Scell)-cellzero.y;
-  const int cz=int((pos.z-DomPosMin.z)/Scell)-cellzero.z;
-  //-code for hdiv 1 or 2 but not zero. | Codigo para hdiv 1 o 2 pero no cero.
-  cxini=cx-min(cx,hdiv);
-  cxfin=cx+min(nc.x-cx-1,hdiv)+1;
-  yini=cy-min(cy,hdiv);
-  yfin=cy+min(nc.y-cy-1,hdiv)+1;
-  zini=cz-min(cz,hdiv);
-  zfin=cz+min(nc.z-cz-1,hdiv)+1;
-} //<vs_innlet_end>
-
-//==============================================================================
 /// Perform interaction between particles. Bound-Fluid/Float
 /// Realiza interaccion entre particulas. Bound-Fluid/Float
 //==============================================================================
@@ -789,13 +569,13 @@ template<TpKernel tker,TpFtMode ftmode> void JSphCpu::InteractionForcesBound
 
     //-Load data of particle p1. | Carga datos de particula p1.
     const tdouble3 posp1=pos[p1];
-    const bool rsymp1=(Symmetry && posp1.y<=Dosh); //<vs_syymmetry>
+    const bool rsymp1=(Symmetry && posp1.y<=KernelSize); //<vs_syymmetry>
     const tfloat3 velp1=TFloat3(velrhop[p1].x,velrhop[p1].y,velrhop[p1].z);
 
     //-Search for neighbours in adjacent cells.
-    const StNgSearch ngs=NgSearchInit(dcell[p1],false,divdata);
+    const StNgSearch ngs=nsearch::Init(dcell[p1],false,divdata);
     for(int z=ngs.zini;z<ngs.zfin;z++)for(int y=ngs.yini;y<ngs.yfin;y++){
-      const tuint2 pif=NgSearchParticleRange(y,z,ngs,divdata);
+      const tuint2 pif=nsearch::ParticleRange(y,z,ngs,divdata);
 
       //-Interaction of boundary with type Fluid/Float | Interaccion de Bound con varias Fluid/Float.
       //---------------------------------------------------------------------------------------------
@@ -806,12 +586,10 @@ template<TpKernel tker,TpFtMode ftmode> void JSphCpu::InteractionForcesBound
         if(rsym)    dry=float(posp1.y+pos[p2].y); //<vs_syymmetry>
         const float drz=float(posp1.z-pos[p2].z);
         const float rr2=drx*drx+dry*dry+drz*drz;
-        if(rr2<=Fourh2 && rr2>=ALMOSTZERO){
-          //-Wendland or Cubic Spline kernel.
-          float frx,fry,frz;
-          if(tker==KERNEL_Wendland)     GetKernelWendland(rr2,drx,dry,drz,frx,fry,frz);
-          else if(tker==KERNEL_Cubic)   GetKernelCubic   (rr2,drx,dry,drz,frx,fry,frz);
-          else if(tker==KERNEL_WendlandC6)GetKernelWendlandC6(rr2,drx,dry,drz,frx,fry,frz);  //<vs_praticalsskq>
+        if(rr2<=KernelSize2 && rr2>=ALMOSTZERO){
+          //-Computes kernel.
+          const float fac=fsph::GetKernel_Fac<tker>(CSP,rr2);
+          const float frx=fac*drx,fry=fac*dry,frz=fac*drz; //-Gradients.
 
           //===== Get mass of particle p2 ===== 
           float massp2=MassFluid; //-Contains particle mass of incorrect fluid. | Contiene masa de particula por defecto fluid.
@@ -823,7 +601,7 @@ template<TpKernel tker,TpFtMode ftmode> void JSphCpu::InteractionForcesBound
           }
 
           if(compute){
-            //-Density derivative.
+            //-Density derivative (Continuity equation).
             //const float dvx=velp1.x-velrhop[p2].x, dvy=velp1.y-velrhop[p2].y, dvz=velp1.z-velrhop[p2].z;
             tfloat4 velrhop2=velrhop[p2];
             if(rsym)velrhop2.y=-velrhop2.y; //<vs_syymmetry>
@@ -836,10 +614,10 @@ template<TpKernel tker,TpFtMode ftmode> void JSphCpu::InteractionForcesBound
               visc=max(dot_rr2,visc);
             }
           }
-          rsym=(rsymp1 && !rsym && float(posp1.y-dry)<=Dosh); //<vs_syymmetry>
-          if(rsym)p2--;                                       //<vs_syymmetry>
+          rsym=(rsymp1 && !rsym && float(posp1.y-dry)<=KernelSize); //<vs_syymmetry>
+          if(rsym)p2--;                                             //<vs_syymmetry>
         }
-        else rsym=false;                                      //<vs_syymmetry>
+        else rsym=false;                                            //<vs_syymmetry>
       }
     }
     //-Sum results together. | Almacena resultados.
@@ -897,12 +675,12 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity,bool sh
     const float rhopp1=velrhop[p1].w;
     const float pressp1=press[p1];
     const tsymatrix3f taup1=(tvisco==VISCO_Artificial? gradvelp1: tau[p1]);
-    const bool rsymp1=(Symmetry && posp1.y<=Dosh); //<vs_syymmetry>
+    const bool rsymp1=(Symmetry && posp1.y<=KernelSize); //<vs_syymmetry>
 
     //-Search for neighbours in adjacent cells.
-    const StNgSearch ngs=NgSearchInit(dcell[p1],boundp2,divdata);
+    const StNgSearch ngs=nsearch::Init(dcell[p1],boundp2,divdata);
     for(int z=ngs.zini;z<ngs.zfin;z++)for(int y=ngs.yini;y<ngs.yfin;y++){
-      const tuint2 pif=NgSearchParticleRange(y,z,ngs,divdata);
+      const tuint2 pif=nsearch::ParticleRange(y,z,ngs,divdata);
 
       //-Interaction of Fluid with type Fluid or Bound. | Interaccion de Fluid con varias Fluid o Bound.
       //------------------------------------------------------------------------------------------------
@@ -913,12 +691,10 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity,bool sh
         if(rsym)    dry=float(posp1.y+pos[p2].y); //<vs_syymmetry>
         const float drz=float(posp1.z-pos[p2].z);
         const float rr2=drx*drx+dry*dry+drz*drz;
-        if(rr2<=Fourh2 && rr2>=ALMOSTZERO){
-          //-Wendland or Cubic Spline kernel.
-          float frx,fry,frz;
-          if(tker==KERNEL_Wendland)     GetKernelWendland(rr2,drx,dry,drz,frx,fry,frz);
-          else if(tker==KERNEL_Cubic)   GetKernelCubic   (rr2,drx,dry,drz,frx,fry,frz);
-          else if(tker==KERNEL_WendlandC6)GetKernelWendlandC6(rr2,drx,dry,drz,frx,fry,frz);  //<vs_praticalsskq>
+        if(rr2<=KernelSize2 && rr2>=ALMOSTZERO){
+          //-Computes kernel.
+          const float fac=fsph::GetKernel_Fac<tker>(CSP,rr2);
+          const float frx=fac*drx,fry=fac*dry,frz=fac*drz; //-Gradients.
 
           //===== Get mass of particle p2 ===== 
           float massp2=(boundp2? MassBound: MassFluid); //-Contiene masa de particula segun sea bound o fluid.
@@ -938,22 +714,23 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity,bool sh
 
           tfloat4 velrhop2=velrhop[p2];
           if(rsym)velrhop2.y=-velrhop2.y; //<vs_syymmetry>
-          //===== Acceleration ===== 
+
+          //-Velocity derivative (Momentum equation).
           if(compute){
-            const float prs=(pressp1+press[p2])/(rhopp1*velrhop2.w) + (tker==KERNEL_Cubic? GetKernelCubicTensil(rr2,rhopp1,pressp1,velrhop2.w,press[p2]): 0);
+            const float prs=(pressp1+press[p2])/(rhopp1*velrhop2.w) + (tker==KERNEL_Cubic? fsph::GetKernelCubic_Tensil(CSP,rr2,rhopp1,pressp1,velrhop2.w,press[p2]): 0);
             const float p_vpm=-prs*massp2;
             acep1.x+=p_vpm*frx; acep1.y+=p_vpm*fry; acep1.z+=p_vpm*frz;
           }
 
-          //-Density derivative.
+          //-Density derivative (Continuity equation).
           const float dvx=velp1.x-velrhop2.x, dvy=velp1.y-velrhop2.y, dvz=velp1.z-velrhop2.z;
-          if(compute)arp1+=massp2*(dvx*frx+dvy*fry+dvz*frz);
+          if(compute)arp1+=massp2*(dvx*frx+dvy*fry+dvz*frz);  // *(rhopp1/velrhop2.w); TO FIX...
 
           const float cbar=(float)Cs0;
           //-Density Diffusion Term (Molteni and Colagrossi 2009).
           if(tdensity==DDT_DDT && deltap1!=FLT_MAX){
             const float rhop1over2=rhopp1/velrhop2.w;
-            const float visc_densi=DDT2h*cbar*(rhop1over2-1.f)/(rr2+Eta2);
+            const float visc_densi=DDTkh*cbar*(rhop1over2-1.f)/(rr2+Eta2);
             const float dot3=(drx*frx+dry*fry+drz*frz);
             const float delta=visc_densi*dot3*massp2;
             //deltap1=(boundp2? FLT_MAX: deltap1+delta);
@@ -963,7 +740,7 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity,bool sh
           if((tdensity==DDT_DDT2 || (tdensity==DDT_DDT2Full && !boundp2)) && deltap1!=FLT_MAX && !ftp2){
             const float rh=1.f+DDTgz*drz;
             const float drhop=RhopZero*pow(rh,1.f/Gamma)-RhopZero;    
-            const float visc_densi=DDT2h*cbar*((velrhop2.w-rhopp1)-drhop)/(rr2+Eta2);
+            const float visc_densi=DDTkh*cbar*((velrhop2.w-rhopp1)-drhop)/(rr2+Eta2);
             const float dot3=(drx*frx+dry*fry+drz*frz);
             const float delta=visc_densi*dot3*massp2/velrhop2.w;
             deltap1=(boundp2? FLT_MAX: deltap1-delta); //-blocks it makes it boil - bloody DBC
@@ -986,7 +763,7 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity,bool sh
             visc=max(dot_rr2,visc);
             if(tvisco==VISCO_Artificial){//-Artificial viscosity.
               if(dot<0){
-                const float amubar=H*dot_rr2;  //amubar=CTE.h*dot/(rr2+CTE.eta2);
+                const float amubar=KernelH*dot_rr2;  //amubar=CTE.h*dot/(rr2+CTE.eta2);
                 const float robar=(rhopp1+velrhop2.w)*0.5f;
                 const float pi_visc=(-visco*cbar*amubar/robar)*massp2;
                 acep1.x-=pi_visc*frx; acep1.y-=pi_visc*fry; acep1.z-=pi_visc*frz;
@@ -1020,10 +797,10 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity,bool sh
               }
             }
           }
-          rsym=(rsymp1 && !rsym && float(posp1.y-dry)<=Dosh); //<vs_syymmetry>
-          if(rsym)p2--;                                       //<vs_syymmetry>
+          rsym=(rsymp1 && !rsym && float(posp1.y-dry)<=KernelSize); //<vs_syymmetry>
+          if(rsym)p2--;                                             //<vs_syymmetry>
         }
-        else rsym=false;                                      //<vs_syymmetry>
+        else rsym=false;                                            //<vs_syymmetry>
       }
     }
     //-Sum results together. | Almacena resultados.
@@ -1086,9 +863,9 @@ void JSphCpu::InteractionForcesDEM(unsigned nfloat,StDivDataCpu divdata,const un
 
       //-Search for neighbours in adjacent cells (first bound and then fluid+floating).
       for(byte tpfluid=0;tpfluid<=1;tpfluid++){
-        const StNgSearch ngs=NgSearchInit(dcell[p1],!tpfluid,divdata);
+        const StNgSearch ngs=nsearch::Init(dcell[p1],!tpfluid,divdata);
         for(int z=ngs.zini;z<ngs.zfin;z++)for(int y=ngs.yini;y<ngs.yfin;y++){
-          const tuint2 pif=NgSearchParticleRange(y,z,ngs,divdata);
+          const tuint2 pif=nsearch::ParticleRange(y,z,ngs,divdata);
 
           //-Interaction of Floating Object particles with type Fluid or Bound. | Interaccion de Floating con varias Fluid o Bound.
           //-----------------------------------------------------------------------------------------------------------------------
@@ -1240,18 +1017,16 @@ template<TpKernel tker> void JSphCpu::Interaction_Forces_ct2(const stinterparmsc
 }
 //==============================================================================
 void JSphCpu::Interaction_Forces_ct(const stinterparmsc &t,StInterResultc &res)const{
-       if(TKernel==KERNEL_Wendland)Interaction_Forces_ct2<KERNEL_Wendland>(t,res);
-  else if(TKernel==KERNEL_Cubic)   Interaction_Forces_ct2<KERNEL_Cubic   >(t,res);
-  else if(TKernel==KERNEL_WendlandC6)Interaction_Forces_ct2<KERNEL_WendlandC6>(t,res);  //<vs_praticalsskq>
+       if(TKernel==KERNEL_Wendland)  Interaction_Forces_ct2<KERNEL_Wendland>(t,res);
+  else if(TKernel==KERNEL_Cubic)     Interaction_Forces_ct2<KERNEL_Cubic   >(t,res);
 }
 
 //<vs_mddbc_ini>
 //==============================================================================
 /// Perform interaction between ghost nodes of boundaries and fluid.
 //==============================================================================
-template<bool sim2d,TpSlipMode tslip> void JSphCpu::InteractionBoundCorrection
-  (unsigned n,float determlimit,float mdbcthreshold
-  ,tint4 nc,int hdiv,unsigned cellinitial,const unsigned *beginendcell,tint3 cellzero
+template<TpKernel tker,bool sim2d,TpSlipMode tslip> void JSphCpu::InteractionMdbcCorrectionT2
+  (unsigned n,StDivDataCpu divdata,float determlimit,float mdbcthreshold
   ,const tdouble3 *pos,const typecode *code,const unsigned *idp
   ,const tfloat3 *boundnormal,const tfloat3 *motionvel,tfloat4 *velrhop)
 {
@@ -1275,67 +1050,58 @@ template<bool sim2d,TpSlipMode tslip> void JSphCpu::InteractionBoundCorrection
     tmatrix3d a_corr2=TMatrix3d(0);   //-Only for 2D.
     tmatrix4d a_corr3=TMatrix4d(0);   //-Only for 3D.
 
-    //-Obtain limits of interaction.
-    int cxini,cxfin,yini,yfin,zini,zfin;
-    GetInteractionCells(gposp1,hdiv,nc,cellzero,cxini,cxfin,yini,yfin,zini,zfin);
-      
-    //-Search for neighbours in adjacent cells. | Busqueda de vecinos en celdas adyacentes.
-    for(int z=zini;z<zfin;z++){
-      const int zmod=(nc.w)*z+cellinitial; //-Sum from start of fluid cells. | Le suma donde empiezan las celdas de fluido.
-      for(int y=yini;y<yfin;y++){
-        int ymod=zmod+nc.x*y;
-        const unsigned pini=beginendcell[cxini+ymod];
-        const unsigned pfin=beginendcell[cxfin+ymod];
+    //-Search for neighbours in adjacent cells.
+    const StNgSearch ngs=nsearch::Init(gposp1,false,divdata);
+    for(int z=ngs.zini;z<ngs.zfin;z++)for(int y=ngs.yini;y<ngs.yfin;y++){
+      const tuint2 pif=nsearch::ParticleRange(y,z,ngs,divdata);
+      //-Interaction of boundary with type Fluid/Float.
+      for(unsigned p2=pif.x;p2<pif.y;p2++){
+        const float drx=float(gposp1.x-pos[p2].x);
+        const float dry=float(gposp1.y-pos[p2].y);
+        const float drz=float(gposp1.z-pos[p2].z);
+        const float rr2=(drx*drx + dry*dry + drz*drz);
+        if(rr2<=KernelSize2 && rr2>=ALMOSTZERO && CODE_IsFluid(code[p2])){//-Only with fluid particles (including inout).
+          //-Wendland kernel.
+          float fac;
+          const float wab=fsph::GetKernel_WabFac<tker>(CSP,rr2,fac);
+          const float frx=fac*drx,fry=fac*dry,frz=fac*drz; //-Gradients.
 
-        //-Interaction of boundary with type Fluid/Float | Interaccion de Bound con varias Fluid/Float.
-        //---------------------------------------------------------------------------------------------
-        for(unsigned p2=pini;p2<pfin;p2++){
-          const float drx=float(gposp1.x-pos[p2].x);
-          const float dry=float(gposp1.y-pos[p2].y);
-          const float drz=float(gposp1.z-pos[p2].z);
-          const float rr2=drx*drx+dry*dry+drz*drz;
-          if(rr2<=Fourh2 && rr2>=ALMOSTZERO && CODE_IsFluid(code[p2])){//-Only with fluid particles (including inout).
-            //-Wendland kernel.
-            float frx,fry,frz,wab;
-            GetKernelWendland(rr2,drx,dry,drz,frx,fry,frz,wab);
+          //===== Get mass and volume of particle p2 =====
+          const tfloat4 velrhopp2=velrhop[p2];
+          const float massp2=MassFluid;
+          const float volp2=massp2/velrhopp2.w;
 
-            //===== Get mass and volume of particle p2 =====
-            const tfloat4 velrhopp2=velrhop[p2];
-            const float massp2=MassFluid;
-            const float volp2=massp2/velrhopp2.w;
+          //===== Density and its gradient =====
+          rhopp1+=massp2*wab;
+          gradrhopp1.x+=massp2*frx;
+          gradrhopp1.y+=massp2*fry;
+          gradrhopp1.z+=massp2*frz;
 
-            //===== Density and its gradient =====
-            rhopp1+=massp2*wab;
-            gradrhopp1.x+=massp2*frx;
-            gradrhopp1.y+=massp2*fry;
-            gradrhopp1.z+=massp2*frz;
+          //===== Kernel values multiplied by volume =====
+          const float vwab=wab*volp2;
+          sumwab+=vwab;
+          const float vfrx=frx*volp2;
+          const float vfry=fry*volp2;
+          const float vfrz=frz*volp2;
 
-            //===== Kernel values multiplied by volume =====
-            const float vwab=wab*volp2;
-            sumwab+=vwab;
-            const float vfrx=frx*volp2;
-            const float vfry=fry*volp2;
-            const float vfrz=frz*volp2;
+          //===== Velocity =====
+          if(tslip!=SLIP_Vel0){
+            velp1.x+=vwab*velrhopp2.x;
+            velp1.y+=vwab*velrhopp2.y;
+            velp1.z+=vwab*velrhopp2.z;
+          }
 
-            //===== Velocity =====
-            if(tslip!=SLIP_Vel0){
-              velp1.x+=vwab*velrhopp2.x;
-              velp1.y+=vwab*velrhopp2.y;
-              velp1.z+=vwab*velrhopp2.z;
-            }
-
-            //===== Matrix A for correction =====
-            if(sim2d){
-              a_corr2.a11+=vwab;  a_corr2.a12+=drx*vwab;  a_corr2.a13+=drz*vwab;
-              a_corr2.a21+=vfrx;  a_corr2.a22+=drx*vfrx;  a_corr2.a23+=drz*vfrx;
-              a_corr2.a31+=vfrz;  a_corr2.a32+=drx*vfrz;  a_corr2.a33+=drz*vfrz;
-            }
-            else{
-              a_corr3.a11+=vwab;  a_corr3.a12+=drx*vwab;  a_corr3.a13+=dry*vwab;  a_corr3.a14+=drz*vwab;
-              a_corr3.a21+=vfrx;  a_corr3.a22+=drx*vfrx;  a_corr3.a23+=dry*vfrx;  a_corr3.a24+=drz*vfrx;
-              a_corr3.a31+=vfry;  a_corr3.a32+=drx*vfry;  a_corr3.a33+=dry*vfry;  a_corr3.a34+=drz*vfry;
-              a_corr3.a41+=vfrz;  a_corr3.a42+=drx*vfrz;  a_corr3.a43+=dry*vfrz;  a_corr3.a44+=drz*vfrz;
-            }
+          //===== Matrix A for correction =====
+          if(sim2d){
+            a_corr2.a11+=vwab;  a_corr2.a12+=drx*vwab;  a_corr2.a13+=drz*vwab;
+            a_corr2.a21+=vfrx;  a_corr2.a22+=drx*vfrx;  a_corr2.a23+=drz*vfrx;
+            a_corr2.a31+=vfrz;  a_corr2.a32+=drx*vfrz;  a_corr2.a33+=drz*vfrz;
+          }
+          else{
+            a_corr3.a11+=vwab;  a_corr3.a12+=drx*vwab;  a_corr3.a13+=dry*vwab;  a_corr3.a14+=drz*vwab;
+            a_corr3.a21+=vfrx;  a_corr3.a22+=drx*vfrx;  a_corr3.a23+=dry*vfrx;  a_corr3.a24+=drz*vfrx;
+            a_corr3.a31+=vfry;  a_corr3.a32+=drx*vfry;  a_corr3.a33+=dry*vfry;  a_corr3.a34+=drz*vfry;
+            a_corr3.a41+=vfrz;  a_corr3.a42+=drx*vfrz;  a_corr3.a43+=dry*vfrz;  a_corr3.a44+=drz*vfrz;
           }
         }
       }
@@ -1432,26 +1198,36 @@ template<bool sim2d,TpSlipMode tslip> void JSphCpu::InteractionBoundCorrection
 /// Calculates extrapolated data on boundary particles from fluid domain for mDBC.
 /// Calcula datos extrapolados en el contorno para mDBC.
 //==============================================================================
-void JSphCpu::Interaction_BoundCorrection(TpSlipMode slipmode
-  ,tuint3 ncells,const unsigned *begincell,tuint3 cellmin
-  ,const tdouble3 *pos,const typecode *code,const unsigned *idp
+ template<TpKernel tker> void JSphCpu::Interaction_MdbcCorrectionT(TpSlipMode slipmode
+  ,const StDivDataCpu &divdata,const tdouble3 *pos,const typecode *code,const unsigned *idp
   ,const tfloat3 *boundnormal,const tfloat3 *motionvel,tfloat4 *velrhop)
 {
   const float determlimit=1e-3f;
-  const tint4 nc=TInt4(int(ncells.x),int(ncells.y),int(ncells.z),int(ncells.x*ncells.y));
-  const tint3 cellzero=TInt3(cellmin.x,cellmin.y,cellmin.z);
-  const unsigned cellfluid=nc.w*nc.z+1;
-  const int hdiv=(CellMode==CELLMODE_H? 2: 1);
   //-Interaction GhostBoundaryNodes-Fluid.
   unsigned n=NpbOk;
   if(Simulate2D){ const bool sim2d=true;
-    if(slipmode==SLIP_Vel0    )InteractionBoundCorrection<sim2d,SLIP_Vel0    >(n,determlimit,MdbcThreshold,nc,hdiv,cellfluid,begincell,cellzero,pos,code,idp,boundnormal,motionvel,velrhop);
-    if(slipmode==SLIP_NoSlip  )InteractionBoundCorrection<sim2d,SLIP_NoSlip  >(n,determlimit,MdbcThreshold,nc,hdiv,cellfluid,begincell,cellzero,pos,code,idp,boundnormal,motionvel,velrhop);
-    if(slipmode==SLIP_FreeSlip)InteractionBoundCorrection<sim2d,SLIP_FreeSlip>(n,determlimit,MdbcThreshold,nc,hdiv,cellfluid,begincell,cellzero,pos,code,idp,boundnormal,motionvel,velrhop);
+    if(slipmode==SLIP_Vel0    )InteractionMdbcCorrectionT2 <tker,sim2d,SLIP_Vel0    > (n,divdata,determlimit,MdbcThreshold,pos,code,idp,boundnormal,motionvel,velrhop);
+    if(slipmode==SLIP_NoSlip  )InteractionMdbcCorrectionT2 <tker,sim2d,SLIP_NoSlip  > (n,divdata,determlimit,MdbcThreshold,pos,code,idp,boundnormal,motionvel,velrhop);
+    if(slipmode==SLIP_FreeSlip)InteractionMdbcCorrectionT2 <tker,sim2d,SLIP_FreeSlip> (n,divdata,determlimit,MdbcThreshold,pos,code,idp,boundnormal,motionvel,velrhop);
   }else{          const bool sim2d=false;
-    if(slipmode==SLIP_Vel0    )InteractionBoundCorrection<sim2d,SLIP_Vel0    >(n,determlimit,MdbcThreshold,nc,hdiv,cellfluid,begincell,cellzero,pos,code,idp,boundnormal,motionvel,velrhop);
-    if(slipmode==SLIP_NoSlip  )InteractionBoundCorrection<sim2d,SLIP_NoSlip  >(n,determlimit,MdbcThreshold,nc,hdiv,cellfluid,begincell,cellzero,pos,code,idp,boundnormal,motionvel,velrhop);
-    if(slipmode==SLIP_FreeSlip)InteractionBoundCorrection<sim2d,SLIP_FreeSlip>(n,determlimit,MdbcThreshold,nc,hdiv,cellfluid,begincell,cellzero,pos,code,idp,boundnormal,motionvel,velrhop);
+    if(slipmode==SLIP_Vel0    )InteractionMdbcCorrectionT2 <tker,sim2d,SLIP_Vel0    > (n,divdata,determlimit,MdbcThreshold,pos,code,idp,boundnormal,motionvel,velrhop);
+    if(slipmode==SLIP_NoSlip  )InteractionMdbcCorrectionT2 <tker,sim2d,SLIP_NoSlip  > (n,divdata,determlimit,MdbcThreshold,pos,code,idp,boundnormal,motionvel,velrhop);
+    if(slipmode==SLIP_FreeSlip)InteractionMdbcCorrectionT2 <tker,sim2d,SLIP_FreeSlip> (n,divdata,determlimit,MdbcThreshold,pos,code,idp,boundnormal,motionvel,velrhop);
+  }
+}
+
+//==============================================================================
+/// Calculates extrapolated data on boundary particles from fluid domain for mDBC.
+/// Calcula datos extrapolados en el contorno para mDBC.
+//==============================================================================
+void JSphCpu::Interaction_MdbcCorrection(TpSlipMode slipmode,const StDivDataCpu &divdata
+  ,const tdouble3 *pos,const typecode *code,const unsigned *idp
+  ,const tfloat3 *boundnormal,const tfloat3 *motionvel,tfloat4 *velrhop)
+{
+  switch(TKernel){
+    case KERNEL_Cubic:       Interaction_MdbcCorrectionT <KERNEL_Cubic     > (slipmode,divdata,pos,code,idp,boundnormal,motionvel,velrhop);  break;
+    case KERNEL_Wendland:    Interaction_MdbcCorrectionT <KERNEL_Wendland  > (slipmode,divdata,pos,code,idp,boundnormal,motionvel,velrhop);  break;
+    default: Run_Exceptioon("Kernel unknown.");
   }
 }
 //<vs_mddbc_end>
@@ -1771,9 +1547,9 @@ void JSphCpu::ComputeSymplecticCorr(double dt){
 //==============================================================================
 double JSphCpu::DtVariable(bool final){
   //-dt1 depends on force per unit mass.
-  const double dt1=(AceMax? (sqrt(double(H)/AceMax)): DBL_MAX); 
+  const double dt1=(AceMax? (sqrt(double(KernelH)/AceMax)): DBL_MAX); 
   //-dt2 combines the Courant and the viscous time-step controls.
-  const double dt2=double(H)/(max(Cs0,VelMax*10.)+double(H)*ViscDtMax);
+  const double dt2=double(KernelH)/(max(Cs0,VelMax*10.)+double(KernelH)*ViscDtMax);
   //-dt new value of time step.
   double dt=double(CFLnumber)*min(dt1,dt2);
   if(FixedDt)dt=FixedDt->GetDt(TimeStep,dt);

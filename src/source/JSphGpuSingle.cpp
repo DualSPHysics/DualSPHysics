@@ -198,8 +198,8 @@ void JSphGpuSingle::ConfigDomain(){
 
   //-Creates object for Celldiv on the GPU and selects a valid cellmode.
   //-Crea objeto para divide en GPU y selecciona un cellmode valido.
-  CellDivSingle=new JCellDivGpuSingle(Stable,FtCount!=0,PeriActive,CellMode
-    ,Scell,Dosh,Map_PosMin,Map_PosMax,Map_Cells,CaseNbound,CaseNfixed,CaseNpb,Log,DirOut);
+  CellDivSingle=new JCellDivGpuSingle(Stable,FtCount!=0,PeriActive,KernelSize2,PosCellSize
+    ,CellMode,Scell,Map_PosMin,Map_PosMax,Map_Cells,CaseNbound,CaseNfixed,CaseNpb,Log,DirOut);
   CellDivSingle->DefineDomain(DomCellCode,DomCelIni,DomCelFin,DomPosMin,DomPosMax);
   ConfigCellDiv((JCellDivGpu*)CellDivSingle);
 
@@ -224,6 +224,7 @@ void JSphGpuSingle::ResizeParticlesSize(unsigned newsize,float oversize,bool upd
   newsize+=(oversize>0? unsigned(oversize*newsize): 0);
   FreeCpuMemoryParticles();
   CellDivSingle->FreeMemoryGpu();
+  DivData=DivDataGpuNull();
   ResizeGpuMemoryParticles(newsize);
   AllocCpuMemoryParticles(newsize);
   TmgStop(Timers,TMG_SuResizeNp);
@@ -326,12 +327,14 @@ void JSphGpuSingle::RunPeriodic(){
 /// Ejecuta divide de particulas en celdas.
 //==============================================================================
 void JSphGpuSingle::RunCellDivide(bool updateperiodic){
+  DivData=DivDataGpuNull();
   //-Creates new periodic particles and marks the old ones to be ignored.
   //-Crea nuevas particulas periodicas y marca las viejas para ignorarlas.
   if(updateperiodic && PeriActive)RunPeriodic();
 
   //-Initiates Divide.
   CellDivSingle->Divide(Npb,Np-Npb-NpbPer-NpfPer,NpbPer,NpfPer,BoundChanged,Dcellg,Codeg,Timers,Posxyg,Poszg,Idpg);
+  DivData=CellDivSingle->GetCellDivData();
 
   //-Sorts particle data. | Ordena datos de particulas.
   TmgStart(Timers,TMG_NlSortData);
@@ -387,7 +390,7 @@ void JSphGpuSingle::RunCellDivide(bool updateperiodic){
   NpbOk=Npb-CellDivSingle->GetNpbIgnore();
 
   //-Update PosCellg[] according to current position of particles.
-  cusphs::UpdatePosCell(Np,Map_PosMin,Dosh,Posxyg,Poszg,PosCellg,NULL);
+  cusphs::UpdatePosCell(Np,Map_PosMin,PosCellSize,Posxyg,Poszg,PosCellg,NULL);
 
   //-Manages excluded particles fixed, moving and floating before aborting the execution.
   if(CellDivSingle->GetNpbOut())AbortBoundOut();
@@ -425,7 +428,7 @@ void JSphGpuSingle::AbortBoundOut(){
 /// Interaccion para el calculo de fuerzas.
 //==============================================================================
 void JSphGpuSingle::Interaction_Forces(TpInterStep interstep){
-  if(TBoundary==BC_MDBC && (MdbcCorrector || interstep!=INTERSTEP_SymCorrector))BoundCorrection(); //-Boundary correction for mDBC.  //<vs_mddbc>
+  if(TBoundary==BC_MDBC && (MdbcCorrector || interstep!=INTERSTEP_SymCorrector))MdbcBoundCorrection(); //-Boundary correction for mDBC.  //<vs_mddbc>
   InterStep=interstep;
   PreInteraction_Forces();
   TmgStart(Timers,TMG_CfForces);
@@ -441,7 +444,7 @@ void JSphGpuSingle::Interaction_Forces(TpInterStep interstep){
     ,lamsps,TDensity,ShiftingMode
     ,Visco*ViscoBoundFactor,Visco
     ,bsbound,bsfluid,Np,Npb,NpbOk
-    ,0,CellDivSingle->GetCellDivData(),Dcellg
+    ,0,DivData,Dcellg
     ,Posxyg,Poszg,PosCellg,Velrhopg,Idpg,Codeg
     ,FtoMasspg,SpsTaug
     ,ViscDtg,Arg,Aceg,Deltag
@@ -452,7 +455,7 @@ void JSphGpuSingle::Interaction_Forces(TpInterStep interstep){
 
   //-Interaction DEM Floating-Bound & Floating-Floating. //(DEM)
   if(UseDEM)cusph::Interaction_ForcesDem(BlockSizes.forcesdem,CaseNfloat
-    ,CellDivSingle->GetCellDivData(),Dcellg,FtRidpg,DemDatag,FtoMasspg,float(DemDtForce)
+    ,DivData,Dcellg,FtRidpg,DemDatag,FtoMasspg,float(DemDtForce)
     ,PosCellg,Velrhopg,Codeg,Idpg,ViscDtg,Aceg,NULL);
 
   //-For 2D simulations always overrides the 2nd component (Y axis).
@@ -480,13 +483,11 @@ void JSphGpuSingle::Interaction_Forces(TpInterStep interstep){
 /// Calculates extrapolated data on boundary particles from fluid domain for mDBC.
 /// Calcula datos extrapolados en el contorno para mDBC.
 //==============================================================================
-void JSphGpuSingle::BoundCorrection(){
+void JSphGpuSingle::MdbcBoundCorrection(){
   TmgStart(Timers,TMG_CfPreForces);
   unsigned n=NpbOk;
-  cusph::Interaction_BoundCorrection(SlipMode,n,CaseNbound,MdbcThreshold
-    ,Simulate2D,CellMode,CellDivSingle->GetNcells()
-    ,CellDivSingle->GetBeginCell(),CellDivSingle->GetCellDomainMin()
-    ,Posxyg,Poszg,Codeg,Idpg,BoundNormalg,MotionVelg,Velrhopg);
+  cusph::Interaction_MdbcCorrection(TKernel,SlipMode,n,CaseNbound,MdbcThreshold,Simulate2D
+    ,DivData,Posxyg,Poszg,Codeg,Idpg,BoundNormalg,MotionVelg,Velrhopg);
   TmgStop(Timers,TMG_CfPreForces);
 }
 //<vs_mddbc_end>
@@ -737,8 +738,7 @@ void JSphGpuSingle::RunFloating(double dt,bool predictor){
 //==============================================================================
 void JSphGpuSingle::RunGaugeSystem(double timestep){
   const bool svpart=(TimeStep>=TimePartNext);
-  GaugeSystem->CalculeGpu(timestep,svpart,CellDivSingle->GetNcells()
-    ,CellDivSingle->GetCellDomainMin(),CellDivSingle->GetBeginCell()
+  GaugeSystem->CalculeGpu(timestep,svpart,DivData
     ,NpbOk,Npb,Np,Posxyg,Poszg,Codeg,Idpg,Velrhopg);
 }
 
@@ -753,7 +753,7 @@ void JSphGpuSingle::ComputePips(bool run){
     const unsigned sauxmemg=ArraysGpu->GetArraySize();
     unsigned* auxmemg=ArraysGpu->ReserveUint();
     DsPips->ComputeGpu(Nstep,TimeStep,timesim,Np,Npb,NpbOk
-      ,CellDivSingle->GetCellDivData(),Dcellg,PosCellg,sauxmemg,auxmemg);
+      ,DivData,Dcellg,PosCellg,sauxmemg,auxmemg);
     ArraysGpu->Free(auxmemg);
   }
 }
@@ -779,7 +779,7 @@ void JSphGpuSingle::Run(std::string appname,JSphCfgRun *cfg,JLog2 *log){
   //--------------------------------------------------------------------------------
   LoadConfig(cfg);
   LoadCaseParticles();
-  ConfigConstants(Simulate2D);
+  VisuConfig();
   ConfigDomain();
   ConfigRunMode("Single-Gpu");
   VisuParticleSummary();
@@ -889,17 +889,6 @@ void JSphGpuSingle::SaveData(){
   //-Stores particle data. | Graba datos de particulas.
   JDataArrays arrays;
   AddBasicArrays(arrays,npsave,AuxPos,Idp,AuxVel,AuxRhop);
-//<vs_praticalss_ini>
-#ifdef PRASS1_SAVEPRESS
-  //-Adds extra arrays to include in output files (BI4, VTK and CSV).
-  float* press=arrays.CreateArrayPtrFloat("Pressure",npsave);//-Creates new array for pressure initialized to zero. 
-  for(unsigned p=0;p<npsave;p++){
-    if(Idp[p]>=CaseNbound){//-If particle is a fluid particle then...
-      press[p]=CteB*(pow(AuxRhop[p]/RhopZero,Gamma)-1.0f);//-Computes pressure starting from density. 
-    }
-  }
-#endif
-//<vs_praticalss_end>
   JSph::SaveData(npsave,arrays,1,vdom,&infoplus);
   if(UseNormals && SvNormals)SaveVtkNormalsGpu("normals/Normals.vtk",Part,npsave,Npb,Posxyg,Poszg,Idpg,BoundNormalg); //<vs_mddbc>
   TmgStop(Timers,TMG_SuSavePart);

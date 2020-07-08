@@ -56,12 +56,8 @@ protected:
   void RunCellDivide(bool updateperiodic);
   void AbortBoundOut();
 
-  inline void GetInteractionCells(unsigned rcell
-    ,int hdiv,const tint4 &nc,const tint3 &cellzero
-    ,int &cxini,int &cxfin,int &yini,int &yfin,int &zini,int &zfin)const;
-
   void Interaction_Forces(TpInterStep tinterstep);
-  void BoundCorrection(); //<vs_mddbc>
+  void MdbcBoundCorrection(); //<vs_mddbc>
 
   double ComputeAceMax(unsigned np,const tfloat3* ace,const typecode *code)const;
   template<bool checkcode> double ComputeAceMaxSeq(unsigned np,const tfloat3* ace,const typecode *code)const;

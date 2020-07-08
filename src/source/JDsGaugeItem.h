@@ -35,8 +35,11 @@
 #include "JObject.h"
 #include "DualSphDef.h"
 #include "JSaveCsv2.h"
+#include "JCellDivDataCpu.h"
+
 #ifdef _WITHGPU
-  #include <cuda_runtime_api.h>
+#include "JCellDivDataGpu.h"
+#include <cuda_runtime_api.h>
 #endif
 
 //-Defines for CUDA exceptions.
@@ -95,23 +98,13 @@ protected:
   const bool Cpu;
   std::string FileInfo;
 
-  //-Variables for calculation (they are constant).
-  bool Simulate2D;     ///<Toggles 2D simulation (cancels forces in Y axis). | Activa o desactiva simulacion en 2D (anula fuerzas en eje Y).
+  //-Constant values for calculation (they are constant).
+  StCteSph CSP;        ///<Structure with main SPH constants values and configurations.
   bool Symmetry;       ///<Use of symmetry in plane y=0.
-  tdouble3 DomPosMin;  ///<Lower limit of simulation + edge 2h if periodic conditions. DomPosMin=Map_PosMin+(DomCelIni*Scell); | Limite inferior de simulacion + borde 2h si hay condiciones periodicas. 
-  tdouble3 DomPosMax;  ///<Upper limit of simulation + edge 2h if periodic conditions. DomPosMax=min(Map_PosMax,Map_PosMin+(DomCelFin*Scell)); | Limite inferior de simulacion + borde 2h si hay condiciones periodicas. 
-  float Scell;         ///<Cell size: 2h or h. | Tamanho de celda: 2h o h.
-  int Hdiv;            ///<Value to divide 2H. | Valor por el que se divide a DosH
-  float H;             ///<The smoothing length [m].
-  float Fourh2;        ///<Constant related to H (Fourh2=H*H*4).
-  float Awen;          ///<Wendland kernel constant (awen) to compute wab.
-  float Bwen;          ///<Wendland kernel constant (bwen) to compute fac (kernel derivative).
-  float MassFluid;     ///<Reference mass of the fluid particle [kg].
-  float MassBound;     ///<Reference mass of the general boundary particle [kg].
-  float Cs0;           ///<Speed of sound at the reference density.
-  float CteB;          ///<Constant used in the state equation [Pa].
-  float Gamma;         ///<Politropic constant for water used in the state equation.
-  float RhopZero;      ///<Reference density of the fluid [kg/m3].
+  tdouble3 DomPosMin;  ///<Lower limit of simulation + edge (KernelSize) if periodic conditions. DomPosMin=Map_PosMin+(DomCelIni*Scell); | Limite inferior de simulacion + borde (KernelSize) si hay condiciones periodicas. 
+  tdouble3 DomPosMax;  ///<Upper limit of simulation + edge (KernelSize) if periodic conditions. DomPosMax=min(Map_PosMax,Map_PosMin+(DomCelFin*Scell)); | Limite inferior de simulacion + borde (KernelSize) si hay condiciones periodicas. 
+  float Scell;            ///<Cell size: KernelSize/ScellDiv (KernelSize or KernelSize/2).
+  int ScellDiv;           ///<Value to divide KernelSize (1 or 2).
 
   //-Configuration variables.
   bool SaveVtkPart; //-Creates VTK files for each PART.
@@ -139,10 +132,6 @@ protected:
 
   bool PointIsOut(double px,double py,double pz)const{ return(px!=px || py!=py || pz!=pz || px<DomPosMin.x || py<DomPosMin.y || pz<DomPosMin.z || px>=DomPosMax.x || py>=DomPosMax.y || pz>=DomPosMax.z); }
   bool PointIsOut(double px,double py)const{ return(px!=px || py!=py || px<DomPosMin.x || py<DomPosMin.y || px>=DomPosMax.x || py>=DomPosMax.y); }
-  inline void GetInteractionCells(const tdouble3 &pos,const tint4 &nc,const tint3 &cellzero
-    ,int &cxini,int &cxfin,int &yini,int &yfin,int &zini,int &zfin)const;
-  inline float ComputePress(float rhop,float rhop0,float b,float gamma)const;
-  inline float ComputePressMorris(float rhop,float rhop0,float cs0,float press0)const; //<vs_praticalss>
 
   static std::string GetNameType(TpGauge type);
 
@@ -154,10 +143,8 @@ public:
   const unsigned Idx;
   const std::string Name;
 
-  void Config(bool simulate2d,bool symmetry
-    ,tdouble3 domposmin,tdouble3 domposmax
-    ,float scell,int hdiv,float h,float massfluid,float massbound
-    ,float cs0,float cteb,float gamma,float rhopzero);
+  void Config(const StCteSph & csp,bool symmetry,tdouble3 domposmin
+    ,tdouble3 domposmax,float scell,int scelldiv);
   void SetSaveVtkPart(bool save){ SaveVtkPart=save; }
   void ConfigComputeTiming(double start,double end,double dt);
   void ConfigOutputTiming(bool save,double start,double end,double dt);
@@ -183,14 +170,14 @@ public:
   bool Update(double timestep)const{ return(timestep>=ComputeNext && ComputeStart<=timestep && timestep<=ComputeEnd); }
   bool Output(double timestep)const{ return(OutputSave && timestep>=OutputNext && OutputStart<=timestep && timestep<=OutputEnd); }
 
-  virtual void CalculeCpu(double timestep,tuint3 ncells,tuint3 cellmin
-    ,const unsigned *begincell,unsigned npbok,unsigned npb,unsigned np
-    ,const tdouble3 *pos,const typecode *code,const unsigned *idp,const tfloat4 *velrhop)=0;
+  virtual void CalculeCpu(double timestep,const StDivDataCpu &dvd
+    ,unsigned npbok,unsigned npb,unsigned np,const tdouble3 *pos
+    ,const typecode *code,const unsigned *idp,const tfloat4 *velrhop)=0;
 
  #ifdef _WITHGPU
-  virtual void CalculeGpu(double timestep,tuint3 ncells,tuint3 cellmin
-    ,const int2 *beginendcell,unsigned npbok,unsigned npb,unsigned np
-    ,const double2 *posxy,const double *posz,const typecode *code,const unsigned *idp,const float4 *velrhop,float3 *aux)=0;
+  virtual void CalculeGpu(double timestep,const StDivDataGpu &dvd
+    ,unsigned npbok,unsigned npb,unsigned np,const double2 *posxy,const double *posz
+    ,const typecode *code,const unsigned *idp,const float4 *velrhop,float3 *aux)=0;
  #endif
 };
 
@@ -243,15 +230,20 @@ public:
 
   void SetPoint(const tdouble3 &point){ ClearResult(); Point=point; }
 
-  void CalculeCpu(double timestep,tuint3 ncells,tuint3 cellmin
-    ,const unsigned *begincell,unsigned npbok,unsigned npb,unsigned np
-    ,const tdouble3 *pos,const typecode *code,const unsigned *idp,const tfloat4 *velrhop);
+  template<TpKernel tker> void CalculeCpuT(double timestep,const StDivDataCpu &dvd
+    ,unsigned npbok,unsigned npb,unsigned np,const tdouble3 *pos
+    ,const typecode *code,const unsigned *idp,const tfloat4 *velrhop);
+
+   void CalculeCpu(double timestep,const StDivDataCpu &dvd
+    ,unsigned npbok,unsigned npb,unsigned np,const tdouble3 *pos
+    ,const typecode *code,const unsigned *idp,const tfloat4 *velrhop);
 
  #ifdef _WITHGPU
-  void CalculeGpu(double timestep,tuint3 ncells,tuint3 cellmin
-    ,const int2 *beginendcell,unsigned npbok,unsigned npb,unsigned np
-    ,const double2 *posxy,const double *posz,const typecode *code,const unsigned *idp,const float4 *velrhop,float3 *aux);
+  void CalculeGpu(double timestep,const StDivDataGpu &dvd
+    ,unsigned npbok,unsigned npb,unsigned np,const double2 *posxy,const double *posz
+    ,const typecode *code,const unsigned *idp,const float4 *velrhop,float3 *aux);
  #endif
+
 };
 
 
@@ -296,8 +288,7 @@ protected:
   void Reset();
   void ClearResult(){ Result.Reset(); }
   void StoreResult();
-  float CalculeMassCpu(const tdouble3 &ptpos,const tint4 &nc
-    ,const tint3 &cellzero,unsigned cellfluid,const unsigned *begincell
+  template<TpKernel tker> float CalculeMassCpu(const tdouble3 &ptpos,const StDivDataCpu &dvd
     ,const tdouble3 *pos,const typecode *code,const tfloat4 *velrhop)const;
 
 public:
@@ -316,15 +307,20 @@ public:
 
   void SetPoints(const tdouble3 &point0,const tdouble3 &point2,double pointdp);
 
-  void CalculeCpu(double timestep,tuint3 ncells,tuint3 cellmin
-    ,const unsigned *begincell,unsigned npbok,unsigned npb,unsigned np
-    ,const tdouble3 *pos,const typecode *code,const unsigned *idp,const tfloat4 *velrhop);
+  template<TpKernel tker> void CalculeCpuT(double timestep,const StDivDataCpu &dvd
+    ,unsigned npbok,unsigned npb,unsigned np,const tdouble3 *pos
+    ,const typecode *code,const unsigned *idp,const tfloat4 *velrhop);
+
+   void CalculeCpu(double timestep,const StDivDataCpu &dvd
+    ,unsigned npbok,unsigned npb,unsigned np,const tdouble3 *pos
+    ,const typecode *code,const unsigned *idp,const tfloat4 *velrhop);
 
  #ifdef _WITHGPU
-  void CalculeGpu(double timestep,tuint3 ncells,tuint3 cellmin
-    ,const int2 *beginendcell,unsigned npbok,unsigned npb,unsigned np
-    ,const double2 *posxy,const double *posz,const typecode *code,const unsigned *idp,const float4 *velrhop,float3 *aux);
+  void CalculeGpu(double timestep,const StDivDataGpu &dvd
+    ,unsigned npbok,unsigned npb,unsigned np,const double2 *posxy,const double *posz
+    ,const typecode *code,const unsigned *idp,const float4 *velrhop,float3 *aux);
  #endif
+
 };
 
 
@@ -384,14 +380,14 @@ public:
   void SetHeight   (double height){          ClearResult(); Height=height; }
   void SetDistLimit(float distlimit){        ClearResult(); DistLimit=distlimit; }
 
-  void CalculeCpu(double timestep,tuint3 ncells,tuint3 cellmin
-    ,const unsigned *begincell,unsigned npbok,unsigned npb,unsigned np
-    ,const tdouble3 *pos,const typecode *code,const unsigned *idp,const tfloat4 *velrhop);
+   void CalculeCpu(double timestep,const StDivDataCpu &dvd
+    ,unsigned npbok,unsigned npb,unsigned np,const tdouble3 *pos
+    ,const typecode *code,const unsigned *idp,const tfloat4 *velrhop);
 
  #ifdef _WITHGPU
-  void CalculeGpu(double timestep,tuint3 ncells,tuint3 cellmin
-    ,const int2 *beginendcell,unsigned npbok,unsigned npb,unsigned np
-    ,const double2 *posxy,const double *posz,const typecode *code,const unsigned *idp,const float4 *velrhop,float3 *aux);
+  void CalculeGpu(double timestep,const StDivDataGpu &dvd
+    ,unsigned npbok,unsigned npb,unsigned np,const double2 *posxy,const double *posz
+    ,const typecode *code,const unsigned *idp,const float4 *velrhop,float3 *aux);
  #endif
 };
 
@@ -460,14 +456,18 @@ public:
   tfloat3     GetInitialCenter()const{ return(InitialCenter); }
   const StGaugeForceRes& GetResult()const{ return(Result); }
 
-  void CalculeCpu(double timestep,tuint3 ncells,tuint3 cellmin
-    ,const unsigned *begincell,unsigned npbok,unsigned npb,unsigned np
-    ,const tdouble3 *pos,const typecode *code,const unsigned *idp,const tfloat4 *velrhop);
+  template<TpKernel tker> void CalculeCpuT(double timestep,const StDivDataCpu &dvd
+    ,unsigned npbok,unsigned npb,unsigned np,const tdouble3 *pos
+    ,const typecode *code,const unsigned *idp,const tfloat4 *velrhop);
+
+  void CalculeCpu(double timestep,const StDivDataCpu &dvd
+    ,unsigned npbok,unsigned npb,unsigned np,const tdouble3 *pos
+    ,const typecode *code,const unsigned *idp,const tfloat4 *velrhop);
 
  #ifdef _WITHGPU
-  void CalculeGpu(double timestep,tuint3 ncells,tuint3 cellmin
-    ,const int2 *beginendcell,unsigned npbok,unsigned npb,unsigned np
-    ,const double2 *posxy,const double *posz,const typecode *code,const unsigned *idp,const float4 *velrhop,float3 *aux);
+  void CalculeGpu(double timestep,const StDivDataGpu &dvd
+    ,unsigned npbok,unsigned npb,unsigned np,const double2 *posxy,const double *posz
+    ,const typecode *code,const unsigned *idp,const float4 *velrhop,float3 *aux);
  #endif
 };
 

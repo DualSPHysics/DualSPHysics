@@ -19,6 +19,7 @@
 /// \file JGaugeSystem.cpp \brief Implements the class \ref JGaugeSystem.
 
 #include "JDsGaugeSystem.h"
+#include "FunSphKernel.h"
 #include "JLog2.h"
 #include "JXml.h"
 #include "JAppInfo.h"
@@ -63,14 +64,12 @@ JGaugeSystem::~JGaugeSystem(){
 //==============================================================================
 void JGaugeSystem::Reset(){
   Configured=false;
-  Simulate2D=false;
-  Simulate2DPosY=0;
+  CSP=CteSphNull();
   Symmetry=false;
-  TimeMax=TimePart=Dp=0;
+  TimeMax=TimePart=0;
   DomPosMin=DomPosMax=TDouble3(0);
   Scell=0;
-  Hdiv=0;
-  H=MassFluid=MassBound=Cs0=CteB=Gamma=RhopZero=0;
+  ScellDiv=0;
   ResetCfgDefault();
   for(unsigned c=0;c<Gauges.size();c++)delete Gauges[c];
   Gauges.clear();
@@ -96,28 +95,22 @@ void JGaugeSystem::ResetCfgDefault(){
 //==============================================================================
 /// Configures object.
 //==============================================================================
-void JGaugeSystem::Config(bool simulate2d,double simulate2dposy,bool symmetry
-  ,double timemax,double timepart
-  ,double dp,tdouble3 posmin,tdouble3 posmax,float scell,unsigned hdiv,float h
-  ,float massfluid,float massbound,float cs0,float cteb,float gamma,float rhopzero)
+void JGaugeSystem::Config(const StCteSph & csp,bool symmetry,double timemax,double timepart
+  ,tdouble3 posmin,tdouble3 posmax,float scell,int scelldiv)
 {
-  Simulate2D=simulate2d;
-  Simulate2DPosY=simulate2dposy;
+  CSP=csp;
+  //-Wendland kernel is used when Cubic is selected.
+  if(CSP.tkernel==KERNEL_Cubic){
+    Log->PrintfWarning("The kernel Cubic Spline is not available in GaugeSystem, so kernel Wendland is used.");
+    if(!CSP.kwend.awen || !CSP.kwend.bwen)Run_Exceptioon("Constants of kernel Wendland are not defined.");
+  }
   Symmetry=symmetry;
   TimeMax=timemax;
   TimePart=timepart;
-  Dp=dp;
   DomPosMin=posmin;
   DomPosMax=posmax;
   Scell=scell;
-  Hdiv=int(hdiv);
-  H=h;
-  MassFluid=massfluid;
-  MassBound=massbound;
-  Cs0=cs0;
-  CteB=cteb;
-  Gamma=gamma;
-  RhopZero=rhopzero;
+  ScellDiv=scelldiv;
   Configured=true;
 }
 
@@ -137,7 +130,7 @@ void JGaugeSystem::LoadLinePoints(double coefdp,const tdouble3 &point1,const tdo
   ,std::vector<tdouble3> &points,const std::string &ref)const
 {
   const double dis=fgeo::PointsDist(point1,point2);
-  const double dp=Dp*coefdp;
+  const double dp=CSP.dp*coefdp;
   if(dis<dp)Run_ExceptioonFile("The line length is less than the indicated dp.",ref);
   unsigned count=unsigned(dis/dp);
   if(dis-(dp*count)>=dp*0.1)count++;
@@ -235,8 +228,8 @@ void JGaugeSystem::ReadXml(const JXml *sxml,TiXmlElement* lis,const JSphMk* mkin
           float masslimit=0;
           switch(sxml->CheckElementAttributes(ele,"masslimit","value coef",true,true)){
             case 1:  masslimit=sxml->ReadElementFloat(ele,"masslimit","value");           break;
-            case 2:  masslimit=MassFluid*sxml->ReadElementFloat(ele,"masslimit","coef");  break;
-            case 0:  masslimit=MassFluid*(Simulate2D? 0.4f: 0.5f);                        break;
+            case 2:  masslimit=CSP.massfluid*sxml->ReadElementFloat(ele,"masslimit","coef");  break;
+            case 0:  masslimit=CSP.massfluid*(CSP.simulate2d? 0.4f: 0.5f);                        break;
           }
           if(masslimit<=0)Run_ExceptioonFile(fun::PrintStr("The masslimit (%f) is invalid.",masslimit),sxml->ErrGetFileRow(ele));
           //-Reads pointdp.
@@ -244,7 +237,7 @@ void JGaugeSystem::ReadXml(const JXml *sxml,TiXmlElement* lis,const JSphMk* mkin
           switch(sxml->CheckElementAttributes(ele,"pointdp","value coefdp",true,true)){
             case 0:
             case 1:  pointdp=sxml->ReadElementFloat(ele,"pointdp","value");      break;
-            case 2:  pointdp=Dp*sxml->ReadElementFloat(ele,"pointdp","coefdp");  break;
+            case 2:  pointdp=CSP.dp*sxml->ReadElementFloat(ele,"pointdp","coefdp");  break;
           }
           if(pointdp<=0)Run_ExceptioonFile(fun::PrintStr("The pointdp (%f) is invalid.",pointdp),sxml->ErrGetFileRow(ele));
           //-Reads point0 and point2.
@@ -261,8 +254,8 @@ void JGaugeSystem::ReadXml(const JXml *sxml,TiXmlElement* lis,const JSphMk* mkin
           switch(sxml->CheckElementAttributes(ele,"distlimit","value coefdp coefh",true,true)){
             case 0:
             case 1:  distlimit=sxml->ReadElementFloat(ele,"distlimit","value");             break;
-            case 2:  distlimit=float(Dp*sxml->ReadElementFloat(ele,"distlimit","coefdp"));  break;
-            case 3:  distlimit=float(H *sxml->ReadElementFloat(ele,"distlimit","coefh"));   break;
+            case 2:  distlimit=float(CSP.dp*sxml->ReadElementFloat(ele,"distlimit","coefdp"));  break;
+            case 3:  distlimit=float(CSP.kernelh *sxml->ReadElementFloat(ele,"distlimit","coefh"));   break;
           }
           if(distlimit<=0)Run_ExceptioonFile(fun::PrintStr("The distlimit (%f) is invalid.",distlimit),sxml->ErrGetFileRow(ele));
           gau=AddGaugeMaxZ(name,cfg.computestart,cfg.computeend,cfg.computedt,pt0,height,distlimit);
@@ -291,7 +284,7 @@ JGaugeVelocity* JGaugeSystem::AddGaugeVel(std::string name,double computestart
   if(GetGaugeIdx(name)!=UINT_MAX)Run_Exceptioon(fun::PrintStr("The name \'%s\' already exists.",name.c_str()));
   //-Creates object.
   JGaugeVelocity* gau=new JGaugeVelocity(GetCount(),name,point,Cpu,Log);
-  gau->Config(Simulate2D,Symmetry,DomPosMin,DomPosMax,Scell,Hdiv,H,MassFluid,MassBound,Cs0,CteB,Gamma,RhopZero);
+  gau->Config(CSP,Symmetry,DomPosMin,DomPosMax,Scell,ScellDiv);
   gau->ConfigComputeTiming(computestart,computeend,computedt);
   //-Uses common configuration.
   gau->SetSaveVtkPart(CfgDefault.savevtkpart);
@@ -308,10 +301,10 @@ JGaugeSwl* JGaugeSystem::AddGaugeSwl(std::string name,double computestart
   ,tdouble3 point0,tdouble3 point2,double pointdp,float masslimit)
 {
   if(GetGaugeIdx(name)!=UINT_MAX)Run_Exceptioon(fun::PrintStr("The name \'%s\' already exists.",name.c_str()));
-  if(masslimit<=0)masslimit=MassFluid*(Simulate2D? 0.4f: 0.5f);
+  if(masslimit<=0)masslimit=CSP.massfluid*(CSP.simulate2d? 0.4f: 0.5f);
   //-Creates object.
   JGaugeSwl* gau=new JGaugeSwl(GetCount(),name,point0,point2,pointdp,masslimit,Cpu,Log);
-  gau->Config(Simulate2D,Symmetry,DomPosMin,DomPosMax,Scell,Hdiv,H,MassFluid,MassBound,Cs0,CteB,Gamma,RhopZero);
+  gau->Config(CSP,Symmetry,DomPosMin,DomPosMax,Scell,ScellDiv);
   gau->ConfigComputeTiming(computestart,computeend,computedt);
   //-Uses common configuration.
   gau->SetSaveVtkPart(CfgDefault.savevtkpart);
@@ -329,7 +322,7 @@ JGaugeMaxZ* JGaugeSystem::AddGaugeMaxZ(std::string name,double computestart
   if(GetGaugeIdx(name)!=UINT_MAX)Run_Exceptioon(fun::PrintStr("The name \'%s\' already exists.",name.c_str()));
   //-Creates object.
   JGaugeMaxZ* gau=new JGaugeMaxZ(GetCount(),name,point0,height,distlimit,Cpu,Log);
-  gau->Config(Simulate2D,Symmetry,DomPosMin,DomPosMax,Scell,Hdiv,H,MassFluid,MassBound,Cs0,CteB,Gamma,RhopZero);
+  gau->Config(CSP,Symmetry,DomPosMin,DomPosMax,Scell,ScellDiv);
   gau->ConfigComputeTiming(computestart,computeend,computedt);
   //-Uses common configuration.
   gau->SetSaveVtkPart(CfgDefault.savevtkpart);
@@ -357,7 +350,7 @@ JGaugeForce* JGaugeSystem::AddGaugeForce(std::string name,double computestart
   const tfloat3 center=ToTFloat3((mkb->GetPosMin()+mkb->GetPosMax())/TDouble3(2));
   //-Creates object.
   JGaugeForce* gau=new JGaugeForce(GetCount(),name,mkbound,typeparts,idbegin,count,code,center,Cpu,Log);
-  gau->Config(Simulate2D,Symmetry,DomPosMin,DomPosMax,Scell,Hdiv,H,MassFluid,MassBound,Cs0,CteB,Gamma,RhopZero);
+  gau->Config(CSP,Symmetry,DomPosMin,DomPosMax,Scell,ScellDiv);
   gau->ConfigComputeTiming(computestart,computeend,computedt);
   //-Uses common configuration.
   gau->SetSaveVtkPart(CfgDefault.savevtkpart);
@@ -449,15 +442,15 @@ JGaugeItem* JGaugeSystem::GetGauge(unsigned c)const{
 //==============================================================================
 /// Updates results on gauges (on CPU).
 //==============================================================================
-void JGaugeSystem::CalculeCpu(double timestep,bool svpart,tuint3 ncells
-  ,tuint3 cellmin,const unsigned *begincell,unsigned npbok,unsigned npb,unsigned np
-  ,const tdouble3 *pos,const typecode *code,const unsigned *idp,const tfloat4 *velrhop)
+void JGaugeSystem::CalculeCpu(double timestep,bool svpart,const StDivDataCpu &dvd
+  ,unsigned npbok,unsigned npb,unsigned np,const tdouble3 *pos
+  ,const typecode *code,const unsigned *idp,const tfloat4 *velrhop)
 {
   const unsigned ng=GetCount();
   for(unsigned cg=0;cg<ng;cg++){
     JGaugeItem* gau=Gauges[cg];
     if(gau->Update(timestep)){
-      gau->CalculeCpu(timestep,ncells,cellmin,begincell,npbok,npb,np,pos,code,idp,velrhop);
+      gau->CalculeCpu(timestep,dvd,npbok,npb,np,pos,code,idp,velrhop);
     }
   }
 }
@@ -466,9 +459,9 @@ void JGaugeSystem::CalculeCpu(double timestep,bool svpart,tuint3 ncells
 //==============================================================================
 /// Updates results on gauges (on GPU).
 //==============================================================================
-void JGaugeSystem::CalculeGpu(double timestep,bool svpart,tuint3 ncells
-  ,tuint3 cellmin,const int2 *beginendcell,unsigned npbok,unsigned npb,unsigned np
-  ,const double2 *posxy,const double *posz,const typecode *code,const unsigned *idp,const float4 *velrhop)
+void JGaugeSystem::CalculeGpu(double timestep,bool svpart,const StDivDataGpu &dvd
+  ,unsigned npbok,unsigned npb,unsigned np,const double2 *posxy,const double *posz
+  ,const typecode *code,const unsigned *idp,const float4 *velrhop)
 {
   //-Allocates GPU memory.
   if(!AuxMemoryg)fcuda::Malloc(&AuxMemoryg,1);
@@ -477,7 +470,7 @@ void JGaugeSystem::CalculeGpu(double timestep,bool svpart,tuint3 ncells
   for(unsigned cg=0;cg<ng;cg++){
     JGaugeItem* gau=Gauges[cg];
     if(gau->Update(timestep)){
-      gau->CalculeGpu(timestep,ncells,cellmin,beginendcell,npbok,npb,np,posxy,posz,code,idp,velrhop,AuxMemoryg);
+      gau->CalculeGpu(timestep,dvd,npbok,npb,np,posxy,posz,code,idp,velrhop,AuxMemoryg);
     }
   }
 

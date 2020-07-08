@@ -35,13 +35,10 @@ class JLog2;
 /// Implements a set of functions and CUDA kernels to compute operations of the Neighbour List.
 namespace cudiv{
 
-inline float3 Float3(const tfloat3& v){ float3 p={v.x,v.y,v.z}; return(p); }
-inline float3 Float3(float x,float y,float z){ float3 p={x,y,z}; return(p); }
 inline tfloat3 ToTFloat3(const float3& v){ return(TFloat3(v.x,v.y,v.z)); }
 
 void Sort(unsigned* keys,unsigned* values,unsigned size,bool stable);
 
-dim3 GetGridSize(unsigned n,unsigned blocksize);
 void ReduPosLimits(unsigned nblocks,float *aux,tfloat3 &pmin,tfloat3 &pmax,JLog2 *log);
 
 

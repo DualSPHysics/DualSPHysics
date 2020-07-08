@@ -16,7 +16,7 @@
  You should have received a copy of the GNU Lesser General Public License along with DualSPHysics. If not, see <http://www.gnu.org/licenses/>. 
 */
 
-/// \file JCellDivDatacpu.h \brief Declares structures and implements inline functions for neighborhood search.
+/// \file JCellDivDataCpu.h \brief Declares structures and implements inline functions for neighborhood search.
 
 #ifndef _JCellDivDataCpu_
 #define _JCellDivDataCpu_
@@ -25,7 +25,7 @@
 
 ///Structure with data of cell division for neighborhood search on GPU.
 typedef struct{
-  int hdiv; //hdiv=(cellmode==CELLMODE_H? 2: 1)
+  int scelldiv; ///<Value to divide KernelSize (1 or 2).
   tint4 nc;
   unsigned cellfluid;
   tint3 cellzero;
@@ -34,6 +34,33 @@ typedef struct{
   unsigned domcellcode;
   tdouble3 domposmin;
 }StDivDataCpu;
+
+//==============================================================================
+///Returns empty StDivDataCpu structure.
+//==============================================================================
+inline StDivDataCpu DivDataCpuNull(){
+  StDivDataCpu c={0,TInt4(0),0,TInt3(0),NULL,0,0,TDouble3(0)};
+  return(c);
+}
+
+//==============================================================================
+/// Returns structure with data for neighborhood search on Single-GPU.
+//==============================================================================
+inline StDivDataCpu MakeDivDataCpu(int scelldiv,const tuint3 &ncells,const tuint3 &cellmin
+  ,const unsigned* begincell,float scell,unsigned domcellcode,const tdouble3 &domposmin)
+{
+  StDivDataCpu ret;
+  ret.scelldiv=scelldiv;
+  ret.nc=TInt4(int(ncells.x),int(ncells.y),int(ncells.z),int(ncells.x*ncells.y));
+  ret.cellfluid=ret.nc.w*ret.nc.z+1;
+  ret.cellzero=ToTInt3(cellmin);
+  ret.begincell=begincell;
+  ret.scell=scell;
+  ret.domcellcode=domcellcode;
+  ret.domposmin=domposmin;
+  return(ret);
+}
+
 
 ///Structure with data for neighborhood search.
 typedef struct{

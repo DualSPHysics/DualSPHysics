@@ -22,7 +22,7 @@
 //:# - Implementacion inicial. (01-12-2019)
 //:#############################################################################
 
-/// \file FunctionsBasic_iker.cu \brief Implements basic functions for CUDA files.
+/// \file FunctionsBasic_iker.h \brief Implements basic functions for CUDA files.
 
 #include "TypesDef.h"
 #include <cuda_runtime_api.h>
@@ -52,21 +52,16 @@ inline dim3 GetSimpleGridSize(unsigned n,unsigned blocksize){
   return(dim3(nb,1,1));
 }
 
-//------------------------------------------------------------------------------
-/// Returns pressure starting from density using equation of state 
-/// based on [Monaghan, 1994].
-//------------------------------------------------------------------------------
-__device__ float ComputePress(float rhop,float ovrhop0,float b,float gamma){ 
-  return(b*(pow(rhop*ovrhop0,gamma)-1.0f));
-}
-
-//<vs_praticalss_ini>
-//------------------------------------------------------------------------------
-/// Returns pressure starting from density using equation of state 
-/// based on [Morris et al., 1997].
-//------------------------------------------------------------------------------
-__device__ float ComputePressMorris(float rhop,float rhop0,float cs0,float press0){ 
-  return(cs0*cs0*(rhop-rhop0)+press0);
-}
-//<vs_praticalss_end>
+////==============================================================================
+///// Returns the dimensions of gridsize according to parameters.
+///// Devuelve tamanho de gridsize segun parametros.
+////==============================================================================
+//inline dim3 GetGridSize_Old(unsigned n,unsigned blocksize){
+//  dim3 sgrid;//=dim3(1,2,3);
+//  unsigned nb=unsigned(n+blocksize-1)/blocksize; //-Total number of blocks to execute.
+//  sgrid.x=(nb<=65535? nb: unsigned(sqrt(float(nb))));
+//  sgrid.y=(nb<=65535? 1: unsigned((nb+sgrid.x-1)/sgrid.x));
+//  sgrid.z=1;
+//  return(sgrid);
+//}
 

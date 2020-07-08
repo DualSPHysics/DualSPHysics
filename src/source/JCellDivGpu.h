@@ -42,10 +42,12 @@ protected:
   const bool Stable;
   const bool Floating;
   const byte PeriActive;
-  const TpCellMode CellMode;    ///<Mode of cell division. | Modo de division en celdas.
-  const unsigned Hdiv;          ///<Value for those divided in DosH. | Valor por el que se divide a DosH.
-  const float Scell,OvScell;
-  const float Dosh;
+  const TpCellMode CellMode;  ///<Cell division mode.
+  const int ScellDiv;         ///<Value to divide KernelSize (1 or 2).
+  const float Scell;          ///<Cell size: KernelSize/ScellDiv (KernelSize or KernelSize/2).
+  const float OvScell;        ///<OvScell=1/Scell
+  const float KernelSize2;    ///<Maximum interaction distance squared (KernelSize^2).
+  const float PosCellSize;    ///<Size of cells used for coding PosCell (it is usually KernelSize).
   const tdouble3 Map_PosMin,Map_PosMax,Map_PosDif;
   const tuint3 Map_Cells;
   const unsigned CaseNbound,CaseNfixed,CaseNpb;
@@ -137,8 +139,8 @@ protected:
   unsigned CellSize(unsigned cell)const{ int2 v=CellBeginEnd(cell); return(unsigned(v.y-v.x)); }
 
 public:
-  JCellDivGpu(bool stable,bool floating,byte periactive
-    ,TpCellMode cellmode,float scell,float dosh,tdouble3 mapposmin,tdouble3 mapposmax,tuint3 mapcells
+  JCellDivGpu(bool stable,bool floating,byte periactive,float kernelsize2,float poscellsize
+    ,TpCellMode cellmode,float scell,tdouble3 mapposmin,tdouble3 mapposmax,tuint3 mapcells
     ,unsigned casenbound,unsigned casenfixed,unsigned casenpb,JLog2 *log,std::string dirout
     ,bool allocfullnct=true,float overmemorynp=CELLDIV_OVERMEMORYNP,word overmemorycells=CELLDIV_OVERMEMORYCELLS);
   ~JCellDivGpu();
@@ -157,7 +159,7 @@ public:
   float* GetAuxMem(unsigned size);
 
   TpCellMode GetCellMode()const{ return(CellMode); }
-  unsigned GetHdiv()const{ return(Hdiv); }
+  int GetScellDiv()const{ return(ScellDiv); }
   float GetScell()const{ return(Scell); }
 //:  tuint3 GetDomCells()const{ return(DomCells); };
 //:  unsigned GetCellCode()const{ return(DomCellCode); };

@@ -27,7 +27,7 @@
 
 
 namespace cusphs{
-#include "FunctionsBasic_iker.cu"
+#include "FunctionsBasic_iker.h"
 
 
 //##############################################################################
@@ -37,7 +37,7 @@ namespace cusphs{
 /// Update PosCellg[] according to current position of particles.
 /// Actualiza PosCellg[] segun la posicion de las particulas.
 //------------------------------------------------------------------------------
-__global__ void KerUpdatePosCell(unsigned np,double3 posmin,float dosh
+__global__ void KerUpdatePosCell(unsigned np,double3 posmin,float poscellsize
   ,const double2 *posxy,const double *posz,float4 *poscell)
 {
   const unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
@@ -46,12 +46,12 @@ __global__ void KerUpdatePosCell(unsigned np,double3 posmin,float dosh
     const double dx=rxy.x-posmin.x;
     const double dy=rxy.y-posmin.y;
     const double dz=posz[p]-posmin.z;
-    const unsigned cx=unsigned(dx/dosh);
-    const unsigned cy=unsigned(dy/dosh);
-    const unsigned cz=unsigned(dz/dosh);
-    const float px=float(dx-(double(dosh)*cx));
-    const float py=float(dy-(double(dosh)*cy));
-    const float pz=float(dz-(double(dosh)*cz));
+    const unsigned cx=unsigned(dx/poscellsize);
+    const unsigned cy=unsigned(dy/poscellsize);
+    const unsigned cz=unsigned(dz/poscellsize);
+    const float px=float(dx-(double(poscellsize)*cx));
+    const float py=float(dy-(double(poscellsize)*cy));
+    const float pz=float(dz-(double(poscellsize)*cz));
     const float pw=__uint_as_float(CEL_Code(cx,cy,cz));
     poscell[p]=make_float4(px,py,pz,pw);
   }
@@ -60,11 +60,11 @@ __global__ void KerUpdatePosCell(unsigned np,double3 posmin,float dosh
 /// Update PosCellg[] according to current position of particles.
 /// Actualiza PosCellg[] segun la posicion de las particulas.
 //==============================================================================
-void UpdatePosCell(unsigned np,tdouble3 posmin,float dosh
+void UpdatePosCell(unsigned np,tdouble3 posmin,float poscellsize
   ,const double2 *posxy,const double *posz,float4 *poscell,cudaStream_t stm)
 {
   const dim3 sgrid=GetSimpleGridSize(np,SPHBSIZE);
-  if(np)KerUpdatePosCell <<<sgrid,SPHBSIZE,0,stm>>> (np,Double3(posmin),dosh,posxy,posz,poscell);
+  if(np)KerUpdatePosCell <<<sgrid,SPHBSIZE,0,stm>>> (np,Double3(posmin),poscellsize,posxy,posz,poscell);
 }
 
 //------------------------------------------------------------------------------

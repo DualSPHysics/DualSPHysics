@@ -21,7 +21,7 @@
 #include "JDsAccInput_ker.h"
 
 namespace cuaccin{
-#include "FunctionsBasic_iker.cu"
+#include "FunctionsBasic_iker.h"
 
 //##############################################################################
 //# Kernels for external forces (JDsAccInput).

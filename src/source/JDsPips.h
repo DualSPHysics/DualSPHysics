@@ -31,8 +31,10 @@
 #include "JObject.h"
 #include "DualSphDef.h"
 #include "JCellDivDataCpu.h"
+
 #ifdef _WITHGPU
-  #include "JCellDivDataGpu.h"
+#include "JCellDivDataGpu.h"
+#include <cuda_runtime_api.h>
 #endif
 
 #include <string>
@@ -96,12 +98,12 @@ public:
   void ComputeCpu(unsigned nstep,double tstep,double tsim
     ,const StCteSph &csp,int ompthreads
     ,unsigned np,unsigned npb,unsigned npbok
-    ,StDivDataCpu dvd,const unsigned *dcell,const tdouble3 *pos);
+    ,const StDivDataCpu &dvd,const unsigned *dcell,const tdouble3 *pos);
 
 #ifdef _WITHGPU
   void ComputeGpu(unsigned nstep,double tstep,double tsim
     ,unsigned np,unsigned npb,unsigned npbok
-    ,StDivDataGpu dvd,const unsigned *dcell,const float4 *poscell
+    ,const StDivDataGpu &dvd,const unsigned *dcell,const float4 *poscell
     ,unsigned sauxmem,unsigned *auxmem);
 #endif
 

@@ -131,6 +131,8 @@ void JSphGpu::InitVars(){
   memset(&BlockSizes,0,sizeof(StBlockSizes));
   BlockSizesStr="";
 
+  DivData=DivDataGpuNull();
+
   Np=Npb=NpbOk=0;
   NpbPer=NpfPer=0;
 
@@ -525,22 +527,22 @@ void JSphGpu::ConstantDataUp(){
   memset(&ctes,0,sizeof(StCteInteraction));
   ctes.nbound=CaseNbound;
   ctes.massb=MassBound; ctes.massf=MassFluid;
-  ctes.fourh2=Fourh2; ctes.h=H;
+  ctes.kernelh=KernelH;
+  ctes.kernelsize2=KernelSize2; 
+  ctes.poscellsize=PosCellSize; 
   //-Wendland constants are always computed since this kernel is used in some parts where other kernels are not defined (e.g. mDBC, inlet/outlet, boundcorr...).
-  ctes.awen=Awen; ctes.bwen=Bwen;
+  ctes.awen=KWend.awen; ctes.bwen=KWend.bwen;
   //-Copies constants for other kernels.
   if(TKernel==KERNEL_Cubic){
-    ctes.cubic_a1=CubicCte.a1; ctes.cubic_a2=CubicCte.a2; ctes.cubic_aa=CubicCte.aa; ctes.cubic_a24=CubicCte.a24;
-    ctes.cubic_c1=CubicCte.c1; ctes.cubic_c2=CubicCte.c2; ctes.cubic_d1=CubicCte.d1; ctes.cubic_odwdeltap=CubicCte.od_wdeltap;
+    ctes.cubic_a1=KCubic.a1; ctes.cubic_a2=KCubic.a2; ctes.cubic_aa=KCubic.aa; ctes.cubic_a24=KCubic.a24;
+    ctes.cubic_c1=KCubic.c1; ctes.cubic_c2=KCubic.c2; ctes.cubic_d1=KCubic.d1; ctes.cubic_odwdeltap=KCubic.od_wdeltap;
   }
-  else if(TKernel==KERNEL_WendlandC6){  //<vs_praticalsskq>
-    ctes.awc6=Awc6; ctes.bwc6=Bwc6;     //<vs_praticalsskq>
-  }                                     //<vs_praticalsskq>
-  if(TBoundary==BC_MDBC){ ctes.awen=Awen; ctes.bwen=Bwen; } //<vs_mddbc>
   ctes.cs0=float(Cs0); ctes.eta2=Eta2;
-  ctes.ddt2h=DDT2h;
+  ctes.ddtkh=DDTkh;
   ctes.ddtgz=DDTgz;
-  ctes.scell=Scell; ctes.dosh=Dosh; ctes.dp=float(Dp);
+  ctes.scell=Scell; 
+  ctes.kernelsize=KernelSize;
+  ctes.dp=float(Dp);
   ctes.cteb=CteB; ctes.gamma=Gamma;
   ctes.rhopzero=RhopZero;
   ctes.ovrhopzero=1.f/RhopZero;
@@ -669,7 +671,7 @@ void JSphGpu::SelecDevice(int gpuid){
 void JSphGpu::ConfigBlockSizes(bool usezone,bool useperi){
   Log->Print(" ");
   BlockSizesStr="";
-  if(CellMode==CELLMODE_2H || CellMode==CELLMODE_H){
+  if(CellMode==CELLMODE_Full || CellMode==CELLMODE_Half){
     const bool lamsps=(TVisco==VISCO_LaminarSPS);
     BlockSizes.forcesbound=BlockSizes.forcesfluid=BlockSizes.forcesdem=BSIZE_FORCES;
     //-Collects kernel information.
@@ -1014,9 +1016,9 @@ void JSphGpu::ComputeSymplecticCorr(double dt){
 double JSphGpu::DtVariable(bool final){
   //-dt1 depends on force per unit mass.
   const double acemax=sqrt(double(AceMax));
-  const double dt1=(AceMax? (sqrt(double(H)/AceMax)): DBL_MAX); 
+  const double dt1=(AceMax? (sqrt(double(KernelH)/AceMax)): DBL_MAX); 
   //-dt2 combines the Courant and the viscous time-step controls.
-  const double dt2=double(H)/(max(Cs0,VelMax*10.)+double(H)*ViscDtMax);
+  const double dt2=double(KernelH)/(max(Cs0,VelMax*10.)+double(KernelH)*ViscDtMax);
   //-dt new value of time step.
   double dt=double(CFLnumber)*min(dt1,dt2);
   if(FixedDt)dt=FixedDt->GetDt(TimeStep,dt);

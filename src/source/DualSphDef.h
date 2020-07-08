@@ -24,14 +24,11 @@
 #include "TypesDef.h"
 #include "JParticlesDef.h"
 #include "JPeriodicDef.h"
+#include "FunSphKernelDef.h"
 #include "OmpDefs.h"
 #include <algorithm>
 
-//<vs_praticalss_ini>
-//#define PRASS1_SAVEPRESS   ///<Compiles code to save pressure.
-//#define PRASS2_EOS_MORRIS  ///<Compiles code to use equation of state Morris instead of the original.
-//#define PRASS3_WENDLANDC6  ///<Compiles code to use WendlandC6 kernel.
-//<vs_praticalss_end>
+//#define DISABLE_KERNELS_EXTRA  ///<Compiles Wendland kernel and ignores the rest of the SPH kernels.
 
 //#define DISABLE_TIMERS     ///<Compiles without timers. | Compilado sin timers.
 //#define DISABLE_BSMODES    ///<compiles without advanced BlockSize modes.
@@ -266,10 +263,6 @@ typedef struct{ //(DEM)
   float restitu;      ///<Restitution Coefficient (units:-).
 }StDemData;
 
-///Structure with SPH constants values.
-typedef struct{
-  float fourh2;       ///<Constant related to H (Fourh2=H*H*4).
-}StCteSph;
 
 ///Structure that stores the maximum values (or almost) achieved during the simulation.
 typedef struct StrMaxNumbers{
@@ -324,7 +317,6 @@ typedef enum{
 
 ///Types of kernel function.
 typedef enum{ 
-  KERNEL_WendlandC6=3, ///<WendlandC6 kernel (5th order).  //<vs_praticalsskq>
   KERNEL_Wendland=2,   ///<Wendland kernel.
   KERNEL_Cubic=1,      ///<Cubic Spline kernel.
   KERNEL_None=0 
@@ -376,6 +368,46 @@ typedef enum{
   SHIFT_None=0              ///<Shifting is not applied.
 }TpShifting; 
 
+
+
+///Structure with main SPH constants and configurations.
+typedef struct{
+  bool simulate2d;          ///<Toggles 2D simulation (cancels forces in Y axis).
+  double simulate2dposy;    ///<Y value in 2D simulations.
+
+  TpKernel tkernel;               ///<Kernel type: Cubic or Wendland.
+  fsph::StKCubicCte      kcubic;  ///<Constants for the Cubic Spline kernel.
+  fsph::StKWendlandCte   kwend;   ///<Constants for the Wendland kernel.
+
+  float kernelh;            ///<The smoothing length of SPH kernel [m].
+  float cteb;               ///<Constant used in the state equation [Pa].
+  float gamma;              ///<Politropic constant for water used in the state equation.
+  float rhopzero;           ///<Reference density of the fluid [kg/m3].
+  double dp;                ///<Initial distance between particles [m].
+  float massfluid;          ///<Reference mass of the fluid particle [kg].
+  float massbound;          ///<Reference mass of the general boundary particle [kg].
+  tfloat3 gravity;          ///<Gravitational acceleration [m/s^2].
+
+  //-Constants for computation (computed starting from previous constants).
+  float kernelsize;         ///<Maximum interaction distance between particles (KernelK*KernelH).
+  float kernelsize2;        ///<Maximum interaction distance squared (KernelSize^2).
+  double cs0;               ///<Speed of sound at the reference density.
+  float eta2;               ///<Constant related to H (Eta2=(h*0.1)*(h*0.1)).
+  float spssmag;            ///<Smagorinsky constant used in SPS turbulence model.
+  float spsblin;            ///<Blin constant used in the SPS turbulence model.
+  float ddtkh;              ///<Constant for DDT1 & DDT2. DDTkh=DDTValue*KernelSize
+  float ddtgz;              ///<Constant for DDT2.        DDTgz=RhopZero*Gravity.z/CteB
+}StCteSph;
+
+///Returns empty StCteSph structure.
+inline StCteSph CteSphNull(){
+  StCteSph c={false,0,KERNEL_None
+    ,{0,0,0,0,0,0,0,0}
+    ,{0,0}
+    ,0,0,0,0,0,0,0,{0,0,0},0,0,0,0,0,0,0,0};
+  return(c);
+}
+
 ///Interaction mode for floatings.
 typedef enum{ 
   FTMODE_None=0,            ///<There are not floatings.
@@ -423,15 +455,15 @@ inline void ApplyConstraints(byte constraints,tfloat3 &linear,tfloat3 &angular){
 ///Modes of cells division.
 typedef enum{ 
    CELLMODE_None=0
-  ,CELLMODE_2H=1      ///<Cells of size 2h.
-  ,CELLMODE_H=2       ///<Cells of size h.
+  ,CELLMODE_Full=1    ///<Cells of size KernelSize (maximum interaction distance).
+  ,CELLMODE_Half=2    ///<Cells of size KernelSize/2.
 }TpCellMode; 
 
 ///Returns the name of the CellMode in text format.
 inline const char* GetNameCellMode(TpCellMode cellmode){
   switch(cellmode){
-    case CELLMODE_2H:      return("2H");
-    case CELLMODE_H:       return("H");
+    case CELLMODE_Full:   return("Full");
+    case CELLMODE_Half:   return("Half");
   }
   return("???");
 }
@@ -475,7 +507,7 @@ inline const char* GetNameDivision(TpMgDivMode axis){
 #define PC__MaxCellz(cc) ((0xffffffff<<(cc&31))>>(cc&31))           //-Coordenada Z de celda maxima. | Maximum Z coordinate of the cell.
 
 
-///Codification of global cells (size=dosh) according to the position for particle interaction usin pos-cell method.
+///Codification of global cells (of size PosCellSize) according to the position for particle interaction using pos-cell method.
 //#define CEL_CONFIG_USER //-Configuration defined by user for special simulation cases.
 #ifdef CEL_CONFIG_USER
   // Place reserved for configuration defined by user for special simulation cases.

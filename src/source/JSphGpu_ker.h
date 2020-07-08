@@ -41,16 +41,17 @@ typedef struct{
   unsigned nbound;
   float massb;              ///<Reference mass of the general boundary particle [kg].
   float massf;              ///<Reference mass of the fluid particle [kg].
-  float h;                  ///<The smoothing length [m].
-  float fourh2;             ///<Constant related to H (Fourh2=H*H*4).
+  float kernelh;            ///<The smoothing length of SPH kernel [m].
+  float kernelsize2;        ///<Maximum interaction distance squared (KernelSize^2).
+  float poscellsize;        ///<Size of cells used for coding PosCell (it is usually KernelSize).
   float awen;               ///<Wendland kernel constant (awen) to compute wab.
   float bwen;               ///<Wendland kernel constant (bwen) to compute fac (kernel derivative).
   float cs0;                ///<Speed of sound at the reference density.
   float eta2;               ///<Constant related to H (Eta2=(h*0.1)*(h*0.1)).
-  float ddt2h;              ///<Constant for DDT1 & DDT2. ddt2h=DDTValue*2*H
+  float ddtkh;              ///<Constant for DDT1 & DDT2. DDTkh=DDTValue*KernelSize
   float ddtgz;              ///<Constant for DDT2.        ddtgz=RhopZero*Gravity.z/CteB
-  float scell;              ///<Cell size: 2h or h.
-  float dosh;               ///<Maximum interaction distance between particles (Dosh=H+H) [m].
+  float scell;              ///<Cell size: KernelSize/ScellDiv (KernelSize or KernelSize/2).
+  float kernelsize;         ///<Maximum interaction distance between particles (KernelK*KernelH).
   float dp;                 ///<Initial distance between particles [m].
   float cteb;               ///<Constant used in the state equation [Pa].
   float gamma;              ///<Politropic constant for water used in the state equation.
@@ -71,8 +72,6 @@ typedef struct{
   double domposminx,domposminy,domposminz;
   //-Ctes. of Cubic Spline kernel.
   float cubic_a1,cubic_a2,cubic_aa,cubic_a24,cubic_c1,cubic_d1,cubic_c2,cubic_odwdeltap;
-  //-Ctes. of WendlandC6 kernel.  //<vs_praticalsskq>
-  float awc6,bwc6;                //<vs_praticalsskq>
 }StCteInteraction; 
 
 /// Structure to collect kernel information.
@@ -182,7 +181,6 @@ typedef struct StrInterParmsg{
 /// Implements a set of functions and CUDA kernels for the particle interaction and system update.
 namespace cusph{
 
-dim3 GetGridSize(unsigned n,unsigned blocksize);
 inline unsigned ReduMaxFloatSize(unsigned ndata){ return((ndata/SPHBSIZE+1)+(ndata/(SPHBSIZE*SPHBSIZE)+SPHBSIZE)); }
 float ReduMaxFloat(unsigned ndata,unsigned inidata,float* data,float* resu);
 float ReduMaxFloat_w(unsigned ndata,unsigned inidata,float4* data,float* resu);
@@ -199,8 +197,8 @@ void ComputeVelMod(unsigned n,const float4 *vel,float *velmod);
 void Interaction_Forces(const StInterParmsg &t);
 
 //-Kernels for the boundary correction (mDBC). //<vs_mddbc_ini>
-void Interaction_BoundCorrection(TpSlipMode slipmode,unsigned n,unsigned nbound,float mdbcthreshold
-  ,bool simulate2d,TpCellMode cellmode,tuint3 ncells,const int2 *begincell,tuint3 cellmin
+void Interaction_MdbcCorrection(TpKernel tkernel,TpSlipMode slipmode,unsigned n,unsigned nbound
+  ,float mdbcthreshold,bool simulate2d,const StDivDataGpu &dvd
   ,const double2 *posxy,const double *posz,const typecode *code,const unsigned *idp
   ,const float3 *boundnormal,const float3 *motionvel,float4 *velrhop);
 //<vs_mddbc_end>

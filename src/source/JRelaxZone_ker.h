@@ -39,10 +39,6 @@
 
 namespace curelaxzone{
 
-inline float3 Float3(const tfloat3& v){ float3 p={v.x,v.y,v.z}; return(p); }
-inline float4 Float4(const tfloat4& v){ float4 p={v.x,v.y,v.z,v.w}; return(p); }
-dim3 GetGridSize(unsigned n,unsigned blocksize);
-
 //# Kernels for JRelaxZone.
 void SetFluidVelUniform(unsigned n,unsigned pini
   ,const tfloat3 &vt,const tfloat4 &cenpla

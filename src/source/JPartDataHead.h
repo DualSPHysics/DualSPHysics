@@ -104,8 +104,8 @@ private:
   bool NpDynamic;        ///<CaseNp can increase.
   bool ReuseIds;         ///<Id of particles excluded values ​​are reused.
 
-  tdouble3 MapPosMin;    ///<Lower limit of simulation + edge 2h if periodic conditions.
-  tdouble3 MapPosMax;    ///<Upper limit of simulation + edge 2h if periodic conditions.
+  tdouble3 MapPosMin;    ///<Lower limit of simulation + edge (KernelSize) if periodic conditions.
+  tdouble3 MapPosMax;    ///<Upper limit of simulation + edge (KernelSize) if periodic conditions.
 
   TpPeri PeriMode;
   tdouble3 PeriXinc;     ///<Value that is added at the outer limit to modify the position.

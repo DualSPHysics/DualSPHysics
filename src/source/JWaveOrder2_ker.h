@@ -35,8 +35,6 @@
 /// Implements a set of functions and CUDA kernels for second order irregular wave generation.
 namespace cuwave2{
 
-dim3 GetGridSize(unsigned n,unsigned blocksize);
-
 //-Kernels for JWaveSpectrum.
 unsigned GetSizeAux(unsigned n);
 double CalcPosition(double time,unsigned n,const double *dnm,const double2 *coefx,double *aux);

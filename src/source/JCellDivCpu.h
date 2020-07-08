@@ -45,9 +45,10 @@ protected:
   const bool Stable;
   const bool Floating;
   const byte PeriActive;
-  const TpCellMode CellMode;    ///<Mode of cell division. | Modo de division en celdas.
-  const unsigned Hdiv;          ///<Value for those divided in DosH. | Valor por el que se divide a DosH.
-  const float Scell,OvScell;
+  const TpCellMode CellMode;  ///<Cell division mode.
+  const int ScellDiv;         ///<Value to divide KernelSize (1 or 2).
+  const float Scell;          ///<Cell size: KernelSize/ScellDiv (KernelSize or KernelSize/2).
+  const float OvScell;        ///<OvScell=1/Scell
   const tdouble3 Map_PosMin,Map_PosMax,Map_PosDif;
   const tuint3 Map_Cells;
   const unsigned CaseNbound,CaseNfixed,CaseNpb;
@@ -168,7 +169,7 @@ public:
   void SortArray(tsymatrix3f *vec);
 
   TpCellMode GetCellMode()const{ return(CellMode); }
-  unsigned GetHdiv()const{ return(Hdiv); }
+  int GetScellDiv()const{ return(ScellDiv); }
   float GetScell()const{ return(Scell); }
 
   unsigned GetNct()const{ return(Nct); }

@@ -23,6 +23,7 @@
 
 #include "DualSphDef.h"
 #include "JSphTimersGpu.h"
+#include "JCellDivDataGpu.h"
 #include "JSph.h"
 #include <string>
 
@@ -91,6 +92,8 @@ protected:
   unsigned GpuCompute;    ///<Compute capability: 10,11,12,20... 
 
   const TpMgDivMode DivAxis;  ///<Axis used in current division. It is used to sort particle data. MGDIV_Z is used for single GPU.
+
+  StDivDataGpu DivData;   ///<Current data of cell division for neighborhood search on GPU.
 
   //-Number of particles in the domain.
   //-Numero de particulas del dominio.

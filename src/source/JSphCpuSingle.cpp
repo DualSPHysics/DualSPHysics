@@ -433,12 +433,14 @@ void JSphCpuSingle::RunPeriodic(){
 /// Ejecuta divide de particulas en celdas.
 //==============================================================================
 void JSphCpuSingle::RunCellDivide(bool updateperiodic){
+  DivData=DivDataCpuNull();
   //-Creates new periodic particles and marks the old ones to be ignored.
   //-Crea nuevas particulas periodicas y marca las viejas para ignorarlas.
   if(updateperiodic && PeriActive)RunPeriodic();
 
   //-Initiates Divide.
   CellDivSingle->Divide(Npb,Np-Npb-NpbPer-NpfPer,NpbPer,NpfPer,BoundChanged,Dcellc,Codec,Idpc,Posc,Timers);
+  DivData=CellDivSingle->GetCellDivData();
 
   //-Sorts particle data. | Ordena datos de particulas.
   TmcStart(Timers,TMC_NlSortData);
@@ -513,39 +515,18 @@ void JSphCpuSingle::AbortBoundOut(){
 }
 
 //==============================================================================
-/// Returns cell limits for interaction.
-/// Devuelve limites de celdas para interaccion.
-//==============================================================================
-void JSphCpuSingle::GetInteractionCells(unsigned rcell
-  ,int hdiv,const tint4 &nc,const tint3 &cellzero
-  ,int &cxini,int &cxfin,int &yini,int &yfin,int &zini,int &zfin)const
-{
-  //-Get interaction limits. | Obtiene limites de interaccion
-  const int cx=PC__Cellx(DomCellCode,rcell)-cellzero.x;
-  const int cy=PC__Celly(DomCellCode,rcell)-cellzero.y;
-  const int cz=PC__Cellz(DomCellCode,rcell)-cellzero.z;
-  //-Code for hdiv 1 or 2 but not zero. | Codigo para hdiv 1 o 2 pero no cero.
-  cxini=cx-min(cx,hdiv);
-  cxfin=cx+min(nc.x-cx-1,hdiv)+1;
-  yini=cy-min(cy,hdiv);
-  yfin=cy+min(nc.y-cy-1,hdiv)+1;
-  zini=cz-min(cz,hdiv);
-  zfin=cz+min(nc.z-cz-1,hdiv)+1;
-}
-
-//==============================================================================
 /// Interaction to calculate forces.
 /// Interaccion para el calculo de fuerzas.
 //==============================================================================
 void JSphCpuSingle::Interaction_Forces(TpInterStep interstep){
-  if(TBoundary==BC_MDBC && (MdbcCorrector || interstep!=INTERSTEP_SymCorrector))BoundCorrection(); //-Boundary correction for mDBC.  //<vs_mddbc>
+  if(TBoundary==BC_MDBC && (MdbcCorrector || interstep!=INTERSTEP_SymCorrector))MdbcBoundCorrection(); //-Boundary correction for mDBC.  //<vs_mddbc>
   InterStep=interstep;
   PreInteraction_Forces();
   TmcStart(Timers,TMC_CfForces);
 
   //-Interaction of Fluid-Fluid/Bound & Bound-Fluid (forces and DEM). | Interaccion Fluid-Fluid/Bound & Bound-Fluid (forces and DEM).
   const stinterparmsc parms=StInterparmsc(Np,Npb,NpbOk
-    ,CellDivSingle->GetCellDivData(),Dcellc
+    ,DivData,Dcellc
     ,Posc,Velrhopc,Idpc,Codec,Pressc,Arc,Acec,Deltac
     ,ShiftingMode,ShiftPosfsc
     ,SpsTauc,SpsGradvelc
@@ -585,11 +566,9 @@ void JSphCpuSingle::Interaction_Forces(TpInterStep interstep){
 /// Calculates extrapolated data on boundary particles from fluid domain for mDBC.
 /// Calcula datos extrapolados en el contorno para mDBC.
 //==============================================================================
-void JSphCpuSingle::BoundCorrection(){
+void JSphCpuSingle::MdbcBoundCorrection(){
   TmcStart(Timers,TMC_CfPreForces);
-  Interaction_BoundCorrection(SlipMode,CellDivSingle->GetNcells()
-    ,CellDivSingle->GetBeginCell(),CellDivSingle->GetCellDomainMin()
-    ,Posc,Codec,Idpc,BoundNormalc,MotionVelc,Velrhopc);
+  Interaction_MdbcCorrection(SlipMode,DivData,Posc,Codec,Idpc,BoundNormalc,MotionVelc,Velrhopc);
   TmcStop(Timers,TMC_CfPreForces);
 }
 //<vs_mddbc_end>
@@ -1004,9 +983,7 @@ void JSphCpuSingle::RunFloating(double dt,bool predictor){
 //==============================================================================
 void JSphCpuSingle::RunGaugeSystem(double timestep){
   const bool svpart=(TimeStep>=TimePartNext);
-  GaugeSystem->CalculeCpu(timestep,svpart,CellDivSingle->GetNcells()
-    ,CellDivSingle->GetCellDomainMin(),CellDivSingle->GetBeginCell()
-    ,NpbOk,Npb,Np,Posc,Codec,Idpc,Velrhopc);
+  GaugeSystem->CalculeCpu(timestep,svpart,DivData,NpbOk,Npb,Np,Posc,Codec,Idpc,Velrhopc);
 }
 
  //==============================================================================
@@ -1018,7 +995,7 @@ void JSphCpuSingle::ComputePips(bool run){
     TimerSim.Stop();
     const double timesim=TimerSim.GetElapsedTimeD()/1000.;
     DsPips->ComputeCpu(Nstep,TimeStep,timesim,CSP,OmpThreads,Np,Npb,NpbOk
-      ,CellDivSingle->GetCellDivData(),Dcellc,Posc);
+      ,DivData,Dcellc,Posc);
   }
 }
 
@@ -1039,7 +1016,7 @@ void JSphCpuSingle::Run(std::string appname,JSphCfgRun *cfg,JLog2 *log){
   //--------------------------------------------------------------------------------
   LoadConfig(cfg);
   LoadCaseParticles();
-  ConfigConstants(Simulate2D);
+  VisuConfig();
   ConfigDomain();
   ConfigRunMode(cfg);
   VisuParticleSummary();
@@ -1148,17 +1125,6 @@ void JSphCpuSingle::SaveData(){
   //-Stores particle data. | Graba datos de particulas.
   JDataArrays arrays;
   AddBasicArrays(arrays,npsave,pos,idp,vel,rhop);
-//<vs_praticalss_ini>
-#ifdef PRASS1_SAVEPRESS
-  //-Adds extra arrays to include in output files (BI4, VTK and CSV).
-  float* press=arrays.CreateArrayPtrFloat("Pressure",npsave);//-Creates new array for pressure initialized to zero. 
-  for(unsigned p=0;p<npsave;p++){
-    if(idp[p]>=CaseNbound){//-If particle is a fluid particle then...
-      press[p]=CteB*(pow(rhop[p]/RhopZero,Gamma)-1.0f);//-Computes pressure starting from density. 
-    }
-  }
-#endif
-//<vs_praticalss_end>
   JSph::SaveData(npsave,arrays,1,vdom,&infoplus);
   //-Free auxiliary memory for particle data. | Libera memoria auxiliar para datos de particulas.
   ArraysCpu->Free(idp);

@@ -90,7 +90,9 @@ private:
   JCellDivCpu* CellDiv;
 
 protected:
-  int OmpThreads;     ///<Max number of OpenMP threads in execution on CPU host (minimum 1). | Numero maximo de hilos OpenMP en ejecucion por host en CPU (minimo 1).
+  int OmpThreads;       ///<Max number of OpenMP threads in execution on CPU host (minimum 1). | Numero maximo de hilos OpenMP en ejecucion por host en CPU (minimo 1).
+
+  StDivDataCpu DivData; ///<Current data of cell division for neighborhood search on CPU.
 
   //-Number of particles in domain | Numero de particulas del dominio.
   unsigned Np;        ///<Total number of particles (including periodic duplicates). | Numero total de particulas (incluidas las duplicadas periodicas).
@@ -148,7 +150,7 @@ protected:
   float ViscDtMax;      ///<Max value of ViscDt calculated in Interaction_Forces().
 
   //-Variables for computing forces. | Vars. derivadas para computo de fuerzas.
-  float *Pressc;       ///<Pressure computed starting from density for interaction. Press[]=ComputePress(Rhop,Rhop0,B,gamma)
+  float *Pressc;       ///<Pressure computed starting from density for interaction. Press[]=fsph::ComputePress(Rhop,CSP)
 
   //-Variables for Laminar+SPS viscosity.  
   tsymatrix3f *SpsTauc;       ///<SPS sub-particle stress tensor.
@@ -205,27 +207,9 @@ protected:
   float CalcVelMaxSeq(unsigned np,const tfloat4* velrhop)const;
   float CalcVelMaxOmp(unsigned np,const tfloat4* velrhop)const;
 
-  inline float ComputePress(float rhop,float rhop0,float b,float gamma)const;
-  inline float ComputePressMorris(float rhop,float rhop0,float cs0,float press0)const; //<vs_praticalss>
   void PreInteractionVars_Forces(unsigned np,unsigned npb);
   void PreInteraction_Forces();
   void PosInteraction_Forces();
-
-  inline void GetKernelWendland(float rr2,float drx,float dry,float drz,float &frx,float &fry,float &frz)const;
-  void GetKernelWendland(float rr2,float drx,float dry,float drz,float &frx,float &fry,float &frz,float &wab)const; //<vs_innlet>
-  inline void GetKernelCubic(float rr2,float drx,float dry,float drz,float &frx,float &fry,float &frz)const;
-  void GetKernelCubic(float rr2,float drx,float dry,float drz,float &frx,float &fry,float &frz,float &wab)const; //<vs_innlet>
-  inline float GetKernelCubicTensil(float rr2,float rhopp1,float pressp1,float rhopp2,float pressp2)const;
-  inline void GetKernelWendlandC6(float rr2,float drx,float dry,float drz,float &frx,float &fry,float &frz)const;     //<vs_praticalsskq>
-  void GetKernelWendlandC6(float rr2,float drx,float dry,float drz,float &frx,float &fry,float &frz,float &wab)const; //<vs_praticalsskq>
-
-  inline void GetInteractionCells(unsigned rcell
-    ,int hdiv,const tint4 &nc,const tint3 &cellzero
-    ,int &cxini,int &cxfin,int &yini,int &yfin,int &zini,int &zfin)const;
-
-  void GetInteractionCells(const tdouble3 &pos                            //<vs_innlet>
-    ,int hdiv,const tint4 &nc,const tint3 &cellzero                       //<vs_innlet>
-    ,int &cxini,int &cxfin,int &yini,int &yfin,int &zini,int &zfin)const; //<vs_innlet>
 
   template<TpKernel tker,TpFtMode ftmode> void InteractionForcesBound
     (unsigned n,unsigned pini,StDivDataCpu divdata,const unsigned *dcell
@@ -255,13 +239,14 @@ protected:
   void Interaction_Forces_ct(const stinterparmsc &t,StInterResultc &res)const;
 
 //<vs_mddbc_ini>
-  template<bool sim2d,TpSlipMode tslip> void InteractionBoundCorrection
-    (unsigned n,float determlimit,float mdbcthreshold
-    ,tint4 nc,int hdiv,unsigned cellinitial,const unsigned *beginendcell,tint3 cellzero
+  template<TpKernel tker,bool sim2d,TpSlipMode tslip> void InteractionMdbcCorrectionT2
+    (unsigned n,StDivDataCpu divdata,float determlimit,float mdbcthreshold
     ,const tdouble3 *pos,const typecode *code,const unsigned *idp
     ,const tfloat3 *boundnormal,const tfloat3 *motionvel,tfloat4 *velrhop);
-  void Interaction_BoundCorrection(TpSlipMode slipmode
-    ,tuint3 ncells,const unsigned *begincell,tuint3 cellmin
+  template<TpKernel tker> void Interaction_MdbcCorrectionT(TpSlipMode slipmode,const StDivDataCpu &divdata
+    ,const tdouble3 *pos,const typecode *code,const unsigned *idp
+    ,const tfloat3 *boundnormal,const tfloat3 *motionvel,tfloat4 *velrhop);
+  void Interaction_MdbcCorrection(TpSlipMode slipmode,const StDivDataCpu &divdata
     ,const tdouble3 *pos,const typecode *code,const unsigned *idp
     ,const tfloat3 *boundnormal,const tfloat3 *motionvel,tfloat4 *velrhop);
 //<vs_mddbc_end>
@@ -323,47 +308,50 @@ protected:
   template<bool sim2d,TpKernel tker> void InteractionInOutExtrap_Double
     (unsigned inoutcount,const int *inoutpart,const byte *cfgzone
     ,const tplane3f *planes,const float* width,const tfloat3 *dirdata,float determlimit
-    ,tint4 nc,int hdiv,unsigned cellinitial
-    ,const unsigned *beginendcell,tint3 cellzero,const unsigned *dcell
-    ,const tdouble3 *pos,const typecode *code,const unsigned *idp
-    ,tfloat4 *velrhop);
+    ,StDivDataCpu dvd,const unsigned *dcell,const tdouble3 *pos,const typecode *code
+    ,const unsigned *idp,tfloat4 *velrhop);
   
   template<bool sim2d,TpKernel tker> void InteractionInOutExtrap_Single
     (unsigned inoutcount,const int *inoutpart,const byte *cfgzone
     ,const tplane3f *planes,const float* width,const tfloat3 *dirdata,float determlimit
-    ,tint4 nc,int hdiv,unsigned cellinitial
-    ,const unsigned *beginendcell,tint3 cellzero,const unsigned *dcell
-    ,const tdouble3 *pos,const typecode *code,const unsigned *idp
-    ,tfloat4 *velrhop);
+    ,StDivDataCpu dvd,const unsigned *dcell,const tdouble3 *pos,const typecode *code
+    ,const unsigned *idp,tfloat4 *velrhop);
   
+  template<TpKernel tker> inline void Interaction_InOutExtrapT
+    (byte doublemode,unsigned inoutcount,const int *inoutpart
+    ,const byte *cfgzone,const tplane3f *planes
+    ,const float* width,const tfloat3 *dirdata,float determlimit
+    ,const unsigned *dcell,const tdouble3 *pos,const typecode *code
+    ,const unsigned *idp,tfloat4 *velrhop);
+
   void Interaction_InOutExtrap(byte doublemode,unsigned inoutcount,const int *inoutpart
     ,const byte *cfgzone,const tplane3f *planes
     ,const float* width,const tfloat3 *dirdata,float determlimit
-    ,tuint3 ncells,const unsigned *begincell,tuint3 cellmin,const unsigned *dcell
-    ,const tdouble3 *pos,const typecode *code,const unsigned *idp
-    ,tfloat4 *velrhop);
+    ,const unsigned *dcell,const tdouble3 *pos,const typecode *code
+    ,const unsigned *idp,tfloat4 *velrhop);
 
   float Interaction_InOutZsurf(unsigned nptz,const tfloat3 *ptzpos,float maxdist,float zbottom
-    ,tuint3 ncells,const unsigned *begincell,tuint3 cellmin
-    ,const tdouble3 *pos,const typecode *code);
+    ,const StDivDataCpu &divdata,const tdouble3 *pos,const typecode *code);
 
 
   template<bool sim2d,TpKernel tker> void InteractionBoundCorr_Double
     (unsigned npb,typecode boundcode,tplane3f plane,tfloat3 direction,float determlimit
-    ,tint4 nc,int hdiv,unsigned cellinitial
-    ,const unsigned *beginendcell,tint3 cellzero
-    ,const tdouble3 *pos,const typecode *code,const unsigned *idp
-    ,tfloat4 *velrhop);
+    ,const StDivDataCpu &dvd,const tdouble3 *pos,const typecode *code
+    ,const unsigned *idp,tfloat4 *velrhop);
 
   template<bool sim2d,TpKernel tker> void InteractionBoundCorr_Single
     (unsigned npb,typecode boundcode,tplane3f plane,tfloat3 direction,float determlimit
-    ,tint4 nc,int hdiv,unsigned cellinitial
-    ,const unsigned *beginendcell,tint3 cellzero
+    ,const StDivDataCpu &dvd,const tdouble3 *pos,const typecode *code
+    ,const unsigned *idp,tfloat4 *velrhop);
+
+  template<TpKernel tker> inline void Interaction_BoundCorrT
+    (byte doublemode,typecode boundcode
+    ,tplane3f plane,tfloat3 direction,float determlimit
     ,const tdouble3 *pos,const typecode *code,const unsigned *idp
     ,tfloat4 *velrhop);
 
-  void Interaction_BoundCorr(byte doublemode,typecode boundcode,tplane3f plane,tfloat3 direction,float determlimit
-    ,tuint3 ncells,const unsigned *begincell,tuint3 cellmin
+  void Interaction_BoundCorr(byte doublemode,typecode boundcode
+    ,tplane3f plane,tfloat3 direction,float determlimit
     ,const tdouble3 *pos,const typecode *code,const unsigned *idp
     ,tfloat4 *velrhop);
 //<vs_innlet_end>

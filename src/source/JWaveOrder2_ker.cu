@@ -28,20 +28,7 @@
 //:#include "JDgKerPrint_ker.h"
 
 namespace cuwave2{
-
-//==============================================================================
-/// Returns the dimensions of gridsize according to parameters.
-/// Devuelve tamanho de gridsize segun parametros.
-//==============================================================================
-dim3 GetGridSize(unsigned n,unsigned blocksize){
-  dim3 sgrid;//=dim3(1,2,3);
-  unsigned nb=unsigned(n+blocksize-1)/blocksize; //-Total number of blocks to execute.
-  sgrid.x=(nb<=65535? nb: unsigned(sqrt(float(nb))));
-  sgrid.y=(nb<=65535? 1: unsigned((nb+sgrid.x-1)/sgrid.x));
-  sgrid.z=1;
-  return(sgrid);
-}
-
+#include "FunctionsBasic_iker.h"
 
 //##############################################################################
 //# Kernels for JWaveSpectrum.
@@ -76,7 +63,7 @@ template <unsigned blockSize> __global__ void KerCalcPosition(unsigned n,double 
 {
   extern __shared__ double sdat[];
   unsigned tid=threadIdx.x;
-  unsigned c=blockIdx.y*gridDim.x*blockDim.x + blockIdx.x*blockDim.x + threadIdx.x;
+  unsigned c=blockIdx.x*blockDim.x + threadIdx.x;
   double e2=0;
   if(c<n){
     const double v=dnm[c]*time;
@@ -89,7 +76,7 @@ template <unsigned blockSize> __global__ void KerCalcPosition(unsigned n,double 
   if(blockSize>=256){ if(tid<128)sdat[tid]+=sdat[tid+128];  __syncthreads(); }
   if(blockSize>=128){ if(tid<64) sdat[tid]+=sdat[tid+64];   __syncthreads(); }
   if(tid<32)KerReduSumDoubleWarp<blockSize>(sdat,tid);
-  if(tid==0)res[blockIdx.y*gridDim.x + blockIdx.x]=sdat[0];
+  if(tid==0)res[blockIdx.x]=sdat[0];
 }
 
 //==============================================================================
@@ -101,7 +88,7 @@ double CalcPosition(double time,unsigned n,const double *dnm,const double2 *coef
   double res=0;
   if(n){
     const unsigned smemSize=sizeof(double)*WAVEBSIZE;
-    const dim3 sgrid=GetGridSize(n,WAVEBSIZE);
+    const dim3 sgrid=GetSimpleGridSize(n,WAVEBSIZE);
     const unsigned n_blocks=sgrid.x*sgrid.y;
     KerCalcPosition<WAVEBSIZE> <<<sgrid,WAVEBSIZE,smemSize>>> (n,time,dnm,coefx,aux);
     res=curedus::ReduSumDouble(n_blocks,0,aux,aux+n_blocks);
@@ -118,7 +105,7 @@ template <unsigned blockSize> __global__ void KerCalcElevation(unsigned n,double
 {
   extern __shared__ double sdat[];
   unsigned tid=threadIdx.x;
-  unsigned c=blockIdx.y*gridDim.x*blockDim.x + blockIdx.x*blockDim.x + threadIdx.x;
+  unsigned c=blockIdx.x*blockDim.x + threadIdx.x;
   double eta2=0;
   if(c<n){
     const double4 coef=coefe[c];
@@ -131,7 +118,7 @@ template <unsigned blockSize> __global__ void KerCalcElevation(unsigned n,double
   if(blockSize>=256){ if(tid<128)sdat[tid]+=sdat[tid+128];  __syncthreads(); }
   if(blockSize>=128){ if(tid<64) sdat[tid]+=sdat[tid+64];   __syncthreads(); }
   if(tid<32)KerReduSumDoubleWarp<blockSize>(sdat,tid);
-  if(tid==0)res[blockIdx.y*gridDim.x + blockIdx.x]=sdat[0];
+  if(tid==0)res[blockIdx.x]=sdat[0];
 }
 
 //==============================================================================
@@ -143,7 +130,7 @@ double CalcElevation(double time,double x,unsigned n,const double4 *coefe,double
   double res=0;
   if(n){
     const unsigned smemSize=sizeof(double)*WAVEBSIZE;
-    const dim3 sgrid=GetGridSize(n,WAVEBSIZE);
+    const dim3 sgrid=GetSimpleGridSize(n,WAVEBSIZE);
     const unsigned n_blocks=sgrid.x*sgrid.y;
     KerCalcElevation<WAVEBSIZE> <<<sgrid,WAVEBSIZE,smemSize>>> (n,time,x,coefe,aux);
     res=curedus::ReduSumDouble(n_blocks,0,aux,aux+n_blocks);
@@ -159,7 +146,7 @@ double CalcElevation(double time,double x,unsigned n,const double4 *coefe,double
 //__global__ void  KerCalcPosition1(unsigned n,double time
 //  ,const double *dnm,const double2 *coefx,double *aux)
 //{
-//  unsigned c=blockIdx.y*gridDim.x*blockDim.x + blockIdx.x*blockDim.x + threadIdx.x; //-Number of interaction.
+//  unsigned c=blockIdx.x*blockDim.x + threadIdx.x; //-Number of interaction.
 //  if(c<n){
 //    const double v=dnm[c]*time;
 //    const double2 coef=coefx[c];
@@ -175,7 +162,7 @@ double CalcElevation(double time,double x,unsigned n,const double4 *coefe,double
 //{
 //  double res=0;
 //  if(n){
-//    dim3 sgrid=GetGridSize(n,WAVEBSIZE);
+//    dim3 sgrid=GetSimpleGridSize(n,WAVEBSIZE);
 //    KerCalcPosition1 <<<sgrid,WAVEBSIZE>>> (n,time,dnm,coefx,aux);
 //    double *auxh=new double[n];
 //    cudaMemcpy(auxh,aux,sizeof(double)*n,cudaMemcpyDeviceToHost);
@@ -192,7 +179,7 @@ double CalcElevation(double time,double x,unsigned n,const double4 *coefe,double
 //{
 //  double res=0;
 //  if(n){
-//    dim3 sgrid=GetGridSize(n,WAVEBSIZE);
+//    dim3 sgrid=GetSimpleGridSize(n,WAVEBSIZE);
 //    KerCalcPosition1 <<<sgrid,WAVEBSIZE>>> (n,time,dnm,coefx,aux);
 //    res=curedu::ReduSumDouble(n,0,aux,aux+n);
 //  }

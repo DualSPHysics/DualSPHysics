@@ -16,7 +16,7 @@
  You should have received a copy of the GNU Lesser General Public License along with DualSPHysics. If not, see <http://www.gnu.org/licenses/>. 
 */
 
-/// \file FunctionsMath_ker.cu \brief Implements basic/general math functions for the GPU executions.
+/// \file FunctionsMath_iker.h \brief Implements basic/general math functions for the GPU executions.
 
 #include "TypesDef.h"
 #include <cuda_runtime_api.h>

@@ -61,26 +61,18 @@ private:
   const bool Cpu;
 
   bool Configured;
-  bool Simulate2D;        ///<Toggles 2D simulation (cancels forces in Y axis). | Activa o desactiva simulacion en 2D (anula fuerzas en eje Y).
-  double Simulate2DPosY;  ///<Y value in 2D simulations.                        | Valor de Y en simulaciones 2D.
+  StCteSph CSP;           ///<Structure with main SPH constants values and configurations.
   bool Symmetry;          ///<Use of symmetry in plane y=0.
-  double TimeMax;
-  double TimePart;
-  double Dp;              ///<Distance between particles.
-  tdouble3 DomPosMin;     ///<Lower limit of simulation + edge 2h if periodic conditions. DomPosMin=Map_PosMin+(DomCelIni*Scell); | Limite inferior de simulacion + borde 2h si hay condiciones periodicas. 
-  tdouble3 DomPosMax;     ///<Upper limit of simulation + edge 2h if periodic conditions. DomPosMax=min(Map_PosMax,Map_PosMin+(DomCelFin*Scell)); | Limite inferior de simulacion + borde 2h si hay condiciones periodicas. 
-  float Scell;            ///<Cell size: 2h or h. | Tamanho de celda: 2h o h.
-  int Hdiv;               ///<Value to divide 2H. | Valor por el que se divide a DosH
-  float H;                ///<The smoothing length [m].
-  float MassFluid;        ///<Reference mass of the fluid particle [kg].
-  float MassBound;        ///<Reference mass of the general boundary particle [kg].
-  float Cs0;              ///<Speed of sound at the reference density.
-  float CteB;             ///<Constant used in the state equation [Pa].
-  float Gamma;            ///<Politropic constant for water used in the state equation.  
-  float RhopZero;         ///<Reference density of the fluid [kg/m3].
+  double TimeMax;         ///<Total time to simulate [s].
+  double TimePart;        ///<Time of output data [s].
+  tdouble3 DomPosMin;     ///<Lower limit of simulation + edge (KernelSize) if periodic conditions. DomPosMin=Map_PosMin+(DomCelIni*Scell); | Limite inferior de simulacion + borde (KernelSize) si hay condiciones periodicas. 
+  tdouble3 DomPosMax;     ///<Upper limit of simulation + edge (KernelSize) if periodic conditions. DomPosMax=min(Map_PosMax,Map_PosMin+(DomCelFin*Scell)); | Limite inferior de simulacion + borde (KernelSize) si hay condiciones periodicas. 
+  float Scell;            ///<Cell size: KernelSize/ScellDiv (KernelSize or KernelSize/2).
+  int ScellDiv;           ///<Value to divide KernelSize (1 or 2).
+
 
   JGaugeItem::StDefault CfgDefault; ///<Default configuration.
-
+  
   std::vector<JGaugeItem*> Gauges;
 
   //-Variables for GPU.
@@ -102,22 +94,20 @@ public:
   ~JGaugeSystem();
   void Reset();
 
-  void Config(bool simulate2d,double simulate2dposy,bool symmetry
-    ,double timemax,double timepart
-    ,double dp,tdouble3 posmin,tdouble3 posmax,float scell,unsigned hdiv,float h
-    ,float massfluid,float massbound,float cs0,float cteb,float gamma,float rhopzero);
+  void Config(const StCteSph & csp,bool symmetry,double timemax,double timepart
+    ,tdouble3 posmin,tdouble3 posmax,float scell,int scelldiv);
 
   void LoadXml(const JXml *sxml,const std::string &place,const JSphMk* mkinfo);
   void VisuConfig(std::string txhead,std::string txfoot);
 
-  bool GetSimulate2D()const{ return(Simulate2D); };
-  double GetSimulate2DPosY()const{ return(Simulate2DPosY); };
-  double GetDp()const{ return(Dp); }
+  bool GetSimulate2D()const{ return(CSP.simulate2d); };
+  double GetSimulate2DPosY()const{ return(CSP.simulate2dposy); };
+  double GetDp()const{ return(CSP.dp); }
   tdouble3 GetDomPosMin()const{ return(DomPosMin); }
   tdouble3 GetDomPosMax()const{ return(DomPosMax); }
-  float GetMassFluid()const{ return(MassFluid); }
-  float GetMassBound()const{ return(MassBound); }
-  float GetH()const{ return(H); }
+  float GetMassFluid()const{ return(CSP.massfluid); }
+  //float GetMassBound()const{ return(MassBound); }
+  float GetKernelH()const{ return(CSP.kernelh); }
   float GetScell()const{ return(Scell); }
 
   void LoadLinePoints(double coefdp,const tdouble3 &point1,const tdouble3 &point2,std::vector<tdouble3> &points)const{ LoadLinePoints(coefdp,point1,point2,points,""); }
@@ -132,14 +122,14 @@ public:
   unsigned GetGaugeIdx(const std::string &name)const;
   JGaugeItem* GetGauge(unsigned c)const;
 
-  void CalculeCpu(double timestep,bool svpart,tuint3 ncells,tuint3 cellmin
-    ,const unsigned *begincell,unsigned npbok,unsigned npb,unsigned np
-    ,const tdouble3 *pos,const typecode *code,const unsigned *idp,const tfloat4 *velrhop);
+  void CalculeCpu(double timestep,bool svpart,const StDivDataCpu &dvd
+    ,unsigned npbok,unsigned npb,unsigned np,const tdouble3 *pos
+    ,const typecode *code,const unsigned *idp,const tfloat4 *velrhop);
 
  #ifdef _WITHGPU
-  void CalculeGpu(double timestep,bool svpart,tuint3 ncells,tuint3 cellmin
-    ,const int2 *beginendcell,unsigned npbok,unsigned npb,unsigned np
-    ,const double2 *posxy,const double *posz,const typecode *code,const unsigned *idp,const float4 *velrhop);
+  void CalculeGpu(double timestep,bool svpart,const StDivDataGpu &dvd
+    ,unsigned npbok,unsigned npb,unsigned np,const double2 *posxy,const double *posz
+    ,const typecode *code,const unsigned *idp,const float4 *velrhop);
  #endif
 
   void SaveResults(unsigned cpart);

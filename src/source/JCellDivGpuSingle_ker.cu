@@ -24,6 +24,7 @@
 #include "JLog2.h"
 
 namespace cudiv{
+#include "FunctionsBasic_iker.h"
 
 //------------------------------------------------------------------------------
 /// Processes bound and fluid particles that may be mixed.
@@ -40,7 +41,7 @@ namespace cudiv{
 __global__ void KerPreSortFull(unsigned np,unsigned cellcode,const unsigned *dcell
   ,const typecode *code,uint3 cellzero,uint3 ncells,unsigned *cellpart,unsigned *sortpart)
 {
-  unsigned p=blockIdx.y*gridDim.x*blockDim.x + blockIdx.x*blockDim.x + threadIdx.x; //-Particle number.
+  unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Particle number.
   if(p<np){
     sortpart[p]=p;
     const unsigned nsheet=ncells.x*ncells.y;
@@ -88,7 +89,7 @@ void PreSortFull(unsigned np,unsigned cellcode,const unsigned *dcell,const typec
   if(np){
     const uint3 cellzero=make_uint3(cellmin.x,cellmin.y,cellmin.z);
     const uint3 xncells=make_uint3(ncells.x,ncells.y,ncells.z);
-    dim3 sgrid=GetGridSize(np,DIVBSIZE);
+    dim3 sgrid=GetSimpleGridSize(np,DIVBSIZE);
     KerPreSortFull <<<sgrid,DIVBSIZE>>> (np,cellcode,dcell,code,cellzero,xncells,cellpart,sortpart);
   }
 }
@@ -109,7 +110,7 @@ __global__ void KerPreSortFluid(unsigned n,unsigned pini,unsigned cellcode
   ,const unsigned *dcell,const typecode *code,uint3 cellzero,uint3 ncells
   ,unsigned *cellpart,unsigned *sortpart)
 {
-  unsigned p=blockIdx.y*gridDim.x*blockDim.x + blockIdx.x*blockDim.x + threadIdx.x; //-Particle number.
+  unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Particle number.
   if(p<n){
     p+=pini;
     sortpart[p]=p;
@@ -151,7 +152,7 @@ void PreSortFluid(unsigned npf,unsigned pini,unsigned cellcode,const unsigned *d
   if(npf){
     const uint3 cellzero=make_uint3(cellmin.x,cellmin.y,cellmin.z);
     const uint3 xncells=make_uint3(ncells.x,ncells.y,ncells.z);
-    dim3 sgrid=GetGridSize(npf,DIVBSIZE);
+    dim3 sgrid=GetSimpleGridSize(npf,DIVBSIZE);
     KerPreSortFluid <<<sgrid,DIVBSIZE>>> (npf,pini,cellcode,dcell,code,cellzero,xncells,cellpart,sortpart);
   }
 }

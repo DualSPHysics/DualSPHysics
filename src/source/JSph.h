@@ -172,12 +172,9 @@ protected:
   TpStep TStep;               ///<Step Algorithm: Verlet or Symplectic.                                  | Algoritmo de paso: Verlet o Symplectic.
   int VerletSteps;            ///<Number of steps to apply Eulerian equations.
 
-  TpKernel TKernel;           ///<Kernel type: Cubic or Wendland.
-  float Awen;                 ///<Wendland kernel constant (awen) to compute wab.                        | Constante para calcular wab con kernel Wendland.
-  float Bwen;                 ///<Wendland kernel constant (bwen) to compute fac (kernel derivative).    | Constante para calcular fac (derivada del kernel) con kernel Wendland.
-  StCubicCte CubicCte;        ///<Constants for Cubic Spline Kernel.                                     | Constante para kernel cubic spline.
-  float Awc6;                 ///<WendlandC6 kernel constant to compute wab.                      //<vs_praticalsskq>
-  float Bwc6;                 ///<WendlandC6 kernel constant to compute fac (kernel derivative).  //<vs_praticalsskq>
+  TpKernel TKernel;                ///<Kernel type: Cubic or Wendland.
+  fsph::StKCubicCte      KCubic;   ///<Constants for the Cubic Spline kernel.
+  fsph::StKWendlandCte   KWend;    ///<Constants for the Wendland kernel.
 
   TpDensity TDensity;         ///<Density Diffusion Term 0:None, 1:Molteni, 2:Fourtakas, 3:Fourtakas(full) (default=0)
   float DDTValue;             ///<Value used with Density Diffusion Term (default=0.1)
@@ -200,8 +197,8 @@ protected:
   float RhopOutMin;           ///<Minimum limit for Rhopout correction.                                 | Limite minimo para la correccion de RhopOut.
   float RhopOutMax;           ///<Maximum limit for Rhopout correction.                                 | Limite maximo para la correccion de RhopOut.
 
-  double TimeMax;             ///<Time of simulation.
-  double TimePart;            ///<Time of data.
+  double TimeMax;             ///<Total time to simulate [s].
+  double TimePart;            ///<Time of output data [s].
   JDsOutputTime *OutputTime;  ///<Manage the use of variable output time to save PARTs.
   int NstepsBreak;            ///<Maximum number of steps allowed (debug).
   bool SvAllSteps;            ///<Saves a PART for each step (debug).
@@ -227,26 +224,30 @@ protected:
   bool SvDomainVtk;          ///<Stores VTK file with the domain of particles of each PART file. | Graba fichero vtk con el dominio de las particulas en cada Part. 
   //bool SvInterCount;       ///<Computes and saves number of interactions.                      | Calcula y graba el numero de interacciones.
 
-  //-Constants for computation.
-  float H;                 ///<The smoothing length [m].
+  //-Constants for computation (from input configuration).
+  float KernelH;           ///<The smoothing length of SPH kernel [m].
   float CteB;              ///<Constant used in the state equation [Pa].
   float Gamma;             ///<Politropic constant for water used in the state equation.
-  float CFLnumber;         ///<Coefficient to multiply dt.
   float RhopZero;          ///<Reference density of the fluid [kg/m3].
+  float CFLnumber;         ///<Coefficient to multiply dt.
   double Dp;               ///<Initial distance between particles [m].
-  double Cs0;              ///<Speed of sound at the reference density.
-  float DDT2h;             ///<Constant for DDT1 & DDT2. DDT2h=DDTValue*2*H
-  float DDTgz;             ///<Constant for DDT2.        DDTgz=RhopZero*Gravity.z/CteB
   float MassFluid;         ///<Reference mass of the fluid particle [kg].
   float MassBound;         ///<Reference mass of the general boundary particle [kg].
   tfloat3 Gravity;         ///<Gravitational acceleration [m/s^2].
-  float Dosh;              ///<Maximum interaction distance between particles (Dosh=H+H) [m].
-  float H2;                ///<Constant related to H (H2=H*H).
-  float Fourh2;            ///<Constant related to H (Fourh2=H*H*4).
+
+  //-Constants for computation (computed starting from previous constants).
+  float KernelSize;        ///<Maximum interaction distance between particles (KernelK*KernelH).
+  float KernelSize2;       ///<Maximum interaction distance squared (KernelSize^2).
+  double Cs0;              ///<Speed of sound at the reference density.
   float Eta2;              ///<Constant related to H (Eta2=(h*0.1)*(h*0.1)).
+
+  //-Constants for computation 2 (computed starting from previous constants).
   float SpsSmag;           ///<Smagorinsky constant used in SPS turbulence model.
   float SpsBlin;           ///<Blin constant used in the SPS turbulence model.
-  StCteSph CSP;            ///<Structure data with SPH constants values.
+  float DDTkh;             ///<Constant for DDT1 & DDT2. DDTkh=DDTValue*KernelSize
+  float DDTgz;             ///<Constant for DDT2.        DDTgz=RhopZero*Gravity.z/CteB
+
+  StCteSph CSP;            ///<Structure with main SPH constants values and configurations.
 
   //-General information about case.
   tdouble3 CasePosMin;       ///<Lower particle limit of the case in the initial instant. | Limite inferior de particulas del caso en instante inicial.
@@ -336,18 +337,21 @@ protected:
   JDsPips *DsPips;          ///<Object for PIPS calculation.
 
   //-Variables for division in cells.
-  TpCellMode CellMode;     ///<Cell division mode. | Modo de division en celdas.
-  unsigned Hdiv;           ///<Value to divide 2H. | Valor por el que se divide a DosH
-  float Scell;             ///<Cell size: 2h or h. | Tamanho de celda: 2h o h.
-  float MovLimit;          ///<Maximum distance a particle is allowed to move in one step (Scell*0.9) | Distancia maxima que se permite recorrer a una particula en un paso (Scell*0.9).
+  TpCellMode CellMode;     ///<Cell division mode.
+  int ScellDiv;            ///<Value to divide KernelSize (1 or 2).
+  float Scell;             ///<Cell size: KernelSize/ScellDiv (KernelSize or KernelSize/2).
+  float MovLimit;          ///<Maximum distance a particle is allowed to move in one step (Scell*0.9).
+
+  float PosCellSize;       ///<Size of cells used for coding PosCell (it is usually KernelSize).
+
 
   //-Defines global domain of the simulation.
   tdouble3 MapRealPosMin;  ///<Real lower limit of simulation (without the periodic condition borders). MapRealPosMin=CasePosMin-(H*BORDER_MAP) | Limite inferior real de simulacion (sin bordes de condiciones periodicas).
   tdouble3 MapRealPosMax;  ///<Real upper limit of simulation (without the periodic condition borders). MapRealPosMax=CasePosMax+(H*BORDER_MAP) | Limite superior real de simulacion (sin bordes de condiciones periodicas).
   tdouble3 MapRealSize;    ///<Result of MapRealSize = MapRealPosMax - MapRealPosMin
 
-  tdouble3 Map_PosMin;     ///<Lower limit of simulation + edge 2h if periodic conditions. Map_PosMin=MapRealPosMin-dosh(in periodic axis) | Limite inferior de simulacion + borde 2h si hay condiciones periodicas.
-  tdouble3 Map_PosMax;     ///<Upper limit of simulation + edge 2h if periodic conditions. Map_PosMax=MapRealPosMax+dosh(in periodic axis) | Limite superior de simulacion + borde 2h si hay condiciones periodicas.
+  tdouble3 Map_PosMin;     ///<Lower limit of simulation + edge (KernelSize) if periodic conditions. Map_PosMin=MapRealPosMin-KernelSize(in periodic axis) | Limite inferior de simulacion + borde (KernelSize) si hay condiciones periodicas.
+  tdouble3 Map_PosMax;     ///<Upper limit of simulation + edge (KernelSize) if periodic conditions. Map_PosMax=MapRealPosMax+KernelSize(in periodic axis) | Limite superior de simulacion + borde (KernelSize) si hay condiciones periodicas.
   tdouble3 Map_Size;       ///<Result of Map_Size = Map_PosMax - Map_PosMin
   tuint3 Map_Cells;        ///<Maximum number of cells within case limits. Map_Cells=TUint3(unsigned(ceil(Map_Size.xyz/Scell))             | Numero de celdas maximo segun los limites del caso.
 
@@ -357,8 +361,8 @@ protected:
   tuint3 DomCelFin;        ///<Last cell within the Map defining local simulation area. DomCelIni=Map_Cells for Single-CPU  | Celda final dentro de Map que define el area de simulacion local.
   tuint3 DomCells;         ///<Number of cells in each direction. DomCells=DomCelFin-DomCelIni                              | Numero de celdas en cada direccion.                                                                
 
-  tdouble3 DomPosMin;      ///<Lower limit of simulation + edge 2h if periodic conditions. DomPosMin=Map_PosMin+(DomCelIni*Scell); | Limite inferior de simulacion + borde 2h si hay condiciones periodicas. 
-  tdouble3 DomPosMax;      ///<Upper limit of simulation + edge 2h if periodic conditions. DomPosMax=min(Map_PosMax,Map_PosMin+(DomCelFin*Scell)); | Limite inferior de simulacion + borde 2h si hay condiciones periodicas. 
+  tdouble3 DomPosMin;      ///<Lower limit of simulation + edge (KernelSize) if periodic conditions. DomPosMin=Map_PosMin+(DomCelIni*Scell); | Limite inferior de simulacion + borde (KernelSize) si hay condiciones periodicas. 
+  tdouble3 DomPosMax;      ///<Upper limit of simulation + edge (KernelSize) if periodic conditions. DomPosMax=min(Map_PosMax,Map_PosMin+(DomCelFin*Scell)); | Limite inferior de simulacion + borde (KernelSize) si hay condiciones periodicas. 
   tdouble3 DomSize;        ///<Result of DomSize = DomPosMax - DomPosMin
 
   tdouble3 DomRealPosMin;  ///<Real lower limit of the simulation according to DomCelIni/Fin (without periodic condition borders) DomRealPosMin=max(DomPosMin,MapRealPosMin) | Limite real inferior de simulacion segun DomCelIni/Fin (sin bordes de condiciones periodicas).
@@ -410,7 +414,9 @@ protected:
   void AllocMemoryFloating(unsigned ftcount,bool imposedvel=false,bool addedforce=false);
   llong GetAllocMemoryCpu()const;
 
+
   void LoadConfig(const JSphCfgRun *cfg);
+  void LoadKernelSelection(const JSphCfgRun *cfg,const JXml *xml);
   void LoadConfigCtes(const JXml *xml);
   void LoadConfigVars(const JXml *xml);
   void LoadConfigVarsExec();
@@ -428,8 +434,8 @@ protected:
   void PrepareCfgDomainValues(tdouble3 &v,tdouble3 vdef=TDouble3(0))const;
   void ResizeMapLimits();
 
-  static void WendlandConstants(bool simulate2d,double h,float &awen,float &bwen);
-  void ConfigConstants(bool simulate2d);
+  void ConfigConstants1(bool simulate2d);
+  void ConfigConstants2();
   void VisuConfig();
   void VisuParticleSummary()const;
   void LoadDcellParticles(unsigned n,const typecode *code,const tdouble3 *pos,unsigned *dcell)const;
@@ -442,7 +448,7 @@ protected:
   void SelecDomain(tuint3 celini,tuint3 celfin);
   static tuint3 CalcCellDistribution(tuint3 ncells);
   static unsigned CalcCellCode(tuint3 ncells);
-  void CheckConfigPosCellGpu();
+  void ConfigPosCellGpu();
   void CalcFloatingRadius(unsigned np,const tdouble3 *pos,const unsigned *idp);
   tdouble3 UpdatePeriodicPos(tdouble3 ps)const;
 
@@ -489,7 +495,6 @@ public:
   ~JSph();
 
   static std::string GetStepName(TpStep tstep);
-  static std::string GetKernelName(TpKernel tkernel);
   static std::string GetViscoName(TpVisco tvisco);
   static std::string GetBoundName(TpBoundary tboundary);
   static std::string GetSlipName(TpSlipMode tslip);       //<vs_mddbc>
@@ -509,7 +514,7 @@ public:
 };
 
 /*:
-ES:
+ES: (2h se refiere a KernelSize)
 Consideraciones sobre condiciones periodicas:
 - Para cada eje periodico se define un valor tfloat3 para sumar a las particulas
   que se salgan por el extremo superior del dominio.

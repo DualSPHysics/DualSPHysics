@@ -207,7 +207,7 @@ void JDsInitializeOp_BoundNormalPlane::ReadXml(const JXml *sxml,TiXmlElement* xe
 void JDsInitializeOp_BoundNormalPlane::Run(unsigned np,unsigned npb,const tdouble3 *pos
   ,const unsigned *idp,const word *mktype,tfloat4 *velrhop,tfloat3 *boundnormal)
 {
-  const double maxdist=(MaxDisteH>0? InitCt.h*MaxDisteH: DBL_MAX);
+  const double maxdist=(MaxDisteH>0? InitCt.kernelh*MaxDisteH: DBL_MAX);
   const double limitdis=InitCt.dp*LimitDist;
   const tdouble3 nor=fgeo::VecUnitary(ToTDouble3(Normal));
   //-Define direction of normal (undefined, top, bottom, left, right...).
@@ -302,7 +302,7 @@ void JDsInitializeOp_BoundNormalSphere::Run(unsigned np,unsigned npb,const tdoub
 {
   const tdouble3 pcen=ToTDouble3(Center);
   const double ra=double(Radius);
-  const double maxdist=(MaxDisteH>0? InitCt.h*MaxDisteH: DBL_MAX);
+  const double maxdist=(MaxDisteH>0? InitCt.kernelh*MaxDisteH: DBL_MAX);
   //-Processes particles.
   JRangeFilter rg(MkBound);
   const bool all=(MkBound.empty());
@@ -357,8 +357,8 @@ void JDsInitializeOp_BoundNormalCylinder::Run(unsigned np,unsigned npb,const tdo
   const tdouble3 cen1=ToTDouble3(Center1);
   const tdouble3 cen2=ToTDouble3(Center2);
   const double ra=double(Radius);
-  const double maxdist=(MaxDisteH>0? InitCt.h*MaxDisteH: DBL_MAX);
-  const double tolerance=0.01*InitCt.h;
+  const double maxdist=(MaxDisteH>0? InitCt.kernelh*MaxDisteH: DBL_MAX);
+  const double tolerance=0.01*InitCt.kernelh;
   const tdouble3 vbot=fgeo::VecUnitary(cen1-cen2);
   const tdouble3 vtop=fgeo::VecUnitary(cen2-cen1);
   const tplane3d platop=fgeo::PlanePtVec(cen2,vbot);
@@ -423,8 +423,8 @@ void JDsInitializeOp_BoundNormalCylinder::GetConfig(std::vector<std::string> &li
 /// Constructor.
 //==============================================================================
 JDsInitialize::JDsInitialize(const JXml *sxml,const std::string &place
-  ,float h,float dp,unsigned nbound,bool boundnormals)
-  :BoundNormals(boundnormals),InitCt(JDsInitializeOp::StrInitCt(h,dp,nbound))
+  ,float kernelh,float dp,unsigned nbound,bool boundnormals)
+  :BoundNormals(boundnormals),InitCt(JDsInitializeOp::StrInitCt(kernelh,dp,nbound))
 {
   ClassName="JDsInitialize";
   Reset();

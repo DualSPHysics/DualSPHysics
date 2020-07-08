@@ -22,37 +22,33 @@
 #define _JDsGauge_ker_
 
 #include "DualSphDef.h"
+#include "JCellDivDataGpu.h"
 #include <cuda_runtime_api.h>
 
 /// Implements a set of functions and CUDA kernels for classes that manage gauges.
 namespace cugauge{
 
 //-Kernel for JGaugeVelocity.
-void Interaction_GaugeVel(bool symm,tdouble3 ptpos
-  ,float awen,int hdiv,tuint3 ncells,tuint3 cellmin,const int2 *begincell
-  ,const double2 *posxy,const double *posz,const typecode *code,const float4 *velrhop
-  ,float3 *ptvel
-  ,tdouble3 domposmin,float scell,float fourh2,float h,float massf);
+void Interaction_GaugeVel(const StCteSph &CSP,const StDivDataGpu &dvd
+  ,tdouble3 ptpos,const double2 *posxy,const double *posz
+  ,const typecode *code,const float4 *velrhop,float3 *ptvel);
 
 //-Kernel for JGaugeSwl.
-void Interaction_GaugeSwl(bool symm,tdouble3 point0,tdouble3 pointdir,unsigned pointnp,float masslimit
-  ,float awen,int hdiv,tuint3 ncells,tuint3 cellmin,const int2 *begincell
-  ,const double2 *posxy,const double *posz,const typecode *code,const float4 *velrhop
-  ,tdouble3 domposmin,float scell,float fourh2,float h,float massf,float3 *ptres);
+void Interaction_GaugeSwl(const StCteSph &CSP,const StDivDataGpu &dvd
+  ,tdouble3 point0,tdouble3 pointdir,unsigned pointnp,float masslimit
+  ,const double2 *posxy,const double *posz,const typecode *code
+  ,const float4 *velrhop,float3 *ptres);
 
 //-Kernel for JGaugeMaxZ.
-void Interaction_GaugeMaxz(tdouble3 point0,float maxdist2
+void Interaction_GaugeMaxz(tdouble3 point0,float maxdist2,const StDivDataGpu &dvd
   ,int cxini,int cxfin,int yini,int yfin,int zini,int zfin
-  ,tint4 nc,unsigned cellfluid,const int2 *begincell
   ,const double2 *posxy,const double *posz,const typecode *code
   ,float3 *ptres);
 
 //-Kernel for JGaugeForce.
-void Interaction_GaugeForce(unsigned n,unsigned idbegin,typecode codesel
-  ,float cs0  //<vs_praticalss>
-  ,float fourh2,float h,float bwen,float massf,float cteb,float rhopzero,float gamma
-  ,int hdiv,tuint3 ncells,tuint3 cellmin,const int2 *begincell,tdouble3 domposmin,float scell
-  ,const double2 *posxy,const double *posz,const typecode *code,const unsigned *idp,const float4 *velrhop
+void Interaction_GaugeForce(const StCteSph &CSP,const StDivDataGpu &dvd
+  ,unsigned n,unsigned idbegin,typecode codesel,const double2 *posxy,const double *posz
+  ,const typecode *code,const unsigned *idp,const float4 *velrhop
   ,float3 *partace);
 
 

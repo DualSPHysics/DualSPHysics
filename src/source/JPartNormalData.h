@@ -62,7 +62,7 @@ private:
   double Data2dPosY;     ///<Y value in 2D simulations.
   double Dp;
   double H;
-  double Dist;           ///<Distance used for calculating normal data (tipically 2H).
+  double Dist;           ///<Distance used for calculating normal data (tipically KernelSize).
   bool FtSupport;        ///<Enables support for floating bodies.
 
   std::string PartNormalsName; ///<Name of normals approach used for PartNormals (Mean or Marrone).

@@ -410,7 +410,7 @@ void JNormalsMarrone::ComputeNormalsMarrone(){
       }
       else if(noroutdmin>NormalsDist[c])noroutdmin=NormalsDist[c];
     }
-    const bool norin=(norindmin<=Dist);//-Maximum distance allows is Dist (2H).
+    const bool norin=(norindmin<=Dist);//-Maximum distance allows is Dist (KernelSize).
     if(DG)printf("-> norindmin:%g  noroutdmin:%g\n",norindmin,noroutdmin);
     //-Almacena informacion de normales distintas.
     unsigned nsel=0;

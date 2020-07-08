@@ -68,7 +68,7 @@ protected:
   tdouble3 *PartNor;
 
   //-Normal data.
-  double Dist;           ///<Distance used for calculating normal data (tipically 2H).
+  double Dist;           ///<Distance used for calculating normal data (tipically KernelSize).
   unsigned SizeNor;
   unsigned *NormalBegin; ///<Normals for each particle [SizePart+1]
   tdouble3 *Normals;     ///<Unitary normal to shape [SizeNor]

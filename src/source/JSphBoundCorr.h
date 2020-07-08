@@ -112,7 +112,7 @@ class JSphBoundCorr : protected JObject
 {
 private:
   JLog2 *Log;
-  const double Dp;
+  const double Dp;       ///<Initial distance between particles [m].
 
   float DetermLimit;     ///<Limit for determinant. Use 1e-3 for first_order or 1e+3 for zeroth_order (default=1e+3).
   byte ExtrapolateMode;  ///<Calculation mode for rhop extrapolation from ghost nodes 1:fast-single, 2:single, 3:double (default=1).

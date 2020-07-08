@@ -19,7 +19,7 @@
 /// \file JDsPips.cpp \brief Implements the class \ref JDsPips.
 
 #include "JDsPips.h"
-#include "JCellNgSearchCpu.h"
+#include "JCellSearch_inline.h"
 #include "JLog2.h"
 #include "JAppInfo.h"
 #include "Functions.h"
@@ -187,7 +187,7 @@ std::string JDsPips::GetTotalPIsInfo()const{
 void JDsPips::ComputeCpu(unsigned nstep,double tstep,double tsim
   ,const StCteSph &csp,int ompthreads
   ,unsigned np,unsigned npb,unsigned npbok
-  ,StDivDataCpu dvd,const unsigned *dcell,const tdouble3 *pos)
+  ,const StDivDataCpu &dvd,const unsigned *dcell,const tdouble3 *pos)
 {
   //-Compute bound & fluid PIs.
   ullong npith[OMP_MAXTHREADS*OMP_STRIDE];
@@ -201,12 +201,12 @@ void JDsPips::ComputeCpu(unsigned nstep,double tstep,double tsim
     unsigned picb=0,pirb=0;
     const tdouble3 posp1=pos[p1];
     //-Search for fluid neighbours in adjacent cells.
-    const StNgSearch ngs=NgSearchInit(dcell[p1],false,dvd);
+    const StNgSearch ngs=nsearch::Init(dcell[p1],false,dvd);
     for(int z=ngs.zini;z<ngs.zfin;z++)for(int y=ngs.yini;y<ngs.yfin;y++){
-      const tuint2 pif=NgSearchParticleRange(y,z,ngs,dvd);
+      const tuint2 pif=nsearch::ParticleRange(y,z,ngs,dvd);
       for(unsigned p2=pif.x;p2<pif.y;p2++){
-        tfloat4 dr; NgSearchDistance(posp1,pos[p2],dr);
-        if(dr.w<=csp.fourh2 && dr.w>=ALMOSTZERO)pirb++;
+        const float rr2=nsearch::Distance2(posp1,pos[p2]);
+        if(rr2<=csp.kernelsize2 && rr2>=ALMOSTZERO)pirb++;
         picb++;
       }
     }
@@ -226,12 +226,12 @@ void JDsPips::ComputeCpu(unsigned nstep,double tstep,double tsim
     const tdouble3 posp1=pos[p1];
     //-Search for bound & fluid neighbours in adjacent cells.
     for(byte tpfluid=0;tpfluid<=1;tpfluid++){
-      const StNgSearch ngs=NgSearchInit(dcell[p1],!tpfluid,dvd);
+      const StNgSearch ngs=nsearch::Init(dcell[p1],!tpfluid,dvd);
       for(int z=ngs.zini;z<ngs.zfin;z++)for(int y=ngs.yini;y<ngs.yfin;y++){
-        const tuint2 pif=NgSearchParticleRange(y,z,ngs,dvd);
+        const tuint2 pif=nsearch::ParticleRange(y,z,ngs,dvd);
         for(unsigned p2=pif.x;p2<pif.y;p2++){
-          tfloat4 dr; NgSearchDistance(posp1,pos[p2],dr);
-          if(dr.w<=csp.fourh2 && dr.w>=ALMOSTZERO)pirf++;
+          const float rr2=nsearch::Distance2(posp1,pos[p2]);
+          if(rr2<=csp.kernelsize2 && rr2>=ALMOSTZERO)pirf++;
           picf++;
         }
       }
@@ -267,7 +267,7 @@ void JDsPips::ComputeCpu(unsigned nstep,double tstep,double tsim
 //==============================================================================
 void JDsPips::ComputeGpu(unsigned nstep,double tstep,double tsim
   ,unsigned np,unsigned npb,unsigned npbok
-  ,StDivDataGpu dvd,const unsigned *dcell,const float4 *poscell
+  ,const StDivDataGpu &dvd,const unsigned *dcell,const float4 *poscell
   ,unsigned sauxmem,unsigned *auxmem)
 {
   //-First calculation with reduction and the result is saved as uint4.

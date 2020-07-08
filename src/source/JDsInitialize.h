@@ -67,11 +67,11 @@ public:
 
   ///Structure with constant values needed for initialization tasks.
   typedef struct StrInitCt{
-    float h;          ///<The smoothing length [m].
+    float kernelh;    ///<The smoothing length of SPH kernel [m].
     float dp;         ///<Initial distance between particles [m].
     unsigned nbound;  ///<Initial number of boundary particles (fixed+moving+floating).
-    StrInitCt(float h_,float dp_,unsigned nbound_){
-      h=h_; dp=dp_; nbound=nbound_;
+    StrInitCt(float kernelh_,float dp_,unsigned nbound_){
+      kernelh=kernelh_; dp=dp_; nbound=nbound_;
     }
   }StInitCt;
 
@@ -231,7 +231,7 @@ private:
 
 public:
   JDsInitialize(const JXml *sxml,const std::string &place
-    ,float h,float dp,unsigned nbound,bool boundnormals);
+    ,float kernelh,float dp,unsigned nbound,bool boundnormals);
   ~JDsInitialize();
   void Reset();
   unsigned Count()const{ return(unsigned(Opes.size())); }

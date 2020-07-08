@@ -23,7 +23,8 @@
 #include <math_constants.h>
 
 namespace cupips{
-#include "FunctionsBasic_iker.cu"
+#include "FunctionsBasic_iker.h"
+#include "JCellSearch_iker.h"
 
 //##############################################################################
 //# Kernels for JDsPips.
@@ -43,77 +44,27 @@ template <unsigned blockSize> __device__ void KerReduSumUintWarp(volatile unsign
 }
 
 //------------------------------------------------------------------------------
-/// Returns cell limits for the interaction.
-/// Devuelve limites de celdas para interaccion.
-//------------------------------------------------------------------------------
-__device__ void KerNgSearchInitsp(unsigned rcell
-  ,const unsigned &axis,const unsigned &cellcode
-  ,const int &hdiv,const int4 &nc,const int3 &cellzero
-  ,int &ini1,int &fin1,int &ini2,int &fin2,int &ini3,int &fin3)
-{
-  //-Obtains interaction limits.
-  const int cx=PC__Cellx(cellcode,rcell)-cellzero.x;
-  const int cy=PC__Celly(cellcode,rcell)-cellzero.y;
-  const int cz=PC__Cellz(cellcode,rcell)-cellzero.z;
-  //-Sorts components according axis used in cell order.
-  const int c1=(axis==MGDIV_X? cy: cx);
-  const int c2=(axis==MGDIV_Z? cy: cz);
-  const int c3=(axis==MGDIV_Z? cz: (axis==MGDIV_X? cx: cy));
-  //-Code for hdiv 1 or 2 but not zero.
-  //-Codigo para hdiv 1 o 2 pero no cero.
-  ini1=c1-min(c1,hdiv);
-  fin1=c1+min(nc.x-c1-1,hdiv)+1;
-  ini2=c2-min(c2,hdiv);
-  fin2=c2+min(nc.y-c2-1,hdiv)+1;
-  ini3=c3-min(c3,hdiv);
-  fin3=c3+min(nc.z-c3-1,hdiv)+1;
-  //-Compute absolute limits.
-  ini3*=nc.w; fin3*=nc.w;
-  ini2*=nc.x; fin2*=nc.x;
-}
-
-//------------------------------------------------------------------------------
-/// Returns range of boundary particles for neighborhood search.
-/// Devuelve rango de particulas bound para busqueda de vecinos.
-__device__ void KerNgSearchParticleRange(const int &c2,const int &c3
-  ,const int &ini1,const int &fin1,const int2 *begincell
-  ,unsigned &pini,unsigned &pfin)
-{
-  const int v=c2+c3;
-  for(int c1=ini1;c1<fin1;c1++){
-    const int2 cbeg=begincell[c1+v];
-    if(cbeg.y){
-      if(!pfin)pini=cbeg.x;
-      pfin=cbeg.y;
-    }
-  }
-}
-
-
-//------------------------------------------------------------------------------
 /// Count number of real and checked neighbours.
 //------------------------------------------------------------------------------
 __device__ void KerInteractionNgBox(const unsigned &pini,const unsigned &pfin
-  ,float dosh,const float4 &pscellp1,const float4 *poscell,unsigned &numr,unsigned &numc)
+  ,float kernelsize2,float poscellsize,const float4 &pscellp1,const float4 *poscell
+  ,unsigned &numr,unsigned &numc)
 {
   for(int p2=pini;p2<pfin;p2++){
     const float4 pscellp2=poscell[p2];
-    float drx=pscellp1.x-pscellp2.x + dosh*(CEL_GetX(__float_as_int(pscellp1.w))-CEL_GetX(__float_as_int(pscellp2.w)));
-    float dry=pscellp1.y-pscellp2.y + dosh*(CEL_GetY(__float_as_int(pscellp1.w))-CEL_GetY(__float_as_int(pscellp2.w)));
-    float drz=pscellp1.z-pscellp2.z + dosh*(CEL_GetZ(__float_as_int(pscellp1.w))-CEL_GetZ(__float_as_int(pscellp2.w)));
-    const float rr2=drx*drx+dry*dry+drz*drz;
-    if(rr2<=dosh*dosh && rr2>=ALMOSTZERO)numr++;
+    const float rr2=cunsearch::Distance2(pscellp1,pscellp2,poscellsize);
+    if(rr2<=kernelsize2 && rr2>=ALMOSTZERO)numr++;
   }
   numc+=(pfin-pini);
 }
 
-
 //------------------------------------------------------------------------------
 /// Count number of real and checked neighbours in particle interacion.
 //------------------------------------------------------------------------------
-template <unsigned blockSize> __global__ void KerInteractionNg(unsigned nb,unsigned pinitb,unsigned nf,unsigned pinitf
-  ,int hdiv,int4 nc,int3 cellzero,const int2 *begincell,unsigned cellfluid,const unsigned *dcell
-  ,unsigned axis,unsigned cellcode,float dosh,const float4 *poscell,uint4 *res)
+template <unsigned blockSize> __global__ void KerInteractionNg
+  (unsigned nb,unsigned pinitb,unsigned nf,unsigned pinitf
+  ,int scelldiv,int4 nc,int3 cellzero,const int2 *begincell,unsigned cellfluid,const unsigned *dcell
+  ,unsigned axis,unsigned cellcode,float kernelsize2,float poscellsize,const float4 *poscell,uint4 *res)
 {
   extern __shared__ unsigned snrf[];
   unsigned *snrb=snrf+blockDim.x;
@@ -129,21 +80,21 @@ template <unsigned blockSize> __global__ void KerInteractionNg(unsigned nb,unsig
 
     //-Obtains neighborhood search limits.
     int ini1,fin1,ini2,fin2,ini3,fin3;
-    KerNgSearchInitsp(dcell[p1],axis,cellcode,hdiv,nc,cellzero,ini1,fin1,ini2,fin2,ini3,fin3);
+    cunsearch::Initsp(dcell[p1],axis,cellcode,scelldiv,nc,cellzero,ini1,fin1,ini2,fin2,ini3,fin3);
 
     //-Interaction with fluids.
     ini3+=cellfluid; fin3+=cellfluid;
     for(int c3=ini3;c3<fin3;c3+=nc.w)for(int c2=ini2;c2<fin2;c2+=nc.x){
-      unsigned pini,pfin=0;  KerNgSearchParticleRange(c2,c3,ini1,fin1,begincell,pini,pfin);
-      if(pfin)KerInteractionNgBox(pini,pfin,dosh,pscellp1,poscell,numr,numc);
+      unsigned pini,pfin=0;  cunsearch::ParticleRange(c2,c3,ini1,fin1,begincell,pini,pfin);
+      if(pfin)KerInteractionNgBox(pini,pfin,kernelsize2,poscellsize,pscellp1,poscell,numr,numc);
     }
     
     //-Interaction with boundaries.
     if(p>=nb){//-When p particle is fluid.
       ini3-=cellfluid; fin3-=cellfluid;
       for(int c3=ini3;c3<fin3;c3+=nc.w)for(int c2=ini2;c2<fin2;c2+=nc.x){
-        unsigned pini,pfin=0;  KerNgSearchParticleRange(c2,c3,ini1,fin1,begincell,pini,pfin);
-        if(pfin)KerInteractionNgBox(pini,pfin,dosh,pscellp1,poscell,numr,numc);
+        unsigned pini,pfin=0;  cunsearch::ParticleRange(c2,c3,ini1,fin1,begincell,pini,pfin);
+        if(pfin)KerInteractionNgBox(pini,pfin,kernelsize2,poscellsize,pscellp1,poscell,numr,numc);
       }
     }
 
@@ -175,8 +126,8 @@ void InteractionNg_1st(unsigned nb,unsigned pinitb,unsigned nf,unsigned pinitf
   const unsigned shmem=sizeof(unsigned)*4*BSIZE;
   dim3 sgrid=GetSimpleGridSize(np,BSIZE);
   KerInteractionNg <BSIZE> <<<sgrid,BSIZE,shmem,stm>>>(nb,pinitb,nf,pinitf
-    ,dvd.hdiv,Int4(dvd.nc),Int3(dvd.cellzero),dvd.beginendcell,dvd.cellfluid,dcell
-    ,dvd.axis,dvd.cellcode,dvd.dosh,poscell,res);
+    ,dvd.scelldiv,dvd.nc,dvd.cellzero,dvd.beginendcell,dvd.cellfluid,dcell
+    ,dvd.axis,dvd.domcellcode,dvd.kernelsize2,dvd.poscellsize,poscell,res);
 }
 
 //==============================================================================

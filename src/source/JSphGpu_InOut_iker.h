@@ -22,6 +22,7 @@
 #define _JSphGpu_InOut_iker_
 
 #include "DualSphDef.h"
+#include "JCellDivDataGpu.h"
 #include <cuda_runtime_api.h>
 
 #define INOUT_RefillAdvanced_MASK 0x01
@@ -86,24 +87,21 @@ void InOutFillCreate(byte periactive,unsigned newn,const unsigned *newinoutpart
 
 //-Kernels for Zsurf calculation (JSphInOut).
 float InOutComputeZsurf(unsigned nptz,const float3 *ptzpos,float maxdist,float zbottom
-  ,TpCellMode cellmode,tuint3 ncells,const int2 *begincell,tuint3 cellmin
-  ,const double2 *posxy,const double *posz,const typecode *code
+  ,const StDivDataGpu &dvd,const double2 *posxy,const double *posz,const typecode *code
   ,float *resg,float *resh);
 
 //-Kernels to extrapolate rhop and velocity (JSphInOut).
-void Interaction_InOutExtrap(byte doublemode,bool simulate2d,TpKernel tkernel,TpCellMode cellmode
+void Interaction_InOutExtrap(byte doublemode,bool simulate2d,TpKernel tkernel
   ,unsigned inoutcount,const int *inoutpart,const byte *cfgzone,byte computerhopmask,byte computevelmask
   ,const float4 *planes,const float* width,const float3 *dirdata,float determlimit
-  ,tuint3 ncells,const int2 *begincell,tuint3 cellmin
-  ,const double2 *posxy,const double *posz,const typecode *code,const unsigned *idp
-  ,float4 *velrhop);
+  ,const StDivDataGpu &dvd,const double2 *posxy,const double *posz,const typecode *code
+  ,const unsigned *idp,float4 *velrhop);
 
 //-Kernels to extrapolate rhop on boundary particles (JSphBoundCorr).
-void Interaction_BoundCorr(byte doublemode,bool simulate2d,TpKernel tkernel,TpCellMode cellmode
+void Interaction_BoundCorr(byte doublemode,bool simulate2d,TpKernel tkernel
   ,unsigned npbok,typecode boundcode,tfloat4 plane,tfloat3 direction,float determlimit
-  ,tuint3 ncells,const int2 *begincell,tuint3 cellmin
-  ,const double2 *posxy,const double *posz,const typecode *code,const unsigned *idp
-  ,float4 *velrhop);
+  ,const StDivDataGpu &dvd,const double2 *posxy,const double *posz
+  ,const typecode *code,const unsigned *idp,float4 *velrhop);
 
 //-Kernels to interpolate velocity (JSphInOutGridDataTime).
 void InOutInterpolateTime(unsigned npt,double time,double t0,double t1

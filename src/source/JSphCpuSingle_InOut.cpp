@@ -258,9 +258,7 @@ void JSphCpuSingle::InOutCalculeZsurf(){
     const tfloat3 *ptz=InOut->GetPtzPos(ci);
     const float maxdist=(float)InOut->GetDistPtzPos(ci);
     const float zbottom=InOut->GetZbottom(ci);
-    const float zsurf=Interaction_InOutZsurf(nptz,ptz,maxdist,zbottom
-      ,CellDivSingle->GetNcells(),CellDivSingle->GetBeginCell(),CellDivSingle->GetCellDomainMin()
-      ,Posc,Codec);
+    const float zsurf=Interaction_InOutZsurf(nptz,ptz,maxdist,zbottom,DivData,Posc,Codec);
     InOut->SetInputZsurf(ci,zsurf);
   }
   TmcStop(Timers,TMC_SuInOut);
@@ -278,7 +276,6 @@ void JSphCpuSingle::InOutExtrapolateData(unsigned inoutcount,const int *inoutpar
   const float determlimit=InOut->GetDetermLimit();
   const byte doublemode=InOut->GetExtrapolateMode();
   Interaction_InOutExtrap(doublemode,inoutcount,inoutpart,cfgzone,planes,width,dirdata,determlimit
-    ,CellDivSingle->GetNcells(),CellDivSingle->GetBeginCell(),CellDivSingle->GetCellDomainMin()
     ,Dcellc,Posc,Codec,Idpc,Velrhopc);
 }
 
@@ -297,7 +294,6 @@ void JSphCpuSingle::BoundCorrectionData(){
     const tplane3f plane=zo->GetPlane();
     const tfloat3 direction=ToTFloat3(zo->GetDirection());
     Interaction_BoundCorr(doublemode,boundcode,plane,direction,determlimit
-      ,CellDivSingle->GetNcells(),CellDivSingle->GetBeginCell(),CellDivSingle->GetCellDomainMin()
       ,Posc,Codec,Idpc,Velrhopc);
   }
   TmcStop(Timers,TMC_SuBoundCorr);

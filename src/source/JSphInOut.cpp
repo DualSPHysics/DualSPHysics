@@ -1076,7 +1076,6 @@ void JSphInOut::InterpolateVelCpu(float timestep,unsigned inoutcount,const int *
   for(unsigned ci=0;ci<GetCount();ci++)if(List[ci]->GetInterpolatedVel()){
     JSphInOutZone* zo=List[ci];
     float velcorr=0;
-    if(zo->GetAwasVel())velcorr=zo->GetAwasVel()->GetVelCorr(timestep); //<vs_inawwas>
     JSphInOutGridData* gd=zo->GetInputVelGrid();
     if(gd->GetNx()==1)gd->InterpolateZVelCpu(timestep,byte(ci),inoutcount,inoutpart,pos,code,idp,velrhop,velcorr);
     else gd->InterpolateVelCpu(timestep,byte(ci),inoutcount,inoutpart,pos,code,idp,velrhop,velcorr);
@@ -1094,7 +1093,6 @@ void JSphInOut::InterpolateVelGpu(float timestep,unsigned inoutcount,const int *
   for(unsigned ci=0;ci<GetCount();ci++)if(List[ci]->GetInterpolatedVel()){
     JSphInOutZone* zo=List[ci];
     float velcorr=0;
-    if(zo->GetAwasVel())velcorr=zo->GetAwasVel()->GetVelCorr(timestep); //<vs_inawwas>
     JSphInOutGridData* gd=zo->GetInputVelGrid();
     if(gd->GetNx()==1)gd->InterpolateZVelGpu(timestep,byte(ci),inoutcount,inoutpartg,posxyg,poszg,codeg,idpg,velrhopg,velcorr);
     else Run_Exceptioon("GPU code was not implemented for nx>1.");
@@ -1445,11 +1443,6 @@ void JSphInOut::VisuConfig(std::string txhead,std::string txfoot)const{
 void JSphInOut::SavePartFiles(unsigned part){
   //-Creates VTK file with Zsurf.
   SaveVtkZsurf(part);
-  //-Saves other files.  //<vs_inawwas_ini>
-  for(unsigned ci=0;ci<GetCount();ci++){
-    JSphInOutZone *izone=List[ci];
-    if(izone->GetAwasVel())izone->GetAwasVel()->SaveCsvData();
-  }  //<vs_inawwas_end>
 }
 
 //==============================================================================

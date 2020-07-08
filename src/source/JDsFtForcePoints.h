@@ -58,7 +58,7 @@ class JDsFtForcePoints : protected JObject
 private:
   JLog2 *Log;
   const bool Cpu;
-  const double Dp;
+  const double Dp;     ///<Initial distance between particles [m].
 
   bool SvCsvPoints;    ///<Saves csv with link points (def=true). 
   bool SvVtkPoints;    ///<Saves vtk with link points (def=false).

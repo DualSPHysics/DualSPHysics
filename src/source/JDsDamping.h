@@ -80,7 +80,7 @@ public:
 
 private:
   JLog2* Log;
-  const double Dp;
+  const double Dp;      ///<Initial distance between particles [m].
   std::vector<StDamping> List;
 
   void ReadXml(const JXml *sxml,TiXmlElement* ele);

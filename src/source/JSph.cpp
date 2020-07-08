@@ -22,6 +22,8 @@
 #include "JAppInfo.h"
 #include "Functions.h"
 #include "FunctionsGeo3d.h"
+#include "FunSphKernelsCfg.h"
+#include "FunSphKernel.h"
 #include "JPartDataHead.h"
 #include "JSphMk.h"
 #include "JDsPartsInit.h"
@@ -163,9 +165,8 @@ void JSph::InitVars(){
   InterStep=INTERSTEP_None;
   VerletSteps=40;
   TKernel=KERNEL_Wendland;
-  Awen=Bwen=0;
-  Awc6=Bwc6=0;  //<vs_praticalsskq>
-  memset(&CubicCte,0,sizeof(StCubicCte));
+  KCubic ={0,0,0,0,0,0,0,0};
+  KWend  ={0,0};
   TVisco=VISCO_None;
   TDensity=DDT_None; DDTValue=0; DDTArray=false;
   ShiftingMode=(Shifting? Shifting->GetShiftMode(): SHIFT_None);
@@ -195,14 +196,16 @@ void JSph::InitVars(){
   SvTimers=false;
   SvDomainVtk=false;
 
-  H=CteB=Gamma=RhopZero=CFLnumber=0;
+  KernelH=CteB=Gamma=RhopZero=CFLnumber=0;
   Dp=0;
-  Cs0=0;
-  DDT2h=DDTgz=0;
   MassFluid=MassBound=0;
   Gravity=TFloat3(0);
-  Dosh=H2=Fourh2=Eta2=0;
+
+  KernelSize=KernelSize2=0;
+  Cs0=0;
+  Eta2=0;
   SpsSmag=SpsBlin=0;
+  DDTkh=DDTgz=0;
   memset(&CSP,0,sizeof(StCteSph));
 
   CasePosMin=CasePosMax=TDouble3(0);
@@ -228,9 +231,11 @@ void JSph::InitVars(){
   AllocMemoryFloating(0,false);
 
   CellMode=CELLMODE_None;
-  Hdiv=0;
+  ScellDiv=0;
   Scell=0;
   MovLimit=0;
+
+  PosCellSize=0;
 
   Map_PosMin=Map_PosMax=Map_Size=TDouble3(0);
   Map_Cells=TUint3(0);
@@ -522,6 +527,22 @@ void JSph::LoadConfig(const JSphCfgRun *cfg){
 }
 
 //==============================================================================
+/// Loads kernel selection to compute kernel values.
+//==============================================================================
+void JSph::LoadKernelSelection(const JSphCfgRun *cfg,const JXml *xml){
+  //-Load kernel selection from execution parameters from XML.
+  JCaseEParms eparms;
+  eparms.LoadXml(xml,"case.execution.parameters");
+  switch(eparms.GetValueInt("Kernel",true,2)){
+    case 1:  TKernel=KERNEL_Cubic;     break;
+    case 2:  TKernel=KERNEL_Wendland;  break;
+    default: Run_Exceptioon("Kernel choice is not valid.");
+  }
+  //-Load kernel selection from execution parameters from commands.
+  if(cfg->TKernel)TKernel=cfg->TKernel;
+}
+
+//==============================================================================
 /// Loads predefined constans from XML.
 //==============================================================================
 void JSph::LoadConfigCtes(const JXml *xml){
@@ -530,16 +551,16 @@ void JSph::LoadConfigCtes(const JXml *xml){
 
   Simulate2D=ctes.GetData2D();
   Simulate2DPosY=ctes.GetData2DPosY();
-  H=(float)ctes.GetH();
+  KernelH=(float)ctes.GetH();
   CteB=(float)ctes.GetB();
   Gamma=(float)ctes.GetGamma();
   RhopZero=(float)ctes.GetRhop0();
   CFLnumber=(float)ctes.GetCFLnumber();
   Dp=ctes.GetDp();
-  Gravity=ToTFloat3(ctes.GetGravity());
   MassFluid=(float)ctes.GetMassFluid();
   MassBound=(float)ctes.GetMassBound();
-  if(ctes.GetEps()!=0)Log->PrintWarning("Eps value is not used (this correction is deprecated).");
+  Gravity=ToTFloat3(ctes.GetGravity());
+  if(ctes.GetEps()!=0)Log->PrintWarning("Eps value is not used (this correction was removed).");
 }
 
 //==============================================================================
@@ -548,9 +569,7 @@ void JSph::LoadConfigCtes(const JXml *xml){
 void JSph::LoadConfigParameters(const JXml *xml){
   JCaseEParms eparms;
   eparms.LoadXml(xml,"case.execution.parameters");
-
-  if(eparms.Exists("FtSaveAce"))SaveFtAce=(eparms.GetValueInt("FtSaveAce",true,0)!=0);
-
+  if(eparms.Exists("FtSaveAce"))SaveFtAce=(eparms.GetValueInt("FtSaveAce",true,0)!=0); //-For Debug.
   if(eparms.Exists("PosDouble")){
     Log->PrintWarning("The parameter \'PosDouble\' is deprecated.");
     SvPosDouble=(eparms.GetValueInt("PosDouble")==2);
@@ -569,14 +588,6 @@ void JSph::LoadConfigParameters(const JXml *xml){
     default: Run_Exceptioon("Step algorithm is not valid.");
   }
   VerletSteps=eparms.GetValueInt("VerletSteps",true,40);
-  switch(eparms.GetValueInt("Kernel",true,2)){
-    case 1:  TKernel=KERNEL_Cubic;     break;
-    case 2:  TKernel=KERNEL_Wendland;  break;
-#ifdef PRASS3_WENDLANDC6                        //<vs_praticalsskq>
-    case 3:  TKernel=KERNEL_WendlandC6; break;  //<vs_praticalsskq>
-#endif                                          //<vs_praticalsskq>
-    default: Run_Exceptioon("Kernel choice is not valid.");
-  }
   switch(eparms.GetValueInt("ViscoTreatment",true,1)){
     case 1:  TVisco=VISCO_Artificial;  break;
     case 2:  TVisco=VISCO_LaminarSPS;  break;
@@ -649,7 +660,7 @@ void JSph::LoadConfigParameters(const JXml *xml){
       if(shiftcoef==0)shiftmode=SHIFT_None;
       else shifttfs=eparms.GetValueFloat("ShiftTFS",true,0);
     }
-    Shifting=new JSphShifting(Simulate2D,Dp,H,Log);
+    Shifting=new JSphShifting(Simulate2D,Dp,KernelH,Log);
     Shifting->ConfigBasic(shiftmode,shiftcoef,shifttfs);
   }
 
@@ -746,7 +757,6 @@ void JSph::LoadConfigCommands(const JSphCfgRun *cfg){
     Run_Exceptioon("Only the slip mode velocity=0 is allowed with mDBC conditions."); //SHABA
   if(cfg->TStep)TStep=cfg->TStep;
   if(cfg->VerletSteps>=0)VerletSteps=cfg->VerletSteps;
-  if(cfg->TKernel)TKernel=cfg->TKernel;
   if(cfg->TVisco){ TVisco=cfg->TVisco; Visco=cfg->Visco; }
   if(cfg->ViscoBoundFactor>=0)ViscoBoundFactor=cfg->ViscoBoundFactor;
 
@@ -786,7 +796,7 @@ void JSph::LoadConfigCommands(const JSphCfgRun *cfg){
       case 3:  shiftmode=SHIFT_Full;     break;
       default: Run_Exceptioon("Shifting mode is not valid.");
     }
-    if(!Shifting)Shifting=new JSphShifting(Simulate2D,Dp,H,Log);
+    if(!Shifting)Shifting=new JSphShifting(Simulate2D,Dp,KernelH,Log);
     Shifting->ConfigBasic(shiftmode);
   }
 
@@ -803,13 +813,18 @@ void JSph::LoadConfigCommands(const JSphCfgRun *cfg){
   }
   else OutputTime->Config(FileXml,"case.execution.special.timeout",TimePart);
 
+  //-Configuration of domain limits.
   CellMode=cfg->CellMode;
   if(cfg->DomainMode==2)ConfigDomainFixed(cfg->DomainFixedMin,cfg->DomainFixedMax);
+
+  //-Configuration of density limits.
   if(cfg->RhopOutModif){
     RhopOutMin=cfg->RhopOutMin; RhopOutMax=cfg->RhopOutMax;
   }
   RhopOut=(RhopOutMin<RhopOutMax);
   if(!RhopOut){ RhopOutMin=-FLT_MAX; RhopOutMax=FLT_MAX; }
+  if(RhopZero<RhopOutMin || RhopZero>RhopOutMax)
+    Run_Exceptioon(fun::PrintStr("The reference density value %f is outside the defined limits [%f,%f].",RhopZero,RhopOutMin,RhopOutMax));
 }
 
 //==============================================================================
@@ -832,7 +847,8 @@ void JSph::LoadConfigVars(const JXml *xml){
     rep|=NuxLib->CreateVar("CaseName"  ,true,true,CaseName);
     rep|=NuxLib->CreateVar("Data2D"    ,true,true,Simulate2D);
     rep|=NuxLib->CreateVar("Data2DPosy",true,true,Simulate2DPosY);
-    rep|=NuxLib->CreateVar("H"         ,true,true,H);
+    rep|=NuxLib->CreateVar("H"         ,true,true,KernelH);
+    rep|=NuxLib->CreateVar("KernelSize",true,true,KernelSize);
     rep|=NuxLib->CreateVar("B"         ,true,true,CteB);
     rep|=NuxLib->CreateVar("Gamma"     ,true,true,Gamma);
     rep|=NuxLib->CreateVar("Rhop0"     ,true,true,RhopZero);
@@ -870,8 +886,12 @@ void JSph::LoadCaseConfig(const JSphCfgRun *cfg){
   if(!fun::FileExists(FileXml))Run_ExceptioonFile("Case configuration was not found.",FileXml);
   JXml xml; xml.LoadFile(FileXml);
 
-  //-Predefined constantes.
+  //-Loads kernel selection to compute kernel values.
+  LoadKernelSelection(cfg,&xml);
+  //-Loads predefined constants.
   LoadConfigCtes(&xml);
+  //-Configures value of calculated constants and loads CSP structure.
+  ConfigConstants1(Simulate2D);
 
   //-Define variables on NuxLib object.
   LoadConfigVars(&xml);
@@ -880,9 +900,10 @@ void JSph::LoadCaseConfig(const JSphCfgRun *cfg){
 
   //-Execution parameters from XML.
   LoadConfigParameters(&xml);
-
   //-Execution parameters from commands.
   LoadConfigCommands(cfg);
+  //-Configures other constants according to formulation options and loads more values in CSP structure.
+  ConfigConstants2();
 
   //-Define variables of execution parameters and shows list of available variables.
   LoadConfigVarsExec();
@@ -971,7 +992,7 @@ void JSph::LoadCaseConfig(const JSphCfgRun *cfg){
   //-Configuration of Shifting with zones.
   if(Shifting && xml.GetNodeSimple("case.execution.special.shifting",true))Run_ExceptioonFile("Shifting is defined several times (in <special><shifting> and <execution><parameters>).",FileXml);
   if(xml.GetNodeSimple("case.execution.special.shifting",true)){
-    Shifting=new JSphShifting(Simulate2D,Dp,H,Log);
+    Shifting=new JSphShifting(Simulate2D,Dp,KernelH,Log);
     Shifting->LoadXml(&xml,"case.execution.special.shifting");
   }
   if(Shifting && !Shifting->GetShiftMode()){ delete Shifting; Shifting=NULL; }
@@ -1329,88 +1350,74 @@ void JSph::ResizeMapLimits(){
 }
 
 //==============================================================================
-/// Calculate Wendland constants.
+/// Configures value of main constants and loads CSP structure.
 //==============================================================================
-void JSph::WendlandConstants(bool simulate2d,double h,float &awen,float &bwen){
-  if(simulate2d){
-    awen=float(0.557/(h*h));
-    bwen=float(-2.7852/(h*h*h));
+void JSph::ConfigConstants1(bool simulate2d){
+  //-Computation of constants.
+  const float kernelk=fsph::GetKernelFactor(TKernel);
+  const double h=KernelH;
+  const double kh=h*kernelk;
+  KernelSize=float(kh); 
+  KernelSize2=float(kh*kh);
+  //-Computes kernel constants.
+  switch(TKernel){
+    case KERNEL_Cubic:       KCubic =fsph::GetKernelCubic_Ctes     (simulate2d,h);  break;
+    case KERNEL_Wendland:    KWend  =fsph::GetKernelWendland_Ctes  (simulate2d,h);  break;
+    default: Run_Exceptioon("Kernel unknown.");
   }
-  else{
-    awen=float(0.41778/(h*h*h));
-    bwen=float(-2.08891/(h*h*h*h));
-  }
+  //-Wendland constants are always computed since this kernel is used in some parts where other kernels are not defined (e.g. Gauge code does not support Cubic Spline).
+  if(TKernel!=KERNEL_Wendland)KWend=fsph::GetKernelWendland_Ctes  (simulate2d,h);
+#ifdef DISABLE_KERNELS_EXTRA
+  if(TKernel!=KERNEL_Wendland)Run_Exceptioon("Only Wendland kernel was compiled in this binary distribution.");
+#endif
+  //-Computes other constants.
+  Cs0=sqrt(double(Gamma)*double(CteB)/double(RhopZero));
+  Eta2=float((h*0.1)*(h*0.1));
+  //-Loads main SPH constants and configurations in CSP.
+  memset(&CSP,0,sizeof(StCteSph));
+  CSP.simulate2d    =Simulate2D;
+  CSP.simulate2dposy=Simulate2DPosY;
+  CSP.tkernel       =TKernel;
+  CSP.kcubic        =KCubic;
+  CSP.kwend         =KWend;
+  CSP.kernelh       =KernelH;
+  CSP.cteb          =CteB;
+  CSP.gamma         =Gamma;
+  CSP.rhopzero      =RhopZero;
+  CSP.dp            =Dp;
+  CSP.massfluid     =MassFluid;
+  CSP.massbound     =MassBound;
+  CSP.gravity       =Gravity;
+  CSP.kernelsize    =KernelSize;
+  CSP.kernelsize2   =KernelSize2;
+  CSP.cs0           =Cs0;
+  CSP.eta2          =Eta2;
 }
 
 //==============================================================================
-/// Configures value of constants.
+/// Configures other constants and loads more values in CSP structure.
 //==============================================================================
-void JSph::ConfigConstants(bool simulate2d){
-  //-Computation of constants.
-  const double h=H;
-  DDT2h=float(h*2*DDTValue);
-  DDTgz=float(double(RhopZero)*double(fabs(Gravity.z))/double(CteB));
-  Cs0=sqrt(double(Gamma)*double(CteB)/double(RhopZero));
-  if(!DtIni)DtIni=h/Cs0;
-  if(!DtMin)DtMin=(h/Cs0)*CoefDtMin;
-  Dosh=float(h*2); 
-  H2=float(h*h);
-  Fourh2=float(h*h*4); 
-  Eta2=float((h*0.1)*(h*0.1));
-  //-Wendland constants are always computed since this kernel is used in some parts where other kernels are not defined (e.g. mDBC, inlet/outlet, boundcorr...).
-  WendlandConstants(simulate2d,H,Awen,Bwen);
-  //-Computes constants for other kernels.
-  if(TKernel==KERNEL_Cubic){
-    if(simulate2d){
-      const double a1=10./(PI*7.);
-      const double a2=a1/(h*h);
-      const double aa=a1/(h*h*h);
-      const double deltap=1./1.5;
-      const double wdeltap=a2*(1.-1.5*deltap*deltap+0.75*deltap*deltap*deltap);
-      CubicCte.od_wdeltap=float(1./wdeltap);
-      CubicCte.a1=float(a1);
-      CubicCte.a2=float(a2);
-      CubicCte.aa=float(aa);
-      CubicCte.a24=float(0.25*a2);
-      CubicCte.c1=float(-3.*aa);
-      CubicCte.d1=float(9.*aa/4.);
-      CubicCte.c2=float(-3.*aa/4.);
-    }
-    else{
-      const double a1=1./PI;
-      const double a2=a1/(h*h*h);
-      const double aa=a1/(h*h*h*h);
-      const double deltap=1./1.5;
-      const double wdeltap=a2*(1.-1.5*deltap*deltap+0.75*deltap*deltap*deltap);
-      CubicCte.od_wdeltap=float(1./wdeltap);
-      CubicCte.a1=float(a1);
-      CubicCte.a2=float(a2);
-      CubicCte.aa=float(aa);
-      CubicCte.a24=float(0.25*a2);
-      CubicCte.c1=float(-3.*aa);
-      CubicCte.d1=float(9.*aa/4.);
-      CubicCte.c2=float(-3.*aa/4.);
-    }
-  }
-  else if(TKernel==KERNEL_WendlandC6){  //<vs_praticalsskq_ini>
-    if(simulate2d){
-      Awc6=float(78./(28.*PI*h*h));
-      Bwc6=float(Awc6/h);
-    }
-    else{
-      Awc6=float(1365./(512.*PI*h*h*h));
-      Bwc6=float(Awc6/h);
-    }
-  }  //<vs_praticalsskq_end>
+void JSph::ConfigConstants2(){
   //-Constants for Laminar viscosity + SPS turbulence model.
-  if(TVisco==VISCO_LaminarSPS){  
-    double dp_sps=(Simulate2D? sqrt(Dp*Dp*2.)/2.: sqrt(Dp*Dp*3.)/3.);  
+  if(TVisco==VISCO_LaminarSPS){
+    const double dp_sps=(Simulate2D? sqrt(Dp*Dp*2.)/2.: sqrt(Dp*Dp*3.)/3.);  
     SpsSmag=float(pow((0.12*dp_sps),2));
     SpsBlin=float((2./3.)*0.0066*dp_sps*dp_sps); 
   }
-  CSP={Fourh2};
-  VisuConfig();
+  //-Constants for DDT.
+  DDTkh=KernelSize*DDTValue;
+  DDTgz=float(double(RhopZero)*double(fabs(Gravity.z))/double(CteB));
+  //-Constants for Dt.
+  if(!DtIni)DtIni=KernelH/Cs0;
+  if(!DtMin)DtMin=(KernelH/Cs0)*CoefDtMin;
+
+  //-Loads main SPH constants and configurations in CSP.
+  CSP.spssmag       =SpsSmag;
+  CSP.spsblin       =SpsBlin;
+  CSP.ddtkh         =DDTkh;
+  CSP.ddtgz         =DDTgz;
 }
+
 
 //==============================================================================
 /// Prints out configuration of the case.
@@ -1457,9 +1464,12 @@ void JSph::VisuConfig(){
     Log->Print(fun::VarStr("  VerletSteps",VerletSteps));
     ConfigInfo=ConfigInfo+sep+fun::PrintStr("(%d)",VerletSteps);
   }
-  //-Kernel. 
-  Log->Print(fun::VarStr("Kernel",GetKernelName(TKernel)));
-  ConfigInfo=ConfigInfo+sep+GetKernelName(TKernel);
+  //-Kernel.
+  std::vector<std::string> lines;
+  fsph::GetKernelConfig(CSP,lines);
+  Log->Print(lines);
+  ConfigInfo=ConfigInfo+sep+fsph::GetKernelName(TKernel);
+
   //-Viscosity.
   Log->Print(fun::VarStr("Viscosity",GetViscoName(TVisco)));
   Log->Print(fun::VarStr("  Visco",Visco));
@@ -1474,7 +1484,7 @@ void JSph::VisuConfig(){
     //Log->Print(fun::VarStr("DensityDiffusionArray",DDTArray));
     ConfigInfo=ConfigInfo+fun::PrintStr("(%g)",DDTValue);
   }
-  if(TDensity==DDT_DDT2Full && H/Dp>1.5)Log->PrintWarning("It is advised that selected DDT \'(Fourtakas et al 2019 (full)\' is used with several boundary layers of particles when h/dp>1.5 (2h <= layers*Dp)");  //<vs_dtt2>
+  if(TDensity==DDT_DDT2Full && KernelH/Dp>1.5)Log->PrintWarning("It is advised that selected DDT \'(Fourtakas et al 2019 (full)\' is used with several boundary layers of particles when h/dp>1.5 (2h <= layers*Dp)");  //<vs_dtt2>  //-Check when KernelSize!=2*KernelH???
   //-Shifting.
   if(Shifting){
     Shifting->VisuConfig();
@@ -1511,9 +1521,12 @@ void JSph::VisuConfig(){
   if(PeriZ)Log->Print(fun::VarStr("PeriodicZinc",PeriZinc));
   if(PeriActive)ConfigInfo=ConfigInfo+sep+"Periodic_"+TpPeriName(TpPeri(PeriActive));
   //-Other configurations. 
-  Log->Print(fun::VarStr("Dx",Dp));
-  Log->Print(fun::VarStr("H",H));
-  Log->Print(fun::VarStr("CoefficientH",H/(Dp*sqrt(Simulate2D? 2.f: 3.f))));
+  Log->Print(fun::VarStr("Dp",Dp));
+  const float coefh=float(KernelH/(Dp*sqrt(Simulate2D? 2.f: 3.f)));
+  Log->Printf("KernelH=%f  (CoefficientH=%g; H/Dp=%g)",KernelH,coefh,KernelH/Dp);
+  const float kernelk=fsph::GetKernelFactor(TKernel);
+  if(kernelk!=2.f)Log->Print(fun::VarStr("KernelK",kernelk));
+  Log->Print(fun::VarStr("KernelSize",KernelSize));
   Log->Print(fun::VarStr("CteB",CteB));
   Log->Print(fun::VarStr("Gamma",Gamma));
   Log->Print(fun::VarStr("RhopZero",RhopZero));
@@ -1525,23 +1538,6 @@ void JSph::VisuConfig(){
   if(FixedDt)Log->Print(fun::VarStr("FixedDt",FixedDt->GetFile()));
   Log->Print(fun::VarStr("MassFluid",MassFluid));
   Log->Print(fun::VarStr("MassBound",MassBound));
-  if(TKernel==KERNEL_Wendland){
-    Log->Print(fun::VarStr("Awen (Wendland)",Awen));
-    Log->Print(fun::VarStr("Bwen (Wendland)",Bwen));
-  }
-  else if(TKernel==KERNEL_Cubic){
-    Log->Print(fun::VarStr("CubicCte.a1",CubicCte.a1));
-    Log->Print(fun::VarStr("CubicCte.aa",CubicCte.aa));
-    Log->Print(fun::VarStr("CubicCte.a24",CubicCte.a24));
-    Log->Print(fun::VarStr("CubicCte.c1",CubicCte.c1));
-    Log->Print(fun::VarStr("CubicCte.c2",CubicCte.c2));
-    Log->Print(fun::VarStr("CubicCte.d1",CubicCte.d1));
-    Log->Print(fun::VarStr("CubicCte.od_wdeltap",CubicCte.od_wdeltap));
-  }
-  else if(TKernel==KERNEL_WendlandC6){ //<vs_praticalsskq_ini>
-    Log->Print(fun::VarStr("Awc6 (WendlandC6)",Awc6));
-    Log->Print(fun::VarStr("Bwc6 (WendlandC6)",Bwc6));
-  } //<vs_praticalsskq_end>
   if(TVisco==VISCO_LaminarSPS){     
     Log->Print(fun::VarStr("SpsSmag",SpsSmag));
     Log->Print(fun::VarStr("SpsBlin",SpsBlin));
@@ -1617,7 +1613,7 @@ void JSph::RunInitialize(unsigned np,unsigned npb,const tdouble3 *pos,const unsi
     JXml xml; xml.LoadFile(FileXml);
     xml.SetNuxLib(NuxLib); //-Enables the use of NuxLib in XML configuration.
     if(xml.GetNodeSimple("case.execution.special.initialize",true)){
-      JDsInitialize init(&xml,"case.execution.special.initialize",H,float(Dp),CaseNbound,boundnormal!=NULL);
+      JDsInitialize init(&xml,"case.execution.special.initialize",KernelH,float(Dp),CaseNbound,boundnormal!=NULL);
       if(init.Count()){
         //-Creates array with mktype value.
         word *mktype=new word[np];
@@ -1658,14 +1654,14 @@ void JSph::FreePartsInit(){
 /// Configures cell division.
 //==============================================================================
 void JSph::ConfigCellDivision(){
-  if(CellMode!=CELLMODE_2H && CellMode!=CELLMODE_H)Run_Exceptioon("The CellMode is invalid.");
-  Hdiv=(CellMode==CELLMODE_2H? 1: 2);
-  Scell=Dosh/Hdiv;
+  if(CellMode!=CELLMODE_Full && CellMode!=CELLMODE_Half)Run_Exceptioon("The CellMode is invalid.");
+  ScellDiv=(CellMode==CELLMODE_Full? 1: 2);
+  Scell=KernelSize/ScellDiv;
   MovLimit=Scell*0.9f;
   Map_Cells=TUint3(unsigned(ceil(Map_Size.x/Scell)),unsigned(ceil(Map_Size.y/Scell)),unsigned(ceil(Map_Size.z/Scell)));
   //-Prints configuration.
   Log->Print(fun::VarStr("CellMode",string(GetNameCellMode(CellMode))));
-  Log->Print(fun::VarStr("Hdiv",Hdiv));
+  Log->Print(fun::VarStr("ScellDiv",ScellDiv));
   Log->Print(string("MapCells=(")+fun::Uint3Str(Map_Cells)+")");
   //-Creates VTK file with map cells.
   if(SaveMapCellsVtkSize()<1024*1024*10)SaveMapCellsVtk(Scell);
@@ -1712,7 +1708,7 @@ void JSph::SelecDomain(tuint3 celini,tuint3 celfin){
   Log->Print(string("DomCells=(")+fun::Uint3Str(DomCells)+")");
   Log->Print(fun::VarStr("DomCellCode",fun::UintStr(PC__GetSx(DomCellCode))+"_"+fun::UintStr(PC__GetSy(DomCellCode))+"_"+fun::UintStr(PC__GetSz(DomCellCode))));
   //-Checks dimension for PosCell use.
-  if(!Cpu)CheckConfigPosCellGpu();
+  if(!Cpu)ConfigPosCellGpu();
 }
 
 //==============================================================================
@@ -1753,7 +1749,8 @@ unsigned JSph::CalcCellCode(tuint3 ncells){
 /// Checks static configuration for PosCell on GPU.
 /// Comprueba la configuracion estatica para PosCell en GPU.
 //==============================================================================
-void JSph::CheckConfigPosCellGpu(){
+void JSph::ConfigPosCellGpu(){
+  //-Checks PosCellCode configuration is valid.
   const unsigned bz=CEL_MOVY;
   const unsigned by=CEL_MOVX-bz;
   const unsigned bx=32-by-bz;
@@ -1769,7 +1766,22 @@ void JSph::CheckConfigPosCellGpu(){
   if(maskx!=CEL_X)Run_Exceptioon("Mask for cell-X is wrong.");
   if(masky!=CEL_Y)Run_Exceptioon("Mask for cell-Y is wrong.");
   if(maskz!=CEL_Z)Run_Exceptioon("Mask for cell-Z is wrong.");
-  if(Map_Cells.x>nx || Map_Cells.y>ny || Map_Cells.z>nz){
+  //-Config PosCellSize and check PosCellCode is enough for current simulation.
+  PosCellSize=KernelSize;//-It is KernelSize by default. 
+  int nks=1;
+  tuint3 nposcells=TUint3(unsigned(ceil(Map_Size.x/PosCellSize)),unsigned(ceil(Map_Size.y/PosCellSize)),unsigned(ceil(Map_Size.z/PosCellSize)));
+  const bool adapt_poscellsize=true;
+  if(adapt_poscellsize){
+    while(nposcells.x>nx || nposcells.y>ny || nposcells.z>nz){
+      nks=(nks==1? 2: nks+2);
+      PosCellSize=KernelSize*nks;
+      nposcells=TUint3(unsigned(ceil(Map_Size.x/PosCellSize)),unsigned(ceil(Map_Size.y/PosCellSize)),unsigned(ceil(Map_Size.z/PosCellSize)));
+    }
+  }
+  //-Shows PosCellSize value.
+  Log->Printf("PosCellSize=%f  (%d x KernelSize)",PosCellSize,nks);
+  //-Checks PosCellCode is enough for current simulation.
+  if(nposcells.x>nx || nposcells.y>ny || nposcells.z>nz){
     Log->Printf("\n*** Attention ***");
     string tx1="The static cell configuration for PosCell on GPU approach is invalid for the current domain";
     string tx2="since the maximum number of cells for each axis is";
@@ -1958,7 +1970,7 @@ void JSph::LoadCaseParticles(){
   //-Calcula limites reales de la simulacion.
   if(PartsLoaded->MapSizeLoaded())PartsLoaded->GetMapSize(MapRealPosMin,MapRealPosMax);
   else{
-    PartsLoaded->CalculeLimits(double(H)*BORDER_MAP,Dp/2.,PeriX,PeriY,PeriZ,MapRealPosMin,MapRealPosMax);
+    PartsLoaded->CalculeLimits(double(KernelH)*BORDER_MAP,Dp/2.,PeriX,PeriY,PeriZ,MapRealPosMin,MapRealPosMax);
     ResizeMapLimits();
   }
   Log->Print(string("MapRealPos(final)=")+fun::Double3gRangeStr(MapRealPosMin,MapRealPosMax));
@@ -1973,10 +1985,9 @@ void JSph::LoadCaseParticles(){
   //-Computes simulation limits with periodic boundaries.
   //-Calcula limites de simulacion con bordes periodicos.
   Map_PosMin=MapRealPosMin; Map_PosMax=MapRealPosMax;
-  float dosh=float(H*2);
-  if(PeriX){ Map_PosMin.x=Map_PosMin.x-dosh;  Map_PosMax.x=Map_PosMax.x+dosh; }
-  if(PeriY){ Map_PosMin.y=Map_PosMin.y-dosh;  Map_PosMax.y=Map_PosMax.y+dosh; }
-  if(PeriZ){ Map_PosMin.z=Map_PosMin.z-dosh;  Map_PosMax.z=Map_PosMax.z+dosh; }
+  if(PeriX){ Map_PosMin.x=Map_PosMin.x-KernelSize;  Map_PosMax.x=Map_PosMax.x+KernelSize; }
+  if(PeriY){ Map_PosMin.y=Map_PosMin.y-KernelSize;  Map_PosMax.y=Map_PosMax.y+KernelSize; }
+  if(PeriZ){ Map_PosMin.z=Map_PosMin.z-KernelSize;  Map_PosMax.z=Map_PosMax.z+KernelSize; }
   Map_Size=Map_PosMax-Map_PosMin;
   //-Saves initial domain in a VTK file (CasePosMin/Max, MapRealPosMin/Max and Map_PosMin/Max).
   SaveInitialDomainVtk();
@@ -2033,8 +2044,7 @@ void JSph::InitRun(unsigned np,const unsigned *idp,const tdouble3 *pos){
   xml.SetNuxLib(NuxLib); //-Enables the use of NuxLib in XML configuration.
 
   //-Configuration of GaugeSystem.
-  GaugeSystem->Config(Simulate2D,Simulate2DPosY,Symmetry,TimeMax,TimePart
-    ,Dp,DomPosMin,DomPosMax,Scell,Hdiv,H,MassFluid,MassBound,float(Cs0),CteB,Gamma,RhopZero);
+  GaugeSystem->Config(CSP,Symmetry,TimeMax,TimePart,DomPosMin,DomPosMax,Scell,ScellDiv);
   if(xml.GetNodeSimple("case.execution.special.gauges",true))
     GaugeSystem->LoadXml(&xml,"case.execution.special.gauges",MkInfo);
 
@@ -2048,7 +2058,6 @@ void JSph::InitRun(unsigned np,const unsigned *idp,const tdouble3 *pos){
   //-Prepares MLPistons configuration.  //<vs_mlapiston_ini>
   if(MLPistons){
     Log->Printf("Multi-Layer Pistons configuration:");
-    //if(MLPistons->UseAwasZsurf())MLPistons->InitAwas(Gravity,Simulate2D,CellOrder,MassFluid,Dp,Dosh,Scell,Hdiv,DomPosMin,DomRealPosMin,DomRealPosMax); ->awaspdte
     MLPistons->VisuConfig(""," ");
   }  //<vs_mlapiston_end>
 
@@ -2202,7 +2211,7 @@ void JSph::ConfigSaveData(unsigned piece,unsigned pieces,std::string div){
   parthead.ConfigBasic(RunCode,AppName,CaseName,CasePosMin,CasePosMax
     ,Simulate2D,Simulate2DPosY,pieces,PartBeginFirst);
   MkInfo->ConfigPartDataHead(&parthead);
-  parthead.ConfigCtes(Dp,H,CteB,RhopZero,Gamma,MassBound,MassFluid,Gravity);
+  parthead.ConfigCtes(Dp,KernelH,CteB,RhopZero,Gamma,MassBound,MassFluid,Gravity);
   parthead.ConfigSimNp(NpDynamic,ReuseIds);
   parthead.ConfigSimMap(MapRealPosMin,MapRealPosMax);
   parthead.ConfigSimPeri(TpPeriFromPeriActive(PeriActive),PeriXinc,PeriYinc,PeriZinc);
@@ -2619,7 +2628,7 @@ void JSph::CheckTermination(){
 void JSph::SaveDomainVtk(unsigned ndom,const tdouble3 *vdom)const{ 
   if(vdom){
     string fname=fun::FileNameSec("Domain.vtk",Part);
-    JVtkLib::SaveVtkBoxes(DirDataOut+fname,ndom,vdom,H*0.5f);
+    JVtkLib::SaveVtkBoxes(DirDataOut+fname,ndom,vdom,KernelH*0.5f);
   }
 }
 
@@ -2753,7 +2762,7 @@ void JSph::GetResInfo(float tsim,float ttot,std::string headplus,std::string det
   dinfo=dinfo+ ";"+ Hardware+ ";"+ "Cells"+GetNameCellMode(CellMode) + " - " + RunMode+ ";"+ ConfigInfo;
   hinfo=hinfo+";Nbound;Nfixed;Dp;H";
   dinfo=dinfo+ ";"+ fun::UintStr(CaseNbound)+ ";"+ fun::UintStr(CaseNfixed);
-  dinfo=dinfo+ ";"+ fun::FloatStr(float(Dp))+ ";"+ fun::FloatStr(H);
+  dinfo=dinfo+ ";"+ fun::FloatStr(float(Dp))+ ";"+ fun::FloatStr(KernelH);
   hinfo=hinfo+";PartsOutRhop;PartsOutVel";
   dinfo=dinfo+ ";"+ fun::UintStr(GetOutRhopCount())+ ";"+ fun::UintStr(GetOutMoveCount());
   hinfo=hinfo+ headplus;
@@ -2833,19 +2842,6 @@ std::string JSph::GetStepName(TpStep tstep){
   string tx;
   if(tstep==STEP_Verlet)tx="Verlet";
   else if(tstep==STEP_Symplectic)tx="Symplectic";
-  else tx="???";
-  return(tx);
-}
-
-//==============================================================================
-/// Returns the name of the kernel in text format.
-/// Devuelve el nombre del kernel en texto.
-//==============================================================================
-std::string JSph::GetKernelName(TpKernel tkernel){
-  string tx;
-  if(tkernel==KERNEL_Cubic)tx="Cubic";
-  else if(tkernel==KERNEL_Wendland)tx="Wendland";
-  else if(tkernel==KERNEL_WendlandC6)tx="WendlandC6"; //<vs_praticalsskq>
   else tx="???";
   return(tx);
 }

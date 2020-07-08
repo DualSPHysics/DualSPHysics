@@ -53,66 +53,6 @@ class JGaugeSwl;
 //# XML format in _FmtXML_InOut.xml.
 //##############################################################################
 
-//<vs_inawwas_ini>
-//##############################################################################
-//# JSphInOutAwas
-//##############################################################################
-/// \brief Manages one inlet zone.
-class JSphInOutAwas : protected JObject
-{
-private:
-  JLog2 *Log;
-
-  const unsigned IdZone;
-  const double InletX;       ///<Inlet limit in X.
-  const tdouble3 InletDir;   ///<Inlet direction in X.
-  const float GravityZ;
-
-  //-Initial configuration variables.
-  bool InletMode;            ///<Applies Inlet correction or Outlet correction.
-  double StartAwas;          ///<Time to start AWAS correction (def=start+ramp*waveperiod).
-  double InitDepth;          ///<Initial depth.
-  double CoefDepth;          ///<Coefficient from initial depth. CoefDepth=sqrt(-GravityZ/InitDepth)
-  JLinearValue *ZsurfTarget; ///<Zsurf target to compute AWAS correction.
-  double GaugeX;             ///<Position in X from piston to measure free-surface water (def=5*Dp).
-  double GaugeXh;            ///<Position in X from piston to measure free-surface water (according H value).
-  double GaugeXdp;           ///<Position in X from piston to measure free-surface water (according Dp value).
-  double GaugeY;             ///<Position in Y to measure free-surface water.
-  double GaugeZmin;          ///<Minimum position in Z to measure free-surface water, it must be in water (def=domain limits).
-  double GaugeZmax;          ///<Maximum position in Z to measure free-surface water (def=domain limits).
-  double GaugeDpXml;         ///<Resolution to measure free-surface water, it uses Dp*gaugedp (def=0.1).
-  double GaugeDp;            ///<Gauge resolution. GaugeDp=Dp*GaugeDpXml
-  byte SaveData;             ///<Saves CSV with AWAS information. 0:none, 1:PART data, 2:all steps.
-
-  JGaugeSwl *GaugeSwl;       ///<Gauge object to measure water level in front of the inlet/outlet zone.
-
-  //-Saves step data for CSV.
-  static const unsigned SizeStepData=200;
-  unsigned CountStepData;
-  tfloat4 *StepData;         ///<Saves values of each step. [SizeSaveData]
-
-  //-Values for the current step.
-  double LastTimeStep;
-  float LastZgauge;
-  float LastZtarget;
-  float LastVelCorr;
-
-private:
-  void ReadXml(const JXml *sxml,TiXmlElement* lis,const std::string &dirdatafile
-    ,JGaugeSystem *gaugesystem);
-
-public:
-  JSphInOutAwas(JLog2 *log,unsigned idzone,double inletx,tdouble3 inletdir
-    ,float gravityz,const std::string &dirdatafile,JGaugeSystem *gaugesystem
-    ,const JXml *sxml,TiXmlElement* ele);
-  ~JSphInOutAwas();
-  void Reset();
-  void GetConfig(std::vector<std::string> &lines)const;
-  float GetVelCorr(double timestep);
-  void SaveCsvData();
-};
-//<vs_inawwas_end>
-
 //##############################################################################
 //# JSphInOutZone
 //##############################################################################
@@ -208,7 +148,6 @@ private:
   float InputVelPosz;       ///<1st input velocity Z (used when VelMode==MVEL_Fixed).
   float InputVelPosz2;      ///<2nd input velocity Z (used when VelMode==MVEL_Fixed).
   float InputVelPosz3;      ///<3rd input velocity Z (used when VelMode==MVEL_Fixed).
-  JSphInOutAwas* AwasVel;   ///<AWAS object to compute velocity.  //<vs_inawwas>
 
   JLinearValue *TimeInputVelData;   ///<Input velocity in time (for VelMode==MVEL_Variable).
   unsigned TimeVelIdx0,TimeVelIdx1; ///<Interval of time for velocity variable.
@@ -317,7 +256,6 @@ public:
   float GetInputZsurf()const{ return(InputZsurf); }
   void SetInputZsurf(float zsurf){ if(ZsurfMode==ZSURF_Calculated)InputZsurf=zsurf; }
 
-  JSphInOutAwas* GetAwasVel()const{ return(AwasVel); } //<vs_inawwas>
   JSphInOutGridData* GetInputVelGrid()const{ return(InputVelGrid); }
   bool GetResetZVelGrid()const{ return(ResetZVelGrid); }
 

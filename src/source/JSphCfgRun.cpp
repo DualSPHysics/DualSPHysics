@@ -43,7 +43,7 @@ void JSphCfgRun::Reset(){
   SvPosDouble=-1;
   OmpThreads=0;
   SvTimers=true;
-  CellMode=CELLMODE_2H;
+  CellMode=CELLMODE_Full;
   TBoundary=0; SlipMode=0; MdbcThreshold=-1;
   DomainMode=0;
   DomainFixedMin=DomainFixedMax=TDouble3(0);
@@ -97,8 +97,8 @@ void JSphCfgRun::VisuInfo()const{
   printf("\n");
 #endif
   printf("    -cellmode:<mode>  Specifies the cell division mode\n");
-  printf("        2h        Lowest and the least expensive in memory (by default)\n");
-  printf("        h         Fastest and the most expensive in memory\n");
+  printf("        full      Lowest and the least expensive in memory (by default)\n");
+  printf("        half      Fastest and the most expensive in memory\n");
   printf("\n");
 
   printf("  Formulation options:\n");
@@ -112,11 +112,10 @@ void JSphCfgRun::VisuInfo()const{
   printf("    -verlet[:steps]  Verlet algorithm as time step algorithm and number of\n");
   printf("                     time steps to switch equations\n");
   printf("\n");
+  printf("    -wendland        Wendland kernel (by default)\n");
+#ifndef DISABLE_KERNELS_EXTRA
   printf("    -cubic           Cubic spline kernel\n");
-  printf("    -wendland        Wendland kernel\n");
-#ifdef PRASS3_WENDLANDC6                                //<vs_praticalsskq>
-  printf("    -wendlandc6      WendlandC6 kernel\n");   //<vs_praticalsskq>
-#endif                                                  //<vs_praticalsskq>
+#endif
   printf("\n");
   printf("    -viscoart:<float>          Artificial viscosity [0-1]\n");
   printf("    -viscolamsps:<float>       Laminar+SPS viscosity [order of 1E-6]\n");  
@@ -271,8 +270,8 @@ void JSphCfgRun::LoadOpts(string *optlis,int optn,int lv,const std::string &file
         bool ok=true;
         if(!txoptfull.empty()){
           txoptfull=fun::StrUpper(txoptfull);
-          if(txoptfull=="H")CellMode=CELLMODE_H;
-          else if(txoptfull=="2H")CellMode=CELLMODE_2H;
+          if(txoptfull=="HALF" || txoptfull=="H")CellMode=CELLMODE_Half;
+          else if(txoptfull=="FULL" || txoptfull=="2H")CellMode=CELLMODE_Full;
           else ok=false;
         }
         else ok=false;
@@ -290,11 +289,8 @@ void JSphCfgRun::LoadOpts(string *optlis,int optn,int lv,const std::string &file
       else if(txword=="VERLET"){ TStep=STEP_Verlet; 
         if(txoptfull!="")VerletSteps=atoi(txoptfull.c_str()); 
       }
-      else if(txword=="CUBIC")TKernel=KERNEL_Cubic;
       else if(txword=="WENDLAND")TKernel=KERNEL_Wendland;
-#ifdef PRASS3_WENDLANDC6                                      //<vs_praticalsskq>
-      else if(txword=="WENDLANDC6")TKernel=KERNEL_WendlandC6; //<vs_praticalsskq>
-#endif                                                        //<vs_praticalsskq>
+      else if(txword=="CUBIC")TKernel=KERNEL_Cubic;
       else if(txword=="VISCOART"){ 
         Visco=float(atof(txoptfull.c_str())); 
         if(Visco>10)ErrorParm(opt,c,lv,file);

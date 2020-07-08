@@ -28,11 +28,11 @@ using namespace std;
 //==============================================================================
 /// Constructor.
 //==============================================================================
-JCellDivGpuSingle::JCellDivGpuSingle(bool stable,bool floating,byte periactive
-  ,TpCellMode cellmode,float scell,float dosh,tdouble3 mapposmin,tdouble3 mapposmax,tuint3 mapcells
+JCellDivGpuSingle::JCellDivGpuSingle(bool stable,bool floating,byte periactive,float kernelsize2,float poscellsize
+  ,TpCellMode cellmode,float scell,tdouble3 mapposmin,tdouble3 mapposmax,tuint3 mapcells
   ,unsigned casenbound,unsigned casenfixed,unsigned casenpb,JLog2 *log,std::string dirout)
-  :JCellDivGpu(stable,floating,periactive,cellmode,scell,dosh,mapposmin,mapposmax,mapcells
-  ,casenbound,casenfixed,casenpb,log,dirout)
+  :JCellDivGpu(stable,floating,periactive,kernelsize2,poscellsize,cellmode,scell
+  ,mapposmin,mapposmax,mapcells,casenbound,casenfixed,casenpb,log,dirout)
 {
   ClassName="JCellDivGpuSingle";
 }
@@ -54,30 +54,35 @@ void JCellDivGpuSingle::CalcCellDomain(const unsigned *dcellg,const typecode *co
   tuint3 celfmin,celfmax;
   CalcCellDomainFluid(Npf1,Npb1,Npf2,Npb1+Npf1+Npb2,dcellg,codeg,celfmin,celfmax);
   //Log->Printf("----->CalcCellDomain> celfmin/max:%s",fun::Uint3RangeStr(celfmin,celfmax).c_str());
-  //-Computes the domain adjusting to the boundary and the fluid (with 2h halo).
-  //-Calcula dominio ajustando al contorno y al fluido (con halo de 2h). 
+  //-Computes the domain adjusting to the boundary and the fluid (with KernelSize halo).
+  //-Calcula dominio ajustando al contorno y al fluido (con halo de KernelSize). 
   MergeMapCellBoundFluid(celbmin,celbmax,celfmin,celfmax,CellDomainMin,CellDomainMax);
 }
 
 //==============================================================================
 /// Combines cell limits of boundary and fluid with map limits.
-/// If UseFluidDomain=TRUE, uses fluid domain plus 2h if there is a boundary;
+/// If UseFluidDomain=TRUE, uses fluid domain plus KernelSize if there is a boundary;
 /// if not, uses the fluid and boundary domain
 /// If the domain is null CellDomainMin=CellDomainMax=(0,0,0).
 ///
 /// Combina limite de celdas de contorno y fluido con limites de mapa.
-/// Con UseFluidDomain=TRUE se queda con el dominio del fluido mas 2h si hay 
-/// contorno, en caso contrario se queda con el dominio que incluya fluido y
-/// contorno.
+/// Con UseFluidDomain=TRUE se queda con el dominio del fluido mas KernelSize
+/// si hay contorno, en caso contrario se queda con el dominio que incluya 
+/// fluido y contorno.
 /// En caso de que el dominio sea nulo CellDomainMin=CellDomainMax=(0,0,0).
 //==============================================================================
 void JCellDivGpuSingle::MergeMapCellBoundFluid(const tuint3 &celbmin,const tuint3 &celbmax,const tuint3 &celfmin,const tuint3 &celfmax,tuint3 &celmin,tuint3 &celmax)const{
-  celmin=TUint3(max(min(celbmin.x,celfmin.x),(celfmin.x>=Hdiv? celfmin.x-Hdiv: 0)),max(min(celbmin.y,celfmin.y),(celfmin.y>=Hdiv? celfmin.y-Hdiv: 0)),max(min(celbmin.z,celfmin.z),(celfmin.z>=Hdiv? celfmin.z-Hdiv: 0)));
-  celmax=TUint3(min(max(celbmax.x,celfmax.x),celfmax.x+Hdiv),min(max(celbmax.y,celfmax.y),celfmax.y+Hdiv),min(max(celbmax.z,celfmax.z),celfmax.z+Hdiv));
+  const unsigned scelldiv=unsigned(ScellDiv);
+  celmin=TUint3(max(min(celbmin.x,celfmin.x),(celfmin.x>=scelldiv? celfmin.x-scelldiv: 0))
+               ,max(min(celbmin.y,celfmin.y),(celfmin.y>=scelldiv? celfmin.y-scelldiv: 0))
+               ,max(min(celbmin.z,celfmin.z),(celfmin.z>=scelldiv? celfmin.z-scelldiv: 0)));
+  celmax=TUint3(min(max(celbmax.x,celfmax.x),celfmax.x+scelldiv)
+               ,min(max(celbmax.y,celfmax.y),celfmax.y+scelldiv)
+               ,min(max(celbmax.z,celfmax.z),celfmax.z+scelldiv));
   if(celmax.x>=DomCells.x)celmax.x=DomCells.x-1;
   if(celmax.y>=DomCells.y)celmax.y=DomCells.y-1;
   if(celmax.z>=DomCells.z)celmax.z=DomCells.z-1;
-  if(celmin.x>celmax.x||celmin.y>celmax.y||celmin.z>celmax.z){ celmin=celmax=TUint3(0,0,0); }
+  if(celmin.x>celmax.x||celmin.y>celmax.y||celmin.z>celmax.z)celmin=celmax=TUint3(0,0,0);
 }
 
 //==============================================================================
@@ -219,7 +224,8 @@ void JCellDivGpuSingle::Divide(unsigned npb1,unsigned npf1,unsigned npb2,unsigne
 /// Devuelve datos de division en celdas para busqueda de vecinos.
 //==============================================================================
 StDivDataGpu JCellDivGpuSingle::GetCellDivData()const{
-  return(MakeDivDataGpu(Hdiv,GetNcells(),GetCellDomainMin(),GetBeginCell(),DomCellCode,Dosh));
+  return(MakeDivDataGpu(ScellDiv,GetNcells(),GetCellDomainMin(),GetBeginCell()
+    ,GetScell(),DomCellCode,DomPosMin,KernelSize2,PosCellSize));
 }
 
 

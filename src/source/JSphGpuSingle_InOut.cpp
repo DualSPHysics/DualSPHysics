@@ -277,8 +277,7 @@ void JSphGpuSingle::InOutCalculeZsurf(){
     const float maxdist=(float)InOut->GetDistPtzPos(ci);
     const float zbottom=InOut->GetZbottom(ci);
     const float zsurf=cusphinout::InOutComputeZsurf(nptz,ptz,maxdist,zbottom
-      ,CellMode,CellDivSingle->GetNcells(),CellDivSingle->GetBeginCell(),CellDivSingle->GetCellDomainMin()
-      ,Posxyg,Poszg,Codeg,auxg,auxh);
+      ,DivData,Posxyg,Poszg,Codeg,auxg,auxh);
     InOut->SetInputZsurf(ci,zsurf);
   }
 }
@@ -296,11 +295,10 @@ void JSphGpuSingle::InOutExtrapolateData(unsigned inoutcount,const int *inoutpar
   const byte doublemode=InOut->GetExtrapolateMode();
   const byte extraprhopmask=InOut->GetExtrapRhopMask();
   const byte extrapvelmask =InOut->GetExtrapVelMask();
-  cusphinout::Interaction_InOutExtrap(doublemode,Simulate2D,TKernel,CellMode
+  cusphinout::Interaction_InOutExtrap(doublemode,Simulate2D,TKernel
     ,inoutcount,inoutpart,cfgzoneg,extraprhopmask,extrapvelmask
     ,planesg,widthg,dirdatag,determlimit
-    ,CellDivSingle->GetNcells(),CellDivSingle->GetBeginCell(),CellDivSingle->GetCellDomainMin()
-    ,Posxyg,Poszg,Codeg,Idpg,Velrhopg);
+    ,DivData,Posxyg,Poszg,Codeg,Idpg,Velrhopg);
 }
 
 //==============================================================================
@@ -317,10 +315,9 @@ void JSphGpuSingle::BoundCorrectionData(){
     const typecode boundcode=zo->GetBoundCode();
     const tfloat4 plane=TPlane3fToTFloat4(zo->GetPlane());
     const tfloat3 direction=ToTFloat3(zo->GetDirection());
-    cusphinout::Interaction_BoundCorr(doublemode,Simulate2D,TKernel,CellMode,NpbOk
+    cusphinout::Interaction_BoundCorr(doublemode,Simulate2D,TKernel,NpbOk
       ,boundcode,plane,direction,determlimit
-      ,CellDivSingle->GetNcells(),CellDivSingle->GetBeginCell(),CellDivSingle->GetCellDomainMin()
-      ,Posxyg,Poszg,Codeg,Idpg,Velrhopg);
+      ,DivData,Posxyg,Poszg,Codeg,Idpg,Velrhopg);
   }
   TmgStop(Timers,TMG_SuBoundCorr);
 }

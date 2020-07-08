@@ -34,19 +34,8 @@
 
 
 namespace curelaxzone{
-#include "FunctionsMath_ker.cu"
-
-//==============================================================================
-// Devuelve tamanho de gridsize segun parametros.
-//==============================================================================
-dim3 GetGridSize(unsigned n,unsigned blocksize){
-  dim3 sgrid;//=dim3(1,2,3);
-  unsigned nb=unsigned(n+blocksize-1)/blocksize;//-Numero total de bloques a lanzar.
-  sgrid.x=(nb<=65535? nb: unsigned(sqrt(float(nb))));
-  sgrid.y=(nb<=65535? 1: unsigned((nb+sgrid.x-1)/sgrid.x));
-  sgrid.z=1;
-  return(sgrid);
-}
+#include "FunctionsBasic_iker.h"
+#include "FunctionsMath_iker.h"
 
 //------------------------------------------------------------------------------
 /// Returns TRUE when code==NULL or particle is normal and fluid.
@@ -72,7 +61,7 @@ __global__ void KerSetFluidVelUniform(unsigned n,unsigned pini
   ,float coeff,double falpha,double fbeta,double fsub,double fdiv,unsigned fluidbeginidp
   ,const double2 *posxy,const double *posz,const unsigned *idp,float4 *velrhop)
 {
-  unsigned p=blockIdx.y*gridDim.x*blockDim.x + blockIdx.x*blockDim.x + threadIdx.x;
+  unsigned p=blockIdx.x*blockDim.x + threadIdx.x;
   if(p<n){
     const unsigned p1=p+pini;
     if(idp==NULL || idp[p1]>=fluidbeginidp){//-Ignore floating particles.
@@ -107,7 +96,7 @@ void SetFluidVelUniform(unsigned n,unsigned pini
   ,const double2 *posxy,const double *posz,const unsigned *idp,float4 *velrhop)
 {
   if(n){
-    const dim3 sgrid=GetGridSize(n,WAVEBSIZE);
+    const dim3 sgrid=GetSimpleGridSize(n,WAVEBSIZE);
     KerSetFluidVelUniform<<<sgrid,WAVEBSIZE>>> (n,pini,Float3(vt),Float4(cenpla)
       ,Float4(dompla1),Float4(dompla2),Float4(dompla3),domsize1,domsize2,domsize3
       ,widthhalf,coeff,falpha,fbeta,fsub,fdiv,fluidbeginidp,posxy,posz,idp,velrhop);
@@ -162,7 +151,7 @@ template <bool order2,bool subdrift> __global__ void KerSetFluidVel(unsigned n,u
   ,double ctd,double ctd2,unsigned fluidbeginidp
   ,const double2 *posxy,const double *posz,const unsigned *idp,float4 *velrhop)
 {
-  unsigned p=blockIdx.y*gridDim.x*blockDim.x + blockIdx.x*blockDim.x + threadIdx.x;
+  unsigned p=blockIdx.x*blockDim.x + threadIdx.x;
   if(p<n){
     const unsigned p1=p+pini;
     if(idp==NULL || idp[p1]>=fluidbeginidp){//-Ignore floating particles.
@@ -199,7 +188,7 @@ void SetFluidVel(unsigned n,unsigned pini,bool order2,bool subdrift
   ,const double2 *posxy,const double *posz,const unsigned *idp,float4 *velrhop)
 {
   if(n){
-    const dim3 sgrid=GetGridSize(n,WAVEBSIZE);
+    const dim3 sgrid=GetSimpleGridSize(n,WAVEBSIZE);
     if(!subdrift){ const bool sdrift=false;
       if(!order2)KerSetFluidVel<false,sdrift> <<<sgrid,WAVEBSIZE>>> (n,pini,centerx,widthhalf,coeffx,coeffz,falpha,fbeta,fsub,fdiv,timewave,swl,kl,sinhkld,wpf,cta,depth,framp,ct2,sinhkld4,ctd,ctd2,fluidbeginidp,posxy,posz,idp,velrhop);
       else       KerSetFluidVel<true ,sdrift> <<<sgrid,WAVEBSIZE>>> (n,pini,centerx,widthhalf,coeffx,coeffz,falpha,fbeta,fsub,fdiv,timewave,swl,kl,sinhkld,wpf,cta,depth,framp,ct2,sinhkld4,ctd,ctd2,fluidbeginidp,posxy,posz,idp,velrhop);
@@ -267,7 +256,7 @@ template <byte subdriftmode> __global__ void KerSetFluidVelSpectrumSub(unsigned 
   ,const double2 *posxy,const double *posz,const unsigned *idp,float4 *velrhop
   ,double fun,double ctd,double ctd2,double ctd_2,double ctd2_2)
 {
-  unsigned p=blockIdx.y*gridDim.x*blockDim.x + blockIdx.x*blockDim.x + threadIdx.x;
+  unsigned p=blockIdx.x*blockDim.x + threadIdx.x;
   if(p<n){
     const unsigned p1=p+pini;
     if(idp==NULL || idp[p1]>=fluidbeginidp){//-Ignore floating particles.
@@ -308,7 +297,7 @@ void SetFluidVelSpectrumSub(unsigned n,unsigned pini
   ,bool subdrift,double fun,double ctd,double ctd2,double ctd_2,double ctd2_2)
 {
   if(n){
-    const dim3 sgrid=GetGridSize(n,WAVEBSIZE);
+    const dim3 sgrid=GetSimpleGridSize(n,WAVEBSIZE);
     if(!subdrift)KerSetFluidVelSpectrumSub<0> <<<sgrid,WAVEBSIZE>>> (n,pini,centerx,widthhalf,coeffx,coeffz,falpha,fbeta,fsub,fdiv,timewave,swl,depth,framp,wavecount,wavekl,waveamp,wavefang,wavephase,fluidbeginidp,posxy,posz,idp,velrhop,fun,ctd,ctd2,ctd_2,ctd2_2);
     else{
       if(!fun)KerSetFluidVelSpectrumSub<1> <<<sgrid,WAVEBSIZE>>> (n,pini,centerx,widthhalf,coeffx,coeffz,falpha,fbeta,fsub,fdiv,timewave,swl,depth,framp,wavecount,wavekl,waveamp,wavefang,wavephase,fluidbeginidp,posxy,posz,idp,velrhop,fun,ctd,ctd2,ctd_2,ctd2_2);
@@ -393,7 +382,7 @@ template<bool usevelz,byte subdriftmode> __global__ void KerSetFluidVelExternal(
   ,const double2 *posxy,const double *posz,const unsigned *idp,float4 *velrhop
   ,double fun,double ctd,double ctd2,double ctd_2,double ctd2_2,double bottom)
 {
-  unsigned p=blockIdx.y*gridDim.x*blockDim.x + blockIdx.x*blockDim.x + threadIdx.x;
+  unsigned p=blockIdx.x*blockDim.x + threadIdx.x;
   if(p<n){
     const unsigned p1=p+pini;
     if(idp==NULL || idp[p1]>=fluidbeginidp){//-Ignore floating particles.
@@ -433,7 +422,7 @@ void SetFluidVelExternal(unsigned n,unsigned pini
   ,bool subdrift,double fun,double ctd,double ctd2,double ctd_2,double ctd2_2,double bottom)
 {
   if(n){
-    const dim3 sgrid=GetGridSize(n,WAVEBSIZE);
+    const dim3 sgrid=GetSimpleGridSize(n,WAVEBSIZE);
     if(!subdrift){ const byte tdrift=0;
       if(!coeffz || !velz)KerSetFluidVelExternal<false,tdrift> <<<sgrid,WAVEBSIZE>>> (n,pini,centerx,widthhalf,coeffx,coeffz,falpha,fbeta,fsub,fdiv,pxmin,pymin,pzmin,dpx,dpy,dpz,npx1,npy1,npz1,velx,velz,fluidbeginidp,posxy,posz,idp,velrhop,fun,ctd,ctd2,ctd_2,ctd2_2,bottom);
       else                KerSetFluidVelExternal<true ,tdrift> <<<sgrid,WAVEBSIZE>>> (n,pini,centerx,widthhalf,coeffx,coeffz,falpha,fbeta,fsub,fdiv,pxmin,pymin,pzmin,dpx,dpy,dpz,npx1,npy1,npz1,velx,velz,fluidbeginidp,posxy,posz,idp,velrhop,fun,ctd,ctd2,ctd_2,ctd2_2,bottom);
@@ -474,7 +463,7 @@ template <unsigned blockSize> __global__ void KerComputeDrift(unsigned n,unsigne
 {
   extern __shared__ unsigned shcount[];
   const unsigned tid=threadIdx.x;
-  const unsigned p=blockIdx.y*gridDim.x*blockDim.x + blockIdx.x*blockDim.x + threadIdx.x;
+  const unsigned p=blockIdx.x*blockDim.x + threadIdx.x;
   shcount[tid]=0;
   __syncthreads();
   if(p<n){
@@ -489,7 +478,7 @@ template <unsigned blockSize> __global__ void KerComputeDrift(unsigned n,unsigne
   if(blockSize>=256){ if(tid<128)shcount[tid]+=shcount[tid+128];  __syncthreads(); }
   if(blockSize>=128){ if(tid<64) shcount[tid]+=shcount[tid+64];   __syncthreads(); }
   if(tid<32)KerReduSumUintWarp<blockSize>(shcount,tid);
-  if(tid==0)res[blockIdx.y*gridDim.x + blockIdx.x]=shcount[0];
+  if(tid==0)res[blockIdx.x]=shcount[0];
 }
 
 //==============================================================================
@@ -500,7 +489,7 @@ unsigned ComputeDrift(unsigned n,unsigned pini,double xmin,double xmax
 {
   unsigned ret=0;
   if(n){
-    const dim3 sgrid=GetGridSize(n,WAVEBSIZE);
+    const dim3 sgrid=GetSimpleGridSize(n,WAVEBSIZE);
     const unsigned smemSize=sizeof(unsigned)*WAVEBSIZE;
     const unsigned nblocks=sgrid.x*sgrid.y;
     //-Allocates memory on GPU.

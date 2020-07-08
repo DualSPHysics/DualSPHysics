@@ -51,7 +51,7 @@ protected:
   void AbortBoundOut();
 
   void Interaction_Forces(TpInterStep interstep);
-  void BoundCorrection(); //<vs_mddbc>
+  void MdbcBoundCorrection(); //<vs_mddbc>
 
   double ComputeAceMax(float *auxmem);
 

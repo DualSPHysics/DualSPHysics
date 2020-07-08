@@ -307,9 +307,6 @@
     <ClInclude Include="..\source\JCellDivGpuSingle.h">
       <Filter>Source\CellDiv</Filter>
     </ClInclude>
-    <ClInclude Include="..\source\JCellNgSearchCpu.h">
-      <Filter>Source\CellDiv</Filter>
-    </ClInclude>
     <ClInclude Include="..\source\JDsDamping.h">
       <Filter>Source\Other</Filter>
     </ClInclude>
@@ -420,6 +417,36 @@
     </ClInclude>
     <ClInclude Include="..\source\JPartsLoad4.h">
       <Filter>Source\Other</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JCellSearch_iker.h">
+      <Filter>Cuda</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JCellSearch_inline.h">
+      <Filter>Source\CellDiv</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\FunSphKernelDef.h">
+      <Filter>Source</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\FunSphKernelsCfg.h">
+      <Filter>Source</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\FunSphKernel.h">
+      <Filter>Source</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\FunSphEos.h">
+      <Filter>Source</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\FunctionsBasic_iker.h">
+      <Filter>Cuda</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\FunSphEos_iker.h">
+      <Filter>Cuda</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\FunSphKernel_iker.h">
+      <Filter>Cuda</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JWaveAwasZsurf.h">
+      <Filter>Src_JWave_MLP_RZ</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -687,6 +714,12 @@
     <ClCompile Include="..\source\JPartsLoad4.cpp">
       <Filter>Source\Other</Filter>
     </ClCompile>
+    <ClCompile Include="..\source\FunSphKernelsCfg.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JWaveAwasZsurf.cpp">
+      <Filter>Src_JWave_MLP_RZ</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <CustomBuildStep Include="..\source\JSphGpu.h">
@@ -712,9 +745,6 @@
     <CudaCompile Include="..\source\JReduSum_ker.cu">
       <Filter>Cuda</Filter>
     </CudaCompile>
-    <CudaCompile Include="..\source\FunctionsMath_ker.cu">
-      <Filter>Cuda</Filter>
-    </CudaCompile>
     <CudaCompile Include="..\source\JRelaxZone_ker.cu">
       <Filter>Cuda</Filter>
     </CudaCompile>
@@ -722,12 +752,6 @@
       <Filter>Cuda</Filter>
     </CudaCompile>
     <CudaCompile Include="..\source\JSphGpuSimple_ker.cu">
-      <Filter>Cuda</Filter>
-    </CudaCompile>
-    <CudaCompile Include="..\source\FunctionsBasic_iker.cu">
-      <Filter>Cuda</Filter>
-    </CudaCompile>
-    <CudaCompile Include="..\source\FunctionsGeo3d_iker.cu">
       <Filter>Cuda</Filter>
     </CudaCompile>
     <CudaCompile Include="..\source\JDsPips_ker.cu">
@@ -740,6 +764,12 @@
       <Filter>Cuda</Filter>
     </CudaCompile>
     <CudaCompile Include="..\source\JDsGauge_ker.cu">
+      <Filter>Cuda</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\source\FunctionsGeo3d_iker.h">
+      <Filter>Cuda</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\source\FunctionsMath_iker.h">
       <Filter>Cuda</Filter>
     </CudaCompile>
   </ItemGroup>

@@ -19,6 +19,9 @@
 /// \file JGauge.cpp \brief Implements the class \ref JGauge.
 
 #include "JDsGaugeItem.h"
+#include "JCellSearch_inline.h"
+#include "FunSphKernel.h"
+#include "FunSphEos.h"
 #include "JException.h"
 #include "JLog2.h"
 #include "JSaveCsv2.h"
@@ -81,7 +84,7 @@ void JGaugeItem::CheckCudaErroor(const std::string &srcfile,int srcline
 /// Initialisation of variables.
 //==============================================================================
 void JGaugeItem::Reset(){
-  Config(false,false,TDouble3(0),TDouble3(0),0,0,0,0,0,0,0,0,0);
+  Config(CteSphNull(),false,TDouble3(0),TDouble3(0),0,0);
   SaveVtkPart=false;
   ConfigComputeTiming(0,0,0);
   ConfigOutputTiming(false,0,0,0);
@@ -93,27 +96,15 @@ void JGaugeItem::Reset(){
 //==============================================================================
 /// Configures object.
 //==============================================================================
-void JGaugeItem::Config(bool simulate2d,bool symmetry
-  ,tdouble3 domposmin,tdouble3 domposmax
-  ,float scell,int hdiv,float h,float massfluid,float massbound
-  ,float cs0,float cteb,float gamma,float rhopzero)
+void JGaugeItem::Config(const StCteSph & csp,bool symmetry,tdouble3 domposmin
+    ,tdouble3 domposmax,float scell,int scelldiv)
 {
-  Simulate2D=simulate2d;
+  CSP=csp;
   Symmetry=symmetry;
   DomPosMin=domposmin;
   DomPosMax=domposmax;
   Scell=scell;
-  Hdiv=hdiv;
-  H=h;
-  Fourh2=float(h*h*4); 
-  Awen=(h? float(Simulate2D? 0.557/(h*h): 0.41778/(h*h*h)): 0);
-  Bwen=(h? float(Simulate2D? -2.7852/(h*h*h): -2.08891/(h*h*h*h)): 0);
-  MassFluid=massfluid;
-  MassBound=massbound;
-  Cs0=cs0;
-  CteB=cteb;
-  Gamma=gamma;
-  RhopZero=rhopzero;
+  ScellDiv=scelldiv;
 }
 
 //==============================================================================
@@ -216,44 +207,6 @@ void JGaugeItem::SaveResults(unsigned cpart){
   SaveResults();
   if(SaveVtkPart)SaveVtkResult(cpart);
 }
-
-//==============================================================================
-/// Return cell limits for interaction starting from position.
-/// Devuelve limites de celdas para interaccion a partir de posicion.
-//==============================================================================
-void JGaugeItem::GetInteractionCells(const tdouble3 &pos,const tint4 &nc,const tint3 &cellzero
-  ,int &cxini,int &cxfin,int &yini,int &yfin,int &zini,int &zfin)const
-{
-  //-Get cell coordinates of position pos.
-  const int cx=int((pos.x-DomPosMin.x)/Scell)-cellzero.x;
-  const int cy=int((pos.y-DomPosMin.y)/Scell)-cellzero.y;
-  const int cz=int((pos.z-DomPosMin.z)/Scell)-cellzero.z;
-  //-code for hdiv 1 or 2 but not zero. | Codigo para hdiv 1 o 2 pero no cero.
-  cxini=cx-min(cx,Hdiv);
-  cxfin=cx+min(nc.x-cx-1,Hdiv)+1;
-  yini=cy-min(cy,Hdiv);
-  yfin=cy+min(nc.y-cy-1,Hdiv)+1;
-  zini=cz-min(cz,Hdiv);
-  zfin=cz+min(nc.z-cz-1,Hdiv)+1;
-}
-
-//==============================================================================
-/// Returns pressure starting from density using equation of state 
-/// based on [Monaghan, 1994].
-//==============================================================================
-float JGaugeItem::ComputePress(float rhop,float rhop0,float b,float gamma)const{ 
-  return(b*(pow(rhop/rhop0,gamma)-1.0f));
-}
-
-//<vs_praticalss_ini>
-//==============================================================================
-/// Returns pressure starting from density using equation of state 
-/// based on [Morris et al., 1997].
-//==============================================================================
-float JGaugeItem::ComputePressMorris(float rhop,float rhop0,float cs0,float press0)const{ 
-  return(cs0*cs0*(rhop-rhop0)+press0);
-}
-//<vs_praticalss_end>
 
 
 //##############################################################################
@@ -359,78 +312,43 @@ unsigned JGaugeVelocity::GetPointDef(std::vector<tfloat3> &points)const{
 //==============================================================================
 /// Calculates velocity at indicated points (on CPU).
 //==============================================================================
-void JGaugeVelocity::CalculeCpu(double timestep,tuint3 ncells,tuint3 cellmin
-  ,const unsigned *begincell,unsigned npbok,unsigned npb,unsigned np
-  ,const tdouble3 *pos,const typecode *code,const unsigned *idp,const tfloat4 *velrhop)
+template<TpKernel tker> void JGaugeVelocity::CalculeCpuT(double timestep
+  ,const StDivDataCpu &dvd,unsigned npbok,unsigned npb,unsigned np,const tdouble3 *pos
+  ,const typecode *code,const unsigned *idp,const tfloat4 *velrhop)
 {
   SetTimeStep(timestep);
   //-Start measure.
   tfloat3 ptvel=TFloat3(0);
   const bool ptout=PointIsOut(Point.x,Point.y,Point.z);//-Verify that the point is within domain boundaries. | Comprueba que el punto este dentro de limites del dominio.
   if(!ptout){
-    const bool rsymp1=(Symmetry && (Point.y<=H+H)); //<vs_syymmetry>
-    const tint4 nc=TInt4(int(ncells.x),int(ncells.y),int(ncells.z),int(ncells.x*ncells.y));
-    const tint3 cellzero=TInt3(cellmin.x,cellmin.y,cellmin.z);
-    const unsigned cellfluid=nc.w*nc.z+1;
-    //-Obtain limits of interaction. | Obtiene limites de interaccion.
-    int cxini,cxfin,yini,yfin,zini,zfin;
-    GetInteractionCells(Point,nc,cellzero,cxini,cxfin,yini,yfin,zini,zfin);
-
     //-Auxiliary variables.
     double sumwab=0;
     tdouble3 sumvel=TDouble3(0);
-
-    //-Search for neighbors in adjacent cells.
-    //-Busqueda de vecinos en celdas adyacentes.
-    if(cxini<cxfin)for(int z=zini;z<zfin;z++){
-      const int zmod=(nc.w)*z+cellfluid; //-Sum from start of fluid cells. | Le suma donde empiezan las celdas de fluido.
-      for(int y=yini;y<yfin;y++){
-        int ymod=zmod+nc.x*y;
-        const unsigned pini=begincell[cxini+ymod];
-        const unsigned pfin=begincell[cxfin+ymod];
-
-        //-Interaction with Fluid/Floating | Interaccion con varias Fluid/Floating.
-        //--------------------------------------------------------------------------
-        bool rsym=false; //<vs_syymmetry>
-        for(unsigned p2=pini;p2<pfin;p2++){
-          const float drx=float(Point.x-pos[p2].x);
-                float dry=float(Point.y-pos[p2].y);
-          if(rsym)    dry=float(Point.y+pos[p2].y); //<vs_syymmetry>
-          const float drz=float(Point.z-pos[p2].z);
-          const float rr2=(drx*drx+dry*dry+drz*drz);
-          //-Interaction with real neighboring particles.
-          //-Interaccion con particulas vecinas reales.
-          if(rr2<=Fourh2 && rr2>=ALMOSTZERO && CODE_IsFluid(code[p2])){
-            float wab;
-            {//-Wendland kernel.
-              const float qq=sqrt(rr2)/H;
-              const float wqq=2.f*qq+1.f;
-              const float wqq1=1.f-0.5f*qq;
-              const float wqq2=wqq1*wqq1;
-              wab=Awen*wqq*wqq2*wqq2; //-Kernel.
-            }
-            tfloat4 velrhop2=velrhop[p2];
-            if(rsym)velrhop2.y=-velrhop2.y; //<vs_syymmetry>
-            wab*=MassFluid/velrhop2.w;
-            sumwab+=wab;
-            sumvel.x+=wab*velrhop2.x;
-            sumvel.y+=wab*velrhop2.y;
-            sumvel.z+=wab*velrhop2.z;
-            rsym=(rsymp1 && !rsym && float(Point.y-dry)<=H+H); //<vs_syymmetry>
-            if(rsym)p2--;                                      //<vs_syymmetry>
-          }
-          else rsym=false;                                     //<vs_syymmetry>
+    //-Search for fluid neighbours in adjacent cells.
+    const StNgSearch ngs=nsearch::Init(Point,false,dvd);
+    for(int z=ngs.zini;z<ngs.zfin;z++)for(int y=ngs.yini;y<ngs.yfin;y++){
+      const tuint2 pif=nsearch::ParticleRange(y,z,ngs,dvd);
+      for(unsigned p2=pif.x;p2<pif.y;p2++){
+        const float rr2=nsearch::Distance2(Point,pos[p2]);
+        //-Interaction with real neighbouring particles.
+        if(rr2<=CSP.kernelsize2 && rr2>=ALMOSTZERO && CODE_IsFluid(code[p2])){
+          float wab=fsph::GetKernel_Wab<tker>(CSP,rr2);
+          tfloat4 velrhop2=velrhop[p2];
+          wab*=CSP.massfluid/velrhop2.w;
+          sumwab+=wab;
+          sumvel.x+=wab*velrhop2.x;
+          sumvel.y+=wab*velrhop2.y;
+          sumvel.z+=wab*velrhop2.z;
         }
       }
     }
-    //-Aplies kernel correction.
+    //-Applies kernel correction.
     //if(sumwab!=0){
     //  sumvel.x/=sumwab;
     //  sumvel.y/=sumwab;
     //  sumvel.z/=sumwab;
     //  PtVel=ToTFloat3(sumvel);
     //}
-
     //-Stores result. | Guarda resultado.
     ptvel=ToTFloat3(sumvel);
   }
@@ -439,21 +357,34 @@ void JGaugeVelocity::CalculeCpu(double timestep,tuint3 ncells,tuint3 cellmin
   //Log->Printf("------> t:%f",TimeStep);
   if(Output(timestep))StoreResult();
 }
+//==============================================================================
+/// Calculates velocity at indicated points (on CPU).
+//==============================================================================
+void JGaugeVelocity::CalculeCpu(double timestep,const StDivDataCpu &dvd
+  ,unsigned npbok,unsigned npb,unsigned np,const tdouble3 *pos
+  ,const typecode *code,const unsigned *idp,const tfloat4 *velrhop)
+{
+  switch(CSP.tkernel){
+    case KERNEL_Cubic:       //Kernel Wendland is used since Cubic is not available.
+    case KERNEL_Wendland:    CalculeCpuT<KERNEL_Wendland>  (timestep,dvd,npbok,npb,np,pos,code,idp,velrhop);  break;
+    default: Run_Exceptioon("Kernel unknown.");
+  }
+}
 
 #ifdef _WITHGPU
 //==============================================================================
 /// Calculates velocity at indicated points (on GPU).
 //==============================================================================
-void JGaugeVelocity::CalculeGpu(double timestep,tuint3 ncells,tuint3 cellmin
-  ,const int2 *beginendcell,unsigned npbok,unsigned npb,unsigned np
-  ,const double2 *posxy,const double *posz,const typecode *code,const unsigned *idp,const float4 *velrhop,float3 *aux)
+void JGaugeVelocity::CalculeGpu(double timestep,const StDivDataGpu &dvd
+  ,unsigned npbok,unsigned npb,unsigned np,const double2 *posxy,const double *posz
+  ,const typecode *code,const unsigned *idp,const float4 *velrhop,float3 *aux)
 {
   SetTimeStep(timestep);
   //-Start measure.
   tfloat3 ptvel=TFloat3(0);
   const bool ptout=PointIsOut(Point.x,Point.y,Point.z);//-Verify that the point is within domain boundaries. | Comprueba que el punto este dentro de limites del dominio.
   if(!ptout){
-    cugauge::Interaction_GaugeVel(Symmetry,Point,Awen,Hdiv,ncells,cellmin,beginendcell,posxy,posz,code,velrhop,aux,DomPosMin,Scell,Fourh2,H,MassFluid);
+    cugauge::Interaction_GaugeVel(CSP,dvd,Point,posxy,posz,code,velrhop,aux);
     cudaMemcpy(&ptvel,aux,sizeof(float3),cudaMemcpyDeviceToHost);
     Check_CudaErroor("Failed in velocity calculation.");
   }
@@ -601,56 +532,24 @@ unsigned JGaugeSwl::GetPointDef(std::vector<tfloat3> &points)const{
 /// Devuelve valor de masa interpolado en el punto indicado. El punto debe 
 /// pertenecer al dominio de celdas.
 //==============================================================================
-float JGaugeSwl::CalculeMassCpu(const tdouble3 &ptpos,const tint4 &nc
-  ,const tint3 &cellzero,unsigned cellfluid,const unsigned *begincell
-  ,const tdouble3 *pos,const typecode *code,const tfloat4 *velrhop)const
+template<TpKernel tker> float JGaugeSwl::CalculeMassCpu(const tdouble3 &ptpos
+  ,const StDivDataCpu &dvd,const tdouble3 *pos,const typecode *code,const tfloat4 *velrhop)const
 {
-  const bool rsymp1=(Symmetry && (ptpos.y<=H+H)); //<vs_syymmetry>
-  //-Obtain limits of interaction. | Obtiene limites de interaccion.
-  int cxini,cxfin,yini,yfin,zini,zfin;
-  GetInteractionCells(ptpos,nc,cellzero,cxini,cxfin,yini,yfin,zini,zfin);
-
   //-Auxiliary variables.
   double sumwab=0;
   double summass=0;
-
-  //-Search for neighbors in adjacent cells.
-  //-Busqueda de vecinos en celdas adyacentes.
-  if(cxini<cxfin)for(int z=zini;z<zfin;z++){
-    const int zmod=(nc.w)*z+cellfluid; //-Sum from start of fluid cells. | Le suma donde empiezan las celdas de fluido.
-    for(int y=yini;y<yfin;y++){
-      int ymod=zmod+nc.x*y;
-      const unsigned pini=begincell[cxini+ymod];
-      const unsigned pfin=begincell[cxfin+ymod];
-
-      //-Interaction with Fluid/Floating | Interaccion con varias Fluid/Floating.
-      //--------------------------------------------------------------------------
-      bool rsym=false; //<vs_syymmetry>
-      for(unsigned p2=pini;p2<pfin;p2++){
-        const float drx=float(ptpos.x-pos[p2].x);
-              float dry=float(ptpos.y-pos[p2].y);
-        if(rsym)    dry=float(ptpos.y+pos[p2].y); //<vs_syymmetry>
-        const float drz=float(ptpos.z-pos[p2].z);
-        const float rr2=(drx*drx+dry*dry+drz*drz);
-        //-Interaction with real neighboring particles.
-        //-Interaccion con particulas vecinas reales.
-        if(rr2<=Fourh2 && rr2>=ALMOSTZERO && CODE_IsFluid(code[p2])){
-          float wab;
-          {//-Wendland kernel.
-            const float qq=sqrt(rr2)/H;
-            const float wqq=2.f*qq+1.f;
-            const float wqq1=1.f-0.5f*qq;
-            const float wqq2=wqq1*wqq1;
-            wab=Awen*wqq*wqq2*wqq2; //-Kernel.
-          }
-          //:Log->Printf("----> p2:%u  wab:%f  vol:%f",p2,wab,MassFluid/velrhop[p2].w);
-          wab*=MassFluid/velrhop[p2].w;
-          sumwab+=wab;
-          summass+=wab*MassFluid;
-          rsym=(rsymp1 && !rsym && float(ptpos.y-dry)<=H+H); //<vs_syymmetry>
-          if(rsym)p2--;                                      //<vs_syymmetry>
-        }
-        else rsym=false;                                     //<vs_syymmetry>
+  //-Search for fluid neighbours in adjacent cells.
+  const StNgSearch ngs=nsearch::Init(ptpos,false,dvd);
+  for(int z=ngs.zini;z<ngs.zfin;z++)for(int y=ngs.yini;y<ngs.yfin;y++){
+    const tuint2 pif=nsearch::ParticleRange(y,z,ngs,dvd);
+    for(unsigned p2=pif.x;p2<pif.y;p2++){
+      const float rr2=nsearch::Distance2(ptpos,pos[p2]);
+      //-Interaction with real neighbouring particles.
+      if(rr2<=CSP.kernelsize2 && rr2>=ALMOSTZERO && CODE_IsFluid(code[p2])){
+        float wab=fsph::GetKernel_Wab<tker>(CSP,rr2);
+        wab*=CSP.massfluid/velrhop[p2].w;
+        sumwab+=wab;
+        summass+=wab*CSP.massfluid;
       }
     }
   }
@@ -662,21 +561,17 @@ float JGaugeSwl::CalculeMassCpu(const tdouble3 &ptpos,const tint4 &nc
 //==============================================================================
 /// Calculates surface water level at indicated points (on CPU).
 //==============================================================================
-void JGaugeSwl::CalculeCpu(double timestep,tuint3 ncells,tuint3 cellmin
-  ,const unsigned *begincell,unsigned npbok,unsigned npb,unsigned np
+template<TpKernel tker> void JGaugeSwl::CalculeCpuT(double timestep
+  ,const StDivDataCpu &dvd,unsigned npbok,unsigned npb,unsigned np
   ,const tdouble3 *pos,const typecode *code,const unsigned *idp,const tfloat4 *velrhop)
 {
   SetTimeStep(timestep);
-  const tint4 nc=TInt4(int(ncells.x),int(ncells.y),int(ncells.z),int(ncells.x*ncells.y));
-  const tint3 cellzero=TInt3(cellmin.x,cellmin.y,cellmin.z);
-  const unsigned cellfluid=nc.w*nc.z+1;
-
   //-Look for change of fluid to empty. | Busca paso de fluido a vacio.
   tdouble3 ptsurf=TDouble3(DBL_MAX);
   float mpre=0;
   tdouble3 ptpos=Point0;
   for(unsigned cp=0;cp<=PointNp;cp++){
-    const float mass=CalculeMassCpu(ptpos,nc,cellzero,cellfluid,begincell,pos,code,velrhop);
+    const float mass=CalculeMassCpu<tker>(ptpos,dvd,pos,code,velrhop);
     if(mass>MassLimit)mpre=mass;
     if(mass<MassLimit && mpre){
       const float fxm1=(MassLimit-mpre)/(mass-mpre)-1;
@@ -692,17 +587,31 @@ void JGaugeSwl::CalculeCpu(double timestep,tuint3 ncells,tuint3 cellmin
   if(Output(timestep))StoreResult();
 }
 
+//==============================================================================
+/// Calculates surface water level at indicated points (on CPU).
+//==============================================================================
+void JGaugeSwl::CalculeCpu(double timestep,const StDivDataCpu &dvd
+  ,unsigned npbok,unsigned npb,unsigned np,const tdouble3 *pos
+  ,const typecode *code,const unsigned *idp,const tfloat4 *velrhop)
+{
+  switch(CSP.tkernel){
+    case KERNEL_Cubic:       //Kernel Wendland is used since Cubic is not available.
+    case KERNEL_Wendland:    CalculeCpuT<KERNEL_Wendland>  (timestep,dvd,npbok,npb,np,pos,code,idp,velrhop);  break;
+    default: Run_Exceptioon("Kernel unknown.");
+  }
+}
 #ifdef _WITHGPU
 //==============================================================================
 /// Calculates surface water level at indicated points (on GPU).
 //==============================================================================
-void JGaugeSwl::CalculeGpu(double timestep,tuint3 ncells,tuint3 cellmin
-  ,const int2 *beginendcell,unsigned npbok,unsigned npb,unsigned np
-  ,const double2 *posxy,const double *posz,const typecode *code,const unsigned *idp,const float4 *velrhop,float3 *aux)
+void JGaugeSwl::CalculeGpu(double timestep,const StDivDataGpu &dvd
+  ,unsigned npbok,unsigned npb,unsigned np,const double2 *posxy,const double *posz
+  ,const typecode *code,const unsigned *idp,const float4 *velrhop,float3 *aux)
 {
   SetTimeStep(timestep);
   //-Start measure.
-  cugauge::Interaction_GaugeSwl(Symmetry,Point0,PointDir,PointNp,MassLimit,Awen,Hdiv,ncells,cellmin,beginendcell,posxy,posz,code,velrhop,DomPosMin,Scell,Fourh2,H,MassFluid,aux);
+  cugauge::Interaction_GaugeSwl(CSP,dvd,Point0,PointDir,PointNp,MassLimit
+    ,posxy,posz,code,velrhop,aux);
   tfloat3 ptsurf=TFloat3(0);
   cudaMemcpy(&ptsurf,aux,sizeof(float3),cudaMemcpyDeviceToHost);
   Check_CudaErroor("Failed in Swl calculation.");
@@ -857,30 +766,27 @@ void JGaugeMaxZ::GetInteractionCellsMaxZ(const tdouble3 &pos,const tint4 &nc,con
 //==============================================================================
 /// Calculates maximum z of fluid at distance of a vertical line (on CPU).
 //==============================================================================
-void JGaugeMaxZ::CalculeCpu(double timestep,tuint3 ncells,tuint3 cellmin
-  ,const unsigned *begincell,unsigned npbok,unsigned npb,unsigned np
-  ,const tdouble3 *pos,const typecode *code,const unsigned *idp,const tfloat4 *velrhop)
+void JGaugeMaxZ::CalculeCpu(double timestep,const StDivDataCpu &dvd
+  ,unsigned npbok,unsigned npb,unsigned np,const tdouble3 *pos
+  ,const typecode *code,const unsigned *idp,const tfloat4 *velrhop)
 {
   //Log->Printf("JGaugeMaxZ----> timestep:%g  (%d)",timestep,(DG?1:0));
   SetTimeStep(timestep);
   //-Compute auxiliary constants.
   const float maxdist2=DistLimit*DistLimit;
   //-Obtain limits of interaction.
-  const tint4 nc=TInt4(int(ncells.x),int(ncells.y),int(ncells.z),int(ncells.x*ncells.y));
-  const tint3 cellzero=TInt3(cellmin.x,cellmin.y,cellmin.z);
-  const unsigned cellfluid=nc.w*nc.z+1;
   int cxini,cxfin,yini,yfin,zini,zfin;
-  GetInteractionCellsMaxZ(Point0,nc,cellzero,cxini,cxfin,yini,yfin,zini,zfin);
+  GetInteractionCellsMaxZ(Point0,dvd.nc,dvd.cellzero,cxini,cxfin,yini,yfin,zini,zfin);
   //-Start measure.
   unsigned pmax=UINT_MAX;
   float zmax=-FLT_MAX;
   //-Search for neighbours in adjacent cells. | Busqueda de vecinos en celdas adyacentes.
   if(cxini<cxfin)for(int z=zfin-1;z>=zini && pmax==UINT_MAX;z--){
-    const int zmod=(nc.w)*z+cellfluid; //-Sum from start of fluid cells. | Le suma donde empiezan las celdas de fluido.
+    const int zmod=(dvd.nc.w)*z+dvd.cellfluid; //-Sum from start of fluid cells. | Le suma donde empiezan las celdas de fluido.
     for(int y=yini;y<yfin;y++){
-      int ymod=zmod+nc.x*y;
-      const unsigned pini=begincell[cxini+ymod];
-      const unsigned pfin=begincell[cxfin+ymod];
+      int ymod=zmod+dvd.nc.x*y;
+      const unsigned pini=dvd.begincell[cxini+ymod];
+      const unsigned pfin=dvd.begincell[cxfin+ymod];
 
       //-Interaction of boundary with type Fluid/Float | Interaccion de Bound con varias Fluid/Float.
       //---------------------------------------------------------------------------------------------
@@ -907,23 +813,21 @@ void JGaugeMaxZ::CalculeCpu(double timestep,tuint3 ncells,tuint3 cellmin
 //==============================================================================
 /// Calculates maximum z of fluid at distance of a vertical line (on GPU).
 //==============================================================================
-void JGaugeMaxZ::CalculeGpu(double timestep,tuint3 ncells,tuint3 cellmin
-  ,const int2 *beginendcell,unsigned npbok,unsigned npb,unsigned np
-  ,const double2 *posxy,const double *posz,const typecode *code
-  ,const unsigned *idp,const float4 *velrhop,float3 *aux)
+void JGaugeMaxZ::CalculeGpu(double timestep,const StDivDataGpu &dvd
+  ,unsigned npbok,unsigned npb,unsigned np,const double2 *posxy,const double *posz
+  ,const typecode *code,const unsigned *idp,const float4 *velrhop,float3 *aux)
 {
   SetTimeStep(timestep);
   //-Compute auxiliary constants.
   const float maxdist2=DistLimit*DistLimit;
   //-Obtain limits of interaction.
-  const tint4 nc=TInt4(int(ncells.x),int(ncells.y),int(ncells.z),int(ncells.x*ncells.y));
-  const tint3 cellzero=TInt3(cellmin.x,cellmin.y,cellmin.z);
-  const unsigned cellfluid=nc.w*nc.z+1;
+  const tint4 nc=TInt4(dvd.nc.x,dvd.nc.y,dvd.nc.z,dvd.nc.w);
+  const tint3 cellzero=TInt3(dvd.cellzero.x,dvd.cellzero.y,dvd.cellzero.z);
   int cxini,cxfin,yini,yfin,zini,zfin;
   GetInteractionCellsMaxZ(Point0,nc,cellzero,cxini,cxfin,yini,yfin,zini,zfin);
   //-Start measure.
-  cugauge::Interaction_GaugeMaxz(Point0,maxdist2,cxini,cxfin,yini,yfin,zini,zfin
-    ,nc,cellfluid,beginendcell,posxy,posz,code,aux);
+  cugauge::Interaction_GaugeMaxz(Point0,maxdist2,dvd
+    ,cxini,cxfin,yini,yfin,zini,zfin,posxy,posz,code,aux);
   tfloat3 ptsurf=TFloat3(0);
   cudaMemcpy(&ptsurf,aux,sizeof(float3),cudaMemcpyDeviceToHost);
   Check_CudaErroor("Failed in MaxZ calculation.");
@@ -1066,16 +970,11 @@ unsigned JGaugeForce::GetPointDef(std::vector<tfloat3> &points)const{
 /// Calculates force sumation on selected fixed or moving particles using only fluid particles (on CPU).
 /// Ignores periodic boundary particles to avoid race condition problems.
 //==============================================================================
-void JGaugeForce::CalculeCpu(double timestep,tuint3 ncells,tuint3 cellmin
-  ,const unsigned *begincell,unsigned npbok,unsigned npb,unsigned np
-  ,const tdouble3 *pos,const typecode *code,const unsigned *idp,const tfloat4 *velrhop)
+template<TpKernel tker> void JGaugeForce::CalculeCpuT(double timestep
+  ,const StDivDataCpu &dvd,unsigned npbok,unsigned npb,unsigned np,const tdouble3 *pos
+  ,const typecode *code,const unsigned *idp,const tfloat4 *velrhop)
 {
-  if(!Cpu)Run_Exceptioon("Method is not allowed for GPU executions.");
   SetTimeStep(timestep);
-  const tint4 nc=TInt4(int(ncells.x),int(ncells.y),int(ncells.z),int(ncells.x*ncells.y));
-  const tint3 cellzero=TInt3(cellmin.x,cellmin.y,cellmin.z);
-  const unsigned cellfluid=nc.w*nc.z+1;
-
   //-Computes acceleration in selected boundary particles.
   memset(PartAcec,0,sizeof(tfloat3)*Count);
   const int n=int(TypeParts==TpPartFixed || TypeParts==TpPartMoving? npbok: np);
@@ -1083,81 +982,34 @@ void JGaugeForce::CalculeCpu(double timestep,tuint3 ncells,tuint3 cellmin
     #pragma omp parallel for schedule (guided)
   #endif
   for(int p1=0;p1<n;p1++)if(CODE_GetTypeAndValue(code[p1])==Code && CODE_IsNormal(code[p1])){//-Ignores periodic boundaries.
-    //-Obtain limits of interaction. | Obtiene limites de interaccion.
-    int cxini,cxfin,yini,yfin,zini,zfin;
-    const tdouble3 ptpos1=pos[p1];
+    const tdouble3 pos1=pos[p1];
     const tfloat4 velrhop1=velrhop[p1];
-#ifdef PRASS2_EOS_MORRIS                                              //<vs_praticalss>
-    const float press1=ComputePressMorris(velrhop1.w,RhopZero,Cs0,0); //<vs_praticalss>
-#else                                                                 //<vs_praticalss>
-    const float press1=ComputePress(velrhop1.w,RhopZero,CteB,Gamma);
-#endif                                                                //<vs_praticalss>
-    GetInteractionCells(ptpos1,nc,cellzero,cxini,cxfin,yini,yfin,zini,zfin);
-
+    const float press1=fsph::ComputePress(velrhop1.w,CSP);
     //-Auxiliary variables.
     tfloat3 ace=TFloat3(0);
 
-    //-Search for neighbors in adjacent cells. | Busqueda de vecinos en celdas adyacentes.
-    if(cxini<cxfin)for(int z=zini;z<zfin;z++){
-      const int zmod=(nc.w)*z+cellfluid; //-Sum from start of fluid cells. | Le suma donde empiezan las celdas de fluido.
-      for(int y=yini;y<yfin;y++){
-        int ymod=zmod+nc.x*y;
-        const unsigned pini=begincell[cxini+ymod];
-        const unsigned pfin=begincell[cxfin+ymod];
-
-        //-Interaction with Fluid/Floating | Interaccion con varias Fluid/Floating.
-        //--------------------------------------------------------------------------
-        for(unsigned p2=pini;p2<pfin;p2++){
-          const float drx=float(ptpos1.x-pos[p2].x);
-          const float dry=float(ptpos1.y-pos[p2].y);
-          const float drz=float(ptpos1.z-pos[p2].z);
-          const float rr2=(drx*drx+dry*dry+drz*drz);
-          //-Interaction with real neighboring particles. | Interaccion con particulas vecinas reales.
-          if(rr2<=Fourh2 && rr2>=ALMOSTZERO && CODE_IsFluid(code[p2])){
-            float frx,fry,frz;
-            {//-Wendland kernel.
-              const float rad=sqrt(rr2);
-              const float qq=rad/H;
-              const float wqq1=1.f-0.5f*qq;
-              const float fac=Bwen*qq*wqq1*wqq1*wqq1/rad; //-Kernel derivative (divided by rad).
-              frx=fac*drx; fry=fac*dry; frz=fac*drz;
-            }
-            const float mass2=MassFluid;
-            const tfloat4 velrhop2=velrhop[p2];
-#ifdef PRASS2_EOS_MORRIS                                                      //<vs_praticalss>
-            const float press2=ComputePressMorris(velrhop2.w,RhopZero,Cs0,0); //<vs_praticalss>
-#else                                                                         //<vs_praticalss>
-            const float press2=ComputePress(velrhop2.w,RhopZero,CteB,Gamma);
-#endif                                                                        //<vs_praticalss>
-            const float prs=(press1+press2)/(velrhop1.w*velrhop2.w);
-            {//-Adds aceleration.
-              const float p_vpm1=-prs*mass2;
-              ace.x+=p_vpm1*frx;  ace.y+=p_vpm1*fry;  ace.z+=p_vpm1*frz;
-            }
-
-            //{//-Adds aceleration from viscosity.
-            //  const float dvx=(velrhop1.x)-velrhop2.x;
-            //  const float dvy=(velrhop1.y)-velrhop2.y;
-            //  const float dvz=(velrhop1.z)-velrhop2.z;
-            //  const float dot=drx*dvx + dry*dvy + drz*dvz;
-            //  if(TVisco==VISCO_Artificial){//-Artificial viscosity
-            //    if(dot<0){
-            //      const float robar=(velrhop1.w+velrhop2.w)*0.5f;
-            //      const float amubar=Dinter*dot/(rr2+Eta2_Dinter);
-            //      const float cbar=Cs0;
-            //      const float pi_visc=-Visco*cbar*amubar/robar;
-            //      const float v=-mass2*pi_visc;
-            //      ace.x+=v*frx;  ace.y+=v*fry;  ace.z+=v*frz;
-            //    }
-            //  }
-            //  else{//-Laminar viscosity
-            //    const float robar2=(velrhop1.w+velrhop2.w);
-            //    const float temp=4.*Visco/((rr2+Eta2_Dinter)*robar2);  //-Simplification of / Simplificacion de: temp=2.0f*visco/((rr2+CTE.eta2)*robar); robar=(rhopp1+velrhop2.w)*0.5f;
-            //    const float v=mass2*temp*(drx*frx+dry*fry+drz*frz);
-            //    ace.x+=v*dvx;  ace.y+=v*dvy;  ace.z+=v*dvz;
-            //  }
-            //}
-          }
+    //-Search for fluid neighbours in adjacent cells.
+    const StNgSearch ngs=nsearch::Init(pos1,false,dvd);
+    for(int z=ngs.zini;z<ngs.zfin;z++)for(int y=ngs.yini;y<ngs.yfin;y++){
+      const tuint2 pif=nsearch::ParticleRange(y,z,ngs,dvd);
+      for(unsigned p2=pif.x;p2<pif.y;p2++){
+        const tfloat4 dr=nsearch::Distances(pos1,pos[p2]);
+        //-Interaction with real neighboring particles. | Interaccion con particulas vecinas reales.
+        if(dr.w<=CSP.kernelsize2 && dr.w>=ALMOSTZERO && CODE_IsFluid(code[p2])){
+          const float fac=fsph::GetKernel_Fac<tker>(CSP,dr.w);
+          const float frx=fac*dr.x;
+          const float fry=fac*dr.y;
+          const float frz=fac*dr.z;
+          //-Velocity derivative (Momentum equation).
+          const float mass2=CSP.massfluid;
+          const tfloat4 velrhop2=velrhop[p2];
+          const float press2=fsph::ComputePress(velrhop2.w,CSP);
+          //-Velocity derivative (Momentum equation).
+          const float prs=(press1+press2)/(velrhop1.w*velrhop2.w)
+            + (tker==KERNEL_Cubic? fsph::GetKernelCubic_Tensil(CSP,dr.w,velrhop1.w,press1,velrhop2.w,press2): 0);
+          const float p_vpm1=-prs*mass2;
+          ace.x+=p_vpm1*frx;  ace.y+=p_vpm1*fry;  ace.z+=p_vpm1*frz;
+          //-Aceleration from viscosity not included.
         }
       }
     }
@@ -1169,9 +1021,24 @@ void JGaugeForce::CalculeCpu(double timestep,tuint3 ncells,tuint3 cellmin
   for(unsigned p=0;p<Count;p++)acesum=acesum+PartAcec[p];
 
   //-Stores result. | Guarda resultado.
-  Result.Set(timestep,acesum*MassBound);
+  Result.Set(timestep,acesum*CSP.massbound);
   //Log->Printf("------> t:%f",TimeStep);
   if(Output(timestep))StoreResult();
+}
+
+//==============================================================================
+/// Calculates force sumation on selected fixed or moving particles using only fluid particles (on CPU).
+/// Ignores periodic boundary particles to avoid race condition problems.
+//==============================================================================
+void JGaugeForce::CalculeCpu(double timestep,const StDivDataCpu &dvd
+  ,unsigned npbok,unsigned npb,unsigned np,const tdouble3 *pos
+  ,const typecode *code,const unsigned *idp,const tfloat4 *velrhop)
+{
+  switch(CSP.tkernel){
+    case KERNEL_Cubic:       //Kernel Wendland is used since Cubic is not available.
+    case KERNEL_Wendland:    CalculeCpuT<KERNEL_Wendland>  (timestep,dvd,npbok,npb,np,pos,code,idp,velrhop);  break;
+    default: Run_Exceptioon("Kernel unknown.");
+  }
 }
 
 #ifdef _WITHGPU
@@ -1179,20 +1046,18 @@ void JGaugeForce::CalculeCpu(double timestep,tuint3 ncells,tuint3 cellmin
 /// Calculates force sumation on selected fixed or moving particles using only fluid particles (on GPU).
 /// Ignores periodic boundary particles.
 //==============================================================================
-void JGaugeForce::CalculeGpu(double timestep,tuint3 ncells,tuint3 cellmin
-  ,const int2 *beginendcell,unsigned npbok,unsigned npb,unsigned np
-  ,const double2 *posxy,const double *posz,const typecode *code,const unsigned *idp,const float4 *velrhop,float3 *aux)
+void JGaugeForce::CalculeGpu(double timestep,const StDivDataGpu &dvd
+  ,unsigned npbok,unsigned npb,unsigned np,const double2 *posxy,const double *posz
+  ,const typecode *code,const unsigned *idp,const float4 *velrhop,float3 *aux)
 {
   SetTimeStep(timestep);
   //-Initializes acceleration array to zero.
   cudaMemset(PartAceg,0,sizeof(float3)*Count);
   const int n=int(TypeParts==TpPartFixed || TypeParts==TpPartMoving? npbok: np);
   //-Computes acceleration in selected boundary particles.
-  cugauge::Interaction_GaugeForce(n,IdBegin,Code
-    ,Cs0  //<vs_praticalss>
-    ,Fourh2,H,Bwen,MassFluid,CteB,RhopZero,Gamma
-    ,Hdiv,ncells,cellmin,beginendcell,DomPosMin,Scell
+  cugauge::Interaction_GaugeForce(CSP,dvd,n,IdBegin,Code
     ,posxy,posz,code,idp,velrhop,PartAceg);
+
   //-Computes total ace.
   tfloat3 acesum=TFloat3(0);
   if(1){//-Computes total ace on GPU.
@@ -1207,7 +1072,7 @@ void JGaugeForce::CalculeGpu(double timestep,tuint3 ncells,tuint3 cellmin
   }
 
   //-Stores result. | Guarda resultado.
-  Result.Set(timestep,acesum*MassBound);
+  Result.Set(timestep,acesum*CSP.massbound);
   //Log->Printf("------> t:%f",TimeStep);
   if(Output(timestep))StoreResult();
 }

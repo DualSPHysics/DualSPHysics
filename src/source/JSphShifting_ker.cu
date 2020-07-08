@@ -28,8 +28,8 @@
 //:#include "JDgKerPrint_ker.h"
 
 namespace cushift{
-#include "FunctionsBasic_iker.cu"
-#include "FunctionsGeo3d_iker.cu"
+#include "FunctionsBasic_iker.h"
+#include "FunctionsGeo3d_iker.h"
 
 //##############################################################################
 //# Kernels for JSphShifting.

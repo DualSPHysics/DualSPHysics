@@ -85,8 +85,8 @@ void JSphShiftingZone::PrepareZone(){
 //==============================================================================
 /// Constructor.
 //==============================================================================
-JSphShifting::JSphShifting(bool simulate2d,double dp,float h,JLog2* log)
-  :Simulate2D(simulate2d),Dp(dp),H(h),Log(log)
+JSphShifting::JSphShifting(bool simulate2d,double dp,float kernelh,JLog2* log)
+  :Simulate2D(simulate2d),Dp(dp),KernelH(kernelh),Log(log)
 {
   ClassName="JSphShifting";
   Reset();
@@ -388,7 +388,7 @@ void JSphShifting::InitCpu(unsigned n,unsigned pini,const tdouble3* pos,tfloat4*
 void JSphShifting::RunCpu(unsigned n,unsigned pini,double dt,const tfloat4* velrhop
   ,tfloat4* shiftposfs)const
 {
-  const double coefumagn=dt*ShiftCoef*H;
+  const double coefumagn=dt*ShiftCoef*KernelH;
   const double coeftfs=(Simulate2D? 2.0: 3.0)-ShiftTFS;
   const float maxdist=float(Dp*0.1); //-Max shifting distance permitted (recommended).
   const int ppini=int(pini),ppfin=pini+int(n),npf=int(n);
@@ -461,7 +461,7 @@ void JSphShifting::InitGpu(unsigned n,unsigned pini,const double2* posxy,const d
 void JSphShifting::RunGpu(unsigned n,unsigned pini,double dt,const float4* velrhop
   ,float4* shiftposfs,cudaStream_t stm)const
 {
-  const double coefumagn=dt*ShiftCoef*H;
+  const double coefumagn=dt*ShiftCoef*KernelH;
   const float coeftfs=(Simulate2D? 2.0f: 3.0f)-ShiftTFS;
   const float maxdist=float(Dp*0.1); //-Max shifting distance permitted (recommended).
   cushift::RunShifting(n,pini,dt,coefumagn,ShiftTFS,coeftfs,maxdist,velrhop,shiftposfs,stm);
