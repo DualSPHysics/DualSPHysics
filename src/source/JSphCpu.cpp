@@ -570,7 +570,7 @@ template<TpKernel tker,TpFtMode ftmode> void JSphCpu::InteractionForcesBound
     //-Load data of particle p1. | Carga datos de particula p1.
     const tdouble3 posp1=pos[p1];
     const bool rsymp1=(Symmetry && posp1.y<=KernelSize); //<vs_syymmetry>
-    const tfloat3 velp1=TFloat3(velrhop[p1].x,velrhop[p1].y,velrhop[p1].z);
+    const tfloat4 velrhop1=velrhop[p1];
 
     //-Search for neighbours in adjacent cells.
     const StNgSearch ngs=nsearch::Init(dcell[p1],false,divdata);
@@ -602,11 +602,10 @@ template<TpKernel tker,TpFtMode ftmode> void JSphCpu::InteractionForcesBound
 
           if(compute){
             //-Density derivative (Continuity equation).
-            //const float dvx=velp1.x-velrhop[p2].x, dvy=velp1.y-velrhop[p2].y, dvz=velp1.z-velrhop[p2].z;
             tfloat4 velrhop2=velrhop[p2];
             if(rsym)velrhop2.y=-velrhop2.y; //<vs_syymmetry>
-            const float dvx=velp1.x-velrhop2.x, dvy=velp1.y-velrhop2.y, dvz=velp1.z-velrhop2.z;
-            if(compute)arp1+=massp2*(dvx*frx+dvy*fry+dvz*frz);
+            const float dvx=velrhop1.x-velrhop2.x, dvy=velrhop1.y-velrhop2.y, dvz=velrhop1.z-velrhop2.z;
+            if(compute)arp1+=massp2*(dvx*frx+dvy*fry+dvz*frz)*(velrhop1.w/velrhop2.w);
 
             {//-Viscosity.
               const float dot=drx*dvx + dry*dvy + drz*dvz;
@@ -724,7 +723,7 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity,bool sh
 
           //-Density derivative (Continuity equation).
           const float dvx=velp1.x-velrhop2.x, dvy=velp1.y-velrhop2.y, dvz=velp1.z-velrhop2.z;
-          if(compute)arp1+=massp2*(dvx*frx+dvy*fry+dvz*frz);  // *(rhopp1/velrhop2.w); TO FIX...
+          if(compute)arp1+=massp2*(dvx*frx+dvy*fry+dvz*frz)*(rhopp1/velrhop2.w);
 
           const float cbar=(float)Cs0;
           //-Density Diffusion Term (Molteni and Colagrossi 2009).

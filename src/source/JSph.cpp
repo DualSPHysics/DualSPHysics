@@ -1358,7 +1358,7 @@ void JSph::ConfigConstants1(bool simulate2d){
   const double h=KernelH;
   const double kh=h*kernelk;
   KernelSize=float(kh); 
-  KernelSize2=float(kh*kh);
+  KernelSize2=KernelSize*KernelSize;
   //-Computes kernel constants.
   switch(TKernel){
     case KERNEL_Cubic:       KCubic =fsph::GetKernelCubic_Ctes     (simulate2d,h);  break;

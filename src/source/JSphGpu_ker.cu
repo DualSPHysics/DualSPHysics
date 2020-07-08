@@ -421,7 +421,7 @@ template<TpKernel tker,TpFtMode ftmode,bool symm>
   (unsigned p1,const unsigned &pini,const unsigned &pfin
   ,const float *ftomassp
   ,const float4 *poscell,const float4 *velrhop,const typecode *code,const unsigned* idp
-  ,float massf,const float4 &pscellp1,const float4 &velp1,float &arp1,float &visc)
+  ,float massf,const float4 &pscellp1,const float4 &velrhop1,float &arp1,float &visc)
 {
   for(int p2=pini;p2<pfin;p2++){
     const float4 pscellp2=poscell[p2];
@@ -435,8 +435,8 @@ template<TpKernel tker,TpFtMode ftmode,bool symm>
       const float fac=cufsph::GetKernel_Fac<tker>(rr2);
       const float frx=fac*drx,fry=fac*dry,frz=fac*drz; //-Gradients.
 
-      float4 velp2=velrhop[p2];
-      if(symm)velp2.y=-velp2.y; //<vs_syymmetry>
+      float4 velrhop2=velrhop[p2];
+      if(symm)velrhop2.y=-velrhop2.y; //<vs_syymmetry>
       //-Obtains particle mass p2 if there are floating bodies.
       //-Obtiene masa de particula p2 en caso de existir floatings.
       float ftmassp2;    //-Contains mass of floating body or massf if fluid. | Contiene masa de particula floating o massf si es fluid.
@@ -450,8 +450,8 @@ template<TpKernel tker,TpFtMode ftmode,bool symm>
 
       if(compute){
         //-Density derivative (Continuity equation).
-        const float dvx=velp1.x-velp2.x, dvy=velp1.y-velp2.y, dvz=velp1.z-velp2.z;
-        arp1+=(USE_FLOATING? ftmassp2: massf)*(dvx*frx+dvy*fry+dvz*frz);
+        const float dvx=velrhop1.x-velrhop2.x, dvy=velrhop1.y-velrhop2.y, dvz=velrhop1.z-velrhop2.z;
+        arp1+=(USE_FLOATING? ftmassp2: massf)*(dvx*frx+dvy*fry+dvz*frz)*(velrhop1.w/velrhop2.w);
 
         {//===== Viscosity ===== 
           const float dot=drx*dvx + dry*dvy + drz*dvz;
@@ -481,7 +481,7 @@ template<TpKernel tker,TpFtMode ftmode,bool symm>
 
     //-Loads particle p1 data.
     const float4 pscellp1=poscell[p1];
-    const float4 velp1=velrhop[p1];
+    const float4 velrhop1=velrhop[p1];
     const bool rsymp1=(symm && CEL_GetPartY(__float_as_uint(pscellp1.w))==0); //<vs_syymmetry>
     
     //-Obtains neighborhood search limits.
@@ -492,8 +492,8 @@ template<TpKernel tker,TpFtMode ftmode,bool symm>
     for(int c3=ini3;c3<fin3;c3+=nc.w)for(int c2=ini2;c2<fin2;c2+=nc.x){
       unsigned pini,pfin=0;  cunsearch::ParticleRange(c2,c3,ini1,fin1,beginendcellfluid,pini,pfin);
       if(pfin){
-                          KerInteractionForcesBoundBox<tker,ftmode,false> (p1,pini,pfin,ftomassp,poscell,velrhop,code,idp,CTE.massf,pscellp1,velp1,arp1,visc);
-        if(symm && rsymp1)KerInteractionForcesBoundBox<tker,ftmode,true > (p1,pini,pfin,ftomassp,poscell,velrhop,code,idp,CTE.massf,pscellp1,velp1,arp1,visc);
+                          KerInteractionForcesBoundBox<tker,ftmode,false> (p1,pini,pfin,ftomassp,poscell,velrhop,code,idp,CTE.massf,pscellp1,velrhop1,arp1,visc);
+        if(symm && rsymp1)KerInteractionForcesBoundBox<tker,ftmode,true > (p1,pini,pfin,ftomassp,poscell,velrhop,code,idp,CTE.massf,pscellp1,velrhop1,arp1,visc);
       }
     }
     //-Stores results.
@@ -564,7 +564,7 @@ template<TpKernel tker,TpFtMode ftmode,bool lamsps,TpDensity tdensity,bool shift
 
       //-Density derivative (Continuity equation).
       const float dvx=velrhop1.x-velrhop2.x, dvy=velrhop1.y-velrhop2.y, dvz=velrhop1.z-velrhop2.z;
-      if(compute)arp1+=(USE_FLOATING? ftmassp2: massp2)*(dvx*frx+dvy*fry+dvz*frz);
+      if(compute)arp1+=(USE_FLOATING? ftmassp2: massp2)*(dvx*frx+dvy*fry+dvz*frz)*(velrhop1.w/velrhop2.w);
 
       const float cbar=CTE.cs0;
       const float dot3=(tdensity!=DDT_None || shift? drx*frx+dry*fry+drz*frz: 0);
