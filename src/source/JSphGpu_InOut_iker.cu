@@ -246,7 +246,8 @@ unsigned InOutCreateList(bool stable,unsigned n,unsigned pini
     cudaMemset(listp+n,0,sizeof(unsigned));
     dim3 sgrid=GetSimpleGridSize(n,SPHBSIZE);
     const unsigned smem=(SPHBSIZE+1)*sizeof(unsigned); //-All fluid particles can be in in/out area and one position for counter.
-    KerInOutCreateList <<<sgrid,SPHBSIZE,smem>>> (n,pini,chkinputmask,nzone,cfgzone,planes,Float3(freemin),Float3(freemax),boxlimit,posxy,posz,code,listp);
+    KerInOutCreateList <<<sgrid,SPHBSIZE,smem>>> (n,pini,chkinputmask,nzone,cfgzone
+      ,planes,Float3(freemin),Float3(freemax),boxlimit,posxy,posz,code,listp);
     cudaMemcpy(&count,listp+n,sizeof(unsigned),cudaMemcpyDeviceToHost);
     //-Reorders list when stable has been activated.
     //-Reordena lista cuando stable esta activado.

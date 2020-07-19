@@ -22,6 +22,8 @@
 //:# =========
 //:# - Clase para gestionar nuevas condiciones inlet/outlet. (08-04-2017)
 //:# - Se divide en dos ficheros independientes. (26-04-2020)
+//:# - BoxLimit en Y se amplia en 2D para evitar problemas en comparaciones 
+//:#   float/double. (18-07-2020)
 //:#############################################################################
 
 /// \file JSphInOutZone.h \brief Declares the class \ref JSphInOutZone.
@@ -126,7 +128,7 @@ private:
   const double Dp;               ///<Distance between particles.
   const tdouble3 MapRealPosMin;
   const tdouble3 MapRealPosMax;
-  const float GravityZ;;
+  const float GravityZ;
 
   //-Configuration parameters.
   JSphInOutPoints *Points;  ///<Definition of inlet points.

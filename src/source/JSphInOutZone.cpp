@@ -212,6 +212,11 @@ void JSphInOutZone::LoadDomain(){
   }
   BoxLimitMin=ToTFloat3(pmin);
   BoxLimitMax=ToTFloat3(pmax);
+  //-Adds minimum border to avoid problems in float/double comparisons.
+  if(Simulate2D){
+    BoxLimitMin.y=float(Simulate2DPosY-Dp*.1);
+    BoxLimitMax.y=float(Simulate2DPosY+Dp*.1);
+  }
   ////-Adds border of size Scell.
   //BoxLimitMin=ToTFloat3(pmin-TDouble3(Scell));
   //BoxLimitMax=ToTFloat3(pmax+TDouble3(Scell));
