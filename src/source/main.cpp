@@ -1,10 +1,10 @@
 /*
  <DUALSPHYSICS>  Copyright (c) 2020, 
- Dr Jose M. Dominguez, Dr Alejandro Crespo, 
+ Dr Jose M. Dominguez Alonso, Dr Alejandro Crespo, 
  Prof. Moncho Gomez Gesteira, Prof. Benedict Rogers, 
- Dr Georgios Fourtakas, Prof. Peter Stansby, Dr Ricardo Canelas, 
+ Dr Georgios Fourtakas, Prof. Peter Stansby, 
  Dr Renato Vacondio, Dr Corrado Altomare, Dr Angelo Tafuni, 
- Orlando Garcia-Feal, Dr Jose Gonzalez Cao
+ Orlando Garcia Feal, Ivan Martinez Estevez
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -31,8 +31,8 @@ School of Mechanical, Aerospace and Civil Engineering, University of Manchester,
 \section compile_sec Project files
 Please download source files and documentation from <a href="http://dual.sphysics.org">DualSPHysics website.</a> \n
 \author <a href="http://dual.sphysics.org/index.php/developers">DualSPHysics Developers.</a> 
-\version 5.0.138
-\date 08-07-2020
+\version 5.0.139
+\date 18-07-2020
 \copyright GNU Lesser General Public License <a href="http://www.gnu.org/licenses/">GNU licenses.</a>
 */
 
@@ -56,7 +56,7 @@ Please download source files and documentation from <a href="http://dual.sphysic
 
 using namespace std;
 
-JAppInfo AppInfo("DualSPHysics5","v5.0.138","08-07-2020");
+JAppInfo AppInfo("DualSPHysics5","v5.0.139","18-07-2020");
 //JAppInfo AppInfo("DualSPHysics5","v5.0.???","UserVersion","v1.0","??-??-????"); //-for user versions.
 
 //==============================================================================
@@ -65,11 +65,11 @@ JAppInfo AppInfo("DualSPHysics5","v5.0.138","08-07-2020");
 std::string getlicense_lgpl(const std::string &name,bool simple){
   std::string tx=(simple? "": "\n");
   tx=tx+"\n <"+fun::StrUpper(name)+"> Copyright (c) 2020 by"; 
-  tx=tx+"\n Dr Jose M. Dominguez, Dr Alejandro Crespo,";
+  tx=tx+"\n Dr Jose M. Dominguez Alonso, Dr Alejandro Crespo,";
   tx=tx+"\n Prof. Moncho Gomez Gesteira, Prof. Benedict Rogers,";
-  tx=tx+"\n Dr Georgios Fourtakas, Prof. Peter Stansby, Dr Ricardo Canelas,";
+  tx=tx+"\n Dr Georgios Fourtakas, Prof. Peter Stansby,";
   tx=tx+"\n Dr Renato Vacondio, Dr Corrado Altomare, Dr Angelo Tafuni,";
-  tx=tx+"\n Orlando Garcia-Feal, Dr Jose Gonzalez Cao\n";
+  tx=tx+"\n Orlando Garcia Feal, Ivan Martinez Estevez\n";
   if(!simple){
     tx=tx+"\n EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo";
     tx=tx+"\n School of Mechanical, Aerospace and Civil Engineering, University of Manchester\n";

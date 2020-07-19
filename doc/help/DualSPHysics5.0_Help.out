@@ -1,11 +1,11 @@
 
 
  <DUALSPHYSICS5> Copyright (c) 2020 by
- Dr Jose M. Dominguez, Dr Alejandro Crespo,
+ Dr Jose M. Dominguez Alonso, Dr Alejandro Crespo,
  Prof. Moncho Gomez Gesteira, Prof. Benedict Rogers,
- Dr Georgios Fourtakas, Prof. Peter Stansby, Dr Ricardo Canelas,
+ Dr Georgios Fourtakas, Prof. Peter Stansby,
  Dr Renato Vacondio, Dr Corrado Altomare, Dr Angelo Tafuni,
- Orlando Garcia-Feal, Dr Jose Gonzalez Cao
+ Orlando Garcia Feal, Ivan Martinez Estevez
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester
@@ -24,19 +24,20 @@
  along with DualSPHysics. If not, see <http://www.gnu.org/licenses/>.
 
 
-DualSPHysics5 v5.0.112 (19-05-2020)
+DualSPHysics5 v5.0.139 (09-07-2020)
 ====================================
 LoadDsphConfig> .../bin/windows/DsphConfig.xml
 Information about execution parameters:
 
   DualSPHysics [name_case [dir_out]] [options]
 
-  Options:
+  General options:
     -h          Shows information about parameters
     -ver        Shows version information
     -info       Shows version features in JSON format
     -opt <file> Loads a file configuration
 
+  Execution options:
     -cpu        Execution on CPU (option by default)
     -gpu[:id]   Execution on GPU and id of the device
 
@@ -48,9 +49,10 @@ Information about execution parameters:
                    cores of the device by default (or using zero value)
 
     -cellmode:<mode>  Specifies the cell division mode
-        2h        Lowest and the least expensive in memory (by default)
-        h         Fastest and the most expensive in memory
+        full      Lowest and the least expensive in memory (by default)
+        half      Fastest and the most expensive in memory
 
+  Formulation options:
     -dbc           Dynamic Boundary Condition DBC (by default)
     -mdbc          Modified Dynamic Boundary Condition mDBC (mode: vel=0)
     -mdbc_noslip   Modified Dynamic Boundary Condition mDBC (mode: no-slip)
@@ -61,9 +63,8 @@ Information about execution parameters:
     -verlet[:steps]  Verlet algorithm as time step algorithm and number of
                      time steps to switch equations
 
+    -wendland        Wendland kernel (by default)
     -cubic           Cubic spline kernel
-    -wendland        Wendland kernel
-    -gaussian        Gaussian kernel
 
     -viscoart:<float>          Artificial viscosity [0-1]
     -viscolamsps:<float>       Laminar+SPS viscosity [order of 1E-6]
@@ -82,19 +83,7 @@ Information about execution parameters:
         nofixed    Shifting is not applied near fixed boundary
         full       Shifting is always applied
 
-    -sv:[formats,...] Specifies the output formats.
-        none    No particles files are generated
-        binx    Binary files (option by default)
-        info    Information about execution in .ibi4 format
-        vtk     VTK files
-        csv     CSV files
-    -createdirs:<0/1> Creates full path for output files
-                      (value by default is read from DsphConfig.xml or 1)
-    -csvsep:<0/1>     Separator character in CSV files (0=semicolon, 1=coma)
-                      (value by default is read from DsphConfig.xml or 0)
-    -svres:<0/1>     Generates file that summarises the execution process
-    -svtimers:<0/1>  Obtains timing for each individual process
-    -svdomainvtk:<0/1>  Generates VTK file with domain limits
+  Simulation options:
     -name <string>      Specifies path and name of the case 
     -runname <string>   Specifies name for case execution
     -dirout <dir>       Specifies the general output directory 
@@ -105,14 +94,36 @@ Information about execution parameters:
      (begin) and located in the directory (dir), (first) indicates the
      number of the first PART to be generated
 
-    -rhopout:min:max Excludes fluid particles out of these density limits
 
-    -ftpause:<float> Time to start floating bodies movement. By default 0
     -tmax:<float>   Maximum time of simulation
     -tout:<float>   Time between output files
 
+    -ftpause:<float> Time to start floating bodies movement. By default 0
+    -rhopout:min:max Excludes fluid particles out of these density limits
     -domain_fixed:xmin:ymin:zmin:xmax:ymax:zmax    The domain is fixed
      with the specified values
+
+  Output options:
+    -sv:[formats,...] Specifies the output formats.
+        none    No particles files are generated
+        binx    Binary files (by default)
+        info    Information about execution in .ibi4 format (by default)
+        vtk     VTK files
+        csv     CSV files
+    -svres:<0/1>     Generates file that summarises the execution process
+    -svtimers:<0/1>  Obtains timing for each individual process
+    -svdomainvtk:<0/1>  Generates VTK file with domain limits
+    -svpips:<mode>:n  Compute PIPS of simulation each n steps (100 by default),
+       mode options: 0=disabled, 1=no save details (by default), 2=save details
+
+    -createdirs:<0/1> Creates full path for output files
+                      (value by default is read from DsphConfig.xml or 1)
+    -csvsep:<0/1>     Separator character in CSV files (0=semicolon, 1=coma)
+                      (value by default is read from DsphConfig.xml or 0)
+
+  Debug options:
+    -nsteps:<uint>  Maximum number of steps allowed (debug)
+    -svsteps:<0/1>  Saves a PART for each step (debug)
 
   Examples:
     DualSPHysics case out_case -sv:binx,csv 

@@ -671,16 +671,21 @@ void JSph::LoadConfigParameters(const JXml *xml){
   TimeMax=eparms.GetValueDouble("TimeMax");
   TimePart=eparms.GetValueDouble("TimeOut");
 
-  DtIni=eparms.GetValueDouble("DtIni",true,0);
-  DtMin=eparms.GetValueDouble("DtMin",true,0);
+  DtIni=max(0,eparms.GetValueDouble("DtIni",true,0));
+  DtMin=max(0,eparms.GetValueDouble("DtMin",true,0));
   CoefDtMin=eparms.GetValueFloat("CoefDtMin",true,0.05f);
   DtAllParticles=(eparms.GetValueInt("DtAllParticles",true,0)==1);
 
-  string filefixeddt=eparms.GetValueStr("FixedDt",true);
+  double valuefixeddt=max(0,eparms.GetValueDouble("DtFixed",true,0));
+  string filefixeddt=eparms.GetValueStr("DtFixedFile",true);
+  if(fun::StrUpper(filefixeddt)=="NONE")filefixeddt="";
+  if(valuefixeddt && !filefixeddt.empty())Run_Exceptioon("The parameters \'DtFixed\' and \'DtFixedFile\' cannot be used at the same time.");
   if(!filefixeddt.empty()){
     FixedDt=new JDsFixedDt();
     FixedDt->LoadFile(DirCase+filefixeddt);
   }
+  else if(valuefixeddt)FixedDt=new JDsFixedDt(valuefixeddt);
+
   if(eparms.Exists("RhopOutMin"))RhopOutMin=eparms.GetValueFloat("RhopOutMin");
   if(eparms.Exists("RhopOutMax"))RhopOutMax=eparms.GetValueFloat("RhopOutMax");
   PartsOutMax=eparms.GetValueFloat("PartsOutMax",true,1);
@@ -1535,7 +1540,10 @@ void JSph::VisuConfig(){
   Log->Print(fun::VarStr("DtIni",DtIni));
   Log->Print(fun::VarStr("DtMin",DtMin));
   Log->Print(fun::VarStr("DtAllParticles",DtAllParticles));
-  if(FixedDt)Log->Print(fun::VarStr("FixedDt",FixedDt->GetFile()));
+  if(FixedDt){
+    if(FixedDt->GetFixedValue())Log->Print(fun::VarStr("FixedDt",FixedDt->GetFixedValue()));
+    else Log->Print(fun::VarStr("FixedDtFile",FixedDt->GetFile()));
+  }
   Log->Print(fun::VarStr("MassFluid",MassFluid));
   Log->Print(fun::VarStr("MassBound",MassBound));
   if(TVisco==VISCO_LaminarSPS){     

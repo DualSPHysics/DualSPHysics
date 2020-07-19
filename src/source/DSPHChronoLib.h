@@ -61,24 +61,26 @@ class DSPHChronoLib {
 public:
   //-States of execution.
   typedef enum { RSTATE_Init, RSTATE_Loading, RSTATE_Results }TpRunState;
-  const std::string version;
+  const std::string version;  ///<Number version
 protected:
-  const std::string ClassName;
+  const std::string ClassName; 
+
   //-Chrono physical system.
   std::string DirOut;
-  bool Simulate2D;
-  bool Parallel;           
+  bool Simulate2D;          ///<True for 2D Simulations.
+  bool UseOmp;              ///<Indicates if use of ChronoEngine_Parallel module is enabled
   int OmpThreads;           ///<Threads number used by OpenMP.
   unsigned SolverIndex;     ///<Indicates the index of chrono solver enum.
   unsigned MaxIter;         ///<Indicates the maximun number of iterations for the solver.
-  bool DG;
-  JChronoData ChData;
+  bool DG;                  ///<Used for Debug
+  bool UseSMC;              ///<True if it is using SMC (SMooth Contacts) (chrono_contacts)
+  bool UseFEA;              ///<True if the use of Finite Element Analysis is enabled
+  JChronoData ChData; 
   TpRunState RunState;
   virtual void SaveForcesHead(){};
   static tdouble3 VecUnitarySafe(const tdouble3 &v);
   DSPHChronoLib(const JChronoData &chdata);
-  bool UseSMC;    ///<True if is using SMC (SMooth Contacts) (chrono_contacts)
-  bool UseFEA;
+
 public:
 
   ///Initialize floating body.
@@ -114,9 +116,6 @@ public:
   ///Loads imposed velocity for floating to calculate coupling with Chrono.    //<vs_fttvel>
   bool SetFtDataVel(word mkbound,const tfloat3 &vlin,const tfloat3 &vang);   //<vs_fttvel>
   
-  ///Loads imposed force for floating to calculate coupling with Chrono.       //<vs_fttvel>
-  bool SetFtDataForce(word mkbound,const tfloat3 &flin,const tfloat3 &fang); //<vs_fttvel>
-
   ///Obtains floating data from coupling with Chrono.
   bool GetFtData(word mkbound,tdouble3 &fcenter,tfloat3 &fvel,tfloat3 &fomega)const;
 
@@ -211,6 +210,6 @@ public:
   ///Obtains center of body.
   bool GetBodyCenter(const std::string &bodyname,tdouble3 &pcen)const;
 };
-#endif
+#endif //!DISABLE_CHRONO_OMP
 
-#endif
+#endif //!DSPHCHRONOLIB_H
