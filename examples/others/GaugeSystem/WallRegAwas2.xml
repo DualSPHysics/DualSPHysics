@@ -2,7 +2,6 @@
 <case app="GenCase4 v4.0.059 (29-12-2017)" date="19-02-2018 18:54:53">
     <casedef>
         <constantsdef>
-            <lattice bound="1" fluid="1" />
             <gravity x="0" y="0" z="-9.81" comment="Gravitational acceleration" />
             <cflnumber value="0.2" comment="Coefficient to multiply Dt" />
             <hswl value="0" auto="true" comment="Maximum still water level to calculate speedofsound using coefsound" />
@@ -13,7 +12,7 @@
             <gamma value="7" comment="Politropic constant for water used in the state equation" />
             <rhop0 value="1000" comment="Reference density of the fluid" />
         </constantsdef>
-        <mkconfig boundcount="230" fluidcount="10">
+        <mkconfig boundcount="230" fluidcount="9">
             <mkorientfluid mk="0" orient="Xyz" />
         </mkconfig>
         <geometry>
@@ -113,9 +112,10 @@
             <parameter key="DensityDT" value="0" comment="Density Diffusion Term 0:None, 1:Molteni, 2:Fourtakas, 3:Fourtakas(full) (default=0)" />
 			<parameter key="DensityDTvalue" value="0.1" comment="DDT value (default=0.1)" />
             <parameter key="CoefDtMin" value="0.05" comment="Coefficient to calculate minimum time step dtmin=coefdtemin*h/speedsound (def=0.05)" />
-            <parameter key="#DtIni" value="0.0001" comment="Initial time step (def=h/speedsound" />
-            <parameter key="#DtMin" value="0.00001" comment="Minimum time step (def=coefdtmin*h/speedsound)" />
-            <parameter key="#DtFixed" value="DtFixed.dat" comment="Dt values are loaded from file (def=disabled)" />
+            <parameter key="DtIni" value="0" comment="Initial time step. Use 0 to defult use (default=h/speedsound)" units_comment="seconds" />
+            <parameter key="DtMin" value="0" comment="Minimum time step. Use 0 to defult use (default=coefdtmin*h/speedsound)" units_comment="seconds" />
+            <parameter key="DtFixed" value="0" comment="Fixed Dt value. Use 0 to disable (default=disabled)" units_comment="seconds" />
+            <parameter key="DtFixedFile" value="NONE" comment="Dt values are loaded from file. Use NONE to disable (default=disabled)" units_comment="milliseconds (ms)" />
             <parameter key="TimeMax" value="20" comment="Time of simulation" />
             <parameter key="TimeOut" value="0.02" comment="Time between output files" />
             <parameter key="PartsOutMax" value="1" comment="Allowed percentage of fluid particles out the domain (def=1)" />
