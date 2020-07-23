@@ -1,13 +1,14 @@
-DualSPHysics5             v5.0.112            19-05-2020
-BoundaryVTK               v5.0.057            15-04-2020
-ComputeForces             v5.0.049            16-03-2020
-FloatingInfo              v5.0.032            26-02-2020
-GenCase                   v5.0.184            19-05-2020
-GenCase [MkWord]          v5.0.184            19-05-2020
-IsoSurface                v5.0.037            21-04-2020
-FlowTool                  v5.0.034            26-02-2020
-MeasureTool               v5.0.051            08-05-2020
-PartVtk                   v5.0.051            26-02-2020
-PartVTKOut                v5.0.032            26-02-2020
-ReadSwash                 v5.0.032            26-02-2020
-
+DualSPHysics5             v5.0.140            18-07-2020
+BoundaryVTK               v5.0.122            09-07-2020
+ComputeForces             v5.0.122            09-07-2020
+FloatingInfo              v5.0.122            09-07-2020
+GenCase                   v5.0.197            18-07-2020
+GenCase [MkWord]          v5.0.197            18-07-2020
+IsoSurface                v5.0.122            09-07-2020
+FlowTool                  v5.0.122            09-07-2020
+MeasureTool               v5.0.122            09-07-2020
+PartVTK                   v5.0.122            09-07-2020
+PartVTKOut                v5.0.122            09-07-2020
+ReadSwash                 v5.0.037            30-06-2020
+DualSPHysics5-NNewtonian  v1.002(v5.0.140)    23-07-2020
+DualSPHysics4-LiquidGas   v1.010(v4.0.048)    04-06-2018
