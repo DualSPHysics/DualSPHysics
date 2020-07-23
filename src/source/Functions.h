@@ -1,6 +1,6 @@
 ﻿//HEAD_DSCODES
 /*
- <DUALSPHYSICS>  Copyright (c) 2019 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -82,6 +82,11 @@
 //:# - Nueva funcion VectorFind().  (25-11-2019)
 //:# - Nueva funcion CompareVersions().  (08-12-2019)
 //:# - Error corregido en StrStripSlashes().  (04-01-2020)
+//:# - Nueva funcion VectorFindMask().  (17-03-2020)
+//:# - Nueva funcion NaturalFmt().  (15-04-2020)
+//:# - Nuevas funciones NewToTFloat3() y NewToTDouble3().  (09-05-2020)
+//:# - Nueva funcion FileModifTime().  (02-06-2020)
+//:# - Nueva funcion Length() para vectores.  (27-06-2020)
 //:#############################################################################
 
 /// \file Functions.h \brief Declares basic/general functions for the entire application.
@@ -129,6 +134,8 @@ std::string PrintStr(const char *format,...);
 std::string PrintStrCsv(bool csvsepcoma,const char *format,...);
 std::string StrCsvSep(bool csvsepcoma,const std::string &cad);
 
+std::string NaturalFmt(double v,unsigned ndigits,bool removezeros);
+
 std::string IntStrFill(int v,int vmax);
 std::string UintStrFill(unsigned v,unsigned vmax,const char fillchar='0');
 std::string LongStr(llong v);
@@ -170,6 +177,9 @@ std::string Double4Str(const tdouble4 &v,const char* fmt="%f,%f,%f");
 /// Converts range of tdouble4 values to string.  
 inline std::string Double4gStr(const tdouble4 &v){ return(Double4Str(v,"%g,%g,%g,%g")); }
 
+std::string VectorStr(const std::vector<std::string> &v);
+
+
 bool StrIsIntegerNumber(const std::string &v);
 bool StrIsRealNumber(const std::string &v);
 
@@ -210,7 +220,8 @@ std::string StrSplitValue(const std::string mark,std::string text,unsigned value
 unsigned VectorSplitStr(const std::string mark,const std::string &text,std::vector<std::string> &vec);
 unsigned VectorSplitInt(const std::string mark,const std::string &text,std::vector<int> &vec);
 unsigned VectorSplitDouble(const std::string mark,const std::string &text,std::vector<double> &vec);
-unsigned VectorFind(const std::string &key,const std::vector<std::string> &vec);
+unsigned VectorFind(const std::string &key,const std::vector<std::string> &vec,unsigned first=0);
+unsigned VectorFindMask(const std::string &keymask,const std::vector<std::string> &vec,unsigned first=0);
 
 double GetFirstValueDouble(std::string tex,std::string pretex="");
 double GetFirstValueDouble(std::string tex,std::string &endtex,std::string pretex);
@@ -261,6 +272,7 @@ std::string JSONObject(const std::vector<std::string> &properties);
 std::string JSONArray(const std::vector<std::string> &values);
 
 int FileType(const std::string &name);
+ullong FileModifTime(const std::string &name);
 inline bool FileExists(const std::string &name){ return(FileType(name)==2); }
 inline bool DirExists(const std::string &name){ return(FileType(name)==1); }
 llong FileSize(const std::string &name);
@@ -312,6 +324,12 @@ double*   ResizeAlloc(double   *data,unsigned ndata,unsigned newsize);
 tdouble2* ResizeAlloc(tdouble2 *data,unsigned ndata,unsigned newsize);
 tdouble3* ResizeAlloc(tdouble3 *data,unsigned ndata,unsigned newsize);
 tdouble4* ResizeAlloc(tdouble4 *data,unsigned ndata,unsigned newsize);
+
+tfloat3*  NewToTFloat3 (const tdouble3* data,unsigned ndata);
+tdouble3* NewToTDouble3(const tfloat3* data,unsigned ndata);
+
+float  Length(const tfloat3 &v);
+double Length(const tdouble3 &v);
 
 bool IsInfinity(float v);
 bool IsInfinity(double v);

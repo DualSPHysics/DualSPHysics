@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2016, Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -24,6 +24,8 @@
 //:# - Simple configuration for parallel boxes of boundary particles. (13-06-2018)
 //:# - Saves VTK file (CfgBoundCorr_Limit.vtk) with LimitPos and Direction 
 //:#   configuration. (13-06-2018)
+//:# - Comprueba opcion active en elementos de primer y segundo nivel. (18-03-2020)  
+//:# - Mejora la gestion de excepciones. (06-05-2020)
 //:#############################################################################
 
 /// \file JSphBoundCorr.h \brief Declares the class \ref JSphBoundCorr.
@@ -41,7 +43,7 @@ class TiXmlElement;
 class JLog2;
 class JLinearValue;
 class JSphMk;
-class JSphPartsInit;
+class JDsPartsInit;
 
 //##############################################################################
 //# XML format in _FmtXML_BoundCorr.xml.
@@ -89,7 +91,7 @@ public:
     ,TpDirection autodir,double autodpfactor,tdouble3 limitpos,tdouble3 direction);
   ~JSphBoundCorrZone();
   void ConfigBoundCode(typecode boundcode);
-  void ConfigAuto(const JSphPartsInit *partsdata);
+  void ConfigAuto(const JDsPartsInit *partsdata);
 
   void RunMotion(const StMotionData& motiondata);
 
@@ -110,18 +112,19 @@ class JSphBoundCorr : protected JObject
 {
 private:
   JLog2 *Log;
-  const double Dp;
+  const double Dp;       ///<Initial distance between particles [m].
 
   float DetermLimit;     ///<Limit for determinant. Use 1e-3 for first_order or 1e+3 for zeroth_order (default=1e+3).
   byte ExtrapolateMode;  ///<Calculation mode for rhop extrapolation from ghost nodes 1:fast-single, 2:single, 3:double (default=1).
 
   std::vector<JSphBoundCorrZone*> List; ///<List of configurations.
 
+  const bool SaveMotionVtk;  ///<Saves CfgBoundCorr_Limit_XXXX.vtk for each part when motion is applied.
   bool UseMotion; ///<Some boundary is moving boundary.
 
   void Reset();
   bool ExistMk(word mkbound)const;
-  void LoadXml(JXml *sxml,const std::string &place);
+  void LoadXml(const JXml *sxml,const std::string &place);
   void ReadXml(const JXml *sxml,TiXmlElement* lis);
   void UpdateMkCode(const JSphMk *mkinfo);
   void SaveVtkConfig(double dp,int part)const;
@@ -129,10 +132,10 @@ private:
 public:
   const bool Cpu;
 
-  JSphBoundCorr(bool cpu,double dp,JLog2 *log,JXml *sxml,const std::string &place,const JSphMk *mkinfo);
+  JSphBoundCorr(bool cpu,double dp,JLog2 *log,const JXml *sxml,const std::string &place,const JSphMk *mkinfo);
   ~JSphBoundCorr();
 
-  void RunAutoConfig(const JSphPartsInit *partsdata);
+  void RunAutoConfig(const JDsPartsInit *partsdata);
 
   void VisuConfig(std::string txhead,std::string txfoot)const;
   unsigned GetCount()const{ return(unsigned(List.size())); };

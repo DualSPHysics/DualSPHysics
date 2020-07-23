@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!-- *** DualSPHysics (19-03-2020) *** -->
+<!-- *** class: JMooredFloatings *** -->
+<!------------------------------------------------------------------------------->
+<!------------------------------------------------------------------------------->
+<!-- *** Example for configuration of moorings using coupling with MoorDyn+. *** -->
+<special>
+    <moorings>
+        <savevtk_moorings value="true" comment="Saves vtk with moorings (default=true)" />
+        <savecsv_points value="true" comment="Saves csv with link points (default=true)" />
+        <savevtk_points value="false" comment="Saves vtk with link points (default=false)" />
+		<mooredfloatings>
+			<floating mkbound="45" comment="Mkbound of the Floating body the mooring is linked to" />
+			<floating mkbound="50" comment="Mkbound of the Floating body the mooring is linked to" />
+		</mooredfloatings>
+		<moordyn file="moordyn.xml" comment="MoorDyn configuration"/>
+    </moorings>
+</special>
+<!------------------------------------------------------------------------------------------->
+<!------------------------------------------------------------------------------------------->
+<!-- *** Attribute "active" in elements <moorings>, <floating> and <moordyn> to enable *** --> 
+<!-- *** (using active="true" or active="1") or disable (using active="false"          *** -->
+<!-- *** or active="0"). It is an optional attribute and true by default.              *** -->
+<moorings active="true">
+	<mooredfloatings>
+		<floating active="true"/>
+	</mooredfloatings>
+	<moordyn active="true"/>
+</moorings>
+
+
+<?xml version="1.0" encoding="UTF-8" ?>
+<!-- *** MoorDyn+ (14-02-2020) *** -->
+<!------------------------------------------------------------------------------->
+<!-- *** Example for complete configuration of moorings using MoorDyn+. *** ------>
+<moordyn>
+	<solverOptions>
+		<waterDepth value="0.5" comment="Water depth" units_comment="m"/>
+		<freesurface value="0" comment="Z position of the water free surface.(default=0)" />
+		<kBot value="3.0e6" comment="Bottom stiffness constant. (default=3.0e6)" units_comment="Pa/m"/>
+		<cBot value="3.0e5" comment="Bottom damping constant. (default=3.0e5)"  units_comment="Pa*s/m"/>
+		<dtM value="0.0001" comment="Desired mooring model time step. (default=0.0001)"/>
+		<waveKin value="0" comment="Wave kinematics flag ( 0: neglect [the only option currently supported] ). (default=0)"/>
+		<writeUnits value="yes" comment="Write units line. value=[yes|no]. (default=yes)"/>
+		<frictionCoefficient value="0" comment="General bottom friction coefficient, as a start. (default=0.0)"/>
+		<fricDamp value="200" comment="Damping coefficient used to model the friction with speeds near zero. (default=200.0)"/>
+		<statDynFricScale value="1.0" comment="Ratio between static and dynamic friction (mu_static/mu_dynamic). (default=1.0)"/>    
+		<dtIC value="1.0" comment="Period to analyse convergence of dynamic relaxation for initial conditions. (default=1.0)" units_comment="s"/>
+		<cdScaleIC value="5" comment="Factor to scale drag coefficients during dynamic relaxation for initial conditions. (default=5)"/>	
+		<threshIC value="0.01" comment="Convergence threshold for for initial conditions. (default=0.001)"/>
+		<tmaxIC value="2" comment="Maximum time for initial conditions without convergence.(default=0)" units_comment="s"/>
+	</solverOptions>
+	<bodies>
+		<body ref="45" comment="Fluid driven object to attach mooring lines."> %body 0
+			<depth value="0.5" comment="Water depth for current object. This value overwrites the global water depth only for its lines." units_comment="m"/>
+		</body>
+		<body ref="50"/> %body 1
+	</bodies>
+	<lines>
+		<linedefault comment="Shared properties for each line.">  
+			<ea value="2.9e3" comment="Line stiffness, product of elasticity modulus and cross-sectional area." units_comment="N"/>
+			<diameter value="3.656e-3" comment="Volume-equivalent diameter of the line." units_comment="m"/>
+			<massDenInAir value="0.0607" comment="Mass per unit length of the line." units_comment="kg/m"/>
+			<ba value="-0.8" comment="Line internal damping (BA/-zeta). (default=-0.8)" units_comment="Ns"/>
+			<can value="1.0" comment="Transverse added mass coefficient (with respect to line displacement). (default=1.0)"/>      
+			<cat value="0.0" comment="Tangential added mass coefficient (with respect to line displacement). (default=0.0)"/>   
+			<cdn value="1.6" comment="Transverse drag coefficient (with respect to frontal area, d*l). (default=1.6)"/>    
+			<cdt value="0.05" comment="Tangential drag coefficient (with respect to surface area, π*d*l). (default=0.05)"/>  
+			<breaktension value="500" comment="Maximum value of tension for the lines. value=0 Break Tension is not used. (default=0)" units_comment="N" />
+			<outputFlags value="pv" comment="Node output properties.(default=-) [-:None|p:Positions|v:Velocities|U:Wave Velocities|t:Tension|D:Hydrodynamic Drag Force|c=Internal Damping|s:Strain of each segment|d: rate of strain of each segment]"/>
+		</linedefault>
+		<line>  %line 0
+			<vesselconnection bodyref="45" x="0.5" y="0.0" z="-2.0"/>
+			<fixconnection x="-0.5" y="0.0" z="-2.50"/>
+			<length value="1" comment="(m)"/>
+			<segments value="20"/>
+			<ea value="3.1e3" comment="Line stiffness, product of elasticity modulus and cross-sectional area." units_comment="N"/>
+		</line>
+		<line>  %line 1
+			<vesselconnection bodyref="50" x="-0.55" y="0" z="-2.0"/>
+			<fixconnection x="0.5" y="0.0" z="-2.50"/>
+			<length value="1" units_comment="m"/>
+			<segments value="20"/>
+			<diameter value="2.956E-3" comment="Volume-equivalent diameter of the line." units_comment="m"/>
+		</line>
+		<line>  %line 2
+			<vesselconnection bodyref="45" x="0.7" y="0.0" z="-2.0"/>
+			<connect conref="1"/>
+			<length value="0.3" units_comment="m"/>
+			<segments value="10"/>
+		</line>
+		<line>  %line 3
+			<connect conref="1"/>
+			<fixconnection bodyref="45" x="0.7" y="0.0" z="-2.5"/>
+			<length value="0.45" units_comment="m"/>
+			<segments value="15"/>
+		</line>
+		<line>  %line 4
+			<vesselconnection bodyref="50" x="-0.75" y="0" z="-2.0"/>
+			<connect conref="2"/>
+			<length value="0.3" units_comment="m"/>
+			<segments value="10" />
+		</line>
+		<line output="no">  %line 5 -> No Output data for this line
+			<connect conref="2"/>
+			<fixconnection bodyref="45" x="-0.75" y="0.0" z="-2.5"/>
+			<length value="0.45" units_comment="m"/>
+			<segments value="15"/>
+		</line>
+	</lines>
+	<output comment="Output data properties for each line.">
+		<time startTime="0" endTime="10" dtOut="0.01" comment="Time options to save data. (default: startTime=0; endTime=0; dtOut=0.01 )"/>
+		<tension type="all" comment="Stores tensions at the connections. type=[fixed|vessel|all]. (default: type=all)"/>
+		<force type="all" comment="Stores forces at the connections. type=[fixed|vessel|all]. (default: type=all)"/>
+		<velocity type="all" comment="Stores velocities at the connections.type=[fixed|vessel|all]. (default: type=all)"/>
+		<position type="fixed" comment="Stores positions at the connections. type=[fixed|vessel|all]. (default: type=all)"/>
+	</output>
+</moordyn>
+

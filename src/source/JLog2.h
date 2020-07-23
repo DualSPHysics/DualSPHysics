@@ -1,6 +1,6 @@
 //HEAD_DSCODES
 /*
- <DUALSPHYSICS>  Copyright (c) 2019 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -27,13 +27,14 @@
 //:# - Nuevo metodo Print() para std::vector<std::string>. (01-02-2017)
 //:# - Error coregido en Printf() y PrintfDbg() cuando el string era demasiado 
 //:#   grande. (20-02-2017)
-//:# - Nuevas funciones Printp() y Printfp() a las que se le puede añadir un 
+//:# - Nuevas funciones Printp() y Printfp() a las que se le puede anhadir un 
 //:#   prefijo. (21-02-2017)
 //:# - New attribute CsvSepComa to configure separator in CSV files. (24-10-2017)
 //:# - Se incluye DirDataOut para facilitar su uso en distintos ambitos. (19-02-2017)
 //:# - Funciones para gestion especial de warnings. (10-03-2018)
 //:# - Permite usar un Mutex para sicronizar el acceso en multithreading ejecuciones. (22-08-2019)
 //:# - Permite crear un log como referencia a otro para incluir un prefijo de forma automatica. (06-09-2019)
+//:# - El uso de mutex o no se define en JLog2Def.h. (17-06-2020)
 //:#############################################################################
 
 /// \file JLog2.h \brief Declares the class \ref JLog2.
@@ -42,12 +43,12 @@
 #define _JLog2_
 
 #include "JObject.h"
+
 #include <string>
 #include <sstream>
 #include <iostream>
 #include <fstream>
 #include <vector>
-
 
 //##############################################################################
 //# JLog2
@@ -90,6 +91,7 @@ public:
   ~JLog2();
   void Reset();
   void Init(std::string fname,bool mpirun=false,int mpirank=0,int mpilaunch=0);
+  void SetModeOutDef(TpMode_Out modeoutdef){ ModeOutDef=modeoutdef; }
   void Print(const std::string &tx,TpMode_Out mode=Out_Default,bool flush=false);
   void Print(const std::vector<std::string> &lines,TpMode_Out mode=Out_Default,bool flush=false);
   void PrintDbg(const std::string &tx,TpMode_Out mode=Out_Default){ Print(tx,mode,true); }

@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2019 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -26,19 +26,23 @@
 #include "Functions.h"
 #include "FunctionsMath.h"
 #include "JXml.h"
-#include "JSphMotion.h"
-#include "JSphVisco.h"
+#include "JDsMotion.h"
+#include "JDsViscoInput.h"
 #include "JWaveGen.h"
 #include "JMLPistons.h"     //<vs_mlapiston>
 #include "JRelaxZones.h"    //<vs_rzone>
 #include "JChronoObjects.h" //<vs_chroono>
-#include "JTimeOut.h"
+#include "JDsMooredFloatings.h"  //<vs_moordyyn>
+#include "JDsFtForcePoints.h" //<vs_moordyyn>
+#include "JDsOutputTime.h"
 #include "JTimeControl.h"
-#include "JGaugeSystem.h"
+#include "JDsGaugeSystem.h"
 #include "JSphInOut.h"  //<vs_innlet>
 #include "JLinearValue.h"
 #include "JDataArrays.h"
-#include "JShifting.h"
+#include "JSphShifting.h"
+#include "JDsPips.h"
+
 #include <climits>
 
 using namespace std;
@@ -85,7 +89,7 @@ void JSphCpuSingle::UpdateMaxValues(){
 /// Load the execution configuration.
 /// Carga la configuracion de ejecucion.
 //==============================================================================
-void JSphCpuSingle::LoadConfig(JCfgRun *cfg){
+void JSphCpuSingle::LoadConfig(JSphCfgRun *cfg){
   //-Load OpenMP configuraction. | Carga configuracion de OpenMP.
   ConfigOmp(cfg);
   //-Load basic general configuraction. | Carga configuracion basica general.
@@ -123,9 +127,14 @@ void JSphCpuSingle::ConfigDomain(){
   //-Load particle code. | Carga code de particulas.
   LoadCodeParticles(Np,Idpc,Codec);
 
+  //-Load normals for boundary particles (fixed and moving).       //<vs_mddbc>
+  if(UseNormals)LoadBoundNormals(Np,Npb,Idpc,Codec,BoundNormalc);  //<vs_mddbc>
+
   //-Runs initialization operations from XML.
   tfloat3 *boundnormal=NULL;
+  boundnormal=BoundNormalc;                                        //<vs_mddbc>
   RunInitialize(Np,Npb,Posc,Idpc,Codec,Velrhopc,boundnormal);
+  if(UseNormals)ConfigBoundNormals(Np,Npb,Posc,Idpc,BoundNormalc); //<vs_mddbc>
 
   //-Creates PartsInit object with initial particle data for automatic configurations.
   CreatePartsInit(Np,Posc,Codec);
@@ -182,7 +191,7 @@ void JSphCpuSingle::ResizeParticlesSize(unsigned newsize,float oversize,bool upd
 unsigned JSphCpuSingle::PeriodicMakeList(unsigned n,unsigned pini,bool stable,unsigned nmax,tdouble3 perinc,const tdouble3 *pos,const typecode *code,unsigned *listp)const{
   unsigned count=0;
   if(n){
-    //-Initialize size of list lsph to zero. | Inicializa tamaño de lista lspg a cero.
+    //-Initialize size of list lsph to zero. | Inicializa tamanho de lista lspg a cero.
     listp[nmax]=0;
     for(unsigned p=0;p<n;p++){
       const unsigned p2=p+pini;
@@ -307,6 +316,33 @@ void JSphCpuSingle::PeriodicDuplicateSymplectic(unsigned np,unsigned pini,tuint3
   }
 }
 
+//<vs_mddbc_ini>
+//==============================================================================
+/// Create periodic particles starting from a list of the particles to duplicate.
+/// Assume that all the particles are valid.
+/// This kernel works for single-cpu & multi-cpu because it uses domposmin.
+///
+/// Crea particulas periodicas a partir de una lista con las particulas a duplicar.
+/// Se presupone que todas las particulas son validas.
+/// Este kernel vale para single-cpu y multi-cpu porque usa domposmin. 
+//==============================================================================
+void JSphCpuSingle::PeriodicDuplicateNormals(unsigned np,unsigned pini,tuint3 cellmax
+  ,tdouble3 perinc,const unsigned *listp,tfloat3 *normals,tfloat3 *motionvel)const
+{
+  const int n=int(np);
+  #ifdef OMP_USE
+    #pragma omp parallel for schedule (static) if(n>OMP_LIMIT_COMPUTELIGHT)
+  #endif
+  for(int p=0;p<n;p++){
+    const unsigned pnew=unsigned(p)+pini;
+    const unsigned rp=listp[p];
+    const unsigned pcopy=(rp&0x7FFFFFFF);
+    normals[pnew]=normals[pcopy];
+    if(motionvel)motionvel[pnew]=motionvel[pcopy];
+  }
+}
+//<vs_mddbc_end>
+
 //==============================================================================
 /// Create duplicate particles for periodic conditions.
 /// Create new periodic particles and mark the old ones to be ignored.
@@ -376,6 +412,7 @@ void JSphCpuSingle::RunPeriodic(){
               if((PosPrec || VelrhopPrec) && (!PosPrec || !VelrhopPrec))Run_Exceptioon("Symplectic data is invalid.") ;
               PeriodicDuplicateSymplectic(count,Np,DomCells,perinc,listp,Idpc,Codec,Dcellc,Posc,Velrhopc,SpsTauc,PosPrec,VelrhopPrec);
             }
+            if(UseNormals)PeriodicDuplicateNormals(count,Np,DomCells,perinc,listp,BoundNormalc,MotionVelc); //<vs_mddbc>
 
             //-Free the list and update the number of particles. | Libera lista y actualiza numero de particulas.
             ArraysCpu->Free(listp); listp=NULL;
@@ -396,12 +433,14 @@ void JSphCpuSingle::RunPeriodic(){
 /// Ejecuta divide de particulas en celdas.
 //==============================================================================
 void JSphCpuSingle::RunCellDivide(bool updateperiodic){
+  DivData=DivDataCpuNull();
   //-Creates new periodic particles and marks the old ones to be ignored.
   //-Crea nuevas particulas periodicas y marca las viejas para ignorarlas.
   if(updateperiodic && PeriActive)RunPeriodic();
 
   //-Initiates Divide.
   CellDivSingle->Divide(Npb,Np-Npb-NpbPer-NpfPer,NpbPer,NpfPer,BoundChanged,Dcellc,Codec,Idpc,Posc,Timers);
+  DivData=CellDivSingle->GetCellDivData();
 
   //-Sorts particle data. | Ordena datos de particulas.
   TmcStart(Timers,TMC_NlSortData);
@@ -419,6 +458,10 @@ void JSphCpuSingle::RunCellDivide(bool updateperiodic){
     CellDivSingle->SortArray(VelrhopPrec);
   }
   if(TVisco==VISCO_LaminarSPS)CellDivSingle->SortArray(SpsTauc);
+  if(UseNormals){ //<vs_mddbc_ini>
+    CellDivSingle->SortArray(BoundNormalc);
+    if(MotionVelc)CellDivSingle->SortArray(MotionVelc);
+  } //<vs_mddbc_end>
 
   //-Collect divide data. | Recupera datos del divide.
   Np=CellDivSingle->GetNpFinal();
@@ -472,44 +515,27 @@ void JSphCpuSingle::AbortBoundOut(){
 }
 
 //==============================================================================
-/// Returns cell limits for interaction.
-/// Devuelve limites de celdas para interaccion.
-//==============================================================================
-void JSphCpuSingle::GetInteractionCells(unsigned rcell
-  ,int hdiv,const tint4 &nc,const tint3 &cellzero
-  ,int &cxini,int &cxfin,int &yini,int &yfin,int &zini,int &zfin)const
-{
-  //-Get interaction limits. | Obtiene limites de interaccion
-  const int cx=PC__Cellx(DomCellCode,rcell)-cellzero.x;
-  const int cy=PC__Celly(DomCellCode,rcell)-cellzero.y;
-  const int cz=PC__Cellz(DomCellCode,rcell)-cellzero.z;
-  //-Code for hdiv 1 or 2 but not zero. | Codigo para hdiv 1 o 2 pero no cero.
-  cxini=cx-min(cx,hdiv);
-  cxfin=cx+min(nc.x-cx-1,hdiv)+1;
-  yini=cy-min(cy,hdiv);
-  yfin=cy+min(nc.y-cy-1,hdiv)+1;
-  zini=cz-min(cz,hdiv);
-  zfin=cz+min(nc.z-cz-1,hdiv)+1;
-}
-
-//==============================================================================
 /// Interaction to calculate forces.
 /// Interaccion para el calculo de fuerzas.
 //==============================================================================
 void JSphCpuSingle::Interaction_Forces(TpInterStep interstep){
+  if(TBoundary==BC_MDBC && (MdbcCorrector || interstep!=INTERSTEP_SymCorrector))MdbcBoundCorrection(); //-Boundary correction for mDBC.  //<vs_mddbc>
   InterStep=interstep;
   PreInteraction_Forces();
   TmcStart(Timers,TMC_CfForces);
 
   //-Interaction of Fluid-Fluid/Bound & Bound-Fluid (forces and DEM). | Interaccion Fluid-Fluid/Bound & Bound-Fluid (forces and DEM).
-  float viscdt=0;
-  const stinterparmsc parms=StInterparmsc(Np,Npb,NpbOk,CellDivSingle->GetNcells()
-    ,CellDivSingle->GetBeginCell(),CellDivSingle->GetCellDomainMin(),Dcellc
+  const stinterparmsc parms=StInterparmsc(Np,Npb,NpbOk
+    ,DivData,Dcellc
     ,Posc,Velrhopc,Idpc,Codec,Pressc,Arc,Acec,Deltac
-    ,SpsTauc,SpsGradvelc,ShiftingMode,ShiftPosfsc);
-  JSphCpu::Interaction_Forces_ct(parms,viscdt);
+    ,ShiftingMode,ShiftPosfsc
+    ,SpsTauc,SpsGradvelc
+  );
+  StInterResultc res;
+  res.viscdt=0;
+  JSphCpu::Interaction_Forces_ct(parms,res);
 
-  //-For 2-D simulations zero the 2nd component. | Para simulaciones 2D anula siempre la 2º componente.
+  //-For 2-D simulations zero the 2nd component. | Para simulaciones 2D anula siempre la 2nd componente.
   if(Simulate2D){
     const int ini=int(Npb),fin=int(Np),npf=int(Np-Npb);
     #ifdef OMP_USE
@@ -518,7 +544,7 @@ void JSphCpuSingle::Interaction_Forces(TpInterStep interstep){
     for(int p=ini;p<fin;p++)Acec[p].y=0;
   }
 
-  //-Add Delta-SPH correction to Arg[]. | Añade correccion de Delta-SPH a Arg[].
+  //-Add Delta-SPH correction to Arg[]. | Anhade correccion de Delta-SPH a Arg[].
   if(Deltac){
     const int ini=int(Npb),fin=int(Np),npf=int(Np-Npb);
     #ifdef OMP_USE
@@ -527,35 +553,48 @@ void JSphCpuSingle::Interaction_Forces(TpInterStep interstep){
     for(int p=ini;p<fin;p++)if(Deltac[p]!=FLT_MAX)Arc[p]+=Deltac[p];
   }
 
-  //-Reset interpolation varibles (ace,ar,shiftpos) over inout particles.         //<vs_innlet>
-  if(InOut)InOut->ClearInteractionVarsCpu(Np-Npb,Npb,Codec,Acec,Arc,ShiftPosfsc); //<vs_innlet>
-
   //-Calculates maximum value of ViscDt.
-  ViscDtMax=viscdt;
+  ViscDtMax=res.viscdt;
   //-Calculates maximum value of Ace (periodic particles are ignored).
   AceMax=ComputeAceMax(Np-Npb,Acec+Npb,Codec+Npb);
 
   TmcStop(Timers,TMC_CfForces);
 }
 
+//<vs_mddbc_ini>
+//==============================================================================
+/// Calculates extrapolated data on boundary particles from fluid domain for mDBC.
+/// Calcula datos extrapolados en el contorno para mDBC.
+//==============================================================================
+void JSphCpuSingle::MdbcBoundCorrection(){
+  TmcStart(Timers,TMC_CfPreForces);
+  Interaction_MdbcCorrection(SlipMode,DivData,Posc,Codec,Idpc,BoundNormalc,MotionVelc,Velrhopc);
+  TmcStop(Timers,TMC_CfPreForces);
+}
+//<vs_mddbc_end>
+
 //==============================================================================
 /// Returns maximum value of ace (modulus), periodic and inout particles must be ignored.
 /// Devuelve el valor maximo de ace (modulo), se deben ignorar las particulas periodicas e inout.
 //==============================================================================
 double JSphCpuSingle::ComputeAceMax(unsigned np,const tfloat3* ace,const typecode *code)const{
-  if(PeriActive!=0)return(ComputeAceMaxOmp<true >(Np-Npb,Acec+Npb,Codec+Npb));
-  else             return(ComputeAceMaxOmp<false>(Np-Npb,Acec+Npb,Codec+Npb));
+  const bool check=(PeriActive!=0 || InOut!=NULL);
+  if(check)return(ComputeAceMaxOmp<true >(Np-Npb,Acec+Npb,Codec+Npb));
+  else     return(ComputeAceMaxOmp<false>(Np-Npb,Acec+Npb,Codec+Npb));
 }
 
 //==============================================================================
 /// Returns maximum value of ace (modulus), periodic particles must be ignored.
 /// Devuelve el valor maximo de ace (modulo), se deben ignorar las particulas periodicas.
 //==============================================================================
-template<bool checkperiodic> double JSphCpuSingle::ComputeAceMaxSeq(unsigned np,const tfloat3* ace,const typecode *code)const{
+template<bool checkcode> double JSphCpuSingle::ComputeAceMaxSeq(unsigned np
+  ,const tfloat3* ace,const typecode *code)const
+{
   float acemax=0;
   const int n=int(np);
   for(int p=0;p<n;p++){
-    const tfloat3 a=((!checkperiodic || CODE_IsNormal(code[p]))? ace[p]: TFloat3(0));
+    const typecode cod=(checkcode? code[p]: 0);
+    const tfloat3 a=(!checkcode || (CODE_IsNormal(cod) && !CODE_IsFluidInout(cod))? ace[p]: TFloat3(0));
     const float a2=a.x*a.x+a.y*a.y+a.z*a.z;
     acemax=max(acemax,a2);
   }
@@ -566,7 +605,9 @@ template<bool checkperiodic> double JSphCpuSingle::ComputeAceMaxSeq(unsigned np,
 /// Returns maximum value of ace (modulus) using OpenMP, periodic particles must be ignored.
 /// Devuelve el valor maximo de ace (modulo) using OpenMP, se deben ignorar las particulas periodicas.
 //==============================================================================
-template<bool checkperiodic> double JSphCpuSingle::ComputeAceMaxOmp(unsigned np,const tfloat3* ace,const typecode *code)const{
+template<bool checkcode> double JSphCpuSingle::ComputeAceMaxOmp(unsigned np
+  ,const tfloat3* ace,const typecode *code)const
+{
   double acemax=0;
   #ifdef OMP_USE
     if(np>OMP_LIMIT_COMPUTELIGHT){
@@ -578,7 +619,8 @@ template<bool checkperiodic> double JSphCpuSingle::ComputeAceMaxOmp(unsigned np,
         float amax2=0;
         #pragma omp for nowait
         for(int p=0;p<n;++p){
-          const tfloat3 a=((!checkperiodic || CODE_IsNormal(code[p]))? ace[p]: TFloat3(0));
+          const typecode cod=(checkcode? code[p]: 0);
+          const tfloat3 a=(!checkcode || (CODE_IsNormal(cod) && !CODE_IsFluidInout(cod))? ace[p]: TFloat3(0));
           const float a2=a.x*a.x+a.y*a.y+a.z*a.z;
           if(amax2<a2)amax2=a2;
         }
@@ -590,9 +632,9 @@ template<bool checkperiodic> double JSphCpuSingle::ComputeAceMaxOmp(unsigned np,
       //-Saves result.
       acemax=sqrt(double(amax));
     }
-    else if(np)acemax=ComputeAceMaxSeq<checkperiodic>(np,ace,code);
+    else if(np)acemax=ComputeAceMaxSeq<checkcode>(np,ace,code);
   #else
-    if(np)acemax=ComputeAceMaxSeq<checkperiodic>(np,ace,code);
+    if(np)acemax=ComputeAceMaxSeq<checkcode>(np,ace,code);
   #endif
   return(acemax);
 }
@@ -677,8 +719,8 @@ tfloat3 JSphCpuSingle::FtPeriodicDist(const tdouble3 &pos,const tdouble3 &center
 }
 
 //==============================================================================
-/// Calculate summation: face, fomegaace.
-/// Calcula suma de face y fomegaace a partir de particulas floating.
+/// Calculate summation of linear and angular forces starting from acceleration of particles.
+/// Calcula suma de fuerzas lineal y angular a partir de la aceleracion de las particulas.
 //==============================================================================
 void JSphCpuSingle::FtCalcForcesSum(unsigned cf,tfloat3 &face,tfloat3 &fomegaace)const{
   const StFloatingData &fobj=FtObjs[cf];
@@ -688,7 +730,7 @@ void JSphCpuSingle::FtCalcForcesSum(unsigned cf,tfloat3 &face,tfloat3 &fomegaace
   const tdouble3 fcenter=fobj.center;
   const float fmassp=fobj.massp;
 
-  //-Computes traslational and rotational velocities.
+  //-Computes sumation of forces starting from acceleration of particles.
   face=TFloat3(0);
   fomegaace=TFloat3(0);
   //-Calculate summation: face, fomegaace. | Calcula sumatorios: face, fomegaace.
@@ -704,8 +746,8 @@ void JSphCpuSingle::FtCalcForcesSum(unsigned cf,tfloat3 &face,tfloat3 &fomegaace
 }
 
 //==============================================================================
-/// Calculate forces around floating object particles.
-/// Calcula fuerzas sobre floatings.
+/// Adds acceleration from particles and from external forces to ftoforces[].
+/// Anhade aceleracion de particulas y de fuerzas externas en ftoforces[].
 //==============================================================================
 void JSphCpuSingle::FtCalcForces(StFtoForces *ftoforces)const{
   const int ftcount=int(FtCount);
@@ -725,9 +767,12 @@ void JSphCpuSingle::FtCalcForces(StFtoForces *ftoforces)const{
     //-Calculates the inverse of the intertia matrix to compute the I^-1 * L= W
     const tmatrix3f invinert=fmath::InverseMatrix3x3(inert);
 
-    //-Computes traslational and rotational velocities.
+    //-Compute summation of linear and angular forces starting from acceleration of particles.
     tfloat3 face,fomegaace;
     FtCalcForcesSum(cf,face,fomegaace);
+    
+    //-Adds the external forces.
+    if(FtLinearForce!=NULL || FtAngularForce!=NULL)FtSumExternalForces(cf,face,fomegaace);
 
     //-Calculate omega starting from fomegaace & invinert. | Calcula omega a partir de fomegaace y invinert.
     {
@@ -799,6 +844,45 @@ void JSphCpuSingle::FtApplyConstraints(StFtoForces *ftoforces,StFtoForcesRes *ft
   }
 }
 
+//<vs_fttvel_ini>
+//==============================================================================
+/// Applies imposed velocity.
+/// Aplica velocidad predefinida.
+//==============================================================================
+void JSphCpuSingle::FtApplyImposedVel(StFtoForcesRes *ftoforcesres)const{
+  for(unsigned cf=0;cf<FtCount;cf++)if(!FtObjs[cf].usechrono && (FtLinearVel[cf]!=NULL || FtAngularVel[cf]!=NULL)){
+    if(FtLinearVel[cf]!=NULL){
+      const tfloat3 v=FtLinearVel[cf]->GetValue3f(TimeStep);
+      if(v.x!=FLT_MAX)FtoForcesRes[cf].fvelres.x=v.x;
+      if(v.y!=FLT_MAX)FtoForcesRes[cf].fvelres.y=v.y;
+      if(v.z!=FLT_MAX)FtoForcesRes[cf].fvelres.z=v.z;
+      //tfloat3 a=FtoForcesRes[cf].fvelres;
+      //Log->Printf("%d> t:%f v(%f,%f,%f)",Nstep,TimeStep,a.x,a.y,a.z);
+    }
+    if(FtAngularVel[cf]!=NULL){
+      const tfloat3 v=FtAngularVel[cf]->GetValue3f(TimeStep);
+      if(v.x!=FLT_MAX)FtoForcesRes[cf].fomegares.x=v.x;
+      if(v.y!=FLT_MAX)FtoForcesRes[cf].fomegares.y=v.y;
+      if(v.z!=FLT_MAX)FtoForcesRes[cf].fomegares.z=v.z;
+    }
+  }
+}
+
+//==============================================================================
+/// Sums the external forces for a floating body.
+/// Suma las fuerzas externas para un objeto flotante.
+//==============================================================================
+void JSphCpuSingle::FtSumExternalForces(unsigned cf,tfloat3 &face,tfloat3 &fomegaace)const{
+  //-Adds external linear forces.
+  if(FtLinearForce!=NULL && FtLinearForce[cf]!=NULL){
+    face=face+FtLinearForce[cf]->GetValue3f(TimeStep);
+  }
+  //-Adds external angular forces.
+  if(FtAngularForce!=NULL && FtAngularForce[cf]!=NULL){
+    fomegaace=fomegaace+FtAngularForce[cf]->GetValue3f(TimeStep);
+  }
+}//<vs_fttvel_end>
+
 //==============================================================================
 /// Process floating objects
 /// Procesa floating objects.
@@ -809,13 +893,21 @@ void JSphCpuSingle::RunFloating(double dt,bool predictor){
     //-Initialises forces of floatings.
     memset(FtoForces,0,sizeof(StFtoForces)*FtCount); 
 
-    //-Adds calculated forces around floating objects. | Añade fuerzas calculadas sobre floatings.
+    //-Adds accelerations from ForcePoints and Moorings.     //<vs_moordyyn>
+    if(ForcePoints)ForcePoints->GetFtMotionData(FtoForces);  //<vs_moordyyn>
+
+    //-Adds acceleration from particles and from external forces to FtoForces[].
     FtCalcForces(FtoForces);
 
     //-Calculate data to update floatings. | Calcula datos para actualizar floatings.
     FtCalcForcesRes(dt,FtoForces,FtoForcesRes);
+    //-Applies imposed velocity.                          //<vs_fttvel>
+    if(FtLinearVel!=NULL)FtApplyImposedVel(FtoForcesRes); //<vs_fttvel>
     //-Applies motion constraints.
     if(FtConstraints)FtApplyConstraints(FtoForces,FtoForcesRes);
+
+    //-Saves face and fomegace for debug.
+    if(SaveFtAce)SaveFtAceFun(dt,predictor,FtoForces);
 
     //-Run floating with Chrono library. //<vs_chroono_ini>
     if(ChronoObjects){
@@ -824,6 +916,8 @@ void JSphCpuSingle::RunFloating(double dt,bool predictor){
       //-Export data / Exporta datos.
       for(unsigned cf=0;cf<FtCount;cf++)if(FtObjs[cf].usechrono)
         ChronoObjects->SetFtData(FtObjs[cf].mkbound,FtoForces[cf].face,FtoForces[cf].fomegaace);
+      //-Applies the external velocities to each floating body of Chrono.
+      if(FtLinearVel!=NULL)ChronoFtApplyImposedVel(); //<vs_fttvel>
       //-Calculate data using Chrono / Calcula datos usando Chrono.
       ChronoObjects->RunChrono(Nstep,TimeStep,dt,predictor);
       //-Load calculated data by Chrono / Carga datos calculados por Chrono.
@@ -866,7 +960,6 @@ void JSphCpuSingle::RunFloating(double dt,bool predictor){
 
       //-Stores floating data.
       if(!predictor){
-        //const tdouble3 centerold=FtObjs[cf].center;
         FtObjs[cf].center=(PeriActive? UpdatePeriodicPos(fcenter): fcenter);
         FtObjs[cf].angles=ToTFloat3(ToTDouble3(FtObjs[cf].angles)+ToTDouble3(fomega)*dt);
         FtObjs[cf].fvel=fvel;
@@ -874,6 +967,12 @@ void JSphCpuSingle::RunFloating(double dt,bool predictor){
       }
     }
 
+    //-Update data of points in FtForces and calculates motion data of affected floatings.  //<vs_moordyyn_ini>
+    if(!predictor && ForcePoints){
+      ForcePoints->UpdatePoints(TimeStep,dt,FtObjs);
+      if(Moorings)Moorings->ComputeForces(Nstep,TimeStep,dt,ForcePoints);
+      ForcePoints->ComputeFtMotion();
+    }  //<vs_moordyyn_end>
     TmcStop(Timers,TMC_SuFloating);
   }
 }
@@ -884,16 +983,27 @@ void JSphCpuSingle::RunFloating(double dt,bool predictor){
 //==============================================================================
 void JSphCpuSingle::RunGaugeSystem(double timestep){
   const bool svpart=(TimeStep>=TimePartNext);
-  GaugeSystem->CalculeCpu(timestep,svpart,CellDivSingle->GetNcells()
-    ,CellDivSingle->GetCellDomainMin(),CellDivSingle->GetBeginCell()
-    ,NpbOk,Npb,Np,Posc,Codec,Idpc,Velrhopc);
+  GaugeSystem->CalculeCpu(timestep,svpart,DivData,NpbOk,Npb,Np,Posc,Codec,Idpc,Velrhopc);
+}
+
+ //==============================================================================
+/// Compute PIPS information of current particles.
+/// Calcula datos de PIPS de particulas actuales.
+//==============================================================================
+void JSphCpuSingle::ComputePips(bool run){
+  if(run || DsPips->CheckRun(Nstep)){
+    TimerSim.Stop();
+    const double timesim=TimerSim.GetElapsedTimeD()/1000.;
+    DsPips->ComputeCpu(Nstep,TimeStep,timesim,CSP,OmpThreads,Np,Npb,NpbOk
+      ,DivData,Dcellc,Posc);
+  }
 }
 
 //==============================================================================
 /// Initialises execution of simulation.
 /// Inicia ejecucion de simulacion.
 //==============================================================================
-void JSphCpuSingle::Run(std::string appname,JCfgRun *cfg,JLog2 *log){
+void JSphCpuSingle::Run(std::string appname,JSphCfgRun *cfg,JLog2 *log){
   if(!cfg||!log)return;
   AppName=appname; Log=log;
 
@@ -906,7 +1016,7 @@ void JSphCpuSingle::Run(std::string appname,JCfgRun *cfg,JLog2 *log){
   //--------------------------------------------------------------------------------
   LoadConfig(cfg);
   LoadCaseParticles();
-  ConfigConstants(Simulate2D);
+  VisuConfig();
   ConfigDomain();
   ConfigRunMode(cfg);
   VisuParticleSummary();
@@ -932,6 +1042,7 @@ void JSphCpuSingle::Run(std::string appname,JCfgRun *cfg,JLog2 *log){
   TimerSim.Start();
   TimerPart.Start();
   Log->Print(string("\n[Initialising simulation (")+RunCode+")  "+fun::GetDateTime()+"]");
+  if(DsPips)ComputePips(true);
   PrintHeadPart();
   while(TimeStep<TimeMax){
     InterStep=(TStep==STEP_Symplectic? INTERSTEP_SymPredictor: INTERSTEP_Verlet);
@@ -954,11 +1065,13 @@ void JSphCpuSingle::Run(std::string appname,JCfgRun *cfg,JLog2 *log){
       Part++;
       PartNstep=Nstep;
       TimeStepM1=TimeStep;
-      TimePartNext=TimeOut->GetNextTime(TimeStep);
+      TimePartNext=(SvAllSteps? TimeStep: OutputTime->GetNextTime(TimeStep));
       TimerPart.Start();
     }
     UpdateMaxValues();
     Nstep++;
+    const bool laststep=(TimeStep>=TimeMax || (NstepsBreak && Nstep>=NstepsBreak));
+    if(DsPips)ComputePips(laststep);
     if(Part<=PartIni+1 && tc.CheckTime())Log->Print(string("  ")+tc.GetInfoFinish((TimeStep-TimeStepIni)/(TimeMax-TimeStepIni)));
     if(NstepsBreak && Nstep>=NstepsBreak)break; //-For debugging.
   }
@@ -974,7 +1087,7 @@ void JSphCpuSingle::Run(std::string appname,JCfgRun *cfg,JLog2 *log){
 /// Genera los ficheros de salida de datos.
 //==============================================================================
 void JSphCpuSingle::SaveData(){
-  const bool save=(SvData!=SDAT_None&&SvData!=SDAT_Info);
+  const bool save=(SvData!=SDAT_None && SvData!=SDAT_Info);
   const unsigned npsave=Np-NpbPer-NpfPer; //-Subtracts the periodic particles if they exist. | Resta las periodicas si las hubiera.
   TmcStart(Timers,TMC_SuSavePart);
   //-Collect particle values in original order. | Recupera datos de particulas en orden original.
@@ -1007,16 +1120,18 @@ void JSphCpuSingle::SaveData(){
     TimerSim.Stop();
     infoplus.timesim=TimerSim.GetElapsedTimeD()/1000.;
   }
+  //-Obtains current domain limits.
+  const tdouble3 vdom[2]={CellDivSingle->GetDomainLimits(true),CellDivSingle->GetDomainLimits(false)};
   //-Stores particle data. | Graba datos de particulas.
   JDataArrays arrays;
   AddBasicArrays(arrays,npsave,pos,idp,vel,rhop);
-  const tdouble3 vdom[2]={CellDivSingle->GetDomainLimits(true),CellDivSingle->GetDomainLimits(false)};
   JSph::SaveData(npsave,arrays,1,vdom,&infoplus);
   //-Free auxiliary memory for particle data. | Libera memoria auxiliar para datos de particulas.
   ArraysCpu->Free(idp);
   ArraysCpu->Free(pos);
   ArraysCpu->Free(vel);
   ArraysCpu->Free(rhop);
+  if(UseNormals && SvNormals)SaveVtkNormals("normals/Normals.vtk",Part,npsave,Npb,Posc,Idpc,BoundNormalc); //<vs_mddbc>
   TmcStop(Timers,TMC_SuSavePart);
 }
 
@@ -1028,7 +1143,7 @@ void JSphCpuSingle::FinishRun(bool stop){
   float tsim=TimerSim.GetElapsedTimeF()/1000.f,ttot=TimerTot.GetElapsedTimeF()/1000.f;
   JSph::ShowResume(stop,tsim,ttot,true,"");
   Log->Print(" ");
-  string hinfo=";RunMode",dinfo=string(";")+RunMode;
+  string hinfo,dinfo;
   if(SvTimers){
     ShowTimers();
     GetTimersInfo(hinfo,dinfo);

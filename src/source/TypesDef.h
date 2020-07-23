@@ -1,6 +1,6 @@
 //HEAD_DSCODES
 /*
- <DUALSPHYSICS>  Copyright (c) 2019 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -26,12 +26,12 @@
 #define PIHALF 1.57079632679489661923  ///<Value of cte PI/2. 
 #define TORAD 0.017453292519943295769  ///<Constant for conversion to radians. rad=degrees*TORAD (TORAD=PI/180)
 #define TODEG 57.29577951308232087684  ///<Constant for conversion to degrees. degrees=rad*TODEG (TODEG=180/PI)
+#define EULER 2.71828182845904523536   ///<Value of cte E (Euler's number or Napier's constant), E=std::exp(1.0);
 
 typedef unsigned char byte;
 typedef unsigned short word;
 typedef long long llong;
 typedef unsigned long long ullong;
-
 
 //##############################################################################
 //# Basic data type definitions.
@@ -556,6 +556,13 @@ inline unsigned SizeOfType(TpTypeData type){
 inline int DimOfType(TpTypeData type){
   return(type<TypeChar? 0: (type<TypeInt2? 1: (type<TypeInt3? 2: (type<TypeInt4? 3: (type<TypeSyMatrix3f? 4: 6)))));
 }
+
+//-Standard vector types.
+#include <vector>
+typedef std::vector<tfloat2>  vfloat2;
+typedef std::vector<tfloat3>  vfloat3;
+typedef std::vector<tdouble2> vdouble2;
+typedef std::vector<tdouble3> vdouble3;
 
 #endif
 

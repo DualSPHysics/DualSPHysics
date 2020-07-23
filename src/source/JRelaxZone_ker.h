@@ -1,6 +1,6 @@
 //HEAD_DSTOOLS
 /* 
- <DualSPHysics codes>  Copyright (c) 2017 by Dr. Jose M. Dominguez
+ <DualSPHysics codes>  Copyright (c) 2020 by Dr. Jose M. Dominguez
  All rights reserved.
 
  DualSPHysics is an international collaboration between:
@@ -38,10 +38,6 @@
 #define WAVEBSIZE 256
 
 namespace curelaxzone{
-
-inline float3 Float3(const tfloat3& v){ float3 p={v.x,v.y,v.z}; return(p); }
-inline float4 Float4(const tfloat4& v){ float4 p={v.x,v.y,v.z,v.w}; return(p); }
-dim3 GetGridSize(unsigned n,unsigned blocksize);
 
 //# Kernels for JRelaxZone.
 void SetFluidVelUniform(unsigned n,unsigned pini

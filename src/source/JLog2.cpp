@@ -1,6 +1,6 @@
 //HEAD_DSCODES
 /*
- <DUALSPHYSICS>  Copyright (c) 2019 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -83,7 +83,7 @@ void JLog2::Reset(){
 /// Initialisation of log file.
 //==============================================================================
 void JLog2::Init(std::string fname,bool mpirun,int mpirank,int mpilaunch){
-  if(Parent)RunException("Init","Method is not available for dependent log.");
+  if(Parent)Run_Exceptioon("Method is not available for dependent log.");
   Reset();
   MpiRun=mpirun; MpiRank=mpirank; MpiLaunch=mpilaunch;
   if(!fname.empty()){//-When file for log is defined.
@@ -99,7 +99,7 @@ void JLog2::Init(std::string fname,bool mpirun,int mpirank,int mpilaunch){
       Pf=new ofstream; 
       Pf->open(fname.c_str());
       if(Pf)Ok=true;
-      else RunException("Init","Cannot open the file.",fname);
+      else Run_ExceptioonFile("Cannot open the file.",fname);
     }
   }
 }

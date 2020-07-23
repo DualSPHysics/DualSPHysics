@@ -1,26 +1,50 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<!-- *** DualSPHysics (08-08-2017) *** -->
+<!-- *** DualSPHysics (26-04-2020) *** -->
 <!-- *** class: JSphAccInput *** -->
 <!------------------------------------------------------------------------------->
 <!------------------------------------------------------------------------------->
 <!-- *** Example for configuration of force to be applied to different blocks of particles. *** -->
 <special>
 	<accinputs>
-		<accinput>
-			<mkfluid value="0" comment="Mk-Fluid of selected particles" />
-			<acccentre x="0" y="0" z="0" comment="Center of acceleration" />
+		<accinput mkfluid="0">
+			<time start="0" end="10" comment="Start and end of its activation (by default all the simulation)" />
+			<acccentre x="0" y="0" z="0" comment="Center of acceleration" units_comment="metres (m)" />
 			<globalgravity value="0" comment="Global gravity enabled (1) or disabled (0)" />
-			<datafile value="CaseForcesData_0.csv" comment="File with acceleration data" />
+			<acctimes comment="Linear acceleration [m/s^2] and angular acceleration [rad/s^2] in time">
+				<timevalue time="0.0" linx="0" liny="0" linz="0" angx="0" angy="0" angz="0" />
+				<timevalue time="0.5" linx="0" liny="0" linz="2" angx="0" angy="0" angz="0" />
+				<timevalue time="2.0" linx="0" liny="0" linz="0" angx="0" angy="5" angz="0" />
+				<timevalue time="2.5" linx="0" liny="0" linz="0" angx="0" angy="5" angz="0" />
+				<timevalue time="3.0" linx="0" liny="0" linz="0" angx="0" angy="0" angz="0" />
+			</acctimes>
 		</accinput>
-		<accinput>
-			<mkfluid value="1" comment="Mk-Fluid of selected particles" />
+		<accinput mkfluid="2">
+			<time start="2" comment="Start and end of its activation (by default all the simulation)" />
+			<acccentre x="0" y="0" z="0" comment="Center of acceleration" units_comment="metres (m)" />
+			<globalgravity value="0" comment="Global gravity enabled (1) or disabled (0)" />
+			<acctimes comment="Linear acceleration [m/s^2] and angular acceleration [rad/s^2] in time">
+			<!-- Missing values are loaded as zero -->
+				<timevalue time="0.0" linz="0" />
+				<timevalue time="0.5" linz="2" />
+				<timevalue time="2.0" angy="5" />
+				<timevalue time="2.5" angy="5" />
+				<timevalue time="3.0" angy="0" />
+			</acctimes>
+		</accinput>
+		<accinput mkbound="10-15,20,25">
 			<acccentre x="0" y="0" z="0" comment="Center of acceleration" />
 			<globalgravity value="0" comment="Global gravity enabled (1) or disabled (0)" />
-			<datafile value="CaseForcesData_1.csv" comment="File with acceleration data" />
+			<acctimesfile value="CaseForcesData_0.csv" comment="File with linear and angular acceleration data" />
 		</accinput>
 	</accinputs>
 </special>
-
-
+<!---------------------------------------------------------------------------------->
+<!---------------------------------------------------------------------------------->
+<!-- *** Attribute "active" in elements <accinputs> and <accinput> to enable  *** --> 
+<!-- *** (using active="true" or active="1") or disable (using active="false" *** -->
+<!-- *** or active="0"). It is an optional attribute and true by default.     *** -->
+<accinputs active="true">
+	<accinput active="true"/>
+</accinputs>
 
 

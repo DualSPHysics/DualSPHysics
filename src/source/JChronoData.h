@@ -1,5 +1,5 @@
 /*
- <DUALSPHYSICS>  Copyright (c) 2019, Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2020, Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -160,9 +160,9 @@ class JChBody : public JChObject
 {
 public:
   ///<Types of body.
-  typedef enum{ BD_Floating,BD_Moving,BD_Fixed }TpBody; 
+  typedef enum{ BD_Floating,BD_Moving,BD_Fixed}TpBody; 
   typedef enum{ NorNull,NorOriginal,NorInvert,NorTwoFace }TpModelNormal; 
-
+  
   static std::string TypeToStr(TpBody type);
   static std::string NormalToStr(TpModelNormal tnor);
 
@@ -170,6 +170,7 @@ private:
   std::vector<JChLink*> LinkRefs;
 
 protected:
+  bool UseFEA; //<chrono_fea>
   double Mass;
   tdouble3 Center;
   tmatrix3d Inertia;
@@ -181,12 +182,12 @@ protected:
   std::string ModelFile;
   TpModelNormal ModelNormal;
 
-  //DVI parameters
+  //-Parameters for collisions.
   float Kfric;
   float Restitu;
-  //Extra DEM parameters
-  //float Young;    //(DEM)
-  //float Poisson;  //(DEM)
+  //-Extra parameters for collisions using Smooth Contacts.
+  float Young;
+  float Poisson;
 
   void CopyFrom(const JChBody &src);
 
@@ -195,7 +196,6 @@ public:
   const std::string IdName;
   const TpBody Type;     
   const word MkBound;
-
   JChBody(unsigned idb,std::string idname,TpBody type,word mkbound); 
   virtual ~JChBody();
   virtual void Reset();
@@ -216,16 +216,17 @@ public:
   tfloat3     GetLinearVelini()   const{ return(LinearVelini);    }
   tfloat3     GetAngularVelini()  const{ return(AngularVelini);   }
 
-  std::string GetModelFile()  const{ return(ModelFile);   }
-  TpModelNormal GetModelNormal()const{ return(ModelNormal); }
-//float       GetYoung()      const{ return(Young);       }  //(DEM)
-//float       GetPoisson()    const{ return(Poisson);     }  //(DEM)
-  float       GetKfric()      const{ return(Kfric);       }
-  float       GetRestitu()    const{ return(Restitu);     }
+  std::string   GetModelFile()    const{ return(ModelFile);  }
+  TpModelNormal GetModelNormal() const{ return(ModelNormal); }
+  float         GetYoung()       const{ return(Young);       }
+  float         GetPoisson()     const{ return(Poisson);     }
+  float         GetKfric()       const{ return(Kfric);       }
+  float         GetRestitu()     const{ return(Restitu);     }
+  bool          GetUseFEA()      const{ return(UseFEA);      }    //<chrono_fea>
 
   void SetModel(const std::string &file,TpModelNormal normal){ ModelFile=file; ModelNormal=normal; } 
-  void SetDVIData(float kfric,float restitu);
-//void SetDEMData(float kfric,float restitu,float young,float poisson);  //(DEM)
+  void SetUseFEA(const bool u){ UseFEA=u; }  //<chrono_fea>
+  void SetCollisionData(float kfric,float restitu,float young,float poisson);
 };
 
 //##############################################################################
@@ -238,6 +239,8 @@ protected:
   bool InputData;
   tfloat3 InputFace;
   tfloat3 InputFomegaAce;
+  tfloat3 InputLinearVel;   //<vs_fttvel>
+  tfloat3 InputAngularVel;  //<vs_fttvel>
 
   tdouble3 OutputCenter;
   tfloat3 OutputVel;
@@ -251,15 +254,18 @@ public:
     ,tint3 translationfree,tint3 rotationfree,tfloat3 linvelini,tfloat3 angvelini);
 
   void ResetInputData(){ InputData=false; }
-  void SetInputData(const tfloat3 &face,const tfloat3 &fomegaace){ InputData=true; InputFace=face; InputFomegaAce=fomegaace; }
+  void SetInputData(const tfloat3 &face,const tfloat3 &fomegaace)  { InputData=true; InputFace=face; InputFomegaAce=fomegaace; }
+  void SetInputDataVel(const tfloat3 &vlin,const tfloat3 &vang)    { InputLinearVel=vlin; InputAngularVel=vang; }      //<vs_fttvel>
   void SetOutputData(const tdouble3 &center,const tfloat3 &vel,const tfloat3 &omega){ OutputCenter=center; OutputVel=vel; OutputOmega=omega; }
 
-  bool     GetInputData()      const{ return(InputData);       }
-  tfloat3  GetInputFace()      const{ return(InputFace);       }
-  tfloat3  GetInputFomegaAce() const{ return(InputFomegaAce);  }
-  tdouble3 GetOutputCenter()   const{ return(OutputCenter);    }
-  tfloat3  GetOutputVel()      const{ return(OutputVel);       }
-  tfloat3  GetOutputOmega()    const{ return(OutputOmega);     }
+  bool     GetInputData()        const{ return(InputData);        }
+  tfloat3  GetInputFace()        const{ return(InputFace);        }
+  tfloat3  GetInputFomegaAce()   const{ return(InputFomegaAce);   }
+  tfloat3  GetInputLinearVel()   const{ return(InputLinearVel);   } //<vs_fttvel>
+  tfloat3  GetInputAngularVel()  const{ return(InputAngularVel);  } //<vs_fttvel>
+  tdouble3 GetOutputCenter()     const{ return(OutputCenter);     }
+  tfloat3  GetOutputVel()        const{ return(OutputVel);        }
+  tfloat3  GetOutputOmega()      const{ return(OutputOmega);      }
 };
 
 //##############################################################################
@@ -287,10 +293,10 @@ public:
   void SetMotionSimple(double dt,const tdouble3  &msimple){ MotionType=MV_Simple; MotionDt=dt; MotionSimple=msimple; }
   void SetMotionMatrix(double dt,const tmatrix4d &mmatrix){ MotionType=MV_Matrix; MotionDt=dt; MotionMatrix=mmatrix; }
 
-  TpMotion GetMotionType()const{ return(MotionType); }
-  tdouble3 GetMotionSimple()const{ return(MotionSimple); }
-  tmatrix4d GetMotionMatrix()const{ return(MotionMatrix); }
-  double GetMotionDt()const{ return(MotionDt); }
+  TpMotion GetMotionType()    const{ return(MotionType);    } 
+  tdouble3 GetMotionSimple()  const{ return(MotionSimple);  }
+  tmatrix4d GetMotionMatrix() const{ return(MotionMatrix);  }
+  double GetMotionDt()        const{ return(MotionDt);      }
 };
 
 //##############################################################################
@@ -313,7 +319,7 @@ class JChLink : public JChObject
 {
 public:
   ///<Types of link.
-  typedef enum{ LK_Hinge, LK_Spheric, LK_PointLine, LK_LinearSpring }TpLink;
+  typedef enum{ LK_Hinge, LK_Spheric, LK_PointLine, LK_LinearSpring, LK_CoulombDamping, LK_Pulley }TpLink;
 
 
   /// Structure with parameters to create VTK of spring.
@@ -344,7 +350,10 @@ protected:
   double Damping;     //-Damping.
 
   tdouble3 RotPoint;  //-Point for rotation.
+  //tdouble3 RotPoint2;  //-Point for rotation from fb1.
+
   tdouble3 RotVector; //-Vector for rotation.  
+
 
   tdouble3 Pointfb0;  //-Point from fb0
   tdouble3 Pointfb1;  //-Point from fb1
@@ -352,9 +361,9 @@ protected:
   tdouble3 SlidingVector; //-Vector direction for sliding axis (for pointline).  
   tdouble3 RotVector2;    //-Second vector for rotation (for pointline).  
 
-  double RestLength;  //-Rest length for spring.
-  StSaveSpring SvSpring; //-Configuration to save vtk spring.
-  double CoulombDamping; //-Coulomb damping value. Not applied when it is zero. (default=0).
+  double RestLength;      //-Rest length for spring.
+  StSaveSpring SvSpring;  //-Configuration to save vtk spring.
+  double CoulombDamping;  //-Coulomb damping value. Not applied when it is zero. (default=0).
 
 protected:
   void CopyFrom(const JChLink &src);
@@ -378,7 +387,7 @@ public:
   double GetDamping()  const{ return(Damping);   }
 
   void SetStiffness(double v){ Stiffness=v; } 
-  void SetDamping  (double v){ Damping  =v; } 
+  void SetDamping  (double v){ Damping=v;   } 
 };
 
 //##############################################################################
@@ -391,8 +400,8 @@ public:
   JChLinkHinge(std::string name,unsigned idbody1,unsigned idbody2);
   JChLinkHinge(const JChLinkHinge &src);
 
-  tdouble3 GetRotPoint() const{ return(RotPoint); } 
-  tdouble3 GetRotVector()const{ return(RotVector); }  
+  tdouble3 GetRotPoint() const{ return(RotPoint);   } 
+  tdouble3 GetRotVector()const{ return(RotVector);  }  
 
   void SetRotPoint (tdouble3 v){ RotPoint =v; }
   void SetRotVector(tdouble3 v){ RotVector=v; }  
@@ -423,15 +432,15 @@ public:
   JChLinkPointLine(std::string name, unsigned idbody1, unsigned idbody2);
   JChLinkPointLine(const JChLinkPointLine &src);
 
-  tdouble3 GetSlidingVector()const{ return(SlidingVector); }  
-  tdouble3 GetRotPoint() const{ return(RotPoint); } 
-  tdouble3 GetRotVector()const{ return(RotVector); }  
-  tdouble3 GetRotVector2()const{ return(RotVector2); }  
+  tdouble3 GetSlidingVector() const{ return(SlidingVector); }  
+  tdouble3 GetRotPoint()      const{ return(RotPoint);      } 
+  tdouble3 GetRotVector()     const{ return(RotVector);     }  
+  tdouble3 GetRotVector2()    const{ return(RotVector2);    }  
 
-  void SetSlidingVector(tdouble3 v){ SlidingVector=v; }  
-  void SetRotPoint (tdouble3 v){ RotPoint=v; }
-  void SetRotVector(tdouble3 v){ RotVector=v; }  
-  void SetRotVector2(tdouble3 v){ RotVector2=v; }  
+  void SetSlidingVector(tdouble3 v){  SlidingVector=v;  }  
+  void SetRotPoint (tdouble3 v){      RotPoint=v;       }
+  void SetRotVector(tdouble3 v){      RotVector=v;      }  
+  void SetRotVector2(tdouble3 v){     RotVector2=v;     }  
 };
 
 //##############################################################################
@@ -448,13 +457,62 @@ public:
   tdouble3 GetPointfb1()const{ return(Pointfb1); }
   double GetRestLength()const{ return(RestLength); }
   StSaveSpring GetSvSpring()const{ return(SvSpring); }
-  double GetCoulombDamping()const{ return(CoulombDamping); }
 
   void SetPointfb0  (tdouble3 v){ Pointfb0 =v; }
   void SetPointfb1  (tdouble3 v){ Pointfb1 =v; }
   void SetRestLength(double   v){ RestLength=v; }
   void SetSvSpring  (const StSaveSpring &v){ SvSpring=v; }
+};
+
+//##############################################################################
+//# JChLinkCoulombDamping
+//##############################################################################
+/// \brief Manages the info of a link.
+class JChLinkCoulombDamping : public JChLink
+{
+public:
+  JChLinkCoulombDamping(std::string name, unsigned idbody1, unsigned idbody2);
+  JChLinkCoulombDamping(const JChLinkCoulombDamping &src);
+
+  tdouble3 GetPointfb0()const{ return(Pointfb0); }
+  tdouble3 GetPointfb1()const{ return(Pointfb1); }
+  double GetRestLength()const{ return(RestLength); }
+  double GetCoulombDamping()const{ return(CoulombDamping); }
+  StSaveSpring GetSvSpring()const{ return(SvSpring); }
+
+  void SetPointfb0  (tdouble3 v){ Pointfb0 =v; }
+  void SetPointfb1  (tdouble3 v){ Pointfb1 =v; }
+  void SetRestLength(double   v){ RestLength=v; }
   void SetCoulombDamping(double v){ CoulombDamping=v; }
+  void SetSvSpring  (const StSaveSpring &v){ SvSpring=v; }
+
+};
+
+//##############################################################################
+//# JChLinkPulley
+//##############################################################################
+/// \brief Manages the info of a link.
+class JChLinkPulley : public JChLink
+{
+private:
+  float Radius;
+  float Radius2;
+  void CopyFrom(const JChLinkPulley &src);
+public:
+  JChLinkPulley(std::string name,unsigned idbody1,unsigned idbody2);
+  JChLinkPulley(const JChLinkPulley &src);
+
+  tdouble3 GetRotPoint() const{ return(RotPoint);   } 
+  //tdouble3 GetRotPoint2()const{ return(RotPoint2);    } 
+  tdouble3 GetRotVector()const{ return(RotVector);  }  
+  float    GetRadius()  const{ return(Radius);    } 
+  float    GetRadius2()  const{ return(Radius2);    }  
+
+  void SetRotPoint  (tdouble3 v){ RotPoint =v; }
+//  void SetRotPoint2 (tdouble3 v){ RotPoint2 =v; }
+  void SetRotVector (tdouble3 v){ RotVector=v; }  
+  void SetRadius    (float r)   { Radius=r;  }
+  void SetRadius2   (float r)   { Radius2=r;   }  
 };
 
 //##############################################################################
@@ -463,14 +521,23 @@ public:
 /// \brief Manages the info of Chrono from the input XML file.
 class JChronoData : protected JChBase
 {
+public:
+  typedef enum{ NSC,SMC }               TpContactMethod; //<chrono_contacts>
+  typedef enum{ BB=0,APGD=1,APGDREF=2}  DSolverType;      //Allowed Solvers
+
 private:
+  std::string Mode;         //Chrono execution mode
+  unsigned MaxIter;         //Indicates the maximun number of iterations for the solver
   std::string DataDir;
   bool UseNSCChrono;
   std::vector<JChBody*> LisBody;
   std::vector<JChLink*> LisLink;
   double Dp;
   float CollisionDp;
-
+  unsigned Solver;
+  int OmpThreads;
+  bool UseFEA;                  //<chrono_fea>
+  TpContactMethod ContactMethod;
 public:
   JChronoData();
   JChronoData(const JChronoData &src);
@@ -492,16 +559,39 @@ public:
   void SetCollisionDp(float v){ CollisionDp=v; }
   float GetCollisionDp()const{ return(CollisionDp); }
 
+  void SetSolver(unsigned s){ Solver=s; }
+  unsigned GetSolver()const{ return(Solver); }
+
+  void SetOmpThreads(unsigned th){ OmpThreads=th; }
+  int GetOmpThreads()const{ return(OmpThreads); }
+
+  void SetMode(std::string m){ Mode=m; }
+  std::string GetMode()const{ return(Mode); }
+
+  void SetMaxIter(unsigned i){ MaxIter=i; }
+  unsigned GetMaxIter()const{ return(MaxIter); }
+
+  void SetUseFEA(bool e){ UseFEA=e; }          //<chrono_fea>
+  bool GetUseFEA()const{ return(UseFEA); }     //<chrono_fea>
+
+  void SetContactMethod(TpContactMethod c){ ContactMethod=c; }            //<chrono_contacts>
+  TpContactMethod GetContactMethod()const{ return(ContactMethod); }       //<chrono_contacts>
+
+  std::string SolverToStr()const;
+  std::string ContactMethodToStr()const;
+
   std::string CheckAddBodyError(unsigned idb,std::string idname,word mkbound)const;
   
   JChBodyFloating* AddBodyFloating(unsigned idb,std::string idname,word mkbound,std::string fileinfo="");
   JChBodyMoving*   AddBodyMoving  (unsigned idb,std::string idname,word mkbound,double mass,std::string fileinfo="");
   JChBodyFixed*    AddBodyFixed   (unsigned idb,std::string idname,word mkbound,std::string fileinfo="");
 
-  JChLinkHinge*        AddLinkHinge       (std::string name,unsigned idbody1,unsigned idbody2,std::string fileinfo="");
-  JChLinkSpheric*      AddLinkSpheric     (std::string name,unsigned idbody1,unsigned idbody2,std::string fileinfo="");
-  JChLinkPointLine*    AddLinkPointLine   (std::string name,unsigned idbody1,unsigned idbody2,std::string fileinfo="");
-  JChLinkLinearSpring* AddLinkLinearSpring(std::string name,unsigned idbody1,unsigned idbody2,std::string fileinfo="");
+  JChLinkHinge*          AddLinkHinge         (std::string name,unsigned idbody1,unsigned idbody2,std::string fileinfo="");
+  JChLinkPulley*         AddLinkPulley        (std::string name,unsigned idbody1,unsigned idbody2,std::string fileinfo="");
+  JChLinkSpheric*        AddLinkSpheric       (std::string name,unsigned idbody1,unsigned idbody2,std::string fileinfo="");
+  JChLinkPointLine*      AddLinkPointLine     (std::string name,unsigned idbody1,unsigned idbody2,std::string fileinfo="");
+  JChLinkLinearSpring*   AddLinkLinearSpring  (std::string name,unsigned idbody1,unsigned idbody2,std::string fileinfo="");
+  JChLinkCoulombDamping* AddLinkCoulombDamping(std::string name,unsigned idbody1,unsigned idbody2,std::string fileinfo="");
   
   unsigned GetBodyCount()const{ return(unsigned(LisBody.size())); }
   unsigned GetLinkCount()const{ return(unsigned(LisLink.size())); }
@@ -514,8 +604,9 @@ public:
   const JChBody* GetBody(unsigned ipos)const;
   const JChBody* GetBodyByMk(word mkbound)const;
   const JChLink* GetLink(unsigned ipos)const;
+  std::vector<const JChLink*> GetLinkByTp(JChLink::TpLink type)const;
+  bool BodyBelongsLink(unsigned idbody1,JChLink::TpLink type)const;
 
-  
   const JChBodyFloating* GetBodyFloating(word mkbound)const;
   const JChBodyMoving*   GetBodyMoving  (word mkbound)const;
   const JChBodyFixed*    GetBodyFixed   (word mkbound)const;
@@ -524,7 +615,3 @@ public:
 
 
 #endif
-
-
-
-

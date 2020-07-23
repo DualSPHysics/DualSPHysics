@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2019 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -33,7 +33,7 @@ JCellDivCpu::JCellDivCpu(bool stable,bool floating,byte periactive
   ,unsigned casenbound,unsigned casenfixed,unsigned casenpb,JLog2 *log,std::string dirout
   ,bool allocfullnct,float overmemorynp,word overmemorycells)
   :Stable(stable),Floating(floating),PeriActive(periactive)
-  ,CellMode(cellmode),Hdiv(cellmode==CELLMODE_2H? 1: (cellmode==CELLMODE_H? 2: 0)),Scell(scell)
+  ,CellMode(cellmode),ScellDiv(cellmode==CELLMODE_Full? 1: (cellmode==CELLMODE_Half? 2: 0)),Scell(scell)
   ,OvScell(1.f/scell),Map_PosMin(mapposmin),Map_PosMax(mapposmax),Map_PosDif(mapposmax-mapposmin)
   ,Map_Cells(mapcells),CaseNbound(casenbound),CaseNfixed(casenfixed),CaseNpb(casenpb),Log(log)
   ,DirOut(dirout),AllocFullNct(allocfullnct),OverMemoryNp(overmemorynp),OverMemoryCells(overmemorycells)
@@ -456,6 +456,15 @@ tdouble3 JCellDivCpu::GetDomainLimits(bool limitmin,unsigned slicecellmin)const{
   tdouble3 pmin=DomPosMin+TDouble3(scell*celmin.x,scell*celmin.y,scell*celmin.z);
   tdouble3 pmax=DomPosMin+TDouble3(scell*celmax.x,scell*celmax.y,scell*celmax.z);
   return(limitmin? pmin: pmax);
+}
+
+//==============================================================================
+/// Returns cell division data for neighborhood search.
+/// Devuelve datis de division en celdas para busqueda de vecinos.
+//==============================================================================
+StDivDataCpu JCellDivCpu::GetCellDivData()const{
+  return(MakeDivDataCpu(ScellDiv,GetNcells(),GetCellDomainMin(),GetBeginCell()
+    ,Scell,DomCellCode,DomPosMin));
 }
 
 /*:

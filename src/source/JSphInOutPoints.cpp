@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2016, Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -20,7 +20,7 @@
 
 #include "JSphInOutPoints.h"
 #include "JSphMk.h"
-#include "JSphPartsInit.h"
+#include "JDsPartsInit.h"
 #include "JXml.h"
 #include "JLog2.h"
 #include "JAppInfo.h"
@@ -96,7 +96,7 @@ void JSphInOutPoints::ResizeMemory(unsigned newnpt){
 //==============================================================================
 /// Returns matrix for rotation in 2D.
 //==============================================================================
-JMatrix4d JSphInOutPoints::ReadRotate2D(JXml *sxml,TiXmlElement* ele,const tdouble3 &pt){
+JMatrix4d JSphInOutPoints::ReadRotate2D(const JXml *sxml,TiXmlElement* ele,const tdouble3 &pt){
   double rotate=sxml->ReadElementDouble(ele,"rotate","angle",true);
   string angunits=fun::StrLower(sxml->ReadElementStr(ele,"rotate","anglesunits"));
   if(angunits=="radians")rotate=rotate*TODEG;
@@ -140,7 +140,9 @@ std::string JSphInOutPoints::CheckParticlesDirection(const JSphMkBlock *pmk,cons
 //==============================================================================
 /// Creates points starting from special fluid particles.
 //==============================================================================
-void JSphInOutPoints::Create2d3d_Particles(JXml *sxml,TiXmlElement* ele,const JSphPartsInit *partsdata){
+void JSphInOutPoints::Create2d3d_Particles(const JXml *sxml,TiXmlElement* ele
+  ,const JDsPartsInit *partsdata)
+{
   if(Count)Run_ExceptioonFile("There are previous definitions of inout points.",sxml->ErrGetFileRow(ele));
   unsigned mkfluid=sxml->GetAttributeUint(ele,"mkfluid");
   string strdir=sxml->GetAttributeStr(ele,"direction");
@@ -190,7 +192,7 @@ void JSphInOutPoints::Create2d3d_Particles(JXml *sxml,TiXmlElement* ele,const JS
 //==============================================================================
 /// Creates points in a line.
 //==============================================================================
-void JSphInOutPoints::Create2d_Line(JXml *sxml,TiXmlElement* ele){
+void JSphInOutPoints::Create2d_Line(const JXml *sxml,TiXmlElement* ele){
   if(Count)Run_Exceptioon("Only one description zone is allowed for inlet/outlet points.");
   //-Load basic data.
   double px1=sxml->ReadElementFloat(ele,"point","x");
@@ -256,7 +258,7 @@ void JSphInOutPoints::Create2d_Line(JXml *sxml,TiXmlElement* ele){
 //==============================================================================
 /// Returns matrix for rotation in 3D.
 //==============================================================================
-JMatrix4d JSphInOutPoints::ReadRotate3D(JXml *sxml,TiXmlElement* ele){
+JMatrix4d JSphInOutPoints::ReadRotate3D(const JXml *sxml,TiXmlElement* ele){
   double rotate=sxml->ReadElementDouble(ele,"rotateaxis","angle",true);
   string angunits=fun::StrLower(sxml->ReadElementStr(ele,"rotateaxis","anglesunits"));
   if(angunits=="radians")rotate=rotate*TODEG;
@@ -273,7 +275,7 @@ JMatrix4d JSphInOutPoints::ReadRotate3D(JXml *sxml,TiXmlElement* ele){
 //==============================================================================
 /// Creates points in a box.
 //==============================================================================
-void JSphInOutPoints::Create3d_Box(JXml *sxml,TiXmlElement* ele){
+void JSphInOutPoints::Create3d_Box(const JXml *sxml,TiXmlElement* ele){
   if(Count)Run_Exceptioon("Only one description zone is allowed for inlet/outlet points.");
   //-Load basic data.
   tdouble3 pt0=sxml->ReadElementDouble3(ele,"point");
@@ -359,7 +361,7 @@ void JSphInOutPoints::Create3d_Box(JXml *sxml,TiXmlElement* ele){
 //==============================================================================
 /// Creates points in a circle.
 //==============================================================================
-void JSphInOutPoints::Create3d_Circle(JXml *sxml,TiXmlElement* ele){
+void JSphInOutPoints::Create3d_Circle(const JXml *sxml,TiXmlElement* ele){
   if(Count)Run_Exceptioon("Only one description zone is allowed for inlet/outlet points.");
   //-Load basic data.
   const tdouble3 pt0=sxml->ReadElementDouble3(ele,"point");
@@ -443,7 +445,9 @@ void JSphInOutPoints::Create3d_Circle(JXml *sxml,TiXmlElement* ele){
 //==============================================================================
 /// Reads definition of inlet points in the XML node and creates points.
 //==============================================================================
-void JSphInOutPoints::CreatePoints(JXml *sxml,TiXmlElement* lis,const JSphPartsInit *partsdata){
+void JSphInOutPoints::CreatePoints(const JXml *sxml,TiXmlElement* lis
+  ,const JDsPartsInit *partsdata)
+{
   string xmlrow=sxml->ErrGetFileRow(lis);
   TiXmlElement* ele=lis->FirstChildElement();
   while(ele){

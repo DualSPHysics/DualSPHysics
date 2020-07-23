@@ -1,6 +1,6 @@
 //HEAD_DSCODES
 /*
- <DUALSPHYSICS>  Copyright (c) 2019 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -27,7 +27,7 @@
 //:# - Los datos se pueden organizar en distintos niveles con forma de arbol.
 //:# - Permite guardar datos basicos y arrays de tipos basicos y strings.
 //:# - La lectura del contenido de arrays desde fichero puede ser de forma 
-//:#   selectiva, sólo los que se necesiten.
+//:#   selectiva, solo los que se necesiten.
 //:# - Los arrays se pueden redimensionar de forma automatica segun se vayan
 //:#   introduciendo mas datos. 
 //:# - Permite uso de punteros externos para reducir el consumo de memoria. 
@@ -41,6 +41,8 @@
 //:# - Ahora el metodo SaveFileListApp() graba los datos del Parent al principio
 //:#   del fichero. (12-01-2014)
 //:# - Opcion en SaveFileXml() para grabar datos de arrays. (04-12-2014)
+//:# - Nuevos metodos CheckCopyArrayData() y CopyArrayData(). (13-04-2020)
+//:# - Mejora la gestion de excepciones. (06-05-2020)
 //:#############################################################################
 
 /// \file JBinaryData.h \brief Declares the class \ref JBinaryData.
@@ -191,7 +193,7 @@ class JBinaryData : protected JObject
       tint3 vint3;
       tuint3 vuint3;
       tfloat3 vfloat3;
-      tdouble3 vdouble3;   //- Elemento de mayor tamaño utilizado para poner a Zero. Large item used to zero elements.
+      tdouble3 vdouble3;   //- Elemento de mayor tamanho utilizado para poner a Zero. Large item used to zero elements.
     };
   }StValue;
 
@@ -360,6 +362,21 @@ class JBinaryData : protected JObject
   JBinaryDataArray* CreateArray(const std::string &name,JBinaryDataDef::TpData type,unsigned count,const void *data,bool externalpointer);
   void RemoveArray(const std::string &name);
   void RemoveArrays();
+  JBinaryDataArray* CheckCopyArrayData(const std::string &name,unsigned size,JBinaryDataDef::TpData type);
+  void CopyArrayData(const std::string &name,unsigned size,char           *ptr);
+  void CopyArrayData(const std::string &name,unsigned size,unsigned char  *ptr);
+  void CopyArrayData(const std::string &name,unsigned size,short          *ptr);
+  void CopyArrayData(const std::string &name,unsigned size,unsigned short *ptr);
+  void CopyArrayData(const std::string &name,unsigned size,int            *ptr);
+  void CopyArrayData(const std::string &name,unsigned size,unsigned       *ptr);
+  void CopyArrayData(const std::string &name,unsigned size,llong          *ptr);
+  void CopyArrayData(const std::string &name,unsigned size,ullong         *ptr);
+  void CopyArrayData(const std::string &name,unsigned size,float          *ptr);
+  void CopyArrayData(const std::string &name,unsigned size,double         *ptr);
+  void CopyArrayData(const std::string &name,unsigned size,tint3          *ptr);
+  void CopyArrayData(const std::string &name,unsigned size,tuint3         *ptr);
+  void CopyArrayData(const std::string &name,unsigned size,tfloat3        *ptr);
+  void CopyArrayData(const std::string &name,unsigned size,tdouble3       *ptr);
 
   //-Gestion de values. Management of values.
   unsigned GetValuesCount()const{ return(unsigned(Values.size())); }

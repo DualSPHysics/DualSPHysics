@@ -1,6 +1,6 @@
 //HEAD_DSCODES
 /*
- <DUALSPHYSICS>  Copyright (c) 2019 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -19,7 +19,7 @@
 //:#############################################################################
 //:# Cambios:
 //:# =========
-//:# - Nuevo movimiento (PredefX) que lee de un fichero la posición en distintos
+//:# - Nuevo movimiento (PredefX) que lee de un fichero la posicion en distintos
 //:#   instantes e interpola para el instante deseado. (14-10-2010)
 //:# - Nuevos metodos SetDirIn() y GetDirIn() para poder establecer un directorio
 //:#   de entrada para ficheros de datos. (19-10-2010)
@@ -29,7 +29,7 @@
 //:# - El movimiento PredefX se ha sustituido por Predef que permite definir el 
 //:#   formato del fichero de datos (numero de campos por linea y posicion de
 //:#   cada campo). (28-12-2010)
-//:# - Pequeños reajustes para aumentar la idependencia entre clases de JMotion
+//:# - Reajustes menores para aumentar la idependencia entre clases de JMotion
 //:#   y con otras clases externas. (04-03-2011)
 //:# - Traduccion de algunos comentarios al ingles. (10-02-2012)
 //:# - Todas las variables pasaron a doble precision. (02-08-2013)
@@ -38,8 +38,8 @@
 //:# - Cambio de nombre de mov MovPrdef por MovRectFile. (15-12-2015)
 //:# - Se usa JReadDatafile para leer datos movimiento en ficheros. (16-12-2015)
 //:# - Se permite indicar unidades de angulos a usar: grados o radianes. (16-12-2015)
-//:# - Se añaden unidades a los datos de movimientos. (16-12-2015)
-//:# - Se añadio el alias mvfile para mvrectfile (o mvpredef). (29-01-2016)
+//:# - Se anhaden unidades a los datos de movimientos. (16-12-2015)
+//:# - Se anhadio el alias mvfile para mvrectfile (o mvpredef). (29-01-2016)
 //:# - Nuevo metodo ResetTime() para reiniciar calculo. (04-05-2017)
 //:# - Nuevos metodos (ProcesTimeSimple, ProcesTimeAce y ProcesTimeGetData) para 
 //:#   calcular movimientos con y sin ace. (07-05-2017)
@@ -47,6 +47,7 @@
 //:# - Improved error messages about XML data in JMotion. (08-05-2017)
 //:# - Al usar ProcesTimeSimple() comprueba que el timestep solicitado sea mayor 
 //:#   o igual al tiempo final anterior. (11-05-2017)
+//:# - Mejora la gestion de excepciones. (06-05-2020)
 //:#############################################################################
 
 /// \file JMotion.h \brief Declares the class \ref JMotion.

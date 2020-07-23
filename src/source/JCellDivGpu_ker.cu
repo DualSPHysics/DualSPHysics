@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2019 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -34,6 +34,7 @@
 #include <thrust/sort.h>
 
 namespace cudiv{
+#include "FunctionsBasic_iker.h"
 
 //------------------------------------------------------------------------------
 /// Reduction of shared memory values for a warp of KerPosLimitsRedu.
@@ -101,8 +102,8 @@ template <unsigned blockSize> __device__ void KerUintLimitsRedu(unsigned* sp1,un
   }
   if(tid<32)KerUintLimitsWarpRedu<blockSize>(sp1,sp2,tid);
   if(tid==0){
-    const unsigned nblocks=gridDim.x*gridDim.y;
-    unsigned cr=blockIdx.y*gridDim.x+blockIdx.x;
+    const unsigned nblocks=gridDim.x;
+    unsigned cr=blockIdx.x;
     results[cr]=sp1[0]; cr+=nblocks;
     results[cr]=sp2[0];
   }
@@ -119,19 +120,6 @@ void Sort(unsigned* keys,unsigned* values,unsigned size,bool stable){
     if(stable)thrust::stable_sort_by_key(dev_keysg,dev_keysg+size,dev_valuesg);
     else thrust::sort_by_key(dev_keysg,dev_keysg+size,dev_valuesg);
   }
-}
-
-//==============================================================================
-/// Returns the dimensions of gridsize according to parameters.
-/// Devuelve tamaño de gridsize segun parametros.
-//==============================================================================
-dim3 GetGridSize(unsigned n,unsigned blocksize){
-  dim3 sgrid;//=dim3(1,2,3);
-  unsigned nb=unsigned(n+blocksize-1)/blocksize; //-Total number of blocks to execute.
-  sgrid.x=(nb<=65535? nb: unsigned(sqrt(float(nb))));
-  sgrid.y=(nb<=65535? 1: unsigned((nb+sgrid.x-1)/sgrid.x));
-  sgrid.z=1;
-  return(sgrid);
 }
 
 //------------------------------------------------------------------------------
@@ -200,8 +188,8 @@ template <unsigned blockSize> __device__ void KerPosLimitsRedu(float* spx1,float
   }
   if(tid<32)KerPosLimitsWarpRedu<blockSize>(spx1,spy1,spz1,spx2,spy2,spz2,tid);
   if(tid==0){
-    const unsigned nblocks=gridDim.x*gridDim.y;
-    unsigned cr=blockIdx.y*gridDim.x+blockIdx.x;
+    const unsigned nblocks=gridDim.x;
+    unsigned cr=blockIdx.x;
     results[cr]=spx1[0]; cr+=nblocks;
     results[cr]=spy1[0]; cr+=nblocks;
     results[cr]=spz1[0]; cr+=nblocks;
@@ -225,7 +213,7 @@ template <unsigned int blockSize> __global__ void KerReduPosLimits(unsigned n,fl
   float *spy2=spx2+blockDim.x;
   float *spz2=spy2+blockDim.x;
   const unsigned tid=threadIdx.x;
-  const unsigned p=blockIdx.y*gridDim.x*blockDim.x + blockIdx.x*blockDim.x + threadIdx.x; //-Value number.
+  const unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Value number.
   //-Loads values in shared memory.
   //-Carga valores en memoria shared.
   unsigned p2=p;
@@ -253,7 +241,7 @@ template <unsigned int blockSize> __global__ void KerReduPosLimits(unsigned n,fl
 void ReduPosLimits(unsigned nblocks,float *aux,tfloat3 &pmin,tfloat3 &pmax,JLog2 *log){
   unsigned n=nblocks;
   const unsigned smemSize=DIVBSIZE*sizeof(float)*6;
-  dim3 sgrid=GetGridSize(n,DIVBSIZE);
+  dim3 sgrid=GetSimpleGridSize(n,DIVBSIZE);
   unsigned n_blocks=sgrid.x*sgrid.y;
   //:printf("n:%d  n_blocks:%d]\n",n,n_blocks);
   float *dat=aux;
@@ -264,7 +252,7 @@ void ReduPosLimits(unsigned nblocks,float *aux,tfloat3 &pmin,tfloat3 &pmax,JLog2
     KerReduPosLimits<DIVBSIZE><<<sgrid,DIVBSIZE,smemSize>>>(n,dat,res);
     //fcuda::Check_CudaError("#>ReduMaxF Fallo en KerReduMaxF.");
     n=n_blocks;
-    sgrid=GetGridSize(n,DIVBSIZE);  
+    sgrid=GetSimpleGridSize(n,DIVBSIZE);  
     n_blocks=sgrid.x*sgrid.y;
     float* x=dat; dat=res; res=x;
   }
@@ -341,8 +329,8 @@ template <unsigned blockSize> __device__ void KerLimitsCellRedu(unsigned cellcod
   }
   if(tid<32)KerLimitsCellWarpRedu<blockSize>(spx1,spy1,spz1,spx2,spy2,spz2,tid);
   if(tid==0){
-    const unsigned nblocks=gridDim.x*gridDim.y;
-    unsigned cr=blockIdx.y*gridDim.x+blockIdx.x;
+    const unsigned nblocks=gridDim.x;
+    unsigned cr=blockIdx.x;
     results[cr]=PC__Cell(cellcode,spx1[0],spy1[0],spz1[0]);  cr+=nblocks;
     results[cr]=PC__Cell(cellcode,spx2[0],spy2[0],spz2[0]);
   }
@@ -361,7 +349,7 @@ template <unsigned int blockSize> __global__ void KerLimitsCellReduBase(unsigned
   unsigned *scy2=scx2+blockDim.x;
   unsigned *scz2=scy2+blockDim.x;
   const unsigned tid=threadIdx.x;
-  const unsigned p=blockIdx.y*gridDim.x*blockDim.x + blockIdx.x*blockDim.x + threadIdx.x; //-Value number.
+  const unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Value number.
   //-Loads values in shared memory.
   //-Carga valores en memoria shared.
   unsigned p2=p;
@@ -391,7 +379,7 @@ template <unsigned int blockSize> __global__ void KerLimitsCellReduBase(unsigned
 void LimitsCellRedu(unsigned cellcode,unsigned nblocks,unsigned *aux,tuint3 &celmin,tuint3 &celmax,JLog2 *log){
   unsigned n=nblocks;
   const unsigned smemSize=DIVBSIZE*sizeof(float)*6;
-  dim3 sgrid=GetGridSize(n,DIVBSIZE);
+  dim3 sgrid=GetSimpleGridSize(n,DIVBSIZE);
   unsigned n_blocks=sgrid.x*sgrid.y;
   //:printf("n:%d  n_blocks:%d]\n",n,n_blocks);
   unsigned *dat=aux;
@@ -402,7 +390,7 @@ void LimitsCellRedu(unsigned cellcode,unsigned nblocks,unsigned *aux,tuint3 &cel
     KerLimitsCellReduBase<DIVBSIZE><<<sgrid,DIVBSIZE,smemSize>>>(cellcode,n,dat,res);
     //fcuda::Check_CudaError("#>ReduMaxF Fallo en KerReduMaxF.");
     n=n_blocks;
-    sgrid=GetGridSize(n,DIVBSIZE);  
+    sgrid=GetSimpleGridSize(n,DIVBSIZE);  
     n_blocks=sgrid.x*sgrid.y;
     unsigned* x=dat; dat=res; res=x;
   }
@@ -436,7 +424,7 @@ template <unsigned int blockSize> __global__ void KerLimitsCell(unsigned n,unsig
   unsigned *scy2=scx2+blockDim.x;
   unsigned *scz2=scy2+blockDim.x;
   const unsigned tid=threadIdx.x;
-  const unsigned p=blockIdx.y*gridDim.x*blockDim.x + blockIdx.x*blockDim.x + threadIdx.x; //-Particle number.
+  const unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Particle number.
   //-Loads shared memory values.
   if(p<n){
     const unsigned pp=p+pini;
@@ -483,7 +471,7 @@ void LimitsCell(unsigned np,unsigned pini,unsigned cellcode,const unsigned *dcel
   }
   //:printf("[ReduMaxF ndata:%d  BLOCKSIZE:%d]\n",ndata,BLOCKSIZE);
   const unsigned smemSize=DIVBSIZE*sizeof(unsigned)*6;
-  dim3 sgrid=GetGridSize(np,DIVBSIZE);
+  dim3 sgrid=GetSimpleGridSize(np,DIVBSIZE);
   unsigned nblocks=sgrid.x*sgrid.y;
   KerLimitsCell<DIVBSIZE><<<sgrid,DIVBSIZE,smemSize>>>(np,pini,cellcode,dcell,code,aux);
   LimitsCellRedu(cellcode,nblocks,aux,celmin,celmax,log);
@@ -520,7 +508,7 @@ void LimitsCell(unsigned np,unsigned pini,unsigned cellcode,const unsigned *dcel
 __global__ void KerCalcBeginEndCell(unsigned n,unsigned pini,const unsigned *cellpart,int2 *begcell)
 {
   extern __shared__ unsigned scell[];    // [blockDim.x+1}
-  const unsigned pt=blockIdx.y*gridDim.x*blockDim.x + blockIdx.x*blockDim.x + threadIdx.x; //-Particle number.
+  const unsigned pt=blockIdx.x*blockDim.x + threadIdx.x; //-Particle number.
   const unsigned p=pt+pini;
   unsigned cel;
   if(pt<n){
@@ -548,7 +536,7 @@ void CalcBeginEndCell(bool full,unsigned np,unsigned npb,unsigned sizebegcell,un
   const unsigned pini=(full? 0: npb);
   const unsigned n=np-pini;
   if(n){
-    dim3 sgrid=GetGridSize(n,DIVBSIZE);
+    dim3 sgrid=GetSimpleGridSize(n,DIVBSIZE);
     KerCalcBeginEndCell <<<sgrid,DIVBSIZE,sizeof(unsigned)*(DIVBSIZE+1)>>> (n,pini,cellpart,begcell);
   }
 }
@@ -562,7 +550,7 @@ __global__ void KerSortDataParticles(unsigned n,unsigned pini,const unsigned *so
   ,const unsigned *idp,const typecode *code,const unsigned *dcell,const double2 *posxy,const double *posz,const float4 *velrhop
   ,unsigned *idp2,typecode *code2,unsigned *dcell2,double2 *posxy2,double *posz2,float4 *velrhop2)
 {
-  const unsigned p=blockIdx.y*gridDim.x*blockDim.x + blockIdx.x*blockDim.x + threadIdx.x; //-Particle number.
+  const unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Particle number.
   if(p<n){
     const unsigned oldpos=(p<pini? p: sortpart[p]);
     idp2[p]=idp[oldpos];
@@ -579,7 +567,7 @@ __global__ void KerSortDataParticles(unsigned n,unsigned pini,const unsigned *so
 //------------------------------------------------------------------------------
 __global__ void KerSortDataParticles(unsigned n,unsigned pini,const unsigned *sortpart,const float4 *a,float4 *a2)
 {
-  const unsigned p=blockIdx.y*gridDim.x*blockDim.x + blockIdx.x*blockDim.x + threadIdx.x; //-Particle number.
+  const unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Particle number.
   if(p<n){
     const unsigned oldpos=(p<pini? p: sortpart[p]);
     a2[p]=a[oldpos];
@@ -591,7 +579,7 @@ __global__ void KerSortDataParticles(unsigned n,unsigned pini,const unsigned *so
 //------------------------------------------------------------------------------
 __global__ void KerSortDataParticles(unsigned n,unsigned pini,const unsigned *sortpart,const float *a,const float *b,float *a2,float *b2)
 {
-  const unsigned p=blockIdx.y*gridDim.x*blockDim.x + blockIdx.x*blockDim.x + threadIdx.x; //-Particle number.
+  const unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Particle number.
   if(p<n){
     const unsigned oldpos=(p<pini? p: sortpart[p]);
     a2[p]=a[oldpos];
@@ -604,7 +592,7 @@ __global__ void KerSortDataParticles(unsigned n,unsigned pini,const unsigned *so
 //------------------------------------------------------------------------------
 __global__ void KerSortDataParticles(unsigned n,unsigned pini,const unsigned *sortpart,const double2 *a,const double *b,const float4 *c,double2 *a2,double *b2,float4 *c2)
 {
-  const unsigned p=blockIdx.y*gridDim.x*blockDim.x + blockIdx.x*blockDim.x + threadIdx.x; //-Particle number.
+  const unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Particle number.
   if(p<n){
     const unsigned oldpos=(p<pini? p: sortpart[p]);
     a2[p]=a[oldpos];
@@ -618,7 +606,7 @@ __global__ void KerSortDataParticles(unsigned n,unsigned pini,const unsigned *so
 //------------------------------------------------------------------------------
 __global__ void KerSortDataParticles(unsigned n,unsigned pini,const unsigned *sortpart,const tsymatrix3f *a,tsymatrix3f *a2)
 {
-  const unsigned p=blockIdx.y*gridDim.x*blockDim.x + blockIdx.x*blockDim.x + threadIdx.x; //-Particle number.
+  const unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Particle number.
   if(p<n){
     const unsigned oldpos=(p<pini? p: sortpart[p]);
     a2[p]=a[oldpos];
@@ -630,7 +618,19 @@ __global__ void KerSortDataParticles(unsigned n,unsigned pini,const unsigned *so
 //------------------------------------------------------------------------------
 __global__ void KerSortDataParticles(unsigned n,unsigned pini,const unsigned *sortpart,const float3 *a,float3 *a2)
 {
-  const unsigned p=blockIdx.y*gridDim.x*blockDim.x + blockIdx.x*blockDim.x + threadIdx.x; //-Particle number.
+  const unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Particle number.
+  if(p<n){
+    const unsigned oldpos=(p<pini? p: sortpart[p]);
+    a2[p]=a[oldpos];
+  }
+}
+//------------------------------------------------------------------------------
+/// Reorders particle data according to sortpart[].
+/// Reordena datos de particulas segun sortpart[].
+//------------------------------------------------------------------------------
+__global__ void KerSortDataParticles(unsigned n,unsigned pini,const unsigned *sortpart,const float *a,float *a2)
+{
+  const unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Particle number.
   if(p<n){
     const unsigned oldpos=(p<pini? p: sortpart[p]);
     a2[p]=a[oldpos];
@@ -646,7 +646,7 @@ void SortDataParticles(unsigned np,unsigned pini,const unsigned *sortpart
   ,unsigned *idp2,typecode *code2,unsigned *dcell2,double2 *posxy2,double *posz2,float4 *velrhop2)
 {
   if(np){
-    dim3 sgrid=GetGridSize(np,DIVBSIZE);
+    dim3 sgrid=GetSimpleGridSize(np,DIVBSIZE);
     KerSortDataParticles <<<sgrid,DIVBSIZE>>>(np,pini,sortpart,idp,code,dcell,posxy,posz,velrhop,idp2,code2,dcell2,posxy2,posz2,velrhop2);
   }
 }
@@ -656,7 +656,7 @@ void SortDataParticles(unsigned np,unsigned pini,const unsigned *sortpart
 //==============================================================================
 void SortDataParticles(unsigned np,unsigned pini,const unsigned *sortpart,const float4 *a,float4 *a2){
   if(np){
-    dim3 sgrid=GetGridSize(np,DIVBSIZE);
+    dim3 sgrid=GetSimpleGridSize(np,DIVBSIZE);
     KerSortDataParticles <<<sgrid,DIVBSIZE>>>(np,pini,sortpart,a,a2);
   }
 }
@@ -666,7 +666,7 @@ void SortDataParticles(unsigned np,unsigned pini,const unsigned *sortpart,const 
 //==============================================================================
 void SortDataParticles(unsigned np,unsigned pini,const unsigned *sortpart,const float *a,const float *b,float *a2,float *b2){
   if(np){
-    dim3 sgrid=GetGridSize(np,DIVBSIZE);
+    dim3 sgrid=GetSimpleGridSize(np,DIVBSIZE);
     KerSortDataParticles <<<sgrid,DIVBSIZE>>>(np,pini,sortpart,a,b,a2,b2);
   }
 }
@@ -676,7 +676,7 @@ void SortDataParticles(unsigned np,unsigned pini,const unsigned *sortpart,const 
 //==============================================================================
 void SortDataParticles(unsigned np,unsigned pini,const unsigned *sortpart,const double2 *a,const double *b,const float4 *c,double2 *a2,double *b2,float4 *c2){
   if(np){
-    dim3 sgrid=GetGridSize(np,DIVBSIZE);
+    dim3 sgrid=GetSimpleGridSize(np,DIVBSIZE);
     KerSortDataParticles <<<sgrid,DIVBSIZE>>>(np,pini,sortpart,a,b,c,a2,b2,c2);
   }
 }
@@ -686,7 +686,7 @@ void SortDataParticles(unsigned np,unsigned pini,const unsigned *sortpart,const 
 //==============================================================================
 void SortDataParticles(unsigned np,unsigned pini,const unsigned *sortpart,const tsymatrix3f *a,tsymatrix3f *a2){
   if(np){
-    dim3 sgrid=GetGridSize(np,DIVBSIZE);
+    dim3 sgrid=GetSimpleGridSize(np,DIVBSIZE);
     KerSortDataParticles <<<sgrid,DIVBSIZE>>>(np,pini,sortpart,a,a2);
   }
 }
@@ -697,7 +697,18 @@ void SortDataParticles(unsigned np,unsigned pini,const unsigned *sortpart,const 
 //==============================================================================
 void SortDataParticles(unsigned np,unsigned pini,const unsigned *sortpart,const float3 *a,float3 *a2){
   if(np){
-    dim3 sgrid=GetGridSize(np,DIVBSIZE);
+    dim3 sgrid=GetSimpleGridSize(np,DIVBSIZE);
+    KerSortDataParticles <<<sgrid,DIVBSIZE>>>(np,pini,sortpart,a,a2);
+  }
+}
+
+//==============================================================================
+/// Reorders particle data according to sortpart.
+/// Reordena datos de particulas segun sortpart.
+//==============================================================================
+void SortDataParticles(unsigned np,unsigned pini,const unsigned *sortpart,const float *a,float *a2){
+  if(np){
+    dim3 sgrid=GetSimpleGridSize(np,DIVBSIZE);
     KerSortDataParticles <<<sgrid,DIVBSIZE>>>(np,pini,sortpart,a,a2);
   }
 }
@@ -711,7 +722,7 @@ template <unsigned int blockSize> __global__ void KerReduUintLimits(unsigned n,u
   extern __shared__ unsigned sp1[];
   unsigned *sp2=sp1+blockDim.x;
   const unsigned tid=threadIdx.x;
-  const unsigned p=blockIdx.y*gridDim.x*blockDim.x + blockIdx.x*blockDim.x + threadIdx.x; //-Value number.
+  const unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Value number.
   //-Loads variables to shared memory.
   //-Carga valores en memoria shared.
   unsigned p2=p;
@@ -733,7 +744,7 @@ template <unsigned int blockSize> __global__ void KerReduUintLimits(unsigned n,u
 void ReduUintLimits(unsigned nblocks,unsigned *aux,unsigned &vmin,unsigned &vmax,JLog2 *log){
   unsigned n=nblocks;
   const unsigned smemSize=DIVBSIZE*sizeof(unsigned)*2;
-  dim3 sgrid=GetGridSize(n,DIVBSIZE);
+  dim3 sgrid=GetSimpleGridSize(n,DIVBSIZE);
   unsigned n_blocks=sgrid.x*sgrid.y;
   //:printf("n:%d  n_blocks:%d]\n",n,n_blocks);
   unsigned *dat=aux;
@@ -744,7 +755,7 @@ void ReduUintLimits(unsigned nblocks,unsigned *aux,unsigned &vmin,unsigned &vmax
     KerReduUintLimits<DIVBSIZE><<<sgrid,DIVBSIZE,smemSize>>>(n,dat,res);
     //fcuda::Check_CudaError("#>ReduMaxF Fallo en KerReduMaxF.");
     n=n_blocks;
-    sgrid=GetGridSize(n,DIVBSIZE);  
+    sgrid=GetSimpleGridSize(n,DIVBSIZE);  
     n_blocks=sgrid.x*sgrid.y;
     unsigned* x=dat; dat=res; res=x;
   }
@@ -778,7 +789,7 @@ template <unsigned blockSize> __device__ void KerUintSumRedu(unsigned* sp1,const
   if(blockSize>=256){ if(tid<128)sp1[tid]+=sp1[tid+128]; __syncthreads(); }
   if(blockSize>=128){ if(tid<64) sp1[tid]+=sp1[tid+64];  __syncthreads(); }
   if(tid<32)KerUintSumWarpRedu<blockSize>(sp1,tid);
-  if(tid==0)results[blockIdx.y*gridDim.x+blockIdx.x]=sp1[0];
+  if(tid==0)results[blockIdx.x]=sp1[0];
 }
 
 //------------------------------------------------------------------------------
@@ -789,7 +800,7 @@ template <unsigned int blockSize> __global__ void KerReduUintSum(unsigned n,unsi
 {
   extern __shared__ unsigned sp1[];
   const unsigned tid=threadIdx.x;
-  const unsigned p=blockIdx.y*gridDim.x*blockDim.x + blockIdx.x*blockDim.x + threadIdx.x; //-Value number.
+  const unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Value number.
   //-Loads values in shared memory.
   //-Carga valores en memoria shared.
   sp1[tid]=(p<n? data[p]: 0);
@@ -806,7 +817,7 @@ template <unsigned int blockSize> __global__ void KerReduUintSum(unsigned n,unsi
 unsigned ReduUintSum(unsigned nblocks,unsigned *aux,JLog2 *log){
   unsigned n=nblocks;
   const unsigned smemSize=DIVBSIZE*sizeof(unsigned);
-  dim3 sgrid=GetGridSize(n,DIVBSIZE);
+  dim3 sgrid=GetSimpleGridSize(n,DIVBSIZE);
   unsigned n_blocks=sgrid.x*sgrid.y;
   //:printf("n:%d  n_blocks:%d]\n",n,n_blocks);
   unsigned *dat=aux;
@@ -817,7 +828,7 @@ unsigned ReduUintSum(unsigned nblocks,unsigned *aux,JLog2 *log){
     KerReduUintSum<DIVBSIZE><<<sgrid,DIVBSIZE,smemSize>>>(n,dat,res);
     //fcuda::Check_CudaError("#>ReduMaxF Fallo en KerReduMaxF.");
     n=n_blocks;
-    sgrid=GetGridSize(n,DIVBSIZE);  
+    sgrid=GetSimpleGridSize(n,DIVBSIZE);  
     n_blocks=sgrid.x*sgrid.y;
     unsigned* x=dat; dat=res; res=x;
   }
@@ -836,7 +847,7 @@ unsigned ReduUintSum(unsigned nblocks,unsigned *aux,JLog2 *log){
 //  extern __shared__ unsigned sp1[];
 //  unsigned *sp2=sp1+blockDim.x;
 //  const unsigned tid=threadIdx.x;
-//  const unsigned cel=blockIdx.y*gridDim.x*blockDim.x + blockIdx.x*blockDim.x + threadIdx.x; //-Nº de celda
+//  const unsigned cel=blockIdx.x*blockDim.x + threadIdx.x; //-Number of cell
 //  //-Carga valores en memoria shared.
 //  if(cel<ncel){
 //    int2 rg=begcell[cel+ini];
@@ -862,7 +873,7 @@ unsigned ReduUintSum(unsigned nblocks,unsigned *aux,JLog2 *log){
 //    return;
 //  }
 //  const unsigned smemSize=DIVBSIZE*sizeof(unsigned)*2;
-//  dim3 sgrid=GetGridSize(ncel,DIVBSIZE);
+//  dim3 sgrid=GetSimpleGridSize(ncel,DIVBSIZE);
 //  unsigned nblocks=sgrid.x*sgrid.y;
 //  KerGetRangeParticlesCells<DIVBSIZE><<<sgrid,DIVBSIZE,smemSize>>>(ncel,celini,begcell,aux);
 //  ReduUintLimits(nblocks,aux,pmin,pmax,log);
@@ -896,7 +907,7 @@ unsigned ReduUintSum(unsigned nblocks,unsigned *aux,JLog2 *log){
 //{ //torder{ORDER_XYZ=1,ORDER_YZX=2,ORDER_XZY=3} 
 //  extern __shared__ unsigned sp1[];
 //  const unsigned tid=threadIdx.x;
-//  const unsigned cel=blockIdx.y*gridDim.x*blockDim.x + blockIdx.x*blockDim.x + threadIdx.x; //-Nº de celda
+//  const unsigned cel=blockIdx.x*blockDim.x + threadIdx.x; //-Number of cell
 //  //-Carga valores en memoria shared.
 //  if(cel<ncel){
 //    int2 rg=begcell[cel+ini];
@@ -915,7 +926,7 @@ unsigned ReduUintSum(unsigned nblocks,unsigned *aux,JLog2 *log){
 //  unsigned ncel=celfin-celini;
 //  if(!ncel)return(0);//-Si no hay celdas cancela proceso.
 //  const unsigned smemSize=DIVBSIZE*sizeof(unsigned);
-//  dim3 sgrid=GetGridSize(ncel,DIVBSIZE);
+//  dim3 sgrid=GetSimpleGridSize(ncel,DIVBSIZE);
 //  unsigned nblocks=sgrid.x*sgrid.y;
 //  KerGetParticlesCells<DIVBSIZE><<<sgrid,DIVBSIZE,smemSize>>>(ncel,celini,begcell,aux);
 //  unsigned sum=ReduUintSum(nblocks,aux,log);

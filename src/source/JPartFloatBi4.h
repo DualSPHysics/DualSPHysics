@@ -1,6 +1,6 @@
 //HEAD_DSCODES
 /*
- <DUALSPHYSICS>  Copyright (c) 2019 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -29,6 +29,9 @@
 //:# - Implementacion. (04-12-2014)
 //:# - Implementacion independiente de StFloatingData en DualSphDef.h. (11-05-2015)
 //:# - Incluye informacion de MkBoundFirst (FormatVer=180423). (23-04-2018)
+//:# - En JPartFloatBi4Load se comprueba que los PARTs cargados sean consecutivos. (11-08-2019)
+//:# - Se guarda tambien Massp de floatings. (10-03-2020)
+//:# - Mejora la gestion de excepciones. (06-05-2020)
 //:#############################################################################
 
 /// \file JPartFloatBi4.h \brief Declares the classes \ref JPartFloatBi4Save and class \ref JPartFloatBi4Load.
@@ -71,6 +74,7 @@ class JPartFloatBi4Save : protected JObject
   unsigned *HeadBegin;
   unsigned *HeadCount;
   float *HeadMass;
+  float *HeadMassp;
   float *HeadRadius;
 
   //-Datos variables de floatings (PARTs). Data variables of floats (parts).
@@ -99,7 +103,7 @@ class JPartFloatBi4Save : protected JObject
   //====================
   //-Configuracion de objeto. Object Configuration.
   void Config(std::string appname,const std::string &dir,word mkboundfirst,unsigned ftcount);
-  void AddHeadData(unsigned cf,word mkbound,unsigned begin,unsigned count,float mass,float radius);
+  void AddHeadData(unsigned cf,word mkbound,unsigned begin,unsigned count,float mass,float massp,float radius);
   void SaveInitial();
 
   ////-Configuracion de parts.  Parts Configuration.
@@ -123,6 +127,7 @@ class JPartFloatBi4Load : protected JObject
   static const unsigned FormatVerDef=180423;    ///<Version de formato by default. Version of format by default.
   unsigned FormatVer;    ///<Version de formato. Format version.
    
+  std::string FileData;   ///<Name of input file with data.
   JBinaryData *Data;      ///<Almacena la informacion general de los datos (constante para cada PART). Stores general information of data (constant for each PART).
 
   word MkBoundFirst;      ///<First Mk for boundary blocks (Mk=MkBound+MkBoundFirst).
@@ -137,6 +142,7 @@ class JPartFloatBi4Load : protected JObject
   unsigned *HeadBegin;
   unsigned *HeadCount;
   float *HeadMass;
+  float *HeadMassp;
   float *HeadRadius;
 
   //-Informacion de PART. PART information.
@@ -147,9 +153,11 @@ class JPartFloatBi4Load : protected JObject
   tfloat3 *PartFvel;
   tfloat3 *PartFomega;
 
-  JBinaryDataArray* CheckArray(JBinaryData *bd,const std::string &name,JBinaryDataDef::TpData type);
+  JBinaryDataArray* CheckArray(JBinaryData *bd,const std::string &name
+    ,JBinaryDataDef::TpData type);
   void ResetPart();
   void ResizeFtData(unsigned ftcount);
+  void CheckPartList()const;
   void CheckPart()const;
   void CheckFloating(unsigned cf)const;
 
@@ -160,7 +168,7 @@ class JPartFloatBi4Load : protected JObject
   static std::string GetFileNamePart();
 
   void LoadFile(const std::string &dir);
-  void CheckHeadData(unsigned cf,word mkbound,unsigned begin,unsigned count,float mass);
+  void CheckHeadData(unsigned cf,word mkbound,unsigned begin,unsigned count,float mass,float massp);
 
   word GetMkBoundFirst()const{ return(MkBoundFirst); }
 
@@ -170,10 +178,11 @@ class JPartFloatBi4Load : protected JObject
 
   word     GetHeadMkbound(unsigned cf)const{ CheckFloating(cf); return(HeadMkbound[cf]); }
   word     GetHeadMk     (unsigned cf)const{ return(MkBoundFirst+GetHeadMkbound(cf)); }
-  unsigned GetHeadBegin  (unsigned cf)const{ CheckFloating(cf); return(HeadBegin[cf]);   }
-  unsigned GetHeadCount  (unsigned cf)const{ CheckFloating(cf); return(HeadCount[cf]);   }
-  float    GetHeadMass   (unsigned cf)const{ CheckFloating(cf); return(HeadMass[cf]);    }
-  float    GetHeadRadius (unsigned cf)const{ CheckFloating(cf); return(HeadRadius[cf]);  }
+  unsigned GetHeadBegin  (unsigned cf)const{ CheckFloating(cf); return(HeadBegin [cf]); }
+  unsigned GetHeadCount  (unsigned cf)const{ CheckFloating(cf); return(HeadCount [cf]); }
+  float    GetHeadMass   (unsigned cf)const{ CheckFloating(cf); return(HeadMass  [cf]); }
+  float    GetHeadMassp  (unsigned cf)const{ CheckFloating(cf); return(HeadMassp [cf]); }
+  float    GetHeadRadius (unsigned cf)const{ CheckFloating(cf); return(HeadRadius[cf]); }
 
   void LoadPart(unsigned cpart);
 

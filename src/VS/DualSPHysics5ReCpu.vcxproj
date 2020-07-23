@@ -1,0 +1,857 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="DebugCPU|x64">
+      <Configuration>DebugCPU</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="ReleaseCPU|x64">
+      <Configuration>ReleaseCPU</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{55F71337-32A6-4C26-8CBA-A06A9183D6F2}</ProjectGuid>
+    <RootNamespace>DualSPHysics</RootNamespace>
+    <Keyword>Win32Proj</Keyword>
+    <ProjectName>DualSPHysics</ProjectName>
+    <CudaToolkitCustomDir>$(CUDA_PATH_V9_2)</CudaToolkitCustomDir>
+    <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseOfMfc>false</UseOfMfc>
+    <CharacterSet>MultiByte</CharacterSet>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <PlatformToolset>v140</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseOfMfc>false</UseOfMfc>
+    <CharacterSet>MultiByte</CharacterSet>
+    <WholeProgramOptimization>false</WholeProgramOptimization>
+    <PlatformToolset>v140</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseOfMfc>false</UseOfMfc>
+    <CharacterSet>MultiByte</CharacterSet>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <PlatformToolset>v140</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseOfMfc>false</UseOfMfc>
+    <CharacterSet>MultiByte</CharacterSet>
+    <WholeProgramOptimization>false</WholeProgramOptimization>
+    <PlatformToolset>v140</PlatformToolset>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$(VCTargetsPath)Microsoft.CPP.UpgradeFromVC71.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$(VCTargetsPath)Microsoft.CPP.UpgradeFromVC71.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$(VCTargetsPath)Microsoft.CPP.UpgradeFromVC71.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$(VCTargetsPath)Microsoft.CPP.UpgradeFromVC71.props" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>10.0.30319.1</_ProjectFileVersion>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">../../bin/windows/</OutDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">../../bin/windows/</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Intermediate/$(ProjectName)_$(Configuration)_$(PlatformName)/</IntDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Intermediate/$(ProjectName)_$(Configuration)_$(PlatformName)/</IntDir>
+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    </LinkIncremental>
+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" />
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">../../bin/windows/</OutDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">../../bin/windows/</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">Intermediate/$(ProjectName)_$(Configuration)_$(PlatformName)/</IntDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">Intermediate/$(ProjectName)_$(Configuration)_$(PlatformName)/</IntDir>
+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">
+    </LinkIncremental>
+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'" />
+    <CodeAnalysisRuleSet Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">AllRules.ruleset</CodeAnalysisRuleSet>
+    <CodeAnalysisRuleSet Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">AllRules.ruleset</CodeAnalysisRuleSet>
+    <CodeAnalysisRules Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'" />
+    <CodeAnalysisRules Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'" />
+    <CodeAnalysisRuleAssemblies Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'" />
+    <CodeAnalysisRuleAssemblies Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'" />
+    <CodeAnalysisRuleSet Condition="'$(Configuration)|$(Platform)'=='Release|x64'">AllRules.ruleset</CodeAnalysisRuleSet>
+    <CodeAnalysisRuleSet Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">AllRules.ruleset</CodeAnalysisRuleSet>
+    <CodeAnalysisRules Condition="'$(Configuration)|$(Platform)'=='Release|x64'" />
+    <CodeAnalysisRules Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" />
+    <CodeAnalysisRuleAssemblies Condition="'$(Configuration)|$(Platform)'=='Release|x64'" />
+    <CodeAnalysisRuleAssemblies Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" />
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(ProjectName)5.0_win64</TargetName>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(ProjectName)5.0_win64_debug</TargetName>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">$(ProjectName)5.0CPU_win64</TargetName>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">$(ProjectName)5.0CPU_win64_debug</TargetName>
+    <PreBuildEventUseInBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</PreBuildEventUseInBuild>
+    <PreBuildEventUseInBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</PreBuildEventUseInBuild>
+    <PreLinkEventUseInBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</PreLinkEventUseInBuild>
+    <PreLinkEventUseInBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</PreLinkEventUseInBuild>
+    <PostBuildEventUseInBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</PostBuildEventUseInBuild>
+    <PostBuildEventUseInBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</PostBuildEventUseInBuild>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <PreBuildEvent>
+      <Command>
+      </Command>
+    </PreBuildEvent>
+    <ClCompile>
+      <Optimization>MaxSpeed</Optimization>
+      <InlineFunctionExpansion>
+      </InlineFunctionExpansion>
+      <IntrinsicFunctions>
+      </IntrinsicFunctions>
+      <FavorSizeOrSpeed>
+      </FavorSizeOrSpeed>
+      <OmitFramePointers>
+      </OmitFramePointers>
+      <EnableFiberSafeOptimizations>false</EnableFiberSafeOptimizations>
+      <WholeProgramOptimization>true</WholeProgramOptimization>
+      <AdditionalIncludeDirectories>$(CUDA_PATH_V9_2)/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_WITHGPU;WIN32;_CONSOLE;%(PreprocessorDefinitions);</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <GenerateXMLDocumentationFiles>false</GenerateXMLDocumentationFiles>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <OpenMPSupport>true</OpenMPSupport>
+      <RuntimeTypeInfo>
+      </RuntimeTypeInfo>
+      <CompileAs>CompileAsCpp</CompileAs>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>cudart_static.lib;dsphchrono.lib;LibJVtkLib_$(PlatformName)_$(PlatformToolset)_$(Configuration).lib;LibJNumexLib_$(PlatformName)_$(PlatformToolset)_$(Configuration).lib;LibJWaveGen_$(PlatformName)_$(PlatformToolset)_$(Configuration).lib;LibDSphMoorDyn_$(PlatformName)_$(PlatformToolset)_$(Configuration).lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <OutputFile>$(TargetPath)</OutputFile>
+      <AdditionalLibraryDirectories>$(CUDA_PATH_V9_2)/lib/$(PlatformName);../lib/vs2015;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <GenerateDebugInformation>false</GenerateDebugInformation>
+      <SubSystem>Console</SubSystem>
+      <OptimizeReferences>true</OptimizeReferences>
+      <EnableCOMDATFolding>false</EnableCOMDATFolding>
+      <IgnoreAllDefaultLibraries>
+      </IgnoreAllDefaultLibraries>
+      <LinkStatus>
+      </LinkStatus>
+    </Link>
+    <PostBuildEvent>
+      <Command>IF EXIST cg_variables.h move cg_variables.h $(Configuration)\
+</Command>
+    </PostBuildEvent>
+    <CudaCompile>
+      <TargetMachinePlatform>64</TargetMachinePlatform>
+      <Defines>
+      </Defines>
+      <UseHostInclude>false</UseHostInclude>
+      <AdditionalOptions>-use_fast_math -Xcompiler "/wd 4267" %(AdditionalOptions)</AdditionalOptions>
+      <CodeGeneration>compute_30,sm_30;compute_35,sm_35;compute_50,sm_50;compute_52,sm_52;compute_61,sm_61;compute_70,sm_70</CodeGeneration>
+    </CudaCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <PreBuildEvent>
+      <Command>
+      </Command>
+    </PreBuildEvent>
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <InlineFunctionExpansion>
+      </InlineFunctionExpansion>
+      <IntrinsicFunctions>false</IntrinsicFunctions>
+      <FavorSizeOrSpeed>Neither</FavorSizeOrSpeed>
+      <OmitFramePointers>
+      </OmitFramePointers>
+      <EnableFiberSafeOptimizations>false</EnableFiberSafeOptimizations>
+      <WholeProgramOptimization>false</WholeProgramOptimization>
+      <AdditionalIncludeDirectories>$(CUDA_PATH_V9_2)/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_WITHGPU;WIN32;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <GenerateXMLDocumentationFiles>false</GenerateXMLDocumentationFiles>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <MultiProcessorCompilation>
+      </MultiProcessorCompilation>
+      <OpenMPSupport>true</OpenMPSupport>
+      <RuntimeTypeInfo>
+      </RuntimeTypeInfo>
+      <CompileAs>CompileAsCpp</CompileAs>
+      <MinimalRebuild>true</MinimalRebuild>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>cudart_static.lib;dsphchrono.lib;LibJVtkLib_$(PlatformName)_$(PlatformToolset)_$(Configuration).lib;LibJNumexLib_$(PlatformName)_$(PlatformToolset)_$(Configuration).lib;LibJWaveGen_$(PlatformName)_$(PlatformToolset)_$(Configuration).lib;LibDSphMoorDyn_$(PlatformName)_$(PlatformToolset)_$(Configuration).lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <OutputFile>$(TargetPath)</OutputFile>
+      <AdditionalLibraryDirectories>$(CUDA_PATH_V9_2)/lib/$(PlatformName);../lib/vs2015;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <SubSystem>Console</SubSystem>
+      <OptimizeReferences>
+      </OptimizeReferences>
+      <EnableCOMDATFolding>
+      </EnableCOMDATFolding>
+      <IgnoreAllDefaultLibraries>
+      </IgnoreAllDefaultLibraries>
+      <LinkStatus>
+      </LinkStatus>
+      <LinkTimeCodeGeneration>Default</LinkTimeCodeGeneration>
+    </Link>
+    <PostBuildEvent>
+      <Command>IF EXIST cg_variables.h move cg_variables.h $(Configuration)\
+</Command>
+    </PostBuildEvent>
+    <CudaCompile>
+      <TargetMachinePlatform>64</TargetMachinePlatform>
+      <Defines>
+      </Defines>
+      <UseHostInclude>false</UseHostInclude>
+      <AdditionalOptions>-use_fast_math -Xcompiler "/wd 4267" %(AdditionalOptions)</AdditionalOptions>
+      <CodeGeneration>compute_30,sm_30;compute_35,sm_35;compute_50,sm_50;compute_52,sm_52;compute_61,sm_61;compute_70,sm_70</CodeGeneration>
+    </CudaCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">
+    <PreBuildEvent>
+      <Command>
+      </Command>
+    </PreBuildEvent>
+    <ClCompile>
+      <Optimization>MaxSpeed</Optimization>
+      <InlineFunctionExpansion>
+      </InlineFunctionExpansion>
+      <IntrinsicFunctions>
+      </IntrinsicFunctions>
+      <FavorSizeOrSpeed>
+      </FavorSizeOrSpeed>
+      <OmitFramePointers>
+      </OmitFramePointers>
+      <EnableFiberSafeOptimizations>false</EnableFiberSafeOptimizations>
+      <WholeProgramOptimization>true</WholeProgramOptimization>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_CONSOLE;%(PreprocessorDefinitions);</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <OpenMPSupport>true</OpenMPSupport>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <GenerateXMLDocumentationFiles>false</GenerateXMLDocumentationFiles>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <RuntimeTypeInfo>
+      </RuntimeTypeInfo>
+      <CompileAs>CompileAsCpp</CompileAs>
+    </ClCompile>
+    <Link>
+      <OutputFile>$(TargetPath)</OutputFile>
+      <AdditionalLibraryDirectories>../lib/vs2015;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <GenerateDebugInformation>false</GenerateDebugInformation>
+      <SubSystem>Console</SubSystem>
+      <OptimizeReferences>true</OptimizeReferences>
+      <EnableCOMDATFolding>false</EnableCOMDATFolding>
+      <AdditionalDependencies>dsphchrono.lib;LibJVtkLib_$(PlatformName)_$(PlatformToolset)_Release.lib;LibJNumexLib_$(PlatformName)_$(PlatformToolset)_Release.lib;LibJWaveGen_$(PlatformName)_$(PlatformToolset)_Release.lib;LibDSphMoorDyn_$(PlatformName)_$(PlatformToolset)_Release.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <LinkStatus>
+      </LinkStatus>
+    </Link>
+    <PostBuildEvent>
+      <Command>IF EXIST cg_variables.h move cg_variables.h $(Configuration)\</Command>
+    </PostBuildEvent>
+    <CudaCompile>
+      <CodeGeneration>compute_30,sm_30</CodeGeneration>
+    </CudaCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">
+    <PreBuildEvent>
+      <Command>
+      </Command>
+    </PreBuildEvent>
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <InlineFunctionExpansion>
+      </InlineFunctionExpansion>
+      <IntrinsicFunctions>false</IntrinsicFunctions>
+      <FavorSizeOrSpeed>Neither</FavorSizeOrSpeed>
+      <OmitFramePointers>
+      </OmitFramePointers>
+      <EnableFiberSafeOptimizations>false</EnableFiberSafeOptimizations>
+      <WholeProgramOptimization>false</WholeProgramOptimization>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <OpenMPSupport>true</OpenMPSupport>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <GenerateXMLDocumentationFiles>false</GenerateXMLDocumentationFiles>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <MultiProcessorCompilation>
+      </MultiProcessorCompilation>
+      <RuntimeTypeInfo>
+      </RuntimeTypeInfo>
+      <CompileAs>CompileAsCpp</CompileAs>
+      <MinimalRebuild>true</MinimalRebuild>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+    </ClCompile>
+    <Link>
+      <OutputFile>$(TargetPath)</OutputFile>
+      <AdditionalLibraryDirectories>../lib/vs2015;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <SubSystem>Console</SubSystem>
+      <OptimizeReferences>
+      </OptimizeReferences>
+      <EnableCOMDATFolding>
+      </EnableCOMDATFolding>
+      <AdditionalDependencies>dsphchrono.lib;LibJVtkLib_$(PlatformName)_$(PlatformToolset)_Debug.lib;LibJNumexLib_$(PlatformName)_$(PlatformToolset)_Debug.lib;LibJWaveGen_$(PlatformName)_$(PlatformToolset)_Debug.lib;LibDSphMoorDyn_$(PlatformName)_$(PlatformToolset)_Debug.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <LinkStatus>
+      </LinkStatus>
+      <LinkTimeCodeGeneration>Default</LinkTimeCodeGeneration>
+    </Link>
+    <PostBuildEvent>
+      <Command>IF EXIST cg_variables.h move cg_variables.h $(Configuration)\</Command>
+    </PostBuildEvent>
+    <CudaCompile>
+      <CodeGeneration>compute_30,sm_30</CodeGeneration>
+    </CudaCompile>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <CudaCompile Include="..\source\FunctionsGeo3d_iker.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">true</ExcludedFromBuild>
+    </CudaCompile>
+    <CudaCompile Include="..\source\FunctionsMath_iker.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">true</ExcludedFromBuild>
+    </CudaCompile>
+    <CudaCompile Include="..\source\JCellDivGpu_ker.cu">
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">rem ***Vars de compilacion
+set CudaPath=$(CUDA_PATH_V9_2)
+set CudaNvcc="%CudaPath%\bin\nvcc.exe"
+set CudaInc="%CudaPath%\include"
+rem ***Seleccion de GPU hardware para compilacion
+set gpuhw=-gencode=arch=compute_30,code=\"sm_30,compute_30\"
+set gpuhw=-gencode=arch=compute_35,code=\"sm_35,compute_35\"
+set gpuhw=-gencode=arch=compute_13,code=\"sm_13,compute_13\" -gencode=arch=compute_20,code=\"sm_20,compute_20\"
+set gpuhw=-gencode=arch=compute_20,code=\"sm_20,compute_20\"
+rem ***Activa la visualizacion de registros por kernel
+set ptxinfo=--ptxas-options -v
+set ptxinfo=
+rem ***Sentencia de compilacion
+%CudaNvcc% -ccbin "$(VCInstallDir)bin" %gpuhw% -use_fast_math -c %ptxinfo% -DWIN32 -D_CONSOLE -D_MBCS -Xcompiler /EHsc,/W3,/nologo,/O2,/Zi,/MT -m 64 -I%CudaInc% -I./ -o Intermediate\$(Configuration)\%(Filename).obj ..\%(Filename)%(Extension)
+</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">rem ***Vars de compilacion
+set CudaPath=$(CUDA_PATH_V9_2)
+set CudaNvcc="%CudaPath%\bin\nvcc.exe"
+set CudaInc="%CudaPath%\include"
+rem ***Seleccion de GPU hardware para compilacion
+set gpuhw=-gencode=arch=compute_30,code=\"sm_30,compute_30\"
+set gpuhw=-gencode=arch=compute_35,code=\"sm_35,compute_35\"
+set gpuhw=-gencode=arch=compute_13,code=\"sm_13,compute_13\" -gencode=arch=compute_20,code=\"sm_20,compute_20\"
+set gpuhw=-gencode=arch=compute_20,code=\"sm_20,compute_20\"
+rem ***Activa la visualizacion de registros por kernel
+set ptxinfo=--ptxas-options -v
+set ptxinfo=
+rem ***Sentencia de compilacion
+%CudaNvcc% -ccbin "$(VCInstallDir)bin" %gpuhw% -use_fast_math -c %ptxinfo% -DWIN32 -D_CONSOLE -D_MBCS -Xcompiler /EHsc,/W3,/nologo,/O2,/Zi,/MT -m 64 -I%CudaInc% -I./ -o Intermediate\$(Configuration)\%(Filename).obj ..\%(Filename)%(Extension)
+</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Intermediate\$(Configuration)\%(Filename).obj</Outputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Intermediate\$(Configuration)\%(Filename).obj</Outputs>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">true</ExcludedFromBuild>
+      <FileType>Document</FileType>
+    </CudaCompile>
+    <CudaCompile Include="..\source\JCellDivGpuSingle_ker.cu">
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">rem ***Vars de compilacion
+set CudaPath=$(CUDA_PATH_V9_2)
+set CudaNvcc="%CudaPath%\bin\nvcc.exe"
+set CudaInc="%CudaPath%\include"
+rem ***Seleccion de GPU hardware para compilacion
+set gpuhw=-gencode=arch=compute_30,code=\"sm_30,compute_30\"
+set gpuhw=-gencode=arch=compute_13,code=\"sm_13,compute_13\" -gencode=arch=compute_20,code=\"sm_20,compute_20\"
+set gpuhw=-gencode=arch=compute_35,code=\"sm_35,compute_35\"
+set gpuhw=-gencode=arch=compute_13,code=\"sm_13,compute_13\" -gencode=arch=compute_20,code=\"sm_20,compute_20\"
+set gpuhw=-gencode=arch=compute_20,code=\"sm_20,compute_20\"
+rem ***Activa la visualizacion de registros por kernel
+set ptxinfo=--ptxas-options -v
+set ptxinfo=
+rem ***Sentencia de compilacion
+%CudaNvcc% -ccbin "$(VCInstallDir)bin" %gpuhw% -use_fast_math -c %ptxinfo% -DWIN32 -D_CONSOLE -D_MBCS -Xcompiler /EHsc,/W3,/nologo,/O2,/Zi,/MT -m 64 -I%CudaInc% -I./ -o Intermediate\$(Configuration)\%(Filename).obj ..\%(Filename)%(Extension)
+</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">rem ***Vars de compilacion
+set CudaPath=$(CUDA_PATH_V9_2)
+set CudaNvcc="%CudaPath%\bin\nvcc.exe"
+set CudaInc="%CudaPath%\include"
+rem ***Seleccion de GPU hardware para compilacion
+set gpuhw=-gencode=arch=compute_30,code=\"sm_30,compute_30\"
+set gpuhw=-gencode=arch=compute_13,code=\"sm_13,compute_13\" -gencode=arch=compute_20,code=\"sm_20,compute_20\"
+set gpuhw=-gencode=arch=compute_35,code=\"sm_35,compute_35\"
+set gpuhw=-gencode=arch=compute_13,code=\"sm_13,compute_13\" -gencode=arch=compute_20,code=\"sm_20,compute_20\"
+set gpuhw=-gencode=arch=compute_20,code=\"sm_20,compute_20\"
+rem ***Activa la visualizacion de registros por kernel
+set ptxinfo=--ptxas-options -v
+set ptxinfo=
+rem ***Sentencia de compilacion
+%CudaNvcc% -ccbin "$(VCInstallDir)bin" %gpuhw% -use_fast_math -c %ptxinfo% -DWIN32 -D_CONSOLE -D_MBCS -Xcompiler /EHsc,/W3,/nologo,/O2,/Zi,/MT -m 64 -I%CudaInc% -I./ -o Intermediate\$(Configuration)\%(Filename).obj ..\%(Filename)%(Extension)
+</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Intermediate\$(Configuration)\%(Filename).obj</Outputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Intermediate\$(Configuration)\%(Filename).obj</Outputs>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">true</ExcludedFromBuild>
+      <FileType>Document</FileType>
+    </CudaCompile>
+    <CudaCompile Include="..\source\JDsPips_ker.cu">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">true</ExcludedFromBuild>
+    </CudaCompile>
+    <CudaCompile Include="..\source\JDsGauge_ker.cu">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">true</ExcludedFromBuild>
+    </CudaCompile>
+    <CudaCompile Include="..\source\JReduSum_ker.cu">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">true</ExcludedFromBuild>
+    </CudaCompile>
+    <CudaCompile Include="..\source\JRelaxZone_ker.cu">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">true</ExcludedFromBuild>
+    </CudaCompile>
+    <CudaCompile Include="..\source\JSphShifting_ker.cu">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">true</ExcludedFromBuild>
+    </CudaCompile>
+    <CudaCompile Include="..\source\JDsAccInput_ker.cu">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">true</ExcludedFromBuild>
+    </CudaCompile>
+    <CudaCompile Include="..\source\JSphGpuSimple_ker.cu">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">true</ExcludedFromBuild>
+    </CudaCompile>
+    <CudaCompile Include="..\source\JSphGpu_InOut_ker.cu">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </CudaCompile>
+    <CudaCompile Include="..\source\JSphGpu_ker.cu">
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">rem ***Vars de compilacion
+set CudaPath=$(CUDA_PATH_V9_2)
+set CudaNvcc="%CudaPath%\bin\nvcc.exe"
+set CudaInc="%CudaPath%\include"
+rem ***Seleccion de GPU hardware para compilacion
+set gpuhw=-gencode=arch=compute_30,code=\"sm_30,compute_30\"
+set gpuhw=-gencode=arch=compute_13,code=\"sm_13,compute_13\" -gencode=arch=compute_20,code=\"sm_20,compute_20\"
+set gpuhw=-gencode=arch=compute_35,code=\"sm_35,compute_35\"
+set gpuhw=-gencode=arch=compute_13,code=\"sm_13,compute_13\" -gencode=arch=compute_20,code=\"sm_20,compute_20\"
+set gpuhw=-gencode=arch=compute_20,code=\"sm_20,compute_20\"
+rem ***Activa la visualizacion de registros por kernel y creacion de _ptxasinfo
+set ptxinfo=--ptxas-options -v
+set ptxinfo=
+rem ***Sentencia de compilacion sin salida _ptxasinfo
+%CudaNvcc% -ccbin "$(VCInstallDir)bin" %gpuhw% -use_fast_math -c %ptxinfo% -DWIN32 -D_CONSOLE -D_MBCS -Xcompiler /EHsc,/W3,/nologo,/O2,/Zi,/MT -m 64 -I%CudaInc% -I./ -o Intermediate\$(Configuration)\%(Filename).obj ..\%(Filename)%(Extension) -D _CRT_SECURE_NO_DEPRECATE 
+rem ***Sentencia de compilacion con salida _ptxasinfo
+rem %CudaNvcc% -ccbin "$(VCInstallDir)bin" %gpuhw% -use_fast_math -c %ptxinfo% -DWIN32 -D_CONSOLE -D_MBCS -Xcompiler /EHsc,/W3,/nologo,/O2,/Zi,/MT -m 64 -I%CudaInc% -I./ -o Intermediate\$(Configuration)\%(Filename).obj ..\%(Filename)%(Extension) -D _CRT_SECURE_NO_DEPRECATE 1&gt;$(OutDir)$(ProjectName)_$(Configuration)64_ptxasinfo
+</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">rem ***Vars de compilacion
+set CudaPath=$(CUDA_PATH_V9_2)
+set CudaNvcc="%CudaPath%\bin\nvcc.exe"
+set CudaInc="%CudaPath%\include"
+rem ***Seleccion de GPU hardware para compilacion
+set gpuhw=-gencode=arch=compute_30,code=\"sm_30,compute_30\"
+set gpuhw=-gencode=arch=compute_13,code=\"sm_13,compute_13\" -gencode=arch=compute_20,code=\"sm_20,compute_20\"
+set gpuhw=-gencode=arch=compute_35,code=\"sm_35,compute_35\"
+set gpuhw=-gencode=arch=compute_13,code=\"sm_13,compute_13\" -gencode=arch=compute_20,code=\"sm_20,compute_20\"
+set gpuhw=-gencode=arch=compute_20,code=\"sm_20,compute_20\"
+rem ***Activa la visualizacion de registros por kernel y creacion de _ptxasinfo
+set ptxinfo=--ptxas-options -v
+set ptxinfo=
+rem ***Sentencia de compilacion sin salida _ptxasinfo
+%CudaNvcc% -ccbin "$(VCInstallDir)bin" %gpuhw% -use_fast_math -c %ptxinfo% -DWIN32 -D_CONSOLE -D_MBCS -Xcompiler /EHsc,/W3,/nologo,/O2,/Zi,/MT -m 64 -I%CudaInc% -I./ -o Intermediate\$(Configuration)\%(Filename).obj ..\%(Filename)%(Extension) -D _CRT_SECURE_NO_DEPRECATE 
+rem ***Sentencia de compilacion con salida _ptxasinfo
+rem %CudaNvcc% -ccbin "$(VCInstallDir)bin" %gpuhw% -use_fast_math -c %ptxinfo% -DWIN32 -D_CONSOLE -D_MBCS -Xcompiler /EHsc,/W3,/nologo,/O2,/Zi,/MT -m 64 -I%CudaInc% -I./ -o Intermediate\$(Configuration)\%(Filename).obj ..\%(Filename)%(Extension) -D _CRT_SECURE_NO_DEPRECATE 1&gt;$(OutDir)$(ProjectName)_$(Configuration)64_ptxasinfo
+</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Intermediate\$(Configuration)\%(Filename).obj</Outputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Intermediate\$(Configuration)\%(Filename).obj</Outputs>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">true</ExcludedFromBuild>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+      </AdditionalInputs>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+      </AdditionalInputs>
+      <FileType>Document</FileType>
+    </CudaCompile>
+    <CudaCompile Include="..\source\JWaveOrder2_ker.cu">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">true</ExcludedFromBuild>
+    </CudaCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\source\DSPHChronoLib.h" />
+    <ClInclude Include="..\source\DSphMoorDyn.h" />
+    <ClInclude Include="..\source\DSphMoorDynUndef.h" />
+    <ClInclude Include="..\source\DualSphDef.h" />
+    <ClInclude Include="..\source\Functions.h" />
+    <ClInclude Include="..\source\FunctionsBasic_iker.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">true</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="..\source\FunctionsCuda.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">true</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="..\source\FunctionsGeo3d.h" />
+    <ClInclude Include="..\source\FunctionsMath.h" />
+    <ClInclude Include="..\source\FunSphEos.h" />
+    <ClInclude Include="..\source\FunSphEos_iker.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">true</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="..\source\FunSphKernel.h" />
+    <ClInclude Include="..\source\FunSphKernelDef.h" />
+    <ClInclude Include="..\source\FunSphKernelsCfg.h" />
+    <ClInclude Include="..\source\FunSphKernel_iker.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">true</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="..\source\JAppInfo.h" />
+    <ClInclude Include="..\source\JAppInfoDef.h" />
+    <ClInclude Include="..\source\JArraysCpu.h" />
+    <ClInclude Include="..\source\JBinaryData.h" />
+    <ClInclude Include="..\source\JCellDivCpu.h" />
+    <ClInclude Include="..\source\JCellDivCpuSingle.h" />
+    <ClInclude Include="..\source\JCellDivDataCpu.h" />
+    <ClInclude Include="..\source\JCellDivDataGpu.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+      </ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">true</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="..\source\JCellDivGpu.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">true</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="..\source\JCellDivGpuSingle.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">true</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="..\source\JCellDivGpuSingle_ker.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">true</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="..\source\JCellDivGpu_ker.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">true</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="..\source\JCellSearch_iker.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">true</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="..\source\JCellSearch_inline.h" />
+    <ClInclude Include="..\source\JCfgRunBase.h" />
+    <ClInclude Include="..\source\JChronoData.h" />
+    <ClInclude Include="..\source\JChronoObjects.h" />
+    <ClInclude Include="..\source\JChronoObjectsUndef.h" />
+    <ClInclude Include="..\source\JDsDamping.h" />
+    <ClInclude Include="..\source\JDataArrays.h" />
+    <ClInclude Include="..\source\JDebugSphGpu.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">true</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="..\source\JDsphConfig.h" />
+    <ClInclude Include="..\source\JDsPips.h" />
+    <ClInclude Include="..\source\JDsPips_ker.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">true</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="..\source\JException.h" />
+    <ClInclude Include="..\source\JArraysGpu.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">true</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="..\source\JDsGaugeItem.h" />
+    <ClInclude Include="..\source\JDsGaugeSystem.h" />
+    <ClInclude Include="..\source\JDsGauge_ker.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">true</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="..\source\JLinearValue.h" />
+    <ClInclude Include="..\source\JLinearValueDef.h" />
+    <ClInclude Include="..\source\JLog2.h" />
+    <ClInclude Include="..\source\JMatrix4.h" />
+    <ClInclude Include="..\source\JMeanValues.h" />
+    <ClInclude Include="..\source\JMLPistons.h" />
+    <ClInclude Include="..\source\JMLPistonsGpu.h" />
+    <ClInclude Include="..\source\JDsMooredFloatings.h" />
+    <ClInclude Include="..\source\JMotion.h" />
+    <ClInclude Include="..\source\JMotionEvent.h" />
+    <ClInclude Include="..\source\JMotionList.h" />
+    <ClInclude Include="..\source\JMotionMov.h" />
+    <ClInclude Include="..\source\JMotionObj.h" />
+    <ClInclude Include="..\source\JMotionPos.h" />
+    <ClInclude Include="..\source\JNormalsMarrone.h" />
+    <ClInclude Include="..\source\JNumexLib.h" />
+    <ClInclude Include="..\source\JNumexLibDef.h" />
+    <ClInclude Include="..\source\JNumexLibUndef.h" />
+    <ClInclude Include="..\source\JObject.h" />
+    <ClInclude Include="..\source\JObjectGpu.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">true</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="..\source\JOutputCsv.h" />
+    <ClInclude Include="..\source\JPartDataBi4.h" />
+    <ClInclude Include="..\source\JPartDataHead.h" />
+    <ClInclude Include="..\source\JPartFloatBi4.h" />
+    <ClInclude Include="..\source\JParticlesDef.h" />
+    <ClInclude Include="..\source\JPartNormalData.h" />
+    <ClInclude Include="..\source\JPartOutBi4Save.h" />
+    <ClInclude Include="..\source\JPartsLoad4.h" />
+    <ClInclude Include="..\source\JPeriodicDef.h" />
+    <ClInclude Include="..\source\JRadixSort.h" />
+    <ClInclude Include="..\source\JRangeFilter.h" />
+    <ClInclude Include="..\source\JReadDatafile.h" />
+    <ClInclude Include="..\source\JReduSum_ker.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">true</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="..\source\JRelaxZones.h" />
+    <ClInclude Include="..\source\JRelaxZonesGpu.h" />
+    <ClInclude Include="..\source\JRelaxZone_ker.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">true</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="..\source\JSaveCsv2.h" />
+    <ClInclude Include="..\source\JDsSaveDt.h" />
+    <ClInclude Include="..\source\JSphShifting.h" />
+    <ClInclude Include="..\source\JSphShifting_ker.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">true</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="..\source\JSimpleNeigs.h" />
+    <ClInclude Include="..\source\JCasePartsDef.h" />
+    <ClInclude Include="..\source\JCaseProperties.h" />
+    <ClInclude Include="..\source\JCaseUserVars.h" />
+    <ClInclude Include="..\source\JCaseVtkOut.h" />
+    <ClInclude Include="..\source\JDsAccInput.h" />
+    <ClInclude Include="..\source\JDsAccInput_ker.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">true</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="..\source\JSphBoundCorr.h" />
+    <ClInclude Include="..\source\JDsFixedDt.h" />
+    <ClInclude Include="..\source\JDsFtForcePoints.h" />
+    <ClInclude Include="..\source\JSphGpuSimple_ker.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">true</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="..\source\JSphGpuSingle.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">true</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="..\source\JSphGpu_InOut_ker.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="..\source\JSphGpu_ker.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">true</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="..\source\JDsInitialize.h" />
+    <ClInclude Include="..\source\JSphInOut.h" />
+    <ClInclude Include="..\source\JSphInOutGridData.h" />
+    <ClInclude Include="..\source\JSphInOutPoints.h" />
+    <ClInclude Include="..\source\JSphInOutZone.h" />
+    <ClInclude Include="..\source\JSphMk.h" />
+    <ClInclude Include="..\source\JDsMotion.h" />
+    <ClInclude Include="..\source\JDsPartsInit.h" />
+    <ClInclude Include="..\source\JDsViscoInput.h" />
+    <ClInclude Include="..\source\JDsPartsOut.h" />
+    <ClInclude Include="..\source\JSphCpuSingle.h" />
+    <ClInclude Include="..\source\JTimeControl.h" />
+    <ClInclude Include="..\source\JDsOutputTime.h" />
+    <ClInclude Include="..\source\JTimer.h" />
+    <ClInclude Include="..\source\JTimerCuda.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">true</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="..\source\JVtkLib.h" />
+    <ClInclude Include="..\source\JVtkLibDef.h" />
+    <ClInclude Include="..\source\JVtkLibUndef.h" />
+    <ClInclude Include="..\source\JWaveAwasZsurf.h" />
+    <ClInclude Include="..\source\JWaveGen.h" />
+    <ClInclude Include="..\source\JWaveGenUndef.h" />
+    <ClInclude Include="..\source\JWaveOrder2_ker.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">true</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="..\source\JWaveSpectrumGpu.h" />
+    <ClInclude Include="..\source\JXml.h" />
+    <ClInclude Include="..\source\OmpDefs.h" />
+    <ClInclude Include="..\source\randomc.h" />
+    <ClInclude Include="..\source\tinystr.h" />
+    <ClInclude Include="..\source\tinyxml.h" />
+    <ClInclude Include="..\source\TypesDef.h" />
+    <CustomBuildStep Include="..\source\_CudaSphApi.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+    </CustomBuildStep>
+    <CustomBuildStep Include="..\source\_radixsort.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+    </CustomBuildStep>
+    <ClInclude Include="..\source\JSphTimersCpu.h" />
+    <CustomBuildStep Include="..\source\JSphTimersGpu.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">true</ExcludedFromBuild>
+    </CustomBuildStep>
+    <ClInclude Include="..\source\JSphCfgRun.h" />
+    <ClInclude Include="..\source\JCaseParts.h" />
+    <ClInclude Include="..\source\JCaseCtes.h" />
+    <ClInclude Include="..\source\JCaseEParms.h" />
+    <ClInclude Include="..\source\JSph.h" />
+    <ClInclude Include="..\source\JSphCpu.h" />
+    <CustomBuildStep Include="..\source\JSphGpu.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">true</ExcludedFromBuild>
+    </CustomBuildStep>
+    <ClInclude Include="..\source\JTimerClock.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\source\Functions.cpp" />
+    <ClCompile Include="..\source\FunctionsCuda.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\source\FunctionsGeo3d.cpp" />
+    <ClCompile Include="..\source\FunSphKernelsCfg.cpp" />
+    <ClCompile Include="..\source\JAppInfo.cpp" />
+    <ClCompile Include="..\source\JArraysCpu.cpp" />
+    <ClCompile Include="..\source\JBinaryData.cpp" />
+    <ClCompile Include="..\source\JCellDivCpu.cpp" />
+    <ClCompile Include="..\source\JCellDivCpuSingle.cpp" />
+    <ClCompile Include="..\source\JCellDivGpu.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\source\JCellDivGpuSingle.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\source\JCfgRunBase.cpp" />
+    <ClCompile Include="..\source\JChronoObjects.cpp" />
+    <ClCompile Include="..\source\JDsDamping.cpp" />
+    <ClCompile Include="..\source\JArraysGpu.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\source\JDataArrays.cpp" />
+    <ClCompile Include="..\source\JDebugSphGpu.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\source\JDsphConfig.cpp" />
+    <ClCompile Include="..\source\JDsPips.cpp" />
+    <ClCompile Include="..\source\JException.cpp" />
+    <ClCompile Include="..\source\JDsGaugeItem.cpp" />
+    <ClCompile Include="..\source\JDsGaugeSystem.cpp" />
+    <ClCompile Include="..\source\JLinearValue.cpp" />
+    <ClCompile Include="..\source\JLog2.cpp" />
+    <ClCompile Include="..\source\JMeanValues.cpp" />
+    <ClCompile Include="..\source\JMLPistonsGpu.cpp" />
+    <ClCompile Include="..\source\JDsMooredFloatings.cpp" />
+    <ClCompile Include="..\source\JMotion.cpp" />
+    <ClCompile Include="..\source\JMotionList.cpp" />
+    <ClCompile Include="..\source\JMotionMov.cpp" />
+    <ClCompile Include="..\source\JMotionObj.cpp" />
+    <ClCompile Include="..\source\JMotionPos.cpp" />
+    <ClCompile Include="..\source\JNormalsMarrone.cpp" />
+    <ClCompile Include="..\source\JObject.cpp" />
+    <ClCompile Include="..\source\JObjectGpu.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\source\JOutputCsv.cpp" />
+    <ClCompile Include="..\source\JPartDataBi4.cpp" />
+    <ClCompile Include="..\source\JPartDataHead.cpp" />
+    <ClCompile Include="..\source\JPartFloatBi4.cpp" />
+    <ClCompile Include="..\source\JPartNormalData.cpp" />
+    <ClCompile Include="..\source\JPartOutBi4Save.cpp" />
+    <ClCompile Include="..\source\JPartsLoad4.cpp" />
+    <ClCompile Include="..\source\JRadixSort.cpp" />
+    <ClCompile Include="..\source\JRangeFilter.cpp" />
+    <ClCompile Include="..\source\JReadDatafile.cpp" />
+    <ClCompile Include="..\source\JRelaxZonesGpu.cpp" />
+    <ClCompile Include="..\source\JSaveCsv2.cpp" />
+    <ClCompile Include="..\source\JDsSaveDt.cpp" />
+    <ClCompile Include="..\source\JSphShifting.cpp" />
+    <ClCompile Include="..\source\JSimpleNeigs.cpp" />
+    <ClCompile Include="..\source\JCaseProperties.cpp" />
+    <ClCompile Include="..\source\JCaseUserVars.cpp" />
+    <ClCompile Include="..\source\JCaseVtkOut.cpp" />
+    <ClCompile Include="..\source\JDsAccInput.cpp" />
+    <ClCompile Include="..\source\JSphBoundCorr.cpp" />
+    <ClCompile Include="..\source\JSphCpuSingle_InOut.cpp" />
+    <ClCompile Include="..\source\JSphCpu_InOut.cpp" />
+    <ClCompile Include="..\source\JDsFixedDt.cpp" />
+    <ClCompile Include="..\source\JDsFtForcePoints.cpp" />
+    <ClCompile Include="..\source\JSphGpuSingle.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\source\JSphGpuSingle_InOut.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\source\JDsInitialize.cpp" />
+    <ClCompile Include="..\source\JSphInOut.cpp" />
+    <ClCompile Include="..\source\JSphInOutGridData.cpp" />
+    <ClCompile Include="..\source\JSphInOutPoints.cpp" />
+    <ClCompile Include="..\source\JSphInOutZone.cpp" />
+    <ClCompile Include="..\source\JSphMk.cpp" />
+    <ClCompile Include="..\source\JDsMotion.cpp" />
+    <ClCompile Include="..\source\JDsPartsInit.cpp" />
+    <ClCompile Include="..\source\JDsViscoInput.cpp" />
+    <ClCompile Include="..\source\JDsPartsOut.cpp" />
+    <ClCompile Include="..\source\JSphCpuSingle.cpp" />
+    <ClCompile Include="..\source\JTimeControl.cpp" />
+    <ClCompile Include="..\source\JDsOutputTime.cpp" />
+    <ClCompile Include="..\source\JSphCfgRun.cpp" />
+    <ClCompile Include="..\source\JCaseParts.cpp" />
+    <ClCompile Include="..\source\JCaseCtes.cpp" />
+    <ClCompile Include="..\source\JCaseEParms.cpp" />
+    <ClCompile Include="..\source\JSph.cpp" />
+    <ClCompile Include="..\source\JSphCpu.cpp" />
+    <ClCompile Include="..\source\JSphGpu.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\source\JWaveAwasZsurf.cpp" />
+    <ClCompile Include="..\source\JWaveSpectrumGpu.cpp" />
+    <ClCompile Include="..\source\JXml.cpp" />
+    <ClCompile Include="..\source\main.cpp" />
+    <ClCompile Include="..\source\randomc.cpp" />
+    <ClCompile Include="..\source\tinystr.cpp" />
+    <ClCompile Include="..\source\tinyxml.cpp" />
+    <ClCompile Include="..\source\tinyxmlerror.cpp" />
+    <ClCompile Include="..\source\tinyxmlparser.cpp" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+</Project>

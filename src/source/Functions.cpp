@@ -1,6 +1,6 @@
 //HEAD_DSCODES
 /*
- <DUALSPHYSICS>  Copyright (c) 2019 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -256,6 +256,37 @@ std::string StrCsvSep(bool csvsepcoma,const std::string &cad){
 }
 
 //==============================================================================
+/// Returns format to obtain simplified number in a string.
+//==============================================================================
+std::string NaturalFmt(double v,unsigned ndigits,bool removezeros){
+  const string fmt0=string("%.")+IntStr(ndigits)+"f";
+  string tnat=DoubleStr(fabs(v),fmt0.c_str());
+  int pp=int(tnat.find("."));
+  int ne=(pp>=0? pp: int(tnat.length()));
+  if(ne==1 && tnat[0]=='0')ne=0;
+  //printf("----> tnat:[%s] ne:%d\n",tnat.c_str(),ne);
+  if(ne==0){
+    tnat=tnat.substr(pp+1);
+    for(int c=0;c<int(tnat.size()) && tnat[c]=='0';c++)ne--;
+    //printf("  --> tnat2:[%s] ne:%d\n",tnat.c_str(),ne);
+  }
+  int ndec=max(int(ndigits)-ne,0);
+  string fmt=string("%.")+IntStr(ndec)+"f";
+  if(removezeros){
+    string txv=DoubleStr(v,fmt.c_str());
+    for(int c=int(txv.size())-1;ndec>0 && c>=0 && txv[c]=='0';c--)ndec--;
+    fmt=string("%.")+IntStr(ndec)+"f";
+  }
+  //string txv=DoubleStr(v,fmt.c_str());
+  //printf("  --> fmt:[%s] v:%s \n",fmt.c_str(),txv.c_str());
+  //string txv1=DoubleStr(v,"%.10E");
+  //double v1=StrToDouble(txv1);
+  //double v2=StrToDouble(txv);
+  //printf("  --> Dif: v1:%s  v2:%s  dif:%g\n",txv1.c_str(),txv.c_str(),v2-v1);
+  return(fmt);
+}
+
+//==============================================================================
 /// Converts unsigned value to string filling with zeros.
 //==============================================================================
 std::string IntStrFill(int v,int vmax){
@@ -391,6 +422,16 @@ std::string Double4Str(const tdouble4 &v,const char* fmt){
   char cad[2048];
   sprintf(cad,fmt,v.x,v.y,v.z,v.w);
   return(std::string(cad));
+}
+
+//==============================================================================
+/// Converts vector of strings to string list.
+//==============================================================================
+std::string VectorStr(const std::vector<std::string> &v){
+  string ret;
+  const unsigned n=unsigned(v.size());
+  for(unsigned c=0;c<n;c++)ret=ret+(c? string(",")+v[c]: v[c]);
+  return(ret);
 }
 
 //==============================================================================
@@ -829,13 +870,36 @@ unsigned VectorSplitDouble(const std::string mark,const std::string &text,std::v
 }
 
 //==============================================================================
-/// Loads string list in a vector and returns size of vector.
+/// Find string in a string vector vector since first position. 
+/// Returns UINT_MAX when it was not found.
 //==============================================================================
-unsigned VectorFind(const std::string &key,const std::vector<std::string> &vec){
-  unsigned c=0;
+unsigned VectorFind(const std::string &key,const std::vector<std::string> &vec
+  ,unsigned first)
+{
+  unsigned c=first;
   const unsigned size=unsigned(vec.size());
   for(;c<size && vec[c]!=key;c++);
   return(c<size? c: UINT_MAX);
+}
+
+//==============================================================================
+/// Find string mask (using *, ?, |) in a string vector vector since first position. 
+/// Returns UINT_MAX when it was not found.
+//==============================================================================
+unsigned VectorFindMask(const std::string &keymask,const std::vector<std::string> &vec
+  ,unsigned first)
+{
+  unsigned ret=UINT_MAX;
+  const unsigned size=unsigned(vec.size());
+  for(unsigned c=first;c<size && ret==UINT_MAX;c++){
+    const string v=vec[c];
+    //printf("---> v:[%s]  keymask:[%s]\n",v.c_str(),keymask.c_str());
+    const bool usemask=(int(keymask.find('?'))>=0 || int(keymask.find('*'))>=0 || int(keymask.find('|'))>=0);
+    if(!usemask && v==keymask)ret=c;
+    if(usemask && FileMask(v,keymask))ret=c;
+    //printf("---> usemask:%d  FileMask:%d\n",(usemask?1:0),FileMask(v,keymask)?1:0);
+  }
+  return(ret);
 }
 
 
@@ -1036,6 +1100,18 @@ int FileType(const std::string &name){
 }
 
 //==============================================================================
+/// Returns time of last modification in a file.
+/// 0:It is not a valid file.
+//==============================================================================
+ullong FileModifTime(const std::string &name){
+  ullong ret=0;
+  struct stat stfileinfo;
+  int intstat=stat(name.c_str(),&stfileinfo);
+  if(intstat==0 && stfileinfo.st_mode&S_IFREG)ret=ullong(stfileinfo.st_mtime);
+  return(ret);
+}
+
+//==============================================================================
 /// Returns size of file or -1 in case of error.
 //==============================================================================
 llong FileSize(const std::string &name){
@@ -1195,7 +1271,7 @@ std::string GetFile(const std::string &ruta){
 //==============================================================================
 std::string GetDirWithSlash(const std::string &ruta){
   std::string rut=ruta;
-  if(ruta!=""){
+  if(!ruta.empty()){
     char last=ruta[ruta.length()-1];
     if(last!='\\'&&last!='/')rut=ruta+"/";
   }
@@ -1520,6 +1596,39 @@ tdouble4* ResizeAlloc(tdouble4 *data,unsigned ndata,unsigned newsize){
   if(ndata)memcpy(data2,data,sizeof(tdouble4)*ndata);
   delete[] data;
   return(data2);
+}
+
+
+//==============================================================================
+/// Returns array converted to tfloat3 in allocated memory with new tfloat3[].
+//==============================================================================
+tfloat3* NewToTFloat3(const tdouble3* data,unsigned ndata){
+  tfloat3* v=new tfloat3[ndata];
+  for(unsigned c=0;c<ndata;c++)v[c]=ToTFloat3(data[c]);
+  return(v);
+}
+
+//==============================================================================
+/// Returns array converted to tdouble3 in allocated memory with new tdouble3[].
+//==============================================================================
+tdouble3* NewToTDouble3(const tfloat3* data,unsigned ndata){
+  tdouble3* v=new tdouble3[ndata];
+  for(unsigned c=0;c<ndata;c++)v[c]=ToTDouble3(data[c]);
+  return(v);
+}
+
+
+//==============================================================================
+/// Returns length of vector.
+//==============================================================================
+float Length(const tfloat3 &v){
+ return(sqrt(v.x*v.x+v.y*v.y+v.z*v.z));
+}
+//==============================================================================
+/// Returns length of vector.
+//==============================================================================
+double Length(const tdouble3 &v){
+ return(sqrt(v.x*v.x+v.y*v.y+v.z*v.z));
 }
 
 

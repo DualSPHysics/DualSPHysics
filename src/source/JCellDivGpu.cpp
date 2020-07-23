@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2019 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -27,13 +27,14 @@ using namespace std;
 //==============================================================================
 /// Constructor.
 //==============================================================================
-JCellDivGpu::JCellDivGpu(bool stable,bool floating,byte periactive
+JCellDivGpu::JCellDivGpu(bool stable,bool floating,byte periactive,float kernelsize2,float poscellsize
   ,TpCellMode cellmode,float scell,tdouble3 mapposmin,tdouble3 mapposmax,tuint3 mapcells
   ,unsigned casenbound,unsigned casenfixed,unsigned casenpb,JLog2 *log,std::string dirout
   ,bool allocfullnct,float overmemorynp,word overmemorycells)
   :Stable(stable),Floating(floating),PeriActive(periactive)
-  ,CellMode(cellmode),Hdiv(cellmode==CELLMODE_2H? 1: (cellmode==CELLMODE_H? 2: 0)),Scell(scell)
-  ,OvScell(1.f/scell),Map_PosMin(mapposmin),Map_PosMax(mapposmax),Map_PosDif(mapposmax-mapposmin)
+  ,CellMode(cellmode),ScellDiv(cellmode==CELLMODE_Full? 1: (cellmode==CELLMODE_Half? 2: 0))
+  ,Scell(scell),OvScell(1.f/scell),KernelSize2(kernelsize2),PosCellSize(poscellsize)
+  ,Map_PosMin(mapposmin),Map_PosMax(mapposmax),Map_PosDif(mapposmax-mapposmin)
   ,Map_Cells(mapcells),CaseNbound(casenbound),CaseNfixed(casenfixed),CaseNpb(casenpb),Log(log)
   ,DirOut(dirout),AllocFullNct(allocfullnct),OverMemoryNp(overmemorynp),OverMemoryCells(overmemorycells)
 {
@@ -353,6 +354,15 @@ void JCellDivGpu::SortDataArrays(const float3 *a,float3 *a2){
 }
 
 //==============================================================================
+/// Reorders data arrays according to SortPart (for float values).
+/// Ordena arrays de datos segun SortPart (para valores float).
+//==============================================================================
+void JCellDivGpu::SortDataArrays(const float *a, float *a2) {
+  const unsigned pini=(DivideFull? 0: NpbFinal);
+  cudiv::SortDataParticles(Nptot,pini,SortPart,a,a2);
+}
+
+//==============================================================================
 /// Returns a pointer with the auxiliary memory allocated in the GPU, only
 /// used as intermediate in some tasks, in order to use it in other tasks.
 /// This memoery is resized according to the particle number thus its
@@ -362,7 +372,7 @@ void JCellDivGpu::SortDataArrays(const float3 *a,float3 *a2){
 /// como almacenamiento intermedio durante ciertos procesos. Asi es posible
 /// aprovechar esta memoria para otros usos.
 /// Esta memoria se redimensiona segun el numero de particulas por lo que su
-/// tamaño y direccion pueden variar.
+/// tamanho y direccion pueden variar.
 //==============================================================================
 float* JCellDivGpu::GetAuxMem(unsigned size){
   //:printf("GetAuxMem> size:%u  SizeAuxMem:%u\n",size,SizeAuxMem);

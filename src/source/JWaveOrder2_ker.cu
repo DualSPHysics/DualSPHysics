@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2019 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -28,27 +28,14 @@
 //:#include "JDgKerPrint_ker.h"
 
 namespace cuwave2{
-
-//==============================================================================
-/// Returns the dimensions of gridsize according to parameters.
-/// Devuelve tamaño de gridsize segun parametros.
-//==============================================================================
-dim3 GetGridSize(unsigned n,unsigned blocksize){
-  dim3 sgrid;//=dim3(1,2,3);
-  unsigned nb=unsigned(n+blocksize-1)/blocksize; //-Total number of blocks to execute.
-  sgrid.x=(nb<=65535? nb: unsigned(sqrt(float(nb))));
-  sgrid.y=(nb<=65535? 1: unsigned((nb+sgrid.x-1)/sgrid.x));
-  sgrid.z=1;
-  return(sgrid);
-}
-
+#include "FunctionsBasic_iker.h"
 
 //##############################################################################
 //# Kernels for JWaveSpectrum.
 //##############################################################################
 //==============================================================================
 /// Returns required size of auxiliary memory according to data to be processed.
-/// Devuelve tamaño necesario de memoria auxiliar segun datos a procesar.
+/// Devuelve tamanho necesario de memoria auxiliar segun datos a procesar.
 //==============================================================================
 unsigned GetSizeAux(unsigned n){
   return(curedus::GetAuxSize_ReduSumDouble(n)*2);
@@ -69,14 +56,14 @@ template <unsigned blockSize> __device__ void KerReduSumDoubleWarp(volatile doub
 
 //==============================================================================
 /// Calculates component of 2nd order for the piston position in irregular generation.
-/// Calcula componente de 2º orden para la posicion de piston en generacion irregular. 
+/// Calcula componente de 2nd orden para la posicion de piston en generacion irregular. 
 //==============================================================================
 template <unsigned blockSize> __global__ void KerCalcPosition(unsigned n,double time
   ,const double *dnm,const double2 *coefx,double *res)
 {
   extern __shared__ double sdat[];
   unsigned tid=threadIdx.x;
-  unsigned c=blockIdx.y*gridDim.x*blockDim.x + blockIdx.x*blockDim.x + threadIdx.x;
+  unsigned c=blockIdx.x*blockDim.x + threadIdx.x;
   double e2=0;
   if(c<n){
     const double v=dnm[c]*time;
@@ -89,19 +76,19 @@ template <unsigned blockSize> __global__ void KerCalcPosition(unsigned n,double 
   if(blockSize>=256){ if(tid<128)sdat[tid]+=sdat[tid+128];  __syncthreads(); }
   if(blockSize>=128){ if(tid<64) sdat[tid]+=sdat[tid+64];   __syncthreads(); }
   if(tid<32)KerReduSumDoubleWarp<blockSize>(sdat,tid);
-  if(tid==0)res[blockIdx.y*gridDim.x + blockIdx.x]=sdat[0];
+  if(tid==0)res[blockIdx.x]=sdat[0];
 }
 
 //==============================================================================
 /// Calculates component of 2nd order for the piston position in irregular generation.
-/// Calcula componente de 2º orden para la posicion de piston en generacion irregular. 
+/// Calcula componente de 2nd orden para la posicion de piston en generacion irregular. 
 //==============================================================================
 double CalcPosition(double time,unsigned n,const double *dnm,const double2 *coefx,double *aux)
 {
   double res=0;
   if(n){
     const unsigned smemSize=sizeof(double)*WAVEBSIZE;
-    const dim3 sgrid=GetGridSize(n,WAVEBSIZE);
+    const dim3 sgrid=GetSimpleGridSize(n,WAVEBSIZE);
     const unsigned n_blocks=sgrid.x*sgrid.y;
     KerCalcPosition<WAVEBSIZE> <<<sgrid,WAVEBSIZE,smemSize>>> (n,time,dnm,coefx,aux);
     res=curedus::ReduSumDouble(n_blocks,0,aux,aux+n_blocks);
@@ -111,14 +98,14 @@ double CalcPosition(double time,unsigned n,const double *dnm,const double2 *coef
 
 //==============================================================================
 /// Calculates component of 2nd order for the elevation in irregular generation.
-/// Calcula componente de 2º orden para la elevacion en generacion irregular. 
+/// Calcula componente de 2nd orden para la elevacion en generacion irregular. 
 //==============================================================================
 template <unsigned blockSize> __global__ void KerCalcElevation(unsigned n,double time
   ,double x,const double4 *coefe,double *res)
 {
   extern __shared__ double sdat[];
   unsigned tid=threadIdx.x;
-  unsigned c=blockIdx.y*gridDim.x*blockDim.x + blockIdx.x*blockDim.x + threadIdx.x;
+  unsigned c=blockIdx.x*blockDim.x + threadIdx.x;
   double eta2=0;
   if(c<n){
     const double4 coef=coefe[c];
@@ -131,19 +118,19 @@ template <unsigned blockSize> __global__ void KerCalcElevation(unsigned n,double
   if(blockSize>=256){ if(tid<128)sdat[tid]+=sdat[tid+128];  __syncthreads(); }
   if(blockSize>=128){ if(tid<64) sdat[tid]+=sdat[tid+64];   __syncthreads(); }
   if(tid<32)KerReduSumDoubleWarp<blockSize>(sdat,tid);
-  if(tid==0)res[blockIdx.y*gridDim.x + blockIdx.x]=sdat[0];
+  if(tid==0)res[blockIdx.x]=sdat[0];
 }
 
 //==============================================================================
 /// Calculates component of 2nd order for the elevation in irregular generation.
-/// Calcula componente de 2º orden para la elevacion en generacion irregular. 
+/// Calcula componente de 2nd orden para la elevacion en generacion irregular. 
 //==============================================================================
 double CalcElevation(double time,double x,unsigned n,const double4 *coefe,double *aux)
 {
   double res=0;
   if(n){
     const unsigned smemSize=sizeof(double)*WAVEBSIZE;
-    const dim3 sgrid=GetGridSize(n,WAVEBSIZE);
+    const dim3 sgrid=GetSimpleGridSize(n,WAVEBSIZE);
     const unsigned n_blocks=sgrid.x*sgrid.y;
     KerCalcElevation<WAVEBSIZE> <<<sgrid,WAVEBSIZE,smemSize>>> (n,time,x,coefe,aux);
     res=curedus::ReduSumDouble(n_blocks,0,aux,aux+n_blocks);
@@ -154,12 +141,12 @@ double CalcElevation(double time,double x,unsigned n,const double4 *coefe,double
 
 /*:
 ////------------------------------------------------------------------------------
-//// Calcula componente de 2º orden para la posicion de piston en generacion irregular. 
+//// Calcula componente de 2nd orden para la posicion de piston en generacion irregular. 
 ////------------------------------------------------------------------------------
 //__global__ void  KerCalcPosition1(unsigned n,double time
 //  ,const double *dnm,const double2 *coefx,double *aux)
 //{
-//  unsigned c=blockIdx.y*gridDim.x*blockDim.x + blockIdx.x*blockDim.x + threadIdx.x; //-Nº de interaccion.
+//  unsigned c=blockIdx.x*blockDim.x + threadIdx.x; //-Number of interaction.
 //  if(c<n){
 //    const double v=dnm[c]*time;
 //    const double2 coef=coefx[c];
@@ -169,13 +156,13 @@ double CalcElevation(double time,double x,unsigned n,const double4 *coefe,double
 //}
 //
 ////==============================================================================
-//// Calcula componente de 2º orden para la posicion de piston en generacion irregular. 
+//// Calcula componente de 2nd orden para la posicion de piston en generacion irregular. 
 ////==============================================================================
 //double CalcPosition1(double time,unsigned n,const double *dnm,const double2 *coefx,double *aux)
 //{
 //  double res=0;
 //  if(n){
-//    dim3 sgrid=GetGridSize(n,WAVEBSIZE);
+//    dim3 sgrid=GetSimpleGridSize(n,WAVEBSIZE);
 //    KerCalcPosition1 <<<sgrid,WAVEBSIZE>>> (n,time,dnm,coefx,aux);
 //    double *auxh=new double[n];
 //    cudaMemcpy(auxh,aux,sizeof(double)*n,cudaMemcpyDeviceToHost);
@@ -186,13 +173,13 @@ double CalcElevation(double time,double x,unsigned n,const double4 *coefe,double
 //}
 //
 ////==============================================================================
-//// Calcula componente de 2º orden para la posicion de piston en generacion irregular. 
+//// Calcula componente de 2nd orden para la posicion de piston en generacion irregular. 
 ////==============================================================================
 //double CalcPosition2(double time,unsigned n,const double *dnm,const double2 *coefx,double *aux)
 //{
 //  double res=0;
 //  if(n){
-//    dim3 sgrid=GetGridSize(n,WAVEBSIZE);
+//    dim3 sgrid=GetSimpleGridSize(n,WAVEBSIZE);
 //    KerCalcPosition1 <<<sgrid,WAVEBSIZE>>> (n,time,dnm,coefx,aux);
 //    res=curedu::ReduSumDouble(n,0,aux,aux+n);
 //  }

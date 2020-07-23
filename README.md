@@ -101,21 +101,22 @@ Please read [CONTRIBUTING.md](CONTRIBUTING.md) if you want to make changes to th
 
 # Authors and people involved
 
-* **Dr Jose M. Dominguez** - *Main Developer*
+* **Dr Jose M. Dominguez Alonso** - *Main Developer*
 * **Dr Alejandro J.C. Crespo**
 * **Prof. Moncho Gomez Gesteira**
 * **Prof. Benedict D. Rogers**
 * **Dr Georgios Fourtakas**
 * **Prof. Peter Stansby**
-* **Dr Ricardo Canelas**
 * **Dr Renato Vacondio**
 * **Dr Corrado Altomare**
 * **Dr Angelo Tafuni**
-* **Orlando Garcia-Feal**
-* **Dr Jose Gonzalez Cao**
+* **Orlando Garcia Feal**
+* **Ivan Martinez Estevez**
+
 
 ## Former people involved
-
+* **Dr Jose Gonzalez Cao**
+* **Dr Ricardo Canelas**
 * **Dr Athanasios Mokos**
 * **Dr Stephen Longshaw**
 * **Dr Anxo Barreiro**

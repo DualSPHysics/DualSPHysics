@@ -1,6 +1,6 @@
 //HEAD_DSCODES
 /*
- <DUALSPHYSICS>  Copyright (c) 2019 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -57,7 +57,6 @@ void JDsphConfig::Reset(){
 /// Initialisation of log file.
 //==============================================================================
 void JDsphConfig::Init(std::string path){
-  const char met[]="Init";
   Reset();
   const string file=fun::GetDirWithSlash(path)+"DsphConfig.xml";
   if(fun::FileExists(file)){
@@ -66,7 +65,7 @@ void JDsphConfig::Init(std::string path){
     sxml.LoadFile(file);
     const string place="dsphconfig.common";
     TiXmlNode* node=sxml.GetNode(place,false);
-    if(!node)RunException(met,string("Cannot find the element \'")+place+"\'.",file);
+    if(!node)Run_ExceptioonFile(string("Cannot find the element \'")+place+"\'.",file);
     //-Reads configuration values in XML file.
     CreateDirs=sxml.ReadElementInt(node,"createdirs","v",true,-1);
     CsvSeparator=sxml.ReadElementInt(node,"csvseparator","v",true,-1);

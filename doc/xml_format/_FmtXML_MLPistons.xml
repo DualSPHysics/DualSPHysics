@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<!-- *** DualSPHysics4Full v4.2.051 (30-05-2018) *** -->
+<!-- *** DualSPHysics (19-03-2020) *** -->
 <!-- *** class: JMLPistons *** -->
 <!------------------------------------------------------------------------------->
 <!------------------------------------------------------------------------------->
@@ -57,4 +57,13 @@
 		</piston2d>
 	</mlayerpistons>
 </special>
+<!------------------------------------------------------------------------------------->
+<!------------------------------------------------------------------------------------->
+<!-- *** Attribute "active" in elements <mlayerpistons> and <pistonXX> to enable *** --> 
+<!-- *** (using active="true" or active="1") or disable (using active="false"    *** -->
+<!-- *** or active="0"). It is an optional attribute and true by default.        *** -->
+<mlayerpistons active="true">
+	<piston1d active="true"/>
+	<piston2d active="true"/>
+</mlayerpistons>
 

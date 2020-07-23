@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<case app="GenCase4 v4.0.140 (07-01-2020)" date="07-01-2020 03:43:01">
-    <casedef requiredversion="v4.0.140">
+<case app="GenCase v5.0.197 (18-07-2020)" date="19-07-2020 02:14:45">
+    <casedef requiredversion="v5.0.197">
         <constantsdef>
-            <lattice bound="2" fluid="1" />
+            <lattice bound="2" fluid="1" comment="Type of lattice to create the initial particles (default=1)" />
             <gravity x="0" y="0" z="-9.81" comment="Gravitational acceleration" units_comment="m/s^2" />
             <rhop0 value="1000" comment="Reference density of the fluid" units_comment="kg/m^3" />
             <hswl value="0" auto="true" comment="Maximum still water level to calculate speedofsound using coefsound" units_comment="metres (m)" />
@@ -11,7 +11,7 @@
             <coefsound value="20" comment="Coefficient to multiply speedsystem" />
             <speedsound value="0" auto="true" comment="Speed of sound to use in the simulation (by default speedofsound=coefsound*speedsystem)" />
             <coefh value="0.866025" comment="Coefficient to calculate the smoothing length (h=coefh*sqrt(3*dp^2) in 3D)" />
-            <_hdp value="2" comment="Coefficient to calculate the smoothing length (hdp=h/dp)" />
+            <_hdp value="2" comment="Alternative option to calculate the smoothing length (h=hdp*dp)" />
             <cflnumber value="0.2" comment="Coefficient to multiply dt" />
             <h value="0" auto="true" units_comment="metres (m)" />
             <b value="0" auto="true" units_comment="Pascal (Pa)" />
@@ -61,6 +61,7 @@
                     <debugout />
                 </list>
                 <mainlist>
+                    <resetdraw />
                     <statesave />
                     <stateload />
                     <matrixsave />
@@ -69,7 +70,7 @@
                     <dpctessave />
                     <dpctesload />
                     <dpctesreset />
-                    <setdpctes cteline="1.5" ctetriangleweight="1.5" ctetrianglelimits="1.5" ctesphere="1.5" ctespherenumsides="24" cteellipsoid="1.5" ctecylindertube="1.5" ctecylindercover="1.5" ctecylindernumsides="24" />
+                    <setdpctes cteline="1.5" ctetriangleweight="1.5" ctetrianglelimits="1.5" ctesphere="1.5" ctespherenumsides="24" cteellipsoid="1.5" ctecylindertube="1.5" ctecylindercover="1.5" ctecylindernumsides="24" cterevolutionnumsides="24" />
                     <setdpctes cteline="0.1" />
                     <setdpctes ctetriangleweight="0.2" />
                     <setdpctes ctetrianglelimits="0.3" />
@@ -79,6 +80,7 @@
                     <setdpctes ctecylindertube="0.6" />
                     <setdpctes ctecylindercover="0.7" />
                     <setdpctes ctecylindernumsides="24" />
+                    <setdpctes cterevolutionnumsides="24" />
                     <move x="1" y="2" z="3" />
                     <scale x="0.1" y="0.2" z="0.3" />
                     <rotate ang="35" x="1.1" y="1.2" z="1.3" />
@@ -95,6 +97,9 @@
                     <setmknextbound next="true" />
                     <setmknextauto auto="false" />
                     <setnormalinvert invert="true" />
+                    <setactive drawpoints="true" drawshapes="true" vtkout="true" />
+                    <setactive drawpoints="false" />
+                    <setactive drawshapes="false" />
                     <setdrawmode mode="wire" />
                     <setdrawmode mode="face" />
                     <setdrawmode mode="solid" />
@@ -286,6 +291,10 @@
                     <drawsphere radius="0.5">
                         <point x="1" y="1" z="0" />
                     </drawsphere>
+                    <drawsphere radius="0.8">
+                        <point x="1" y="1" z="0" />
+                        <layers vdp="-0.5*,-1.5" />
+                    </drawsphere>
                     <drawellipsoid radius="1.15">
                         <point x="1" y="0" z="0" />
                         <point x="1" y="1" z="1" />
@@ -293,6 +302,11 @@
                     <drawcylinder radius="0.85" mask="1">
                         <point x="1" y="1" z="0" />
                         <point x="1" y="1" z="1" />
+                    </drawcylinder>
+                    <drawcylinder radius="0.5" mask="1 | 3">
+                        <point x="1" y="1" z="0" />
+                        <point x="1" y="1" z="1" />
+                        <layers vdp="0*,0.5,1" />
                     </drawcylinder>
                     <drawwave depth="4" hmaxwave="3" x0="26" z0="5">
                         <point x="10" y="0" z="5" />
@@ -340,6 +354,19 @@
                         <drawrotate angx="10" angy="15" angz="30" />
                         <drawscale x="1" y="1" z="0.8" />
                     </drawfilecsv>
+                    <setfrdrawmode auto="true" />
+                    <drawpoint x="0.1" y="0.12" z="0.123" />
+                    <drawline>
+                        <point x="1" y="2" z="3" />
+                        <point x="11" y="21" z="31" />
+                    </drawline>
+                    <drawquadri>
+                        <point x="0" y="0" z="0" />
+                        <point x="2" y="0" z="0" />
+                        <point x="2" y="0" z="1" />
+                        <point x="0" y="0" z="1" />
+                    </drawquadri>
+                    <setfrdrawmode auto="false" />
                     <fillvoidpoint x="3" y="2" z="1" />
                     <fillpoint x="3" y="2" z="1">
                         <modefill>void</modefill>
@@ -427,11 +454,12 @@
                         <point x="0.1" y="1" z="1.1" />
                         <size x="3" y="4" z="2" />
                     </redrawnearbox>
-                    <newvar Cte1="0.1" Cte2="0.2" Cte3="0.3" _cte="true" _rem="Constant values" />
+                    <newvarcte Cte1="0.1" Cte2="0.2" Cte3="0.3" _rem="Constant values" _print="1" />
                     <newvar SizeX="0.25" SizeZ="(Dp+2)*2.8" dpd2="Dp/2" _rem="Some variables" />
-                    <setvar SizeZ="SizeX+Cte1*Cte2" _rem="Changes value of SizeZ" />
+                    <setvar SizeZ="SizeX+Cte1*Cte2" _rem="Changes value of SizeZ" _print="0" />
                     <setvar dpd2="dpd2+Dp" SizeX="SizeX*dpd2" />
                     <setvar v="eval(condition,a,b)" />
+                    <setvar v1="pi()" v2="e()" />
                     <setvar v1="float(a)" v2="int(a)" v3="floor(a)" v4="ceil(a)" v5="round(a)" />
                     <setvar v1="min(a,b)" v2="min(a,b,c)" v3="max(a,b)" v4="max(a,b,c)" />
                     <setvar v1="abs(a)" v2="fmod(a,b)" v3="fmodr(a,b)" v4="sqrt(a)" v5="exp(a)" />
@@ -441,6 +469,14 @@
                     <setvar v1="sinh(a)" v2="cosh(a)" v3="tanh(a)" />
                     <setvar v1="asin(a)" v2="acos(a)" v3="atan(a)" v4="atan2(a,b)" />
                     <setvar v1="randinit(a)" v2="rand(a)" v3="randint(a,b)" />
+                    <setvar v1="wavelength(gravity,depth,period)" />
+                    <setvar v1="roundpos(pos,posmin,dp)" />
+                    <setvar v1="roundposx(pos)" v2="roundposy(pos)" v3="roundposz(pos)" />
+                    <newvarstrcte Text1="Hello" Text2="bye" _rem="Text values" _print="true" />
+                    <newvarstr Text3="AAAA" Text4="[Text1][Text2]_[Dp]" _rem="More text values" _print="0" />
+                    <setvarstr Text3="[Text1]" Text4="BBBB" _rem="Modify values" _print="1" />
+                    <exportvar vars="-all,Dp,Rhop0,PosMax*" />
+                    <exportvar vars="all,-Dp,-PosMin_?" />
                     <debugout />
                     <shapeout file="fshape_1" reset="false" />
                     <shapeout file="fshape_2" />
@@ -449,7 +485,7 @@
                     <cellsout file="filecellsFluid5" mkfluid="5" />
                     <pointsmkout file="points" />
                     <printf text="Prints line 1\n and line 2" />
-                    <printf if="Dp!=0.1" text="Dp is not 0.1. It is #Dp#" />
+                    <printf if="Dp!=0.1==(true||false)" text="Dp is not 0.1. It is #Dp#" />
                     <abort if="Dp<0.1" text="Dp (#Dp#) is lower than 0.1 \n It is invalid." />
                     <abort />
                     <runlist name="Hola" />
@@ -489,14 +525,19 @@
             <floating mkbound="1" rhopbody="1300" property="Material_1" />
             <floating mkbound="2">
                 <massbody value="1.3" />
+                <masspart value="0.15" />
                 <center x="11" y="12" z="13" />
                 <inertia x="20" y="22" z="24" />
             </floating>
-            <floating mkbound="3" property="Material_2">
+            <floating mkbound="3" rhopbody="0" property="Material_1">
+                <massbody value="1.3" />
+                <masspart value="distributed_bodymass" />
+            </floating>
+            <floating mkbound="4" property="Material_2">
                 <massbody value="1.3" />
                 <inertia x="11" y="22" z="22" />
             </floating>
-            <floating mkbound="4" property="Material_2">
+            <floating mkbound="5" property="Material_2">
                 <massbody value="1.3" />
                 <inertiafull>
                     <values v11="11" v12="0" v13="0" />
@@ -504,13 +545,49 @@
                     <values v31="0" v32="0" v33="33" />
                 </inertiafull>
             </floating>
-            <floating mkbound="5" rhopbody="1500">
+            <floating mkbound="6" rhopbody="1500">
                 <translationDOF x="0" y="0" z="1" comment="Use 0 to restrict Degrees Of Freedon for translation (default=(1,1,1))" />
                 <rotationDOF x="0" y="1" z="0" comment="Use 0 to restrict Degrees Of Freedon for rotation (default=(1,1,1))" />
             </floating>
-            <floating mkbound="6" rhopbody="1500">
+            <floating mkbound="7" rhopbody="1500">
                 <linearvelini x="1" y="3" z="2" units_comment="m/s" />
                 <angularvelini x="0.2" y="0.4" z="0.6" units_comment="rad/s" />
+            </floating>
+            <floating mkbound="8" rhopbody="1300">
+                <linearvel file="FileLinear.csv" units_comment="m/s" />
+                <angularvel file="FileAngular.csv" units_comment="rad/s" />
+            </floating>
+            <floating mkbound="9" rhopbody="1300">
+                <linearvel units_comment="m/s">
+                    <vel time="0" x="0" z="0" />
+                    <vel time="0.1" x="1" z="11" />
+                    <vel time="0.1" x="2" z="22" />
+                    <vel time="0.3" x="3" z="33" />
+                </linearvel>
+                <angularvel units_comment="rad/s">
+                    <vel time="0" x="10" y="none" z="0" />
+                    <vel time="0.02" x="11" y="1" z="none" />
+                    <vel time="0.04" x="12" y="2" z="none" />
+                    <vel time="0.08" x="13" y="none" z="4" />
+                </angularvel>
+            </floating>
+            <floating mkbound="10" rhopbody="1300">
+                <linearforce file="FileLinearForce.csv" units_comment="N/s" />
+                <angularforce file="FileAngularForce.csv" units_comment="N/s" />
+            </floating>
+            <floating mkbound="11" rhopbody="1300">
+                <linearforce units_comment="N/s">
+                    <force time="0" x="0" y="0" z="0" />
+                    <force time="0.1" x="1" y="0" z="11" />
+                    <force time="0.1" x="2" y="0" z="22" />
+                    <force time="0.3" x="3" y="0" z="33" />
+                </linearforce>
+                <angularforce units_comment="N/s">
+                    <force time="0" x="10" y="0" z="0" />
+                    <force time="0.02" x="11" y="1" z="0" />
+                    <force time="0.04" x="12" y="2" z="0" />
+                    <force time="0.08" x="13" y="0" z="4" />
+                </angularforce>
             </floating>
         </floatings>
         <properties>
@@ -717,11 +794,25 @@
                 </mvrotfile>
             </objreal>
         </motion>
+        <normals active="true">
+            <distanceh value="2.0" comment="Maximum distance (H*distanceh) to compute normals data (default=2)" />
+            <geometryfile file="[CaseName]_hdp_Actual.vtk" comment="File with boundary geometry (VTK format). Use NONE to ignore it." />
+            <computenormals value="0" comment="Computes final normals for boundary particles 0:None, 1:Mean, 2:Marrone(unverified) (default=0)" />
+            <svnormaldata value="0" comment="Saves VTK with normal data for debug (default=0)" />
+            <svnormals value="0" comment="Saves VTK with particle normals according to <computenormals> for debug (default=0)" />
+            <svshapes value="0" comment="Saves VTK with geometry in triangles and quads with its normals for debug (default=0)" />
+            <dg_svopenshapes value="0" comment="Saves VTK with enlarged triangles and quads for debug (default=0)" />
+            <dg_svpartsnormal value="0" comment="Saves VTKs with normals and out-vectors for each particle (default=0)">
+                <onlypos xmin="-0.04" zmin="-0.04" xmax="0.06" zmax="0.06" />
+                <onlypos ymin="-0.1" ymax="0.1" />
+            </dg_svpartsnormal>
+        </normals>
     </casedef>
     <execution>
         <parameters>
             <parameter key="SavePosDouble" value="0" comment="Saves particle position using double precision (default=0)" />
             <parameter key="PosDouble" value="1" comment="**DEPRECATED** Precision in particle interaction 0:Simple, 1:Double, 2:Uses and saves double (default=0)" />
+            <parameter key="Boundary" value="1" comment="Boundary method 1:DBC, 2:mDBC (default=1)" />
             <parameter key="StepAlgorithm" value="2" comment="Step Algorithm 1:Verlet, 2:Symplectic (default=1)" />
             <parameter key="VerletSteps" value="40" comment="Verlet only: Number of steps to apply Euler timestepping (default=40)" />
             <parameter key="Kernel" value="2" comment="Interaction Kernel 1:Cubic Spline, 2:Wendland, 3:Gaussian (default=2)" />
@@ -730,16 +821,17 @@
             <parameter key="ViscoBoundFactor" value="1" comment="Multiply viscosity value with boundary (default=1)" />
             <parameter key="DensityDT" value="0" comment="Density Diffusion Term 0:None, 1:Molteni, 2:Fourtakas, 3:Fourtakas(full) (default=0)" />
             <parameter key="DensityDTvalue" value="0.1" comment="DDT value (default=0.1)" />
-            <parameter key="#Shifting" value="0" comment="Shifting mode 0:None, 1:Ignore bound, 2:Ignore fixed, 3:Full (default=0)" />
-            <parameter key="#ShiftCoef" value="-2" comment="Coefficient for shifting computation (default=-2)" />
-            <parameter key="#ShiftTFS" value="1.5" comment="Threshold to detect free surface. Typically 1.5 for 2D and 2.75 for 3D (default=0)" />
-            <parameter key="RigidAlgorithm" value="1" comment="Rigid Algorithm 1:SPH, 2:DEM, 3:Chrono (default=1)" />
+            <parameter key="Shifting" value="0" comment="Shifting mode 0:None, 1:Ignore bound, 2:Ignore fixed, 3:Full (default=0)" />
+            <parameter key="ShiftCoef" value="-2" comment="Coefficient for shifting computation (default=-2)" />
+            <parameter key="ShiftTFS" value="0" comment="Threshold to detect free surface. Typically 1.5 for 2D and 2.75 for 3D (default=0)" />
+            <parameter key="RigidAlgorithm" value="1" comment="Rigid Algorithm 0:collision-free, 1:SPH, 2:DEM, 3:Chrono (default=1)" />
             <parameter key="FtPause" value="0.0" comment="Time to freeze the floatings at simulation start (warmup) (default=0)" units_comment="seconds" />
             <parameter key="FtIgnoreRadius" value="0" comment="Ignores floating body radius with periodic conditions (default=0)" />
             <parameter key="CoefDtMin" value="0.05" comment="Coefficient to calculate minimum time step dtmin=coefdtmin*h/speedsound (default=0.05)" />
-            <parameter key="#DtIni" value="0.0001" comment="Initial time step (default=h/speedsound)" units_comment="seconds" />
-            <parameter key="#DtMin" value="0.00001" comment="Minimum time step (default=coefdtmin*h/speedsound)" units_comment="seconds" />
-            <parameter key="#DtFixed" value="DtFixed.dat" comment="Dt values are loaded from file (default=disabled)" />
+            <parameter key="DtIni" value="0" comment="Initial time step. Use 0 to defult use (default=h/speedsound)" units_comment="seconds" />
+            <parameter key="DtMin" value="0" comment="Minimum time step. Use 0 to defult use (default=coefdtmin*h/speedsound)" units_comment="seconds" />
+            <parameter key="DtFixed" value="0" comment="Fixed Dt value. Use 0 to disable (default=disabled)" units_comment="seconds" />
+            <parameter key="DtFixedFile" value="NONE" comment="Dt values are loaded from file. Use NONE to disable (default=disabled)" units_comment="milliseconds (ms)" />
             <parameter key="DtAllParticles" value="0" comment="Velocity of particles used to calculate DT. 1:All, 0:Only fluid/floating (default=0)" />
             <parameter key="TimeMax" value="1.5" comment="Time of simulation" units_comment="seconds" />
             <parameter key="TimeOut" value="0.01" comment="Time out data" units_comment="seconds" />

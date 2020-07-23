@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2019 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -24,16 +24,22 @@
 #include "TypesDef.h"
 #include "JParticlesDef.h"
 #include "JPeriodicDef.h"
+#include "FunSphKernelDef.h"
 #include "OmpDefs.h"
 #include <algorithm>
+
+//#define DISABLE_KERNELS_EXTRA  ///<Compiles Wendland kernel and ignores the rest of the SPH kernels.
 
 //#define DISABLE_TIMERS     ///<Compiles without timers. | Compilado sin timers.
 //#define DISABLE_BSMODES    ///<compiles without advanced BlockSize modes.
 
 //-Removes dependencies from precompiled libraries.
-//#define DISABLE_VTKLIB     ///<It allows compile without VTK library.
-//#define DISABLE_CHRONO     ///<It allows compile without ChronoLib library (dsphchrono.dll and ChronoEngine.dll).
+#include "JNumexLibDef.h"    //Defines DISABLE_NUMEXLIB to compile without Numex library.
+#include "JVtkLibDef.h"      //Defines DISABLE_VTKLIB to compile without VTK library.
+//#define DISABLE_CHRONO     ///<It allows compile without ChronoLib library (dsphchrono.dll, ChronoEngine.dll and ChronoEngine_parallel.dll).
+//#define DISABLE_CHRONO_OMP ///<It allows compile without parallel module of Chrono (ignores ChronoEngine_parallel.dll).
 //#define DISABLE_WAVEGEN    ///<It allows compile without Wave-Paddles, Multi-Layer Pistons and Relaxation Zones libraries.
+//#define DISABLE_MOORDYN    ///<It allows compile without LibDSphMoorDyn library.  //<vs_moordyyn>
 
 
 //-Defines AVAILABLE_VTKLIB when this feature is compiled.
@@ -43,11 +49,27 @@
   #define AVAILABLE_VTKLIB true
 #endif
 
-//-Defines AVAILABLE_CHRONO when this feature is compiled.
+//-Defines AVAILABLE_NUMEXLIB when this feature is compiled.
+#ifdef DISABLE_NUMEXLIB
+  #define AVAILABLE_NUMEXLIB false
+#else
+  #define AVAILABLE_NUMEXLIB true
+#endif
+
+//-Defines AVAILABLE_CHRONO and AVAILABLE_CHRONO_OMP when these features are compiled.
 #ifdef DISABLE_CHRONO
+  #ifndef DISABLE_CHRONO_OMP
+	  #define DISABLE_CHRONO_OMP
+  #endif
   #define AVAILABLE_CHRONO false
+  #define AVAILABLE_CHRONO_OMP false
 #else
   #define AVAILABLE_CHRONO true
+  #ifdef DISABLE_CHRONO_OMP
+    #define AVAILABLE_CHRONO_OMP false
+  #else
+    #define AVAILABLE_CHRONO_OMP true
+  #endif  
 #endif
 
 //-Defines AVAILABLE_WAVEGEN when this feature is compiled.
@@ -60,7 +82,11 @@
 #endif
 
 //-Defines AVAILABLE_MOORDYN when this feature is compiled.
+#ifdef DISABLE_MOORDYN             //<vs_moordyyn>  
   #define AVAILABLE_MOORDYN false
+#else                              //<vs_moordyyn>
+  #define AVAILABLE_MOORDYN true   //<vs_moordyyn>
+#endif                             //<vs_moordyyn>
 
 //-Defines AVAILABLE_GPU when this feature is compiled.
 #ifdef _WITHGPU
@@ -79,10 +105,10 @@
 
 #define DELTA_HEAVYFLOATING  ///<Applies DDT to fluid particles interacting with floatings with higher density (massp>MassFluid*1.2). | Aplica DDT a fluido que interaccionan con floatings pesados (massp>MassFluid*1.2). NO_COMENTARIO
 
-#define CELLDIV_OVERMEMORYNP 0.05f  ///<Memory that is reserved for the particle management in JCellDivGpu. | Memoria que se reserva de mas para la gestion de particulas en JCellDivGpu.
-#define CELLDIV_OVERMEMORYCELLS 1   ///<Number of cells in each dimension is increased to allocate memory for JCellDivGpu cells. | Numero celdas que se incrementa en cada dimension al reservar memoria para celdas en JCellDivGpu.
-#define PERIODIC_OVERMEMORYNP 0.05f ///<Memory reserved for the creation of periodic particles in JSphGpuSingle::RunPeriodic(). | Mermoria que se reserva de mas para la creacion de particulas periodicas en JSphGpuSingle::RunPeriodic().
-#define PARTICLES_OVERMEMORY_MIN 10 ///<Minimum over memory allocated on CPU or GPU according number of particles.
+#define CELLDIV_OVERMEMORYNP 0.05f   ///<Memory that is reserved for the particle management in JCellDivGpu. | Memoria que se reserva de mas para la gestion de particulas en JCellDivGpu.
+#define CELLDIV_OVERMEMORYCELLS 1    ///<Number of cells in each dimension is increased to allocate memory for JCellDivGpu cells. | Numero celdas que se incrementa en cada dimension al reservar memoria para celdas en JCellDivGpu.
+#define PERIODIC_OVERMEMORYNP 0.05f  ///<Memory reserved for the creation of periodic particles in JSphGpuSingle::RunPeriodic(). | Mermoria que se reserva de mas para la creacion de particulas periodicas en JSphGpuSingle::RunPeriodic().
+#define PARTICLES_OVERMEMORY_MIN 128 ///<Minimum over memory allocated on CPU or GPU according number of particles.
 
 #define BORDER_MAP 0.05
 
@@ -237,6 +263,7 @@ typedef struct{ //(DEM)
   float restitu;      ///<Restitution Coefficient (units:-).
 }StDemData;
 
+
 ///Structure that stores the maximum values (or almost) achieved during the simulation.
 typedef struct StrMaxNumbers{
   llong memcpu;       ///<Amount of reserved CPU memory. | Cantidad de memoria Cpu reservada.            
@@ -254,7 +281,8 @@ typedef struct StrMaxNumbers{
 
 ///Structure with values to apply external acceleration to fluid.
 typedef struct{
-  unsigned mkfluid;
+  unsigned codesel1;  ///<First code for application (It is disabled with UINT_MAX).
+  unsigned codesel2;  ///<Last code for application.
   tdouble3 acclin;
   tdouble3 accang;
   tdouble3 centre;
@@ -289,9 +317,8 @@ typedef enum{
 
 ///Types of kernel function.
 typedef enum{ 
-  KERNEL_Gaussian=3,  ///<Gaussian kernel.
-  KERNEL_Wendland=2,  ///<Wendland kernel.
-  KERNEL_Cubic=1,     ///<Cubic Spline kernel.
+  KERNEL_Wendland=2,   ///<Wendland kernel.
+  KERNEL_Cubic=1,      ///<Cubic Spline kernel.
   KERNEL_None=0 
 }TpKernel;                  
 
@@ -304,8 +331,18 @@ typedef enum{
 
 ///Types of boundary conditions.
 typedef enum{ 
+  BC_MDBC=2,   ///<M-DBC.   //<vs_mddbc>
   BC_DBC=1     ///<Dynamic Boundary Condition (DBC).
 }TpBoundary;
+
+//<vs_mddbc_ini>
+///Types of boundary conditions. 
+typedef enum{ 
+  SLIP_FreeSlip=3,  ///<Free slip
+  SLIP_NoSlip=2,    ///<No-slip
+  SLIP_Vel0=1       ///<DBC vel=0
+}TpSlipMode;
+//<vs_mddbc_end>
 
 ///Types of interaction step.
 typedef enum{ 
@@ -317,6 +354,8 @@ typedef enum{
 
 ///Types of density diffussion term.
 typedef enum{ 
+  DDT_DDT2Full=3, ///<Density Diffussion Term 2 (Fourtakas et al 2019). It is applied to all fluid particles.         //<vs_dtt2>
+  DDT_DDT2=2,     ///<Density Diffussion Term 2 (Fourtakas et al 2019). It is only applied to inner fluid particles.  //<vs_dtt2>
   DDT_DDT=1,      ///<Density Diffussion Term. It is only applied to inner fluid particles.
   DDT_None=0 
 }TpDensity;
@@ -328,6 +367,46 @@ typedef enum{
   SHIFT_NoBound=1,          ///<Shifting is applied to fluid particles except those that interact with all boundaries.
   SHIFT_None=0              ///<Shifting is not applied.
 }TpShifting; 
+
+
+
+///Structure with main SPH constants and configurations.
+typedef struct{
+  bool simulate2d;          ///<Toggles 2D simulation (cancels forces in Y axis).
+  double simulate2dposy;    ///<Y value in 2D simulations.
+
+  TpKernel tkernel;               ///<Kernel type: Cubic or Wendland.
+  fsph::StKCubicCte      kcubic;  ///<Constants for the Cubic Spline kernel.
+  fsph::StKWendlandCte   kwend;   ///<Constants for the Wendland kernel.
+
+  float kernelh;            ///<The smoothing length of SPH kernel [m].
+  float cteb;               ///<Constant used in the state equation [Pa].
+  float gamma;              ///<Politropic constant for water used in the state equation.
+  float rhopzero;           ///<Reference density of the fluid [kg/m3].
+  double dp;                ///<Initial distance between particles [m].
+  float massfluid;          ///<Reference mass of the fluid particle [kg].
+  float massbound;          ///<Reference mass of the general boundary particle [kg].
+  tfloat3 gravity;          ///<Gravitational acceleration [m/s^2].
+
+  //-Constants for computation (computed starting from previous constants).
+  float kernelsize;         ///<Maximum interaction distance between particles (KernelK*KernelH).
+  float kernelsize2;        ///<Maximum interaction distance squared (KernelSize^2).
+  double cs0;               ///<Speed of sound at the reference density.
+  float eta2;               ///<Constant related to H (Eta2=(h*0.1)*(h*0.1)).
+  float spssmag;            ///<Smagorinsky constant used in SPS turbulence model.
+  float spsblin;            ///<Blin constant used in the SPS turbulence model.
+  float ddtkh;              ///<Constant for DDT1 & DDT2. DDTkh=DDTValue*KernelSize
+  float ddtgz;              ///<Constant for DDT2.        DDTgz=RhopZero*Gravity.z/CteB
+}StCteSph;
+
+///Returns empty StCteSph structure.
+inline StCteSph CteSphNull(){
+  StCteSph c={false,0,KERNEL_None
+    ,{0,0,0,0,0,0,0,0}
+    ,{0,0}
+    ,0,0,0,0,0,0,0,{0,0,0},0,0,0,0,0,0,0,0};
+  return(c);
+}
 
 ///Interaction mode for floatings.
 typedef enum{ 
@@ -376,18 +455,19 @@ inline void ApplyConstraints(byte constraints,tfloat3 &linear,tfloat3 &angular){
 ///Modes of cells division.
 typedef enum{ 
    CELLMODE_None=0
-  ,CELLMODE_2H=1      ///<Cells of size 2h.
-  ,CELLMODE_H=2       ///<Cells of size h.
+  ,CELLMODE_Full=1    ///<Cells of size KernelSize (maximum interaction distance).
+  ,CELLMODE_Half=2    ///<Cells of size KernelSize/2.
 }TpCellMode; 
 
 ///Returns the name of the CellMode in text format.
 inline const char* GetNameCellMode(TpCellMode cellmode){
   switch(cellmode){
-    case CELLMODE_2H:      return("2H");
-    case CELLMODE_H:       return("H");
+    case CELLMODE_Full:   return("Full");
+    case CELLMODE_Half:   return("Half");
   }
   return("???");
 }
+
 
 ///Domain division mode.
 typedef enum{ 
@@ -427,13 +507,34 @@ inline const char* GetNameDivision(TpMgDivMode axis){
 #define PC__MaxCellz(cc) ((0xffffffff<<(cc&31))>>(cc&31))           //-Coordenada Z de celda maxima. | Maximum Z coordinate of the cell.
 
 
-///Codification of global cells (size=dosh) according to the position for particle interaction usin pos-cell method.
-//-Cell configuration 1:
-#define CEL1_X 0xfff80000  //-Mask of bits for cell X: 13 bits for 8192 ->  1111 1111 1111 1000   0000 0000 0000 0000
-#define CEL1_Y 0x0007fe00  //-Mask of bits for cell Y: 10 bits for 1024 ->  0000 0000 0000 0111   1111 1110 0000 0000
-#define CEL1_Z 0x000001ff  //-Mask of bits for cell Z:  9 bits for  512 ->  0000 0000 0000 0000   0000 0001 1111 1111
-#define CEL1_MOVX 19       //-Displacement to obaint X cell.
-#define CEL1_MOVY 9        //-Displacement to obaint Y cell.
+///Codification of global cells (of size PosCellSize) according to the position for particle interaction using pos-cell method.
+//#define CEL_CONFIG_USER //-Configuration defined by user for special simulation cases.
+#ifdef CEL_CONFIG_USER
+  // Place reserved for configuration defined by user for special simulation cases.
+  // Place reserved for configuration defined by user for special simulation cases.
+  // Place reserved for configuration defined by user for special simulation cases.
+#else
+  #define CEL_CONFIG_13_10_9 //-Typical configuration of cells in X, Y and Z for 3-D simulations.
+  //#define CEL_CONFIG_17_2_13 //-Configuration to maximize cells in X and Z for 2-D simulations.
+
+  //-Cell configuration 13_10_9:
+  #ifdef CEL_CONFIG_13_10_9
+    #define CEL1_X 0xfff80000  //-Mask of bits for cell X: 13 bits for 8,192 ->  1111 1111 1111 1000   0000 0000 0000 0000
+    #define CEL1_Y 0x0007fe00  //-Mask of bits for cell Y: 10 bits for 1,024 ->  0000 0000 0000 0111   1111 1110 0000 0000
+    #define CEL1_Z 0x000001ff  //-Mask of bits for cell Z:  9 bits for   512 ->  0000 0000 0000 0000   0000 0001 1111 1111
+    #define CEL1_MOVX 19       //-Displacement to obaint X cell.
+    #define CEL1_MOVY 9        //-Displacement to obaint Y cell.
+  #endif
+  //-Cell configuration 17_2_13:
+  #ifdef CEL_CONFIG_17_2_13
+    #define CEL1_X 0xffff8000  //-Mask of bits for cell X: 17 bits for 131,072 ->  1111 1111 1111 1111   1000 0000 0000 0000
+    #define CEL1_Y 0x00006000  //-Mask of bits for cell Y:  2 bits for       4 ->  0000 0000 0000 0000   0110 0000 0000 0000
+    #define CEL1_Z 0x00001fff  //-Mask of bits for cell Z: 13 bits for   8,192 ->  0000 0000 0000 0000   0001 1111 1111 1111
+    #define CEL1_MOVX 15       //-Displacement to obaint X cell.
+    #define CEL1_MOVY 13       //-Displacement to obaint Y cell.
+  #endif
+#endif
+
 //-Cell configuration in use:
 #define CEL_X CEL1_X        //-Selected mask of bits for cell X
 #define CEL_Y CEL1_Y        //-Selected mask of bits for cell Y

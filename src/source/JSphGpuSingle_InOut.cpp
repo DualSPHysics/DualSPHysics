@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2017 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -22,7 +22,7 @@
 #include "JCellDivGpuSingle.h"
 #include "JArraysGpu.h"
 #include "JSphMk.h"
-#include "JSphPartsInit.h"
+#include "JDsPartsInit.h"
 #include "JSphInOut.h"
 #include "JSphBoundCorr.h"
 #include "JSphGpu_InOut_iker.h"
@@ -78,19 +78,21 @@ void JSphGpuSingle::InOutCheckProximity(unsigned newnp){
 //==============================================================================
 void JSphGpuSingle::InOutInit(double timestepini){
   TmgStart(Timers,TMG_SuInOut);
-  Log->Print("InOut configuration:");
+  Log->Print("Initialising InOut...");
   if(PartBegin)Run_Exceptioon("Simulation restart not allowed when Inlet/Outlet is used.");
 
   //-Configures InOut zones and prepares new inout particles to create.
-  const unsigned newnp=InOut->Config(timestepini,Stable,Simulate2D,Simulate2DPosY,PeriActive,RhopZero,CteB,Gamma,Gravity,Dp,MapRealPosMin,MapRealPosMax,MkInfo->GetCodeNewFluid(),PartsInit);
+  const unsigned newnp=InOut->Config(timestepini,Stable,Simulate2D,Simulate2DPosY,PeriActive
+    ,RhopZero,CteB,Gamma,Gravity,Dp,MapRealPosMin,MapRealPosMax,MkInfo->GetCodeNewFluid()
+    ,PartsInit,GaugeSystem,NuxLib);
 
   //-Mark special fluid particles to ignore. | Marca las particulas fluidas especiales para ignorar.
   InOutIgnoreFluidDef(InOut->MkFluidList);
 
   //Log->Printf("++> newnp:%u",newnp);
-  //-Resizes memory when it is necessary.
-  if(!CheckGpuParticlesSize(Np+newnp)){
-    const unsigned newnp2=newnp+InOut->CalcResizeNp(timestepini);
+  //-Resizes memory when it is necessary (always at the beginning).
+  if(true || !CheckGpuParticlesSize(Np+newnp)){
+    const unsigned newnp2=newnp+InOut->GetNpResizePlus0();
     TmgStop(Timers,TMG_SuInOut);
     ResizeParticlesSize(Np+newnp2,0,false);
     CellDivSingle->SetIncreaseNp(newnp2);
@@ -129,7 +131,7 @@ void JSphGpuSingle::InOutInit(double timestepini){
   InOutCheckProximity(newnp);
 
   //-Shows configuration.
-  InOut->VisuConfig(""," ");
+  InOut->VisuConfig("\nInOut configuration:"," ");
   //-Checks invalid options for symmetry. //<vs_syymmetry>
   if(Symmetry && InOut->GetExtrapolatedData())Run_Exceptioon("Symmetry is not allowed with inlet/outlet conditions when extrapolate option is enabled."); //<vs_syymmetry>
 
@@ -176,7 +178,8 @@ void JSphGpuSingle::InOutComputeStep(double stepdt){
   TmgStart(Timers,TMG_SuInOut);
   //-Resizes memory when it is necessary. InOutCount is the maximum number of new inlet particles.
   if(!CheckGpuParticlesSize(Np+InOut->GetCurrentNp())){
-    const unsigned newnp2=InOut->GetCurrentNp()+InOut->CalcResizeNp(TimeStep+stepdt);
+    if(!InOut->GetNpResizePlus1())Run_Exceptioon("Allocated memory is not enough and resizing is not allowed by XML configuration (check the value inout.memoryresize.size).");
+    const unsigned newnp2=InOut->GetCurrentNp()+InOut->GetNpResizePlus1();
     TmgStop(Timers,TMG_SuInOut);
     ResizeParticlesSize(Np+newnp2,0,false);
     CellDivSingle->SetIncreaseNp(newnp2);
@@ -234,8 +237,6 @@ void JSphGpuSingle::InOutComputeStep(double stepdt){
   //-Updates zsurf.
   if(InOut->GetCalculatedZsurf())InOutCalculeZsurf();
   if(InOut->GetCalculatedZsurf() || InOut->GetVariableZsurf())InOut->UpdateZsurf(TimeStep+stepdt);
-  //-Creates VTK file with Zsurf.
-  if(TimeStep+stepdt>=TimePartNext)InOut->SaveVtkZsurf(Part);
 
   //-Updates velocity and rhop (no extrapolated).
   if(InOut->GetNoExtrapolatedData())InOut->UpdateDataGpu(float(TimeStep+stepdt),true
@@ -257,6 +258,9 @@ void JSphGpuSingle::InOutComputeStep(double stepdt){
   //-Free array for inoutpart list.
   ArraysGpu->Free(inoutpart); inoutpart=NULL;
 
+  //-Saves files per PART.
+  if(TimeStep+stepdt>=TimePartNext)InOut->SavePartFiles(Part);
+
   TmgStop(Timers,TMG_SuInOut);
 }
 
@@ -273,8 +277,7 @@ void JSphGpuSingle::InOutCalculeZsurf(){
     const float maxdist=(float)InOut->GetDistPtzPos(ci);
     const float zbottom=InOut->GetZbottom(ci);
     const float zsurf=cusphinout::InOutComputeZsurf(nptz,ptz,maxdist,zbottom
-      ,CellMode,CellDivSingle->GetNcells(),CellDivSingle->GetBeginCell(),CellDivSingle->GetCellDomainMin()
-      ,Posxyg,Poszg,Codeg,auxg,auxh);
+      ,DivData,Posxyg,Poszg,Codeg,auxg,auxh);
     InOut->SetInputZsurf(ci,zsurf);
   }
 }
@@ -292,11 +295,10 @@ void JSphGpuSingle::InOutExtrapolateData(unsigned inoutcount,const int *inoutpar
   const byte doublemode=InOut->GetExtrapolateMode();
   const byte extraprhopmask=InOut->GetExtrapRhopMask();
   const byte extrapvelmask =InOut->GetExtrapVelMask();
-  cusphinout::Interaction_InOutExtrap(doublemode,Simulate2D,TKernel,CellMode
+  cusphinout::Interaction_InOutExtrap(doublemode,Simulate2D,TKernel
     ,inoutcount,inoutpart,cfgzoneg,extraprhopmask,extrapvelmask
     ,planesg,widthg,dirdatag,determlimit
-    ,CellDivSingle->GetNcells(),CellDivSingle->GetBeginCell(),CellDivSingle->GetCellDomainMin()
-    ,Posxyg,Poszg,Codeg,Idpg,Velrhopg);
+    ,DivData,Posxyg,Poszg,Codeg,Idpg,Velrhopg);
 }
 
 //==============================================================================
@@ -313,10 +315,9 @@ void JSphGpuSingle::BoundCorrectionData(){
     const typecode boundcode=zo->GetBoundCode();
     const tfloat4 plane=TPlane3fToTFloat4(zo->GetPlane());
     const tfloat3 direction=ToTFloat3(zo->GetDirection());
-    cusphinout::Interaction_BoundCorr(doublemode,Simulate2D,TKernel,CellMode,NpbOk
+    cusphinout::Interaction_BoundCorr(doublemode,Simulate2D,TKernel,NpbOk
       ,boundcode,plane,direction,determlimit
-      ,CellDivSingle->GetNcells(),CellDivSingle->GetBeginCell(),CellDivSingle->GetCellDomainMin()
-      ,Posxyg,Poszg,Codeg,Idpg,Velrhopg);
+      ,DivData,Posxyg,Poszg,Codeg,Idpg,Velrhopg);
   }
   TmgStop(Timers,TMG_SuBoundCorr);
 }

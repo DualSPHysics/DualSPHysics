@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2019 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -42,9 +42,12 @@ protected:
   const bool Stable;
   const bool Floating;
   const byte PeriActive;
-  const TpCellMode CellMode;    ///<Mode of cell division. | Modo de division en celdas.
-  const unsigned Hdiv;          ///<Value for those divided in DosH. | Valor por el que se divide a DosH.
-  const float Scell,OvScell;
+  const TpCellMode CellMode;  ///<Cell division mode.
+  const int ScellDiv;         ///<Value to divide KernelSize (1 or 2).
+  const float Scell;          ///<Cell size: KernelSize/ScellDiv (KernelSize or KernelSize/2).
+  const float OvScell;        ///<OvScell=1/Scell
+  const float KernelSize2;    ///<Maximum interaction distance squared (KernelSize^2).
+  const float PosCellSize;    ///<Size of cells used for coding PosCell (it is usually KernelSize).
   const tdouble3 Map_PosMin,Map_PosMax,Map_PosDif;
   const tuint3 Map_Cells;
   const unsigned CaseNbound,CaseNfixed,CaseNpb;
@@ -52,7 +55,7 @@ protected:
   std::string DirOut;
 
   bool AllocFullNct;     ///<Resserve memory for max number of cells of domain (DomCells). | Reserva memoria para el numero maximo de celdas del dominio (DomCells).
-  float OverMemoryNp;    ///<Percentage that is added to the memory reserved for Np. (def=0) | Porcentaje que se añade a la reserva de memoria de Np. (def=0).
+  float OverMemoryNp;    ///<Percentage that is added to the memory reserved for Np. (def=0) | Porcentaje que se anhade a la reserva de memoria de Np. (def=0).
   word OverMemoryCells;  ///<Cell number that is incremented in each dimension to reserve memory. | Numero celdas que se incrementa en cada dimension reservar memoria. (def=0).
 
   //-Variables to define the domain.
@@ -136,7 +139,7 @@ protected:
   unsigned CellSize(unsigned cell)const{ int2 v=CellBeginEnd(cell); return(unsigned(v.y-v.x)); }
 
 public:
-  JCellDivGpu(bool stable,bool floating,byte periactive
+  JCellDivGpu(bool stable,bool floating,byte periactive,float kernelsize2,float poscellsize
     ,TpCellMode cellmode,float scell,tdouble3 mapposmin,tdouble3 mapposmax,tuint3 mapcells
     ,unsigned casenbound,unsigned casenfixed,unsigned casenpb,JLog2 *log,std::string dirout
     ,bool allocfullnct=true,float overmemorynp=CELLDIV_OVERMEMORYNP,word overmemorycells=CELLDIV_OVERMEMORYCELLS);
@@ -151,11 +154,12 @@ public:
   void SortDataArrays(const double2 *a,const double *b,const float4 *c,double2 *a2,double *b2,float4 *c2);
   void SortDataArrays(const tsymatrix3f *a,tsymatrix3f *a2);
   void SortDataArrays(const float3 *a,float3 *a2);
+  void SortDataArrays(const float *a,float *a2);
 
   float* GetAuxMem(unsigned size);
 
   TpCellMode GetCellMode()const{ return(CellMode); }
-  unsigned GetHdiv()const{ return(Hdiv); }
+  int GetScellDiv()const{ return(ScellDiv); }
   float GetScell()const{ return(Scell); }
 //:  tuint3 GetDomCells()const{ return(DomCells); };
 //:  unsigned GetCellCode()const{ return(DomCellCode); };
@@ -180,7 +184,7 @@ public:
   unsigned GetNpfOutIgnore()const{ return(NpfOutIgnore); }
 
   //:const unsigned* GetCellPart()const{ return(CellPart); }
-  const int2* GetBeginCell(){ return(BeginEndCell); }
+  const int2* GetBeginCell()const{ return(BeginEndCell); }
 
   void SetIncreaseNp(unsigned increasenp){ IncreaseNp=increasenp; }
 

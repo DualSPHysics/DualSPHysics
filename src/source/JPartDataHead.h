@@ -1,6 +1,6 @@
 ﻿//HEAD_DSCODES
 /*
- <DUALSPHYSICS>  Copyright (c) 2019 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -24,6 +24,7 @@
 //:# - Establece PERI_Unknown por defecto. (27-04-2018)
 //:# - Improved definition of the periodic conditions. (27-04-2018)
 //:# - Incluye informacion de Symmetry. (13-05-2018)
+//:# - Mejora la gestion de excepciones. (06-05-2020)
 //:#############################################################################
 
 /// \file JPartDataHead.h \brief Declares the class \ref JPartDataHead.
@@ -103,8 +104,8 @@ private:
   bool NpDynamic;        ///<CaseNp can increase.
   bool ReuseIds;         ///<Id of particles excluded values ​​are reused.
 
-  tdouble3 MapPosMin;    ///<Lower limit of simulation + edge 2h if periodic conditions.
-  tdouble3 MapPosMax;    ///<Upper limit of simulation + edge 2h if periodic conditions.
+  tdouble3 MapPosMin;    ///<Lower limit of simulation + edge (KernelSize) if periodic conditions.
+  tdouble3 MapPosMax;    ///<Upper limit of simulation + edge (KernelSize) if periodic conditions.
 
   TpPeri PeriMode;
   tdouble3 PeriXinc;     ///<Value that is added at the outer limit to modify the position.

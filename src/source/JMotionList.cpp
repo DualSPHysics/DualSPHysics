@@ -1,6 +1,6 @@
 //HEAD_DSCODES
 /*
- <DUALSPHYSICS>  Copyright (c) 2019 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -180,7 +180,7 @@ JMotionList::~JMotionList(){
 bool JMotionList::GetData(unsigned ref,bool &typesimple,tdouble3 &simplemov
   ,tdouble3 &simplevel,tdouble3 &simpleace,tmatrix4d &matmov,tmatrix4d &matmov2)const
 {
-  if(ref>=Nref)RunException("GetData","Reference is invalid.");
+  if(ref>=Nref)Run_Exceptioon("Reference is invalid.");
   return(MotionData[ref].GetData(typesimple,simplemov,simplevel,simpleace,matmov,matmov2));
 }
 
@@ -189,7 +189,7 @@ bool JMotionList::GetData(unsigned ref,bool &typesimple,tdouble3 &simplemov
 //==============================================================================
 bool JMotionList::GetData(unsigned ref,bool &typesimple,tdouble3 &simplemov,tmatrix4d &matmov)const
 {
-  if(ref>=Nref)RunException("GetData","Reference is invalid.");
+  if(ref>=Nref)Run_Exceptioon("Reference is invalid.");
   return(MotionData[ref].GetData(typesimple,simplemov,matmov));
 }
 

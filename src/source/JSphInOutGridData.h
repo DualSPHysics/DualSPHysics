@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2016, Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -141,15 +141,17 @@ public:
   unsigned CountTimes()const{ return(unsigned(DataTimes.size())); }
   std::string GetFile()const{ return(File); };
 
-  void InterpolateVel(double time,unsigned np,const tdouble3* pos,tfloat3 *vel);
   void InterpolateVelCpu(double time,unsigned izone,unsigned np,const int *plist
-    ,const tdouble3 *pos,const typecode *code,const unsigned *idp,tfloat4 *velrhop);
+    ,const tdouble3 *pos,const typecode *code,const unsigned *idp,tfloat4 *velrhop
+    ,float velcorr);
   void InterpolateZVelCpu(double time,unsigned izone,unsigned np,const int *plist
-    ,const tdouble3 *pos,const typecode *code,const unsigned *idp,tfloat4 *velrhop);
+    ,const tdouble3 *pos,const typecode *code,const unsigned *idp,tfloat4 *velrhop
+    ,float velcorr);
 
 #ifdef _WITHGPU
   void InterpolateZVelGpu(double time,unsigned izone,unsigned np,const int *plist
-    ,const double2 *posxyg,const double *poszg,const typecode *codeg,const unsigned *idpg,float4 *velrhopg);
+    ,const double2 *posxyg,const double *poszg,const typecode *codeg
+    ,const unsigned *idpg,float4 *velrhopg,float velcorr);
 #endif
 
 

@@ -1,6 +1,6 @@
 //HEAD_DSCODES
 /*
- <DUALSPHYSICS>  Copyright (c) 2019 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -133,7 +133,7 @@ void JPartOutBi4Save::ConfigBasic(unsigned piece,unsigned npiece,std::string run
 /// Configuration of number of particles.
 //==============================================================================
 void JPartOutBi4Save::ConfigParticles(ullong casenp,ullong casenfixed,ullong casenmoving,ullong casenfloat,ullong casenfluid){
-  if(casenp!=casenfixed+casenmoving+casenfloat+casenfluid)RunException("ConfigParticles","Error in the number of particles.");
+  if(casenp!=casenfixed+casenmoving+casenfloat+casenfluid)Run_Exceptioon("Error in the number of particles.");
   Data->SetvUllong("CaseNp",casenp);
   Data->SetvUllong("CaseNfixed",casenfixed);
   Data->SetvUllong("CaseNmoving",casenmoving);
@@ -174,16 +174,15 @@ std::string JPartOutBi4Save::GetNamePart(unsigned cpart){
 }
 
 //==============================================================================
-/// Añade datos de particulas de de nuevo part.
+/// Anhade datos de particulas de de nuevo part.
 /// Adds data of particles to new part.
 //==============================================================================
 JBinaryData* JPartOutBi4Save::AddPartOut(unsigned cpart,double timestep,unsigned nout
   ,const unsigned *idp,const ullong *idpd,const tfloat3 *pos,const tdouble3 *posd
   ,const tfloat3 *vel,const float *rhop,const byte *motive)
 {
-  const char met[]="AddPartOut";
-  if(!idp && !idpd)RunException(met,"The id of particles is invalid.");
-  if(!pos && !posd)RunException(met,"The position of particles is invalid.");
+  if(!idp && !idpd)Run_Exceptioon("The id of particles is invalid.");
+  if(!pos && !posd)Run_Exceptioon("The position of particles is invalid.");
   //-Configura item Part. Configures item Part.
   Part->Clear();
   Cpart=cpart;
@@ -229,7 +228,7 @@ void JPartOutBi4Save::SavePartOut(bool posdouble,unsigned cpart,double timestep,
   ,const unsigned *idp,const tfloat3 *posf,const tdouble3 *posd,const tfloat3 *vel
   ,const float *rhop,const byte *motive)
 {
-  if(!posf && !posd)RunException("SavePartOut","The position of particles is invalid.");
+  if(!posf && !posd)Run_Exceptioon("The position of particles is invalid.");
   if(posdouble){
     if(posd==NULL){
       tdouble3 *xpos=new tdouble3[nout];

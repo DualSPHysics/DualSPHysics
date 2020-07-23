@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<!-- *** DualSPHysics (08-08-2017) *** -->
+<!-- *** DualSPHysics (20-03-2020) *** -->
 <!-- *** class: JSaveDt *** -->
 <!------------------------------------------------------------------------------->
 <!------------------------------------------------------------------------------->
@@ -13,6 +13,13 @@
 		<alldt value="1" comment="Saves file with all dt values (def=0)" />
 	</savedt>
 </special>
+<!------------------------------------------------------------------------------------>
+<!------------------------------------------------------------------------------------>
+<!-- *** Attribute "active" in elements <savedt> to enable (using active="true" *** --> 
+<!-- *** or active="1") or disable (using active="false" or active="0").        *** -->
+<!-- *** It is an optional attribute and true by default.                       *** -->
+<savedt active="true">
+</savedt>
 
 
 

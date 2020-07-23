@@ -1,6 +1,6 @@
 //HEAD_DSCODES
 /*
- <DUALSPHYSICS>  Copyright (c) 2019 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -287,7 +287,6 @@ void JMotionDataFile::Resize(unsigned size){
 // Carga y configura datos del movimiento a partir de fichero de datos.
 //==============================================================================
 void JMotionDataFile::LoadFilePos(std::string dirdata,std::string file,const int fields,const int fieldtime,const int fieldx,const int fieldy,const int fieldz){
-  const char met[]="LoadFilePos";
   if(int(file.find("/"))<0 && int(file.find("\\"))<0)file=dirdata+file; //-If only name of file then add Dirin.
   //printf("LoadFilePos>  file:[%s]\n",file.c_str());
 
@@ -311,14 +310,13 @@ void JMotionDataFile::LoadFilePos(std::string dirdata,std::string file,const int
     //printf("[%u]>  t:%f  x:%f\n",r,time,posx);
   }
   Count=rows;
-  if(Count<2)RunException(met,"Cannot be less than two positions.",file);
+  if(Count<2)Run_ExceptioonFile("Cannot be less than two positions.",file);
 }
 
 //==============================================================================
 // Carga y configura datos del movimiento a partir de fichero de datos.
 //==============================================================================
 void JMotionDataFile::LoadFileAng(std::string dirdata,std::string file,bool angdegrees){
-  const char met[]="LoadFileAng";
   if(int(file.find("/"))<0 && int(file.find("\\"))<0)file=dirdata+file; //-If only name of file then add Dirin.
 
   //-Carga datos del fichero.
@@ -333,5 +331,5 @@ void JMotionDataFile::LoadFileAng(std::string dirdata,std::string file,bool angd
   }
   if(!angdegrees)for(unsigned r=0;r<rows;r++)ValuesAng[r]=ValuesAng[r]*TODEG; //-Convierte de radianes a grados.
   Count=rows;
-  if(Count<2)RunException(met,"Cannot be less than two angles.",file);
+  if(Count<2)Run_ExceptioonFile("Cannot be less than two angles.",file);
 }

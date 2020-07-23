@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2019 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -24,6 +24,7 @@
 #include "DualSphDef.h"
 #include "JObject.h"
 #include "JSphTimersCpu.h"
+#include "JCellDivDataCpu.h"
 #include "JLog2.h"
 #include <cmath>
 #include <cstring>
@@ -44,9 +45,10 @@ protected:
   const bool Stable;
   const bool Floating;
   const byte PeriActive;
-  const TpCellMode CellMode;    ///<Mode of cell division. | Modo de division en celdas.
-  const unsigned Hdiv;          ///<Value for those divided in DosH. | Valor por el que se divide a DosH.
-  const float Scell,OvScell;
+  const TpCellMode CellMode;  ///<Cell division mode.
+  const int ScellDiv;         ///<Value to divide KernelSize (1 or 2).
+  const float Scell;          ///<Cell size: KernelSize/ScellDiv (KernelSize or KernelSize/2).
+  const float OvScell;        ///<OvScell=1/Scell
   const tdouble3 Map_PosMin,Map_PosMax,Map_PosDif;
   const tuint3 Map_Cells;
   const unsigned CaseNbound,CaseNfixed,CaseNpb;
@@ -54,7 +56,7 @@ protected:
   std::string DirOut;
 
   bool AllocFullNct;     ///<Resserve memory for max number of cells of domain (DomCells). | Reserva memoria para el numero maximo de celdas del dominio (DomCells).
-  float OverMemoryNp;    ///<Percentage that is added to the memory reserved for Np. (def=0) | Porcentaje que se añade a la reserva de memoria de Np. (def=0).
+  float OverMemoryNp;    ///<Percentage that is added to the memory reserved for Np. (def=0) | Porcentaje que se anhade a la reserva de memoria de Np. (def=0).
   word OverMemoryCells;  ///<Cell number that is incremented in each dimension to reserve memory. | Numero celdas que se incrementa en cada dimension reservar memoria. (def=0).
 
   //-Variables to define the domain.
@@ -108,7 +110,9 @@ protected:
 
   tuint3 CellDomainMin; ///<Lower domain limit in cells inside of DomCells. | Limite inferior del dominio en celdas dentro de DomCells.
   tuint3 CellDomainMax; ///<Upper domain limit in cells inside of DomCells. | Limite superior del dominio en celdas dentro de DomCells.
-  unsigned Ncx,Ncy,Ncz,Nsheet,Nct;
+  unsigned Ncx,Ncy,Ncz;
+  unsigned Nsheet;      ///<Nsheet=Ncx*Ncy
+  unsigned Nct;         ///<Nct=Ncx*Ncy*Ncz
   ullong Nctt;          ///<Total number of special cells included  Nctt=SizeBeginCell(). | Numero total de celdas incluyendo las especiales Nctt=SizeBeginCell().
   unsigned BoxBoundIgnore,BoxFluid,BoxBoundOut,BoxFluidOut,BoxBoundOutIgnore,BoxFluidOutIgnore;
 
@@ -165,7 +169,7 @@ public:
   void SortArray(tsymatrix3f *vec);
 
   TpCellMode GetCellMode()const{ return(CellMode); }
-  unsigned GetHdiv()const{ return(Hdiv); }
+  int GetScellDiv()const{ return(ScellDiv); }
   float GetScell()const{ return(Scell); }
 
   unsigned GetNct()const{ return(Nct); }
@@ -179,6 +183,8 @@ public:
   tuint3 GetCellDomainMax()const{ return(CellDomainMax); }
   tdouble3 GetDomainLimits(bool limitmin,unsigned slicecellmin=0)const;
 
+  StDivDataCpu GetCellDivData()const;
+
   unsigned GetNpFinal()const{ return(NpFinal); }
   unsigned GetNpbFinal()const{ return(NpbFinal); }
   unsigned GetNpbIgnore()const{ return(NpbIgnore); }
@@ -188,7 +194,7 @@ public:
   unsigned GetNpfOutIgnore()const{ return(NpfOutIgnore); }
 
   //:const unsigned* GetCellPart()const{ return(CellPart); }
-  const unsigned* GetBeginCell(){ return(BeginCell); }
+  const unsigned* GetBeginCell()const{ return(BeginCell); }
 
   void SetIncreaseNp(unsigned increasenp){ IncreaseNp=increasenp; }
 

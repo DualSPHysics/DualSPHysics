@@ -1,6 +1,6 @@
 //HEAD_DSCODES
 /*
- <DUALSPHYSICS>  Copyright (c) 2019 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -21,13 +21,14 @@
 //:# =========
 //:# - Error corregido: En el metodo rotate() de la clase JMatrix4 se cambio 
 //:#   MulPre(MatrixRot(...)) por Mul(MatrixRot(...)) para que funcionase bien 
-//:#   la combinación de movimiento con rotación.  (19-10-2010)
+//:#   la combinacion de movimiento con rotacion.  (19-10-2010)
 //:# - Traduccion de comentarios al ingles. (10-02-2012)
 //:# - Metodo GetMotion() para obtener angulos con respecto a ejes y traslacion
 //:#   a partir de la matriz de transformacion. (04-07-2014)
 //:# - Metodo MulNormal() para aplicar a normales. (19-10-2015)
 //:# - Mejoras de precision en GetMotion(). (20-01-2016)
 //:# - Cambio en GetMotion() para mantener compatibilidad con Linux. (01-02-2016)
+//:# - Nuevos metodos para la rotacion. (05-04-2020)
 //:#############################################################################
 
 /// \file JMatrix4.h \brief Declares the template \ref JMatrix4
@@ -216,6 +217,14 @@ public:
   }
 
 //==============================================================================
+/// Rotational motion is applied.
+/// \param ang Angles of roation for each axis (in degrees).
+//==============================================================================
+  void Rotate(T3 ang){
+    Mul(MatrixRot(ang));
+  }
+
+//==============================================================================
 /// Scaling is aplied.
 /// \param p Array with the scale in every axis.
 //==============================================================================
@@ -240,6 +249,54 @@ public:
   static JMatrix4 MatrixScale(const T3 &p){
     JMatrix4 m;
     m.a11=p.x; m.a22=p.y; m.a33=p.z;
+    return(m);
+  }
+
+//==============================================================================
+/// Returns a transformation matrix for a rotation in axis X.
+/// \param ang Angle of roation (in degrees).
+//==============================================================================
+  static JMatrix4 MatrixRotX(T ang){
+    //MatrixRot(ang,TDouble3(0,0,0),TDouble3(-1,0,0));
+    const T rad=T(ang*TORAD);
+    const T cs=cos(rad),sn=sin(rad);
+    const TMAT m={1,0,0,0 , 0,cs,-sn,0 , 0,sn,cs,0 , 0,0,0,1}; 
+    return(JMatrix4(m));
+  }
+
+//==============================================================================
+/// Returns a transformation matrix for a rotation in axis Y.
+/// \param ang Angle of roation (in degrees).
+//==============================================================================
+  static JMatrix4 MatrixRotY(T ang){
+    //MatrixRot(ang,TDouble3(0,0,0),TDouble3(0,-1,0));
+    const T rad=T(ang*TORAD);
+    const T cs=cos(rad),sn=sin(rad);
+    const TMAT m={cs,0,sn,0 , 0,1,0,0 , -sn,0,cs,0 , 0,0,0,1}; 
+    return(JMatrix4(m));
+  }
+
+//==============================================================================
+/// Returns a transformation matrix for a rotation in axis Z.
+/// \param ang Angle of roation (in degrees).
+//==============================================================================
+  static JMatrix4 MatrixRotZ(T ang){
+    //MatrixRot(ang,TDouble3(0,0,0),TDouble3(0,0,-1));
+    const T rad=T(ang*TORAD);
+    const T cs=cos(rad),sn=sin(rad);
+    const TMAT m={cs,-sn,0,0 , sn,cs,0,0 , 0,0,1,0 , 0,0,0,1}; 
+    return(JMatrix4(m));
+  }
+
+//==============================================================================
+/// Returns a transformation matrix for a rotation.
+/// \param ang Angle of roation in each axis (in degrees).
+//==============================================================================
+  static JMatrix4 MatrixRot(T3 ang){
+    JMatrix4 m;
+    if(ang.z)m.Mul(MatrixRotZ(ang.z));
+    if(ang.x)m.Mul(MatrixRotX(ang.x));
+    if(ang.y)m.Mul(MatrixRotY(ang.y));
     return(m);
   }
 

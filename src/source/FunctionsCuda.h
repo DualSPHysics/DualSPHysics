@@ -1,6 +1,6 @@
 ﻿//HEAD_DSCODES
 /*
- <DUALSPHYSICS>  Copyright (c) 2019 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -112,6 +112,7 @@ int _ConvertSMVer2Cores(int major, int minor);
 size_t Malloc(byte     **,unsigned count);
 size_t Malloc(word     **,unsigned count);
 size_t Malloc(unsigned **,unsigned count);
+size_t Malloc(uint4    **,unsigned count);
 size_t Malloc(int      **,unsigned count);
 size_t Malloc(int2     **,unsigned count);
 size_t Malloc(float    **,unsigned count);

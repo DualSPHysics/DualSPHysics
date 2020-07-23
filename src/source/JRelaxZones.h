@@ -1,6 +1,6 @@
 //HEAD_DSTOOLS
 /* 
- <DualSPHysics codes>  Copyright (c) 2017 by Dr. Jose M. Dominguez
+ <DualSPHysics codes>  Copyright (c) 2020 by Dr. Jose M. Dominguez
  All rights reserved.
 
  DualSPHysics is an international collaboration between:
@@ -28,6 +28,7 @@
 //# =========
 //# - Clase para la creacion de oleaje actuando sobre la velocidad de las 
 //#   particulas. (28-10-2016)
+//# - Comprueba opcion active en elementos de primer y segundo nivel. (19-03-2020)  
 //#############################################################################
 
 #ifndef _JRelaxZones_
@@ -60,15 +61,15 @@ class JRelaxZones : protected JObject
 {
 public:
   JRelaxZones(bool useomp,bool usegpu,JLog2* log,std::string dirdata
-    ,bool withfloatings,unsigned fluidbeginidp){}
+    ,bool withfloatings,unsigned fluidbeginidp,tdouble3 gravity3){}
   ~JRelaxZones(){}
   void Reset(){}
   static bool Available(){ return(false); }
 
   void LoadFileXml(const std::string &filexml,const std::string &place){}
-  void LoadXml(JXml *sxml,const std::string &place){}
+  void LoadXml(const JXml *sxml,const std::string &place){}
 
-  void Init(std::string dircase,double timemax,double dp,tfloat3 gravity){}
+  void Init(std::string dircase,double timemax,double dp){}
 
   void VisuConfig(std::string txhead,std::string txfoot){}
 
@@ -93,6 +94,7 @@ private:
   const std::string DirData;
   const bool WithFloatings;
   const unsigned FluidBeginIdp; ///<Idp for first fluid particle.
+  const double Gravity;    ///<Gravity value (always positive).
 
   std::vector<JRelaxZone*> List;
   std::vector<JRelaxZoneExternal*> ListExternal; //-For external velocity (SWASH).
@@ -106,15 +108,15 @@ private:
 
 public:
   JRelaxZones(bool useomp,bool usegpu,JLog2* log,std::string dirdata
-    ,bool withfloatings,unsigned fluidbeginidp);
+    ,bool withfloatings,unsigned fluidbeginidp,tdouble3 gravity3);
   ~JRelaxZones();
   void Reset();
   static bool Available(){ return(true); }
 
   void LoadFileXml(const std::string &filexml,const std::string &place);
-  void LoadXml(JXml *sxml,const std::string &place);
+  void LoadXml(const JXml *sxml,const std::string &place);
 
-  void Init(std::string dircase,double timemax,double dp,tfloat3 gravity);
+  void Init(std::string dircase,double timemax,double dp);
 
   void VisuConfig(std::string txhead,std::string txfoot);
 

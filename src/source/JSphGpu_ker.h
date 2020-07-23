@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2019 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -29,6 +29,7 @@
 
 #include "DualSphDef.h"
 #include "JSphTimersGpu.h"
+#include "JCellDivDataGpu.h"
 #include <cuda_runtime_api.h>
 
 class JLog2;
@@ -38,19 +39,23 @@ class JLog2;
 /// Structure with constants stored in the constant memory of GPU for the particle interactions.
 typedef struct{
   unsigned nbound;
-  float massb;              ///<Mass of a boundary particle.
-  float massf;              ///<Mass of a fluid particle.
-  float h;                  ///<Smoothing length (=coef*sqrt(dx*dx+dy*dy+dz*dz))
-  float fourh2;             ///< \ref h * \ref h * 4 
-  float awen;               ///<Cte. of Wendland kernel to compute wab.
-  float bwen;               ///<Cte. of Wendland kernel to compute fac (kernel derivative).
-  float cs0;                ///<Speed of sound of reference.
-  float eta2;               ///<eta*eta being eta=0.1*\ref h
-  float ddt2h;              ///<Constant for DDT1 & DDT2. ddt2h=DDTValue*2*H
+  float massb;              ///<Reference mass of the general boundary particle [kg].
+  float massf;              ///<Reference mass of the fluid particle [kg].
+  float kernelh;            ///<The smoothing length of SPH kernel [m].
+  float kernelsize2;        ///<Maximum interaction distance squared (KernelSize^2).
+  float poscellsize;        ///<Size of cells used for coding PosCell (it is usually KernelSize).
+  float awen;               ///<Wendland kernel constant (awen) to compute wab.
+  float bwen;               ///<Wendland kernel constant (bwen) to compute fac (kernel derivative).
+  float cs0;                ///<Speed of sound at the reference density.
+  float eta2;               ///<Constant related to H (Eta2=(h*0.1)*(h*0.1)).
+  float ddtkh;              ///<Constant for DDT1 & DDT2. DDTkh=DDTValue*KernelSize
   float ddtgz;              ///<Constant for DDT2.        ddtgz=RhopZero*Gravity.z/CteB
-  float scell,dosh,dp;
-  float cteb,gamma;
-  float rhopzero;           ///<rhopzero=RhopZero
+  float scell;              ///<Cell size: KernelSize/ScellDiv (KernelSize or KernelSize/2).
+  float kernelsize;         ///<Maximum interaction distance between particles (KernelK*KernelH).
+  float dp;                 ///<Initial distance between particles [m].
+  float cteb;               ///<Constant used in the state equation [Pa].
+  float gamma;              ///<Politropic constant for water used in the state equation.
+  float rhopzero;           ///<Reference density of the fluid [kg/m3].
   float ovrhopzero;         ///<ovrhopzero=1/RhopZero
   float movlimit;
   unsigned symmetry;   //<vs_syymmetry>
@@ -65,8 +70,6 @@ typedef struct{
   unsigned axis;
   unsigned cellcode;
   double domposminx,domposminy,domposminz;
-  //-Ctes. of Gaussian kernel.
-  float agau,bgau;
   //-Ctes. of Cubic Spline kernel.
   float cubic_a1,cubic_a2,cubic_aa,cubic_a24,cubic_c1,cubic_d1,cubic_c2,cubic_odwdeltap;
 }StCteInteraction; 
@@ -84,15 +87,6 @@ typedef struct{
   int forcesdem_bsmax;
 }StKerInfo; 
 
-///Returns the reordered value according to a given axis.
-/// (x,y,z) in MGDIV_Z ---> (y,z,x) for MGDIV_X
-/// (x,y,z) in MGDIV_Z ---> (x,z,y) for MGDIV_Y
-inline tuint3 CodeAxisOrder(TpMgDivMode axis,tuint3 v){
-  if(axis==MGDIV_X)return(TUint3(v.y,v.z,v.x));
-  if(axis==MGDIV_Y)return(TUint3(v.x,v.z,v.y));
-  return(v);
-}
-
 ///Structure with the parameters for particle interaction on GPU.
 typedef struct StrInterParmsg{
   //-Configuration options.
@@ -104,7 +98,6 @@ typedef struct StrInterParmsg{
   TpDensity tdensity;
   TpShifting shiftmode;
   //-Execution values.
-  int hdiv;  //hdiv=(cellmode==CELLMODE_H? 2: 1)
   float viscob,viscof;
   unsigned bsbound,bsfluid;
   unsigned vnp,vnpb,vnpbok;
@@ -113,13 +106,8 @@ typedef struct StrInterParmsg{
   unsigned boundnum;
   unsigned fluidnum;         
   unsigned id;
-  TpMgDivMode axis;       ///<Axis used in current division. It is used to sort cells and particles.
-  tuint3 ncells;
-  int4 nc;                ///<Number of cells according axis.
-  unsigned cellfluid;
-  tint3 cellmin;
+  StDivDataGpu divdatag;
   //-Input data arrays.
-  const int2 *begincell;
   const unsigned *dcell;
   const double2 *posxy;
   const double *posz;
@@ -146,13 +134,11 @@ typedef struct StrInterParmsg{
     ,bool symmetry_ //<vs_syymmetry>
     ,TpKernel tkernel_,TpFtMode ftmode_
     ,bool lamsps_,TpDensity tdensity_,TpShifting shiftmode_
-    ,TpCellMode cellmode_
     ,float viscob_,float viscof_
     ,unsigned bsbound_,unsigned bsfluid_
     ,unsigned np_,unsigned npb_,unsigned npbok_
-    ,unsigned id_,TpMgDivMode axis_
-    ,tuint3 ncells_,tuint3 cellmin_
-    ,const int2 *begincell_,const unsigned *dcell_
+    ,unsigned id_
+    ,const StDivDataGpu &divdatag_,const unsigned *dcell_
     ,const double2 *posxy_,const double *posz_,const float4 *poscell_
     ,const float4 *velrhop_,const unsigned *idp_,const typecode *code_
     ,const float *ftomassp_,const tsymatrix3f *spstau_
@@ -168,20 +154,15 @@ typedef struct StrInterParmsg{
     tkernel=tkernel_; ftmode=ftmode_;
     lamsps=lamsps_; tdensity=tdensity_; shiftmode=shiftmode_;
     //-Execution values.
-    hdiv=(cellmode_==CELLMODE_H? 2: 1);
     viscob=viscob_; viscof=viscof_;
     bsbound=bsbound_; bsfluid=bsfluid_;
     vnp=np_; vnpb=npb_; vnpbok=npbok_;
     boundini=0;   boundnum=vnpbok;
     fluidini=vnpb; fluidnum=vnp-vnpb;
-    id=id_; axis=axis_;
-    ncells=ncells_;
-    const tuint3 nc3=CodeAxisOrder(axis,ncells);
-    nc.x=int(nc3.x); nc.y=int(nc3.y); nc.z=int(nc3.z); nc.w=int(nc3.x*nc3.y);
-    cellfluid=nc.w*nc.z+1;
-    cellmin=TInt3(int(cellmin_.x),int(cellmin_.y),int(cellmin_.z));
+    id=id_; 
+    divdatag=divdatag_;
     //-Input data arrays.
-    begincell=begincell_; dcell=dcell_;
+    dcell=dcell_;
     posxy=posxy_; posz=posz_; poscell=poscell_;
     velrhop=velrhop_; idp=idp_; code=code_;
     ftomassp=ftomassp_; tau=spstau_;
@@ -200,7 +181,6 @@ typedef struct StrInterParmsg{
 /// Implements a set of functions and CUDA kernels for the particle interaction and system update.
 namespace cusph{
 
-dim3 GetGridSize(unsigned n,unsigned blocksize);
 inline unsigned ReduMaxFloatSize(unsigned ndata){ return((ndata/SPHBSIZE+1)+(ndata/(SPHBSIZE*SPHBSIZE)+SPHBSIZE)); }
 float ReduMaxFloat(unsigned ndata,unsigned inidata,float* data,float* resu);
 float ReduMaxFloat_w(unsigned ndata,unsigned inidata,float4* data,float* resu);
@@ -216,9 +196,16 @@ void ComputeVelMod(unsigned n,const float4 *vel,float *velmod);
 //-Kernels for the force calculation.
 void Interaction_Forces(const StInterParmsg &t);
 
+//-Kernels for the boundary correction (mDBC). //<vs_mddbc_ini>
+void Interaction_MdbcCorrection(TpKernel tkernel,TpSlipMode slipmode,unsigned n,unsigned nbound
+  ,float mdbcthreshold,bool simulate2d,const StDivDataGpu &dvd
+  ,const double2 *posxy,const double *posz,const typecode *code,const unsigned *idp
+  ,const float3 *boundnormal,const float3 *motionvel,float4 *velrhop);
+//<vs_mddbc_end>
+
 //-Kernels for the calculation of the DEM forces.
-void Interaction_ForcesDem(TpCellMode cellmode,unsigned bsize
-  ,unsigned nfloat,tuint3 ncells,const int2 *begincell,tuint3 cellmin,const unsigned *dcell
+void Interaction_ForcesDem(unsigned bsize,unsigned nfloat
+  ,const StDivDataGpu &dvd,const unsigned *dcell
   ,const unsigned *ftridp,const float4 *demdata,const float *ftomassp,float dtforce
   ,const float4 *poscell,const float4 *velrhop
   ,const typecode *code,const unsigned *idp,float *viscdt,float3 *ace,StKerInfo *kerinfo);
@@ -245,6 +232,7 @@ void MoveLinBound(byte periactive,unsigned np,unsigned ini,tdouble3 mvpos,tfloat
   ,const unsigned *ridp,double2 *posxy,double *posz,unsigned *dcell,float4 *velrhop,typecode *code);
 void MoveMatBound(byte periactive,bool simulate2d,unsigned np,unsigned ini,tmatrix4d m,double dt
   ,const unsigned *ridpmv,double2 *posxy,double *posz,unsigned *dcell,float4 *velrhop,typecode *code,float3 *boundnormal);
+void CopyMotionVel(unsigned nmoving,const unsigned *ridpmv,const float4 *velrhop,float3 *motionvel); //<vs_mddbc>
 
 //-Kernels for MLPistons motion.  //<vs_mlapiston_ini>
 void MovePiston1d(bool periactive,unsigned np,unsigned idini,double dp,double poszmin,unsigned poszcount,const byte *pistonid,const double* movx,const double* velx,const unsigned *ridpmv,double2 *posxy,double *posz,unsigned *dcell,float4 *velrhop,typecode *code);
@@ -259,7 +247,7 @@ void FtCalcForcesSum(bool periactive,unsigned ftcount
 void FtCalcForces(unsigned ftcount,tfloat3 gravity
   ,const float *ftomass,const float3 *ftoangles
   ,const float4 *ftoinertiaini8,const float *ftoinertiaini1
-  ,const float3 *ftoforcessum,float3 *ftoforces);
+  ,const float3 *ftoforcessum,float3 *ftoforces,const float3 *ftoextforces);
 void FtCalcForcesRes(unsigned ftcount,bool simulate2d,double dt
   ,const float3 *ftoomega,const float3 *ftovel,const double3 *ftocenter,const float3 *ftoforces
   ,float3 *ftoforcesres,double3 *ftocenterres);
@@ -279,6 +267,7 @@ void PeriodicDuplicateVerlet(unsigned n,unsigned pini,tuint3 domcells,tdouble3 p
 void PeriodicDuplicateSymplectic(unsigned n,unsigned pini
   ,tuint3 domcells,tdouble3 perinc,const unsigned *listp,unsigned *idp,typecode *code,unsigned *dcell
   ,double2 *posxy,double *posz,float4 *velrhop,tsymatrix3f *spstau,double2 *posxypre,double *poszpre,float4 *velrhoppre);
+void PeriodicDuplicateNormals(unsigned n,unsigned pini,const unsigned *listp,float3 *normals,float3 *motionvel); //<vs_mddbc>
 
 //-Kernels for Damping.
 void ComputeDamping(double dt,tdouble4 plane,float dist,float over,tfloat3 factorxyz,float redumax

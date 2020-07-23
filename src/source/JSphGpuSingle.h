@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2019 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -42,7 +42,7 @@ protected:
   llong GetMemoryGpuNp()const;
   llong GetMemoryGpuNct()const;
   void UpdateMaxValues();
-  void LoadConfig(JCfgRun *cfg);
+  void LoadConfig(JSphCfgRun *cfg);
   void ConfigDomain();
 
   void ResizeParticlesSize(unsigned newsize,float oversize,bool updatedivide);
@@ -51,6 +51,7 @@ protected:
   void AbortBoundOut();
 
   void Interaction_Forces(TpInterStep interstep);
+  void MdbcBoundCorrection(); //<vs_mddbc>
 
   double ComputeAceMax(float *auxmem);
 
@@ -60,8 +61,12 @@ protected:
   double ComputeStep_Sym();
 
   void UpdateFtObjs();
+  void FtApplyImposedVel(float3 *ftoforcesresg)const; //<vs_fttvel>
+  void FtCopyExternalForces(); //<vs_fttvel>
   void RunFloating(double dt,bool predictor);
   void RunGaugeSystem(double timestep);
+
+  void ComputePips(bool run);
 
   void SaveData();
   void FinishRun(bool stop);
@@ -69,7 +74,7 @@ protected:
 public:
   JSphGpuSingle();
   ~JSphGpuSingle();
-  void Run(std::string appname,JCfgRun *cfg,JLog2 *log);
+  void Run(std::string appname,JSphCfgRun *cfg,JLog2 *log);
 
 //<vs_innlet_ini>
 //-Code for InOut in JSphGpuSingle_InOut.cpp

@@ -1,5 +1,5 @@
 /*
- <DUALSPHYSICS>  Copyright (c) 2016, Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -31,19 +31,21 @@ class JChronoObjects : protected JObject
 protected:
 public:
   JChronoObjects(JLog2* log,const std::string &dirdata,const std::string &casename
-    ,JXml *sxml,const std::string &place,double dp,word mkboundfirst){}
+    ,const JXml *sxml,const std::string &place,double dp,word mkboundfirst){}
   ~JChronoObjects(){};
   void Reset(){};
   static bool Available(){ return(false); }
 
   bool UseDataDVI(word mkbound)const{ return(false); };
+  bool GetUseCollision()const{ return(false); };
+
   bool ConfigBodyFloating(word mkbound,double mass,const tdouble3 &center
     ,const tmatrix3d &inertia,const tint3 &translationfree,const tint3 &rotationfree
     ,const tfloat3 &linvelini,const tfloat3 &angvelini){ return(false); };
 
-  void ConfigDataDVIBodyFloating(word mkbound,float kfric,float restitu){};
-  void ConfigDataDVIBodyMoving  (word mkbound,float kfric,float restitu){};
-  void ConfigDataDVIBodyFixed   (word mkbound,float kfric,float restitu){};
+  void ConfigDataBodyFloating(word mkbound,float kfric,float restitu,float young,float poisson){};
+  void ConfigDataBodyMoving  (word mkbound,float kfric,float restitu,float young,float poisson){};
+  void ConfigDataBodyFixed   (word mkbound,float kfric,float restitu,float young,float poisson){};
 
   void Init(bool simulate2d,const JSphMk* mkinfo){};
   void VisuConfig(std::string txhead, std::string txfoot)const{};
@@ -51,6 +53,7 @@ public:
   bool GetWithMotion()const{ return(false); }
 
   void SetFtData(word mkbound,const tfloat3 &face,const tfloat3 &fomegaace){};
+  void SetFtDataVel(word mkbound,const tfloat3 &vlin,const tfloat3 &vang){}; //<vs_fttvel>
   void GetFtData(word mkbound,tdouble3 &fcenter,tfloat3 &fvel,tfloat3 &fomega)const{};
 
   void SetMovingData(word mkbound,bool simple,const tdouble3 &msimple,const tmatrix4d &mmatrix,double dt){};

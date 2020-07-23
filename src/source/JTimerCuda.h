@@ -1,6 +1,6 @@
 //HEAD_DSCODES
 /*
- <DUALSPHYSICS>  Copyright (c) 2019 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -19,8 +19,8 @@
 //:#############################################################################
 //:# Cambios:
 //:# =========
-//:# - Implementacion de una clase para medir con precision pequeños intervalos
-//:#   de tiempo mediante la GPU usando cudaEvent de CUDA. (10-01-2011)
+//:# - Implementacion de una clase para medir con precision intervalos de tiempo
+//:#   reducidos mediante la GPU usando cudaEvent de CUDA. (10-01-2011)
 //:# - Traduccion de comentarios al ingles. (10-02-2012)
 //:#############################################################################
 

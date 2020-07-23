@@ -1,5 +1,5 @@
 /*
- <DUALSPHYSICS>  Copyright (c) 2016, Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -24,12 +24,12 @@
 #include "FunctionsGeo3d.h"
 #include "JLog2.h"
 #include "JXml.h"
-#include "JSpaceParts.h"
+#include "JCaseParts.h"
 #include "JAppInfo.h"
 #include "JSaveCsv2.h"
 #include "JVtkLib.h"
 #include "JRangeFilter.h"
-#include "JSpaceVtkOut.h"
+#include "JCaseVtkOut.h"
 #include "JSphMk.h"
 #include <cstring>
 #include <cfloat>
@@ -47,7 +47,7 @@ using namespace std;
 /// Constructor.
 //==============================================================================
 JChronoObjects::JChronoObjects(JLog2* log,const std::string &dirdata,const std::string &casename
- ,JXml *sxml,const std::string &place,double dp,word mkboundfirst)
+ ,const JXml *sxml,const std::string &place,double dp,word mkboundfirst)
  :Log(log),DirData(dirdata),CaseName(casename),Dp(dp),MkBoundFirst(mkboundfirst),UseDVI(true)
 {
   ClassName="JChronoObjects";
@@ -71,6 +71,10 @@ JChronoObjects::~JChronoObjects(){
 /// Initialisation of variables.
 //==============================================================================
 void JChronoObjects::Reset(){
+  Solver=0;
+  OmpThreads=1;
+  UseChronoSMC=false;
+  UseCollision=false;
   WithMotion=false;
   delete ChronoDataXml; ChronoDataXml=NULL;
   delete ChronoLib; ChronoLib=NULL;
@@ -105,36 +109,35 @@ bool JChronoObjects::ConfigBodyFloating(word mkbound,double mass
 }
 
 //==============================================================================
-/// Configures Floating body with DVI parameters. 
+/// Configures Floating body data for collisions. 
 //==============================================================================
-void JChronoObjects::ConfigDataDVIBodyFloating(word mkbound,float kfric,float restitu){
+void JChronoObjects::ConfigDataBodyFloating(word mkbound,float kfric,float restitu,float young,float poisson){
   JChBodyFloating* body=(JChBodyFloating*)ChronoDataXml->GetBodyFloating(mkbound);
-  if(body)body->SetDVIData(kfric,restitu); 
+  if(body)body->SetCollisionData(kfric,restitu,young,poisson);
 }
-
 //==============================================================================
-/// Configures Moving body with DVI parameters. 
+/// Configures Moving body data for collisions. 
 //==============================================================================
-void JChronoObjects::ConfigDataDVIBodyMoving(word mkbound,float kfric,float restitu){
+void JChronoObjects::ConfigDataBodyMoving(word mkbound,float kfric,float restitu,float young,float poisson){
   JChBodyMoving* body=(JChBodyMoving*)ChronoDataXml->GetBodyMoving(mkbound);
-  if(body)body->SetDVIData(kfric,restitu); 
+  if(body)body->SetCollisionData(kfric,restitu,young,poisson);
 }
 
 //==============================================================================
-/// Configures Fixed body with DVI parameters. 
+/// Configures Fixed body data for collisions. 
 //==============================================================================
-void JChronoObjects::ConfigDataDVIBodyFixed(word mkbound,float kfric,float restitu){
+void JChronoObjects::ConfigDataBodyFixed(word mkbound,float kfric,float restitu,float young,float poisson){
   JChBodyFixed* body=(JChBodyFixed*)ChronoDataXml->GetBodyFixed(mkbound);
-  if(body)body->SetDVIData(kfric,restitu); 
+  if(body)body->SetCollisionData(kfric,restitu,young,poisson);
 }
 
 //==============================================================================
 /// Loads data from XML file.
 //==============================================================================
-void JChronoObjects::LoadXml(JXml *sxml,const std::string &place){
-  TiXmlNode* node=sxml->GetNode(place,false);
+void JChronoObjects::LoadXml(const JXml *sxml,const std::string &place){
+  TiXmlNode* node=sxml->GetNodeSimple(place);
   if(!node)Run_Exceptioon(std::string("Cannot find the element \'")+place+"\'.");
-  ReadXml(sxml,node->ToElement());
+  if(sxml->CheckNodeActive(node))ReadXml(sxml,node->ToElement());
 }
 
 //==============================================================================
@@ -168,7 +171,7 @@ std::string JChronoObjects::ReadXmlModelFile(const JXml *sxml,TiXmlElement* ele)
 void JChronoObjects::LoadPtrAutoActual(const JXml *sxml,std::string xmlrow){
   if(!JVtkLib::Available())Run_Exceptioon("Code for VTK format files is not included in the current compilation, so CHRONO collisions according to VTK geometry are not supported.");
   if(Ptr_VtkSimple_AutoActual==NULL){
-    JSpaceVtkOut vtkout;
+    JCaseVtkOut vtkout;
     vtkout.LoadXml(sxml,"case.execution.vtkout",false);
     std::vector<std::string> vtkfiles;
     vtkout.GetFiles("_Actual.vtk",vtkfiles);
@@ -184,7 +187,7 @@ void JChronoObjects::LoadPtrAutoActual(const JXml *sxml,std::string xmlrow){
 void JChronoObjects::LoadPtrAutoDp(const JXml *sxml,std::string xmlrow){
   if(!JVtkLib::Available())Run_Exceptioon("Code for VTK format files is not included in the current compilation, so CHRONO collisions according to VTK geometry are not supported.");
   if(Ptr_VtkSimple_AutoDp==NULL){
-    JSpaceVtkOut vtkout;
+    JCaseVtkOut vtkout;
     vtkout.LoadXml(sxml,"case.execution.vtkout",false);
     std::vector<std::string> vtkfiles;
     vtkout.GetFiles("_Dp.vtk",vtkfiles);
@@ -242,7 +245,7 @@ void JChronoObjects::CreateObjFiles(std::string idname,const std::vector<unsigne
 void JChronoObjects::ReadXml(const JXml *sxml,TiXmlElement* lis){
   Reset();
   //-Checks XML elements.
-  sxml->CheckElementNames(lis,false,"savedata schemescale collisiondp bodyfloating bodymoving bodyfixed link_hinge link_spheric link_pointline link_linearspring");
+  sxml->CheckElementNames(lis,true,"savedata schemescale collision *bodyfixed *bodyfloating *link_hinge *link_spheric *link_pointline *link_linearspring *link_coulombdamping *link_pulley");
 
   ChronoDataXml=new JChronoData;
   ChronoDataXml->SetUseNSCChrono(UseDVI);
@@ -254,18 +257,42 @@ void JChronoObjects::ReadXml(const JXml *sxml,TiXmlElement* lis){
   ChronoDataXml->SetDataDir(diroutobj);
   //-Loads configuration to save CSV file for debug.
   SaveDataTime=sxml->ReadElementFloat(lis,"savedata","value",true,-1.f);
-  //-Loads allowed collision overlap according Dp.
-  CollisionDp=sxml->ReadElementFloat(lis,"collisiondp","value",true,0.5f);
-  ChronoDataXml->SetCollisionDp(CollisionDp);
   //-Loads scale value to create initial scheme of configuration.
   SchemeScale=sxml->ReadElementFloat(lis,"schemescale","value",true,1);
+
+  //-Configures the collision for chrono.
+  if(sxml->ExistsElement(lis,"collision")){
+    TiXmlElement *collision=lis->FirstChildElement("collision");
+    UseCollision=sxml->GetAttributeBool(collision,"activate",false);
+    if(UseCollision){
+      sxml->CheckElementNames(collision,true,"distancedp ompthreads contactmethod");
+      //-Loads allowed collision overlap according Dp.
+      CollisionDp=sxml->ReadElementFloat(collision,"distancedp","value",true,0.5f);
+      ChronoDataXml->SetCollisionDp(CollisionDp);
+      //-Loads solver. Only DSolverType::BB is allowed yet
+      const unsigned solver=JChronoData::DSolverType::BB;//sxml->ReadElementUnsigned(collision,"solver","value",true, JChronoData::DSolverType::BB);
+      //const unsigned iteration_max=sxml->ReadElementUnsigned(collision,"solver","iteration_max",true,10);
+      if(solver!=JChronoData::DSolverType::APGD && solver!=JChronoData::DSolverType::APGDREF && solver!=JChronoData::DSolverType::BB)Run_ExceptioonFile(fun::PrintStr("The solver value \'%d\' is not allowed.",solver),sxml->ErrGetFileRow(lis));
+      ChronoDataXml->SetSolver(solver);
+      //ChronoDataXml->SetMaxIter(iteration_max);
+      //-Loads number of threads.
+      OmpThreads=sxml->ReadElementInt(collision,"ompthreads","value",true,1); //-Default=Single-core
+      //-Loads the contact method type [NSC|SMC]
+      unsigned contact_m=sxml->ReadElementInt(collision,"contactmethod","value",true,0);
+      if(contact_m<0 || contact_m>1)Run_ExceptioonFile(fun::PrintStr("The value \'%d\' is not allowed for contactmethod attribute. Only 0 or 1.",contact_m),sxml->ErrGetFileRow(lis)); 
+      ChronoDataXml->SetContactMethod(contact_m==0? JChronoData::NSC: JChronoData::SMC);
+      UseChronoSMC=(ChronoDataXml->GetContactMethod()==JChronoData::SMC);
+    }
+  }
+  ConfigOmp();
+  ChronoDataXml->SetOmpThreads(OmpThreads);
 
   //-Loads body elements.
   unsigned nextidbody=0;
   TiXmlElement* ele=lis->FirstChildElement(); 
   while(ele){
     const std::string elename=ele->Value();
-    if(elename.length()>4 && elename.substr(0,4)=="body"){
+    if(elename.length()>4 && elename.substr(0,4)=="body" && sxml->CheckElementActive(ele)){
       const string xmlrow=sxml->ErrGetFileRow(ele);
       string idnamebase=sxml->GetAttributeStr(ele,"id");
       //word mkbound=sxml->GetAttributeWord(ele,"mkbound");
@@ -274,23 +301,27 @@ void JChronoObjects::ReadXml(const JXml *sxml,TiXmlElement* lis){
       //Log->Printf("-----> mkbounds:[%s]",rg.ToString().c_str());
       rg.GetValues(mkbounds);
       const unsigned nmkbounds=unsigned(mkbounds.size());
-      //-Creates obj files with geometry.
-      const string mfilebase=ReadXmlModelFile(sxml,ele);
-      if(fun::StrUpper(mfilebase)=="AUTOACTUAL" && Ptr_VtkSimple_AutoActual==NULL)LoadPtrAutoActual(sxml,xmlrow);
-      if(fun::StrUpper(mfilebase)=="AUTODP"     && Ptr_VtkSimple_AutoDp    ==NULL)LoadPtrAutoDp    (sxml,xmlrow);
-      const JChBody::TpModelNormal tnormal=ReadXmlModelNormal(sxml,ele);
-      if(!mfilebase.empty())CreateObjFiles(idnamebase,mkbounds,DirData,mfilebase,byte(tnormal),diroutobj,xmlrow);
+
+      //-Creates obj files with geometry if collisions are activated.
+      std::string mfilebase="";
+      JChBody::TpModelNormal tnormal=JChBody::NorOriginal;
+      if(UseCollision){
+        mfilebase=ReadXmlModelFile(sxml,ele);
+        if(fun::StrUpper(mfilebase)=="AUTOACTUAL" && Ptr_VtkSimple_AutoActual==NULL)LoadPtrAutoActual(sxml,xmlrow);
+        if(fun::StrUpper(mfilebase)=="AUTODP"     && Ptr_VtkSimple_AutoDp    ==NULL)LoadPtrAutoDp    (sxml,xmlrow);
+        tnormal=ReadXmlModelNormal(sxml,ele);
+        if(!mfilebase.empty())CreateObjFiles(idnamebase,mkbounds,DirData,mfilebase,byte(tnormal),diroutobj,xmlrow);
+      }
       //-Creates a body object for each MK value in mkbounds[].
       for(unsigned cmk=0;cmk<nmkbounds;cmk++){
         const word mkbound=word(mkbounds[cmk]);
         //-Creates body object.
         unsigned idb=nextidbody; nextidbody++;
         const string idname=(nmkbounds>1? idnamebase+fun::UintStr(mkbound): idnamebase);
-        const string mfile=(!mfilebase.empty()? idnamebase+fun::PrintStr("_mkb%04u.obj",mkbound): ""); 
+        const string mfile=(!mfilebase.empty()? idnamebase+fun::PrintStr("_mkb%04u.obj",mkbound): "");
         if(elename=="bodyfloating"){
-          //Log->Printf("----> AddBodyFloating>> \'%s\' mkb:%u mf:[%s]",idname.c_str(),mkbound,mfile.c_str());
           JChBodyFloating *body=ChronoDataXml->AddBodyFloating(idb,idname,mkbound,xmlrow);
-          body->SetModel(mfile,tnormal);
+          if(UseCollision)body->SetModel(mfile,tnormal);
           ReadXmlValues(sxml,ele->FirstChildElement("values"),body->GetValuesPtr());
         }
         else if(elename=="bodymoving"){
@@ -298,14 +329,14 @@ void JChronoObjects::ReadXml(const JXml *sxml,TiXmlElement* lis){
           //Log->Printf("----> AddBodyMoving>> \'%s\' mkb:%u mf:[%s]",idname.c_str(),mkbound,mfile.c_str());
           const double mass=sxml->GetAttributeDouble(ele,"massbody");
           JChBodyMoving *body=ChronoDataXml->AddBodyMoving(idb,idname,mkbound,mass,xmlrow);
-          body->SetModel(mfile,tnormal);
+          if(UseCollision)body->SetModel(mfile,tnormal);
           ReadXmlValues(sxml,ele->FirstChildElement("values"),body->GetValuesPtr());
           if(!mfile.empty())WithMotion=true;
         }
         else if(elename=="bodyfixed"){
           //Log->Printf("----> AddBodyFixed>> \'%s\' mkb:%u mf:[%s]",idname.c_str(),mkbound,mfile.c_str());
           JChBodyFixed *body=ChronoDataXml->AddBodyFixed(idb,idname,mkbound,xmlrow);
-          body->SetModel(mfile,tnormal);
+          if(UseCollision)body->SetModel(mfile,tnormal);
           ReadXmlValues(sxml,ele->FirstChildElement("values"),body->GetValuesPtr());
         }
         else sxml->ErrReadElement(ele,elename,false);
@@ -318,7 +349,7 @@ void JChronoObjects::ReadXml(const JXml *sxml,TiXmlElement* lis){
   ele=lis->FirstChildElement(); 
   while(ele){
     const std::string elename=ele->Value();
-    if(elename.length()>5 && elename.substr(0,5)=="link_"){
+    if(elename.length()>5 && elename.substr(0,5)=="link_" && sxml->CheckElementActive(ele)){
       const string xmlrow=sxml->ErrGetFileRow(ele);
       //-Identify body1.
       const string idnamebody1=sxml->GetAttributeStr(ele,"idbody1");
@@ -382,7 +413,6 @@ void JChronoObjects::ReadXml(const JXml *sxml,TiXmlElement* lis){
         link->SetStiffness (sxml->ReadElementDouble (ele,"stiffness"  ,"value"));
         link->SetDamping   (sxml->ReadElementDouble (ele,"damping"    ,"value"));
         link->SetRestLength(sxml->ReadElementDouble (ele,"rest_length","value"));
-        link->SetCoulombDamping(sxml->ReadElementDouble(ele,"coulombdamping","value",true,0));
         ReadXmlValues(sxml,ele->FirstChildElement("values"),link->GetValuesPtr());
         TiXmlElement* ele2=ele->FirstChildElement("savevtk");
         if(ele2){//-Configuration to save vtk spring.
@@ -392,6 +422,32 @@ void JChronoObjects::ReadXml(const JXml *sxml,TiXmlElement* lis){
           cfg.nside =sxml->ReadElementInt  (ele2,"nside" ,"value",true,cfg.nside );
           link->SetSvSpring(cfg);
         }
+      }
+      else if(elename=="link_coulombdamping"){
+        JChLinkCoulombDamping *link=ChronoDataXml->AddLinkCoulombDamping(name,idbody1,idbody2,xmlrow);
+        link->SetPointfb0  (sxml->ReadElementDouble3(ele,"point_fb1"));
+        link->SetPointfb1  (sxml->ReadElementDouble3(ele,"point_fb2"));
+        link->SetRestLength(sxml->ReadElementDouble (ele,"rest_length","value"));
+        link->SetCoulombDamping(sxml->ReadElementDouble(ele,"damping","value",false));
+        ReadXmlValues(sxml,ele->FirstChildElement("values"),link->GetValuesPtr());
+        TiXmlElement* ele2=ele->FirstChildElement("savevtk");
+        if(ele2){//-Configuration to save vtk spring.
+          JChLink::StSaveSpring cfg;
+          cfg.radius=sxml->ReadElementFloat(ele2,"radius","value",true,cfg.radius);
+          cfg.length=sxml->ReadElementFloat(ele2,"length","value",true,cfg.length);
+          cfg.nside =sxml->ReadElementInt  (ele2,"nside" ,"value",true,cfg.nside );
+          link->SetSvSpring(cfg);
+        }
+      }
+      else if(elename=="link_pulley"){
+        if(idnamebody1=="NULL"&&idnamebody2=="NULL")Run_ExceptioonFile("Link-Pulley uses two bodies.",xmlrow);
+        if(!ChronoDataXml->BodyBelongsLink(idbody1,JChLink::LK_Hinge))Log->PrintfWarning("The body \"%s\" also should belong to a link_hinge.",idnamebody1.c_str());
+        JChLinkPulley *link=ChronoDataXml->AddLinkPulley(name,idbody1,idbody2,xmlrow);
+        link->SetRotPoint (sxml->ReadElementDouble3(ele,"rotpoint" ));
+        link->SetRotVector(sxml->ReadElementDouble3(ele,"rotvector"));
+        link->SetRadius(sxml->ReadElementFloat(ele,"radius","value"));
+        link->SetRadius2(sxml->ReadElementFloat(ele,"radius2","value"));
+        ReadXmlValues(sxml,ele->FirstChildElement("values"),link->GetValuesPtr());
       }
       else sxml->ErrReadElement(ele,elename,false);
     }
@@ -435,6 +491,22 @@ void JChronoObjects::ReadXmlValues(const JXml *sxml,TiXmlElement* lis,JChValues*
       ele=ele->NextSiblingElement();
     }
   }
+}
+
+//==============================================================================
+/// Creates VTK file with the scheme of Chrono objects.
+//==============================================================================
+void JChronoObjects::SaveVtkScheme_Spring(JVtkLib *sh,word mk,word mk1
+  ,tdouble3 pt0,tdouble3 pt1,double restlength,double radius,double revlength,int nside)const
+{
+  const double ds=Dp*SchemeScale;
+  if(nside>1){
+    const double cornersout=radius/2.,cornersin=radius/4.;
+    sh->AddShapeSpring(pt0,pt1,restlength,ds,cornersout,cornersin,radius,revlength,nside,mk);
+  }
+  else sh->AddShapeLine(pt0,pt1,mk);
+  sh->AddShapeBoxSize(pt0-TDouble3(ds),TDouble3(ds*2),mk);
+  sh->AddShapeBoxSize(pt1-TDouble3(ds),TDouble3(ds*2),mk1);
 }
 
 //==============================================================================
@@ -485,18 +557,21 @@ void JChronoObjects::SaveVtkScheme()const{
         const JChLinkLinearSpring* linktype=(const JChLinkLinearSpring*)link;
         if(link->GetBodyRefCount()<2)Run_Exceptioon("Link without two bodies reference.");
         const word mk1=link->GetBodyRef(1)->MkBound+MkBoundFirst;
-        const tdouble3 pt0=linktype->GetPointfb0();
-        const tdouble3 pt1=linktype->GetPointfb1();
         const JChLink::StSaveSpring cfg=linktype->GetSvSpring();
-        if(cfg.nside>1){
-          const double radius=cfg.radius,revlength=cfg.length;
-          const int nsides=cfg.nside;
-          const double cornersout=cfg.radius/2.f,cornersin=cfg.radius/4.f;
-          sh.AddShapeSpring(pt0,pt1,linktype->GetRestLength(),ds,cornersout,cornersin,radius,revlength,nsides,mk);
-        }
-        else sh.AddShapeLine(pt0,pt1,mk);
-        sh.AddShapeBoxSize(pt0-TDouble3(ds),TDouble3(ds*2),mk);
-        sh.AddShapeBoxSize(pt1-TDouble3(ds),TDouble3(ds*2),mk1);
+        SaveVtkScheme_Spring(&sh,mk,mk1,linktype->GetPointfb0(),linktype->GetPointfb1(),linktype->GetRestLength(),cfg.radius,cfg.length,cfg.nside);
+      }break;
+      case JChLink::LK_CoulombDamping:{
+        const JChLinkCoulombDamping* linktype=(const JChLinkCoulombDamping*)link;
+        if(link->GetBodyRefCount()<2)Run_Exceptioon("Link without two bodies reference.");
+        const word mk1=link->GetBodyRef(1)->MkBound+MkBoundFirst;
+        const JChLink::StSaveSpring cfg=linktype->GetSvSpring();
+        SaveVtkScheme_Spring(&sh,mk,mk1,linktype->GetPointfb0(),linktype->GetPointfb1(),linktype->GetRestLength(),cfg.radius,cfg.length,cfg.nside);
+      }break;
+      case JChLink::LK_Pulley:{
+        const JChLinkPulley* linktype=(const JChLinkPulley*)link;
+        const tdouble3 pt=linktype->GetRotPoint();
+        const tdouble3 v=fgeo::VecUnitary(linktype->GetRotVector())*(ds*2);
+        sh.AddShapeCylinder(pt-v,pt+v,ds*1.5,16,mk);
       }break;
       default: Run_Exceptioon("Type of link is not supported.");
     }
@@ -522,6 +597,22 @@ void JChronoObjects::ConfigMovingBodies(const JSphMk* mkinfo){
 }
 
 //==============================================================================
+/// Loads the execution configuration with OpenMP.
+/// Carga la configuracion de ejecucion con OpenMP.
+//==============================================================================
+void JChronoObjects::ConfigOmp(){
+#ifdef OMP_USE
+  //-Determine number of threads for host with OpenMP. | Determina numero de threads por host con OpenMP.
+  if (OmpThreads<=0)OmpThreads=max(omp_get_num_procs(), 1);
+  if (OmpThreads>OMP_MAXTHREADS)OmpThreads=OMP_MAXTHREADS;
+  omp_set_num_threads(OmpThreads);
+  Log->Printf("Threads by host for parallel execution in Chrono: %d", OmpThreads);
+#else
+  OmpThreads=1;
+#endif
+}
+
+//==============================================================================
 /// Configures and reads floating data from XML file.
 //==============================================================================
 void JChronoObjects::Init(bool simulate2d,const JSphMk* mkinfo){
@@ -532,15 +623,37 @@ void JChronoObjects::Init(bool simulate2d,const JSphMk* mkinfo){
   //-Creates VTK file with the scheme of Chrono objects.
   SaveVtkScheme();
   //-Creates and configures object ChronoLib.
-  ChronoLib=new DSPHChronoLib();
+  if(ChronoDataXml->GetOmpThreads()>1){
+    #ifndef DISABLE_CHRONO_OMP
+      ChronoLib=new DSPHChronoLibMC(*ChronoDataXml); //<chrono_multicore>
+    #else
+      Log->PrintWarning("Chrono Parallel module is not enabled. The execution will be using single core");
+      ChronoDataXml->SetOmpThreads(1);
+      ChronoLib=new DSPHChronoLibSC(*ChronoDataXml);
+    #endif
+  }
+  else ChronoLib=new DSPHChronoLibSC(*ChronoDataXml);
   const bool svforces=SaveDataTime>=0;
-  ChronoLib->Config(AppInfo.GetDirOut(),svforces,simulate2d,*ChronoDataXml);
+  ChronoLib->Config(AppInfo.GetDirOut(),svforces,simulate2d);
   if(svforces){
     Log->AddFileInfo("ChronoBody_forces.csv","Saves forces for each body.");
     Log->AddFileInfo("ChronoLink_forces.csv","Saves forces for each link.");
   }
   delete ChronoDataXml; ChronoDataXml=NULL;
   ChronoLib->Config_Inertia();
+}
+
+//==============================================================================
+/// Check the parameters of the sent body to find missing values
+//==============================================================================
+void JChronoObjects::CheckParams(const JChBody *body)const{
+  const string objdesc=fun::PrintStr("Object mkbound=%u",body->MkBound);
+  if(body->GetKfric()  ==FLT_MAX)  Run_Exceptioon(objdesc+" - Value of Kfric is invalid.");
+  if(body->GetRestitu()==FLT_MAX)  Run_Exceptioon(objdesc+" - Value of Restitution_Coefficient is invalid.");
+  if(UseChronoSMC){
+    if(body->GetYoung()  ==FLT_MAX)Run_Exceptioon(objdesc+" - Value of Young_Modulus is invalid.");
+    if(body->GetPoisson()==FLT_MAX)Run_Exceptioon(objdesc+" - Value of PoissonRatio is invalid.");
+  } 
 }
 
 //==============================================================================
@@ -584,16 +697,16 @@ void JChronoObjects::VisuValues(const JChValues *values)const{
 void JChronoObjects::VisuBody(const JChBody *body)const{
   Log->Printf("  Body_%04u \"%s\" -  type: %s",body->Idb,body->IdName.c_str(),body->TypeToStr(body->Type).c_str());
   if(body->Type == JChBody::BD_Floating){
-    Log->Printf("    MkBound....: %u",((const JChBodyFloating *)body)->MkBound);
-    Log->Printf("    Mass.......: %g",body->GetMass());
-    Log->Printf("    Center.....: (%s)",fun::Double3gStr(body->GetCenter()).c_str());
+    Log->Printf("    MkBound......: %u",((const JChBodyFloating *)body)->MkBound);
+    Log->Printf("    Mass.........: %g",body->GetMass());
+    Log->Printf("    Center.......: (%s)",fun::Double3gStr(body->GetCenter()).c_str());
     const tmatrix3f inert=ToTMatrix3f(body->GetInertia());
-    Log->Printf("    Inertia....: (%g,%g,%g) (xx,yy,zz)",inert.a11,inert.a22,inert.a33);
-    Log->Printf("    Inertia....: (%g,%g,%g) (xy,yz,xz)",inert.a12,inert.a23,inert.a13);
+    Log->Printf("    Inertia......: (%g,%g,%g) (xx,yy,zz)",inert.a11,inert.a22,inert.a33);
+    Log->Printf("    Inertia......: (%g,%g,%g) (xy,yz,xz)",inert.a12,inert.a23,inert.a13);
     if(!body->GetMotionFree()){
       const tint3 m=body->GetTranslationFree();
       const tint3 r=body->GetRotationFree();
-      Log->Printf("    MotionFree.: Translation:(%d,%d,%d) Rotation:(%d,%d,%d)",m.x,m.y,m.z,r.x,r.y,r.z);
+      Log->Printf("    MotionFree...: Translation:(%d,%d,%d) Rotation:(%d,%d,%d)",m.x,m.y,m.z,r.x,r.y,r.z);
     }
     if(body->GetLinearVelini()!=TFloat3(0) || body->GetAngularVelini()!=TFloat3(0)){
       const tfloat3 v=body->GetLinearVelini();
@@ -603,18 +716,25 @@ void JChronoObjects::VisuBody(const JChBody *body)const{
     }
   }
   if(body->Type==JChBody::BD_Moving){
-    Log->Printf("    MkBound....: %u",((const JChBodyFixed *)body)->MkBound);
-    Log->Printf("    Mass.......: %g",body->GetMass());
+    Log->Printf("    MkBound......: %u",((const JChBodyFixed *)body)->MkBound);
+    Log->Printf("    Mass.........: %g",body->GetMass());
   }
   if(body->Type==JChBody::BD_Fixed){
-    Log->Printf("    MkBound....: %u",((const JChBodyFixed *)body)->MkBound);
+    Log->Printf("    MkBound......: %u",((const JChBodyFixed *)body)->MkBound);
   }
-  if(!body->GetModelFile().empty()){
-    Log->Printf("    Kfric......: %g",body->GetKfric());
-    Log->Printf("    Restitution: %g",body->GetRestitu());
-    Log->Printf("    ModelFile..: %s",body->GetModelFile().c_str());
-    Log->Printf("    ModelNormal: %s",JChBody::NormalToStr(body->GetModelNormal()).c_str());
+
+  if(!body->GetModelFile().empty() && UseCollision){
+    Log->Printf("    Kfric........: %g",body->GetKfric());
+    Log->Printf("    Restitution..: %g",body->GetRestitu());
+    if(UseChronoSMC){
+      Log->Printf("    Young_Modulus: %g",body->GetYoung());
+      Log->Printf("    Poisson Ratio: %g",body->GetPoisson());
+    } 
+    CheckParams(body); //Checks the above parameters in function of the contact method
+    Log->Printf("    ModelFile....: %s",body->GetModelFile().c_str());
+    Log->Printf("    ModelNormal..: %s",JChBody::NormalToStr(body->GetModelNormal()).c_str());
   }
+
   VisuValues(body->GetValuesPtr());
   if(body->GetLinkRefCount()){
     Log->Printf("    Links......: %u",body->GetLinkRefCount());
@@ -651,12 +771,27 @@ void JChronoObjects::VisuLink(const JChLink *link)const{
       Log->Printf("    Point Body 1..: (%s)",fun::Double3gStr(linktype->GetPointfb0()).c_str());
       Log->Printf("    Point Body 2..: (%s)",fun::Double3gStr(linktype->GetPointfb1()).c_str());
       Log->Printf("    Rest length...: %g", linktype->GetRestLength());
-      if(linktype->GetCoulombDamping())Log->Printf("    CoulombDamping: %g", linktype->GetCoulombDamping());
+    }break;
+    case JChLink::LK_CoulombDamping:{
+      const JChLinkCoulombDamping* linktype=(const JChLinkCoulombDamping*)link;
+      Log->Printf("    Point Body 1..: (%s)",fun::Double3gStr(linktype->GetPointfb0()).c_str());
+      Log->Printf("    Point Body 2..: (%s)",fun::Double3gStr(linktype->GetPointfb1()).c_str());
+      Log->Printf("    Rest length...: %g", linktype->GetRestLength());
+      Log->Printf("    CoulombDamping: %g", linktype->GetCoulombDamping());
+    }break;
+    case JChLink::LK_Pulley:{
+      const JChLinkPulley* linktype=(const JChLinkPulley*)link;
+      Log->Printf("    Rotation point: (%s)",fun::Double3gStr(linktype->GetRotPoint()).c_str());
+      Log->Printf("    Rotation axis.: (%s)",fun::Double3gStr(linktype->GetRotVector()).c_str());
+      Log->Printf("    Radius body1..: %g",linktype->GetRadius());
+      Log->Printf("    Radius body2..: %g",linktype->GetRadius2());
     }break;
     default: Run_Exceptioon("Type of link is not supported.");
   }
-  Log->Printf("    Stiffness.....: %g",link->GetStiffness());
-  Log->Printf("    Damping.......: %g",link->GetDamping());
+  if(link->Type!=JChLink::LK_CoulombDamping && link->Type!=JChLink::LK_Pulley){
+    Log->Printf("    Stiffness.....: %g",link->GetStiffness());
+    Log->Printf("    Damping.......: %g",link->GetDamping());
+  }
   VisuValues(link->GetValuesPtr());
   if(link->GetBodyRefCount()){
     Log->Printf("    Bodies........: %u",link->GetBodyRefCount());
@@ -673,11 +808,30 @@ void JChronoObjects::VisuConfig(std::string txhead, std::string txfoot)const{
   if(!txhead.empty())Log->Print(txhead);
   const JChronoData* chdata=ChronoLib->GetChronoData();
   Log->Printf("  DSPHChrono version: %s",ChronoLib->version.c_str());
-  Log->Printf("  Data directory.....: [%s]",chdata->GetDataDir().c_str());
-  Log->Printf("  Bodies.............: %d",chdata->GetBodyCount());
-  Log->Printf("  Links..............: %u",chdata->GetLinkCount());
+  Log->Printf("  Data directory...: [%s]",chdata->GetDataDir().c_str());
+  Log->Printf("  Collisions.......: %s",(UseCollision? "True": "False"));
+  if(UseCollision){
+    Log->Printf("  Collision dp.....: %g",chdata->GetCollisionDp());
+    Log->Printf("  Contact Method...: %s",chdata->ContactMethodToStr().c_str());  //<chrono_contacts>
+    Log->Printf("  Solver ..........: %s",chdata->SolverToStr().c_str());
+  }
+  Log->Printf("  Execution mode...: %s",chdata->GetMode().c_str());
+  Log->Printf("  OpenMP Threads...: %d",chdata->GetOmpThreads());
+  Log->Printf("  Bodies...........: %d",chdata->GetBodyCount());
+  Log->Printf("  Links............: %u",chdata->GetLinkCount());
+  //Log->Printf("  FEA Enabled......: %s",chdata->GetUseFEA()?"Yes":"No");     //<chrono_fea>
+
   for(unsigned c=0;c<chdata->GetBodyCount();c++)VisuBody(chdata->GetBody(c));
   for(unsigned c=0;c<chdata->GetLinkCount();c++)VisuLink(chdata->GetLink(c));
+  //-Checks bodies without geometry for collisions.
+  if(UseCollision){
+    string mkboundlist;
+    for(unsigned c=0;c<chdata->GetBodyCount();c++)if(chdata->GetBody(c)->GetModelFile().empty()){
+      if(mkboundlist.empty())mkboundlist=fun::UintStr(chdata->GetBody(c)->MkBound);
+      else mkboundlist=mkboundlist+","+fun::UintStr(chdata->GetBody(c)->MkBound);
+    }
+    if(!mkboundlist.empty())Log->PrintfWarning("The collisions with Chrono is activated but some bodies (mkbound=[%s]) do not have model file defined.",mkboundlist.c_str());
+  }
   if(!txfoot.empty())Log->Print(txfoot);
 }
 
@@ -687,6 +841,14 @@ void JChronoObjects::VisuConfig(std::string txhead, std::string txfoot)const{
 void JChronoObjects::SetFtData(word mkbound,const tfloat3 &face,const tfloat3 &fomegaace){
   if(!ChronoLib->SetFtData(mkbound,face,fomegaace))Run_Exceptioon("Error running Chrono library.");
 }
+
+//<vs_fttvel_ini>
+//==============================================================================
+/// Loads imposed velocity for floating to calculate coupling with Chrono.
+//==============================================================================
+void JChronoObjects::SetFtDataVel(word mkbound,const tfloat3 &vlin,const tfloat3 &vang){
+  if(!ChronoLib->SetFtDataVel(mkbound,vlin,vang))Run_Exceptioon("Error running Chrono library.");
+}//<vs_fttvel_end>
 
 //==============================================================================
 /// Obtains floating data from coupling with Chrono.
@@ -754,35 +916,36 @@ void JChronoObjects::RunChrono(unsigned nstep,double timestep,double dt,bool pre
 void JChronoObjects::SavePart(int part){
   const double ds=Dp*SchemeScale;
   const JChronoData* chdata=ChronoLib->GetChronoData();
-  //-Saves VTK of LinearSpring links.
+  //-Saves VTK of LinearSpring and CoulombDamping links.
   if(1){
     bool save=false;
     JVtkLib sh;
-    for(unsigned c=0;c<chdata->GetLinkCount();c++)if(chdata->GetLink(c)->Type==JChLink::LK_LinearSpring){
-      const JChLinkLinearSpring* linktype=(const JChLinkLinearSpring*)chdata->GetLink(c);
-      if(linktype->GetBodyRefCount()<1)Run_Exceptioon("Link without body reference.");
-      const word mk=linktype->GetBodyRef(0)->MkBound+MkBoundFirst;
-      tdouble3 p1,p2;
-      if(ChronoLib->GetSpringLinkPositions(linktype->Name,p1,p2))Run_Exceptioon("Error running GetSpringLinkPositions() of Chrono library.");
-      //Log->Printf("---> SpringPos: (%f,%f,%f) (%f,%f,%f)\n",p1.x,p1.y,p1.z,p2.x,p2.y,p2.z);
-      const JChLink::StSaveSpring cfg=linktype->GetSvSpring();
-      if(cfg.nside>1){
-        const double radius=cfg.radius,revlength=cfg.length;
-        const int nsides=cfg.nside;
-        const double cornersout=cfg.radius/2.f,cornersin=cfg.radius/4.f;
-        //const double restlen=linktype->GetRestLength();
-        const double restlen=ChronoLib->GetSpringLinkRestLength(linktype->Name); //-Is necessary when it is variable.
-        sh.AddShapeSpring(p1,p2,restlen,ds,cornersout,cornersin,radius,revlength,nsides,mk);
-        save=true;
-      }
-      else if(cfg.nside==1){
-        sh.AddShapeLine(p1,p2,mk);
-        save=true;
+    for(unsigned c=0;c<chdata->GetLinkCount();c++){
+      if(chdata->GetLink(c)->Type==JChLink::LK_LinearSpring || chdata->GetLink(c)->Type==JChLink::LK_CoulombDamping){
+        const JChLink *link=chdata->GetLink(c);
+        if(link->GetBodyRefCount()<1)Run_Exceptioon("Link without body reference.");
+        const word mk=link->GetBodyRef(0)->MkBound+MkBoundFirst;
+        tdouble3 p1,p2;
+        if(ChronoLib->GetSpringLinkPositions(link->Name,p1,p2))Run_Exceptioon("Error running GetSpringLinkPositions() of Chrono library.");
+        //Log->Printf("---> SpringPos: (%f,%f,%f) (%f,%f,%f)\n",p1.x,p1.y,p1.z,p2.x,p2.y,p2.z);
+        const JChLink::StSaveSpring cfg=(link->Type==JChLink::LK_LinearSpring? ((const JChLinkLinearSpring*)link)->GetSvSpring(): ((const JChLinkCoulombDamping*)link)->GetSvSpring());
+        if(cfg.nside>1){
+          const double radius=cfg.radius,revlength=cfg.length;
+          const int nsides=cfg.nside;
+          const double cornersout=cfg.radius/2.f,cornersin=cfg.radius/4.f;
+          const double restlen=ChronoLib->GetSpringLinkRestLength(link->Name); //-It is necessary when RestLength is variable.
+          sh.AddShapeSpring(p1,p2,restlen,ds,cornersout,cornersin,radius,revlength,nsides,mk);
+          save=true;
+        }
+        else if(cfg.nside==1){
+          sh.AddShapeLine(p1,p2,mk);
+          save=true;
+        }
       }
     }
     if(save){
-      Log->AddFileInfo("data/Chrono_Springs_????.vtk","Saves VTK file with representation of Chrono springs.");
-      const string filevtk=AppInfo.GetDirDataOut()+fun::FileNameSec("Chrono_Springs.vtk",part);
+      Log->AddFileInfo("SpringVtk/Chrono_Springs_????.vtk","Saves VTK file with representation of Chrono springs.");
+      const string filevtk=AppInfo.GetDirOut()+fun::FileNameSec("SpringVtk/Chrono_Springs.vtk",part);
       sh.SaveShapeVtk(filevtk,"Mk");
     }
   }
