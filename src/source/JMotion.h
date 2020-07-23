@@ -19,7 +19,7 @@
 //:#############################################################################
 //:# Cambios:
 //:# =========
-//:# - Nuevo movimiento (PredefX) que lee de un fichero la posición en distintos
+//:# - Nuevo movimiento (PredefX) que lee de un fichero la posicion en distintos
 //:#   instantes e interpola para el instante deseado. (14-10-2010)
 //:# - Nuevos metodos SetDirIn() y GetDirIn() para poder establecer un directorio
 //:#   de entrada para ficheros de datos. (19-10-2010)

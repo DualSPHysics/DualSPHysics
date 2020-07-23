@@ -23,6 +23,7 @@
 #include "JReadDatafile.h"
 #include <cstring>
 #include <cfloat>
+#include <algorithm>
 
 using namespace std;
 

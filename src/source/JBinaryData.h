@@ -27,7 +27,7 @@
 //:# - Los datos se pueden organizar en distintos niveles con forma de arbol.
 //:# - Permite guardar datos basicos y arrays de tipos basicos y strings.
 //:# - La lectura del contenido de arrays desde fichero puede ser de forma 
-//:#   selectiva, sólo los que se necesiten.
+//:#   selectiva, solo los que se necesiten.
 //:# - Los arrays se pueden redimensionar de forma automatica segun se vayan
 //:#   introduciendo mas datos. 
 //:# - Permite uso de punteros externos para reducir el consumo de memoria. 

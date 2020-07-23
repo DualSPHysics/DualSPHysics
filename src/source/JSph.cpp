@@ -63,6 +63,7 @@
 #include "JVtkLib.h"
 #include "JNumexLib.h"
 #include "JCaseUserVars.h"
+#include <algorithm>
 
 using namespace std;
 
@@ -671,12 +672,12 @@ void JSph::LoadConfigParameters(const JXml *xml){
   TimeMax=eparms.GetValueDouble("TimeMax");
   TimePart=eparms.GetValueDouble("TimeOut");
 
-  DtIni=max(0,eparms.GetValueDouble("DtIni",true,0));
-  DtMin=max(0,eparms.GetValueDouble("DtMin",true,0));
+  DtIni=max(0.0,eparms.GetValueDouble("DtIni",true,0));
+  DtMin=max(0.0,eparms.GetValueDouble("DtMin",true,0));
   CoefDtMin=eparms.GetValueFloat("CoefDtMin",true,0.05f);
   DtAllParticles=(eparms.GetValueInt("DtAllParticles",true,0)==1);
 
-  double valuefixeddt=max(0,eparms.GetValueDouble("DtFixed",true,0));
+  double valuefixeddt=max(0.0,eparms.GetValueDouble("DtFixed",true,0));
   string filefixeddt=eparms.GetValueStr("DtFixedFile",true);
   if(fun::StrUpper(filefixeddt)=="NONE")filefixeddt="";
   if(valuefixeddt && !filefixeddt.empty())Run_Exceptioon("The parameters \'DtFixed\' and \'DtFixedFile\' cannot be used at the same time.");

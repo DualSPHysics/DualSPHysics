@@ -21,7 +21,7 @@
 //:# =========
 //:# - Error corregido: En el metodo rotate() de la clase JMatrix4 se cambio 
 //:#   MulPre(MatrixRot(...)) por Mul(MatrixRot(...)) para que funcionase bien 
-//:#   la combinación de movimiento con rotación.  (19-10-2010)
+//:#   la combinacion de movimiento con rotacion.  (19-10-2010)
 //:# - Traduccion de comentarios al ingles. (10-02-2012)
 //:# - Metodo GetMotion() para obtener angulos con respecto a ejes y traslacion
 //:#   a partir de la matriz de transformacion. (04-07-2014)

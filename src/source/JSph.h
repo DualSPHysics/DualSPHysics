@@ -274,7 +274,7 @@ protected:
   std::string PartBeginDir;   ///<Searches directory for starting PART.                   | Directorio donde busca el PART de arranque.
   unsigned PartBegin;         ///<Indicates the start (0: no resumption).                 | Indica el PART de arranque (0:Sin reanudacion).
   unsigned PartBeginFirst;    ///<Indicates the number of the first PART to be generated. | Indica el numero del primer PART a generar.                                    
-  double PartBeginTimeStep;   ///<initial instant of the simulation                       | Instante de inicio de la simulación.                                          
+  double PartBeginTimeStep;   ///<initial instant of the simulation                       | Instante de inicio de la simulacion.                                          
   ullong PartBeginTotalNp;    ///<Total number of simulated particles.
 
   JDsPartsOut *PartsOut;        ///<Stores excluded particles until they are saved. | Almacena las particulas excluidas hasta su grabacion.
@@ -387,9 +387,9 @@ protected:
   int Nstep;              ///<Number of step in execution.             | Numero de paso en ejecucion.
   int PartNstep;          ///<Number of step when last PART was saved. | Numero de paso en el que se guardo el ultimo PART.
   unsigned PartOut;       ///<Total number of excluded particles. | Numero total de particulas excluidas al grabar el ultimo PART.
-  double TimeStepIni;     ///<Initial instant of the simulation. | Instante inicial de la simulación.
-  double TimeStep;        ///<Current instant of the simulation. | Instante actual de la simulación.                                 
-  double TimeStepM1;      ///<Instant of the simulation when the last PART was stored. | Instante de la simulación en que se grabo el último PART.         
+  double TimeStepIni;     ///<Initial instant of the simulation. | Instante inicial de la simulacion.
+  double TimeStep;        ///<Current instant of the simulation. | Instante actual de la simulacion.                                 
+  double TimeStepM1;      ///<Instant of the simulation when the last PART was stored. | Instante de la simulacion en que se grabo el ultimo PART.         
   double TimePartNext;    ///<Instant to store next PART file.   | Instante para grabar siguiente fichero PART.
   double LastDt;          ///<Last dt value added to Instant to TimeStep. | Ultimo valor de dt sumado a TimeStep.
 
@@ -522,7 +522,7 @@ Consideraciones sobre condiciones periodicas:
   condiciones periodicas esta holgura solo se aplica a MapPosMax.
 - El ajuste de tamanho de dominio realizado por ResizeMapLimits() no afecta a los
   ejes periodicos.
-- El halo periodico tendrá una unica celda de grosor 2h aunque en los otros ejes
+- El halo periodico tendra una unica celda de grosor 2h aunque en los otros ejes
   se use celdas de tamanho h.
 - En la interaccion, una celda de tamanho 2h o dos celdas de tamanho h del extremo 
   inferior interaccionan con el halo periodico. En el caso del extremo superior
