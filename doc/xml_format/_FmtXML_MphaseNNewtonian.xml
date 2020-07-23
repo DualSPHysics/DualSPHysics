@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!-- *** DualSPHysics-NNewtonian (05-04-2020) *** -->
+<!------------------------------------------------------------------------------->
+<!------------------------------------------------------------------------------->
+<!-- *** Example for Non Newtonian simulations. *** -->
+<execution>
+	<special> 
+		<nnphases> %Defines non-newtonian phases parameters
+			<phase mkfluid="0">
+				<rhop value="1000" comment="Density of the phase" />
+				<csound value="80" comment="Speed of sound for phase (m/s)" />
+				<gamma value="7" comment="Gamma polytropic index value for phase" />
+				<visco value="0.01" comment="Kinematic viscosity (or consistency index) value for phase (m2/s)" />
+				<tau_yield value="0.0001" comment="Specific yield stress of phase (Pa m3/kg)" />
+				<tau_max value="0.00001" comment="User defined maximum specific yield stress of phase (Pa m3/kg)" />
+				<Bi_multi value="10.0" comment="tau_max multiplier for use with Bingham model or bi-viscosity model(tau_bi=tau_max*Bi_multi)" />					
+				<HBP_m value="10" comment="Use 0 to reduce Newtonian liquid, order of 10 for power law and order of 100 for Bingham (sec) " />
+				<HBP_n value="2" comment="Use 1 to reduce to Newtonian, <1 for shear thinning >1 for shear thickenning " />                    
+				<phasetype value="0" comment="Non-Newtonian=0 only option in beta" />
+			</phase>		
+		</nnphases>
+	</special>
+	<parameters>
+		%Choice of reology treatment, velocity gradient calculation and viscosity treatment  
+		<parameter key="RheologyTreatment" value="2" comment="Reology formulation 1:Single-phase classic, 2: Single and multi-phase  (default=1)" />
+		<parameter key="VelocityGradientType" value="1" comment="Velocity gradient formulation 1:FDA, 2:SPH (default=1)" />
+		<parameter key="ViscoTreatment" value="2" comment="Viscosity formulation 1:Artificial, 2:Laminar+SPS, 3:Constitutive  eq. (default=1)" />
+	</parameters>
+</execution>
+
+
+<!------------------------------------------------------------------------------->
+<!------------------------------------------------------------------------------->
+<!-- *** Example of two phases using power law and Bingham using HBP *** -->
+<special>
+	<nnphases> %Defines non-newtonian phases parameters
+		<phase mkfluid="0">
+			<rhop value="1000" comment="Density of the phase" />                    
+			<visco value="0.1" comment="Kinematic viscosity (or consistency index) value for phase (m2/s)" />
+			<tau_yield value="0.1" comment="Specific yield stress of phase (Pa m3/kg)" />
+			<HBP_m value="5" comment="Use 0 to reduce Newtonian liquid, order of 10 for power law and order of 100 for Bingham (sec) " />
+			<HBP_n value="1" comment="Use 1 to reduce to Newtonian, <1 for shear thinning >1 for shear thickenning " />                    
+			<phasetype value="0" comment="Non-Newtonian=0 only option in beta" />					
+		</phase>
+		<phase mkfluid="1">
+			<rhop value="1000" comment="Density of the phase" />                    
+			<visco value="0.1" comment="Kinematic viscosity (or consistency index) value for phase (m2/s)" />
+			<tau_yield value="0.1" comment="Specific yield stress of phase (Pa m3/kg)" />
+			<HBP_m value="100" comment="Use 0 to reduce Newtonian liquid, order of 10 for power law and order of 100 for Bingham (sec) " />
+			<HBP_n value="1" comment="Use 1 to reduce to Newtonian, <1 for shear thinning >1 for shear thickenning " />                    
+			<phasetype value="0" comment="Non-Newtonian=0 only option in beta" />					
+		</phase>										                
+	</nnphases>
+</special>
+<!------------------------------------------------------------------------------->
+<!------------------------------------------------------------------------------->
+<!-- *** Example of two phases using Bignham shear thickening and thinning using HBP *** -->
+<special>
+	<nnphases> %Defines non-newtonian phases parameters
+		<phase mkfluid="0">
+			<rhop value="1000" comment="Density of the phase" />                    
+			<visco value="0.1" comment="Kinematic viscosity (or consistency index) value for phase (m2/s)" />
+			<tau_yield value="0.1" comment="Specific yield stress of phase (Pa m3/kg)" />
+			<HBP_m value="100" comment="Use 0 to reduce Newtonian liquid, order of 10 for power law and order of 100 for Bingham (sec) " />
+			<HBP_n value="1.5" comment="Use 1 to reduce to Newtonian, <1 for shear thinning >1 for shear thickenning " />                    
+			<phasetype value="0" comment="Non-Newtonian=0 only option in beta" />					
+		</phase>
+		<phase mkfluid="1">
+			<rhop value="1000" comment="Density of the phase" />                    
+			<visco value="0.1" comment="Kinematic viscosity (or consistency index) value for phase (m2/s)" />
+			<tau_yield value="0.1" comment="Specific yield stress of phase (Pa m3/kg)" />
+			<HBP_m value="100" comment="Use 0 to reduce Newtonian liquid, order of 10 for power law and order of 100 for Bingham (sec) " />
+			<HBP_n value="0.9" comment="Use 1 to reduce to Newtonian, <1 for shear thinning >1 for shear thickenning " />                    
+			<phasetype value="0" comment="Non-Newtonian=0 only option in beta" />					
+		</phase>										                
+	</nnphases>
+</special>
+<!------------------------------------------------------------------------------->
+<!------------------------------------------------------------------------------->
+<!-- *** Example of two phases using Bignham (bi-viscosity) and Bingham using HBP *** -->
+<special>
+	<nnphases> %Defines non-newtonian phases parameters
+		<phase mkfluid="0">
+			<rhop value="1000" comment="Density of the phase" />                    
+			<visco value="0.1" comment="Kinematic viscosity (or consistency index) value for phase (m2/s)" />
+			<tau_yield value="0.001" comment="Specific yield stress of phase (Pa m3/kg)" />
+			<tau_max value="0.0001" comment="User defined maximum specific yield stress of phase (Pa m3/kg)" />
+			<Bi_multi value="10.0" comment="tau_max multiplier for use with Bingham model or bi-viscosity model(tau_bi=tau_max*Bi_multi)" />					
+			<HBP_m value="100" comment="Use 0 to reduce Newtonian liquid, order of 10 for power law and order of 100 for Bingham (sec) " />
+			<HBP_n value="1" comment="Use 1 to reduce to Newtonian, <1 for shear thinning >1 for shear thickenning " />                    
+			<phasetype value="0" comment="Non-Newtonian=0 only option in beta" />					
+		</phase>
+		<phase mkfluid="1">
+			<rhop value="1000" comment="Density of the phase" />                    
+			<visco value="0.1" comment="Kinematic viscosity (or consistency index) value for phase (m2/s)" />
+			<tau_yield value="0.001" comment="Specific yield stress of phase (Pa m3/kg)" />
+			<HBP_m value="100" comment="Use 0 to reduce Newtonian liquid, order of 10 for power law and order of 100 for Bingham (sec) " />
+			<HBP_n value="1" comment="Use 1 to reduce to Newtonian, <1 for shear thinning >1 for shear thickenning " />                    
+			<phasetype value="0" comment="Non-Newtonian=0 only option in beta" />					
+		</phase>										                
+	</nnphases>
+</special>
+
+
+
+
+
