@@ -30,7 +30,7 @@
  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
 
 
-ComputeForces v5.0.049 (16-03-2020)
+ComputeForces v5.0.122 (09-07-2020)
 ====================================
 LoadDsphConfig> .../bin/windows/DsphConfig.xml
 Information about parameters of execution:
@@ -46,20 +46,21 @@ Information about parameters of execution:
     -dirin <dir>       Directory with particle data
     -filexml file.xml  Loads xml file with information of mk and
                        and other information. The word 'AUTO' can
-                       be used to load the xml used in the simulation.
+                       be used to load the xml used in the simulation
     -first:<int>       Indicates the first file to be computed
     -last:<int>        Indicates the last file to be computed
     -files:<values>    Indicates the number of files to be processed
 
     -threads:<int>  Indicates the number of threads for parallel execution of
      the interpolation, it takes the number of cores of the device by default
-     (or uses zero value).
+     (or uses zero value)
 
   Define parameters for force calculation:
     -viscoart:<float>      Artificial viscosity [0-1] (0 by default)
     -viscolam:<float>      Laminar viscosity [order of 1E-6]
-    -viscoauto:            Viscosity configuration is load from BI4 files.
+    -viscoauto:            Viscosity configuration is load from BI4 files
     -gravity:<float:float:float> Gravity value
+
   Define axis for moment calculation:
     -momentaxis:x1:y1:z1:x2:y2:z2  Axis for moment calculation
 

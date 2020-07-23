@@ -1,6 +1,6 @@
 
 
- <FLOWTOOL V5.0.034 (26-02-2020)>  Copyright (c) 2020 by Dr Jose M. Dominguez
+ <FLOWTOOL>  Copyright (c) 2020 by Dr Jose M. Dominguez
  All rights reserved.
 
  DualSPHysics is an international collaboration between University of Vigo 
@@ -30,7 +30,7 @@
  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
 
 
-FlowTool v5.0.034 (26-02-2020)
+FlowTool v5.0.122 (09-07-2020)
 ===============================
 LoadDsphConfig> .../bin/windows/DsphConfig.xml
 Information about parameters of execution:
@@ -61,6 +61,10 @@ Information about parameters of execution:
                           (value by default is read from DsphConfig.xml or 1)
     -csvsep:<0/1>         Separator character in CSV files (0=semicolon, 1=coma)
                           (value by default is read from DsphConfig.xml or 0)
+
+    -threads:<int>  Indicates the number of threads for parallel execution of
+     the interpolation, it takes the number of cores of the device by default
+     (or using zero value).
 
   Examples:
     FlowTool -dirin . -fileboxes boxes.dat -savecsv resul.csv -savevtk dir/files.vtk

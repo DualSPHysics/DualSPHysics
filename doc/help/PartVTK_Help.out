@@ -30,12 +30,12 @@
  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
 
 
-PartVtk v5.0.051 (26-02-2020)
+PartVTK v5.0.122 (09-07-2020)
 ==============================
 LoadDsphConfig> .../bin/windows/DsphConfig.xml
 Information about parameters of execution:
 
-  PartVtk <options>
+  PartVTK <options>
 
   Basic options:
     -h             Shows information about parameters
@@ -52,6 +52,8 @@ Information about parameters of execution:
     -first:<int>     Indicates the first file to be computed
     -last:<int>      Indicates the last file to be computed
     -files:<values>  Indicates the number of files to be processed
+
+    -continue:<0/1>  Process only new VTK files (default=false)
 
     -move:x:y:z      Particles are moved using this offset
 
@@ -119,6 +121,6 @@ Information about parameters of execution:
        (default value=0)
 
   Examples:
-    PartVtk -savevtk partfluid.vtk -onlytype:-bound -filexml dir/AUTO
+    PartVTK -savevtk partfluid.vtk -onlytype:-bound -filexml dir/AUTO
             -savevtk partbound.vtk -onlytype:-all,bound -vars:vel.x,var1
 

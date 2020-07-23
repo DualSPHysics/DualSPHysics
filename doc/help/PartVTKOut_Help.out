@@ -30,12 +30,12 @@
  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
 
 
-PartVTKOut v5.0.032 (26-02-2020)
+PartVTKOut v5.0.122 (09-07-2020)
 =================================
 LoadDsphConfig> .../bin/windows/DsphConfig.xml
 Information about parameters of execution:
 
-  PartVtkOut <options>
+  PartVTKOut <options>
 
   Basic options:
     -h             Shows information about parameters
@@ -48,6 +48,7 @@ Information about parameters of execution:
                        save value of mk
     -first:<int>     Indicates the first file to be computed
     -last:<int>      Indicates the last file to be computed
+
   Define output file:
     -savevtk <file.vtk>     Generates vtk(polydata) files with excluded
                             particles.
@@ -67,5 +68,5 @@ Information about parameters of execution:
     -limitrhop:min:max      Changes limits of rhop values
 
   Examples:
-    PartVtkOut -savevtk out.vtk
+    PartVTKOut -savevtk out.vtk
 

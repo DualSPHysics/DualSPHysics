@@ -30,7 +30,7 @@
  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
 
 
-GenCase v5.0.184 (19-05-2020) 
+GenCase v5.0.197 (18-07-2020) 
 ===============================
 LoadDsphConfig> .../bin/windows/DsphConfig.xml
 Execution parameters information:
@@ -43,9 +43,9 @@ Execution parameters information:
     -template        Generates the example file 'CaseTemplate.xml'
     -dp:<float>      Defines the distance between particles
 
-    -ompthreads:<int>  Indicates the number of threads by host for
-                   parallel execution, it takes the number of cores
-                   of the device by default (or uses zero value)
+    -threads:<int>   Indicates the number of threads for parallel execution,
+                     it takes the number of cores of the device by default
+                     (or uses zero value).
 
     -save:<values>  Indicates the format of output files
        +/-all:        To choose or reject all options

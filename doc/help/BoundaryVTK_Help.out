@@ -30,7 +30,7 @@
  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
 
 
-BoundaryVTK v5.0.057 (15-04-2020)
+BoundaryVTK v5.0.122 (09-07-2020)
 ==================================
 LoadDsphConfig> .../bin/windows/DsphConfig.xml
 Information about parameters of execution:
@@ -117,9 +117,9 @@ Information about parameters of execution:
                          (value by default is read from DsphConfig.xml or 0)
 
   Examples:
-    BoundaryVtk -loadvtk bound.vtk -savevtk box.vtk -onlymk:10,12
+    BoundaryVTK -loadvtk bound.vtk -savevtk box.vtk -onlymk:10,12
 
-    BoundaryVtk -loadvtk *_Actual.vtk -filexml AUTO -motiondata .
-    BoundaryVtk -loadvtk file.vtk -filexml case.xml -motiondata .
+    BoundaryVTK -loadvtk *_Actual.vtk -filexml AUTO -motiondata .
+    BoundaryVTK -loadvtk file.vtk -filexml case.xml -motiondata .
                 -saveply motion.ply
 

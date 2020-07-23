@@ -30,7 +30,7 @@
  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
 
 
-MeasureTool v5.0.051 (08-05-2020)
+MeasureTool v5.0.122 (09-07-2020)
 ==================================
 LoadDsphConfig> .../bin/windows/DsphConfig.xml
 Information about parameters of execution:
@@ -123,26 +123,25 @@ Information about parameters of execution:
        +/-XXX:       Variable defined by the user
        (by default: vel,rhop)
 
-    -height[:<float>]  Height value is calculated starting from mass values
-                       for each point x,y. The reference mass to obtain the
-                       height is calculated according to the mass values of
-                       the selected particles; by default 0.5 in 3D (half 
-                       the mass) and 0.4 in 2D
+    -elevation[:<float>]  Fluid elevation is calculated starting from mass 
+                     values for each point x,y. The reference mass to obtain
+                     the elevation is calculated according to the mass values
+                     of the selected particles; by default 0.5 in 3D (half 
+                     the mass) and 0.4 in 2D
 
-    -heightlimit:<float>  The same as -height but the reference mass is
-                          given by an absolute value
+    -elevationlimit:<float>  The same as -elevation but the reference mass is
+                             given by an absolute value
 
-    -heightoutput:<value> Output files with height values (default value = time)
-       time:        Values of height for each time
-       pos:         Values of height for each position (x,y)
+    -elevationoutput:<value> Output files with fluid elevation values
+       time:        Values of elevation for each time (option by default)
+       pos:         Values of elevation for each position (x,y)
        all:         Both output files.
+
   Define output files format:
     -savevtk <file.vtk>   Generates VTK(polydata) file with the given
                           interpolation points
-
     -savecsv <file.csv>   Generates one CSV file with the time history
                           of the obtained values
-
     -saveascii <file.asc> Generates one ASCII file without headers
                           with the time history of the obtained values
 
