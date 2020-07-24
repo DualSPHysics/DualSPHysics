@@ -1,0 +1,776 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Cuda">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cu;cpp;c;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Libs">
+      <UniqueIdentifier>{99d1ade6-e68a-4751-ab48-b8d6bd2e501a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source">
+      <UniqueIdentifier>{6de12eb8-c425-49be-b99c-8d64538d1569}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Common">
+      <UniqueIdentifier>{f60090e0-1dd6-457c-ab56-cccbd3391527}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="CommonDsph">
+      <UniqueIdentifier>{6f7ff7f7-4d05-4c9d-8719-fd9bb5837ba1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Common\JXml">
+      <UniqueIdentifier>{500b2f4e-f261-4bcf-9964-ac82f6f277bc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Common\JMotion">
+      <UniqueIdentifier>{74f9f91d-50ee-4a68-a7fd-f3dae19dfbe4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Src_Chrono">
+      <UniqueIdentifier>{43f581fe-d4d4-445e-b4aa-71d3f8920b43}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Src_JWave_MLP_RZ">
+      <UniqueIdentifier>{72be6522-7328-4bb5-9f5d-2dab35803c8a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Src_Inlet">
+      <UniqueIdentifier>{55310fa5-8236-4088-a368-9d92edff8b87}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Src_Moorings">
+      <UniqueIdentifier>{b27c9e66-9b04-4b69-8a55-8dc262bfa75b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\CellDiv">
+      <UniqueIdentifier>{a5e48308-a8b0-4f2e-a73d-ddec5dd622de}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Other">
+      <UniqueIdentifier>{583e2a37-010a-49f2-ac68-933a9d111334}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\source\JCellDivGpu_ker.h">
+      <Filter>Cuda</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JCellDivGpuSingle_ker.h">
+      <Filter>Cuda</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JSphGpu_ker.h">
+      <Filter>Cuda</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JPartDataBi4.h">
+      <Filter>CommonDsph</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JPartOutBi4Save.h">
+      <Filter>CommonDsph</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JPartFloatBi4.h">
+      <Filter>CommonDsph</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JWaveGen.h">
+      <Filter>Libs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\OmpDefs.h">
+      <Filter>Source</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JWaveOrder2_ker.h">
+      <Filter>Cuda</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JReduSum_ker.h">
+      <Filter>Cuda</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JDsphConfig.h">
+      <Filter>CommonDsph</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\Functions.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\FunctionsCuda.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\FunctionsMath.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JBinaryData.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JException.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JLog2.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JMatrix4.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JMeanValues.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JObject.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JObjectGpu.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JRadixSort.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JRangeFilter.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JReadDatafile.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JTimeControl.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JTimer.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JTimerCuda.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\randomc.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\TypesDef.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JXml.h">
+      <Filter>Common\JXml</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\tinystr.h">
+      <Filter>Common\JXml</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\tinyxml.h">
+      <Filter>Common\JXml</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JMotion.h">
+      <Filter>Common\JMotion</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JMotionEvent.h">
+      <Filter>Common\JMotion</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JMotionList.h">
+      <Filter>Common\JMotion</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JMotionMov.h">
+      <Filter>Common\JMotion</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JMotionObj.h">
+      <Filter>Common\JMotion</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JMotionPos.h">
+      <Filter>Common\JMotion</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JTimerClock.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JSaveCsv2.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JPartDataHead.h">
+      <Filter>CommonDsph</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JParticlesDef.h">
+      <Filter>CommonDsph</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JPeriodicDef.h">
+      <Filter>CommonDsph</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JAppInfo.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JLinearValue.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JChronoData.h">
+      <Filter>Src_Chrono</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JChronoObjects.h">
+      <Filter>Src_Chrono</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\DSPHChronoLib.h">
+      <Filter>Src_Chrono</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JMLPistons.h">
+      <Filter>Src_JWave_MLP_RZ</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JMLPistonsGpu.h">
+      <Filter>Src_JWave_MLP_RZ</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JRelaxZones.h">
+      <Filter>Src_JWave_MLP_RZ</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JRelaxZonesGpu.h">
+      <Filter>Src_JWave_MLP_RZ</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JRelaxZone_ker.h">
+      <Filter>Cuda</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JSphGpu_InOut_ker.h">
+      <Filter>Cuda</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JSphInOut.h">
+      <Filter>Src_Inlet</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JSphInOutGridData.h">
+      <Filter>Src_Inlet</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JSphInOutPoints.h">
+      <Filter>Src_Inlet</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JSphBoundCorr.h">
+      <Filter>Src_Inlet</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JSimpleNeigs.h">
+      <Filter>Src_Inlet</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\FunctionsGeo3d.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JLinearValueDef.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JDataArrays.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JNormalsMarrone.h">
+      <Filter>CommonDsph</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JPartNormalData.h">
+      <Filter>CommonDsph</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JOutputCsv.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JVtkLib.h">
+      <Filter>Libs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JVtkLibUndef.h">
+      <Filter>Libs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JWaveGenUndef.h">
+      <Filter>Libs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JChronoObjectsUndef.h">
+      <Filter>Src_Chrono</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JSphGpuSimple_ker.h">
+      <Filter>Cuda</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\DSphMoorDyn.h">
+      <Filter>Libs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\DSphMoorDynUndef.h">
+      <Filter>Libs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JNumexLib.h">
+      <Filter>Libs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JNumexLibDef.h">
+      <Filter>Libs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JNumexLibUndef.h">
+      <Filter>Libs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JVtkLibDef.h">
+      <Filter>Libs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JSphInOutZone.h">
+      <Filter>Src_Inlet</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JDsPips_ker.h">
+      <Filter>Cuda</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JAppInfoDef.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JCfgRunBase.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JDsMooredFloatings.h">
+      <Filter>Src_Moorings</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JDsFtForcePoints.h">
+      <Filter>Src_Moorings</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JCellDivCpu.h">
+      <Filter>Source\CellDiv</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JCellDivCpuSingle.h">
+      <Filter>Source\CellDiv</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JCellDivDataCpu.h">
+      <Filter>Source\CellDiv</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JCellDivDataGpu.h">
+      <Filter>Source\CellDiv</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JCellDivGpu.h">
+      <Filter>Source\CellDiv</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JCellDivGpuSingle.h">
+      <Filter>Source\CellDiv</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JDsDamping.h">
+      <Filter>Source\Other</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JDsPips.h">
+      <Filter>Source\Other</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JDsGaugeItem.h">
+      <Filter>Source\Other</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JDsGaugeSystem.h">
+      <Filter>Source\Other</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JDsPartsOut.h">
+      <Filter>Source\Other</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JDsSaveDt.h">
+      <Filter>Source\Other</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JDsAccInput.h">
+      <Filter>Source\Other</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JDsAccInput_ker.h">
+      <Filter>Cuda</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JSphShifting_ker.h">
+      <Filter>Cuda</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JDsFixedDt.h">
+      <Filter>Source\Other</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JDsInitialize.h">
+      <Filter>Source\Other</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JDsMotion.h">
+      <Filter>Source\Other</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JDsPartsInit.h">
+      <Filter>Source\Other</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JDsViscoInput.h">
+      <Filter>Source\Other</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JDsOutputTime.h">
+      <Filter>Source\Other</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\DualSphDef.h">
+      <Filter>Source</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JArraysCpu.h">
+      <Filter>Source</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JArraysGpu.h">
+      <Filter>Source</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JDebugSphGpu.h">
+      <Filter>Source</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JSph.h">
+      <Filter>Source</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JSphCfgRun.h">
+      <Filter>Source</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JSphCpu.h">
+      <Filter>Source</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JSphCpuSingle.h">
+      <Filter>Source</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JSphGpuSingle.h">
+      <Filter>Source</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JSphMk.h">
+      <Filter>Source</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JSphShifting.h">
+      <Filter>Source</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JSphTimersCpu.h">
+      <Filter>Source</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JCaseCtes.h">
+      <Filter>CommonDsph</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JCaseEParms.h">
+      <Filter>CommonDsph</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JCaseParts.h">
+      <Filter>CommonDsph</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JCasePartsDef.h">
+      <Filter>CommonDsph</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JCaseProperties.h">
+      <Filter>CommonDsph</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JCaseUserVars.h">
+      <Filter>CommonDsph</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JCaseVtkOut.h">
+      <Filter>CommonDsph</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JDsGauge_ker.h">
+      <Filter>Cuda</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JWaveSpectrumGpu.h">
+      <Filter>Source\Other</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JPartsLoad4.h">
+      <Filter>Source\Other</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JCellSearch_iker.h">
+      <Filter>Cuda</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JCellSearch_inline.h">
+      <Filter>Source\CellDiv</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\FunSphKernelDef.h">
+      <Filter>Source</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\FunSphKernelsCfg.h">
+      <Filter>Source</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\FunSphKernel.h">
+      <Filter>Source</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\FunSphEos.h">
+      <Filter>Source</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\FunctionsBasic_iker.h">
+      <Filter>Cuda</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\FunSphEos_iker.h">
+      <Filter>Cuda</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\FunSphKernel_iker.h">
+      <Filter>Cuda</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JWaveAwasZsurf.h">
+      <Filter>Src_JWave_MLP_RZ</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\source\main.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JPartDataBi4.cpp">
+      <Filter>CommonDsph</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JPartOutBi4Save.cpp">
+      <Filter>CommonDsph</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JPartFloatBi4.cpp">
+      <Filter>CommonDsph</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JDsphConfig.cpp">
+      <Filter>CommonDsph</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\Functions.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\FunctionsCuda.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JBinaryData.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JException.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JLog2.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JMeanValues.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JObject.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JObjectGpu.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JRadixSort.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JRangeFilter.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JReadDatafile.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JTimeControl.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\randomc.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JXml.cpp">
+      <Filter>Common\JXml</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\tinystr.cpp">
+      <Filter>Common\JXml</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\tinyxml.cpp">
+      <Filter>Common\JXml</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\tinyxmlerror.cpp">
+      <Filter>Common\JXml</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\tinyxmlparser.cpp">
+      <Filter>Common\JXml</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JMotion.cpp">
+      <Filter>Common\JMotion</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JMotionList.cpp">
+      <Filter>Common\JMotion</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JMotionMov.cpp">
+      <Filter>Common\JMotion</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JMotionObj.cpp">
+      <Filter>Common\JMotion</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JMotionPos.cpp">
+      <Filter>Common\JMotion</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JSaveCsv2.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JPartDataHead.cpp">
+      <Filter>CommonDsph</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JAppInfo.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JLinearValue.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JChronoObjects.cpp">
+      <Filter>Src_Chrono</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JMLPistonsGpu.cpp">
+      <Filter>Src_JWave_MLP_RZ</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JRelaxZonesGpu.cpp">
+      <Filter>Src_JWave_MLP_RZ</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JSphCpu_InOut.cpp">
+      <Filter>Src_Inlet</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JSphCpuSingle_InOut.cpp">
+      <Filter>Src_Inlet</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JSphGpuSingle_InOut.cpp">
+      <Filter>Src_Inlet</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JSphInOut.cpp">
+      <Filter>Src_Inlet</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JSphInOutGridData.cpp">
+      <Filter>Src_Inlet</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JSphInOutPoints.cpp">
+      <Filter>Src_Inlet</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JSphBoundCorr.cpp">
+      <Filter>Src_Inlet</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JSimpleNeigs.cpp">
+      <Filter>Src_Inlet</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\FunctionsGeo3d.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JDataArrays.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JNormalsMarrone.cpp">
+      <Filter>CommonDsph</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JPartNormalData.cpp">
+      <Filter>CommonDsph</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JOutputCsv.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JSphInOutZone.cpp">
+      <Filter>Src_Inlet</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JCfgRunBase.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JDsMooredFloatings.cpp">
+      <Filter>Src_Moorings</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JDsFtForcePoints.cpp">
+      <Filter>Src_Moorings</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JCellDivCpu.cpp">
+      <Filter>Source\CellDiv</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JCellDivCpuSingle.cpp">
+      <Filter>Source\CellDiv</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JCellDivGpu.cpp">
+      <Filter>Source\CellDiv</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JCellDivGpuSingle.cpp">
+      <Filter>Source\CellDiv</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JDsDamping.cpp">
+      <Filter>Source\Other</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JDsPips.cpp">
+      <Filter>Source\Other</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JDsGaugeItem.cpp">
+      <Filter>Source\Other</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JDsGaugeSystem.cpp">
+      <Filter>Source\Other</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JDsPartsOut.cpp">
+      <Filter>Source\Other</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JDsSaveDt.cpp">
+      <Filter>Source\Other</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JDsAccInput.cpp">
+      <Filter>Source\Other</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JDsFixedDt.cpp">
+      <Filter>Source\Other</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JDsInitialize.cpp">
+      <Filter>Source\Other</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JDsMotion.cpp">
+      <Filter>Source\Other</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JDsPartsInit.cpp">
+      <Filter>Source\Other</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JDsViscoInput.cpp">
+      <Filter>Source\Other</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JDsOutputTime.cpp">
+      <Filter>Source\Other</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JArraysCpu.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JArraysGpu.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JDebugSphGpu.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JSph.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JSphCfgRun.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JSphCpu.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JSphCpuSingle.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JSphGpu.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JSphGpuSingle.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JSphMk.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JSphShifting.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JCaseCtes.cpp">
+      <Filter>CommonDsph</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JCaseEParms.cpp">
+      <Filter>CommonDsph</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JCaseParts.cpp">
+      <Filter>CommonDsph</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JCaseProperties.cpp">
+      <Filter>CommonDsph</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JCaseUserVars.cpp">
+      <Filter>CommonDsph</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JCaseVtkOut.cpp">
+      <Filter>CommonDsph</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JWaveSpectrumGpu.cpp">
+      <Filter>Source\Other</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JPartsLoad4.cpp">
+      <Filter>Source\Other</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\FunSphKernelsCfg.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JWaveAwasZsurf.cpp">
+      <Filter>Src_JWave_MLP_RZ</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuildStep Include="..\source\JSphGpu.h">
+      <Filter>Source</Filter>
+    </CustomBuildStep>
+    <CustomBuildStep Include="..\source\JSphTimersGpu.h">
+      <Filter>Source</Filter>
+    </CustomBuildStep>
+  </ItemGroup>
+  <ItemGroup>
+    <CudaCompile Include="..\source\JCellDivGpu_ker.cu">
+      <Filter>Cuda</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\source\JCellDivGpuSingle_ker.cu">
+      <Filter>Cuda</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\source\JSphGpu_ker.cu">
+      <Filter>Cuda</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\source\JWaveOrder2_ker.cu">
+      <Filter>Cuda</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\source\JReduSum_ker.cu">
+      <Filter>Cuda</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\source\JRelaxZone_ker.cu">
+      <Filter>Cuda</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\source\JSphGpu_InOut_ker.cu">
+      <Filter>Cuda</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\source\JSphGpuSimple_ker.cu">
+      <Filter>Cuda</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\source\JDsPips_ker.cu">
+      <Filter>Cuda</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\source\JDsAccInput_ker.cu">
+      <Filter>Cuda</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\source\JSphShifting_ker.cu">
+      <Filter>Cuda</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\source\JDsGauge_ker.cu">
+      <Filter>Cuda</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\source\FunctionsGeo3d_iker.h">
+      <Filter>Cuda</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\source\FunctionsMath_iker.h">
+      <Filter>Cuda</Filter>
+    </CudaCompile>
+  </ItemGroup>
+</Project>

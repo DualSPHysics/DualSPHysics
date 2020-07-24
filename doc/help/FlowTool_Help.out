@@ -1,0 +1,71 @@
+
+
+ <FLOWTOOL>  Copyright (c) 2020 by Dr Jose M. Dominguez
+ All rights reserved.
+
+ DualSPHysics is an international collaboration between University of Vigo 
+ (Spain) and University of Manchester (UK). 
+
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions
+ are met:
+ * Redistributions of source code must retain the above copyright
+   notice, this list of conditions and the following disclaimer.
+ * Redistributions in binary form must reproduce the above copyright
+   notice, this list of conditions and the following disclaimer in the
+   documentation and/or other materials provided with the distribution.
+ * Neither the name of the DualSPHysics nor the names of its contributors
+   may be used to endorse or promote products derived from this software
+   without specific prior written permission.
+
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER BE LIABLE FOR ANY
+ DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
+
+
+FlowTool v5.0.122 (09-07-2020)
+===============================
+LoadDsphConfig> .../bin/windows/DsphConfig.xml
+Information about parameters of execution:
+
+  FlowTool <options>
+
+  Basic options:
+    -h             Shows information about parameters
+    -ver           Shows version information
+    -opt <file>    Load configuration of a file
+
+  Defines input file:
+    -dirin <dir>       Directory with particle data bi4
+    -filein <file>     File with particle data bi4
+
+    -fileboxes <file>  File with definition of domains using prisms
+    -first:<int>     Indicates the first file to be computed
+    -last:<int>      Indicates the last file to be computed
+    -files:<values>  Indicates the number of files to be processed
+
+  Defines output file:
+    -boxestemplate        Creates example file to be used with -fileboxes
+    -savecsv <file.csv>   Generates CSV files with number of particles that
+                          enter or leave the domains , volume and flow rates
+    -savevtk <file.vtk>   Generates vtk(polydata) files with particles
+
+    -createdirs:<0/1>     Creates full path for output files
+                          (value by default is read from DsphConfig.xml or 1)
+    -csvsep:<0/1>         Separator character in CSV files (0=semicolon, 1=coma)
+                          (value by default is read from DsphConfig.xml or 0)
+
+    -threads:<int>  Indicates the number of threads for parallel execution of
+     the interpolation, it takes the number of cores of the device by default
+     (or using zero value).
+
+  Examples:
+    FlowTool -dirin . -fileboxes boxes.dat -savecsv resul.csv -savevtk dir/files.vtk
+

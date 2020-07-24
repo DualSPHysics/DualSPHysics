@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<!-- *** DualSPHysics (18-12-2018) *** -->
+<!-- *** DualSPHysics (19-03-2020) *** -->
 <!-- *** class: JGaugeSystem *** -->
 <!------------------------------------------------------------------------------->
 <!------------------------------------------------------------------------------->
 <!-- *** Example for definition of gauges *** -->
 <special>
-    <gauges>
-        <!-- Defines the default configuration for all gauges. -->
+	<gauges>
+		<!-- Defines the default configuration for all gauges. -->
 		<default>
 			<savevtkpart value="false" comment="Creates VTK files for each PART (default=false)" />
 			<computedt value="0.001" comment="Time between measurements. 0:all steps (default=TimeOut)" units_comment="s" />
@@ -15,7 +15,7 @@
 			<outputdt value="0" comment="Time between output measurements. 0:all steps (default=TimeOut)" units_comment="s" />
 			<outputtime start="0" end="10" comment="Start and end of output measures. (default=simulation time)" units_comment="s" />
 		</default>
-        <!-- Calculates velocity in one point and changes default configuration parameters. -->
+		<!-- Calculates velocity in one point and changes default configuration parameters. -->
 		<velocity name="Vel-0">
 			<savevtkpart value="true" comment="Creates VTK files for each PART (default=default.savevtkpart)" />
 			<computedt value="0.01" comment="Time between measurements. 0:all steps (default=default.computedt)" units_comment="s" />
@@ -25,19 +25,19 @@
 			<outputtime start="0" end="10" comment="Start and end of output measures. (default=default.outputtime)" units_comment="s" />
 			<point x="1.0" y="0" z="0.1" comment="Measurement position" units_comment="m" />
 		</velocity>
-        <!-- Only "start" is defined in <compute> and <output>. -->
+		<!-- Only "start" is defined in <compute> and <output>. -->
 		<velocity name="Vel_start">
 			<computetime start="0.1" comment="Start and end of measures. (default=default.computetime)" units_comment="s" />
 			<outputtime start="0" comment="Start and end of output measures. (default=default.outputtime)" units_comment="s" />
 			<point x="1.0" y="0" z="0.1" comment="Measurement position" units_comment="m" />
 		</velocity>
-        <!-- Only "end" is defined in <compute> and <output>. -->
+		<!-- Only "end" is defined in <compute> and <output>. -->
 		<velocity name="Vel_end">
 			<computetime end="0.5" comment="Start and end of measures. (default=default.computetime)" units_comment="s" />
 			<outputtime end="0.2" comment="Start and end of output measures. (default=default.outputtime)" units_comment="s" />
 			<point x="1.0" y="0" z="0.1" comment="Measurement position" units_comment="m" />
 		</velocity>
-        <!-- Calculates Surface Water Level in a line of points. -->
+		<!-- Calculates Surface Water Level in a line of points. -->
 		<swl name="Swl_x09">
 			<masslimit value="0.1" comment="Mass value to calculate free-surface (default=uses coefmasslimit)" units_comment="kg" />
 			<pointdp value="0.2" comment="Distance between check points" units_comment="m" />
@@ -50,7 +50,7 @@
 			<point0 x="0" y="0" z="0.1" comment="Initial point" units_comment="m" />
 			<point2 x="4" y="0" z="0.1" comment="Final point" units_comment="m" />
 		</swl>
-        <!-- Calculates maximum z of fluid at distance of a vertical line. -->
+		<!-- Calculates maximum z of fluid at distance of a vertical line. -->
 		<maxz name="MaxX_x09a">
 			<point0 x="0.9" y="0" z="0" comment="Bottom point" units_comment="m" />
 			<height value="2.1" comment="Maximum height to check" units_comment="m" />
@@ -72,8 +72,18 @@
 			<output value="true" comment="Creates CSV files of measurements (default=default.output)" />
 			<target mkbound="1" comment="Indicates the mkbound of selected particles to compute forces" />
 		</force>
-    </gauges>
+	</gauges>
 </special>
-
+<!-------------------------------------------------------------------------------------->
+<!-------------------------------------------------------------------------------------->
+<!-- *** Attribute "active" in elements <gauges> and its child elements to enable *** --> 
+<!-- *** (using active="true" or active="1") or disable (using active="false"     *** -->
+<!-- *** or active="0"). It is an optional attribute and true by default.         *** -->
+<gauges active="true">
+	<velocity active="true"/>
+	<swl active="true"/>
+	<maxz active="true"/>
+	<force active="true"/>
+</gauges>
 
 

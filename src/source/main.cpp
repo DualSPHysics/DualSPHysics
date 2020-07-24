@@ -1,10 +1,10 @@
 /*
- <DUALSPHYSICS>  Copyright (c) 2019, 
- Dr Jose M. Dominguez, Dr Alejandro Crespo, 
+ <DUALSPHYSICS>  Copyright (c) 2020, 
+ Dr Jose M. Dominguez Alonso, Dr Alejandro Crespo, 
  Prof. Moncho Gomez Gesteira, Prof. Benedict Rogers, 
- Dr Georgios Fourtakas, Prof. Peter Stansby, Dr Ricardo Canelas, 
+ Dr Georgios Fourtakas, Prof. Peter Stansby, 
  Dr Renato Vacondio, Dr Corrado Altomare, Dr Angelo Tafuni, 
- Orlando Garcia-Feal, Dr Jose Gonzalez Cao
+ Orlando Garcia Feal, Ivan Martinez Estevez
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -31,8 +31,8 @@ School of Mechanical, Aerospace and Civil Engineering, University of Manchester,
 \section compile_sec Project files
 Please download source files and documentation from <a href="http://dual.sphysics.org">DualSPHysics website.</a> \n
 \author <a href="http://dual.sphysics.org/index.php/developers">DualSPHysics Developers.</a> 
-\version 4.4.001
-\date 27-03-2019
+\version 5.0.140
+\date 18-07-2020
 \copyright GNU Lesser General Public License <a href="http://www.gnu.org/licenses/">GNU licenses.</a>
 */
 
@@ -45,8 +45,8 @@ Please download source files and documentation from <a href="http://dual.sphysic
 #include <fstream>
 #include "JAppInfo.h"
 #include "JLog2.h"
-#include "JCfgRun.h"
 #include "JException.h"
+#include "JSphCfgRun.h"
 #include "JSphCpuSingle.h"
 #ifdef _WITHGPU
   #include "JSphGpuSingle.h"
@@ -56,21 +56,20 @@ Please download source files and documentation from <a href="http://dual.sphysic
 
 using namespace std;
 
-
-JAppInfo AppInfo("DualSPHysics4","v4.4.053","19-01-2020");
-//JAppInfo AppInfo("DualSPHysics4","v4.2.???","UserVersion","v1.0","??-??-????"); //-for user versions.
+JAppInfo AppInfo("DualSPHysics5","v5.0.140","18-07-2020");
+//JAppInfo AppInfo("DualSPHysics5","v5.0.???","UserVersion","v1.0","??-??-????"); //-for user versions.
 
 //==============================================================================
 /// LGPL License.
 //==============================================================================
 std::string getlicense_lgpl(const std::string &name,bool simple){
   std::string tx=(simple? "": "\n");
-  tx=tx+"\n <"+fun::StrUpper(name)+"> Copyright (c) 2019 by"; 
-  tx=tx+"\n Dr Jose M. Dominguez, Dr Alejandro Crespo,";
-  tx=tx+"\n Prof. Moncho Gomez Gesteira,  Prof. Benedict Rogers,";
-  tx=tx+"\n Dr Georgios Fourtakas, Prof. Peter Stansby, Dr Ricardo Canelas,";
+  tx=tx+"\n <"+fun::StrUpper(name)+"> Copyright (c) 2020 by"; 
+  tx=tx+"\n Dr Jose M. Dominguez Alonso, Dr Alejandro Crespo,";
+  tx=tx+"\n Prof. Moncho Gomez Gesteira, Prof. Benedict Rogers,";
+  tx=tx+"\n Dr Georgios Fourtakas, Prof. Peter Stansby,";
   tx=tx+"\n Dr Renato Vacondio, Dr Corrado Altomare, Dr Angelo Tafuni,";
-  tx=tx+"\n Orlando Garcia-Feal, Dr Jose Gonzalez Cao\n";
+  tx=tx+"\n Orlando Garcia Feal, Ivan Martinez Estevez\n";
   if(!simple){
     tx=tx+"\n EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo";
     tx=tx+"\n School of Mechanical, Aerospace and Civil Engineering, University of Manchester\n";
@@ -101,11 +100,13 @@ bool ShowsVersionInfo(int argc,char** argv){
   else if(option=="-info"){
     //-Defines the features included in the program.
     bool d_ddtf=false;
+    d_ddtf=true;  //<vs_dtt2> 
     std::vector<std::string> features;
     features.push_back(fun::JSONProperty("CPU",true));
     features.push_back(fun::JSONProperty("GPU",AVAILABLE_GPU));
     features.push_back(fun::JSONProperty("MultiGPU",AVAILABLE_MGPU));
     features.push_back(fun::JSONProperty("VTK_Output",AVAILABLE_VTKLIB));
+    features.push_back(fun::JSONProperty("Numex_Expressions",AVAILABLE_NUMEXLIB));
     features.push_back(fun::JSONProperty("CHRONO_Coupling",AVAILABLE_CHRONO));
     features.push_back(fun::JSONProperty("MoorDyn_Coupling",AVAILABLE_MOORDYN));
     features.push_back(fun::JSONProperty("WaveGen",AVAILABLE_WAVEGEN));
@@ -138,7 +139,12 @@ void PrintExceptionLog(const std::string &prefix,const std::string &text,JLog2 *
 //==============================================================================
 int main(int argc, char** argv){
   int errcode=1;
-  AppInfo.AddNameExtra("Symmetry");   //<vs_syymmetry>
+  //AppInfo.AddNameExtra("Moordyn");    //<vs_moordyyn>
+  //AppInfo.AddNameExtra("FtVel");      //<vs_fttvel>
+  //AppInfo.AddNameExtra("Symmetry");   //<vs_syymmetry>
+  //AppInfo.AddNameExtra("MDBC");       //<vs_mddbc>
+  //AppInfo.AddNameExtra("DDT2");       //<vs_dtt2>
+  //AppInfo.AddNameExtra("SaveFtAce");
 #ifdef CODE_SIZE4
   AppInfo.AddNameExtra("MK65k");
 #endif
@@ -151,7 +157,7 @@ int main(int argc, char** argv){
   for(unsigned c=0;c<=unsigned(appname.size());c++)appnamesub=appnamesub+"=";
   printf("\n%s\n%s\n",appname.c_str(),appnamesub.c_str());
   JLog2 *log=NULL;
-  JCfgRun cfg;
+  JSphCfgRun cfg;
   try{
     cfg.LoadArgv(argc,argv);
     //cfg.VisuConfig();

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<!-- *** DualSPHysics (24-03-2019) *** -->
+<!-- *** DualSPHysics (19-03-2020) *** -->
 <!-- *** class: JSphBoundCorr *** -->
 <!------------------------------------------------------------------------------->
 <!------------------------------------------------------------------------------->
@@ -24,3 +24,11 @@
 		</mkzone>
 	</boundcorr>
 </special>
+<!---------------------------------------------------------------------------------->
+<!---------------------------------------------------------------------------------->
+<!-- *** Attribute "active" in elements <boundcorr> and <mkzone> to enable    *** --> 
+<!-- *** (using active="true" or active="1") or disable (using active="false" *** -->
+<!-- *** or active="0"). It is an optional attribute and true by default.     *** -->
+<boundcorr active="true">
+	<mkzone active="true"/>
+</boundcorr>

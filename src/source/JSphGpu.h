@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2019 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -23,10 +23,11 @@
 
 #include "DualSphDef.h"
 #include "JSphTimersGpu.h"
+#include "JCellDivDataGpu.h"
 #include "JSph.h"
 #include <string>
 
-class JPartsOut;
+class JDsPartsOut;
 class JArraysGpu;
 class JCellDivGpu;
 
@@ -90,9 +91,9 @@ protected:
   unsigned GpuSharedMem;  ///<Size of shared memory for each block in bytes.
   unsigned GpuCompute;    ///<Compute capability: 10,11,12,20... 
 
-  std::string RunMode;    ///<Stores execution mode (symmetry,OpenMP,balance...).
-
   const TpMgDivMode DivAxis;  ///<Axis used in current division. It is used to sort particle data. MGDIV_Z is used for single GPU.
+
+  StDivDataGpu DivData;   ///<Current data of cell division for neighborhood search on GPU.
 
   //-Number of particles in the domain.
   //-Numero de particulas del dominio.
@@ -147,6 +148,9 @@ protected:
   float4 *PosCellg; ///<Relative position and cell coordiantes for particle interaction {posx,posy,posz,cellxyz}
   float4 *Velrhopg;
 
+  float3 *BoundNormalg;  ///<Normal (x,y,z) pointing from boundary particles to ghost nodes.  //<vs_mddbc>
+  float3 *MotionVelg;    ///<Velocity of a moving boundary particle.                          //<vs_mddbc>
+    
   //-Variables for compute step: VERLET.
   float4 *VelrhopM1g;  ///<Verlet: in order to keep previous values. | Verlet: para guardar valores anteriores.
 
@@ -166,6 +170,7 @@ protected:
   float3 *FtoForcesg;      ///<Stores forces for the floating bodies {face_f3,fomegaace_f3} equivalent to JSphCpu::FtoForces [FtCount]. | Almacena fuerzas de floatings {face_f3,fomegaace_f3} equivalente a JSphCpu::FtoForces [FtCount]. 
   float3 *FtoForcesResg;   ///<Stores data to update floatings {fomegares_f3,fvelres_f3} equivalent to JSphCpu::FtoForcesRes. [FtCount]. | Almacena datos para actualizar floatings {fomegares_f3,fvelres_f3} equivalente a JSphCpu::FtoForcesRes. [FtCount].
   double3 *FtoCenterResg;  ///<Stores centre to update floatings. [Ftcount]. | Almacena centro para actualizar floatings. [FtCount]. 
+  float3  *FtoExtForcesg;  ///<Stores the external forces to sum of each floating body. [Ftcount].| Almacena las fuerzas externas para sumar a cada objeto flotante. [FtCount]. 
 
   tdouble3 *FtoAuxDouble6; ///<Memory to swap floating data with GPU. [2*FtCount]. | Memoria para intercambiar datos de floatings con GPU. [2*FtCount].
   tfloat3  *FtoAuxFloat9;  ///<Memory to swap floating data with GPU. [3*FtCount]. | Memoria para intercambiar datos de floatings con GPU. [3*FtCount].
@@ -268,6 +273,9 @@ protected:
   void RunMotion(double stepdt);
   void RunRelaxZone(double dt);  //<vs_rzone>
   void RunDamping(double dt,unsigned np,unsigned npb,const double2 *posxy,const double *posz,const typecode *code,float4 *velrhop);
+
+  void SaveVtkNormalsGpu(std::string filename,int numfile,unsigned np,unsigned npb               //<vs_mddbc>
+    ,const double2 *posxyg,const double *poszg,const unsigned *idpg,const float3 *boundnormalg); //<vs_mddbc>
 
   void ShowTimers(bool onlyfile=false);
   void GetTimersInfo(std::string &hinfo,std::string &dinfo)const;

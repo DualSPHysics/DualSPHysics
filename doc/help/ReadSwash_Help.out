@@ -1,0 +1,99 @@
+
+
+ <READSWASH>  Copyright (c) 2020 by Dr Jose M. Dominguez
+ All rights reserved.
+
+ DualSPHysics is an international collaboration between University of Vigo 
+ (Spain) and University of Manchester (UK). 
+
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions
+ are met:
+ * Redistributions of source code must retain the above copyright
+   notice, this list of conditions and the following disclaimer.
+ * Redistributions in binary form must reproduce the above copyright
+   notice, this list of conditions and the following disclaimer in the
+   documentation and/or other materials provided with the distribution.
+ * Neither the name of the DualSPHysics nor the names of its contributors
+   may be used to endorse or promote products derived from this software
+   without specific prior written permission.
+
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER BE LIABLE FOR ANY
+ DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
+
+
+ReadSwash v5.0.037 (30-06-2020)
+================================
+LoadDsphConfig> .../bin/windows/DsphConfig.xml
+Information about execution parameters:
+
+  ReadSwash [options]
+
+  Options:
+    -h             Shows information about parameters
+    -ver           Shows version information
+
+  Creates CSV files with velocity.
+    -savecsv <file.sws> <file.csv>  Generates CSV files with velocity X, Y and
+                                    Z starting from SWS file (SWASH file)
+
+  Creates corrected CSV files.
+    -correctcsv:tmax[:steps] <filein.csv> <fileout.csv>  Generates CSV files
+     with corrected velocity until indicated time using one or several segments
+     according steps value. Steps is 1 by default and using 0 any correction is
+     applied.
+    -tclip:min[:max]         Defines time interval to export.
+    -setposx:<float>         Changes position X in CSV.
+    -setposy:<float>         Changes position X in CSV.
+
+  Creates VTK files with velocity.
+    -savevtkveldp:<float> <file>   Creates VTK file using a dp value
+    -file_velx <file_velx.csv>     Loads X-velocity data
+    -file_vely <file_vely.csv>     Loads Y-velocity data
+    -file_velz <file_velz.csv>     Loads Z-velocity data
+    -dt:<float>                    Duration of computation step
+    -tmin:<float>                  Initial time
+    -tmax:<float>                  Final time
+    -smooth:<uint>                 Smoothing level when interpolating velocity
+
+  Creates VTK files with particles.
+    -savevtk_case <file>        Creates VTK file with piston particles
+    -loadcase <casename>        Defines case name for DualSPHysics
+    -dt:<float>                 Duration of computation step
+    -tmin:<float>               Initial time
+    -tmax:<float>               Final time
+
+  Creates VTK files for Relaxation Zone (RZ).
+    -savevtkrz:<name> <file>   Creates VTK file with velocity in points
+    -filesx:ini:count          Defines number of values in axis X
+    -filesy:ini:count          Defines number of values in axis Y
+    -load_velz                 Activates the Z-velocity data load
+    -dpz:<float>               Separation in Z (def=10 points)
+    -savegriddp:<float>        Distance between points of grid
+    -dt:<float>                Duration of computation step
+    -tmin:<float>              Initial time
+    -tmax:<float>              Final time
+    -smooth:<uint>             Smoothing level when interpolating velocity
+
+  General configuration.
+    -createdirs:<0/1>  Creates full path for output files
+                       (value by default is read from DsphConfig.xml or 1)
+    -csvsep:<0/1>      Separator character in CSV files (0=semicolon, 1=coma)
+                       (value by default is read from DsphConfig.xml or 0)
+
+  Examples:
+    ReadSwash -savecsv file.sws .
+    ReadSwash -correctcsv:40:2 data_velx_x10_y00.csv datacor_velx_x10_y00.csv
+      -tclip:10:40
+    ReadSwash -savevtkveldp:0.1 result -file_velx Susco_velx_x00_y00.csv
+     -file_velz Susco_velx_x00_y00.csv -tmax:50
+    ReadSwash -savevtk_case pistonparts -loadcase PistonTest
+

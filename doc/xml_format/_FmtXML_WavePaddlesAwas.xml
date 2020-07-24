@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<!-- *** DualSPHysics (11-03-2018) *** -->
+<!-- *** DualSPHysics (19-03-2020) *** -->
 <!-- *** class: JWaveAwasZsurf *** -->
 <!------------------------------------------------------------------------------->
 <!------------------------------------------------------------------------------->
 <!-- *** Example for AWAS (only for Piston) with regular and irregular waves *** -->
+<!-- Warning: AWAS can only be used when the piston only moves in direction X+. -->
 <special>
 	<wavepaddles>
 		<piston>
@@ -33,6 +34,18 @@
 		</piston_spectrum>
 	</wavepaddles>
 </special>
-
+<!--------------------------------------------------------------------------------------->
+<!--------------------------------------------------------------------------------------->
+<!-- *** Attribute "active" in element <awas_zsurf> to enable (using active="true" *** --> 
+<!-- *** or active="1") or disable (using active="false or active="0")."           *** -->
+<!-- *** It is an optional attribute and true by default.                          *** -->
+<wavepaddles>
+	<piston>
+		<awas_zsurf active="true"/>
+	</piston>
+	<piston_spectrum>
+		<awas_zsurf active="true"/>
+	</piston_spectrum>
+</wavepaddles>
 
 

@@ -1,0 +1,156 @@
+
+
+ <MEASURETOOL>  Copyright (c) 2020 by Dr Jose M. Dominguez
+ All rights reserved.
+
+ DualSPHysics is an international collaboration between University of Vigo 
+ (Spain) and University of Manchester (UK). 
+
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions
+ are met:
+ * Redistributions of source code must retain the above copyright
+   notice, this list of conditions and the following disclaimer.
+ * Redistributions in binary form must reproduce the above copyright
+   notice, this list of conditions and the following disclaimer in the
+   documentation and/or other materials provided with the distribution.
+ * Neither the name of the DualSPHysics nor the names of its contributors
+   may be used to endorse or promote products derived from this software
+   without specific prior written permission.
+
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER BE LIABLE FOR ANY
+ DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
+
+
+MeasureTool v5.0.122 (09-07-2020)
+==================================
+LoadDsphConfig> .../bin/windows/DsphConfig.xml
+Information about parameters of execution:
+
+  MeasureTool <options>
+
+  Basic options:
+    -h              Shows information about parameters
+    -ver           Shows version information
+    -opt <file>     Loads configuration from a file
+
+  Define input file :
+    -dirin <dir>       Indicates the directory with particle data
+    -casein <casename> Name of case file with particle data
+
+    -filexml file.xml  Loads xml file with information of mk and
+                       and other information. The word 'AUTO' can
+                       be used to load the xml used in the simulation.
+    -first:<int>    Indicates the first file to be computed
+    -last:<int>     Indicates the last file to be computed
+    -files:<values> Indicates the number of files to be processed
+
+    -threads:<int>  Indicates the number of threads for parallel execution of
+     the interpolation, it takes the number of cores of the device by default
+     (or using zero value).
+
+  Define parameters for acceleration or vorticity calculation:
+    -viscoart:<float>    Artificial viscosity [0-1]
+    -viscolam:<float>    Laminar viscosity [order of 1E-6]
+    -gravity:<float:float:float> Gravity value
+
+  Set the filters that are applied to particles for interpolation:
+    -onlypos:xmin:ymin:zmin:xmax:ymax:zmax  Indicates limits of particles
+    -onlyposfile filters.xml  Indicates XML file with filters to apply
+    -onlymk:<values>     Indicates the mk of selected particles
+    -onlyid:<values>     Indicates the id of selected particles
+    -onlytype:<values>   Indicates the type of selected particles
+       +/-all:       To choose or reject all options
+       +/-bound:     Boundary particles (fixed, moving and floating)
+       +/-fixed:     Boundary fixed particles
+       +/-moving:    Boundary moving particles
+       +/-floating:  Floating body particles
+       +/-fluid:     Fluid particles (no excluded)
+       (by default: all, + means include, - means do not include)
+
+  Set the configuration of interpolation:
+    -pointstemplate Creates example file to be used with -points or -pointspos
+    -points <file>  Defines the points where interpolated data will be
+                    computed (each value separated by space or a new line)
+    -pointspos <file>  Defines the position of points where interpolated data
+                       will be computed (each line contains the points for one
+                       part file, points are defined as x0;y0;z0;x1;y1;z1...)
+    -particlesmk:<values>  Indicates the points where interpolated data will
+                           be computed using the positions of the particles 
+                           with the given mk
+
+    -particlesid:<values>  Indicates the points where interpolated data will
+                           be computed using the positions of the particles 
+                           with the given id
+
+    -kclimit:<float>       Defines the minimum value of sum_wab_vol to apply
+                           the Kernel Correction (default value = 0.5)
+    -kcdummy:<float>       Defines the dummy value for the interpolated
+                           quantity if Kernel Correction is not applied
+                           (default value = 0)
+    -kcusedummy:<0/1>      Defines whether or not to use the dummy value
+                           (default value = 1)
+
+    -distinter_2h:<float>  Coefficient of 2h that defines the maximum distance
+                           for the interaction among particles depending on 2h
+                           (default value = 1.0)
+    -distinter:<float>     Defines the maximum distance for the interaction
+                           among particles in an absolute way.
+
+  Set the values to be calculated:
+    -vars[:<values>] Defines the variables or magnitudes that
+                     are going to be computed as an interpolation
+                     of the selected particles around a given position
+                     (+ means include, - means do not include)
+       +/-all:       To choose or reject all options
+       +/-vel:       Velocity
+       +/-rhop:      Density
+       +/-press:     Pressure
+       +/-mass:      Mass
+       +/-vol:       Volume
+       +/-idp:       Id of particles
+       +/-ace:       Acceleration
+       +/-vor:       Vorticity
+       +/-kcorr:     Summation of interaction kernel multiplied by volume
+       +/-XXX:       Variable defined by the user
+       (by default: vel,rhop)
+
+    -elevation[:<float>]  Fluid elevation is calculated starting from mass 
+                     values for each point x,y. The reference mass to obtain
+                     the elevation is calculated according to the mass values
+                     of the selected particles; by default 0.5 in 3D (half 
+                     the mass) and 0.4 in 2D
+
+    -elevationlimit:<float>  The same as -elevation but the reference mass is
+                             given by an absolute value
+
+    -elevationoutput:<value> Output files with fluid elevation values
+       time:        Values of elevation for each time (option by default)
+       pos:         Values of elevation for each position (x,y)
+       all:         Both output files.
+
+  Define output files format:
+    -savevtk <file.vtk>   Generates VTK(polydata) file with the given
+                          interpolation points
+    -savecsv <file.csv>   Generates one CSV file with the time history
+                          of the obtained values
+    -saveascii <file.asc> Generates one ASCII file without headers
+                          with the time history of the obtained values
+
+    -createdirs:<0/1>     Creates full path for output files
+                          (value by default is read from DsphConfig.xml or 1)
+    -csvsep:<0/1>         Separator character in CSV files (0=semicolon, 1=coma)
+                          (value by default is read from DsphConfig.xml or 0)
+
+  Examples:
+    MeasureTool -points fpoints.txt -onlytype:-all,fluid -savecsv dataf
+    MeasureTool -points fpoints.txt -vars:press -savevtk visupress
+

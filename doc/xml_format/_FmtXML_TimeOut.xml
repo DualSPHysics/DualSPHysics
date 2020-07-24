@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<!-- *** DualSPHysics (08-08-2017) *** -->
+<!-- *** DualSPHysics (19-03-2020) *** -->
 <!-- *** class: JTimeOut *** -->
 <!------------------------------------------------------------------------------->
 <!------------------------------------------------------------------------------->
@@ -12,6 +12,13 @@
 		<tout time="0.3" timeout="0.01" />
 	</timeout>
 </special>
+<!------------------------------------------------------------------------------------>
+<!------------------------------------------------------------------------------------>
+<!-- *** Attribute "active" in element <timeout> to enable (using active="true" *** --> 
+<!-- *** or active="1") or disable (using active="false" or active="0").        *** -->
+<!-- *** It is an optional attribute and true by default.                       *** -->
+<timeout active="true">
+</timeout>
 
 
 

@@ -1,0 +1,126 @@
+
+
+ <PARTVTK>  Copyright (c) 2020 by Dr Jose M. Dominguez
+ All rights reserved.
+
+ DualSPHysics is an international collaboration between University of Vigo 
+ (Spain) and University of Manchester (UK). 
+
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions
+ are met:
+ * Redistributions of source code must retain the above copyright
+   notice, this list of conditions and the following disclaimer.
+ * Redistributions in binary form must reproduce the above copyright
+   notice, this list of conditions and the following disclaimer in the
+   documentation and/or other materials provided with the distribution.
+ * Neither the name of the DualSPHysics nor the names of its contributors
+   may be used to endorse or promote products derived from this software
+   without specific prior written permission.
+
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER BE LIABLE FOR ANY
+ DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
+
+
+PartVTK v5.0.122 (09-07-2020)
+==============================
+LoadDsphConfig> .../bin/windows/DsphConfig.xml
+Information about parameters of execution:
+
+  PartVTK <options>
+
+  Basic options:
+    -h             Shows information about parameters
+    -ver           Shows version information
+    -opt <file>    Loads configuration of a file
+
+  Define input file:
+    -dirin <dir>       Directory with particle data
+    -casein <casename> Name of case file with particle data
+
+    -filexml file.xml  Loads xml file with information of mk and
+                       and other information. The word 'AUTO' can
+                       be used to load the xml used in the simulation.
+    -first:<int>     Indicates the first file to be computed
+    -last:<int>      Indicates the last file to be computed
+    -files:<values>  Indicates the number of files to be processed
+
+    -continue:<0/1>  Process only new VTK files (default=false)
+
+    -move:x:y:z      Particles are moved using this offset
+
+    -threads:<int>   Indicates the number of threads for parallel execution of
+     the interpolation, it takes the number of cores of the device by default
+     (or uses zero value).
+
+  Define parameters for acceleration or vorticity calculation:
+    -viscoart:<float>      Artificial viscosity [0-1]
+    -viscolam:<float>      Laminar viscosity [order of 1E-6]
+    -gravity:<float:float:float> Gravity value
+    -distinter_2h:<float>  Coefficient of 2h that defines the maximum distance
+                           for the interaction among particles depending on 2h
+                           (default value = 1.0)
+    -distinter:<float>     Defines the maximum distance for the interaction
+                           among particles in an absolute way.
+
+  Define output file:
+    -savevtk <file.vtk>    Generates vtk(polydata) files with particles
+                           according to the filters with options onlymk,
+                           onlyid and onlytype
+    -saveascii <file.asc>  Generates ASCII files without headers
+
+    -savecsv <file.csv>    Generates CSV files to use with calculation sheets
+    -savestatscsv <file.csv>  Generates CSV files with statistics
+
+    -createdirs:<0/1>    Creates full path for output files
+                         (value by default is read from DsphConfig.xml or 1)
+    -csvsep:<0/1>       Separator character in CSV files (0=semicolon, 1=coma)
+                        (value by default is read from DsphConfig.xml or 0)
+
+  Configuration for each output file:
+    -onlypos:xmin:ymin:zmin:xmax:ymax:zmax  Indicates limits of particles
+    -onlyposfile filters.xml  Indicates XML file with filters to apply
+    -onlyvel:vmin:vmax   Indicates the velocity of selected particles
+    -onlymk:<values>     Indicates the mk of selected particles
+    -onlyid:<values>     Indicates the id of selected particles
+    -onlytype:<values>   Indicates the type of selected particles
+       (+ means include, - means do not include)
+       +/-all:       To choose or reject all options
+       +/-bound:     Boundary particles (fixed, moving and floating)
+       +/-fixed:     Boundary fixed particles
+       +/-moving:    Boundary moving particles
+       +/-floating:  Floating body particles
+       +/-fluid:     Fluid particles (no excluded)
+       (Preselected types: all)
+
+    -vars:<values>  Indicates the variables to be computed and stored
+       (+ means include, - means do not include)
+       +/-all:       To choose or reject all options
+       +/-idp:       Id of particle
+       +/-vel:       Velocity
+       +/-rhop:      Density
+       +/-press:     Pressure
+       +/-mass:      Mass
+       +/-vol:       Volume
+       +/-type:      Type (fixed,moving,floating,fluid)
+       +/-mk:        Value of mk associated to the particles
+       +/-ace:       Acceleration
+       +/-vor:       Vorticity
+       +/-XXX:       Variable defined by the user
+       (Preselected variables: idp,vel,rhop,type)
+
+    -symparts:<0/1>  Adds mirrored particles from symmetry data to VKT files
+       (default value=0)
+
+  Examples:
+    PartVTK -savevtk partfluid.vtk -onlytype:-bound -filexml dir/AUTO
+            -savevtk partbound.vtk -onlytype:-all,bound -vars:vel.x,var1
+

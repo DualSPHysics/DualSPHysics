@@ -1,0 +1,147 @@
+
+
+ <ISOSURFACE>  Copyright (c) 2020 by Dr Jose M. Dominguez
+ All rights reserved.
+
+ DualSPHysics is an international collaboration between University of Vigo 
+ (Spain) and University of Manchester (UK). 
+
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions
+ are met:
+ * Redistributions of source code must retain the above copyright
+   notice, this list of conditions and the following disclaimer.
+ * Redistributions in binary form must reproduce the above copyright
+   notice, this list of conditions and the following disclaimer in the
+   documentation and/or other materials provided with the distribution.
+ * Neither the name of the DualSPHysics nor the names of its contributors
+   may be used to endorse or promote products derived from this software
+   without specific prior written permission.
+
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER BE LIABLE FOR ANY
+ DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
+
+
+IsoSurface v5.0.122 (09-07-2020)
+=================================
+LoadDsphConfig> .../bin/windows/DsphConfig.xml
+Information about parameters of execution:
+
+  IsoSurface <options>
+
+  Basic options:
+    -h             Shows information about parameters
+    -ver           Shows version information
+    -opt <file>    Loads configuration of a file
+
+  Define input file:
+    -dirin <dir>       Directory with particle data
+    -casein <casename> Name of case file with particle data
+
+    -filexml file.xml  Loads xml file with information of mk and
+                       and other information. The word 'AUTO' can
+                       be used to load the xml used in the simulation.
+    -first:<int>     Indicates the first file to be computed
+    -last:<int>      Indicates the last file to be computed
+    -files:<values>  Indicates the number of files to be processed
+
+    -move:x:y:z      Particles are moved using this offset
+
+    -threads:<int>   Indicates the number of threads for parallel execution of
+     the interpolation, it takes the number of cores of the device by default
+     (or uses zero value).
+
+  Define input data:
+    -onlypos:xmin:ymin:zmin:xmax:ymax:zmax  Indicates limits of particles
+    -onlyposfile filters.xml  Indicates XML file with filters to apply
+    -onlymk:<values>     Indicates the mk of selected particles
+    -onlytype:<values>   Indicates the type of selected particles
+       (+ means include, - means do not include)
+       +/-all:       To choose or reject all options
+       +/-bound:     Boundary particles (fixed, moving and floating)
+       +/-fixed:     Boundary fixed particles
+       +/-moving:    Boundary moving particles
+       +/-floating:  Floating body particles
+       +/-fluid:     Fluid particles (no excluded)
+       (Preselected types: fluid)
+
+    -vars:<values>  Indicates the variables to be computed and stored
+       (+ means include, - means do not include)
+       +/-all:       To choose or reject all options
+       +/-idp:       Id of particle
+       +/-vel:       Velocity
+       +/-rhop:      Density
+       +/-press:     Pressure
+       +/-mass:      Mass
+       +/-vol:       Volume
+       +/-type:      Type (fixed,moving,floating,fluid)
+       +/-mk:        Value of mk associated to the particles
+       +/-ace:       Acceleration
+       +/-vor:       Vorticity
+       +/-XXX:       Variable defined by the user
+       (Preselected variables: vel)
+
+  Define parameters for acceleration or vorticity calculation:
+    -viscoart:<float>      Artificial viscosity [0-1]
+    -viscolam:<float>      Laminar viscosity [order of 1E-6]
+    -gravity:<float:float:float> Gravity value
+
+  Set the configuration of interpolation:
+    -distinter_2h:<float>  Coefficient of 2h that defines the maximum distance
+                           for the interaction among particles depending on 2h
+                           (default value = 1.0)
+    -distinter:<float>     Defines the maximum distance for the interaction
+                           among particles in an absolute way.
+
+    -kclimit:<float>       Defines the minimum value of sum_wab_vol to apply
+                           the Kernel Correction (default value = 0.05)
+    -kcdummy:<float>       Defines the dummy value for the interpolated
+                           quantity if Kernel Correction is not applied
+                           (default value = 0)
+    -kcusedummy:<0/1>      Defines whether or not to use the dummy value
+                           (default value = 1)
+
+  Set the configuration of isosurface:
+    -iso_limits:xmin:ymin:zmin:xmax:ymax:zmax Isosurface limits are adjusted to
+     the given limits
+
+    -distnode_dp:<float>   Defines the distance between nodes by multiplying dp
+     and the given value (option by default)
+    -distnode:<float>      Distance between nodes is given
+
+  Define output files:
+    -saveiso <file.vtk>    Generates VTK files (polydata) with the isosuface
+     calculated starting from a variable mass and using the limit value. When
+     limit value is not given, the threshold mass value of the fluid is
+     considered (0.5*fluid particle mass)
+    -isovar:var:<values>   Generates isosuface calculated starting from a
+     variable given and using the limit values.
+
+    -saveslice <file.vtk>  Generates VTK files (polydata) with the slice of 
+     isosuface. 
+    -slicevec:ptx:pty:ptz:vecx:vecy:vecz  The plane of slice is defined using
+     a point and a vector. The slice configuration is automatically defined for
+     2-D simulations. Several definitions can be used.
+    -slice3pt:pt1x:pt1y:pt1z:pt2x:pt2y:pt2z:pt3x:pt3y:pt3z  The plane of slice
+     is defined using three points. The slice configuration is automatically
+     defined for 2-D simulations. Several definitions can be used.
+    -slicedata:<mode>  Indicates how data vertices is processed
+       none          Discard the data
+       nearest       Copy data from nearest vertex
+       interpolate   Interpolate data (default)
+
+    -createdirs:<0/1>    Creates full path for output files
+                         (value by default is read from DsphConfig.xml or 1)
+
+  Examples:
+    IsoSurface -saveiso fileiso
+    IsoSurface -saveiso fileiso -isovar:mass:3.2,3.1,3.0
+
