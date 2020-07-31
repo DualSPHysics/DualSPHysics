@@ -28,6 +28,7 @@
 //:# - Opcion para calcular boundary limit de forma automatica. (19-05-2020)  
 //:# - Cambio de nombre de J.SphInitialize a J.DsInitialize. (28-06-2020)
 //:# - Error corregido al obtener nombre de operacion a partir de la clase. (02-07-2020)
+//:# - New filter onlypos according to particle position. (25-07-2020)
 //:#############################################################################
 
 /// \file JDsInitialize.h \brief Declares the class \ref JDsInitialize.
@@ -75,6 +76,12 @@ public:
     }
   }StInitCt;
 
+protected:
+  bool OnlyPos;         ///<Activate filter according to position.
+  tdouble3 OnlyPosMin;  ///<Minimum positon for filtering.
+  tdouble3 OnlyPosMax;  ///<Maximum positon for filtering.
+  unsigned NpUpdated;   ///<Number of updated particles.
+  unsigned NpTotal;     ///<Total number of particles.
 public:
   const TpInitialize Type;   ///<Type of particle.
   const StInitCt InitCt;     ///<Constant values needed for initialization tasks.
@@ -85,14 +92,27 @@ public:
     :Type(type),InitCt(initct),BaseNameSize(unsigned(std::string("JDsInitializeOp_").size()))
   { 
     ClassName=std::string("JDsInitializeOp_")+name;
+    Reset();
   } 
   virtual ~JDsInitializeOp(){ DestructorActive=true; }
+  void Reset();
+  void ReadXmlOnlyPos(const JXml *sxml,TiXmlElement* ele);
   virtual void ReadXml(const JXml *sxml,TiXmlElement* ele)=0;
   virtual void Run(unsigned np,unsigned npb,const tdouble3 *pos
     ,const unsigned *idp,const word *mktype,tfloat4 *velrhop,tfloat3 *boundnormal)=0;
   virtual void GetConfig(std::vector<std::string> &lines)const=0;
   unsigned ComputeDomainMk(bool bound,word mktp,unsigned np,const word *mktype
-  ,const unsigned *idp,const tdouble3 *pos,tdouble3 &posmin,tdouble3 &posmax)const;
+    ,const unsigned *idp,const tdouble3 *pos,tdouble3 &posmin,tdouble3 &posmax)const;
+  inline bool CheckPos(unsigned p,const tdouble3 *pos){
+    NpTotal++;
+    const bool sel=(!OnlyPos || (OnlyPosMin<=pos[p] && pos[p]<=OnlyPosMax));
+    if(sel)NpUpdated++;
+    return(sel);
+  }
+  std::string GetConfigNp()const;
+  std::string GetConfigMkBound(std::string mktype)const;
+  std::string GetConfigMkFluid(std::string mktype)const;
+  std::string GetConfigOnlyPos()const;
 };
 
 //##############################################################################
@@ -137,7 +157,7 @@ private:
 public:
   JDsInitializeOp_BoundNormalSet(const JXml *sxml,TiXmlElement* ele,StInitCt initct)
     :JDsInitializeOp(IT_BoundNormalSet,"BoundNormalSet",initct){ Reset(); ReadXml(sxml,ele); }
-  void Reset(){ MkBound=""; Normal=TFloat3(0); }
+  void Reset();
   void ReadXml(const JXml *sxml,TiXmlElement* ele);
   void Run(unsigned np,unsigned npb,const tdouble3 *pos,const unsigned *idp
     ,const word *mktype,tfloat4 *velrhop,tfloat3 *boundnormal);
@@ -160,7 +180,7 @@ private:
 public:
   JDsInitializeOp_BoundNormalPlane(const JXml *sxml,TiXmlElement* ele,StInitCt initct)
     :JDsInitializeOp(IT_BoundNormalPlane,"BoundNormalPlane",initct){ Reset(); ReadXml(sxml,ele); }
-  void Reset(){ MkBound=""; PointAuto=false; LimitDist=0; Point=Normal=TFloat3(0); MaxDisteH=0; }
+  void Reset();
   void ReadXml(const JXml *sxml,TiXmlElement* ele);
   void Run(unsigned np,unsigned npb,const tdouble3 *pos,const unsigned *idp
     ,const word *mktype,tfloat4 *velrhop,tfloat3 *boundnormal);
@@ -182,7 +202,7 @@ private:
 public:
   JDsInitializeOp_BoundNormalSphere(const JXml *sxml,TiXmlElement* ele,StInitCt initct)
     :JDsInitializeOp(IT_BoundNormalSphere,"BoundNormalSphere",initct){ Reset(); ReadXml(sxml,ele); }
-  void Reset(){ MkBound=""; Center=TFloat3(0); MaxDisteH=Radius=0; Inside=true; }
+  void Reset();
   void ReadXml(const JXml *sxml,TiXmlElement* ele);
   void Run(unsigned np,unsigned npb,const tdouble3 *pos,const unsigned *idp
     ,const word *mktype,tfloat4 *velrhop,tfloat3 *boundnormal);
@@ -205,7 +225,7 @@ private:
 public:
   JDsInitializeOp_BoundNormalCylinder(const JXml *sxml,TiXmlElement* ele,StInitCt initct)
     :JDsInitializeOp(IT_BoundNormalCylinder,"BoundNormalCylinder",initct){ Reset(); ReadXml(sxml,ele); }
-  void Reset(){ MkBound=""; Center1=Center2=TFloat3(0); MaxDisteH=Radius=0; Inside=true; }
+  void Reset();
   void ReadXml(const JXml *sxml,TiXmlElement* ele);
   void Run(unsigned np,unsigned npb,const tdouble3 *pos,const unsigned *idp
     ,const word *mktype,tfloat4 *velrhop,tfloat3 *boundnormal);
