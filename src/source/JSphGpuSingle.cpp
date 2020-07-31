@@ -486,8 +486,9 @@ void JSphGpuSingle::Interaction_Forces(TpInterStep interstep){
 void JSphGpuSingle::MdbcBoundCorrection(){
   TmgStart(Timers,TMG_CfPreForces);
   unsigned n=NpbOk;
-  cusph::Interaction_MdbcCorrection(TKernel,SlipMode,n,CaseNbound,MdbcThreshold,Simulate2D
-    ,DivData,Posxyg,Poszg,Codeg,Idpg,BoundNormalg,MotionVelg,Velrhopg);
+  cusph::Interaction_MdbcCorrection(TKernel,Simulate2D,SlipMode,MdbcFastSingle
+    ,n,CaseNbound,MdbcThreshold,DivData,Map_PosMin,Posxyg,Poszg,PosCellg,Codeg
+    ,Idpg,BoundNormalg,MotionVelg,Velrhopg);
   TmgStop(Timers,TMG_CfPreForces);
 }
 //<vs_mddbc_end>

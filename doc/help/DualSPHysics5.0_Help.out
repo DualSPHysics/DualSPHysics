@@ -24,7 +24,7 @@
  along with DualSPHysics. If not, see <http://www.gnu.org/licenses/>.
 
 
-DualSPHysics5 v5.0.141 (25-07-2020)
+DualSPHysics5 v5.0.143 (31-07-2020)
 ====================================
 LoadDsphConfig> .../bin/windows/DsphConfig.xml
 Information about execution parameters:
@@ -57,6 +57,7 @@ Information about execution parameters:
     -mdbc          Modified Dynamic Boundary Condition mDBC (mode: vel=0)
     -mdbc_noslip   Modified Dynamic Boundary Condition mDBC (mode: no-slip)
     -mdbc_freeslip Modified Dynamic Boundary Condition mDBC (mode: free-slip)
+    -mdbc_fast:<0/1>       Fast single precision calculation on GPU (default=1)
     -mdbc_threshold:<float> Kernel support limit to apply mDBC correction [0-1]
 
     -symplectic      Symplectic algorithm as time step algorithm

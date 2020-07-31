@@ -188,6 +188,7 @@ protected:
   TpBoundary TBoundary;       ///<Boundary condition: DBC, M-DBC.
   TpSlipMode SlipMode;        ///<Slip mode for mDBC 1:DBC vel=0, 2:No-slip, 3:Free slip (default=1).     //<vs_mddbc>
   bool MdbcCorrector;         ///<mDBC correction is also applied in corrector of Symplectic (default=0). //<vs_mddbc>
+  bool MdbcFastSingle;        ///<Matrix calculations are done in single precision (default=1).           //<vs_mddbc>
   float MdbcThreshold;        ///<Kernel support limit to apply mDBC correction (default=0).              //<vs_mddbc>
   bool UseNormals;            ///<Indicates use of normals for mDBC.                                      //<vs_mddbc>
   bool UseNormalsFt;          ///<Indicates use of normals of floating bodies for mDBC.                   //<vs_mddbc>
@@ -342,8 +343,7 @@ protected:
   float Scell;             ///<Cell size: KernelSize/ScellDiv (KernelSize or KernelSize/2).
   float MovLimit;          ///<Maximum distance a particle is allowed to move in one step (Scell*0.9).
 
-  float PosCellSize;       ///<Size of cells used for coding PosCell (it is usually KernelSize).
-
+  float PosCellSize;       ///<Size of cells used for coding PosCell on GPU (it is usually KernelSize).
 
   //-Defines global domain of the simulation.
   tdouble3 MapRealPosMin;  ///<Real lower limit of simulation (without the periodic condition borders). MapRealPosMin=CasePosMin-(H*BORDER_MAP) | Limite inferior real de simulacion (sin bordes de condiciones periodicas).

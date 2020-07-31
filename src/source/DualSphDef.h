@@ -30,8 +30,11 @@
 
 //#define DISABLE_KERNELS_EXTRA  ///<Compiles Wendland kernel and ignores the rest of the SPH kernels.
 
+#define DISABLE_MDBC_EXTRAMODES  ///<Compiles only slipmode=SLIP_Vel0 and ignores the rest since they are not ready.
+
 //#define DISABLE_TIMERS     ///<Compiles without timers. | Compilado sin timers.
 //#define DISABLE_BSMODES    ///<compiles without advanced BlockSize modes.
+
 
 //-Removes dependencies from precompiled libraries.
 #include "JNumexLibDef.h"    //Defines DISABLE_NUMEXLIB to compile without Numex library.
@@ -262,7 +265,6 @@ typedef struct{ //(DEM)
   float tau;          ///<Value of (1-poisson^2)/young (units:-).
   float restitu;      ///<Restitution Coefficient (units:-).
 }StDemData;
-
 
 ///Structure that stores the maximum values (or almost) achieved during the simulation.
 typedef struct StrMaxNumbers{

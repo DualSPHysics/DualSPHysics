@@ -173,12 +173,13 @@ void JSph::InitVars(){
   ShiftingMode=(Shifting? Shifting->GetShiftMode(): SHIFT_None);
   Visco=0; ViscoBoundFactor=1;
   TBoundary=BC_DBC;
-  SlipMode=SLIP_Vel0;  //<vs_mddbc>
-  MdbcCorrector=false; //<vs_mddbc>
-  MdbcThreshold=0;     //<vs_mddbc>
-  UseNormals=false;    //<vs_mddbc>
-  UseNormalsFt=false;  //<vs_mddbc>
-  SvNormals=false;     //<vs_mddbc>
+  SlipMode=SLIP_Vel0;   //<vs_mddbc>
+  MdbcCorrector=false;  //<vs_mddbc>
+  MdbcFastSingle=true;  //<vs_mddbc>
+  MdbcThreshold=0;      //<vs_mddbc>
+  UseNormals=false;     //<vs_mddbc>
+  UseNormalsFt=false;   //<vs_mddbc>
+  SvNormals=false;      //<vs_mddbc>
   UseDEM=false;  //(DEM)
   delete[] DemData; DemData=NULL;  //(DEM)
   UseChrono=false; //<vs_chroono>
@@ -617,6 +618,8 @@ void JSph::LoadConfigParameters(const JXml *xml){
       default: Run_Exceptioon("Slip mode is not valid.");
     }
     MdbcCorrector=(eparms.GetValueInt("MDBCCorrector",true,0)!=0);
+    MdbcFastSingle=(eparms.GetValueInt("MDBCFastSingle",true,1)!=0);
+    if(Cpu)MdbcFastSingle=false;
   } 
   //<vs_mddbc_end>
 
@@ -744,7 +747,11 @@ void JSph::LoadConfigCommands(const JSphCfgRun *cfg){
   //-Aplies configuration using command line.
   if(cfg->SvPosDouble>=0)SvPosDouble=(cfg->SvPosDouble!=0);
   if(cfg->TBoundary){
-    TBoundary=BC_DBC;  SlipMode=SLIP_Vel0;  MdbcCorrector=false;  MdbcThreshold=0;
+    TBoundary=BC_DBC;
+    SlipMode=SLIP_Vel0;
+    MdbcCorrector=false;
+    MdbcFastSingle=true;
+    MdbcThreshold=0;
     switch(cfg->TBoundary){
       case 1:  TBoundary=BC_DBC;   break;
       case 2:  TBoundary=BC_MDBC;  break;
@@ -758,9 +765,13 @@ void JSph::LoadConfigCommands(const JSphCfgRun *cfg){
     }
     UseNormals=(TBoundary==BC_MDBC);
   }
-  if(TBoundary==BC_MDBC && cfg->MdbcThreshold>=0)MdbcThreshold=cfg->MdbcThreshold;
-  if(TBoundary==BC_MDBC && SlipMode!=SLIP_Vel0)
-    Run_Exceptioon("Only the slip mode velocity=0 is allowed with mDBC conditions."); //SHABA
+  if(TBoundary==BC_MDBC){
+    if(cfg->MdbcThreshold >=0)MdbcThreshold=cfg->MdbcThreshold;
+    if(cfg->MdbcFastSingle>=0)MdbcFastSingle=(cfg->MdbcFastSingle>0);
+    if(SlipMode!=SLIP_Vel0)Run_Exceptioon("Only the slip mode velocity=0 is allowed with mDBC conditions."); //SHABA
+    if(Cpu)MdbcFastSingle=false;
+  }
+    
   if(cfg->TStep)TStep=cfg->TStep;
   if(cfg->VerletSteps>=0)VerletSteps=cfg->VerletSteps;
   if(cfg->TVisco){ TVisco=cfg->TVisco; Visco=cfg->Visco; }
@@ -1456,10 +1467,12 @@ void JSph::VisuConfig(){
   if(TBoundary==BC_MDBC){ //<vs_mddbc_ini>
     Log->Print(fun::VarStr("  SlipMode",GetSlipName(SlipMode)));
     Log->Print(fun::VarStr("  mDBC-Corrector",MdbcCorrector));
+    Log->Print(fun::VarStr("  mDBC-FastSingle",MdbcFastSingle));
     Log->Print(fun::VarStr("  mDBC-Threshold",MdbcThreshold));
     ConfigInfo=ConfigInfo+"("+GetSlipName(SlipMode);
-    if(MdbcCorrector)ConfigInfo=ConfigInfo+",Corrector";
-    if(MdbcThreshold>0)ConfigInfo=ConfigInfo+fun::PrintStr(",Threshold=%g",MdbcThreshold);
+    if(MdbcCorrector)ConfigInfo=ConfigInfo+" - Corrector";
+    if(MdbcFastSingle)ConfigInfo=ConfigInfo+" - FastSingle";
+    if(MdbcThreshold>0)ConfigInfo=ConfigInfo+fun::PrintStr(" - Threshold=%g",MdbcThreshold);
     ConfigInfo=ConfigInfo+")";
   } //<vs_mddbc_end>
   //-StepAlgorithm. 

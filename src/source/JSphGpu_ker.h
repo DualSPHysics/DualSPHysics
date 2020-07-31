@@ -197,10 +197,12 @@ void ComputeVelMod(unsigned n,const float4 *vel,float *velmod);
 void Interaction_Forces(const StInterParmsg &t);
 
 //-Kernels for the boundary correction (mDBC). //<vs_mddbc_ini>
-void Interaction_MdbcCorrection(TpKernel tkernel,TpSlipMode slipmode,unsigned n,unsigned nbound
-  ,float mdbcthreshold,bool simulate2d,const StDivDataGpu &dvd
-  ,const double2 *posxy,const double *posz,const typecode *code,const unsigned *idp
-  ,const float3 *boundnormal,const float3 *motionvel,float4 *velrhop);
+void Interaction_MdbcCorrection(TpKernel tkernel,bool simulate2d
+  ,TpSlipMode slipmode,bool fastsingle,unsigned n,unsigned nbound
+  ,float mdbcthreshold,const StDivDataGpu &dvd,const tdouble3 &mapposmin
+  ,const double2 *posxy,const double *posz,const float4 *poscell
+  ,const typecode *code,const unsigned *idp,const float3 *boundnormal
+  ,const float3 *motionvel,float4 *velrhop);
 //<vs_mddbc_end>
 
 //-Kernels for the calculation of the DEM forces.

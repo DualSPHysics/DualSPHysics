@@ -31,8 +31,8 @@ School of Mechanical, Aerospace and Civil Engineering, University of Manchester,
 \section compile_sec Project files
 Please download source files and documentation from <a href="http://dual.sphysics.org">DualSPHysics website.</a> \n
 \author <a href="http://dual.sphysics.org/index.php/developers">DualSPHysics Developers.</a> 
-\version 5.0.141
-\date 25-07-2020
+\version 5.0.143
+\date 31-07-2020
 \copyright GNU Lesser General Public License <a href="http://www.gnu.org/licenses/">GNU licenses.</a>
 */
 
@@ -56,7 +56,7 @@ Please download source files and documentation from <a href="http://dual.sphysic
 
 using namespace std;
 
-JAppInfo AppInfo("DualSPHysics5","v5.0.141","25-07-2020");
+JAppInfo AppInfo("DualSPHysics5","v5.0.143","31-07-2020");
 //JAppInfo AppInfo("DualSPHysics5","v5.0.???","UserVersion","v1.0","??-??-????"); //-for user versions.
 
 //==============================================================================
@@ -139,11 +139,11 @@ void PrintExceptionLog(const std::string &prefix,const std::string &text,JLog2 *
 //==============================================================================
 int main(int argc, char** argv){
   int errcode=1;
-  //AppInfo.AddNameExtra("Moordyn");    //<vs_moordyyn>
-  //AppInfo.AddNameExtra("FtVel");      //<vs_fttvel>
-  //AppInfo.AddNameExtra("Symmetry");   //<vs_syymmetry>
-  //AppInfo.AddNameExtra("MDBC");       //<vs_mddbc>
-  //AppInfo.AddNameExtra("DDT2");       //<vs_dtt2>
+  //AppInfo.AddNameExtra("Moordyn");     //<vs_moordyyn>
+  //AppInfo.AddNameExtra("FtVel");       //<vs_fttvel>
+  //AppInfo.AddNameExtra("Symmetry");    //<vs_syymmetry>
+  //AppInfo.AddNameExtra("MDBC");        //<vs_mddbc>
+  //AppInfo.AddNameExtra("DDT2");        //<vs_dtt2>
   //AppInfo.AddNameExtra("SaveFtAce");
 #ifdef CODE_SIZE4
   AppInfo.AddNameExtra("MK65k");
