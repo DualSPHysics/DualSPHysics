@@ -49,15 +49,15 @@ protected:
     ,unsigned *idp,typecode *code,unsigned *dcell,tdouble3 *pos,tfloat4 *velrhop,tsymatrix3f *spstau,tfloat4 *velrhopm1)const;
   void PeriodicDuplicateSymplectic(unsigned np,unsigned pini,tuint3 cellmax,tdouble3 perinc,const unsigned *listp
     ,unsigned *idp,typecode *code,unsigned *dcell,tdouble3 *pos,tfloat4 *velrhop,tsymatrix3f *spstau,tdouble3 *pospre,tfloat4 *velrhoppre)const;
-  void PeriodicDuplicateNormals(unsigned np,unsigned pini,tuint3 cellmax              //<vs_mddbc>
-    ,tdouble3 perinc,const unsigned *listp,tfloat3 *motionvel,tfloat3 *normals)const; //<vs_mddbc>
+  void PeriodicDuplicateNormals(unsigned np,unsigned pini,tuint3 cellmax
+    ,tdouble3 perinc,const unsigned *listp,tfloat3 *motionvel,tfloat3 *normals)const;
   void RunPeriodic();
 
   void RunCellDivide(bool updateperiodic);
   void AbortBoundOut();
 
   void Interaction_Forces(TpInterStep tinterstep);
-  void MdbcBoundCorrection(); //<vs_mddbc>
+  void MdbcBoundCorrection();
 
   double ComputeAceMax(unsigned np,const tfloat3* ace,const typecode *code)const;
   template<bool checkcode> double ComputeAceMaxSeq(unsigned np,const tfloat3* ace,const typecode *code)const;
@@ -71,8 +71,8 @@ protected:
   void FtCalcForcesSum(unsigned cf,tfloat3 &face,tfloat3 &fomegaace)const;
   void FtCalcForces(StFtoForces *ftoforces)const;
   void FtCalcForcesRes(double dt,const StFtoForces *ftoforces,StFtoForcesRes *ftoforcesres)const;
-  void FtApplyImposedVel(StFtoForcesRes *ftoforcesres)const; //<vs_fttvel>
-  void FtSumExternalForces(unsigned cf,tfloat3 &face,tfloat3 &fomegaace)const;//<vs_fttvel>
+  void FtApplyImposedVel(StFtoForcesRes *ftoforcesres)const;
+  void FtSumExternalForces(unsigned cf,tfloat3 &face,tfloat3 &fomegaace)const;
   void FtApplyConstraints(StFtoForces *ftoforces,StFtoForcesRes *ftoforcesres)const;
   void RunFloating(double dt,bool predictor);
   void RunGaugeSystem(double timestep,bool saveinput=false);
@@ -87,7 +87,6 @@ public:
   ~JSphCpuSingle();
   void Run(std::string appname,JSphCfgRun *cfg,JLog2 *log);
 
-//<vs_innlet_ini>
 //-Code for InOut in JSphCpuSingle_InOut.cpp
 //--------------------------------------------
 protected:
@@ -99,7 +98,6 @@ protected:
   void InOutExtrapolateData(unsigned inoutcount,const int *inoutpart);
 
   void BoundCorrectionData();
-//<vs_innlet_end>
 };
 
 #endif

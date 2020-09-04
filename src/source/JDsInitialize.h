@@ -60,10 +60,10 @@ public:
   ///Types of initializations.
   typedef enum{ 
     IT_FluidVel=1,
-    IT_BoundNormalSet=2,       //<vs_mddbc>
-    IT_BoundNormalPlane=3,     //<vs_mddbc>
-    IT_BoundNormalSphere=4,    //<vs_mddbc>
-    IT_BoundNormalCylinder=5,  //<vs_mddbc>
+    IT_BoundNormalSet=2,
+    IT_BoundNormalPlane=3,
+    IT_BoundNormalSphere=4,
+    IT_BoundNormalCylinder=5,
   }TpInitialize; 
 
   ///Structure with constant values needed for initialization tasks.
@@ -144,7 +144,6 @@ public:
   void GetConfig(std::vector<std::string> &lines)const;
 };  
 
-//<vs_mddbc_ini>
 //##############################################################################
 //# JDsInitializeOp_BoundNormalSet
 //##############################################################################
@@ -231,7 +230,6 @@ public:
     ,const word *mktype,tfloat4 *velrhop,tfloat3 *boundnormal);
   void GetConfig(std::vector<std::string> &lines)const;
 };  
-//<vs_mddbc_end>
 
 
 //##############################################################################

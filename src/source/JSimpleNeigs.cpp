@@ -154,7 +154,7 @@ void JSimpleNeigs::CreateMapCells(){
   delete[] npcell;  npcell=NULL;
 }
 
-//============================================================================== //<vs_innlet_ini>
+//==============================================================================
 /// Return cell limits for interaction starting from position.
 /// Devuelve limites de celdas para interaccion a partir de posicion.
 //==============================================================================

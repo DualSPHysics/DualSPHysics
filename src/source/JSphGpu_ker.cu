@@ -576,14 +576,14 @@ template<TpKernel tker,TpFtMode ftmode,bool lamsps,TpDensity tdensity,bool shift
         //deltap1=(boundp2? FLT_MAX: deltap1+delta);
         deltap1=(boundp2 && CTE.tboundary==BC_DBC? FLT_MAX: deltap1+delta);
       }
-      //-Density Diffusion Term (Fourtakas et al 2019). //<vs_dtt2_ini>
+      //-Density Diffusion Term (Fourtakas et al 2019).
       if((tdensity==DDT_DDT2 || (tdensity==DDT_DDT2Full && !boundp2)) && deltap1!=FLT_MAX && !ftp2){
         const float rh=1.f+CTE.ddtgz*drz;
         const float drhop=CTE.rhopzero*pow(rh,1.f/CTE.gamma)-CTE.rhopzero;  
         const float visc_densi=CTE.ddtkh*cbar*((velrhop2.w-velrhop1.w)-drhop)/(rr2+CTE.eta2);
         const float delta=visc_densi*dot3*massp2/velrhop2.w;
         deltap1=(boundp2? FLT_MAX: deltap1-delta); //-blocks it makes it boil - bloody DBC
-      } //<vs_dtt2_end>
+      }
 
       //-Shifting correction.
       if(shift && shiftposfsp1.x!=FLT_MAX){
@@ -832,19 +832,19 @@ template<TpKernel tker,TpFtMode ftmode,bool lamsps,TpDensity tdensity,bool shift
 template<TpKernel tker,TpFtMode ftmode,bool lamsps> void Interaction_Forces_gt2(const StInterParmsg &t){
 #ifdef FAST_COMPILATION
   if(t.shiftmode || t.tdensity!=DDT_DDT2Full)throw "Shifting and extra DDT are disabled for FastCompilation...";
-  Interaction_ForcesGpuT<tker,ftmode,lamsps,DDT_DDT2Full,false> (t);  //<vs_dtt2>
+  Interaction_ForcesGpuT<tker,ftmode,lamsps,DDT_DDT2Full,false> (t);
 #else
   if(t.shiftmode){               const bool shift=true;
     if(t.tdensity==DDT_None)    Interaction_ForcesGpuT<tker,ftmode,lamsps,DDT_None    ,shift> (t);
     if(t.tdensity==DDT_DDT)     Interaction_ForcesGpuT<tker,ftmode,lamsps,DDT_DDT     ,shift> (t);
-    if(t.tdensity==DDT_DDT2)    Interaction_ForcesGpuT<tker,ftmode,lamsps,DDT_DDT2    ,shift> (t);  //<vs_dtt2>
-    if(t.tdensity==DDT_DDT2Full)Interaction_ForcesGpuT<tker,ftmode,lamsps,DDT_DDT2Full,shift> (t);  //<vs_dtt2>
+    if(t.tdensity==DDT_DDT2)    Interaction_ForcesGpuT<tker,ftmode,lamsps,DDT_DDT2    ,shift> (t);
+    if(t.tdensity==DDT_DDT2Full)Interaction_ForcesGpuT<tker,ftmode,lamsps,DDT_DDT2Full,shift> (t);
   }
   else{                           const bool shift=false;
     if(t.tdensity==DDT_None)    Interaction_ForcesGpuT<tker,ftmode,lamsps,DDT_None    ,shift> (t);
     if(t.tdensity==DDT_DDT)     Interaction_ForcesGpuT<tker,ftmode,lamsps,DDT_DDT     ,shift> (t);
-    if(t.tdensity==DDT_DDT2)    Interaction_ForcesGpuT<tker,ftmode,lamsps,DDT_DDT2    ,shift> (t);  //<vs_dtt2>
-    if(t.tdensity==DDT_DDT2Full)Interaction_ForcesGpuT<tker,ftmode,lamsps,DDT_DDT2Full,shift> (t);  //<vs_dtt2>
+    if(t.tdensity==DDT_DDT2)    Interaction_ForcesGpuT<tker,ftmode,lamsps,DDT_DDT2    ,shift> (t);
+    if(t.tdensity==DDT_DDT2Full)Interaction_ForcesGpuT<tker,ftmode,lamsps,DDT_DDT2Full,shift> (t);
   }
 #endif
 }
@@ -881,8 +881,6 @@ void Interaction_Forces(const StInterParmsg &t){
  #endif
 #endif
 }
-
-//<vs_mddbc_ini>
 
 //------------------------------------------------------------------------------
 /// Returns the corrected position after applying periodic conditions.
@@ -1334,8 +1332,6 @@ void Interaction_MdbcCorrection(TpKernel tkernel,bool simulate2d,TpSlipMode slip
     default: throw "Kernel unknown at Interaction_MdbcCorrection().";
   }
 }
-//<vs_mddbc_end>
-
 
 
 //##############################################################################
@@ -1803,7 +1799,7 @@ template<bool periactive,bool simulate2d> __global__ void KerMoveMatBound(unsign
       KerUpdatePos<periactive>(make_double2(rpos.x,rpos.y),rpos.z,dx,dy,dz,false,pid,posxy,posz,dcell,code);
       //-Computes velocity.
       velrhop[pid]=make_float4(float(dx/dt),float(dy/dt),float(dz/dt),velrhop[pid].w);
-      //-Computes normal. //<vs_mddbc_ini>
+      //-Computes normal.
       if(boundnormal){
         const float3 bnor=boundnormal[pid];
         const double3 gs=make_double3(rpos.x+bnor.x,rpos.y+bnor.y,rpos.z+bnor.z);
@@ -1811,7 +1807,7 @@ template<bool periactive,bool simulate2d> __global__ void KerMoveMatBound(unsign
         const double gs2y=gs.x*m.a21 + gs.y*m.a22 + gs.z*m.a23 + m.a24;
         const double gs2z=gs.x*m.a31 + gs.y*m.a32 + gs.z*m.a33 + m.a34;
         boundnormal[pid]=make_float3(gs2x-rpos2.x,gs2y-rpos2.y,gs2z-rpos2.z);
-      }//<vs_mddbc_end>
+      }
     }
   }
 }
@@ -1834,7 +1830,6 @@ void MoveMatBound(byte periactive,bool simulate2d,unsigned np,unsigned ini,tmatr
   }
 }
 
-//<vs_mddbc_ini>
 //------------------------------------------------------------------------------
 /// Copy motion velocity to MotionVel[].
 /// Copia velocidad de movimiento a MotionVel[].
@@ -1863,11 +1858,8 @@ void CopyMotionVel(unsigned nmoving,const unsigned *ridp,const float4 *velrhop,f
   KerCopyMotionVel<true>  <<<sgrid,SPHBSIZE>>> (nmoving,ridp,velrhop,motionvel);
 }
 
-//<vs_mddbc_end>
 
 
-
-//<vs_mlapiston_ini>
 //##############################################################################
 //# Kernels for MLPistons motion.
 //##############################################################################
@@ -1956,7 +1948,6 @@ void MovePiston2d(bool periactive,unsigned np,unsigned idini
     else          KerMovePiston2d<false> <<<sgrid,SPHBSIZE>>> (np,idini,dp,posymin,poszmin,poszcount,movx,velx,ridpmv,posxy,posz,dcell,velrhop,code);
   }
 }
-//<vs_mlapiston_end>
 
 
 //##############################################################################
@@ -2613,7 +2604,6 @@ void PeriodicDuplicateSymplectic(unsigned n,unsigned pini
   }
 }
 
-//<vs_mddbc_ini>
 //------------------------------------------------------------------------------
 /// Creates periodic particles from a list of particles to duplicate.
 /// It is assumed that all particles are valid.
@@ -2646,7 +2636,6 @@ void PeriodicDuplicateNormals(unsigned n,unsigned pini,const unsigned *listp,flo
     KerPeriodicDuplicateNormals <<<sgrid,SPHBSIZE>>> (n,pini,listp,normals,motionvel);
   }
 }
-//<vs_mddbc_end>
 
 
 //##############################################################################
@@ -2789,12 +2778,10 @@ void ComputeDampingPla(double dt,tdouble4 plane,float dist,float over,tfloat3 fa
 }
 
 
-//<vs_innlet_ini>
 //##############################################################################
 //# Kernels for InOut (JSphInOut) and BoundCorr (JSphBoundCorr).
 //# Kernels para InOut (JSphInOut) y BoundCorr (JSphBoundCorr).
 //##############################################################################
 #include "JSphGpu_InOut_iker.cu"
-//<vs_innlet_end>
 
 

@@ -53,7 +53,7 @@ public:
   bool GetWithMotion()const{ return(false); }
 
   void SetFtData(word mkbound,const tfloat3 &face,const tfloat3 &fomegaace){};
-  void SetFtDataVel(word mkbound,const tfloat3 &vlin,const tfloat3 &vang){}; //<vs_fttvel>
+  void SetFtDataVel(word mkbound,const tfloat3 &vlin,const tfloat3 &vang){};
   void GetFtData(word mkbound,tdouble3 &fcenter,tfloat3 &fvel,tfloat3 &fomega)const{};
 
   void SetMovingData(word mkbound,bool simple,const tdouble3 &msimple,const tmatrix4d &mmatrix,double dt){};

@@ -37,7 +37,7 @@ class JXml;
 class TiXmlElement;
 class JLog2;
 class JLinearValue;
-class JSphInOutVelAwas;  //<vs_inawwas>
+class JSphInOutVelAwas;
 class JSphInOutGridData;
 class JGaugeSystem;
 
@@ -87,7 +87,7 @@ protected:
   //unsigned TimeVelIdx0,TimeVelIdx1; ///<Interval of time for velocity variable.
   bool SaveVelProfile;              ///<Indicate when input velocity profile must be saved in CSV file.
 
-  JSphInOutVelAwas* AwasVel;     ///<AWAS object to compute velocity.  //<vs_inawwas>
+  JSphInOutVelAwas* AwasVel;     ///<AWAS object to compute velocity.
 
   JSphInOutGridData *InputVelGrid;  ///<Input velocity is interpolated in time from a data grid (for VelMode==InVelM_Interpolated).
 
@@ -130,7 +130,7 @@ public:
 #endif
 
 
-  void SaveAwasVelCsv(); //<vs_inawwas>
+  void SaveAwasVelCsv();
   void SaveVtkVelGrid();
 };
 

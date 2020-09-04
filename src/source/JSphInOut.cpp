@@ -1317,7 +1317,7 @@ void JSphInOut::SavePartFiles(unsigned part){
   //-Creates VTK file with Zsurf.
   SaveVtkZsurf(part);
   //-Saves other files.
-  for(unsigned ci=0;ci<GetCount();ci++)List[ci]->GetInOutVel()->SaveAwasVelCsv(); //<vs_inawwas>
+  for(unsigned ci=0;ci<GetCount();ci++)List[ci]->GetInOutVel()->SaveAwasVelCsv();
 }
 
 //==============================================================================

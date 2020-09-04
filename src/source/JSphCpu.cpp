@@ -30,17 +30,17 @@
 #include "JArraysCpu.h"
 #include "JDsFixedDt.h"
 #include "JWaveGen.h"
-#include "JMLPistons.h"     //<vs_mlapiston>
-#include "JRelaxZones.h"    //<vs_rzone>
-#include "JChronoObjects.h" //<vs_chroono>
-#include "JDsFtForcePoints.h" //<vs_moordyyn>
+#include "JMLPistons.h"
+#include "JRelaxZones.h"
+#include "JChronoObjects.h"
+#include "JDsFtForcePoints.h"
 #include "JDsDamping.h"
 #include "JXml.h"
 #include "JDsSaveDt.h"
 #include "JDsOutputTime.h"
 #include "JDsAccInput.h"
 #include "JDsGaugeSystem.h"
-#include "JSphBoundCorr.h"  //<vs_innlet>
+#include "JSphBoundCorr.h"
 #include "JSphShifting.h"
 
 #include <climits>
@@ -85,7 +85,7 @@ void JSphCpu::InitVars(){
   NpbPer=NpfPer=0;
 
   Idpc=NULL; Codec=NULL; Dcellc=NULL; Posc=NULL; Velrhopc=NULL;
-  BoundNormalc=NULL; MotionVelc=NULL; //-mDBC //<vs_mddbc>
+  BoundNormalc=NULL; MotionVelc=NULL; //-mDBC
   VelrhopM1c=NULL;                //-Verlet
   PosPrec=NULL; VelrhopPrec=NULL; //-Symplectic
   SpsTauc=NULL; SpsGradvelc=NULL; //-Laminar+SPS. 
@@ -178,14 +178,14 @@ void JSphCpu::AllocCpuMemoryParticles(unsigned np,float over){
   if(Shifting){
     ArraysCpu->AddArrayCount(JArraysCpu::SIZE_16B,1); //-shiftposfs
   }
-  if(UseNormals){ //<vs_mddbc_ini> 
+  if(UseNormals){
     ArraysCpu->AddArrayCount(JArraysCpu::SIZE_12B,1); //-BoundNormal
     if(SlipMode!=SLIP_Vel0)ArraysCpu->AddArrayCount(JArraysCpu::SIZE_12B,1); //-MotionVel
-  } //<vs_mddbc_end> 
-  if(InOut){  //<vs_innlet_ini>
+  }
+  if(InOut){
     //ArraysCpu->AddArrayCount(JArraysCpu::SIZE_4B,1);  //-InOutPart
     ArraysCpu->AddArrayCount(JArraysCpu::SIZE_1B,2);  //-newizone,zsurfok
-  }  //<vs_innlet_end>
+  }
   //-Shows the allocated memory.
   MemCpuParticles=ArraysCpu->GetAllocMemoryCpu();
   PrintSizeNp(CpuParticlesSize,MemCpuParticles,0);
@@ -206,8 +206,8 @@ void JSphCpu::ResizeCpuMemoryParticles(unsigned npnew){
   tdouble3    *pospre     =SaveArrayCpu(Np,PosPrec);
   tfloat4     *velrhoppre =SaveArrayCpu(Np,VelrhopPrec);
   tsymatrix3f *spstau     =SaveArrayCpu(Np,SpsTauc);
-  tfloat3     *boundnormal=SaveArrayCpu(Np,BoundNormalc); //<vs_mddbc>
-  tfloat3     *motionvel  =SaveArrayCpu(Np,MotionVelc);   //<vs_mddbc>
+  tfloat3     *boundnormal=SaveArrayCpu(Np,BoundNormalc);
+  tfloat3     *motionvel  =SaveArrayCpu(Np,MotionVelc);
   //-Frees pointers.
   ArraysCpu->Free(Idpc);
   ArraysCpu->Free(Codec);
@@ -218,8 +218,8 @@ void JSphCpu::ResizeCpuMemoryParticles(unsigned npnew){
   ArraysCpu->Free(PosPrec);
   ArraysCpu->Free(VelrhopPrec);
   ArraysCpu->Free(SpsTauc);
-  ArraysCpu->Free(BoundNormalc);  //<vs_mddbc>
-  ArraysCpu->Free(MotionVelc);    //<vs_mddbc>
+  ArraysCpu->Free(BoundNormalc);
+  ArraysCpu->Free(MotionVelc);
   //-Resizes CPU memory allocation.
   const double mbparticle=(double(MemCpuParticles)/(1024*1024))/CpuParticlesSize; //-MB por particula.
   Log->Printf("**JSphCpu: Requesting cpu memory for %u particles: %.1f MB.",npnew,mbparticle*npnew);
@@ -234,8 +234,8 @@ void JSphCpu::ResizeCpuMemoryParticles(unsigned npnew){
   if(pospre)     PosPrec     =ArraysCpu->ReserveDouble3();
   if(velrhoppre) VelrhopPrec =ArraysCpu->ReserveFloat4();
   if(spstau)     SpsTauc     =ArraysCpu->ReserveSymatrix3f();
-  if(boundnormal)BoundNormalc=ArraysCpu->ReserveFloat3(); //<vs_mddbc>
-  if(motionvel)  MotionVelc  =ArraysCpu->ReserveFloat3(); //<vs_mddbc>
+  if(boundnormal)BoundNormalc=ArraysCpu->ReserveFloat3();
+  if(motionvel)  MotionVelc  =ArraysCpu->ReserveFloat3();
   //-Restore data in CPU memory.
   RestoreArrayCpu(Np,idp,Idpc);
   RestoreArrayCpu(Np,code,Codec);
@@ -246,8 +246,8 @@ void JSphCpu::ResizeCpuMemoryParticles(unsigned npnew){
   RestoreArrayCpu(Np,pospre,PosPrec);
   RestoreArrayCpu(Np,velrhoppre,VelrhopPrec);
   RestoreArrayCpu(Np,spstau,SpsTauc);
-  RestoreArrayCpu(Np,boundnormal,BoundNormalc); //<vs_mddbc>
-  RestoreArrayCpu(Np,motionvel,MotionVelc);     //<vs_mddbc>
+  RestoreArrayCpu(Np,boundnormal,BoundNormalc);
+  RestoreArrayCpu(Np,motionvel,MotionVelc);
   //-Updates values.
   CpuParticlesSize=npnew;
   MemCpuParticles=ArraysCpu->GetAllocMemoryCpu();
@@ -290,10 +290,10 @@ void JSphCpu::ReserveBasicArraysCpu(){
   Velrhopc=ArraysCpu->ReserveFloat4();
   if(TStep==STEP_Verlet)VelrhopM1c=ArraysCpu->ReserveFloat4();
   if(TVisco==VISCO_LaminarSPS)SpsTauc=ArraysCpu->ReserveSymatrix3f();
-  if(UseNormals){ //<vs_mddbc_ini>
+  if(UseNormals){
     BoundNormalc=ArraysCpu->ReserveFloat3();
     if(SlipMode!=SLIP_Vel0)MotionVelc=ArraysCpu->ReserveFloat3();
-  } //<vs_mddbc_end>
+  }
 }
 
 //==============================================================================
@@ -307,7 +307,7 @@ llong JSphCpu::GetAllocMemoryCpu()const{
   //-Reserved in AllocCpuMemoryFixed().
   s+=MemCpuFixed;
   //-Reserved in other objects.
-  if(MLPistons)s+=MLPistons->GetAllocMemoryCpu();  //<vs_mlapiston>
+  if(MLPistons)s+=MLPistons->GetAllocMemoryCpu();
   return(s);
 }
 
@@ -428,7 +428,7 @@ void JSphCpu::InitRunCpu(){
   if(TStep==STEP_Verlet)memcpy(VelrhopM1c,Velrhopc,sizeof(tfloat4)*Np);
   if(TVisco==VISCO_LaminarSPS)memset(SpsTauc,0,sizeof(tsymatrix3f)*Np);
   if(CaseNfloat)InitFloating();
-  if(MotionVelc)memset(MotionVelc,0,sizeof(tfloat3)*Np); //<vs_mddbc>
+  if(MotionVelc)memset(MotionVelc,0,sizeof(tfloat3)*Np);
 }
 
 //==============================================================================
@@ -735,7 +735,7 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity,bool sh
             //deltap1=(boundp2? FLT_MAX: deltap1+delta);
             deltap1=(boundp2 && TBoundary==BC_DBC? FLT_MAX: deltap1+delta);
           }
-          //-Density Diffusion Term (Fourtakas et al 2019).  //<vs_dtt2_ini>
+          //-Density Diffusion Term (Fourtakas et al 2019).
           if((tdensity==DDT_DDT2 || (tdensity==DDT_DDT2Full && !boundp2)) && deltap1!=FLT_MAX && !ftp2){
             const float rh=1.f+DDTgz*drz;
             const float drhop=RhopZero*pow(rh,1.f/Gamma)-RhopZero;    
@@ -743,7 +743,7 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity,bool sh
             const float dot3=(drx*frx+dry*fry+drz*frz);
             const float delta=visc_densi*dot3*massp2/velrhop2.w;
             deltap1=(boundp2? FLT_MAX: deltap1-delta); //-blocks it makes it boil - bloody DBC
-          }  //<vs_dtt2_end>
+          }
 
           //-Shifting correction.
           if(shift && shiftposfsp1.x!=FLT_MAX){
@@ -1000,8 +1000,8 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity> void J
 template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco> void JSphCpu::Interaction_Forces_ct4(const stinterparmsc &t,StInterResultc &res)const{
        if(TDensity==DDT_None)    Interaction_Forces_ct5<tker,ftmode,tvisco,DDT_None    >(t,res);
   else if(TDensity==DDT_DDT)     Interaction_Forces_ct5<tker,ftmode,tvisco,DDT_DDT     >(t,res);
-  else if(TDensity==DDT_DDT2)    Interaction_Forces_ct5<tker,ftmode,tvisco,DDT_DDT2    >(t,res);  //<vs_dtt2>
-  else if(TDensity==DDT_DDT2Full)Interaction_Forces_ct5<tker,ftmode,tvisco,DDT_DDT2Full>(t,res);  //<vs_dtt2>
+  else if(TDensity==DDT_DDT2)    Interaction_Forces_ct5<tker,ftmode,tvisco,DDT_DDT2    >(t,res);
+  else if(TDensity==DDT_DDT2Full)Interaction_Forces_ct5<tker,ftmode,tvisco,DDT_DDT2Full>(t,res);
 }
 //==============================================================================
 template<TpKernel tker,TpFtMode ftmode> void JSphCpu::Interaction_Forces_ct3(const stinterparmsc &t,StInterResultc &res)const{
@@ -1020,7 +1020,6 @@ void JSphCpu::Interaction_Forces_ct(const stinterparmsc &t,StInterResultc &res)c
   else if(TKernel==KERNEL_Cubic)     Interaction_Forces_ct2<KERNEL_Cubic   >(t,res);
 }
 
-//<vs_mddbc_ini>
 //==============================================================================
 /// Perform interaction between ghost nodes of boundaries and fluid.
 //==============================================================================
@@ -1229,7 +1228,6 @@ void JSphCpu::Interaction_MdbcCorrection(TpSlipMode slipmode,const StDivDataCpu 
     default: Run_Exceptioon("Kernel unknown.");
   }
 }
-//<vs_mddbc_end>
 
 //==============================================================================
 /// Update pos, dcell and code to move with indicated displacement.
@@ -1652,17 +1650,16 @@ void JSphCpu::MoveMatBound(unsigned np,unsigned ini,tmatrix4d m,double dt,const 
       const double dx=ps2.x-ps.x, dy=ps2.y-ps.y, dz=ps2.z-ps.z;
       UpdatePos(ps,dx,dy,dz,false,pid,pos,dcell,code);
       velrhop[pid].x=float(dx/dt);  velrhop[pid].y=float(dy/dt);  velrhop[pid].z=float(dz/dt);
-      //-Computes normal. //<vs_mddbc_ini>
+      //-Computes normal.
       if(boundnormal){
         const tdouble3 gs=ps+ToTDouble3(boundnormal[pid]);
         const tdouble3 gs2=MatrixMulPoint(m,gs);
         boundnormal[pid]=ToTFloat3(gs2-ps2);
-      }//<vs_mddbc_end>
+      }
     }
   }
 }
 
-//<vs_mddbc_ini>
 //==============================================================================
 /// Copy motion velocity to MotionVel[].
 /// Copia velocidad de movimiento a MotionVel[].
@@ -1677,7 +1674,7 @@ void JSphCpu::CopyMotionVel(unsigned nmoving,const unsigned *ridp
       motionvel[pid]=TFloat3(v.x,v.y,v.z);
     }
   }
-} //<vs_mddbc_end>
+}
 
 //==============================================================================
 /// Calculates predefined movement of boundary particles.
@@ -1696,7 +1693,7 @@ void JSphCpu::CalcMotion(double stepdt){
 void JSphCpu::RunMotion(double stepdt){
   TmcStart(Timers,TMC_SuMotion);
   tfloat3 *boundnormal=NULL;
-  boundnormal=BoundNormalc; //<vs_mddbc>
+  boundnormal=BoundNormalc;
   const bool motsim=true;
   BoundChanged=false;
   //-Add motion from automatic wave generation.
@@ -1716,11 +1713,11 @@ void JSphCpu::RunMotion(double stepdt){
         if(motsim)MoveMatBound   (m.count,m.idbegin-CaseNfixed,m.matmov,stepdt,RidpMove,Posc,Dcellc,Velrhopc,Codec,boundnormal); 
         //else    MoveMatBoundAce(m.count,m.idbegin-CaseNfixed,m.matmov,m.matmov2,stepdt,RidpMove,Posc,Dcellc,Velrhopc,Acec,Codec);
       }      
-      //-Applies predefined motion to BoundCorr configuration.           //<vs_innlet> 
-      if(BoundCorr && BoundCorr->GetUseMotion())BoundCorr->RunMotion(m); //<vs_innlet> 
+      //-Applies predefined motion to BoundCorr configuration.
+      if(BoundCorr && BoundCorr->GetUseMotion())BoundCorr->RunMotion(m);
     }
   }
-  //-Management of Multi-Layer Pistons.  //<vs_mlapiston_ini>
+  //-Management of Multi-Layer Pistons.
   if(MLPistons){
     if(!BoundChanged)CalcRidp(PeriActive!=0,Npb,0,CaseNfixed,CaseNfixed+CaseNmoving,Codec,Idpc,RidpMove);
     BoundChanged=true;
@@ -1735,12 +1732,11 @@ void JSphCpu::RunMotion(double stepdt){
       MovePiston2d(mot.np,mot.idbegin-CaseNfixed,mot.posymin,mot.poszmin,mot.poszcount,mot.movyz,mot.velyz
         ,RidpMove,Posc,Dcellc,Velrhopc,Codec);
     }
-  }  //<vs_mlapiston_end>
-  if(MotionVelc)CopyMotionVel(CaseNmoving,RidpMove,Velrhopc,MotionVelc); //<vs_mddbc>
+  }
+  if(MotionVelc)CopyMotionVel(CaseNmoving,RidpMove,Velrhopc,MotionVelc);
   TmcStop(Timers,TMC_SuMotion);
 }
 
-//<vs_mlapiston_ini>
 //==============================================================================
 /// Applies movement and velocity of piston 1D to a group of particles.
 /// Aplica movimiento y velocidad de piston 1D a conjunto de particulas.
@@ -1796,9 +1792,7 @@ void JSphCpu::MovePiston2d(unsigned np,unsigned ini
     }
   }
 }
-//<vs_mlapiston_end>
 
-//<vs_rzone_ini>
 //==============================================================================
 /// Applies RelaxZone to selected particles.
 /// Aplica RelaxZone a las particulas indicadas.
@@ -1808,7 +1802,6 @@ void JSphCpu::RunRelaxZone(double dt){
   RelaxZones->SetFluidVel(TimeStep,dt,Np-Npb,Npb,Posc,Idpc,Velrhopc);
   TmcStop(Timers,TMC_SuMotion);
 }
-//<vs_rzone_end>
 
 //==============================================================================
 /// Applies Damping to selected particles.

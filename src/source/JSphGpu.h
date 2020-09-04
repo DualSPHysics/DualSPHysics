@@ -148,8 +148,8 @@ protected:
   float4 *PosCellg; ///<Relative position and cell coordiantes for particle interaction {posx,posy,posz,cellxyz}
   float4 *Velrhopg;
 
-  float3 *BoundNormalg;  ///<Normal (x,y,z) pointing from boundary particles to ghost nodes.  //<vs_mddbc>
-  float3 *MotionVelg;    ///<Velocity of a moving boundary particle.                          //<vs_mddbc>
+  float3 *BoundNormalg;  ///<Normal (x,y,z) pointing from boundary particles to ghost nodes.
+  float3 *MotionVelg;    ///<Velocity of a moving boundary particle.
     
   //-Variables for compute step: VERLET.
   float4 *VelrhopM1g;  ///<Verlet: in order to keep previous values. | Verlet: para guardar valores anteriores.
@@ -271,11 +271,11 @@ protected:
 
   void CalcMotion(double stepdt);
   void RunMotion(double stepdt);
-  void RunRelaxZone(double dt);  //<vs_rzone>
+  void RunRelaxZone(double dt);
   void RunDamping(double dt,unsigned np,unsigned npb,const double2 *posxy,const double *posz,const typecode *code,float4 *velrhop);
 
-  void SaveVtkNormalsGpu(std::string filename,int numfile,unsigned np,unsigned npb               //<vs_mddbc>
-    ,const double2 *posxyg,const double *poszg,const unsigned *idpg,const float3 *boundnormalg); //<vs_mddbc>
+  void SaveVtkNormalsGpu(std::string filename,int numfile,unsigned np,unsigned npb
+    ,const double2 *posxyg,const double *poszg,const unsigned *idpg,const float3 *boundnormalg);
 
   void ShowTimers(bool onlyfile=false);
   void GetTimersInfo(std::string &hinfo,std::string &dinfo)const;

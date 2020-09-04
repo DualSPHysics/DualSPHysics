@@ -25,7 +25,7 @@
 #include "JLog2.h"
 #include "JXml.h"
 #include "JLinearValue.h"
-#include "JSphInOutVelAwas.h"  //<vs_inawwas>
+#include "JSphInOutVelAwas.h"
 #include "JSphInOutGridData.h"
 
 #ifdef _WITHGPU
@@ -54,7 +54,7 @@ JSphInOutVel::JSphInOutVel(bool cpu,unsigned idzone,const StCteSph &csp
   ClassName="JSphInOutVel";
 
   InputTimeVel=NULL;
-  AwasVel=NULL; //<vs_inawwas>
+  AwasVel=NULL;
   InputVelGrid=NULL;
 
   Reset();
@@ -90,7 +90,7 @@ void JSphInOutVel::Reset(){
 
   SaveVelProfile=true;
 
-  delete AwasVel; AwasVel=NULL; //<vs_inawwas>
+  delete AwasVel; AwasVel=NULL;
 
   delete InputVelGrid; InputVelGrid=NULL;
 
@@ -224,19 +224,18 @@ TpInVelMode JSphInOutVel::ReadXml(const JXml *sxml,TiXmlElement *ele
     }
 //-Interpolated velocity with grid-data (old version).
     else if(VelMode==InVelM_Interpolated){
-      string checklist="gridveldata gridposzero";
-      checklist=checklist+" awas"; //<vs_inawwas>
+      const string checklist="gridveldata gridposzero awas";
       sxml->CheckElementNames(xele,true,checklist);
       InputVelGrid=new JSphInOutGridData(Log);
       InputVelGrid->ConfigFromFile(dirdatafile+sxml->ReadElementStr(xele,"gridveldata","file"));
       double xmin=sxml->ReadElementDouble(xele,"gridposzero","x",true,0);
       double zmin=sxml->ReadElementDouble(xele,"gridposzero","z",true,0);
       InputVelGrid->SetPosMin(TDouble3(xmin,(CSP.simulate2d? CSP.simulate2dposy: maprealposminy),zmin));
-      //-Load AWAS configuration. //<vs_inawwas_ini> 
+      //-Load AWAS configuration.
       if(sxml->CheckElementActive(xele,"awas")){
         AwasVel=new JSphInOutVelAwas(Log,IdZone,PtPlane.x,Direction,CSP.gravity.z
           ,dirdatafile,gaugesystem,sxml,xele->FirstChildElement("awas"));
-      }//<vs_inawwas_end> 
+      }
     }
     else if(VelMode!=InVelM_Extrapolated)Run_Exceptioon("Inlet/outlet velocity profile is unknown.");
   }
@@ -350,7 +349,7 @@ void JSphInOutVel::GetConfig(std::vector<std::string> &lines)const{
   else if(VelMode==InVelM_Interpolated){
     lines.push_back(fun::PrintStr("  Velocity file: %s",InputVelGrid->GetFile().c_str()));
     lines.push_back(fun::PrintStr("  Reset Z velocity: %s","True"));
-    if(AwasVel)AwasVel->GetConfig(lines); //<vs_inawwas>
+    if(AwasVel)AwasVel->GetConfig(lines);
   }
   else if(VelMode!=InVelM_Extrapolated)Run_Exceptioon("Velocity mode is unknown.");
 }
@@ -446,8 +445,7 @@ void JSphInOutVel::UpdateVelInterpolateCpu(double timestep,unsigned nplist
   ,const unsigned *idp,tfloat4 *velrhop)
 {
   if(InputVelGrid){
-    float velcorr=0;
-    velcorr=(AwasVel? AwasVel->GetVelCorr(timestep): 0); //<vs_inawwas>
+    const float velcorr=(AwasVel? AwasVel->GetVelCorr(timestep): 0);
     if(InputVelGrid->GetNx()==1)
          InputVelGrid->InterpolateZVelCpu(timestep,byte(IdZone),nplist,plist,pos,code,idp,velrhop,velcorr);
     else InputVelGrid->InterpolateVelCpu (timestep,byte(IdZone),nplist,plist,pos,code,idp,velrhop,velcorr);
@@ -474,8 +472,7 @@ void JSphInOutVel::UpdateVelInterpolateGpu(double timestep,unsigned nplist,const
   ,const unsigned *idpg,float4 *velrhopg)
 {
   if(InputVelGrid){
-    float velcorr=0;
-    velcorr=(AwasVel? AwasVel->GetVelCorr(timestep): 0); //<vs_inawwas>
+    const float velcorr=(AwasVel? AwasVel->GetVelCorr(timestep): 0);
     if(InputVelGrid->GetNx()==1)
          InputVelGrid->InterpolateZVelGpu(timestep,byte(IdZone),nplist,plist,posxyg,poszg,codeg,idpg,velrhopg,velcorr);
     else Run_Exceptioon("GPU code was not implemented for nx>1.");
@@ -487,20 +484,12 @@ void JSphInOutVel::UpdateVelInterpolateGpu(double timestep,unsigned nplist,const
 }
 #endif
 
-
-
-
-
-
-
-//<vs_inawwas_ini>
 //==============================================================================
 /// Saves CSV file with AWAS information.
 //==============================================================================
 void JSphInOutVel::SaveAwasVelCsv(){
   if(AwasVel)AwasVel->SaveCsvData();
 }
-//<vs_inawwas_end>
 
 //==============================================================================
 /// Saves grid nodes in VTK file.

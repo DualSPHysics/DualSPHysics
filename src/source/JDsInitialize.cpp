@@ -227,7 +227,6 @@ void JDsInitializeOp_FluidVel::GetConfig(std::vector<std::string> &lines)const{
 }
 
 
-//<vs_mddbc_ini>
 //##############################################################################
 //# JDsInitializeOp_BoundNormalSet
 //##############################################################################
@@ -542,7 +541,6 @@ void JDsInitializeOp_BoundNormalCylinder::GetConfig(std::vector<std::string> &li
   lines.push_back(fun::PrintStr("  Inside...: %s",(Inside? "true": "false")));
   lines.push_back(fun::PrintStr("  MaxDistH.: %g",MaxDisteH));
 }
-//<vs_mddbc_end>
 
 
 //##############################################################################
@@ -606,12 +604,10 @@ void JDsInitialize::ReadXml(const JXml *sxml,TiXmlElement* lis){
     if(cmd.length() && cmd[0]!='_' && sxml->CheckElementActive(ele)){
       //printf("-----------> [%s]\n",cmd.c_str());
       if(cmd=="fluidvelocity"){ JDsInitializeOp_FluidVel *ope=new JDsInitializeOp_FluidVel(sxml,ele,InitCt); Opes.push_back(ope); }
-      //<vs_mddbc_ini>
       else if(cmd=="boundnormal_set"     ){ if(BoundNormals){ JDsInitializeOp_BoundNormalSet      *ope=new JDsInitializeOp_BoundNormalSet     (sxml,ele,InitCt); Opes.push_back(ope); } }
       else if(cmd=="boundnormal_plane"   ){ if(BoundNormals){ JDsInitializeOp_BoundNormalPlane    *ope=new JDsInitializeOp_BoundNormalPlane   (sxml,ele,InitCt); Opes.push_back(ope); } }
       else if(cmd=="boundnormal_sphere"  ){ if(BoundNormals){ JDsInitializeOp_BoundNormalSphere   *ope=new JDsInitializeOp_BoundNormalSphere  (sxml,ele,InitCt); Opes.push_back(ope); } }
       else if(cmd=="boundnormal_cylinder"){ if(BoundNormals){ JDsInitializeOp_BoundNormalCylinder *ope=new JDsInitializeOp_BoundNormalCylinder(sxml,ele,InitCt); Opes.push_back(ope); } }
-      //<vs_mddbc_end>
       else sxml->ErrReadElement(ele,cmd,false);
     }
     ele=ele->NextSiblingElement();
