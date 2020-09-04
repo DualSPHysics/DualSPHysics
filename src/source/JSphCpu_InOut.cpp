@@ -69,8 +69,8 @@ template<bool sim2d,TpKernel tker> void JSphCpu::InteractionInOutExtrap_Double
     if(!CODE_IsFluidInout(code[p1]))Run_Exceptioon("InOut particle is invalid.");
     const unsigned izone=CODE_GetIzoneFluidInout(code[p1]);
     const byte cfg=cfgzone[izone];
-    const bool computerhop=(JSphInOutZone::GetConfigRhopMode(cfg)==JSphInOutZone::MRHOP_Extrapolated);
-    const bool computevel=(JSphInOutZone::GetConfigVelMode(cfg)==JSphInOutZone::MVEL_Extrapolated);
+    const bool computerhop=(JSphInOutZone::GetConfigRhopMode(cfg)==InRhop_Extrapolated);
+    const bool computevel=(JSphInOutZone::GetConfigVelMode(cfg)==InVelM_Extrapolated);
     if(computerhop || computevel){
       //-Calculates ghost node position.
       tdouble3 pos_p1=pos[p1];
@@ -256,8 +256,8 @@ template<bool sim2d,TpKernel tker> void JSphCpu::InteractionInOutExtrap_Single
     if(!CODE_IsFluidInout(code[p1]))Run_Exceptioon("InOut particle is invalid.");
     const unsigned izone=CODE_GetIzoneFluidInout(code[p1]);
     const byte cfg=cfgzone[izone];
-    const bool computerhop=(JSphInOutZone::GetConfigRhopMode(cfg)==JSphInOutZone::MRHOP_Extrapolated);
-    const bool computevel=(JSphInOutZone::GetConfigVelMode(cfg)==JSphInOutZone::MVEL_Extrapolated);
+    const bool computerhop=(JSphInOutZone::GetConfigRhopMode(cfg)==InRhop_Extrapolated);
+    const bool computevel=(JSphInOutZone::GetConfigVelMode(cfg)==InVelM_Extrapolated);
     if(computerhop || computevel){
       //-Calculates ghost node position.
       tdouble3 pos_p1=pos[p1];

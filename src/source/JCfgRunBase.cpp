@@ -128,6 +128,45 @@ void JCfgRunBase::ErrorParm(const std::string &opt,int optc,int lv,const std::st
   Run_ExceptioonFile(tx,file);
 }
 
+
+//==============================================================================
+/// Loads nv values float using command options. Returns number of loaded 
+/// values.
+//==============================================================================
+unsigned JCfgRunBase::LoadFloats(std::string txopt,float def,unsigned nv
+  ,std::vector<float> &vv)
+{
+  //printf("txopt=[%s]\n",txopt.c_str());
+  vv.clear();
+  for(unsigned c=0;c<nv;c++)vv.push_back(def);
+  unsigned num=0;
+  std::string aux=txopt;
+  for(;!aux.empty() && num<nv;num++){
+    std::string txv=fun::StrSplit(":",aux);
+    if(!txv.empty())vv[num]=float(atof(txv.c_str()));
+  }
+  return(num);
+}
+
+//==============================================================================
+/// Loads nv values double using command options. Returns number of loaded 
+/// values.
+//==============================================================================
+unsigned JCfgRunBase::LoadDoubles(std::string txopt,double def,unsigned nv
+  ,std::vector<double> &vv)
+{
+  //printf("txopt=[%s]\n",txopt.c_str());
+  vv.clear();
+  for(unsigned c=0;c<nv;c++)vv.push_back(def);
+  unsigned num=0;
+  std::string aux=txopt;
+  for(;!aux.empty() && num<nv;num++){
+    std::string txv=fun::StrSplit(":",aux);
+    if(!txv.empty())vv[num]=atof(txv.c_str());
+  }
+  return(num);
+}
+
 //==============================================================================
 /// Loads nv values tfloat3 using command options. Returns number of loaded 
 /// values.

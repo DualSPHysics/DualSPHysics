@@ -256,6 +256,19 @@ std::string JReadDatafile::ReadNextValue(bool in_line){
 }
 
 //==============================================================================
+/// Returns next bool in the current line or next line if in_line is false.
+//==============================================================================
+bool JReadDatafile::ReadNextBool(bool in_line){
+  bool ret;
+  const string value=fun::StrLower(ReadNextValue(in_line));
+  if(value=="1" || value=="true")ret=true;
+  else if(value=="0" || value=="false")ret=false;
+  else if(fun::StrIsRealNumber(value))ret=(atof(value.c_str())!=0);
+  else ret=true;
+  return(ret);
+}
+
+//==============================================================================
 /// Returns next double in the current line or next line if in_line is false.
 //==============================================================================
 double JReadDatafile::ReadNextDouble(bool in_line){

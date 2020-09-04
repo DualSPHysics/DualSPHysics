@@ -24,6 +24,7 @@
 //:# - Simplificacion de clase usando JDataArrays. (05-09-2019)
 //:# - Gestion de excepciones mejorada.  (15-09-2019)
 //:# - Cambios para soportar CODE_SIZE4. (07-04-2020)
+//:# - Nueva variable TypeSp con el valor de special del code. (02-08-2020)
 //:#############################################################################
 
 /// \file JDebugSphGpu.h \brief Declares the class \ref JDebugSphGpu.

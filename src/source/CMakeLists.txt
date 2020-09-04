@@ -1,5 +1,5 @@
 #==================================================================
-# DualSPHysics GPU/CPU v5.0.140 22-07-2020
+# DualSPHysics GPU/CPU v5.0.149 04-09-2020
 #==================================================================
 
 cmake_minimum_required(VERSION 2.8)
@@ -36,7 +36,7 @@ set(OBWAVERZ JMLPistonsGpu.cpp JRelaxZonesGpu.cpp)
 set(OBWAVERZCUDA JRelaxZone_ker.cu)
 set(OBCHRONO JChronoObjects.cpp)
 set(OBMOORDYN JDsMooredFloatings.cpp JDsFtForcePoints.cpp)
-set(OBINOUT JSphCpu_InOut.cpp JSphCpuSingle_InOut.cpp JSphBoundCorr.cpp JSphInOut.cpp JSphInOutZone.cpp JSphInOutGridData.cpp JSphInOutPoints.cpp JSimpleNeigs.cpp)
+set(OBINOUT JSphCpu_InOut.cpp JSphCpuSingle_InOut.cpp JSphBoundCorr.cpp JSphInOut.cpp JSphInOutZone.cpp JSphInOutGridData.cpp JSphInOutPoints.cpp JSphInOutVel.cpp JSphInOutVelAwas.cpp JSphInOutZsurf.cpp JSimpleNeigs.cpp)
 set(OBINOUTGPU JSphGpuSingle_InOut.cpp)
 set(OBMDBC JPartNormalData.cpp JNormalsMarrone.cpp)
 

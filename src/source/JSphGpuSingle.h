@@ -64,7 +64,7 @@ protected:
   void FtApplyImposedVel(float3 *ftoforcesresg)const; //<vs_fttvel>
   void FtCopyExternalForces(); //<vs_fttvel>
   void RunFloating(double dt,bool predictor);
-  void RunGaugeSystem(double timestep);
+  void RunGaugeSystem(double timestep,bool saveinput=false);
 
   void ComputePips(bool run);
 
@@ -84,7 +84,7 @@ protected:
   void InOutIgnoreFluidDef(const std::vector<unsigned> &mkfluidlist);
   void InOutCheckProximity(unsigned newnp);
   void InOutComputeStep(double stepdt);
-  void InOutCalculeZsurf();
+  void InOutUpdatePartsData(double timestepnew);
   void InOutExtrapolateData(unsigned inoutcount,const int *inoutpart);
 
   void BoundCorrectionData();

@@ -29,6 +29,8 @@
 #include "JSphInOutPoints.h"
 #include "JSimpleNeigs.h"
 #include "FunctionsMath.h"
+#include "FunctionsCuda.h"
+#include "JDebugSphGpu.h"
 #include "JAppInfo.h"
 #include "JTimeControl.h"
 #include "JDataArrays.h"
@@ -77,13 +79,14 @@ void JSphGpuSingle::InOutCheckProximity(unsigned newnp){
 /// Inicia condiciones inlet/outlet.
 //==============================================================================
 void JSphGpuSingle::InOutInit(double timestepini){
+  InOut->Nstep=Nstep; //-For debug.
   TmgStart(Timers,TMG_SuInOut);
   Log->Print("Initialising InOut...");
   if(PartBegin)Run_Exceptioon("Simulation restart not allowed when Inlet/Outlet is used.");
 
   //-Configures InOut zones and prepares new inout particles to create.
-  const unsigned newnp=InOut->Config(timestepini,Stable,Simulate2D,Simulate2DPosY,PeriActive
-    ,RhopZero,CteB,Gamma,Gravity,Dp,MapRealPosMin,MapRealPosMax,MkInfo->GetCodeNewFluid()
+  const unsigned newnp=InOut->Config(timestepini,Stable,PeriActive
+    ,MapRealPosMin,MapRealPosMax,MkInfo->GetCodeNewFluid()
     ,PartsInit,GaugeSystem,NuxLib);
 
   //-Mark special fluid particles to ignore. | Marca las particulas fluidas especiales para ignorar.
@@ -133,7 +136,7 @@ void JSphGpuSingle::InOutInit(double timestepini){
   //-Shows configuration.
   InOut->VisuConfig("\nInOut configuration:"," ");
   //-Checks invalid options for symmetry. //<vs_syymmetry>
-  if(Symmetry && InOut->GetExtrapolatedData())Run_Exceptioon("Symmetry is not allowed with inlet/outlet conditions when extrapolate option is enabled."); //<vs_syymmetry>
+  if(Symmetry && InOut->Use_ExtrapolatedData())Run_Exceptioon("Symmetry is not allowed with inlet/outlet conditions when extrapolate option is enabled."); //<vs_syymmetry>
 
   //-Updates divide information.
   TmgStop(Timers,TMG_SuInOut);
@@ -141,25 +144,13 @@ void JSphGpuSingle::InOutInit(double timestepini){
   TmgStart(Timers,TMG_SuInOut);
   if(DBG_INOUT_PARTINIT)DgSaveVtkParticlesGpu("CfgInOut_InletIni.vtk",1,0,Np,Posxyg,Poszg,Codeg,Idpg,Velrhopg);
 
-  //-Create list of current inout particles (normal and periodic).
-  int* inoutpart=ArraysGpu->ReserveInt();
-  const unsigned inoutcount=InOut->CreateListSimpleGpu(Nstep,Np-Npb,Npb,Codeg,GpuParticlesSize,inoutpart);
-  InOut->SetCurrentNp(inoutcount);
+  //-Updates Velocity data of inout zones according to current timestep.
+  InOut->UpdateVelData(timestepini);
+  //-Updates Zsurf data of inout zones according to current timestep.
+  InOut->UpdateZsurfData(timestepini,true);
 
-  //-Updates velocity and rhop (no extrapolated).
-  if(InOut->GetNoExtrapolatedData())InOut->UpdateDataGpu(float(timestepini),true,inoutcount,inoutpart,Posxyg,Poszg,Codeg,Idpg,Velrhopg);
-
-  //-Calculates extrapolated velocity and/or rhop for inlet/outlet particles from fluid domain.
-  if(InOut->GetExtrapolatedData())InOutExtrapolateData(inoutcount,inoutpart);
-
-  //-Calculates interpolated velocity for inlet/outlet particles.
-  if(InOut->GetInterpolatedVel())InOut->InterpolateVelGpu(float(timestepini),inoutcount,inoutpart,Posxyg,Poszg,Codeg,Idpg,Velrhopg);
-
-  //-Updates velocity and rhop of M1 variables starting from current velocity and rhop when Verlet is used. 
-  if(VelrhopM1g)InOut->UpdateVelrhopM1Gpu(inoutcount,inoutpart,Velrhopg,VelrhopM1g);
-
-  //-Free array for inoutpart list.
-  ArraysGpu->Free(inoutpart); inoutpart=NULL;
+  //-Updates inout particle data according inlet configuration.
+  InOutUpdatePartsData(timestepini);
 
   if(DBG_INOUT_PARTINIT)DgSaveVtkParticlesGpu("CfgInOut_InletIni.vtk",2,0,Np,Posxyg,Poszg,Codeg,Idpg,Velrhopg);
   TmgStop(Timers,TMG_SuInOut);
@@ -173,6 +164,8 @@ void JSphGpuSingle::InOutInit(double timestepini){
 /// - If particle is moved out the domain then it changes to ignore particle.
 //==============================================================================
 void JSphGpuSingle::InOutComputeStep(double stepdt){
+  const double newtimestep=TimeStep+stepdt;
+  InOut->Nstep=Nstep; //-For debug.
   //Log->Printf("%u>--------> [InOutComputeStep_000]",Nstep);
   //DgSaveVtkParticlesGpu("BB_ComputeStepA.vtk",DgNum,0,Np,Posxyg,Poszg,Codeg,Idpg,Velrhopg);
   TmgStart(Timers,TMG_SuInOut);
@@ -186,31 +179,41 @@ void JSphGpuSingle::InOutComputeStep(double stepdt){
     TmgStart(Timers,TMG_SuInOut);
   }
 
+  //-Updates Velocity data of inout zones according to current timestep.
+  InOut->UpdateVelData(newtimestep);
+  //-Updates Zsurf data of inout zones according to current timestep.
+  InOut->UpdateZsurfData(newtimestep,false);
+
   //-Create and remove inout particles.
   unsigned newnp=0;
   {
+    byte *zsurfok=NULL;
     //-Creates list with current inout particles and normal fluid (no periodic) in inout zones.
     int* inoutpart=ArraysGpu->ReserveInt();
-    const unsigned inoutcountpre=InOut->CreateListGpu(Nstep,Np-Npb,Npb,Posxyg,Poszg,Codeg,GpuParticlesSize,inoutpart);
+    const unsigned inoutcountpre=InOut->CreateListGpu(Np-Npb,Npb,Posxyg,Poszg,Codeg,GpuParticlesSize,inoutpart);
 
     //-Updates code of inout particles according its position and create new inlet particles when refilling=false.
     byte *newizoneg=ArraysGpu->ReserveByte();
-    newnp=InOut->ComputeStepGpu(Nstep,stepdt,inoutcountpre,inoutpart,IdMax+1,GpuParticlesSize,Np,Posxyg,Poszg,Dcellg,Codeg,Idpg,Velrhopg,newizoneg,this);
+    newnp=InOut->ComputeStepGpu(inoutcountpre,inoutpart,IdMax+1,GpuParticlesSize
+      ,Np,Posxyg,Poszg,Dcellg,Codeg,Idpg,zsurfok,Velrhopg,newizoneg,this);
     ArraysGpu->Free(newizoneg);  newizoneg=NULL;
 
     //-Creates new inlet particles using advanced refilling mode.
-    if(InOut->GetRefillAdvanced()){
+    if(InOut->Use_RefillAdvanced()){
+      //-Creates new inlet particles using advanced refilling mode.
       float   *prodistg =ArraysGpu->ReserveFloat();
       double2 *proposxyg=ArraysGpu->ReserveDouble2();
       double  *proposzg =ArraysGpu->ReserveDouble();
       newnp+=InOut->ComputeStepFillingGpu(Nstep,stepdt,inoutcountpre,inoutpart
         ,IdMax+1+newnp,GpuParticlesSize,Np+newnp,Posxyg,Poszg,Dcellg,Codeg,Idpg,Velrhopg
-        ,prodistg,proposxyg,proposzg,Timers);
+        ,zsurfok,prodistg,proposxyg,proposzg,Timers);
       ArraysGpu->Free(prodistg);
       ArraysGpu->Free(proposxyg);
       ArraysGpu->Free(proposzg);
     }
+    //-Free arrays.
     ArraysGpu->Free(inoutpart);
+    ArraysGpu->Free(zsurfok);
   }
 
   //-Updates new particle values for Laminar+SPS.
@@ -229,34 +232,8 @@ void JSphGpuSingle::InOutComputeStep(double stepdt){
   RunCellDivide(true);
   TmgStart(Timers,TMG_SuInOut);
 
-  //-Create list of current inout particles (normal and periodic).
-  int* inoutpart=ArraysGpu->ReserveInt();
-  const unsigned inoutcount=InOut->CreateListSimpleGpu(Nstep,Np-Npb,Npb,Codeg,GpuParticlesSize,inoutpart);
-  InOut->SetCurrentNp(inoutcount);
-
-  //-Updates zsurf.
-  if(InOut->GetCalculatedZsurf())InOutCalculeZsurf();
-  if(InOut->GetCalculatedZsurf() || InOut->GetVariableZsurf())InOut->UpdateZsurf(TimeStep+stepdt);
-
-  //-Updates velocity and rhop (no extrapolated).
-  if(InOut->GetNoExtrapolatedData())InOut->UpdateDataGpu(float(TimeStep+stepdt),true
-    ,inoutcount,inoutpart,Posxyg,Poszg,Codeg,Idpg,Velrhopg);
-
-  //-Calculates extrapolated velocity and/or rhop for inlet/outlet particles from fluid domain.
-  if(InOut->GetExtrapolatedData())InOutExtrapolateData(inoutcount,inoutpart);
-
-  //-Calculates interpolated velocity for inlet/outlet particles.
-  if(InOut->GetInterpolatedVel())InOut->InterpolateVelGpu(float(TimeStep+stepdt)
-    ,inoutcount,inoutpart,Posxyg,Poszg,Codeg,Idpg,Velrhopg);
-
-  //-Removes interpolated Z velocity of inlet/outlet particles.
-  if(InOut->GetInterpolatedVel())InOut->InterpolateResetZVelGpu(inoutcount,inoutpart,Codeg,Velrhopg);
-
-  //-Updates velocity and rhop of M1 variables starting from current velocity and rhop when Verlet is used. 
-  if(VelrhopM1g)InOut->UpdateVelrhopM1Gpu(inoutcount,inoutpart,Velrhopg,VelrhopM1g);
-
-  //-Free array for inoutpart list.
-  ArraysGpu->Free(inoutpart); inoutpart=NULL;
+  //-Updates inout particle data according inlet configuration.
+  InOutUpdatePartsData(newtimestep);
 
   //-Saves files per PART.
   if(TimeStep+stepdt>=TimePartNext)InOut->SavePartFiles(Part);
@@ -265,21 +242,35 @@ void JSphGpuSingle::InOutComputeStep(double stepdt){
 }
 
 //==============================================================================
-/// Calculates zsurf for inlet/outlet particles from fluid domain.
-/// Calcula zsurf en el fluido para las particulas inlet/outlet.
+/// Updates inout particle data according inlet configuration.
 //==============================================================================
-void JSphGpuSingle::InOutCalculeZsurf(){
-  for(unsigned ci=0;ci<InOut->GetCount();ci++)if(InOut->GetCountPtzPos(ci)){
-    const unsigned nptz=InOut->GetCountPtzPos(ci);
-    const float3 *ptz=InOut->GetPtzPosg(ci);
-    float *auxg=InOut->GetPtzAuxg(ci);
-    float *auxh=InOut->GetPtzAux(ci);
-    const float maxdist=(float)InOut->GetDistPtzPos(ci);
-    const float zbottom=InOut->GetZbottom(ci);
-    const float zsurf=cusphinout::InOutComputeZsurf(nptz,ptz,maxdist,zbottom
-      ,DivData,Posxyg,Poszg,Codeg,auxg,auxh);
-    InOut->SetInputZsurf(ci,zsurf);
+void JSphGpuSingle::InOutUpdatePartsData(double timestepnew){
+  //-Create list of current inout particles (normal and periodic).
+  int* inoutpart=ArraysGpu->ReserveInt();
+  const unsigned inoutcount=InOut->CreateListSimpleGpu(Np-Npb,Npb,Codeg,GpuParticlesSize,inoutpart);
+  InOut->SetCurrentNp(inoutcount);
+
+  //-Updates velocity and rhop (with analytical solution).
+  if(InOut->Use_AnalyticalData()){
+    float *zsurfpart=NULL;
+    //-Updates velocity and rhop (with analytical solution).
+    InOut->SetAnalyticalDataGpu(float(timestepnew),inoutcount,inoutpart,Posxyg,Poszg,Codeg,Idpg,zsurfpart,Velrhopg);
+    //-Free array.
+    ArraysGpu->Free(zsurfpart); zsurfpart=NULL;
   }
+
+  //-Calculates extrapolated velocity and/or rhop for inlet/outlet particles from fluid domain.
+  if(InOut->Use_ExtrapolatedData())InOutExtrapolateData(inoutcount,inoutpart);
+
+  //-Calculates interpolated velocity for inlet/outlet particles.
+  if(InOut->Use_InterpolatedVel())
+    InOut->InterpolateVelGpu(float(timestepnew),inoutcount,inoutpart,Posxyg,Poszg,Codeg,Idpg,Velrhopg);
+
+  //-Updates velocity and rhop of M1 variables starting from current velocity and rhop when Verlet is used. 
+  if(VelrhopM1g)InOut->UpdateVelrhopM1Gpu(inoutcount,inoutpart,Velrhopg,VelrhopM1g);
+
+  //-Free array for inoutpart list.
+  ArraysGpu->Free(inoutpart); inoutpart=NULL;
 }
 
 //==============================================================================

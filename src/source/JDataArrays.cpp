@@ -77,6 +77,46 @@ void JDataArrays::CopyFrom(const JDataArrays &arr){
 }
 
 //==============================================================================
+/// Copy data (tag is not copied) from other JDataArrays throws exception when 
+/// structure does not match.
+//==============================================================================
+void JDataArrays::CopyDataFrom(const JDataArrays &arr,bool filterarrays){
+  const unsigned na=Count();
+  for(unsigned ca=0;ca<na;ca++){
+    JDataArrays::StDataArray& ar=Arrays[ca];
+    unsigned ca2=arr.GetIdxName(ar.keyname);
+    if(ca2==UINT_MAX)Run_Exceptioon(fun::PrintStr("Array \'%s\' is missing in source data.",ar.keyname.c_str()));
+    const JDataArrays::StDataArray& ar2=arr.GetArrayCte(ca2);
+    if(ar.type!=ar2.type)Run_Exceptioon(fun::PrintStr("Type of array \'%s\' does not match.",ar.keyname.c_str()));
+    if(ar.count!=ar2.count)Run_Exceptioon(fun::PrintStr("Size of array \'%s\' does not match.",ar.keyname.c_str()));
+    memcpy(ar.ptr,ar2.ptr,SizeOfType(ar.type)*ar.count);
+  }
+  if(!filterarrays){
+    const unsigned na2=arr.Count();
+    for(unsigned ca2=0;ca2<na2;ca2++){
+      const JDataArrays::StDataArray& ar2=arr.GetArrayCte(ca2);
+      unsigned ca=GetIdxName(ar2.keyname);
+      if(ca==UINT_MAX)Run_Exceptioon(fun::PrintStr("Array \'%s\' of source is missing in target data.",ar2.keyname.c_str()));
+    }
+  }
+}
+
+//==============================================================================
+/// Returns true when name, type and size of arrays match.
+//==============================================================================
+bool JDataArrays::EqualStructure(const JDataArrays &arr,bool cmptag)const{
+  bool eq=(Count()==arr.Count());
+  const unsigned na=Count();
+  for(unsigned ca=0;ca<na && eq;ca++){
+    const JDataArrays::StDataArray& ar1=GetArrayCte(ca);
+    const JDataArrays::StDataArray& ar2=arr.GetArrayCte(ca);
+    eq=(ar1.keyname==ar2.keyname && ar1.type==ar2.type && ar1.count==ar2.count 
+      && (!cmptag || ar1.tag==ar2.tag));
+  }
+  return(eq);
+}
+
+//==============================================================================
 /// Frees dynamic memory of array pointer using delete[] when delptr=true.
 //==============================================================================
 void JDataArrays::FreeMemory(StDataArray &arr){
@@ -176,6 +216,7 @@ unsigned JDataArrays::AddArray(std::string fullname,TpTypeData type
   ar.fullname=fullname;
   ar.keyname=fun::StrSplit(":",fullname);
   ar.type=type;
+  ar.tag=0;
   ar.count=count;
   ar.ptr=ptr;
   ar.delptr=delptr;
@@ -334,6 +375,7 @@ std::string JDataArrays::GetUnitsByName(std::string keyname){
   const string var=fun::StrLower(keyname);
   if(var=="pos")return(" [m]");
   else if(var=="vel")return(" [m/s]");
+  else if(var=="veldir")return(" [m/s]");
   else if(var=="rhop")return(" [kg/m^3]");
   else if(var=="mass")return(" [kg]");
   else if(var=="press")return(" [Pa]");
@@ -341,6 +383,7 @@ std::string JDataArrays::GetUnitsByName(std::string keyname){
   else if(var=="ace")return(" [m/s^2]");
   else if(var=="vor")return(" [1/s]");
   else if(var=="height")return(" [m]");
+  else if(var=="zsurf")return(" [m]");
   return("");
 }
 

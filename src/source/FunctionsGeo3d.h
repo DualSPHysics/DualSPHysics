@@ -58,6 +58,7 @@
 //:# - Error corregido en PolygonConcave(). (05-12-2019)
 //:# - Nuevas funciones: PlanePointsIn(). (17-12-2019)
 //:# - Nuevas funciones: PointsLower(), PointsSortLower(). (11-02-2020)
+//:# - Nuevas funciones: PlaneAxisDist(). (26-08-2020)
 //:#############################################################################
 
 /// \file FunctionsGeo3d.h \brief Declares geometry functions for 3D.
@@ -506,6 +507,27 @@ inline tplane3d PlanePtVec(const tdouble3 &pt,const tdouble3 &vec){
 inline tplane3f PlanePtVec(const tfloat3 &pt,const tfloat3 &vec){
   const tfloat3 v=VecUnitary(vec);//-No es necesario pero asi el modulo del vector no afecta al resultado de PointPlane().
   return(TPlane3f(v.x,v.y,v.z,-v.x*pt.x-v.y*pt.y-v.z*pt.z));
+}
+
+
+//==============================================================================
+/// Devuelve el plano para calcular distancias desde pt en un eje arbitrario.
+/// Returns the plane to calculate distance from pt on one arbitrary axis.
+//==============================================================================
+inline tplane3d PlaneAxisDist(const tdouble3 &pt,const tdouble3 &vec,double distdp=1){
+  const tplane3d pla=PlanePtVec(pt,vec);
+  const double dis=sqrt(pla.a*pla.a+pla.b*pla.b+pla.c*pla.c)*distdp;
+  return(TPlane3d(pla.a/dis,pla.b/dis,pla.c/dis,pla.d/dis));
+}
+
+//==============================================================================
+/// Devuelve el plano para calcular distancias desde pt en un eje arbitrario.
+/// Returns the plane to calculate distance from pt on one arbitrary axis.
+//==============================================================================
+inline tplane3f PlaneAxisDist(const tfloat3 &pt,const tfloat3 &vec,float distdp=1){
+  const tplane3f pla=PlanePtVec(pt,vec);
+  const float dis=sqrt(pla.a*pla.a+pla.b*pla.b+pla.c*pla.c)*distdp;
+  return(TPlane3f(pla.a/dis,pla.b/dis,pla.c/dis,pla.d/dis));
 }
 
 

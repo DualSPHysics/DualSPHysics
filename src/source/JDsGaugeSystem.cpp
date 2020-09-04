@@ -16,7 +16,7 @@
  You should have received a copy of the GNU Lesser General Public License along with DualSPHysics. If not, see <http://www.gnu.org/licenses/>. 
 */
 
-/// \file JGaugeSystem.cpp \brief Implements the class \ref JGaugeSystem.
+/// \file JDsGaugeSystem.cpp \brief Implements the class \ref JGaugeSystem.
 
 #include "JDsGaugeSystem.h"
 #include "FunSphKernel.h"
@@ -248,7 +248,6 @@ void JGaugeSystem::ReadXml(const JXml *sxml,TiXmlElement* lis,const JSphMk* mkin
         else if(cmd=="maxz"){
           const tdouble3 pt0=sxml->ReadElementDouble3(ele,"point0");
           const float height=sxml->ReadElementFloat(ele,"height","value");
-
           //-Reads distlimit.
           float distlimit=0;
           switch(sxml->CheckElementAttributes(ele,"distlimit","value coefdp coefh",true,true)){
@@ -380,6 +379,9 @@ void JGaugeSystem::VisuConfig(std::string txhead,std::string txfoot){
 //==============================================================================
 void JGaugeSystem::SaveVtkInitPoints()const{
   if(JVtkLib::Available()){
+    //-Save individual schemes for complex gauges.
+    for(unsigned cg=0;cg<GetCount();cg++)Gauges[cg]->SaveVtkScheme();
+    //-Save VKT file with all initial gauge points.
     unsigned *vidx=NULL;
     unsigned *vtype=NULL;
     byte *vout=NULL;
@@ -442,9 +444,10 @@ JGaugeItem* JGaugeSystem::GetGauge(unsigned c)const{
 //==============================================================================
 /// Updates results on gauges (on CPU).
 //==============================================================================
-void JGaugeSystem::CalculeCpu(double timestep,bool svpart,const StDivDataCpu &dvd
+void JGaugeSystem::CalculeCpu(double timestep,const StDivDataCpu &dvd
   ,unsigned npbok,unsigned npb,unsigned np,const tdouble3 *pos
-  ,const typecode *code,const unsigned *idp,const tfloat4 *velrhop)
+  ,const typecode *code,const unsigned *idp,const tfloat4 *velrhop
+  ,bool saveinput)
 {
   const unsigned ng=GetCount();
   for(unsigned cg=0;cg<ng;cg++){
@@ -453,15 +456,29 @@ void JGaugeSystem::CalculeCpu(double timestep,bool svpart,const StDivDataCpu &dv
       gau->CalculeCpu(timestep,dvd,npbok,npb,np,pos,code,idp,velrhop);
     }
   }
+  //-Saves input state.
+  InputCpu=(saveinput? StrInputCpu(timestep,dvd,npbok,npb,np,pos,code,idp,velrhop): StrInputCpu());
+}
+
+//==============================================================================
+/// Updates results on requested gauge using last input data. (on CPU).
+//==============================================================================
+void JGaugeSystem::CalculeLastInputCpu(std::string gaugename){
+  const unsigned idx=GetGaugeIdx(gaugename);
+  if(idx==UINT_MAX)Run_Exceptioon(fun::PrintStr("Requested gauge \'%s\' is missing.",gaugename.c_str()));
+  if(!InputCpu.ready)Run_Exceptioon(fun::PrintStr("Input state to compute gauge \'%s\' is not available.",gaugename.c_str()));
+  const StInputCpu &s=InputCpu;
+  Gauges[idx]->CalculeCpu(s.timestep,s.dvd,s.npbok,s.npb,s.np,s.pos,s.code,s.idp,s.velrhop);
 }
 
 #ifdef _WITHGPU
 //==============================================================================
 /// Updates results on gauges (on GPU).
 //==============================================================================
-void JGaugeSystem::CalculeGpu(double timestep,bool svpart,const StDivDataGpu &dvd
+void JGaugeSystem::CalculeGpu(double timestep,const StDivDataGpu &dvd
   ,unsigned npbok,unsigned npb,unsigned np,const double2 *posxy,const double *posz
-  ,const typecode *code,const unsigned *idp,const float4 *velrhop)
+  ,const typecode *code,const unsigned *idp,const float4 *velrhop
+  ,bool saveinput)
 {
   //-Allocates GPU memory.
   if(!AuxMemoryg)fcuda::Malloc(&AuxMemoryg,1);
@@ -473,9 +490,33 @@ void JGaugeSystem::CalculeGpu(double timestep,bool svpart,const StDivDataGpu &dv
       gau->CalculeGpu(timestep,dvd,npbok,npb,np,posxy,posz,code,idp,velrhop,AuxMemoryg);
     }
   }
+  //-Saves input state.
+  InputGpu=(saveinput? StrInputGpu(timestep,dvd,npbok,npb,np,posxy,posz,code,idp,velrhop): StrInputGpu());
+}
 
+//==============================================================================
+/// Updates results on requested gauge using last input data. (on GPU).
+//==============================================================================
+void JGaugeSystem::CalculeLastInputGpu(std::string gaugename){
+  const unsigned idx=GetGaugeIdx(gaugename);
+  if(idx==UINT_MAX)Run_Exceptioon(fun::PrintStr("Requested gauge \'%s\' is missing.",gaugename.c_str()));
+  if(!InputGpu.ready)Run_Exceptioon(fun::PrintStr("Input state to compute gauge \'%s\' is not available.",gaugename.c_str()));
+  //-Allocates GPU memory.
+  if(!AuxMemoryg)fcuda::Malloc(&AuxMemoryg,1);
+  const StInputGpu &s=InputGpu;
+  Gauges[idx]->CalculeGpu(s.timestep,s.dvd,s.npbok,s.npb,s.np,s.posxy,s.posz,s.code,s.idp,s.velrhop,AuxMemoryg);
 }
 #endif
+
+//==============================================================================
+/// Updates results on requested gauge using last input data. (on CPU or GPU).
+//==============================================================================
+void JGaugeSystem::CalculeLastInput(std::string gaugename){
+  if(Cpu)CalculeLastInputCpu(gaugename);
+  #ifdef _WITHGPU
+  else   CalculeLastInputGpu(gaugename);
+  #endif
+}
 
 //==============================================================================
 /// Saves results in VTK and/or CSV file.

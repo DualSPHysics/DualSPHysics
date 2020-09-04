@@ -84,12 +84,16 @@ private:
 
   tdouble3 Direction;    ///<Inflow direction.
 
-  unsigned Size;      ///<Size of allocated memory for Points[].
-  unsigned Count;     ///<Number of valid points.
-  tdouble3* Points;   ///<Position of points [Size].
+  unsigned Size;        ///<Size of allocated memory for Points[].
+  unsigned Count;       ///<Number of valid points.
+  tdouble3 *Points;     ///<Position of points [Size].
+  byte     *PointsInit; ///<Indicates an initial valid (z<zsurf) point [Size].
 
   //-Domain data. PtDom[8] is the reference point in inout plane.
   tdouble3 PtDom[10]; 
+
+  tdouble3 ZonePosMin;
+  tdouble3 ZonePosMax;
 
   void ResizeMemory(unsigned newnpt);
   JMatrix4d ReadRotate2D(const JXml *sxml,TiXmlElement* ele,const tdouble3 &pt);
@@ -104,6 +108,7 @@ private:
   void Create3d_Box(const JXml *sxml,TiXmlElement* ele);
   void Create3d_Circle(const JXml *sxml,TiXmlElement* ele);
   void CheckPoints(const std::string &xmlrow);
+  void ComputeDomainLimits(tdouble3 &posmin,tdouble3 &posmax)const;
   void ComputeDomainFromPoints();
 
 public:
@@ -120,9 +125,16 @@ public:
   tdouble3 GetDirection()const{ return(Direction); }
   unsigned GetCount()const{ return(Count); }
   tdouble3* GetPoints()const{ return(Points); }
-  unsigned GetCountZmax(float zsurf)const;
+  byte* GetPointsInit()const{ return(PointsInit); }
+
+  void SetPointsInit(bool active);
+  unsigned CountPointsInit()const;
 
   const tdouble3* GetPtDomain()const{ return(PtDom); };
+  void GetPtDomain(std::vector<tdouble3> &ptdom)const;
+
+  tdouble3 GetZonePosMin()const{ return(ZonePosMin); }
+  tdouble3 GetZonePosMax()const{ return(ZonePosMax); }
 
 };
 

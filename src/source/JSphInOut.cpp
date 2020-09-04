@@ -20,7 +20,8 @@
 
 #include "JSphInOut.h"
 #include "JSphInOutZone.h"
-#include "JSphInOutGridData.h"
+#include "JSphInOutVel.h"
+#include "JSphInOutZsurf.h"
 #include "JSphCpu.h"
 #include "JXml.h"
 #include "JLog2.h"
@@ -51,12 +52,13 @@ using namespace std;
 //==============================================================================
 /// Constructor.
 //==============================================================================
-JSphInOut::JSphInOut(bool cpu,JLog2 *log,std::string xmlfile,JXml *sxml,std::string xmlpath,const std::string &dirdatafile)
-  :Cpu(cpu),Log(log),XmlFile(xmlfile),XmlPath(xmlpath),DirDataFile(dirdatafile)
+JSphInOut::JSphInOut(bool cpu,const StCteSph &csp,std::string xmlfile
+  ,JXml *sxml,std::string xmlpath,const std::string &dirdatafile,JLog2 *log)
+  :Cpu(cpu),CSP(csp),XmlFile(xmlfile),XmlPath(xmlpath),DirDataFile(dirdatafile),Log(log)
 {
   ClassName="JSphInOut";
   Planes=NULL;
-  CfgZone=NULL; CfgUpdate=NULL;  Width=NULL;  DirData=NULL;  VelData=NULL;  Zbottom=NULL; Zsurf=NULL;
+  CfgZone=NULL; CfgUpdate=NULL;  Width=NULL;  DirData=NULL;  VelData=NULL;  Zsurf=NULL;
   PtZone=NULL;  PtPos=NULL;  PtAuxDist=NULL;
   #ifdef _WITHGPU
     Planesg=NULL; BoxLimitg=NULL; CfgZoneg=NULL; CfgUpdateg=NULL; Widthg=NULL; DirDatag=NULL; Zsurfg=NULL;
@@ -79,12 +81,10 @@ JSphInOut::~JSphInOut(){
 /// Initialisation of variables.
 //==============================================================================
 void JSphInOut::Reset(){
-
-  Stable=Simulate2D=false;
-  Simulate2DPosY=0;
+  Nstep=0;
+  Stable=false;
   PeriActive=0;
-  RhopZero=CteB=Gamma=GravityZ=CoefHydro=0;
-  Dp=0;
+  CoefHydro=0;
   MapRealPosMin=MapRealPosMax=TDouble3(0);
   CodeNewPart=0;
 
@@ -104,12 +104,14 @@ void JSphInOut::Reset(){
   NewNpPart=0;
   CurrentNp=0;
 
-  RefillAdvanced=false;
-  VariableVel=false;
+  UseRefillAdvanced=false;
+  UseZsurfNonUniform=false;
+  UseAnalyticalData=false;
+  UseExtrapolatedData=false;
+  UseInterpolatedVel=false;
+
   VariableZsurf=false;
   CalculatedZsurf=false;
-  ExtrapolatedData=NoExtrapolatedData=false;
-  InterpolatedVel=false;
   for(int c=0;c<List.size();c++)delete List[c];
   List.clear();
   FreeMemory();
@@ -207,9 +209,9 @@ void JSphInOut::ReadXml(const JXml *sxml,TiXmlElement* lis
     if(sxml->CheckElementActive(ele)){
       const unsigned id=GetCount();
       if(id>idmax)Run_Exceptioon("Maximum number of inlet/outlet zones has been reached.");
-      JSphInOutZone* iet=new JSphInOutZone(Cpu,Log,id,Simulate2D,Simulate2DPosY,Dp
-        ,MapRealPosMin,MapRealPosMax,GravityZ,sxml,ele,DirDataFile,partsdata,gaugesystem);
-      List.push_back(iet);
+      JSphInOutZone* zo=new JSphInOutZone(Cpu,id,CSP,MapRealPosMin,MapRealPosMax
+        ,sxml,ele,DirDataFile,partsdata,gaugesystem,Log);
+      List.push_back(zo);
     }
     ele=ele->NextSiblingElement("inoutzone");
   }
@@ -228,7 +230,6 @@ void JSphInOut::AllocateMemory(unsigned listsize){
     Width    =new float   [size];
     DirData  =new tfloat3 [size];
     VelData  =new tfloat4 [size*2];
-    Zbottom  =new float   [size];
     Zsurf    =new float   [size];
     if(1){
       memset(Planes   ,255,sizeof(tplane3f)*size);
@@ -237,7 +238,6 @@ void JSphInOut::AllocateMemory(unsigned listsize){
       memset(Width    ,255,sizeof(float   )*size);
       memset(DirData  ,255,sizeof(tfloat3 )*size);
       memset(VelData  ,255,sizeof(tfloat4 )*size*2);
-      memset(Zbottom  ,255,sizeof(float   )*size);
       memset(Zsurf    ,255,sizeof(float   )*size);
     }
   }
@@ -260,7 +260,6 @@ void JSphInOut::FreeMemory(){
   delete[] Width;     Width=NULL;
   delete[] DirData;   DirData=NULL;
   delete[] VelData;   VelData=NULL;
-  delete[] Zbottom;   Zbottom=NULL;
   delete[] Zsurf;     Zsurf=NULL;
   #ifdef _WITHGPU
     if(!Cpu)FreeMemoryGpu();
@@ -373,11 +372,11 @@ void JSphInOut::ComputeFreeDomain(){
     zolimit[ci].x=(FreeCentre.x<=boxmin.x? boxmin.x: (FreeCentre.x>=boxmax.x? boxmax.x: FLT_MAX));
     zolimit[ci].y=(FreeCentre.y<=boxmin.y? boxmin.y: (FreeCentre.y>=boxmax.y? boxmax.y: FLT_MAX));
     zolimit[ci].z=(FreeCentre.z<=boxmin.z? boxmin.z: (FreeCentre.z>=boxmax.z? boxmax.z: FLT_MAX));
-    if(zolimit[ci].x==FLT_MAX && zolimit[ci].z==FLT_MAX && (Simulate2D || zolimit[ci].y==FLT_MAX))
+    if(zolimit[ci].x==FLT_MAX && zolimit[ci].z==FLT_MAX && (CSP.simulate2d || zolimit[ci].y==FLT_MAX))
       Run_Exceptioon(fun::PrintStr("FreeCentre position (%g,%g,%g) is within the inout zone %d. FreeCentre must be changed in XML file.",FreeCentre.x,FreeCentre.y,FreeCentre.z,ci));
   }
   //-Look for the best solution for FreeLimitMin/Max.
-  const byte nsel=(Simulate2D? 2: 3);
+  const byte nsel=(CSP.simulate2d? 2: 3);
   float bestsize=-FLT_MAX;
   tfloat3 bestmin,bestmax;
   sel[0]=0;
@@ -408,7 +407,7 @@ void JSphInOut::ComputeFreeDomain(){
       }
       if(ok){
         const tfloat3 ss=pmax-pmin;
-        const float size=(Simulate2D? ss.x*ss.z: ss.x*ss.y*ss.z);
+        const float size=(CSP.simulate2d? ss.x*ss.z: ss.x*ss.y*ss.z);
         if(size>bestsize){
           if(ci+1==nzone){//-Last zone was used.
             //if(1){
@@ -440,20 +439,27 @@ void JSphInOut::ComputeFreeDomain(){
   FreeLimitMin=bestmin;
   FreeLimitMax=bestmax;
   //SaveVtkDomains();
-  //Run_Exceptioon("Stop");
+  //-Free allocated memory.
+  delete[] zolimit;
+  delete[] sel;
+  delete[] dmin;
+  delete[] dmax;
 }
 
 //==============================================================================
 /// Saves domain zones in VTK file.
 //==============================================================================
 void JSphInOut::SaveVtkDomains(){
+  const bool simulate2d=CSP.simulate2d;
+  const float simulate2dposy=float(CSP.simulate2dposy);
+  const float dp=float(CSP.dp);
   //-InOut real domains.
   {
     JVtkLib sh;
     for(unsigned ci=0;ci<GetCount();ci++){
       const JSphInOutZone *izone=List[ci];
       const tdouble3* ptdom=izone->GetPtDomain();
-      if(Simulate2D)sh.AddShapeQuad(ptdom[0],ptdom[1],ptdom[2],ptdom[3],ci);
+      if(simulate2d)sh.AddShapeQuad(ptdom[0],ptdom[1],ptdom[2],ptdom[3],ci);
       else sh.AddShapeBoxFront(ptdom[0],ptdom[1],ptdom[2],ptdom[3],ptdom[4],ptdom[5],ptdom[6],ptdom[7],ci);
       sh.AddShapeLine(ptdom[8],ptdom[9],ci); //-Normal line.
     }
@@ -467,8 +473,8 @@ void JSphInOut::SaveVtkDomains(){
     for(unsigned ci=0;ci<GetCount();ci++){
       tfloat3 boxmin=List[ci]->GetBoxLimitMin();
       tfloat3 boxmax=List[ci]->GetBoxLimitMax();
-      if(Simulate2D){
-        boxmin.y=boxmax.y=float(Simulate2DPosY);
+      if(simulate2d){
+        boxmin.y=boxmax.y=simulate2dposy;
         const tfloat3 pt1=TFloat3(boxmax.x,boxmin.y,boxmin.z);
         const tfloat3 pt2=TFloat3(boxmin.x,boxmax.y,boxmax.z);
         sh.AddShapeQuad(boxmin,pt1,boxmax,pt2,ci);
@@ -477,12 +483,12 @@ void JSphInOut::SaveVtkDomains(){
     }
     //-Draws FreeCentre.
     {
-      tfloat3 pc0=FreeCentre-TFloat3(float(Dp/2));
-      tfloat3 pc2=FreeCentre+TFloat3(float(Dp/2));
+      tfloat3 pc0=FreeCentre-TFloat3(dp/2);
+      tfloat3 pc2=FreeCentre+TFloat3(dp/2);
       tfloat3 pc1=TFloat3(pc2.x,pc0.y,pc0.z);
       tfloat3 pc3=TFloat3(pc0.x,pc2.y,pc2.z);
-      if(Simulate2D){
-        pc0.y=pc1.y=pc2.y=pc3.y=float(Simulate2DPosY);
+      if(simulate2d){
+        pc0.y=pc1.y=pc2.y=pc3.y=simulate2dposy;
         sh.AddShapeQuad(pc0,pc1,pc2,pc3,GetCount());
       }
       else sh.AddShapeBoxSize(pc0,pc2-pc0,GetCount());
@@ -493,8 +499,8 @@ void JSphInOut::SaveVtkDomains(){
       tfloat3 pc2=MinValues(FreeLimitMax,ToTFloat3(MapRealPosMax));
       tfloat3 pc1=TFloat3(pc2.x,pc0.y,pc0.z);
       tfloat3 pc3=TFloat3(pc0.x,pc2.y,pc2.z);
-      if(Simulate2D){
-        pc0.y=pc1.y=pc2.y=pc3.y=float(Simulate2DPosY);
+      if(simulate2d){
+        pc0.y=pc1.y=pc2.y=pc3.y=simulate2dposy;
         sh.AddShapeQuad(pc0,pc1,pc2,pc3,GetCount());
       }
       else sh.AddShapeBoxSize(pc0,pc2-pc0,GetCount());
@@ -509,33 +515,22 @@ void JSphInOut::SaveVtkDomains(){
 /// Saves VTK of InputVelGrid nodes.
 //==============================================================================
 void JSphInOut::SaveVtkVelGrid(){
-  for(unsigned ci=0;ci<GetCount();ci++)if(List[ci]->GetInterpolatedVel()){
-    const string filevtk=AppInfo.GetDirOut()+fun::PrintStr("CfgInOut_VelGrid_i%d.vtk",ci);
-    List[ci]->SaveVtkVelGrid(filevtk);
-    Log->AddFileInfo(filevtk,"Saves VTK file with InputVelGrid nodes (by JSphInOut).");
-  }
+  for(unsigned ci=0;ci<GetCount();ci++)if(List[ci]->Use_InterpolatedVel())
+    List[ci]->GetInOutVel()->SaveVtkVelGrid();
 }
 
 //==============================================================================
 /// Configures basic parameter of the simulation and prepares execution and 
 /// returns number of initial inlet particles.
 //==============================================================================
-unsigned JSphInOut::Config(double timestep,bool stable,bool simulate2d,double simulate2dposy
-  ,byte periactive,float rhopzero,float cteb,float gamma,tfloat3 gravity,double dp
+unsigned JSphInOut::Config(double timestep,bool stable,byte periactive
   ,tdouble3 posmin,tdouble3 posmax,typecode codenewpart,const JDsPartsInit *partsdata
   ,JGaugeSystem *gaugesystem,JNumexLib *nuxlib)
 {
   Stable=stable;
-  Simulate2D=simulate2d;
-  Simulate2DPosY=simulate2dposy;
   PeriActive=periactive;
-  RhopZero=rhopzero;
-  CteB=cteb;
-  Gamma=gamma;
-  GravityZ=gravity.z;
-  if(gravity.x!=0 || gravity.y!=0)Log->PrintfWarning("Only gravity in Z (0,0,%g) is used in inlet/outlet code (e.g.: hydrostatic density or water elevation calculation).",GravityZ);
-  CoefHydro=RhopZero*(-GravityZ)/CteB;
-  Dp=dp;
+  if(CSP.gravity.x!=0 || CSP.gravity.y!=0)Log->PrintfWarning("Only gravity in Z (0,0,%g) is used in inlet/outlet code (e.g.: hydrostatic density or water elevation calculation).",CSP.gravity.z);
+  CoefHydro=CSP.rhopzero*(-CSP.gravity.z)/CSP.cteb;
   MapRealPosMin=posmin; MapRealPosMax=posmax;
   CodeNewPart=codenewpart;
   //-Loads Xml configuration.
@@ -554,12 +549,11 @@ unsigned JSphInOut::Config(double timestep,bool stable,bool simulate2d,double si
     Planes   [ci]=List[ci]->GetPlane();
     CfgZone  [ci]=List[ci]->GetConfigZone();
     CfgUpdate[ci]=List[ci]->GetConfigUpdate();
-    Width    [ci]=float(Dp*List[ci]->GetLayers());
+    Width    [ci]=float(CSP.dp*List[ci]->GetLayers());
     DirData  [ci]=ToTFloat3(List[ci]->GetDirection());
-    Zbottom  [ci]=List[ci]->GetInputZbottom();
   }
-  UpdateVelData(timestep,true);
-  UpdateZsurf(timestep,true);
+  UpdateVelData(timestep);
+  UpdateZsurfData(timestep,true);
 
   #ifdef _WITHGPU
     if(INOUT_RefillAdvanced_MASK!=JSphInOutZone::RefillAdvanced_MASK)Run_Exceptioon("RefillAdvanced mask does not match.");
@@ -609,26 +603,28 @@ unsigned JSphInOut::Config(double timestep,bool stable,bool simulate2d,double si
   }
 
   //-Checks if some inlet configuration uses extrapolated data or variable velocity.
-  RefillAdvanced=false;
-  VariableVel=false;
+  UseRefillAdvanced=false;
+  UseZsurfNonUniform=false;
+  UseAnalyticalData=false;
+  UseExtrapolatedData=false;
+  UseInterpolatedVel=false;
+
   VariableZsurf=false;
   CalculatedZsurf=false;
-  ExtrapolatedData=false;
-  NoExtrapolatedData=false;
-  InterpolatedVel=false;
   for(unsigned ci=0;ci<GetCount();ci++){
     const JSphInOutZone* zo=List[ci];
-    if(zo->GetRefillAdvanced())RefillAdvanced=true; 
-    if(zo->GetInterpolatedVel())InterpolatedVel=true;
-    if(zo->GetExtrapolatedData())ExtrapolatedData=true;
-    if(zo->GetNoExtrapolatedData())NoExtrapolatedData=true;
-    if(zo->GetVariableVel())VariableVel=true;
+    if(zo->Use_RefillAdvanced())UseRefillAdvanced=true; 
+    if(zo->GetInOutZsurf()->GetUniformZsurf()==false)UseZsurfNonUniform=true;
+    if(zo->Use_AnalyticalData())UseAnalyticalData=true;
+    if(zo->Use_ExtrapolatedData())UseExtrapolatedData=true;
+    if(zo->Use_InterpolatedVel())UseInterpolatedVel=true;
+
     if(zo->GetVariableZsurf())VariableZsurf=true;
     if(zo->GetCalculatedZsurf())CalculatedZsurf=true;
   }
 
   //-Prepares data of points to refilling or calculated zsurf.
-  if(RefillAdvanced || CalculatedZsurf){
+  if(UseRefillAdvanced || CalculatedZsurf){
     AllocatePtMemory(npt);
     npt=0;
     for(unsigned ci=0;ci<ListSize;ci++){
@@ -664,31 +660,6 @@ unsigned JSphInOut::Config(double timestep,bool stable,bool simulate2d,double si
       JVtkLib::SaveVtkData(filevtk,arrays,"Pos");
       Log->AddFileInfo(filevtk,"Saves initial InOut points for DEBUG (by JSphInOut).");
     }
-    //-Creates VTK file.
-    if(DBG_INOUT_PTINIT){
-      unsigned npz=0;
-      for(unsigned ci=0;ci<ListSize;ci++)npz+=List[ci]->GetCountPtzPos();
-      if(npz){
-        tfloat3 *pos =new tfloat3[npz];
-        byte    *zone=new byte[npz];
-        npz=0;
-        for(unsigned ci=0;ci<ListSize;ci++){
-          unsigned n=List[ci]->GetCountPtzPos();
-          memcpy(pos+npz,List[ci]->GetPtzPos(),sizeof(tfloat3)*n);
-          memset(zone+npz,byte(ci),sizeof(byte)*n);
-          npz+=n;
-        }
-        JDataArrays arrays;
-        arrays.AddArray("Pos",npz,pos,false);
-        if(zone)arrays.AddArray("Zone",npz,zone,false);
-        const string filevtk=AppInfo.GetDirOut()+"CfgInOut_PtInitZ.vtk";
-        JVtkLib::SaveVtkData(filevtk,arrays,"Pos");
-        Log->AddFileInfo(filevtk,"Saves initial InOut points for DEBUG (by JSphInOut).");
-        //-Frees memory.
-        delete[] pos;  pos=NULL;
-        delete[] zone; zone=NULL;
-      }
-    }
   }
   return(npart);
 }
@@ -705,7 +676,7 @@ void JSphInOut::LoadInitPartsData(unsigned idpfirst,unsigned nparttot
     const unsigned np=List[ci]->GetNpartInit();
     //Log->Printf(" LoadInitPartsData--> np:%u  npart:%u",np,npart);
     if(npart+np>nparttot)Run_Exceptioon("Number of initial inlet/outlet particles is invalid.");
-    List[ci]->LoadInletParticles(pos+npart);
+    List[ci]->LoadInitialParticles(np,pos+npart);
     for(unsigned cp=0;cp<np;cp++){
       const unsigned p=npart+cp;
       idp[p]=idpfirst+p;
@@ -729,7 +700,7 @@ void JSphInOut::InitCheckProximity(unsigned np,unsigned newnp,float scell
   ,const tdouble3* pos,const unsigned *idp,typecode *code)
 {
   //-Look for nearby particles.
-  const double disterror=Dp*0.8;
+  const double disterror=CSP.dp*0.8;
   JSimpleNeigs neigs(np,pos,scell);
   byte* errpart=new byte[np];
   memset(errpart,0,sizeof(byte)*np);
@@ -801,7 +772,7 @@ void JSphInOut::InitCheckProximity(unsigned np,unsigned newnp,float scell
 //==============================================================================
 /// Creates list with current inout particles (normal and periodic).
 //==============================================================================
-unsigned JSphInOut::CreateListSimpleCpu(unsigned nstep,unsigned npf,unsigned pini
+unsigned JSphInOut::CreateListSimpleCpu(unsigned npf,unsigned pini
   ,const typecode *code,int *inoutpart)
 {
   unsigned count=0;
@@ -813,36 +784,6 @@ unsigned JSphInOut::CreateListSimpleCpu(unsigned nstep,unsigned npf,unsigned pin
         inoutpart[count]=p; count++;
       }
     }
-    if(0){ //DG_INOUT
-      Log->Printf("AAA_000 ListSize:%u",ListSize);
-      Log->Printf("AAA_000 Planes[0]:(%f,%f,%f,%f)",Planes[0].a,Planes[0].b,Planes[0].c,Planes[0].d);
-      const float xini=-5.f;
-      const float dp=0.01f;
-      const unsigned np=1000;
-      tfloat3 vpos[np];
-      float vdis0[np];
-      float vdis1[np];
-      for(unsigned p=0;p<np;p++){
-        vpos[p]=TFloat3(xini+dp*p,0,0);
-        const float dis0=fgeo::PlanePoint(Planes[0],vpos[p]);
-        vdis0[p]=(dis0<0? -1.f: (dis0>0? 1.f: 0));
-        const float dis1=fgeo::PlanePoint(Planes[1],vpos[p]);
-        vdis1[p]=(dis1<0? -1.f: (dis1>0? 1.f: 0));
-      }
-      //-Generates VTK file.
-      JDataArrays arrays;
-      arrays.AddArray("Pos",np,vpos,false);
-      if(vdis0)arrays.AddArray("vdis0",np,vdis0,false);
-      if(vdis1)arrays.AddArray("vdis1",np,vdis1,false);
-      JVtkLib::SaveVtkData(AppInfo.GetDirOut()+"_Planes.vtk",arrays,"Pos");
-      //-Old Style...
-      //JFormatFiles2::StScalarData fields[5];
-      //unsigned nfields=0;
-      //if(vdis0){ fields[nfields]=JFormatFiles2::DefineField("vdis0",JFormatFiles2::Float32,1,vdis0);    nfields++; }
-      //if(vdis1){ fields[nfields]=JFormatFiles2::DefineField("vdis1",JFormatFiles2::Float32,1,vdis1);    nfields++; }
-      ////string fname=DirOut+fun::FileNameSec("DgParts.vtk",numfile);
-      //JFormatFiles2::SaveVtk(AppInfo.GetDirOut()+"_Planes.vtk",np,vpos,nfields,fields);
-    }
   }
   //Log->Printf("%u> -------->CreateListXXX>> InOutcount:%u",nstep,count);
   return(count);
@@ -852,7 +793,7 @@ unsigned JSphInOut::CreateListSimpleCpu(unsigned nstep,unsigned npf,unsigned pin
 /// Creates list with current inout particles and normal (no periodic) fluid in 
 /// inlet/outlet zones (update its code).
 //==============================================================================
-unsigned JSphInOut::CreateListCpu(unsigned nstep,unsigned npf,unsigned pini
+unsigned JSphInOut::CreateListCpu(unsigned npf,unsigned pini
   ,const tdouble3 *pos,const unsigned *idp,typecode *code,int *inoutpart)
 {
   unsigned count=0;
@@ -880,39 +821,7 @@ unsigned JSphInOut::CreateListCpu(unsigned nstep,unsigned npf,unsigned pini
         }
       }
     }
-//    Log->Printf("==>> nold:%d  nnew:%d",nold,nnew);
-    if(0){ //DG_INOUT
-      Log->Printf("AAA_000 ListSize:%u",ListSize);
-      Log->Printf("AAA_000 Planes[0]:(%f,%f,%f,%f)",Planes[0].a,Planes[0].b,Planes[0].c,Planes[0].d);
-      const float xini=-5.f;
-      const float dp=0.01f;
-      const unsigned np=1000;
-      tfloat3 vpos[np];
-      float vdis0[np];
-      float vdis1[np];
-      for(unsigned p=0;p<np;p++){
-        vpos[p]=TFloat3(xini+dp*p,0,0);
-        const float dis0=fgeo::PlanePoint(Planes[0],vpos[p]);
-        vdis0[p]=(dis0<0? -1.f: (dis0>0? 1.f: 0));
-        const float dis1=fgeo::PlanePoint(Planes[1],vpos[p]);
-        vdis1[p]=(dis1<0? -1.f: (dis1>0? 1.f: 0));
-      }
-      //-Generates VTK file.
-      JDataArrays arrays;
-      arrays.AddArray("Pos",np,vpos,false);
-      if(vdis0)arrays.AddArray("vdis0",np,vdis0,false);
-      if(vdis1)arrays.AddArray("vdis1",np,vdis1,false);
-      JVtkLib::SaveVtkData(AppInfo.GetDirOut()+"_Planes.vtk",arrays,"Pos");
-      //-Old Style...
-      //JFormatFiles2::StScalarData fields[5];
-      //unsigned nfields=0;
-      //if(vdis0){ fields[nfields]=JFormatFiles2::DefineField("vdis0",JFormatFiles2::Float32,1,vdis0);    nfields++; }
-      //if(vdis1){ fields[nfields]=JFormatFiles2::DefineField("vdis1",JFormatFiles2::Float32,1,vdis1);    nfields++; }
-      ////string fname=DirOut+fun::FileNameSec("DgParts.vtk",numfile);
-      //JFormatFiles2::SaveVtk(AppInfo.GetDirOut()+"_Planes.vtk",np,vpos,nfields,fields);
-    }
   }
-  //Log->Printf("%u> -------->CreateListXXX>> InOutcount:%u",nstep,count);
   return(count);
 }
 
@@ -920,7 +829,7 @@ unsigned JSphInOut::CreateListCpu(unsigned nstep,unsigned npf,unsigned pini
 //==============================================================================
 /// Creates list with current inout particles (normal and periodic).
 //==============================================================================
-unsigned JSphInOut::CreateListSimpleGpu(unsigned nstep,unsigned npf,unsigned pini
+unsigned JSphInOut::CreateListSimpleGpu(unsigned npf,unsigned pini
   ,const typecode *codeg,unsigned size,int *inoutpartg)
 {
   unsigned count=0;
@@ -935,7 +844,7 @@ unsigned JSphInOut::CreateListSimpleGpu(unsigned nstep,unsigned npf,unsigned pin
 /// Creates list with current inout particles and normal (no periodic) fluid in 
 /// inlet/outlet zones (update its code).
 //==============================================================================
-unsigned JSphInOut::CreateListGpu(unsigned nstep,unsigned npf,unsigned pini
+unsigned JSphInOut::CreateListGpu(unsigned npf,unsigned pini
   ,const double2 *posxyg,const double *poszg,typecode *codeg,unsigned size,int *inoutpartg)
 {
   unsigned count=0;
@@ -952,47 +861,49 @@ unsigned JSphInOut::CreateListGpu(unsigned nstep,unsigned npf,unsigned pini
 }
 #endif
 
+
 //==============================================================================
-/// Updates velocity coefficients for imposed velocity according timestep. 
-/// Returns true when the data was changed.
+/// Updates velocity data according timestep. 
 //==============================================================================
-bool JSphInOut::UpdateVelData(double timestep,bool full){
-  bool modified=full;
-  for(unsigned ci=0;ci<ListSize;ci++)if(full || List[ci]->GetVariableVel()){
-    tfloat4 vel0,vel1;
-    if(List[ci]->UpdateVelData(timestep,full,vel0,vel1)){
-      modified=true;
-      VelData[ci*2]=vel0;
-      VelData[ci*2+1]=vel1;
+void JSphInOut::UpdateVelData(double timestep){
+  for(unsigned ci=0;ci<ListSize;ci++){
+    JSphInOutVel *inoutvel=List[ci]->GetInOutVel();
+    inoutvel->UpdateVel(timestep);
+    if(inoutvel->UseCoefficients()){
+      VelData[ci*2  ]=inoutvel->GetCurrentCoefs0();
+      VelData[ci*2+1]=inoutvel->GetCurrentCoefs1();
     }
   }
-  return(modified);
 }
 
 //==============================================================================
-/// Updates zsurf according timestep. 
-/// Returns true when the data was changed.
+/// Updates zsurf data according timestep. 
 //==============================================================================
-bool JSphInOut::UpdateZsurf(double timestep,bool full){
+void JSphInOut::UpdateZsurfData(double timestep,bool full){
   bool modified=full;
-  for(unsigned ci=0;ci<ListSize;ci++)if(full || List[ci]->GetVariableZsurf() || List[ci]->GetCalculatedZsurf()){
-    modified|=List[ci]->UpdateZsurf(timestep,full,Zsurf[ci]);
+  for(unsigned ci=0;ci<ListSize;ci++){
+    const float zsurf=List[ci]->GetInOutZsurf()->UpdateZsurf(timestep);
+    if(Zsurf[ci]!=zsurf){
+      Zsurf[ci]=zsurf;
+      modified=true;
+    }
   }
   #ifdef _WITHGPU
     if(modified && !Cpu)cudaMemcpy(Zsurfg,Zsurf,sizeof(float)*ListSize,cudaMemcpyHostToDevice);
   #endif
-  return(modified);
 }
 
+
 //==============================================================================
-/// Updates velocity and rhop of inlet/outlet particles when it is not extrapolated. 
-/// Actualiza velocidad y densidad de particulas inlet/outlet cuando no es extrapolada.
+/// Updates velocity and rhop of inlet/outlet particles when it uses an 
+/// analytical solution.
 //==============================================================================
-void JSphInOut::UpdateDataCpu(float timestep,bool full,unsigned inoutcount,const int *inoutpart
-  ,const tdouble3 *pos,const typecode *code,const unsigned *idp,tfloat4 *velrhop)
+void JSphInOut::SetAnalyticalDataCpu(float timestep,unsigned inoutcount
+  ,const int *inoutpart,const tdouble3 *pos,const typecode *code,const unsigned *idp
+  ,const float *zsurfpart,tfloat4 *velrhop)
 {
-  const bool modifvel=UpdateVelData(timestep,full);
-  //const bool modifzsurf=UpdateZsurf(timestep,full);
+  const float rhopzero=CSP.rhopzero;
+  const float gamma=CSP.gamma;
   const int ncp=int(inoutcount);
   #ifdef OMP_USE
     #pragma omp parallel for schedule (static)
@@ -1002,35 +913,38 @@ void JSphInOut::UpdateDataCpu(float timestep,bool full,unsigned inoutcount,const
     const unsigned izone=CODE_GetIzoneFluidInout(code[p]);
     const byte cfg=CfgZone[izone];
     const bool refillspfull=(CfgUpdate[izone]&JSphInOutZone::RefillSpFull_MASK)!=0;
+    const float zsurf=(zsurfpart? zsurfpart[cp]: Zsurf[izone]);
     const double posz=pos[p].z;
     tfloat4 rvelrhop=velrhop[p];
     //-Compute rhop value.
-    const JSphInOutZone::TpRhopMode rmode=JSphInOutZone::GetConfigRhopMode(cfg);
-    if(rmode==JSphInOutZone::MRHOP_Constant)rvelrhop.w=RhopZero;
-    if(rmode==JSphInOutZone::MRHOP_Hydrostatic){
-      const float depth=float(double(Zsurf[izone])-posz);
+    const TpInRhopMode rmode=JSphInOutZone::GetConfigRhopMode(cfg);
+    if(rmode==InRhop_Constant)rvelrhop.w=rhopzero;
+    if(rmode==InRhop_Hydrostatic){
+      const float depth=float(double(zsurf)-posz);
       const float rh=1.f+CoefHydro*depth;     //rh=1.+rhop0*(-gravity.z)*(Dp*ptdata.GetDepth(p))/vCteB;
-      rvelrhop.w=RhopZero*pow(rh,1.f/Gamma);  //rhop[id]=rhop0*pow(rh,(1./gamma));
+      const float frhop=pow(rh,1.f/gamma);    //rhop[id]=rhop0*pow(rh,(1./gamma));
+      rvelrhop.w=rhopzero*(frhop<1.f? 1.f: frhop);//-Avoid rhop lower thand rhopzero to prevent suction.
+      //rvelrhop.w=rhopzero*pow(rh,1.f/gamma);  //rhop[id]=rhop0*pow(rh,(1./gamma));
     }
     //-Compute velocity value.
-    const JSphInOutZone::TpVelMode    vmode=JSphInOutZone::GetConfigVelMode(cfg);
-    const JSphInOutZone::TpVelProfile vprof=JSphInOutZone::GetConfigVelProfile(cfg);
-    float vel=0;
-    if(!refillspfull || posz<=Zsurf[izone]){//-It is necessary for RefillingMode==Simple-Full
-      if(vmode==JSphInOutZone::MVEL_Fixed){
-        vel=JSphInOutZone::CalcVel(vprof,VelData[izone*2],posz);
+    const TpInVelMode    vmode=JSphInOutZone::GetConfigVelMode(cfg);
+    const TpInVelProfile vprof=JSphInOutZone::GetConfigVelProfile(cfg);
+    if(vmode==InVelM_Fixed || vmode==InVelM_Variable){
+      float vel=0;
+      if(!refillspfull || posz<=zsurf){
+        if(vmode==InVelM_Fixed){
+          vel=JSphInOutZone::CalcVel(vprof,VelData[izone*2],posz);
+        }
+        else{
+          const float vel1=JSphInOutZone::CalcVel(vprof,VelData[izone*2],posz);
+          const float vel2=JSphInOutZone::CalcVel(vprof,VelData[izone*2+1],posz);
+          const float time1=VelData[izone*2].w;
+          const float time2=VelData[izone*2+1].w;
+          if(timestep<=time1 || time1==time2)vel=vel1;
+          else if(timestep>=time2)vel=vel2;
+          else vel=(timestep-time1)/(time2-time1)*(vel2-vel1)+vel1;
+        }
       }
-      else if(vmode==JSphInOutZone::MVEL_Variable){
-        const float vel1=JSphInOutZone::CalcVel(vprof,VelData[izone*2],posz);
-        const float vel2=JSphInOutZone::CalcVel(vprof,VelData[izone*2+1],posz);
-        const float time1=VelData[izone*2].w;
-        const float time2=VelData[izone*2+1].w;
-        if(timestep<=time1 || time1==time2)vel=vel1;
-        else if(timestep>=time2)vel=vel2;
-        else vel=(timestep-time1)/(time2-time1)*(vel2-vel1)+vel1;
-      }
-    }
-    if(vmode!=JSphInOutZone::MVEL_Extrapolated){
       rvelrhop.x=vel*DirData[izone].x;
       rvelrhop.y=vel*DirData[izone].y;
       rvelrhop.z=vel*DirData[izone].z;
@@ -1041,27 +955,26 @@ void JSphInOut::UpdateDataCpu(float timestep,bool full,unsigned inoutcount,const
 
 #ifdef _WITHGPU
 //==============================================================================
-/// Updates velocity and rhop of inlet/outlet particles when it is not extrapolated. 
-/// Actualiza velocidad y densidad de particulas inlet/outlet cuando no es extrapolada.
+/// Updates velocity and rhop of inlet/outlet particles when it uses an 
+/// analytical solution.
 //==============================================================================
-void JSphInOut::UpdateDataGpu(float timestep,bool full,unsigned inoutcount,const int *inoutpartg
-  ,const double2 *posxyg,const double *poszg,const typecode *codeg,const unsigned *idpg,float4 *velrhopg)
+void JSphInOut::SetAnalyticalDataGpu(float timestep,unsigned inoutcount
+  ,const int *inoutpartg,const double2 *posxyg,const double *poszg
+  ,const typecode *codeg,const unsigned *idpg,const float *zsurfpart,float4 *velrhopg)
 {
-  const bool modifvel=UpdateVelData(timestep,full);
-  //const bool modifzsurf=UpdateZsurf(timestep,full);
   for(unsigned izone=0;izone<ListSize;izone++){
     const byte refillspfull=((CfgUpdate[izone]&JSphInOutZone::RefillSpFull_MASK)!=0? 1: 0);
     const byte cfg=CfgZone[izone];
-    const JSphInOutZone::TpRhopMode   rmode=JSphInOutZone::GetConfigRhopMode(cfg);
-    const JSphInOutZone::TpVelMode    vmode=JSphInOutZone::GetConfigVelMode(cfg);
-    const JSphInOutZone::TpVelProfile vprof=JSphInOutZone::GetConfigVelProfile(cfg);
-    const byte brmode=(rmode==JSphInOutZone::MRHOP_Constant? 0: (rmode==JSphInOutZone::MRHOP_Hydrostatic? 1: (rmode==JSphInOutZone::MRHOP_Extrapolated? 2: 99)));
-    const byte bvmode=(vmode==JSphInOutZone::MVEL_Fixed?     0: (vmode==JSphInOutZone::MVEL_Variable?     1: (vmode==JSphInOutZone::MVEL_Extrapolated?  2: 99)));
-    const byte bvprof=(vprof==JSphInOutZone::PVEL_Constant?  0: (vprof==JSphInOutZone::PVEL_Linear?       1: (vprof==JSphInOutZone::PVEL_Parabolic?     2: 99)));
-    cusphinout::InOutUpdateData(inoutcount,(unsigned*)inoutpartg
+    const TpInRhopMode   rmode=JSphInOutZone::GetConfigRhopMode(cfg);
+    const TpInVelMode    vmode=JSphInOutZone::GetConfigVelMode(cfg);
+    const TpInVelProfile vprof=JSphInOutZone::GetConfigVelProfile(cfg);
+    const byte brmode=(rmode==InRhop_Constant? 0: (rmode==InRhop_Hydrostatic? 1: (rmode==InRhop_Extrapolated? 2: 99)));
+    const byte bvmode=(vmode==InVelM_Fixed?    0: (vmode==InVelM_Variable?    1: (vmode==InVelM_Extrapolated? 2: 99)));
+    const byte bvprof=(vprof==InVelP_Constant? 0: (vprof==InVelP_Linear?      1: (vprof==InVelP_Parabolic?    2: 99)));
+    cusphinout::InOutSetAnalyticalData(inoutcount,(unsigned*)inoutpartg
       ,byte(izone),brmode,bvmode,bvprof,refillspfull
       ,timestep,Zsurf[izone],VelData[izone*2],VelData[izone*2+1],DirData[izone]
-      ,CoefHydro,RhopZero,Gamma,codeg,poszg,velrhopg);
+      ,CoefHydro,CSP.rhopzero,CSP.gamma,codeg,poszg,zsurfpart,velrhopg);
   }
 }
 #endif
@@ -1073,13 +986,9 @@ void JSphInOut::UpdateDataGpu(float timestep,bool full,unsigned inoutcount,const
 void JSphInOut::InterpolateVelCpu(float timestep,unsigned inoutcount,const int *inoutpart
   ,const tdouble3 *pos,const typecode *code,const unsigned *idp,tfloat4 *velrhop)
 {
-  for(unsigned ci=0;ci<GetCount();ci++)if(List[ci]->GetInterpolatedVel()){
-    JSphInOutZone* zo=List[ci];
-    float velcorr=0;
-    JSphInOutGridData* gd=zo->GetInputVelGrid();
-    if(gd->GetNx()==1)gd->InterpolateZVelCpu(timestep,byte(ci),inoutcount,inoutpart,pos,code,idp,velrhop,velcorr);
-    else gd->InterpolateVelCpu(timestep,byte(ci),inoutcount,inoutpart,pos,code,idp,velrhop,velcorr);
-  }
+  for(unsigned ci=0;ci<GetCount();ci++)if(List[ci]->Use_InterpolatedVel())
+    List[ci]->GetInOutVel()->UpdateVelInterpolateCpu(timestep
+      ,inoutcount,inoutpart,pos,code,idp,velrhop);
 }
 
 #ifdef _WITHGPU
@@ -1088,54 +997,12 @@ void JSphInOut::InterpolateVelCpu(float timestep,unsigned inoutcount,const int *
 /// Interpola velocidad de particulas inlet/outlet a partir de datos en el objeto InputVelGrid.
 //==============================================================================
 void JSphInOut::InterpolateVelGpu(float timestep,unsigned inoutcount,const int *inoutpartg
-  ,double2 *posxyg,double *poszg,typecode *codeg,unsigned *idpg,float4 *velrhopg)
+  ,const double2 *posxyg,const double *poszg,const typecode *codeg,const unsigned *idpg
+  ,float4 *velrhopg)
 {
-  for(unsigned ci=0;ci<GetCount();ci++)if(List[ci]->GetInterpolatedVel()){
-    JSphInOutZone* zo=List[ci];
-    float velcorr=0;
-    JSphInOutGridData* gd=zo->GetInputVelGrid();
-    if(gd->GetNx()==1)gd->InterpolateZVelGpu(timestep,byte(ci),inoutcount,inoutpartg,posxyg,poszg,codeg,idpg,velrhopg,velcorr);
-    else Run_Exceptioon("GPU code was not implemented for nx>1.");
-  }
-}
-#endif
-
-//==============================================================================
-/// Removes interpolated Z velocity of inlet/outlet particles.
-/// Elimina velocidad interpolada en Z de particulas inlet/outlet.
-//==============================================================================
-void JSphInOut::InterpolateResetZVelCpu(unsigned inoutcount,const int *inoutpart
-  ,const typecode *code,tfloat4 *velrhop)
-{
-  for(unsigned ci=0;ci<GetCount();ci++)if(List[ci]->GetResetZVelGrid()){
-    const JSphInOutGridData* gd=List[ci]->GetInputVelGrid();
-    if(gd->GetUseVelz()){
-      const int n=int(inoutcount);
-      #ifdef OMP_USE
-        #pragma omp parallel for schedule (static) if(n>OMP_LIMIT_COMPUTELIGHT)
-      #endif
-      for(int cp=0;cp<n;cp++){
-        const unsigned p=inoutpart[cp];
-        if(ci==CODE_GetIzoneFluidInout(code[p]))velrhop[p].z=0;
-      }
-    }
-  }
-}
-
-#ifdef _WITHGPU
-//==============================================================================
-/// Removes interpolated Z velocity of inlet/outlet particles.
-/// Elimina velocidad interpolada en Z de particulas inlet/outlet.
-//==============================================================================
-void JSphInOut::InterpolateResetZVelGpu(unsigned inoutcount,const int *inoutpartg
-  ,typecode *codeg,float4 *velrhopg)
-{
-  for(unsigned ci=0;ci<GetCount();ci++)if(List[ci]->GetResetZVelGrid()){
-    const JSphInOutGridData* gd=List[ci]->GetInputVelGrid();
-    if(gd->GetUseVelz()){
-      cusphinout::InOutInterpolateResetZVel(ci,inoutcount,inoutpartg,codeg,velrhopg);
-    }
-  }
+  for(unsigned ci=0;ci<GetCount();ci++)if(List[ci]->Use_InterpolatedVel())
+    List[ci]->GetInOutVel()->UpdateVelInterpolateGpu(timestep
+      ,inoutcount,inoutpartg,posxyg,poszg,codeg,idpg,velrhopg);
 }
 #endif
 
@@ -1161,9 +1028,10 @@ void JSphInOut::CheckPartsIzone(std::string key,unsigned nstep
 ///   it creates a new inout particle.
 /// - If particle is moved out the domain then it changes to ignore particle.
 //==============================================================================
-unsigned JSphInOut::ComputeStepCpu(unsigned nstep,double dt,unsigned inoutcount
-  ,int *inoutpart,const JSphCpu *sphcpu,unsigned idnext,unsigned sizenp,unsigned np
-  ,tdouble3 *pos,unsigned *dcell,typecode *code,unsigned *idp,tfloat4 *velrhop,byte *newizone)
+unsigned JSphInOut::ComputeStepCpu(unsigned inoutcount,int *inoutpart
+  ,const JSphCpu *sphcpu,unsigned idnext,unsigned sizenp,unsigned np
+  ,tdouble3 *pos,unsigned *dcell,typecode *code,unsigned *idp,const byte *zsurfok
+  ,tfloat4 *velrhop,byte *newizone)
 {
   //-Updates code according to particle position and define new particles to create.
   const int ncp=int(inoutcount);
@@ -1177,8 +1045,8 @@ unsigned JSphInOut::ComputeStepCpu(unsigned nstep,double dt,unsigned inoutcount
     const unsigned p=(unsigned)inoutpart[cp];
     const typecode rcode=code[p];
     const unsigned izone0=CODE_GetIzoneFluidInout(rcode);
-    const unsigned izone=(izone0&0xf); //-Substract 16 to obtain the actual zone (0-15).
-if(izone>=ListSize)Run_Exceptioon(fun::PrintStr("%d>> Value izone %d is invalid of idp[%d]=%d.",nstep,izone,p,idp[p]));
+    const unsigned izone=(izone0&CODE_TYPE_FLUID_INOUT015MASK); //-Substract 16 to obtain the actual zone (0-15).
+if(izone>=ListSize)Run_Exceptioon(fun::PrintStr("%d>> Value izone %d is invalid of idp[%d]=%d.",Nstep,izone,p,idp[p]));
     const byte cfupdate=CfgUpdate[izone];
     const bool refilladvan=(cfupdate&JSphInOutZone::RefillAdvanced_MASK)!=0;
     const bool refillsfull=(cfupdate&JSphInOutZone::RefillSpFull_MASK  )!=0;
@@ -1186,18 +1054,19 @@ if(izone>=ListSize)Run_Exceptioon(fun::PrintStr("%d>> Value izone %d is invalid 
     const bool removezsurf=(cfupdate&JSphInOutZone::RemoveZsurf_MASK   )!=0;
     const bool converinput=(cfupdate&JSphInOutZone::ConvertInput_MASK  )!=0;
     const tfloat3 ps=ToTFloat3(pos[p]);
+    const bool zok=(zsurfok? (zsurfok[cp]!=0): (ps.z<=Zsurf[izone]));
     if(izone0>=16){//-Normal fluid particle in zone inlet/outlet.
-      if(removeinput || (removezsurf && ps.z>Zsurf[izone]))cod=CODE_SetOutPos(rcode); //-Normal fluid particle in zone inlet/outlet is removed.
+      if(removeinput || (removezsurf && !zok))cod=CODE_SetOutPos(rcode); //-Normal fluid particle in zone inlet/outlet is removed.
       else cod=(converinput? rcode^0x10: CodeNewPart); //-Converts to inout particle or not.
     }
     else{//-Previous inout fluid particle.
       const float displane=-fgeo::PlaneDistSign(Planes[izone],ps);
-      if(displane>Width[izone] || (removezsurf && ps.z>Zsurf[izone])){
+      if(displane>Width[izone] || (removezsurf && !zok)){
         cod=CODE_SetOutIgnore(rcode); //-Particle is moved out domain.
       }
       else if(displane<0){
         cod=CodeNewPart;//-Inout particle changes to fluid particle.
-        if(!refilladvan && (refillsfull || ps.z<=Zsurf[izone]))newiz=byte(izone); //-A new particle is created.
+        if(!refilladvan && (refillsfull || zok))newiz=byte(izone); //-A new particle is created.
       }
     }
     newizone[cp]=newiz;
@@ -1243,13 +1112,14 @@ if(izone>=ListSize)Run_Exceptioon(fun::PrintStr("%d>> Value izone %d is invalid 
 ///   it creates a new in/out particle.
 /// - If particle is moved out the domain then it changes to ignore particle.
 //==============================================================================
-unsigned JSphInOut::ComputeStepGpu(unsigned nstep,double dt,unsigned inoutcount,int *inoutpartg
+unsigned JSphInOut::ComputeStepGpu(unsigned inoutcount,int *inoutpartg
   ,unsigned idnext,unsigned sizenp,unsigned np,double2 *posxyg,double *poszg
-  ,unsigned *dcellg,typecode *codeg,unsigned *idpg,float4 *velrhopg,byte *newizoneg,const JSphGpuSingle *gp)
+  ,unsigned *dcellg,typecode *codeg,unsigned *idpg,const byte *zsurfok
+  ,float4 *velrhopg,byte *newizoneg,const JSphGpuSingle *gp)
 {
   //-Checks particle position.
   cusphinout::InOutComputeStep(inoutcount,inoutpartg,Planesg,Widthg,CfgUpdateg,Zsurfg
-    ,CodeNewPart,posxyg,poszg,codeg,newizoneg);
+    ,CodeNewPart,posxyg,poszg,zsurfok,codeg,newizoneg);
   //-Create list for new inlet particles to create.
   const unsigned newnp=cusphinout::InOutListCreate(Stable,inoutcount,sizenp-1,newizoneg,inoutpartg);
   if(inoutcount+newnp>=sizenp)Run_Exceptioon("Allocated memory is not enough for new particles inlet.");
@@ -1267,10 +1137,10 @@ unsigned JSphInOut::ComputeStepGpu(unsigned nstep,double dt,unsigned inoutcount,
 ///   it creates a new inout particle.
 /// - If particle is moved out the domain then it changes to ignore particle.
 //==============================================================================
-unsigned JSphInOut::ComputeStepFillingCpu(unsigned nstep,double dt,unsigned inoutcount,int *inoutpart
+unsigned JSphInOut::ComputeStepFillingCpu(unsigned inoutcount,int *inoutpart
   ,const JSphCpu *sphcpu,unsigned idnext,unsigned sizenp,unsigned np
   ,tdouble3 *pos,unsigned *dcell,typecode *code,unsigned *idp,tfloat4 *velrhop
-  ,float *prodist,tdouble3 *propos)
+  ,const byte *zsurfok,float *prodist,tdouble3 *propos)
 {
   //-Updates position of particles and computes projection data to filling mode.
   const int ncp=int(inoutcount);
@@ -1300,7 +1170,8 @@ unsigned JSphInOut::ComputeStepFillingCpu(unsigned nstep,double dt,unsigned inou
 
   //-Compute maximum distance to create points in each PtPos.
   //const bool checkzsurf=(VariableZsurf || CalculatedZsurf);
-  const float dpmin=float(Dp*1);
+  const float dp=float(CSP.dp);
+  const float dpmin=dp*1.f;
   const float dpmin2=dpmin*dpmin;
   const int npt=int(PtCount);
   #ifdef OMP_USE
@@ -1311,7 +1182,8 @@ unsigned JSphInOut::ComputeStepFillingCpu(unsigned nstep,double dt,unsigned inou
     const byte izone=PtZone[cpt];
     if((CfgUpdate[izone]&JSphInOutZone::RefillAdvanced_MASK)!=0){
       const tdouble3 ps=PtPos[cpt];
-      if(float(ps.z)<=Zsurf[izone]){
+      const bool zok=(zsurfok? (zsurfok[cpt]!=0): (float(ps.z)<=Zsurf[izone]));
+      if(zok){
         distmax=0;
         for(int cp=0;cp<ncp;cp++){
           const tfloat3 dis=ToTFloat3(ps-propos[cp]);
@@ -1325,7 +1197,7 @@ unsigned JSphInOut::ComputeStepFillingCpu(unsigned nstep,double dt,unsigned inou
         }
       }
     }
-    PtAuxDist[cpt]=(distmax==0? float(Dp): distmax);
+    PtAuxDist[cpt]=(distmax==0? dp: distmax);
   }
 
   //-Creates new inout particles.
@@ -1364,18 +1236,19 @@ unsigned JSphInOut::ComputeStepFillingCpu(unsigned nstep,double dt,unsigned inou
 unsigned JSphInOut::ComputeStepFillingGpu(unsigned nstep,double dt,unsigned inoutcount,int *inoutpartg
   ,unsigned idnext,unsigned sizenp,unsigned np
   ,double2 *posxyg,double *poszg,unsigned *dcellg,typecode *codeg,unsigned *idpg,float4 *velrhopg
-  ,float *prodistg,double2 *proposxyg,double *proposzg,TimersGpu timers)
+  ,const byte* zsurfokg,float *prodistg,double2 *proposxyg,double *proposzg,TimersGpu timers)
 {
   //-Computes projection data to filling mode.
   cusphinout::InOutFillProjection(inoutcount,(unsigned *)inoutpartg,CfgUpdateg,Planesg,posxyg,poszg
     ,codeg,prodistg,proposxyg,proposzg);
 
   //-Create list of selected ptpoints and its distance to create new inlet/outlet particles.
-  const float dpmin=float(Dp*1);
+  const float dp=float(CSP.dp);
+  const float dpmin=dp*1.f;
   const float dpmin2=dpmin*dpmin;
-  const unsigned newnp=cusphinout::InOutFillListCreate(Stable,PtCount,PtPosxyg,PtPoszg
+  const unsigned newnp=cusphinout::InOutFillListCreate(Stable,PtCount,PtPosxyg,PtPoszg,zsurfokg
     ,PtZoneg,CfgUpdateg,Zsurfg,Widthg,inoutcount,prodistg,proposxyg,proposzg
-    ,dpmin,dpmin2,float(Dp),PtAuxDistg,sizenp-1,(unsigned*)inoutpartg);
+    ,dpmin,dpmin2,dp,PtAuxDistg,sizenp-1,(unsigned*)inoutpartg);
 
   //-Creates new inlet/outlet particles to fill inlet/outlet domain.
   cusphinout::InOutFillCreate(PeriActive,newnp,(unsigned *)inoutpartg,PtPosxyg,PtPoszg,PtZoneg,PtAuxDistg
@@ -1443,34 +1316,67 @@ void JSphInOut::VisuConfig(std::string txhead,std::string txfoot)const{
 void JSphInOut::SavePartFiles(unsigned part){
   //-Creates VTK file with Zsurf.
   SaveVtkZsurf(part);
+  //-Saves other files.
+  for(unsigned ci=0;ci<GetCount();ci++)List[ci]->GetInOutVel()->SaveAwasVelCsv(); //<vs_inawwas>
 }
 
 //==============================================================================
 /// Creates VTK files with Zsurf.
 //==============================================================================
 void JSphInOut::SaveVtkZsurf(unsigned part){
+  const bool simulate2d=CSP.simulate2d;
+  const float simulate2dposy=float(CSP.simulate2dposy);
   JVtkLib sh;
   bool usesh=false;
   for(unsigned ci=0;ci<GetCount();ci++){
-    const JSphInOutZone *izone=List[ci];
-    if(izone->GetSvVtkZsurf()){
-      const float zsurf=izone->GetInputZsurf();
-      //const tdouble3* ptdom=izone->GetPtDomain();
-      tfloat3 boxmin=List[ci]->GetBoxLimitMin();
-      tfloat3 boxmax=List[ci]->GetBoxLimitMax();
-      if(Simulate2D){
-        const float py=float(Simulate2DPosY);
-        const tfloat3 pt1=TFloat3(boxmin.x,py,zsurf);
-        const tfloat3 pt2=TFloat3(boxmax.x,py,zsurf);
-        sh.AddShapeLine(pt1,pt2,ci);
-      }
-      else{
-        boxmin.z=boxmax.z=zsurf;
-        const tfloat3 pt1=TFloat3(boxmax.x,boxmin.y,boxmin.z);
-        const tfloat3 pt2=TFloat3(boxmin.x,boxmax.y,boxmax.z);
-        sh.AddShapeQuad(boxmin,pt1,boxmax,pt2,ci);
-      }
+    if(List[ci]->GetInOutZsurf()->GetSvVtkZsurf()){
       usesh=true;
+      const StZsurfResult &zres=List[ci]->GetInOutZsurf()->GetZsurfResults();
+      if(zres.npt==1){
+        const float zsurf=*(zres.zsurf);
+        if(List[ci]->GetZsurfMode()==InZsurf_Calculated){
+          if(simulate2d){
+            const float py=simulate2dposy;
+            const tfloat3 pt1=TFloat3(float(zres.pt.x-zres.vdp.x),py,zsurf);
+            const tfloat3 pt2=TFloat3(float(zres.pt.x+zres.vdp.x),py,zsurf);
+            sh.AddShapeLine(pt1,pt2,ci);
+          }
+          else{
+            const float d=CSP.kernelsize;
+            const tfloat3 pt1=TFloat3(float(zres.pt.x-d),float(zres.pt.y-d),zsurf);
+            const tfloat3 pt2=TFloat3(float(zres.pt.x+d),float(zres.pt.y-d),zsurf);
+            const tfloat3 pt3=TFloat3(float(zres.pt.x+d),float(zres.pt.y+d),zsurf);
+            const tfloat3 pt4=TFloat3(float(zres.pt.x-d),float(zres.pt.y+d),zsurf);
+            sh.AddShapeQuad(pt1,pt2,pt3,pt4,ci);
+          }
+        }
+        else{
+          tfloat3 boxmin=List[ci]->GetBoxLimitMin();
+          tfloat3 boxmax=List[ci]->GetBoxLimitMax();
+          if(simulate2d){
+            const float py=simulate2dposy;
+            const tfloat3 pt1=TFloat3(boxmin.x,py,zsurf);
+            const tfloat3 pt2=TFloat3(boxmax.x,py,zsurf);
+            sh.AddShapeLine(pt1,pt2,ci);
+          }
+          else{
+            boxmin.z=boxmax.z=zsurf;
+            const tfloat3 pt1=TFloat3(boxmax.x,boxmin.y,boxmin.z);
+            const tfloat3 pt2=TFloat3(boxmin.x,boxmax.y,boxmax.z);
+            sh.AddShapeQuad(boxmin,pt1,boxmax,pt2,ci);
+          }
+        }
+      }
+      else{//-Non-uniform.
+        const tdouble3 dir=zres.direction*(CSP.dp*2);
+        for(unsigned cp=0;cp+1<zres.npt;cp++){
+          tdouble3 p0=zres.pt+(zres.vdp*double(cp));
+          tdouble3 p1=p0+zres.vdp;
+          p0.z=zres.zsurf[cp];
+          p1.z=zres.zsurf[cp+1];
+          sh.AddShapeQuad(p0,p1,p1-dir,p0-dir,ci);
+        }
+      }
     }
   }
   if(usesh){
@@ -1480,77 +1386,19 @@ void JSphInOut::SaveVtkZsurf(unsigned part){
   }
 }
 
-//==============================================================================
-/// Returns data from requested zone.
-//==============================================================================
-double JSphInOut::GetDistPtzPos(unsigned ci)const{
-  return(ci<ListSize? List[ci]->GetDistPtzPos(): 0); 
-}
-
-//==============================================================================
-/// Returns data from requested zone.
-//==============================================================================
-unsigned JSphInOut::GetCountPtzPos(unsigned ci)const{  
-  return(ci<ListSize? List[ci]->GetCountPtzPos(): 0); 
-}
-
-//==============================================================================
-/// Returns data from requested zone.
-//==============================================================================
-const tfloat3* JSphInOut::GetPtzPos(unsigned ci)const{ 
-  return(ci<ListSize? List[ci]->GetPtzPos(): NULL); 
-}
-
-#ifdef _WITHGPU
-//==============================================================================
-/// Returns data from requested zone.
-//==============================================================================
-const float3* JSphInOut::GetPtzPosg(unsigned ci)const{     
-  return(ci<ListSize? List[ci]->GetPtzPosg(): NULL); 
-}
-
-//==============================================================================
-/// Returns data from requested zone.
-//==============================================================================
-float* JSphInOut::GetPtzAuxg(unsigned ci)const{ 
-  return(ci<ListSize? List[ci]->GetPtzAuxg(): NULL); 
-}
-
-//==============================================================================
-/// Returns data from requested zone.
-//==============================================================================
-float* JSphInOut::GetPtzAux (unsigned ci)const{ 
-  return(ci<ListSize? List[ci]->GetPtzAux(): NULL); 
-}
-#endif
-
-//==============================================================================
-/// Returns data from requested zone.
-//==============================================================================
-void JSphInOut::SetInputZsurf(unsigned ci,float zsurf){ 
-  if(ci<ListSize)List[ci]->SetInputZsurf(zsurf); 
-}
-
-//==============================================================================
-/// Returns data from requested zone.
-//==============================================================================
-float JSphInOut::GetZbottom(unsigned ci)const{ 
-  return(ci<ListSize? List[ci]->GetInputZbottom(): 0); 
-}
-
 #ifdef _WITHGPU
 //==============================================================================
 /// Returns data from requested zone.
 //==============================================================================
 byte JSphInOut::GetExtrapRhopMask()const{ 
-  return(byte(JSphInOutZone::MRHOP_Extrapolated)); 
+  return(byte(InRhop_Extrapolated)); 
 }
 
 //==============================================================================
 /// Returns data from requested zone.
 //==============================================================================
 byte JSphInOut::GetExtrapVelMask()const{ 
-  return(byte(JSphInOutZone::MVEL_Extrapolated)); 
+  return(byte(InVelM_Extrapolated)); 
 }
 #endif
 

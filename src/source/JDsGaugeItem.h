@@ -122,11 +122,11 @@ protected:
   double TimeStep;
 
   //-Variables to store the results in buffer.
-  static const unsigned OutSize=200; ///<Maximum number of results in buffer.
-  unsigned OutCount;                 ///<Number of stored results in buffer.
+  const unsigned OutSize; ///<Maximum number of results in buffer.
+  unsigned OutCount;      ///<Number of stored results in buffer.
   std::string OutFile;
 
-  JGaugeItem(TpGauge type,unsigned idx,std::string name,bool cpu,JLog2* log);
+  JGaugeItem(TpGauge type,unsigned idx,std::string name,bool cpu,JLog2* log,unsigned outsize=200);
   void Reset();
   void SetTimeStep(double timestep);
 
@@ -151,11 +151,13 @@ public:
 
   void GetConfig(std::vector<std::string> &lines)const;
 
-  std::string GetResultsFileCsv()const;
-  std::string GetResultsFileVtk()const;
+  std::string GetResultsFile(bool dirdata,const std::string &fext,const std::string &subname="")const;
+  std::string GetResultsFileCsv(const std::string &subname="")const;
+  std::string GetResultsFileVtk(const std::string &subname="")const;
   virtual void SaveResults()=0;
   virtual void SaveVtkResult(unsigned cpart)=0;
   virtual unsigned GetPointDef(std::vector<tfloat3> &points)const=0;
+  virtual void SaveVtkScheme()const{};
 
   void SaveResults(unsigned cpart);
 

@@ -125,6 +125,7 @@
   typedef unsigned typecode;           //-Type of the variable code using 4 bytes.
   //-Code of the particles:
   #define CODE_MASKSPECIAL 0xe0000000  //-Bits de special: 11100000 00000000 00000000 00000000              | Special bits: 11100000 00000000 00000000 00000000
+  #define CODE_MASKSPECIALMV 29        //-Displacemente in bits of special bits.
   #define CODE_NORMAL   0x0            //-0  Particulas normales no excluidas.                              | 0 Normal particles (not excluded)
   #define CODE_PERIODIC 0x20000000     //-1  Particulas duplicadas por periodicas.                          | 1 Duplicate particles for periodic
   #define CODE_OUTIGNORE 0x40000000    //-2  Marca particulas que se van a ignorar en el siguiente divide.  | 2 Brands particles to be ignored in the next division.
@@ -149,6 +150,7 @@
   typedef word typecode;            //-Type of the variable code using 2 bytes.
   //-Code of the particles:
   #define CODE_MASKSPECIAL 0xe000   //-Bits de special:     1110 0000 0000 0000                          | Special bits: 1110 0000 0000 0000
+  #define CODE_MASKSPECIALMV 13     //-Displacemente in bits of special bits.
   #define CODE_NORMAL   0x0         //-0  Particulas normales no excluidas.                              | 0 Normal particles (not excluded)
   #define CODE_PERIODIC 0x2000      //-1  Particulas duplicadas por periodicas.                          | 1 Duplicate particles for periodic
   #define CODE_OUTIGNORE 0x4000     //-2  Marca particulas que se van a ignorar en el siguiente divide.  | 2 Brands particles to be ignored in the next division.
@@ -170,6 +172,7 @@
   #define CODE_TYPE_FLUID_INOUT     0x1fe0  //---First inlet/outlet code: 8160 (16 different codes for InOut zones + 16 to select input particles). //<vs_innlet>
   #define CODE_TYPE_FLUID_INOUTNUM  16      //---Maximum number of valid inlet/outlet zones.                                                        //<vs_innlet>
   #define CODE_TYPE_FLUID_INOUTMASK 31      //---Mask to obtain zone value.                                                                         //<vs_innlet>
+  #define CODE_TYPE_FLUID_INOUT015MASK 15   //---Mask to obtain zone value (ignore extra bit).                                                      //<vs_innlet>
 #endif
 
 #define CODE_SetNormal(code)    (code&(~CODE_MASKSPECIAL))
@@ -179,6 +182,7 @@
 #define CODE_SetOutMove(code)   (CODE_SetNormal(code)|CODE_OUTMOVE)
 #define CODE_SetOutRhop(code)   (CODE_SetNormal(code)|CODE_OUTRHOP)
 #define CODE_GetSpecialValue(code) (code&CODE_MASKSPECIAL)
+#define CODE_GetSpecialByte(code) (CODE_GetSpecialValue(code)>>CODE_MASKSPECIALMV)
 
 #define CODE_GetType(code) (code&CODE_MASKTYPE)
 #define CODE_GetTypeValue(code) (code&CODE_MASKVALUE)

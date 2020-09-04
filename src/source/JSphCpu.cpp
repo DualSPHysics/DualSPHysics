@@ -184,7 +184,7 @@ void JSphCpu::AllocCpuMemoryParticles(unsigned np,float over){
   } //<vs_mddbc_end> 
   if(InOut){  //<vs_innlet_ini>
     //ArraysCpu->AddArrayCount(JArraysCpu::SIZE_4B,1);  //-InOutPart
-    ArraysCpu->AddArrayCount(JArraysCpu::SIZE_1B,1);  //-newizone
+    ArraysCpu->AddArrayCount(JArraysCpu::SIZE_1B,2);  //-newizone,zsurfok
   }  //<vs_innlet_end>
   //-Shows the allocated memory.
   MemCpuParticles=ArraysCpu->GetAllocMemoryCpu();

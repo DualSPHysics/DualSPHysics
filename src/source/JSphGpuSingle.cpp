@@ -737,10 +737,10 @@ void JSphGpuSingle::RunFloating(double dt,bool predictor){
 /// Runs calculations in configured gauges.
 /// Ejecuta calculos en las posiciones de medida configuradas.
 //==============================================================================
-void JSphGpuSingle::RunGaugeSystem(double timestep){
-  const bool svpart=(TimeStep>=TimePartNext);
-  GaugeSystem->CalculeGpu(timestep,svpart,DivData
-    ,NpbOk,Npb,Np,Posxyg,Poszg,Codeg,Idpg,Velrhopg);
+void JSphGpuSingle::RunGaugeSystem(double timestep,bool saveinput){
+  //const bool svpart=(TimeStep>=TimePartNext);
+  GaugeSystem->CalculeGpu(timestep,DivData
+    ,NpbOk,Npb,Np,Posxyg,Poszg,Codeg,Idpg,Velrhopg,saveinput);
 }
 
  //==============================================================================
@@ -788,7 +788,7 @@ void JSphGpuSingle::Run(std::string appname,JSphCfgRun *cfg,JLog2 *log){
   //-Initialisation of execution variables. | Inicializacion de variables de ejecucion.
   //------------------------------------------------------------------------------------
   InitRunGpu();
-  RunGaugeSystem(TimeStep);
+  RunGaugeSystem(TimeStep,true);
   if(InOut)InOutInit(TimeStepIni);  //<vs_innlet>
   FreePartsInit();
   UpdateMaxValues();

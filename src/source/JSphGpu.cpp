@@ -351,7 +351,7 @@ void JSphGpu::AllocGpuMemoryParticles(unsigned np,float over){
   } //<vs_mddbc_end> 
   if(InOut){  //<vs_innlet_ini>
     //ArraysGpu->AddArrayCount(JArraysGpu::SIZE_4B,1);  //-InOutPartg
-    ArraysGpu->AddArrayCount(JArraysGpu::SIZE_1B,1);  //-newizone
+    ArraysGpu->AddArrayCount(JArraysGpu::SIZE_1B,2);  //-newizone,zsurfok
   }  //<vs_innlet_end>
   //-Shows the allocated memory.
   MemGpuParticles=ArraysGpu->GetAllocMemoryGpu();

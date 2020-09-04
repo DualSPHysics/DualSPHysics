@@ -152,6 +152,7 @@ tdouble2* ToHostDouble2(unsigned pini,unsigned n,const double2  *ptrg);
 tfloat3*  ToHostPosf3(unsigned pini,unsigned n,const double2 *posxyg,const double *poszg);
 tdouble3* ToHostPosd3(unsigned pini,unsigned n,const double2 *posxyg,const double *poszg);
 tfloat3*  ToHostFloatXYZ_W(unsigned pini,unsigned n,const float4 *ptrg,float **ptr_w);
+tfloat3*  ToHostPosf3(unsigned nplist,const unsigned *idxlistg,const double2 *posxyg,const double *poszg);
 
 }
 

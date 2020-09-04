@@ -75,7 +75,7 @@ protected:
   void FtSumExternalForces(unsigned cf,tfloat3 &face,tfloat3 &fomegaace)const;//<vs_fttvel>
   void FtApplyConstraints(StFtoForces *ftoforces,StFtoForcesRes *ftoforcesres)const;
   void RunFloating(double dt,bool predictor);
-  void RunGaugeSystem(double timestep);
+  void RunGaugeSystem(double timestep,bool saveinput=false);
 
   void ComputePips(bool run);
   
@@ -95,7 +95,7 @@ protected:
   void InOutIgnoreFluidDef(const std::vector<unsigned> &mkfluidlist);
   void InOutCheckProximity(unsigned newnp);
   void InOutComputeStep(double stepdt);
-  void InOutCalculeZsurf();
+  void InOutUpdatePartsData(double timestepnew);
   void InOutExtrapolateData(unsigned inoutcount,const int *inoutpart);
 
   void BoundCorrectionData();

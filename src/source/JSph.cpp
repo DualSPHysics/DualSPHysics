@@ -1120,7 +1120,7 @@ void JSph::LoadCaseConfig(const JSphCfgRun *cfg){
 
   //-Configuration of Inlet/Outlet.  //<vs_innlet_ini> 
   if(xml.GetNodeSimple("case.execution.special.inout",true)){
-    InOut=new JSphInOut(Cpu,Log,FileXml,&xml,"case.execution.special.inout",DirCase);
+    InOut=new JSphInOut(Cpu,CSP,FileXml,&xml,"case.execution.special.inout",DirCase,Log);
     NpDynamic=true;
     ReuseIds=InOut->GetReuseIds();
     if(ReuseIds)Run_Exceptioon("Inlet/Outlet with ReuseIds is not a valid option for now...");

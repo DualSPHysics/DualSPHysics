@@ -981,9 +981,9 @@ void JSphCpuSingle::RunFloating(double dt,bool predictor){
 /// Runs calculations in configured gauges.
 /// Ejecuta calculos en las posiciones de medida configuradas.
 //==============================================================================
-void JSphCpuSingle::RunGaugeSystem(double timestep){
-  const bool svpart=(TimeStep>=TimePartNext);
-  GaugeSystem->CalculeCpu(timestep,svpart,DivData,NpbOk,Npb,Np,Posc,Codec,Idpc,Velrhopc);
+void JSphCpuSingle::RunGaugeSystem(double timestep,bool saveinput){
+  //const bool svpart=(TimeStep>=TimePartNext);
+  GaugeSystem->CalculeCpu(timestep,DivData,NpbOk,Npb,Np,Posc,Codec,Idpc,Velrhopc,saveinput);
 }
 
  //==============================================================================
@@ -1024,7 +1024,7 @@ void JSphCpuSingle::Run(std::string appname,JSphCfgRun *cfg,JLog2 *log){
   //-Initialisation of execution variables. | Inicializacion de variables de ejecucion.
   //------------------------------------------------------------------------------------
   InitRunCpu();
-  RunGaugeSystem(TimeStep);
+  RunGaugeSystem(TimeStep,true);
   if(InOut)InOutInit(TimeStepIni);  //<vs_innlet>
   FreePartsInit();
   UpdateMaxValues();

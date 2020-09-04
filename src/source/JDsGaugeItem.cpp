@@ -16,7 +16,7 @@
  You should have received a copy of the GNU Lesser General Public License along with DualSPHysics. If not, see <http://www.gnu.org/licenses/>. 
 */
 
-/// \file JGauge.cpp \brief Implements the class \ref JGauge.
+/// \file JDsGaugeItem.cpp \brief Implements the class \ref JGauge.
 
 #include "JDsGaugeItem.h"
 #include "JCellSearch_inline.h"
@@ -48,8 +48,8 @@ using namespace std;
 //==============================================================================
 /// Constructor.
 //==============================================================================
-JGaugeItem::JGaugeItem(TpGauge type,unsigned idx,std::string name,bool cpu,JLog2* log)
-  :Type(type),Idx(idx),Name(name),Cpu(cpu),Log(log)
+JGaugeItem::JGaugeItem(TpGauge type,unsigned idx,std::string name,bool cpu,JLog2* log,unsigned outsize)
+  :Type(type),Idx(idx),Name(name),Cpu(cpu),Log(log),OutSize(outsize)
 {
   ClassName="JGaugeItem";
   Reset();
@@ -133,10 +133,10 @@ void JGaugeItem::ConfigOutputTiming(bool save,double start,double end,double dt)
 //==============================================================================
 std::string JGaugeItem::GetNameType(TpGauge type){
   switch(type){
-    case GAUGE_Vel:   return("Vel");
-    case GAUGE_Swl:   return("SWL");
-    case GAUGE_MaxZ:  return("MaxZ");
-    case GAUGE_Force: return("Force");
+    case GAUGE_Vel:     return("Vel");
+    case GAUGE_Swl:     return("SWL");
+    case GAUGE_MaxZ:    return("MaxZ");
+    case GAUGE_Force:   return("Force");
   }
   return("???");
 }
@@ -175,17 +175,27 @@ void JGaugeItem::GetConfig(std::vector<std::string> &lines)const{
 }
 
 //==============================================================================
+/// Returns filename for output results files.
+//==============================================================================
+std::string JGaugeItem::GetResultsFile(bool dirdata,const std::string &fext
+  ,const std::string &subname)const
+{
+  const string fdir=(dirdata? AppInfo.GetDirDataOut(): AppInfo.GetDirOut());
+  return(fdir+"Gauges"+GetNameType(Type)+"_"+Name+subname+"."+fun::StrLower(fext));
+}
+
+//==============================================================================
 /// Returns filename for output results for CSV files.
 //==============================================================================
-std::string JGaugeItem::GetResultsFileCsv()const{
-  return(AppInfo.GetDirOut()+"Gauges"+GetNameType(Type)+"_"+Name)+".csv";
+std::string JGaugeItem::GetResultsFileCsv(const std::string &subname)const{
+  return(GetResultsFile(false,"csv",subname));
 }
 
 //==============================================================================
 /// Returns filename for output results for VTK files.
 //==============================================================================
-std::string JGaugeItem::GetResultsFileVtk()const{
-  return(AppInfo.GetDirDataOut()+"Gauges"+GetNameType(Type)+"_"+Name+".vtk");
+std::string JGaugeItem::GetResultsFileVtk(const std::string &subname)const{
+  return(GetResultsFile(true,"vtk",subname));
 }
 
 //==============================================================================
@@ -583,7 +593,7 @@ template<TpKernel tker> void JGaugeSwl::CalculeCpuT(double timestep
   if(ptsurf.x==DBL_MAX)ptsurf=Point0+(PointDir*(mpre? PointNp: 0));
   //-Stores result. | Guarda resultado.
   Result.Set(timestep,ToTFloat3(Point0),ToTFloat3(Point2),ToTFloat3(ptsurf));
-  //Log->Printf("------> t:%f",TimeStep);
+  //Log->Printf("---JGaugeSwl::CalculeCpuT---> t:%f",TimeStep);
   if(Output(timestep))StoreResult();
 }
 
@@ -837,6 +847,8 @@ void JGaugeMaxZ::CalculeGpu(double timestep,const StDivDataGpu &dvd
   if(Output(timestep))StoreResult();
 }
 #endif
+
+
 
 //##############################################################################
 //# JGaugeForce

@@ -307,6 +307,7 @@ void Interaction_GaugeMaxz(tdouble3 point0,float maxdist2,const StDivDataGpu &dv
     ,posxy,posz,code,ptres);
 }
 
+
 //------------------------------------------------------------------------------
 /// Calculates force on selected fixed or moving particles using only fluid particles.
 /// Ignores periodic boundary particles to avoid race condition problems.

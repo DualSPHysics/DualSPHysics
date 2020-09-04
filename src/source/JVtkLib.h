@@ -23,6 +23,8 @@
 //:# - Permite compilar sin libreria de VTK. (13-12-2019)
 //:# - Nuevas funciones AddShapePolyLine(). (23-12-2019)
 //:# - Parametro creatpath que por defecto es true. (27-12-2019)
+//:# - Nuevas funciones AddShapePoint() y AddShapePoints(). (04-08-2020)
+//:# - Nuevas funciones AddShapeTriangle(). (26-08-2020)
 //:#############################################################################
 
 /// \file JVtkLib.h \brief Declares the class \ref JVtkLib.
@@ -102,6 +104,16 @@ public:
   /// Generates a VTK file with shapes.
   void SaveShapeVtk(std::string file,std::string varname,bool createpath=true);
 
+  /// Adds shape point.
+  void AddShapePoint(const tfloat3 &pt,int value);
+  /// Adds shape point.
+  void AddShapePoint(const tdouble3 &pt,int value);
+
+  /// Adds shape set of points.
+  void AddShapePoints(unsigned np,const tfloat3 *vp,int value);
+  /// Adds shape set of points.
+  void AddShapePoints(unsigned np,const tdouble3 *vp,int value);
+
   /// Adds shape line.
   void AddShapeLine(const tfloat3  &pt1,const tfloat3  &pt2,int value);
   /// Adds shape line.
@@ -111,6 +123,11 @@ public:
   void AddShapePolyLine(unsigned np,const tfloat3  *vp,int value);
   /// Adds shape polyline.
   void AddShapePolyLine(unsigned np,const tdouble3 *vp,int value);
+
+  /// Adds shape triangle using 3 points.
+  void AddShapeTriangle(const tfloat3 &pt1,const tfloat3 &pt2,const tfloat3 &pt3,int value);
+  /// Adds shape triangle using 3 points.
+  void AddShapeTriangle(const tdouble3 &pt1,const tdouble3 &pt2,const tdouble3 &pt3,int value);
 
   /// Adds shape quad using 4 points.
   void AddShapeQuad(const tfloat3  &pt1,const tfloat3  &pt2,const tfloat3  &pt3,const tfloat3  &pt4,int value);
