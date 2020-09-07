@@ -36,6 +36,7 @@
 #include <vector>
 #include "JObject.h"
 #include "DualSphDef.h"
+#include "JSphInOutDef.h"
 #ifdef _WITHGPU
   #include <cuda_runtime_api.h>
   #include "JSphTimersGpu.h"

@@ -265,7 +265,7 @@ unsigned InOutCreateList(bool stable,unsigned n,unsigned pini
 //------------------------------------------------------------------------------
 __device__ float KerInOutCalcVel(byte vprof,const float4 &vdata,float posz){
   float vel=0;
-  if(vprof==0)vel=vdata.x;  //-InVelP_Constant
+  if(vprof==0)vel=vdata.x;  //-InVelP_Uniform
   else if(vprof==1){        //-InVelP_Linear
     const float m=vdata.x;
     const float b=vdata.y;

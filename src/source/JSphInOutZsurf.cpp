@@ -441,3 +441,5 @@ float JSphInOutZsurf::GetCurrentZsurfNonUniform(const tdouble3 &ps)const{
   const unsigned cx=(dx<=0? 0: unsigned(dx));
   return(CurrentZsurf[(cx<Nptx? cx: Nptx-1)]);
 }
+
+

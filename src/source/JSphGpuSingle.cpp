@@ -907,4 +907,3 @@ void JSphGpuSingle::FinishRun(bool stop){
   Log->PrintWarningList();
 }
 
-

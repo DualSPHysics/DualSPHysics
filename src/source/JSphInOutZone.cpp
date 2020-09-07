@@ -337,7 +337,7 @@ void JSphInOutZone::LoadInitialParticles(unsigned npartinit,tdouble3 *pos){
 //==============================================================================
 float JSphInOutZone::CalcVel(TpInVelProfile vprof,const tfloat4 &vdata,double posz){
   float vel=0;
-  if(vprof==InVelP_Constant)vel=vdata.x;
+  if(vprof==InVelP_Uniform)vel=vdata.x;
   else if(vprof==InVelP_Linear){
     const float m=vdata.x;
     const float b=vdata.y;

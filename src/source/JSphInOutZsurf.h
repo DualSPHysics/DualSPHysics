@@ -79,9 +79,9 @@ protected:
 
   //-Zsurf data when UniformZsurf==false (calculated or from mesh data file).
   unsigned TimeCount;    ///<Number times with zsurf data.
-  double   *Times;       ///<Times with data. [TimeCount]
-  float    *TimesZsurf;  ///<Zsurf data for different times and positions on CPU. [Nptx*TimeCount]
-  float    *TimesZsurfg; ///<Zsurf data for different times and positions on GPU. [Nptx*TimeCount]
+  double   *Times;       ///<Times with data (minumum allocated size is 2). [TimeCount]
+  float    *TimesZsurf;  ///<Zsurf data for different times and positions on CPU (minumum size is 2*Nptx). [Nptx*TimeCount]
+  float    *TimesZsurfg; ///<Zsurf data for different times and positions on GPU (minumum size is 2*Nptx). [Nptx*TimeCount]
 
   double CurrentTime;      ///<Timestep of zsurf in Zsurf line.
   bool   CurrentExternal;  ///<Pointers CurrentZsurf and CurrentZsurfg are external from GaugeMesh object.

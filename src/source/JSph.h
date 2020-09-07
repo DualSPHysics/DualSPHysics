@@ -145,6 +145,7 @@ private:
   void ConfigDomainParticlesPrc(tdouble3 vmin,tdouble3 vmax);
   void ConfigDomainParticlesPrcValue(std::string key,double v);
   void ConfigDomainResize(std::string key,const JCaseEParms *eparms);
+
 protected:
   const bool Cpu;
   const bool Mgpu;
@@ -407,6 +408,7 @@ protected:
   void SaveFtAceFun(double dt,bool predictor,StFtoForces *ftoforces);
 
 
+protected:
   void AllocMemoryFloating(unsigned ftcount,bool imposedvel=false,bool addedforce=false);
   llong GetAllocMemoryCpu()const;
 

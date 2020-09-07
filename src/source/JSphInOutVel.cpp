@@ -73,7 +73,7 @@ JSphInOutVel::~JSphInOutVel(){
 //==============================================================================
 void JSphInOutVel::Reset(){
   VelMode=InVelM_Fixed;
-  VelProfile=InVelP_Constant;
+  VelProfile=InVelP_Uniform;
   VelBehaviour=InVelB_Unknown;
 
   VelMin=VelMax=0;
@@ -119,7 +119,7 @@ TpInVelMode JSphInOutVel::ReadXml(const JXml *sxml,TiXmlElement *ele
       const byte vel3=(sxml->ExistsElement(xele,"velocity3")? 1: 0);
       if(vel1+vel2+vel3>1)sxml->ErrReadElement(xele,"velocity",false,"Several definitions for velocity were found.");
       if(vel1 || vel1+vel2+vel3==0){
-        VelProfile=InVelP_Constant;
+        VelProfile=InVelP_Uniform;
         sxml->CheckAttributeNames(xele,"velocity","time v comment units_comment");
         InputVel=sxml->ReadElementFloat(xele,"velocity","v");
       }
@@ -155,7 +155,7 @@ TpInVelMode JSphInOutVel::ReadXml(const JXml *sxml,TiXmlElement *ele
       if(vel1+vel2+vel3+vel1f+vel2f+vel3f>1)sxml->ErrReadElement(xele,"velocitytimes/velocityfile",false,"Several definitions for velocity were found.");
       if(vel1+vel2+vel3+vel1f+vel2f+vel3f==0)sxml->ErrReadElement(xele,"velocitytimes/velocityfile",false,"No definitions for variable velocity were found.");
       if(vel1 || vel1f){
-        VelProfile=InVelP_Constant;
+        VelProfile=InVelP_Uniform;
         InputTimeVel=new JLinearValue(1);
         TiXmlElement* xlis=xele->FirstChildElement("velocitytimes");
         if(xlis){
@@ -257,7 +257,7 @@ void JSphInOutVel::CalculateVelMinMax(float &velmin,float &velmax)const{
   velmax=-FLT_MAX;
   if(VelMode==InVelM_Fixed){
     switch(VelProfile){
-      case InVelP_Constant:
+      case InVelP_Uniform:
         velmin=velmax=InputVel;  
       break;
       case InVelP_Linear:    
@@ -274,7 +274,7 @@ void JSphInOutVel::CalculateVelMinMax(float &velmin,float &velmax)const{
   else if(VelMode==InVelM_Variable){
     const unsigned count=InputTimeVel->GetCount();
     switch(VelProfile){
-      case InVelP_Constant:
+      case InVelP_Uniform:
         for(unsigned c=0;c<count;c++){
           const float v=float(InputTimeVel->GetValueByIdx(c));
           velmin=min(velmin,v);
@@ -342,7 +342,7 @@ void JSphInOutVel::GetConfig(std::vector<std::string> &lines)const{
   lines.push_back(fun::PrintStr("Velocity mode: %s",TpInVelModeText(VelMode)));
   if(VelMode==InVelM_Fixed || VelMode==InVelM_Variable){
     if(VelMode==InVelM_Variable && !InputTimeVel->GetFile().empty())lines.push_back(fun::PrintStr("  Velocity file: %s",InputTimeVel->GetFile().c_str()));
-    if(VelProfile==InVelP_Constant )lines.push_back(fun::PrintStr("  Velocity profile: Constant %g",InputVel));
+    if(VelProfile==InVelP_Uniform )lines.push_back(fun::PrintStr("  Velocity profile: Uniform %g",InputVel));
     if(VelProfile==InVelP_Linear   )lines.push_back(fun::PrintStr("  Velocity profile: Linear %g(z=%g), %g(z=%g)",InputVel,InputVelPosz,InputVel2,InputVelPosz2));
     if(VelProfile==InVelP_Parabolic)lines.push_back(fun::PrintStr("  Velocity profile: Parabolic %g(z=%g), %g(z=%g), %g(z=%g)",InputVel,InputVelPosz,InputVel2,InputVelPosz2,InputVel3,InputVelPosz3));
   }
@@ -360,7 +360,7 @@ void JSphInOutVel::GetConfig(std::vector<std::string> &lines)const{
 void JSphInOutVel::ComputeInitialVel(){
   CurrentCoefs0=CurrentCoefs1=TFloat4(0);
   if(VelMode==InVelM_Fixed){
-    if(VelProfile==InVelP_Constant){
+    if(VelProfile==InVelP_Uniform){
       CurrentCoefs0=TFloat4(InputVel,0,0,0);
     }
     else if(VelProfile==InVelP_Linear){
@@ -390,7 +390,7 @@ void JSphInOutVel::UpdateVelVariable(double timestep){
     TimeVelIdx1=InputTimeVel->GetPosNext();
     const float t =(float)InputTimeVel->GetTimeByIdx(TimeVelIdx0);
     const float t2=(float)InputTimeVel->GetTimeByIdx(TimeVelIdx1);
-    if(VelProfile==InVelP_Constant){
+    if(VelProfile==InVelP_Uniform){
       CurrentCoefs0=TFloat4((float)InputTimeVel->GetValueByIdx(TimeVelIdx0),0,0,t);
       CurrentCoefs1=TFloat4((float)InputTimeVel->GetValueByIdx(TimeVelIdx1),0,0,t2);
     }
@@ -501,5 +501,4 @@ void JSphInOutVel::SaveVtkVelGrid(){
     InputVelGrid->SaveDataVtk(filevtk,0);
   }
 }
-
 

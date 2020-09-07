@@ -60,7 +60,7 @@ protected:
   const tdouble3 ZonePosMax;  ///<Maximum position of inlet points.
 
   TpInVelMode VelMode;        ///<Inflow velocity mode (fixed, variable, extrapolated or interpolated).
-  TpInVelProfile VelProfile;  ///<Inflow velocity profile (constant, linear or parabolic).
+  TpInVelProfile VelProfile;  ///<Inflow velocity profile (uniform, linear or parabolic).
   TpInBehaviour VelBehaviour; ///<Behaviour of inlet/outlet according to the velocity.
 
   float VelMin;        ///<Minimum input velocity or -FLT_MAX (when it is unknown).
@@ -132,6 +132,7 @@ public:
 
   void SaveAwasVelCsv();
   void SaveVtkVelGrid();
+
 };
 
 #endif

@@ -22,7 +22,6 @@
 #define _JSphInOutDef_
 
 //#include "TypesDef.h"
-//#include <string>
 
 
 ///Defines the treatment of fluid particles entering a inlet/outlet zone.
@@ -61,10 +60,10 @@ inline const char* TpInVelModeText(const TpInVelMode t){
 
 ///Controls profile of imposed velocity.
 typedef enum{ 
-   InVelP_Constant=0x00    ///<Imposed velocity profile constant (xxxx xx00).
+   InVelP_Uniform=0x00     ///<Imposed velocity profile uniform (xxxx xx00).
   ,InVelP_Linear=0x01      ///<Imposed velocity profile linear (xxxx xx01).
   ,InVelP_Parabolic=0x02   ///<Imposed velocity profile parabolic (xxxx xx10).
-  ,InVelP_MASK=0x03         ///<Mask to obtain value (0000 0011).
+  ,InVelP_MASK=0x03        ///<Mask to obtain value (0000 0011).
 }TpInVelProfile;
 
 ///Behaviour of inlet/outlet according to the velocity.
@@ -110,8 +109,6 @@ typedef struct{
   tdouble3 vdp;        ///<Vector to compute gauge positions.
   tdouble3 direction;  ///<Inflow direction.
 }StZsurfResult;
-
-
 
 
 #endif

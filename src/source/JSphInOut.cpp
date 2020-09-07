@@ -970,7 +970,7 @@ void JSphInOut::SetAnalyticalDataGpu(float timestep,unsigned inoutcount
     const TpInVelProfile vprof=JSphInOutZone::GetConfigVelProfile(cfg);
     const byte brmode=(rmode==InRhop_Constant? 0: (rmode==InRhop_Hydrostatic? 1: (rmode==InRhop_Extrapolated? 2: 99)));
     const byte bvmode=(vmode==InVelM_Fixed?    0: (vmode==InVelM_Variable?    1: (vmode==InVelM_Extrapolated? 2: 99)));
-    const byte bvprof=(vprof==InVelP_Constant? 0: (vprof==InVelP_Linear?      1: (vprof==InVelP_Parabolic?    2: 99)));
+    const byte bvprof=(vprof==InVelP_Uniform?  0: (vprof==InVelP_Linear?      1: (vprof==InVelP_Parabolic?    2: 99)));
     cusphinout::InOutSetAnalyticalData(inoutcount,(unsigned*)inoutpartg
       ,byte(izone),brmode,bvmode,bvprof,refillspfull
       ,timestep,Zsurf[izone],VelData[izone*2],VelData[izone*2+1],DirData[izone]
@@ -1401,5 +1401,3 @@ byte JSphInOut::GetExtrapVelMask()const{
   return(byte(InVelM_Extrapolated)); 
 }
 #endif
-
-
