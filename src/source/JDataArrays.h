@@ -28,7 +28,8 @@
 //:# - Nuevos tipos int e int3. (19-02-2020)
 //:# - Nuevos metodos CreateArrayPtrXXX(). (04-03-2020)
 //:# - Parametro defvalue en metodos CreateArrayXXX() y CreateArrayPtrXXX(). (05-08-2020)
-//:# - Nuevos metodo CopyDataFrom(), EqualStructure(). (17-08-2020)
+//:# - Nuevos metodos CopyDataFrom(), EqualStructure(). (17-08-2020)
+//:# - Nuevos metodos ReverseArrayData(). (09-09-2020)
 //:#############################################################################
 
 /// \file JDataArrays.h \brief Declares the class \ref JDataArrays.
@@ -142,6 +143,8 @@ public:
 
   void EraseArray(std::string keyname);
   void MoveArray(unsigned idx,unsigned idx2);
+
+  void ReverseArrayData(unsigned idx);
 
   unsigned Count()const{ return(unsigned(Arrays.size())); }
 

@@ -24,6 +24,7 @@
 #include "FunctionsMath.h"
 #include "FunctionsGeo3d.h"
 #include "JRangeFilter.h"
+#include "JAppInfo.h"
 #include "JXml.h"
 
 #include <climits>
@@ -550,8 +551,9 @@ void JDsInitializeOp_BoundNormalCylinder::GetConfig(std::vector<std::string> &li
 /// Constructor.
 //==============================================================================
 JDsInitialize::JDsInitialize(const JXml *sxml,const std::string &place
-  ,float kernelh,float dp,unsigned nbound,bool boundnormals)
-  :BoundNormals(boundnormals),InitCt(JDsInitializeOp::StrInitCt(kernelh,dp,nbound))
+  ,const std::string &dirdatafile,float kernelh,float dp,unsigned nbound
+  ,bool boundnormals):BoundNormals(boundnormals)
+  ,InitCt(JDsInitializeOp::StrInitCt(kernelh,dp,nbound,dirdatafile))
 {
   ClassName="JDsInitialize";
   Reset();
@@ -603,7 +605,10 @@ void JDsInitialize::ReadXml(const JXml *sxml,TiXmlElement* lis){
     string cmd=ele->Value();
     if(cmd.length() && cmd[0]!='_' && sxml->CheckElementActive(ele)){
       //printf("-----------> [%s]\n",cmd.c_str());
-      if(cmd=="fluidvelocity"){ JDsInitializeOp_FluidVel *ope=new JDsInitializeOp_FluidVel(sxml,ele,InitCt); Opes.push_back(ope); }
+      if(cmd=="fluidvelocity"){ 
+        JDsInitializeOp_FluidVel *ope=new JDsInitializeOp_FluidVel(sxml,ele,InitCt);
+        Opes.push_back(ope); 
+      }
       else if(cmd=="boundnormal_set"     ){ if(BoundNormals){ JDsInitializeOp_BoundNormalSet      *ope=new JDsInitializeOp_BoundNormalSet     (sxml,ele,InitCt); Opes.push_back(ope); } }
       else if(cmd=="boundnormal_plane"   ){ if(BoundNormals){ JDsInitializeOp_BoundNormalPlane    *ope=new JDsInitializeOp_BoundNormalPlane   (sxml,ele,InitCt); Opes.push_back(ope); } }
       else if(cmd=="boundnormal_sphere"  ){ if(BoundNormals){ JDsInitializeOp_BoundNormalSphere   *ope=new JDsInitializeOp_BoundNormalSphere  (sxml,ele,InitCt); Opes.push_back(ope); } }

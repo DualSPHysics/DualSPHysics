@@ -41,6 +41,7 @@
 #include "JDsAccInput.h"
 #include "JDsGaugeSystem.h"
 #include "JSphBoundCorr.h"
+#include "JSphInOut.h"
 #include "JSphShifting.h"
 
 #include <climits>
@@ -1301,8 +1302,8 @@ void JSphCpu::UpdatePos(tdouble3 rpos,double movx,double movy,double movz
 /// Calculate new values of position, velocity & density for fluid (using Verlet).
 /// Calcula nuevos valores de posicion, velocidad y densidad para el fluido (usando Verlet).
 //==============================================================================
-void JSphCpu::ComputeVerletVarsFluid(bool shift,
-  const tfloat4 *velrhop1,const tfloat4 *velrhop2,double dt,double dt2
+void JSphCpu::ComputeVerletVarsFluid(bool shift,const tfloat3 *indirvel
+  ,const tfloat4 *velrhop1,const tfloat4 *velrhop2,double dt,double dt2
   ,tdouble3 *pos,unsigned *dcell,typecode *code,tfloat4 *velrhopnew)const
 {
   const double dt205=0.5*dt*dt;
@@ -1334,11 +1335,20 @@ void JSphCpu::ComputeVerletVarsFluid(bool shift,
         rhopnew);
       //-Restore data of inout particles.
       if(InOut && CODE_IsFluidInout(Codec[p])){
-        dx=double(velrhop1[p].x)*dt;
-        dy=double(velrhop1[p].y)*dt;
-        dz=double(velrhop1[p].z)*dt;
         outrhop=false;
         rvelrhopnew=velrhop2[p];
+        const tfloat3 vd=indirvel[CODE_GetIzoneFluidInout(Codec[p])];
+        if(vd.x!=FLT_MAX){
+          const float v=velrhop1[p].x*vd.x + velrhop1[p].y*vd.y + velrhop1[p].z*vd.z;
+          dx=double(v*vd.x) * dt;
+          dy=double(v*vd.y) * dt;
+          dz=double(v*vd.z) * dt;
+        }
+        else{
+          dx=double(velrhop1[p].x) * dt;
+          dy=double(velrhop1[p].y) * dt;
+          dz=double(velrhop1[p].z) * dt;
+        }
       }
       //-Update particle data.
       UpdatePos(pos[p],dx,dy,dz,outrhop,p,pos,dcell,code);
@@ -1376,14 +1386,15 @@ void JSphCpu::ComputeVelrhopBound(const tfloat4* velrhopold,double armul,tfloat4
 void JSphCpu::ComputeVerlet(double dt){
   TmcStart(Timers,TMC_SuComputeStep);
   const bool shift=(Shifting!=NULL);
+  const tfloat3 *indirvel=(InOut? InOut->GetDirVel(): NULL);
   VerletStep++;
   if(VerletStep<VerletSteps){
     const double twodt=dt+dt;
-    ComputeVerletVarsFluid(shift,Velrhopc,VelrhopM1c,dt,twodt,Posc,Dcellc,Codec,VelrhopM1c);
+    ComputeVerletVarsFluid(shift,indirvel,Velrhopc,VelrhopM1c,dt,twodt,Posc,Dcellc,Codec,VelrhopM1c);
     ComputeVelrhopBound(VelrhopM1c,twodt,VelrhopM1c);
   }
   else{
-    ComputeVerletVarsFluid(shift,Velrhopc,Velrhopc,dt,dt,Posc,Dcellc,Codec,VelrhopM1c);
+    ComputeVerletVarsFluid(shift,indirvel,Velrhopc,Velrhopc,dt,dt,Posc,Dcellc,Codec,VelrhopM1c);
     ComputeVelrhopBound(Velrhopc,dt,VelrhopM1c);
     VerletStep=0;
   }
@@ -1420,6 +1431,7 @@ void JSphCpu::ComputeSymplecticPre(double dt){
   }
 
   //-Calculate new values of fluid. | Calcula nuevos datos del fluido.
+  const tfloat3 *indirvel=(InOut? InOut->GetDirVel(): NULL);
   const int np=int(Np);
   #ifdef OMP_USE
     #pragma omp parallel for schedule (static) if(np>OMP_LIMIT_COMPUTESTEP)
@@ -1448,6 +1460,13 @@ void JSphCpu::ComputeSymplecticPre(double dt){
       if(InOut && CODE_IsFluidInout(Codec[p])){
         outrhop=false;
         rvelrhopnew=VelrhopPrec[p];
+        const tfloat3 vd=indirvel[CODE_GetIzoneFluidInout(Codec[p])];
+        if(vd.x!=FLT_MAX){
+          const float v=rvelrhopnew.x*vd.x + rvelrhopnew.y*vd.y + rvelrhopnew.z*vd.z;
+          dx=double(v*vd.x) * dt05;
+          dy=double(v*vd.y) * dt05;
+          dz=double(v*vd.z) * dt05;
+        }
       }
       //-Update particle data.
       UpdatePos(PosPrec[p],dx,dy,dz,outrhop,p,Posc,Dcellc,Codec);
@@ -1487,6 +1506,7 @@ void JSphCpu::ComputeSymplecticCorr(double dt){
   }
 
   //-Calculate fluid values. | Calcula datos de fluido.
+  const tfloat3 *indirvel=(InOut? InOut->GetDirVel(): NULL);
   const double dt05=dt*.5;
   const int np=int(Np);
   #ifdef OMP_USE
@@ -1514,11 +1534,20 @@ void JSphCpu::ComputeSymplecticCorr(double dt){
       bool outrhop=(rhopnew<RhopOutMin || rhopnew>RhopOutMax);
       //-Restore data of inout particles.
       if(InOut && CODE_IsFluidInout(Codec[p])){
-        rvelrhopnew=VelrhopPrec[p];
-        dx=(double(rvelrhopnew.x)+double(rvelrhopnew.x)) * dt05; 
-        dy=(double(rvelrhopnew.y)+double(rvelrhopnew.y)) * dt05; 
-        dz=(double(rvelrhopnew.z)+double(rvelrhopnew.z)) * dt05;
         outrhop=false;
+        rvelrhopnew=VelrhopPrec[p];
+        const tfloat3 vd=indirvel[CODE_GetIzoneFluidInout(Codec[p])];
+        if(vd.x!=FLT_MAX){
+          const float v=rvelrhopnew.x*vd.x + rvelrhopnew.y*vd.y + rvelrhopnew.z*vd.z;
+          dx=double(v*vd.x) * dt;
+          dy=double(v*vd.y) * dt;
+          dz=double(v*vd.z) * dt;
+        }
+        else{
+          dx=double(rvelrhopnew.x) * dt; 
+          dy=double(rvelrhopnew.y) * dt; 
+          dz=double(rvelrhopnew.z) * dt;
+        }
       }
       //-Update particle data.
       UpdatePos(PosPrec[p],dx,dy,dz,outrhop,p,Posc,Dcellc,Codec);

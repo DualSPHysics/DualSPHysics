@@ -268,6 +268,29 @@ void JDataArrays::MoveArray(unsigned idx,unsigned idx2){
 }
 
 //==============================================================================
+/// Reverse data of array (v=-v).
+//==============================================================================
+void JDataArrays::ReverseArrayData(unsigned idx){
+  if(idx>=Count())Run_Exceptioon("Array idx is invalid.");
+  StDataArray ar=Arrays[idx];
+  const unsigned count=ar.count;
+  const unsigned count3=ar.count*3;
+  switch(ar.type){
+    case TypeUchar:
+    case TypeUshort:
+    case TypeUint:
+    case TypeUint3:    break;
+    case TypeInt:{     int    *v=(int   *)ar.ptr;  for(unsigned c=0;c<count ;c++)v[c]=-v[c];  }break;
+    case TypeFloat:{   float  *v=(float *)ar.ptr;  for(unsigned c=0;c<count ;c++)v[c]=-v[c];  }break;
+    case TypeDouble:{  double *v=(double*)ar.ptr;  for(unsigned c=0;c<count ;c++)v[c]=-v[c];  }break;
+    case TypeInt3:{    int    *v=(int   *)ar.ptr;  for(unsigned c=0;c<count3;c++)v[c]=-v[c];  }break;
+    case TypeFloat3:{  float  *v=(float *)ar.ptr;  for(unsigned c=0;c<count3;c++)v[c]=-v[c];  }break;
+    case TypeDouble3:{ double *v=(double*)ar.ptr;  for(unsigned c=0;c<count3;c++)v[c]=-v[c];  }break;
+    default: Run_Exceptioon(fun::PrintStr("Type of data \'%s\' is invalid.",TypeToStr(ar.type)));
+  }
+}
+
+//==============================================================================
 /// Returns reference to requested array by idx.
 //==============================================================================
 JDataArrays::StDataArray& JDataArrays::GetArray(unsigned idx){

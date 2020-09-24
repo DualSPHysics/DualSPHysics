@@ -870,6 +870,14 @@ unsigned VectorSplitDouble(const std::string mark,const std::string &text,std::v
 }
 
 //==============================================================================
+/// Set strings to lowercase.
+//==============================================================================
+void VectorLower(std::vector<std::string> &vec){
+  const unsigned size=unsigned(vec.size());
+  for(unsigned c=0;c<size;c++)vec[c]=StrLower(vec[c]);
+}
+
+//==============================================================================
 /// Find string in a string vector vector since first position. 
 /// Returns UINT_MAX when it was not found.
 //==============================================================================
@@ -960,6 +968,34 @@ int GetFirstValueInt(std::string tex,std::string &endtex,std::string pretex){
   endtex=tex.substr(len);
   return(atoi(tex.substr(0,len).c_str()));
 }
+
+//==============================================================================
+/// Returns first text between "pretex" and "endtex" and returns the remaining text.
+//==============================================================================
+std::string GetFirstTextBetween(std::string tex,std::string &resttex
+  ,std::string pretex,std::string endtex)
+{
+  string txv;
+  if(!pretex.empty()){//-Elimina texto previo si lo hubiera incluyendo pretex.
+    int pre=int(tex.find(pretex));
+    if(pre>=0)tex=tex.substr(pre+int(pretex.size()));
+    //printf("tex=[%s]\n",tex.c_str());
+  }
+  if(endtex.empty())txv=tex;
+  else{
+    int pos=int(tex.find(endtex));
+    if(pos>=0){
+      txv=tex.substr(0,pos);
+      tex=tex.substr(pos);
+    }
+    else{//-Requested text not found.
+      txv="";
+    } 
+  }
+  resttex=tex;
+  return(txv);
+}
+
 
 
 //==============================================================================

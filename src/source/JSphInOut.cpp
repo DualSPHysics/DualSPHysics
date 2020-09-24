@@ -58,11 +58,13 @@ JSphInOut::JSphInOut(bool cpu,const StCteSph &csp,std::string xmlfile
 {
   ClassName="JSphInOut";
   Planes=NULL;
-  CfgZone=NULL; CfgUpdate=NULL;  Width=NULL;  DirData=NULL;  VelData=NULL;  Zsurf=NULL;
-  PtZone=NULL;  PtPos=NULL;  PtAuxDist=NULL;
+  CfgZone=NULL;  CfgUpdate=NULL;  Width=NULL;  
+  DirData=NULL;  DirVel=NULL;     VelData=NULL;    Zsurf=NULL;
+  PtZone=NULL;   PtPos=NULL;      PtAuxDist=NULL;
   #ifdef _WITHGPU
-    Planesg=NULL; BoxLimitg=NULL; CfgZoneg=NULL; CfgUpdateg=NULL; Widthg=NULL; DirDatag=NULL; Zsurfg=NULL;
-    PtZoneg=NULL; PtPosxyg=NULL; PtPoszg=NULL; PtAuxDistg=NULL;
+    Planesg=NULL;   BoxLimitg=NULL;  CfgZoneg=NULL;  CfgUpdateg=NULL; Widthg=NULL; 
+    DirDatag=NULL;  DirVelg=NULL;    Zsurfg=NULL;
+    PtZoneg=NULL;   PtPosxyg=NULL;   PtPoszg=NULL;   PtAuxDistg=NULL;
   #endif
   Reset();
   //-Loads basic configuration.
@@ -229,6 +231,7 @@ void JSphInOut::AllocateMemory(unsigned listsize){
     CfgUpdate=new byte    [size];
     Width    =new float   [size];
     DirData  =new tfloat3 [size];
+    DirVel   =new tfloat3 [size];
     VelData  =new tfloat4 [size*2];
     Zsurf    =new float   [size];
     if(1){
@@ -237,6 +240,7 @@ void JSphInOut::AllocateMemory(unsigned listsize){
       memset(CfgUpdate,255,sizeof(byte    )*size);
       memset(Width    ,255,sizeof(float   )*size);
       memset(DirData  ,255,sizeof(tfloat3 )*size);
+      memset(DirVel   ,255,sizeof(tfloat3 )*size);
       memset(VelData  ,255,sizeof(tfloat4 )*size*2);
       memset(Zsurf    ,255,sizeof(float   )*size);
     }
@@ -259,6 +263,7 @@ void JSphInOut::FreeMemory(){
   delete[] CfgUpdate; CfgUpdate=NULL;
   delete[] Width;     Width=NULL;
   delete[] DirData;   DirData=NULL;
+  delete[] DirVel;    DirVel=NULL;
   delete[] VelData;   VelData=NULL;
   delete[] Zsurf;     Zsurf=NULL;
   #ifdef _WITHGPU
@@ -329,6 +334,7 @@ void JSphInOut::AllocateMemoryGpu(unsigned listsize){
     fcuda::Malloc(&CfgUpdateg,ListSize);
     fcuda::Malloc(&Widthg    ,ListSize);
     fcuda::Malloc(&DirDatag  ,ListSize);
+    fcuda::Malloc(&DirVelg   ,ListSize);
     fcuda::Malloc(&Zsurfg    ,ListSize);
   }
   catch(const std::bad_alloc){
@@ -346,6 +352,7 @@ void JSphInOut::FreeMemoryGpu(){
   if(CfgUpdateg)cudaFree(CfgUpdateg);  CfgUpdateg=NULL;
   if(Widthg)    cudaFree(Widthg);      Widthg=NULL;
   if(DirDatag)  cudaFree(DirDatag);    DirDatag=NULL;
+  if(DirVelg)   cudaFree(DirVelg);     DirVelg=NULL;
   if(Zsurfg)    cudaFree(Zsurfg);      Zsurfg=NULL;
 }
 #endif
@@ -551,6 +558,7 @@ unsigned JSphInOut::Config(double timestep,bool stable,byte periactive
     CfgUpdate[ci]=List[ci]->GetConfigUpdate();
     Width    [ci]=float(CSP.dp*List[ci]->GetLayers());
     DirData  [ci]=ToTFloat3(List[ci]->GetDirection());
+    DirVel   [ci]=(List[ci]->GetVelMode()==InVelM_Interpolated? DirData[ci]: TFloat3(FLT_MAX));
   }
   UpdateVelData(timestep);
   UpdateZsurfData(timestep,true);
@@ -568,6 +576,7 @@ unsigned JSphInOut::Config(double timestep,bool stable,byte periactive
       cudaMemcpy(CfgUpdateg,CfgUpdate,sizeof(byte)  *ListSize,cudaMemcpyHostToDevice);
       cudaMemcpy(Widthg    ,Width    ,sizeof(float) *ListSize,cudaMemcpyHostToDevice);
       cudaMemcpy(DirDatag  ,DirData  ,sizeof(float3)*ListSize,cudaMemcpyHostToDevice);
+      cudaMemcpy(DirVelg   ,DirVel   ,sizeof(float3)*ListSize,cudaMemcpyHostToDevice);
       //cudaMemcpy(Zsurfg  ,Zsurf  ,sizeof(float) *ListSize,cudaMemcpyHostToDevice); //It is done in UpdateZsurf().
       //-Copies data for BoxLimitg to GPU memory.
       if(UseBoxLimit){

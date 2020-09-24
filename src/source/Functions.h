@@ -87,6 +87,8 @@
 //:# - Nuevas funciones NewToTFloat3() y NewToTDouble3().  (09-05-2020)
 //:# - Nueva funcion FileModifTime().  (02-06-2020)
 //:# - Nueva funcion Length() para vectores.  (27-06-2020)
+//:# - Nueva funcion VectorLower().  (09-09-2020)
+//:# - Nueva funcion GetFirstTextBetween().  (20-09-2020)
 //:#############################################################################
 
 /// \file Functions.h \brief Declares basic/general functions for the entire application.
@@ -220,13 +222,15 @@ std::string StrSplitValue(const std::string mark,std::string text,unsigned value
 unsigned VectorSplitStr(const std::string mark,const std::string &text,std::vector<std::string> &vec);
 unsigned VectorSplitInt(const std::string mark,const std::string &text,std::vector<int> &vec);
 unsigned VectorSplitDouble(const std::string mark,const std::string &text,std::vector<double> &vec);
+void     VectorLower(std::vector<std::string> &vec);
 unsigned VectorFind(const std::string &key,const std::vector<std::string> &vec,unsigned first=0);
 unsigned VectorFindMask(const std::string &keymask,const std::vector<std::string> &vec,unsigned first=0);
 
 double GetFirstValueDouble(std::string tex,std::string pretex="");
-double GetFirstValueDouble(std::string tex,std::string &endtex,std::string pretex);
+double GetFirstValueDouble(std::string tex,std::string &resttex,std::string pretex);
 int GetFirstValueInt(std::string tex,std::string pretex="");
-int GetFirstValueInt(std::string tex,std::string &endtex,std::string pretex);
+int GetFirstValueInt(std::string tex,std::string &resttex,std::string pretex);
+std::string GetFirstTextBetween(std::string tex,std::string &resttex,std::string pretex,std::string endtex);
 
 int CompareVersions(std::string v1,std::string v2);
 

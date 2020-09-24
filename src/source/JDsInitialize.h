@@ -59,20 +59,21 @@ class JDsInitializeOp : public JObject
 public:
   ///Types of initializations.
   typedef enum{ 
-    IT_FluidVel=1,
-    IT_BoundNormalSet=2,
-    IT_BoundNormalPlane=3,
-    IT_BoundNormalSphere=4,
-    IT_BoundNormalCylinder=5,
+    IT_FluidVel=10
+   ,IT_BoundNormalSet=30
+   ,IT_BoundNormalPlane=31
+   ,IT_BoundNormalSphere=32
+   ,IT_BoundNormalCylinder=33
   }TpInitialize; 
 
   ///Structure with constant values needed for initialization tasks.
   typedef struct StrInitCt{
-    float kernelh;    ///<The smoothing length of SPH kernel [m].
-    float dp;         ///<Initial distance between particles [m].
-    unsigned nbound;  ///<Initial number of boundary particles (fixed+moving+floating).
-    StrInitCt(float kernelh_,float dp_,unsigned nbound_){
-      kernelh=kernelh_; dp=dp_; nbound=nbound_;
+    float kernelh;      ///<The smoothing length of SPH kernel [m].
+    float dp;           ///<Initial distance between particles [m].
+    unsigned nbound;    ///<Initial number of boundary particles (fixed+moving+floating).
+    std::string dirdatafile; ///<Directory to data files.
+    StrInitCt(float kernelh_,float dp_,unsigned nbound_,std::string dirdatafile_){
+      kernelh=kernelh_; dp=dp_; nbound=nbound_; dirdatafile=dirdatafile_;
     }
   }StInitCt;
 
@@ -124,9 +125,9 @@ class JDsInitializeOp_FluidVel : public JDsInitializeOp
 private:
   ///Controls profile of imposed velocity.
   typedef enum{ 
-    TVEL_Constant=0,    ///<Velocity profile uniform.
-    TVEL_Linear=1,      ///<Velocity profile linear.
-    TVEL_Parabolic=2    ///<Velocity profile parabolic.
+    TVEL_Constant=0   ///<Velocity profile uniform.
+   ,TVEL_Linear=1     ///<Velocity profile linear.
+   ,TVEL_Parabolic=2  ///<Velocity profile parabolic.
   }TpVelocity;
 private:
   TpVelocity VelType;  ///<Type of velocity.
@@ -249,7 +250,8 @@ private:
 
 public:
   JDsInitialize(const JXml *sxml,const std::string &place
-    ,float kernelh,float dp,unsigned nbound,bool boundnormals);
+    ,const std::string &dirdatafile,float kernelh,float dp,unsigned nbound
+    ,bool boundnormals);
   ~JDsInitialize();
   void Reset();
   unsigned Count()const{ return(unsigned(Opes.size())); }

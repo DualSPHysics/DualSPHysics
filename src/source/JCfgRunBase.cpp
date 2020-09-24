@@ -27,7 +27,7 @@ using namespace std;
 //==============================================================================
 /// Constructor.
 //==============================================================================
-JCfgRunBase::JCfgRunBase(){
+JCfgRunBase::JCfgRunBase(bool noparms):NoParms(noparms){
   ClassName="JCfgRunBase";
   Reset();
 }
@@ -80,12 +80,14 @@ void JCfgRunBase::LoadArgv(int argc,char** argv){
       }
     }
     if(optn>=MAXOPTS)Run_Exceptioon("Has exceeded the maximum configuration options.");
-    optlis[optn]=tex; optn++;
+    if(!tex.empty()){//-Ignores empty parameters.
+      optlis[optn]=tex; optn++;
+    }
   }
   //for(int c=0;c<optn;c++)printf("[%d]=[%s]\n",c,optlis[c].c_str());
-  if(optn)LoadOpts(optlis,optn,0,"");
+  if(optn || NoParms)LoadOpts(optlis,optn,0,"");
   delete[] optlis;
-  if(!optn)PrintInfo=true;
+  if(!optn && !NoParms)PrintInfo=true;
   if(!PrintInfo){ //-Configuracion por defecto
     //VisuConfig(); 
   }

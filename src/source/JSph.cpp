@@ -1626,7 +1626,8 @@ void JSph::RunInitialize(unsigned np,unsigned npb,const tdouble3 *pos,const unsi
     JXml xml; xml.LoadFile(FileXml);
     xml.SetNuxLib(NuxLib); //-Enables the use of NuxLib in XML configuration.
     if(xml.GetNodeSimple("case.execution.special.initialize",true)){
-      JDsInitialize init(&xml,"case.execution.special.initialize",KernelH,float(Dp),CaseNbound,boundnormal!=NULL);
+      JDsInitialize init(&xml,"case.execution.special.initialize",DirCase
+        ,KernelH,float(Dp),CaseNbound,boundnormal!=NULL);
       if(init.Count()){
         //-Creates array with mktype value.
         word *mktype=new word[np];

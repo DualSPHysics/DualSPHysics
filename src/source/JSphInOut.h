@@ -115,6 +115,7 @@ private:
   byte     *CfgUpdate; ///<Information about refilling mode, InputMode and RemoveZsurf. [ListSize].
   float    *Width;     ///<Zone width [ListSize].
   tfloat3  *DirData;   ///<Inflow direction [ListSize].
+  tfloat3  *DirVel;    ///<Inflow direction for velocity (use FLT_MAX to ignore it). [ListSize].
   tfloat4  *VelData;   ///<Velocity coefficients for imposed velocity [ListSize*2].
   float    *Zsurf;     ///<Zsurf (it can be variable) [ListSize].
   
@@ -126,6 +127,7 @@ private:
   byte   *CfgUpdateg; ///<Information about refilling mode, InputMode and RemoveZsurf. [ListSize].
   float  *Widthg;     ///<Zone width [ListSize].
   float3 *DirDatag;   ///<Inflow direction [ListSize].
+  float3 *DirVelg;    ///<Inflow direction for velocity (use FLT_MAX to ignore it). [ListSize].
   float  *Zsurfg;     ///<Zsurf (it can be variable) [ListSize].
 #endif
 
@@ -278,15 +280,17 @@ public:
   float GetDetermLimit()const{ return(DetermLimit); };
   byte GetExtrapolateMode()const{ return(ExtrapolateMode); };
 
-  const tplane3f* GetPlanes() const{ return(Planes);  };
+  const tplane3f* GetPlanes ()const{ return(Planes);  };
   const byte*     GetCfgZone()const{ return(CfgZone); };
-  const float*    GetWidth()  const{ return(Width);   };
+  const float*    GetWidth  ()const{ return(Width);   };
   const tfloat3*  GetDirData()const{ return(DirData); };
+  const tfloat3*  GetDirVel ()const{ return(DirVel);  };
 #ifdef _WITHGPU
-  const float4*  GetPlanesg() const{ return(Planesg);  };
+  const float4*  GetPlanesg ()const{ return(Planesg);  };
   const byte*    GetCfgZoneg()const{ return(CfgZoneg); };
-  const float*   GetWidthg()  const{ return(Widthg);   };
+  const float*   GetWidthg  ()const{ return(Widthg);   };
   const float3*  GetDirDatag()const{ return(DirDatag); };
+  const float3*  GetDirVelg ()const{ return(DirVelg);  };
   byte  GetExtrapRhopMask()const;
   byte  GetExtrapVelMask() const;
 #endif

@@ -28,6 +28,7 @@
 
 #include <cstring>
 #include <cfloat>
+#include <cmath>
 #include <algorithm>
 
 using namespace std;

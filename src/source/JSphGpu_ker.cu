@@ -87,8 +87,8 @@ template <unsigned blockSize> __global__ void KerReduMaxFloat(unsigned n,unsigne
 /// de resu[] debe ser >= a (N/SPHBSIZE+1)+(N/(SPHBSIZE*SPHBSIZE)+SPHBSIZE)
 //==============================================================================
 float ReduMaxFloat(unsigned ndata,unsigned inidata,float* data,float* resu){
-  float resf;
-  if(1){
+  float resf=0;
+  if(ndata>=1){
     unsigned n=ndata,ini=inidata;
     unsigned smemSize=SPHBSIZE*sizeof(float);
     dim3 sgrid=GetSimpleGridSize(n,SPHBSIZE);
