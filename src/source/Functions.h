@@ -222,6 +222,7 @@ std::string StrSplitValue(const std::string mark,std::string text,unsigned value
 unsigned VectorSplitStr(const std::string mark,const std::string &text,std::vector<std::string> &vec);
 unsigned VectorSplitInt(const std::string mark,const std::string &text,std::vector<int> &vec);
 unsigned VectorSplitDouble(const std::string mark,const std::string &text,std::vector<double> &vec);
+unsigned VectorSplitFloat(const std::string mark,const std::string &text,std::vector<float> &vec);
 void     VectorLower(std::vector<std::string> &vec);
 unsigned VectorFind(const std::string &key,const std::vector<std::string> &vec,unsigned first=0);
 unsigned VectorFindMask(const std::string &keymask,const std::vector<std::string> &vec,unsigned first=0);

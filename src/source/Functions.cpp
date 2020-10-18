@@ -870,6 +870,18 @@ unsigned VectorSplitDouble(const std::string mark,const std::string &text,std::v
 }
 
 //==============================================================================
+/// Loads float list in a vector and returns size of vector.
+//==============================================================================
+unsigned VectorSplitFloat(const std::string mark,const std::string &text,std::vector<float> &vec){
+  std::string aux=text;
+  while(!aux.empty()){
+    std::string txv=StrSplit(mark,aux);
+    if(!txv.empty())vec.push_back(float(atof(txv.c_str())));
+  }
+  return((unsigned)vec.size());
+}
+
+//==============================================================================
 /// Set strings to lowercase.
 //==============================================================================
 void VectorLower(std::vector<std::string> &vec){
@@ -1358,7 +1370,7 @@ void GetFileNameSplit(const std::string &file,std::string &dir,std::string &fnam
 //==============================================================================
 std::string AddExtension(const std::string &file,const std::string &ext){
   std::string file2=file;
-  if(file2.empty()||file2[file2.length()-1]!='.')file2+='.';
+  if(file2.empty() || file2[file2.length()-1]!='.')file2+='.';
   file2+=ext;
   return(file2);
 }

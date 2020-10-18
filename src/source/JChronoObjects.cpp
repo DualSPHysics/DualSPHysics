@@ -81,6 +81,7 @@ void JChronoObjects::Reset(){
   delete ChronoLib; ChronoLib=NULL;
   CollisionDp=0;
   SchemeScale=1;
+  CollisionShapes=0;
   SaveDataTime=NextTime=0;
   LastTimeOk=-1;
   JVtkLib::DeleteMkShapes(Ptr_VtkSimple_AutoActual); Ptr_VtkSimple_AutoActual=NULL;
@@ -206,9 +207,10 @@ void JChronoObjects::LoadPtrAutoDp(const JXml *sxml,std::string xmlrow){
 //==============================================================================
 /// Creates and return obj file with body geometry.
 //==============================================================================
-void JChronoObjects::CreateObjFiles(std::string idname,const std::vector<unsigned> &mkbounds
+unsigned JChronoObjects::CreateObjFiles(std::string idname,const std::vector<unsigned> &mkbounds
   ,std::string datadir,std::string mfile,byte normalmode,std::string diroutobj,std::string xmlrow)
 {
+  unsigned nfaces=0;
   const unsigned nmkbounds=unsigned(mkbounds.size());
   JVtkLib::TpModeNormal tnormal=JVtkLib::NorNULL;
   switch((JChBody::TpModelNormal)normalmode){
@@ -240,9 +242,10 @@ void JChronoObjects::CreateObjFiles(std::string idname,const std::vector<unsigne
       ptr=Ptr_VtkSimple_AutoDp;
     }
     const string filein=(ptr==NULL? datadir+mfile: "");
-    JVtkLib::CreateOBJsByMk(ptr,filein,diroutobj+idname,mkbounds,MkBoundFirst,tnormal);
+    nfaces=JVtkLib::CreateOBJsByMk(ptr,filein,diroutobj+idname,mkbounds,MkBoundFirst,tnormal);
   }
   else Run_ExceptioonFile("Model file format is invalid.",xmlrow);
+  return(nfaces);
 }
 
 //==============================================================================
@@ -294,6 +297,7 @@ void JChronoObjects::ReadXml(const JXml *sxml,TiXmlElement* lis){
   ChronoDataXml->SetOmpThreads(OmpThreads);
 
   //-Loads body elements.
+  CollisionShapes=0;
   unsigned nextidbody=0;
   TiXmlElement* ele=lis->FirstChildElement(); 
   while(ele){
@@ -316,7 +320,7 @@ void JChronoObjects::ReadXml(const JXml *sxml,TiXmlElement* lis){
         if(fun::StrUpper(mfilebase)=="AUTOACTUAL" && Ptr_VtkSimple_AutoActual==NULL)LoadPtrAutoActual(sxml,xmlrow);
         if(fun::StrUpper(mfilebase)=="AUTODP"     && Ptr_VtkSimple_AutoDp    ==NULL)LoadPtrAutoDp    (sxml,xmlrow);
         tnormal=ReadXmlModelNormal(sxml,ele);
-        if(!mfilebase.empty())CreateObjFiles(idnamebase,mkbounds,DirData,mfilebase,byte(tnormal),diroutobj,xmlrow);
+        if(!mfilebase.empty())CollisionShapes+=CreateObjFiles(idnamebase,mkbounds,DirData,mfilebase,byte(tnormal),diroutobj,xmlrow);
       }
       //-Creates a body object for each MK value in mkbounds[].
       for(unsigned cmk=0;cmk<nmkbounds;cmk++){
@@ -847,18 +851,19 @@ void JChronoObjects::VisuLink(const JChLink *link)const{
 void JChronoObjects::VisuConfig(std::string txhead, std::string txfoot)const{
   if(!txhead.empty())Log->Print(txhead);
   const JChronoData* chdata=ChronoLib->GetChronoData();
-  Log->Printf("  DSPHChrono version: %s",ChronoLib->version.c_str());
-  Log->Printf("  Data directory...: [%s]",chdata->GetDataDir().c_str());
-  Log->Printf("  Collisions.......: %s",(UseCollision? "True": "False"));
+  Log->Printf("  DSPHChrono version.: %s",ChronoLib->version.c_str());
+  Log->Printf("  Data directory....: [%s]",chdata->GetDataDir().c_str());
+  Log->Printf("  Collisions........: %s",(UseCollision? "True": "False"));
   if(UseCollision){
-    Log->Printf("  Collision dp.....: %g",chdata->GetCollisionDp());
-    Log->Printf("  Contact Method...: %s",chdata->ContactMethodToStr().c_str());  //<chrono_contacts>
-    Log->Printf("  Solver ..........: %s",chdata->SolverToStr().c_str());
+    Log->Printf("    Collision dp....: %g",chdata->GetCollisionDp());
+    Log->Printf("    Contact Method..: %s",chdata->ContactMethodToStr().c_str());  //<chrono_contacts>
+    Log->Printf("    Solver .........: %s",chdata->SolverToStr().c_str());
+    Log->Printf("    Collision shapes: %u",CollisionShapes);
   }
-  Log->Printf("  Execution mode...: %s",chdata->GetMode().c_str());
-  Log->Printf("  OpenMP Threads...: %d",chdata->GetOmpThreads());
-  Log->Printf("  Bodies...........: %d",chdata->GetBodyCount());
-  Log->Printf("  Links............: %u",chdata->GetLinkCount());
+  Log->Printf("  Execution mode....: %s",chdata->GetMode().c_str());
+  Log->Printf("  OpenMP Threads....: %d",chdata->GetOmpThreads());
+  Log->Printf("  Bodies............: %d",chdata->GetBodyCount());
+  Log->Printf("  Links.............: %u",chdata->GetLinkCount());
   //Log->Printf("  FEA Enabled......: %s",chdata->GetUseFEA()?"Yes":"No");     //<chrono_fea>
 
   for(unsigned c=0;c<chdata->GetBodyCount();c++)VisuBody(chdata->GetBody(c));

@@ -23,6 +23,7 @@
 //:# - Comprueba opcion active en elementos de primer y segundo nivel. (19-03-2020) 
 //:# - Permite la ejecucion de ChLinks con coeficientes variables de stiffness
 //:#   y damping. (04-10-2020)  
+//:# - Contabiliza y muestra el numero de caras para las colisiones. (18-10-2020)  
 //:#############################################################################
 
 /// \file JChronoObjects.h \brief Declares the class \ref JChronoObjects.
@@ -90,8 +91,9 @@ protected:
   
   DSPHChronoLib *ChronoLib;   ///<Objeto para integracion con libreria de Chrono Engine.
 
-  float CollisionDp;   ///<Allowed collision overlap according Dp (default=0.5).
-  double SchemeScale;  ///<Scale value to create initial scheme of configuration.
+  float CollisionDp;        ///<Allowed collision overlap according Dp (default=0.5).
+  double SchemeScale;       ///<Scale value to create initial scheme of configuration.
+  unsigned CollisionShapes; ///<Number of shapes for collisions created from VTK files.
 
   double SaveDataTime;  ///<Saves CSV with data exchange (0=all steps, <0:none).
   double NextTime;
@@ -100,7 +102,7 @@ protected:
   void LoadPtrAutoActual(const JXml *sxml,std::string xmlrow);
   void LoadPtrAutoDp(const JXml *sxml,std::string xmlrow);
   
-  void CreateObjFiles(std::string idname,const std::vector<unsigned> &mkbounds
+  unsigned CreateObjFiles(std::string idname,const std::vector<unsigned> &mkbounds
     ,std::string datadir,std::string mfile,byte normalmode,std::string diroutobj,std::string xmlrow);
 
   void LoadXml(const JXml *sxml, const std::string &place);
@@ -130,6 +132,7 @@ public:
 
   bool UseDataDVI(word mkbound)const;
   bool GetUseCollision()const{ return(UseCollision); }
+  unsigned GetCollisionShapes()const{ return(CollisionShapes); }
 
   bool ConfigBodyFloating(word mkbound,double mass,const tdouble3 &center
     ,const tmatrix3d &inertia,const tint3 &translationfree,const tint3 &rotationfree

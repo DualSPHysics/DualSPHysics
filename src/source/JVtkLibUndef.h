@@ -102,8 +102,8 @@ public:
   //==============================================================================
   static void* CreateMkShapes(const std::vector<std::string> &vtkfiles){ return(NULL); }
   static void DeleteMkShapes(void* ptr_vtksimple){}
-  static void CreateOBJsByMk(void* ptr_vtksimple,std::string filein,std::string filesout
-    ,const std::vector<unsigned> &mkbounds,unsigned mkboundfirst,TpModeNormal normalmode){}
+  static unsigned CreateOBJsByMk(void* ptr_vtksimple,std::string filein,std::string filesout
+    ,const std::vector<unsigned> &mkbounds,unsigned mkboundfirst,TpModeNormal normalmode){ return(0); }
 
 };
 #endif

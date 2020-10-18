@@ -59,6 +59,8 @@
 //:# - Nuevas funciones: PlanePointsIn(). (17-12-2019)
 //:# - Nuevas funciones: PointsLower(), PointsSortLower(). (11-02-2020)
 //:# - Nuevas funciones: PlaneAxisDist(). (26-08-2020)
+//:# - Nuevas funciones: PlaneNormalized(). (04-10-2020)
+//:# - Nuevas funciones: PointsDist2(). (06-10-2020)
 //:#############################################################################
 
 /// \file FunctionsGeo3d.h \brief Declares geometry functions for 3D.
@@ -207,6 +209,42 @@ inline double PointDist(const tdouble3 &p1){
 //==============================================================================
 inline float PointDist(const tfloat3 &p1){
   return(sqrt(p1.x*p1.x+p1.y*p1.y+p1.z*p1.z));
+}
+
+
+//==============================================================================
+/// Devuelve la distancia^2 entre dos puntos.
+/// Returns the distance^2 between two points.
+//==============================================================================
+inline double PointsDist2(const tdouble3 &p1,const tdouble3 &p2){
+  const tdouble3 v=p1-p2;
+  return(v.x*v.x+v.y*v.y+v.z*v.z);
+}
+
+//==============================================================================
+/// Devuelve la distancia^2 entre dos puntos.
+/// Returns the distance^2 between two points.
+//==============================================================================
+inline float PointsDist2(const tfloat3 &p1,const tfloat3 &p2){
+  const tfloat3 v=p1-p2;
+  return(v.x*v.x+v.y*v.y+v.z*v.z);
+}
+
+
+//==============================================================================
+/// Devuelve la distancia^2 al (0,0,0).
+/// Returns the distance^2 from (0,0,0).
+//==============================================================================
+inline double PointDist2(const tdouble3 &p1){
+  return(p1.x*p1.x+p1.y*p1.y+p1.z*p1.z);
+}
+
+//==============================================================================
+/// Devuelve la distancia^2 al (0,0,0).
+/// Returns the distance^2 from (0,0,0).
+//==============================================================================
+inline float PointDist2(const tfloat3 &p1){
+  return(p1.x*p1.x+p1.y*p1.y+p1.z*p1.z);
 }
 
 
@@ -507,6 +545,25 @@ inline tplane3d PlanePtVec(const tdouble3 &pt,const tdouble3 &vec){
 inline tplane3f PlanePtVec(const tfloat3 &pt,const tfloat3 &vec){
   const tfloat3 v=VecUnitary(vec);//-No es necesario pero asi el modulo del vector no afecta al resultado de PointPlane().
   return(TPlane3f(v.x,v.y,v.z,-v.x*pt.x-v.y*pt.y-v.z*pt.z));
+}
+
+
+//==============================================================================
+/// Devuelve el plano normalizado (A^2+B^2+C^2=1).
+/// Returns the normalized plane (A^2+B^2+C^2=1).
+//==============================================================================
+inline tplane3d PlaneNormalized(const tplane3d &pla){
+  const double dis=sqrt(pla.a*pla.a+pla.b*pla.b+pla.c*pla.c);
+  return(TPlane3d(pla.a/dis,pla.b/dis,pla.c/dis,pla.d/dis));
+}
+
+//==============================================================================
+/// Devuelve el plano normalizado (A^2+B^2+C^2=1).
+/// Returns the normalized plane (A^2+B^2+C^2=1).
+//==============================================================================
+inline tplane3f PlaneNormalized(const tplane3f &pla){
+  const float dis=sqrt(pla.a*pla.a+pla.b*pla.b+pla.c*pla.c);
+  return(TPlane3f(pla.a/dis,pla.b/dis,pla.c/dis,pla.d/dis));
 }
 
 
