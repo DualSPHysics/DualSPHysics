@@ -31,6 +31,7 @@
 #include "JRangeFilter.h"
 #include "JCaseVtkOut.h"
 #include "JSphMk.h"
+#include "JLinearValue.h"
 #include <cstring>
 #include <cfloat>
 #include <climits>
@@ -84,6 +85,11 @@ void JChronoObjects::Reset(){
   LastTimeOk=-1;
   JVtkLib::DeleteMkShapes(Ptr_VtkSimple_AutoActual); Ptr_VtkSimple_AutoActual=NULL;
   JVtkLib::DeleteMkShapes(Ptr_VtkSimple_AutoDp);     Ptr_VtkSimple_AutoDp=NULL;
+  UseVariableCoeff=false;
+  for(unsigned c=0;c<StiffnessV.size();c++)if(StiffnessV[c])delete StiffnessV[c];
+  StiffnessV.clear();
+  for(unsigned c=0;c<DampingV.size();c++)  if(DampingV[c])  delete DampingV[c];
+  DampingV.clear();
 }
 
 //==============================================================================
@@ -384,15 +390,13 @@ void JChronoObjects::ReadXml(const JXml *sxml,TiXmlElement* lis){
         JChLinkHinge *link=ChronoDataXml->AddLinkHinge(name,idbody1,idbody2,xmlrow);
         link->SetRotPoint (sxml->ReadElementDouble3(ele,"rotpoint" ));
         link->SetRotVector(sxml->ReadElementDouble3(ele,"rotvector"));
-        link->SetStiffness(sxml->ReadElementDouble (ele,"stiffness","value"));
-        link->SetDamping  (sxml->ReadElementDouble (ele,"damping"  ,"value"));
+        ReadCoeffs(link,sxml,ele);//-Read Stiffness and Damping
         ReadXmlValues(sxml,ele->FirstChildElement("values"),link->GetValuesPtr());
       }
       else if(elename=="link_spheric"){
         JChLinkSpheric *link=ChronoDataXml->AddLinkSpheric(name,idbody1,idbody2,xmlrow);
         link->SetRotPoint (sxml->ReadElementDouble3(ele,"rotpoint"));
-        link->SetStiffness(sxml->ReadElementDouble (ele,"stiffness","value"));
-        link->SetDamping  (sxml->ReadElementDouble (ele,"damping"  ,"value"));
+        ReadCoeffs(link,sxml,ele);//-Read Stiffness and Damping
         ReadXmlValues(sxml,ele->FirstChildElement("values"),link->GetValuesPtr());
       }
       else if(elename=="link_pointline"){
@@ -402,16 +406,14 @@ void JChronoObjects::ReadXml(const JXml *sxml,TiXmlElement* lis){
         link->SetRotPoint (sxml->ReadElementDouble3(ele,"rotpoint"));
         link->SetRotVector(sxml->ExistsElement(ele,"rotvector")? sxml->ReadElementDouble3(ele,"rotvector"): TDouble3(0));
         link->SetRotVector2(sxml->ExistsElement(ele,"rotvector") && sxml->ExistsElement(ele,"rotvector2")? sxml->ReadElementDouble3(ele,"rotvector2"): TDouble3(0));
-        link->SetStiffness(sxml->ReadElementDouble (ele,"stiffness","value"));
-        link->SetDamping  (sxml->ReadElementDouble (ele,"damping"  ,"value"));
+        ReadCoeffs(link,sxml,ele);//-Read Stiffness and Damping
         ReadXmlValues(sxml,ele->FirstChildElement("values"),link->GetValuesPtr());
       }
       else if(elename=="link_linearspring"){
         JChLinkLinearSpring *link=ChronoDataXml->AddLinkLinearSpring(name,idbody1,idbody2,xmlrow);
         link->SetPointfb0  (sxml->ReadElementDouble3(ele,"point_fb1"));
         link->SetPointfb1  (sxml->ReadElementDouble3(ele,"point_fb2"));
-        link->SetStiffness (sxml->ReadElementDouble (ele,"stiffness"  ,"value"));
-        link->SetDamping   (sxml->ReadElementDouble (ele,"damping"    ,"value"));
+        ReadCoeffs(link,sxml,ele);//-Read Stiffness and Damping
         link->SetRestLength(sxml->ReadElementDouble (ele,"rest_length","value"));
         ReadXmlValues(sxml,ele->FirstChildElement("values"),link->GetValuesPtr());
         TiXmlElement* ele2=ele->FirstChildElement("savevtk");
@@ -453,10 +455,48 @@ void JChronoObjects::ReadXml(const JXml *sxml,TiXmlElement* lis){
     }
     ele=ele->NextSiblingElement();
   }
+ 
+  //-Defines the use of variable coefficients for links
+  if(StiffnessV.size() || DampingV.size())UseVariableCoeff=true;
+
   //-Prepares object ChronoDataXml.
+  ChronoDataXml->SetUseVariableCoeff(UseVariableCoeff);
   ChronoDataXml->Prepare();
   NextTime=(SaveDataTime>=0? 0: DBL_MAX);
   LastTimeOk=-1;
+}
+
+//==============================================================================
+/// Reads the coefficients of stiffness and damping from xml file. 
+/// Checks the use of static or variable coefficient values.
+//==============================================================================
+void JChronoObjects::ReadCoeffs(JChLink *link,const JXml *sxml,TiXmlElement* ele){
+  double k=sxml->ReadElementDouble (ele,"stiffness","value",true,DBL_MAX);
+  double c=sxml->ReadElementDouble (ele,"damping","value",true,DBL_MAX);
+  
+  const unsigned nl=ChronoDataXml->GetLinkCount();   //-Number of links.
+  const unsigned pl=ChronoDataXml->GetPosLink(link); //-Position of link.
+  //-Check the use of variable stiffness
+  if(k==DBL_MAX){
+    StiffnessV.resize(nl,NULL); 
+    JLinearValue *stiffness=new JLinearValue(1,false);
+    stiffness->ReadXmlValues(sxml,ele,"stiffness","k","time:value");
+    if(!stiffness->GetFile().empty())stiffness->LoadFile(DirData+stiffness->GetFile());
+    StiffnessV[pl]=stiffness;
+    link->SetVariableK(true);
+  }
+  else link->SetStiffness(k);
+
+  //-Check the use of variable damping
+  if(c==DBL_MAX){
+    DampingV.resize(nl,NULL); 
+    JLinearValue *damping=new JLinearValue(1,false);
+    damping->ReadXmlValues(sxml,ele,"damping","c","time:value");
+    if(!damping->GetFile().empty())damping->LoadFile(DirData+damping->GetFile());
+    DampingV[pl]=damping;
+    link->SetVariableC(true);
+  }
+  else link->SetDamping(c);
 }
 
 //==============================================================================
@@ -789,8 +829,8 @@ void JChronoObjects::VisuLink(const JChLink *link)const{
     default: Run_Exceptioon("Type of link is not supported.");
   }
   if(link->Type!=JChLink::LK_CoulombDamping && link->Type!=JChLink::LK_Pulley){
-    Log->Printf("    Stiffness.....: %g",link->GetStiffness());
-    Log->Printf("    Damping.......: %g",link->GetDamping());
+    Log->Printf("    Stiffness.....: %s",link->GetVariableK()?"Variable":fun::PrintStr("%g",link->GetStiffness()).c_str());
+    Log->Printf("    Damping.......: %s",link->GetVariableC()?"Variable":fun::PrintStr("%g",link->GetDamping()).c_str());
   }
   VisuValues(link->GetValuesPtr());
   if(link->GetBodyRefCount()){
@@ -867,6 +907,7 @@ void JChronoObjects::SetMovingData(word mkbound,bool simple,const tdouble3 &msim
 /// Computes a single timestep with Chrono for the system
 //==============================================================================
 void JChronoObjects::RunChrono(unsigned nstep,double timestep,double dt,bool predictor){
+  if(UseVariableCoeff)SetVariableCoeff(timestep);
   if(!ChronoLib->RunChrono(timestep,dt,predictor))Run_Exceptioon("Error running Chrono library.");
   //-Saves floating body data in CSV files.
   if((LastTimeOk==timestep || NextTime<=timestep) && (SaveDataTime==0 || !predictor)){
@@ -907,6 +948,26 @@ void JChronoObjects::RunChrono(unsigned nstep,double timestep,double dt,bool pre
   //  ChronoLib->GetBodyCenter("ball",pcen);
   //  Log->Printf("RunChrono----> timestep:%f  dt:%f  ball.center:(%f,%f,%f)",timestep,dt,pcen.x,pcen.y,pcen.z);
   //}
+}
+
+//==============================================================================
+/// Establishes the current value of the stiffness and damping when the use of 
+/// variable coefficients is enabled
+//==============================================================================
+void JChronoObjects::SetVariableCoeff(const double timestep){
+  const JChronoData* chdata=ChronoLib->GetChronoData();
+  const unsigned nl=chdata->GetLinkCount();
+  //-Stiiffness
+  for(unsigned c=0;c<StiffnessV.size() && c<nl;c++)if(StiffnessV[c]){
+    JChLink *link=chdata->GetLink(c);
+    if(link->GetVariableK())link->SetStiffness(StiffnessV[c]->GetValue(timestep));
+
+  }
+  //-Damping
+  for(unsigned c=0;c<DampingV.size() && c<nl;c++)if(DampingV[c]){
+    JChLink *link=chdata->GetLink(c);
+    if(link->GetVariableC())link->SetDamping(DampingV[c]->GetValue(timestep));
+  }
 }
 
 //==============================================================================

@@ -15,13 +15,15 @@
  You should have received a copy of the GNU General Public License, along with DualSPHysics. If not, see <http://www.gnu.org/licenses/>. 
 */
 
-//#############################################################################
-//# Cambios:
-//# =========
-//# - Hace de interface con la libreria dsphchrono.dll. (03-05-2016)
-//# - Permite compilar sin librerias de CHRONO. (13-12-2019)
-//:# - Comprueba opcion active en elementos de primer y segundo nivel. (19-03-2020)  
-//#############################################################################
+//:#############################################################################
+//:# Cambios:
+//:# =========
+//:# - Hace de interface con la libreria dsphchrono.dll. (03-05-2016)
+//:# - Permite compilar sin librerias de CHRONO. (13-12-2019)
+//:# - Comprueba opcion active en elementos de primer y segundo nivel. (19-03-2020) 
+//:# - Permite la ejecucion de ChLinks con coeficientes variables de stiffness
+//:#   y damping. (04-10-2020)  
+//:#############################################################################
 
 /// \file JChronoObjects.h \brief Declares the class \ref JChronoObjects.
 
@@ -50,6 +52,7 @@ class JChBody;
 class JChBodyFloating;
 class JChLink;
 class DSPHChronoLib;
+class JLinearValue;
 
 //##############################################################################
 //# JChronoObjects
@@ -67,6 +70,10 @@ protected:
   std::string CaseName;
   const double Dp;
   const word MkBoundFirst;
+
+  bool UseVariableCoeff; ///<Indicates the use of variable coefficients
+  std::vector<JLinearValue*> StiffnessV; ///<For variable stiffness
+  std::vector<JLinearValue*> DampingV;   ///<For variable damping
 
   unsigned Solver; 
   int OmpThreads;     ///<Max number of OpenMP threads in execution on CPU host (minimum 1).
@@ -110,6 +117,9 @@ protected:
   void SaveVtkScheme_Spring(JVtkLib *sh,word mk,word mk1,tdouble3 pt0,tdouble3 pt1
     ,double restlength,double radius,double revlength,int nside)const;
   void SaveVtkScheme()const;
+
+  void SetVariableCoeff(const double timestep);
+  void ReadCoeffs(JChLink *link,const JXml *sxml,TiXmlElement* ele);
 
 public:
   JChronoObjects(JLog2* log,const std::string &dirdata,const std::string &casename

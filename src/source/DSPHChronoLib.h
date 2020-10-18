@@ -15,20 +15,22 @@
  You should have received a copy of the GNU General Public License, along with DualSPHysics. If not, see <http://www.gnu.org/licenses/>. 
 */
 
-//#############################################################################
-//# Cambios:
-//# =========
-//# - Recibe parametros del objeto en una structuctura. (03-05-2016)
-//# - Codigo adaptado al estilo de DualSPHysics. (03-05-2016)
-//# - Uso de JChronoData para configurar y gestionar varios objetos con 
-//#   con multiples uniones. (10-05-2016)
-//# - Nuevo atributo DataDir en JChronoData. (10-05-2016)
-//# - Cambio de solver e integrador para evitar valores NaN. (23-05-2016)
-//# - Procesa todos los objetos de una vez. (26-05-2016)
-//# - Se cambio el nombre de fomegavel por fomegaace. (27-05-2016)
-//# - Funciones ApplyInitialVel y ApplyImposedVel para aplicar velocidades
-//#  externas (29-06-2020).
-//#############################################################################
+//:#############################################################################
+//:# Cambios:
+//:# =========
+//:# - Recibe parametros del objeto en una structuctura. (03-05-2016)
+//:# - Codigo adaptado al estilo de DualSPHysics. (03-05-2016)
+//:# - Uso de JChronoData para configurar y gestionar varios objetos con 
+//:#   con multiples uniones. (10-05-2016)
+//:# - Nuevo atributo DataDir en JChronoData. (10-05-2016)
+//:# - Cambio de solver e integrador para evitar valores NaN. (23-05-2016)
+//:# - Procesa todos los objetos de una vez. (26-05-2016)
+//:# - Se cambio el nombre de fomegavel por fomegaace. (27-05-2016)
+//:# - Funciones ApplyInitialVel y ApplyImposedVel para aplicar velocidades
+//:#  externas (29-06-2020).
+//:# - Permite la simulacion de ChLinks con coeficientes variables de stiffness 
+//:#   y damping. (v5.0.156 / 04-10-2020)
+//:#############################################################################
 
 /// \file DSPHChronoLib.h \brief Declares the class \ref DSPHChronoLib which is the interface between DualSPHysics and Chrono.
 
@@ -83,19 +85,19 @@ protected:
 
 public:
 
-  ///Initialize floating body.
+  /// Initialize floating body.
   virtual void Config(std::string dirout, bool svdata, bool simulate2d){};
 
-  ///Initialize floating body.
+  /// Initialize floating body.
   virtual void Config_Inertia(){};
 
-  ///Compute a single timestep for each floating and moving body.
+  /// Compute a single timestep for each floating and moving body.
   virtual bool RunChrono(double timestep, double dt, bool predictor)=0;
 
-  ///Saves forces for each body and link (ChronoLink_forces.csv, ChronoBody_forces.csv).
+  /// Saves forces for each body and link (ChronoLink_forces.csv, ChronoBody_forces.csv).
   virtual void SaveForces(){};
 
-  ///Obtains positions of Spring link.
+  /// Obtains positions of Spring link.
   virtual bool GetSpringLinkPositions(const std::string &linkname, tdouble3 &p1, tdouble3 &p2)const=0;
 
   /// Obtains RestLength of Spring link.
@@ -104,22 +106,22 @@ public:
   /// Modifies RestLength of Spring link.
   virtual void SetSpringLinkRestLength(const std::string &linkname, double restlength)const{};
 
-  ///Obtains center of body.
+  /// Obtains center of body.
   virtual bool GetBodyCenter(const std::string &bodyname, tdouble3 &pcen)const=0;
 
-  ///Returns pointer to ChronoData object.
+  /// Returns pointer to ChronoData object.
   const JChronoData* GetChronoData(){ return(&ChData); }
 
-  ///Loads floating data to calculate coupling with Chrono.
+  /// Loads floating data to calculate coupling with Chrono.
   bool SetFtData(word mkbound, const tfloat3 &face, const tfloat3 &fomegaace);
 
-  ///Loads imposed velocity for floating to calculate coupling with Chrono.
-  bool SetFtDataVel(word mkbound,const tfloat3 &vlin,const tfloat3 &vang);
+  /// Loads imposed velocity for floating to calculate coupling with Chrono.
+  bool SetFtDataVel(word mkbound,const tfloat3 &vlin,const tfloat3 &vang); 
   
-  ///Obtains floating data from coupling with Chrono.
+  /// Obtains floating data from coupling with Chrono.
   bool GetFtData(word mkbound,tdouble3 &fcenter,tfloat3 &fvel,tfloat3 &fomega)const;
 
-  ///Loads motion data to calculate coupling with Chrono.
+  /// Loads motion data to calculate coupling with Chrono.
   bool SetMovingData(word mkbound,bool simple,const tdouble3 &msimple,const tmatrix4d &mmatrix,double stepdt);
   
   /// Adds the material properties to chrono object
@@ -146,19 +148,19 @@ public:
   DSPHChronoLibSC(const JChronoData &chdata);
   ~DSPHChronoLibSC();
 
-  ///Initialize floating body.
+  /// Initialize floating body.
   void Config(std::string dirout,bool svdata,bool simulate2d);
 
-  ///Initialize floating body.
+  /// Initialize floating body.
   void Config_Inertia();
 
-  ///Compute a single timestep for each floating and moving body.
+  /// Compute a single timestep for each floating and moving body.
   bool RunChrono(double timestep,double dt,bool predictor);
 
-  ///Saves forces for each body and link (ChronoLink_forces.csv,ChronoBody_forces.csv).
+  /// Saves forces for each body and link (ChronoLink_forces.csv,ChronoBody_forces.csv).
   void SaveForces();
 
-  ///Obtains positions of Spring link.
+  /// Obtains positions of Spring link.
   bool GetSpringLinkPositions(const std::string &linkname,tdouble3 &p1,tdouble3 &p2)const;
 
   /// Obtains RestLength of Spring link.
@@ -167,8 +169,11 @@ public:
   /// Modifies RestLength of Spring link.
   void SetSpringLinkRestLength(const std::string &linkname,double restlength)const;
 
-  ///Obtains center of body.
+  /// Obtains center of body.
   bool GetBodyCenter(const std::string &bodyname,tdouble3 &pcen)const;
+
+  /// Establishes the variable coefficients to the link objects.
+  void SetVariableCoeff();
 };
 
 
@@ -186,19 +191,19 @@ public:
   DSPHChronoLibMC(const JChronoData &chdata);
   ~DSPHChronoLibMC();
 
-  ///Initialize floating body.
+  /// Initialize floating body.
   void Config(std::string dirout,bool svdata,bool simulate2d);
 
-  ///Initialize floating body.
+  /// Initialize floating body.
   void Config_Inertia();
 
-  ///Compute a single timestep for each floating and moving body.
+  /// Compute a single timestep for each floating and moving body.
   bool RunChrono(double timestep,double dt,bool predictor);
 
-  ///Saves forces for each body and link (ChronoLink_forces.csv,ChronoBody_forces.csv).
+  /// Saves forces for each body and link (ChronoLink_forces.csv,ChronoBody_forces.csv).
   void SaveForces();
 
-  ///Obtains positions of Spring link.
+  /// Obtains positions of Spring link.
   bool GetSpringLinkPositions(const std::string &linkname,tdouble3 &p1,tdouble3 &p2)const;
 
   /// Obtains RestLength of Spring link.
@@ -207,8 +212,11 @@ public:
   /// Modifies RestLength of Spring link.
   void SetSpringLinkRestLength(const std::string &linkname,double restlength)const;
 
-  ///Obtains center of body.
+  /// Obtains center of body.
   bool GetBodyCenter(const std::string &bodyname,tdouble3 &pcen)const;
+
+  /// Establishes the variable coefficients to the link objects.
+  void SetVariableCoeff();
 };
 #endif //!DISABLE_CHRONO_OMP
 

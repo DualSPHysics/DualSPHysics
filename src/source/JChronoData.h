@@ -315,12 +315,15 @@ public:
 //# JChLink
 //##############################################################################
 /// \brief Manages the info of each link between bodies.
+
 class JChLink : public JChObject
 {
 public:
   ///<Types of link.
   typedef enum{ LK_Hinge, LK_Spheric, LK_PointLine, LK_LinearSpring, LK_CoulombDamping, LK_Pulley }TpLink;
-
+  
+  bool VariableK; ///<Indicates if it is using a variable stiffness coefficient along time.
+  bool VariableC; ///<Indicates if it is using a variable damping coefficient along time.
 
   /// Structure with parameters to create VTK of spring.
   typedef struct StrSaveSpring{
@@ -385,9 +388,15 @@ public:
   
   double GetStiffness()const{ return(Stiffness); } 
   double GetDamping()  const{ return(Damping);   }
+  
+  bool GetVariableK()  const{ return(VariableK); } 
+  bool GetVariableC()  const{ return(VariableC);   }
 
   void SetStiffness(double v){ Stiffness=v; } 
   void SetDamping  (double v){ Damping=v;   } 
+  
+  void SetVariableK(bool v){ VariableK=v; } 
+  void SetVariableC(bool v){ VariableC=v;   } 
 };
 
 //##############################################################################
@@ -538,6 +547,8 @@ private:
   int OmpThreads;
   bool UseFEA;                  //<chrono_fea>
   TpContactMethod ContactMethod;
+  bool UseVariableCoeff;
+
 public:
   JChronoData();
   JChronoData(const JChronoData &src);
@@ -603,13 +614,18 @@ public:
 
   const JChBody* GetBody(unsigned ipos)const;
   const JChBody* GetBodyByMk(word mkbound)const;
-  const JChLink* GetLink(unsigned ipos)const;
+  JChLink* GetLink(unsigned ipos)const;
+  unsigned GetPosLink(const JChLink *link)const;
+
   std::vector<const JChLink*> GetLinkByTp(JChLink::TpLink type)const;
   bool BodyBelongsLink(unsigned idbody1,JChLink::TpLink type)const;
 
   const JChBodyFloating* GetBodyFloating(word mkbound)const;
   const JChBodyMoving*   GetBodyMoving  (word mkbound)const;
   const JChBodyFixed*    GetBodyFixed   (word mkbound)const;
+
+  bool GetUseVariableCoeff()const{return(UseVariableCoeff);}
+  void SetUseVariableCoeff(bool v){UseVariableCoeff=v;}
 };
 
 
