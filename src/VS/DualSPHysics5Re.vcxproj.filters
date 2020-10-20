@@ -460,6 +460,15 @@
     <ClInclude Include="..\source\JSphInOutZsurf.h">
       <Filter>Source\Inlet</Filter>
     </ClInclude>
+    <ClInclude Include="..\source\JComputeMotionRef.h">
+      <Filter>Source\Other</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JFtMotionSave.h">
+      <Filter>Source\Other</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JPartMotionDef.h">
+      <Filter>Source\Other</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\source\main.cpp">
@@ -740,6 +749,12 @@
     </ClCompile>
     <ClCompile Include="..\source\JSphInOutZsurf.cpp">
       <Filter>Source\Inlet</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JComputeMotionRef.cpp">
+      <Filter>Source\Other</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JFtMotionSave.cpp">
+      <Filter>Source\Other</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

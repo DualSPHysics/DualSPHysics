@@ -24,6 +24,7 @@
 #include <cmath>
 #include <cstring>
 #include <cstdlib>
+#include <climits>
 #include <iostream>
 #include <sstream>
 
@@ -40,7 +41,8 @@ JPartFloatBi4Save::JPartFloatBi4Save(){
   Data=NULL;
   HeadMkbound=NULL; HeadBegin=NULL; HeadCount=NULL; 
   HeadMass=NULL; HeadMassp=NULL; HeadRadius=NULL;
-  PartCenter=NULL; PartFvel=NULL; PartFomega=NULL;
+  PartCenter=NULL; PartPosRef=NULL; PartFVelLin=NULL; PartFVelAng=NULL;
+  PartFAceLin=NULL; PartFAceAng=NULL;
   Reset();
 }
 
@@ -61,7 +63,9 @@ void JPartFloatBi4Save::Reset(){
   ResetData();
   FormatVer=FormatVerDef;
   Dir="";
+  FileFull="";
   MkBoundFirst=0;
+  PosRefData=false;
   InitialSaved=false;
 }
 
@@ -98,8 +102,11 @@ long long JPartFloatBi4Save::GetAllocMemory()const{
   if(HeadMassp)  s=s+sizeof(float)   *FtCount;
   if(HeadRadius) s=s+sizeof(float)   *FtCount;
   if(PartCenter) s=s+sizeof(tdouble3)*FtCount;
-  if(PartFvel)   s=s+sizeof(tfloat3) *FtCount;
-  if(PartFomega) s=s+sizeof(tfloat3) *FtCount;
+  if(PartPosRef) s=s+sizeof(tdouble3)*FtCount*3;
+  if(PartFVelLin)s=s+sizeof(tfloat3) *FtCount;
+  if(PartFVelAng)s=s+sizeof(tfloat3) *FtCount;
+  if(PartFAceLin)s=s+sizeof(tfloat3) *FtCount;
+  if(PartFAceAng)s=s+sizeof(tfloat3) *FtCount;
   return(s);
 }
 
@@ -117,8 +124,11 @@ void JPartFloatBi4Save::ResizeFtData(unsigned ftcount){
   delete[] HeadMassp;   HeadMassp=NULL;
   delete[] HeadRadius;  HeadRadius=NULL;
   delete[] PartCenter;  PartCenter=NULL;
-  delete[] PartFvel;    PartFvel=NULL;
-  delete[] PartFomega;  PartFomega=NULL;
+  delete[] PartPosRef;  PartPosRef=NULL;
+  delete[] PartFVelLin; PartFVelLin=NULL;
+  delete[] PartFVelAng; PartFVelAng=NULL;
+  delete[] PartFAceLin; PartFAceLin=NULL;
+  delete[] PartFAceAng; PartFAceAng=NULL;
   //-Asigna memoria. Assign memory.
   if(FtCount){
     HeadMkbound=new word    [FtCount];
@@ -128,8 +138,11 @@ void JPartFloatBi4Save::ResizeFtData(unsigned ftcount){
     HeadMassp  =new float   [FtCount];
     HeadRadius =new float   [FtCount];
     PartCenter =new tdouble3[FtCount];
-    PartFvel   =new tfloat3 [FtCount];
-    PartFomega =new tfloat3 [FtCount];
+    if(PosRefData)PartPosRef=new tdouble3[FtCount*3];
+    PartFVelLin=new tfloat3 [FtCount];
+    PartFVelAng=new tfloat3 [FtCount];
+    PartFAceLin=new tfloat3 [FtCount];
+    PartFAceAng=new tfloat3 [FtCount];
     memset(HeadMkbound,0,sizeof(word)    *FtCount);
     memset(HeadBegin  ,0,sizeof(unsigned)*FtCount);
     memset(HeadCount  ,0,sizeof(unsigned)*FtCount);
@@ -145,9 +158,12 @@ void JPartFloatBi4Save::ResizeFtData(unsigned ftcount){
 /// Clears data of floatings by PART.
 //==============================================================================
 void JPartFloatBi4Save::ClearPartData(){
-  if(PartCenter)memset(PartCenter ,0,sizeof(tdouble3)*FtCount);
-  if(PartFvel)  memset(PartFvel   ,0,sizeof(tfloat3) *FtCount);
-  if(PartFomega)memset(PartFomega ,0,sizeof(tfloat3) *FtCount);
+  if(PartCenter )memset(PartCenter ,0,sizeof(tdouble3)*FtCount);
+  if(PartPosRef )memset(PartPosRef ,0,sizeof(tdouble3)*FtCount*3);
+  if(PartFVelLin)memset(PartFVelLin,0,sizeof(tfloat3) *FtCount);
+  if(PartFVelAng)memset(PartFVelAng,0,sizeof(tfloat3) *FtCount);
+  if(PartFAceLin)memset(PartFAceLin,0,sizeof(tfloat3) *FtCount);
+  if(PartFAceAng)memset(PartFAceAng,0,sizeof(tfloat3) *FtCount);
 }
 
 //==============================================================================
@@ -170,11 +186,13 @@ std::string JPartFloatBi4Save::GetFileNamePart(){
 /// Configuracion de datos de cabecera.
 /// Configuration of header data.
 //==============================================================================
-void JPartFloatBi4Save::Config(std::string appname,const std::string &dir,word mkboundfirst,unsigned ftcount){
+void JPartFloatBi4Save::Config(std::string appname,const std::string &dir
+  ,word mkboundfirst,unsigned ftcount,bool saveposref){
   Reset();
   AppName=appname;
   Dir=fun::GetDirWithSlash(dir);
   MkBoundFirst=mkboundfirst;
+  PosRefData=saveposref;
   ResizeFtData(ftcount);
 }
 
@@ -198,11 +216,12 @@ void JPartFloatBi4Save::AddHeadData(unsigned cf,word mkbound,unsigned begin
 /// Grabacion inicial de fichero con info de Data.
 /// Initial file recording with info from Data.
 //==============================================================================
-void JPartFloatBi4Save::SaveInitial(){
+void JPartFloatBi4Save::SaveInitial(std::string file){
   if(!InitialSaved){
     Data->SetvText("AppName",AppName);
     Data->SetvUint("FormatVer",FormatVer);
     Data->SetvUshort("MkBoundFirst",MkBoundFirst);
+    Data->SetvBool("PosRefData",PosRefData);
     Data->SetvUint("FtCount",FtCount);
     Data->CreateArray("mkbound",JBinaryDataDef::DatUshort,FtCount,HeadMkbound,false);
     Data->CreateArray("begin"  ,JBinaryDataDef::DatUint  ,FtCount,HeadBegin  ,false);
@@ -211,7 +230,9 @@ void JPartFloatBi4Save::SaveInitial(){
     Data->CreateArray("massp"  ,JBinaryDataDef::DatFloat ,FtCount,HeadMassp  ,false);
     Data->CreateArray("radius" ,JBinaryDataDef::DatFloat ,FtCount,HeadRadius ,false);
     Part->SetHide(true);
-    Data->SaveFile(Dir+GetFileNamePart(),true,false);
+    if(file.empty())FileFull=Dir+GetFileNamePart();
+    else FileFull=Dir+file;
+    Data->SaveFile(FileFull,true,false);
     InitialSaved=true;
   }
 }
@@ -220,11 +241,26 @@ void JPartFloatBi4Save::SaveInitial(){
 /// Anhade datos de particulas de de nuevo part.
 /// Adds data of particles to new part.
 //==============================================================================
-void JPartFloatBi4Save::AddPartData(unsigned cf,const tdouble3 &center,const tfloat3 &fvel,const tfloat3 &fomega){
+void JPartFloatBi4Save::AddPartData(unsigned cf,const tdouble3 &center
+  ,const tfloat3 &fvellin,const tfloat3 &fvelang
+  ,const tfloat3 &facelin,const tfloat3 &faceang)
+{
   if(cf>=FtCount)Run_Exceptioon("Number of floating is invalid.");
   PartCenter[cf]=center;
-  PartFvel[cf]=fvel;
-  PartFomega[cf]=fomega;
+  PartFVelLin[cf]=fvellin;
+  PartFVelAng[cf]=fvelang;
+  PartFAceLin[cf]=facelin;
+  PartFAceAng[cf]=faceang;
+}
+
+//==============================================================================
+/// Anhade datos de posicion de particulas de de nuevo part.
+/// Adds postion reference data of particles to new part.
+//==============================================================================
+void JPartFloatBi4Save::AddPartDataPosRef(unsigned ftcount,const tdouble3 *posref)
+{
+  if(ftcount!=FtCount)Run_Exceptioon("Number of floating is invalid.");
+  memcpy(PartPosRef,posref,sizeof(tdouble3)*ftcount*3);
 }
 
 
@@ -232,18 +268,24 @@ void JPartFloatBi4Save::AddPartData(unsigned cf,const tdouble3 &center,const tfl
 /// Anhade datos de particulas de de nuevo part.
 /// Adds data of particles to new part.
 //==============================================================================
-JBinaryData* JPartFloatBi4Save::AddPartFloat(unsigned cpart,double timestep,double demdtforce){
+JBinaryData* JPartFloatBi4Save::AddPartFloat(unsigned cpart,unsigned step
+  ,double timestep,double demdtforce)
+{
   //-Configura item Part. Configures item Part.
   Part->Clear();
   Cpart=cpart;
   Part->SetName(GetNamePart(cpart));
   Part->SetvUint("Cpart",cpart);
+  Part->SetvUint("Step",step);
   Part->SetvDouble("TimeStep",timestep);
   Part->SetvDouble("DemDtForce",demdtforce);
   //-Crea array con datos de floatings. Create array with floatings data.
-  Part->CreateArray("center",JBinaryDataDef::DatDouble3,FtCount,PartCenter,false);
-  Part->CreateArray("fvel",JBinaryDataDef::DatFloat3,FtCount,PartFvel,false);
-  Part->CreateArray("fomega",JBinaryDataDef::DatFloat3,FtCount,PartFomega,false);
+  Part->CreateArray("center" ,JBinaryDataDef::DatDouble3,FtCount,PartCenter,false);
+  Part->CreateArray("fvel"   ,JBinaryDataDef::DatFloat3 ,FtCount,PartFVelLin,false);
+  Part->CreateArray("fomega" ,JBinaryDataDef::DatFloat3 ,FtCount,PartFVelAng,false);
+  Part->CreateArray("facelin",JBinaryDataDef::DatFloat3 ,FtCount,PartFAceLin,false);
+  Part->CreateArray("faceang",JBinaryDataDef::DatFloat3 ,FtCount,PartFAceAng,false);
+  if(PartPosRef)Part->CreateArray("posref" ,JBinaryDataDef::DatDouble3,FtCount*3,PartPosRef,false);
   ClearPartData();
   return(Part);
 }
@@ -254,7 +296,7 @@ JBinaryData* JPartFloatBi4Save::AddPartFloat(unsigned cpart,double timestep,doub
 //==============================================================================
 void JPartFloatBi4Save::SavePartFloat(){
   if(!InitialSaved)SaveInitial();
-  Part->SaveFileListApp(Dir+GetFileNamePart(),"JPartFloatBi4",true,true);
+  Part->SaveFileListApp(FileFull,"JPartFloatBi4",true,true);
   Part->RemoveArrays();
 }
 
@@ -271,7 +313,9 @@ JPartFloatBi4Load::JPartFloatBi4Load(){
   Data=NULL;
   HeadMkbound=NULL; HeadBegin=NULL; HeadCount=NULL; 
   HeadMass=NULL; HeadMassp=NULL; HeadRadius=NULL;
-  PartCenter=NULL; PartFvel=NULL; PartFomega=NULL;
+  PartCenter=NULL; PartPosRef=NULL;
+  PartFVelLin=NULL; PartFVelAng=NULL;
+  PartFAceLin=NULL; PartFAceAng=NULL;
   Reset();
 }
 
@@ -293,6 +337,7 @@ void JPartFloatBi4Load::Reset(){
   delete Data; 
   Data=new JBinaryData("JPartFloatBi4");
   MkBoundFirst=0;
+  PosRefData=false;
   FtCount=PartCount=0;
   ResizeFtData(0);
   Part=NULL;
@@ -305,6 +350,7 @@ void JPartFloatBi4Load::Reset(){
 //==============================================================================
 void JPartFloatBi4Load::ResetPart(){
   Part=NULL;
+  Step=UINT_MAX;
   TimeStep=DemDtForce=0;
 }
 
@@ -322,8 +368,11 @@ void JPartFloatBi4Load::ResizeFtData(unsigned ftcount){
   delete[] HeadMassp;   HeadMassp=NULL;
   delete[] HeadRadius;  HeadRadius=NULL;
   delete[] PartCenter;  PartCenter=NULL;
-  delete[] PartFvel;    PartFvel=NULL;
-  delete[] PartFomega;  PartFomega=NULL;
+  delete[] PartPosRef;  PartPosRef=NULL;
+  delete[] PartFVelLin; PartFVelLin=NULL;
+  delete[] PartFVelAng; PartFVelAng=NULL;
+  delete[] PartFAceLin; PartFAceLin=NULL;
+  delete[] PartFAceAng; PartFAceAng=NULL;
   //-Asigna memoria. Asign memory
   if(FtCount){
     HeadMkbound=new word    [FtCount];
@@ -333,8 +382,11 @@ void JPartFloatBi4Load::ResizeFtData(unsigned ftcount){
     HeadMassp  =new float   [FtCount];
     HeadRadius =new float   [FtCount];
     PartCenter =new tdouble3[FtCount];
-    PartFvel   =new tfloat3 [FtCount];
-    PartFomega =new tfloat3 [FtCount];
+    if(PosRefData)PartPosRef=new tdouble3[FtCount*3];
+    PartFVelLin=new tfloat3 [FtCount];
+    PartFVelAng=new tfloat3 [FtCount];
+    PartFAceLin=new tfloat3 [FtCount];
+    PartFAceAng=new tfloat3 [FtCount];
     memset(HeadMkbound,0,sizeof(word)    *FtCount);
     memset(HeadBegin  ,0,sizeof(unsigned)*FtCount);
     memset(HeadCount  ,0,sizeof(unsigned)*FtCount);
@@ -342,8 +394,11 @@ void JPartFloatBi4Load::ResizeFtData(unsigned ftcount){
     memset(HeadMassp  ,0,sizeof(float)   *FtCount);
     memset(HeadRadius ,0,sizeof(float)   *FtCount);
     memset(PartCenter ,0,sizeof(tdouble3)*FtCount);
-    memset(PartFvel   ,0,sizeof(tfloat3) *FtCount);
-    memset(PartFomega ,0,sizeof(tfloat3) *FtCount);
+    if(PartPosRef)memset(PartPosRef,0,sizeof(tdouble3)*FtCount*3);
+    memset(PartFVelLin,0,sizeof(tfloat3) *FtCount);
+    memset(PartFVelAng,0,sizeof(tfloat3) *FtCount);
+    memset(PartFAceLin,0,sizeof(tfloat3) *FtCount);
+    memset(PartFAceAng,0,sizeof(tfloat3) *FtCount);
   }
 }
 
@@ -398,6 +453,7 @@ void JPartFloatBi4Load::LoadFile(const std::string &dir){
   FormatVer=head->GetvUint("FormatVer",true,0);
   if(FormatVer<FormatVerDef)Run_ExceptioonFile(fun::PrintStr("The data format version \'%u\' is not valid. Version \'%u\' required.",FormatVer,FormatVerDef),FileData);
   MkBoundFirst=head->GetvUshort("MkBoundFirst",true,0);
+  PosRefData=head->GetvBool("PosRefData",true,false);
   FtCount=head->GetvUint("FtCount",true,0);
   PartCount=Data->GetItemsCount()-1;
   FirstPart=(PartCount? Data->GetItem(1)->GetvUint("Cpart",true,0): 0);
@@ -469,6 +525,7 @@ void JPartFloatBi4Load::LoadPart(unsigned cpart){
     if(sname>spartname && name.substr(sname-spartname)==partname)Part=Data->GetItem(c);
   }
   if(Part){
+    Step=Part->GetvUint("Step",true,UINT_MAX);
     TimeStep=Part->GetvDouble("TimeStep");
     DemDtForce=Part->GetvDouble("DemDtForce");
     {//-Loads array center.
@@ -477,11 +534,22 @@ void JPartFloatBi4Load::LoadPart(unsigned cpart){
     }
     {//-Loads array fvel.
       JBinaryDataArray *ar=CheckArray(Part,"fvel",JBinaryDataDef::DatFloat3);
-      memcpy(PartFvel,(const tfloat3 *)ar->GetDataPointer(),sizeof(tfloat3)*FtCount);
+      memcpy(PartFVelLin,(const tfloat3 *)ar->GetDataPointer(),sizeof(tfloat3)*FtCount);
     }
     {//-Loads array fomega.
       JBinaryDataArray *ar=CheckArray(Part,"fomega",JBinaryDataDef::DatFloat3);
-      memcpy(PartFomega,(const tfloat3 *)ar->GetDataPointer(),sizeof(tfloat3)*FtCount);
+      memcpy(PartFVelAng,(const tfloat3 *)ar->GetDataPointer(),sizeof(tfloat3)*FtCount);
+    }
+    FAceData=(Part->GetArray("facelin") && Part->GetArray("faceang"));
+    if(FAceData){
+      {//-Loads array facelin when it is available.
+        JBinaryDataArray *ar=CheckArray(Part,"facelin",JBinaryDataDef::DatFloat3);
+        memcpy(PartFAceLin,(const tfloat3 *)ar->GetDataPointer(),sizeof(tfloat3)*FtCount);
+      }
+      {//-Loads array faceang when it is available.
+        JBinaryDataArray *ar=CheckArray(Part,"faceang",JBinaryDataDef::DatFloat3);
+        memcpy(PartFAceAng,(const tfloat3 *)ar->GetDataPointer(),sizeof(tfloat3)*FtCount);
+      }
     }
   }
   else Run_Exceptioon("PART not found.");

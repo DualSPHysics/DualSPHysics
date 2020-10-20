@@ -249,14 +249,16 @@ void FtCalcForces(unsigned ftcount,tfloat3 gravity
   ,const float4 *ftoinertiaini8,const float *ftoinertiaini1
   ,const float3 *ftoforcessum,float3 *ftoforces,const float3 *ftoextforces);
 void FtCalcForcesRes(unsigned ftcount,bool simulate2d,double dt
-  ,const float3 *ftoomega,const float3 *ftovel,const double3 *ftocenter,const float3 *ftoforces
+  ,const float3 *ftovelace,const double3 *ftocenter,const float3 *ftoforces
   ,float3 *ftoforcesres,double3 *ftocenterres);
 void FtApplyConstraints(unsigned ftcount,const byte *ftoconstraints
   ,float3 *ftoforces,float3 *ftoforcesres);
 void FtUpdate(bool periactive,bool predictor,unsigned ftcount,double dt
   ,const float4 *ftodatp,const float3 *ftoforcesres,double3 *ftocenterres,const unsigned *ftridp
-  ,double3 *ftocenter,float3 *ftoangles,float3 *ftovel,float3 *ftoomega
+  ,double3 *ftocenter,float3 *ftoangles,float3 *ftovelace
   ,double2 *posxy,double *posz,unsigned *dcell,float4 *velrhop,typecode *code);
+void FtGetPosRef(unsigned np,const unsigned *idpref,const unsigned *ftridp //<vs_ftmottionsv>
+  ,const double2 *posxy,const double *posz,double *posref);                 //<vs_ftmottionsv>
 
 //-Kernels for periodic conditions.
 void PeriodicIgnore(unsigned n,typecode *code);

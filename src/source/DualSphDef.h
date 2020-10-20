@@ -242,6 +242,8 @@ typedef struct{
   tfloat3 angles;   ///<Rotation angles from center (angle xz, angle yz, angle xy) (units:Rad).
   tfloat3 fvel;     ///<Linear velocity of the floating object (units:m/s).
   tfloat3 fomega;   ///<Angular velocity of the floating object (units:rad/s).
+  tfloat3 facelin;  ///<Linear acceleration of the floating object computed from velocity difference (units:m/s^2).
+  tfloat3 faceang;  ///<Angular acceleration of the floating object computed from velocity difference (units:rad/s^2).
   tmatrix3f inertiaini; ///<Initial state inertia tensor in world coordinates (computed or user-given).
   bool usechrono;   ///<Activates the use of Chrono library.
 }StFloatingData;

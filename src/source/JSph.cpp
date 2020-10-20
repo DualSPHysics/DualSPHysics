@@ -54,6 +54,7 @@
 #include "JDsInitialize.h"
 #include "JSphInOut.h"
 #include "JSphBoundCorr.h"
+#include "JFtMotionSave.h"  //<vs_ftmottionsv>
 #include "JDsPips.h"
 #include "JLinearValue.h"
 #include "JPartNormalData.h"
@@ -105,6 +106,7 @@ JSph::JSph(bool cpu,bool mgpu,bool withmpi):Cpu(cpu),Mgpu(mgpu),WithMpi(withmpi)
   PartsLoaded=NULL;
   InOut=NULL;
   BoundCorr=NULL;
+  FtMotSave=NULL; //<vs_ftmottionsv>
   DsPips=NULL;
   NuxLib=NULL;
   InitVars();
@@ -141,6 +143,7 @@ JSph::~JSph(){
   delete PartsLoaded;   PartsLoaded=NULL;
   delete InOut;         InOut=NULL;
   delete BoundCorr;     BoundCorr=NULL;
+  delete FtMotSave;     FtMotSave=NULL;   //<vs_ftmottionsv>
   delete DsPips;        DsPips=NULL;
   delete NuxLib;        NuxLib=NULL;
 }
@@ -572,6 +575,7 @@ void JSph::LoadConfigParameters(const JXml *xml){
   JCaseEParms eparms;
   eparms.LoadXml(xml,"case.execution.parameters");
   if(eparms.Exists("FtSaveAce"))SaveFtAce=(eparms.GetValueInt("FtSaveAce",true,0)!=0); //-For Debug.
+  if(eparms.GetValueDouble("FtSaveMotion",true,-1.)>=0)FtMotSave=new JFtMotionSave(eparms.GetValueDouble("FtSaveMotion"),Log); //<vs_ftmottionsv>
   if(eparms.Exists("PosDouble")){
     Log->PrintWarning("The parameter \'PosDouble\' is deprecated.");
     SvPosDouble=(eparms.GetValueInt("PosDouble")==2);
@@ -1059,6 +1063,7 @@ void JSph::LoadCaseConfig(const JSphCfgRun *cfg){
         fobj->angles=TFloat3(0);
         fobj->fvel=ToTFloat3(fblock.GetLinearVelini());
         fobj->fomega=ToTFloat3(fblock.GetAngularVelini());
+        fobj->facelin=fobj->faceang=TFloat3(0);
         fobj->inertiaini=ToTMatrix3f(fblock.GetInertia());
         //-Chrono configuration.
         fobj->usechrono=(ChronoObjects && ChronoObjects->ConfigBodyFloating(fblock.GetMkType()
@@ -2265,7 +2270,7 @@ void JSph::ConfigSaveData(unsigned piece,unsigned pieces,std::string div){
   //-Configura objeto para grabacion de datos de floatings.
   if(SvData&SDAT_Binx && FtCount){
     DataFloatBi4=new JPartFloatBi4Save();
-    DataFloatBi4->Config(AppName,DirDataOut,MkInfo->GetMkBoundFirst(),FtCount);
+    DataFloatBi4->Config(AppName,DirDataOut,MkInfo->GetMkBoundFirst(),FtCount,false);
     for(unsigned cf=0;cf<FtCount;cf++){
       const StFloatingData &ft=FtObjs[cf];
       DataFloatBi4->AddHeadData(cf,ft.mkbound,ft.begin,ft.count,ft.mass,ft.massp,ft.radius);
@@ -2277,6 +2282,20 @@ void JSph::ConfigSaveData(unsigned piece,unsigned pieces,std::string div){
   //-Crea objeto para almacenar las particulas excluidas hasta su grabacion.
   PartsOut=new JDsPartsOut();
 }
+
+//<vs_ftmottionsv_ini>  
+//==============================================================================
+/// Configures object to store floating motion data with high frequency.
+//==============================================================================
+void JSph::ConfigFtMotionSave(unsigned np,const tdouble3 *pos,const unsigned *idp){
+  if(FtCount){
+    FtMotSave->Config(AppName,DirDataOut,MkInfo->GetMkBoundFirst(),FtCount,FtObjs,np,pos,idp);
+  }
+  else{ 
+    delete FtMotSave; FtMotSave=NULL; 
+  }
+}
+//<vs_ftmottionsv_end>
 
 //==============================================================================
 /// Stores new excluded particles until recordering next PART.
@@ -2514,8 +2533,11 @@ void JSph::SavePartData(unsigned npok,unsigned nout,const JDataArrays& arrays
 
   //-Stores data of floating bodies.
   if(DataFloatBi4){
-    for(unsigned cf=0;cf<FtCount;cf++)DataFloatBi4->AddPartData(cf,FtObjs[cf].center,FtObjs[cf].fvel,FtObjs[cf].fomega);
-    DataFloatBi4->SavePartFloat(Part,TimeStep,(UseDEM? DemDtForce: 0));
+    for(unsigned cf=0;cf<FtCount;cf++){
+      const StFloatingData *v=FtObjs+cf;
+      DataFloatBi4->AddPartData(cf,v->center,v->fvel,v->fomega,v->facelin,v->faceang);
+    }
+    DataFloatBi4->SavePartFloat(Part,Nstep,TimeStep,(UseDEM? DemDtForce: 0));
   }
 
   //-Empties stock of excluded particles.

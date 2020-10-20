@@ -38,6 +38,7 @@
 #include "JTimeControl.h"
 #include "JDsGaugeSystem.h"
 #include "JSphInOut.h"
+#include "JFtMotionSave.h" //<vs_ftmottionsv>  
 #include "JLinearValue.h"
 #include "JDataArrays.h"
 #include "JSphShifting.h"
@@ -118,6 +119,8 @@ void JSphCpuSingle::ConfigDomain(){
 
   //-Computes radius of floating bodies.
   if(CaseNfloat && PeriActive!=0 && !PartBegin)CalcFloatingRadius(Np,Posc,Idpc);
+  //-Configures floating motion data storage with high frequency. //<vs_ftmottionsv>  
+  if(FtMotSave)ConfigFtMotionSave(Np,Posc,Idpc);                  //<vs_ftmottionsv>  
 
   //-Configures Multi-Layer Pistons according particles. | Configura pistones Multi-Layer segun particulas.
   if(MLPistons)MLPistons->PreparePiston(Dp,Np,Idpc,Posc);
@@ -955,8 +958,14 @@ void JSphCpuSingle::RunFloating(double dt,bool predictor){
       if(!predictor){
         FtObjs[cf].center=(PeriActive? UpdatePeriodicPos(fcenter): fcenter);
         FtObjs[cf].angles=ToTFloat3(ToTDouble3(FtObjs[cf].angles)+ToTDouble3(fomega)*dt);
+        FtObjs[cf].facelin=(fvel  -FtObjs[cf].fvel  )/float(dt);
+        FtObjs[cf].faceang=(fomega-FtObjs[cf].fomega)/float(dt);
         FtObjs[cf].fvel=fvel;
         FtObjs[cf].fomega=fomega;
+        //<vs_ftmottionsv_ini>
+        if(FtMotSave && FtMotSave->CheckTime(TimeStep+dt))
+          FtMotSave->SaveFtDataCpu(TimeStep+dt,Nstep+1,FtObjs,Np,Posc,FtRidp);
+        //<vs_ftmottionsv_end>
       }
     }
 

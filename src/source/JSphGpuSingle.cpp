@@ -39,6 +39,7 @@
 #include "JSphGpuSimple_ker.h"
 #include "JDsGaugeSystem.h"
 #include "JSphInOut.h"
+#include "JFtMotionSave.h" //<vs_ftmottionsv>  
 #include "JLinearValue.h"
 #include "JDataArrays.h"
 #include "JDebugSphGpu.h"
@@ -152,6 +153,8 @@ void JSphGpuSingle::ConfigDomain(){
 
   //-Computes radius of floating bodies.
   if(CaseNfloat && PeriActive!=0 && !PartBegin)CalcFloatingRadius(Np,AuxPos,Idp);
+  //-Configures floating motion data storage with high frequency. //<vs_ftmottionsv>  
+  if(FtMotSave)ConfigFtMotionSave(Np,AuxPos,Idp);                 //<vs_ftmottionsv>  
 
   //-Configures Multi-Layer Pistons according particles. | Configura pistones Multi-Layer segun particulas.
   if(MLPistons)MLPistons->PreparePiston(Dp,Np,Idp,AuxPos);
@@ -569,18 +572,21 @@ double JSphGpuSingle::ComputeStep_Sym(){
 void JSphGpuSingle::UpdateFtObjs(){
   if(FtCount && FtObjsOutdated){
     tdouble3 *fcen=FtoAuxDouble6;
-    tfloat3  *fang=FtoAuxFloat9;
-    tfloat3  *fvel=fang+FtCount;
-    tfloat3  *fome=fvel+FtCount;
+    tfloat3  *fang=FtoAuxFloat15;
+    tfloat3  *fvellin=fang+FtCount;
+    tfloat3  *fvelang=fvellin+FtCount;
+    tfloat3  *facelin=fvelang+FtCount;
+    tfloat3  *faceang=facelin+FtCount;
     cudaMemcpy(fcen,FtoCenterg,sizeof(double3)*FtCount,cudaMemcpyDeviceToHost);
     cudaMemcpy(fang,FtoAnglesg,sizeof(float3) *FtCount,cudaMemcpyDeviceToHost);
-    cudaMemcpy(fvel,FtoVelg   ,sizeof(float3) *FtCount,cudaMemcpyDeviceToHost);
-    cudaMemcpy(fome,FtoOmegag ,sizeof(float3) *FtCount,cudaMemcpyDeviceToHost);
+    cudaMemcpy(fvellin,FtoVelAceg,sizeof(float3)*FtCount*4,cudaMemcpyDeviceToHost);
     for(unsigned cf=0;cf<FtCount;cf++){
       FtObjs[cf].center=fcen[cf];
       FtObjs[cf].angles=fang[cf];
-      FtObjs[cf].fvel  =fvel[cf];
-      FtObjs[cf].fomega=fome[cf];
+      FtObjs[cf].fvel  =fvellin[cf];
+      FtObjs[cf].fomega=fvelang[cf];
+      FtObjs[cf].facelin=facelin[cf];
+      FtObjs[cf].faceang=faceang[cf];
     }
   }
   FtObjsOutdated=false;
@@ -597,7 +603,7 @@ void JSphGpuSingle::FtApplyImposedVel(float3 *ftoforcesresg)const{
     const tfloat3 v2=(FtAngularVel[cf]!=NULL? FtAngularVel[cf]->GetValue3f(TimeStep): TFloat3(FLT_MAX));
     if(!ftoforcesresc && (v1!=TFloat3(FLT_MAX) || v2!=TFloat3(FLT_MAX))){
       //-Copies data on GPU memory to CPU memory.
-      ftoforcesresc=FtoAuxFloat9;
+      ftoforcesresc=FtoAuxFloat15;
       cudaMemcpy(ftoforcesresc,ftoforcesresg,sizeof(tfloat3)*FtCount*2,cudaMemcpyDeviceToHost);
     }
     unsigned cfpos=cf*2+1;
@@ -620,7 +626,7 @@ void JSphGpuSingle::FtApplyImposedVel(float3 *ftoforcesresg)const{
 /// Copia las fuerzas externas al array FtoExtForcesg para GPU.
 //==============================================================================
 void JSphGpuSingle::FtCopyExternalForces(){
-  tfloat3 *ftoextforces=FtoAuxFloat9;
+  tfloat3 *ftoextforces=FtoAuxFloat15;
   memset(ftoextforces,0,sizeof(tfloat3)*FtCount*2);
   if(FtLinearForce!=NULL && FtAngularForce!=NULL)for(unsigned cf=0;cf<FtCount;cf++){
     //-Adds external linear forces.
@@ -654,7 +660,7 @@ void JSphGpuSingle::RunFloating(double dt,bool predictor){
     //-Adds accelerations from ForcePoints and Moorings.
     if(ForcePoints){
       //-Initialises forces of floatings.
-      StFtoForces *ftoforces=(StFtoForces *)FtoAuxFloat9;
+      StFtoForces *ftoforces=(StFtoForces *)FtoAuxFloat15;
       memset(ftoforces,0,sizeof(StFtoForces)*FtCount);
       ForcePoints->GetFtMotionData(ftoforces);
       //-Copies data to GPU memory.
@@ -670,7 +676,7 @@ void JSphGpuSingle::RunFloating(double dt,bool predictor){
     cusph::FtCalcForces(FtCount,Gravity,FtoMassg,FtoAnglesg,FtoInertiaini8g,FtoInertiaini1g,FtoForcesSumg,FtoForcesg,FtoExtForcesg);
     
     //-Calculate data to update floatings / Calcula datos para actualizar floatings.
-    cusph::FtCalcForcesRes(FtCount,Simulate2D,dt,FtoOmegag,FtoVelg,FtoCenterg,FtoForcesg,FtoForcesResg,FtoCenterResg);
+    cusph::FtCalcForcesRes(FtCount,Simulate2D,dt,FtoVelAceg,FtoCenterg,FtoForcesg,FtoForcesResg,FtoCenterResg);
     //-Applies imposed velocity.
     if(FtLinearVel!=NULL)FtApplyImposedVel(FtoForcesResg);
     //-Applies motion constraints.
@@ -678,7 +684,7 @@ void JSphGpuSingle::RunFloating(double dt,bool predictor){
     
     //-Saves face and fomegace for debug.
     if(SaveFtAce){
-      StFtoForces *ftoforces=(StFtoForces *)FtoAuxFloat9;
+      StFtoForces *ftoforces=(StFtoForces *)FtoAuxFloat15;
       cudaMemcpy(ftoforces,FtoForcesg,sizeof(tfloat3)*FtCount*2,cudaMemcpyDeviceToHost);
       SaveFtAceFun(dt,predictor,ftoforces);
     }
@@ -688,7 +694,7 @@ void JSphGpuSingle::RunFloating(double dt,bool predictor){
       TmgStop(Timers,TMG_SuFloating);
       TmgStart(Timers,TMG_SuChrono);
       //-Export data / Exporta datos.
-      tfloat3* ftoforces=FtoAuxFloat9;
+      tfloat3* ftoforces=FtoAuxFloat15;
       cudaMemcpy(ftoforces,FtoForcesg,sizeof(tfloat3)*FtCount*2,cudaMemcpyDeviceToHost);
       for(unsigned cf=0;cf<FtCount;cf++)if(FtObjs[cf].usechrono)
         ChronoObjects->SetFtData(FtObjs[cf].mkbound,ftoforces[cf*2],ftoforces[cf*2+1]);
@@ -708,17 +714,23 @@ void JSphGpuSingle::RunFloating(double dt,bool predictor){
     }
 
     //-Apply movement around floating objects / Aplica movimiento sobre floatings.
-    cusph::FtUpdate(PeriActive!=0,predictor,FtCount,dt,FtoDatpg,FtoForcesResg,FtoCenterResg,FtRidpg,FtoCenterg,FtoAnglesg,FtoVelg,FtoOmegag,Posxyg,Poszg,Dcellg,Velrhopg,Codeg);
+    cusph::FtUpdate(PeriActive!=0,predictor,FtCount,dt,FtoDatpg,FtoForcesResg,FtoCenterResg
+      ,FtRidpg,FtoCenterg,FtoAnglesg,FtoVelAceg,Posxyg,Poszg,Dcellg,Velrhopg,Codeg);
 
     //-Stores floating data.
     if(!predictor){
       FtObjsOutdated=true;
+      //<vs_ftmottionsv_ini>
+      if(FtMotSave && FtMotSave->CheckTime(TimeStep+dt)){
+        UpdateFtObjs(); //-Updates floating information on CPU memory.
+        FtMotSave->SaveFtDataGpu(TimeStep+dt,Nstep+1,FtObjs,Np,Posxyg,Poszg,FtRidpg);
+      }
+      //<vs_ftmottionsv_end>
     }
 
     //-Update data of points in FtForces and calculates motion data of affected floatings.
     if(!predictor && ForcePoints){
-      //-Updates floating information on CPU memory.
-      UpdateFtObjs();
+      UpdateFtObjs(); //-Updates floating information on CPU memory.
       ForcePoints->UpdatePoints(TimeStep,dt,FtObjs);
       if(Moorings)Moorings->ComputeForces(Nstep,TimeStep,dt,ForcePoints);
       ForcePoints->ComputeFtMotion();

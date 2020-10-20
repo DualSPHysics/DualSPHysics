@@ -173,12 +173,13 @@ protected:
   float3  *FtoExtForcesg;  ///<Stores the external forces to sum of each floating body. [Ftcount].| Almacena las fuerzas externas para sumar a cada objeto flotante. [FtCount]. 
 
   tdouble3 *FtoAuxDouble6; ///<Memory to swap floating data with GPU. [2*FtCount]. | Memoria para intercambiar datos de floatings con GPU. [2*FtCount].
-  tfloat3  *FtoAuxFloat9;  ///<Memory to swap floating data with GPU. [3*FtCount]. | Memoria para intercambiar datos de floatings con GPU. [3*FtCount].
+  tfloat3  *FtoAuxFloat15; ///<Memory to swap floating data with GPU. [5*FtCount]. | Memoria para intercambiar datos de floatings con GPU. [5*FtCount].
 
   double3 *FtoCenterg;      ///<Maintains centre of floating bodies [Ftcount].   | Mantiene centro de floating. [FtCount].   
   float3  *FtoAnglesg;      ///<Maintains rotation angles from center (angle xz, angle yz, angle xy) (units:Rad) [FtCount].   
-  float3  *FtoVelg;         ///<Maintains velocity of floating bodies [FtCount]. | Mantiene vel de floating. [FtCount].
-  float3  *FtoOmegag;       ///<Maintains omega of floating bodies [FtCount].    | Mantiene omega de floating. [FtCount].
+  float3  *FtoVelAceg;      ///<Maintains velocity and acceleration (linear and angular) of floating bodies (vellin,velang,acelin,aceang)  [FtCount*4].
+  //float3  *FtoVelg;         ///<Maintains velocity of floating bodies [FtCount]. | Mantiene vel de floating. [FtCount].
+  //float3  *FtoOmegag;       ///<Maintains omega of floating bodies [FtCount].    | Mantiene omega de floating. [FtCount].
   float4  *FtoInertiaini8g; ///<Initial state inertia tensor in world coordinates (computed or user-given) (a11,...,a21,a22,...,a32) [Ftcount*2].
   float   *FtoInertiaini1g; ///<Initial state inertia tensor in world coordinates (computed or user-given) (a33) [Ftcount].
 

@@ -568,6 +568,7 @@ rem %CudaNvcc% -ccbin "$(VCInstallDir)bin" %gpuhw% -use_fast_math -c %ptxinfo% -
     <ClInclude Include="..\source\JChronoData.h" />
     <ClInclude Include="..\source\JChronoObjects.h" />
     <ClInclude Include="..\source\JChronoObjectsUndef.h" />
+    <ClInclude Include="..\source\JComputeMotionRef.h" />
     <ClInclude Include="..\source\JDsDamping.h" />
     <ClInclude Include="..\source\JDataArrays.h" />
     <ClInclude Include="..\source\JDebugSphGpu.h">
@@ -591,6 +592,7 @@ rem %CudaNvcc% -ccbin "$(VCInstallDir)bin" %gpuhw% -use_fast_math -c %ptxinfo% -
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">true</ExcludedFromBuild>
     </ClInclude>
+    <ClInclude Include="..\source\JFtMotionSave.h" />
     <ClInclude Include="..\source\JLinearValue.h" />
     <ClInclude Include="..\source\JLinearValueDef.h" />
     <ClInclude Include="..\source\JLog2.h" />
@@ -619,6 +621,7 @@ rem %CudaNvcc% -ccbin "$(VCInstallDir)bin" %gpuhw% -use_fast_math -c %ptxinfo% -
     <ClInclude Include="..\source\JPartDataHead.h" />
     <ClInclude Include="..\source\JPartFloatBi4.h" />
     <ClInclude Include="..\source\JParticlesDef.h" />
+    <ClInclude Include="..\source\JPartMotionDef.h" />
     <ClInclude Include="..\source\JPartNormalData.h" />
     <ClInclude Include="..\source\JPartOutBi4Save.h" />
     <ClInclude Include="..\source\JPartsLoad4.h" />
@@ -764,6 +767,7 @@ rem %CudaNvcc% -ccbin "$(VCInstallDir)bin" %gpuhw% -use_fast_math -c %ptxinfo% -
     </ClCompile>
     <ClCompile Include="..\source\JCfgRunBase.cpp" />
     <ClCompile Include="..\source\JChronoObjects.cpp" />
+    <ClCompile Include="..\source\JComputeMotionRef.cpp" />
     <ClCompile Include="..\source\JDsDamping.cpp" />
     <ClCompile Include="..\source\JArraysGpu.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">true</ExcludedFromBuild>
@@ -779,6 +783,7 @@ rem %CudaNvcc% -ccbin "$(VCInstallDir)bin" %gpuhw% -use_fast_math -c %ptxinfo% -
     <ClCompile Include="..\source\JException.cpp" />
     <ClCompile Include="..\source\JDsGaugeItem.cpp" />
     <ClCompile Include="..\source\JDsGaugeSystem.cpp" />
+    <ClCompile Include="..\source\JFtMotionSave.cpp" />
     <ClCompile Include="..\source\JLinearValue.cpp" />
     <ClCompile Include="..\source\JLog2.cpp" />
     <ClCompile Include="..\source\JMeanValues.cpp" />

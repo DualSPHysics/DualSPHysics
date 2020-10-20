@@ -61,7 +61,7 @@ JSphGpu::JSphGpu(bool withmpi):JSph(false,false,withmpi),DivAxis(MGDIV_None){
   Idp=NULL; Code=NULL; Dcell=NULL; Posxy=NULL; Posz=NULL; Velrhop=NULL;
   AuxPos=NULL; AuxVel=NULL; AuxRhop=NULL;
   CellDiv=NULL;
-  FtoAuxDouble6=NULL; FtoAuxFloat9=NULL; //-Calculates forces on floating bodies.
+  FtoAuxDouble6=NULL; FtoAuxFloat15=NULL; //-Calculates forces on floating bodies.
   ArraysGpu=new JArraysGpu;
   InitVars();
   TmgCreation(Timers,false);
@@ -152,7 +152,7 @@ void JSphGpu::InitVars(){
   FtoDatpg=NULL;  FtoMassg=NULL;  FtoConstraintsg=NULL;                           //-Calculates forces on floating bodies.
   FtoForcesSumg=NULL;  FtoForcesg=NULL;  FtoForcesResg=NULL;  FtoCenterResg=NULL; //-Calculates forces on floating bodies.
   FtoExtForcesg=NULL;                                                             //-Calculates forces on floating bodies.
-  FtoCenterg=NULL; FtoAnglesg=NULL; FtoVelg=NULL; FtoOmegag=NULL;//-Management of floating bodies.
+  FtoCenterg=NULL; FtoAnglesg=NULL; FtoVelAceg=NULL;//-Management of floating bodies.
   FtoInertiaini8g=NULL; FtoInertiaini1g=NULL;//-Management of floating bodies.
   FtObjsOutdated=true;
   DemDatag=NULL; //(DEM)
@@ -170,7 +170,7 @@ void JSphGpu::InitVars(){
 void JSphGpu::FreeCpuMemoryFixed(){
   MemCpuFixed=0;
   delete[] FtoAuxDouble6; FtoAuxDouble6=NULL;
-  delete[] FtoAuxFloat9;  FtoAuxFloat9=NULL;
+  delete[] FtoAuxFloat15; FtoAuxFloat15=NULL;
 }
 
 //==============================================================================
@@ -184,7 +184,7 @@ void JSphGpu::AllocCpuMemoryFixed(){
     //-Allocates memory for floating bodies.
     if(CaseNfloat){
       FtoAuxDouble6=new tdouble3[FtCount*2];  MemCpuFixed+=(sizeof(tdouble3)*FtCount*2);
-      FtoAuxFloat9 =new tfloat3 [FtCount*3];  MemCpuFixed+=(sizeof(tfloat3) *FtCount*3);
+      FtoAuxFloat15=new tfloat3 [FtCount*5];  MemCpuFixed+=(sizeof(tfloat3) *FtCount*5);
     }
   }
   catch(const std::bad_alloc){
@@ -210,8 +210,7 @@ void JSphGpu::FreeGpuMemoryFixed(){
   if(FtoForcesResg)     cudaFree(FtoForcesResg);      FtoForcesResg=NULL;
   if(FtoCenterg)        cudaFree(FtoCenterg);         FtoCenterg=NULL;
   if(FtoAnglesg)        cudaFree(FtoAnglesg);         FtoAnglesg=NULL;
-  if(FtoVelg)           cudaFree(FtoVelg);            FtoVelg=NULL;
-  if(FtoOmegag)         cudaFree(FtoOmegag);          FtoOmegag=NULL;
+  if(FtoVelAceg)        cudaFree(FtoVelAceg);         FtoVelAceg=NULL;
   if(FtoInertiaini8g)   cudaFree(FtoInertiaini8g);    FtoInertiaini8g=NULL;
   if(FtoInertiaini1g)   cudaFree(FtoInertiaini1g);    FtoInertiaini1g=NULL;
   if(DemDatag)          cudaFree(DemDatag);           DemDatag=NULL;
@@ -242,8 +241,7 @@ void JSphGpu::AllocGpuMemoryFixed(){
     m=sizeof(double3) *FtCount;     cudaMalloc((void**)&FtoCenterResg     ,m);  MemGpuFixed+=m;
     m=sizeof(double3) *FtCount;     cudaMalloc((void**)&FtoCenterg        ,m);  MemGpuFixed+=m;
     m=sizeof(float3)  *FtCount;     cudaMalloc((void**)&FtoAnglesg        ,m);  MemGpuFixed+=m;
-    m=sizeof(float3)  *FtCount;     cudaMalloc((void**)&FtoVelg           ,m);  MemGpuFixed+=m;
-    m=sizeof(float3)  *FtCount;     cudaMalloc((void**)&FtoOmegag         ,m);  MemGpuFixed+=m;
+    m=sizeof(float3)  *FtCount*4;   cudaMalloc((void**)&FtoVelAceg        ,m);  MemGpuFixed+=m;
     m=sizeof(float4)  *FtCount*2;   cudaMalloc((void**)&FtoInertiaini8g   ,m);  MemGpuFixed+=m;
     m=sizeof(float)   *FtCount;     cudaMalloc((void**)&FtoInertiaini1g   ,m);  MemGpuFixed+=m;
   }
@@ -751,8 +749,8 @@ void JSphGpu::InitFloating(){
     ftdata.LoadPart(PartBegin);
     for(unsigned cf=0;cf<FtCount;cf++){
       FtObjs[cf].center=ftdata.GetPartCenter(cf);
-      FtObjs[cf].fvel=ftdata.GetPartFvel(cf);
-      FtObjs[cf].fomega=ftdata.GetPartFomega(cf);
+      FtObjs[cf].fvel  =ftdata.GetPartFVelLin(cf);
+      FtObjs[cf].fomega=ftdata.GetPartFVelAng(cf);
       FtObjs[cf].radius=ftdata.GetHeadRadius(cf);
     }
     DemDtForce=ftdata.GetPartDemDtForce();
@@ -778,10 +776,10 @@ void JSphGpu::InitFloating(){
     byte     *constr=new byte    [FtCount];
     tdouble3 *center=new tdouble3[FtCount];
     tfloat3  *angles=new tfloat3 [FtCount];
-    tfloat3  *vel   =new tfloat3 [FtCount];
-    tfloat3  *omega =new tfloat3 [FtCount];
+    tfloat3  *velace=new tfloat3 [FtCount*4];
     tfloat4  *inert8=new tfloat4 [FtCount*2];
     float    *inert1=new float   [FtCount];
+    memset(velace,0,sizeof(tfloat3)*FtCount*4);
     for(unsigned cf=0;cf<FtCount;cf++){
       const StFloatingData &fobj=FtObjs[cf];
       datp[cf].pini=fobj.begin-CaseNpb;
@@ -792,8 +790,8 @@ void JSphGpu::InitFloating(){
       constr[cf]=fobj.constraints;
       center[cf]=fobj.center;
       angles[cf]=fobj.angles;
-      vel   [cf]=fobj.fvel;
-      omega [cf]=fobj.fomega;
+      velace[cf]=fobj.fvel;
+      velace[FtCount+cf]=fobj.fomega;
       const tmatrix3f v=fobj.inertiaini;
       inert8[cf*2]  =TFloat4(v.a11,v.a12,v.a13,v.a21);
       inert8[cf*2+1]=TFloat4(v.a22,v.a23,v.a31,v.a32);
@@ -804,16 +802,14 @@ void JSphGpu::InitFloating(){
     cudaMemcpy(FtoConstraintsg,constr,sizeof(byte)     *FtCount  ,cudaMemcpyHostToDevice);
     cudaMemcpy(FtoCenterg     ,center,sizeof(double3)  *FtCount  ,cudaMemcpyHostToDevice);
     cudaMemcpy(FtoAnglesg     ,angles,sizeof(float3)   *FtCount  ,cudaMemcpyHostToDevice);
-    cudaMemcpy(FtoVelg        ,vel   ,sizeof(float3)   *FtCount  ,cudaMemcpyHostToDevice);
-    cudaMemcpy(FtoOmegag      ,omega ,sizeof(float3)   *FtCount  ,cudaMemcpyHostToDevice);
+    cudaMemcpy(FtoVelAceg     ,velace,sizeof(float3)   *FtCount*4,cudaMemcpyHostToDevice);
     cudaMemcpy(FtoInertiaini8g,inert8,sizeof(float4)   *FtCount*2,cudaMemcpyHostToDevice);
     cudaMemcpy(FtoInertiaini1g,inert1,sizeof(float)    *FtCount  ,cudaMemcpyHostToDevice);
     delete[] datp;
     delete[] ftmass;
     delete[] center;
     delete[] angles;
-    delete[] vel;
-    delete[] omega;
+    delete[] velace;
     delete[] inert8;
     delete[] inert1;
   }

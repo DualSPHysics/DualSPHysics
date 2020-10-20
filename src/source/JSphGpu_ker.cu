@@ -2177,20 +2177,20 @@ void FtCalcForces(unsigned ftcount,tfloat3 gravity
 /// Calcula datos para actualizar floatings.
 //------------------------------------------------------------------------------
 __global__ void KerFtCalcForcesRes(unsigned ftcount,bool simulate2d,double dt
-  ,const float3 *ftoomega,const float3 *ftovel,const double3 *ftocenter,const float3 *ftoforces
+  ,const float3 *ftovelace,const double3 *ftocenter,const float3 *ftoforces
   ,float3 *ftoforcesres,double3 *ftocenterres)
 {
   const unsigned cf=blockIdx.x*blockDim.x + threadIdx.x; //-Floating number.
   if(cf<ftcount){
     //-Compute fomega.
-    float3 fomega=ftoomega[cf];
+    float3 fomega=ftovelace[ftcount+cf];
     {
       const float3 omegaace=ftoforces[cf*2+1];
       fomega.x=float(dt*omegaace.x+fomega.x);
       fomega.y=float(dt*omegaace.y+fomega.y);
       fomega.z=float(dt*omegaace.z+fomega.z);
     }
-    float3 fvel=ftovel[cf];
+    float3 fvel=ftovelace[cf];
     //-Zero components for 2-D simulation. | Anula componentes para 2D.
     float3 face=ftoforces[cf*2];
     if(simulate2d){ face.y=0; fomega.x=0; fomega.z=0; fvel.y=0; }
@@ -2215,12 +2215,12 @@ __global__ void KerFtCalcForcesRes(unsigned ftcount,bool simulate2d,double dt
 /// Calcula fuerzas sobre floatings.
 //==============================================================================
 void FtCalcForcesRes(unsigned ftcount,bool simulate2d,double dt
-  ,const float3 *ftoomega,const float3 *ftovel,const double3 *ftocenter,const float3 *ftoforces
+  ,const float3 *ftovelace,const double3 *ftocenter,const float3 *ftoforces
   ,float3 *ftoforcesres,double3 *ftocenterres)
 {
   if(ftcount){
     dim3 sgrid=GetSimpleGridSize(ftcount,SPHBSIZE);
-    KerFtCalcForcesRes <<<sgrid,SPHBSIZE>>> (ftcount,simulate2d,dt,ftoomega,ftovel,ftocenter,ftoforces,ftoforcesres,ftocenterres);
+    KerFtCalcForcesRes <<<sgrid,SPHBSIZE>>> (ftcount,simulate2d,dt,ftovelace,ftocenter,ftoforces,ftoforcesres,ftocenterres);
   }
 }
 
@@ -2283,8 +2283,9 @@ void FtApplyConstraints(unsigned ftcount,const byte *ftoconstraints
 /// Updates information and particles of floating bodies.
 //------------------------------------------------------------------------------
 template<bool periactive> __global__ void KerFtUpdate(bool predictor,double dt //ftodata={pini,np,radius,massp}
-  ,const float4 *ftodatp,const float3 *ftoforcesres,double3 *ftocenterres,const unsigned *ftridp
-  ,double3 *ftocenter,float3 *ftoangles,float3 *ftovel,float3 *ftoomega
+  ,unsigned nft,const float4 *ftodatp,const float3 *ftoforcesres
+  ,double3 *ftocenterres,const unsigned *ftridp
+  ,double3 *ftocenter,float3 *ftoangles,float3 *ftovelace
   ,double2 *posxy,double *posz,unsigned *dcell,float4 *velrhop,typecode *code)
 {
   const unsigned tid=threadIdx.x;  //-Thread number.
@@ -2332,8 +2333,20 @@ template<bool periactive> __global__ void KerFtUpdate(bool predictor,double dt /
     rangles.y=float(double(rangles.y)+double(fomega.y)*dt);
     rangles.z=float(double(rangles.z)+double(fomega.z)*dt);
     ftoangles[cf]=rangles;
-    ftovel[cf]=fvel;
-    ftoomega[cf]=fomega;
+    //-Linear velocity and acceleration.
+    float3 v=ftovelace[cf];
+    v.x=(fvel.x-v.x)/float(dt);
+    v.y=(fvel.y-v.y)/float(dt);
+    v.z=(fvel.z-v.z)/float(dt);
+    ftovelace[cf]=fvel;
+    ftovelace[nft+nft+cf]=v;
+    //-Angular velocity and acceleration.
+    v=ftovelace[nft+cf];
+    v.x=(fomega.x-v.x)/float(dt);
+    v.y=(fomega.y-v.y)/float(dt);
+    v.z=(fomega.z-v.z)/float(dt);
+    ftovelace[nft+cf]=fomega;
+    ftovelace[nft*3+cf]=v;
   }
 }
 
@@ -2342,16 +2355,58 @@ template<bool periactive> __global__ void KerFtUpdate(bool predictor,double dt /
 //==============================================================================
 void FtUpdate(bool periactive,bool predictor,unsigned ftcount,double dt
   ,const float4 *ftodatp,const float3 *ftoforcesres,double3 *ftocenterres,const unsigned *ftridp
-  ,double3 *ftocenter,float3 *ftoangles,float3 *ftovel,float3 *ftoomega
+  ,double3 *ftocenter,float3 *ftoangles,float3 *ftovelace
   ,double2 *posxy,double *posz,unsigned *dcell,float4 *velrhop,typecode *code)
 {
   if(ftcount){
     const unsigned bsize=128; 
     dim3 sgrid=GetSimpleGridSize(ftcount*bsize,bsize);
-    if(periactive)KerFtUpdate<true>  <<<sgrid,bsize>>> (predictor,dt,ftodatp,ftoforcesres,ftocenterres,ftridp,ftocenter,ftoangles,ftovel,ftoomega,posxy,posz,dcell,velrhop,code);
-    else          KerFtUpdate<false> <<<sgrid,bsize>>> (predictor,dt,ftodatp,ftoforcesres,ftocenterres,ftridp,ftocenter,ftoangles,ftovel,ftoomega,posxy,posz,dcell,velrhop,code);
+    if(periactive)KerFtUpdate<true>  <<<sgrid,bsize>>> (predictor,dt,ftcount,ftodatp,ftoforcesres,ftocenterres,ftridp,ftocenter,ftoangles,ftovelace,posxy,posz,dcell,velrhop,code);
+    else          KerFtUpdate<false> <<<sgrid,bsize>>> (predictor,dt,ftcount,ftodatp,ftoforcesres,ftocenterres,ftridp,ftocenter,ftoangles,ftovelace,posxy,posz,dcell,velrhop,code);
   }
 }
+
+
+//<vs_ftmottionsv_ini>
+//------------------------------------------------------------------------------
+/// Get reference position of floating bodies.
+//------------------------------------------------------------------------------
+__global__ void KerFtGetPosRef(unsigned np,const unsigned *idpref
+  ,const unsigned *ftridp,const double2 *posxy,const double *posz,double *posref)
+{
+  unsigned cp=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle
+  if(cp<np){
+    bool ok=false;
+    const unsigned cid=idpref[cp];
+    if(cid!=UINT_MAX){
+      const unsigned p=ftridp[cid];
+      if(p!=UINT_MAX){
+        posref[cp]=cp*10;
+        const double2 rxy=posxy[p];
+        const unsigned c=cp*3;
+        posref[c  ]=rxy.x;
+        posref[c+1]=rxy.y;
+        posref[c+2]=posz[p];
+        ok=true;
+      }
+    }
+    if(!ok)posref[cp*3]=DBL_MAX;
+  }
+}
+//==============================================================================
+/// Get reference position of floating bodies.
+//==============================================================================
+void FtGetPosRef(unsigned np,const unsigned *idpref,const unsigned *ftridp
+  ,const double2 *posxy,const double *posz,double *posref)
+{
+  if(np){
+    const unsigned bsize=128; 
+    dim3 sgrid=GetSimpleGridSize(np,bsize);
+    KerFtGetPosRef <<<sgrid,bsize>>> (np,idpref,ftridp,posxy,posz,posref);
+  }
+}
+//<vs_ftmottionsv_end>
+
 
 
 //##############################################################################

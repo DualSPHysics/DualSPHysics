@@ -80,6 +80,7 @@ class JLinearValue;
 class JCaseEParms;
 class JDataArrays;
 class JNumexLib;
+class JFtMotionSave; //<vs_ftmottionsv>
 
 //##############################################################################
 //# XML format of execution parameters in _FmtXML__Parameters.xml.
@@ -332,6 +333,8 @@ protected:
   JSphInOut *InOut;         ///<Object for inlet/outlet conditions.
   JSphBoundCorr *BoundCorr; ///<Object for boundary extrapolated correction (used in combination with InOut).
 
+  JFtMotionSave *FtMotSave; ///<Object for saving floating motion data with high frequency. //<vs_ftmottionsv>
+
   JDsPips *DsPips;          ///<Object for PIPS calculation.
 
   //-Variables for division in cells.
@@ -462,6 +465,7 @@ protected:
   void PrintHeadPart();
 
   void ConfigSaveData(unsigned piece,unsigned pieces,std::string div);
+  void ConfigFtMotionSave(unsigned np,const tdouble3 *pos,const unsigned *idp); //<vs_ftmottionsv>
   void AddParticlesOut(unsigned nout,const unsigned *idp,const tdouble3 *pos,const tfloat3 *vel,const float *rhop,const typecode *code);
   void AbortBoundOut(JLog2 *log,unsigned nout,const unsigned *idp,const tdouble3 *pos,const tfloat3 *vel,const float *rhop,const typecode *code);
 
