@@ -35,6 +35,7 @@
 //:# - Graba aceleracion lineal y angular. (19-10-2020)
 //:# - Graba numero de step. (19-10-2020)
 //:# - Permite graba posiciones de referencia para el calculo de movimiento. (19-10-2020)
+//:# - Nuevos metodos y otras mejoras. (20-10-2020)
 //:#############################################################################
 
 /// \file JPartFloatBi4.h \brief Declares the classes \ref JPartFloatBi4Save and class \ref JPartFloatBi4Load.
@@ -48,6 +49,7 @@
 #include <string>
 #include <vector>
 #include <fstream>
+#include <climits>
 
 
 //##############################################################################
@@ -85,10 +87,10 @@ class JPartFloatBi4Save : protected JObject
   //-Datos variables de floatings (PARTs). Data variables of floats (parts).
   tdouble3 *PartCenter; ///<Center of the floating object [FtCount]. 
   tdouble3 *PartPosRef; ///<Reference positions of the floating object [FtCount*3].. 
-  tfloat3 *PartFVelLin; ///<Linear velocity of the floating object (units:m/s) [FtCount].
-  tfloat3 *PartFVelAng; ///<Angular velocity of the floating object (units:rad/s) [FtCount].
-  tfloat3 *PartFAceLin; ///<Linear acceleration of the floating object (units:m/s^2) [FtCount].
-  tfloat3 *PartFAceAng; ///<Angular acceleration of the floating object (units:rad/s^2) [FtCount].
+  tfloat3  *PartVelLin; ///<Linear velocity of the floating object (units:m/s) [FtCount].
+  tfloat3  *PartVelAng; ///<Angular velocity of the floating object (units:rad/s) [FtCount].
+  tfloat3  *PartAceLin; ///<Linear acceleration of the floating object (units:m/s^2) [FtCount].
+  tfloat3  *PartAceAng; ///<Angular acceleration of the floating object (units:rad/s^2) [FtCount].
   
   unsigned Cpart;    ///<Numero de PART. PART number.
 
@@ -161,21 +163,22 @@ class JPartFloatBi4Load : protected JObject
   float *HeadRadius;
 
   //-Informacion de PART. PART information.
+  unsigned Cpart;
   unsigned Step;
   double TimeStep;
   double DemDtForce;
-  bool FAceData;        ///<Linear and angular acceleration is available.  
+  bool AceData;         ///<Linear and angular acceleration is available.  
   //-Datos variables de floatings (PARTs). Data variables of floatings (parts).
   tdouble3 *PartCenter;
   tdouble3 *PartPosRef; ///<Reference positions of the floating object [FtCount*3]. 
-  tfloat3 *PartFVelLin; ///<Linear velocity of the floating object (units:m/s) [FtCount].
-  tfloat3 *PartFVelAng; ///<Angular velocity of the floating object (units:rad/s) [FtCount].
-  tfloat3 *PartFAceLin; ///<Linear acceleration of the floating object (units:m/s^2) [FtCount].
-  tfloat3 *PartFAceAng; ///<Angular acceleration of the floating object (units:rad/s^2) [FtCount].
+  tfloat3  *PartVelLin; ///<Linear velocity of the floating object (units:m/s) [FtCount].
+  tfloat3  *PartVelAng; ///<Angular velocity of the floating object (units:rad/s) [FtCount].
+  tfloat3  *PartAceLin; ///<Linear acceleration of the floating object (units:m/s^2) [FtCount].
+  tfloat3  *PartAceAng; ///<Angular acceleration of the floating object (units:rad/s^2) [FtCount].
 
  private:
   JBinaryDataArray* CheckArray(JBinaryData *bd,const std::string &name
-    ,JBinaryDataDef::TpData type);
+    ,JBinaryDataDef::TpData type,unsigned count=UINT_MAX);
   void ResetPart();
   void ResizeFtData(unsigned ftcount);
   void CheckPartList()const;
@@ -188,10 +191,12 @@ class JPartFloatBi4Load : protected JObject
   void Reset();
   static std::string GetFileNamePart();
 
-  void LoadFile(const std::string &dir);
+  static std::string GetLoadFile(const std::string &dir,std::string filename="");
+  void LoadFile(const std::string &dir,std::string filename="");
   void CheckHeadData(unsigned cf,word mkbound,unsigned begin,unsigned count,float mass,float massp);
 
   word GetMkBoundFirst()const{ return(MkBoundFirst); }
+  bool GetPosRefData()const{ return(PosRefData); }
 
   unsigned GetFtCount()const{ return(FtCount); }
   unsigned GetCount()const{ return(PartCount); }
@@ -205,21 +210,27 @@ class JPartFloatBi4Load : protected JObject
   float    GetHeadMassp  (unsigned cf)const{ CheckFloating(cf); return(HeadMassp [cf]); }
   float    GetHeadRadius (unsigned cf)const{ CheckFloating(cf); return(HeadRadius[cf]); }
 
+  void LoadPartItem(unsigned cp);
   void LoadPart(unsigned cpart);
 
-  unsigned GetPartStep()const{ CheckPart(); return(Step); }
-  double GetPartTimeStep()const{ CheckPart(); return(TimeStep); }
-  double GetPartDemDtForce()const{ CheckPart(); return(DemDtForce); }
-  bool GetPartFAceData()const{ return(FAceData); }
+  unsigned GetPartCpart     ()const{ CheckPart(); return(Cpart); }
+  unsigned GetPartStep      ()const{ CheckPart(); return(Step); }
+  double   GetPartTimeStep  ()const{ CheckPart(); return(TimeStep); }
+  double   GetPartDemDtForce()const{ CheckPart(); return(DemDtForce); }
+  bool     GetPartAceData   ()const{ return(AceData); }
   
   tdouble3 GetPartCenter(unsigned cf)const{ CheckFloating(cf); return(PartCenter[cf]); }
-  tfloat3 GetPartFVelLin(unsigned cf)const{ CheckFloating(cf); return(PartFVelLin[cf]); }
-  tfloat3 GetPartFVelAng(unsigned cf)const{ CheckFloating(cf); return(PartFVelAng[cf]); }
-  tfloat3 GetPartFAceLin(unsigned cf)const{ CheckFloating(cf); return(FAceData? PartFAceLin[cf]: TFloat3(0)); }
-  tfloat3 GetPartFAceAng(unsigned cf)const{ CheckFloating(cf); return(FAceData? PartFAceAng[cf]: TFloat3(0)); }
+  tfloat3  GetPartVelLin(unsigned cf)const{ CheckFloating(cf); return(PartVelLin[cf]); }
+  tfloat3  GetPartVelAng(unsigned cf)const{ CheckFloating(cf); return(PartVelAng[cf]); }
+  tfloat3  GetPartAceLin(unsigned cf)const{ CheckFloating(cf); return(AceData? PartAceLin[cf]: TFloat3(0)); }
+  tfloat3  GetPartAceAng(unsigned cf)const{ CheckFloating(cf); return(AceData? PartAceAng[cf]: TFloat3(0)); }
 
-  bool GetPosRefData()const{ return(PosRefData); }
-  const tdouble3* GetPartPosRef()const{ return(PartPosRef); }
+  const tdouble3* GetPartCenter()const{ CheckPart(); return(PartCenter); }
+  const tfloat3*  GetPartVelLin()const{ CheckPart(); return(PartVelLin); }
+  const tfloat3*  GetPartVelAng()const{ CheckPart(); return(PartVelAng); }
+  const tfloat3*  GetPartAceLin()const{ CheckPart(); return(AceData? PartAceLin: NULL); }
+  const tfloat3*  GetPartAceAng()const{ CheckPart(); return(AceData? PartAceAng: NULL); }
+  const tdouble3* GetPartPosRef()const{ CheckPart(); return(PosRefData? PartPosRef: NULL); }
 };
 
 

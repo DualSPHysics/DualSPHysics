@@ -25,6 +25,9 @@
 #include <climits>
 #include <algorithm>
 
+//##############################################################################
+//# JRangeFilter
+//##############################################################################
 //==============================================================================
 /// Constructor.
 //==============================================================================
@@ -33,6 +36,16 @@ JRangeFilter::JRangeFilter(std::string filter){
   Ranges=NULL; FastValue=NULL;
   Reset();
   Config(filter);
+}
+
+//==============================================================================
+/// Constructor.
+//==============================================================================
+JRangeFilter::JRangeFilter(const std::vector<unsigned> &values){
+  ClassName="JRangeFilter";
+  Ranges=NULL; FastValue=NULL;
+  Reset();
+  Config(values);
 }
 
 //==============================================================================
@@ -186,11 +199,39 @@ void JRangeFilter::Config(std::string filter){
       }
     }
   }
+  Prepare();
+}
+
+//==============================================================================
+/// Configures the given filter.
+//==============================================================================
+void JRangeFilter::Config(const std::vector<unsigned> &values){
+  Reset();
+  const unsigned nv=unsigned(values.size());
+  if(nv){
+    unsigned v1=values[0],v2=values[0];
+    for(unsigned cv=1;cv<nv;cv++){
+      const unsigned v=values[cv];
+      if(v==v2 || v==v2+1)v2=v;
+      else{
+        AddRange(v1,v2);
+        v1=v2=v;
+      }
+    }
+    AddRange(v1,v2);
+  }
+  Prepare();
+}
+
+//==============================================================================
+/// Prepares data to use.
+//==============================================================================
+void JRangeFilter::Prepare(){
   SortRanges();
   JoinRanges();
   if(Count){
     ValueMin=Ranges[0]; ValueMax=Ranges[((int(Count)-1)<<1)+1];
-    if(ValueMax-ValueMin<1000&&ValueMax-ValueMin>1&&Count>1){
+    if(ValueMax-ValueMin<1000 && ValueMax-ValueMin>1 && Count>1){
       FastValue=new byte[ValueMax-ValueMin+1];
       memset(FastValue,0,sizeof(byte)*(ValueMax-ValueMin+1));
       for(unsigned c=0;c<Count;c++){

@@ -2381,7 +2381,6 @@ __global__ void KerFtGetPosRef(unsigned np,const unsigned *idpref
     if(cid!=UINT_MAX){
       const unsigned p=ftridp[cid];
       if(p!=UINT_MAX){
-        posref[cp]=cp*10;
         const double2 rxy=posxy[p];
         const unsigned c=cp*3;
         posref[c  ]=rxy.x;

@@ -63,7 +63,7 @@ void JSphCfgRun::Reset(){
   FtPause=-1;
   NstepsBreak=0;
   SvAllSteps=false;
-  PipsMode=1; PipsSteps=100;
+  PipsMode=0; PipsSteps=100;
   CreateDirs=true;
   CsvSepComa=false;
 }
@@ -169,7 +169,7 @@ void JSphCfgRun::VisuInfo()const{
   printf("    -svdomainvtk:<0/1>  Generates VTK file with domain limits\n");
 /////////|---------1---------2---------3---------4---------5---------6---------7--------X8
   printf("    -svpips:<mode>:n  Compute PIPS of simulation each n steps (100 by default),\n");
-  printf("       mode options: 0=disabled, 1=no save details (by default), 2=save details\n");
+  printf("       mode options: 0=disabled (by default), 1=no save details, 2=save details\n");
   printf("\n");
   printf("    -createdirs:<0/1> Creates full path for output files\n");
   printf("                      (value by default is read from DsphConfig.xml or 1)\n");

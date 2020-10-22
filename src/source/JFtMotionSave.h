@@ -86,6 +86,8 @@ public:
     ,unsigned ftcount,const StFloatingData *ftobjs,unsigned np
     ,const tdouble3 *pos,const unsigned *idp);
 
+  double GetTimeOut()const{ return(TimeOut); }
+
   bool CheckTime(double timestep)const{ return(timestep>=NextTimeOutput); }
 
   void SaveFtDataCpu(double timestep,unsigned nstep,const StFloatingData *ftobjs

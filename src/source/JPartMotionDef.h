@@ -23,7 +23,7 @@
 
 #include "TypesDef.h"
 
-///Structure with data to compute motion from particles.
+/// Structure with data to compute motion from particles.
 typedef struct {
   word mkbound;
   unsigned begin;
@@ -34,6 +34,16 @@ typedef struct {
   tdouble3 ps[3]; //-Initial position of selected particles.
   double dis[3];  //-Maximum distance to first position for periodic boundaries.
 }StMkMotionData;
+
+/// Structure with the information of floating body motions.
+typedef struct{
+  double surge; //-Motion in X.
+  double sway;  //-Motion in Y.
+  double heave; //-Motion in Z.
+  double roll;  //-Rotation in X.
+  double pitch; //-Rotation in Y.
+  double yaw;   //-Rotation in Z.
+}StBodyMotions;
 
 
 #endif

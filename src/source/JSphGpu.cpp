@@ -749,8 +749,8 @@ void JSphGpu::InitFloating(){
     ftdata.LoadPart(PartBegin);
     for(unsigned cf=0;cf<FtCount;cf++){
       FtObjs[cf].center=ftdata.GetPartCenter(cf);
-      FtObjs[cf].fvel  =ftdata.GetPartFVelLin(cf);
-      FtObjs[cf].fomega=ftdata.GetPartFVelAng(cf);
+      FtObjs[cf].fvel  =ftdata.GetPartVelLin(cf);
+      FtObjs[cf].fomega=ftdata.GetPartVelAng(cf);
       FtObjs[cf].radius=ftdata.GetHeadRadius(cf);
     }
     DemDtForce=ftdata.GetPartDemDtForce();

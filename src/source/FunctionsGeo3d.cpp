@@ -28,7 +28,6 @@
 
 namespace fgeo{
 
-
 //==============================================================================
 /// Devuelve proyeccion ortogonal del punto en la linea (pr1,pr2).
 /// Returns orthogonal projection of the point in the line (pr1,pr2).
@@ -705,16 +704,6 @@ bool PolygonInside(const tfloat3 &pt,unsigned npla,const tplane3f *vpla){
   }
   return(neg==npla || pos==npla);
 }
-
-
-
-
-
-
-
-
-
-
 
 
 

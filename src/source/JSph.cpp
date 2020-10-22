@@ -1455,6 +1455,7 @@ void JSph::VisuConfig(){
   if(SvPosDouble)ConfigInfo=ConfigInfo+sep+"SvPosDouble";
   //-Other configurations. 
   Log->Print(fun::VarStr("SaveFtAce",SaveFtAce));
+  if(FtMotSave)Log->Printf("SaveFtMotion=%s  (tout:%g)",(FtMotSave? "True": "False"),FtMotSave->GetTimeOut()); //<vs_ftmottionsv>
   Log->Print(fun::VarStr("SvTimers",SvTimers));
   if(DsPips)Log->Print(fun::VarStr("PIPS-steps",DsPips->StepsNum));
   //-Boundary. 
