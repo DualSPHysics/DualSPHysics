@@ -122,6 +122,7 @@ void JChronoObjects::ConfigDataBodyFloating(word mkbound,float kfric,float resti
   JChBodyFloating* body=(JChBodyFloating*)ChronoDataXml->GetBodyFloating(mkbound);
   if(body)body->SetCollisionData(kfric,restitu,young,poisson);
 }
+
 //==============================================================================
 /// Configures Moving body data for collisions. 
 //==============================================================================
@@ -273,6 +274,7 @@ void JChronoObjects::ReadXml(const JXml *sxml,TiXmlElement* lis){
   if(sxml->ExistsElement(lis,"collision")){
     TiXmlElement *collision=lis->FirstChildElement("collision");
     UseCollision=sxml->GetAttributeBool(collision,"activate",false);
+    ChronoDataXml->SetUseCollision(UseCollision);
     if(UseCollision){
       sxml->CheckElementNames(collision,true,"distancedp ompthreads contactmethod");
       //-Loads allowed collision overlap according Dp.
@@ -315,12 +317,14 @@ void JChronoObjects::ReadXml(const JXml *sxml,TiXmlElement* lis){
       //-Creates obj files with geometry if collisions are activated.
       std::string mfilebase="";
       JChBody::TpModelNormal tnormal=JChBody::NorOriginal;
+      bool imposefric=false;
       if(UseCollision){
         mfilebase=ReadXmlModelFile(sxml,ele);
         if(fun::StrUpper(mfilebase)=="AUTOACTUAL" && Ptr_VtkSimple_AutoActual==NULL)LoadPtrAutoActual(sxml,xmlrow);
         if(fun::StrUpper(mfilebase)=="AUTODP"     && Ptr_VtkSimple_AutoDp    ==NULL)LoadPtrAutoDp    (sxml,xmlrow);
         tnormal=ReadXmlModelNormal(sxml,ele);
         if(!mfilebase.empty())CollisionShapes+=CreateObjFiles(idnamebase,mkbounds,DirData,mfilebase,byte(tnormal),diroutobj,xmlrow);
+        imposefric=sxml->GetAttributeBool(ele,"imposefric",true,false);
       }
       //-Creates a body object for each MK value in mkbounds[].
       for(unsigned cmk=0;cmk<nmkbounds;cmk++){
@@ -331,7 +335,10 @@ void JChronoObjects::ReadXml(const JXml *sxml,TiXmlElement* lis){
         const string mfile=(!mfilebase.empty()? idnamebase+fun::PrintStr("_mkb%04u.obj",mkbound): "");
         if(elename=="bodyfloating"){
           JChBodyFloating *body=ChronoDataXml->AddBodyFloating(idb,idname,mkbound,xmlrow);
-          if(UseCollision)body->SetModel(mfile,tnormal);
+          if(UseCollision){
+            body->SetModel(mfile,tnormal);
+            body->SetImposeFric(imposefric);
+          }
           ReadXmlValues(sxml,ele->FirstChildElement("values"),body->GetValuesPtr());
         }
         else if(elename=="bodymoving"){
@@ -339,14 +346,20 @@ void JChronoObjects::ReadXml(const JXml *sxml,TiXmlElement* lis){
           //Log->Printf("----> AddBodyMoving>> \'%s\' mkb:%u mf:[%s]",idname.c_str(),mkbound,mfile.c_str());
           const double mass=sxml->GetAttributeDouble(ele,"massbody");
           JChBodyMoving *body=ChronoDataXml->AddBodyMoving(idb,idname,mkbound,mass,xmlrow);
-          if(UseCollision)body->SetModel(mfile,tnormal);
+          if(UseCollision){
+            body->SetModel(mfile,tnormal);
+            body->SetImposeFric(imposefric);
+          }
           ReadXmlValues(sxml,ele->FirstChildElement("values"),body->GetValuesPtr());
           if(!mfile.empty())WithMotion=true;
         }
         else if(elename=="bodyfixed"){
           //Log->Printf("----> AddBodyFixed>> \'%s\' mkb:%u mf:[%s]",idname.c_str(),mkbound,mfile.c_str());
           JChBodyFixed *body=ChronoDataXml->AddBodyFixed(idb,idname,mkbound,xmlrow);
-          if(UseCollision)body->SetModel(mfile,tnormal);
+          if(UseCollision){
+            body->SetModel(mfile,tnormal);
+            body->SetImposeFric(imposefric);
+          }
           ReadXmlValues(sxml,ele->FirstChildElement("values"),body->GetValuesPtr());
         }
         else sxml->ErrReadElement(ele,elename,false);
@@ -760,7 +773,7 @@ void JChronoObjects::VisuBody(const JChBody *body)const{
     }
   }
   if(body->Type==JChBody::BD_Moving){
-    Log->Printf("    MkBound......: %u",((const JChBodyFixed *)body)->MkBound);
+    Log->Printf("    MkBound......: %u",((const JChBodyMoving *)body)->MkBound);
     Log->Printf("    Mass.........: %g",body->GetMass());
   }
   if(body->Type==JChBody::BD_Fixed){
@@ -768,7 +781,7 @@ void JChronoObjects::VisuBody(const JChBody *body)const{
   }
 
   if(!body->GetModelFile().empty() && UseCollision){
-    Log->Printf("    Kfric........: %g",body->GetKfric());
+    Log->Printf("    Kfric........: %g %s",body->GetKfric(),body->GetImposeFric()?"(Impose)":"");
     Log->Printf("    Restitution..: %g",body->GetRestitu());
     if(UseChronoSMC){
       Log->Printf("    Young_Modulus: %g",body->GetYoung());
@@ -864,7 +877,6 @@ void JChronoObjects::VisuConfig(std::string txhead, std::string txfoot)const{
   Log->Printf("  OpenMP Threads....: %d",chdata->GetOmpThreads());
   Log->Printf("  Bodies............: %d",chdata->GetBodyCount());
   Log->Printf("  Links.............: %u",chdata->GetLinkCount());
-  //Log->Printf("  FEA Enabled......: %s",chdata->GetUseFEA()?"Yes":"No");     //<chrono_fea>
 
   for(unsigned c=0;c<chdata->GetBodyCount();c++)VisuBody(chdata->GetBody(c));
   for(unsigned c=0;c<chdata->GetLinkCount();c++)VisuLink(chdata->GetLink(c));

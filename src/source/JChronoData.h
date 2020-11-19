@@ -1,37 +1,68 @@
 /*
- <DUALSPHYSICS>  Copyright (c) 2020, Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2020, Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/).
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
 
- This file is part of DualSPHysics. 
+ This file is part of DualSPHysics.
 
  DualSPHysics is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by
- the Free Software Foundation, either version 3 of the License, or (at your option) any later version. 
+ the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 
  DualSPHysics is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details. 
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 
- You should have received a copy of the GNU General Public License, along with DualSPHysics. If not, see <http://www.gnu.org/licenses/>. 
+ You should have received a copy of the GNU General Public License, along with DualSPHysics. If not, see <http://www.gnu.org/licenses/>.
 */
 
-//#############################################################################
-//# Cambios:
-//# =========
-//# - Clase creada para almacenar la configuracion de los distintos cuerpos y
-//#   sus uniones para usar con Chrono. (05-05-2016)
-//#############################################################################
+//:#############################################################################
+//:# Cambios:
+//:# =========
+//:# - Clase creada para almacenar la configuracion de los distintos cuerpos y
+//:#   sus uniones para usar con Chrono. (05-05-2016).
+//:# - Nuevo enumerado para elegir el tipo de Solver (23-12-2019).
+//:# - Funcions para incorporar los parametros Young's Modulus y Poisson Ration 
+//:#   a los objetos de Chrono (16-01-2020).
+//:# - Nuevo objeto link_pulley (24-02-2020).
+//:# - Nuevo objeto link_coulombdamping (27-02-2020).
+//:# - Nuevos objetos para simular Finite Element Analysis (FEA) en Chrono 
+//:#   [JChBodyFEA,JChCable,JChBeamANCF,JChBeamEuler,JChBeamIGA] (24-04-2020).
+//:# - Modificacion del tipo de array que contienen informacion de los nodos
+//:#   de JChBodyFEA (14-05-2020).
+//:# - Se incorporta un array con los deplazamientos de los nodos para objetos 
+//:#   FEA. (15-05-2020).
+//:# - Se modifica el tipo de datos del array Forces de JChBodyFEA (11-06-2020).
+//:# - Se crea una structura StPoints para la gestion de los extremos de
+//:#   los objetos JChBodyFEA (15-07-2020).
+//:# - Se incorpora la posibilidad de establecer extremos fijos para los
+//:#   objetos JChBodyFEA (15-07-2020).
+//:# - Permite la simulacion de ChLinks con coeficientes variables de stiffness 
+//:#   y damping (04-10-2020).
+//:# - Variable density para objetos JChBodyFEA (09-10-2020).
+//:# - Se utilizan los parametros DVI y DEM para la definicion de superficies
+//:#   en objetos JChBodyFEA (09-10-2020).
+//:# - Variable booleana UseCollision para habilitar/deshabilitar colisiones 
+//:#   en Chrono (13-10-2020).
+//:# - Se renombra las variables Positions y Forces por Pos y Force respectivamente 
+//:#   en los objetos JChBodyFEA (13-10-2020).
+//:# - Variable Torque para aplicar fuerzas de torsion en los nodos de los
+//:#   objetos JChBodyFEA (13-10-2020).
+//:# - Variable ImposedFric para indicar que se usara el valor de Kfric
+//:#   de un objeto en la colision entre dos objetos (30-10-2020).
+//:#############################################################################
 
 /// \file JChronoData.h \brief Declares the class \ref JChronoData.
 
 #ifndef _JChronoData_
 #define _JChronoData_
 
+#include "TypesDef.h"
+#include <cstdio>
+#include <cstring>
 #include <string>
 #include <vector>
 #include <cstdlib>
 #include <cmath>
-#include "TypesDef.h"
 
 //-Defines for normal exceptions.
 #ifndef Run_Exceptioon
@@ -51,12 +82,12 @@ class JChLink;
 class JChBase
 {
 protected:
-  std::string ClassName;           ///<Name of the class.
+  std::string ClassName;  ///<Name of the class.
   void RunExceptioon(const std::string &srcfile,int srcline
     ,const std::string &classname,const std::string &method
     ,const std::string &msg,const std::string &file="")const;
-public:  
-  JChBase():ClassName("JChBase"){} ///<Constructor of objects.
+public:
+  JChBase() : ClassName("JChBase"){} ///<Constructor of objects.
 };
 
 //##############################################################################
@@ -67,7 +98,7 @@ class JChValues : protected JChBase
 {
 public:
   ///<Types of value.
-  typedef enum{ TP_Text,TP_Int,TP_Uint,TP_Double,TP_Int3,TP_Uint3,TP_Double3 }TpValue; 
+  typedef enum{ TP_Text,TP_Int,TP_Uint,TP_Double,TP_Int3,TP_Uint3,TP_Double3 }TpValue;
 
   ///Structure that describes the information of a value.
   typedef struct{
@@ -81,7 +112,7 @@ public:
       tint3 vint3;
       tuint3 vuint3;
       tfloat3 vfloat3;
-      tdouble3 vdouble3;   //-The largest element to set zero.
+      tdouble3 vdouble3;   ///<The largest element to set zero.
     };
   }StValue;
 
@@ -95,7 +126,7 @@ private:
   unsigned CheckValueType(const std::string &name,TpValue type,bool optional)const;
 
 public:
-  JChValues(); 
+  JChValues();
   ~JChValues();
   void Reset();
 
@@ -134,7 +165,7 @@ class JChObject : protected JChBase
 protected:
   JChValues Values;
 
-public:  
+public:
   JChObject(){ ClassName="JChBase"; } ///<Constructor of objects.
 
   JChValues* GetValuesPtr()const{ return((JChValues*)&Values); }
@@ -160,9 +191,9 @@ class JChBody : public JChObject
 {
 public:
   ///<Types of body.
-  typedef enum{ BD_Floating,BD_Moving,BD_Fixed}TpBody; 
-  typedef enum{ NorNull,NorOriginal,NorInvert,NorTwoFace }TpModelNormal; 
-  
+  typedef enum{ BD_Floating,BD_Moving,BD_Fixed }TpBody;
+  typedef enum{ NorNull,NorOriginal,NorInvert,NorTwoFace }TpModelNormal;
+
   static std::string TypeToStr(TpBody type);
   static std::string NormalToStr(TpModelNormal tnor);
 
@@ -170,7 +201,7 @@ private:
   std::vector<JChLink*> LinkRefs;
 
 protected:
-  bool UseFEA; //<chrono_fea>
+  bool UseFEA;
   double Mass;
   tdouble3 Center;
   tmatrix3d Inertia;
@@ -183,6 +214,7 @@ protected:
   TpModelNormal ModelNormal;
 
   //-Parameters for collisions.
+  bool ImposeFric; ///< Indicates that its Kfric value will be used in collisions between two bodies.
   float Kfric;
   float Restitu;
   //-Extra parameters for collisions using Smooth Contacts.
@@ -194,9 +226,9 @@ protected:
 public:
   const unsigned Idb;
   const std::string IdName;
-  const TpBody Type;     
+  const TpBody Type;
   const word MkBound;
-  JChBody(unsigned idb,std::string idname,TpBody type,word mkbound); 
+  JChBody(unsigned idb,std::string idname,TpBody type,word mkbound);
   virtual ~JChBody();
   virtual void Reset();
 
@@ -216,16 +248,19 @@ public:
   tfloat3     GetLinearVelini()   const{ return(LinearVelini);    }
   tfloat3     GetAngularVelini()  const{ return(AngularVelini);   }
 
-  std::string   GetModelFile()    const{ return(ModelFile);  }
+  std::string   GetModelFile()   const{ return(ModelFile);  }
   TpModelNormal GetModelNormal() const{ return(ModelNormal); }
   float         GetYoung()       const{ return(Young);       }
   float         GetPoisson()     const{ return(Poisson);     }
   float         GetKfric()       const{ return(Kfric);       }
   float         GetRestitu()     const{ return(Restitu);     }
-  bool          GetUseFEA()      const{ return(UseFEA);      }    //<chrono_fea>
+  bool          GetUseFEA()      const{ return(UseFEA);      } 
 
-  void SetModel(const std::string &file,TpModelNormal normal){ ModelFile=file; ModelNormal=normal; } 
-  void SetUseFEA(const bool u){ UseFEA=u; }  //<chrono_fea>
+  bool          GetImposeFric()  const{ return(ImposeFric);  } 
+  void          SetImposeFric(const bool i)  { ImposeFric=i; } 
+
+  void SetModel(const std::string &file,TpModelNormal normal){ ModelFile=file; ModelNormal=normal; }
+  void SetUseFEA(const bool u){ UseFEA=u; } 
   void SetCollisionData(float kfric,float restitu,float young,float poisson);
 };
 
@@ -275,7 +310,7 @@ public:
 class JChBodyMoving : public JChBody
 {
 public:
-  typedef enum{ MV_None,MV_Simple,MV_Matrix }TpMotion; 
+  typedef enum{ MV_None,MV_Simple,MV_Matrix }TpMotion;
 
 protected:
   TpMotion MotionType;    ///<Type of motion: linear or rotational.
@@ -299,6 +334,7 @@ public:
   double GetMotionDt()        const{ return(MotionDt);      }
 };
 
+
 //##############################################################################
 //# JChBodyFixed
 //##############################################################################
@@ -320,53 +356,49 @@ class JChLink : public JChObject
 {
 public:
   ///<Types of link.
-  typedef enum{ LK_Hinge, LK_Spheric, LK_PointLine, LK_LinearSpring, LK_CoulombDamping, LK_Pulley }TpLink;
+  typedef enum{ LK_Hinge,LK_Spheric,LK_PointLine,LK_LinearSpring,LK_CoulombDamping,LK_Pulley }TpLink;
   
-  bool VariableK; ///<Indicates if it is using a variable stiffness coefficient along time.
-  bool VariableC; ///<Indicates if it is using a variable damping coefficient along time.
-
   /// Structure with parameters to create VTK of spring.
   typedef struct StrSaveSpring{
-    float radius;    //-Spring radius.
-    float length;    //-Length for each revolution.
-    int nside;       //-Number of sections for each revolution.
+    float radius;    ///<Spring radius.
+    float length;    ///<Length for each revolution.
+    int nside;       ///<Number of sections for each revolution.
 
     StrSaveSpring(){ reset(); }
     StrSaveSpring(float xradius,float xlength,int xnside)
-    { 
+    {
       reset(); radius=xradius; length=xlength; nside=xnside;
     }
-    void reset(){ 
+    void reset(){
       radius=3;
       length=1.f;
       nside=16;
     }
   }StSaveSpring;
 
-
   static std::string TypeToStr(TpLink type);
 
 protected:
   std::vector<JChBody*> BodyRefs;
 
-  double Stiffness;   //-Stiffness.
-  double Damping;     //-Damping.
+  bool VariableK; ///<Indicates if it is using a variable stiffness coefficient along time.
+  bool VariableC; ///<Indicates if it is using a variable damping coefficient along time.
 
-  tdouble3 RotPoint;  //-Point for rotation.
-  //tdouble3 RotPoint2;  //-Point for rotation from fb1.
+  double Stiffness;	///<Stiffness.
+  double Damping;	///<Damping.
 
-  tdouble3 RotVector; //-Vector for rotation.  
+  tdouble3 RotPoint;	///<Point for rotation.
+  tdouble3 RotVector;	///<Vector for rotation.  
 
+  tdouble3 Pointfb0;	///<Point from fb0
+  tdouble3 Pointfb1;	///<Point from fb1
 
-  tdouble3 Pointfb0;  //-Point from fb0
-  tdouble3 Pointfb1;  //-Point from fb1
+  tdouble3 SlidingVector; ///<Vector direction for sliding axis (for pointline).  
+  tdouble3 RotVector2;    ///<Second vector for rotation (for pointline).  
 
-  tdouble3 SlidingVector; //-Vector direction for sliding axis (for pointline).  
-  tdouble3 RotVector2;    //-Second vector for rotation (for pointline).  
-
-  double RestLength;      //-Rest length for spring.
-  StSaveSpring SvSpring;  //-Configuration to save vtk spring.
-  double CoulombDamping;  //-Coulomb damping value. Not applied when it is zero. (default=0).
+  double RestLength;      ///<Rest length for spring.
+  StSaveSpring SvSpring;  ///<Configuration to save vtk spring.
+  double CoulombDamping;  ///<Coulomb damping value. Not applied when it is zero. (default=0).
 
 protected:
   void CopyFrom(const JChLink &src);
@@ -375,9 +407,9 @@ public:
   const unsigned IdBody1;
   const unsigned IdBody2;
   const std::string Name;
-  const TpLink Type;     
+  const TpLink Type;
 
-  JChLink(std::string name,TpLink type,unsigned idbody1,unsigned idbody2); 
+  JChLink(std::string name,TpLink type,unsigned idbody1,unsigned idbody2);
   virtual ~JChLink();
   void Reset();
 
@@ -423,10 +455,10 @@ public:
 class JChLinkSpheric : public JChLink
 {
 public:
-  JChLinkSpheric(std::string name, unsigned idbody1, unsigned idbody2);
+  JChLinkSpheric(std::string name,unsigned idbody1,unsigned idbody2);
   JChLinkSpheric(const JChLinkSpheric &src);
 
-  tdouble3 GetRotPoint()const{ return(RotPoint); } 
+  tdouble3 GetRotPoint()const{ return(RotPoint); }
 
   void SetRotPoint(tdouble3 v){ RotPoint=v; }
 };
@@ -438,7 +470,7 @@ public:
 class JChLinkPointLine : public JChLink
 {
 public:
-  JChLinkPointLine(std::string name, unsigned idbody1, unsigned idbody2);
+  JChLinkPointLine(std::string name,unsigned idbody1,unsigned idbody2);
   JChLinkPointLine(const JChLinkPointLine &src);
 
   tdouble3 GetSlidingVector() const{ return(SlidingVector); }  
@@ -459,7 +491,7 @@ public:
 class JChLinkLinearSpring : public JChLink
 {
 public:
-  JChLinkLinearSpring(std::string name, unsigned idbody1, unsigned idbody2);
+  JChLinkLinearSpring(std::string name,unsigned idbody1,unsigned idbody2);
   JChLinkLinearSpring(const JChLinkLinearSpring &src);
 
   tdouble3 GetPointfb0()const{ return(Pointfb0); }
@@ -480,7 +512,7 @@ public:
 class JChLinkCoulombDamping : public JChLink
 {
 public:
-  JChLinkCoulombDamping(std::string name, unsigned idbody1, unsigned idbody2);
+  JChLinkCoulombDamping(std::string name,unsigned idbody1,unsigned idbody2);
   JChLinkCoulombDamping(const JChLinkCoulombDamping &src);
 
   tdouble3 GetPointfb0()const{ return(Pointfb0); }
@@ -511,16 +543,14 @@ public:
   JChLinkPulley(std::string name,unsigned idbody1,unsigned idbody2);
   JChLinkPulley(const JChLinkPulley &src);
 
-  tdouble3 GetRotPoint() const{ return(RotPoint);   } 
-  //tdouble3 GetRotPoint2()const{ return(RotPoint2);    } 
-  tdouble3 GetRotVector()const{ return(RotVector);  }  
-  float    GetRadius()  const{ return(Radius);    } 
-  float    GetRadius2()  const{ return(Radius2);    }  
+  tdouble3 GetRotPoint() const{ return(RotPoint);  } 
+  tdouble3 GetRotVector()const{ return(RotVector); }  
+  float    GetRadius()   const{ return(Radius);    } 
+  float    GetRadius2()  const{ return(Radius2);   }  
 
   void SetRotPoint  (tdouble3 v){ RotPoint =v; }
-//  void SetRotPoint2 (tdouble3 v){ RotPoint2 =v; }
   void SetRotVector (tdouble3 v){ RotVector=v; }  
-  void SetRadius    (float r)   { Radius=r;  }
+  void SetRadius    (float r)   { Radius=r;    }
   void SetRadius2   (float r)   { Radius2=r;   }  
 };
 
@@ -532,11 +562,11 @@ class JChronoData : protected JChBase
 {
 public:
   typedef enum{ NSC,SMC }               TpContactMethod; //<chrono_contacts>
-  typedef enum{ BB=0,APGD=1,APGDREF=2}  DSolverType;      //Allowed Solvers
+  typedef enum{ BB=0,APGD=1,APGDREF=2 } DSolverType;     //Allowed Solvers
 
 private:
-  std::string Mode;         //Chrono execution mode
-  unsigned MaxIter;         //Indicates the maximun number of iterations for the solver
+  std::string Mode;         ///<Chrono execution mode
+  //unsigned MaxIter;         ///<Indicates the maximun number of iterations for the solver
   std::string DataDir;
   bool UseNSCChrono;
   std::vector<JChBody*> LisBody;
@@ -545,9 +575,10 @@ private:
   float CollisionDp;
   unsigned Solver;
   int OmpThreads;
-  bool UseFEA;                  //<chrono_fea>
+  bool UseFEA;                  //<vs_chronoo_fea>
   TpContactMethod ContactMethod;
   bool UseVariableCoeff;
+  bool UseCollision;
 
 public:
   JChronoData();
@@ -560,6 +591,9 @@ public:
 
   void SetDataDir(const std::string &datadir){ DataDir=datadir; }
   std::string GetDataDir()const{ return(DataDir); }
+
+  void SetUseCollision(bool c){ UseCollision=c; }
+  bool GetUseCollision()const{ return(UseCollision); }
 
   void SetUseNSCChrono(bool useNSCchrono){ UseNSCChrono=useNSCchrono; }
   bool GetUseNSCChrono()const{ return(UseNSCChrono); }
@@ -579,20 +613,20 @@ public:
   void SetMode(std::string m){ Mode=m; }
   std::string GetMode()const{ return(Mode); }
 
-  void SetMaxIter(unsigned i){ MaxIter=i; }
-  unsigned GetMaxIter()const{ return(MaxIter); }
+  //void SetMaxIter(unsigned i){ MaxIter=i; }
+  //unsigned GetMaxIter()const{ return(MaxIter); }
 
-  void SetUseFEA(bool e){ UseFEA=e; }          //<chrono_fea>
-  bool GetUseFEA()const{ return(UseFEA); }     //<chrono_fea>
+  void SetUseFEA(bool e){ UseFEA=e; }          //<vs_chronoo_fea>
+  bool GetUseFEA()const{ return(UseFEA); }     //<vs_chronoo_fea>
 
-  void SetContactMethod(TpContactMethod c){ ContactMethod=c; }            //<chrono_contacts>
-  TpContactMethod GetContactMethod()const{ return(ContactMethod); }       //<chrono_contacts>
+  void SetContactMethod(TpContactMethod c){ ContactMethod=c; }
+  TpContactMethod GetContactMethod()const{ return(ContactMethod); }
 
   std::string SolverToStr()const;
   std::string ContactMethodToStr()const;
 
   std::string CheckAddBodyError(unsigned idb,std::string idname,word mkbound)const;
-  
+
   JChBodyFloating* AddBodyFloating(unsigned idb,std::string idname,word mkbound,std::string fileinfo="");
   JChBodyMoving*   AddBodyMoving  (unsigned idb,std::string idname,word mkbound,double mass,std::string fileinfo="");
   JChBodyFixed*    AddBodyFixed   (unsigned idb,std::string idname,word mkbound,std::string fileinfo="");
@@ -603,7 +637,7 @@ public:
   JChLinkPointLine*      AddLinkPointLine     (std::string name,unsigned idbody1,unsigned idbody2,std::string fileinfo="");
   JChLinkLinearSpring*   AddLinkLinearSpring  (std::string name,unsigned idbody1,unsigned idbody2,std::string fileinfo="");
   JChLinkCoulombDamping* AddLinkCoulombDamping(std::string name,unsigned idbody1,unsigned idbody2,std::string fileinfo="");
-  
+
   unsigned GetBodyCount()const{ return(unsigned(LisBody.size())); }
   unsigned GetLinkCount()const{ return(unsigned(LisLink.size())); }
 
@@ -627,7 +661,5 @@ public:
   bool GetUseVariableCoeff()const{return(UseVariableCoeff);}
   void SetUseVariableCoeff(bool v){UseVariableCoeff=v;}
 };
-
-
 
 #endif

@@ -24,6 +24,7 @@
 //:# - Permite la ejecucion de ChLinks con coeficientes variables de stiffness
 //:#   y damping. (04-10-2020)  
 //:# - Contabiliza y muestra el numero de caras para las colisiones. (18-10-2020)  
+//:# - Permite imponer el valor de kfric de un objeto sobre otros. (30-10-2020)
 //:#############################################################################
 
 /// \file JChronoObjects.h \brief Declares the class \ref JChronoObjects.

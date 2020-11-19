@@ -20,7 +20,6 @@
 
 #include "JComputeMotionRef.h"
 #include "FunctionsGeo3d.h"
-//#include "Functions.h"
 
 #include <algorithm>
 #include <climits>
@@ -146,7 +145,7 @@ void JComputeMotionRef::ComputeRefPoints(unsigned casenfixed,unsigned casenmovin
   for(unsigned cmk=0;cmk<nmk;cmk++){
     unsigned pini=Mks[cmk].begin;
     unsigned pfin=pini+Mks[cmk].np;
-    //-Calcula dominio del objeto.
+    //-Computes domain size of the body.
     tdouble3 posmin=TDouble3(DBL_MAX),posmax=TDouble3(-DBL_MAX);
     for(unsigned p=pini;p<pfin;p++)if(ridp[p]<UINT_MAX){
       const unsigned rp=ridp[p];
@@ -159,7 +158,7 @@ void JComputeMotionRef::ComputeRefPoints(unsigned casenfixed,unsigned casenmovin
       if(posmax.z<ps.z)posmax.z=ps.z;
     }
     //printf("Mk[%d] (%g,%g,%g)-(%g,%g,%g)\n",cmk,posmin.x,posmin.y,posmin.z,posmax.x,posmax.y,posmax.z);
-    //-Busca las particulas mas cercanas a las 8 esquinas.
+    //-Look for the particles closest to the 8 corners.
     tdouble3 poslim[8];
     unsigned idlim[8];
     unsigned nlim=0;
@@ -184,7 +183,7 @@ void JComputeMotionRef::ComputeRefPoints(unsigned casenfixed,unsigned casenmovin
         double dis2=fgeo::PointsDist(ps,pm);
         if(dis>dis2){ dis=dis2; id=p; pslim=ps; }
       }
-      //-Descarta repetidas.
+      //-Discards repeated particles.
       bool rep=false;
       for(unsigned cr=0;cr<nlim && !rep;cr++)rep=(idlim[cr]==id);
       if(!rep){
@@ -192,7 +191,7 @@ void JComputeMotionRef::ComputeRefPoints(unsigned casenfixed,unsigned casenmovin
         idlim[nlim]=id; poslim[nlim]=pslim; nlim++;
       }
     }
-    //-Entre las seleccionadas busca la mas alejada de la primera.
+    //-Among the selected ones, look for the one furthest away from the first one.
     //printf("p1[%u]=(%g,%g,%g)\n",idlim[0],pos[idlim[0]].x,pos[idlim[0]].y,pos[idlim[0]].z);
     if(nlim>1){
       tdouble3 ps1=poslim[0];
@@ -208,7 +207,7 @@ void JComputeMotionRef::ComputeRefPoints(unsigned casenfixed,unsigned casenmovin
       tdouble3 aux2=poslim[1]; poslim[1]=poslim[id]; poslim[id]=aux2;
       //printf("p2[%u]=(%g,%g,%g)\n",idlim[1],pos[idlim[1]].x,pos[idlim[1]].y,pos[idlim[1]].z);
     }
-    //-Entre las seleccionadas busca la mas alejada de la recta que forman las 2 seleccionadas.
+    //-Among the selected ones, look for the one furthest away from the straight line between the two selected points.
     if(nlim>2){
       tdouble3 ps1=poslim[0];
       tdouble3 ps2=poslim[1];
@@ -224,7 +223,7 @@ void JComputeMotionRef::ComputeRefPoints(unsigned casenfixed,unsigned casenmovin
       tdouble3 aux2=poslim[2]; poslim[2]=poslim[id]; poslim[id]=aux2;
       //printf("p3[%u]=(%g,%g,%g)\n",idlim[2],pos[idlim[2]].x,pos[idlim[2]].y,pos[idlim[2]].z);
     }
-    //-Guarda las particulas seleccionadas y su distancia a la primera (para codiciones periodicas).
+    //-Saves the selected particles and their distance from the first one for periodic conditions.
     Mks[cmk].nid=(nlim>3? 3: nlim);
     for(unsigned clim=0;clim<Mks[cmk].nid;clim++){
       Mks[cmk].id[clim]=idlim[clim];
