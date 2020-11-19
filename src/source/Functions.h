@@ -245,11 +245,17 @@ std::string VarStr(const std::string &name,bool value);
 std::string VarStr(const std::string &name,int value);
 std::string VarStr(const std::string &name,unsigned value);
 
-std::string VarStr(const std::string &name,unsigned n,const int* values,std::string size="?");
-std::string VarStr(const std::string &name,unsigned n,const unsigned* values,std::string size="?");
-std::string VarStr(const std::string &name,unsigned n,const word* values,std::string size="?");
-std::string VarStr(const std::string &name,unsigned n,const float* values,std::string size="?",const char* fmt="%f");
-std::string VarStr(const std::string &name,unsigned n,const double* values,std::string size="?",const char* fmt="%f");
+std::string VarStr(const std::string &name,unsigned n,const int *values,std::string size="?");
+std::string VarStr(const std::string &name,unsigned n,const unsigned *values,std::string size="?");
+std::string VarStr(const std::string &name,unsigned n,const word *values,std::string size="?");
+std::string VarStr(const std::string &name,unsigned n,const float *values,std::string size="?",const char *fmt="%f");
+std::string VarStr(const std::string &name,unsigned n,const double *values,std::string size="?",const char *fmt="%f");
+std::string VarStr(const std::string &name,unsigned n,const tdouble3 *values,std::string size="?",const char *fmt="%g");
+
+std::string VarStr(const std::string &name,const std::vector<int> &values,std::string size="?");
+std::string VarStr(const std::string &name,const std::vector<tdouble3> &values,std::string size="?",const char *fmt="%g");
+
+
 
 void PrintVar(const std::string &name,const char *value,const std::string &post="");
 void PrintVar(const std::string &name,const std::string &value,const std::string &post="");

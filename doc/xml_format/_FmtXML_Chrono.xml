@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<!-- *** DualSPHysics [Chrono] v5.0.099 (09-04-2020) *** -->
+<!-- *** DualSPHysics [Chrono] v5.0.161 (30-10-2020) *** -->
 <!-- *** class: JChronoObjects *** -->
 <!------------------------------------------------------------------------------->
 <!------------------------------------------------------------------------------->
@@ -59,6 +59,33 @@
 					<length value="1" comment="length for each revolution (default=1)" />
 				</savevtk>
 			</link_linearspring>
+			<!-- Spring with variable stiffness and damping along time -->
+			<link_linearspring idbody1="domain" idbody2="box1">
+				<point_fb1 x="1.0" y="1.0" z="1.0" comment="Point in body 1" />
+				<point_fb2 x="2.0" y="2.0" z="2.0" comment="Point in body 2" />
+				<damping comment="Damping [Ns/m]">     <!--  Variable Damping -->
+					<c time="0" value="0"/>
+					<c time="5" value="0"/>
+					<c time="5" value="500"/>
+					<c time="10" value="500"/>
+				</damping>
+				<stiffness comment="Stiffness [N/m]"> <!--  Variable Stiffness -->
+					<k time="0" value="0"/>
+					<k time="5" value="0"/>
+					<k time="5" value="100"/>
+					<k time="10" value="100"/>
+				</stiffness>
+				<rest_length value="5.0" comment="Spring equilibrium length [m]" />
+			</link_linearspring>
+			<!-- Spring with variable stiffness and damping along time from external file -->
+			<link_linearspring idbody1="domain" idbody2="box1">
+				<point_fb1 x="1.0" y="1.0" z="1.0" comment="Point in body 1" />
+				<point_fb2 x="2.0" y="2.0" z="2.0" comment="Point in body 2" />
+				<damping file="CaseExternalDamping.csv" comment="Damping [Ns/m]"/>		<!--  Variable Damping from external file -->	
+				<stiffness file="CaseExternalStiffness.csv" comment="Stiffness [N/m]"/> <!--  Variable Stiffness from external file -->	
+				<rest_length value="5.0" comment="Spring equilibrium length [m]" />
+			</link_linearspring>
+			<!-- Coulomb Damping bewteen two bodies -->
 			<link_coulombdamping  idbody1="domain" idbody2="box1">
 				<point_fb1 x="1.0" y="1.0" z="1.0" comment="Point in body 1" />
 				<point_fb2 x="2.0" y="2.0" z="2.0" comment="Point in body 2" />
@@ -147,6 +174,15 @@
 	<link_spheric active="true"/>
 	<link_pulley active="true"/>
 </chrono>
-
+<!----------------------------------------------------------------------------------------->
+<!----------------------------------------------------------------------------------------->
+<!-- *** Attribute "imposefric" in elements <bodyXXX> to impose its kfric value when *** --> 
+<!-- *** this body collides with other (using imposefric="true" or imposefric="1")   *** --> 
+<!-- *** or disable (using imposefric="false" or imposefric="0"). It is an optional  *** -->
+<!-- *** attribute and false by default.                                             *** -->
+<chrono>
+	<bodyfixed id="domain" mkbound="10" modelfile="AutoActual" modelnormal="invert" imposefric="true" />
+	<bodyfloating id="box" mkbound="51" modelfile="AutoActual" imposefric="true" />
+</chrono>
 
 

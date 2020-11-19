@@ -32,6 +32,7 @@
 //:# - Nuevo metodo GetAppendMode() para saber si se va ampliar un fichero existente. (06-07-2018)
 //:# - Error corregido en SaveData() por el que siempre se grababa el head. (13-08-2018)
 //:# - Gestion de excepciones mejorada.  (15-09-2019)
+//:# - Nuevo metodo AddHead3() y clase Head3 para cabeceras de datos triples. (02-11-2020)
 //:#############################################################################
 
 /// \file JSaveCsv2.h \brief Declares the class \ref JSaveCsv2.
@@ -129,6 +130,18 @@ public:
   Endl(){};
 };
 
+//##############################################################################
+//# Head3  Eg: "cen [m];pos" -> "cen.x [m];cen.y [m];cen.z [m];pos.x;pos.y;pos.z"
+//##############################################################################
+/// \brief Class to add header for triple data (operator use).
+
+class Head3
+{
+public:
+  const std::string HeadText;
+  Head3(std::string headtext):HeadText(headtext){};
+};
+
 
 //##############################################################################
 //# JSaveCsv2
@@ -163,6 +176,8 @@ private:
   void AddStr(std::string tx);
   void AddSeparator(unsigned count);
   void AddEndl();
+  void AddHead3(std::string headtx);
+
   void Save(const std::string &tx);
   void SetSeparators(std::string &tx)const;
   void OpenFile();
@@ -195,6 +210,7 @@ public:
   JSaveCsv2& operator <<(const AutoSepOff &obj);
   JSaveCsv2& operator <<(const Endl &obj);
   JSaveCsv2& operator <<(const Fmt &obj);
+  JSaveCsv2& operator <<(const Head3 &obj);
 
   JSaveCsv2& operator <<(const std::string &v){ AddStr(v); return(*this); }
 

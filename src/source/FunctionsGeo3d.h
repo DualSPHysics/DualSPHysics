@@ -61,6 +61,9 @@
 //:# - Nuevas funciones: PlaneAxisDist(). (26-08-2020)
 //:# - Nuevas funciones: PlaneNormalized(). (04-10-2020)
 //:# - Nuevas funciones: PointsDist2(). (06-10-2020)
+//:# - Nuevas funciones: DomainsIntersection(). (01-11-2020)
+//:# - Nuevas funciones: VectorsUnitaryAngle(). (03-11-2020)
+//:# - Controla error de acos() en funciones VectorsAngle() y VectorsUnitaryAngle(). (03-11-2020)
 //:#############################################################################
 
 /// \file FunctionsGeo3d.h \brief Declares geometry functions for 3D.
@@ -137,6 +140,31 @@ inline bool PointInMinMax(const tdouble3 &pt,const tdouble3 &pmin,const tdouble3
 //==============================================================================
 inline bool PointInMinMax(const tfloat3 &pt,const tfloat3 &pmin,const tfloat3 &pmax){
   return(pmin.x<=pt.x && pmin.y<=pt.y && pmin.z<=pt.z && pt.x<=pmax.x && pt.y<=pmax.x && pt.z<=pmax.z);
+}
+
+
+//==============================================================================
+/// Devuelve true cuando parte de un dominio esta dentro de otro dominio.
+/// Returns true when part of domain is inside other domain.
+//==============================================================================
+inline bool DomainsIntersection(const tdouble3 &pmin1,const tdouble3 &pmax1
+  ,const tdouble3 &pmin2,const tdouble3 &pmax2)
+{
+  return(((pmin1.x<=pmin2.x && pmin2.x<=pmax1.x) || (pmin2.x<=pmin1.x && pmin1.x<=pmax2.x))
+      && ((pmin1.y<=pmin2.y && pmin2.y<=pmax1.y) || (pmin2.y<=pmin1.y && pmin1.y<=pmax2.y))
+      && ((pmin1.z<=pmin2.z && pmin2.z<=pmax1.z) || (pmin2.z<=pmin1.z && pmin1.z<=pmax2.z)));
+}
+
+//==============================================================================
+/// Devuelve true cuando parte de un dominio esta dentro de otro dominio.
+/// Returns true when part of domain is inside other domain.
+//==============================================================================
+inline bool DomainsIntersection(const tfloat3 &pmin1,const tfloat3 &pmax1
+  ,const tfloat3 &pmin2,const tfloat3 &pmax2)
+{
+  return(((pmin1.x<=pmin2.x && pmin2.x<=pmax1.x) || (pmin2.x<=pmin1.x && pmin1.x<=pmax2.x))
+      && ((pmin1.y<=pmin2.y && pmin2.y<=pmax1.y) || (pmin2.y<=pmin1.y && pmin1.y<=pmax2.y))
+      && ((pmin1.z<=pmin2.z && pmin2.z<=pmax1.z) || (pmin2.z<=pmin1.z && pmin1.z<=pmax2.z)));
 }
 
 
@@ -379,7 +407,8 @@ inline tfloat3 VecOrthogonal(const tfloat3 &v,float module){
 /// Returns angle in degrees between two vectors.
 //==============================================================================
 inline double VectorsAngle(const tdouble3 &v1,const tdouble3 &v2){
-  return(acos(ProductScalar(v1,v2)/(PointDist(v1)*PointDist(v2)))*TODEG);
+  const double v=ProductScalar(v1,v2)/(PointDist(v1)*PointDist(v2));
+  return(acos(v<-1.? -1.: (v>1.? 1.: v))*TODEG);
 }
 
 //==============================================================================
@@ -387,7 +416,26 @@ inline double VectorsAngle(const tdouble3 &v1,const tdouble3 &v2){
 /// Returns angle in degrees between two vectors.
 //==============================================================================
 inline float VectorsAngle(const tfloat3 &v1,const tfloat3 &v2){
-  return(float(acos(ProductScalar(v1,v2)/(PointDist(v1)*PointDist(v2)))*TODEG));
+  const float v=ProductScalar(v1,v2)/(PointDist(v1)*PointDist(v2));
+  return(float(acos(v<-1.? -1.: (v>1.? 1.: v))*TODEG));
+}
+
+//==============================================================================
+/// Devuelve el angulo en grados que forman dos vectores unitarios.
+/// Returns angle in degrees between two unitary vectors.
+//==============================================================================
+inline double VectorsUnitaryAngle(const tdouble3 &v1,const tdouble3 &v2){
+  const double v=ProductScalar(v1,v2);
+  return(acos(v<-1.? -1.: (v>1.? 1.: v))*TODEG);
+}
+
+//==============================================================================
+/// Devuelve el angulo en grados que forman dos vectores unitarios.
+/// Returns angle in degrees between two unitary vectors.
+//==============================================================================
+inline float VectorsUnitaryAngle(const tfloat3 &v1,const tfloat3 &v2){
+  const float v=ProductScalar(v1,v2);
+  return(float(acos(v<-1.? -1.: (v>1.? 1.: v))*TODEG));
 }
 
 
@@ -849,7 +897,8 @@ void TriangleOpen(const tfloat3 &p1,const tfloat3 &p2,const tfloat3 &p3
 /// Returns the normal planes which bound a convex polygon formed by np points.
 /// With openingdist you can open or close normal planes.
 //==============================================================================
-void PolygonNormalPlanes(const std::vector<tdouble3> &vpt,double openingdist,std::vector<tplane3d> &vpla);
+void PolygonNormalPlanes(const std::vector<tdouble3> &vpt,double openingdist
+  ,std::vector<tplane3d> &vpla);
 
 //==============================================================================
 /// Devuelve los planos normales que limitan un poligono convexo formado por np puntos.
@@ -857,7 +906,8 @@ void PolygonNormalPlanes(const std::vector<tdouble3> &vpt,double openingdist,std
 /// Returns the normal planes which bound a convex polygon formed by np points.
 /// With openingdist you can open or close normal planes.
 //==============================================================================
-void PolygonNormalPlanes(const std::vector<tfloat3> &vpt,float openingdist,std::vector<tplane3f> &vpla);
+void PolygonNormalPlanes(const std::vector<tfloat3> &vpt,float openingdist
+  ,std::vector<tplane3f> &vpla);
 
 
 //==============================================================================
