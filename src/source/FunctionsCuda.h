@@ -39,10 +39,8 @@
 #include <vector>
 #include <cuda_runtime_api.h>
 #include "TypesDef.h"
+#include "RunExceptionGpuDef.h"
 
-#ifndef Check_CudaErroorFun
-#define Check_CudaErroorFun(msg) CheckCudaErroorFun(__FILE__,__LINE__,__func__,msg)
-#endif
 
 /// Implements a set of basic/general GPU functions.
 namespace fcuda{

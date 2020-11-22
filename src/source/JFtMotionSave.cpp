@@ -20,6 +20,7 @@
 
 #include "JFtMotionSave.h"
 #include "Functions.h"
+#include "JAppInfo.h"
 #include "JLog2.h"
 #include "JPartFloatBi4.h"
 #include "JComputeMotionRef.h"
@@ -42,7 +43,7 @@ using namespace std;
 //==============================================================================
 /// Constructor.
 //==============================================================================
-JFtMotionSave::JFtMotionSave(double tout,JLog2* log):TimeOut(tout),Log(log){
+JFtMotionSave::JFtMotionSave(double tout):Log(AppInfo.LogPtr()),TimeOut(tout){
   ClassName="JFtMotionSave";
   FtMks=NULL;
   IdpRef=NULL;  PosRef=NULL;
@@ -131,15 +132,6 @@ void JFtMotionSave::ConfigPosRef(unsigned np,const tdouble3 *pos,const unsigned 
   computemotref.ComputeRefPoints(CaseFtBegin,0,CaseNfloat,np,idp,pos,NULL,NULL);
   computemotref.GetMotionRef(FtCount,FtMks);
   computemotref.Reset();
-  //-Shows reference points for debug.
-  if(0)for(unsigned cf=0;cf<FtCount;cf++){
-    const StMkMotionData &v=FtMks[cf];
-    string tx;
-    for(unsigned ci=0;ci<3;ci++){
-      tx=tx+fun::PrintStr("  i%d:(%g,%g,%g)",v.id[ci],v.ps[ci].x,v.ps[ci].y,v.ps[ci].z);
-    }
-    Log->Printf("*** [%d] %s",cf,tx.c_str());
-  }
   //-Load IdpRef[].
   for(unsigned cf=0;cf<FtCount;cf++){
     const StMkMotionData &v=FtMks[cf];

@@ -205,9 +205,6 @@
     <ClInclude Include="..\source\JSphGpu_InOut_ker.h">
       <Filter>Cuda</Filter>
     </ClInclude>
-    <ClInclude Include="..\source\FunctionsGeo3d.h">
-      <Filter>Common</Filter>
-    </ClInclude>
     <ClInclude Include="..\source\JLinearValueDef.h">
       <Filter>Common</Filter>
     </ClInclude>
@@ -469,6 +466,15 @@
     <ClInclude Include="..\source\JPartMotionDef.h">
       <Filter>Source\Other</Filter>
     </ClInclude>
+    <ClInclude Include="..\source\FunGeo3d.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\RunExceptionDef.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\RunExceptionGpuDef.h">
+      <Filter>Common</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\source\main.cpp">
@@ -499,9 +505,6 @@
       <Filter>Common</Filter>
     </ClCompile>
     <ClCompile Include="..\source\JLog2.cpp">
-      <Filter>Common</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\JMeanValues.cpp">
       <Filter>Common</Filter>
     </ClCompile>
     <ClCompile Include="..\source\JObject.cpp">
@@ -575,9 +578,6 @@
     </ClCompile>
     <ClCompile Include="..\source\JRelaxZonesGpu.cpp">
       <Filter>Src_JWave_MLP_RZ</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\FunctionsGeo3d.cpp">
-      <Filter>Common</Filter>
     </ClCompile>
     <ClCompile Include="..\source\JDataArrays.cpp">
       <Filter>Common</Filter>
@@ -755,6 +755,9 @@
     </ClCompile>
     <ClCompile Include="..\source\JFtMotionSave.cpp">
       <Filter>Source\Other</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\FunGeo3d.cpp">
+      <Filter>Common</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

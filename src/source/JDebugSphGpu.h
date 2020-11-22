@@ -40,21 +40,6 @@
 #include <cuda_runtime_api.h>
 
 
-//-Defines for normal exceptions for static methods.
-#ifndef Run_ExceptioonSta
-#define Run_ExceptioonSta(msg) RunExceptioonStatic(__FILE__,__LINE__,__func__,msg)
-#endif
-#ifndef Run_ExceptioonFileSta
-#define Run_ExceptioonFileSta(msg,file) RunExceptioonStatic(__FILE__,__LINE__,__func__,msg,file)
-#endif
-//-Defines for CUDA exceptions for static methods.
-#ifndef Run_ExceptioonCudaSta
-#define Run_ExceptioonCudaSta(cuerr,msg) RunExceptioonCudaStatic(__FILE__,__LINE__,__func__,cuerr,msg)
-#endif
-#ifndef Check_CudaErroorSta
-#define Check_CudaErroorSta(msg) CheckCudaErroorStatic(__FILE__,__LINE__,__func__,msg)
-#endif
-
 class JDataArrays;
 class JSphGpuSingle;
 class JSphMgpuNodeUnit;

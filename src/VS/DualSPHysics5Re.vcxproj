@@ -516,7 +516,7 @@ rem %CudaNvcc% -ccbin "$(VCInstallDir)bin" %gpuhw% -use_fast_math -c %ptxinfo% -
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">true</ExcludedFromBuild>
     </ClInclude>
-    <ClInclude Include="..\source\FunctionsGeo3d.h" />
+    <ClInclude Include="..\source\FunGeo3d.h" />
     <ClInclude Include="..\source\FunctionsMath.h" />
     <ClInclude Include="..\source\FunSphEos.h" />
     <ClInclude Include="..\source\FunSphEos_iker.h">
@@ -712,6 +712,8 @@ rem %CudaNvcc% -ccbin "$(VCInstallDir)bin" %gpuhw% -use_fast_math -c %ptxinfo% -
     <ClInclude Include="..\source\JXml.h" />
     <ClInclude Include="..\source\OmpDefs.h" />
     <ClInclude Include="..\source\randomc.h" />
+    <ClInclude Include="..\source\RunExceptionDef.h" />
+    <ClInclude Include="..\source\RunExceptionGpuDef.h" />
     <ClInclude Include="..\source\tinystr.h" />
     <ClInclude Include="..\source\tinyxml.h" />
     <ClInclude Include="..\source\TypesDef.h" />
@@ -750,7 +752,7 @@ rem %CudaNvcc% -ccbin "$(VCInstallDir)bin" %gpuhw% -use_fast_math -c %ptxinfo% -
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">true</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="..\source\FunctionsGeo3d.cpp" />
+    <ClCompile Include="..\source\FunGeo3d.cpp" />
     <ClCompile Include="..\source\FunSphKernelsCfg.cpp" />
     <ClCompile Include="..\source\JAppInfo.cpp" />
     <ClCompile Include="..\source\JArraysCpu.cpp" />
@@ -786,7 +788,6 @@ rem %CudaNvcc% -ccbin "$(VCInstallDir)bin" %gpuhw% -use_fast_math -c %ptxinfo% -
     <ClCompile Include="..\source\JFtMotionSave.cpp" />
     <ClCompile Include="..\source\JLinearValue.cpp" />
     <ClCompile Include="..\source\JLog2.cpp" />
-    <ClCompile Include="..\source\JMeanValues.cpp" />
     <ClCompile Include="..\source\JMLPistonsGpu.cpp" />
     <ClCompile Include="..\source\JDsMooredFloatings.cpp" />
     <ClCompile Include="..\source\JMotion.cpp" />

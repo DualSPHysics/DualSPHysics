@@ -78,7 +78,7 @@ private:
   void SaveFtData(double timestep,unsigned nstep,const StFloatingData *ftobjs);
 
 public:
-  JFtMotionSave(double tout,JLog2* log);
+  JFtMotionSave(double tout);
   ~JFtMotionSave();
   void Reset();
 

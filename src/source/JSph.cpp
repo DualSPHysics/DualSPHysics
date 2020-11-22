@@ -21,7 +21,7 @@
 #include "JSph.h"
 #include "JAppInfo.h"
 #include "Functions.h"
-#include "FunctionsGeo3d.h"
+#include "FunGeo3d.h"
 #include "FunSphKernelsCfg.h"
 #include "FunSphKernel.h"
 #include "JPartDataHead.h"
@@ -528,7 +528,7 @@ void JSph::LoadConfig(const JSphCfgRun *cfg){
   LoadCaseConfig(cfg);
 
   //-PIPS configuration.
-  if(cfg->PipsMode)DsPips=new JDsPips(Cpu,cfg->PipsSteps,(cfg->PipsMode==2),(TStep==STEP_Symplectic? 2: 1),Log);
+  if(cfg->PipsMode)DsPips=new JDsPips(Cpu,cfg->PipsSteps,(cfg->PipsMode==2),(TStep==STEP_Symplectic? 2: 1));
 }
 
 //==============================================================================
@@ -575,7 +575,7 @@ void JSph::LoadConfigParameters(const JXml *xml){
   JCaseEParms eparms;
   eparms.LoadXml(xml,"case.execution.parameters");
   if(eparms.Exists("FtSaveAce"))SaveFtAce=(eparms.GetValueInt("FtSaveAce",true,0)!=0); //-For Debug.
-  if(eparms.GetValueDouble("FtSaveMotion",true,-1.)>=0)FtMotSave=new JFtMotionSave(eparms.GetValueDouble("FtSaveMotion"),Log); //<vs_ftmottionsv>
+  if(eparms.GetValueDouble("FtSaveMotion",true,-1.)>=0)FtMotSave=new JFtMotionSave(eparms.GetValueDouble("FtSaveMotion")); //<vs_ftmottionsv>
   if(eparms.Exists("PosDouble")){
     Log->PrintWarning("The parameter \'PosDouble\' is deprecated.");
     SvPosDouble=(eparms.GetValueInt("PosDouble")==2);
@@ -667,7 +667,7 @@ void JSph::LoadConfigParameters(const JXml *xml){
       if(shiftcoef==0)shiftmode=SHIFT_None;
       else shifttfs=eparms.GetValueFloat("ShiftTFS",true,0);
     }
-    Shifting=new JSphShifting(Simulate2D,Dp,KernelH,Log);
+    Shifting=new JSphShifting(Simulate2D,Dp,KernelH);
     Shifting->ConfigBasic(shiftmode,shiftcoef,shifttfs);
   }
 
@@ -816,7 +816,7 @@ void JSph::LoadConfigCommands(const JSphCfgRun *cfg){
       case 3:  shiftmode=SHIFT_Full;     break;
       default: Run_Exceptioon("Shifting mode is not valid.");
     }
-    if(!Shifting)Shifting=new JSphShifting(Simulate2D,Dp,KernelH,Log);
+    if(!Shifting)Shifting=new JSphShifting(Simulate2D,Dp,KernelH);
     Shifting->ConfigBasic(shiftmode);
   }
 
@@ -947,18 +947,18 @@ void JSph::LoadCaseConfig(const JSphCfgRun *cfg){
   MkInfo->Config(&parts);
 
   //-Configuration of GaugeSystem.
-  GaugeSystem=new JGaugeSystem(Cpu,Log);
+  GaugeSystem=new JGaugeSystem(Cpu);
 
   //-Configuration of AccInput.
   if(xml.GetNodeSimple("case.execution.special.accinputs",true)){
-    AccInput=new JDsAccInput(Log,DirCase,&xml,"case.execution.special.accinputs");
+    AccInput=new JDsAccInput(DirCase,&xml,"case.execution.special.accinputs");
   }
 
   //-Configuration of ChronoObjects.
   if(UseChrono){
     if(xml.GetNodeSimple("case.execution.special.chrono",true)){
       if(!JChronoObjects::Available())Run_Exceptioon("DSPHChronoLib to use Chrono is not included in the current compilation.");
-      ChronoObjects=new JChronoObjects(Log,DirCase,CaseName,&xml,"case.execution.special.chrono",Dp,parts.GetMkBoundFirst());
+      ChronoObjects=new JChronoObjects(DirCase,CaseName,&xml,"case.execution.special.chrono",Dp,parts.GetMkBoundFirst());
     }
     else Run_ExceptioonFile("Chrono configuration in XML file is missing.",FileXml);
   }
@@ -1011,7 +1011,7 @@ void JSph::LoadCaseConfig(const JSphCfgRun *cfg){
   //-Configuration of Shifting with zones.
   if(Shifting && xml.GetNodeSimple("case.execution.special.shifting",true))Run_ExceptioonFile("Shifting is defined several times (in <special><shifting> and <execution><parameters>).",FileXml);
   if(xml.GetNodeSimple("case.execution.special.shifting",true)){
-    Shifting=new JSphShifting(Simulate2D,Dp,KernelH,Log);
+    Shifting=new JSphShifting(Simulate2D,Dp,KernelH);
     Shifting->LoadXml(&xml,"case.execution.special.shifting");
   }
   if(Shifting && !Shifting->GetShiftMode()){ delete Shifting; Shifting=NULL; }
@@ -1019,7 +1019,7 @@ void JSph::LoadCaseConfig(const JSphCfgRun *cfg){
 
   //-Configuration of damping zones.
   if(xml.GetNodeSimple("case.execution.special.damping",true)){
-    Damping=new JDsDamping(Dp,Log);
+    Damping=new JDsDamping(Dp);
     Damping->LoadXml(&xml,"case.execution.special.damping");
   }
 
@@ -1118,7 +1118,7 @@ void JSph::LoadCaseConfig(const JSphCfgRun *cfg){
 
   //-Configuration of Inlet/Outlet.
   if(xml.GetNodeSimple("case.execution.special.inout",true)){
-    InOut=new JSphInOut(Cpu,CSP,FileXml,&xml,"case.execution.special.inout",DirCase,Log);
+    InOut=new JSphInOut(Cpu,CSP,FileXml,&xml,"case.execution.special.inout",DirCase);
     NpDynamic=true;
     ReuseIds=InOut->GetReuseIds();
     if(ReuseIds)Run_Exceptioon("Inlet/Outlet with ReuseIds is not a valid option for now...");
@@ -1127,14 +1127,14 @@ void JSph::LoadCaseConfig(const JSphCfgRun *cfg){
   //-Configuration of boundary extrapolated correction.
   if(xml.GetNodeSimple("case.execution.special.boundextrap",false))Run_Exceptioon("The XML section 'boundextrap' is obsolete.");
   if(xml.GetNodeSimple("case.execution.special.boundcorr",true)){
-    BoundCorr=new JSphBoundCorr(Cpu,Dp,Log,&xml,"case.execution.special.boundcorr",MkInfo);
+    BoundCorr=new JSphBoundCorr(Cpu,Dp,&xml,"case.execution.special.boundcorr",MkInfo);
   }
  
   //-Configuration of Moorings object.
   if(xml.GetNodeSimple("case.execution.special.moorings",true)){
     if(WithFloating){
       if(!AVAILABLE_MOORDYN)Run_Exceptioon("Code for moorings and MoorDyn+ coupling is not included in the current compilation.");
-      Moorings=new JDsMooredFloatings(Log,DirCase,CaseName,Gravity);
+      Moorings=new JDsMooredFloatings(DirCase,CaseName,Gravity);
       Moorings->LoadXml(&xml,"case.execution.special.moorings");
     }
     else Log->PrintWarning("The use of Moorings was disabled because there are no floating objects...");
@@ -1143,7 +1143,7 @@ void JSph::LoadCaseConfig(const JSphCfgRun *cfg){
   //-Configuration of ForcePoints object.
   if(Moorings || xml.GetNodeSimple("case.execution.special.forcepoints",true)){
     if(WithFloating){
-      ForcePoints=new JDsFtForcePoints(Log,Cpu,Dp,FtCount);
+      ForcePoints=new JDsFtForcePoints(Cpu,Dp,FtCount);
       //FtForces->LoadXml(&xml,"case.execution.special.forcepoints");
     }
     else Log->PrintWarning("The use of impossed force to floatings was disabled because there are no floating objects...");
@@ -2127,7 +2127,7 @@ void JSph::InitRun(unsigned np,const unsigned *idp,const tdouble3 *pos){
 
   //-Configuration of SaveDt.
   if(xml.GetNodeSimple("case.execution.special.savedt",true)){
-    SaveDt=new JDsSaveDt(Log);
+    SaveDt=new JDsSaveDt();
     SaveDt->Config(&xml,"case.execution.special.savedt",TimeMax,TimePart);
     SaveDt->VisuConfig("SaveDt configuration:"," ");
   }
@@ -2144,7 +2144,7 @@ void JSph::InitRun(unsigned np,const unsigned *idp,const tdouble3 *pos){
   if(GaugeSystem->GetCount())GaugeSystem->VisuConfig("GaugeSystem configuration:"," ");
 
   //-Shows configuration of JDsOutputTime.
-  if(OutputTime->UseSpecialConfig())OutputTime->VisuConfig(Log,"TimeOut configuration:"," ");
+  if(OutputTime->UseSpecialConfig())OutputTime->VisuConfig("TimeOut configuration:"," ");
 
   Part=PartIni; Nstep=0; PartNstep=0; PartOut=0;
   TimeStep=TimeStepIni; TimeStepM1=TimeStep;

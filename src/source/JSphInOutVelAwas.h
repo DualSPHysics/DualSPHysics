@@ -83,7 +83,7 @@ private:
     ,JGaugeSystem *gaugesystem);
 
 public:
-  JSphInOutVelAwas(JLog2 *log,unsigned idzone,double inletx,tdouble3 inletdir
+  JSphInOutVelAwas(unsigned idzone,double inletx,tdouble3 inletdir
     ,float gravityz,const std::string &dirdatafile,JGaugeSystem *gaugesystem
     ,const JXml *sxml,TiXmlElement* ele);
   ~JSphInOutVelAwas();

@@ -23,7 +23,7 @@
 #include "JAppInfo.h"
 #include "JXml.h"
 #include "Functions.h"
-#include "FunctionsGeo3d.h"
+#include "FunGeo3d.h"
 #include "JVtkLib.h"
 #include <cfloat>
 #include <algorithm>
@@ -36,7 +36,7 @@ using std::string;
 //==============================================================================
 /// Constructor.
 //==============================================================================
-JDsDamping::JDsDamping(double dp,JLog2* log):Dp(dp),Log(log){
+JDsDamping::JDsDamping(double dp):Log(AppInfo.LogPtr()),Dp(dp){
   ClassName="JDsDamping";
   Reset();
 }

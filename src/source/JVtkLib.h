@@ -42,14 +42,6 @@
 #include <vector>
 #include "JVtkLibDef.h"      //Defines DISABLE_VTKLIB to compile without VTK library.
 
-//-Defines for normal exceptions for static methods.
-#ifndef Run_ExceptioonSta
-#define Run_ExceptioonSta(msg) RunExceptioonStatic(__FILE__,__LINE__,__func__,msg)
-#endif
-#ifndef Run_ExceptioonFileSta
-#define Run_ExceptioonFileSta(msg,file) RunExceptioonStatic(__FILE__,__LINE__,__func__,msg,file)
-#endif
-
 class JShapeVtk;
 
 //##############################################################################

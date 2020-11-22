@@ -101,14 +101,8 @@
 #include <vector>
 #include <sys/stat.h>
 #include "TypesDef.h"
+#include "RunExceptionDef.h"
 
-
-#ifndef Run_ExceptioonFun
-#define Run_ExceptioonFun(msg) RunExceptioonFun(__FILE__,__LINE__,__func__,msg)
-#endif
-#ifndef Run_ExceptioonFileFun
-#define Run_ExceptioonFileFun(msg,file) RunExceptioonFun(__FILE__,__LINE__,__func__,msg,file)
-#endif
 
 /// Implements a set of basic/general functions.
 namespace fun{

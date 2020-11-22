@@ -27,7 +27,7 @@
 #include "JSaveCsv2.h"
 #include "JAppInfo.h"
 #include "Functions.h"
-#include "FunctionsGeo3d.h"
+#include "FunGeo3d.h"
 #include "JDataArrays.h"
 #include "JVtkLib.h"
 #ifdef _WITHGPU
@@ -48,8 +48,8 @@ using namespace std;
 //==============================================================================
 /// Constructor.
 //==============================================================================
-JGaugeItem::JGaugeItem(TpGauge type,unsigned idx,std::string name,bool cpu,JLog2* log,unsigned outsize)
-  :Type(type),Idx(idx),Name(name),Cpu(cpu),Log(log),OutSize(outsize)
+JGaugeItem::JGaugeItem(TpGauge type,unsigned idx,std::string name,bool cpu,unsigned outsize)
+  :Log(AppInfo.LogPtr()),Type(type),Idx(idx),Name(name),Cpu(cpu),OutSize(outsize)
 {
   ClassName="JGaugeItem";
   Reset();
@@ -225,8 +225,8 @@ void JGaugeItem::SaveResults(unsigned cpart){
 //==============================================================================
 /// Constructor.
 //==============================================================================
-JGaugeVelocity::JGaugeVelocity(unsigned idx,std::string name,tdouble3 point,bool cpu,JLog2* log)
-  :JGaugeItem(GAUGE_Vel,idx,name,cpu,log)
+JGaugeVelocity::JGaugeVelocity(unsigned idx,std::string name,tdouble3 point,bool cpu)
+  :JGaugeItem(GAUGE_Vel,idx,name,cpu)
 {
   ClassName="JGaugeVel";
   FileInfo=string("Saves velocity data measured from fluid particles (by ")+ClassName+").";
@@ -412,8 +412,8 @@ void JGaugeVelocity::CalculeGpu(double timestep,const StDivDataGpu &dvd
 //==============================================================================
 /// Constructor.
 //==============================================================================
-JGaugeSwl::JGaugeSwl(unsigned idx,std::string name,tdouble3 point0,tdouble3 point2,double pointdp,float masslimit,bool cpu,JLog2* log)
-  :JGaugeItem(GAUGE_Swl,idx,name,cpu,log)
+JGaugeSwl::JGaugeSwl(unsigned idx,std::string name,tdouble3 point0,tdouble3 point2,double pointdp,float masslimit,bool cpu)
+  :JGaugeItem(GAUGE_Swl,idx,name,cpu)
 {
   ClassName="JGaugeSwl";
   FileInfo=string("Saves SWL data measured from fluid particles (by ")+ClassName+").";
@@ -639,8 +639,8 @@ void JGaugeSwl::CalculeGpu(double timestep,const StDivDataGpu &dvd
 //==============================================================================
 /// Constructor.
 //==============================================================================
-JGaugeMaxZ::JGaugeMaxZ(unsigned idx,std::string name,tdouble3 point0,double height,float distlimit,bool cpu,JLog2* log)
-  :JGaugeItem(GAUGE_MaxZ,idx,name,cpu,log)
+JGaugeMaxZ::JGaugeMaxZ(unsigned idx,std::string name,tdouble3 point0,double height,float distlimit,bool cpu)
+  :JGaugeItem(GAUGE_MaxZ,idx,name,cpu)
 {
   ClassName="JGaugeMaxZ";
   FileInfo=string("Saves maximum Z position of fluid particles (by ")+ClassName+").";
@@ -858,8 +858,8 @@ void JGaugeMaxZ::CalculeGpu(double timestep,const StDivDataGpu &dvd
 //==============================================================================
 JGaugeForce::JGaugeForce(unsigned idx,std::string name,word mkbound
   ,TpParticles typeparts,unsigned idbegin,unsigned count,typecode code
-  ,tfloat3 center,bool cpu,JLog2* log)
-  :JGaugeItem(GAUGE_Force,idx,name,cpu,log)
+  ,tfloat3 center,bool cpu)
+  :JGaugeItem(GAUGE_Force,idx,name,cpu)
 {
   ClassName="JGaugeForce";
   FileInfo=string("Saves Force data measured from boundary particles (by ")+ClassName+").";
@@ -1072,15 +1072,10 @@ void JGaugeForce::CalculeGpu(double timestep,const StDivDataGpu &dvd
 
   //-Computes total ace.
   tfloat3 acesum=TFloat3(0);
-  if(1){//-Computes total ace on GPU.
+  {//-Computes total ace on GPU.
     const float3 result=curedus::ReduSumFloat3(Count,0,PartAceg,Auxg);
     acesum=TFloat3(result.x,result.y,result.z);
     Check_CudaErroor("Failed in Force calculation.");
-  }
-  else{//-Computes total ace on CPU.
-    tfloat3* aceh=fcuda::ToHostFloat3(0,Count,PartAceg);
-    for(unsigned p=0;p<Count;p++)acesum=acesum+aceh[p];
-    delete[] aceh; aceh=NULL;
   }
 
   //-Stores result. | Guarda resultado.

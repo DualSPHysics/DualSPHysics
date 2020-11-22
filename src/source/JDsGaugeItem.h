@@ -42,15 +42,6 @@
 #include <cuda_runtime_api.h>
 #endif
 
-//-Defines for CUDA exceptions.
-#ifdef _WITHGPU
-#ifndef Run_ExceptioonCuda
-#define Run_ExceptioonCuda(cuerr,msg) RunExceptioonCuda(__FILE__,__LINE__,ClassName,__func__,cuerr,msg)
-#endif
-#ifndef Check_CudaErroor
-#define Check_CudaErroor(msg) CheckCudaErroor(__FILE__,__LINE__,ClassName,__func__,msg)
-#endif
-#endif
 
 class JLog2;
 
@@ -126,7 +117,7 @@ protected:
   unsigned OutCount;      ///<Number of stored results in buffer.
   std::string OutFile;
 
-  JGaugeItem(TpGauge type,unsigned idx,std::string name,bool cpu,JLog2* log,unsigned outsize=200);
+  JGaugeItem(TpGauge type,unsigned idx,std::string name,bool cpu,unsigned outsize=200);
   void Reset();
   void SetTimeStep(double timestep);
 
@@ -220,7 +211,7 @@ protected:
   void StoreResult();
 
 public:
-  JGaugeVelocity(unsigned idx,std::string name,tdouble3 point,bool cpu,JLog2* log);
+  JGaugeVelocity(unsigned idx,std::string name,tdouble3 point,bool cpu);
   ~JGaugeVelocity();
 
   void SaveResults();
@@ -294,7 +285,7 @@ protected:
     ,const tdouble3 *pos,const typecode *code,const tfloat4 *velrhop)const;
 
 public:
-  JGaugeSwl(unsigned idx,std::string name,tdouble3 point0,tdouble3 point2,double pointdp,float masslimit,bool cpu,JLog2* log);
+  JGaugeSwl(unsigned idx,std::string name,tdouble3 point0,tdouble3 point2,double pointdp,float masslimit,bool cpu);
   ~JGaugeSwl();
 
   void SaveResults();
@@ -366,7 +357,7 @@ protected:
     ,int &cxini,int &cxfin,int &yini,int &yfin,int &zini,int &zfin)const;
 
 public:
-  JGaugeMaxZ(unsigned idx,std::string name,tdouble3 point0,double height,float distlimit,bool cpu,JLog2* log);
+  JGaugeMaxZ(unsigned idx,std::string name,tdouble3 point0,double height,float distlimit,bool cpu);
   ~JGaugeMaxZ();
 
   void SaveResults();
@@ -443,7 +434,7 @@ protected:
 
 public:
   JGaugeForce(unsigned idx,std::string name,word mkbound,TpParticles typeparts
-    ,unsigned idbegin,unsigned count,typecode code,tfloat3 center,bool cpu,JLog2* log);
+    ,unsigned idbegin,unsigned count,typecode code,tfloat3 center,bool cpu);
   ~JGaugeForce();
 
   void SaveResults();

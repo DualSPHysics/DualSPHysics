@@ -19,7 +19,7 @@
 /// \file JComputeMotionRef.cpp \brief Implements the class \ref JComputeMotionRef.
 
 #include "JComputeMotionRef.h"
-#include "FunctionsGeo3d.h"
+#include "FunGeo3d.h"
 
 #include <algorithm>
 #include <climits>

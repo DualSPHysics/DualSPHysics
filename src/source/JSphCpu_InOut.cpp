@@ -22,7 +22,7 @@
 #include "JCellSearch_inline.h"
 #include "FunSphKernel.h"
 #include "FunctionsMath.h"
-#include "FunctionsGeo3d.h"
+#include "FunGeo3d.h"
 #include "JSphInOut.h"
 #include "JSphInOutZone.h"
 #include <climits>

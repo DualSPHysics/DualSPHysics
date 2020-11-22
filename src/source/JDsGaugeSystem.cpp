@@ -24,7 +24,7 @@
 #include "JXml.h"
 #include "JAppInfo.h"
 #include "Functions.h"
-#include "FunctionsGeo3d.h"
+#include "FunGeo3d.h"
 #include "JSphMk.h"
 #include "JDataArrays.h"
 #include "JVtkLib.h"
@@ -43,7 +43,7 @@ using namespace std;
 //==============================================================================
 /// Constructor.
 //==============================================================================
-JGaugeSystem::JGaugeSystem(bool cpu,JLog2* log):Cpu(cpu),Log(log){
+JGaugeSystem::JGaugeSystem(bool cpu):Log(AppInfo.LogPtr()),Cpu(cpu){
   ClassName="JGaugeSystem";
  #ifdef _WITHGPU
   AuxMemoryg=NULL;
@@ -282,7 +282,7 @@ JGaugeVelocity* JGaugeSystem::AddGaugeVel(std::string name,double computestart
 {
   if(GetGaugeIdx(name)!=UINT_MAX)Run_Exceptioon(fun::PrintStr("The name \'%s\' already exists.",name.c_str()));
   //-Creates object.
-  JGaugeVelocity* gau=new JGaugeVelocity(GetCount(),name,point,Cpu,Log);
+  JGaugeVelocity* gau=new JGaugeVelocity(GetCount(),name,point,Cpu);
   gau->Config(CSP,Symmetry,DomPosMin,DomPosMax,Scell,ScellDiv);
   gau->ConfigComputeTiming(computestart,computeend,computedt);
   //-Uses common configuration.
@@ -302,7 +302,7 @@ JGaugeSwl* JGaugeSystem::AddGaugeSwl(std::string name,double computestart
   if(GetGaugeIdx(name)!=UINT_MAX)Run_Exceptioon(fun::PrintStr("The name \'%s\' already exists.",name.c_str()));
   if(masslimit<=0)masslimit=CSP.massfluid*(CSP.simulate2d? 0.4f: 0.5f);
   //-Creates object.
-  JGaugeSwl* gau=new JGaugeSwl(GetCount(),name,point0,point2,pointdp,masslimit,Cpu,Log);
+  JGaugeSwl* gau=new JGaugeSwl(GetCount(),name,point0,point2,pointdp,masslimit,Cpu);
   gau->Config(CSP,Symmetry,DomPosMin,DomPosMax,Scell,ScellDiv);
   gau->ConfigComputeTiming(computestart,computeend,computedt);
   //-Uses common configuration.
@@ -320,7 +320,7 @@ JGaugeMaxZ* JGaugeSystem::AddGaugeMaxZ(std::string name,double computestart
 {
   if(GetGaugeIdx(name)!=UINT_MAX)Run_Exceptioon(fun::PrintStr("The name \'%s\' already exists.",name.c_str()));
   //-Creates object.
-  JGaugeMaxZ* gau=new JGaugeMaxZ(GetCount(),name,point0,height,distlimit,Cpu,Log);
+  JGaugeMaxZ* gau=new JGaugeMaxZ(GetCount(),name,point0,height,distlimit,Cpu);
   gau->Config(CSP,Symmetry,DomPosMin,DomPosMax,Scell,ScellDiv);
   gau->ConfigComputeTiming(computestart,computeend,computedt);
   //-Uses common configuration.
@@ -348,7 +348,7 @@ JGaugeForce* JGaugeSystem::AddGaugeForce(std::string name,double computestart
   const typecode code=mkb->Code;
   const tfloat3 center=ToTFloat3((mkb->GetPosMin()+mkb->GetPosMax())/TDouble3(2));
   //-Creates object.
-  JGaugeForce* gau=new JGaugeForce(GetCount(),name,mkbound,typeparts,idbegin,count,code,center,Cpu,Log);
+  JGaugeForce* gau=new JGaugeForce(GetCount(),name,mkbound,typeparts,idbegin,count,code,center,Cpu);
   gau->Config(CSP,Symmetry,DomPosMin,DomPosMax,Scell,ScellDiv);
   gau->ConfigComputeTiming(computestart,computeend,computedt);
   //-Uses common configuration.

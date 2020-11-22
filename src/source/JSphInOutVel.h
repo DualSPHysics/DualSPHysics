@@ -100,7 +100,7 @@ protected:
 
 public:
   JSphInOutVel(bool cpu,unsigned idzone,const StCteSph &csp,tdouble3 direction
-    ,tdouble3 ptplane,tdouble3 zoneposmin,tdouble3 zoneposmax,JLog2 *log);
+    ,tdouble3 ptplane,tdouble3 zoneposmin,tdouble3 zoneposmax);
   ~JSphInOutVel();
   void Reset();
   TpInVelMode ReadXml(const JXml *sxml,TiXmlElement *lis,const std::string &dirdatafile

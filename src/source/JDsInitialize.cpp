@@ -22,7 +22,7 @@
 #include "JCaseProperties.h"
 #include "Functions.h"
 #include "FunctionsMath.h"
-#include "FunctionsGeo3d.h"
+#include "FunGeo3d.h"
 #include "JRangeFilter.h"
 #include "JAppInfo.h"
 #include "JXml.h"

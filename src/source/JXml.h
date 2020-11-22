@@ -50,6 +50,7 @@
 //:# - Mejora la gestion de excepciones. (06-05-2020)
 //:# - Nuevos metodos CheckAttributes(elementname) y ExistsElement(elementname,attribute). (27-08-2020)
 //:# - Mejora en CheckElementActive(lis,name). Ahora devuelve false cuando no existe name. (03-09-2020)
+//:# - Usa GetDateTime() de Functions.h ya que actualmente esa cabecera esta incluida. (20-11-2020)
 //:#############################################################################
 
 /// \file JXml.h \brief Declares the class \ref JXml.
@@ -93,11 +94,6 @@ public:
 #else
   void SetNuxLib(JNumx* nux){ NuxLib=nux; }
 #endif
-
-  //==============================================================================
-  /// Returns date and time of the system in text format (dd-mm-yyyy hh:mm:ss)
-  //==============================================================================
-  static std::string GetDateTime();
 
   //==============================================================================
   /// Returns the requested node and creates it if necessary.

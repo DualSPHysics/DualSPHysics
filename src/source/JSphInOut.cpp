@@ -27,7 +27,7 @@
 #include "JLog2.h"
 #include "JAppInfo.h"
 #include "Functions.h"
-#include "FunctionsGeo3d.h"
+#include "FunGeo3d.h"
 #include "JVtkLib.h"
 #include "JSimpleNeigs.h"
 #include "JTimeControl.h"
@@ -53,8 +53,8 @@ using namespace std;
 /// Constructor.
 //==============================================================================
 JSphInOut::JSphInOut(bool cpu,const StCteSph &csp,std::string xmlfile
-  ,JXml *sxml,std::string xmlpath,const std::string &dirdatafile,JLog2 *log)
-  :Cpu(cpu),CSP(csp),XmlFile(xmlfile),XmlPath(xmlpath),DirDataFile(dirdatafile),Log(log)
+  ,JXml *sxml,std::string xmlpath,const std::string &dirdatafile)
+  :Log(AppInfo.LogPtr()),Cpu(cpu),CSP(csp),XmlFile(xmlfile),XmlPath(xmlpath),DirDataFile(dirdatafile)
 {
   ClassName="JSphInOut";
   Planes=NULL;
@@ -212,7 +212,7 @@ void JSphInOut::ReadXml(const JXml *sxml,TiXmlElement* lis
       const unsigned id=GetCount();
       if(id>idmax)Run_Exceptioon("Maximum number of inlet/outlet zones has been reached.");
       JSphInOutZone* zo=new JSphInOutZone(Cpu,id,CSP,MapRealPosMin,MapRealPosMax
-        ,sxml,ele,DirDataFile,partsdata,gaugesystem,Log);
+        ,sxml,ele,DirDataFile,partsdata,gaugesystem);
       List.push_back(zo);
     }
     ele=ele->NextSiblingElement("inoutzone");
@@ -234,7 +234,7 @@ void JSphInOut::AllocateMemory(unsigned listsize){
     DirVel   =new tfloat3 [size];
     VelData  =new tfloat4 [size*2];
     Zsurf    =new float   [size];
-    if(1){
+    {
       memset(Planes   ,255,sizeof(tplane3f)*size);
       memset(CfgZone  ,255,sizeof(byte    )*size);
       memset(CfgUpdate,255,sizeof(byte    )*size);
@@ -417,14 +417,6 @@ void JSphInOut::ComputeFreeDomain(){
         const float size=(CSP.simulate2d? ss.x*ss.z: ss.x*ss.y*ss.z);
         if(size>bestsize){
           if(ci+1==nzone){//-Last zone was used.
-            //if(1){
-            //  string tx;
-            //  for(unsigned cc=0;cc<nzone;cc++)tx=tx+fun::PrintStr("-[%u]",sel[cc]);
-            //  Log->Printf("-----> %u >---%s: %f",cd,tx.c_str(),size);cd++;
-            //  JVtkLib sh;
-            //  sh.AddShapeBoxSize(pmin,pmax-pmin,cd);
-            //  sh.SaveShapeVtk(Log->GetDirOut()+fun::FileNameSec("CfgInOut_DG_FreeDomain.vtk",cd),"");
-            //}
             bestsize=size;
             bestmin=pmin; bestmax=pmax;
           }

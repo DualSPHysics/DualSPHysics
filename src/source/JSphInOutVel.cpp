@@ -47,9 +47,9 @@ using namespace std;
 /// Constructor.
 //==============================================================================
 JSphInOutVel::JSphInOutVel(bool cpu,unsigned idzone,const StCteSph &csp
-  ,tdouble3 direction,tdouble3 ptplane,tdouble3 zoneposmin,tdouble3 zoneposmax,JLog2 *log)
-  :Cpu(cpu),IdZone(idzone),CSP(csp),Direction(direction),PtPlane(ptplane)
-  ,ZonePosMin(zoneposmin),ZonePosMax(zoneposmax),Log(log)
+  ,tdouble3 direction,tdouble3 ptplane,tdouble3 zoneposmin,tdouble3 zoneposmax)
+  :Log(AppInfo.LogPtr()),Cpu(cpu),IdZone(idzone),CSP(csp),Direction(direction)
+  ,PtPlane(ptplane),ZonePosMin(zoneposmin),ZonePosMax(zoneposmax)
 {
   ClassName="JSphInOutVel";
 
@@ -226,14 +226,14 @@ TpInVelMode JSphInOutVel::ReadXml(const JXml *sxml,TiXmlElement *ele
     else if(VelMode==InVelM_Interpolated){
       const string checklist="gridveldata gridposzero awas";
       sxml->CheckElementNames(xele,true,checklist);
-      InputVelGrid=new JSphInOutGridData(Log);
+      InputVelGrid=new JSphInOutGridData();
       InputVelGrid->ConfigFromFile(dirdatafile+sxml->ReadElementStr(xele,"gridveldata","file"));
       double xmin=sxml->ReadElementDouble(xele,"gridposzero","x",true,0);
       double zmin=sxml->ReadElementDouble(xele,"gridposzero","z",true,0);
       InputVelGrid->SetPosMin(TDouble3(xmin,(CSP.simulate2d? CSP.simulate2dposy: maprealposminy),zmin));
       //-Load AWAS configuration.
       if(sxml->CheckElementActive(xele,"awas")){
-        AwasVel=new JSphInOutVelAwas(Log,IdZone,PtPlane.x,Direction,CSP.gravity.z
+        AwasVel=new JSphInOutVelAwas(IdZone,PtPlane.x,Direction,CSP.gravity.z
           ,dirdatafile,gaugesystem,sxml,xele->FirstChildElement("awas"));
       }
     }

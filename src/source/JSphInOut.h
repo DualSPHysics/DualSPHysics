@@ -178,7 +178,7 @@ public:
   std::vector<unsigned> MkFluidList;
     
   JSphInOut(bool cpu,const StCteSph &csp,std::string xmlfile,JXml *sxml
-    ,std::string xmlpath,const std::string &dirdatafile,JLog2 *log);
+    ,std::string xmlpath,const std::string &dirdatafile);
   ~JSphInOut();
   void Reset();
 

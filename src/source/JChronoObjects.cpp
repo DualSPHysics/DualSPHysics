@@ -20,8 +20,9 @@
 #include "JChronoObjects.h"
 #include "DSPHChronoLib.h"
 #include "JChronoData.h"
+#include "JAppInfo.h"
 #include "Functions.h"
-#include "FunctionsGeo3d.h"
+#include "FunGeo3d.h"
 #include "JLog2.h"
 #include "JXml.h"
 #include "JCaseParts.h"
@@ -47,9 +48,10 @@ using namespace std;
 //==============================================================================
 /// Constructor.
 //==============================================================================
-JChronoObjects::JChronoObjects(JLog2* log,const std::string &dirdata,const std::string &casename
+JChronoObjects::JChronoObjects(const std::string &dirdata,const std::string &casename
  ,const JXml *sxml,const std::string &place,double dp,word mkboundfirst)
- :Log(log),DirData(dirdata),CaseName(casename),Dp(dp),MkBoundFirst(mkboundfirst),UseDVI(true)
+ :Log(AppInfo.LogPtr()),DirData(dirdata),CaseName(casename),Dp(dp)
+  ,MkBoundFirst(mkboundfirst),UseDVI(true)
 {
   ClassName="JChronoObjects";
   ChronoDataXml=NULL;
@@ -960,11 +962,6 @@ void JChronoObjects::RunChrono(unsigned nstep,double timestep,double dt,bool pre
     //-Saves forces for each body and link (link_forces.csv, body_forces.csv).
     ChronoLib->SaveForces();
   }
-  //if(1){
-  //  tdouble3 pcen;
-  //  ChronoLib->GetBodyCenter("ball",pcen);
-  //  Log->Printf("RunChrono----> timestep:%f  dt:%f  ball.center:(%f,%f,%f)",timestep,dt,pcen.x,pcen.y,pcen.z);
-  //}
 }
 
 //==============================================================================
@@ -994,7 +991,7 @@ void JChronoObjects::SavePart(int part){
   const double ds=Dp*SchemeScale;
   const JChronoData* chdata=ChronoLib->GetChronoData();
   //-Saves VTK of LinearSpring and CoulombDamping links.
-  if(1){
+  {
     bool save=false;
     JVtkLib sh;
     for(unsigned c=0;c<chdata->GetLinkCount();c++){

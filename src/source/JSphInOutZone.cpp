@@ -27,7 +27,7 @@
 #include "JLog2.h"
 #include "JAppInfo.h"
 #include "Functions.h"
-#include "FunctionsGeo3d.h"
+#include "FunGeo3d.h"
 #include "JLinearValue.h"
 #include "JDsGaugeSystem.h"
 
@@ -52,8 +52,8 @@ using namespace std;
 JSphInOutZone::JSphInOutZone(bool cpu,unsigned idzone,const StCteSph &csp
   ,const tdouble3 &posmin,const tdouble3 &posmax
   ,const JXml *sxml,TiXmlElement* ele,const std::string &dirdatafile
-  ,const JDsPartsInit *partsdata,JGaugeSystem *gaugesystem,JLog2 *log)
-  :Cpu(cpu),IdZone(idzone),CSP(csp),MapRealPosMin(posmin),MapRealPosMax(posmax),Log(log)
+  ,const JDsPartsInit *partsdata,JGaugeSystem *gaugesystem)
+  :Log(AppInfo.LogPtr()),Cpu(cpu),IdZone(idzone),CSP(csp),MapRealPosMin(posmin),MapRealPosMax(posmax)
 {
   ClassName="JSphInOutZone";
   Points=NULL;
@@ -211,7 +211,7 @@ void JSphInOutZone::ReadXml(const JXml *sxml,TiXmlElement* ele,const std::string
   if(layers>250)sxml->ErrReadElement(ele,"layers",false,"Maximum number of layers is 250.");
   Layers=byte(layers);
   //-Creates inlet points.
-  Points=new JSphInOutPoints(Log,CSP.simulate2d,CSP.simulate2dposy,Layers,CSP.dp,0,MapRealPosMin,MapRealPosMax);
+  Points=new JSphInOutPoints(CSP.simulate2d,CSP.simulate2dposy,Layers,CSP.dp,0,MapRealPosMin,MapRealPosMax);
   if(CSP.simulate2d){
     TiXmlElement* zone2d=ele->FirstChildElement("zone2d"); 
     if(zone2d)Points->CreatePoints(sxml,zone2d,partsdata);
@@ -233,11 +233,11 @@ void JSphInOutZone::ReadXml(const JXml *sxml,TiXmlElement* ele,const std::string
   NptInit=Points->GetCount();
 
   //-Velocity configuration.
-  InOutVel=new JSphInOutVel(Cpu,IdZone,CSP,Direction,PtPlane,Points->GetZonePosMin(),Points->GetZonePosMax(),Log);
+  InOutVel=new JSphInOutVel(Cpu,IdZone,CSP,Direction,PtPlane,Points->GetZonePosMin(),Points->GetZonePosMax());
   VelMode=InOutVel->ReadXml(sxml,ele,dirdatafile,gaugesystem,MapRealPosMin.y);
 
   //-Z-surface configuration.
-  InOutZsurf=new JSphInOutZsurf(Cpu,IdZone,CSP,Direction,Points->GetZonePosMin(),Points->GetZonePosMax(),Log);
+  InOutZsurf=new JSphInOutZsurf(Cpu,IdZone,CSP,Direction,Points->GetZonePosMin(),Points->GetZonePosMax());
   ZsurfMode=InOutZsurf->ReadXml(sxml,ele,dirdatafile,gaugesystem);
 
   //-Rhop configuration.

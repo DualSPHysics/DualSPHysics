@@ -120,7 +120,7 @@ public:
   JSphInOutZone(bool cpu,unsigned idzone,const StCteSph &csp
     ,const tdouble3 &posmin,const tdouble3 &posmax
     ,const JXml *sxml,TiXmlElement* ele,const std::string &dirdatafile
-    ,const JDsPartsInit *partsdata,JGaugeSystem *gaugesystem,JLog2 *log);
+    ,const JDsPartsInit *partsdata,JGaugeSystem *gaugesystem);
   ~JSphInOutZone();
   void Reset();
   void GetConfig(std::vector<std::string> &lines)const;

@@ -146,7 +146,7 @@ private:
   void ReadXml(const JXml *sxml,TiXmlElement* ele,const JSphMk* mkinfo);
 
 public:
-  JGaugeSystem(bool cpu,JLog2* log);
+  JGaugeSystem(bool cpu);
   ~JGaugeSystem();
   void Reset();
 

@@ -40,8 +40,8 @@ using namespace std;
 //==============================================================================
 /// Constructor.
 //==============================================================================
-JDsPips::JDsPips(bool cpu,unsigned stepsnum,bool svdata,unsigned ntimes,JLog2* log)
-  :Cpu(cpu),StepsNum(stepsnum),SvData(svdata),Ntimes(ntimes),Log(log)
+JDsPips::JDsPips(bool cpu,unsigned stepsnum,bool svdata,unsigned ntimes)
+  :Log(AppInfo.LogPtr()),Cpu(cpu),StepsNum(stepsnum),SvData(svdata),Ntimes(ntimes)
 {
   ClassName="JDsPips";
   NextNstep=0;
@@ -258,7 +258,7 @@ void JDsPips::ComputeCpu(unsigned nstep,double tstep,double tsim
   Data.push_back(v);
   NextNstep+=StepsNum;
   
-  //if(1)Log->Printf("%u> PIf: %llu/%llu   PIb: %llu/%llu",v.nstep,v.pirf,v.picf,v.pirb,v.picb);
+  //Log->Printf("%u> PIf: %llu/%llu   PIb: %llu/%llu",v.nstep,v.pirf,v.picf,v.pirb,v.picb);
 }
 
 #ifdef _WITHGPU
@@ -319,6 +319,6 @@ void JDsPips::ComputeGpu(unsigned nstep,double tstep,double tsim
   Data.push_back(v);
   NextNstep+=StepsNum;
   
-  //if(1)Log->Printf("%u> PIf: %llu/%llu   PIb: %llu/%llu",v.nstep,v.pirf,v.picf,v.pirb,v.picb);
+  //Log->Printf("%u> PIf: %llu/%llu   PIb: %llu/%llu",v.nstep,v.pirf,v.picf,v.pirb,v.picb);
 }
 #endif

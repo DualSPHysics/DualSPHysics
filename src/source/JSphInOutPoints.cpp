@@ -25,7 +25,7 @@
 #include "JLog2.h"
 #include "JAppInfo.h"
 #include "Functions.h"
-#include "FunctionsGeo3d.h"
+#include "FunGeo3d.h"
 #include "JMatrix4.h"
 #include "JDataArrays.h"
 #include "JVtkLib.h"
@@ -41,9 +41,9 @@ using namespace std;
 //==============================================================================
 /// Constructor.
 //==============================================================================
-JSphInOutPoints::JSphInOutPoints(JLog2 *log,bool simulate2d,double simulate2dposy,byte layers
+JSphInOutPoints::JSphInOutPoints(bool simulate2d,double simulate2dposy,byte layers
   ,double dp,double initialmove,tdouble3 posmin,tdouble3 posmax)
-  :Log(log),Simulate2D(simulate2d),Simulate2DPosY(simulate2dposy),Layers(layers)
+  :Log(AppInfo.LogPtr()),Simulate2D(simulate2d),Simulate2DPosY(simulate2dposy),Layers(layers)
   ,Dp(dp),InitialMove(initialmove),MapRealPosMin(posmin),MapRealPosMax(posmax)
 {
   ClassName="JSphInOutPoints";

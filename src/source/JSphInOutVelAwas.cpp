@@ -39,10 +39,10 @@ using namespace std;
 //==============================================================================
 /// Constructor.
 //==============================================================================
-JSphInOutVelAwas::JSphInOutVelAwas(JLog2 *log,unsigned idzone,double inletx,tdouble3 inletdir
+JSphInOutVelAwas::JSphInOutVelAwas(unsigned idzone,double inletx,tdouble3 inletdir
   ,float gravityz,const std::string &dirdatafile,JGaugeSystem *gaugesystem
   ,const JXml *sxml,TiXmlElement* ele)
-  :Log(log),IdZone(idzone),InletX(inletx),InletDir(inletdir),GravityZ(gravityz)
+  :Log(AppInfo.LogPtr()),IdZone(idzone),InletX(inletx),InletDir(inletdir),GravityZ(gravityz)
 {
   ClassName="JSphInOutVelAwas";
   ZsurfTarget=NULL;

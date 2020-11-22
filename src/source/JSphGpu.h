@@ -25,25 +25,13 @@
 #include "JSphTimersGpu.h"
 #include "JCellDivDataGpu.h"
 #include "JSph.h"
+
 #include <string>
+
 
 class JDsPartsOut;
 class JArraysGpu;
 class JCellDivGpu;
-
-//-Defines for CUDA exceptions.
-#ifndef Run_ExceptioonCuda
-#define Run_ExceptioonCuda(cuerr,msg) RunExceptioonCuda(__FILE__,__LINE__,ClassName,__func__,cuerr,msg)
-#endif
-#ifndef Run_ExceptioonCudaSta
-#define Run_ExceptioonCudaSta(cuerr,msg) RunExceptioonCudaStatic(__FILE__,__LINE__,__func__,cuerr,msg)
-#endif
-#ifndef Check_CudaErroor
-#define Check_CudaErroor(msg) CheckCudaErroor(__FILE__,__LINE__,ClassName,__func__,msg)
-#endif
-#ifndef Check_CudaErroorSta
-#define Check_CudaErroorSta(msg) CheckCudaErroorStatic(__FILE__,__LINE__,__func__,msg)
-#endif
 
 //##############################################################################
 //# JSphGpu

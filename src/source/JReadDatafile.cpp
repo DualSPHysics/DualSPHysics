@@ -148,15 +148,6 @@ void JReadDatafile::ProcessLines(){
     RemLineCount=0;
     for(int c=0;c<LineCount;c++)if(Data[LineBegin[c]]=='#')RemLineCount++;
     //printf("++> RemLineCount: %u\n",RemLineCount);
-    //-Prints lines.
-    if(0)for(int c=0;c<LineCount;c++){
-      const unsigned pini=LineBegin[c];
-      const unsigned pfin=LineBegin[c+1];
-      if(!c)printf("\n");
-      printf("++> Line[%02d]=[%2d]=[",c,pfin-pini-1); 
-      for(unsigned p=pini;p<pfin-1;p++)printf("%c",Data[p]);
-      printf("]\n");
-    }
     //-Determines the separator.
     {
       unsigned sep0=0,sep1=0,sep2=0,sep3=0;

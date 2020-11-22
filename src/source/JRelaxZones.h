@@ -107,7 +107,7 @@ private:
   void SaveDomainVtk(std::string fname,tdouble3 center,float width,double swl,double depth);
 
 public:
-  JRelaxZones(bool useomp,bool usegpu,JLog2* log,std::string dirdata
+  JRelaxZones(bool useomp,bool usegpu,JLog2 *log,std::string dirdata
     ,bool withfloatings,unsigned fluidbeginidp,tdouble3 gravity3);
   ~JRelaxZones();
   void Reset();

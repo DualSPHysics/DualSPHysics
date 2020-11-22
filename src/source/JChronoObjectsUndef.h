@@ -30,7 +30,7 @@ class JChronoObjects : protected JObject
 {
 protected:
 public:
-  JChronoObjects(JLog2* log,const std::string &dirdata,const std::string &casename
+  JChronoObjects(const std::string &dirdata,const std::string &casename
     ,const JXml *sxml,const std::string &place,double dp,word mkboundfirst){}
   ~JChronoObjects(){};
   void Reset(){};

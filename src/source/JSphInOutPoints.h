@@ -112,7 +112,7 @@ private:
   void ComputeDomainFromPoints();
 
 public:
-  JSphInOutPoints(JLog2 *log,bool simulate2d,double simulate2dposy,byte layers
+  JSphInOutPoints(bool simulate2d,double simulate2dposy,byte layers
     ,double dp,double initialmove,tdouble3 posmin,tdouble3 posmax);
   ~JSphInOutPoints();
   void Reset();

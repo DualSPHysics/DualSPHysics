@@ -123,7 +123,7 @@ private:
 public:
   const static unsigned FmtVersion=1;
 
-  JSphInOutGridData(JLog2 *log);
+  JSphInOutGridData();
   ~JSphInOutGridData();
   void Reset();
   void ConfigFromFile(const std::string &filename);

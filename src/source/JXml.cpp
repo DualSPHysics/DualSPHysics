@@ -63,19 +63,6 @@ void JXml::Reset(){
 }
 
 //==============================================================================
-/// Returns date and time of the system in text format (dd-mm-yyyy hh:mm:ss)
-//==============================================================================
-std::string JXml::GetDateTime(){
-  time_t rawtime;
-  struct tm *timeinfo;
-  time(&rawtime);
-  timeinfo=localtime(&rawtime);
-  char bufftime[64];
-  strftime(bufftime,64,"%d-%m-%Y %H:%M:%S",timeinfo);
-  return(bufftime);
-}
-
-//==============================================================================
 /// Returns the requested node and creates it if necessary.
 /// \param path Path of the requested node.
 /// \param createpath Allows to create the path if does not exist,
@@ -892,10 +879,10 @@ void JXml::SaveFile(const std::string &fname,const std::string &app,bool date){
   if((!app.empty()||date)&&Doc->FirstChild()){
     TiXmlElement* ele=Doc->FirstChildElement();
     if(!app.empty())AddAttribute(ele,"app",app);
-    if(date)AddAttribute(ele,"date",GetDateTime());
+    if(date)AddAttribute(ele,"date",fun::GetDateTime());
   }
   if(!Doc->SaveFile(fname.c_str()))Run_ExceptioonFile("Cannot save the xml document.",fname);
-  if(1)CorrectFile(fname);
+  CorrectFile(fname);
 }
 //==============================================================================
 /// Creates an xml document of a file.

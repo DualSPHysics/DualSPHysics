@@ -29,21 +29,9 @@
 #ifndef _JObject_
 #define _JObject_
 
+#include "RunExceptionDef.h"
 #include <string>
 
-//-Defines for normal exceptions.
-#ifndef Run_Exceptioon
-#define Run_Exceptioon(msg) RunExceptioon(__FILE__,__LINE__,ClassName,__func__,msg)
-#endif
-#ifndef Run_ExceptioonFile
-#define Run_ExceptioonFile(msg,file) RunExceptioon(__FILE__,__LINE__,ClassName,__func__,msg,file)
-#endif
-#ifndef Run_ExceptioonSta
-#define Run_ExceptioonSta(msg) RunExceptioonStatic(__FILE__,__LINE__,__func__,msg)
-#endif
-#ifndef Run_ExceptioonFileSta
-#define Run_ExceptioonFileSta(msg,file) RunExceptioonStatic(__FILE__,__LINE__,__func__,msg,file)
-#endif
 
 //##############################################################################
 //# JObject

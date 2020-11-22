@@ -57,20 +57,13 @@
 #define _JChronoData_
 
 #include "TypesDef.h"
+#include "RunExceptionDef.h"
 #include <cstdio>
 #include <cstring>
 #include <string>
 #include <vector>
 #include <cstdlib>
 #include <cmath>
-
-//-Defines for normal exceptions.
-#ifndef Run_Exceptioon
-#define Run_Exceptioon(msg) RunExceptioon(__FILE__,__LINE__,ClassName,__func__,msg)
-#endif
-#ifndef Run_ExceptioonFile
-#define Run_ExceptioonFile(msg,file) RunExceptioon(__FILE__,__LINE__,ClassName,__func__,msg,file)
-#endif
 
 class JChBody;
 class JChLink;

@@ -20,7 +20,7 @@
 
 #include "JSphInOutZsurf.h"
 #include "Functions.h"
-#include "FunctionsGeo3d.h"
+#include "FunGeo3d.h"
 #include "JXml.h"
 #include "JLog2.h"
 #include "JLinearValue.h"
@@ -46,9 +46,9 @@ using namespace std;
 /// Constructor.
 //==============================================================================
 JSphInOutZsurf::JSphInOutZsurf(bool cpu,unsigned idzone,const StCteSph &csp
-  ,tdouble3 direction,tdouble3 zoneposmin,tdouble3 zoneposmax,JLog2 *log)
-  :Cpu(cpu),IdZone(idzone),CSP(csp),Direction(direction),ZonePosMin(zoneposmin)
-  ,ZonePosMax(zoneposmax),Log(log)
+  ,tdouble3 direction,tdouble3 zoneposmin,tdouble3 zoneposmax)
+  :Log(AppInfo.LogPtr()),Cpu(cpu),IdZone(idzone),CSP(csp),Direction(direction)
+  ,ZonePosMin(zoneposmin),ZonePosMax(zoneposmax)
 {
   ClassName="JSphInOutZsurf";
   InputTime=NULL;

@@ -37,7 +37,7 @@ using namespace std;
 //==============================================================================
 /// Constructor.
 //==============================================================================
-JDsSaveDt::JDsSaveDt(JLog2* log):Log(log){
+JDsSaveDt::JDsSaveDt():Log(AppInfo.LogPtr()){
   ClassName="JDsSaveDt";
   Reset();
 }

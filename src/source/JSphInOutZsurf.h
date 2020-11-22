@@ -108,7 +108,7 @@ protected:
 
 public:
   JSphInOutZsurf(bool cpu,unsigned idzone,const StCteSph &csp,tdouble3 direction
-    ,tdouble3 zoneposmin,tdouble3 zoneposmax,JLog2 *log);
+    ,tdouble3 zoneposmin,tdouble3 zoneposmax);
   ~JSphInOutZsurf();
   void Reset();
   TpInZsurfMode ReadXml(const JXml *sxml,TiXmlElement* lis,const std::string &dirdatafile
