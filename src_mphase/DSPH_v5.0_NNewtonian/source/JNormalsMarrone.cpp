@@ -20,7 +20,7 @@
 
 #include "JNormalsMarrone.h"
 #include "Functions.h"
-#include "FunctionsGeo3d.h"
+#include "FunGeo3d.h"
 #include "JPartDataBi4.h"
 #include "JPartNormalData.h"
 #include "JDataArrays.h"
@@ -153,7 +153,7 @@ void JNormalsMarrone::LoadBoundParticles(){
   JPartDataBi4 pd;
   //-Loads file piece_0 and obtains configuration.
   //-Carga fichero piece_0 y obtiene configuracion.
-  if(1){
+  {
     const string file1=CaseDir+JPartDataBi4::GetFileNameCase(CaseName,0,1);
     if(fun::FileExists(file1))pd.LoadFileCase(CaseDir,CaseName,0,1);
     else if(fun::FileExists(CaseDir+JPartDataBi4::GetFileNameCase(CaseName,0,2)))pd.LoadFileCase(CaseDir,CaseName,0,2);
@@ -209,20 +209,6 @@ void JNormalsMarrone::LoadBoundParticles(){
   }
   //-Checks data of boundary particles.
   for(unsigned p=0;p<SizePart;p++)if(PartPos[p].x==DBL_MAX)Run_Exceptioon("Some postion of bound particles is invalid.");
-  //-Save lodaded particles for debug. 
-  if(0){
-    unsigned *vidp=new unsigned[SizePart];
-    for(unsigned p=0;p<SizePart;p++)vidp[p]=p;
-    JDataArrays arrays;
-    arrays.AddArray("Pos",SizePart,PartPos,false);
-    if(vidp)arrays.AddArray("Idp",SizePart,vidp,true);
-    JVtkLib::SaveVtkData(DirOut+CaseName+"_DgParts.vtk",arrays,"Pos");
-    ////-Old style...
-    //std::vector<JFormatFiles2::StScalarData> fields;
-    //if(vidp) fields.push_back(JFormatFiles2::DefineField("Idp",JFormatFiles2::UInt32,1,vidp));
-    //JFormatFiles2::SaveVtk(DirOut+CaseName+"_DgParts.vtk",SizePart,PartPos,fields);
-    //delete[] vidp;
-  }
 }
 
 //==============================================================================
@@ -264,25 +250,23 @@ void JNormalsMarrone::SaveVtkNormalData(){
   unsigned np=0;
   for(unsigned p=0;p<SizePart;p++){
     const tdouble3 ps=PartPos[p];
-    if(1){
-      const unsigned cini=NormalBegin[p];
-      const unsigned cfin=NormalBegin[p+1];
-      for(unsigned c=cini;c<cfin;c++){
-        const tdouble3 n=Normals[c];
-        const tdouble3 t=OutVecs[c];
-        const double  nd=NormalsDist[c];
-        const double  td=OutVecsDist[c];
-        vpos[np]=ToTFloat3(ps);
-        vidp[np]=p;
-        vnum[np]=byte(c-cini);
-        vnor[np]=ToTFloat3(TDouble3(n.x,n.y,n.z)*nd);
-        vout[np]=ToTFloat3(TDouble3(t.x,t.y,t.z)*td);
-        vnordist[np]=float(nd);
-        voutdist[np]=float(td);
-        vnorsign[np]=(nd>=0? 0: 1);
-        voutsign[np]=(td>=0? 0: 1);
-        np++;
-      }
+    const unsigned cini=NormalBegin[p];
+    const unsigned cfin=NormalBegin[p+1];
+    for(unsigned c=cini;c<cfin;c++){
+      const tdouble3 n=Normals[c];
+      const tdouble3 t=OutVecs[c];
+      const double  nd=NormalsDist[c];
+      const double  td=OutVecsDist[c];
+      vpos[np]=ToTFloat3(ps);
+      vidp[np]=p;
+      vnum[np]=byte(c-cini);
+      vnor[np]=ToTFloat3(TDouble3(n.x,n.y,n.z)*nd);
+      vout[np]=ToTFloat3(TDouble3(t.x,t.y,t.z)*td);
+      vnordist[np]=float(nd);
+      voutdist[np]=float(td);
+      vnorsign[np]=(nd>=0? 0: 1);
+      voutsign[np]=(td>=0? 0: 1);
+      np++;
     }
   }
   //-Saves VTK file and frees memory.
@@ -319,7 +303,7 @@ void JNormalsMarrone::RunCase(std::string casename,std::string dirout,bool savev
   DirOut=fun::GetDirWithSlash(!dirout.empty()? dirout: CaseDir);
   LoadBoundParticles();
   LoadNormalData();
-  if(0)SaveVtkNormalData(); //-For debug.
+  //SaveVtkNormalData(); //-For debug.
   ComputeNormalsMarrone();
   if(savevtk)SaveVtkNormalFinal(DirOut+CaseName+"_NorMarrone.vtk");
 }
@@ -353,7 +337,7 @@ void JNormalsMarrone::RunData(std::string casename,std::string dirout,bool savev
   NormalsDist=normalsdist;
   OutVecs=outvecs;
   OutVecsDist=outvecsdist;
-  if(0)SaveVtkNormalData(); //-For debug.
+  //SaveVtkNormalData(); //-For debug.
   ComputeNormalsMarrone();
   if(savevtk)SaveVtkNormalFinal(DirOut+CaseName+"_NorMarrone.vtk");
 }

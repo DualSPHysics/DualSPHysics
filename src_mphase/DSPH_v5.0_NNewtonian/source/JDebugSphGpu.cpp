@@ -229,6 +229,9 @@ void JDebugSphGpu::LoadParticlesData(const JSphGpuSingle *gp,unsigned pini,unsig
     #endif
     arrays->AddArray("Code",n,code,true);
     arrays->AddArray("Type",n,GetCodeType(n,code),true);
+    byte *typesp=new byte[n];
+    for(unsigned p=0;p<n;p++)typesp[p]=byte(CODE_GetSpecialByte(code[p]));
+    arrays->AddArray("TypeSp",n,typesp,true);
     arrays->AddArray("TypeValue",n,GetCodeTypeValue(n,code),true);
   }
   //-Loads pos.

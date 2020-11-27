@@ -43,6 +43,7 @@
 //:# - Nuevos metodos GetValue3ByIdx() y GetValue3d3d(). (23-04-2020)
 //:# - Con la opcion OptionalValues los valores que falten del XML se leen como 
 //:#   cero. No es compatible con la opcion SpecialValues. (24-04-2020)
+//:# - Nuevos metodos RnSetValues(). (05-09-2020)
 //:#############################################################################
 
 #include "JObject.h"
@@ -150,6 +151,9 @@ public:
   TiXmlElement* WriteXmlValues(JXml *sxml,TiXmlElement* ele,std::string name
     ,std::string subname,std::string attributes)const;
 #endif
+
+  void RnSetValues(double v){ RnSetValues(0,v,0,v); }
+  void RnSetValues(double t0,double v0,double t1,double v1);
 };
 
 #endif

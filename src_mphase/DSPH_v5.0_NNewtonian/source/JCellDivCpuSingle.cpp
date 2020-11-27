@@ -29,9 +29,9 @@ using namespace std;
 //==============================================================================
 JCellDivCpuSingle::JCellDivCpuSingle(bool stable,bool floating,byte periactive
   ,TpCellMode cellmode,float scell,tdouble3 mapposmin,tdouble3 mapposmax,tuint3 mapcells
-  ,unsigned casenbound,unsigned casenfixed,unsigned casenpb,JLog2 *log,std::string dirout)
+  ,unsigned casenbound,unsigned casenfixed,unsigned casenpb,std::string dirout)
   :JCellDivCpu(stable,floating,periactive,cellmode,scell,mapposmin,mapposmax,mapcells
-  ,casenbound,casenfixed,casenpb,log,dirout)
+  ,casenbound,casenfixed,casenpb,dirout)
 {
   ClassName="JCellDivCpuSingle";
 }

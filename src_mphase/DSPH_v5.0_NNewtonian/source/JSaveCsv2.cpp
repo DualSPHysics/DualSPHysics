@@ -146,6 +146,26 @@ void JSaveCsv2::AddEndl(){
   if(DataSelected)Data=Data+"\n";
   else Head=Head+"\n";
 }
+ 
+//==============================================================================
+/// Add header for triple data.
+//==============================================================================
+void JSaveCsv2::AddHead3(std::string headtx){
+  if(!DataSelected){
+    const string mark=(fun::StrSplitCount(";",headtx)>=fun::StrSplitCount(",",headtx)? ";": ",");
+    vector<string> vec;
+    const unsigned nv=fun::VectorSplitStr(mark,headtx,vec);
+    for(unsigned cv=0;cv<nv;cv++)if(!vec[cv].empty()){
+      string txend=vec[cv];
+      string txini=fun::StrSplit(" ",txend);
+      if(!txini.empty()){
+        AddStr(txini+".x "+txend);
+        AddStr(txini+".y "+txend);
+        AddStr(txini+".z "+txend);
+      }
+    }
+  }
+}
   
 //==============================================================================
 /// Returns string using the same parameters used in printf().
@@ -210,6 +230,14 @@ JSaveCsv2& JSaveCsv2::operator <<(const Endl &obj){
 //==============================================================================
 JSaveCsv2& JSaveCsv2::operator <<(const Fmt &obj){
   FmtCurrent[obj.TypeFmt]=(obj.Format.empty()? FmtDefault[obj.TypeFmt]: obj.Format);
+  return(*this);
+}
+
+//==============================================================================
+/// Operator: Add header for triple data.
+//==============================================================================
+JSaveCsv2& JSaveCsv2::operator <<(const Head3 &obj){
+  AddHead3(obj.HeadText);
   return(*this);
 }
 

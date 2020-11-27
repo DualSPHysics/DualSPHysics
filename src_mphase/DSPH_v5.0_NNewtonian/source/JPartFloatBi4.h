@@ -32,6 +32,10 @@
 //:# - En JPartFloatBi4Load se comprueba que los PARTs cargados sean consecutivos. (11-08-2019)
 //:# - Se guarda tambien Massp de floatings. (10-03-2020)
 //:# - Mejora la gestion de excepciones. (06-05-2020)
+//:# - Graba aceleracion lineal y angular. (19-10-2020)
+//:# - Graba numero de step. (19-10-2020)
+//:# - Permite graba posiciones de referencia para el calculo de movimiento. (19-10-2020)
+//:# - Nuevos metodos y otras mejoras. (20-10-2020)
 //:#############################################################################
 
 /// \file JPartFloatBi4.h \brief Declares the classes \ref JPartFloatBi4Save and class \ref JPartFloatBi4Load.
@@ -45,6 +49,7 @@
 #include <string>
 #include <vector>
 #include <fstream>
+#include <climits>
 
 
 //##############################################################################
@@ -66,8 +71,10 @@ class JPartFloatBi4Save : protected JObject
 
   std::string AppName;   ///<Nombre de aplicacion. Application Name.
   std::string Dir;       ///<Directorio de datos. Data Directory.
+  std::string FileFull;  ///<Full name of output file.
   word MkBoundFirst;     ///<First Mk for boundary blocks (Mk=MkBound+MkBoundFirst).
   unsigned FtCount;      ///<Numero de floatings. Number of floats.
+  bool PosRefData;       ///<Saves position reference data.
 
   //-Datos constantes de floatings (head). Constant data of floats (head).
   word *HeadMkbound;
@@ -78,12 +85,16 @@ class JPartFloatBi4Save : protected JObject
   float *HeadRadius;
 
   //-Datos variables de floatings (PARTs). Data variables of floats (parts).
-  tdouble3 *PartCenter;
-  tfloat3 *PartFvel;
-  tfloat3 *PartFomega;
+  tdouble3 *PartCenter; ///<Center of the floating object [FtCount]. 
+  tdouble3 *PartPosRef; ///<Reference positions of the floating object [FtCount*3].. 
+  tfloat3  *PartVelLin; ///<Linear velocity of the floating object (units:m/s) [FtCount].
+  tfloat3  *PartVelAng; ///<Angular velocity of the floating object (units:rad/s) [FtCount].
+  tfloat3  *PartAceLin; ///<Linear acceleration of the floating object (units:m/s^2) [FtCount].
+  tfloat3  *PartAceAng; ///<Angular acceleration of the floating object (units:rad/s^2) [FtCount].
   
   unsigned Cpart;    ///<Numero de PART. PART number.
 
+ private:
   void ResizeFtData(unsigned ftcount);
   void ClearPartData();
   static std::string GetNamePart(unsigned cpart);
@@ -102,17 +113,22 @@ class JPartFloatBi4Save : protected JObject
   //Data recording:
   //====================
   //-Configuracion de objeto. Object Configuration.
-  void Config(std::string appname,const std::string &dir,word mkboundfirst,unsigned ftcount);
+  void Config(std::string appname,const std::string &dir,word mkboundfirst
+    ,unsigned ftcount,bool saveposref);
   void AddHeadData(unsigned cf,word mkbound,unsigned begin,unsigned count,float mass,float massp,float radius);
-  void SaveInitial();
+  void SaveInitial(std::string file="");
 
-  ////-Configuracion de parts.  Parts Configuration.
-  void AddPartData(unsigned cf,const tdouble3 &center,const tfloat3 &fvel,const tfloat3 &fomega);
-  JBinaryData* AddPartFloat(unsigned cpart,double timestep,double demdtforce);
+  //-Configuracion de parts.  Parts Configuration.
+  void AddPartData(unsigned cf,const tdouble3 &center,const tfloat3 &fvellin
+    ,const tfloat3 &fvelang,const tfloat3 &facelin,const tfloat3 &faceang);
+  void AddPartDataPosRef(unsigned ftcount,const tdouble3 *posref);
+  JBinaryData* AddPartFloat(unsigned cpart,unsigned step,double timestep,double demdtforce);
 
   ////-Grabacion de fichero. File recording.
   void SavePartFloat();
-  void SavePartFloat(unsigned cpart,double timestep,double demdtforce){   AddPartFloat(cpart,timestep,demdtforce); SavePartFloat();   }
+  void SavePartFloat(unsigned cpart,unsigned step,double timestep,double demdtforce){   
+    AddPartFloat(cpart,step,timestep,demdtforce); SavePartFloat();
+  }
 };
 
 
@@ -131,6 +147,7 @@ class JPartFloatBi4Load : protected JObject
   JBinaryData *Data;      ///<Almacena la informacion general de los datos (constante para cada PART). Stores general information of data (constant for each PART).
 
   word MkBoundFirst;      ///<First Mk for boundary blocks (Mk=MkBound+MkBoundFirst).
+  bool PosRefData;        ///<Position reference data is available.
 
   unsigned FtCount;       ///<Numero de floatings. Floating number
   unsigned PartCount;     ///<Numero de PARTs. PARTs number
@@ -146,15 +163,22 @@ class JPartFloatBi4Load : protected JObject
   float *HeadRadius;
 
   //-Informacion de PART. PART information.
+  unsigned Cpart;
+  unsigned Step;
   double TimeStep;
   double DemDtForce;
+  bool AceData;         ///<Linear and angular acceleration is available.  
   //-Datos variables de floatings (PARTs). Data variables of floatings (parts).
   tdouble3 *PartCenter;
-  tfloat3 *PartFvel;
-  tfloat3 *PartFomega;
+  tdouble3 *PartPosRef; ///<Reference positions of the floating object [FtCount*3]. 
+  tfloat3  *PartVelLin; ///<Linear velocity of the floating object (units:m/s) [FtCount].
+  tfloat3  *PartVelAng; ///<Angular velocity of the floating object (units:rad/s) [FtCount].
+  tfloat3  *PartAceLin; ///<Linear acceleration of the floating object (units:m/s^2) [FtCount].
+  tfloat3  *PartAceAng; ///<Angular acceleration of the floating object (units:rad/s^2) [FtCount].
 
+ private:
   JBinaryDataArray* CheckArray(JBinaryData *bd,const std::string &name
-    ,JBinaryDataDef::TpData type);
+    ,JBinaryDataDef::TpData type,unsigned count=UINT_MAX);
   void ResetPart();
   void ResizeFtData(unsigned ftcount);
   void CheckPartList()const;
@@ -167,10 +191,12 @@ class JPartFloatBi4Load : protected JObject
   void Reset();
   static std::string GetFileNamePart();
 
-  void LoadFile(const std::string &dir);
+  static std::string GetLoadFile(const std::string &dir,std::string filename="");
+  void LoadFile(const std::string &dir,std::string filename="");
   void CheckHeadData(unsigned cf,word mkbound,unsigned begin,unsigned count,float mass,float massp);
 
   word GetMkBoundFirst()const{ return(MkBoundFirst); }
+  bool GetPosRefData()const{ return(PosRefData); }
 
   unsigned GetFtCount()const{ return(FtCount); }
   unsigned GetCount()const{ return(PartCount); }
@@ -184,16 +210,28 @@ class JPartFloatBi4Load : protected JObject
   float    GetHeadMassp  (unsigned cf)const{ CheckFloating(cf); return(HeadMassp [cf]); }
   float    GetHeadRadius (unsigned cf)const{ CheckFloating(cf); return(HeadRadius[cf]); }
 
+  void LoadPartItem(unsigned cp);
   void LoadPart(unsigned cpart);
 
-  double GetPartTimeStep()const{ CheckPart(); return(TimeStep); }
-  double GetPartDemDtForce()const{ CheckPart(); return(DemDtForce); }
+  unsigned GetPartCpart     ()const{ CheckPart(); return(Cpart); }
+  unsigned GetPartStep      ()const{ CheckPart(); return(Step); }
+  double   GetPartTimeStep  ()const{ CheckPart(); return(TimeStep); }
+  double   GetPartDemDtForce()const{ CheckPart(); return(DemDtForce); }
+  bool     GetPartAceData   ()const{ return(AceData); }
   
   tdouble3 GetPartCenter(unsigned cf)const{ CheckFloating(cf); return(PartCenter[cf]); }
-  tfloat3 GetPartFvel   (unsigned cf)const{ CheckFloating(cf); return(PartFvel[cf]);   }
-  tfloat3 GetPartFomega (unsigned cf)const{ CheckFloating(cf); return(PartFomega[cf]); }
-};
+  tfloat3  GetPartVelLin(unsigned cf)const{ CheckFloating(cf); return(PartVelLin[cf]); }
+  tfloat3  GetPartVelAng(unsigned cf)const{ CheckFloating(cf); return(PartVelAng[cf]); }
+  tfloat3  GetPartAceLin(unsigned cf)const{ CheckFloating(cf); return(AceData? PartAceLin[cf]: TFloat3(0)); }
+  tfloat3  GetPartAceAng(unsigned cf)const{ CheckFloating(cf); return(AceData? PartAceAng[cf]: TFloat3(0)); }
 
+  const tdouble3* GetPartCenter()const{ CheckPart(); return(PartCenter); }
+  const tfloat3*  GetPartVelLin()const{ CheckPart(); return(PartVelLin); }
+  const tfloat3*  GetPartVelAng()const{ CheckPart(); return(PartVelAng); }
+  const tfloat3*  GetPartAceLin()const{ CheckPart(); return(AceData? PartAceLin: NULL); }
+  const tfloat3*  GetPartAceAng()const{ CheckPart(); return(AceData? PartAceAng: NULL); }
+  const tdouble3* GetPartPosRef()const{ CheckPart(); return(PosRefData? PartPosRef: NULL); }
+};
 
 
 #endif

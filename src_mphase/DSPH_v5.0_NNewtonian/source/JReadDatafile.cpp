@@ -148,15 +148,6 @@ void JReadDatafile::ProcessLines(){
     RemLineCount=0;
     for(int c=0;c<LineCount;c++)if(Data[LineBegin[c]]=='#')RemLineCount++;
     //printf("++> RemLineCount: %u\n",RemLineCount);
-    //-Prints lines.
-    if(0)for(int c=0;c<LineCount;c++){
-      const unsigned pini=LineBegin[c];
-      const unsigned pfin=LineBegin[c+1];
-      if(!c)printf("\n");
-      printf("++> Line[%02d]=[%2d]=[",c,pfin-pini-1); 
-      for(unsigned p=pini;p<pfin-1;p++)printf("%c",Data[p]);
-      printf("]\n");
-    }
     //-Determines the separator.
     {
       unsigned sep0=0,sep1=0,sep2=0,sep3=0;
@@ -253,6 +244,19 @@ std::string JReadDatafile::ReadNextValue(bool in_line){
   ReadValue=fun::StrSplit(Sep,ReadLine); 
   ReadLinValue++;
   return(ReadValue);
+}
+
+//==============================================================================
+/// Returns next bool in the current line or next line if in_line is false.
+//==============================================================================
+bool JReadDatafile::ReadNextBool(bool in_line){
+  bool ret;
+  const string value=fun::StrLower(ReadNextValue(in_line));
+  if(value=="1" || value=="true")ret=true;
+  else if(value=="0" || value=="false")ret=false;
+  else if(fun::StrIsRealNumber(value))ret=(atof(value.c_str())!=0);
+  else ret=true;
+  return(ret);
 }
 
 //==============================================================================

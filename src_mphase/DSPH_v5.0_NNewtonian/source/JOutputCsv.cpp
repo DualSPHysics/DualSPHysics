@@ -95,22 +95,20 @@ void JOutputCsv::SaveCsv(std::string fname,const JDataArrays &arrays,std::string
     for(unsigned cv=0;cv<nv;cv++){
       for(unsigned cf=0;cf<nf;cf++){
         const JDataArrays::StDataArray& ar=arrays.GetArrayCte(cf);
-        if(1){
-          string fmt=outfmt[cf];
-          string values;
-          switch(ar.type){
-            case TypeUchar:  { const byte     *v=(byte    *)ar.ptr;  values=fun::PrintStr(fmt.c_str(),v[cv])+csvsep; }break;
-            case TypeUshort: { const word     *v=(word    *)ar.ptr;  values=fun::PrintStr(fmt.c_str(),v[cv])+csvsep; }break;
-            case TypeUint:   { const unsigned *v=(unsigned*)ar.ptr;  values=fun::PrintStr(fmt.c_str(),v[cv])+csvsep; }break;
-            case TypeFloat:  { const float    *v=(float   *)ar.ptr;  values=fun::PrintStr(fmt.c_str(),v[cv])+csvsep; }break;
-            case TypeDouble: { const double   *v=(double  *)ar.ptr;  values=fun::PrintStr(fmt.c_str(),v[cv])+csvsep; }break;
-            case TypeUint3:  { const tuint3   *v=(tuint3  *)ar.ptr;  values=fun::PrintStr(fmt.c_str(),v[cv].x,v[cv].y,v[cv].z)+csvsep; }break;
-            case TypeFloat3: { const tfloat3  *v=(tfloat3 *)ar.ptr;  values=fun::PrintStr(fmt.c_str(),v[cv].x,v[cv].y,v[cv].z)+csvsep; }break;
-            case TypeDouble3:{ const tdouble3 *v=(tdouble3*)ar.ptr;  values=fun::PrintStr(fmt.c_str(),v[cv].x,v[cv].y,v[cv].z)+csvsep; }break;
-            default: Run_ExceptioonFile(fun::PrintStr("Type of array \'%s\' is invalid.",TypeToStr(ar.type)),fname);
-          }
-          pf << values;
+        string fmt=outfmt[cf];
+        string values;
+        switch(ar.type){
+          case TypeUchar:  { const byte     *v=(byte    *)ar.ptr;  values=fun::PrintStr(fmt.c_str(),v[cv])+csvsep; }break;
+          case TypeUshort: { const word     *v=(word    *)ar.ptr;  values=fun::PrintStr(fmt.c_str(),v[cv])+csvsep; }break;
+          case TypeUint:   { const unsigned *v=(unsigned*)ar.ptr;  values=fun::PrintStr(fmt.c_str(),v[cv])+csvsep; }break;
+          case TypeFloat:  { const float    *v=(float   *)ar.ptr;  values=fun::PrintStr(fmt.c_str(),v[cv])+csvsep; }break;
+          case TypeDouble: { const double   *v=(double  *)ar.ptr;  values=fun::PrintStr(fmt.c_str(),v[cv])+csvsep; }break;
+          case TypeUint3:  { const tuint3   *v=(tuint3  *)ar.ptr;  values=fun::PrintStr(fmt.c_str(),v[cv].x,v[cv].y,v[cv].z)+csvsep; }break;
+          case TypeFloat3: { const tfloat3  *v=(tfloat3 *)ar.ptr;  values=fun::PrintStr(fmt.c_str(),v[cv].x,v[cv].y,v[cv].z)+csvsep; }break;
+          case TypeDouble3:{ const tdouble3 *v=(tdouble3*)ar.ptr;  values=fun::PrintStr(fmt.c_str(),v[cv].x,v[cv].y,v[cv].z)+csvsep; }break;
+          default: Run_ExceptioonFile(fun::PrintStr("Type of array \'%s\' is invalid.",TypeToStr(ar.type)),fname);
         }
+        pf << values;
       }
       pf << endl;
     }

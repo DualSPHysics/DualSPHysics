@@ -57,13 +57,24 @@
 //:# - Nuevas funciones: PointInMinMax(). (01-12-2019)
 //:# - Error corregido en PolygonConcave(). (05-12-2019)
 //:# - Nuevas funciones: PlanePointsIn(). (17-12-2019)
+//:# - Nuevas funciones: PlaneTriangleIntersec() y PlanePolygonIntersec(). (17-12-2019)
 //:# - Nuevas funciones: PointsLower(), PointsSortLower(). (11-02-2020)
+//:# - Nuevas funciones: LineMerge(). (11-02-2020)
+//:# - Nuevas funciones: PlaneAxisDist(). (26-08-2020)
+//:# - Nuevas funciones: PlaneNormalized(). (04-10-2020)
+//:# - Nuevas funciones: PointsDist2(). (06-10-2020)
+//:# - Nuevas funciones: DomainsIntersection(). (01-11-2020)
+//:# - Nuevas funciones: VectorsUnitaryAngle(). (03-11-2020)
+//:# - Controla error de acos() en funciones VectorsAngle() y VectorsUnitaryAngle(). (03-11-2020)
+//:# - Cambio menor en PolygonConcave(). (20-11-2020)
+//:# - Mueve funciones de poligonos a FunGeo3dPolygon. (21-11-2020)
+//:# - Mueve funciones de triangulos a FunGeo3dTriangle. (21-11-2020)
 //:#############################################################################
 
-/// \file FunctionsGeo3d.h \brief Declares geometry functions for 3D.
+/// \file FunGeo3d.h \brief Declares geometry functions for 3D.
 
-#ifndef _FunctionsGeo3d_
-#define _FunctionsGeo3d_
+#ifndef _FunGeo3d_
+#define _FunGeo3d_
 
 #include "TypesDef.h"
 #include <cstdlib>
@@ -71,7 +82,7 @@
 #include <cfloat>
 #include <vector>
 
-/// Implements a set of basic/general math functions.
+/// Implements a set of geometry functions for 3D.
 namespace fgeo{
 
 double TriangleArea(const tdouble3 &p1,const tdouble3 &p2,const tdouble3 &p3);
@@ -134,6 +145,31 @@ inline bool PointInMinMax(const tdouble3 &pt,const tdouble3 &pmin,const tdouble3
 //==============================================================================
 inline bool PointInMinMax(const tfloat3 &pt,const tfloat3 &pmin,const tfloat3 &pmax){
   return(pmin.x<=pt.x && pmin.y<=pt.y && pmin.z<=pt.z && pt.x<=pmax.x && pt.y<=pmax.x && pt.z<=pmax.z);
+}
+
+
+//==============================================================================
+/// Devuelve true cuando parte de un dominio esta dentro de otro dominio.
+/// Returns true when part of domain is inside other domain.
+//==============================================================================
+inline bool DomainsIntersection(const tdouble3 &pmin1,const tdouble3 &pmax1
+  ,const tdouble3 &pmin2,const tdouble3 &pmax2)
+{
+  return(((pmin1.x<=pmin2.x && pmin2.x<=pmax1.x) || (pmin2.x<=pmin1.x && pmin1.x<=pmax2.x))
+      && ((pmin1.y<=pmin2.y && pmin2.y<=pmax1.y) || (pmin2.y<=pmin1.y && pmin1.y<=pmax2.y))
+      && ((pmin1.z<=pmin2.z && pmin2.z<=pmax1.z) || (pmin2.z<=pmin1.z && pmin1.z<=pmax2.z)));
+}
+
+//==============================================================================
+/// Devuelve true cuando parte de un dominio esta dentro de otro dominio.
+/// Returns true when part of domain is inside other domain.
+//==============================================================================
+inline bool DomainsIntersection(const tfloat3 &pmin1,const tfloat3 &pmax1
+  ,const tfloat3 &pmin2,const tfloat3 &pmax2)
+{
+  return(((pmin1.x<=pmin2.x && pmin2.x<=pmax1.x) || (pmin2.x<=pmin1.x && pmin1.x<=pmax2.x))
+      && ((pmin1.y<=pmin2.y && pmin2.y<=pmax1.y) || (pmin2.y<=pmin1.y && pmin1.y<=pmax2.y))
+      && ((pmin1.z<=pmin2.z && pmin2.z<=pmax1.z) || (pmin2.z<=pmin1.z && pmin1.z<=pmax2.z)));
 }
 
 
@@ -206,6 +242,42 @@ inline double PointDist(const tdouble3 &p1){
 //==============================================================================
 inline float PointDist(const tfloat3 &p1){
   return(sqrt(p1.x*p1.x+p1.y*p1.y+p1.z*p1.z));
+}
+
+
+//==============================================================================
+/// Devuelve la distancia^2 entre dos puntos.
+/// Returns the distance^2 between two points.
+//==============================================================================
+inline double PointsDist2(const tdouble3 &p1,const tdouble3 &p2){
+  const tdouble3 v=p1-p2;
+  return(v.x*v.x+v.y*v.y+v.z*v.z);
+}
+
+//==============================================================================
+/// Devuelve la distancia^2 entre dos puntos.
+/// Returns the distance^2 between two points.
+//==============================================================================
+inline float PointsDist2(const tfloat3 &p1,const tfloat3 &p2){
+  const tfloat3 v=p1-p2;
+  return(v.x*v.x+v.y*v.y+v.z*v.z);
+}
+
+
+//==============================================================================
+/// Devuelve la distancia^2 al (0,0,0).
+/// Returns the distance^2 from (0,0,0).
+//==============================================================================
+inline double PointDist2(const tdouble3 &p1){
+  return(p1.x*p1.x+p1.y*p1.y+p1.z*p1.z);
+}
+
+//==============================================================================
+/// Devuelve la distancia^2 al (0,0,0).
+/// Returns the distance^2 from (0,0,0).
+//==============================================================================
+inline float PointDist2(const tfloat3 &p1){
+  return(p1.x*p1.x+p1.y*p1.y+p1.z*p1.z);
 }
 
 
@@ -340,7 +412,8 @@ inline tfloat3 VecOrthogonal(const tfloat3 &v,float module){
 /// Returns angle in degrees between two vectors.
 //==============================================================================
 inline double VectorsAngle(const tdouble3 &v1,const tdouble3 &v2){
-  return(acos(ProductScalar(v1,v2)/(PointDist(v1)*PointDist(v2)))*TODEG);
+  const double v=ProductScalar(v1,v2)/(PointDist(v1)*PointDist(v2));
+  return(acos(v<-1.? -1.: (v>1.? 1.: v))*TODEG);
 }
 
 //==============================================================================
@@ -348,7 +421,26 @@ inline double VectorsAngle(const tdouble3 &v1,const tdouble3 &v2){
 /// Returns angle in degrees between two vectors.
 //==============================================================================
 inline float VectorsAngle(const tfloat3 &v1,const tfloat3 &v2){
-  return(float(acos(ProductScalar(v1,v2)/(PointDist(v1)*PointDist(v2)))*TODEG));
+  const float v=ProductScalar(v1,v2)/(PointDist(v1)*PointDist(v2));
+  return(float(acos(v<-1.? -1.: (v>1.? 1.: v))*TODEG));
+}
+
+//==============================================================================
+/// Devuelve el angulo en grados que forman dos vectores unitarios.
+/// Returns angle in degrees between two unitary vectors.
+//==============================================================================
+inline double VectorsUnitaryAngle(const tdouble3 &v1,const tdouble3 &v2){
+  const double v=ProductScalar(v1,v2);
+  return(acos(v<-1.? -1.: (v>1.? 1.: v))*TODEG);
+}
+
+//==============================================================================
+/// Devuelve el angulo en grados que forman dos vectores unitarios.
+/// Returns angle in degrees between two unitary vectors.
+//==============================================================================
+inline float VectorsUnitaryAngle(const tfloat3 &v1,const tfloat3 &v2){
+  const float v=ProductScalar(v1,v2);
+  return(float(acos(v<-1.? -1.: (v>1.? 1.: v))*TODEG));
 }
 
 
@@ -368,37 +460,6 @@ inline tline3d TLine3d2Pt(tdouble3 p1,tdouble3 p2){
 inline tline3d TLine3dPtVec(tdouble3 pt,tdouble3 vec){
   tline3d r={pt,VecUnitary(vec)};
   return(r);
-}
-
-
-//==============================================================================
-/// Devuelve posicion en la recta para un valor de X o DBL_MAX para posiciones no validas.
-/// Returns position on the rect for a X value or DBL_MAX for invalid positions.
-//==============================================================================
-inline tdouble3 LinePointX(const tline3d &r,double x){
-  if(r.v.x==0)return(TDouble3(DBL_MAX));
-  const double f=(x-r.p.x)/r.v.x;
-  return(TDouble3(x,r.p.y+f*r.v.y,r.p.z+f*r.v.z));
-}
-
-//==============================================================================
-/// Devuelve posicion en la recta para un valor de Y o DBL_MAX para posiciones no validas.
-/// Returns position on the rect for a Y value or DBL_MAX for invalid positions.
-//==============================================================================
-inline tdouble3 LinePointY(const tline3d &r,double y){
-  if(r.v.y==0)return(TDouble3(DBL_MAX));
-  const double f=(y-r.p.y)/r.v.y;
-  return(TDouble3(r.p.x+f*r.v.x,y,r.p.z+f*r.v.z));
-}
-
-//==============================================================================
-/// Devuelve posicion en la recta para un valor de Z o DBL_MAX para posiciones no validas.
-/// Returns position on the rect for a Z value or DBL_MAX for invalid positions.
-//==============================================================================
-inline tdouble3 LinePointZ(const tline3d &r,double z){
-  if(r.v.z==0)return(TDouble3(DBL_MAX));
-  const double f=(z-r.p.z)/r.v.z;
-  return(TDouble3(r.p.x+f*r.v.x,r.p.y+f*r.v.y,z));
 }
 
 
@@ -437,47 +498,6 @@ tfloat3 LineOrthogonalPoint(const tfloat3 &pt,const tfloat3 &pr1,const tfloat3 &
 
 
 //==============================================================================
-/// Devuelve proyeccion ortogonal del punto en la linea (pr1,pr2). Devuelve 0.0 
-/// cuando la proyeccion coincide con pr1, 0.5 en la mitad del segmeneto y 1.0 
-/// en el punto pr2.
-/// Returns orthogonal projection of the point in the line (pr1,pr2).
-//==============================================================================
-double LineOrthogonalPointFromPr1(const tdouble3 &pt,const tdouble3 &pr1,const tdouble3 &pr2);
-
-//==============================================================================
-/// Devuelve proyeccion ortogonal del punto en la linea (pr1,pr2). Devuelve 0.0 
-/// cuando la proyeccion coincide con pr1, 0.5 en la mitad del segmeneto y 1.0 
-/// en el punto pr2.
-/// Returns orthogonal projection of the point in the line (pr1,pr2).
-//==============================================================================
-float LineOrthogonalPointFromPr1(const tfloat3 &pt,const tfloat3 &pr1,const tfloat3 &pr2);
-
-
-//==============================================================================
-/// Devuelve punto del segmento (pr1,pr2) mas cercano al punto pt.
-/// Returns point in segment (pr1,pr2) closest to point pt.
-//==============================================================================
-inline tdouble3 LineNearestPoint(const tdouble3 &pt,const tdouble3 &pr1,const tdouble3 &pr2){
-  const double t=LineOrthogonalPointFromPr1(pt,pr1,pr2);
-  if(t<=0)return(pr1);
-  if(t>=1.0)return(pr2);
-  return(pr1+((pr2-pr1)*t));
-}
-
-//==============================================================================
-/// Devuelve punto del segmento (pr1,pr2) mas cercano al punto pt.
-/// Returns point in segment (pr1,pr2) closest to point pt.
-//==============================================================================
-inline tfloat3 LineNearestPoint(const tfloat3 &pt,const tfloat3 &pr1,const tfloat3 &pr2){
-  const float t=LineOrthogonalPointFromPr1(pt,pr1,pr2);
-  if(t<=0)return(pr1);
-  if(t>=1.0)return(pr2);
-  return(pr1+((pr2-pr1)*t));
-}
-
-
-
-//==============================================================================
 /// Devuelve el plano formado por 3 puntos.
 /// Returns the plane defined by 3 points.
 //==============================================================================
@@ -506,6 +526,46 @@ inline tplane3d PlanePtVec(const tdouble3 &pt,const tdouble3 &vec){
 inline tplane3f PlanePtVec(const tfloat3 &pt,const tfloat3 &vec){
   const tfloat3 v=VecUnitary(vec);//-No es necesario pero asi el modulo del vector no afecta al resultado de PointPlane().
   return(TPlane3f(v.x,v.y,v.z,-v.x*pt.x-v.y*pt.y-v.z*pt.z));
+}
+
+
+//==============================================================================
+/// Devuelve el plano normalizado (A^2+B^2+C^2=1).
+/// Returns the normalized plane (A^2+B^2+C^2=1).
+//==============================================================================
+inline tplane3d PlaneNormalized(const tplane3d &pla){
+  const double dis=sqrt(pla.a*pla.a+pla.b*pla.b+pla.c*pla.c);
+  return(TPlane3d(pla.a/dis,pla.b/dis,pla.c/dis,pla.d/dis));
+}
+
+//==============================================================================
+/// Devuelve el plano normalizado (A^2+B^2+C^2=1).
+/// Returns the normalized plane (A^2+B^2+C^2=1).
+//==============================================================================
+inline tplane3f PlaneNormalized(const tplane3f &pla){
+  const float dis=sqrt(pla.a*pla.a+pla.b*pla.b+pla.c*pla.c);
+  return(TPlane3f(pla.a/dis,pla.b/dis,pla.c/dis,pla.d/dis));
+}
+
+
+//==============================================================================
+/// Devuelve el plano para calcular distancias desde pt en un eje arbitrario.
+/// Returns the plane to calculate distance from pt on one arbitrary axis.
+//==============================================================================
+inline tplane3d PlaneAxisDist(const tdouble3 &pt,const tdouble3 &vec,double distdp=1){
+  const tplane3d pla=PlanePtVec(pt,vec);
+  const double dis=sqrt(pla.a*pla.a+pla.b*pla.b+pla.c*pla.c)*distdp;
+  return(TPlane3d(pla.a/dis,pla.b/dis,pla.c/dis,pla.d/dis));
+}
+
+//==============================================================================
+/// Devuelve el plano para calcular distancias desde pt en un eje arbitrario.
+/// Returns the plane to calculate distance from pt on one arbitrary axis.
+//==============================================================================
+inline tplane3f PlaneAxisDist(const tfloat3 &pt,const tfloat3 &vec,float distdp=1){
+  const tplane3f pla=PlanePtVec(pt,vec);
+  const float dis=sqrt(pla.a*pla.a+pla.b*pla.b+pla.c*pla.c)*distdp;
+  return(TPlane3f(pla.a/dis,pla.b/dis,pla.c/dis,pla.d/dis));
 }
 
 
@@ -662,160 +722,6 @@ double TriangleArea(const tdouble3 &p1,const tdouble3 &p2,const tdouble3 &p3);
 //==============================================================================
 float TriangleArea(const tfloat3 &p1,const tfloat3 &p2,const tfloat3 &p3);
 
-
-//==============================================================================
-/// Devuelve perimetro de un triangulo formado por 3 puntos.
-/// Returns the perimeter of a triangle formed by 3 points.
-//==============================================================================
-inline double TrianglePerimeter(const tdouble3 &p1,const tdouble3 &p2,const tdouble3 &p3){
-  return(PointsDist(p1,p2)+PointsDist(p2,p3)+PointsDist(p3,p1));
-}
-
-//==============================================================================
-/// Devuelve perimetro de un triangulo formado por 3 puntos.
-/// Returns the perimeter of a triangle formed by 3 points.
-//==============================================================================
-inline float TrianglePerimeter(const tfloat3 &p1,const tfloat3 &p2,const tfloat3 &p3){
-  return(PointsDist(p1,p2)+PointsDist(p2,p3)+PointsDist(p3,p1));
-}
-
-
-//==============================================================================
-/// Devuelve la normal de un triangulo.
-/// Returns the normal of a triangle.
-//==============================================================================
-inline tdouble3 TriangleNormal(const tdouble3& p1,const tdouble3& p2,const tdouble3& p3){
-  return(ProductVec(p1-p2,p2-p3));
-}
-
-//==============================================================================
-/// Devuelve la normal de un triangulo.
-/// Returns the normal of a triangle.
-//==============================================================================
-inline tfloat3 TriangleNormal(const tfloat3& p1,const tfloat3& p2,const tfloat3& p3){
-  return(ProductVec(p1-p2,p2-p3));
-}
-
-
-//==============================================================================
-/// Devuelve los tres planos normales que limitan un triangulo formado por 3 puntos.
-/// Con openingdist puedes abrir o cerrar los planos normales.
-/// Returns the three normal planes which bound a triangle formed by 3 points.
-/// With openingdist you can open or close normal planes.
-//==============================================================================
-void TriangleNormalPlanes(const tdouble3 &p1,const tdouble3 &p2,const tdouble3 &p3
-  ,double openingdist,tplane3d &pla1,tplane3d &pla2,tplane3d &pla3);
-
-//==============================================================================
-/// Devuelve los tres planos normales que limitan un triangulo formado por 3 puntos.
-/// Con openingdist puedes abrir o cerrar los planos normales.
-/// Returns the three normal planes which bound a triangle formed by 3 points.
-/// With openingdist you can open or close normal planes.
-//==============================================================================
-void TriangleNormalPlanes(const tfloat3 &p1,const tfloat3 &p2,const tfloat3 &p3
-  ,float openingdist,tplane3f &pla1,tplane3f &pla2,tplane3f &pla3);
-
-//==============================================================================
-/// Devuelve los tres planos normales que limitan un triangulo formado por 3 puntos.
-/// Con openingdist puedes abrir o cerrar los planos normales.
-/// Los calculos internos se hacen con double precision.
-/// Returns the three normal planes which bound a triangle formed by 3 points.
-/// With openingdist you can open or close normal levels.
-/// The internal computation is performed with double precision.
-//==============================================================================
-inline void TriangleNormalPlanes_dbl(const tfloat3 &p1,const tfloat3 &p2,const tfloat3 &p3
-  ,float openingdist,tplane3f &pla1,tplane3f &pla2,tplane3f &pla3)
-{
-  tplane3d plad1,plad2,plad3;
-  TriangleNormalPlanes(ToTDouble3(p1),ToTDouble3(p2),ToTDouble3(p3),double(openingdist),plad1,plad2,plad3);
-  pla1=TPlane3f(plad1); pla2=TPlane3f(plad2); pla3=TPlane3f(plad3);
-}
-
-
-//==============================================================================
-/// Devuelve true cuando el punto esta dentro de 3 planos.
-/// Returns true when the point is inside 3 planes.
-//==============================================================================
-bool TriangleInside(const tdouble3 &pt,const tplane3d &pla1,const tplane3d &pla2,const tplane3d &pla3);
-
-//==============================================================================
-/// Devuelve true cuando el punto esta dentro de 3 planos.
-/// Returns true when the point is inside 3 planes.
-//==============================================================================
-bool TriangleInside(const tfloat3 &pt,const tplane3f &pla1,const tplane3f &pla2,const tplane3f &pla3);
-
-
-//==============================================================================
-/// A partir de un triangulo formado por 3 puntos devuelve los puntos que forman
-/// un triangulo mas o menos abierto segun openingdist.
-/// Starting from a triangle formed by 3 points returns the points that form
-/// a triangle more or less open according to openingdist.
-//==============================================================================
-void TriangleOpen(const tdouble3 &p1,const tdouble3 &p2,const tdouble3 &p3
-  ,double openingdist,tdouble3 &pt1,tdouble3 &pt2,tdouble3 &pt3);
-
-//==============================================================================
-/// A partir de un triangulo formado por 3 puntos devuelve los puntos que forman
-/// un triangulo mas o menos abierto segun openingdist.
-/// Starting from a triangle formed by 3 points returns the points that form
-/// a triangle more or less open according to openingdist.
-//==============================================================================
-void TriangleOpen(const tfloat3 &p1,const tfloat3 &p2,const tfloat3 &p3
-  ,float openingdist,tfloat3 &pt1,tfloat3 &pt2,tfloat3 &pt3);
-
-
-//==============================================================================
-/// Devuelve los planos normales que limitan un poligono convexo formado por np puntos.
-/// Con openingdist puedes abrir o cerrar los planos normales.
-/// Returns the normal planes which bound a convex polygon formed by np points.
-/// With openingdist you can open or close normal planes.
-//==============================================================================
-void PolygonNormalPlanes(const std::vector<tdouble3> &vpt,double openingdist,std::vector<tplane3d> &vpla);
-
-//==============================================================================
-/// Devuelve los planos normales que limitan un poligono convexo formado por np puntos.
-/// Con openingdist puedes abrir o cerrar los planos normales.
-/// Returns the normal planes which bound a convex polygon formed by np points.
-/// With openingdist you can open or close normal planes.
-//==============================================================================
-void PolygonNormalPlanes(const std::vector<tfloat3> &vpt,float openingdist,std::vector<tplane3f> &vpla);
-
-
-//==============================================================================
-/// Indica si un poligon es concavo.
-/// Returns true when the polygon is concave.
-//==============================================================================
-bool PolygonIsConcave(unsigned np,const tdouble3* vpt,double tolerance=0.01);
-
-//==============================================================================
-/// Devuelve poligono (convexo o concavo) como un conjunto de triangulos.
-/// Returns polygon (convex or concave) as a set of triangles.
-//==============================================================================
-void PolygonConcave(unsigned np,const tdouble3* vpt,std::vector<tint3> &vtri,double tolerance=0.01);
-
-
-//==============================================================================
-/// Devuelve true cuando el punto esta dentro de los planos.
-/// Returns true when the point is inside planes.
-//==============================================================================
-bool PolygonInside(const tdouble3 &pt,const std::vector<tplane3d> &vpla);
-
-//==============================================================================
-/// Devuelve true cuando el punto esta dentro de los planos.
-/// Returns true when the point is inside planes.
-//==============================================================================
-bool PolygonInside(const tfloat3 &pt,const std::vector<tplane3f> &vpla);
-
-
-//==============================================================================
-/// Devuelve true cuando el punto esta dentro de los planos.
-/// Returns true when the point is inside planes.
-bool PolygonInside(const tdouble3 &pt,unsigned npla,const tplane3d *vpla);
-
-  //==============================================================================
-/// Devuelve true cuando el punto esta dentro de los planos.
-/// Returns true when the point is inside planes.
-bool PolygonInside(const tfloat3 &pt,unsigned npla,const tplane3f *vpla);
 
 }
 

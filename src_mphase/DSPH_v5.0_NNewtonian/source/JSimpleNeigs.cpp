@@ -154,7 +154,7 @@ void JSimpleNeigs::CreateMapCells(){
   delete[] npcell;  npcell=NULL;
 }
 
-//============================================================================== //<vs_innlet_ini>
+//==============================================================================
 /// Return cell limits for interaction starting from position.
 /// Devuelve limites de celdas para interaccion a partir de posicion.
 //==============================================================================
@@ -205,3 +205,31 @@ unsigned JSimpleNeigs::NearbyPositions(const tdouble3 &ps,unsigned pignore,doubl
   }
   return(CountSelect);
 }
+
+//==============================================================================
+/// Store nearby positions in vector vsel and returns number of selected positions.
+/// Guarda las posiciones cercanas en vsel y devuelve el numero de posiciones seleccionadas.
+//==============================================================================
+unsigned JSimpleNeigs::NearbyPositionsLt(const tdouble3 &ps,unsigned pignore
+  ,double dist,std::vector<unsigned> &vsel)const
+{
+  vsel.clear();
+  const double dist2=dist*dist;
+  //printf("==> pos:(%f,%f,%f)\n",ps.x,ps.y,ps.z);
+  tint3 celmin,celmax;
+  GetNearbyCells(ps,dist,celmin,celmax);
+  //printf("==> NearbyCells:%s\n",fun::Int3RangeStr(celmin,celmax).c_str());
+  for(int cz=celmin.z;cz<=celmax.z;cz++)for(int cy=celmin.y;cy<=celmax.y;cy++){
+    const unsigned cmin=GetCell(TInt3(celmin.x,cy,cz));
+    const unsigned cmax=GetCell(TInt3(celmax.x,cy,cz));
+    const unsigned pini=BeginCell[cmin];
+    const unsigned pfin=BeginCell[cmax+1];
+    for(unsigned cp=pini;cp<pfin;cp++){
+      const unsigned p=PosInCell[cp];
+      const tdouble3 ds=ps-Pos[p];
+      if(ds.x*ds.x+ds.y*ds.y+ds.z*ds.z<dist2 && p!=pignore)vsel.push_back(p);
+    }
+  }
+  return(unsigned(vsel.size()));
+}
+

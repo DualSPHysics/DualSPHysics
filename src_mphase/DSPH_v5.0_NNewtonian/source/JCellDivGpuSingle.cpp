@@ -30,9 +30,9 @@ using namespace std;
 //==============================================================================
 JCellDivGpuSingle::JCellDivGpuSingle(bool stable,bool floating,byte periactive,float kernelsize2,float poscellsize
   ,TpCellMode cellmode,float scell,tdouble3 mapposmin,tdouble3 mapposmax,tuint3 mapcells
-  ,unsigned casenbound,unsigned casenfixed,unsigned casenpb,JLog2 *log,std::string dirout)
+  ,unsigned casenbound,unsigned casenfixed,unsigned casenpb,std::string dirout)
   :JCellDivGpu(stable,floating,periactive,kernelsize2,poscellsize,cellmode,scell
-  ,mapposmin,mapposmax,mapcells,casenbound,casenfixed,casenpb,log,dirout)
+  ,mapposmin,mapposmax,mapcells,casenbound,casenfixed,casenpb,dirout)
 {
   ClassName="JCellDivGpuSingle";
 }

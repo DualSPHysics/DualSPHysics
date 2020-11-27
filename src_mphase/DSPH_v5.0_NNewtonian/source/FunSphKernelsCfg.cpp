@@ -39,14 +39,8 @@ namespace fsph{
 //==============================================================================
 void RunExceptioonFun(const std::string &srcfile,int srcline,const std::string &fun
   ,const std::string &msg,const std::string &file)
-{ // fun::RunExceptioonFun(__FILE__,__LINE__,__func__,"msg");
-  std::string tx;
-  tx=fun::PrintStr("\n*** Exception (%s::%s:%d)\n",fun::GetPathLevels(srcfile,3).c_str(),fun.c_str(),srcline);
-  if(!msg.empty())tx=tx+fun::PrintStr("Text: %s\n",msg.c_str());
-  if(!file.empty())tx=tx+fun::PrintStr("File: %s\n",file.c_str());
-  printf("%s\n",tx.c_str());
-  fflush(stdout);
-  throw string("#")+tx;
+{ 
+  fun::RunExceptioonFun(srcfile,srcline,fun,msg,file);
 }
 
 //==============================================================================

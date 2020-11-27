@@ -89,7 +89,7 @@ private:
   void SaveVtkConfig(double dp)const;
 
 public:
-  JDsDamping(double dp,JLog2* log);
+  JDsDamping(double dp);
   ~JDsDamping();
   void Reset();
 

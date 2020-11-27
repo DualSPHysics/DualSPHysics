@@ -216,12 +216,13 @@ void ComputeVelMod(unsigned n,const float4 *vel,float *velmod);
 //-Kernels for the force calculation.
 void Interaction_Forces(const StInterParmsg &t);
 
-//-Kernels for the boundary correction (mDBC). //<vs_mddbc_ini>
-void Interaction_MdbcCorrection(TpKernel tkernel,TpSlipMode slipmode,unsigned n,unsigned nbound
-  ,float mdbcthreshold,bool simulate2d,const StDivDataGpu &dvd
-  ,const double2 *posxy,const double *posz,const typecode *code,const unsigned *idp
-  ,const float3 *boundnormal,const float3 *motionvel,float4 *velrhop);
-//<vs_mddbc_end>
+//-Kernels for the boundary correction (mDBC).
+void Interaction_MdbcCorrection(TpKernel tkernel,bool simulate2d
+  ,TpSlipMode slipmode,bool fastsingle,unsigned n,unsigned nbound
+  ,float mdbcthreshold,const StDivDataGpu &dvd,const tdouble3 &mapposmin
+  ,const double2 *posxy,const double *posz,const float4 *poscell
+  ,const typecode *code,const unsigned *idp,const float3 *boundnormal
+  ,const float3 *motionvel,float4 *velrhop);
 
 //-Kernels for the calculation of the DEM forces.
 void Interaction_ForcesDem(unsigned bsize,unsigned nfloat
@@ -252,12 +253,11 @@ void MoveLinBound(byte periactive,unsigned np,unsigned ini,tdouble3 mvpos,tfloat
   ,const unsigned *ridp,double2 *posxy,double *posz,unsigned *dcell,float4 *velrhop,typecode *code);
 void MoveMatBound(byte periactive,bool simulate2d,unsigned np,unsigned ini,tmatrix4d m,double dt
   ,const unsigned *ridpmv,double2 *posxy,double *posz,unsigned *dcell,float4 *velrhop,typecode *code,float3 *boundnormal);
-void CopyMotionVel(unsigned nmoving,const unsigned *ridpmv,const float4 *velrhop,float3 *motionvel); //<vs_mddbc>
+void CopyMotionVel(unsigned nmoving,const unsigned *ridpmv,const float4 *velrhop,float3 *motionvel);
 
-//-Kernels for MLPistons motion.  //<vs_mlapiston_ini>
+//-Kernels for MLPistons motion.
 void MovePiston1d(bool periactive,unsigned np,unsigned idini,double dp,double poszmin,unsigned poszcount,const byte *pistonid,const double* movx,const double* velx,const unsigned *ridpmv,double2 *posxy,double *posz,unsigned *dcell,float4 *velrhop,typecode *code);
 void MovePiston2d(bool periactive,unsigned np,unsigned idini,double dp,double posymin,double poszmin,unsigned poszcount,const double* movx,const double* velx,const unsigned *ridpmv,double2 *posxy,double *posz,unsigned *dcell,float4 *velrhop,typecode *code);
-//<vs_mlapiston_end>
 
 //-Kernels for Floating bodies.
 void FtCalcForcesSum(bool periactive,unsigned ftcount
@@ -269,14 +269,16 @@ void FtCalcForces(unsigned ftcount,tfloat3 gravity
   ,const float4 *ftoinertiaini8,const float *ftoinertiaini1
   ,const float3 *ftoforcessum,float3 *ftoforces,const float3 *ftoextforces);
 void FtCalcForcesRes(unsigned ftcount,bool simulate2d,double dt
-  ,const float3 *ftoomega,const float3 *ftovel,const double3 *ftocenter,const float3 *ftoforces
+  ,const float3 *ftovelace,const double3 *ftocenter,const float3 *ftoforces
   ,float3 *ftoforcesres,double3 *ftocenterres);
 void FtApplyConstraints(unsigned ftcount,const byte *ftoconstraints
   ,float3 *ftoforces,float3 *ftoforcesres);
 void FtUpdate(bool periactive,bool predictor,unsigned ftcount,double dt
   ,const float4 *ftodatp,const float3 *ftoforcesres,double3 *ftocenterres,const unsigned *ftridp
-  ,double3 *ftocenter,float3 *ftoangles,float3 *ftovel,float3 *ftoomega
+  ,double3 *ftocenter,float3 *ftoangles,float3 *ftovelace
   ,double2 *posxy,double *posz,unsigned *dcell,float4 *velrhop,typecode *code);
+void FtGetPosRef(unsigned np,const unsigned *idpref,const unsigned *ftridp //<vs_ftmottionsv>
+  ,const double2 *posxy,const double *posz,double *posref);                 //<vs_ftmottionsv>
 
 //-Kernels for periodic conditions.
 void PeriodicIgnore(unsigned n,typecode *code);
@@ -287,7 +289,7 @@ void PeriodicDuplicateVerlet(unsigned n,unsigned pini,tuint3 domcells,tdouble3 p
 void PeriodicDuplicateSymplectic(unsigned n,unsigned pini
   ,tuint3 domcells,tdouble3 perinc,const unsigned *listp,unsigned *idp,typecode *code,unsigned *dcell
   ,double2 *posxy,double *posz,float4 *velrhop,tsymatrix3f *spstau,double2 *posxypre,double *poszpre,float4 *velrhoppre);
-void PeriodicDuplicateNormals(unsigned n,unsigned pini,const unsigned *listp,float3 *normals,float3 *motionvel); //<vs_mddbc>
+void PeriodicDuplicateNormals(unsigned n,unsigned pini,const unsigned *listp,float3 *normals,float3 *motionvel);
 
 //-Kernels for Damping.
 void ComputeDamping(double dt,tdouble4 plane,float dist,float over,tfloat3 factorxyz,float redumax

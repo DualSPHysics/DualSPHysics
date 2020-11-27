@@ -27,11 +27,13 @@
 //:# - Clase para buscar posiciones cercanas de forma simple con un rendimiento
 //:#   aceptable. (15-09-2018)
 //:# - Mejora la gestion de excepciones. (06-05-2020)
+//:# - Nuevo metodo NearbyPositionsLt(). (30-10-2020)
 //:#############################################################################
 
 #include "JObject.h"
 #include "TypesDef.h"
 #include <climits>
+#include <vector>
 
 //##############################################################################
 //# JSimpleNeigs
@@ -71,6 +73,7 @@ public:
   unsigned GetAllocMemory()const;
 
   unsigned NearbyPositions(const tdouble3 &ps,unsigned pignore,double dist);
+  unsigned NearbyPositionsLt(const tdouble3 &ps,unsigned pignore,double dist,std::vector<unsigned> &vsel)const;
 
   unsigned GetCountSelect()const{ return(CountSelect); }
   const unsigned* GetSelectPos()const{ return(SelectPos); }

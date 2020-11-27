@@ -183,6 +183,8 @@ void JPartNormalData::SaveFile(std::string dir){
   //-Saves general variables.
   bdat.SetvText("AppName",AppName);
   bdat.SetvText("Date",Date);
+  //bdat.SetvText("AppName","XxX"); //AppName);
+  //bdat.SetvText("Date","XxX"); //Date);
   bdat.SetvText("CaseName",CaseName);
   bdat.SetvBool("Data2d",Data2d);
   bdat.SetvDouble("Data2dPosY",Data2dPosY);

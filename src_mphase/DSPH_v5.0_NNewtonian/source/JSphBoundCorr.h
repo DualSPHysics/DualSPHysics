@@ -87,8 +87,8 @@ public:
   const unsigned IdZone;
   const word MkBound;
 
-  JSphBoundCorrZone(JLog2 *log,unsigned idzone,word mkbound
-    ,TpDirection autodir,double autodpfactor,tdouble3 limitpos,tdouble3 direction);
+  JSphBoundCorrZone(unsigned idzone,word mkbound,TpDirection autodir
+    ,double autodpfactor,tdouble3 limitpos,tdouble3 direction);
   ~JSphBoundCorrZone();
   void ConfigBoundCode(typecode boundcode);
   void ConfigAuto(const JDsPartsInit *partsdata);
@@ -132,7 +132,7 @@ private:
 public:
   const bool Cpu;
 
-  JSphBoundCorr(bool cpu,double dp,JLog2 *log,const JXml *sxml,const std::string &place,const JSphMk *mkinfo);
+  JSphBoundCorr(bool cpu,double dp,const JXml *sxml,const std::string &place,const JSphMk *mkinfo);
   ~JSphBoundCorr();
 
   void RunAutoConfig(const JDsPartsInit *partsdata);

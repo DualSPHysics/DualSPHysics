@@ -118,7 +118,7 @@ void JSphInOutGridDataTime::Interpolate(double time,const JSphInOutGridDataTime 
 //==============================================================================
 /// Constructor.
 //==============================================================================
-JSphInOutGridData::JSphInOutGridData(JLog2 *log):Log(log){
+JSphInOutGridData::JSphInOutGridData():Log(AppInfo.LogPtr()){
   ClassName="JSphInOutGridData";
   SelData=NULL;
   #ifdef _WITHGPU

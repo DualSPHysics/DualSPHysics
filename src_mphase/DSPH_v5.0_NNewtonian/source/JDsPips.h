@@ -84,7 +84,7 @@ public:
   const unsigned Ntimes;    ///<Interaction number per step (Verlet:1, Symplectic:2).
 
 public:
-  JDsPips(bool cpu,unsigned stepsnum,bool svdata,unsigned ntimes,JLog2* log);
+  JDsPips(bool cpu,unsigned stepsnum,bool svdata,unsigned ntimes);
   ~JDsPips();
   long long GetAllocMemory()const;
 

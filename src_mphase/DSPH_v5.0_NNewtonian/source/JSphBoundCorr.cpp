@@ -26,7 +26,7 @@
 #include "JLog2.h"
 #include "JAppInfo.h"
 #include "Functions.h"
-#include "FunctionsGeo3d.h"
+#include "FunGeo3d.h"
 #include "JMatrix4.h"
 #include "JLinearValue.h"
 #include "JSaveCsv2.h"
@@ -45,9 +45,9 @@ using namespace std;
 //==============================================================================
 /// Constructor.
 //==============================================================================
-JSphBoundCorrZone::JSphBoundCorrZone(JLog2 *log,unsigned idzone,word mkbound
- ,TpDirection autodir,double autodpfactor,tdouble3 limitpos,tdouble3 direction)
- :Log(log),IdZone(idzone),MkBound(mkbound)
+JSphBoundCorrZone::JSphBoundCorrZone(unsigned idzone,word mkbound,TpDirection autodir
+ ,double autodpfactor,tdouble3 limitpos,tdouble3 direction)
+ :Log(AppInfo.LogPtr()),IdZone(idzone),MkBound(mkbound)
 {
   ClassName="JSphBoundCorrZone";
   Reset();
@@ -180,9 +180,9 @@ void JSphBoundCorrZone::GetConfig(std::vector<std::string> &lines)const{
 //==============================================================================
 /// Constructor.
 //==============================================================================
-JSphBoundCorr::JSphBoundCorr(bool cpu,double dp,JLog2 *log,const JXml *sxml
+JSphBoundCorr::JSphBoundCorr(bool cpu,double dp,const JXml *sxml
   ,const std::string &place,const JSphMk *mkinfo)
-  :Cpu(cpu),Dp(dp),Log(log),SaveMotionVtk(false)
+  :Log(AppInfo.LogPtr()),Cpu(cpu),Dp(dp),SaveMotionVtk(false)
 {
   ClassName="JSphBoundCorr";
   Reset();
@@ -281,7 +281,7 @@ void JSphBoundCorr::ReadXml(const JXml *sxml,TiXmlElement* lis){
       for(unsigned cmk=0;cmk<nmkbounds;cmk++){
         const word mkbound=word(mkbounds[cmk]);
         if(ExistMk(mkbound))Run_Exceptioon(fun::PrintStr("An input already exists for the same mkbound=%u.",mkbound));
-        JSphBoundCorrZone *zo=new JSphBoundCorrZone(Log,GetCount(),mkbound,autodir,autodpfactor,limitpoint,direction);
+        JSphBoundCorrZone *zo=new JSphBoundCorrZone(GetCount(),mkbound,autodir,autodpfactor,limitpoint,direction);
         List.push_back(zo);
       }
     }

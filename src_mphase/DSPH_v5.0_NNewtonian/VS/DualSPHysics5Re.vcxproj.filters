@@ -223,9 +223,6 @@
     <ClInclude Include="..\source\JSimpleNeigs.h">
       <Filter>Src_Inlet</Filter>
     </ClInclude>
-    <ClInclude Include="..\source\FunctionsGeo3d.h">
-      <Filter>Common</Filter>
-    </ClInclude>
     <ClInclude Include="..\source\JLinearValueDef.h">
       <Filter>Common</Filter>
     </ClInclude>
@@ -454,6 +451,36 @@
     <ClInclude Include="..\source\JSphGpu_NN_ker.h">
       <Filter>Cuda</Filter>
     </ClInclude>
+    <ClInclude Include="..\source\FunGeo3d.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\RunExceptionDef.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\RunExceptionGpuDef.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JSphInOutDef.h">
+      <Filter>Src_Inlet</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JSphInOutVel.h">
+      <Filter>Src_Inlet</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JSphInOutVelAwas.h">
+      <Filter>Src_Inlet</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JSphInOutZsurf.h">
+      <Filter>Src_Inlet</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JComputeMotionRef.h">
+      <Filter>Source\Other</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JFtMotionSave.h">
+      <Filter>Source\Other</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JPartMotionDef.h">
+      <Filter>Source\Other</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\source\main.cpp">
@@ -484,9 +511,6 @@
       <Filter>Common</Filter>
     </ClCompile>
     <ClCompile Include="..\source\JLog2.cpp">
-      <Filter>Common</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\JMeanValues.cpp">
       <Filter>Common</Filter>
     </ClCompile>
     <ClCompile Include="..\source\JObject.cpp">
@@ -584,9 +608,6 @@
     </ClCompile>
     <ClCompile Include="..\source\JSimpleNeigs.cpp">
       <Filter>Src_Inlet</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\FunctionsGeo3d.cpp">
-      <Filter>Common</Filter>
     </ClCompile>
     <ClCompile Include="..\source\JDataArrays.cpp">
       <Filter>Common</Filter>
@@ -737,6 +758,24 @@
     </ClCompile>
     <ClCompile Include="..\source\JSphGpu_NN.cpp">
       <Filter>Src_NN</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\FunGeo3d.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JSphInOutVel.cpp">
+      <Filter>Src_Inlet</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JSphInOutVelAwas.cpp">
+      <Filter>Src_Inlet</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JSphInOutZsurf.cpp">
+      <Filter>Src_Inlet</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JComputeMotionRef.cpp">
+      <Filter>Source\Other</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JFtMotionSave.cpp">
+      <Filter>Source\Other</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

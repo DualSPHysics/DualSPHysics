@@ -21,6 +21,8 @@
 //# =========
 //# - Nuevos metodos LoadFloat3() y LoadDouble3(). (27-06-2020)
 //# - Actualiza codigo para DualSPHysics. (28-06-2020)
+//# - Nuevas funciones LoadFloats() y LoadDoubles(). (12-08-2020)
+//# - Ignora parametros vacios. (10-09-2020)
 //#############################################################################
 
 #ifndef _JCfgRunBase_
@@ -36,6 +38,7 @@
 #include <iostream>
 #include <fstream>
 #include <cstdlib>
+#include <vector>
 
 //==============================================================================
 //##############################################################################
@@ -46,6 +49,8 @@ protected:
   int ParmDef;
   void LoadDsphConfig(std::string path);
 
+  static unsigned LoadFloats (std::string txopt,float  def,unsigned nv,std::vector<float > &vv);
+  static unsigned LoadDoubles(std::string txopt,double def,unsigned nv,std::vector<double> &vv);
   static unsigned LoadFloat3 (std::string txopt,float def,unsigned nv,tfloat3 *v);
   static unsigned LoadDouble3(std::string txopt,double def,unsigned nv,tdouble3 *v);
   static void LoadFloat3(std::string txopt,float def,tfloat3 &v1);
@@ -65,6 +70,7 @@ protected:
   }
 
 public:
+  const bool NoParms; ///<Allows zero parameters without showing help.
   bool PrintInfo;
 
   //-General configuration from DsphConfig.xml
@@ -72,7 +78,7 @@ public:
   bool CsvSepComa;   ///<Separator character in CSV files (false=semicolon, true=coma).
 
 public:
-  JCfgRunBase();
+  JCfgRunBase(bool noparms=false);
   void Reset();
 
   void LoadArgv(int argc,char** argv);
