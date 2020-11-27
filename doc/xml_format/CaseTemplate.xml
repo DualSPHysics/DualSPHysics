@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<case app="GenCase v5.0.197 (18-07-2020)" date="19-07-2020 02:14:45">
-    <casedef requiredversion="v5.0.197">
+<case app="GenCase v5.0.222 (16-11-2020)" date="27-11-2020 18:34:41">
+    <casedef requiredversion="v5.0.222">
         <constantsdef>
             <lattice bound="2" fluid="1" comment="Type of lattice to create the initial particles (default=1)" />
             <gravity x="0" y="0" z="-9.81" comment="Gravitational acceleration" units_comment="m/s^2" />
@@ -117,6 +117,35 @@
                     <setmkbackfluid mk="4" />
                     <setmkbackbound mk="6" />
                     <setmkbackclear />
+                    <clipreset />
+                    <clipdomain />
+                    <clipplane>
+                        <point1 x="0" y="0" z="0" />
+                        <point2 x="1" y="0" z="0" />
+                        <point3 x="1" y="0" z="1" />
+                    </clipplane>
+                    <clipplane>
+                        <point x="0" y="0" z="0" />
+                        <vector x="0" y="0" z="1" />
+                    </clipplane>
+                    <clipbox>
+                        <point x="0" y="0" z="0" />
+                        <size x="1" y="2" z="3" />
+                    </clipbox>
+                    <clipbox>
+                        <point x="0" y="0" z="0" />
+                        <endpoint x="0.1" y="0.2" z="0.3" />
+                    </clipbox>
+                    <clipbox>
+                        <boxfaces>top</boxfaces>
+                        <point x="0" y="0" z="0" />
+                        <size x="1" y="2" z="3" />
+                    </clipbox>
+                    <clipbox>
+                        <boxfaces>bottom | left | right | front | back</boxfaces>
+                        <point x="0" y="0" z="0" />
+                        <size x="1" y="2" z="3" />
+                    </clipbox>
                     <drawpoint x="0" y="0" z="0" />
                     <drawpoints>
                         <point x="0" y="0" z="1" />
@@ -295,7 +324,7 @@
                         <point x="1" y="1" z="0" />
                         <layers vdp="-0.5*,-1.5" />
                     </drawsphere>
-                    <drawellipsoid radius="1.15">
+                    <drawellipsoid radius="1.5">
                         <point x="1" y="0" z="0" />
                         <point x="1" y="1" z="1" />
                     </drawellipsoid>
@@ -458,6 +487,7 @@
                     <newvar SizeX="0.25" SizeZ="(Dp+2)*2.8" dpd2="Dp/2" _rem="Some variables" />
                     <setvar SizeZ="SizeX+Cte1*Cte2" _rem="Changes value of SizeZ" _print="0" />
                     <setvar dpd2="dpd2+Dp" SizeX="SizeX*dpd2" />
+                    <newvar x1="11" x2="22" x3="33" sumx="x[1]+x[1+1]+x[3]" _rem="Using variables as an array" />
                     <setvar v="eval(condition,a,b)" />
                     <setvar v1="pi()" v2="e()" />
                     <setvar v1="float(a)" v2="int(a)" v3="floor(a)" v4="ceil(a)" v5="round(a)" />
@@ -468,7 +498,7 @@
                     <setvar v1="sindg(a)" v2="cosdg(a)" v3="tandg(a)" />
                     <setvar v1="sinh(a)" v2="cosh(a)" v3="tanh(a)" />
                     <setvar v1="asin(a)" v2="acos(a)" v3="atan(a)" v4="atan2(a,b)" />
-                    <setvar v1="randinit(a)" v2="rand(a)" v3="randint(a,b)" />
+                    <setvar v1="randinit(a)" v2="rand(a)" v3="rand(a,b)" v4="randint(a,b)" />
                     <setvar v1="wavelength(gravity,depth,period)" />
                     <setvar v1="roundpos(pos,posmin,dp)" />
                     <setvar v1="roundposx(pos)" v2="roundposy(pos)" v3="roundposz(pos)" />
@@ -509,6 +539,17 @@
                 <velocity3 v="1" v2="0.608" v3="3" z="2" z2="2.4" z3="2.8" comment="Parabolic profile velocity" units_comment="m/s" />
             </velocity>
             <velwave mkfluid="3" depth="4" hmaxwave="3" x0="26" negative="false" />
+            <velmesh mkfluid="0">
+                <direction x="1" y="0" z="0" comment="Direction to apply velocity magnitude or used to calculate starting from 3-component velocity data." />
+                <meshdata file="MeshData_VelDir.csv" magnitude="true" reverse="true" setx="0.01" sety="0.02" setz="0.003" initialtime="10.5" comment="Velocity data (magnitude or 3 components) mesh-data file (CSV or binary)." units_comment="m/s" />
+            </velmesh>
+            <velmesh mkfluid="0">
+                <direction x="1" y="1" z="0" comment="Direction to apply velocity magnitude or used to calculate starting from 3-component velocity data." />
+                <meshdata file="MeshData_Vel.mbi4" magnitude="false" reverse="true" setz="0.001" comment="Velocity data (magnitude or 3 components) mesh-data file (CSV or binary)." units_comment="m/s" />
+            </velmesh>
+            <densitymesh mkfluid="0">
+                <meshdata file="MeshData_Rhop.csv" setx="0.01" sety="0.02" setz="0.003" initialtime="0.5" comment="Density data from mesh-data file (CSV or binary)." units_comment="kg/m^3" />
+            </densitymesh>
             <move mkbound="0" x="0.1" y="0.4" z="0.2" />
             <move mkfluid="0" x="0.2" y="0" z="0" />
             <rotateaxis mkbound="0" angle="45" anglesunits="degrees">
@@ -801,7 +842,6 @@
             <svnormaldata value="0" comment="Saves VTK with normal data for debug (default=0)" />
             <svnormals value="0" comment="Saves VTK with particle normals according to <computenormals> for debug (default=0)" />
             <svshapes value="0" comment="Saves VTK with geometry in triangles and quads with its normals for debug (default=0)" />
-            <dg_svopenshapes value="0" comment="Saves VTK with enlarged triangles and quads for debug (default=0)" />
             <dg_svpartsnormal value="0" comment="Saves VTKs with normals and out-vectors for each particle (default=0)">
                 <onlypos xmin="-0.04" zmin="-0.04" xmax="0.06" zmax="0.06" />
                 <onlypos ymin="-0.1" ymax="0.1" />

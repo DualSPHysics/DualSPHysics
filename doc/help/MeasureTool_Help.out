@@ -30,7 +30,7 @@
  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
 
 
-MeasureTool v5.0.122 (09-07-2020)
+MeasureTool v5.0.142 (22-10-2020)
 ==================================
 LoadDsphConfig> .../bin/windows/DsphConfig.xml
 Information about parameters of execution:
@@ -136,6 +136,9 @@ Information about parameters of execution:
        time:        Values of elevation for each time (option by default)
        pos:         Values of elevation for each position (x,y)
        all:         Both output files.
+
+    -tke            Turbulent Kinetic Energy is calculated using the average 
+                    velocity of selected PARTS
 
   Define output files format:
     -savevtk <file.vtk>   Generates VTK(polydata) file with the given
