@@ -20,6 +20,7 @@
 
 #include "JCellDivGpu.h"
 #include "JCellDivGpu_ker.h"
+#include "JAppInfo.h"
 #include "Functions.h"
 
 using namespace std;
@@ -29,13 +30,13 @@ using namespace std;
 //==============================================================================
 JCellDivGpu::JCellDivGpu(bool stable,bool floating,byte periactive,float kernelsize2,float poscellsize
   ,TpCellMode cellmode,float scell,tdouble3 mapposmin,tdouble3 mapposmax,tuint3 mapcells
-  ,unsigned casenbound,unsigned casenfixed,unsigned casenpb,JLog2 *log,std::string dirout
+  ,unsigned casenbound,unsigned casenfixed,unsigned casenpb,std::string dirout
   ,bool allocfullnct,float overmemorynp,word overmemorycells)
-  :Stable(stable),Floating(floating),PeriActive(periactive)
+  :Log(AppInfo.LogPtr()),Stable(stable),Floating(floating),PeriActive(periactive)
   ,CellMode(cellmode),ScellDiv(cellmode==CELLMODE_Full? 1: (cellmode==CELLMODE_Half? 2: 0))
   ,Scell(scell),OvScell(1.f/scell),KernelSize2(kernelsize2),PosCellSize(poscellsize)
   ,Map_PosMin(mapposmin),Map_PosMax(mapposmax),Map_PosDif(mapposmax-mapposmin)
-  ,Map_Cells(mapcells),CaseNbound(casenbound),CaseNfixed(casenfixed),CaseNpb(casenpb),Log(log)
+  ,Map_Cells(mapcells),CaseNbound(casenbound),CaseNfixed(casenfixed),CaseNpb(casenpb)
   ,DirOut(dirout),AllocFullNct(allocfullnct),OverMemoryNp(overmemorynp),OverMemoryCells(overmemorycells)
 {
   ClassName="JCellDivGpu";
@@ -228,11 +229,11 @@ void JCellDivGpu::CalcCellDomainBound(unsigned n,unsigned pini,unsigned n2,unsig
   ,const unsigned* dcellg,const typecode *codeg,tuint3 &cellmin,tuint3 &cellmax)
 {
   tuint3 cmin,cmax;
-  cudiv::LimitsCell(n,pini,DomCellCode,dcellg,codeg,(unsigned*)AuxMem,cmin,cmax,Log);
+  cudiv::LimitsCell(n,pini,DomCellCode,dcellg,codeg,(unsigned*)AuxMem,cmin,cmax);
   cellmin=(cmin.x>cmax.x? DomCells: cmin);
   cellmax=(cmin.x>cmax.x? TUint3(0): cmax);
   if(n2){
-    cudiv::LimitsCell(n2,pini2,DomCellCode,dcellg,codeg,(unsigned*)AuxMem,cmin,cmax,Log);
+    cudiv::LimitsCell(n2,pini2,DomCellCode,dcellg,codeg,(unsigned*)AuxMem,cmin,cmax);
     cmin=(cmin.x>cmax.x? DomCells: cmin);
     cmax=(cmin.x>cmax.x? TUint3(0): cmax);
     cellmin=MinValues(cellmin,cmin);
@@ -252,11 +253,11 @@ void JCellDivGpu::CalcCellDomainFluid(unsigned n,unsigned pini,unsigned n2,unsig
   ,const unsigned* dcellg,const typecode *codeg,tuint3 &cellmin,tuint3 &cellmax)
 {
   tuint3 cmin,cmax;
-  cudiv::LimitsCell(n,pini,DomCellCode,dcellg,codeg,(unsigned*)AuxMem,cmin,cmax,Log);
+  cudiv::LimitsCell(n,pini,DomCellCode,dcellg,codeg,(unsigned*)AuxMem,cmin,cmax);
   cellmin=(cmin.x>cmax.x? DomCells: cmin);
   cellmax=(cmin.x>cmax.x? TUint3(0): cmax);
   if(n2){
-    cudiv::LimitsCell(n2,pini2,DomCellCode,dcellg,codeg,(unsigned*)AuxMem,cmin,cmax,Log);
+    cudiv::LimitsCell(n2,pini2,DomCellCode,dcellg,codeg,(unsigned*)AuxMem,cmin,cmax);
     cmin=(cmin.x>cmax.x? DomCells: cmin);
     cmax=(cmin.x>cmax.x? TUint3(0): cmax);
     cellmin=MinValues(cellmin,cmin);

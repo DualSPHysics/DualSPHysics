@@ -39,10 +39,8 @@
 #include <vector>
 #include <cuda_runtime_api.h>
 #include "TypesDef.h"
+#include "RunExceptionGpuDef.h"
 
-#ifndef Check_CudaErroorFun
-#define Check_CudaErroorFun(msg) CheckCudaErroorFun(__FILE__,__LINE__,__func__,msg)
-#endif
 
 /// Implements a set of basic/general GPU functions.
 namespace fcuda{
@@ -152,6 +150,7 @@ tdouble2* ToHostDouble2(unsigned pini,unsigned n,const double2  *ptrg);
 tfloat3*  ToHostPosf3(unsigned pini,unsigned n,const double2 *posxyg,const double *poszg);
 tdouble3* ToHostPosd3(unsigned pini,unsigned n,const double2 *posxyg,const double *poszg);
 tfloat3*  ToHostFloatXYZ_W(unsigned pini,unsigned n,const float4 *ptrg,float **ptr_w);
+tfloat3*  ToHostPosf3(unsigned nplist,const unsigned *idxlistg,const double2 *posxyg,const double *poszg);
 
 }
 

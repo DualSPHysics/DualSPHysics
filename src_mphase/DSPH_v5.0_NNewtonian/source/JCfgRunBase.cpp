@@ -27,7 +27,7 @@ using namespace std;
 //==============================================================================
 /// Constructor.
 //==============================================================================
-JCfgRunBase::JCfgRunBase(){
+JCfgRunBase::JCfgRunBase(bool noparms):NoParms(noparms){
   ClassName="JCfgRunBase";
   Reset();
 }
@@ -80,12 +80,14 @@ void JCfgRunBase::LoadArgv(int argc,char** argv){
       }
     }
     if(optn>=MAXOPTS)Run_Exceptioon("Has exceeded the maximum configuration options.");
-    optlis[optn]=tex; optn++;
+    if(!tex.empty()){//-Ignores empty parameters.
+      optlis[optn]=tex; optn++;
+    }
   }
   //for(int c=0;c<optn;c++)printf("[%d]=[%s]\n",c,optlis[c].c_str());
-  if(optn)LoadOpts(optlis,optn,0,"");
+  if(optn || NoParms)LoadOpts(optlis,optn,0,"");
   delete[] optlis;
-  if(!optn)PrintInfo=true;
+  if(!optn && !NoParms)PrintInfo=true;
   if(!PrintInfo){ //-Configuracion por defecto
     //VisuConfig(); 
   }
@@ -126,6 +128,45 @@ void JCfgRunBase::ErrorParm(const std::string &opt,int optc,int lv,const std::st
   std::string tx=fun::PrintStr("Parameter \"%s\" unrecognised or invalid. ",opt.c_str());
   tx=tx+fun::PrintStr("(Level cfg:%d, Parameter:%d)",lv,optc);
   Run_ExceptioonFile(tx,file);
+}
+
+
+//==============================================================================
+/// Loads nv values float using command options. Returns number of loaded 
+/// values.
+//==============================================================================
+unsigned JCfgRunBase::LoadFloats(std::string txopt,float def,unsigned nv
+  ,std::vector<float> &vv)
+{
+  //printf("txopt=[%s]\n",txopt.c_str());
+  vv.clear();
+  for(unsigned c=0;c<nv;c++)vv.push_back(def);
+  unsigned num=0;
+  std::string aux=txopt;
+  for(;!aux.empty() && num<nv;num++){
+    std::string txv=fun::StrSplit(":",aux);
+    if(!txv.empty())vv[num]=float(atof(txv.c_str()));
+  }
+  return(num);
+}
+
+//==============================================================================
+/// Loads nv values double using command options. Returns number of loaded 
+/// values.
+//==============================================================================
+unsigned JCfgRunBase::LoadDoubles(std::string txopt,double def,unsigned nv
+  ,std::vector<double> &vv)
+{
+  //printf("txopt=[%s]\n",txopt.c_str());
+  vv.clear();
+  for(unsigned c=0;c<nv;c++)vv.push_back(def);
+  unsigned num=0;
+  std::string aux=txopt;
+  for(;!aux.empty() && num<nv;num++){
+    std::string txv=fun::StrSplit(":",aux);
+    if(!txv.empty())vv[num]=atof(txv.c_str());
+  }
+  return(num);
 }
 
 //==============================================================================

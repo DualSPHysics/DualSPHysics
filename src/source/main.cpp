@@ -31,8 +31,8 @@ School of Mechanical, Aerospace and Civil Engineering, University of Manchester,
 \section compile_sec Project files
 Please download source files and documentation from <a href="http://dual.sphysics.org">DualSPHysics website.</a> \n
 \author <a href="http://dual.sphysics.org/index.php/developers">DualSPHysics Developers.</a> 
-\version 5.0.140
-\date 18-07-2020
+\version 5.0.164
+\date 21-11-2020
 \copyright GNU Lesser General Public License <a href="http://www.gnu.org/licenses/">GNU licenses.</a>
 */
 
@@ -56,7 +56,7 @@ Please download source files and documentation from <a href="http://dual.sphysic
 
 using namespace std;
 
-JAppInfo AppInfo("DualSPHysics5","v5.0.140","18-07-2020");
+JAppInfo AppInfo("DualSPHysics5","v5.0.164","21-11-2020");
 //JAppInfo AppInfo("DualSPHysics5","v5.0.???","UserVersion","v1.0","??-??-????"); //-for user versions.
 
 //==============================================================================
@@ -99,8 +99,6 @@ bool ShowsVersionInfo(int argc,char** argv){
   }
   else if(option=="-info"){
     //-Defines the features included in the program.
-    bool d_ddtf=false;
-    d_ddtf=true;  //<vs_dtt2> 
     std::vector<std::string> features;
     features.push_back(fun::JSONProperty("CPU",true));
     features.push_back(fun::JSONProperty("GPU",AVAILABLE_GPU));
@@ -110,7 +108,7 @@ bool ShowsVersionInfo(int argc,char** argv){
     features.push_back(fun::JSONProperty("CHRONO_Coupling",AVAILABLE_CHRONO));
     features.push_back(fun::JSONProperty("MoorDyn_Coupling",AVAILABLE_MOORDYN));
     features.push_back(fun::JSONProperty("WaveGen",AVAILABLE_WAVEGEN));
-    features.push_back(fun::JSONProperty("DDT_Fourtakas",d_ddtf));
+    features.push_back(fun::JSONProperty("DDT_Fourtakas",true));
     //-Defines main information about the version program.
     std::vector<std::string> info;
     info.push_back(fun::JSONProperty("ShortName",AppInfo.GetShortName()));
@@ -139,12 +137,9 @@ void PrintExceptionLog(const std::string &prefix,const std::string &text,JLog2 *
 //==============================================================================
 int main(int argc, char** argv){
   int errcode=1;
-  //AppInfo.AddNameExtra("Moordyn");    //<vs_moordyyn>
-  //AppInfo.AddNameExtra("FtVel");      //<vs_fttvel>
-  //AppInfo.AddNameExtra("Symmetry");   //<vs_syymmetry>
-  //AppInfo.AddNameExtra("MDBC");       //<vs_mddbc>
-  //AppInfo.AddNameExtra("DDT2");       //<vs_dtt2>
+  //AppInfo.AddNameExtra("Symmetry");    //<vs_syymmetry>
   //AppInfo.AddNameExtra("SaveFtAce");
+  //AppInfo.AddNameExtra("SaveFtMotion");//<vs_ftmottionsv>
 #ifdef CODE_SIZE4
   AppInfo.AddNameExtra("MK65k");
 #endif

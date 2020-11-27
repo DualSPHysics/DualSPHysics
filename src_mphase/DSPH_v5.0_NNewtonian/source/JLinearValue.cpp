@@ -534,4 +534,22 @@ TiXmlElement* JLinearValue::WriteXmlValues(JXml *sxml,TiXmlElement* ele,std::str
 
 #endif
 
+//==============================================================================
+/// Cambia valores despues de la configuracion inicial.
+/// Set values after the initial configuration.
+//==============================================================================
+void JLinearValue::RnSetValues(double t0,double v0,double t1,double v1){
+  //-Prepares data.
+  if(GetCount()!=2){
+    SetSize(2);
+    memset(Times,0,sizeof(double)*Size);
+    memset(Values,0,sizeof(double)*Size*Nvalues);
+    Count=2;
+  }
+  //-Set data.
+  Times[0]=t0;          Values[0      ]=v0;
+  Times[1]=max(t0,t1);  Values[Nvalues]=v1;
+  Position=UINT_MAX;
+}
+
 

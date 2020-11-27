@@ -434,17 +434,6 @@ void JCasePropLinks::GetPropsList(std::vector<std::string> &vprops_mk
   for(unsigned cmk=0;cmk<unsigned(vprops_mk .size());cmk++)vprops_mk [cmk]=GetPropsSort(vprops_mk [cmk]);
   for(unsigned cmk=0;cmk<unsigned(vprops_mkb.size());cmk++)vprops_mkb[cmk]=GetPropsSort(vprops_mkb[cmk]);
   for(unsigned cmk=0;cmk<unsigned(vprops_mkf.size());cmk++)vprops_mkf[cmk]=GetPropsSort(vprops_mkf[cmk]);
-  /*:if(0){
-    unsigned size=unsigned(vprops_mk.size());
-    size=max(size,unsigned(vprops_mkb.size()));
-    size=max(size,unsigned(vprops_mkf.size()));
-    for(unsigned cmk=0;cmk<size;cmk++){
-      string mk =(cmk<unsigned(vprops_mk .size())? vprops_mk [cmk]: "");
-      string mkb=(cmk<unsigned(vprops_mkb.size())? vprops_mkb[cmk]: "");
-      string mkf=(cmk<unsigned(vprops_mkf.size())? vprops_mkf[cmk]: "");
-      printf("GetPropsList --> [%u]=[%s]-[%s]-[%s] \n",cmk,mk.c_str(),mkb.c_str(),mkf.c_str());
-    }
-  }:*/
 }
 
 //==============================================================================
@@ -756,8 +745,8 @@ void JCaseProperties::FilterMk(word mkboundfirst,word mkfluidfirst,std::string m
   vector<string> vprops;
   vector<string> vmks;
   //-Gets properties of each MK of mkselect.
-  //JTimer timer; timer.Start();  
-  if(1){//-Fast method when number of mks is very high.
+  //JTimer timer; timer.Start();
+  {//-Fast method when number of mks is very high.
     vector<string> vprops_mk;
     vector<string> vprops_mkb;
     vector<string> vprops_mkf;
@@ -767,12 +756,6 @@ void JCaseProperties::FilterMk(word mkboundfirst,word mkfluidfirst,std::string m
     while(v!=UINT_MAX){
       word mk=word(v);
       string props=Links->GetPropsFast(mk,mkboundfirst,mkfluidfirst,vprops_mk,vprops_mkb,vprops_mkf);
-      ////-Checks new method results.
-      //string props2=Links->GetProps(mk,mkboundfirst,mkfluidfirst);
-      //if(props!=props2){
-      //  printf("\nError mk: %d  [%s]!=[%s] \n",mk,props.c_str(),props2.c_str());
-      //  Run_Exceptioon("Error in result of GetPropsFast().");
-      //}
       if(!props.empty()){
         unsigned c=0;
         for(;c<vprops.size() && props!=vprops[c];c++);
@@ -785,25 +768,6 @@ void JCaseProperties::FilterMk(word mkboundfirst,word mkfluidfirst,std::string m
       v=rg.GetNextValue(v);
     }
     //timer.Stop(); printf("\nTime of fast method: %.3f sec.\n\n",timer.GetElapsedTimeF()/1000.f); fflush(stdout);
-  }
-  else{//-Old method, it is too slow when number of mks is very high.
-    JRangeFilter rg(mkselect);
-    unsigned v=rg.GetFirstValue();
-    while(v!=UINT_MAX){
-      word mk=word(v);
-      string props=Links->GetProps(mk,mkboundfirst,mkfluidfirst);
-      if(!props.empty()){
-        unsigned c=0;
-        for(;c<vprops.size() && props!=vprops[c];c++);
-        if(c==vprops.size()){
-          vprops.push_back(props);
-          vmks.push_back(fun::IntStr(mk));
-        }
-        else vmks[c]=vmks[c]+","+fun::IntStr(mk);
-      }
-      v=rg.GetNextValue(v);
-    }
-    //timer.Stop(); printf("\nTime of old method: %.3f sec.\n\n",timer.GetElapsedTimeF()/1000.f); fflush(stdout);
   }
 
   //-Reorders MK's.

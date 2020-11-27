@@ -19,6 +19,7 @@
 /// \file JDsOutputTime.cpp \brief Implements the class \ref JDsOutputTime.
 
 #include "JDsOutputTime.h"
+#include "JAppInfo.h"
 #include "Functions.h"
 #include "JXml.h"
 #include "JLog2.h"
@@ -131,7 +132,8 @@ void JDsOutputTime::LoadXml(const JXml *sxml,const std::string &place){
 //==============================================================================
 /// Shows object configuration using Log.
 //==============================================================================
-void JDsOutputTime::VisuConfig(JLog2 *log,std::string txhead,std::string txfoot){
+void JDsOutputTime::VisuConfig(std::string txhead,std::string txfoot){
+  JLog2 *log=AppInfo.LogPtr();
   if(!txhead.empty()){
     if(log)log->Print(txhead); 
     else printf("%s\n",txhead.c_str());

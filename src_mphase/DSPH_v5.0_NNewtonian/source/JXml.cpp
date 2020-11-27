@@ -63,19 +63,6 @@ void JXml::Reset(){
 }
 
 //==============================================================================
-/// Returns date and time of the system in text format (dd-mm-yyyy hh:mm:ss)
-//==============================================================================
-std::string JXml::GetDateTime(){
-  time_t rawtime;
-  struct tm *timeinfo;
-  time(&rawtime);
-  timeinfo=localtime(&rawtime);
-  char bufftime[64];
-  strftime(bufftime,64,"%d-%m-%Y %H:%M:%S",timeinfo);
-  return(bufftime);
-}
-
-//==============================================================================
 /// Returns the requested node and creates it if necessary.
 /// \param path Path of the requested node.
 /// \param createpath Allows to create the path if does not exist,
@@ -183,12 +170,16 @@ unsigned JXml::CountElements(const TiXmlNode* node,const std::string &name)const
 }
 
 //==============================================================================
-/// Returns true when element is not deactivated.
+/// Returns true when element is valid and it is not deactivated.
 /// \param lis Xml element to look for requesed element name.
 /// \param name Element name to look for.
 //==============================================================================
 bool JXml::CheckElementActive(const TiXmlElement* lis,const std::string &name)const{
-  return(lis? ReadElementBool(lis,name,"active",true,true): false);
+  //return(lis? ReadElementBool(lis,name,"active",true,true): false);
+  bool active=false;
+  TiXmlElement* ele=(lis? GetFirstElement(lis,name,true): NULL);
+  if(ele)active=GetAttributeBool(ele,"active",true,true);
+  return(active);
 }
 
 //==============================================================================
@@ -389,12 +380,32 @@ bool JXml::ExistsAttribute(const TiXmlElement* ele,const std::string &name)const
 //==============================================================================
 int JXml::CheckAttributes(const TiXmlElement* ele,std::string names,bool checkmanyatt)const{
   int ret=0;
+  string severaldefs;
   for(int c=1;!names.empty() && ret!=-1;c++){
     string name=fun::StrSplit(" ",names);
-    if(ExistsAttribute(ele,name))ret=(ret? -1: c);
+    if(ExistsAttribute(ele,name)){
+      severaldefs=severaldefs+(severaldefs.empty()? "": ", ")+name;
+      ret=(ret? -1: c);
+    }
   }
-  if(checkmanyatt && ret==-1)Run_ExceptioonFile(string("Several definitions for \'")+ele->Value()+"\'.",ErrGetFileRow(ele));
+  if(checkmanyatt && ret==-1)Run_ExceptioonFile(string("Several definitions (")+severaldefs+") for \'"+ele->Value()+"\'.",ErrGetFileRow(ele));
   return(ret);
+}
+
+//==============================================================================
+/// Checks if some or several attributes appers in the element. Returns number
+/// of found attribute (1...n), 0 none found and -1 several found.
+/// \param lis List of Xml elements of the error.
+/// \param elementname Name of the requested element.
+/// \param names Names of the requested attributes separated by spaces.
+/// \param checkmanyatt Throw exception if several attributes exist.
+//==============================================================================
+int JXml::CheckAttributes(const TiXmlElement* lis,std::string elementname
+  ,std::string names,bool checkmanyatt)const
+{
+  const TiXmlElement *ele=lis->FirstChildElement(elementname.c_str());
+  if(ele)return(CheckAttributes(ele,names,checkmanyatt));
+  return(0);
 }
 
 
@@ -868,10 +879,10 @@ void JXml::SaveFile(const std::string &fname,const std::string &app,bool date){
   if((!app.empty()||date)&&Doc->FirstChild()){
     TiXmlElement* ele=Doc->FirstChildElement();
     if(!app.empty())AddAttribute(ele,"app",app);
-    if(date)AddAttribute(ele,"date",GetDateTime());
+    if(date)AddAttribute(ele,"date",fun::GetDateTime());
   }
   if(!Doc->SaveFile(fname.c_str()))Run_ExceptioonFile("Cannot save the xml document.",fname);
-  if(1)CorrectFile(fname);
+  CorrectFile(fname);
 }
 //==============================================================================
 /// Creates an xml document of a file.

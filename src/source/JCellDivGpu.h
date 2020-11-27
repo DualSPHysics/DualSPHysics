@@ -141,7 +141,7 @@ protected:
 public:
   JCellDivGpu(bool stable,bool floating,byte periactive,float kernelsize2,float poscellsize
     ,TpCellMode cellmode,float scell,tdouble3 mapposmin,tdouble3 mapposmax,tuint3 mapcells
-    ,unsigned casenbound,unsigned casenfixed,unsigned casenpb,JLog2 *log,std::string dirout
+    ,unsigned casenbound,unsigned casenfixed,unsigned casenpb,std::string dirout
     ,bool allocfullnct=true,float overmemorynp=CELLDIV_OVERMEMORYNP,word overmemorycells=CELLDIV_OVERMEMORYCELLS);
   ~JCellDivGpu();
   void FreeMemoryGpu(){ FreeMemoryAll(); }

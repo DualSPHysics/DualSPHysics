@@ -251,10 +251,10 @@ unsigned InOutCreateList(bool stable,unsigned n,unsigned pini
     cudaMemcpy(&count,listp+n,sizeof(unsigned),cudaMemcpyDeviceToHost);
     //-Reorders list when stable has been activated.
     //-Reordena lista cuando stable esta activado.
-    //if(stable && count){ //-Does not affect results.
-    //  thrust::device_ptr<unsigned> dev_list(listp);
-    //  thrust::sort(dev_list,dev_list+count);
-    //}
+    if(stable && count){ //-Does not affect results.
+      thrust::device_ptr<unsigned> dev_list(listp);
+      thrust::sort(dev_list,dev_list+count);
+    }
   }
   return(count);
 }
@@ -265,13 +265,13 @@ unsigned InOutCreateList(bool stable,unsigned n,unsigned pini
 //------------------------------------------------------------------------------
 __device__ float KerInOutCalcVel(byte vprof,const float4 &vdata,float posz){
   float vel=0;
-  if(vprof==0)vel=vdata.x;  //-PVEL_Constant
-  else if(vprof==1){        //-PVEL_Linear
+  if(vprof==0)vel=vdata.x;  //-InVelP_Uniform
+  else if(vprof==1){        //-InVelP_Linear
     const float m=vdata.x;
     const float b=vdata.y;
     vel=m*posz+b;
   }
-  else if(vprof==2){        //-PVEL_Parabolic
+  else if(vprof==2){        //-InVelP_Parabolic
     const float a=vdata.x;
     const float b=vdata.y;
     const float c=vdata.z;
@@ -281,45 +281,48 @@ __device__ float KerInOutCalcVel(byte vprof,const float4 &vdata,float posz){
 }
 
 //------------------------------------------------------------------------------
-/// Updates velocity and rhop of inlet/outlet particles when it is not extrapolated. 
-/// Actualiza velocidad y densidad de particulas inlet/outlet cuando no es extrapolada.
+/// Updates velocity and rhop of inlet/outlet particles when it uses an 
+/// analytical solution.
 //------------------------------------------------------------------------------
-__global__ void KerInOutUpdateData(unsigned n,const unsigned *inoutpart
+__global__ void KerInOutSetAnalyticalData(unsigned n,const unsigned *inoutpart
   ,byte izone,byte rmode,byte vmode,byte vprof,byte refillspfull
-  ,float timestep,float zsurf,float4 veldata,float4 veldata2,float3 dirdata
+  ,float timestep,float zsurfv,float4 veldata,float4 veldata2,float3 dirdata
   ,float coefhydro,float rhopzero,float gamma
-  ,const typecode *code,const double *posz,float4 *velrhop)
+  ,const typecode *code,const double *posz,const float *zsurfpart,float4 *velrhop)
 {
   const unsigned cp=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
   if(cp<n){
     const unsigned p=inoutpart[cp];
     if(izone==byte(CODE_GetIzoneFluidInout(code[p]))){
+      const float zsurf=(zsurfpart? zsurfpart[cp]: zsurfv);
       const double rposz=posz[p];
       float4 rvelrhop=velrhop[p];
       //-Compute rhop value.
-      if(rmode==0)rvelrhop.w=rhopzero; //-MRHOP_Constant
-      if(rmode==1){                    //-MRHOP_Hydrostatic
+      if(rmode==0)rvelrhop.w=rhopzero; //-InRhop_Constant
+      if(rmode==1){                    //-InRhop_Hydrostatic
         const float depth=float(double(zsurf)-rposz);
         const float rh=1.f+coefhydro*depth;     //rh=1.+rhop0*(-gravity.z)*(Dp*ptdata.GetDepth(p))/vCteB;
-        rvelrhop.w=rhopzero*pow(rh,1.f/gamma);  //rhop[id]=rhop0*pow(rh,(1./gamma));
+        const float frhop=pow(rh,1.f/gamma);    //rhop[id]=rhop0*pow(rh,(1./gamma));
+        rvelrhop.w=rhopzero*(frhop<1.f? 1.f: frhop);//-Avoid rhop lower thand rhopzero to prevent suction.
+        //rvelrhop.w=rhopzero*pow(rh,1.f/gamma);  //rhop[id]=rhop0*pow(rh,(1./gamma));
       }
       //-Compute velocity value.
-      float vel=0;
-      if(!refillspfull || rposz<=zsurf){//-It is necessary for RefillingMode==Simple-Full
-        if(vmode==0){      //-MVEL_Fixed
-          vel=KerInOutCalcVel(vprof,veldata,float(rposz));
+      if(vmode<2){//-VelMode InVelM_Fixed or InVelM_Variable.
+        float vel=0;
+        if(!refillspfull || rposz<=zsurf){
+          if(vmode==0){ //-InVelM_Fixed
+            vel=KerInOutCalcVel(vprof,veldata,float(rposz));
+          }
+          else{ //-InVelM_Variable
+            const float vel1=KerInOutCalcVel(vprof,veldata,float(rposz));
+            const float vel2=KerInOutCalcVel(vprof,veldata2,float(rposz));
+            const float time1=veldata.w;
+            const float time2=veldata2.w;
+            if(timestep<=time1 || time1==time2)vel=vel1;
+            else if(timestep>=time2)vel=vel2;
+            else vel=(timestep-time1)/(time2-time1)*(vel2-vel1)+vel1;
+          }
         }
-        else if(vmode==1){ //-MVEL_Variable
-          const float vel1=KerInOutCalcVel(vprof,veldata,float(rposz));
-          const float vel2=KerInOutCalcVel(vprof,veldata2,float(rposz));
-          const float time1=veldata.w;
-          const float time2=veldata2.w;
-          if(timestep<=time1 || time1==time2)vel=vel1;
-          else if(timestep>=time2)vel=vel2;
-          else vel=(timestep-time1)/(time2-time1)*(vel2-vel1)+vel1;
-        }
-      }
-      if(vmode!=2){      //-MVEL_Extrapolated
         rvelrhop.x=vel*dirdata.x;
         rvelrhop.y=vel*dirdata.y;
         rvelrhop.z=vel*dirdata.z;
@@ -330,19 +333,20 @@ __global__ void KerInOutUpdateData(unsigned n,const unsigned *inoutpart
 }
 
 //==============================================================================
-/// Updates velocity and rhop of inlet/outlet particles when it is not extrapolated. 
-/// Actualiza velocidad y densidad de particulas inlet/outlet cuando no es extrapolada.
+/// Updates velocity and rhop of inlet/outlet particles when it uses an 
+/// analytical solution.
 //==============================================================================
-void InOutUpdateData(unsigned n,const unsigned *inoutpart
+void InOutSetAnalyticalData(unsigned n,const unsigned *inoutpart
   ,byte izone,byte rmode,byte vmode,byte vprof,byte refillspfull
-  ,float timestep,float zsurf,tfloat4 veldata,tfloat4 veldata2,tfloat3 dirdata
+  ,float timestep,float zsurfv,tfloat4 veldata,tfloat4 veldata2,tfloat3 dirdata
   ,float coefhydro,float rhopzero,float gamma
-  ,const typecode *code,const double *posz,float4 *velrhop)
+  ,const typecode *code,const double *posz,const float *zsurfpart,float4 *velrhop)
 {
   if(n){
     dim3 sgrid=GetSimpleGridSize(n,SPHBSIZE);
-    KerInOutUpdateData <<<sgrid,SPHBSIZE>>> (n,inoutpart,izone,rmode,vmode,vprof,refillspfull
-      ,timestep,zsurf,Float4(veldata),Float4(veldata2),Float3(dirdata),coefhydro,rhopzero,gamma,code,posz,velrhop);
+    KerInOutSetAnalyticalData <<<sgrid,SPHBSIZE>>> (n,inoutpart,izone,rmode,vmode
+      ,vprof,refillspfull,timestep,zsurfv,Float4(veldata),Float4(veldata2)
+      ,Float3(dirdata),coefhydro,rhopzero,gamma,code,posz,zsurfpart,velrhop);
   }
 }
 
@@ -415,8 +419,9 @@ void InOutUpdateVelrhopM1(unsigned n,const int *inoutpart
 /// If particle is moved out the domain then it changes to ignore particle.
 //------------------------------------------------------------------------------
 __global__ void KerInOutComputeStep(unsigned n,int *inoutpart,const float4 *planes
-  ,const float *width,const byte *cfgupdate,const float *zsurf,typecode codenewpart
-  ,const double2 *posxy,const double *posz,typecode *code,byte *newizone)
+  ,const float *width,const byte *cfgupdate,const float *zsurfv,typecode codenewpart
+  ,const double2 *posxy,const double *posz,const byte *zsurfok
+  ,typecode *code,byte *newizone)
 {
   const unsigned cp=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
   if(cp<n){
@@ -425,7 +430,7 @@ __global__ void KerInOutComputeStep(unsigned n,int *inoutpart,const float4 *plan
     const int p=inoutpart[cp];
     const typecode rcode=code[p];
     const byte izone0=byte(CODE_GetIzoneFluidInout(rcode));
-    const byte izone=(izone0&0xf); //-Substract 16 to obtain the actual zone (0-15).
+    const byte izone=(izone0&CODE_TYPE_FLUID_INOUT015MASK); //-Substract 16 to obtain the actual zone (0-15).
     const byte cfupdate=cfgupdate[izone];
     const bool refilladvan=(cfupdate&INOUT_RefillAdvanced_MASK)!=0;
     const bool refillsfull=(cfupdate&INOUT_RefillSpFull_MASK)!=0;
@@ -434,18 +439,19 @@ __global__ void KerInOutComputeStep(unsigned n,int *inoutpart,const float4 *plan
     const bool converinput=(cfupdate&INOUT_ConvertInput_MASK)!=0;
     const double2 rposxy=posxy[p];
     const float rposz=float(posz[p]);
+    const bool zok=(zsurfok? zsurfok[cp]: rposz<=zsurfv[izone]);
     if(izone0>=16){//-Normal fluid particle in zone inlet/outlet.
-      if(removeinput || (removezsurf && rposz>zsurf[izone]))cod=CODE_SetOutPos(rcode); //-Normal fluid particle in zone inlet/outlet is removed.
+      if(removeinput || (removezsurf && !zok))cod=CODE_SetOutPos(rcode); //-Normal fluid particle in zone inlet/outlet is removed.
       else cod=(converinput? rcode^0x10: codenewpart); //-Converts to inout particle or not.
     }
     else{//-Previous inout fluid particle.
       const float displane=-cugeo::PlaneDistSign(planes[izone],float(rposxy.x),float(rposxy.y),rposz);
-      if(displane>width[izone] || (removezsurf && rposz>zsurf[izone])){
+      if(displane>width[izone] || (removezsurf && !zok)){
         cod=CODE_SetOutIgnore(rcode); //-Particle is moved out domain.
       }
       else if(displane<0){
         cod=codenewpart;//-Inout particle changes to fluid particle.
-        if(!refilladvan && (refillsfull || rposz<=zsurf[izone]))newiz=byte(izone); //-A new particle is created.
+        if(!refilladvan && (refillsfull || zok))newiz=byte(izone); //-A new particle is created.
       }
     }
     newizone[cp]=newiz;
@@ -460,13 +466,14 @@ __global__ void KerInOutComputeStep(unsigned n,int *inoutpart,const float4 *plan
 /// If particle is moved out the domain then it changes to ignore particle.
 //==============================================================================
 void InOutComputeStep(unsigned n,int *inoutpart,const float4 *planes
-  ,const float *width,const byte *cfgupdate,const float *zsurf,typecode codenewpart
-  ,const double2 *posxy,const double *posz,typecode *code,byte *newizone)
+  ,const float *width,const byte *cfgupdate,const float *zsurfv,typecode codenewpart
+  ,const double2 *posxy,const double *posz,const byte *zsurfok
+  ,typecode *code,byte *newizone)
 {
   if(n){
     dim3 sgrid=GetSimpleGridSize(n,SPHBSIZE);
-    KerInOutComputeStep <<<sgrid,SPHBSIZE>>> (n,inoutpart,planes,width,cfgupdate,zsurf
-      ,codenewpart,posxy,posz,code,newizone);
+    KerInOutComputeStep <<<sgrid,SPHBSIZE>>> (n,inoutpart,planes,width,cfgupdate,zsurfv
+      ,codenewpart,posxy,posz,zsurfok,code,newizone);
   }
 }
 
@@ -660,7 +667,7 @@ void InOutFillProjection(unsigned n,const unsigned *inoutpart
 /// Create list of selected ptpoints and its distance for new inlet/outlet particles.
 //------------------------------------------------------------------------------
 __global__ void KerInOutFillListCreate(unsigned npt
-  ,const double2 *ptposxy,const double *ptposz
+  ,const double2 *ptposxy,const double *ptposz,const byte *zsurfok
   ,const byte *ptzone,const byte *cfgupdate,const float *zsurf,const float *width
   ,unsigned npropt,const float *prodist,const double2 *proposxy,const double *proposz
   ,float dpmin,float dpmin2,float dp,float *ptdist,unsigned nmax,unsigned *inoutpart)
@@ -676,7 +683,8 @@ __global__ void KerInOutFillListCreate(unsigned npt
     if((cfgupdate[izone]&INOUT_RefillAdvanced_MASK)!=0){
       const double2 rptxy=ptposxy[cpt];
       const double rptz=ptposz[cpt];
-      if(zsurf==NULL || float(rptz)<=zsurf[izone]){
+      const bool zok=(zsurfok? zsurfok[cpt]: float(rptz)<=zsurf[izone]);
+      if(zok){
         distmax=0;
         for(int cpro=0;cpro<npropt;cpro++){
           const double2 propsxy=proposxy[cpro];
@@ -717,7 +725,7 @@ __global__ void KerInOutFillListCreate(unsigned npt
 /// Returns number of new particles to create.
 //==============================================================================
 unsigned InOutFillListCreate(bool stable,unsigned npt
-  ,const double2 *ptposxy,const double *ptposz
+  ,const double2 *ptposxy,const double *ptposz,const byte *zsurfok
   ,const byte *ptzone,const byte *cfgupdate,const float *zsurf,const float *width
   ,unsigned npropt,const float *prodist,const double2 *proposxy,const double *proposz
   ,float dpmin,float dpmin2,float dp,float *ptdist,unsigned nmax,unsigned *inoutpart)
@@ -729,7 +737,9 @@ unsigned InOutFillListCreate(bool stable,unsigned npt
     cudaMemset(inoutpart+nmax,0,sizeof(unsigned));
     dim3 sgrid=GetSimpleGridSize(npt,SPHBSIZE);
     const unsigned smem=(SPHBSIZE+1)*sizeof(unsigned); //-All fluid particles can be in in/out area and one position for counter.
-    KerInOutFillListCreate <<<sgrid,SPHBSIZE,smem>>> (npt,ptposxy,ptposz,ptzone,cfgupdate,zsurf,width,npropt,prodist,proposxy,proposz,dpmin,dpmin2,dp,ptdist,nmax,inoutpart);
+    KerInOutFillListCreate <<<sgrid,SPHBSIZE,smem>>> (npt,ptposxy,ptposz,zsurfok
+      ,ptzone,cfgupdate,zsurf,width,npropt,prodist,proposxy,proposz,dpmin,dpmin2
+      ,dp,ptdist,nmax,inoutpart);
     cudaMemcpy(&count,inoutpart+nmax,sizeof(unsigned),cudaMemcpyDeviceToHost);
     //-Reorders list if it is valid and stable has been activated.
     //-Reordena lista si es valida y stable esta activado.
@@ -782,77 +792,6 @@ void InOutFillCreate(byte periactive,unsigned newn,const unsigned *newinoutpart
     if(periactive)KerInOutFillCreate<true>  <<<sgrid,SPHBSIZE>>> (newn,newinoutpart,ptposxy,ptposz,ptzone,ptauxdist,np,idnext,codenewpart,dirdata,posxy,posz,dcell,code,idp,velrhop);
     else          KerInOutFillCreate<false> <<<sgrid,SPHBSIZE>>> (newn,newinoutpart,ptposxy,ptposz,ptzone,ptauxdist,np,idnext,codenewpart,dirdata,posxy,posz,dcell,code,idp,velrhop);
   }
-}
-
-
-//------------------------------------------------------------------------------
-/// Calculates maximum zsurf in fluid domain.
-//------------------------------------------------------------------------------
-template<unsigned blockSize> __global__ void KerInOutComputeZsurf
-  (unsigned nptz,const float3 *ptzpos,float maxdist2,float zbottom
-  ,int scelldiv,int4 nc,int3 cellzero,const int2 *beginendcellfluid
-  ,const double2 *posxy,const double *posz,const typecode *code,float *res)
-{
-  extern __shared__ float sfdat[];
-  const unsigned tid=threadIdx.x;
-
-  const unsigned p1=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
-  if(p1<nptz){
-    float zsurfmax=zbottom;
-    //-Obtains basic data of particle p1.
-    const float3 posp1=ptzpos[p1];
-    
-    //-Obtains neighborhood search limits.
-    int ini1,fin1,ini2,fin2,ini3,fin3;
-    cusph::cunsearch::InitCte(posp1.x,posp1.y,posp1.z,scelldiv,nc,cellzero,ini1,fin1,ini2,fin2,ini3,fin3);
-
-    //-Interaction with fluids.
-    for(int c3=ini3;c3<fin3;c3+=nc.w)for(int c2=ini2;c2<fin2;c2+=nc.x){
-      unsigned pini,pfin=0;  cunsearch::ParticleRange(c2,c3,ini1,fin1,beginendcellfluid,pini,pfin);
-      if(pfin)for(unsigned p2=pini;p2<pfin;p2++){
-        const float poszp2=float(posz[p2]);
-        if(poszp2>zsurfmax){
-          const float drz=posp1.z-poszp2;
-          const double2 posxyp2=posxy[p2];
-          const float drx=posp1.x-float(posxyp2.x);
-          const float dry=posp1.y-float(posxyp2.y);
-          const float rr2=drx*drx+dry*dry+drz*drz;
-          if(rr2<=maxdist2 && CODE_IsFluidNotInout(code[p2]))zsurfmax=poszp2;//-Only with fluid particles but not inout particles.
-        }
-      }
-    }
-    sfdat[tid]=zsurfmax;
-  }
-  else sfdat[tid]=zbottom;
-  //-Reduces maximum in shared memory.
-  __syncthreads();
-  if(blockSize>=512){ if(tid<256)sfdat[tid]=max(sfdat[tid],sfdat[tid+256]);  __syncthreads(); }
-  if(blockSize>=256){ if(tid<128)sfdat[tid]=max(sfdat[tid],sfdat[tid+128]);  __syncthreads(); }
-  if(blockSize>=128){ if(tid<64) sfdat[tid]=max(sfdat[tid],sfdat[tid+64] );  __syncthreads(); }
-  if(tid<32)cusph::KerReduMaxFloatWarp<blockSize>(sfdat,tid);
-  if(tid==0)res[blockIdx.x]=sfdat[0];
-}
-
-//==============================================================================
-/// Calculates maximum zsurf in fluid domain.
-//==============================================================================
-float InOutComputeZsurf(unsigned nptz,const float3 *ptzpos,float maxdist,float zbottom
-  ,const StDivDataGpu &dvd,const double2 *posxy,const double *posz,const typecode *code
-  ,float *auxg,float *auxh)
-{
-  const int2 *beginendcellfluid=dvd.beginendcell+dvd.cellfluid;
-  float zsurfmax=zbottom;
-  if(nptz){
-    const unsigned bsize=SPHBSIZE;
-    dim3 sgrid=GetSimpleGridSize(nptz,bsize);
-    unsigned smem=sizeof(float)*bsize;
-    KerInOutComputeZsurf<bsize> <<<sgrid,bsize,smem>>> (nptz,ptzpos,(maxdist*maxdist),zbottom
-      ,dvd.scelldiv,dvd.nc,dvd.cellzero,beginendcellfluid,posxy,posz,code,auxg);
-    const unsigned nblocks=sgrid.x*sgrid.y;
-    cudaMemcpy(auxh,auxg,sizeof(float)*nblocks,cudaMemcpyDeviceToHost);
-    for(unsigned c=0;c<nblocks;c++)zsurfmax=max(zsurfmax,auxh[c]);
-  }
-  return(zsurfmax);
 }
 
 

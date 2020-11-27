@@ -44,7 +44,7 @@ protected:
 public:
   JCellDivCpuSingle(bool stable,bool floating,byte periactive
     ,TpCellMode cellmode,float scell,tdouble3 mapposmin,tdouble3 mapposmax,tuint3 mapcells
-    ,unsigned casenbound,unsigned casenfixed,unsigned casenpb,JLog2 *log,std::string dirout);
+    ,unsigned casenbound,unsigned casenfixed,unsigned casenpb,std::string dirout);
 
   void Divide(unsigned npb1,unsigned npf1,unsigned npb2,unsigned npf2,bool boundchanged
     ,const unsigned *dcellc,const typecode* codec,const unsigned* idpc,const tdouble3* posc,TimersCpu timers);

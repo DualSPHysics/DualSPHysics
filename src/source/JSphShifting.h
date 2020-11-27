@@ -129,7 +129,7 @@ private:
 
 
 public:
-  JSphShifting(bool simulate2d,double dp,float kernelh,JLog2* log);
+  JSphShifting(bool simulate2d,double dp,float kernelh);
   ~JSphShifting();
   void Reset();
 

@@ -20,6 +20,7 @@
 //:# Cambios:
 //:# =========
 //:# - Clases para calcular promedios simples, moviles y ponderados. (20-02-2016)
+//:# - Se elimina codigo de JMeanMoving por falta de uso. (20-11-2020)
 //:#############################################################################
 
 /// \file JMeanValues.h \brief Declares the class \ref JMeanValue and class \ref JMeanMoving.
@@ -56,38 +57,6 @@ public:
   double GetMin()const{ return(Min); }
   double GetMean()const{ return(Mean); }
   ullong GetValues()const{ return(Values); }
-};
-
-
-//##############################################################################
-//# JMeanMoving
-//##############################################################################
-/// \brief Calculates the mobile and weighted average value of a sequence of values.
-
-class JMeanMoving : protected JObject
-{
-public:
-protected:
-  unsigned SizeValues;
-  double *Values;
-  double *Weights;
-  unsigned NextValue;
-  bool ValuesFull;      ///< Array of values is full.
-
-  void Init(unsigned size,bool weighted);
-
-public:
-  JMeanMoving(unsigned size=10);
-  ~JMeanMoving();
-  void Reset();
-  void InitSimple(unsigned size);
-  void InitWeightedLinear(unsigned size);
-  void InitWeightedExponential(unsigned size,float fac=1);
-
-  void AddValue(double v);
-  double GetSimpleMean()const;
-  double GetWeightedMean()const;
-
 };
 
 

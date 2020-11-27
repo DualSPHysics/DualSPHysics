@@ -51,7 +51,7 @@ protected:
   void AbortBoundOut();
 
   void Interaction_Forces(TpInterStep interstep);
-  void MdbcBoundCorrection(); //<vs_mddbc>
+  void MdbcBoundCorrection();
 
   double ComputeAceMax(float *auxmem);
 
@@ -61,10 +61,10 @@ protected:
   double ComputeStep_Sym();
 
   void UpdateFtObjs();
-  void FtApplyImposedVel(float3 *ftoforcesresg)const; //<vs_fttvel>
-  void FtCopyExternalForces(); //<vs_fttvel>
+  void FtApplyImposedVel(float3 *ftoforcesresg)const;
+  void FtCopyExternalForces();
   void RunFloating(double dt,bool predictor);
-  void RunGaugeSystem(double timestep);
+  void RunGaugeSystem(double timestep,bool saveinput=false);
 
   void ComputePips(bool run);
 
@@ -76,7 +76,6 @@ public:
   ~JSphGpuSingle();
   void Run(std::string appname,JSphCfgRun *cfg,JLog2 *log);
 
-//<vs_innlet_ini>
 //-Code for InOut in JSphGpuSingle_InOut.cpp
 //--------------------------------------------
 protected:
@@ -84,11 +83,10 @@ protected:
   void InOutIgnoreFluidDef(const std::vector<unsigned> &mkfluidlist);
   void InOutCheckProximity(unsigned newnp);
   void InOutComputeStep(double stepdt);
-  void InOutCalculeZsurf();
+  void InOutUpdatePartsData(double timestepnew);
   void InOutExtrapolateData(unsigned inoutcount,const int *inoutpart);
 
   void BoundCorrectionData();
-//<vs_innlet_end>
 };
 
 #endif

@@ -47,6 +47,7 @@ public:
   TpCellMode CellMode;
   int TBoundary;        ///<Boundary method: 0:None, 1:DBC (by default), 2:mDBC (SlipMode: 1:DBC vel=0)
   int SlipMode;         ///<Slip mode for mDBC: 0:None, 1:DBC vel=0, 2:No-slip, 3:Free slip (default=1).
+  int MdbcFastSingle;   ///<Matrix calculations are done in single precision (default=1). 
   float MdbcThreshold;  ///<Kernel support limit to apply mDBC correction (default=0).
   TpStep TStep;
   int VerletSteps;
@@ -73,7 +74,7 @@ public:
   int NstepsBreak;  ///<Maximum number of steps allowed (debug).
   bool SvAllSteps;  ///<Saves a PART for each step (debug).
 
-  unsigned PipsMode;   ///<Defines mode of PIPS calculation (0:No computed, 1:Computed (default), 2:computed and save detail).
+  unsigned PipsMode;   ///<Defines mode of PIPS calculation (0:No computed (default), 1:Computed, 2:computed and save detail).
   unsigned PipsSteps;  ///<Number of steps per interval to compute PIPS (100 by default).
 
 public:

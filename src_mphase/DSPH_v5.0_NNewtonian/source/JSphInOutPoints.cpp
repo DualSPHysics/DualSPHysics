@@ -25,7 +25,7 @@
 #include "JLog2.h"
 #include "JAppInfo.h"
 #include "Functions.h"
-#include "FunctionsGeo3d.h"
+#include "FunGeo3d.h"
 #include "JMatrix4.h"
 #include "JDataArrays.h"
 #include "JVtkLib.h"
@@ -41,13 +41,14 @@ using namespace std;
 //==============================================================================
 /// Constructor.
 //==============================================================================
-JSphInOutPoints::JSphInOutPoints(JLog2 *log,bool simulate2d,double simulate2dposy,byte layers
+JSphInOutPoints::JSphInOutPoints(bool simulate2d,double simulate2dposy,byte layers
   ,double dp,double initialmove,tdouble3 posmin,tdouble3 posmax)
-  :Log(log),Simulate2D(simulate2d),Simulate2DPosY(simulate2dposy),Layers(layers)
+  :Log(AppInfo.LogPtr()),Simulate2D(simulate2d),Simulate2DPosY(simulate2dposy),Layers(layers)
   ,Dp(dp),InitialMove(initialmove),MapRealPosMin(posmin),MapRealPosMax(posmax)
 {
   ClassName="JSphInOutPoints";
   Points=NULL;
+  PointsInit=NULL;
   Reset();
 }
 
@@ -65,9 +66,9 @@ JSphInOutPoints::~JSphInOutPoints(){
 void JSphInOutPoints::Reset(){
   ConfigInfo.clear();
   Direction=TDouble3(0);
-  delete[] Points; Points=NULL;
-  Size=Count=0;
+  ResetPoints();
   for(unsigned c=0;c<10;c++)PtDom[c]=TDouble3(DBL_MAX);
+  ZonePosMin=ZonePosMax=TDouble3(0);
 }
 
 //==============================================================================
@@ -75,6 +76,7 @@ void JSphInOutPoints::Reset(){
 //==============================================================================
 void JSphInOutPoints::ResetPoints(){
   delete[] Points; Points=NULL;
+  delete[] PointsInit; PointsInit=NULL;
   Size=Count=0;
 }
 
@@ -84,7 +86,8 @@ void JSphInOutPoints::ResetPoints(){
 void JSphInOutPoints::ResizeMemory(unsigned newnpt){
   if(Size-Count<newnpt){
     try{
-      Points=fun::ResizeAlloc(Points,Count,Count+newnpt);
+      Points    =fun::ResizeAlloc(Points    ,Count,Count+newnpt);
+      PointsInit=fun::ResizeAlloc(PointsInit,0    ,Count+newnpt);
     }
     catch(const std::bad_alloc){
       Run_Exceptioon("Could not allocate the requested memory.");
@@ -469,15 +472,20 @@ void JSphInOutPoints::CreatePoints(const JXml *sxml,TiXmlElement* lis
   }
   //-Checks direction and position of points in simulation domain.
   CheckPoints(xmlrow);
+  //-Computes domain limits of inlet points.
+  ComputeDomainLimits(ZonePosMin,ZonePosMax);
+  //-Set PointsInit[] to zero.
+  memset(PointsInit,0,sizeof(byte)*Size);
 }
 
 //==============================================================================
-/// Compute domain limits of zone from inout points (for 2D and particles-3D).
+/// Compute domain limits from inout points.
 //==============================================================================
-void JSphInOutPoints::ComputeDomainFromPoints(){
-  tdouble3 pmin=TDouble3(DBL_MAX),pmax=TDouble3(-DBL_MAX);
+void JSphInOutPoints::ComputeDomainLimits(tdouble3 &posmin,tdouble3 &posmax)const{
+  if(Count==0)Run_Exceptioon("There are not defined points.");
+  tdouble3 pmin=Points[0],pmax=Points[0];
   //-Calculates minimum and maximum position of inout points. 
-  for(unsigned p=0;p<Count;p++){
+  for(unsigned p=1;p<Count;p++){
     const tdouble3 ps=Points[p];
     if(pmin.x>ps.x)pmin.x=ps.x;
     if(pmin.y>ps.y)pmin.y=ps.y;
@@ -486,6 +494,16 @@ void JSphInOutPoints::ComputeDomainFromPoints(){
     if(pmax.y<ps.y)pmax.y=ps.y;
     if(pmax.z<ps.z)pmax.z=ps.z;
   }
+  posmin=pmin; posmax=pmax;
+}
+
+//==============================================================================
+/// Compute domain limits of zone from inout points (for 2D and particles-3D).
+//==============================================================================
+void JSphInOutPoints::ComputeDomainFromPoints(){
+  //-Calculates minimum and maximum position of inout points. 
+  tdouble3 pmin=TDouble3(DBL_MAX),pmax=TDouble3(-DBL_MAX);
+  ComputeDomainLimits(pmin,pmax);
   const tdouble3 dir1=Direction*(Dp/2); //-Vector direction.
   const unsigned nfar=2*(Layers)+1;
   if(Simulate2D){
@@ -624,12 +642,27 @@ void JSphInOutPoints::GetConfig(std::vector<std::string> &lines)const{
 }
 
 //==============================================================================
-/// Returns number of point below zsurf.
+/// Activates or deactivates initial points.
 //==============================================================================
-unsigned JSphInOutPoints::GetCountZmax(float zsurf)const{
+void JSphInOutPoints::SetPointsInit(bool active){
+  memset(PointsInit,(active? 1: 0),sizeof(byte)*Count);
+}
+
+//==============================================================================
+/// Counts and returns number of valid initial points.
+//==============================================================================
+unsigned JSphInOutPoints::CountPointsInit()const{
   unsigned n=0;
-  for(unsigned p=0;p<Count;p++)if(float(Points[p].z)<=zsurf)n++;
+  for(unsigned p=0;p<Count;p++)if(PointsInit[p])n++;
   return(n);
+}
+
+//==============================================================================
+/// Returns border points of the domain of inlet points.
+//==============================================================================
+void JSphInOutPoints::GetPtDomain(std::vector<tdouble3> &ptdom)const{
+  ptdom.clear();
+  for(unsigned p=0;p<10;p++)ptdom.push_back(PtDom[p]);
 }
 
 

@@ -146,7 +146,7 @@ private:
   void SaveFileSurfStep(double timestep,double xpos,double zsurf,double zsurftarget);
 
 public:
-  JWaveAwasZsurf(JLog2 *log,word mkbound,const JXml *sxml,TiXmlElement* lis);
+  JWaveAwasZsurf(word mkbound,const JXml *sxml,TiXmlElement* lis);
   ~JWaveAwasZsurf(){ DestructorActive=true; Reset(); }
   void Init(JGaugeSystem *gaugesystem,const JSphMk *mkinfo,tdouble3 pistondir
     ,double gravityz,double depth,double wavestart,double waveheight,double waveperiod

@@ -27,6 +27,7 @@
 //:# - Permite rangos con incremento configurable Ej:(1,4-10:2,99). (02-01-2017)
 //:# - Error corregido en Config(). (23-01-2017)
 //:# - Nueva funcion GetValues(). (30-07-2018)
+//:# - Nuevo metodo para cargar vector de valores. (21-10-2020)
 //:#############################################################################
 
 /// \file JRangeFilter.h \brief Declares the class \ref JRangeFilter.
@@ -60,13 +61,17 @@ private:
   void AddRangeStep(unsigned v,unsigned v2,unsigned step);
   void SortRanges();
   void JoinRanges();
+  void Prepare();
   bool CheckNewValue(unsigned v)const;
+
 
 public:
   JRangeFilter(std::string filter="");
+  JRangeFilter(const std::vector<unsigned> &values);
   ~JRangeFilter(){ DestructorActive=true; Reset(); }
   void Reset();
   void Config(std::string filter);
+  void Config(const std::vector<unsigned> &values);
   bool CheckValue(unsigned v)const;
   unsigned GetFirstValue()const;
   unsigned GetNextValue(unsigned v)const;

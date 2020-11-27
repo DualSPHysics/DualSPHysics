@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<!-- *** DualSPHysics (19-05-2020) *** -->
+<!-- *** DualSPHysics (25-07-2020) *** -->
 <!-- *** class: JSphInitialize *** -->
 <!------------------------------------------------------------------------------->
 <!------------------------------------------------------------------------------->
@@ -54,6 +54,41 @@
 		</boundnormal_cylinder>
 	</initialize>
 </special>
+<!------------------------------------------------------------------------------->
+<!------------------------------------------------------------------------------->
+<!-- *** Filter option (<onlypos>) according to particle position for      *** -->
+<!-- *** <fluidvelocity> and <boundnormal_XXX> options.                    *** -->
+<special>
+	<initialize>
+		<fluidvelocity mkfluid="0">
+		    ...
+			<onlypos>
+				<posmin x="1" y="0" z="0" />
+				<posmax x="2" y="1" z="3" />
+			</onlypos>
+		</fluidvelocity>
+		<boundnormal_set mkbound="1">
+		    ...
+			<onlypos>
+				<posmin x="1" y="0" z="0" />
+				<posmax x="2" y="1" z="3" />
+			</onlypos>
+		</boundnormal_set>
+		<boundnormal_plane mkbound="2">
+		    ...
+			<onlypos>
+				<posmin x="2" />
+				<posmax x="4" />
+			</onlypos>
+		</boundnormal_plane>
+		<boundnormal_sphere mkbound="3">
+		    ...
+			<onlypos>
+				<posmax z="1" />
+			</onlypos>
+		</boundnormal_plane>
+	</initialize>
+</special>
 <!------------------------------------------------------------------------------------------>
 <!------------------------------------------------------------------------------------------>
 <!-- *** Attribute "active" in elements <initialize> and its child elements to enable *** --> 
@@ -65,4 +100,7 @@
 	<boundnormal_plane active="true"/>
 	<boundnormal_sphere active="true"/>
 	<boundnormal_cylinder active="true"/>
+	<XXX>
+		<onlypos active="true"/>
+	</XXX>
 </initialize>

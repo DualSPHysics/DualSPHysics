@@ -39,14 +39,16 @@ inline tfloat3 ToTFloat3(const float3& v){ return(TFloat3(v.x,v.y,v.z)); }
 
 void Sort(unsigned* keys,unsigned* values,unsigned size,bool stable);
 
-void ReduPosLimits(unsigned nblocks,float *aux,tfloat3 &pmin,tfloat3 &pmax,JLog2 *log);
+void ReduPosLimits(unsigned nblocks,float *aux,tfloat3 &pmin,tfloat3 &pmax);
 
 
 inline unsigned LimitsPosSize(unsigned ndata){ ndata=(ndata>DIVBSIZE? ndata: DIVBSIZE); unsigned n=6,s=((ndata/DIVBSIZE)+1); return((s*n + ((s/DIVBSIZE)+1)*n) + DIVBSIZE); }
 
 
-void LimitsCell(unsigned np,unsigned pini,unsigned cellcode,const unsigned *dcell,const typecode *code,unsigned *aux,tuint3 &celmin,tuint3 &celmax,JLog2 *log);
-void CalcBeginEndCell(bool full,unsigned np,unsigned npb,unsigned sizebegcell,unsigned cellfluid,const unsigned *cellpart,int2 *begcell);
+void LimitsCell(unsigned np,unsigned pini,unsigned cellcode,const unsigned *dcell
+  ,const typecode *code,unsigned *aux,tuint3 &celmin,tuint3 &celmax);
+void CalcBeginEndCell(bool full,unsigned np,unsigned npb,unsigned sizebegcell
+  ,unsigned cellfluid,const unsigned *cellpart,int2 *begcell);
 
 void SortDataParticles(unsigned np,unsigned pini,const unsigned *sortpart,const unsigned *idp,const typecode *code,const unsigned *dcell,const double2 *posxy,const double *posz,const float4 *velrhop,unsigned *idp2,typecode *code2,unsigned *dcell2,double2 *posxy2,double *posz2,float4 *velrhop2);
 void SortDataParticles(unsigned np,unsigned pini,const unsigned *sortpart,const float4 *a,float4 *a2);
@@ -57,10 +59,10 @@ void SortDataParticles(unsigned np,unsigned pini,const unsigned *sortpart,const 
 void SortDataParticles(unsigned np,unsigned pini,const unsigned *sortpart,const float *a,float *a2);
 
 //:inline unsigned GetRangeParticlesCellsSizeAux(unsigned celini,unsigned celfin){ unsigned n=2,s=(((celfin-celini)/DIVBSIZE)+1); return((s*n + ((s/DIVBSIZE)+1)*n) + DIVBSIZE); } 
-//:void GetRangeParticlesCells(unsigned celini,unsigned celfin,const int2 *begcell,unsigned *aux,unsigned &pmin,unsigned &pmax,JLog2 *log);
+//:void GetRangeParticlesCells(unsigned celini,unsigned celfin,const int2 *begcell,unsigned *aux,unsigned &pmin,unsigned &pmax);
 
 //:inline unsigned GetParticlesCellsSizeAux(unsigned celini,unsigned celfin){ unsigned n=1,s=(((celfin-celini)/DIVBSIZE)+1); return((s*n + ((s/DIVBSIZE)+1)*n) + DIVBSIZE); }  
-//:unsigned GetParticlesCells(unsigned celini,unsigned celfin,const int2 *begcell,unsigned *aux,JLog2 *log);
+//:unsigned GetParticlesCells(unsigned celini,unsigned celfin,const int2 *begcell,unsigned *aux);
 
 }
 

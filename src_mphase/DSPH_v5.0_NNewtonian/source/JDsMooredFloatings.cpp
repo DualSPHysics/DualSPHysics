@@ -30,7 +30,7 @@
 #include "JLog2.h"
 #include "JVtkLib.h"
 #include "Functions.h"
-#include "FunctionsGeo3d.h"
+#include "FunGeo3d.h"
 #include "JSaveCsv2.h"
 #include "JDsFtForcePoints.h"
 #include "JAppInfo.h"
@@ -50,8 +50,8 @@ using namespace std;
 //==============================================================================
 /// Constructor.
 //==============================================================================
-JDsMooredFloating::JDsMooredFloating(JLog2 *log,word fmk)
-  :Log(log),FloatingMk(fmk)
+JDsMooredFloating::JDsMooredFloating(word fmk)
+  :Log(AppInfo.LogPtr()),FloatingMk(fmk)
 {
   ClassName="JDsMooredFloating";
   Reset();
@@ -115,8 +115,8 @@ JDsMooredFloating::StLinkData JDsMooredFloating::GetFairlead(unsigned fairnum)co
 //==============================================================================
 /// Constructor.
 //==============================================================================
-JDsMooredFloatings::JDsMooredFloatings(JLog2 *log,std::string dircase,std::string casename
-  ,tfloat3 gravity):Log(log),DirCase(dircase),CaseName(casename),Gravity(gravity)
+JDsMooredFloatings::JDsMooredFloatings(std::string dircase,std::string casename
+  ,tfloat3 gravity):Log(AppInfo.LogPtr()),DirCase(dircase),CaseName(casename),Gravity(gravity)
 {
   ClassName="JDsMooredFloatings";
   MoorDynReady=false;
@@ -126,7 +126,7 @@ JDsMooredFloatings::JDsMooredFloatings(JLog2 *log,std::string dircase,std::strin
   FairleadPos=NULL;
   FairleadVel=NULL;
   FairleadForce=NULL;
-  MoorDyn_LogInit(log);
+  MoorDyn_LogInit(Log);
   Reset();
 }
 //==============================================================================
@@ -191,7 +191,7 @@ void JDsMooredFloatings::ReadXml(const JXml *sxml,TiXmlElement* lis){
       if(sxml->CheckElementActive(ele)){
         word floatingmk=sxml->GetAttributeWord(ele,"mkbound");
         if(GetFloatingByMk(floatingmk)!=UINT_MAX)Run_Exceptioon(fun::PrintStr("Floating mkbound=%d is already configured.",floatingmk));
-        JDsMooredFloating *mo=new JDsMooredFloating(Log,floatingmk);
+        JDsMooredFloating *mo=new JDsMooredFloating(floatingmk);
         Floatings.push_back(mo);
       }
       ele=ele->NextSiblingElement("floating");

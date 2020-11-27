@@ -41,7 +41,7 @@ protected:
 public:
   JCellDivGpuSingle(bool stable,bool floating,byte periactive,float kernelsize2,float poscellsize
     ,TpCellMode cellmode,float scell,tdouble3 mapposmin,tdouble3 mapposmax,tuint3 mapcells
-    ,unsigned casenbound,unsigned casenfixed,unsigned casenpb,JLog2 *log,std::string dirout);
+    ,unsigned casenbound,unsigned casenfixed,unsigned casenpb,std::string dirout);
 
   void Divide(unsigned npb1,unsigned npf1,unsigned npb2,unsigned npf2,bool boundchanged,const unsigned *dcellg,const typecode *codeg,TimersGpu timers,const double2 *posxy,const double *posz,const unsigned *idp);
 

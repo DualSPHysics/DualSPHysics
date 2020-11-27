@@ -109,24 +109,22 @@ void Interaction_GaugeVel(const StCteSph &CSP,const StDivDataGpu &dvd,tdouble3 p
   //,tdouble3 domposmin,float scell,float kernelsize2,float h,float massf)
 {
   //-Interaction Fluid-Fluid & Fluid-Bound.
-  if(1){
-    const int2 *beginendcellfluid=dvd.beginendcell+dvd.cellfluid;
-    const unsigned bsize=32;
-    dim3 sgrid=GetSimpleGridSize(1,bsize);
-    //:JDgKerPrint info;
-    //:byte* ik=NULL; //info.GetInfoPointer(sgridf,bsfluid);
-    switch(CSP.tkernel){
-      case KERNEL_Cubic:   //Kernel Cubic is not available.
-      case KERNEL_Wendland:{ const float aker=CSP.kwend.awen;
-        KerInteractionGaugeVel<KERNEL_Wendland> <<<sgrid,bsize>>> (aker,Double3(ptpos)
-          ,dvd.scelldiv,dvd.nc,dvd.cellzero,beginendcellfluid
-          ,dvd.axis,dvd.domcellcode,dvd.domposmin,dvd.scell,dvd.poscellsize
-          ,dvd.kernelsize2,CSP.kernelh,CSP.massfluid,posxy,posz,code,velrhop,ptvel);
-      }break;
-      default: throw "Kernel unknown at Interaction_GaugeVel().";
-    }
-    //:info.PrintValuesFull(true); //info.PrintValuesInfo();
+  const int2 *beginendcellfluid=dvd.beginendcell+dvd.cellfluid;
+  const unsigned bsize=32;
+  dim3 sgrid=GetSimpleGridSize(1,bsize);
+  //:JDgKerPrint info;
+  //:byte* ik=NULL; //info.GetInfoPointer(sgridf,bsfluid);
+  switch(CSP.tkernel){
+    case KERNEL_Cubic:   //Kernel Cubic is not available.
+    case KERNEL_Wendland:{ const float aker=CSP.kwend.awen;
+      KerInteractionGaugeVel<KERNEL_Wendland> <<<sgrid,bsize>>> (aker,Double3(ptpos)
+        ,dvd.scelldiv,dvd.nc,dvd.cellzero,beginendcellfluid
+        ,dvd.axis,dvd.domcellcode,dvd.domposmin,dvd.scell,dvd.poscellsize
+        ,dvd.kernelsize2,CSP.kernelh,CSP.massfluid,posxy,posz,code,velrhop,ptvel);
+    }break;
+    default: throw "Kernel unknown at Interaction_GaugeVel().";
   }
+  //:info.PrintValuesFull(true); //info.PrintValuesInfo();
 }
 
 //------------------------------------------------------------------------------
@@ -228,23 +226,21 @@ void Interaction_GaugeSwl(const StCteSph &CSP,const StDivDataGpu &dvd
   ,const double2 *posxy,const double *posz,const typecode *code
   ,const float4 *velrhop,float3 *ptres)
 {
-  if(1){
-    const int2 *beginendcellfluid=dvd.beginendcell+dvd.cellfluid;
-    const unsigned bsize=128;
-    dim3 sgrid=GetSimpleGridSize(bsize,bsize);
-    const unsigned smem=sizeof(float)*(bsize+1);
-    switch(CSP.tkernel){
-      case KERNEL_Cubic:   //Kernel Cubic is not available.
-      case KERNEL_Wendland:{ const float aker=CSP.kwend.awen;
-        KerInteractionGaugeSwl<KERNEL_Wendland> <<<sgrid,bsize,smem>>> (aker
-          ,point0.x,point0.y,point0.z,pointdir.x,pointdir.y,pointdir.z
-          ,pointnp,masslimit,dvd.kernelsize2,CSP.kernelh,CSP.massfluid
-          ,dvd.scelldiv,dvd.nc,dvd.cellzero,beginendcellfluid
-          ,dvd.axis,dvd.domcellcode,dvd.domposmin,dvd.scell,dvd.poscellsize
-          ,posxy,posz,code,velrhop,ptres);
-      }break;
-      default: throw "Kernel unknown at Interaction_GaugeSwl().";
-    }
+  const int2 *beginendcellfluid=dvd.beginendcell+dvd.cellfluid;
+  const unsigned bsize=128;
+  dim3 sgrid=GetSimpleGridSize(bsize,bsize);
+  const unsigned smem=sizeof(float)*(bsize+1);
+  switch(CSP.tkernel){
+    case KERNEL_Cubic:   //Kernel Cubic is not available.
+    case KERNEL_Wendland:{ const float aker=CSP.kwend.awen;
+      KerInteractionGaugeSwl<KERNEL_Wendland> <<<sgrid,bsize,smem>>> (aker
+        ,point0.x,point0.y,point0.z,pointdir.x,pointdir.y,pointdir.z
+        ,pointnp,masslimit,dvd.kernelsize2,CSP.kernelh,CSP.massfluid
+        ,dvd.scelldiv,dvd.nc,dvd.cellzero,beginendcellfluid
+        ,dvd.axis,dvd.domcellcode,dvd.domposmin,dvd.scell,dvd.poscellsize
+        ,posxy,posz,code,velrhop,ptres);
+    }break;
+    default: throw "Kernel unknown at Interaction_GaugeSwl().";
   }
 }
 
@@ -306,6 +302,7 @@ void Interaction_GaugeMaxz(tdouble3 point0,float maxdist2,const StDivDataGpu &dv
     ,cxini,cxfin,yini,yfin,zini,zfin,dvd.nc,dvd.cellfluid,dvd.beginendcell
     ,posxy,posz,code,ptres);
 }
+
 
 //------------------------------------------------------------------------------
 /// Calculates force on selected fixed or moving particles using only fluid particles.

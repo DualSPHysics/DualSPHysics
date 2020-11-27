@@ -19,6 +19,7 @@
 /// \file JDsAccInput.cpp \brief Implements the class \ref JDsAccInput.
 
 #include "JDsAccInput.h"
+#include "JAppInfo.h"
 #include "JLog2.h"
 #include "JXml.h"
 #include "Functions.h"
@@ -40,11 +41,11 @@ using namespace std;
 //==============================================================================
 /// Constructor.
 //==============================================================================
-JDsAccInputMk::JDsAccInputMk(JLog2* log,unsigned idx,bool bound,word mktype1,word mktype2
+JDsAccInputMk::JDsAccInputMk(unsigned idx,bool bound,word mktype1,word mktype2
   ,double tini,double tend,bool genabled,tfloat3 acccentre,const JLinearValue &acedata
   ,const JLinearValue &veldata)
-  :Log(log),Idx(idx),Bound(bound),MkType1(mktype1),MkType2(mktype2),TimeIni(tini),TimeEnd(tend)
-  ,GravityEnabled(genabled),AccCoG(acccentre)
+  :Log(AppInfo.LogPtr()),Idx(idx),Bound(bound),MkType1(mktype1),MkType2(mktype2)
+  ,TimeIni(tini),TimeEnd(tend),GravityEnabled(genabled),AccCoG(acccentre)
 {
   ClassName="JDsAccInputMk";
   AceData=NULL;
@@ -117,8 +118,8 @@ const StAceInput& JDsAccInputMk::GetAccValues(double timestep){
 //==============================================================================
 /// Constructor.
 //==============================================================================
-JDsAccInput::JDsAccInput(JLog2* log,const std::string &dirdata,const JXml *sxml
-  ,const std::string &place):Log(log),DirData(dirdata)
+JDsAccInput::JDsAccInput(const std::string &dirdata,const JXml *sxml
+  ,const std::string &place):Log(AppInfo.LogPtr()),DirData(dirdata)
 {
   ClassName="JDsAccInput";
   Reset();
@@ -199,7 +200,7 @@ void JDsAccInput::ReadXml(const JXml *sxml,TiXmlElement* lis){
       //-Create input configurations.
       if(mktype1!=USHRT_MAX){
         if(ExistMk(bound,mktype1))Run_ExceptioonFile(fun::PrintStr("An input already exists for the same %s=%u.",(bound? "mkbound": "mkfluid"),mktype1),sxml->ErrGetFileRow(ele));
-        JDsAccInputMk *input=new JDsAccInputMk(Log,GetCount(),bound,mktype1,mktype2,tini,tend,genabled,acccentre,acedata,veldata);
+        JDsAccInputMk *input=new JDsAccInputMk(GetCount(),bound,mktype1,mktype2,tini,tend,genabled,acccentre,acedata,veldata);
         Inputs.push_back(input);
       }
       else{//-Check range of mkvalues.
@@ -214,12 +215,12 @@ void JDsAccInput::ReadXml(const JXml *sxml,TiXmlElement* lis){
           word v=word(vmk[c]);
           if(mktype2+1==v)mktype2=v;
           else{
-            JDsAccInputMk *input=new JDsAccInputMk(Log,GetCount(),bound,mktype1,mktype2,tini,tend,genabled,acccentre,acedata,veldata);
+            JDsAccInputMk *input=new JDsAccInputMk(GetCount(),bound,mktype1,mktype2,tini,tend,genabled,acccentre,acedata,veldata);
             Inputs.push_back(input);
             mktype1=mktype2=v;
           }
         }
-        JDsAccInputMk *input=new JDsAccInputMk(Log,GetCount(),bound,mktype1,mktype2,tini,tend,genabled,acccentre,acedata,veldata);
+        JDsAccInputMk *input=new JDsAccInputMk(GetCount(),bound,mktype1,mktype2,tini,tend,genabled,acccentre,acedata,veldata);
         Inputs.push_back(input);
       }
     }

@@ -27,6 +27,7 @@
 //:# - Objeto JXml pasado como const para operaciones de lectura. (18-03-2020)  
 //:# - Comprueba opcion active en elementos de primer y segundo nivel. (18-03-2020)  
 //:# - Cambio de nombre de fichero J.GaugeSystem a J.DsGaugeSystem. (28-06-2020)
+//:# - Nuevos metodos CalculeLastInputXXX(). (27-08-2020)
 //:#############################################################################
 
 /// \file JDsGaugeSystem.h \brief Declares the class \ref JGaugeSystem.
@@ -56,6 +57,57 @@ class JSphMk;
 
 class JGaugeSystem : protected JObject
 {
+public:
+  ///Structure to save execution input on CPU.
+  typedef struct StrInputCpu{
+    bool ready;
+    double timestep;
+    StDivDataCpu dvd;
+    unsigned npbok;
+    unsigned npb;
+    unsigned np;
+    const tdouble3 *pos;
+    const typecode *code;
+    const unsigned *idp;
+    const tfloat4 *velrhop;
+    StrInputCpu(){ ready=false; npbok=npb=np=0; }
+    StrInputCpu(double timestep_,const StDivDataCpu &dvd_
+      ,unsigned npbok_,unsigned npb_,unsigned np_,const tdouble3 *pos_
+      ,const typecode *code_,const unsigned *idp_,const tfloat4 *velrhop_)
+    {
+      ready=true;  timestep=timestep_;
+      dvd=dvd_;  npbok=npbok_;  npb=npb_;   np=np_;  
+      pos=pos_;  code=code_;  idp=idp_;  velrhop=velrhop_;
+    }
+  }StInputCpu;
+
+
+ #ifdef _WITHGPU
+  ///Structure to save execution input on GPU.
+  typedef struct StrInputGpu{
+    bool ready;
+    double timestep;
+    StDivDataGpu dvd;
+    unsigned npbok;
+    unsigned npb;
+    unsigned np;
+    const double2 *posxy;
+    const double *posz;
+    const typecode *code;
+    const unsigned *idp;
+    const float4 *velrhop;
+    StrInputGpu(){ ready=false; npbok=npb=np=0; }
+    StrInputGpu(double timestep_,const StDivDataGpu &dvd_
+      ,unsigned npbok_,unsigned npb_,unsigned np_,const double2 *posxy_,const double *posz_
+      ,const typecode *code_,const unsigned *idp_,const float4 *velrhop_)
+    {
+      ready=true;  timestep=timestep_;
+      dvd=dvd_;  npbok=npbok_;  npb=npb_;   np=np_;  
+      posxy=posxy_;  posz=posz_;  code=code_;  idp=idp_;  velrhop=velrhop_;
+    }
+  }StInputGpu;
+ #endif
+
 private:
   JLog2* Log;
   const bool Cpu;
@@ -80,6 +132,11 @@ private:
   float3* AuxMemoryg;  ///<Auxiliary allocated memory on GPU [1].
  #endif
 
+  //-Variables for saving input state.
+  StInputCpu InputCpu;
+ #ifdef _WITHGPU
+  StInputGpu InputGpu;
+ #endif
 
   void ResetCfgDefault();
   void LoadLinePoints(double coefdp,const tdouble3 &point1,const tdouble3 &point2,std::vector<tdouble3> &points,const std::string &ref)const;
@@ -87,14 +144,13 @@ private:
   void LoadPoints(JXml *sxml,TiXmlElement* lis,std::vector<tdouble3> &points)const;
   JGaugeItem::StDefault ReadXmlCommon(const JXml *sxml,TiXmlElement* ele)const;
   void ReadXml(const JXml *sxml,TiXmlElement* ele,const JSphMk* mkinfo);
-  void SaveVtkInitPoints()const;
 
 public:
-  JGaugeSystem(bool cpu,JLog2* log);
+  JGaugeSystem(bool cpu);
   ~JGaugeSystem();
   void Reset();
 
-  void Config(const StCteSph & csp,bool symmetry,double timemax,double timepart
+  void Config(const StCteSph &csp,bool symmetry,double timemax,double timepart
     ,tdouble3 posmin,tdouble3 posmax,float scell,int scelldiv);
 
   void LoadXml(const JXml *sxml,const std::string &place,const JSphMk* mkinfo);
@@ -113,24 +169,38 @@ public:
   void LoadLinePoints(double coefdp,const tdouble3 &point1,const tdouble3 &point2,std::vector<tdouble3> &points)const{ LoadLinePoints(coefdp,point1,point2,points,""); }
   void LoadLinePoints(unsigned count,const tdouble3 &point1,const tdouble3 &point2,std::vector<tdouble3> &points)const{ LoadLinePoints(count,point1,point2,points,""); }
 
-  JGaugeVelocity* AddGaugeVel  (std::string name,double computestart,double computeend,double computedt,const tdouble3 &point);
-  JGaugeSwl*      AddGaugeSwl  (std::string name,double computestart,double computeend,double computedt,tdouble3 point0,tdouble3 point2,double pointdp,float masslimit=0);
-  JGaugeMaxZ*     AddGaugeMaxZ (std::string name,double computestart,double computeend,double computedt,tdouble3 point0,double height,float distlimit);
-  JGaugeForce*    AddGaugeForce(std::string name,double computestart,double computeend,double computedt,const JSphMk* mkinfo,word mkbound);
+  JGaugeVelocity* AddGaugeVel  (std::string name,double computestart,double computeend,double computedt
+    ,const tdouble3 &point);
+  JGaugeSwl*      AddGaugeSwl  (std::string name,double computestart,double computeend,double computedt
+    ,tdouble3 point0,tdouble3 point2,double pointdp,float masslimit=0);
+  JGaugeMaxZ*     AddGaugeMaxZ (std::string name,double computestart,double computeend,double computedt
+    ,tdouble3 point0,double height,float distlimit);
+  JGaugeForce*    AddGaugeForce(std::string name,double computestart,double computeend,double computedt
+    ,const JSphMk* mkinfo,word mkbound);
+
+  void SaveVtkInitPoints()const;
 
   unsigned GetCount()const{ return(unsigned(Gauges.size())); }
   unsigned GetGaugeIdx(const std::string &name)const;
   JGaugeItem* GetGauge(unsigned c)const;
 
-  void CalculeCpu(double timestep,bool svpart,const StDivDataCpu &dvd
+  void CalculeCpu(double timestep,const StDivDataCpu &dvd
     ,unsigned npbok,unsigned npb,unsigned np,const tdouble3 *pos
-    ,const typecode *code,const unsigned *idp,const tfloat4 *velrhop);
+    ,const typecode *code,const unsigned *idp,const tfloat4 *velrhop
+    ,bool saveinput=false);
+
+  void CalculeLastInputCpu(std::string gaugename);
 
  #ifdef _WITHGPU
-  void CalculeGpu(double timestep,bool svpart,const StDivDataGpu &dvd
+  void CalculeGpu(double timestep,const StDivDataGpu &dvd
     ,unsigned npbok,unsigned npb,unsigned np,const double2 *posxy,const double *posz
-    ,const typecode *code,const unsigned *idp,const float4 *velrhop);
+    ,const typecode *code,const unsigned *idp,const float4 *velrhop
+    ,bool saveinput=false);
+
+  void CalculeLastInputGpu(std::string gaugename);
  #endif
+
+  void CalculeLastInput(std::string gaugename);
 
   void SaveResults(unsigned cpart);
 };

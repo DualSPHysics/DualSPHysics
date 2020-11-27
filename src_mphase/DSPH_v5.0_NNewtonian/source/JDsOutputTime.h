@@ -81,7 +81,7 @@ public:
   void Config(double timeoutdef);
   void Config(std::string filexml,const std::string &place,double timeoutdef);
   bool UseSpecialConfig()const{ return(SpecialConfig); }
-  void VisuConfig(JLog2 *log,std::string txhead,std::string txfoot);
+  void VisuConfig(std::string txhead,std::string txfoot);
   double GetNextTime(double t);
 };
 

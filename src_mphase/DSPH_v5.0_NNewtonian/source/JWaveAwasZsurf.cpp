@@ -50,7 +50,8 @@ using namespace std;
 //==============================================================================
 // Constructor de objeto.
 //==============================================================================
-JWaveAwasZsurf::JWaveAwasZsurf(JLog2 *log,word mkbound,const JXml *sxml,TiXmlElement* lis):Log(log),MkBound(mkbound)
+JWaveAwasZsurf::JWaveAwasZsurf(word mkbound,const JXml *sxml,TiXmlElement* lis)
+  :Log(AppInfo.LogPtr()),MkBound(mkbound)
 {
   ClassName="JWaveAwasZsurf";
   GaugeSwl=NULL;
@@ -250,7 +251,7 @@ void JWaveAwasZsurf::SaveFileSurfStep(){
   for(unsigned c=0;c<SurfStepCount;c++){
     const tdouble4 v=SurfStepData[c];
     *FileSurfStep << v.x << v.y << v.z << v.w;
-    if(1){
+    {
       const tdouble2 w=SurfStepData2[c];
       *FileSurfStep << w.x << w.y;
     }
@@ -365,7 +366,7 @@ double JWaveAwasZsurf::GetPosCorrection(double timestep,double ztarget,bool svda
   }
 
   //-Limits exteme movements.
-  if(1){
+  {
     const double dx=xmov+movawas;
     const double limvel0=LimVel,limace0=LimAce;
     LimVel=dx/dt;

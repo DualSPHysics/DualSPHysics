@@ -106,8 +106,9 @@ private:
   void SaveFileAllDts();
   void AddValueData(double timestep,double dt,StValue &value);
   void AddLastValues();
+
 public:
-  JDsSaveDt(JLog2* log);
+  JDsSaveDt();
   ~JDsSaveDt();
   void Reset();
   void Config(const JXml *sxml,const std::string &place,double timemax,double timeout);

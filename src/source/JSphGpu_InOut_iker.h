@@ -47,11 +47,12 @@ unsigned InOutCreateList(bool stable,unsigned n,unsigned pini
   ,tfloat3 freemin,tfloat3 freemax
   ,const float2 *boxlimit,const double2 *posxy,const double *posz
   ,typecode *code,unsigned *listp);
-void InOutUpdateData(unsigned n,const unsigned *listp
+
+void InOutSetAnalyticalData(unsigned n,const unsigned *listp
   ,byte izone,byte rmode,byte vmode,byte vprof,byte refillspfull
-  ,float timestep,float zsurf,tfloat4 veldata,tfloat4 veldata2,tfloat3 dirdata
+  ,float timestep,float zsurfv,tfloat4 veldata,tfloat4 veldata2,tfloat3 dirdata
   ,float coefhydro,float rhopzero,float gamma
-  ,const typecode *code,const double *posz,float4 *velrhop);
+  ,const typecode *code,const double *posz,const float *zsurfpart,float4 *velrhop);
 
 void InoutClearInteractionVars(unsigned npf,unsigned pini,const typecode *code
     ,float3 *ace,float *ar,float *viscdt,float4 *shiftposfs);
@@ -60,8 +61,9 @@ void InOutUpdateVelrhopM1(unsigned n,const int *inoutpart
     ,const float4 *velrhop,float4 *velrhopm1);
 
 void InOutComputeStep(unsigned n,int *inoutpart,const float4 *planes
-  ,const float *width,const byte *cfgupdate,const float *zsurf,typecode codenewpart
-  ,const double2 *posxy,const double *posz,typecode *code,byte *newizone);
+  ,const float *width,const byte *cfgupdate,const float *zsurfv,typecode codenewpart
+  ,const double2 *posxy,const double *posz,const byte *zsurfok
+  ,typecode *code,byte *newizone);
 unsigned InOutListCreate(bool stable,unsigned n,unsigned nmax,const byte *newizone,int *inoutpart);
 void InOutCreateNewInlet(byte periactive,unsigned newn
   ,const unsigned *inoutpart,unsigned inoutcount,const byte *newizone
@@ -76,7 +78,7 @@ void InOutFillProjection(unsigned n,const unsigned *inoutpart
   ,const byte *cfgupdate,const float4 *planes,const double2 *posxy,const double *posz
   ,const typecode *code,float *prodist,double2 *proposxy,double *proposz);
 unsigned InOutFillListCreate(bool stable,unsigned npt
-  ,const double2 *ptposxy,const double *ptposz
+  ,const double2 *ptposxy,const double *ptposz,const byte *zsurfok
   ,const byte *ptzone,const byte *cfgupdate,const float *zsurf,const float *width
   ,unsigned npropt,const float *prodist,const double2 *proposxy,const double *proposz
   ,float dpmin,float dpmin2,float dp,float *ptdist,unsigned nmax,unsigned *inoutpart);
@@ -84,11 +86,6 @@ void InOutFillCreate(byte periactive,unsigned newn,const unsigned *newinoutpart
   ,const double2 *ptposxy,const double *ptposz,const byte *ptzone,const float *ptauxdist
   ,unsigned np,unsigned idnext,typecode codenewpart,const float3 *dirdata
   ,double2 *posxy,double *posz,unsigned *dcell,typecode *code,unsigned *idp,float4 *velrhop);
-
-//-Kernels for Zsurf calculation (JSphInOut).
-float InOutComputeZsurf(unsigned nptz,const float3 *ptzpos,float maxdist,float zbottom
-  ,const StDivDataGpu &dvd,const double2 *posxy,const double *posz,const typecode *code
-  ,float *resg,float *resh);
 
 //-Kernels to extrapolate rhop and velocity (JSphInOut).
 void Interaction_InOutExtrap(byte doublemode,bool simulate2d,TpKernel tkernel

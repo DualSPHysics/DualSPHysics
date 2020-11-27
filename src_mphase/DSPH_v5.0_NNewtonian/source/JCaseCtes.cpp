@@ -179,7 +179,7 @@ void JCaseCtes::WriteXmlDef(JXml *sxml,TiXmlElement* node,bool svtemplate)const{
   WriteXmlElementAuto(sxml,node,"speedsound",GetSpeedSound(),GetSpeedSoundAuto(),"Speed of sound to use in the simulation (by default speedofsound=coefsound*speedsystem)");
   if(GetCoefH()||!GetCoefHdp()){
     WriteXmlElementComment(JXml::AddElementAttrib(node,"coefh","value",GetCoefH()),"Coefficient to calculate the smoothing length (h=coefh*sqrt(3*dp^2) in 3D)");
-    if(svtemplate)WriteXmlElementComment(JXml::AddElementAttrib(node,"_hdp","value",2),"Coefficient to calculate the smoothing length (hdp=h/dp)");
+    if(svtemplate)WriteXmlElementComment(JXml::AddElementAttrib(node,"_hdp","value",2),"Alternative option to calculate the smoothing length (h=hdp*dp)");
   }
   if(GetCoefHdp())WriteXmlElementComment(JXml::AddElementAttrib(node,"hdp","value",GetCoefHdp()),"Coefficient to calculate the smoothing length (hdp=h/dp)");
   WriteXmlElementComment(JXml::AddElementAttrib(node,"cflnumber","value",GetCFLnumber()),"Coefficient to multiply dt");

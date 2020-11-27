@@ -661,6 +661,47 @@ tfloat3* ToHostFloatXYZ_W(unsigned pini,unsigned n,const float4 *ptrg,float **pt
 }
 
 
+//==============================================================================
+/// Returns dynamic pointer with selected positions in idxlistg as tfloat3.
+/// (this pointer must be deleted)
+//==============================================================================
+tfloat3* ToHostPosf3(unsigned nplist,const unsigned *idxlistg
+  ,const double2 *posxyg,const double *poszg)
+{
+  Check_CudaErroorFun("At the beginning.");
+  if(nplist){
+    try{
+      tfloat3 *posf=new tfloat3[nplist];
+      unsigned *idxlist=ToHostUint(0,nplist,idxlistg);
+      unsigned idmin=UINT_MAX,idmax=0;
+      for(unsigned c=0;c<nplist;c++){
+        const unsigned p=idxlist[c];
+        if(p!=UINT_MAX){
+          idmin=std::min(idmin,p);
+          idmax=std::max(idmax,p);
+        }
+      }
+      const unsigned npdata=(idmin!=UINT_MAX? idmax-idmin+1: 0);
+      tfloat3 *posdata=NULL;
+      if(npdata)posdata=ToHostPosf3(idmin,npdata,posxyg,poszg);
+      for(unsigned c=0;c<nplist;c++){
+        const unsigned p=idxlist[c];
+        posf[c]=(p!=UINT_MAX? posdata[p-idmin]: TFloat3(0));
+      }
+      delete[] idxlist;
+      delete[] posdata;
+      return(posf);
+    }
+    catch(const std::bad_alloc){
+      fun::Run_ExceptioonFun(fun::PrintStr("Could not allocate the requested memory (nplist=%u).",nplist));
+    }
+  }
+  return(NULL);
+}
+
+
+
+
 }
 
 

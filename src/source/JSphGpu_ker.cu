@@ -87,8 +87,8 @@ template <unsigned blockSize> __global__ void KerReduMaxFloat(unsigned n,unsigne
 /// de resu[] debe ser >= a (N/SPHBSIZE+1)+(N/(SPHBSIZE*SPHBSIZE)+SPHBSIZE)
 //==============================================================================
 float ReduMaxFloat(unsigned ndata,unsigned inidata,float* data,float* resu){
-  float resf;
-  if(1){
+  float resf=0;
+  if(ndata>=1){
     unsigned n=ndata,ini=inidata;
     unsigned smemSize=SPHBSIZE*sizeof(float);
     dim3 sgrid=GetSimpleGridSize(n,SPHBSIZE);
@@ -576,14 +576,14 @@ template<TpKernel tker,TpFtMode ftmode,bool lamsps,TpDensity tdensity,bool shift
         //deltap1=(boundp2? FLT_MAX: deltap1+delta);
         deltap1=(boundp2 && CTE.tboundary==BC_DBC? FLT_MAX: deltap1+delta);
       }
-      //-Density Diffusion Term (Fourtakas et al 2019). //<vs_dtt2_ini>
+      //-Density Diffusion Term (Fourtakas et al 2019).
       if((tdensity==DDT_DDT2 || (tdensity==DDT_DDT2Full && !boundp2)) && deltap1!=FLT_MAX && !ftp2){
         const float rh=1.f+CTE.ddtgz*drz;
         const float drhop=CTE.rhopzero*pow(rh,1.f/CTE.gamma)-CTE.rhopzero;  
         const float visc_densi=CTE.ddtkh*cbar*((velrhop2.w-velrhop1.w)-drhop)/(rr2+CTE.eta2);
         const float delta=visc_densi*dot3*massp2/velrhop2.w;
         deltap1=(boundp2? FLT_MAX: deltap1-delta); //-blocks it makes it boil - bloody DBC
-      } //<vs_dtt2_end>
+      }
 
       //-Shifting correction.
       if(shift && shiftposfsp1.x!=FLT_MAX){
@@ -832,19 +832,19 @@ template<TpKernel tker,TpFtMode ftmode,bool lamsps,TpDensity tdensity,bool shift
 template<TpKernel tker,TpFtMode ftmode,bool lamsps> void Interaction_Forces_gt2(const StInterParmsg &t){
 #ifdef FAST_COMPILATION
   if(t.shiftmode || t.tdensity!=DDT_DDT2Full)throw "Shifting and extra DDT are disabled for FastCompilation...";
-  Interaction_ForcesGpuT<tker,ftmode,lamsps,DDT_DDT2Full,false> (t);  //<vs_dtt2>
+  Interaction_ForcesGpuT<tker,ftmode,lamsps,DDT_DDT2Full,false> (t);
 #else
   if(t.shiftmode){               const bool shift=true;
     if(t.tdensity==DDT_None)    Interaction_ForcesGpuT<tker,ftmode,lamsps,DDT_None    ,shift> (t);
     if(t.tdensity==DDT_DDT)     Interaction_ForcesGpuT<tker,ftmode,lamsps,DDT_DDT     ,shift> (t);
-    if(t.tdensity==DDT_DDT2)    Interaction_ForcesGpuT<tker,ftmode,lamsps,DDT_DDT2    ,shift> (t);  //<vs_dtt2>
-    if(t.tdensity==DDT_DDT2Full)Interaction_ForcesGpuT<tker,ftmode,lamsps,DDT_DDT2Full,shift> (t);  //<vs_dtt2>
+    if(t.tdensity==DDT_DDT2)    Interaction_ForcesGpuT<tker,ftmode,lamsps,DDT_DDT2    ,shift> (t);
+    if(t.tdensity==DDT_DDT2Full)Interaction_ForcesGpuT<tker,ftmode,lamsps,DDT_DDT2Full,shift> (t);
   }
   else{                           const bool shift=false;
     if(t.tdensity==DDT_None)    Interaction_ForcesGpuT<tker,ftmode,lamsps,DDT_None    ,shift> (t);
     if(t.tdensity==DDT_DDT)     Interaction_ForcesGpuT<tker,ftmode,lamsps,DDT_DDT     ,shift> (t);
-    if(t.tdensity==DDT_DDT2)    Interaction_ForcesGpuT<tker,ftmode,lamsps,DDT_DDT2    ,shift> (t);  //<vs_dtt2>
-    if(t.tdensity==DDT_DDT2Full)Interaction_ForcesGpuT<tker,ftmode,lamsps,DDT_DDT2Full,shift> (t);  //<vs_dtt2>
+    if(t.tdensity==DDT_DDT2)    Interaction_ForcesGpuT<tker,ftmode,lamsps,DDT_DDT2    ,shift> (t);
+    if(t.tdensity==DDT_DDT2Full)Interaction_ForcesGpuT<tker,ftmode,lamsps,DDT_DDT2Full,shift> (t);
   }
 #endif
 }
@@ -882,11 +882,208 @@ void Interaction_Forces(const StInterParmsg &t){
 #endif
 }
 
-//<vs_mddbc_ini>
+//------------------------------------------------------------------------------
+/// Returns the corrected position after applying periodic conditions.
+/// Devuelve la posicion corregida tras aplicar condiciones periodicas.
+//------------------------------------------------------------------------------
+__device__ float4 KerComputePosCell(const double3 &ps,const double3 &mapposmin,float poscellsize)
+{
+  const double dx=ps.x-mapposmin.x;
+  const double dy=ps.y-mapposmin.y;
+  const double dz=ps.z-mapposmin.z;
+  int cx=int(dx/poscellsize);
+  int cy=int(dy/poscellsize);
+  int cz=int(dz/poscellsize);
+  cx=(cx>=0? cx: 0);
+  cy=(cy>=0? cy: 0);
+  cz=(cz>=0? cz: 0);
+  const float px=float(dx-(double(poscellsize)*cx));
+  const float py=float(dy-(double(poscellsize)*cy));
+  const float pz=float(dz-(double(poscellsize)*cz));
+  const float pw=__uint_as_float(CEL_Code(cx,cy,cz));
+  return(make_float4(px,py,pz,pw));
+}
+
 //------------------------------------------------------------------------------
 /// Perform interaction between ghost node of selected bondary and fluid.
 //------------------------------------------------------------------------------
-template<TpKernel tker,bool sim2d,TpSlipMode tslip> __global__ void KerInteractionMdbcCorrectionT2
+template<TpKernel tker,bool sim2d,TpSlipMode tslip> __global__ void KerInteractionMdbcCorrection_Fast
+  (unsigned n,unsigned nbound,float determlimit,float mdbcthreshold
+  ,double3 mapposmin,float poscellsize,const float4 *poscell
+  ,int scelldiv,int4 nc,int3 cellzero,const int2 *beginendcellfluid
+  ,const double2 *posxy,const double *posz,const typecode *code,const unsigned *idp
+  ,const float3 *boundnormal,const float3 *motionvel,float4 *velrhop)
+{
+  const unsigned p1=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
+  if(p1<n){
+    const float3 bnormalp1=boundnormal[p1];
+    if(bnormalp1.x!=0 || bnormalp1.y!=0 || bnormalp1.z!=0){
+      float rhopfinal=FLT_MAX;
+      float3 velrhopfinal=make_float3(0,0,0);
+      float sumwab=0;
+
+      //-Calculates ghost node position.
+      double3 gposp1=make_double3(posxy[p1].x+bnormalp1.x,posxy[p1].y+bnormalp1.y,posz[p1]+bnormalp1.z);
+      gposp1=(CTE.periactive!=0? KerUpdatePeriodicPos(gposp1): gposp1); //-Corrected interface Position.
+      const float4 gpscellp1=KerComputePosCell(gposp1,mapposmin,poscellsize);
+
+      //-Initializes variables for calculation.
+      float rhopp1=0;
+      float3 gradrhopp1=make_float3(0,0,0);
+      float3 velp1=make_float3(0,0,0);                              // -Only for velocity
+      tmatrix3f a_corr2; if(sim2d) cumath::Tmatrix3fReset(a_corr2); //-Only for 2D.
+      tmatrix4f a_corr3; if(!sim2d)cumath::Tmatrix4fReset(a_corr3); //-Only for 3D.
+    
+      //-Obtains neighborhood search limits.
+      int ini1,fin1,ini2,fin2,ini3,fin3;
+      cunsearch::InitCte(gposp1.x,gposp1.y,gposp1.z,scelldiv,nc,cellzero,ini1,fin1,ini2,fin2,ini3,fin3);
+
+      //-Boundary-Fluid interaction.
+      for(int c3=ini3;c3<fin3;c3+=nc.w)for(int c2=ini2;c2<fin2;c2+=nc.x){
+        unsigned pini,pfin=0;  cunsearch::ParticleRange(c2,c3,ini1,fin1,beginendcellfluid,pini,pfin);
+        if(pfin)for(unsigned p2=pini;p2<pfin;p2++){
+          const float4 pscellp2=poscell[p2];
+          float drx=gpscellp1.x-pscellp2.x + CTE.poscellsize*(CEL_GetX(__float_as_int(gpscellp1.w))-CEL_GetX(__float_as_int(pscellp2.w)));
+          float dry=gpscellp1.y-pscellp2.y + CTE.poscellsize*(CEL_GetY(__float_as_int(gpscellp1.w))-CEL_GetY(__float_as_int(pscellp2.w)));
+          float drz=gpscellp1.z-pscellp2.z + CTE.poscellsize*(CEL_GetZ(__float_as_int(gpscellp1.w))-CEL_GetZ(__float_as_int(pscellp2.w)));
+          const float rr2=drx*drx+dry*dry+drz*drz;
+          if(rr2<=CTE.kernelsize2 && rr2>=ALMOSTZERO && CODE_IsFluid(code[p2])){//-Only with fluid particles (including inout).
+            //-Computes kernel.
+            float fac;
+            const float wab=cufsph::GetKernel_WabFac<tker>(rr2,fac);
+            const float frx=fac*drx,fry=fac*dry,frz=fac*drz; //-Gradients.
+
+            //===== Get mass and volume of particle p2 =====
+            const float4 velrhopp2=velrhop[p2];
+            float massp2=CTE.massf;
+            const float volp2=massp2/velrhopp2.w;
+
+            //===== Density and its gradient =====
+            rhopp1+=massp2*wab;
+            gradrhopp1.x+=massp2*frx;
+            gradrhopp1.y+=massp2*fry;
+            gradrhopp1.z+=massp2*frz;
+
+            //===== Kernel values multiplied by volume =====
+            const float vwab=wab*volp2;
+            sumwab+=vwab;
+            const float vfrx=frx*volp2;
+            const float vfry=fry*volp2;
+            const float vfrz=frz*volp2;
+
+            //===== Velocity =====
+            if(tslip!=SLIP_Vel0) {
+              velp1.x+=vwab*velrhopp2.x;
+              velp1.y+=vwab*velrhopp2.y;
+              velp1.z+=vwab*velrhopp2.z;
+            }
+
+            //===== Matrix A for correction =====
+            if(sim2d){
+              a_corr2.a11+=vwab;  a_corr2.a12+=drx*vwab;  a_corr2.a13+=drz*vwab;
+              a_corr2.a21+=vfrx;  a_corr2.a22+=drx*vfrx;  a_corr2.a23+=drz*vfrx;
+              a_corr2.a31+=vfrz;  a_corr2.a32+=drx*vfrz;  a_corr2.a33+=drz*vfrz;
+            }
+            else{
+              a_corr3.a11+=vwab;  a_corr3.a12+=drx*vwab;  a_corr3.a13+=dry*vwab;  a_corr3.a14+=drz*vwab;
+              a_corr3.a21+=vfrx;  a_corr3.a22+=drx*vfrx;  a_corr3.a23+=dry*vfrx;  a_corr3.a24+=drz*vfrx;
+              a_corr3.a31+=vfry;  a_corr3.a32+=drx*vfry;  a_corr3.a33+=dry*vfry;  a_corr3.a34+=drz*vfry;
+              a_corr3.a41+=vfrz;  a_corr3.a42+=drx*vfrz;  a_corr3.a43+=dry*vfrz;  a_corr3.a44+=drz*vfrz;
+            }
+          }
+        }
+      }
+
+      //-Store the results.
+      //--------------------
+      if(sumwab>=mdbcthreshold){
+        const float3 dpos=make_float3(-bnormalp1.x,-bnormalp1.y,-bnormalp1.z); //-Boundary particle position - ghost node position.
+        if(sim2d){
+          const double determ=cumath::Determinant3x3dbl(a_corr2);
+          if(fabs(determ)>=determlimit){//-Use 1e-3f (first_order) or 1e+3f (zeroth_order).
+            const tmatrix3f invacorr2=cumath::InverseMatrix3x3dbl(a_corr2,determ);
+            //-GHOST NODE DENSITY IS MIRRORED BACK TO THE BOUNDARY PARTICLES.
+            const float rhoghost=float(invacorr2.a11*rhopp1 + invacorr2.a12*gradrhopp1.x + invacorr2.a13*gradrhopp1.z);
+            const float grx=    -float(invacorr2.a21*rhopp1 + invacorr2.a22*gradrhopp1.x + invacorr2.a23*gradrhopp1.z);
+            const float grz=    -float(invacorr2.a31*rhopp1 + invacorr2.a32*gradrhopp1.x + invacorr2.a33*gradrhopp1.z);
+            rhopfinal=(rhoghost + grx*dpos.x + grz*dpos.z);
+          }
+          else if(a_corr2.a11>0){//-Determinant is small but a11 is nonzero, 0th order ANGELO.
+            rhopfinal=float(rhopp1/a_corr2.a11);
+          }
+          //-Ghost node velocity (0th order).
+          if(tslip!=SLIP_Vel0){
+            velrhopfinal.x=float(velp1.x/a_corr2.a11);
+            velrhopfinal.z=float(velp1.z/a_corr2.a11);
+            velrhopfinal.y=0;
+          }
+        }
+        else{
+          const double determ=cumath::Determinant4x4dbl(a_corr3);
+          if(fabs(determ)>=determlimit){
+            const tmatrix4f invacorr3=cumath::InverseMatrix4x4dbl(a_corr3,determ);
+            //-GHOST NODE DENSITY IS MIRRORED BACK TO THE BOUNDARY PARTICLES.
+            const float rhoghost=float(invacorr3.a11*rhopp1 + invacorr3.a12*gradrhopp1.x + invacorr3.a13*gradrhopp1.y + invacorr3.a14*gradrhopp1.z);
+            const float grx=    -float(invacorr3.a21*rhopp1 + invacorr3.a22*gradrhopp1.x + invacorr3.a23*gradrhopp1.y + invacorr3.a24*gradrhopp1.z);
+            const float gry=    -float(invacorr3.a31*rhopp1 + invacorr3.a32*gradrhopp1.x + invacorr3.a33*gradrhopp1.y + invacorr3.a34*gradrhopp1.z);
+            const float grz=    -float(invacorr3.a41*rhopp1 + invacorr3.a42*gradrhopp1.x + invacorr3.a43*gradrhopp1.y + invacorr3.a44*gradrhopp1.z);
+            rhopfinal=(rhoghost + grx*dpos.x + gry*dpos.y + grz*dpos.z);
+          }
+          else if(a_corr3.a11>0){//-Determinant is small but a11 is nonzero, 0th order ANGELO.
+            rhopfinal=float(rhopp1/a_corr3.a11);
+          }
+          //-Ghost node velocity (0th order).
+          if(tslip!=SLIP_Vel0){
+            velrhopfinal.x=float(velp1.x/a_corr3.a11);
+            velrhopfinal.y=float(velp1.y/a_corr3.a11);
+            velrhopfinal.z=float(velp1.z/a_corr3.a11);
+          }
+        }
+        //-Store the results.
+        rhopfinal=(rhopfinal!=FLT_MAX? rhopfinal: CTE.rhopzero);
+        if(tslip==SLIP_Vel0){//-DBC vel=0
+          velrhop[p1].w=rhopfinal;
+        }
+        if(tslip==SLIP_NoSlip){//-No-Slip
+          const float3 v=motionvel[p1];
+          velrhop[p1]=make_float4(v.x+v.x-velrhopfinal.x,v.y+v.y-velrhopfinal.y,v.z+v.z-velrhopfinal.z,rhopfinal);
+        }
+        if(tslip==SLIP_FreeSlip){//-No-Penetration and free slip    SHABA
+          float3 FSVelFinal; // final free slip boundary velocity
+          const float3 v=motionvel[p1];
+          float motion=sqrt(v.x*v.x+v.y*v.y+v.z*v.z); // to check if boundary moving
+          float norm=sqrt(bnormalp1.x*bnormalp1.x+bnormalp1.y*bnormalp1.y+bnormalp1.z*bnormalp1.z);
+          float3 normal; // creating a normailsed boundary normal
+          normal.x=fabs(bnormalp1.x)/norm; normal.y=fabs(bnormalp1.y)/norm; normal.z=fabs(bnormalp1.z)/norm;
+
+          // finding the velocity componants normal and tangential to boundary 
+          float3 normvel=make_float3(velrhopfinal.x*normal.x,velrhopfinal.y*normal.y,velrhopfinal.z*normal.z); // velocity in direction of normal pointin ginto fluid)
+          float3 tangvel=make_float3(velrhopfinal.x-normvel.x,velrhopfinal.y-normvel.y,velrhopfinal.z-normvel.z); // velocity tangential to normal
+
+          if (motion > 0) { // if moving boundary
+              float3 normmot=make_float3(v.x*normal.x,v.y*normal.y,v.z*normal.z); // boundary motion in direction normal to boundary 
+              FSVelFinal=make_float3(normmot.x+normmot.x-normvel.x,normmot.y+normmot.y-normvel.y,normmot.z+normmot.z-normvel.z);
+              // only velocity in normal direction for no-penetration
+              // fluid sees zero velocity in the tangetial direction
+          }
+          else {
+              FSVelFinal=make_float3(tangvel.x-normvel.x,tangvel.y-normvel.y,tangvel.z-normvel.z);
+              // tangential velocity equal to fluid velocity for free slip
+              // normal velocity reversed for no-penetration
+          }
+
+          // Save the velocity and density
+          velrhop[p1]=make_float4(FSVelFinal.x,FSVelFinal.y,FSVelFinal.z,rhopfinal);
+        }
+      }
+    }
+  }
+}
+
+//------------------------------------------------------------------------------
+/// Perform interaction between ghost node of selected bondary and fluid.
+//------------------------------------------------------------------------------
+template<TpKernel tker,bool sim2d,TpSlipMode tslip> __global__ void KerInteractionMdbcCorrection_Dbl
   (unsigned n,unsigned nbound,float determlimit,float mdbcthreshold
   ,int scelldiv,int4 nc,int3 cellzero,const int2 *beginendcellfluid
   ,const double2 *posxy,const double *posz,const typecode *code,const unsigned *idp
@@ -1056,14 +1253,16 @@ template<TpKernel tker,bool sim2d,TpSlipMode tslip> __global__ void KerInteracti
   }
 }
 
+
 //==============================================================================
 /// Calculates extrapolated data on boundary particles from fluid domain for mDBC.
 /// Calcula datos extrapolados en el contorno para mDBC.
 //==============================================================================
-template<TpKernel tker> void Interaction_MdbcCorrectionT(TpSlipMode slipmode,unsigned n,unsigned nbound
-  ,float mdbcthreshold,bool simulate2d,const StDivDataGpu &dvd
-  ,const double2 *posxy,const double *posz,const typecode *code,const unsigned *idp
-  ,const float3 *boundnormal,const float3 *motionvel,float4 *velrhop)
+template<TpKernel tker,bool sim2d,TpSlipMode tslip> void Interaction_MdbcCorrectionT2(
+  bool fastsingle,unsigned n,unsigned nbound,float mdbcthreshold,const StDivDataGpu &dvd
+  ,const tdouble3 &mapposmin,const double2 *posxy,const double *posz,const float4 *poscell
+  ,const typecode *code,const unsigned *idp,const float3 *boundnormal,const float3 *motionvel
+  ,float4 *velrhop)
 {
   const int2* beginendcellfluid=dvd.beginendcell+dvd.cellfluid;
   const float determlimit=1e-3f;
@@ -1071,43 +1270,68 @@ template<TpKernel tker> void Interaction_MdbcCorrectionT(TpSlipMode slipmode,uns
   if(n){
     const unsigned bsbound=128;
     dim3 sgridb=cusph::GetSimpleGridSize(n,bsbound);
-    if(simulate2d){ const bool sim2d=true;
-      if(slipmode==SLIP_Vel0    )KerInteractionMdbcCorrectionT2 <tker,sim2d,SLIP_Vel0    > <<<sgridb,bsbound>>> (n,nbound,determlimit,mdbcthreshold,dvd.scelldiv,dvd.nc,dvd.cellzero,beginendcellfluid,posxy,posz,code,idp,boundnormal,motionvel,velrhop);
-      if(slipmode==SLIP_NoSlip  )KerInteractionMdbcCorrectionT2 <tker,sim2d,SLIP_NoSlip  > <<<sgridb,bsbound>>> (n,nbound,determlimit,mdbcthreshold,dvd.scelldiv,dvd.nc,dvd.cellzero,beginendcellfluid,posxy,posz,code,idp,boundnormal,motionvel,velrhop);
-      if(slipmode==SLIP_FreeSlip)KerInteractionMdbcCorrectionT2 <tker,sim2d,SLIP_FreeSlip> <<<sgridb,bsbound>>> (n,nbound,determlimit,mdbcthreshold,dvd.scelldiv,dvd.nc,dvd.cellzero,beginendcellfluid,posxy,posz,code,idp,boundnormal,motionvel,velrhop);
-    }else{          const bool sim2d=false;
-      if(slipmode==SLIP_Vel0    )KerInteractionMdbcCorrectionT2 <tker,sim2d,SLIP_Vel0    > <<<sgridb,bsbound>>> (n,nbound,determlimit,mdbcthreshold,dvd.scelldiv,dvd.nc,dvd.cellzero,beginendcellfluid,posxy,posz,code,idp,boundnormal,motionvel,velrhop);
-      if(slipmode==SLIP_NoSlip  )KerInteractionMdbcCorrectionT2 <tker,sim2d,SLIP_NoSlip  > <<<sgridb,bsbound>>> (n,nbound,determlimit,mdbcthreshold,dvd.scelldiv,dvd.nc,dvd.cellzero,beginendcellfluid,posxy,posz,code,idp,boundnormal,motionvel,velrhop);
-      if(slipmode==SLIP_FreeSlip)KerInteractionMdbcCorrectionT2 <tker,sim2d,SLIP_FreeSlip> <<<sgridb,bsbound>>> (n,nbound,determlimit,mdbcthreshold,dvd.scelldiv,dvd.nc,dvd.cellzero,beginendcellfluid,posxy,posz,code,idp,boundnormal,motionvel,velrhop);
+    if(fastsingle){//-mDBC-Fast_v2
+      KerInteractionMdbcCorrection_Fast <tker,sim2d,tslip> <<<sgridb,bsbound>>> (n,nbound
+        ,determlimit,mdbcthreshold,Double3(mapposmin),dvd.poscellsize,poscell
+        ,dvd.scelldiv,dvd.nc,dvd.cellzero,beginendcellfluid
+        ,posxy,posz,code,idp,boundnormal,motionvel,velrhop);
+    }
+    else{//-mDBC_v0
+      KerInteractionMdbcCorrection_Dbl <tker,sim2d,tslip> <<<sgridb,bsbound>>> (n,nbound
+        ,determlimit,mdbcthreshold,dvd.scelldiv,dvd.nc,dvd.cellzero,beginendcellfluid
+        ,posxy,posz,code,idp,boundnormal,motionvel,velrhop);
     }
   }
 }
-
+//==============================================================================
+template<TpKernel tker> void Interaction_MdbcCorrectionT(bool simulate2d
+  ,TpSlipMode slipmode,bool fastsingle,unsigned n,unsigned nbound
+  ,float mdbcthreshold,const StDivDataGpu &dvd,const tdouble3 &mapposmin
+  ,const double2 *posxy,const double *posz,const float4 *poscell,const typecode *code
+  ,const unsigned *idp,const float3 *boundnormal,const float3 *motionvel,float4 *velrhop)
+{
+  switch(slipmode){
+    case SLIP_Vel0:{ const TpSlipMode tslip=SLIP_Vel0;
+      if(simulate2d)Interaction_MdbcCorrectionT2 <tker,true ,tslip> (fastsingle,n,nbound,mdbcthreshold,dvd,mapposmin,posxy,posz,poscell,code,idp,boundnormal,motionvel,velrhop);
+      else          Interaction_MdbcCorrectionT2 <tker,false,tslip> (fastsingle,n,nbound,mdbcthreshold,dvd,mapposmin,posxy,posz,poscell,code,idp,boundnormal,motionvel,velrhop);
+    }break;
+#ifndef DISABLE_MDBC_EXTRAMODES
+    case SLIP_NoSlip:{ const TpSlipMode tslip=SLIP_NoSlip;
+      if(simulate2d)Interaction_MdbcCorrectionT2 <tker,true ,tslip> (fastsingle,n,nbound,mdbcthreshold,dvd,mapposmin,posxy,posz,poscell,code,idp,boundnormal,motionvel,velrhop);
+      else          Interaction_MdbcCorrectionT2 <tker,false,tslip> (fastsingle,n,nbound,mdbcthreshold,dvd,mapposmin,posxy,posz,poscell,code,idp,boundnormal,motionvel,velrhop);
+    }break;
+    case SLIP_FreeSlip:{ const TpSlipMode tslip=SLIP_FreeSlip;
+      if(simulate2d)Interaction_MdbcCorrectionT2 <tker,true ,tslip> (fastsingle,n,nbound,mdbcthreshold,dvd,mapposmin,posxy,posz,poscell,code,idp,boundnormal,motionvel,velrhop);
+      else          Interaction_MdbcCorrectionT2 <tker,false,tslip> (fastsingle,n,nbound,mdbcthreshold,dvd,mapposmin,posxy,posz,poscell,code,idp,boundnormal,motionvel,velrhop);
+    }break;
+#endif
+    default: throw "SlipMode unknown at Interaction_MdbcCorrectionT().";
+  }
+}
 //==============================================================================
 /// Calculates extrapolated data on boundary particles from fluid domain for mDBC.
 /// Calcula datos extrapolados en el contorno para mDBC.
 //==============================================================================
-void Interaction_MdbcCorrection(TpKernel tkernel,TpSlipMode slipmode,unsigned n,unsigned nbound
-  ,float mdbcthreshold,bool simulate2d,const StDivDataGpu &dvd
-  ,const double2 *posxy,const double *posz,const typecode *code,const unsigned *idp
-  ,const float3 *boundnormal,const float3 *motionvel,float4 *velrhop)
+void Interaction_MdbcCorrection(TpKernel tkernel,bool simulate2d,TpSlipMode slipmode
+  ,bool fastsingle,unsigned n,unsigned nbound,float mdbcthreshold
+  ,const StDivDataGpu &dvd,const tdouble3 &mapposmin
+  ,const double2 *posxy,const double *posz,const float4 *poscell,const typecode *code
+  ,const unsigned *idp,const float3 *boundnormal,const float3 *motionvel,float4 *velrhop)
 {
   switch(tkernel){
-    case KERNEL_Wendland:
-      Interaction_MdbcCorrectionT <KERNEL_Wendland> (slipmode,n,nbound,mdbcthreshold
-        ,simulate2d,dvd,posxy,posz,code,idp,boundnormal,motionvel,velrhop);
-    break;
+    case KERNEL_Wendland:{ const TpKernel tker=KERNEL_Wendland;
+      Interaction_MdbcCorrectionT <tker> (simulate2d,slipmode,fastsingle,n,nbound,mdbcthreshold
+        ,dvd,mapposmin,posxy,posz,poscell,code,idp,boundnormal,motionvel,velrhop);
+    }break;
 #ifndef DISABLE_KERNELS_EXTRA
-    case KERNEL_Cubic:
-      Interaction_MdbcCorrectionT <KERNEL_Cubic> (slipmode,n,nbound,mdbcthreshold
-        ,simulate2d,dvd,posxy,posz,code,idp,boundnormal,motionvel,velrhop);
-    break;
+    case KERNEL_Cubic:{ const TpKernel tker=KERNEL_Cubic;
+      Interaction_MdbcCorrectionT <tker> (simulate2d,slipmode,fastsingle,n,nbound,mdbcthreshold
+        ,dvd,mapposmin,posxy,posz,poscell,code,idp,boundnormal,motionvel,velrhop);
+    }break;
 #endif
     default: throw "Kernel unknown at Interaction_MdbcCorrection().";
   }
 }
-//<vs_mddbc_end>
-
 
 
 //##############################################################################
@@ -1575,7 +1799,7 @@ template<bool periactive,bool simulate2d> __global__ void KerMoveMatBound(unsign
       KerUpdatePos<periactive>(make_double2(rpos.x,rpos.y),rpos.z,dx,dy,dz,false,pid,posxy,posz,dcell,code);
       //-Computes velocity.
       velrhop[pid]=make_float4(float(dx/dt),float(dy/dt),float(dz/dt),velrhop[pid].w);
-      //-Computes normal. //<vs_mddbc_ini>
+      //-Computes normal.
       if(boundnormal){
         const float3 bnor=boundnormal[pid];
         const double3 gs=make_double3(rpos.x+bnor.x,rpos.y+bnor.y,rpos.z+bnor.z);
@@ -1583,7 +1807,7 @@ template<bool periactive,bool simulate2d> __global__ void KerMoveMatBound(unsign
         const double gs2y=gs.x*m.a21 + gs.y*m.a22 + gs.z*m.a23 + m.a24;
         const double gs2z=gs.x*m.a31 + gs.y*m.a32 + gs.z*m.a33 + m.a34;
         boundnormal[pid]=make_float3(gs2x-rpos2.x,gs2y-rpos2.y,gs2z-rpos2.z);
-      }//<vs_mddbc_end>
+      }
     }
   }
 }
@@ -1606,7 +1830,6 @@ void MoveMatBound(byte periactive,bool simulate2d,unsigned np,unsigned ini,tmatr
   }
 }
 
-//<vs_mddbc_ini>
 //------------------------------------------------------------------------------
 /// Copy motion velocity to MotionVel[].
 /// Copia velocidad de movimiento a MotionVel[].
@@ -1635,11 +1858,8 @@ void CopyMotionVel(unsigned nmoving,const unsigned *ridp,const float4 *velrhop,f
   KerCopyMotionVel<true>  <<<sgrid,SPHBSIZE>>> (nmoving,ridp,velrhop,motionvel);
 }
 
-//<vs_mddbc_end>
 
 
-
-//<vs_mlapiston_ini>
 //##############################################################################
 //# Kernels for MLPistons motion.
 //##############################################################################
@@ -1728,7 +1948,6 @@ void MovePiston2d(bool periactive,unsigned np,unsigned idini
     else          KerMovePiston2d<false> <<<sgrid,SPHBSIZE>>> (np,idini,dp,posymin,poszmin,poszcount,movx,velx,ridpmv,posxy,posz,dcell,velrhop,code);
   }
 }
-//<vs_mlapiston_end>
 
 
 //##############################################################################
@@ -1958,20 +2177,20 @@ void FtCalcForces(unsigned ftcount,tfloat3 gravity
 /// Calcula datos para actualizar floatings.
 //------------------------------------------------------------------------------
 __global__ void KerFtCalcForcesRes(unsigned ftcount,bool simulate2d,double dt
-  ,const float3 *ftoomega,const float3 *ftovel,const double3 *ftocenter,const float3 *ftoforces
+  ,const float3 *ftovelace,const double3 *ftocenter,const float3 *ftoforces
   ,float3 *ftoforcesres,double3 *ftocenterres)
 {
   const unsigned cf=blockIdx.x*blockDim.x + threadIdx.x; //-Floating number.
   if(cf<ftcount){
     //-Compute fomega.
-    float3 fomega=ftoomega[cf];
+    float3 fomega=ftovelace[ftcount+cf];
     {
       const float3 omegaace=ftoforces[cf*2+1];
       fomega.x=float(dt*omegaace.x+fomega.x);
       fomega.y=float(dt*omegaace.y+fomega.y);
       fomega.z=float(dt*omegaace.z+fomega.z);
     }
-    float3 fvel=ftovel[cf];
+    float3 fvel=ftovelace[cf];
     //-Zero components for 2-D simulation. | Anula componentes para 2D.
     float3 face=ftoforces[cf*2];
     if(simulate2d){ face.y=0; fomega.x=0; fomega.z=0; fvel.y=0; }
@@ -1996,12 +2215,12 @@ __global__ void KerFtCalcForcesRes(unsigned ftcount,bool simulate2d,double dt
 /// Calcula fuerzas sobre floatings.
 //==============================================================================
 void FtCalcForcesRes(unsigned ftcount,bool simulate2d,double dt
-  ,const float3 *ftoomega,const float3 *ftovel,const double3 *ftocenter,const float3 *ftoforces
+  ,const float3 *ftovelace,const double3 *ftocenter,const float3 *ftoforces
   ,float3 *ftoforcesres,double3 *ftocenterres)
 {
   if(ftcount){
     dim3 sgrid=GetSimpleGridSize(ftcount,SPHBSIZE);
-    KerFtCalcForcesRes <<<sgrid,SPHBSIZE>>> (ftcount,simulate2d,dt,ftoomega,ftovel,ftocenter,ftoforces,ftoforcesres,ftocenterres);
+    KerFtCalcForcesRes <<<sgrid,SPHBSIZE>>> (ftcount,simulate2d,dt,ftovelace,ftocenter,ftoforces,ftoforcesres,ftocenterres);
   }
 }
 
@@ -2064,8 +2283,9 @@ void FtApplyConstraints(unsigned ftcount,const byte *ftoconstraints
 /// Updates information and particles of floating bodies.
 //------------------------------------------------------------------------------
 template<bool periactive> __global__ void KerFtUpdate(bool predictor,double dt //ftodata={pini,np,radius,massp}
-  ,const float4 *ftodatp,const float3 *ftoforcesres,double3 *ftocenterres,const unsigned *ftridp
-  ,double3 *ftocenter,float3 *ftoangles,float3 *ftovel,float3 *ftoomega
+  ,unsigned nft,const float4 *ftodatp,const float3 *ftoforcesres
+  ,double3 *ftocenterres,const unsigned *ftridp
+  ,double3 *ftocenter,float3 *ftoangles,float3 *ftovelace
   ,double2 *posxy,double *posz,unsigned *dcell,float4 *velrhop,typecode *code)
 {
   const unsigned tid=threadIdx.x;  //-Thread number.
@@ -2113,8 +2333,20 @@ template<bool periactive> __global__ void KerFtUpdate(bool predictor,double dt /
     rangles.y=float(double(rangles.y)+double(fomega.y)*dt);
     rangles.z=float(double(rangles.z)+double(fomega.z)*dt);
     ftoangles[cf]=rangles;
-    ftovel[cf]=fvel;
-    ftoomega[cf]=fomega;
+    //-Linear velocity and acceleration.
+    float3 v=ftovelace[cf];
+    v.x=(fvel.x-v.x)/float(dt);
+    v.y=(fvel.y-v.y)/float(dt);
+    v.z=(fvel.z-v.z)/float(dt);
+    ftovelace[cf]=fvel;
+    ftovelace[nft+nft+cf]=v;
+    //-Angular velocity and acceleration.
+    v=ftovelace[nft+cf];
+    v.x=(fomega.x-v.x)/float(dt);
+    v.y=(fomega.y-v.y)/float(dt);
+    v.z=(fomega.z-v.z)/float(dt);
+    ftovelace[nft+cf]=fomega;
+    ftovelace[nft*3+cf]=v;
   }
 }
 
@@ -2123,16 +2355,57 @@ template<bool periactive> __global__ void KerFtUpdate(bool predictor,double dt /
 //==============================================================================
 void FtUpdate(bool periactive,bool predictor,unsigned ftcount,double dt
   ,const float4 *ftodatp,const float3 *ftoforcesres,double3 *ftocenterres,const unsigned *ftridp
-  ,double3 *ftocenter,float3 *ftoangles,float3 *ftovel,float3 *ftoomega
+  ,double3 *ftocenter,float3 *ftoangles,float3 *ftovelace
   ,double2 *posxy,double *posz,unsigned *dcell,float4 *velrhop,typecode *code)
 {
   if(ftcount){
     const unsigned bsize=128; 
     dim3 sgrid=GetSimpleGridSize(ftcount*bsize,bsize);
-    if(periactive)KerFtUpdate<true>  <<<sgrid,bsize>>> (predictor,dt,ftodatp,ftoforcesres,ftocenterres,ftridp,ftocenter,ftoangles,ftovel,ftoomega,posxy,posz,dcell,velrhop,code);
-    else          KerFtUpdate<false> <<<sgrid,bsize>>> (predictor,dt,ftodatp,ftoforcesres,ftocenterres,ftridp,ftocenter,ftoangles,ftovel,ftoomega,posxy,posz,dcell,velrhop,code);
+    if(periactive)KerFtUpdate<true>  <<<sgrid,bsize>>> (predictor,dt,ftcount,ftodatp,ftoforcesres,ftocenterres,ftridp,ftocenter,ftoangles,ftovelace,posxy,posz,dcell,velrhop,code);
+    else          KerFtUpdate<false> <<<sgrid,bsize>>> (predictor,dt,ftcount,ftodatp,ftoforcesres,ftocenterres,ftridp,ftocenter,ftoangles,ftovelace,posxy,posz,dcell,velrhop,code);
   }
 }
+
+
+//<vs_ftmottionsv_ini>
+//------------------------------------------------------------------------------
+/// Get reference position of floating bodies.
+//------------------------------------------------------------------------------
+__global__ void KerFtGetPosRef(unsigned np,const unsigned *idpref
+  ,const unsigned *ftridp,const double2 *posxy,const double *posz,double *posref)
+{
+  unsigned cp=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle
+  if(cp<np){
+    bool ok=false;
+    const unsigned cid=idpref[cp];
+    if(cid!=UINT_MAX){
+      const unsigned p=ftridp[cid];
+      if(p!=UINT_MAX){
+        const double2 rxy=posxy[p];
+        const unsigned c=cp*3;
+        posref[c  ]=rxy.x;
+        posref[c+1]=rxy.y;
+        posref[c+2]=posz[p];
+        ok=true;
+      }
+    }
+    if(!ok)posref[cp*3]=DBL_MAX;
+  }
+}
+//==============================================================================
+/// Get reference position of floating bodies.
+//==============================================================================
+void FtGetPosRef(unsigned np,const unsigned *idpref,const unsigned *ftridp
+  ,const double2 *posxy,const double *posz,double *posref)
+{
+  if(np){
+    const unsigned bsize=128; 
+    dim3 sgrid=GetSimpleGridSize(np,bsize);
+    KerFtGetPosRef <<<sgrid,bsize>>> (np,idpref,ftridp,posxy,posz,posref);
+  }
+}
+//<vs_ftmottionsv_end>
+
 
 
 //##############################################################################
@@ -2385,7 +2658,6 @@ void PeriodicDuplicateSymplectic(unsigned n,unsigned pini
   }
 }
 
-//<vs_mddbc_ini>
 //------------------------------------------------------------------------------
 /// Creates periodic particles from a list of particles to duplicate.
 /// It is assumed that all particles are valid.
@@ -2418,7 +2690,6 @@ void PeriodicDuplicateNormals(unsigned n,unsigned pini,const unsigned *listp,flo
     KerPeriodicDuplicateNormals <<<sgrid,SPHBSIZE>>> (n,pini,listp,normals,motionvel);
   }
 }
-//<vs_mddbc_end>
 
 
 //##############################################################################
@@ -2561,12 +2832,10 @@ void ComputeDampingPla(double dt,tdouble4 plane,float dist,float over,tfloat3 fa
 }
 
 
-//<vs_innlet_ini>
 //##############################################################################
 //# Kernels for InOut (JSphInOut) and BoundCorr (JSphBoundCorr).
 //# Kernels para InOut (JSphInOut) y BoundCorr (JSphBoundCorr).
 //##############################################################################
 #include "JSphGpu_InOut_iker.cu"
-//<vs_innlet_end>
 
 

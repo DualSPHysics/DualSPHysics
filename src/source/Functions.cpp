@@ -870,6 +870,26 @@ unsigned VectorSplitDouble(const std::string mark,const std::string &text,std::v
 }
 
 //==============================================================================
+/// Loads float list in a vector and returns size of vector.
+//==============================================================================
+unsigned VectorSplitFloat(const std::string mark,const std::string &text,std::vector<float> &vec){
+  std::string aux=text;
+  while(!aux.empty()){
+    std::string txv=StrSplit(mark,aux);
+    if(!txv.empty())vec.push_back(float(atof(txv.c_str())));
+  }
+  return((unsigned)vec.size());
+}
+
+//==============================================================================
+/// Set strings to lowercase.
+//==============================================================================
+void VectorLower(std::vector<std::string> &vec){
+  const unsigned size=unsigned(vec.size());
+  for(unsigned c=0;c<size;c++)vec[c]=StrLower(vec[c]);
+}
+
+//==============================================================================
 /// Find string in a string vector vector since first position. 
 /// Returns UINT_MAX when it was not found.
 //==============================================================================
@@ -961,6 +981,34 @@ int GetFirstValueInt(std::string tex,std::string &endtex,std::string pretex){
   return(atoi(tex.substr(0,len).c_str()));
 }
 
+//==============================================================================
+/// Returns first text between "pretex" and "endtex" and returns the remaining text.
+//==============================================================================
+std::string GetFirstTextBetween(std::string tex,std::string &resttex
+  ,std::string pretex,std::string endtex)
+{
+  string txv;
+  if(!pretex.empty()){//-Elimina texto previo si lo hubiera incluyendo pretex.
+    int pre=int(tex.find(pretex));
+    if(pre>=0)tex=tex.substr(pre+int(pretex.size()));
+    //printf("tex=[%s]\n",tex.c_str());
+  }
+  if(endtex.empty())txv=tex;
+  else{
+    int pos=int(tex.find(endtex));
+    if(pos>=0){
+      txv=tex.substr(0,pos);
+      tex=tex.substr(pos);
+    }
+    else{//-Requested text not found.
+      txv="";
+    } 
+  }
+  resttex=tex;
+  return(txv);
+}
+
+
 
 //==============================================================================
 /// Compares version numbers and returns -1:1<v2, 0:v1=v2, 1:v1>v2.
@@ -1010,30 +1058,41 @@ std::string VarStr(const std::string &name,unsigned value){
   sprintf(cad,"=%u",value);
   return(name+cad);
 }
-std::string VarStr(const std::string &name,unsigned n,const int* values,std::string size){
+std::string VarStr(const std::string &name,unsigned n,const int *values,std::string size){
   std::string tex=name+"["+(size=="?"? UintStr(n): size)+"]=[";
   for(unsigned c=0;c<n;c++)tex=tex+(c? ",": "")+fun::IntStr(values[c]);
   return(tex+"]");
 }
-std::string VarStr(const std::string &name,unsigned n,const unsigned* values,std::string size){
+std::string VarStr(const std::string &name,unsigned n,const unsigned *values,std::string size){
   std::string tex=name+"["+(size=="?"? UintStr(n): size)+"]=[";
   for(unsigned c=0;c<n;c++)tex=tex+(c? ",": "")+fun::UintStr(values[c]);
   return(tex+"]");
 }
-std::string VarStr(const std::string &name,unsigned n,const word* values,std::string size){
+std::string VarStr(const std::string &name,unsigned n,const word *values,std::string size){
   std::string tex=name+"["+(size=="?"? UintStr(n): size)+"]=[";
   for(unsigned c=0;c<n;c++)tex=tex+(c? ",": "")+fun::UintStr(values[c]);
   return(tex+"]");
 }
-std::string VarStr(const std::string &name,unsigned n,const float* values,std::string size,const char* fmt){
+std::string VarStr(const std::string &name,unsigned n,const float *values,std::string size,const char *fmt){
   std::string tex=name+"["+(size=="?"? UintStr(n): size)+"]=[";
   for(unsigned c=0;c<n;c++)tex=tex+(c? ",": "")+fun::FloatStr(values[c],fmt);
   return(tex+"]");
 }
-std::string VarStr(const std::string &name,unsigned n,const double* values,std::string size,const char* fmt){
+std::string VarStr(const std::string &name,unsigned n,const double *values,std::string size,const char *fmt){
   std::string tex=name+"["+(size=="?"? UintStr(n): size)+"]=[";
   for(unsigned c=0;c<n;c++)tex=tex+(c? ",": "")+fun::DoubleStr(values[c],fmt);
   return(tex+"]");
+}
+std::string VarStr(const std::string &name,unsigned n,const tdouble3 *values,std::string size,const char *fmt){
+  std::string tex=name+"["+(size=="?"? UintStr(n): size)+"]=[";
+  for(unsigned c=0;c<n;c++)tex=tex+(c? ", ": "")+"("+fun::Double3xStr(values[c],fmt)+")";
+  return(tex+"]");
+}
+std::string VarStr(const std::string &name,const std::vector<int> &values,std::string size){
+  return(VarStr(name,unsigned(values.size()),values.data(),size));
+}
+std::string VarStr(const std::string &name,const std::vector<tdouble3> &values,std::string size,const char *fmt){
+  return(VarStr(name,unsigned(values.size()),values.data(),size,fmt));
 }
 
 //==============================================================================
@@ -1322,7 +1381,7 @@ void GetFileNameSplit(const std::string &file,std::string &dir,std::string &fnam
 //==============================================================================
 std::string AddExtension(const std::string &file,const std::string &ext){
   std::string file2=file;
-  if(file2.empty()||file2[file2.length()-1]!='.')file2+='.';
+  if(file2.empty() || file2[file2.length()-1]!='.')file2+='.';
   file2+=ext;
   return(file2);
 }

@@ -19,6 +19,7 @@
 /// \file JCellDivCpu.cpp \brief Implements the class \ref JCellDivCpu.
 
 #include "JCellDivCpu.h"
+#include "JAppInfo.h"
 #include "Functions.h"
 #include <cfloat>
 #include <climits>
@@ -30,12 +31,12 @@ using namespace std;
 //==============================================================================
 JCellDivCpu::JCellDivCpu(bool stable,bool floating,byte periactive
   ,TpCellMode cellmode,float scell,tdouble3 mapposmin,tdouble3 mapposmax,tuint3 mapcells
-  ,unsigned casenbound,unsigned casenfixed,unsigned casenpb,JLog2 *log,std::string dirout
+  ,unsigned casenbound,unsigned casenfixed,unsigned casenpb,std::string dirout
   ,bool allocfullnct,float overmemorynp,word overmemorycells)
-  :Stable(stable),Floating(floating),PeriActive(periactive)
+  :Log(AppInfo.LogPtr()),Stable(stable),Floating(floating),PeriActive(periactive)
   ,CellMode(cellmode),ScellDiv(cellmode==CELLMODE_Full? 1: (cellmode==CELLMODE_Half? 2: 0)),Scell(scell)
   ,OvScell(1.f/scell),Map_PosMin(mapposmin),Map_PosMax(mapposmax),Map_PosDif(mapposmax-mapposmin)
-  ,Map_Cells(mapcells),CaseNbound(casenbound),CaseNfixed(casenfixed),CaseNpb(casenpb),Log(log)
+  ,Map_Cells(mapcells),CaseNbound(casenbound),CaseNfixed(casenfixed),CaseNpb(casenpb)
   ,DirOut(dirout),AllocFullNct(allocfullnct),OverMemoryNp(overmemorynp),OverMemoryCells(overmemorycells)
 {
   ClassName="JCellDivCpu";
