@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<!-- *** DualSPHysics (02-07-2020) *** -->
+<!-- *** DualSPHysics (04-07-2020) *** -->
 <!-- *** class: JSphInOut *** -->
 <!------------------------------------------------------------------------------->
 <!------------------------------------------------------------------------------->
@@ -222,7 +222,7 @@
 <!------------------------------------------------------------------------------->
 <!------------------------------------------------------------------------------->
 <!-- *** Velocity definitions *** -->
-<!-- Fixed Constant velocity -->
+<!-- Fixed Uniform velocity -->
 	<imposevelocity mode="0" comment="Imposed velocity 0:fixed value, 1:variable value, 2:Extrapolated velocity, 3:Interpolated velocity (default=0)">
 		<velocity v="2" comment="Uniform velocity" units_comment="m/s" />
 	</imposevelocity>
@@ -293,14 +293,13 @@
 <!-- *** Zsurf definitions *** -->
 <!-- Imposed fixed zsurf -->
 	<imposezsurf mode="0" comment="Inlet Z-surface 0:Imposed fixed value, 1:Imposed variable value, 2:Calculated from fluid domain (default=0)">
-		<zbottom value="0" comment="Bottom level of water (used for Hydrostatic option)" units_comment="m" />
 		<zsurf value="1" comment="Characteristic inlet Z-surface (used for Hydrostatic option)" units_comment="m" />
+		<remove value="false" comment="Removes particles above the Zsurf limit (default=false)" />
 	</imposezsurf>
 <!-- Imposed variable zsurf -->
 	<imposezsurf mode="1" comment="Inlet Z-surface 0:Imposed fixed value, 1:Imposed variable value, 2:Calculated from fluid domain (default=0)">
 		<savevtk value="true" comment="Creates VTK files with Zsurf for each PART (default=false)" />
 		<remove value="true" comment="Removes particles above the Zsurf limit (default=false)" />
-		<zbottom value="0" comment="Bottom level of water (used for Hydrostatic option)" units_comment="m" />
 		<zsurftimes comment="Characteristic inlet Z-Surf changes in time" units_comment="m/s">
 			<timevalue time="0" zsurf="1" />
 			<timevalue time="1" zsurf="1" />
@@ -314,15 +313,14 @@
 	<imposezsurf mode="1" comment="Inlet Z-surface 0:Imposed fixed value, 1:Imposed variable value, 2:Calculated from fluid domain (default=0)">
 		<savevtk value="true" comment="Creates VTK files with Zsurf for each PART (default=false)" />
 		<remove value="false" comment="Removes particles above the Zsurf limit (default=false)" />
-		<zbottom value="0" comment="Bottom level of water (used for Hydrostatic option)" units_comment="m" />
 		<zsurffile file="FileZsurf.csv" comment="Zsurf data (time;zsurf)"/>
 	</imposevelocity>
 <!-- Zsurf calculated from fluid -->
 	<imposezsurf mode="2" comment="Inlet Z-surface 0:Imposed fixed value, 1:Imposed variable value, 2:Calculated from fluid domain (default=0)">
 		<savevtk value="true" comment="Creates VTK files with Zsurf for each PART (default=false)" />
 		<remove value="false" comment="Removes particles above the Zsurf limit (default=false)" />
-		<zbottom value="0" comment="Bottom level of water (used for Hydrostatic option)" units_comment="m" />
-		<zsurf value="1" comment="Initial Z-surface" units_comment="m" />
+		<zsurfmin value="0.8" comment="Minimum Z-surface to reduce the calculation area (default=minimun Z inlet)" units_comment="m" />
+		<zsurffit valuedp="0.5" comment="Reduction of calculated zsurf with explicit value (value) or according to dp (valuedp) (default vdp=0.5)" units_comment="m" />
 	</imposezsurf>
 <!---------------------------------------------------------------------------------->
 <!---------------------------------------------------------------------------------->
