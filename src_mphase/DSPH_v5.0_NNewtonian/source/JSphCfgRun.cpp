@@ -44,7 +44,7 @@ void JSphCfgRun::Reset(){
   OmpThreads=0;
   SvTimers=true;
   CellMode=CELLMODE_Full;
-  TBoundary=0; SlipMode=0; MdbcThreshold=-1;
+  TBoundary=0; SlipMode=0; MdbcFastSingle=-1; MdbcThreshold=-1;
   DomainMode=0;
   DomainFixedMin=DomainFixedMax=TDouble3(0);
   TStep=STEP_None; VerletSteps=-1;
@@ -63,7 +63,7 @@ void JSphCfgRun::Reset(){
   FtPause=-1;
   NstepsBreak=0;
   SvAllSteps=false;
-  PipsMode=1; PipsSteps=100;
+  PipsMode=0; PipsSteps=100;
   CreateDirs=true;
   CsvSepComa=false;
 }
@@ -106,6 +106,8 @@ void JSphCfgRun::VisuInfo()const{
   printf("    -mdbc          Modified Dynamic Boundary Condition mDBC (mode: vel=0)\n");
   printf("    -mdbc_noslip   Modified Dynamic Boundary Condition mDBC (mode: no-slip)\n");
   printf("    -mdbc_freeslip Modified Dynamic Boundary Condition mDBC (mode: free-slip)\n");
+/////////|---------1---------2---------3---------4---------5---------6---------7--------X8
+  printf("    -mdbc_fast:<0/1>       Fast single precision calculation on GPU (default=1)\n");
   printf("    -mdbc_threshold:<float> Kernel support limit to apply mDBC correction [0-1]\n");
   printf("\n");
   printf("    -symplectic      Symplectic algorithm as time step algorithm\n");
@@ -167,7 +169,7 @@ void JSphCfgRun::VisuInfo()const{
   printf("    -svdomainvtk:<0/1>  Generates VTK file with domain limits\n");
 /////////|---------1---------2---------3---------4---------5---------6---------7--------X8
   printf("    -svpips:<mode>:n  Compute PIPS of simulation each n steps (100 by default),\n");
-  printf("       mode options: 0=disabled, 1=no save details (by default), 2=save details\n");
+  printf("       mode options: 0=disabled (by default), 1=no save details, 2=save details\n");
   printf("\n");
   printf("    -createdirs:<0/1> Creates full path for output files\n");
   printf("                      (value by default is read from DsphConfig.xml or 1)\n");
@@ -281,6 +283,7 @@ void JSphCfgRun::LoadOpts(string *optlis,int optn,int lv,const std::string &file
       else if(txword=="MDBC")         { TBoundary=2; SlipMode=1; }
       else if(txword=="MDBC_NOSLIP")  { TBoundary=2; SlipMode=2; }
       else if(txword=="MDBC_FREESLIP"){ TBoundary=2; SlipMode=3; }
+      else if(txword=="MDBC_FAST")MdbcFastSingle=(txoptfull!=""? atoi(txoptfull.c_str()): 1);
       else if(txword=="MDBC_THRESHOLD"){ 
         MdbcThreshold=float(atof(txoptfull.c_str())); 
         if(MdbcThreshold<0 || MdbcThreshold>1.f)ErrorParm(opt,c,lv,file);

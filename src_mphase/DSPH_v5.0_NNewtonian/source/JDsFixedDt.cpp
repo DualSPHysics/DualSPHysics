@@ -23,17 +23,19 @@
 #include "JReadDatafile.h"
 #include <cstring>
 #include <cfloat>
+#include <algorithm>
 
 using namespace std;
 
 //==============================================================================
 /// Constructor.
 //==============================================================================
-JDsFixedDt::JDsFixedDt(){
+JDsFixedDt::JDsFixedDt(double fixedvalue){
   ClassName="JDsFixedDt";
   Times=NULL;
   Values=NULL;
   Reset();
+  FixedValue=fixedvalue;
 }
 
 //==============================================================================
@@ -48,6 +50,7 @@ JDsFixedDt::~JDsFixedDt(){
 /// Initialisation of variables.
 //==============================================================================
 void JDsFixedDt::Reset(){
+  FixedValue=0;
   delete[] Times;  Times=NULL;
   delete[] Values; Values=NULL;
   File="";
@@ -101,26 +104,28 @@ double JDsFixedDt::GetDt(double timestep,double dtvar){
   if(LastTimestepInput>=0 && timestep==LastTimestepInput && dtvar==LastDtInput)return(LastDtOutput);
   LastTimestepInput=timestep;
   LastDtInput=dtvar;
-  double ret=0;
-  //-Busca intervalo del instante indicado.
-  //-Searches indicated interval of time.
-  double tini=Times[Position];
-  double tnext=(Position+1<Count? Times[Position+1]: tini);
-  for(;tnext<timestep&&Position+2<Count;Position++){
-    tini=tnext;
-    tnext=Times[Position+2];
+  double ret=FixedValue;
+  if(!ret){
+    //-Busca intervalo del instante indicado.
+    //-Searches indicated interval of time.
+    double tini=Times[Position];
+    double tnext=(Position+1<Count? Times[Position+1]: tini);
+    for(;tnext<timestep&&Position+2<Count;Position++){
+      tini=tnext;
+      tnext=Times[Position+2];
+    }
+    //-Calcula dt en el instante indicado.
+    //-Computes dt for the indicated instant.
+    if(timestep<=tini)ret=Values[Position]/1000;
+    else if(timestep>=tnext)ret=Values[Position+1]/1000;
+    else{
+      const double tfactor=(timestep-tini)/(tnext-tini);
+      double vini=Values[Position];
+      double vnext=Values[Position+1];
+      ret=(tfactor*(vnext-vini)+vini)/1000;
+    }
   }
-  //-Calcula dt en el instante indicado.
-  //-Computes dt for the indicated instant.
-  if(timestep<=tini)ret=Values[Position]/1000;
-  else if(timestep>=tnext)ret=Values[Position+1]/1000;
-  else{
-    const double tfactor=(timestep-tini)/(tnext-tini);
-    double vini=Values[Position];
-    double vnext=Values[Position+1];
-    ret=(tfactor*(vnext-vini)+vini)/1000;
-  }
-  double dterror=ret-dtvar;
+  const double dterror=ret-dtvar;
   if(DtError<dterror)DtError=dterror;
   LastDtOutput=ret;
   return(ret);

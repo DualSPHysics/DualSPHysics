@@ -131,8 +131,8 @@ protected:
   tdouble3 *Posc;
   tfloat4 *Velrhopc;
 
-  tfloat3 *BoundNormalc;  ///<Normal (x,y,z) pointing from boundary particles to ghost nodes.  //<vs_mddbc>
-  tfloat3 *MotionVelc;    ///<Velocity of a moving boundary particle.                          //<vs_mddbc>
+  tfloat3 *BoundNormalc;  ///<Normal (x,y,z) pointing from boundary particles to ghost nodes.
+  tfloat3 *MotionVelc;    ///<Velocity of a moving boundary particle.
     
   //-Variables for compute step: VERLET. | Vars. para compute step: VERLET.
   tfloat4 *VelrhopM1c;  ///<Verlet: in order to keep previous values. | Verlet: para guardar valores anteriores.
@@ -246,7 +246,6 @@ protected:
   template<TpKernel tker> void Interaction_Forces_ct2(const stinterparmsc &t,StInterResultc &res)const;
   void Interaction_Forces_ct(const stinterparmsc &t,StInterResultc &res)const;
 
-//<vs_mddbc_ini>
   template<TpKernel tker,bool sim2d,TpSlipMode tslip> void InteractionMdbcCorrectionT2
     (unsigned n,StDivDataCpu divdata,float determlimit,float mdbcthreshold
     ,const tdouble3 *pos,const typecode *code,const unsigned *idp
@@ -257,11 +256,10 @@ protected:
   void Interaction_MdbcCorrection(TpSlipMode slipmode,const StDivDataCpu &divdata
     ,const tdouble3 *pos,const typecode *code,const unsigned *idp
     ,const tfloat3 *boundnormal,const tfloat3 *motionvel,tfloat4 *velrhop);
-//<vs_mddbc_end>
 
   void ComputeSpsTau(unsigned n,unsigned pini,const tfloat4 *velrhop,const tsymatrix3f *gradvel,tsymatrix3f *tau)const;
 
-  void ComputeVerletVarsFluid(bool shift,const tfloat4 *velrhop1,const tfloat4 *velrhop2,double dt,double dt2,tdouble3 *pos,unsigned *cell,typecode *code,tfloat4 *velrhopnew)const;
+  void ComputeVerletVarsFluid(bool shift,const tfloat3 *indirvel,const tfloat4 *velrhop1,const tfloat4 *velrhop2,double dt,double dt2,tdouble3 *pos,unsigned *cell,typecode *code,tfloat4 *velrhopnew)const;
   void ComputeVelrhopBound(const tfloat4* velrhopold,double armul,tfloat4* velrhopnew)const;
 
   void ComputeVerlet(double dt);
@@ -277,20 +275,18 @@ protected:
     ,const unsigned *ridp,tdouble3 *pos,unsigned *dcell,tfloat4 *velrhop,typecode *code)const;
   void MoveMatBound(unsigned np,unsigned ini,tmatrix4d m,double dt,const unsigned *ridpmv
     ,tdouble3 *pos,unsigned *dcell,tfloat4 *velrhop,typecode *code,tfloat3 *boundnormal)const;
-  void CopyMotionVel(unsigned nmoving,const unsigned *ridp,const tfloat4 *velrhop,tfloat3 *motionvel)const; //<vs_mddbc>
+  void CopyMotionVel(unsigned nmoving,const unsigned *ridp,const tfloat4 *velrhop,tfloat3 *motionvel)const;
   void CalcMotion(double stepdt);
   void RunMotion(double stepdt);
-  void RunRelaxZone(double dt);  //<vs_rzone>
+  void RunRelaxZone(double dt);
   void RunDamping(double dt,unsigned np,unsigned npb,const tdouble3 *pos,const typecode *code,tfloat4 *velrhop)const;
 
-  //<vs_mlapiston_ini>
   void MovePiston1d(unsigned np,unsigned ini,double poszmin,unsigned poszcount
     ,const byte *pistonid,const double* movx,const double* velx
     ,const unsigned *ridpmv,tdouble3 *pos,unsigned *dcell,tfloat4 *velrhop,typecode *code)const;
   void MovePiston2d(unsigned np,unsigned ini
     ,double posymin,double poszmin,unsigned poszcount,const double* movx,const double* velx
     ,const unsigned *ridpmv,tdouble3 *pos,unsigned *dcell,tfloat4 *velrhop,typecode *code)const;
-  //<vs_mlapiston_end>
 
   void ShowTimers(bool onlyfile=false);
   void GetTimersInfo(std::string &hinfo,std::string &dinfo)const;
@@ -307,7 +303,6 @@ public:
 
   void UpdatePos(tdouble3 pos0,double dx,double dy,double dz,bool outrhop,unsigned p,tdouble3 *pos,unsigned *cell,typecode *code)const;
 
-//<vs_innlet_ini>
 //-Code for InOut in JSphCpu_InOut.cpp
 //--------------------------------------
 protected:
@@ -362,7 +357,6 @@ protected:
     ,tplane3f plane,tfloat3 direction,float determlimit
     ,const tdouble3 *pos,const typecode *code,const unsigned *idp
     ,tfloat4 *velrhop);
-//<vs_innlet_end>
 
 
 //<vs_non-Newtonian_ini>

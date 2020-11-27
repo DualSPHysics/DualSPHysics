@@ -24,6 +24,7 @@
 //:# - Simplificacion de clase usando JDataArrays. (05-09-2019)
 //:# - Gestion de excepciones mejorada.  (15-09-2019)
 //:# - Cambios para soportar CODE_SIZE4. (07-04-2020)
+//:# - Nueva variable TypeSp con el valor de special del code. (02-08-2020)
 //:#############################################################################
 
 /// \file JDebugSphGpu.h \brief Declares the class \ref JDebugSphGpu.
@@ -38,21 +39,6 @@
 #include <cstring>
 #include <cuda_runtime_api.h>
 
-
-//-Defines for normal exceptions for static methods.
-#ifndef Run_ExceptioonSta
-#define Run_ExceptioonSta(msg) RunExceptioonStatic(__FILE__,__LINE__,__func__,msg)
-#endif
-#ifndef Run_ExceptioonFileSta
-#define Run_ExceptioonFileSta(msg,file) RunExceptioonStatic(__FILE__,__LINE__,__func__,msg,file)
-#endif
-//-Defines for CUDA exceptions for static methods.
-#ifndef Run_ExceptioonCudaSta
-#define Run_ExceptioonCudaSta(cuerr,msg) RunExceptioonCudaStatic(__FILE__,__LINE__,__func__,cuerr,msg)
-#endif
-#ifndef Check_CudaErroorSta
-#define Check_CudaErroorSta(msg) CheckCudaErroorStatic(__FILE__,__LINE__,__func__,msg)
-#endif
 
 class JDataArrays;
 class JSphGpuSingle;

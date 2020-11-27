@@ -123,11 +123,13 @@ void InteractionNg_1st(unsigned nb,unsigned pinitb,unsigned nf,unsigned pinitf
 {
   const unsigned BSIZE=256;
   const unsigned np=nb+nf;
-  const unsigned shmem=sizeof(unsigned)*4*BSIZE;
-  dim3 sgrid=GetSimpleGridSize(np,BSIZE);
-  KerInteractionNg <BSIZE> <<<sgrid,BSIZE,shmem,stm>>>(nb,pinitb,nf,pinitf
-    ,dvd.scelldiv,dvd.nc,dvd.cellzero,dvd.beginendcell,dvd.cellfluid,dcell
-    ,dvd.axis,dvd.domcellcode,dvd.kernelsize2,dvd.poscellsize,poscell,res);
+  if(np){
+    const unsigned shmem=sizeof(unsigned)*4*BSIZE;
+    dim3 sgrid=GetSimpleGridSize(np,BSIZE);
+    KerInteractionNg <BSIZE> <<<sgrid,BSIZE,shmem,stm>>>(nb,pinitb,nf,pinitf
+      ,dvd.scelldiv,dvd.nc,dvd.cellzero,dvd.beginendcell,dvd.cellfluid,dcell
+      ,dvd.axis,dvd.domcellcode,dvd.kernelsize2,dvd.poscellsize,poscell,res);
+  }
 }
 
 //==============================================================================
@@ -176,10 +178,12 @@ template <unsigned blockSize> __global__ void KerReduSumUint4(unsigned n,unsigne
 //==============================================================================
 void InteractionNg_2nd(unsigned n,const uint4 *data,uint4 *res,cudaStream_t stm)
 {
-  const unsigned BSIZE=256;
-  const unsigned shmem=sizeof(unsigned)*4*BSIZE;
-  dim3 sgrid=GetSimpleGridSize(n,BSIZE);
-  KerReduSumUint4 <BSIZE> <<<sgrid,BSIZE,shmem,stm>>> (n,0,data,res);
+  if(n){
+    const unsigned BSIZE=256;
+    const unsigned shmem=sizeof(unsigned)*4*BSIZE;
+    dim3 sgrid=GetSimpleGridSize(n,BSIZE);
+    KerReduSumUint4 <BSIZE> <<<sgrid,BSIZE,shmem,stm>>> (n,0,data,res);
+  }
 }
 
 //==============================================================================
@@ -251,10 +255,12 @@ template <unsigned blockSize> __global__ void KerReduSumUintlong4(unsigned n,uns
 //==============================================================================
 void InteractionNg_3th(unsigned n,const uint4 *data,ullong *res,cudaStream_t stm)
 {
-  const unsigned BSIZE=256;
-  const unsigned shmem=sizeof(ullong)*4*BSIZE;
-  dim3 sgrid=GetSimpleGridSize(n,BSIZE);
-  KerReduSumUintlong4 <BSIZE> <<<sgrid,BSIZE,shmem,stm>>> (n,0,data,res);
+  if(n){
+    const unsigned BSIZE=256;
+    const unsigned shmem=sizeof(ullong)*4*BSIZE;
+    dim3 sgrid=GetSimpleGridSize(n,BSIZE);
+    KerReduSumUintlong4 <BSIZE> <<<sgrid,BSIZE,shmem,stm>>> (n,0,data,res);
+  }
 }
 
 //==============================================================================

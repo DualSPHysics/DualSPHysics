@@ -83,7 +83,7 @@ protected:
   void Reset();
 
 public:
-  JDsAccInputMk(JLog2* log,unsigned idx,bool bound,word mktype1,word mktype2
+  JDsAccInputMk(unsigned idx,bool bound,word mktype1,word mktype2
     ,double tini,double tend,bool genabled,tfloat3 acccentre
     ,const JLinearValue &acedata,const JLinearValue &veldata);
   ~JDsAccInputMk();
@@ -121,7 +121,7 @@ protected:
   void ComputeVelocity(const JLinearValue &acedata,JLinearValue &veldata)const;
 
 public:
-  JDsAccInput(JLog2* log,const std::string &dirdata,const JXml *sxml,const std::string &place);
+  JDsAccInput(const std::string &dirdata,const JXml *sxml,const std::string &place);
   ~JDsAccInput();
   long long GetAllocMemory()const{ return(MemSize); }
 

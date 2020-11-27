@@ -23,7 +23,7 @@
 #include "JAppInfo.h"
 #include "JXml.h"
 #include "Functions.h"
-#include "FunctionsGeo3d.h"
+#include "FunGeo3d.h"
 #include "JDataArrays.h"
 #include "JVtkLib.h"
 #ifdef _WITHGPU
@@ -85,8 +85,8 @@ void JSphShiftingZone::PrepareZone(){
 //==============================================================================
 /// Constructor.
 //==============================================================================
-JSphShifting::JSphShifting(bool simulate2d,double dp,float kernelh,JLog2* log)
-  :Simulate2D(simulate2d),Dp(dp),KernelH(kernelh),Log(log)
+JSphShifting::JSphShifting(bool simulate2d,double dp,float kernelh)
+  :Log(AppInfo.LogPtr()),Simulate2D(simulate2d),Dp(dp),KernelH(kernelh)
 {
   ClassName="JSphShifting";
   Reset();
@@ -250,7 +250,7 @@ void JSphShifting::VisuConfig(std::string txhead,std::string txfoot){
       tx=tx+fun::PrintStr("%u from in/out configuration",GetCount()-ZonesXml);
     }
     Log->Print(fun::VarStr("  ShiftDomain",string("Zones (")+tx+")"));
-    if(1)for(unsigned c=0;c<GetCount();c++){
+    for(unsigned c=0;c<GetCount();c++){
       const JSphShiftingZone* zo=Zones[c];
       if(zo->GetUsePosMax())Log->Printf("  Zone_%d  %s",c,fun::Double3gRangeStr(zo->GetPosMin(),zo->GetPosMax()).c_str());
       else{

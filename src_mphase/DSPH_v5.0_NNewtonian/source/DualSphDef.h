@@ -30,8 +30,11 @@
 
 //#define DISABLE_KERNELS_EXTRA  ///<Compiles Wendland kernel and ignores the rest of the SPH kernels.
 
+#define DISABLE_MDBC_EXTRAMODES  ///<Compiles only slipmode=SLIP_Vel0 and ignores the rest since they are not ready.
+
 //#define DISABLE_TIMERS     ///<Compiles without timers. | Compilado sin timers.
 //#define DISABLE_BSMODES    ///<compiles without advanced BlockSize modes.
+
 
 //-Removes dependencies from precompiled libraries.
 #include "JNumexLibDef.h"    //Defines DISABLE_NUMEXLIB to compile without Numex library.
@@ -39,7 +42,7 @@
 //#define DISABLE_CHRONO     ///<It allows compile without ChronoLib library (dsphchrono.dll, ChronoEngine.dll and ChronoEngine_parallel.dll).
 //#define DISABLE_CHRONO_OMP ///<It allows compile without parallel module of Chrono (ignores ChronoEngine_parallel.dll).
 //#define DISABLE_WAVEGEN    ///<It allows compile without Wave-Paddles, Multi-Layer Pistons and Relaxation Zones libraries.
-//#define DISABLE_MOORDYN    ///<It allows compile without LibDSphMoorDyn library.  //<vs_moordyyn>
+//#define DISABLE_MOORDYN    ///<It allows compile without LibDSphMoorDyn library.
 
 
 //-Defines AVAILABLE_VTKLIB when this feature is compiled.
@@ -82,11 +85,11 @@
 #endif
 
 //-Defines AVAILABLE_MOORDYN when this feature is compiled.
-#ifdef DISABLE_MOORDYN             //<vs_moordyyn>  
+#ifdef DISABLE_MOORDYN
   #define AVAILABLE_MOORDYN false
-#else                              //<vs_moordyyn>
-  #define AVAILABLE_MOORDYN true   //<vs_moordyyn>
-#endif                             //<vs_moordyyn>
+#else
+  #define AVAILABLE_MOORDYN true
+#endif
 
 //-Defines AVAILABLE_GPU when this feature is compiled.
 #ifdef _WITHGPU
@@ -122,6 +125,7 @@
   typedef unsigned typecode;           //-Type of the variable code using 4 bytes.
   //-Code of the particles:
   #define CODE_MASKSPECIAL 0xe0000000  //-Bits de special: 11100000 00000000 00000000 00000000              | Special bits: 11100000 00000000 00000000 00000000
+  #define CODE_MASKSPECIALMV 29        //-Displacemente in bits of special bits.
   #define CODE_NORMAL   0x0            //-0  Particulas normales no excluidas.                              | 0 Normal particles (not excluded)
   #define CODE_PERIODIC 0x20000000     //-1  Particulas duplicadas por periodicas.                          | 1 Duplicate particles for periodic
   #define CODE_OUTIGNORE 0x40000000    //-2  Marca particulas que se van a ignorar en el siguiente divide.  | 2 Brands particles to be ignored in the next division.
@@ -138,14 +142,15 @@
   #define CODE_MASKVALUE 0x00000ffff    //-Bits type-value: 0000 0111 1111 1111  Range:0-65535
 
   #define CODE_TYPE_FLUID_LIMITFREE 0x0003ffdf //---Last normal fluid code: 262111
-  #define CODE_TYPE_FLUID_INOUT     0x0003ffe0 //---First inlet/outlet code: 262112 (16 different codes for InOut zones + 16 to select input particles). //<vs_innlet>
-  #define CODE_TYPE_FLUID_INOUTNUM  16      //---Maximum number of valid inlet/outlet zones.                                                             //<vs_innlet>
-  #define CODE_TYPE_FLUID_INOUTMASK 31      //---Mask to obtain zone value.                                                                              //<vs_innlet>
+  #define CODE_TYPE_FLUID_INOUT     0x0003ffe0 //---First inlet/outlet code: 262112 (16 different codes for InOut zones + 16 to select input particles).
+  #define CODE_TYPE_FLUID_INOUTNUM  16      //---Maximum number of valid inlet/outlet zones.
+  #define CODE_TYPE_FLUID_INOUTMASK 31      //---Mask to obtain zone value.
 #else
   #define CODE_MKRANGEMAX 2047      //-Maximum valid MK value. | Valor maximo de MK valido.
   typedef word typecode;            //-Type of the variable code using 2 bytes.
   //-Code of the particles:
   #define CODE_MASKSPECIAL 0xe000   //-Bits de special:     1110 0000 0000 0000                          | Special bits: 1110 0000 0000 0000
+  #define CODE_MASKSPECIALMV 13     //-Displacemente in bits of special bits.
   #define CODE_NORMAL   0x0         //-0  Particulas normales no excluidas.                              | 0 Normal particles (not excluded)
   #define CODE_PERIODIC 0x2000      //-1  Particulas duplicadas por periodicas.                          | 1 Duplicate particles for periodic
   #define CODE_OUTIGNORE 0x4000     //-2  Marca particulas que se van a ignorar en el siguiente divide.  | 2 Brands particles to be ignored in the next division.
@@ -164,9 +169,10 @@
   #define CODE_MASKVALUE 0x7ff      //-Bits type-value: 0000 0111 1111 1111  Range:0-2047
 
   #define CODE_TYPE_FLUID_LIMITFREE 0x1fdf  //---Last normal fluid code: 8159
-  #define CODE_TYPE_FLUID_INOUT     0x1fe0  //---First inlet/outlet code: 8160 (16 different codes for InOut zones + 16 to select input particles). //<vs_innlet>
-  #define CODE_TYPE_FLUID_INOUTNUM  16      //---Maximum number of valid inlet/outlet zones.                                                        //<vs_innlet>
-  #define CODE_TYPE_FLUID_INOUTMASK 31      //---Mask to obtain zone value.                                                                         //<vs_innlet>
+  #define CODE_TYPE_FLUID_INOUT     0x1fe0  //---First inlet/outlet code: 8160 (16 different codes for InOut zones + 16 to select input particles).
+  #define CODE_TYPE_FLUID_INOUTNUM  16      //---Maximum number of valid inlet/outlet zones.
+  #define CODE_TYPE_FLUID_INOUTMASK 31      //---Mask to obtain zone value.
+  #define CODE_TYPE_FLUID_INOUT015MASK 15   //---Mask to obtain zone value (ignore extra bit).
 #endif
 
 #define CODE_SetNormal(code)    (code&(~CODE_MASKSPECIAL))
@@ -176,6 +182,7 @@
 #define CODE_SetOutMove(code)   (CODE_SetNormal(code)|CODE_OUTMOVE)
 #define CODE_SetOutRhop(code)   (CODE_SetNormal(code)|CODE_OUTRHOP)
 #define CODE_GetSpecialValue(code) (code&CODE_MASKSPECIAL)
+#define CODE_GetSpecialByte(code) (CODE_GetSpecialValue(code)>>CODE_MASKSPECIALMV)
 
 #define CODE_GetType(code) (code&CODE_MASKTYPE)
 #define CODE_GetTypeValue(code) (code&CODE_MASKVALUE)
@@ -193,12 +200,12 @@
 #define CODE_IsFluid(code)    (CODE_GetType(code)==CODE_TYPE_FLUID)
 #define CODE_IsNotFluid(code) (CODE_GetType(code)!=CODE_TYPE_FLUID)
 
-//#define CODE_IsFluidInout(code)    (CODE_IsFluid(code) && CODE_GetTypeAndValue(code)>=CODE_TYPE_FLUID_INOUT)  //<vs_innlet>
-#define CODE_IsFluidInout(code)    (CODE_GetTypeAndValue(code)>=CODE_TYPE_FLUID_INOUT)                        //<vs_innlet>
-#define CODE_IsFluidNotInout(code) (CODE_IsFluid(code) && CODE_GetTypeAndValue(code)< CODE_TYPE_FLUID_INOUT)  //<vs_innlet>
+//#define CODE_IsFluidInout(code)    (CODE_IsFluid(code) && CODE_GetTypeAndValue(code)>=CODE_TYPE_FLUID_INOUT)
+#define CODE_IsFluidInout(code)    (CODE_GetTypeAndValue(code)>=CODE_TYPE_FLUID_INOUT)
+#define CODE_IsFluidNotInout(code) (CODE_IsFluid(code) && CODE_GetTypeAndValue(code)< CODE_TYPE_FLUID_INOUT)
 
-#define CODE_ToFluidInout(code,izone) (code&(~CODE_MASKTYPEVALUE))|(CODE_TYPE_FLUID_INOUT|izone)  //<vs_innlet>
-#define CODE_GetIzoneFluidInout(code) (code&CODE_TYPE_FLUID_INOUTMASK)                            //<vs_innlet>
+#define CODE_ToFluidInout(code,izone) (code&(~CODE_MASKTYPEVALUE))|(CODE_TYPE_FLUID_INOUT|izone)
+#define CODE_GetIzoneFluidInout(code) (code&CODE_TYPE_FLUID_INOUTMASK)
 
 
 ///Defines type of movement.
@@ -235,8 +242,10 @@ typedef struct{
   tfloat3 angles;   ///<Rotation angles from center (angle xz, angle yz, angle xy) (units:Rad).
   tfloat3 fvel;     ///<Linear velocity of the floating object (units:m/s).
   tfloat3 fomega;   ///<Angular velocity of the floating object (units:rad/s).
+  tfloat3 facelin;  ///<Linear acceleration of the floating object computed from velocity difference (units:m/s^2).
+  tfloat3 faceang;  ///<Angular acceleration of the floating object computed from velocity difference (units:rad/s^2).
   tmatrix3f inertiaini; ///<Initial state inertia tensor in world coordinates (computed or user-given).
-  bool usechrono;   ///<Activates the use of Chrono library.  //<vs_chroono>
+  bool usechrono;   ///<Activates the use of Chrono library.
 }StFloatingData;
 
 ///Structure with the information of the floating object in forces calculation.
@@ -262,7 +271,6 @@ typedef struct{ //(DEM)
   float tau;          ///<Value of (1-poisson^2)/young (units:-).
   float restitu;      ///<Restitution Coefficient (units:-).
 }StDemData;
-
 
 ///Structure that stores the maximum values (or almost) achieved during the simulation.
 typedef struct StrMaxNumbers{
@@ -373,18 +381,16 @@ typedef enum{
 
 ///Types of boundary conditions.
 typedef enum{ 
-  BC_MDBC=2,   ///<M-DBC.   //<vs_mddbc>
+  BC_MDBC=2,   ///<M-DBC.
   BC_DBC=1     ///<Dynamic Boundary Condition (DBC).
 }TpBoundary;
 
-//<vs_mddbc_ini>
 ///Types of boundary conditions. 
 typedef enum{ 
   SLIP_FreeSlip=3,  ///<Free slip
   SLIP_NoSlip=2,    ///<No-slip
   SLIP_Vel0=1       ///<DBC vel=0
 }TpSlipMode;
-//<vs_mddbc_end>
 
 ///Types of interaction step.
 typedef enum{ 
@@ -396,8 +402,8 @@ typedef enum{
 
 ///Types of density diffussion term.
 typedef enum{ 
-  DDT_DDT2Full=3, ///<Density Diffussion Term 2 (Fourtakas et al 2019). It is applied to all fluid particles.         //<vs_dtt2>
-  DDT_DDT2=2,     ///<Density Diffussion Term 2 (Fourtakas et al 2019). It is only applied to inner fluid particles.  //<vs_dtt2>
+  DDT_DDT2Full=3, ///<Density Diffussion Term 2 (Fourtakas et al 2019). It is applied to all fluid particles.
+  DDT_DDT2=2,     ///<Density Diffussion Term 2 (Fourtakas et al 2019). It is only applied to inner fluid particles.
   DDT_DDT=1,      ///<Density Diffussion Term. It is only applied to inner fluid particles.
   DDT_None=0 
 }TpDensity;

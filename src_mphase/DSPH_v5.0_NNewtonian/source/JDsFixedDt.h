@@ -26,6 +26,7 @@
 //:# - GetNextTime() guarda entrada y salida para evitar calculos con llamadas 
 //:#   consecutivas iguales. (02-09-2019)
 //:# - Cambio de nombre de J.SphDtFixed a J.DsFixedDt. (28-06-2020)
+//:# - Permite establecer un dt fijo en el constructor. (18-07-2020)
 //:#############################################################################
 
 /// \file JDsFixedDt.h \brief Declares the class \ref JDsFixedDt.
@@ -51,6 +52,7 @@ class JDsFixedDt : protected JObject
 {
 protected:
   static const unsigned FILESIZEMAX=104857600; ///<Maximum file size (100mb).
+  double FixedValue;
 
   std::string File;
   unsigned Size;
@@ -67,7 +69,7 @@ protected:
   void Resize(unsigned size);
 
 public:
-  JDsFixedDt();
+  JDsFixedDt(double fixedvalue=0);
   ~JDsFixedDt();
   void Reset();
   unsigned GetAllocMemory()const;
@@ -75,6 +77,7 @@ public:
   double GetDt(double timestep,double dtvar);
   double GetDtError(bool reset);
   std::string GetFile()const{ return(File); };
+  double GetFixedValue()const{ return(FixedValue); };
 };
 
 #endif

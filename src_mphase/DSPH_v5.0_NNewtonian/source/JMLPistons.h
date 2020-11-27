@@ -74,7 +74,7 @@ public:
   }StMotionInfoPiston2D;
 
 public:
-  JMLPistons(bool usegpu,JLog2* log,std::string dirdata){}
+  JMLPistons(bool usegpu,JLog2 *log,std::string dirdata){}
   ~JMLPistons(){}
   void Reset(){}
   static bool Available(){ return(false); }
@@ -160,7 +160,7 @@ private:
   void PreparePiston1d(double dp,unsigned np,const unsigned *idp,const tdouble3 *pos);
 
 public:
-  JMLPistons(bool usegpu,JLog2* log,std::string dirdata);
+  JMLPistons(bool usegpu,JLog2 *log,std::string dirdata);
   ~JMLPistons();
   void Reset();
   static bool Available(){ return(true); }

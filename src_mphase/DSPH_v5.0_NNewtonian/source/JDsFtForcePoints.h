@@ -105,7 +105,7 @@ private:
   void SaveCsvPoints(unsigned numfile)const;
 
 public:
-  JDsFtForcePoints(JLog2 *log,bool iscpu,double dp,unsigned ftcount);
+  JDsFtForcePoints(bool iscpu,double dp,unsigned ftcount);
   ~JDsFtForcePoints();
   void Reset();
   llong GetAllocMemory()const;

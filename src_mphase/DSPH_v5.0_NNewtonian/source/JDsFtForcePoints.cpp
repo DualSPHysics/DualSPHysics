@@ -28,7 +28,7 @@
 #include "JDsFtForcePoints.h"
 #include "JLog2.h"
 #include "Functions.h"
-#include "FunctionsGeo3d.h"
+#include "FunGeo3d.h"
 #include "JDataArrays.h"
 #include "JVtkLib.h"
 #include "JSaveCsv2.h"
@@ -50,8 +50,8 @@ using namespace std;
 //==============================================================================
 /// Constructor.
 //==============================================================================
-JDsFtForcePoints::JDsFtForcePoints(JLog2 *log,bool iscpu,double dp,unsigned ftcount)
-  :Log(log),Cpu(iscpu),Dp(dp),FtCount(word(ftcount))
+JDsFtForcePoints::JDsFtForcePoints(bool iscpu,double dp,unsigned ftcount)
+  :Log(AppInfo.LogPtr()),Cpu(iscpu),Dp(dp),FtCount(word(ftcount))
 {
   ClassName="JDsFtForcePoints";
   FtRadius=NULL;  FtMass=NULL;

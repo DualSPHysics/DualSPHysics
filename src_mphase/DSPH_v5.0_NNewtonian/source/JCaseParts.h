@@ -220,10 +220,10 @@ private:
   tint3 RotationFree;
   tdouble3 LinearVelini;
   tdouble3 AngularVelini;
-  JLinearValue *LinearVel;    //<vs_fttvel>
-  JLinearValue *AngularVel;   //<vs_fttvel>
-  JLinearValue *LinearForce;  //<vs_fttvel>
-  JLinearValue *AngularForce; //<vs_fttvel>
+  JLinearValue *LinearVel;
+  JLinearValue *AngularVel;
+  JLinearValue *LinearForce;
+  JLinearValue *AngularForce;
 
 public:
   JCasePartBlock_Floating(const JCaseProperties* properties
@@ -243,10 +243,10 @@ public:
   tint3         GetRotationFree()   const{ return(RotationFree); }
   tdouble3      GetLinearVelini()   const{ return(LinearVelini); }
   tdouble3      GetAngularVelini()  const{ return(AngularVelini); }
-  JLinearValue* GetLinearVel()      const{ return(LinearVel); }    //<vs_fttvel>
-  JLinearValue* GetAngularVel()     const{ return(AngularVel); }   //<vs_fttvel>
-  JLinearValue* GetLinearForce()    const{ return(LinearForce); }  //<vs_fttvel>
-  JLinearValue* GetAngularForce()   const{ return(AngularForce); } //<vs_fttvel>
+  JLinearValue* GetLinearVel()      const{ return(LinearVel); }
+  JLinearValue* GetAngularVel()     const{ return(AngularVel); }
+  JLinearValue* GetLinearForce()    const{ return(LinearForce); }
+  JLinearValue* GetAngularForce()   const{ return(AngularForce); }
   void ReadXml(const JXml *sxml,TiXmlElement* ele);
   TiXmlElement* WriteXml(JXml *sxml,TiXmlElement* ele)const;
 };  

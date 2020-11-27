@@ -238,7 +238,7 @@ template <unsigned int blockSize> __global__ void KerReduPosLimits(unsigned n,fl
 /// En results[] cada bloque graba xmin,ymin,zmin,xmax,ymax,zmax agrupando por
 /// bloque.
 //==============================================================================
-void ReduPosLimits(unsigned nblocks,float *aux,tfloat3 &pmin,tfloat3 &pmax,JLog2 *log){
+void ReduPosLimits(unsigned nblocks,float *aux,tfloat3 &pmin,tfloat3 &pmax){
   unsigned n=nblocks;
   const unsigned smemSize=DIVBSIZE*sizeof(float)*6;
   dim3 sgrid=GetSimpleGridSize(n,DIVBSIZE);
@@ -376,7 +376,9 @@ template <unsigned int blockSize> __global__ void KerLimitsCellReduBase(unsigned
 /// En results[] cada bloque graba cxmin,cymin,czmin,cxmax,cymax,czmax codificando
 /// los valores como celdas en 2 unsigned y agrupando por bloque.
 //==============================================================================
-void LimitsCellRedu(unsigned cellcode,unsigned nblocks,unsigned *aux,tuint3 &celmin,tuint3 &celmax,JLog2 *log){
+void LimitsCellRedu(unsigned cellcode,unsigned nblocks,unsigned *aux
+  ,tuint3 &celmin,tuint3 &celmax)
+{
   unsigned n=nblocks;
   const unsigned smemSize=DIVBSIZE*sizeof(float)*6;
   dim3 sgrid=GetSimpleGridSize(n,DIVBSIZE);
@@ -463,7 +465,9 @@ template <unsigned int blockSize> __global__ void KerLimitsCell(unsigned n,unsig
 /// En results[] cada bloque graba cxmin,cymin,czmin,cxmax,cymax,czmax codificando
 /// los valores como celdas en 2 unsigned y agrupando por bloque.
 //==============================================================================
-void LimitsCell(unsigned np,unsigned pini,unsigned cellcode,const unsigned *dcell,const typecode *code,unsigned *aux,tuint3 &celmin,tuint3 &celmax,JLog2 *log){
+void LimitsCell(unsigned np,unsigned pini,unsigned cellcode,const unsigned *dcell
+  ,const typecode *code,unsigned *aux,tuint3 &celmin,tuint3 &celmax)
+{
   if(!np){//-Execution is canceled when no particles.
     celmin=TUint3(UINT_MAX);
     celmax=TUint3(0);
@@ -474,7 +478,7 @@ void LimitsCell(unsigned np,unsigned pini,unsigned cellcode,const unsigned *dcel
   dim3 sgrid=GetSimpleGridSize(np,DIVBSIZE);
   unsigned nblocks=sgrid.x*sgrid.y;
   KerLimitsCell<DIVBSIZE><<<sgrid,DIVBSIZE,smemSize>>>(np,pini,cellcode,dcell,code,aux);
-  LimitsCellRedu(cellcode,nblocks,aux,celmin,celmax,log);
+  LimitsCellRedu(cellcode,nblocks,aux,celmin,celmax);
 #ifdef DG_LimitsCell  //:delbeg:
   char cad[1024];
   sprintf(cad,"LimitsPos_%s> n:%u  pini:%u",(velrhop? "Fluid": "Bound"),np,pini); log->Print(cad);
@@ -741,7 +745,7 @@ template <unsigned int blockSize> __global__ void KerReduUintLimits(unsigned n,u
 /// Reduce los limites de valores unsigned a partir de results[].
 /// En results[] cada bloque graba vmin,vmax agrupando por bloque.
 //==============================================================================
-void ReduUintLimits(unsigned nblocks,unsigned *aux,unsigned &vmin,unsigned &vmax,JLog2 *log){
+void ReduUintLimits(unsigned nblocks,unsigned *aux,unsigned &vmin,unsigned &vmax){
   unsigned n=nblocks;
   const unsigned smemSize=DIVBSIZE*sizeof(unsigned)*2;
   dim3 sgrid=GetSimpleGridSize(n,DIVBSIZE);
@@ -814,7 +818,7 @@ template <unsigned int blockSize> __global__ void KerReduUintSum(unsigned n,unsi
 /// Returns the sum of the values contained in aux[].
 /// Devuelve la suma de los valores contenidos en aux[].
 //==============================================================================
-unsigned ReduUintSum(unsigned nblocks,unsigned *aux,JLog2 *log){
+unsigned ReduUintSum(unsigned nblocks,unsigned *aux){
   unsigned n=nblocks;
   const unsigned smemSize=DIVBSIZE*sizeof(unsigned);
   dim3 sgrid=GetSimpleGridSize(n,DIVBSIZE);
@@ -866,7 +870,7 @@ unsigned ReduUintSum(unsigned nblocks,unsigned *aux,JLog2 *log){
 ////==============================================================================
 //// Devuelve rango de particulas en el rango de celdas indicadas.
 ////==============================================================================
-//void GetRangeParticlesCells(unsigned celini,unsigned celfin,const int2 *begcell,unsigned *aux,unsigned &pmin,unsigned &pmax,JLog2 *log){
+//void GetRangeParticlesCells(unsigned celini,unsigned celfin,const int2 *begcell,unsigned *aux,unsigned &pmin,unsigned &pmax){
 //  unsigned ncel=celfin-celini;
 //  if(!ncel){//-Si no hay celdas cancela proceso.
 //    pmin=UINT_MAX; pmax=0;
@@ -922,7 +926,7 @@ unsigned ReduUintSum(unsigned nblocks,unsigned *aux,JLog2 *log){
 ////==============================================================================
 //// Devuelve numero de particulas en el rango de celdas indicadas.
 ////==============================================================================
-//unsigned GetParticlesCells(unsigned celini,unsigned celfin,const int2 *begcell,unsigned *aux,JLog2 *log){
+//unsigned GetParticlesCells(unsigned celini,unsigned celfin,const int2 *begcell,unsigned *aux){
 //  unsigned ncel=celfin-celini;
 //  if(!ncel)return(0);//-Si no hay celdas cancela proceso.
 //  const unsigned smemSize=DIVBSIZE*sizeof(unsigned);

@@ -27,6 +27,9 @@
 //:# - Nuevos metodos FilterApply(), FilterList(), SortData(), FilterSortList()... (18-01-2020)
 //:# - Nuevos tipos int e int3. (19-02-2020)
 //:# - Nuevos metodos CreateArrayPtrXXX(). (04-03-2020)
+//:# - Parametro defvalue en metodos CreateArrayXXX() y CreateArrayPtrXXX(). (05-08-2020)
+//:# - Nuevos metodos CopyDataFrom(), EqualStructure(). (17-08-2020)
+//:# - Nuevos metodos ReverseArrayData(). (09-09-2020)
 //:#############################################################################
 
 /// \file JDataArrays.h \brief Declares the class \ref JDataArrays.
@@ -40,13 +43,6 @@
 #include <vector>
 #include <climits>
 
-//-Defines for normal exceptions for static methods.
-#ifndef Run_ExceptioonSta
-#define Run_ExceptioonSta(msg) RunExceptioonStatic(__FILE__,__LINE__,__func__,msg)
-#endif
-#ifndef Run_ExceptioonFileSta
-#define Run_ExceptioonFileSta(msg,file) RunExceptioonStatic(__FILE__,__LINE__,__func__,msg,file)
-#endif
 
 //##############################################################################
 //# JDataArrays
@@ -65,6 +61,7 @@ public:
     std::string fullname; ///<Name + other information. "name:outputformat:units", e.g. "velocity:%f:m/s"
     std::string keyname;  ///<Name for identification.
     TpTypeData type;      ///<Type of values.
+    int tag;              ///<Label variable for user purposes.
     unsigned count;       ///<Number of values in pointer.
     void *ptr;            ///<Data pointer [count].
     bool delptr;          ///<Automatically frees memory in destructor or Reset() method.
@@ -96,6 +93,9 @@ public:
   void Reset();
 
   void CopyFrom(const JDataArrays &arr);
+  void CopyDataFrom(const JDataArrays &arr,bool filterarrays);
+
+  bool EqualStructure(const JDataArrays &arr,bool cmptag=true)const;
 
   unsigned AddArray(std::string fullname,TpTypeData type,unsigned count,void *ptr,bool delptr);
   unsigned AddArray(std::string fullname,unsigned count,const byte     *ptr,bool delptr=false){ return(AddArray(fullname,TypeUchar  ,count,(void*)ptr,delptr)); }
@@ -109,33 +109,35 @@ public:
   unsigned AddArray(std::string fullname,unsigned count,const tfloat3  *ptr,bool delptr=false){ return(AddArray(fullname,TypeFloat3 ,count,(void*)ptr,delptr)); }
   unsigned AddArray(std::string fullname,unsigned count,const tdouble3 *ptr,bool delptr=false){ return(AddArray(fullname,TypeDouble3,count,(void*)ptr,delptr)); }
 
-  unsigned CreateArrayByte   (std::string fullname,unsigned count,byte     value=0          ,bool delptr=true){ return(AddArray(fullname,count,NewArrayByte   (count,true,value),delptr)); }
-  unsigned CreateArrayWord   (std::string fullname,unsigned count,word     value=0          ,bool delptr=true){ return(AddArray(fullname,count,NewArrayWord   (count,true,value),delptr)); }
-  unsigned CreateArrayUint   (std::string fullname,unsigned count,unsigned value=0          ,bool delptr=true){ return(AddArray(fullname,count,NewArrayUint   (count,true,value),delptr)); }
-  unsigned CreateArrayInt    (std::string fullname,unsigned count,int      value=0          ,bool delptr=true){ return(AddArray(fullname,count,NewArrayInt    (count,true,value),delptr)); }
-  unsigned CreateArrayFloat  (std::string fullname,unsigned count,float    value=0          ,bool delptr=true){ return(AddArray(fullname,count,NewArrayFloat  (count,true,value),delptr)); }
-  unsigned CreateArrayDouble (std::string fullname,unsigned count,double   value=0          ,bool delptr=true){ return(AddArray(fullname,count,NewArrayDouble (count,true,value),delptr)); }
-  unsigned CreateArrayUint3  (std::string fullname,unsigned count,tuint3   value=TUint3(0)  ,bool delptr=true){ return(AddArray(fullname,count,NewArrayUint3  (count,true,value),delptr)); }
-  unsigned CreateArrayInt3   (std::string fullname,unsigned count,tint3    value=TInt3(0)   ,bool delptr=true){ return(AddArray(fullname,count,NewArrayInt3   (count,true,value),delptr)); }
-  unsigned CreateArrayFloat3 (std::string fullname,unsigned count,tfloat3  value=TFloat3(0) ,bool delptr=true){ return(AddArray(fullname,count,NewArrayFloat3 (count,true,value),delptr)); }
-  unsigned CreateArrayDouble3(std::string fullname,unsigned count,tdouble3 value=TDouble3(0),bool delptr=true){ return(AddArray(fullname,count,NewArrayDouble3(count,true,value),delptr)); }
+  unsigned CreateArrayByte   (std::string fullname,unsigned count,bool defvalue=true,byte     value=0          ,bool delptr=true){ return(AddArray(fullname,count,NewArrayByte   (count,defvalue,value),delptr)); }
+  unsigned CreateArrayWord   (std::string fullname,unsigned count,bool defvalue=true,word     value=0          ,bool delptr=true){ return(AddArray(fullname,count,NewArrayWord   (count,defvalue,value),delptr)); }
+  unsigned CreateArrayUint   (std::string fullname,unsigned count,bool defvalue=true,unsigned value=0          ,bool delptr=true){ return(AddArray(fullname,count,NewArrayUint   (count,defvalue,value),delptr)); }
+  unsigned CreateArrayInt    (std::string fullname,unsigned count,bool defvalue=true,int      value=0          ,bool delptr=true){ return(AddArray(fullname,count,NewArrayInt    (count,defvalue,value),delptr)); }
+  unsigned CreateArrayFloat  (std::string fullname,unsigned count,bool defvalue=true,float    value=0          ,bool delptr=true){ return(AddArray(fullname,count,NewArrayFloat  (count,defvalue,value),delptr)); }
+  unsigned CreateArrayDouble (std::string fullname,unsigned count,bool defvalue=true,double   value=0          ,bool delptr=true){ return(AddArray(fullname,count,NewArrayDouble (count,defvalue,value),delptr)); }
+  unsigned CreateArrayUint3  (std::string fullname,unsigned count,bool defvalue=true,tuint3   value=TUint3(0)  ,bool delptr=true){ return(AddArray(fullname,count,NewArrayUint3  (count,defvalue,value),delptr)); }
+  unsigned CreateArrayInt3   (std::string fullname,unsigned count,bool defvalue=true,tint3    value=TInt3(0)   ,bool delptr=true){ return(AddArray(fullname,count,NewArrayInt3   (count,defvalue,value),delptr)); }
+  unsigned CreateArrayFloat3 (std::string fullname,unsigned count,bool defvalue=true,tfloat3  value=TFloat3(0) ,bool delptr=true){ return(AddArray(fullname,count,NewArrayFloat3 (count,defvalue,value),delptr)); }
+  unsigned CreateArrayDouble3(std::string fullname,unsigned count,bool defvalue=true,tdouble3 value=TDouble3(0),bool delptr=true){ return(AddArray(fullname,count,NewArrayDouble3(count,defvalue,value),delptr)); }
 
-  byte*     CreateArrayPtrByte   (std::string fullname,unsigned count,byte     value=0          ,bool delptr=true){ return((byte*)    GetArrayByte   (CreateArrayByte   (fullname,count,value,delptr))); }
-  word*     CreateArrayPtrWord   (std::string fullname,unsigned count,word     value=0          ,bool delptr=true){ return((word*)    GetArrayWord   (CreateArrayWord   (fullname,count,value,delptr))); }
-  unsigned* CreateArrayPtrUint   (std::string fullname,unsigned count,unsigned value=0          ,bool delptr=true){ return((unsigned*)GetArrayUint   (CreateArrayUint   (fullname,count,value,delptr))); }
-  int*      CreateArrayPtrInt    (std::string fullname,unsigned count,int      value=0          ,bool delptr=true){ return((int*)     GetArrayInt    (CreateArrayInt    (fullname,count,value,delptr))); }
-  float*    CreateArrayPtrFloat  (std::string fullname,unsigned count,float    value=0          ,bool delptr=true){ return((float*)   GetArrayFloat  (CreateArrayFloat  (fullname,count,value,delptr))); }
-  double*   CreateArrayPtrDouble (std::string fullname,unsigned count,double   value=0          ,bool delptr=true){ return((double*)  GetArrayDouble (CreateArrayDouble (fullname,count,value,delptr))); }
-  tuint3*   CreateArrayPtrUint3  (std::string fullname,unsigned count,tuint3   value=TUint3(0)  ,bool delptr=true){ return((tuint3*)  GetArrayUint3  (CreateArrayUint3  (fullname,count,value,delptr))); }
-  tint3*    CreateArrayPtrInt3   (std::string fullname,unsigned count,tint3    value=TInt3(0)   ,bool delptr=true){ return((tint3*)   GetArrayInt3   (CreateArrayInt3   (fullname,count,value,delptr))); }
-  tfloat3*  CreateArrayPtrFloat3 (std::string fullname,unsigned count,tfloat3  value=TFloat3(0) ,bool delptr=true){ return((tfloat3*) GetArrayFloat3 (CreateArrayFloat3 (fullname,count,value,delptr))); }
-  tdouble3* CreateArrayPtrDouble3(std::string fullname,unsigned count,tdouble3 value=TDouble3(0),bool delptr=true){ return((tdouble3*)GetArrayDouble3(CreateArrayDouble3(fullname,count,value,delptr))); }
+  byte*     CreateArrayPtrByte   (std::string fullname,unsigned count,bool defvalue=true,byte     value=0          ,bool delptr=true){ return((byte*)    GetArrayByte   (CreateArrayByte   (fullname,count,defvalue,value,delptr))); }
+  word*     CreateArrayPtrWord   (std::string fullname,unsigned count,bool defvalue=true,word     value=0          ,bool delptr=true){ return((word*)    GetArrayWord   (CreateArrayWord   (fullname,count,defvalue,value,delptr))); }
+  unsigned* CreateArrayPtrUint   (std::string fullname,unsigned count,bool defvalue=true,unsigned value=0          ,bool delptr=true){ return((unsigned*)GetArrayUint   (CreateArrayUint   (fullname,count,defvalue,value,delptr))); }
+  int*      CreateArrayPtrInt    (std::string fullname,unsigned count,bool defvalue=true,int      value=0          ,bool delptr=true){ return((int*)     GetArrayInt    (CreateArrayInt    (fullname,count,defvalue,value,delptr))); }
+  float*    CreateArrayPtrFloat  (std::string fullname,unsigned count,bool defvalue=true,float    value=0          ,bool delptr=true){ return((float*)   GetArrayFloat  (CreateArrayFloat  (fullname,count,defvalue,value,delptr))); }
+  double*   CreateArrayPtrDouble (std::string fullname,unsigned count,bool defvalue=true,double   value=0          ,bool delptr=true){ return((double*)  GetArrayDouble (CreateArrayDouble (fullname,count,defvalue,value,delptr))); }
+  tuint3*   CreateArrayPtrUint3  (std::string fullname,unsigned count,bool defvalue=true,tuint3   value=TUint3(0)  ,bool delptr=true){ return((tuint3*)  GetArrayUint3  (CreateArrayUint3  (fullname,count,defvalue,value,delptr))); }
+  tint3*    CreateArrayPtrInt3   (std::string fullname,unsigned count,bool defvalue=true,tint3    value=TInt3(0)   ,bool delptr=true){ return((tint3*)   GetArrayInt3   (CreateArrayInt3   (fullname,count,defvalue,value,delptr))); }
+  tfloat3*  CreateArrayPtrFloat3 (std::string fullname,unsigned count,bool defvalue=true,tfloat3  value=TFloat3(0) ,bool delptr=true){ return((tfloat3*) GetArrayFloat3 (CreateArrayFloat3 (fullname,count,defvalue,value,delptr))); }
+  tdouble3* CreateArrayPtrDouble3(std::string fullname,unsigned count,bool defvalue=true,tdouble3 value=TDouble3(0),bool delptr=true){ return((tdouble3*)GetArrayDouble3(CreateArrayDouble3(fullname,count,defvalue,value,delptr))); }
 
   void DeleteArray(unsigned idx);
   void DeleteArray(std::string keyname);
 
   void EraseArray(std::string keyname);
   void MoveArray(unsigned idx,unsigned idx2);
+
+  void ReverseArrayData(unsigned idx);
 
   unsigned Count()const{ return(unsigned(Arrays.size())); }
 

@@ -36,6 +36,7 @@
 //:# - Nuevos metodo: Find(),FindValueStr(),FindValueDbl(). (02-07-2018)
 //:# - Muestra extension maxima de fichero permitida en caso de ser insuficiente. (21-10-2019)
 //:# - Mejora la gestion de excepciones. (06-05-2020)
+//:# - Nuevo metodo: ReadNextBool(). (19-08-2020)
 //:#############################################################################
 
 /// \file JReadDatafile.h \brief Declares the class \ref JReadDatafile.
@@ -94,6 +95,8 @@ public:
   std::string GetLine(int line)const;
   
   std::string ReadNextValue(bool in_line=false);
+
+  bool ReadNextBool(bool in_line=false);
 
   double ReadNextDouble(bool in_line=false);
   tdouble3 ReadNextDouble3(bool in_line=false);

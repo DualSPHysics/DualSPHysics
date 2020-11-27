@@ -85,7 +85,7 @@ private:
 public:
   const word FloatingMk;   ///<Mkbound of the Floating body the mooring is linked to.
 
-  JDsMooredFloating(JLog2 *log,word fmk);
+  JDsMooredFloating(word fmk);
   ~JDsMooredFloating();
   void Reset();
 
@@ -142,7 +142,7 @@ private:
   void FreeFairMemory();
 
 public:
-  JDsMooredFloatings(JLog2 *log,std::string dircase,std::string casename,tfloat3 gravity);
+  JDsMooredFloatings(std::string dircase,std::string casename,tfloat3 gravity);
   ~JDsMooredFloatings();
   void Reset();
   void LoadXml(const JXml *sxml,const std::string &place);

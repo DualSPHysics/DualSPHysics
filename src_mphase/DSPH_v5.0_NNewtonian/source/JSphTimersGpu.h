@@ -56,12 +56,11 @@ typedef enum{
   ,TMG_SuResizeNp=14
   ,TMG_SuDownData=15
   ,TMG_SuSavePart=16
-  ,TMG_SuChrono=17           //<vs_innlet>
-  ,TMG_SuBoundCorr=18        //<vs_innlet>
-  ,TMG_SuInOut=19            //<vs_innlet>
+  ,TMG_SuChrono=17
+  ,TMG_SuBoundCorr=18
+  ,TMG_SuInOut=19
 }CsTypeTimerGPU;
-//#define TMG_COUNT 17       //<vs_no_innlet>
-#define TMG_COUNT 20         //<vs_innlet>
+#define TMG_COUNT 20
 
 typedef StSphTimerGpu TimersGpu[TMG_COUNT];
 
@@ -87,9 +86,9 @@ inline const char* TmgGetName(CsTypeTimerGPU ct){
     case TMG_SuResizeNp:        return("SU-ResizeNp");
     case TMG_SuDownData:        return("SU-DownData");
     case TMG_SuSavePart:        return("SU-SavePart");
-    case TMG_SuChrono:          return("SU-Chrono");             //<vs_chroono>
-    case TMG_SuBoundCorr:       return("SU-BoundCorr");          //<vs_innlet>
-    case TMG_SuInOut:           return("SU-InOut");              //<vs_innlet>
+    case TMG_SuChrono:          return("SU-Chrono");
+    case TMG_SuBoundCorr:       return("SU-BoundCorr");
+    case TMG_SuInOut:           return("SU-InOut");
   }
   return("???");
 }

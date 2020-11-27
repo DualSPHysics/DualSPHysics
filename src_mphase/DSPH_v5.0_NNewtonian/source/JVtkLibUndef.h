@@ -60,10 +60,16 @@ public:
   // Functions to create VTK files with shapes.
   //==============================================================================
   void SaveShapeVtk(std::string file,std::string varname,bool createpath=true){}
+  void AddShapePoint(const tfloat3 &pt,int value){}
+  void AddShapePoint(const tdouble3 &pt,int value){}
+  void AddShapePoints(unsigned np,const tfloat3 *vp,int value){}
+  void AddShapePoints(unsigned np,const tdouble3 *vp,int value){}
   void AddShapeLine(const tfloat3  &pt1,const tfloat3  &pt2,int value){}
   void AddShapeLine(const tdouble3 &pt1,const tdouble3 &pt2,int value){}
   void AddShapePolyLine(unsigned np,const tfloat3  *vp,int value){}
   void AddShapePolyLine(unsigned np,const tdouble3 *vp,int value){}
+  void AddShapeTriangle(const tfloat3 &pt1,const tfloat3 &pt2,const tfloat3 &pt3,int value){}
+  void AddShapeTriangle(const tdouble3 &pt1,const tdouble3 &pt2,const tdouble3 &pt3,int value){}
   void AddShapeQuad(const tfloat3  &pt1,const tfloat3  &pt2,const tfloat3  &pt3,const tfloat3  &pt4,int value){}
   void AddShapeQuad(const tdouble3 &pt1,const tdouble3 &pt2,const tdouble3 &pt3,const tdouble3 &pt4,int value){}
   void AddShapeQuad(const tfloat3  &pt,const tfloat3  &vec,float  size,int value){}
@@ -96,8 +102,8 @@ public:
   //==============================================================================
   static void* CreateMkShapes(const std::vector<std::string> &vtkfiles){ return(NULL); }
   static void DeleteMkShapes(void* ptr_vtksimple){}
-  static void CreateOBJsByMk(void* ptr_vtksimple,std::string filein,std::string filesout
-    ,const std::vector<unsigned> &mkbounds,unsigned mkboundfirst,TpModeNormal normalmode){}
+  static unsigned CreateOBJsByMk(void* ptr_vtksimple,std::string filein,std::string filesout
+    ,const std::vector<unsigned> &mkbounds,unsigned mkboundfirst,TpModeNormal normalmode){ return(0); }
 
 };
 #endif

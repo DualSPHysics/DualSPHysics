@@ -31,7 +31,7 @@ class JWaveGen
 {
 public:
   StMotionData MotionData;
-  JWaveGen(bool useomp,bool usegpu,JLog2* log,std::string dirdata,const JXml *sxml,const std::string &place,tdouble3 gravity3){}
+  JWaveGen(bool useomp,bool usegpu,JLog2 *log,std::string dirdata,const JXml *sxml,const std::string &place,tdouble3 gravity3){}
   ~JWaveGen(){}
   static bool Available(){ return(false); }
   bool ConfigPaddle(word mkbound,word motionref,unsigned idbegin,unsigned np){ return(false); }
