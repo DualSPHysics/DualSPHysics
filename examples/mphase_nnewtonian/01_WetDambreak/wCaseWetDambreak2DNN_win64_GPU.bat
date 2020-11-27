@@ -56,8 +56,8 @@ set dirout2=%dirout%\particles
 if not "%ERRORLEVEL%" == "0" goto fail
 
 rem Executes PartVTKOut to create VTK files with excluded particles.
-%partvtkout% -dirin %diroutdata% -savevtk %dirout2%/PartFluidOut -SaveResume %dirout2%/_ResumeFluidOut
-if not "%ERRORLEVEL%" == "0" goto fail
+REM %partvtkout% -dirin %diroutdata% -savevtk %dirout2%/PartFluidOut -SaveResume %dirout2%/_ResumeFluidOut
+REM if not "%ERRORLEVEL%" == "0" goto fail
 
 rem Executes IsoSurface to create VTK files with slices of surface.
 set dirout2=%dirout%\surface

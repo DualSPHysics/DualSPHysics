@@ -65,8 +65,8 @@ ${partvtk} -dirin ${diroutdata} -savevtk ${dirout2}/PartFluid -onlytype:-all,flu
 if [ $? -ne 0 ] ; then fail; fi
 
 # Executes PartVTKOut to create VTK files with excluded particles.
-${partvtkout} -dirin ${diroutdata} -savevtk ${dirout2}/PartFluidOut -SaveResume ${dirout2}/_ResumeFluidOut
-if [ $? -ne 0 ] ; then fail; fi
+# ${partvtkout} -dirin ${diroutdata} -savevtk ${dirout2}/PartFluidOut -SaveResume ${dirout2}/_ResumeFluidOut
+# if [ $? -ne 0 ] ; then fail; fi
 
 # Executes IsoSurface to create VTK files with slices of surface.
 export dirout2=${dirout}/surface

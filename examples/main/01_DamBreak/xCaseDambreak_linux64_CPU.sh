@@ -67,8 +67,8 @@ ${partvtk} -dirin ${diroutdata} -savevtk ${dirout2}/PartFluid -onlytype:-all,+fl
 if [ $? -ne 0 ] ; then fail; fi
 
 # Executes PartVTKOut to create VTK files with excluded particles.
-${partvtkout} -dirin ${diroutdata} -savevtk ${dirout2}/PartFluidOut -SaveResume ${dirout2}/_ResumeFluidOut
-if [ $? -ne 0 ] ; then fail; fi
+# ${partvtkout} -dirin ${diroutdata} -savevtk ${dirout2}/PartFluidOut -SaveResume ${dirout2}/_ResumeFluidOut
+# if [ $? -ne 0 ] ; then fail; fi
 
 # Executes MeasureTool to create VTK files with velocity and a CSV file with velocity at each simulation time.
 export dirout2=${dirout}/measuretool
@@ -84,9 +84,9 @@ ${measuretool} -dirin ${diroutdata} -points CaseDambreak_PointsPressure_Correct.
 if [ $? -ne 0 ] ; then fail; fi
 
 # Executes ComputeForces to create a CSV file with force at each simulation time.
-export dirout2=${dirout}/forces
-${computeforces} -dirin ${diroutdata} -onlymk:20 -viscoart:0.1 -savecsv ${dirout2}/_ForceBuilding
-if [ $? -ne 0 ] ; then fail; fi
+# export dirout2=${dirout}/forces
+# ${computeforces} -dirin ${diroutdata} -onlymk:20 -viscoart:0.1 -savecsv ${dirout2}/_ForceBuilding
+# if [ $? -ne 0 ] ; then fail; fi
 
 # Executes IsoSurface to create VTK files with surface fluid and slices of surface.
 export dirout2=${dirout}/surface
@@ -97,9 +97,9 @@ ${isosurface} -dirin ${diroutdata} -saveiso ${dirout2}/Surface -vars:-all,vel,rh
 if [ $? -ne 0 ] ; then fail; fi
 
 # Executes FlowTool to create VTK files with particles assigned to different zones and a CSV file with information of each zone.
-export dirout2=${dirout}/flow
-${flowtool} -dirin ${diroutdata} -fileboxes CaseDambreak_FileBoxes.txt -savecsv ${dirout2}/_ResultFlow.csv -savevtk ${dirout2}/Boxes.vtk
-if [ $? -ne 0 ] ; then fail; fi
+# export dirout2=${dirout}/flow
+# ${flowtool} -dirin ${diroutdata} -fileboxes CaseDambreak_FileBoxes.txt -savecsv ${dirout2}/_ResultFlow.csv -savevtk ${dirout2}/Boxes.vtk
+# if [ $? -ne 0 ] ; then fail; fi
 
 fi
 if [ $option != 3 ];then
