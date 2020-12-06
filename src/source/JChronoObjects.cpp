@@ -664,7 +664,6 @@ void JChronoObjects::ConfigOmp(){
   //-Determine number of threads for host with OpenMP. | Determina numero de threads por host con OpenMP.
   if (OmpThreads<=0)OmpThreads=max(omp_get_num_procs(), 1);
   if (OmpThreads>OMP_MAXTHREADS)OmpThreads=OMP_MAXTHREADS;
-  omp_set_num_threads(OmpThreads);
   Log->Printf("Threads by host for parallel execution in Chrono: %d", OmpThreads);
 #else
   OmpThreads=1;

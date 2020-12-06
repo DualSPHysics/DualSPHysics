@@ -27,6 +27,7 @@
 //:# - Improved exception managment. (18-03-2020)
 //:# - Comprueba opcion active en elementos de primer y segundo nivel. (19-03-2020)  
 //:# - Cambio de nombre de J.TimeOut a J.DsOutputTime. (28-06-2020)
+//:# - Elimina uso interno de JLog. (06-12-2020)
 //:#############################################################################
 
 /// \file JDsOutputTime.h \brief Declares the class \ref JDsOutputTime.
@@ -40,7 +41,6 @@
 
 class JXml;
 class TiXmlElement;
-class JLog2;
 
 //##############################################################################
 //# XML format in _FmtXML_TimeOut.xml.
@@ -81,7 +81,8 @@ public:
   void Config(double timeoutdef);
   void Config(std::string filexml,const std::string &place,double timeoutdef);
   bool UseSpecialConfig()const{ return(SpecialConfig); }
-  void VisuConfig(std::string txhead,std::string txfoot);
+  void VisuConfig(std::string txhead,std::string txfoot)const;
+  void GetConfig(std::string txhead,std::string txfoot,std::vector<std::string> &lines)const;
   double GetNextTime(double t);
 };
 

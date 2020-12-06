@@ -328,6 +328,8 @@ void JSphGpuSingle::RunPeriodic(){
 /// Ejecuta divide de particulas en celdas.
 //==============================================================================
 void JSphGpuSingle::RunCellDivide(bool updateperiodic){
+  //JDebugSphGpu::SaveVtk("_DG_Divide_Pre.vtk",Nstep,0,Np,"all",this);
+
   DivData=DivDataGpuNull();
   //-Creates new periodic particles and marks the old ones to be ignored.
   //-Crea nuevas particulas periodicas y marca las viejas para ignorarlas.
