@@ -395,7 +395,8 @@ std::string JDataArrays::GetArrayUnits(unsigned idx)const{
 /// Returns units according name of array.
 //==============================================================================
 std::string JDataArrays::GetUnitsByName(std::string keyname){
-  const string var=fun::StrLower(keyname);
+  string varlw=fun::StrLower(keyname);
+  const string var=fun::StrSplit(".",varlw);
   if(var=="pos")return(" [m]");
   else if(var=="vel")return(" [m/s]");
   else if(var=="veldir")return(" [m/s]");

@@ -172,9 +172,9 @@ __device__ void ParticleRange(const int &c2,const int &c3
 __device__ float Distance2(const float4 &pscellp1,const float4 &pscellp2
   ,const float &poscellsize)
 {
-  const float drx=pscellp1.x-pscellp2.x + poscellsize*(CEL_GetX(__float_as_int(pscellp1.w))-CEL_GetX(__float_as_int(pscellp2.w)));
-  const float dry=pscellp1.y-pscellp2.y + poscellsize*(CEL_GetY(__float_as_int(pscellp1.w))-CEL_GetY(__float_as_int(pscellp2.w)));
-  const float drz=pscellp1.z-pscellp2.z + poscellsize*(CEL_GetZ(__float_as_int(pscellp1.w))-CEL_GetZ(__float_as_int(pscellp2.w)));
+  const float drx=pscellp1.x-pscellp2.x + poscellsize*(CEL_GetfX(pscellp1.w)-CEL_GetfX(pscellp2.w));
+  const float dry=pscellp1.y-pscellp2.y + poscellsize*(CEL_GetfY(pscellp1.w)-CEL_GetfY(pscellp2.w));
+  const float drz=pscellp1.z-pscellp2.z + poscellsize*(CEL_GetfZ(pscellp1.w)-CEL_GetfZ(pscellp2.w));
   return(drx*drx + dry*dry + drz*drz);
 }
 

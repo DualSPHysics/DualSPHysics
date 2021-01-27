@@ -2144,7 +2144,11 @@ void JSph::InitRun(unsigned np,const unsigned *idp,const tdouble3 *pos){
   if(GaugeSystem->GetCount())GaugeSystem->VisuConfig("GaugeSystem configuration:"," ");
 
   //-Shows configuration of JDsOutputTime.
-  if(OutputTime->UseSpecialConfig())OutputTime->VisuConfig("TimeOut configuration:"," ");
+  if(OutputTime->UseSpecialConfig()){
+    vector<string> lines;
+    OutputTime->GetConfig("TimeOut configuration:"," ",lines);
+    Log->Print(lines);
+  }
 
   Part=PartIni; Nstep=0; PartNstep=0; PartOut=0;
   TimeStep=TimeStepIni; TimeStepM1=TimeStep;

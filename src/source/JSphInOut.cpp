@@ -235,14 +235,14 @@ void JSphInOut::AllocateMemory(unsigned listsize){
     VelData  =new tfloat4 [size*2];
     Zsurf    =new float   [size];
     {
-      memset(Planes   ,255,sizeof(tplane3f)*size);
-      memset(CfgZone  ,255,sizeof(byte    )*size);
-      memset(CfgUpdate,255,sizeof(byte    )*size);
-      memset(Width    ,255,sizeof(float   )*size);
-      memset(DirData  ,255,sizeof(tfloat3 )*size);
-      memset(DirVel   ,255,sizeof(tfloat3 )*size);
-      memset(VelData  ,255,sizeof(tfloat4 )*size*2);
-      memset(Zsurf    ,255,sizeof(float   )*size);
+      memset(Planes   ,0,sizeof(tplane3f)*size);
+      memset(CfgZone  ,0,sizeof(byte    )*size);
+      memset(CfgUpdate,0,sizeof(byte    )*size);
+      memset(Width    ,0,sizeof(float   )*size);
+      memset(DirData  ,0,sizeof(tfloat3 )*size);
+      memset(DirVel   ,0,sizeof(tfloat3 )*size);
+      memset(VelData  ,0,sizeof(tfloat4 )*size*2);
+      memset(Zsurf    ,0,sizeof(float   )*size);
     }
   }
   catch(const std::bad_alloc){

@@ -285,6 +285,13 @@ size_t Malloc(int2 **ptr,unsigned count){
 }
 
 //==============================================================================
+/// Allocates memory for int3 on GPU.
+//==============================================================================
+size_t Malloc(int3 **ptr,unsigned count){
+  size_t size=sizeof(int3)*count;  cudaMalloc((void**)ptr,size);  return(size);
+}
+
+//==============================================================================
 /// Allocates memory for float on GPU.
 //==============================================================================
 size_t Malloc(float **ptr,unsigned count){
@@ -499,6 +506,23 @@ tint2* ToHostInt2(unsigned pini,unsigned n,const int2 *vg){
   try{
     tint2 *v=new tint2[n];
     cudaMemcpy(v,vg+pini,sizeof(tint2)*n,cudaMemcpyDeviceToHost);
+    Check_CudaErroorFun("After cudaMemcpy().");
+    return(v);
+  }
+  catch(const std::bad_alloc){
+    fun::Run_ExceptioonFun(fun::PrintStr("Could not allocate the requested memory (np=%u).",n));
+  }
+  return(NULL);
+}
+
+//==============================================================================
+/// Returns dynamic pointer with tint3 data. (this pointer must be deleted)
+//==============================================================================
+tint3* ToHostInt3(unsigned pini,unsigned n,const int3 *vg){
+  Check_CudaErroorFun("At the beginning.");
+  try{
+    tint3 *v=new tint3[n];
+    cudaMemcpy(v,vg+pini,sizeof(tint3)*n,cudaMemcpyDeviceToHost);
     Check_CudaErroorFun("After cudaMemcpy().");
     return(v);
   }

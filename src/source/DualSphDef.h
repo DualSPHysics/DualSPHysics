@@ -548,13 +548,19 @@ inline const char* GetNameDivision(TpMgDivMode axis){
 #define CEL_MOVX CEL1_MOVX  //-Selected displacement to obaint X cell.
 #define CEL_MOVY CEL1_MOVY  //-Selected displacement to obaint Y cell.
 //-Cell methods:
-#define CEL_GetPartX(cel)  (cel&CEL_X)                        //-Returns bits of X cell.
-#define CEL_GetPartY(cel)  (cel&CEL_Y)                        //-Returns bits of Y cell.
-#define CEL_GetPartZ(cel)  (cel&CEL_Z)                        //-Returns bits of Z cell.
-#define CEL_GetX(cel)      (cel>>CEL_MOVX)                    //-Returns X coordinate of the cell.
-#define CEL_GetY(cel)      (CEL_GetPartY(cel)>>CEL_MOVY)      //-Returns Y coordinate of the cell.
-#define CEL_GetZ(cel)      (cel&CEL_Z)                        //-Returns Z coordinate of the cell.
-#define CEL_Code(cx,cy,cz) ((cx<<CEL_MOVX)|(cy<<CEL_MOVY)|cz) //-Returns code for cell (cx,cy,cz).
+#define CEL_GetPartX(cel)  (cel&CEL_X)                        ///<Returns bits of X cell.
+#define CEL_GetPartY(cel)  (cel&CEL_Y)                        ///<Returns bits of Y cell.
+#define CEL_GetPartZ(cel)  (cel&CEL_Z)                        ///<Returns bits of Z cell.
+#define CEL_GetX(cel)      (cel>>CEL_MOVX)                    ///<Returns X coordinate of the cell.
+#define CEL_GetY(cel)      (CEL_GetPartY(cel)>>CEL_MOVY)      ///<Returns Y coordinate of the cell.
+#define CEL_GetZ(cel)      (cel&CEL_Z)                        ///<Returns Z coordinate of the cell.
+#define CEL_Code(cx,cy,cz) ((cx<<CEL_MOVX)|(cy<<CEL_MOVY)|cz) ///<Returns code for cell (cx,cy,cz).
+
+//-Returns cell coordinates from float number (for GPU).
+#define CEL_GetfX(celf) (int(CEL_GetX(__float_as_uint(celf)))) ///<Returns X coordinate of the cell (for GPU).
+#define CEL_GetfY(celf) (int(CEL_GetY(__float_as_uint(celf)))) ///<Returns Y coordinate of the cell (for GPU).
+#define CEL_GetfZ(celf) (int(CEL_GetZ(__float_as_uint(celf)))) ///<Returns Z coordinate of the cell (for GPU).
+
 
 
 #endif

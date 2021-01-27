@@ -19,10 +19,8 @@
 /// \file JDsOutputTime.cpp \brief Implements the class \ref JDsOutputTime.
 
 #include "JDsOutputTime.h"
-#include "JAppInfo.h"
 #include "Functions.h"
 #include "JXml.h"
-#include "JLog2.h"
 #include <cstring>
 #include <cfloat>
 
@@ -130,22 +128,27 @@ void JDsOutputTime::LoadXml(const JXml *sxml,const std::string &place){
 }
 
 //==============================================================================
-/// Shows object configuration using Log.
+/// Shows object configuration.
 //==============================================================================
-void JDsOutputTime::VisuConfig(std::string txhead,std::string txfoot){
-  JLog2 *log=AppInfo.LogPtr();
-  if(!txhead.empty()){
-    if(log)log->Print(txhead); 
-    else printf("%s\n",txhead.c_str());
-  }
+void JDsOutputTime::VisuConfig(std::string txhead,std::string txfoot)const{
+  if(!txhead.empty())printf("%s\n",txhead.c_str());
   for(unsigned c=0;c<GetCount();c++){
-    if(log)log->Printf("  Time: %f  (tout:%f)",Times[c].time,Times[c].tout);
-    else printf("  Time: %f  (tout:%f)\n",Times[c].time,Times[c].tout);
+    printf("  Time: %f  (tout:%f)\n",Times[c].time,Times[c].tout);
   }
-  if(!txfoot.empty()){
-    if(log)log->Print(txfoot);
-    else printf("%s\n",txfoot.c_str());
+  if(!txfoot.empty())printf("%s\n",txfoot.c_str());
+}
+
+//==============================================================================
+/// Returns configuration information.
+//==============================================================================
+void JDsOutputTime::GetConfig(std::string txhead,std::string txfoot
+  ,std::vector<std::string> &lines)const
+{
+  if(!txhead.empty())lines.push_back(txhead); 
+  for(unsigned c=0;c<GetCount();c++){
+    lines.push_back(fun::PrintStr("  Time: %f  (tout:%f)",Times[c].time,Times[c].tout)); 
   }
+  if(!txfoot.empty())lines.push_back(txfoot); 
 }
 
 //==============================================================================

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<case app="GenCase v5.0.222 (16-11-2020)" date="27-11-2020 18:34:41">
-    <casedef requiredversion="v5.0.222">
+<case app="GenCase v5.0.228 (27-01-2021)" date="27-01-2021 00:39:59">
+    <casedef requiredversion="v5.0.228">
         <constantsdef>
             <lattice bound="2" fluid="1" comment="Type of lattice to create the initial particles (default=1)" />
             <gravity x="0" y="0" z="-9.81" comment="Gravitational acceleration" units_comment="m/s^2" />
@@ -510,6 +510,7 @@
                     <debugout />
                     <shapeout file="fshape_1" reset="false" />
                     <shapeout file="fshape_2" />
+                    <shapeout file="fshape_3" reset="false" savenormal="1.5" />
                     <cellsout file="filecellsAll" />
                     <cellsout file="filecellsBound5" mkbound="5" />
                     <cellsout file="filecellsFluid5" mkfluid="5" />

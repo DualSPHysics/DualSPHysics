@@ -30,7 +30,7 @@
  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
 
 
-BoundaryVTK v5.0.122 (09-07-2020)
+BoundaryVTK v5.0.147 (27-01-2021)
 ==================================
 LoadDsphConfig> .../bin/windows/DsphConfig.xml
 Information about parameters of execution:
@@ -55,7 +55,7 @@ Information about parameters of execution:
                          only the previous -loadvtk instruction and can not be
                          used with -onlyid
     -onlyid:<values>     Indicates the code of object of the shapes to be
-                         loaded, only affects the previous -loadvtk instruction
+                         loaded, only affects the previous -loadvtk 
     -changemk:<value>    Changes the mk of the loaded shapes to a given value,
                          only affects the previous -loadvtk instruction 
 
@@ -84,6 +84,14 @@ Information about parameters of execution:
                          directory where is the file Part_0000.bi4 to load
                          initial positions of particles.
                          Can not be used with -motiontime and -motiondatatime
+
+    -motionfile file.fbi4  Indicates the file where reference position of
+                         particles are loaded to generate the floating body
+                         Can not be used with -motiontime and -motiondatatime
+
+    -motionfocus:<mk>    Indicates the mk to fix this body and move the rest
+                         around. This option is only available when motion is
+                         computed from particle data.
 
   Define output files:
     -savevtk <file.vtk>  Generates vtk(polydata) files with the loaded shapes

@@ -30,6 +30,7 @@
 //:# - Parametro defvalue en metodos CreateArrayXXX() y CreateArrayPtrXXX(). (05-08-2020)
 //:# - Nuevos metodos CopyDataFrom(), EqualStructure(). (17-08-2020)
 //:# - Nuevos metodos ReverseArrayData(). (09-09-2020)
+//:# - Determina unidades para variables de una componente (e.g. Vel.x). (20-12-2020)
 //:#############################################################################
 
 /// \file JDataArrays.h \brief Declares the class \ref JDataArrays.
