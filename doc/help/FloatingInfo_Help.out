@@ -30,7 +30,7 @@
  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
 
 
-FloatingInfo v5.0.122 (09-07-2020)
+FloatingInfo v5.0.147 (27-01-2021)
 ===================================
 LoadDsphConfig> .../bin/windows/DsphConfig.xml
 Information about parameters of execution:
@@ -44,6 +44,7 @@ Information about parameters of execution:
 
   Define input data:
     -dirin <dir>     Directory with particles data
+    -filein <file>   Input file name (PartFloat.fbi4 by default)
     -first:<int>     Indicates the first file to be computed
     -last:<int>      Indicates the last file to be computed
     -files:<values>  Indicates the number of files to be processed

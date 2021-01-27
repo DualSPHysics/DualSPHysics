@@ -24,7 +24,7 @@
  along with DualSPHysics. If not, see <http://www.gnu.org/licenses/>.
 
 
-DualSPHysics5 v5.0.143 (31-07-2020)
+DualSPHysics5 v5.0.168 (27-01-2021)
 ====================================
 LoadDsphConfig> .../bin/windows/DsphConfig.xml
 Information about execution parameters:
@@ -115,7 +115,7 @@ Information about execution parameters:
     -svtimers:<0/1>  Obtains timing for each individual process
     -svdomainvtk:<0/1>  Generates VTK file with domain limits
     -svpips:<mode>:n  Compute PIPS of simulation each n steps (100 by default),
-       mode options: 0=disabled, 1=no save details (by default), 2=save details
+       mode options: 0=disabled (by default), 1=no save details, 2=save details
 
     -createdirs:<0/1> Creates full path for output files
                       (value by default is read from DsphConfig.xml or 1)

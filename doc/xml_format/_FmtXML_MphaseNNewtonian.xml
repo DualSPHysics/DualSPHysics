@@ -25,6 +25,7 @@
 		<parameter key="RheologyTreatment" value="2" comment="Reology formulation 1:Single-phase classic, 2: Single and multi-phase  (default=1)" />
 		<parameter key="VelocityGradientType" value="1" comment="Velocity gradient formulation 1:FDA, 2:SPH (default=1)" />
 		<parameter key="ViscoTreatment" value="2" comment="Viscosity formulation 1:Artificial, 2:Laminar+SPS, 3:Constitutive  eq. (default=1)" />
+		<parameter key="RelaxationDt" value="0.2" "Relaxation parameter for the viscous time step restricition(default=0.2)" />
 	</parameters>
 </execution>
 
