@@ -1,7 +1,5 @@
-DualSPHysics5             v5.0.164            21-11-2020
-GenCase                   v5.0.222            16-11-2020
-GenCase [MkWord]          v5.0.222            16-11-2020
-IsoSurface                v5.0.142            22-10-2020
-MeasureTool               v5.0.142            22-10-2020
-PartVTK                   v5.0.142            22-10-2020
-DualSPHysics5-NNewtonian  v1.005(v5.0.164)    21-11-2020
+GenCase           v5.0.229    29-01-2021
+GenCase [MkWord]  v5.0.229    29-01-2021
+IsoSurface        v5.0.147    27-01-2021
+MeasureTool       v5.0.147    27-01-2021
+PartVTK           v5.0.147    27-01-2021
