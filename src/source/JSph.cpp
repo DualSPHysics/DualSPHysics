@@ -2184,8 +2184,12 @@ void JSph::CalcMotionWaveGen(double stepdt){
   if(WaveGen){
     const bool svdata=(TimeStep+stepdt>=TimePartNext);
     for(unsigned c=0;c<WaveGen->GetCount();c++){
-      if(motsim)DsMotion->SetMotionData   (WaveGen->GetMotion   (svdata,c,TimeStep,stepdt));
-      else      DsMotion->SetMotionDataAce(WaveGen->GetMotionAce(svdata,c,TimeStep,stepdt));
+      const StMotionData m=(motsim? WaveGen->GetMotion(svdata,c,TimeStep,stepdt): WaveGen->GetMotionAce(svdata,c,TimeStep,stepdt));
+      //Log->Printf("%u> t:%f  tp:%d  mx:%f  SetMotionData-WaveGen",Nstep,TimeStep,m.type,m.linmov.x);
+      if(m.type!=MOTT_None){
+        if(motsim)DsMotion->SetMotionData   (m);
+        else      DsMotion->SetMotionDataAce(m);
+      }
     }
   }
 }

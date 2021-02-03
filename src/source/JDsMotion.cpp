@@ -123,7 +123,7 @@ bool JDsMotion::ProcesTime(TpMotionMode mode,double timestep,double dt){
   if(mode==MOMT_Simple)ActiveMotion=Mot->ProcesTimeSimple(timestep+TimeMod,dt);
   if(mode==MOMT_Ace2dt)ActiveMotion=Mot->ProcesTimeAce(timestep+TimeMod,dt);
   //-Load motion data in ObjMotion[].
-  if(ActiveMotion)for(unsigned ref=0;ref<ObjCount;ref++){
+  if(true || ActiveMotion)for(unsigned ref=0;ref<ObjCount;ref++){
     StMotionData &m=ObjMotion[ref];
     bool typelinear;
     bool active=Mot->ProcesTimeGetData(ref,typelinear,m.linmov,m.linvel,m.linace,m.matmov,m.matmov2);

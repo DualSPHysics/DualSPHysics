@@ -28,6 +28,7 @@
 //:# - Mejora interface usando la estructura StMotionData. (12-09-2019)
 //:# - Mejora la gestion de excepciones. (06-05-2020)
 //:# - Cambio de nombre de J.SphMotion a J.DsMotion. (28-06-2020)
+//:# - En ProcesTime() siempre se calcula el movimiento para todos los objetos. (03-02-2021)
 //:#############################################################################
 
 /// \file JDsMotion.h \brief Declares the class \ref JDsMotion.
