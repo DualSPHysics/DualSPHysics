@@ -1059,7 +1059,7 @@ template<TpKernel tker,bool sim2d,TpSlipMode tslip> void JSphCpu::InteractionMdb
         const float dry=float(gposp1.y-pos[p2].y);
         const float drz=float(gposp1.z-pos[p2].z);
         const float rr2=(drx*drx + dry*dry + drz*drz);
-        if(rr2<=KernelSize2 && rr2>=ALMOSTZERO && CODE_IsFluid(code[p2])){//-Only with fluid particles (including inout).
+        if(rr2<=KernelSize2 && CODE_IsFluid(code[p2])){//-Only with fluid particles (including inout).
           //-Wendland kernel.
           float fac;
           const float wab=fsph::GetKernel_WabFac<tker>(CSP,rr2,fac);
