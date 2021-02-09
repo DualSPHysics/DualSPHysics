@@ -406,7 +406,7 @@ void JSphCpu::ConfigRunMode(const JSphCfgRun *cfg,std::string preinfo){
   #ifndef WIN32
     const int len=128; char hname[len];
     gethostname(hname,len);
-    preinfo=preinfo+(!preinfo.empty()? ", ": "")+"HostName:"+hname;
+    preinfo=preinfo+(!preinfo.empty()? " - ": "")+"HostName:"+hname;
   #endif
   Hardware="Cpu";
   if(OmpThreads==1)RunMode="Single core";
