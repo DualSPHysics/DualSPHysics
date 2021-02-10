@@ -338,6 +338,7 @@ protected:
   JDsPips *DsPips;          ///<Object for PIPS calculation.
 
   //-Variables for division in cells.
+  bool CellDomFixed;       ///<The Cell domain is fixed according maximum domain size.
   TpCellMode CellMode;     ///<Cell division mode.
   int ScellDiv;            ///<Value to divide KernelSize (1 or 2).
   float Scell;             ///<Cell size: KernelSize/ScellDiv (KernelSize or KernelSize/2).

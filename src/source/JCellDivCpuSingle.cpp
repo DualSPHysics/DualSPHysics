@@ -28,10 +28,11 @@ using namespace std;
 /// Constructor.
 //==============================================================================
 JCellDivCpuSingle::JCellDivCpuSingle(bool stable,bool floating,byte periactive
-  ,TpCellMode cellmode,float scell,tdouble3 mapposmin,tdouble3 mapposmax,tuint3 mapcells
+  ,bool celldomfixed,TpCellMode cellmode,float scell
+  ,tdouble3 mapposmin,tdouble3 mapposmax,tuint3 mapcells
   ,unsigned casenbound,unsigned casenfixed,unsigned casenpb,std::string dirout)
-  :JCellDivCpu(stable,floating,periactive,cellmode,scell,mapposmin,mapposmax,mapcells
-  ,casenbound,casenfixed,casenpb,dirout)
+  :JCellDivCpu(stable,floating,periactive,celldomfixed,cellmode,scell
+  ,mapposmin,mapposmax,mapcells,casenbound,casenfixed,casenpb,dirout)
 {
   ClassName="JCellDivCpuSingle";
 }
@@ -41,21 +42,30 @@ JCellDivCpuSingle::JCellDivCpuSingle(bool stable,bool floating,byte periactive
 /// Calcula limites del dominio en celdas ajustando al fluido (CellDomainMin/Max). 
 //==============================================================================
 void JCellDivCpuSingle::CalcCellDomain(const unsigned *dcellc,const typecode *codec){
-  //-Calculate boundary domain | Calcula dominio del contorno.
-  tuint3 celbmin,celbmax;
-  if(!BoundLimitOk){
-    CalcCellDomainBound(Npb1,0,Npb2,Npb1+Npf1,dcellc,codec,celbmin,celbmax);
-    BoundLimitOk=true; BoundLimitCellMin=celbmin; BoundLimitCellMax=celbmax;
-  } 
-  else{ celbmin=BoundLimitCellMin; celbmax=BoundLimitCellMax; }
-  //Log->Printf("----->CalcCellDomain> BoundLimitCellMin/Max2:%s",fun::Uint3RangeStr(BoundLimitCellMin,BoundLimitCellMax).c_str());
-  //-Calculate fluid domain | Calcula dominio del fluido.
-  tuint3 celfmin,celfmax;
-  CalcCellDomainFluid(Npf1,Npb1,Npf2,Npb1+Npf1+Npb2,dcellc,codec,celfmin,celfmax);
-  //Log->Printf("----->CalcCellDomain> celfmin/max:%s",fun::Uint3RangeStr(celfmin,celfmax).c_str());
-  //-Computes the domain adjusting to the boundary and the fluid (with KernelSize halo).
-  //-Calcula dominio ajustando al contorno y al fluido (con halo de KernelSize). 
-  MergeMapCellBoundFluid(celbmin,celbmax,celfmin,celfmax,CellDomainMin,CellDomainMax);
+  //-Define maximum cell domain.
+  if(CellDomFixed){
+    CellDomainMin=TUint3(0,0,0);
+    CellDomainMax=TUint3(DomCells.x-1,DomCells.y-1,DomCells.z-1);
+    if(!BoundLimitOk){
+      BoundLimitOk=true; BoundLimitCellMin=CellDomainMin; BoundLimitCellMax=CellDomainMax;
+    } 
+  }
+  else{ //-Calculate boundary domain | Calcula dominio del contorno.
+    tuint3 celbmin,celbmax;
+    if(!BoundLimitOk){
+      CalcCellDomainBound(Npb1,0,Npb2,Npb1+Npf1,dcellc,codec,celbmin,celbmax);
+      BoundLimitOk=true; BoundLimitCellMin=celbmin; BoundLimitCellMax=celbmax;
+    } 
+    else{ celbmin=BoundLimitCellMin; celbmax=BoundLimitCellMax; }
+    //Log->Printf("----->CalcCellDomain> BoundLimitCellMin/Max2:%s",fun::Uint3RangeStr(BoundLimitCellMin,BoundLimitCellMax).c_str());
+    //-Calculate fluid domain | Calcula dominio del fluido.
+    tuint3 celfmin,celfmax;
+    CalcCellDomainFluid(Npf1,Npb1,Npf2,Npb1+Npf1+Npb2,dcellc,codec,celfmin,celfmax);
+    //Log->Printf("----->CalcCellDomain> celfmin/max:%s",fun::Uint3RangeStr(celfmin,celfmax).c_str());
+    //-Computes the domain adjusting to the boundary and the fluid (with KernelSize halo).
+    //-Calcula dominio ajustando al contorno y al fluido (con halo de KernelSize). 
+    MergeMapCellBoundFluid(celbmin,celbmax,celfmin,celfmax,CellDomainMin,CellDomainMax);
+  }
 }
 
 //==============================================================================
@@ -262,8 +272,10 @@ void JCellDivCpuSingle::PreSort(const unsigned* dcellc,const typecode *codec){
 /// ignoradas), pero en caso de haber alguna floating excluida se genera una 
 /// excepcion en CalcCellDomainFluid();
 //==============================================================================
-void JCellDivCpuSingle::Divide(unsigned npb1,unsigned npf1,unsigned npb2,unsigned npf2,bool boundchanged
-  ,const unsigned *dcellc,const typecode* codec,const unsigned* idpc,const tdouble3* posc,TimersCpu timers)
+void JCellDivCpuSingle::Divide(unsigned npb1,unsigned npf1
+  ,unsigned npb2,unsigned npf2,bool boundchanged
+  ,const unsigned *dcellc,const typecode* codec,const unsigned* idpc
+  ,const tdouble3* posc,TimersCpu timers)
 {
   DivideFull=false;
   TmcStart(timers,TMC_NlLimits);

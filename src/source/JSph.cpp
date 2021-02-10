@@ -235,6 +235,7 @@ void JSph::InitVars(){
 
   AllocMemoryFloating(0,false);
 
+  CellDomFixed=false;
   CellMode=CELLMODE_None;
   ScellDiv=0;
   Scell=0;
@@ -834,6 +835,7 @@ void JSph::LoadConfigCommands(const JSphCfgRun *cfg){
   else OutputTime->Config(FileXml,"case.execution.special.timeout",TimePart);
 
   //-Configuration of domain limits.
+  CellDomFixed=cfg->CellDomFixed;
   CellMode=cfg->CellMode;
   if(cfg->DomainMode==2)ConfigDomainFixed(cfg->DomainFixedMin,cfg->DomainFixedMax);
 
@@ -1683,6 +1685,7 @@ void JSph::ConfigCellDivision(){
   Log->Print(fun::VarStr("CellMode",string(GetNameCellMode(CellMode))));
   Log->Print(fun::VarStr("ScellDiv",ScellDiv));
   Log->Print(string("MapCells=(")+fun::Uint3Str(Map_Cells)+")");
+  Log->Print(fun::VarStr("CellDomFixed",CellDomFixed));
   //-Creates VTK file with map cells.
   if(SaveMapCellsVtkSize()<1024*1024*10)SaveMapCellsVtk(Scell);
   else Log->PrintWarning("File CfgInit_MapCells.vtk was not created because number of cells is too high.");

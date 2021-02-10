@@ -42,6 +42,7 @@ protected:
   const bool Stable;
   const bool Floating;
   const byte PeriActive;
+
   const TpCellMode CellMode;  ///<Cell division mode.
   const int ScellDiv;         ///<Value to divide KernelSize (1 or 2).
   const float Scell;          ///<Cell size: KernelSize/ScellDiv (KernelSize or KernelSize/2).
@@ -98,8 +99,9 @@ protected:
   unsigned NpFinal,NpbFinal;
   unsigned NpbIgnore;
 
-  tuint3 CellDomainMin; ///<Lower domain limit in cells inside of DomCells. | Limite inferior del dominio en celdas dentro de DomCells.
-  tuint3 CellDomainMax; ///<Upper domain limit in cells inside of DomCells. | Limite superior del dominio en celdas dentro de DomCells.
+  const bool CellDomFixed; ///<The CellDomainMin-Max is fixed according maximum domain size.
+  tuint3 CellDomainMin;    ///<Lower domain limit in cells inside of DomCells. | Limite inferior del dominio en celdas dentro de DomCells.
+  tuint3 CellDomainMax;    ///<Upper domain limit in cells inside of DomCells. | Limite superior del dominio en celdas dentro de DomCells.
   unsigned Ncx,Ncy,Ncz,Nsheet,Nct;
   ullong Nctt;          ///<Total number of special cells included  Nctt=SizeBeginEndCell(). | Numero total de celdas incluyendo las especiales Nctt=SizeBeginEndCell().
   unsigned BoxBoundIgnore,BoxFluid,BoxBoundOut,BoxFluidOut,BoxBoundOutIgnore,BoxFluidOutIgnore;
@@ -139,8 +141,10 @@ protected:
   unsigned CellSize(unsigned cell)const{ int2 v=CellBeginEnd(cell); return(unsigned(v.y-v.x)); }
 
 public:
-  JCellDivGpu(bool stable,bool floating,byte periactive,float kernelsize2,float poscellsize
-    ,TpCellMode cellmode,float scell,tdouble3 mapposmin,tdouble3 mapposmax,tuint3 mapcells
+  JCellDivGpu(bool stable,bool floating,byte periactive
+    ,float kernelsize2,float poscellsize
+    ,bool celldomfixed,TpCellMode cellmode,float scell
+    ,tdouble3 mapposmin,tdouble3 mapposmax,tuint3 mapcells
     ,unsigned casenbound,unsigned casenfixed,unsigned casenpb,std::string dirout
     ,bool allocfullnct=true,float overmemorynp=CELLDIV_OVERMEMORYNP,word overmemorycells=CELLDIV_OVERMEMORYCELLS);
   ~JCellDivGpu();

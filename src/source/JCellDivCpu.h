@@ -108,8 +108,9 @@ protected:
   unsigned NpFinal,NpbFinal;
   unsigned NpbIgnore;
 
-  tuint3 CellDomainMin; ///<Lower domain limit in cells inside of DomCells. | Limite inferior del dominio en celdas dentro de DomCells.
-  tuint3 CellDomainMax; ///<Upper domain limit in cells inside of DomCells. | Limite superior del dominio en celdas dentro de DomCells.
+  const bool CellDomFixed; ///<The CellDomainMin-Max is fixed according maximum domain size.
+  tuint3 CellDomainMin;    ///<Lower domain limit in cells inside of DomCells. | Limite inferior del dominio en celdas dentro de DomCells.
+  tuint3 CellDomainMax;    ///<Upper domain limit in cells inside of DomCells. | Limite superior del dominio en celdas dentro de DomCells.
   unsigned Ncx,Ncy,Ncz;
   unsigned Nsheet;      ///<Nsheet=Ncx*Ncy
   unsigned Nct;         ///<Nct=Ncx*Ncy*Ncz
@@ -153,7 +154,8 @@ protected:
 
 public:
   JCellDivCpu(bool stable,bool floating,byte periactive
-    ,TpCellMode cellmode,float scell,tdouble3 mapposmin,tdouble3 mapposmax,tuint3 mapcells
+    ,bool celldomfixed,TpCellMode cellmode,float scell
+    ,tdouble3 mapposmin,tdouble3 mapposmax,tuint3 mapcells
     ,unsigned casenbound,unsigned casenfixed,unsigned casenpb,std::string dirout
     ,bool allocfullnct=true,float overmemorynp=CELLDIV_OVERMEMORYNP,word overmemorycells=CELLDIV_OVERMEMORYCELLS);
   ~JCellDivCpu();

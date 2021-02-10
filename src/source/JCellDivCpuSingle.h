@@ -43,7 +43,8 @@ protected:
 
 public:
   JCellDivCpuSingle(bool stable,bool floating,byte periactive
-    ,TpCellMode cellmode,float scell,tdouble3 mapposmin,tdouble3 mapposmax,tuint3 mapcells
+    ,bool celldomfixed,TpCellMode cellmode,float scell
+    ,tdouble3 mapposmin,tdouble3 mapposmax,tuint3 mapcells
     ,unsigned casenbound,unsigned casenfixed,unsigned casenpb,std::string dirout);
 
   void Divide(unsigned npb1,unsigned npf1,unsigned npb2,unsigned npf2,bool boundchanged

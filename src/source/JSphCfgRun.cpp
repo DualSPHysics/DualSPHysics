@@ -43,6 +43,7 @@ void JSphCfgRun::Reset(){
   SvPosDouble=-1;
   OmpThreads=0;
   SvTimers=true;
+  CellDomFixed=false;
   CellMode=CELLMODE_Full;
   TBoundary=0; SlipMode=0; MdbcFastSingle=-1; MdbcThreshold=-1;
   DomainMode=0;
@@ -99,6 +100,7 @@ void JSphCfgRun::VisuInfo()const{
   printf("    -cellmode:<mode>  Specifies the cell division mode\n");
   printf("        full      Lowest and the least expensive in memory (by default)\n");
   printf("        half      Fastest and the most expensive in memory\n");
+  printf("    -cellfixed:<0/1>  Cell domain is fixed according maximum domain size\n");
   printf("\n");
 
   printf("  Formulation options:\n");
@@ -279,6 +281,7 @@ void JSphCfgRun::LoadOpts(string *optlis,int optn,int lv,const std::string &file
         else ok=false;
         if(!ok)ErrorParm(opt,c,lv,file);
       }
+      else if(txword=="CELLFIXED")CellDomFixed=(txoptfull!=""? atoi(txoptfull.c_str()): 1)!=0;
       else if(txword=="DBC")          { TBoundary=1; SlipMode=0; }
       else if(txword=="MDBC")         { TBoundary=2; SlipMode=1; }
       else if(txword=="MDBC_NOSLIP")  { TBoundary=2; SlipMode=2; }
