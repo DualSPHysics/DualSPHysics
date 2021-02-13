@@ -89,6 +89,7 @@
 //:# - Nueva funcion Length() para vectores.  (27-06-2020)
 //:# - Nueva funcion VectorLower().  (09-09-2020)
 //:# - Nueva funcion GetFirstTextBetween().  (20-09-2020)
+//:# - Nuevas funciones RealStr() y uso en VarStr().  (13-02-2021)
 //:#############################################################################
 
 /// \file Functions.h \brief Declares basic/general functions for the entire application.
@@ -131,6 +132,9 @@ std::string PrintStrCsv(bool csvsepcoma,const char *format,...);
 std::string StrCsvSep(bool csvsepcoma,const std::string &cad);
 
 std::string NaturalFmt(double v,unsigned ndigits,bool removezeros);
+std::string RealStr(double v,unsigned ndigits,bool removezeros);
+inline std::string RealStr(float  v){ return(RealStr(v, 7,true)); }
+inline std::string RealStr(double v){ return(RealStr(v,16,true)); }
 
 std::string IntStrFill(int v,int vmax);
 std::string UintStrFill(unsigned v,unsigned vmax,const char fillchar='0');

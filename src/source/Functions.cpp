@@ -287,6 +287,20 @@ std::string NaturalFmt(double v,unsigned ndigits,bool removezeros){
 }
 
 //==============================================================================
+/// Returns real number as string using normal format and scientific format for
+/// very small numbers.
+//==============================================================================
+std::string RealStr(double v,unsigned ndigits,bool removezeros){
+  ndigits=max(ndigits,1u);
+  string fmt=NaturalFmt(v,ndigits,removezeros);
+  string ret=PrintStr(fmt.c_str(),v);
+
+  const int smax=ndigits+5+(v>=0? 0: 1);
+  if(ret.size()>smax || fabs(v)>pow(10,ndigits))ret=PrintStr("%.*e",ndigits-1,v);
+  return(ret);
+}
+
+//==============================================================================
 /// Converts unsigned value to string filling with zeros.
 //==============================================================================
 std::string IntStrFill(int v,int vmax){
@@ -1041,13 +1055,31 @@ int CompareVersions(std::string v1,std::string v2){
 //==============================================================================
 /// Returns variable and its value in text format.
 //==============================================================================
-std::string VarStr(const std::string &name,const char *value){ return(name+"=\""+value+"\""); }
-std::string VarStr(const std::string &name,const std::string &value){ return(name+"=\""+value+"\""); }
-std::string VarStr(const std::string &name,float value){ return(name+"="+FloatStr(value)); }
-std::string VarStr(const std::string &name,tfloat3 value){ return(name+"=("+FloatStr(value.x)+","+FloatStr(value.y)+","+FloatStr(value.z)+")"); }
-std::string VarStr(const std::string &name,double value){ return(name+"="+DoubleStr(value)); }
-std::string VarStr(const std::string &name,tdouble3 value){ return(name+"=("+DoubleStr(value.x)+","+DoubleStr(value.y)+","+DoubleStr(value.z)+")"); }
-std::string VarStr(const std::string &name,bool value){ return(name+"="+(value? "True": "False")+""); }
+std::string VarStr(const std::string &name,const char *value){
+  return(name+"=\""+value+"\"");
+}
+std::string VarStr(const std::string &name,const std::string &value){
+  return(name+"=\""+value+"\""); 
+}
+std::string VarStr(const std::string &name,float value){ 
+  //return(name+"="+FloatStr(value)); 
+  return(name+"="+RealStr(value));
+}
+std::string VarStr(const std::string &name,tfloat3 value){ 
+  //return(name+"=("+FloatStr(value.x)+","+FloatStr(value.y)+","+FloatStr(value.z)+")"); 
+  return(name+"=("+RealStr(value.x)+","+RealStr(value.y)+","+RealStr(value.z)+")"); 
+}
+std::string VarStr(const std::string &name,double value){ 
+  //return(name+"="+DoubleStr(value)); 
+  return(name+"="+RealStr(value)); 
+}
+std::string VarStr(const std::string &name,tdouble3 value){ 
+  //return(name+"=("+DoubleStr(value.x)+","+DoubleStr(value.y)+","+DoubleStr(value.z)+")");
+  return(name+"=("+RealStr(value.x)+","+RealStr(value.y)+","+RealStr(value.z)+")");
+}
+std::string VarStr(const std::string &name,bool value){ 
+  return(name+"="+(value? "True": "False")+""); 
+}
 std::string VarStr(const std::string &name,int value){
   char cad[30];
   sprintf(cad,"=%d",value);
