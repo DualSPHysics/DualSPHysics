@@ -907,6 +907,8 @@ void JSph::LoadConfigVarsExec(){
 void JSph::LoadCaseConfig(const JSphCfgRun *cfg){
   if(!fun::FileExists(FileXml))Run_ExceptioonFile("Case configuration was not found.",FileXml);
   JXml xml; xml.LoadFile(FileXml);
+  //-Shows pre-processing application generating the XML file.
+  Log->Printf("XML-App: %s",xml.GetAttributeStr(xml.GetNodeError("case")->ToElement(),"app",true,"unknown").c_str());
 
   //-Loads kernel selection to compute kernel values.
   LoadKernelSelection(cfg,&xml);
@@ -1502,7 +1504,7 @@ void JSph::VisuConfig(){
     //Log->Print(fun::VarStr("DensityDiffusionArray",DDTArray));
     ConfigInfo=ConfigInfo+fun::PrintStr("(%g)",DDTValue);
   }
-  if(TDensity==DDT_DDT2Full && KernelH/Dp>1.5)Log->PrintWarning("It is advised that selected DDT \'(Fourtakas et al 2019 (full)\' is used with several boundary layers of particles when h/dp>1.5 (2h <= layers*Dp)");
+  if(TDensity==DDT_DDT2Full && KernelH/Dp>1.5)Log->PrintWarning("It is advised that selected DDT: \'Fourtakas et al 2019 (full)\' is used with several boundary layers of particles when h/dp>1.5 (2h <= layers*Dp)");
   //-Shifting.
   if(Shifting){
     Shifting->VisuConfig();
