@@ -28,12 +28,15 @@ using namespace std;
 //==============================================================================
 /// Constructor.
 //==============================================================================
-JCellDivGpu::JCellDivGpu(bool stable,bool floating,byte periactive,float kernelsize2,float poscellsize
-  ,TpCellMode cellmode,float scell,tdouble3 mapposmin,tdouble3 mapposmax,tuint3 mapcells
+JCellDivGpu::JCellDivGpu(bool stable,bool floating,byte periactive
+  ,float kernelsize2,float poscellsize
+  ,bool celldomfixed,TpCellMode cellmode,float scell
+  ,tdouble3 mapposmin,tdouble3 mapposmax,tuint3 mapcells
   ,unsigned casenbound,unsigned casenfixed,unsigned casenpb,std::string dirout
   ,bool allocfullnct,float overmemorynp,word overmemorycells)
   :Log(AppInfo.LogPtr()),Stable(stable),Floating(floating),PeriActive(periactive)
-  ,CellMode(cellmode),ScellDiv(cellmode==CELLMODE_Full? 1: (cellmode==CELLMODE_Half? 2: 0))
+  ,CellDomFixed(celldomfixed),CellMode(cellmode)
+  ,ScellDiv(cellmode==CELLMODE_Full? 1: (cellmode==CELLMODE_Half? 2: 0))
   ,Scell(scell),OvScell(1.f/scell),KernelSize2(kernelsize2),PosCellSize(poscellsize)
   ,Map_PosMin(mapposmin),Map_PosMax(mapposmax),Map_PosDif(mapposmax-mapposmin)
   ,Map_Cells(mapcells),CaseNbound(casenbound),CaseNfixed(casenfixed),CaseNpb(casenpb)

@@ -947,7 +947,7 @@ template<TpKernel tker,bool sim2d,TpSlipMode tslip> __global__ void KerInteracti
           float dry=gpscellp1.y-pscellp2.y + CTE.poscellsize*(CEL_GetfY(gpscellp1.w)-CEL_GetfY(pscellp2.w));
           float drz=gpscellp1.z-pscellp2.z + CTE.poscellsize*(CEL_GetfZ(gpscellp1.w)-CEL_GetfZ(pscellp2.w));
           const float rr2=drx*drx+dry*dry+drz*drz;
-          if(rr2<=CTE.kernelsize2 && rr2>=ALMOSTZERO && CODE_IsFluid(code[p2])){//-Only with fluid particles (including inout).
+          if(rr2<=CTE.kernelsize2 && CODE_IsFluid(code[p2])){//-Only with fluid particles (including inout).
             //-Computes kernel.
             float fac;
             const float wab=cufsph::GetKernel_WabFac<tker>(rr2,fac);
@@ -1120,7 +1120,7 @@ template<TpKernel tker,bool sim2d,TpSlipMode tslip> __global__ void KerInteracti
           const float dry=float(gposp1.y-p2xy.y);
           const float drz=float(gposp1.z-posz[p2]);
           const float rr2=drx*drx+dry*dry+drz*drz;
-          if(rr2<=CTE.kernelsize2 && rr2>=ALMOSTZERO && CODE_IsFluid(code[p2])){//-Only with fluid particles (including inout).
+          if(rr2<=CTE.kernelsize2 && CODE_IsFluid(code[p2])){//-Only with fluid particles (including inout).
             //-Computes kernel.
             float fac;
             const float wab=cufsph::GetKernel_WabFac<tker>(rr2,fac);

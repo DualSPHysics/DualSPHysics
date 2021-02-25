@@ -721,7 +721,7 @@ void JSphGpu::ConfigRunMode(std::string preinfo){
   #ifndef WIN32
     const int len=128; char hname[len];
     gethostname(hname,len);
-    preinfo=preinfo+(!preinfo.empty()? ", ": "")+"HostName:"+hname;
+    preinfo=preinfo+(!preinfo.empty()? " - ": "")+"HostName:"+hname;
   #endif
   RunMode=preinfo+RunMode;
   if(Stable)RunMode=string("Stable - ")+RunMode;

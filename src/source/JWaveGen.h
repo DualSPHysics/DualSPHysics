@@ -26,6 +26,7 @@
 //:# - Permite configurar varios <savemotion>. (04-02-2020)
 //:# - <savemotion> usa por defecto TimeMax y TimePart de la simulacion. (04-02-2020)
 //:# - Comprueba opcion active en elementos de primer, segundo nivel y AWAS. (19-03-2020)  
+//:# - Devuelve movimiento MOTT_None para tiempos fuera del intervalo de generacion. (03-02-2021)
 //:#############################################################################
 
 /// \file JWaveGen.h \brief Declares the class \ref JWaveGen.
@@ -57,9 +58,11 @@ class JWaveGen
 private:
   const bool UseOmp;
   const bool UseGpu;
+  StMotionData MotionNull; ///<Motion data for null movement.
+
   double TimeMod;       ///<Modifies the timestep for paddle motion.
   JWavePaddles* WavPad; 
-  
+
   //-Vars. auxiliares cargadas tras Init().
   //-Auxiliary variables loaded after Init().
   bool Use_Awas;    //-Use of AWAS-Zsurf.
@@ -104,6 +107,12 @@ public:
   /// Shows object configuration using Log.
   //==============================================================================
   void VisuConfig(std::string txhead,std::string txfoot);
+
+  //==============================================================================
+  /// Devuelve datos de movimiento nulo.
+  /// Returns null motion data.
+  //==============================================================================
+  const StMotionData& GetMotionNull()const{ return(MotionNull); };
 
   //==============================================================================
   /// Devuelve datos del movimiento lineal o matricial para el intervalo indicado.

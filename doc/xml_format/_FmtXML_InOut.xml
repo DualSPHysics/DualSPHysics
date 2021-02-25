@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<!-- *** DualSPHysics (04-07-2020) *** -->
+<!-- *** DualSPHysics (21-02-2021) *** -->
 <!-- *** class: JSphInOut *** -->
 <!------------------------------------------------------------------------------->
 <!------------------------------------------------------------------------------->
@@ -273,6 +273,8 @@
 	<imposevelocity mode="1" comment="Imposed velocity 0:fixed value, 1:variable value, 2:Extrapolated velocity, 3:Interpolated velocity (default=0)">
 		<velocityfile3 file="WavesREG_InOut_vx3.csv" comment="Parabolic inlet velocity data (time;v;v2;v3;z;z2;z3)"/>
 	</imposevelocity>
+<!-- Extrapolated velocity -->
+	<imposevelocity mode="2" comment="Imposed velocity 0:fixed value, 1:variable value, 2:Extrapolated velocity, 3:Interpolated velocity (default=0)"/>
 <!-- Interpolated velocity from a CSV file -->
 	<imposevelocity mode="3" comment="Imposed velocity 0:fixed value, 1:variable value, 2:Extrapolated velocity, 3:Interpolated velocity (default=0)">
 		<gridveldata file="wave_h02t2d1r1o2Velxz.csv" comment="CSV file with velocity data in different times and positions" />
@@ -300,13 +302,13 @@
 	<imposezsurf mode="1" comment="Inlet Z-surface 0:Imposed fixed value, 1:Imposed variable value, 2:Calculated from fluid domain (default=0)">
 		<savevtk value="true" comment="Creates VTK files with Zsurf for each PART (default=false)" />
 		<remove value="true" comment="Removes particles above the Zsurf limit (default=false)" />
-		<zsurftimes comment="Characteristic inlet Z-Surf changes in time" units_comment="m/s">
-			<timevalue time="0" zsurf="1" />
-			<timevalue time="1" zsurf="1" />
-			<timevalue time="2" zsurf="0.4" />
-			<timevalue time="3" zsurf="0.4" />
-			<timevalue time="5" zsurf="2" />
-			<timevalue time="7" zsurf="0.4" />
+		<zsurftimes comment="Characteristic inlet Z-Surf changes in time" units_comment="m">
+			<timevalue time="0.0" zsurf="1" />
+			<timevalue time="1.0" zsurf="1" />
+			<timevalue time="2.2" zsurf="0.4" />
+			<timevalue time="3.0" zsurf="0.4" />
+			<timevalue time="5.5" zsurf="2" />
+			<timevalue time="7.0" zsurf="0.4" />
 		</zsurftimes>
 	</imposezsurf>
 <!-- Imposed variable zsurf using values in a external file-->

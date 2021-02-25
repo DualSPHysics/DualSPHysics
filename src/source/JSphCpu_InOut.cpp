@@ -61,7 +61,7 @@ template<bool sim2d,TpKernel tker> void JSphCpu::InteractionInOutExtrap_Double
   //Log->Printf("%u>++> InteractionInOutGhost_Double",Nstep);
   //-Inicia ejecucion con OpenMP.
   const int n=int(inoutcount);
-  #ifdef _WITHOMP
+  #ifdef OMP_USE
     #pragma omp parallel for schedule (guided)
   #endif
   for(int p=0;p<n;p++){
@@ -248,7 +248,7 @@ template<bool sim2d,TpKernel tker> void JSphCpu::InteractionInOutExtrap_Single
 {
   //-Inicia ejecucion con OpenMP.
   const int n=int(inoutcount);
-  #ifdef _WITHOMP
+  #ifdef OMP_USE
     #pragma omp parallel for schedule (guided)
   #endif
   for(int p=0;p<n;p++){
@@ -505,7 +505,7 @@ template<bool sim2d,TpKernel tker> void JSphCpu::InteractionBoundCorr_Double
   ,const unsigned *idp,tfloat4 *velrhop)
 {
   const int n=int(npb);
-  #ifdef _WITHOMP
+  #ifdef OMP_USE
     #pragma omp parallel for schedule (guided)
   #endif
   for(int p1=0;p1<n;p1++)if(CODE_GetTypeAndValue(code[p1])==boundcode){
@@ -617,7 +617,7 @@ template<bool sim2d,TpKernel tker> void JSphCpu::InteractionBoundCorr_Single
   ,const unsigned *idp,tfloat4 *velrhop)
 {
   const int n=int(npb);
-  #ifdef _WITHOMP
+  #ifdef OMP_USE
     #pragma omp parallel for schedule (guided)
   #endif
   for(int p1=0;p1<n;p1++)if(CODE_GetTypeAndValue(code[p1])==boundcode){

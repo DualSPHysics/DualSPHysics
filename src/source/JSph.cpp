@@ -235,6 +235,7 @@ void JSph::InitVars(){
 
   AllocMemoryFloating(0,false);
 
+  CellDomFixed=false;
   CellMode=CELLMODE_None;
   ScellDiv=0;
   Scell=0;
@@ -834,6 +835,7 @@ void JSph::LoadConfigCommands(const JSphCfgRun *cfg){
   else OutputTime->Config(FileXml,"case.execution.special.timeout",TimePart);
 
   //-Configuration of domain limits.
+  CellDomFixed=cfg->CellDomFixed;
   CellMode=cfg->CellMode;
   if(cfg->DomainMode==2)ConfigDomainFixed(cfg->DomainFixedMin,cfg->DomainFixedMax);
 
@@ -905,6 +907,8 @@ void JSph::LoadConfigVarsExec(){
 void JSph::LoadCaseConfig(const JSphCfgRun *cfg){
   if(!fun::FileExists(FileXml))Run_ExceptioonFile("Case configuration was not found.",FileXml);
   JXml xml; xml.LoadFile(FileXml);
+  //-Shows pre-processing application generating the XML file.
+  Log->Printf("XML-App: %s",xml.GetAttributeStr(xml.GetNodeError("case")->ToElement(),"app",true,"unknown").c_str());
 
   //-Loads kernel selection to compute kernel values.
   LoadKernelSelection(cfg,&xml);
@@ -1500,7 +1504,7 @@ void JSph::VisuConfig(){
     //Log->Print(fun::VarStr("DensityDiffusionArray",DDTArray));
     ConfigInfo=ConfigInfo+fun::PrintStr("(%g)",DDTValue);
   }
-  if(TDensity==DDT_DDT2Full && KernelH/Dp>1.5)Log->PrintWarning("It is advised that selected DDT \'(Fourtakas et al 2019 (full)\' is used with several boundary layers of particles when h/dp>1.5 (2h <= layers*Dp)");
+  if(TDensity==DDT_DDT2Full && KernelH/Dp>1.5)Log->PrintWarning("It is advised that selected DDT: \'Fourtakas et al 2019 (full)\' is used with several boundary layers of particles when h/dp>1.5 (2h <= layers*Dp)");
   //-Shifting.
   if(Shifting){
     Shifting->VisuConfig();
@@ -1683,6 +1687,7 @@ void JSph::ConfigCellDivision(){
   Log->Print(fun::VarStr("CellMode",string(GetNameCellMode(CellMode))));
   Log->Print(fun::VarStr("ScellDiv",ScellDiv));
   Log->Print(string("MapCells=(")+fun::Uint3Str(Map_Cells)+")");
+  Log->Print(fun::VarStr("CellDomFixed",CellDomFixed));
   //-Creates VTK file with map cells.
   if(SaveMapCellsVtkSize()<1024*1024*10)SaveMapCellsVtk(Scell);
   else Log->PrintWarning("File CfgInit_MapCells.vtk was not created because number of cells is too high.");
@@ -2184,8 +2189,12 @@ void JSph::CalcMotionWaveGen(double stepdt){
   if(WaveGen){
     const bool svdata=(TimeStep+stepdt>=TimePartNext);
     for(unsigned c=0;c<WaveGen->GetCount();c++){
-      if(motsim)DsMotion->SetMotionData   (WaveGen->GetMotion   (svdata,c,TimeStep,stepdt));
-      else      DsMotion->SetMotionDataAce(WaveGen->GetMotionAce(svdata,c,TimeStep,stepdt));
+      const StMotionData m=(motsim? WaveGen->GetMotion(svdata,c,TimeStep,stepdt): WaveGen->GetMotionAce(svdata,c,TimeStep,stepdt));
+      //Log->Printf("%u> t:%f  tp:%d  mx:%f  SetMotionData-WaveGen",Nstep,TimeStep,m.type,m.linmov.x);
+      if(m.type!=MOTT_None){
+        if(motsim)DsMotion->SetMotionData   (m);
+        else      DsMotion->SetMotionDataAce(m);
+      }
     }
   }
 }

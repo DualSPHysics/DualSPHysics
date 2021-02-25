@@ -406,7 +406,7 @@ void JSphCpu::ConfigRunMode(const JSphCfgRun *cfg,std::string preinfo){
   #ifndef WIN32
     const int len=128; char hname[len];
     gethostname(hname,len);
-    preinfo=preinfo+(!preinfo.empty()? ", ": "")+"HostName:"+hname;
+    preinfo=preinfo+(!preinfo.empty()? " - ": "")+"HostName:"+hname;
   #endif
   Hardware="Cpu";
   if(OmpThreads==1)RunMode="Single core";
@@ -1031,7 +1031,7 @@ template<TpKernel tker,bool sim2d,TpSlipMode tslip> void JSphCpu::InteractionMdb
 {
   if(tslip==SLIP_FreeSlip)Run_Exceptioon("SlipMode=\'Free slip\' is not yet implemented...");
   const int nn=int(n);
-  #ifdef _WITHOMP
+  #ifdef OMP_USE
     #pragma omp parallel for schedule (guided)
   #endif
   for(int p1=0;p1<nn;p1++)if(boundnormal[p1]!=TFloat3(0)){
@@ -1059,7 +1059,7 @@ template<TpKernel tker,bool sim2d,TpSlipMode tslip> void JSphCpu::InteractionMdb
         const float dry=float(gposp1.y-pos[p2].y);
         const float drz=float(gposp1.z-pos[p2].z);
         const float rr2=(drx*drx + dry*dry + drz*drz);
-        if(rr2<=KernelSize2 && rr2>=ALMOSTZERO && CODE_IsFluid(code[p2])){//-Only with fluid particles (including inout).
+        if(rr2<=KernelSize2 && CODE_IsFluid(code[p2])){//-Only with fluid particles (including inout).
           //-Wendland kernel.
           float fac;
           const float wab=fsph::GetKernel_WabFac<tker>(CSP,rr2,fac);
