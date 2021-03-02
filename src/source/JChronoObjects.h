@@ -139,9 +139,9 @@ public:
     ,const tmatrix3d &inertia,const tint3 &translationfree,const tint3 &rotationfree
     ,const tfloat3 &linvelini,const tfloat3 &angvelini);
 
-  void ConfigDataBodyFloating(word mkbound,float kfric,float restitu,float young,float poisson);
-  void ConfigDataBodyMoving  (word mkbound,float kfric,float restitu,float young,float poisson);
-  void ConfigDataBodyFixed   (word mkbound,float kfric,float restitu,float young,float poisson);
+  void ConfigDataBodyFloating(word mkbound,float kfric,float sfric,float restitu,float young,float poisson);
+  void ConfigDataBodyMoving  (word mkbound,float kfric,float sfric,float restitu,float young,float poisson);
+  void ConfigDataBodyFixed   (word mkbound,float kfric,float sfric,float restitu,float young,float poisson);
 
   void Init(bool simulate2d,const JSphMk* mkinfo);
   void VisuConfig(std::string txhead, std::string txfoot)const;

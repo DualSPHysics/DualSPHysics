@@ -268,6 +268,7 @@ typedef struct{ //(DEM)
   float young;        ///<Young Modulus of the floating object (units:N/m2).
   float poisson;      ///<Poisson coefficient of the floating object (units:-).
   float kfric;        ///<Kinetic friction coefficient of the floating object (units:-).
+  float sfric;        ///<Static friction coefficient of the floating object (units:-).
   float tau;          ///<Value of (1-poisson^2)/young (units:-).
   float restitu;      ///<Restitution Coefficient (units:-).
 }StDemData;

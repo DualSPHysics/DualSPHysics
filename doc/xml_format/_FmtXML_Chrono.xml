@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<!-- *** DualSPHysics [Chrono] v5.0.161 (30-10-2020) *** -->
+<!-- *** DualSPHysics [Chrono] v5.0.176 (01-03-2021) *** -->
 <!-- *** class: JChronoObjects *** -->
 <!------------------------------------------------------------------------------->
 <!------------------------------------------------------------------------------->
@@ -10,7 +10,8 @@
 	<floatings>
 		<floating mkbound="1" relativeweight="1.0" property="pvc" comment="Property for the floating bound" />
 		<floating mkbound="2" relativeweight="1.2" property="pvc+SetKfric" comment="Property for the floating bound" />
-		<floating mkbound="3" relativeweight="1.0" property="pvc+SetResCoeff" comment="Property for the floating bound" />
+		<floating mkbound="3" relativeweight="1.2" property="pvc+SetSfric" comment="Property for the floating bound" />
+		<floating mkbound="4" relativeweight="1.0" property="pvc+SetResCoeff" comment="Property for the floating bound" />
 	</floatings>
 	<properties>
 		<propertyfile file="Floating_Materials.xml" path="materials" />
@@ -18,9 +19,11 @@
 		<links>
 			<link mkbound="0" property="pvc" comment="Property for the fixed bound" />
 		</links>
-		<!-- The values Kfric_User and Restitution_Coefficient_User replace  -->
-		<!-- to Kfric and Restitution_Coefficient values in Floating_Materials.xml -->
+		<!-- The values Kfric_User, Sfric_User and Restitution_Coefficient_User    -->
+		<!-- replace to Kfric, Sfric and Restitution_Coefficient values in         -->
+		<!-- Floating_Materials.xml -->
 		<property name="SetKfric" Kfric_User="0.1234" />
+		<property name="SetSfric" Sfric_User="0.1234" />
 		<property name="SetResCoeff" Restitution_Coefficient_User="0.4321" />
 	</properties>
 </casedef>
@@ -29,6 +32,8 @@
 		<chrono>
 			<savedata value="-1" comment="Saves CSV with data exchange for each time interval (0=all steps)" />
 			<schemescale value="1" comment="Scale used to create the initial scheme of Chrono objects (default=1)" />
+			<!-- Enable the use of a coefficient to scale the forces of each object -->	
+			<scaleforce x="0.01" y="1" z="1" comment="Scale forces in all directions. (default=1,1,1)"/>
 			<!-- Enable collisions for chrono -->
 			<collision activate="true">
 				<distancedp value="0.5" comment="Allowed collision overlap according Dp (default=0.5)" />

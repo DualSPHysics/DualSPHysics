@@ -36,12 +36,21 @@
 //:# - Permitidas las ejecuciones Multi Core con SMC en Linux. (v3.06 / 17-04-2020)
 //:# - Funciones ApplyInitialVel y ApplyImposedVel para aplicar velocidades
 //:#   externas. (v3.07 / 29-06-2020)
-//:# - Simulaciones con ojetos FEA. (v4.01 / 14-07-2020)
+//:# - Simulaciones con objetos FEA. (v4.01 / 14-07-2020)
+//:# - Elementos flexibles con formas circulares 2D (v4.02 / 14-07-2020)
+//:# - Elementos flexibles con formas rectangulares 2D (v4.03 / 28-09-2020)
 //:# - Permite la simulacion de ChLinks con coeficientes variables de stiffness 
-//:#   y damping. (v4.01.003 / 04-10-2020)
+//:#   y damping. (v4.04 / 04-10-2020)
 //:# - Activadas las colisiones entre objetos flexibles y objetos rigidos usando
-//:#   la clase chrono/fea/ChContactSurfaceMesh (v4.01.004 / 08-10-2020)
-//:# - Imponer valor de friction de un material sobre otros (v4.01.005 / 30-10-2020) 
+//:#   la clase chrono/fea/ChContactSurfaceMesh (v4.05 / 08-10-2020)
+//:# - Imponer valor de friction de un material sobre otros (v4.06 / 30-10-2020) 
+//:# - Permite seleccionar el modo de colision de los objetos flexibles (v4.07 / 06-11-2020) 
+//:# - Nuevo link ChLinkPointFrame para conectar FEA nodos a objetos rigidos (v4.08 / 09-11-2020)
+//:# - Posibilidad de multiplicar las fuerzas por coeficientes introducidos por
+//:#   por el usuario para escalar las fuerzas en simulaciones 2D (v4.09 / 15-12-2020)
+//:# - Posibilidad de multiplicar las fuerzas por coeficientes introducidos por
+//:#   por el usuario para escalar las fuerzas en simulaciones 2D (v4.09 / 15-12-2020)
+//:# - Uso de coeficientes de friccion dinamico (Kfric) y estatico (Sfric) (v4.10 / 01-03-2021)
 //:#############################################################################
 
 /// \file DSPHChronoLib.h \brief Declares the class \ref DSPHChronoLib which is the interface between DualSPHysics and Chrono.
@@ -58,8 +67,8 @@
 //-Forward declarations to avoid including chrono classes.
 namespace chrono {
   class ChSystem;
-  class ChSystemParallel;     //<chrono_multicore>
-  class ChMaterialSurface;    //<chrono_contacts>
+  class ChSystemParallel;
+  class ChMaterialSurface;
   class ChBody;
   namespace fea{  //<vs_chronoo_fea>
     class ChMesh; //<vs_chronoo_fea>
@@ -123,15 +132,15 @@ protected:
 
 public:
 
-  /// Initialize floating body.
+  /// Loads data for bodies and configures objects.
   virtual void Config(std::string dirout,bool svdata,bool simulate2d){};
 
-  /// Initialize floating body.
+  /// Loads inertia for bodies.
   virtual void Config_Inertia(){};
 
   /// Compute a single timestep for each floating and moving body.
   virtual bool RunChrono(double timestep,double dt,bool predictor)=0;
-
+ 
   /// Saves forces for each body and link (ChronoLink_forces.csv, ChronoBody_forces.csv).
   virtual void SaveForces(){};
 
@@ -194,10 +203,10 @@ public:
   /// Destructor
   ~DSPHChronoLibSC();
 
-  /// Initialize floating body.
+  /// Loads data for bodies and configures objects.
   void Config(std::string dirout,bool svdata,bool simulate2d);
 
-  /// Initialize floating body.
+  /// Loads inertia for bodies.
   void Config_Inertia();
 
   /// Compute a single timestep for each floating and moving body.
@@ -227,7 +236,7 @@ public:
 /// \brief Defines the class for multi-core executions.
 class DSPHChronoLibMC : public DSPHChronoLib {
 private:
-  chrono::ChSystemParallel *MphysicalSystem;  ///<Pointer to Chrono System //TODO: SMC multicore
+  chrono::ChSystemParallel *MphysicalSystem;  ///<Pointer to Chrono System 
 
   /// Saves header for forces for each body and link (ChronoLink_forces.csv, ChronoBody_forces.csv).
   void SaveForcesHead();
@@ -251,15 +260,15 @@ public:
   /// Destructor
   ~DSPHChronoLibMC();
 
-  /// Initialize floating body.
+  /// Loads data for bodies and configures objects.
   void Config(std::string dirout,bool svdata,bool simulate2d);
 
-  /// Initialize floating body.
+  /// Loads inertia for bodies.
   void Config_Inertia();
 
   /// Compute a single timestep for each floating and moving body.
   bool RunChrono(double timestep,double dt,bool predictor);
-
+  
   /// Saves forces for each body and link (ChronoLink_forces.csv,ChronoBody_forces.csv).
   void SaveForces();
 

@@ -49,6 +49,14 @@
 //:#   objetos JChBodyFEA (13-10-2020).
 //:# - Variable ImposedFric para indicar que se usara el valor de Kfric
 //:#   de un objeto en la colision entre dos objetos (30-10-2020).
+//:# - Enumerado TpCollisionFEA en objetos JChronoFEA para indicar el modo
+//:#   de colision en objetos deformables (06-11-2020).
+//:# - Nueva clase para administrar links tipo JChLinkPointFrame 
+//:#   para conectar FEA nodos a objetos rigidos (09-11-2020).
+//:# - Funcion ResetForces() para restablecer a 0 las fuerzas del array de los
+//:#   objetos FEA (06-12-2020).
+//:# - Se incorpora un vector de coeficientes de fuerzas para escalar las fuerzas
+//:#   de los objetos (15-12-2020).
 //:#############################################################################
 
 /// \file JChronoData.h \brief Declares the class \ref JChronoData.
@@ -207,8 +215,9 @@ protected:
   TpModelNormal ModelNormal;
 
   //-Parameters for collisions.
-  bool ImposeFric; ///< Indicates that its Kfric value will be used in collisions between two bodies.
-  float Kfric;
+  bool ImposeFric; ///< Indicates that its Sfric value will be used in collisions between two bodies.
+  float Kfric; ///< Kinetic friction
+  float Sfric; ///< Static friction
   float Restitu;
   //-Extra parameters for collisions using Smooth Contacts.
   float Young;
@@ -246,6 +255,7 @@ public:
   float         GetYoung()       const{ return(Young);       }
   float         GetPoisson()     const{ return(Poisson);     }
   float         GetKfric()       const{ return(Kfric);       }
+  float         GetSfric()       const{ return(Sfric);       }
   float         GetRestitu()     const{ return(Restitu);     }
   bool          GetUseFEA()      const{ return(UseFEA);      } 
 
@@ -254,7 +264,7 @@ public:
 
   void SetModel(const std::string &file,TpModelNormal normal){ ModelFile=file; ModelNormal=normal; }
   void SetUseFEA(const bool u){ UseFEA=u; } 
-  void SetCollisionData(float kfric,float restitu,float young,float poisson);
+  void SetCollisionData(float kfric,float sfric,float restitu,float young,float poisson);
 };
 
 //##############################################################################
@@ -349,7 +359,7 @@ class JChLink : public JChObject
 {
 public:
   ///<Types of link.
-  typedef enum{ LK_Hinge,LK_Spheric,LK_PointLine,LK_LinearSpring,LK_CoulombDamping,LK_Pulley }TpLink;
+  typedef enum{ LK_Hinge,LK_Spheric,LK_PointLine,LK_LinearSpring,LK_CoulombDamping,LK_Pulley,LK_PointFrame }TpLink;
   
   /// Structure with parameters to create VTK of spring.
   typedef struct StrSaveSpring{
@@ -554,7 +564,7 @@ public:
 class JChronoData : protected JChBase
 {
 public:
-  typedef enum{ NSC,SMC }               TpContactMethod; //<chrono_contacts>
+  typedef enum{ NSC,SMC }               TpContactMethod;
   typedef enum{ BB=0,APGD=1,APGDREF=2 } DSolverType;     //Allowed Solvers
 
 private:
@@ -572,6 +582,7 @@ private:
   TpContactMethod ContactMethod;
   bool UseVariableCoeff;
   bool UseCollision;
+  tfloat3 ScaleForce; ///<Scale the forces of each object in all directions.
 
 public:
   JChronoData();
@@ -653,6 +664,8 @@ public:
 
   bool GetUseVariableCoeff()const{return(UseVariableCoeff);}
   void SetUseVariableCoeff(bool v){UseVariableCoeff=v;}
-};
 
+  void    SetScaleForce(tfloat3 s){        ScaleForce=s;}
+  tfloat3 GetScaleForce()    const{ return(ScaleForce); }
+};
 #endif

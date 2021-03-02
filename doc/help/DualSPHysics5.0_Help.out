@@ -5,7 +5,7 @@
  Prof. Moncho Gomez Gesteira, Prof. Benedict Rogers,
  Dr Georgios Fourtakas, Prof. Peter Stansby,
  Dr Renato Vacondio, Dr Corrado Altomare, Dr Angelo Tafuni,
- Orlando Garcia Feal, Ivan Martinez Estevez
+ Dr Orlando Garcia Feal, Ivan Martinez Estevez
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester
@@ -24,7 +24,7 @@
  along with DualSPHysics. If not, see <http://www.gnu.org/licenses/>.
 
 
-DualSPHysics5 v5.0.169 (03-02-2021)
+DualSPHysics5 v5.0.176 (01-03-2021)
 ====================================
 LoadDsphConfig> .../bin/windows/DsphConfig.xml
 Information about execution parameters:
@@ -51,6 +51,7 @@ Information about execution parameters:
     -cellmode:<mode>  Specifies the cell division mode
         full      Lowest and the least expensive in memory (by default)
         half      Fastest and the most expensive in memory
+    -cellfixed:<0/1>  Cell domain is fixed according maximum domain size
 
   Formulation options:
     -dbc           Dynamic Boundary Condition DBC (by default)

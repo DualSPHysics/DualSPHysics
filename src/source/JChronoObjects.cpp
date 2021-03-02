@@ -120,25 +120,25 @@ bool JChronoObjects::ConfigBodyFloating(word mkbound,double mass
 //==============================================================================
 /// Configures Floating body data for collisions. 
 //==============================================================================
-void JChronoObjects::ConfigDataBodyFloating(word mkbound,float kfric,float restitu,float young,float poisson){
+void JChronoObjects::ConfigDataBodyFloating(word mkbound,float kfric,float sfric,float restitu,float young,float poisson){
   JChBodyFloating* body=(JChBodyFloating*)ChronoDataXml->GetBodyFloating(mkbound);
-  if(body)body->SetCollisionData(kfric,restitu,young,poisson);
+  if(body)body->SetCollisionData(kfric,sfric,restitu,young,poisson);
 }
 
 //==============================================================================
 /// Configures Moving body data for collisions. 
 //==============================================================================
-void JChronoObjects::ConfigDataBodyMoving(word mkbound,float kfric,float restitu,float young,float poisson){
+void JChronoObjects::ConfigDataBodyMoving(word mkbound,float kfric,float sfric,float restitu,float young,float poisson){
   JChBodyMoving* body=(JChBodyMoving*)ChronoDataXml->GetBodyMoving(mkbound);
-  if(body)body->SetCollisionData(kfric,restitu,young,poisson);
+  if(body)body->SetCollisionData(kfric,sfric,restitu,young,poisson);
 }
 
 //==============================================================================
 /// Configures Fixed body data for collisions. 
 //==============================================================================
-void JChronoObjects::ConfigDataBodyFixed(word mkbound,float kfric,float restitu,float young,float poisson){
+void JChronoObjects::ConfigDataBodyFixed(word mkbound,float kfric,float sfric,float restitu,float young,float poisson){
   JChBodyFixed* body=(JChBodyFixed*)ChronoDataXml->GetBodyFixed(mkbound);
-  if(body)body->SetCollisionData(kfric,restitu,young,poisson);
+  if(body)body->SetCollisionData(kfric,sfric,restitu,young,poisson);
 }
 
 //==============================================================================
@@ -707,6 +707,7 @@ void JChronoObjects::Init(bool simulate2d,const JSphMk* mkinfo){
 void JChronoObjects::CheckParams(const JChBody *body)const{
   const string objdesc=fun::PrintStr("Object mkbound=%u",body->MkBound);
   if(body->GetKfric()  ==FLT_MAX)  Run_Exceptioon(objdesc+" - Value of Kfric is invalid.");
+  if(body->GetSfric()  ==FLT_MAX)  Run_Exceptioon(objdesc+" - Value of Sfric is invalid.");
   if(body->GetRestitu()==FLT_MAX)  Run_Exceptioon(objdesc+" - Value of Restitution_Coefficient is invalid.");
   if(UseChronoSMC){
     if(body->GetYoung()  ==FLT_MAX)Run_Exceptioon(objdesc+" - Value of Young_Modulus is invalid.");
@@ -783,6 +784,7 @@ void JChronoObjects::VisuBody(const JChBody *body)const{
 
   if(!body->GetModelFile().empty() && UseCollision){
     Log->Printf("    Kfric........: %g %s",body->GetKfric(),body->GetImposeFric()?"(Impose)":"");
+    Log->Printf("    Sfric........: %g %s",body->GetSfric(),body->GetImposeFric()?"(Impose)":"");
     Log->Printf("    Restitution..: %g",body->GetRestitu());
     if(UseChronoSMC){
       Log->Printf("    Young_Modulus: %g",body->GetYoung());
