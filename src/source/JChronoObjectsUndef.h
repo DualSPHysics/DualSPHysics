@@ -38,6 +38,7 @@ public:
 
   bool UseDataDVI(word mkbound)const{ return(false); };
   bool GetUseCollision()const{ return(false); };
+  unsigned GetCollisionShapes()const{ return(0); }
 
   bool ConfigBodyFloating(word mkbound,double mass,const tdouble3 &center
     ,const tmatrix3d &inertia,const tint3 &translationfree,const tint3 &rotationfree

@@ -698,8 +698,9 @@ void JSphGpuSingle::RunFloating(double dt,bool predictor){
       //-Export data / Exporta datos.
       tfloat3* ftoforces=FtoAuxFloat15;
       cudaMemcpy(ftoforces,FtoForcesg,sizeof(tfloat3)*FtCount*2,cudaMemcpyDeviceToHost);
-      for(unsigned cf=0;cf<FtCount;cf++)if(FtObjs[cf].usechrono)
+      for(unsigned cf=0;cf<FtCount;cf++)if(FtObjs[cf].usechrono){
         ChronoObjects->SetFtData(FtObjs[cf].mkbound,ftoforces[cf*2],ftoforces[cf*2+1]);
+      }
       //-Applies the external velocities to each floating body of Chrono.
       if(FtLinearVel!=NULL)ChronoFtApplyImposedVel();
       //-Calculate data using Chrono / Calcula datos usando Chrono.

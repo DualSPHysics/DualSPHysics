@@ -910,8 +910,9 @@ void JSphCpuSingle::RunFloating(double dt,bool predictor){
       TmcStop(Timers,TMC_SuFloating);
       TmcStart(Timers,TMC_SuChrono);
       //-Export data / Exporta datos.
-      for(unsigned cf=0;cf<FtCount;cf++)if(FtObjs[cf].usechrono)
+      for(unsigned cf=0;cf<FtCount;cf++)if(FtObjs[cf].usechrono){
         ChronoObjects->SetFtData(FtObjs[cf].mkbound,FtoForces[cf].face,FtoForces[cf].fomegaace);
+      }
       //-Applies the external velocities to each floating body of Chrono.
       if(FtLinearVel!=NULL)ChronoFtApplyImposedVel();
       //-Calculate data using Chrono / Calcula datos usando Chrono.

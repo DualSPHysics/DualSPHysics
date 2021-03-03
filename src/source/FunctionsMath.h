@@ -39,6 +39,7 @@
 //:# - Nuevas funciones VecOrthogonal2(). (05-10-2018)
 //:# - Se mueven las funciones de geometria 2D y 3D a los nuevos ficheros 
 //:#   FunctionsGeo2d.h y FunctionsGeoed.h respectivamente. (08-02-2019)
+//:# - Nueva funcion CalcRoundPos(). (02-03-2021)
 //:#############################################################################
 
 /// \file FunctionsMath.h \brief Declares basic/general math functions.
@@ -347,6 +348,15 @@ inline double sec(double z){ return(1.0 / cos(z)); }
 /// Returns cosecant of input angle in radians.
 //==============================================================================
 inline double csc(double z){ return(1.0 / sin(z)); }
+
+
+//==============================================================================
+// Calculates position set at specific intervals (dp) from a start (posmin).
+//==============================================================================
+inline double CalcRoundPos(double pos,double posmin,double dp){
+  const int posi=int(round((pos-posmin)/dp));
+  return(posmin+dp*posi);
+}
 
 }
 

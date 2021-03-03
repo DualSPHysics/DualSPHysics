@@ -641,7 +641,7 @@ public:
   JChLinkPointLine*      AddLinkPointLine     (std::string name,unsigned idbody1,unsigned idbody2,std::string fileinfo="");
   JChLinkLinearSpring*   AddLinkLinearSpring  (std::string name,unsigned idbody1,unsigned idbody2,std::string fileinfo="");
   JChLinkCoulombDamping* AddLinkCoulombDamping(std::string name,unsigned idbody1,unsigned idbody2,std::string fileinfo="");
-
+ 
   unsigned GetBodyCount()const{ return(unsigned(LisBody.size())); }
   unsigned GetLinkCount()const{ return(unsigned(LisLink.size())); }
 
@@ -668,4 +668,5 @@ public:
   void    SetScaleForce(tfloat3 s){        ScaleForce=s;}
   tfloat3 GetScaleForce()    const{ return(ScaleForce); }
 };
+
 #endif
