@@ -962,7 +962,7 @@ void JSph::LoadCaseConfig(const JSphCfgRun *cfg){
   if(UseChrono){
     if(xml.GetNodeSimple("case.execution.special.chrono",true)){
       if(!JChronoObjects::Available())Run_Exceptioon("DSPHChronoLib to use Chrono is not included in the current compilation.");
-      ChronoObjects=new JChronoObjects(DirCase,CaseName,&xml,"case.execution.special.chrono",Dp,parts.GetMkBoundFirst());
+      ChronoObjects=new JChronoObjects(DirCase,CaseName,&xml,"case.execution.special.chrono",Dp,parts.GetMkBoundFirst(),Simulate2D);
     }
     else Run_ExceptioonFile("Chrono configuration in XML file is missing.",FileXml);
   }
@@ -2105,7 +2105,7 @@ void JSph::InitRun(unsigned np,const unsigned *idp,const tdouble3 *pos){
   if(ChronoObjects){
     Log->Print("Chrono Objects configuration:");
     if(PartBegin)Run_Exceptioon("Simulation restart not allowed when Chrono is used.");
-    ChronoObjects->Init(Simulate2D,MkInfo);
+    ChronoObjects->Init(MkInfo);
     ChronoObjects->VisuConfig(""," ");
   }
 

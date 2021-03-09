@@ -56,7 +56,7 @@
 //:# - Funcion ResetForces() para restablecer a 0 las fuerzas del array de los
 //:#   objetos FEA (06-12-2020).
 //:# - Se incorpora un vector de coeficientes de fuerzas para escalar las fuerzas
-//:#   de los objetos (15-12-2020).
+//:#   para cada objeto (10-03-2021).
 //:#############################################################################
 
 /// \file JChronoData.h \brief Declares the class \ref JChronoData.
@@ -213,15 +213,16 @@ protected:
   tfloat3 AngularVelini;
   std::string ModelFile;
   TpModelNormal ModelNormal;
+  tfloat3 ScaleForce; ///<Scale the forces of each object in all directions.
 
   //-Parameters for collisions.
-  bool ImposeFric; ///< Indicates that its Sfric value will be used in collisions between two bodies.
-  float Kfric; ///< Kinetic friction
-  float Sfric; ///< Static friction
-  float Restitu;
+  bool ImposeFric; ///< Indicates that its Sfric and Kfric coefficients will be used in collisions between two bodies.
+  float Kfric; ///< Kinetic friction coefficient
+  float Sfric; ///< Static friction coefficient
+  float Restitu; ///< Restitution coefficient
   //-Extra parameters for collisions using Smooth Contacts.
-  float Young;
-  float Poisson;
+  float Young; ///< Young modulus
+  float Poisson; ///< Poisson ratio
 
   void CopyFrom(const JChBody &src);
 
@@ -265,6 +266,10 @@ public:
   void SetModel(const std::string &file,TpModelNormal normal){ ModelFile=file; ModelNormal=normal; }
   void SetUseFEA(const bool u){ UseFEA=u; } 
   void SetCollisionData(float kfric,float sfric,float restitu,float young,float poisson);
+
+  
+  void    SetScaleForce(tfloat3 s){        ScaleForce=s;}
+  tfloat3 GetScaleForce()    const{ return(ScaleForce); }
 };
 
 //##############################################################################
@@ -582,7 +587,6 @@ private:
   TpContactMethod ContactMethod;
   bool UseVariableCoeff;
   bool UseCollision;
-  tfloat3 ScaleForce; ///<Scale the forces of each object in all directions.
 
 public:
   JChronoData();
@@ -641,7 +645,7 @@ public:
   JChLinkPointLine*      AddLinkPointLine     (std::string name,unsigned idbody1,unsigned idbody2,std::string fileinfo="");
   JChLinkLinearSpring*   AddLinkLinearSpring  (std::string name,unsigned idbody1,unsigned idbody2,std::string fileinfo="");
   JChLinkCoulombDamping* AddLinkCoulombDamping(std::string name,unsigned idbody1,unsigned idbody2,std::string fileinfo="");
- 
+
   unsigned GetBodyCount()const{ return(unsigned(LisBody.size())); }
   unsigned GetLinkCount()const{ return(unsigned(LisLink.size())); }
 
@@ -665,8 +669,5 @@ public:
   bool GetUseVariableCoeff()const{return(UseVariableCoeff);}
   void SetUseVariableCoeff(bool v){UseVariableCoeff=v;}
 
-  void    SetScaleForce(tfloat3 s){        ScaleForce=s;}
-  tfloat3 GetScaleForce()    const{ return(ScaleForce); }
 };
-
 #endif

@@ -31,7 +31,8 @@ class JChronoObjects : protected JObject
 protected:
 public:
   JChronoObjects(const std::string &dirdata,const std::string &casename
-    ,const JXml *sxml,const std::string &place,double dp,word mkboundfirst){}
+    ,const JXml *sxml,const std::string &place,double dp,word mkboundfirst
+    ,bool simulate2d){}
   ~JChronoObjects(){};
   void Reset(){};
   static bool Available(){ return(false); }
@@ -48,7 +49,7 @@ public:
   void ConfigDataBodyMoving  (word mkbound,float kfric,float restitu,float young,float poisson){};
   void ConfigDataBodyFixed   (word mkbound,float kfric,float restitu,float young,float poisson){};
 
-  void Init(bool simulate2d,const JSphMk* mkinfo){};
+  void Init(const JSphMk* mkinfo){};
   void VisuConfig(std::string txhead, std::string txfoot)const{};
 
   bool GetWithMotion()const{ return(false); }

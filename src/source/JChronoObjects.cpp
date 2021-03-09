@@ -49,9 +49,9 @@ using namespace std;
 /// Constructor.
 //==============================================================================
 JChronoObjects::JChronoObjects(const std::string &dirdata,const std::string &casename
- ,const JXml *sxml,const std::string &place,double dp,word mkboundfirst)
+ ,const JXml *sxml,const std::string &place,double dp,word mkboundfirst,bool simulate2d)
  :Log(AppInfo.LogPtr()),DirData(dirdata),CaseName(casename),Dp(dp)
-  ,MkBoundFirst(mkboundfirst),UseDVI(true)
+  ,MkBoundFirst(mkboundfirst),Simulate2D(simulate2d),UseDVI(true)
 {
   ClassName="JChronoObjects";
   ChronoDataXml=NULL;
@@ -74,7 +74,6 @@ JChronoObjects::~JChronoObjects(){
 /// Initialisation of variables.
 //==============================================================================
 void JChronoObjects::Reset(){
-  Solver=0;
   OmpThreads=1;
   UseChronoSMC=false;
   UseCollision=false;
@@ -257,7 +256,7 @@ unsigned JChronoObjects::CreateObjFiles(std::string idname,const std::vector<uns
 void JChronoObjects::ReadXml(const JXml *sxml,TiXmlElement* lis){
   Reset();
   //-Checks XML elements.
-  sxml->CheckElementNames(lis,true,"savedata schemescale collision *bodyfixed *bodyfloating *link_hinge *link_spheric *link_pointline *link_linearspring *link_coulombdamping *link_pulley");
+  sxml->CheckElementNames(lis,true,"savedata schemescale scaleforce collision *bodyfixed *bodyfloating *link_hinge *link_spheric *link_pointline *link_linearspring *link_coulombdamping *link_pulley");
 
   ChronoDataXml=new JChronoData;
   ChronoDataXml->SetUseNSCChrono(UseDVI);
@@ -271,7 +270,6 @@ void JChronoObjects::ReadXml(const JXml *sxml,TiXmlElement* lis){
   SaveDataTime=sxml->ReadElementFloat(lis,"savedata","value",true,-1.f);
   //-Loads scale value to create initial scheme of configuration.
   SchemeScale=sxml->ReadElementFloat(lis,"schemescale","value",true,1);
-
   //-Configures the collision for chrono.
   if(sxml->ExistsElement(lis,"collision")){
     TiXmlElement *collision=lis->FirstChildElement("collision");
@@ -369,6 +367,9 @@ void JChronoObjects::ReadXml(const JXml *sxml,TiXmlElement* lis){
     }
     ele=ele->NextSiblingElement();
   }
+
+  //-Reads the vectors to scale forces for each object.
+  if(sxml->ExistsElement(lis,"scaleforce"))ReadScaleForces(sxml,lis);
 
   //-Loads link elements.
   ele=lis->FirstChildElement(); 
@@ -516,6 +517,36 @@ void JChronoObjects::ReadCoeffs(JChLink *link,const JXml *sxml,TiXmlElement* ele
     link->SetVariableC(true);
   }
   else link->SetDamping(c);
+}
+
+//==============================================================================
+/// Reads the vectors to scale forces for each object.
+//==============================================================================
+void JChronoObjects::ReadScaleForces(const JXml *sxml,TiXmlElement* lis){
+  if(!Simulate2D)Log->PrintfWarning("The option \'scaleforce\' should be used only for 2D simulations.");
+  TiXmlElement *ele=lis->FirstChildElement("scaleforce");
+  sxml->CheckElementNames(ele,true,"*body");
+  ele=ele->FirstChildElement();
+  while(ele){
+    std::string cmd=ele->Value();
+    if(cmd.length()&&cmd[0]!='_' && sxml->CheckElementActive(ele)){
+      if(cmd=="body"){
+        const tfloat3 scaleforce=sxml->GetAttributeFloat3(ele); //-Get the vector to scale force. | Coge el vector para escalar fuerzas.
+        //-Read the mkbound values.
+        //-Lee los valores de mkbound.
+        std::vector<unsigned> mkbounds;
+        JRangeFilter rg(sxml->GetAttributeStr(ele,"mkbound"));  //-Get the mkbound value. | Coge el valor de mkbound
+        rg.GetValues(mkbounds);
+        const unsigned nmkbounds=unsigned(mkbounds.size());
+        for(unsigned cmk=0;cmk<nmkbounds;cmk++){
+          const word mkbound=word(mkbounds[cmk]);
+          JChBody *body=(JChBody *)ChronoDataXml->GetBodyByMk(mkbound);
+          body->SetScaleForce(scaleforce);
+        }
+      }
+    }
+    ele=ele->NextSiblingElement();
+  }
 }
 
 //==============================================================================
@@ -673,7 +704,7 @@ void JChronoObjects::ConfigOmp(){
 //==============================================================================
 /// Configures and reads floating data from XML file.
 //==============================================================================
-void JChronoObjects::Init(bool simulate2d,const JSphMk* mkinfo){
+void JChronoObjects::Init(const JSphMk* mkinfo){
   //-Updates center of moving objects.
   ConfigMovingBodies(mkinfo);
   //-Checks data in ChronoData.
@@ -692,7 +723,7 @@ void JChronoObjects::Init(bool simulate2d,const JSphMk* mkinfo){
   }
   else ChronoLib=new DSPHChronoLibSC(*ChronoDataXml);
   const bool svforces=SaveDataTime>=0;
-  ChronoLib->Config(AppInfo.GetDirOut(),svforces,simulate2d);
+  ChronoLib->Config(AppInfo.GetDirOut(),svforces,Simulate2D);
   if(svforces){
     Log->AddFileInfo("ChronoBody_forces.csv","Saves forces for each body.");
     Log->AddFileInfo("ChronoLink_forces.csv","Saves forces for each link.");
@@ -794,7 +825,8 @@ void JChronoObjects::VisuBody(const JChBody *body)const{
     Log->Printf("    ModelFile....: %s",body->GetModelFile().c_str());
     Log->Printf("    ModelNormal..: %s",JChBody::NormalToStr(body->GetModelNormal()).c_str());
   }
-
+  if(body->GetScaleForce()!=TFloat3(FLT_MAX))
+    Log->Printf("    Scale Force..: (%s)",fun::Float3gStr(body->GetScaleForce()).c_str());
   VisuValues(body->GetValuesPtr());
   if(body->GetLinkRefCount()){
     Log->Printf("    Links......: %u",body->GetLinkRefCount());
@@ -880,7 +912,6 @@ void JChronoObjects::VisuConfig(std::string txhead, std::string txfoot)const{
   Log->Printf("  OpenMP Threads....: %d",chdata->GetOmpThreads());
   Log->Printf("  Bodies............: %d",chdata->GetBodyCount());
   Log->Printf("  Links.............: %u",chdata->GetLinkCount());
-
   for(unsigned c=0;c<chdata->GetBodyCount();c++)VisuBody(chdata->GetBody(c));
   for(unsigned c=0;c<chdata->GetLinkCount();c++)VisuLink(chdata->GetLink(c));
   //-Checks bodies without geometry for collisions.

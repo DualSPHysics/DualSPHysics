@@ -48,9 +48,9 @@
 //:# - Nuevo link ChLinkPointFrame para conectar FEA nodos a objetos rigidos (v4.08 / 09-11-2020)
 //:# - Posibilidad de multiplicar las fuerzas por coeficientes introducidos por
 //:#   por el usuario para escalar las fuerzas en simulaciones 2D (v4.09 / 15-12-2020)
-//:# - Posibilidad de multiplicar las fuerzas por coeficientes introducidos por
-//:#   por el usuario para escalar las fuerzas en simulaciones 2D (v4.09 / 15-12-2020)
 //:# - Uso de coeficientes de friccion dinamico (Kfric) y estatico (Sfric) (v4.10 / 01-03-2021)
+//:# - Se permite escalar las fuerzas de manera individual para cada uno de los
+//:#   objetos de chrono (v4.11 / 10-03-2021)
 //:#############################################################################
 
 /// \file DSPHChronoLib.h \brief Declares the class \ref DSPHChronoLib which is the interface between DualSPHysics and Chrono.
