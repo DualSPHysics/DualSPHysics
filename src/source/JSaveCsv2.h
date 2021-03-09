@@ -33,6 +33,7 @@
 //:# - Error corregido en SaveData() por el que siempre se grababa el head. (13-08-2018)
 //:# - Gestion de excepciones mejorada.  (15-09-2019)
 //:# - Nuevo metodo AddHead3() y clase Head3 para cabeceras de datos triples. (02-11-2020)
+//:# - Soporta tipo tmatrix4d. (04-02-2021)
 //:#############################################################################
 
 /// \file JSaveCsv2.h \brief Declares the class \ref JSaveCsv2.
@@ -242,6 +243,26 @@ public:
   JSaveCsv2& operator <<(const tdouble2 &v){ AddStr(ToStr(FmtCurrent[TpDouble2 ].c_str(),v.x,v.y));         return(*this); }
   JSaveCsv2& operator <<(const tdouble3 &v){ AddStr(ToStr(FmtCurrent[TpDouble3 ].c_str(),v.x,v.y,v.z));     return(*this); }
   JSaveCsv2& operator <<(const tdouble4 &v){ AddStr(ToStr(FmtCurrent[TpDouble4 ].c_str(),v.x,v.y,v.z,v.w)); return(*this); }
+
+  JSaveCsv2& operator <<(const tmatrix4d &v){ 
+    AddStr(ToStr(FmtCurrent[TpDouble1].c_str(),v.a11)); 
+    AddStr(ToStr(FmtCurrent[TpDouble1].c_str(),v.a12)); 
+    AddStr(ToStr(FmtCurrent[TpDouble1].c_str(),v.a13)); 
+    AddStr(ToStr(FmtCurrent[TpDouble1].c_str(),v.a14)); 
+    AddStr(ToStr(FmtCurrent[TpDouble1].c_str(),v.a21)); 
+    AddStr(ToStr(FmtCurrent[TpDouble1].c_str(),v.a22)); 
+    AddStr(ToStr(FmtCurrent[TpDouble1].c_str(),v.a23)); 
+    AddStr(ToStr(FmtCurrent[TpDouble1].c_str(),v.a24)); 
+    AddStr(ToStr(FmtCurrent[TpDouble1].c_str(),v.a31)); 
+    AddStr(ToStr(FmtCurrent[TpDouble1].c_str(),v.a32)); 
+    AddStr(ToStr(FmtCurrent[TpDouble1].c_str(),v.a33)); 
+    AddStr(ToStr(FmtCurrent[TpDouble1].c_str(),v.a34)); 
+    AddStr(ToStr(FmtCurrent[TpDouble1].c_str(),v.a41)); 
+    AddStr(ToStr(FmtCurrent[TpDouble1].c_str(),v.a42)); 
+    AddStr(ToStr(FmtCurrent[TpDouble1].c_str(),v.a43)); 
+    AddStr(ToStr(FmtCurrent[TpDouble1].c_str(),v.a44)); 
+    return(*this); 
+  }
 
   void SaveData(bool closefile=false);
 };

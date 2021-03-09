@@ -102,6 +102,8 @@ void JSimpleNeigs::DefineMapCells(){
   //printf("==>  ncx:%u ncy:%u ncz:%u\n",Ncx,Ncy,Ncz);
   Nsheet=Ncx*Ncy; Nct=Nsheet*Ncz;
   ullong nct0=ullong(Ncx)*ullong(Ncy)*ullong(Ncz);
+  const ullong ncmax=ullong(1024*1024*512);
+  if(nct0>ncmax)Run_Exceptioon(fun::PrintStr("Number of cells (%d x %d x %d) is too high.",Ncx,Ncy,Ncz));
   if(ullong(Nct)!=nct0)Run_Exceptioon(fun::PrintStr("Number of cells (%d x %d x %d) is invalid.",Ncx,Ncy,Ncz));
 }
 
