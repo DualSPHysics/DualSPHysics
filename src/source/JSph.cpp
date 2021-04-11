@@ -644,9 +644,7 @@ void JSph::LoadConfigParameters(const JXml *xml){
       case 1:  TDensity=DDT_DDT;      break;
       case 2:  TDensity=DDT_DDT2;     break;
       case 3:  TDensity=DDT_DDT2Full; break;
-      default: 
-        if(tddt==2 || tddt==3)Run_Exceptioon("Density Diffusion Term \'Fourtakas et al 2019\' is not available in this version.");
-        else Run_Exceptioon("Density Diffusion Term mode is not valid.");
+      default: Run_Exceptioon("Density Diffusion Term mode is not valid.");
     }
     DDTValue=eparms.GetValueFloat("DensityDTvalue",true,0.1f);
   }
@@ -788,9 +786,7 @@ void JSph::LoadConfigCommands(const JSphCfgRun *cfg){
       case 1:  TDensity=DDT_DDT;      break;
       case 2:  TDensity=DDT_DDT2;     break;
       case 3:  TDensity=DDT_DDT2Full; break;
-      default: 
-        if(cfg->TDensity==2 || cfg->TDensity==3)Run_Exceptioon("Density Diffusion Term \'Fourtakas et al 2019\' is not available in this version.");
-        else Run_Exceptioon("Density Diffusion Term mode is not valid.");
+      default: Run_Exceptioon("Density Diffusion Term mode is not valid.");
     }
     if(cfg->DDTValue>=0)DDTValue=cfg->DDTValue;
     else if(DDTValue==0)DDTValue=0.1f;
@@ -2942,7 +2938,7 @@ std::string JSph::GetSlipName(TpSlipMode tslip){
 /// Returns name of Density Diffusion Term in text format.
 /// Devuelve nombre del Density Diffusion Term en texto.
 //==============================================================================
-std::string JSph::GetDDTName(TpDensity tdensity){
+std::string JSph::GetDDTName(TpDensity tdensity)const{
   string tx;
   if(tdensity==DDT_None)tx="None";
   else if(tdensity==DDT_DDT)tx="Molteni and Colagrossi 2009";

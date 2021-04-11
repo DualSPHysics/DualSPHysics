@@ -22,6 +22,7 @@
 //:# - Codigo creado a partir de JArraysGpu para usar con memoria CPU. (10-03-2014)
 //:# - Remplaza long long por llong. (01-10-2015)
 //:# - Mejora la gestion de excepciones. (06-05-2020)
+//:# - Incorpora nuevos tipos. (11-04-2021)
 //:#############################################################################
 
 /// \file JArraysCpu.h \brief Declares the class \ref JArraysCpu.
@@ -86,7 +87,17 @@ public:
 class JArraysCpu : protected JObject
 {
 public:
-  typedef enum{ SIZE_1B=1,SIZE_2B=2,SIZE_4B=4,SIZE_8B=8,SIZE_12B=12,SIZE_16B=16,SIZE_24B=24,SIZE_32B=32 }TpArraySize;  //-Tipos de arrays.
+  typedef enum{ 
+    SIZE_1B=1
+   ,SIZE_2B=2
+   ,SIZE_4B=4
+   ,SIZE_8B=8
+   ,SIZE_12B=12
+   ,SIZE_16B=16
+   ,SIZE_24B=24
+   ,SIZE_32B=32
+   ,SIZE_72B=72
+  }TpArraySize;  //-Tipos de arrays.
 
 protected:
   JArraysCpuSize *Arrays1b;
@@ -97,8 +108,18 @@ protected:
   JArraysCpuSize *Arrays16b;
   JArraysCpuSize *Arrays24b;
   JArraysCpuSize *Arrays32b;
+  JArraysCpuSize *Arrays72b;
   
-  JArraysCpuSize* GetArrays(TpArraySize tsize)const{ return(tsize==SIZE_32B? Arrays32b: (tsize==SIZE_24B? Arrays24b: (tsize==SIZE_16B? Arrays16b: (tsize==SIZE_12B? Arrays12b: (tsize==SIZE_8B? Arrays8b: (tsize==SIZE_4B? Arrays4b: (tsize==SIZE_2B? Arrays2b: Arrays1b))))))); }
+  JArraysCpuSize* GetArrays(TpArraySize tsize)const{ 
+    return(tsize==SIZE_32B? Arrays32b: 
+          (tsize==SIZE_24B? Arrays24b: 
+          (tsize==SIZE_16B? Arrays16b: 
+          (tsize==SIZE_12B? Arrays12b: 
+          (tsize==SIZE_8B?  Arrays8b: 
+          (tsize==SIZE_4B?  Arrays4b: 
+          (tsize==SIZE_2B?  Arrays2b:
+          (tsize==SIZE_1B?  Arrays1b: Arrays72b)))))))); 
+  }
 
 public:
   JArraysCpu();
@@ -125,6 +146,8 @@ public:
   tdouble2*    ReserveDouble2(){    return((tdouble2*)Arrays16b->Reserve());    }
   tdouble3*    ReserveDouble3(){    return((tdouble3*)Arrays24b->Reserve());    }
   tsymatrix3f* ReserveSymatrix3f(){ return((tsymatrix3f*)Arrays24b->Reserve()); }
+  tmatrix2d*   ReserveMatrix2d(){   return((tmatrix2d*)Arrays32b->Reserve());   }
+  tmatrix3d*   ReserveMatrix3d(){   return((tmatrix3d*)Arrays72b->Reserve());   }
 #ifdef CODE_SIZE4
   typecode*    ReserveTypeCode(){   return(ReserveUint());                      }
 #else
@@ -142,6 +165,8 @@ public:
   void Free(tdouble2    *pointer){ Arrays16b->Free(pointer); }
   void Free(tdouble3    *pointer){ Arrays24b->Free(pointer); }
   void Free(tsymatrix3f *pointer){ Arrays24b->Free(pointer); }
+  void Free(tmatrix2d   *pointer){ Arrays32b->Free(pointer); }
+  void Free(tmatrix3d   *pointer){ Arrays72b->Free(pointer); }
 };
 
 

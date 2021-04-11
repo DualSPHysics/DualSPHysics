@@ -191,7 +191,7 @@ protected:
   //-Variables for Laminar+SPS viscosity.  
   tsymatrix3f *SpsTaug;       ///<SPS sub-particle stress tensor.
   tsymatrix3f *SpsGradvelg;   ///<Velocity gradients.
-  
+
   TimersGpu Timers;  ///<Declares an array with timers for CPU (type structure \ref StSphTimerGpu).
 
   void InitVars();

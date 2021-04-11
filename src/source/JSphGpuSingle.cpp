@@ -434,8 +434,8 @@ void JSphGpuSingle::Interaction_Forces(TpInterStep interstep){
   if(TBoundary==BC_MDBC && (MdbcCorrector || interstep!=INTERSTEP_SymCorrector))MdbcBoundCorrection(); //-Boundary correction for mDBC.
   InterStep=interstep;
   PreInteraction_Forces();
-  TmgStart(Timers,TMG_CfForces);
 
+  TmgStart(Timers,TMG_CfForces);
   const bool lamsps=(TVisco==VISCO_LaminarSPS);
   unsigned bsfluid=BlockSizes.forcesfluid;
   unsigned bsbound=BlockSizes.forcesbound;

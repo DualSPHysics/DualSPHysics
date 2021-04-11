@@ -501,7 +501,7 @@ public:
   static std::string GetViscoName(TpVisco tvisco);
   static std::string GetBoundName(TpBoundary tboundary);
   static std::string GetSlipName(TpSlipMode tslip);
-  static std::string GetDDTName(TpDensity tdensity);
+  std::string GetDDTName(TpDensity tdensity)const;
 
   std::string GetDDTConfig()const;
 

@@ -363,7 +363,7 @@ typedef enum{
 typedef enum{ 
   DDT_DDT2Full=3, ///<Density Diffussion Term 2 (Fourtakas et al 2019). It is applied to all fluid particles.
   DDT_DDT2=2,     ///<Density Diffussion Term 2 (Fourtakas et al 2019). It is only applied to inner fluid particles.
-  DDT_DDT=1,      ///<Density Diffussion Term. It is only applied to inner fluid particles.
+  DDT_DDT=1,      ///<Density Diffussion Term 1 (Molteni and Colagrossi 2009). It is only applied to inner fluid particles.
   DDT_None=0 
 }TpDensity;
 

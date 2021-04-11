@@ -40,6 +40,7 @@
 //:# - Se mueven las funciones de geometria 2D y 3D a los nuevos ficheros 
 //:#   FunctionsGeo2d.h y FunctionsGeoed.h respectivamente. (08-02-2019)
 //:# - Nueva funcion CalcRoundPos(). (02-03-2021)
+//:# - Nuevas funciones para matrices 2x2. (10-04-2021)
 //:#############################################################################
 
 /// \file FunctionsMath.h \brief Declares basic/general math functions.
@@ -81,6 +82,71 @@ inline double InterpolationBilinear(double x,double y,double px,double py,double
   double vy0=InterpolationLinear(x,px,px+dx,vxy,vxxy);
   double vy1=InterpolationLinear(x,px,px+dx,vxyy,vxxyy);
   return(InterpolationLinear(y,py,py+dy,vy0,vy1));
+}
+
+
+//==============================================================================
+/// Calcula el determinante de una matriz de 2x2.
+/// Returns the determinant of a 2x2 matrix.
+//==============================================================================
+inline double Determinant2x2(const tmatrix2d &d){
+  return(d.a11 * d.a22 - d.a12 * d.a21);
+}
+
+//==============================================================================
+/// Calcula el determinante de una matriz de 2x2.
+/// Returns the determinant of a 2x2 matrix.
+//==============================================================================
+inline float Determinant2x2(const tmatrix2f &d){
+  return(d.a11 * d.a22 - d.a12 * d.a21);
+}
+
+//==============================================================================
+/// Devuelve la matriz inversa de una matriz de 2x2.
+/// Returns the inverse matrix of a 2x2 matrix.
+//==============================================================================
+inline tmatrix2f InverseMatrix2x2(const tmatrix2f &d,const float det){
+  tmatrix2f inv;
+  if(det){
+    inv.a11= d.a22/det;
+    inv.a12=-d.a12/det;
+    inv.a21=-d.a21/det;
+    inv.a22= d.a11/det;
+  }
+  else inv=TMatrix2f(0);
+  return(inv);
+}
+
+//==============================================================================
+/// Devuelve la matriz inversa de una matriz de 2x2.
+/// Returns the inverse matrix of a 2x2 matrix.
+//==============================================================================
+inline tmatrix2f InverseMatrix2x2(const tmatrix2f &d){
+  return(InverseMatrix2x2(d,Determinant2x2(d)));
+}
+
+//==============================================================================
+/// Devuelve la matriz inversa de una matriz de 2x2.
+/// Returns the inverse matrix of a 2x2 matrix.
+//==============================================================================
+inline tmatrix2d InverseMatrix2x2(const tmatrix2d &d,const double det){
+  tmatrix2d inv;
+  if(det){
+    inv.a11= d.a22/det;
+    inv.a12=-d.a12/det;
+    inv.a21=-d.a21/det;
+    inv.a22= d.a11/det;
+  }
+  else inv=TMatrix2d(0);
+  return(inv);
+}
+
+//==============================================================================
+/// Devuelve la matriz inversa de una matriz de 2x2.
+/// Returns the inverse matrix of a 2x2 matrix.
+//==============================================================================
+inline tmatrix2d InverseMatrix2x2(const tmatrix2d &d){
+  return(InverseMatrix2x2(d,Determinant2x2(d)));
 }
 
 

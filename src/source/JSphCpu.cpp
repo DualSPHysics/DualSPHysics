@@ -89,7 +89,7 @@ void JSphCpu::InitVars(){
   BoundNormalc=NULL; MotionVelc=NULL; //-mDBC
   VelrhopM1c=NULL;                //-Verlet
   PosPrec=NULL; VelrhopPrec=NULL; //-Symplectic
-  SpsTauc=NULL; SpsGradvelc=NULL; //-Laminar+SPS. 
+  SpsTauc=NULL; SpsGradvelc=NULL; //-Laminar+SPS.
   Arc=NULL; Acec=NULL; Deltac=NULL;
   ShiftPosfsc=NULL;               //-Shifting.
   Pressc=NULL;
@@ -745,7 +745,7 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity,bool sh
             const float delta=visc_densi*dot3*massp2/velrhop2.w;
             deltap1=(boundp2? FLT_MAX: deltap1-delta); //-blocks it makes it boil - bloody DBC
           }
-
+          
           //-Shifting correction.
           if(shift && shiftposfsp1.x!=FLT_MAX){
             const float massrhop=massp2/velrhop2.w;
@@ -1229,6 +1229,9 @@ void JSphCpu::Interaction_MdbcCorrection(TpSlipMode slipmode,const StDivDataCpu 
     default: Run_Exceptioon("Kernel unknown.");
   }
 }
+
+
+
 
 //==============================================================================
 /// Update pos, dcell and code to move with indicated displacement.
