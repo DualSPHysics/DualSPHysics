@@ -1231,8 +1231,6 @@ void JSphCpu::Interaction_MdbcCorrection(TpSlipMode slipmode,const StDivDataCpu 
 }
 
 
-
-
 //==============================================================================
 /// Update pos, dcell and code to move with indicated displacement.
 /// The value of outrhop indicates is it outside of the density limits.

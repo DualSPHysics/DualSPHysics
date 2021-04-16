@@ -313,7 +313,7 @@ void JSphCfgRun::LoadOpts(string *optlis,int optn,int lv,const std::string &file
       }
       else if(txword=="DDT"){
         TDensity=atoi(txoptfull.c_str()); 
-        if(TDensity<0 || TDensity>4)ErrorParm(opt,c,lv,file);
+        if(TDensity<0 || TDensity>3)ErrorParm(opt,c,lv,file);
       }
       else if(txword=="DDTVALUE"){
         DDTValue=float(atof(txoptfull.c_str())); 

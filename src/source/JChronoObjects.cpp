@@ -815,7 +815,7 @@ void JChronoObjects::VisuBody(const JChBody *body)const{
 
   if(!body->GetModelFile().empty() && UseCollision){
     Log->Printf("    Kfric........: %g %s",body->GetKfric(),body->GetImposeFric()?"(Impose)":"");
-    Log->Printf("    Sfric........: %g %s",body->GetSfric(),body->GetImposeFric()?"(Impose)":"");
+    //Log->Printf("    Sfric........: %g %s",body->GetSfric(),body->GetImposeFric()?"(Impose)":"");
     Log->Printf("    Restitution..: %g",body->GetRestitu());
     if(UseChronoSMC){
       Log->Printf("    Young_Modulus: %g",body->GetYoung());

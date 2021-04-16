@@ -67,22 +67,6 @@ __device__ double DistPlane(const float4 &pla,const double3 &pt){
 /// Initializes matrix to zero.
 /// Inicializa matriz a cero.
 //------------------------------------------------------------------------------
-__device__ void Tmatrix2fReset(tmatrix2f &m){ 
-  m.a11=m.a12=m.a21=m.a22=0; 
-}
-
-//------------------------------------------------------------------------------
-/// Initializes matrix to zero.
-/// Inicializa matriz a cero.
-//------------------------------------------------------------------------------
-__device__ void Tmatrix2dReset(tmatrix2d &m){ 
-  m.a11=m.a12=m.a21=m.a22=0; 
-}
-
-//------------------------------------------------------------------------------
-/// Initializes matrix to zero.
-/// Inicializa matriz a cero.
-//------------------------------------------------------------------------------
 __device__ void Tmatrix3fReset(tmatrix3f &m){ 
   m.a11=m.a12=m.a13=m.a21=m.a22=m.a23=m.a31=m.a32=m.a33=0; 
 }
@@ -110,32 +94,6 @@ __device__ void Tmatrix4fReset(tmatrix4f &m){
 __device__ void Tmatrix4dReset(tmatrix4d &m){ 
   m.a11=m.a12=m.a13=m.a14=m.a21=m.a22=m.a23=m.a24=m.a31=m.a32=m.a33=m.a34=m.a41=m.a42=m.a43=m.a44=0; 
 }
-
-
-//------------------------------------------------------------------------------
-/// Calcula el determinante de una matriz de 2x2.
-/// Returns the determinant of a 2x2 matrix.
-//------------------------------------------------------------------------------
-__device__ double Determinant2x2(const tmatrix2d &d){
-  return(d.a11*d.a22 - d.a12*d.a21);
-}
-
-//------------------------------------------------------------------------------
-/// Devuelve la matriz inversa de una matriz de 2x2.
-/// Returns the inverse matrix of a 2x2 matrix.
-//------------------------------------------------------------------------------
-__device__ tmatrix2d InverseMatrix2x2(const tmatrix2d &d,const double det){
-  tmatrix2d inv;
-  if(det){
-    inv.a11= d.a22/det;
-    inv.a12=-d.a12/det;
-    inv.a21=-d.a21/det;
-    inv.a22= d.a11/det;
-  }
-  else Tmatrix2dReset(inv);
-  return(inv);
-}
-
 
 //------------------------------------------------------------------------------
 /// Calcula el determinante de una matriz de 3x3.

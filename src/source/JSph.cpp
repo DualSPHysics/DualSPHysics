@@ -1175,22 +1175,23 @@ StDemData JSph::LoadDemData(bool checkdata,const JCasePartBlock* block)const{
   if(checkdata){
     const string objdesc=fun::PrintStr("Object mk=%u (mkbound=%u)",mk,mkbound);
     if(!block->ExistsSubValue("Kfric","value"))Run_Exceptioon(objdesc+" - Value of Kfric is invalid.");
-    if(!block->ExistsSubValue("Sfric","value"))Run_Exceptioon(objdesc+" - Value of Sfric is invalid.");
+    //if(!block->ExistsSubValue("Sfric","value"))Run_Exceptioon(objdesc+" - Value of Sfric is invalid.");
     if(!block->ExistsSubValue("Restitution_Coefficient","value"))Run_Exceptioon(objdesc+" - Value of Restitution_Coefficient is invalid.");
     if(!block->ExistsSubValue("Young_Modulus","value"))Run_Exceptioon(objdesc+" - Value of Young_Modulus is invalid.");
     if(!block->ExistsSubValue("PoissonRatio","value"))Run_Exceptioon(objdesc+" - Value of PoissonRatio is invalid.");
   }
   //-Loads necessary values for collisions using DEM or Chrono.
   data.kfric=block->GetSubValueFloat("Kfric","value",true,FLT_MAX);
-  data.sfric=block->GetSubValueFloat("Sfric","value",true,FLT_MAX); 
+  //data.sfric=block->GetSubValueFloat("Sfric","value",true,FLT_MAX); 
   data.restitu=block->GetSubValueFloat("Restitution_Coefficient","value",true,FLT_MAX);
   data.young=block->GetSubValueFloat("Young_Modulus","value",true,FLT_MAX);
   data.poisson=block->GetSubValueFloat("PoissonRatio","value",true,FLT_MAX);
   if(block->ExistsValue("Kfric_User"))data.kfric=block->GetValueFloat("Kfric_User");
-  if(block->ExistsValue("Sfric_User"))data.sfric=block->GetValueFloat("Sfric_User");
+  //if(block->ExistsValue("Sfric_User"))data.sfric=block->GetValueFloat("Sfric_User");
   if(block->ExistsValue("Restitution_Coefficient_User"))data.restitu=block->GetValueFloat("Restitution_Coefficient_User");
 
   //-Checks and initialises the friction coefficients when one of them was not defined.
+  data.sfric=FLT_MAX; //-Disable sfric.
   if     (data.kfric==FLT_MAX && data.sfric!=FLT_MAX)data.kfric=data.sfric; 
   else if(data.kfric!=FLT_MAX && data.sfric==FLT_MAX)data.sfric=data.kfric;
 
