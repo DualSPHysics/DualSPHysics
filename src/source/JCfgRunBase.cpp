@@ -20,7 +20,10 @@
 
 #include "JCfgRunBase.h"
 #include "JAppInfo.h"
+
+#ifdef JCfgRunBase_UseDSCfg
 #include "JDsphConfig.h"
+#endif
 
 using namespace std;
 
@@ -45,11 +48,13 @@ void JCfgRunBase::Reset(){
 /// Load configuration from DsphConfig.xml.
 //==============================================================================
 void JCfgRunBase::LoadDsphConfig(std::string path){
+#ifdef JCfgRunBase_UseDSCfg
   JDsphConfig dsphconfig;
   dsphconfig.Init(path);
   if(!dsphconfig.GetFileCfg().empty())printf("LoadDsphConfig> %s\n",fun::GetPathLevels(dsphconfig.GetFileCfg(),3).c_str());
   if(dsphconfig.GetCreateDirs()!=-1)CreateDirs=(dsphconfig.GetCreateDirs()==1);
   if(dsphconfig.GetCsvSeparator()!=-1)CsvSepComa=(dsphconfig.GetCsvSeparator()==1);
+#endif
 }
 
 //==============================================================================

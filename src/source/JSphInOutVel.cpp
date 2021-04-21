@@ -88,6 +88,11 @@ void JSphInOutVel::Reset(){
   delete InputTimeVel; InputTimeVel=NULL;
   TimeVelIdx0=TimeVelIdx1=UINT_MAX; 
 
+  FlowActive=false;
+  FlowRatio=0;
+  FlowPointsOk=0;
+  FlowToVel=1.f;
+
   SaveVelProfile=true;
 
   delete AwasVel; AwasVel=NULL;
@@ -141,7 +146,7 @@ TpInVelMode JSphInOutVel::ReadXml(const JXml *sxml,TiXmlElement *ele
         InputVelPosz2=sxml->ReadElementFloat(xele,"velocity3","z2");
         InputVelPosz3=sxml->ReadElementFloat(xele,"velocity3","z3");
       }
-      sxml->CheckElementNames(xele,true,"*velocity *velocity2 *velocity3");
+      sxml->CheckElementNames(xele,true,"*velocity *velocity2 *velocity3 *flowvelocity");
     }
 //-Variable velocity.
     else if(VelMode==InVelM_Variable){
@@ -220,7 +225,7 @@ TpInVelMode JSphInOutVel::ReadXml(const JXml *sxml,TiXmlElement *ele
         }
       }
       if(!InputTimeVel || InputTimeVel->GetCount()<1)Run_Exceptioon("There are not inlet/outlet velocity values.");
-      sxml->CheckElementNames(xele,true,"*velocitytimes *velocitytimes2 *velocitytimes3 velocityfile velocityfile2 velocityfile3");
+      sxml->CheckElementNames(xele,true,"*velocitytimes *velocitytimes2 *velocitytimes3 velocityfile velocityfile2 velocityfile3 *flowvelocity");
     }
 //-Interpolated velocity with grid-data (old version).
     else if(VelMode==InVelM_Interpolated){
@@ -238,6 +243,16 @@ TpInVelMode JSphInOutVel::ReadXml(const JXml *sxml,TiXmlElement *ele
       }
     }
     else if(VelMode!=InVelM_Extrapolated)Run_Exceptioon("Inlet/outlet velocity profile is unknown.");
+    //-Loads flow configuration.
+    {
+      sxml->CheckAttributeNames(xele,"flowvelocity","active ratio comment");
+      FlowActive=sxml->ReadElementBool(xele,"flowvelocity","active",true,false);
+      if(FlowActive){
+        if(VelMode!=InVelM_Fixed && VelMode!=InVelM_Variable)sxml->ErrReadElement(xele,"flowvelocity",false,"The use of flow velocity is only supported by fixed or variable velocity.");
+        if(VelProfile!=InVelP_Uniform)sxml->ErrReadElement(xele,"flowvelocity",false,"The use of flow velocity is only supported by uniform velocity profile.");
+        FlowRatio=sxml->ReadElementFloat(xele,"flowvelocity","ratio",true,1.f);
+      }
+    }
   }
   else sxml->ErrReadElement(ele,"imposevelocity",true);
 
@@ -335,14 +350,38 @@ std::string JSphInOutVel::GetInletBehaviourName()const{
 }
 
 //==============================================================================
+/// Configures the conversion from velocity m/s to flow l/s.
+//==============================================================================
+void JSphInOutVel::ConfigFlowToVel(unsigned initnptok){
+  FlowPointsOk=initnptok;
+  const double volpart=(CSP.simulate2d? CSP.dp*CSP.dp: CSP.dp*CSP.dp*CSP.dp)*FlowRatio; //-Volume of particle.
+  const double npartlitre=(CSP.simulate2d? 0.01: 0.001)/volpart; //-Particles per litre.
+  FlowToVel=float(((npartlitre/FlowPointsOk)*CSP.dp));
+  //-Updates velocity using modified FlowToVel.
+  if(VelMode==InVelM_Variable)TimeVelIdx0=TimeVelIdx1=UINT_MAX; 
+  ComputeInitialVel();
+}
+
+//==============================================================================
 /// Loads lines with configuration information.
 //==============================================================================
 void JSphInOutVel::GetConfig(std::vector<std::string> &lines)const{
   const bool simulate2d=CSP.simulate2d;
   lines.push_back(fun::PrintStr("Velocity mode: %s",TpInVelModeText(VelMode)));
   if(VelMode==InVelM_Fixed || VelMode==InVelM_Variable){
+    if(FlowActive){
+      lines.push_back(fun::PrintStr("  Flow velocity configuration: True  (flow to velocity: %g m/l  volratio:%g)",FlowToVel,FlowRatio));
+      lines.push_back(fun::PrintStr("  Active InOut points: %u",FlowPointsOk));
+    }
     if(VelMode==InVelM_Variable && !InputTimeVel->GetFile().empty())lines.push_back(fun::PrintStr("  Velocity file: %s",InputTimeVel->GetFile().c_str()));
-    if(VelProfile==InVelP_Uniform )lines.push_back(fun::PrintStr("  Velocity profile: Uniform %g",InputVel));
+    if(FlowActive){
+      if(VelProfile==InVelP_Uniform && VelMode==InVelM_Fixed)
+        lines.push_back(fun::PrintStr("  Velocity profile: Uniform %g m/s  (%g l/s)",InputVel*FlowToVel,InputVel));
+    }
+    else{
+      if(VelProfile==InVelP_Uniform && VelMode==InVelM_Fixed)
+        lines.push_back(fun::PrintStr("  Velocity profile: Uniform %g m/s",InputVel));
+    }
     if(VelProfile==InVelP_Linear   )lines.push_back(fun::PrintStr("  Velocity profile: Linear %g(z=%g), %g(z=%g)",InputVel,InputVelPosz,InputVel2,InputVelPosz2));
     if(VelProfile==InVelP_Parabolic)lines.push_back(fun::PrintStr("  Velocity profile: Parabolic %g(z=%g), %g(z=%g), %g(z=%g)",InputVel,InputVelPosz,InputVel2,InputVelPosz2,InputVel3,InputVelPosz3));
   }
@@ -361,7 +400,7 @@ void JSphInOutVel::ComputeInitialVel(){
   CurrentCoefs0=CurrentCoefs1=TFloat4(0);
   if(VelMode==InVelM_Fixed){
     if(VelProfile==InVelP_Uniform){
-      CurrentCoefs0=TFloat4(InputVel,0,0,0);
+      CurrentCoefs0=TFloat4(InputVel*FlowToVel,0,0,0);
     }
     else if(VelProfile==InVelP_Linear){
       const float m=(InputVel2-InputVel)/(InputVelPosz2-InputVelPosz);
@@ -391,8 +430,8 @@ void JSphInOutVel::UpdateVelVariable(double timestep){
     const float t =(float)InputTimeVel->GetTimeByIdx(TimeVelIdx0);
     const float t2=(float)InputTimeVel->GetTimeByIdx(TimeVelIdx1);
     if(VelProfile==InVelP_Uniform){
-      CurrentCoefs0=TFloat4((float)InputTimeVel->GetValueByIdx(TimeVelIdx0),0,0,t);
-      CurrentCoefs1=TFloat4((float)InputTimeVel->GetValueByIdx(TimeVelIdx1),0,0,t2);
+      CurrentCoefs0=TFloat4((float)InputTimeVel->GetValueByIdx(TimeVelIdx0)*FlowToVel,0,0,t);
+      CurrentCoefs1=TFloat4((float)InputTimeVel->GetValueByIdx(TimeVelIdx1)*FlowToVel,0,0,t2);
     }
     else if(VelProfile==InVelP_Linear){
       for(unsigned cc=0;cc<=1;cc++){

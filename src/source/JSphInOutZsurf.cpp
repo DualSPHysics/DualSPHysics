@@ -408,6 +408,18 @@ void JSphInOutZsurf::GetConfig(std::vector<std::string> &lines)const{
 }
 
 //==============================================================================
+/// Returns initial active points (below zsurf).
+//==============================================================================
+unsigned JSphInOutZsurf::ComputeActivePoints(unsigned npt,const tdouble3 *ptpos)const{
+  unsigned npok=0;
+  if(UniformZsurf){
+    if(InputZsurf==FLT_MAX)npok=npt;
+    else for(unsigned p=0;p<npt;p++)if(float(ptpos[p].z)<=InputZsurf)npok++;
+  }
+  return(npok);
+}
+
+//==============================================================================
 /// Activates or deactivates points according to zsurf.
 //==============================================================================
 void JSphInOutZsurf::SetInitialPoints(unsigned npt,const tdouble3 *ptpos,byte *ptok)const{

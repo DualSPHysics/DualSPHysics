@@ -475,6 +475,9 @@
     <ClInclude Include="..\source\RunExceptionGpuDef.h">
       <Filter>Common</Filter>
     </ClInclude>
+    <ClInclude Include="..\source\JCfgRunBaseDef.h">
+      <Filter>Common</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\source\main.cpp">

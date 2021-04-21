@@ -565,6 +565,7 @@ rem %CudaNvcc% -ccbin "$(VCInstallDir)bin" %gpuhw% -use_fast_math -c %ptxinfo% -
     </ClInclude>
     <ClInclude Include="..\source\JCellSearch_inline.h" />
     <ClInclude Include="..\source\JCfgRunBase.h" />
+    <ClInclude Include="..\source\JCfgRunBaseDef.h" />
     <ClInclude Include="..\source\JChronoData.h" />
     <ClInclude Include="..\source\JChronoObjects.h" />
     <ClInclude Include="..\source\JChronoObjectsUndef.h" />

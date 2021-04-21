@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<!-- *** DualSPHysics (21-02-2021) *** -->
+<!-- *** DualSPHysics (21-04-2021) *** -->
 <!-- *** class: JSphInOut *** -->
 <!------------------------------------------------------------------------------->
 <!------------------------------------------------------------------------------->
@@ -280,6 +280,13 @@
 		<gridveldata file="wave_h02t2d1r1o2Velxz.csv" comment="CSV file with velocity data in different times and positions" />
 		<gridresetvelz value="true" comment="Reset Z velocity after interaction (default=false)" />
 		<_gridposzero x="0" z="0" comment="Defines position of grid (default=0)" />
+	</imposevelocity>
+<!------------------------------------------------------------------------------->
+<!-- Flow velocity [l/s] definition instead of velocity [m/s] -->
+<!-- Flow velocity [l/s] is suported by uniform fixed or uniform veriable velocity when zsurf is fixed. -->
+	<imposevelocity mode="0" comment="Imposed velocity 0:fixed value, 1:variable value, 2:Extrapolated velocity, 3:Interpolated velocity (default=0)">
+	    <flowvelocity active="true" ratio="1.0" comment="Velocity values are read as flow [l/s] and ratio is used to compute particle volume (ratio*dp^3)." />
+		<velocity v="2" comment="Uniform velocity" units_comment="m/s" />
 	</imposevelocity>
 <!------------------------------------------------------------------------------->
 <!------------------------------------------------------------------------------->

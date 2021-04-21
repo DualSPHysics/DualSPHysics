@@ -265,6 +265,13 @@ void JSphInOutZone::ReadXml(const JXml *sxml,TiXmlElement* ele,const std::string
   else InOutZsurf->SetInitialPoints(Points->GetCount(),Points->GetPoints(),Points->GetPointsInit());
   NpartInit=Points->CountPointsInit()*Layers;
 
+  //-Compute flow velocity factor.
+  if(InOutVel->GetFlowActive()){
+    if(ZsurfMode!=InZsurf_Fixed)Run_Exceptioon(fun::PrintStr("Inlet/outlet zone %d: The use of flow velocity is only supported by fixed zsurf configuration.",IdZone));
+    const unsigned nptok=InOutZsurf->ComputeActivePoints(Points->GetCount(),Points->GetPoints());
+    InOutVel->ConfigFlowToVel(nptok);
+  }
+
   InputCheck=(InOutZsurf->GetRemoveZsurf() || InputMode!=InInput_Free);
 }
 

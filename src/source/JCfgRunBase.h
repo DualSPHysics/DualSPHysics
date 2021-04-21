@@ -23,6 +23,7 @@
 //# - Actualiza codigo para DualSPHysics. (28-06-2020)
 //# - Nuevas funciones LoadFloats() y LoadDoubles(). (12-08-2020)
 //# - Ignora parametros vacios. (10-09-2020)
+//:# - El uso de JDsphConfig o no se define en JCfgRunBaseDef.h. (20-04-2021)
 //#############################################################################
 
 #ifndef _JCfgRunBase_
@@ -30,6 +31,7 @@
 
 #pragma warning(disable : 4996) //Anula sprintf() deprecated.
 
+#include "JCfgRunBaseDef.h"
 #include "TypesDef.h"
 #include "Functions.h"
 #include "JObject.h"
