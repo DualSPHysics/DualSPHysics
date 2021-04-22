@@ -831,8 +831,8 @@ template<TpKernel tker,TpFtMode ftmode,bool lamsps,TpDensity tdensity,bool shift
 //#define FAST_COMPILATION
 template<TpKernel tker,TpFtMode ftmode,bool lamsps> void Interaction_Forces_gt2(const StInterParmsg &t){
 #ifdef FAST_COMPILATION
-  if(t.shiftmode || t.tdensity!=DDT_DDT2Full)throw "Shifting and extra DDT are disabled for FastCompilation...";
-  Interaction_ForcesGpuT<tker,ftmode,lamsps,DDT_DDT2Full,false> (t);
+  if(t.shiftmode || t.tdensity!=DDT_DDT4)throw "Shifting and extra DDT are disabled for FastCompilation...";
+  Interaction_ForcesGpuT<tker,ftmode,lamsps,DDT_DDT4,false> (t);
 #else
   if(t.shiftmode){               const bool shift=true;
     if(t.tdensity==DDT_None)    Interaction_ForcesGpuT<tker,ftmode,lamsps,DDT_None    ,shift> (t);

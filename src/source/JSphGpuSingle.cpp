@@ -494,6 +494,7 @@ void JSphGpuSingle::MdbcBoundCorrection(){
   TmgStop(Timers,TMG_CfPreForces);
 }
 
+
 //==============================================================================
 /// Returns the maximum value of  (ace.x^2 + ace.y^2 + ace.z^2) from Acec[].
 /// Devuelve valor maximo de (ace.x^2 + ace.y^2 + ace.z^2) a partir de Acec[].
