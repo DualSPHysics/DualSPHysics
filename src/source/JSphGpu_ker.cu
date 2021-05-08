@@ -39,6 +39,7 @@ __constant__ StCteInteraction CTE;
 namespace cusph{
 #include "FunctionsBasic_iker.h"
 #include "FunctionsMath_iker.h"
+#include "FunctionsGeo3d_iker.h"
 #include "FunSphKernel_iker.h"
 #include "FunSphEos_iker.h"
 #include "JCellSearch_iker.h"
@@ -1656,7 +1657,7 @@ template<bool periactive,bool floatings> __global__ void KerComputeStepPos2(unsi
         const double2 rmovxy=movxy[p];
         KerUpdatePos<periactive>(posxypre[p],poszpre[p],rmovxy.x,rmovxy.y,movz[p],outrhop,p,posxy,posz,dcell,code);
       }
-      else{
+      else{ //-Copy position of floating particles.
         posxy[p]=posxypre[p];
         posz[p]=poszpre[p];
       }

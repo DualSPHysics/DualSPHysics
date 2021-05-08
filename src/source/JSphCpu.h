@@ -253,10 +253,11 @@ protected:
 
   void ComputeVerletVarsFluid(bool shift,const tfloat3 *indirvel,const tfloat4 *velrhop1,const tfloat4 *velrhop2,double dt,double dt2,tdouble3 *pos,unsigned *cell,typecode *code,tfloat4 *velrhopnew)const;
   void ComputeVelrhopBound(const tfloat4* velrhopold,double armul,tfloat4* velrhopnew)const;
-
   void ComputeVerlet(double dt);
+
   void ComputeSymplecticPre(double dt);
   void ComputeSymplecticCorr(double dt);
+
   double DtVariable(bool final);
 
   void RunShifting(double dt);

@@ -973,7 +973,7 @@ void JSphGpu::ComputeSymplecticPre(double dt){
   //-Aplica desplazamiento a las particulas fluid no periodicas.
   cusph::ComputeStepPos2(PeriActive,WithFloating,Np,Npb,PosxyPreg,PoszPreg
     ,movxyg,movzg,Posxyg,Poszg,Dcellg,Codeg);
-  //-Frees memory allocated for the displacement
+  //-Frees memory allocated for the displacement.
   ArraysGpu->Free(movxyg);   movxyg=NULL;
   ArraysGpu->Free(movzg);    movzg=NULL;
   //-Copies previous position of the boundaries.

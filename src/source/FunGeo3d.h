@@ -69,6 +69,7 @@
 //:# - Cambio menor en PolygonConcave(). (20-11-2020)
 //:# - Mueve funciones de poligonos a FunGeo3dPolygon. (21-11-2020)
 //:# - Mueve funciones de triangulos a FunGeo3dTriangle. (21-11-2020)
+//:# - Nuevas funciones: VecBounce(). (05-05-2021)
 //:#############################################################################
 
 /// \file FunGeo3d.h \brief Declares geometry functions for 3D.
@@ -405,6 +406,25 @@ inline tfloat3 VecOrthogonal(const tfloat3 &v,float module){
   else if(v.y)r=TFloat3(1,(-v.x-v.z)/v.y,1);
   else if(v.z)r=TFloat3(1,1,(-v.x-v.y)/v.z);
   return(VecModule(r,module));
+}
+
+
+//==============================================================================
+/// Devuelve vector de rebote a una normal.
+/// Returns bounce vector to a normal.
+//==============================================================================
+inline tfloat3 VecBounce(const tfloat3 &vec,const tfloat3 &normal){
+  const tfloat3 u=normal*(fgeo::ProductScalar(vec,normal)/fgeo::ProductScalar(normal,normal));
+  return(vec-u-u);
+}
+
+//==============================================================================
+/// Devuelve vector de rebote a una normal.
+/// Returns bounce vector to a normal.
+//==============================================================================
+inline tdouble3 VecBounce(const tdouble3 &vec,const tdouble3 &normal){
+  const tdouble3 u=normal*(fgeo::ProductScalar(vec,normal)/fgeo::ProductScalar(normal,normal));
+  return(vec-u-u);
 }
 
 //==============================================================================

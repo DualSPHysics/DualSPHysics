@@ -47,6 +47,14 @@ __device__ double PlanePoint(const double4 &pla,const double3 &pt){
 }
 
 //------------------------------------------------------------------------------
+/// Resuelve punto en el plano.
+/// Solves point in the plane.
+//------------------------------------------------------------------------------
+__device__ float PlanePoint(const float4 &pla,const float3 &pt){ 
+  return(pla.x*pt.x+pla.y*pt.y+pla.z*pt.z+pla.w);
+}
+
+//------------------------------------------------------------------------------
 /// Comprueba si el punto esta dentro del dominio definido.
 /// Checks the point is inside the defined domain.
 //------------------------------------------------------------------------------
@@ -75,6 +83,80 @@ __device__ float PlaneDistSign(const float4 &pla,const float &ptx,const float &p
   return(PlanePoint(pla,ptx,pty,ptz)/sqrt(pla.x*pla.x+pla.y*pla.y+pla.z*pla.z));
 }
 
+//==============================================================================
+/// Devuelve la distancia al (0,0,0).
+/// Returns the distance from (0,0,0).
+//==============================================================================
+__device__ float PointDist(const float3 &p1){
+  return(sqrt(p1.x*p1.x+p1.y*p1.y+p1.z*p1.z));
+}
+
+//==============================================================================
+/// Devuelve la distancia al (0,0,0).
+/// Returns the distance from (0,0,0).
+//==============================================================================
+__device__ float PointDist(const float4 &p1){
+  return(sqrt(p1.x*p1.x+p1.y*p1.y+p1.z*p1.z));
+}
+
+//------------------------------------------------------------------------------
+/// Devuelve la distancia^2 entre dos puntos.
+/// Returns the distance^2 between two points.
+//------------------------------------------------------------------------------
+__device__ float PointsDist2(const float3 &p1,const float3 &p2){
+  const float dx=p1.x-p2.x;
+  const float dy=p1.y-p2.y;
+  const float dz=p1.z-p2.z;
+  return(dx*dx + dy*dy + dz*dz);
+}
+
+//------------------------------------------------------------------------------
+/// Devuelve vector unitario valido del vector or (0,0,0).
+/// Returns a valid unit vector of the vector or (0,0,0).
+//------------------------------------------------------------------------------
+__device__ float3 VecUnitary(const float3 &v){
+  const float m=sqrt(v.x*v.x+v.y*v.y+v.z*v.z);
+  return(m? make_float3(v.x/m,v.y/m,v.z/m): v);
+}
+
+//------------------------------------------------------------------------------
+/// Devuelve vector unitario valido del vector or (0,0,0).
+/// Returns a valid unit vector of the vector or (0,0,0).
+//------------------------------------------------------------------------------
+__device__ float3 VecModule(const float3 &v,float module){
+  const float m=sqrt(v.x*v.x+v.y*v.y+v.z*v.z);
+  const float m2=(m? module/m: 0);
+  return(m? make_float3(v.x*m2,v.y*m2,v.z*m2): v);
+}
+
+//==============================================================================
+/// Devuelve el producto escalar de 2 vectores.
+/// Returns the scalar product of two vectors.
+//==============================================================================
+__device__ float ProductScalar(const float3 &v1,const float3 &v2){
+  return(v1.x*v2.x + v1.y*v2.y + v1.z*v2.z);
+}
+
+//------------------------------------------------------------------------------
+/// Devuelve vector de rebote a una normal.
+/// Returns bounce vector to a normal.
+//------------------------------------------------------------------------------
+__device__ float3 VecBounce(const float3 &vec,const float3 &normal){
+  const float pp=ProductScalar(vec,normal)/ProductScalar(normal,normal);
+  const float ux=normal.x*pp;
+  const float uy=normal.y*pp;
+  const float uz=normal.z*pp;
+  return(make_float3(vec.x-ux-ux,vec.y-uy-uy,vec.z-uz-uz));
+}
+
+//------------------------------------------------------------------------------
+/// Devuelve el plano formado por un punto y un vector.
+/// Returns the plane defined by a point and a vector.
+//------------------------------------------------------------------------------
+__device__ float4 PlanePtVec(const float3 &pt,const float3 &vec){
+  const float3 v=VecUnitary(vec);//-No es necesario pero asi el modulo del vector no afecta al resultado de PointPlane().
+  return(make_float4(v.x,v.y,v.z,-v.x*pt.x-v.y*pt.y-v.z*pt.z));
+}
 
 }
 

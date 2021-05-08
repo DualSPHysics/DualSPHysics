@@ -1299,6 +1299,7 @@ void JSphCpu::UpdatePos(tdouble3 rpos,double movx,double movy,double movz
   }
 }
 
+
 //==============================================================================
 /// Calculate new values of position, velocity & density for fluid (using Verlet).
 /// Calcula nuevos valores de posicion, velocidad y densidad para el fluido (usando Verlet).
@@ -1404,6 +1405,7 @@ void JSphCpu::ComputeVerlet(double dt){
   TmcStop(Timers,TMC_SuComputeStep);
 }
 
+
 //==============================================================================
 /// Update of particles according to forces and dt using Symplectic-Predictor.
 /// Actualizacion de particulas segun fuerzas y dt usando Symplectic-Predictor.
@@ -1417,10 +1419,9 @@ void JSphCpu::ComputeSymplecticPre(double dt){
   //-Change data to variables Pre to calculate new data. | Cambia datos a variables Pre para calcular nuevos datos.
   swap(PosPrec,Posc);         //Put value of Pos[] in PosPre[].         | Es decir... PosPre[] <= Pos[].
   swap(VelrhopPrec,Velrhopc); //Put value of Velrhop[] in VelrhopPre[]. | Es decir... VelrhopPre[] <= Velrhop[].
-  //-Calculate new values of particles. | Calcula nuevos datos de particulas.
-  const double dt05=dt*.5;
-  
+
   //-Calculate new density for boundary and copy velocity. | Calcula nueva densidad para el contorno y copia velocidad.
+  const double dt05=dt*.5;
   const int npb=int(Npb);
   #ifdef OMP_USE
     #pragma omp parallel for schedule (static) if(npb>OMP_LIMIT_COMPUTESTEP)
@@ -1431,16 +1432,19 @@ void JSphCpu::ComputeSymplecticPre(double dt){
     Velrhopc[p]=TFloat4(vr.x,vr.y,vr.z,(rhopnew<RhopZero? RhopZero: rhopnew));//-Avoid fluid particles being absorbed by boundary ones. | Evita q las boundary absorvan a las fluidas.
   }
 
-  //-Calculate new values of fluid. | Calcula nuevos datos del fluido.
+  //-Compute displacement, velocity and density for fluid.
+  tdouble3 *movc=ArraysCpu->ReserveDouble3();
   const tfloat3 *indirvel=(InOut? InOut->GetDirVel(): NULL);
   const int np=int(Np);
+  const int npf=np-npb;
   #ifdef OMP_USE
-    #pragma omp parallel for schedule (static) if(np>OMP_LIMIT_COMPUTESTEP)
+    #pragma omp parallel for schedule (static) if(npf>OMP_LIMIT_COMPUTESTEP)
   #endif
   for(int p=npb;p<np;p++){
+    const typecode rcode=Codec[p];
     //-Calculate density.
     const float rhopnew=float(double(VelrhopPrec[p].w)+dt05*Arc[p]);
-    if(!WithFloating || CODE_IsFluid(Codec[p])){//-Fluid Particles.
+    if(!WithFloating || CODE_IsFluid(rcode)){//-Fluid Particles.
       //-Calculate displacement. | Calcula desplazamiento.
       double dx=double(VelrhopPrec[p].x)*dt05;
       double dy=double(VelrhopPrec[p].y)*dt05;
@@ -1458,10 +1462,10 @@ void JSphCpu::ComputeSymplecticPre(double dt){
         float(double(VelrhopPrec[p].z) + (double(Acec[p].z)+Gravity.z) * dt05),
         rhopnew);
       //-Restore data of inout particles.
-      if(InOut && CODE_IsFluidInout(Codec[p])){
+      if(InOut && CODE_IsFluidInout(rcode)){
         outrhop=false;
         rvelrhopnew=VelrhopPrec[p];
-        const tfloat3 vd=indirvel[CODE_GetIzoneFluidInout(Codec[p])];
+        const tfloat3 vd=indirvel[CODE_GetIzoneFluidInout(rcode)];
         if(vd.x!=FLT_MAX){
           const float v=rvelrhopnew.x*vd.x + rvelrhopnew.y*vd.y + rvelrhopnew.z*vd.z;
           dx=double(v*vd.x) * dt05;
@@ -1470,16 +1474,37 @@ void JSphCpu::ComputeSymplecticPre(double dt){
         }
       }
       //-Update particle data.
-      UpdatePos(PosPrec[p],dx,dy,dz,outrhop,p,Posc,Dcellc,Codec);
+      movc[p]=TDouble3(dx,dy,dz);
+      if(outrhop){ //-Only brands as excluded normal particles (not periodic). | Solo marca como excluidas las normales (no periodicas).
+        if(CODE_IsNormal(rcode))Codec[p]=CODE_SetOutRhop(rcode);
+      }
+      //UpdatePos(PosPrec[p],dx,dy,dz,outrhop,p,Posc,Dcellc,Codec);
       Velrhopc[p]=rvelrhopnew;
     }
     else{//-Floating Particles.
       Velrhopc[p]=VelrhopPrec[p];
       Velrhopc[p].w=(rhopnew<RhopZero? RhopZero: rhopnew); //-Avoid fluid particles being absorbed by floating ones. | Evita q las floating absorvan a las fluidas.
-      //-Copy position. | Copia posicion.
-      Posc[p]=PosPrec[p];
     }
   }
+
+  //-Applies displacement to non-periodic fluid particles.
+  #ifdef OMP_USE
+    #pragma omp parallel for schedule (static) if(npf>OMP_LIMIT_COMPUTESTEP)
+  #endif
+  for(int p=npb;p<np;p++){
+    const typecode rcode=Codec[p];
+    const bool outrhop=CODE_IsOutRhop(rcode);
+    const bool normal=(!PeriActive || outrhop || CODE_IsNormal(rcode));
+    if(normal){//-Does not apply to periodic particles. | No se aplica a particulas periodicas
+      if(CODE_IsFluid(rcode)){//-Only applied for fluid displacement. | Solo se aplica desplazamiento al fluido.
+        UpdatePos(PosPrec[p],movc[p].x,movc[p].y,movc[p].z,outrhop,p,Posc,Dcellc,Codec);
+      }
+      else Posc[p]=PosPrec[p]; //-Copy position of floating particles.
+    }
+  }
+  
+  //-Frees memory allocated for the displacement.
+  ArraysCpu->Free(movc);   movc=NULL;
 
   //-Copy previous position of boundary. | Copia posicion anterior del contorno.
   memcpy(Posc,PosPrec,sizeof(tdouble3)*Npb);
@@ -1506,17 +1531,20 @@ void JSphCpu::ComputeSymplecticCorr(double dt){
     Velrhopc[p]=TFloat4(0,0,0,(rhopnew<RhopZero? RhopZero: rhopnew));//-Avoid fluid particles being absorbed by boundary ones. | Evita q las boundary absorvan a las fluidas.
   }
 
-  //-Calculate fluid values. | Calcula datos de fluido.
+  //-Compute displacement, velocity and density for fluid.
+  tdouble3 *movc=ArraysCpu->ReserveDouble3();
   const tfloat3 *indirvel=(InOut? InOut->GetDirVel(): NULL);
   const double dt05=dt*.5;
   const int np=int(Np);
+  const int npf=np-npb;
   #ifdef OMP_USE
-    #pragma omp parallel for schedule (static) if(np>OMP_LIMIT_COMPUTESTEP)
+    #pragma omp parallel for schedule (static) if(npf>OMP_LIMIT_COMPUTESTEP)
   #endif
   for(int p=npb;p<np;p++){
+    const typecode rcode=Codec[p];
     const double epsilon_rdot=(-double(Arc[p])/double(Velrhopc[p].w))*dt;
     const float rhopnew=float(double(VelrhopPrec[p].w) * (2.-epsilon_rdot)/(2.+epsilon_rdot));
-    if(!WithFloating || CODE_IsFluid(Codec[p])){//-Fluid Particles.
+    if(!WithFloating || CODE_IsFluid(rcode)){//-Fluid Particles.
       //-Calculate velocity & density. | Calcula velocidad y densidad.
       tfloat4 rvelrhopnew=TFloat4(
         float(double(VelrhopPrec[p].x) + (double(Acec[p].x)+Gravity.x) * dt), 
@@ -1534,10 +1562,10 @@ void JSphCpu::ComputeSymplecticCorr(double dt){
       }
       bool outrhop=(rhopnew<RhopOutMin || rhopnew>RhopOutMax);
       //-Restore data of inout particles.
-      if(InOut && CODE_IsFluidInout(Codec[p])){
+      if(InOut && CODE_IsFluidInout(rcode)){
         outrhop=false;
         rvelrhopnew=VelrhopPrec[p];
-        const tfloat3 vd=indirvel[CODE_GetIzoneFluidInout(Codec[p])];
+        const tfloat3 vd=indirvel[CODE_GetIzoneFluidInout(rcode)];
         if(vd.x!=FLT_MAX){
           const float v=rvelrhopnew.x*vd.x + rvelrhopnew.y*vd.y + rvelrhopnew.z*vd.z;
           dx=double(v*vd.x) * dt;
@@ -1551,22 +1579,45 @@ void JSphCpu::ComputeSymplecticCorr(double dt){
         }
       }
       //-Update particle data.
-      UpdatePos(PosPrec[p],dx,dy,dz,outrhop,p,Posc,Dcellc,Codec);
+      movc[p]=TDouble3(dx,dy,dz);
+      if(outrhop){ //-Only brands as excluded normal particles (not periodic). | Solo marca como excluidas las normales (no periodicas).
+        if(CODE_IsNormal(rcode))Codec[p]=CODE_SetOutRhop(rcode);
+      }
+      //UpdatePos(PosPrec[p],dx,dy,dz,outrhop,p,Posc,Dcellc,Codec);
       Velrhopc[p]=rvelrhopnew;
     }
     else{//-Floating Particles.
       Velrhopc[p]=VelrhopPrec[p];
       Velrhopc[p].w=(rhopnew<RhopZero? RhopZero: rhopnew); //-Avoid fluid particles being absorbed by floating ones. | Evita q las floating absorvan a las fluidas.
-      //-Copy position. | Copia posicion.
-      Posc[p]=PosPrec[p];
     }
   }
+
+  //-Applies displacement to non-periodic fluid particles.
+  #ifdef OMP_USE
+    #pragma omp parallel for schedule (static) if(npf>OMP_LIMIT_COMPUTESTEP)
+  #endif
+  for(int p=npb;p<np;p++){
+    const typecode rcode=Codec[p];
+    const bool outrhop=CODE_IsOutRhop(rcode);
+    const bool normal=(!PeriActive || outrhop || CODE_IsNormal(rcode));
+    if(normal){//-Does not apply to periodic particles. | No se aplica a particulas periodicas
+      if(CODE_IsFluid(rcode)){//-Only applied for fluid displacement. | Solo se aplica desplazamiento al fluido.
+        UpdatePos(PosPrec[p],movc[p].x,movc[p].y,movc[p].z,outrhop,p,Posc,Dcellc,Codec);
+      }
+      else Posc[p]=PosPrec[p]; //-Copy position of floating particles.
+    }
+  }
+ 
+  //-Frees memory allocated for the displacement.
+  ArraysCpu->Free(movc);   movc=NULL;
 
   //-Free memory assigned to variables Pre and ComputeSymplecticPre(). | Libera memoria asignada a variables Pre en ComputeSymplecticPre().
   ArraysCpu->Free(PosPrec);      PosPrec=NULL;
   ArraysCpu->Free(VelrhopPrec);  VelrhopPrec=NULL;
   TmcStop(Timers,TMC_SuComputeStep);
 }
+
+
 
 //==============================================================================
 /// Calculate variable Dt.
