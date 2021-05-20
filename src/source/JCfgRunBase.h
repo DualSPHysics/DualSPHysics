@@ -86,6 +86,7 @@ public:
   void LoadArgv(int argc,char** argv);
   void LoadFile(std::string fname,int lv);
   void ErrorParm(const std::string &opt,int optc,int lv,const std::string &file)const;
+  void ErrorParmText(const std::string &text,int optc,int lv,const std::string &file)const;
 
   virtual void VisuInfo()const=0;
   virtual void VisuConfig()const=0;

@@ -45,9 +45,9 @@ public:
     ,const tmatrix3d &inertia,const tint3 &translationfree,const tint3 &rotationfree
     ,const tfloat3 &linvelini,const tfloat3 &angvelini){ return(false); };
 
-  void ConfigDataBodyFloating(word mkbound,float kfric,float restitu,float young,float poisson){};
-  void ConfigDataBodyMoving  (word mkbound,float kfric,float restitu,float young,float poisson){};
-  void ConfigDataBodyFixed   (word mkbound,float kfric,float restitu,float young,float poisson){};
+  void ConfigDataBodyFloating(word mkbound,float kfric,float sfric,float restitu,float young,float poisson){};
+  void ConfigDataBodyMoving  (word mkbound,float kfric,float sfric,float restitu,float young,float poisson){};
+  void ConfigDataBodyFixed   (word mkbound,float kfric,float sfric,float restitu,float young,float poisson){};
 
   void Init(const JSphMk* mkinfo){};
   void VisuConfig(std::string txhead, std::string txfoot)const{};

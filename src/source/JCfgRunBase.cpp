@@ -135,6 +135,14 @@ void JCfgRunBase::ErrorParm(const std::string &opt,int optc,int lv,const std::st
   Run_ExceptioonFile(tx,file);
 }
 
+//==============================================================================
+/// Generates error on parameter with indicated text.
+//==============================================================================
+void JCfgRunBase::ErrorParmText(const std::string &text,int optc,int lv,const std::string &file)const{
+  std::string tx=text+fun::PrintStr(" (Level cfg:%d, Parameter:%d)",lv,optc);
+  Run_ExceptioonFile(tx,file);
+}
+
 
 //==============================================================================
 /// Loads nv values float using command options. Returns number of loaded 
