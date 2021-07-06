@@ -116,7 +116,9 @@ JDsMooredFloating::StLinkData JDsMooredFloating::GetFairlead(unsigned fairnum)co
 /// Constructor.
 //==============================================================================
 JDsMooredFloatings::JDsMooredFloatings(std::string dircase,std::string casename
-  ,tfloat3 gravity):Log(AppInfo.LogPtr()),DirCase(dircase),CaseName(casename),Gravity(gravity)
+  ,tfloat3 gravity,double timemax,double dtout)
+  :Log(AppInfo.LogPtr()),DirCase(dircase),CaseName(casename),Gravity(gravity)
+  ,TimeMax(timemax),DtOut(dtout)
 {
   ClassName="JDsMooredFloatings";
   MoorDynReady=false;
@@ -260,7 +262,7 @@ void JDsMooredFloatings::Config(unsigned ftcount,const StFloatingData *ftdata,JD
     }
     if(Gravity.z==0)Run_Exceptioon("Gravity.z equal to zero is not allowed.");
     if(Gravity.x || Gravity.y)Log->PrintfWarning("Gravity.x or Gravity.y are not zero but only gravity.z=%f is used for MoorDyn+.",fabs(Gravity.z));
-    if(MoorDyn_LinesInit(filexml,nodexml,MoordynDir,nftm,ftmkb,ftvellin,ftvelang,Gravity))
+    if(MoorDyn_LinesInit(filexml,nodexml,MoordynDir,nftm,ftmkb,ftvellin,ftvelang,Gravity,TimeMax,DtOut))
       Run_Exceptioon("Error initializing moorings in MoorDyn library.");
     MoorDynReady=true;
     //-Free memory.

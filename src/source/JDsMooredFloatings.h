@@ -113,6 +113,8 @@ private:
   const std::string DirCase;
   const std::string CaseName;
   const tfloat3 Gravity;
+  const double TimeMax;
+  const double DtOut;
   std::string FileLines;
   std::string MoordynDir;   ///<Work directory for MoorDyn.
 
@@ -142,7 +144,7 @@ private:
   void FreeFairMemory();
 
 public:
-  JDsMooredFloatings(std::string dircase,std::string casename,tfloat3 gravity);
+  JDsMooredFloatings(std::string dircase,std::string casename,tfloat3 gravity,double timemax,double dtout);
   ~JDsMooredFloatings();
   void Reset();
   void LoadXml(const JXml *sxml,const std::string &place);

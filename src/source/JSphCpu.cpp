@@ -640,7 +640,7 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity,bool sh
   ,StDivDataCpu divdata,const unsigned *dcell
   ,const tsymatrix3f* tau,tsymatrix3f* gradvel
   ,const tdouble3 *pos,const tfloat4 *velrhop,const typecode *code,const unsigned *idp
-  ,const float *press 
+  ,const float *press,const tfloat3 *dengradcorr
   ,float &viscdt,float *ar,tfloat3 *ace,float *delta
   ,TpShifting shiftmode,tfloat4 *shiftposfs)const
 {
@@ -971,11 +971,11 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity,bool sh
   if(t.npf){
     //-Interaction Fluid-Fluid.
     InteractionForcesFluid<tker,ftmode,tvisco,tdensity,shift> (t.npf,t.npb,false,Visco                 
-      ,t.divdata,t.dcell,t.spstau,t.spsgradvel,t.pos,t.velrhop,t.code,t.idp,t.press
+      ,t.divdata,t.dcell,t.spstau,t.spsgradvel,t.pos,t.velrhop,t.code,t.idp,t.press,t.dengradcorr
       ,viscdt,t.ar,t.ace,t.delta,t.shiftmode,t.shiftposfs);
     //-Interaction Fluid-Bound.
     InteractionForcesFluid<tker,ftmode,tvisco,tdensity,shift> (t.npf,t.npb,true ,Visco*ViscoBoundFactor
-      ,t.divdata,t.dcell,t.spstau,t.spsgradvel,t.pos,t.velrhop,t.code,t.idp,t.press
+      ,t.divdata,t.dcell,t.spstau,t.spsgradvel,t.pos,t.velrhop,t.code,t.idp,t.press,NULL
       ,viscdt,t.ar,t.ace,t.delta,t.shiftmode,t.shiftposfs);
 
     //-Interaction of DEM Floating-Bound & Floating-Floating. //(DEM)
@@ -1413,6 +1413,11 @@ void JSphCpu::ComputeVerlet(double dt){
 void JSphCpu::ComputeSymplecticPre(double dt){
   TmcStart(Timers,TMC_SuComputeStep);
   const bool shift=false; //(ShiftingMode!=SHIFT_None); //-We strongly recommend running the shifting correction only for the corrector. If you want to re-enable shifting in the predictor, change the value here to "true".
+  const double dt05=dt*.5;
+  const int np=int(Np);
+  const int npb=int(Npb);
+  const int npf=np-npb;
+
   //-Assign memory to variables Pre. | Asigna memoria a variables Pre.
   PosPrec=ArraysCpu->ReserveDouble3();
   VelrhopPrec=ArraysCpu->ReserveFloat4();
@@ -1421,8 +1426,6 @@ void JSphCpu::ComputeSymplecticPre(double dt){
   swap(VelrhopPrec,Velrhopc); //Put value of Velrhop[] in VelrhopPre[]. | Es decir... VelrhopPre[] <= Velrhop[].
 
   //-Calculate new density for boundary and copy velocity. | Calcula nueva densidad para el contorno y copia velocidad.
-  const double dt05=dt*.5;
-  const int npb=int(Npb);
   #ifdef OMP_USE
     #pragma omp parallel for schedule (static) if(npb>OMP_LIMIT_COMPUTESTEP)
   #endif
@@ -1435,8 +1438,6 @@ void JSphCpu::ComputeSymplecticPre(double dt){
   //-Compute displacement, velocity and density for fluid.
   tdouble3 *movc=ArraysCpu->ReserveDouble3();
   const tfloat3 *indirvel=(InOut? InOut->GetDirVel(): NULL);
-  const int np=int(Np);
-  const int npf=np-npb;
   #ifdef OMP_USE
     #pragma omp parallel for schedule (static) if(npf>OMP_LIMIT_COMPUTESTEP)
   #endif
@@ -1475,11 +1476,8 @@ void JSphCpu::ComputeSymplecticPre(double dt){
       }
       //-Update particle data.
       movc[p]=TDouble3(dx,dy,dz);
-      if(outrhop){ //-Only brands as excluded normal particles (not periodic). | Solo marca como excluidas las normales (no periodicas).
-        if(CODE_IsNormal(rcode))Codec[p]=CODE_SetOutRhop(rcode);
-      }
-      //UpdatePos(PosPrec[p],dx,dy,dz,outrhop,p,Posc,Dcellc,Codec);
       Velrhopc[p]=rvelrhopnew;
+      if(outrhop && CODE_IsNormal(rcode))Codec[p]=CODE_SetOutRhop(rcode); //-Only brands as excluded normal particles (not periodic). | Solo marca como excluidas las normales (no periodicas).
     }
     else{//-Floating Particles.
       Velrhopc[p]=VelrhopPrec[p];
@@ -1519,9 +1517,12 @@ void JSphCpu::ComputeSymplecticPre(double dt){
 void JSphCpu::ComputeSymplecticCorr(double dt){
   TmcStart(Timers,TMC_SuComputeStep);
   const bool shift=(Shifting!=NULL);
+  const double dt05=dt*.5;
+  const int np=int(Np);
+  const int npb=int(Npb);
+  const int npf=np-npb;
   
   //-Calculate rhop of boudary and set velocity=0. | Calcula rhop de contorno y vel igual a cero.
-  const int npb=int(Npb);
   #ifdef OMP_USE
     #pragma omp parallel for schedule (static) if(npb>OMP_LIMIT_COMPUTESTEP)
   #endif
@@ -1534,9 +1535,6 @@ void JSphCpu::ComputeSymplecticCorr(double dt){
   //-Compute displacement, velocity and density for fluid.
   tdouble3 *movc=ArraysCpu->ReserveDouble3();
   const tfloat3 *indirvel=(InOut? InOut->GetDirVel(): NULL);
-  const double dt05=dt*.5;
-  const int np=int(Np);
-  const int npf=np-npb;
   #ifdef OMP_USE
     #pragma omp parallel for schedule (static) if(npf>OMP_LIMIT_COMPUTESTEP)
   #endif
@@ -1580,10 +1578,7 @@ void JSphCpu::ComputeSymplecticCorr(double dt){
       }
       //-Update particle data.
       movc[p]=TDouble3(dx,dy,dz);
-      if(outrhop){ //-Only brands as excluded normal particles (not periodic). | Solo marca como excluidas las normales (no periodicas).
-        if(CODE_IsNormal(rcode))Codec[p]=CODE_SetOutRhop(rcode);
-      }
-      //UpdatePos(PosPrec[p],dx,dy,dz,outrhop,p,Posc,Dcellc,Codec);
+      if(outrhop && CODE_IsNormal(rcode))Codec[p]=CODE_SetOutRhop(rcode); //-Only brands as excluded normal particles (not periodic). | Solo marca como excluidas las normales (no periodicas).
       Velrhopc[p]=rvelrhopnew;
     }
     else{//-Floating Particles.

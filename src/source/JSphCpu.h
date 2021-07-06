@@ -38,6 +38,7 @@ typedef struct{
   const unsigned *idp;
   const typecode *code;
   const float *press;
+  const tfloat3 *dengradcorr;
   float* ar;
   tfloat3 *ace;
   float *delta;
@@ -52,6 +53,7 @@ inline stinterparmsc StInterparmsc(unsigned np,unsigned npb,unsigned npbok
   ,StDivDataCpu divdata,const unsigned *dcell
   ,const tdouble3 *pos,const tfloat4 *velrhop,const unsigned *idp,const typecode *code
   ,const float *press
+  ,const tfloat3 *dengradcorr
   ,float* ar,tfloat3 *ace,float *delta
   ,TpShifting shiftmode,tfloat4 *shiftposfs
   ,tsymatrix3f *spstau,tsymatrix3f *spsgradvel
@@ -61,6 +63,7 @@ inline stinterparmsc StInterparmsc(unsigned np,unsigned npb,unsigned npbok
     ,divdata,dcell
     ,pos,velrhop,idp,code
     ,press
+    ,dengradcorr
     ,ar,ace,delta
     ,shiftmode,shiftposfs
     ,spstau,spsgradvel
@@ -221,7 +224,7 @@ protected:
     ,StDivDataCpu divdata,const unsigned *dcell
     ,const tsymatrix3f* tau,tsymatrix3f* gradvel
     ,const tdouble3 *pos,const tfloat4 *velrhop,const typecode *code,const unsigned *idp
-    ,const float *press
+    ,const float *press,const tfloat3 *dengradcorr
     ,float &viscdt,float *ar,tfloat3 *ace,float *delta
     ,TpShifting shiftmode,tfloat4 *shiftposfs)const;
 

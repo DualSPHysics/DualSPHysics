@@ -583,7 +583,6 @@ private:
   float CollisionDp;
   unsigned Solver;
   int OmpThreads;
-  bool UseFEA;                  //<vs_chronoo_fea>
   TpContactMethod ContactMethod;
   bool UseVariableCoeff;
   bool UseCollision;
@@ -623,9 +622,6 @@ public:
 
   //void SetMaxIter(unsigned i){ MaxIter=i; }
   //unsigned GetMaxIter()const{ return(MaxIter); }
-
-  void SetUseFEA(bool e){ UseFEA=e; }          //<vs_chronoo_fea>
-  bool GetUseFEA()const{ return(UseFEA); }     //<vs_chronoo_fea>
 
   void SetContactMethod(TpContactMethod c){ ContactMethod=c; }
   TpContactMethod GetContactMethod()const{ return(ContactMethod); }

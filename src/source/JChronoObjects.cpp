@@ -420,7 +420,6 @@ void JChronoObjects::ReadXml(const JXml *sxml,TiXmlElement* lis){
         ReadXmlValues(sxml,ele->FirstChildElement("values"),link->GetValuesPtr());
       }
       else if(elename=="link_pointline"){
-        if(idnamebody2!="NULL")Run_ExceptioonFile("Link-PointLine only uses one body.",xmlrow);
         JChLinkPointLine *link=ChronoDataXml->AddLinkPointLine(name,idbody1,idbody2,xmlrow);
         link->SetSlidingVector(sxml->ReadElementDouble3(ele,"slidingvector"));
         link->SetRotPoint (sxml->ReadElementDouble3(ele,"rotpoint"));

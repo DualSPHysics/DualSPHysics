@@ -521,12 +521,13 @@ void JSphCpuSingle::Interaction_Forces(TpInterStep interstep){
   if(TBoundary==BC_MDBC && (MdbcCorrector || interstep!=INTERSTEP_SymCorrector))MdbcBoundCorrection(); //-Boundary correction for mDBC.
   InterStep=interstep;
   PreInteraction_Forces();
+  tfloat3 *dengradcorr=NULL;
 
   TmcStart(Timers,TMC_CfForces);
   //-Interaction of Fluid-Fluid/Bound & Bound-Fluid (forces and DEM). | Interaccion Fluid-Fluid/Bound & Bound-Fluid (forces and DEM).
   const stinterparmsc parms=StInterparmsc(Np,Npb,NpbOk
     ,DivData,Dcellc
-    ,Posc,Velrhopc,Idpc,Codec,Pressc
+    ,Posc,Velrhopc,Idpc,Codec,Pressc,dengradcorr
     ,Arc,Acec,Deltac
     ,ShiftingMode,ShiftPosfsc
     ,SpsTauc,SpsGradvelc

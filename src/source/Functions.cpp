@@ -1798,6 +1798,13 @@ bool IsLtEqual(double v1,double v2,double tolerance){
 //==============================================================================
 /// Returns v1 is equal to v2 according a tolerance value.
 //==============================================================================
+bool IsEqual(const tfloat3 &v1,const tfloat3 &v2,float tolerance){
+  return(IsEqual(v1.x,v2.x,tolerance) && IsEqual(v1.y,v2.y,tolerance) && IsEqual(v1.z,v2.z,tolerance));
+}
+
+//==============================================================================
+/// Returns v1 is equal to v2 according a tolerance value.
+//==============================================================================
 bool IsEqual(const tdouble3 &v1,const tdouble3 &v2,double tolerance){
   return(IsEqual(v1.x,v2.x,tolerance) && IsEqual(v1.y,v2.y,tolerance) && IsEqual(v1.z,v2.z,tolerance));
 }

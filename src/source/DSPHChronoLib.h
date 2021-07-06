@@ -45,7 +45,7 @@
 //:#   la clase chrono/fea/ChContactSurfaceMesh (v4.05 / 08-10-2020)
 //:# - Imponer valor de friction de un material sobre otros (v4.06 / 30-10-2020) 
 //:# - Permite seleccionar el modo de colision de los objetos flexibles (v4.07 / 06-11-2020) 
-//:# - Nuevo link ChLinkPointFrame para conectar FEA nodos a objetos rigidos (v4.08 / 09-11-2020)
+//:# - Nuevo link ChLinkPointRotFrame para conectar FEA nodos a objetos rigidos (v4.08 / 09-11-2020)
 //:# - Posibilidad de multiplicar las fuerzas por coeficientes introducidos por
 //:#   por el usuario para escalar las fuerzas en simulaciones 2D (v4.09 / 15-12-2020)
 //:# - Uso de coeficientes de friccion dinamico (Kfric) y estatico (Sfric) (v4.10 / 01-03-2021)
@@ -70,12 +70,7 @@ namespace chrono {
   class ChSystemParallel;
   class ChMaterialSurface;
   class ChBody;
-  namespace fea{  //<vs_chronoo_fea>
-    class ChMesh; //<vs_chronoo_fea>
-  }               //<vs_chronoo_fea>
 };
-
-class BuildersFEA;	//<vs_chronoo_fea>
 
 //##############################################################################
 //# DSPHChronoLib

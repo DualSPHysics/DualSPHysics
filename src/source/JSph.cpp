@@ -1134,7 +1134,7 @@ void JSph::LoadCaseConfig(const JSphCfgRun *cfg){
   if(xml.GetNodeSimple("case.execution.special.moorings",true)){
     if(WithFloating){
       if(!AVAILABLE_MOORDYN)Run_Exceptioon("Code for moorings and MoorDyn+ coupling is not included in the current compilation.");
-      Moorings=new JDsMooredFloatings(DirCase,CaseName,Gravity);
+      Moorings=new JDsMooredFloatings(DirCase,CaseName,Gravity,TimeMax,TimePart);
       Moorings->LoadXml(&xml,"case.execution.special.moorings");
     }
     else Log->PrintWarning("The use of Moorings was disabled because there are no floating objects...");
