@@ -90,6 +90,7 @@
 //:# - Nueva funcion VectorLower().  (09-09-2020)
 //:# - Nueva funcion GetFirstTextBetween().  (20-09-2020)
 //:# - Nuevas funciones RealStr() y uso en VarStr().  (13-02-2021)
+//:# - Nuevas funciones StrRemoveAfter(), StrRemoveBefore(), StrEqualBegin().  (27-06-2021)
 //:#############################################################################
 
 /// \file Functions.h \brief Declares basic/general functions for the entire application.
@@ -205,6 +206,10 @@ std::string StrTrimRepeated(const std::string &cad);
 std::string StrWithoutChar(const std::string &cad,char let);
 std::string StrRepeat(const std::string &cad,unsigned count);
 std::string StrReplace(const std::string &cad,const std::string &key,const std::string &newcad);
+std::string StrRemoveAfter(const std::string &cad,const std::string &key);
+std::string StrRemoveBefore(const std::string &cad,const std::string &key);
+inline bool StrEqualBegin(const std::string &cad,const std::string &key){ return(cad.find(key)==0); }
+
 std::string StrAddSlashes(const std::string &cad);
 std::string StrStripSlashes(const std::string &cad);
 

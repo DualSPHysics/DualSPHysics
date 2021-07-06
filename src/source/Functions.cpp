@@ -681,6 +681,22 @@ std::string StrReplace(const std::string &cad,const std::string &key,const std::
 }
 
 //==============================================================================
+/// Gets new string removing last part since key.
+//==============================================================================
+std::string StrRemoveAfter(const std::string &cad,const std::string &key){
+  const int pos=int(cad.find(key));
+  return(pos<0? cad: cad.substr(0,pos));
+}
+
+//==============================================================================
+/// Gets new string removing first part until key.
+//==============================================================================
+std::string StrRemoveBefore(const std::string &cad,const std::string &key){
+  const int pos=int(cad.find(key));
+  return(pos<0? cad: cad.substr(pos+key.length()));
+}
+
+//==============================================================================
 /// Replaces C-style escape sequences by normal text ("\n" -> "\\n").
 /// Escape sequences: \a, \b, \f, \n, \r, \t, \v, \\, \', \".
 //==============================================================================
