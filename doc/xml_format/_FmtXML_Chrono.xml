@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<!-- *** DualSPHysics [Chrono] v5.0.177 (10-03-2021) *** -->
+<!-- *** DualSPHysics [Chrono] v5.0.182 (06-07-2021) *** -->
 <!-- *** class: JChronoObjects *** -->
 <!------------------------------------------------------------------------------->
 <!------------------------------------------------------------------------------->
@@ -121,6 +121,14 @@
 			<!-- Define restrictions of a body to absolute space -->
 			<!-- Spheric joint or modified joint by rotvector and rotvector2 that can slide along an axis -->
 			<link_pointline idbody1="box4">
+				<slidingvector x="0" y="1" z="0" comment="Sliding vector direction" />
+				<rotpoint x="4.0" y="0" z="4.0" comment="Sliding point in the body" />
+				<_rotvector x="0" y="1" z="0" comment="Vector direction for rotation, use (0,0,0) for spheric joint (default=(0,0,0))" />
+				<_rotvector2 x="0" y="0" z="1" comment="Second vector to avoid rotation (default=(0,0,0))" />
+				<stiffness value="400" comment="Torsional stiffness [Nm/rad]" />
+				<damping value="50" comment="Torsional damping [Nms/rad]" />
+			</link_pointline>
+			<link_pointline idbody1="box4" idbody2="box5">
 				<slidingvector x="0" y="1" z="0" comment="Sliding vector direction" />
 				<rotpoint x="4.0" y="0" z="4.0" comment="Sliding point in the body" />
 				<_rotvector x="0" y="1" z="0" comment="Vector direction for rotation, use (0,0,0) for spheric joint (default=(0,0,0))" />
