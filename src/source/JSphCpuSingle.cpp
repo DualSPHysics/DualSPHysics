@@ -90,7 +90,7 @@ void JSphCpuSingle::UpdateMaxValues(){
 /// Load the execution configuration.
 /// Carga la configuracion de ejecucion.
 //==============================================================================
-void JSphCpuSingle::LoadConfig(JSphCfgRun *cfg){
+void JSphCpuSingle::LoadConfig(const JSphCfgRun *cfg){
   //-Load OpenMP configuraction. | Carga configuracion de OpenMP.
   ConfigOmp(cfg);
   //-Load basic general configuraction. | Carga configuracion basica general.
@@ -1009,9 +1009,9 @@ void JSphCpuSingle::ComputePips(bool run){
 /// Initialises execution of simulation.
 /// Inicia ejecucion de simulacion.
 //==============================================================================
-void JSphCpuSingle::Run(std::string appname,JSphCfgRun *cfg,JLog2 *log){
+void JSphCpuSingle::Run(std::string appname,const JSphCfgRun *cfg,JLog2 *log){
   if(!cfg||!log)return;
-  AppName=appname; Log=log;
+  AppName=appname; Log=log; CfgRun=cfg;
 
   //-Configure timers.
   //-------------------
@@ -1050,6 +1050,7 @@ void JSphCpuSingle::Run(std::string appname,JSphCfgRun *cfg,JLog2 *log){
   Log->Print(string("\n[Initialising simulation (")+RunCode+")  "+fun::GetDateTime()+"]");
   if(DsPips)ComputePips(true);
   PrintHeadPart();
+//Run_Exceptioon("Stop");
   while(TimeStep<TimeMax){
     InterStep=(TStep==STEP_Symplectic? INTERSTEP_SymPredictor: INTERSTEP_Verlet);
     if(ViscoTime)Visco=ViscoTime->GetVisco(float(TimeStep));

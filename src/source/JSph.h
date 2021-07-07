@@ -153,6 +153,8 @@ protected:
   const bool WithMpi;
   JLog2 *Log;
 
+  const JSphCfgRun *CfgRun;
+
   bool Simulate2D;       ///<Toggles 2D simulation (cancels forces in Y axis). | Activa o desactiva simulacion en 2D (anula fuerzas en eje Y).
   double Simulate2DPosY; ///<Y value in 2D simulations.                        | Valor de Y en simulaciones 2D.
   bool Symmetry;         ///<Activates symmetry in plane y=0 (default=false).

@@ -39,7 +39,7 @@ protected:
 
   llong GetAllocMemoryCpu()const;
   void UpdateMaxValues();
-  void LoadConfig(JSphCfgRun *cfg);
+  void LoadConfig(const JSphCfgRun *cfg);
   void ConfigDomain();
 
   void ResizeParticlesSize(unsigned newsize,float oversize,bool updatedivide);
@@ -85,7 +85,7 @@ protected:
 public:
   JSphCpuSingle();
   ~JSphCpuSingle();
-  void Run(std::string appname,JSphCfgRun *cfg,JLog2 *log);
+  void Run(std::string appname,const JSphCfgRun *cfg,JLog2 *log);
 
 //-Code for InOut in JSphCpuSingle_InOut.cpp
 //--------------------------------------------

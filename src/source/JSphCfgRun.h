@@ -50,6 +50,8 @@ public:
   int SlipMode;         ///<Slip mode for mDBC: 0:None, 1:DBC vel=0, 2:No-slip, 3:Free slip (default=1).
   int MdbcFastSingle;   ///<Matrix calculations are done in single precision (default=1). 
   float MdbcThreshold;  ///<Kernel support limit to apply mDBC correction (default=0).
+  std::vector<std::string> InitParms;
+
   TpStep TStep;
   int VerletSteps;
   TpKernel TKernel;

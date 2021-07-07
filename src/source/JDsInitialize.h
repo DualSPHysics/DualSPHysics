@@ -29,6 +29,10 @@
 //:# - Cambio de nombre de J.SphInitialize a J.DsInitialize. (28-06-2020)
 //:# - Error corregido al obtener nombre de operacion a partir de la clase. (02-07-2020)
 //:# - New filter onlypos according to particle position. (25-07-2020)
+//:# - Nueva opcion IT_BoundNormalCells para calcular normales a partir de 
+//:#   particulas finales (en desarrollo y solo para 2D). (07-07-2020)
+//:# - Se permite la configuracion por parametros de ejecucion de IT_BoundNormalPlane 
+//:#   y IT_BoundNormalCells. (07-07-2020)
 //:#############################################################################
 
 /// \file JDsInitialize.h \brief Declares the class \ref JDsInitialize.
@@ -64,16 +68,26 @@ public:
    ,IT_BoundNormalPlane=31
    ,IT_BoundNormalSphere=32
    ,IT_BoundNormalCylinder=33
+   ,IT_BoundNormalCells=34
   }TpInitialize; 
 
   ///Structure with constant values needed for initialization tasks.
   typedef struct StrInitCt{
-    float kernelh;      ///<The smoothing length of SPH kernel [m].
-    float dp;           ///<Initial distance between particles [m].
-    unsigned nbound;    ///<Initial number of boundary particles (fixed+moving+floating).
+    bool simulate2d;         ///<Toggles 2D simulation.
+    double simulate2dposy;   ///<Y value in 2D simulations.
+    tdouble3 maprealposmin;  ///<Real lower limit simulation.
+    tdouble3 maprealposmax;  ///<Real upper limit simulation.
+    double dp;               ///<Initial distance between particles [m].
+    float kernelh;           ///<The smoothing length of SPH kernel [m].
+    unsigned nbound;         ///<Initial number of boundary particles (fixed+moving+floating).
     std::string dirdatafile; ///<Directory to data files.
-    StrInitCt(float kernelh_,float dp_,unsigned nbound_,std::string dirdatafile_){
-      kernelh=kernelh_; dp=dp_; nbound=nbound_; dirdatafile=dirdatafile_;
+
+    StrInitCt(bool sim2d,double sim2dy,tdouble3 posmin,tdouble3 posmax
+      ,double dp_,float kernelh_,unsigned nbound_,std::string dirdatafile_)
+    {
+      simulate2d=sim2d; simulate2dposy=sim2dy;
+      maprealposmin=posmin; maprealposmax=posmax; dp=dp_;
+      kernelh=kernelh_; nbound=nbound_; dirdatafile=dirdatafile_;
     }
   }StInitCt;
 
@@ -180,8 +194,11 @@ private:
 public:
   JDsInitializeOp_BoundNormalPlane(const JXml *sxml,TiXmlElement* ele,StInitCt initct)
     :JDsInitializeOp(IT_BoundNormalPlane,"BoundNormalPlane",initct){ Reset(); ReadXml(sxml,ele); }
+  JDsInitializeOp_BoundNormalPlane(const std::string &eparm,StInitCt initct)
+    :JDsInitializeOp(IT_BoundNormalPlane,"BoundNormalPlane",initct){ Reset(); ReadKeyvals(eparm); }
   void Reset();
   void ReadXml(const JXml *sxml,TiXmlElement* ele);
+  void ReadKeyvals(const std::string &eparm);
   void Run(unsigned np,unsigned npb,const tdouble3 *pos,const unsigned *idp
     ,const word *mktype,tfloat4 *velrhop,tfloat3 *boundnormal);
   void GetConfig(std::vector<std::string> &lines)const;
@@ -232,6 +249,28 @@ public:
   void GetConfig(std::vector<std::string> &lines)const;
 };  
 
+//##############################################################################
+//# JDsInitializeOp_BoundNormalCells
+//##############################################################################
+/// Initializes normals of boundary particles.
+class JDsInitializeOp_BoundNormalCells : public JDsInitializeOp
+{
+private:
+  std::string MkBound;
+  float MaxDisteH;  ///<Maximum distance to boundary limit. It uses H*distanceh (default=2).
+public:
+  JDsInitializeOp_BoundNormalCells(const JXml *sxml,TiXmlElement* ele,StInitCt initct)
+    :JDsInitializeOp(IT_BoundNormalCells,"BoundNormalCells",initct){ Reset(); ReadXml(sxml,ele); }
+  JDsInitializeOp_BoundNormalCells(const std::string &eparm,StInitCt initct)
+    :JDsInitializeOp(IT_BoundNormalPlane,"BoundNormalCells",initct){ Reset(); ReadKeyvals(eparm); }
+  void Reset();
+  void ReadXml(const JXml *sxml,TiXmlElement* ele);
+  void ReadKeyvals(const std::string &eparm);
+  void Run(unsigned np,unsigned npb,const tdouble3 *pos,const unsigned *idp
+    ,const word *mktype,tfloat4 *velrhop,tfloat3 *boundnormal);
+  void GetConfig(std::vector<std::string> &lines)const;
+};  
+
 
 //##############################################################################
 //# JDsInitialize
@@ -245,15 +284,18 @@ private:
   std::vector<JDsInitializeOp*> Opes;
 
   void LoadFileXml(const std::string &file,const std::string &path);
-  void LoadXml(const JXml *sxml,const std::string &place);
   void ReadXml(const JXml *sxml,TiXmlElement* lis);
 
 public:
-  JDsInitialize(const JXml *sxml,const std::string &place
-    ,const std::string &dirdatafile,float kernelh,float dp,unsigned nbound
-    ,bool boundnormals);
+  JDsInitialize(bool sim2d,double sim2dy,tdouble3 posmin,tdouble3 posmax
+    ,double dp,float kernelh,const std::string &dirdatafile
+    ,unsigned nbound,bool boundnormals);
   ~JDsInitialize();
   void Reset();
+
+  void LoadXml(const JXml *sxml,const std::string &place);
+  void LoadExecParms(const std::vector<std::string> &execparms);
+
   unsigned Count()const{ return(unsigned(Opes.size())); }
 
   void Run(unsigned np,unsigned npb,const tdouble3 *pos

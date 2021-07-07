@@ -80,6 +80,7 @@ JSph::JSph(bool cpu,bool mgpu,bool withmpi):Cpu(cpu),Mgpu(mgpu),WithMpi(withmpi)
   DataFloatBi4=NULL;
   PartsOut=NULL;
   Log=NULL;
+  CfgRun=NULL;
   ViscoTime=NULL;
   FixedDt=NULL;
   SaveDt=NULL;
@@ -1638,23 +1639,29 @@ void JSph::RunInitialize(unsigned np,unsigned npb,const tdouble3 *pos,const unsi
   ,const typecode *code,tfloat4 *velrhop,tfloat3 *boundnormal)
 {
   if(!PartBegin){
-    JXml xml; xml.LoadFile(FileXml);
-    xml.SetNuxLib(NuxLib); //-Enables the use of NuxLib in XML configuration.
-    if(xml.GetNodeSimple("case.execution.special.initialize",true)){
-      JDsInitialize init(&xml,"case.execution.special.initialize",DirCase
-        ,KernelH,float(Dp),CaseNbound,boundnormal!=NULL);
-      if(init.Count()){
-        //-Creates array with mktype value.
-        word *mktype=new word[np];
-        for(unsigned p=0;p<np;p++){
-          const unsigned cmk=MkInfo->GetMkBlockByCode(code[p]);
-          mktype[p]=(cmk<MkInfo->Size()? word(MkInfo->Mkblock(cmk)->MkType): USHRT_MAX);
-        }
-        init.Run(np,npb,pos,idp,mktype,velrhop,boundnormal);
-        init.GetConfig(InitializeInfo);
-        //-Frees memory.
-        delete[] mktype; mktype=NULL;
+    JDsInitialize init(Simulate2D,Simulate2DPosY,MapRealPosMin,MapRealPosMax,Dp,KernelH,DirCase,CaseNbound,boundnormal!=NULL);
+    //-Loads configuration from XML.
+    {
+      JXml xml; xml.LoadFile(FileXml);
+      xml.SetNuxLib(NuxLib); //-Enables the use of NuxLib in XML configuration.
+      if(xml.GetNodeSimple("case.execution.special.initialize",true)){
+        init.LoadXml(&xml,"case.execution.special.initialize");
       }
+    }
+    //-Loads configuration from execution parameters.
+    init.LoadExecParms(CfgRun->InitParms);
+    //-Executes initialize tasks.
+    if(init.Count()){
+      //-Creates array with mktype value.
+      word *mktype=new word[np];
+      for(unsigned p=0;p<np;p++){
+        const unsigned cmk=MkInfo->GetMkBlockByCode(code[p]);
+        mktype[p]=(cmk<MkInfo->Size()? word(MkInfo->Mkblock(cmk)->MkType): USHRT_MAX);
+      }
+      init.Run(np,npb,pos,idp,mktype,velrhop,boundnormal);
+      init.GetConfig(InitializeInfo);
+      //-Frees memory.
+      delete[] mktype; mktype=NULL;
     }
   }
 }

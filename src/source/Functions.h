@@ -91,6 +91,9 @@
 //:# - Nueva funcion GetFirstTextBetween().  (20-09-2020)
 //:# - Nuevas funciones RealStr() y uso en VarStr().  (13-02-2021)
 //:# - Nuevas funciones StrRemoveAfter(), StrRemoveBefore(), StrEqualBegin().  (27-06-2021)
+//:# - Nueva opcion mark en VectorFind() y VectorFindMask().  (06-07-2021)
+//:# - Nuevas funciones Split2pVector(), Split2pKey(), Split2pValue(), Split2pDouble3(), Split2pDouble3Error().  (06-07-2021)
+//:# - Nuevas funciones GetVectorFind().  (06-07-2021)
 //:#############################################################################
 
 /// \file Functions.h \brief Declares basic/general functions for the entire application.
@@ -227,14 +230,23 @@ unsigned VectorSplitInt(const std::string mark,const std::string &text,std::vect
 unsigned VectorSplitDouble(const std::string mark,const std::string &text,std::vector<double> &vec);
 unsigned VectorSplitFloat(const std::string mark,const std::string &text,std::vector<float> &vec);
 void     VectorLower(std::vector<std::string> &vec);
-unsigned VectorFind(const std::string &key,const std::vector<std::string> &vec,unsigned first=0);
-unsigned VectorFindMask(const std::string &keymask,const std::vector<std::string> &vec,unsigned first=0);
+unsigned VectorFind(const std::string &key,const std::string mark,const std::vector<std::string> &vec,unsigned first=0);
+unsigned VectorFindMask(const std::string &keymask,const std::string mark,const std::vector<std::string> &vec,unsigned first=0);
+inline unsigned VectorFind(const std::string &key,const std::vector<std::string> &vec,unsigned first=0){ return(VectorFind(key,"",vec,first)); }
+inline unsigned VectorFindMask(const std::string &keymask,const std::vector<std::string> &vec,unsigned first=0){ return( VectorFindMask(keymask,"",vec,first)); }
+std::string GetVectorFind(const std::string &key,const std::string mark,const std::vector<std::string> &vec,unsigned first=0);
 
 double GetFirstValueDouble(std::string tex,std::string pretex="");
 double GetFirstValueDouble(std::string tex,std::string &resttex,std::string pretex);
 int GetFirstValueInt(std::string tex,std::string pretex="");
 int GetFirstValueInt(std::string tex,std::string &resttex,std::string pretex);
 std::string GetFirstTextBetween(std::string tex,std::string &resttex,std::string pretex,std::string endtex);
+
+unsigned Split2pVector(const std::string &text,std::vector<std::string> &vec);
+std::string Split2pKey(const std::string &text);
+std::string Split2pValue(const std::string &text);
+tdouble3 Split2pDouble3(std::string text);
+bool Split2pDouble3Error(std::string text);
 
 int CompareVersions(std::string v1,std::string v2);
 

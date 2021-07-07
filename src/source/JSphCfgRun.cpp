@@ -112,6 +112,9 @@ void JSphCfgRun::VisuInfo()const{
   printf("    -mdbc_fast:<0/1>        Fast single precision calculation on GPU (default=1)\n");
   printf("    -mdbc_threshold:<float> Kernel support limit to apply mDBC correction [0-1]\n");
   printf("\n");
+  printf("    -initnorpla:<inlinecfg> Initialize definition for <boundnormal_plane>\n");
+  printf("    -initnorcel:<inlinecfg> Initialize definition for <boundnormal_cells>\n");
+  printf("\n");
   printf("    -symplectic      Symplectic algorithm as time step algorithm\n");
   printf("    -verlet[:steps]  Verlet algorithm as time step algorithm and number of\n");
   printf("                     time steps to switch equations\n");
@@ -245,7 +248,7 @@ void JSphCfgRun::VisuConfig()const{
 void JSphCfgRun::LoadOpts(string *optlis,int optn,int lv,const std::string &file){
   if(lv>=10)Run_Exceptioon("No more than 10 levels of recursive configuration.");
   for(int c=0;c<optn;c++){
-    string opt=optlis[c];
+    const string opt=optlis[c];
     if(opt[0]!='-' && opt[0]!='#'){
       if(!DirsDef){ CaseName=opt; DirsDef++; }
       else if(DirsDef==1){ DirOut=opt; DirsDef++; }
@@ -291,6 +294,10 @@ void JSphCfgRun::LoadOpts(string *optlis,int optn,int lv,const std::string &file
         MdbcThreshold=float(atof(txoptfull.c_str())); 
         if(MdbcThreshold<0 || MdbcThreshold>1.f)ErrorParm(opt,c,lv,file);
       }
+      else if(txword=="INITNORPLA"){
+        InitParms.push_back(opt); //if(TBoundary==1){ TBoundary=2; SlipMode=1; }//-Activates mDBC.
+      }
+      else if(txword=="INITNORCEL"){ InitParms.push_back(opt); }
       else if(txword=="SYMPLECTIC")TStep=STEP_Symplectic;
       else if(txword=="VERLET"){ TStep=STEP_Verlet; 
         if(txoptfull!="")VerletSteps=atoi(txoptfull.c_str()); 

@@ -24,3 +24,4 @@
 */
 
 //#define DISABLE_VTKLIB   ///<It allows compile without VTK library.
+//#define DISABLE_NORCELLS ///<It allows compile without JNormalsCells code (under development).

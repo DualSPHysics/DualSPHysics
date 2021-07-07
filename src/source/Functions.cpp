@@ -923,12 +923,13 @@ void VectorLower(std::vector<std::string> &vec){
 /// Find string in a string vector vector since first position. 
 /// Returns UINT_MAX when it was not found.
 //==============================================================================
-unsigned VectorFind(const std::string &key,const std::vector<std::string> &vec
-  ,unsigned first)
+unsigned VectorFind(const std::string &key,const std::string mark
+  ,const std::vector<std::string> &vec,unsigned first)
 {
   unsigned c=first;
   const unsigned size=unsigned(vec.size());
-  for(;c<size && vec[c]!=key;c++);
+  if(mark.empty())for(;c<size && vec[c]!=key;c++);
+  else for(;c<size && StrRemoveAfter(vec[c],mark)!=key;c++);
   return(c<size? c: UINT_MAX);
 }
 
@@ -936,13 +937,13 @@ unsigned VectorFind(const std::string &key,const std::vector<std::string> &vec
 /// Find string mask (using *, ?, |) in a string vector vector since first position. 
 /// Returns UINT_MAX when it was not found.
 //==============================================================================
-unsigned VectorFindMask(const std::string &keymask,const std::vector<std::string> &vec
-  ,unsigned first)
+unsigned VectorFindMask(const std::string &keymask,const std::string mark
+  ,const std::vector<std::string> &vec,unsigned first)
 {
   unsigned ret=UINT_MAX;
   const unsigned size=unsigned(vec.size());
   for(unsigned c=first;c<size && ret==UINT_MAX;c++){
-    const string v=vec[c];
+    const string v=(mark.empty()? vec[c]: StrRemoveAfter(vec[c],mark));
     //printf("---> v:[%s]  keymask:[%s]\n",v.c_str(),keymask.c_str());
     const bool usemask=(int(keymask.find('?'))>=0 || int(keymask.find('*'))>=0 || int(keymask.find('|'))>=0);
     if(!usemask && v==keymask)ret=c;
@@ -950,6 +951,17 @@ unsigned VectorFindMask(const std::string &keymask,const std::vector<std::string
     //printf("---> usemask:%d  FileMask:%d\n",(usemask?1:0),FileMask(v,keymask)?1:0);
   }
   return(ret);
+}
+
+//==============================================================================
+/// Return the found value or empty string.
+/// Removes first part of value until mark.
+//==============================================================================
+std::string GetVectorFind(const std::string &key,const std::string mark
+  ,const std::vector<std::string> &vec,unsigned first)
+{
+  const unsigned c=VectorFind(key,mark,vec,first);
+  return(c!=UINT_MAX? (mark.empty()? vec[c]: StrRemoveBefore(vec[c],mark)): string(""));
 }
 
 
@@ -1038,6 +1050,67 @@ std::string GetFirstTextBetween(std::string tex,std::string &resttex
   return(txv);
 }
 
+
+//==============================================================================
+/// Returns key from "key=value".
+//==============================================================================
+unsigned Split2pVector(const std::string &text,std::vector<std::string> &vec){
+  string aux=text;
+  string keyval;
+  while(!aux.empty()){
+    string txv=StrSplit(":",aux);
+    if(int(txv.find("="))>=0){
+      if(!keyval.empty())vec.push_back(keyval);
+      keyval=txv;
+    }
+    else if(!keyval.empty()){
+      keyval=keyval+":"+txv;
+    }
+  }
+  if(!keyval.empty())vec.push_back(keyval);
+  return(unsigned(vec.size()));
+}
+
+//==============================================================================
+/// Returns key from "key=value".
+//==============================================================================
+std::string Split2pKey(const std::string &text){
+  return(StrRemoveAfter(text,"="));
+}
+
+//==============================================================================
+/// Returns value from "key=value".
+//==============================================================================
+std::string Split2pValue(const std::string &text){
+  return(StrRemoveBefore(text,"="));
+}
+
+//==============================================================================
+/// Returns tdouble3 value from "float:float:float" or "key=float:float:float".
+//==============================================================================
+tdouble3 Split2pDouble3(std::string text){
+  //printf("[%s]",text.c_str());
+  string v1=StrRemoveAfter(text,":"); text=text.substr(v1.length()); text=StrRemoveBefore(text,":");
+  v1=StrRemoveBefore(v1,"=");
+  //printf("  v1:[%s] text=[%s]  ",v1.c_str(),text.c_str());
+  string v2=StrRemoveAfter(text,":"); text=text.substr(v2.length()); text=StrRemoveBefore(text,":");
+  string v3=StrRemoveAfter(text,":");
+  //printf("=[%s]:[%s]:[%s]\n",v1.c_str(),v2.c_str(),v3.c_str());
+  return(TDouble3(atof(v1.c_str()),atof(v2.c_str()),atof(v3.c_str())));
+}
+
+//==============================================================================
+/// Returns true when some value is invalid.
+//==============================================================================
+bool Split2pDouble3Error(std::string text){
+  string v1=StrRemoveAfter(text,":"); text=text.substr(v1.length()); text=StrRemoveBefore(text,":");
+  v1=StrRemoveBefore(v1,"=");
+  string v2=StrRemoveAfter(text,":"); text=text.substr(v2.length()); text=StrRemoveBefore(text,":");
+  string v3=StrRemoveAfter(text,":");
+  bool err=(v1.empty() || v2.empty() || v3.empty());
+  err=(err || !StrIsRealNumber(v1) || !StrIsRealNumber(v2) || !StrIsRealNumber(v3));
+  return(err);
+}
 
 
 //==============================================================================
