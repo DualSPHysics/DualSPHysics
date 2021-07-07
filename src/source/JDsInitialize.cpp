@@ -584,12 +584,12 @@ void JDsInitializeOp_BoundNormalCylinder::GetConfig(std::vector<std::string> &li
 
 
 //##############################################################################
-//# JDsInitializeOp_BoundNormalCells
+//# JDsInitializeOp_BoundNormalParts
 //##############################################################################
 //==============================================================================
 /// Initialisation of variables.
 //==============================================================================
-void JDsInitializeOp_BoundNormalCells::Reset(){
+void JDsInitializeOp_BoundNormalParts::Reset(){
   JDsInitializeOp::Reset();
   MkBound="";
   MaxDisteH=0;
@@ -598,11 +598,9 @@ void JDsInitializeOp_BoundNormalCells::Reset(){
 //==============================================================================
 /// Reads configuration from XML.
 //==============================================================================
-void JDsInitializeOp_BoundNormalCells::ReadXml(const JXml *sxml,TiXmlElement* xele){
+void JDsInitializeOp_BoundNormalParts::ReadXml(const JXml *sxml,TiXmlElement* xele){
   sxml->CheckElementNames(xele,true,"maxdisth");
-  OnlyPos=false;
-  OnlyPosMin=OnlyPosMax=TDouble3(0);
-  //ReadXmlOnlyPos(sxml,xele);
+  ReadXmlOnlyPos(sxml,xele);
   MkBound=sxml->GetAttributeStr(xele,"mkbound",true);
   MaxDisteH=sxml->ReadElementFloat(xele,"maxdisth","v",true,2.f);
 }
@@ -610,7 +608,7 @@ void JDsInitializeOp_BoundNormalCells::ReadXml(const JXml *sxml,TiXmlElement* xe
 //==============================================================================
 /// Reads configuration from execution parameter.
 //==============================================================================
-void JDsInitializeOp_BoundNormalCells::ReadKeyvals(const std::string &eparm){
+void JDsInitializeOp_BoundNormalParts::ReadKeyvals(const std::string &eparm){
   //-Initial values.
   OnlyPos=false;
   OnlyPosMin=OnlyPosMax=TDouble3(0);
@@ -632,10 +630,10 @@ void JDsInitializeOp_BoundNormalCells::ReadKeyvals(const std::string &eparm){
 //==============================================================================
 /// Initializes data of particles according XML configuration.
 //==============================================================================
-void JDsInitializeOp_BoundNormalCells::Run(unsigned np,unsigned npb,const tdouble3 *pos
+void JDsInitializeOp_BoundNormalParts::Run(unsigned np,unsigned npb,const tdouble3 *pos
   ,const unsigned *idp,const word *mktype,tfloat4 *velrhop,tfloat3 *boundnormal)
 {
-  if(!InitCt.simulate2d)Run_Exceptioon("Initialize option BoundNormalCells is not supported for 3D simulations.");
+  if(!InitCt.simulate2d)Run_Exceptioon("Initialize option BoundNormalParts is not supported for 3D simulations.");
   //-Select particles to process.
   unsigned *partsel=new unsigned[np];
   unsigned nsel=0;
@@ -646,18 +644,20 @@ void JDsInitializeOp_BoundNormalCells::Run(unsigned np,unsigned npb,const tdoubl
   }
   //-Process selected particles.
   const double maxdist=InitCt.kernelh*min(MaxDisteH,10.f);
-  JVtkLib::ComputeNormalsCells(InitCt.simulate2d,InitCt.simulate2dposy,InitCt.dp
+  JVtkLib::ComputeNormalsPartCells(InitCt.simulate2d,InitCt.simulate2dposy,InitCt.dp
     ,InitCt.maprealposmin,InitCt.maprealposmax,maxdist,AppInfo.GetDirOut()
     ,nsel,partsel,np,pos,boundnormal);
+  //-Free memory.
+  delete[] partsel; partsel=NULL;
 }
 
 //==============================================================================
 /// Returns strings with configuration.
 //==============================================================================
-void JDsInitializeOp_BoundNormalCells::GetConfig(std::vector<std::string> &lines)const{
+void JDsInitializeOp_BoundNormalParts::GetConfig(std::vector<std::string> &lines)const{
   lines.push_back(fun::PrintStr("  Operation: %s",ClassName.substr(BaseNameSize).c_str()));
   lines.push_back(GetConfigMkBound(MkBound));
-  //if(OnlyPos)lines.push_back(GetConfigOnlyPos());
+  if(OnlyPos)lines.push_back(GetConfigOnlyPos());
   lines.push_back(fun::PrintStr("  MaxDistH.: %g",MaxDisteH));
 }
 
@@ -730,7 +730,7 @@ void JDsInitialize::ReadXml(const JXml *sxml,TiXmlElement* lis){
       else if(cmd=="boundnormal_plane"   ){ if(BoundNormals){ JDsInitializeOp_BoundNormalPlane    *ope=new JDsInitializeOp_BoundNormalPlane   (sxml,ele,InitCt); Opes.push_back(ope); } }
       else if(cmd=="boundnormal_sphere"  ){ if(BoundNormals){ JDsInitializeOp_BoundNormalSphere   *ope=new JDsInitializeOp_BoundNormalSphere  (sxml,ele,InitCt); Opes.push_back(ope); } }
       else if(cmd=="boundnormal_cylinder"){ if(BoundNormals){ JDsInitializeOp_BoundNormalCylinder *ope=new JDsInitializeOp_BoundNormalCylinder(sxml,ele,InitCt); Opes.push_back(ope); } }
-      else if(cmd=="boundnormal_cells"   ){ if(BoundNormals){ JDsInitializeOp_BoundNormalCells    *ope=new JDsInitializeOp_BoundNormalCells   (sxml,ele,InitCt); Opes.push_back(ope); } }
+      else if(cmd=="boundnormal_parts"   ){ if(BoundNormals){ JDsInitializeOp_BoundNormalParts    *ope=new JDsInitializeOp_BoundNormalParts   (sxml,ele,InitCt); Opes.push_back(ope); } }
       else sxml->ErrReadElement(ele,cmd,false);
     }
     ele=ele->NextSiblingElement();
@@ -747,8 +747,8 @@ void JDsInitialize::LoadExecParms(const std::vector<std::string> &execparms){
     const string cmd=fun::StrLower(fun::StrRemoveBefore(fun::StrRemoveAfter(eparm,":"),"-"));
     //const string keyvals=fun::StrRemoveBefore(eparm,":");
     //printf("==> eparm=[%s]_[%s]_[%s]\n",eparm.c_str(),cmd.c_str(),keyvals.c_str());
-         if(cmd=="initnorpla"){ if(BoundNormals){ JDsInitializeOp_BoundNormalPlane *ope=new JDsInitializeOp_BoundNormalPlane(eparm,InitCt); Opes.push_back(ope); } }
-    else if(cmd=="initnorcel"){ if(BoundNormals){ JDsInitializeOp_BoundNormalCells *ope=new JDsInitializeOp_BoundNormalCells(eparm,InitCt); Opes.push_back(ope); } }
+         if(cmd=="initnorpla" ){ if(BoundNormals){ JDsInitializeOp_BoundNormalPlane *ope=new JDsInitializeOp_BoundNormalPlane(eparm,InitCt); Opes.push_back(ope); } }
+    else if(cmd=="initnorpart"){ if(BoundNormals){ JDsInitializeOp_BoundNormalParts *ope=new JDsInitializeOp_BoundNormalParts(eparm,InitCt); Opes.push_back(ope); } }
     else Run_Exceptioon(fun::PrintStr("Execution parameter \'%s\' is invalid.",eparm.c_str()));
   }
 }

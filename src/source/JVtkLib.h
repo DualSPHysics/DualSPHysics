@@ -204,7 +204,7 @@ public:
   //==============================================================================
   // Functions to compute normals from final particles (for mDBC and under development).
   //==============================================================================
-  static void ComputeNormalsCells(bool data2d,double data2dposy,double dp
+  static void ComputeNormalsPartCells(bool data2d,double data2dposy,double dp
     ,tdouble3 mapposmin,tdouble3 mapposmax,double dist,std::string dirout
     ,unsigned nsel,const unsigned *partsel,unsigned np,const tdouble3 *pos
     ,tfloat3 *boundnormal);

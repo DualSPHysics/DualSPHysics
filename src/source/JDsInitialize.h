@@ -29,10 +29,10 @@
 //:# - Cambio de nombre de J.SphInitialize a J.DsInitialize. (28-06-2020)
 //:# - Error corregido al obtener nombre de operacion a partir de la clase. (02-07-2020)
 //:# - New filter onlypos according to particle position. (25-07-2020)
-//:# - Nueva opcion IT_BoundNormalCells para calcular normales a partir de 
+//:# - Nueva opcion IT_BoundNormalParts para calcular normales a partir de 
 //:#   particulas finales (en desarrollo y solo para 2D). (07-07-2020)
 //:# - Se permite la configuracion por parametros de ejecucion de IT_BoundNormalPlane 
-//:#   y IT_BoundNormalCells. (07-07-2020)
+//:#   y IT_BoundNormalParts. (07-07-2020)
 //:#############################################################################
 
 /// \file JDsInitialize.h \brief Declares the class \ref JDsInitialize.
@@ -68,7 +68,7 @@ public:
    ,IT_BoundNormalPlane=31
    ,IT_BoundNormalSphere=32
    ,IT_BoundNormalCylinder=33
-   ,IT_BoundNormalCells=34
+   ,IT_BoundNormalParts=34
   }TpInitialize; 
 
   ///Structure with constant values needed for initialization tasks.
@@ -250,19 +250,19 @@ public:
 };  
 
 //##############################################################################
-//# JDsInitializeOp_BoundNormalCells
+//# JDsInitializeOp_BoundNormalParts
 //##############################################################################
 /// Initializes normals of boundary particles.
-class JDsInitializeOp_BoundNormalCells : public JDsInitializeOp
+class JDsInitializeOp_BoundNormalParts : public JDsInitializeOp
 {
 private:
   std::string MkBound;
   float MaxDisteH;  ///<Maximum distance to boundary limit. It uses H*distanceh (default=2).
 public:
-  JDsInitializeOp_BoundNormalCells(const JXml *sxml,TiXmlElement* ele,StInitCt initct)
-    :JDsInitializeOp(IT_BoundNormalCells,"BoundNormalCells",initct){ Reset(); ReadXml(sxml,ele); }
-  JDsInitializeOp_BoundNormalCells(const std::string &eparm,StInitCt initct)
-    :JDsInitializeOp(IT_BoundNormalPlane,"BoundNormalCells",initct){ Reset(); ReadKeyvals(eparm); }
+  JDsInitializeOp_BoundNormalParts(const JXml *sxml,TiXmlElement* ele,StInitCt initct)
+    :JDsInitializeOp(IT_BoundNormalParts,"BoundNormalParts",initct){ Reset(); ReadXml(sxml,ele); }
+  JDsInitializeOp_BoundNormalParts(const std::string &eparm,StInitCt initct)
+    :JDsInitializeOp(IT_BoundNormalPlane,"BoundNormalParts",initct){ Reset(); ReadKeyvals(eparm); }
   void Reset();
   void ReadXml(const JXml *sxml,TiXmlElement* ele);
   void ReadKeyvals(const std::string &eparm);

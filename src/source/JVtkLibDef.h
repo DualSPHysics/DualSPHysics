@@ -23,5 +23,5 @@
  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-//#define DISABLE_VTKLIB   ///<It allows compile without VTK library.
-//#define DISABLE_NORCELLS ///<It allows compile without JNormalsCells code (under development).
+//#define DISABLE_VTKLIB        ///<It allows compile without VTK library.
+//#define DISABLE_NORPARTCELLS  ///<It allows compile without JNormalsPartCells code (under development).

@@ -112,8 +112,8 @@ void JSphCfgRun::VisuInfo()const{
   printf("    -mdbc_fast:<0/1>        Fast single precision calculation on GPU (default=1)\n");
   printf("    -mdbc_threshold:<float> Kernel support limit to apply mDBC correction [0-1]\n");
   printf("\n");
-  printf("    -initnorpla:<inlinecfg> Initialize definition for <boundnormal_plane>\n");
-  printf("    -initnorcel:<inlinecfg> Initialize definition for <boundnormal_cells>\n");
+  printf("    -initnorpla:<inlinecfg>  Initialize definition for <boundnormal_plane>\n");
+  printf("    -initnorpart:<inlinecfg> Initialize definition for <boundnormal_parts>\n");
   printf("\n");
   printf("    -symplectic      Symplectic algorithm as time step algorithm\n");
   printf("    -verlet[:steps]  Verlet algorithm as time step algorithm and number of\n");
@@ -297,7 +297,7 @@ void JSphCfgRun::LoadOpts(string *optlis,int optn,int lv,const std::string &file
       else if(txword=="INITNORPLA"){
         InitParms.push_back(opt); //if(TBoundary==1){ TBoundary=2; SlipMode=1; }//-Activates mDBC.
       }
-      else if(txword=="INITNORCEL"){ InitParms.push_back(opt); }
+      else if(txword=="INITNORPART"){ InitParms.push_back(opt); }
       else if(txword=="SYMPLECTIC")TStep=STEP_Symplectic;
       else if(txword=="VERLET"){ TStep=STEP_Verlet; 
         if(txoptfull!="")VerletSteps=atoi(txoptfull.c_str()); 
