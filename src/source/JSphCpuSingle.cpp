@@ -1050,7 +1050,6 @@ void JSphCpuSingle::Run(std::string appname,const JSphCfgRun *cfg,JLog2 *log){
   Log->Print(string("\n[Initialising simulation (")+RunCode+")  "+fun::GetDateTime()+"]");
   if(DsPips)ComputePips(true);
   PrintHeadPart();
-//Run_Exceptioon("Stop");
   while(TimeStep<TimeMax){
     InterStep=(TStep==STEP_Symplectic? INTERSTEP_SymPredictor: INTERSTEP_Verlet);
     if(ViscoTime)Visco=ViscoTime->GetVisco(float(TimeStep));

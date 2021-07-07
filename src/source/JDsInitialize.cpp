@@ -338,6 +338,18 @@ void JDsInitializeOp_BoundNormalPlane::ReadKeyvals(const std::string &eparm){
       Normal=ToTFloat3(fun::Split2pDouble3(val));
     }
     else if(key=="maxdisth")MaxDisteH=fun::StrToFloat(val);
+    else if(key=="posmax"){
+      if(fun::Split2pDouble3Error(val))Run_Exceptioon(fun::PrintStr("OnlyPosMax definition is invalid in execution parameter \'%s\'.",eparm.c_str()));
+      OnlyPosMax=fun::Split2pDouble3(val);
+      if(!OnlyPos)OnlyPosMin=TDouble3(-DBL_MAX);
+      OnlyPos=true;
+    }
+    else if(key=="posmin"){
+      if(fun::Split2pDouble3Error(val))Run_Exceptioon(fun::PrintStr("OnlyPosMin definition is invalid in execution parameter \'%s\'.",eparm.c_str()));
+      OnlyPosMin=fun::Split2pDouble3(val);
+      if(!OnlyPos)OnlyPosMax=TDouble3(DBL_MAX);
+      OnlyPos=true;
+    }
     else Run_Exceptioon(fun::PrintStr("Key \'%s\' is unknown in execution parameter \'%s\'.",key.c_str(),eparm.c_str()));
   }
 }
@@ -623,6 +635,18 @@ void JDsInitializeOp_BoundNormalParts::ReadKeyvals(const std::string &eparm){
     const string val=fun::StrLower(fun::StrRemoveBefore(vkv[c],"="));
     if(key=="mkbound")MkBound=val;
     else if(key=="maxdisth")MaxDisteH=fun::StrToFloat(val);
+    else if(key=="posmax"){
+      if(fun::Split2pDouble3Error(val))Run_Exceptioon(fun::PrintStr("OnlyPosMax definition is invalid in execution parameter \'%s\'.",eparm.c_str()));
+      OnlyPosMax=fun::Split2pDouble3(val);
+      if(!OnlyPos)OnlyPosMin=TDouble3(-DBL_MAX);
+      OnlyPos=true;
+    }
+    else if(key=="posmin"){
+      if(fun::Split2pDouble3Error(val))Run_Exceptioon(fun::PrintStr("OnlyPosMin definition is invalid in execution parameter \'%s\'.",eparm.c_str()));
+      OnlyPosMin=fun::Split2pDouble3(val);
+      if(!OnlyPos)OnlyPosMax=TDouble3(DBL_MAX);
+      OnlyPos=true;
+    }
     else Run_Exceptioon(fun::PrintStr("Key \'%s\' is unknown in execution parameter \'%s\'.",key.c_str(),eparm.c_str()));
   }
 }
