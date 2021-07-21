@@ -40,7 +40,7 @@
 #include "JNumexLibDef.h"    //Defines DISABLE_NUMEXLIB to compile without Numex library.
 #include "JVtkLibDef.h"      //Defines DISABLE_VTKLIB to compile without VTK library.
 //#define DISABLE_CHRONO     ///<It allows compile without ChronoLib library (dsphchrono.dll, ChronoEngine.dll and ChronoEngine_parallel.dll).
-//#define DISABLE_CHRONO_OMP ///<It allows compile without parallel module of Chrono (ignores ChronoEngine_parallel.dll).
+#define DISABLE_CHRONO_OMP   ///<It allows compile without parallel module of Chrono (ignores ChronoEngine_parallel.dll).
 //#define DISABLE_WAVEGEN    ///<It allows compile without Wave-Paddles, Multi-Layer Pistons and Relaxation Zones libraries.
 //#define DISABLE_MOORDYN    ///<It allows compile without LibDSphMoorDyn library.
 

@@ -685,9 +685,8 @@ void JSphGpu::ConfigBlockSizes(bool usezone,bool useperi){
         ,lamsps,TDensity,ShiftingMode
         ,0,0,0,0,100,0,0
         ,0,divdatag,NULL
+        ,NULL,NULL,NULL,NULL,NULL,NULL
         ,NULL,NULL,NULL
-        ,NULL,NULL,NULL
-        ,NULL,NULL
         ,NULL,NULL,NULL,NULL
         ,NULL
         ,NULL

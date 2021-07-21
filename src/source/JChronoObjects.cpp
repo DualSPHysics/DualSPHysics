@@ -715,7 +715,7 @@ void JChronoObjects::Init(const JSphMk* mkinfo){
     #ifndef DISABLE_CHRONO_OMP
       ChronoLib=new DSPHChronoLibMC(*ChronoDataXml); //<chrono_multicore>
     #else
-      Log->PrintWarning("Chrono Parallel module is not enabled. The execution will be using single core");
+      Log->PrintWarning("Chrono Parallel module is not enabled since it does not work properly. The execution will be using single-core");
       ChronoDataXml->SetOmpThreads(1);
       ChronoLib=new DSPHChronoLibSC(*ChronoDataXml);
     #endif
