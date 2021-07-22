@@ -762,9 +762,9 @@ void JSphCpuSingle::FtCalcForces(StFtoForces *ftoforces)const{
 
     //-Compute a cumulative rotation matrix.
     const tmatrix3f frot=fmath::RotMatrix3x3(fang);
-    //-Compute the intertia tensor by rotating the initial tensor to the curent orientation I=(R*I_0)*R^T.
+    //-Compute the inertia tensor by rotating the initial tensor to the curent orientation I=(R*I_0)*R^T.
     inert=fmath::MulMatrix3x3(fmath::MulMatrix3x3(frot,inert),fmath::TrasMatrix3x3(frot));
-    //-Calculates the inverse of the intertia matrix to compute the I^-1 * L= W
+    //-Calculates the inverse of the inertia matrix to compute the I^-1 * L= W
     const tmatrix3f invinert=fmath::InverseMatrix3x3(inert);
 
     //-Compute summation of linear and angular forces starting from acceleration of particles.

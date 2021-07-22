@@ -1905,6 +1905,12 @@ bool IsEqual(const tdouble4 &v1,const tdouble4 &v2,double tolerance){
   return(IsEqual(v1.x,v2.x,tolerance) && IsEqual(v1.y,v2.y,tolerance) && IsEqual(v1.z,v2.z,tolerance) && IsEqual(v1.w,v2.w,tolerance));
 }
 
+//==============================================================================
+/// Returns v with its elements in absolute value
+//==============================================================================
+tdouble3 Double3ToAbs(const tdouble3 v){
+	return TDouble3(std::abs(v.x),std::abs(v.y),std::abs(v.z));
+}
 
 }
 

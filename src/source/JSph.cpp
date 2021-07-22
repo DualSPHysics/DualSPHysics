@@ -959,7 +959,7 @@ void JSph::LoadCaseConfig(const JSphCfgRun *cfg){
   if(UseChrono){
     if(xml.GetNodeSimple("case.execution.special.chrono",true)){
       if(!JChronoObjects::Available())Run_Exceptioon("DSPHChronoLib to use Chrono is not included in the current compilation.");
-      ChronoObjects=new JChronoObjects(DirCase,CaseName,&xml,"case.execution.special.chrono",Dp,parts.GetMkBoundFirst(),Simulate2D);
+      ChronoObjects=new JChronoObjects(DirCase,CaseName,&xml,"case.execution.special.chrono",Dp,parts.GetMkBoundFirst(),Gravity,Simulate2D,FtPause);
     }
     else Run_ExceptioonFile("Chrono configuration in XML file is missing.",FileXml);
   }
@@ -1066,10 +1066,14 @@ void JSph::LoadCaseConfig(const JSphCfgRun *cfg){
         fobj->fomega=ToTFloat3(fblock.GetAngularVelini());
         fobj->facelin=fobj->faceang=TFloat3(0);
         fobj->inertiaini=ToTMatrix3f(fblock.GetInertia());
+        //-Set to zero the values Ixx and Izz in the inertia matrix when it is a 2D-Simulation.
+        tmatrix3d inertiaini=fblock.GetInertia();
+        if(Simulate2D)inertiaini=TMatrix3d(0,0,0,0,inertiaini.a22,0,0,0,0);
+        fobj->inertiaini=ToTMatrix3f(inertiaini);
         //-Chrono configuration.
         fobj->usechrono=(ChronoObjects && ChronoObjects->ConfigBodyFloating(fblock.GetMkType()
-          ,fblock.GetMassbody(),fblock.GetCenter(),fblock.GetInertia()
-          ,fblock.GetTranslationFree(),fblock.GetRotationFree(),fobj->fvel,fobj->fomega));
+          ,fblock.GetMassbody(),fblock.GetCenter(),inertiaini,fblock.GetTranslationFree()
+          ,fblock.GetRotationFree(),fobj->fvel,fobj->fomega));
         cobj++;
       }
     }

@@ -25,9 +25,15 @@
 //:# - Nuevo objeto link_lulley (27-02-2020).
 //:# - Se anade un bloque collision para activar o desactivar las colisiones en chrono (28-02-2020).
 //:# - Comprueba opcion active en elementos de primer y segundo nivel. (19-03-2020). 
+//:# - Lectura de Finite Element Analysis (FEA) (22-04-2020).
+//:# - Nuevo objeto BeamIGA (FEA) (22-04-2020). 
+//:# - Permite visualizar la configuracion de los objetos FEA (22-04-2020).
+//:# - Permite la ejecucion de ChLinks con coeficientes variables de stiffness
 //:#   y damping. (04-10-2020).
 //:# - Contabiliza y muestra el numero de caras para las colisiones. (18-10-2020).
 //:# - Permite imponer el valor de kfric de un objeto sobre otros. (30-10-2020).
+//:# - Lectura de la etiqueta link_pointframe que permite conectar nodos FEA
+//:#   a objetos rigidos. (09-11-2020).
 //:# - Permite escalar fuerzas usando la etiqueta <scaleforce> (10-03-2021).
 //:#############################################################################
 
@@ -55,7 +61,6 @@ class TiXmlElement;
 class JChronoData;
 class JChValues;
 class JChBody;
-class JChBodyFloating;
 class JChLink;
 class DSPHChronoLib;
 class JLinearValue;
@@ -77,17 +82,19 @@ protected:
   const double Dp;
   const word MkBoundFirst;
   const bool Simulate2D;
+  const double FtPause;
 
   bool UseVariableCoeff; ///<Indicates the use of variable coefficients
   std::vector<JLinearValue*> StiffnessV; ///<For variable stiffness
   std::vector<JLinearValue*> DampingV;   ///<For variable damping
 
-  int OmpThreads;     ///<Max number of OpenMP threads in execution on CPU host (minimum 1).
-  const bool UseDVI;  ///<Uses Differential Variational Inequality (DVI) method.
-  bool UseChronoSMC;  ///<Uses Smooth Contacts for collisions.
-  bool UseCollision;  ///<Activates collisions between chrono objects.
-  
-  bool WithMotion;   ///<Some Chrono object with geometry is a moving object.
+  int OmpThreads;        ///<Max number of OpenMP threads in execution on CPU host (minimum 1).
+  const bool UseDVI;     ///<Uses Differential Variational Inequality (DVI) method.
+  bool UseChronoSMC;     ///<Uses Smooth Contacts for collisions.
+  bool UseCollision;     ///<Activates collisions between chrono objects.
+
+  bool WithMotion;       ///<Some Chrono object with geometry is a moving object.
+  const tfloat3 Gravity; ///<Gravity acceleration. | Aceleracion por gravedad.
 
   void* Ptr_VtkSimple_AutoActual;
   void* Ptr_VtkSimple_AutoDp;
@@ -126,11 +133,12 @@ protected:
 
   void SetVariableCoeff(const double timestep);
   void ReadCoeffs(JChLink *link,const JXml *sxml,TiXmlElement* ele);
+  void ReadScaleForces(const JXml *sxml,TiXmlElement* lis);
 
 public:
   JChronoObjects(const std::string &dirdata,const std::string &casename
     ,const JXml *sxml,const std::string &place,double dp,word mkboundfirst
-    ,bool simulate2d);
+	,tfloat3 g,const bool simulate2d,const double ftpause);
   ~JChronoObjects();
   void Reset();
   static bool Available(){ return(true); }
@@ -162,9 +170,6 @@ public:
 
   void SavePart(int part);
 
-  void ReadScaleForces(const JXml *sxml,TiXmlElement* lis);
 };
+#endif //!DISABLE_CHRONO
 #endif
-
-#endif
-

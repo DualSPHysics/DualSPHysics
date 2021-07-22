@@ -72,6 +72,7 @@
 #include <vector>
 #include <cstdlib>
 #include <cmath>
+#include <climits>
 
 class JChBody;
 class JChLink;
@@ -266,7 +267,8 @@ public:
   void SetModel(const std::string &file,TpModelNormal normal){ ModelFile=file; ModelNormal=normal; }
   void SetUseFEA(const bool u){ UseFEA=u; } 
   void SetCollisionData(float kfric,float sfric,float restitu,float young,float poisson);
-
+  
+  void SetVelIni(tfloat3 linvelini,tfloat3 angvelini);
   
   void    SetScaleForce(tfloat3 s){        ScaleForce=s;}
   tfloat3 GetScaleForce()    const{ return(ScaleForce); }
@@ -569,23 +571,30 @@ public:
 class JChronoData : protected JChBase
 {
 public:
-  typedef enum{ NSC,SMC }               TpContactMethod;
-  typedef enum{ BB=0,APGD=1,APGDREF=2 } DSolverType;     //Allowed Solvers
+  typedef enum{ NSC,SMC }                TpContactMethod;
+  typedef enum{ BB=0,MINRES=1,PARDISO=2 }TpSolverType;     //Allowed Solvers
+  typedef enum{ EULER_IL=0,HHT=1}        TpTStepperType;   //Allowed timesteppers
 
 private:
   std::string Mode;         ///<Chrono execution mode
-  //unsigned MaxIter;         ///<Indicates the maximun number of iterations for the solver
   std::string DataDir;
   bool UseNSCChrono;
   std::vector<JChBody*> LisBody;
   std::vector<JChLink*> LisLink;
+
+
   double Dp;
   float CollisionDp;
   unsigned Solver;
+  unsigned TimeStepper;
+  double Alpha;
   int OmpThreads;
   TpContactMethod ContactMethod;
   bool UseVariableCoeff;
   bool UseCollision;
+  bool UseGravity;
+  tfloat3 Gravity;
+  double FtPause;
 
 public:
   JChronoData();
@@ -614,22 +623,35 @@ public:
   void SetSolver(unsigned s){ Solver=s; }
   unsigned GetSolver()const{ return(Solver); }
 
+  void SetTimeStepper(unsigned t,double a=0){ TimeStepper=t; Alpha=a; }
+  unsigned GetTimeStepper()const{ return(TimeStepper); }
+  
+  double GetAlpha()const{ return(Alpha); }
+
   void SetOmpThreads(unsigned th){ OmpThreads=th; }
   int GetOmpThreads()const{ return(OmpThreads); }
 
   void SetMode(std::string m){ Mode=m; }
   std::string GetMode()const{ return(Mode); }
 
-  //void SetMaxIter(unsigned i){ MaxIter=i; }
-  //unsigned GetMaxIter()const{ return(MaxIter); }
+  void SetGravity(const tfloat3 g){ Gravity=g; UseGravity=true;}
+  tfloat3 GetGravity()const { return (Gravity);}
+
+  void SetFtPause(const double f){ FtPause=f;}
+  double GetFtPause()const { return (FtPause);}
+
+  bool GetUseGravity()const{ return(UseGravity); }
 
   void SetContactMethod(TpContactMethod c){ ContactMethod=c; }
   TpContactMethod GetContactMethod()const{ return(ContactMethod); }
 
   std::string SolverToStr()const;
+  std::string TimeStepperToStr()const;
   std::string ContactMethodToStr()const;
 
   std::string CheckAddBodyError(unsigned idb,std::string idname,word mkbound)const;
+ 
+  std::string CheckAddNodeError(const unsigned ref)const;
 
   JChBodyFloating* AddBodyFloating(unsigned idb,std::string idname,word mkbound,std::string fileinfo="");
   JChBodyMoving*   AddBodyMoving  (unsigned idb,std::string idname,word mkbound,double mass,std::string fileinfo="");
@@ -664,6 +686,7 @@ public:
 
   bool GetUseVariableCoeff()const{return(UseVariableCoeff);}
   void SetUseVariableCoeff(bool v){UseVariableCoeff=v;}
+
 
 };
 #endif

@@ -258,10 +258,6 @@ void JSphCfgRun::LoadOpts(string *optlis,int optn,int lv,const std::string &file
       //-Splits options in txoptfull, txopt1, txopt2, txopt3 and txopt4.
       string txword,txoptfull,txopt1,txopt2;
       SplitsOpts(opt,txword,txoptfull,txopt1,txopt2);
-      //-Disable keywords for extra features configuration. //<vs_xxtras_ini>
-#ifdef DISABLE_EXTRASCFG   
-#endif
-      //<vs_xxtras_end>
       //-Checks keywords in commands.
       if(txword=="CPU"){ Cpu=true; Gpu=false; }
       else if(txword=="GPU"){ Gpu=true; Cpu=false;

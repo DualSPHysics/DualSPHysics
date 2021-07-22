@@ -2109,9 +2109,9 @@ __global__ void KerFtCalcForces(unsigned ftcount,float3 gravity
 
     //-Compute a cumulative rotation matrix.
     const tmatrix3f frot=cumath::RotMatrix3x3(fang);
-    //-Compute the intertia tensor by rotating the initial tensor to the curent orientation I=(R*I_0)*R^T.
+    //-Compute the inertia tensor by rotating the initial tensor to the curent orientation I=(R*I_0)*R^T.
     inert=cumath::MulMatrix3x3(cumath::MulMatrix3x3(frot,inert),cumath::TrasMatrix3x3(frot));
-    //-Calculates the inverse of the intertia matrix to compute the I^-1 * L= W
+    //-Calculates the inverse of the inertia matrix to compute the I^-1 * L= W
     const tmatrix3f invinert=cumath::InverseMatrix3x3(inert);
 
     //-Loads traslational and rotational velocities.

@@ -373,6 +373,7 @@ bool IsEqual(const tfloat3  &v1,const tfloat3  &v2,float  tolerance);
 bool IsEqual(const tdouble3 &v1,const tdouble3 &v2,double tolerance);
 bool IsEqual(const tdouble4 &v1,const tdouble4 &v2,double tolerance);
 
+tdouble3 Double3ToAbs(const tdouble3 v);
 }
 
 #endif

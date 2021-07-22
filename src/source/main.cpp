@@ -31,8 +31,8 @@ School of Mechanical, Aerospace and Civil Engineering, University of Manchester,
 \section compile_sec Project files
 Please download source files and documentation from <a href="http://dual.sphysics.org">DualSPHysics website.</a> \n
 \author <a href="http://dual.sphysics.org/index.php/developers">DualSPHysics Developers.</a> 
-\version 5.0.189
-\date 21-07-2021
+\version 5.0.191
+\date 22-07-2021
 \copyright GNU Lesser General Public License <a href="http://www.gnu.org/licenses/">GNU licenses.</a>
 */
 
@@ -56,7 +56,7 @@ Please download source files and documentation from <a href="http://dual.sphysic
 
 using namespace std;
 
-JAppInfo AppInfo("DualSPHysics5","v5.0.189.19","21-07-2021");
+JAppInfo AppInfo("DualSPHysics5","v5.0.191.19","22-07-2021");
 //JAppInfo AppInfo("DualSPHysics5","v5.0.???","UserVersion","v1.0","??-??-????"); //-for user versions.
 
 //==============================================================================
@@ -138,9 +138,6 @@ void PrintExceptionLog(const std::string &prefix,const std::string &text,JLog2 *
 int main(int argc, char** argv){
   int errcode=1;
   bool extrafeatures=true;
-  #ifdef DISABLE_EXTRASCFG //<vs_xxtras>
-    extrafeatures=false;   //<vs_xxtras>
-  #endif                   //<vs_xxtras>
   //AppInfo.AddNameExtra("Symmetry");    //<vs_syymmetry>
   //AppInfo.AddNameExtra("SaveFtAce");
   //AppInfo.AddNameExtra("SaveFtMotion");//<vs_ftmottionsv>
