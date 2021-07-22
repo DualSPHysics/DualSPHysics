@@ -28,6 +28,8 @@
 #include "OmpDefs.h"
 #include <algorithm>
 
+//#define DISABLE_EXTRASCFG     ///<Compiles without configuration of developing features. //<vs_xxtras>
+
 //#define DISABLE_KERNELS_EXTRA  ///<Compiles Wendland kernel and ignores the rest of the SPH kernels.
 
 #define DISABLE_MDBC_EXTRAMODES  ///<Compiles only slipmode=SLIP_Vel0 and ignores the rest since they are not ready.

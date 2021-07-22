@@ -138,9 +138,9 @@ void PrintExceptionLog(const std::string &prefix,const std::string &text,JLog2 *
 int main(int argc, char** argv){
   int errcode=1;
   bool extrafeatures=true;
-  #ifdef DISABLE_EXTRASCFG
-    extrafeatures=false;
-  #endif
+  #ifdef DISABLE_EXTRASCFG //<vs_xxtras>
+    extrafeatures=false;   //<vs_xxtras>
+  #endif                   //<vs_xxtras>
   //AppInfo.AddNameExtra("Symmetry");    //<vs_syymmetry>
   //AppInfo.AddNameExtra("SaveFtAce");
   //AppInfo.AddNameExtra("SaveFtMotion");//<vs_ftmottionsv>
