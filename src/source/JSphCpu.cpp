@@ -174,7 +174,7 @@ void JSphCpu::AllocCpuMemoryParticles(unsigned np,float over){
     ArraysCpu->AddArrayCount(JArraysCpu::SIZE_16B,1); //-velrhoppre
   }
   if(TVisco==VISCO_LaminarSPS){     
-    ArraysCpu->AddArrayCount(JArraysCpu::SIZE_24B,1); //-SpsTau,SpsGradvel
+    ArraysCpu->AddArrayCount(JArraysCpu::SIZE_24B,2); //-SpsTau,SpsGradvel
   }
   if(Shifting){
     ArraysCpu->AddArrayCount(JArraysCpu::SIZE_16B,1); //-shiftposfs
