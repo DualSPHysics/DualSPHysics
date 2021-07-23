@@ -1592,6 +1592,63 @@ void JSph::VisuConfig(){
   if(CteB==0)Run_Exceptioon("Constant \'b\' cannot be zero.\n\'b\' is zero when fluid height is zero (or fluid particles were not created)");
 }
 
+
+//==============================================================================
+/// Prints out references of the case.
+//==============================================================================
+void JSph::VisuRefs(){
+  Log->Print("[References]");
+/////////////|---------1---------2---------3---------4---------5---------6---------7--------X8
+  Log->Print("- Official solver reference DualSPHysics v5.0: J.M. Dominguez, G. Fourtakas,");
+  Log->Print("    C. Altomare, R.B. Canelas, A. Tafuni, O. Garcia-Feal, I. Martinez-Estevez,"); 
+  Log->Print("    A. Mokos, R. Vacondio, A.J.C. Crespo, B.D. Rogers, P.K. Stansby, M. Gomez-Gesteira."); 
+  Log->Print("    2021. DualSPHysics: from fluid dynamics to multiphysics problems.");
+  Log->Print("    Computational Particle Mechanics. doi: https://doi.org/10.1007/s40571-021-00404-2");
+  Log->Print("");
+  //-Code implementation:
+  Log->Print("- Optimised CPU multi-core and GPU implementation (Dominguez et al., 2013  https://doi.org/10.1016/j.cpc.2012.10.015)");
+  //-Boundary conditions:
+  if(TBoundary==BC_DBC )Log->Print("- Dynamic boundary conditions (Crespo et al., 2007  https://doi.org/10.3970/cmc.2007.005.173)");
+  if(TBoundary==BC_MDBC)Log->Print("- Modified Dynamic boundary conditions (English et al., 2021  https://doi.org/10.1007/s40571-021-00403-3)");
+  //-Density diffusion Term:
+  if(TDensity==DDT_DDT     )Log->Print("- Density diffusion Term: Molteni (Molteni and Colagrossi, 2009  https://doi.org/10.1016/j.cpc.2008.12.004)");
+  if(TDensity==DDT_DDT2    )Log->Print("- Density diffusion Term: Fourtakas (Fourtakas et al., 2019  https://doi.org/10.1016/j.compfluid.2019.06.009)");
+  if(TDensity==DDT_DDT2Full)Log->Print("- Density diffusion Term: Fourtakas (Fourtakas et al., 2019  https://doi.org/10.1016/j.compfluid.2019.06.009)");
+  //-Viscosity:
+  if(TVisco==VISCO_Artificial)Log->Print("- Viscosity: Artificial (Monaghan, 1992  https://doi.org/10.1146/annurev.aa.30.090192.002551)");
+  if(TVisco==VISCO_LaminarSPS)Log->Print("- Viscosity: Laminar + SPS turbulence model (Dalrymple and Rogers, 2006  https://doi.org/10.1016/j.coastaleng.2005.10.004)");
+  if(ViscoBoundFactor!=1     )Log->Print("- Viscosity: ViscoBoundFactor coefficient (Barreiro et al., 2014  https://doi.org/10.1371/journal.pone.0111031)");
+  //-Kernel fuctions:
+  if(TKernel==KERNEL_Cubic   )Log->Print("- Kernel: Cubic Spline (Monaghan, 1992  https://doi.org/10.1146/annurev.aa.30.090192.002551)");
+  if(TKernel==KERNEL_Wendland)Log->Print("- Kernel: Quintic Wendland (Wendland, 1995  https://doi.org/10.1007/BF02123482)");
+  //-Time integration scheme: 
+  if(TStep==STEP_Verlet    )Log->Print("- Time integration scheme: Verlet (Verlet, 1967  https://doi.org/10.1103/PhysRev.159.98)");
+  if(TStep==STEP_Symplectic)Log->Print("- Time integration scheme: Symplectic (Leimkhuler, 1996  https://doi.org/10.1007/978-3-319-16375-8_1)");
+  //-Other features:
+  if(PeriActive!=0)Log->Print("- Periodic open boundaries (Gomez-Gesteira et al., 2012  https://doi.org/10.1016/j.cageo.2012.02.029)");
+  if(InOut        )Log->Print("- Inflow-outflow boundary conditions (Tafuni et al., 2018  https://doi.org/10.1016/j.cma.2018.08.004)");
+  if(WithFloating )Log->Print("- Floating objects (Canelas et al., 2015  https://doi.org/10.1002/fld.4031)");
+  if(UseDEM       )Log->Print("- Coupling SPH-DCDEM (Canelas et al., 2017  https://doi.org/10.1061/(ASCE)HY.1943-7900.0001331)");
+  if(UseChrono    )Log->Print("- Coupling with Project Chrono (Canelas et al., 2018  https://doi.org/10.1016/j.apor.2018.04.015)");
+  if(Moorings     )Log->Print("- Coupling with MoorDyn+ (Dominguez et al., 2019  https://doi.org/10.1016/j.coastaleng.2019.103560)");
+  if(Shifting     )Log->Print("- Shifting algorithm (Lind et al., 2012  https://doi.org/10.1016/j.jcp.2011.10.027)");
+  if(AccInput     )Log->Print("- External imposed forces (Longshaw and Rogers, 2015  https://doi.org/10.1016/j.advengsoft.2015.01.008)");
+  //-Wave generation:
+  const bool damp=(Damping!=NULL);
+  const bool awas=(WaveGen && WaveGen->UseAwas());
+  const bool lonw=(WaveGen && !WaveGen->WavesSolitary());
+  const bool solw=(WaveGen && WaveGen->WavesSolitary());
+  const bool inow=(InOut && InOut->Use_AwasVel());
+  if(lonw        )Log->Print("- Long-crested wave generation (Altomare et al., 2017  https://doi.org/10.1016/j.coastaleng.2017.06.004)");
+  if(solw        )Log->Print("- Solitary wave generation (Dominguez et al., 2019  https://doi.org/10.1080/21664250.2018.1560682)");
+  if(MLPistons   )Log->Print("- Multi-layer Piston for wave generation (Altomare et al., 2015  https://doi.org/10.1142/S0578563415500242)");
+  if(RelaxZones  )Log->Print("- Relaxation Zone for wave generation (Altomare et al., 2018  https://doi.org/10.1016/j.apor.2018.09.013)");
+  if(inow        )Log->Print("- Wave generation and absorption using open boundaries (Verbrugghe et al., 2019  https://doi.org/10.1016/j.cpc.2019.02.003)");
+  if(awas && damp)Log->Print("- AWAS & Damping: Active and passive wave absorption (Altomare et al., 2017  https://doi.org/10.1016/j.coastaleng.2017.06.004)");
+  else if(awas)   Log->Print("- AWAS: Active Wave Absorption System (Altomare et al., 2017  https://doi.org/10.1016/j.coastaleng.2017.06.004)");
+  else if(damp)   Log->Print("- Damping system (Altomare et al., 2017  https://doi.org/10.1016/j.coastaleng.2017.06.004)");
+}
+
 //==============================================================================
 /// Shows particle and MK blocks summary.
 //==============================================================================

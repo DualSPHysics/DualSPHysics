@@ -441,6 +441,7 @@ protected:
   void ConfigConstants1(bool simulate2d);
   void ConfigConstants2();
   void VisuConfig();
+  void VisuRefs();
   void VisuParticleSummary()const;
   void LoadDcellParticles(unsigned n,const typecode *code,const tdouble3 *pos,unsigned *dcell)const;
   void RunInitialize(unsigned np,unsigned npb,const tdouble3 *pos,const unsigned *idp

@@ -1312,6 +1312,15 @@ void JSphInOut::VisuConfig(std::string txhead,std::string txfoot)const{
 }
 
 //==============================================================================
+/// Returns true when AWAS-velocity is configured in some inout zone.
+//==============================================================================
+bool JSphInOut::Use_AwasVel()const{
+  bool ret=false;
+  for(unsigned ci=0;ci<GetCount() && !ret;ci++)ret=List[ci]->Use_AwasVel();
+  return(ret);
+}
+
+//==============================================================================
 /// Saves VTK and CSV files per PART.
 //==============================================================================
 void JSphInOut::SavePartFiles(unsigned part){

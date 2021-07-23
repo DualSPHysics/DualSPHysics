@@ -276,6 +276,13 @@ void JSphInOutZone::ReadXml(const JXml *sxml,TiXmlElement* ele,const std::string
 }
 
 //==============================================================================
+/// Returns true when AWAS-velocity is configured.
+//==============================================================================
+bool JSphInOutZone::Use_AwasVel()const{ 
+  return(InOutVel && InOutVel->UseAwasVel());
+}
+
+//==============================================================================
 /// Returns a byte with information about VelMode, VelProfile and RhopMode.
 //==============================================================================
 byte JSphInOutZone::GetConfigZone()const{

@@ -922,5 +922,6 @@ void JSphGpuSingle::FinishRun(bool stop){
   if(SvRes)SaveRes(tsim,ttot,hinfo,dinfo);
   Log->PrintFilesList();
   Log->PrintWarningList();
+  VisuRefs();
 }
 

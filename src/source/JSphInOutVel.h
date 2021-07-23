@@ -120,6 +120,7 @@ public:
   float GetVelMax()const{ return(VelMax); }
   TpInBehaviour GetInletBehaviour()const{ return(VelBehaviour); }
   std::string GetInletBehaviourName()const;
+  bool UseAwasVel()const{ return(AwasVel!=NULL); }
 
   TpInVelProfile GetVelProfile()const{ return(VelProfile); }
   bool UseCoefficients()const{ return(VelMode==InVelM_Fixed || VelMode==InVelM_Variable); }

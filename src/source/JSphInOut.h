@@ -264,6 +264,7 @@ public:
   bool Use_AnalyticalData()const{ return(UseAnalyticalData); }
   bool Use_ExtrapolatedData()const{ return(UseExtrapolatedData); }
   bool Use_InterpolatedVel()const{ return(UseInterpolatedVel); }
+  bool Use_AwasVel()const;
 
   bool GetVariableZsurf()const{ return(VariableZsurf); }
   bool GetCalculatedZsurf()const{ return(CalculatedZsurf); }
