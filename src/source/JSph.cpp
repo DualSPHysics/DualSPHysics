@@ -1065,10 +1065,9 @@ void JSph::LoadCaseConfig(const JSphCfgRun *cfg){
         fobj->fvel=ToTFloat3(fblock.GetLinearVelini());
         fobj->fomega=ToTFloat3(fblock.GetAngularVelini());
         fobj->facelin=fobj->faceang=TFloat3(0);
-        fobj->inertiaini=ToTMatrix3f(fblock.GetInertia());
-        //-Set to zero the values Ixx and Izz in the inertia matrix when it is a 2D-Simulation.
         tmatrix3d inertiaini=fblock.GetInertia();
-        if(Simulate2D)inertiaini=TMatrix3d(0,0,0,0,inertiaini.a22,0,0,0,0);
+        //-Set to zero the values Ixx and Izz in the inertia matrix when it is a 2D-Simulation.
+        //if(Simulate2D)inertiaini=TMatrix3d(0,0,0,0,inertiaini.a22,0,0,0,0);
         fobj->inertiaini=ToTMatrix3f(inertiaini);
         //-Chrono configuration.
         fobj->usechrono=(ChronoObjects && ChronoObjects->ConfigBodyFloating(fblock.GetMkType()
