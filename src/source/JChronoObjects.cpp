@@ -360,7 +360,7 @@ void JChronoObjects::ReadXml(const JXml *sxml,TiXmlElement* lis){
           ReadXmlValues(sxml,ele->FirstChildElement("values"),body->GetValuesPtr());
         }
         else if(elename=="bodymoving"){
-          //Run_Exceptioon("The use of predefined moving objects (<bodymoving>) is disabled since it does not work properly.");
+          Run_Exceptioon("The use of predefined moving objects (<bodymoving>) is disabled since it does not work properly.");
           //Log->Printf("----> AddBodyMoving>> \'%s\' mkb:%u mf:[%s]",idname.c_str(),mkbound,mfile.c_str());
           const double mass=sxml->GetAttributeDouble(ele,"massbody");
           JChBodyMoving *body=ChronoDataXml->AddBodyMoving(idb,idname,mkbound,mass,xmlrow);	//-No Finite Element

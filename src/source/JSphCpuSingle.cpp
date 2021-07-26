@@ -189,7 +189,10 @@ void JSphCpuSingle::ResizeParticlesSize(unsigned newsize,float oversize,bool upd
 /// Crea lista de nuevas particulas periodicas a duplicar.
 /// Con stable activado reordena lista de periodicas.
 //==============================================================================
-unsigned JSphCpuSingle::PeriodicMakeList(unsigned n,unsigned pini,bool stable,unsigned nmax,tdouble3 perinc,const tdouble3 *pos,const typecode *code,unsigned *listp)const{
+unsigned JSphCpuSingle::PeriodicMakeList(unsigned n,unsigned pini,bool stable
+  ,unsigned nmax,tdouble3 perinc,const tdouble3 *pos,const typecode *code
+  ,unsigned *listp)const
+{
   unsigned count=0;
   if(n){
     //-Initialize size of list lsph to zero. | Inicializa tamanho de lista lspg a cero.
@@ -263,8 +266,9 @@ void JSphCpuSingle::PeriodicDuplicatePos(unsigned pnew,unsigned pcopy,bool inver
 /// Se presupone que todas las particulas son validas.
 /// Este kernel vale para single-cpu y multi-cpu porque usa domposmin. 
 //==============================================================================
-void JSphCpuSingle::PeriodicDuplicateVerlet(unsigned np,unsigned pini,tuint3 cellmax,tdouble3 perinc,const unsigned *listp
-  ,unsigned *idp,typecode *code,unsigned *dcell,tdouble3 *pos,tfloat4 *velrhop,tsymatrix3f *spstau,tfloat4 *velrhopm1)const
+void JSphCpuSingle::PeriodicDuplicateVerlet(unsigned np,unsigned pini,tuint3 cellmax
+  ,tdouble3 perinc,const unsigned *listp,unsigned *idp,typecode *code,unsigned *dcell
+  ,tdouble3 *pos,tfloat4 *velrhop,tsymatrix3f *spstau,tfloat4 *velrhopm1)const
 {
   const int n=int(np);
   #ifdef OMP_USE

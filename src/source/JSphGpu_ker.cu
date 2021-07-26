@@ -2692,7 +2692,6 @@ void PeriodicDuplicateNormals(unsigned n,unsigned pini,const unsigned *listp,flo
   }
 }
 
-
 //##############################################################################
 //# Kernels for Damping.
 //##############################################################################
