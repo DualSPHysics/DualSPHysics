@@ -23,7 +23,8 @@
 //# - Actualiza codigo para DualSPHysics. (28-06-2020)
 //# - Nuevas funciones LoadFloats() y LoadDoubles(). (12-08-2020)
 //# - Ignora parametros vacios. (10-09-2020)
-//:# - El uso de JDsphConfig o no se define en JCfgRunBaseDef.h. (20-04-2021)
+//# - El uso de JDsphConfig o no se define en JCfgRunBaseDef.h. (20-04-2021)
+//# - Nuevo metodo LoadDouble2(). (05-08-2021)
 //#############################################################################
 
 #ifndef _JCfgRunBase_
@@ -57,6 +58,7 @@ protected:
   static unsigned LoadDouble3(std::string txopt,double def,unsigned nv,tdouble3 *v);
   static void LoadFloat3(std::string txopt,float def,tfloat3 &v1);
   static void LoadFloat6(std::string txopt,float def,tfloat3 &v1,tfloat3 &v2);
+  static void LoadDouble2(std::string txopt,double def,tdouble2 &v1);
   static void LoadDouble3(std::string txopt,double def,tdouble3 &v1);
   static void LoadDouble6(std::string txopt,double def,tdouble3 &v1,tdouble3 &v2);
 

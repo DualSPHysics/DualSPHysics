@@ -247,6 +247,24 @@ void JCfgRunBase::LoadFloat6(std::string txopt,float def,tfloat3 &v1,tfloat3 &v2
 }
 
 //==============================================================================
+/// Load 1 value tdouble2 using command options.
+//==============================================================================
+void JCfgRunBase::LoadDouble2(std::string txopt,double def,tdouble2 &v1){
+  //printf("txopt=[%s]\n",txopt.c_str());
+  double values[2]={def,def};
+  string ttx=txopt;
+  for(int tc=0;ttx!="" && tc<2;tc++){
+    int tpos=int(ttx.find(":"));
+    string ttxopt=(tpos>0? ttx.substr(0,tpos): ttx);
+    string ttxopt2;
+    if(tpos>0)ttxopt2=ttx.substr(tpos+1);
+    values[tc]=atof(ttxopt.c_str());
+    ttx=ttxopt2;
+  } 
+  v1=TDouble2(values[0],values[1]);
+}
+
+//==============================================================================
 /// Load 1 value tdouble3 using command options.
 //==============================================================================
 void JCfgRunBase::LoadDouble3(std::string txopt,double def,tdouble3 &v1){

@@ -25,6 +25,7 @@
 //:#   calcular tiempo estimado de finalizacion con un overhead minimo. Se calculo  
 //:#   un overhead del 2.1% en bucles de iteraciones muy ligeras. (25-04-2016)
 //:# - Documentacion del codigo en ingles. (08-08-2017)
+//:# - Nuevo metodo GetOutNum() para identificar la primera salida de informacion. (03-08-2021)
 //:#############################################################################
 
 #ifndef _JTimeControl_
@@ -66,6 +67,7 @@ protected:
 
   double LastTime;
 
+  unsigned OutNum;
 
   void ConfigPeriodic(double tfirst,double tout);
   void ConfigTimes(unsigned ntimes,const double *vtimes);
@@ -95,6 +97,7 @@ public:
 
   double GetLastTime()const{ return(LastTime); }
   std::string GetInfoFinish(double done);
+  unsigned GetOutNum()const{ return(OutNum); }
 };
 
 #endif

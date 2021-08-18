@@ -37,6 +37,7 @@
 //:# - Muestra extension maxima de fichero permitida en caso de ser insuficiente. (21-10-2019)
 //:# - Mejora la gestion de excepciones. (06-05-2020)
 //:# - Nuevo metodo: ReadNextBool(). (19-08-2020)
+//:# - Nuevo metodo: ReplaceSpaces(). (03-08-2021)
 //:#############################################################################
 
 /// \file JReadDatafile.h \brief Declares the class \ref JReadDatafile.
@@ -86,6 +87,7 @@ public:
 
   void LoadFile(const std::string &file,unsigned maxsize=1048576000);
   void RemoveChar(char let);
+  void ReplaceSpaces();
 
   unsigned Lines()const{ return(LineCount); }
   unsigned RemLines()const{ return(RemLineCount); }
