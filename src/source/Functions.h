@@ -94,6 +94,7 @@
 //:# - Nueva opcion mark en VectorFind() y VectorFindMask().  (06-07-2021)
 //:# - Nuevas funciones Split2pVector(), Split2pKey(), Split2pValue(), Split2pDouble3(), Split2pDouble3Error().  (06-07-2021)
 //:# - Nuevas funciones GetVectorFind().  (06-07-2021)
+//:# - Nuevas funciones GetHostName().  (27-08-2021)
 //:#############################################################################
 
 /// \file Functions.h \brief Declares basic/general functions for the entire application.
@@ -113,6 +114,8 @@
 namespace fun{
 void RunExceptioonFun(const std::string &srcfile,int srcline,const std::string &fun
   ,const std::string &msg,const std::string &file="");
+
+std::string GetHostName();
 
 std::string GetDateTimeFormat(const char* format,int nseg=0);
 inline std::string GetDateTime(){ return(GetDateTimeFormat("%d-%m-%Y %H:%M:%S",0)); }

@@ -45,9 +45,6 @@
 #include "JSphShifting.h"
 
 #include <climits>
-#ifndef WIN32
-#include <unistd.h>
-#endif
 
 using namespace std;
 
@@ -402,18 +399,15 @@ void JSphCpu::ConfigOmp(const JSphCfgRun *cfg){
 /// Configures execution mode in CPU.
 /// Configura modo de ejecucion en CPU.
 //==============================================================================
-void JSphCpu::ConfigRunMode(const JSphCfgRun *cfg,std::string preinfo){
-  #ifndef WIN32
-    const int len=128; char hname[len];
-    gethostname(hname,len);
-    preinfo=preinfo+(!preinfo.empty()? " - ": "")+"HostName:"+hname;
-  #endif
-  Hardware="Cpu";
-  if(OmpThreads==1)RunMode="Single core";
-  else RunMode=string("OpenMP(Threads:")+fun::IntStr(OmpThreads)+")";
-  if(!preinfo.empty())RunMode=preinfo+" - "+RunMode;
-  if(Stable)RunMode=string("Stable - ")+RunMode;
-  RunMode=string("Pos-Double - ")+RunMode;
+void JSphCpu::ConfigRunMode(){
+  Hardware="CPU";
+  //-Defines RunMode.
+  RunMode="";
+  if(Stable)RunMode=RunMode+(!RunMode.empty()? " - ": "") + "Stable";
+  RunMode=RunMode+(!RunMode.empty()? " - ": "") + "Pos-Double";
+  if(OmpThreads==1)RunMode=RunMode+(!RunMode.empty()? " - ": "") + "Single core";
+  else             RunMode=RunMode+(!RunMode.empty()? " - ": "") + fun::PrintStr("OpenMP(Threads:%d)",OmpThreads); 
+  //-Shows RunMode.
   Log->Print(" ");
   Log->Print(fun::VarStr("RunMode",RunMode));
   Log->Print(" ");

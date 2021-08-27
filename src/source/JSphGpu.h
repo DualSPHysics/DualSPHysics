@@ -29,6 +29,7 @@
 #include <string>
 
 
+class JDsGpuInfo;
 class JDsPartsOut;
 class JArraysGpu;
 class JCellDivGpu;
@@ -71,13 +72,7 @@ protected:
   StBlockSizes BlockSizes;        ///<Stores configuration of BlockSizes. | Almacena configuracion de BlockSizes.
   std::string BlockSizesStr;      ///<Stores configuration of BlockSizes in text form. | Almacena configuracion de BlockSizes en texto.
 
-  //-Variables with information for the GPU hardware.
-  //-Variables con informacion del hardware GPU.
-  int GpuSelect;          ///<GPU Selection (-1:no selection). | Gpu seleccionada (-1:sin seleccion).
-  std::string GpuName;    ///<Name of the selected GPU.
-  size_t GpuGlobalMem;    ///<Size of global memory in bytes.
-  unsigned GpuSharedMem;  ///<Size of shared memory for each block in bytes.
-  unsigned GpuCompute;    ///<Compute capability: 10,11,12,20... 
+  JDsGpuInfo *GpuInfo;    ///<Main information of selected GPU.
 
   const TpMgDivMode DivAxis;  ///<Axis used in current division. It is used to sort particle data. MGDIV_Z is used for single GPU.
 
@@ -242,7 +237,7 @@ protected:
   void SelecDevice(int gpuid);
   void ConfigBlockSizes(bool usezone,bool useperi);
 
-  void ConfigRunMode(std::string preinfo);
+  void ConfigRunMode();
   void ConfigCellDiv(JCellDivGpu* celldiv){ CellDiv=celldiv; }
   void InitFloating();
   void InitRunGpu();

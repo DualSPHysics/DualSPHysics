@@ -23,6 +23,7 @@
 #include "JSphGpu_ker.h"
 #include "JSphGpuSimple_ker.h"
 #include "JCellDivGpu.h"
+#include "JDsGpuInfo.h"
 #include "JPartFloatBi4.h"
 #include "Functions.h"
 #include "FunctionsCuda.h"
@@ -47,9 +48,6 @@
 #include "JVtkLib.h"
 
 #include <climits>
-#ifndef WIN32
-#include <unistd.h>
-#endif
 
 using namespace std;
 
@@ -62,6 +60,7 @@ JSphGpu::JSphGpu(bool withmpi):JSph(false,false,withmpi),DivAxis(MGDIV_None){
   AuxPos=NULL; AuxVel=NULL; AuxRhop=NULL;
   CellDiv=NULL;
   FtoAuxDouble6=NULL; FtoAuxFloat15=NULL; //-Calculates forces on floating bodies.
+  GpuInfo=new JDsGpuInfo;
   ArraysGpu=new JArraysGpu;
   InitVars();
   TmgCreation(Timers,false);
@@ -75,7 +74,8 @@ JSphGpu::~JSphGpu(){
   FreeCpuMemoryParticles();
   FreeGpuMemoryParticles();
   FreeGpuMemoryFixed();
-  delete ArraysGpu;
+  delete ArraysGpu; ArraysGpu=NULL;
+  delete GpuInfo;   GpuInfo=NULL;
   TmgDestruction(Timers);
   cudaDeviceReset();
 }
@@ -625,43 +625,13 @@ unsigned JSphGpu::ParticlesDataDown(unsigned n,unsigned pini,bool code,bool only
 /// Inicializa dispositivo CUDA.
 //==============================================================================
 void JSphGpu::SelecDevice(int gpuid){
-  Log->Print("[Select CUDA Device]");
-  //-Get and show GPU information.
-  vector<string> gpuinfo;
-  vector<fcuda::StGpuInfo> gpuprops;
-  const int devcount=fcuda::GetCudaDevicesInfo(&gpuinfo,&gpuprops);
-  Log->Print(gpuinfo);
-  Log->Print(" ");
+  //-Shows information on available GPUs.
+  JDsGpuInfo::ShowGpusInfo(Log);
   //-GPU selection.
-  GpuSelect=-1;
-  if(devcount){
-    if(gpuid>=0)cudaSetDevice(gpuid);
-    else{
-      unsigned *ptr=NULL;
-      cudaMalloc((void**)&ptr,sizeof(unsigned)*100);
-      cudaFree(ptr);
-    }
-    cudaDeviceProp devp;
-    int dev;
-    cudaGetDevice(&dev);
-    cudaGetDeviceProperties(&devp,dev);
-    GpuSelect=dev;
-    GpuName=devp.name;
-    GpuGlobalMem=devp.totalGlobalMem;
-    GpuSharedMem=int(devp.sharedMemPerBlock);
-    GpuCompute=devp.major*10+devp.minor;
-    //-Displays information on the selected hardware.
-    //-Muestra informacion del hardware seleccionado.
-    Log->Print("[GPU Hardware]");
-    if(gpuid<0)Hardware=fun::PrintStr("Gpu_%d?=\"%s\"",GpuSelect,GpuName.c_str());
-    else Hardware=fun::PrintStr("Gpu_%d=\"%s\"",GpuSelect,GpuName.c_str());
-    if(gpuid<0)Log->Printf("Device default: %d  \"%s\"",GpuSelect,GpuName.c_str());
-    else Log->Printf("Device selected: %d  \"%s\"",GpuSelect,GpuName.c_str());
-    Log->Printf("Compute capability: %.1f",float(GpuCompute)/10);
-    Log->Printf("Memory global: %d MB",int(GpuGlobalMem/(1024*1024)));
-    Log->Printf("Memory shared: %u Bytes",GpuSharedMem);
-  }
-  else Run_Exceptioon("There are no available CUDA devices.");
+  Log->Print("[GPU Hardware]");
+  GpuInfo->SelectGpu(gpuid);
+  GpuInfo->ShowSelectGpusInfo(Log);
+  cudaSetDevice(GpuInfo->GetGpuId());
 }
 
 //==============================================================================
@@ -716,19 +686,17 @@ void JSphGpu::ConfigBlockSizes(bool usezone,bool useperi){
 /// Configures execution mode in the GPU.
 /// Configura modo de ejecucion en GPU.
 //==============================================================================
-void JSphGpu::ConfigRunMode(std::string preinfo){
-  #ifndef WIN32
-    const int len=128; char hname[len];
-    gethostname(hname,len);
-    preinfo=preinfo+(!preinfo.empty()? " - ": "")+"HostName:"+hname;
-  #endif
-  RunMode=preinfo+RunMode;
-  if(Stable)RunMode=string("Stable - ")+RunMode;
-  RunMode=string("Pos-Cell - ")+RunMode;
+void JSphGpu::ConfigRunMode(){
+  Hardware=GpuInfo->GetHardware();
+  //-Defines RunMode.
+  RunMode="";
+  if(Stable)RunMode=RunMode+(!RunMode.empty()? " - ": "")+"Stable";
+  RunMode=RunMode+(!RunMode.empty()? " - ": "")+"Pos-Cell";
+  RunMode=RunMode+(!RunMode.empty()? " - ": "")+"Single-GPU";
+  //-Shows RunMode.
   Log->Print(" ");
   Log->Print(fun::VarStr("RunMode",RunMode));
   Log->Print(" ");
-  if(!RunMode.empty())RunMode=RunMode+" - "+BlockSizesStr;
 }
 
 //==============================================================================

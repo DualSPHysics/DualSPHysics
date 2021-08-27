@@ -61,6 +61,19 @@ void RunExceptioonFun(const std::string &srcfile,int srcline,const std::string &
 }
 
 //==============================================================================
+/// Returns host name or empty string when it is unknown.
+//==============================================================================
+std::string GetHostName(){
+  string ret;
+  #ifndef WIN32
+    const int len=128; char hname[len];
+    gethostname(hname,len);
+    ret=hname;
+  #endif
+  return(ret);
+}
+
+//==============================================================================
 /// Returns date and time of the system + nseg using the format.
 //==============================================================================
 std::string GetDateTimeFormat(const char* format,int nseg){

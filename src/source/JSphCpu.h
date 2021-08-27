@@ -202,7 +202,7 @@ protected:
     ,unsigned *idp,tdouble3 *pos,tfloat3 *vel,float *rhop,typecode *code);
   void ConfigOmp(const JSphCfgRun *cfg);
 
-  void ConfigRunMode(const JSphCfgRun *cfg,std::string preinfo="");
+  void ConfigRunMode();
   void ConfigCellDiv(JCellDivCpu* celldiv){ CellDiv=celldiv; }
   void InitFloating();
   void InitRunCpu();

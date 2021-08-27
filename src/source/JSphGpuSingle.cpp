@@ -775,7 +775,7 @@ void JSphGpuSingle::ComputePips(bool run){
 /// Inicia ejecucion de simulacion.
 //==============================================================================
 void JSphGpuSingle::Run(std::string appname,const JSphCfgRun *cfg,JLog2 *log){
-  if(!cfg||!log)return;
+  if(!cfg || !log)return;
   AppName=appname; Log=log; CfgRun=cfg;
 
   //-Selection of GPU.
@@ -793,7 +793,7 @@ void JSphGpuSingle::Run(std::string appname,const JSphCfgRun *cfg,JLog2 *log){
   LoadCaseParticles();
   VisuConfig();
   ConfigDomain();
-  ConfigRunMode("Single-Gpu");
+  ConfigRunMode();
   VisuParticleSummary();
 
   //-Initialisation of execution variables. | Inicializacion de variables de ejecucion.

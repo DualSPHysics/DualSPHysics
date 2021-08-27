@@ -1028,7 +1028,7 @@ void JSphCpuSingle::Run(std::string appname,const JSphCfgRun *cfg,JLog2 *log){
   LoadCaseParticles();
   VisuConfig();
   ConfigDomain();
-  ConfigRunMode(cfg);
+  ConfigRunMode();
   VisuParticleSummary();
 
   //-Initialisation of execution variables. | Inicializacion de variables de ejecucion.

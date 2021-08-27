@@ -478,6 +478,9 @@
     <ClInclude Include="..\source\JCfgRunBaseDef.h">
       <Filter>Common</Filter>
     </ClInclude>
+    <ClInclude Include="..\source\JDsGpuInfo.h">
+      <Filter>Source\Other</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\source\main.cpp">
@@ -761,6 +764,9 @@
     </ClCompile>
     <ClCompile Include="..\source\FunGeo3d.cpp">
       <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JDsGpuInfo.cpp">
+      <Filter>Source\Other</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
