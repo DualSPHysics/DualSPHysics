@@ -3027,16 +3027,6 @@ std::string JSph::GetDDTConfig()const{
 }
 
 //==============================================================================
-/// Returns string with the name of timer and value.
-/// Devuelve string con el nombre del temporizador y su valor.
-//==============================================================================
-std::string JSph::TimerToText(const std::string &name,float value){
-  string ret=name;
-  while(ret.length()<33)ret+=".";
-  return(ret+": "+fun::FloatStr(value/1000)+" sec.");
-}
-
-//==============================================================================
 /// Saves VTK file with particle data (degug).
 /// Graba fichero VTK con datos de las particulas (degug).
 //==============================================================================

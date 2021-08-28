@@ -221,14 +221,14 @@ void JSphGpuSingle::ConfigDomain(){
 /// tiempo consumido con TMG_SuResizeNp. Al terminar actualiza el divide.
 //==============================================================================
 void JSphGpuSingle::ResizeParticlesSize(unsigned newsize,float oversize,bool updatedivide){
-  TmgStart(Timers,TMG_SuResizeNp);
+  Timersg->TmStart(TMG_SuResizeNp,false);
   newsize+=(oversize>0? unsigned(oversize*newsize): 0);
   FreeCpuMemoryParticles();
   CellDivSingle->FreeMemoryGpu();
   DivData=DivDataGpuNull();
   ResizeGpuMemoryParticles(newsize);
   AllocCpuMemoryParticles(newsize);
-  TmgStop(Timers,TMG_SuResizeNp);
+  Timersg->TmStop(TMG_SuResizeNp,false);
   if(updatedivide)RunCellDivide(true);
 }
 
@@ -246,7 +246,7 @@ void JSphGpuSingle::ResizeParticlesSize(unsigned newsize,float oversize,bool upd
 /// nuevas periodicas.
 //==============================================================================
 void JSphGpuSingle::RunPeriodic(){
-  TmgStart(Timers,TMG_SuPeriodic);
+  Timersg->TmStart(TMG_SuPeriodic,false);
   //-Stores the current number of periodic particles.
   //-Guarda numero de periodicas actuales.
   NpfPerM1=NpfPer;
@@ -291,9 +291,9 @@ void JSphGpuSingle::RunPeriodic(){
           //-Redimensiona memoria para particulas si no hay espacio suficiente y repite el proceso de busqueda.
           if(count>nmax || !CheckGpuParticlesSize(count+Np)){
             ArraysGpu->Free(listpg); listpg=NULL;
-            TmgStop(Timers,TMG_SuPeriodic);
+            Timersg->TmStop(TMG_SuPeriodic,false);
             ResizeParticlesSize(Np+count,PERIODIC_OVERMEMORYNP,false);
-            TmgStart(Timers,TMG_SuPeriodic);
+            Timersg->TmStart(TMG_SuPeriodic,false);
           }
           else{
             run=false;
@@ -319,8 +319,8 @@ void JSphGpuSingle::RunPeriodic(){
       }
     }
   }
+  Timersg->TmStop(TMG_SuPeriodic,true);
   Check_CudaErroor("Failed in creation of periodic particles.");
-  TmgStop(Timers,TMG_SuPeriodic);
 }
 
 //==============================================================================
@@ -336,11 +336,12 @@ void JSphGpuSingle::RunCellDivide(bool updateperiodic){
   if(updateperiodic && PeriActive)RunPeriodic();
 
   //-Initiates Divide.
-  CellDivSingle->Divide(Npb,Np-Npb-NpbPer-NpfPer,NpbPer,NpfPer,BoundChanged,Dcellg,Codeg,Timers,Posxyg,Poszg,Idpg);
+  CellDivSingle->Divide(Npb,Np-Npb-NpbPer-NpfPer,NpbPer,NpfPer,BoundChanged
+    ,Dcellg,Codeg,Posxyg,Poszg,Idpg,Timersg);
   DivData=CellDivSingle->GetCellDivData();
 
   //-Sorts particle data. | Ordena datos de particulas.
-  TmgStart(Timers,TMG_NlSortData);
+  Timersg->TmStart(TMG_NlSortData,false);
   {
     unsigned* idpg=ArraysGpu->ReserveUint();
     typecode* codeg=ArraysGpu->ReserveTypeCode();
@@ -400,17 +401,17 @@ void JSphGpuSingle::RunCellDivide(bool updateperiodic){
 
   //-Collect position of floating particles. | Recupera posiciones de floatings.
   if(CaseNfloat)cusph::CalcRidp(PeriActive!=0,Np-Npb,Npb,CaseNpb,CaseNpb+CaseNfloat,Codeg,Idpg,FtRidpg);
-  TmgStop(Timers,TMG_NlSortData);
+  Timersg->TmStop(TMG_NlSortData,false);
 
   //-Control of excluded particles (only fluid because excluded boundary are checked before).
   //-Gestion de particulas excluidas (solo fluid porque las boundary excluidas se comprueban antes).
-  TmgStart(Timers,TMG_NlOutCheck);
+  Timersg->TmStart(TMG_NlOutCheck,false);
   unsigned npfout=CellDivSingle->GetNpfOut();
   if(npfout){
     ParticlesDataDown(npfout,Np,true,false);
     AddParticlesOut(npfout,Idp,AuxPos,AuxVel,AuxRhop,Code);
   }
-  TmgStop(Timers,TMG_NlOutCheck);
+  Timersg->TmStop(TMG_NlOutCheck,true);
   BoundChanged=false;
 }
 
@@ -436,7 +437,7 @@ void JSphGpuSingle::Interaction_Forces(TpInterStep interstep){
   PreInteraction_Forces();
   float3 *dengradcorr=NULL;
 
-  TmgStart(Timers,TMG_CfForces);
+  Timersg->TmStart(TMG_CfForces,true);
   const bool lamsps=(TVisco==VISCO_LaminarSPS);
   unsigned bsfluid=BlockSizes.forcesfluid;
   unsigned bsbound=BlockSizes.forcesbound;
@@ -471,6 +472,7 @@ void JSphGpuSingle::Interaction_Forces(TpInterStep interstep){
 
   //-Applies DDT.
   if(Deltag)cusph::AddDelta(Np-Npb,Deltag+Npb,Arg+Npb);//-Adds the Delta-SPH correction for the density. | Anhade correccion de Delta-SPH a Arg[]. 
+  cudaDeviceSynchronize();
   Check_CudaErroor("Failed while executing kernels of interaction.");
 
   //-Calculates maximum value of ViscDt.
@@ -478,8 +480,8 @@ void JSphGpuSingle::Interaction_Forces(TpInterStep interstep){
   //-Calculates maximum value of Ace (periodic particles are ignored). ViscDtg is used like auxiliary memory.
   AceMax=ComputeAceMax(ViscDtg); 
 
+  Timersg->TmStop(TMG_CfForces,true);
   Check_CudaErroor("Failed in reduction of viscdt.");
-  TmgStop(Timers,TMG_CfForces);
 }
 
 //==============================================================================
@@ -487,12 +489,12 @@ void JSphGpuSingle::Interaction_Forces(TpInterStep interstep){
 /// Calcula datos extrapolados en el contorno para mDBC.
 //==============================================================================
 void JSphGpuSingle::MdbcBoundCorrection(){
-  TmgStart(Timers,TMG_CfPreForces);
+  Timersg->TmStart(TMG_CfPreForces,false);
   unsigned n=NpbOk;
   cusph::Interaction_MdbcCorrection(TKernel,Simulate2D,SlipMode,MdbcFastSingle
     ,n,CaseNbound,MdbcThreshold,DivData,Map_PosMin,Posxyg,Poszg,PosCellg,Codeg
     ,Idpg,BoundNormalg,MotionVelg,Velrhopg);
-  TmgStop(Timers,TMG_CfPreForces);
+  Timersg->TmStop(TMG_CfPreForces,false);
 }
 
 
@@ -657,7 +659,7 @@ void JSphGpuSingle::FtCopyExternalForces(){
 //==============================================================================
 void JSphGpuSingle::RunFloating(double dt,bool predictor){
   if(TimeStep>=FtPause){//-Operator >= is used because when FtPause=0 in symplectic-predictor, code would not enter here. | Se usa >= pq si FtPause es cero en symplectic-predictor no entraria.
-    TmgStart(Timers,TMG_SuFloating);
+    Timersg->TmStart(TMG_SuFloating,false);
     //-Initialises forces of floatings.
     cudaMemset(FtoForcesg,0,sizeof(StFtoForces)*FtCount);
 
@@ -695,8 +697,8 @@ void JSphGpuSingle::RunFloating(double dt,bool predictor){
 
     //-Run floating with Chrono library.
     if(ChronoObjects){      
-      TmgStop(Timers,TMG_SuFloating);
-      TmgStart(Timers,TMG_SuChrono);
+      Timersg->TmStop(TMG_SuFloating,false);
+      Timersg->TmStart(TMG_SuChrono,false);
       //-Export data / Exporta datos.
       tfloat3* ftoforces=FtoAuxFloat15;
       cudaMemcpy(ftoforces,FtoForcesg,sizeof(tfloat3)*FtCount*2,cudaMemcpyDeviceToHost);
@@ -714,8 +716,8 @@ void JSphGpuSingle::RunFloating(double dt,bool predictor){
       for(unsigned cf=0;cf<FtCount;cf++)if(FtObjs[cf].usechrono)ChronoObjects->GetFtData(FtObjs[cf].mkbound,ftocenter[cf],ftoforces[cf*2+1],ftoforces[cf*2]);
       cudaMemcpy(FtoCenterResg,ftocenter,sizeof(tdouble3)*FtCount  ,cudaMemcpyHostToDevice);
       cudaMemcpy(FtoForcesResg,ftoforces,sizeof(float3)  *FtCount*2,cudaMemcpyHostToDevice);
-      TmgStop(Timers,TMG_SuChrono);
-      TmgStart(Timers,TMG_SuFloating);
+      Timersg->TmStop(TMG_SuChrono,false);
+      Timersg->TmStart(TMG_SuFloating,false);
     }
 
     //-Apply movement around floating objects / Aplica movimiento sobre floatings.
@@ -740,7 +742,7 @@ void JSphGpuSingle::RunFloating(double dt,bool predictor){
       if(Moorings)Moorings->ComputeForces(Nstep,TimeStep,dt,ForcePoints);
       ForcePoints->ComputeFtMotion();
     }
-    TmgStop(Timers,TMG_SuFloating);
+    Timersg->TmStop(TMG_SuFloating,false);
   }
 }
 
@@ -784,8 +786,8 @@ void JSphGpuSingle::Run(std::string appname,const JSphCfgRun *cfg,JLog2 *log){
 
   //-Configures timers.
   //-------------------
-  TmgCreation(Timers,cfg->SvTimers);
-  TmgStart(Timers,TMG_Init);
+  Timersg->Config(cfg->SvTimers);
+  Timersg->TmStart(TMG_Init,false);
 
   //-Load parameters and values of input. | Carga de parametros y datos de entrada.
   //--------------------------------------------------------------------------------
@@ -805,8 +807,8 @@ void JSphGpuSingle::Run(std::string appname,const JSphCfgRun *cfg,JLog2 *log){
   UpdateMaxValues();
   PrintAllocMemory(GetAllocMemoryCpu(),GetAllocMemoryGpu());
   SaveData(); 
-  TmgResetValues(Timers);
-  TmgStop(Timers,TMG_Init);
+  Timersg->ResetTimes();
+  Timersg->TmStop(TMG_Init,false);
   if(Log->WarningCount())Log->PrintWarningList("\n[WARNINGS]","");
   PartNstep=-1; Part++;
 
@@ -865,19 +867,19 @@ void JSphGpuSingle::SaveData(){
   const unsigned npsave=Np-NpbPer-NpfPer; //-Subtracts the periodic particles if they exist. | Resta las periodicas si las hubiera.
   //-Retrieves particle data from the GPU. | Recupera datos de particulas en GPU.
   if(save){
-    TmgStart(Timers,TMG_SuDownData);
+    Timersg->TmStart(TMG_SuDownData,false);
     unsigned npnormal=ParticlesDataDown(Np,0,false,PeriActive!=0);
     if(npnormal!=npsave)Run_Exceptioon("The number of particles is invalid.");
-    TmgStop(Timers,TMG_SuDownData);
+    Timersg->TmStop(TMG_SuDownData,false);
   }
   //-Retrieve floating object data from the GPU. | Recupera datos de floatings en GPU.
   if(FtCount){
-    TmgStart(Timers,TMG_SuDownData);
+    Timersg->TmStart(TMG_SuDownData,false);
     UpdateFtObjs();
-    TmgStop(Timers,TMG_SuDownData);
+    Timersg->TmStop(TMG_SuDownData,false);
   }
   //-Collects additional information. | Reune informacion adicional.
-  TmgStart(Timers,TMG_SuSavePart);
+  Timersg->TmStart(TMG_SuSavePart,false);
   StInfoPartPlus infoplus;
   memset(&infoplus,0,sizeof(StInfoPartPlus));
   if(SvData&SDAT_Info){
@@ -902,7 +904,7 @@ void JSphGpuSingle::SaveData(){
   AddBasicArrays(arrays,npsave,AuxPos,Idp,AuxVel,AuxRhop);
   JSph::SaveData(npsave,arrays,1,vdom,&infoplus);
   if(UseNormals && SvNormals)SaveVtkNormalsGpu("normals/Normals.vtk",Part,npsave,Npb,Posxyg,Poszg,Idpg,BoundNormalg);
-  TmgStop(Timers,TMG_SuSavePart);
+  Timersg->TmStop(TMG_SuSavePart,false);
 }
 
 //==============================================================================
@@ -915,9 +917,8 @@ void JSphGpuSingle::FinishRun(bool stop){
   Log->Print(" ");
   string hinfo,dinfo;
   if(SvTimers){
-    ShowTimers();
-    GetTimersInfo(hinfo,dinfo);
-    Log->Print(" ");
+    Timersg->ShowTimes("[GPU Timers]",Log);
+    Timersg->GetTimersInfo(hinfo,dinfo);
   }
   if(SvRes)SaveRes(tsim,ttot,hinfo,dinfo);
   Log->PrintFilesList();

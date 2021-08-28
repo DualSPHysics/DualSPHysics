@@ -22,7 +22,7 @@
 #define _JSphGpu_
 
 #include "DualSphDef.h"
-#include "JSphTimersGpu.h"
+#include "JDsTimersGpu.h"
 #include "JCellDivDataGpu.h"
 #include "JSph.h"
 
@@ -187,7 +187,7 @@ protected:
   tsymatrix3f *SpsTaug;       ///<SPS sub-particle stress tensor.
   tsymatrix3f *SpsGradvelg;   ///<Velocity gradients.
 
-  TimersGpu Timers;  ///<Declares an array with timers for CPU (type structure \ref StSphTimerGpu).
+  JDsTimersGpu *Timersg;  ///<Manages timers for GPU execution.
 
   void InitVars();
 
@@ -260,15 +260,6 @@ protected:
 
   void SaveVtkNormalsGpu(std::string filename,int numfile,unsigned np,unsigned npb
     ,const double2 *posxyg,const double *poszg,const unsigned *idpg,const float3 *boundnormalg);
-
-  void ShowTimers(bool onlyfile=false);
-  void GetTimersInfo(std::string &hinfo,std::string &dinfo)const;
-  unsigned TimerGetCount()const{ return(TmgGetCount()); }
-  bool TimerIsActive(unsigned ct)const{ return(TmgIsActive(Timers,(CsTypeTimerGPU)ct)); }
-  float TimerGetValue(unsigned ct)const{ return(TmgGetValue(Timers,(CsTypeTimerGPU)ct)); }
-  const double* TimerGetPtrValue(unsigned ct)const{ return(TmgGetPtrValue(Timers,(CsTypeTimerGPU)ct)); }
-  std::string TimerGetName(unsigned ct)const{ return(TmgGetName((CsTypeTimerGPU)ct)); }
-  std::string TimerToText(unsigned ct)const{ return(JSph::TimerToText(TimerGetName(ct),TimerGetValue(ct))); }
 
 public:
   JSphGpu(bool withmpi);

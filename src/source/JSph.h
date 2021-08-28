@@ -508,8 +508,6 @@ public:
 
   std::string GetDDTConfig()const;
 
-  static std::string TimerToText(const std::string &name,float value);
-
 //-Functions for debug.
 //----------------------
 public:

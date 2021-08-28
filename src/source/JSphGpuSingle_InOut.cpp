@@ -80,7 +80,7 @@ void JSphGpuSingle::InOutCheckProximity(unsigned newnp){
 //==============================================================================
 void JSphGpuSingle::InOutInit(double timestepini){
   InOut->Nstep=Nstep; //-For debug.
-  TmgStart(Timers,TMG_SuInOut);
+  Timersg->TmStart(TMG_SuInOut,false);
   Log->Print("Initialising InOut...");
   if(PartBegin)Run_Exceptioon("Simulation restart not allowed when Inlet/Outlet is used.");
 
@@ -96,10 +96,10 @@ void JSphGpuSingle::InOutInit(double timestepini){
   //-Resizes memory when it is necessary (always at the beginning).
   if(true || !CheckGpuParticlesSize(Np+newnp)){
     const unsigned newnp2=newnp+InOut->GetNpResizePlus0();
-    TmgStop(Timers,TMG_SuInOut);
+    Timersg->TmStop(TMG_SuInOut,false);
     ResizeParticlesSize(Np+newnp2,0,false);
     CellDivSingle->SetIncreaseNp(newnp2);
-    TmgStart(Timers,TMG_SuInOut);
+    Timersg->TmStart(TMG_SuInOut,false);
   }
 
   //-Creates initial inlet particles.
@@ -139,9 +139,9 @@ void JSphGpuSingle::InOutInit(double timestepini){
   if(Symmetry && InOut->Use_ExtrapolatedData())Run_Exceptioon("Symmetry is not allowed with inlet/outlet conditions when extrapolate option is enabled."); //<vs_syymmetry>
 
   //-Updates divide information.
-  TmgStop(Timers,TMG_SuInOut);
+  Timersg->TmStop(TMG_SuInOut,false);
   RunCellDivide(true);
-  TmgStart(Timers,TMG_SuInOut);
+  Timersg->TmStart(TMG_SuInOut,false);
   if(DBG_INOUT_PARTINIT)DgSaveVtkParticlesGpu("CfgInOut_InletIni.vtk",1,0,Np,Posxyg,Poszg,Codeg,Idpg,Velrhopg);
 
   //-Updates Velocity data of inout zones according to current timestep.
@@ -153,7 +153,7 @@ void JSphGpuSingle::InOutInit(double timestepini){
   InOutUpdatePartsData(timestepini);
 
   if(DBG_INOUT_PARTINIT)DgSaveVtkParticlesGpu("CfgInOut_InletIni.vtk",2,0,Np,Posxyg,Poszg,Codeg,Idpg,Velrhopg);
-  TmgStop(Timers,TMG_SuInOut);
+  Timersg->TmStop(TMG_SuInOut,false);
 }
 
 //==============================================================================
@@ -168,15 +168,15 @@ void JSphGpuSingle::InOutComputeStep(double stepdt){
   InOut->Nstep=Nstep; //-For debug.
   //Log->Printf("%u>--------> [InOutComputeStep_000]",Nstep);
   //DgSaveVtkParticlesGpu("BB_ComputeStepA.vtk",DgNum,0,Np,Posxyg,Poszg,Codeg,Idpg,Velrhopg);
-  TmgStart(Timers,TMG_SuInOut);
+  Timersg->TmStart(TMG_SuInOut,false);
   //-Resizes memory when it is necessary. InOutCount is the maximum number of new inlet particles.
   if(!CheckGpuParticlesSize(Np+InOut->GetCurrentNp())){
     if(!InOut->GetNpResizePlus1())Run_Exceptioon("Allocated memory is not enough and resizing is not allowed by XML configuration (check the value inout.memoryresize.size).");
     const unsigned newnp2=InOut->GetCurrentNp()+InOut->GetNpResizePlus1();
-    TmgStop(Timers,TMG_SuInOut);
+    Timersg->TmStop(TMG_SuInOut,false);
     ResizeParticlesSize(Np+newnp2,0,false);
     CellDivSingle->SetIncreaseNp(newnp2);
-    TmgStart(Timers,TMG_SuInOut);
+    Timersg->TmStart(TMG_SuInOut,false);
   }
 
   //-Updates Velocity data of inout zones according to current timestep.
@@ -206,7 +206,7 @@ void JSphGpuSingle::InOutComputeStep(double stepdt){
       double  *proposzg =ArraysGpu->ReserveDouble();
       newnp+=InOut->ComputeStepFillingGpu(Nstep,stepdt,inoutcountpre,inoutpart
         ,IdMax+1+newnp,GpuParticlesSize,Np+newnp,Posxyg,Poszg,Dcellg,Codeg,Idpg,Velrhopg
-        ,zsurfok,prodistg,proposxyg,proposzg,Timers);
+        ,zsurfok,prodistg,proposxyg,proposzg,Timersg);
       ArraysGpu->Free(prodistg);
       ArraysGpu->Free(proposxyg);
       ArraysGpu->Free(proposzg);
@@ -228,9 +228,9 @@ void JSphGpuSingle::InOutComputeStep(double stepdt){
   }
 
   //-Updates divide information.
-  TmgStop(Timers,TMG_SuInOut);
+  Timersg->TmStop(TMG_SuInOut,false);
   RunCellDivide(true);
-  TmgStart(Timers,TMG_SuInOut);
+  Timersg->TmStart(TMG_SuInOut,false);
 
   //-Updates inout particle data according inlet configuration.
   InOutUpdatePartsData(newtimestep);
@@ -238,7 +238,7 @@ void JSphGpuSingle::InOutComputeStep(double stepdt){
   //-Saves files per PART.
   if(TimeStep+stepdt>=TimePartNext)InOut->SavePartFiles(Part);
 
-  TmgStop(Timers,TMG_SuInOut);
+  Timersg->TmStop(TMG_SuInOut,false);
 }
 
 //==============================================================================
@@ -297,7 +297,7 @@ void JSphGpuSingle::InOutExtrapolateData(unsigned inoutcount,const int *inoutpar
 /// Calcula datos extrapolados en el contorno para las particulas inlet/outlet.
 //==============================================================================
 void JSphGpuSingle::BoundCorrectionData(){
-  TmgStart(Timers,TMG_SuBoundCorr);
+  Timersg->TmStart(TMG_SuBoundCorr,false);
   const unsigned n=BoundCorr->GetCount();
   const float determlimit=BoundCorr->GetDetermLimit();
   const byte doublemode=BoundCorr->GetExtrapolateMode();
@@ -310,7 +310,7 @@ void JSphGpuSingle::BoundCorrectionData(){
       ,boundcode,plane,direction,determlimit
       ,DivData,Posxyg,Poszg,Codeg,Idpg,Velrhopg);
   }
-  TmgStop(Timers,TMG_SuBoundCorr);
+  Timersg->TmStop(TMG_SuBoundCorr,false);
 }
 
 

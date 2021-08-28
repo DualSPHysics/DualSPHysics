@@ -23,6 +23,8 @@
 
 #include "JCellDivCpu.h"
 
+class JDsTimersCpu;
+
 //##############################################################################
 //# JCellDivCpuSingle
 //##############################################################################
@@ -48,7 +50,8 @@ public:
     ,unsigned casenbound,unsigned casenfixed,unsigned casenpb,std::string dirout);
 
   void Divide(unsigned npb1,unsigned npf1,unsigned npb2,unsigned npf2,bool boundchanged
-    ,const unsigned *dcellc,const typecode* codec,const unsigned* idpc,const tdouble3* posc,TimersCpu timers);
+    ,const unsigned *dcellc,const typecode* codec,const unsigned* idpc,const tdouble3* posc
+    ,JDsTimersCpu *timersc);
 
   ullong GetAllocMemory()const{ return(JCellDivCpu::GetAllocMemory()); }
   ullong GetAllocMemoryNp()const{ return(JCellDivCpu::GetAllocMemoryNp()); };

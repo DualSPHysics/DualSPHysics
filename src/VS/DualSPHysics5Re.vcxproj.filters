@@ -364,9 +364,6 @@
     <ClInclude Include="..\source\JSphShifting.h">
       <Filter>Source</Filter>
     </ClInclude>
-    <ClInclude Include="..\source\JSphTimersCpu.h">
-      <Filter>Source</Filter>
-    </ClInclude>
     <ClInclude Include="..\source\JCaseCtes.h">
       <Filter>CommonDsph</Filter>
     </ClInclude>
@@ -480,6 +477,15 @@
     </ClInclude>
     <ClInclude Include="..\source\JDsGpuInfo.h">
       <Filter>Source\Other</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JDsTimers.h">
+      <Filter>Source</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JDsTimersCpu.h">
+      <Filter>Source</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JDsTimersGpu.h">
+      <Filter>Source</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -768,12 +774,12 @@
     <ClCompile Include="..\source\JDsGpuInfo.cpp">
       <Filter>Source\Other</Filter>
     </ClCompile>
+    <ClCompile Include="..\source\JDsTimers.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <CustomBuildStep Include="..\source\JSphGpu.h">
-      <Filter>Source</Filter>
-    </CustomBuildStep>
-    <CustomBuildStep Include="..\source\JSphTimersGpu.h">
       <Filter>Source</Filter>
     </CustomBuildStep>
   </ItemGroup>

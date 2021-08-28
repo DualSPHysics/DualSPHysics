@@ -55,8 +55,8 @@ JSphCpu::JSphCpu(bool withmpi):JSph(true,false,withmpi){
   ClassName="JSphCpu";
   CellDiv=NULL;
   ArraysCpu=new JArraysCpu;
+  Timersc=new JDsTimersCpu;
   InitVars();
-  TmcCreation(Timers,false);
 }
 
 //==============================================================================
@@ -66,8 +66,8 @@ JSphCpu::~JSphCpu(){
   DestructorActive=true;
   FreeCpuMemoryParticles();
   FreeCpuMemoryFixed();
-  delete ArraysCpu;
-  TmcDestruction(Timers);
+  delete ArraysCpu; ArraysCpu=NULL;
+  delete Timersc;   Timersc=NULL;
 }
 
 //==============================================================================
@@ -459,7 +459,7 @@ void JSphCpu::PreInteractionVars_Forces(unsigned np,unsigned npb){
 /// Prepara variables para interaccion.
 //==============================================================================
 void JSphCpu::PreInteraction_Forces(){
-  TmcStart(Timers,TMC_CfPreForces);
+  Timersc->TmStart(TMC_CfPreForces);
   //-Assign memory.
   Arc=ArraysCpu->ReserveFloat();
   Acec=ArraysCpu->ReserveFloat3();
@@ -476,7 +476,7 @@ void JSphCpu::PreInteraction_Forces(){
   const unsigned pini=(DtAllParticles? 0: Npb);
   VelMax=CalcVelMaxOmp(Np-pini,Velrhopc+pini);
   ViscDtMax=0;
-  TmcStop(Timers,TMC_CfPreForces);
+  Timersc->TmStop(TMC_CfPreForces);
 }
 
 //==============================================================================
@@ -1380,7 +1380,7 @@ void JSphCpu::ComputeVelrhopBound(const tfloat4* velrhopold,double armul,tfloat4
 /// Actualizacion de particulas segun fuerzas y dt usando Verlet.
 //==============================================================================
 void JSphCpu::ComputeVerlet(double dt){
-  TmcStart(Timers,TMC_SuComputeStep);
+  Timersc->TmStart(TMC_SuComputeStep);
   const bool shift=(Shifting!=NULL);
   const tfloat3 *indirvel=(InOut? InOut->GetDirVel(): NULL);
   VerletStep++;
@@ -1396,7 +1396,7 @@ void JSphCpu::ComputeVerlet(double dt){
   }
   //-New values are calculated en VelrhopM1c. | Los nuevos valores se calculan en VelrhopM1c.
   swap(Velrhopc,VelrhopM1c);     //-Swap Velrhopc & VelrhopM1c. | Intercambia Velrhopc y VelrhopM1c.
-  TmcStop(Timers,TMC_SuComputeStep);
+  Timersc->TmStop(TMC_SuComputeStep);
 }
 
 
@@ -1405,7 +1405,7 @@ void JSphCpu::ComputeVerlet(double dt){
 /// Actualizacion de particulas segun fuerzas y dt usando Symplectic-Predictor.
 //==============================================================================
 void JSphCpu::ComputeSymplecticPre(double dt){
-  TmcStart(Timers,TMC_SuComputeStep);
+  Timersc->TmStart(TMC_SuComputeStep);
   const bool shift=false; //(ShiftingMode!=SHIFT_None); //-We strongly recommend running the shifting correction only for the corrector. If you want to re-enable shifting in the predictor, change the value here to "true".
   const double dt05=dt*.5;
   const int np=int(Np);
@@ -1501,7 +1501,7 @@ void JSphCpu::ComputeSymplecticPre(double dt){
   //-Copy previous position of boundary. | Copia posicion anterior del contorno.
   memcpy(Posc,PosPrec,sizeof(tdouble3)*Npb);
 
-  TmcStop(Timers,TMC_SuComputeStep);
+  Timersc->TmStop(TMC_SuComputeStep);
 }
 
 //==============================================================================
@@ -1509,7 +1509,7 @@ void JSphCpu::ComputeSymplecticPre(double dt){
 /// Actualizacion de particulas segun fuerzas y dt usando Symplectic-Corrector.
 //==============================================================================
 void JSphCpu::ComputeSymplecticCorr(double dt){
-  TmcStart(Timers,TMC_SuComputeStep);
+  Timersc->TmStart(TMC_SuComputeStep);
   const bool shift=(Shifting!=NULL);
   const double dt05=dt*.5;
   const int np=int(Np);
@@ -1603,7 +1603,7 @@ void JSphCpu::ComputeSymplecticCorr(double dt){
   //-Free memory assigned to variables Pre and ComputeSymplecticPre(). | Libera memoria asignada a variables Pre en ComputeSymplecticPre().
   ArraysCpu->Free(PosPrec);      PosPrec=NULL;
   ArraysCpu->Free(VelrhopPrec);  VelrhopPrec=NULL;
-  TmcStop(Timers,TMC_SuComputeStep);
+  Timersc->TmStop(TMC_SuComputeStep);
 }
 
 
@@ -1644,9 +1644,9 @@ double JSphCpu::DtVariable(bool final){
 /// Calcula Shifting final para posicion de particulas.
 //==============================================================================
 void JSphCpu::RunShifting(double dt){
-  TmcStart(Timers,TMC_SuShifting);
+  Timersc->TmStart(TMC_SuShifting);
   Shifting->RunCpu(Np-Npb,Npb,dt,Velrhopc,ShiftPosfsc);
-  TmcStop(Timers,TMC_SuShifting);
+  Timersc->TmStop(TMC_SuShifting);
 }
 
 //==============================================================================
@@ -1751,9 +1751,9 @@ void JSphCpu::CopyMotionVel(unsigned nmoving,const unsigned *ridp
 /// Calcula movimiento predefinido de boundary particles.
 //==============================================================================
 void JSphCpu::CalcMotion(double stepdt){
-  TmcStart(Timers,TMC_SuMotion);
+  Timersc->TmStart(TMC_SuMotion);
   JSph::CalcMotion(stepdt);
-  TmcStop(Timers,TMC_SuMotion);
+  Timersc->TmStop(TMC_SuMotion);
 }
 
 //==============================================================================
@@ -1761,7 +1761,7 @@ void JSphCpu::CalcMotion(double stepdt){
 /// Procesa movimiento de boundary particles.
 //==============================================================================
 void JSphCpu::RunMotion(double stepdt){
-  TmcStart(Timers,TMC_SuMotion);
+  Timersc->TmStart(TMC_SuMotion);
   tfloat3 *boundnormal=NULL;
   boundnormal=BoundNormalc;
   const bool motsim=true;
@@ -1804,7 +1804,7 @@ void JSphCpu::RunMotion(double stepdt){
     }
   }
   if(MotionVelc)CopyMotionVel(CaseNmoving,RidpMove,Velrhopc,MotionVelc);
-  TmcStop(Timers,TMC_SuMotion);
+  Timersc->TmStop(TMC_SuMotion);
 }
 
 //==============================================================================
@@ -1868,9 +1868,9 @@ void JSphCpu::MovePiston2d(unsigned np,unsigned ini
 /// Aplica RelaxZone a las particulas indicadas.
 //==============================================================================
 void JSphCpu::RunRelaxZone(double dt){
-  TmcStart(Timers,TMC_SuMotion);
+  Timersc->TmStart(TMC_SuMotion);
   RelaxZones->SetFluidVel(TimeStep,dt,Np-Npb,Npb,Posc,Idpc,Velrhopc);
-  TmcStop(Timers,TMC_SuMotion);
+  Timersc->TmStop(TMC_SuMotion);
 }
 
 //==============================================================================
@@ -1907,26 +1907,5 @@ void JSphCpu::InitFloating(){
   }
 }
 
-//==============================================================================
-/// Show active timers.
-/// Muestra los temporizadores activos.
-//==============================================================================
-void JSphCpu::ShowTimers(bool onlyfile){
-  JLog2::TpMode_Out mode=(onlyfile? JLog2::Out_File: JLog2::Out_ScrFile);
-  Log->Print("[CPU Timers]",mode);
-  if(!SvTimers)Log->Print("none",mode);
-  else for(unsigned c=0;c<TimerGetCount();c++)if(TimerIsActive(c))Log->Print(TimerToText(c),mode);
-}
-
-//==============================================================================
-/// Return string with names and values of active timers.
-/// Devuelve string con nombres y valores de los timers activos.
-//==============================================================================
-void JSphCpu::GetTimersInfo(std::string &hinfo,std::string &dinfo)const{
-  for(unsigned c=0;c<TimerGetCount();c++)if(TimerIsActive(c)){
-    hinfo=hinfo+";"+TimerGetName(c);
-    dinfo=dinfo+";"+fun::FloatStr(TimerGetValue(c)/1000.f);
-  }
-}
 
 

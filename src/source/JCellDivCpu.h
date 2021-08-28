@@ -23,7 +23,7 @@
 
 #include "DualSphDef.h"
 #include "JObject.h"
-#include "JSphTimersCpu.h"
+#include "JDsTimersCpu.h"
 #include "JCellDivDataCpu.h"
 #include "JLog2.h"
 #include <cmath>

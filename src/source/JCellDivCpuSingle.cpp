@@ -19,6 +19,7 @@
 /// \file JCellDivCpuSingle.cpp \brief Implements the class \ref JCellDivCpuSingle.
 
 #include "JCellDivCpuSingle.h"
+#include "JDsTimersCpu.h"
 #include "Functions.h"
 #include <climits>
 
@@ -275,10 +276,10 @@ void JCellDivCpuSingle::PreSort(const unsigned* dcellc,const typecode *codec){
 void JCellDivCpuSingle::Divide(unsigned npb1,unsigned npf1
   ,unsigned npb2,unsigned npf2,bool boundchanged
   ,const unsigned *dcellc,const typecode* codec,const unsigned* idpc
-  ,const tdouble3* posc,TimersCpu timers)
+  ,const tdouble3* posc,JDsTimersCpu *timersc)
 {
   DivideFull=false;
-  TmcStart(timers,TMC_NlLimits);
+  timersc->TmStart(TMC_NlLimits);
 
   //-Establish number of particles. | Establece numero de particulas.
   Npb1=npb1; Npf1=npf1; Npb2=npb2; Npf2=npf2;
@@ -308,7 +309,7 @@ void JCellDivCpuSingle::Divide(unsigned npb1,unsigned npf1
   //-Check is there is memory reserved and if it is sufficient for Nptot.
   //-Comprueba si hay memoria reservada y si es suficiente para Nptot.
   CheckMemoryNct(Nct);
-  TmcStop(timers,TMC_NlLimits);
+  timersc->TmStop(TMC_NlLimits);
 
   //-Determines if the divide affects all the particles.
   //-BoundDivideOk becomes false when the allocation memory changes for particles or cells.
@@ -322,7 +323,7 @@ void JCellDivCpuSingle::Divide(unsigned npb1,unsigned npf1
 
   //-Computes CellPart[] and SortPart[] (where the particle is that must go in stated position).
   //-Calcula CellPart[] y SortPart[] (donde esta la particula que deberia ir en dicha posicion).
-  TmcStart(timers,TMC_NlMakeSort);
+  timersc->TmStart(TMC_NlMakeSort);
   PreSort(dcellc,codec);
 
   //-Calculate number of particles. | Calcula numeros de particulas.
@@ -339,7 +340,7 @@ void JCellDivCpuSingle::Divide(unsigned npb1,unsigned npf1
 
   Ndiv++;
   if(DivideFull)NdivFull++;
-  TmcStop(timers,TMC_NlMakeSort);
+  timersc->TmStop(TMC_NlMakeSort);
 }
 
 

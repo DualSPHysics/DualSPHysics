@@ -39,7 +39,6 @@
 #include "JSphInOutDef.h"
 #ifdef _WITHGPU
   #include <cuda_runtime_api.h>
-  #include "JSphTimersGpu.h"
 #endif
 
 #define DBG_INOUT_PTINIT 0   ///<JSphInOut: Saves VTK files (CfgInOut_PtInit.vtk and CfgInOut_PtInitZ.vtk) with initial inout points (0/1).
@@ -54,6 +53,9 @@ class JSphGpuSingle;
 class JDsPartsInit;
 class JGaugeSystem;
 class JNumexLib;
+#ifdef _WITHGPU
+  class JDsTimersGpu;
+#endif
 
 //##############################################################################
 //# XML format in _FmtXML_InOut.xml.
@@ -240,7 +242,7 @@ public:
   unsigned ComputeStepFillingGpu(unsigned nstep,double dt,unsigned inoutcount,int *inoutpartg
     ,unsigned idnext,unsigned sizenp,unsigned np
     ,double2 *posxyg,double *poszg,unsigned *dcellg,typecode *codeg,unsigned *idpg,float4 *velrhopg
-    ,const byte* zsurfokg,float *prodistg,double2 *proposxyg,double *proposzg,TimersGpu timers);
+    ,const byte* zsurfokg,float *prodistg,double2 *proposxyg,double *proposzg,JDsTimersGpu *timersg);
 
   void UpdateVelrhopM1Gpu(unsigned inoutcount,const int *inoutpartg
     ,const float4 *velrhopg,float4 *velrhopm1g);

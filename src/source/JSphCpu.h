@@ -22,7 +22,7 @@
 #define _JSphCpu_
 
 #include "DualSphDef.h"
-#include "JSphTimersCpu.h"
+#include "JDsTimersCpu.h"
 #include "JCellDivDataCpu.h"
 #include "JSph.h"
 #include <string>
@@ -159,8 +159,7 @@ protected:
   tsymatrix3f *SpsTauc;       ///<SPS sub-particle stress tensor.
   tsymatrix3f *SpsGradvelc;   ///<Velocity gradients.
 
-  TimersCpu Timers;
-
+  JDsTimersCpu *Timersc;  ///<Manages timers for CPU execution.
 
   void InitVars();
 
@@ -283,15 +282,6 @@ protected:
   void MovePiston2d(unsigned np,unsigned ini
     ,double posymin,double poszmin,unsigned poszcount,const double* movx,const double* velx
     ,const unsigned *ridpmv,tdouble3 *pos,unsigned *dcell,tfloat4 *velrhop,typecode *code)const;
-
-  void ShowTimers(bool onlyfile=false);
-  void GetTimersInfo(std::string &hinfo,std::string &dinfo)const;
-  unsigned TimerGetCount()const{ return(TmcGetCount()); }
-  bool TimerIsActive(unsigned ct)const{ return(TmcIsActive(Timers,(CsTypeTimerCPU)ct)); }
-  float TimerGetValue(unsigned ct)const{ return(TmcGetValue(Timers,(CsTypeTimerCPU)ct)); }
-  const double* TimerGetPtrValue(unsigned ct)const{ return(TmcGetPtrValue(Timers,(CsTypeTimerCPU)ct)); }
-  std::string TimerGetName(unsigned ct)const{ return(TmcGetName((CsTypeTimerCPU)ct)); }
-  std::string TimerToText(unsigned ct)const{ return(JSph::TimerToText(TimerGetName(ct),TimerGetValue(ct))); }
 
 public:
   JSphCpu(bool withmpi);

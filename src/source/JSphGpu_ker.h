@@ -28,7 +28,6 @@
 #define _JSphGpu_ker_
 
 #include "DualSphDef.h"
-#include "JSphTimersGpu.h"
 #include "JCellDivDataGpu.h"
 #include <cuda_runtime_api.h>
 
