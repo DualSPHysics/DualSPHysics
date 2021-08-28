@@ -94,8 +94,11 @@ std::string JDsTimers::TimerToText(unsigned c,unsigned maxlen)const{
   const StDsTimer &t=List[c];
   if(t.active){
     ret=t.name;
+    for(unsigned cv=0;cv<t.level;cv++)ret=string("  ")+ret;
     while(ret.length()<maxlen)ret+=".";
-    ret+": "+fun::DoubleStr(t.time/1000.)+" sec.";
+    ret=ret+": ";
+    if(t.time)ret=ret+fun::DoubleStr(t.time/1000.,"%f")+" sec.";
+    else      ret=ret+"0 sec.";
   }
   return(ret);
 }
