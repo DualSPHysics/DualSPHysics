@@ -104,6 +104,8 @@ void JSphCpuSingle::LoadConfig(const JSphCfgRun *cfg){
 /// Configuracion del dominio actual.
 //==============================================================================
 void JSphCpuSingle::ConfigDomain(){
+  //-Configure cell map division (defines ScellDiv, Scell, Map_Cells). 
+  ConfigCellDivision();
   //-Calculate number of particles. | Calcula numero de particulas.
   Np=PartsLoaded->GetCount(); Npb=CaseNpb; NpbOk=Npb;
   //-Allocates fixed memory for moving & floating particles. | Reserva memoria fija para moving y floating.
@@ -143,8 +145,6 @@ void JSphCpuSingle::ConfigDomain(){
   //-Computes MK domain for boundary and fluid particles.
   MkInfo->ComputeMkDomains(Np,Posc,Codec);
 
-  //-Configure cells division. | Configura division celdas.
-  ConfigCellDivision();
   //-Sets local domain of the simulation within Map_Cells and computes DomCellCode.
   //-Establece dominio de simulacion local dentro de Map_Cells y calcula DomCellCode.
   SelecDomain(TUint3(0,0,0),Map_Cells);

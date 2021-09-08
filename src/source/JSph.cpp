@@ -1678,7 +1678,9 @@ void JSph::LoadDcellParticles(unsigned n,const typecode *code,const tdouble3 *po
         const double dx=ps.x-DomPosMin.x;
         const double dy=ps.y-DomPosMin.y;
         const double dz=ps.z-DomPosMin.z;
-        unsigned cx=unsigned(dx/Scell),cy=unsigned(dy/Scell),cz=unsigned(dz/Scell);
+        const unsigned cx=unsigned(dx/Scell);
+        const unsigned cy=unsigned(dy/Scell);
+        const unsigned cz=unsigned(dz/Scell);
         dcell[p]=PC__Cell(DomCellCode,cx,cy,cz);
       }
       else{//-Particle out.
@@ -1747,14 +1749,16 @@ void JSph::FreePartsInit(){
 }
 
 //==============================================================================
-/// Configures cell division.
+/// Configure cell map division (defines ScellDiv, Scell, Map_Cells). 
 //==============================================================================
 void JSph::ConfigCellDivision(){
   if(CellMode!=CELLMODE_Full && CellMode!=CELLMODE_Half)Run_Exceptioon("The CellMode is invalid.");
   ScellDiv=(CellMode==CELLMODE_Full? 1: 2);
   Scell=KernelSize/ScellDiv;
   MovLimit=Scell*0.9f;
-  Map_Cells=TUint3(unsigned(ceil(Map_Size.x/Scell)),unsigned(ceil(Map_Size.y/Scell)),unsigned(ceil(Map_Size.z/Scell)));
+  Map_Cells=TUint3(unsigned(ceil(Map_Size.x/Scell)),
+                   unsigned(ceil(Map_Size.y/Scell)),
+                   unsigned(ceil(Map_Size.z/Scell)));
   //-Prints configuration.
   Log->Print(fun::VarStr("CellMode",string(GetNameCellMode(CellMode))));
   Log->Print(fun::VarStr("ScellDiv",ScellDiv));
@@ -1804,8 +1808,6 @@ void JSph::SelecDomain(tuint3 celini,tuint3 celfin){
   //-Prints configurantion.
   Log->Print(string("DomCells=(")+fun::Uint3Str(DomCells)+")");
   Log->Print(fun::VarStr("DomCellCode",fun::UintStr(PC__GetSx(DomCellCode))+"_"+fun::UintStr(PC__GetSy(DomCellCode))+"_"+fun::UintStr(PC__GetSz(DomCellCode))));
-  //-Checks dimension for PosCell use.
-  if(!Cpu)ConfigPosCellGpu();
 }
 
 //==============================================================================
@@ -1843,8 +1845,8 @@ unsigned JSph::CalcCellCode(tuint3 ncells){
 }
 
 //==============================================================================
-/// Checks static configuration for PosCell on GPU.
-/// Comprueba la configuracion estatica para PosCell en GPU.
+/// Defines PosCellSize for PosCell on GPU according to Map_Size and KernelSize.
+/// Define PosCellSize para PosCell en GPU segun Map_Size y KernelSize.
 //==============================================================================
 void JSph::ConfigPosCellGpu(){
   //-Checks PosCellCode configuration is valid.
@@ -2086,6 +2088,8 @@ void JSph::LoadCaseParticles(){
   if(PeriY){ Map_PosMin.y=Map_PosMin.y-KernelSize;  Map_PosMax.y=Map_PosMax.y+KernelSize; }
   if(PeriZ){ Map_PosMin.z=Map_PosMin.z-KernelSize;  Map_PosMax.z=Map_PosMax.z+KernelSize; }
   Map_Size=Map_PosMax-Map_PosMin;
+  //-Defines PosCellSize for PosCell on GPU according to Map_Size and KernelSize.
+  if(!Cpu)ConfigPosCellGpu();
   //-Saves initial domain in a VTK file (CasePosMin/Max, MapRealPosMin/Max and Map_PosMin/Max).
   SaveInitialDomainVtk();
 }
