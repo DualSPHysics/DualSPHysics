@@ -496,7 +496,9 @@ inline const char* GetNameDivision(TpMgDivMode axis){
 }
 
 
+//##############################################################################
 ///Codification of local cells according to the position.
+//##############################################################################
 #define PC__CodeMapOut   0xffffffff
 #define PC__CodeSpecial  0x80000000
 #define PC__CodeDomLeft  0x80000000
@@ -514,54 +516,55 @@ inline const char* GetNameDivision(TpMgDivMode axis){
 #define PC__MaxCellz(cc) ((0xffffffff<<(cc&31))>>(cc&31))           //-Coordenada Z de celda maxima. | Maximum Z coordinate of the cell.
 
 
-///Codification of global cells (of size PosCellSize) according to the position for particle interaction using pos-cell method.
-//#define CEL_CONFIG_USER //-Configuration defined by user for special simulation cases.
-#ifdef CEL_CONFIG_USER
+//##############################################################################
+///Codification of global cells (of size PosCellSize) according to the position for particle interaction using pos-cell method on GPU.
+//##############################################################################
+//#define PSCEL_CONFIG_USER //-Configuration defined by user for special simulation cases.
+#ifdef PSCEL_CONFIG_USER
   // Place reserved for configuration defined by user for special simulation cases.
   // Place reserved for configuration defined by user for special simulation cases.
   // Place reserved for configuration defined by user for special simulation cases.
 #else
-  #define CEL_CONFIG_13_10_9 //-Typical configuration of cells in X, Y and Z for 3-D simulations.
-  //#define CEL_CONFIG_17_2_13 //-Configuration to maximize cells in X and Z for 2-D simulations.
+  #define PSCEL_CONFIG_13_10_9 //-Typical configuration of cells in X, Y and Z for 3-D simulations.
+  //#define PSCEL_CONFIG_17_2_13 //-Configuration to maximize cells in X and Z for 2-D simulations.
 
   //-Cell configuration 13_10_9:
-  #ifdef CEL_CONFIG_13_10_9
-    #define CEL1_X 0xfff80000  //-Mask of bits for cell X: 13 bits for 8,192 ->  1111 1111 1111 1000   0000 0000 0000 0000
-    #define CEL1_Y 0x0007fe00  //-Mask of bits for cell Y: 10 bits for 1,024 ->  0000 0000 0000 0111   1111 1110 0000 0000
-    #define CEL1_Z 0x000001ff  //-Mask of bits for cell Z:  9 bits for   512 ->  0000 0000 0000 0000   0000 0001 1111 1111
-    #define CEL1_MOVX 19       //-Displacement to obaint X cell.
-    #define CEL1_MOVY 9        //-Displacement to obaint Y cell.
+  #ifdef PSCEL_CONFIG_13_10_9
+    #define PSCEL1_X 0xfff80000  //-Mask of bits for cell X: 13 bits for 8,192 ->  1111 1111 1111 1000   0000 0000 0000 0000
+    #define PSCEL1_Y 0x0007fe00  //-Mask of bits for cell Y: 10 bits for 1,024 ->  0000 0000 0000 0111   1111 1110 0000 0000
+    #define PSCEL1_Z 0x000001ff  //-Mask of bits for cell Z:  9 bits for   512 ->  0000 0000 0000 0000   0000 0001 1111 1111
+    #define PSCEL1_MOVX 19       //-Displacement to obaint X cell.
+    #define PSCEL1_MOVY 9        //-Displacement to obaint Y cell.
   #endif
   //-Cell configuration 17_2_13:
-  #ifdef CEL_CONFIG_17_2_13
-    #define CEL1_X 0xffff8000  //-Mask of bits for cell X: 17 bits for 131,072 ->  1111 1111 1111 1111   1000 0000 0000 0000
-    #define CEL1_Y 0x00006000  //-Mask of bits for cell Y:  2 bits for       4 ->  0000 0000 0000 0000   0110 0000 0000 0000
-    #define CEL1_Z 0x00001fff  //-Mask of bits for cell Z: 13 bits for   8,192 ->  0000 0000 0000 0000   0001 1111 1111 1111
-    #define CEL1_MOVX 15       //-Displacement to obaint X cell.
-    #define CEL1_MOVY 13       //-Displacement to obaint Y cell.
+  #ifdef PSCEL_CONFIG_17_2_13
+    #define PSCEL1_X 0xffff8000  //-Mask of bits for cell X: 17 bits for 131,072 ->  1111 1111 1111 1111   1000 0000 0000 0000
+    #define PSCEL1_Y 0x00006000  //-Mask of bits for cell Y:  2 bits for       4 ->  0000 0000 0000 0000   0110 0000 0000 0000
+    #define PSCEL1_Z 0x00001fff  //-Mask of bits for cell Z: 13 bits for   8,192 ->  0000 0000 0000 0000   0001 1111 1111 1111
+    #define PSCEL1_MOVX 15       //-Displacement to obaint X cell.
+    #define PSCEL1_MOVY 13       //-Displacement to obaint Y cell.
   #endif
 #endif
 
 //-Cell configuration in use:
-#define CEL_X CEL1_X        //-Selected mask of bits for cell X
-#define CEL_Y CEL1_Y        //-Selected mask of bits for cell Y
-#define CEL_Z CEL1_Z        //-Selected mask of bits for cell Z
-#define CEL_MOVX CEL1_MOVX  //-Selected displacement to obaint X cell.
-#define CEL_MOVY CEL1_MOVY  //-Selected displacement to obaint Y cell.
+#define PSCEL_X PSCEL1_X        //-Selected mask of bits for cell X
+#define PSCEL_Y PSCEL1_Y        //-Selected mask of bits for cell Y
+#define PSCEL_Z PSCEL1_Z        //-Selected mask of bits for cell Z
+#define PSCEL_MOVX PSCEL1_MOVX  //-Selected displacement to obaint X cell.
+#define PSCEL_MOVY PSCEL1_MOVY  //-Selected displacement to obaint Y cell.
 //-Cell methods:
-#define CEL_GetPartX(cel)  (cel&CEL_X)                        ///<Returns bits of X cell.
-#define CEL_GetPartY(cel)  (cel&CEL_Y)                        ///<Returns bits of Y cell.
-#define CEL_GetPartZ(cel)  (cel&CEL_Z)                        ///<Returns bits of Z cell.
-#define CEL_GetX(cel)      (cel>>CEL_MOVX)                    ///<Returns X coordinate of the cell.
-#define CEL_GetY(cel)      (CEL_GetPartY(cel)>>CEL_MOVY)      ///<Returns Y coordinate of the cell.
-#define CEL_GetZ(cel)      (cel&CEL_Z)                        ///<Returns Z coordinate of the cell.
-#define CEL_Code(cx,cy,cz) ((cx<<CEL_MOVX)|(cy<<CEL_MOVY)|cz) ///<Returns code for cell (cx,cy,cz).
+#define PSCEL_GetPartX(cel)  (cel&PSCEL_X)                          ///<Returns bits of X cell.
+#define PSCEL_GetPartY(cel)  (cel&PSCEL_Y)                          ///<Returns bits of Y cell.
+#define PSCEL_GetPartZ(cel)  (cel&PSCEL_Z)                          ///<Returns bits of Z cell.
+#define PSCEL_GetX(cel)      (cel>>PSCEL_MOVX)                      ///<Returns X coordinate of the cell.
+#define PSCEL_GetY(cel)      (PSCEL_GetPartY(cel)>>PSCEL_MOVY)      ///<Returns Y coordinate of the cell.
+#define PSCEL_GetZ(cel)      (cel&PSCEL_Z)                          ///<Returns Z coordinate of the cell.
+#define PSCEL_Code(cx,cy,cz) ((cx<<PSCEL_MOVX)|(cy<<PSCEL_MOVY)|cz) ///<Returns code for cell (cx,cy,cz).
 
 //-Returns cell coordinates from float number (for GPU).
-#define CEL_GetfX(celf) (int(CEL_GetX(__float_as_uint(celf)))) ///<Returns X coordinate of the cell (for GPU).
-#define CEL_GetfY(celf) (int(CEL_GetY(__float_as_uint(celf)))) ///<Returns Y coordinate of the cell (for GPU).
-#define CEL_GetfZ(celf) (int(CEL_GetZ(__float_as_uint(celf)))) ///<Returns Z coordinate of the cell (for GPU).
-
+#define PSCEL_GetfX(celf) (int(PSCEL_GetX(__float_as_uint(celf)))) ///<Returns X coordinate of the cell (for GPU).
+#define PSCEL_GetfY(celf) (int(PSCEL_GetY(__float_as_uint(celf)))) ///<Returns Y coordinate of the cell (for GPU).
+#define PSCEL_GetfZ(celf) (int(PSCEL_GetZ(__float_as_uint(celf)))) ///<Returns Z coordinate of the cell (for GPU).
 
 
 #endif

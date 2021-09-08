@@ -147,7 +147,7 @@ tuint3* JDebugSphGpu::GetPosCell_Cell(unsigned n,const tfloat4 *poscell){
   tuint3 *cell=JDataArrays::NewArrayUint3(n,false);
   for(unsigned c=0;c<n;c++){
     const unsigned cellu=poscellu[c].w;
-    cell[c]=TUint3(CEL_GetX(cellu),CEL_GetY(cellu),CEL_GetZ(cellu));
+    cell[c]=TUint3(PSCEL_GetX(cellu),PSCEL_GetY(cellu),PSCEL_GetZ(cellu));
   }
   return(cell);
 }

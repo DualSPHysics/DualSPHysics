@@ -1850,8 +1850,8 @@ unsigned JSph::CalcCellCode(tuint3 ncells){
 //==============================================================================
 void JSph::ConfigPosCellGpu(){
   //-Checks PosCellCode configuration is valid.
-  const unsigned bz=CEL_MOVY;
-  const unsigned by=CEL_MOVX-bz;
+  const unsigned bz=PSCEL_MOVY;
+  const unsigned by=PSCEL_MOVX-bz;
   const unsigned bx=32-by-bz;
   const unsigned nx=1<<bx,ny=1<<by,nz=1<<bz;
   Log->Print(fun::VarStr("PosCellCode",fun::PrintStr("%d_%d_%d (%d,%d,%d)",bx,by,bz,nx,ny,nz)));
@@ -1859,12 +1859,12 @@ void JSph::ConfigPosCellGpu(){
   const unsigned maskx=(UINT_MAX>>(by+bz))<<(by+bz);
   const unsigned maskz=(UINT_MAX<<(bx+by))>>(bx+by);
   const unsigned masky=(UINT_MAX&(~(maskx|maskz)));
-  //Log->Printf("===> X(%02d):[%u]==[%u] cells:",bx,maskx,CEL_X);
-  //Log->Printf("===> Y(%02d):[%u]==[%u]",by,masky,CEL_Y);
-  //Log->Printf("===> Z(%02d):[%u]==[%u]",bz,maskz,CEL_Z);
-  if(maskx!=CEL_X)Run_Exceptioon("Mask for cell-X is wrong.");
-  if(masky!=CEL_Y)Run_Exceptioon("Mask for cell-Y is wrong.");
-  if(maskz!=CEL_Z)Run_Exceptioon("Mask for cell-Z is wrong.");
+  //Log->Printf("===> X(%02d):[%u]==[%u] cells:",bx,maskx,PSCEL_X);
+  //Log->Printf("===> Y(%02d):[%u]==[%u]",by,masky,PSCEL_Y);
+  //Log->Printf("===> Z(%02d):[%u]==[%u]",bz,maskz,PSCEL_Z);
+  if(maskx!=PSCEL_X)Run_Exceptioon("Mask for cell-X is wrong.");
+  if(masky!=PSCEL_Y)Run_Exceptioon("Mask for cell-Y is wrong.");
+  if(maskz!=PSCEL_Z)Run_Exceptioon("Mask for cell-Z is wrong.");
   //-Config PosCellSize and check PosCellCode is enough for current simulation.
   PosCellSize=KernelSize;//-It is KernelSize by default. 
   int nks=1;
@@ -1890,13 +1890,13 @@ void JSph::ConfigPosCellGpu(){
     if(scells.x+scells.y+scells.z>32)Run_Exceptioon("The number of cells is too large for a 32-bit PosCell configuration. The number of cells should be reduced.");
     Log->Printf("\nThe current configuration can be changed by the user by modifying the DualSphDef.h file and compiling the program again. ");
     Log->Printf("Replace the following code in DualSphDef.h:");
-    Log->Printf("  //#define CEL_CONFIG_USER");
-    Log->Printf("  #ifdef CEL_CONFIG_USER");
+    Log->Printf("  //#define PSCEL_CONFIG_USER");
+    Log->Printf("  #ifdef PSCEL_CONFIG_USER");
     Log->Printf("     ...");
     Log->Printf("  #else\n");
     Log->Printf("With:");
-    Log->Printf("  #define CEL_CONFIG_USER");
-    Log->Printf("  #ifdef CEL_CONFIG_USER");
+    Log->Printf("  #define PSCEL_CONFIG_USER");
+    Log->Printf("  #ifdef PSCEL_CONFIG_USER");
     const unsigned cex0=(1<<(scells.y+scells.z));
     const unsigned cey0=(1<<(scells.z));
     const unsigned cez0=(1);
@@ -1904,11 +1904,11 @@ void JSph::ConfigPosCellGpu(){
     for(unsigned c=1;c<scells.x;c++)cex=(cex<<1)|cex0;
     for(unsigned c=1;c<scells.y;c++)cey=(cey<<1)|cey0;
     for(unsigned c=1;c<scells.z;c++)cez=(cez<<1)|cez0;
-    Log->Printf("    #define CEL1_X 0x%08x  //-Mask of bits for cell X: %u bits for %u cells",cex,scells.x,1<<scells.x);
-    Log->Printf("    #define CEL1_Y 0x%08x  //-Mask of bits for cell Y: %u bits for %u cells",cey,scells.y,1<<scells.y);
-    Log->Printf("    #define CEL1_Z 0x%08x  //-Mask of bits for cell Z: %u bits for %u cells",cez,scells.z,1<<scells.z);
-    Log->Printf("    #define CEL1_MOVX %7u  //-Displacement to obaint X cell.",scells.y+scells.z);
-    Log->Printf("    #define CEL1_MOVY %7u  //-Displacement to obaint Y cell.",scells.z);
+    Log->Printf("    #define PSCEL1_X 0x%08x  //-Mask of bits for cell X: %u bits for %u cells",cex,scells.x,1<<scells.x);
+    Log->Printf("    #define PSCEL1_Y 0x%08x  //-Mask of bits for cell Y: %u bits for %u cells",cey,scells.y,1<<scells.y);
+    Log->Printf("    #define PSCEL1_Z 0x%08x  //-Mask of bits for cell Z: %u bits for %u cells",cez,scells.z,1<<scells.z);
+    Log->Printf("    #define PSCEL1_MOVX %7u  //-Displacement to obaint X cell.",scells.y+scells.z);
+    Log->Printf("    #define PSCEL1_MOVY %7u  //-Displacement to obaint Y cell.",scells.z);
     Log->Printf("  #else\n");
     Run_Exceptioon("Current configuration for PosCell on GPU is invalid. More information above.");
   }

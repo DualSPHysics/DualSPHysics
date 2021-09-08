@@ -426,10 +426,10 @@ template<TpKernel tker,TpFtMode ftmode,bool symm>
 {
   for(int p2=pini;p2<pfin;p2++){
     const float4 pscellp2=poscell[p2];
-    float drx=pscellp1.x-pscellp2.x + CTE.poscellsize*(CEL_GetfX(pscellp1.w)-CEL_GetfX(pscellp2.w));
-    float dry=pscellp1.y-pscellp2.y + CTE.poscellsize*(CEL_GetfY(pscellp1.w)-CEL_GetfY(pscellp2.w));
-    float drz=pscellp1.z-pscellp2.z + CTE.poscellsize*(CEL_GetfZ(pscellp1.w)-CEL_GetfZ(pscellp2.w));
-    if(symm)dry=pscellp1.y+pscellp2.y + CTE.poscellsize*CEL_GetfY(pscellp2.w); //<vs_syymmetry>
+    float drx=pscellp1.x-pscellp2.x + CTE.poscellsize*(PSCEL_GetfX(pscellp1.w)-PSCEL_GetfX(pscellp2.w));
+    float dry=pscellp1.y-pscellp2.y + CTE.poscellsize*(PSCEL_GetfY(pscellp1.w)-PSCEL_GetfY(pscellp2.w));
+    float drz=pscellp1.z-pscellp2.z + CTE.poscellsize*(PSCEL_GetfZ(pscellp1.w)-PSCEL_GetfZ(pscellp2.w));
+    if(symm)dry=pscellp1.y+pscellp2.y + CTE.poscellsize*PSCEL_GetfY(pscellp2.w); //<vs_syymmetry>
     const float rr2=drx*drx+dry*dry+drz*drz;
     if(rr2<=CTE.kernelsize2 && rr2>=ALMOSTZERO){
       //-Computes kernel.
@@ -483,7 +483,7 @@ template<TpKernel tker,TpFtMode ftmode,bool symm>
     //-Loads particle p1 data.
     const float4 pscellp1=poscell[p1];
     const float4 velrhop1=velrhop[p1];
-    const bool rsymp1=(symm && CEL_GetPartY(__float_as_uint(pscellp1.w))==0); //<vs_syymmetry>
+    const bool rsymp1=(symm && PSCEL_GetPartY(__float_as_uint(pscellp1.w))==0); //<vs_syymmetry>
     
     //-Obtains neighborhood search limits.
     int ini1,fin1,ini2,fin2,ini3,fin3;
@@ -523,10 +523,10 @@ template<TpKernel tker,TpFtMode ftmode,bool lamsps,TpDensity tdensity,bool shift
 {
   for(int p2=pini;p2<pfin;p2++){
     const float4 pscellp2=poscell[p2];
-    float drx=pscellp1.x-pscellp2.x + CTE.poscellsize*(CEL_GetfX(pscellp1.w)-CEL_GetfX(pscellp2.w));
-    float dry=pscellp1.y-pscellp2.y + CTE.poscellsize*(CEL_GetfY(pscellp1.w)-CEL_GetfY(pscellp2.w));
-    float drz=pscellp1.z-pscellp2.z + CTE.poscellsize*(CEL_GetfZ(pscellp1.w)-CEL_GetfZ(pscellp2.w));
-    if(symm)dry=pscellp1.y+pscellp2.y + CTE.poscellsize*CEL_GetfY(pscellp2.w); //<vs_syymmetry>
+    float drx=pscellp1.x-pscellp2.x + CTE.poscellsize*(PSCEL_GetfX(pscellp1.w)-PSCEL_GetfX(pscellp2.w));
+    float dry=pscellp1.y-pscellp2.y + CTE.poscellsize*(PSCEL_GetfY(pscellp1.w)-PSCEL_GetfY(pscellp2.w));
+    float drz=pscellp1.z-pscellp2.z + CTE.poscellsize*(PSCEL_GetfZ(pscellp1.w)-PSCEL_GetfZ(pscellp2.w));
+    if(symm)dry=pscellp1.y+pscellp2.y + CTE.poscellsize*PSCEL_GetfY(pscellp2.w); //<vs_syymmetry>
     const float rr2=drx*drx+dry*dry+drz*drz;
     if(rr2<=CTE.kernelsize2 && rr2>=ALMOSTZERO){
       //-Computes kernel.
@@ -681,7 +681,7 @@ template<TpKernel tker,TpFtMode ftmode,bool lamsps,TpDensity tdensity,bool shift
     const float4 pscellp1=poscell[p1];
     const float4 velrhop1=velrhop[p1];
     const float pressp1=cufsph::ComputePressCte(velrhop1.w);
-    const bool rsymp1=(symm && CEL_GetPartY(__float_as_uint(pscellp1.w))==0); //<vs_syymmetry>
+    const bool rsymp1=(symm && PSCEL_GetPartY(__float_as_uint(pscellp1.w))==0); //<vs_syymmetry>
 
     //-Variables for Laminar+SPS.
     float2 taup1_xx_xy,taup1_xz_yy,taup1_yz_zz;
@@ -901,7 +901,7 @@ __device__ float4 KerComputePosCell(const double3 &ps,const double3 &mapposmin,f
   const float px=float(dx-(double(poscellsize)*cx));
   const float py=float(dy-(double(poscellsize)*cy));
   const float pz=float(dz-(double(poscellsize)*cz));
-  const float pw=__uint_as_float(CEL_Code(cx,cy,cz));
+  const float pw=__uint_as_float(PSCEL_Code(cx,cy,cz));
   return(make_float4(px,py,pz,pw));
 }
 
@@ -944,9 +944,9 @@ template<TpKernel tker,bool sim2d,TpSlipMode tslip> __global__ void KerInteracti
         unsigned pini,pfin=0;  cunsearch::ParticleRange(c2,c3,ini1,fin1,beginendcellfluid,pini,pfin);
         if(pfin)for(unsigned p2=pini;p2<pfin;p2++){
           const float4 pscellp2=poscell[p2];
-          float drx=gpscellp1.x-pscellp2.x + CTE.poscellsize*(CEL_GetfX(gpscellp1.w)-CEL_GetfX(pscellp2.w));
-          float dry=gpscellp1.y-pscellp2.y + CTE.poscellsize*(CEL_GetfY(gpscellp1.w)-CEL_GetfY(pscellp2.w));
-          float drz=gpscellp1.z-pscellp2.z + CTE.poscellsize*(CEL_GetfZ(gpscellp1.w)-CEL_GetfZ(pscellp2.w));
+          float drx=gpscellp1.x-pscellp2.x + CTE.poscellsize*(PSCEL_GetfX(gpscellp1.w)-PSCEL_GetfX(pscellp2.w));
+          float dry=gpscellp1.y-pscellp2.y + CTE.poscellsize*(PSCEL_GetfY(gpscellp1.w)-PSCEL_GetfY(pscellp2.w));
+          float drz=gpscellp1.z-pscellp2.z + CTE.poscellsize*(PSCEL_GetfZ(gpscellp1.w)-PSCEL_GetfZ(pscellp2.w));
           const float rr2=drx*drx+dry*dry+drz*drz;
           if(rr2<=CTE.kernelsize2 && CODE_IsFluid(code[p2])){//-Only with fluid particles (including inout).
             //-Computes kernel.
@@ -1355,9 +1355,9 @@ __device__ void KerInteractionForcesDemBox
     const typecode codep2=code[p2];
     if(CODE_IsNotFluid(codep2) && tavp1!=CODE_GetTypeAndValue(codep2)){
       const float4 pscellp2=poscell[p2];
-      const float drx=pscellp1.x-pscellp2.x + CTE.poscellsize*(CEL_GetfX(pscellp1.w)-CEL_GetfX(pscellp2.w));
-      const float dry=pscellp1.y-pscellp2.y + CTE.poscellsize*(CEL_GetfY(pscellp1.w)-CEL_GetfY(pscellp2.w));
-      const float drz=pscellp1.z-pscellp2.z + CTE.poscellsize*(CEL_GetfZ(pscellp1.w)-CEL_GetfZ(pscellp2.w));
+      const float drx=pscellp1.x-pscellp2.x + CTE.poscellsize*(PSCEL_GetfX(pscellp1.w)-PSCEL_GetfX(pscellp2.w));
+      const float dry=pscellp1.y-pscellp2.y + CTE.poscellsize*(PSCEL_GetfY(pscellp1.w)-PSCEL_GetfY(pscellp2.w));
+      const float drz=pscellp1.z-pscellp2.z + CTE.poscellsize*(PSCEL_GetfZ(pscellp1.w)-PSCEL_GetfZ(pscellp2.w));
       const float rr2=drx*drx+dry*dry+drz*drz;
       const float rad=sqrt(rr2);
 
