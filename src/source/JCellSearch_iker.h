@@ -36,9 +36,9 @@ __device__ void InitCte(unsigned rcell
   ,int &ini1,int &fin1,int &ini2,int &fin2,int &ini3,int &fin3)
 {
   //-Obtains interaction limits.
-  const int cx=PC__Cellx(CTE.cellcode,rcell)-cellzero.x;
-  const int cy=PC__Celly(CTE.cellcode,rcell)-cellzero.y;
-  const int cz=PC__Cellz(CTE.cellcode,rcell)-cellzero.z;
+  const int cx=DCEL_Cellx(CTE.cellcode,rcell)-cellzero.x;
+  const int cy=DCEL_Celly(CTE.cellcode,rcell)-cellzero.y;
+  const int cz=DCEL_Cellz(CTE.cellcode,rcell)-cellzero.z;
   //-Sorts components according axis used in cell order.
   const int c1=(CTE.axis==MGDIV_X? cy: cx);
   const int c2=(CTE.axis==MGDIV_Z? cy: cz);
@@ -97,9 +97,9 @@ __device__ void Initsp(unsigned rcell
   ,int &ini1,int &fin1,int &ini2,int &fin2,int &ini3,int &fin3)
 {
   //-Obtains interaction limits.
-  const int cx=PC__Cellx(cellcode,rcell)-cellzero.x;
-  const int cy=PC__Celly(cellcode,rcell)-cellzero.y;
-  const int cz=PC__Cellz(cellcode,rcell)-cellzero.z;
+  const int cx=DCEL_Cellx(cellcode,rcell)-cellzero.x;
+  const int cy=DCEL_Celly(cellcode,rcell)-cellzero.y;
+  const int cz=DCEL_Cellz(cellcode,rcell)-cellzero.z;
   //-Sorts components according axis used in cell order.
   const int c1=(axis==MGDIV_X? cy: cx);
   const int c2=(axis==MGDIV_Z? cy: cz);

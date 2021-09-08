@@ -1200,7 +1200,7 @@ void JSphGpu::DgSaveVtkParticlesGpu(std::string filename,int numfile,unsigned pi
     dcel=new tuint3[n];
     unsigned *aux=new unsigned[n];
     cudaMemcpy(aux,dcelg+pini,sizeof(unsigned)*n,cudaMemcpyDeviceToHost);
-    for(unsigned p=0;p<n;p++)dcel[p]=TUint3(unsigned(PC__Cellx(cellcode,aux[p])),unsigned(PC__Celly(cellcode,aux[p])),unsigned(PC__Cellz(cellcode,aux[p])));
+    for(unsigned p=0;p<n;p++)dcel[p]=TUint3(unsigned(DCEL_Cellx(cellcode,aux[p])),unsigned(DCEL_Celly(cellcode,aux[p])),unsigned(DCEL_Cellz(cellcode,aux[p])));
     delete[] aux;
   }
   //-Loads vel and rhop.

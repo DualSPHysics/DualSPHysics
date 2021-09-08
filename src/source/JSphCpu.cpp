@@ -1289,7 +1289,7 @@ void JSphCpu::UpdatePos(tdouble3 rpos,double movx,double movy,double movz
       dz=rpos.z-DomPosMin.z;
     }
     unsigned cx=unsigned(dx/Scell),cy=unsigned(dy/Scell),cz=unsigned(dz/Scell);
-    cell[p]=PC__Cell(DomCellCode,cx,cy,cz);
+    cell[p]=DCEL_Cell(DomCellCode,cx,cy,cz);
   }
 }
 

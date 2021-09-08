@@ -499,21 +499,21 @@ inline const char* GetNameDivision(TpMgDivMode axis){
 //##############################################################################
 ///Codification of local cells according to the position.
 //##############################################################################
-#define PC__CodeMapOut   0xffffffff
-#define PC__CodeSpecial  0x80000000
-#define PC__CodeDomLeft  0x80000000
-#define PC__CodeDomRight 0x80000001
-#define PC__GetCode(sx,sy,sz) (((sx+1)<<25)|(sy<<20)|(sz<<15)|((sy+sz)<<10)|((sx+1+sz)<<5)|(sx+1+sy))  //-Clave de codificacion (orden de valores: sx,sy,sz,sy+sz,sx+sz,sx+sy). | Encryption key (order of values: sx,sy,sz,sy+sz,sz+sx,sx+sy).
-#define PC__GetSx(cc) (cc>>25)       //-Numero de bits para coordenada X de celda. | Number of bits for X coordinate cell.
-#define PC__GetSy(cc) ((cc>>20)&31)  //-Numero de bits para coordenada Y de celda. | Number of bits for Y coordinate cell.
-#define PC__GetSz(cc) ((cc>>15)&31)  //-Numero de bits para coordenada Z de celda. | Number of bits for Z coordinate cell.
-#define PC__Cellx(cc,cel) ((*((unsigned*)&cel))>>((cc>>10)&31))             //-Coordenada X de celda. | X coordinate of the cell.
-#define PC__Celly(cc,cel) (((*((unsigned*)&cel))<<(cc>>25))>>((cc>>5)&31))  //-Coordenada Y de celda. | Y coordinate of the cell.
-#define PC__Cellz(cc,cel) (((*((unsigned*)&cel))<<(cc&31))>>(cc&31))        //-Coordenada Z de celda. | Z coordinate of the cell.
-#define PC__Cell(cc,cx,cy,cz) ((cx<<((cc>>10)&31))|(cy<<((cc>>15)&31))|cz)  //-Valor de celda para cx, cy y cz. | Cell value for cx,cy and cz.
-#define PC__MaxCellx(cc) ((0xffffffff>>((cc>>10)&31))>>1)           //-Coordenada X de celda maxima. | Maximum X coordinate of the cell.
-#define PC__MaxCelly(cc) ((0xffffffff<<(cc>>25))>>((cc>>5)&31))     //-Coordenada Y de celda maxima. | Maximum Y coordinate of the cell.
-#define PC__MaxCellz(cc) ((0xffffffff<<(cc&31))>>(cc&31))           //-Coordenada Z de celda maxima. | Maximum Z coordinate of the cell.
+#define DCEL_CodeMapOut   0xffffffff
+#define DCEL_CodeSpecial  0x80000000
+#define DCEL_CodeDomLeft  0x80000000
+#define DCEL_CodeDomRight 0x80000001
+#define DCEL_GetCode(sx,sy,sz) (((sx+1)<<25)|(sy<<20)|(sz<<15)|((sy+sz)<<10)|((sx+1+sz)<<5)|(sx+1+sy))  //-Clave de codificacion (orden de valores: sx,sy,sz,sy+sz,sx+sz,sx+sy). | Encryption key (order of values: sx,sy,sz,sy+sz,sz+sx,sx+sy).
+#define DCEL_GetSx(cc) (cc>>25)       //-Numero de bits para coordenada X de celda. | Number of bits for X coordinate cell.
+#define DCEL_GetSy(cc) ((cc>>20)&31)  //-Numero de bits para coordenada Y de celda. | Number of bits for Y coordinate cell.
+#define DCEL_GetSz(cc) ((cc>>15)&31)  //-Numero de bits para coordenada Z de celda. | Number of bits for Z coordinate cell.
+#define DCEL_Cellx(cc,cel) ((*((unsigned*)&cel))>>((cc>>10)&31))             //-Coordenada X de celda. | X coordinate of the cell.
+#define DCEL_Celly(cc,cel) (((*((unsigned*)&cel))<<(cc>>25))>>((cc>>5)&31))  //-Coordenada Y de celda. | Y coordinate of the cell.
+#define DCEL_Cellz(cc,cel) (((*((unsigned*)&cel))<<(cc&31))>>(cc&31))        //-Coordenada Z de celda. | Z coordinate of the cell.
+#define DCEL_Cell(cc,cx,cy,cz) ((cx<<((cc>>10)&31))|(cy<<((cc>>15)&31))|cz)  //-Valor de celda para cx, cy y cz. | Cell value for cx,cy and cz.
+#define DCEL_MaxCellx(cc) ((0xffffffff>>((cc>>10)&31))>>1)           //-Coordenada X de celda maxima. | Maximum X coordinate of the cell.
+#define DCEL_MaxCelly(cc) ((0xffffffff<<(cc>>25))>>((cc>>5)&31))     //-Coordenada Y de celda maxima. | Maximum Y coordinate of the cell.
+#define DCEL_MaxCellz(cc) ((0xffffffff<<(cc&31))>>(cc&31))           //-Coordenada Z de celda maxima. | Maximum Z coordinate of the cell.
 
 
 //##############################################################################

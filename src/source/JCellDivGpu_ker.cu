@@ -331,8 +331,8 @@ template <unsigned blockSize> __device__ void KerLimitsCellRedu(unsigned cellcod
   if(tid==0){
     const unsigned nblocks=gridDim.x;
     unsigned cr=blockIdx.x;
-    results[cr]=PC__Cell(cellcode,spx1[0],spy1[0],spz1[0]);  cr+=nblocks;
-    results[cr]=PC__Cell(cellcode,spx2[0],spy2[0],spz2[0]);
+    results[cr]=DCEL_Cell(cellcode,spx1[0],spy1[0],spz1[0]);  cr+=nblocks;
+    results[cr]=DCEL_Cell(cellcode,spx2[0],spy2[0],spz2[0]);
   }
 }
 
@@ -355,12 +355,12 @@ template <unsigned int blockSize> __global__ void KerLimitsCellReduBase(unsigned
   unsigned p2=p;
   const unsigned celmin=(p<n? data[p2]: UINT_MAX);  p2+=n;
   const unsigned celmax=(p<n? data[p2]: 0);
-  scx1[tid]=PC__Cellx(cellcode,celmin);
-  scy1[tid]=PC__Celly(cellcode,celmin);
-  scz1[tid]=PC__Cellz(cellcode,celmin);
-  scx2[tid]=PC__Cellx(cellcode,celmax);
-  scy2[tid]=PC__Celly(cellcode,celmax);
-  scz2[tid]=PC__Cellz(cellcode,celmax);
+  scx1[tid]=DCEL_Cellx(cellcode,celmin);
+  scy1[tid]=DCEL_Celly(cellcode,celmin);
+  scz1[tid]=DCEL_Cellz(cellcode,celmin);
+  scx2[tid]=DCEL_Cellx(cellcode,celmax);
+  scy2[tid]=DCEL_Celly(cellcode,celmax);
+  scz2[tid]=DCEL_Cellz(cellcode,celmax);
   __syncthreads();
   //-Reduction of shared memory values.
   //-Reduce valores de memoria shared.
@@ -399,8 +399,8 @@ void LimitsCellRedu(unsigned cellcode,unsigned nblocks,unsigned *aux
   unsigned resf[6];
   cudaMemcpy(resf,dat,sizeof(unsigned)*2,cudaMemcpyDeviceToHost);
   //fcuda::Check_CudaError("#>ReduMaxF Fallo en cudaMemcpy.");
-  celmin=TUint3(PC__Cellx(cellcode,resf[0]),PC__Celly(cellcode,resf[0]),PC__Cellz(cellcode,resf[0]));
-  celmax=TUint3(PC__Cellx(cellcode,resf[1]),PC__Celly(cellcode,resf[1]),PC__Cellz(cellcode,resf[1]));
+  celmin=TUint3(DCEL_Cellx(cellcode,resf[0]),DCEL_Celly(cellcode,resf[0]),DCEL_Cellz(cellcode,resf[0]));
+  celmax=TUint3(DCEL_Cellx(cellcode,resf[1]),DCEL_Celly(cellcode,resf[1]),DCEL_Cellz(cellcode,resf[1]));
 }
 
 //------------------------------------------------------------------------------
@@ -431,9 +431,9 @@ template <unsigned int blockSize> __global__ void KerLimitsCell(unsigned n,unsig
   if(p<n){
     const unsigned pp=p+pini;
     const unsigned rcell=dcell[pp];
-    const unsigned cx=PC__Cellx(cellcode,rcell);
-    const unsigned cy=PC__Celly(cellcode,rcell);
-    const unsigned cz=PC__Cellz(cellcode,rcell);
+    const unsigned cx=DCEL_Cellx(cellcode,rcell);
+    const unsigned cy=DCEL_Celly(cellcode,rcell);
+    const unsigned cz=DCEL_Cellz(cellcode,rcell);
     if(CODE_GetSpecialValue(code[pp])<CODE_OUTIGNORE){ //-Particle not excluded | Particula no excluida.
       scx1[tid]=cx; scy1[tid]=cy; scz1[tid]=cz;
       scx2[tid]=cx; scy2[tid]=cy; scz2[tid]=cz;
@@ -490,7 +490,7 @@ void LimitsCell(unsigned np,unsigned pini,unsigned cellcode,const unsigned *dcel
   tuint3 pmaxh=TUint3(0);
   for(unsigned p=0;p<np;p++)if(!checkh[p]){
     unsigned cell=*((unsigned *)&(poscellh[p].w));
-    unsigned px=PC__Cellx(cellcode,cell),py=PC__Celly(cellcode,cell),pz=PC__Cellz(cellcode,cell);
+    unsigned px=DCEL_Cellx(cellcode,cell),py=DCEL_Celly(cellcode,cell),pz=DCEL_Cellz(cellcode,cell);
     //sprintf(cad,"LimitsPos> cell[%u]=%u  (%u,%u,%u)",p,cell,px,py,pz); log->Print(cad);
     if(pminh.x>px)pminh.x=px;  if(pminh.y>py)pminh.y=py;  if(pminh.z>pz)pminh.z=pz;
     if(pmaxh.x<px)pmaxh.x=px;  if(pmaxh.y<py)pmaxh.y=py;  if(pmaxh.z<pz)pmaxh.z=pz;

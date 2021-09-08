@@ -95,7 +95,7 @@ tuint3* JDebugSphGpu::GetCell3(unsigned n,const unsigned *dcell,unsigned cellcod
   tuint3 *cell3=JDataArrays::NewArrayUint3(n,false);
   for(unsigned c=0;c<n;c++){
     const unsigned dcel=dcell[c];
-    cell3[c]=TUint3(unsigned(PC__Cellx(cellcode,dcel)),unsigned(PC__Celly(cellcode,dcel)),unsigned(PC__Cellz(cellcode,dcel)));
+    cell3[c]=TUint3(unsigned(DCEL_Cellx(cellcode,dcel)),unsigned(DCEL_Celly(cellcode,dcel)),unsigned(DCEL_Cellz(cellcode,dcel)));
   }
   return(cell3);
 }

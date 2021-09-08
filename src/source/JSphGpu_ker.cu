@@ -362,7 +362,7 @@ template<bool periactive> __device__ void KerUpdatePos
     else if(outrhop)rcode=CODE_SetOutRhop(rcode);
     else rcode=CODE_SetOutMove(rcode);
     code[p]=rcode;
-    dcell[p]=PC__CodeMapOut;
+    dcell[p]=DCEL_CodeMapOut;
   }
   else{//-Particle in.
     if(periactive){
@@ -373,7 +373,7 @@ template<bool periactive> __device__ void KerUpdatePos
     const unsigned cx=unsigned(dx/CTE.scell);
     const unsigned cy=unsigned(dy/CTE.scell);
     const unsigned cz=unsigned(dz/CTE.scell);
-    dcell[p]=PC__Cell(CTE.cellcode,cx,cy,cz);
+    dcell[p]=DCEL_Cell(CTE.cellcode,cx,cy,cz);
   }
 }
 
@@ -2559,7 +2559,7 @@ __device__ void KerPeriodicDuplicatePos(unsigned pnew,unsigned pcopy
   //-Graba posicion y celda de nuevas particulas.
   posxy[pnew]=rxy;
   posz[pnew]=rz;
-  dcell[pnew]=PC__Cell(CTE.cellcode,cx,cy,cz);
+  dcell[pnew]=DCEL_Cell(CTE.cellcode,cx,cy,cz);
 }
 
 //------------------------------------------------------------------------------

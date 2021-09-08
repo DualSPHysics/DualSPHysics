@@ -254,7 +254,7 @@ void JSphCpuSingle::PeriodicDuplicatePos(unsigned pnew,unsigned pcopy,bool inver
   cz=(cz<=cellmax.z? cz: cellmax.z);
   //-Record position and cell of new particles. |  Graba posicion y celda de nuevas particulas.
   pos[pnew]=ps;
-  dcell[pnew]=PC__Cell(DomCellCode,cx,cy,cz);
+  dcell[pnew]=DCEL_Cell(DomCellCode,cx,cy,cz);
 }
 
 //==============================================================================

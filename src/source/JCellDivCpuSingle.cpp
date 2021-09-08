@@ -138,9 +138,9 @@ void JCellDivCpuSingle::PreSortFull(unsigned np,const unsigned *dcellc,const typ
   for(unsigned p=0;p<np;p++){
     //-Computes cell according position.
     const unsigned rcell=dcellc[p];
-    const unsigned cx=PC__Cellx(DomCellCode,rcell)-CellDomainMin.x;
-    const unsigned cy=PC__Celly(DomCellCode,rcell)-CellDomainMin.y;
-    const unsigned cz=PC__Cellz(DomCellCode,rcell)-CellDomainMin.z;
+    const unsigned cx=DCEL_Cellx(DomCellCode,rcell)-CellDomainMin.x;
+    const unsigned cy=DCEL_Celly(DomCellCode,rcell)-CellDomainMin.y;
+    const unsigned cz=DCEL_Cellz(DomCellCode,rcell)-CellDomainMin.z;
     const unsigned cellsort=cx+cy*Ncx+cz*Nsheet;
     //-Checks particle code.
     const typecode rcode=codec[p];
@@ -178,9 +178,9 @@ void JCellDivCpuSingle::PreSortFluid(unsigned np,unsigned pini,const unsigned *d
   for(unsigned p=pini;p<pfin;p++){
     //-Computes cell according position.
     const unsigned rcell=dcellc[p];
-    const unsigned cx=PC__Cellx(DomCellCode,rcell)-CellDomainMin.x;
-    const unsigned cy=PC__Celly(DomCellCode,rcell)-CellDomainMin.y;
-    const unsigned cz=PC__Cellz(DomCellCode,rcell)-CellDomainMin.z;
+    const unsigned cx=DCEL_Cellx(DomCellCode,rcell)-CellDomainMin.x;
+    const unsigned cy=DCEL_Celly(DomCellCode,rcell)-CellDomainMin.y;
+    const unsigned cz=DCEL_Cellz(DomCellCode,rcell)-CellDomainMin.z;
     const unsigned cellsortfluid=BoxFluid+cx+cy*Ncx+cz*Nsheet;
     //-Checks particle code.
     const typecode rcode=codec[p];

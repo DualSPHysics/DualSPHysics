@@ -53,9 +53,9 @@ __global__ void KerPreSortFull(unsigned np,unsigned cellcode,const unsigned *dce
     const unsigned cellfluidoutignore=cellboundoutignore+1;  //-For fluid and floatings.
     //-Computes cell according position.
     const unsigned rcell=dcell[p];
-    const unsigned cx=PC__Cellx(cellcode,rcell)-cellzero.x;
-    const unsigned cy=PC__Celly(cellcode,rcell)-cellzero.y;
-    const unsigned cz=PC__Cellz(cellcode,rcell)-cellzero.z;
+    const unsigned cx=DCEL_Cellx(cellcode,rcell)-cellzero.x;
+    const unsigned cy=DCEL_Celly(cellcode,rcell)-cellzero.y;
+    const unsigned cz=DCEL_Cellz(cellcode,rcell)-cellzero.z;
     const unsigned cellsort=cx+cy*ncells.x+cz*nsheet;
     //-Checks particle code.
     const typecode rcode=code[p];
@@ -121,9 +121,9 @@ __global__ void KerPreSortFluid(unsigned n,unsigned pini,unsigned cellcode
     const unsigned cellfluidoutignore=cellfluidout+2;  //-For fluid and floatings.
     //-Computes cell according position.
     const unsigned rcell=dcell[p];
-    const unsigned cx=PC__Cellx(cellcode,rcell)-cellzero.x;
-    const unsigned cy=PC__Celly(cellcode,rcell)-cellzero.y;
-    const unsigned cz=PC__Cellz(cellcode,rcell)-cellzero.z;
+    const unsigned cx=DCEL_Cellx(cellcode,rcell)-cellzero.x;
+    const unsigned cy=DCEL_Celly(cellcode,rcell)-cellzero.y;
+    const unsigned cz=DCEL_Cellz(cellcode,rcell)-cellzero.z;
     const unsigned cellsortfluid=cellfluid+cx+cy*ncells.x+cz*nsheet;
     //-Checks particle code.
     const typecode rcode=code[p];

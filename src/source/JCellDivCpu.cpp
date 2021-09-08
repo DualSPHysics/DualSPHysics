@@ -251,9 +251,9 @@ void JCellDivCpu::LimitsCellBound(unsigned n,unsigned pini,const unsigned* dcell
   const unsigned pfin=pini+n;
   for(unsigned p=pini;p<pfin;p++){
     const unsigned rcell=dcellc[p];
-    const unsigned cx=PC__Cellx(DomCellCode,rcell);
-    const unsigned cy=PC__Celly(DomCellCode,rcell);
-    const unsigned cz=PC__Cellz(DomCellCode,rcell);
+    const unsigned cx=DCEL_Cellx(DomCellCode,rcell);
+    const unsigned cy=DCEL_Celly(DomCellCode,rcell);
+    const unsigned cz=DCEL_Cellz(DomCellCode,rcell);
     const typecode rcode=codec[p];
     const typecode rcodsp=CODE_GetSpecialValue(rcode);
     if(rcodsp<CODE_OUTIGNORE){ //-Particle not excluded | Particula no excluida.
@@ -309,9 +309,9 @@ void JCellDivCpu::LimitsCellFluid(unsigned n,unsigned pini,const unsigned* dcell
   const unsigned pfin=pini+n;
   for(unsigned p=pini;p<pfin;p++){
     const unsigned rcell=dcellc[p];
-    const unsigned cx=PC__Cellx(DomCellCode,rcell);
-    const unsigned cy=PC__Celly(DomCellCode,rcell);
-    const unsigned cz=PC__Cellz(DomCellCode,rcell);
+    const unsigned cx=DCEL_Cellx(DomCellCode,rcell);
+    const unsigned cy=DCEL_Celly(DomCellCode,rcell);
+    const unsigned cz=DCEL_Cellz(DomCellCode,rcell);
     if(CODE_GetSpecialValue(codec[p])<CODE_OUTIGNORE){ //-Particle not excluded | Particula no excluida.
       if(cmin.x>cx)cmin.x=cx;
       if(cmin.y>cy)cmin.y=cy;

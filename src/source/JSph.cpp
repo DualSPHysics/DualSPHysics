@@ -1681,14 +1681,14 @@ void JSph::LoadDcellParticles(unsigned n,const typecode *code,const tdouble3 *po
         const unsigned cx=unsigned(dx/Scell);
         const unsigned cy=unsigned(dy/Scell);
         const unsigned cz=unsigned(dz/Scell);
-        dcell[p]=PC__Cell(DomCellCode,cx,cy,cz);
+        dcell[p]=DCEL_Cell(DomCellCode,cx,cy,cz);
       }
       else{//-Particle out.
         Run_Exceptioon("Found new particles out."); //-There can not be new particles excluded. | No puede haber nuevas particulas excluidas.
-        dcell[p]=PC__CodeMapOut;
+        dcell[p]=DCEL_CodeMapOut;
       }
     }
-    else dcell[p]=PC__CodeMapOut;
+    else dcell[p]=DCEL_CodeMapOut;
   }
 }
 
@@ -1807,7 +1807,7 @@ void JSph::SelecDomain(tuint3 celini,tuint3 celfin){
   if(!DomCellCode)Run_Exceptioon(string("Failed to select a valid CellCode for ")+fun::UintStr(DomCells.x)+"x"+fun::UintStr(DomCells.y)+"x"+fun::UintStr(DomCells.z)+" cells (CellMode="+GetNameCellMode(CellMode)+").");
   //-Prints configurantion.
   Log->Print(string("DomCells=(")+fun::Uint3Str(DomCells)+")");
-  Log->Print(fun::VarStr("DomCellCode",fun::UintStr(PC__GetSx(DomCellCode))+"_"+fun::UintStr(PC__GetSy(DomCellCode))+"_"+fun::UintStr(PC__GetSz(DomCellCode))));
+  Log->Print(fun::VarStr("DomCellCode",fun::UintStr(DCEL_GetSx(DomCellCode))+"_"+fun::UintStr(DCEL_GetSy(DomCellCode))+"_"+fun::UintStr(DCEL_GetSz(DomCellCode))));
 }
 
 //==============================================================================
@@ -1840,7 +1840,7 @@ tuint3 JSph::CalcCellDistribution(tuint3 ncells){
 unsigned JSph::CalcCellCode(tuint3 ncells){
   const tuint3 scells=CalcCellDistribution(ncells);
   unsigned ccode=0;
-  if(scells.x+scells.y+scells.z==32)ccode=PC__GetCode(scells.x,scells.y,scells.z);
+  if(scells.x+scells.y+scells.z==32)ccode=DCEL_GetCode(scells.x,scells.y,scells.z);
   return(ccode);
 }
 
