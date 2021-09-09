@@ -1808,7 +1808,7 @@ void JSph::SelecDomain(tuint3 celini,tuint3 celfin){
   if(!DomCellCode)Run_Exceptioon(string("Failed to select a valid CellCode for ")+fun::UintStr(DomCells.x)+"x"+fun::UintStr(DomCells.y)+"x"+fun::UintStr(DomCells.z)+" cells (CellMode="+GetNameCellMode(CellMode)+").");
   //-Prints configurantion.
   Log->Print(string("DomCells=(")+fun::Uint3Str(DomCells)+")");
-  Log->Print(fun::VarStr("DomCellCode",fun::UintStr(DCEL_GetSx(DomCellCode))+"_"+fun::UintStr(DCEL_GetSy(DomCellCode))+"_"+fun::UintStr(DCEL_GetSz(DomCellCode))));
+  Log->Print(fun::VarStr("DomCellCode",JDsDcell::DcellCodeStr(DomCellCode)));
 }
 
 //==============================================================================

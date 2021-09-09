@@ -28,6 +28,7 @@
 #define _JDsDcell_
 
 #include "TypesDef.h"
+#include <string>
 
 //##############################################################################
 //# JDsDcell
@@ -37,11 +38,12 @@
 class JDsDcell
 {
 public:
-  static unsigned CalcBitsValue(unsigned v,unsigned minbits=1);
-  static tuint3   CalcCellDistribution(const tuint3 &ncells,const unsigned maxbits=32);
-  static unsigned CalcCellCode(const tuint3 &ncells);
-  static bool     InvalidCellCode(unsigned dcc,const tuint3 &ncells);
-  static void     PrintDcellCodeInfo(unsigned dcc);
+  static unsigned    CalcBitsValue(unsigned v,unsigned minbits=1);
+  static tuint3      CalcCellDistribution(const tuint3 &ncells,const unsigned maxbits=32);
+  static unsigned    CalcCellCode(const tuint3 &ncells);
+  static bool        InvalidCellCode(unsigned dcc,const tuint3 &ncells);
+  static std::string DcellCodeStr(unsigned dcc);
+  static void        PrintDcellCodeInfo(unsigned dcc);
 };
 
 #endif

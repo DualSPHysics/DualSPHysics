@@ -20,6 +20,7 @@
 
 #include "JDsDcell.h"
 #include "JDsDcellDef.h"
+#include "Functions.h"
 
 using namespace std;
 
@@ -73,6 +74,13 @@ bool JDsDcell::InvalidCellCode(unsigned dcc,const tuint3 &ncells){
       || DCEL_MaxCellx(dcc)<ncells.x 
       || DCEL_MaxCelly(dcc)<ncells.y 
       || DCEL_MaxCellz(dcc)<ncells.z);
+}
+
+//==============================================================================
+/// Returns dcellcode as string with bits distribution.
+//==============================================================================
+std::string JDsDcell::DcellCodeStr(unsigned dcc){
+  return(fun::PrintStr("1+%u_%u_%u",DCEL_GetSx(dcc)-1,DCEL_GetSy(dcc),DCEL_GetSz(dcc)));
 }
 
 //==============================================================================
