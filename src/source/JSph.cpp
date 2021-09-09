@@ -33,6 +33,7 @@
 #include "JCaseCtes.h"
 #include "JCaseEParms.h"
 #include "JCaseParts.h"
+#include "JDsDcell.h"
 #include "JDsFixedDt.h"
 #include "JDsSaveDt.h"
 #include "JDsOutputTime.h"
@@ -1803,45 +1804,11 @@ void JSph::SelecDomain(tuint3 celini,tuint3 celfin){
   if(DomRealPosMin.z<MapRealPosMin.z)DomRealPosMin.z=MapRealPosMin.z;
   //-Computes cofification of cells for the selected domain.
   //-Calcula codificacion de celdas para el dominio seleccionado.
-  DomCellCode=CalcCellCode(DomCells+TUint3(1));
+  DomCellCode=JDsDcell::CalcCellCode(DomCells+TUint3(1));
   if(!DomCellCode)Run_Exceptioon(string("Failed to select a valid CellCode for ")+fun::UintStr(DomCells.x)+"x"+fun::UintStr(DomCells.y)+"x"+fun::UintStr(DomCells.z)+" cells (CellMode="+GetNameCellMode(CellMode)+").");
   //-Prints configurantion.
   Log->Print(string("DomCells=(")+fun::Uint3Str(DomCells)+")");
   Log->Print(fun::VarStr("DomCellCode",fun::UintStr(DCEL_GetSx(DomCellCode))+"_"+fun::UintStr(DCEL_GetSy(DomCellCode))+"_"+fun::UintStr(DCEL_GetSz(DomCellCode))));
-}
-
-//==============================================================================
-/// Calculates the distribution of 32 bits between the X, Y and Z axes.
-/// Calcula el reparto de 32 bits entre los ejes X, Y y Z.
-//==============================================================================
-tuint3 JSph::CalcCellDistribution(tuint3 ncells){
-  unsigned sxmin=2; for(;ncells.x>>sxmin;sxmin++);
-  unsigned symin=2; for(;ncells.y>>symin;symin++);
-  unsigned szmin=2; for(;ncells.z>>szmin;szmin++);
-  unsigned smin=sxmin+symin+szmin;
-  unsigned ccode=0;
-  if(smin<=32){
-    unsigned sx=sxmin,sy=symin,sz=szmin;
-    unsigned rest=32-smin;
-    while(rest){
-      if(rest){ sx++; rest--; }
-      if(rest){ sy++; rest--; }
-      if(rest){ sz++; rest--; }
-    }
-    sxmin=sx; symin=sy; szmin=sz;
-  }
-  return(TUint3(sxmin,symin,szmin));
-}
-
-//==============================================================================
-/// Selects an adequate code for cell configuration.
-/// Selecciona un codigo adecuado para la codificion de celda.
-//==============================================================================
-unsigned JSph::CalcCellCode(tuint3 ncells){
-  const tuint3 scells=CalcCellDistribution(ncells);
-  unsigned ccode=0;
-  if(scells.x+scells.y+scells.z==32)ccode=DCEL_GetCode(scells.x,scells.y,scells.z);
-  return(ccode);
 }
 
 //==============================================================================
@@ -1886,8 +1853,8 @@ void JSph::ConfigPosCellGpu(){
     string tx2="since the maximum number of cells for each axis is";
     Log->Printf("%s (%u x %u x %u cells), %s %u x %u x %u cells.",tx1.c_str()
       ,Map_Cells.x,Map_Cells.y,Map_Cells.z,tx2.c_str(),nx,ny,nz);
-    const tuint3 scells=CalcCellDistribution(Map_Cells);
-    if(scells.x+scells.y+scells.z>32)Run_Exceptioon("The number of cells is too large for a 32-bit PosCell configuration. The number of cells should be reduced.");
+    const tuint3 scells=JDsDcell::CalcCellDistribution(Map_Cells,32);
+    if(scells==TUint3(0) || scells.x+scells.y+scells.z>32)Run_Exceptioon("The number of cells is too large for a 32-bit PosCell configuration. The number of cells should be reduced.");
     Log->Printf("\nThe current configuration can be changed by the user by modifying the DualSphDef.h file and compiling the program again. ");
     Log->Printf("Replace the following code in DualSphDef.h:");
     Log->Printf("  //#define PSCEL_CONFIG_USER");
