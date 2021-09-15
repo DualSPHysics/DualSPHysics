@@ -25,6 +25,8 @@
 //# - Ignora parametros vacios. (10-09-2020)
 //# - El uso de JDsphConfig o no se define en JCfgRunBaseDef.h. (20-04-2021)
 //# - Nuevo metodo LoadDouble2(). (05-08-2021)
+//# - Mejora de LoadDouble2(), LoadDouble3() y LoadDouble6() y equivalesntes 
+//#   para floats. Ahora toma el valor default siempre que falte un valor. (14-09-2021)
 //#############################################################################
 
 #ifndef _JCfgRunBase_

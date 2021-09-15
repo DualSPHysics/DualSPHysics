@@ -252,15 +252,11 @@ void JCfgRunBase::LoadFloat6(std::string txopt,float def,tfloat3 &v1,tfloat3 &v2
 void JCfgRunBase::LoadDouble2(std::string txopt,double def,tdouble2 &v1){
   //printf("txopt=[%s]\n",txopt.c_str());
   double values[2]={def,def};
-  string ttx=txopt;
-  for(int tc=0;ttx!="" && tc<2;tc++){
-    int tpos=int(ttx.find(":"));
-    string ttxopt=(tpos>0? ttx.substr(0,tpos): ttx);
-    string ttxopt2;
-    if(tpos>0)ttxopt2=ttx.substr(tpos+1);
-    values[tc]=atof(ttxopt.c_str());
-    ttx=ttxopt2;
-  } 
+  string aux=txopt;
+  for(int tc=0;!aux.empty() && tc<2;tc++){
+    string txv=fun::StrSplit(":",aux);
+    if(!txv.empty())values[tc]=atof(txv.c_str());
+  }
   v1=TDouble2(values[0],values[1]);
 }
 
@@ -270,15 +266,11 @@ void JCfgRunBase::LoadDouble2(std::string txopt,double def,tdouble2 &v1){
 void JCfgRunBase::LoadDouble3(std::string txopt,double def,tdouble3 &v1){
   //printf("txopt=[%s]\n",txopt.c_str());
   double values[3]={def,def,def};
-  string ttx=txopt;
-  for(int tc=0;ttx!="" && tc<3;tc++){
-    int tpos=int(ttx.find(":"));
-    string ttxopt=(tpos>0? ttx.substr(0,tpos): ttx);
-    string ttxopt2;
-    if(tpos>0)ttxopt2=ttx.substr(tpos+1);
-    values[tc]=atof(ttxopt.c_str());
-    ttx=ttxopt2;
-  } 
+  string aux=txopt;
+  for(int tc=0;!aux.empty() && tc<3;tc++){
+    string txv=fun::StrSplit(":",aux);
+    if(!txv.empty())values[tc]=atof(txv.c_str());
+  }
   v1=TDouble3(values[0],values[1],values[2]);
 }
 
@@ -288,15 +280,11 @@ void JCfgRunBase::LoadDouble3(std::string txopt,double def,tdouble3 &v1){
 void JCfgRunBase::LoadDouble6(std::string txopt,double def,tdouble3 &v1,tdouble3 &v2){
   //printf("txopt=[%s]\n",txopt.c_str());
   double values[6]={def,def,def,def,def,def};
-  string ttx=txopt;
-  for(int tc=0;ttx!="" && tc<6;tc++){
-    int tpos=int(ttx.find(":"));
-    string ttxopt=(tpos>0? ttx.substr(0,tpos): ttx);
-    string ttxopt2;
-    if(tpos>0)ttxopt2=ttx.substr(tpos+1);
-    values[tc]=atof(ttxopt.c_str());
-    ttx=ttxopt2;
-  } 
+  string aux=txopt;
+  for(int tc=0;!aux.empty() && tc<6;tc++){
+    string txv=fun::StrSplit(":",aux);
+    if(!txv.empty())values[tc]=atof(txv.c_str());
+  }
   v1=TDouble3(values[0],values[1],values[2]);
   v2=TDouble3(values[3],values[4],values[5]);
 }
