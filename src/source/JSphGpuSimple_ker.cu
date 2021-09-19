@@ -186,6 +186,9 @@ template<bool floating,bool shift,bool inout> __global__ void KerComputeStepVerl
           }
         }
         //-Update particle data.
+        #ifdef MGPU_DG_NOTMOVE
+          dx=dy=dz=0;
+        #endif
         movxy[p]=make_double2(dx,dy);
         movz[p]=dz;
         if(outrhop){ //-Only brands as excluded normal particles (not periodic). | Solo marca como excluidas las normales (no periodicas).
@@ -288,6 +291,9 @@ template<bool floating,bool shift,bool inout> __global__ void KerComputeStepSymp
           }
         }
         //-Update particle data.
+        #ifdef MGPU_DG_NOTMOVE
+          dx=dy=dz=0;
+        #endif
         movxy[p]=make_double2(dx,dy);
         movz[p]=dz;
         if(outrhop){ //-Only brands as excluded normal particles (not periodic). | Solo marca como excluidas las normales (no periodicas).
@@ -397,6 +403,9 @@ template<bool floating,bool shift,bool inout> __global__ void KerComputeStepSymp
           }
         }
         //-Update particle data.
+        #ifdef MGPU_DG_NOTMOVE
+          dx=dy=dz=0;
+        #endif
         movxy[p]=make_double2(dx,dy);
         movz[p]=dz;
         if(outrhop){ //-Only brands as excluded normal particles (not periodic). | Solo marca como excluidas las normales (no periodicas).

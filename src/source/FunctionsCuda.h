@@ -156,6 +156,10 @@ tfloat3*  ToHostPosf3(unsigned nplist,const unsigned *idxlistg,const double2 *po
 
 }
 
+//:-INITIALISATION:
+//: cudaSetDevice(gpuid);
+//: cudaDeviceReset();
+
 //:-SYNCHRONIZATION:
 //: cudaDeviceSynchronize();           //-Blocks host until all issued CUDA calls are complete.
 //: cudaStreamSynchronize(stream);     //-Blocks host until all issued CUDA calls in stream are complete.

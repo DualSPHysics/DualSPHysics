@@ -105,6 +105,7 @@ typedef struct StrInterParmsg{
   unsigned boundnum;
   unsigned fluidnum;         
   unsigned id;
+  unsigned nstep;
   StDivDataGpu divdatag;
   //-Input data arrays.
   const unsigned *dcell;
@@ -137,7 +138,7 @@ typedef struct StrInterParmsg{
     ,float viscob_,float viscof_
     ,unsigned bsbound_,unsigned bsfluid_
     ,unsigned np_,unsigned npb_,unsigned npbok_
-    ,unsigned id_
+    ,unsigned id_,unsigned nstep_
     ,const StDivDataGpu &divdatag_,const unsigned *dcell_
     ,const double2 *posxy_,const double *posz_,const float4 *poscell_
     ,const float4 *velrhop_,const unsigned *idp_,const typecode *code_
@@ -160,7 +161,7 @@ typedef struct StrInterParmsg{
     vnp=np_; vnpb=npb_; vnpbok=npbok_;
     boundini=0;   boundnum=vnpbok;
     fluidini=vnpb; fluidnum=vnp-vnpb;
-    id=id_; 
+    id=id_; nstep=nstep_; 
     divdatag=divdatag_;
     //-Input data arrays.
     dcell=dcell_;

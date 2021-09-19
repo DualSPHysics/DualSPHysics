@@ -449,7 +449,7 @@ void JSphGpuSingle::Interaction_Forces(TpInterStep interstep){
     ,lamsps,TDensity,ShiftingMode
     ,Visco*ViscoBoundFactor,Visco
     ,bsbound,bsfluid,Np,Npb,NpbOk
-    ,0,DivData,Dcellg
+    ,0,Nstep,DivData,Dcellg
     ,Posxyg,Poszg,PosCellg,Velrhopg,Idpg,Codeg
     ,FtoMasspg,SpsTaug,dengradcorr
     ,ViscDtg,Arg,Aceg,Deltag
