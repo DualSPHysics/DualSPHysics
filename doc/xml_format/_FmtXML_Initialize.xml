@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<!-- *** DualSPHysics v5.0.188 (07-07-2021) *** -->
+<!-- *** DualSPHysics v5.0.210 (11-10-2021) *** -->
 <!-- *** class: JSphInitialize *** -->
 <!------------------------------------------------------------------------------->
 <!------------------------------------------------------------------------------->
@@ -32,12 +32,14 @@
 			<point x="1" y="0" z="0" />
 			<normal x="1" y="0" z="0" />
 			<maxdisth v="2.0" comment="Maximum distance to boundary limit. It uses H*maxdisth (default=2)" />		
+			<clear v="true" comment="Clears previous normal data (default=true)" />		
 		</boundnormal_plane>
 		<boundnormal_plane mkbound="2">
 			<point auto="true" comment="Point is calculated automatically accoding to normal configuration." />
 			<limitdist vdp="0.5" comment="Minimun distance (Dp*vdp) between particles and boundary limit to calculate the point (default=0.5)" />
 			<normal x="1" y="0" z="0" />
 			<maxdisth v="2.0" comment="Maximum distance to boundary limit. It uses H*maxdisth (default=2)" />		
+			<clear v="true" comment="Clears previous normal data (default=true)" />		
 			<!-- Examples by execution parameters: -->
 			<!--  -initnorpla:mkbound=10:normal=1:0:0 -->
 			<!--  -initnorpla:mkbound=10:point=auto:normal=1:0:0:limitdist=0.5:maxdisth=2 -->
@@ -49,13 +51,17 @@
 			<radius v="1" />
 			<inside v="true" comment="Boundary particles inside the sphere" />		
 			<maxdisth v="2.0" comment="Maximum distance to boundary limit. It uses H*maxdisth (default=2)" />		
+			<clear v="true" comment="Clears previous normal data (default=true)" />		
 		</boundnormal_sphere>
 		<boundnormal_cylinder mkbound="4">
 			<center1 x="1" y="0" z="0" /> 
 			<center2 x="2" y="0" z="0" /> 
 			<radius v="1" />
 			<inside v="true" comment="Boundary particles inside the cylinder" />		
+			<limit1 v="true" comment="Active normals to limit 1 for inside mode (default=true)" />		
+			<limit2 v="true" comment="Active normals to limit 2 for inside mode (default=true)" />		
 			<maxdisth v="2.0" comment="Maximum distance to boundary limit. It uses H*maxdisth (default=2)" />		
+			<clear v="true" comment="Clears previous normal data (default=true)" />		
 		</boundnormal_cylinder>
 		<boundnormal_parts mkbound="2">
 			<maxdisth v="2.0" comment="Maximum distance to boundary limit. It uses H*maxdisth (default=2)" />

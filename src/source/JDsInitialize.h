@@ -33,6 +33,8 @@
 //:#   particulas finales (en desarrollo y solo para 2D). (07-07-2020)
 //:# - Se permite la configuracion por parametros de ejecucion de IT_BoundNormalPlane 
 //:#   y IT_BoundNormalParts. (07-07-2020)
+//:# - Nuevas opciones limit en JDsInitializeOp_BoundNormalCylinder. (11-10-2021)
+//:# - Nueva opcion clear para inicializacion de normales. (11-10-2021)
 //:#############################################################################
 
 /// \file JDsInitialize.h \brief Declares the class \ref JDsInitialize.
@@ -191,6 +193,7 @@ private:
   tfloat3 Point;
   tfloat3 Normal;
   float MaxDisteH;  ///<Maximum distance to boundary limit. It uses H*distanceh (default=2).
+  bool InitClear;   ///<Clears previous normal data (default=true).
 public:
   JDsInitializeOp_BoundNormalPlane(const JXml *sxml,TiXmlElement* ele,StInitCt initct)
     :JDsInitializeOp(IT_BoundNormalPlane,"BoundNormalPlane",initct){ Reset(); ReadXml(sxml,ele); }
@@ -216,6 +219,7 @@ private:
   float Radius;
   bool Inside;      ///<Boundary particles inside the sphere.
   float MaxDisteH;  ///<Maximum distance to boundary limit. It uses H*distanceh (default=2).
+  bool InitClear;   ///<Clears previous normal data (default=true).
 public:
   JDsInitializeOp_BoundNormalSphere(const JXml *sxml,TiXmlElement* ele,StInitCt initct)
     :JDsInitializeOp(IT_BoundNormalSphere,"BoundNormalSphere",initct){ Reset(); ReadXml(sxml,ele); }
@@ -238,7 +242,10 @@ private:
   tfloat3 Center2;
   float Radius;
   bool Inside;      ///<Boundary particles inside the cylinder.
+  bool Limit1;      ///<Active normals to limit 1 for inside mode (default=true).
+  bool Limit2;      ///<Active normals to limit 2 for inside mode (default=true).
   float MaxDisteH;  ///<Maximum distance to boundary limit. It uses H*distanceh (default=2).
+  bool InitClear;   ///<Clears previous normal data (default=true).
 public:
   JDsInitializeOp_BoundNormalCylinder(const JXml *sxml,TiXmlElement* ele,StInitCt initct)
     :JDsInitializeOp(IT_BoundNormalCylinder,"BoundNormalCylinder",initct){ Reset(); ReadXml(sxml,ele); }
