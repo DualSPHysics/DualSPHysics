@@ -2727,7 +2727,7 @@ __device__ double KerPointPlane(const double4 &pla,const double3 &pt)
 /// Applies Damping.
 /// Aplica Damping.
 //------------------------------------------------------------------------------
-__global__ void KerComputeDamping(unsigned n,unsigned pini
+__global__ void KerComputeDampingPlane(unsigned n,unsigned pini
   ,double dt,double4 plane,float dist,float over,float3 factorxyz,float redumax
   ,const double2 *posxy,const double *posz,const typecode *code
   ,float4 *velrhop)
@@ -2752,7 +2752,7 @@ __global__ void KerComputeDamping(unsigned n,unsigned pini
         float4 rvel=velrhop[p1];
         rvel.x=float(redudtx*rvel.x); 
         rvel.y=float(redudty*rvel.y); 
-        rvel.z=float(redudtz*rvel.z); 
+        rvel.z=float(redudtz*rvel.z);
         velrhop[p1]=rvel;
       }
     }
@@ -2762,14 +2762,14 @@ __global__ void KerComputeDamping(unsigned n,unsigned pini
 /// Applies Damping.
 /// Aplica Damping.
 //==============================================================================
-void ComputeDamping(double dt,tdouble4 plane,float dist,float over,tfloat3 factorxyz,float redumax
-  ,unsigned n,unsigned pini,const double2 *posxy,const double *posz,const typecode *code
-  ,float4 *velrhop)
+void ComputeDampingPlane(double dt,double4 plane,float dist,float over
+  ,float3 factorxyz,float redumax,unsigned n,unsigned pini
+  ,const double2 *posxy,const double *posz,const typecode *code,float4 *velrhop)
 {
   if(n){
     dim3 sgridf=GetSimpleGridSize(n,SPHBSIZE);
-    KerComputeDamping <<<sgridf,SPHBSIZE>>> (n,pini,dt,Double4(plane),dist,over,Float3(factorxyz),redumax
-      ,posxy,posz,code,velrhop);
+    KerComputeDampingPlane <<<sgridf,SPHBSIZE>>> (n,pini,dt,plane,dist,over
+      ,factorxyz,redumax,posxy,posz,code,velrhop);
   }
 }
 
@@ -2777,7 +2777,7 @@ void ComputeDamping(double dt,tdouble4 plane,float dist,float over,tfloat3 facto
 /// Applies Damping to limited domain.
 /// Aplica Damping limitado a un dominio.
 //------------------------------------------------------------------------------
-__global__ void KerComputeDampingPla(unsigned n,unsigned pini
+__global__ void ComputeDampingPlaneDom(unsigned n,unsigned pini
   ,double dt,double4 plane,float dist,float over,float3 factorxyz,float redumax
   ,double zmin,double zmax,double4 pla0,double4 pla1,double4 pla2,double4 pla3
   ,const double2 *posxy,const double *posz,const typecode *code
@@ -2816,16 +2816,16 @@ __global__ void KerComputeDampingPla(unsigned n,unsigned pini
 /// Applies Damping to limited domain.
 /// Aplica Damping limitado a un dominio.
 //==============================================================================
-void ComputeDampingPla(double dt,tdouble4 plane,float dist,float over,tfloat3 factorxyz,float redumax
-  ,double zmin,double zmax,tdouble4 pla0,tdouble4 pla1,tdouble4 pla2,tdouble4 pla3
+void ComputeDampingPlaneDom(double dt,double4 plane,float dist,float over
+  ,float3 factorxyz,float redumax
+  ,double zmin,double zmax,double4 pla0,double4 pla1,double4 pla2,double4 pla3
   ,unsigned n,unsigned pini,const double2 *posxy,const double *posz,const typecode *code
   ,float4 *velrhop)
 {
   if(n){
     dim3 sgridf=GetSimpleGridSize(n,SPHBSIZE);
-    KerComputeDampingPla <<<sgridf,SPHBSIZE>>> (n,pini,dt,Double4(plane),dist,over,Float3(factorxyz),redumax
-      ,zmin,zmax,Double4(pla0),Double4(pla1),Double4(pla2),Double4(pla3)
-      ,posxy,posz,code,velrhop);
+    ComputeDampingPlaneDom <<<sgridf,SPHBSIZE>>> (n,pini,dt,plane,dist,over,factorxyz
+      ,redumax,zmin,zmax,pla0,pla1,pla2,pla3,posxy,posz,code,velrhop);
   }
 }
 

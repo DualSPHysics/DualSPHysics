@@ -1878,8 +1878,8 @@ void JSphCpu::RunRelaxZone(double dt){
 /// Aplica Damping a las particulas indicadas.
 //==============================================================================
 void JSphCpu::RunDamping(double dt,unsigned np,unsigned npb,const tdouble3 *pos,const typecode *code,tfloat4 *velrhop)const{
-  if(CaseNfloat || PeriActive)Damping->ComputeDamping(TimeStep,dt,np-npb,npb,pos,code,velrhop);
-  else Damping->ComputeDamping(TimeStep,dt,np-npb,npb,pos,NULL,velrhop);
+  const typecode *codeptr=(CaseNfloat || PeriActive? code: NULL);
+  Damping->ComputeDampingCpu(TimeStep,dt,np-npb,npb,pos,codeptr,velrhop);
 }
 
 //==============================================================================

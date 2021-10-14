@@ -275,11 +275,11 @@ void PeriodicDuplicateSymplectic(unsigned n,unsigned pini
 void PeriodicDuplicateNormals(unsigned n,unsigned pini,const unsigned *listp,float3 *normals,float3 *motionvel);
 
 //-Kernels for Damping.
-void ComputeDamping(double dt,tdouble4 plane,float dist,float over,tfloat3 factorxyz,float redumax
-  ,unsigned n,unsigned pini,const double2 *posxy,const double *posz,const typecode *code
-  ,float4 *velrhop);
-void ComputeDampingPla(double dt,tdouble4 plane,float dist,float over,tfloat3 factorxyz,float redumax
-  ,double zmin,double zmax,tdouble4 pla0,tdouble4 pla1,tdouble4 pla2,tdouble4 pla3
+void ComputeDampingPlane(double dt,double4 plane,float dist,float over
+  ,float3 factorxyz,float redumax,unsigned n,unsigned pini
+  ,const double2 *posxy,const double *posz,const typecode *code,float4 *velrhop);
+void ComputeDampingPlaneDom(double dt,double4 plane,float dist,float over,float3 factorxyz
+  ,float redumax,double zmin,double zmax,double4 pla0,double4 pla1,double4 pla2,double4 pla3
   ,unsigned n,unsigned pini,const double2 *posxy,const double *posz,const typecode *code
   ,float4 *velrhop);
 
