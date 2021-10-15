@@ -63,14 +63,14 @@ public:
   ///Types of damping configurations.
   typedef enum{ 
     DA_Plane=1
-   //,DA_Box=2
+   ,DA_Box=2
   }TpDamping; 
 
   ///Returns damping type as string.
   static std::string GetNameType(TpDamping type){
     switch(type){
-      case DA_Plane:       return("Plane");
-      //case DA_Box:         return("Box");
+      case DA_Plane:  return("Plane");
+      case DA_Box:    return("Box");
     }
     return("???");
   }
@@ -141,6 +141,67 @@ private:
 public:
   JDsDampingOp_Plane(unsigned id,const JXml *sxml,TiXmlElement* ele)
     :JDsDampingOp(id,DA_Plane){ Reset(); ReadXml(sxml,ele); }
+  void Reset();
+  void ReadXml(const JXml *sxml,TiXmlElement* ele);
+  void SaveVtkConfig(double dp,JVtkLib *sh)const;
+  void GetConfig(std::vector<std::string> &lines)const;
+
+  void ComputeDampingCpu(double dt,unsigned n,unsigned pini
+    ,const tdouble3 *pos,const typecode *code,tfloat4 *velrhop)const;
+
+#ifdef _WITHGPU
+  void ComputeDampingGpu(double dt,unsigned n,unsigned pini
+    ,const double2 *posxy,const double *posz,const typecode *code,float4 *velrhop)const;
+#endif
+};  
+
+
+//##############################################################################
+//# JDsDampingOp_Box
+//##############################################################################
+/// Damping according to distance to box limits.
+class JDsDampingOp_Box : public JDsDampingOp
+{
+public:
+///Direction mode.
+  typedef enum{ 
+    BDIR_Void=0
+   ,BDIR_Top=1
+   ,BDIR_Bottom=2
+   ,BDIR_Left=4
+   ,BDIR_Right=8
+   ,BDIR_Front=16
+   ,BDIR_Back=32
+   ,BDIR_All=63
+   ,BDIR_Error=64
+  }TpDirections;  
+
+  static std::string GetBoxDirText(TpDirections bdir);
+  static TpDirections GetBoxDir(std::string txdir);
+
+
+private:
+  TpDirections Directions; ///<Define the activated directions.
+  tdouble3 LimitMin1;  ///<Initial box point for minimal reduction.
+  tdouble3 LimitMin2;  ///<Final box point for minimal reduction.
+  tdouble3 LimitMax1;  ///<Initial box point for Miximum reduction.
+  tdouble3 LimitMax2;  ///<Final box point for Miximum reduction.
+
+  tdouble3 LimitOver1; ///<Initial box point for overlimit domain.
+  tdouble3 LimitOver2; ///<Final box point for overlimit domain.
+
+  tdouble3 BoxSize1;
+  tdouble3 BoxSize2;
+
+  //tplane3d Plane;     ///<Plane at the limitmin point. | Plano en el punto limitmin.
+  //float Dist;         ///<Distance between limitmin and limitmax points. | Distancia entre puntos limitmin y limitmax.
+
+private:
+  TpDirections ReadXmlDirections(const JXml *sxml,TiXmlElement* ele)const;
+
+public:
+  JDsDampingOp_Box(unsigned id,const JXml *sxml,TiXmlElement* ele)
+    :JDsDampingOp(id,DA_Box){ Reset(); ReadXml(sxml,ele); }
   void Reset();
   void ReadXml(const JXml *sxml,TiXmlElement* ele);
   void SaveVtkConfig(double dp,JVtkLib *sh)const;

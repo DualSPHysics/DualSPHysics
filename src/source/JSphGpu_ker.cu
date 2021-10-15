@@ -2707,6 +2707,14 @@ __device__ bool KerIsNormalFluid(const typecode *code,unsigned p){
   return(true);
 }
 //------------------------------------------------------------------------------
+/// Checks position is inside box limits.
+/// Comprueba si la posicion esta dentro de los limites.
+//------------------------------------------------------------------------------
+__device__ bool KerPointInBox(double px,double py,double pz,const double3 &p1,const double3 &p2)
+{
+  return(p1.x<=px && p1.y<=py && p1.z<=pz && px<=p2.x && py<=p2.y && pz<=p2.z);
+}
+//------------------------------------------------------------------------------
 /// Solves point on the plane.
 /// Resuelve punto en el plano.
 //------------------------------------------------------------------------------
@@ -2829,6 +2837,74 @@ void ComputeDampingPlaneDom(double dt,double4 plane,float dist,float over
   }
 }
 
+
+
+
+//------------------------------------------------------------------------------
+/// Applies Damping according box configuration.
+/// Aplica Damping segun cofiguracion de caja.
+//------------------------------------------------------------------------------
+__global__ void KerComputeDampingBox(unsigned n,unsigned pini
+  ,double dt,float3 factorxyz,float redumax
+  ,double3 limitmin1,double3 limitmin2,double3 limitmax1,double3 limitmax2
+  ,double3 limitover1,double3 limitover2,double3 boxsize1,double3 boxsize2
+  ,const double2 *posxy,const double *posz,const typecode *code
+  ,float4 *velrhop)
+{
+  unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
+  if(p<n){
+    const unsigned p1=p+pini;
+    const bool ok=KerIsNormalFluid(code,p1);//-Ignore floating and periodic particles. | Descarta particulas floating o periodicas.
+    if(ok){
+      const double2 rposxy=posxy[p1];
+      const double rposz=posz[p1];
+      //-Check if it is within the domain. | Comprueba si esta dentro del dominio.
+      if(KerPointInBox(rposxy.x,rposxy.y,rposz,limitover1,limitover2)){//-Inside overlimit domain.
+        if(!KerPointInBox(rposxy.x,rposxy.y,rposz,limitmin1,limitmin2)){//-Outside free domain.
+          double fdis=1.;
+          if(KerPointInBox(rposxy.x,rposxy.y,rposz,limitmax1,limitmax2)){//-Compute damping coefficient.
+            fdis=0;
+            if(boxsize2.z){ const double fdiss=(rposz   -limitmin2.z)/boxsize2.z; fdis=(fdis>=fdiss? fdis: fdiss); }
+            if(boxsize2.y){ const double fdiss=(rposxy.y-limitmin2.y)/boxsize2.y; fdis=(fdis>=fdiss? fdis: fdiss); }
+            if(boxsize2.x){ const double fdiss=(rposxy.x-limitmin2.x)/boxsize2.x; fdis=(fdis>=fdiss? fdis: fdiss); }
+            if(boxsize1.z){ const double fdiss=(limitmin1.z-rposz   )/boxsize1.z; fdis=(fdis>=fdiss? fdis: fdiss); }
+            if(boxsize1.y){ const double fdiss=(limitmin1.y-rposxy.y)/boxsize1.y; fdis=(fdis>=fdiss? fdis: fdiss); }
+            if(boxsize1.x){ const double fdiss=(limitmin1.x-rposxy.x)/boxsize1.x; fdis=(fdis>=fdiss? fdis: fdiss); }
+          }
+          const double redudt=dt*(fdis*fdis)*redumax;
+          double redudtx=(1.-redudt*factorxyz.x);
+          double redudty=(1.-redudt*factorxyz.y);
+          double redudtz=(1.-redudt*factorxyz.z);
+          redudtx=(redudtx<0? 0.: redudtx);
+          redudty=(redudty<0? 0.: redudty);
+          redudtz=(redudtz<0? 0.: redudtz);
+          float4 rvel=velrhop[p1];
+          rvel.x=float(redudtx*rvel.x); 
+          rvel.y=float(redudty*rvel.y); 
+          rvel.z=float(redudtz*rvel.z);
+          //rvel.x=rvel.y=rvel.z=0;
+          velrhop[p1]=rvel;
+        }
+      }
+    }
+  }
+}
+//==============================================================================
+/// Applies Damping according box configuration.
+/// Aplica Damping segun cofiguracion de caja.
+//==============================================================================
+void ComputeDampingBox(unsigned n,unsigned pini,double dt,float3 factorxyz,float redumax
+  ,double3 limitmin1,double3 limitmin2,double3 limitmax1,double3 limitmax2
+  ,double3 limitover1,double3 limitover2,double3 boxsize1,double3 boxsize2
+  ,const double2 *posxy,const double *posz,const typecode *code,float4 *velrhop)
+{
+  if(n){
+    dim3 sgridf=GetSimpleGridSize(n,SPHBSIZE);
+    KerComputeDampingBox <<<sgridf,SPHBSIZE>>> (n,pini,dt,factorxyz,redumax
+      ,limitmin1,limitmin2,limitmax1,limitmax2,limitover1,limitover2,boxsize1,boxsize2
+      ,posxy,posz,code,velrhop);
+  }
+}
 
 }
 

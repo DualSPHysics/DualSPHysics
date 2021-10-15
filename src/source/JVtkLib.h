@@ -26,6 +26,7 @@
 //# - Nuevas funciones AddShapePoint() y AddShapePoints(). (04-08-2020)
 //# - Nuevas funciones AddShapeTriangle(). (26-08-2020)
 //# - La funcion CreateOBJsByMk() devuelve en numero de faces creadas. (v5.0.158 / 18-10-2020)
+//# - Nueva funcion SetShapeWireMode(). (14-10-2021)
 //#############################################################################
 
 /// \file JVtkLib.h \brief Declares the class \ref JVtkLib.
@@ -96,6 +97,9 @@ public:
   //==============================================================================
   /// Generates a VTK file with shapes.
   void SaveShapeVtk(std::string file,std::string varname,bool createpath=true);
+
+  /// Set wire mode.
+  void SetShapeWireMode(bool wiremode);
 
   /// Adds shape point.
   void AddShapePoint(const tfloat3 &pt,int value);

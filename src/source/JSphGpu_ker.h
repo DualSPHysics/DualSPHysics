@@ -282,6 +282,10 @@ void ComputeDampingPlaneDom(double dt,double4 plane,float dist,float over,float3
   ,float redumax,double zmin,double zmax,double4 pla0,double4 pla1,double4 pla2,double4 pla3
   ,unsigned n,unsigned pini,const double2 *posxy,const double *posz,const typecode *code
   ,float4 *velrhop);
+void ComputeDampingBox(unsigned n,unsigned pini,double dt,float3 factorxyz,float redumax
+  ,double3 limitmin1,double3 limitmin2,double3 limitmax1,double3 limitmax2
+  ,double3 limitover1,double3 limitover2,double3 boxsize1,double3 boxsize2
+  ,const double2 *posxy,const double *posz,const typecode *code,float4 *velrhop);
 
 }
 

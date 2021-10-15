@@ -60,6 +60,7 @@ public:
   // Functions to create VTK files with shapes.
   //==============================================================================
   void SaveShapeVtk(std::string file,std::string varname,bool createpath=true){}
+  void SetShapeWireMode(bool wiremode){}
   void AddShapePoint(const tfloat3 &pt,int value){}
   void AddShapePoint(const tdouble3 &pt,int value){}
   void AddShapePoints(unsigned np,const tfloat3 *vp,int value){}

@@ -33,7 +33,7 @@
 #include "FunctionsBasic_iker.h"
 #endif
 
-using std::string;
+using namespace std;
 
 //##############################################################################
 //# JDsDampingOp_Plane
@@ -91,7 +91,7 @@ void JDsDampingOp_Plane::ComputeDomPlanes(){
 }
 
 //==============================================================================
-/// Reads particles information in xml format.
+/// Reads damping configuration in xml format.
 //==============================================================================
 void JDsDampingOp_Plane::ReadXml(const JXml *sxml,TiXmlElement* ele){
   sxml->CheckElementNames(ele,true,"overlimit redumax factorxyz limitmin limitmax domain");
@@ -172,7 +172,7 @@ void JDsDampingOp_Plane::SaveVtkConfig(double dp,JVtkLib *sh)const{
 /// Returns strings with configuration.
 //==============================================================================
 void JDsDampingOp_Plane::GetConfig(std::vector<std::string> &lines)const{
-  lines.push_back(fun::PrintStr("Damping zone_%u (%s): ",Id,GetNameType(Type).c_str()));
+  lines.push_back(fun::PrintStr("Damping zone_%u (type: %s): ",Id,GetNameType(Type).c_str()));
   lines.push_back(fun::PrintStr("  LimitPoints: %s overlimit:%f",fun::Double3gRangeStr(LimitMin,LimitMax).c_str(),OverLimit));
   lines.push_back(fun::PrintStr("  LimitDist..: %g",Dist));
   lines.push_back(fun::PrintStr("  ReduMax....: %g",ReduMax));
@@ -261,6 +261,254 @@ void JDsDampingOp_Plane::ComputeDampingGpu(double dt,unsigned n,unsigned pini
 }
 #endif
 
+//##############################################################################
+//# JDsDampingOp_Box
+//##############################################################################
+//==============================================================================
+/// Initialisation of variables.
+//==============================================================================
+void JDsDampingOp_Box::Reset(){
+  JDsDampingOp::Reset();
+  Directions=BDIR_All;
+  LimitMin1=LimitMin2=TDouble3(0);
+  LimitMax1=LimitMax2=TDouble3(0);
+  //-Other variables.
+  LimitOver1=LimitOver2=TDouble3(0);
+  BoxSize1=BoxSize2=TDouble3(0);
+}
+
+//==============================================================================
+/// Returns box direction from string.
+//==============================================================================
+JDsDampingOp_Box::TpDirections JDsDampingOp_Box::GetBoxDir(std::string txdir){
+  if(txdir=="top"   )return(BDIR_Top);
+  if(txdir=="bottom")return(BDIR_Bottom);
+  if(txdir=="left"  )return(BDIR_Left);
+  if(txdir=="right" )return(BDIR_Right);
+  if(txdir=="front" )return(BDIR_Front);
+  if(txdir=="back"  )return(BDIR_Back);
+  if(txdir=="all"   )return(BDIR_All);
+  return(BDIR_Error);
+}
+
+//==============================================================================
+/// Returns box direction from string.
+//==============================================================================
+std::string JDsDampingOp_Box::GetBoxDirText(JDsDampingOp_Box::TpDirections bdir){
+  if(bdir>=BDIR_Error)return("???");
+  if(bdir==BDIR_All  )return("all");
+  if(bdir==BDIR_Void )return("void");
+  std::string ret;
+  if(bdir&BDIR_Top   )ret=ret+std::string(ret.empty()? "": ", ")+"top";
+  if(bdir&BDIR_Bottom)ret=ret+std::string(ret.empty()? "": ", ")+"bottom";
+  if(bdir&BDIR_Left  )ret=ret+std::string(ret.empty()? "": ", ")+"left";
+  if(bdir&BDIR_Right )ret=ret+std::string(ret.empty()? "": ", ")+"right";
+  if(bdir&BDIR_Front )ret=ret+std::string(ret.empty()? "": ", ")+"front";
+  if(bdir&BDIR_Back  )ret=ret+std::string(ret.empty()? "": ", ")+"back";
+  return(ret);
+}
+
+//==============================================================================
+/// Reads configuration on directions in xml format.
+//==============================================================================
+JDsDampingOp_Box::TpDirections JDsDampingOp_Box::ReadXmlDirections(const JXml *sxml
+  ,TiXmlElement* ele)const
+{
+  string dirs=sxml->ReadElementStr(ele,"directions","value",true);
+  dirs=fun::StrReplace(dirs,","," ");
+  dirs=fun::StrTrim(dirs);
+  dirs=fun::StrTrimRepeated(dirs);
+  dirs=fun::StrLower(dirs);
+  TpDirections ret=BDIR_All;
+  if(!dirs.empty()){
+    ret=BDIR_Void;
+    string aux=dirs;
+    while(!aux.empty()){
+      string value=fun::StrSplit(" ",aux);
+      if(!value.empty()){
+        bool add=true;
+        if(value[0]=='+')value=value.substr(1);
+        if(value[0]=='-'){ value=value.substr(1); add=false; }
+        TpDirections bdir=GetBoxDir(value);
+        if(bdir==BDIR_Error)sxml->ErrReadElement(ele,"directions",false,"Some value is invalid.");
+        if(add)ret=TpDirections(ret|bdir);
+        else ret=TpDirections(ret&(BDIR_All^bdir));
+      }
+    }
+  }
+  if(ret==BDIR_Void)sxml->ErrReadElement(ele,"directions",false,"At least one direction must be confirured.");
+  return(ret);
+}
+
+//==============================================================================
+/// Reads damping configuration in xml format.
+//==============================================================================
+void JDsDampingOp_Box::ReadXml(const JXml *sxml,TiXmlElement* ele){
+  sxml->CheckElementNames(ele,true,"overlimit redumax factorxyz directions limitmin limitmax");
+  //-General options.
+  OverLimit=sxml->ReadElementFloat(ele,"overlimit","value");
+  ReduMax=sxml->ReadElementFloat(ele,"redumax","value",true,10);
+  Factorxyz.x=sxml->ReadElementFloat(ele,"factorxyz","x",true,1);
+  Factorxyz.y=sxml->ReadElementFloat(ele,"factorxyz","y",true,1);
+  Factorxyz.z=sxml->ReadElementFloat(ele,"factorxyz","z",true,1);
+  //-Specific options.
+  Directions=ReadXmlDirections(sxml,ele);
+  TiXmlElement* emin=sxml->GetFirstElement(ele,"limitmin",false);
+  if(emin){
+    LimitMin1=sxml->ReadElementDouble3(emin,"pointini");
+    LimitMin2=sxml->ReadElementDouble3(emin,"pointend");
+  }
+  TiXmlElement* emax=sxml->GetFirstElement(ele,"limitmax",false);
+  if(emin){
+    LimitMax1=sxml->ReadElementDouble3(emax,"pointini");
+    LimitMax2=sxml->ReadElementDouble3(emax,"pointend");
+  }
+  //-Check configuration.
+  const string errdamp=fun::PrintStr("Error in configuration of damping %d.",Id);
+  if(!(LimitMin1<=LimitMin2))Run_Exceptioon(errdamp+" Begin of LimitMin is higher than end of LimitMin.");
+  if(!(LimitMax1<=LimitMax2))Run_Exceptioon(errdamp+" Begin of LimitMax is higher than end of LimitMax.");
+  if(!(LimitMax1<=LimitMin1))Run_Exceptioon(errdamp+" LimitMin box is not inside of LimitMax box.");
+  if(!(LimitMin2<=LimitMax2))Run_Exceptioon(errdamp+" LimitMin box is not inside of LimitMax box.");
+  if(OverLimit<0)Run_Exceptioon(errdamp+" OverLimit must be higher than 1.");
+  //-Defines domains according to active directions.
+  LimitOver1=LimitMax1-TDouble3(OverLimit);
+  LimitOver2=LimitMax2+TDouble3(OverLimit);
+  if(!(Directions&BDIR_Top   ))LimitMax2.z=LimitOver2.z=LimitMin2.z;
+  if(!(Directions&BDIR_Back  ))LimitMax2.y=LimitOver2.y=LimitMin2.y;
+  if(!(Directions&BDIR_Right ))LimitMax2.x=LimitOver2.x=LimitMin2.x;
+  if(!(Directions&BDIR_Bottom))LimitMax1.z=LimitOver1.z=LimitMin1.z;
+  if(!(Directions&BDIR_Front ))LimitMax1.y=LimitOver1.y=LimitMin1.y;
+  if(!(Directions&BDIR_Left  ))LimitMax1.x=LimitOver1.x=LimitMin1.x;
+  //-Defines BoxSize values.
+  BoxSize1=LimitMin1-LimitMax1;
+  BoxSize2=LimitMax2-LimitMin2;
+  if(!(Directions&BDIR_Top   ) || BoxSize2.z<0)BoxSize2.z=0;
+  if(!(Directions&BDIR_Back  ) || BoxSize2.y<0)BoxSize2.y=0;
+  if(!(Directions&BDIR_Right ) || BoxSize2.x<0)BoxSize2.x=0;
+  if(!(Directions&BDIR_Bottom) || BoxSize1.z<0)BoxSize1.z=0;
+  if(!(Directions&BDIR_Front ) || BoxSize1.y<0)BoxSize1.y=0;
+  if(!(Directions&BDIR_Left  ) || BoxSize1.x<0)BoxSize1.x=0;
+}
+
+//==============================================================================
+/// Saves VTK file with scheme of configuration.
+//==============================================================================
+void JDsDampingOp_Box::SaveVtkConfig(double dp,JVtkLib *sh)const{
+  const int cv=int(Id);
+  const tdouble3 smin=LimitMin2-LimitMin1;
+  const tdouble3 smax=LimitMax2-LimitMax1;
+  const tdouble3 sove=LimitOver2-LimitOver1;
+  //-Domains.
+  sh->SetShapeWireMode(true);
+  sh->AddShapeBoxSize(LimitMin1,smin,cv);
+  sh->AddShapeBoxSize(LimitMax1,smax,cv);
+  sh->AddShapeBoxSize(LimitOver1,sove,cv);
+  sh->SetShapeWireMode(false);
+  //-Lines from LimitMin box to LimitMax box.
+  const tdouble3 pt1=LimitMin1,pt1b=LimitMax1;
+  const tdouble3 pt2=pt1+TDouble3(0     ,0     ,smin.z),pt2b=pt1b+TDouble3(0     ,0     ,smax.z);
+  const tdouble3 pt3=pt1+TDouble3(0     ,smin.y,0     ),pt3b=pt1b+TDouble3(0     ,smax.y,0     );
+  const tdouble3 pt4=pt1+TDouble3(0     ,smin.y,smin.z),pt4b=pt1b+TDouble3(0     ,smax.y,smax.z);
+  const tdouble3 pt5=pt1+TDouble3(smin.x,0     ,0     ),pt5b=pt1b+TDouble3(smax.x,0     ,0     );
+  const tdouble3 pt6=pt1+TDouble3(smin.x,0     ,smin.z),pt6b=pt1b+TDouble3(smax.x,0     ,smax.z);
+  const tdouble3 pt7=pt1+TDouble3(smin.x,smin.y,0     ),pt7b=pt1b+TDouble3(smax.x,smax.y,0     );
+  const tdouble3 pt8=pt1+TDouble3(smin.x,smin.y,smin.z),pt8b=pt1b+TDouble3(smax.x,smax.y,smax.z);
+  sh->AddShapeLine(pt1,pt1b,cv);
+  sh->AddShapeLine(pt2,pt2b,cv);
+  sh->AddShapeLine(pt3,pt3b,cv);
+  sh->AddShapeLine(pt4,pt4b,cv);
+  sh->AddShapeLine(pt5,pt5b,cv);
+  sh->AddShapeLine(pt6,pt6b,cv);
+  sh->AddShapeLine(pt7,pt7b,cv);
+  sh->AddShapeLine(pt8,pt8b,cv);
+  //-Active directions.
+  if(Directions&BDIR_Top   )sh->AddShapeQuad(pt2,pt6,pt8,pt4,cv);
+  if(Directions&BDIR_Bottom)sh->AddShapeQuad(pt1,pt3,pt7,pt5,cv);
+  if(Directions&BDIR_Left  )sh->AddShapeQuad(pt1,pt2,pt4,pt3,cv);
+  if(Directions&BDIR_Right )sh->AddShapeQuad(pt5,pt7,pt8,pt6,cv);
+  if(Directions&BDIR_Front )sh->AddShapeQuad(pt1,pt5,pt6,pt2,cv);
+  if(Directions&BDIR_Back  )sh->AddShapeQuad(pt3,pt4,pt8,pt7,cv);
+}
+
+//==============================================================================
+/// Returns strings with configuration.
+//==============================================================================
+void JDsDampingOp_Box::GetConfig(std::vector<std::string> &lines)const{
+  lines.push_back(fun::PrintStr("Damping zone_%u (type: %s): ",Id,GetNameType(Type).c_str()));
+  lines.push_back(fun::PrintStr("  BoxDirections.: [%s]",GetBoxDirText(Directions).c_str()));
+  lines.push_back(fun::PrintStr("  MinimalDamping: %s",fun::Double3gRangeStr(LimitMin1,LimitMin2).c_str()));
+  lines.push_back(fun::PrintStr("  MaximumDamping: %s",fun::Double3gRangeStr(LimitMax1,LimitMax2).c_str()));
+  lines.push_back(fun::PrintStr("  Overlimit.....: %f",OverLimit));
+  lines.push_back(fun::PrintStr("  ReduMax.......: %g",ReduMax));
+  lines.push_back(fun::PrintStr("  Factorxyz.....: (%g,%g,%g)",Factorxyz.x,Factorxyz.y,Factorxyz.z));
+}
+
+//==============================================================================
+/// Applies Damping to the indicated particles within the domain delimited by 
+/// domplaX planes.
+//==============================================================================
+void JDsDampingOp_Box::ComputeDampingCpu(double dt,unsigned n,unsigned pini
+  ,const tdouble3 *pos,const typecode *code,tfloat4 *velrhop)const
+{
+  const tfloat3 factorxyz=Factorxyz;
+  const float redumax=ReduMax;
+  const int inp=int(n);
+  #ifdef OMP_USE
+    #pragma omp parallel for schedule (static) if(inp>OMP_LIMIT_COMPUTEMEDIUM)
+  #endif
+  for(int p=0;p<inp;p++){
+    const unsigned p1=pini+unsigned(p);
+    bool ok=true;
+    if(code){//-Ignores floating and periodic particles. | Descarta particulas floating o periodicas.
+      const typecode cod=code[p1];
+      ok=(CODE_IsNormal(cod) && CODE_IsFluid(cod));
+    }
+    if(ok){
+      const tdouble3 ps=pos[p1];
+      //-Check if it is within the domain. | Comprueba si esta dentro del dominio.
+      if(LimitOver1<=ps && ps<=LimitOver2){//-Inside overlimit domain.
+        if(!(LimitMin1<=ps && ps<=LimitMin2)){//-Outside free domain.
+          double fdis=1.;
+          if(LimitMax1<=ps && ps<=LimitMax2){//-Compute damping coefficient.
+            fdis=0;
+            if(BoxSize2.z){ const double fdiss=(ps.z-LimitMin2.z)/BoxSize2.z; fdis=(fdis>=fdiss? fdis: fdiss); }
+            if(BoxSize2.y){ const double fdiss=(ps.y-LimitMin2.y)/BoxSize2.y; fdis=(fdis>=fdiss? fdis: fdiss); }
+            if(BoxSize2.x){ const double fdiss=(ps.x-LimitMin2.x)/BoxSize2.x; fdis=(fdis>=fdiss? fdis: fdiss); }
+            if(BoxSize1.z){ const double fdiss=(LimitMin1.z-ps.z)/BoxSize1.z; fdis=(fdis>=fdiss? fdis: fdiss); }
+            if(BoxSize1.y){ const double fdiss=(LimitMin1.y-ps.y)/BoxSize1.y; fdis=(fdis>=fdiss? fdis: fdiss); }
+            if(BoxSize1.x){ const double fdiss=(LimitMin1.x-ps.x)/BoxSize1.x; fdis=(fdis>=fdiss? fdis: fdiss); }
+          }
+          const double redudt=dt*(fdis*fdis)*redumax;
+          double redudtx=(1.-redudt*factorxyz.x);
+          double redudty=(1.-redudt*factorxyz.y);
+          double redudtz=(1.-redudt*factorxyz.z);
+          redudtx=(redudtx<0? 0.: redudtx);
+          redudty=(redudty<0? 0.: redudty);
+          redudtz=(redudtz<0? 0.: redudtz);
+          velrhop[p1].x=float(redudtx*velrhop[p1].x);
+          velrhop[p1].y=float(redudty*velrhop[p1].y);
+          velrhop[p1].z=float(redudtz*velrhop[p1].z);
+        }
+      }
+    }
+  }
+}
+
+#ifdef _WITHGPU
+//==============================================================================
+/// Applies Damping to the indicated particles within the domain delimited by 
+/// domplaX planes.
+//==============================================================================
+void JDsDampingOp_Box::ComputeDampingGpu(double dt,unsigned n,unsigned pini
+  ,const double2 *posxy,const double *posz,const typecode *code,float4 *velrhop)const
+{
+  cusph::ComputeDampingBox(n,pini,dt,Float3(Factorxyz),ReduMax
+    ,Double3(LimitMin1),Double3(LimitMin2),Double3(LimitMax1),Double3(LimitMax2)
+    ,Double3(LimitOver1),Double3(LimitOver2),Double3(BoxSize1),Double3(BoxSize2)
+    ,posxy,posz,code,velrhop);
+}
+#endif
+
 
 //##############################################################################
 //# JDsDamping
@@ -290,7 +538,7 @@ void JDsDamping::Reset(){
 }
 
 //==============================================================================
-/// Loads initial conditions of XML object.
+/// Loads damping configuration of XML object.
 //==============================================================================
 void JDsDamping::LoadXml(const JXml *sxml,const std::string &place){
   Reset();
@@ -300,7 +548,7 @@ void JDsDamping::LoadXml(const JXml *sxml,const std::string &place){
 }
 
 //==============================================================================
-/// Reads list of initial conditions in the XML node.
+/// Reads list of damping configuration in the XML node.
 //==============================================================================
 void JDsDamping::ReadXml(const JXml *sxml,TiXmlElement* lis){
   //-Loads damping zones.
@@ -309,7 +557,8 @@ void JDsDamping::ReadXml(const JXml *sxml,TiXmlElement* lis){
     string cmd=ele->Value();
     if(cmd.length() && cmd[0]!='_' && sxml->CheckElementActive(ele)){
       //printf("-----------> [%s]\n",cmd.c_str());
-      if(cmd=="dampingzone"){  JDsDampingOp_Plane *dmp=new JDsDampingOp_Plane(Count(),sxml,ele); List.push_back(dmp);  }
+           if(cmd=="dampingzone"){  JDsDampingOp_Plane *dmp=new JDsDampingOp_Plane(Count(),sxml,ele); List.push_back(dmp);  }
+      else if(cmd=="dampingbox" ){  JDsDampingOp_Box   *dmp=new JDsDampingOp_Box  (Count(),sxml,ele); List.push_back(dmp);  }
       else sxml->ErrReadElement(ele,cmd,false);
     }
     ele=ele->NextSiblingElement();
