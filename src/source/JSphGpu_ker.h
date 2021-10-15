@@ -286,6 +286,11 @@ void ComputeDampingBox(unsigned n,unsigned pini,double dt,float3 factorxyz,float
   ,double3 limitmin1,double3 limitmin2,double3 limitmax1,double3 limitmax2
   ,double3 limitover1,double3 limitover2,double3 boxsize1,double3 boxsize2
   ,const double2 *posxy,const double *posz,const typecode *code,float4 *velrhop);
+void ComputeDampingCylinder(unsigned n,unsigned pini
+  ,double dt,double3 point1,double3 point2,double limitmin
+  ,float dist,float over,float3 factorxyz,float redumax
+  ,const double2 *posxy,const double *posz,const typecode *code
+  ,float4 *velrhop);
 
 }
 

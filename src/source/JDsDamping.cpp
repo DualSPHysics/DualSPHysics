@@ -180,8 +180,7 @@ void JDsDampingOp_Plane::GetConfig(std::vector<std::string> &lines)const{
 }
 
 //==============================================================================
-/// Applies Damping to the indicated particles within the domain delimited by 
-/// domplaX planes.
+/// Applies Damping to particles within the domain configuration on CPU.
 //==============================================================================
 void JDsDampingOp_Plane::ComputeDampingCpu(double dt,unsigned n,unsigned pini
   ,const tdouble3 *pos,const typecode *code,tfloat4 *velrhop)const
@@ -212,7 +211,7 @@ void JDsDampingOp_Plane::ComputeDampingCpu(double dt,unsigned n,unsigned pini
     if(ok){
       const tdouble3 ps=pos[p1];
       //-Check if it is within the domain. | Comprueba si esta dentro del dominio.
-      double vdis=fgeo::PlanePoint(plane,ps);
+      const double vdis=fgeo::PlanePoint(plane,ps);
       if(0<vdis && vdis<=dist+over){
         if(!usedomain || (ps.z>=zmin && ps.z<=zmax && fgeo::PlanePoint(pla0,ps)<=0 && fgeo::PlanePoint(pla1,ps)<=0 && fgeo::PlanePoint(pla2,ps)<=0 && fgeo::PlanePoint(pla3,ps)<=0)){
           const double fdis=(vdis>=dist? 1.: vdis/dist);
@@ -234,8 +233,7 @@ void JDsDampingOp_Plane::ComputeDampingCpu(double dt,unsigned n,unsigned pini
 
 #ifdef _WITHGPU
 //==============================================================================
-/// Applies Damping to the indicated particles within the domain delimited by 
-/// domplaX planes.
+/// Applies Damping to particles within the domain configuration on GPU.
 //==============================================================================
 void JDsDampingOp_Plane::ComputeDampingGpu(double dt,unsigned n,unsigned pini
   ,const double2 *posxy,const double *posz,const typecode *code,float4 *velrhop)const
@@ -260,6 +258,7 @@ void JDsDampingOp_Plane::ComputeDampingGpu(double dt,unsigned n,unsigned pini
   }
 }
 #endif
+
 
 //##############################################################################
 //# JDsDampingOp_Box
@@ -444,8 +443,7 @@ void JDsDampingOp_Box::GetConfig(std::vector<std::string> &lines)const{
 }
 
 //==============================================================================
-/// Applies Damping to the indicated particles within the domain delimited by 
-/// domplaX planes.
+/// Applies Damping to particles within the domain configuration on CPU.
 //==============================================================================
 void JDsDampingOp_Box::ComputeDampingCpu(double dt,unsigned n,unsigned pini
   ,const tdouble3 *pos,const typecode *code,tfloat4 *velrhop)const
@@ -496,8 +494,7 @@ void JDsDampingOp_Box::ComputeDampingCpu(double dt,unsigned n,unsigned pini
 
 #ifdef _WITHGPU
 //==============================================================================
-/// Applies Damping to the indicated particles within the domain delimited by 
-/// domplaX planes.
+/// Applies Damping to particles within the domain configuration on GPU.
 //==============================================================================
 void JDsDampingOp_Box::ComputeDampingGpu(double dt,unsigned n,unsigned pini
   ,const double2 *posxy,const double *posz,const typecode *code,float4 *velrhop)const
@@ -506,6 +503,123 @@ void JDsDampingOp_Box::ComputeDampingGpu(double dt,unsigned n,unsigned pini
     ,Double3(LimitMin1),Double3(LimitMin2),Double3(LimitMax1),Double3(LimitMax2)
     ,Double3(LimitOver1),Double3(LimitOver2),Double3(BoxSize1),Double3(BoxSize2)
     ,posxy,posz,code,velrhop);
+}
+#endif
+
+
+
+//##############################################################################
+//# JDsDampingOp_Cylinder
+//##############################################################################
+//==============================================================================
+/// Initialisation of variables.
+//==============================================================================
+void JDsDampingOp_Cylinder::Reset(){
+  JDsDampingOp::Reset();
+  Point1=Point2=TDouble3(0);
+  LimitMin=LimitMax=0;
+}
+
+//==============================================================================
+/// Reads damping configuration in xml format.
+//==============================================================================
+void JDsDampingOp_Cylinder::ReadXml(const JXml *sxml,TiXmlElement* ele){
+  sxml->CheckElementNames(ele,true,"overlimit redumax factorxyz point1 point2 limitmin limitmax");
+  //-General options.
+  OverLimit=sxml->ReadElementFloat(ele,"overlimit","value");
+  ReduMax=sxml->ReadElementFloat(ele,"redumax","value",true,10);
+  Factorxyz.x=sxml->ReadElementFloat(ele,"factorxyz","x",true,1);
+  Factorxyz.y=sxml->ReadElementFloat(ele,"factorxyz","y",true,1);
+  Factorxyz.z=sxml->ReadElementFloat(ele,"factorxyz","z",true,1);
+  //-Specific options.
+  Point1=sxml->ReadElementDouble3(ele,"point1");
+  Point2=sxml->ReadElementDouble3(ele,"point2");
+  LimitMin=sxml->ReadElementDouble(ele,"limitmin","radius");
+  LimitMax=sxml->ReadElementDouble(ele,"limitmax","radius");
+  //-Check configuration.
+  const string errdamp=fun::PrintStr("Error in configuration of damping %d.",Id);
+  if(LimitMin>LimitMax)Run_Exceptioon(errdamp+" LimitMin radius is higher than LimitMax radius.");
+}
+
+//==============================================================================
+/// Saves VTK file with scheme of configuration.
+//==============================================================================
+void JDsDampingOp_Cylinder::SaveVtkConfig(double dp,JVtkLib *sh)const{
+  const int cv=int(Id);
+  sh->SetShapeWireMode(true);
+  sh->AddShapeCylinder(Point1,Point2,LimitMin,28,cv,3);
+  sh->SetShapeWireMode(false);
+  sh->AddShapeCylinder(Point1,Point2,LimitMax,28,cv,3);
+  sh->SetShapeWireMode(true);
+  sh->AddShapeCylinder(Point1,Point2,LimitMax+OverLimit,28,cv,3);
+}
+
+//==============================================================================
+/// Returns strings with configuration.
+//==============================================================================
+void JDsDampingOp_Cylinder::GetConfig(std::vector<std::string> &lines)const{
+  lines.push_back(fun::PrintStr("Damping zone_%u (type: %s): ",Id,GetNameType(Type).c_str()));
+  lines.push_back(fun::PrintStr("  Axis points.: %s",fun::Double3gRangeStr(Point1,Point2).c_str()));
+  lines.push_back(fun::PrintStr("  LimitMin....: %f",LimitMin));
+  lines.push_back(fun::PrintStr("  LimitMax....: %f",LimitMax));
+  lines.push_back(fun::PrintStr("  Overlimit...: %f",OverLimit));
+  lines.push_back(fun::PrintStr("  ReduMax.....: %g",ReduMax));
+  lines.push_back(fun::PrintStr("  Factorxyz...: (%g,%g,%g)",Factorxyz.x,Factorxyz.y,Factorxyz.z));
+}
+
+//==============================================================================
+/// Applies Damping to particles within the domain configuration on CPU.
+//==============================================================================
+void JDsDampingOp_Cylinder::ComputeDampingCpu(double dt,unsigned n,unsigned pini
+  ,const tdouble3 *pos,const typecode *code,tfloat4 *velrhop)const
+{
+  const float dist=float(LimitMax-LimitMin);
+  const bool isvertical=(Point1.x==Point2.x && Point1.y==Point2.y);
+  const int inp=int(n);
+  #ifdef OMP_USE
+    #pragma omp parallel for schedule (static) if(inp>OMP_LIMIT_COMPUTEMEDIUM)
+  #endif
+  for(int p=0;p<inp;p++){
+    const unsigned p1=pini+unsigned(p);
+    bool ok=true;
+    if(code){//-Ignores floating and periodic particles. | Descarta particulas floating o periodicas.
+      const typecode cod=code[p1];
+      ok=(CODE_IsNormal(cod) && CODE_IsFluid(cod));
+    }
+    if(ok){
+      //-Check if it is within the domain. | Comprueba si esta dentro del dominio.
+      const tdouble3 ps=pos[p1];
+      const double vdis=(isvertical? 
+        sqrt((ps.x-Point1.x)*(ps.x-Point1.x)+(ps.y-Point1.y)*(ps.y-Point1.y)): 
+        fgeo::LinePointDist(ps,Point1,Point2)
+        ) - LimitMin;
+      if(0<vdis && vdis<=dist+OverLimit){
+        const double fdis=(vdis>=dist? 1.: vdis/dist);
+        const double redudt=dt*(fdis*fdis)*ReduMax;
+        double redudtx=(1.-redudt*Factorxyz.x);
+        double redudty=(1.-redudt*Factorxyz.y);
+        double redudtz=(1.-redudt*Factorxyz.z);
+        redudtx=(redudtx<0? 0.: redudtx);
+        redudty=(redudty<0? 0.: redudty);
+        redudtz=(redudtz<0? 0.: redudtz);
+        velrhop[p1].x=float(redudtx*velrhop[p1].x);
+        velrhop[p1].y=float(redudty*velrhop[p1].y);
+        velrhop[p1].z=float(redudtz*velrhop[p1].z);
+      }
+    }
+  }
+}
+
+#ifdef _WITHGPU
+//==============================================================================
+/// Applies Damping to particles within the domain configuration on GPU.
+//==============================================================================
+void JDsDampingOp_Cylinder::ComputeDampingGpu(double dt,unsigned n,unsigned pini
+  ,const double2 *posxy,const double *posz,const typecode *code,float4 *velrhop)const
+{
+  const float dist=float(LimitMax-LimitMin);
+  cusph::ComputeDampingCylinder(n,pini,dt,Double3(Point1),Double3(Point2),LimitMin
+    ,dist,OverLimit,Float3(Factorxyz),ReduMax,posxy,posz,code,velrhop);
 }
 #endif
 
@@ -557,8 +671,9 @@ void JDsDamping::ReadXml(const JXml *sxml,TiXmlElement* lis){
     string cmd=ele->Value();
     if(cmd.length() && cmd[0]!='_' && sxml->CheckElementActive(ele)){
       //printf("-----------> [%s]\n",cmd.c_str());
-           if(cmd=="dampingzone"){  JDsDampingOp_Plane *dmp=new JDsDampingOp_Plane(Count(),sxml,ele); List.push_back(dmp);  }
-      else if(cmd=="dampingbox" ){  JDsDampingOp_Box   *dmp=new JDsDampingOp_Box  (Count(),sxml,ele); List.push_back(dmp);  }
+           if(cmd=="dampingzone"    ){  JDsDampingOp_Plane    *dmp=new JDsDampingOp_Plane   (Count(),sxml,ele); List.push_back(dmp);  }
+      else if(cmd=="dampingbox"     ){  JDsDampingOp_Box      *dmp=new JDsDampingOp_Box     (Count(),sxml,ele); List.push_back(dmp);  }
+      else if(cmd=="dampingcylinder"){  JDsDampingOp_Cylinder *dmp=new JDsDampingOp_Cylinder(Count(),sxml,ele); List.push_back(dmp);  }
       else sxml->ErrReadElement(ele,cmd,false);
     }
     ele=ele->NextSiblingElement();

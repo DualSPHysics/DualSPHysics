@@ -2785,7 +2785,7 @@ void ComputeDampingPlane(double dt,double4 plane,float dist,float over
 /// Applies Damping to limited domain.
 /// Aplica Damping limitado a un dominio.
 //------------------------------------------------------------------------------
-__global__ void ComputeDampingPlaneDom(unsigned n,unsigned pini
+__global__ void KerComputeDampingPlaneDom(unsigned n,unsigned pini
   ,double dt,double4 plane,float dist,float over,float3 factorxyz,float redumax
   ,double zmin,double zmax,double4 pla0,double4 pla1,double4 pla2,double4 pla3
   ,const double2 *posxy,const double *posz,const typecode *code
@@ -2832,12 +2832,10 @@ void ComputeDampingPlaneDom(double dt,double4 plane,float dist,float over
 {
   if(n){
     dim3 sgridf=GetSimpleGridSize(n,SPHBSIZE);
-    ComputeDampingPlaneDom <<<sgridf,SPHBSIZE>>> (n,pini,dt,plane,dist,over,factorxyz
+    KerComputeDampingPlaneDom <<<sgridf,SPHBSIZE>>> (n,pini,dt,plane,dist,over,factorxyz
       ,redumax,zmin,zmax,pla0,pla1,pla2,pla3,posxy,posz,code,velrhop);
   }
 }
-
-
 
 
 //------------------------------------------------------------------------------
@@ -2905,6 +2903,68 @@ void ComputeDampingBox(unsigned n,unsigned pini,double dt,float3 factorxyz,float
       ,posxy,posz,code,velrhop);
   }
 }
+
+
+//------------------------------------------------------------------------------
+/// Applies Damping to limited cylinder domain.
+/// Aplica Damping limitado a un dominio de cilindro.
+//------------------------------------------------------------------------------
+__global__ void KerComputeDampingCylinder(unsigned n,unsigned pini
+  ,double dt,bool isvertical,double3 point1,double3 point2,double limitmin
+  ,float dist,float over,float3 factorxyz,float redumax
+  ,const double2 *posxy,const double *posz,const typecode *code
+  ,float4 *velrhop)
+{
+  unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
+  if(p<n){
+    const unsigned p1=p+pini;
+    const bool ok=KerIsNormalFluid(code,p1);//-Ignore floating and periodic particles. | Descarta particulas floating o periodicas.
+    if(ok){
+      //-Check if it is within the domain. | Comprueba si esta dentro del dominio.
+      const double2 rposxy=posxy[p1];
+      const double rposz=posz[p1];
+      const double3 ps=make_double3(rposxy.x,rposxy.y,rposz);
+      const double vdis=(isvertical? 
+        sqrt((ps.x-point1.x)*(ps.x-point1.x)+(ps.y-point1.y)*(ps.y-point1.y)): 
+        cugeo::LinePointDist(ps,point1,point2)
+        ) - limitmin;
+      if(0<vdis && vdis<=dist+over){
+        const double fdis=(vdis>=dist? 1.: vdis/dist);
+        const double redudt=dt*(fdis*fdis)*redumax;
+        double redudtx=(1.-redudt*factorxyz.x);
+        double redudty=(1.-redudt*factorxyz.y);
+        double redudtz=(1.-redudt*factorxyz.z);
+        redudtx=(redudtx<0? 0.: redudtx);
+        redudty=(redudty<0? 0.: redudty);
+        redudtz=(redudtz<0? 0.: redudtz);
+        float4 rvel=velrhop[p1];
+        rvel.x=float(redudtx*rvel.x); 
+        rvel.y=float(redudty*rvel.y); 
+        rvel.z=float(redudtz*rvel.z); 
+        velrhop[p1]=rvel;
+      }
+    }
+  }
+}
+//==============================================================================
+/// Applies Damping to limited cylinder domain.
+/// Aplica Damping limitado a un dominio de cilindro.
+//==============================================================================
+void ComputeDampingCylinder(unsigned n,unsigned pini
+  ,double dt,double3 point1,double3 point2,double limitmin
+  ,float dist,float over,float3 factorxyz,float redumax
+  ,const double2 *posxy,const double *posz,const typecode *code
+  ,float4 *velrhop)
+{
+  if(n){
+    const bool isvertical=(point1.x==point2.x && point1.y==point2.y);
+    dim3 sgridf=GetSimpleGridSize(n,SPHBSIZE);
+    KerComputeDampingCylinder <<<sgridf,SPHBSIZE>>> (n,pini,dt
+      ,isvertical,point1,point2,limitmin,dist,over,factorxyz,redumax
+      ,posxy,posz,code,velrhop);
+  }
+}
+
 
 }
 

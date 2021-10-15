@@ -100,6 +100,17 @@ __device__ float PointDist(const float4 &p1){
 }
 
 //------------------------------------------------------------------------------
+/// Devuelve la distancia entre dos puntos.
+/// Returns the distance between two points.
+//------------------------------------------------------------------------------
+__device__ double PointsDist(const double3 &p1,const double3 &p2){
+  const double dx=p1.x-p2.x;
+  const double dy=p1.y-p2.y;
+  const double dz=p1.z-p2.z;
+  return(sqrt(dx*dx+dy*dy+dz*dz));
+}
+
+//------------------------------------------------------------------------------
 /// Devuelve la distancia^2 entre dos puntos.
 /// Returns the distance^2 between two points.
 //------------------------------------------------------------------------------
@@ -156,6 +167,39 @@ __device__ float3 VecBounce(const float3 &vec,const float3 &normal){
 __device__ float4 PlanePtVec(const float3 &pt,const float3 &vec){
   const float3 v=VecUnitary(vec);//-No es necesario pero asi el modulo del vector no afecta al resultado de PointPlane().
   return(make_float4(v.x,v.y,v.z,-v.x*pt.x-v.y*pt.y-v.z*pt.z));
+}
+
+//------------------------------------------------------------------------------
+/// Devuelve el area de un triangulo formado por 3 puntos.
+/// Returns the area of a triangle formed by 3 points.
+//------------------------------------------------------------------------------
+__device__ double TriangleArea(const double3 &p1,const double3 &p2,const double3 &p3){
+  //Se obtienen los vectores del triangulo.
+  //Obtains the triangle vectors.
+  double PQx=p2.x-p1.x;
+  double PQy=p2.y-p1.y;
+  double PQz=p2.z-p1.z;
+  double PRx=p3.x-p1.x;
+  double PRy=p3.y-p1.y;
+  double PRz=p3.z-p1.z;
+  //Se hace el producto cruz.
+  //Computes the cross product.
+  double Vi=PQy*PRz-PRy*PQz;
+  double Vj=-(PQx*PRz-PRx*PQz);
+  double Vk=PQx*PRy-PRx*PQy;
+  //Se obtiene el area del triangulo que es igual a la mitad de la magnitud del vector resultante.
+  //Obtains the triangle area that equals half the magnitude of the resulting vector.
+  return(double(.5)*sqrt(Vi*Vi+Vj*Vj+Vk*Vk));
+}
+
+//------------------------------------------------------------------------------
+/// Devuelve la distancia entre un punto y una recta entre dos puntos.
+/// Returns the distance between a point and a line between two points.
+//------------------------------------------------------------------------------
+__device__ double LinePointDist(const double3 &pt,const double3 &pr1,const double3 &pr2){
+  double ar=TriangleArea(pt,pr1,pr2);
+  double dis=PointsDist(pr1,pr2);
+  return((ar*2)/dis);
 }
 
 }

@@ -64,13 +64,15 @@ public:
   typedef enum{ 
     DA_Plane=1
    ,DA_Box=2
+   ,DA_Cylinder=3
   }TpDamping; 
 
   ///Returns damping type as string.
   static std::string GetNameType(TpDamping type){
     switch(type){
-      case DA_Plane:  return("Plane");
-      case DA_Box:    return("Box");
+      case DA_Plane:    return("Plane");
+      case DA_Box:      return("Box");
+      case DA_Cylinder: return("Cylinder");
     }
     return("???");
   }
@@ -202,6 +204,39 @@ private:
 public:
   JDsDampingOp_Box(unsigned id,const JXml *sxml,TiXmlElement* ele)
     :JDsDampingOp(id,DA_Box){ Reset(); ReadXml(sxml,ele); }
+  void Reset();
+  void ReadXml(const JXml *sxml,TiXmlElement* ele);
+  void SaveVtkConfig(double dp,JVtkLib *sh)const;
+  void GetConfig(std::vector<std::string> &lines)const;
+
+  void ComputeDampingCpu(double dt,unsigned n,unsigned pini
+    ,const tdouble3 *pos,const typecode *code,tfloat4 *velrhop)const;
+
+#ifdef _WITHGPU
+  void ComputeDampingGpu(double dt,unsigned n,unsigned pini
+    ,const double2 *posxy,const double *posz,const typecode *code,float4 *velrhop)const;
+#endif
+};  
+
+
+//##############################################################################
+//# JDsDampingOp_Cylinder
+//##############################################################################
+/// Damping according to distance to cylinder limits.
+class JDsDampingOp_Cylinder : public JDsDampingOp
+{
+private:
+  tdouble3 Point1;   ///<Point for axis definition.
+  tdouble3 Point2;   ///<Point for axis definition.
+  double LimitMin;  ///<Radius for minimal reduction.
+  double LimitMax;  ///<Radius for maximum reduction.
+
+  //tplane3d Plane;     ///<Plane at the limitmin point. | Plano en el punto limitmin.
+  //float Dist;         ///<Distance between limitmin and limitmax points. | Distancia entre puntos limitmin y limitmax.
+
+public:
+  JDsDampingOp_Cylinder(unsigned id,const JXml *sxml,TiXmlElement* ele)
+    :JDsDampingOp(id,DA_Cylinder){ Reset(); ReadXml(sxml,ele); }
   void Reset();
   void ReadXml(const JXml *sxml,TiXmlElement* ele);
   void SaveVtkConfig(double dp,JVtkLib *sh)const;
