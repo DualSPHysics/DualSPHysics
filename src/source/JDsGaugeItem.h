@@ -23,6 +23,7 @@
 //:# - Se escriben las unidades en las cabeceras de los ficheros CSV. (26-04-2018)
 //:# - Gestion de excepciones mejorada.  (15-09-2019)
 //:# - Cambio de nombre de fichero J.GaugeItem a J.DsGaugeItem. (28-06-2020)
+//:# - Permite carga de ficheros mbi4 en formato multidata. (24-10-2021)
 //:#############################################################################
 
 /// \file JDsGaugeItem.h \brief Declares the class \ref JGaugeItem.
