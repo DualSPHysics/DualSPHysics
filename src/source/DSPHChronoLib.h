@@ -67,7 +67,8 @@
 //:# - Colisiones mesh vs mesh habilitadas para FEA (v6.14 / 01-07-2021).
 //:# - Link_pointframe permite asignar directamente nodos a un objeto rigido (v6.15 / 01-07-2021).
 //:# - Permite el uso de varios hilos con OpenMP para resolver colisiones (v6.16 / 20-07-2021).
-//:# - HAbilita el uso de FtPause con Chrono (v6.17 / 21-07-2021).
+//:# - Habilita el uso de FtPause con Chrono (v6.17 / 21-07-2021).
+//:# - Se mantiene independencia entre la masa del objeto SPH y de la viga FEA (v6.18 / 22-09-2021).
 //:#############################################################################
 
 /// \file DSPHChronoLib.h \brief Declares the class \ref DSPHChronoLib which is the interface between DualSPHysics and Chrono.
