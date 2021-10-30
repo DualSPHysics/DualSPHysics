@@ -1973,7 +1973,7 @@ tdouble3 JSph::UpdatePeriodicPos(tdouble3 ps)const{
 /// Sets configuration for recordering of particles.
 /// Establece configuracion para grabacion de particulas.
 //==============================================================================
-void JSph::RestartCheckData(){
+void JSph::RestartCheckData(bool loadpsingle){
   if(PartBegin){
     //-Loads particle blocks information.
     JPartDataHead parthead;
@@ -1990,6 +1990,8 @@ void JSph::RestartCheckData(){
       if(pmk->MkType!=mbk.MkType)Run_ExceptioonFile(fun::PrintStr("MkType value of Mk block %u does not match.",c),filehead);
       if(pmk->Count!=mbk.Count)Run_ExceptioonFile(fun::PrintStr("Count value of Mk block %u does not match.",c),filehead);
     }
+    //-Checks warnings.
+    if(loadpsingle)Log->PrintWarning("Restarting from single precision data generates some minor differences in the results.");
   }
 }
 
@@ -2020,7 +2022,7 @@ void JSph::LoadCaseParticles(){
   PartsLoaded->LoadParticles(DirCase,CaseName,PartBegin,PartBeginDir);
   PartsLoaded->CheckConfig(CaseNp,CaseNfixed,CaseNmoving,CaseNfloat,CaseNfluid,Simulate2D,Simulate2DPosY,TpPeri(PeriActive));
 
-  if(PartBegin)RestartCheckData();
+  if(PartBegin)RestartCheckData(PartsLoaded->GetPosSingle());
   Log->Printf("Loaded particles: %u",PartsLoaded->GetCount());
 
   //-Checks if the initial density of fluid particles is out of limits.
@@ -2092,7 +2094,10 @@ void JSph::InitRun(unsigned np,const unsigned *idp,const tdouble3 *pos){
   //-Adjust motion paddles for the instant of the loaded PART.
   if(WaveGen)WaveGen->SetTimeMod(!PartIni? PartBeginTimeStep: 0);
   //-Adjust Multi-layer pistons for the instant of the loaded PART.
-  if(MLPistons)MLPistons->SetTimeMod(!PartIni? PartBeginTimeStep: 0);
+  if(MLPistons){
+    MLPistons->SetTimeMod(!PartIni? PartBeginTimeStep: 0);
+    MLPistons->CalculateMontionInit(TimeStepIni);
+  }
 
   //-Uses Inlet information from PART read.
   if(PartBeginTimeStep && PartBeginTotalNp){

@@ -455,7 +455,7 @@ protected:
   void CalcFloatingRadius(unsigned np,const tdouble3 *pos,const unsigned *idp);
   tdouble3 UpdatePeriodicPos(tdouble3 ps)const;
 
-  void RestartCheckData();
+  void RestartCheckData(bool loadpsingle);
   void CheckRhopLimits();
   void LoadCaseParticles();
   void InitRun(unsigned np,const unsigned *idp,const tdouble3 *pos);

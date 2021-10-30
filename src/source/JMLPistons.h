@@ -30,6 +30,7 @@
 //# - Remplaza long long por llong. (01-10-2015)
 //# - Improved exception managment. (19-03-2020)  
 //# - Comprueba opcion active en elementos de primer y segundo nivel. (19-03-2020)  
+//# - Nueva funcion CalculateMontionInit() para permitir el reinicio. (30-10-2021)  
 //#############################################################################
 
 #ifndef _JMLPistons_
@@ -92,6 +93,7 @@ public:
 
   void SetTimeMod(double timemod){}
   double GetTimeMod()const{ return(0); }
+  void CalculateMontionInit(double timeinit){}
 
   void CalculateMotion1d(double time){}
 
@@ -178,6 +180,7 @@ public:
 
   void SetTimeMod(double timemod);
   double GetTimeMod()const{ return(TimeMod); }
+  void CalculateMontionInit(double timeinit);
 
   void CalculateMotion1d(double time);
 
