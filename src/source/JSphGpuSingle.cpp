@@ -46,6 +46,7 @@
 #include "JSphShifting.h"
 #include "JDsPips.h"
 #include "JDsExtraData.h"
+#include "FunctionsCuda.h"
 
 #include <climits>
 
