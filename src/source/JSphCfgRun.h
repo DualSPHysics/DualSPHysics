@@ -68,6 +68,7 @@ public:
   std::string CaseName,RunName,DirOut,DirDataOut;
   std::string PartBeginDir;
   unsigned PartBegin,PartBeginFirst;
+  bool RestartChrono;             ///<Allows restart with Chrono active (default=0).
   float FtPause;
   bool RhopOutModif;              ///<Indicates whether \ref RhopOutMin or RhopOutMax is changed.
   float RhopOutMin,RhopOutMax;    ///<Limits for \ref RhopOut density correction.

@@ -229,6 +229,7 @@ void JSph::InitVars(){
   PartBegin=PartBeginFirst=0;
   PartBeginTimeStep=0; 
   PartBeginTotalNp=0;
+  RestartChrono=false;
 
   WrnPartsOut=true;
 
@@ -497,7 +498,11 @@ void JSph::LoadConfig(const JSphCfgRun *cfg){
   if(!CaseName.length())Run_Exceptioon("Name of the case for execution was not indicated.");
   RunName=(cfg->RunName.length()? cfg->RunName: CaseName);
   FileXml=DirCase+CaseName+".xml";
-  PartBeginDir=cfg->PartBeginDir; PartBegin=cfg->PartBegin; PartBeginFirst=cfg->PartBeginFirst;
+  PartBeginDir=cfg->PartBeginDir; 
+  PartBegin=cfg->PartBegin; 
+  PartBeginFirst=cfg->PartBeginFirst;
+  RestartChrono=cfg->RestartChrono;
+
   //-Output options:
   CsvSepComa=cfg->CsvSepComa;
   SvData=byte(SDAT_None); 
@@ -2157,7 +2162,10 @@ void JSph::InitRun(unsigned np,const unsigned *idp,const tdouble3 *pos){
   //-Prepares ChronoObjects configuration.
   if(ChronoObjects){
     Log->Print("Chrono Objects configuration:");
-    if(PartBegin)Run_Exceptioon("Simulation restart not allowed when Chrono is used.");
+    if(PartBegin){
+      if(!RestartChrono)Run_Exceptioon("Simulation restart not allowed when Chrono is used.");
+      else Log->PrintWarning("Be careful as restart mode is not fully supported by Chrono.");
+    }
     ChronoObjects->Init(MkInfo);
     ChronoObjects->VisuConfig(""," ");
   }

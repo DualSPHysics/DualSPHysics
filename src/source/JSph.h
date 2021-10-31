@@ -282,6 +282,7 @@ protected:
   unsigned PartBeginFirst;    ///<Indicates the number of the first PART to be generated. | Indica el numero del primer PART a generar.                                    
   double PartBeginTimeStep;   ///<initial instant of the simulation                       | Instante de inicio de la simulacion.                                          
   ullong PartBeginTotalNp;    ///<Total number of simulated particles.
+  bool RestartChrono;         ///<Allows restart with Chrono active (default=0).
 
   JDsPartsOut *PartsOut;        ///<Stores excluded particles until they are saved. | Almacena las particulas excluidas hasta su grabacion.
   bool WrnPartsOut;           ///<Active warning according to number of out particles (default=1).

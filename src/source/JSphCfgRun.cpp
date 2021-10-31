@@ -60,6 +60,7 @@ void JSphCfgRun::Reset(){
   Sv_Vtk=false; Sv_Csv=false;
   CaseName=""; RunName=""; DirOut=""; DirDataOut=""; 
   PartBegin=0; PartBeginFirst=0; PartBeginDir="";
+  RestartChrono=false;
   TimeMax=-1; TimePart=-1;
   RhopOutModif=false; RhopOutMin=700; RhopOutMax=1300;
   FtPause=-1;
@@ -154,7 +155,8 @@ void JSphCfgRun::VisuInfo()const{
   printf("    -partbegin:begin[:first] dir \n");
   printf("     Specifies the beginning of the simulation starting from a given PART\n");
   printf("     (begin) and located in the directory (dir), (first) indicates the\n");
-  printf("     number of the first PART to be generated\n\n");
+  printf("     number of the first PART to be generated\n");
+  printf("    -restartchrono:<0/1>    Allows restart with Chrono active (default=0)\n");
   printf("\n");
   printf("    -tmax:<float>   Maximum time of simulation\n");
   printf("    -tout:<float>   Time between output files\n");
@@ -369,6 +371,7 @@ void JSphCfgRun::LoadOpts(string *optlis,int optn,int lv,const std::string &file
         }
         PartBeginDir=optlis[c+1]; c++; 
       }
+      else if(txword=="RESTARTCHRONO")RestartChrono=(txoptfull!=""? atoi(txoptfull.c_str()): 1)!=0;
       else if(txword=="RHOPOUT"){ 
         RhopOutMin=float(atof(txopt1.c_str())); 
         RhopOutMax=float(atof(txopt2.c_str())); 
