@@ -493,6 +493,9 @@
     <ClInclude Include="..\source\JDsDcellDef.h">
       <Filter>Source\CellDiv</Filter>
     </ClInclude>
+    <ClInclude Include="..\source\JDsExtraData.h">
+      <Filter>Source</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\source\main.cpp">
@@ -785,6 +788,9 @@
     </ClCompile>
     <ClCompile Include="..\source\JDsDcell.cpp">
       <Filter>Source\CellDiv</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JDsExtraData.cpp">
+      <Filter>Source</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

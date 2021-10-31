@@ -294,7 +294,7 @@ void JBinaryDataArray::FreeMemory(){
 /// Allocate memory for the elements indicated.
 //==============================================================================
 void JBinaryDataArray::AllocMemory(unsigned size,bool savedata){
-  if(Count&&savedata&&size){
+  if(Count && savedata && size){
     if(ExternalPointer)Run_Exceptioon("External pointer can not be resized.");
     const unsigned count2=min(Count,size);
     void *ptr=AllocPointer(size);
@@ -313,6 +313,20 @@ void JBinaryDataArray::AllocMemory(unsigned size,bool savedata){
     FreeMemory();
     Size=size;
     if(Size)Pointer=AllocPointer(Size);
+  }
+}
+
+//==============================================================================
+/// Asigna memoria para los elementos indicados e inicializa Count.
+/// Allocate memory for the elements indicated and set Count.
+//==============================================================================
+void JBinaryDataArray::AllocMemoryCount(unsigned count,bool clear){
+  FreeMemory();
+  Size=count;
+  if(Size){
+    Pointer=AllocPointer(Size);
+    Count=count;
+    if(clear)memset(Pointer,0,JBinaryDataDef::SizeOfType(Type)*count);
   }
 }
 
@@ -1801,6 +1815,16 @@ JBinaryDataArray* JBinaryData::CreateArray(const std::string &name,JBinaryDataDe
   JBinaryDataArray *ar=CreateArray(name,type);
   ar->SetData(count,data,externalpointer);
   return(ar);
+}
+
+//==============================================================================
+/// Crea array y devuelve puntero a datos del array.
+/// Creates array and returns pointer to data array.
+//==============================================================================
+tfloat3* JBinaryData::CreateArrayFloat3(const std::string &name,unsigned count,bool clear){
+  JBinaryDataArray *ar=CreateArray(name,JBinaryDataDef::DatFloat3);
+  ar->AllocMemoryCount(count,clear);
+  return((tfloat3*)ar->GetPointer());
 }
 
 //==============================================================================

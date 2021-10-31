@@ -80,6 +80,7 @@ protected:
   void ComputePips(bool run);
   
   void SaveData();
+  void SaveExtraData();
   void FinishRun(bool stop);
 
 public:

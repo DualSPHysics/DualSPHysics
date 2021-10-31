@@ -43,6 +43,7 @@
 #include "JDataArrays.h"
 #include "JSphShifting.h"
 #include "JDsPips.h"
+#include "JDsExtraData.h"
 
 #include <climits>
 
@@ -134,9 +135,7 @@ void JSphCpuSingle::ConfigDomain(){
   if(UseNormals)LoadBoundNormals(Np,Npb,Idpc,Codec,BoundNormalc);
 
   //-Runs initialization operations from XML.
-  tfloat3 *boundnormal=NULL;
-  boundnormal=BoundNormalc;
-  RunInitialize(Np,Npb,Posc,Idpc,Codec,Velrhopc,boundnormal);
+  RunInitialize(Np,Npb,Posc,Idpc,Codec,Velrhopc,BoundNormalc);
   if(UseNormals)ConfigBoundNormals(Np,Npb,Posc,Idpc,BoundNormalc);
 
   //-Creates PartsInit object with initial particle data for automatic configurations.
@@ -1141,8 +1140,27 @@ void JSphCpuSingle::SaveData(){
   ArraysCpu->Free(pos);
   ArraysCpu->Free(vel);
   ArraysCpu->Free(rhop);
-  if(UseNormals && SvNormals)SaveVtkNormals("normals/Normals.vtk",Part,npsave,Npb,Posc,Idpc,BoundNormalc);
+  if(UseNormals && SvNormals)SaveVtkNormals("normals/Normals.vtk",Part,npsave,Npb,Posc,Idpc,BoundNormalc,1.f);
+  //-Save extra data.
+  if(SvExtraDataBi4)SaveExtraData();
   Timersc->TmStop(TMC_SuSavePart);
+}
+
+//==============================================================================
+/// Displays and stores final summary of the execution.
+/// Muestra y graba resumen final de ejecucion.
+//==============================================================================
+void JSphCpuSingle::SaveExtraData(){
+  const bool svextra=(BoundNormalc!=NULL);
+  if(svextra && SvExtraDataBi4->CheckSave(Part)){
+    SvExtraDataBi4->InitPartData(Part,TimeStep,Nstep);
+    //-Saves normals of mDBC.
+    if(BoundNormalc){
+      SvExtraDataBi4->AddNormals(UseNormalsFt,Np,Npb,Idpc,(PeriActive? Codec: NULL),BoundNormalc);
+    }
+    //-Saves file.
+    SvExtraDataBi4->SavePartData();
+  }
 }
 
 //==============================================================================

@@ -45,6 +45,7 @@
 #include "JDebugSphGpu.h"
 #include "JSphShifting.h"
 #include "JDsPips.h"
+#include "JDsExtraData.h"
 
 #include <climits>
 
@@ -168,7 +169,6 @@ void JSphGpuSingle::ConfigDomain(){
   tfloat3 *boundnormal=NULL;
   if(UseNormals){
     boundnormal=new tfloat3[Np];
-    memset(boundnormal,0,sizeof(tfloat3)*Np);
     LoadBoundNormals(Np,Npb,Idp,Code,boundnormal);
   }
 
@@ -904,7 +904,39 @@ void JSphGpuSingle::SaveData(){
   AddBasicArrays(arrays,npsave,AuxPos,Idp,AuxVel,AuxRhop);
   JSph::SaveData(npsave,arrays,1,vdom,&infoplus);
   if(UseNormals && SvNormals)SaveVtkNormalsGpu("normals/Normals.vtk",Part,npsave,Npb,Posxyg,Poszg,Idpg,BoundNormalg);
+  //-Save extra data.
+  if(SvExtraDataBi4)SaveExtraData();
   Timersg->TmStop(TMG_SuSavePart,false);
+}
+
+//==============================================================================
+/// Displays and stores final summary of the execution.
+/// Muestra y graba resumen final de ejecucion.
+//==============================================================================
+void JSphGpuSingle::SaveExtraData(){
+  const bool svextra=(BoundNormalg!=NULL);
+  if(svextra && SvExtraDataBi4->CheckSave(Part)){
+    SvExtraDataBi4->InitPartData(Part,TimeStep,Nstep);
+    //-Saves normals of mDBC.
+    unsigned *idp =NULL;
+    tfloat3  *nor =NULL;
+    typecode *code=NULL;
+    if(BoundNormalg){
+      unsigned nsize=Npb;
+      idp=fcuda::ToHostUint  (0,nsize,Idpg);
+      nor=fcuda::ToHostFloat3(0,nsize,BoundNormalg);
+      if(PeriActive){
+        #ifdef CODE_SIZE4
+          code=fcuda::ToHostUint(0,nsize,Codeg);
+        #else
+          code=fcuda::ToHostWord(0,nsize,Codeg);
+        #endif
+      }
+      SvExtraDataBi4->AddNormals(UseNormalsFt,Np,Npb,idp,code,nor);
+    }
+    //-Saves file.
+    SvExtraDataBi4->SavePartData();
+  }
 }
 
 //==============================================================================

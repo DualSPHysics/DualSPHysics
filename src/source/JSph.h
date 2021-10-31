@@ -81,6 +81,7 @@ class JCaseEParms;
 class JDataArrays;
 class JNumexLib;
 class JFtMotionSave; //<vs_ftmottionsv>
+class JDsExtraDataSave;
 
 //##############################################################################
 //# XML format of execution parameters in _FmtXML__Parameters.xml.
@@ -337,6 +338,9 @@ protected:
 
   JFtMotionSave *FtMotSave; ///<Object for saving floating motion data with high frequency. //<vs_ftmottionsv>
 
+  std::string SvExtraParts;         ///<Part interval (or list) for saving extra data for restart option (default=empty=disabled)
+  JDsExtraDataSave *SvExtraDataBi4; ///<To store extra data for restart option (SvExtraParts).
+
   JDsPips *DsPips;          ///<Object for PIPS calculation.
 
   //-Variables for division in cells.
@@ -476,14 +480,14 @@ protected:
     ,const unsigned *idp,const tfloat3 *vel,const float *rhop)const;
   void SavePartData(unsigned npok,unsigned nout,const JDataArrays& arrays,unsigned ndom,const tdouble3 *vdom,const StInfoPartPlus *infoplus);
   void SaveData(unsigned npok,const JDataArrays& arrays,unsigned ndom,const tdouble3 *vdom,const StInfoPartPlus *infoplus);
+
   void CheckTermination();
   void SaveDomainVtk(unsigned ndom,const tdouble3 *vdom)const;
   void SaveInitialDomainVtk()const;
   unsigned SaveMapCellsVtkSize()const;
   void SaveMapCellsVtk(float scell)const;
   void SaveVtkNormals(std::string filename,int numfile,unsigned np,unsigned npb
-    ,const tdouble3 *pos,const unsigned *idp,const tfloat3 *boundnormal)const;
-
+    ,const tdouble3 *pos,const unsigned *idp,const tfloat3 *boundnormal,float resize)const;
  
   void GetResInfo(float tsim,float ttot,std::string headplus,std::string detplus
     ,std::string &hinfo,std::string &dinfo)const;

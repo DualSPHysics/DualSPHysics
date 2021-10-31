@@ -41,6 +41,7 @@ public:
   bool GpuFree;
   bool Stable;
   int SvPosDouble;  ///<Saves particle position using double precision (default=0)
+  std::string SvExtraParts;   ///<Part interval (or list) for saving extra data for restart option (default=empty=disabled)
 
   int OmpThreads;
 

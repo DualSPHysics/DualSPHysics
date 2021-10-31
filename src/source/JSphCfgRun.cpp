@@ -41,6 +41,7 @@ void JSphCfgRun::Reset(){
   Gpu=false; GpuId=-1; GpuFree=false;
   Stable=false;
   SvPosDouble=-1;
+  SvExtraParts="undefined";
   OmpThreads=0;
   SvTimers=true;
   CellDomFixed=false;
@@ -90,6 +91,8 @@ void JSphCfgRun::VisuInfo()const{
   printf("\n");
   printf("    -stable     The result is always the same but the execution is slower\n");
   printf("    -saveposdouble:<0/1>  Saves position using double precision (default=0)\n");
+  printf("    -svextraparts:<int>  PART interval for saving extra data (default=0)\n");
+  printf("    -svextraparts:<list> List of PARTs for saving extra data (default=0)\n");
   printf("\n");
 #ifdef OMP_USE
   printf("    -ompthreads:<int>  Only for CPU execution, indicates the number of threads\n");
@@ -268,6 +271,7 @@ void JSphCfgRun::LoadOpts(string *optlis,int optn,int lv,const std::string &file
         const int v=(txoptfull!=""? atoi(txoptfull.c_str()): 1);
         SvPosDouble=(!v? 0: 1);
       }
+      else if(txword=="SVEXTRAPARTS")SvExtraParts=txoptfull;
 #ifdef OMP_USE
       else if(txword=="OMPTHREADS"){ 
         OmpThreads=atoi(txoptfull.c_str()); if(OmpThreads<0)OmpThreads=0;

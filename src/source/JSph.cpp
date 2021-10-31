@@ -49,6 +49,7 @@
 #include "JPartDataBi4.h"
 #include "JPartOutBi4Save.h"
 #include "JPartFloatBi4.h"
+#include "JDsExtraData.h"
 #include "JDsPartsOut.h"
 #include "JSphShifting.h"
 #include "JDsDamping.h"
@@ -79,6 +80,7 @@ JSph::JSph(bool cpu,bool mgpu,bool withmpi):Cpu(cpu),Mgpu(mgpu),WithMpi(withmpi)
   DataBi4=NULL;
   DataOutBi4=NULL;
   DataFloatBi4=NULL;
+  SvExtraDataBi4=NULL;
   PartsOut=NULL;
   Log=NULL;
   CfgRun=NULL;
@@ -119,17 +121,18 @@ JSph::JSph(bool cpu,bool mgpu,bool withmpi):Cpu(cpu),Mgpu(mgpu),WithMpi(withmpi)
 //==============================================================================
 JSph::~JSph(){
   DestructorActive=true;
-  delete DataBi4;       DataBi4=NULL;
-  delete DataOutBi4;    DataOutBi4=NULL;
-  delete DataFloatBi4;  DataFloatBi4=NULL;
-  delete PartsOut;      PartsOut=NULL;
-  delete ViscoTime;     ViscoTime=NULL;
-  delete FixedDt;       FixedDt=NULL;
-  delete SaveDt;        SaveDt=NULL;
-  delete OutputTime;    OutputTime=NULL;
-  delete MkInfo;        MkInfo=NULL;
-  delete PartsInit;     PartsInit=NULL;
-  delete DsMotion;      DsMotion=NULL;
+  delete DataBi4;        DataBi4=NULL;
+  delete DataOutBi4;     DataOutBi4=NULL;
+  delete DataFloatBi4;   DataFloatBi4=NULL;
+  delete SvExtraDataBi4; SvExtraDataBi4=NULL;
+  delete PartsOut;       PartsOut=NULL;
+  delete ViscoTime;      ViscoTime=NULL;
+  delete FixedDt;        FixedDt=NULL;
+  delete SaveDt;         SaveDt=NULL;
+  delete OutputTime;     OutputTime=NULL;
+  delete MkInfo;         MkInfo=NULL;
+  delete PartsInit;      PartsInit=NULL;
+  delete DsMotion;       DsMotion=NULL;
   AllocMemoryFloating(0,false);
   delete[] DemData;     DemData=NULL;
   delete GaugeSystem;   GaugeSystem=NULL;
@@ -199,6 +202,7 @@ void JSph::InitVars(){
   PartsOutWrn=1; PartsOutTotWrn=10;
 
   SvData=byte(SDAT_Binx)|byte(SDAT_Info);
+  SvExtraParts="";
   SvRes=false;
   SvTimers=false;
   SvDomainVtk=false;
@@ -484,6 +488,7 @@ void JSph::LoadConfig(const JSphCfgRun *cfg){
   //------------------------------------------------------
   Stable=cfg->Stable;
   SvPosDouble=false; //-Options by default.
+  SvExtraParts="";   //-Options by default.
   DirOut=fun::GetDirWithSlash(cfg->DirOut);
   DirDataOut=(!cfg->DirDataOut.empty()? fun::GetDirWithSlash(DirOut+cfg->DirDataOut): DirOut);
   CaseName=cfg->CaseName; 
@@ -584,6 +589,7 @@ void JSph::LoadConfigParameters(const JXml *xml){
     SvPosDouble=(eparms.GetValueInt("PosDouble")==2);
   }
   if(eparms.Exists("SavePosDouble"))SvPosDouble=(eparms.GetValueInt("SavePosDouble",true,0)!=0);
+  if(eparms.Exists("SaveExtraParts"))SvExtraParts=eparms.GetValue("SaveExtraParts");
   switch(eparms.GetValueInt("RigidAlgorithm",true,1)){ //(DEM)
     case 0:  FtMode=FTMODE_Ext;                   break;
     case 1:  FtMode=FTMODE_Sph;                   break;
@@ -750,6 +756,7 @@ void JSph::LoadConfigParameters(const JXml *xml){
 void JSph::LoadConfigCommands(const JSphCfgRun *cfg){
   //-Aplies configuration using command line.
   if(cfg->SvPosDouble>=0)SvPosDouble=(cfg->SvPosDouble!=0);
+  if(cfg->SvExtraParts!="undefined")SvExtraParts=cfg->SvExtraParts;
   if(cfg->TBoundary){
     TBoundary=BC_DBC;
     SlipMode=SLIP_Vel0;
@@ -1251,48 +1258,38 @@ void JSph::LoadBoundNormals(unsigned np,unsigned npb,const unsigned *idp
   ,const typecode *code,tfloat3 *boundnormal)
 {
   memset(boundnormal,0,sizeof(tfloat3)*np);
-  string filenordata=JNormalsMarrone::GetNormalDataFile(DirCase+CaseName);
-  if(fun::FileExists(filenordata)){
-    //-Load or compute final normals.
-    const tdouble3 *pnor=NULL;
-    unsigned pnorsize=0;
-    JPartNormalData nd;
-    JNormalsMarrone nmarrone;
-    nd.LoadFile(DirCase+CaseName);
-    UseNormalsFt=nd.GetFtSupport();
-    if(nd.GetCountNormals()){
-      //-Compute Marrone normals starting from normal data in NBI4 file.
-      nd.Reset();
-      const bool savevtknor=false; //-Saves normals calculated starting from NBI4 file.
-      nmarrone.RunCase(DirCase+CaseName,DirOut,savevtknor);
-      pnor=nmarrone.GetPartNor();
-      pnorsize=nmarrone.GetPartNorSize();
+  if(!PartBegin){
+    string filenordata=JNormalsMarrone::GetNormalDataFile(DirCase+CaseName);
+    if(fun::FileExists(filenordata)){
+      //-Load or compute final normals.
+      const tdouble3 *pnor=NULL;
+      unsigned pnorsize=0;
+      JPartNormalData nd;
+      JNormalsMarrone nmarrone;
+      nd.LoadFile(DirCase+CaseName);
+      UseNormalsFt=nd.GetFtSupport();
+      if(nd.GetCountNormals()){
+        //-Compute Marrone normals starting from normal data in NBI4 file.
+        nd.Reset();
+        const bool savevtknor=false; //-Saves normals calculated starting from NBI4 file.
+        nmarrone.RunCase(DirCase+CaseName,DirOut,savevtknor);
+        pnor=nmarrone.GetPartNor();
+        pnorsize=nmarrone.GetPartNorSize();
+      }
+      else{
+        //-Loads final normals in NBI4 file.
+        pnor=nd.GetPartNormals();
+        pnorsize=nd.GetNbound();
+      }
+      //-Applies final normals. Loads normals from boundary particle to boundary limit.
+      if(pnorsize){
+        if(pnorsize<npb)Run_ExceptioonFile("The number of final normals does not match fixed and moving particles.",filenordata);
+        for(unsigned p=0;p<npb;p++)boundnormal[p]=ToTFloat3(pnor[p]);  //-For fixed and moving particles.
+        Log->Printf("NormalDataFile=\"%s\"",filenordata.c_str());
+      }
     }
-    else{
-      //-Loads final normals in NBI4 file.
-      pnor=nd.GetPartNormals();
-      pnorsize=nd.GetNbound();
-    }
-    //-Applies final normals. Loads normals from boundary particle to boundary limit.
-    if(pnorsize){
-      if(pnorsize<npb)Run_ExceptioonFile("The number of final normals does not match fixed and moving particles.",filenordata);
-      for(unsigned p=0;p<npb;p++)boundnormal[p]=ToTFloat3(pnor[p]);  //-For fixed and moving particles.
-      Log->Printf("NormalDataFile=\"%s\"",filenordata.c_str());
-    }
-    //for(unsigned p=0;p<npb;p++)boundnormal[p]=ToTFloat3(pnor[p]*2.);  //-Normal from boundary particle to ghost node (full distance).
-    ////-Removes normal of unselected boundaries.
-    //if(BoundCorr && !BoundCorr->GetMkBoundList().empty()){
-    //  JRangeFilter rg(BoundCorr->GetMkBoundList());
-    //  const unsigned nc=MkInfo->Size();
-    //  for(unsigned c=0;c<nc;c++){
-    //    const JSphMkBlock* bk=MkInfo->Mkblock(c);
-    //    if(!rg.CheckValue(bk->MkType) && (bk->Type==TpPartFixed || bk->Type==TpPartMoving)){
-    //      for(unsigned p=0;p<bk->Count;p++)boundnormal[p+bk->Begin]=TFloat3(0);
-    //    }
-    //  }
-    //}
+    else Log->Print("**File with normal data not found.");
   }
-  else Log->Print("**File with normal data not found.");
 }
 
 //==============================================================================
@@ -1302,17 +1299,30 @@ void JSph::ConfigBoundNormals(unsigned np,unsigned npb,const tdouble3 *pos
   ,const unsigned *idp,tfloat3 *boundnormal)
 {
   //-Checks current normals.
-  bool ftnor=false;
-  for(unsigned p=0;p<np;p++)if(idp[p]<CaseNbound && boundnormal[p]!=TFloat3(0)){
-    if(idp[p]>=CaseNpb){
-      if(!UseNormalsFt)boundnormal[p]=TFloat3(0);
+  if(!PartBegin){
+    bool ftnor=false;
+    for(unsigned p=0;p<np;p++)if(idp[p]<CaseNbound && boundnormal[p]!=TFloat3(0)){
+      if(idp[p]>=CaseNpb){
+        if(!UseNormalsFt)boundnormal[p]=TFloat3(0);
+      }
     }
+    UseNormalsFt=ftnor;
   }
-  UseNormalsFt=ftnor;
+  
+  //-Loads normals for restart mode.
+  if(PartBegin){
+    if(JDsExtraDataLoad::ExistsPartData(PartBeginDir,int(PartBegin))){
+      JDsExtraDataLoad edat(CaseNbound,CaseNfloat,Log);
+      edat.LoadPartData(PartBeginDir,int(PartBegin));
+      UseNormalsFt=edat.LoadNormals(np,npb,idp,boundnormal);
+    }
+    else Run_Exceptioon(fun::PrintStr("No extra data available to restart at PART_%04d with mDBC.",PartBegin).c_str());
+  }
+
   //-Saves normals from boundary particles to boundary limit.
   const string file1="CfgInit_Normals.vtk";
   Log->AddFileInfo(DirOut+file1,"Saves VTK file with initial normals (from boundary particles to boundary limit).");
-  SaveVtkNormals(file1,-1,np,npb,pos,idp,boundnormal);
+  SaveVtkNormals(file1,-1,np,npb,pos,idp,boundnormal,(PartBegin? 0.5f: 1.f));
   //-Config normals.
   unsigned nerr=0,nerrft=0;
   for(unsigned p=0;p<np;p++)if(idp[p]<CaseNbound){
@@ -1320,12 +1330,12 @@ void JSph::ConfigBoundNormals(unsigned np,unsigned npb,const tdouble3 *pos
       if(idp[p]<CaseNpb)nerr++;
       else nerrft++;
     }
-    boundnormal[p]=(boundnormal[p]*2.f);
+    if(!PartBegin)boundnormal[p]=(boundnormal[p]*2.f);
   }
   //-Saves normals from boundary particles to ghost node.
   const string file2="CfgInit_NormalsGhost.vtk";
   Log->AddFileInfo(DirOut+file2,"Saves VTK file with initial normals (from boundary particles to ghost node).");
-  SaveVtkNormals(file2,-1,np,npb,pos,idp,boundnormal);
+  SaveVtkNormals(file2,-1,np,npb,pos,idp,boundnormal,1.f);
   if(nerr>0)Log->PrintfWarning("There are %u of %u fixed or moving boundary particles without normal data.",nerr,npb);
 }
 
@@ -1467,6 +1477,9 @@ void JSph::VisuConfig(){
   //-SavePosDouble. 
   Log->Print(fun::VarStr("SavePosDouble",SvPosDouble));
   if(SvPosDouble)ConfigInfo=ConfigInfo+sep+"SvPosDouble";
+  //-SaveExtraData. 
+  Log->Print(fun::VarStr("SvExtraParts",SvExtraParts));
+  if(!SvExtraParts.empty())ConfigInfo=ConfigInfo+sep+"SvExtraParts";
   //-Other configurations. 
   Log->Print(fun::VarStr("SaveFtAce",SaveFtAce));
   if(FtMotSave)Log->Printf("SaveFtMotion=%s  (tout:%g)",(FtMotSave? "True": "False"),FtMotSave->GetTimeOut()); //<vs_ftmottionsv>
@@ -2340,6 +2353,13 @@ void JSph::ConfigSaveData(unsigned piece,unsigned pieces,std::string div){
     DataFloatBi4->SaveInitial();
     Log->AddFileInfo(DirDataOut+"PartFloat.fbi4","Binary file with floating body information for each instant (input for FloatingInfo program).");
   }
+  //-Configures object to store extra data.
+  if(SvData&SDAT_Binx && !SvExtraParts.empty()){
+    if(TBoundary==BC_MDBC || !SvPosDouble){
+      SvExtraDataBi4=new JDsExtraDataSave(AppName,DirDataOut,CaseNbound,CaseNfloat,Log);
+      SvExtraDataBi4->Config(SvExtraParts);
+    }
+  }
   //-Creates object to store excluded particles until recordering. 
   //-Crea objeto para almacenar las particulas excluidas hasta su grabacion.
   PartsOut=new JDsPartsOut();
@@ -2532,7 +2552,7 @@ void JSph::SavePartData(unsigned npok,unsigned nout,const JDataArrays& arrays
       const unsigned *idp =arrays.GetArrayUint   ("Idp");
       const tfloat3  *vel =arrays.GetArrayFloat3 ("Vel");
       const float    *rhop=arrays.GetArrayFloat  ("Rhop");
-      if(SvPosDouble){
+      if(SvPosDouble || (SvExtraDataBi4 && SvExtraDataBi4->CheckSave(Part))){
         DataBi4->AddPartData(npok,idp,pos,vel,rhop);
       }
       else{
@@ -2807,7 +2827,7 @@ void JSph::SaveMapCellsVtk(float scell)const{
 /// Solo se permiten particulas normales (no periodicas).
 //==============================================================================
 void JSph::SaveVtkNormals(std::string filename,int numfile,unsigned np,unsigned npb
-  ,const tdouble3 *pos,const unsigned *idp,const tfloat3 *boundnormal)const
+  ,const tdouble3 *pos,const unsigned *idp,const tfloat3 *boundnormal,float resize)const
 {
   if(JVtkLib::Available()){
     if(numfile>=0)filename=fun::FileNameSec(filename,numfile);
@@ -2829,6 +2849,7 @@ void JSph::SaveVtkNormals(std::string filename,int numfile,unsigned np,unsigned 
     MkInfo->GetMkByIds(npb,idp,vmk);
     memcpy(vnor,boundnormal,sizeof(tfloat3)*npb);
     //-Computes normalsize.
+    if(resize!=1.f)for(unsigned p=0;p<npsel;p++)vnor[p]=vnor[p]*resize;
     for(unsigned p=0;p<npsel;p++)vsnor[p]=fgeo::PointDist(vnor[p]);
     //-Saves VTK file.
     JVtkLib::SaveVtkData(filename,arrays,"Pos");

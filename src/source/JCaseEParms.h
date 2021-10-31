@@ -92,7 +92,6 @@ private:
 
   JCaseEParmsItem* GetItemPointer(const std::string &key);
   std::string GetValueNum(const std::string &key,int num);
-  std::string GetValue(const std::string &key);
   void ReadXml(const JXml *sxml,TiXmlElement* lis);
   void WriteXml(JXml *sxml,TiXmlElement* lis)const;
 public:
@@ -110,6 +109,8 @@ public:
   JCaseEParmsPos GetPosminValue(char key)const;
   JCaseEParmsPos GetPosmaxValue(char key)const;
   bool IsPosDefault()const{ return(Posminx=="default" && Posminy=="default" && Posminz=="default" && Posmaxx=="default" && Posmaxy=="default" && Posmaxz=="default"); }
+
+  std::string GetValue(const std::string &key);
 
   int GetValueNumInt(const std::string &key,int num,bool optional=false,int valdef=0);
   double GetValueNumDouble(const std::string &key,int num,bool optional=false,double valdef=0);

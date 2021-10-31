@@ -1115,7 +1115,7 @@ void JSphGpu::SaveVtkNormalsGpu(std::string filename,int numfile,unsigned np,uns
   unsigned *idp=fcuda::ToHostUint(0,n,idpg);
   tfloat3  *nor=fcuda::ToHostFloat3(0,n,boundnormalg);
   //-Generates VTK file.
-  SaveVtkNormals(filename,numfile,np,npb,pos,idp,nor);
+  SaveVtkNormals(filename,numfile,np,npb,pos,idp,nor,1.f);
   //-Frees memory.
   delete[] pos;
   delete[] idp;
