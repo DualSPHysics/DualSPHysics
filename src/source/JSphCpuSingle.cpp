@@ -750,8 +750,8 @@ void JSphCpuSingle::FtCalcForcesSum(unsigned cf,tfloat3 &face,tfloat3 &fomegaace
 }
 
 //==============================================================================
-/// Adds acceleration from particles and from external forces to ftoforces[].
-/// Anhade aceleracion de particulas y de fuerzas externas en ftoforces[].
+/// Computes final acceleration from particles and from external forces to ftoforces[].
+/// Calcula aceleracion final a parti de particulas y de fuerzas externas en ftoforces[].
 //==============================================================================
 void JSphCpuSingle::FtCalcForces(StFtoForces *ftoforces)const{
   const int ftcount=int(FtCount);
@@ -774,9 +774,9 @@ void JSphCpuSingle::FtCalcForces(StFtoForces *ftoforces)const{
     //-Compute summation of linear and angular forces starting from acceleration of particles.
     tfloat3 face,fomegaace;
     FtCalcForcesSum(cf,face,fomegaace);
-    
-    //-Adds the external forces.
-    if(FtLinearForce!=NULL || FtAngularForce!=NULL)FtSumExternalForces(cf,face,fomegaace);
+    //-Adds inital external forces from ForcePoints, Moorings and external files.
+    face=face+ftoforces[cf].face;
+    fomegaace=fomegaace+ftoforces[cf].fomegaace;
 
     //-Calculate omega starting from fomegaace & invinert. | Calcula omega a partir de fomegaace y invinert.
     {
@@ -791,8 +791,8 @@ void JSphCpuSingle::FtCalcForces(StFtoForces *ftoforces)const{
     face.y=(face.y + fmass*Gravity.y) / fmass;
     face.z=(face.z + fmass*Gravity.z) / fmass;
     //-Keep result in ftoforces[]. | Guarda resultados en ftoforces[].
-    ftoforces[cf].face=ftoforces[cf].face+face;
-    ftoforces[cf].fomegaace=ftoforces[cf].fomegaace+fomegaace;
+    ftoforces[cf].face=face; //-Saves acceleration (forces/fmass);
+    ftoforces[cf].fomegaace=fomegaace;
   }
 }
 
@@ -872,21 +872,6 @@ void JSphCpuSingle::FtApplyImposedVel(StFtoForcesRes *ftoforcesres)const{
 }
 
 //==============================================================================
-/// Sums the external forces for a floating body.
-/// Suma las fuerzas externas para un objeto flotante.
-//==============================================================================
-void JSphCpuSingle::FtSumExternalForces(unsigned cf,tfloat3 &face,tfloat3 &fomegaace)const{
-  //-Adds external linear forces.
-  if(FtLinearForce!=NULL && FtLinearForce[cf]!=NULL){
-    face=face+FtLinearForce[cf]->GetValue3f(TimeStep);
-  }
-  //-Adds external angular forces.
-  if(FtAngularForce!=NULL && FtAngularForce[cf]!=NULL){
-    fomegaace=fomegaace+FtAngularForce[cf]->GetValue3f(TimeStep);
-  }
-}
-
-//==============================================================================
 /// Process floating objects
 /// Procesa floating objects.
 //==============================================================================
@@ -896,10 +881,20 @@ void JSphCpuSingle::RunFloating(double dt,bool predictor){
     //-Initialises forces of floatings.
     memset(FtoForces,0,sizeof(StFtoForces)*FtCount); 
 
-    //-Adds accelerations from ForcePoints and Moorings.
-    if(ForcePoints)ForcePoints->GetFtMotionData(FtoForces);
+    //-Adds external forces (ForcePoints, Moorings, external file) to FtoForces[].
+    if(ForcePoints!=NULL || FtLinearForce!=NULL){
+      //-Loads sum of linear and angular forces from ForcePoints and Moorings.
+      if(ForcePoints)ForcePoints->GetFtForcesSum(FtoForces);
+      //-Adds the external forces.
+      if(FtLinearForce!=NULL){
+        for(unsigned cf=0;cf<FtCount;cf++){
+          FtoForces[cf].face     =FtoForces[cf].face     +GetFtExternalForceLin(cf,TimeStep);
+          FtoForces[cf].fomegaace=FtoForces[cf].fomegaace+GetFtExternalForceAng(cf,TimeStep);
+        }
+      }
+    }
 
-    //-Adds acceleration from particles and from external forces to FtoForces[].
+    //-Computes final acceleration from particles and from external forces in FtoForces[].
     FtCalcForces(FtoForces);
 
     //-Calculate data to update floatings. | Calcula datos para actualizar floatings.
@@ -981,7 +976,7 @@ void JSphCpuSingle::RunFloating(double dt,bool predictor){
     if(!predictor && ForcePoints){
       ForcePoints->UpdatePoints(TimeStep,dt,FtObjs);
       if(Moorings)Moorings->ComputeForces(Nstep,TimeStep,dt,ForcePoints);
-      ForcePoints->ComputeFtMotion();
+      ForcePoints->ComputeForcesSum();
     }
     Timersc->TmStop(TMC_SuFloating);
   }

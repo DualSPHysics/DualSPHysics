@@ -629,58 +629,39 @@ void JSphGpuSingle::FtApplyImposedVel(float3 *ftoforcesresg)const{
 }
 
 //==============================================================================
-/// Copies the external forces to FtoExtForcesg array for GPU.
-/// Copia las fuerzas externas al array FtoExtForcesg para GPU.
-//==============================================================================
-void JSphGpuSingle::FtCopyExternalForces(){
-  tfloat3 *ftoextforces=FtoAuxFloat15;
-  memset(ftoextforces,0,sizeof(tfloat3)*FtCount*2);
-  if(FtLinearForce!=NULL && FtAngularForce!=NULL)for(unsigned cf=0;cf<FtCount;cf++){
-    //-Adds external linear forces.
-    if(FtLinearForce[cf]!=NULL){
-      const tfloat3 flin=FtLinearForce[cf]->GetValue3f(TimeStep);
-      if(flin.x!=FLT_MAX)ftoextforces[cf*2].x=flin.x;
-      if(flin.y!=FLT_MAX)ftoextforces[cf*2].y=flin.y;
-      if(flin.z!=FLT_MAX)ftoextforces[cf*2].z=flin.z;
-    }
-    //-Adds external angular forces.
-    if(FtAngularForce[cf]!=NULL){
-      const tfloat3 fang=FtAngularForce[cf]->GetValue3f(TimeStep);
-      if(fang.x!=FLT_MAX)ftoextforces[cf*2+1].x=fang.x;
-      if(fang.y!=FLT_MAX)ftoextforces[cf*2+1].y=fang.y;
-      if(fang.z!=FLT_MAX)ftoextforces[cf*2+1].z=fang.z;
-    }
-  }
-  cudaMemcpy(FtoExtForcesg,ftoextforces,sizeof(tfloat3)*FtCount*2,cudaMemcpyHostToDevice);
-}
-
-//==============================================================================
 /// Process floating objects.
 /// Procesa floating objects.
 //==============================================================================
 void JSphGpuSingle::RunFloating(double dt,bool predictor){
   if(TimeStep>=FtPause){//-Operator >= is used because when FtPause=0 in symplectic-predictor, code would not enter here. | Se usa >= pq si FtPause es cero en symplectic-predictor no entraria.
     Timersg->TmStart(TMG_SuFloating,false);
-    //-Initialises forces of floatings.
-    cudaMemset(FtoForcesg,0,sizeof(StFtoForces)*FtCount);
-
-    //-Adds accelerations from ForcePoints and Moorings.
-    if(ForcePoints){
-      //-Initialises forces of floatings.
+    
+    //-Adds external forces (ForcePoints, Moorings, external file) to FtoForces[].
+    if(ForcePoints!=NULL || FtLinearForce!=NULL){
       StFtoForces *ftoforces=(StFtoForces *)FtoAuxFloat15;
       memset(ftoforces,0,sizeof(StFtoForces)*FtCount);
-      ForcePoints->GetFtMotionData(ftoforces);
+      //-Loads sum of linear and angular forces from ForcePoints and Moorings.
+      if(ForcePoints)ForcePoints->GetFtForcesSum(ftoforces);
+      //-Adds the external forces.
+      if(FtLinearForce!=NULL){
+        for(unsigned cf=0;cf<FtCount;cf++){
+          ftoforces[cf].face     =ftoforces[cf].face     +GetFtExternalForceLin(cf,TimeStep);
+          ftoforces[cf].fomegaace=ftoforces[cf].fomegaace+GetFtExternalForceAng(cf,TimeStep);
+        }
+      }
       //-Copies data to GPU memory.
       cudaMemcpy(FtoForcesg,ftoforces,sizeof(StFtoForces)*FtCount,cudaMemcpyHostToDevice);
     }
+    else{
+      //-Initialises forces of floatings when no external forces are applied.
+      cudaMemset(FtoForcesg,0,sizeof(StFtoForces)*FtCount);
+    }
 
-    //-Adds acceleration from particles and from external forces to FtoForces[].
-    //-Copies the external forces to FtoExtForcesg array.
-    if(FtLinearForce!=NULL)FtCopyExternalForces();
-    //-Calculate forces summation (face,fomegaace) starting from floating particles in ftoforcessum[].
-    cusph::FtCalcForcesSum(PeriActive!=0,FtCount,FtoDatpg,FtoCenterg,FtRidpg,Posxyg,Poszg,Aceg,FtoForcesSumg);
-    //-Adds acceleration from particles and from external forces to FtoForcesg[].
-    cusph::FtCalcForces(FtCount,Gravity,FtoMassg,FtoAnglesg,FtoInertiaini8g,FtoInertiaini1g,FtoForcesSumg,FtoForcesg,FtoExtForcesg);
+    //-Calculate forces summation (face,fomegaace) starting from floating particles and add in FtoForcesg[].
+    cusph::FtCalcForcesSum(PeriActive!=0,FtCount,FtoDatpg,FtoCenterg,FtRidpg,Posxyg,Poszg,Aceg,FtoForcesg);
+
+    //-Computes final acceleration from particles and from external forces in FtoForcesg[].
+    cusph::FtCalcForces(FtCount,Gravity,FtoMassg,FtoAnglesg,FtoInertiaini8g,FtoInertiaini1g,FtoForcesg);
     
     //-Calculate data to update floatings / Calcula datos para actualizar floatings.
     cusph::FtCalcForcesRes(FtCount,Simulate2D,dt,FtoVelAceg,FtoCenterg,FtoForcesg,FtoForcesResg,FtoCenterResg);
@@ -741,7 +722,7 @@ void JSphGpuSingle::RunFloating(double dt,bool predictor){
       UpdateFtObjs(); //-Updates floating information on CPU memory.
       ForcePoints->UpdatePoints(TimeStep,dt,FtObjs);
       if(Moorings)Moorings->ComputeForces(Nstep,TimeStep,dt,ForcePoints);
-      ForcePoints->ComputeFtMotion();
+      ForcePoints->ComputeForcesSum();
     }
     Timersg->TmStop(TMG_SuFloating,false);
   }

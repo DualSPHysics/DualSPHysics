@@ -42,6 +42,7 @@ JPartFloatBi4Save::JPartFloatBi4Save(){
   HeadMass=NULL; HeadMassp=NULL; HeadRadius=NULL;
   PartCenter=NULL; PartPosRef=NULL; PartVelLin=NULL; PartVelAng=NULL;
   PartAceLin=NULL; PartAceAng=NULL;
+  FptMkbound=NULL; FptPos=NULL; FptForce=NULL;
   Reset();
 }
 
@@ -59,6 +60,7 @@ JPartFloatBi4Save::~JPartFloatBi4Save(){
 //==============================================================================
 void JPartFloatBi4Save::Reset(){
   ResizeFtData(0);
+  ResizeFptData(0);
   ResetData();
   FormatVer=FormatVerDef;
   Dir="";
@@ -106,6 +108,9 @@ long long JPartFloatBi4Save::GetAllocMemory()const{
   if(PartVelAng) s=s+sizeof(tfloat3) *FtCount;
   if(PartAceLin) s=s+sizeof(tfloat3) *FtCount;
   if(PartAceAng) s=s+sizeof(tfloat3) *FtCount;
+  if(FptMkbound) s=s+sizeof(word)    *FptSize;
+  if(FptPos)     s=s+sizeof(tdouble3)*FptSize;
+  if(FptForce)   s=s+sizeof(tfloat3) *FptSize;
   return(s);
 }
 
@@ -153,6 +158,25 @@ void JPartFloatBi4Save::ResizeFtData(unsigned ftcount){
 }
 
 //==============================================================================
+/// Redimensiona memoria para datos de force points.
+/// Resize memory for force points data.
+//==============================================================================
+void JPartFloatBi4Save::ResizeFptData(unsigned fptsize){
+  FptSize=fptsize;
+  FptCount=0;
+  //-Libera memoria. Free memory
+  delete[] FptMkbound; FptMkbound=NULL;
+  delete[] FptPos;     FptPos=NULL;
+  delete[] FptForce;   FptForce=NULL;
+  //-Asigna memoria. Assign memory.
+  if(FptSize){
+    FptMkbound=new word    [FtCount];
+    FptPos    =new tdouble3[FtCount];
+    FptForce  =new tfloat3 [FtCount];
+  }
+}
+
+//==============================================================================
 /// Vacia datos de floatings por PART.
 /// Clears data of floatings by PART.
 //==============================================================================
@@ -163,6 +187,7 @@ void JPartFloatBi4Save::ClearPartData(){
   if(PartVelAng)memset(PartVelAng,0,sizeof(tfloat3) *FtCount);
   if(PartAceLin)memset(PartAceLin,0,sizeof(tfloat3) *FtCount);
   if(PartAceAng)memset(PartAceAng,0,sizeof(tfloat3) *FtCount);
+  FptCount=0;
 }
 
 //==============================================================================
@@ -262,6 +287,22 @@ void JPartFloatBi4Save::AddPartDataPosRef(unsigned ftcount,const tdouble3 *posre
   memcpy(PartPosRef,posref,sizeof(tdouble3)*ftcount*3);
 }
 
+//==============================================================================
+/// Anhade datos de force points de nuevo part.
+/// Adds data of force points to new part.
+//==============================================================================
+void JPartFloatBi4Save::AddPartDataForcePoints(unsigned npt,const word *mkbound
+  ,const tdouble3 *pos,const tfloat3 *force)
+{
+  if(npt){
+    if(npt>FptSize)ResizeFptData(npt);
+    memcpy(FptMkbound,mkbound,sizeof(word    )*npt);
+    memcpy(FptPos    ,pos    ,sizeof(tdouble3)*npt);
+    memcpy(FptForce  ,force  ,sizeof(tfloat3 )*npt);
+    FptCount=npt;
+  }
+}
+
 
 //==============================================================================
 /// Anhade datos de particulas de de nuevo part.
@@ -285,6 +326,13 @@ JBinaryData* JPartFloatBi4Save::AddPartFloat(unsigned cpart,unsigned step
   Part->CreateArray("facelin",JBinaryDataDef::DatFloat3 ,FtCount,PartAceLin,false);
   Part->CreateArray("faceang",JBinaryDataDef::DatFloat3 ,FtCount,PartAceAng,false);
   if(PartPosRef)Part->CreateArray("posref" ,JBinaryDataDef::DatDouble3,FtCount*3,PartPosRef,false);
+  //-Crea arrays con datos de force points. Create arrays with force points data.
+  if(FptCount){
+    Part->SetvUint("FptCount",FptCount);
+    Part->CreateArray("FptMkbound",JBinaryDataDef::DatUshort ,FptCount,FptMkbound,false);
+    Part->CreateArray("FptPos"    ,JBinaryDataDef::DatDouble3,FptCount,FptPos    ,false);
+    Part->CreateArray("FptForce"  ,JBinaryDataDef::DatFloat3 ,FptCount,FptForce  ,false);
+  }
   ClearPartData();
   return(Part);
 }

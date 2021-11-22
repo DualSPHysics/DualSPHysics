@@ -2055,8 +2055,14 @@ template<bool periactive> __global__ void KerFtCalcForcesSum( //ftodatp={pini,np
       fomegaace.x+=rfomegaacex[c]; fomegaace.y+=rfomegaacey[c]; fomegaace.z+=rfomegaacez[c];
     }
     //-Stores results in ftoforcessum[].
-    ftoforcessum[cf*2]=face;
-    ftoforcessum[cf*2+1]=fomegaace;
+    unsigned cf2=cf*2;
+    float3 aux=ftoforcessum[cf2];
+    face.x+=aux.x; face.y+=aux.y; face.z+=aux.z;
+    ftoforcessum[cf2]=face;
+    cf2++;
+    aux=ftoforcessum[cf2];
+    fomegaace.x+=aux.x; fomegaace.y+=aux.y; fomegaace.z+=aux.z;
+    ftoforcessum[cf2]=fomegaace;
   }
 }
 
@@ -2092,13 +2098,13 @@ __device__ void KerLoadMatrix3f(unsigned c,const float4 *data8,const float *data
 }
 
 //------------------------------------------------------------------------------
-/// Adds acceleration from particles and from external forces to ftoforces[].
-/// Anhade aceleracion de particulas y de fuerzas externas en ftoforces[].
+/// Computes final acceleration from particles and from external forces to ftoforces[].
+/// Calcula aceleracion final a parti de particulas y de fuerzas externas en ftoforces[].
 //------------------------------------------------------------------------------
 __global__ void KerFtCalcForces(unsigned ftcount,float3 gravity
   ,const float *ftomass,const float3 *ftoangles
   ,const float4 *ftoinertiaini8,const float *ftoinertiaini1
-  ,const float3 *ftoforcessum,float3 *ftoforces,const float3 *ftoextforces) //fdata={pini,np,radius,mass}
+  ,float3 *ftoforces) //fdata={pini,np,radius,mass}
 {
   const unsigned cf=blockIdx.x*blockDim.x + threadIdx.x; //-Number of floating.
   if(cf<ftcount){
@@ -2117,22 +2123,8 @@ __global__ void KerFtCalcForces(unsigned ftcount,float3 gravity
 
     //-Loads traslational and rotational velocities.
     const unsigned cf2=cf*2;
-    float3 face=ftoforcessum[cf2];
-    float3 fomegaace=ftoforcessum[cf2+1];
-
-    //-Sums the external forces.
-    if(ftoextforces!=NULL){
-      //-Linear force.
-      const float3 rflin=ftoextforces[cf2];
-      face.x=face.x+rflin.x; 
-      face.y=face.y+rflin.y; 
-      face.z=face.z+rflin.z; 
-      //-Angular force.
-      const float3 rfang=ftoextforces[cf2+1];
-      fomegaace.x=fomegaace.x+rfang.x; 
-      fomegaace.y=fomegaace.y+rfang.y; 
-      fomegaace.z=fomegaace.z+rfang.z; 
-    }
+    float3 face=ftoforces[cf2];
+    float3 fomegaace=ftoforces[cf2+1];
 
     //-Calculate omega starting from fomegaace & invinert. | Calcula omega a partir de fomegaace y invinert.
     {
@@ -2146,30 +2138,25 @@ __global__ void KerFtCalcForces(unsigned ftcount,float3 gravity
     face.x=(face.x + fmass*gravity.x) / fmass;
     face.y=(face.y + fmass*gravity.y) / fmass;
     face.z=(face.z + fmass*gravity.z) / fmass;
-    //-Stores results in ftoforces[].
-    const float3 rface=ftoforces[cf2];
-    const float3 rfome=ftoforces[cf2+1];
-    face.x+=rface.x;      face.y+=rface.y;      face.z+=rface.z;
-    fomegaace.x+=rfome.x; fomegaace.y+=rfome.y; fomegaace.z+=rfome.z;
     //-Stores final results.
-    ftoforces[cf2]  =face;
+    ftoforces[cf2]  =face; //-Saves acceleration (forces/fmass);
     ftoforces[cf2+1]=fomegaace;
   }
 }
 
 //==============================================================================
-/// Adds acceleration from particles and from external forces to ftoforces[].
-/// Anhade aceleracion de particulas y de fuerzas externas en ftoforces[].
+/// Computes final acceleration from particles and from external forces to ftoforces[].
+/// Calcula aceleracion final a parti de particulas y de fuerzas externas en ftoforces[].
 //==============================================================================
 void FtCalcForces(unsigned ftcount,tfloat3 gravity
   ,const float *ftomass,const float3 *ftoangles
   ,const float4 *ftoinertiaini8,const float *ftoinertiaini1
-  ,const float3 *ftoforcessum,float3 *ftoforces,const float3 *ftoextforces)
+  ,float3 *ftoforces)
 {
   if(ftcount){
     dim3 sgrid=GetSimpleGridSize(ftcount,SPHBSIZE);
     KerFtCalcForces <<<sgrid,SPHBSIZE>>> (ftcount,Float3(gravity),ftomass
-      ,ftoangles,ftoinertiaini8,ftoinertiaini1,ftoforcessum,ftoforces,ftoextforces);
+      ,ftoangles,ftoinertiaini8,ftoinertiaini1,ftoforces);
   }
 }
 

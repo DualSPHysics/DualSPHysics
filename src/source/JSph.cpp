@@ -2230,6 +2230,22 @@ void JSph::InitRun(unsigned np,const unsigned *idp,const tdouble3 *pos){
   TimePartNext=(SvAllSteps? TimeStep: OutputTime->GetNextTime(TimeStep));
 }
 
+
+//==============================================================================
+/// Returns linear forces from external file according to timestep.
+//==============================================================================
+tfloat3 JSph::GetFtExternalForceLin(unsigned cf,double timestep)const{
+  return(FtLinearForce[cf]!=NULL? FtLinearForce[cf]->GetValue3f(timestep): TFloat3(0));
+}
+
+//==============================================================================
+/// Returns angular forces from external file according to timestep.
+//==============================================================================
+tfloat3 JSph::GetFtExternalForceAng(unsigned cf,double timestep)const{
+  return(FtAngularForce[cf]!=NULL? FtAngularForce[cf]->GetValue3f(timestep): TFloat3(0));
+}
+
+
 //==============================================================================
 /// Calculates predefined movement of boundary particles.
 /// Calcula movimiento predefinido de boundary particles.
@@ -2621,12 +2637,14 @@ void JSph::SavePartData(unsigned npok,unsigned nout,const JDataArrays& arrays
     DataOutBi4->SavePartOut(SvPosDouble,Part,TimeStep,PartsOut->GetCount(),PartsOut->GetIdpOut(),NULL,PartsOut->GetPosOut(),PartsOut->GetVelOut(),PartsOut->GetRhopOut(),PartsOut->GetMotiveOut());
   }
 
-  //-Stores data of floating bodies.
+  //-Stores data of floating bodies (and force points).
   if(DataFloatBi4){
     for(unsigned cf=0;cf<FtCount;cf++){
       const StFloatingData *v=FtObjs+cf;
       DataFloatBi4->AddPartData(cf,v->center,v->fvel,v->fomega,v->facelin,v->faceang);
     }
+    if(ForcePoints)DataFloatBi4->AddPartDataForcePoints(ForcePoints->GetPtCount()
+      ,ForcePoints->GetPtMkBound(),ForcePoints->GetPtPos(),ForcePoints->GetPtForce());
     DataFloatBi4->SavePartFloat(Part,Nstep,TimeStep,(UseDEM? DemDtForce: 0));
   }
 

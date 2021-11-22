@@ -465,6 +465,9 @@ protected:
   void LoadCaseParticles();
   void InitRun(unsigned np,const unsigned *idp,const tdouble3 *pos);
 
+  tfloat3 GetFtExternalForceLin(unsigned cf,double timestep)const;
+  tfloat3 GetFtExternalForceAng(unsigned cf,double timestep)const;
+
   bool CalcMotion(double stepdt);
   void CalcMotionWaveGen(double stepdt);
   void ChronoFtApplyImposedVel();

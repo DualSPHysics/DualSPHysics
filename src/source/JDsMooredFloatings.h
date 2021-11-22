@@ -83,9 +83,9 @@ private:
   std::vector<StLinkData> Fairleads;
 
 public:
-  const word FloatingMk;   ///<Mkbound of the Floating body the mooring is linked to.
+  const word FloatingMkBound;   ///<Mkbound of the Floating body the mooring is linked to.
 
-  JDsMooredFloating(word fmk);
+  JDsMooredFloating(word mkbound);
   ~JDsMooredFloating();
   void Reset();
 
@@ -137,7 +137,7 @@ private:
   //double NextTime;
   //double LastTimeOk;
 
-  unsigned GetFloatingByMk(word mkbound)const;
+  unsigned GetFloatingByMkbound(word mkbound)const;
   void ReadXml(const JXml *sxml,TiXmlElement* ele);
   void ConfigFloatings(unsigned ftcount,const StFloatingData *ftdata);
   void AllocFairMemory();

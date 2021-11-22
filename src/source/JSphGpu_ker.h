@@ -250,7 +250,7 @@ void FtCalcForcesSum(bool periactive,unsigned ftcount
 void FtCalcForces(unsigned ftcount,tfloat3 gravity
   ,const float *ftomass,const float3 *ftoangles
   ,const float4 *ftoinertiaini8,const float *ftoinertiaini1
-  ,const float3 *ftoforcessum,float3 *ftoforces,const float3 *ftoextforces);
+  ,float3 *ftoforces);
 void FtCalcForcesRes(unsigned ftcount,bool simulate2d,double dt
   ,const float3 *ftovelace,const double3 *ftocenter,const float3 *ftoforces
   ,float3 *ftoforcesres,double3 *ftocenterres);
