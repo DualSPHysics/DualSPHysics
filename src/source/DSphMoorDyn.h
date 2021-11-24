@@ -34,6 +34,7 @@
 
 #include "TypesDef.h"
 #include "JLog2.h"
+#include "JXml.h"
 #include <string>
 
 //#define DISABLE_MOORDYN     ///<It allows compile without DSphMoorDyn library.
@@ -107,9 +108,17 @@ unsigned MoorDyn_MooringsCount();
 unsigned MoorDyn_GetMooringReference(const unsigned ftid);
 
 //==============================================================================
-/// Sends to MoorDyn the DualSPHysics log to store and print messages
+/// Sends to MoorDyn+ the object to manage Logs from DualSPHysics
 //==============================================================================
 void MoorDyn_LogInit(JLog2 *log);
+
+//==============================================================================
+/// Sends to MoorDyn the object to manage user-defined variables from DualSPHysics
+//==============================================================================
+#ifndef DISABLE_NUMEXLIB
+void MoorDyn_NuxLibInit(JNumx *nuxlib);
+#endif // !DISABLE_NUMEXLIB
+
 #endif
 
 #endif
