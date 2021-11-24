@@ -185,11 +185,19 @@ class JPartFloatBi4Load : protected JObject
   tfloat3  *PartAceLin; ///<Linear acceleration of the floating object (units:m/s^2) [FtCount].
   tfloat3  *PartAceAng; ///<Angular acceleration of the floating object (units:rad/s^2) [FtCount].
 
+  //-Data of force points (PARTs).
+  unsigned FptSize;
+  unsigned FptCount;
+  word     *FptMkbound;  ///<MkBound of floating body. [FptSize].
+  tdouble3 *FptPos;      ///<Position. [FptSize].
+  tfloat3  *FptForce;    ///<Force. [FptSize].
+
  private:
   JBinaryDataArray* CheckArray(JBinaryData *bd,const std::string &name
     ,JBinaryDataDef::TpData type,unsigned count=UINT_MAX);
   void ResetPart();
   void ResizeFtData(unsigned ftcount);
+  void ResizeFptData(unsigned fptsize);
   void CheckPartList()const;
   void CheckPart()const;
   void CheckFloating(unsigned cf)const;
@@ -240,6 +248,12 @@ class JPartFloatBi4Load : protected JObject
   const tfloat3*  GetPartAceLin()const{ CheckPart(); return(AceData? PartAceLin: NULL); }
   const tfloat3*  GetPartAceAng()const{ CheckPart(); return(AceData? PartAceAng: NULL); }
   const tdouble3* GetPartPosRef()const{ CheckPart(); return(PosRefData? PartPosRef: NULL); }
+
+  unsigned        GetPartFptCount  ()const{ CheckPart(); return(FptCount); }
+  const word*     GetPartFptMkbound()const{ CheckPart(); return(FptCount? FptMkbound: NULL); }
+  const tdouble3* GetPartFptPos    ()const{ CheckPart(); return(FptCount? FptPos:     NULL); }
+  const tfloat3*  GetPartFptForce  ()const{ CheckPart(); return(FptCount? FptForce:   NULL); }
+
 };
 
 

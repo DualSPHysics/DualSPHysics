@@ -876,8 +876,8 @@ void JSphCpuSingle::FtApplyImposedVel(StFtoForcesRes *ftoforcesres)const{
 /// Procesa floating objects.
 //==============================================================================
 void JSphCpuSingle::RunFloating(double dt,bool predictor){
+  Timersc->TmStart(TMC_SuFloating);
   if(TimeStep>=FtPause){//-Operator >= is used because when FtPause=0 in symplectic-predictor, code would not enter here. | Se usa >= pq si FtPause es cero en symplectic-predictor no entraria.
-    Timersc->TmStart(TMC_SuFloating);
     //-Initialises forces of floatings.
     memset(FtoForces,0,sizeof(StFtoForces)*FtCount); 
 
@@ -971,15 +971,14 @@ void JSphCpuSingle::RunFloating(double dt,bool predictor){
         //<vs_ftmottionsv_end>
       }
     }
-
-    //-Update data of points in FtForces and calculates motion data of affected floatings.
-    if(!predictor && ForcePoints){
-      ForcePoints->UpdatePoints(TimeStep,dt,FtObjs);
-      if(Moorings)Moorings->ComputeForces(Nstep,TimeStep,dt,ForcePoints);
-      ForcePoints->ComputeForcesSum();
-    }
-    Timersc->TmStop(TMC_SuFloating);
   }
+  //-Update data of points in FtForces and calculates motion data of affected floatings.
+  if(!predictor && ForcePoints){
+    ForcePoints->UpdatePoints(TimeStep,dt,FtObjs);
+    if(Moorings)Moorings->ComputeForces(Nstep,TimeStep,dt,ForcePoints);
+    ForcePoints->ComputeForcesSum();
+  }
+  Timersc->TmStop(TMC_SuFloating);
 }
 
 //==============================================================================

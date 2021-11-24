@@ -95,6 +95,8 @@
 //:# - Nuevas funciones Split2pVector(), Split2pKey(), Split2pValue(), Split2pDouble3(), Split2pDouble3Error().  (06-07-2021)
 //:# - Nuevas funciones GetVectorFind().  (06-07-2021)
 //:# - Nuevas funciones GetHostName().  (27-08-2021)
+//:# - Nuevas funciones GetNewFileName().  (04-11-2021)
+//:# - Nuevas funciones VectorFind() para unsigned, float y double.  (06-11-2021)
 //:#############################################################################
 
 /// \file Functions.h \brief Declares basic/general functions for the entire application.
@@ -239,6 +241,10 @@ inline unsigned VectorFind(const std::string &key,const std::vector<std::string>
 inline unsigned VectorFindMask(const std::string &keymask,const std::vector<std::string> &vec,unsigned first=0){ return( VectorFindMask(keymask,"",vec,first)); }
 std::string GetVectorFind(const std::string &key,const std::string mark,const std::vector<std::string> &vec,unsigned first=0);
 
+unsigned VectorFind(const unsigned key,const std::vector<unsigned> &vec,unsigned first=0);
+unsigned VectorFind(const float    key,const std::vector<float>    &vec,unsigned first=0);
+unsigned VectorFind(const double   key,const std::vector<double>   &vec,unsigned first=0);
+
 double GetFirstValueDouble(std::string tex,std::string pretex="");
 double GetFirstValueDouble(std::string tex,std::string &resttex,std::string pretex);
 int GetFirstValueInt(std::string tex,std::string pretex="");
@@ -321,6 +327,7 @@ std::string GetWithoutExtension(const std::string &ruta);
 void GetFileNameSplit(const std::string &file,std::string &dir,std::string &fname,std::string &fext);
 std::string AddExtension(const std::string &file,const std::string &ext);
 std::string FileNameSec(std::string fname,unsigned fnumber);
+std::string GetNewFileName(std::string fnamefmt,unsigned initialnum=0);
 std::string ShortFileName(const std::string &file,unsigned maxlen,bool withpoints=true);
 std::string TextWithShortFileName(const std::string &txpre,const std::string &txpos,const std::string &file,unsigned maxlen);
 

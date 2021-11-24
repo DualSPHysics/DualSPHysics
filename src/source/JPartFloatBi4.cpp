@@ -170,9 +170,9 @@ void JPartFloatBi4Save::ResizeFptData(unsigned fptsize){
   delete[] FptForce;   FptForce=NULL;
   //-Asigna memoria. Assign memory.
   if(FptSize){
-    FptMkbound=new word    [FtCount];
-    FptPos    =new tdouble3[FtCount];
-    FptForce  =new tfloat3 [FtCount];
+    FptMkbound=new word    [FptSize];
+    FptPos    =new tdouble3[FptSize];
+    FptForce  =new tfloat3 [FptSize];
   }
 }
 
@@ -363,6 +363,7 @@ JPartFloatBi4Load::JPartFloatBi4Load(){
   PartCenter=NULL; PartPosRef=NULL;
   PartVelLin=NULL; PartVelAng=NULL;
   PartAceLin=NULL; PartAceAng=NULL;
+  FptMkbound=NULL; FptPos=NULL; FptForce=NULL;
   Reset();
 }
 
@@ -387,6 +388,7 @@ void JPartFloatBi4Load::Reset(){
   PosRefData=false;
   FtCount=PartCount=0;
   ResizeFtData(0);
+  ResizeFptData(0);
   Part=NULL;
   ResetPart();
 }
@@ -447,6 +449,25 @@ void JPartFloatBi4Load::ResizeFtData(unsigned ftcount){
     memset(PartVelAng ,0,sizeof(tfloat3) *FtCount);
     memset(PartAceLin ,0,sizeof(tfloat3) *FtCount);
     memset(PartAceAng ,0,sizeof(tfloat3) *FtCount);
+  }
+}
+
+//==============================================================================
+/// Redimensiona memoria para datos de force points.
+/// Resize memory for force points data.
+//==============================================================================
+void JPartFloatBi4Load::ResizeFptData(unsigned fptsize){
+  FptSize=fptsize;
+  FptCount=0;
+  //-Libera memoria. Free memory
+  delete[] FptMkbound; FptMkbound=NULL;
+  delete[] FptPos;     FptPos=NULL;
+  delete[] FptForce;   FptForce=NULL;
+  //-Asigna memoria. Assign memory.
+  if(FptSize){
+    FptMkbound=new word    [FptSize];
+    FptPos    =new tdouble3[FptSize];
+    FptForce  =new tfloat3 [FptSize];
   }
 }
 
@@ -593,6 +614,7 @@ void JPartFloatBi4Load::LoadPartItem(unsigned cp){
     JBinaryDataArray *ar=CheckArray(Part,"fomega",JBinaryDataDef::DatFloat3);
     memcpy(PartVelAng,(const tfloat3 *)ar->GetDataPointer(),sizeof(tfloat3)*FtCount);
   }
+
   AceData=(Part->GetArray("facelin") && Part->GetArray("faceang"));
   if(AceData){
     {//-Loads array facelin when it is available.
@@ -608,8 +630,25 @@ void JPartFloatBi4Load::LoadPartItem(unsigned cp){
     JBinaryDataArray *ar=CheckArray(Part,"posref",JBinaryDataDef::DatDouble3,FtCount*3);
     memcpy(PartPosRef,(const tdouble3 *)ar->GetDataPointer(),sizeof(tdouble3)*FtCount*3);
   }
-}
 
+  const unsigned fptcount=Part->GetvUint("FptCount",true,0);
+  if(fptcount){
+    if(fptcount>FptSize)ResizeFptData(fptcount);
+    {//-Loads array FptMkbound when it is available.
+      JBinaryDataArray *ar=CheckArray(Part,"FptMkbound",JBinaryDataDef::DatUshort);
+      memcpy(FptMkbound,(const word *)ar->GetDataPointer(),sizeof(word)*fptcount);
+    }
+    {//-Loads array FptPos when it is available.
+      JBinaryDataArray *ar=CheckArray(Part,"FptPos",JBinaryDataDef::DatDouble3);
+      memcpy(FptPos,(const tdouble3 *)ar->GetDataPointer(),sizeof(tdouble3)*fptcount);
+    }  
+    {//-Loads array FptForce when it is available.
+      JBinaryDataArray *ar=CheckArray(Part,"FptForce",JBinaryDataDef::DatFloat3);
+      memcpy(FptForce,(const tfloat3 *)ar->GetDataPointer(),sizeof(tfloat3)*fptcount);
+    }  
+    FptCount=fptcount;
+  }
+}
 
 //==============================================================================
 /// Selecciona el PART indicado y devuelve false en caso de error.

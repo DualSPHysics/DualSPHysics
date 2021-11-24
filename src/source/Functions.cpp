@@ -979,6 +979,43 @@ std::string GetVectorFind(const std::string &key,const std::string mark
 
 
 //==============================================================================
+/// Find unsigned value in a vector since first position. 
+/// Returns UINT_MAX when it was not found.
+//==============================================================================
+unsigned VectorFind(const unsigned key,const std::vector<unsigned> &vec,unsigned first)
+{
+  unsigned c=first;
+  const unsigned size=unsigned(vec.size());
+  for(;c<size && vec[c]!=key;c++);
+  return(c<size? c: UINT_MAX);
+}
+
+//==============================================================================
+/// Find float value in a vector since first position. 
+/// Returns UINT_MAX when it was not found.
+//==============================================================================
+unsigned VectorFind(const float key,const std::vector<float> &vec,unsigned first)
+{
+  unsigned c=first;
+  const unsigned size=unsigned(vec.size());
+  for(;c<size && vec[c]!=key;c++);
+  return(c<size? c: UINT_MAX);
+}
+
+//==============================================================================
+/// Find double value in a vector since first position. 
+/// Returns UINT_MAX when it was not found.
+//==============================================================================
+unsigned VectorFind(const double key,const std::vector<double> &vec,unsigned first)
+{
+  unsigned c=first;
+  const unsigned size=unsigned(vec.size());
+  for(;c<size && vec[c]!=key;c++);
+  return(c<size? c: UINT_MAX);
+}
+
+
+//==============================================================================
 /// Returns first double value after "pretex".
 //==============================================================================
 double GetFirstValueDouble(std::string tex,std::string pretex){
@@ -1533,6 +1570,22 @@ std::string FileNameSec(std::string fname,unsigned fnumber){
   }
   else fname=fname+"_????.";
   return(fname+fext);
+}
+
+//==============================================================================
+/// Returns the first filename with number  that does not exist.
+/// E.g.: GetNewFileName("DBG_name_%04d.dat")
+//==============================================================================
+std::string GetNewFileName(std::string fnamefmt,unsigned initialnum){
+  std::string file0;
+  std::string file=PrintStr(fnamefmt.c_str(),initialnum);
+  while(FileExists(file) && file0!=file){
+    initialnum++;
+    file0=file;
+    file=PrintStr(fnamefmt.c_str(),initialnum);
+  }
+  if(file==file0)Run_ExceptioonFileFun("Error generation new file name.",file);
+  return(file);
 }
 
 //==============================================================================
