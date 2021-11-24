@@ -635,15 +635,15 @@ void JPartFloatBi4Load::LoadPartItem(unsigned cp){
   if(fptcount){
     if(fptcount>FptSize)ResizeFptData(fptcount);
     {//-Loads array FptMkbound when it is available.
-      JBinaryDataArray *ar=CheckArray(Part,"FptMkbound",JBinaryDataDef::DatUshort);
+      JBinaryDataArray *ar=CheckArray(Part,"FptMkbound",JBinaryDataDef::DatUshort,fptcount);
       memcpy(FptMkbound,(const word *)ar->GetDataPointer(),sizeof(word)*fptcount);
     }
     {//-Loads array FptPos when it is available.
-      JBinaryDataArray *ar=CheckArray(Part,"FptPos",JBinaryDataDef::DatDouble3);
+      JBinaryDataArray *ar=CheckArray(Part,"FptPos",JBinaryDataDef::DatDouble3,fptcount);
       memcpy(FptPos,(const tdouble3 *)ar->GetDataPointer(),sizeof(tdouble3)*fptcount);
     }  
     {//-Loads array FptForce when it is available.
-      JBinaryDataArray *ar=CheckArray(Part,"FptForce",JBinaryDataDef::DatFloat3);
+      JBinaryDataArray *ar=CheckArray(Part,"FptForce",JBinaryDataDef::DatFloat3,fptcount);
       memcpy(FptForce,(const tfloat3 *)ar->GetDataPointer(),sizeof(tfloat3)*fptcount);
     }  
     FptCount=fptcount;
