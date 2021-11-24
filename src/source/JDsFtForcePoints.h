@@ -32,6 +32,7 @@
 //:# - Actualiza coupling con MoorDyn. (23-12-2019)
 //:# - Saves VTK files in MooringsVtk directory. (24-12-2019)
 //:# - Cambio de nombre de J.SphFtForcePoints a J.DsFtForcePoints. (28-06-2020)
+//:# - Se proporcionan datos de fuerzas en lugar de aceleraciones. (24-11-2021)
 //#############################################################################
 
 /// \file JDsFtForcePoints.h \brief Declares the class \ref JDsFtForcePoints.

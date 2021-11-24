@@ -150,8 +150,7 @@ void JSphGpu::InitVars(){
   RidpMoveg=NULL;
   FtRidpg=NULL;   FtoMasspg=NULL;                  //-Floatings.
   FtoDatpg=NULL;  FtoMassg=NULL;  FtoConstraintsg=NULL;                           //-Calculates forces on floating bodies.
-  FtoForcesSumg=NULL;  FtoForcesg=NULL;  FtoForcesResg=NULL;  FtoCenterResg=NULL; //-Calculates forces on floating bodies.
-  FtoExtForcesg=NULL;                                                             //-Calculates forces on floating bodies.
+  FtoForcesg=NULL;  FtoForcesResg=NULL;  FtoCenterResg=NULL; //-Calculates forces on floating bodies.
   FtoCenterg=NULL; FtoAnglesg=NULL; FtoVelAceg=NULL;//-Management of floating bodies.
   FtoInertiaini8g=NULL; FtoInertiaini1g=NULL;//-Management of floating bodies.
   FtObjsOutdated=true;
@@ -178,7 +177,7 @@ void JSphGpu::FreeCpuMemoryFixed(){
 //==============================================================================
 void JSphGpu::AllocCpuMemoryFixed(){
   MemCpuFixed=0;
-  if(sizeof(tfloat3)*2!=sizeof(StFtoForces))Run_Exceptioon("Error: FtoForcesg and FtoForcesSumg does not match float3*2.");
+  if(sizeof(tfloat3)*2!=sizeof(StFtoForces))Run_Exceptioon("Error: FtoForcesg does not match float3*2.");
   if(sizeof(float)*9!=sizeof(tmatrix3f))Run_Exceptioon("Error: FtoInertiainig does not match float*9.");
   try{
     //-Allocates memory for floating bodies.
@@ -204,8 +203,6 @@ void JSphGpu::FreeGpuMemoryFixed(){
   if(FtoDatpg)          cudaFree(FtoDatpg);           FtoDatpg=NULL;
   if(FtoMassg)          cudaFree(FtoMassg);           FtoMassg=NULL;
   if(FtoConstraintsg)   cudaFree(FtoConstraintsg);    FtoConstraintsg=NULL;
-  if(FtoForcesSumg)     cudaFree(FtoForcesSumg);      FtoForcesSumg=NULL;
-  if(FtoExtForcesg)     cudaFree(FtoExtForcesg);      FtoExtForcesg=NULL;
   if(FtoForcesg)        cudaFree(FtoForcesg);         FtoForcesg=NULL;
   if(FtoForcesResg)     cudaFree(FtoForcesResg);      FtoForcesResg=NULL;
   if(FtoCenterg)        cudaFree(FtoCenterg);         FtoCenterg=NULL;
@@ -234,8 +231,6 @@ void JSphGpu::AllocGpuMemoryFixed(){
     m=sizeof(float4)  *FtCount;     cudaMalloc((void**)&FtoDatpg          ,m);  MemGpuFixed+=m;
     m=sizeof(float)   *FtCount;     cudaMalloc((void**)&FtoMassg          ,m);  MemGpuFixed+=m;
     m=sizeof(byte)    *FtCount;     cudaMalloc((void**)&FtoConstraintsg   ,m);  MemGpuFixed+=m;
-    m=sizeof(float3)  *FtCount*2;   cudaMalloc((void**)&FtoForcesSumg     ,m);  MemGpuFixed+=m;
-    m=sizeof(float3)  *FtCount*2;   cudaMalloc((void**)&FtoExtForcesg     ,m);  MemGpuFixed+=m;
     m=sizeof(float3)  *FtCount*2;   cudaMalloc((void**)&FtoForcesg        ,m);  MemGpuFixed+=m;
     m=sizeof(float3)  *FtCount*2;   cudaMalloc((void**)&FtoForcesResg     ,m);  MemGpuFixed+=m;
     m=sizeof(double3) *FtCount;     cudaMalloc((void**)&FtoCenterResg     ,m);  MemGpuFixed+=m;
