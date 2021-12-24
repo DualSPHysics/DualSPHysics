@@ -118,6 +118,7 @@ private:
   std::string FileLines;
   std::string MoordynDir;   ///<Work directory for MoorDyn.
 
+  bool SvVtkLines;     ///<Saves vtk with mooring lines (def=true).
   bool SvVtkMoorings;  ///<Saves vtk with moorings (def=true).
   bool SvCsvPoints;    ///<Saves csv with link points (def=true). 
   bool SvVtkPoints;    ///<Saves vtk with link points (def=false).
@@ -154,8 +155,8 @@ public:
 
   void ComputeForces(unsigned nstep,double timestep,double dt,JDsFtForcePoints *forcepoints);
 
-  void SaveVtkMoorings(unsigned numfile)const;
-  void SaveData(unsigned numfile)const{ if(SvVtkMoorings)SaveVtkMoorings(numfile); }
+  void SaveVtkMoorings(unsigned numfile,bool svlines)const;
+  void SaveData(unsigned numfile)const;
 
   unsigned Count()const{ return(unsigned(Floatings.size())); }
 };

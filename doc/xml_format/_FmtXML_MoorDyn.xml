@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<!-- *** DualSPHysics (05-07-2021) *** -->
+<!-- *** DualSPHysics (24-12-2021) *** -->
 <!-- *** class: JMooredFloatings *** -->
 <!------------------------------------------------------------------------------->
 <!------------------------------------------------------------------------------->
 <!-- *** Example for configuration of moorings using coupling with MoorDyn+. *** -->
 <special>
     <moorings>
+        <savevtk_lines value="true" comment="Saves vtk with mooring lines (default=true)" />
         <savevtk_moorings value="true" comment="Saves vtk with moorings (default=true)" />
         <savecsv_points value="true" comment="Saves csv with link points (default=true)" />
         <savevtk_points value="false" comment="Saves vtk with link points (default=false)" />
@@ -50,6 +51,15 @@
 		<threshIC value="0.01" comment="Convergence threshold for for initial conditions. (default=0.001)"/>
 		<tmaxIC value="2" comment="Maximum time for initial conditions without convergence.(default=0)" units_comment="s"/>
 	</solverOptions>
+	<!-- Solver options      -->
+	<!-- dtM value is calculated automatically to     -->
+	<!-- ensure the equilibrium state of the system.  -->
+	<!-- To impose a value, option auto="false" can   -->
+	<!-- be used (default: auto=true)                 --> 
+	<solverOptions>
+		<dtM value="0.0001" auto="false" comment="Desired mooring model time step. (default=0.0001)" />
+	</solverOptions>
+	
 	<!-- Attached floating bodies -->
 	<bodies>
 		<body ref="45" comment="Fluid driven object to attach mooring lines."> %body 0
@@ -64,7 +74,7 @@
 	<!-- Mooring lines -->
 	<lines>
 		<!-- Default properties for all mooring lines -->
-		<linedefault comment="Shared properties for each line.">  
+		<linedefault comment="Shared properties for each line.">
 			<ea value="2.9e3" comment="Line stiffness, product of elasticity modulus and cross-sectional area." units_comment="N"/>
 			<diameter value="3.656e-3" comment="Volume-equivalent diameter of the line." units_comment="m"/>
 			<massDenInAir value="0.0607" comment="Mass per unit length of the line." units_comment="kg/m"/>
@@ -76,30 +86,44 @@
 			<breaktension value="500" comment="Maximum value of tension for the lines. value=0 Break Tension is not used. (default=0)" units_comment="N" />
 			<outputFlags value="pv" comment="Node output properties.(default=-) [-:None|p:Positions|v:Velocities|U:Wave Velocities|t:Tension|D:Hydrodynamic Drag Force|c=Internal Damping|s:Strain of each segment|d: rate of strain of each segment]"/>
 		</linedefault>
+		
+		<!-- Default properties for all mooring lines      -->
+		<!-- E can be defined instead of using EA.         -->
+		<!-- It means that EA will be calculated by E*Area -->
+		<!-- Just E or EA can be defined, then both cannot -->
+		<!-- be defined at the same time since they depend -->
+		<!-- on each other                                 --> 
+		<linedefault comment="Shared properties for each line.">
+		    <e value="2.76246e+08" comment="Stiffness coefficient(Young's Modulus)." units_comment="N/m^2"/>
+			...
+		</linedefault>
+		
 		<line>  %line 0
 			<vesselconnection bodyref="45" x="0.5" y="0.0" z="-2.0"/>
 			<fixconnection x="-0.5" y="0.0" z="-2.50"/>
-			<length value="1" comment="(m)"/>
+			<length value="1" comment="Unstretched length." units_comment="(m)"/>
 			<segments value="20"/>
 			<ea value="3.1e3" comment="Line stiffness, product of elasticity modulus and cross-sectional area." units_comment="N"/>
 		</line>
 		<line>  %line 1
 			<vesselconnection bodyref="50" x="-0.55" y="0" z="-2.0"/>
 			<fixconnection x="0.5" y="0.0" z="-2.50"/>
-			<length value="1" units_comment="m"/>
+			<length value="1" comment="Unstretched length." units_comment="(m)"/>
 			<segments value="20"/>
 			<diameter value="2.956E-3" comment="Volume-equivalent diameter of the line." units_comment="m"/>
 		</line>
 		<line>  %line 2
 			<vesselconnection bodyref="45" x="0.7" y="0.0" z="-2.0"/>
 			<connect conref="1"/>
-			<length value="0.3" units_comment="m"/>
+			<length value="0.3" comment="Unstretched length." units_comment="(m)"/>
 			<segments value="10"/>
+			<depth value="0.25" comment="Water depth for current line. This value overwrites water depth only for this line." units_comment="m"/>
+
 		</line>
 		<line>  %line 3
 			<connect conref="1"/>
 			<fixconnection bodyref="45" x="0.7" y="0.0" z="-2.5"/>
-			<length value="0.45" units_comment="m"/>
+			<length value="0.45" comment="Unstretched length." units_comment="(m)"/>
 			<segments value="15"/>
 		</line>
 		<line>  %line 4
@@ -111,7 +135,7 @@
 		<line savedata="false">  %line 5 -> No Output data for this line
 			<connect conref="2"/>
 			<fixconnection bodyref="45" x="-0.75" y="0.0" z="-2.5"/>
-			<length value="0.45" units_comment="m"/>
+			<length value="0.45" comment="Unstretched length." units_comment="(m)"/>
 			<segments value="15"/>
 		</line>
 	</lines>

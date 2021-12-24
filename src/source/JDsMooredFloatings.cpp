@@ -144,7 +144,7 @@ JDsMooredFloatings::~JDsMooredFloatings(){
 void JDsMooredFloatings::Reset(){
   FileLines="";
   MoordynDir="";
-  SvVtkMoorings=SvCsvPoints=SvVtkPoints=false;
+  SvVtkLines=SvVtkMoorings=SvCsvPoints=SvVtkPoints=false;
   for(unsigned c=0;c<Count();c++)delete Floatings[c];
   Floatings.clear();
   if(MoorDynReady){
@@ -169,7 +169,7 @@ unsigned JDsMooredFloatings::GetFloatingByMkbound(word mkbound)const{
 /// Reads list of mooredfloatings in the XML node.
 //==============================================================================
 void JDsMooredFloatings::ReadXml(const JXml *sxml,TiXmlElement* lis){
-  sxml->CheckElementNames(lis,true,"moordyn savevtk_moorings savecsv_points savevtk_points mooredfloatings");
+  sxml->CheckElementNames(lis,true,"moordyn savevtk_lines savevtk_moorings savecsv_points savevtk_points mooredfloatings");
   //-Loads configuration file for MoorDyn solver.
   if(sxml->CheckElementActive(lis,"moordyn")){
     FileLines=sxml->ReadElementStr(lis,"moordyn","file",true);
@@ -182,6 +182,7 @@ void JDsMooredFloatings::ReadXml(const JXml *sxml,TiXmlElement* lis){
     }
   }
   //-Loads configuration to save VTK and CSV files.
+  SvVtkLines=sxml->ReadElementBool(lis,"savevtk_lines","value",true,true);
   SvVtkMoorings=sxml->ReadElementBool(lis,"savevtk_moorings","value",true,true);
   SvCsvPoints=sxml->ReadElementBool(lis,"savecsv_points","value",true,true);
   SvVtkPoints=sxml->ReadElementBool(lis,"savevtk_points","value",true,false);
@@ -301,9 +302,9 @@ void JDsMooredFloatings::VisuConfig(std::string txhead,std::string txfoot)const{
 }
 
 //==============================================================================
-/// Saves VTK with moorings.
+/// Saves VTK with moorings full or only lines.
 //==============================================================================
-void JDsMooredFloatings::SaveVtkMoorings(unsigned numfile)const{
+void JDsMooredFloatings::SaveVtkMoorings(unsigned numfile,bool svlines)const{
   JVtkLib sh;
   unsigned vpossize=0;
   tfloat3 *vpos=NULL;
@@ -316,14 +317,30 @@ void JDsMooredFloatings::SaveVtkMoorings(unsigned numfile)const{
     }
     for(unsigned cn=0;cn<nodes;cn++)vpos[cn]=ToTFloat3(MoorDyn_GetNodePos(cl,cn));
     sh.AddShapePolyLine(nodes,vpos,int(cl));
+    if(svlines)sh.AddShapePoints(nodes,vpos,int(cl));
     const float dist=(nodes>=2? fgeo::PointsDist(vpos[0],vpos[1])/10: 1);
-    for(unsigned cn=0;cn<nodes;cn++)sh.AddShapeSphere(vpos[cn],dist,16,int(cl));
+    if(!svlines)for(unsigned cn=0;cn<nodes;cn++)sh.AddShapeSphere(vpos[cn],dist,16,int(cl));
   }
   delete[] vpos; vpos=NULL;
   //-Genera fichero VTK.
-  Log->AddFileInfo(AppInfo.GetDirOut()+"MooringsVtk/Moorings_????.vtk","Saves VTK file with moorings.");
-  const string file=AppInfo.GetDirOut()+fun::FileNameSec("MooringsVtk/Moorings.vtk",numfile);
-  sh.SaveShapeVtk(file,"Line");
+  if(svlines){
+    Log->AddFileInfo(AppInfo.GetDirOut()+"MooringsVtk/MooringsLines_????.vtk","Saves VTK file with moorings.");
+    const string file=AppInfo.GetDirOut()+fun::FileNameSec("MooringsVtk/MooringsLines.vtk",numfile);
+    sh.SaveShapeVtk(file,"Line");
+  }
+  else{
+    Log->AddFileInfo(AppInfo.GetDirOut()+"MooringsVtk/Moorings_????.vtk","Saves VTK file with moorings.");
+    const string file=AppInfo.GetDirOut()+fun::FileNameSec("MooringsVtk/Moorings.vtk",numfile);
+    sh.SaveShapeVtk(file,"Line");
+  }
+}
+
+//==============================================================================
+/// Saves data of moorings.
+//==============================================================================
+void JDsMooredFloatings::SaveData(unsigned numfile)const{
+  if(SvVtkLines)   SaveVtkMoorings(numfile,true); 
+  if(SvVtkMoorings)SaveVtkMoorings(numfile,false); 
 }
 
 //==============================================================================
