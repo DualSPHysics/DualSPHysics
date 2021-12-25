@@ -6,6 +6,7 @@
 <!-- *** Example for configuration of moorings using coupling with MoorDyn+. *** -->
 <special>
     <moorings>
+        <start value="4" ramptime="0" comment="Start time of the application of mooring forces with configurable ramp time (default=0)" />
         <savevtk_lines value="true" comment="Saves vtk with mooring lines (default=true)" />
         <savevtk_moorings value="true" comment="Saves vtk with moorings (default=true)" />
         <savecsv_points value="true" comment="Saves csv with link points (default=true)" />

@@ -118,6 +118,10 @@ private:
   std::string FileLines;
   std::string MoordynDir;   ///<Work directory for MoorDyn.
 
+  double StartTime;    ///<Start time of the application of mooring forces. (def=0).
+  double StartRamp;    ///<Ramp time after start time. (def=0).
+  double StartEnd;     ///<End time of ramp time. (def=0).
+
   bool SvVtkLines;     ///<Saves vtk with mooring lines (def=true).
   bool SvVtkMoorings;  ///<Saves vtk with moorings (def=true).
   bool SvCsvPoints;    ///<Saves csv with link points (def=true). 
