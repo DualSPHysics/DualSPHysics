@@ -52,15 +52,6 @@
 		<threshIC value="0.01" comment="Convergence threshold for for initial conditions. (default=0.001)"/>
 		<tmaxIC value="2" comment="Maximum time for initial conditions without convergence.(default=0)" units_comment="s"/>
 	</solverOptions>
-	<!-- Solver options      -->
-	<!-- dtM value is calculated automatically to     -->
-	<!-- ensure the equilibrium state of the system.  -->
-	<!-- To impose a value, option auto="false" can   -->
-	<!-- be used (default: auto=true)                 --> 
-	<solverOptions>
-		<dtM value="0.0001" auto="false" comment="Desired mooring model time step. (default=0.0001)" />
-	</solverOptions>
-	
 	<!-- Attached floating bodies -->
 	<bodies>
 		<body ref="45" comment="Fluid driven object to attach mooring lines."> %body 0
@@ -76,6 +67,7 @@
 	<lines>
 		<!-- Default properties for all mooring lines -->
 		<linedefault comment="Shared properties for each line.">
+			<e value="2.76246e+08" comment="Stiffness coefficient(Young's Modulus)." units_comment="N/m^2"/>
 			<ea value="2.9e3" comment="Line stiffness, product of elasticity modulus and cross-sectional area." units_comment="N"/>
 			<diameter value="3.656e-3" comment="Volume-equivalent diameter of the line." units_comment="m"/>
 			<massDenInAir value="0.0607" comment="Mass per unit length of the line." units_comment="kg/m"/>
