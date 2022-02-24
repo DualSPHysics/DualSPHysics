@@ -34,6 +34,10 @@
 //:# - Gestion de excepciones mejorada.  (15-09-2019)
 //:# - Nuevo metodo AddHead3() y clase Head3 para cabeceras de datos triples. (02-11-2020)
 //:# - Soporta tipo tmatrix4d. (04-02-2021)
+//:# =========
+//:# To defnine output format use: 
+//:#   jcsv::JSaveCsv2 scsv( );
+//:#   scsv << jcsv::Fmt(jcsv::TpFloat1,"%g") << jcsv::Fmt(jcsv::TpFloat3,"%g;%g;%g");
 //:#############################################################################
 
 /// \file JSaveCsv2.h \brief Declares the class \ref JSaveCsv2.
