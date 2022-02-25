@@ -22,7 +22,7 @@
 		</dampingzone>
 		<!-- Damping definition accoding to a box domain -->
 		<dampingbox>
-		    <directions value="all,-top,-left,-bottom" comment="Active directions (top/bottom/left/right/front/back) (default=all)"/>
+			<directions value="all,-top,-left,-bottom" comment="Active directions (top/bottom/left/right/front/back) (default=all)"/>
 			<limitmin comment="Limit where minimum reduction is applied">
 				<pointini x="0" y="1" z="0" />
 				<pointend x="5" y="3" z="2" />

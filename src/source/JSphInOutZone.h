@@ -170,7 +170,6 @@ public:
   bool GetVariableZsurf()const{ return(ZsurfMode==InZsurf_Variable); }
   bool GetCalculatedZsurf()const{ return(ZsurfMode==InZsurf_Calculated); }
 
-
   JSphInOutVel*   GetInOutVel  ()const{ return(InOutVel); }  
   JSphInOutZsurf* GetInOutZsurf()const{ return(InOutZsurf); }  
 

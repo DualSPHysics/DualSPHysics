@@ -737,7 +737,7 @@ void JSphGpuSingle::RunGaugeSystem(double timestep,bool saveinput){
     ,NpbOk,Npb,Np,Posxyg,Poszg,Codeg,Idpg,Velrhopg,saveinput);
 }
 
- //==============================================================================
+//==============================================================================
 /// Compute PIPS information of current particles.
 /// Calcula datos de PIPS de particulas actuales.
 //==============================================================================

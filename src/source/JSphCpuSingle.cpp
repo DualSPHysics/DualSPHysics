@@ -990,7 +990,7 @@ void JSphCpuSingle::RunGaugeSystem(double timestep,bool saveinput){
   GaugeSystem->CalculeCpu(timestep,DivData,NpbOk,Npb,Np,Posc,Codec,Idpc,Velrhopc,saveinput);
 }
 
- //==============================================================================
+//==============================================================================
 /// Compute PIPS information of current particles.
 /// Calcula datos de PIPS de particulas actuales.
 //==============================================================================
