@@ -27,7 +27,6 @@
 
 #ifdef _WITHGPU
   #include <cuda_runtime_api.h>
-  #include "JSphTimersGpu.h"
 #endif
 
 #include <string>
@@ -82,7 +81,12 @@ protected:
   JLinearValue *InputTimeVel; ///<Input velocity in time (for VelMode==InVelM_Variable).
   unsigned TimeVelIdx0;
   unsigned TimeVelIdx1;
-
+  
+  //-Velocity according flow [l/s].
+  bool FlowActive;
+  float FlowRatio;       ///<It is used to compute particle volume (ratio*dp^3). 
+  unsigned FlowPointsOk; ///<Initial active inlet points (below zsurf). 
+  float FlowToVel;       ///<Factor to compute velocity [m/s] starting from flow [l/s]. 
 
   //unsigned TimeVelIdx0,TimeVelIdx1; ///<Interval of time for velocity variable.
   bool SaveVelProfile;              ///<Indicate when input velocity profile must be saved in CSV file.
@@ -106,12 +110,16 @@ public:
   TpInVelMode ReadXml(const JXml *sxml,TiXmlElement *lis,const std::string &dirdatafile
     ,JGaugeSystem *gaugesystem,double maprealposminy);
 
+  bool GetFlowActive()const{ return(FlowActive); }
+  void ConfigFlowToVel(unsigned initnptok);
+
   void GetConfig(std::vector<std::string> &lines)const;
 
   float GetVelMin()const{ return(VelMin); }
   float GetVelMax()const{ return(VelMax); }
   TpInBehaviour GetInletBehaviour()const{ return(VelBehaviour); }
   std::string GetInletBehaviourName()const;
+  bool UseAwasVel()const{ return(AwasVel!=NULL); }
 
   TpInVelProfile GetVelProfile()const{ return(VelProfile); }
   bool UseCoefficients()const{ return(VelMode==InVelM_Fixed || VelMode==InVelM_Variable); }

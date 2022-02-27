@@ -27,6 +27,7 @@
 //:# - <savemotion> usa por defecto TimeMax y TimePart de la simulacion. (04-02-2020)
 //:# - Comprueba opcion active en elementos de primer, segundo nivel y AWAS. (19-03-2020)  
 //:# - Devuelve movimiento MOTT_None para tiempos fuera del intervalo de generacion. (03-02-2021)
+//:# - Indica tipos de generacion de olas configurados. (23-07-2021)
 //:#############################################################################
 
 /// \file JWaveGen.h \brief Declares the class \ref JWaveGen.
@@ -60,13 +61,17 @@ private:
   const bool UseGpu;
   StMotionData MotionNull; ///<Motion data for null movement.
 
-  double TimeMod;       ///<Modifies the timestep for paddle motion.
+  double TimeMod;          ///<Modifies the timestep for paddle motion.
   JWavePaddles* WavPad; 
 
-  //-Vars. auxiliares cargadas tras Init().
   //-Auxiliary variables loaded after Init().
-  bool Use_Awas;    //-Use of AWAS-Zsurf.
   unsigned Count;
+
+  bool Use_Awas;       ///<Use of AWAS-Zsurf.
+  bool Waves_Regular;  ///<Regular waves configured.
+  bool Waves_Spectrum; ///<Irregular waves configured.
+  bool Waves_File;     ///<Waves from external file configured.
+  bool Waves_Solitary; ///<Solitary waves configured.
 
 public:
 
@@ -132,9 +137,13 @@ public:
   //==============================================================================
   word GetPaddleMkbound(unsigned cp)const;
 
-
   unsigned GetCount()const{ return(Count); }
-  bool UseAwas()const{ return(Use_Awas); } 
+
+  bool UseAwas()      const{ return(Use_Awas);       } 
+  bool WavesRegular() const{ return(Waves_Regular);  } 
+  bool WavesSpectrum()const{ return(Waves_Spectrum); } 
+  bool WavesFile()    const{ return(Waves_File);     } 
+  bool WavesSolitary()const{ return(Waves_Solitary); } 
 
 };
 #endif

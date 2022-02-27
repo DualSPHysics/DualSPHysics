@@ -43,6 +43,10 @@ public:
   word GetPaddleMkbound(unsigned cp)const{ return(0); }
   unsigned GetCount()const{ return(0); }
   bool UseAwas()const{ return(false); }
+  bool WavesRegular() const{ return(false); }
+  bool WavesSpectrum()const{ return(false); }
+  bool WavesFile()    const{ return(false); }
+  bool WavesSolitary()const{ return(false); }
 };
 #endif
 

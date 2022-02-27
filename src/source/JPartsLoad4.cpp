@@ -51,8 +51,11 @@ JPartsLoad4::~JPartsLoad4(){
 /// Initialisation of variables.
 //==============================================================================
 void JPartsLoad4::Reset(){
+  Npiece=0;
   Simulate2D=false;
   Simulate2DPosY=0;
+  NpDynamic=false;
+  PosSingle=false;
   CaseNp=CaseNfixed=CaseNmoving=CaseNfloat=CaseNfluid=0;
   PeriMode=PERI_Unknown;
   PeriXinc=PeriYinc=PeriZinc=TDouble3(0);
@@ -172,6 +175,7 @@ void JPartsLoad4::LoadParticles(const std::string &casedir,const std::string &ca
   Simulate2D=pd.Get_Data2d();
   Simulate2DPosY=(Simulate2D? pd.Get_Data2dPosY(): 0);
   NpDynamic=pd.Get_NpDynamic();
+  PosSingle=pd.Get_PosSimple();
   PartBeginTotalNp=(NpDynamic? pd.Get_NpTotal(): 0);
   CaseNp=pd.Get_CaseNp();
   CaseNfixed=pd.Get_CaseNfixed();
@@ -187,7 +191,6 @@ void JPartsLoad4::LoadParticles(const std::string &casedir,const std::string &ca
   MapSize=(MapPosMin!=MapPosMax);
   CasePosMin=pd.Get_CasePosMin();
   CasePosMax=pd.Get_CasePosMax();
-  const bool possingle=pd.Get_PosSimple();
   if(!pd.Get_IdpSimple())Run_Exceptioon("Only Idp (32 bits) is valid at the moment.");
   //-Loads data for restarting.
   if(PartBegin){
@@ -224,7 +227,7 @@ void JPartsLoad4::LoadParticles(const std::string &casedir,const std::string &ca
           auxf3=new tfloat3[auxsize];
           auxf=new float[auxsize];
         }
-        if(possingle){
+        if(PosSingle){
           pd.Get_Pos(npok,auxf3);
           for(unsigned p=0;p<npok;p++)Pos[ntot+p]=ToTDouble3(auxf3[p]);
         }

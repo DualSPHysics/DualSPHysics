@@ -23,6 +23,10 @@
 //# - Actualiza codigo para DualSPHysics. (28-06-2020)
 //# - Nuevas funciones LoadFloats() y LoadDoubles(). (12-08-2020)
 //# - Ignora parametros vacios. (10-09-2020)
+//# - El uso de JDsphConfig o no se define en JCfgRunBaseDef.h. (20-04-2021)
+//# - Nuevo metodo LoadDouble2(). (05-08-2021)
+//# - Mejora de LoadDouble2(), LoadDouble3() y LoadDouble6() y equivalesntes 
+//#   para floats. Ahora toma el valor default siempre que falte un valor. (14-09-2021)
 //#############################################################################
 
 #ifndef _JCfgRunBase_
@@ -30,6 +34,7 @@
 
 #pragma warning(disable : 4996) //Anula sprintf() deprecated.
 
+#include "JCfgRunBaseDef.h"
 #include "TypesDef.h"
 #include "Functions.h"
 #include "JObject.h"
@@ -55,6 +60,7 @@ protected:
   static unsigned LoadDouble3(std::string txopt,double def,unsigned nv,tdouble3 *v);
   static void LoadFloat3(std::string txopt,float def,tfloat3 &v1);
   static void LoadFloat6(std::string txopt,float def,tfloat3 &v1,tfloat3 &v2);
+  static void LoadDouble2(std::string txopt,double def,tdouble2 &v1);
   static void LoadDouble3(std::string txopt,double def,tdouble3 &v1);
   static void LoadDouble6(std::string txopt,double def,tdouble3 &v1,tdouble3 &v2);
 
@@ -84,6 +90,7 @@ public:
   void LoadArgv(int argc,char** argv);
   void LoadFile(std::string fname,int lv);
   void ErrorParm(const std::string &opt,int optc,int lv,const std::string &file)const;
+  void ErrorParmText(const std::string &text,int optc,int lv,const std::string &file)const;
 
   virtual void VisuInfo()const=0;
   virtual void VisuConfig()const=0;

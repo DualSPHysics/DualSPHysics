@@ -39,7 +39,6 @@
 
 #ifdef _WITHGPU
   #include <cuda_runtime_api.h>
-  #include "JSphTimersGpu.h"
 #endif
 
 class JXml;
@@ -165,11 +164,11 @@ public:
   bool Use_InterpolatedVel()const{ return(VelMode==InVelM_Interpolated); }
   bool Use_VelFixed()const{ return(VelMode==InVelM_Fixed); }
   bool Use_VelVariable()const{ return(VelMode==InVelM_Variable); }
+  bool Use_AwasVel()const;
   bool Use_RefillAdvanced()const{ return(RefillingMode==InRefill_Advanced); }
 
   bool GetVariableZsurf()const{ return(ZsurfMode==InZsurf_Variable); }
   bool GetCalculatedZsurf()const{ return(ZsurfMode==InZsurf_Calculated); }
-
 
   JSphInOutVel*   GetInOutVel  ()const{ return(InOutVel); }  
   JSphInOutZsurf* GetInOutZsurf()const{ return(InOutZsurf); }  

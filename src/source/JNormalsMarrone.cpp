@@ -377,7 +377,7 @@ void JNormalsMarrone::ComputeNormalsMarrone(){
     tdouble3 nor=TDouble3(0);
     bool nordone=false;
     //-For debug.
-    const bool DG=false;//(p==0);
+    const bool DG=false;//(p==0); (p==56)
     if(DG)for(unsigned c=cini;c<cfin;c++){
       const tdouble3 n=Normals[c];
       const tdouble3 t=OutVecs[c];
@@ -450,13 +450,8 @@ void JNormalsMarrone::ComputeNormalsMarrone(){
 
     //-Compute final normal.
     if(norin){//-The projection position is in the shape.
-      //-Calcula normales.
-      if(ndismin==1){
-        unsigned cn=cmin[0];
-        nor=plim[cn]-ps;
-        nordone=true;
-      }
-      else{
+      //-Calcula normal cuando hay dos o mas posiciones de interseccion a la misma distancia.
+      if(ndismin>1){
         nor=TDouble3(0);
         for(unsigned cn=0;cn<ndismin;cn++)nor=nor+(vnor[cmin[cn]]*dnor[cmin[cn]]);
         if(ndismin){
@@ -472,6 +467,14 @@ void JNormalsMarrone::ComputeNormalsMarrone(){
           if(snormin==DBL_MAX)snormin=0;
           nor=fgeo::VecUnitary(nor)*snormin;
         }
+        nordone=true;
+        if(fgeo::PointDist(nor)>Dist*1.5)nordone=false; //-Disables normals by projection greater than 1.5* maximum distance. 
+        if(DG)printf("FinalNear-> [%u]> ndismin:%d  n:(%g,%g,%g):%g\n",p,ndismin,nor.x,nor.y,nor.z,fgeo::PointDist(nor));
+      }
+      //-Calcula normal cuando solo hay una posicion de interseccion o habiendo varias no dieron un resultado valido.
+      if(!nordone && ndismin>=1){
+        unsigned cn=cmin[0];
+        nor=plim[cn]-ps;
         nordone=true;
       }
     }
@@ -529,6 +532,7 @@ void JNormalsMarrone::ComputeNormalsMarrone(){
 
     //-Saves final normal.
     PartNor[p]=(nordone? nor: TDouble3(0));
+    if(DG)if(nordone && fgeo::PointDist(nor)>Dist)printf("==> NorDist[%d]:%g    Dist:%f\n",p,fgeo::PointDist(nor),Dist);
   }
   //-Libera memoria dinamica.
   delete[] vnor; vnor=NULL;

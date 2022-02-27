@@ -44,12 +44,12 @@ typedef struct{
 
 inline tint2 TInt2(int v){ tint2 p={v,v}; return(p); }
 inline tint2 TInt2(int x,int y){ tint2 p={x,y}; return(p); }
-inline bool   operator ==(const tint2& a,const tint2& b){ return(a.x==b.x && a.y==b.y); }
-inline bool   operator !=(const tint2& a,const tint2& b){ return(a.x!=b.x || a.y!=b.y); }
-inline bool   operator  <(const tint2& a,const tint2& b){ return(a.x<b.x && a.y<b.y); }
-inline bool   operator  >(const tint2& a,const tint2& b){ return(a.x>b.x && a.y>b.y); }
-inline bool   operator <=(const tint2& a,const tint2& b){ return(a.x<=b.x && a.y<=b.y); }
-inline bool   operator >=(const tint2& a,const tint2& b){ return(a.x>=b.x && a.y>=b.y); }
+inline bool  operator ==(const tint2& a,const tint2& b){ return(a.x==b.x && a.y==b.y); }
+inline bool  operator !=(const tint2& a,const tint2& b){ return(a.x!=b.x || a.y!=b.y); }
+inline bool  operator  <(const tint2& a,const tint2& b){ return(a.x<b.x && a.y<b.y); }
+inline bool  operator  >(const tint2& a,const tint2& b){ return(a.x>b.x && a.y>b.y); }
+inline bool  operator <=(const tint2& a,const tint2& b){ return(a.x<=b.x && a.y<=b.y); }
+inline bool  operator >=(const tint2& a,const tint2& b){ return(a.x>=b.x && a.y>=b.y); }
 inline tint2 operator  +(const tint2& a,const tint2& b){ return(TInt2(a.x+b.x,a.y+b.y)); }
 inline tint2 operator  -(const tint2& a,const tint2& b){ return(TInt2(a.x-b.x,a.y-b.y)); }
 inline tint2 operator  *(const tint2& a,const tint2& b){ return(TInt2(a.x*b.x,a.y*b.y)); }
@@ -327,6 +327,37 @@ inline tfloat4 ToTFloat4(const tdouble4& v){ return(TFloat4(float(v.x),float(v.y
 inline tdouble4 ToTDouble4(const tfloat4& v){ return(TDouble4(v.x,v.y,v.z,v.w)); }
 
 
+///Matrix of 2x2 values of type float.
+typedef struct{
+  float a11,a12;
+  float a21,a22;
+}tmatrix2f;
+
+///Constructor of type \ref matrix2f.
+inline tmatrix2f TMatrix2f(){ tmatrix2f m={1,0,0,1}; return(m); }
+inline tmatrix2f TMatrix2f(float a11,float a12,float a21,float a22){ tmatrix2f m={a11,a12,a21,a22}; return(m); }
+inline tmatrix2f TMatrix2f(float v){ tmatrix2f m={v,v,v,v}; return(m); }
+inline bool operator ==(const tmatrix2f& a, const tmatrix2f& b){ return(a.a11==b.a11 && a.a12==b.a12 && a.a21==b.a21 && a.a22==b.a22); }
+inline bool operator !=(const tmatrix2f& a, const tmatrix2f& b){ return(a.a11!=b.a11 || a.a12!=b.a12 || a.a21!=b.a21 || a.a22!=b.a22); }
+
+
+///Matrix of 2x2 values of type double.
+typedef struct{
+  double a11,a12;
+  double a21,a22;
+}tmatrix2d;
+
+///Constructor of type \ref matrix2d.
+inline tmatrix2d TMatrix2d(){ tmatrix2d m={1,0,0,1}; return(m); }
+inline tmatrix2d TMatrix2d(double a11,double a12,double a21,double a22){ tmatrix2d m={a11,a12,a21,a22}; return(m); }
+inline tmatrix2d TMatrix2d(double v){ tmatrix2d m={v,v,v,v}; return(m); }
+inline bool operator ==(const tmatrix2d& a, const tmatrix2d& b){ return(a.a11==b.a11 && a.a12==b.a12 && a.a21==b.a21 && a.a22==b.a22); }
+inline bool operator !=(const tmatrix2d& a, const tmatrix2d& b){ return(a.a11!=b.a11 || a.a12!=b.a12 || a.a21!=b.a21 || a.a22!=b.a22); }
+
+///Converts \ref matrix2d to \ref matrix2f.
+inline tmatrix2f ToTMatrix2f(const tmatrix2d& v){ return(TMatrix2f(float(v.a11),float(v.a12),float(v.a21),float(v.a22))); }
+
+
 ///Matrix of 3x3 values of type float.
 typedef struct{
   float a11,a12,a13;
@@ -335,6 +366,7 @@ typedef struct{
 }tmatrix3f;
 
 ///Constructor of type \ref matrix3f.
+inline tmatrix3f TMatrix3f(){ tmatrix3f m={1,0,0,0,1,0,0,0,1}; return(m); }
 inline tmatrix3f TMatrix3f(float a11,float a12,float a13,float a21,float a22,float a23,float a31,float a32,float a33){ tmatrix3f m={a11,a12,a13,a21,a22,a23,a31,a32,a33}; return(m); }
 inline tmatrix3f TMatrix3f(float v){ tmatrix3f m={v,v,v,v,v,v,v,v,v}; return(m); }
 inline bool operator ==(const tmatrix3f& a, const tmatrix3f& b){ return(a.a11==b.a11 && a.a12==b.a12 && a.a13==b.a13 && a.a21==b.a21 && a.a22==b.a22 && a.a23==b.a23 && a.a31==b.a31 && a.a32==b.a32 && a.a33==b.a33); }
@@ -349,6 +381,7 @@ typedef struct{
 }tmatrix3d;
 
 ///Constructor of type \ref matrix3d.
+inline tmatrix3d TMatrix3d(){ tmatrix3d m={1,0,0,0,1,0,0,0,1}; return(m); }
 inline tmatrix3d TMatrix3d(double a11,double a12,double a13,double a21,double a22,double a23,double a31,double a32,double a33){ tmatrix3d m={a11,a12,a13,a21,a22,a23,a31,a32,a33}; return(m); }
 inline tmatrix3d TMatrix3d(double v){ tmatrix3d m={v,v,v,v,v,v,v,v,v}; return(m); }
 inline bool operator ==(const tmatrix3d& a, const tmatrix3d& b){ return(a.a11==b.a11 && a.a12==b.a12 && a.a13==b.a13 && a.a21==b.a21 && a.a22==b.a22 && a.a23==b.a23 && a.a31==b.a31 && a.a32==b.a32 && a.a33==b.a33); }
@@ -398,6 +431,21 @@ typedef struct{
   float xx,xy,xz,yy,yz,zz;
 }tsymatrix3f;
 inline tsymatrix3f TSymMatrix3f(){ tsymatrix3f m={0,0,0,0,0,0}; return(m); }
+
+///Symmetric matrix 3x3 of 6 values of type float.
+typedef struct{
+  double xx,xy,xz,yy,yz,zz;
+}tsymatrix3d;
+inline tsymatrix3d TSymMatrix3d(){ tsymatrix3d m={0,0,0,0,0,0}; return(m); }
+inline tsymatrix3d TSymMatrix3d(double xx,double xy,double xz,double yy,double yz,double zz){ 
+  tsymatrix3d m={xx,xy,xz,yy,yz,zz}; return(m); 
+}
+inline tsymatrix3d operator +(const tsymatrix3d& a,const tsymatrix3d& b){ 
+  return(TSymMatrix3d(a.xx+b.xx, a.xy+b.xy, a.xz+b.xz, a.yy+b.yy, a.yz+b.yz, a.zz+b.zz)); 
+}
+inline tsymatrix3d operator *(const tsymatrix3d& a,const double b){ 
+  return(TSymMatrix3d(a.xx*b,a.xy*b,a.xz*b,a.yy*b,a.yz*b,a.zz*b)); 
+}
 
 ///Symmetric matrix 4x4 of 10 values of type float.
 typedef struct{

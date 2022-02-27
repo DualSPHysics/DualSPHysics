@@ -50,8 +50,8 @@ using namespace std;
 //==============================================================================
 /// Constructor.
 //==============================================================================
-JDsMooredFloating::JDsMooredFloating(word fmk)
-  :Log(AppInfo.LogPtr()),FloatingMk(fmk)
+JDsMooredFloating::JDsMooredFloating(word mkbound)
+  :Log(AppInfo.LogPtr()),FloatingMkBound(mkbound)
 {
   ClassName="JDsMooredFloating";
   Reset();
@@ -93,7 +93,7 @@ void JDsMooredFloating::AddFairlead(unsigned fairnum,const tdouble3 &linkpos,wor
 /// Shows mooring configuration.
 //==============================================================================
 void JDsMooredFloating::VisuConfig()const{
-  Log->Printf("  Floating_%u (MkBound:%u)",FtId,FloatingMk);
+  Log->Printf("  Floating_%u (MkBound:%u)",FtId,FloatingMkBound);
   for(unsigned c=0;c<Count();c++){
     const tdouble3 pos=Fairleads[c].linkpos;
     Log->Printf("    Link_%u:  LinkPos:(%g,%g,%g)  Point_%u",Fairleads[c].fairnum,pos.x,pos.y,pos.z,Fairleads[c].ptid);
@@ -116,7 +116,9 @@ JDsMooredFloating::StLinkData JDsMooredFloating::GetFairlead(unsigned fairnum)co
 /// Constructor.
 //==============================================================================
 JDsMooredFloatings::JDsMooredFloatings(std::string dircase,std::string casename
-  ,tfloat3 gravity):Log(AppInfo.LogPtr()),DirCase(dircase),CaseName(casename),Gravity(gravity)
+  ,tfloat3 gravity,double timemax,double dtout)
+  :Log(AppInfo.LogPtr()),DirCase(dircase),CaseName(casename),Gravity(gravity)
+  ,TimeMax(timemax),DtOut(dtout)
 {
   ClassName="JDsMooredFloatings";
   MoorDynReady=false;
@@ -142,7 +144,8 @@ JDsMooredFloatings::~JDsMooredFloatings(){
 void JDsMooredFloatings::Reset(){
   FileLines="";
   MoordynDir="";
-  SvVtkMoorings=SvCsvPoints=SvVtkPoints=false;
+  StartTime=StartRamp=StartEnd=0;
+  SvVtkLines=SvVtkMoorings=SvCsvPoints=SvVtkPoints=false;
   for(unsigned c=0;c<Count();c++)delete Floatings[c];
   Floatings.clear();
   if(MoorDynReady){
@@ -155,11 +158,11 @@ void JDsMooredFloatings::Reset(){
 }
 
 //==============================================================================
-/// Returns idx of floating with requested mk.
+/// Returns idx of floating with requested mkbound.
 //==============================================================================
-unsigned JDsMooredFloatings::GetFloatingByMk(word mkbound)const{
+unsigned JDsMooredFloatings::GetFloatingByMkbound(word mkbound)const{
   unsigned c=0;
-  for(c=0;c<Count() && Floatings[c]->FloatingMk!=mkbound;c++);
+  for(c=0;c<Count() && Floatings[c]->FloatingMkBound!=mkbound;c++);
   return(c>=Count()? UINT_MAX: c);
 }
 
@@ -167,7 +170,7 @@ unsigned JDsMooredFloatings::GetFloatingByMk(word mkbound)const{
 /// Reads list of mooredfloatings in the XML node.
 //==============================================================================
 void JDsMooredFloatings::ReadXml(const JXml *sxml,TiXmlElement* lis){
-  sxml->CheckElementNames(lis,true,"moordyn savevtk_moorings savecsv_points savevtk_points mooredfloatings");
+  sxml->CheckElementNames(lis,true,"moordyn start savevtk_lines savevtk_moorings savecsv_points savevtk_points mooredfloatings");
   //-Loads configuration file for MoorDyn solver.
   if(sxml->CheckElementActive(lis,"moordyn")){
     FileLines=sxml->ReadElementStr(lis,"moordyn","file",true);
@@ -179,7 +182,12 @@ void JDsMooredFloatings::ReadXml(const JXml *sxml,TiXmlElement* lis){
       //IME//if(fun::CpyFile(DirData+FileLines,MoordynDir+"lines.txt"))Run_ExceptioonFile("Error: File could not be created.",MoordynDir+"lines.txt");
     }
   }
+  //-Loads initial configuration.
+  StartTime=sxml->ReadElementDouble(lis,"start","value",true,0);
+  StartRamp=sxml->ReadElementDouble(lis,"start","ramptime",true,0);
+  StartEnd=(StartRamp>0? StartTime+StartRamp: StartTime);
   //-Loads configuration to save VTK and CSV files.
+  SvVtkLines=sxml->ReadElementBool(lis,"savevtk_lines","value",true,true);
   SvVtkMoorings=sxml->ReadElementBool(lis,"savevtk_moorings","value",true,true);
   SvCsvPoints=sxml->ReadElementBool(lis,"savecsv_points","value",true,true);
   SvVtkPoints=sxml->ReadElementBool(lis,"savevtk_points","value",true,false);
@@ -189,9 +197,9 @@ void JDsMooredFloatings::ReadXml(const JXml *sxml,TiXmlElement* lis){
     TiXmlElement* ele=mlis->FirstChildElement("floating"); 
     while(ele){
       if(sxml->CheckElementActive(ele)){
-        word floatingmk=sxml->GetAttributeWord(ele,"mkbound");
-        if(GetFloatingByMk(floatingmk)!=UINT_MAX)Run_Exceptioon(fun::PrintStr("Floating mkbound=%d is already configured.",floatingmk));
-        JDsMooredFloating *mo=new JDsMooredFloating(floatingmk);
+        const word floatingmkbound=sxml->GetAttributeWord(ele,"mkbound");
+        if(GetFloatingByMkbound(floatingmkbound)!=UINT_MAX)Run_Exceptioon(fun::PrintStr("Floating mkbound=%d is already configured.",floatingmkbound));
+        JDsMooredFloating *mo=new JDsMooredFloating(floatingmkbound);
         Floatings.push_back(mo);
       }
       ele=ele->NextSiblingElement("floating");
@@ -215,14 +223,14 @@ void JDsMooredFloatings::LoadXml(const JXml *sxml,const std::string &place){
 void JDsMooredFloatings::ConfigFloatings(unsigned ftcount,const StFloatingData *ftdata){
   //-Ordena floatings amarrados segun MkBound de floating.
   const unsigned nftm=Count();
-  for(unsigned c=0;c<nftm-1;c++)for(unsigned c2=c+1;c2<nftm;c2++)if(Floatings[c]->FloatingMk>Floatings[c2]->FloatingMk){
+  for(unsigned c=0;c<nftm-1;c++)for(unsigned c2=c+1;c2<nftm;c2++)if(Floatings[c]->FloatingMkBound>Floatings[c2]->FloatingMkBound){
     JDsMooredFloating* mo=Floatings[c]; Floatings[c]=Floatings[c2]; Floatings[c2]=mo;
   }
   //-Asigna id general de floating y numero de floating amarrado.
   for(unsigned cfm=0;cfm<nftm;cfm++){
     JDsMooredFloating* mo=Floatings[cfm];
     unsigned cf;
-    for(cf=0;cf<ftcount && ftdata[cf].mkbound!=mo->FloatingMk;cf++);
+    for(cf=0;cf<ftcount && ftdata[cf].mkbound!=mo->FloatingMkBound;cf++);
     if(cf>=ftcount)Run_Exceptioon("Floating body used in mooring not found.");
     mo->ConfigIds(cfm,cf);
   }
@@ -231,7 +239,9 @@ void JDsMooredFloatings::ConfigFloatings(unsigned ftcount,const StFloatingData *
 //==============================================================================
 /// Configures object.
 //==============================================================================
-void JDsMooredFloatings::Config(unsigned ftcount,const StFloatingData *ftdata,JDsFtForcePoints *forcepoints){
+void JDsMooredFloatings::Config(unsigned ftcount,const StFloatingData *ftdata
+  ,JDsFtForcePoints *forcepoints)
+{
   //-Asocia moorings con floatings y los reordena.
   ConfigFloatings(ftcount,ftdata);
   const unsigned nftm=Count();
@@ -247,7 +257,7 @@ void JDsMooredFloatings::Config(unsigned ftcount,const StFloatingData *ftdata,JD
     tdouble3 *ftvelang=new tdouble3[nftm];
     for(unsigned cfm=0;cfm<nftm;cfm++){
       const unsigned ftid=Floatings[cfm]->GetFtId();
-      ftmkb   [cfm]=Floatings[cfm]->FloatingMk;
+      ftmkb   [cfm]=Floatings[cfm]->FloatingMkBound;
       ftvellin[cfm]=ToTDouble3(ftdata[ftid].fvel);
       ftvelang[cfm]=ToTDouble3(ftdata[ftid].fomega);
     }
@@ -260,7 +270,7 @@ void JDsMooredFloatings::Config(unsigned ftcount,const StFloatingData *ftdata,JD
     }
     if(Gravity.z==0)Run_Exceptioon("Gravity.z equal to zero is not allowed.");
     if(Gravity.x || Gravity.y)Log->PrintfWarning("Gravity.x or Gravity.y are not zero but only gravity.z=%f is used for MoorDyn+.",fabs(Gravity.z));
-    if(MoorDyn_LinesInit(filexml,nodexml,MoordynDir,nftm,ftmkb,ftvellin,ftvelang,Gravity))
+    if(MoorDyn_LinesInit(filexml,nodexml,MoordynDir,nftm,ftmkb,ftvellin,ftvelang,Gravity,TimeMax,DtOut))
       Run_Exceptioon("Error initializing moorings in MoorDyn library.");
     MoorDynReady=true;
     //-Free memory.
@@ -272,11 +282,12 @@ void JDsMooredFloatings::Config(unsigned ftcount,const StFloatingData *ftdata,JD
   //-Adds link positions for each floating.
   for(unsigned cfm=0;cfm<nftm;cfm++){
     const unsigned ftid=Floatings[cfm]->GetFtId();
+    const word     ftmkb=Floatings[cfm]->FloatingMkBound;
     const unsigned nfairleads=MoorDyn_FairsCount(cfm);
     for(unsigned ck=0;ck<nfairleads;ck++){
       const unsigned nodes=MoorDyn_SegsCount(cfm,ck);
       const tdouble3 pos=MoorDyn_GetNodePosLink(cfm,ck);
-      const word ptid=forcepoints->AddPoint(ftid,pos);
+      const word ptid=forcepoints->AddPoint(ftid,ftmkb,pos);
       Floatings[cfm]->AddFairlead(ck,pos,ptid);
     }
   }
@@ -290,15 +301,16 @@ void JDsMooredFloatings::Config(unsigned ftcount,const StFloatingData *ftdata,JD
 //==============================================================================
 void JDsMooredFloatings::VisuConfig(std::string txhead,std::string txfoot)const{
   if(!txhead.empty())Log->Print(txhead);
+  Log->Printf("  Start...........: %g [s]  (ramp time: %g [s])",StartTime,StartRamp);
   Log->Printf("  Output directory: %s",MoordynDir.c_str());
   for(unsigned cfm=0;cfm<Count();cfm++)Floatings[cfm]->VisuConfig();
   if(!txfoot.empty())Log->Print(txfoot);
 }
 
 //==============================================================================
-/// Saves VTK with moorings.
+/// Saves VTK with moorings full or only lines.
 //==============================================================================
-void JDsMooredFloatings::SaveVtkMoorings(unsigned numfile)const{
+void JDsMooredFloatings::SaveVtkMoorings(unsigned numfile,bool svlines)const{
   JVtkLib sh;
   unsigned vpossize=0;
   tfloat3 *vpos=NULL;
@@ -311,14 +323,30 @@ void JDsMooredFloatings::SaveVtkMoorings(unsigned numfile)const{
     }
     for(unsigned cn=0;cn<nodes;cn++)vpos[cn]=ToTFloat3(MoorDyn_GetNodePos(cl,cn));
     sh.AddShapePolyLine(nodes,vpos,int(cl));
+    if(svlines)sh.AddShapePoints(nodes,vpos,int(cl));
     const float dist=(nodes>=2? fgeo::PointsDist(vpos[0],vpos[1])/10: 1);
-    for(unsigned cn=0;cn<nodes;cn++)sh.AddShapeSphere(vpos[cn],dist,16,int(cl));
+    if(!svlines)for(unsigned cn=0;cn<nodes;cn++)sh.AddShapeSphere(vpos[cn],dist,16,int(cl));
   }
   delete[] vpos; vpos=NULL;
   //-Genera fichero VTK.
-  Log->AddFileInfo(AppInfo.GetDirOut()+"MooringsVtk/Moorings_????.vtk","Saves VTK file with moorings.");
-  const string file=AppInfo.GetDirOut()+fun::FileNameSec("MooringsVtk/Moorings.vtk",numfile);
-  sh.SaveShapeVtk(file,"Line");
+  if(svlines){
+    Log->AddFileInfo(AppInfo.GetDirOut()+"MooringsVtk/MooringsLines_????.vtk","Saves VTK file with moorings.");
+    const string file=AppInfo.GetDirOut()+fun::FileNameSec("MooringsVtk/MooringsLines.vtk",numfile);
+    sh.SaveShapeVtk(file,"Line");
+  }
+  else{
+    Log->AddFileInfo(AppInfo.GetDirOut()+"MooringsVtk/Moorings_????.vtk","Saves VTK file with moorings.");
+    const string file=AppInfo.GetDirOut()+fun::FileNameSec("MooringsVtk/Moorings.vtk",numfile);
+    sh.SaveShapeVtk(file,"Line");
+  }
+}
+
+//==============================================================================
+/// Saves data of moorings.
+//==============================================================================
+void JDsMooredFloatings::SaveData(unsigned numfile)const{
+  if(SvVtkLines)   SaveVtkMoorings(numfile,true); 
+  if(SvVtkMoorings)SaveVtkMoorings(numfile,false); 
 }
 
 //==============================================================================
@@ -400,13 +428,22 @@ void JDsMooredFloatings::ComputeForces(unsigned nstep,double timestep,double dt,
   if(MoorDyn_FairleadsCalc(FairNftm,FairleadPos,FairleadVel,FairleadForce,timestep,dt))
     Run_Exceptioon("Error calculating forces by MoorDyn.");
   
+  //-Computes ramp factor according start configuration.
+  double framp=1.;
+  if(timestep<StartEnd){
+    framp=(timestep<StartTime || StartRamp==0? 0.: 1.-(StartEnd-timestep)/StartRamp);
+    framp=framp*framp;
+  }
+
   //-Updates forces in JDsFtForcePoints object.
   for(unsigned cf=0;cf<FairNftm;cf++){
     const JDsMooredFloating* mo=Floatings[cf];
     const unsigned nfairs=FairFtmNum[cf];
     for(unsigned cfa=0;cfa<nfairs;cfa++){
       const word ptid=mo->GetFairlead(cfa).ptid;
-      forcepoints->SetForce(ptid,ToTFloat3(TDouble3(FairleadForce[cf][cfa][0],FairleadForce[cf][cfa][1],FairleadForce[cf][cfa][2])));
+      tfloat3 force=ToTFloat3(TDouble3(FairleadForce[cf][cfa][0],FairleadForce[cf][cfa][1],FairleadForce[cf][cfa][2]));
+      if(timestep<StartEnd)force=force*float(framp);
+      forcepoints->SetForce(ptid,force);
     }
   }
 }

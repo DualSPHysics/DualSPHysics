@@ -18,13 +18,23 @@
 //:#############################################################################
 //:# Cambios:
 //:# =========
-//:# - Hace de interface con la libreria dsphchrono.dll. (03-05-2016)
-//:# - Permite compilar sin librerias de CHRONO. (13-12-2019)
-//:# - Comprueba opcion active en elementos de primer y segundo nivel. (19-03-2020) 
+//:# - Hace de interface con la libreria dsphchrono.dll. (03-05-2016).
+//:# - Permite compilar sin librerias de CHRONO. (13-12-2019).
+//:# - Permitidos SMooth Contacts (SMC) y ejecuciones Multi Core (17-01-2020).
+//:# - Nuevo objeto link_coulomdamping (21-02-2020).
+//:# - Nuevo objeto link_lulley (27-02-2020).
+//:# - Se anade un bloque collision para activar o desactivar las colisiones en chrono (28-02-2020).
+//:# - Comprueba opcion active en elementos de primer y segundo nivel. (19-03-2020). 
+//:# - Lectura de Finite Element Analysis (FEA) (22-04-2020).
+//:# - Nuevo objeto BeamIGA (FEA) (22-04-2020). 
+//:# - Permite visualizar la configuracion de los objetos FEA (22-04-2020).
 //:# - Permite la ejecucion de ChLinks con coeficientes variables de stiffness
-//:#   y damping. (04-10-2020)  
-//:# - Contabiliza y muestra el numero de caras para las colisiones. (18-10-2020)  
-//:# - Permite imponer el valor de kfric de un objeto sobre otros. (30-10-2020)
+//:#   y damping. (04-10-2020).
+//:# - Contabiliza y muestra el numero de caras para las colisiones. (18-10-2020).
+//:# - Permite imponer el valor de kfric de un objeto sobre otros. (30-10-2020).
+//:# - Lectura de la etiqueta link_pointframe que permite conectar nodos FEA
+//:#   a objetos rigidos. (09-11-2020).
+//:# - Permite escalar fuerzas usando la etiqueta <scaleforce> (10-03-2021).
 //:#############################################################################
 
 /// \file JChronoObjects.h \brief Declares the class \ref JChronoObjects.
@@ -51,7 +61,6 @@ class TiXmlElement;
 class JChronoData;
 class JChValues;
 class JChBody;
-class JChBodyFloating;
 class JChLink;
 class DSPHChronoLib;
 class JLinearValue;
@@ -72,25 +81,26 @@ protected:
   std::string CaseName;
   const double Dp;
   const word MkBoundFirst;
+  const bool Simulate2D;
+  const double FtPause;
 
   bool UseVariableCoeff; ///<Indicates the use of variable coefficients
   std::vector<JLinearValue*> StiffnessV; ///<For variable stiffness
   std::vector<JLinearValue*> DampingV;   ///<For variable damping
 
-  unsigned Solver; 
-  int OmpThreads;     ///<Max number of OpenMP threads in execution on CPU host (minimum 1).
-  const bool UseDVI;  ///<Uses Differential Variational Inequality (DVI) method.
-  bool UseChronoSMC;  ///<Uses Smooth Contacts for collisions.
-  bool UseCollision;  ///<Activates collisions between chrono objects.
-  
-  bool WithMotion;   ///<Some Chrono object with geometry is a moving object.
-  
+  int OmpThreads;        ///<Max number of OpenMP threads in execution on CPU host (minimum 1).
+  const bool UseDVI;     ///<Uses Differential Variational Inequality (DVI) method.
+  bool UseChronoSMC;     ///<Uses Smooth Contacts for collisions.
+  bool UseCollision;     ///<Activates collisions between chrono objects.
+
+  bool WithMotion;       ///<Some Chrono object with geometry is a moving object.
+  const tfloat3 Gravity; ///<Gravity acceleration. | Aceleracion por gravedad.
+
   void* Ptr_VtkSimple_AutoActual;
   void* Ptr_VtkSimple_AutoDp;
 
-  JChronoData *ChronoDataXml; ///<Datos de Chrono cargados del XML.
-  
-  DSPHChronoLib *ChronoLib;   ///<Objeto para integracion con libreria de Chrono Engine.
+  JChronoData *ChronoDataXml; ///<Chrono data loaded from XML. | Datos de Chrono cargados del XML.
+  DSPHChronoLib *ChronoLib;   ///<Object for the integrarion with Chrono Engine library. | Objeto para integracion con libreria de Chrono Engine.
 
   float CollisionDp;        ///<Allowed collision overlap according Dp (default=0.5).
   double SchemeScale;       ///<Scale value to create initial scheme of configuration.
@@ -123,10 +133,12 @@ protected:
 
   void SetVariableCoeff(const double timestep);
   void ReadCoeffs(JChLink *link,const JXml *sxml,TiXmlElement* ele);
+  void ReadScaleForces(const JXml *sxml,TiXmlElement* lis);
 
 public:
   JChronoObjects(const std::string &dirdata,const std::string &casename
-    ,const JXml *sxml,const std::string &place,double dp,word mkboundfirst);
+    ,const JXml *sxml,const std::string &place,double dp,word mkboundfirst
+	,tfloat3 g,const bool simulate2d,const double ftpause);
   ~JChronoObjects();
   void Reset();
   static bool Available(){ return(true); }
@@ -139,11 +151,11 @@ public:
     ,const tmatrix3d &inertia,const tint3 &translationfree,const tint3 &rotationfree
     ,const tfloat3 &linvelini,const tfloat3 &angvelini);
 
-  void ConfigDataBodyFloating(word mkbound,float kfric,float restitu,float young,float poisson);
-  void ConfigDataBodyMoving  (word mkbound,float kfric,float restitu,float young,float poisson);
-  void ConfigDataBodyFixed   (word mkbound,float kfric,float restitu,float young,float poisson);
+  void ConfigDataBodyFloating(word mkbound,float kfric,float sfric,float restitu,float young,float poisson);
+  void ConfigDataBodyMoving  (word mkbound,float kfric,float sfric,float restitu,float young,float poisson);
+  void ConfigDataBodyFixed   (word mkbound,float kfric,float sfric,float restitu,float young,float poisson);
 
-  void Init(bool simulate2d,const JSphMk* mkinfo);
+  void Init(const JSphMk* mkinfo);
   void VisuConfig(std::string txhead, std::string txfoot)const;
 
   bool GetWithMotion()const{ return(WithMotion); }
@@ -157,8 +169,7 @@ public:
   void RunChrono(unsigned nstep,double timestep,double dt,bool predictor);
 
   void SavePart(int part);
+
 };
+#endif //!DISABLE_CHRONO
 #endif
-
-#endif
-

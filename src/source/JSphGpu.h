@@ -22,13 +22,14 @@
 #define _JSphGpu_
 
 #include "DualSphDef.h"
-#include "JSphTimersGpu.h"
+#include "JDsTimersGpu.h"
 #include "JCellDivDataGpu.h"
 #include "JSph.h"
 
 #include <string>
 
 
+class JDsGpuInfo;
 class JDsPartsOut;
 class JArraysGpu;
 class JCellDivGpu;
@@ -71,13 +72,7 @@ protected:
   StBlockSizes BlockSizes;        ///<Stores configuration of BlockSizes. | Almacena configuracion de BlockSizes.
   std::string BlockSizesStr;      ///<Stores configuration of BlockSizes in text form. | Almacena configuracion de BlockSizes en texto.
 
-  //-Variables with information for the GPU hardware.
-  //-Variables con informacion del hardware GPU.
-  int GpuSelect;          ///<GPU Selection (-1:no selection). | Gpu seleccionada (-1:sin seleccion).
-  std::string GpuName;    ///<Name of the selected GPU.
-  size_t GpuGlobalMem;    ///<Size of global memory in bytes.
-  unsigned GpuSharedMem;  ///<Size of shared memory for each block in bytes.
-  unsigned GpuCompute;    ///<Compute capability: 10,11,12,20... 
+  JDsGpuInfo *GpuInfo;    ///<Main information of selected GPU.
 
   const TpMgDivMode DivAxis;  ///<Axis used in current division. It is used to sort particle data. MGDIV_Z is used for single GPU.
 
@@ -154,11 +149,9 @@ protected:
   float4 *FtoDatpg;        ///<Constant data of floatings {pini_u,np_u,radius_f,massp_f} [FtCount] //__device__ int __float_as_int(float x) //__device__ float __int_as_float(int x).
   float  *FtoMassg;        ///<Constant data of floatings (mass_f) [FtCount] 
   byte   *FtoConstraintsg; ///<Constant value to define motion constraints.
-  float3 *FtoForcesSumg;   ///<Stores forces summation for the floating bodies {sumface_f3,sumfomegaace_f3}[FtCount]. | Almacena sumatorio de fuerzas de floatings {sumface_f3,sumfomegaace_f3} [FtCount]. 
   float3 *FtoForcesg;      ///<Stores forces for the floating bodies {face_f3,fomegaace_f3} equivalent to JSphCpu::FtoForces [FtCount]. | Almacena fuerzas de floatings {face_f3,fomegaace_f3} equivalente a JSphCpu::FtoForces [FtCount]. 
   float3 *FtoForcesResg;   ///<Stores data to update floatings {fomegares_f3,fvelres_f3} equivalent to JSphCpu::FtoForcesRes. [FtCount]. | Almacena datos para actualizar floatings {fomegares_f3,fvelres_f3} equivalente a JSphCpu::FtoForcesRes. [FtCount].
   double3 *FtoCenterResg;  ///<Stores centre to update floatings. [Ftcount]. | Almacena centro para actualizar floatings. [FtCount]. 
-  float3  *FtoExtForcesg;  ///<Stores the external forces to sum of each floating body. [Ftcount].| Almacena las fuerzas externas para sumar a cada objeto flotante. [FtCount]. 
 
   tdouble3 *FtoAuxDouble6; ///<Memory to swap floating data with GPU. [2*FtCount]. | Memoria para intercambiar datos de floatings con GPU. [2*FtCount].
   tfloat3  *FtoAuxFloat15; ///<Memory to swap floating data with GPU. [5*FtCount]. | Memoria para intercambiar datos de floatings con GPU. [5*FtCount].
@@ -191,8 +184,8 @@ protected:
   //-Variables for Laminar+SPS viscosity.  
   tsymatrix3f *SpsTaug;       ///<SPS sub-particle stress tensor.
   tsymatrix3f *SpsGradvelg;   ///<Velocity gradients.
-  
-  TimersGpu Timers;  ///<Declares an array with timers for CPU (type structure \ref StSphTimerGpu).
+
+  JDsTimersGpu *Timersg;  ///<Manages timers for GPU execution.
 
   void InitVars();
 
@@ -242,7 +235,7 @@ protected:
   void SelecDevice(int gpuid);
   void ConfigBlockSizes(bool usezone,bool useperi);
 
-  void ConfigRunMode(std::string preinfo);
+  void ConfigRunMode();
   void ConfigCellDiv(JCellDivGpu* celldiv){ CellDiv=celldiv; }
   void InitFloating();
   void InitRunGpu();
@@ -265,15 +258,6 @@ protected:
 
   void SaveVtkNormalsGpu(std::string filename,int numfile,unsigned np,unsigned npb
     ,const double2 *posxyg,const double *poszg,const unsigned *idpg,const float3 *boundnormalg);
-
-  void ShowTimers(bool onlyfile=false);
-  void GetTimersInfo(std::string &hinfo,std::string &dinfo)const;
-  unsigned TimerGetCount()const{ return(TmgGetCount()); }
-  bool TimerIsActive(unsigned ct)const{ return(TmgIsActive(Timers,(CsTypeTimerGPU)ct)); }
-  float TimerGetValue(unsigned ct)const{ return(TmgGetValue(Timers,(CsTypeTimerGPU)ct)); }
-  const double* TimerGetPtrValue(unsigned ct)const{ return(TmgGetPtrValue(Timers,(CsTypeTimerGPU)ct)); }
-  std::string TimerGetName(unsigned ct)const{ return(TmgGetName((CsTypeTimerGPU)ct)); }
-  std::string TimerToText(unsigned ct)const{ return(JSph::TimerToText(TimerGetName(ct),TimerGetValue(ct))); }
 
 public:
   JSphGpu(bool withmpi);

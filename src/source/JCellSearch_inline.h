@@ -32,9 +32,9 @@ namespace nsearch{
 //==============================================================================
 inline StNgSearch Init(unsigned rcell,bool boundp2,const StDivDataCpu &dvd){
   //-Get cell coordinates of cell number.
-  const int cx=PC__Cellx(dvd.domcellcode,rcell)-dvd.cellzero.x;
-  const int cy=PC__Celly(dvd.domcellcode,rcell)-dvd.cellzero.y;
-  const int cz=PC__Cellz(dvd.domcellcode,rcell)-dvd.cellzero.z;
+  const int cx=DCEL_Cellx(dvd.domcellcode,rcell)-dvd.cellzero.x;
+  const int cy=DCEL_Celly(dvd.domcellcode,rcell)-dvd.cellzero.y;
+  const int cz=DCEL_Cellz(dvd.domcellcode,rcell)-dvd.cellzero.z;
   //-Code for scelldiv 1 or 2 but not zero. | Codigo para scelldiv 1 o 2 pero no cero.
   StNgSearch ret;
   ret.cellinit=(boundp2? 0: dvd.cellfluid);

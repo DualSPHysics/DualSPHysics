@@ -42,7 +42,7 @@ protected:
   llong GetMemoryGpuNp()const;
   llong GetMemoryGpuNct()const;
   void UpdateMaxValues();
-  void LoadConfig(JSphCfgRun *cfg);
+  void LoadConfig(const JSphCfgRun *cfg);
   void ConfigDomain();
 
   void ResizeParticlesSize(unsigned newsize,float oversize,bool updatedivide);
@@ -62,19 +62,19 @@ protected:
 
   void UpdateFtObjs();
   void FtApplyImposedVel(float3 *ftoforcesresg)const;
-  void FtCopyExternalForces();
   void RunFloating(double dt,bool predictor);
   void RunGaugeSystem(double timestep,bool saveinput=false);
 
   void ComputePips(bool run);
 
   void SaveData();
+  void SaveExtraData();
   void FinishRun(bool stop);
 
 public:
   JSphGpuSingle();
   ~JSphGpuSingle();
-  void Run(std::string appname,JSphCfgRun *cfg,JLog2 *log);
+  void Run(std::string appname,const JSphCfgRun *cfg,JLog2 *log);
 
 //-Code for InOut in JSphGpuSingle_InOut.cpp
 //--------------------------------------------

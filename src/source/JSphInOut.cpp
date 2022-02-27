@@ -35,6 +35,7 @@
 #include "JNumexLib.h"
 
 #ifdef _WITHGPU
+  #include "JDsTimersGpu.h"
   #include "FunctionsCuda.h"
   #include "JSphGpu_InOut_iker.h"
   #include "JDebugSphGpu.h"
@@ -1237,7 +1238,7 @@ unsigned JSphInOut::ComputeStepFillingCpu(unsigned inoutcount,int *inoutpart
 unsigned JSphInOut::ComputeStepFillingGpu(unsigned nstep,double dt,unsigned inoutcount,int *inoutpartg
   ,unsigned idnext,unsigned sizenp,unsigned np
   ,double2 *posxyg,double *poszg,unsigned *dcellg,typecode *codeg,unsigned *idpg,float4 *velrhopg
-  ,const byte* zsurfokg,float *prodistg,double2 *proposxyg,double *proposzg,TimersGpu timers)
+  ,const byte* zsurfokg,float *prodistg,double2 *proposxyg,double *proposzg,JDsTimersGpu *timersg)
 {
   //-Computes projection data to filling mode.
   cusphinout::InOutFillProjection(inoutcount,(unsigned *)inoutpartg,CfgUpdateg,Planesg,posxyg,poszg
@@ -1309,6 +1310,15 @@ void JSphInOut::VisuConfig(std::string txhead,std::string txfoot)const{
     izone->CheckConfig();
   }
   if(!txfoot.empty())Log->Print(txfoot);
+}
+
+//==============================================================================
+/// Returns true when AWAS-velocity is configured in some inout zone.
+//==============================================================================
+bool JSphInOut::Use_AwasVel()const{
+  bool ret=false;
+  for(unsigned ci=0;ci<GetCount() && !ret;ci++)ret=List[ci]->Use_AwasVel();
+  return(ret);
 }
 
 //==============================================================================

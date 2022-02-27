@@ -90,6 +90,13 @@
 //:# - Nueva funcion VectorLower().  (09-09-2020)
 //:# - Nueva funcion GetFirstTextBetween().  (20-09-2020)
 //:# - Nuevas funciones RealStr() y uso en VarStr().  (13-02-2021)
+//:# - Nuevas funciones StrRemoveAfter(), StrRemoveBefore(), StrEqualBegin().  (27-06-2021)
+//:# - Nueva opcion mark en VectorFind() y VectorFindMask().  (06-07-2021)
+//:# - Nuevas funciones Split2pVector(), Split2pKey(), Split2pValue(), Split2pDouble3(), Split2pDouble3Error().  (06-07-2021)
+//:# - Nuevas funciones GetVectorFind().  (06-07-2021)
+//:# - Nuevas funciones GetHostName().  (27-08-2021)
+//:# - Nuevas funciones GetNewFileName().  (04-11-2021)
+//:# - Nuevas funciones VectorFind() para unsigned, float y double.  (06-11-2021)
 //:#############################################################################
 
 /// \file Functions.h \brief Declares basic/general functions for the entire application.
@@ -109,6 +116,8 @@
 namespace fun{
 void RunExceptioonFun(const std::string &srcfile,int srcline,const std::string &fun
   ,const std::string &msg,const std::string &file="");
+
+std::string GetHostName();
 
 std::string GetDateTimeFormat(const char* format,int nseg=0);
 inline std::string GetDateTime(){ return(GetDateTimeFormat("%d-%m-%Y %H:%M:%S",0)); }
@@ -205,6 +214,10 @@ std::string StrTrimRepeated(const std::string &cad);
 std::string StrWithoutChar(const std::string &cad,char let);
 std::string StrRepeat(const std::string &cad,unsigned count);
 std::string StrReplace(const std::string &cad,const std::string &key,const std::string &newcad);
+std::string StrRemoveAfter(const std::string &cad,const std::string &key);
+std::string StrRemoveBefore(const std::string &cad,const std::string &key);
+inline bool StrEqualBegin(const std::string &cad,const std::string &key){ return(cad.find(key)==0); }
+
 std::string StrAddSlashes(const std::string &cad);
 std::string StrStripSlashes(const std::string &cad);
 
@@ -222,14 +235,27 @@ unsigned VectorSplitInt(const std::string mark,const std::string &text,std::vect
 unsigned VectorSplitDouble(const std::string mark,const std::string &text,std::vector<double> &vec);
 unsigned VectorSplitFloat(const std::string mark,const std::string &text,std::vector<float> &vec);
 void     VectorLower(std::vector<std::string> &vec);
-unsigned VectorFind(const std::string &key,const std::vector<std::string> &vec,unsigned first=0);
-unsigned VectorFindMask(const std::string &keymask,const std::vector<std::string> &vec,unsigned first=0);
+unsigned VectorFind(const std::string &key,const std::string mark,const std::vector<std::string> &vec,unsigned first=0);
+unsigned VectorFindMask(const std::string &keymask,const std::string mark,const std::vector<std::string> &vec,unsigned first=0);
+inline unsigned VectorFind(const std::string &key,const std::vector<std::string> &vec,unsigned first=0){ return(VectorFind(key,"",vec,first)); }
+inline unsigned VectorFindMask(const std::string &keymask,const std::vector<std::string> &vec,unsigned first=0){ return( VectorFindMask(keymask,"",vec,first)); }
+std::string GetVectorFind(const std::string &key,const std::string mark,const std::vector<std::string> &vec,unsigned first=0);
+
+unsigned VectorFind(const unsigned key,const std::vector<unsigned> &vec,unsigned first=0);
+unsigned VectorFind(const float    key,const std::vector<float>    &vec,unsigned first=0);
+unsigned VectorFind(const double   key,const std::vector<double>   &vec,unsigned first=0);
 
 double GetFirstValueDouble(std::string tex,std::string pretex="");
 double GetFirstValueDouble(std::string tex,std::string &resttex,std::string pretex);
 int GetFirstValueInt(std::string tex,std::string pretex="");
 int GetFirstValueInt(std::string tex,std::string &resttex,std::string pretex);
 std::string GetFirstTextBetween(std::string tex,std::string &resttex,std::string pretex,std::string endtex);
+
+unsigned Split2pVector(const std::string &text,std::vector<std::string> &vec);
+std::string Split2pKey(const std::string &text);
+std::string Split2pValue(const std::string &text);
+tdouble3 Split2pDouble3(std::string text);
+bool Split2pDouble3Error(std::string text);
 
 int CompareVersions(std::string v1,std::string v2);
 
@@ -301,6 +327,7 @@ std::string GetWithoutExtension(const std::string &ruta);
 void GetFileNameSplit(const std::string &file,std::string &dir,std::string &fname,std::string &fext);
 std::string AddExtension(const std::string &file,const std::string &ext);
 std::string FileNameSec(std::string fname,unsigned fnumber);
+std::string GetNewFileName(std::string fnamefmt,unsigned initialnum=0);
 std::string ShortFileName(const std::string &file,unsigned maxlen,bool withpoints=true);
 std::string TextWithShortFileName(const std::string &txpre,const std::string &txpos,const std::string &file,unsigned maxlen);
 
@@ -352,9 +379,11 @@ bool IsGtEqual(double v1,double v2,double tolerance);
 bool IsLtEqual(float  v1,float  v2,float  tolerance);
 bool IsLtEqual(double v1,double v2,double tolerance);
 
+bool IsEqual(const tfloat3  &v1,const tfloat3  &v2,float  tolerance);
 bool IsEqual(const tdouble3 &v1,const tdouble3 &v2,double tolerance);
 bool IsEqual(const tdouble4 &v1,const tdouble4 &v2,double tolerance);
 
+tdouble3 Double3ToAbs(const tdouble3 v);
 }
 
 #endif

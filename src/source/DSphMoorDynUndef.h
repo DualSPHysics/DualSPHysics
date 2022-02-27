@@ -24,7 +24,8 @@
 #ifdef DISABLE_MOORDYN
 bool MoorDyn_LinesInit(const std::string filexml,const std::string nodexml
   ,const std::string dirout,const unsigned numFts,const unsigned ftmkbound[]
-  ,const tdouble3 vellin[],const tdouble3 velang[],const tfloat3 gravity){ return(true); }
+  ,const tdouble3 vellin[],const tdouble3 velang[],const tfloat3 gravity
+  ,const double tmax,const double dtout){ return(true); }
 bool MoorDyn_LinesClose(){ return(true); }
 bool MoorDyn_FairleadsCalc(const unsigned numFts, double*** fairpos, double*** fairvel, double*** fairforce, double t, double dt){ return(true); }
 double MoorDyn_GetFairTen(const unsigned line){ return(0); }
@@ -37,6 +38,9 @@ tdouble3 MoorDyn_GetNodePos(const unsigned line, const unsigned node){ return(TD
 unsigned MoorDyn_MooringsCount(){ return(0); }
 unsigned MoorDyn_GetMooringReference(const unsigned ftid){ return(0); }
 void MoorDyn_LogInit(JLog2 * log){}
+#ifndef DISABLE_NUMEXLIB
+void MoorDyn_NuxLibInit(JNumx* nuxlib) {};
+#endif // !DISABLE_NUMEXLIB
 #endif
 
 #endif

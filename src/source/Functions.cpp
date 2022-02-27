@@ -61,6 +61,19 @@ void RunExceptioonFun(const std::string &srcfile,int srcline,const std::string &
 }
 
 //==============================================================================
+/// Returns host name or empty string when it is unknown.
+//==============================================================================
+std::string GetHostName(){
+  string ret;
+  #ifndef WIN32
+    const int len=128; char hname[len];
+    gethostname(hname,len);
+    ret=hname;
+  #endif
+  return(ret);
+}
+
+//==============================================================================
 /// Returns date and time of the system + nseg using the format.
 //==============================================================================
 std::string GetDateTimeFormat(const char* format,int nseg){
@@ -681,6 +694,22 @@ std::string StrReplace(const std::string &cad,const std::string &key,const std::
 }
 
 //==============================================================================
+/// Gets new string removing last part since key.
+//==============================================================================
+std::string StrRemoveAfter(const std::string &cad,const std::string &key){
+  const int pos=int(cad.find(key));
+  return(pos<0? cad: cad.substr(0,pos));
+}
+
+//==============================================================================
+/// Gets new string removing first part until key.
+//==============================================================================
+std::string StrRemoveBefore(const std::string &cad,const std::string &key){
+  const int pos=int(cad.find(key));
+  return(pos<0? cad: cad.substr(pos+key.length()));
+}
+
+//==============================================================================
 /// Replaces C-style escape sequences by normal text ("\n" -> "\\n").
 /// Escape sequences: \a, \b, \f, \n, \r, \t, \v, \\, \', \".
 //==============================================================================
@@ -907,8 +936,53 @@ void VectorLower(std::vector<std::string> &vec){
 /// Find string in a string vector vector since first position. 
 /// Returns UINT_MAX when it was not found.
 //==============================================================================
-unsigned VectorFind(const std::string &key,const std::vector<std::string> &vec
-  ,unsigned first)
+unsigned VectorFind(const std::string &key,const std::string mark
+  ,const std::vector<std::string> &vec,unsigned first)
+{
+  unsigned c=first;
+  const unsigned size=unsigned(vec.size());
+  if(mark.empty())for(;c<size && vec[c]!=key;c++);
+  else for(;c<size && StrRemoveAfter(vec[c],mark)!=key;c++);
+  return(c<size? c: UINT_MAX);
+}
+
+//==============================================================================
+/// Find string mask (using *, ?, |) in a string vector vector since first position. 
+/// Returns UINT_MAX when it was not found.
+//==============================================================================
+unsigned VectorFindMask(const std::string &keymask,const std::string mark
+  ,const std::vector<std::string> &vec,unsigned first)
+{
+  unsigned ret=UINT_MAX;
+  const unsigned size=unsigned(vec.size());
+  for(unsigned c=first;c<size && ret==UINT_MAX;c++){
+    const string v=(mark.empty()? vec[c]: StrRemoveAfter(vec[c],mark));
+    //printf("---> v:[%s]  keymask:[%s]\n",v.c_str(),keymask.c_str());
+    const bool usemask=(int(keymask.find('?'))>=0 || int(keymask.find('*'))>=0 || int(keymask.find('|'))>=0);
+    if(!usemask && v==keymask)ret=c;
+    if(usemask && FileMask(v,keymask))ret=c;
+    //printf("---> usemask:%d  FileMask:%d\n",(usemask?1:0),FileMask(v,keymask)?1:0);
+  }
+  return(ret);
+}
+
+//==============================================================================
+/// Return the found value or empty string.
+/// Removes first part of value until mark.
+//==============================================================================
+std::string GetVectorFind(const std::string &key,const std::string mark
+  ,const std::vector<std::string> &vec,unsigned first)
+{
+  const unsigned c=VectorFind(key,mark,vec,first);
+  return(c!=UINT_MAX? (mark.empty()? vec[c]: StrRemoveBefore(vec[c],mark)): string(""));
+}
+
+
+//==============================================================================
+/// Find unsigned value in a vector since first position. 
+/// Returns UINT_MAX when it was not found.
+//==============================================================================
+unsigned VectorFind(const unsigned key,const std::vector<unsigned> &vec,unsigned first)
 {
   unsigned c=first;
   const unsigned size=unsigned(vec.size());
@@ -917,23 +991,27 @@ unsigned VectorFind(const std::string &key,const std::vector<std::string> &vec
 }
 
 //==============================================================================
-/// Find string mask (using *, ?, |) in a string vector vector since first position. 
+/// Find float value in a vector since first position. 
 /// Returns UINT_MAX when it was not found.
 //==============================================================================
-unsigned VectorFindMask(const std::string &keymask,const std::vector<std::string> &vec
-  ,unsigned first)
+unsigned VectorFind(const float key,const std::vector<float> &vec,unsigned first)
 {
-  unsigned ret=UINT_MAX;
+  unsigned c=first;
   const unsigned size=unsigned(vec.size());
-  for(unsigned c=first;c<size && ret==UINT_MAX;c++){
-    const string v=vec[c];
-    //printf("---> v:[%s]  keymask:[%s]\n",v.c_str(),keymask.c_str());
-    const bool usemask=(int(keymask.find('?'))>=0 || int(keymask.find('*'))>=0 || int(keymask.find('|'))>=0);
-    if(!usemask && v==keymask)ret=c;
-    if(usemask && FileMask(v,keymask))ret=c;
-    //printf("---> usemask:%d  FileMask:%d\n",(usemask?1:0),FileMask(v,keymask)?1:0);
-  }
-  return(ret);
+  for(;c<size && vec[c]!=key;c++);
+  return(c<size? c: UINT_MAX);
+}
+
+//==============================================================================
+/// Find double value in a vector since first position. 
+/// Returns UINT_MAX when it was not found.
+//==============================================================================
+unsigned VectorFind(const double key,const std::vector<double> &vec,unsigned first)
+{
+  unsigned c=first;
+  const unsigned size=unsigned(vec.size());
+  for(;c<size && vec[c]!=key;c++);
+  return(c<size? c: UINT_MAX);
 }
 
 
@@ -1022,6 +1100,67 @@ std::string GetFirstTextBetween(std::string tex,std::string &resttex
   return(txv);
 }
 
+
+//==============================================================================
+/// Returns key from "key=value".
+//==============================================================================
+unsigned Split2pVector(const std::string &text,std::vector<std::string> &vec){
+  string aux=text;
+  string keyval;
+  while(!aux.empty()){
+    string txv=StrSplit(":",aux);
+    if(int(txv.find("="))>=0){
+      if(!keyval.empty())vec.push_back(keyval);
+      keyval=txv;
+    }
+    else if(!keyval.empty()){
+      keyval=keyval+":"+txv;
+    }
+  }
+  if(!keyval.empty())vec.push_back(keyval);
+  return(unsigned(vec.size()));
+}
+
+//==============================================================================
+/// Returns key from "key=value".
+//==============================================================================
+std::string Split2pKey(const std::string &text){
+  return(StrRemoveAfter(text,"="));
+}
+
+//==============================================================================
+/// Returns value from "key=value".
+//==============================================================================
+std::string Split2pValue(const std::string &text){
+  return(StrRemoveBefore(text,"="));
+}
+
+//==============================================================================
+/// Returns tdouble3 value from "float:float:float" or "key=float:float:float".
+//==============================================================================
+tdouble3 Split2pDouble3(std::string text){
+  //printf("[%s]",text.c_str());
+  string v1=StrRemoveAfter(text,":"); text=text.substr(v1.length()); text=StrRemoveBefore(text,":");
+  v1=StrRemoveBefore(v1,"=");
+  //printf("  v1:[%s] text=[%s]  ",v1.c_str(),text.c_str());
+  string v2=StrRemoveAfter(text,":"); text=text.substr(v2.length()); text=StrRemoveBefore(text,":");
+  string v3=StrRemoveAfter(text,":");
+  //printf("=[%s]:[%s]:[%s]\n",v1.c_str(),v2.c_str(),v3.c_str());
+  return(TDouble3(atof(v1.c_str()),atof(v2.c_str()),atof(v3.c_str())));
+}
+
+//==============================================================================
+/// Returns true when some value is invalid.
+//==============================================================================
+bool Split2pDouble3Error(std::string text){
+  string v1=StrRemoveAfter(text,":"); text=text.substr(v1.length()); text=StrRemoveBefore(text,":");
+  v1=StrRemoveBefore(v1,"=");
+  string v2=StrRemoveAfter(text,":"); text=text.substr(v2.length()); text=StrRemoveBefore(text,":");
+  string v3=StrRemoveAfter(text,":");
+  bool err=(v1.empty() || v2.empty() || v3.empty());
+  err=(err || !StrIsRealNumber(v1) || !StrIsRealNumber(v2) || !StrIsRealNumber(v3));
+  return(err);
+}
 
 
 //==============================================================================
@@ -1434,6 +1573,22 @@ std::string FileNameSec(std::string fname,unsigned fnumber){
 }
 
 //==============================================================================
+/// Returns the first filename with number  that does not exist.
+/// E.g.: GetNewFileName("DBG_name_%04d.dat")
+//==============================================================================
+std::string GetNewFileName(std::string fnamefmt,unsigned initialnum){
+  std::string file0;
+  std::string file=PrintStr(fnamefmt.c_str(),initialnum);
+  while(FileExists(file) && file0!=file){
+    initialnum++;
+    file0=file;
+    file=PrintStr(fnamefmt.c_str(),initialnum);
+  }
+  if(file==file0)Run_ExceptioonFileFun("Error generation new file name.",file);
+  return(file);
+}
+
+//==============================================================================
 /// Returns the filename with a requested size of characteres.
 //==============================================================================
 std::string ShortFileName(const std::string &file,unsigned maxlen,bool withpoints){
@@ -1798,6 +1953,13 @@ bool IsLtEqual(double v1,double v2,double tolerance){
 //==============================================================================
 /// Returns v1 is equal to v2 according a tolerance value.
 //==============================================================================
+bool IsEqual(const tfloat3 &v1,const tfloat3 &v2,float tolerance){
+  return(IsEqual(v1.x,v2.x,tolerance) && IsEqual(v1.y,v2.y,tolerance) && IsEqual(v1.z,v2.z,tolerance));
+}
+
+//==============================================================================
+/// Returns v1 is equal to v2 according a tolerance value.
+//==============================================================================
 bool IsEqual(const tdouble3 &v1,const tdouble3 &v2,double tolerance){
   return(IsEqual(v1.x,v2.x,tolerance) && IsEqual(v1.y,v2.y,tolerance) && IsEqual(v1.z,v2.z,tolerance));
 }
@@ -1809,6 +1971,12 @@ bool IsEqual(const tdouble4 &v1,const tdouble4 &v2,double tolerance){
   return(IsEqual(v1.x,v2.x,tolerance) && IsEqual(v1.y,v2.y,tolerance) && IsEqual(v1.z,v2.z,tolerance) && IsEqual(v1.w,v2.w,tolerance));
 }
 
+//==============================================================================
+/// Returns v with its elements in absolute value
+//==============================================================================
+tdouble3 Double3ToAbs(const tdouble3 v){
+	return TDouble3(std::abs(v.x),std::abs(v.y),std::abs(v.z));
+}
 
 }
 

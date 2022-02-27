@@ -294,7 +294,7 @@ void JBinaryDataArray::FreeMemory(){
 /// Allocate memory for the elements indicated.
 //==============================================================================
 void JBinaryDataArray::AllocMemory(unsigned size,bool savedata){
-  if(Count&&savedata&&size){
+  if(Count && savedata && size){
     if(ExternalPointer)Run_Exceptioon("External pointer can not be resized.");
     const unsigned count2=min(Count,size);
     void *ptr=AllocPointer(size);
@@ -313,6 +313,20 @@ void JBinaryDataArray::AllocMemory(unsigned size,bool savedata){
     FreeMemory();
     Size=size;
     if(Size)Pointer=AllocPointer(Size);
+  }
+}
+
+//==============================================================================
+/// Asigna memoria para los elementos indicados e inicializa Count.
+/// Allocate memory for the elements indicated and set Count.
+//==============================================================================
+void JBinaryDataArray::AllocMemoryCount(unsigned count,bool clear){
+  FreeMemory();
+  Size=count;
+  if(Size){
+    Pointer=AllocPointer(Size);
+    Count=count;
+    if(clear)memset(Pointer,0,JBinaryDataDef::SizeOfType(Type)*count);
   }
 }
 
@@ -1157,11 +1171,11 @@ JBinaryData::StHeadFmtBin JBinaryData::MakeFileHead(const std::string &filecode)
 /// Returns file size and its header.
 /// If the file does not contain a header returns 0.
 //==============================================================================
-unsigned JBinaryData::GetFileHead(std::ifstream *pf,JBinaryData::StHeadFmtBin &head)const{
+ullong JBinaryData::GetFileHead(std::ifstream *pf,JBinaryData::StHeadFmtBin &head)const{
   //-Obtiene size del fichero.
   //-Gets file size.
   pf->seekg(0,ios::end);
-  const unsigned fsize=(unsigned)pf->tellg();
+  const ullong fsize=(ullong)pf->tellg();
   pf->seekg(0,ios::beg);
   //-Lee cabecera basica.
   //-Reads basic header.
@@ -1211,7 +1225,10 @@ unsigned JBinaryData::CheckFileHead(const std::string &file,std::ifstream *pf,co
   JBinaryData::StHeadFmtBin head;
   //-Obtiene size y cabecera del fichero.
   //-Get size and file header.
-  const unsigned fsize=GetFileHead(pf,head);
+  const ullong fsize_ull=GetFileHead(pf,head);
+  const unsigned fsize=unsigned(fsize_ull);
+  //printf("**==> fsize:%u != %llu\n",fsize,fsize_ull);
+  if(fsize_ull!=ullong(fsize))Run_ExceptioonFile("The size of file is not supported as it is higher than 4GB.",file);
   //-Comprueba validez de cabecera.
   //-Check for valid header.
   CheckHead(file,head,filecode);
@@ -1798,6 +1815,16 @@ JBinaryDataArray* JBinaryData::CreateArray(const std::string &name,JBinaryDataDe
   JBinaryDataArray *ar=CreateArray(name,type);
   ar->SetData(count,data,externalpointer);
   return(ar);
+}
+
+//==============================================================================
+/// Crea array y devuelve puntero a datos del array.
+/// Creates array and returns pointer to data array.
+//==============================================================================
+tfloat3* JBinaryData::CreateArrayFloat3(const std::string &name,unsigned count,bool clear){
+  JBinaryDataArray *ar=CreateArray(name,JBinaryDataDef::DatFloat3);
+  ar->AllocMemoryCount(count,clear);
+  return((tfloat3*)ar->GetPointer());
 }
 
 //==============================================================================

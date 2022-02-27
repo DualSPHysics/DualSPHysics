@@ -81,6 +81,7 @@ class JCaseEParms;
 class JDataArrays;
 class JNumexLib;
 class JFtMotionSave; //<vs_ftmottionsv>
+class JDsExtraDataSave;
 
 //##############################################################################
 //# XML format of execution parameters in _FmtXML__Parameters.xml.
@@ -152,6 +153,8 @@ protected:
   const bool Mgpu;
   const bool WithMpi;
   JLog2 *Log;
+
+  const JSphCfgRun *CfgRun;
 
   bool Simulate2D;       ///<Toggles 2D simulation (cancels forces in Y axis). | Activa o desactiva simulacion en 2D (anula fuerzas en eje Y).
   double Simulate2DPosY; ///<Y value in 2D simulations.                        | Valor de Y en simulaciones 2D.
@@ -279,6 +282,7 @@ protected:
   unsigned PartBeginFirst;    ///<Indicates the number of the first PART to be generated. | Indica el numero del primer PART a generar.                                    
   double PartBeginTimeStep;   ///<initial instant of the simulation                       | Instante de inicio de la simulacion.                                          
   ullong PartBeginTotalNp;    ///<Total number of simulated particles.
+  bool RestartChrono;         ///<Allows restart with Chrono active (default=0).
 
   JDsPartsOut *PartsOut;        ///<Stores excluded particles until they are saved. | Almacena las particulas excluidas hasta su grabacion.
   bool WrnPartsOut;           ///<Active warning according to number of out particles (default=1).
@@ -334,6 +338,9 @@ protected:
   JSphBoundCorr *BoundCorr; ///<Object for boundary extrapolated correction (used in combination with InOut).
 
   JFtMotionSave *FtMotSave; ///<Object for saving floating motion data with high frequency. //<vs_ftmottionsv>
+
+  std::string SvExtraParts;         ///<Part interval (or list) for saving extra data for restart option (default=empty=disabled)
+  JDsExtraDataSave *SvExtraDataBi4; ///<To store extra data for restart option (SvExtraParts).
 
   JDsPips *DsPips;          ///<Object for PIPS calculation.
 
@@ -392,7 +399,7 @@ protected:
   double TimeStep;        ///<Current instant of the simulation. | Instante actual de la simulacion.                                 
   double TimeStepM1;      ///<Instant of the simulation when the last PART was stored. | Instante de la simulacion en que se grabo el ultimo PART.         
   double TimePartNext;    ///<Instant to store next PART file.   | Instante para grabar siguiente fichero PART.
-  double LastDt;          ///<Last dt value added to Instant to TimeStep. | Ultimo valor de dt sumado a TimeStep.
+  double LastDt;          ///<Last dt value added to TimeStep. | Ultimo valor de dt sumado a TimeStep.
 
   //-Control of the execution times.
   JTimer TimerTot;         ///<Measueres total runtime.                          | Mide el tiempo total de ejecucion.
@@ -439,6 +446,7 @@ protected:
   void ConfigConstants1(bool simulate2d);
   void ConfigConstants2();
   void VisuConfig();
+  void VisuRefs();
   void VisuParticleSummary()const;
   void LoadDcellParticles(unsigned n,const typecode *code,const tdouble3 *pos,unsigned *dcell)const;
   void RunInitialize(unsigned np,unsigned npb,const tdouble3 *pos,const unsigned *idp
@@ -448,16 +456,17 @@ protected:
 
   void ConfigCellDivision();
   void SelecDomain(tuint3 celini,tuint3 celfin);
-  static tuint3 CalcCellDistribution(tuint3 ncells);
-  static unsigned CalcCellCode(tuint3 ncells);
   void ConfigPosCellGpu();
   void CalcFloatingRadius(unsigned np,const tdouble3 *pos,const unsigned *idp);
   tdouble3 UpdatePeriodicPos(tdouble3 ps)const;
 
-  void RestartCheckData();
+  void RestartCheckData(bool loadpsingle);
   void CheckRhopLimits();
   void LoadCaseParticles();
   void InitRun(unsigned np,const unsigned *idp,const tdouble3 *pos);
+
+  tfloat3 GetFtExternalForceLin(unsigned cf,double timestep)const;
+  tfloat3 GetFtExternalForceAng(unsigned cf,double timestep)const;
 
   bool CalcMotion(double stepdt);
   void CalcMotionWaveGen(double stepdt);
@@ -475,14 +484,14 @@ protected:
     ,const unsigned *idp,const tfloat3 *vel,const float *rhop)const;
   void SavePartData(unsigned npok,unsigned nout,const JDataArrays& arrays,unsigned ndom,const tdouble3 *vdom,const StInfoPartPlus *infoplus);
   void SaveData(unsigned npok,const JDataArrays& arrays,unsigned ndom,const tdouble3 *vdom,const StInfoPartPlus *infoplus);
+
   void CheckTermination();
   void SaveDomainVtk(unsigned ndom,const tdouble3 *vdom)const;
   void SaveInitialDomainVtk()const;
   unsigned SaveMapCellsVtkSize()const;
   void SaveMapCellsVtk(float scell)const;
   void SaveVtkNormals(std::string filename,int numfile,unsigned np,unsigned npb
-    ,const tdouble3 *pos,const unsigned *idp,const tfloat3 *boundnormal)const;
-
+    ,const tdouble3 *pos,const unsigned *idp,const tfloat3 *boundnormal,float resize)const;
  
   void GetResInfo(float tsim,float ttot,std::string headplus,std::string detplus
     ,std::string &hinfo,std::string &dinfo)const;
@@ -501,11 +510,9 @@ public:
   static std::string GetViscoName(TpVisco tvisco);
   static std::string GetBoundName(TpBoundary tboundary);
   static std::string GetSlipName(TpSlipMode tslip);
-  static std::string GetDDTName(TpDensity tdensity);
+  std::string GetDDTName(TpDensity tdensity)const;
 
   std::string GetDDTConfig()const;
-
-  static std::string TimerToText(const std::string &name,float value);
 
 //-Functions for debug.
 //----------------------

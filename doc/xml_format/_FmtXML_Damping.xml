@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<!-- *** DualSPHysics (19-03-2020) *** -->
+<!-- *** DualSPHysics v5.0.213 (15-10-2021) *** -->
 <!-- *** class: JDamping *** -->
 <!------------------------------------------------------------------------------->
 <!------------------------------------------------------------------------------->
 <!-- *** Example for Damping *** -->
 <special>
 	<damping>
+		<!-- Damping definition accoding to a plane -->
 		<dampingzone>
 			<limitmin x="4" y="0" z="0" comment="Location where minimum reduction is applied" />
 			<limitmax x="4.5" y="0" z="0" comment="Location where maximum reduction is applied" />
@@ -19,6 +20,31 @@
 				<point4 x="5" y="8" />
 			</domain>
 		</dampingzone>
+		<!-- Damping definition accoding to a box domain -->
+		<dampingbox>
+			<directions value="all,-top,-left,-bottom" comment="Active directions (top/bottom/left/right/front/back) (default=all)"/>
+			<limitmin comment="Limit where minimum reduction is applied">
+				<pointini x="0" y="1" z="0" />
+				<pointend x="5" y="3" z="2" />
+			</limitmin>
+			<limitmax comment="Limit where maximum reduction is applied">
+				<pointini x="0" y="0" z="0" />
+				<pointend x="8" y="4" z="2" />
+			</limitmax>
+			<overlimit value="1" comment="The scope of maximum reduction over limitmax (default=0)" />
+			<redumax value="10" comment="Maximum reduction in location limitmax (default=10)" />
+			<factorxyz x="1" y="1" z="1" comment="Application factor in components (default x=1,y=1,z=1)" />
+		</dampingbox>
+		<!-- Damping definition accoding to a cylinder domain -->
+		<dampingcylinder>
+			<point1 x="0" y="0" z="0" comment="Point for axis definition" />
+			<point2 x="0" y="0" z="2" comment="Point for axis definition" />
+			<limitmin radius="5" comment="Limit where minimum reduction is applied" />
+			<limitmax radius="8" comment="Limit where maximum reduction is applied" />
+			<overlimit value="1" comment="The scope of maximum reduction over limitmax (default=0)" />
+			<redumax value="10" comment="Maximum reduction in location limitmax (default=10)" />
+			<factorxyz x="1" y="1" z="1" comment="Application factor in components (default x=1,y=1,z=1)" />
+		</dampingcylinder>
 	</damping>
 </special>
 <!---------------------------------------------------------------------------------->
@@ -28,6 +54,8 @@
 <!-- *** or active="0"). It is an optional attribute and true by default.     *** -->
 <damping active="true">
 	<dampingzone active="true"/>
+	<dampingbox active="true"/>
+	<dampingcylinder active="true"/>
 </damping>
 
 

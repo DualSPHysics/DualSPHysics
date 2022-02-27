@@ -32,6 +32,7 @@
 //:# - Actualiza coupling con MoorDyn. (23-12-2019)
 //:# - Saves VTK files in MooringsVtk directory. (24-12-2019)
 //:# - Cambio de nombre de J.SphFtForcePoints a J.DsFtForcePoints. (28-06-2020)
+//:# - Se proporcionan datos de fuerzas en lugar de aceleraciones. (24-11-2021)
 //#############################################################################
 
 /// \file JDsFtForcePoints.h \brief Declares the class \ref JDsFtForcePoints.
@@ -80,8 +81,9 @@ private:
 
   //-Variables to apply forces on floating bodies.
   word PtCount;       ///<Total number of points.
-  word *PtId;         ///<Id for points (for initialization) [PtCount].
-  word *PtFtid;       ///<Id of floating (for initialization) [PtCount].
+  word  *PtId;        ///<Id for points (for initialization) [PtCount].
+  word  *PtFtid;      ///<Id of floating (for initialization) [PtCount].
+  word  *PtMkBound;   ///<MkBound of floating [PtCount].
   float *PartDist;    ///<Initial distance to nearest particle [PtCount].
 
   double TimeStep;    ///<Current instant of the simulation.
@@ -92,9 +94,9 @@ private:
   word SelFtCount;      ///<Number of floating objects with force points.  
   word *SelFtIndex;     ///<Index to selected floatings. Uses USHRT_MAX when index is invalid [FtCount].
   word *SelFtid;        ///<Id of floating [SelFtCount].
-  tdouble3 *SelFtCenter;///<Center of the selected floating [SelFtCount].
-  tfloat3 *SelFtAce;    ///<Total ace of each selected floating [SelFtCount].
-  tfloat3 *SelFtOmega;  ///<Total omega of each selected floating [SelFtCount].
+  tdouble3 *SelFtCenter;   ///<Center of the selected floating [SelFtCount].
+  tfloat3  *SelFtForceLin; ///<Total sum of linear forces of each selected floating [SelFtCount].
+  tfloat3  *SelFtForceAng; ///<Total sum of angular forces of each selected floating [SelFtCount].
 
   void AllocMemoryFt(word ftcount);
   void AllocMemorySelFt(word selftcount);
@@ -111,7 +113,7 @@ public:
   llong GetAllocMemory()const;
 
   void SetSaveData(bool savecsv,bool savevtk){ SvCsvPoints|=savecsv; SvVtkPoints|=savevtk; }
-  word AddPoint(unsigned ftid,const tdouble3 &pos);
+  word AddPoint(unsigned ftid,word ftmkb,const tdouble3 &pos);
   word GetIdx(word ptid)const;
 
   void Config(unsigned ftcount,const StFloatingData *ftdata,byte periactive,bool perix,bool periy,bool periz,tdouble3 perixinc,tdouble3 periyinc,tdouble3 perizinc);
@@ -123,9 +125,14 @@ public:
   tdouble3 GetPos(word idx)const{ return(PtPos[idx]); }
   tfloat3 GetVel(word idx)const{ return(PtVel[idx]); }
 
+  word GetPtCount()const{ return(PtCount); }
+  const word*     GetPtMkBound()const{ return(PtMkBound); }
+  const tdouble3* GetPtPos    ()const{ return(PtPos);     }
+  const tfloat3*  GetPtForce  ()const{ return(PtForce);   }
+
   void SetForce(word idx,const tfloat3 &force){ PtForce[idx]=force; }
-  void ComputeFtMotion();
-  void GetFtMotionData(StFtoForces *ftoforces)const;
+  void ComputeForcesSum();
+  void GetFtForcesSum(StFtoForces *ftoforces)const;
 
   void SaveData(unsigned numfile)const;
 };

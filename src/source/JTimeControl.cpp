@@ -81,6 +81,7 @@ void JTimeControl::Reset(){
   IteStart=0;
   IteNum=NextIte=0;
   LastTime=0;
+  OutNum=0;
 }
 
 //==============================================================================
@@ -183,6 +184,7 @@ bool JTimeControl::CheckRealTime(){
       IteNum=0; NextIte=nite;
     }
   }
+  if(ret)OutNum++;
   return(ret);
 }
 

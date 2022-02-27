@@ -34,6 +34,7 @@
 
 #include "TypesDef.h"
 #include "JLog2.h"
+#include "JXml.h"
 #include <string>
 
 //#define DISABLE_MOORDYN     ///<It allows compile without DSphMoorDyn library.
@@ -46,7 +47,8 @@
 //==============================================================================
 bool MoorDyn_LinesInit(const std::string filexml,const std::string nodexml
   ,const std::string dirout,const unsigned numFts,const unsigned ftmkbound[]
-  ,const tdouble3 vellin[],const tdouble3 velang[],const tfloat3 gravity);
+  ,const tdouble3 vellin[],const tdouble3 velang[],const tfloat3 gravity
+  ,const double tmax,const double dtout);
 
 //==============================================================================
 /// Deallocates the variables used by MoorDyn (returns true in case of error).
@@ -56,7 +58,8 @@ bool MoorDyn_LinesClose();
 //==============================================================================
 /// Force calculation of moorings by MoorDyn (returns true in case of error).
 //==============================================================================
-bool MoorDyn_FairleadsCalc(const unsigned numFts, double*** fairpos, double*** fairvel, double*** fairforce, double t, double dt);
+bool MoorDyn_FairleadsCalc(const unsigned numFts,double*** fairpos,double*** fairvel
+  ,double*** fairforce,double t,double dt);
 
 //==============================================================================
 /// Returns the tension at the fairlead of a given line. (line=0...)
@@ -81,18 +84,18 @@ unsigned MoorDyn_SegsCount(const unsigned line);
 //==============================================================================
 /// Returns number of segments in indicated line. (line=0...)
 //==============================================================================
-unsigned MoorDyn_SegsCount(const unsigned ftid, const unsigned line);
+unsigned MoorDyn_SegsCount(const unsigned ftid,const unsigned line);
 
 //==============================================================================
 /// Returns position of node. (line=0... node=0...)
 //==============================================================================
-tdouble3 MoorDyn_GetNodePosLink(const unsigned ftid, const unsigned line);
+tdouble3 MoorDyn_GetNodePosLink(const unsigned ftid,const unsigned line);
 
 
 //==============================================================================
 /// Returns position of node. (line=0... node=0...)
 //==============================================================================
-tdouble3 MoorDyn_GetNodePos(const unsigned line, const unsigned node);
+tdouble3 MoorDyn_GetNodePos(const unsigned line,const unsigned node);
 
 //==============================================================================
 /// Returns number of Moorings created
@@ -105,9 +108,17 @@ unsigned MoorDyn_MooringsCount();
 unsigned MoorDyn_GetMooringReference(const unsigned ftid);
 
 //==============================================================================
-/// Sends to MoorDyn the DualSPHysics log to store and print messages
+/// Sends to MoorDyn+ the object to manage Logs from DualSPHysics
 //==============================================================================
-void MoorDyn_LogInit(JLog2 * log);
+void MoorDyn_LogInit(JLog2 *log);
+
+//==============================================================================
+/// Sends to MoorDyn the object to manage user-defined variables from DualSPHysics
+//==============================================================================
+#ifndef DISABLE_NUMEXLIB
+void MoorDyn_NuxLibInit(JNumx *nuxlib);
+#endif // !DISABLE_NUMEXLIB
+
 #endif
 
 #endif

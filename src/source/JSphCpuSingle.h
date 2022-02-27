@@ -39,7 +39,7 @@ protected:
 
   llong GetAllocMemoryCpu()const;
   void UpdateMaxValues();
-  void LoadConfig(JSphCfgRun *cfg);
+  void LoadConfig(const JSphCfgRun *cfg);
   void ConfigDomain();
 
   void ResizeParticlesSize(unsigned newsize,float oversize,bool updatedivide);
@@ -72,7 +72,6 @@ protected:
   void FtCalcForces(StFtoForces *ftoforces)const;
   void FtCalcForcesRes(double dt,const StFtoForces *ftoforces,StFtoForcesRes *ftoforcesres)const;
   void FtApplyImposedVel(StFtoForcesRes *ftoforcesres)const;
-  void FtSumExternalForces(unsigned cf,tfloat3 &face,tfloat3 &fomegaace)const;
   void FtApplyConstraints(StFtoForces *ftoforces,StFtoForcesRes *ftoforcesres)const;
   void RunFloating(double dt,bool predictor);
   void RunGaugeSystem(double timestep,bool saveinput=false);
@@ -80,12 +79,13 @@ protected:
   void ComputePips(bool run);
   
   void SaveData();
+  void SaveExtraData();
   void FinishRun(bool stop);
 
 public:
   JSphCpuSingle();
   ~JSphCpuSingle();
-  void Run(std::string appname,JSphCfgRun *cfg,JLog2 *log);
+  void Run(std::string appname,const JSphCfgRun *cfg,JLog2 *log);
 
 //-Code for InOut in JSphCpuSingle_InOut.cpp
 //--------------------------------------------

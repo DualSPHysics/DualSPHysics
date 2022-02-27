@@ -83,9 +83,9 @@ private:
   std::vector<StLinkData> Fairleads;
 
 public:
-  const word FloatingMk;   ///<Mkbound of the Floating body the mooring is linked to.
+  const word FloatingMkBound;   ///<Mkbound of the Floating body the mooring is linked to.
 
-  JDsMooredFloating(word fmk);
+  JDsMooredFloating(word mkbound);
   ~JDsMooredFloating();
   void Reset();
 
@@ -113,9 +113,16 @@ private:
   const std::string DirCase;
   const std::string CaseName;
   const tfloat3 Gravity;
+  const double TimeMax;
+  const double DtOut;
   std::string FileLines;
   std::string MoordynDir;   ///<Work directory for MoorDyn.
 
+  double StartTime;    ///<Start time of the application of mooring forces. (def=0).
+  double StartRamp;    ///<Ramp time after start time. (def=0).
+  double StartEnd;     ///<End time of ramp time. (def=0).
+
+  bool SvVtkLines;     ///<Saves vtk with mooring lines (def=true).
   bool SvVtkMoorings;  ///<Saves vtk with moorings (def=true).
   bool SvCsvPoints;    ///<Saves csv with link points (def=true). 
   bool SvVtkPoints;    ///<Saves vtk with link points (def=false).
@@ -135,14 +142,14 @@ private:
   //double NextTime;
   //double LastTimeOk;
 
-  unsigned GetFloatingByMk(word mkbound)const;
+  unsigned GetFloatingByMkbound(word mkbound)const;
   void ReadXml(const JXml *sxml,TiXmlElement* ele);
   void ConfigFloatings(unsigned ftcount,const StFloatingData *ftdata);
   void AllocFairMemory();
   void FreeFairMemory();
 
 public:
-  JDsMooredFloatings(std::string dircase,std::string casename,tfloat3 gravity);
+  JDsMooredFloatings(std::string dircase,std::string casename,tfloat3 gravity,double timemax,double dtout);
   ~JDsMooredFloatings();
   void Reset();
   void LoadXml(const JXml *sxml,const std::string &place);
@@ -152,8 +159,8 @@ public:
 
   void ComputeForces(unsigned nstep,double timestep,double dt,JDsFtForcePoints *forcepoints);
 
-  void SaveVtkMoorings(unsigned numfile)const;
-  void SaveData(unsigned numfile)const{ if(SvVtkMoorings)SaveVtkMoorings(numfile); }
+  void SaveVtkMoorings(unsigned numfile,bool svlines)const;
+  void SaveData(unsigned numfile)const;
 
   unsigned Count()const{ return(unsigned(Floatings.size())); }
 };

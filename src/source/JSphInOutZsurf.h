@@ -123,6 +123,7 @@ public:
   bool GetRemoveZsurf()const{ return(RemoveZsurf); }
   bool GetSvVtkZsurf()const{ return(SvVtkZsurf); }
 
+  unsigned ComputeActivePoints(unsigned npt,const tdouble3 *ptpos)const;
   void SetInitialPoints(unsigned npt,const tdouble3 *ptpos,byte *ptok)const;
 
   float UpdateZsurf(double timestep);

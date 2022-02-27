@@ -26,6 +26,7 @@
 //# - Nuevas funciones AddShapePoint() y AddShapePoints(). (04-08-2020)
 //# - Nuevas funciones AddShapeTriangle(). (26-08-2020)
 //# - La funcion CreateOBJsByMk() devuelve en numero de faces creadas. (v5.0.158 / 18-10-2020)
+//# - Nueva funcion SetShapeWireMode(). (14-10-2021)
 //#############################################################################
 
 /// \file JVtkLib.h \brief Declares the class \ref JVtkLib.
@@ -40,7 +41,7 @@
 #include <cstring>
 #include <string>
 #include <vector>
-#include "JVtkLibDef.h"      //Defines DISABLE_VTKLIB to compile without VTK library.
+#include "JVtkLibDef.h"      //Defines DISABLE_VTKLIB to compile without VTK library and more options.
 
 class JShapeVtk;
 
@@ -96,6 +97,9 @@ public:
   //==============================================================================
   /// Generates a VTK file with shapes.
   void SaveShapeVtk(std::string file,std::string varname,bool createpath=true);
+
+  /// Set wire mode.
+  void SetShapeWireMode(bool wiremode);
 
   /// Adds shape point.
   void AddShapePoint(const tfloat3 &pt,int value);
@@ -199,6 +203,15 @@ public:
   /// Creates OBJ file with MK geometry in VTK file. Returns number of created shapes.
   static unsigned CreateOBJsByMk(void* ptr_vtksimple,std::string filein,std::string filesout
     ,const std::vector<unsigned> &mkbounds,unsigned mkboundfirst,TpModeNormal normalmode);
+
+
+  //==============================================================================
+  // Functions to compute normals from final particles (for mDBC and under development).
+  //==============================================================================
+  static void ComputeNormalsPartCells(bool data2d,double data2dposy,double dp
+    ,tdouble3 mapposmin,tdouble3 mapposmax,double dist,std::string dirout
+    ,unsigned nsel,const unsigned *partsel,unsigned np,const tdouble3 *pos
+    ,tfloat3 *boundnormal);
 
 
 };

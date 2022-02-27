@@ -72,7 +72,7 @@ void JSphCpuSingle::InOutCheckProximity(unsigned newnp){
 //==============================================================================
 void JSphCpuSingle::InOutInit(double timestepini){
   InOut->Nstep=Nstep; //-For debug.
-  TmcStart(Timers,TMC_SuInOut);
+  Timersc->TmStart(TMC_SuInOut);
   Log->Print("Initialising InOut...");
   if(PartBegin)Run_Exceptioon("Simulation restart not allowed when Inlet/Outlet is used.");
   
@@ -88,10 +88,10 @@ void JSphCpuSingle::InOutInit(double timestepini){
   //-Resizes memory when it is necessary (always at the beginning).
   if(true || !CheckCpuParticlesSize(Np+newnp)){
     const unsigned newnp2=newnp+InOut->GetNpResizePlus0();
-    TmcStop(Timers,TMC_SuInOut);
+    Timersc->TmStop(TMC_SuInOut);
     ResizeParticlesSize(Np+newnp2,0,false);
     CellDivSingle->SetIncreaseNp(newnp2);
-    TmcStart(Timers,TMC_SuInOut);
+    Timersc->TmStart(TMC_SuInOut);
   }
 
   //-Creates initial inlet particles with pos, idp, code and velrhop=0.
@@ -120,9 +120,9 @@ void JSphCpuSingle::InOutInit(double timestepini){
   if(Symmetry && InOut->Use_ExtrapolatedData())Run_Exceptioon("Symmetry is not allowed with inlet/outlet conditions when extrapolate option is enabled."); //<vs_syymmetry>
 
   //-Updates divide information.
-  TmcStop(Timers,TMC_SuInOut);
+  Timersc->TmStop(TMC_SuInOut);
   RunCellDivide(true);
-  TmcStart(Timers,TMC_SuInOut);
+  Timersc->TmStart(TMC_SuInOut);
   if(DBG_INOUT_PARTINIT)DgSaveVtkParticlesCpu("CfgInOut_InletIni.vtk",1,0,Np,Posc,Codec,Idpc,Velrhopc);
 
   //-Updates Velocity data of inout zones according to current timestep.
@@ -134,7 +134,7 @@ void JSphCpuSingle::InOutInit(double timestepini){
   InOutUpdatePartsData(timestepini);
 
   if(DBG_INOUT_PARTINIT)DgSaveVtkParticlesCpu("CfgInOut_InletIni.vtk",2,0,Np,Posc,Codec,Idpc,Velrhopc);
-  TmcStop(Timers,TMC_SuInOut);
+  Timersc->TmStop(TMC_SuInOut);
 }
 
 //==============================================================================
@@ -149,15 +149,15 @@ void JSphCpuSingle::InOutComputeStep(double stepdt){
   InOut->Nstep=Nstep; //-For debug.
   //Log->Printf("%u>--------> [InOutComputeStep_000]",Nstep);
   //DgSaveVtkParticlesCpu("_ComputeStep_XX.vtk",0,0,Np,Posc,Codec,Idpc,Velrhopc);
-  TmcStart(Timers,TMC_SuInOut);
+  Timersc->TmStart(TMC_SuInOut);
   //-Resizes memory when it is necessary. InOutCount is the maximum number of new inlet particles.
   if(!CheckCpuParticlesSize(Np+InOut->GetCurrentNp())){
     if(!InOut->GetNpResizePlus1())Run_Exceptioon("Allocated memory is not enough and resizing is not allowed by XML configuration (check the value inout.memoryresize.size).");
     const unsigned newnp2=InOut->GetCurrentNp()+InOut->GetNpResizePlus1();
-    TmcStop(Timers,TMC_SuInOut);
+    Timersc->TmStop(TMC_SuInOut);
     ResizeParticlesSize(Np+newnp2,0,false);
     CellDivSingle->SetIncreaseNp(newnp2);
-    TmcStart(Timers,TMC_SuInOut);
+    Timersc->TmStart(TMC_SuInOut);
   }
 
   //-Updates Velocity data of inout zones according to current timestep.
@@ -207,9 +207,9 @@ void JSphCpuSingle::InOutComputeStep(double stepdt){
   }
 
   //-Updates divide information.
-  TmcStop(Timers,TMC_SuInOut);
+  Timersc->TmStop(TMC_SuInOut);
   RunCellDivide(true);
-  TmcStart(Timers,TMC_SuInOut);
+  Timersc->TmStart(TMC_SuInOut);
 
   //-Updates inout particle data according inlet configuration.
   InOutUpdatePartsData(newtimestep);
@@ -217,7 +217,7 @@ void JSphCpuSingle::InOutComputeStep(double stepdt){
   //-Saves files per PART.
   if(TimeStep+stepdt>=TimePartNext)InOut->SavePartFiles(Part);
 
-  TmcStop(Timers,TMC_SuInOut);
+  Timersc->TmStop(TMC_SuInOut);
 }
 
 //==============================================================================
@@ -272,7 +272,7 @@ void JSphCpuSingle::InOutExtrapolateData(unsigned inoutcount,const int *inoutpar
 /// Calcula datos extrapolados en el contorno para las particulas inlet/outlet.
 //==============================================================================
 void JSphCpuSingle::BoundCorrectionData(){
-  TmcStart(Timers,TMC_SuBoundCorr);
+  Timersc->TmStart(TMC_SuBoundCorr);
   const unsigned n=BoundCorr->GetCount();
   const float determlimit=BoundCorr->GetDetermLimit();
   const byte doublemode=BoundCorr->GetExtrapolateMode();
@@ -284,7 +284,7 @@ void JSphCpuSingle::BoundCorrectionData(){
     Interaction_BoundCorr(doublemode,boundcode,plane,direction,determlimit
       ,Posc,Codec,Idpc,Velrhopc);
   }
-  TmcStop(Timers,TMC_SuBoundCorr);
+  Timersc->TmStop(TMC_SuBoundCorr);
 }
 
 

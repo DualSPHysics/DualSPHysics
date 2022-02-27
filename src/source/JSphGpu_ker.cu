@@ -39,6 +39,7 @@ __constant__ StCteInteraction CTE;
 namespace cusph{
 #include "FunctionsBasic_iker.h"
 #include "FunctionsMath_iker.h"
+#include "FunctionsGeo3d_iker.h"
 #include "FunSphKernel_iker.h"
 #include "FunSphEos_iker.h"
 #include "JCellSearch_iker.h"
@@ -361,7 +362,7 @@ template<bool periactive> __device__ void KerUpdatePos
     else if(outrhop)rcode=CODE_SetOutRhop(rcode);
     else rcode=CODE_SetOutMove(rcode);
     code[p]=rcode;
-    dcell[p]=PC__CodeMapOut;
+    dcell[p]=DCEL_CodeMapOut;
   }
   else{//-Particle in.
     if(periactive){
@@ -372,7 +373,7 @@ template<bool periactive> __device__ void KerUpdatePos
     const unsigned cx=unsigned(dx/CTE.scell);
     const unsigned cy=unsigned(dy/CTE.scell);
     const unsigned cz=unsigned(dz/CTE.scell);
-    dcell[p]=PC__Cell(CTE.cellcode,cx,cy,cz);
+    dcell[p]=DCEL_Cell(CTE.cellcode,cx,cy,cz);
   }
 }
 
@@ -425,10 +426,10 @@ template<TpKernel tker,TpFtMode ftmode,bool symm>
 {
   for(int p2=pini;p2<pfin;p2++){
     const float4 pscellp2=poscell[p2];
-    float drx=pscellp1.x-pscellp2.x + CTE.poscellsize*(CEL_GetfX(pscellp1.w)-CEL_GetfX(pscellp2.w));
-    float dry=pscellp1.y-pscellp2.y + CTE.poscellsize*(CEL_GetfY(pscellp1.w)-CEL_GetfY(pscellp2.w));
-    float drz=pscellp1.z-pscellp2.z + CTE.poscellsize*(CEL_GetfZ(pscellp1.w)-CEL_GetfZ(pscellp2.w));
-    if(symm)dry=pscellp1.y+pscellp2.y + CTE.poscellsize*CEL_GetfY(pscellp2.w); //<vs_syymmetry>
+    float drx=pscellp1.x-pscellp2.x + CTE.poscellsize*(PSCEL_GetfX(pscellp1.w)-PSCEL_GetfX(pscellp2.w));
+    float dry=pscellp1.y-pscellp2.y + CTE.poscellsize*(PSCEL_GetfY(pscellp1.w)-PSCEL_GetfY(pscellp2.w));
+    float drz=pscellp1.z-pscellp2.z + CTE.poscellsize*(PSCEL_GetfZ(pscellp1.w)-PSCEL_GetfZ(pscellp2.w));
+    if(symm)dry=pscellp1.y+pscellp2.y + CTE.poscellsize*PSCEL_GetfY(pscellp2.w); //<vs_syymmetry>
     const float rr2=drx*drx+dry*dry+drz*drz;
     if(rr2<=CTE.kernelsize2 && rr2>=ALMOSTZERO){
       //-Computes kernel.
@@ -482,7 +483,7 @@ template<TpKernel tker,TpFtMode ftmode,bool symm>
     //-Loads particle p1 data.
     const float4 pscellp1=poscell[p1];
     const float4 velrhop1=velrhop[p1];
-    const bool rsymp1=(symm && CEL_GetPartY(__float_as_uint(pscellp1.w))==0); //<vs_syymmetry>
+    const bool rsymp1=(symm && PSCEL_GetPartY(__float_as_uint(pscellp1.w))==0); //<vs_syymmetry>
     
     //-Obtains neighborhood search limits.
     int ini1,fin1,ini2,fin2,ini3,fin3;
@@ -511,7 +512,7 @@ template<TpKernel tker,TpFtMode ftmode,bool symm>
 template<TpKernel tker,TpFtMode ftmode,bool lamsps,TpDensity tdensity,bool shift,bool symm>
   __device__ void KerInteractionForcesFluidBox(bool boundp2,unsigned p1
   ,const unsigned &pini,const unsigned &pfin,float visco
-  ,const float *ftomassp,const float2 *tauff
+  ,const float *ftomassp,const float2 *tauff,const float3 *dengradcorr
   ,const float4 *poscell,const float4 *velrhop,const typecode *code,const unsigned *idp
   ,float massp2,bool ftp1
   ,const float4 &pscellp1,const float4 &velrhop1,float pressp1
@@ -522,10 +523,10 @@ template<TpKernel tker,TpFtMode ftmode,bool lamsps,TpDensity tdensity,bool shift
 {
   for(int p2=pini;p2<pfin;p2++){
     const float4 pscellp2=poscell[p2];
-    float drx=pscellp1.x-pscellp2.x + CTE.poscellsize*(CEL_GetfX(pscellp1.w)-CEL_GetfX(pscellp2.w));
-    float dry=pscellp1.y-pscellp2.y + CTE.poscellsize*(CEL_GetfY(pscellp1.w)-CEL_GetfY(pscellp2.w));
-    float drz=pscellp1.z-pscellp2.z + CTE.poscellsize*(CEL_GetfZ(pscellp1.w)-CEL_GetfZ(pscellp2.w));
-    if(symm)dry=pscellp1.y+pscellp2.y + CTE.poscellsize*CEL_GetfY(pscellp2.w); //<vs_syymmetry>
+    float drx=pscellp1.x-pscellp2.x + CTE.poscellsize*(PSCEL_GetfX(pscellp1.w)-PSCEL_GetfX(pscellp2.w));
+    float dry=pscellp1.y-pscellp2.y + CTE.poscellsize*(PSCEL_GetfY(pscellp1.w)-PSCEL_GetfY(pscellp2.w));
+    float drz=pscellp1.z-pscellp2.z + CTE.poscellsize*(PSCEL_GetfZ(pscellp1.w)-PSCEL_GetfZ(pscellp2.w));
+    if(symm)dry=pscellp1.y+pscellp2.y + CTE.poscellsize*PSCEL_GetfY(pscellp2.w); //<vs_syymmetry>
     const float rr2=drx*drx+dry*dry+drz*drz;
     if(rr2<=CTE.kernelsize2 && rr2>=ALMOSTZERO){
       //-Computes kernel.
@@ -652,7 +653,7 @@ template<TpKernel tker,TpFtMode ftmode,bool lamsps,TpDensity tdensity,bool shift
 template<TpKernel tker,TpFtMode ftmode,bool lamsps,TpDensity tdensity,bool shift,bool symm>
   __global__ void KerInteractionForcesFluid(unsigned n,unsigned pinit,float viscob,float viscof
   ,int scelldiv,int4 nc,int3 cellzero,const int2 *begincell,unsigned cellfluid,const unsigned *dcell
-  ,const float *ftomassp,const float2 *tauff,float2 *gradvelff
+  ,const float *ftomassp,const float2 *tauff,float2 *gradvelff,const float3 *dengradcorr
   ,const float4 *poscell,const float4 *velrhop,const typecode *code,const unsigned *idp
   ,float *viscdt,float *ar,float3 *ace,float *delta
   ,TpShifting shiftmode,float4 *shiftposfs)
@@ -680,7 +681,7 @@ template<TpKernel tker,TpFtMode ftmode,bool lamsps,TpDensity tdensity,bool shift
     const float4 pscellp1=poscell[p1];
     const float4 velrhop1=velrhop[p1];
     const float pressp1=cufsph::ComputePressCte(velrhop1.w);
-    const bool rsymp1=(symm && CEL_GetPartY(__float_as_uint(pscellp1.w))==0); //<vs_syymmetry>
+    const bool rsymp1=(symm && PSCEL_GetPartY(__float_as_uint(pscellp1.w))==0); //<vs_syymmetry>
 
     //-Variables for Laminar+SPS.
     float2 taup1_xx_xy,taup1_xz_yy,taup1_yz_zz;
@@ -706,8 +707,8 @@ template<TpKernel tker,TpFtMode ftmode,bool lamsps,TpDensity tdensity,bool shift
     for(int c3=ini3;c3<fin3;c3+=nc.w)for(int c2=ini2;c2<fin2;c2+=nc.x){
       unsigned pini,pfin=0;  cunsearch::ParticleRange(c2,c3,ini1,fin1,begincell,pini,pfin);
       if(pfin){
-                          KerInteractionForcesFluidBox<tker,ftmode,lamsps,tdensity,shift,false> (false,p1,pini,pfin,viscof,ftomassp,tauff,poscell,velrhop,code,idp,CTE.massf,ftp1,pscellp1,velrhop1,pressp1,taup1_xx_xy,taup1_xz_yy,taup1_yz_zz,grap1_xx_xy,grap1_xz_yy,grap1_yz_zz,acep1,arp1,visc,deltap1,shiftmode,shiftposfsp1);
-        if(symm && rsymp1)KerInteractionForcesFluidBox<tker,ftmode,lamsps,tdensity,shift,true > (false,p1,pini,pfin,viscof,ftomassp,tauff,poscell,velrhop,code,idp,CTE.massf,ftp1,pscellp1,velrhop1,pressp1,taup1_xx_xy,taup1_xz_yy,taup1_yz_zz,grap1_xx_xy,grap1_xz_yy,grap1_yz_zz,acep1,arp1,visc,deltap1,shiftmode,shiftposfsp1); //<vs_syymmetry>
+                          KerInteractionForcesFluidBox<tker,ftmode,lamsps,tdensity,shift,false> (false,p1,pini,pfin,viscof,ftomassp,tauff,dengradcorr,poscell,velrhop,code,idp,CTE.massf,ftp1,pscellp1,velrhop1,pressp1,taup1_xx_xy,taup1_xz_yy,taup1_yz_zz,grap1_xx_xy,grap1_xz_yy,grap1_yz_zz,acep1,arp1,visc,deltap1,shiftmode,shiftposfsp1);
+        if(symm && rsymp1)KerInteractionForcesFluidBox<tker,ftmode,lamsps,tdensity,shift,true > (false,p1,pini,pfin,viscof,ftomassp,tauff,dengradcorr,poscell,velrhop,code,idp,CTE.massf,ftp1,pscellp1,velrhop1,pressp1,taup1_xx_xy,taup1_xz_yy,taup1_yz_zz,grap1_xx_xy,grap1_xz_yy,grap1_yz_zz,acep1,arp1,visc,deltap1,shiftmode,shiftposfsp1); //<vs_syymmetry>
       }
     }
     //-Interaction with boundaries.
@@ -715,8 +716,8 @@ template<TpKernel tker,TpFtMode ftmode,bool lamsps,TpDensity tdensity,bool shift
     for(int c3=ini3;c3<fin3;c3+=nc.w)for(int c2=ini2;c2<fin2;c2+=nc.x){
       unsigned pini,pfin=0;  cunsearch::ParticleRange(c2,c3,ini1,fin1,begincell,pini,pfin);
       if(pfin){
-                        KerInteractionForcesFluidBox<tker,ftmode,lamsps,tdensity,shift,false> (true ,p1,pini,pfin,viscob,ftomassp,tauff,poscell,velrhop,code,idp,CTE.massb,ftp1,pscellp1,velrhop1,pressp1,taup1_xx_xy,taup1_xz_yy,taup1_yz_zz,grap1_xx_xy,grap1_xz_yy,grap1_yz_zz,acep1,arp1,visc,deltap1,shiftmode,shiftposfsp1);
-      if(symm && rsymp1)KerInteractionForcesFluidBox<tker,ftmode,lamsps,tdensity,shift,true > (true ,p1,pini,pfin,viscob,ftomassp,tauff,poscell,velrhop,code,idp,CTE.massb,ftp1,pscellp1,velrhop1,pressp1,taup1_xx_xy,taup1_xz_yy,taup1_yz_zz,grap1_xx_xy,grap1_xz_yy,grap1_yz_zz,acep1,arp1,visc,deltap1,shiftmode,shiftposfsp1);
+                        KerInteractionForcesFluidBox<tker,ftmode,lamsps,tdensity,shift,false> (true ,p1,pini,pfin,viscob,ftomassp,tauff,NULL,poscell,velrhop,code,idp,CTE.massb,ftp1,pscellp1,velrhop1,pressp1,taup1_xx_xy,taup1_xz_yy,taup1_yz_zz,grap1_xx_xy,grap1_xz_yy,grap1_yz_zz,acep1,arp1,visc,deltap1,shiftmode,shiftposfsp1);
+      if(symm && rsymp1)KerInteractionForcesFluidBox<tker,ftmode,lamsps,tdensity,shift,true > (true ,p1,pini,pfin,viscob,ftomassp,tauff,NULL,poscell,velrhop,code,idp,CTE.massb,ftp1,pscellp1,velrhop1,pressp1,taup1_xx_xy,taup1_xz_yy,taup1_yz_zz,grap1_xx_xy,grap1_xz_yy,grap1_yz_zz,acep1,arp1,visc,deltap1,shiftmode,shiftposfsp1);
       }
     }
 
@@ -752,7 +753,7 @@ template<TpKernel tker,TpFtMode ftmode,bool lamsps,TpDensity tdensity,bool shift
 {
  #if CUDART_VERSION >= 6050
   {
-    typedef void (*fun_ptr)(unsigned,unsigned,float,float,int,int4,int3,const int2*,unsigned,const unsigned*,const float*,const float2*,float2*,const float4*,const float4*,const typecode*,const unsigned*,float*,float*,float3*,float*,TpShifting,float4*);
+    typedef void (*fun_ptr)(unsigned,unsigned,float,float,int,int4,int3,const int2*,unsigned,const unsigned*,const float*,const float2*,float2*,const float3*,const float4*,const float4*,const typecode*,const unsigned*,float*,float*,float3*,float*,TpShifting,float4*);
     fun_ptr ptr=&KerInteractionForcesFluid<tker,ftmode,lamsps,tdensity,shift,symm>;
     int qblocksize=0,mingridsize=0;
     cudaOccupancyMaxPotentialBlockSize(&mingridsize,&qblocksize,(void*)ptr,0,0);
@@ -798,16 +799,17 @@ template<TpKernel tker,TpFtMode ftmode,bool lamsps,TpDensity tdensity,bool shift
   const int2* beginendcell=dvd.beginendcell;
   //-Interaction Fluid-Fluid & Fluid-Bound.
   if(t.fluidnum){
+    //printf("[ns:%u  id:%d] halo:%d fini:%d(%d) bini:%d(%d)\n",t.nstep,t.id,t.halo,t.fluidini,t.fluidnum,t.boundini,t.boundnum);
     dim3 sgridf=GetSimpleGridSize(t.fluidnum,t.bsfluid);
     if(t.symmetry) //<vs_syymmetry_ini>
       KerInteractionForcesFluid<tker,ftmode,lamsps,tdensity,shift,true> <<<sgridf,t.bsfluid,0,t.stm>>> 
       (t.fluidnum,t.fluidini,t.viscob,t.viscof,dvd.scelldiv,dvd.nc,dvd.cellzero,dvd.beginendcell,dvd.cellfluid,t.dcell
-      ,t.ftomassp,(const float2*)t.tau,(float2*)t.gradvel,t.poscell,t.velrhop,t.code,t.idp
+      ,t.ftomassp,(const float2*)t.tau,(float2*)t.gradvel,t.dengradcorr,t.poscell,t.velrhop,t.code,t.idp
       ,t.viscdt,t.ar,t.ace,t.delta,t.shiftmode,t.shiftposfs);
     else //<vs_syymmetry_end>
       KerInteractionForcesFluid<tker,ftmode,lamsps,tdensity,shift,false> <<<sgridf,t.bsfluid,0,t.stm>>> 
       (t.fluidnum,t.fluidini,t.viscob,t.viscof,dvd.scelldiv,dvd.nc,dvd.cellzero,dvd.beginendcell,dvd.cellfluid,t.dcell
-      ,t.ftomassp,(const float2*)t.tau,(float2*)t.gradvel,t.poscell,t.velrhop,t.code,t.idp
+      ,t.ftomassp,(const float2*)t.tau,(float2*)t.gradvel,t.dengradcorr,t.poscell,t.velrhop,t.code,t.idp
       ,t.viscdt,t.ar,t.ace,t.delta,t.shiftmode,t.shiftposfs);
       //KerInteractionForcesFluid<tker,ftmode,lamsps,tdensity,shift,false> <<<sgridf,t.bsfluid,0,t.stm>>> (t.fluidnum,t.fluidini,t.scelldiv,t.nc,t.cellfluid,t.viscob,t.viscof,t.begincell,Int3(t.cellmin),t.dcell,t.ftomassp,(const float2*)t.tau,(float2*)t.gradvel,t.poscell,t.velrhop,t.code,t.idp,t.viscdt,t.ar,t.ace,t.delta,t.shiftmode,t.shiftposfs);
   }
@@ -831,8 +833,8 @@ template<TpKernel tker,TpFtMode ftmode,bool lamsps,TpDensity tdensity,bool shift
 //#define FAST_COMPILATION
 template<TpKernel tker,TpFtMode ftmode,bool lamsps> void Interaction_Forces_gt2(const StInterParmsg &t){
 #ifdef FAST_COMPILATION
-  if(t.shiftmode || t.tdensity!=DDT_DDT2Full)throw "Shifting and extra DDT are disabled for FastCompilation...";
-  Interaction_ForcesGpuT<tker,ftmode,lamsps,DDT_DDT2Full,false> (t);
+  if(t.shiftmode || t.tdensity!=DDT_DDT4)throw "Shifting and extra DDT are disabled for FastCompilation...";
+  Interaction_ForcesGpuT<tker,ftmode,lamsps,DDT_DDT4,false> (t);
 #else
   if(t.shiftmode){               const bool shift=true;
     if(t.tdensity==DDT_None)    Interaction_ForcesGpuT<tker,ftmode,lamsps,DDT_None    ,shift> (t);
@@ -900,7 +902,7 @@ __device__ float4 KerComputePosCell(const double3 &ps,const double3 &mapposmin,f
   const float px=float(dx-(double(poscellsize)*cx));
   const float py=float(dy-(double(poscellsize)*cy));
   const float pz=float(dz-(double(poscellsize)*cz));
-  const float pw=__uint_as_float(CEL_Code(cx,cy,cz));
+  const float pw=__uint_as_float(PSCEL_Code(cx,cy,cz));
   return(make_float4(px,py,pz,pw));
 }
 
@@ -943,9 +945,9 @@ template<TpKernel tker,bool sim2d,TpSlipMode tslip> __global__ void KerInteracti
         unsigned pini,pfin=0;  cunsearch::ParticleRange(c2,c3,ini1,fin1,beginendcellfluid,pini,pfin);
         if(pfin)for(unsigned p2=pini;p2<pfin;p2++){
           const float4 pscellp2=poscell[p2];
-          float drx=gpscellp1.x-pscellp2.x + CTE.poscellsize*(CEL_GetfX(gpscellp1.w)-CEL_GetfX(pscellp2.w));
-          float dry=gpscellp1.y-pscellp2.y + CTE.poscellsize*(CEL_GetfY(gpscellp1.w)-CEL_GetfY(pscellp2.w));
-          float drz=gpscellp1.z-pscellp2.z + CTE.poscellsize*(CEL_GetfZ(gpscellp1.w)-CEL_GetfZ(pscellp2.w));
+          float drx=gpscellp1.x-pscellp2.x + CTE.poscellsize*(PSCEL_GetfX(gpscellp1.w)-PSCEL_GetfX(pscellp2.w));
+          float dry=gpscellp1.y-pscellp2.y + CTE.poscellsize*(PSCEL_GetfY(gpscellp1.w)-PSCEL_GetfY(pscellp2.w));
+          float drz=gpscellp1.z-pscellp2.z + CTE.poscellsize*(PSCEL_GetfZ(gpscellp1.w)-PSCEL_GetfZ(pscellp2.w));
           const float rr2=drx*drx+dry*dry+drz*drz;
           if(rr2<=CTE.kernelsize2 && CODE_IsFluid(code[p2])){//-Only with fluid particles (including inout).
             //-Computes kernel.
@@ -1354,9 +1356,9 @@ __device__ void KerInteractionForcesDemBox
     const typecode codep2=code[p2];
     if(CODE_IsNotFluid(codep2) && tavp1!=CODE_GetTypeAndValue(codep2)){
       const float4 pscellp2=poscell[p2];
-      const float drx=pscellp1.x-pscellp2.x + CTE.poscellsize*(CEL_GetfX(pscellp1.w)-CEL_GetfX(pscellp2.w));
-      const float dry=pscellp1.y-pscellp2.y + CTE.poscellsize*(CEL_GetfY(pscellp1.w)-CEL_GetfY(pscellp2.w));
-      const float drz=pscellp1.z-pscellp2.z + CTE.poscellsize*(CEL_GetfZ(pscellp1.w)-CEL_GetfZ(pscellp2.w));
+      const float drx=pscellp1.x-pscellp2.x + CTE.poscellsize*(PSCEL_GetfX(pscellp1.w)-PSCEL_GetfX(pscellp2.w));
+      const float dry=pscellp1.y-pscellp2.y + CTE.poscellsize*(PSCEL_GetfY(pscellp1.w)-PSCEL_GetfY(pscellp2.w));
+      const float drz=pscellp1.z-pscellp2.z + CTE.poscellsize*(PSCEL_GetfZ(pscellp1.w)-PSCEL_GetfZ(pscellp2.w));
       const float rr2=drx*drx+dry*dry+drz*drz;
       const float rad=sqrt(rr2);
 
@@ -1656,7 +1658,7 @@ template<bool periactive,bool floatings> __global__ void KerComputeStepPos2(unsi
         const double2 rmovxy=movxy[p];
         KerUpdatePos<periactive>(posxypre[p],poszpre[p],rmovxy.x,rmovxy.y,movz[p],outrhop,p,posxy,posz,dcell,code);
       }
-      else{
+      else{ //-Copy position of floating particles.
         posxy[p]=posxypre[p];
         posz[p]=poszpre[p];
       }
@@ -2053,8 +2055,14 @@ template<bool periactive> __global__ void KerFtCalcForcesSum( //ftodatp={pini,np
       fomegaace.x+=rfomegaacex[c]; fomegaace.y+=rfomegaacey[c]; fomegaace.z+=rfomegaacez[c];
     }
     //-Stores results in ftoforcessum[].
-    ftoforcessum[cf*2]=face;
-    ftoforcessum[cf*2+1]=fomegaace;
+    unsigned cf2=cf*2;
+    float3 aux=ftoforcessum[cf2];
+    face.x+=aux.x; face.y+=aux.y; face.z+=aux.z;
+    ftoforcessum[cf2]=face;
+    cf2++;
+    aux=ftoforcessum[cf2];
+    fomegaace.x+=aux.x; fomegaace.y+=aux.y; fomegaace.z+=aux.z;
+    ftoforcessum[cf2]=fomegaace;
   }
 }
 
@@ -2090,13 +2098,13 @@ __device__ void KerLoadMatrix3f(unsigned c,const float4 *data8,const float *data
 }
 
 //------------------------------------------------------------------------------
-/// Adds acceleration from particles and from external forces to ftoforces[].
-/// Anhade aceleracion de particulas y de fuerzas externas en ftoforces[].
+/// Computes final acceleration from particles and from external forces to ftoforces[].
+/// Calcula aceleracion final a parti de particulas y de fuerzas externas en ftoforces[].
 //------------------------------------------------------------------------------
 __global__ void KerFtCalcForces(unsigned ftcount,float3 gravity
   ,const float *ftomass,const float3 *ftoangles
   ,const float4 *ftoinertiaini8,const float *ftoinertiaini1
-  ,const float3 *ftoforcessum,float3 *ftoforces,const float3 *ftoextforces) //fdata={pini,np,radius,mass}
+  ,float3 *ftoforces) //fdata={pini,np,radius,mass}
 {
   const unsigned cf=blockIdx.x*blockDim.x + threadIdx.x; //-Number of floating.
   if(cf<ftcount){
@@ -2108,29 +2116,15 @@ __global__ void KerFtCalcForces(unsigned ftcount,float3 gravity
 
     //-Compute a cumulative rotation matrix.
     const tmatrix3f frot=cumath::RotMatrix3x3(fang);
-    //-Compute the intertia tensor by rotating the initial tensor to the curent orientation I=(R*I_0)*R^T.
+    //-Compute the inertia tensor by rotating the initial tensor to the curent orientation I=(R*I_0)*R^T.
     inert=cumath::MulMatrix3x3(cumath::MulMatrix3x3(frot,inert),cumath::TrasMatrix3x3(frot));
-    //-Calculates the inverse of the intertia matrix to compute the I^-1 * L= W
+    //-Calculates the inverse of the inertia matrix to compute the I^-1 * L= W
     const tmatrix3f invinert=cumath::InverseMatrix3x3(inert);
 
     //-Loads traslational and rotational velocities.
     const unsigned cf2=cf*2;
-    float3 face=ftoforcessum[cf2];
-    float3 fomegaace=ftoforcessum[cf2+1];
-
-    //-Sums the external forces.
-    if(ftoextforces!=NULL){
-      //-Linear force.
-      const float3 rflin=ftoextforces[cf2];
-      face.x=face.x+rflin.x; 
-      face.y=face.y+rflin.y; 
-      face.z=face.z+rflin.z; 
-      //-Angular force.
-      const float3 rfang=ftoextforces[cf2+1];
-      fomegaace.x=fomegaace.x+rfang.x; 
-      fomegaace.y=fomegaace.y+rfang.y; 
-      fomegaace.z=fomegaace.z+rfang.z; 
-    }
+    float3 face=ftoforces[cf2];
+    float3 fomegaace=ftoforces[cf2+1];
 
     //-Calculate omega starting from fomegaace & invinert. | Calcula omega a partir de fomegaace y invinert.
     {
@@ -2144,30 +2138,25 @@ __global__ void KerFtCalcForces(unsigned ftcount,float3 gravity
     face.x=(face.x + fmass*gravity.x) / fmass;
     face.y=(face.y + fmass*gravity.y) / fmass;
     face.z=(face.z + fmass*gravity.z) / fmass;
-    //-Stores results in ftoforces[].
-    const float3 rface=ftoforces[cf2];
-    const float3 rfome=ftoforces[cf2+1];
-    face.x+=rface.x;      face.y+=rface.y;      face.z+=rface.z;
-    fomegaace.x+=rfome.x; fomegaace.y+=rfome.y; fomegaace.z+=rfome.z;
     //-Stores final results.
-    ftoforces[cf2]  =face;
+    ftoforces[cf2]  =face; //-Saves acceleration (forces/fmass);
     ftoforces[cf2+1]=fomegaace;
   }
 }
 
 //==============================================================================
-/// Adds acceleration from particles and from external forces to ftoforces[].
-/// Anhade aceleracion de particulas y de fuerzas externas en ftoforces[].
+/// Computes final acceleration from particles and from external forces to ftoforces[].
+/// Calcula aceleracion final a parti de particulas y de fuerzas externas en ftoforces[].
 //==============================================================================
 void FtCalcForces(unsigned ftcount,tfloat3 gravity
   ,const float *ftomass,const float3 *ftoangles
   ,const float4 *ftoinertiaini8,const float *ftoinertiaini1
-  ,const float3 *ftoforcessum,float3 *ftoforces,const float3 *ftoextforces)
+  ,float3 *ftoforces)
 {
   if(ftcount){
     dim3 sgrid=GetSimpleGridSize(ftcount,SPHBSIZE);
     KerFtCalcForces <<<sgrid,SPHBSIZE>>> (ftcount,Float3(gravity),ftomass
-      ,ftoangles,ftoinertiaini8,ftoinertiaini1,ftoforcessum,ftoforces,ftoextforces);
+      ,ftoangles,ftoinertiaini8,ftoinertiaini1,ftoforces);
   }
 }
 
@@ -2558,7 +2547,7 @@ __device__ void KerPeriodicDuplicatePos(unsigned pnew,unsigned pcopy
   //-Graba posicion y celda de nuevas particulas.
   posxy[pnew]=rxy;
   posz[pnew]=rz;
-  dcell[pnew]=PC__Cell(CTE.cellcode,cx,cy,cz);
+  dcell[pnew]=DCEL_Cell(CTE.cellcode,cx,cy,cz);
 }
 
 //------------------------------------------------------------------------------
@@ -2691,7 +2680,6 @@ void PeriodicDuplicateNormals(unsigned n,unsigned pini,const unsigned *listp,flo
   }
 }
 
-
 //##############################################################################
 //# Kernels for Damping.
 //##############################################################################
@@ -2704,6 +2692,14 @@ __device__ bool KerIsNormalFluid(const typecode *code,unsigned p){
     return(CODE_IsNormal(cod) && CODE_IsFluid(cod));
   }
   return(true);
+}
+//------------------------------------------------------------------------------
+/// Checks position is inside box limits.
+/// Comprueba si la posicion esta dentro de los limites.
+//------------------------------------------------------------------------------
+__device__ bool KerPointInBox(double px,double py,double pz,const double3 &p1,const double3 &p2)
+{
+  return(p1.x<=px && p1.y<=py && p1.z<=pz && px<=p2.x && py<=p2.y && pz<=p2.z);
 }
 //------------------------------------------------------------------------------
 /// Solves point on the plane.
@@ -2726,7 +2722,7 @@ __device__ double KerPointPlane(const double4 &pla,const double3 &pt)
 /// Applies Damping.
 /// Aplica Damping.
 //------------------------------------------------------------------------------
-__global__ void KerComputeDamping(unsigned n,unsigned pini
+__global__ void KerComputeDampingPlane(unsigned n,unsigned pini
   ,double dt,double4 plane,float dist,float over,float3 factorxyz,float redumax
   ,const double2 *posxy,const double *posz,const typecode *code
   ,float4 *velrhop)
@@ -2751,7 +2747,7 @@ __global__ void KerComputeDamping(unsigned n,unsigned pini
         float4 rvel=velrhop[p1];
         rvel.x=float(redudtx*rvel.x); 
         rvel.y=float(redudty*rvel.y); 
-        rvel.z=float(redudtz*rvel.z); 
+        rvel.z=float(redudtz*rvel.z);
         velrhop[p1]=rvel;
       }
     }
@@ -2761,14 +2757,14 @@ __global__ void KerComputeDamping(unsigned n,unsigned pini
 /// Applies Damping.
 /// Aplica Damping.
 //==============================================================================
-void ComputeDamping(double dt,tdouble4 plane,float dist,float over,tfloat3 factorxyz,float redumax
-  ,unsigned n,unsigned pini,const double2 *posxy,const double *posz,const typecode *code
-  ,float4 *velrhop)
+void ComputeDampingPlane(double dt,double4 plane,float dist,float over
+  ,float3 factorxyz,float redumax,unsigned n,unsigned pini
+  ,const double2 *posxy,const double *posz,const typecode *code,float4 *velrhop)
 {
   if(n){
     dim3 sgridf=GetSimpleGridSize(n,SPHBSIZE);
-    KerComputeDamping <<<sgridf,SPHBSIZE>>> (n,pini,dt,Double4(plane),dist,over,Float3(factorxyz),redumax
-      ,posxy,posz,code,velrhop);
+    KerComputeDampingPlane <<<sgridf,SPHBSIZE>>> (n,pini,dt,plane,dist,over
+      ,factorxyz,redumax,posxy,posz,code,velrhop);
   }
 }
 
@@ -2776,7 +2772,7 @@ void ComputeDamping(double dt,tdouble4 plane,float dist,float over,tfloat3 facto
 /// Applies Damping to limited domain.
 /// Aplica Damping limitado a un dominio.
 //------------------------------------------------------------------------------
-__global__ void KerComputeDampingPla(unsigned n,unsigned pini
+__global__ void KerComputeDampingPlaneDom(unsigned n,unsigned pini
   ,double dt,double4 plane,float dist,float over,float3 factorxyz,float redumax
   ,double zmin,double zmax,double4 pla0,double4 pla1,double4 pla2,double4 pla3
   ,const double2 *posxy,const double *posz,const typecode *code
@@ -2815,15 +2811,143 @@ __global__ void KerComputeDampingPla(unsigned n,unsigned pini
 /// Applies Damping to limited domain.
 /// Aplica Damping limitado a un dominio.
 //==============================================================================
-void ComputeDampingPla(double dt,tdouble4 plane,float dist,float over,tfloat3 factorxyz,float redumax
-  ,double zmin,double zmax,tdouble4 pla0,tdouble4 pla1,tdouble4 pla2,tdouble4 pla3
+void ComputeDampingPlaneDom(double dt,double4 plane,float dist,float over
+  ,float3 factorxyz,float redumax
+  ,double zmin,double zmax,double4 pla0,double4 pla1,double4 pla2,double4 pla3
   ,unsigned n,unsigned pini,const double2 *posxy,const double *posz,const typecode *code
   ,float4 *velrhop)
 {
   if(n){
     dim3 sgridf=GetSimpleGridSize(n,SPHBSIZE);
-    KerComputeDampingPla <<<sgridf,SPHBSIZE>>> (n,pini,dt,Double4(plane),dist,over,Float3(factorxyz),redumax
-      ,zmin,zmax,Double4(pla0),Double4(pla1),Double4(pla2),Double4(pla3)
+    KerComputeDampingPlaneDom <<<sgridf,SPHBSIZE>>> (n,pini,dt,plane,dist,over,factorxyz
+      ,redumax,zmin,zmax,pla0,pla1,pla2,pla3,posxy,posz,code,velrhop);
+  }
+}
+
+
+//------------------------------------------------------------------------------
+/// Applies Damping according box configuration.
+/// Aplica Damping segun cofiguracion de caja.
+//------------------------------------------------------------------------------
+__global__ void KerComputeDampingBox(unsigned n,unsigned pini
+  ,double dt,float3 factorxyz,float redumax
+  ,double3 limitmin1,double3 limitmin2,double3 limitmax1,double3 limitmax2
+  ,double3 limitover1,double3 limitover2,double3 boxsize1,double3 boxsize2
+  ,const double2 *posxy,const double *posz,const typecode *code
+  ,float4 *velrhop)
+{
+  unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
+  if(p<n){
+    const unsigned p1=p+pini;
+    const bool ok=KerIsNormalFluid(code,p1);//-Ignore floating and periodic particles. | Descarta particulas floating o periodicas.
+    if(ok){
+      const double2 rposxy=posxy[p1];
+      const double rposz=posz[p1];
+      //-Check if it is within the domain. | Comprueba si esta dentro del dominio.
+      if(KerPointInBox(rposxy.x,rposxy.y,rposz,limitover1,limitover2)){//-Inside overlimit domain.
+        if(!KerPointInBox(rposxy.x,rposxy.y,rposz,limitmin1,limitmin2)){//-Outside free domain.
+          double fdis=1.;
+          if(KerPointInBox(rposxy.x,rposxy.y,rposz,limitmax1,limitmax2)){//-Compute damping coefficient.
+            fdis=0;
+            if(boxsize2.z){ const double fdiss=(rposz   -limitmin2.z)/boxsize2.z; fdis=(fdis>=fdiss? fdis: fdiss); }
+            if(boxsize2.y){ const double fdiss=(rposxy.y-limitmin2.y)/boxsize2.y; fdis=(fdis>=fdiss? fdis: fdiss); }
+            if(boxsize2.x){ const double fdiss=(rposxy.x-limitmin2.x)/boxsize2.x; fdis=(fdis>=fdiss? fdis: fdiss); }
+            if(boxsize1.z){ const double fdiss=(limitmin1.z-rposz   )/boxsize1.z; fdis=(fdis>=fdiss? fdis: fdiss); }
+            if(boxsize1.y){ const double fdiss=(limitmin1.y-rposxy.y)/boxsize1.y; fdis=(fdis>=fdiss? fdis: fdiss); }
+            if(boxsize1.x){ const double fdiss=(limitmin1.x-rposxy.x)/boxsize1.x; fdis=(fdis>=fdiss? fdis: fdiss); }
+          }
+          const double redudt=dt*(fdis*fdis)*redumax;
+          double redudtx=(1.-redudt*factorxyz.x);
+          double redudty=(1.-redudt*factorxyz.y);
+          double redudtz=(1.-redudt*factorxyz.z);
+          redudtx=(redudtx<0? 0.: redudtx);
+          redudty=(redudty<0? 0.: redudty);
+          redudtz=(redudtz<0? 0.: redudtz);
+          float4 rvel=velrhop[p1];
+          rvel.x=float(redudtx*rvel.x); 
+          rvel.y=float(redudty*rvel.y); 
+          rvel.z=float(redudtz*rvel.z);
+          //rvel.x=rvel.y=rvel.z=0;
+          velrhop[p1]=rvel;
+        }
+      }
+    }
+  }
+}
+//==============================================================================
+/// Applies Damping according box configuration.
+/// Aplica Damping segun cofiguracion de caja.
+//==============================================================================
+void ComputeDampingBox(unsigned n,unsigned pini,double dt,float3 factorxyz,float redumax
+  ,double3 limitmin1,double3 limitmin2,double3 limitmax1,double3 limitmax2
+  ,double3 limitover1,double3 limitover2,double3 boxsize1,double3 boxsize2
+  ,const double2 *posxy,const double *posz,const typecode *code,float4 *velrhop)
+{
+  if(n){
+    dim3 sgridf=GetSimpleGridSize(n,SPHBSIZE);
+    KerComputeDampingBox <<<sgridf,SPHBSIZE>>> (n,pini,dt,factorxyz,redumax
+      ,limitmin1,limitmin2,limitmax1,limitmax2,limitover1,limitover2,boxsize1,boxsize2
+      ,posxy,posz,code,velrhop);
+  }
+}
+
+
+//------------------------------------------------------------------------------
+/// Applies Damping to limited cylinder domain.
+/// Aplica Damping limitado a un dominio de cilindro.
+//------------------------------------------------------------------------------
+__global__ void KerComputeDampingCylinder(unsigned n,unsigned pini
+  ,double dt,bool isvertical,double3 point1,double3 point2,double limitmin
+  ,float dist,float over,float3 factorxyz,float redumax
+  ,const double2 *posxy,const double *posz,const typecode *code
+  ,float4 *velrhop)
+{
+  unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
+  if(p<n){
+    const unsigned p1=p+pini;
+    const bool ok=KerIsNormalFluid(code,p1);//-Ignore floating and periodic particles. | Descarta particulas floating o periodicas.
+    if(ok){
+      //-Check if it is within the domain. | Comprueba si esta dentro del dominio.
+      const double2 rposxy=posxy[p1];
+      const double rposz=posz[p1];
+      const double3 ps=make_double3(rposxy.x,rposxy.y,rposz);
+      const double vdis=(isvertical? 
+        sqrt((ps.x-point1.x)*(ps.x-point1.x)+(ps.y-point1.y)*(ps.y-point1.y)): 
+        cugeo::LinePointDist(ps,point1,point2)
+        ) - limitmin;
+      if(0<vdis && vdis<=dist+over){
+        const double fdis=(vdis>=dist? 1.: vdis/dist);
+        const double redudt=dt*(fdis*fdis)*redumax;
+        double redudtx=(1.-redudt*factorxyz.x);
+        double redudty=(1.-redudt*factorxyz.y);
+        double redudtz=(1.-redudt*factorxyz.z);
+        redudtx=(redudtx<0? 0.: redudtx);
+        redudty=(redudty<0? 0.: redudty);
+        redudtz=(redudtz<0? 0.: redudtz);
+        float4 rvel=velrhop[p1];
+        rvel.x=float(redudtx*rvel.x); 
+        rvel.y=float(redudty*rvel.y); 
+        rvel.z=float(redudtz*rvel.z); 
+        velrhop[p1]=rvel;
+      }
+    }
+  }
+}
+//==============================================================================
+/// Applies Damping to limited cylinder domain.
+/// Aplica Damping limitado a un dominio de cilindro.
+//==============================================================================
+void ComputeDampingCylinder(unsigned n,unsigned pini
+  ,double dt,double3 point1,double3 point2,double limitmin
+  ,float dist,float over,float3 factorxyz,float redumax
+  ,const double2 *posxy,const double *posz,const typecode *code
+  ,float4 *velrhop)
+{
+  if(n){
+    const bool isvertical=(point1.x==point2.x && point1.y==point2.y);
+    dim3 sgridf=GetSimpleGridSize(n,SPHBSIZE);
+    KerComputeDampingCylinder <<<sgridf,SPHBSIZE>>> (n,pini,dt
+      ,isvertical,point1,point2,limitmin,dist,over,factorxyz,redumax
       ,posxy,posz,code,velrhop);
   }
 }

@@ -179,7 +179,6 @@ void JReadDatafile::ProcessLines(){
   //printf("++> LineCount:%u(%u)  Size:%u -> %u\n",LineCount,RemLineCount,SizeFile,Size);
 }
 
-
 //==============================================================================
 /// Removes character.
 //==============================================================================
@@ -199,6 +198,15 @@ void JReadDatafile::RemoveChar(char let){
   SetReadLine(0);
 }
 
+//==============================================================================
+/// Replaces several spaces and tabulations by a tabulation.
+//==============================================================================
+void JReadDatafile::ReplaceSpaces(){
+  ProcessSpaces();
+  //-Prepares to first use.
+  ProcessLines();
+  SetReadLine(0);
+}
 
 //==============================================================================
 /// Restarts reading position.

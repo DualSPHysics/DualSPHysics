@@ -28,7 +28,6 @@
 #define _JSphGpu_ker_
 
 #include "DualSphDef.h"
-#include "JSphTimersGpu.h"
 #include "JCellDivDataGpu.h"
 #include <cuda_runtime_api.h>
 
@@ -106,6 +105,7 @@ typedef struct StrInterParmsg{
   unsigned boundnum;
   unsigned fluidnum;         
   unsigned id;
+  unsigned nstep;
   StDivDataGpu divdatag;
   //-Input data arrays.
   const unsigned *dcell;
@@ -117,6 +117,7 @@ typedef struct StrInterParmsg{
   const typecode *code;
   const float *ftomassp;
   const tsymatrix3f *tau;
+  const float3 *dengradcorr;
   //-Output data arrays.
   float *viscdt;
   float* ar;
@@ -137,11 +138,12 @@ typedef struct StrInterParmsg{
     ,float viscob_,float viscof_
     ,unsigned bsbound_,unsigned bsfluid_
     ,unsigned np_,unsigned npb_,unsigned npbok_
-    ,unsigned id_
+    ,unsigned id_,unsigned nstep_
     ,const StDivDataGpu &divdatag_,const unsigned *dcell_
     ,const double2 *posxy_,const double *posz_,const float4 *poscell_
     ,const float4 *velrhop_,const unsigned *idp_,const typecode *code_
     ,const float *ftomassp_,const tsymatrix3f *spstau_
+    ,const float3 *dengradcorr_
     ,float *viscdt_,float* ar_,float3 *ace_,float *delta_
     ,tsymatrix3f *spsgradvel_
     ,float4 *shiftposfs_
@@ -159,13 +161,14 @@ typedef struct StrInterParmsg{
     vnp=np_; vnpb=npb_; vnpbok=npbok_;
     boundini=0;   boundnum=vnpbok;
     fluidini=vnpb; fluidnum=vnp-vnpb;
-    id=id_; 
+    id=id_; nstep=nstep_; 
     divdatag=divdatag_;
     //-Input data arrays.
     dcell=dcell_;
     posxy=posxy_; posz=posz_; poscell=poscell_;
     velrhop=velrhop_; idp=idp_; code=code_;
     ftomassp=ftomassp_; tau=spstau_;
+    dengradcorr=dengradcorr_;
     //-Output data arrays.
     viscdt=viscdt_; ar=ar_; ace=ace_; delta=delta_;
     gradvel=spsgradvel_;
@@ -247,7 +250,7 @@ void FtCalcForcesSum(bool periactive,unsigned ftcount
 void FtCalcForces(unsigned ftcount,tfloat3 gravity
   ,const float *ftomass,const float3 *ftoangles
   ,const float4 *ftoinertiaini8,const float *ftoinertiaini1
-  ,const float3 *ftoforcessum,float3 *ftoforces,const float3 *ftoextforces);
+  ,float3 *ftoforces);
 void FtCalcForcesRes(unsigned ftcount,bool simulate2d,double dt
   ,const float3 *ftovelace,const double3 *ftocenter,const float3 *ftoforces
   ,float3 *ftoforcesres,double3 *ftocenterres);
@@ -272,12 +275,21 @@ void PeriodicDuplicateSymplectic(unsigned n,unsigned pini
 void PeriodicDuplicateNormals(unsigned n,unsigned pini,const unsigned *listp,float3 *normals,float3 *motionvel);
 
 //-Kernels for Damping.
-void ComputeDamping(double dt,tdouble4 plane,float dist,float over,tfloat3 factorxyz,float redumax
+void ComputeDampingPlane(double dt,double4 plane,float dist,float over
+  ,float3 factorxyz,float redumax,unsigned n,unsigned pini
+  ,const double2 *posxy,const double *posz,const typecode *code,float4 *velrhop);
+void ComputeDampingPlaneDom(double dt,double4 plane,float dist,float over,float3 factorxyz
+  ,float redumax,double zmin,double zmax,double4 pla0,double4 pla1,double4 pla2,double4 pla3
   ,unsigned n,unsigned pini,const double2 *posxy,const double *posz,const typecode *code
   ,float4 *velrhop);
-void ComputeDampingPla(double dt,tdouble4 plane,float dist,float over,tfloat3 factorxyz,float redumax
-  ,double zmin,double zmax,tdouble4 pla0,tdouble4 pla1,tdouble4 pla2,tdouble4 pla3
-  ,unsigned n,unsigned pini,const double2 *posxy,const double *posz,const typecode *code
+void ComputeDampingBox(unsigned n,unsigned pini,double dt,float3 factorxyz,float redumax
+  ,double3 limitmin1,double3 limitmin2,double3 limitmax1,double3 limitmax2
+  ,double3 limitover1,double3 limitover2,double3 boxsize1,double3 boxsize2
+  ,const double2 *posxy,const double *posz,const typecode *code,float4 *velrhop);
+void ComputeDampingCylinder(unsigned n,unsigned pini
+  ,double dt,double3 point1,double3 point2,double limitmin
+  ,float dist,float over,float3 factorxyz,float redumax
+  ,const double2 *posxy,const double *posz,const typecode *code
   ,float4 *velrhop);
 
 }

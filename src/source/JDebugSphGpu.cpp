@@ -95,7 +95,7 @@ tuint3* JDebugSphGpu::GetCell3(unsigned n,const unsigned *dcell,unsigned cellcod
   tuint3 *cell3=JDataArrays::NewArrayUint3(n,false);
   for(unsigned c=0;c<n;c++){
     const unsigned dcel=dcell[c];
-    cell3[c]=TUint3(unsigned(PC__Cellx(cellcode,dcel)),unsigned(PC__Celly(cellcode,dcel)),unsigned(PC__Cellz(cellcode,dcel)));
+    cell3[c]=TUint3(unsigned(DCEL_Cellx(cellcode,dcel)),unsigned(DCEL_Celly(cellcode,dcel)),unsigned(DCEL_Cellz(cellcode,dcel)));
   }
   return(cell3);
 }
@@ -147,7 +147,7 @@ tuint3* JDebugSphGpu::GetPosCell_Cell(unsigned n,const tfloat4 *poscell){
   tuint3 *cell=JDataArrays::NewArrayUint3(n,false);
   for(unsigned c=0;c<n;c++){
     const unsigned cellu=poscellu[c].w;
-    cell[c]=TUint3(CEL_GetX(cellu),CEL_GetY(cellu),CEL_GetZ(cellu));
+    cell[c]=TUint3(PSCEL_GetX(cellu),PSCEL_GetY(cellu),PSCEL_GetZ(cellu));
   }
   return(cell);
 }

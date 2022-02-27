@@ -49,6 +49,14 @@
 //:#   objetos JChBodyFEA (13-10-2020).
 //:# - Variable ImposedFric para indicar que se usara el valor de Kfric
 //:#   de un objeto en la colision entre dos objetos (30-10-2020).
+//:# - Enumerado TpCollisionFEA en objetos JChronoFEA para indicar el modo
+//:#   de colision en objetos deformables (06-11-2020).
+//:# - Nueva clase para administrar links tipo JChLinkPointFrame 
+//:#   para conectar FEA nodos a objetos rigidos (09-11-2020).
+//:# - Funcion ResetForces() para restablecer a 0 las fuerzas del array de los
+//:#   objetos FEA (06-12-2020).
+//:# - Se incorpora un vector de coeficientes de fuerzas para escalar las fuerzas
+//:#   para cada objeto (10-03-2021).
 //:#############################################################################
 
 /// \file JChronoData.h \brief Declares the class \ref JChronoData.
@@ -64,6 +72,7 @@
 #include <vector>
 #include <cstdlib>
 #include <cmath>
+#include <climits>
 
 class JChBody;
 class JChLink;
@@ -205,14 +214,16 @@ protected:
   tfloat3 AngularVelini;
   std::string ModelFile;
   TpModelNormal ModelNormal;
+  tfloat3 ScaleForce; ///<Scale the forces of each object in all directions.
 
   //-Parameters for collisions.
-  bool ImposeFric; ///< Indicates that its Kfric value will be used in collisions between two bodies.
-  float Kfric;
-  float Restitu;
+  bool ImposeFric; ///< Indicates that its Sfric and Kfric coefficients will be used in collisions between two bodies.
+  float Kfric; ///< Kinetic friction coefficient
+  float Sfric; ///< Static friction coefficient
+  float Restitu; ///< Restitution coefficient
   //-Extra parameters for collisions using Smooth Contacts.
-  float Young;
-  float Poisson;
+  float Young; ///< Young modulus
+  float Poisson; ///< Poisson ratio
 
   void CopyFrom(const JChBody &src);
 
@@ -246,6 +257,7 @@ public:
   float         GetYoung()       const{ return(Young);       }
   float         GetPoisson()     const{ return(Poisson);     }
   float         GetKfric()       const{ return(Kfric);       }
+  float         GetSfric()       const{ return(Sfric);       }
   float         GetRestitu()     const{ return(Restitu);     }
   bool          GetUseFEA()      const{ return(UseFEA);      } 
 
@@ -254,7 +266,12 @@ public:
 
   void SetModel(const std::string &file,TpModelNormal normal){ ModelFile=file; ModelNormal=normal; }
   void SetUseFEA(const bool u){ UseFEA=u; } 
-  void SetCollisionData(float kfric,float restitu,float young,float poisson);
+  void SetCollisionData(float kfric,float sfric,float restitu,float young,float poisson);
+  
+  void SetVelIni(tfloat3 linvelini,tfloat3 angvelini);
+  
+  void    SetScaleForce(tfloat3 s){        ScaleForce=s;}
+  tfloat3 GetScaleForce()    const{ return(ScaleForce); }
 };
 
 //##############################################################################
@@ -349,7 +366,7 @@ class JChLink : public JChObject
 {
 public:
   ///<Types of link.
-  typedef enum{ LK_Hinge,LK_Spheric,LK_PointLine,LK_LinearSpring,LK_CoulombDamping,LK_Pulley }TpLink;
+  typedef enum{ LK_Hinge,LK_Spheric,LK_PointLine,LK_LinearSpring,LK_CoulombDamping,LK_Pulley,LK_PointFrame }TpLink;
   
   /// Structure with parameters to create VTK of spring.
   typedef struct StrSaveSpring{
@@ -554,24 +571,30 @@ public:
 class JChronoData : protected JChBase
 {
 public:
-  typedef enum{ NSC,SMC }               TpContactMethod; //<chrono_contacts>
-  typedef enum{ BB=0,APGD=1,APGDREF=2 } DSolverType;     //Allowed Solvers
+  typedef enum{ NSC,SMC }                TpContactMethod;
+  typedef enum{ BB=0,MINRES=1,PARDISO=2 }TpSolverType;     //Allowed Solvers
+  typedef enum{ EULER_IL=0,HHT=1}        TpTStepperType;   //Allowed timesteppers
 
 private:
   std::string Mode;         ///<Chrono execution mode
-  //unsigned MaxIter;         ///<Indicates the maximun number of iterations for the solver
   std::string DataDir;
   bool UseNSCChrono;
   std::vector<JChBody*> LisBody;
   std::vector<JChLink*> LisLink;
+
+
   double Dp;
   float CollisionDp;
   unsigned Solver;
+  unsigned TimeStepper;
+  double Alpha;
   int OmpThreads;
-  bool UseFEA;                  //<vs_chronoo_fea>
   TpContactMethod ContactMethod;
   bool UseVariableCoeff;
   bool UseCollision;
+  bool UseGravity;
+  tfloat3 Gravity;
+  double FtPause;
 
 public:
   JChronoData();
@@ -600,25 +623,35 @@ public:
   void SetSolver(unsigned s){ Solver=s; }
   unsigned GetSolver()const{ return(Solver); }
 
+  void SetTimeStepper(unsigned t,double a=0){ TimeStepper=t; Alpha=a; }
+  unsigned GetTimeStepper()const{ return(TimeStepper); }
+  
+  double GetAlpha()const{ return(Alpha); }
+
   void SetOmpThreads(unsigned th){ OmpThreads=th; }
   int GetOmpThreads()const{ return(OmpThreads); }
 
   void SetMode(std::string m){ Mode=m; }
   std::string GetMode()const{ return(Mode); }
 
-  //void SetMaxIter(unsigned i){ MaxIter=i; }
-  //unsigned GetMaxIter()const{ return(MaxIter); }
+  void SetGravity(const tfloat3 g){ Gravity=g; UseGravity=true;}
+  tfloat3 GetGravity()const { return (Gravity);}
 
-  void SetUseFEA(bool e){ UseFEA=e; }          //<vs_chronoo_fea>
-  bool GetUseFEA()const{ return(UseFEA); }     //<vs_chronoo_fea>
+  void SetFtPause(const double f){ FtPause=f;}
+  double GetFtPause()const { return (FtPause);}
+
+  bool GetUseGravity()const{ return(UseGravity); }
 
   void SetContactMethod(TpContactMethod c){ ContactMethod=c; }
   TpContactMethod GetContactMethod()const{ return(ContactMethod); }
 
   std::string SolverToStr()const;
+  std::string TimeStepperToStr()const;
   std::string ContactMethodToStr()const;
 
   std::string CheckAddBodyError(unsigned idb,std::string idname,word mkbound)const;
+ 
+  std::string CheckAddNodeError(const unsigned ref)const;
 
   JChBodyFloating* AddBodyFloating(unsigned idb,std::string idname,word mkbound,std::string fileinfo="");
   JChBodyMoving*   AddBodyMoving  (unsigned idb,std::string idname,word mkbound,double mass,std::string fileinfo="");
@@ -653,6 +686,7 @@ public:
 
   bool GetUseVariableCoeff()const{return(UseVariableCoeff);}
   void SetUseVariableCoeff(bool v){UseVariableCoeff=v;}
-};
 
+
+};
 #endif

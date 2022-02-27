@@ -24,6 +24,8 @@
 #include "JCellDivGpu.h"
 #include "JCellDivDataGpu.h"
 
+class JDsTimersGpu;
+
 //##############################################################################
 //# JCellDivGpuSingle
 //##############################################################################
@@ -45,7 +47,10 @@ public:
     ,tdouble3 mapposmin,tdouble3 mapposmax,tuint3 mapcells
     ,unsigned casenbound,unsigned casenfixed,unsigned casenpb,std::string dirout);
 
-  void Divide(unsigned npb1,unsigned npf1,unsigned npb2,unsigned npf2,bool boundchanged,const unsigned *dcellg,const typecode *codeg,TimersGpu timers,const double2 *posxy,const double *posz,const unsigned *idp);
+  void Divide(unsigned npb1,unsigned npf1,unsigned npb2,unsigned npf2
+    ,bool boundchanged,const unsigned *dcellg,const typecode *codeg
+    ,const double2 *posxy,const double *posz,const unsigned *idp
+    ,JDsTimersGpu *timersg);
 
   StDivDataGpu GetCellDivData()const;
 

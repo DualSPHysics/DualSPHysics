@@ -23,7 +23,7 @@
 
 #include "DualSphDef.h"
 #include "JObjectGpu.h"
-#include "JSphTimersGpu.h"
+#include "JDsTimersGpu.h"
 #include "JLog2.h"
 #include <cmath>
 #include <cstring>

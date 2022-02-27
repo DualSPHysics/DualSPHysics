@@ -26,9 +26,11 @@
 #include "JRangeFilter.h"
 #include "JAppInfo.h"
 #include "JXml.h"
+#include "JVtkLib.h"
 
 #include <climits>
 #include <cfloat>
+#include <algorithm>
 
 using namespace std;
 
@@ -287,13 +289,14 @@ void JDsInitializeOp_BoundNormalPlane::Reset(){
   LimitDist=0; 
   Point=Normal=TFloat3(0); 
   MaxDisteH=0;
+  InitClear=true;
 }
 
 //==============================================================================
-/// Reads particles information in xml format.
+/// Reads configuration from XML.
 //==============================================================================
 void JDsInitializeOp_BoundNormalPlane::ReadXml(const JXml *sxml,TiXmlElement* xele){
-  sxml->CheckElementNames(xele,true,"onlypos point limitdist normal maxdisth");
+  sxml->CheckElementNames(xele,true,"onlypos point limitdist normal maxdisth clear");
   ReadXmlOnlyPos(sxml,xele);
   MkBound=sxml->GetAttributeStr(xele,"mkbound",true);
   PointAuto=sxml->ReadElementBool(xele,"point","auto",true,false);
@@ -301,6 +304,56 @@ void JDsInitializeOp_BoundNormalPlane::ReadXml(const JXml *sxml,TiXmlElement* xe
   LimitDist=sxml->ReadElementFloat(xele,"limitdist","vdp",true,0.5f);
   Normal=sxml->ReadElementFloat3(xele,"normal");
   MaxDisteH=sxml->ReadElementFloat(xele,"maxdisth","v",true,2.f);
+  InitClear=sxml->ReadElementBool(xele,"clear","v",true,true);
+}
+
+//==============================================================================
+/// Reads configuration from execution parameter.
+//==============================================================================
+void JDsInitializeOp_BoundNormalPlane::ReadKeyvals(const std::string &eparm){
+  //-Initial values.
+  OnlyPos=false;
+  OnlyPosMin=OnlyPosMax=TDouble3(0);
+  PointAuto=true;
+  LimitDist=0.5f;
+  MaxDisteH=2.f;
+  //-Loads configuration from eparm.
+  const string keyvals=fun::StrRemoveBefore(eparm,":");
+  //printf("==> eparm=[%s]_[%s]\n",eparm.c_str(),keyvals.c_str());
+  vector<string> vkv;
+  const unsigned nv=fun::Split2pVector(keyvals,vkv);
+  for(unsigned c=0;c<nv;c++){
+    const string key=fun::StrLower(fun::StrRemoveAfter(vkv[c],"="));
+    const string val=fun::StrLower(fun::StrRemoveBefore(vkv[c],"="));
+    if(key=="mkbound")MkBound=val;
+    else if(key=="point"){
+      if(fun::StrLower(val)=="auto")PointAuto=true;
+      else{
+        if(fun::Split2pDouble3Error(val))Run_Exceptioon(fun::PrintStr("Point definition is invalid in execution parameter \'%s\'.",eparm.c_str()));
+        Point=ToTFloat3(fun::Split2pDouble3(val));
+        PointAuto=false;
+      }
+    }
+    else if(key=="limitdist")LimitDist=fun::StrToFloat(val);
+    else if(key=="normal"){
+      if(fun::Split2pDouble3Error(val))Run_Exceptioon(fun::PrintStr("Normal definition is invalid in execution parameter \'%s\'.",eparm.c_str()));
+      Normal=ToTFloat3(fun::Split2pDouble3(val));
+    }
+    else if(key=="maxdisth")MaxDisteH=fun::StrToFloat(val);
+    else if(key=="posmax"){
+      if(fun::Split2pDouble3Error(val))Run_Exceptioon(fun::PrintStr("OnlyPosMax definition is invalid in execution parameter \'%s\'.",eparm.c_str()));
+      OnlyPosMax=fun::Split2pDouble3(val);
+      if(!OnlyPos)OnlyPosMin=TDouble3(-DBL_MAX);
+      OnlyPos=true;
+    }
+    else if(key=="posmin"){
+      if(fun::Split2pDouble3Error(val))Run_Exceptioon(fun::PrintStr("OnlyPosMin definition is invalid in execution parameter \'%s\'.",eparm.c_str()));
+      OnlyPosMin=fun::Split2pDouble3(val);
+      if(!OnlyPos)OnlyPosMax=TDouble3(DBL_MAX);
+      OnlyPos=true;
+    }
+    else Run_Exceptioon(fun::PrintStr("Key \'%s\' is unknown in execution parameter \'%s\'.",key.c_str(),eparm.c_str()));
+  }
 }
 
 //==============================================================================
@@ -361,7 +414,8 @@ void JDsInitializeOp_BoundNormalPlane::Run(unsigned np,unsigned npb,const tdoubl
     for(unsigned p=0;p<np;p++)if(mktype[p]==mktp && idp[p]<InitCt.nbound && CheckPos(p,pos)){
       const tdouble3 ps=pos[p];
       const tdouble3 psb=fgeo::PlaneOrthogonalPoint(ps,pla);
-      boundnormal[p]=(fgeo::PointsDist(ps,psb)<maxdist? ToTFloat3(psb-ps): TFloat3(0));
+      if(fgeo::PointsDist(ps,psb)<maxdist)boundnormal[p]=ToTFloat3(psb-ps);
+      else if(InitClear)boundnormal[p]=TFloat3(0);
     }
     //-Next mktp value.
     v=rg.GetNextValue(v);
@@ -379,6 +433,7 @@ void JDsInitializeOp_BoundNormalPlane::GetConfig(std::vector<std::string> &lines
   else lines.push_back(fun::PrintStr("  Point....: (%g,%g,%g)",Point.x,Point.y,Point.z));
   lines.push_back(fun::PrintStr("  Normal...: (%g,%g,%g)",Normal.x,Normal.y,Normal.z));
   lines.push_back(fun::PrintStr("  MaxDistH.: %g",MaxDisteH));
+  if(!InitClear)lines.push_back(fun::PrintStr("  Clear....: %s",(InitClear? "true": "false")));
 }
 
 
@@ -392,21 +447,24 @@ void JDsInitializeOp_BoundNormalSphere::Reset(){
   JDsInitializeOp::Reset();
   MkBound=""; 
   Center=TFloat3(0); 
-  MaxDisteH=Radius=0; 
+  Radius=0; 
   Inside=true;
+  MaxDisteH=0;
+  InitClear=true;
 }
 
 //==============================================================================
 /// Reads particles information in xml format.
 //==============================================================================
 void JDsInitializeOp_BoundNormalSphere::ReadXml(const JXml *sxml,TiXmlElement* xele){
-  sxml->CheckElementNames(xele,true,"onlypos center radius inside maxdisth");
+  sxml->CheckElementNames(xele,true,"onlypos center radius inside maxdisth clear");
   ReadXmlOnlyPos(sxml,xele);
   MkBound=sxml->GetAttributeStr(xele,"mkbound",true);
   Center=sxml->ReadElementFloat3(xele,"center");
   Radius=sxml->ReadElementFloat(xele,"radius","v");
   Inside=sxml->ReadElementBool(xele,"inside","v");
   MaxDisteH=sxml->ReadElementFloat(xele,"maxdisth","v",true,2.f);
+  InitClear=sxml->ReadElementBool(xele,"clear","v",true,true);
 }
 
 //==============================================================================
@@ -430,7 +488,8 @@ void JDsInitializeOp_BoundNormalSphere::Run(unsigned np,unsigned npb,const tdoub
     if((Inside  && ps_in  && dissurf<=maxdist) || (!Inside && ps_out && fabs(dissurf)<=maxdist)){
       psb=pcen+(fgeo::VecUnitary(ps-pcen)*ra); //-Normal to surface limit.
     }
-    boundnormal[p]=(psb.x!=DBL_MAX? ToTFloat3(psb-ps): TFloat3(0));
+    if(psb.x!=DBL_MAX)boundnormal[p]=ToTFloat3(psb-ps);
+    else if(InitClear)boundnormal[p]=TFloat3(0);
   }
 }
 
@@ -445,6 +504,7 @@ void JDsInitializeOp_BoundNormalSphere::GetConfig(std::vector<std::string> &line
   lines.push_back(fun::PrintStr("  Radius...: %g",Radius));
   lines.push_back(fun::PrintStr("  Inside...: %s",(Inside? "true": "false")));
   lines.push_back(fun::PrintStr("  MaxDistH.: %g",MaxDisteH));
+  if(!InitClear)lines.push_back(fun::PrintStr("  Clear....: %s",(InitClear? "true": "false")));
 }
 
 
@@ -458,22 +518,28 @@ void JDsInitializeOp_BoundNormalCylinder::Reset(){
   JDsInitializeOp::Reset();
   MkBound="";
   Center1=Center2=TFloat3(0);
-  MaxDisteH=Radius=0;
+  Radius=0;
   Inside=true;
+  Limit1=Limit2=true;
+  MaxDisteH=0;
+  InitClear=true;
 }
 
 //==============================================================================
 /// Reads particles information in xml format.
 //==============================================================================
 void JDsInitializeOp_BoundNormalCylinder::ReadXml(const JXml *sxml,TiXmlElement* xele){
-  sxml->CheckElementNames(xele,true,"onlypos center1 center2 radius inside maxdisth");
+  sxml->CheckElementNames(xele,true,"onlypos center1 center2 radius inside limit1 limit2 maxdisth clear");
   ReadXmlOnlyPos(sxml,xele);
   MkBound=sxml->GetAttributeStr(xele,"mkbound",true);
   Center1=sxml->ReadElementFloat3(xele,"center1");
   Center2=sxml->ReadElementFloat3(xele,"center2");
   Radius=sxml->ReadElementFloat(xele,"radius","v");
   Inside=sxml->ReadElementBool(xele,"inside","v");
+  Limit1=sxml->ReadElementBool(xele,"limit1","v",true,true);
+  Limit2=sxml->ReadElementBool(xele,"limit2","v",true,true);
   MaxDisteH=sxml->ReadElementFloat(xele,"maxdisth","v",true,2.f);
+  InitClear=sxml->ReadElementBool(xele,"clear","v",true,true);
 }
 
 //==============================================================================
@@ -506,12 +572,18 @@ void JDsInitializeOp_BoundNormalCylinder::Run(unsigned np,unsigned npb,const tdo
     byte sel=0;
     if(Inside && ps_in && (disbody<=maxdist || distop<=maxdist || disbot<=maxdist)){
       if(disbot<=distop){
-        if(fun::IsEqual(disbody,disbot,tolerance))psb=pcen+(fgeo::VecUnitary(ps-pcen)*ra)+vbot*disbot; //-Normal to bottom border.
+        if(!Limit1){
+          if(disbody<=maxdist)psb=pcen+(fgeo::VecUnitary(ps-pcen)*ra);//-Normal to body limit.
+        }
+        else if(fun::IsEqual(disbody,disbot,tolerance))psb=pcen+(fgeo::VecUnitary(ps-pcen)*ra)+vbot*disbot; //-Normal to bottom border.
         else if(disbody<disbot)psb=pcen+(fgeo::VecUnitary(ps-pcen)*ra);//-Normal to body limit.
         else psb=ps+vbot*disbot; //-Normal to bottom limit.
       }
       else{
-        if(fun::IsEqual(disbody,distop,tolerance))psb=pcen+(fgeo::VecUnitary(ps-pcen)*ra)+vtop*distop; //-Normal to top border.
+        if(!Limit2){
+          if(disbody<=maxdist)psb=pcen+(fgeo::VecUnitary(ps-pcen)*ra);//-Normal to body limit.
+        }
+        else if(fun::IsEqual(disbody,distop,tolerance))psb=pcen+(fgeo::VecUnitary(ps-pcen)*ra)+vtop*distop; //-Normal to top border.
         else if(disbody<distop)psb=pcen+(fgeo::VecUnitary(ps-pcen)*ra);//-Normal to body limit.
         else psb=ps+vtop*distop; //-Normal to top limit.
       } 
@@ -526,7 +598,8 @@ void JDsInitializeOp_BoundNormalCylinder::Run(unsigned np,unsigned npb,const tdo
       else if(disbot<0)psb=ps+vbot*disbot; //-Normal to bottom limit.
       else if(distop<0)psb=ps+vtop*distop; //-Normal to top limit.
     }
-    boundnormal[p]=(psb.x!=DBL_MAX? ToTFloat3(psb-ps): TFloat3(0));
+    if(psb.x!=DBL_MAX)boundnormal[p]=ToTFloat3(psb-ps);
+    else if(InitClear)boundnormal[p]=TFloat3(0);
   }
 }
 
@@ -540,6 +613,100 @@ void JDsInitializeOp_BoundNormalCylinder::GetConfig(std::vector<std::string> &li
   lines.push_back(fun::PrintStr("  Centers..: (%g,%g,%g)-(%g,%g,%g)",Center1.x,Center1.y,Center1.z,Center2.x,Center2.y,Center2.z));
   lines.push_back(fun::PrintStr("  Radius...: %g",Radius));
   lines.push_back(fun::PrintStr("  Inside...: %s",(Inside? "true": "false")));
+  if(!Limit1)lines.push_back(fun::PrintStr("  Limit1...: %s",(Limit1? "true": "false")));
+  if(!Limit2)lines.push_back(fun::PrintStr("  Limit2...: %s",(Limit2? "true": "false")));
+  lines.push_back(fun::PrintStr("  MaxDistH.: %g",MaxDisteH));
+  if(!InitClear)lines.push_back(fun::PrintStr("  Clear....: %s",(InitClear? "true": "false")));
+}
+
+
+//##############################################################################
+//# JDsInitializeOp_BoundNormalParts
+//##############################################################################
+//==============================================================================
+/// Initialisation of variables.
+//==============================================================================
+void JDsInitializeOp_BoundNormalParts::Reset(){
+  JDsInitializeOp::Reset();
+  MkBound="";
+  MaxDisteH=0;
+}
+
+//==============================================================================
+/// Reads configuration from XML.
+//==============================================================================
+void JDsInitializeOp_BoundNormalParts::ReadXml(const JXml *sxml,TiXmlElement* xele){
+  sxml->CheckElementNames(xele,true,"maxdisth");
+  ReadXmlOnlyPos(sxml,xele);
+  MkBound=sxml->GetAttributeStr(xele,"mkbound",true);
+  MaxDisteH=sxml->ReadElementFloat(xele,"maxdisth","v",true,2.f);
+}
+
+//==============================================================================
+/// Reads configuration from execution parameter.
+//==============================================================================
+void JDsInitializeOp_BoundNormalParts::ReadKeyvals(const std::string &eparm){
+  //-Initial values.
+  OnlyPos=false;
+  OnlyPosMin=OnlyPosMax=TDouble3(0);
+  MaxDisteH=2.f;
+  //-Loads configuration from eparm.
+  const string keyvals=fun::StrRemoveBefore(eparm,":");
+  //printf("==> eparm=[%s]_[%s]\n",eparm.c_str(),keyvals.c_str());
+  vector<string> vkv;
+  const unsigned nv=fun::Split2pVector(keyvals,vkv);
+  for(unsigned c=0;c<nv;c++){
+    const string key=fun::StrLower(fun::StrRemoveAfter(vkv[c],"="));
+    const string val=fun::StrLower(fun::StrRemoveBefore(vkv[c],"="));
+    if(key=="mkbound")MkBound=val;
+    else if(key=="maxdisth")MaxDisteH=fun::StrToFloat(val);
+    else if(key=="posmax"){
+      if(fun::Split2pDouble3Error(val))Run_Exceptioon(fun::PrintStr("OnlyPosMax definition is invalid in execution parameter \'%s\'.",eparm.c_str()));
+      OnlyPosMax=fun::Split2pDouble3(val);
+      if(!OnlyPos)OnlyPosMin=TDouble3(-DBL_MAX);
+      OnlyPos=true;
+    }
+    else if(key=="posmin"){
+      if(fun::Split2pDouble3Error(val))Run_Exceptioon(fun::PrintStr("OnlyPosMin definition is invalid in execution parameter \'%s\'.",eparm.c_str()));
+      OnlyPosMin=fun::Split2pDouble3(val);
+      if(!OnlyPos)OnlyPosMax=TDouble3(DBL_MAX);
+      OnlyPos=true;
+    }
+    else Run_Exceptioon(fun::PrintStr("Key \'%s\' is unknown in execution parameter \'%s\'.",key.c_str(),eparm.c_str()));
+  }
+}
+
+//==============================================================================
+/// Initializes data of particles according XML configuration.
+//==============================================================================
+void JDsInitializeOp_BoundNormalParts::Run(unsigned np,unsigned npb,const tdouble3 *pos
+  ,const unsigned *idp,const word *mktype,tfloat4 *velrhop,tfloat3 *boundnormal)
+{
+  if(!InitCt.simulate2d)Run_Exceptioon("Initialize option BoundNormalParts is not supported for 3D simulations.");
+  //-Select particles to process.
+  unsigned *partsel=new unsigned[np];
+  unsigned nsel=0;
+  JRangeFilter rg(MkBound);
+  const bool all=(MkBound.empty());
+  for(unsigned p=0;p<np;p++)if(idp[p]<InitCt.nbound && (all || rg.CheckValue(mktype[p])) && CheckPos(p,pos)){
+    partsel[nsel++]=p;
+  }
+  //-Process selected particles.
+  const double maxdist=InitCt.kernelh*min(MaxDisteH,10.f);
+  JVtkLib::ComputeNormalsPartCells(InitCt.simulate2d,InitCt.simulate2dposy,InitCt.dp
+    ,InitCt.maprealposmin,InitCt.maprealposmax,maxdist,AppInfo.GetDirOut()
+    ,nsel,partsel,np,pos,boundnormal);
+  //-Free memory.
+  delete[] partsel; partsel=NULL;
+}
+
+//==============================================================================
+/// Returns strings with configuration.
+//==============================================================================
+void JDsInitializeOp_BoundNormalParts::GetConfig(std::vector<std::string> &lines)const{
+  lines.push_back(fun::PrintStr("  Operation: %s",ClassName.substr(BaseNameSize).c_str()));
+  lines.push_back(GetConfigMkBound(MkBound));
+  if(OnlyPos)lines.push_back(GetConfigOnlyPos());
   lines.push_back(fun::PrintStr("  MaxDistH.: %g",MaxDisteH));
 }
 
@@ -550,14 +717,13 @@ void JDsInitializeOp_BoundNormalCylinder::GetConfig(std::vector<std::string> &li
 //==============================================================================
 /// Constructor.
 //==============================================================================
-JDsInitialize::JDsInitialize(const JXml *sxml,const std::string &place
-  ,const std::string &dirdatafile,float kernelh,float dp,unsigned nbound
-  ,bool boundnormals):BoundNormals(boundnormals)
-  ,InitCt(JDsInitializeOp::StrInitCt(kernelh,dp,nbound,dirdatafile))
+JDsInitialize::JDsInitialize(bool sim2d,double sim2dy,tdouble3 posmin,tdouble3 posmax
+  ,double dp,float kernelh,const std::string &dirdatafile
+  ,unsigned nbound,bool boundnormals):BoundNormals(boundnormals)
+  ,InitCt(JDsInitializeOp::StrInitCt(sim2d,sim2dy,posmin,posmax,dp,kernelh,nbound,dirdatafile))
 {
   ClassName="JDsInitialize";
   Reset();
-  LoadXml(sxml,place);
 }
 
 //==============================================================================
@@ -589,7 +755,7 @@ void JDsInitialize::LoadFileXml(const std::string &file,const std::string &path)
 /// Loads particles information from the object XML.
 //==============================================================================
 void JDsInitialize::LoadXml(const JXml *sxml,const std::string &place){
-  Reset();
+  //Reset();
   TiXmlNode* node=sxml->GetNodeSimple(place);
   //if(!node)Run_Exceptioon(std::string("Cannot find the element \'")+place+"\'.");
   if(sxml->CheckNodeActive(node))ReadXml(sxml,node->ToElement());
@@ -613,9 +779,26 @@ void JDsInitialize::ReadXml(const JXml *sxml,TiXmlElement* lis){
       else if(cmd=="boundnormal_plane"   ){ if(BoundNormals){ JDsInitializeOp_BoundNormalPlane    *ope=new JDsInitializeOp_BoundNormalPlane   (sxml,ele,InitCt); Opes.push_back(ope); } }
       else if(cmd=="boundnormal_sphere"  ){ if(BoundNormals){ JDsInitializeOp_BoundNormalSphere   *ope=new JDsInitializeOp_BoundNormalSphere  (sxml,ele,InitCt); Opes.push_back(ope); } }
       else if(cmd=="boundnormal_cylinder"){ if(BoundNormals){ JDsInitializeOp_BoundNormalCylinder *ope=new JDsInitializeOp_BoundNormalCylinder(sxml,ele,InitCt); Opes.push_back(ope); } }
+      else if(cmd=="boundnormal_parts"   ){ if(BoundNormals){ JDsInitializeOp_BoundNormalParts    *ope=new JDsInitializeOp_BoundNormalParts   (sxml,ele,InitCt); Opes.push_back(ope); } }
       else sxml->ErrReadElement(ele,cmd,false);
     }
     ele=ele->NextSiblingElement();
+  }
+}
+
+//==============================================================================
+/// Loads configuration from execution parameters.
+//==============================================================================
+void JDsInitialize::LoadExecParms(const std::vector<std::string> &execparms){
+  const unsigned nparms=unsigned(execparms.size());
+  for(unsigned c=0;c<nparms;c++){
+    const string eparm=execparms[c];
+    const string cmd=fun::StrLower(fun::StrRemoveBefore(fun::StrRemoveAfter(eparm,":"),"-"));
+    //const string keyvals=fun::StrRemoveBefore(eparm,":");
+    //printf("==> eparm=[%s]_[%s]_[%s]\n",eparm.c_str(),cmd.c_str(),keyvals.c_str());
+         if(cmd=="initnorpla" ){ if(BoundNormals){ JDsInitializeOp_BoundNormalPlane *ope=new JDsInitializeOp_BoundNormalPlane(eparm,InitCt); Opes.push_back(ope); } }
+    else if(cmd=="initnorpart"){ if(BoundNormals){ JDsInitializeOp_BoundNormalParts *ope=new JDsInitializeOp_BoundNormalParts(eparm,InitCt); Opes.push_back(ope); } }
+    else Run_Exceptioon(fun::PrintStr("Execution parameter \'%s\' is invalid.",eparm.c_str()));
   }
 }
 

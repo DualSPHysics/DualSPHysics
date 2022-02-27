@@ -60,6 +60,7 @@ protected:
   bool Simulate2D;         ///<Indicates 2D simulation.
   double Simulate2DPosY;   ///<Y value in 2D simulations.
   bool NpDynamic;          ///<CaseNp can increase.
+  bool PosSingle;          ///<Particles position in single precision.
 
   ullong CaseNp;           ///<Number of total particles.  
   ullong CaseNfixed;       ///<Number of fixed boundary particles. 
@@ -115,6 +116,7 @@ public:
 
   bool GetSimulate2D()const{ return(Simulate2D); }
   double GetSimulate2DPosY()const{ return(Simulate2DPosY); }
+  bool GetPosSingle()const{ return(PosSingle); }
   double GetPartBeginTimeStep()const{ return(PartBeginTimeStep); }
   ullong GetPartBeginTotalNp()const{ return(PartBeginTotalNp); }
 

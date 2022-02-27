@@ -565,6 +565,7 @@ rem %CudaNvcc% -ccbin "$(VCInstallDir)bin" %gpuhw% -use_fast_math -c %ptxinfo% -
     </ClInclude>
     <ClInclude Include="..\source\JCellSearch_inline.h" />
     <ClInclude Include="..\source\JCfgRunBase.h" />
+    <ClInclude Include="..\source\JCfgRunBaseDef.h" />
     <ClInclude Include="..\source\JChronoData.h" />
     <ClInclude Include="..\source\JChronoObjects.h" />
     <ClInclude Include="..\source\JChronoObjectsUndef.h" />
@@ -575,11 +576,24 @@ rem %CudaNvcc% -ccbin "$(VCInstallDir)bin" %gpuhw% -use_fast_math -c %ptxinfo% -
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">true</ExcludedFromBuild>
     </ClInclude>
+    <ClInclude Include="..\source\JDsDcell.h" />
+    <ClInclude Include="..\source\JDsDcellDef.h" />
+    <ClInclude Include="..\source\JDsExtraData.h" />
+    <ClInclude Include="..\source\JDsGpuInfo.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">true</ExcludedFromBuild>
+    </ClInclude>
     <ClInclude Include="..\source\JDsphConfig.h" />
     <ClInclude Include="..\source\JDsPips.h" />
     <ClInclude Include="..\source\JDsPips_ker.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">true</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="..\source\JDsTimers.h" />
+    <ClInclude Include="..\source\JDsTimersCpu.h" />
+    <ClInclude Include="..\source\JDsTimersGpu.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">true</ExcludedFromBuild>
     </ClInclude>
     <ClInclude Include="..\source\JException.h" />
     <ClInclude Include="..\source\JArraysGpu.h">
@@ -729,11 +743,6 @@ rem %CudaNvcc% -ccbin "$(VCInstallDir)bin" %gpuhw% -use_fast_math -c %ptxinfo% -
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
     </CustomBuildStep>
-    <ClInclude Include="..\source\JSphTimersCpu.h" />
-    <CustomBuildStep Include="..\source\JSphTimersGpu.h">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">true</ExcludedFromBuild>
-    </CustomBuildStep>
     <ClInclude Include="..\source\JSphCfgRun.h" />
     <ClInclude Include="..\source\JCaseParts.h" />
     <ClInclude Include="..\source\JCaseCtes.h" />
@@ -780,8 +789,15 @@ rem %CudaNvcc% -ccbin "$(VCInstallDir)bin" %gpuhw% -use_fast_math -c %ptxinfo% -
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">true</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="..\source\JDsDcell.cpp" />
+    <ClCompile Include="..\source\JDsExtraData.cpp" />
+    <ClCompile Include="..\source\JDsGpuInfo.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="..\source\JDsphConfig.cpp" />
     <ClCompile Include="..\source\JDsPips.cpp" />
+    <ClCompile Include="..\source\JDsTimers.cpp" />
     <ClCompile Include="..\source\JException.cpp" />
     <ClCompile Include="..\source\JDsGaugeItem.cpp" />
     <ClCompile Include="..\source\JDsGaugeSystem.cpp" />

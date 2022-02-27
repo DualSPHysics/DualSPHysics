@@ -53,7 +53,7 @@ __global__ void KerUpdatePosCell(unsigned np,double3 posmin,float poscellsize
     const float px=float(dx-(double(poscellsize)*cx));
     const float py=float(dy-(double(poscellsize)*cy));
     const float pz=float(dz-(double(poscellsize)*cz));
-    const float pw=__uint_as_float(CEL_Code(cx,cy,cz));
+    const float pw=__uint_as_float(PSCEL_Code(cx,cy,cz));
     poscell[p]=make_float4(px,py,pz,pw);
   }
 }

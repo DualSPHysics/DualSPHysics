@@ -91,11 +91,19 @@ class JPartFloatBi4Save : protected JObject
   tfloat3  *PartVelAng; ///<Angular velocity of the floating object (units:rad/s) [FtCount].
   tfloat3  *PartAceLin; ///<Linear acceleration of the floating object (units:m/s^2) [FtCount].
   tfloat3  *PartAceAng; ///<Angular acceleration of the floating object (units:rad/s^2) [FtCount].
-  
+
+  //-Data of force points (PARTs).
+  unsigned FptSize;
+  unsigned FptCount;
+  word     *FptMkbound;  ///<MkBound of floating body. [FptSize].
+  tdouble3 *FptPos;      ///<Position. [FptSize].
+  tfloat3  *FptForce;    ///<Force. [FptSize].
+
   unsigned Cpart;    ///<Numero de PART. PART number.
 
  private:
   void ResizeFtData(unsigned ftcount);
+  void ResizeFptData(unsigned fptsize);
   void ClearPartData();
   static std::string GetNamePart(unsigned cpart);
 
@@ -122,6 +130,7 @@ class JPartFloatBi4Save : protected JObject
   void AddPartData(unsigned cf,const tdouble3 &center,const tfloat3 &fvellin
     ,const tfloat3 &fvelang,const tfloat3 &facelin,const tfloat3 &faceang);
   void AddPartDataPosRef(unsigned ftcount,const tdouble3 *posref);
+  void AddPartDataForcePoints(unsigned npt,const word *mkbound,const tdouble3 *pos,const tfloat3 *force);
   JBinaryData* AddPartFloat(unsigned cpart,unsigned step,double timestep,double demdtforce);
 
   ////-Grabacion de fichero. File recording.
@@ -176,11 +185,19 @@ class JPartFloatBi4Load : protected JObject
   tfloat3  *PartAceLin; ///<Linear acceleration of the floating object (units:m/s^2) [FtCount].
   tfloat3  *PartAceAng; ///<Angular acceleration of the floating object (units:rad/s^2) [FtCount].
 
+  //-Data of force points (PARTs).
+  unsigned FptSize;
+  unsigned FptCount;
+  word     *FptMkbound;  ///<MkBound of floating body. [FptSize].
+  tdouble3 *FptPos;      ///<Position. [FptSize].
+  tfloat3  *FptForce;    ///<Force. [FptSize].
+
  private:
   JBinaryDataArray* CheckArray(JBinaryData *bd,const std::string &name
     ,JBinaryDataDef::TpData type,unsigned count=UINT_MAX);
   void ResetPart();
   void ResizeFtData(unsigned ftcount);
+  void ResizeFptData(unsigned fptsize);
   void CheckPartList()const;
   void CheckPart()const;
   void CheckFloating(unsigned cf)const;
@@ -231,6 +248,12 @@ class JPartFloatBi4Load : protected JObject
   const tfloat3*  GetPartAceLin()const{ CheckPart(); return(AceData? PartAceLin: NULL); }
   const tfloat3*  GetPartAceAng()const{ CheckPart(); return(AceData? PartAceAng: NULL); }
   const tdouble3* GetPartPosRef()const{ CheckPart(); return(PosRefData? PartPosRef: NULL); }
+
+  unsigned        GetPartFptCount  ()const{ CheckPart(); return(FptCount); }
+  const word*     GetPartFptMkbound()const{ CheckPart(); return(FptCount? FptMkbound: NULL); }
+  const tdouble3* GetPartFptPos    ()const{ CheckPart(); return(FptCount? FptPos:     NULL); }
+  const tfloat3*  GetPartFptForce  ()const{ CheckPart(); return(FptCount? FptForce:   NULL); }
+
 };
 
 

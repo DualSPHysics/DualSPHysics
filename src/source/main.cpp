@@ -4,7 +4,7 @@
  Prof. Moncho Gomez Gesteira, Prof. Benedict Rogers, 
  Dr Georgios Fourtakas, Prof. Peter Stansby, 
  Dr Renato Vacondio, Dr Corrado Altomare, Dr Angelo Tafuni, 
- Orlando Garcia Feal, Ivan Martinez Estevez
+ Dr Orlando Garcia Feal, Ivan Martinez Estevez
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -31,8 +31,8 @@ School of Mechanical, Aerospace and Civil Engineering, University of Manchester,
 \section compile_sec Project files
 Please download source files and documentation from <a href="http://dual.sphysics.org">DualSPHysics website.</a> \n
 \author <a href="http://dual.sphysics.org/index.php/developers">DualSPHysics Developers.</a> 
-\version 5.0.175
-\date 21-02-2021
+\version 5.0.228
+\date 24-02-2022
 \copyright GNU Lesser General Public License <a href="http://www.gnu.org/licenses/">GNU licenses.</a>
 */
 
@@ -56,7 +56,7 @@ Please download source files and documentation from <a href="http://dual.sphysic
 
 using namespace std;
 
-JAppInfo AppInfo("DualSPHysics5","v5.0.175","21-02-2021");
+JAppInfo AppInfo("DualSPHysics5","v5.0.228","24-02-2022");
 //JAppInfo AppInfo("DualSPHysics5","v5.0.???","UserVersion","v1.0","??-??-????"); //-for user versions.
 
 //==============================================================================
@@ -69,7 +69,7 @@ std::string getlicense_lgpl(const std::string &name,bool simple){
   tx=tx+"\n Prof. Moncho Gomez Gesteira, Prof. Benedict Rogers,";
   tx=tx+"\n Dr Georgios Fourtakas, Prof. Peter Stansby,";
   tx=tx+"\n Dr Renato Vacondio, Dr Corrado Altomare, Dr Angelo Tafuni,";
-  tx=tx+"\n Orlando Garcia Feal, Ivan Martinez Estevez\n";
+  tx=tx+"\n Dr Orlando Garcia Feal, Ivan Martinez Estevez\n";
   if(!simple){
     tx=tx+"\n EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo";
     tx=tx+"\n School of Mechanical, Aerospace and Civil Engineering, University of Manchester\n";
@@ -137,12 +137,14 @@ void PrintExceptionLog(const std::string &prefix,const std::string &text,JLog2 *
 //==============================================================================
 int main(int argc, char** argv){
   int errcode=1;
+
   //AppInfo.AddNameExtra("Symmetry");    //<vs_syymmetry>
   //AppInfo.AddNameExtra("SaveFtAce");
   //AppInfo.AddNameExtra("SaveFtMotion");//<vs_ftmottionsv>
-#ifdef CODE_SIZE4
-  AppInfo.AddNameExtra("MK65k");
-#endif
+  #ifdef CODE_SIZE4
+    AppInfo.AddNameExtra("MK65k");
+  #endif
+
   AppInfo.ConfigRunPaths(argv[0]);
   if(ShowsVersionInfo(argc,argv))return(errcode);
   std::string license=getlicense_lgpl(AppInfo.GetShortName(),false);

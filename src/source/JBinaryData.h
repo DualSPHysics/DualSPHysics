@@ -43,6 +43,8 @@
 //:# - Opcion en SaveFileXml() para grabar datos de arrays. (04-12-2014)
 //:# - Nuevos metodos CheckCopyArrayData() y CopyArrayData(). (13-04-2020)
 //:# - Mejora la gestion de excepciones. (06-05-2020)
+//:# - Lanza excepcion cuando el fichero no es soportado por ser mayor de 4GB. (25-10-2021)
+//:# - Nuevo metodo CreateArrayFloat3() para facilitar uso eficiente. (31-10-2021)
 //:#############################################################################
 
 /// \file JBinaryData.h \brief Declares the class \ref JBinaryData.
@@ -131,6 +133,7 @@ class JBinaryDataArray : protected JObject
 
   void FreeMemory();
   void AllocMemory(unsigned size,bool savedata=false);
+  void AllocMemoryCount(unsigned count,bool clear);
   void ConfigExternalMemory(unsigned size,void* pointer);
 
   void ReadData(unsigned count,unsigned size,std::ifstream *pf,bool resize);
@@ -288,7 +291,7 @@ class JBinaryData : protected JObject
   void ReadItem(std::ifstream *pf,unsigned sbuf,byte *buf,bool create,bool loadarraysdata);
 
   JBinaryData::StHeadFmtBin MakeFileHead(const std::string &filecode)const;
-  unsigned GetFileHead(std::ifstream *pf,JBinaryData::StHeadFmtBin &head)const;
+  ullong GetFileHead(std::ifstream *pf,JBinaryData::StHeadFmtBin &head)const;
   void CheckHead(const std::string &file,const StHeadFmtBin &head,const std::string &filecode)const;
   unsigned CheckFileHead(const std::string &file,std::ifstream *pf,const std::string &filecode)const;
   unsigned CheckFileListHead(const std::string &file,std::fstream *pf,const std::string &filecode)const;
@@ -360,6 +363,9 @@ class JBinaryData : protected JObject
   JBinaryDataArray* GetArray(unsigned index);
   JBinaryDataArray* CreateArray(const std::string &name,JBinaryDataDef::TpData type);
   JBinaryDataArray* CreateArray(const std::string &name,JBinaryDataDef::TpData type,unsigned count,const void *data,bool externalpointer);
+
+  tfloat3* CreateArrayFloat3(const std::string &name,unsigned count,bool clear);
+
   void RemoveArray(const std::string &name);
   void RemoveArrays();
   JBinaryDataArray* CheckCopyArrayData(const std::string &name,unsigned size,JBinaryDataDef::TpData type);

@@ -47,6 +47,14 @@ __device__ double PlanePoint(const double4 &pla,const double3 &pt){
 }
 
 //------------------------------------------------------------------------------
+/// Resuelve punto en el plano.
+/// Solves point in the plane.
+//------------------------------------------------------------------------------
+__device__ float PlanePoint(const float4 &pla,const float3 &pt){ 
+  return(pla.x*pt.x+pla.y*pt.y+pla.z*pt.z+pla.w);
+}
+
+//------------------------------------------------------------------------------
 /// Comprueba si el punto esta dentro del dominio definido.
 /// Checks the point is inside the defined domain.
 //------------------------------------------------------------------------------
@@ -75,6 +83,124 @@ __device__ float PlaneDistSign(const float4 &pla,const float &ptx,const float &p
   return(PlanePoint(pla,ptx,pty,ptz)/sqrt(pla.x*pla.x+pla.y*pla.y+pla.z*pla.z));
 }
 
+//==============================================================================
+/// Devuelve la distancia al (0,0,0).
+/// Returns the distance from (0,0,0).
+//==============================================================================
+__device__ float PointDist(const float3 &p1){
+  return(sqrt(p1.x*p1.x+p1.y*p1.y+p1.z*p1.z));
+}
+
+//==============================================================================
+/// Devuelve la distancia al (0,0,0).
+/// Returns the distance from (0,0,0).
+//==============================================================================
+__device__ float PointDist(const float4 &p1){
+  return(sqrt(p1.x*p1.x+p1.y*p1.y+p1.z*p1.z));
+}
+
+//------------------------------------------------------------------------------
+/// Devuelve la distancia entre dos puntos.
+/// Returns the distance between two points.
+//------------------------------------------------------------------------------
+__device__ double PointsDist(const double3 &p1,const double3 &p2){
+  const double dx=p1.x-p2.x;
+  const double dy=p1.y-p2.y;
+  const double dz=p1.z-p2.z;
+  return(sqrt(dx*dx+dy*dy+dz*dz));
+}
+
+//------------------------------------------------------------------------------
+/// Devuelve la distancia^2 entre dos puntos.
+/// Returns the distance^2 between two points.
+//------------------------------------------------------------------------------
+__device__ float PointsDist2(const float3 &p1,const float3 &p2){
+  const float dx=p1.x-p2.x;
+  const float dy=p1.y-p2.y;
+  const float dz=p1.z-p2.z;
+  return(dx*dx + dy*dy + dz*dz);
+}
+
+//------------------------------------------------------------------------------
+/// Devuelve vector unitario valido del vector or (0,0,0).
+/// Returns a valid unit vector of the vector or (0,0,0).
+//------------------------------------------------------------------------------
+__device__ float3 VecUnitary(const float3 &v){
+  const float m=sqrt(v.x*v.x+v.y*v.y+v.z*v.z);
+  return(m? make_float3(v.x/m,v.y/m,v.z/m): v);
+}
+
+//------------------------------------------------------------------------------
+/// Devuelve vector unitario valido del vector or (0,0,0).
+/// Returns a valid unit vector of the vector or (0,0,0).
+//------------------------------------------------------------------------------
+__device__ float3 VecModule(const float3 &v,float module){
+  const float m=sqrt(v.x*v.x+v.y*v.y+v.z*v.z);
+  const float m2=(m? module/m: 0);
+  return(m? make_float3(v.x*m2,v.y*m2,v.z*m2): v);
+}
+
+//==============================================================================
+/// Devuelve el producto escalar de 2 vectores.
+/// Returns the scalar product of two vectors.
+//==============================================================================
+__device__ float ProductScalar(const float3 &v1,const float3 &v2){
+  return(v1.x*v2.x + v1.y*v2.y + v1.z*v2.z);
+}
+
+//------------------------------------------------------------------------------
+/// Devuelve vector de rebote a una normal.
+/// Returns bounce vector to a normal.
+//------------------------------------------------------------------------------
+__device__ float3 VecBounce(const float3 &vec,const float3 &normal){
+  const float pp=ProductScalar(vec,normal)/ProductScalar(normal,normal);
+  const float ux=normal.x*pp;
+  const float uy=normal.y*pp;
+  const float uz=normal.z*pp;
+  return(make_float3(vec.x-ux-ux,vec.y-uy-uy,vec.z-uz-uz));
+}
+
+//------------------------------------------------------------------------------
+/// Devuelve el plano formado por un punto y un vector.
+/// Returns the plane defined by a point and a vector.
+//------------------------------------------------------------------------------
+__device__ float4 PlanePtVec(const float3 &pt,const float3 &vec){
+  const float3 v=VecUnitary(vec);//-No es necesario pero asi el modulo del vector no afecta al resultado de PointPlane().
+  return(make_float4(v.x,v.y,v.z,-v.x*pt.x-v.y*pt.y-v.z*pt.z));
+}
+
+//------------------------------------------------------------------------------
+/// Devuelve el area de un triangulo formado por 3 puntos.
+/// Returns the area of a triangle formed by 3 points.
+//------------------------------------------------------------------------------
+__device__ double TriangleArea(const double3 &p1,const double3 &p2,const double3 &p3){
+  //Se obtienen los vectores del triangulo.
+  //Obtains the triangle vectors.
+  double PQx=p2.x-p1.x;
+  double PQy=p2.y-p1.y;
+  double PQz=p2.z-p1.z;
+  double PRx=p3.x-p1.x;
+  double PRy=p3.y-p1.y;
+  double PRz=p3.z-p1.z;
+  //Se hace el producto cruz.
+  //Computes the cross product.
+  double Vi=PQy*PRz-PRy*PQz;
+  double Vj=-(PQx*PRz-PRx*PQz);
+  double Vk=PQx*PRy-PRx*PQy;
+  //Se obtiene el area del triangulo que es igual a la mitad de la magnitud del vector resultante.
+  //Obtains the triangle area that equals half the magnitude of the resulting vector.
+  return(double(.5)*sqrt(Vi*Vi+Vj*Vj+Vk*Vk));
+}
+
+//------------------------------------------------------------------------------
+/// Devuelve la distancia entre un punto y una recta entre dos puntos.
+/// Returns the distance between a point and a line between two points.
+//------------------------------------------------------------------------------
+__device__ double LinePointDist(const double3 &pt,const double3 &pr1,const double3 &pr2){
+  double ar=TriangleArea(pt,pr1,pr2);
+  double dis=PointsDist(pr1,pr2);
+  return((ar*2)/dis);
+}
 
 }
 

@@ -20,6 +20,7 @@
 
 #include "JCellDivGpuSingle.h"
 #include "JCellDivGpuSingle_ker.h"
+#include "JDsTimersGpu.h"
 #include "Functions.h"
 #include <climits>
 
@@ -148,11 +149,12 @@ void JCellDivGpuSingle::PreSort(const unsigned *dcellg,const typecode *codeg){
 /// El valor np incluye las periodicas bound y fluid (npbper y npfper).
 /// Las floating se tratan como si fuesen fluido (tanto al ser excluidas como ignoradas).
 //==============================================================================
-void JCellDivGpuSingle::Divide(unsigned npb1,unsigned npf1,unsigned npb2,unsigned npf2,bool boundchanged
-  ,const unsigned *dcellg,const typecode *codeg,TimersGpu timers,const double2 *posxy,const double *posz,const unsigned *idp)
+void JCellDivGpuSingle::Divide(unsigned npb1,unsigned npf1,unsigned npb2,unsigned npf2
+  ,bool boundchanged,const unsigned *dcellg,const typecode *codeg
+  ,const double2 *posxy,const double *posz,const unsigned *idp,JDsTimersGpu *timersg)
 {
   DivideFull=false;
-  TmgStart(timers,TMG_NlLimits);
+  timersg->TmStart(TMG_NlLimits,false);
 
   //-Establish number of particles. | Establece numero de particulas.
   Npb1=npb1; Npf1=npf1; Npb2=npb2; Npf2=npf2;
@@ -182,7 +184,7 @@ void JCellDivGpuSingle::Divide(unsigned npb1,unsigned npf1,unsigned npb2,unsigne
   //-Checks if the allocated memory is sufficient for Nptot.
   //-Comprueba si hay memoria reservada y si es suficiente para Nptot.
   CheckMemoryNct(Nct);
-  TmgStop(timers,TMG_NlLimits);
+  timersg->TmStop(TMG_NlLimits,false);
 
   //-Determines if the divide affects all the particles.
   //-BoundDivideOk becomes false when the allocation memory changes for particles or cells.
@@ -196,20 +198,20 @@ void JCellDivGpuSingle::Divide(unsigned npb1,unsigned npf1,unsigned npb2,unsigne
 
   //-Computes CellPart[] and assigns consecutive values to SortPart[].
   //-Calcula CellPart[] y asigna valores consecutivos a SortPart[].
-  TmgStart(timers,TMG_NlPreSort);
+  timersg->TmStart(TMG_NlPreSort,false);
   PreSort(dcellg,codeg);
-  TmgStop(timers,TMG_NlPreSort);
+  timersg->TmStop(TMG_NlPreSort,false);
 
   //-Sorts CellPart and SortPart as a function of the cell.
   //-Ordena CellPart y SortPart en funcion de la celda.
-  TmgStart(timers,TMG_NlRadixSort);
+  timersg->TmStart(TMG_NlRadixSort,false);
   if(DivideFull)cudiv::Sort(CellPart,SortPart,Nptot,Stable);
   else cudiv::Sort(CellPart+Npb1,SortPart+Npb1,Nptot-Npb1,Stable);
-  TmgStop(timers,TMG_NlRadixSort);
+  timersg->TmStop(TMG_NlRadixSort,false);
 
   //-Computes the initial and the last paeticle of each cell (BeginEndCell).
   //-Calcula particula inicial y final de cada celda (BeginEndCell).
-  TmgStart(timers,TMG_NlCellBegin);
+  timersg->TmStart(TMG_NlCellBegin,false);
   cudiv::CalcBeginEndCell(DivideFull,Nptot,Npb1,unsigned(SizeBeginEndCell(Nct)),BoxFluid,CellPart,BeginEndCell);
 
   //-Calculate number of particles. | Calcula numeros de particulas.
@@ -228,8 +230,8 @@ void JCellDivGpuSingle::Divide(unsigned npb1,unsigned npf1,unsigned npb2,unsigne
 
   Ndiv++;
   if(DivideFull)NdivFull++;
+  timersg->TmStop(TMG_NlCellBegin,true);
   Check_CudaErroor("Error in NL construction.");
-  TmgStop(timers,TMG_NlCellBegin);
 }
 
 //==============================================================================

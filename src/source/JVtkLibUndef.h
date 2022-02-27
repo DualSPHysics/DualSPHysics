@@ -60,6 +60,7 @@ public:
   // Functions to create VTK files with shapes.
   //==============================================================================
   void SaveShapeVtk(std::string file,std::string varname,bool createpath=true){}
+  void SetShapeWireMode(bool wiremode){}
   void AddShapePoint(const tfloat3 &pt,int value){}
   void AddShapePoint(const tdouble3 &pt,int value){}
   void AddShapePoints(unsigned np,const tfloat3 *vp,int value){}
@@ -104,6 +105,14 @@ public:
   static void DeleteMkShapes(void* ptr_vtksimple){}
   static unsigned CreateOBJsByMk(void* ptr_vtksimple,std::string filein,std::string filesout
     ,const std::vector<unsigned> &mkbounds,unsigned mkboundfirst,TpModeNormal normalmode){ return(0); }
+
+  //==============================================================================
+  // Functions to compute normals from final particles (for mDBC and under development).
+  //==============================================================================
+  static void ComputeNormalsPartCells(bool data2d,double data2dposy,double dp
+    ,tdouble3 mapposmin,tdouble3 mapposmax,double dist,std::string dirout
+    ,unsigned nsel,const unsigned *partsel,unsigned np,const tdouble3 *pos
+    ,tfloat3 *boundnormal){}
 
 };
 #endif

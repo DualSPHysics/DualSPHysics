@@ -56,10 +56,10 @@ JDsFtForcePoints::JDsFtForcePoints(bool iscpu,double dp,unsigned ftcount)
   ClassName="JDsFtForcePoints";
   FtRadius=NULL;  FtMass=NULL;
   FtCountPt=NULL;  FtBeginPt=NULL;
-  PtId=NULL;  PtFtid=NULL;  PartDist=NULL;
+  PtId=NULL;  PtFtid=NULL;  PtMkBound=NULL;  PartDist=NULL;
   PtPos=NULL;  PtVel=NULL;  PtForce=NULL;
   SelFtIndex=NULL;  SelFtid=NULL;  SelFtCenter=NULL;  
-  SelFtAce=NULL;  SelFtOmega=NULL;
+  SelFtForceLin=NULL;  SelFtForceAng=NULL;
   Reset();
   if(FtCount>=USHRT_MAX)Run_Exceptioon("Number of floatings is invalid.");
 }
@@ -113,27 +113,27 @@ void JDsFtForcePoints::AllocMemoryFt(word ftcount){
 /// Allocates memory for SelXXX arrays.
 //==============================================================================
 void JDsFtForcePoints::AllocMemorySelFt(word selftcount){
-  delete[] SelFtIndex;  SelFtIndex=NULL;
-  delete[] SelFtid;     SelFtid=NULL;
-  delete[] SelFtCenter; SelFtCenter=NULL;
-  delete[] SelFtAce;    SelFtAce=NULL;
-  delete[] SelFtOmega;  SelFtOmega=NULL;
+  delete[] SelFtIndex;     SelFtIndex=NULL;
+  delete[] SelFtid;        SelFtid=NULL;
+  delete[] SelFtCenter;    SelFtCenter=NULL;
+  delete[] SelFtForceLin;  SelFtForceLin=NULL;
+  delete[] SelFtForceAng;  SelFtForceAng=NULL;
   if(selftcount){
     try{
-      SelFtIndex =new word[FtCount];
-      SelFtid    =new word[selftcount];
-      SelFtCenter=new tdouble3[selftcount];
-      SelFtAce   =new tfloat3[selftcount];
-      SelFtOmega =new tfloat3[selftcount];
+      SelFtIndex   =new word[FtCount];
+      SelFtid      =new word[selftcount];
+      SelFtCenter  =new tdouble3[selftcount];
+      SelFtForceLin=new tfloat3[selftcount];
+      SelFtForceAng=new tfloat3[selftcount];
     }
     catch(const std::bad_alloc){
       Run_Exceptioon("Could not allocate the requested memory.");
     }
-    memset(SelFtIndex ,0,sizeof(word)*FtCount);
-    memset(SelFtid    ,0,sizeof(word)*selftcount);
-    memset(SelFtCenter,0,sizeof(tdouble3)*selftcount);
-    memset(SelFtAce   ,0,sizeof(tfloat3)*selftcount);
-    memset(SelFtOmega ,0,sizeof(tfloat3)*selftcount);
+    memset(SelFtIndex   ,0,sizeof(word)    *FtCount);
+    memset(SelFtid      ,0,sizeof(word)    *selftcount);
+    memset(SelFtCenter  ,0,sizeof(tdouble3)*selftcount);
+    memset(SelFtForceLin,0,sizeof(tfloat3) *selftcount);
+    memset(SelFtForceAng,0,sizeof(tfloat3) *selftcount);
   }
   SelFtCount=selftcount;
 }
@@ -144,21 +144,23 @@ void JDsFtForcePoints::AllocMemorySelFt(word selftcount){
 void JDsFtForcePoints::ResizeMemoryPt(word ptcount){
   if(!ptcount){
     PtCount=0;
-    delete[] PtId;     PtId=NULL;
-    delete[] PtFtid;   PtFtid=NULL;
-    delete[] PartDist; PartDist=NULL;
-    delete[] PtPos;    PtPos=NULL;
-    delete[] PtVel;    PtVel=NULL;
-    delete[] PtForce;  PtForce=NULL;
+    delete[] PtId;      PtId=NULL;
+    delete[] PtFtid;    PtFtid=NULL;
+    delete[] PtMkBound; PtMkBound=NULL;
+    delete[] PartDist;  PartDist=NULL;
+    delete[] PtPos;     PtPos=NULL;
+    delete[] PtVel;     PtVel=NULL;
+    delete[] PtForce;   PtForce=NULL;
   }
   if(ptcount){
     try{
-      PtId    =fun::ResizeAlloc(PtId    ,PtCount,ptcount);
-      PtFtid  =fun::ResizeAlloc(PtFtid  ,PtCount,ptcount);
-      PartDist=fun::ResizeAlloc(PartDist,PtCount,ptcount);
-      PtPos   =fun::ResizeAlloc(PtPos   ,PtCount,ptcount);
-      PtVel   =fun::ResizeAlloc(PtVel   ,PtCount,ptcount);
-      PtForce =fun::ResizeAlloc(PtForce ,PtCount,ptcount);
+      PtId     =fun::ResizeAlloc(PtId     ,PtCount,ptcount);
+      PtFtid   =fun::ResizeAlloc(PtFtid   ,PtCount,ptcount);
+      PtMkBound=fun::ResizeAlloc(PtMkBound,PtCount,ptcount);
+      PartDist =fun::ResizeAlloc(PartDist ,PtCount,ptcount);
+      PtPos    =fun::ResizeAlloc(PtPos    ,PtCount,ptcount);
+      PtVel    =fun::ResizeAlloc(PtVel    ,PtCount,ptcount);
+      PtForce  =fun::ResizeAlloc(PtForce  ,PtCount,ptcount);
     }
     catch(const std::bad_alloc){
       Run_Exceptioon("Could not allocate the requested memory.");
@@ -178,30 +180,32 @@ llong JDsFtForcePoints::GetAllocMemory()const{
   if(FtCountPt)s+=sizeof(word)*FtCount;
   if(FtBeginPt)s+=sizeof(word)*FtCount;
   //Allocated in AllocMemorySelFt().
-  if(SelFtIndex) s+=sizeof(word)*FtCount;
-  if(SelFtid)    s+=sizeof(word)*SelFtCount;
-  if(SelFtCenter)s+=sizeof(tdouble3)*SelFtCount;
-  if(SelFtAce)   s+=sizeof(tfloat3)*SelFtCount;
-  if(SelFtOmega) s+=sizeof(tfloat3)*SelFtCount;
+  if(SelFtIndex)   s+=sizeof(word)*FtCount;
+  if(SelFtid)      s+=sizeof(word)*SelFtCount;
+  if(SelFtCenter)  s+=sizeof(tdouble3)*SelFtCount;
+  if(SelFtForceLin)s+=sizeof(tfloat3)*SelFtCount;
+  if(SelFtForceAng)s+=sizeof(tfloat3)*SelFtCount;
   //Allocated in ResizeMemoryPt().
-  if(PtId)    s+=sizeof(word)*PtCount;
-  if(PtFtid)  s+=sizeof(word)*PtCount;
-  if(PartDist)s+=sizeof(float)*PtCount;
-  if(PtPos)   s+=sizeof(tdouble3)*PtCount;
-  if(PtVel)   s+=sizeof(tfloat3)*PtCount;
-  if(PtForce) s+=sizeof(tfloat3)*PtCount;
+  if(PtId)     s+=sizeof(word)*PtCount;
+  if(PtFtid)   s+=sizeof(word)*PtCount;
+  if(PtMkBound)s+=sizeof(word)*PtCount;
+  if(PartDist) s+=sizeof(float)*PtCount;
+  if(PtPos)    s+=sizeof(tdouble3)*PtCount;
+  if(PtVel)    s+=sizeof(tfloat3)*PtCount;
+  if(PtForce)  s+=sizeof(tfloat3)*PtCount;
   return(s);
 }
 
 //==============================================================================
 /// Adds point and returns ptid of the new point.
 //==============================================================================
-word JDsFtForcePoints::AddPoint(unsigned ftid,const tdouble3 &pos){
+word JDsFtForcePoints::AddPoint(unsigned ftid,word ftmkb,const tdouble3 &pos){
   if(unsigned(ftid)>=unsigned(FtCount))Run_Exceptioon("Id of floating is invalid.");
   word c=PtCount;
   ResizeMemoryPt(PtCount+1);
   PtId[c]=c;
   PtFtid[c]=ftid;
+  PtMkBound[c]=ftmkb;
   PartDist[c]=0;
   PtPos[c]=pos;
   PtVel[c]=TFloat3(0);
@@ -253,9 +257,10 @@ void JDsFtForcePoints::Config(unsigned ftcount,const StFloatingData *ftdata
   const int n=int(PtCount);
   //-Sorts points according ftid and ptid.
   for(int c=0;c<n-1;c++)for(int c2=c+1;c2<n;c2++)if(PtFtid[c]>PtFtid[c2] || (PtFtid[c]==PtFtid[c2] && PtId[c]>PtId[c2])){
-    const word      id=PtId  [c]; PtId  [c]=PtId  [c2]; PtId  [c2]=id;
-    const word    ftid=PtFtid[c]; PtFtid[c]=PtFtid[c2]; PtFtid[c2]=ftid;
-    const tdouble3 pos=PtPos [c]; PtPos [c]=PtPos [c2]; PtPos [c2]=pos;
+    const word       id=PtId     [c]; PtId     [c]=PtId     [c2]; PtId     [c2]=id;
+    const word     ftid=PtFtid   [c]; PtFtid   [c]=PtFtid   [c2]; PtFtid   [c2]=ftid;
+    const word     mkb =PtMkBound[c]; PtMkBound[c]=PtMkBound[c2]; PtMkBound[c2]=mkb;
+    const tdouble3 pos =PtPos    [c]; PtPos    [c]=PtPos    [c2]; PtPos    [c2]=pos;
   }
   //-Prepares PtCountFt[] and PtBeginFt[].
   memset(FtBeginPt,0,sizeof(word)*FtCount);
@@ -315,7 +320,7 @@ void JDsFtForcePoints::VisuConfig(std::string txhead,std::string txfoot
   if(!txhead.empty())Log->Print(txhead);
   for(word c=0;c<PtCount;c++){
     Log->Printf("  Point_%u(%g,%g,%g) in Floating_%u with mkbound=%u. Distance to particle: %g (%g x Dp)"
-      ,PtId[c],PtPos[c].x,PtPos[c].y,PtPos[c].z,PtFtid[c],ftdata[PtFtid[c]].mkbound,PartDist[c],PartDist[c]/Dp);
+      ,PtId[c],PtPos[c].x,PtPos[c].y,PtPos[c].z,PtFtid[c],PtMkBound[c],PartDist[c],PartDist[c]/Dp); //ftdata[PtFtid[c]].mkbound
   }
   if(!txfoot.empty())Log->Print(txfoot);
 }
@@ -368,37 +373,38 @@ void JDsFtForcePoints::UpdatePoints(double timestep,double dt,const StFloatingDa
 }
 
 //==============================================================================
-/// Computes motion data for floatings (SelFtAce[] and SelFtOmega[]).
+/// Computes sum of linear and angular forces on floatings (SelFtForceLin[] 
+/// and SelFtForceAng[]).
 //==============================================================================
-void JDsFtForcePoints::ComputeFtMotion(){
+void JDsFtForcePoints::ComputeForcesSum(){
   for(word cs=0;cs<SelFtCount;cs++){
     const word cf=SelFtid[cs];
     const tdouble3 fcenter=SelFtCenter[cs];
-    tdouble3 facetot=TDouble3(0);
-    tdouble3 fomegatot=TDouble3(0);
+    tdouble3 forcelintot=TDouble3(0);
+    tdouble3 forceangtot=TDouble3(0);
     const word cpini=FtBeginPt[cf];
     const word cpfin=cpini+FtCountPt[cf];
     for(word cp=cpini;cp<cpfin;cp++){
-      const tdouble3 face=ToTDouble3(PtForce[cp])/TDouble3(FtMass[cf]); //-Acceleration in this point.
-      facetot=facetot+face;
+      const tdouble3 force=ToTDouble3(PtForce[cp]); //-Force art this point.
+      forcelintot=forcelintot+force;
       const tfloat3 dist=(PeriActive? FtPeriodicDist(PtPos[cp],fcenter,FtRadius[cf]): ToTFloat3(PtPos[cp]-fcenter)); 
-      fomegatot.x+= face.z*dist.y - face.y*dist.z;
-      fomegatot.y+= face.x*dist.z - face.z*dist.x;
-      fomegatot.z+= face.y*dist.x - face.x*dist.y;
+      forceangtot.x+= force.z*dist.y - force.y*dist.z;
+      forceangtot.y+= force.x*dist.z - force.z*dist.x;
+      forceangtot.z+= force.y*dist.x - force.x*dist.y;
     }
-    SelFtAce[cs]=ToTFloat3(facetot);
-    SelFtOmega[cs]=ToTFloat3(fomegatot);
+    SelFtForceLin[cs]=ToTFloat3(forcelintot);
+    SelFtForceAng[cs]=ToTFloat3(forceangtot);
   }
 }
 
 //==============================================================================
-/// Stores motion data for floatings in ftoforces[].
+/// Stores sum of linear and angular forces on floatings in ftoforces[].
 //==============================================================================
-void JDsFtForcePoints::GetFtMotionData(StFtoForces *ftoforces)const{
+void JDsFtForcePoints::GetFtForcesSum(StFtoForces *ftoforces)const{
   for(word cs=0;cs<SelFtCount;cs++){
     const word cf=SelFtid[cs];
-    ftoforces[cf].face=SelFtAce[cs];
-    ftoforces[cf].fomegaace=SelFtOmega[cs];
+    ftoforces[cf].face     =SelFtForceLin[cs];
+    ftoforces[cf].fomegaace=SelFtForceAng[cs];
   }
 }
 

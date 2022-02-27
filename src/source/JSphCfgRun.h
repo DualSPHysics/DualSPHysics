@@ -41,6 +41,7 @@ public:
   bool GpuFree;
   bool Stable;
   int SvPosDouble;  ///<Saves particle position using double precision (default=0)
+  std::string SvExtraParts;   ///<Part interval (or list) for saving extra data for restart option (default=empty=disabled)
 
   int OmpThreads;
 
@@ -50,6 +51,8 @@ public:
   int SlipMode;         ///<Slip mode for mDBC: 0:None, 1:DBC vel=0, 2:No-slip, 3:Free slip (default=1).
   int MdbcFastSingle;   ///<Matrix calculations are done in single precision (default=1). 
   float MdbcThreshold;  ///<Kernel support limit to apply mDBC correction (default=0).
+  std::vector<std::string> InitParms;
+
   TpStep TStep;
   int VerletSteps;
   TpKernel TKernel;
@@ -65,6 +68,7 @@ public:
   std::string CaseName,RunName,DirOut,DirDataOut;
   std::string PartBeginDir;
   unsigned PartBegin,PartBeginFirst;
+  bool RestartChrono;             ///<Allows restart with Chrono active (default=0).
   float FtPause;
   bool RhopOutModif;              ///<Indicates whether \ref RhopOutMin or RhopOutMax is changed.
   float RhopOutMin,RhopOutMax;    ///<Limits for \ref RhopOut density correction.

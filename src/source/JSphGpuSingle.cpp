@@ -45,6 +45,8 @@
 #include "JDebugSphGpu.h"
 #include "JSphShifting.h"
 #include "JDsPips.h"
+#include "JDsExtraData.h"
+#include "FunctionsCuda.h"
 
 #include <climits>
 
@@ -124,7 +126,7 @@ void JSphGpuSingle::UpdateMaxValues(){
 /// Loads the configuration of the execution.
 /// Carga la configuracion de ejecucion.
 //==============================================================================
-void JSphGpuSingle::LoadConfig(JSphCfgRun *cfg){
+void JSphGpuSingle::LoadConfig(const JSphCfgRun *cfg){
   //-Loads general configuration.
   JSph::LoadConfig(cfg);
   //-Checks compatibility of selected options.
@@ -136,6 +138,8 @@ void JSphGpuSingle::LoadConfig(JSphCfgRun *cfg){
 /// Configuracion del dominio actual.
 //==============================================================================
 void JSphGpuSingle::ConfigDomain(){
+  //-Configure cell map division (defines ScellDiv, Scell, Map_Cells). 
+  ConfigCellDivision();
   //-Computes the number of particles.
   Np=PartsLoaded->GetCount(); Npb=CaseNpb; NpbOk=Npb;
   //-Allocates memory for arrays with fixed size (motion and floating bodies).
@@ -166,7 +170,6 @@ void JSphGpuSingle::ConfigDomain(){
   tfloat3 *boundnormal=NULL;
   if(UseNormals){
     boundnormal=new tfloat3[Np];
-    memset(boundnormal,0,sizeof(tfloat3)*Np);
     LoadBoundNormals(Np,Npb,Idp,Code,boundnormal);
   }
 
@@ -180,8 +183,6 @@ void JSphGpuSingle::ConfigDomain(){
   //-Computes MK domain for boundary and fluid particles.
   MkInfo->ComputeMkDomains(Np,AuxPos,Code);
 
-  //-Configure cell division.
-  ConfigCellDivision();
   //-Sets local domain of the simulation within Map_Cells and computes DomCellCode.
   //-Establece dominio de simulacion local dentro de Map_Cells y calcula DomCellCode.
   SelecDomain(TUint3(0,0,0),Map_Cells);
@@ -221,14 +222,14 @@ void JSphGpuSingle::ConfigDomain(){
 /// tiempo consumido con TMG_SuResizeNp. Al terminar actualiza el divide.
 //==============================================================================
 void JSphGpuSingle::ResizeParticlesSize(unsigned newsize,float oversize,bool updatedivide){
-  TmgStart(Timers,TMG_SuResizeNp);
+  Timersg->TmStart(TMG_SuResizeNp,false);
   newsize+=(oversize>0? unsigned(oversize*newsize): 0);
   FreeCpuMemoryParticles();
   CellDivSingle->FreeMemoryGpu();
   DivData=DivDataGpuNull();
   ResizeGpuMemoryParticles(newsize);
   AllocCpuMemoryParticles(newsize);
-  TmgStop(Timers,TMG_SuResizeNp);
+  Timersg->TmStop(TMG_SuResizeNp,false);
   if(updatedivide)RunCellDivide(true);
 }
 
@@ -246,7 +247,7 @@ void JSphGpuSingle::ResizeParticlesSize(unsigned newsize,float oversize,bool upd
 /// nuevas periodicas.
 //==============================================================================
 void JSphGpuSingle::RunPeriodic(){
-  TmgStart(Timers,TMG_SuPeriodic);
+  Timersg->TmStart(TMG_SuPeriodic,false);
   //-Stores the current number of periodic particles.
   //-Guarda numero de periodicas actuales.
   NpfPerM1=NpfPer;
@@ -291,9 +292,9 @@ void JSphGpuSingle::RunPeriodic(){
           //-Redimensiona memoria para particulas si no hay espacio suficiente y repite el proceso de busqueda.
           if(count>nmax || !CheckGpuParticlesSize(count+Np)){
             ArraysGpu->Free(listpg); listpg=NULL;
-            TmgStop(Timers,TMG_SuPeriodic);
+            Timersg->TmStop(TMG_SuPeriodic,false);
             ResizeParticlesSize(Np+count,PERIODIC_OVERMEMORYNP,false);
-            TmgStart(Timers,TMG_SuPeriodic);
+            Timersg->TmStart(TMG_SuPeriodic,false);
           }
           else{
             run=false;
@@ -319,8 +320,8 @@ void JSphGpuSingle::RunPeriodic(){
       }
     }
   }
+  Timersg->TmStop(TMG_SuPeriodic,true);
   Check_CudaErroor("Failed in creation of periodic particles.");
-  TmgStop(Timers,TMG_SuPeriodic);
 }
 
 //==============================================================================
@@ -336,11 +337,12 @@ void JSphGpuSingle::RunCellDivide(bool updateperiodic){
   if(updateperiodic && PeriActive)RunPeriodic();
 
   //-Initiates Divide.
-  CellDivSingle->Divide(Npb,Np-Npb-NpbPer-NpfPer,NpbPer,NpfPer,BoundChanged,Dcellg,Codeg,Timers,Posxyg,Poszg,Idpg);
+  CellDivSingle->Divide(Npb,Np-Npb-NpbPer-NpfPer,NpbPer,NpfPer,BoundChanged
+    ,Dcellg,Codeg,Posxyg,Poszg,Idpg,Timersg);
   DivData=CellDivSingle->GetCellDivData();
 
   //-Sorts particle data. | Ordena datos de particulas.
-  TmgStart(Timers,TMG_NlSortData);
+  Timersg->TmStart(TMG_NlSortData,false);
   {
     unsigned* idpg=ArraysGpu->ReserveUint();
     typecode* codeg=ArraysGpu->ReserveTypeCode();
@@ -400,17 +402,17 @@ void JSphGpuSingle::RunCellDivide(bool updateperiodic){
 
   //-Collect position of floating particles. | Recupera posiciones de floatings.
   if(CaseNfloat)cusph::CalcRidp(PeriActive!=0,Np-Npb,Npb,CaseNpb,CaseNpb+CaseNfloat,Codeg,Idpg,FtRidpg);
-  TmgStop(Timers,TMG_NlSortData);
+  Timersg->TmStop(TMG_NlSortData,false);
 
   //-Control of excluded particles (only fluid because excluded boundary are checked before).
   //-Gestion de particulas excluidas (solo fluid porque las boundary excluidas se comprueban antes).
-  TmgStart(Timers,TMG_NlOutCheck);
+  Timersg->TmStart(TMG_NlOutCheck,false);
   unsigned npfout=CellDivSingle->GetNpfOut();
   if(npfout){
     ParticlesDataDown(npfout,Np,true,false);
     AddParticlesOut(npfout,Idp,AuxPos,AuxVel,AuxRhop,Code);
   }
-  TmgStop(Timers,TMG_NlOutCheck);
+  Timersg->TmStop(TMG_NlOutCheck,true);
   BoundChanged=false;
 }
 
@@ -434,8 +436,9 @@ void JSphGpuSingle::Interaction_Forces(TpInterStep interstep){
   if(TBoundary==BC_MDBC && (MdbcCorrector || interstep!=INTERSTEP_SymCorrector))MdbcBoundCorrection(); //-Boundary correction for mDBC.
   InterStep=interstep;
   PreInteraction_Forces();
-  TmgStart(Timers,TMG_CfForces);
+  float3 *dengradcorr=NULL;
 
+  Timersg->TmStart(TMG_CfForces,true);
   const bool lamsps=(TVisco==VISCO_LaminarSPS);
   unsigned bsfluid=BlockSizes.forcesfluid;
   unsigned bsbound=BlockSizes.forcesbound;
@@ -447,9 +450,9 @@ void JSphGpuSingle::Interaction_Forces(TpInterStep interstep){
     ,lamsps,TDensity,ShiftingMode
     ,Visco*ViscoBoundFactor,Visco
     ,bsbound,bsfluid,Np,Npb,NpbOk
-    ,0,DivData,Dcellg
+    ,0,Nstep,DivData,Dcellg
     ,Posxyg,Poszg,PosCellg,Velrhopg,Idpg,Codeg
-    ,FtoMasspg,SpsTaug
+    ,FtoMasspg,SpsTaug,dengradcorr
     ,ViscDtg,Arg,Aceg,Deltag
     ,SpsGradvelg
     ,ShiftPosfsg
@@ -470,6 +473,7 @@ void JSphGpuSingle::Interaction_Forces(TpInterStep interstep){
 
   //-Applies DDT.
   if(Deltag)cusph::AddDelta(Np-Npb,Deltag+Npb,Arg+Npb);//-Adds the Delta-SPH correction for the density. | Anhade correccion de Delta-SPH a Arg[]. 
+  cudaDeviceSynchronize();
   Check_CudaErroor("Failed while executing kernels of interaction.");
 
   //-Calculates maximum value of ViscDt.
@@ -477,8 +481,8 @@ void JSphGpuSingle::Interaction_Forces(TpInterStep interstep){
   //-Calculates maximum value of Ace (periodic particles are ignored). ViscDtg is used like auxiliary memory.
   AceMax=ComputeAceMax(ViscDtg); 
 
+  Timersg->TmStop(TMG_CfForces,true);
   Check_CudaErroor("Failed in reduction of viscdt.");
-  TmgStop(Timers,TMG_CfForces);
 }
 
 //==============================================================================
@@ -486,13 +490,14 @@ void JSphGpuSingle::Interaction_Forces(TpInterStep interstep){
 /// Calcula datos extrapolados en el contorno para mDBC.
 //==============================================================================
 void JSphGpuSingle::MdbcBoundCorrection(){
-  TmgStart(Timers,TMG_CfPreForces);
+  Timersg->TmStart(TMG_CfPreForces,false);
   unsigned n=NpbOk;
   cusph::Interaction_MdbcCorrection(TKernel,Simulate2D,SlipMode,MdbcFastSingle
     ,n,CaseNbound,MdbcThreshold,DivData,Map_PosMin,Posxyg,Poszg,PosCellg,Codeg
     ,Idpg,BoundNormalg,MotionVelg,Velrhopg);
-  TmgStop(Timers,TMG_CfPreForces);
+  Timersg->TmStop(TMG_CfPreForces,false);
 }
+
 
 //==============================================================================
 /// Returns the maximum value of  (ace.x^2 + ace.y^2 + ace.z^2) from Acec[].
@@ -624,58 +629,39 @@ void JSphGpuSingle::FtApplyImposedVel(float3 *ftoforcesresg)const{
 }
 
 //==============================================================================
-/// Copies the external forces to FtoExtForcesg array for GPU.
-/// Copia las fuerzas externas al array FtoExtForcesg para GPU.
-//==============================================================================
-void JSphGpuSingle::FtCopyExternalForces(){
-  tfloat3 *ftoextforces=FtoAuxFloat15;
-  memset(ftoextforces,0,sizeof(tfloat3)*FtCount*2);
-  if(FtLinearForce!=NULL && FtAngularForce!=NULL)for(unsigned cf=0;cf<FtCount;cf++){
-    //-Adds external linear forces.
-    if(FtLinearForce[cf]!=NULL){
-      const tfloat3 flin=FtLinearForce[cf]->GetValue3f(TimeStep);
-      if(flin.x!=FLT_MAX)ftoextforces[cf*2].x=flin.x;
-      if(flin.y!=FLT_MAX)ftoextforces[cf*2].y=flin.y;
-      if(flin.z!=FLT_MAX)ftoextforces[cf*2].z=flin.z;
-    }
-    //-Adds external angular forces.
-    if(FtAngularForce[cf]!=NULL){
-      const tfloat3 fang=FtAngularForce[cf]->GetValue3f(TimeStep);
-      if(fang.x!=FLT_MAX)ftoextforces[cf*2+1].x=fang.x;
-      if(fang.y!=FLT_MAX)ftoextforces[cf*2+1].y=fang.y;
-      if(fang.z!=FLT_MAX)ftoextforces[cf*2+1].z=fang.z;
-    }
-  }
-  cudaMemcpy(FtoExtForcesg,ftoextforces,sizeof(tfloat3)*FtCount*2,cudaMemcpyHostToDevice);
-}
-
-//==============================================================================
 /// Process floating objects.
 /// Procesa floating objects.
 //==============================================================================
 void JSphGpuSingle::RunFloating(double dt,bool predictor){
+  Timersg->TmStart(TMG_SuFloating,false);
   if(TimeStep>=FtPause){//-Operator >= is used because when FtPause=0 in symplectic-predictor, code would not enter here. | Se usa >= pq si FtPause es cero en symplectic-predictor no entraria.
-    TmgStart(Timers,TMG_SuFloating);
-    //-Initialises forces of floatings.
-    cudaMemset(FtoForcesg,0,sizeof(StFtoForces)*FtCount);
-
-    //-Adds accelerations from ForcePoints and Moorings.
-    if(ForcePoints){
-      //-Initialises forces of floatings.
+    
+    //-Adds external forces (ForcePoints, Moorings, external file) to FtoForces[].
+    if(ForcePoints!=NULL || FtLinearForce!=NULL){
       StFtoForces *ftoforces=(StFtoForces *)FtoAuxFloat15;
       memset(ftoforces,0,sizeof(StFtoForces)*FtCount);
-      ForcePoints->GetFtMotionData(ftoforces);
+      //-Loads sum of linear and angular forces from ForcePoints and Moorings.
+      if(ForcePoints)ForcePoints->GetFtForcesSum(ftoforces);
+      //-Adds the external forces.
+      if(FtLinearForce!=NULL){
+        for(unsigned cf=0;cf<FtCount;cf++){
+          ftoforces[cf].face     =ftoforces[cf].face     +GetFtExternalForceLin(cf,TimeStep);
+          ftoforces[cf].fomegaace=ftoforces[cf].fomegaace+GetFtExternalForceAng(cf,TimeStep);
+        }
+      }
       //-Copies data to GPU memory.
       cudaMemcpy(FtoForcesg,ftoforces,sizeof(StFtoForces)*FtCount,cudaMemcpyHostToDevice);
     }
+    else{
+      //-Initialises forces of floatings when no external forces are applied.
+      cudaMemset(FtoForcesg,0,sizeof(StFtoForces)*FtCount);
+    }
 
-    //-Adds acceleration from particles and from external forces to FtoForces[].
-    //-Copies the external forces to FtoExtForcesg array.
-    if(FtLinearForce!=NULL)FtCopyExternalForces();
-    //-Calculate forces summation (face,fomegaace) starting from floating particles in ftoforcessum[].
-    cusph::FtCalcForcesSum(PeriActive!=0,FtCount,FtoDatpg,FtoCenterg,FtRidpg,Posxyg,Poszg,Aceg,FtoForcesSumg);
-    //-Adds acceleration from particles and from external forces to FtoForcesg[].
-    cusph::FtCalcForces(FtCount,Gravity,FtoMassg,FtoAnglesg,FtoInertiaini8g,FtoInertiaini1g,FtoForcesSumg,FtoForcesg,FtoExtForcesg);
+    //-Calculate forces summation (face,fomegaace) starting from floating particles and add in FtoForcesg[].
+    cusph::FtCalcForcesSum(PeriActive!=0,FtCount,FtoDatpg,FtoCenterg,FtRidpg,Posxyg,Poszg,Aceg,FtoForcesg);
+
+    //-Computes final acceleration from particles and from external forces in FtoForcesg[].
+    cusph::FtCalcForces(FtCount,Gravity,FtoMassg,FtoAnglesg,FtoInertiaini8g,FtoInertiaini1g,FtoForcesg);
     
     //-Calculate data to update floatings / Calcula datos para actualizar floatings.
     cusph::FtCalcForcesRes(FtCount,Simulate2D,dt,FtoVelAceg,FtoCenterg,FtoForcesg,FtoForcesResg,FtoCenterResg);
@@ -693,13 +679,14 @@ void JSphGpuSingle::RunFloating(double dt,bool predictor){
 
     //-Run floating with Chrono library.
     if(ChronoObjects){      
-      TmgStop(Timers,TMG_SuFloating);
-      TmgStart(Timers,TMG_SuChrono);
+      Timersg->TmStop(TMG_SuFloating,false);
+      Timersg->TmStart(TMG_SuChrono,false);
       //-Export data / Exporta datos.
       tfloat3* ftoforces=FtoAuxFloat15;
       cudaMemcpy(ftoforces,FtoForcesg,sizeof(tfloat3)*FtCount*2,cudaMemcpyDeviceToHost);
-      for(unsigned cf=0;cf<FtCount;cf++)if(FtObjs[cf].usechrono)
+      for(unsigned cf=0;cf<FtCount;cf++)if(FtObjs[cf].usechrono){
         ChronoObjects->SetFtData(FtObjs[cf].mkbound,ftoforces[cf*2],ftoforces[cf*2+1]);
+      }
       //-Applies the external velocities to each floating body of Chrono.
       if(FtLinearVel!=NULL)ChronoFtApplyImposedVel();
       //-Calculate data using Chrono / Calcula datos usando Chrono.
@@ -711,8 +698,8 @@ void JSphGpuSingle::RunFloating(double dt,bool predictor){
       for(unsigned cf=0;cf<FtCount;cf++)if(FtObjs[cf].usechrono)ChronoObjects->GetFtData(FtObjs[cf].mkbound,ftocenter[cf],ftoforces[cf*2+1],ftoforces[cf*2]);
       cudaMemcpy(FtoCenterResg,ftocenter,sizeof(tdouble3)*FtCount  ,cudaMemcpyHostToDevice);
       cudaMemcpy(FtoForcesResg,ftoforces,sizeof(float3)  *FtCount*2,cudaMemcpyHostToDevice);
-      TmgStop(Timers,TMG_SuChrono);
-      TmgStart(Timers,TMG_SuFloating);
+      Timersg->TmStop(TMG_SuChrono,false);
+      Timersg->TmStart(TMG_SuFloating,false);
     }
 
     //-Apply movement around floating objects / Aplica movimiento sobre floatings.
@@ -729,16 +716,15 @@ void JSphGpuSingle::RunFloating(double dt,bool predictor){
       }
       //<vs_ftmottionsv_end>
     }
-
-    //-Update data of points in FtForces and calculates motion data of affected floatings.
-    if(!predictor && ForcePoints){
-      UpdateFtObjs(); //-Updates floating information on CPU memory.
-      ForcePoints->UpdatePoints(TimeStep,dt,FtObjs);
-      if(Moorings)Moorings->ComputeForces(Nstep,TimeStep,dt,ForcePoints);
-      ForcePoints->ComputeFtMotion();
-    }
-    TmgStop(Timers,TMG_SuFloating);
   }
+  //-Update data of points in FtForces and calculates motion data of affected floatings.
+  if(!predictor && ForcePoints){
+    UpdateFtObjs(); //-Updates floating information on CPU memory.
+    ForcePoints->UpdatePoints(TimeStep,dt,FtObjs);
+    if(Moorings)Moorings->ComputeForces(Nstep,TimeStep,dt,ForcePoints);
+    ForcePoints->ComputeForcesSum();
+  }
+  Timersg->TmStop(TMG_SuFloating,false);
 }
 
 //==============================================================================
@@ -751,7 +737,7 @@ void JSphGpuSingle::RunGaugeSystem(double timestep,bool saveinput){
     ,NpbOk,Npb,Np,Posxyg,Poszg,Codeg,Idpg,Velrhopg,saveinput);
 }
 
- //==============================================================================
+//==============================================================================
 /// Compute PIPS information of current particles.
 /// Calcula datos de PIPS de particulas actuales.
 //==============================================================================
@@ -771,9 +757,9 @@ void JSphGpuSingle::ComputePips(bool run){
 /// Initialises execution of simulation.
 /// Inicia ejecucion de simulacion.
 //==============================================================================
-void JSphGpuSingle::Run(std::string appname,JSphCfgRun *cfg,JLog2 *log){
-  if(!cfg||!log)return;
-  AppName=appname; Log=log;
+void JSphGpuSingle::Run(std::string appname,const JSphCfgRun *cfg,JLog2 *log){
+  if(!cfg || !log)return;
+  AppName=appname; Log=log; CfgRun=cfg;
 
   //-Selection of GPU.
   //-------------------
@@ -781,8 +767,8 @@ void JSphGpuSingle::Run(std::string appname,JSphCfgRun *cfg,JLog2 *log){
 
   //-Configures timers.
   //-------------------
-  TmgCreation(Timers,cfg->SvTimers);
-  TmgStart(Timers,TMG_Init);
+  Timersg->Config(cfg->SvTimers);
+  Timersg->TmStart(TMG_Init,false);
 
   //-Load parameters and values of input. | Carga de parametros y datos de entrada.
   //--------------------------------------------------------------------------------
@@ -790,7 +776,7 @@ void JSphGpuSingle::Run(std::string appname,JSphCfgRun *cfg,JLog2 *log){
   LoadCaseParticles();
   VisuConfig();
   ConfigDomain();
-  ConfigRunMode("Single-Gpu");
+  ConfigRunMode();
   VisuParticleSummary();
 
   //-Initialisation of execution variables. | Inicializacion de variables de ejecucion.
@@ -802,8 +788,8 @@ void JSphGpuSingle::Run(std::string appname,JSphCfgRun *cfg,JLog2 *log){
   UpdateMaxValues();
   PrintAllocMemory(GetAllocMemoryCpu(),GetAllocMemoryGpu());
   SaveData(); 
-  TmgResetValues(Timers);
-  TmgStop(Timers,TMG_Init);
+  Timersg->ResetTimes();
+  Timersg->TmStop(TMG_Init,false);
   if(Log->WarningCount())Log->PrintWarningList("\n[WARNINGS]","");
   PartNstep=-1; Part++;
 
@@ -862,19 +848,19 @@ void JSphGpuSingle::SaveData(){
   const unsigned npsave=Np-NpbPer-NpfPer; //-Subtracts the periodic particles if they exist. | Resta las periodicas si las hubiera.
   //-Retrieves particle data from the GPU. | Recupera datos de particulas en GPU.
   if(save){
-    TmgStart(Timers,TMG_SuDownData);
+    Timersg->TmStart(TMG_SuDownData,false);
     unsigned npnormal=ParticlesDataDown(Np,0,false,PeriActive!=0);
     if(npnormal!=npsave)Run_Exceptioon("The number of particles is invalid.");
-    TmgStop(Timers,TMG_SuDownData);
+    Timersg->TmStop(TMG_SuDownData,false);
   }
   //-Retrieve floating object data from the GPU. | Recupera datos de floatings en GPU.
   if(FtCount){
-    TmgStart(Timers,TMG_SuDownData);
+    Timersg->TmStart(TMG_SuDownData,false);
     UpdateFtObjs();
-    TmgStop(Timers,TMG_SuDownData);
+    Timersg->TmStop(TMG_SuDownData,false);
   }
   //-Collects additional information. | Reune informacion adicional.
-  TmgStart(Timers,TMG_SuSavePart);
+  Timersg->TmStart(TMG_SuSavePart,false);
   StInfoPartPlus infoplus;
   memset(&infoplus,0,sizeof(StInfoPartPlus));
   if(SvData&SDAT_Info){
@@ -899,7 +885,39 @@ void JSphGpuSingle::SaveData(){
   AddBasicArrays(arrays,npsave,AuxPos,Idp,AuxVel,AuxRhop);
   JSph::SaveData(npsave,arrays,1,vdom,&infoplus);
   if(UseNormals && SvNormals)SaveVtkNormalsGpu("normals/Normals.vtk",Part,npsave,Npb,Posxyg,Poszg,Idpg,BoundNormalg);
-  TmgStop(Timers,TMG_SuSavePart);
+  //-Save extra data.
+  if(SvExtraDataBi4)SaveExtraData();
+  Timersg->TmStop(TMG_SuSavePart,false);
+}
+
+//==============================================================================
+/// Displays and stores final summary of the execution.
+/// Muestra y graba resumen final de ejecucion.
+//==============================================================================
+void JSphGpuSingle::SaveExtraData(){
+  const bool svextra=(BoundNormalg!=NULL);
+  if(svextra && SvExtraDataBi4->CheckSave(Part)){
+    SvExtraDataBi4->InitPartData(Part,TimeStep,Nstep);
+    //-Saves normals of mDBC.
+    unsigned *idp =NULL;
+    tfloat3  *nor =NULL;
+    typecode *code=NULL;
+    if(BoundNormalg){
+      unsigned nsize=Npb;
+      idp=fcuda::ToHostUint  (0,nsize,Idpg);
+      nor=fcuda::ToHostFloat3(0,nsize,BoundNormalg);
+      if(PeriActive){
+        #ifdef CODE_SIZE4
+          code=fcuda::ToHostUint(0,nsize,Codeg);
+        #else
+          code=fcuda::ToHostWord(0,nsize,Codeg);
+        #endif
+      }
+      SvExtraDataBi4->AddNormals(UseNormalsFt,Np,Npb,idp,code,nor);
+    }
+    //-Saves file.
+    SvExtraDataBi4->SavePartData();
+  }
 }
 
 //==============================================================================
@@ -912,12 +930,12 @@ void JSphGpuSingle::FinishRun(bool stop){
   Log->Print(" ");
   string hinfo,dinfo;
   if(SvTimers){
-    ShowTimers();
-    GetTimersInfo(hinfo,dinfo);
-    Log->Print(" ");
+    Timersg->ShowTimes("[GPU Timers]",Log);
+    Timersg->GetTimersInfo(hinfo,dinfo);
   }
   if(SvRes)SaveRes(tsim,ttot,hinfo,dinfo);
   Log->PrintFilesList();
   Log->PrintWarningList();
+  VisuRefs();
 }
 
