@@ -401,7 +401,7 @@ void JPartDataBi4::SaveFileData(std::string fname){
   if(NoRtimes){
     rcode=Data->GetvText("RunCode");
     rdate=Data->GetvText("Date");
-    Data->SetvText("RunCode","00001010");
+    Data->SetvText("RunCode","00000000");
     Data->SetvText("Date","???");
     rtime=Part->GetvDouble("RunTime",true,0);
     rtsim=Part->GetvDouble("timesim",true,0);

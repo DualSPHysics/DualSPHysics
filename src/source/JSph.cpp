@@ -2361,7 +2361,7 @@ void JSph::ConfigSaveData(unsigned piece,unsigned pieces,std::string div){
   //-Configura objeto para grabacion de particulas excluidas.
   if(SvData&SDAT_Binx){
     DataOutBi4=new JPartOutBi4Save();
-    DataOutBi4->ConfigBasic(piece,pieces,RunCode,AppName,Simulate2D,DirDataOut);
+    DataOutBi4->ConfigBasic(NoRtimes,piece,pieces,RunCode,AppName,Simulate2D,DirDataOut);
     DataOutBi4->ConfigParticles(CaseNp,CaseNfixed,CaseNmoving,CaseNfloat,CaseNfluid);
     DataOutBi4->ConfigLimits(MapRealPosMin,MapRealPosMax,(RhopOut? RhopOutMin: 0),(RhopOut? RhopOutMax: 0));
     DataOutBi4->SaveInitial();

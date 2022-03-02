@@ -66,7 +66,7 @@ void JSphCfgRun::Reset(){
   FtPause=-1;
   NstepsBreak=0;
   SvAllSteps=false;
-  NoRtimes=false;
+  NoRtimes=true;
   PipsMode=0; PipsSteps=100;
   CreateDirs=true;
   CsvSepComa=false;

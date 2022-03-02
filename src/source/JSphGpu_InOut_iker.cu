@@ -524,7 +524,7 @@ unsigned InOutListCreate(bool stable,unsigned n,unsigned nmax,const byte *newizo
     //-Reordena lista si es valida y stable esta activado.
     if(stable && count && count<=nmax){
       thrust::device_ptr<unsigned> dev_list((unsigned*)inoutpart);
-      thrust::sort(dev_list+n,dev_list+n+count);
+      thrust::sort(dev_list+n,dev_list+(n+count));
     }
   }
   return(count);

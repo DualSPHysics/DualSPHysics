@@ -56,6 +56,7 @@ JPartOutBi4Save::~JPartOutBi4Save(){
 //==============================================================================
 void JPartOutBi4Save::Reset(){
   ResetData();
+  NoRtimes=false;
   Dir="";
   Block=0;
   Piece=0;
@@ -113,14 +114,17 @@ std::string JPartOutBi4Save::GetFileNamePart(unsigned block,unsigned piece,unsig
 /// Configuracion de variables basicas.
 /// Configuration of basic variables.
 //==============================================================================
-void JPartOutBi4Save::ConfigBasic(unsigned piece,unsigned npiece,std::string runcode,std::string appname,bool data2d,const std::string &dir){
+void JPartOutBi4Save::ConfigBasic(bool nortimes,unsigned piece,unsigned npiece
+  ,std::string runcode,std::string appname,bool data2d,const std::string &dir)
+{
   Reset();
+  NoRtimes=nortimes;
   Piece=piece; Npiece=npiece;
   Dir=fun::GetDirWithSlash(dir);
   Data->SetvUint("Piece",Piece);
   Data->SetvUint("Npiece",Npiece);
-  Data->SetvText("RunCode",runcode);
-  Data->SetvText("Date",fun::GetDateTime());
+  Data->SetvText("RunCode",(NoRtimes? "00000000": runcode));
+  Data->SetvText("Date",(NoRtimes? "???": fun::GetDateTime()));
   Data->SetvText("AppName",appname);
   Data->SetvBool("Data2d",data2d);
   Data->SetvUint("FmtVersion",FmtVersion);
