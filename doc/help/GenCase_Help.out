@@ -30,17 +30,23 @@
  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
 
 
-GenCase v5.0.229 (29-01-2021) 
-===============================
+GenCase v5.0.260 (08-05-2022)
+==============================
 LoadDsphConfig> .../bin/windows/DsphConfig.xml
 Execution parameters information:
 
+  GenCase config_inout [options]
   GenCase config_in config_out [options]
+  GenCase config_in <str>*<str> [options]
 
   Options:
     -h               Shows information about the different parameters
     -ver             Shows version information
     -template        Generates the example file 'CaseTemplate.xml'
+    -clean           Saves a clean version of the configuration XML file
+
+    -evars:<str>     Defines new values for variables in XML file
+                     E.g.: -evars:Dp=0.56:SizeX=2.3
     -dp:<float>      Defines the distance between particles
 
     -threads:<int>   Indicates the number of threads for parallel execution,

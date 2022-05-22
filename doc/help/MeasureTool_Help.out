@@ -30,7 +30,7 @@
  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
 
 
-MeasureTool v5.0.147 (27-01-2021)
+MeasureTool v5.0.176 (21-05-2022)
 ==================================
 LoadDsphConfig> .../bin/windows/DsphConfig.xml
 Information about parameters of execution:
@@ -80,6 +80,12 @@ Information about parameters of execution:
     -pointstemplate Creates example file to be used with -points or -pointspos
     -points <file>  Defines the points where interpolated data will be
                     computed (each value separated by space or a new line)
+    -pointsdef:<def>  Definition of points by command line intead of by file.
+       List of equivalences with definitions in external file (POINTS=pt,
+       POINTSLIST=ptls and POINTSENDLIST=ptels):
+           pt=<x>:<y>:<z>,pt=<x>:<y>:<z>...
+           ptls[x=<x0>:<dx>:<nx>,y=<y0>:<dy>:<ny>,z=<z0>:<dz>:<nz>]...
+           ptels[x=<x0>:<dx>:<xf>,y=<y0>:<dy>:<yf>,z=<z0>:<dz>:<zf>]...
     -pointspos <file>  Defines the position of points where interpolated data
                        will be computed (each line contains the points for one
                        part file, points are defined as x0;y0;z0;x1;y1;z1...)
@@ -92,11 +98,14 @@ Information about parameters of execution:
                            with the given id
 
     -kclimit:<float>       Defines the minimum value of sum_wab_vol to apply
-                           the Kernel Correction (default value = 0.5)
+                           the Kernel Correction. Use value >= 2 to disable
+                           this correction (default value = 0.5)
     -kcdummy:<float>       Defines the dummy value for the interpolated
                            quantity if Kernel Correction is not applied
                            (default value = 0)
     -kcusedummy:<0/1>      Defines whether or not to use the dummy value
+                           (default value = 1)
+    -kcmass:<0/1>          Enables/disables Kernel Correction for Mass variable
                            (default value = 1)
 
     -distinter_2h:<float>  Coefficient of 2h that defines the maximum distance
@@ -114,28 +123,50 @@ Information about parameters of execution:
        +/-vel:       Velocity
        +/-rhop:      Density
        +/-press:     Pressure
+       +/-pressh:    Hydrostatic pressure (computed from depth data)
        +/-mass:      Mass
        +/-vol:       Volume
        +/-idp:       Id of particles
        +/-ace:       Acceleration
        +/-vor:       Vorticity
+       +/-depth:     Depth (computed from depth data files by IsoSurface)
        +/-kcorr:     Summation of interaction kernel multiplied by volume
        +/-XXX:       Variable defined by the user
        (by default: vel,rhop)
 
+    -depthdir <dir>  Directory with depth data (PartDepth_xxxx.bin4)
+
+  Set the height values to be calculated:
     -elevation[:<float>]  Fluid elevation is calculated starting from mass 
                      values for each point x,y. The reference mass to obtain
                      the elevation is calculated according to the mass values
                      of the selected particles; by default 0.5 in 3D (half 
                      the mass) and 0.4 in 2D
-
     -elevationlimit:<float>  The same as -elevation but the reference mass is
                              given by an absolute value
-
     -elevationoutput:<value> Output files with fluid elevation values
        time:        Values of elevation for each time (option by default)
        pos:         Values of elevation for each position (x,y)
        all:         Both output files.
+
+    -hvars[:<values>] Defines height values to be computed
+                      (+ means include, - means do not include)
+       +/-all:        To choose or reject all options
+       +/-eta:        Elevation for each column x,y (equal to -elevation)
+       +/-bottom:     Fluid bottom for each column x,y
+       +/-depthsum:   Sum of depths for each column x,y
+       +/-depthmax:   Maximum depth for each column x,y
+       +/-depthlast:  Last depth (near surface) for each column x,y
+       +/-depthfirst: First depth (near bottom) for each column x,y
+       +/-depthrhop:  Total depth calculated by integral of density at x,y
+
+    -hsort:<value>    Height sort mode: 1:Original, 2:X-Y, 3:Y-X (0 by default)
+
+    -masslimit:<float>  Coefficient to compute mass limit used to find the
+                        fluid surface, by default 0.5 in 3D (half the mass)
+                        and 0.4 in 2D
+    -masslimitvalue:<float>  The same as -masslimit but the reference mass is
+                        given by an absolute value
 
     -tke            Turbulent Kinetic Energy is calculated using the average 
                     velocity of selected PARTS
@@ -145,7 +176,8 @@ Information about parameters of execution:
                           interpolation points
     -savecsv <file.csv>   Generates one CSV file with the time history
                           of the obtained values
-    -savecsvpart:<0/1>    Generates CSV file per PART data instead of var
+    -savecsvpart:<0/1>    Generates CSV file per PART data instead of variable
+    -savecsvnopos:<0/1>   Position not included in CSV file per PART data
     -saveascii <file.asc> Generates one ASCII file without headers
                           with the time history of the obtained values
 

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<!-- *** DualSPHysics (31-10-2021) *** -->
+<!-- *** DualSPHysics (31-07-2020) *** -->
 <!-- *** class: JSph (JSpaceEParms)  *** -->
 <!------------------------------------------------------------------------------->
 <!------------------------------------------------------------------------------->
@@ -9,7 +9,6 @@
 <execution>
 	<parameters>
 		<parameter key="SavePosDouble" value="0" comment="Saves particle position using double precision (default=0)" />
-        <parameter key="SaveExtraParts" value="0-100:10" comment="Part interval or list for saving extra data for restart option (default=0)" />
 		<parameter key="Boundary" value="2" comment="Boundary method 1:DBC, 2:mDBC (default=1)" />
 		<parameter key="MDBCFastSingle" value="1" comment="mDBC uses fast single precision calculation on GPU (default=1)" />
 		<parameter key="StepAlgorithm" value="1" comment="Step Algorithm 1:Verlet, 2:Symplectic (default=1)" />

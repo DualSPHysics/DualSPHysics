@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<!-- *** DualSPHysics (04-09-2020) *** -->
+<!-- *** DualSPHysics (24-10-2021) *** -->
 <!-- *** class: JGaugeSystem *** -->
 <!------------------------------------------------------------------------------->
 <!------------------------------------------------------------------------------->
@@ -12,7 +12,7 @@
 			<computedt value="0.001" comment="Time between measurements. 0:all steps (default=TimeOut)" units_comment="s" />
 			<computetime start="0.1" end="0.2" comment="Start and end of measures. (default=simulation time)" units_comment="s" />
 			<output value="true" comment="Creates CSV files of measurements (default=false)" />
-			<outputdt value="0" comment="Time between output measurements. 0:all steps (default=TimeOut)" units_comment="s" />
+			<outputdt value="0" comment="Time between output measurements. 0:all computed measurements (default=TimeOut)" units_comment="s" />
 			<outputtime start="0" end="10" comment="Start and end of output measures. (default=simulation time)" units_comment="s" />
 		</default>
 		<!-- Calculates velocity in one point and changes default configuration parameters. -->
@@ -21,7 +21,7 @@
 			<computedt value="0.01" comment="Time between measurements. 0:all steps (default=default.computedt)" units_comment="s" />
 			<computetime start="0.05" end="0.11" comment="Start and end of measures. (default=default.computetime)" units_comment="s" />
 			<output value="true" comment="Creates CSV files of measurements (default=default.output)" />
-			<outputdt value="0" comment="Time between output measurements. 0:all steps (default=default.outputdt)" units_comment="s" />
+			<outputdt value="0" comment="Time between output measurements. 0:all computed measurements (default=default.outputdt)" units_comment="s" />
 			<outputtime start="0" end="10" comment="Start and end of output measures. (default=default.outputtime)" units_comment="s" />
 			<point x="1.0" y="0" z="0.1" comment="Measurement position" units_comment="m" />
 		</velocity>
