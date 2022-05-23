@@ -56,7 +56,7 @@ JPartDataBi4::~JPartDataBi4(){
 //==============================================================================
 void JPartDataBi4::Reset(){
   ResetData();
-  NoRtimes=false;
+  NoRtimes=true;
   Dir="";
   Piece=0;
   Npiece=1;

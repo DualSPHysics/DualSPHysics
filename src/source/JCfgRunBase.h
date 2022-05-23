@@ -27,6 +27,7 @@
 //# - Nuevo metodo LoadDouble2(). (05-08-2021)
 //# - Mejora de LoadDouble2(), LoadDouble3() y LoadDouble6() y equivalesntes 
 //#   para floats. Ahora toma el valor default siempre que falte un valor. (14-09-2021)
+//# - Nuevo metodo VerText(). (08-05-2022)
 //#############################################################################
 
 #ifndef _JCfgRunBase_
@@ -91,6 +92,8 @@ public:
   void LoadFile(std::string fname,int lv);
   void ErrorParm(const std::string &opt,int optc,int lv,const std::string &file)const;
   void ErrorParmText(const std::string &text,int optc,int lv,const std::string &file)const;
+
+  static std::string VerText(const std::string fullname,const std::string veropt);
 
   virtual void VisuInfo()const=0;
   virtual void VisuConfig()const=0;

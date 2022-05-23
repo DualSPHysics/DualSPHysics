@@ -50,7 +50,8 @@
 //:# - Incluye informacion de Symmetry. (13-05-2019)
 //:# - Nuevo AddPartData() para tipos TpTypeData. (23-08-2019)
 //:# - Mejora la gestion de excepciones. (06-05-2020)
-//:# - Option NoRtimes to removes execution dependent values from bi4 files (28-02-2022)
+//:# - Option NoRtimes to removes execution dependent values from bi4 files. (28-02-2022)
+//:# - Option NoRtimes is enabled by default. (08-05-2022)
 //:#############################################################################
 
 /// \file JPartDataBi4.h \brief Declares the class \ref JPartDataBi4.

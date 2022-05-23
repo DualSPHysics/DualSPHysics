@@ -68,7 +68,11 @@
 //:# - Link_pointframe permite asignar directamente nodos a un objeto rigido (v6.15 / 01-07-2021).
 //:# - Permite el uso de varios hilos con OpenMP para resolver colisiones (v6.16 / 20-07-2021).
 //:# - Habilita el uso de FtPause con Chrono (v6.17 / 21-07-2021).
-//:# - Se mantiene independencia entre la masa del objeto SPH y de la viga FEA (v6.18 / 22-09-2021).
+//:# - Se mantiene independencia entre la masa del objeto SPH y de la viga FEA (v6.18 / 22-09-2021)
+//:# - Permite la opcion modified Newton matrix para evaluarlo y ensamblarlo en cada paso (HHT) (v6.19 / 19-11-2021).
+//:# - Almacena los nodos de cada beam como copias en vez de punteros (v6.20 / 22-11-2021).
+//:# - Permite configurar los parametros para el integrador HHT usando una estructura StHHT (v6.21 / 03-01-2022).
+//:# - Acomplamiento con chrono-4.0.0 debido a los problemas de rendimiento de v6 (v4.21 / 07-04-2022).
 //:#############################################################################
 
 /// \file DSPHChronoLib.h \brief Declares the class \ref DSPHChronoLib which is the interface between DualSPHysics and Chrono.
@@ -99,6 +103,7 @@ public:
   typedef enum { RSTATE_Init,RSTATE_Loading,RSTATE_Results }TpRunState;
   const std::string version;       ///<DualSPHysics version
   const std::string DsphChVersion; ///<Interface version
+  const std::string ChronoVersion; ///<Chrono version
 
 protected:
   const std::string ClassName;
@@ -128,7 +133,7 @@ protected:
   virtual void SetVariableCoeff(){};
   
   /// Adds the material properties to a object to enable collisions
-  std::shared_ptr<chrono::ChMaterialSurface> ConfigSurfaceBody(const JChBody &body);
+  void ConfigSurfaceBody(const JChBody &body,chrono::ChBody *chbody);
 
   /// Adds the initial velocity.
   void ApplyInitialVel(const JChBody &body,chrono::ChBody *chbody);
@@ -186,11 +191,11 @@ class DSPHChronoLibSC : public DSPHChronoLib {
 private:
   chrono::ChSystem *MphysicalSystem; ///<Pointer to Chrono System
 
+  /// Establishes the variable coefficients to the link objects.
+  virtual void SetVariableCoeff();
+
   /// Saves header for forces for each body and link (ChronoLink_forces.csv, ChronoBody_forces.csv).
   void SaveForcesHead();
-  
-  /// Establishes the variable coefficients to the link objects.
-  void SetVariableCoeff();
   
   /// Configures floating bodies
   void ConfigFloating(const JChBody* body);

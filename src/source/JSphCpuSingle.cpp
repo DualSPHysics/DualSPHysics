@@ -972,13 +972,15 @@ void JSphCpuSingle::RunFloating(double dt,bool predictor){
       }
     }
   }
+  Timersc->TmStop(TMC_SuFloating);
   //-Update data of points in FtForces and calculates motion data of affected floatings.
   if(!predictor && ForcePoints){
+    Timersc->TmStart(TMC_SuMoorings);
     ForcePoints->UpdatePoints(TimeStep,dt,FtObjs);
     if(Moorings)Moorings->ComputeForces(Nstep,TimeStep,dt,ForcePoints);
     ForcePoints->ComputeForcesSum();
+    Timersc->TmStop(TMC_SuMoorings);
   }
-  Timersc->TmStop(TMC_SuFloating);
 }
 
 //==============================================================================

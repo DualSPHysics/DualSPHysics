@@ -1,14 +1,13 @@
-#DualSPHysics GPU/CPU v5.0.164 21-11-2020
+#DualSPHysics GPU/CPU v5.0.231 03-03-2022
 
 #=============== Compilation Options (YES/NO) ===============
-USE_GCC5=NO
+USE_GCC5=YES
 USE_DEBUG=NO
 USE_FAST_MATH=YES
 USE_NATIVE_CPU_OPTIMIZATIONS=NO
 COMPILE_VTKLIB=YES
 COMPILE_NUMEXLIB=YES
 COMPILE_CHRONO=YES
-COMPILE_CHRONO_OMP=YES
 COMPILE_WAVEGEN=YES
 COMPILE_MOORDYN=YES
 
@@ -47,11 +46,7 @@ ifeq ($(COMPILE_NUMEXLIB), NO)
   CCMOREFLAGS:=$(CCMOREFLAGS) -DDISABLE_NUMEXLIB
 endif
 ifeq ($(COMPILE_CHRONO), NO)
-  COMPILE_CHRONO_OMP=NO
   CCFLAGS:=$(CCFLAGS) -DDISABLE_CHRONO
-endif
-ifeq ($(COMPILE_CHRONO_OMP), NO)
-  CCFLAGS:=$(CCFLAGS) -DDISABLE_CHRONO_OMP
 endif
 ifeq ($(COMPILE_WAVEGEN), NO)
   CCFLAGS:=$(CCFLAGS) -DDISABLE_WAVEGEN
@@ -114,10 +109,10 @@ OBJXML=JXml.o tinystr.o tinyxml.o tinyxmlerror.o tinyxmlparser.o
 OBJSPHMOTION=JMotion.o JMotionList.o JMotionMov.o JMotionObj.o JMotionPos.o JDsMotion.o
 OBCOMMON=Functions.o FunGeo3d.o FunSphKernelsCfg.o JAppInfo.o JBinaryData.o JCfgRunBase.o JDataArrays.o JException.o JLinearValue.o JLog2.o JObject.o JOutputCsv.o JRadixSort.o JRangeFilter.o JReadDatafile.o JSaveCsv2.o JTimeControl.o randomc.o
 OBCOMMONDSPH=JDsphConfig.o JDsPips.o JPartDataBi4.o JPartDataHead.o JPartFloatBi4.o JPartOutBi4Save.o JCaseCtes.o JCaseEParms.o JCaseParts.o JCaseProperties.o JCaseUserVars.o JCaseVtkOut.o
-OBSPH=JArraysCpu.o JCellDivCpu.o JSphCfgRun.o JComputeMotionRef.o JDsDamping.o JDsGaugeItem.o JDsGaugeSystem.o JDsPartsOut.o JDsSaveDt.o JSphShifting.o JSph.o JDsAccInput.o JSphCpu.o JDsInitialize.o JFtMotionSave.o JSphMk.o JDsPartsInit.o JDsFixedDt.o JDsViscoInput.o JDsOutputTime.o JWaveAwasZsurf.o JWaveSpectrumGpu.o main.o
+OBSPH=JArraysCpu.o JCellDivCpu.o JSphCfgRun.o JComputeMotionRef.o JDsDcell.o JDsDamping.o JDsExtraData.o JDsGaugeItem.o JDsGaugeSystem.o JDsPartsOut.o JDsSaveDt.o JSphShifting.o JSph.o JDsAccInput.o JSphCpu.o JDsInitialize.o JFtMotionSave.o JSphMk.o JDsPartsInit.o JDsFixedDt.o JDsViscoInput.o JDsOutputTime.o JDsTimers.o JWaveAwasZsurf.o JWaveSpectrumGpu.o main.o
 OBSPHSINGLE=JCellDivCpuSingle.o JPartsLoad4.o JSphCpuSingle.o
 OBCOMMONGPU=FunctionsCuda.o JObjectGpu.o 
-OBSPHGPU=JArraysGpu.o JDebugSphGpu.o JCellDivGpu.o JSphGpu.o 
+OBSPHGPU=JArraysGpu.o JDebugSphGpu.o JCellDivGpu.o JSphGpu.o JDsGpuInfo.o 
 OBSPHSINGLEGPU=JCellDivGpuSingle.o JSphGpuSingle.o
 OBCUDA=JCellDivGpu_ker.o JCellDivGpuSingle_ker.o JDsPips_ker.o JDsGauge_ker.o JReduSum_ker.o JSphShifting_ker.o JDsAccInput_ker.o JSphGpu_ker.o JSphGpuSimple_ker.o JWaveOrder2_ker.o
 
@@ -144,9 +139,6 @@ endif
 ifeq ($(COMPILE_CHRONO), YES)
   JLIBS:=$(JLIBS) -ldsphchrono -lChronoEngine 
 endif
-ifeq ($(COMPILE_CHRONO_OMP), YES)
-  JLIBS:=$(JLIBS) -lChronoEngine_parallel
- endif
 ifeq ($(COMPILE_WAVEGEN), YES)
   JLIBS:=$(JLIBS) -ljwavegen_64
 endif

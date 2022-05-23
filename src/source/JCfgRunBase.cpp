@@ -129,7 +129,9 @@ void JCfgRunBase::LoadFile(std::string fname,int lv){
 //==============================================================================
 /// Generates error of unknown parameter.
 //==============================================================================
-void JCfgRunBase::ErrorParm(const std::string &opt,int optc,int lv,const std::string &file)const{
+void JCfgRunBase::ErrorParm(const std::string &opt,int optc,int lv
+  ,const std::string &file)const
+{
   std::string tx=fun::PrintStr("Parameter \"%s\" unrecognised or invalid. ",opt.c_str());
   tx=tx+fun::PrintStr("(Level cfg:%d, Parameter:%d)",lv,optc);
   Run_ExceptioonFile(tx,file);
@@ -138,9 +140,39 @@ void JCfgRunBase::ErrorParm(const std::string &opt,int optc,int lv,const std::st
 //==============================================================================
 /// Generates error on parameter with indicated text.
 //==============================================================================
-void JCfgRunBase::ErrorParmText(const std::string &text,int optc,int lv,const std::string &file)const{
+void JCfgRunBase::ErrorParmText(const std::string &text,int optc,int lv
+  ,const std::string &file)const
+{
   std::string tx=text+fun::PrintStr(" (Level cfg:%d, Parameter:%d)",lv,optc);
   Run_ExceptioonFile(tx,file);
+}
+
+
+//==============================================================================
+/// Returns string of version info according parameters in veropt.
+//==============================================================================
+std::string JCfgRunBase::VerText(const std::string fullname,const std::string veropt){
+  string ret=fullname;
+  if(veropt.size()>4){
+    string fname=fullname;
+    //string vname,vver,vdate;
+    string vname=fun::StrSplit(" v",fname);
+    string vver =string("v")+fun::StrSplit(" (",fname);
+    string vdate=(fname.empty() || fname[fname.size()-1]!=')'? "???": fname.substr(0,fname.size()-1));
+    if(!vdate.empty() && vdate[0]=='v'){ //-Manage special cases: "DualSPHysics-XXXX vX.X (vX.X) (DD-MM-YYYY)"
+      string ver2=string("(")+fun::StrSplit(" (",fname);
+      vver=vver+ver2;
+      vdate=(fname.empty() || fname[fname.size()-1]!=')'? "???": fname.substr(0,fname.size()-1));
+    }
+    int s1=atoi(fun::StrSplitValue(":",veropt,1).c_str());
+    int s2=atoi(fun::StrSplitValue(":",veropt,2).c_str());
+    if(s1>0)vname=fun::StrFillEnd(vname," ",s1);
+    if(s2>0)vver =fun::StrFillEnd(vver ," ",s2);
+    //printf("[%s]->[%d,%d] [%s]---[%s]---[%s]\n",FullName.c_str(),s1,s2,vname.c_str(),vver.c_str(),vdate.c_str());
+    //printf("%s %s %s\n",vname.c_str(),vver.c_str(),vdate.c_str());
+    ret=vname+" "+vver+" "+vdate;
+  }
+  return(ret);
 }
 
 

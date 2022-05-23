@@ -168,7 +168,7 @@
       </Defines>
       <UseHostInclude>false</UseHostInclude>
       <AdditionalOptions>-use_fast_math -Xcompiler "/wd 4267" %(AdditionalOptions)</AdditionalOptions>
-      <CodeGeneration>compute_30,sm_30;compute_35,sm_35;compute_50,sm_50;compute_52,sm_52;compute_61,sm_61;compute_70,sm_70</CodeGeneration>
+      <CodeGeneration>compute_30,sm_30;compute_70,sm_70</CodeGeneration>
     </CudaCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -591,10 +591,7 @@ rem %CudaNvcc% -ccbin "$(VCInstallDir)bin" %gpuhw% -use_fast_math -c %ptxinfo% -
     </ClInclude>
     <ClInclude Include="..\source\JDsTimers.h" />
     <ClInclude Include="..\source\JDsTimersCpu.h" />
-    <ClInclude Include="..\source\JDsTimersGpu.h">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">true</ExcludedFromBuild>
-    </ClInclude>
+    <ClInclude Include="..\source\JDsTimersGpu.h" />
     <ClInclude Include="..\source\JException.h" />
     <ClInclude Include="..\source\JArraysGpu.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">true</ExcludedFromBuild>

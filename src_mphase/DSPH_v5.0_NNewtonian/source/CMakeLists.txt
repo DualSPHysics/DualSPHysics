@@ -11,7 +11,6 @@ PROJECT(DualSPHysics)
 #------------------------------------------------------------------
 option(ENABLE_MOORDYN "Enable the MoorDyn+ library" ON)
 option(ENABLE_CHRONO "Enable the Chrono Engine library" ON)
-option(ENABLE_CHRONO_OMP "Enable the Chrono Parallel module" ON)
 
 #------------------------------------------------------------------
 # Source files
@@ -95,7 +94,7 @@ set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_GLIBCXX_USE_CXX11_ABI=0 -fPIC")
 #------------------------------------------------------------------
 # Binaries
 #------------------------------------------------------------------
-set (CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../../../bin/${PLATFORM})# Generic output directory
+set (CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../../../bin/${PLATFORM}/DSNNewtonian)# Generic output directory
 set (CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})         # Release output directory
 set (CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})           # Debug output directory
 
@@ -155,24 +154,8 @@ if(ENABLE_CHRONO)
     set(LINKER_FLAGS ${LINKER_FLAGS} dsphchrono)
   endif()
 else()
-  set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DDISABLE_CHRONO")
   set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DDISABLE_CHRONO")
 endif(ENABLE_CHRONO)
-
-# Chrono Parallel
-if(ENABLE_CHRONO_OMP)
-  if(ENABLE_CHRONO)
-    message(STATUS "Using ChronoEngine Parallel Module")
-    if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-      set(LINKER_FLAGS ${LINKER_FLAGS} ChronoEngine_parallel)
-    endif()
-  else()
-    message(FATAL_ERROR "You should enable CHRONO option to use CHRONO_OMP")
-  endif(ENABLE_CHRONO)
-else()
-  set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DDISABLE_CHRONO_OMP")
-  set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DDISABLE_CHRONO_OMP")
-endif(ENABLE_CHRONO_OMP)
 
 #------------------------------------------------------------------
 # Linker flags

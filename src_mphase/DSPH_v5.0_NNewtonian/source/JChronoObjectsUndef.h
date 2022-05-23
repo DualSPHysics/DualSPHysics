@@ -31,23 +31,25 @@ class JChronoObjects : protected JObject
 protected:
 public:
   JChronoObjects(const std::string &dirdata,const std::string &casename
-    ,const JXml *sxml,const std::string &place,double dp,word mkboundfirst){}
+    ,const JXml *sxml,const std::string &place,double dp,word mkboundfirst
+    ,bool simulate2d){}
   ~JChronoObjects(){};
   void Reset(){};
   static bool Available(){ return(false); }
 
   bool UseDataDVI(word mkbound)const{ return(false); };
   bool GetUseCollision()const{ return(false); };
+  unsigned GetCollisionShapes()const{ return(0); }
 
   bool ConfigBodyFloating(word mkbound,double mass,const tdouble3 &center
     ,const tmatrix3d &inertia,const tint3 &translationfree,const tint3 &rotationfree
     ,const tfloat3 &linvelini,const tfloat3 &angvelini){ return(false); };
 
-  void ConfigDataBodyFloating(word mkbound,float kfric,float restitu,float young,float poisson){};
-  void ConfigDataBodyMoving  (word mkbound,float kfric,float restitu,float young,float poisson){};
-  void ConfigDataBodyFixed   (word mkbound,float kfric,float restitu,float young,float poisson){};
+  void ConfigDataBodyFloating(word mkbound,float kfric,float sfric,float restitu,float young,float poisson){};
+  void ConfigDataBodyMoving  (word mkbound,float kfric,float sfric,float restitu,float young,float poisson){};
+  void ConfigDataBodyFixed   (word mkbound,float kfric,float sfric,float restitu,float young,float poisson){};
 
-  void Init(bool simulate2d,const JSphMk* mkinfo){};
+  void Init(const JSphMk* mkinfo){};
   void VisuConfig(std::string txhead, std::string txfoot)const{};
 
   bool GetWithMotion()const{ return(false); }

@@ -24,7 +24,7 @@
  along with DualSPHysics. If not, see <http://www.gnu.org/licenses/>.
 
 
-DualSPHysics5 v5.0.176 (01-03-2021)
+DualSPHysics5 v5.0.233 (08-05-2022)
 ====================================
 LoadDsphConfig> .../bin/windows/DsphConfig.xml
 Information about execution parameters:
@@ -43,6 +43,8 @@ Information about execution parameters:
 
     -stable     The result is always the same but the execution is slower
     -saveposdouble:<0/1>  Saves position using double precision (default=0)
+    -svextraparts:<int>  PART interval for saving extra data (default=0)
+    -svextraparts:<list> List of PARTs for saving extra data (default=0)
 
     -ompthreads:<int>  Only for CPU execution, indicates the number of threads
                    by host for parallel execution, this takes the number of 
@@ -58,8 +60,11 @@ Information about execution parameters:
     -mdbc          Modified Dynamic Boundary Condition mDBC (mode: vel=0)
     -mdbc_noslip   Modified Dynamic Boundary Condition mDBC (mode: no-slip)
     -mdbc_freeslip Modified Dynamic Boundary Condition mDBC (mode: free-slip)
-    -mdbc_fast:<0/1>       Fast single precision calculation on GPU (default=1)
+    -mdbc_fast:<0/1>        Fast single precision calculation on GPU (default=1)
     -mdbc_threshold:<float> Kernel support limit to apply mDBC correction [0-1]
+
+    -initnorpla:<inlinecfg>  Initialize definition for <boundnormal_plane>
+    -initnorpart:<inlinecfg> Initialize definition for <boundnormal_parts>
 
     -symplectic      Symplectic algorithm as time step algorithm
     -verlet[:steps]  Verlet algorithm as time step algorithm and number of
@@ -95,7 +100,7 @@ Information about execution parameters:
      Specifies the beginning of the simulation starting from a given PART
      (begin) and located in the directory (dir), (first) indicates the
      number of the first PART to be generated
-
+    -restartchrono:<0/1>    Allows restart with Chrono active (default=0)
 
     -tmax:<float>   Maximum time of simulation
     -tout:<float>   Time between output files
@@ -124,8 +129,9 @@ Information about execution parameters:
                       (value by default is read from DsphConfig.xml or 0)
 
   Debug options:
-    -nsteps:<uint>  Maximum number of steps allowed (debug)
-    -svsteps:<0/1>  Saves a PART for each step (debug)
+    -nsteps:<uint>  Maximum number of steps allowed (activates nortimes)
+    -svsteps:<0/1>  Saves a PART for each step (activates nortimes)
+    -nortimes:<0/1> Removes execution dependent values from bi4 files
 
   Examples:
     DualSPHysics case out_case -sv:binx,csv 

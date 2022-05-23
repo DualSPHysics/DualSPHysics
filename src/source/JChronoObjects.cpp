@@ -895,7 +895,8 @@ void JChronoObjects::VisuLink(const JChLink *link)const{
 void JChronoObjects::VisuConfig(std::string txhead, std::string txfoot)const{
   if(!txhead.empty())Log->Print(txhead);
   const JChronoData* chdata=ChronoLib->GetChronoData();
-  Log->Printf("  DSPHChrono version.: %s",ChronoLib->version.c_str());
+  Log->Printf("  DSPHChrono version: %s",ChronoLib->version.c_str());
+  Log->Printf("  Chrono version....: %s",ChronoLib->ChronoVersion.c_str());
   Log->Printf("  Data directory....: [%s]",chdata->GetDataDir().c_str());
   Log->Printf("  Solver ...........: %s",chdata->SolverToStr().c_str());
   Log->Printf("  Time Stepper......: %s",chdata->TimeStepperToStr().c_str());

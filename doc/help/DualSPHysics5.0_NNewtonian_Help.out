@@ -26,7 +26,6 @@
 
 DualSPHysics5-NNewtonian v1.005 (v5.0.164) (21-11-2020)
 ========================================================
-LoadDsphConfig> .../bin/windows/DsphConfig.xml
 Information about execution parameters:
 
   DualSPHysics [name_case [dir_out]] [options]

@@ -718,13 +718,15 @@ void JSphGpuSingle::RunFloating(double dt,bool predictor){
     }
   }
   //-Update data of points in FtForces and calculates motion data of affected floatings.
+  Timersg->TmStop(TMG_SuFloating,false);
   if(!predictor && ForcePoints){
+    Timersg->TmStart(TMG_SuMoorings,false);
     UpdateFtObjs(); //-Updates floating information on CPU memory.
     ForcePoints->UpdatePoints(TimeStep,dt,FtObjs);
     if(Moorings)Moorings->ComputeForces(Nstep,TimeStep,dt,ForcePoints);
     ForcePoints->ComputeForcesSum();
+    Timersg->TmStop(TMG_SuMoorings,false);
   }
-  Timersg->TmStop(TMG_SuFloating,false);
 }
 
 //==============================================================================
