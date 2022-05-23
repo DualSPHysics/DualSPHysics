@@ -30,7 +30,7 @@
  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
 
 
-PartVTK v5.0.147 (27-01-2021)
+PartVTK v5.0.176 (21-05-2022)
 ==============================
 LoadDsphConfig> .../bin/windows/DsphConfig.xml
 Information about parameters of execution:
@@ -80,6 +80,8 @@ Information about parameters of execution:
     -savecsv <file.csv>    Generates CSV files to use with calculation sheets
     -savestatscsv <file.csv>  Generates CSV files with statistics
 
+    -saveenergy <file.csv> Generates one CSV file with energy in time domain
+
     -createdirs:<0/1>    Creates full path for output files
                          (value by default is read from DsphConfig.xml or 1)
     -csvsep:<0/1>       Separator character in CSV files (0=semicolon, 1=coma)
@@ -108,14 +110,26 @@ Information about parameters of execution:
        +/-vel:       Velocity
        +/-rhop:      Density
        +/-press:     Pressure
+       +/-pressh:    Hydrostatic pressure (computed from depth data)
        +/-mass:      Mass
        +/-vol:       Volume
        +/-type:      Type (fixed,moving,floating,fluid)
        +/-mk:        Value of mk associated to the particles
        +/-ace:       Acceleration
        +/-vor:       Vorticity
+       +/-depth:     Depth (computed from depth data files by IsoSurface)
+       +/-energy:    Energy variables: kinectic, potential, internal and total
+       +/-enkin:     Kinetic energy
+       +/-enpot:     Potential energy (use -enpotzero to define zero-position)
+       +/-enint:     Internal energy
+       +/-entot:     Total energy (kinectic + potential + internal)
        +/-XXX:       Variable defined by the user
        (Preselected variables: idp,vel,rhop,type)
+
+    -depthdir <dir>  Directory with depth data (PartDepth_xxxx.bin4)
+
+    -enpotzero:<x0,y0,z0>  Indicates the zero position for potential energy
+                           calculation (default value = 0,0,0)
 
     -symparts:<0/1>  Adds mirrored particles from symmetry data to VKT files
        (default value=0)

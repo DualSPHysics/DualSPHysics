@@ -8,7 +8,6 @@ USE_NATIVE_CPU_OPTIMIZATIONS=NO
 COMPILE_VTKLIB=YES
 COMPILE_NUMEXLIB=YES
 COMPILE_CHRONO=YES
-COMPILE_CHRONO_OMP=YES
 COMPILE_WAVEGEN=YES
 COMPILE_MOORDYN=YES
 
@@ -16,7 +15,7 @@ LIBS_DIRECTORIES=-L./
 LIBS_DIRECTORIES:=$(LIBS_DIRECTORIES) -L../lib/linux_gcc
 
 EXECNAME=DualSPHysics5.0_NNewtonian_linux64
-EXECS_DIRECTORY=../../../bin/linux
+EXECS_DIRECTORY=../../../bin/linux/DSNNewtonian
 
 # -std=c++0x ---> Used to avoid errors for calls to enums
 ifeq ($(USE_DEBUG), YES)
@@ -47,11 +46,7 @@ ifeq ($(COMPILE_NUMEXLIB), NO)
   CCMOREFLAGS:=$(CCMOREFLAGS) -DDISABLE_NUMEXLIB
 endif
 ifeq ($(COMPILE_CHRONO), NO)
-  COMPILE_CHRONO_OMP=NO
   CCFLAGS:=$(CCFLAGS) -DDISABLE_CHRONO
-endif
-ifeq ($(COMPILE_CHRONO_OMP), NO)
-  CCFLAGS:=$(CCFLAGS) -DDISABLE_CHRONO_OMP
 endif
 ifeq ($(COMPILE_WAVEGEN), NO)
   CCFLAGS:=$(CCFLAGS) -DDISABLE_WAVEGEN
@@ -146,9 +141,6 @@ endif
 ifeq ($(COMPILE_CHRONO), YES)
   JLIBS:=$(JLIBS) -ldsphchrono -lChronoEngine 
 endif
-ifeq ($(COMPILE_CHRONO_OMP), YES)
-  JLIBS:=$(JLIBS) -lChronoEngine_parallel
- endif
 ifeq ($(COMPILE_WAVEGEN), YES)
   JLIBS:=$(JLIBS) -ljwavegen_64
 endif

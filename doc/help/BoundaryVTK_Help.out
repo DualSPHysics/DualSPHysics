@@ -30,7 +30,7 @@
  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
 
 
-BoundaryVTK v5.0.147 (27-01-2021)
+BoundaryVTK v5.0.176 (21-05-2022)
 ==================================
 LoadDsphConfig> .../bin/windows/DsphConfig.xml
 Information about parameters of execution:
@@ -100,9 +100,17 @@ Information about parameters of execution:
     -savevtkdata <file.vtk>  Generates vtk(polydata) file with the loaded
                          shapes including mk and shape code
 
-    -savemotion <file>   Generates csv file with movement of the objects
-    -saveposmotion:<mk>:x:y:z <file>   Generates csv file with updated position
-                         according movement of mk boundary
+    -savemotion <file>   Generates CSV file with matrix movement from the beginning
+    -saveposmotion:<mk>:x:y:z <file>   Generates CSV file with updated position
+       according movement of mk boundary
+    -saveposmotion:mk=<mk>,<def>  Generates CSV file with updated position
+       according movement of mk boundary where points are defined using:
+           pt=<x>:<y>:<z>,pt=<x>:<y>:<z>...    for a simple list of points
+           ptls[x=<x0>:<dx>:<nx>,y=<y0>:<dy>:<ny>,z=<z0>:<dz>:<nz>]...
+           ptels[x=<x0>:<dx>:<xf>,y=<y0>:<dy>:<yf>,z=<z0>:<dz>:<zf>]...
+       ptls and ptels are point grid definitions equivalent to POINTSLIST and
+       POINTSENDLIST respectively
+
     -onlytype:<values>   Indicates the type of selected mk of the shapes to be
                          stored, affects only the previous out option and cannot be
                          combined with other filters

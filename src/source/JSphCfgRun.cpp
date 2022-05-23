@@ -66,6 +66,7 @@ void JSphCfgRun::Reset(){
   FtPause=-1;
   NstepsBreak=0;
   SvAllSteps=false;
+  NoRtimes=true;
   PipsMode=0; PipsSteps=100;
   CreateDirs=true;
   CsvSepComa=false;
@@ -188,8 +189,9 @@ void JSphCfgRun::VisuInfo()const{
   printf("\n");
 
   printf("  Debug options:\n");
-  printf("    -nsteps:<uint>  Maximum number of steps allowed (debug)\n");
-  printf("    -svsteps:<0/1>  Saves a PART for each step (debug)\n");
+  printf("    -nsteps:<uint>  Maximum number of steps allowed (activates nortimes)\n");
+  printf("    -svsteps:<0/1>  Saves a PART for each step (activates nortimes)\n");
+  printf("    -nortimes:<0/1> Removes execution dependent values from bi4 files\n");
   printf("\n");
 
   printf("  Examples:\n");
@@ -393,8 +395,15 @@ void JSphCfgRun::LoadOpts(string *optlis,int optn,int lv,const std::string &file
         LoadDouble6(txoptfull,0,DomainFixedMin,DomainFixedMax);
         DomainMode=2;
       }
-      else if(txword=="NSTEPS")NstepsBreak=atoi(txoptfull.c_str()); 
-      else if(txword=="SVSTEPS")SvAllSteps=(txoptfull!=""? atoi(txoptfull.c_str()): 1)!=0;
+      else if(txword=="NSTEPS"){
+        NstepsBreak=atoi(txoptfull.c_str()); 
+        if(NstepsBreak)NoRtimes=true;
+      }
+      else if(txword=="SVSTEPS"){
+        SvAllSteps=(txoptfull!=""? atoi(txoptfull.c_str()): 1)!=0;
+        if(SvAllSteps)NoRtimes=true;
+      }
+      else if(txword=="NORTIMES")NoRtimes=(txoptfull!=""? atoi(txoptfull.c_str()): 1)!=0;
       else if(txword=="SVPIPS"){
         PipsMode=(unsigned)atoi(txopt1.c_str());
         if(PipsMode>2)ErrorParm(opt,c,lv,file);

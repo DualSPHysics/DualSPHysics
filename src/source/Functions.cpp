@@ -607,6 +607,35 @@ std::string StrLower(const std::string &cad){
 }
 
 //==============================================================================
+/// Fills string on the begin with another string.
+//==============================================================================
+std::string StrFillBegin(const std::string &cad,const std::string rcad
+  ,unsigned maxsize)
+{
+  string ret=cad;
+  if(!rcad.empty() && unsigned(ret.size())<maxsize){
+    while(unsigned(ret.size())<maxsize)ret=rcad+ret;
+    if(unsigned(ret.size())>maxsize)ret=ret.substr(unsigned(ret.size())-maxsize);
+  }
+  return(ret);
+}
+
+//==============================================================================
+/// Fills string on the end with another string.
+//==============================================================================
+std::string StrFillEnd(const std::string &cad,const std::string rcad
+  ,unsigned maxsize)
+{
+  string ret=cad;
+  if(!rcad.empty() && unsigned(ret.size())<maxsize){
+    while(unsigned(ret.size())<maxsize)ret=ret+rcad;
+    if(unsigned(ret.size())>maxsize)ret=ret.substr(0,maxsize);
+  }
+  return(ret);
+}
+
+
+//==============================================================================
 /// Gets string without spaces at the beginning and end.
 //==============================================================================
 std::string StrTrim(const std::string &cad){

@@ -56,6 +56,7 @@ JPartDataBi4::~JPartDataBi4(){
 //==============================================================================
 void JPartDataBi4::Reset(){
   ResetData();
+  NoRtimes=true;
   Dir="";
   Piece=0;
   Npiece=1;
@@ -158,7 +159,10 @@ std::string JPartDataBi4::GetFileData(std::string casename,std::string dirname,u
 //==============================================================================
 /// Object configuration from JPartDataHead object.
 //==============================================================================
-void JPartDataBi4::Config(unsigned piece,unsigned npiece,std::string dir,const JPartDataHead* phead){
+void JPartDataBi4::Config(bool nortimes,unsigned piece,unsigned npiece
+  ,std::string dir,const JPartDataHead* phead)
+{
+  NoRtimes=nortimes;
   ConfigBasic(piece,npiece,phead->GetRunCode(),phead->GetAppName(),phead->GetCaseName()
     ,phead->GetData2d(),phead->GetData2dPosY(),dir);
   ConfigParticles(phead->GetCaseNp(),phead->GetCaseNfixed(),phead->GetCaseNmoving()
@@ -391,10 +395,31 @@ void JPartDataBi4::AddPartDataSplitting(unsigned npok,const float *mass
 void JPartDataBi4::SaveFileData(std::string fname){
   //-Comprueba que Part tenga algun array de datos. Check that Part has array with data.
   if(!Part->GetArraysCount())Run_Exceptioon("There is not array of particles data.");
+  //-Removes execution times and other execution-only dependent values.
+  string rcode,rdate;
+  double rtime,rtsim;
+  if(NoRtimes){
+    rcode=Data->GetvText("RunCode");
+    rdate=Data->GetvText("Date");
+    Data->SetvText("RunCode","00000000");
+    Data->SetvText("Date","???");
+    rtime=Part->GetvDouble("RunTime",true,0);
+    rtsim=Part->GetvDouble("timesim",true,0);
+    if(Part->ExistsValue("RunTime"))Part->SetvDouble("RunTime",0);
+    if(Part->ExistsValue("timesim"))Part->SetvDouble("timesim",0);
+  }
   //-Graba fichero. Record file.
   Data->SaveFile(Dir+fname,false,true);
   Part->RemoveArrays();
   //Data->SaveFileXml(Dir+fun::GetWithoutExtension(fname)+"__.xml");
+  //-Restores execution times and other execution-only dependent values.
+  if(NoRtimes){
+    Data->SetvText("RunCode",rcode);
+    Data->SetvText("Date",rdate);
+    if(Part->ExistsValue("RunTime"))Part->SetvDouble("RunTime",rtime);
+    if(Part->ExistsValue("timesim"))Part->SetvDouble("timesim",rtsim);
+  }
+
 }
 
 //==============================================================================

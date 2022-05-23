@@ -30,6 +30,7 @@
 //:# - Implementacion. (23-11-2013)
 //:# - Ahora se guarda tambien el motivo de exclusion. (20-03-2018)
 //:# - Mejora la gestion de excepciones. (06-05-2020)
+//:# - Option NoRtimes to removes execution dependent values from bi4 files (02-03-2022)
 //:#############################################################################
 
 /// \file JPartOutBi4Save.h \brief Declares the class \ref JPartOutBi4Save.
@@ -60,6 +61,7 @@ class JPartOutBi4Save : protected JObject
   //static const unsigned FormatVerDef=131122;  ///<Version de formato by default. Version of format by default.
   static const unsigned FmtVersion=180320;    ///<Version de formato by default. Version of format by default.
   //unsigned FormatVer;        ///<Version de formato. Format version.
+  bool NoRtimes;     ///<Removes execution times and other execution-only dependent values.
 
   std::string Dir;   ///<Directorio de datos. Data directory.
   unsigned Block;    ///<Numero de bloque. Block number.
@@ -96,7 +98,7 @@ class JPartOutBi4Save : protected JObject
   //Data recording:
   //====================
   //-Configuracion de objeto. Object Configuration.
-  void ConfigBasic(unsigned piece,unsigned npiece,std::string runcode,std::string appname,bool data2d,const std::string &dir);
+  void ConfigBasic(bool nortimes,unsigned piece,unsigned npiece,std::string runcode,std::string appname,bool data2d,const std::string &dir);
   void ConfigParticles(ullong casenp,ullong casenfixed,ullong casenmoving,ullong casenfloat,ullong casenfluid);
   void ConfigLimits(const tdouble3 &mapposmin,const tdouble3 &mapposmax,float rhopmin,float rhopmax);
   void SaveInitial();

@@ -50,6 +50,8 @@
 //:# - Incluye informacion de Symmetry. (13-05-2019)
 //:# - Nuevo AddPartData() para tipos TpTypeData. (23-08-2019)
 //:# - Mejora la gestion de excepciones. (06-05-2020)
+//:# - Option NoRtimes to removes execution dependent values from bi4 files. (28-02-2022)
+//:# - Option NoRtimes is enabled by default. (08-05-2022)
 //:#############################################################################
 
 /// \file JPartDataBi4.h \brief Declares the class \ref JPartDataBi4.
@@ -84,7 +86,8 @@ class JPartDataBi4 : protected JObject
 
   //-Variables de gestion.
   static const unsigned FormatVerDef=130825;    ///<Version de formato by default. Version of format by default.
-  unsigned FormatVer;        ///<Version de formato. Version of format.
+  unsigned FormatVer;    ///<Version de formato. Version of format.
+  bool NoRtimes;         ///<Removes execution times and other execution-only dependent values.
 
   std::string Dir;   ///<Directorio de datos. Data Directory.
   unsigned Piece;    ///<Numero de parte. Part number.
@@ -116,7 +119,7 @@ class JPartDataBi4 : protected JObject
   //Recording of data
   //====================
   //-Object configuration from JPartDataHead object.
-  void Config(unsigned piece,unsigned npiece,std::string dir,const JPartDataHead* parthead);
+  void Config(bool nortimes,unsigned piece,unsigned npiece,std::string dir,const JPartDataHead* parthead);
 
   //-Object configuration.
   void ConfigBasic(unsigned piece,unsigned npiece,std::string runcode,std::string appname,std::string casename,bool data2d,double data2dposy,const std::string &dir);

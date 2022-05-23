@@ -12,17 +12,29 @@ x1 y1 z1
 x2 y2 z2
 x3 y3 z3
 
+By command line:
+ -pointsdef:pt=x1:y1:z1,pt=x2:y2:z2,pt=x3:y3:z3
+
+
 Definition_of_list_of_points_according_to_number_of_points:
 "POINTSLIST"
 BeginX BeginY BeginZ
 StepX  StepY  StepZ
 CountX CountY CountZ
 
+By command line:
+ -pointsdef:ptls[x=BeginX:StepX:CountX,y=BeginY:StepY:CountY,z=BeginZ:StepZ:CountZ]
+
+
 Definition_of_list_of_points_according_to_end_points:
 "POINTSENDLIST"
 BeginX BeginY BeginZ
 StepX  StepY  StepZ
 EndX   EndY   EndZ
+
+By command line:
+ -pointsdef:ptels[x=BeginX:StepX:EndX,y=BeginY:StepY:EndY,z=BeginZ:StepZ:EndZ]
+
 
 POINTS
 0 0    1 #Point:(0,0,1)

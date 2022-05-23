@@ -68,7 +68,11 @@
 //:# - Link_pointframe permite asignar directamente nodos a un objeto rigido (v6.15 / 01-07-2021).
 //:# - Permite el uso de varios hilos con OpenMP para resolver colisiones (v6.16 / 20-07-2021).
 //:# - Habilita el uso de FtPause con Chrono (v6.17 / 21-07-2021).
-//:# - Se mantiene independencia entre la masa del objeto SPH y de la viga FEA (v6.18 / 22-09-2021).
+//:# - Se mantiene independencia entre la masa del objeto SPH y de la viga FEA (v6.18 / 22-09-2021)
+//:# - Permite la opcion modified Newton matrix para evaluarlo y ensamblarlo en cada paso (HHT) (v6.19 / 19-11-2021).
+//:# - Almacena los nodos de cada beam como copias en vez de punteros (v6.20 / 22-11-2021).
+//:# - Permite configurar los parametros para el integrador HHT usando una estructura StHHT (v6.21 / 03-01-2022).
+//:# - Acomplamiento con chrono-4.0.0 debido a los problemas de rendimiento de v6 (v4.21 / 07-04-2022).
 //:#############################################################################
 
 /// \file DSPHChronoLib.h \brief Declares the class \ref DSPHChronoLib which is the interface between DualSPHysics and Chrono.
@@ -85,7 +89,6 @@
 //-Forward declarations to avoid including chrono classes.
 namespace chrono {
   class ChSystem;
-  class ChSystemMulticore;
   class ChMaterialSurface;
   class ChBody;
 };
@@ -100,6 +103,7 @@ public:
   typedef enum { RSTATE_Init,RSTATE_Loading,RSTATE_Results }TpRunState;
   const std::string version;       ///<DualSPHysics version
   const std::string DsphChVersion; ///<Interface version
+  const std::string ChronoVersion; ///<Chrono version
 
 protected:
   const std::string ClassName;
@@ -107,19 +111,15 @@ protected:
   //-Chrono physical system.
   std::string DirOut;
   bool Simulate2D;          ///<True for 2D Simulations.
-  FeaBeams *FeaBeamsObj;    ///<Pointer to FeaBeams.
   bool UseOmp;              ///<Indicates if use of ChronoEngine_Multicore module is enabled.
   int OmpThreads;           ///<Threads number used by OpenMP.
   unsigned SolverIx;        ///<Indicates the index of chrono solver enum.
   unsigned TimeStepperIx;   ///<Indicates the index of chrono timestepper enum.
-  unsigned MaxIter;         ///<Indicates the maximun number of iterations for the solver.
-  bool DG;                  ///<Used for Debug.
   bool UseSMC;              ///<True if it is using SMC (SMooth Contacts) 
-  bool UseFEA;              ///<True if the use of Finite Element Analysis is enabled.
   JChronoData ChData;
   TpRunState RunState;
   double CollisionCoef;
-  double Alpha;  ///< HHT method parameter:  -1/3 <= alpha <= 0. For some dissipation
+
   /// Constructor
   DSPHChronoLib(const JChronoData &chdata);
 
@@ -133,8 +133,8 @@ protected:
   virtual void SetVariableCoeff(){};
   
   /// Adds the material properties to a object to enable collisions
-  std::shared_ptr<chrono::ChMaterialSurface> ConfigSurfaceBody(const JChBody &body);
-   
+  void ConfigSurfaceBody(const JChBody &body,chrono::ChBody *chbody);
+
   /// Adds the initial velocity.
   void ApplyInitialVel(const JChBody &body,chrono::ChBody *chbody);
 
@@ -191,11 +191,11 @@ class DSPHChronoLibSC : public DSPHChronoLib {
 private:
   chrono::ChSystem *MphysicalSystem; ///<Pointer to Chrono System
 
+  /// Establishes the variable coefficients to the link objects.
+  virtual void SetVariableCoeff();
+
   /// Saves header for forces for each body and link (ChronoLink_forces.csv, ChronoBody_forces.csv).
   void SaveForcesHead();
-  
-  /// Establishes the variable coefficients to the link objects.
-  void SetVariableCoeff();
   
   /// Configures floating bodies
   void ConfigFloating(const JChBody* body);
@@ -237,61 +237,4 @@ public:
   /// Obtains center of body.
   bool GetBodyCenter(const std::string &bodyname,tdouble3 &pcen)const;
 };
-
-#ifndef DISABLE_CHRONO_OMP
-//##############################################################################
-//# DSPHChronoLibMC
-//##############################################################################
-/// \brief Defines the class for multi-core executions.
-class DSPHChronoLibMC : public DSPHChronoLib {
-private:
-  chrono::ChSystemMulticore *MphysicalSystem;  ///<Pointer to Chrono System 
-
-  /// Saves header for forces for each body and link (ChronoLink_forces.csv, ChronoBody_forces.csv).
-  void SaveForcesHead();
-
-  /// Establishes the variable coefficients to the link objects.
-  void SetVariableCoeff();
-
-  /// Configures floating bodies
-  void ConfigFloating(const JChBody* body);
-
-  /// Configures moving bodies
-  void ConfigMoving(const JChBody* body);
-
-  /// Configures fixed bodies
-  void ConfigFixed(const JChBody* body);
-
-public:
-  /// Constructor
-  DSPHChronoLibMC(const JChronoData &chdata);
-
-  /// Destructor
-  ~DSPHChronoLibMC();
-
-  /// Loads data for bodies and configures objects.
-  void Config(std::string dirout,bool svdata,bool simulate2d);
-
-  /// Loads inertia for bodies.
-  void Config_Inertia();
-
-  /// Compute a single timestep for each floating and moving body.
-  bool RunChrono(double timestep,double dt,bool predictor);
-  
-  /// Saves forces for each body and link (ChronoLink_forces.csv,ChronoBody_forces.csv).
-  void SaveForces();
-
-  /// Obtains positions of Spring link.
-  bool GetSpringLinkPositions(const std::string &linkname,tdouble3 &p1,tdouble3 &p2)const;
-
-  /// Obtains RestLength of Spring link.
-  double GetSpringLinkRestLength(const std::string &linkname)const;
-
-  /// Modifies RestLength of Spring link.
-  void SetSpringLinkRestLength(const std::string &linkname,double restlength)const;
-
-  /// Obtains center of body.
-  bool GetBodyCenter(const std::string &bodyname,tdouble3 &pcen)const;
-};
-#endif //!DISABLE_CHRONO_OMP
 #endif //!DSPHCHRONOLIB_H

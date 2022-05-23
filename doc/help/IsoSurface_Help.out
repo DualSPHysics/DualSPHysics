@@ -30,7 +30,7 @@
  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
 
 
-IsoSurface v5.0.147 (27-01-2021)
+IsoSurface v5.0.176 (21-05-2022)
 =================================
 LoadDsphConfig> .../bin/windows/DsphConfig.xml
 Information about parameters of execution:
@@ -118,11 +118,11 @@ Information about parameters of execution:
     -distnode:<float>      Distance between nodes is given
 
   Define output files:
-    -saveiso <file.vtk>    Generates VTK files (polydata) with the isosuface
+    -saveiso <file.vtk>    Generates VTK files (polydata) with the isosurface
      calculated starting from a variable mass and using the limit value. When
      limit value is not given, the threshold mass value of the fluid is
      considered (0.5*fluid particle mass)
-    -isovar:var:<values>   Generates isosuface calculated starting from a
+    -isovar:var:<values>   Generates isosurface calculated starting from a
      variable given and using the limit values.
 
     -saveslice <file.vtk>  Generates VTK files (polydata) with the slice of 
@@ -137,6 +137,9 @@ Information about parameters of execution:
        none          Discard the data
        nearest       Copy data from nearest vertex
        interpolate   Interpolate data (default)
+
+    -savedepth <dir>  Generates files with depth data using default
+                      configuration by option -saveiso.
 
     -createdirs:<0/1>    Creates full path for output files
                          (value by default is read from DsphConfig.xml or 1)

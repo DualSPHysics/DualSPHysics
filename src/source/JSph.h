@@ -208,6 +208,7 @@ protected:
   JDsOutputTime *OutputTime;  ///<Manage the use of variable output time to save PARTs.
   int NstepsBreak;            ///<Maximum number of steps allowed (debug).
   bool SvAllSteps;            ///<Saves a PART for each step (debug).
+  bool NoRtimes;              ///<Removes execution dependent values from bi4 files (debug).
   ullong TerminateMt;         ///<Modification time of file TERMINATE.
 
   double DtIni;              ///<Initial Dt

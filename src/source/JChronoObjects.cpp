@@ -275,22 +275,8 @@ void JChronoObjects::ReadXml(const JXml *sxml,TiXmlElement* lis){
   //-Loads scale value to create initial scheme of configuration.
   SchemeScale=sxml->ReadElementFloat(lis,"schemescale","value",true,1);
    
-  //-Loads solver.
-  //const unsigned solver=sxml->ReadElementUnsigned(lis,"solver","value",true,JChronoData::TpSolverType::BB);
-  //ChronoDataXml->SetSolver(solver);
-
-  //-Loads time stepper. Only TpTStepperType::EULER_IL and HHT are allowed yet
-  const unsigned timestepper=sxml->ReadElementUnsigned(lis,"timestepper","value",true,JChronoData::TpTStepperType::EULER_IL);
-  if(timestepper!=JChronoData::TpTStepperType::EULER_IL && timestepper!=JChronoData::TpTStepperType::HHT)
-    Run_ExceptioonFile(fun::PrintStr("The value \'%d\' is not allowed for the timestepper. Only 0 or 1.",timestepper),sxml->ErrGetFileRow(lis)); 
-  double alpha=0.0;//-Value for dissipation using TpTStepperType::HHT
-  if(sxml->ExistsElement(lis,"timestepper")){
-    alpha=sxml->GetAttributeDouble(lis->FirstChildElement("timestepper"),"alpha",true,-0.2);
-    if(alpha && timestepper!=JChronoData::TpTStepperType::HHT){
-      alpha=0; Log->PrintWarning("The use of \'alpha\' is only allowed for the HHT timestepper.");
-    }
-  }
-  ChronoDataXml->SetTimeStepper(timestepper,alpha);
+  //-Loads time stepper.
+  ChronoDataXml->SetTimeStepper(JChronoData::TpTStepperType::EULER_IL);
 
   //-Read the number of threads
   OmpThreads=sxml->ReadElementInt(lis,"ompthreads","value",true,1); //-Default=Single-core
@@ -909,19 +895,18 @@ void JChronoObjects::VisuLink(const JChLink *link)const{
 void JChronoObjects::VisuConfig(std::string txhead, std::string txfoot)const{
   if(!txhead.empty())Log->Print(txhead);
   const JChronoData* chdata=ChronoLib->GetChronoData();
-  Log->Printf("  DSPHChrono version.: %s",ChronoLib->version.c_str());
+  Log->Printf("  DSPHChrono version: %s",ChronoLib->version.c_str());
+  Log->Printf("  Chrono version....: %s",ChronoLib->ChronoVersion.c_str());
   Log->Printf("  Data directory....: [%s]",chdata->GetDataDir().c_str());
   Log->Printf("  Solver ...........: %s",chdata->SolverToStr().c_str());
   Log->Printf("  Time Stepper......: %s",chdata->TimeStepperToStr().c_str());
-  if(chdata->GetTimeStepper()==JChronoData::TpTStepperType::HHT)
-    Log->Printf("    Alpha ..........: %g",chdata->GetAlpha());
   Log->Printf("  Collisions........: %s",(UseCollision? "True": "False"));
   if(UseCollision){
     Log->Printf("    Collision dp....: %g",chdata->GetCollisionDp());
     Log->Printf("    Contact Method..: %s",chdata->ContactMethodToStr().c_str());  //<chrono_contacts>
     Log->Printf("    Collision shapes: %u",CollisionShapes);
   }
-  Log->Printf("  Execution mode....: %s",chdata->GetMode().c_str());
+  Log->Printf("  Execution mode....: %s",chdata->GetExecMode().c_str());
   Log->Printf("  OpenMP Threads....: %d",chdata->GetOmpThreads());
   Log->Printf("  Bodies............: %d",chdata->GetBodyCount());
   Log->Printf("  Links.............: %u",chdata->GetLinkCount());

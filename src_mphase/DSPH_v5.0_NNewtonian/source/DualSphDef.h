@@ -40,7 +40,7 @@
 #include "JNumexLibDef.h"    //Defines DISABLE_NUMEXLIB to compile without Numex library.
 #include "JVtkLibDef.h"      //Defines DISABLE_VTKLIB to compile without VTK library.
 //#define DISABLE_CHRONO     ///<It allows compile without ChronoLib library (dsphchrono.dll, ChronoEngine.dll and ChronoEngine_parallel.dll).
-//#define DISABLE_CHRONO_OMP ///<It allows compile without parallel module of Chrono (ignores ChronoEngine_parallel.dll).
+#define DISABLE_CHRONO_OMP   ///<It allows compile without parallel module of Chrono (ignores ChronoEngine_parallel.dll).
 //#define DISABLE_WAVEGEN    ///<It allows compile without Wave-Paddles, Multi-Layer Pistons and Relaxation Zones libraries.
 //#define DISABLE_MOORDYN    ///<It allows compile without LibDSphMoorDyn library.
 
@@ -143,7 +143,7 @@
 
   #define CODE_TYPE_FLUID_LIMITFREE 0x0003ffdf //---Last normal fluid code: 262111
   #define CODE_TYPE_FLUID_INOUT     0x0003ffe0 //---First inlet/outlet code: 262112 (16 different codes for InOut zones + 16 to select input particles).
-  #define CODE_TYPE_FLUID_INOUTNUM  16      //---Maximum number of valid inlet/outlet zones.
+  #define CODE_TYPE_FLUID_INOUTNUM  16      //---Maximum number of vali d inlet/outlet zones.
   #define CODE_TYPE_FLUID_INOUTMASK 31      //---Mask to obtain zone value.
 #else
   #define CODE_MKRANGEMAX 2047      //-Maximum valid MK value. | Valor maximo de MK valido.
@@ -268,6 +268,7 @@ typedef struct{ //(DEM)
   float young;        ///<Young Modulus of the floating object (units:N/m2).
   float poisson;      ///<Poisson coefficient of the floating object (units:-).
   float kfric;        ///<Kinetic friction coefficient of the floating object (units:-).
+  float sfric;        ///<Static friction coefficient of the floating object (units:-).
   float tau;          ///<Value of (1-poisson^2)/young (units:-).
   float restitu;      ///<Restitution Coefficient (units:-).
 }StDemData;

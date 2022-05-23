@@ -216,8 +216,9 @@ void JSphGpuSingle::InOutComputeStep(double stepdt){
     ArraysGpu->Free(zsurfok);
   }
 
-  //-Updates new particle values for Laminar+SPS.
+  //-Updates new particle values for Laminar+SPS and normals for mDBC.
   if(SpsTaug)cudaMemset(SpsTaug+Np,0,sizeof(tsymatrix3f)*newnp);
+  if(BoundNormalg)cudaMemset(BoundNormalg+Np,0,sizeof(float3)*newnp);
 
   //-Updates number of particles.
   if(newnp){

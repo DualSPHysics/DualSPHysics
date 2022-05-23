@@ -195,8 +195,9 @@ void JSphCpuSingle::InOutComputeStep(double stepdt){
     ArraysCpu->Free(zsurfok);
   }
 
-  //-Updates new particle values for Laminar+SPS.
+  //-Updates new particle values for Laminar+SPS and normals for mDBC.
   if(SpsTauc)memset(SpsTauc+Np,0,sizeof(tsymatrix3f)*newnp);
+  if(BoundNormalc)memset(BoundNormalc+Np,0,sizeof(tfloat3)*newnp);
 
   //-Updates number of particles.
   if(newnp){

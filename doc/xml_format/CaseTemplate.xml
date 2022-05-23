@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<case app="GenCase v5.0.229 (29-01-2021)" date="01-02-2021 03:04:43">
-    <casedef requiredversion="v5.0.229">
+<case app="GenCase v5.0.260 (08-05-2022)" date="23-05-2022 14:55:36">
+    <casedef requiredversion="v5.0.260">
         <constantsdef>
             <lattice bound="2" fluid="1" comment="Type of lattice to create the initial particles (default=1)" />
             <gravity x="0" y="0" z="-9.81" comment="Gravitational acceleration" units_comment="m/s^2" />
@@ -50,6 +50,7 @@
         </patterns>
         <geometry>
             <definition dp="0.05" comment="Initial inter-particle distance" units_comment="metres (m)">
+                <pointref x="0" y="0" z="0" />
                 <pointmin x="-0.25" y="-0.05" z="-0.05" />
                 <pointmax x="2" y="1" z="1" />
             </definition>
@@ -383,6 +384,41 @@
                         <drawrotate angx="10" angy="15" angz="30" />
                         <drawscale x="1" y="1" z="0.8" />
                     </drawfilecsv>
+                    <drawbathymetry>
+                        <zpoints file="FileData.xyz" comment="File with positions using format XYZ or VTK" />
+                        <grid dp="0.1" />
+                    </drawbathymetry>
+                    <drawbathymetry>
+                        <zpoints file="FileData.xyz" comment="File with positions using format XYZ or VTK">
+                            <move x="1" y="2" z="3" />
+                            <rotate x="15" y="30" z="45" />
+                            <scale x="1" y="1" z="2" />
+                            <selection>
+                                <point x="10" y="15" />
+                                <size x="100" y="150" />
+                            </selection>
+                        </zpoints>
+                        <grid dp="0.1">
+                            <initdomain>
+                                <point x="25" y="35" />
+                                <size x="40" y="20" />
+                            </initdomain>
+                            <expands>
+                                <xmin size="5" z="25" size2="52" z2="252" />
+                                <xmax size="4" z="24" size2="54" />
+                                <ymin size="3" size2="53" z2="253" />
+                                <ymax size="-2" />
+                            </expands>
+                            <periodicx rampwidth="0" />
+                            <periodicy rampwidth="10" flatwidth="1" />
+                            <finalmove x="18" y="10" z="28" />
+                        </grid>
+                        <savepoints file="true" comment="Saves VTK with final positions for debug (default=false)" />
+                        <savegrid file="true" comment="Saves VTK with final grid cells for debug (default=false)" />
+                    </drawbathymetry>
+                    <drawbathymetry>
+                        <grid file="DataGrid.vtk" comment="File with grid positions using format XYZ or VTK" />
+                    </drawbathymetry>
                     <setfrdrawmode auto="true" />
                     <drawpoint x="0.1" y="0.12" z="0.123" />
                     <drawline>
@@ -483,11 +519,14 @@
                         <point x="0.1" y="1" z="1.1" />
                         <size x="3" y="4" z="2" />
                     </redrawnearbox>
+                    <varssave />
+                    <varsload />
                     <newvarcte Cte1="0.1" Cte2="0.2" Cte3="0.3" _rem="Constant values" _print="1" />
                     <newvar SizeX="0.25" SizeZ="(Dp+2)*2.8" dpd2="Dp/2" _rem="Some variables" />
                     <setvar SizeZ="SizeX+Cte1*Cte2" _rem="Changes value of SizeZ" _print="0" />
                     <setvar dpd2="dpd2+Dp" SizeX="SizeX*dpd2" />
-                    <newvar x1="11" x2="22" x3="33" sumx="x[1]+x[1+1]+x[3]" _rem="Using variables as an array" />
+                    <newvar x1="11" x2="22" x3="33" _rem="Using variables as an array" />
+                    <newvar sumx="x[1]+x[1+1]+x[3]" _rem="Using variables as an array" />
                     <setvar v="eval(condition,a,b)" />
                     <setvar v1="pi()" v2="e()" />
                     <setvar v1="float(a)" v2="int(a)" v3="floor(a)" v4="ceil(a)" v5="round(a)" />
@@ -503,8 +542,11 @@
                     <setvar v1="roundpos(pos,posmin,dp)" />
                     <setvar v1="roundposx(pos)" v2="roundposy(pos)" v3="roundposz(pos)" />
                     <newvarstrcte Text1="Hello" Text2="bye" _rem="Text values" _print="true" />
-                    <newvarstr Text3="AAAA" Text4="[Text1][Text2]_[Dp]" _rem="More text values" _print="0" />
+                    <newvarstr Text3="[Text1][Text2]_[Dp*100]" _rem="Merging text and numeric values" _print="0" />
+                    <newvarstr Text4="[Value[c+1]] == [Value32] when c=31" _rem="Dynamic name values" _print="0" />
                     <setvarstr Text3="[Text1]" Text4="BBBB" _rem="Modify values" _print="1" />
+                    <delvar vars="v1" />
+                    <delvar vars="v5,Tex*,Size?" />
                     <exportvar vars="-all,Dp,Rhop0,PosMax*" />
                     <exportvar vars="all,-Dp,-PosMin_?" />
                     <debugout />
@@ -516,8 +558,8 @@
                     <cellsout file="filecellsFluid5" mkfluid="5" />
                     <pointsmkout file="points" />
                     <printf text="Prints line 1\n and line 2" />
-                    <printf if="Dp!=0.1==(true||false)" text="Dp is not 0.1. It is #Dp#" />
-                    <abort if="Dp<0.1" text="Dp (#Dp#) is lower than 0.1 \n It is invalid." />
+                    <printf if="Dp!=0.1==(true||false)" text="Dp is not 0.1. It is [Dp]" />
+                    <abort if="Dp<0.1" text="Dp ([Dp]) is lower than 0.1 \n It is invalid." />
                     <abort />
                     <runlist name="Hola" />
                     <runlist name="Hola2" times="5" />
@@ -526,7 +568,12 @@
         </geometry>
         <initials>
             <velocity mkfluid="0" x="0.1" y="0.4" z="0.2" />
-            <velocity mkfluid="9" x="6" y="5" z="4" />
+            <velocity mkfluid="9" x="6" y="5" z="4">
+                <onlypos>
+                    <posmin x="1" y="2" z="3" />
+                    <posmax x="10" y="20" z="30" />
+                </onlypos>
+            </velocity>
             <velocity mkfluid="0">
                 <direction x="1" y="0" z="0" />
                 <velocity v="2" comment="Uniform profile velocity" units_comment="m/s" />
@@ -548,6 +595,27 @@
                 <direction x="1" y="1" z="0" comment="Direction to apply velocity magnitude or used to calculate starting from 3-component velocity data." />
                 <meshdata file="MeshData_Vel.mbi4" magnitude="false" reverse="true" setz="0.001" comment="Velocity data (magnitude or 3 components) mesh-data file (CSV or binary)." units_comment="m/s" />
             </velmesh>
+            <densityuniform mkfluid="0" rhop="1000.5" comment="Density value" units_comment="kg/m^3" />
+            <densityuniform mkfluid="1" rhop="1001.05" comment="Density value" units_comment="kg/m^3">
+                <onlypos>
+                    <posmin x="-10" z="-1" />
+                    <posmax y="0.1" />
+                </onlypos>
+            </densityuniform>
+            <densitygradient mkfluid="0">
+                <pos1 x="0" y="0" z="0" rhop="1000" comment="Initial density value" units_comment="kg/m^3" />
+                <pos2 x="0" y="0" z="-10" rhop="1002" comment="Final density value" units_comment="kg/m^3" />
+            </densitygradient>
+            <densitydepth mkfluid="1">
+                <posswl x="0" y="0" z="10" comment="Position of surface water level" />
+            </densitydepth>
+            <densitydepth mkfluid="2">
+                <posswl x="0" y="0" z="10" comment="Position of surface water level" />
+                <gravity x="1" y="0" z="-9.81" comment="Gravitational acceleration" units_comment="m/s^2" />
+                <rhop0 value="1100" comment="Reference density" units_comment="kg/m^3" />
+                <gamma value="6.7" comment="Polytropic constant for water" />
+                <b value="2.10121e+07" units_comment="Pascal (Pa)" />
+            </densitydepth>
             <densitymesh mkfluid="0">
                 <meshdata file="MeshData_Rhop.csv" setx="0.01" sety="0.02" setz="0.003" initialtime="0.5" comment="Density data from mesh-data file (CSV or binary)." units_comment="kg/m^3" />
             </densitymesh>
@@ -838,6 +906,7 @@
         </motion>
         <normals active="true">
             <distanceh value="2.0" comment="Maximum distance (H*distanceh) to compute normals data (default=2)" />
+            <ftsupport value="0" comment="Enables support for floating bodies (default=0)" />
             <geometryfile file="[CaseName]_hdp_Actual.vtk" comment="File with boundary geometry (VTK format). Use NONE to ignore it." />
             <computenormals value="0" comment="Computes final normals for boundary particles 0:None, 1:Mean, 2:Marrone(unverified) (default=0)" />
             <svnormaldata value="0" comment="Saves VTK with normal data for debug (default=0)" />

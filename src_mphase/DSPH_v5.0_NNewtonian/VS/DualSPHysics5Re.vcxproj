@@ -78,15 +78,15 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup>
     <_ProjectFileVersion>10.0.30319.1</_ProjectFileVersion>
-    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">../../../bin/windows/</OutDir>
-    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">../../bin/windows/</OutDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">../../../bin/windows/DSNNewtonian</OutDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">../../../bin/windows/DSNNewtonian</OutDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Intermediate/$(ProjectName)_$(Configuration)_$(PlatformName)/</IntDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Intermediate/$(ProjectName)_$(Configuration)_$(PlatformName)/</IntDir>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     </LinkIncremental>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" />
-    <OutDir Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">../../../bin/windows/</OutDir>
-    <OutDir Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">../../bin/windows/</OutDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">../../../bin/windows/DSNNewtonian</OutDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">../../../bin/windows/DSNNewtonian</OutDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">Intermediate/$(ProjectName)_$(Configuration)_$(PlatformName)/</IntDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">Intermediate/$(ProjectName)_$(Configuration)_$(PlatformName)/</IntDir>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">

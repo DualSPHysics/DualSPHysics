@@ -1,8 +1,8 @@
 #==================================================================
-# DualSPHysics GPU/CPU v5.0.164 21-11-2020
+# DualSPHysics GPU/CPU v5.0.233 23-05-2022
 #==================================================================
 
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 3.0)
 
 PROJECT(DualSPHysics)
 
@@ -11,7 +11,6 @@ PROJECT(DualSPHysics)
 #------------------------------------------------------------------
 option(ENABLE_MOORDYN "Enable the MoorDyn+ library" ON)
 option(ENABLE_CHRONO "Enable the Chrono Engine library" ON)
-option(ENABLE_CHRONO_OMP "Enable the Chrono Parallel module" ON)
 
 #------------------------------------------------------------------
 # Source files
@@ -22,12 +21,12 @@ set(OBJXML JXml.cpp tinystr.cpp tinyxml.cpp tinyxmlerror.cpp tinyxmlparser.cpp)
 set(OBJSPHMOTION JMotion.cpp JMotionList.cpp JMotionMov.cpp JMotionObj.cpp JMotionPos.cpp JDsMotion.cpp)
 set(OBCOMMON Functions.cpp FunGeo3d.cpp FunSphKernelsCfg.cpp JAppInfo.cpp JBinaryData.cpp JCfgRunBase.cpp JDataArrays.cpp JException.cpp JLinearValue.cpp JLog2.cpp JObject.cpp JOutputCsv.cpp JRadixSort.cpp JRangeFilter.cpp JReadDatafile.cpp JSaveCsv2.cpp JTimeControl.cpp randomc.cpp)
 set(OBCOMMONDSPH JDsphConfig.cpp JDsPips.cpp JPartDataBi4.cpp JPartDataHead.cpp JPartFloatBi4.cpp JPartOutBi4Save.cpp JCaseCtes.cpp JCaseEParms.cpp JCaseParts.cpp JCaseProperties.cpp JCaseUserVars.cpp JCaseVtkOut.cpp)
-set(OBSPH JArraysCpu.cpp JCellDivCpu.cpp JSphCfgRun.cpp JComputeMotionRef.cpp JDsDamping.cpp JDsGaugeItem.cpp JDsGaugeSystem.cpp JDsPartsOut.cpp JDsSaveDt.cpp JSphShifting.cpp JSph.cpp JDsAccInput.cpp JSphCpu.cpp JDsInitialize.cpp JSphMk.cpp JDsPartsInit.cpp JDsFixedDt.cpp JDsViscoInput.cpp JDsOutputTime.cpp JFtMotionSave.cpp JWaveAwasZsurf.cpp JWaveSpectrumGpu.cpp main.cpp)
+set(OBSPH JArraysCpu.cpp JCellDivCpu.cpp JSphCfgRun.cpp JComputeMotionRef.cpp JDsDcell.cpp JDsDamping.cpp JDsExtraData.cpp JDsGaugeItem.cpp JDsGaugeSystem.cpp JDsPartsOut.cpp JDsSaveDt.cpp JSphShifting.cpp JSph.cpp JDsAccInput.cpp JSphCpu.cpp JDsInitialize.cpp JFtMotionSave.cpp JSphMk.cpp JDsPartsInit.cpp JDsFixedDt.cpp JDsViscoInput.cpp JDsOutputTime.cpp JDsTimers.cpp JWaveAwasZsurf.cpp JWaveSpectrumGpu.cpp main.cpp)
 set(OBSPHSINGLE JCellDivCpuSingle.cpp JPartsLoad4.cpp JSphCpuSingle.cpp)
 
 # GPU Objects
 set(OBCOMMONGPU FunctionsCuda.cpp JObjectGpu.cpp)
-set(OBSPHGPU JArraysGpu.cpp JDebugSphGpu.cpp JCellDivGpu.cpp JSphGpu.cpp)
+set(OBSPHGPU JArraysGpu.cpp JDebugSphGpu.cpp JCellDivGpu.cpp JSphGpu.cpp JDsGpuInfo.cpp)
 set(OBSPHSINGLEGPU JCellDivGpuSingle.cpp JSphGpuSingle.cpp)
 set(OBCUDA JCellDivGpu_ker.cu JCellDivGpuSingle_ker.cu JDsPips_ker.cu JDsGauge_ker.cu JReduSum_ker.cu JSphShifting_ker.cu JDsAccInput_ker.cu JSphGpu_ker.cu JSphGpuSimple_ker.cu JWaveOrder2_ker.cu)
 
@@ -84,12 +83,6 @@ if (OPENMP_FOUND)
   set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
   set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
 endif()
-
-#------------------------------------------------------------------
-# Don't use C++11 ABI for compatibility between GCC v4.9 and >=5
-#------------------------------------------------------------------
-set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D_GLIBCXX_USE_CXX11_ABI=0 -fPIC")
-set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_GLIBCXX_USE_CXX11_ABI=0 -fPIC")
 
 #------------------------------------------------------------------
 # Binaries
@@ -157,21 +150,6 @@ else()
   set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DDISABLE_CHRONO")
   set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DDISABLE_CHRONO")
 endif(ENABLE_CHRONO)
-
-# Chrono Parallel
-if(ENABLE_CHRONO_OMP)
-  if(ENABLE_CHRONO)
-    message(STATUS "Using ChronoEngine Parallel Module")
-    if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-      set(LINKER_FLAGS ${LINKER_FLAGS} ChronoEngine_parallel)
-    endif()
-  else()
-    message(FATAL_ERROR "You should enable CHRONO option to use CHRONO_OMP")
-  endif(ENABLE_CHRONO)
-else()
-  set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DDISABLE_CHRONO_OMP")
-  set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DDISABLE_CHRONO_OMP")
-endif(ENABLE_CHRONO_OMP)
 
 #------------------------------------------------------------------
 # Linker flags

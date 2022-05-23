@@ -41,7 +41,7 @@
 		<freesurface value="0" comment="Z position of the water free surface.(default=0)" />
 		<kBot value="3.0e6" comment="Bottom stiffness constant. (default=3.0e6)" units_comment="Pa/m"/>
 		<cBot value="3.0e5" comment="Bottom damping constant. (default=3.0e5)"  units_comment="Pa*s/m"/>
-		<dtM value="0.0001" comment="Desired mooring model time step. (default=0.0001)"/>
+		<dtM value="0.0001" auto="true" comment="Desired mooring model time step. (default=0.0001)"/>
 		<waveKin value="0" comment="Wave kinematics flag ( 0: neglect [the only option currently supported] ). (default=0)"/>
 		<writeUnits value="yes" comment="Write units line. value=[yes|no]. (default=yes)"/>
 		<frictionCoefficient value="0" comment="General bottom friction coefficient, as a start. (default=0.0)"/>
@@ -52,6 +52,15 @@
 		<threshIC value="0.01" comment="Convergence threshold for for initial conditions. (default=0.001)"/>
 		<tmaxIC value="2" comment="Maximum time for initial conditions without convergence.(default=0)" units_comment="s"/>
 	</solverOptions>
+	<!-- Solver options      -->
+	<!-- dtM value is calculated automatically to     -->
+	<!-- ensure the equilibrium state of the system.  -->
+	<!-- To impose a value, option auto="false" can   -->
+	<!-- be used (default: auto=true)                 --> 
+	<solverOptions>
+		<dtM value="0.0001" auto="false" comment="Desired mooring model time step. (default=0.0001)" />
+	</solverOptions>
+	
 	<!-- Attached floating bodies -->
 	<bodies>
 		<body ref="45" comment="Fluid driven object to attach mooring lines."> %body 0

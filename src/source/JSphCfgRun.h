@@ -78,6 +78,7 @@ public:
 
   int NstepsBreak;  ///<Maximum number of steps allowed (debug).
   bool SvAllSteps;  ///<Saves a PART for each step (debug).
+  bool NoRtimes;    ///<Removes execution dependent values from bi4 files (debug).
 
   unsigned PipsMode;   ///<Defines mode of PIPS calculation (0:No computed (default), 1:Computed, 2:computed and save detail).
   unsigned PipsSteps;  ///<Number of steps per interval to compute PIPS (100 by default).

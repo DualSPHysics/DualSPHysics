@@ -30,7 +30,7 @@
  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
 
 
-ComputeForces v5.0.147 (27-01-2021)
+ComputeForces v5.0.176 (21-05-2022)
 ====================================
 LoadDsphConfig> .../bin/windows/DsphConfig.xml
 Information about parameters of execution:
@@ -58,17 +58,21 @@ Information about parameters of execution:
   Define parameters for force calculation:
     -viscoart:<float>      Artificial viscosity [0-1] (0 by default)
     -viscolam:<float>      Laminar viscosity [order of 1E-6]
-    -viscoauto:            Viscosity configuration is load from BI4 files
+    -viscoauto             Viscosity configuration is load from BI4 files
     -gravity:<float:float:float> Gravity value
+
+    -balancex                Compute mass and center.x for floating balance
 
   Define axis for moment calculation:
     -momentaxis:x1:y1:z1:x2:y2:z2  Axis for moment calculation
 
-  Configuration for each output file:
+  Define filter options:
     -onlypos:xmin:ymin:zmin:xmax:ymax:zmax  Indicates limits of particles
     -onlyposfile filters.xml  Indicates XML file with filters to apply
     -onlymk:<values>     Indicates the mk of selected particles
     -onlyid:<values>     Indicates the id of selected particles
+    -onlyidfile <file>   Indicates the id of selected particles by TXT file
+    -fixedfilter         The initial particle selection is maintained.
 
   Define output file:
     -savecsv <file.csv>   Generates one CSV file with the time history

@@ -987,7 +987,7 @@ void JSph::LoadCaseConfig(const JSphCfgRun *cfg){
   if(UseChrono){
     if(xml.GetNodeSimple("case.execution.special.chrono",true)){
       if(!JChronoObjects::Available())Run_Exceptioon("DSPHChronoLib to use Chrono is not included in the current compilation.");
-      ChronoObjects=new JChronoObjects(DirCase,CaseName,&xml,"case.execution.special.chrono",Dp,parts.GetMkBoundFirst());
+      ChronoObjects=new JChronoObjects(DirCase,CaseName,&xml,"case.execution.special.chrono",Dp,parts.GetMkBoundFirst(),Simulate2D);
     }
     else Run_ExceptioonFile("Chrono configuration in XML file is missing.",FileXml);
   }
@@ -1137,9 +1137,9 @@ void JSph::LoadCaseConfig(const JSphCfgRun *cfg){
         //-Loads data for collisions using Chrono.
         if(ChronoObjects && ChronoObjects->UseDataDVI(mkbound)){
           const StDemData data=LoadDemData(false,&block);
-          if(block.Type==TpPartFloating)ChronoObjects->ConfigDataBodyFloating(mkbound,data.kfric,data.restitu,data.young,data.poisson);
-          if(block.Type==TpPartMoving)  ChronoObjects->ConfigDataBodyMoving  (mkbound,data.kfric,data.restitu,data.young,data.poisson);
-          if(block.Type==TpPartFixed)   ChronoObjects->ConfigDataBodyFixed   (mkbound,data.kfric,data.restitu,data.young,data.poisson);
+          if(block.Type==TpPartFloating)ChronoObjects->ConfigDataBodyFloating(mkbound,data.kfric,data.sfric,data.restitu,data.young,data.poisson);
+          if(block.Type==TpPartMoving)  ChronoObjects->ConfigDataBodyMoving  (mkbound,data.kfric,data.sfric,data.restitu,data.young,data.poisson);
+          if(block.Type==TpPartFixed)   ChronoObjects->ConfigDataBodyFixed   (mkbound,data.kfric,data.sfric,data.restitu,data.young,data.poisson);
         }
       }
     }
@@ -1217,17 +1217,26 @@ StDemData JSph::LoadDemData(bool checkdata,const JCasePartBlock* block)const{
   if(checkdata){
     const string objdesc=fun::PrintStr("Object mk=%u (mkbound=%u)",mk,mkbound);
     if(!block->ExistsSubValue("Kfric","value"))Run_Exceptioon(objdesc+" - Value of Kfric is invalid.");
+    //if(!block->ExistsSubValue("Sfric","value"))Run_Exceptioon(objdesc+" - Value of Sfric is invalid.");
     if(!block->ExistsSubValue("Restitution_Coefficient","value"))Run_Exceptioon(objdesc+" - Value of Restitution_Coefficient is invalid.");
     if(!block->ExistsSubValue("Young_Modulus","value"))Run_Exceptioon(objdesc+" - Value of Young_Modulus is invalid.");
     if(!block->ExistsSubValue("PoissonRatio","value"))Run_Exceptioon(objdesc+" - Value of PoissonRatio is invalid.");
   }
   //-Loads necessary values for collisions using DEM or Chrono.
   data.kfric=block->GetSubValueFloat("Kfric","value",true,FLT_MAX);
+  //data.sfric=block->GetSubValueFloat("Sfric","value",true,FLT_MAX); 
   data.restitu=block->GetSubValueFloat("Restitution_Coefficient","value",true,FLT_MAX);
   data.young=block->GetSubValueFloat("Young_Modulus","value",true,FLT_MAX);
   data.poisson=block->GetSubValueFloat("PoissonRatio","value",true,FLT_MAX);
   if(block->ExistsValue("Kfric_User"))data.kfric=block->GetValueFloat("Kfric_User");
+  //if(block->ExistsValue("Sfric_User"))data.sfric=block->GetValueFloat("Sfric_User");
   if(block->ExistsValue("Restitution_Coefficient_User"))data.restitu=block->GetValueFloat("Restitution_Coefficient_User");
+
+  //-Checks and initialises the friction coefficients when one of them was not defined.
+  data.sfric=FLT_MAX; //-Disable sfric.
+  if     (data.kfric==FLT_MAX && data.sfric!=FLT_MAX)data.kfric=data.sfric; 
+  else if(data.kfric!=FLT_MAX && data.sfric==FLT_MAX)data.sfric=data.kfric;
+
   //-Loads necessary values for DEM.
   data.massp=MassBound;
   if(block->Type==TpPartFloating){
@@ -2139,7 +2148,7 @@ void JSph::InitRun(unsigned np,const unsigned *idp,const tdouble3 *pos){
   if(ChronoObjects){
     Log->Print("Chrono Objects configuration:");
     if(PartBegin)Run_Exceptioon("Simulation restart not allowed when Chrono is used.");
-    ChronoObjects->Init(Simulate2D,MkInfo);
+    ChronoObjects->Init(MkInfo);
     ChronoObjects->VisuConfig(""," ");
   }
 

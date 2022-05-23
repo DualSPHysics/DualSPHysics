@@ -203,7 +203,6 @@ private:
   std::vector<JChLink*> LinkRefs;
 
 protected:
-  bool UseFEA;
   double Mass;
   tdouble3 Center;
   tmatrix3d Inertia;
@@ -259,13 +258,11 @@ public:
   float         GetKfric()       const{ return(Kfric);       }
   float         GetSfric()       const{ return(Sfric);       }
   float         GetRestitu()     const{ return(Restitu);     }
-  bool          GetUseFEA()      const{ return(UseFEA);      } 
 
   bool          GetImposeFric()  const{ return(ImposeFric);  } 
   void          SetImposeFric(const bool i)  { ImposeFric=i; } 
 
   void SetModel(const std::string &file,TpModelNormal normal){ ModelFile=file; ModelNormal=normal; }
-  void SetUseFEA(const bool u){ UseFEA=u; } 
   void SetCollisionData(float kfric,float sfric,float restitu,float young,float poisson);
   
   void SetVelIni(tfloat3 linvelini,tfloat3 angvelini);
@@ -343,7 +340,6 @@ public:
   tmatrix4d GetMotionMatrix() const{ return(MotionMatrix);  }
   double GetMotionDt()        const{ return(MotionDt);      }
 };
-
 
 //##############################################################################
 //# JChBodyFixed
@@ -571,23 +567,21 @@ public:
 class JChronoData : protected JChBase
 {
 public:
-  typedef enum{ NSC,SMC }                TpContactMethod;
-  typedef enum{ BB=0,MINRES=1,PARDISO=2 }TpSolverType;     //Allowed Solvers
-  typedef enum{ EULER_IL=0,HHT=1}        TpTStepperType;   //Allowed timesteppers
+  typedef enum{ NSC,SMC }          TpContactMethod;
+  typedef enum{ BB=0,MINRES=1 }    TpSolverType;     //Allowed Solvers
+  typedef enum{ EULER_IL=0 }       TpTStepperType;   //Allowed timesteppers
 
 private:
-  std::string Mode;         ///<Chrono execution mode
+  std::string ExecMode;         ///<Chrono execution mode
   std::string DataDir;
   bool UseNSCChrono;
   std::vector<JChBody*> LisBody;
   std::vector<JChLink*> LisLink;
 
-
   double Dp;
   float CollisionDp;
   unsigned Solver;
   unsigned TimeStepper;
-  double Alpha;
   int OmpThreads;
   TpContactMethod ContactMethod;
   bool UseVariableCoeff;
@@ -623,16 +617,14 @@ public:
   void SetSolver(unsigned s){ Solver=s; }
   unsigned GetSolver()const{ return(Solver); }
 
-  void SetTimeStepper(unsigned t,double a=0){ TimeStepper=t; Alpha=a; }
+  void SetTimeStepper(unsigned t){ TimeStepper=t; }
   unsigned GetTimeStepper()const{ return(TimeStepper); }
   
-  double GetAlpha()const{ return(Alpha); }
-
   void SetOmpThreads(unsigned th){ OmpThreads=th; }
   int GetOmpThreads()const{ return(OmpThreads); }
 
-  void SetMode(std::string m){ Mode=m; }
-  std::string GetMode()const{ return(Mode); }
+  void SetExecMode(std::string m){ ExecMode=m; }
+  std::string GetExecMode()const{ return(ExecMode); }
 
   void SetGravity(const tfloat3 g){ Gravity=g; UseGravity=true;}
   tfloat3 GetGravity()const { return (Gravity);}
@@ -651,8 +643,6 @@ public:
 
   std::string CheckAddBodyError(unsigned idb,std::string idname,word mkbound)const;
  
-  std::string CheckAddNodeError(const unsigned ref)const;
-
   JChBodyFloating* AddBodyFloating(unsigned idb,std::string idname,word mkbound,std::string fileinfo="");
   JChBodyMoving*   AddBodyMoving  (unsigned idb,std::string idname,word mkbound,double mass,std::string fileinfo="");
   JChBodyFixed*    AddBodyFixed   (unsigned idb,std::string idname,word mkbound,std::string fileinfo="");

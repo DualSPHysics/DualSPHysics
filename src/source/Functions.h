@@ -97,6 +97,7 @@
 //:# - Nuevas funciones GetHostName().  (27-08-2021)
 //:# - Nuevas funciones GetNewFileName().  (04-11-2021)
 //:# - Nuevas funciones VectorFind() para unsigned, float y double.  (06-11-2021)
+//:# - Nuevas funciones StrFillBegin(), StrFillEnd().  (08-05-2022)
 //:#############################################################################
 
 /// \file Functions.h \brief Declares basic/general functions for the entire application.
@@ -207,6 +208,8 @@ inline tfloat3  StrToFloat3 (const std::string &v){ return(ToTFloat3(StrToDouble
 
 std::string StrUpper(const std::string &cad);
 std::string StrLower(const std::string &cad);
+std::string StrFillBegin(const std::string &cad,const std::string rcad,unsigned maxsize);
+std::string StrFillEnd(const std::string &cad,const std::string rcad,unsigned maxsize);
 std::string StrTrim(const std::string &cad);
 std::string StrTrimBegin(const std::string &cad);
 std::string StrTrimEnd(const std::string &cad);

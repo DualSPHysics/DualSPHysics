@@ -195,6 +195,7 @@ void JSph::InitVars(){
   TimeMax=TimePart=0;
   NstepsBreak=0;
   SvAllSteps=false;
+  NoRtimes=false;
   TerminateMt=0;
   DtIni=DtMin=0; CoefDtMin=0; DtAllParticles=false;
   PartsOutMax=0;
@@ -836,6 +837,7 @@ void JSph::LoadConfigCommands(const JSphCfgRun *cfg){
   NstepsBreak=cfg->NstepsBreak;
   if(NstepsBreak)Log->PrintfWarning("The execution will be cancelled after %d simulation steps.",NstepsBreak);
   SvAllSteps=cfg->SvAllSteps;
+  NoRtimes=cfg->NoRtimes;
   //-Configuration of JDsOutputTime with TimePart.
   OutputTime=new JDsOutputTime();
   if(cfg->TimePart>=0){
@@ -2346,7 +2348,7 @@ void JSph::ConfigSaveData(unsigned piece,unsigned pieces,std::string div){
   //-Configura objeto para grabacion de particulas e informacion.
   if(SvData&SDAT_Info || SvData&SDAT_Binx){
     DataBi4=new JPartDataBi4();
-    DataBi4->Config(piece,pieces,DirDataOut,&parthead);
+    DataBi4->Config(NoRtimes,piece,pieces,DirDataOut,&parthead);
     if(div.empty())DataBi4->ConfigSimDiv(JPartDataBi4::DIV_None);
     else if(div=="X")DataBi4->ConfigSimDiv(JPartDataBi4::DIV_X);
     else if(div=="Y")DataBi4->ConfigSimDiv(JPartDataBi4::DIV_Y);
@@ -2359,7 +2361,7 @@ void JSph::ConfigSaveData(unsigned piece,unsigned pieces,std::string div){
   //-Configura objeto para grabacion de particulas excluidas.
   if(SvData&SDAT_Binx){
     DataOutBi4=new JPartOutBi4Save();
-    DataOutBi4->ConfigBasic(piece,pieces,RunCode,AppName,Simulate2D,DirDataOut);
+    DataOutBi4->ConfigBasic(NoRtimes,piece,pieces,RunCode,AppName,Simulate2D,DirDataOut);
     DataOutBi4->ConfigParticles(CaseNp,CaseNfixed,CaseNmoving,CaseNfloat,CaseNfluid);
     DataOutBi4->ConfigLimits(MapRealPosMin,MapRealPosMax,(RhopOut? RhopOutMin: 0),(RhopOut? RhopOutMax: 0));
     DataOutBi4->SaveInitial();
