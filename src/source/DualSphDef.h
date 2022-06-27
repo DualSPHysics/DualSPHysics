@@ -411,6 +411,7 @@ typedef struct{
   float eta2;               ///<Constant related to H (Eta2=(h*0.1)*(h*0.1)).
   float spssmag;            ///<Smagorinsky constant used in SPS turbulence model.
   float spsblin;            ///<Blin constant used in the SPS turbulence model.
+  float ddtkhcte;           ///<Store fixed constant DDTkh.
   float ddtkh;              ///<Constant for DDT1 & DDT2. DDTkh=DDTValue*KernelSize
   float ddtgz;              ///<Constant for DDT2.        DDTgz=RhopZero*Gravity.z/CteB
 }StCteSph;
@@ -420,7 +421,7 @@ inline StCteSph CteSphNull(){
   StCteSph c={false,0,KERNEL_None
     ,{0,0,0,0,0,0,0,0}
     ,{0,0}
-    ,0,0,0,0,0,0,0,{0,0,0},0,0,0,0,0,0,0,0};
+    ,0,0,0,0,0,0,0,{0,0,0},0,0,0,0,0,0,0,0,0};
   return(c);
 }
 

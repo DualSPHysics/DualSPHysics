@@ -54,6 +54,7 @@ void JSphCfgRun::Reset(){
   TVisco=VISCO_None; Visco=0; ViscoBoundFactor=-1;
   TDensity=-1;
   DDTValue=-1;
+  DDTValueTRamp=DDTValueTMax=DDTValueMax=0;  //<vs_ddramp>
   Shifting=-1;
   SvRes=true; SvDomainVtk=false;
   Sv_Binx=true; Sv_Info=true;
@@ -139,6 +140,7 @@ void JSphCfgRun::VisuInfo()const{
   printf("        2          Diffusion term by Fourtakas et al 2019 (inner fluid particles)\n");
   printf("        3          Diffusion term by Fourtakas et al 2019 (all fluid particles)\n");
   printf("    -ddtvalue:<float> Constant for DDT (0.1 by default)\n");
+  printf("    -ddtramp:tramp:tmax:maxvalue  Total time of DDT ramp and time for maxvalue\n"); //<vs_ddramp>
   printf("\n");
   printf("    -shifting:<mode> Specifies the use of Shifting correction\n");
   printf("        none       Shifting is disabled (by default)\n");
@@ -263,8 +265,8 @@ void JSphCfgRun::LoadOpts(string *optlis,int optn,int lv,const std::string &file
     }
     else if(opt[0]=='-'){
       //-Splits options in txoptfull, txopt1, txopt2, txopt3 and txopt4.
-      string txword,txoptfull,txopt1,txopt2;
-      SplitsOpts(opt,txword,txoptfull,txopt1,txopt2);
+      string txword,txoptfull,txopt1,txopt2,txopt3;
+      SplitsOpts(opt,txword,txoptfull,txopt1,txopt2,txopt3);
       //-Checks keywords in commands.
       if(txword=="CPU"){ Cpu=true; Gpu=false; }
       else if(txword=="GPU"){ Gpu=true; Cpu=false;
@@ -334,6 +336,15 @@ void JSphCfgRun::LoadOpts(string *optlis,int optn,int lv,const std::string &file
         DDTValue=float(atof(txoptfull.c_str())); 
         if(DDTValue<0 || DDTValue>1)ErrorParm(opt,c,lv,file);
       }
+      else if(txword=="DDTRAMP"){ //<vs_ddramp_ini>
+        tdouble3 v;
+        LoadDouble3(txoptfull,0,v);
+        DDTValueTRamp=v.x;
+        DDTValueTMax=v.y;
+        DDTValueMax=v.z;
+        if(DDTValueTRamp<=0 || DDTValueMax<=0)DDTValueTRamp=DDTValueTMax=DDTValueMax=0;
+        if(DDTValueTMax>DDTValueTRamp)DDTValueTMax=DDTValueTRamp;
+      } //<vs_ddramp_end>
       else if(txword=="SHIFTING"){
         const string tx=fun::StrUpper(txoptfull);
         if(tx=="NONE")Shifting=0;

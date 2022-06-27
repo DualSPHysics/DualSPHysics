@@ -183,6 +183,7 @@ protected:
 
   TpDensity TDensity;         ///<Density Diffusion Term 0:None, 1:Molteni, 2:Fourtakas, 3:Fourtakas(full) (default=0)
   float DDTValue;             ///<Value used with Density Diffusion Term (default=0.1)
+  tdouble3 DDTRamp;           ///<Configuration of initial DDT ramp (Total time, time for maxvalue, maxvalue).  //<vs_ddramp>
   bool DDTArray;              ///<Use extra array to compute Density Diffusion Term. The correction is applied after particle interaction. 
 
   TpVisco TVisco;             ///<Viscosity type: Artificial,...                                         | Tipo de viscosidad: Artificial,...
@@ -251,6 +252,7 @@ protected:
   //-Constants for computation 2 (computed starting from previous constants).
   float SpsSmag;           ///<Smagorinsky constant used in SPS turbulence model.
   float SpsBlin;           ///<Blin constant used in the SPS turbulence model.
+  float DDTkhCte;          ///<Store fixed constant DDTkh.
   float DDTkh;             ///<Constant for DDT1 & DDT2. DDTkh=DDTValue*KernelSize
   float DDTgz;             ///<Constant for DDT2.        DDTgz=RhopZero*Gravity.z/CteB
 

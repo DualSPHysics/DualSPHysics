@@ -178,6 +178,7 @@ void JSph::InitVars(){
   KWend  ={0,0};
   TVisco=VISCO_None;
   TDensity=DDT_None; DDTValue=0; DDTArray=false;
+  DDTRamp=TDouble3(0); //<vs_ddramp>
   ShiftingMode=(Shifting? Shifting->GetShiftMode(): SHIFT_None);
   Visco=0; ViscoBoundFactor=1;
   TBoundary=BC_DBC;
@@ -217,7 +218,7 @@ void JSph::InitVars(){
   Cs0=0;
   Eta2=0;
   SpsSmag=SpsBlin=0;
-  DDTkh=DDTgz=0;
+  DDTkhCte=DDTkh=DDTgz=0;
   memset(&CSP,0,sizeof(StCteSph));
 
   CasePosMin=CasePosMax=TDouble3(0);
@@ -808,6 +809,9 @@ void JSph::LoadConfigCommands(const JSphCfgRun *cfg){
   }
   if(TDensity==DDT_None)DDTValue=0;
   else if(cfg->DDTValue>=0)DDTValue=cfg->DDTValue;
+  if(TDensity!=DDT_None && cfg->DDTValueTRamp>0 && cfg->DDTValueMax>0){ //<vs_ddramp_ini>
+    DDTRamp=TDouble3(cfg->DDTValueTRamp,cfg->DDTValueTMax,cfg->DDTValueMax);
+  } //<vs_ddramp_end>
   DDTArray=(TDensity!=DDT_None && Cpu); //-It is necessary because the interaction is divided in two steps: fluid-fluid/float and fluid-bound.
   //-Checks warnings of DDT according to gravity.
   if(Gravity.z==0){
@@ -1449,7 +1453,7 @@ void JSph::ConfigConstants2(){
     SpsBlin=float((2./3.)*0.0066*dp_sps*dp_sps); 
   }
   //-Constants for DDT.
-  DDTkh=KernelSize*DDTValue;
+  DDTkhCte=DDTkh=KernelSize*DDTValue;
   DDTgz=float(double(RhopZero)*double(fabs(Gravity.z))/double(CteB));
   //-Constants for Dt.
   if(!DtIni)DtIni=KernelH/Cs0;
@@ -1458,6 +1462,7 @@ void JSph::ConfigConstants2(){
   //-Loads main SPH constants and configurations in CSP.
   CSP.spssmag       =SpsSmag;
   CSP.spsblin       =SpsBlin;
+  CSP.ddtkhcte      =DDTkhCte;
   CSP.ddtkh         =DDTkh;
   CSP.ddtgz         =DDTgz;
 }
@@ -1532,7 +1537,14 @@ void JSph::VisuConfig(){
   if(TDensity!=DDT_None){
     Log->Print(fun::VarStr("  DensityDiffusionValue",DDTValue));
     //Log->Print(fun::VarStr("DensityDiffusionArray",DDTArray));
-    ConfigInfo=ConfigInfo+fun::PrintStr("(%g)",DDTValue);
+    string cinfo=fun::PrintStr("(%g)",DDTValue);
+    if(DDTRamp.x){ //<vs_ddramp_ini>
+      Log->Print(fun::VarStr("  DensityDiffusionTRamp"   ,DDTRamp.x));
+      Log->Print(fun::VarStr("  DensityDiffusionTMax"    ,DDTRamp.y));
+      Log->Print(fun::VarStr("  DensityDiffusionValueMax",DDTRamp.z));
+      cinfo=fun::PrintStr("(%g:t%g:t%g:v%g)",DDTValue,DDTRamp.x,DDTRamp.y,DDTRamp.z);
+    } //<vs_ddramp_end>
+    ConfigInfo=ConfigInfo+cinfo;
   }
   if(TDensity==DDT_DDT2Full && KernelH/Dp>1.5)Log->PrintWarning("It is advised that selected DDT: \'Fourtakas et al 2019 (full)\' is used with several boundary layers of particles when h/dp>1.5 (2h <= layers*Dp)");
   //-Shifting.

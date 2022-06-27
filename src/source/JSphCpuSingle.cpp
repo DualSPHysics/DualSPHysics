@@ -643,6 +643,27 @@ template<bool checkcode> double JSphCpuSingle::ComputeAceMaxOmp(unsigned np
   return(acemax);
 }
 
+//<vs_ddramp_ini>
+//==============================================================================
+/// Applies initial DDT ramp.
+//==============================================================================
+void JSphCpuSingle::RunInitialDDTRamp(){
+  if(TimeStep<DDTRamp.x){
+    if((Nstep%10)==0){//-DDTkh value is updated every 10 calculation steps.
+      if(TimeStep<=DDTRamp.y)DDTkh=KernelSize * float(DDTRamp.z);
+      else{
+        const double tt=TimeStep-DDTRamp.y;
+        const double tr=DDTRamp.x-DDTRamp.y;
+        DDTkh=KernelSize * float(((tr-tt)/tr)*(DDTRamp.z-DDTValue)+DDTValue);
+      }
+    }
+  }
+  else{
+    if(DDTkh!=DDTkhCte)CSP.ddtkh=DDTkh=DDTkhCte;
+    DDTRamp.x=0;
+  }
+}//<vs_ddramp_end>
+
 //==============================================================================
 /// Perform interactions and updates of particles according to forces 
 /// calculated in the interaction using Verlet.
@@ -1053,6 +1074,7 @@ void JSphCpuSingle::Run(std::string appname,const JSphCfgRun *cfg,JLog2 *log){
   while(TimeStep<TimeMax){
     InterStep=(TStep==STEP_Symplectic? INTERSTEP_SymPredictor: INTERSTEP_Verlet);
     if(ViscoTime)Visco=ViscoTime->GetVisco(float(TimeStep));
+    if(DDTRamp.x)RunInitialDDTRamp(); //<vs_ddramp>
     double stepdt=ComputeStep();
     RunGaugeSystem(TimeStep+stepdt);
     if(CaseNmoving)RunMotion(stepdt);
