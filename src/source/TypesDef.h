@@ -327,6 +327,14 @@ inline tfloat4 ToTFloat4(const tdouble4& v){ return(TFloat4(float(v.x),float(v.y
 inline tdouble4 ToTDouble4(const tfloat4& v){ return(TDouble4(v.x,v.y,v.z,v.w)); }
 
 
+///Structure of 6 variables of type float.
+typedef struct{
+  float a1,a2,a3,a4,a5,a6;
+}tfloat6;
+
+inline tfloat6 TFloat6(float v){ tfloat6 p={v,v,v,v,v,v}; return(p); }
+
+
 ///Matrix of 2x2 values of type float.
 typedef struct{
   float a11,a12;
@@ -424,6 +432,20 @@ inline bool operator ==(const tmatrix4d& a, const tmatrix4d& b){ return(a.a11==b
 inline bool operator !=(const tmatrix4d& a, const tmatrix4d& b){ return(a.a11!=b.a11 || a.a12!=b.a12 || a.a13!=b.a13 || a.a14!=b.a14 || a.a21!=b.a21 || a.a22!=b.a22 || a.a23!=b.a23 || a.a24!=b.a24 || a.a31!=b.a31 || a.a32!=b.a32 || a.a33!=b.a33 || a.a34!=b.a34 || a.a41!=b.a41 || a.a42!=b.a42 || a.a43!=b.a43 || a.a44!=b.a44); }
 inline tdouble3 MatrixMulPoint(const tmatrix4d &m,const tdouble3 &p){ return(TDouble3(m.a11*p.x + m.a12*p.y + m.a13*p.z + m.a14, m.a21*p.x + m.a22*p.y + m.a23*p.z + m.a24, m.a31*p.x + m.a32*p.y + m.a33*p.z + m.a34)); }
 inline tfloat3 MatrixMulPointNormal(const tmatrix4d &m,const tfloat3 &p){ return(ToTFloat3(TDouble3(m.a11*p.x + m.a12*p.y + m.a13*p.z, m.a21*p.x + m.a22*p.y + m.a23*p.z, m.a31*p.x + m.a32*p.y + m.a33*p.z))); }
+
+
+///Matrix of 6x6 values of type float.
+typedef struct{
+  float a11,a12,a13,a14,a15,a16;
+  float a21,a22,a23,a24,a25,a26;
+  float a31,a32,a33,a34,a35,a36;
+  float a41,a42,a43,a44,a45,a46;
+  float a51,a52,a53,a54,a55,a56;
+  float a61,a62,a63,a64,a65,a66;
+}tmatrix6f;
+
+///Constructor of type \ref matrix6f.
+inline tmatrix6f TMatrix6f(float v){ tmatrix6f m={v,v,v,v,v,v,v,v,v,v,v,v,v,v,v,v,v,v,v,v,v,v,v,v,v,v,v,v,v,v,v,v,v,v,v,v}; return(m); }
 
 
 ///Symmetric matrix 3x3 of 6 values of type float.

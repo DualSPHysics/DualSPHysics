@@ -96,6 +96,14 @@ __device__ void Tmatrix4dReset(tmatrix4d &m){
 }
 
 //------------------------------------------------------------------------------
+/// Calcula el determinante de una matriz de 2x2.
+/// Returns the determinant of a 2x2 matrix.
+//------------------------------------------------------------------------------
+__device__ float Determinant2x2(const tmatrix3f &d){
+  return(d.a11 * d.a33 - d.a13 * d.a31);
+}
+
+//------------------------------------------------------------------------------
 /// Calcula el determinante de una matriz de 3x3.
 /// Returns the determinant of a 3x3 matrix.
 //------------------------------------------------------------------------------
