@@ -821,7 +821,7 @@ void JSphGpuSingle::Run(std::string appname,const JSphCfgRun *cfg,JLog2 *log){
   InitRunGpu();
   RunGaugeSystem(TimeStep,true);
   if(InOut)InOutInit(TimeStepIni);
-  if(FlexStruc)FlexStrucInit();
+  if(FlexStruc)FlexStrucInit(); //<vs_flexstruc>
   FreePartsInit();
   UpdateMaxValues();
   PrintAllocMemory(GetAllocMemoryCpu(),GetAllocMemoryGpu());

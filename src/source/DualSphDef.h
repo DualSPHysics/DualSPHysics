@@ -177,7 +177,7 @@
   #define CODE_TYPE_FLUID 0x1800    //---Particles fluid:  6144-8191                                      
   #define CODE_MASKVALUE 0x7ff      //-Bits type-value: 0000 0111 1111 1111  Range:0-2047
 
-  #define CODE_TYPE_FIXED_FLEXSTRUC 0x07f0  //---First flexible structure code: 2032 (16 different codes for flexible structure bodies)
+  #define CODE_TYPE_FIXED_FLEXSTRUC 0x07f0  //---First flexible structure code: 2032 (16 different codes for flexible structure bodies). //<vs_flexstruc>
 
   #define CODE_TYPE_FLUID_LIMITFREE 0x1fdf  //---Last normal fluid code: 8159
   #define CODE_TYPE_FLUID_INOUT     0x1fe0  //---First inlet/outlet code: 8160 (16 different codes for InOut zones + 16 to select input particles).
@@ -211,11 +211,13 @@
 #define CODE_IsFluid(code)    (CODE_GetType(code)==CODE_TYPE_FLUID)
 #define CODE_IsNotFluid(code) (CODE_GetType(code)!=CODE_TYPE_FLUID)
 
+//<vs_flexstruc_init>
 #define CODE_IsFixedFlexStruc(code)     (CODE_IsFixed(code) && CODE_GetTypeValue(code)>=CODE_GetTypeValue(CODE_TYPE_FIXED_FLEXSTRUC))
 #define CODE_IsFixedNotFlexStruc(code)  (CODE_IsFixed(code) && CODE_GetTypeValue(code)< CODE_GetTypeValue(CODE_TYPE_FIXED_FLEXSTRUC))
 
 #define CODE_ToFixedFlexStruc(code,ibody) (code&(~CODE_MASKTYPEVALUE))|(CODE_TYPE_FIXED_FLEXSTRUC|ibody)
 #define CODE_GetIbodyFixedFlexStruc(code) (code&(~(CODE_MASKSPECIAL|CODE_MASKTYPE|CODE_GetTypeValue(CODE_TYPE_FIXED_FLEXSTRUC))))
+//<vs_flexstruc_end>
 
 //#define CODE_IsFluidInout(code)    (CODE_IsFluid(code) && CODE_GetTypeAndValue(code)>=CODE_TYPE_FLUID_INOUT)
 #define CODE_IsFluidInout(code)    (CODE_GetTypeAndValue(code)>=CODE_TYPE_FLUID_INOUT)
@@ -489,6 +491,7 @@ inline void ApplyConstraints(byte constraints,tfloat3 &linear,tfloat3 &angular){
   if(constraints&FTCON_RotateZ)angular.z=0;
 }
 
+//<vs_flexstruc_ini>
 ///Constitutive model for flexible structures.
 typedef enum{
   CONSTITMODEL_None=1,          ///<None.
@@ -496,6 +499,7 @@ typedef enum{
   CONSTITMODEL_PlaneStress=2,   ///<Plane stress.
   CONSTITMODEL_SVK=3            ///<St. Venant Kirchhoff.
 }TpConstitModel;
+//<vs_flexstruc_end>
 
 
 ///Modes of cells division.

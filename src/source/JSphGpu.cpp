@@ -155,7 +155,7 @@ void JSphGpu::InitVars(){
   FtoInertiaini8g=NULL; FtoInertiaini1g=NULL;//-Management of floating bodies.
   FtObjsOutdated=true;
   DemDatag=NULL; //(DEM)
-  FlexStrucDatag=NULL; PosCell0g=NULL; NumPairsg=NULL; PairIdxg=NULL; KerCorrg=NULL; DefGradg=NULL; //-Flexible structure.//<vs_flexstruc>
+  FlexStrucDatag=NULL; PosCell0g=NULL; NumPairsg=NULL; PairIdxg=NULL; KerCorrg=NULL; DefGradg=NULL; //-Flexible structure. //<vs_flexstruc>
   GpuParticlesAllocs=0;
   GpuParticlesSize=0;
   MemGpuParticles=MemGpuFixed=0;

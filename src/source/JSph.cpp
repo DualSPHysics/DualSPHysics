@@ -56,7 +56,7 @@
 #include "JDsInitialize.h"
 #include "JSphInOut.h"
 #include "JSphBoundCorr.h"
-#include "JSphFlexibleStructure.h"
+#include "JSphFlexibleStructure.h" //<vs_flexstruc>
 #include "JFtMotionSave.h"  //<vs_ftmottionsv>
 #include "JDsPips.h"
 #include "JLinearValue.h"

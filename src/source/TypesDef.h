@@ -326,14 +326,14 @@ inline tfloat4 ToTFloat4(const tdouble4& v){ return(TFloat4(float(v.x),float(v.y
 ///Converts \ref tfloat4 to \ref tdouble4.
 inline tdouble4 ToTDouble4(const tfloat4& v){ return(TDouble4(v.x,v.y,v.z,v.w)); }
 
-
+//<vs_flexstruc_ini>
 ///Structure of 6 variables of type float.
 typedef struct{
   float a1,a2,a3,a4,a5,a6;
 }tfloat6;
 
 inline tfloat6 TFloat6(float v){ tfloat6 p={v,v,v,v,v,v}; return(p); }
-
+//<vs_flexstruc_end>
 
 ///Matrix of 2x2 values of type float.
 typedef struct{
@@ -434,6 +434,7 @@ inline tdouble3 MatrixMulPoint(const tmatrix4d &m,const tdouble3 &p){ return(TDo
 inline tfloat3 MatrixMulPointNormal(const tmatrix4d &m,const tfloat3 &p){ return(ToTFloat3(TDouble3(m.a11*p.x + m.a12*p.y + m.a13*p.z, m.a21*p.x + m.a22*p.y + m.a23*p.z, m.a31*p.x + m.a32*p.y + m.a33*p.z))); }
 
 
+//<vs_flexstruc_ini>
 ///Matrix of 6x6 values of type float.
 typedef struct{
   float a11,a12,a13,a14,a15,a16;
@@ -446,6 +447,7 @@ typedef struct{
 
 ///Constructor of type \ref matrix6f.
 inline tmatrix6f TMatrix6f(float v){ tmatrix6f m={v,v,v,v,v,v,v,v,v,v,v,v,v,v,v,v,v,v,v,v,v,v,v,v,v,v,v,v,v,v,v,v,v,v,v,v}; return(m); }
+//<vs_flexstruc_end>
 
 
 ///Symmetric matrix 3x3 of 6 values of type float.

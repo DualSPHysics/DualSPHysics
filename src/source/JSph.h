@@ -74,7 +74,7 @@ class JDsMooredFloatings;
 class JDsFtForcePoints;
 class JSphInOut;
 class JSphBoundCorr;
-class JSphFlexibleStructure;
+class JSphFlexibleStructure; //<vs_flexstruc>
 class JDsPartsInit;
 class JDsPips;
 class JLinearValue;
