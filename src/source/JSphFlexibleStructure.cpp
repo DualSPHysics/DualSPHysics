@@ -204,14 +204,6 @@ void JSphFlexibleStructure::UpdateMkCode(const JSphMk *mkinfo){
 }
 
 //==============================================================================
-/// Initialises flexible structures.
-/// Inicializa estructuras flexibles.
-//==============================================================================
-void JSphFlexibleStructure::Init(unsigned npb,typecode *code){
-  ConfigCode(npb,code);
-}
-
-//==============================================================================
 /// Configures particle codings for flexible structures.
 /// Configura codificaciones de partículas para estructuras flexibles.
 //==============================================================================

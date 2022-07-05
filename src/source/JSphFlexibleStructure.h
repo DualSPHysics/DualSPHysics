@@ -92,7 +92,6 @@ private:
   void LoadXml(const JXml *sxml,const std::string &place);
   void ReadXml(const JXml *sxml,TiXmlElement* lis);
   void UpdateMkCode(const JSphMk *mkinfo);
-  void ConfigCode(unsigned npb,typecode *code);
 
 public:
 
@@ -100,7 +99,9 @@ public:
   ~JSphFlexibleStructure();
 
   unsigned GetCount()const{ return(unsigned(List.size())); }
-  void Init(unsigned npb,typecode *code);
+  const JSphFlexibleStructureBody* GetMkBody(unsigned idx)const{ return(idx<GetCount()? List[idx]: NULL); }
+
+  void ConfigCode(unsigned npb,typecode *code);
 
 };
 

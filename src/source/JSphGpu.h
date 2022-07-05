@@ -171,11 +171,12 @@ protected:
 
   //<vs_flexstruc_ini>
   //-Variables for flexible structure.
-  float4 *PosCell0g;        ///<Relative initial position and cell coordinates {posx,posy,posz,cellxyz}
-  unsigned *NumPairs;       ///<Number of initial neighbours
-  unsigned **PairIdx;       ///<List of indices to each initial neighbour
-  tmatrix3f *KerCorrg;      ///<Kernel correction
-  tmatrix3f *DefGradg;      ///<Deformation gradient tensor
+  StFlexStrucData *FlexStrucDatag;  ///<Data for each individual flexible structure body
+  float4 *PosCell0g;                ///<Relative initial position and cell coordinates {posx,posy,posz,cellxyz}
+  unsigned *NumPairsg;              ///<Number of initial neighbours
+  unsigned **PairIdxg;              ///<List of indices to each initial neighbour
+  tmatrix3f *KerCorrg;              ///<Kernel correction
+  tmatrix3f *DefGradg;              ///<Deformation gradient tensor
   //<vs_flexstruc_end>
 
   //-Variables for computing forces
