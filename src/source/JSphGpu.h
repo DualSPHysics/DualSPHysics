@@ -169,6 +169,15 @@ protected:
   //-Variables for DEM. (DEM)
   float4 *DemDatag;       ///<Data of the object {mass, (1-poisson^2)/young, kfric, restitu} in GPU [DemObjsSize].
 
+  //<vs_flexstruc_ini>
+  //-Variables for flexible structure.
+  float4 *PosCell0g;        ///<Relative initial position and cell coordinates {posx,posy,posz,cellxyz}
+  unsigned *NumPairs;       ///<Number of initial neighbours
+  unsigned **PairIdx;       ///<List of indices to each initial neighbour
+  tmatrix3f *KerCorrg;      ///<Kernel correction
+  tmatrix3f *DefGradg;      ///<Deformation gradient tensor
+  //<vs_flexstruc_end>
+
   //-Variables for computing forces
   float *ViscDtg;
   float3 *Aceg;      ///<Accumulates acceleration of the particles. | Acumula fuerzas de interaccion.

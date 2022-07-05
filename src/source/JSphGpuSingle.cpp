@@ -39,6 +39,7 @@
 #include "JSphGpuSimple_ker.h"
 #include "JDsGaugeSystem.h"
 #include "JSphInOut.h"
+#include "JSphFlexibleStructure.h" //<vs_flexstruc>
 #include "JFtMotionSave.h" //<vs_ftmottionsv>  
 #include "JLinearValue.h"
 #include "JDataArrays.h"
@@ -464,6 +465,10 @@ void JSphGpuSingle::Interaction_Forces(TpInterStep interstep){
     ,DivData,Dcellg,FtRidpg,DemDatag,FtoMasspg,float(DemDtForce)
     ,PosCellg,Velrhopg,Codeg,Idpg,ViscDtg,Aceg,NULL);
 
+  //-Interaction flexible structure-structure //<vs_flexstruc>
+  const StInterParmsFlexStrucg parmsflexstruc=StrInterParmsFlexStrucg(NULL,NULL,NULL,NULL,NULL,NULL);
+  if(true)cusph::Interaction_ForcesFlexStruc(parms,parmsflexstruc);
+
   //-For 2D simulations always overrides the 2nd component (Y axis).
   //-Para simulaciones 2D anula siempre la 2nd componente.
   if(Simulate2D)cusph::Resety(Np-Npb,Npb,Aceg);
@@ -811,6 +816,7 @@ void JSphGpuSingle::Run(std::string appname,const JSphCfgRun *cfg,JLog2 *log){
   InitRunGpu();
   RunGaugeSystem(TimeStep,true);
   if(InOut)InOutInit(TimeStepIni);
+  if(FlexStruc)FlexStrucInit();
   FreePartsInit();
   UpdateMaxValues();
   PrintAllocMemory(GetAllocMemoryCpu(),GetAllocMemoryGpu());
@@ -966,4 +972,14 @@ void JSphGpuSingle::FinishRun(bool stop){
   Log->PrintWarningList();
   VisuRefs();
 }
+
+//<vs_flexstruc_ini>
+void JSphGpuSingle::FlexStrucInit(){
+
+  cudaMemcpy(Code,Codeg,sizeof(typecode)*Npb,cudaMemcpyDeviceToHost);
+  FlexStruc->Init(Npb,Code);
+  cudaMemcpy(Codeg,Code,sizeof(typecode)*Npb,cudaMemcpyHostToDevice);
+
+}
+//<vs_flexstruc_end>
 

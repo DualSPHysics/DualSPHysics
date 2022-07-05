@@ -246,6 +246,15 @@ typedef struct{
   tmatrix4d matmov2;   ///Matrix transformation to compute acceleration of particles (when acceleration movement is computed).
 }StMotionData;
 
+///Structure with the information of the flexible structure.
+typedef struct{
+  float massp;      ///< Particle mass
+  float youngmod;   ///< Young's modulus
+  float poissrat;   ///< Poisson ratio
+  float hgfactor;   ///< Hourglass correction factor
+  tmatrix6f cmat;   ///< Constitutive matrix
+}StFlexStrucData;
+
 ///Structure with the information of the floating object.
 typedef struct{
   word mkbound;     ///<MkBound of the floating object.

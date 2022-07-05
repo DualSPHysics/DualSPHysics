@@ -180,6 +180,37 @@ typedef struct StrInterParmsg{
 
 }StInterParmsg;
 
+///Structure with the parameters for flexible structure interaction on GPU.
+typedef struct StrInterParmsFlexStrucg{
+  //-Input data arrays.
+  const float4 *poscell0;
+  const unsigned *numpairs;
+  const unsigned **pairidx;
+  const tmatrix3f *kercorr;
+  const StFlexStrucData *flexstrucdata;
+  //-Output data arrays.
+  tmatrix3f *defgrad;
+
+  ///Structure constructor.
+  StrInterParmsFlexStrucg(
+       const float4 *poscell0_
+      ,const unsigned *numpairs_
+      ,const unsigned **pairidx_
+      ,const tmatrix3f *kercorr_
+      ,const StFlexStrucData *flexstrucdata_
+      ,tmatrix3f *defgrad_)
+  {
+    //-Input data arrays.
+    poscell0=poscell0_;
+    numpairs=numpairs_;
+    pairidx=pairidx_;
+    kercorr=kercorr_;
+    flexstrucdata=flexstrucdata_;
+    //-Output data arrays.
+    defgrad=defgrad_;
+  }
+}StInterParmsFlexStrucg;
+
 
 /// Implements a set of functions and CUDA kernels for the particle interaction and system update.
 namespace cusph{
@@ -198,6 +229,9 @@ void ComputeVelMod(unsigned n,const float4 *vel,float *velmod);
 
 //-Kernels for the force calculation.
 void Interaction_Forces(const StInterParmsg &t);
+
+//-Kernels for the flexible structure calculation.//<vs_flexstruc>
+void Interaction_ForcesFlexStruc(const StInterParmsg &t,const StInterParmsFlexStrucg &tfs);
 
 //-Kernels for the boundary correction (mDBC).
 void Interaction_MdbcCorrection(TpKernel tkernel,bool simulate2d
