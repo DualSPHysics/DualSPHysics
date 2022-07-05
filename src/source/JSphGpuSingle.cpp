@@ -50,6 +50,7 @@
 #include "FunctionsCuda.h"
 
 #include <climits>
+#include <numeric> //<vs_flexstruc>
 
 using namespace std;
 //==============================================================================
@@ -465,9 +466,13 @@ void JSphGpuSingle::Interaction_Forces(TpInterStep interstep){
     ,DivData,Dcellg,FtRidpg,DemDatag,FtoMasspg,float(DemDtForce)
     ,PosCellg,Velrhopg,Codeg,Idpg,ViscDtg,Aceg,NULL);
 
-  //-Interaction flexible structure-structure //<vs_flexstruc>
-  const StInterParmsFlexStrucg parmsflexstruc=StrInterParmsFlexStrucg(NULL,NULL,NULL,NULL,NULL,NULL);
-  if(true)cusph::Interaction_ForcesFlexStruc(parms,parmsflexstruc);
+  //<vs_flexstruc_ini>
+  //-Interaction flexible structure-flexible structure.
+  if(FlexStruc){
+    const StInterParmsFlexStrucg parmsflexstruc=StrInterParmsFlexStrucg(PosCell0g,NumPairsg,PairIdxg,KerCorrg,FlexStrucDatag,DefGradg);
+    cusph::Interaction_ForcesFlexStruc(parms,parmsflexstruc);
+  }
+  //<vs_flexstruc_end>
 
   //-For 2D simulations always overrides the 2nd component (Y axis).
   //-Para simulaciones 2D anula siempre la 2nd componente.
@@ -917,6 +922,7 @@ void JSphGpuSingle::SaveData(){
   //-Stores particle data. | Graba datos de particulas.
   JDataArrays arrays;
   AddBasicArrays(arrays,npsave,AuxPos,Idp,AuxVel,AuxRhop);
+  arrays.AddArray("Code",npsave,Code); //<vs_flexstruc> //TODO Remove after debugging.
   JSph::SaveData(npsave,arrays,1,vdom,&infoplus);
   if(UseNormals && SvNormals)SaveVtkNormalsGpu("normals/Normals.vtk",Part,npsave,Npb,Posxyg,Poszg,Idpg,BoundNormalg);
   //-Save extra data.
@@ -975,11 +981,68 @@ void JSphGpuSingle::FinishRun(bool stop){
 
 //<vs_flexstruc_ini>
 void JSphGpuSingle::FlexStrucInit(){
-
-  cudaMemcpy(Code,Codeg,sizeof(typecode)*Npb,cudaMemcpyDeviceToHost);
-  FlexStruc->Init(Npb,Code);
-  cudaMemcpy(Codeg,Code,sizeof(typecode)*Npb,cudaMemcpyHostToDevice);
-
+  //-Configure code for flexible structures.
+  cudaMemcpy(Code,Codeg,sizeof(typecode)*Np,cudaMemcpyDeviceToHost);
+  FlexStruc->ConfigCode(Npb,Code);
+  cudaMemcpy(Codeg,Code,sizeof(typecode)*Np,cudaMemcpyHostToDevice);
+  //-Interaction building flexible structure arrays.
+  const StInterParmsg parms=StrInterParmsg(Simulate2D
+      ,Symmetry //<vs_syymmetry>
+      ,TKernel,FtMode
+      ,TVisco==VISCO_LaminarSPS,TDensity,ShiftingMode
+      ,Visco*ViscoBoundFactor,Visco
+      ,BlockSizes.forcesbound,BlockSizes.forcesfluid,Np,Npb,NpbOk
+      ,0,Nstep,DivData,Dcellg
+      ,Posxyg,Poszg,PosCellg,Velrhopg,Idpg,Codeg
+      ,FtoMasspg,SpsTaug,NULL
+      ,ViscDtg,Arg,Aceg,Deltag
+      ,SpsGradvelg
+      ,ShiftPosfsg
+      ,NULL,NULL);
+  //-Allocate flexible structure arrays on GPU
+  cudaMalloc((void**)&FlexStrucDatag,sizeof(StFlexStrucData)*FlexStruc->GetCount());
+  cudaMalloc((void**)&PosCell0g,sizeof(float4)*Npb);
+  cudaMalloc((void**)&NumPairsg,sizeof(unsigned)*Npb);
+  cudaMalloc((void**)&PairIdxg,sizeof(unsigned*)*Npb);
+  cudaMalloc((void**)&KerCorrg,sizeof(tmatrix3f)*Npb);
+  cudaMalloc((void**)&DefGradg,sizeof(tmatrix3f)*Npb);
+  //-Get flexible structure data for each body and copy to GPU
+  StFlexStrucData *flexstrucdata=new StFlexStrucData [FlexStruc->GetCount()];
+  for(unsigned c=0;c<FlexStruc->GetCount();c++){
+    flexstrucdata[c].vol0=FlexStruc->GetMkBody(c)->GetParticleVolume();
+    flexstrucdata[c].rho0=FlexStruc->GetMkBody(c)->GetDensity();
+    flexstrucdata[c].mass0=FlexStruc->GetMkBody(c)->GetParticleMass();
+    flexstrucdata[c].youngmod=FlexStruc->GetMkBody(c)->GetYoungMod();
+    flexstrucdata[c].poissratio=FlexStruc->GetMkBody(c)->GetPoissRatio();
+    flexstrucdata[c].hgfactor=FlexStruc->GetMkBody(c)->GetHgFactor();
+    flexstrucdata[c].cmat=FlexStruc->GetMkBody(c)->GetConstitMatrix();
+  }
+  cudaMemcpy(FlexStrucDatag,flexstrucdata,sizeof(StFlexStrucData)*FlexStruc->GetCount(),cudaMemcpyHostToDevice);
+  delete[] flexstrucdata;
+  //-Copy current position into initial position.
+  cudaMemcpy(PosCell0g,PosCellg,sizeof(float4)*Npb,cudaMemcpyDeviceToDevice);
+  //-Count number of pairs for each flexible structure particle.
+  cudaMemset(NumPairsg,0,sizeof(unsigned)*Npb);
+  cusph::CountFlexStrucPairs(parms,NumPairsg);
+  unsigned *numpairs=new unsigned [Npb];
+  cudaMemcpy(numpairs,NumPairsg,sizeof(unsigned)*Npb,cudaMemcpyDeviceToHost);
+  unsigned numpairstot=accumulate(numpairs,numpairs+Npb,0);
+  //-Set pair indices for each flexible structure particle.
+  unsigned *bufferg;
+  cudaMalloc((void**)&bufferg,sizeof(unsigned)*numpairstot);
+  unsigned **pairidx=new unsigned* [Npb];
+  unsigned *offset=bufferg;
+  for(unsigned p=0;p<Npb;p++){
+    pairidx[p]=offset;
+    offset+=numpairs[p];
+  }
+  cudaMemcpy(PairIdxg,pairidx,sizeof(unsigned*)*Npb,cudaMemcpyHostToDevice);
+  delete[] numpairs;
+  delete[] pairidx;
+  cusph::SetFlexStrucPairs(parms,NumPairsg,PairIdxg);
+  //-Calculate kernel correction for each structure particle.
+  cudaMemset(KerCorrg,0,sizeof(tmatrix3f)*Npb);
+  cusph::CalcFlexStrucKerCorr(parms,NumPairsg,PairIdxg,KerCorrg);
 }
 //<vs_flexstruc_end>
 
