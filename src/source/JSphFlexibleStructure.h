@@ -1,0 +1,107 @@
+//HEAD_DSPH
+/*
+ <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/).
+
+ EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
+ School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
+
+ This file is part of DualSPHysics.
+
+ DualSPHysics is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+
+ DualSPHysics is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.
+
+ You should have received a copy of the GNU General Public License, along with DualSPHysics. If not, see <http://www.gnu.org/licenses/>.
+*/
+
+/// \file JSphFlexibleStructure.h \brief Declares the class \ref JSphFlexibleStructure.
+
+#ifndef _JSphFlexibleStructure_
+#define _JSphFlexibleStructure_
+
+#include "JObject.h"
+#include "DualSphDef.h"
+
+class JLog2;
+class JXml;
+class TiXmlElement;
+class JSphMk;
+
+//##############################################################################
+//# JSphFlexibleStructureBody
+//##############################################################################
+/// \brief Manages the info of a single flexible structure.
+class JSphFlexibleStructureBody : protected JObject
+{
+private:
+  JLog2* Log;
+
+  //-Selection of particles
+  typecode BoundCode;      ///<Code to select boundary particles.
+
+  //-Body parameters
+  float ParticleVolume;
+  float Density;
+  float YoungMod;
+  float PoissRatio;
+  TpConstitModel ConstitModel;
+  float HgFactor;
+
+  tmatrix6f ConstitMatrix;
+
+  void Reset();
+
+public:
+  const unsigned IdBody;
+  const word MkBound;
+
+  JSphFlexibleStructureBody(unsigned idbody,word mkbound,float particlevolume,float density,double youngmod,double poissratio,TpConstitModel constitmodel,float hgfactor);
+  ~JSphFlexibleStructureBody();
+  void ConfigBoundCode(typecode boundcode);
+
+  typecode GetBoundCode()const{ return(BoundCode); }
+
+  float GetParticleVolume()const{ return ParticleVolume; };
+  float GetDensity()const{ return Density; };
+  float GetYoungMod()const{ return YoungMod; };
+  float GetPoissRatio()const{ return PoissRatio; };
+  float GetHgFactor()const{ return HgFactor; };
+
+  float GetParticleMass()const{ return GetParticleVolume()*GetDensity(); };
+  tmatrix6f GetConstitMatrix()const{ return ConstitMatrix; };
+
+};
+
+//##############################################################################
+//# JSphFlexibleStructure
+//##############################################################################
+/// \brief Manages the info of flexible structures.
+class JSphFlexibleStructure : protected JObject
+{
+private:
+  JLog2* Log;
+  const bool Simulate2D;
+  const double Dp;       ///<Initial distance between particles [m].
+
+  std::vector<JSphFlexibleStructureBody*> List;     ///<List of flexible structure bodies.
+
+  void Reset();
+  bool ExistMk(word mkbound)const;
+  void LoadXml(const JXml *sxml,const std::string &place);
+  void ReadXml(const JXml *sxml,TiXmlElement* lis);
+  void UpdateMkCode(const JSphMk *mkinfo);
+  void ConfigCode(unsigned npb,typecode *code);
+
+public:
+
+  JSphFlexibleStructure(bool simulate2d,double dp,JXml *sxml,const std::string &place,const JSphMk *mkinfo);
+  ~JSphFlexibleStructure();
+
+  unsigned GetCount()const{ return(unsigned(List.size())); }
+  void Init(unsigned npb,typecode *code);
+
+};
+
+#endif
