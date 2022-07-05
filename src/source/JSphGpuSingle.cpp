@@ -469,7 +469,7 @@ void JSphGpuSingle::Interaction_Forces(TpInterStep interstep){
   //<vs_flexstruc_ini>
   //-Interaction flexible structure-flexible structure.
   if(FlexStruc){
-    const StInterParmsFlexStrucg parmsflexstruc=StrInterParmsFlexStrucg(PosCell0g,NumPairsg,PairIdxg,KerCorrg,FlexStrucDatag,DefGradg);
+    const StInterParmsFlexStrucg parmsflexstruc=StrInterParmsFlexStrucg(FlexStrucDatag,PosCell0g,NumPairsg,PairIdxg,KerCorrg,DefGradg);
     cusph::Interaction_ForcesFlexStruc(parms,parmsflexstruc);
   }
   //<vs_flexstruc_end>
@@ -1042,7 +1042,7 @@ void JSphGpuSingle::FlexStrucInit(){
   cusph::SetFlexStrucPairs(parms,NumPairsg,PairIdxg);
   //-Calculate kernel correction for each structure particle.
   cudaMemset(KerCorrg,0,sizeof(tmatrix3f)*Npb);
-  cusph::CalcFlexStrucKerCorr(parms,NumPairsg,PairIdxg,KerCorrg);
+  cusph::CalcFlexStrucKerCorr(parms,FlexStrucDatag,NumPairsg,PairIdxg,KerCorrg);
 }
 //<vs_flexstruc_end>
 

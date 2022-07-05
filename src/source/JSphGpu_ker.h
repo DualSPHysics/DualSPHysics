@@ -180,36 +180,38 @@ typedef struct StrInterParmsg{
 
 }StInterParmsg;
 
+//<vs_flexstruc_ini>
 ///Structure with the parameters for flexible structure interaction on GPU.
 typedef struct StrInterParmsFlexStrucg{
   //-Input data arrays.
+  const StFlexStrucData *flexstrucdata;
   const float4 *poscell0;
   const unsigned *numpairs;
-  const unsigned **pairidx;
+  const unsigned *const *pairidx;
   const tmatrix3f *kercorr;
-  const StFlexStrucData *flexstrucdata;
   //-Output data arrays.
   tmatrix3f *defgrad;
 
   ///Structure constructor.
   StrInterParmsFlexStrucg(
-       const float4 *poscell0_
+       const StFlexStrucData *flexstrucdata_
+      ,const float4 *poscell0_
       ,const unsigned *numpairs_
-      ,const unsigned **pairidx_
+      ,const unsigned *const *pairidx_
       ,const tmatrix3f *kercorr_
-      ,const StFlexStrucData *flexstrucdata_
       ,tmatrix3f *defgrad_)
   {
     //-Input data arrays.
+    flexstrucdata=flexstrucdata_;
     poscell0=poscell0_;
     numpairs=numpairs_;
     pairidx=pairidx_;
     kercorr=kercorr_;
-    flexstrucdata=flexstrucdata_;
     //-Output data arrays.
     defgrad=defgrad_;
   }
 }StInterParmsFlexStrucg;
+//<vs_flexstruc_end>
 
 
 /// Implements a set of functions and CUDA kernels for the particle interaction and system update.
@@ -230,8 +232,13 @@ void ComputeVelMod(unsigned n,const float4 *vel,float *velmod);
 //-Kernels for the force calculation.
 void Interaction_Forces(const StInterParmsg &t);
 
-//-Kernels for the flexible structure calculation.//<vs_flexstruc>
+//<vs_flexstruc_ini>
+//-Kernels for the flexible structure calculation.
 void Interaction_ForcesFlexStruc(const StInterParmsg &t,const StInterParmsFlexStrucg &tfs);
+void CountFlexStrucPairs(const StInterParmsg &t,unsigned *numpairs);
+void SetFlexStrucPairs(const StInterParmsg &t,const unsigned *numpairs,unsigned **pairidx);
+void CalcFlexStrucKerCorr(const StInterParmsg &t,const StFlexStrucData *flexstrucdata,const unsigned *numpairs,const unsigned *const *pairidx,tmatrix3f *kercorr);
+//<vs_flexstruc_end>
 
 //-Kernels for the boundary correction (mDBC).
 void Interaction_MdbcCorrection(TpKernel tkernel,bool simulate2d
