@@ -56,6 +56,7 @@
 #include "JDsInitialize.h"
 #include "JSphInOut.h"
 #include "JSphBoundCorr.h"
+#include "JSphFlexibleStructure.h"
 #include "JFtMotionSave.h"  //<vs_ftmottionsv>
 #include "JDsPips.h"
 #include "JLinearValue.h"
@@ -110,6 +111,7 @@ JSph::JSph(bool cpu,bool mgpu,bool withmpi):Cpu(cpu),Mgpu(mgpu),WithMpi(withmpi)
   PartsLoaded=NULL;
   InOut=NULL;
   BoundCorr=NULL;
+  FlexStruc=NULL; //<vs_flexstruc>
   FtMotSave=NULL; //<vs_ftmottionsv>
   DsPips=NULL;
   NuxLib=NULL;
@@ -148,6 +150,7 @@ JSph::~JSph(){
   delete PartsLoaded;   PartsLoaded=NULL;
   delete InOut;         InOut=NULL;
   delete BoundCorr;     BoundCorr=NULL;
+  delete FlexStruc;     FlexStruc=NULL;   //<vs_flexstruc>
   delete FtMotSave;     FtMotSave=NULL;   //<vs_ftmottionsv>
   delete DsPips;        DsPips=NULL;
   delete NuxLib;        NuxLib=NULL;
@@ -1138,6 +1141,13 @@ void JSph::LoadCaseConfig(const JSphCfgRun *cfg){
       }
     }
   }
+
+  //<vs_flexstruc_ini>
+  //-Configuration of flexible structures.
+  if(xml.GetNodeSimple("case.execution.special.flexiblestructures",true)){
+    FlexStruc=new JSphFlexibleStructure(Simulate2D,Dp,&xml,"case.execution.special.flexiblestructures",MkInfo);
+  }
+  //<vs_flexstruc_end>
 
   //-Configuration of Inlet/Outlet.
   if(xml.GetNodeSimple("case.execution.special.inout",true)){
