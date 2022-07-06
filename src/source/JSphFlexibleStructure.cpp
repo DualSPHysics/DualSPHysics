@@ -159,7 +159,7 @@ void JSphFlexibleStructure::LoadXml(const JXml *sxml,const std::string &place){
 //==============================================================================
 void JSphFlexibleStructure::ReadXml(const JXml *sxml,TiXmlElement* lis){
   //-Loads flexible structure body elements.
-  const unsigned idmax=CODE_MASKVALUE-CODE_GetTypeValue(CODE_TYPE_FIXED_FLEXSTRUC);
+  const unsigned idmax=CODE_MASKVALUE-(CODE_GetTypeValue(CODE_TYPE_FIXED_FLEXSTRUC)|CODE_TYPE_FIXED_FLEXSTRUC_CLAMPMASK);
   TiXmlElement* ele=lis->FirstChildElement("flexiblestructurebody");
   while(ele){
     if(sxml->CheckElementActive(ele)){
@@ -211,7 +211,7 @@ void JSphFlexibleStructure::ConfigCode(unsigned npb,typecode *code){
   for(unsigned c=0;c<GetCount();c++){
     typecode bcode=List[c]->GetBoundCode();
     for(unsigned p=0;p<npb;p++){
-      if(code[p]==bcode)code[p]=typecode(CODE_ToFixedFlexStruc(code[p],List[c]->IdBody));
+      if(code[p]==bcode)code[p]=typecode(CODE_ToFixedFlexStrucFlex(code[p],List[c]->IdBody));
     }
   }
 }

@@ -1074,17 +1074,21 @@ void Interaction_ForcesFlexStruc(const StInterParmsg &t,const StInterParmsFlexSt
 
 __global__ void KerCountFlexStrucPairs(unsigned n,unsigned pinit
     ,int scelldiv,int4 nc,int3 cellzero,const int2 *begincell,const unsigned *dcell
-    ,const float4 *poscell,const typecode *code,const unsigned *idp
-    ,unsigned *numpairs)
+    ,const float4 *poscell,const unsigned *idp
+    ,typecode *code,unsigned *numpairs)
 {
   const unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Number of thread.
   if(p<n){
     const unsigned p1=p+pinit;      //-Number of particle.
-    bool haspairsp1=CODE_IsFixedFlexStruc(code[p1])? true: false;
-    unsigned numpairsp1=0;
 
     //-Loads particle p1 data.
+    const typecode codep1=code[p1];
     const float4 pscellp1=poscell[p1];
+
+    //-Initialise variables.
+    typecode newcodep1;
+    bool haspairsp1=CODE_IsFixedFlexStrucFlex(codep1)? true: false;
+    unsigned numpairsp1=0;
 
     //-Obtains neighborhood search limits.
     int ini1,fin1,ini2,fin2,ini3,fin3;
@@ -1103,14 +1107,21 @@ __global__ void KerCountFlexStrucPairs(unsigned n,unsigned pinit
             float drz=pscellp1.z-pscellp2.z+CTE.poscellsize*(PSCEL_GetfZ(pscellp1.w)-PSCEL_GetfZ(pscellp2.w));
             const float rr2=drx*drx+dry*dry+drz*drz;
             if(rr2<=CTE.kernelsize2&&rr2>=ALMOSTZERO){
-              haspairsp1=CODE_IsFixedFlexStruc(code[p2])? true: haspairsp1;
+              const typecode codep2=code[p2];
+              if(CODE_IsFixedNotFlexStruc(codep1)&&CODE_IsFixedFlexStrucFlex(codep2)){
+                haspairsp1=true;
+                newcodep1=CODE_ToFixedFlexStrucClamp(codep1,CODE_GetIbodyFixedFlexStruc(codep2));
+              }
               numpairsp1++;
             }
           }
         }
       }
     }
-    if(haspairsp1&&numpairsp1)numpairs[p1]=numpairsp1;
+    if(haspairsp1&&numpairsp1){
+      if(CODE_IsFixedNotFlexStruc(codep1))code[p1]=newcodep1;
+      numpairs[p1]=numpairsp1;
+    }
   }
 }
 
@@ -1119,7 +1130,7 @@ void CountFlexStrucPairs(const StInterParmsg &t,unsigned *numpairs){
     const StDivDataGpu &dvd=t.divdatag;
     dim3 sgridb=GetSimpleGridSize(t.vnpb,t.bsbound);
     KerCountFlexStrucPairs <<<sgridb,t.bsbound,0,t.stm>>>
-        (t.vnpb,t.boundini,dvd.scelldiv,dvd.nc,dvd.cellzero,dvd.beginendcell,t.dcell,t.poscell,t.code,t.idp,numpairs);
+        (t.vnpb,t.boundini,dvd.scelldiv,dvd.nc,dvd.cellzero,dvd.beginendcell,t.dcell,t.poscell,t.idp,const_cast<typecode*>(t.code),numpairs);
   }
 }
 

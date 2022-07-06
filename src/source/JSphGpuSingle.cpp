@@ -1027,6 +1027,7 @@ void JSphGpuSingle::FlexStrucInit(){
   //-Count number of pairs for each flexible structure particle.
   cudaMemset(NumPairsg,0,sizeof(unsigned)*Npb);
   cusph::CountFlexStrucPairs(parms,NumPairsg);
+  cudaMemcpy(Code,Codeg,sizeof(typecode)*Npb,cudaMemcpyDeviceToHost);
   unsigned *numpairs=new unsigned [Npb];
   cudaMemcpy(numpairs,NumPairsg,sizeof(unsigned)*Npb,cudaMemcpyDeviceToHost);
   unsigned numpairstot=accumulate(numpairs,numpairs+Npb,0);
