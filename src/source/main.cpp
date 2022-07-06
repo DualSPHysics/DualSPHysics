@@ -56,7 +56,7 @@ Please download source files and documentation from <a href="http://dual.sphysic
 
 using namespace std;
 
-JAppInfo AppInfo("DualSPHysics5","v5.2.235","27-06-2022");
+JAppInfo AppInfo("DualSPHysics5","v5.2.235.001","06-07-2022");
 //JAppInfo AppInfo("DualSPHysics5","v5.0.???","UserVersion","v1.0","??-??-????"); //-for user versions.
 
 //==============================================================================
@@ -109,6 +109,7 @@ bool ShowsVersionInfo(int argc,char** argv){
     features.push_back(fun::JSONProperty("CHRONO_Coupling",AVAILABLE_CHRONO));
     features.push_back(fun::JSONProperty("MoorDyn_Coupling",AVAILABLE_MOORDYN));
     features.push_back(fun::JSONProperty("WaveGen",AVAILABLE_WAVEGEN));
+    features.push_back(fun::JSONProperty("FlexibleStructure",AVAILABLE_FLEXSTRUCTURE)); //<vs_flexstruc>
     features.push_back(fun::JSONProperty("DDT_Fourtakas",true));
     //-Defines main information about the version program.
     std::vector<std::string> info;
@@ -142,6 +143,7 @@ int main(int argc, char** argv){
   //AppInfo.AddNameExtra("Symmetry");    //<vs_syymmetry>
   //AppInfo.AddNameExtra("SaveFtAce");
   //AppInfo.AddNameExtra("SaveFtMotion");//<vs_ftmottionsv>
+  AppInfo.AddNameExtra("FlexibleStructure");//<vs_flexstruc>
   #ifdef CODE_SIZE4
     AppInfo.AddNameExtra("MK65k");
   #endif

@@ -54,6 +54,15 @@
 //#define DISABLE_MOORDYN    ///<It allows compile without LibDSphMoorDyn library.
 
 
+//<vs_flexstruc_ini>
+//-Defines AVAILABLE_FLEXSTRUCTURE when this feature is compiled.
+#ifdef DISABLE_FLEXSTRUCTURE
+#define AVAILABLE_FLEXSTRUCTURE false
+#else
+#define AVAILABLE_FLEXSTRUCTURE true
+#endif
+//<vs_flexstruc_end>
+
 //-Defines AVAILABLE_VTKLIB when this feature is compiled.
 #ifdef DISABLE_VTKLIB
   #define AVAILABLE_VTKLIB false
