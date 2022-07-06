@@ -653,6 +653,7 @@ rem %CudaNvcc% -ccbin "$(VCInstallDir)bin" %gpuhw% -use_fast_math -c %ptxinfo% -
     <ClInclude Include="..\source\JSaveCsv2.h" />
     <ClInclude Include="..\source\JDsSaveDt.h" />
     <ClInclude Include="..\source\JSphFlexibleStructure.h" />
+    <ClInclude Include="..\source\JSphFlexibleStructureUndef.h" />
     <ClInclude Include="..\source\JSphInOutDef.h" />
     <ClInclude Include="..\source\JSphInOutVel.h" />
     <ClInclude Include="..\source\JSphInOutVelAwas.h" />

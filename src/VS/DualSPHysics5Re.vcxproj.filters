@@ -502,6 +502,9 @@
     <ClInclude Include="..\source\JSphFlexibleStructure.h">
       <Filter>Src_FSI</Filter>
     </ClInclude>
+    <ClInclude Include="..\source\JSphFlexibleStructureUndef.h">
+      <Filter>Src_FSI</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\source\main.cpp">
