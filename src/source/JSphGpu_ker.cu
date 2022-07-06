@@ -978,10 +978,10 @@ __global__ void KerInteractionForcesFlexStruc(unsigned n,unsigned pinit
       const tmatrix3f defgradp1=defgrad[p1];
 
       //-Obtains flexible structure data.
-      const float rho0p1=flexstrucdata[CODE_GetIbodyFixedFlexStruc(codep1)].mass0;
+      const float rho0p1=flexstrucdata[CODE_GetIbodyFixedFlexStruc(codep1)].rho0;
       const float mass0p1=flexstrucdata[CODE_GetIbodyFixedFlexStruc(codep1)].mass0;
       const float youngmod=flexstrucdata[CODE_GetIbodyFixedFlexStruc(codep1)].youngmod;
-      const float poisson=flexstrucdata[CODE_GetIbodyFixedFlexStruc(codep1)].poissratio;
+      const float poissratio=flexstrucdata[CODE_GetIbodyFixedFlexStruc(codep1)].poissratio;
       const float hgfactor=flexstrucdata[CODE_GetIbodyFixedFlexStruc(codep1)].hgfactor;
       const tmatrix6f cmat=flexstrucdata[CODE_GetIbodyFixedFlexStruc(codep1)].cmat;
       const tmatrix3f pk1p1=KerComputePK1StressFlexStruc(defgradp1,cmat);
@@ -1017,9 +1017,7 @@ __global__ void KerInteractionForcesFlexStruc(unsigned n,unsigned pinit
         pk1kercorrdw.x=pk1kercorrp1p2.a11*frx0+pk1kercorrp1p2.a12*fry0+pk1kercorrp1p2.a13*frz0;
         pk1kercorrdw.y=pk1kercorrp1p2.a21*frx0+pk1kercorrp1p2.a22*fry0+pk1kercorrp1p2.a23*frz0;
         pk1kercorrdw.z=pk1kercorrp1p2.a31*frx0+pk1kercorrp1p2.a32*fry0+pk1kercorrp1p2.a33*frz0;
-        acep1.x+=pk1kercorrdw.x*vol0p1/rho0p1;
-        acep1.y+=pk1kercorrdw.y*vol0p1/rho0p1;
-        acep1.z+=pk1kercorrdw.z*vol0p1/rho0p1;
+        acep1.x+=pk1kercorrdw.x*vol0p1/rho0p1; acep1.y+=pk1kercorrdw.y*vol0p1/rho0p1; acep1.z+=pk1kercorrdw.z*vol0p1/rho0p1;
 
         //      //-Hour glass correction.
         //      if(hgfactor){
@@ -1041,23 +1039,23 @@ __global__ void KerInteractionForcesFlexStruc(unsigned n,unsigned pinit
         //        const float mulFac=(hgfactor*vol0*vol0*wab*young/(rr20*rr*massp)*0.5f*(deltaij+deltaji));
         //        acep1.x-=mulFac*xij.x;  acep1.y-=mulFac*xij.y;  acep1.z-=mulFac*xij.z;
         //      }
+      }
 
-        //-Store results.
-        if(acep1.x||acep1.y||acep1.z){
-          float3 r=ace[p1]; r.x+=acep1.x; r.y+=acep1.y; r.z+=acep1.z; ace[p1]=r;
-        }
+      //-Store results.
+      if(acep1.x||acep1.y||acep1.z){
+        float3 r=ace[p1]; r.x+=acep1.x; r.y+=acep1.y; r.z+=acep1.z; ace[p1]=r;
       }
     }
   }
 }
 
 template<TpKernel tker,bool simulate2d> void Interaction_ForcesFlexStrucT(const StInterParmsg &t,const StInterParmsFlexStrucg &tfs){
-  if(t.boundnum){
-    dim3 sgridb=GetSimpleGridSize(t.boundnum,t.bsbound);
+  if(t.vnpb){
+    dim3 sgridb=GetSimpleGridSize(t.vnpb,t.bsbound);
     KerComputeDefGradFlexStruc<tker,simulate2d> <<<sgridb,t.bsbound,0,t.stm>>>
-        (t.boundnum,t.boundini,t.poscell,t.code,t.idp,tfs.flexstrucdata,tfs.poscell0,tfs.numpairs,tfs.pairidx,tfs.kercorr,tfs.defgrad);
+        (t.vnpb,t.boundini,t.poscell,t.code,t.idp,tfs.flexstrucdata,tfs.poscell0,tfs.numpairs,tfs.pairidx,tfs.kercorr,tfs.defgrad);
     KerInteractionForcesFlexStruc<tker,simulate2d> <<<sgridb,t.bsbound,0,t.stm>>>
-        (t.boundnum,t.boundini,t.poscell,t.code,t.idp,tfs.flexstrucdata,tfs.poscell0,tfs.numpairs,tfs.pairidx,tfs.kercorr,tfs.defgrad,t.ace);
+        (t.vnpb,t.boundini,t.poscell,t.code,t.idp,tfs.flexstrucdata,tfs.poscell0,tfs.numpairs,tfs.pairidx,tfs.kercorr,tfs.defgrad,t.ace);
   }
 }
 
