@@ -54,6 +54,15 @@
 //#define DISABLE_MOORDYN    ///<It allows compile without LibDSphMoorDyn library.
 
 
+//<vs_flexstruc_ini>
+//-Defines AVAILABLE_FLEXSTRUCTURE when this feature is compiled.
+#ifdef DISABLE_FLEXSTRUCTURE
+#define AVAILABLE_FLEXSTRUCTURE false
+#else
+#define AVAILABLE_FLEXSTRUCTURE true
+#endif
+//<vs_flexstruc_end>
+
 //-Defines AVAILABLE_VTKLIB when this feature is compiled.
 #ifdef DISABLE_VTKLIB
   #define AVAILABLE_VTKLIB false
@@ -211,7 +220,7 @@
 #define CODE_IsFluid(code)    (CODE_GetType(code)==CODE_TYPE_FLUID)
 #define CODE_IsNotFluid(code) (CODE_GetType(code)!=CODE_TYPE_FLUID)
 
-//<vs_flexstruc_init>
+//<vs_flexstruc_ini>
 #define CODE_IsFixedFlexStruc(code)     (CODE_IsFixed(code) && CODE_GetTypeValue(code)>=CODE_GetTypeValue(CODE_TYPE_FIXED_FLEXSTRUC))
 #define CODE_IsFixedNotFlexStruc(code)  (CODE_IsFixed(code) && CODE_GetTypeValue(code)< CODE_GetTypeValue(CODE_TYPE_FIXED_FLEXSTRUC))
 

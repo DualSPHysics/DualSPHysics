@@ -8,9 +8,6 @@
     <Filter Include="Libs">
       <UniqueIdentifier>{99d1ade6-e68a-4751-ab48-b8d6bd2e501a}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source">
-      <UniqueIdentifier>{6de12eb8-c425-49be-b99c-8d64538d1569}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Common">
       <UniqueIdentifier>{f60090e0-1dd6-457c-ab56-cccbd3391527}</UniqueIdentifier>
     </Filter>
@@ -31,6 +28,12 @@
     </Filter>
     <Filter Include="Src_Moorings">
       <UniqueIdentifier>{b27c9e66-9b04-4b69-8a55-8dc262bfa75b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Src_FSI">
+      <UniqueIdentifier>{0e625a79-26ea-4ba9-b426-1311f7a59dbe}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source">
+      <UniqueIdentifier>{6de12eb8-c425-49be-b99c-8d64538d1569}</UniqueIdentifier>
     </Filter>
     <Filter Include="Source\CellDiv">
       <UniqueIdentifier>{a5e48308-a8b0-4f2e-a73d-ddec5dd622de}</UniqueIdentifier>
@@ -496,6 +499,9 @@
     <ClInclude Include="..\source\JDsGpuInfo.h">
       <Filter>Source</Filter>
     </ClInclude>
+    <ClInclude Include="..\source\JSphFlexibleStructure.h">
+      <Filter>Src_FSI</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\source\main.cpp">
@@ -791,6 +797,9 @@
     </ClCompile>
     <ClCompile Include="..\source\JDsGpuInfo.cpp">
       <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JSphFlexibleStructure.cpp">
+      <Filter>Src_FSI</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
