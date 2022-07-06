@@ -339,7 +339,7 @@ void JSphGpuSingle::RunCellDivide(bool updateperiodic){
   if(updateperiodic && PeriActive)RunPeriodic();
 
   //-Initiates Divide.
-  CellDivSingle->Divide(Npb,Np-Npb-NpbPer-NpfPer,NpbPer,NpfPer,BoundChanged
+  CellDivSingle->Divide(Npb,Np-Npb-NpbPer-NpfPer,NpbPer,NpfPer,BoundChanged,CellDivideAll
     ,Dcellg,Codeg,Posxyg,Poszg,Idpg,Timersg);
   DivData=CellDivSingle->GetCellDivData();
 
@@ -981,6 +981,9 @@ void JSphGpuSingle::FinishRun(bool stop){
 
 //<vs_flexstruc_ini>
 void JSphGpuSingle::FlexStrucInit(){
+  //-Recalculate the neighbour lists for all particles.
+  BoundChanged=true; CellDivideAll=true;
+  RunCellDivide(true);
   //-Configure code for flexible structures.
   cudaMemcpy(Code,Codeg,sizeof(typecode)*Np,cudaMemcpyDeviceToHost);
   FlexStruc->ConfigCode(Npb,Code);
@@ -1043,6 +1046,9 @@ void JSphGpuSingle::FlexStrucInit(){
   //-Calculate kernel correction for each structure particle.
   cudaMemset(KerCorrg,0,sizeof(tmatrix3f)*Npb);
   cusph::CalcFlexStrucKerCorr(parms,FlexStrucDatag,NumPairsg,PairIdxg,KerCorrg);
+  //-Recalculate the neighbour lists back to normal (without all particles).
+  BoundChanged=true; CellDivideAll=false;
+  RunCellDivide(true);
 }
 //<vs_flexstruc_end>
 

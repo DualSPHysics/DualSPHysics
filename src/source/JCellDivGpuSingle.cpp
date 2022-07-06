@@ -44,7 +44,7 @@ JCellDivGpuSingle::JCellDivGpuSingle(bool stable,bool floating,byte periactive
 /// Computes cell domains adjusting to the fluid (CellDomainMin/Max). 
 /// Calcula limites del dominio en celdas ajustando al fluido (CellDomainMin/Max). 
 //==============================================================================
-void JCellDivGpuSingle::CalcCellDomain(const unsigned *dcellg,const typecode *codeg){
+void JCellDivGpuSingle::CalcCellDomain(bool celldivideall,const unsigned *dcellg,const typecode *codeg){
   //-Define maximum cell domain.
   if(CellDomFixed){
     CellDomainMin=TUint3(0,0,0);
@@ -67,7 +67,7 @@ void JCellDivGpuSingle::CalcCellDomain(const unsigned *dcellg,const typecode *co
     //Log->Printf("----->CalcCellDomain> celfmin/max:%s",fun::Uint3RangeStr(celfmin,celfmax).c_str());
     //-Computes the domain adjusting to the boundary and the fluid (with KernelSize halo).
     //-Calcula dominio ajustando al contorno y al fluido (con halo de KernelSize). 
-    MergeMapCellBoundFluid(celbmin,celbmax,celfmin,celfmax,CellDomainMin,CellDomainMax);
+    MergeMapCellBoundFluid(celldivideall,celbmin,celbmax,celfmin,celfmax,CellDomainMin,CellDomainMax);
   }
 }
 
@@ -83,16 +83,22 @@ void JCellDivGpuSingle::CalcCellDomain(const unsigned *dcellg,const typecode *co
 /// fluido y contorno.
 /// En caso de que el dominio sea nulo CellDomainMin=CellDomainMax=(0,0,0).
 //==============================================================================
-void JCellDivGpuSingle::MergeMapCellBoundFluid(const tuint3 &celbmin,const tuint3 &celbmax
+void JCellDivGpuSingle::MergeMapCellBoundFluid(bool celldivideall,const tuint3 &celbmin,const tuint3 &celbmax
   ,const tuint3 &celfmin,const tuint3 &celfmax,tuint3 &celmin,tuint3 &celmax)const
 {
-  const unsigned scelldiv=unsigned(ScellDiv);
-  celmin=TUint3(max(min(celbmin.x,celfmin.x),(celfmin.x>=scelldiv? celfmin.x-scelldiv: 0))
-               ,max(min(celbmin.y,celfmin.y),(celfmin.y>=scelldiv? celfmin.y-scelldiv: 0))
-               ,max(min(celbmin.z,celfmin.z),(celfmin.z>=scelldiv? celfmin.z-scelldiv: 0)));
-  celmax=TUint3(min(max(celbmax.x,celfmax.x),celfmax.x+scelldiv)
-               ,min(max(celbmax.y,celfmax.y),celfmax.y+scelldiv)
-               ,min(max(celbmax.z,celfmax.z),celfmax.z+scelldiv));
+  if(celldivideall){
+    celmin=TUint3(min(celbmin.x,celfmin.x),min(celbmin.y,celfmin.y),min(celbmin.z,celfmin.z));
+    celmax=TUint3(max(celbmax.x,celfmax.x),max(celbmax.y,celfmax.y),max(celbmax.z,celfmax.z));
+  }
+  else{
+    const unsigned scelldiv=unsigned(ScellDiv);
+    celmin=TUint3(max(min(celbmin.x,celfmin.x),(celfmin.x>=scelldiv? celfmin.x-scelldiv: 0))
+                 ,max(min(celbmin.y,celfmin.y),(celfmin.y>=scelldiv? celfmin.y-scelldiv: 0))
+                 ,max(min(celbmin.z,celfmin.z),(celfmin.z>=scelldiv? celfmin.z-scelldiv: 0)));
+    celmax=TUint3(min(max(celbmax.x,celfmax.x),celfmax.x+scelldiv)
+                 ,min(max(celbmax.y,celfmax.y),celfmax.y+scelldiv)
+                 ,min(max(celbmax.z,celfmax.z),celfmax.z+scelldiv));
+  }
   if(celmax.x>=DomCells.x)celmax.x=DomCells.x-1;
   if(celmax.y>=DomCells.y)celmax.y=DomCells.y-1;
   if(celmax.z>=DomCells.z)celmax.z=DomCells.z-1;
@@ -150,7 +156,7 @@ void JCellDivGpuSingle::PreSort(const unsigned *dcellg,const typecode *codeg){
 /// Las floating se tratan como si fuesen fluido (tanto al ser excluidas como ignoradas).
 //==============================================================================
 void JCellDivGpuSingle::Divide(unsigned npb1,unsigned npf1,unsigned npb2,unsigned npf2
-  ,bool boundchanged,const unsigned *dcellg,const typecode *codeg
+  ,bool boundchanged,bool celldivideall,const unsigned *dcellg,const typecode *codeg
   ,const double2 *posxy,const double *posz,const unsigned *idp,JDsTimersGpu *timersg)
 {
   DivideFull=false;
@@ -177,7 +183,7 @@ void JCellDivGpuSingle::Divide(unsigned npb1,unsigned npf1,unsigned npb2,unsigne
   }
 
   //-Calculate domain limits | Calcula limites del dominio.
-  CalcCellDomain(dcellg,codeg);
+  CalcCellDomain(celldivideall,dcellg,codeg);
   //-Calculate number of cells for divide and check reservation of memory for cells.
   //-Calcula numero de celdas para el divide y comprueba reserva de memoria para celdas.
   PrepareNct();
