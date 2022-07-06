@@ -211,7 +211,7 @@
 #define CODE_IsFluid(code)    (CODE_GetType(code)==CODE_TYPE_FLUID)
 #define CODE_IsNotFluid(code) (CODE_GetType(code)!=CODE_TYPE_FLUID)
 
-//<vs_flexstruc_init>
+//<vs_flexstruc_ini>
 #define CODE_IsFixedFlexStruc(code)     (CODE_IsFixed(code) && CODE_GetTypeValue(code)>=CODE_GetTypeValue(CODE_TYPE_FIXED_FLEXSTRUC))
 #define CODE_IsFixedNotFlexStruc(code)  (CODE_IsFixed(code) && CODE_GetTypeValue(code)< CODE_GetTypeValue(CODE_TYPE_FIXED_FLEXSTRUC))
 
