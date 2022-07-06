@@ -1073,7 +1073,7 @@ void Interaction_ForcesFlexStruc(const StInterParmsg &t,const StInterParmsFlexSt
 }
 
 __global__ void KerCountFlexStrucPairs(unsigned n,unsigned pinit
-    ,int scelldiv,int4 nc,int3 cellzero,const int2 *beginendcellfluid,const unsigned *dcell
+    ,int scelldiv,int4 nc,int3 cellzero,const int2 *begincell,const unsigned *dcell
     ,const float4 *poscell,const typecode *code,const unsigned *idp
     ,unsigned *numpairs)
 {
@@ -1094,7 +1094,7 @@ __global__ void KerCountFlexStrucPairs(unsigned n,unsigned pinit
     for(int c3=ini3;c3<fin3;c3+=nc.w){
       for(int c2=ini2;c2<fin2;c2+=nc.x){
         unsigned pini,pfin=0;
-        cunsearch::ParticleRange(c2,c3,ini1,fin1,beginendcellfluid,pini,pfin);
+        cunsearch::ParticleRange(c2,c3,ini1,fin1,begincell,pini,pfin);
         if(pfin){
           for(int p2=pini;p2<pfin;p2++){
             const float4 pscellp2=poscell[p2];
@@ -1117,15 +1117,14 @@ __global__ void KerCountFlexStrucPairs(unsigned n,unsigned pinit
 void CountFlexStrucPairs(const StInterParmsg &t,unsigned *numpairs){
   if(t.vnpb){
     const StDivDataGpu &dvd=t.divdatag;
-    const int2 *beginendcellfluid=dvd.beginendcell+dvd.cellfluid;
     dim3 sgridb=GetSimpleGridSize(t.vnpb,t.bsbound);
     KerCountFlexStrucPairs <<<sgridb,t.bsbound,0,t.stm>>>
-        (t.vnpb,t.boundini,dvd.scelldiv,dvd.nc,dvd.cellzero,beginendcellfluid,t.dcell,t.poscell,t.code,t.idp,numpairs);
+        (t.vnpb,t.boundini,dvd.scelldiv,dvd.nc,dvd.cellzero,dvd.beginendcell,t.dcell,t.poscell,t.code,t.idp,numpairs);
   }
 }
 
 __global__ void KerSetFlexStrucPairs(unsigned n,unsigned pinit
-    ,int scelldiv,int4 nc,int3 cellzero,const int2 *beginendcellfluid,const unsigned *dcell
+    ,int scelldiv,int4 nc,int3 cellzero,const int2 *begincell,const unsigned *dcell
     ,const float4 *poscell,const typecode *code,const unsigned *idp
     ,const unsigned *numpairs
     ,unsigned **pairidx)
@@ -1147,7 +1146,7 @@ __global__ void KerSetFlexStrucPairs(unsigned n,unsigned pinit
     for(int c3=ini3;c3<fin3;c3+=nc.w){
       for(int c2=ini2;c2<fin2;c2+=nc.x){
         unsigned pini,pfin=0;
-        cunsearch::ParticleRange(c2,c3,ini1,fin1,beginendcellfluid,pini,pfin);
+        cunsearch::ParticleRange(c2,c3,ini1,fin1,begincell,pini,pfin);
         if(pfin){
           for(int p2=pini;p2<pfin;p2++){
             const float4 pscellp2=poscell[p2];
@@ -1166,10 +1165,9 @@ __global__ void KerSetFlexStrucPairs(unsigned n,unsigned pinit
 void SetFlexStrucPairs(const StInterParmsg &t,const unsigned *numpairs,unsigned **pairidx){
   if(t.vnpb){
     const StDivDataGpu &dvd=t.divdatag;
-    const int2 *beginendcellfluid=dvd.beginendcell+dvd.cellfluid;
     dim3 sgridb=GetSimpleGridSize(t.vnpb,t.bsbound);
     KerSetFlexStrucPairs <<<sgridb,t.bsbound,0,t.stm>>>
-        (t.vnpb,t.boundini,dvd.scelldiv,dvd.nc,dvd.cellzero,beginendcellfluid,t.dcell,t.poscell,t.code,t.idp,numpairs,pairidx);
+        (t.vnpb,t.boundini,dvd.scelldiv,dvd.nc,dvd.cellzero,dvd.beginendcell,t.dcell,t.poscell,t.code,t.idp,numpairs,pairidx);
   }
 }
 
