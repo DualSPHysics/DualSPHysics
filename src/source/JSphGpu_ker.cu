@@ -1963,7 +1963,7 @@ void AddDelta(unsigned n,const float *delta,float *ar,cudaStream_t stm){
   }
 }
 
-
+//<vs_flexstruc_ini> (modified)
 //##############################################################################
 //# Kernels para ComputeStep (position)
 //# Kernels for ComputeStep (position)
@@ -1972,20 +1972,22 @@ void AddDelta(unsigned n,const float *delta,float *ar,cudaStream_t stm){
 /// Updates particle position according to displacement.
 /// Actualizacion de posicion de particulas segun desplazamiento.
 //------------------------------------------------------------------------------
-template<bool periactive,bool floatings> __global__ void KerComputeStepPos(unsigned n,unsigned pini
+template<bool periactive,bool floatings> __global__ void KerComputeStepPos(unsigned np,unsigned npb
   ,const double2 *movxy,const double *movz
   ,double2 *posxy,double *posz,unsigned *dcell,typecode *code)
 {
-  unsigned pt=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
-  if(pt<n){
-    unsigned p=pt+pini;
+  unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
+  if(p<np){
     const typecode rcode=code[p];
-    const bool outrhop=CODE_IsOutRhop(rcode);
-    const bool fluid=(!floatings || CODE_IsFluid(rcode));
-    const bool normal=(!periactive || outrhop || CODE_IsNormal(rcode));
-    if(normal && fluid){ //-Does not apply to periodic or floating particles. | No se aplica a particulas periodicas o floating.
-      const double2 rmovxy=movxy[p];
-      KerUpdatePos<periactive>(posxy[p],posz[p],rmovxy.x,rmovxy.y,movz[p],outrhop,p,posxy,posz,dcell,code);
+    if(p>=npb||CODE_IsFixedFlexStrucFlex(rcode)){
+      const bool outrhop=CODE_IsOutRhop(rcode);
+      const bool fluid=(!floatings||CODE_IsFluid(rcode));
+      const bool flexstruc=CODE_IsFixedFlexStrucFlex(rcode);
+      const bool normal=(!periactive||outrhop||CODE_IsNormal(rcode));
+      if(normal && (fluid||flexstruc)){ //-Does not apply to periodic or floating particles. | No se aplica a particulas periodicas o floating.
+        const double2 rmovxy=movxy[p];
+        KerUpdatePos<periactive>(posxy[p],posz[p],rmovxy.x,rmovxy.y,movz[p],outrhop,p,posxy,posz,dcell,code);
+      }
     }
     //-In case of floating maintains the original position.
     //-En caso de floating mantiene la posicion original.
@@ -2000,20 +2002,19 @@ void ComputeStepPos(byte periactive,bool floatings,unsigned np,unsigned npb
   ,const double2 *movxy,const double *movz
   ,double2 *posxy,double *posz,unsigned *dcell,typecode *code)
 {
-  const unsigned pini=npb;
-  const unsigned npf=np-pini;
-  if(npf){
-    dim3 sgrid=GetSimpleGridSize(npf,SPHBSIZE);
+  if(np){
+    dim3 sgrid=GetSimpleGridSize(np,SPHBSIZE);
     if(periactive){ const bool peri=true;
-      if(floatings)KerComputeStepPos<peri,true>  <<<sgrid,SPHBSIZE>>> (npf,pini,movxy,movz,posxy,posz,dcell,code);
-      else         KerComputeStepPos<peri,false> <<<sgrid,SPHBSIZE>>> (npf,pini,movxy,movz,posxy,posz,dcell,code);
+      if(floatings)KerComputeStepPos<peri,true>  <<<sgrid,SPHBSIZE>>> (np,npb,movxy,movz,posxy,posz,dcell,code);
+      else         KerComputeStepPos<peri,false> <<<sgrid,SPHBSIZE>>> (np,npb,movxy,movz,posxy,posz,dcell,code);
     }
     else{ const bool peri=false;
-      if(floatings)KerComputeStepPos<peri,true>  <<<sgrid,SPHBSIZE>>> (npf,pini,movxy,movz,posxy,posz,dcell,code);
-      else         KerComputeStepPos<peri,false> <<<sgrid,SPHBSIZE>>> (npf,pini,movxy,movz,posxy,posz,dcell,code);
+      if(floatings)KerComputeStepPos<peri,true>  <<<sgrid,SPHBSIZE>>> (np,npb,movxy,movz,posxy,posz,dcell,code);
+      else         KerComputeStepPos<peri,false> <<<sgrid,SPHBSIZE>>> (np,npb,movxy,movz,posxy,posz,dcell,code);
     }
   }
 }
+//<vs_flexstruc_end> (modified)
 
 //------------------------------------------------------------------------------
 /// Updates particle position according to displacement.

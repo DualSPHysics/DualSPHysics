@@ -138,7 +138,30 @@ template<bool floating,bool shift,bool inout> __global__ void KerComputeStepVerl
     if(p<npb){ //-Particles: Fixed & Moving.
       float rrhop=float(double(velrhop2[p].w)+dt2*ar[p]);
       rrhop=(rrhop<rhopzero? rhopzero: rrhop); //-To prevent absorption of fluid particles by boundaries. | Evita q las boundary absorvan a las fluidas.
-      velrhopnew[p]=make_float4(0,0,0,rrhop);
+      //<vs_flexstruc_ini>
+      //-Update flexible structure particles (semi-implicit Euler).
+      if(CODE_IsFixedFlexStrucFlex(code[p])){
+        const float3 race=ace[p];
+        const double acegrx=double(race.x)+gravity.x;
+        const double acegry=double(race.y)+gravity.y;
+        const double acegrz=double(race.z)+gravity.z;
+        const float4 rvelrhop1=velrhop1[p];
+        const float4 rvelrhopnew=make_float4(
+            float(double(rvelrhop1.x) + acegrx*dt),
+            float(double(rvelrhop1.y) + acegry*dt),
+            float(double(rvelrhop1.z) + acegrz*dt),
+            rrhop);
+        //-Calculate displacement. | Calcula desplazamiento.
+        double dx=double(rvelrhopnew.x)*dt;
+        double dy=double(rvelrhopnew.y)*dt;
+        double dz=double(rvelrhopnew.z)*dt;
+        //-Update particle data.
+        movxy[p]=make_double2(dx,dy);
+        movz[p]=dz;
+        velrhopnew[p]=rvelrhopnew;
+      }
+      else velrhopnew[p]=make_float4(0,0,0,rrhop);
+      //<vs_flexstruc_end>
     }
     else{ //-Particles: Floating & Fluid.
       const typecode rcode=code[p];
