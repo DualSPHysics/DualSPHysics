@@ -1961,7 +1961,7 @@ void AddDelta(unsigned n,const float *delta,float *ar,cudaStream_t stm){
   }
 }
 
-//<vs_flexstruc_ini> (modified)
+
 //##############################################################################
 //# Kernels para ComputeStep (position)
 //# Kernels for ComputeStep (position)
@@ -1977,10 +1977,10 @@ template<bool periactive,bool floatings> __global__ void KerComputeStepPos(unsig
   unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
   if(p<np){
     const typecode rcode=code[p];
-    if(p>=npb||CODE_IsFixedFlexStrucFlex(rcode)){
+    if(p>=npb||CODE_IsFixedFlexStrucFlex(rcode)){ //<vs_flexstruc>
       const bool outrhop=CODE_IsOutRhop(rcode);
       const bool fluid=(!floatings||CODE_IsFluid(rcode));
-      const bool flexstruc=CODE_IsFixedFlexStrucFlex(rcode);
+      const bool flexstruc=CODE_IsFixedFlexStrucFlex(rcode); //<vs_flexstruc>
       const bool normal=(!periactive||outrhop||CODE_IsNormal(rcode));
       if(normal && (fluid||flexstruc)){ //-Does not apply to periodic or floating particles. | No se aplica a particulas periodicas o floating.
         const double2 rmovxy=movxy[p];
@@ -2012,7 +2012,6 @@ void ComputeStepPos(byte periactive,bool floatings,unsigned np,unsigned npb
     }
   }
 }
-//<vs_flexstruc_end> (modified)
 
 //------------------------------------------------------------------------------
 /// Updates particle position according to displacement.

@@ -86,10 +86,12 @@ void JCellDivGpuSingle::CalcCellDomain(bool celldivideall,const unsigned *dcellg
 void JCellDivGpuSingle::MergeMapCellBoundFluid(bool celldivideall,const tuint3 &celbmin,const tuint3 &celbmax
   ,const tuint3 &celfmin,const tuint3 &celfmax,tuint3 &celmin,tuint3 &celmax)const
 {
+  //<vs_flexstruc_ini>
   if(celldivideall){
     celmin=TUint3(min(celbmin.x,celfmin.x),min(celbmin.y,celfmin.y),min(celbmin.z,celfmin.z));
     celmax=TUint3(max(celbmax.x,celfmax.x),max(celbmax.y,celfmax.y),max(celbmax.z,celfmax.z));
   }
+  //<vs_flexstruc_end>
   else{
     const unsigned scelldiv=unsigned(ScellDiv);
     celmin=TUint3(max(min(celbmin.x,celfmin.x),(celfmin.x>=scelldiv? celfmin.x-scelldiv: 0))
