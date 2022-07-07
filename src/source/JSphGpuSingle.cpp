@@ -463,6 +463,7 @@ void JSphGpuSingle::Interaction_Forces(TpInterStep interstep){
     ,0,Nstep,DivData,Dcellg
     ,Posxyg,Poszg,PosCellg,Velrhopg,Idpg,Codeg
     ,FtoMasspg,SpsTaug,dengradcorr
+    ,FlexStrucDatag //<vs_flexstruc>
     ,ViscDtg,Arg,Aceg,Deltag
     ,SpsGradvelg
     ,ShiftPosfsg
@@ -477,7 +478,7 @@ void JSphGpuSingle::Interaction_Forces(TpInterStep interstep){
   //<vs_flexstruc_ini>
   //-Interaction flexible structure-flexible structure.
   if(FlexStruc){
-    const StInterParmsFlexStrucg parmsflexstruc=StrInterParmsFlexStrucg(FlexStrucDatag,PosCell0g,NumPairsg,PairIdxg,KerCorrg,DefGradg);
+    const StInterParmsFlexStrucg parmsflexstruc=StrInterParmsFlexStrucg(PosCell0g,NumPairsg,PairIdxg,KerCorrg,DefGradg);
     cusph::Interaction_ForcesFlexStruc(parms,parmsflexstruc);
   }
   //<vs_flexstruc_end>
@@ -1024,6 +1025,7 @@ void JSphGpuSingle::FlexStrucInit(){
       ,0,Nstep,DivData,Dcellg
       ,Posxyg,Poszg,PosCellg,Velrhopg,Idpg,Codeg
       ,FtoMasspg,SpsTaug,NULL
+      ,FlexStrucDatag //<vs_flexstruc>
       ,ViscDtg,Arg,Aceg,Deltag
       ,SpsGradvelg
       ,ShiftPosfsg

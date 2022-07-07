@@ -118,6 +118,7 @@ typedef struct StrInterParmsg{
   const float *ftomassp;
   const tsymatrix3f *tau;
   const float3 *dengradcorr;
+  const StFlexStrucData *flexstrucdata; //<vs_flexstruc>
   //-Output data arrays.
   float *viscdt;
   float* ar;
@@ -144,6 +145,7 @@ typedef struct StrInterParmsg{
     ,const float4 *velrhop_,const unsigned *idp_,const typecode *code_
     ,const float *ftomassp_,const tsymatrix3f *spstau_
     ,const float3 *dengradcorr_
+    ,const StFlexStrucData *flexstrucdata_ //<vs_flexstruc>
     ,float *viscdt_,float* ar_,float3 *ace_,float *delta_
     ,tsymatrix3f *spsgradvel_
     ,float4 *shiftposfs_
@@ -169,6 +171,7 @@ typedef struct StrInterParmsg{
     velrhop=velrhop_; idp=idp_; code=code_;
     ftomassp=ftomassp_; tau=spstau_;
     dengradcorr=dengradcorr_;
+    flexstrucdata=flexstrucdata_; //<vs_flexstruc>
     //-Output data arrays.
     viscdt=viscdt_; ar=ar_; ace=ace_; delta=delta_;
     gradvel=spsgradvel_;
@@ -184,7 +187,6 @@ typedef struct StrInterParmsg{
 ///Structure with the parameters for flexible structure interaction on GPU.
 typedef struct StrInterParmsFlexStrucg{
   //-Input data arrays.
-  const StFlexStrucData *flexstrucdata;
   const float4 *poscell0;
   const unsigned *numpairs;
   const unsigned *const *pairidx;
@@ -194,15 +196,13 @@ typedef struct StrInterParmsFlexStrucg{
 
   ///Structure constructor.
   StrInterParmsFlexStrucg(
-       const StFlexStrucData *flexstrucdata_
-      ,const float4 *poscell0_
+       const float4 *poscell0_
       ,const unsigned *numpairs_
       ,const unsigned *const *pairidx_
       ,const tmatrix3f *kercorr_
       ,tmatrix3f *defgrad_)
   {
     //-Input data arrays.
-    flexstrucdata=flexstrucdata_;
     poscell0=poscell0_;
     numpairs=numpairs_;
     pairidx=pairidx_;
