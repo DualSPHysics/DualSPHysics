@@ -173,8 +173,8 @@ protected:
   //<vs_flexstruc_ini>
   //-Variables for flexible structure.
   unsigned NumPairsTot;             ///<Total number of pairs across all flexible structure bodies.
-  StFlexStrucData *FlexStrucDatag;  ///<Data for each individual flexible structure body
   unsigned *PairIdxBufferg;         ///<Raw buffer to particle indices
+  StFlexStrucData *FlexStrucDatag;  ///<Data for each individual flexible structure body
   float4 *PosCell0g;                ///<Relative initial position and cell coordinates {posx,posy,posz,cellxyz}
   unsigned *NumPairsg;              ///<Number of initial neighbours
   unsigned **PairIdxg;              ///<List of indices to each initial neighbour

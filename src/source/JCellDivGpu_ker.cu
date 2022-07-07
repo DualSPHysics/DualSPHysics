@@ -751,18 +751,26 @@ void SortDataParticles(unsigned np,unsigned pini,const unsigned *sortpart
   }
 }
 
-__global__ void KerUpdateIndices(unsigned n,const unsigned *sortpart,unsigned *idx)
+void SortIndices(unsigned *sortpart,unsigned* sortidx,unsigned np,bool stable){
+  thrust::device_vector<unsigned> dev_sortpart(sortpart,sortpart+np);
+  thrust::device_ptr<unsigned> dev_sortidx(sortidx);
+  thrust::sequence(dev_sortidx,dev_sortidx+np);
+  Sort(thrust::raw_pointer_cast(dev_sortpart.data()),sortidx,np,stable);
+}
+
+__global__ void KerUpdateIndices(unsigned n,unsigned nptot,unsigned pini,const unsigned *sortidx,unsigned *idx)
 {
   const unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Particle number.
   if(p<n){
-    idx[p]=sortpart[idx[p]];
+    const unsigned idxp=idx[p];
+    if(idxp>=pini&&idxp<nptot)idx[p]=sortidx[idxp];
   }
 }
 
-void UpdateIndices(unsigned n,const unsigned *sortpart,unsigned *idx){
+void UpdateIndices(unsigned n,unsigned nptot,unsigned pini,const unsigned *sortidx,unsigned *idx){
   if(n){
     dim3 sgrid=GetSimpleGridSize(n,DIVBSIZE);
-    KerUpdateIndices <<<sgrid,DIVBSIZE>>>(n,sortpart,idx);
+    KerUpdateIndices <<<sgrid,DIVBSIZE>>>(n,nptot,pini,sortidx,idx);
   }
 }
 //<vs_flexstruc_end>

@@ -43,6 +43,7 @@
 #include "JDsGaugeSystem.h"
 #include "JSphBoundCorr.h"
 #include "JSphInOut.h"
+#include "JSphFlexibleStructure.h"
 #include "JSphShifting.h"
 #include "JDataArrays.h"
 #include "JVtkLib.h"
@@ -349,6 +350,27 @@ void JSphGpu::AllocGpuMemoryParticles(unsigned np,float over){
   if(InOut){
     //ArraysGpu->AddArrayCount(JArraysGpu::SIZE_4B,1);  //-InOutPartg
     ArraysGpu->AddArrayCount(JArraysGpu::SIZE_1B,2);  //-newizone,zsurfok
+  }
+  if(FlexStruc){
+    cudaMalloc((void**)&FlexStrucDatag,sizeof(StFlexStrucData)*FlexStruc->GetCount());
+    cudaMalloc((void**)&PosCell0g,sizeof(float4)*GpuParticlesSize);
+    cudaMalloc((void**)&NumPairsg,sizeof(unsigned)*GpuParticlesSize);
+    cudaMalloc((void**)&PairIdxg,sizeof(unsigned*)*GpuParticlesSize);
+    cudaMalloc((void**)&KerCorrg,sizeof(tmatrix3f)*GpuParticlesSize);
+    cudaMalloc((void**)&PosCell02g,sizeof(float4)*GpuParticlesSize);
+    cudaMalloc((void**)&NumPairs2g,sizeof(unsigned)*GpuParticlesSize);
+    cudaMalloc((void**)&PairIdx2g,sizeof(unsigned*)*GpuParticlesSize);
+    cudaMalloc((void**)&KerCorr2g,sizeof(tmatrix3f)*GpuParticlesSize);
+    cudaMalloc((void**)&DefGradg,sizeof(tmatrix3f)*GpuParticlesSize);
+    cudaMemset(PosCell0g,0,sizeof(float4)*GpuParticlesSize);
+    cudaMemset(NumPairsg,0,sizeof(unsigned)*GpuParticlesSize);
+    cudaMemset(PairIdxg,0,sizeof(unsigned*)*GpuParticlesSize);
+    cudaMemset(KerCorrg,0,sizeof(tmatrix3f)*GpuParticlesSize);
+    cudaMemset(PosCell02g,0,sizeof(float4)*GpuParticlesSize);
+    cudaMemset(NumPairs2g,0,sizeof(unsigned)*GpuParticlesSize);
+    cudaMemset(PairIdx2g,0,sizeof(unsigned*)*GpuParticlesSize);
+    cudaMemset(KerCorr2g,0,sizeof(tmatrix3f)*GpuParticlesSize);
+    cudaMemset(DefGradg,0,sizeof(tmatrix3f)*GpuParticlesSize);
   }
   //-Shows the allocated memory.
   MemGpuParticles=ArraysGpu->GetAllocMemoryGpu();

@@ -45,6 +45,7 @@ JCellDivGpu::JCellDivGpu(bool stable,bool floating,byte periactive
   ClassName="JCellDivGpu";
   CellPart=NULL;  SortPart=NULL;  AuxMem=NULL;
   BeginEndCell=NULL;
+  SortIdx=NULL; //<vs_flexstruc>
   Reset();
 }
 
@@ -120,6 +121,7 @@ void JCellDivGpu::AllocMemoryNp(ullong np){
   size_t m=sizeof(unsigned)*SizeNp;
   cudaMalloc((void**)&CellPart,m); MemAllocGpuNp+=m;
   cudaMalloc((void**)&SortPart,m); MemAllocGpuNp+=m;
+  cudaMalloc((void**)&SortIdx,m);  MemAllocGpuNp+=m; //<vs_flexstruc>
   SizeAuxMem=cudiv::LimitsPosSize(SizeNp);
   m=sizeof(float)*SizeAuxMem;
   cudaMalloc((void**)&AuxMem,m);   MemAllocGpuNp+=m;
@@ -372,11 +374,14 @@ void JCellDivGpu::SortDataArrays(const float *a, float *a2) {
 /// Ordena arrays de datos segun SortPart (para flexible structures).
 //==============================================================================
 void JCellDivGpu::SortFlexStrucArrays(const float4 *poscell0,const unsigned *numpairs,unsigned *const *pairidx,const tmatrix3f *kercorr,float4 *poscell02,unsigned *numpairs2,unsigned **pairidx2,tmatrix3f *kercorr2){
-  cudiv::SortDataParticles(NpbFinal,0,SortPart,poscell0,numpairs,pairidx,kercorr,poscell02,numpairs2,pairidx2,kercorr2);
+  const unsigned pini=(DivideFull? 0: NpbFinal);
+  cudiv::SortDataParticles(Nptot,pini,SortPart,poscell0,numpairs,pairidx,kercorr,poscell02,numpairs2,pairidx2,kercorr2);
 }
 
 void JCellDivGpu::UpdateIndices(unsigned n,unsigned *idx){
-  cudiv::UpdateIndices(n,SortPart,idx);
+  cudiv::SortIndices(SortPart,SortIdx,Nptot,Stable);
+  const unsigned pini=(DivideFull? 0: NpbFinal);
+  cudiv::UpdateIndices(n,Nptot,pini,SortIdx,idx);
 }
 //<vs_flexstruc_end>
 

@@ -391,8 +391,8 @@ void JSphGpuSingle::RunCellDivide(bool updateperiodic){
     }
   }
   //<vs_flexstruc_ini>
-  if(FlexStruc&&NumPairsTot){
-    CellDivSingle->UpdateIndices(NumPairsTot,PairIdxBufferg);
+  if(FlexStruc){
+    if(PairIdxBufferg)CellDivSingle->UpdateIndices(NumPairsTot,PairIdxBufferg);
     CellDivSingle->SortFlexStrucArrays(PosCell0g,NumPairsg,PairIdxg,KerCorrg,PosCell02g,NumPairs2g,PairIdx2g,KerCorr2g);
     swap(PosCell0g,PosCell02g); swap(NumPairsg,NumPairs2g); swap(PairIdxg,PairIdx2g); swap(KerCorrg,KerCorr2g);
   }
@@ -856,10 +856,7 @@ void JSphGpuSingle::Run(std::string appname,const JSphCfgRun *cfg,JLog2 *log){
     RunGaugeSystem(TimeStep+stepdt);
     if(CaseNmoving)RunMotion(stepdt);
     //<vs_flexstruc_init>
-    if(FlexStruc){
-      BoundChanged=true;
-      CellDivideAll=true;
-    }
+    if(FlexStruc)BoundChanged=true;
     //<vs_flexstruc_end>
     if(InOut)InOutComputeStep(stepdt);
     else RunCellDivide(true);
@@ -995,42 +992,13 @@ void JSphGpuSingle::FinishRun(bool stop){
 
 //<vs_flexstruc_ini>
 void JSphGpuSingle::FlexStrucInit(){
-  //-Recalculate the neighbour lists for all particles.
-  BoundChanged=true; CellDivideAll=true;
-  RunCellDivide(true);
+//  //-Recalculate the neighbour lists for all particles.
+//  BoundChanged=true; CellDivideAll=true;
+//  RunCellDivide(true);
   //-Configure code for flexible structures.
-  cudaMemcpy(Code,Codeg,sizeof(typecode)*Np,cudaMemcpyDeviceToHost);
+  cudaMemcpy(Code,Codeg,sizeof(typecode)*Npb,cudaMemcpyDeviceToHost);
   FlexStruc->ConfigCode(Npb,Code);
-  cudaMemcpy(Codeg,Code,sizeof(typecode)*Np,cudaMemcpyHostToDevice);
-  //-Interaction building flexible structure arrays.
-  const StInterParmsg parms=StrInterParmsg(Simulate2D
-      ,Symmetry //<vs_syymmetry>
-      ,TKernel,FtMode
-      ,TVisco==VISCO_LaminarSPS,TDensity,ShiftingMode
-      ,Visco*ViscoBoundFactor,Visco
-      ,BlockSizes.forcesbound,BlockSizes.forcesfluid,Np,Npb,NpbOk
-      ,0,Nstep,DivData,Dcellg
-      ,Posxyg,Poszg,PosCellg,Velrhopg,Idpg,Codeg
-      ,FtoMasspg,SpsTaug,NULL
-      ,ViscDtg,Arg,Aceg,Deltag
-      ,SpsGradvelg
-      ,ShiftPosfsg
-      ,NULL,NULL);
-  //-Allocate flexible structure arrays on GPU
-  cudaMalloc((void**)&FlexStrucDatag,sizeof(StFlexStrucData)*FlexStruc->GetCount());
-  cudaMalloc((void**)&PosCell0g,sizeof(float4)*Npb);
-  cudaMalloc((void**)&NumPairsg,sizeof(unsigned)*Npb);
-  cudaMalloc((void**)&PairIdxg,sizeof(unsigned*)*Npb);
-  cudaMalloc((void**)&KerCorrg,sizeof(tmatrix3f)*Npb);
-  cudaMalloc((void**)&PosCell02g,sizeof(float4)*Npb);
-  cudaMalloc((void**)&NumPairs2g,sizeof(unsigned)*Npb);
-  cudaMalloc((void**)&PairIdx2g,sizeof(unsigned*)*Npb);
-  cudaMalloc((void**)&KerCorr2g,sizeof(tmatrix3f)*Npb);
-  cudaMalloc((void**)&DefGradg,sizeof(tmatrix3f)*Npb);
-  cudaMemset(PosCell02g,0,sizeof(float4)*Npb);
-  cudaMemset(NumPairs2g,0,sizeof(unsigned)*Npb);
-  cudaMemset(PairIdx2g,0,sizeof(unsigned*)*Npb);
-  cudaMemset(KerCorr2g,0,sizeof(tmatrix3f)*Npb);
+  cudaMemcpy(Codeg,Code,sizeof(typecode)*Npb,cudaMemcpyHostToDevice);
   //-Get flexible structure data for each body and copy to GPU
   StFlexStrucData *flexstrucdata=new StFlexStrucData [FlexStruc->GetCount()];
   for(unsigned c=0;c<FlexStruc->GetCount();c++){
@@ -1045,17 +1013,30 @@ void JSphGpuSingle::FlexStrucInit(){
   cudaMemcpy(FlexStrucDatag,flexstrucdata,sizeof(StFlexStrucData)*FlexStruc->GetCount(),cudaMemcpyHostToDevice);
   delete[] flexstrucdata;
   //-Copy current position into initial position.
-  cudaMemcpy(PosCell0g,PosCellg,sizeof(float4)*Npb,cudaMemcpyDeviceToDevice);
+  cudaMemcpy(PosCell0g,PosCellg,sizeof(float4)*Np,cudaMemcpyDeviceToDevice);
+  //-Interaction building flexible structure arrays.
+  const StInterParmsg parms=StrInterParmsg(Simulate2D
+      ,Symmetry //<vs_syymmetry>
+      ,TKernel,FtMode
+      ,TVisco==VISCO_LaminarSPS,TDensity,ShiftingMode
+      ,Visco*ViscoBoundFactor,Visco
+      ,BlockSizes.forcesbound,BlockSizes.forcesfluid,Np,Npb,NpbOk
+      ,0,Nstep,DivData,Dcellg
+      ,Posxyg,Poszg,PosCellg,Velrhopg,Idpg,Codeg
+      ,FtoMasspg,SpsTaug,NULL
+      ,ViscDtg,Arg,Aceg,Deltag
+      ,SpsGradvelg
+      ,ShiftPosfsg
+      ,NULL,NULL);
   //-Count number of pairs for each flexible structure particle.
-  cudaMemset(NumPairsg,0,sizeof(unsigned)*Npb);
   cusph::CountFlexStrucPairs(parms,NumPairsg);
-  cudaMemcpy(Code,Codeg,sizeof(typecode)*Npb,cudaMemcpyDeviceToHost);
-  unsigned *numpairs=new unsigned [Npb];
-  cudaMemcpy(numpairs,NumPairsg,sizeof(unsigned)*Npb,cudaMemcpyDeviceToHost);
+  cudaMemcpy(Code,Codeg,sizeof(typecode)*Np,cudaMemcpyDeviceToHost);
+  unsigned *numpairs=new unsigned [Np];
+  cudaMemcpy(numpairs,NumPairsg,sizeof(unsigned)*Np,cudaMemcpyDeviceToHost);
   NumPairsTot=accumulate(numpairs,numpairs+Npb,0);
   //-Set pair indices for each flexible structure particle.
   cudaMalloc((void**)&PairIdxBufferg,sizeof(unsigned)*NumPairsTot);
-  unsigned **pairidx=new unsigned* [Npb];
+  unsigned **pairidx=new unsigned* [Np];
   unsigned *offset=PairIdxBufferg;
   for(unsigned p=0;p<Npb;p++){
     if(numpairs[p]){
@@ -1063,13 +1044,15 @@ void JSphGpuSingle::FlexStrucInit(){
       offset+=numpairs[p];
     }
   }
-  cudaMemcpy(PairIdxg,pairidx,sizeof(unsigned*)*Npb,cudaMemcpyHostToDevice);
+  cudaMemcpy(PairIdxg,pairidx,sizeof(unsigned*)*Np,cudaMemcpyHostToDevice);
   delete[] numpairs;
   delete[] pairidx;
   cusph::SetFlexStrucPairs(parms,NumPairsg,PairIdxg);
   //-Calculate kernel correction for each structure particle.
-  cudaMemset(KerCorrg,0,sizeof(tmatrix3f)*Npb);
   cusph::CalcFlexStrucKerCorr(parms,FlexStrucDatag,NumPairsg,PairIdxg,KerCorrg);
+//  //-Recalculate the neighbour lists for all particles.
+//  BoundChanged=true; CellDivideAll=false;
+//  RunCellDivide(true);
 }
 //<vs_flexstruc_end>
 

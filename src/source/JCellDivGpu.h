@@ -114,6 +114,8 @@ protected:
 
   bool DivideFull;      ///<Indicate that divie is applied to fluid & boundary (not only to fluid). | Indica que el divide se aplico a fluido y contorno (no solo al fluido).
 
+  unsigned *SortIdx;    ///<Indices to particles which are sorted
+
   void Reset();
 
   //-Management of allocated dynamic memory.

@@ -1094,32 +1094,20 @@ __global__ void KerCountFlexStrucPairs(unsigned n,unsigned pinit
     bool haspairsp1=CODE_IsFixedFlexStrucFlex(codep1)? true: false;
     unsigned numpairsp1=0;
 
-    //-Obtains neighborhood search limits.
-    int ini1,fin1,ini2,fin2,ini3,fin3;
-    cunsearch::InitCte(dcell[p1],scelldiv,nc,cellzero,ini1,fin1,ini2,fin2,ini3,fin3);
-
     //-Flexible structure-flexible structure interaction.
-    for(int c3=ini3;c3<fin3;c3+=nc.w){
-      for(int c2=ini2;c2<fin2;c2+=nc.x){
-        unsigned pini,pfin=0;
-        cunsearch::ParticleRange(c2,c3,ini1,fin1,begincell,pini,pfin);
-        if(pfin){
-          for(int p2=pini;p2<pfin;p2++){
-            const float4 pscellp2=poscell[p2];
-            float drx=pscellp1.x-pscellp2.x+CTE.poscellsize*(PSCEL_GetfX(pscellp1.w)-PSCEL_GetfX(pscellp2.w));
-            float dry=pscellp1.y-pscellp2.y+CTE.poscellsize*(PSCEL_GetfY(pscellp1.w)-PSCEL_GetfY(pscellp2.w));
-            float drz=pscellp1.z-pscellp2.z+CTE.poscellsize*(PSCEL_GetfZ(pscellp1.w)-PSCEL_GetfZ(pscellp2.w));
-            const float rr2=drx*drx+dry*dry+drz*drz;
-            if(rr2<=CTE.kernelsize2&&rr2>=ALMOSTZERO){
-              const typecode codep2=code[p2];
-              if(CODE_IsFixedNotFlexStruc(codep1)&&CODE_IsFixedFlexStrucFlex(codep2)){
-                haspairsp1=true;
-                newcodep1=CODE_ToFixedFlexStrucClamp(codep1,CODE_GetIbodyFixedFlexStruc(codep2));
-              }
-              numpairsp1++;
-            }
-          }
+    for(unsigned p2=pinit;p2<pinit+n;p2++){
+      const float4 pscellp2=poscell[p2];
+      float drx=pscellp1.x-pscellp2.x+CTE.poscellsize*(PSCEL_GetfX(pscellp1.w)-PSCEL_GetfX(pscellp2.w));
+      float dry=pscellp1.y-pscellp2.y+CTE.poscellsize*(PSCEL_GetfY(pscellp1.w)-PSCEL_GetfY(pscellp2.w));
+      float drz=pscellp1.z-pscellp2.z+CTE.poscellsize*(PSCEL_GetfZ(pscellp1.w)-PSCEL_GetfZ(pscellp2.w));
+      const float rr2=drx*drx+dry*dry+drz*drz;
+      if(rr2<=CTE.kernelsize2&&rr2>=ALMOSTZERO){
+        const typecode codep2=code[p2];
+        if(CODE_IsFixedNotFlexStruc(codep1)&&CODE_IsFixedFlexStrucFlex(codep2)){
+          haspairsp1=true;
+          newcodep1=CODE_ToFixedFlexStrucClamp(codep1,CODE_GetIbodyFixedFlexStruc(codep2));
         }
+        numpairsp1++;
       }
     }
     if(haspairsp1&&numpairsp1){
@@ -1153,26 +1141,14 @@ __global__ void KerSetFlexStrucPairs(unsigned n,unsigned pinit
     //-Loads particle p1 data.
     const float4 pscellp1=poscell[p1];
 
-    //-Obtains neighborhood search limits.
-    int ini1,fin1,ini2,fin2,ini3,fin3;
-    cunsearch::InitCte(dcell[p1],scelldiv,nc,cellzero,ini1,fin1,ini2,fin2,ini3,fin3);
-
     //-Flexible structure-flexible structure interaction.
-    for(int c3=ini3;c3<fin3;c3+=nc.w){
-      for(int c2=ini2;c2<fin2;c2+=nc.x){
-        unsigned pini,pfin=0;
-        cunsearch::ParticleRange(c2,c3,ini1,fin1,begincell,pini,pfin);
-        if(pfin){
-          for(int p2=pini;p2<pfin;p2++){
-            const float4 pscellp2=poscell[p2];
-            float drx=pscellp1.x-pscellp2.x+CTE.poscellsize*(PSCEL_GetfX(pscellp1.w)-PSCEL_GetfX(pscellp2.w));
-            float dry=pscellp1.y-pscellp2.y+CTE.poscellsize*(PSCEL_GetfY(pscellp1.w)-PSCEL_GetfY(pscellp2.w));
-            float drz=pscellp1.z-pscellp2.z+CTE.poscellsize*(PSCEL_GetfZ(pscellp1.w)-PSCEL_GetfZ(pscellp2.w));
-            const float rr2=drx*drx+dry*dry+drz*drz;
-            if(rr2<=CTE.kernelsize2&&rr2>=ALMOSTZERO&&haspairsp1)pairidx[p1][idx++]=p2;
-          }
-        }
-      }
+    for(unsigned p2=pinit;p2<pinit+n;p2++){
+      const float4 pscellp2=poscell[p2];
+      float drx=pscellp1.x-pscellp2.x+CTE.poscellsize*(PSCEL_GetfX(pscellp1.w)-PSCEL_GetfX(pscellp2.w));
+      float dry=pscellp1.y-pscellp2.y+CTE.poscellsize*(PSCEL_GetfY(pscellp1.w)-PSCEL_GetfY(pscellp2.w));
+      float drz=pscellp1.z-pscellp2.z+CTE.poscellsize*(PSCEL_GetfZ(pscellp1.w)-PSCEL_GetfZ(pscellp2.w));
+      const float rr2=drx*drx+dry*dry+drz*drz;
+      if(rr2<=CTE.kernelsize2&&rr2>=ALMOSTZERO&&haspairsp1)pairidx[p1][idx++]=p2;
     }
   }
 }
