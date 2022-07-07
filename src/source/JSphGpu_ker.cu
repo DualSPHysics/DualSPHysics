@@ -849,7 +849,7 @@ template<TpKernel tker,TpFtMode ftmode,bool lamsps,TpDensity tdensity,bool shift
 template<TpKernel tker,TpFtMode ftmode,bool lamsps> void Interaction_Forces_gt2(const StInterParmsg &t){
 #ifdef FAST_COMPILATION
 //  if(t.shiftmode || t.tdensity!=DDT_None)throw "Shifting and extra DDT are disabled for FastCompilation...";
-  Interaction_ForcesGpuT<tker,ftmode,lamsps,DDT_DDT2Full,false> (t);
+  Interaction_ForcesGpuT<tker,ftmode,lamsps,DDT_DDT,false> (t);
 #else
   if(t.shiftmode){               const bool shift=true;
     if(t.tdensity==DDT_None)    Interaction_ForcesGpuT<tker,ftmode,lamsps,DDT_None    ,shift> (t);
@@ -1021,7 +1021,8 @@ __global__ void KerInteractionForcesFlexStruc(unsigned n,unsigned pinit
         const float fac0=cufsph::GetKernel_Fac<tker>(rr20);
         const float frx0=fac0*drx0,fry0=fac0*dry0,frz0=fac0*drz0; //-Gradients.
         //-Acceleration due to structure.
-        const tmatrix3f pk1p2=KerComputePK1StressFlexStruc(defgrad[p2],cmat);
+        const tmatrix3f defgradp2=defgrad[p2];
+        const tmatrix3f pk1p2=KerComputePK1StressFlexStruc(defgradp2,cmat);
         const tmatrix3f kercorrp2=kercorr[p2];
         const tmatrix3f pk1kercorrp2=cumath::MulMatrix3x3(pk1p2,kercorrp2);
         tmatrix3f pk1kercorrp1p2;
@@ -1033,27 +1034,28 @@ __global__ void KerInteractionForcesFlexStruc(unsigned n,unsigned pinit
         pk1kercorrdw.y=pk1kercorrp1p2.a21*frx0+pk1kercorrp1p2.a22*fry0+pk1kercorrp1p2.a23*frz0;
         pk1kercorrdw.z=pk1kercorrp1p2.a31*frx0+pk1kercorrp1p2.a32*fry0+pk1kercorrp1p2.a33*frz0;
         acep1.x+=pk1kercorrdw.x*vol0p1/rho0p1; acep1.y+=pk1kercorrdw.y*vol0p1/rho0p1; acep1.z+=pk1kercorrdw.z*vol0p1/rho0p1;
-
-        //      //-Hour glass correction.
-        //      if(hgfactor){
-        //        float drx,dry,drz;
-        //        KerGetParticlesDr<psingle> (p2,posxy,posz,pospress,posdp1,posp1,drx,dry,drz);
-        //        const float wab=particlepairs[p1].Wab[pair];
-        //        const float3 x0ij={float(particlepairs[p1].Xij[pair].x),float(particlepairs[p1].Xij[pair].y),float(particlepairs[p1].Xij[pair].z)};
-        //        const float3 xij={drx,dry,drz};
-        //        const float3 x0ji={-x0ij.x,-x0ij.y,-x0ij.z};
-        //        const float3 xji={-xij.x,-xij.y,-xij.z};
-        //        const float rr20=x0ij.x*x0ij.x+x0ij.y*x0ij.y+x0ij.z*x0ij.z;
-        //        const float rr=sqrt(xij.x*xij.x+xij.y*xij.y+xij.z*xij.z);
-        //        const float3 xijbar=cumath::MulMatrix3x3(defgrad[p1],x0ij);
-        //        const float3 xjibar=cumath::MulMatrix3x3(defgrad[p2],x0ji);
-        //        const float3 epsij={xij.x-xijbar.x,xij.y-xijbar.y,xij.z-xijbar.z};
-        //        const float3 epsji={xji.x-xjibar.x,xji.y-xjibar.y,xji.z-xjibar.z};
-        //        const float deltaij=(epsij.x*xij.x+epsij.y*xij.y+epsij.z*xij.z)/rr;
-        //        const float deltaji=(epsji.x*xji.x+epsji.y*xji.y+epsji.z*xji.z)/rr;
-        //        const float mulFac=(hgfactor*vol0*vol0*wab*young/(rr20*rr*massp)*0.5f*(deltaij+deltaji));
-        //        acep1.x-=mulFac*xij.x;  acep1.y-=mulFac*xij.y;  acep1.z-=mulFac*xij.z;
-        //      }
+        //-Hourglass correction.
+        if(hgfactor){
+          const float4 pscellp2=poscell[p2];
+          float drx=pscellp1.x-pscellp2.x + CTE.poscellsize*(PSCEL_GetfX(pscellp1.w)-PSCEL_GetfX(pscellp2.w));
+          float dry=pscellp1.y-pscellp2.y + CTE.poscellsize*(PSCEL_GetfY(pscellp1.w)-PSCEL_GetfY(pscellp2.w));
+          float drz=pscellp1.z-pscellp2.z + CTE.poscellsize*(PSCEL_GetfZ(pscellp1.w)-PSCEL_GetfZ(pscellp2.w));
+          const float rr2=drx*drx+dry*dry+drz*drz;
+          const float wab=cufsph::GetKernel_Wab<tker>(rr2);
+          const float xijbarx=defgradp1.a11*drx0+defgradp1.a12*dry0+defgradp1.a13*drz0;
+          const float xijbary=defgradp1.a21*drx0+defgradp1.a22*dry0+defgradp1.a23*drz0;
+          const float xijbarz=defgradp1.a31*drx0+defgradp1.a32*dry0+defgradp1.a33*drz0;
+          const float xjibarx=-(defgradp2.a11*drx0+defgradp2.a12*dry0+defgradp2.a13*drz0);
+          const float xjibary=-(defgradp2.a21*drx0+defgradp2.a22*dry0+defgradp2.a23*drz0);
+          const float xjibarz=-(defgradp2.a31*drx0+defgradp2.a32*dry0+defgradp2.a33*drz0);
+          const float3 epsij=make_float3(drx-xijbarx,dry-xijbary,drz-xijbarz);
+          const float3 epsji=make_float3(-drx-xjibarx,-dry-xjibary,-drz-xjibarz);
+          const float rr=sqrt(rr2);
+          const float deltaij=(epsij.x*drx+epsij.y*dry+epsij.z*drz)/rr;
+          const float deltaji=-(epsji.x*drx+epsji.y*dry+epsji.z*drz)/rr;
+          const float mulfac=(hgfactor*vol0p1*vol0p1*wab*youngmod/(rr20*rr*mass0p1)*0.5f*(deltaij+deltaji));
+          acep1.x-=mulfac*drx; acep1.y-=mulfac*dry; acep1.z-=mulfac*drz;
+        }
       }
 
       //-Store results.
