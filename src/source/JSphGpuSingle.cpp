@@ -453,7 +453,7 @@ void JSphGpuSingle::Interaction_Forces(TpInterStep interstep){
   unsigned bsfluid=BlockSizes.forcesfluid;
   unsigned bsbound=BlockSizes.forcesbound;
 
-  //-Interaction Fluid-Fluid/Bound & Bound-Fluid.
+  //-Interaction parameters.
   const StInterParmsg parms=StrInterParmsg(Simulate2D
     ,Symmetry //<vs_syymmetry>
     ,TKernel,FtMode
@@ -468,12 +468,6 @@ void JSphGpuSingle::Interaction_Forces(TpInterStep interstep){
     ,SpsGradvelg
     ,ShiftPosfsg
     ,NULL,NULL);
-  cusph::Interaction_Forces(parms);
-
-  //-Interaction DEM Floating-Bound & Floating-Floating. //(DEM)
-  if(UseDEM)cusph::Interaction_ForcesDem(BlockSizes.forcesdem,CaseNfloat
-    ,DivData,Dcellg,FtRidpg,DemDatag,FtoMasspg,float(DemDtForce)
-    ,PosCellg,Velrhopg,Codeg,Idpg,ViscDtg,Aceg,NULL);
 
   //<vs_flexstruc_ini>
   //-Interaction flexible structure-flexible structure.
@@ -482,6 +476,14 @@ void JSphGpuSingle::Interaction_Forces(TpInterStep interstep){
     cusph::Interaction_ForcesFlexStruc(parms,parmsflexstruc);
   }
   //<vs_flexstruc_end>
+
+  //-Interaction Fluid-Fluid/Bound & Bound-Fluid.
+  cusph::Interaction_Forces(parms);
+
+  //-Interaction DEM Floating-Bound & Floating-Floating. //(DEM)
+  if(UseDEM)cusph::Interaction_ForcesDem(BlockSizes.forcesdem,CaseNfloat
+    ,DivData,Dcellg,FtRidpg,DemDatag,FtoMasspg,float(DemDtForce)
+    ,PosCellg,Velrhopg,Codeg,Idpg,ViscDtg,Aceg,NULL);
 
   //-For 2D simulations always overrides the 2nd component (Y axis).
   //-Para simulaciones 2D anula siempre la 2nd componente.
