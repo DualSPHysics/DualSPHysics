@@ -156,7 +156,8 @@ void JSphGpu::InitVars(){
   FtObjsOutdated=true;
   DemDatag=NULL; //(DEM)
   CellDivideAll=false;  //-Flexible structure. //<vs_flexstruc>
-  FlexStrucDatag=NULL; PosCell0g=NULL; NumPairsg=NULL; PairIdxg=NULL; KerCorrg=NULL; DefGradg=NULL; //-Flexible structure. //<vs_flexstruc>
+  NumPairsTot=0; FlexStrucDatag=NULL; PairIdxBufferg=NULL; PosCell0g=NULL; NumPairsg=NULL; PairIdxg=NULL; KerCorrg=NULL; DefGradg=NULL; //-Flexible structure. //<vs_flexstruc>
+  PosCell02g=NULL; NumPairs2g=NULL; PairIdx2g=NULL; KerCorr2g=NULL; //-Flexible structure. //<vs_flexstruc>
   GpuParticlesAllocs=0;
   GpuParticlesSize=0;
   MemGpuParticles=MemGpuFixed=0;

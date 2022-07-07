@@ -390,6 +390,13 @@ void JSphGpuSingle::RunCellDivide(bool updateperiodic){
       swap(MotionVelg,motionvelg); ArraysGpu->Free(motionvelg);
     }
   }
+  //<vs_flexstruc_ini>
+  if(FlexStruc&&NumPairsTot){
+    CellDivSingle->UpdateIndices(NumPairsTot,PairIdxBufferg);
+    CellDivSingle->SortFlexStrucArrays(PosCell0g,NumPairsg,PairIdxg,KerCorrg,PosCell02g,NumPairs2g,PairIdx2g,KerCorr2g);
+    swap(PosCell0g,PosCell02g); swap(NumPairsg,NumPairs2g); swap(PairIdxg,PairIdx2g); swap(KerCorrg,KerCorr2g);
+  }
+  //<vs_flexstruc_ini>
 
   //-Collect divide data. | Recupera datos del divide.
   Np=CellDivSingle->GetNpFinal();
@@ -416,6 +423,7 @@ void JSphGpuSingle::RunCellDivide(bool updateperiodic){
   }
   Timersg->TmStop(TMG_NlOutCheck,true);
   BoundChanged=false;
+  CellDivideAll=false;
 }
 
 //------------------------------------------------------------------------------
@@ -847,6 +855,12 @@ void JSphGpuSingle::Run(std::string appname,const JSphCfgRun *cfg,JLog2 *log){
     double stepdt=ComputeStep();
     RunGaugeSystem(TimeStep+stepdt);
     if(CaseNmoving)RunMotion(stepdt);
+    //<vs_flexstruc_init>
+    if(FlexStruc){
+      BoundChanged=true;
+      CellDivideAll=true;
+    }
+    //<vs_flexstruc_end>
     if(InOut)InOutComputeStep(stepdt);
     else RunCellDivide(true);
     TimeStep+=stepdt;
@@ -1008,7 +1022,15 @@ void JSphGpuSingle::FlexStrucInit(){
   cudaMalloc((void**)&NumPairsg,sizeof(unsigned)*Npb);
   cudaMalloc((void**)&PairIdxg,sizeof(unsigned*)*Npb);
   cudaMalloc((void**)&KerCorrg,sizeof(tmatrix3f)*Npb);
+  cudaMalloc((void**)&PosCell02g,sizeof(float4)*Npb);
+  cudaMalloc((void**)&NumPairs2g,sizeof(unsigned)*Npb);
+  cudaMalloc((void**)&PairIdx2g,sizeof(unsigned*)*Npb);
+  cudaMalloc((void**)&KerCorr2g,sizeof(tmatrix3f)*Npb);
   cudaMalloc((void**)&DefGradg,sizeof(tmatrix3f)*Npb);
+  cudaMemset(PosCell02g,0,sizeof(float4)*Npb);
+  cudaMemset(NumPairs2g,0,sizeof(unsigned)*Npb);
+  cudaMemset(PairIdx2g,0,sizeof(unsigned*)*Npb);
+  cudaMemset(KerCorr2g,0,sizeof(tmatrix3f)*Npb);
   //-Get flexible structure data for each body and copy to GPU
   StFlexStrucData *flexstrucdata=new StFlexStrucData [FlexStruc->GetCount()];
   for(unsigned c=0;c<FlexStruc->GetCount();c++){
@@ -1030,15 +1052,16 @@ void JSphGpuSingle::FlexStrucInit(){
   cudaMemcpy(Code,Codeg,sizeof(typecode)*Npb,cudaMemcpyDeviceToHost);
   unsigned *numpairs=new unsigned [Npb];
   cudaMemcpy(numpairs,NumPairsg,sizeof(unsigned)*Npb,cudaMemcpyDeviceToHost);
-  unsigned numpairstot=accumulate(numpairs,numpairs+Npb,0);
+  NumPairsTot=accumulate(numpairs,numpairs+Npb,0);
   //-Set pair indices for each flexible structure particle.
-  unsigned *bufferg;
-  cudaMalloc((void**)&bufferg,sizeof(unsigned)*numpairstot);
+  cudaMalloc((void**)&PairIdxBufferg,sizeof(unsigned)*NumPairsTot);
   unsigned **pairidx=new unsigned* [Npb];
-  unsigned *offset=bufferg;
+  unsigned *offset=PairIdxBufferg;
   for(unsigned p=0;p<Npb;p++){
-    pairidx[p]=offset;
-    offset+=numpairs[p];
+    if(numpairs[p]){
+      pairidx[p]=offset;
+      offset+=numpairs[p];
+    }
   }
   cudaMemcpy(PairIdxg,pairidx,sizeof(unsigned*)*Npb,cudaMemcpyHostToDevice);
   delete[] numpairs;
@@ -1047,9 +1070,6 @@ void JSphGpuSingle::FlexStrucInit(){
   //-Calculate kernel correction for each structure particle.
   cudaMemset(KerCorrg,0,sizeof(tmatrix3f)*Npb);
   cusph::CalcFlexStrucKerCorr(parms,FlexStrucDatag,NumPairsg,PairIdxg,KerCorrg);
-  //-Recalculate the neighbour lists back to normal (without all particles).
-  BoundChanged=true; CellDivideAll=false;
-  RunCellDivide(true);
 }
 //<vs_flexstruc_end>
 

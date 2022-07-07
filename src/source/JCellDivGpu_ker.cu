@@ -641,6 +641,26 @@ __global__ void KerSortDataParticles(unsigned n,unsigned pini,const unsigned *so
   }
 }
 
+//<vs_flexstruc_ini>
+//------------------------------------------------------------------------------
+/// Reorders particle data according to idsort[].
+/// Reordena datos de particulas segun idsort[].
+//------------------------------------------------------------------------------
+__global__ void KerSortDataParticles(unsigned n,unsigned pini,const unsigned *sortpart
+                                     ,const float4 *poscell0,const unsigned *numpairs,unsigned *const *pairidx,const tmatrix3f *kercorr
+                                     ,float4 *poscell02,unsigned *numpairs2,unsigned **pairidx2,tmatrix3f *kercorr2)
+{
+  const unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Particle number.
+  if(p<n){
+    const unsigned oldpos=(p<pini? p: sortpart[p]);
+    poscell02[p]=poscell0[oldpos];
+    numpairs2[p]=numpairs[oldpos];
+    pairidx2[p]=pairidx[oldpos];
+    kercorr2[p]=kercorr[oldpos];
+  }
+}
+//<vs_flexstruc_end>
+
 //==============================================================================
 /// Reorders particle data according to sortpart.
 /// Reordena datos de particulas segun sortpart.
@@ -716,6 +736,36 @@ void SortDataParticles(unsigned np,unsigned pini,const unsigned *sortpart,const 
     KerSortDataParticles <<<sgrid,DIVBSIZE>>>(np,pini,sortpart,a,a2);
   }
 }
+
+//<vs_flexstruc_ini>
+//==============================================================================
+/// Reorders particle data according to sortpart.
+/// Reordena datos de particulas segun sortpart.
+//==============================================================================
+void SortDataParticles(unsigned np,unsigned pini,const unsigned *sortpart
+                       ,const float4 *poscell0,const unsigned *numpairs,unsigned *const *pairidx,const tmatrix3f *kercorr
+                       ,float4 *poscell02,unsigned *numpairs2,unsigned **pairidx2,tmatrix3f *kercorr2){
+  if(np){
+    dim3 sgrid=GetSimpleGridSize(np,DIVBSIZE);
+    KerSortDataParticles <<<sgrid,DIVBSIZE>>>(np,pini,sortpart,poscell0,numpairs,pairidx,kercorr,poscell02,numpairs2,pairidx2,kercorr2);
+  }
+}
+
+__global__ void KerUpdateIndices(unsigned n,const unsigned *sortpart,unsigned *idx)
+{
+  const unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Particle number.
+  if(p<n){
+    idx[p]=sortpart[idx[p]];
+  }
+}
+
+void UpdateIndices(unsigned n,const unsigned *sortpart,unsigned *idx){
+  if(n){
+    dim3 sgrid=GetSimpleGridSize(n,DIVBSIZE);
+    KerUpdateIndices <<<sgrid,DIVBSIZE>>>(n,sortpart,idx);
+  }
+}
+//<vs_flexstruc_end>
 
 //------------------------------------------------------------------------------
 /// Compute minimum and maximum values starting from data[].

@@ -366,6 +366,20 @@ void JCellDivGpu::SortDataArrays(const float *a, float *a2) {
   cudiv::SortDataParticles(Nptot,pini,SortPart,a,a2);
 }
 
+//<vs_flexstruc_ini>
+//==============================================================================
+/// Reorders data arrays according to SortPart (for flexible structures).
+/// Ordena arrays de datos segun SortPart (para flexible structures).
+//==============================================================================
+void JCellDivGpu::SortFlexStrucArrays(const float4 *poscell0,const unsigned *numpairs,unsigned *const *pairidx,const tmatrix3f *kercorr,float4 *poscell02,unsigned *numpairs2,unsigned **pairidx2,tmatrix3f *kercorr2){
+  cudiv::SortDataParticles(NpbFinal,0,SortPart,poscell0,numpairs,pairidx,kercorr,poscell02,numpairs2,pairidx2,kercorr2);
+}
+
+void JCellDivGpu::UpdateIndices(unsigned n,unsigned *idx){
+  cudiv::UpdateIndices(n,SortPart,idx);
+}
+//<vs_flexstruc_end>
+
 //==============================================================================
 /// Returns a pointer with the auxiliary memory allocated in the GPU, only
 /// used as intermediate in some tasks, in order to use it in other tasks.
