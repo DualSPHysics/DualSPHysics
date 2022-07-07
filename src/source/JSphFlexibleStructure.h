@@ -28,7 +28,7 @@ class JLog2;
 class JXml;
 class TiXmlElement;
 class JSphMk;
-#ifdef DISABLE_FLEXSTRUCT
+#ifdef DISABLE_FLEXSTRUCTURE
 #include "JSphFlexibleStructureUndef.h"
 #else
 //##############################################################################
