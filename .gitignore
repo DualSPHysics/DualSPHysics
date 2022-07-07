@@ -2,12 +2,13 @@
 src/VS/*
 !src/VS/_ClearTempFiles.bat
 !src/VS/*.vcxproj
-!src/VS/*.vcxproj.user
+#!src/VS/*.vcxproj.user
 !src/VS/*.vcxproj.filters
 !src/VS/*.sln
+src/VS/DualSPHysics5Re.vcxproj.user
 
-## Ignores output of examples in 01_DamBreak.
-examples/main/01_DamBreak/*_out
+## Ignores output of examples 
+examples/*/*/*_out
 
 ## Ignores other directories.
 __Tools__
@@ -19,4 +20,3 @@ bin/windows/*.iobj
 bin/windows/*.ipdb
 bin/windows/*.lib
 bin/windows/*.exp
-examples/*/*/*_out
