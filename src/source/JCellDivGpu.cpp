@@ -373,9 +373,9 @@ void JCellDivGpu::SortDataArrays(const float *a, float *a2) {
 /// Reorders data arrays according to SortPart (for flexible structures).
 /// Ordena arrays de datos segun SortPart (para flexible structures).
 //==============================================================================
-void JCellDivGpu::SortFlexStrucArrays(const float4 *poscell0,const unsigned *numpairs,unsigned *const *pairidx,const tmatrix3f *kercorr,float4 *poscell02,unsigned *numpairs2,unsigned **pairidx2,tmatrix3f *kercorr2){
+void JCellDivGpu::SortFlexStrucArrays(const float4 *poscell0,const unsigned *numpairs,unsigned *const *pairidx,const tmatrix3f *kercorr,const float *rhos,float4 *poscell02,unsigned *numpairs2,unsigned **pairidx2,tmatrix3f *kercorr2,float *rhos2){
   const unsigned pini=(DivideFull? 0: NpbFinal);
-  cudiv::SortDataParticles(Nptot,pini,SortPart,poscell0,numpairs,pairidx,kercorr,poscell02,numpairs2,pairidx2,kercorr2);
+  cudiv::SortDataParticles(Nptot,pini,SortPart,poscell0,numpairs,pairidx,kercorr,rhos,poscell02,numpairs2,pairidx2,kercorr2,rhos2);
 }
 
 void JCellDivGpu::UpdateIndices(unsigned n,unsigned *idx){

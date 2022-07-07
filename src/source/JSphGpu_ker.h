@@ -119,6 +119,7 @@ typedef struct StrInterParmsg{
   const tsymatrix3f *tau;
   const float3 *dengradcorr;
   const StFlexStrucData *flexstrucdata; //<vs_flexstruc>
+  const float *rhos; //<vs_flexstruc>
   //-Output data arrays.
   float *viscdt;
   float* ar;
@@ -145,7 +146,7 @@ typedef struct StrInterParmsg{
     ,const float4 *velrhop_,const unsigned *idp_,const typecode *code_
     ,const float *ftomassp_,const tsymatrix3f *spstau_
     ,const float3 *dengradcorr_
-    ,const StFlexStrucData *flexstrucdata_ //<vs_flexstruc>
+    ,const StFlexStrucData *flexstrucdata_,const float *rhos_ //<vs_flexstruc>
     ,float *viscdt_,float* ar_,float3 *ace_,float *delta_
     ,tsymatrix3f *spsgradvel_
     ,float4 *shiftposfs_
@@ -171,7 +172,7 @@ typedef struct StrInterParmsg{
     velrhop=velrhop_; idp=idp_; code=code_;
     ftomassp=ftomassp_; tau=spstau_;
     dengradcorr=dengradcorr_;
-    flexstrucdata=flexstrucdata_; //<vs_flexstruc>
+    flexstrucdata=flexstrucdata_; rhos=rhos_; //<vs_flexstruc>
     //-Output data arrays.
     viscdt=viscdt_; ar=ar_; ace=ace_; delta=delta_;
     gradvel=spsgradvel_;
@@ -192,6 +193,7 @@ typedef struct StrInterParmsFlexStrucg{
   const unsigned *const *pairidx;
   const tmatrix3f *kercorr;
   //-Output data arrays.
+  float *rhos;
   tmatrix3f *defgrad;
 
   ///Structure constructor.
@@ -200,6 +202,7 @@ typedef struct StrInterParmsFlexStrucg{
       ,const unsigned *numpairs_
       ,const unsigned *const *pairidx_
       ,const tmatrix3f *kercorr_
+      ,float *rhos_
       ,tmatrix3f *defgrad_)
   {
     //-Input data arrays.
@@ -208,6 +211,7 @@ typedef struct StrInterParmsFlexStrucg{
     pairidx=pairidx_;
     kercorr=kercorr_;
     //-Output data arrays.
+    rhos=rhos_;
     defgrad=defgrad_;
   }
 }StInterParmsFlexStrucg;

@@ -481,7 +481,7 @@ template<TpKernel tker,TpFtMode ftmode,bool symm>
 template<TpKernel tker,TpFtMode ftmode,bool symm> 
   __global__ void KerInteractionForcesBound(unsigned n,unsigned pinit
   ,int scelldiv,int4 nc,int3 cellzero,const int2 *beginendcellfluid,const unsigned *dcell
-  ,const float *ftomassp,const StFlexStrucData *flexstrucdata
+  ,const float *ftomassp,const StFlexStrucData *flexstrucdata,const float* rhos
   ,const float4 *poscell,const float4 *velrhop,const typecode *code,const unsigned *idp
   ,float *viscdt,float *ar,float3 *ace)
 {
@@ -495,7 +495,7 @@ template<TpKernel tker,TpFtMode ftmode,bool symm>
     const float4 pscellp1=poscell[p1];
     const float4 velrhop1=velrhop[p1];
     const typecode codep1=code[p1]; //<vs_flexstruc>
-    const float mass0p1=(CODE_IsFixedFlexStrucFlex(codep1)? flexstrucdata[CODE_GetIbodyFixedFlexStruc(codep1)].mass0: FLT_MAX); //<vs_flexstruc>
+    const float mass0p1=(CODE_IsFixedFlexStrucFlex(codep1)? rhos[p1]*flexstrucdata[CODE_GetIbodyFixedFlexStruc(codep1)].vol0: FLT_MAX); //<vs_flexstruc>
     const float pressp1=cufsph::ComputePressCte(velrhop1.w); //<vs_flexstruc>
     const bool rsymp1=(symm && PSCEL_GetPartY(__float_as_uint(pscellp1.w))==0); //<vs_syymmetry>
     
@@ -780,7 +780,7 @@ template<TpKernel tker,TpFtMode ftmode,bool lamsps,TpDensity tdensity,bool shift
     //printf(">> KerInteractionForcesFluid  blocksize:%u (%u)\n",qblocksize,0);
   }
   {
-    typedef void (*fun_ptr)(unsigned,unsigned,int,int4,int3,const int2*,const unsigned*,const float*,const StFlexStrucData*,const float4*,const float4*,const typecode*,const unsigned*,float*,float*,float3*);
+    typedef void (*fun_ptr)(unsigned,unsigned,int,int4,int3,const int2*,const unsigned*,const float*,const StFlexStrucData*,const float*,const float4*,const float4*,const typecode*,const unsigned*,float*,float*,float3*);
     fun_ptr ptr=&KerInteractionForcesBound<tker,ftmode,symm>;
     int qblocksize=0,mingridsize=0;
     cudaOccupancyMaxPotentialBlockSize(&mingridsize,&qblocksize,(void*)ptr,0,0);
@@ -836,11 +836,11 @@ template<TpKernel tker,TpFtMode ftmode,bool lamsps,TpDensity tdensity,bool shift
     if(t.symmetry) //<vs_syymmetry_ini>
       KerInteractionForcesBound<tker,ftmode,true > <<<sgridb,t.bsbound,0,t.stm>>> 
       (t.boundnum,t.boundini,dvd.scelldiv,dvd.nc,dvd.cellzero,beginendcell+dvd.cellfluid,t.dcell
-        ,t.ftomassp,t.flexstrucdata,t.poscell,t.velrhop,t.code,t.idp,t.viscdt,t.ar,t.ace);
+        ,t.ftomassp,t.flexstrucdata,t.rhos,t.poscell,t.velrhop,t.code,t.idp,t.viscdt,t.ar,t.ace);
     else //<vs_syymmetry_end>
       KerInteractionForcesBound<tker,ftmode,false> <<<sgridb,t.bsbound,0,t.stm>>> 
       (t.boundnum,t.boundini,dvd.scelldiv,dvd.nc,dvd.cellzero,beginendcellfluid,t.dcell
-        ,t.ftomassp,t.flexstrucdata,t.poscell,t.velrhop,t.code,t.idp,t.viscdt,t.ar,t.ace);
+        ,t.ftomassp,t.flexstrucdata,t.rhos,t.poscell,t.velrhop,t.code,t.idp,t.viscdt,t.ar,t.ace);
   }
 }
 
@@ -974,7 +974,7 @@ template<TpKernel tker,bool simulate2d>
 __global__ void KerInteractionForcesFlexStruc(unsigned n,unsigned pinit
     ,const float4 *poscell,const typecode *code,const unsigned *idp
     ,const StFlexStrucData *flexstrucdata,const float4 *poscell0,const unsigned *numpairs,const unsigned *const *pairidx,const tmatrix3f *kercorr,const tmatrix3f *defgrad
-    ,float3 *ace)
+    ,float *rhos,float3 *ace)
 {
   const unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Number of thread.
   if(p<n){
@@ -1003,9 +1003,9 @@ __global__ void KerInteractionForcesFlexStruc(unsigned n,unsigned pinit
       const tmatrix3f pk1kercorrp1=cumath::MulMatrix3x3(pk1p1,kercorrp1);
 
       //-Evolve structural density
-      const float jacobp1=(simulate2d?cumath::Determinant2x2(defgradp1):cumath::Determinant3x3(defgradp1));
+      const float jacobp1=(simulate2d? cumath::Determinant2x2(defgradp1): cumath::Determinant3x3(defgradp1));
       const float rhop1=rho0p1/jacobp1;
-      //    rhos[p1]=rhop1;
+      rhos[p1]=rhop1;
 
       //    //-Calculate structural speed of sound
       //    const float strucCsp1=sqrtf(young*(1.0f-poisson)/(rhop1*(1.0f+poisson)*(1.0f-2.0f*poisson)));
@@ -1072,7 +1072,7 @@ template<TpKernel tker,bool simulate2d> void Interaction_ForcesFlexStrucT(const 
     KerComputeDefGradFlexStruc<tker,simulate2d> <<<sgridb,t.bsbound,0,t.stm>>>
         (t.vnpb,t.boundini,t.poscell,t.code,t.idp,t.flexstrucdata,tfs.poscell0,tfs.numpairs,tfs.pairidx,tfs.kercorr,tfs.defgrad);
     KerInteractionForcesFlexStruc<tker,simulate2d> <<<sgridb,t.bsbound,0,t.stm>>>
-        (t.vnpb,t.boundini,t.poscell,t.code,t.idp,t.flexstrucdata,tfs.poscell0,tfs.numpairs,tfs.pairidx,tfs.kercorr,tfs.defgrad,t.ace);
+        (t.vnpb,t.boundini,t.poscell,t.code,t.idp,t.flexstrucdata,tfs.poscell0,tfs.numpairs,tfs.pairidx,tfs.kercorr,tfs.defgrad,tfs.rhos,t.ace);
   }
 }
 

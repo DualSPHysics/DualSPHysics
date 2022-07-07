@@ -215,3 +215,11 @@ void JSphFlexibleStructure::ConfigCode(unsigned npb,typecode *code){
     }
   }
 }
+
+//==============================================================================
+/// Sets mass density for flexible structures.
+/// Establece la densidad de masa para estructuras flexibles.
+//==============================================================================
+void JSphFlexibleStructure::SetDensity(unsigned npb,const typecode *code,float *rhos){
+  for(unsigned p=0;p<npb;p++)rhos[p]=(CODE_IsFixedFlexStrucFlex(code[p])? GetMkBody(CODE_GetIbodyFixedFlexStruc(code[p]))->GetDensity(): 0);
+}

@@ -161,7 +161,7 @@ public:
   void SortDataArrays(const tsymatrix3f *a,tsymatrix3f *a2);
   void SortDataArrays(const float3 *a,float3 *a2);
   void SortDataArrays(const float *a,float *a2);
-  void SortFlexStrucArrays(const float4 *poscell0,const unsigned *numpairs,unsigned *const *pairidx,const tmatrix3f *kercorr,float4 *poscell02,unsigned *numpairs2,unsigned **pairidx2,tmatrix3f *kercorr2); //<vs_flexstruc>
+  void SortFlexStrucArrays(const float4 *poscell0,const unsigned *numpairs,unsigned *const *pairidx,const tmatrix3f *kercorr,const float *rhos,float4 *poscell02,unsigned *numpairs2,unsigned **pairidx2,tmatrix3f *kercorr2,float *rhos2); //<vs_flexstruc>
   void UpdateIndices(unsigned n,unsigned *idx); //<vs_flexstruc>
 
   float* GetAuxMem(unsigned size);

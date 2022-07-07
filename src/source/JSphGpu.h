@@ -179,10 +179,12 @@ protected:
   unsigned *NumPairsg;              ///<Number of initial neighbours
   unsigned **PairIdxg;              ///<List of indices to each initial neighbour
   tmatrix3f *KerCorrg;              ///<Kernel correction
+  float *Rhosg;                     ///<Structural density
   float4 *PosCell02g;               ///<Relative initial position and cell coordinates {posx,posy,posz,cellxyz}
   unsigned *NumPairs2g;             ///<Number of initial neighbours
   unsigned **PairIdx2g;             ///<List of indices to each initial neighbour
   tmatrix3f *KerCorr2g;             ///<Kernel correction
+  float *Rhos2g;                    ///<Structural density
   tmatrix3f *DefGradg;              ///<Deformation gradient tensor
   //<vs_flexstruc_end>
 

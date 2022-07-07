@@ -647,8 +647,8 @@ __global__ void KerSortDataParticles(unsigned n,unsigned pini,const unsigned *so
 /// Reordena datos de particulas segun idsort[].
 //------------------------------------------------------------------------------
 __global__ void KerSortDataParticles(unsigned n,unsigned pini,const unsigned *sortpart
-                                     ,const float4 *poscell0,const unsigned *numpairs,unsigned *const *pairidx,const tmatrix3f *kercorr
-                                     ,float4 *poscell02,unsigned *numpairs2,unsigned **pairidx2,tmatrix3f *kercorr2)
+                                     ,const float4 *poscell0,const unsigned *numpairs,unsigned *const *pairidx,const tmatrix3f *kercorr,const float *rhos
+                                     ,float4 *poscell02,unsigned *numpairs2,unsigned **pairidx2,tmatrix3f *kercorr2,float *rhos2)
 {
   const unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Particle number.
   if(p<n){
@@ -657,6 +657,7 @@ __global__ void KerSortDataParticles(unsigned n,unsigned pini,const unsigned *so
     numpairs2[p]=numpairs[oldpos];
     pairidx2[p]=pairidx[oldpos];
     kercorr2[p]=kercorr[oldpos];
+    rhos2[p]=rhos[oldpos];
   }
 }
 //<vs_flexstruc_end>
@@ -743,11 +744,11 @@ void SortDataParticles(unsigned np,unsigned pini,const unsigned *sortpart,const 
 /// Reordena datos de particulas segun sortpart.
 //==============================================================================
 void SortDataParticles(unsigned np,unsigned pini,const unsigned *sortpart
-                       ,const float4 *poscell0,const unsigned *numpairs,unsigned *const *pairidx,const tmatrix3f *kercorr
-                       ,float4 *poscell02,unsigned *numpairs2,unsigned **pairidx2,tmatrix3f *kercorr2){
+                       ,const float4 *poscell0,const unsigned *numpairs,unsigned *const *pairidx,const tmatrix3f *kercorr,const float *rhos
+                       ,float4 *poscell02,unsigned *numpairs2,unsigned **pairidx2,tmatrix3f *kercorr2,float *rhos2){
   if(np){
     dim3 sgrid=GetSimpleGridSize(np,DIVBSIZE);
-    KerSortDataParticles <<<sgrid,DIVBSIZE>>>(np,pini,sortpart,poscell0,numpairs,pairidx,kercorr,poscell02,numpairs2,pairidx2,kercorr2);
+    KerSortDataParticles <<<sgrid,DIVBSIZE>>>(np,pini,sortpart,poscell0,numpairs,pairidx,kercorr,rhos,poscell02,numpairs2,pairidx2,kercorr2,rhos2);
   }
 }
 

@@ -393,8 +393,8 @@ void JSphGpuSingle::RunCellDivide(bool updateperiodic){
   //<vs_flexstruc_ini>
   if(FlexStruc){
     if(PairIdxBufferg)CellDivSingle->UpdateIndices(NumPairsTot,PairIdxBufferg);
-    CellDivSingle->SortFlexStrucArrays(PosCell0g,NumPairsg,PairIdxg,KerCorrg,PosCell02g,NumPairs2g,PairIdx2g,KerCorr2g);
-    swap(PosCell0g,PosCell02g); swap(NumPairsg,NumPairs2g); swap(PairIdxg,PairIdx2g); swap(KerCorrg,KerCorr2g);
+    CellDivSingle->SortFlexStrucArrays(PosCell0g,NumPairsg,PairIdxg,KerCorrg,Rhosg,PosCell02g,NumPairs2g,PairIdx2g,KerCorr2g,Rhos2g);
+    swap(PosCell0g,PosCell02g); swap(NumPairsg,NumPairs2g); swap(PairIdxg,PairIdx2g); swap(KerCorrg,KerCorr2g); swap(Rhosg,Rhos2g);
   }
   //<vs_flexstruc_ini>
 
@@ -463,7 +463,7 @@ void JSphGpuSingle::Interaction_Forces(TpInterStep interstep){
     ,0,Nstep,DivData,Dcellg
     ,Posxyg,Poszg,PosCellg,Velrhopg,Idpg,Codeg
     ,FtoMasspg,SpsTaug,dengradcorr
-    ,FlexStrucDatag //<vs_flexstruc>
+    ,FlexStrucDatag,Rhosg //<vs_flexstruc>
     ,ViscDtg,Arg,Aceg,Deltag
     ,SpsGradvelg
     ,ShiftPosfsg
@@ -478,7 +478,7 @@ void JSphGpuSingle::Interaction_Forces(TpInterStep interstep){
   //<vs_flexstruc_ini>
   //-Interaction flexible structure-flexible structure.
   if(FlexStruc){
-    const StInterParmsFlexStrucg parmsflexstruc=StrInterParmsFlexStrucg(PosCell0g,NumPairsg,PairIdxg,KerCorrg,DefGradg);
+    const StInterParmsFlexStrucg parmsflexstruc=StrInterParmsFlexStrucg(PosCell0g,NumPairsg,PairIdxg,KerCorrg,Rhosg,DefGradg);
     cusph::Interaction_ForcesFlexStruc(parms,parmsflexstruc);
   }
   //<vs_flexstruc_end>
@@ -1025,7 +1025,7 @@ void JSphGpuSingle::FlexStrucInit(){
       ,0,Nstep,DivData,Dcellg
       ,Posxyg,Poszg,PosCellg,Velrhopg,Idpg,Codeg
       ,FtoMasspg,SpsTaug,NULL
-      ,FlexStrucDatag //<vs_flexstruc>
+      ,FlexStrucDatag,Rhosg //<vs_flexstruc>
       ,ViscDtg,Arg,Aceg,Deltag
       ,SpsGradvelg
       ,ShiftPosfsg
@@ -1052,6 +1052,11 @@ void JSphGpuSingle::FlexStrucInit(){
   cusph::SetFlexStrucPairs(parms,NumPairsg,PairIdxg);
   //-Calculate kernel correction for each structure particle.
   cusph::CalcFlexStrucKerCorr(parms,FlexStrucDatag,NumPairsg,PairIdxg,KerCorrg);
+  //-Set structural density.
+  float *rhos=new float [Np];
+  FlexStruc->SetDensity(Npb,Code,rhos);
+  cudaMemcpy(Rhosg,rhos,sizeof(float)*Np,cudaMemcpyHostToDevice);
+  delete[] rhos;
 //  //-Recalculate the neighbour lists for all particles.
 //  BoundChanged=true; CellDivideAll=false;
 //  RunCellDivide(true);

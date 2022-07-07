@@ -104,7 +104,7 @@ public:
   const JSphFlexibleStructureBody* GetMkBody(unsigned idx)const{ return(idx<GetCount()? List[idx]: NULL); }
 
   void ConfigCode(unsigned npb,typecode *code);
-
+  void SetDensity(unsigned npb,const typecode *code,float *rhos);
 };
 #endif
 #endif

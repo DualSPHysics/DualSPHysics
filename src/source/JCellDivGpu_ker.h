@@ -57,7 +57,7 @@ void SortDataParticles(unsigned np,unsigned pini,const unsigned *sortpart,const 
 void SortDataParticles(unsigned np,unsigned pini,const unsigned *sortpart,const tsymatrix3f *a,tsymatrix3f *a2);
 void SortDataParticles(unsigned np,unsigned pini,const unsigned *sortpart,const float3 *a,float3 *a2);
 void SortDataParticles(unsigned np,unsigned pini,const unsigned *sortpart,const float *a,float *a2);
-void SortDataParticles(unsigned np,unsigned pini,const unsigned *sortpart,const float4 *poscell0,const unsigned *numpairs,unsigned *const *pairidx,const tmatrix3f *kercorr,float4 *poscell02,unsigned *numpairs2,unsigned **pairidx2,tmatrix3f *kercorr2); //<vs_flexstruc>
+void SortDataParticles(unsigned np,unsigned pini,const unsigned *sortpart,const float4 *poscell0,const unsigned *numpairs,unsigned *const *pairidx,const tmatrix3f *kercorr,const float *rhos,float4 *poscell02,unsigned *numpairs2,unsigned **pairidx2,tmatrix3f *kercorr2,float *rhos2); //<vs_flexstruc>
 void SortIndices(unsigned *sortpart,unsigned* sortidx,unsigned np,bool stable); //<vs_flexstruc>
 void UpdateIndices(unsigned n,unsigned nptot,unsigned pini,const unsigned *sortidx,unsigned *idx); //<vs_flexstruc>
 
