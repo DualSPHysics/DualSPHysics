@@ -902,7 +902,7 @@ void JSphGpuSingle::SaveData(){
   //-Retrieves particle data from the GPU. | Recupera datos de particulas en GPU.
   if(save){
     Timersg->TmStart(TMG_SuDownData,false);
-    unsigned npnormal=ParticlesDataDown(Np,0,false,PeriActive!=0);
+    unsigned npnormal=ParticlesDataDown(Np,0,true,PeriActive!=0); //<vs_flexstruc> // TODO Set code=false after debugging.
     if(npnormal!=npsave)Run_Exceptioon("The number of particles is invalid.");
     Timersg->TmStop(TMG_SuDownData,false);
   }
