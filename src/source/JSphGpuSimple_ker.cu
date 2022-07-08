@@ -140,7 +140,7 @@ template<bool floating,bool shift,bool inout> __global__ void KerComputeStepVerl
       rrhop=(rrhop<rhopzero? rhopzero: rrhop); //-To prevent absorption of fluid particles by boundaries. | Evita q las boundary absorvan a las fluidas.
       //<vs_flexstruc_ini>
       //-Update flexible structure particles (semi-implicit Euler).
-      if(CODE_IsFixedFlexStrucFlex(code[p])){
+      if(CODE_IsFlexStrucFlex(code[p])){
         const float3 race=ace[p];
         const double acegrx=double(race.x)+gravity.x;
         const double acegry=double(race.y)+gravity.y;
@@ -275,7 +275,7 @@ template<bool floating,bool shift,bool inout> __global__ void KerComputeStepSymp
       rvelrhop.w=(rvelrhop.w<rhopzero? rhopzero: rvelrhop.w); //-To prevent absorption of fluid particles by boundaries. | Evita que las boundary absorvan a las fluidas.
       //<vs_flexstruc_ini>
       //-Update structure particles (symplectic)
-      if(CODE_IsFixedFlexStrucFlex(code[p])){
+      if(CODE_IsFlexStrucFlex(code[p])){
         //-Calculate displacement. | Calcula desplazamiento.
         double dx=double(rvelrhop.x)*dtm;
         double dy=double(rvelrhop.y)*dtm;
@@ -396,7 +396,7 @@ template<bool floating,bool shift,bool inout> __global__ void KerComputeStepSymp
       rrhop=(rrhop<rhopzero? rhopzero: rrhop); //-To prevent absorption of fluid particles by boundaries. | Evita q las boundary absorvan a las fluidas.
       //<vs_flexstruc_ini>
       //-Update structure particles (symplectic).
-      if(CODE_IsFixedFlexStrucFlex(code[p])){
+      if(CODE_IsFlexStrucFlex(code[p])){
         const float4 rvelrhoppre=velrhoppre[p];
         float4 rvelrhopnew=rvelrhoppre;
         //-Calculate velocity. | Calcula velocidad.

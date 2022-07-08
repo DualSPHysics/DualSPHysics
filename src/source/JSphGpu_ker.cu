@@ -423,7 +423,7 @@ template<TpKernel tker,TpFtMode ftmode,bool symm>
   ,const float *ftomassp
   ,const float4 *poscell,const float4 *velrhop,const typecode *code,const unsigned* idp
   ,float massp2,float masssp1
-  ,const float4 &pscellp1,const float4 &velrhop1,float codep1,float pressp1
+  ,const float4 &pscellp1,const float4 &velrhop1,typecode codep1,float pressp1
   ,float3 &acep1,float &arp1,float &visc)
 {
   for(int p2=pini;p2<pfin;p2++){
@@ -462,7 +462,7 @@ template<TpKernel tker,TpFtMode ftmode,bool symm>
           visc=max(dot_rr2,visc); 
         }
         //<vs_flexstruc_ini>
-        if(CODE_IsFixedFlexStrucFlex(code[p1])){
+        if(CODE_IsFlexStrucFlex(codep1)){
           //-Laminar viscosity contribution.
           const float robar2=(velrhop1.w+velrhop2.w);
           const float temp=4.f*visco/((rr2+CTE.eta2)*robar2);
@@ -501,7 +501,7 @@ template<TpKernel tker,TpFtMode ftmode,bool symm>
     const float4 pscellp1=poscell[p1];
     const float4 velrhop1=velrhop[p1];
     const typecode codep1=code[p1]; //<vs_flexstruc>
-    const float masssp1=(CODE_IsFixedFlexStrucFlex(codep1)? rhos[p1]*flexstrucdata[CODE_GetIbodyFixedFlexStruc(codep1)].vol0: FLT_MAX); //<vs_flexstruc>
+    const float masssp1=(CODE_IsFlexStrucFlex(codep1)? rhos[p1]*flexstrucdata[CODE_GetIbodyFixedFlexStruc(codep1)].vol0: FLT_MAX); //<vs_flexstruc>
     const float pressp1=cufsph::ComputePressCte(velrhop1.w); //<vs_flexstruc>
     const bool rsymp1=(symm && PSCEL_GetPartY(__float_as_uint(pscellp1.w))==0); //<vs_syymmetry>
     
@@ -988,7 +988,7 @@ __global__ void KerInteractionForcesFlexStruc(unsigned n,unsigned pinit
 
     //-Get codep1.
     const typecode codep1=code[p1];
-    if(CODE_IsFixedFlexStrucFlex(codep1)){
+    if(CODE_IsFlexStrucFlex(codep1)){
       float3 acep1=make_float3(0,0,0);
 
       //-Obtains basic data of particle p1.
@@ -1114,7 +1114,7 @@ __global__ void KerCountFlexStrucPairs(unsigned n,unsigned pinit
 
     //-Initialise variables.
     typecode newcodep1;
-    bool haspairsp1=CODE_IsFixedFlexStrucFlex(codep1)? true: false;
+    bool haspairsp1=CODE_IsFlexStrucFlex(codep1)? true: false;
     unsigned numpairsp1=0;
 
     //-Flexible structure-flexible structure interaction.
@@ -1126,15 +1126,15 @@ __global__ void KerCountFlexStrucPairs(unsigned n,unsigned pinit
       const float rr2=drx*drx+dry*dry+drz*drz;
       if(rr2<=CTE.kernelsize2&&rr2>=ALMOSTZERO){
         const typecode codep2=code[p2];
-        if(CODE_IsFixedNotFlexStruc(codep1)&&CODE_IsFixedFlexStrucFlex(codep2)){
+        if((CODE_IsFixed(codep1)||CODE_IsMoving(codep1))&&!CODE_IsFlexStrucAny(codep1)&&CODE_IsFlexStrucFlex(codep2)){
           haspairsp1=true;
-          newcodep1=CODE_ToFixedFlexStrucClamp(codep1,CODE_GetIbodyFixedFlexStruc(codep2));
+          newcodep1=CODE_ToFlexStrucClamp(codep1,CODE_GetIbodyFixedFlexStruc(codep2));
         }
         numpairsp1++;
       }
     }
     if(haspairsp1&&numpairsp1){
-      if(CODE_IsFixedNotFlexStruc(codep1))code[p1]=newcodep1;
+      if((CODE_IsFixed(codep1)||CODE_IsMoving(codep1))&&!CODE_IsFlexStrucAny(codep1))code[p1]=newcodep1;
       numpairs[p1]=numpairsp1;
     }
   }
@@ -1976,10 +1976,10 @@ template<bool periactive,bool floatings> __global__ void KerComputeStepPos(unsig
   unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
   if(p<np){
     const typecode rcode=code[p];
-    if(p>=npb||CODE_IsFixedFlexStrucFlex(rcode)){ //<vs_flexstruc>
+    if(p>=npb||CODE_IsFlexStrucFlex(rcode)){ //<vs_flexstruc>
       const bool outrhop=CODE_IsOutRhop(rcode);
       const bool fluid=(!floatings||CODE_IsFluid(rcode));
-      const bool flexstruc=CODE_IsFixedFlexStrucFlex(rcode); //<vs_flexstruc>
+      const bool flexstruc=CODE_IsFlexStrucFlex(rcode); //<vs_flexstruc>
       const bool normal=(!periactive||outrhop||CODE_IsNormal(rcode));
       if(normal && (fluid||flexstruc)){ //-Does not apply to periodic or floating particles. | No se aplica a particulas periodicas o floating.
         const double2 rmovxy=movxy[p];
@@ -2023,14 +2023,14 @@ template<bool periactive,bool floatings> __global__ void KerComputeStepPos2(unsi
   unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
   if(p<np){
     const typecode rcode=code[p];
-    if(p>=npb||CODE_IsFixedFlexStrucFlex(rcode)){ //<vs_flexstruc>
+    if(p>=npb||CODE_IsFlexStrucFlex(rcode)){ //<vs_flexstruc>
       const typecode rcode=code[p];
       const bool outrhop=CODE_IsOutRhop(rcode);
       const bool fluid=(!floatings||CODE_IsFluid(rcode));
-      const bool structure=CODE_IsFixedFlexStrucFlex(rcode); //<vs_flexstruc>
+      const bool flexstruc=CODE_IsFlexStrucFlex(rcode); //<vs_flexstruc>
       const bool normal=(!periactive||outrhop||CODE_IsNormal(rcode));
       if(normal){//-Does not apply to periodic particles. | No se aplica a particulas periodicas
-        if(fluid||structure){//-Only applied for fluid displacement. | Solo se aplica desplazamiento al fluido.
+        if(fluid||flexstruc){//-Only applied for fluid displacement. | Solo se aplica desplazamiento al fluido.
           const double2 rmovxy=movxy[p];
           KerUpdatePos<periactive>(posxypre[p],poszpre[p],rmovxy.x,rmovxy.y,movz[p],outrhop,p,posxy,posz,dcell,code);
         }

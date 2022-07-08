@@ -187,8 +187,8 @@
   #define CODE_MASKVALUE 0x7ff      //-Bits type-value: 0000 0111 1111 1111  Range:0-2047
 
   //<vs_flexstruc_ini>
-  #define CODE_TYPE_FIXED_FLEXSTRUC 0x07e0            //---First (flexible) flexible structure code: 2016 (16 different codes for flexible structure bodies + extra bit for clamped).
-  #define CODE_TYPE_FIXED_FLEXSTRUC_CLAMPMASK 0x0010  //---Bit mask for clamped code.
+  #define CODE_TYPE_FLEXSTRUC_MASK 0x07e0         //-Bits for flexible structure: 0000 0111 1110 0000
+  #define CODE_TYPE_FLEXSTRUCCLAMP_MASK 0x0010    //-Bits for flexible structure clamp: 0000 0000 0001 0000
   //<vs_flexstruc_end>
 
   #define CODE_TYPE_FLUID_LIMITFREE 0x1fdf  //---Last normal fluid code: 8159
@@ -224,14 +224,13 @@
 #define CODE_IsNotFluid(code) (CODE_GetType(code)!=CODE_TYPE_FLUID)
 
 //<vs_flexstruc_ini>
-#define CODE_IsFixedFlexStruc(code)       (CODE_IsFixed(code) && CODE_GetTypeValue(code)>=CODE_GetTypeValue(CODE_TYPE_FIXED_FLEXSTRUC))
-#define CODE_IsFixedNotFlexStruc(code)    (CODE_IsFixed(code) && CODE_GetTypeValue(code)< CODE_GetTypeValue(CODE_TYPE_FIXED_FLEXSTRUC))
-#define CODE_IsFixedFlexStrucFlex(code)   (CODE_IsFixed(code) && CODE_GetTypeValue(code)>=CODE_GetTypeValue(CODE_TYPE_FIXED_FLEXSTRUC) && CODE_GetTypeValue(code)<(CODE_GetTypeValue(CODE_TYPE_FIXED_FLEXSTRUC)|CODE_TYPE_FIXED_FLEXSTRUC_CLAMPMASK))
-#define CODE_IsFixedFlexStrucClamp(code)  (CODE_IsFixed(code) && CODE_GetTypeValue(code)>=(CODE_GetTypeValue(CODE_TYPE_FIXED_FLEXSTRUC)|CODE_TYPE_FIXED_FLEXSTRUC_CLAMPMASK))
+#define CODE_IsFlexStrucAny(code)   ((CODE_IsFixed(code)||CODE_IsMoving(code)) && (code&CODE_TYPE_FLEXSTRUC_MASK)==CODE_TYPE_FLEXSTRUC_MASK)
+#define CODE_IsFlexStrucFlex(code)  (CODE_IsMoving(code) && (code&(CODE_TYPE_FLEXSTRUC_MASK|CODE_TYPE_FLEXSTRUCCLAMP_MASK))==CODE_TYPE_FLEXSTRUC_MASK)
+#define CODE_IsFlexStrucClamp(code) ((CODE_IsFixed(code)||CODE_IsMoving(code)) && (code&(CODE_TYPE_FLEXSTRUC_MASK|CODE_TYPE_FLEXSTRUCCLAMP_MASK))==(CODE_TYPE_FLEXSTRUC_MASK|CODE_TYPE_FLEXSTRUCCLAMP_MASK))
 
-#define CODE_ToFixedFlexStrucFlex(code,ibody)   (code&(~CODE_MASKTYPEVALUE))|(CODE_TYPE_FIXED_FLEXSTRUC|ibody)
-#define CODE_ToFixedFlexStrucClamp(code,ibody)  (code&(~CODE_MASKTYPEVALUE))|(CODE_TYPE_FIXED_FLEXSTRUC|CODE_TYPE_FIXED_FLEXSTRUC_CLAMPMASK|ibody)
-#define CODE_GetIbodyFixedFlexStruc(code)       (code&(~(CODE_MASKSPECIAL|CODE_MASKTYPE|CODE_GetTypeValue(CODE_TYPE_FIXED_FLEXSTRUC)|CODE_TYPE_FIXED_FLEXSTRUC_CLAMPMASK)))
+#define CODE_ToFlexStrucFlex(code,ibody)  ((code&(CODE_MASKSPECIAL|CODE_MASKTYPE))|CODE_TYPE_FLEXSTRUC_MASK|ibody)
+#define CODE_ToFlexStrucClamp(code,ibody) ((code&(CODE_MASKSPECIAL|CODE_MASKTYPE))|CODE_TYPE_FLEXSTRUC_MASK|CODE_TYPE_FLEXSTRUCCLAMP_MASK|ibody)
+#define CODE_GetIbodyFixedFlexStruc(code) (code&(~(CODE_MASKSPECIAL|CODE_MASKTYPE|CODE_TYPE_FLEXSTRUC_MASK|CODE_TYPE_FLEXSTRUCCLAMP_MASK)))
 //<vs_flexstruc_end>
 
 //#define CODE_IsFluidInout(code)    (CODE_IsFluid(code) && CODE_GetTypeAndValue(code)>=CODE_TYPE_FLUID_INOUT)

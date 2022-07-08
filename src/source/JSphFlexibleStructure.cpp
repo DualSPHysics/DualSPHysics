@@ -159,7 +159,7 @@ void JSphFlexibleStructure::LoadXml(const JXml *sxml,const std::string &place){
 //==============================================================================
 void JSphFlexibleStructure::ReadXml(const JXml *sxml,TiXmlElement* lis){
   //-Loads flexible structure body elements.
-  const unsigned idmax=CODE_MASKVALUE-(CODE_GetTypeValue(CODE_TYPE_FIXED_FLEXSTRUC)|CODE_TYPE_FIXED_FLEXSTRUC_CLAMPMASK);
+  const unsigned idmax=CODE_TYPE_FLEXSTRUCCLAMP_MASK-1;
   TiXmlElement* ele=lis->FirstChildElement("flexiblestructurebody");
   while(ele){
     if(sxml->CheckElementActive(ele)){
@@ -196,10 +196,10 @@ void JSphFlexibleStructure::ReadXml(const JXml *sxml,TiXmlElement* lis){
 void JSphFlexibleStructure::UpdateMkCode(const JSphMk *mkinfo){
   for(unsigned c=0;c<GetCount();c++){
     const unsigned cmk=mkinfo->GetMkBlockByMkBound(List[c]->MkBound);
-    if(cmk<mkinfo->Size() && (CODE_IsFixed(mkinfo->Mkblock(cmk)->Code))){
+    if(cmk<mkinfo->Size() && (CODE_IsMoving(mkinfo->Mkblock(cmk)->Code))){
       List[c]->ConfigBoundCode(mkinfo->Mkblock(cmk)->Code);
     }
-    else Run_Exceptioon(fun::PrintStr("MkBound value (%u) is not a valid Mk fixed boundary.",List[c]->MkBound));
+    else Run_Exceptioon(fun::PrintStr("MkBound value (%u) is not a valid Mk moving boundary.",List[c]->MkBound));
   }
 }
 
@@ -211,7 +211,7 @@ void JSphFlexibleStructure::ConfigCode(unsigned npb,typecode *code){
   for(unsigned c=0;c<GetCount();c++){
     typecode bcode=List[c]->GetBoundCode();
     for(unsigned p=0;p<npb;p++){
-      if(code[p]==bcode)code[p]=typecode(CODE_ToFixedFlexStrucFlex(code[p],List[c]->IdBody));
+      if(code[p]==bcode)code[p]=typecode(CODE_ToFlexStrucFlex(code[p],List[c]->IdBody));
     }
   }
 }
@@ -221,5 +221,5 @@ void JSphFlexibleStructure::ConfigCode(unsigned npb,typecode *code){
 /// Establece la densidad de masa para estructuras flexibles.
 //==============================================================================
 void JSphFlexibleStructure::SetDensity(unsigned npb,const typecode *code,float *rhos){
-  for(unsigned p=0;p<npb;p++)rhos[p]=(CODE_IsFixedFlexStrucFlex(code[p])? GetMkBody(CODE_GetIbodyFixedFlexStruc(code[p]))->GetDensity(): 0);
+  for(unsigned p=0;p<npb;p++)rhos[p]=(CODE_IsFlexStrucFlex(code[p])? GetMkBody(CODE_GetIbodyFixedFlexStruc(code[p]))->GetDensity(): 0);
 }
