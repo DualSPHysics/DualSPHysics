@@ -273,6 +273,24 @@ template<bool floating,bool shift,bool inout> __global__ void KerComputeStepSymp
       float4 rvelrhop=velrhoppre[p];
       rvelrhop.w=float(double(rvelrhop.w)+dtm*ar[p]);
       rvelrhop.w=(rvelrhop.w<rhopzero? rhopzero: rvelrhop.w); //-To prevent absorption of fluid particles by boundaries. | Evita que las boundary absorvan a las fluidas.
+      //<vs_flexstruc_ini>
+      //-Update structure particles (symplectic)
+      if(CODE_IsFixedFlexStrucFlex(code[p])){
+        //-Calculate displacement. | Calcula desplazamiento.
+        double dx=double(rvelrhop.x)*dtm;
+        double dy=double(rvelrhop.y)*dtm;
+        double dz=double(rvelrhop.z)*dtm;
+        //-Calculate velocity & density. | Calcula velocidad y densidad.
+        const float3 race=ace[p];
+        rvelrhop.x=float(double(rvelrhop.x) + (double(race.x)+gravity.x) * dtm);
+        rvelrhop.y=float(double(rvelrhop.y) + (double(race.y)+gravity.y) * dtm);
+        rvelrhop.z=float(double(rvelrhop.z) + (double(race.z)+gravity.z) * dtm);
+        //-Update particle data.
+        movxy[p]=make_double2(dx,dy);
+        movz[p]=dz;
+      }
+      //<vs_flexstruc_end>
+      //-Stores new velocity and density.
       velrhop[p]=rvelrhop;
     }
     else{ //-Particles: Floating & Fluid.
@@ -376,7 +394,29 @@ template<bool floating,bool shift,bool inout> __global__ void KerComputeStepSymp
       double epsilon_rdot=(-double(ar[p])/double(velrhop[p].w))*dt;
       float rrhop=float(double(velrhoppre[p].w) * (2.-epsilon_rdot)/(2.+epsilon_rdot));
       rrhop=(rrhop<rhopzero? rhopzero: rrhop); //-To prevent absorption of fluid particles by boundaries. | Evita q las boundary absorvan a las fluidas.
-      velrhop[p]=make_float4(0,0,0,rrhop);
+      //<vs_flexstruc_ini>
+      //-Update structure particles (symplectic).
+      if(CODE_IsFixedFlexStrucFlex(code[p])){
+        const float4 rvelrhoppre=velrhoppre[p];
+        float4 rvelrhopnew=rvelrhoppre;
+        //-Calculate velocity. | Calcula velocidad.
+        const float3 race=ace[p];
+        rvelrhopnew.x=float(double(rvelrhoppre.x) + (double(race.x)+gravity.x) * dt);
+        rvelrhopnew.y=float(double(rvelrhoppre.y) + (double(race.y)+gravity.y) * dt);
+        rvelrhopnew.z=float(double(rvelrhoppre.z) + (double(race.z)+gravity.z) * dt);
+        rvelrhopnew.w=rrhop;
+        //-Calculate displacement. | Calcula desplazamiento.
+        double dx=(double(rvelrhoppre.x)+double(rvelrhopnew.x)) * dtm;
+        double dy=(double(rvelrhoppre.y)+double(rvelrhopnew.y)) * dtm;
+        double dz=(double(rvelrhoppre.z)+double(rvelrhopnew.z)) * dtm;
+        //-Update particle data.
+        movxy[p]=make_double2(dx,dy);
+        movz[p]=dz;
+        //-Stores new velocity and density.
+        velrhop[p]=rvelrhopnew;
+      }
+      //<vs_flexstruc_end>
+      else velrhop[p]=make_float4(0,0,0,rrhop);
     }
     else{ //-Particles: Floating & Fluid.
       const typecode rcode=code[p];

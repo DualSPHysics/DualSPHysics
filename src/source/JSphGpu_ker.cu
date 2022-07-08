@@ -2016,25 +2016,28 @@ void ComputeStepPos(byte periactive,bool floatings,unsigned np,unsigned npb
 /// Updates particle position according to displacement.
 /// Actualizacion de posicion de particulas segun desplazamiento.
 //------------------------------------------------------------------------------
-template<bool periactive,bool floatings> __global__ void KerComputeStepPos2(unsigned n,unsigned pini
+template<bool periactive,bool floatings> __global__ void KerComputeStepPos2(unsigned np,unsigned npb
   ,const double2 *posxypre,const double *poszpre,const double2 *movxy,const double *movz
   ,double2 *posxy,double *posz,unsigned *dcell,typecode *code)
 {
-  unsigned pt=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
-  if(pt<n){
-    unsigned p=pt+pini;
+  unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
+  if(p<np){
     const typecode rcode=code[p];
-    const bool outrhop=CODE_IsOutRhop(rcode);
-    const bool fluid=(!floatings || CODE_IsFluid(rcode));
-    const bool normal=(!periactive || outrhop || CODE_IsNormal(rcode));
-    if(normal){//-Does not apply to periodic particles. | No se aplica a particulas periodicas
-      if(fluid){//-Only applied for fluid displacement. | Solo se aplica desplazamiento al fluido.
-        const double2 rmovxy=movxy[p];
-        KerUpdatePos<periactive>(posxypre[p],poszpre[p],rmovxy.x,rmovxy.y,movz[p],outrhop,p,posxy,posz,dcell,code);
-      }
-      else{ //-Copy position of floating particles.
-        posxy[p]=posxypre[p];
-        posz[p]=poszpre[p];
+    if(p>=npb||CODE_IsFixedFlexStrucFlex(rcode)){ //<vs_flexstruc>
+      const typecode rcode=code[p];
+      const bool outrhop=CODE_IsOutRhop(rcode);
+      const bool fluid=(!floatings||CODE_IsFluid(rcode));
+      const bool structure=CODE_IsFixedFlexStrucFlex(rcode); //<vs_flexstruc>
+      const bool normal=(!periactive||outrhop||CODE_IsNormal(rcode));
+      if(normal){//-Does not apply to periodic particles. | No se aplica a particulas periodicas
+        if(fluid||structure){//-Only applied for fluid displacement. | Solo se aplica desplazamiento al fluido.
+          const double2 rmovxy=movxy[p];
+          KerUpdatePos<periactive>(posxypre[p],poszpre[p],rmovxy.x,rmovxy.y,movz[p],outrhop,p,posxy,posz,dcell,code);
+        }
+        else{ //-Copy position of floating particles.
+          posxy[p]=posxypre[p];
+          posz[p]=poszpre[p];
+        }
       }
     }
   }
@@ -2048,17 +2051,15 @@ void ComputeStepPos2(byte periactive,bool floatings,unsigned np,unsigned npb
   ,const double2 *posxypre,const double *poszpre,const double2 *movxy,const double *movz
   ,double2 *posxy,double *posz,unsigned *dcell,typecode *code)
 {
-  const unsigned pini=npb;
-  const unsigned npf=np-pini;
-  if(npf){
-    dim3 sgrid=GetSimpleGridSize(npf,SPHBSIZE);
+  if(np){
+    dim3 sgrid=GetSimpleGridSize(np,SPHBSIZE);
     if(periactive){ const bool peri=true;
-      if(floatings)KerComputeStepPos2<peri,true>  <<<sgrid,SPHBSIZE>>> (npf,pini,posxypre,poszpre,movxy,movz,posxy,posz,dcell,code);
-      else         KerComputeStepPos2<peri,false> <<<sgrid,SPHBSIZE>>> (npf,pini,posxypre,poszpre,movxy,movz,posxy,posz,dcell,code);
+      if(floatings)KerComputeStepPos2<peri,true>  <<<sgrid,SPHBSIZE>>> (np,npb,posxypre,poszpre,movxy,movz,posxy,posz,dcell,code);
+      else         KerComputeStepPos2<peri,false> <<<sgrid,SPHBSIZE>>> (np,npb,posxypre,poszpre,movxy,movz,posxy,posz,dcell,code);
     }
     else{ const bool peri=false;
-      if(floatings)KerComputeStepPos2<peri,true>  <<<sgrid,SPHBSIZE>>> (npf,pini,posxypre,poszpre,movxy,movz,posxy,posz,dcell,code);
-      else         KerComputeStepPos2<peri,false> <<<sgrid,SPHBSIZE>>> (npf,pini,posxypre,poszpre,movxy,movz,posxy,posz,dcell,code);
+      if(floatings)KerComputeStepPos2<peri,true>  <<<sgrid,SPHBSIZE>>> (np,npb,posxypre,poszpre,movxy,movz,posxy,posz,dcell,code);
+      else         KerComputeStepPos2<peri,false> <<<sgrid,SPHBSIZE>>> (np,npb,posxypre,poszpre,movxy,movz,posxy,posz,dcell,code);
     }
   }
 }

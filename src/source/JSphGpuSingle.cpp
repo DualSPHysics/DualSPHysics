@@ -604,6 +604,7 @@ double JSphGpuSingle::ComputeStep_Sym(){
   //-Corrector
   //-----------
   DemDtForce=dt;                               //(DEM)
+  if(FlexStruc)BoundChanged=true; //<vs_flexstruc>
   RunCellDivide(true);
   Interaction_Forces(INTERSTEP_SymCorrector);  //-Interaction.
   const double ddt_c=DtVariable(true);         //-Calculate dt of corrector step.
@@ -858,9 +859,7 @@ void JSphGpuSingle::Run(std::string appname,const JSphCfgRun *cfg,JLog2 *log){
     double stepdt=ComputeStep();
     RunGaugeSystem(TimeStep+stepdt);
     if(CaseNmoving)RunMotion(stepdt);
-    //<vs_flexstruc_init>
-    if(FlexStruc)BoundChanged=true;
-    //<vs_flexstruc_end>
+    if(FlexStruc)BoundChanged=true; //<vs_flexstruc>
     if(InOut)InOutComputeStep(stepdt);
     else RunCellDivide(true);
     TimeStep+=stepdt;
