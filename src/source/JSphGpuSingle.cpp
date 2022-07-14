@@ -473,8 +473,10 @@ void JSphGpuSingle::Interaction_Forces(TpInterStep interstep){
   //<vs_flexstruc_ini>
   //-Interaction flexible structure-flexible structure.
   if(FlexStruc){
-    const StInterParmsFlexStrucg parmsfs=StrInterParmsFlexStrucg(Simulate2D,TKernel,CaseNflexstruc,PosCellg,Codeg
-        ,FlexStrucDatag,FlexStrucRidpg,PosCell0g,NumPairsg,PairIdxg,KerCorrg,Aceg,DefGradg,NULL);
+    const StInterParmsFlexStrucg parmsfs=StrInterParmsFlexStrucg(Simulate2D,TKernel
+        ,Visco*ViscoBoundFactor,CaseNflexstruc,DivData,Dcellg
+        ,PosCellg,Velrhopg,Codeg
+        ,FlexStrucDatag,FlexStrucRidpg,PosCell0g,NumPairsg,PairIdxg,KerCorrg,DefGradg,Aceg,NULL);
     cusph::Interaction_ForcesFlexStruc(parmsfs);
   }
   //<vs_flexstruc_end>
@@ -1039,14 +1041,9 @@ void JSphGpuSingle::FlexStrucInit(){
   cusph::SetFlexStrucPairs(CaseNflexstruc,PosCell0g,PairIdxg);
   //-Interaction parameters.
   const StInterParmsFlexStrucg parmsfs=StrInterParmsFlexStrucg(Simulate2D,TKernel
-      ,CaseNflexstruc
-      ,PosCellg,Codeg
-      ,FlexStrucDatag
-      ,FlexStrucRidpg,PosCell0g
-      ,NumPairsg,PairIdxg
-      ,KerCorrg
-      ,Aceg,DefGradg
-      ,NULL);
+      ,Visco*ViscoBoundFactor,CaseNflexstruc,DivData,Dcellg
+      ,PosCellg,Velrhopg,Codeg
+      ,FlexStrucDatag,FlexStrucRidpg,PosCell0g,NumPairsg,PairIdxg,KerCorrg,DefGradg,Aceg,NULL);
   //-Calculate kernel correction for each structure particle.
   cusph::CalcFlexStrucKerCorr(parmsfs);
 }

@@ -959,7 +959,9 @@ __device__ tmatrix3f KerComputePK1StressFlexStruc(const tmatrix3f &defgrad,const
 }
 
 template<TpKernel tker,bool simulate2d>
-__global__ void KerInteractionForcesFlexStruc(unsigned n,const float4 *poscell,const typecode *code
+__global__ void KerInteractionForcesFlexStruc(unsigned n,float visco
+    ,int scelldiv,int4 nc,int3 cellzero,const int2 *beginendcellfluid,const unsigned *dcell
+    ,const float4 *poscell,const float4 *velrhop,const typecode *code
     ,const StFlexStrucData *flexstrucdata,const unsigned *flexstrucridp
     ,const float4 *poscell0,const unsigned *numpairs,const unsigned *const *pairidx,const tmatrix3f *kercorr,const tmatrix3f *defgrad
     ,float3 *ace)
@@ -975,13 +977,15 @@ __global__ void KerInteractionForcesFlexStruc(unsigned n,const float4 *poscell,c
       float3 acep1=make_float3(0,0,0);
 
       //-Obtains basic data of particle p1.
-      const float vol0p1=flexstrucdata[CODE_GetIbodyFixedFlexStruc(codep1)].vol0;
       const float4 pscellp1=poscell[p1];
+      const float4 velrhop1=velrhop[p1];
+      const float pressp1=cufsph::ComputePressCte(velrhop1.w);
       const float4 pscell0p1=poscell0[pfs1];
       const tmatrix3f kercorrp1=kercorr[pfs1];
       const tmatrix3f defgradp1=defgrad[pfs1];
 
       //-Obtains flexible structure data.
+      const float vol0p1=flexstrucdata[CODE_GetIbodyFixedFlexStruc(codep1)].vol0;
       const float rho0p1=flexstrucdata[CODE_GetIbodyFixedFlexStruc(codep1)].rho0;
       const float mass0p1=flexstrucdata[CODE_GetIbodyFixedFlexStruc(codep1)].mass0;
       const float youngmod=flexstrucdata[CODE_GetIbodyFixedFlexStruc(codep1)].youngmod;
@@ -991,15 +995,54 @@ __global__ void KerInteractionForcesFlexStruc(unsigned n,const float4 *poscell,c
       const tmatrix3f pk1p1=KerComputePK1StressFlexStruc(defgradp1,cmat);
       const tmatrix3f pk1kercorrp1=cumath::MulMatrix3x3(pk1p1,kercorrp1);
 
-      //-Evolve structural density
+      //-Get current mass of flexible structure particle.
       const float jacobp1=(simulate2d? cumath::Determinant2x2(defgradp1): cumath::Determinant3x3(defgradp1));
-      const float rhop1=rho0p1/jacobp1;
+      const float masssp1=(CODE_IsFlexStrucFlex(codep1)? vol0p1*rho0p1/jacobp1: FLT_MAX);
+
+      //-Obtains neighborhood search limits.
+      int ini1,fin1,ini2,fin2,ini3,fin3;
+      cunsearch::InitCte(dcell[p1],scelldiv,nc,cellzero,ini1,fin1,ini2,fin2,ini3,fin3);
+
+      //-Flexible structure-Fluid interaction.
+      for(int c3=ini3;c3<fin3;c3+=nc.w){
+        for(int c2=ini2;c2<fin2;c2+=nc.x){
+          unsigned pini,pfin=0;  cunsearch::ParticleRange(c2,c3,ini1,fin1,beginendcellfluid,pini,pfin);
+          if(pfin){
+            for(int p2=pini;p2<pfin;p2++){
+              if(CODE_IsFluid(code[p2])){
+                const float4 pscellp2=poscell[p2];
+                float drx=pscellp1.x-pscellp2.x+CTE.poscellsize*(PSCEL_GetfX(pscellp1.w)-PSCEL_GetfX(pscellp2.w));
+                float dry=pscellp1.y-pscellp2.y+CTE.poscellsize*(PSCEL_GetfY(pscellp1.w)-PSCEL_GetfY(pscellp2.w));
+                float drz=pscellp1.z-pscellp2.z+CTE.poscellsize*(PSCEL_GetfZ(pscellp1.w)-PSCEL_GetfZ(pscellp2.w));
+                const float rr2=drx*drx+dry*dry+drz*drz;
+                if(rr2<=CTE.kernelsize2&&rr2>=ALMOSTZERO){
+                  //-Computes kernel.
+                  const float fac=cufsph::GetKernel_Fac<tker>(rr2);
+                  const float frx=fac*drx,fry=fac*dry,frz=fac*drz; //-Gradients.
+                  float4 velrhop2=velrhop[p2];
+                  const float dvx=velrhop1.x-velrhop2.x,dvy=velrhop1.y-velrhop2.y,dvz=velrhop1.z-velrhop2.z;
+                  //-Laminar viscosity contribution.
+                  const float robar2=(velrhop1.w+velrhop2.w);
+                  const float temp=4.f*visco/((rr2+CTE.eta2)*robar2);
+                  const float vtemp=CTE.massf*temp*(drx*frx+dry*fry+drz*frz);
+                  acep1.x+=vtemp*dvx; acep1.y+=vtemp*dvy; acep1.z+=vtemp*dvz;
+                  //-Velocity derivative (Momentum equation).
+                  const float pressp2=cufsph::ComputePressCte(velrhop2.w);
+                  const float prs=(pressp1+pressp2)/(velrhop1.w*velrhop2.w)+(tker==KERNEL_Cubic?cufsph::GetKernelCubic_Tensil(rr2,velrhop1.w,pressp1,velrhop2.w,pressp2):0);
+                  const float p_vpm=-prs*CTE.massf*CTE.massf/masssp1;
+                  acep1.x+=p_vpm*frx; acep1.y+=p_vpm*fry; acep1.z+=p_vpm*frz;
+                }
+              }
+            }
+          }
+        }
+      }
 
       //    //-Calculate structural speed of sound
       //    const float strucCsp1=sqrtf(young*(1.0f-poisson)/(rhop1*(1.0f+poisson)*(1.0f-2.0f*poisson)));
 
       //-Loop through pairs and calculate forces.
-      for(unsigned pair=0;pair<numpairs[p1];pair++){
+      for(unsigned pair=0;pair<numpairs[pfs1];pair++){
         const unsigned pfs2=pairidx[pfs1][pair];
         const float4 pscell0p2=poscell0[pfs2];
         float drx0=pscell0p1.x-pscell0p2.x+CTE.poscellsize*(PSCEL_GetfX(pscell0p1.w)-PSCEL_GetfX(pscell0p2.w));
@@ -1057,11 +1100,12 @@ __global__ void KerInteractionForcesFlexStruc(unsigned n,const float4 *poscell,c
 
 template<TpKernel tker,bool simulate2d> void Interaction_ForcesFlexStrucT(const StInterParmsFlexStrucg &tfs){
   if(tfs.vnpfs){
+    const StDivDataGpu &dvd=tfs.divdatag;
     dim3 sgridb=GetSimpleGridSize(tfs.vnpfs,SPHBSIZE);
     KerComputeDefGradFlexStruc<tker,simulate2d> <<<sgridb,SPHBSIZE,0,tfs.stm>>>
         (tfs.vnpfs,tfs.poscell,tfs.code,tfs.flexstrucdata,tfs.flexstrucridp,tfs.poscell0,tfs.numpairs,tfs.pairidx,tfs.kercorr,tfs.defgrad);
     KerInteractionForcesFlexStruc<tker,simulate2d> <<<sgridb,SPHBSIZE,0,tfs.stm>>>
-        (tfs.vnpfs,tfs.poscell,tfs.code,tfs.flexstrucdata,tfs.flexstrucridp,tfs.poscell0,tfs.numpairs,tfs.pairidx,tfs.kercorr,tfs.defgrad,tfs.ace);
+        (tfs.vnpfs,tfs.viscob,dvd.scelldiv,dvd.nc,dvd.cellzero,dvd.beginendcell+dvd.cellfluid,tfs.dcell,tfs.poscell,tfs.velrhop,tfs.code,tfs.flexstrucdata,tfs.flexstrucridp,tfs.poscell0,tfs.numpairs,tfs.pairidx,tfs.kercorr,tfs.defgrad,tfs.ace);
   }
 }
 

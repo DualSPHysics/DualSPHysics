@@ -187,9 +187,13 @@ typedef struct StrInterParmsFlexStrucg{
   bool simulate2d;
   TpKernel tkernel;
   //-Execution values.
+  float viscob;
   unsigned vnpfs;
+  StDivDataGpu divdatag;
   //-Input data arrays.
+  const unsigned *dcell;
   const float4 *poscell;
+  const float4 *velrhop;
   const typecode *code;
   const StFlexStrucData *flexstrucdata;
   const unsigned *flexstrucridp;
@@ -198,35 +202,40 @@ typedef struct StrInterParmsFlexStrucg{
   const unsigned *const *pairidx;
   const tmatrix3f *kercorr;
   //-Output data arrays.
-  float3 *ace;
   tmatrix3f *defgrad;
+  float3 *ace;
   //-Other values and objects.
   cudaStream_t stm;
 
   ///Structure constructor.
   StrInterParmsFlexStrucg(
        bool simulate2d_,TpKernel tkernel_
-      ,unsigned vnpfs_
-      ,const float4 *poscell_,const typecode *code_
+      ,float viscob_,unsigned vnpfs_
+      ,const StDivDataGpu &divdatag_
+      ,const unsigned *dcell_
+      ,const float4 *poscell_,const float4 *velrhop_,const typecode *code_
       ,const StFlexStrucData *flexstrucdata_
       ,const unsigned *flexstrucridp_,const float4 *poscell0_
       ,const unsigned *numpairs_,const unsigned *const *pairidx_
       ,const tmatrix3f *kercorr_
-      ,float3 *ace_,tmatrix3f *defgrad_
+      ,tmatrix3f *defgrad_,float3 *ace_
       ,cudaStream_t stm_)
   {
     //-Configuration options.
     simulate2d=simulate2d_; tkernel=tkernel_;
     //-Execution values.
+    viscob=viscob_;
     vnpfs=vnpfs_;
+    divdatag=divdatag_;
     //-Input data arrays.
-    poscell=poscell_; code=code_;
+    dcell=dcell_;
+    poscell=poscell_; velrhop=velrhop_; code=code_;
     flexstrucdata=flexstrucdata_;
     flexstrucridp=flexstrucridp_; poscell0=poscell0_;
     numpairs=numpairs_; pairidx=pairidx_;
     kercorr=kercorr_;
     //-Output data arrays.
-    ace=ace_; defgrad=defgrad_;
+    defgrad=defgrad_; ace=ace_;
     //-Other values and objects.
     stm=stm_;
   }
