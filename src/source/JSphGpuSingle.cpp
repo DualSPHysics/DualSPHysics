@@ -392,8 +392,9 @@ void JSphGpuSingle::RunCellDivide(bool updateperiodic){
   //<vs_flexstruc_ini>
   if(FlexStruc){
     if(FlexStrucRidpg){
-      CellDivSingle->UpdateIndices(CaseNflexstruc,FlexStrucRidpg,FlexStrucRidp2g);
-      swap(FlexStrucRidpg,FlexStrucRidp2g);
+      CellDivSingle->UpdateIndices(CaseNflexstruc,FlexStrucRidpg);
+//      CellDivSingle->UpdateIndices(CaseNflexstruc,FlexStrucRidpg,FlexStrucRidp2g);
+//      swap(FlexStrucRidpg,FlexStrucRidp2g);
     }
   }
   //<vs_flexstruc_ini>

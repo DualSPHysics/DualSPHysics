@@ -844,12 +844,31 @@ unsigned ReduUintSum(unsigned nblocks,unsigned *aux){
 }
 
 //<vs_flexstruc_ini>
-void UpdateIndices(unsigned n,const unsigned *sortpart,const unsigned *idx,unsigned *idx2){
+void SortIndices(unsigned *sortpart,unsigned* sortidx,unsigned np,bool stable){
+  thrust::device_ptr<unsigned> dev_sortidx(sortidx);
+  thrust::sequence(dev_sortidx,dev_sortidx+np);
+  Sort(sortpart,sortidx,np,stable);
+}
+
+__global__ void KerUpdateIndices(unsigned n,const unsigned *sortidx,unsigned *idx)
+{
+  const unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Particle number.
+  if(p<n)idx[p]=sortidx[idx[p]];
+}
+
+void UpdateIndices(unsigned n,const unsigned *sortidx,unsigned *idx){
   if(n){
-    thrust::device_ptr<const unsigned> dev_sortpart(sortpart);
+    dim3 sgrid=GetSimpleGridSize(n,DIVBSIZE);
+    KerUpdateIndices <<<sgrid,DIVBSIZE>>>(n,sortidx,idx);
+  }
+}
+
+void UpdateIndices(unsigned n,const unsigned *sortidx,const unsigned *idx,unsigned *idx2){
+  if(n){
+    thrust::device_ptr<const unsigned> dev_sortidx(sortidx);
     thrust::device_ptr<const unsigned> dev_idx(idx);
     thrust::device_ptr<unsigned> dev_idx2(idx2);
-    thrust::gather(dev_idx,dev_idx+n,dev_sortpart,dev_idx2);
+    thrust::gather(dev_idx,dev_idx+n,dev_sortidx,dev_idx2);
   }
 }
 //<vs_flexstruc_end>

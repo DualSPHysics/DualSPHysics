@@ -45,6 +45,7 @@ JCellDivGpu::JCellDivGpu(bool stable,bool floating,byte periactive
   ClassName="JCellDivGpu";
   CellPart=NULL;  SortPart=NULL;  AuxMem=NULL;
   BeginEndCell=NULL;
+  SortPart2=NULL; SortIdx=NULL; //<vs_flexstruc>
   Reset();
 }
 
@@ -118,8 +119,10 @@ void JCellDivGpu::AllocMemoryNp(ullong np){
   //-Reserva memoria para particulas.
   MemAllocGpuNp=0;
   size_t m=sizeof(unsigned)*SizeNp;
-  cudaMalloc((void**)&CellPart,m); MemAllocGpuNp+=m;
-  cudaMalloc((void**)&SortPart,m); MemAllocGpuNp+=m;
+  cudaMalloc((void**)&CellPart, m); MemAllocGpuNp+=m;
+  cudaMalloc((void**)&SortPart, m); MemAllocGpuNp+=m;
+  cudaMalloc((void**)&SortPart2,m); MemAllocGpuNp+=m; //<vs_flexstruc>
+  cudaMalloc((void**)&SortIdx,  m); MemAllocGpuNp+=m; //<vs_flexstruc>
   SizeAuxMem=cudiv::LimitsPosSize(SizeNp);
   m=sizeof(float)*SizeAuxMem;
   cudaMalloc((void**)&AuxMem,m);   MemAllocGpuNp+=m;
@@ -400,8 +403,20 @@ tdouble3 JCellDivGpu::GetDomainLimits(bool limitmin,unsigned slicecellmin)const{
 }
 
 //<vs_flexstruc_ini>
+void JCellDivGpu::UpdateIndices(unsigned n,unsigned *idx){
+  if(DivideFull){
+    cudaMemcpy(SortPart2,SortPart,sizeof(unsigned)*NpbFinal,cudaMemcpyDeviceToDevice);
+    cudiv::SortIndices(SortPart2,SortIdx,NpbFinal,Stable);
+    cudiv::UpdateIndices(n,SortIdx,idx);
+  }
+}
+
 void JCellDivGpu::UpdateIndices(unsigned n,const unsigned *idx,unsigned *idx2){
-  if(DivideFull)cudiv::UpdateIndices(n,SortPart,idx,idx2);
+  if(DivideFull){
+    cudaMemcpy(SortPart2,SortPart,sizeof(unsigned)*NpbFinal,cudaMemcpyDeviceToDevice);
+    cudiv::SortIndices(SortPart2,SortIdx,NpbFinal,Stable);
+    cudiv::UpdateIndices(n,SortIdx,idx,idx2);
+  }
 }
 //<vs_flexstruc_end>
 
