@@ -114,8 +114,6 @@ protected:
 
   bool DivideFull;      ///<Indicate that divie is applied to fluid & boundary (not only to fluid). | Indica que el divide se aplico a fluido y contorno (no solo al fluido).
 
-  unsigned *SortIdx;    ///<Indices to particles which are sorted
-
   void Reset();
 
   //-Management of allocated dynamic memory.
@@ -161,8 +159,6 @@ public:
   void SortDataArrays(const tsymatrix3f *a,tsymatrix3f *a2);
   void SortDataArrays(const float3 *a,float3 *a2);
   void SortDataArrays(const float *a,float *a2);
-  void SortFlexStrucArrays(const float4 *poscell0,const unsigned *numpairs,unsigned *const *pairidx,const tmatrix3f *kercorr,const float *rhos,float4 *poscell02,unsigned *numpairs2,unsigned **pairidx2,tmatrix3f *kercorr2,float *rhos2); //<vs_flexstruc>
-  void UpdateIndices(unsigned n,unsigned *idx); //<vs_flexstruc>
 
   float* GetAuxMem(unsigned size);
 
@@ -195,6 +191,8 @@ public:
   const int2* GetBeginCell()const{ return(BeginEndCell); }
 
   void SetIncreaseNp(unsigned increasenp){ IncreaseNp=increasenp; }
+
+  void UpdateIndices(unsigned n,const unsigned *idx,unsigned *idx2);  //<vs_flexstruc>
 
   //:uint2 GetRangeParticlesCells(bool fluid,unsigned celini,unsigned celfin)const;
   //:unsigned GetParticlesCells(unsigned celini,unsigned celfin);

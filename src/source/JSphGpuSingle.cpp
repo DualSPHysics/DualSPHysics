@@ -391,7 +391,10 @@ void JSphGpuSingle::RunCellDivide(bool updateperiodic){
   }
   //<vs_flexstruc_ini>
   if(FlexStruc){
-//    if(FlexStrucRidpg)CellDivSingle->UpdateIndices(CaseNflexstruc,FlexStrucRidpg);
+    if(FlexStrucRidpg){
+      CellDivSingle->UpdateIndices(CaseNflexstruc,FlexStrucRidpg,FlexStrucRidp2g);
+      swap(FlexStrucRidpg,FlexStrucRidp2g);
+    }
   }
   //<vs_flexstruc_ini>
 
@@ -998,13 +1001,14 @@ void JSphGpuSingle::FlexStrucInit(){
   CaseNflexstruc=cusph::CountFlexStrucParts(Npb,Codeg);
   //-Allocate arrays.
   size_t m=0;
-  m=sizeof(StFlexStrucData)*FlexStrucCount; cudaMalloc((void**)&FlexStrucDatag, m);  MemGpuFixed+=m;
-  m=sizeof(unsigned)*CaseNflexstruc;        cudaMalloc((void**)&FlexStrucRidpg, m);  MemGpuFixed+=m;
-  m=sizeof(float4)*CaseNflexstruc;          cudaMalloc((void**)&PosCell0g,      m);  MemGpuFixed+=m;
-  m=sizeof(unsigned)*CaseNflexstruc;        cudaMalloc((void**)&NumPairsg,      m);  MemGpuFixed+=m;
-  m=sizeof(unsigned*)*CaseNflexstruc;       cudaMalloc((void**)&PairIdxg,       m);  MemGpuFixed+=m;
-  m=sizeof(tmatrix3f)*CaseNflexstruc;       cudaMalloc((void**)&KerCorrg,       m);  MemGpuFixed+=m;
-  m=sizeof(tmatrix3f)*CaseNflexstruc;       cudaMalloc((void**)&DefGradg,       m);  MemGpuFixed+=m;
+  m=sizeof(StFlexStrucData)*FlexStrucCount; cudaMalloc((void**)&FlexStrucDatag,   m);  MemGpuFixed+=m;
+  m=sizeof(unsigned)*CaseNflexstruc;        cudaMalloc((void**)&FlexStrucRidpg,   m);  MemGpuFixed+=m;
+  m=sizeof(unsigned)*CaseNflexstruc;        cudaMalloc((void**)&FlexStrucRidp2g,  m);  MemGpuFixed+=m;
+  m=sizeof(float4)*CaseNflexstruc;          cudaMalloc((void**)&PosCell0g,        m);  MemGpuFixed+=m;
+  m=sizeof(unsigned)*CaseNflexstruc;        cudaMalloc((void**)&NumPairsg,        m);  MemGpuFixed+=m;
+  m=sizeof(unsigned*)*CaseNflexstruc;       cudaMalloc((void**)&PairIdxg,         m);  MemGpuFixed+=m;
+  m=sizeof(tmatrix3f)*CaseNflexstruc;       cudaMalloc((void**)&KerCorrg,         m);  MemGpuFixed+=m;
+  m=sizeof(tmatrix3f)*CaseNflexstruc;       cudaMalloc((void**)&DefGradg,         m);  MemGpuFixed+=m;
   //-Get flexible structure data for each body and copy to GPU
   vector<StFlexStrucData> flexstrucdata(FlexStrucCount);
   for(unsigned c=0;c<FlexStrucCount;c++){
@@ -1019,6 +1023,7 @@ void JSphGpuSingle::FlexStrucInit(){
   cudaMemcpy(FlexStrucDatag,flexstrucdata.data(),sizeof(StFlexStrucData)*FlexStrucCount,cudaMemcpyHostToDevice);
   //-Calculate array for indexing into flexible structure particles.
   cusph::CalcFlexStrucRidp(Npb,Codeg,FlexStrucRidpg);
+  cudaMemcpy(FlexStrucRidp2g,FlexStrucRidpg,sizeof(unsigned)*CaseNflexstruc,cudaMemcpyDeviceToDevice);
   //-Copy current position into initial position.
   cusph::GatherToFlexStrucArray(CaseNflexstruc,FlexStrucRidpg,PosCellg,PosCell0g);
   //-Get number of particle pairs for each flexible structure particle.

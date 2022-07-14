@@ -45,7 +45,6 @@ JCellDivGpu::JCellDivGpu(bool stable,bool floating,byte periactive
   ClassName="JCellDivGpu";
   CellPart=NULL;  SortPart=NULL;  AuxMem=NULL;
   BeginEndCell=NULL;
-  SortIdx=NULL; //<vs_flexstruc>
   Reset();
 }
 
@@ -121,7 +120,6 @@ void JCellDivGpu::AllocMemoryNp(ullong np){
   size_t m=sizeof(unsigned)*SizeNp;
   cudaMalloc((void**)&CellPart,m); MemAllocGpuNp+=m;
   cudaMalloc((void**)&SortPart,m); MemAllocGpuNp+=m;
-  cudaMalloc((void**)&SortIdx,m);  MemAllocGpuNp+=m; //<vs_flexstruc>
   SizeAuxMem=cudiv::LimitsPosSize(SizeNp);
   m=sizeof(float)*SizeAuxMem;
   cudaMalloc((void**)&AuxMem,m);   MemAllocGpuNp+=m;
@@ -368,23 +366,6 @@ void JCellDivGpu::SortDataArrays(const float *a, float *a2) {
   cudiv::SortDataParticles(Nptot,pini,SortPart,a,a2);
 }
 
-//<vs_flexstruc_ini>
-//==============================================================================
-/// Reorders data arrays according to SortPart (for flexible structures).
-/// Ordena arrays de datos segun SortPart (para flexible structures).
-//==============================================================================
-void JCellDivGpu::SortFlexStrucArrays(const float4 *poscell0,const unsigned *numpairs,unsigned *const *pairidx,const tmatrix3f *kercorr,const float *rhos,float4 *poscell02,unsigned *numpairs2,unsigned **pairidx2,tmatrix3f *kercorr2,float *rhos2){
-  const unsigned pini=(DivideFull? 0: NpbFinal);
-  cudiv::SortDataParticles(Nptot,pini,SortPart,poscell0,numpairs,pairidx,kercorr,rhos,poscell02,numpairs2,pairidx2,kercorr2,rhos2);
-}
-
-void JCellDivGpu::UpdateIndices(unsigned n,unsigned *idx){
-  cudiv::SortIndices(SortPart,SortIdx,Nptot,Stable);
-  const unsigned pini=(DivideFull? 0: NpbFinal);
-  cudiv::UpdateIndices(n,Nptot,pini,SortIdx,idx);
-}
-//<vs_flexstruc_end>
-
 //==============================================================================
 /// Returns a pointer with the auxiliary memory allocated in the GPU, only
 /// used as intermediate in some tasks, in order to use it in other tasks.
@@ -417,6 +398,12 @@ tdouble3 JCellDivGpu::GetDomainLimits(bool limitmin,unsigned slicecellmin)const{
   tdouble3 pmax=DomPosMin+TDouble3(scell*celmax.x,scell*celmax.y,scell*celmax.z);
   return(limitmin? pmin: pmax);
 }
+
+//<vs_flexstruc_ini>
+void JCellDivGpu::UpdateIndices(unsigned n,const unsigned *idx,unsigned *idx2){
+  if(DivideFull)cudiv::UpdateIndices(n,SortPart,idx,idx2);
+}
+//<vs_flexstruc_end>
 
 /*:
 ////==============================================================================

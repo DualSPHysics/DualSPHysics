@@ -174,6 +174,7 @@ protected:
   unsigned NumPairsTot;             ///<Total number of pairs across all flexible structure bodies.
   StFlexStrucData *FlexStrucDatag;  ///<Data for each individual flexible structure body [FlexStruc->GetCount()]
   unsigned *FlexStrucRidpg;         ///<Identifier to access to the particles of the flexible structures [CaseNflexstruc].
+  unsigned *FlexStrucRidp2g;        ///<Second array for sorting in RunCellDivide [CaseNflexstruc].
   float4 *PosCell0g;                ///<Relative initial position and cell coordinates {posx,posy,posz,cellxyz} [CaseNflexstruc].
   unsigned *NumPairsg;              ///<Number of initial neighbours [CaseNflexstruc].
   unsigned *PairIdxBufferg;         ///<Raw buffer to particle indices [NumPairsTot].

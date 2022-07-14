@@ -32,6 +32,7 @@
 #pragma warning(disable : 4244) //Cancels "warning C4244: conversion from 'unsigned __int64' to 'unsigned int', possible loss of data"
 #include <thrust/device_vector.h>
 #include <thrust/sort.h>
+#include <thrust/gather.h>
 
 namespace cudiv{
 #include "FunctionsBasic_iker.h"
@@ -641,27 +642,6 @@ __global__ void KerSortDataParticles(unsigned n,unsigned pini,const unsigned *so
   }
 }
 
-//<vs_flexstruc_ini>
-//------------------------------------------------------------------------------
-/// Reorders particle data according to idsort[].
-/// Reordena datos de particulas segun idsort[].
-//------------------------------------------------------------------------------
-__global__ void KerSortDataParticles(unsigned n,unsigned pini,const unsigned *sortpart
-                                     ,const float4 *poscell0,const unsigned *numpairs,unsigned *const *pairidx,const tmatrix3f *kercorr,const float *rhos
-                                     ,float4 *poscell02,unsigned *numpairs2,unsigned **pairidx2,tmatrix3f *kercorr2,float *rhos2)
-{
-  const unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Particle number.
-  if(p<n){
-    const unsigned oldpos=(p<pini? p: sortpart[p]);
-    poscell02[p]=poscell0[oldpos];
-    numpairs2[p]=numpairs[oldpos];
-    pairidx2[p]=pairidx[oldpos];
-    kercorr2[p]=kercorr[oldpos];
-    rhos2[p]=rhos[oldpos];
-  }
-}
-//<vs_flexstruc_end>
-
 //==============================================================================
 /// Reorders particle data according to sortpart.
 /// Reordena datos de particulas segun sortpart.
@@ -737,44 +717,6 @@ void SortDataParticles(unsigned np,unsigned pini,const unsigned *sortpart,const 
     KerSortDataParticles <<<sgrid,DIVBSIZE>>>(np,pini,sortpart,a,a2);
   }
 }
-
-//<vs_flexstruc_ini>
-//==============================================================================
-/// Reorders particle data according to sortpart.
-/// Reordena datos de particulas segun sortpart.
-//==============================================================================
-void SortDataParticles(unsigned np,unsigned pini,const unsigned *sortpart
-                       ,const float4 *poscell0,const unsigned *numpairs,unsigned *const *pairidx,const tmatrix3f *kercorr,const float *rhos
-                       ,float4 *poscell02,unsigned *numpairs2,unsigned **pairidx2,tmatrix3f *kercorr2,float *rhos2){
-  if(np){
-    dim3 sgrid=GetSimpleGridSize(np,DIVBSIZE);
-    KerSortDataParticles <<<sgrid,DIVBSIZE>>>(np,pini,sortpart,poscell0,numpairs,pairidx,kercorr,rhos,poscell02,numpairs2,pairidx2,kercorr2,rhos2);
-  }
-}
-
-void SortIndices(unsigned *sortpart,unsigned* sortidx,unsigned np,bool stable){
-  thrust::device_vector<unsigned> dev_sortpart(sortpart,sortpart+np);
-  thrust::device_ptr<unsigned> dev_sortidx(sortidx);
-  thrust::sequence(dev_sortidx,dev_sortidx+np);
-  Sort(thrust::raw_pointer_cast(dev_sortpart.data()),sortidx,np,stable);
-}
-
-__global__ void KerUpdateIndices(unsigned n,unsigned nptot,unsigned pini,const unsigned *sortidx,unsigned *idx)
-{
-  const unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Particle number.
-  if(p<n){
-    const unsigned idxp=idx[p];
-    if(idxp>=pini&&idxp<nptot)idx[p]=sortidx[idxp];
-  }
-}
-
-void UpdateIndices(unsigned n,unsigned nptot,unsigned pini,const unsigned *sortidx,unsigned *idx){
-  if(n){
-    dim3 sgrid=GetSimpleGridSize(n,DIVBSIZE);
-    KerUpdateIndices <<<sgrid,DIVBSIZE>>>(n,nptot,pini,sortidx,idx);
-  }
-}
-//<vs_flexstruc_end>
 
 //------------------------------------------------------------------------------
 /// Compute minimum and maximum values starting from data[].
@@ -900,6 +842,17 @@ unsigned ReduUintSum(unsigned nblocks,unsigned *aux){
   //fcuda::Check_CudaError("#>ReduMaxF Fallo en cudaMemcpy.");
   return(resf);
 }
+
+//<vs_flexstruc_ini>
+void UpdateIndices(unsigned n,const unsigned *sortpart,const unsigned *idx,unsigned *idx2){
+  if(n){
+    thrust::device_ptr<const unsigned> dev_sortpart(sortpart);
+    thrust::device_ptr<const unsigned> dev_idx(idx);
+    thrust::device_ptr<unsigned> dev_idx2(idx2);
+    thrust::gather(dev_idx,dev_idx+n,dev_sortpart,dev_idx2);
+  }
+}
+//<vs_flexstruc_end>
 
 /*:
 ////------------------------------------------------------------------------------
