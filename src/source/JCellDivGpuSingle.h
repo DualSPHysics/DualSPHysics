@@ -34,8 +34,8 @@ class JDsTimersGpu;
 class JCellDivGpuSingle : public JCellDivGpu
 {
 protected:
-  void CalcCellDomain(bool celldivideall,const unsigned *dcellg,const typecode *codeg);
-  void MergeMapCellBoundFluid(bool celldivideall,const tuint3 &celbmin,const tuint3 &celbmax,const tuint3 &celfmin,const tuint3 &celfmax,tuint3 &celmin,tuint3 &celmax)const;
+  void CalcCellDomain(const unsigned *dcellg,const typecode *codeg);
+  void MergeMapCellBoundFluid(const tuint3 &celbmin,const tuint3 &celbmax,const tuint3 &celfmin,const tuint3 &celfmax,tuint3 &celmin,tuint3 &celmax)const;
   void PrepareNct();
 
   void PreSort(const unsigned *dcellg,const typecode *codeg);
@@ -48,7 +48,7 @@ public:
     ,unsigned casenbound,unsigned casenfixed,unsigned casenpb,std::string dirout);
 
   void Divide(unsigned npb1,unsigned npf1,unsigned npb2,unsigned npf2
-    ,bool boundchanged,bool celldivideall,const unsigned *dcellg,const typecode *codeg
+    ,bool boundchanged,const unsigned *dcellg,const typecode *codeg
     ,const double2 *posxy,const double *posz,const unsigned *idp
     ,JDsTimersGpu *timersg);
 
