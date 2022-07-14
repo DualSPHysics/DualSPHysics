@@ -3383,7 +3383,8 @@ void Interaction_ForcesFlexStruc(const StInterParmsFlexStrucg &tfs){
 #endif
 }
 
-__global__ void KerComputeStepPosFlexStruc(unsigned n,const unsigned *flexstrucridp,const double2 *movxy,const double *movz
+__global__ void KerComputeStepPosFlexStruc(unsigned n,const unsigned *flexstrucridp
+    ,const double2 *posxypre,const double *poszpre,const double2 *movxy,const double *movz
     ,double2 *posxy,double *posz,unsigned *dcell,typecode *code)
 {
   unsigned pt=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
@@ -3395,17 +3396,18 @@ __global__ void KerComputeStepPosFlexStruc(unsigned n,const unsigned *flexstrucr
     const bool normal=(outrhop || CODE_IsNormal(rcode));
     if(normal && flexstruc){
       const double2 rmovxy=movxy[p];
-      KerUpdatePos<false>(posxy[p],posz[p],rmovxy.x,rmovxy.y,movz[p],outrhop,p,posxy,posz,dcell,code);  // Periodic not implemented yet.
+      KerUpdatePos<false>(posxypre[p],poszpre[p],rmovxy.x,rmovxy.y,movz[p],outrhop,p,posxy,posz,dcell,code);  // Periodic not implemented yet.
     }
   }
 }
 
-void ComputeStepPosFlexStruc(unsigned npfs,const unsigned *flexstrucridp,const double2 *movxy,const double *movz
+void ComputeStepPosFlexStruc(unsigned npfs,const unsigned *flexstrucridp
+    ,const double2 *posxypre,const double *poszpre,const double2 *movxy,const double *movz
     ,double2 *posxy,double *posz,unsigned *dcell,typecode *code)
 {
   if(npfs){
     dim3 sgrid=GetSimpleGridSize(npfs,SPHBSIZE);
-    KerComputeStepPosFlexStruc <<<sgrid,SPHBSIZE>>> (npfs,flexstrucridp,movxy,movz,posxy,posz,dcell,code);
+    KerComputeStepPosFlexStruc <<<sgrid,SPHBSIZE>>> (npfs,flexstrucridp,posxypre,poszpre,movxy,movz,posxy,posz,dcell,code);
   }
 }
 //<vs_flexstruc_end>

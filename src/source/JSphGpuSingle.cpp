@@ -571,7 +571,6 @@ double JSphGpuSingle::ComputeStep_Ver(){
   if(Shifting)RunShifting(dt);             //-Shifting.
   ComputeVerlet(dt);                       //-Update particles using Verlet (periodic particles become invalid).
   if(CaseNfloat)RunFloating(dt,false);     //-Control of floating bodies.
-  if(CaseNflexstruc)RunFlexStruc(dt);      //-Control of flexible structures.
   PosInteraction_Forces();                 //-Free memory used for interaction.
   if(Damping)RunDamping(dt,Np,Npb,Posxyg,Poszg,Codeg,Velrhopg); //-Aplies Damping.
   if(RelaxZones)RunRelaxZone(dt);          //-Generate waves using RZ.
@@ -597,7 +596,6 @@ double JSphGpuSingle::ComputeStep_Sym(){
   if(Shifting)RunShifting(dt*.5);              //-Shifting.
   ComputeSymplecticPre(dt);                    //-Apply Symplectic-Predictor to particles (periodic particles become invalid).
   if(CaseNfloat)RunFloating(dt*.5,true);       //-Control of floating bodies.
-  if(CaseNflexstruc)RunFlexStruc(dt);          //-Control of flexible structures.
   PosInteraction_Forces();                     //-Free memory used for interaction.
   //-Corrector
   //-----------
@@ -608,7 +606,6 @@ double JSphGpuSingle::ComputeStep_Sym(){
   if(Shifting)RunShifting(dt);                 //-Shifting.
   ComputeSymplecticCorr(dt);                   //-Apply Symplectic-Corrector to particles (periodic particles become invalid).
   if(CaseNfloat)RunFloating(dt,false);         //-Control of floating bodies.
-  if(CaseNflexstruc)RunFlexStruc(dt);          //-Control of flexible structures.
   PosInteraction_Forces();                     //-Free memory used for interaction.
   if(Damping)RunDamping(dt,Np,Npb,Posxyg,Poszg,Codeg,Velrhopg); //-Aplies Damping.
   if(RelaxZones)RunRelaxZone(dt);              //-Generate waves using RZ.
@@ -1047,31 +1044,6 @@ void JSphGpuSingle::FlexStrucInit(){
       ,FlexStrucDatag,FlexStrucRidpg,PosCell0g,NumPairsg,PairIdxg,KerCorrg,DefGradg,Aceg,NULL);
   //-Calculate kernel correction for each structure particle.
   cusph::CalcFlexStrucKerCorr(parmsfs);
-}
-
-void JSphGpuSingle::RunFlexStruc(double dt){
-  //-Allocates memory to compute the displacement.
-  double2 *movxyg=ArraysGpu->ReserveDouble2();
-  double *movzg=ArraysGpu->ReserveDouble();
-  //-Computes displacement and velocity.
-  if(TStep==STEP_Verlet){
-    cusphs::ComputeStepFlexStrucSemiImplicitEuler(CaseNflexstruc,dt,Gravity,Codeg,Aceg,FlexStrucRidpg,Velrhopg,movxyg,movzg,NULL);
-    cusph::ComputeStepPosFlexStruc(CaseNflexstruc,FlexStrucRidpg,movxyg,movzg,Posxyg,Poszg,Dcellg,Codeg);
-  }
-  else{
-    if(InterStep==INTERSTEP_SymPredictor){
-      cusphs::ComputeStepFlexStrucSymplecticPre(CaseNflexstruc,0.5*dt,Gravity,Codeg,Aceg,FlexStrucRidpg,Velrhopg,movxyg,movzg,NULL);
-      cusph::ComputeStepPosFlexStruc(CaseNflexstruc,FlexStrucRidpg,movxyg,movzg,Posxyg,Poszg,Dcellg,Codeg);
-    }
-    else{
-      cusphs::ComputeStepFlexStrucSymplecticCor(CaseNflexstruc,dt,Gravity,Codeg,Aceg,FlexStrucRidpg,VelrhopPreg,Velrhopg,movxyg,movzg,NULL);
-      cusph::ComputeStepPosFlexStruc(CaseNflexstruc,FlexStrucRidpg,movxyg,movzg,Posxyg,Poszg,Dcellg,Codeg);
-    }
-  }
-  //-Frees memory allocated for the diplacement.
-  ArraysGpu->Free(movxyg);   movxyg=NULL;
-  ArraysGpu->Free(movzg);    movzg=NULL;
-  BoundChanged=true;
 }
 //<vs_flexstruc_end>
 

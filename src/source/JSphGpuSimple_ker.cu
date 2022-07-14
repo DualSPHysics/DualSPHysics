@@ -446,8 +446,9 @@ void ComputeStepSymplecticCor(bool floating,bool shift,bool inout,unsigned np,un
 
 
 //<vs_flexstruc_ini>
-__global__ void KerComputeStepFlexStrucSemiImplicitEuler(unsigned n,double dt,float3 gravity,const typecode *code,const float3 *ace,const unsigned *flexstrucridp
-    ,float4 *velrhop,double2 *movxy,double *movz)
+__global__ void KerComputeStepFlexStrucSemiImplicitEuler(unsigned n,const float4 *velrhop,const typecode *code,const unsigned *flexstrucridp
+    ,const float3 *ace,double dt,float3 gravity
+    ,double2 *movxy,double *movz,float4 *velrhopnew)
 {
   unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
   if(p<n){
@@ -462,7 +463,7 @@ __global__ void KerComputeStepFlexStrucSemiImplicitEuler(unsigned n,double dt,fl
           float(double(rvelrhop.x) + acegrx*dt),
           float(double(rvelrhop.y) + acegry*dt),
           float(double(rvelrhop.z) + acegrz*dt),
-          rvelrhop.w);
+          velrhopnew[p1].w);
       //-Calculate displacement. | Calcula desplazamiento.
       const double dx=double(rvelrhopnew.x)*dt;
       const double dy=double(rvelrhopnew.y)*dt;
@@ -470,40 +471,43 @@ __global__ void KerComputeStepFlexStrucSemiImplicitEuler(unsigned n,double dt,fl
       //-Update particle data.
       movxy[p1]=make_double2(dx,dy);
       movz[p1]=dz;
-      velrhop[p1]=rvelrhopnew;
+      velrhopnew[p1]=rvelrhopnew;
     }
   }
 }
 
-void ComputeStepFlexStrucSemiImplicitEuler(unsigned npfs,double dt,tfloat3 gravity,const typecode *code,const float3 *ace,const unsigned *flexstrucridp
-    ,float4 *velrhop,double2 *movxy,double *movz,cudaStream_t stm)
+void ComputeStepFlexStrucSemiImplicitEuler(unsigned npfs,const float4 *velrhop,const typecode *code,const unsigned *flexstrucridp
+    ,const float3 *ace,double dt,tfloat3 gravity
+    ,double2 *movxy,double *movz,float4 *velrhopnew,cudaStream_t stm)
 {
   if(npfs){
     dim3 sgrid=GetSimpleGridSize(npfs,SPHBSIZE);
-    KerComputeStepFlexStrucSemiImplicitEuler <<<sgrid,SPHBSIZE,0,stm>>> (npfs,dt,Float3(gravity),code,ace,flexstrucridp
-        ,velrhop,movxy,movz);
+    KerComputeStepFlexStrucSemiImplicitEuler <<<sgrid,SPHBSIZE,0,stm>>> (npfs,velrhop,code,flexstrucridp
+        ,ace,dt,Float3(gravity)
+        ,movxy,movz,velrhopnew);
   }
 }
 
-__global__ void KerComputeStepFlexStrucSymplecticPre(unsigned n,double dtm,float3 gravity,const typecode *code,const float3 *ace,const unsigned *flexstrucridp
-    ,float4 *velrhop,double2 *movxy,double *movz)
+__global__ void KerComputeStepFlexStrucSymplecticPre(unsigned n,const float4 *velrhoppre,const typecode *code,const unsigned *flexstrucridp
+    ,const float3 *ace,double dtm,float3 gravity
+    ,double2 *movxy,double *movz,float4 *velrhop)
 {
   unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
   if(p<n){
     const unsigned p1=flexstrucridp[p]; //-Number of particle.
     if(CODE_IsFlexStrucFlex(code[p1])){
-      const float4 rvelrhop=velrhop[p1];
+      const float4 rvelrhoppre=velrhoppre[p1];
       const float3 race=ace[p];
       //-Calculate displacement. | Calcula desplazamiento.
-      double dx=double(rvelrhop.x)*dtm;
-      double dy=double(rvelrhop.y)*dtm;
-      double dz=double(rvelrhop.z)*dtm;
+      double dx=double(rvelrhoppre.x)*dtm;
+      double dy=double(rvelrhoppre.y)*dtm;
+      double dz=double(rvelrhoppre.z)*dtm;
       //-Calculate velocity & density. | Calcula velocidad y densidad.
       const float4 rvelrhopnew=make_float4(
-          float(double(rvelrhop.x) + (double(race.x)+gravity.x) * dtm),
-          float(double(rvelrhop.y) + (double(race.y)+gravity.y) * dtm),
-          float(double(rvelrhop.z) + (double(race.z)+gravity.z) * dtm),
-          rvelrhop.w);
+          float(double(rvelrhoppre.x) + (double(race.x)+gravity.x) * dtm),
+          float(double(rvelrhoppre.y) + (double(race.y)+gravity.y) * dtm),
+          float(double(rvelrhoppre.z) + (double(race.z)+gravity.z) * dtm),
+          velrhop[p1].w);
       //-Update particle data.
       movxy[p1]=make_double2(dx,dy);
       movz[p1]=dz;
@@ -512,18 +516,21 @@ __global__ void KerComputeStepFlexStrucSymplecticPre(unsigned n,double dtm,float
   }
 }
 
-void ComputeStepFlexStrucSymplecticPre(unsigned npfs,double dtm,tfloat3 gravity,const typecode *code,const float3 *ace,const unsigned *flexstrucridp
-    ,float4 *velrhop,double2 *movxy,double *movz,cudaStream_t stm)
+void ComputeStepFlexStrucSymplecticPre(unsigned npfs,const float4 *velrhoppre,const typecode *code,const unsigned *flexstrucridp
+    ,const float3 *ace,double dtm,tfloat3 gravity
+    ,double2 *movxy,double *movz,float4 *velrhop,cudaStream_t stm)
 {
   if(npfs){
     dim3 sgrid=GetSimpleGridSize(npfs,SPHBSIZE);
-    KerComputeStepFlexStrucSymplecticPre <<<sgrid,SPHBSIZE,0,stm>>> (npfs,dtm,Float3(gravity),code,ace,flexstrucridp
-        ,velrhop,movxy,movz);
+    KerComputeStepFlexStrucSymplecticPre <<<sgrid,SPHBSIZE,0,stm>>> (npfs,velrhoppre,code,flexstrucridp
+        ,ace,dtm,Float3(gravity)
+        ,movxy,movz,velrhop);
   }
 }
 
-__global__ void KerComputeStepFlexStrucSymplecticCor(unsigned n,double dt,float3 gravity,const typecode *code,const float3 *ace,const unsigned *flexstrucridp,const float4 *velrhoppre
-    ,float4 *velrhop,double2 *movxy,double *movz)
+__global__ void KerComputeStepFlexStrucSymplecticCor(unsigned n,const float4 *velrhoppre,const typecode *code,const unsigned *flexstrucridp
+    ,const float3 *ace,double dtm,double dt,float3 gravity
+    ,double2 *movxy,double *movz,float4 *velrhop)
 {
   unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
   if(p<n){
@@ -539,9 +546,9 @@ __global__ void KerComputeStepFlexStrucSymplecticCor(unsigned n,double dt,float3
           float(double(rvelrhoppre.z) + (double(race.z)+gravity.z) * dt),
           rvelrhop.w);
       //-Calculate displacement. | Calcula desplazamiento.
-      double dx=(double(rvelrhoppre.x)+double(rvelrhopnew.x)) * 0.5*dt;
-      double dy=(double(rvelrhoppre.y)+double(rvelrhopnew.y)) * 0.5*dt;
-      double dz=(double(rvelrhoppre.z)+double(rvelrhopnew.z)) * 0.5*dt;
+      double dx=(double(rvelrhoppre.x)+double(rvelrhopnew.x)) * dtm;
+      double dy=(double(rvelrhoppre.y)+double(rvelrhopnew.y)) * dtm;
+      double dz=(double(rvelrhoppre.z)+double(rvelrhopnew.z)) * dtm;
       //-Update particle data.
       movxy[p1]=make_double2(dx,dy);
       movz[p1]=dz;
@@ -550,13 +557,15 @@ __global__ void KerComputeStepFlexStrucSymplecticCor(unsigned n,double dt,float3
   }
 }
 
-void ComputeStepFlexStrucSymplecticCor(unsigned npfs,double dt,tfloat3 gravity,const typecode *code,const float3 *ace,const unsigned *flexstrucridp,const float4 *velrhoppre
-    ,float4 *velrhop,double2 *movxy,double *movz,cudaStream_t stm)
+void ComputeStepFlexStrucSymplecticCor(unsigned npfs,const float4 *velrhoppre,const typecode *code,const unsigned *flexstrucridp
+    ,const float3 *ace,double dtm,double dt,tfloat3 gravity
+    ,double2 *movxy,double *movz,float4 *velrhop,cudaStream_t stm)
 {
   if(npfs){
     dim3 sgrid=GetSimpleGridSize(npfs,SPHBSIZE);
-    KerComputeStepFlexStrucSymplecticCor <<<sgrid,SPHBSIZE,0,stm>>> (npfs,dt,Float3(gravity),code,ace,flexstrucridp,velrhoppre
-        ,velrhop,movxy,movz);
+    KerComputeStepFlexStrucSymplecticCor <<<sgrid,SPHBSIZE,0,stm>>> (npfs,velrhoppre,code,flexstrucridp
+        ,ace,dtm,dt,Float3(gravity)
+        ,movxy,movz,velrhop);
   }
 }
 //<vs_flexstruc_end>

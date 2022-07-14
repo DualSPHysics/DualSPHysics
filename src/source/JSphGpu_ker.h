@@ -364,7 +364,9 @@ unsigned CountFlexStrucPairs(unsigned npfs,const float4 *poscell0,unsigned *nump
 void SetFlexStrucPairs(unsigned npfs,const float4 *poscell0,unsigned **pairidx);
 void CalcFlexStrucKerCorr(const StInterParmsFlexStrucg &tfs);
 void Interaction_ForcesFlexStruc(const StInterParmsFlexStrucg &tfs);
-void ComputeStepPosFlexStruc(unsigned npfs,const unsigned *flexstrucridp,const double2 *movxy,const double *movz,double2 *posxy,double *posz,unsigned *dcell,typecode *code);
+void ComputeStepPosFlexStruc(unsigned npfs,const unsigned *flexstrucridp
+    ,const double2 *posxypre,const double *poszpre,const double2 *movxy,const double *movz
+    ,double2 *posxy,double *posz,unsigned *dcell,typecode *code);
 //<vs_flexstruc_end>
 
 }
