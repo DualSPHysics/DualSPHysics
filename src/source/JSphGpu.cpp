@@ -653,8 +653,8 @@ void JSphGpu::ConfigBlockSizes(bool usezone,bool useperi){
         ,0,0,0,0,100,0,0
         ,0,0,divdatag,NULL
         ,NULL,NULL,NULL,NULL,NULL,NULL
-        ,NULL,NULL,NULL,NULL
         ,NULL,NULL,NULL
+        ,NULL,NULL,NULL,NULL
         ,NULL
         ,NULL
         ,NULL,&kerinfo);
@@ -818,7 +818,6 @@ void JSphGpu::PreInteractionVars_Forces(unsigned np,unsigned npb){
   if(Deltag)cudaMemset(Deltag,0,sizeof(float)*np);                       //Deltag[]=0
   cudaMemset(Aceg,0,sizeof(tfloat3)*np);                                 //Aceg[]=(0,0,0)
   if(SpsGradvelg)cudaMemset(SpsGradvelg+npb,0,sizeof(tsymatrix3f)*npf);  //SpsGradvelg[]=(0,0,0,0,0,0).
-  if(DefGradg)cudaMemset(DefGradg,0,sizeof(tmatrix3f)*npb);              //DefGradg[]=TMatrix3f(0). //<vs_flexstruc>
 
   //-Select particles for shifting.
   if(ShiftPosfsg)Shifting->InitGpu(npf,npb,Posxyg,Poszg,ShiftPosfsg);
@@ -843,6 +842,9 @@ void JSphGpu::PreInteraction_Forces(){
 
   //-Initialise arrays.
   PreInteractionVars_Forces(Np,Npb);
+
+  //-Initialise deformation gradient tensor.
+  if(DefGradg)cudaMemset(DefGradg,0,sizeof(tmatrix3f)*CaseNflexstruc);  //<vs_flexstruc>
 
   //-Computes VelMax: Includes the particles from floating bodies and does not affect the periodic conditions.
   //-Calcula VelMax: Se incluyen las particulas floatings y no afecta el uso de condiciones periodicas.

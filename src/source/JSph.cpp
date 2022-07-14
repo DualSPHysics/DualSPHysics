@@ -245,6 +245,8 @@ void JSph::InitVars(){
   FtIgnoreRadius=false;
   WithFloating=false;
 
+  FlexStrucCount=0; //<vs_flexstruc>
+
   AllocMemoryFloating(0,false);
 
   CellDomFixed=false;
@@ -1146,6 +1148,7 @@ void JSph::LoadCaseConfig(const JSphCfgRun *cfg){
   //-Configuration of flexible structures.
   if(xml.GetNodeSimple("case.execution.special.flexiblestructures",true)){
     FlexStruc=new JSphFlexibleStructure(Simulate2D,Dp,&xml,"case.execution.special.flexiblestructures",MkInfo);
+    FlexStrucCount=FlexStruc->GetCount();
   }
   //<vs_flexstruc_end>
 

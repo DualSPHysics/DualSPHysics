@@ -317,6 +317,9 @@ protected:
   bool UseChrono;  ///<Use Chrono library for rigid body dynamics.
   JChronoObjects *ChronoObjects;  ///<Object for integration with Chrono Engine.
 
+  //-Variables for flexible structures.
+  unsigned FlexStrucCount;      ///<Number of flexible structure bodies. //<vs_flexstruc>
+
   JDsMooredFloatings* Moorings;     ///<Manages floating bodies with moorings. | Gestiona floating bodies con amarres.
   JDsFtForcePoints* ForcePoints; ///<Manages forces to apply on floating bodies.
 

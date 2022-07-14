@@ -32,6 +32,7 @@
 #pragma warning(disable : 4503) //Cancels "warning C4503: decorated name length exceeded, name was truncated"
 #include <thrust/device_vector.h>
 #include <thrust/sort.h>
+#include <thrust/gather.h>
 
 __constant__ StCteInteraction CTE;
 #define CTE_AVAILABLE
@@ -419,12 +420,10 @@ __device__ double3 KerUpdatePeriodicPos(double3 ps)
 //------------------------------------------------------------------------------
 template<TpKernel tker,TpFtMode ftmode,bool symm>
   __device__ void KerInteractionForcesBoundBox
-  (unsigned p1,const unsigned &pini,const unsigned &pfin,float visco
+  (unsigned p1,const unsigned &pini,const unsigned &pfin
   ,const float *ftomassp
   ,const float4 *poscell,const float4 *velrhop,const typecode *code,const unsigned* idp
-  ,float massp2,float masssp1
-  ,const float4 &pscellp1,const float4 &velrhop1,typecode codep1,float pressp1
-  ,float3 &acep1,float &arp1,float &visc)
+  ,float massf,const float4 &pscellp1,const float4 &velrhop1,float &arp1,float &visc)
 {
   for(int p2=pini;p2<pfin;p2++){
     const float4 pscellp2=poscell[p2];
@@ -442,39 +441,25 @@ template<TpKernel tker,TpFtMode ftmode,bool symm>
       if(symm)velrhop2.y=-velrhop2.y; //<vs_syymmetry>
       //-Obtains particle mass p2 if there are floating bodies.
       //-Obtiene masa de particula p2 en caso de existir floatings.
-      float ftmassp2;    //-Contains mass of floating body or massp2 if fluid. | Contiene masa de particula floating o massp2 si es fluid.
+      float ftmassp2;    //-Contains mass of floating body or massf if fluid. | Contiene masa de particula floating o massf si es fluid.
       bool compute=true; //-Deactivated when DEM is used and is float-float or float-bound. | Se desactiva cuando se usa DEM y es float-float o float-bound.
       if(USE_FLOATING){
         const typecode cod=code[p2];
         bool ftp2=CODE_IsFloating(cod);
-        ftmassp2=(ftp2? ftomassp[CODE_GetTypeValue(cod)]: massp2);
+        ftmassp2=(ftp2? ftomassp[CODE_GetTypeValue(cod)]: massf);
         compute=!(USE_FTEXTERNAL && ftp2); //-Deactivated when DEM or Chrono is used and is bound-float. | Se desactiva cuando se usa DEM o Chrono y es bound-float.
       }
 
       if(compute){
         //-Density derivative (Continuity equation).
         const float dvx=velrhop1.x-velrhop2.x, dvy=velrhop1.y-velrhop2.y, dvz=velrhop1.z-velrhop2.z;
-        arp1+=(USE_FLOATING? ftmassp2: massp2)*(dvx*frx+dvy*fry+dvz*frz)*(velrhop1.w/velrhop2.w);
+        arp1+=(USE_FLOATING? ftmassp2: massf)*(dvx*frx+dvy*fry+dvz*frz)*(velrhop1.w/velrhop2.w);
 
         {//===== Viscosity ===== 
           const float dot=drx*dvx + dry*dvy + drz*dvz;
           const float dot_rr2=dot/(rr2+CTE.eta2);
           visc=max(dot_rr2,visc); 
         }
-        //<vs_flexstruc_ini>
-        if(CODE_IsFlexStrucFlex(codep1)){
-          //-Laminar viscosity contribution.
-          const float robar2=(velrhop1.w+velrhop2.w);
-          const float temp=4.f*visco/((rr2+CTE.eta2)*robar2);
-          const float vtemp=massp2*temp*(drx*frx+dry*fry+drz*frz);
-          acep1.x+=vtemp*dvx; acep1.y+=vtemp*dvy; acep1.z+=vtemp*dvz;
-          //-Velocity derivative (Momentum equation).
-          const float pressp2=cufsph::ComputePressCte(velrhop2.w);
-          const float prs=(pressp1+pressp2)/(velrhop1.w*velrhop2.w)+(tker==KERNEL_Cubic? cufsph::GetKernelCubic_Tensil(rr2,velrhop1.w,pressp1,velrhop2.w,pressp2): 0);
-          const float p_vpm=-prs*massp2*massp2/masssp1;
-          acep1.x+=p_vpm*frx; acep1.y+=p_vpm*fry; acep1.z+=p_vpm*frz;
-        }
-        //<vs_flexstruc_end>
       }
     }
   }
@@ -485,24 +470,20 @@ template<TpKernel tker,TpFtMode ftmode,bool symm>
 /// Realiza interaccion entre particulas. Bound-Fluid/Float
 //------------------------------------------------------------------------------
 template<TpKernel tker,TpFtMode ftmode,bool symm> 
-  __global__ void KerInteractionForcesBound(unsigned n,unsigned pinit,float viscob
+  __global__ void KerInteractionForcesBound(unsigned n,unsigned pinit
   ,int scelldiv,int4 nc,int3 cellzero,const int2 *beginendcellfluid,const unsigned *dcell
-  ,const float *ftomassp,const StFlexStrucData *flexstrucdata,const float* rhos
+  ,const float *ftomassp
   ,const float4 *poscell,const float4 *velrhop,const typecode *code,const unsigned *idp
-  ,float *viscdt,float *ar,float3 *ace)
+  ,float *viscdt,float *ar)
 {
   const unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Number of thread.
   if(p<n){
     const unsigned p1=p+pinit;      //-Number of particle.
     float visc=0,arp1=0;
-    float3 acep1=make_float3(0,0,0); //<vs_flexstruc>
 
     //-Loads particle p1 data.
     const float4 pscellp1=poscell[p1];
     const float4 velrhop1=velrhop[p1];
-    const typecode codep1=code[p1]; //<vs_flexstruc>
-    const float masssp1=(CODE_IsFlexStrucFlex(codep1)? rhos[p1]*flexstrucdata[CODE_GetIbodyFixedFlexStruc(codep1)].vol0: FLT_MAX); //<vs_flexstruc>
-    const float pressp1=cufsph::ComputePressCte(velrhop1.w); //<vs_flexstruc>
     const bool rsymp1=(symm && PSCEL_GetPartY(__float_as_uint(pscellp1.w))==0); //<vs_syymmetry>
     
     //-Obtains neighborhood search limits.
@@ -513,14 +494,13 @@ template<TpKernel tker,TpFtMode ftmode,bool symm>
     for(int c3=ini3;c3<fin3;c3+=nc.w)for(int c2=ini2;c2<fin2;c2+=nc.x){
       unsigned pini,pfin=0;  cunsearch::ParticleRange(c2,c3,ini1,fin1,beginendcellfluid,pini,pfin);
       if(pfin){
-                          KerInteractionForcesBoundBox<tker,ftmode,false> (p1,pini,pfin,viscob,ftomassp,poscell,velrhop,code,idp,CTE.massf,masssp1,pscellp1,velrhop1,codep1,pressp1,acep1,arp1,visc);
-        if(symm && rsymp1)KerInteractionForcesBoundBox<tker,ftmode,true > (p1,pini,pfin,viscob,ftomassp,poscell,velrhop,code,idp,CTE.massf,masssp1,pscellp1,velrhop1,codep1,pressp1,acep1,arp1,visc);
+                          KerInteractionForcesBoundBox<tker,ftmode,false> (p1,pini,pfin,ftomassp,poscell,velrhop,code,idp,CTE.massf,pscellp1,velrhop1,arp1,visc);
+        if(symm && rsymp1)KerInteractionForcesBoundBox<tker,ftmode,true > (p1,pini,pfin,ftomassp,poscell,velrhop,code,idp,CTE.massf,pscellp1,velrhop1,arp1,visc);
       }
     }
     //-Stores results.
-    if(arp1||acep1.x||acep1.y||acep1.z||visc){
+    if(arp1 || visc){
       ar[p1]+=arp1;
-      float3 r=ace[p1]; r.x+=acep1.x; r.y+=acep1.y; r.z+=acep1.z; ace[p1]=r; //<vs_flexstruc>
       if(visc>viscdt[p1])viscdt[p1]=visc;
     }
   }
@@ -786,7 +766,7 @@ template<TpKernel tker,TpFtMode ftmode,bool lamsps,TpDensity tdensity,bool shift
     //printf(">> KerInteractionForcesFluid  blocksize:%u (%u)\n",qblocksize,0);
   }
   {
-    typedef void (*fun_ptr)(unsigned,unsigned,float,int,int4,int3,const int2*,const unsigned*,const float*,const StFlexStrucData*,const float*,const float4*,const float4*,const typecode*,const unsigned*,float*,float*,float3*);
+    typedef void (*fun_ptr)(unsigned,unsigned,int,int4,int3,const int2*,const unsigned*,const float*,const float4*,const float4*,const typecode*,const unsigned*,float*,float*);
     fun_ptr ptr=&KerInteractionForcesBound<tker,ftmode,symm>;
     int qblocksize=0,mingridsize=0;
     cudaOccupancyMaxPotentialBlockSize(&mingridsize,&qblocksize,(void*)ptr,0,0);
@@ -841,12 +821,12 @@ template<TpKernel tker,TpFtMode ftmode,bool lamsps,TpDensity tdensity,bool shift
     //printf("bsbound:%u\n",bsbound);
     if(t.symmetry) //<vs_syymmetry_ini>
       KerInteractionForcesBound<tker,ftmode,true > <<<sgridb,t.bsbound,0,t.stm>>> 
-      (t.boundnum,t.boundini,t.viscob,dvd.scelldiv,dvd.nc,dvd.cellzero,beginendcell+dvd.cellfluid,t.dcell
-        ,t.ftomassp,t.flexstrucdata,t.rhos,t.poscell,t.velrhop,t.code,t.idp,t.viscdt,t.ar,t.ace);
+      (t.boundnum,t.boundini,dvd.scelldiv,dvd.nc,dvd.cellzero,beginendcell+dvd.cellfluid,t.dcell
+        ,t.ftomassp,t.poscell,t.velrhop,t.code,t.idp,t.viscdt,t.ar);
     else //<vs_syymmetry_end>
       KerInteractionForcesBound<tker,ftmode,false> <<<sgridb,t.bsbound,0,t.stm>>> 
-      (t.boundnum,t.boundini,t.viscob,dvd.scelldiv,dvd.nc,dvd.cellzero,beginendcellfluid,t.dcell
-        ,t.ftomassp,t.flexstrucdata,t.rhos,t.poscell,t.velrhop,t.code,t.idp,t.viscdt,t.ar,t.ace);
+      (t.boundnum,t.boundini,dvd.scelldiv,dvd.nc,dvd.cellzero,beginendcellfluid,t.dcell
+        ,t.ftomassp,t.poscell,t.velrhop,t.code,t.idp,t.viscdt,t.ar);
   }
 }
 
@@ -907,33 +887,35 @@ void Interaction_Forces(const StInterParmsg &t){
 
 //<vs_flexstruc_ini>
 template<TpKernel tker,bool simulate2d>
-__global__ void KerComputeDefGradFlexStruc(unsigned n,unsigned pinit
-    ,const float4 *poscell,const typecode *code,const unsigned *idp
-    ,const StFlexStrucData *flexstrucdata,const float4 *poscell0,const unsigned *numpairs,const unsigned *const *pairidx,const tmatrix3f *kercorr
+__global__ void KerComputeDefGradFlexStruc(unsigned n,const float4 *poscell,const typecode *code
+    ,const StFlexStrucData *flexstrucdata,const unsigned *flexstrucridp
+    ,const float4 *poscell0,const unsigned *numpairs,const unsigned *const *pairidx,const tmatrix3f *kercorr
     ,tmatrix3f *defgrad)
 {
   const unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Number of thread.
   if(p<n){
-    const unsigned p1=p+pinit;      //-Number of particle.
+    const unsigned pfs1=p;      //-Number of particle.
 
     //-Get number of pairs for this particle.
-    const unsigned numpairsp1=numpairs[p1];
+    const unsigned numpairsp1=numpairs[pfs1];
 
     //-If this particle has pairs.
     if(numpairsp1){
       tmatrix3f defgradp1={0};
 
       //-Obtains basic data of particle p1.
+      const unsigned p1=flexstrucridp[pfs1];
       const float vol0p1=flexstrucdata[CODE_GetIbodyFixedFlexStruc(code[p1])].vol0;
       const float4 pscellp1=poscell[p1];
-      const float4 pscell0p1=poscell0[p1];
-      const tmatrix3f kercorrp1=kercorr[p1];
+      const float4 pscell0p1=poscell0[pfs1];
+      const tmatrix3f kercorrp1=kercorr[pfs1];
 
       //-Calculate deformation gradient.
       for(unsigned pair=0;pair<numpairsp1;pair++){
-        const unsigned p2=pairidx[p1][pair];
+        const unsigned pfs2=pairidx[pfs1][pair];
+        const unsigned p2=flexstrucridp[pfs2];
         const float4 pscellp2=poscell[p2];
-        const float4 pscell0p2=poscell0[p2];
+        const float4 pscell0p2=poscell0[pfs2];
         float drx=pscellp1.x-pscellp2.x + CTE.poscellsize*(PSCEL_GetfX(pscellp1.w)-PSCEL_GetfX(pscellp2.w));
         float dry=pscellp1.y-pscellp2.y + CTE.poscellsize*(PSCEL_GetfY(pscellp1.w)-PSCEL_GetfY(pscellp2.w));
         float drz=pscellp1.z-pscellp2.z + CTE.poscellsize*(PSCEL_GetfZ(pscellp1.w)-PSCEL_GetfZ(pscellp2.w));
@@ -947,7 +929,7 @@ __global__ void KerComputeDefGradFlexStruc(unsigned n,unsigned pinit
         defgradp1.a21-=vol0p1*dry*frx0; defgradp1.a22-=vol0p1*dry*fry0; defgradp1.a23-=vol0p1*dry*frz0;
         defgradp1.a31-=vol0p1*drz*frx0; defgradp1.a32-=vol0p1*drz*fry0; defgradp1.a33-=vol0p1*drz*frz0;
       }
-      defgrad[p1]=cumath::MulMatrix3x3(defgradp1,kercorrp1);
+      defgrad[pfs1]=cumath::MulMatrix3x3(defgradp1,kercorrp1);
     }
   }
 }
@@ -977,14 +959,15 @@ __device__ tmatrix3f KerComputePK1StressFlexStruc(const tmatrix3f &defgrad,const
 }
 
 template<TpKernel tker,bool simulate2d>
-__global__ void KerInteractionForcesFlexStruc(unsigned n,unsigned pinit
-    ,const float4 *poscell,const typecode *code,const unsigned *idp
-    ,const StFlexStrucData *flexstrucdata,const float4 *poscell0,const unsigned *numpairs,const unsigned *const *pairidx,const tmatrix3f *kercorr,const tmatrix3f *defgrad
-    ,float *rhos,float3 *ace)
+__global__ void KerInteractionForcesFlexStruc(unsigned n,const float4 *poscell,const typecode *code
+    ,const StFlexStrucData *flexstrucdata,const unsigned *flexstrucridp
+    ,const float4 *poscell0,const unsigned *numpairs,const unsigned *const *pairidx,const tmatrix3f *kercorr,const tmatrix3f *defgrad
+    ,float3 *ace)
 {
   const unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Number of thread.
   if(p<n){
-    const unsigned p1=p+pinit;      //-Number of particle.
+    const unsigned pfs1=p;      //-Number of particle.
+    const unsigned p1=flexstrucridp[pfs1];
 
     //-Get codep1.
     const typecode codep1=code[p1];
@@ -994,9 +977,9 @@ __global__ void KerInteractionForcesFlexStruc(unsigned n,unsigned pinit
       //-Obtains basic data of particle p1.
       const float vol0p1=flexstrucdata[CODE_GetIbodyFixedFlexStruc(codep1)].vol0;
       const float4 pscellp1=poscell[p1];
-      const float4 pscell0p1=poscell0[p1];
-      const tmatrix3f kercorrp1=kercorr[p1];
-      const tmatrix3f defgradp1=defgrad[p1];
+      const float4 pscell0p1=poscell0[pfs1];
+      const tmatrix3f kercorrp1=kercorr[pfs1];
+      const tmatrix3f defgradp1=defgrad[pfs1];
 
       //-Obtains flexible structure data.
       const float rho0p1=flexstrucdata[CODE_GetIbodyFixedFlexStruc(codep1)].rho0;
@@ -1011,15 +994,14 @@ __global__ void KerInteractionForcesFlexStruc(unsigned n,unsigned pinit
       //-Evolve structural density
       const float jacobp1=(simulate2d? cumath::Determinant2x2(defgradp1): cumath::Determinant3x3(defgradp1));
       const float rhop1=rho0p1/jacobp1;
-      rhos[p1]=rhop1;
 
       //    //-Calculate structural speed of sound
       //    const float strucCsp1=sqrtf(young*(1.0f-poisson)/(rhop1*(1.0f+poisson)*(1.0f-2.0f*poisson)));
 
       //-Loop through pairs and calculate forces.
       for(unsigned pair=0;pair<numpairs[p1];pair++){
-        const unsigned p2=pairidx[p1][pair];
-        const float4 pscell0p2=poscell0[p2];
+        const unsigned pfs2=pairidx[pfs1][pair];
+        const float4 pscell0p2=poscell0[pfs2];
         float drx0=pscell0p1.x-pscell0p2.x+CTE.poscellsize*(PSCEL_GetfX(pscell0p1.w)-PSCEL_GetfX(pscell0p2.w));
         float dry0=pscell0p1.y-pscell0p2.y+CTE.poscellsize*(PSCEL_GetfY(pscell0p1.w)-PSCEL_GetfY(pscell0p2.w));
         float drz0=pscell0p1.z-pscell0p2.z+CTE.poscellsize*(PSCEL_GetfZ(pscell0p1.w)-PSCEL_GetfZ(pscell0p2.w));
@@ -1027,9 +1009,9 @@ __global__ void KerInteractionForcesFlexStruc(unsigned n,unsigned pinit
         const float fac0=cufsph::GetKernel_Fac<tker>(rr20);
         const float frx0=fac0*drx0,fry0=fac0*dry0,frz0=fac0*drz0; //-Gradients.
         //-Acceleration due to structure.
-        const tmatrix3f defgradp2=defgrad[p2];
+        const tmatrix3f defgradp2=defgrad[pfs2];
         const tmatrix3f pk1p2=KerComputePK1StressFlexStruc(defgradp2,cmat);
-        const tmatrix3f kercorrp2=kercorr[p2];
+        const tmatrix3f kercorrp2=kercorr[pfs2];
         const tmatrix3f pk1kercorrp2=cumath::MulMatrix3x3(pk1p2,kercorrp2);
         tmatrix3f pk1kercorrp1p2;
         pk1kercorrp1p2.a11=pk1kercorrp1.a11+pk1kercorrp2.a11; pk1kercorrp1p2.a12=pk1kercorrp1.a12+pk1kercorrp2.a12; pk1kercorrp1p2.a13=pk1kercorrp1.a13+pk1kercorrp2.a13;
@@ -1042,6 +1024,7 @@ __global__ void KerInteractionForcesFlexStruc(unsigned n,unsigned pinit
         acep1.x+=pk1kercorrdw.x*vol0p1/rho0p1; acep1.y+=pk1kercorrdw.y*vol0p1/rho0p1; acep1.z+=pk1kercorrdw.z*vol0p1/rho0p1;
         //-Hourglass correction.
         if(hgfactor){
+          const unsigned p2=flexstrucridp[pfs2];
           const float4 pscellp2=poscell[p2];
           float drx=pscellp1.x-pscellp2.x + CTE.poscellsize*(PSCEL_GetfX(pscellp1.w)-PSCEL_GetfX(pscellp2.w));
           float dry=pscellp1.y-pscellp2.y + CTE.poscellsize*(PSCEL_GetfY(pscellp1.w)-PSCEL_GetfY(pscellp2.w));
@@ -1072,187 +1055,221 @@ __global__ void KerInteractionForcesFlexStruc(unsigned n,unsigned pinit
   }
 }
 
-template<TpKernel tker,bool simulate2d> void Interaction_ForcesFlexStrucT(const StInterParmsg &t,const StInterParmsFlexStrucg &tfs){
-  if(t.vnpb){
-    dim3 sgridb=GetSimpleGridSize(t.vnpb,t.bsbound);
-    KerComputeDefGradFlexStruc<tker,simulate2d> <<<sgridb,t.bsbound,0,t.stm>>>
-        (t.vnpb,t.boundini,t.poscell,t.code,t.idp,t.flexstrucdata,tfs.poscell0,tfs.numpairs,tfs.pairidx,tfs.kercorr,tfs.defgrad);
-    KerInteractionForcesFlexStruc<tker,simulate2d> <<<sgridb,t.bsbound,0,t.stm>>>
-        (t.vnpb,t.boundini,t.poscell,t.code,t.idp,t.flexstrucdata,tfs.poscell0,tfs.numpairs,tfs.pairidx,tfs.kercorr,tfs.defgrad,tfs.rhos,t.ace);
+template<TpKernel tker,bool simulate2d> void Interaction_ForcesFlexStrucT(const StInterParmsFlexStrucg &tfs){
+  if(tfs.vnpfs){
+    dim3 sgridb=GetSimpleGridSize(tfs.vnpfs,SPHBSIZE);
+    KerComputeDefGradFlexStruc<tker,simulate2d> <<<sgridb,SPHBSIZE,0,tfs.stm>>>
+        (tfs.vnpfs,tfs.poscell,tfs.code,tfs.flexstrucdata,tfs.flexstrucridp,tfs.poscell0,tfs.numpairs,tfs.pairidx,tfs.kercorr,tfs.defgrad);
+    KerInteractionForcesFlexStruc<tker,simulate2d> <<<sgridb,SPHBSIZE,0,tfs.stm>>>
+        (tfs.vnpfs,tfs.poscell,tfs.code,tfs.flexstrucdata,tfs.flexstrucridp,tfs.poscell0,tfs.numpairs,tfs.pairidx,tfs.kercorr,tfs.defgrad,tfs.ace);
   }
 }
 
-template<TpKernel tker> void Interaction_ForcesFlexStruc_gt0(const StInterParmsg &t,const StInterParmsFlexStrucg &tfs){
-  if(t.simulate2d)Interaction_ForcesFlexStrucT<tker,true>  (t,tfs);
-  else            Interaction_ForcesFlexStrucT<tker,false> (t,tfs);
+template<TpKernel tker> void Interaction_ForcesFlexStruc_gt0(const StInterParmsFlexStrucg &tfs){
+  if(tfs.simulate2d)Interaction_ForcesFlexStrucT<tker,true>  (tfs);
+  else              Interaction_ForcesFlexStrucT<tker,false> (tfs);
 }
 
-void Interaction_ForcesFlexStruc(const StInterParmsg &t,const StInterParmsFlexStrucg &tfs){
+void Interaction_ForcesFlexStruc(const StInterParmsFlexStrucg &tfs){
 #ifdef FAST_COMPILATION
-  if(t.tkernel!=KERNEL_Wendland)throw "Extra kernels are disabled for FastCompilation...";
-  Interaction_ForcesFlexStruc_gt0<KERNEL_Wendland> (t,tfs);
+  if(tfs.tkernel!=KERNEL_Wendland)throw "Extra kernels are disabled for FastCompilation...";
+  Interaction_ForcesFlexStruc_gt0<KERNEL_Wendland> (tfs);
 #else
-  if(t.tkernel==KERNEL_Wendland)     Interaction_ForcesFlexStruc_gt0<KERNEL_Wendland> (t,tfs);
+  if(tfs.tkernel==KERNEL_Wendland)     Interaction_ForcesFlexStruc_gt0<KERNEL_Wendland> (tfs);
 #ifndef DISABLE_KERNELS_EXTRA
-  else if(t.tkernel==KERNEL_Cubic)   Interaction_ForcesFlexStruc_gt0<KERNEL_Cubic   > (t,tfs);
+  else if(tfs.tkernel==KERNEL_Cubic)   Interaction_ForcesFlexStruc_gt0<KERNEL_Cubic   > (tfs);
 #endif
 #endif
 }
 
-__global__ void KerCountFlexStrucPairs(unsigned n,unsigned pinit
-    ,int scelldiv,int4 nc,int3 cellzero,const int2 *begincell,const unsigned *dcell
-    ,const float4 *poscell,const unsigned *idp
-    ,typecode *code,unsigned *numpairs)
-{
-  const unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Number of thread.
+__global__ void KerSetClampCodes(unsigned n,const float4 *poscell,typecode *code){
+  const unsigned p=blockIdx.x*blockDim.x+threadIdx.x; //-Number of thread.
   if(p<n){
-    const unsigned p1=p+pinit;      //-Number of particle.
-
-    //-Loads particle p1 data.
+    const unsigned p1=p;      //-Number of particle.
     const typecode codep1=code[p1];
-    const float4 pscellp1=poscell[p1];
 
-    //-Initialise variables.
-    typecode newcodep1;
-    bool haspairsp1=CODE_IsFlexStrucFlex(codep1)? true: false;
-    unsigned numpairsp1=0;
+    //-If potentially a clamp particle.
+    if((CODE_IsFixed(codep1)||CODE_IsMoving(codep1))&&!CODE_IsFlexStrucAny(codep1)){
 
-    //-Flexible structure-flexible structure interaction.
-    for(unsigned p2=pinit;p2<pinit+n;p2++){
-      const float4 pscellp2=poscell[p2];
-      float drx=pscellp1.x-pscellp2.x+CTE.poscellsize*(PSCEL_GetfX(pscellp1.w)-PSCEL_GetfX(pscellp2.w));
-      float dry=pscellp1.y-pscellp2.y+CTE.poscellsize*(PSCEL_GetfY(pscellp1.w)-PSCEL_GetfY(pscellp2.w));
-      float drz=pscellp1.z-pscellp2.z+CTE.poscellsize*(PSCEL_GetfZ(pscellp1.w)-PSCEL_GetfZ(pscellp2.w));
-      const float rr2=drx*drx+dry*dry+drz*drz;
-      if(rr2<=CTE.kernelsize2&&rr2>=ALMOSTZERO){
+      //-Loads particle p1 data.
+      const float4 pscellp1=poscell[p1];
+
+      //-Loop through other boundary particles.
+      for(unsigned p2=0;p2<n;p2++){
         const typecode codep2=code[p2];
-        if((CODE_IsFixed(codep1)||CODE_IsMoving(codep1))&&!CODE_IsFlexStrucAny(codep1)&&CODE_IsFlexStrucFlex(codep2)){
-          haspairsp1=true;
-          newcodep1=CODE_ToFlexStrucClamp(codep1,CODE_GetIbodyFixedFlexStruc(codep2));
+        if(CODE_IsFlexStrucFlex(codep2)){
+          const float4 pscellp2=poscell[p2];
+          float drx=pscellp1.x-pscellp2.x+CTE.poscellsize*(PSCEL_GetfX(pscellp1.w)-PSCEL_GetfX(pscellp2.w));
+          float dry=pscellp1.y-pscellp2.y+CTE.poscellsize*(PSCEL_GetfY(pscellp1.w)-PSCEL_GetfY(pscellp2.w));
+          float drz=pscellp1.z-pscellp2.z+CTE.poscellsize*(PSCEL_GetfZ(pscellp1.w)-PSCEL_GetfZ(pscellp2.w));
+          const float rr2=drx*drx+dry*dry+drz*drz;
+          if(rr2<=CTE.kernelsize2&&rr2>=ALMOSTZERO){
+            code[p1]=CODE_ToFlexStrucClamp(codep1,CODE_GetIbodyFixedFlexStruc(codep2));
+            break;
+          }
         }
-        numpairsp1++;
       }
     }
-    if(haspairsp1&&numpairsp1){
-      if((CODE_IsFixed(codep1)||CODE_IsMoving(codep1))&&!CODE_IsFlexStrucAny(codep1))code[p1]=newcodep1;
-      numpairs[p1]=numpairsp1;
+  }
+}
+
+void SetClampCodes(unsigned npb,const float4 *poscell,typecode *code){
+  if(npb){
+    dim3 sgridb=GetSimpleGridSize(npb,SPHBSIZE);
+    KerSetClampCodes <<<sgridb,SPHBSIZE>>> (npb,poscell,code);
+  }
+}
+
+struct IsFlexStrucAny{ __host__ __device__ bool operator()(const typecode &code) { return CODE_IsFlexStrucAny(code); } };
+
+unsigned CountFlexStrucParts(unsigned npb,const typecode *code){
+  if(npb){
+    thrust::device_ptr<const typecode> dev_code(code);
+    return thrust::count_if(dev_code,dev_code+npb,IsFlexStrucAny());
+  }
+  return 0;
+}
+
+void CalcFlexStrucRidp(unsigned npb,const typecode *code,unsigned *flexstrucridp){
+  if(npb){
+    thrust::counting_iterator<unsigned> idx(0);
+    thrust::device_ptr<const typecode> dev_code(code);
+    thrust::device_ptr<unsigned> dev_flexstrucridp(flexstrucridp);
+    thrust::copy_if(idx,idx+npb,dev_code,dev_flexstrucridp,IsFlexStrucAny());
+  }
+}
+
+void GatherToFlexStrucArray(unsigned npfs,const unsigned *flexstrucridp,const float4 *fullarray,float4 *flexstrucarray){
+  if(npfs){
+    thrust::device_ptr<const unsigned> dev_flexstrucridp(flexstrucridp);
+    thrust::device_ptr<const float4> dev_fullarray(fullarray);
+    thrust::device_ptr<float4> dev_flexstrucarray(flexstrucarray);
+    thrust::gather(dev_flexstrucridp,dev_flexstrucridp+npfs,dev_fullarray,dev_flexstrucarray);
+  }
+}
+
+__global__ void KerCountFlexStrucPairs(unsigned n,const float4 *poscell0,unsigned *numpairs){
+  const unsigned p=blockIdx.x*blockDim.x+threadIdx.x; //-Number of thread.
+  if(p<n){
+    const unsigned pfs1=p;      //-Number of particle.
+    unsigned numpairsp1=0;
+
+    //-Loads particle p1 data.
+    const float4 pscell0p1=poscell0[pfs1];
+
+    //-Loop through other flexible structure particles.
+    for(unsigned pfs2=0;pfs2<n;pfs2++){
+      const float4 pscell0p2=poscell0[pfs2];
+      float drx0=pscell0p1.x-pscell0p2.x+CTE.poscellsize*(PSCEL_GetfX(pscell0p1.w)-PSCEL_GetfX(pscell0p2.w));
+      float dry0=pscell0p1.y-pscell0p2.y+CTE.poscellsize*(PSCEL_GetfY(pscell0p1.w)-PSCEL_GetfY(pscell0p2.w));
+      float drz0=pscell0p1.z-pscell0p2.z+CTE.poscellsize*(PSCEL_GetfZ(pscell0p1.w)-PSCEL_GetfZ(pscell0p2.w));
+      const float rr20=drx0*drx0+dry0*dry0+drz0*drz0;
+      if(rr20<=CTE.kernelsize2&&rr20>=ALMOSTZERO)numpairsp1++;
     }
+    numpairs[pfs1]=numpairsp1;
   }
 }
 
-void CountFlexStrucPairs(const StInterParmsg &t,unsigned *numpairs){
-  if(t.vnpb){
-    const StDivDataGpu &dvd=t.divdatag;
-    dim3 sgridb=GetSimpleGridSize(t.vnpb,t.bsbound);
-    KerCountFlexStrucPairs <<<sgridb,t.bsbound,0,t.stm>>>
-        (t.vnpb,t.boundini,dvd.scelldiv,dvd.nc,dvd.cellzero,dvd.beginendcell,t.dcell,t.poscell,t.idp,const_cast<typecode*>(t.code),numpairs);
+unsigned CountFlexStrucPairs(unsigned npfs,const float4 *poscell0,unsigned *numpairs){
+  if(npfs){
+    dim3 sgridb=GetSimpleGridSize(npfs,SPHBSIZE);
+    KerCountFlexStrucPairs <<<sgridb,SPHBSIZE>>> (npfs,poscell0,numpairs);
+    thrust::device_ptr<unsigned> dev_numpairs(numpairs);
+    return thrust::reduce(dev_numpairs,dev_numpairs+npfs);
   }
+  return 0;
 }
 
-__global__ void KerSetFlexStrucPairs(unsigned n,unsigned pinit
-    ,int scelldiv,int4 nc,int3 cellzero,const int2 *begincell,const unsigned *dcell
-    ,const float4 *poscell,const typecode *code,const unsigned *idp
-    ,const unsigned *numpairs
-    ,unsigned **pairidx)
+__global__ void KerSetFlexStrucPairs(unsigned n,const float4 *poscell0,unsigned **pairidx)
 {
   const unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Number of thread.
   if(p<n){
-    const unsigned p1=p+pinit;      //-Number of particle.
-    bool haspairsp1=numpairs[p1]>0;
+    const unsigned pfs1=p;      //-Number of particle.
     unsigned idx=0;
 
     //-Loads particle p1 data.
-    const float4 pscellp1=poscell[p1];
+    const float4 pscell0p1=poscell0[pfs1];
 
-    //-Flexible structure-flexible structure interaction.
-    for(unsigned p2=pinit;p2<pinit+n;p2++){
-      const float4 pscellp2=poscell[p2];
-      float drx=pscellp1.x-pscellp2.x+CTE.poscellsize*(PSCEL_GetfX(pscellp1.w)-PSCEL_GetfX(pscellp2.w));
-      float dry=pscellp1.y-pscellp2.y+CTE.poscellsize*(PSCEL_GetfY(pscellp1.w)-PSCEL_GetfY(pscellp2.w));
-      float drz=pscellp1.z-pscellp2.z+CTE.poscellsize*(PSCEL_GetfZ(pscellp1.w)-PSCEL_GetfZ(pscellp2.w));
-      const float rr2=drx*drx+dry*dry+drz*drz;
-      if(rr2<=CTE.kernelsize2&&rr2>=ALMOSTZERO&&haspairsp1)pairidx[p1][idx++]=p2;
+    //-Loop through other flexible structure particles.
+    for(unsigned pfs2=0;pfs2<n;pfs2++){
+      const float4 pscell0p2=poscell0[pfs2];
+      float drx0=pscell0p1.x-pscell0p2.x+CTE.poscellsize*(PSCEL_GetfX(pscell0p1.w)-PSCEL_GetfX(pscell0p2.w));
+      float dry0=pscell0p1.y-pscell0p2.y+CTE.poscellsize*(PSCEL_GetfY(pscell0p1.w)-PSCEL_GetfY(pscell0p2.w));
+      float drz0=pscell0p1.z-pscell0p2.z+CTE.poscellsize*(PSCEL_GetfZ(pscell0p1.w)-PSCEL_GetfZ(pscell0p2.w));
+      const float rr20=drx0*drx0+dry0*dry0+drz0*drz0;
+      if(rr20<=CTE.kernelsize2&&rr20>=ALMOSTZERO)pairidx[pfs1][idx++]=pfs2;
     }
   }
 }
 
-void SetFlexStrucPairs(const StInterParmsg &t,const unsigned *numpairs,unsigned **pairidx){
-  if(t.vnpb){
-    const StDivDataGpu &dvd=t.divdatag;
-    dim3 sgridb=GetSimpleGridSize(t.vnpb,t.bsbound);
-    KerSetFlexStrucPairs <<<sgridb,t.bsbound,0,t.stm>>>
-        (t.vnpb,t.boundini,dvd.scelldiv,dvd.nc,dvd.cellzero,dvd.beginendcell,t.dcell,t.poscell,t.code,t.idp,numpairs,pairidx);
+void SetFlexStrucPairs(unsigned npfs,const float4 *poscell0,unsigned **pairidx){
+  if(npfs){
+    dim3 sgridb=GetSimpleGridSize(npfs,SPHBSIZE);
+    KerSetFlexStrucPairs <<<sgridb,SPHBSIZE>>> (npfs,poscell0,pairidx);
   }
 }
 
 template<TpKernel tker,bool simulate2d>
-__global__ void KerCalcFlexStrucKerCorr(unsigned n,unsigned pinit
-    ,const float4 *poscell,const typecode *code,const unsigned *idp
-    ,const StFlexStrucData *flexstrucdata,const unsigned *numpairs,const unsigned *const *pairidx
+__global__ void KerCalcFlexStrucKerCorr(unsigned n,const typecode *code,const StFlexStrucData *flexstrucdata
+    ,const unsigned *flexstrucridp,const float4 *poscell0,const unsigned *numpairs,const unsigned *const *pairidx
     ,tmatrix3f *kercorr)
 {
   const unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Number of thread.
   if(p<n){
-    const unsigned p1=p+pinit;      //-Number of particle.
+    const unsigned pfs1=p;      //-Number of particle.
 
     //-Get number of pairs for this particle.
-    const unsigned numpairsp1=numpairs[p1];
+    const unsigned numpairsp1=numpairs[pfs1];
 
     //-If this particle has pairs.
     if(numpairsp1){
       tmatrix3f kercorrp1={0};
 
       //-Obtains basic data of particle p1.
-      const float vol0p1=flexstrucdata[CODE_GetIbodyFixedFlexStruc(code[p1])].vol0;
-      const float4 pscellp1=poscell[p1];
+      const float vol0p1=flexstrucdata[CODE_GetIbodyFixedFlexStruc(code[flexstrucridp[pfs1]])].vol0;
+      const float4 pscell0p1=poscell0[pfs1];
 
       //-Calculate kernel correction matrix.
       for(unsigned pair=0;pair<numpairsp1;pair++){
-        const unsigned p2=pairidx[p1][pair];
-        const float4 pscellp2=poscell[p2];
-        float drx=pscellp1.x-pscellp2.x + CTE.poscellsize*(PSCEL_GetfX(pscellp1.w)-PSCEL_GetfX(pscellp2.w));
-        float dry=pscellp1.y-pscellp2.y + CTE.poscellsize*(PSCEL_GetfY(pscellp1.w)-PSCEL_GetfY(pscellp2.w));
-        float drz=pscellp1.z-pscellp2.z + CTE.poscellsize*(PSCEL_GetfZ(pscellp1.w)-PSCEL_GetfZ(pscellp2.w));
-        const float rr2=drx*drx+dry*dry+drz*drz;
+        const unsigned pfs2=pairidx[pfs1][pair];
+        const float4 pscell0p2=poscell0[pfs2];
+        float drx0=pscell0p1.x-pscell0p2.x + CTE.poscellsize*(PSCEL_GetfX(pscell0p1.w)-PSCEL_GetfX(pscell0p2.w));
+        float dry0=pscell0p1.y-pscell0p2.y + CTE.poscellsize*(PSCEL_GetfY(pscell0p1.w)-PSCEL_GetfY(pscell0p2.w));
+        float drz0=pscell0p1.z-pscell0p2.z + CTE.poscellsize*(PSCEL_GetfZ(pscell0p1.w)-PSCEL_GetfZ(pscell0p2.w));
+        const float rr20=drx0*drx0+dry0*dry0+drz0*drz0;
         //-Computes kernel.
-        const float fac=cufsph::GetKernel_Fac<tker>(rr2);
-        const float frx=fac*drx,fry=fac*dry,frz=fac*drz; //-Gradients.
-        kercorrp1.a11-=vol0p1*drx*frx; kercorrp1.a12-=vol0p1*drx*fry; kercorrp1.a13-=vol0p1*drx*frz;
-        kercorrp1.a21-=vol0p1*dry*frx; kercorrp1.a22-=vol0p1*dry*fry; kercorrp1.a23-=vol0p1*dry*frz;
-        kercorrp1.a31-=vol0p1*drz*frx; kercorrp1.a32-=vol0p1*drz*fry; kercorrp1.a33-=vol0p1*drz*frz;
+        const float fac0=cufsph::GetKernel_Fac<tker>(rr20);
+        const float frx0=fac0*drx0,fry0=fac0*dry0,frz0=fac0*drz0; //-Gradients.
+        kercorrp1.a11-=vol0p1*drx0*frx0; kercorrp1.a12-=vol0p1*drx0*fry0; kercorrp1.a13-=vol0p1*drx0*frz0;
+        kercorrp1.a21-=vol0p1*dry0*frx0; kercorrp1.a22-=vol0p1*dry0*fry0; kercorrp1.a23-=vol0p1*dry0*frz0;
+        kercorrp1.a31-=vol0p1*drz0*frx0; kercorrp1.a32-=vol0p1*drz0*fry0; kercorrp1.a33-=vol0p1*drz0*frz0;
       }
-      kercorr[p1]=(simulate2d? cumath::InverseMatrix2x2(kercorrp1): cumath::InverseMatrix3x3(kercorrp1));
+      kercorr[pfs1]=(simulate2d? cumath::InverseMatrix2x2(kercorrp1): cumath::InverseMatrix3x3(kercorrp1));
     }
   }
 }
 
-template<TpKernel tker,bool simulate2d> void CalcFlexStrucKerCorrT
-    (const StInterParmsg &t,const StFlexStrucData *flexstrucdata,const unsigned *numpairs,const unsigned *const *pairidx
-     ,tmatrix3f *kercorr){
-  if(t.vnpb){
-    dim3 sgridb=GetSimpleGridSize(t.vnpb,t.bsbound);
-    KerCalcFlexStrucKerCorr<tker,simulate2d> <<<sgridb,t.bsbound,0,t.stm>>>
-        (t.vnpb,t.boundini,t.poscell,t.code,t.idp,flexstrucdata,numpairs,pairidx,kercorr);
+template<TpKernel tker,bool simulate2d> void CalcFlexStrucKerCorrT(const StInterParmsFlexStrucg &tfs){
+  if(tfs.vnpfs){
+    dim3 sgridb=GetSimpleGridSize(tfs.vnpfs,SPHBSIZE);
+    KerCalcFlexStrucKerCorr<tker,simulate2d> <<<sgridb,SPHBSIZE>>>
+        (tfs.vnpfs,tfs.code,tfs.flexstrucdata,tfs.flexstrucridp,tfs.poscell0,tfs.numpairs,tfs.pairidx,const_cast<tmatrix3f*>(tfs.kercorr));
   }
 }
 
-template<TpKernel tker> void CalcFlexStrucKerCorr_gt0
-    (const StInterParmsg &t,const StFlexStrucData *flexstrucdata,const unsigned *numpairs,const unsigned *const *pairidx
-     ,tmatrix3f *kercorr){
-  if(t.simulate2d)CalcFlexStrucKerCorrT<tker,true>  (t,flexstrucdata,numpairs,pairidx,kercorr);
-  else            CalcFlexStrucKerCorrT<tker,false> (t,flexstrucdata,numpairs,pairidx,kercorr);
+template<TpKernel tker> void CalcFlexStrucKerCorr_gt0(const StInterParmsFlexStrucg &tfs){
+  if(tfs.simulate2d)CalcFlexStrucKerCorrT<tker,true>  (tfs);
+  else              CalcFlexStrucKerCorrT<tker,false> (tfs);
 }
 
-void CalcFlexStrucKerCorr
-    (const StInterParmsg &t,const StFlexStrucData *flexstrucdata,const unsigned *numpairs,const unsigned *const *pairidx
-     ,tmatrix3f *kercorr){
+void CalcFlexStrucKerCorr(const StInterParmsFlexStrucg &tfs){
 #ifdef FAST_COMPILATION
-  if(t.tkernel!=KERNEL_Wendland)throw "Extra kernels are disabled for FastCompilation...";
-  CalcFlexStrucKerCorr_gt0<KERNEL_Wendland> (t,flexstrucdata,numpairs,pairidx,kercorr);
+  if(tfs.tkernel!=KERNEL_Wendland)throw "Extra kernels are disabled for FastCompilation...";
+  CalcFlexStrucKerCorr_gt0<KERNEL_Wendland> (tfs);
 #else
-  if(t.tkernel==KERNEL_Wendland)     CalcFlexStrucKerCorr_gt0<KERNEL_Wendland> (t,flexstrucdata,numpairs,pairidx,kercorr);
+  if(tfs.tkernel==KERNEL_Wendland)     CalcFlexStrucKerCorr_gt0<KERNEL_Wendland> (tfs);
 #ifndef DISABLE_KERNELS_EXTRA
-  else if(t.tkernel==KERNEL_Cubic)   CalcFlexStrucKerCorr_gt0<KERNEL_Cubic   > (t,flexstrucdata,numpairs,pairidx,kercorr);
+  else if(tfs.tkernel==KERNEL_Cubic)   CalcFlexStrucKerCorr_gt0<KERNEL_Cubic   > (tfs);
 #endif
 #endif
 }

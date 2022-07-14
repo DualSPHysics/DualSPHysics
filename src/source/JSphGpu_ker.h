@@ -118,8 +118,6 @@ typedef struct StrInterParmsg{
   const float *ftomassp;
   const tsymatrix3f *tau;
   const float3 *dengradcorr;
-  const StFlexStrucData *flexstrucdata; //<vs_flexstruc>
-  const float *rhos; //<vs_flexstruc>
   //-Output data arrays.
   float *viscdt;
   float* ar;
@@ -146,7 +144,6 @@ typedef struct StrInterParmsg{
     ,const float4 *velrhop_,const unsigned *idp_,const typecode *code_
     ,const float *ftomassp_,const tsymatrix3f *spstau_
     ,const float3 *dengradcorr_
-    ,const StFlexStrucData *flexstrucdata_,const float *rhos_ //<vs_flexstruc>
     ,float *viscdt_,float* ar_,float3 *ace_,float *delta_
     ,tsymatrix3f *spsgradvel_
     ,float4 *shiftposfs_
@@ -172,7 +169,6 @@ typedef struct StrInterParmsg{
     velrhop=velrhop_; idp=idp_; code=code_;
     ftomassp=ftomassp_; tau=spstau_;
     dengradcorr=dengradcorr_;
-    flexstrucdata=flexstrucdata_; rhos=rhos_; //<vs_flexstruc>
     //-Output data arrays.
     viscdt=viscdt_; ar=ar_; ace=ace_; delta=delta_;
     gradvel=spsgradvel_;
@@ -187,32 +183,52 @@ typedef struct StrInterParmsg{
 //<vs_flexstruc_ini>
 ///Structure with the parameters for flexible structure interaction on GPU.
 typedef struct StrInterParmsFlexStrucg{
+  //-Configuration options.
+  bool simulate2d;
+  TpKernel tkernel;
+  //-Execution values.
+  unsigned vnpfs;
   //-Input data arrays.
+  const float4 *poscell;
+  const typecode *code;
+  const StFlexStrucData *flexstrucdata;
+  const unsigned *flexstrucridp;
   const float4 *poscell0;
   const unsigned *numpairs;
   const unsigned *const *pairidx;
   const tmatrix3f *kercorr;
   //-Output data arrays.
-  float *rhos;
+  float3 *ace;
   tmatrix3f *defgrad;
+  //-Other values and objects.
+  cudaStream_t stm;
 
   ///Structure constructor.
   StrInterParmsFlexStrucg(
-       const float4 *poscell0_
-      ,const unsigned *numpairs_
-      ,const unsigned *const *pairidx_
+       bool simulate2d_,TpKernel tkernel_
+      ,unsigned vnpfs_
+      ,const float4 *poscell_,const typecode *code_
+      ,const StFlexStrucData *flexstrucdata_
+      ,const unsigned *flexstrucridp_,const float4 *poscell0_
+      ,const unsigned *numpairs_,const unsigned *const *pairidx_
       ,const tmatrix3f *kercorr_
-      ,float *rhos_
-      ,tmatrix3f *defgrad_)
+      ,float3 *ace_,tmatrix3f *defgrad_
+      ,cudaStream_t stm_)
   {
+    //-Configuration options.
+    simulate2d=simulate2d_; tkernel=tkernel_;
+    //-Execution values.
+    vnpfs=vnpfs_;
     //-Input data arrays.
-    poscell0=poscell0_;
-    numpairs=numpairs_;
-    pairidx=pairidx_;
+    poscell=poscell_; code=code_;
+    flexstrucdata=flexstrucdata_;
+    flexstrucridp=flexstrucridp_; poscell0=poscell0_;
+    numpairs=numpairs_; pairidx=pairidx_;
     kercorr=kercorr_;
     //-Output data arrays.
-    rhos=rhos_;
-    defgrad=defgrad_;
+    ace=ace_; defgrad=defgrad_;
+    //-Other values and objects.
+    stm=stm_;
   }
 }StInterParmsFlexStrucg;
 //<vs_flexstruc_end>
@@ -238,10 +254,14 @@ void Interaction_Forces(const StInterParmsg &t);
 
 //<vs_flexstruc_ini>
 //-Kernels for the flexible structure calculation.
-void Interaction_ForcesFlexStruc(const StInterParmsg &t,const StInterParmsFlexStrucg &tfs);
-void CountFlexStrucPairs(const StInterParmsg &t,unsigned *numpairs);
-void SetFlexStrucPairs(const StInterParmsg &t,const unsigned *numpairs,unsigned **pairidx);
-void CalcFlexStrucKerCorr(const StInterParmsg &t,const StFlexStrucData *flexstrucdata,const unsigned *numpairs,const unsigned *const *pairidx,tmatrix3f *kercorr);
+void SetClampCodes(unsigned npb,const float4 *poscell,typecode *code);
+unsigned CountFlexStrucParts(unsigned npb,const typecode *code);
+void CalcFlexStrucRidp(unsigned npb,const typecode *code,unsigned *flexstrucridp);
+void GatherToFlexStrucArray(unsigned npfs,const unsigned *flexstrucridp,const float4 *fullarray,float4 *flexstrucarray);
+unsigned CountFlexStrucPairs(unsigned npfs,const float4 *poscell0,unsigned *numpairs);
+void SetFlexStrucPairs(unsigned npfs,const float4 *poscell0,unsigned **pairidx);
+void CalcFlexStrucKerCorr(const StInterParmsFlexStrucg &tfs);
+void Interaction_ForcesFlexStruc(const StInterParmsFlexStrucg &tfs);
 //<vs_flexstruc_end>
 
 //-Kernels for the boundary correction (mDBC).
