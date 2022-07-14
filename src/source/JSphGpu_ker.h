@@ -261,18 +261,6 @@ void ComputeVelMod(unsigned n,const float4 *vel,float *velmod);
 //-Kernels for the force calculation.
 void Interaction_Forces(const StInterParmsg &t);
 
-//<vs_flexstruc_ini>
-//-Kernels for the flexible structure calculation.
-void SetClampCodes(unsigned npb,const float4 *poscell,typecode *code);
-unsigned CountFlexStrucParts(unsigned npb,const typecode *code);
-void CalcFlexStrucRidp(unsigned npb,const typecode *code,unsigned *flexstrucridp);
-void GatherToFlexStrucArray(unsigned npfs,const unsigned *flexstrucridp,const float4 *fullarray,float4 *flexstrucarray);
-unsigned CountFlexStrucPairs(unsigned npfs,const float4 *poscell0,unsigned *numpairs);
-void SetFlexStrucPairs(unsigned npfs,const float4 *poscell0,unsigned **pairidx);
-void CalcFlexStrucKerCorr(const StInterParmsFlexStrucg &tfs);
-void Interaction_ForcesFlexStruc(const StInterParmsFlexStrucg &tfs);
-//<vs_flexstruc_end>
-
 //-Kernels for the boundary correction (mDBC).
 void Interaction_MdbcCorrection(TpKernel tkernel,bool simulate2d
   ,TpSlipMode slipmode,bool fastsingle,unsigned n,unsigned nbound
@@ -365,6 +353,19 @@ void ComputeDampingCylinder(unsigned n,unsigned pini
   ,float dist,float over,float3 factorxyz,float redumax
   ,const double2 *posxy,const double *posz,const typecode *code
   ,float4 *velrhop);
+
+//<vs_flexstruc_ini>
+//-Kernels for the flexible structure calculation.
+void SetClampCodes(unsigned npb,const float4 *poscell,typecode *code);
+unsigned CountFlexStrucParts(unsigned npb,const typecode *code);
+void CalcFlexStrucRidp(unsigned npb,const typecode *code,unsigned *flexstrucridp);
+void GatherToFlexStrucArray(unsigned npfs,const unsigned *flexstrucridp,const float4 *fullarray,float4 *flexstrucarray);
+unsigned CountFlexStrucPairs(unsigned npfs,const float4 *poscell0,unsigned *numpairs);
+void SetFlexStrucPairs(unsigned npfs,const float4 *poscell0,unsigned **pairidx);
+void CalcFlexStrucKerCorr(const StInterParmsFlexStrucg &tfs);
+void Interaction_ForcesFlexStruc(const StInterParmsFlexStrucg &tfs);
+void ComputeStepPosFlexStruc(unsigned npfs,const unsigned *flexstrucridp,const double2 *movxy,const double *movz,double2 *posxy,double *posz,unsigned *dcell,typecode *code);
+//<vs_flexstruc_end>
 
 }
 

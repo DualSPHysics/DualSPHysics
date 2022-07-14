@@ -57,7 +57,14 @@ void ComputeStepSymplecticCor(bool floating,bool shift,bool inout,unsigned np,un
   ,const float3 *indirvel,double dtm,double dt,float rhopzero,float rhopoutmin,float rhopoutmax,tfloat3 gravity
   ,typecode *code,double2 *movxy,double *movz,float4 *velrhop,cudaStream_t stm);
 
-
+//<vs_flexstruc_ini>
+void ComputeStepFlexStrucSemiImplicitEuler(unsigned npfs,double dt,tfloat3 gravity,const typecode *code,const float3 *ace,const unsigned *flexstrucridp
+  ,float4 *velrhop,double2 *movxy,double *movz,cudaStream_t stm);
+void ComputeStepFlexStrucSymplecticPre(unsigned npfs,double dtm,tfloat3 gravity,const typecode *code,const float3 *ace,const unsigned *flexstrucridp
+    ,float4 *velrhop,double2 *movxy,double *movz,cudaStream_t stm);
+void ComputeStepFlexStrucSymplecticCor(unsigned npfs,double dt,tfloat3 gravity,const typecode *code,const float3 *ace,const unsigned *flexstrucridp,const float4 *velrhoppre
+    ,float4 *velrhop,double2 *movxy,double *movz,cudaStream_t stm);
+//<vs_flexstruc_end>
 }
 
 

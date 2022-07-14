@@ -929,10 +929,6 @@ void JSphGpu::ComputeSymplecticPre(double dt){
   //-Allocate memory to compute the diplacement.
   double2 *movxyg=ArraysGpu->ReserveDouble2();
   double *movzg=ArraysGpu->ReserveDouble();
-  //-Copies previous position of the boundaries.
-  //-Copia posicion anterior del contorno.
-  cudaMemcpy(Posxyg,PosxyPreg,sizeof(double2)*Npb,cudaMemcpyDeviceToDevice);
-  cudaMemcpy(Poszg,PoszPreg,sizeof(double)*Npb,cudaMemcpyDeviceToDevice);
   //-Compute displacement, velocity and density.
   const double dt05=dt*.5;
   const float3 *indirvel=(InOut? InOut->GetDirVelg(): NULL);
@@ -947,6 +943,10 @@ void JSphGpu::ComputeSymplecticPre(double dt){
   //-Frees memory allocated for the displacement.
   ArraysGpu->Free(movxyg);   movxyg=NULL;
   ArraysGpu->Free(movzg);    movzg=NULL;
+  //-Copies previous position of the boundaries.
+  //-Copia posicion anterior del contorno.
+  cudaMemcpy(Posxyg,PosxyPreg,sizeof(double2)*Npb,cudaMemcpyDeviceToDevice);
+  cudaMemcpy(Poszg,PoszPreg,sizeof(double)*Npb,cudaMemcpyDeviceToDevice);
   Timersg->TmStop(TMG_SuComputeStep,false);
 }
 
