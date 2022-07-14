@@ -225,7 +225,7 @@ void JSph::InitVars(){
   memset(&CSP,0,sizeof(StCteSph));
 
   CasePosMin=CasePosMax=TDouble3(0);
-  CaseNp=CaseNbound=CaseNfixed=CaseNmoving=CaseNfloat=CaseNfluid=CaseNpb=0;
+  CaseNp=CaseNbound=CaseNfixed=CaseNmoving=CaseNfloat=CaseNfluid=CaseNpb=CaseNflexstruc=0;
 
   PeriActive=0; PeriX=PeriY=PeriZ=false;
   PeriXinc=PeriYinc=PeriZinc=TDouble3(0);

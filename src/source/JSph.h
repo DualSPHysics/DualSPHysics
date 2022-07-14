@@ -269,6 +269,7 @@ protected:
   unsigned CaseNfluid;       ///<Number of fluid particles (including the excluded ones). 
   unsigned CaseNbound;       ///<Number of boundary particles ( \ref Nfixed + \ref Nmoving + \ref Nfloat ).
   unsigned CaseNpb;          ///<Number of particles of the boundary block ( \ref Nbound - \ref Nfloat ) or ( \ref Nfixed + \ref Nmoving).
+  unsigned CaseNflexstruc;   ///<Number of flexible structure particles (including clamp particles). //<vs_flexstruc>
 
   JSphMk *MkInfo;            ///<Stores information for the Mk of the particles.
   JDsPartsInit *PartsInit;  ///<Stores initial particles data for automatic configurations.
