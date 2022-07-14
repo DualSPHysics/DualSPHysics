@@ -156,9 +156,7 @@ void JSphGpu::InitVars(){
   FtoInertiaini8g=NULL; FtoInertiaini1g=NULL;//-Management of floating bodies.
   FtObjsOutdated=true;
   DemDatag=NULL; //(DEM)
-  CellDivideAll=false;  //-Flexible structure. //<vs_flexstruc>
-  NumPairsTot=0; FlexStrucDatag=NULL; PairIdxBufferg=NULL; PosCell0g=NULL; NumPairsg=NULL; PairIdxg=NULL; KerCorrg=NULL; Rhosg=NULL; DefGradg=NULL; //-Flexible structure. //<vs_flexstruc>
-  PosCell02g=NULL; NumPairs2g=NULL; PairIdx2g=NULL; KerCorr2g=NULL; Rhos2g=NULL; //-Flexible structure. //<vs_flexstruc>
+  NumPairsTot=0; FlexStrucDatag=NULL; FlexStrucRidpg=NULL; PosCell0g=NULL; NumPairsg=NULL; PairIdxBufferg=NULL; PairIdxg=NULL; KerCorrg=NULL; DefGradg=NULL; //-Flexible structure. //<vs_flexstruc>
   GpuParticlesAllocs=0;
   GpuParticlesSize=0;
   MemGpuParticles=MemGpuFixed=0;
@@ -350,31 +348,6 @@ void JSphGpu::AllocGpuMemoryParticles(unsigned np,float over){
   if(InOut){
     //ArraysGpu->AddArrayCount(JArraysGpu::SIZE_4B,1);  //-InOutPartg
     ArraysGpu->AddArrayCount(JArraysGpu::SIZE_1B,2);  //-newizone,zsurfok
-  }
-  if(FlexStruc){
-    cudaMalloc((void**)&FlexStrucDatag,sizeof(StFlexStrucData)*FlexStruc->GetCount());
-    cudaMalloc((void**)&PosCell0g,sizeof(float4)*GpuParticlesSize);
-    cudaMalloc((void**)&NumPairsg,sizeof(unsigned)*GpuParticlesSize);
-    cudaMalloc((void**)&PairIdxg,sizeof(unsigned*)*GpuParticlesSize);
-    cudaMalloc((void**)&KerCorrg,sizeof(tmatrix3f)*GpuParticlesSize);
-    cudaMalloc((void**)&Rhosg,sizeof(float)*GpuParticlesSize);
-    cudaMalloc((void**)&PosCell02g,sizeof(float4)*GpuParticlesSize);
-    cudaMalloc((void**)&NumPairs2g,sizeof(unsigned)*GpuParticlesSize);
-    cudaMalloc((void**)&PairIdx2g,sizeof(unsigned*)*GpuParticlesSize);
-    cudaMalloc((void**)&KerCorr2g,sizeof(tmatrix3f)*GpuParticlesSize);
-    cudaMalloc((void**)&Rhos2g,sizeof(float)*GpuParticlesSize);
-    cudaMalloc((void**)&DefGradg,sizeof(tmatrix3f)*GpuParticlesSize);
-    cudaMemset(PosCell0g,0,sizeof(float4)*GpuParticlesSize);
-    cudaMemset(NumPairsg,0,sizeof(unsigned)*GpuParticlesSize);
-    cudaMemset(PairIdxg,0,sizeof(unsigned*)*GpuParticlesSize);
-    cudaMemset(KerCorrg,0,sizeof(tmatrix3f)*GpuParticlesSize);
-    cudaMemset(Rhosg,0,sizeof(float)*GpuParticlesSize);
-    cudaMemset(PosCell02g,0,sizeof(float4)*GpuParticlesSize);
-    cudaMemset(NumPairs2g,0,sizeof(unsigned)*GpuParticlesSize);
-    cudaMemset(PairIdx2g,0,sizeof(unsigned*)*GpuParticlesSize);
-    cudaMemset(KerCorr2g,0,sizeof(tmatrix3f)*GpuParticlesSize);
-    cudaMemset(Rhos2g,0,sizeof(float)*GpuParticlesSize);
-    cudaMemset(DefGradg,0,sizeof(tmatrix3f)*GpuParticlesSize);
   }
   //-Shows the allocated memory.
   MemGpuParticles=ArraysGpu->GetAllocMemoryGpu();
@@ -682,7 +655,6 @@ void JSphGpu::ConfigBlockSizes(bool usezone,bool useperi){
         ,NULL,NULL,NULL,NULL,NULL,NULL
         ,NULL,NULL,NULL,NULL
         ,NULL,NULL,NULL
-        ,NULL,NULL
         ,NULL
         ,NULL
         ,NULL,&kerinfo);

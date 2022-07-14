@@ -90,7 +90,6 @@ protected:
   unsigned NpbPerM1;  ///<Number of periodic boundary particles (previous values). | Numero de particulas contorno periodicas (valores anteriores).
 
   bool BoundChanged;  ///<Indicates if a selected boundary particle has changed since the last time step. | Indica si el contorno seleccionado a cambiado desde el ultimo divide.
-  bool CellDivideAll; ///<Indicates if cell-divide should be over all over particles (needed to initialise flexible structure). //<vs_flexstruc>
 
   unsigned CpuParticlesSize; ///<Number of particles for which CPU memory was allocated. | Numero de particulas para las cuales se reservo memoria en cpu. 
   llong MemCpuFixed;         ///<Allocated memory in AllocCpuMemoryFixed. | Mermoria reservada en AllocCpuMemoryFixed. 
@@ -173,19 +172,14 @@ protected:
   //<vs_flexstruc_ini>
   //-Variables for flexible structure.
   unsigned NumPairsTot;             ///<Total number of pairs across all flexible structure bodies.
-  unsigned *PairIdxBufferg;         ///<Raw buffer to particle indices
-  StFlexStrucData *FlexStrucDatag;  ///<Data for each individual flexible structure body
-  float4 *PosCell0g;                ///<Relative initial position and cell coordinates {posx,posy,posz,cellxyz}
-  unsigned *NumPairsg;              ///<Number of initial neighbours
-  unsigned **PairIdxg;              ///<List of indices to each initial neighbour
-  tmatrix3f *KerCorrg;              ///<Kernel correction
-  float *Rhosg;                     ///<Structural density
-  float4 *PosCell02g;               ///<Relative initial position and cell coordinates {posx,posy,posz,cellxyz}
-  unsigned *NumPairs2g;             ///<Number of initial neighbours
-  unsigned **PairIdx2g;             ///<List of indices to each initial neighbour
-  tmatrix3f *KerCorr2g;             ///<Kernel correction
-  float *Rhos2g;                    ///<Structural density
-  tmatrix3f *DefGradg;              ///<Deformation gradient tensor
+  StFlexStrucData *FlexStrucDatag;  ///<Data for each individual flexible structure body [FlexStruc->GetCount()]
+  unsigned *FlexStrucRidpg;         ///<Identifier to access to the particles of the flexible structures [CaseNflexstruc].
+  float4 *PosCell0g;                ///<Relative initial position and cell coordinates {posx,posy,posz,cellxyz} [CaseNflexstruc].
+  unsigned *NumPairsg;              ///<Number of initial neighbours [CaseNflexstruc].
+  unsigned *PairIdxBufferg;         ///<Raw buffer to particle indices [NumPairsTot].
+  unsigned **PairIdxg;              ///<List of indices to each initial neighbour [CaseNflexstruc].
+  tmatrix3f *KerCorrg;              ///<Kernel correction [CaseNflexstruc].
+  tmatrix3f *DefGradg;              ///<Deformation gradient tensor [CaseNflexstruc].
   //<vs_flexstruc_end>
 
   //-Variables for computing forces
