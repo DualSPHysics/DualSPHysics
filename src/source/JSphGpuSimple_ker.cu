@@ -497,7 +497,7 @@ __global__ void KerComputeStepFlexStrucSymplecticPre(unsigned n,const float4 *ve
     const unsigned p1=flexstrucridp[p]; //-Number of particle.
     if(CODE_IsFlexStrucFlex(code[p1])){
       const float4 rvelrhoppre=velrhoppre[p1];
-      const float3 race=ace[p];
+      const float3 race=ace[p1];
       //-Calculate displacement. | Calcula desplazamiento.
       double dx=double(rvelrhoppre.x)*dtm;
       double dy=double(rvelrhoppre.y)*dtm;
@@ -537,14 +537,13 @@ __global__ void KerComputeStepFlexStrucSymplecticCor(unsigned n,const float4 *ve
     const unsigned p1=flexstrucridp[p]; //-Number of particle.
     if(CODE_IsFlexStrucFlex(code[p1])){
       const float4 rvelrhoppre=velrhoppre[p1];
-      const float4 rvelrhop=velrhop[p1];
-      const float3 race=ace[p];
+      const float3 race=ace[p1];
       //-Calculate velocity. | Calcula velocidad.
       const float4 rvelrhopnew=make_float4(
           float(double(rvelrhoppre.x) + (double(race.x)+gravity.x) * dt),
           float(double(rvelrhoppre.y) + (double(race.y)+gravity.y) * dt),
           float(double(rvelrhoppre.z) + (double(race.z)+gravity.z) * dt),
-          rvelrhop.w);
+          velrhop[p1].w);
       //-Calculate displacement. | Calcula desplazamiento.
       double dx=(double(rvelrhoppre.x)+double(rvelrhopnew.x)) * dtm;
       double dy=(double(rvelrhoppre.y)+double(rvelrhopnew.y)) * dtm;
