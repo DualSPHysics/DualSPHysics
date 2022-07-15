@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<case>
+    <casedef>
+        <constantsdef>
+            <gravity x="0" y="0" z="-9.81" comment="Gravitational acceleration" units_comment="m/s^2" />
+            <rhop0 value="917" comment="Reference density of the fluid" units_comment="kg/m^3" />
+            <hswl value="0" auto="false" comment="Maximum still water level to calculate speedofsound using coefsound" units_comment="metres (m)" />
+            <gamma value="7" comment="Polytropic constant for water used in the state equation" />
+            <speedsystem value="3.5" auto="false" comment="Maximum system speed (by default the dam-break propagation is used)" />
+            <coefsound value="10" comment="Coefficient to multiply speedsystem" />
+            <speedsound value="0" auto="true" comment="Speed of sound to use in the simulation (by default speedofsound=coefsound*speedsystem)" />
+            <coefh value="1.0" comment="Coefficient to calculate the smoothing length (h=coefh*sqrt(3*dp^2) in 3D)" />			
+            <cflnumber value="0.1" comment="Coefficient to multiply dt" />	
+        </constantsdef>
+        <mkconfig boundcount="240" fluidcount="10" />
+        <geometry>
+            <definition dp="0.001" units_comment="metres (m)">
+                <pointmin x="-0.003" y="0" z="-0.005" />
+                <pointmax x="0.612" y="0" z="0.3475" />
+            </definition>
+            <commands>
+                <mainlist>
+                    <setdrawmode mode="full" />
+                    <setmkfluid mk="0" />
+                    <drawbox>
+                        <boxfill>solid</boxfill>
+                        <point x="0.0" y="-0.01" z="0.0" />
+                        <size x="0.609" y="0.02" z="0.1150" />
+                    </drawbox>
+					<setmkbound mk="0" />
+					<drawbox>
+                        <boxfill>solid</boxfill>
+                        <point x="-0.002" y="-0.01" z="-0.004" />
+                        <size x="0.613" y="0.02" z="0.004" />
+                    </drawbox>
+					<drawbox>
+                        <boxfill>solid</boxfill>
+                        <point x="-0.002" y="-0.01" z="0.3445" />
+                        <size x="0.613" y="0.02" z="0.002" />
+                    </drawbox>
+					<drawbox>
+                        <boxfill>solid</boxfill>
+                        <point x="-0.002" y="-0.01" z="0.0" />
+                        <size x="0.002" y="0.02" z="0.3445" />
+                    </drawbox>
+					<drawbox>
+                        <boxfill>solid</boxfill>
+                        <point x="0.609" y="-0.01" z="0.0" />
+                        <size x="0.002" y="0.02" z="0.3445" />
+                    </drawbox>
+					<setmkbound mk="1" />
+					<drawbox>
+                        <boxfill>solid</boxfill>
+                        <point x="0.3025" y="-0.01" z="-0.002" />
+                        <size x="0.004" y="0.02" z="0.1170" />
+                    </drawbox>
+                </mainlist>
+            </commands>
+        </geometry>
+        <motion>
+            <objreal ref="0">
+                <begin mov="1" start="0" />
+                <mvrotfile id="1" duration="100" anglesunits="degrees">
+                    <file name="RollTimeSeries.csv" />
+                    <axisp1 x="0.3045" y="-0.01" z="0" />
+                    <axisp2 x="0.3045" y="0.02" z="0" />
+                </mvrotfile>
+            </objreal>
+            <objreal ref="1">
+                <begin mov="1" start="0" />
+                <mvnull id="1" />
+            </objreal>
+        </motion>
+    </casedef>
+    <execution>
+		<special>
+            <flexiblestructures>
+                <flexiblestructurebody mkbound="1">
+                    <density value="1100.0" comment="Mass density" units_comment="kg/m^3" />
+                    <youngmod value="6.0e6" comment="Young's Modulus" units_comment="Pa" />
+                    <poissratio value="0.49" comment="Poisson ratio" />
+                    <constitmodel value="2" comment="Constitutive model 1:Plane Strain (2D), 2:Plane Stress (2D), 3:St. Venant Kirchhoff (3D)" />
+                    <hgfactor value="0.0" comment="Hourglass correction factor: keep as low as possible (default=0)" />
+                </flexiblestructurebody>
+            </flexiblestructures>
+		</special>
+        <parameters>
+            <parameter key="SavePosDouble" value="1" comment="Saves particle position using double precision (default=0)" />
+            <parameter key="StepAlgorithm" value="1" comment="Step Algorithm 1:Verlet, 2:Symplectic (default=1)" />
+            <parameter key="Kernel" value="2" comment="Interaction Kernel 1:Cubic Spline, 2:Wendland (default=2)" />
+            <parameter key="ViscoTreatment" value="2" comment="Viscosity formulation 1:Artificial, 2:Laminar+SPS (default=1)" />
+            <parameter key="Visco" value="5e-5" comment="Viscosity value" />
+            <parameter key="DensityDT" value="1" comment="Density Diffusion Term 0:None, 1:Molteni, 2:Fourtakas, 3:Fourtakas(full) (default=0)" />
+            <parameter key="DensityDTvalue" value="0.1" comment="DDT value (default=0.1)" />
+            <parameter key="CoefDtMin" value="0.001" comment="Coefficient to calculate minimum time step dtmin=coefdtmin*h/speedsound (default=0.05)" />
+            <parameter key="DtAllParticles" value="1" comment="Velocity of particles used to calculate DT. 1:All, 0:Only fluid/floating (default=0)" />
+            <parameter key="TimeMax" value="5.0" comment="Time of simulation" units_comment="seconds" />
+            <parameter key="TimeOut" value="0.01" comment="Time out data" units_comment="seconds" />
+            <simulationdomain comment="Defines domain of simulation (default=Uses minimun and maximum position of the generated particles)">
+                <posmin x="default - 10%" y="default" z="default - 10%" comment="e.g.: x=0.5, y=default-1, z=default-10%" />
+                <posmax x="default + 10%" y="default" z="default + 10%" />
+            </simulationdomain>
+        </parameters>
+    </execution>
+</case>
