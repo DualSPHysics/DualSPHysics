@@ -145,7 +145,7 @@
     <Link>
       <AdditionalDependencies>cudart_static.lib;dsphchrono.lib;LibJVtkLib_$(PlatformName)_$(PlatformToolset)_$(Configuration).lib;LibJNumexLib_$(PlatformName)_$(PlatformToolset)_$(Configuration).lib;LibJWaveGen_$(PlatformName)_$(PlatformToolset)_$(Configuration).lib;LibDSphMoorDyn_$(PlatformName)_$(PlatformToolset)_$(Configuration).lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>$(TargetPath)</OutputFile>
-      <AdditionalLibraryDirectories>$(CUDA_PATH_V9_2)/lib/$(PlatformName);../lib/vs2015;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(CUDA_PATH_V9_2)/lib/$(PlatformName);../lib/vs2022;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
       <OptimizeReferences>true</OptimizeReferences>
@@ -202,7 +202,7 @@
     <Link>
       <AdditionalDependencies>cudart_static.lib;dsphchrono.lib;LibJVtkLib_$(PlatformName)_$(PlatformToolset)_$(Configuration).lib;LibJNumexLib_$(PlatformName)_$(PlatformToolset)_$(Configuration).lib;LibJWaveGen_$(PlatformName)_$(PlatformToolset)_$(Configuration).lib;LibDSphMoorDyn_$(PlatformName)_$(PlatformToolset)_$(Configuration).lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>$(TargetPath)</OutputFile>
-      <AdditionalLibraryDirectories>$(CUDA_PATH_V9_2)/lib/$(PlatformName);../lib/vs2015;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(CUDA_PATH_V9_2)/lib/$(PlatformName);../lib/vs2022;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
       <OptimizeReferences>
@@ -260,7 +260,7 @@
     </ClCompile>
     <Link>
       <OutputFile>$(TargetPath)</OutputFile>
-      <AdditionalLibraryDirectories>../lib/vs2015;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>../lib/vs2022;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
       <OptimizeReferences>true</OptimizeReferences>
@@ -309,7 +309,7 @@
     </ClCompile>
     <Link>
       <OutputFile>$(TargetPath)</OutputFile>
-      <AdditionalLibraryDirectories>../lib/vs2015;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>../lib/vs2022;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
       <OptimizeReferences>
