@@ -56,7 +56,7 @@ ifeq ($(COMPILE_MOORDYN), NO)
 endif
 
 #=============== CUDA selection ===============
-CUDAVER=92
+CUDAVER=11
 
 #=============== CUDA toolkit directory (make appropriate for local CUDA installation) ===============
 ifeq ($(CUDAVER),00)
@@ -70,6 +70,9 @@ ifeq ($(CUDAVER),91)
 endif
 ifeq ($(CUDAVER),92)
   DIRTOOLKIT=/exports/opt/NVIDIA/cuda-9.2
+endif
+ifeq ($(CUDAVER),11)
+  DIRTOOLKIT=/exports/opt/NVIDIA/cuda-11.7
 endif
 
 #=============== Select GPU architectures ===============
@@ -102,7 +105,15 @@ ifeq ($(CUDAVER),92)
   GENCODE:=$(GENCODE) -gencode=arch=compute_61,code=\"sm_61,compute_61\"
   GENCODE:=$(GENCODE) -gencode=arch=compute_70,code=\"sm_70,compute_70\"
 endif
-
+ifeq ($(CUDAVER),11)
+  # module load cuda/11.7
+  # GENCODE:=$(GENCODE) -gencode=arch=compute_30,code=\"sm_30,compute_30\"
+  GENCODE:=$(GENCODE) -gencode=arch=compute_35,code=\"sm_35,compute_35\"
+  GENCODE:=$(GENCODE) -gencode=arch=compute_50,code=\"sm_50,compute_50\"
+  GENCODE:=$(GENCODE) -gencode=arch=compute_52,code=\"sm_52,compute_52\"
+  GENCODE:=$(GENCODE) -gencode=arch=compute_61,code=\"sm_61,compute_61\"
+  GENCODE:=$(GENCODE) -gencode=arch=compute_70,code=\"sm_70,compute_70\"
+endif
 
 #=============== Files to compile ===============
 OBJXML=JXml.o tinystr.o tinyxml.o tinyxmlerror.o tinyxmlparser.o
