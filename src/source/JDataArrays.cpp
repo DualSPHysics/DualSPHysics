@@ -443,184 +443,195 @@ void JDataArrays::Print()const{
 /// Returns dynamic pointer with byte array. (this pointer must be deleted)
 //==============================================================================
 byte* JDataArrays::NewArrayByte(unsigned count,bool defvalue,byte value){
+  byte *v=NULL;
   try{
-    byte *v=new byte[count];
+    v=new byte[count];
     if(count && defvalue)memset(v,value,sizeof(byte)*count);
-    return(v);
   }
   catch(const std::bad_alloc){
     Run_ExceptioonSta(fun::PrintStr("Could not allocate the requested memory (size=%u).",count));
   }
+  return(v);
 }
 
 //==============================================================================
 /// Returns dynamic pointer with word array. (this pointer must be deleted)
 //==============================================================================
 word* JDataArrays::NewArrayWord(unsigned count,bool defvalue,word value){
+  word *v=NULL;
   try{
-    word *v=new word[count];
+    v=new word[count];
     if(count && defvalue){
       if(!value)memset(v,0,sizeof(word)*count);
       else for(unsigned c=0;c<count;c++)v[c]=value;
     }
-    return(v);
   }
   catch(const std::bad_alloc){
     Run_ExceptioonSta(fun::PrintStr("Could not allocate the requested memory (size=%u).",count));
   }
+  return(v);
 }
 
 //==============================================================================
 /// Returns dynamic pointer with unsigned array. (this pointer must be deleted)
 //==============================================================================
 unsigned* JDataArrays::NewArrayUint(unsigned count,bool defvalue,unsigned value){
+  unsigned *v=NULL;
   try{
-    unsigned *v=new unsigned[count];
+    v=new unsigned[count];
     if(count && defvalue){
       if(!value)memset(v,0,sizeof(unsigned)*count);
       else for(unsigned c=0;c<count;c++)v[c]=value;
     }
-    return(v);
   }
   catch(const std::bad_alloc){
     Run_ExceptioonSta(fun::PrintStr("Could not allocate the requested memory (size=%u).",count));
   }
+  return(v);
 }
 
 //==============================================================================
 /// Returns dynamic pointer with int array. (this pointer must be deleted)
 //==============================================================================
 int* JDataArrays::NewArrayInt(unsigned count,bool defvalue,int value){
+  int *v=NULL;
   try{
-    int *v=new int[count];
+    v=new int[count];
     if(count && defvalue){
       if(!value)memset(v,0,sizeof(int)*count);
       else for(unsigned c=0;c<count;c++)v[c]=value;
     }
-    return(v);
   }
   catch(const std::bad_alloc){
     Run_ExceptioonSta(fun::PrintStr("Could not allocate the requested memory (size=%u).",count));
   }
+  return(v);
 }
 
 //==============================================================================
 /// Returns dynamic pointer with float array. (this pointer must be deleted)
 //==============================================================================
 float* JDataArrays::NewArrayFloat(unsigned count,bool defvalue,float value){
+  float *v=NULL;
   try{
-    float *v=new float[count];
+    v=new float[count];
     if(count && defvalue){
       if(!value)memset(v,0,sizeof(float)*count);
       else for(unsigned c=0;c<count;c++)v[c]=value;
     }
-    return(v);
   }
   catch(const std::bad_alloc){
     Run_ExceptioonSta(fun::PrintStr("Could not allocate the requested memory (size=%u).",count));
   }
+  return(v);
 }
 
 //==============================================================================
 /// Returns dynamic pointer with double array. (this pointer must be deleted)
 //==============================================================================
 double* JDataArrays::NewArrayDouble(unsigned count,bool defvalue,double value){
+  double *v=NULL;
   try{
-    double *v=new double[count];
+    v=new double[count];
     if(count && defvalue){
       if(!value)memset(v,0,sizeof(double)*count);
       else for(unsigned c=0;c<count;c++)v[c]=value;
     }
-    return(v);
   }
   catch(const std::bad_alloc){
     Run_ExceptioonSta(fun::PrintStr("Could not allocate the requested memory (size=%u).",count));
   }
+  return(v);
 }
 
 //==============================================================================
 /// Returns dynamic pointer with tuint3 array. (this pointer must be deleted)
 //==============================================================================
 tuint3* JDataArrays::NewArrayUint3(unsigned count,bool defvalue,tuint3 value){
+  tuint3 *v=NULL;
   try{
-    tuint3 *v=new tuint3[count];
+    v=new tuint3[count];
     if(count && defvalue){
       if(value==TUint3(0))memset(v,0,sizeof(tuint3)*count);
       else for(unsigned c=0;c<count;c++)v[c]=value;
     }
-    return(v);
   }
   catch(const std::bad_alloc){
     Run_ExceptioonSta(fun::PrintStr("Could not allocate the requested memory (size=%u).",count));
   }
+  return(v);
 }
 
 //==============================================================================
 /// Returns dynamic pointer with tuint3 array. (this pointer must be deleted)
 //==============================================================================
 tint3* JDataArrays::NewArrayInt3(unsigned count,bool defvalue,tint3 value){
+  tint3 *v=NULL;
   try{
-    tint3 *v=new tint3[count];
+    v=new tint3[count];
     if(count && defvalue){
       if(value==TInt3(0))memset(v,0,sizeof(tint3)*count);
       else for(unsigned c=0;c<count;c++)v[c]=value;
     }
-    return(v);
   }
   catch(const std::bad_alloc){
     Run_ExceptioonSta(fun::PrintStr("Could not allocate the requested memory (size=%u).",count));
   }
+  return(v);
 }
 
 //==============================================================================
 /// Returns dynamic pointer with tfloat3 array. (this pointer must be deleted)
 //==============================================================================
 tfloat3* JDataArrays::NewArrayFloat3(unsigned count,bool defvalue,tfloat3 value){
+  tfloat3 *v=NULL;
   try{
-    tfloat3 *v=new tfloat3[count];
+    v=new tfloat3[count];
     if(count && defvalue){
       if(value==TFloat3(0))memset(v,0,sizeof(tfloat3)*count);
       else for(unsigned c=0;c<count;c++)v[c]=value;
     }
-    return(v);
   }
   catch(const std::bad_alloc){
     Run_ExceptioonSta(fun::PrintStr("Could not allocate the requested memory (size=%u).",count));
   }
+  return(v);
 }
 
 //==============================================================================
 /// Returns dynamic pointer with double array. (this pointer must be deleted)
 //==============================================================================
 tdouble3* JDataArrays::NewArrayDouble3(unsigned count,bool defvalue,tdouble3 value){
+  tdouble3 *v=NULL;
   try{
-    tdouble3 *v=new tdouble3[count];
+    v=new tdouble3[count];
     if(count && defvalue){
       if(value==TDouble3(0))memset(v,0,sizeof(tdouble3)*count);
       else for(unsigned c=0;c<count;c++)v[c]=value;
     }
-    return(v);
   }
   catch(const std::bad_alloc){
     Run_ExceptioonSta(fun::PrintStr("Could not allocate the requested memory (size=%u).",count));
   }
+  return(v);
 }
 
 //==============================================================================
 /// Returns dynamic pointer with a sequence. (this pointer must be deleted)
 //==============================================================================
 unsigned* JDataArrays::NewArraySeqUint(unsigned count,unsigned start,unsigned step){
+  unsigned *v=NULL;
   try{
-    unsigned *v=new unsigned[count];
+    v=new unsigned[count];
     unsigned vv=start;
     for(unsigned c=0;c<count;c++){
       v[c]=vv; vv+=step;
     }
-    return(v);
   }
   catch(const std::bad_alloc){
     Run_ExceptioonSta(fun::PrintStr("Could not allocate the requested memory (size=%u).",count));
   }
+  return(v);
 }
 
 //==============================================================================

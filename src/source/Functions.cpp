@@ -175,9 +175,9 @@ double GetRuntime(){
 /// Returns duration in format xh ym zs.
 //==============================================================================
 std::string GetHoursOfSeconds(double s){
-  int hours=int(s/3600);
+  const int hours=int(s/3600);
   s-=double(hours*3600);
-  int mins=int(s/60);
+  const int mins=int(s/60);
   s-=double(mins*60);
   char cad[64];
   sprintf(cad,"%dh %dm %.1fs",hours,mins,s);
