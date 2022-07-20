@@ -168,7 +168,7 @@
       </Defines>
       <UseHostInclude>false</UseHostInclude>
       <AdditionalOptions>-use_fast_math -Xcompiler "/wd 4267" %(AdditionalOptions)</AdditionalOptions>
-      <CodeGeneration>compute_60,sm_60;compute_61,sm_61;compute_70,sm_70;compute_80,sm_80;</CodeGeneration>
+      <CodeGeneration>compute_35,sm_35;compute_60,sm_60;compute_61,sm_61;compute_70,sm_70;compute_80,sm_80</CodeGeneration>
     </CudaCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -228,7 +228,7 @@
       </Defines>
       <UseHostInclude>false</UseHostInclude>
       <AdditionalOptions>-use_fast_math -Xcompiler "/wd 4267" %(AdditionalOptions)</AdditionalOptions>
-      <CodeGeneration>compute_30,sm_30;compute_35,sm_35;compute_50,sm_50;compute_52,sm_52;compute_61,sm_61;compute_70,sm_70</CodeGeneration>
+      <CodeGeneration>compute_35,sm_35;compute_50,sm_50;compute_52,sm_52;compute_61,sm_61;compute_70,sm_70</CodeGeneration>
     </CudaCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">
