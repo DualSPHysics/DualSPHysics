@@ -179,7 +179,7 @@
       <Defines>
       </Defines>
       <UseHostInclude>false</UseHostInclude>
-      <AdditionalOptions>-use_fast_math -Xcompiler "/wd 4267" %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>-use_fast_math -Xcompiler "/wd 4267" -Wno-deprecated-gpu-targets %(AdditionalOptions)</AdditionalOptions>
       <CodeGeneration>compute_35,sm_35;compute_60,sm_60;compute_61,sm_61;compute_70,sm_70;compute_80,sm_80</CodeGeneration>
     </CudaCompile>
   </ItemDefinitionGroup>
@@ -239,7 +239,7 @@
       <Defines>
       </Defines>
       <UseHostInclude>false</UseHostInclude>
-      <AdditionalOptions>-use_fast_math -Xcompiler "/wd 4267" %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>-use_fast_math -Xcompiler "/wd 4267" -Wno-deprecated-gpu-targets %(AdditionalOptions)</AdditionalOptions>
       <CodeGeneration>compute_35,sm_35;compute_50,sm_50;compute_52,sm_52;compute_61,sm_61;compute_70,sm_70</CodeGeneration>
     </CudaCompile>
   </ItemDefinitionGroup>
