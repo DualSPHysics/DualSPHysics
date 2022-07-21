@@ -13,7 +13,7 @@ COMPILE_MOORDYN=YES
 LIBS_DIRECTORIES=-L./
 LIBS_DIRECTORIES:=$(LIBS_DIRECTORIES) -L../lib/linux_gcc
 
-EXECNAME=DualSPHysics5.0CPU_linux64
+EXECNAME=DualSPHysics5.2CPU_linux64
 EXECS_DIRECTORY=../../bin/linux
 
 # -std=c++0x ---> Used to avoid errors for calls to enums
