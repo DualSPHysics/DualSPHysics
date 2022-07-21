@@ -1,7 +1,6 @@
 #DualSPHysics CPU v5.0.231 03-03-2022
 
 #=============== Compilation Options (YES/NO) ===============
-USE_GCC5=YES
 USE_DEBUG=NO
 USE_FAST_MATH=YES
 USE_NATIVE_CPU_OPTIMIZATIONS=NO
@@ -31,13 +30,6 @@ else
 endif
 CC=g++
 CCLINKFLAGS=-fopenmp -lgomp
-
-#Required for GCC versions >=5.0
-ifeq ($(USE_GCC5), YES)
-  CCFLAGS+=-D_GLIBCXX_USE_CXX11_ABI=0
-  CCLINKFLAGS+=-D_GLIBCXX_USE_CXX11_ABI=0
-  NCCFLAGS+=-D_GLIBCXX_USE_CXX11_ABI=0
-endif
 
 ifeq ($(COMPILE_VTKLIB), NO)
   CCFLAGS:=$(CCFLAGS) -DDISABLE_VTKLIB
