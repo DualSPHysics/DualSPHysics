@@ -1,7 +1,6 @@
 #DualSPHysics GPU/CPU v5.0.231 03-03-2022
 
 #=============== Compilation Options (YES/NO) ===============
-USE_GCC5=YES
 USE_DEBUG=NO
 USE_FAST_MATH=YES
 USE_NATIVE_CPU_OPTIMIZATIONS=NO
@@ -14,7 +13,7 @@ COMPILE_MOORDYN=YES
 LIBS_DIRECTORIES=-L./
 LIBS_DIRECTORIES:=$(LIBS_DIRECTORIES) -L../lib/linux_gcc
 
-EXECNAME=DualSPHysics5.0_linux64
+EXECNAME=DualSPHysics5.2_linux64
 EXECS_DIRECTORY=../../bin/linux
 
 # -std=c++0x ---> Used to avoid errors for calls to enums
@@ -31,13 +30,6 @@ else
 endif
 CC=g++
 CCLINKFLAGS=-fopenmp -lgomp
-
-#Required for GCC versions >=5.0
-ifeq ($(USE_GCC5), YES)
-  CCFLAGS+=-D_GLIBCXX_USE_CXX11_ABI=0
-  CCLINKFLAGS+=-D_GLIBCXX_USE_CXX11_ABI=0
-  NCCFLAGS+=-D_GLIBCXX_USE_CXX11_ABI=0
-endif
 
 ifeq ($(COMPILE_VTKLIB), NO)
   CCFLAGS:=$(CCFLAGS) -DDISABLE_VTKLIB
@@ -56,7 +48,7 @@ ifeq ($(COMPILE_MOORDYN), NO)
 endif
 
 #=============== CUDA selection ===============
-CUDAVER=92
+CUDAVER=11
 
 #=============== CUDA toolkit directory (make appropriate for local CUDA installation) ===============
 ifeq ($(CUDAVER),00)
@@ -70,6 +62,9 @@ ifeq ($(CUDAVER),91)
 endif
 ifeq ($(CUDAVER),92)
   DIRTOOLKIT=/exports/opt/NVIDIA/cuda-9.2
+endif
+ifeq ($(CUDAVER),11)
+  DIRTOOLKIT=/exports/opt/NVIDIA/cuda-11.7
 endif
 
 #=============== Select GPU architectures ===============
@@ -102,7 +97,15 @@ ifeq ($(CUDAVER),92)
   GENCODE:=$(GENCODE) -gencode=arch=compute_61,code=\"sm_61,compute_61\"
   GENCODE:=$(GENCODE) -gencode=arch=compute_70,code=\"sm_70,compute_70\"
 endif
-
+ifeq ($(CUDAVER),11)
+  # module load cuda/11.7
+  # GENCODE:=$(GENCODE) -gencode=arch=compute_30,code=\"sm_30,compute_30\"
+  GENCODE:=$(GENCODE) -gencode=arch=compute_35,code=\"sm_35,compute_35\"
+  GENCODE:=$(GENCODE) -gencode=arch=compute_50,code=\"sm_50,compute_50\"
+  GENCODE:=$(GENCODE) -gencode=arch=compute_52,code=\"sm_52,compute_52\"
+  GENCODE:=$(GENCODE) -gencode=arch=compute_61,code=\"sm_61,compute_61\"
+  GENCODE:=$(GENCODE) -gencode=arch=compute_70,code=\"sm_70,compute_70\"
+endif
 
 #=============== Files to compile ===============
 OBJXML=JXml.o tinystr.o tinyxml.o tinyxmlerror.o tinyxmlparser.o
@@ -157,6 +160,9 @@ else
 endif
 ifeq ($(USE_FAST_MATH), YES)
   NCCFLAGS+= -use_fast_math
+  ifeq ($(CUDAVER),11)	
+	NCCFLAGS+= -Wno-deprecated-gpu-targets
+  endif
 endif
 
 all:$(EXECS_DIRECTORY)/$(EXECNAME)
