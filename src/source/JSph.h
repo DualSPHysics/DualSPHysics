@@ -73,7 +73,6 @@ class JChronoObjects;
 class JDsMooredFloatings;
 class JDsFtForcePoints;
 class JSphInOut;
-class JSphBoundCorr;
 class JDsPartsInit;
 class JDsPips;
 class JLinearValue;
@@ -338,7 +337,6 @@ protected:
   JDsAccInput *AccInput;    ///<Object for variable acceleration functionality.
 
   JSphInOut *InOut;         ///<Object for inlet/outlet conditions.
-  JSphBoundCorr *BoundCorr; ///<Object for boundary extrapolated correction (used in combination with InOut).
 
   JFtMotionSave *FtMotSave; ///<Object for saving floating motion data with high frequency. //<vs_ftmottionsv>
 

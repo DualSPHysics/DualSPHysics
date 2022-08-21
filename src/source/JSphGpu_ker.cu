@@ -2957,8 +2957,8 @@ void ComputeDampingCylinder(unsigned n,unsigned pini
 
 
 //##############################################################################
-//# Kernels for InOut (JSphInOut) and BoundCorr (JSphBoundCorr).
-//# Kernels para InOut (JSphInOut) y BoundCorr (JSphBoundCorr).
+//# Kernels for InOut (JSphInOut).
+//# Kernels para InOut (JSphInOut).
 //##############################################################################
 #include "JSphGpu_InOut_iker.cu"
 

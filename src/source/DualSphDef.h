@@ -22,6 +22,7 @@
 #define _DualSphDef_
 
 #include "TypesDef.h"
+#include "JAppInfoDef.h"
 #include "JParticlesDef.h"
 #include "JPeriodicDef.h"
 #include "FunSphKernelDef.h"

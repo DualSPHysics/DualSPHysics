@@ -427,9 +427,6 @@
     <ClInclude Include="..\source\JSimpleNeigs.h">
       <Filter>Source\Inlet</Filter>
     </ClInclude>
-    <ClInclude Include="..\source\JSphBoundCorr.h">
-      <Filter>Source\Inlet</Filter>
-    </ClInclude>
     <ClInclude Include="..\source\JSphInOut.h">
       <Filter>Source\Inlet</Filter>
     </ClInclude>
@@ -736,9 +733,6 @@
       <Filter>Src_JWave_MLP_RZ</Filter>
     </ClCompile>
     <ClCompile Include="..\source\JSimpleNeigs.cpp">
-      <Filter>Source\Inlet</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\JSphBoundCorr.cpp">
       <Filter>Source\Inlet</Filter>
     </ClCompile>
     <ClCompile Include="..\source\JSphCpu_InOut.cpp">

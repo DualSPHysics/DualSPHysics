@@ -55,7 +55,6 @@
 #include "JDsDamping.h"
 #include "JDsInitialize.h"
 #include "JSphInOut.h"
-#include "JSphBoundCorr.h"
 #include "JFtMotionSave.h"  //<vs_ftmottionsv>
 #include "JDsPips.h"
 #include "JLinearValue.h"
@@ -109,7 +108,6 @@ JSph::JSph(bool cpu,bool mgpu,bool withmpi):Cpu(cpu),Mgpu(mgpu),WithMpi(withmpi)
   AccInput=NULL;
   PartsLoaded=NULL;
   InOut=NULL;
-  BoundCorr=NULL;
   FtMotSave=NULL; //<vs_ftmottionsv>
   DsPips=NULL;
   NuxLib=NULL;
@@ -147,7 +145,6 @@ JSph::~JSph(){
   delete AccInput;      AccInput=NULL; 
   delete PartsLoaded;   PartsLoaded=NULL;
   delete InOut;         InOut=NULL;
-  delete BoundCorr;     BoundCorr=NULL;
   delete FtMotSave;     FtMotSave=NULL;   //<vs_ftmottionsv>
   delete DsPips;        DsPips=NULL;
   delete NuxLib;        NuxLib=NULL;
@@ -1148,10 +1145,8 @@ void JSph::LoadCaseConfig(const JSphCfgRun *cfg){
   }
   
   //-Configuration of boundary extrapolated correction.
-  if(xml.GetNodeSimple("case.execution.special.boundextrap",false))Run_Exceptioon("The XML section 'boundextrap' is obsolete.");
-  if(xml.GetNodeSimple("case.execution.special.boundcorr",true)){
-    BoundCorr=new JSphBoundCorr(Cpu,Dp,&xml,"case.execution.special.boundcorr",MkInfo);
-  }
+  if(xml.GetNodeSimple("case.execution.special.boundextrap",false))Run_Exceptioon("The XML section 'boundextrap' is obsolete. Use mDBC boundary conditions.");
+  if(xml.GetNodeSimple("case.execution.special.boundcorr",false))Run_Exceptioon("The XML section 'boundcorr' is obsolete. Use mDBC boundary conditions.");
  
   //-Configuration of Moorings object.
   if(xml.GetNodeSimple("case.execution.special.moorings",true)){
@@ -1178,7 +1173,6 @@ void JSph::LoadCaseConfig(const JSphCfgRun *cfg){
     if(PeriY)       Run_Exceptioon("Symmetry is not allowed with periodic conditions in axis Y.");
     if(WithFloating)Run_Exceptioon("Symmetry is not allowed with floating bodies.");
     if(UseChrono)   Run_Exceptioon("Symmetry is not allowed with Chrono objects.");
-    if(BoundCorr)   Run_Exceptioon("Symmetry is not allowed with BoundCor.");
     if(TVisco!=VISCO_Artificial)Run_Exceptioon("Symmetry is only allowed with Artificial viscosity.");
   } //<vs_syymmetry_end>
 
@@ -2220,14 +2214,6 @@ void JSph::InitRun(unsigned np,const unsigned *idp,const tdouble3 *pos){
     SaveDt->VisuConfig("SaveDt configuration:"," ");
   }
 
-  //-Prepares BoundCorr configuration.
-  if(BoundCorr){
-    Log->Print("BoundCorr configuration:");
-    if(PartBegin)Run_Exceptioon("Simulation restart not allowed when BoundCorr is used.");
-    BoundCorr->RunAutoConfig(PartsInit);
-    BoundCorr->VisuConfig(""," ");
-  }
-
   //-Shows configuration of JGaugeSystem.
   if(GaugeSystem->GetCount())GaugeSystem->VisuConfig("GaugeSystem configuration:"," ");
 
@@ -2740,7 +2726,6 @@ void JSph::SaveData(unsigned npok,const JDataArrays& arrays
   if(ChronoObjects)ChronoObjects->SavePart(Part);
   if(Moorings)Moorings->SaveData(Part);
   if(ForcePoints)ForcePoints->SaveData(Part);
-  if(BoundCorr && BoundCorr->GetUseMotion())BoundCorr->SaveData(Part);
   if(DsPips && DsPips->SvData && SvData!=SDAT_None)DsPips->SaveData();
 
   //-Checks request for simulation termination.

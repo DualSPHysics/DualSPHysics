@@ -94,12 +94,6 @@ void Interaction_InOutExtrap(byte doublemode,bool simulate2d,TpKernel tkernel
   ,const StDivDataGpu &dvd,const double2 *posxy,const double *posz,const typecode *code
   ,const unsigned *idp,float4 *velrhop);
 
-//-Kernels to extrapolate rhop on boundary particles (JSphBoundCorr).
-void Interaction_BoundCorr(byte doublemode,bool simulate2d,TpKernel tkernel
-  ,unsigned npbok,typecode boundcode,tfloat4 plane,tfloat3 direction,float determlimit
-  ,const StDivDataGpu &dvd,const double2 *posxy,const double *posz
-  ,const typecode *code,const unsigned *idp,float4 *velrhop);
-
 //-Kernels to interpolate velocity (JSphInOutGridDataTime).
 void InOutInterpolateTime(unsigned npt,double time,double t0,double t1
   ,const float *velx0,const float *velx1,float *velx
