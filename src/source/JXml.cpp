@@ -221,7 +221,9 @@ std::string JXml::ErrGetFileRow(const TiXmlNode* node,const std::string &firstel
 /// \param missing Error because it does not exist.
 /// \throw JException Error in element...
 //==============================================================================
-void JXml::ErrReadElement(const TiXmlNode* node,const std::string &element,bool missing,std::string errortext)const{
+void JXml::ErrReadElement(const TiXmlNode* node,const std::string &element
+  ,bool missing,std::string errortext)const
+{
   std::string tex="Error reading xml - ";
   if(missing)tex=tex+"Some element is missing \'"+element+"\'";
   else{

@@ -74,13 +74,54 @@ std::string GetHostName(){
 }
 
 //==============================================================================
+/// Returns current date and time.
+//==============================================================================
+time_t GetDateTimet(){
+  time_t rawtime;
+  time(&rawtime);
+  return(rawtime);
+}
+
+//==============================================================================
+/// Returns current date and time according to user data.
+/// day=1-31, month=1-12, hour=0-23, min=0-59, sec=0-59
+//==============================================================================
+time_t GetDateTimet(int day,int month,int year,int hour,int min,int sec){
+  time_t rawtime;
+  time(&rawtime);
+  struct tm *timeinfo;
+  timeinfo=gmtime(&rawtime);
+  timeinfo->tm_year=year-1900;
+  timeinfo->tm_mon=month - 1;
+  timeinfo->tm_mday=day;
+  timeinfo->tm_hour=hour;
+  timeinfo->tm_min=min;
+  timeinfo->tm_sec=sec;
+  return(mktime(timeinfo));
+}
+
+//==============================================================================
+/// Returns input date and time + nseg using the format.
+//==============================================================================
+std::string GetDateTimeFormat(time_t tt,const char* format,int nseg){
+  time_t rawtime=tt;
+  rawtime+=nseg;
+  struct tm *timeinfo;
+  timeinfo=localtime(&rawtime);
+  //timeinfo=gmtime(&rawtime);
+  char bufftime[256];
+  strftime(bufftime,256,format,timeinfo);
+  return(bufftime);
+}
+
+//==============================================================================
 /// Returns date and time of the system + nseg using the format.
 //==============================================================================
 std::string GetDateTimeFormat(const char* format,int nseg){
   time_t rawtime;
-  struct tm *timeinfo;
   time(&rawtime);
   rawtime+=nseg;
+  struct tm *timeinfo;
   timeinfo=localtime(&rawtime);
   //timeinfo=gmtime(&rawtime);
   char bufftime[256];
@@ -152,6 +193,20 @@ int GetWeekNumber(int day,int month,int year){
   int v=-1;
   if(tx.size()==2)v=int(unsigned(tx[0]-'0')*10+unsigned(tx[1]-'0'));
   return(v);
+}
+
+//==============================================================================
+/// Returns day, month and year from text dd-mm-yyyy.
+/// Returns 0 when imput data is invalid.
+//==============================================================================
+void GetDateValuesDMY(std::string datetx,int &day,int &month,int &year){
+  day=month=year=0;
+  if(datetx.size()==10){
+    day  =atoi(datetx.substr(0,2).c_str());
+    month=atoi(datetx.substr(3,2).c_str());
+    year =atoi(datetx.substr(6,4).c_str());
+    if(day<1 || day>31 || month<1 || month>12 || year<0)day=month=year=0;
+  }
 }
 
 //==============================================================================

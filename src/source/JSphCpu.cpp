@@ -40,7 +40,6 @@
 #include "JDsOutputTime.h"
 #include "JDsAccInput.h"
 #include "JDsGaugeSystem.h"
-#include "JSphBoundCorr.h"
 #include "JSphInOut.h"
 #include "JSphShifting.h"
 
@@ -1783,8 +1782,6 @@ void JSphCpu::RunMotion(double stepdt){
         if(motsim)MoveMatBound   (m.count,m.idbegin-CaseNfixed,m.matmov,stepdt,RidpMove,Posc,Dcellc,Velrhopc,Codec,boundnormal); 
         //else    MoveMatBoundAce(m.count,m.idbegin-CaseNfixed,m.matmov,m.matmov2,stepdt,RidpMove,Posc,Dcellc,Velrhopc,Acec,Codec);
       }      
-      //-Applies predefined motion to BoundCorr configuration.
-      if(BoundCorr && BoundCorr->GetUseMotion())BoundCorr->RunMotion(m);
     }
   }
   //-Management of Multi-Layer Pistons.

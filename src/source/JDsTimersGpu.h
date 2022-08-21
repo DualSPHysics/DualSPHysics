@@ -45,8 +45,7 @@ typedef enum{
   ,TMG_SuSavePart=16
   ,TMG_SuChrono=17
   ,TMG_SuMoorings=18
-  ,TMG_SuBoundCorr=19
-  ,TMG_SuInOut=20
+  ,TMG_SuInOut=19
 }TpTimersGPU;
 
 //##############################################################################
@@ -88,7 +87,6 @@ public:
     Add(TMG_SuSavePart        ,"SU-SavePart"   ,0,SvTimers);
     Add(TMG_SuChrono          ,"SU-Chrono"     ,0,SvTimers);
     Add(TMG_SuMoorings        ,"SU-Moorings"   ,0,SvTimers);
-    Add(TMG_SuBoundCorr       ,"SU-BoundCorr"  ,0,SvTimers);
     Add(TMG_SuInOut           ,"SU-InOut"      ,0,SvTimers);
   }
   

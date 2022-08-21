@@ -683,7 +683,6 @@ rem %CudaNvcc% -ccbin "$(VCInstallDir)bin" %gpuhw% -use_fast_math -c %ptxinfo% -
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">true</ExcludedFromBuild>
     </ClInclude>
-    <ClInclude Include="..\source\JSphBoundCorr.h" />
     <ClInclude Include="..\source\JDsFixedDt.h" />
     <ClInclude Include="..\source\JDsFtForcePoints.h" />
     <ClInclude Include="..\source\JSphGpuSimple_ker.h">
@@ -848,7 +847,6 @@ rem %CudaNvcc% -ccbin "$(VCInstallDir)bin" %gpuhw% -use_fast_math -c %ptxinfo% -
     <ClCompile Include="..\source\JCaseUserVars.cpp" />
     <ClCompile Include="..\source\JCaseVtkOut.cpp" />
     <ClCompile Include="..\source\JDsAccInput.cpp" />
-    <ClCompile Include="..\source\JSphBoundCorr.cpp" />
     <ClCompile Include="..\source\JSphCpuSingle_InOut.cpp" />
     <ClCompile Include="..\source\JSphCpu_InOut.cpp" />
     <ClCompile Include="..\source\JDsFixedDt.cpp" />
