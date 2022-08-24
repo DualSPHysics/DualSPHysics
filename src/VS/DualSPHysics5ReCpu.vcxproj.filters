@@ -421,9 +421,6 @@
     <ClInclude Include="..\source\FunSphKernel_iker.h">
       <Filter>Cuda</Filter>
     </ClInclude>
-    <ClInclude Include="..\source\JWaveAwasZsurf.h">
-      <Filter>Src_JWave_MLP_RZ</Filter>
-    </ClInclude>
     <ClInclude Include="..\source\JSimpleNeigs.h">
       <Filter>Source\Inlet</Filter>
     </ClInclude>
@@ -728,9 +725,6 @@
     </ClCompile>
     <ClCompile Include="..\source\FunSphKernelsCfg.cpp">
       <Filter>Source</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\JWaveAwasZsurf.cpp">
-      <Filter>Src_JWave_MLP_RZ</Filter>
     </ClCompile>
     <ClCompile Include="..\source\JSimpleNeigs.cpp">
       <Filter>Source\Inlet</Filter>

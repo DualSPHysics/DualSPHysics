@@ -38,6 +38,8 @@ public:
   void Init(JGaugeSystem *gaugesystem,const JSphMk *mkinfo,double timemax,double timepart){}
   void SetTimeMod(double timemod){}
   void VisuConfig(std::string txhead,std::string txfoot){}
+  void LoadLastGaugeResults(){}
+  void UpdateGaugePoints(){}
   const StMotionData& GetMotion(bool svdata,unsigned cp,double timestep,double dt){ return(MotionData); }
   const StMotionData& GetMotionAce(bool svdata,unsigned cp,double timestep,double dt){ return(MotionData); }
   word GetPaddleMkbound(unsigned cp)const{ return(0); }

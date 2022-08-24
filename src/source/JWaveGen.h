@@ -36,6 +36,7 @@
 #define _JWaveGen_
 
 #include "DualSphDef.h"
+#include "JObject.h"
 #include <string>
 
 //#define DISABLE_WAVEGEN     ///<It allows compile without WaveGen library.
@@ -44,6 +45,7 @@ class JXml;
 class JLog2;
 class JWavePaddles;
 class JGaugeSystem;
+class JGaugeSwl;
 class JSphMk;
 
 //##############################################################################
@@ -54,8 +56,20 @@ class JSphMk;
 #ifdef DISABLE_WAVEGEN
 #include "JWaveGenUndef.h"
 #else
-class JWaveGen
+class JWaveGen : protected JObject
 {
+public:
+  ///Structure with the information on paddle-related particles.
+  typedef struct{
+    unsigned idxpaddle;      ///<Idx of paddle.
+    word mkbound;            ///<Mk-bound of particles.
+    word motionref;          ///<Id for motion.
+    unsigned idbegin;        ///<Id of first particle of paddle.
+    unsigned np;             ///<Number of particles in paddle.
+    StMotionData motiondata; ///<Motion data for particles.
+    JGaugeSwl* gaugeswl;     ///<Object to measure the position of the free surface..
+  }StPaddleParts;
+
 private:
   const bool UseOmp;
   const bool UseGpu;
@@ -63,6 +77,7 @@ private:
 
   double TimeMod;          ///<Modifies the timestep for paddle motion.
   JWavePaddles* WavPad; 
+  std::vector<StPaddleParts> PaddleParts; 
 
   //-Auxiliary variables loaded after Init().
   unsigned Count;
@@ -72,6 +87,10 @@ private:
   bool Waves_Spectrum; ///<Irregular waves configured.
   bool Waves_File;     ///<Waves from external file configured.
   bool Waves_Solitary; ///<Solitary waves configured.
+
+private:
+  void Reset();
+  void CreatePaddleParts(unsigned n);
 
 public:
 
@@ -112,6 +131,16 @@ public:
   /// Shows object configuration using Log.
   //==============================================================================
   void VisuConfig(std::string txhead,std::string txfoot);
+
+  //==============================================================================
+  /// Loads the last gauge results.
+  //==============================================================================
+  void LoadLastGaugeResults();
+
+  //==============================================================================
+  /// Updates measurement limits according cell size and last measurement.
+  //==============================================================================
+  void UpdateGaugePoints();
 
   //==============================================================================
   /// Devuelve datos de movimiento nulo.
