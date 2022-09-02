@@ -85,6 +85,7 @@ private:
   bool Use_Awas;       ///<Use of AWAS-Zsurf.
   bool Waves_Regular;  ///<Regular waves configured.
   bool Waves_Spectrum; ///<Irregular waves configured.
+  bool Waves_Focused;  ///<Focused waves configured.
   bool Waves_File;     ///<Waves from external file configured.
   bool Waves_Solitary; ///<Solitary waves configured.
 
@@ -171,6 +172,7 @@ public:
   bool UseAwas()      const{ return(Use_Awas);       } 
   bool WavesRegular() const{ return(Waves_Regular);  } 
   bool WavesSpectrum()const{ return(Waves_Spectrum); } 
+  bool WavesFocused() const{ return(Waves_Focused);  } 
   bool WavesFile()    const{ return(Waves_File);     } 
   bool WavesSolitary()const{ return(Waves_Solitary); } 
 

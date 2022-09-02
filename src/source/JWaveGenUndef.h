@@ -47,6 +47,7 @@ public:
   bool UseAwas()const{ return(false); }
   bool WavesRegular() const{ return(false); }
   bool WavesSpectrum()const{ return(false); }
+  bool WavesFocused() const{ return(false); }
   bool WavesFile()    const{ return(false); }
   bool WavesSolitary()const{ return(false); }
 };
