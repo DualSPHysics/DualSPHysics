@@ -30,6 +30,7 @@
 #include <fstream>
 #include <cfloat>
 #include <climits>
+#include <cmath>
 #include <algorithm>
 
 using namespace std;

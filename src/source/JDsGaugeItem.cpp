@@ -412,8 +412,8 @@ void JGaugeVelocity::CalculeGpu(double timestep,const StDivDataGpu &dvd
 //==============================================================================
 /// Constructor.
 //==============================================================================
-JGaugeSwl::JGaugeSwl(unsigned idx,std::string name,tdouble3 point0,tdouble3 point2,double pointdp,float masslimit,bool cpu)
-  :JGaugeItem(GAUGE_Swl,idx,name,cpu)
+JGaugeSwl::JGaugeSwl(unsigned idx,std::string name,tdouble3 point0,tdouble3 point2
+  ,double pointdp,float masslimit,bool cpu):JGaugeItem(GAUGE_Swl,idx,name,cpu)
 {
   ClassName="JGaugeSwl";
   FileInfo=string("Saves SWL data measured from fluid particles (by ")+ClassName+").";
@@ -435,6 +435,7 @@ JGaugeSwl::~JGaugeSwl(){
 /// Initialisation of variables.
 //==============================================================================
 void JGaugeSwl::Reset(){
+  PointDp=0;
   SetPoints(TDouble3(0),TDouble3(0),0);
   MassLimit=0;
   JGaugeItem::Reset();
@@ -447,7 +448,7 @@ void JGaugeSwl::SetPoints(const tdouble3 &point0,const tdouble3 &point2,double p
   //if(PointDp<=0)Run_Exceptioon(fun::PrintStr("The value of PointDp is <= zero in gauge \'%s\'.",Name.c_str()));
   Point0=point0;
   Point2=point2;
-  PointDp=pointdp;
+  if(pointdp)PointDp=pointdp;
   const double dis=fgeo::PointsDist(Point0,Point2);
   if(dis>0 && PointDp>0){
     PointNp=unsigned(dis/PointDp);

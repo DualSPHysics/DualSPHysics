@@ -28,6 +28,7 @@
 //# - Mejora de LoadDouble2(), LoadDouble3() y LoadDouble6() y equivalesntes 
 //#   para floats. Ahora toma el valor default siempre que falte un valor. (14-09-2021)
 //# - Nuevo metodo VerText(). (08-05-2022)
+//# - Incluye txopt5 en SplitsOpts(). (25-08-2022)
 //#############################################################################
 
 #ifndef _JCfgRunBase_
@@ -65,14 +66,26 @@ protected:
   static void LoadDouble3(std::string txopt,double def,tdouble3 &v1);
   static void LoadDouble6(std::string txopt,double def,tdouble3 &v1,tdouble3 &v2);
 
-  void SplitsOpts(const std::string &opt,std::string &txword,std::string &txoptfull,std::string &txopt1,std::string &txopt2,std::string &txopt3,std::string &txopt4)const;
-  void SplitsOpts(const std::string &opt,std::string &txword,std::string &txoptfull,std::string &txopt1,std::string &txopt2,std::string &txopt3)const{
+  void SplitsOpts(const std::string &opt,std::string &txword,std::string &txoptfull
+    ,std::string &txopt1,std::string &txopt2,std::string &txopt3,std::string &txopt4
+    ,std::string &txopt5)const;
+  void SplitsOpts(const std::string &opt,std::string &txword,std::string &txoptfull
+    ,std::string &txopt1,std::string &txopt2,std::string &txopt3,std::string &txopt4)const
+  {
+    std::string tx5; SplitsOpts(opt,txword,txoptfull,txopt1,txopt2,txopt3,txopt4,tx5);
+  }
+  void SplitsOpts(const std::string &opt,std::string &txword,std::string &txoptfull
+    ,std::string &txopt1,std::string &txopt2,std::string &txopt3)const
+  {
     std::string tx4; SplitsOpts(opt,txword,txoptfull,txopt1,txopt2,txopt3,tx4);
   }
-  void SplitsOpts(const std::string &opt,std::string &txword,std::string &txoptfull,std::string &txopt1,std::string &txopt2)const{
+  void SplitsOpts(const std::string &opt,std::string &txword,std::string &txoptfull
+    ,std::string &txopt1,std::string &txopt2)const
+  {
     std::string tx3,tx4; SplitsOpts(opt,txword,txoptfull,txopt1,txopt2,tx3,tx4);
   }
-  void SplitsOpts(const std::string &opt,std::string &txword,std::string &txoptfull)const{
+  void SplitsOpts(const std::string &opt,std::string &txword,std::string &txoptfull)const
+  {
     std::string tx1,tx2,tx3,tx4; SplitsOpts(opt,txword,txoptfull,tx1,tx2,tx3,tx4);
   }
 

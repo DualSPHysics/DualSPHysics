@@ -2272,6 +2272,7 @@ bool JSph::CalcMotion(double stepdt){
 void JSph::CalcMotionWaveGen(double stepdt){
   const bool motsim=true;
   if(WaveGen){
+    if(WaveGen->UseAwas())WaveGen->LoadLastGaugeResults();
     const bool svdata=(TimeStep+stepdt>=TimePartNext);
     for(unsigned c=0;c<WaveGen->GetCount();c++){
       const StMotionData m=(motsim? WaveGen->GetMotion(svdata,c,TimeStep,stepdt): WaveGen->GetMotionAce(svdata,c,TimeStep,stepdt));
@@ -2281,6 +2282,7 @@ void JSph::CalcMotionWaveGen(double stepdt){
         else      DsMotion->SetMotionDataAce(m);
       }
     }
+    if(WaveGen->UseAwas())WaveGen->UpdateGaugePoints();
   }
 }
 

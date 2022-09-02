@@ -337,7 +337,8 @@ inline double cot(double z){ return(1.0 / tan(z)); }
 //==============================================================================
 /// Returns hyperbolic cotangent of angle in radians.
 //==============================================================================
-inline double coth(double z){ return(cosh(z) / sinh(z)); }
+inline double coth(double z){ return(1.0 / tanh(z)); }
+//inline double coth(double z){ return(cosh(z) / sinh(z)); }
 
 //==============================================================================
 /// Returns secant of angle in radians.
