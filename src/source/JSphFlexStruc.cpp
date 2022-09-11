@@ -33,8 +33,8 @@ using namespace std;
 /// Constructor.
 //==============================================================================
 JSphFlexStrucBody::JSphFlexStrucBody(
-    unsigned idbody,word mkbound,float particlevolume,float density,double youngmod,double poissratio,TpConstitModel constitmodel,float hgfactor)
-    :Log(AppInfo.LogPtr()),IdBody(idbody),MkBound(mkbound)
+    unsigned idbody,word mkbound,word mkclamp,float particlevolume,float density,double youngmod,double poissratio,TpConstitModel constitmodel,float hgfactor)
+    :Log(AppInfo.LogPtr()),IdBody(idbody),MkBound(mkbound),MkClamp(mkclamp)
 {
   ClassName="JSphFlexStrucBody";
   Reset();
@@ -87,6 +87,7 @@ JSphFlexStrucBody::~JSphFlexStrucBody(){
 //==============================================================================
 void JSphFlexStrucBody::Reset(){
   BoundCode=0;
+  ClampCode=0;
   ParticleVolume=0;
   Density=0;
   YoungMod=0;
@@ -104,6 +105,14 @@ void JSphFlexStrucBody::ConfigBoundCode(typecode boundcode){
   BoundCode=boundcode;
 }
 
+//==============================================================================
+/// Configures ClampCode.
+//==============================================================================
+void JSphFlexStrucBody::ConfigClampCode(typecode clampcode){
+  if(ClampCode)Run_Exceptioon(fun::PrintStr("ClampCode was already configured for mkbound=%u.",MkBound));
+  ClampCode=clampcode;
+}
+
 
 //##############################################################################
 //# JSphFlexStruc
@@ -117,7 +126,8 @@ JSphFlexStruc::JSphFlexStruc(bool simulate2d,double dp,JXml *sxml,const std::str
   ClassName="JSphFlexStruc";
   Reset();
   LoadXml(sxml,place);
-  UpdateMkCode(mkinfo);
+  ConfigBoundCode(mkinfo);
+  ConfigClampCode(mkinfo);
 }
 
 //==============================================================================
@@ -167,6 +177,7 @@ void JSphFlexStruc::ReadXml(const JXml *sxml,TiXmlElement* lis){
       if(id>idmax)Run_Exceptioon("Maximum number of flexible structure bodies has been reached.");
       word mkbound=sxml->GetAttributeWord(ele,"mkbound");
       if(ExistMk(mkbound))Run_Exceptioon(fun::PrintStr("An input already exists for the same mkbound=%u.",mkbound));
+      word mkclamp=sxml->GetAttributeWord(ele,"mkclamp");
       float particlevolume=static_cast<float>(Simulate2D? Dp*Dp: Dp*Dp*Dp);
       float density=sxml->ReadElementFloat(ele,"density","value");
       double youngmod=sxml->ReadElementDouble(ele,"youngmod","value");
@@ -183,7 +194,7 @@ void JSphFlexStruc::ReadXml(const JXml *sxml,TiXmlElement* lis){
       else if(!Simulate2D && constitmodel!=CONSTITMODEL_SVK)
         Run_Exceptioon(fun::PrintStr("Constitutive model for body %u is not valid for 3D simulations.",id));
       float hgfactor=sxml->ReadElementFloat(ele,"hgfactor","value",true,0);
-      JSphFlexStrucBody* body=new JSphFlexStrucBody(id,mkbound,particlevolume,density,youngmod,poissratio,constitmodel,hgfactor);
+      JSphFlexStrucBody* body=new JSphFlexStrucBody(id,mkbound,mkclamp,particlevolume,density,youngmod,poissratio,constitmodel,hgfactor);
       List.push_back(body);
     }
     ele=ele->NextSiblingElement("flexstrucbody");
@@ -191,15 +202,29 @@ void JSphFlexStruc::ReadXml(const JXml *sxml,TiXmlElement* lis){
 }
 
 //==============================================================================
-/// Updates BoundCode of each body.
+/// Configures BoundCode for each body.
 //==============================================================================
-void JSphFlexStruc::UpdateMkCode(const JSphMk *mkinfo){
+void JSphFlexStruc::ConfigBoundCode(const JSphMk *mkinfo){
   for(unsigned c=0;c<GetCount();c++){
     const unsigned cmk=mkinfo->GetMkBlockByMkBound(List[c]->MkBound);
     if(cmk<mkinfo->Size() && (CODE_IsMoving(mkinfo->Mkblock(cmk)->Code))){
       List[c]->ConfigBoundCode(mkinfo->Mkblock(cmk)->Code);
     }
-    else Run_Exceptioon(fun::PrintStr("MkBound value (%u) is not a valid Mk moving boundary.",List[c]->MkBound));
+    else Run_Exceptioon(fun::PrintStr("MkBound value for mkbound=%u is not a valid Mk moving boundary.",List[c]->MkBound));
+  }
+}
+
+//==============================================================================
+/// Configures ClampCode for each body.
+//==============================================================================
+void JSphFlexStruc::ConfigClampCode(const JSphMk *mkinfo){
+  for(unsigned c=0;c<GetCount();c++){
+    if(ExistMk(List[c]->MkClamp))Run_Exceptioon(fun::PrintStr("MkClamp for mkbound=%u cannot be a flexible structure.",List[c]->MkBound));
+    const unsigned cmk=mkinfo->GetMkBlockByMkBound(List[c]->MkClamp);
+    if(cmk<mkinfo->Size()){
+      List[c]->ConfigClampCode(mkinfo->Mkblock(cmk)->Code);
+    }
+    else Run_Exceptioon(fun::PrintStr("MkClamp value for mkbound=%u is not a valid Mk boundary.",List[c]->MkBound));
   }
 }
 
@@ -221,5 +246,5 @@ void JSphFlexStruc::ConfigCode(unsigned npb,typecode *code){
 /// Establece la densidad de masa para estructuras flexibles.
 //==============================================================================
 void JSphFlexStruc::SetDensity(unsigned npb,const typecode *code,float *rhos){
-  for(unsigned p=0;p<npb;p++)rhos[p]=(CODE_IsFlexStrucFlex(code[p])? GetMkBody(CODE_GetIbodyFixedFlexStruc(code[p]))->GetDensity(): 0);
+  for(unsigned p=0;p<npb;p++)rhos[p]=(CODE_IsFlexStrucFlex(code[p])? GetBody(CODE_GetIbodyFlexStruc(code[p]))->GetDensity(): 0);
 }

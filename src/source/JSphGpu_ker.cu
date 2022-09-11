@@ -2956,7 +2956,7 @@ void ComputeDampingCylinder(unsigned n,unsigned pini
 //<vs_flexstruc_ini>
 struct IsFlexStrucAny{ __host__ __device__ bool operator()(const typecode &code) { return CODE_IsFlexStrucAny(code); } };
 
-__global__ void KerSetClampCodes(unsigned n,const float4 *poscell,typecode *code){
+__global__ void KerSetClampCodes(unsigned n,const float4 *poscell,const StFlexStrucData *flexstrucdata,typecode *code){
   const unsigned p=blockIdx.x*blockDim.x+threadIdx.x; //-Number of thread.
   if(p<n){
     const unsigned p1=p;      //-Number of particle.
@@ -2972,14 +2972,16 @@ __global__ void KerSetClampCodes(unsigned n,const float4 *poscell,typecode *code
       for(unsigned p2=0;p2<n;p2++){
         const typecode codep2=code[p2];
         if(CODE_IsFlexStrucFlex(codep2)){
-          const float4 pscellp2=poscell[p2];
-          float drx=pscellp1.x-pscellp2.x+CTE.poscellsize*(PSCEL_GetfX(pscellp1.w)-PSCEL_GetfX(pscellp2.w));
-          float dry=pscellp1.y-pscellp2.y+CTE.poscellsize*(PSCEL_GetfY(pscellp1.w)-PSCEL_GetfY(pscellp2.w));
-          float drz=pscellp1.z-pscellp2.z+CTE.poscellsize*(PSCEL_GetfZ(pscellp1.w)-PSCEL_GetfZ(pscellp2.w));
-          const float rr2=drx*drx+dry*dry+drz*drz;
-          if(rr2<=CTE.kernelsize2&&rr2>=ALMOSTZERO){
-            code[p1]=CODE_ToFlexStrucClamp(codep1,CODE_GetIbodyFixedFlexStruc(codep2));
-            break;
+          if(codep1==flexstrucdata[CODE_GetIbodyFlexStruc(codep2)].clampcode){
+            const float4 pscellp2=poscell[p2];
+            float drx=pscellp1.x-pscellp2.x+CTE.poscellsize*(PSCEL_GetfX(pscellp1.w)-PSCEL_GetfX(pscellp2.w));
+            float dry=pscellp1.y-pscellp2.y+CTE.poscellsize*(PSCEL_GetfY(pscellp1.w)-PSCEL_GetfY(pscellp2.w));
+            float drz=pscellp1.z-pscellp2.z+CTE.poscellsize*(PSCEL_GetfZ(pscellp1.w)-PSCEL_GetfZ(pscellp2.w));
+            const float rr2=drx*drx+dry*dry+drz*drz;
+            if(rr2<=CTE.kernelsize2&&rr2>=ALMOSTZERO){
+              code[p1]=CODE_ToFlexStrucClamp(codep1,CODE_GetIbodyFlexStruc(codep2));
+              break;
+            }
           }
         }
       }
@@ -2987,10 +2989,10 @@ __global__ void KerSetClampCodes(unsigned n,const float4 *poscell,typecode *code
   }
 }
 
-void SetClampCodes(unsigned npb,const float4 *poscell,typecode *code){
+void SetClampCodes(unsigned npb,const float4 *poscell,const StFlexStrucData *flexstrucdata,typecode *code){
   if(npb){
     dim3 sgridb=GetSimpleGridSize(npb,SPHBSIZE);
-    KerSetClampCodes <<<sgridb,SPHBSIZE>>> (npb,poscell,code);
+    KerSetClampCodes <<<sgridb,SPHBSIZE>>> (npb,poscell,flexstrucdata,code);
   }
 }
 
@@ -3097,7 +3099,7 @@ template<TpKernel tker,bool simulate2d> __global__ void KerCalcFlexStrucKerCorr(
       tmatrix3f kercorrp1={0};
 
       //-Obtains basic data of particle p1.
-      const float vol0p1=flexstrucdata[CODE_GetIbodyFixedFlexStruc(code[flexstrucridp[pfs1]])].vol0;
+      const float vol0p1=flexstrucdata[CODE_GetIbodyFlexStruc(code[flexstrucridp[pfs1]])].vol0;
       const float4 pscell0p1=poscell0[pfs1];
 
       //-Calculate kernel correction matrix.
@@ -3163,7 +3165,7 @@ template<TpKernel tker,bool simulate2d> __global__ void KerComputeDefGradFlexStr
 
       //-Obtains basic data of particle p1.
       const unsigned p1=flexstrucridp[pfs1];
-      const float vol0p1=flexstrucdata[CODE_GetIbodyFixedFlexStruc(code[p1])].vol0;
+      const float vol0p1=flexstrucdata[CODE_GetIbodyFlexStruc(code[p1])].vol0;
       const float4 pscellp1=poscell[p1];
       const float4 pscell0p1=poscell0[pfs1];
       const tmatrix3f kercorrp1=kercorr[pfs1];
@@ -3242,13 +3244,13 @@ template<TpKernel tker,bool simulate2d> __global__ void KerInteractionForcesFlex
       const tmatrix3f defgradp1=defgrad[pfs1];
 
       //-Obtains flexible structure data.
-      const float vol0p1=flexstrucdata[CODE_GetIbodyFixedFlexStruc(codep1)].vol0;
-      const float rho0p1=flexstrucdata[CODE_GetIbodyFixedFlexStruc(codep1)].rho0;
-      const float mass0p1=flexstrucdata[CODE_GetIbodyFixedFlexStruc(codep1)].mass0;
-      const float youngmod=flexstrucdata[CODE_GetIbodyFixedFlexStruc(codep1)].youngmod;
-      const float poissratio=flexstrucdata[CODE_GetIbodyFixedFlexStruc(codep1)].poissratio;
-      const float hgfactor=flexstrucdata[CODE_GetIbodyFixedFlexStruc(codep1)].hgfactor;
-      const tmatrix6f cmat=flexstrucdata[CODE_GetIbodyFixedFlexStruc(codep1)].cmat;
+      const float vol0p1=flexstrucdata[CODE_GetIbodyFlexStruc(codep1)].vol0;
+      const float rho0p1=flexstrucdata[CODE_GetIbodyFlexStruc(codep1)].rho0;
+      const float mass0p1=flexstrucdata[CODE_GetIbodyFlexStruc(codep1)].mass0;
+      const float youngmod=flexstrucdata[CODE_GetIbodyFlexStruc(codep1)].youngmod;
+      const float poissratio=flexstrucdata[CODE_GetIbodyFlexStruc(codep1)].poissratio;
+      const float hgfactor=flexstrucdata[CODE_GetIbodyFlexStruc(codep1)].hgfactor;
+      const tmatrix6f cmat=flexstrucdata[CODE_GetIbodyFlexStruc(codep1)].cmat;
       const tmatrix3f pk1p1=KerComputePK1StressFlexStruc(defgradp1,cmat);
       const tmatrix3f pk1kercorrp1=cumath::MulMatrix3x3(pk1p1,kercorrp1);
 

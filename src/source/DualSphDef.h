@@ -221,7 +221,7 @@
 
 #define CODE_ToFlexStrucFlex(code,ibody)  ((code&(CODE_MASKSPECIAL|CODE_MASKTYPE))|CODE_TYPE_FLEXSTRUC_MASK|ibody)
 #define CODE_ToFlexStrucClamp(code,ibody) ((code&(CODE_MASKSPECIAL|CODE_MASKTYPE))|CODE_TYPE_FLEXSTRUC_MASK|CODE_TYPE_FLEXSTRUCCLAMP_MASK|ibody)
-#define CODE_GetIbodyFixedFlexStruc(code) (code&(~(CODE_MASKSPECIAL|CODE_MASKTYPE|CODE_TYPE_FLEXSTRUC_MASK|CODE_TYPE_FLEXSTRUCCLAMP_MASK)))
+#define CODE_GetIbodyFlexStruc(code)      (code&(~(CODE_MASKSPECIAL|CODE_MASKTYPE|CODE_TYPE_FLEXSTRUC_MASK|CODE_TYPE_FLEXSTRUCCLAMP_MASK)))
 //<vs_flexstruc_end>
 
 //#define CODE_IsFluidInout(code)    (CODE_IsFluid(code) && CODE_GetTypeAndValue(code)>=CODE_TYPE_FLUID_INOUT)
@@ -256,13 +256,14 @@ typedef struct{
 //<vs_flexstruc_ini>
 ///Structure with the information of the flexible structure.
 typedef struct{
-  float vol0;       ///< Initial particle volume
-  float rho0;       ///< Initial particle density
-  float mass0;      ///< Initial particle mass
-  float youngmod;   ///< Young's modulus
-  float poissratio; ///< Poisson ratio
-  float hgfactor;   ///< Hourglass correction factor
-  tmatrix6f cmat;   ///< Constitutive matrix
+  typecode clampcode; ///< Code for clamping particles.
+  float vol0;         ///< Initial particle volume.
+  float rho0;         ///< Initial particle density.
+  float mass0;        ///< Initial particle mass.
+  float youngmod;     ///< Young's modulus.
+  float poissratio;   ///< Poisson ratio.
+  float hgfactor;     ///< Hourglass correction factor.
+  tmatrix6f cmat;     ///< Constitutive matrix.
 }StFlexStrucData;
 //<vs_flexstruc_end>
 

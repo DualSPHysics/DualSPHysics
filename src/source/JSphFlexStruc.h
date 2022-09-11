@@ -40,6 +40,7 @@ private:
 
   //-Selection of particles
   typecode BoundCode;      ///<Code to select boundary particles.
+  typecode ClampCode;      ///<Code to select clamping particles.
 
   //-Body parameters
   float ParticleVolume;
@@ -56,12 +57,16 @@ private:
 public:
   const unsigned IdBody;
   const word MkBound;
+  const word MkClamp;
 
-  JSphFlexStrucBody(unsigned idbody,word mkbound,float particlevolume,float density,double youngmod,double poissratio,TpConstitModel constitmodel,float hgfactor);
+  JSphFlexStrucBody(unsigned idbody,word mkbound,word mkclamp,float particlevolume,float density,double youngmod,double poissratio,TpConstitModel constitmodel,float hgfactor);
   ~JSphFlexStrucBody();
+
   void ConfigBoundCode(typecode boundcode);
+  void ConfigClampCode(typecode clampcode);
 
   typecode GetBoundCode()const{ return(BoundCode); }
+  typecode GetClampCode()const{ return(ClampCode); }
 
   float GetParticleVolume()const{ return ParticleVolume; };
   float GetDensity()const{ return Density; };
@@ -91,7 +96,8 @@ private:
   bool ExistMk(word mkbound)const;
   void LoadXml(const JXml *sxml,const std::string &place);
   void ReadXml(const JXml *sxml,TiXmlElement* lis);
-  void UpdateMkCode(const JSphMk *mkinfo);
+  void ConfigBoundCode(const JSphMk *mkinfo);
+  void ConfigClampCode(const JSphMk *mkinfo);
 
 public:
 
@@ -99,7 +105,7 @@ public:
   ~JSphFlexStruc();
 
   unsigned GetCount()const{ return(unsigned(List.size())); }
-  const JSphFlexStrucBody* GetMkBody(unsigned idx)const{ return(idx<GetCount()?List[idx]:NULL); }
+  const JSphFlexStrucBody* GetBody(unsigned idx)const{ return(idx<GetCount()?List[idx]:NULL); }
 
   void ConfigCode(unsigned npb,typecode *code);
   void SetDensity(unsigned npb,const typecode *code,float *rhos);

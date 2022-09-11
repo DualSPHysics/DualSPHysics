@@ -356,7 +356,7 @@ void ComputeDampingCylinder(unsigned n,unsigned pini
 
 //<vs_flexstruc_ini>
 //-Kernels for the flexible structure calculation.
-void SetClampCodes(unsigned npb,const float4 *poscell,typecode *code);
+void SetClampCodes(unsigned npb,const float4 *poscell,const StFlexStrucData *flexstrucdata,typecode *code);
 unsigned CountFlexStrucParts(unsigned npb,const typecode *code);
 void CalcFlexStrucRidp(unsigned npb,const typecode *code,unsigned *flexstrucridp);
 void GatherToFlexStrucArray(unsigned npfs,const unsigned *flexstrucridp,const float4 *fullarray,float4 *flexstrucarray);
