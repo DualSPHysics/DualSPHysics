@@ -28,9 +28,7 @@ class JLog2;
 class JXml;
 class TiXmlElement;
 class JSphMk;
-#ifdef DISABLE_FLEXSTRUCTURE
-#include "JSphFlexibleStructureUndef.h"
-#else
+
 //##############################################################################
 //# JSphFlexibleStructureBody
 //##############################################################################
@@ -106,5 +104,5 @@ public:
   void ConfigCode(unsigned npb,typecode *code);
   void SetDensity(unsigned npb,const typecode *code,float *rhos);
 };
-#endif
+
 #endif
