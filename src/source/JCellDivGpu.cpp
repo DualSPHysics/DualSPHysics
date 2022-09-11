@@ -410,14 +410,6 @@ void JCellDivGpu::UpdateIndices(unsigned n,unsigned *idx){
     cudiv::UpdateIndices(n,SortIdx,idx);
   }
 }
-
-void JCellDivGpu::UpdateIndices(unsigned n,const unsigned *idx,unsigned *idx2){
-  if(DivideFull){
-    cudaMemcpy(SortPart2,SortPart,sizeof(unsigned)*NpbFinal,cudaMemcpyDeviceToDevice);
-    cudiv::SortIndices(SortPart2,SortIdx,NpbFinal,Stable);
-    cudiv::UpdateIndices(n,SortIdx,idx,idx2);
-  }
-}
 //<vs_flexstruc_end>
 
 /*:

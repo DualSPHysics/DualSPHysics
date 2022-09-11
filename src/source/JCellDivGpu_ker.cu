@@ -862,15 +862,6 @@ void UpdateIndices(unsigned n,const unsigned *sortidx,unsigned *idx){
     KerUpdateIndices <<<sgrid,DIVBSIZE>>>(n,sortidx,idx);
   }
 }
-
-void UpdateIndices(unsigned n,const unsigned *sortidx,const unsigned *idx,unsigned *idx2){
-  if(n){
-    thrust::device_ptr<const unsigned> dev_sortidx(sortidx);
-    thrust::device_ptr<const unsigned> dev_idx(idx);
-    thrust::device_ptr<unsigned> dev_idx2(idx2);
-    thrust::gather(dev_idx,dev_idx+n,dev_sortidx,dev_idx2);
-  }
-}
 //<vs_flexstruc_end>
 
 /*:

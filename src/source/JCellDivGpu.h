@@ -195,8 +195,7 @@ public:
 
   void SetIncreaseNp(unsigned increasenp){ IncreaseNp=increasenp; }
 
-  void UpdateIndices(unsigned n,unsigned *idx);                 //<vs_flexstruc>
-  void UpdateIndices(unsigned n,const unsigned *idx,unsigned *idx2);  //<vs_flexstruc>
+  void UpdateIndices(unsigned n,unsigned *idx); //<vs_flexstruc>
 
   //:uint2 GetRangeParticlesCells(bool fluid,unsigned celini,unsigned celfin)const;
   //:unsigned GetParticlesCells(unsigned celini,unsigned celfin);

@@ -389,15 +389,7 @@ void JSphGpuSingle::RunCellDivide(bool updateperiodic){
       swap(MotionVelg,motionvelg); ArraysGpu->Free(motionvelg);
     }
   }
-  //<vs_flexstruc_ini>
-  if(FlexStruc){
-    if(FlexStrucRidpg){
-      CellDivSingle->UpdateIndices(CaseNflexstruc,FlexStrucRidpg);
-//      CellDivSingle->UpdateIndices(CaseNflexstruc,FlexStrucRidpg,FlexStrucRidp2g);
-//      swap(FlexStrucRidpg,FlexStrucRidp2g);
-    }
-  }
-  //<vs_flexstruc_ini>
+  if(FlexStruc&&FlexStrucRidpg)CellDivSingle->UpdateIndices(CaseNflexstruc,FlexStrucRidpg); //<vs_flexstruc>
 
   //-Collect divide data. | Recupera datos del divide.
   Np=CellDivSingle->GetNpFinal();
