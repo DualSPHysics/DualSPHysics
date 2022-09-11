@@ -43,7 +43,7 @@
 #include "JDsGaugeSystem.h"
 #include "JSphBoundCorr.h"
 #include "JSphInOut.h"
-#include "JSphFlexStruc.h" //<vs_flexstruc>
+#include "JSphFlexStruc.h"  //<vs_flexstruc>
 #include "JSphShifting.h"
 #include "JDataArrays.h"
 #include "JVtkLib.h"
@@ -156,7 +156,7 @@ void JSphGpu::InitVars(){
   FtoInertiaini8g=NULL; FtoInertiaini1g=NULL;//-Management of floating bodies.
   FtObjsOutdated=true;
   DemDatag=NULL; //(DEM)
-  NumPairsTot=0; FlexStrucDatag=NULL; FlexStrucRidpg=NULL; FlexStrucRidp2g=NULL; PosCell0g=NULL;  //<vs_flexstruc>
+  NumPairsTot=0; FlexStrucDatag=NULL; FlexStrucRidpg=NULL; PosCell0g=NULL;          //<vs_flexstruc>
   NumPairsg=NULL; PairIdxBufferg=NULL; PairIdxg=NULL; KerCorrg=NULL; DefGradg=NULL; //<vs_flexstruc>
   GpuParticlesAllocs=0;
   GpuParticlesSize=0;
@@ -214,6 +214,14 @@ void JSphGpu::FreeGpuMemoryFixed(){
   if(FtoInertiaini8g)   cudaFree(FtoInertiaini8g);    FtoInertiaini8g=NULL;
   if(FtoInertiaini1g)   cudaFree(FtoInertiaini1g);    FtoInertiaini1g=NULL;
   if(DemDatag)          cudaFree(DemDatag);           DemDatag=NULL;
+  if(FlexStrucDatag)    cudaFree(FlexStrucDatag);     FlexStrucDatag=NULL;  //<vs_flexstruc>
+  if(FlexStrucRidpg)    cudaFree(FlexStrucRidpg);     FlexStrucRidpg=NULL;  //<vs_flexstruc>
+  if(PosCell0g)         cudaFree(PosCell0g);          PosCell0g=NULL;       //<vs_flexstruc>
+  if(NumPairsg)         cudaFree(NumPairsg);          NumPairsg=NULL;       //<vs_flexstruc>
+  if(PairIdxBufferg)    cudaFree(PairIdxBufferg);     PairIdxBufferg=NULL;  //<vs_flexstruc>
+  if(PairIdxg)          cudaFree(PairIdxg);           PairIdxg=NULL;        //<vs_flexstruc>
+  if(KerCorrg)          cudaFree(KerCorrg);           KerCorrg=NULL;        //<vs_flexstruc>
+  if(DefGradg)          cudaFree(DefGradg);           DefGradg=NULL;        //<vs_flexstruc>
 }
 
 //==============================================================================
@@ -825,6 +833,9 @@ void JSphGpu::PreInteractionVars_Forces(unsigned np,unsigned npb){
 
   //-Apply the extra forces to the correct particle sets.
   if(AccInput)AccInput->RunGpu(TimeStep,Gravity,npf,npb,Codeg,Posxyg,Poszg,Velrhopg,Aceg);
+
+  //-Initialise deformation gradient tensor.
+  if(DefGradg)cudaMemset(DefGradg,0,sizeof(tmatrix3f)*CaseNflexstruc);  //<vs_flexstruc>
 }
 
 //==============================================================================
@@ -843,9 +854,6 @@ void JSphGpu::PreInteraction_Forces(){
 
   //-Initialise arrays.
   PreInteractionVars_Forces(Np,Npb);
-
-  //-Initialise deformation gradient tensor.
-  if(DefGradg)cudaMemset(DefGradg,0,sizeof(tmatrix3f)*CaseNflexstruc);  //<vs_flexstruc>
 
   //-Computes VelMax: Includes the particles from floating bodies and does not affect the periodic conditions.
   //-Calcula VelMax: Se incluyen las particulas floatings y no afecta el uso de condiciones periodicas.

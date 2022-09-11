@@ -39,8 +39,8 @@
 #include "JSphGpuSimple_ker.h"
 #include "JDsGaugeSystem.h"
 #include "JSphInOut.h"
-#include "JSphFlexStruc.h" //<vs_flexstruc>
-#include "JFtMotionSave.h" //<vs_ftmottionsv>  
+#include "JSphFlexStruc.h"  //<vs_flexstruc>
+#include "JFtMotionSave.h"  //<vs_ftmottionsv>
 #include "JLinearValue.h"
 #include "JDataArrays.h"
 #include "JDebugSphGpu.h"
@@ -1010,7 +1010,6 @@ void JSphGpuSingle::FlexStrucInit(){
   CaseNflexstruc=cusph::CountFlexStrucParts(Npb,Codeg);
   //-Allocate arrays.
   m=sizeof(unsigned)*CaseNflexstruc;        cudaMalloc((void**)&FlexStrucRidpg,   m);  MemGpuFixed+=m;
-  m=sizeof(unsigned)*CaseNflexstruc;        cudaMalloc((void**)&FlexStrucRidp2g,  m);  MemGpuFixed+=m;
   m=sizeof(float4)*CaseNflexstruc;          cudaMalloc((void**)&PosCell0g,        m);  MemGpuFixed+=m;
   m=sizeof(unsigned)*CaseNflexstruc;        cudaMalloc((void**)&NumPairsg,        m);  MemGpuFixed+=m;
   m=sizeof(unsigned*)*CaseNflexstruc;       cudaMalloc((void**)&PairIdxg,         m);  MemGpuFixed+=m;
@@ -1018,7 +1017,6 @@ void JSphGpuSingle::FlexStrucInit(){
   m=sizeof(tmatrix3f)*CaseNflexstruc;       cudaMalloc((void**)&DefGradg,         m);  MemGpuFixed+=m;
   //-Calculate array for indexing into flexible structure particles.
   cusph::CalcFlexStrucRidp(Npb,Codeg,FlexStrucRidpg);
-  cudaMemcpy(FlexStrucRidp2g,FlexStrucRidpg,sizeof(unsigned)*CaseNflexstruc,cudaMemcpyDeviceToDevice);
   //-Copy current position into initial position.
   cusph::GatherToFlexStrucArray(CaseNflexstruc,FlexStrucRidpg,PosCellg,PosCell0g);
   //-Get number of particle pairs for each flexible structure particle.

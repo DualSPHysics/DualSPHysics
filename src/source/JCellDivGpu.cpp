@@ -97,9 +97,11 @@ void JCellDivGpu::FreeMemoryNct(){
 //==============================================================================
 void JCellDivGpu::FreeMemoryAll(){
   FreeMemoryNct();
-  cudaFree(CellPart);  CellPart=NULL;
-  cudaFree(SortPart);  SortPart=NULL;
-  cudaFree(AuxMem);    AuxMem=NULL; 
+  cudaFree(CellPart);   CellPart=NULL;
+  cudaFree(SortPart);   SortPart=NULL;
+  cudaFree(AuxMem);     AuxMem=NULL;
+  cudaFree(SortPart2);  SortPart2=NULL; //<vs_flexstruc>
+  cudaFree(SortIdx);    SortIdx=NULL;   //<vs_flexstruc>
   MemAllocGpuNp=0;
   BoundDivideOk=false;
 }

@@ -32,7 +32,6 @@
 #pragma warning(disable : 4244) //Cancels "warning C4244: conversion from 'unsigned __int64' to 'unsigned int', possible loss of data"
 #include <thrust/device_vector.h>
 #include <thrust/sort.h>
-#include <thrust/gather.h>
 
 namespace cudiv{
 #include "FunctionsBasic_iker.h"

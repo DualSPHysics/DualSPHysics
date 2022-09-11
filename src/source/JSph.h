@@ -74,14 +74,14 @@ class JDsMooredFloatings;
 class JDsFtForcePoints;
 class JSphInOut;
 class JSphBoundCorr;
-class JSphFlexStruc; //<vs_flexstruc>
+class JSphFlexStruc;  //<vs_flexstruc>
 class JDsPartsInit;
 class JDsPips;
 class JLinearValue;
 class JCaseEParms;
 class JDataArrays;
 class JNumexLib;
-class JFtMotionSave; //<vs_ftmottionsv>
+class JFtMotionSave;  //<vs_ftmottionsv>
 class JDsExtraDataSave;
 
 //##############################################################################
