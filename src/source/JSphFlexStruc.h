@@ -16,10 +16,10 @@
  You should have received a copy of the GNU General Public License, along with DualSPHysics. If not, see <http://www.gnu.org/licenses/>.
 */
 
-/// \file JSphFlexibleStructure.h \brief Declares the class \ref JSphFlexibleStructure.
+/// \file JSphFlexStruc.h \brief Declares the class \ref JSphFlexStruc.
 
-#ifndef _JSphFlexibleStructure_
-#define _JSphFlexibleStructure_
+#ifndef _JSphFlexStruc_
+#define _JSphFlexStruc_
 
 #include "JObject.h"
 #include "DualSphDef.h"
@@ -30,10 +30,10 @@ class TiXmlElement;
 class JSphMk;
 
 //##############################################################################
-//# JSphFlexibleStructureBody
+//# JSphFlexStrucBody
 //##############################################################################
 /// \brief Manages the info of a single flexible structure.
-class JSphFlexibleStructureBody : protected JObject
+class JSphFlexStrucBody : protected JObject
 {
 private:
   JLog2* Log;
@@ -57,8 +57,8 @@ public:
   const unsigned IdBody;
   const word MkBound;
 
-  JSphFlexibleStructureBody(unsigned idbody,word mkbound,float particlevolume,float density,double youngmod,double poissratio,TpConstitModel constitmodel,float hgfactor);
-  ~JSphFlexibleStructureBody();
+  JSphFlexStrucBody(unsigned idbody,word mkbound,float particlevolume,float density,double youngmod,double poissratio,TpConstitModel constitmodel,float hgfactor);
+  ~JSphFlexStrucBody();
   void ConfigBoundCode(typecode boundcode);
 
   typecode GetBoundCode()const{ return(BoundCode); }
@@ -75,17 +75,17 @@ public:
 };
 
 //##############################################################################
-//# JSphFlexibleStructure
+//# JSphFlexStruc
 //##############################################################################
 /// \brief Manages the info of flexible structures.
-class JSphFlexibleStructure : protected JObject
+class JSphFlexStruc : protected JObject
 {
 private:
   JLog2* Log;
   const bool Simulate2D;
   const double Dp;       ///<Initial distance between particles [m].
 
-  std::vector<JSphFlexibleStructureBody*> List;     ///<List of flexible structure bodies.
+  std::vector<JSphFlexStrucBody*> List;     ///<List of flexible structure bodies.
 
   void Reset();
   bool ExistMk(word mkbound)const;
@@ -95,11 +95,11 @@ private:
 
 public:
 
-  JSphFlexibleStructure(bool simulate2d,double dp,JXml *sxml,const std::string &place,const JSphMk *mkinfo);
-  ~JSphFlexibleStructure();
+  JSphFlexStruc(bool simulate2d,double dp,JXml *sxml,const std::string &place,const JSphMk *mkinfo);
+  ~JSphFlexStruc();
 
   unsigned GetCount()const{ return(unsigned(List.size())); }
-  const JSphFlexibleStructureBody* GetMkBody(unsigned idx)const{ return(idx<GetCount()? List[idx]: NULL); }
+  const JSphFlexStrucBody* GetMkBody(unsigned idx)const{ return(idx<GetCount()?List[idx]:NULL); }
 
   void ConfigCode(unsigned npb,typecode *code);
   void SetDensity(unsigned npb,const typecode *code,float *rhos);

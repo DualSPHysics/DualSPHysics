@@ -74,7 +74,7 @@ class JDsMooredFloatings;
 class JDsFtForcePoints;
 class JSphInOut;
 class JSphBoundCorr;
-class JSphFlexibleStructure; //<vs_flexstruc>
+class JSphFlexStruc; //<vs_flexstruc>
 class JDsPartsInit;
 class JDsPips;
 class JLinearValue;
@@ -345,7 +345,7 @@ protected:
   JSphInOut *InOut;         ///<Object for inlet/outlet conditions.
   JSphBoundCorr *BoundCorr; ///<Object for boundary extrapolated correction (used in combination with InOut).
 
-  JSphFlexibleStructure *FlexStruc; ///<Object for flexible structures. //<vs_flexstruc>
+  JSphFlexStruc *FlexStruc; ///<Object for flexible structures. //<vs_flexstruc>
 
   JFtMotionSave *FtMotSave; ///<Object for saving floating motion data with high frequency. //<vs_ftmottionsv>
 

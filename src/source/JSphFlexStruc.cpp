@@ -16,9 +16,9 @@
  You should have received a copy of the GNU Lesser General Public License along with DualSPHysics. If not, see <http://www.gnu.org/licenses/>.
 */
 
-/// \file JSphFlexibleStructure.cpp \brief Implements the class \ref JSphFlexibleStructure.
+/// \file JSphFlexStruc.cpp \brief Implements the class \ref JSphFlexStruc.
 
-#include "JSphFlexibleStructure.h"
+#include "JSphFlexStruc.h"
 #include "JAppInfo.h"
 #include "JXml.h"
 #include "Functions.h"
@@ -27,16 +27,16 @@
 using namespace std;
 
 //##############################################################################
-//# JSphFlexibleStructureBody
+//# JSphFlexStrucBody
 //##############################################################################
 //==============================================================================
 /// Constructor.
 //==============================================================================
-JSphFlexibleStructureBody::JSphFlexibleStructureBody(
+JSphFlexStrucBody::JSphFlexStrucBody(
     unsigned idbody,word mkbound,float particlevolume,float density,double youngmod,double poissratio,TpConstitModel constitmodel,float hgfactor)
     :Log(AppInfo.LogPtr()),IdBody(idbody),MkBound(mkbound)
 {
-  ClassName="JSphFlexibleStructureBody";
+  ClassName="JSphFlexStrucBody";
   Reset();
   ParticleVolume=particlevolume;
   Density=density;
@@ -77,7 +77,7 @@ JSphFlexibleStructureBody::JSphFlexibleStructureBody(
 //==============================================================================
 /// Destructor.
 //==============================================================================
-JSphFlexibleStructureBody::~JSphFlexibleStructureBody(){
+JSphFlexStrucBody::~JSphFlexStrucBody(){
   DestructorActive=true;
   Reset();
 }
@@ -85,7 +85,7 @@ JSphFlexibleStructureBody::~JSphFlexibleStructureBody(){
 //==============================================================================
 /// Initialisation of variables.
 //==============================================================================
-void JSphFlexibleStructureBody::Reset(){
+void JSphFlexStrucBody::Reset(){
   BoundCode=0;
   ParticleVolume=0;
   Density=0;
@@ -99,22 +99,22 @@ void JSphFlexibleStructureBody::Reset(){
 //==============================================================================
 /// Configures BoundCode.
 //==============================================================================
-void JSphFlexibleStructureBody::ConfigBoundCode(typecode boundcode){
+void JSphFlexStrucBody::ConfigBoundCode(typecode boundcode){
   if(BoundCode)Run_Exceptioon(fun::PrintStr("BoundCode was already configured for mkbound=%u.",MkBound));
   BoundCode=boundcode;
 }
 
 
 //##############################################################################
-//# JSphFlexibleStructure
+//# JSphFlexStruc
 //##############################################################################
 //==============================================================================
 /// Constructor.
 //==============================================================================
-JSphFlexibleStructure::JSphFlexibleStructure(bool simulate2d,double dp,JXml *sxml,const std::string &place,const JSphMk *mkinfo)
+JSphFlexStruc::JSphFlexStruc(bool simulate2d,double dp,JXml *sxml,const std::string &place,const JSphMk *mkinfo)
     :Log(AppInfo.LogPtr()),Simulate2D(simulate2d),Dp(dp)
 {
-  ClassName="JSphFlexibleStructure";
+  ClassName="JSphFlexStruc";
   Reset();
   LoadXml(sxml,place);
   UpdateMkCode(mkinfo);
@@ -123,7 +123,7 @@ JSphFlexibleStructure::JSphFlexibleStructure(bool simulate2d,double dp,JXml *sxm
 //==============================================================================
 /// Destructor.
 //==============================================================================
-JSphFlexibleStructure::~JSphFlexibleStructure(){
+JSphFlexStruc::~JSphFlexStruc(){
   DestructorActive=true;
   Reset();
 }
@@ -131,7 +131,7 @@ JSphFlexibleStructure::~JSphFlexibleStructure(){
 //==============================================================================
 /// Initialisation of variables.
 //==============================================================================
-void JSphFlexibleStructure::Reset(){
+void JSphFlexStruc::Reset(){
   for(unsigned c=0;c<GetCount();c++)delete List[c];
   List.clear();
 }
@@ -139,7 +139,7 @@ void JSphFlexibleStructure::Reset(){
 //==============================================================================
 /// Returns true if mkbound value is already configured.
 //==============================================================================
-bool JSphFlexibleStructure::ExistMk(word mkbound)const{
+bool JSphFlexStruc::ExistMk(word mkbound)const{
   bool ret=false;
   for(unsigned c=0;c<List.size() && !ret;c++)ret=(List[c]->MkBound==mkbound);
   return(ret);
@@ -148,7 +148,7 @@ bool JSphFlexibleStructure::ExistMk(word mkbound)const{
 //==============================================================================
 /// Loads initial conditions of XML object.
 //==============================================================================
-void JSphFlexibleStructure::LoadXml(const JXml *sxml,const std::string &place){
+void JSphFlexStruc::LoadXml(const JXml *sxml,const std::string &place){
   TiXmlNode* node=sxml->GetNodeSimple(place);
   if(!node)Run_Exceptioon(std::string("Cannot find the element \'")+place+"\'.");
   if(sxml->CheckNodeActive(node))ReadXml(sxml,node->ToElement());
@@ -157,10 +157,10 @@ void JSphFlexibleStructure::LoadXml(const JXml *sxml,const std::string &place){
 //==============================================================================
 /// Reads list of initial conditions in the XML node.
 //==============================================================================
-void JSphFlexibleStructure::ReadXml(const JXml *sxml,TiXmlElement* lis){
+void JSphFlexStruc::ReadXml(const JXml *sxml,TiXmlElement* lis){
   //-Loads flexible structure body elements.
   const unsigned idmax=CODE_TYPE_FLEXSTRUCCLAMP_MASK-1;
-  TiXmlElement* ele=lis->FirstChildElement("flexiblestructurebody");
+  TiXmlElement* ele=lis->FirstChildElement("flexstrucbody");
   while(ele){
     if(sxml->CheckElementActive(ele)){
       const unsigned id=GetCount();
@@ -183,17 +183,17 @@ void JSphFlexibleStructure::ReadXml(const JXml *sxml,TiXmlElement* lis){
       else if(!Simulate2D && constitmodel!=CONSTITMODEL_SVK)
         Run_Exceptioon(fun::PrintStr("Constitutive model for body %u is not valid for 3D simulations.",id));
       float hgfactor=sxml->ReadElementFloat(ele,"hgfactor","value",true,0);
-      JSphFlexibleStructureBody* body=new JSphFlexibleStructureBody(id,mkbound,particlevolume,density,youngmod,poissratio,constitmodel,hgfactor);
+      JSphFlexStrucBody* body=new JSphFlexStrucBody(id,mkbound,particlevolume,density,youngmod,poissratio,constitmodel,hgfactor);
       List.push_back(body);
     }
-    ele=ele->NextSiblingElement("flexiblestructurebody");
+    ele=ele->NextSiblingElement("flexstrucbody");
   }
 }
 
 //==============================================================================
 /// Updates BoundCode of each body.
 //==============================================================================
-void JSphFlexibleStructure::UpdateMkCode(const JSphMk *mkinfo){
+void JSphFlexStruc::UpdateMkCode(const JSphMk *mkinfo){
   for(unsigned c=0;c<GetCount();c++){
     const unsigned cmk=mkinfo->GetMkBlockByMkBound(List[c]->MkBound);
     if(cmk<mkinfo->Size() && (CODE_IsMoving(mkinfo->Mkblock(cmk)->Code))){
@@ -207,7 +207,7 @@ void JSphFlexibleStructure::UpdateMkCode(const JSphMk *mkinfo){
 /// Configures particle codings for flexible structures.
 /// Configura codificaciones de partículas para estructuras flexibles.
 //==============================================================================
-void JSphFlexibleStructure::ConfigCode(unsigned npb,typecode *code){
+void JSphFlexStruc::ConfigCode(unsigned npb,typecode *code){
   for(unsigned c=0;c<GetCount();c++){
     typecode bcode=List[c]->GetBoundCode();
     for(unsigned p=0;p<npb;p++){
@@ -220,6 +220,6 @@ void JSphFlexibleStructure::ConfigCode(unsigned npb,typecode *code){
 /// Sets mass density for flexible structures.
 /// Establece la densidad de masa para estructuras flexibles.
 //==============================================================================
-void JSphFlexibleStructure::SetDensity(unsigned npb,const typecode *code,float *rhos){
+void JSphFlexStruc::SetDensity(unsigned npb,const typecode *code,float *rhos){
   for(unsigned p=0;p<npb;p++)rhos[p]=(CODE_IsFlexStrucFlex(code[p])? GetMkBody(CODE_GetIbodyFixedFlexStruc(code[p]))->GetDensity(): 0);
 }

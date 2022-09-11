@@ -38,7 +38,7 @@ set(OBMOORDYN JDsMooredFloatings.cpp JDsFtForcePoints.cpp)
 set(OBINOUT JSphCpu_InOut.cpp JSphCpuSingle_InOut.cpp JSphBoundCorr.cpp JSphInOut.cpp JSphInOutZone.cpp JSphInOutGridData.cpp JSphInOutPoints.cpp JSphInOutVel.cpp JSphInOutVelAwas.cpp JSphInOutZsurf.cpp JSimpleNeigs.cpp)
 set(OBINOUTGPU JSphGpuSingle_InOut.cpp)
 set(OBMDBC JPartNormalData.cpp JNormalsMarrone.cpp)
-set(OBFLEXSTRUC JSphFlexibleStructure.cpp)
+set(OBFLEXSTRUC JSphFlexStruc.cpp)
 
 #------------------------------------------------------------------
 # NVCC Flags

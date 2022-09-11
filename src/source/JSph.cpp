@@ -56,8 +56,8 @@
 #include "JDsInitialize.h"
 #include "JSphInOut.h"
 #include "JSphBoundCorr.h"
-#include "JSphFlexibleStructure.h" //<vs_flexstruc>
-#include "JFtMotionSave.h"  //<vs_ftmottionsv>
+#include "JSphFlexStruc.h" //<vs_flexstruc>
+#include "JFtMotionSave.h" //<vs_ftmottionsv>
 #include "JDsPips.h"
 #include "JLinearValue.h"
 #include "JPartNormalData.h"
@@ -1146,8 +1146,8 @@ void JSph::LoadCaseConfig(const JSphCfgRun *cfg){
 
   //<vs_flexstruc_ini>
   //-Configuration of flexible structures.
-  if(xml.GetNodeSimple("case.execution.special.flexiblestructures",true)){
-    FlexStruc=new JSphFlexibleStructure(Simulate2D,Dp,&xml,"case.execution.special.flexiblestructures",MkInfo);
+  if(xml.GetNodeSimple("case.execution.special.flexstrucs",true)){
+    FlexStruc=new JSphFlexStruc(Simulate2D,Dp,&xml,"case.execution.special.flexstrucs",MkInfo);
     FlexStrucCount=FlexStruc->GetCount();
   }
   //<vs_flexstruc_end>

@@ -43,7 +43,7 @@
 #include "JDsGaugeSystem.h"
 #include "JSphBoundCorr.h"
 #include "JSphInOut.h"
-#include "JSphFlexibleStructure.h"
+#include "JSphFlexStruc.h" //<vs_flexstruc>
 #include "JSphShifting.h"
 #include "JDataArrays.h"
 #include "JVtkLib.h"

@@ -39,7 +39,7 @@
 #include "JSphGpuSimple_ker.h"
 #include "JDsGaugeSystem.h"
 #include "JSphInOut.h"
-#include "JSphFlexibleStructure.h" //<vs_flexstruc>
+#include "JSphFlexStruc.h" //<vs_flexstruc>
 #include "JFtMotionSave.h" //<vs_ftmottionsv>  
 #include "JLinearValue.h"
 #include "JDataArrays.h"
