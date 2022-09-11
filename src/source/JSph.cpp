@@ -2240,6 +2240,12 @@ void JSph::InitRun(unsigned np,const unsigned *idp,const tdouble3 *pos){
     SaveDt->VisuConfig("SaveDt configuration:"," ");
   }
 
+  //-Prepares flexible structures configuration.
+  if(FlexStruc){
+    Log->Printf("Flexible Structures configuration:");
+    FlexStruc->VisuConfig(""," ");
+  }
+
   //-Prepares BoundCorr configuration.
   if(BoundCorr){
     Log->Print("BoundCorr configuration:");

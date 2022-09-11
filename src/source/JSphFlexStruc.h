@@ -67,6 +67,8 @@ public:
   void ConfigBoundCode(typecode boundcode);
   void ConfigClampCode(typecode clampcode);
 
+  void GetConfig(std::vector<std::string> &lines)const;
+
   typecode GetBoundCode()const{ return(BoundCode); }
   typecode GetClampCode()const{ return(ClampCode); }
 
@@ -106,6 +108,8 @@ public:
 
   JSphFlexStruc(bool simulate2d,double dp,JXml *sxml,const std::string &place,const JSphMk *mkinfo);
   ~JSphFlexStruc();
+
+  void VisuConfig(std::string txhead,std::string txfoot);
 
   unsigned GetCount()const{ return(unsigned(List.size())); }
   const JSphFlexStrucBody* GetBody(unsigned idx)const{ return(idx<GetCount()?List[idx]:NULL); }

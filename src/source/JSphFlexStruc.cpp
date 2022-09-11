@@ -20,6 +20,7 @@
 
 #include "JSphFlexStruc.h"
 #include "JAppInfo.h"
+#include "JLog2.h"
 #include "JXml.h"
 #include "Functions.h"
 #include "JSphMk.h"
@@ -111,6 +112,22 @@ void JSphFlexStrucBody::ConfigBoundCode(typecode boundcode){
 void JSphFlexStrucBody::ConfigClampCode(typecode clampcode){
   if(ClampCode)Run_Exceptioon(fun::PrintStr("ClampCode was already configured for mkbound=%u.",MkBound));
   ClampCode=clampcode;
+}
+
+//==============================================================================
+/// Loads lines with configuration information.
+//==============================================================================
+void JSphFlexStrucBody::GetConfig(std::vector<std::string> &lines)const{
+  lines.push_back(fun::PrintStr("    Clamp mkbound: %i",MkClamp));
+  lines.push_back(fun::PrintStr("    Particle volume: %g",GetParticleVolume()));
+  lines.push_back(fun::PrintStr("    Particle mass: %g",GetParticleMass()));
+  lines.push_back(fun::PrintStr("    Density: %g",GetDensity()));
+  lines.push_back(fun::PrintStr("    Young's modulus: %g",GetYoungMod()));
+  lines.push_back(fun::PrintStr("    Poisson ratio: %g",GetPoissRatio()));
+  lines.push_back(fun::PrintStr("    Sound speed: %g",GetSoundSpeed()));
+  lines.push_back(fun::PrintStr("    Hourglass correction factor: %g",GetHgFactor()));
+  std::string cmodelstr=(ConstitModel==CONSTITMODEL_SVK? "St. Venant Kirchhoff" : (ConstitModel==CONSTITMODEL_PlaneStress? "Plane Stress": (ConstitModel==CONSTITMODEL_PlaneStrain? "Plane Strain": "None")));
+  lines.push_back(fun::PrintStr("    Constitutive model: %s",cmodelstr.c_str()));
 }
 
 
@@ -226,6 +243,20 @@ void JSphFlexStruc::ConfigClampCode(const JSphMk *mkinfo){
     }
     else Run_Exceptioon(fun::PrintStr("MkClamp value for mkbound=%u is not a valid Mk boundary.",List[c]->MkBound));
   }
+}
+
+//==============================================================================
+/// Shows object configuration using Log.
+//==============================================================================
+void JSphFlexStruc::VisuConfig(std::string txhead,std::string txfoot){
+  if(!txhead.empty())Log->Print(txhead);
+  for(unsigned c=0;c<GetCount();c++){
+    Log->Printf("  Flexible Structure %u (mkbound:%u):",List[c]->IdBody,List[c]->MkBound);
+    std::vector<std::string> lines;
+    List[c]->GetConfig(lines);
+    Log->Print(lines);
+  }
+  if(!txfoot.empty())Log->Print(txfoot);
 }
 
 //==============================================================================
