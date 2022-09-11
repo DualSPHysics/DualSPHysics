@@ -3223,7 +3223,7 @@ template<TpKernel tker,bool simulate2d> __global__ void KerInteractionForcesFlex
     ,const float4 *poscell,const float4 *velrhop,const typecode *code
     ,const StFlexStrucData *flexstrucdata,const unsigned *flexstrucridp
     ,const float4 *poscell0,const unsigned *numpairs,const unsigned *const *pairidx,const tmatrix3f *kercorr,const tmatrix3f *defgrad
-    ,float3 *ace)
+    ,float *flexstrucdt,float3 *ace)
 {
   const unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Number of thread.
   if(p<n){
@@ -3246,7 +3246,6 @@ template<TpKernel tker,bool simulate2d> __global__ void KerInteractionForcesFlex
       //-Obtains flexible structure data.
       const float vol0p1=flexstrucdata[CODE_GetIbodyFlexStruc(codep1)].vol0;
       const float rho0p1=flexstrucdata[CODE_GetIbodyFlexStruc(codep1)].rho0;
-      const float mass0p1=flexstrucdata[CODE_GetIbodyFlexStruc(codep1)].mass0;
       const float youngmod=flexstrucdata[CODE_GetIbodyFlexStruc(codep1)].youngmod;
       const float poissratio=flexstrucdata[CODE_GetIbodyFlexStruc(codep1)].poissratio;
       const float hgfactor=flexstrucdata[CODE_GetIbodyFlexStruc(codep1)].hgfactor;
@@ -3255,8 +3254,11 @@ template<TpKernel tker,bool simulate2d> __global__ void KerInteractionForcesFlex
       const tmatrix3f pk1kercorrp1=cumath::MulMatrix3x3(pk1p1,kercorrp1);
 
       //-Get current mass of flexible structure particle.
-      const float jacobp1=(simulate2d? cumath::Determinant2x2(defgradp1): cumath::Determinant3x3(defgradp1));
-      const float masssp1=(CODE_IsFlexStrucFlex(codep1)? vol0p1*rho0p1/jacobp1: FLT_MAX);
+      const float mass0p1=vol0p1*rho0p1;
+      const float rhop1=rho0p1/(simulate2d? cumath::Determinant2x2(defgradp1): cumath::Determinant3x3(defgradp1));
+
+      //-Calculate structural speed of sound.
+      const float csp1=sqrt(youngmod*(1.0-poissratio)/(rhop1*(1.0+poissratio)*(1.0-2.0*poissratio)));
 
       //-Obtains neighborhood search limits.
       int ini1,fin1,ini2,fin2,ini3,fin3;
@@ -3288,7 +3290,7 @@ template<TpKernel tker,bool simulate2d> __global__ void KerInteractionForcesFlex
                   //-Velocity derivative (Momentum equation).
                   const float pressp2=cufsph::ComputePressCte(velrhop2.w);
                   const float prs=(pressp1+pressp2)/(velrhop1.w*velrhop2.w)+(tker==KERNEL_Cubic?cufsph::GetKernelCubic_Tensil(rr2,velrhop1.w,pressp1,velrhop2.w,pressp2):0);
-                  const float p_vpm=-prs*CTE.massf*CTE.massf/masssp1;
+                  const float p_vpm=-prs*CTE.massf*CTE.massf/mass0p1;
                   acep1.x+=p_vpm*frx; acep1.y+=p_vpm*fry; acep1.z+=p_vpm*frz;
                 }
               }
@@ -3296,9 +3298,6 @@ template<TpKernel tker,bool simulate2d> __global__ void KerInteractionForcesFlex
           }
         }
       }
-
-      //    //-Calculate structural speed of sound
-      //    const float strucCsp1=sqrtf(young*(1.0f-poisson)/(rhop1*(1.0f+poisson)*(1.0f-2.0f*poisson)));
 
       //-Loop through pairs and calculate forces.
       for(unsigned pair=0;pair<numpairs[pfs1];pair++){
@@ -3350,8 +3349,9 @@ template<TpKernel tker,bool simulate2d> __global__ void KerInteractionForcesFlex
       }
 
       //-Store results.
-      if(acep1.x||acep1.y||acep1.z){
+      if(acep1.x||acep1.y||acep1.z||csp1){
         float3 r=ace[p1]; r.x+=acep1.x; r.y+=acep1.y; r.z+=acep1.z; ace[p1]=r;
+        if(csp1>flexstrucdt[pfs1])flexstrucdt[pfs1]=csp1;
       }
     }
   }
@@ -3364,7 +3364,7 @@ template<TpKernel tker,bool simulate2d> void Interaction_ForcesFlexStrucT(const 
     KerComputeDefGradFlexStruc<tker,simulate2d> <<<sgridb,SPHBSIZE,0,tfs.stm>>>
         (tfs.vnpfs,tfs.poscell,tfs.code,tfs.flexstrucdata,tfs.flexstrucridp,tfs.poscell0,tfs.numpairs,tfs.pairidx,tfs.kercorr,tfs.defgrad);
     KerInteractionForcesFlexStruc<tker,simulate2d> <<<sgridb,SPHBSIZE,0,tfs.stm>>>
-        (tfs.vnpfs,tfs.viscob,dvd.scelldiv,dvd.nc,dvd.cellzero,dvd.beginendcell+dvd.cellfluid,tfs.dcell,tfs.poscell,tfs.velrhop,tfs.code,tfs.flexstrucdata,tfs.flexstrucridp,tfs.poscell0,tfs.numpairs,tfs.pairidx,tfs.kercorr,tfs.defgrad,tfs.ace);
+        (tfs.vnpfs,tfs.viscob,dvd.scelldiv,dvd.nc,dvd.cellzero,dvd.beginendcell+dvd.cellfluid,tfs.dcell,tfs.poscell,tfs.velrhop,tfs.code,tfs.flexstrucdata,tfs.flexstrucridp,tfs.poscell0,tfs.numpairs,tfs.pairidx,tfs.kercorr,tfs.defgrad,tfs.flexstrucdt,tfs.ace);
   }
 }
 

@@ -141,6 +141,11 @@ protected:
   StFtoForces *FtoForces;       ///<Stores forces of floatings [FtCount].
   StFtoForcesRes *FtoForcesRes; ///<Stores data to update floatings [FtCount].
 
+  //<vs_flexstruc_ini>
+  //-Variables for flexible structures.
+  float FlexStrucDtMax;             ///<Maximum value of FlexStrucDt computed in Interaction_ForcesFlexStruc().
+  //<vs_flexstruc_end>
+
   //-Variables for computation of forces | Vars. para computo de fuerzas.
   tfloat3 *Acec;         ///<Sum of interaction forces | Acumula fuerzas de interaccion
   float *Arc; 

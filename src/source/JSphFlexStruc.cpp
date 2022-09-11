@@ -242,6 +242,16 @@ void JSphFlexStruc::ConfigCode(unsigned npb,typecode *code){
 }
 
 //==============================================================================
+/// Get maximum initial sound speed across all flexible structures.
+/// Obtenga la máxima velocidad de sonido inicial en todas las estructuras flexibles.
+//==============================================================================
+double JSphFlexStruc::GetInitialSoundSpeed(){
+  double cs0=0.0;
+  for(unsigned c=0;c<GetCount();c++)cs0=max(cs0,double(List[c]->GetSoundSpeed()));
+  return cs0;
+}
+
+//==============================================================================
 /// Sets mass density for flexible structures.
 /// Establece la densidad de masa para estructuras flexibles.
 //==============================================================================

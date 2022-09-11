@@ -259,7 +259,6 @@ typedef struct{
   typecode clampcode; ///< Code for clamping particles.
   float vol0;         ///< Initial particle volume.
   float rho0;         ///< Initial particle density.
-  float mass0;        ///< Initial particle mass.
   float youngmod;     ///< Young's modulus.
   float poissratio;   ///< Poisson ratio.
   float hgfactor;     ///< Hourglass correction factor.

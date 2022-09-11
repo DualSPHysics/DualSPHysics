@@ -202,6 +202,7 @@ typedef struct StrInterParmsFlexStrucg{
   const unsigned *const *pairidx;
   const tmatrix3f *kercorr;
   //-Output data arrays.
+  float *flexstrucdt;
   tmatrix3f *defgrad;
   float3 *ace;
   //-Other values and objects.
@@ -218,7 +219,7 @@ typedef struct StrInterParmsFlexStrucg{
       ,const unsigned *flexstrucridp_,const float4 *poscell0_
       ,const unsigned *numpairs_,const unsigned *const *pairidx_
       ,const tmatrix3f *kercorr_
-      ,tmatrix3f *defgrad_,float3 *ace_
+      ,float *flexstrucdt_,tmatrix3f *defgrad_,float3 *ace_
       ,cudaStream_t stm_)
   {
     //-Configuration options.
@@ -235,7 +236,7 @@ typedef struct StrInterParmsFlexStrucg{
     numpairs=numpairs_; pairidx=pairidx_;
     kercorr=kercorr_;
     //-Output data arrays.
-    defgrad=defgrad_; ace=ace_;
+    flexstrucdt=flexstrucdt_; defgrad=defgrad_; ace=ace_;
     //-Other values and objects.
     stm=stm_;
   }

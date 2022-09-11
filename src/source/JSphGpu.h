@@ -170,7 +170,7 @@ protected:
   float4 *DemDatag;       ///<Data of the object {mass, (1-poisson^2)/young, kfric, restitu} in GPU [DemObjsSize].
 
   //<vs_flexstruc_ini>
-  //-Variables for flexible structure.
+  //-Variables for flexible structures.
   unsigned NumPairsTot;             ///<Total number of pairs across all flexible structure bodies.
   StFlexStrucData *FlexStrucDatag;  ///<Data for each individual flexible structure body [FlexStruc->GetCount()]
   unsigned *FlexStrucRidpg;         ///<Identifier to access to the particles of the flexible structures [CaseNflexstruc].
@@ -179,7 +179,9 @@ protected:
   unsigned *PairIdxBufferg;         ///<Raw buffer to particle indices [NumPairsTot].
   unsigned **PairIdxg;              ///<List of indices to each initial neighbour [CaseNflexstruc].
   tmatrix3f *KerCorrg;              ///<Kernel correction [CaseNflexstruc].
+  float *FlexStrucDtg;              ///<Structural speed of sound for each flexible structure particle [CaseNflexstruc].
   tmatrix3f *DefGradg;              ///<Deformation gradient tensor [CaseNflexstruc].
+  float FlexStrucDtMax;             ///<Maximum value of FlexStrucDt computed in Interaction_ForcesFlexStruc().
   //<vs_flexstruc_end>
 
   //-Variables for computing forces

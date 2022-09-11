@@ -156,8 +156,8 @@ void JSphGpu::InitVars(){
   FtoInertiaini8g=NULL; FtoInertiaini1g=NULL;//-Management of floating bodies.
   FtObjsOutdated=true;
   DemDatag=NULL; //(DEM)
-  NumPairsTot=0; FlexStrucDatag=NULL; FlexStrucRidpg=NULL; PosCell0g=NULL;          //<vs_flexstruc>
-  NumPairsg=NULL; PairIdxBufferg=NULL; PairIdxg=NULL; KerCorrg=NULL; DefGradg=NULL; //<vs_flexstruc>
+  NumPairsTot=0; FlexStrucDatag=NULL; FlexStrucRidpg=NULL; PosCell0g=NULL; NumPairsg=NULL;                //<vs_flexstruc>
+  PairIdxBufferg=NULL; PairIdxg=NULL; KerCorrg=NULL; FlexStrucDtg=NULL; DefGradg=NULL; FlexStrucDtMax=0;  //<vs_flexstruc>
   GpuParticlesAllocs=0;
   GpuParticlesSize=0;
   MemGpuParticles=MemGpuFixed=0;
@@ -221,6 +221,7 @@ void JSphGpu::FreeGpuMemoryFixed(){
   if(PairIdxBufferg)    cudaFree(PairIdxBufferg);     PairIdxBufferg=NULL;  //<vs_flexstruc>
   if(PairIdxg)          cudaFree(PairIdxg);           PairIdxg=NULL;        //<vs_flexstruc>
   if(KerCorrg)          cudaFree(KerCorrg);           KerCorrg=NULL;        //<vs_flexstruc>
+  if(FlexStrucDtg)      cudaFree(FlexStrucDtg);       FlexStrucDtg=NULL;    //<vs_flexstruc>
   if(DefGradg)          cudaFree(DefGradg);           DefGradg=NULL;        //<vs_flexstruc>
 }
 
@@ -863,6 +864,12 @@ void JSphGpu::PreInteraction_Forces(){
   VelMax=sqrt(velmax);
   cudaMemset(ViscDtg,0,sizeof(float)*Np);           //ViscDtg[]=0
   ViscDtMax=0;
+  //<vs_flexstruc_ini>
+  if(FlexStruc){
+    cudaMemset(FlexStrucDtg,0,sizeof(float)*CaseNflexstruc);  //FlexStrucDtg[]=0
+    FlexStrucDtMax=0;
+  }
+  //<vs_flexstruc_end>
   Timersg->TmStop(TMG_CfPreForces,true);
   Check_CudaErroor("Failed calculating VelMax.");
 }
@@ -1018,10 +1025,15 @@ double JSphGpu::DtVariable(bool final){
   const double dt1=(AceMax? (sqrt(double(KernelH)/AceMax)): DBL_MAX); 
   //-dt2 combines the Courant and the viscous time-step controls.
   const double dt2=double(KernelH)/(max(Cs0,VelMax*10.)+double(KernelH)*ViscDtMax);
+  //-dt3 uses the maximum speed of sound across all structure particles.
+  const double dt3=(FlexStrucDtMax? double(KernelH)/FlexStrucDtMax: DBL_MAX); //<vs_flexstruc>
   //-dt new value of time step.
-  double dt=double(CFLnumber)*min(dt1,dt2);
+  double dt=double(CFLnumber)*min(dt1,min(dt2,dt3));
   if(FixedDt)dt=FixedDt->GetDt(TimeStep,dt);
-  if(fun::IsNAN(dt) || fun::IsInfinity(dt))Run_Exceptioon(fun::PrintStr("The computed Dt=%f (from AceMax=%f, VelMax=%f, ViscDtMax=%f) is NaN or infinity at nstep=%u.",dt,AceMax,VelMax,ViscDtMax,Nstep));
+  if(fun::IsNAN(dt) || fun::IsInfinity(dt)){
+    if(FlexStruc)Run_Exceptioon(fun::PrintStr("The computed Dt=%f (from AceMax=%f, VelMax=%f, ViscDtMax=%f, FlexStrucDtMax=%f) is NaN or infinity at nstep=%u.",dt,AceMax,VelMax,ViscDtMax,FlexStrucDtMax,Nstep));
+    else         Run_Exceptioon(fun::PrintStr("The computed Dt=%f (from AceMax=%f, VelMax=%f, ViscDtMax=%f) is NaN or infinity at nstep=%u.",dt,AceMax,VelMax,ViscDtMax,Nstep));
+  }
   if(dt<double(DtMin)){ 
     dt=double(DtMin); DtModif++;
     if(DtModif>=DtModifWrn){
@@ -1034,7 +1046,7 @@ double JSphGpu::DtVariable(bool final){
     if(PartDtMin>dt)PartDtMin=dt;
     if(PartDtMax<dt)PartDtMax=dt;
     //-Saves detailed information about dt in SaveDt object.
-    if(SaveDt)SaveDt->AddValues(TimeStep,dt,dt1*CFLnumber,dt2*CFLnumber,AceMax,ViscDtMax,VelMax);
+    if(SaveDt)SaveDt->AddValues(TimeStep,dt,dt1*CFLnumber,dt2*CFLnumber,AceMax,ViscDtMax,FlexStrucDtMax,VelMax);
   }
   return(dt);
 }

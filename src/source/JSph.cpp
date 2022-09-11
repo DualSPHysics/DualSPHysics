@@ -246,6 +246,7 @@ void JSph::InitVars(){
   WithFloating=false;
 
   FlexStrucCount=0; //<vs_flexstruc>
+  FlexStrucCs0=0;   //<vs_flexstruc>
 
   AllocMemoryFloating(0,false);
 
@@ -1149,6 +1150,11 @@ void JSph::LoadCaseConfig(const JSphCfgRun *cfg){
   if(xml.GetNodeSimple("case.execution.special.flexstrucs",true)){
     FlexStruc=new JSphFlexStruc(Simulate2D,Dp,&xml,"case.execution.special.flexstrucs",MkInfo);
     FlexStrucCount=FlexStruc->GetCount();
+    FlexStrucCs0=FlexStruc->GetInitialSoundSpeed();
+    if(!CaseNfluid||FlexStrucCs0>Cs0){
+      DtIni=KernelH/FlexStrucCs0;
+      DtMin=(KernelH/FlexStrucCs0)*CoefDtMin;
+    }
   }
   //<vs_flexstruc_end>
 

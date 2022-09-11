@@ -60,7 +60,7 @@ void JDsSaveDt::Reset(){
   LastInterval=0;
   memset(&ValueNull,0,sizeof(StValue));
   LastDtf=LastDt1=LastDt2=ValueNull;
-  LastAceMax=LastViscDtMax=LastVelMax=ValueNull;
+  LastAceMax=LastViscDtMax=LastFlexStrucDtMax=LastVelMax=ValueNull;
   CountAllDts=0;
 }
 
@@ -141,9 +141,10 @@ void JDsSaveDt::SaveFileValues(){
     v=Dt1[c];        scsv << v.vmean << v.vmin << v.vmax;
     v=Dt2[c];        scsv << v.vmean << v.vmin << v.vmax;
     if(FullInfo){
-      v=AceMax[c];     scsv << v.vmean << v.vmin << v.vmax;
-      v=ViscDtMax[c];  scsv << v.vmean << v.vmin << v.vmax;
-      v=VelMax[c];     scsv << v.vmean << v.vmin << v.vmax;
+      v=AceMax[c];          scsv << v.vmean << v.vmin << v.vmax;
+      v=ViscDtMax[c];       scsv << v.vmean << v.vmin << v.vmax;
+      v=FlexStrucDtMax[c];  scsv << v.vmean << v.vmin << v.vmax;  //<vs_flexstruc>
+      v=VelMax[c];          scsv << v.vmean << v.vmin << v.vmax;
     }
     scsv << jcsv::Endl();
   }
@@ -214,8 +215,9 @@ void JDsSaveDt::AddLastValues(){
   if(FullInfo){
     AceMax[Count]=LastAceMax;
     ViscDtMax[Count]=LastViscDtMax;
+    FlexStrucDtMax[Count]=LastFlexStrucDtMax; //<vs_flexstruc>
     VelMax[Count]=LastVelMax;
-    LastAceMax=LastViscDtMax=LastVelMax=ValueNull;
+    LastAceMax=LastViscDtMax=LastFlexStrucDtMax=LastVelMax=ValueNull;
   }
   Count++;
 }
@@ -224,7 +226,7 @@ void JDsSaveDt::AddLastValues(){
 /// Saves indicated info for dt. If it matches with timestep.
 /// Guarda info del dt inicado. Si coincide timestep lo sobre
 //==============================================================================
-void JDsSaveDt::AddValues(double timestep,double dtfinal,double dt1,double dt2,double acemax,double viscdtmax,double velmax){
+void JDsSaveDt::AddValues(double timestep,double dtfinal,double dt1,double dt2,double acemax,double viscdtmax,double flexstrucdtmax,double velmax){
   if(TimeStart<=timestep && timestep<=TimeFinish){
     unsigned interval=unsigned((timestep-TimeStart)/TimeInterval);
     if(LastInterval!=interval && LastDtf.num){
@@ -238,6 +240,7 @@ void JDsSaveDt::AddValues(double timestep,double dtfinal,double dt1,double dt2,d
     if(FullInfo){
       AddValueData(timestep,acemax,LastAceMax);
       AddValueData(timestep,viscdtmax,LastViscDtMax);
+      AddValueData(timestep,flexstrucdtmax,LastFlexStrucDtMax); //<vs_flexstruc>
       AddValueData(timestep,velmax,LastVelMax);
     }
     //-Management of AllDt.

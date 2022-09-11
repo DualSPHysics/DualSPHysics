@@ -472,7 +472,7 @@ void JSphGpuSingle::Interaction_Forces(TpInterStep interstep){
     const StInterParmsFlexStrucg parmsfs=StrInterParmsFlexStrucg(Simulate2D,TKernel
         ,Visco*ViscoBoundFactor,CaseNflexstruc,DivData,Dcellg
         ,PosCellg,Velrhopg,Codeg
-        ,FlexStrucDatag,FlexStrucRidpg,PosCell0g,NumPairsg,PairIdxg,KerCorrg,DefGradg,Aceg,NULL);
+        ,FlexStrucDatag,FlexStrucRidpg,PosCell0g,NumPairsg,PairIdxg,KerCorrg,FlexStrucDtg,DefGradg,Aceg,NULL);
     cusph::Interaction_ForcesFlexStruc(parmsfs);
   }
   //<vs_flexstruc_end>
@@ -492,7 +492,10 @@ void JSphGpuSingle::Interaction_Forces(TpInterStep interstep){
   //-Calculates maximum value of ViscDt.
   if(Np)ViscDtMax=cusph::ReduMaxFloat(Np,0,ViscDtg,CellDivSingle->GetAuxMem(cusph::ReduMaxFloatSize(Np)));
   //-Calculates maximum value of Ace (periodic particles are ignored). ViscDtg is used like auxiliary memory.
-  AceMax=ComputeAceMax(ViscDtg); 
+  AceMax=ComputeAceMax(ViscDtg);
+
+  //-Calculates maximum value of FlexStrucDt.
+  if(CaseNflexstruc)FlexStrucDtMax=cusph::ReduMaxFloat(CaseNflexstruc,0,FlexStrucDtg,CellDivSingle->GetAuxMem(cusph::ReduMaxFloatSize(CaseNflexstruc)));
 
   Timersg->TmStop(TMG_CfForces,true);
   Check_CudaErroor("Failed in reduction of viscdt.");
@@ -519,10 +522,10 @@ void JSphGpuSingle::MdbcBoundCorrection(){
 double JSphGpuSingle::ComputeAceMax(float *auxmem){
   const bool check=(PeriActive!=0 || InOut!=NULL);
   float acemax=0;
-  const unsigned npf=Np-Npb;
-  if(!check)cusph::ComputeAceMod(npf,Aceg+Npb,auxmem);//-Without periodic conditions. | Sin condiciones periodicas.
-  else cusph::ComputeAceMod(npf,Codeg+Npb,Aceg+Npb,auxmem);//-With periodic conditions ignores the periodic particles. | Con condiciones periodicas ignora las particulas periodicas.
-  if(npf)acemax=cusph::ReduMaxFloat(npf,0,auxmem,CellDivSingle->GetAuxMem(cusph::ReduMaxFloatSize(npf)));
+  const unsigned pini=(CaseNflexstruc? 0: Npb);
+  if(!check)cusph::ComputeAceMod(Np-pini,Aceg+pini,auxmem);//-Without periodic conditions. | Sin condiciones periodicas.
+  else cusph::ComputeAceMod(Np-pini,Codeg+pini,Aceg+pini,auxmem);//-With periodic conditions ignores the periodic particles. | Con condiciones periodicas ignora las particulas periodicas.
+  if(Np-pini)acemax=cusph::ReduMaxFloat(Np-pini,0,auxmem,CellDivSingle->GetAuxMem(cusph::ReduMaxFloatSize(Np-pini)));
   return(sqrt(double(acemax)));
 }
 
@@ -993,7 +996,6 @@ void JSphGpuSingle::FlexStrucInit(){
     flexstrucdata[c].clampcode=FlexStruc->GetBody(c)->GetClampCode();
     flexstrucdata[c].vol0=FlexStruc->GetBody(c)->GetParticleVolume();
     flexstrucdata[c].rho0=FlexStruc->GetBody(c)->GetDensity();
-    flexstrucdata[c].mass0=FlexStruc->GetBody(c)->GetParticleMass();
     flexstrucdata[c].youngmod=FlexStruc->GetBody(c)->GetYoungMod();
     flexstrucdata[c].poissratio=FlexStruc->GetBody(c)->GetPoissRatio();
     flexstrucdata[c].hgfactor=FlexStruc->GetBody(c)->GetHgFactor();
@@ -1014,6 +1016,7 @@ void JSphGpuSingle::FlexStrucInit(){
   m=sizeof(unsigned)*CaseNflexstruc;        cudaMalloc((void**)&NumPairsg,        m);  MemGpuFixed+=m;
   m=sizeof(unsigned*)*CaseNflexstruc;       cudaMalloc((void**)&PairIdxg,         m);  MemGpuFixed+=m;
   m=sizeof(tmatrix3f)*CaseNflexstruc;       cudaMalloc((void**)&KerCorrg,         m);  MemGpuFixed+=m;
+  m=sizeof(float)*CaseNflexstruc;           cudaMalloc((void**)&FlexStrucDtg,     m);  MemGpuFixed+=m;
   m=sizeof(tmatrix3f)*CaseNflexstruc;       cudaMalloc((void**)&DefGradg,         m);  MemGpuFixed+=m;
   //-Calculate array for indexing into flexible structure particles.
   cusph::CalcFlexStrucRidp(Npb,Codeg,FlexStrucRidpg);
@@ -1039,7 +1042,7 @@ void JSphGpuSingle::FlexStrucInit(){
   const StInterParmsFlexStrucg parmsfs=StrInterParmsFlexStrucg(Simulate2D,TKernel
       ,Visco*ViscoBoundFactor,CaseNflexstruc,DivData,Dcellg
       ,PosCellg,Velrhopg,Codeg
-      ,FlexStrucDatag,FlexStrucRidpg,PosCell0g,NumPairsg,PairIdxg,KerCorrg,DefGradg,Aceg,NULL);
+      ,FlexStrucDatag,FlexStrucRidpg,PosCell0g,NumPairsg,PairIdxg,KerCorrg,FlexStrucDtg,DefGradg,Aceg,NULL);
   //-Calculate kernel correction for each structure particle.
   cusph::CalcFlexStrucKerCorr(parmsfs);
 }

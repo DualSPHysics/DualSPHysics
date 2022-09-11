@@ -24,6 +24,8 @@
 #include "JObject.h"
 #include "DualSphDef.h"
 
+#include <cmath>
+
 class JLog2;
 class JXml;
 class TiXmlElement;
@@ -76,6 +78,7 @@ public:
 
   float GetParticleMass()const{ return GetParticleVolume()*GetDensity(); };
   tmatrix6f GetConstitMatrix()const{ return ConstitMatrix; };
+  float GetSoundSpeed()const{ return sqrt(GetYoungMod()*(1.0-GetPoissRatio())/(GetDensity()*(1.0+GetPoissRatio())*(1.0-2.0*GetPoissRatio()))); }
 
 };
 
@@ -108,6 +111,7 @@ public:
   const JSphFlexStrucBody* GetBody(unsigned idx)const{ return(idx<GetCount()?List[idx]:NULL); }
 
   void ConfigCode(unsigned npb,typecode *code);
+  double GetInitialSoundSpeed();
   void SetDensity(unsigned npb,const typecode *code,float *rhos);
 };
 
