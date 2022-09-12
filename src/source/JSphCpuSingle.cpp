@@ -132,11 +132,11 @@ void JSphCpuSingle::ConfigDomain(){
   LoadCodeParticles(Np,Idpc,Codec);
 
   //-Load normals for boundary particles (fixed and moving).
-  if(UseNormals)LoadBoundNormals(Np,Npb,Idpc,Codec,BoundNormalc);
+  if(Use_Normals)LoadBoundNormals(Np,Npb,Idpc,Codec,BoundNormalc);
 
   //-Runs initialization operations from XML.
   RunInitialize(Np,Npb,Posc,Idpc,Codec,Velrhopc,BoundNormalc);
-  if(UseNormals)ConfigBoundNormals(Np,Npb,Posc,Idpc,BoundNormalc);
+  if(Use_Normals)ConfigBoundNormals(Np,Npb,Posc,Idpc,BoundNormalc);
 
   //-Creates PartsInit object with initial particle data for automatic configurations.
   CreatePartsInit(Np,Posc,Codec);
@@ -414,7 +414,7 @@ void JSphCpuSingle::RunPeriodic(){
               if((PosPrec || VelrhopPrec) && (!PosPrec || !VelrhopPrec))Run_Exceptioon("Symplectic data is invalid.") ;
               PeriodicDuplicateSymplectic(count,Np,DomCells,perinc,listp,Idpc,Codec,Dcellc,Posc,Velrhopc,SpsTauc,PosPrec,VelrhopPrec);
             }
-            if(UseNormals)PeriodicDuplicateNormals(count,Np,DomCells,perinc,listp,BoundNormalc,MotionVelc);
+            if(Use_Normals)PeriodicDuplicateNormals(count,Np,DomCells,perinc,listp,BoundNormalc,MotionVelc);
 
             //-Free the list and update the number of particles. | Libera lista y actualiza numero de particulas.
             ArraysCpu->Free(listp); listp=NULL;
@@ -461,7 +461,7 @@ void JSphCpuSingle::RunCellDivide(bool updateperiodic){
     CellDivSingle->SortArray(VelrhopPrec);
   }
   if(TVisco==VISCO_LaminarSPS)CellDivSingle->SortArray(SpsTauc);
-  if(UseNormals){
+  if(Use_Normals){
     CellDivSingle->SortArray(BoundNormalc);
     if(MotionVelc)CellDivSingle->SortArray(MotionVelc);
   }
@@ -984,6 +984,19 @@ void JSphCpuSingle::RunFloating(double dt,bool predictor){
         FtObjs[cf].faceang=(fomega-FtObjs[cf].fomega)/float(dt);
         FtObjs[cf].fvel=fvel;
         FtObjs[cf].fomega=fomega;
+        //-Updates floating normals for mDBC.
+        if(Use_NormalsFt){
+          const tdouble3 dang=ToTDouble3(FtObjs[cf].angles-fobj.angles)*TODEG;
+          const tdouble3 cen=FtObjs[cf].center;
+          JMatrix4d mat;
+          mat.Move(cen);
+          mat.Rotate(dang);
+          mat.Move(fobj.center*-1);
+          for(unsigned fp=fpini;fp<fpfin;fp++){
+            const int p=FtRidp[fp];
+            if(p!=UINT_MAX)BoundNormalc[p]=ToTFloat3(mat.MulNormal(ToTDouble3(BoundNormalc[p])));
+          }
+        }
         //<vs_ftmottionsv_ini>
         if(FtMotSave && FtMotSave->CheckTime(TimeStep+dt))
           FtMotSave->SaveFtDataCpu(TimeStep+dt,Nstep+1,FtObjs,Np,Posc,FtRidp);
@@ -1156,7 +1169,7 @@ void JSphCpuSingle::SaveData(){
   ArraysCpu->Free(pos);
   ArraysCpu->Free(vel);
   ArraysCpu->Free(rhop);
-  if(UseNormals && SvNormals)SaveVtkNormals("normals/Normals.vtk",Part,npsave,Npb,Posc,Idpc,BoundNormalc,1.f);
+  if(Use_Normals && SvNormals)SaveVtkNormals("normals/Normals.vtk",Part,npsave,Npb,Posc,Idpc,BoundNormalc,1.f);
   //-Save extra data.
   if(SvExtraDataBi4)SaveExtraData();
   Timersc->TmStop(TMC_SuSavePart);
@@ -1172,7 +1185,7 @@ void JSphCpuSingle::SaveExtraData(){
     SvExtraDataBi4->InitPartData(Part,TimeStep,Nstep);
     //-Saves normals of mDBC.
     if(BoundNormalc){
-      SvExtraDataBi4->AddNormals(UseNormalsFt,Np,Npb,Idpc,(PeriActive? Codec: NULL),BoundNormalc);
+      SvExtraDataBi4->AddNormals(Use_NormalsFt,Np,Npb,Idpc,(PeriActive? Codec: NULL),BoundNormalc);
     }
     //-Saves file.
     SvExtraDataBi4->SavePartData();

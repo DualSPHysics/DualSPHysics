@@ -338,7 +338,7 @@ void JSphGpu::AllocGpuMemoryParticles(unsigned np,float over){
   if(Shifting){
     ArraysGpu->AddArrayCount(JArraysGpu::SIZE_16B,1); //-shiftposfs
   }
-  if(UseNormals){
+  if(Use_Normals){
     ArraysGpu->AddArrayCount(JArraysGpu::SIZE_12B,1); //-BoundNormal
     if(SlipMode!=SLIP_Vel0)ArraysGpu->AddArrayCount(JArraysGpu::SIZE_12B,1); //-MotionVel
   }
@@ -466,7 +466,7 @@ void JSphGpu::ReserveBasicArraysGpu(){
   Velrhopg=ArraysGpu->ReserveFloat4();
   if(TStep==STEP_Verlet)VelrhopM1g=ArraysGpu->ReserveFloat4();
   if(TVisco==VISCO_LaminarSPS)SpsTaug=ArraysGpu->ReserveSymatrix3f();
-  if(UseNormals){
+  if(Use_Normals){
     BoundNormalg=ArraysGpu->ReserveFloat3();
     if(SlipMode!=SLIP_Vel0)MotionVelg=ArraysGpu->ReserveFloat3();
   }
@@ -566,7 +566,7 @@ void JSphGpu::ParticlesDataUp(unsigned n,const tfloat3 *boundnormal){
   cudaMemcpy(Posxyg  ,Posxy  ,sizeof(double2)*n ,cudaMemcpyHostToDevice);
   cudaMemcpy(Poszg   ,Posz   ,sizeof(double)*n  ,cudaMemcpyHostToDevice);
   cudaMemcpy(Velrhopg,Velrhop,sizeof(float4)*n  ,cudaMemcpyHostToDevice);
-  if(UseNormals)cudaMemcpy(BoundNormalg,boundnormal,sizeof(float3)*n,cudaMemcpyHostToDevice);
+  if(Use_Normals)cudaMemcpy(BoundNormalg,boundnormal,sizeof(float3)*n,cudaMemcpyHostToDevice);
   Check_CudaErroor("Failed copying data to GPU.");
 }
 
@@ -1102,7 +1102,7 @@ void JSphGpu::SaveVtkNormalsGpu(std::string filename,int numfile,unsigned np,uns
   ,const double2 *posxyg,const double *poszg,const unsigned *idpg,const float3 *boundnormalg)
 {
   //-Allocates memory.
-  unsigned n=npb;
+  const unsigned n=(Use_NormalsFt? np: npb);
   tdouble3 *pos=fcuda::ToHostPosd3(0,n,posxyg,poszg);
   unsigned *idp=fcuda::ToHostUint(0,n,idpg);
   tfloat3  *nor=fcuda::ToHostFloat3(0,n,boundnormalg);

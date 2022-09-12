@@ -175,7 +175,7 @@ void JSphCpu::AllocCpuMemoryParticles(unsigned np,float over){
   if(Shifting){
     ArraysCpu->AddArrayCount(JArraysCpu::SIZE_16B,1); //-shiftposfs
   }
-  if(UseNormals){
+  if(Use_Normals){
     ArraysCpu->AddArrayCount(JArraysCpu::SIZE_12B,1); //-BoundNormal
     if(SlipMode!=SLIP_Vel0)ArraysCpu->AddArrayCount(JArraysCpu::SIZE_12B,1); //-MotionVel
   }
@@ -287,7 +287,7 @@ void JSphCpu::ReserveBasicArraysCpu(){
   Velrhopc=ArraysCpu->ReserveFloat4();
   if(TStep==STEP_Verlet)VelrhopM1c=ArraysCpu->ReserveFloat4();
   if(TVisco==VISCO_LaminarSPS)SpsTauc=ArraysCpu->ReserveSymatrix3f();
-  if(UseNormals){
+  if(Use_Normals){
     BoundNormalc=ArraysCpu->ReserveFloat3();
     if(SlipMode!=SLIP_Vel0)MotionVelc=ArraysCpu->ReserveFloat3();
   }
@@ -1196,7 +1196,7 @@ template<TpKernel tker,bool sim2d,TpSlipMode tslip> void JSphCpu::InteractionMdb
 {
   const float determlimit=1e-3f;
   //-Interaction GhostBoundaryNodes-Fluid.
-  unsigned n=NpbOk;
+  const unsigned n=(Use_NormalsFt? Np: NpbOk);
   if(Simulate2D){ const bool sim2d=true;
     if(slipmode==SLIP_Vel0    )InteractionMdbcCorrectionT2 <tker,sim2d,SLIP_Vel0    > (n,divdata,determlimit,MdbcThreshold,pos,code,idp,boundnormal,motionvel,velrhop);
     if(slipmode==SLIP_NoSlip  )InteractionMdbcCorrectionT2 <tker,sim2d,SLIP_NoSlip  > (n,divdata,determlimit,MdbcThreshold,pos,code,idp,boundnormal,motionvel,velrhop);
