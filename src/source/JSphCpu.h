@@ -143,6 +143,16 @@ protected:
 
   //<vs_flexstruc_ini>
   //-Variables for flexible structures.
+  unsigned NumPairsTot;             ///<Total number of pairs across all flexible structure bodies.
+  StFlexStrucData *FlexStrucDatac;  ///<Data for each individual flexible structure body [FlexStruc->GetCount()]
+  unsigned *FlexStrucRidpc;         ///<Identifier to access to the particles of the flexible structures [CaseNflexstruc].
+  tfloat4 *PosCell0c;               ///<Relative initial position and cell coordinates {posx,posy,posz,cellxyz} [CaseNflexstruc].
+  unsigned *NumPairsc;              ///<Number of initial neighbours [CaseNflexstruc].
+  unsigned *PairIdxBufferc;         ///<Raw buffer to particle indices [NumPairsTot].
+  unsigned **PairIdxc;              ///<List of indices to each initial neighbour [CaseNflexstruc].
+  tmatrix3f *KerCorrc;              ///<Kernel correction [CaseNflexstruc].
+  float *FlexStrucDtc;              ///<Structural speed of sound for each flexible structure particle [CaseNflexstruc].
+  tmatrix3f *DefGradc;              ///<Deformation gradient tensor [CaseNflexstruc].
   float FlexStrucDtMax;             ///<Maximum value of FlexStrucDt computed in Interaction_ForcesFlexStruc().
   //<vs_flexstruc_end>
 

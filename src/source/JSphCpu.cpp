@@ -94,6 +94,8 @@ void JSphCpu::InitVars(){
   FtRidp=NULL;
   FtoForces=NULL;
   FtoForcesRes=NULL;
+  NumPairsTot=0; FlexStrucDatac=NULL; FlexStrucRidpc=NULL; PosCell0c=NULL; NumPairsc=NULL;                //<vs_flexstruc>
+  PairIdxBufferc=NULL; PairIdxc=NULL; KerCorrc=NULL; FlexStrucDtc=NULL; DefGradc=NULL; FlexStrucDtMax=0;  //<vs_flexstruc>
   FreeCpuMemoryParticles();
   FreeCpuMemoryFixed();
 }
@@ -104,10 +106,19 @@ void JSphCpu::InitVars(){
 //==============================================================================
 void JSphCpu::FreeCpuMemoryFixed(){
   MemCpuFixed=0;
-  delete[] RidpMove;     RidpMove=NULL;
-  delete[] FtRidp;       FtRidp=NULL;
-  delete[] FtoForces;    FtoForces=NULL;
-  delete[] FtoForcesRes; FtoForcesRes=NULL;
+  delete[] RidpMove;        RidpMove=NULL;
+  delete[] FtRidp;          FtRidp=NULL;
+  delete[] FtoForces;       FtoForces=NULL;
+  delete[] FtoForcesRes;    FtoForcesRes=NULL;
+  delete[] FlexStrucDatac;  FlexStrucDatac=NULL;  //<vs_flexstruc>
+  delete[] FlexStrucRidpc;  FlexStrucRidpc=NULL;  //<vs_flexstruc>
+  delete[] PosCell0c;       PosCell0c=NULL;       //<vs_flexstruc>
+  delete[] NumPairsc;       NumPairsc=NULL;       //<vs_flexstruc>
+  delete[] PairIdxBufferc;  PairIdxBufferc=NULL;  //<vs_flexstruc>
+  delete[] PairIdxc;        PairIdxc=NULL;        //<vs_flexstruc>
+  delete[] KerCorrc;        KerCorrc=NULL;        //<vs_flexstruc>
+  delete[] FlexStrucDtc;    FlexStrucDtc=NULL;    //<vs_flexstruc>
+  delete[] DefGradc;        DefGradc=NULL;        //<vs_flexstruc>
 }
 
 //==============================================================================
@@ -444,6 +455,9 @@ void JSphCpu::PreInteractionVars_Forces(unsigned np,unsigned npb){
   //-Adds variable acceleration from input configuration.
   if(AccInput)AccInput->RunCpu(TimeStep,Gravity,npf,npb,Codec,Posc,Velrhopc,Acec);
 
+  //-Initialise deformation gradient tensor.
+  if(DefGradc)memset(DefGradc,0,sizeof(tmatrix3f)*CaseNflexstruc);  //<vs_flexstruc>
+
   //-Prepare press values for interaction.
   const int n=int(np);
   #ifdef OMP_USE
@@ -476,6 +490,12 @@ void JSphCpu::PreInteraction_Forces(){
   const unsigned pini=(DtAllParticles? 0: Npb);
   VelMax=CalcVelMaxOmp(Np-pini,Velrhopc+pini);
   ViscDtMax=0;
+  //<vs_flexstruc_ini>
+  if(FlexStruc){
+    memset(FlexStrucDtc,0,sizeof(float)*CaseNflexstruc);  //FlexStrucDtc[]=0
+    FlexStrucDtMax=0;
+  }
+  //<vs_flexstruc_end>
   Timersc->TmStop(TMC_CfPreForces);
 }
 
@@ -1394,8 +1414,25 @@ void JSphCpu::ComputeVerlet(double dt){
     ComputeVelrhopBound(Velrhopc,dt,VelrhopM1c);
     VerletStep=0;
   }
+  //<vs_flexstruc_ini>
+  //-Computes displacement and velocity for flexible structures.
+//  if(CaseNflexstruc){
+//    Timersg->TmStart(TMG_SuFlexStruc,false);
+//    cusphs::ComputeStepFlexStrucSemiImplicitEuler(CaseNflexstruc,Velrhopg,Codeg,FlexStrucRidpg,Aceg,dt,Gravity,movxyg,movzg,VelrhopM1g,NULL);
+//    Timersg->TmStop(TMG_SuFlexStruc,false);
+//  }
+  //<vs_flexstruc_end>
   //-New values are calculated en VelrhopM1c. | Los nuevos valores se calculan en VelrhopM1c.
   swap(Velrhopc,VelrhopM1c);     //-Swap Velrhopc & VelrhopM1c. | Intercambia Velrhopc y VelrhopM1c.
+  //<vs_flexstruc_ini>
+  //-Applies displacement for flexible structures.
+//  if(CaseNflexstruc){
+//    Timersg->TmStart(TMG_SuFlexStruc,false);
+//    cusph::ComputeStepPosFlexStruc(CaseNflexstruc,FlexStrucRidpg,Posxyg,Poszg,movxyg,movzg,Posxyg,Poszg,Dcellg,Codeg);
+//    BoundChanged=true;
+//    Timersg->TmStop(TMG_SuFlexStruc,false);
+//  }
+  //<vs_flexstruc_end>
   Timersc->TmStop(TMC_SuComputeStep);
 }
 
@@ -1501,6 +1538,17 @@ void JSphCpu::ComputeSymplecticPre(double dt){
   //-Copy previous position of boundary. | Copia posicion anterior del contorno.
   memcpy(Posc,PosPrec,sizeof(tdouble3)*Npb);
 
+  //<vs_flexstruc_ini>
+  //-Applies predictor to flexible structure particles.
+//  if(CaseNflexstruc){
+//    Timersg->TmStart(TMG_SuFlexStruc,false);
+//    cusphs::ComputeStepFlexStrucSymplecticPre(CaseNflexstruc,VelrhopPreg,Codeg,FlexStrucRidpg,Aceg,dt05,Gravity,movxyg,movzg,Velrhopg,NULL);
+//    cusph::ComputeStepPosFlexStruc(CaseNflexstruc,FlexStrucRidpg,PosxyPreg,PoszPreg,movxyg,movzg,Posxyg,Poszg,Dcellg,Codeg);
+//    BoundChanged=true;
+//    Timersg->TmStop(TMG_SuFlexStruc,false);
+//  }
+  //<vs_flexstruc_end>
+
   Timersc->TmStop(TMC_SuComputeStep);
 }
 
@@ -1596,6 +1644,17 @@ void JSphCpu::ComputeSymplecticCorr(double dt){
       else Posc[p]=PosPrec[p]; //-Copy position of floating particles.
     }
   }
+
+  //<vs_flexstruc_ini>
+  //-Applies corrector to flexible structure particles.
+//  if(CaseNflexstruc){
+//    Timersg->TmStart(TMG_SuFlexStruc,false);
+//    cusphs::ComputeStepFlexStrucSymplecticCor(CaseNflexstruc,VelrhopPreg,Codeg,FlexStrucRidpg,Aceg,dt05,dt,Gravity,movxyg,movzg,Velrhopg,NULL);
+//    cusph::ComputeStepPosFlexStruc(CaseNflexstruc,FlexStrucRidpg,PosxyPreg,PoszPreg,movxyg,movzg,Posxyg,Poszg,Dcellg,Codeg);
+//    BoundChanged=true;
+//    Timersg->TmStop(TMG_SuFlexStruc,false);
+//  }
+  //<vs_flexstruc_end>
  
   //-Frees memory allocated for the displacement.
   ArraysCpu->Free(movc);   movc=NULL;
@@ -1617,11 +1676,16 @@ double JSphCpu::DtVariable(bool final){
   const double dt1=(AceMax? (sqrt(double(KernelH)/AceMax)): DBL_MAX); 
   //-dt2 combines the Courant and the viscous time-step controls.
   const double dt2=double(KernelH)/(max(Cs0,VelMax*10.)+double(KernelH)*ViscDtMax);
+  //-dt3 uses the maximum speed of sound across all structure particles.
+  const double dt3=(FlexStrucDtMax? double(KernelH)/FlexStrucDtMax: DBL_MAX); //<vs_flexstruc>
   //-dt new value of time step.
-  double dt=double(CFLnumber)*min(dt1,dt2);
+  double dt=double(CFLnumber)*min(dt1,min(dt2,dt3));
   if(FixedDt)dt=FixedDt->GetDt(TimeStep,dt);
-  if(fun::IsNAN(dt) || fun::IsInfinity(dt))Run_Exceptioon(fun::PrintStr("The computed Dt=%f (from AceMax=%f, VelMax=%f, ViscDtMax=%f) is NaN or infinity at nstep=%u.",dt,AceMax,VelMax,ViscDtMax,Nstep));
-  if(dt<double(DtMin)){ 
+  if(fun::IsNAN(dt) || fun::IsInfinity(dt)){
+    if(FlexStruc)Run_Exceptioon(fun::PrintStr("The computed Dt=%f (from AceMax=%f, VelMax=%f, ViscDtMax=%f, FlexStrucDtMax=%f) is NaN or infinity at nstep=%u.",dt,AceMax,VelMax,ViscDtMax,FlexStrucDtMax,Nstep));
+    else         Run_Exceptioon(fun::PrintStr("The computed Dt=%f (from AceMax=%f, VelMax=%f, ViscDtMax=%f) is NaN or infinity at nstep=%u.",dt,AceMax,VelMax,ViscDtMax,Nstep));
+  }
+  if(dt<double(DtMin)){
     dt=double(DtMin); DtModif++;
     if(DtModif>=DtModifWrn){
       Log->PrintfWarning("%d DTs adjusted to DtMin (t:%g, nstep:%u)",DtModif,TimeStep,Nstep);
