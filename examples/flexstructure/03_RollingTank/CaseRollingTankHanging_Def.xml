@@ -15,8 +15,8 @@
         <mkconfig boundcount="240" fluidcount="10" />
         <geometry>
             <definition dp="0.001" units_comment="metres (m)">
-                <pointmin x="-0.003" y="0" z="-0.005" />
-                <pointmax x="0.612" y="0" z="0.3495" />
+                <pointmin x="-0.004" y="0" z="-0.008" />
+                <pointmax x="0.613" y="0" z="0.3525" />
             </definition>
             <commands>
                 <mainlist>
@@ -30,29 +30,29 @@
 					<setmkbound mk="0" />
 					<drawbox>
                         <boxfill>solid</boxfill>
-                        <point x="-0.002" y="-0.01" z="-0.004" />
-                        <size x="0.613" y="0.02" z="0.004" />
+                        <point x="-0.004" y="-0.01" z="-0.008" />
+                        <size x="0.617" y="0.02" z="0.008" />
                     </drawbox>
 					<drawbox>
                         <boxfill>solid</boxfill>
-                        <point x="-0.002" y="-0.01" z="0.3445" />
-                        <size x="0.613" y="0.02" z="0.004" />
+                        <point x="-0.004" y="-0.01" z="0.3445" />
+                        <size x="0.617" y="0.02" z="0.008" />
                     </drawbox>
 					<drawbox>
                         <boxfill>solid</boxfill>
-                        <point x="-0.002" y="-0.01" z="0.0" />
-                        <size x="0.002" y="0.02" z="0.3445" />
+                        <point x="-0.004" y="-0.01" z="0.0" />
+                        <size x="0.004" y="0.02" z="0.3445" />
                     </drawbox>
 					<drawbox>
                         <boxfill>solid</boxfill>
                         <point x="0.609" y="-0.01" z="0.0" />
-                        <size x="0.002" y="0.02" z="0.3445" />
+                        <size x="0.004" y="0.02" z="0.3445" />
                     </drawbox>
 					<setmkbound mk="1" />
 					<drawbox>
                         <boxfill>solid</boxfill>
                         <point x="0.3025" y="-0.01" z="0.0575" />
-                        <size x="0.004" y="0.02" z="0.289" />
+                        <size x="0.004" y="0.02" z="0.29" />
                     </drawbox>
                 </mainlist>
             </commands>
