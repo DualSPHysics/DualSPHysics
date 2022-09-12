@@ -84,6 +84,8 @@ protected:
   void SaveExtraData();
   void FinishRun(bool stop);
 
+  void FlexStrucInit(); //<vs_flexstruc>
+
 public:
   JSphCpuSingle();
   ~JSphCpuSingle();

@@ -996,6 +996,19 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity,bool sh
     if(UseDEM)InteractionForcesDEM(CaseNfloat,t.divdata,t.dcell
       ,FtRidp,DemData,t.pos,t.velrhop,t.code,t.idp,viscdt,t.ace);
 
+    //<vs_flexstruc_ini>
+    //-Interaction flexible structure-flexible structure.
+//    if(FlexStruc){
+//      Timersg->TmStart(TMG_SuFlexStruc,false);
+//      const StInterParmsFlexStrucg parmsfs=StrInterParmsFlexStrucg(Simulate2D,TKernel
+//          ,Visco*ViscoBoundFactor,CaseNflexstruc,DivData,Dcellg
+//          ,PosCellg,Velrhopg,Codeg
+//          ,FlexStrucDatag,FlexStrucRidpg,PosCell0g,NumPairsg,PairIdxg,KerCorrg,FlexStrucDtg,DefGradg,Aceg,NULL);
+//      cusph::Interaction_ForcesFlexStruc(parmsfs);
+//      Timersg->TmStop(TMG_SuFlexStruc,false);
+//    }
+    //<vs_flexstruc_end>
+
     //-Computes tau for Laminar+SPS.
     if(tvisco==VISCO_LaminarSPS)ComputeSpsTau(t.npf,t.npb,t.velrhop,t.spsgradvel,t.spstau);
   }
