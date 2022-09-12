@@ -182,8 +182,8 @@ void JSph::InitVars(){
   MdbcCorrector=false;
   MdbcFastSingle=true;
   MdbcThreshold=0;
-  Use_Normals=false;
-  Use_NormalsFt=false;
+  UseNormals=false;
+  UseNormalsFt=false;
   SvNormals=false;
   UseDEM=false;  //(DEM)
   delete[] DemData; DemData=NULL;  //(DEM)
@@ -626,7 +626,7 @@ void JSph::LoadConfigParameters(const JXml *xml){
     default: Run_Exceptioon("Boundary Condition method is not valid.");
   }
   if(TBoundary==BC_MDBC){
-    Use_Normals=true;
+    UseNormals=true;
     switch(eparms.GetValueInt("SlipMode",true,1)){
       case 1:  SlipMode=SLIP_Vel0;      break;
       case 2:  SlipMode=SLIP_NoSlip;    break;
@@ -777,7 +777,7 @@ void JSph::LoadConfigCommands(const JSphCfgRun *cfg){
       case 3:  SlipMode=SLIP_FreeSlip;  break;
       default: Run_Exceptioon("Slip mode for mDBC is not valid.");
     }
-    Use_Normals=(TBoundary==BC_MDBC);
+    UseNormals=(TBoundary==BC_MDBC);
   }
   if(TBoundary==BC_MDBC){
     if(cfg->MdbcThreshold >=0)MdbcThreshold=cfg->MdbcThreshold;
@@ -1292,7 +1292,7 @@ void JSph::ConfigBoundNormals(unsigned np,unsigned npb,const tdouble3 *pos
   if(!PartBegin){
     bool ftnor=false;
     for(unsigned p=0;p<np && !ftnor;p++)ftnor=(idp[p]<CaseNbound && idp[p]>=CaseNpb && boundnormal[p]!=TFloat3(0));
-    Use_NormalsFt=ftnor;
+    UseNormalsFt=ftnor;
   }
 
   //-Loads normals for restart mode.
@@ -1300,7 +1300,7 @@ void JSph::ConfigBoundNormals(unsigned np,unsigned npb,const tdouble3 *pos
     if(JDsExtraDataLoad::ExistsPartData(PartBeginDir,int(PartBegin))){
       JDsExtraDataLoad edat(CaseNbound,CaseNfloat,Log);
       edat.LoadPartData(PartBeginDir,int(PartBegin));
-      Use_NormalsFt=edat.LoadNormals(np,npb,idp,boundnormal);
+      UseNormalsFt=edat.LoadNormals(np,npb,idp,boundnormal);
     }
     else Run_Exceptioon(fun::PrintStr("No extra data available to restart at PART_%04d with mDBC.",PartBegin).c_str());
   }
@@ -1324,7 +1324,7 @@ void JSph::ConfigBoundNormals(unsigned np,unsigned npb,const tdouble3 *pos
   SaveVtkNormals(file2,-1,np,npb,pos,idp,boundnormal,1.f);
   if(nerr  >0)Log->PrintfWarning("There are %u of %u fixed or moving boundary particles without normal data.",nerr,npb);
   if(nerrft>0)Log->PrintfWarning("There are %u of %u floating particles without normal data.",nerrft,CaseNfloat);
-  if(Use_NormalsFt && (!UseChrono || !ChronoObjects->GetUseCollision()))
+  if(UseNormalsFt && (!UseChrono || !ChronoObjects->GetUseCollision()))
     Log->PrintWarning("When mDBC is applied to floating bodies, their collisions should be solved using Chrono (RigidAlgorithm=3).");
 }
 
@@ -2846,7 +2846,7 @@ void JSph::SaveVtkNormals(std::string filename,int numfile,unsigned np,unsigned 
     //-Find floating particles.
     unsigned nfloat=0;
     unsigned* ftidx=NULL;
-    if(Use_NormalsFt){
+    if(UseNormalsFt){
       const unsigned size=min(CaseNfloat,np);
       ftidx=new unsigned[size];
       for(unsigned p=npb;p<np;p++)if(idp[p]<CaseNbound)ftidx[nfloat++]=p;

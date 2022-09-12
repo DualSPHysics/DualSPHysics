@@ -195,8 +195,8 @@ protected:
   bool MdbcCorrector;         ///<mDBC correction is also applied in corrector of Symplectic (default=0).
   bool MdbcFastSingle;        ///<Matrix calculations are done in single precision (default=1).
   float MdbcThreshold;        ///<Kernel support limit to apply mDBC correction (default=0).
-  bool Use_Normals;            ///<Indicates use of normals for mDBC.
-  bool Use_NormalsFt;          ///<Indicates use of normals of floating bodies for mDBC.
+  bool UseNormals;            ///<Indicates use of normals for mDBC.
+  bool UseNormalsFt;          ///<Indicates use of normals of floating bodies for mDBC.
   bool SvNormals;             ///<Saves normals VTK each PART (for debug).
 
   bool RhopOut;               ///<Indicates whether the RhopOut density correction is active or not.    | Indica si activa la correccion de densidad RhopOut o no.                       

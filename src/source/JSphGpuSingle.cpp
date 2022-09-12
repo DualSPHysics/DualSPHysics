@@ -168,7 +168,7 @@ void JSphGpuSingle::ConfigDomain(){
 
   //-Load normals for boundary particles (fixed and moving).
   tfloat3 *boundnormal=NULL;
-  if(Use_Normals){
+  if(UseNormals){
     boundnormal=new tfloat3[Np];
     LoadBoundNormals(Np,Npb,Idp,Code,boundnormal);
   }
@@ -178,7 +178,7 @@ void JSphGpuSingle::ConfigDomain(){
 
   //-Runs initialization operations from XML.
   RunInitialize(Np,Npb,AuxPos,Idp,Code,Velrhop,boundnormal);
-  if(Use_Normals)ConfigBoundNormals(Np,Npb,AuxPos,Idp,boundnormal);
+  if(UseNormals)ConfigBoundNormals(Np,Npb,AuxPos,Idp,boundnormal);
 
   //-Computes MK domain for boundary and fluid particles.
   MkInfo->ComputeMkDomains(Np,AuxPos,Code);
@@ -305,7 +305,7 @@ void JSphGpuSingle::RunPeriodic(){
               if((PosxyPreg || PoszPreg || VelrhopPreg) && (!PosxyPreg || !PoszPreg || !VelrhopPreg))Run_Exceptioon("Symplectic data is invalid.") ;
               cusph::PeriodicDuplicateSymplectic(count,Np,DomCells,perinc,listpg,Idpg,Codeg,Dcellg,Posxyg,Poszg,Velrhopg,SpsTaug,PosxyPreg,PoszPreg,VelrhopPreg);
             }
-            if(Use_Normals)cusph::PeriodicDuplicateNormals(count,Np,listpg,BoundNormalg,MotionVelg);
+            if(UseNormals)cusph::PeriodicDuplicateNormals(count,Np,listpg,BoundNormalg,MotionVelg);
 
             //-Frees memory and updates the particle number.
             //-Libera lista y actualiza numero de particulas.
@@ -378,7 +378,7 @@ void JSphGpuSingle::RunCellDivide(bool updateperiodic){
     CellDivSingle->SortDataArrays(SpsTaug,spstaug);
     swap(SpsTaug,spstaug);  ArraysGpu->Free(spstaug);
   }
-  if(Use_Normals){
+  if(UseNormals){
     float3* boundnormalg=ArraysGpu->ReserveFloat3();
     CellDivSingle->SortDataArrays(BoundNormalg,boundnormalg);
     swap(BoundNormalg,boundnormalg); ArraysGpu->Free(boundnormalg);
@@ -491,7 +491,7 @@ void JSphGpuSingle::Interaction_Forces(TpInterStep interstep){
 //==============================================================================
 void JSphGpuSingle::MdbcBoundCorrection(){
   Timersg->TmStart(TMG_CfPreForces,false);
-  const unsigned n=(Use_NormalsFt? Np: NpbOk);
+  const unsigned n=(UseNormalsFt? Np: NpbOk);
   cusph::Interaction_MdbcCorrection(TKernel,Simulate2D,SlipMode,MdbcFastSingle
     ,n,CaseNbound,MdbcThreshold,DivData,Map_PosMin,Posxyg,Poszg,PosCellg,Codeg
     ,Idpg,BoundNormalg,MotionVelg,Velrhopg);
@@ -733,7 +733,7 @@ void JSphGpuSingle::RunFloating(double dt,bool predictor){
     if(!predictor){
       FtObjsOutdated=true;
       //-Updates floating normals for mDBC.
-      if(Use_NormalsFt){
+      if(UseNormalsFt){
         tdouble3 *fcen=FtoAuxDouble6;
         tfloat3  *fang=FtoAuxFloat15;
         cudaMemcpy(fcen,FtoCenterg,sizeof(double3)*FtCount,cudaMemcpyDeviceToHost);
@@ -929,7 +929,7 @@ void JSphGpuSingle::SaveData(){
   JDataArrays arrays;
   AddBasicArrays(arrays,npsave,AuxPos,Idp,AuxVel,AuxRhop);
   JSph::SaveData(npsave,arrays,1,vdom,&infoplus);
-  if(Use_Normals && SvNormals)SaveVtkNormalsGpu("normals/Normals.vtk",Part,npsave,Npb,Posxyg,Poszg,Idpg,BoundNormalg);
+  if(UseNormals && SvNormals)SaveVtkNormalsGpu("normals/Normals.vtk",Part,npsave,Npb,Posxyg,Poszg,Idpg,BoundNormalg);
   //-Save extra data.
   if(SvExtraDataBi4)SaveExtraData();
   Timersg->TmStop(TMG_SuSavePart,false);
@@ -948,7 +948,7 @@ void JSphGpuSingle::SaveExtraData(){
     tfloat3  *nor =NULL;
     typecode *code=NULL;
     if(BoundNormalg){
-      const unsigned nsize=(Use_NormalsFt? Np: Npb);
+      const unsigned nsize=(UseNormalsFt? Np: Npb);
       idp=fcuda::ToHostUint  (0,nsize,Idpg);
       nor=fcuda::ToHostFloat3(0,nsize,BoundNormalg);
       if(PeriActive){
@@ -958,7 +958,7 @@ void JSphGpuSingle::SaveExtraData(){
           code=fcuda::ToHostWord(0,nsize,Codeg);
         #endif
       }
-      SvExtraDataBi4->AddNormals(Use_NormalsFt,Np,Npb,idp,code,nor);
+      SvExtraDataBi4->AddNormals(UseNormalsFt,Np,Npb,idp,code,nor);
     }
     //-Saves file.
     SvExtraDataBi4->SavePartData();
