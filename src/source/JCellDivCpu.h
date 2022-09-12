@@ -125,6 +125,9 @@ protected:
 
   bool DivideFull;      ///<Indicate that divie is applied to fluid & boundary (not only to fluid). | Indica que el divide se aplico a fluido y contorno (no solo al fluido).
 
+  unsigned *SortPart2;    ///<Copy of SortPart so can use as key.     //<vs_flexstruc>
+  unsigned *SortIdx;      ///<Indices to particles which are sorted.  //<vs_flexstruc>
+
   void Reset();
 
   //-Management of allocated dynamic memory.
@@ -199,6 +202,8 @@ public:
   const unsigned* GetBeginCell()const{ return(BeginCell); }
 
   void SetIncreaseNp(unsigned increasenp){ IncreaseNp=increasenp; }
+
+  void UpdateIndices(unsigned n,unsigned *idx); //<vs_flexstruc>
 
   //:bool CellNoEmpty(unsigned box,byte kind)const;
   //:unsigned CellBegin(unsigned box,byte kind)const;

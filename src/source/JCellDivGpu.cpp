@@ -123,11 +123,12 @@ void JCellDivGpu::AllocMemoryNp(ullong np){
   size_t m=sizeof(unsigned)*SizeNp;
   cudaMalloc((void**)&CellPart, m); MemAllocGpuNp+=m;
   cudaMalloc((void**)&SortPart, m); MemAllocGpuNp+=m;
-  cudaMalloc((void**)&SortPart2,m); MemAllocGpuNp+=m; //<vs_flexstruc>
-  cudaMalloc((void**)&SortIdx,  m); MemAllocGpuNp+=m; //<vs_flexstruc>
   SizeAuxMem=cudiv::LimitsPosSize(SizeNp);
   m=sizeof(float)*SizeAuxMem;
   cudaMalloc((void**)&AuxMem,m);   MemAllocGpuNp+=m;
+  m=sizeof(unsigned)*SizeNp;
+  cudaMalloc((void**)&SortPart2,m); MemAllocGpuNp+=m; //<vs_flexstruc>
+  cudaMalloc((void**)&SortIdx,  m); MemAllocGpuNp+=m; //<vs_flexstruc>
   //-Checks allocated memory.
   //-Comprueba reserva de memoria.
   cudaError_t cuerr=cudaGetLastError();
