@@ -43,15 +43,15 @@
     </casedef>
     <execution>
         <special>
-            <flexiblestructures>
-                <flexiblestructurebody mkbound="1">
+            <flexstrucs>
+                <flexstrucbody mkbound="1" mkclamp="0">
                     <density value="1000.0" comment="Mass density" units_comment="kg/m^3" />
                     <youngmod value="1.4e6" comment="Young's Modulus" units_comment="Pa" />
                     <poissratio value="0.4" comment="Poisson ratio" />
                     <constitmodel value="1" comment="Constitutive model 1:Plane Strain (2D), 2:Plane Stress (2D), 3:St. Venant Kirchhoff (3D)" />
                     <hgfactor value="0.0" comment="Hourglass correction factor: keep as low as possible (default=0)" />
-                </flexiblestructurebody>
-            </flexiblestructures>
+                </flexstrucbody>
+            </flexstrucs>
         </special>
         <parameters>
             <parameter key="SavePosDouble" value="1" comment="Saves particle position using double precision (default=0)" />
