@@ -1,4 +1,4 @@
-#DualSPHysics GPU/CPU v5.2.243 24-08-2022
+#DualSPHysics GPU/CPU v5.2.245 12-09-2022
 
 #=============== Compilation Options (YES/NO) ===============
 USE_DEBUG=NO
@@ -125,7 +125,7 @@ OBCHRONO=JChronoObjects.o
 OBMOORDYN=JDsMooredFloatings.o JDsFtForcePoints.o
 OBINOUT=JSphCpu_InOut.o JSphCpuSingle_InOut.o JSphInOut.o JSphInOutZone.o JSphInOutGridData.o JSphInOutPoints.o JSphInOutVel.o JSphInOutVelAwas.o JSphInOutZsurf.o JSimpleNeigs.o
 OBINOUTGPU=JSphGpuSingle_InOut.o
-OBMDBC=JPartNormalData.o JNormalsMarrone.o
+OBMDBC=JPartNormalData.o
 
 OBJECTS=$(OBJXML) $(OBJSPHMOTION) $(OBCOMMON) $(OBCOMMONDSPH) $(OBSPH) $(OBSPHSINGLE)
 OBJECTS:=$(OBJECTS) $(OBCOMMONGPU) $(OBSPHGPU) $(OBSPHSINGLEGPU) $(OBCUDA)

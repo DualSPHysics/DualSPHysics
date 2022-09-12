@@ -1,5 +1,5 @@
 #==================================================================
-# DualSPHysics GPU/CPU v5.2.243 24-08-2022
+# DualSPHysics GPU/CPU v5.2.245 12-09-2022
 #==================================================================
 
 cmake_minimum_required(VERSION 3.0)
@@ -37,7 +37,7 @@ set(OBCHRONO JChronoObjects.cpp)
 set(OBMOORDYN JDsMooredFloatings.cpp JDsFtForcePoints.cpp)
 set(OBINOUT JSphCpu_InOut.cpp JSphCpuSingle_InOut.cpp JSphInOut.cpp JSphInOutZone.cpp JSphInOutGridData.cpp JSphInOutPoints.cpp JSphInOutVel.cpp JSphInOutVelAwas.cpp JSphInOutZsurf.cpp JSimpleNeigs.cpp)
 set(OBINOUTGPU JSphGpuSingle_InOut.cpp)
-set(OBMDBC JPartNormalData.cpp JNormalsMarrone.cpp)
+set(OBMDBC JPartNormalData.cpp)
 
 #------------------------------------------------------------------
 # NVCC Flags
