@@ -47,6 +47,7 @@ typedef enum{
   ,TMG_SuMoorings=18
   ,TMG_SuBoundCorr=19
   ,TMG_SuInOut=20
+  ,TMG_SuFlexStruc=21 //<vs_flexstruc>
 }TpTimersGPU;
 
 //##############################################################################
@@ -90,6 +91,7 @@ public:
     Add(TMG_SuMoorings        ,"SU-Moorings"   ,0,SvTimers);
     Add(TMG_SuBoundCorr       ,"SU-BoundCorr"  ,0,SvTimers);
     Add(TMG_SuInOut           ,"SU-InOut"      ,0,SvTimers);
+    Add(TMG_SuFlexStruc       ,"SU-FlexStruc"  ,0,SvTimers);  //<vs_flexstruc>
   }
   
   //==============================================================================

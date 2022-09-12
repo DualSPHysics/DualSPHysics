@@ -469,11 +469,13 @@ void JSphGpuSingle::Interaction_Forces(TpInterStep interstep){
   //<vs_flexstruc_ini>
   //-Interaction flexible structure-flexible structure.
   if(FlexStruc){
+    Timersg->TmStart(TMG_SuFlexStruc,false);
     const StInterParmsFlexStrucg parmsfs=StrInterParmsFlexStrucg(Simulate2D,TKernel
         ,Visco*ViscoBoundFactor,CaseNflexstruc,DivData,Dcellg
         ,PosCellg,Velrhopg,Codeg
         ,FlexStrucDatag,FlexStrucRidpg,PosCell0g,NumPairsg,PairIdxg,KerCorrg,FlexStrucDtg,DefGradg,Aceg,NULL);
     cusph::Interaction_ForcesFlexStruc(parmsfs);
+    Timersg->TmStop(TMG_SuFlexStruc,false);
   }
   //<vs_flexstruc_end>
 
@@ -494,8 +496,14 @@ void JSphGpuSingle::Interaction_Forces(TpInterStep interstep){
   //-Calculates maximum value of Ace (periodic particles are ignored). ViscDtg is used like auxiliary memory.
   AceMax=ComputeAceMax(ViscDtg);
 
+  //<vs_flexstruc_ini>
   //-Calculates maximum value of FlexStrucDt.
-  if(CaseNflexstruc)FlexStrucDtMax=cusph::ReduMaxFloat(CaseNflexstruc,0,FlexStrucDtg,CellDivSingle->GetAuxMem(cusph::ReduMaxFloatSize(CaseNflexstruc)));
+  if(CaseNflexstruc){
+    Timersg->TmStart(TMG_SuFlexStruc,false);
+    FlexStrucDtMax=cusph::ReduMaxFloat(CaseNflexstruc,0,FlexStrucDtg,CellDivSingle->GetAuxMem(cusph::ReduMaxFloatSize(CaseNflexstruc)));
+    Timersg->TmStop(TMG_SuFlexStruc,false);
+  }
+  //<vs_flexstruc_end>
 
   Timersg->TmStop(TMG_CfForces,true);
   Check_CudaErroor("Failed in reduction of viscdt.");
@@ -987,6 +995,9 @@ void JSphGpuSingle::FinishRun(bool stop){
 
 //<vs_flexstruc_ini>
 void JSphGpuSingle::FlexStrucInit(){
+  //-Start timer and print info.
+  Timersg->TmStart(TMG_SuFlexStruc,false);
+  Log->Print("Initialising Flexible Structures...");
   //-Allocate array.
   size_t m=0;
   m=sizeof(StFlexStrucData)*FlexStrucCount; cudaMalloc((void**)&FlexStrucDatag,m); MemGpuFixed+=m;
@@ -1045,6 +1056,8 @@ void JSphGpuSingle::FlexStrucInit(){
       ,FlexStrucDatag,FlexStrucRidpg,PosCell0g,NumPairsg,PairIdxg,KerCorrg,FlexStrucDtg,DefGradg,Aceg,NULL);
   //-Calculate kernel correction for each structure particle.
   cusph::CalcFlexStrucKerCorr(parmsfs);
+  Log->Print("");
+  Timersg->TmStop(TMG_SuFlexStruc,false);
 }
 //<vs_flexstruc_end>
 

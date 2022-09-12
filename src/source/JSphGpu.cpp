@@ -913,19 +913,29 @@ void JSphGpu::ComputeVerlet(double dt){  //pdtedom
       ,Aceg,ShiftPosfsg,indirvel,dt,dt,RhopZero,RhopOutMin,RhopOutMax,Gravity,Codeg,movxyg,movzg,VelrhopM1g,NULL);
     VerletStep=0;
   }
+  //<vs_flexstruc_ini>
   //-Computes displacement and velocity for flexible structures.
-  if(CaseNflexstruc)cusphs::ComputeStepFlexStrucSemiImplicitEuler(CaseNflexstruc,Velrhopg,Codeg,FlexStrucRidpg,Aceg,dt,Gravity,movxyg,movzg,VelrhopM1g,NULL);
+  if(CaseNflexstruc){
+    Timersg->TmStart(TMG_SuFlexStruc,false);
+    cusphs::ComputeStepFlexStrucSemiImplicitEuler(CaseNflexstruc,Velrhopg,Codeg,FlexStrucRidpg,Aceg,dt,Gravity,movxyg,movzg,VelrhopM1g,NULL);
+    Timersg->TmStop(TMG_SuFlexStruc,false);
+  }
+  //<vs_flexstruc_end>
   //-The new values are calculated in VelRhopM1g.
   //-Los nuevos valores se calculan en VelrhopM1g.
   swap(Velrhopg,VelrhopM1g);   //-Exchanges Velrhopg and VelrhopM1g. | Intercambia Velrhopg y VelrhopM1g.
   //-Applies displacement to non-periodic fluid particles.
   //-Aplica desplazamiento a las particulas fluid no periodicas.
   cusph::ComputeStepPos(PeriActive,WithFloating,Np,Npb,movxyg,movzg,Posxyg,Poszg,Dcellg,Codeg);
+  //<vs_flexstruc_ini>
   //-Applies displacement for flexible structures.
   if(CaseNflexstruc){
+    Timersg->TmStart(TMG_SuFlexStruc,false);
     cusph::ComputeStepPosFlexStruc(CaseNflexstruc,FlexStrucRidpg,Posxyg,Poszg,movxyg,movzg,Posxyg,Poszg,Dcellg,Codeg);
     BoundChanged=true;
-  };
+    Timersg->TmStop(TMG_SuFlexStruc,false);
+  }
+  //<vs_flexstruc_end>
   //-Frees memory allocated for the diplacement.
   ArraysGpu->Free(movxyg);   movxyg=NULL;
   ArraysGpu->Free(movzg);    movzg=NULL;
@@ -966,12 +976,16 @@ void JSphGpu::ComputeSymplecticPre(double dt){
   //-Copia posicion anterior del contorno.
   cudaMemcpy(Posxyg,PosxyPreg,sizeof(double2)*Npb,cudaMemcpyDeviceToDevice);
   cudaMemcpy(Poszg,PoszPreg,sizeof(double)*Npb,cudaMemcpyDeviceToDevice);
+  //<vs_flexstruc_ini>
   //-Applies predictor to flexible structure particles.
   if(CaseNflexstruc){
+    Timersg->TmStart(TMG_SuFlexStruc,false);
     cusphs::ComputeStepFlexStrucSymplecticPre(CaseNflexstruc,VelrhopPreg,Codeg,FlexStrucRidpg,Aceg,dt05,Gravity,movxyg,movzg,Velrhopg,NULL);
     cusph::ComputeStepPosFlexStruc(CaseNflexstruc,FlexStrucRidpg,PosxyPreg,PoszPreg,movxyg,movzg,Posxyg,Poszg,Dcellg,Codeg);
     BoundChanged=true;
+    Timersg->TmStop(TMG_SuFlexStruc,false);
   }
+  //<vs_flexstruc_end>
   //-Frees memory allocated for the displacement.
   ArraysGpu->Free(movxyg);   movxyg=NULL;
   ArraysGpu->Free(movzg);    movzg=NULL;
@@ -999,12 +1013,16 @@ void JSphGpu::ComputeSymplecticCorr(double dt){
   //-Aplica desplazamiento a las particulas fluid no periodicas.
   cusph::ComputeStepPos2(PeriActive,WithFloating,Np,Npb,PosxyPreg,PoszPreg
     ,movxyg,movzg,Posxyg,Poszg,Dcellg,Codeg);
+  //<vs_flexstruc_ini>
   //-Applies corrector to flexible structure particles.
   if(CaseNflexstruc){
+    Timersg->TmStart(TMG_SuFlexStruc,false);
     cusphs::ComputeStepFlexStrucSymplecticCor(CaseNflexstruc,VelrhopPreg,Codeg,FlexStrucRidpg,Aceg,dt05,dt,Gravity,movxyg,movzg,Velrhopg,NULL);
     cusph::ComputeStepPosFlexStruc(CaseNflexstruc,FlexStrucRidpg,PosxyPreg,PoszPreg,movxyg,movzg,Posxyg,Poszg,Dcellg,Codeg);
     BoundChanged=true;
+    Timersg->TmStop(TMG_SuFlexStruc,false);
   }
+  //<vs_flexstruc_end>
   //-Frees memory allocated for diplacement.
   ArraysGpu->Free(movxyg);   movxyg=NULL;
   ArraysGpu->Free(movzg);    movzg=NULL;
