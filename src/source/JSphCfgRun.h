@@ -66,8 +66,11 @@ public:
   double DDTValueTMax;   ///<Time of maximum DDT value (default=0)                 //<vs_ddramp>
   double DDTValueMax;    ///<Maximum DDT value for initial ramp (default=0)        //<vs_ddramp>
   int Shifting;   ///<Shifting mode -1:no defined, 0:none, 1:nobound, 2:nofixed, 3:full
-  bool SvRes,SvTimers,SvDomainVtk;
   bool Sv_Binx,Sv_Info,Sv_Csv,Sv_Vtk;
+  bool SvNormals; ///<Saves normals VTK each PART (default=0).
+  bool SvRes;
+  bool SvTimers;
+  bool SvDomainVtk;
   std::string CaseName,RunName,DirOut,DirDataOut;
   std::string PartBeginDir;
   unsigned PartBegin,PartBeginFirst;

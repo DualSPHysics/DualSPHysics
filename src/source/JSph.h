@@ -197,7 +197,7 @@ protected:
   float MdbcThreshold;        ///<Kernel support limit to apply mDBC correction (default=0).
   bool UseNormals;            ///<Indicates use of normals for mDBC.
   bool UseNormalsFt;          ///<Indicates use of normals of floating bodies for mDBC.
-  bool SvNormals;             ///<Saves normals VTK each PART (for debug).
+  bool SvNormals;             ///<Saves normals VTK each PART (default=0).
 
   bool RhopOut;               ///<Indicates whether the RhopOut density correction is active or not.    | Indica si activa la correccion de densidad RhopOut o no.                       
   float RhopOutMin;           ///<Minimum limit for Rhopout correction.                                 | Limite minimo para la correccion de RhopOut.

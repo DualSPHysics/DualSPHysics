@@ -508,6 +508,7 @@ void JSph::LoadConfig(const JSphCfgRun *cfg){
   if(cfg->Sv_Binx)SvData|=byte(SDAT_Binx);
   if(cfg->Sv_Info)SvData|=byte(SDAT_Info);
   if(cfg->Sv_Vtk)SvData|=byte(SDAT_Vtk);
+  SvNormals=cfg->SvNormals;
   SvRes=cfg->SvRes;
   SvTimers=cfg->SvTimers;
   SvDomainVtk=cfg->SvDomainVtk;
@@ -1613,8 +1614,8 @@ void JSph::VisuRefs(){
   Log->Print("- Official solver reference DualSPHysics v5.0: J.M. Dominguez, G. Fourtakas,");
   Log->Print("    C. Altomare, R.B. Canelas, A. Tafuni, O. Garcia-Feal, I. Martinez-Estevez,"); 
   Log->Print("    A. Mokos, R. Vacondio, A.J.C. Crespo, B.D. Rogers, P.K. Stansby, M. Gomez-Gesteira."); 
-  Log->Print("    2021. DualSPHysics: from fluid dynamics to multiphysics problems.");
-  Log->Print("    Computational Particle Mechanics. doi: https://doi.org/10.1007/s40571-021-00404-2");
+  Log->Print("    2022. DualSPHysics: from fluid dynamics to multiphysics problems.");
+  Log->Print("    Computational Particle Mechanics, 9:867-895. doi: https://doi.org/10.1007/s40571-021-00404-2");
   Log->Print("");
   //-Code implementation:
   Log->Print("- Optimised CPU multi-core and GPU implementation (Dominguez et al., 2013  https://doi.org/10.1016/j.cpc.2012.10.015)");
