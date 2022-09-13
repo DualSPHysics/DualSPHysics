@@ -203,7 +203,9 @@ public:
 
   void SetIncreaseNp(unsigned increasenp){ IncreaseNp=increasenp; }
 
-  void UpdateIndices(unsigned n,unsigned *idx); //<vs_flexstruc>
+  void UpdateIndices(unsigned n,unsigned *idx);                                   //<vs_flexstruc>
+  void SortIndices(unsigned *sortpart,unsigned* sortidx,unsigned np,bool stable); //<vs_flexstruc>
+  void UpdateIndices(unsigned n,const unsigned *sortidx,unsigned *idx);           //<vs_flexstruc>
 
   //:bool CellNoEmpty(unsigned box,byte kind)const;
   //:unsigned CellBegin(unsigned box,byte kind)const;

@@ -23,6 +23,7 @@
 #include "Functions.h"
 #include <cfloat>
 #include <climits>
+#include <numeric>
 
 using namespace std;
 
@@ -478,11 +479,24 @@ StDivDataCpu JCellDivCpu::GetCellDivData()const{
 
 //<vs_flexstruc_ini>
 void JCellDivCpu::UpdateIndices(unsigned n,unsigned *idx){
-//  if(DivideFull){
-//    cudaMemcpy(SortPart2,SortPart,sizeof(unsigned)*NpbFinal,cudaMemcpyDeviceToDevice);
-//    cudiv::SortIndices(SortPart2,SortIdx,NpbFinal,Stable);
-//    cudiv::UpdateIndices(n,SortIdx,idx);
-//  }
+  if(DivideFull){
+    memcpy(SortPart2,SortPart,sizeof(unsigned)*NpbFinal);
+    SortIndices(SortPart2,SortIdx,NpbFinal,Stable);
+    UpdateIndices(n,SortIdx,idx);
+  }
+}
+
+void JCellDivCpu::SortIndices(unsigned *sortpart,unsigned* sortidx,unsigned np,bool stable){
+  iota(sortidx,sortidx+np,0);
+  if(stable)stable_sort(sortidx,sortidx+np,[sortpart](unsigned i1,unsigned i2){return sortpart[i1]<sortpart[i2];});
+  else             sort(sortidx,sortidx+np,[sortpart](unsigned i1,unsigned i2){return sortpart[i1]<sortpart[i2];});
+}
+
+void JCellDivCpu::UpdateIndices(unsigned n,const unsigned *sortidx,unsigned *idx){
+  #ifdef OMP_USE
+    #pragma omp parallel for schedule (static) if(n>OMP_LIMIT_COMPUTELIGHT)
+  #endif
+  for(int p=0;p<n;p++)if(p<n)idx[p]=sortidx[idx[p]];
 }
 //<vs_flexstruc_end>
 

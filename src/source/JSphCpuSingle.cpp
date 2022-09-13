@@ -466,7 +466,7 @@ void JSphCpuSingle::RunCellDivide(bool updateperiodic){
     CellDivSingle->SortArray(BoundNormalc);
     if(MotionVelc)CellDivSingle->SortArray(MotionVelc);
   }
-//  if(FlexStruc&&FlexStrucRidpc)CellDivSingle->UpdateIndices(CaseNflexstruc,FlexStrucRidpc); //<vs_flexstruc>
+  if(FlexStruc&&FlexStrucRidpc)CellDivSingle->UpdateIndices(CaseNflexstruc,FlexStrucRidpc); //<vs_flexstruc>
 
   //-Collect divide data. | Recupera datos del divide.
   Np=CellDivSingle->GetNpFinal();
