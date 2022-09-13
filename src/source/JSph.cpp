@@ -764,7 +764,6 @@ void JSph::LoadConfigCommands(const JSphCfgRun *cfg){
   if(cfg->TBoundary){
     TBoundary=BC_DBC;
     SlipMode=SLIP_Vel0;
-    MdbcCorrector=false;
     MdbcFastSingle=true;
     MdbcThreshold=0;
     switch(cfg->TBoundary){
@@ -779,6 +778,7 @@ void JSph::LoadConfigCommands(const JSphCfgRun *cfg){
       default: Run_Exceptioon("Slip mode for mDBC is not valid.");
     }
     UseNormals=(TBoundary==BC_MDBC);
+    if(TBoundary!=BC_MDBC)MdbcCorrector=false;
   }
   if(TBoundary==BC_MDBC){
     if(cfg->MdbcThreshold >=0)MdbcThreshold=cfg->MdbcThreshold;
@@ -1280,6 +1280,12 @@ void JSph::LoadBoundNormals(unsigned np,unsigned npb,const unsigned *idp
         for(unsigned p=0;p<pnorsize;p++)boundnormal[p]=ToTFloat3(pnor[p]);
       }
     }
+    else{
+      const string filenormals=JPartNormalData::GetNormalDataFile(true,DirCase+CaseName);
+      if(fun::FileExists(filenormals)){
+        Run_ExceptioonFile("Old normal data file format (XXX_NormalData.nbi4) is invalid for current version. Use GenCase version 5.0.268 or higher to generate a supported file with normal data (XXX_Normals.nbi4).",filenormals);
+      }
+    }
   }
 }
 
@@ -1325,6 +1331,7 @@ void JSph::ConfigBoundNormals(unsigned np,unsigned npb,const tdouble3 *pos
   SaveVtkNormals(file2,-1,np,npb,pos,idp,boundnormal,1.f);
   if(nerr  >0)Log->PrintfWarning("There are %u of %u fixed or moving boundary particles without normal data.",nerr,npb);
   if(nerrft>0)Log->PrintfWarning("There are %u of %u floating particles without normal data.",nerrft,CaseNfloat);
+  if(TBoundary==BC_MDBC && nerr==npb && nerrft==CaseNfloat)Run_Exceptioon("No valid normal vectors for using mDBC.");
   if(UseNormalsFt && (!UseChrono || !ChronoObjects->GetUseCollision()))
     Log->PrintWarning("When mDBC is applied to floating bodies, their collisions should be solved using Chrono (RigidAlgorithm=3).");
 }

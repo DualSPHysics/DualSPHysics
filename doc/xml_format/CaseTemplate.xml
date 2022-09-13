@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<case app="GenCase v5.0.260 (08-05-2022)" date="23-05-2022 14:55:36">
-    <casedef requiredversion="v5.0.260">
+<case app="GenCase v5.0.268 (12-09-2022)" date="13-09-2022 03:09:49">
+    <casedef requiredversion="v5.0.268">
         <constantsdef>
             <lattice bound="2" fluid="1" comment="Type of lattice to create the initial particles (default=1)" />
             <gravity x="0" y="0" z="-9.81" comment="Gravitational acceleration" units_comment="m/s^2" />
             <rhop0 value="1000" comment="Reference density of the fluid" units_comment="kg/m^3" />
-            <hswl value="0" auto="true" comment="Maximum still water level to calculate speedofsound using coefsound" units_comment="metres (m)" />
+            <rhopgradient value="2" comment="Initial density gradient 1:Rhop0, 2:Water column, 3:Max. water height (default=2)" />
+            <hswl value="0" auto="true" comment="Maximum height of still water to calculate speedofsound using coefsound" units_comment="metres (m)" />
             <gamma value="7" comment="Polytropic constant for water used in the state equation" />
             <speedsystem value="0" auto="true" comment="Maximum system speed (by default the dam-break propagation is used)" />
             <coefsound value="20" comment="Coefficient to multiply speedsystem" />
@@ -49,6 +50,9 @@
             </pattern>
         </patterns>
         <geometry>
+            <predefinition>
+                <newvarcte VarSize="28.11" _rem="Example of variable" />
+            </predefinition>
             <definition dp="0.05" comment="Initial inter-particle distance" units_comment="metres (m)">
                 <pointref x="0" y="0" z="0" />
                 <pointmin x="-0.25" y="-0.05" z="-0.05" />
@@ -905,17 +909,11 @@
             </objreal>
         </motion>
         <normals active="true">
+            <geometryfile file="[CaseName]_hdp_Actual.vtk" comment="File with boundary geometry (VTK format)" />
             <distanceh value="2.0" comment="Maximum distance (H*distanceh) to compute normals data (default=2)" />
-            <ftsupport value="0" comment="Enables support for floating bodies (default=0)" />
-            <geometryfile file="[CaseName]_hdp_Actual.vtk" comment="File with boundary geometry (VTK format). Use NONE to ignore it." />
-            <computenormals value="0" comment="Computes final normals for boundary particles 0:None, 1:Mean, 2:Marrone(unverified) (default=0)" />
-            <svnormaldata value="0" comment="Saves VTK with normal data for debug (default=0)" />
-            <svnormals value="0" comment="Saves VTK with particle normals according to <computenormals> for debug (default=0)" />
+            <svnormals value="1" comment="Saves VTK with particle normals according to <computenormals> for debug (default=0)" />
             <svshapes value="0" comment="Saves VTK with geometry in triangles and quads with its normals for debug (default=0)" />
-            <dg_svpartsnormal value="0" comment="Saves VTKs with normals and out-vectors for each particle (default=0)">
-                <onlypos xmin="-0.04" zmin="-0.04" xmax="0.06" zmax="0.06" />
-                <onlypos ymin="-0.1" ymax="0.1" />
-            </dg_svpartsnormal>
+            <svnormaldata value="0" comment="Saves binary and VTK with normal data for debug (default=0)" />
         </normals>
     </casedef>
     <execution>
