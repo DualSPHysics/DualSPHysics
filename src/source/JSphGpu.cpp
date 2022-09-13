@@ -912,29 +912,22 @@ void JSphGpu::ComputeVerlet(double dt){  //pdtedom
       ,Aceg,ShiftPosfsg,indirvel,dt,dt,RhopZero,RhopOutMin,RhopOutMax,Gravity,Codeg,movxyg,movzg,VelrhopM1g,NULL);
     VerletStep=0;
   }
+  //-Applies displacement to non-periodic fluid particles.
+  //-Aplica desplazamiento a las particulas fluid no periodicas.
+  cusph::ComputeStepPos(PeriActive,WithFloating,Np,Npb,movxyg,movzg,Posxyg,Poszg,Dcellg,Codeg);
   //<vs_flexstruc_ini>
   //-Computes displacement and velocity for flexible structures.
   if(CaseNflexstruc){
     Timersg->TmStart(TMG_SuFlexStruc,false);
     cusphs::ComputeStepFlexStrucSemiImplicitEuler(CaseNflexstruc,Velrhopg,Codeg,FlexStrucRidpg,Aceg,dt,Gravity,movxyg,movzg,VelrhopM1g,NULL);
+    cusph::ComputeStepPosFlexStruc(CaseNflexstruc,FlexStrucRidpg,Posxyg,Poszg,movxyg,movzg,Posxyg,Poszg,Dcellg,Codeg);
+    BoundChanged=true;
     Timersg->TmStop(TMG_SuFlexStruc,false);
   }
   //<vs_flexstruc_end>
   //-The new values are calculated in VelRhopM1g.
   //-Los nuevos valores se calculan en VelrhopM1g.
   swap(Velrhopg,VelrhopM1g);   //-Exchanges Velrhopg and VelrhopM1g. | Intercambia Velrhopg y VelrhopM1g.
-  //-Applies displacement to non-periodic fluid particles.
-  //-Aplica desplazamiento a las particulas fluid no periodicas.
-  cusph::ComputeStepPos(PeriActive,WithFloating,Np,Npb,movxyg,movzg,Posxyg,Poszg,Dcellg,Codeg);
-  //<vs_flexstruc_ini>
-  //-Applies displacement for flexible structures.
-  if(CaseNflexstruc){
-    Timersg->TmStart(TMG_SuFlexStruc,false);
-    cusph::ComputeStepPosFlexStruc(CaseNflexstruc,FlexStrucRidpg,Posxyg,Poszg,movxyg,movzg,Posxyg,Poszg,Dcellg,Codeg);
-    BoundChanged=true;
-    Timersg->TmStop(TMG_SuFlexStruc,false);
-  }
-  //<vs_flexstruc_end>
   //-Frees memory allocated for the diplacement.
   ArraysGpu->Free(movxyg);   movxyg=NULL;
   ArraysGpu->Free(movzg);    movzg=NULL;

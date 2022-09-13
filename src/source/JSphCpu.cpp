@@ -1429,23 +1429,15 @@ void JSphCpu::ComputeVerlet(double dt){
   }
   //<vs_flexstruc_ini>
   //-Computes displacement and velocity for flexible structures.
-//  if(CaseNflexstruc){
-//    Timersg->TmStart(TMG_SuFlexStruc,false);
-//    cusphs::ComputeStepFlexStrucSemiImplicitEuler(CaseNflexstruc,Velrhopg,Codeg,FlexStrucRidpg,Aceg,dt,Gravity,movxyg,movzg,VelrhopM1g,NULL);
-//    Timersg->TmStop(TMG_SuFlexStruc,false);
-//  }
+  if(CaseNflexstruc){
+    Timersc->TmStart(TMC_SuFlexStruc);
+    ComputeSemiImplicitEulerFlexStruc(dt,Posc,Dcellc,Codec);
+    BoundChanged=true;
+    Timersc->TmStop(TMC_SuFlexStruc);
+  }
   //<vs_flexstruc_end>
   //-New values are calculated en VelrhopM1c. | Los nuevos valores se calculan en VelrhopM1c.
   swap(Velrhopc,VelrhopM1c);     //-Swap Velrhopc & VelrhopM1c. | Intercambia Velrhopc y VelrhopM1c.
-  //<vs_flexstruc_ini>
-  //-Applies displacement for flexible structures.
-//  if(CaseNflexstruc){
-//    Timersg->TmStart(TMG_SuFlexStruc,false);
-//    cusph::ComputeStepPosFlexStruc(CaseNflexstruc,FlexStrucRidpg,Posxyg,Poszg,movxyg,movzg,Posxyg,Poszg,Dcellg,Codeg);
-//    BoundChanged=true;
-//    Timersg->TmStop(TMG_SuFlexStruc,false);
-//  }
-  //<vs_flexstruc_end>
   Timersc->TmStop(TMC_SuComputeStep);
 }
 
@@ -1984,5 +1976,35 @@ void JSphCpu::InitFloating(){
   }
 }
 
-
-
+//<vs_flexstruc_ini>
+void JSphCpu::ComputeSemiImplicitEulerFlexStruc(double dt,tdouble3 *pos,unsigned *dcell,typecode *code)const
+{
+  const tdouble3 gravity=ToTDouble3(Gravity);
+  #ifdef OMP_USE
+    #pragma omp parallel for schedule (static) if(CaseNflexstruc>OMP_LIMIT_COMPUTESTEP)
+  #endif
+  for(unsigned p=0;p<CaseNflexstruc;p++){
+    const unsigned p1=FlexStrucRidpc[p]; //-Number of particle.
+    if(CODE_IsFlexStrucFlex(code[p1])){
+      const tfloat4 rvelrhop=Velrhopc[p1];
+      const tfloat3 race=Acec[p1];
+      const double acegrx=double(race.x)+gravity.x;
+      const double acegry=double(race.y)+gravity.y;
+      const double acegrz=double(race.z)+gravity.z;
+      const tfloat4 rvelrhopnew=TFloat4(
+          float(double(rvelrhop.x) + acegrx*dt),
+          float(double(rvelrhop.y) + acegry*dt),
+          float(double(rvelrhop.z) + acegrz*dt),
+          VelrhopM1c[p1].w);
+      //-Calculate displacement. | Calcula desplazamiento.
+      const double dx=double(rvelrhopnew.x)*dt;
+      const double dy=double(rvelrhopnew.y)*dt;
+      const double dz=double(rvelrhopnew.z)*dt;
+      bool outrhop=(rvelrhopnew.w<RhopOutMin || rvelrhopnew.w>RhopOutMax);
+      //-Update particle data.
+      UpdatePos(pos[p1],dx,dy,dz,outrhop,p,pos,dcell,code);
+      VelrhopM1c[p1]=rvelrhopnew;
+    }
+  }
+}
+//<vs_flexstruc_end>

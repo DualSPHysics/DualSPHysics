@@ -298,6 +298,8 @@ protected:
     ,double posymin,double poszmin,unsigned poszcount,const double* movx,const double* velx
     ,const unsigned *ridpmv,tdouble3 *pos,unsigned *dcell,tfloat4 *velrhop,typecode *code)const;
 
+  void ComputeSemiImplicitEulerFlexStruc(double dt,tdouble3 *pos,unsigned *dcell,typecode *code)const;  //<vs_flexstruc>
+
 public:
   JSphCpu(bool withmpi);
   ~JSphCpu();
