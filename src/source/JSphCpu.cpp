@@ -1196,7 +1196,7 @@ template<TpKernel tker,bool sim2d,TpSlipMode tslip> void JSphCpu::InteractionMdb
 {
   const float determlimit=1e-3f;
   //-Interaction GhostBoundaryNodes-Fluid.
-  unsigned n=NpbOk;
+  const unsigned n=(UseNormalsFt? Np: NpbOk);
   if(Simulate2D){ const bool sim2d=true;
     if(slipmode==SLIP_Vel0    )InteractionMdbcCorrectionT2 <tker,sim2d,SLIP_Vel0    > (n,divdata,determlimit,MdbcThreshold,pos,code,idp,boundnormal,motionvel,velrhop);
     if(slipmode==SLIP_NoSlip  )InteractionMdbcCorrectionT2 <tker,sim2d,SLIP_NoSlip  > (n,divdata,determlimit,MdbcThreshold,pos,code,idp,boundnormal,motionvel,velrhop);

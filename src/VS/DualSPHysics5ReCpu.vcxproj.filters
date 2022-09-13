@@ -211,9 +211,6 @@
     <ClInclude Include="..\source\JDataArrays.h">
       <Filter>Common</Filter>
     </ClInclude>
-    <ClInclude Include="..\source\JNormalsMarrone.h">
-      <Filter>CommonDsph</Filter>
-    </ClInclude>
     <ClInclude Include="..\source\JPartNormalData.h">
       <Filter>CommonDsph</Filter>
     </ClInclude>
@@ -596,9 +593,6 @@
     </ClCompile>
     <ClCompile Include="..\source\JDataArrays.cpp">
       <Filter>Common</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\JNormalsMarrone.cpp">
-      <Filter>CommonDsph</Filter>
     </ClCompile>
     <ClCompile Include="..\source\JPartNormalData.cpp">
       <Filter>CommonDsph</Filter>

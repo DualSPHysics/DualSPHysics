@@ -1102,7 +1102,7 @@ void JSphGpu::SaveVtkNormalsGpu(std::string filename,int numfile,unsigned np,uns
   ,const double2 *posxyg,const double *poszg,const unsigned *idpg,const float3 *boundnormalg)
 {
   //-Allocates memory.
-  unsigned n=npb;
+  const unsigned n=(UseNormalsFt? np: npb);
   tdouble3 *pos=fcuda::ToHostPosd3(0,n,posxyg,poszg);
   unsigned *idp=fcuda::ToHostUint(0,n,idpg);
   tfloat3  *nor=fcuda::ToHostFloat3(0,n,boundnormalg);

@@ -59,7 +59,6 @@
 #include "JDsPips.h"
 #include "JLinearValue.h"
 #include "JPartNormalData.h"
-#include "JNormalsMarrone.h"
 #include "JDataArrays.h"
 #include "JOutputCsv.h"
 #include "JVtkLib.h"
@@ -509,6 +508,7 @@ void JSph::LoadConfig(const JSphCfgRun *cfg){
   if(cfg->Sv_Binx)SvData|=byte(SDAT_Binx);
   if(cfg->Sv_Info)SvData|=byte(SDAT_Info);
   if(cfg->Sv_Vtk)SvData|=byte(SDAT_Vtk);
+  SvNormals=cfg->SvNormals;
   SvRes=cfg->SvRes;
   SvTimers=cfg->SvTimers;
   SvDomainVtk=cfg->SvDomainVtk;
@@ -764,7 +764,6 @@ void JSph::LoadConfigCommands(const JSphCfgRun *cfg){
   if(cfg->TBoundary){
     TBoundary=BC_DBC;
     SlipMode=SLIP_Vel0;
-    MdbcCorrector=false;
     MdbcFastSingle=true;
     MdbcThreshold=0;
     switch(cfg->TBoundary){
@@ -779,6 +778,7 @@ void JSph::LoadConfigCommands(const JSphCfgRun *cfg){
       default: Run_Exceptioon("Slip mode for mDBC is not valid.");
     }
     UseNormals=(TBoundary==BC_MDBC);
+    if(TBoundary!=BC_MDBC)MdbcCorrector=false;
   }
   if(TBoundary==BC_MDBC){
     if(cfg->MdbcThreshold >=0)MdbcThreshold=cfg->MdbcThreshold;
@@ -1264,36 +1264,28 @@ void JSph::LoadBoundNormals(unsigned np,unsigned npb,const unsigned *idp
 {
   memset(boundnormal,0,sizeof(tfloat3)*np);
   if(!PartBegin){
-    string filenordata=JNormalsMarrone::GetNormalDataFile(DirCase+CaseName);
-    if(fun::FileExists(filenordata)){
-      //-Load or compute final normals.
+    const string filenormals=JPartNormalData::GetNormalDataFile(false,DirCase+CaseName);
+    if(fun::FileExists(filenormals)){
+      //-Loads final normals.
       const tdouble3 *pnor=NULL;
       unsigned pnorsize=0;
       JPartNormalData nd;
-      JNormalsMarrone nmarrone;
-      nd.LoadFile(DirCase+CaseName);
-      UseNormalsFt=nd.GetFtSupport();
-      if(nd.GetCountNormals()){
-        //-Compute Marrone normals starting from normal data in NBI4 file.
-        nd.Reset();
-        const bool savevtknor=false; //-Saves normals calculated starting from NBI4 file.
-        nmarrone.RunCase(DirCase+CaseName,DirOut,savevtknor);
-        pnor=nmarrone.GetPartNor();
-        pnorsize=nmarrone.GetPartNorSize();
-      }
-      else{
-        //-Loads final normals in NBI4 file.
-        pnor=nd.GetPartNormals();
-        pnorsize=nd.GetNbound();
-      }
+      nd.LoadFile(false,DirCase+CaseName);
+      pnor=nd.GetPartNormals();
+      pnorsize=nd.GetNbound();
       //-Applies final normals. Loads normals from boundary particle to boundary limit.
       if(pnorsize){
-        if(pnorsize<npb)Run_ExceptioonFile("The number of final normals does not match fixed and moving particles.",filenordata);
-        for(unsigned p=0;p<npb;p++)boundnormal[p]=ToTFloat3(pnor[p]);  //-For fixed and moving particles.
-        Log->Printf("NormalDataFile=\"%s\"",filenordata.c_str());
+        Log->Printf("NormalDataFile=\"%s\"",filenormals.c_str());
+        if(pnorsize!=CaseNbound)Run_ExceptioonFile("The number of final normals does not match boundary particles.",filenormals);
+        for(unsigned p=0;p<pnorsize;p++)boundnormal[p]=ToTFloat3(pnor[p]);
       }
     }
-    else Log->Print("**File with normal data not found.");
+    else{
+      const string filenormals=JPartNormalData::GetNormalDataFile(true,DirCase+CaseName);
+      if(fun::FileExists(filenormals)){
+        Run_ExceptioonFile("Old normal data file format (XXX_NormalData.nbi4) is invalid for current version. Use GenCase version 5.0.268 or higher to generate a supported file with normal data (XXX_Normals.nbi4).",filenormals);
+      }
+    }
   }
 }
 
@@ -1306,14 +1298,10 @@ void JSph::ConfigBoundNormals(unsigned np,unsigned npb,const tdouble3 *pos
   //-Checks current normals.
   if(!PartBegin){
     bool ftnor=false;
-    for(unsigned p=0;p<np;p++)if(idp[p]<CaseNbound && boundnormal[p]!=TFloat3(0)){
-      if(idp[p]>=CaseNpb){
-        if(!UseNormalsFt)boundnormal[p]=TFloat3(0);
-      }
-    }
+    for(unsigned p=0;p<np && !ftnor;p++)ftnor=(idp[p]<CaseNbound && idp[p]>=CaseNpb && boundnormal[p]!=TFloat3(0));
     UseNormalsFt=ftnor;
   }
-  
+
   //-Loads normals for restart mode.
   if(PartBegin){
     if(JDsExtraDataLoad::ExistsPartData(PartBeginDir,int(PartBegin))){
@@ -1328,7 +1316,7 @@ void JSph::ConfigBoundNormals(unsigned np,unsigned npb,const tdouble3 *pos
   const string file1="CfgInit_Normals.vtk";
   Log->AddFileInfo(DirOut+file1,"Saves VTK file with initial normals (from boundary particles to boundary limit).");
   SaveVtkNormals(file1,-1,np,npb,pos,idp,boundnormal,(PartBegin? 0.5f: 1.f));
-  //-Config normals.
+  //-Counts the null normals.
   unsigned nerr=0,nerrft=0;
   for(unsigned p=0;p<np;p++)if(idp[p]<CaseNbound){
     if(boundnormal[p]==TFloat3(0)){
@@ -1341,7 +1329,11 @@ void JSph::ConfigBoundNormals(unsigned np,unsigned npb,const tdouble3 *pos
   const string file2="CfgInit_NormalsGhost.vtk";
   Log->AddFileInfo(DirOut+file2,"Saves VTK file with initial normals (from boundary particles to ghost node).");
   SaveVtkNormals(file2,-1,np,npb,pos,idp,boundnormal,1.f);
-  if(nerr>0)Log->PrintfWarning("There are %u of %u fixed or moving boundary particles without normal data.",nerr,npb);
+  if(nerr  >0)Log->PrintfWarning("There are %u of %u fixed or moving boundary particles without normal data.",nerr,npb);
+  if(nerrft>0)Log->PrintfWarning("There are %u of %u floating particles without normal data.",nerrft,CaseNfloat);
+  if(TBoundary==BC_MDBC && nerr==npb && nerrft==CaseNfloat)Run_Exceptioon("No valid normal vectors for using mDBC.");
+  if(UseNormalsFt && (!UseChrono || !ChronoObjects->GetUseCollision()))
+    Log->PrintWarning("When mDBC is applied to floating bodies, their collisions should be solved using Chrono (RigidAlgorithm=3).");
 }
 
 //==============================================================================
@@ -1629,8 +1621,8 @@ void JSph::VisuRefs(){
   Log->Print("- Official solver reference DualSPHysics v5.0: J.M. Dominguez, G. Fourtakas,");
   Log->Print("    C. Altomare, R.B. Canelas, A. Tafuni, O. Garcia-Feal, I. Martinez-Estevez,"); 
   Log->Print("    A. Mokos, R. Vacondio, A.J.C. Crespo, B.D. Rogers, P.K. Stansby, M. Gomez-Gesteira."); 
-  Log->Print("    2021. DualSPHysics: from fluid dynamics to multiphysics problems.");
-  Log->Print("    Computational Particle Mechanics. doi: https://doi.org/10.1007/s40571-021-00404-2");
+  Log->Print("    2022. DualSPHysics: from fluid dynamics to multiphysics problems.");
+  Log->Print("    Computational Particle Mechanics, 9:867-895. doi: https://doi.org/10.1007/s40571-021-00404-2");
   Log->Print("");
   //-Code implementation:
   Log->Print("- Optimised CPU multi-core and GPU implementation (Dominguez et al., 2013  https://doi.org/10.1016/j.cpc.2012.10.015)");
@@ -2862,6 +2854,12 @@ void JSph::SaveVtkNormals(std::string filename,int numfile,unsigned np,unsigned 
     //-Find floating particles.
     unsigned nfloat=0;
     unsigned* ftidx=NULL;
+    if(UseNormalsFt){
+      const unsigned size=min(CaseNfloat,np);
+      ftidx=new unsigned[size];
+      for(unsigned p=npb;p<np;p++)if(idp[p]<CaseNbound)ftidx[nfloat++]=p;
+      if(nfloat>CaseNfloat)Run_Exceptioon("More floating particles were found than expected.");
+    }
     //-Allocate memory for boundary particles.
     const unsigned npsel=npb+nfloat;
     JDataArrays arrays;
@@ -2875,6 +2873,15 @@ void JSph::SaveVtkNormals(std::string filename,int numfile,unsigned np,unsigned 
     memcpy(vidp,idp,sizeof(unsigned)*npb);
     MkInfo->GetMkByIds(npb,idp,vmk);
     memcpy(vnor,boundnormal,sizeof(tfloat3)*npb);
+    //-Loads data of floating particles.
+    for(unsigned p=0;p<nfloat;p++){
+      const unsigned idx=ftidx[p];
+      vpos[npb+p]=pos[idx];
+      vidp[npb+p]=idp[idx];
+      vmk [npb+p]=MkInfo->GetMkById(idp[idx]);
+      vnor[npb+p]=boundnormal[idx];
+    }
+    delete[] ftidx; ftidx=NULL;
     //-Computes normalsize.
     if(resize!=1.f)for(unsigned p=0;p<npsel;p++)vnor[p]=vnor[p]*resize;
     for(unsigned p=0;p<npsel;p++)vsnor[p]=fgeo::PointDist(vnor[p]);

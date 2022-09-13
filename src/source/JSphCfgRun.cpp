@@ -56,9 +56,13 @@ void JSphCfgRun::Reset(){
   DDTValue=-1;
   DDTValueTRamp=DDTValueTMax=DDTValueMax=0;  //<vs_ddramp>
   Shifting=-1;
-  SvRes=true; SvDomainVtk=false;
-  Sv_Binx=true; Sv_Info=true;
-  Sv_Vtk=false; Sv_Csv=false;
+  Sv_Binx=true; 
+  Sv_Info=true;
+  Sv_Vtk=false;
+  Sv_Csv=false;
+  SvNormals=false; 
+  SvRes=true; 
+  SvDomainVtk=false;
   CaseName=""; RunName=""; DirOut=""; DirDataOut=""; 
   PartBegin=0; PartBeginFirst=0; PartBeginDir="";
   RestartChrono=false;
@@ -177,6 +181,7 @@ void JSphCfgRun::VisuInfo()const{
   printf("        info    Information about execution in .ibi4 format (by default)\n");
   printf("        vtk     VTK files\n");
   printf("        csv     CSV files\n");
+  printf("    -svnormals:<0/1> Saves normal vector of boundary particles (default=0)\n");
   printf("    -svres:<0/1>     Generates file that summarises the execution process\n");
   printf("    -svtimers:<0/1>  Obtains timing for each individual process\n");
   printf("    -svdomainvtk:<0/1>  Generates VTK file with domain limits\n");
@@ -353,6 +358,7 @@ void JSphCfgRun::LoadOpts(string *optlis,int optn,int lv,const std::string &file
         else if(tx=="FULL")Shifting=3;
         else ErrorParm(opt,c,lv,file);
       }
+      else if(txword=="SVNORMALS")SvNormals=(txoptfull!=""? atoi(txoptfull.c_str()): 1)!=0;
       else if(txword=="SVRES")SvRes=(txoptfull!=""? atoi(txoptfull.c_str()): 1)!=0;
       else if(txword=="SVTIMERS")SvTimers=(txoptfull!=""? atoi(txoptfull.c_str()): 1)!=0;
       else if(txword=="SVDOMAINVTK")SvDomainVtk=(txoptfull!=""? atoi(txoptfull.c_str()): 1)!=0;

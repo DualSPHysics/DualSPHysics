@@ -984,6 +984,19 @@ void JSphCpuSingle::RunFloating(double dt,bool predictor){
         FtObjs[cf].faceang=(fomega-FtObjs[cf].fomega)/float(dt);
         FtObjs[cf].fvel=fvel;
         FtObjs[cf].fomega=fomega;
+        //-Updates floating normals for mDBC.
+        if(UseNormalsFt){
+          const tdouble3 dang=ToTDouble3(FtObjs[cf].angles-fobj.angles)*TODEG;
+          const tdouble3 cen=FtObjs[cf].center;
+          JMatrix4d mat;
+          mat.Move(cen);
+          mat.Rotate(dang);
+          mat.Move(fobj.center*-1);
+          for(unsigned fp=fpini;fp<fpfin;fp++){
+            const int p=FtRidp[fp];
+            if(p!=UINT_MAX)BoundNormalc[p]=ToTFloat3(mat.MulNormal(ToTDouble3(BoundNormalc[p])));
+          }
+        }
         //<vs_ftmottionsv_ini>
         if(FtMotSave && FtMotSave->CheckTime(TimeStep+dt))
           FtMotSave->SaveFtDataCpu(TimeStep+dt,Nstep+1,FtObjs,Np,Posc,FtRidp);

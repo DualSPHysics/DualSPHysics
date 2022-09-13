@@ -1861,6 +1861,43 @@ void CopyMotionVel(unsigned nmoving,const unsigned *ridp,const float4 *velrhop,f
 }
 
 
+//------------------------------------------------------------------------------
+/// Applies a matrix movement to a set of particles.
+/// Aplica un movimiento matricial a un conjunto de particulas.
+//------------------------------------------------------------------------------
+__global__ void KerFtNormalsUpdate(unsigned n,unsigned fpini
+  ,double a11,double a12,double a13,double a21,double a22,double a23,double a31,double a32,double a33
+  ,const unsigned *ftridp,float3 *boundnormal)
+{
+  const unsigned fp=blockIdx.x*blockDim.x + threadIdx.x; //-Number of floating particle.
+  if(fp<n){
+    const unsigned p=ftridp[fp+fpini];
+    if(p!=UINT_MAX){
+      float3 rnor=boundnormal[p];
+      const double nx=rnor.x;
+      const double ny=rnor.y;
+      const double nz=rnor.z;
+      rnor.x=float(a11*nx + a12*ny + a13*nz);
+      rnor.y=float(a21*nx + a22*ny + a23*nz);
+      rnor.z=float(a31*nx + a32*ny + a33*nz);
+      boundnormal[p]=rnor;
+    }
+  }
+}
+
+//==============================================================================
+/// Applies a matrix movement to a set of particles.
+/// Aplica un movimiento matricial a un conjunto de particulas.
+//==============================================================================
+void FtNormalsUpdate(unsigned np,unsigned ini,tmatrix4d m,const unsigned *ftridp
+  ,float3 *boundnormal)
+{
+  dim3 sgrid=GetSimpleGridSize(np,SPHBSIZE);
+  if(np)KerFtNormalsUpdate <<<sgrid,SPHBSIZE>>> (np,ini,m.a11,m.a12,m.a13
+    ,m.a21,m.a22,m.a23,m.a31,m.a32,m.a33,ftridp,boundnormal);
+}
+
+
 
 //##############################################################################
 //# Kernels for MLPistons motion.
