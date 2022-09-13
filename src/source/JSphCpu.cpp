@@ -1541,14 +1541,13 @@ void JSphCpu::ComputeSymplecticPre(double dt){
   memcpy(Posc,PosPrec,sizeof(tdouble3)*Npb);
 
   //<vs_flexstruc_ini>
-  //-Applies predictor to flexible structure particles.
-//  if(CaseNflexstruc){
-//    Timersg->TmStart(TMG_SuFlexStruc,false);
-//    cusphs::ComputeStepFlexStrucSymplecticPre(CaseNflexstruc,VelrhopPreg,Codeg,FlexStrucRidpg,Aceg,dt05,Gravity,movxyg,movzg,Velrhopg,NULL);
-//    cusph::ComputeStepPosFlexStruc(CaseNflexstruc,FlexStrucRidpg,PosxyPreg,PoszPreg,movxyg,movzg,Posxyg,Poszg,Dcellg,Codeg);
-//    BoundChanged=true;
-//    Timersg->TmStop(TMG_SuFlexStruc,false);
-//  }
+  //-Computes displacement and velocity for flexible structures.
+  if(CaseNflexstruc){
+    Timersc->TmStart(TMC_SuFlexStruc);
+    ComputeSymplecticPreFlexStruc(dt05,Posc,Dcellc,Codec);
+    BoundChanged=true;
+    Timersc->TmStop(TMC_SuFlexStruc);
+  }
   //<vs_flexstruc_end>
 
   //-Frees memory allocated for the displacement.
@@ -1651,14 +1650,12 @@ void JSphCpu::ComputeSymplecticCorr(double dt){
   }
 
   //<vs_flexstruc_ini>
-  //-Applies corrector to flexible structure particles.
-//  if(CaseNflexstruc){
-//    Timersg->TmStart(TMG_SuFlexStruc,false);
-//    cusphs::ComputeStepFlexStrucSymplecticCor(CaseNflexstruc,VelrhopPreg,Codeg,FlexStrucRidpg,Aceg,dt05,dt,Gravity,movxyg,movzg,Velrhopg,NULL);
-//    cusph::ComputeStepPosFlexStruc(CaseNflexstruc,FlexStrucRidpg,PosxyPreg,PoszPreg,movxyg,movzg,Posxyg,Poszg,Dcellg,Codeg);
-//    BoundChanged=true;
-//    Timersg->TmStop(TMG_SuFlexStruc,false);
-//  }
+  if(CaseNflexstruc){
+    Timersc->TmStart(TMC_SuFlexStruc);
+    ComputeSymplecticCorrFlexStruc(dt05,dt,Posc,Dcellc,Codec);
+    BoundChanged=true;
+    Timersc->TmStop(TMC_SuFlexStruc);
+  }
   //<vs_flexstruc_end>
  
   //-Frees memory allocated for the displacement.
@@ -2002,8 +1999,74 @@ void JSphCpu::ComputeSemiImplicitEulerFlexStruc(double dt,tdouble3 *pos,unsigned
       const double dz=double(rvelrhopnew.z)*dt;
       bool outrhop=(rvelrhopnew.w<RhopOutMin || rvelrhopnew.w>RhopOutMax);
       //-Update particle data.
-      UpdatePos(pos[p1],dx,dy,dz,outrhop,p,pos,dcell,code);
+      UpdatePos(pos[p1],dx,dy,dz,outrhop,p1,pos,dcell,code);
       VelrhopM1c[p1]=rvelrhopnew;
+    }
+  }
+}
+
+void JSphCpu::ComputeSymplecticPreFlexStruc(double dtm,tdouble3 *pos,unsigned *dcell,typecode *code)const
+{
+  const tdouble3 gravity=ToTDouble3(Gravity);
+  #ifdef OMP_USE
+    #pragma omp parallel for schedule (static) if(CaseNflexstruc>OMP_LIMIT_COMPUTESTEP)
+  #endif
+  for(unsigned p=0;p<CaseNflexstruc;p++){
+    const unsigned p1=FlexStrucRidpc[p]; //-Number of particle.
+    if(CODE_IsFlexStrucFlex(code[p1])){
+      const tfloat4 rvelrhoppre=VelrhopPrec[p1];
+      const tfloat3 race=Acec[p1];
+      //-Calculate displacement. | Calcula desplazamiento.
+      double dx=double(rvelrhoppre.x)*dtm;
+      double dy=double(rvelrhoppre.y)*dtm;
+      double dz=double(rvelrhoppre.z)*dtm;
+      //-Calculate velocity & density. | Calcula velocidad y densidad.
+      const tfloat4 rvelrhopnew=TFloat4(
+          float(double(rvelrhoppre.x) + (double(race.x)+gravity.x) * dtm),
+          float(double(rvelrhoppre.y) + (double(race.y)+gravity.y) * dtm),
+          float(double(rvelrhoppre.z) + (double(race.z)+gravity.z) * dtm),
+          Velrhopc[p1].w);
+      bool outrhop=(rvelrhopnew.w<RhopOutMin || rvelrhopnew.w>RhopOutMax);
+      if(outrhop && CODE_IsNormal(code[p1]))code[p1]=CODE_SetOutRhop(code[p1]); //-Only brands as excluded normal particles (not periodic). | Solo marca como excluidas las normales (no periodicas).
+      //-Update particle data.
+      Velrhopc[p1]=rvelrhopnew;
+      outrhop=CODE_IsOutRhop(code[p1]);
+      const bool flexstruc=CODE_IsFlexStrucFlex(code[p1]);
+      const bool normal=(outrhop || CODE_IsNormal(code[p1]));
+      if(normal && flexstruc)UpdatePos(PosPrec[p1],dx,dy,dz,outrhop,p1,pos,dcell,code);
+    }
+  }
+}
+
+void JSphCpu::ComputeSymplecticCorrFlexStruc(double dtm,double dt,tdouble3 *pos,unsigned *dcell,typecode *code)const
+{
+  const tdouble3 gravity=ToTDouble3(Gravity);
+#ifdef OMP_USE
+#pragma omp parallel for schedule (static) if(CaseNflexstruc>OMP_LIMIT_COMPUTESTEP)
+#endif
+  for(unsigned p=0;p<CaseNflexstruc;p++){
+    const unsigned p1=FlexStrucRidpc[p]; //-Number of particle.
+    if(CODE_IsFlexStrucFlex(code[p1])){
+      const tfloat4 rvelrhoppre=VelrhopPrec[p1];
+      const tfloat3 race=Acec[p1];
+      //-Calculate velocity. | Calcula velocidad.
+      const tfloat4 rvelrhopnew=TFloat4(
+          float(double(rvelrhoppre.x) + (double(race.x)+gravity.x) * dt),
+          float(double(rvelrhoppre.y) + (double(race.y)+gravity.y) * dt),
+          float(double(rvelrhoppre.z) + (double(race.z)+gravity.z) * dt),
+          Velrhopc[p1].w);
+      //-Calculate displacement. | Calcula desplazamiento.
+      double dx=(double(rvelrhoppre.x)+double(rvelrhopnew.x)) * dtm;
+      double dy=(double(rvelrhoppre.y)+double(rvelrhopnew.y)) * dtm;
+      double dz=(double(rvelrhoppre.z)+double(rvelrhopnew.z)) * dtm;
+      bool outrhop=(rvelrhopnew.w<RhopOutMin || rvelrhopnew.w>RhopOutMax);
+      if(outrhop && CODE_IsNormal(code[p1]))code[p1]=CODE_SetOutRhop(code[p1]); //-Only brands as excluded normal particles (not periodic). | Solo marca como excluidas las normales (no periodicas).
+      //-Update particle data.
+      Velrhopc[p1]=rvelrhopnew;
+      outrhop=CODE_IsOutRhop(code[p1]);
+      const bool flexstruc=CODE_IsFlexStrucFlex(code[p1]);
+      const bool normal=(outrhop || CODE_IsNormal(code[p1]));
+      if(normal && flexstruc)UpdatePos(PosPrec[p1],dx,dy,dz,outrhop,p1,pos,dcell,code);
     }
   }
 }
