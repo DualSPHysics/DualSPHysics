@@ -1544,9 +1544,6 @@ void JSphCpu::ComputeSymplecticPre(double dt){
       else Posc[p]=PosPrec[p]; //-Copy position of floating particles.
     }
   }
-  
-  //-Frees memory allocated for the displacement.
-  ArraysCpu->Free(movc);   movc=NULL;
 
   //-Copy previous position of boundary. | Copia posicion anterior del contorno.
   memcpy(Posc,PosPrec,sizeof(tdouble3)*Npb);
@@ -1561,6 +1558,9 @@ void JSphCpu::ComputeSymplecticPre(double dt){
 //    Timersg->TmStop(TMG_SuFlexStruc,false);
 //  }
   //<vs_flexstruc_end>
+
+  //-Frees memory allocated for the displacement.
+  ArraysCpu->Free(movc);   movc=NULL;
 
   Timersc->TmStop(TMC_SuComputeStep);
 }

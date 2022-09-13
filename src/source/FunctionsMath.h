@@ -83,6 +83,44 @@ inline double InterpolationBilinear(double x,double y,double px,double py,double
   return(InterpolationLinear(y,py,py+dy,vy0,vy1));
 }
 
+//<vs_flexstruc_ini>
+//------------------------------------------------------------------------------
+/// Calcula el determinante de una matriz de 2x2.
+/// Returns the determinant of a 2x2 matrix.
+//------------------------------------------------------------------------------
+inline float Determinant2x2(const tmatrix3f &d){
+  return(d.a11 * d.a33 - d.a13 * d.a31);
+}
+
+//------------------------------------------------------------------------------
+/// Devuelve la matriz inversa de una matriz de 2x2.
+/// Returns the inverse matrix of a 2x2 matrix.
+//------------------------------------------------------------------------------
+inline tmatrix3f InverseMatrix2x2(const tmatrix3f &d,const float det){
+  tmatrix3f inv;
+  if(det){
+    inv.a11= d.a33/det;
+    inv.a12= 0;
+    inv.a13=-d.a13/det;
+    inv.a21= 0;
+    inv.a22= 0;
+    inv.a23= 0;
+    inv.a31=-d.a31/det;
+    inv.a32= 0;
+    inv.a33= d.a11/det;
+  }
+  else inv=TMatrix3f(0);
+  return(inv);
+}
+
+//==============================================================================
+/// Devuelve la matriz inversa de una matriz de 2x2.
+/// Returns the inverse matrix of a 2x2 matrix.
+//==============================================================================
+inline tmatrix3f InverseMatrix2x2(const tmatrix3f &d){
+  return(InverseMatrix2x2(d,Determinant2x2(d)));
+}
+//<vs_flexstruc_end>
 
 //==============================================================================
 /// Calcula el determinante de una matriz de 3x3.

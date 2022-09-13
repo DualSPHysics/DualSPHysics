@@ -59,7 +59,7 @@ protected:
   void Interaction_Forces(TpInterStep tinterstep);
   void MdbcBoundCorrection();
 
-  double ComputeAceMax(unsigned np,const tfloat3* ace,const typecode *code)const;
+  double ComputeAceMax()const;
   template<bool checkcode> double ComputeAceMaxSeq(unsigned np,const tfloat3* ace,const typecode *code)const;
   template<bool checkcode> double ComputeAceMaxOmp(unsigned np,const tfloat3* ace,const typecode *code)const;
   

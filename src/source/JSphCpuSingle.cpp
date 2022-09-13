@@ -563,7 +563,7 @@ void JSphCpuSingle::Interaction_Forces(TpInterStep interstep){
   //-Calculates maximum value of ViscDt.
   ViscDtMax=res.viscdt;
   //-Calculates maximum value of Ace (periodic particles are ignored).
-  AceMax=ComputeAceMax(Np-Npb,Acec+Npb,Codec+Npb);
+  AceMax=ComputeAceMax();
 
   //<vs_flexstruc_ini>
   //-Calculates maximum value of FlexStrucDt.
@@ -592,7 +592,7 @@ void JSphCpuSingle::MdbcBoundCorrection(){
 /// Returns maximum value of ace (modulus), periodic and inout particles must be ignored.
 /// Devuelve el valor maximo de ace (modulo), se deben ignorar las particulas periodicas e inout.
 //==============================================================================
-double JSphCpuSingle::ComputeAceMax(unsigned np,const tfloat3* ace,const typecode *code)const{
+double JSphCpuSingle::ComputeAceMax()const{
   const bool check=(PeriActive!=0 || InOut!=NULL);
   const unsigned pini=(CaseNflexstruc? 0: Npb);
   if(check)return(ComputeAceMaxOmp<true >(Np-pini,Acec+pini,Codec+pini));
