@@ -997,7 +997,7 @@ void JSph::LoadCaseConfig(const JSphCfgRun *cfg){
     WaveGen=new JWaveGen(useomp,!Cpu,Log,DirCase,&xml,"case.execution.special.wavepaddles",ToTDouble3(Gravity));
     if(DsMotion)for(unsigned ref=0;ref<DsMotion->GetNumObjects();ref++){
       const StMotionData& m=DsMotion->GetMotionData(ref);
-      WaveGen->ConfigPaddle(m.mkbound,ref,m.idbegin,m.count);
+      WaveGen->ConfigPaddleParts(m.mkbound,ref,m.idbegin,m.count);
     }
   }
 
@@ -1657,9 +1657,11 @@ void JSph::VisuRefs(){
   const bool awas=(WaveGen && WaveGen->UseAwas());
   const bool lonw=(WaveGen && !WaveGen->WavesSolitary());
   const bool solw=(WaveGen && WaveGen->WavesSolitary());
+  const bool focw=(WaveGen && WaveGen->WavesFocused());
   const bool inow=(InOut && InOut->Use_AwasVel());
   if(lonw        )Log->Print("- Long-crested wave generation (Altomare et al., 2017  https://doi.org/10.1016/j.coastaleng.2017.06.004)");
   if(solw        )Log->Print("- Solitary wave generation (Dominguez et al., 2019  https://doi.org/10.1080/21664250.2018.1560682)");
+  if(focw        )Log->Print("- Focused waves theory (Whittaker et al., 2017  https://doi.org/10.1016/j.coastaleng.2016.12.001)");
   if(MLPistons   )Log->Print("- Multi-layer Piston for wave generation (Altomare et al., 2015  https://doi.org/10.1142/S0578563415500242)");
   if(RelaxZones  )Log->Print("- Relaxation Zone for wave generation (Altomare et al., 2018  https://doi.org/10.1016/j.apor.2018.09.013)");
   if(inow        )Log->Print("- Wave generation and absorption using open boundaries (Verbrugghe et al., 2019  https://doi.org/10.1016/j.cpc.2019.02.003)");
@@ -2142,7 +2144,7 @@ void JSph::InitRun(unsigned np,const unsigned *idp,const tdouble3 *pos){
   //-Prepares WaveGen configuration.
   if(WaveGen){
     Log->Print("Wave paddles configuration:");
-    WaveGen->Init(GaugeSystem,MkInfo,TimeMax,TimePart);
+    WavesInit(GaugeSystem,MkInfo,TimeMax,TimePart);
     WaveGen->VisuConfig(""," ");
   }
 
@@ -2222,6 +2224,70 @@ void JSph::InitRun(unsigned np,const unsigned *idp,const tdouble3 *pos){
   TimePartNext=(SvAllSteps? TimeStep: OutputTime->GetNextTime(TimeStep));
 }
 
+//==============================================================================
+/// Returns linear forces from external file according to timestep.
+//==============================================================================
+void JSph::WavesInit(JGaugeSystem *gaugesystem,const JSphMk *mkinfo
+  ,double timemax,double timepart)
+{
+  StWvgDimensions wdims;
+  wdims.dp=GaugeSystem->GetDp();
+  wdims.scell=GaugeSystem->GetScell();
+  wdims.kernelh=GaugeSystem->GetKernelH();
+  wdims.massfluid=GaugeSystem->GetMassFluid();
+  wdims.domposmin=GaugeSystem->GetDomPosMin();
+  wdims.domposmax=GaugeSystem->GetDomPosMax();
+  wdims.padposmin=wdims.padposmax=TDouble3(DBL_MAX);
+  for(unsigned cp=0;cp<WaveGen->GetCount();cp++){
+    const word mkbound=WaveGen->GetPaddleMkbound(cp);
+    //-Obtains initial limits of paddle for AWAS configuration.
+    const unsigned cmk=mkinfo->GetMkBlockByMkBound(mkbound);
+    if(cmk<mkinfo->Size()){
+      wdims.padposmin=mkinfo->Mkblock(cmk)->GetPosMin();
+      wdims.padposmax=mkinfo->Mkblock(cmk)->GetPosMax();
+    }
+    else wdims.padposmin=wdims.padposmax=TDouble3(DBL_MAX);
+    WaveGen->InitPaddle(cp,timemax,timepart,wdims);
+    //-Configures gauge according AWAS configuration.
+    if(WaveGen->PaddleUseAwas(cp)){
+      const string gname=fun::PrintStr("AwasMkb%02u",mkbound);
+      const double coefmassdef=(Simulate2D? 0.4: 0.5);
+      double masslimit,tstart,gdp;
+      tdouble3 point0,point2;
+      WaveGen->PaddleGetAwasInfo(cp,coefmassdef,wdims.massfluid,masslimit,tstart,gdp,point0,point2);
+      //-Creates gauge for AWAS.
+      JGaugeSwl *gswl=gaugesystem->AddGaugeSwl(gname,tstart,DBL_MAX,0,point0,point2,gdp,float(masslimit));
+      WaveGen->PaddleGaugeInit(cp,(void*)gswl);
+    }
+  }
+}
+
+//==============================================================================
+/// Loads the last gauge results.
+//==============================================================================
+void JSph::WavesLoadLastGaugeResults(){
+  for(unsigned cp=0;cp<WaveGen->GetCount();cp++){
+    const JGaugeSwl* gswl=(const JGaugeSwl*)WaveGen->PaddleGaugeGet(cp);
+    if(gswl){
+      WaveGen->LoadLastGaugeResults(cp,gswl->GetResult().timestep
+        ,gswl->GetResult().posswl,gswl->GetResult().point0);
+    }
+  }
+}
+
+//==============================================================================
+/// Updates measurement limits according cell size and last measurement.
+//==============================================================================
+void JSph::WavesUpdateGaugePoints(){
+  for(unsigned cp=0;cp<WaveGen->GetCount();cp++){
+    JGaugeSwl* gswl=(JGaugeSwl*)WaveGen->PaddleGaugeGet(cp);
+    if(gswl){
+      tdouble3 point0=TDouble3(0),point2=TDouble3(0);
+      WaveGen->GetUpdateGaugePoints(cp,gswl->GetResult().modified,point0,point2);
+      gswl->SetPoints(point0,point2);
+    }
+  }
+}
 
 //==============================================================================
 /// Returns linear forces from external file according to timestep.
@@ -2264,7 +2330,7 @@ bool JSph::CalcMotion(double stepdt){
 void JSph::CalcMotionWaveGen(double stepdt){
   const bool motsim=true;
   if(WaveGen){
-    if(WaveGen->UseAwas())WaveGen->LoadLastGaugeResults();
+    if(WaveGen->UseAwas())WavesLoadLastGaugeResults();
     const bool svdata=(TimeStep+stepdt>=TimePartNext);
     for(unsigned c=0;c<WaveGen->GetCount();c++){
       const StMotionData m=(motsim? WaveGen->GetMotion(svdata,c,TimeStep,stepdt): WaveGen->GetMotionAce(svdata,c,TimeStep,stepdt));
@@ -2274,7 +2340,7 @@ void JSph::CalcMotionWaveGen(double stepdt){
         else      DsMotion->SetMotionDataAce(m);
       }
     }
-    if(WaveGen->UseAwas())WaveGen->UpdateGaugePoints();
+    if(WaveGen->UseAwas())WavesUpdateGaugePoints();
   }
 }
 
