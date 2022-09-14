@@ -186,6 +186,7 @@ typedef struct StrInterParmsFlexStrucg{
   //-Configuration options.
   bool simulate2d;
   TpKernel tkernel;
+  bool lamsps;
   //-Execution values.
   float viscob;
   unsigned vnpfs;
@@ -210,7 +211,7 @@ typedef struct StrInterParmsFlexStrucg{
 
   ///Structure constructor.
   StrInterParmsFlexStrucg(
-       bool simulate2d_,TpKernel tkernel_
+       bool simulate2d_,TpKernel tkernel_,bool lamsps_
       ,float viscob_,unsigned vnpfs_
       ,const StDivDataGpu &divdatag_
       ,const unsigned *dcell_
@@ -223,7 +224,7 @@ typedef struct StrInterParmsFlexStrucg{
       ,cudaStream_t stm_)
   {
     //-Configuration options.
-    simulate2d=simulate2d_; tkernel=tkernel_;
+    simulate2d=simulate2d_; tkernel=tkernel_; lamsps=lamsps_;
     //-Execution values.
     viscob=viscob_;
     vnpfs=vnpfs_;

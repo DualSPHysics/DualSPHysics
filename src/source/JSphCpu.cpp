@@ -2190,7 +2190,7 @@ inline tmatrix3f JSphCpu::ComputePK1StressFlexStruc(const tmatrix3f &defgrad,con
   return fmath::MulMatrix3x3(defgrad,pk2);
 }
 
-template<TpKernel tker,bool simulate2d> void JSphCpu::InteractionForcesFlexStruc(unsigned n,float visco
+template<TpKernel tker,bool simulate2d,bool lamsps> void JSphCpu::InteractionForcesFlexStruc(unsigned n,float visco
     ,StDivDataCpu divdata,const unsigned *dcell
     ,const tdouble3 *pos,const tfloat4 *velrhop,const float *press,const typecode *code
     ,const StFlexStrucData *flexstrucdata,const unsigned *flexstrucridp
@@ -2257,15 +2257,28 @@ template<TpKernel tker,bool simulate2d> void JSphCpu::InteractionForcesFlexStruc
                 const float frx=fac*drx,fry=fac*dry,frz=fac*drz; //-Gradients.
                 tfloat4 velrhop2=velrhop[p2];
                 const float dvx=velrhop1.x-velrhop2.x,dvy=velrhop1.y-velrhop2.y,dvz=velrhop1.z-velrhop2.z;
-                //-Laminar viscosity contribution.
-                const float robar2=(velrhop1.w+velrhop2.w);
-                const float temp=4.f*visco/((rr2+Eta2)*robar2);
-                const float vtemp=MassFluid*temp*(drx*frx+dry*fry+drz*frz);
-                acep1.x+=vtemp*dvx; acep1.y+=vtemp*dvy; acep1.z+=vtemp*dvz;
+                //-Artificial viscosity.
+                if(!lamsps){
+                  const float dot=drx*dvx+dry*dvy+drz*dvz;
+                  if(dot<0){
+                    const float dot_rr2=dot/(rr2+Eta2);
+                    const float amubar=KernelH*dot_rr2;
+                    const float robar=(velrhop1.w+velrhop2.w)*0.5f;
+                    const float pi_visc=(-visco*Cs0*amubar/robar)*MassFluid*(MassFluid/mass0p1);
+                    acep1.x-=pi_visc*frx; acep1.y-=pi_visc*fry; acep1.z-=pi_visc*frz;
+                  }
+                }
+                  //-Laminar viscosity.
+                else{
+                  const float robar2=(velrhop1.w+velrhop2.w);
+                  const float temp=4.f*visco/((rr2+Eta2)*robar2);
+                  const float vtemp=MassFluid*temp*(drx*frx+dry*fry+drz*frz)*(MassFluid/mass0p1);
+                  acep1.x+=vtemp*dvx; acep1.y+=vtemp*dvy; acep1.z+=vtemp*dvz;
+                }
                 //-Velocity derivative (Momentum equation).
                 const float pressp2=press[p2];
                 const float prs=(pressp1+pressp2)/(velrhop1.w*velrhop2.w)+(tker==KERNEL_Cubic?fsph::GetKernelCubic_Tensil(CSP,rr2,velrhop1.w,pressp1,velrhop2.w,pressp2):0);
-                const float p_vpm=-prs*MassFluid*MassFluid/mass0p1;
+                const float p_vpm=-prs*MassFluid*(MassFluid/mass0p1);
                 acep1.x+=p_vpm*frx; acep1.y+=p_vpm*fry; acep1.z+=p_vpm*frz;
               }
             }
@@ -2334,18 +2347,23 @@ template<TpKernel tker,bool simulate2d> void JSphCpu::InteractionForcesFlexStruc
   for(int th=0;th<OmpThreads;th++)if(flexstrucdt<flexstructh[th*OMP_STRIDE])flexstrucdt=flexstructh[th*OMP_STRIDE];
 }
 
-template<TpKernel tker,bool simulate2d> void JSphCpu::Interaction_ForcesFlexStrucT(float &flexstrucdtmax)const{
+template<TpKernel tker,bool simulate2d,bool lamsps> void JSphCpu::Interaction_ForcesFlexStrucT(float &flexstrucdtmax)const{
   if(CaseNflexstruc){
     ComputeDefGradFlexStruc<tker,simulate2d>
       (CaseNflexstruc,Posc,Codec,FlexStrucDatac,FlexStrucRidpc,Pos0c,NumPairsc,PairIdxc,KerCorrc,DefGradc);
-    InteractionForcesFlexStruc<tker,simulate2d>
+    InteractionForcesFlexStruc<tker,simulate2d,lamsps>
       (CaseNflexstruc,Visco*ViscoBoundFactor,DivData,Dcellc,Posc,Velrhopc,Pressc,Codec,FlexStrucDatac,FlexStrucRidpc,Pos0c,NumPairsc,PairIdxc,KerCorrc,DefGradc,flexstrucdtmax,Acec);
   }
 }
 
+template<TpKernel tker,bool simulate2d> void JSphCpu::Interaction_ForcesFlexStruc_ct1(float &flexstrucdtmax)const{
+  if(TVisco==VISCO_LaminarSPS)Interaction_ForcesFlexStrucT<tker,simulate2d,true> (flexstrucdtmax);
+  else                        Interaction_ForcesFlexStrucT<tker,simulate2d,false>(flexstrucdtmax);
+}
+
 template<TpKernel tker> void JSphCpu::Interaction_ForcesFlexStruc_ct0(float &flexstrucdtmax)const{
-  if(Simulate2D)Interaction_ForcesFlexStrucT<tker,true> (flexstrucdtmax);
-  else          Interaction_ForcesFlexStrucT<tker,false>(flexstrucdtmax);
+  if(Simulate2D)Interaction_ForcesFlexStruc_ct1<tker,true> (flexstrucdtmax);
+  else          Interaction_ForcesFlexStruc_ct1<tker,false>(flexstrucdtmax);
 }
 
 void JSphCpu::Interaction_ForcesFlexStruc(float &flexstrucdtmax)const{

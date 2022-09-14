@@ -3218,7 +3218,7 @@ __device__ tmatrix3f KerComputePK1StressFlexStruc(const tmatrix3f &defgrad,const
   return cumath::MulMatrix3x3(defgrad,pk2);
 }
 
-template<TpKernel tker,bool simulate2d> __global__ void KerInteractionForcesFlexStruc(unsigned n,float visco
+template<TpKernel tker,bool simulate2d,bool lamsps> __global__ void KerInteractionForcesFlexStruc(unsigned n,float visco
     ,int scelldiv,int4 nc,int3 cellzero,const int2 *beginendcellfluid,const unsigned *dcell
     ,const float4 *poscell,const float4 *velrhop,const typecode *code
     ,const StFlexStrucData *flexstrucdata,const unsigned *flexstrucridp
@@ -3282,15 +3282,28 @@ template<TpKernel tker,bool simulate2d> __global__ void KerInteractionForcesFlex
                   const float frx=fac*drx,fry=fac*dry,frz=fac*drz; //-Gradients.
                   float4 velrhop2=velrhop[p2];
                   const float dvx=velrhop1.x-velrhop2.x,dvy=velrhop1.y-velrhop2.y,dvz=velrhop1.z-velrhop2.z;
-                  //-Laminar viscosity contribution.
-                  const float robar2=(velrhop1.w+velrhop2.w);
-                  const float temp=4.f*visco/((rr2+CTE.eta2)*robar2);
-                  const float vtemp=CTE.massf*temp*(drx*frx+dry*fry+drz*frz);
-                  acep1.x+=vtemp*dvx; acep1.y+=vtemp*dvy; acep1.z+=vtemp*dvz;
+                  //-Artificial viscosity.
+                  if(!lamsps){
+                    const float dot=drx*dvx+dry*dvy+drz*dvz;
+                    if(dot<0){
+                      const float dot_rr2=dot/(rr2+CTE.eta2);
+                      const float amubar=CTE.kernelh*dot_rr2;
+                      const float robar=(velrhop1.w+velrhop2.w)*0.5f;
+                      const float pi_visc=(-visco*CTE.cs0*amubar/robar)*CTE.massf*(CTE.massf/mass0p1);
+                      acep1.x-=pi_visc*frx; acep1.y-=pi_visc*fry; acep1.z-=pi_visc*frz;
+                    }
+                  }
+                  //-Laminar viscosity.
+                  else{
+                    const float robar2=(velrhop1.w+velrhop2.w);
+                    const float temp=4.f*visco/((rr2+CTE.eta2)*robar2);
+                    const float vtemp=CTE.massf*temp*(drx*frx+dry*fry+drz*frz)*(CTE.massf/mass0p1);
+                    acep1.x+=vtemp*dvx; acep1.y+=vtemp*dvy; acep1.z+=vtemp*dvz;
+                  }
                   //-Velocity derivative (Momentum equation).
                   const float pressp2=cufsph::ComputePressCte(velrhop2.w);
                   const float prs=(pressp1+pressp2)/(velrhop1.w*velrhop2.w)+(tker==KERNEL_Cubic?cufsph::GetKernelCubic_Tensil(rr2,velrhop1.w,pressp1,velrhop2.w,pressp2):0);
-                  const float p_vpm=-prs*CTE.massf*CTE.massf/mass0p1;
+                  const float p_vpm=-prs*CTE.massf*(CTE.massf/mass0p1);
                   acep1.x+=p_vpm*frx; acep1.y+=p_vpm*fry; acep1.z+=p_vpm*frz;
                 }
               }
@@ -3357,20 +3370,25 @@ template<TpKernel tker,bool simulate2d> __global__ void KerInteractionForcesFlex
   }
 }
 
-template<TpKernel tker,bool simulate2d> void Interaction_ForcesFlexStrucT(const StInterParmsFlexStrucg &tfs){
+template<TpKernel tker,bool simulate2d,bool lamsps> void Interaction_ForcesFlexStrucT(const StInterParmsFlexStrucg &tfs){
   if(tfs.vnpfs){
     const StDivDataGpu &dvd=tfs.divdatag;
     dim3 sgridb=GetSimpleGridSize(tfs.vnpfs,SPHBSIZE);
     KerComputeDefGradFlexStruc<tker,simulate2d> <<<sgridb,SPHBSIZE,0,tfs.stm>>>
         (tfs.vnpfs,tfs.poscell,tfs.code,tfs.flexstrucdata,tfs.flexstrucridp,tfs.poscell0,tfs.numpairs,tfs.pairidx,tfs.kercorr,tfs.defgrad);
-    KerInteractionForcesFlexStruc<tker,simulate2d> <<<sgridb,SPHBSIZE,0,tfs.stm>>>
+    KerInteractionForcesFlexStruc<tker,simulate2d,lamsps> <<<sgridb,SPHBSIZE,0,tfs.stm>>>
         (tfs.vnpfs,tfs.viscob,dvd.scelldiv,dvd.nc,dvd.cellzero,dvd.beginendcell+dvd.cellfluid,tfs.dcell,tfs.poscell,tfs.velrhop,tfs.code,tfs.flexstrucdata,tfs.flexstrucridp,tfs.poscell0,tfs.numpairs,tfs.pairidx,tfs.kercorr,tfs.defgrad,tfs.flexstrucdt,tfs.ace);
   }
 }
 
+template<TpKernel tker,bool simulate2d> void Interaction_ForcesFlexStruc_gt1(const StInterParmsFlexStrucg &tfs){
+  if(tfs.lamsps)Interaction_ForcesFlexStrucT<tker,simulate2d,true>  (tfs);
+  else          Interaction_ForcesFlexStrucT<tker,simulate2d,false> (tfs);
+}
+
 template<TpKernel tker> void Interaction_ForcesFlexStruc_gt0(const StInterParmsFlexStrucg &tfs){
-  if(tfs.simulate2d)Interaction_ForcesFlexStrucT<tker,true>  (tfs);
-  else              Interaction_ForcesFlexStrucT<tker,false> (tfs);
+  if(tfs.simulate2d)Interaction_ForcesFlexStruc_gt1<tker,true>  (tfs);
+  else              Interaction_ForcesFlexStruc_gt1<tker,false> (tfs);
 }
 
 void Interaction_ForcesFlexStruc(const StInterParmsFlexStrucg &tfs){

@@ -470,7 +470,7 @@ void JSphGpuSingle::Interaction_Forces(TpInterStep interstep){
   //-Interaction flexible structure-flexible structure.
   if(FlexStruc){
     Timersg->TmStart(TMG_SuFlexStruc,false);
-    const StInterParmsFlexStrucg parmsfs=StrInterParmsFlexStrucg(Simulate2D,TKernel
+    const StInterParmsFlexStrucg parmsfs=StrInterParmsFlexStrucg(Simulate2D,TKernel,(TVisco==VISCO_LaminarSPS)
         ,Visco*ViscoBoundFactor,CaseNflexstruc,DivData,Dcellg
         ,PosCellg,Velrhopg,Codeg
         ,FlexStrucDatag,FlexStrucRidpg,PosCell0g,NumPairsg,PairIdxg,KerCorrg,FlexStrucDtg,DefGradg,Aceg,NULL);
@@ -1049,7 +1049,7 @@ void JSphGpuSingle::FlexStrucInit(){
   //-Set the indices for each particle pair.
   cusph::SetFlexStrucPairs(CaseNflexstruc,PosCell0g,PairIdxg);
   //-Interaction parameters.
-  const StInterParmsFlexStrucg parmsfs=StrInterParmsFlexStrucg(Simulate2D,TKernel
+  const StInterParmsFlexStrucg parmsfs=StrInterParmsFlexStrucg(Simulate2D,TKernel,(TVisco==VISCO_LaminarSPS)
       ,Visco*ViscoBoundFactor,CaseNflexstruc,DivData,Dcellg
       ,PosCellg,Velrhopg,Codeg
       ,FlexStrucDatag,FlexStrucRidpg,PosCell0g,NumPairsg,PairIdxg,KerCorrg,FlexStrucDtg,DefGradg,Aceg,NULL);
