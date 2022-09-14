@@ -3203,7 +3203,7 @@ __device__ tmatrix3f KerComputePK1StressFlexStruc(const tmatrix3f &defgrad,const
   gl.a21*=0.5f; gl.a22*=0.5f; gl.a23*=0.5f;
   gl.a31*=0.5f; gl.a32*=0.5f; gl.a33*=0.5f;
   //-Convert to Voigt notation.
-  const tfloat6 glv={gl.a11,gl.a22,gl.a33,0.5f*(gl.a23+gl.a32),0.5f*(gl.a31+gl.a13),0.5f*(gl.a12+gl.a21)};
+  const tfloat6 glv={gl.a11,gl.a22,gl.a33,gl.a23+gl.a32,gl.a31+gl.a13,gl.a12+gl.a21};
   //-Multiply with stiffness tensor to get PK2 stress in Voigt form.
   tfloat6 pk2v;
   pk2v.a1=cmat.a11*glv.a1+cmat.a12*glv.a2+cmat.a13*glv.a3+cmat.a14*glv.a4+cmat.a15*glv.a5+cmat.a16*glv.a6;

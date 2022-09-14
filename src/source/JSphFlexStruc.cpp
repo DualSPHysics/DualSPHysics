@@ -51,7 +51,7 @@ JSphFlexStrucBody::JSphFlexStrucBody(
     double mulFactor=youngmod/((1.0+poissratio)*(1.0-2.0*poissratio));
     double c1=mulFactor*(1.0-poissratio);
     double c2=mulFactor*poissratio;
-    double c3=mulFactor*(1.0-2.0*poissratio);
+    double c3=mulFactor*(1.0-2.0*poissratio)/2.0;
     //-Fill rows and columns for 2D.
     ConstitMatrix.a11=ConstitMatrix.a33=static_cast<float>(c1);
     ConstitMatrix.a13=ConstitMatrix.a31=static_cast<float>(c2);
@@ -68,7 +68,7 @@ JSphFlexStrucBody::JSphFlexStrucBody(
     double mulFactor=youngmod/(1.0-poissratio*poissratio);
     double c1=mulFactor*1.0;
     double c2=mulFactor*poissratio;
-    double c3=mulFactor*(1.0-poissratio);
+    double c3=mulFactor*(1.0-poissratio)/2.0;
     ConstitMatrix.a11=ConstitMatrix.a33=static_cast<float>(c1);
     ConstitMatrix.a13=ConstitMatrix.a31=static_cast<float>(c2);
     ConstitMatrix.a55=static_cast<float>(c3);
