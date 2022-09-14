@@ -146,12 +146,11 @@ protected:
   unsigned NumPairsTot;             ///<Total number of pairs across all flexible structure bodies.
   StFlexStrucData *FlexStrucDatac;  ///<Data for each individual flexible structure body [FlexStruc->GetCount()]
   unsigned *FlexStrucRidpc;         ///<Identifier to access to the particles of the flexible structures [CaseNflexstruc].
-  tfloat4 *PosCell0c;               ///<Relative initial position and cell coordinates {posx,posy,posz,cellxyz} [CaseNflexstruc].
+  tdouble3 *Pos0c;                  ///<Initial particle positions [CaseNflexstruc].
   unsigned *NumPairsc;              ///<Number of initial neighbours [CaseNflexstruc].
   unsigned *PairIdxBufferc;         ///<Raw buffer to particle indices [NumPairsTot].
   unsigned **PairIdxc;              ///<List of indices to each initial neighbour [CaseNflexstruc].
   tmatrix3f *KerCorrc;              ///<Kernel correction [CaseNflexstruc].
-  float *FlexStrucDtc;              ///<Structural speed of sound for each flexible structure particle [CaseNflexstruc].
   tmatrix3f *DefGradc;              ///<Deformation gradient tensor [CaseNflexstruc].
   float FlexStrucDtMax;             ///<Maximum value of FlexStrucDt computed in Interaction_ForcesFlexStruc().
   //<vs_flexstruc_end>
@@ -298,9 +297,25 @@ protected:
     ,double posymin,double poszmin,unsigned poszcount,const double* movx,const double* velx
     ,const unsigned *ridpmv,tdouble3 *pos,unsigned *dcell,tfloat4 *velrhop,typecode *code)const;
 
-  void ComputeSemiImplicitEulerFlexStruc(double dt,tdouble3 *pos,unsigned *dcell,typecode *code)const;          //<vs_flexstruc>
-  void ComputeSymplecticPreFlexStruc(double dtm,tdouble3 *pos,unsigned *dcell,typecode *code)const;             //<vs_flexstruc>
-  void ComputeSymplecticCorrFlexStruc(double dtm,double dt,tdouble3 *pos,unsigned *dcell,typecode *code)const;  //<vs_flexstruc>
+  //<vs_flexstruc_ini>
+  template<TpKernel tker,bool simulate2d> void ComputeDefGradFlexStruc(unsigned n,const tdouble3 *pos,const typecode *code
+      ,const StFlexStrucData *flexstrucdata,const unsigned *flexstrucridp
+      ,const tdouble3 *pos0,const unsigned *numpairs,const unsigned *const *pairidx,const tmatrix3f *kercorr
+      ,tmatrix3f *defgrad)const;
+  inline tmatrix3f ComputePK1StressFlexStruc(const tmatrix3f &defgrad,const tmatrix6f &cmat)const;
+  template<TpKernel tker,bool simulate2d> void InteractionForcesFlexStruc(unsigned n,float visco
+      ,StDivDataCpu divdata,const unsigned *dcell
+      ,const tdouble3 *pos,const tfloat4 *velrhop,const float *press,const typecode *code
+      ,const StFlexStrucData *flexstrucdata,const unsigned *flexstrucridp
+      ,const tdouble3 *pos0,const unsigned *numpairs,const unsigned *const *pairidx,const tmatrix3f *kercorr,const tmatrix3f *defgrad
+      ,float &flexstrucdt,tfloat3 *ace)const;
+  template<TpKernel tker,bool simulate2d> void Interaction_ForcesFlexStrucT(float &flexstrucdtmax)const;
+  template<TpKernel tker> void Interaction_ForcesFlexStruc_ct0(float &flexstrucdtmax)const;
+  void Interaction_ForcesFlexStruc(float &flexstrucdtmax)const;
+  void ComputeSemiImplicitEulerFlexStruc(double dt,tdouble3 *pos,unsigned *dcell,typecode *code)const;
+  void ComputeSymplecticPreFlexStruc(double dtm,tdouble3 *pos,unsigned *dcell,typecode *code)const;
+  void ComputeSymplecticCorrFlexStruc(double dtm,double dt,tdouble3 *pos,unsigned *dcell,typecode *code)const;
+  //<vs_flexstruc_end>
 
 public:
   JSphCpu(bool withmpi);

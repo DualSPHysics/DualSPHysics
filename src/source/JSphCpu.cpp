@@ -94,8 +94,8 @@ void JSphCpu::InitVars(){
   FtRidp=NULL;
   FtoForces=NULL;
   FtoForcesRes=NULL;
-  NumPairsTot=0; FlexStrucDatac=NULL; FlexStrucRidpc=NULL; PosCell0c=NULL; NumPairsc=NULL;                //<vs_flexstruc>
-  PairIdxBufferc=NULL; PairIdxc=NULL; KerCorrc=NULL; FlexStrucDtc=NULL; DefGradc=NULL; FlexStrucDtMax=0;  //<vs_flexstruc>
+  NumPairsTot=0; FlexStrucDatac=NULL; FlexStrucRidpc=NULL; Pos0c=NULL; NumPairsc=NULL;  //<vs_flexstruc>
+  PairIdxBufferc=NULL; PairIdxc=NULL; KerCorrc=NULL; DefGradc=NULL; FlexStrucDtMax=0;   //<vs_flexstruc>
   FreeCpuMemoryParticles();
   FreeCpuMemoryFixed();
 }
@@ -112,12 +112,11 @@ void JSphCpu::FreeCpuMemoryFixed(){
   delete[] FtoForcesRes;    FtoForcesRes=NULL;
   delete[] FlexStrucDatac;  FlexStrucDatac=NULL;  //<vs_flexstruc>
   delete[] FlexStrucRidpc;  FlexStrucRidpc=NULL;  //<vs_flexstruc>
-  delete[] PosCell0c;       PosCell0c=NULL;       //<vs_flexstruc>
+  delete[] Pos0c;           Pos0c=NULL;           //<vs_flexstruc>
   delete[] NumPairsc;       NumPairsc=NULL;       //<vs_flexstruc>
   delete[] PairIdxBufferc;  PairIdxBufferc=NULL;  //<vs_flexstruc>
   delete[] PairIdxc;        PairIdxc=NULL;        //<vs_flexstruc>
   delete[] KerCorrc;        KerCorrc=NULL;        //<vs_flexstruc>
-  delete[] FlexStrucDtc;    FlexStrucDtc=NULL;    //<vs_flexstruc>
   delete[] DefGradc;        DefGradc=NULL;        //<vs_flexstruc>
 }
 
@@ -490,12 +489,7 @@ void JSphCpu::PreInteraction_Forces(){
   const unsigned pini=(DtAllParticles? 0: Npb);
   VelMax=CalcVelMaxOmp(Np-pini,Velrhopc+pini);
   ViscDtMax=0;
-  //<vs_flexstruc_ini>
-  if(FlexStruc){
-    memset(FlexStrucDtc,0,sizeof(float)*CaseNflexstruc);  //FlexStrucDtc[]=0
-    FlexStrucDtMax=0;
-  }
-  //<vs_flexstruc_end>
+  if(FlexStruc)FlexStrucDtMax=0;  //<vs_flexstruc>
   Timersc->TmStop(TMC_CfPreForces);
 }
 
@@ -995,19 +989,6 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity,bool sh
     //-Interaction of DEM Floating-Bound & Floating-Floating. //(DEM)
     if(UseDEM)InteractionForcesDEM(CaseNfloat,t.divdata,t.dcell
       ,FtRidp,DemData,t.pos,t.velrhop,t.code,t.idp,viscdt,t.ace);
-
-    //<vs_flexstruc_ini>
-    //-Interaction flexible structure-flexible structure.
-//    if(FlexStruc){
-//      Timersg->TmStart(TMG_SuFlexStruc,false);
-//      const StInterParmsFlexStrucg parmsfs=StrInterParmsFlexStrucg(Simulate2D,TKernel
-//          ,Visco*ViscoBoundFactor,CaseNflexstruc,DivData,Dcellg
-//          ,PosCellg,Velrhopg,Codeg
-//          ,FlexStrucDatag,FlexStrucRidpg,PosCell0g,NumPairsg,PairIdxg,KerCorrg,FlexStrucDtg,DefGradg,Aceg,NULL);
-//      cusph::Interaction_ForcesFlexStruc(parmsfs);
-//      Timersg->TmStop(TMG_SuFlexStruc,false);
-//    }
-    //<vs_flexstruc_end>
 
     //-Computes tau for Laminar+SPS.
     if(tvisco==VISCO_LaminarSPS)ComputeSpsTau(t.npf,t.npb,t.velrhop,t.spsgradvel,t.spstau);
@@ -1974,6 +1955,241 @@ void JSphCpu::InitFloating(){
 }
 
 //<vs_flexstruc_ini>
+template<TpKernel tker,bool simulate2d> void JSphCpu::ComputeDefGradFlexStruc(unsigned n,const tdouble3 *pos,const typecode *code
+    ,const StFlexStrucData *flexstrucdata,const unsigned *flexstrucridp
+    ,const tdouble3 *pos0,const unsigned *numpairs,const unsigned *const *pairidx,const tmatrix3f *kercorr
+    ,tmatrix3f *defgrad)const{
+  //-Starts execution using OpenMP.
+  #ifdef OMP_USE
+    #pragma omp parallel for schedule (guided)
+  #endif
+  for(unsigned p=0;p<n;p++){
+    const unsigned pfs1=p;      //-Number of particle.
+
+    //-Get number of pairs for this particle.
+    const unsigned numpairsp1=numpairs[pfs1];
+
+    //-If this particle has pairs.
+    if(numpairsp1){
+      tmatrix3f defgradp1={0};
+
+      //-Obtains basic data of particle p1.
+      const unsigned p1=flexstrucridp[pfs1];
+      const float vol0p1=flexstrucdata[CODE_GetIbodyFlexStruc(code[p1])].vol0;
+      const tdouble3 posp1=pos[p1];
+      const tdouble3 pos0p1=pos0[pfs1];
+      const tmatrix3f kercorrp1=kercorr[pfs1];
+
+      //-Calculate deformation gradient.
+      for(unsigned pair=0;pair<numpairsp1;pair++){
+        const unsigned pfs2=pairidx[pfs1][pair];
+        const unsigned p2=flexstrucridp[pfs2];
+        const tdouble3 posp2=pos[p2];
+        const tdouble3 pos0p2=pos0[pfs2];
+        const float drx=float(posp1.x-posp2.x);
+        const float dry=float(posp1.y-posp2.y);
+        const float drz=float(posp1.z-posp2.z);
+        const float drx0=float(pos0p1.x-pos0p2.x);
+        const float dry0=float(pos0p1.y-pos0p2.y);
+        const float drz0=float(pos0p1.z-pos0p2.z);
+        const float rr20=drx0*drx0+dry0*dry0+drz0*drz0;
+        const float fac0=fsph::GetKernel_Fac<tker>(CSP,rr20);
+        const float frx0=fac0*drx0,fry0=fac0*dry0,frz0=fac0*drz0; //-Gradients.
+        defgradp1.a11-=vol0p1*drx*frx0; defgradp1.a12-=vol0p1*drx*fry0; defgradp1.a13-=vol0p1*drx*frz0;
+        defgradp1.a21-=vol0p1*dry*frx0; defgradp1.a22-=vol0p1*dry*fry0; defgradp1.a23-=vol0p1*dry*frz0;
+        defgradp1.a31-=vol0p1*drz*frx0; defgradp1.a32-=vol0p1*drz*fry0; defgradp1.a33-=vol0p1*drz*frz0;
+      }
+      defgrad[pfs1]=fmath::MulMatrix3x3(defgradp1,kercorrp1);
+    }
+  }
+}
+
+inline tmatrix3f JSphCpu::ComputePK1StressFlexStruc(const tmatrix3f &defgrad,const tmatrix6f &cmat)const{
+  //-Calculate Green-Lagrange strain from deformation gradient.
+  tmatrix3f gl=fmath::MulMatrix3x3(fmath::TrasMatrix3x3(defgrad),defgrad);
+  gl.a11-=1.0f; gl.a22-=1.0f; gl.a33-=1.0f;
+  gl.a11*=0.5f; gl.a12*=0.5f; gl.a13*=0.5f;
+  gl.a21*=0.5f; gl.a22*=0.5f; gl.a23*=0.5f;
+  gl.a31*=0.5f; gl.a32*=0.5f; gl.a33*=0.5f;
+  //-Convert to Voigt notation.
+  const tfloat6 glv={gl.a11,gl.a22,gl.a33,0.5f*(gl.a23+gl.a32),0.5f*(gl.a31+gl.a13),0.5f*(gl.a12+gl.a21)};
+  //-Multiply with stiffness tensor to get PK2 stress in Voigt form.
+  tfloat6 pk2v;
+  pk2v.a1=cmat.a11*glv.a1+cmat.a12*glv.a2+cmat.a13*glv.a3+cmat.a14*glv.a4+cmat.a15*glv.a5+cmat.a16*glv.a6;
+  pk2v.a2=cmat.a21*glv.a1+cmat.a22*glv.a2+cmat.a23*glv.a3+cmat.a24*glv.a4+cmat.a25*glv.a5+cmat.a26*glv.a6;
+  pk2v.a3=cmat.a31*glv.a1+cmat.a32*glv.a2+cmat.a33*glv.a3+cmat.a34*glv.a4+cmat.a35*glv.a5+cmat.a36*glv.a6;
+  pk2v.a4=cmat.a41*glv.a1+cmat.a42*glv.a2+cmat.a43*glv.a3+cmat.a44*glv.a4+cmat.a45*glv.a5+cmat.a46*glv.a6;
+  pk2v.a5=cmat.a51*glv.a1+cmat.a52*glv.a2+cmat.a53*glv.a3+cmat.a54*glv.a4+cmat.a55*glv.a5+cmat.a56*glv.a6;
+  pk2v.a6=cmat.a61*glv.a1+cmat.a62*glv.a2+cmat.a63*glv.a3+cmat.a64*glv.a4+cmat.a65*glv.a5+cmat.a66*glv.a6;
+  //-Convert PK2 stress back to normal notation.
+  const tmatrix3f pk2={pk2v.a1,pk2v.a6,pk2v.a5,pk2v.a6,pk2v.a2,pk2v.a4,pk2v.a5,pk2v.a4,pk2v.a3};
+  //-Convert PK2 to PK1 and return.
+  return fmath::MulMatrix3x3(defgrad,pk2);
+}
+
+template<TpKernel tker,bool simulate2d> void JSphCpu::InteractionForcesFlexStruc(unsigned n,float visco
+    ,StDivDataCpu divdata,const unsigned *dcell
+    ,const tdouble3 *pos,const tfloat4 *velrhop,const float *press,const typecode *code
+    ,const StFlexStrucData *flexstrucdata,const unsigned *flexstrucridp
+    ,const tdouble3 *pos0,const unsigned *numpairs,const unsigned *const *pairidx,const tmatrix3f *kercorr,const tmatrix3f *defgrad
+    ,float &flexstrucdt,tfloat3 *ace)const{
+  //-Initialise flexstructh to calculate max flexstrucdt.
+  float flexstructh[OMP_MAXTHREADS*OMP_STRIDE];
+  for(int th=0;th<OmpThreads;th++)flexstructh[th*OMP_STRIDE]=0;
+  //-Starts execution using OpenMP.
+  #ifdef OMP_USE
+    #pragma omp parallel for schedule (guided)
+  #endif
+  for(unsigned p=0;p<n;p++){
+    const unsigned pfs1=p;      //-Number of particle.
+    const unsigned p1=flexstrucridp[pfs1];
+
+    //-Get codep1.
+    const typecode codep1=code[p1];
+    if(CODE_IsFlexStrucFlex(codep1)){
+      tfloat3 acep1=TFloat3(0);
+
+      //-Obtains basic data of particle p1.
+      const tdouble3 posp1=pos[p1];
+      const tfloat4 velrhop1=velrhop[p1];
+      const float pressp1=press[p1];
+      const tdouble3 pos0p1=pos0[pfs1];
+      const tmatrix3f kercorrp1=kercorr[pfs1];
+      const tmatrix3f defgradp1=defgrad[pfs1];
+
+      //-Obtains flexible structure data.
+      const float vol0p1=flexstrucdata[CODE_GetIbodyFlexStruc(codep1)].vol0;
+      const float rho0p1=flexstrucdata[CODE_GetIbodyFlexStruc(codep1)].rho0;
+      const float youngmod=flexstrucdata[CODE_GetIbodyFlexStruc(codep1)].youngmod;
+      const float poissratio=flexstrucdata[CODE_GetIbodyFlexStruc(codep1)].poissratio;
+      const float hgfactor=flexstrucdata[CODE_GetIbodyFlexStruc(codep1)].hgfactor;
+      const tmatrix6f cmat=flexstrucdata[CODE_GetIbodyFlexStruc(codep1)].cmat;
+      const tmatrix3f pk1p1=ComputePK1StressFlexStruc(defgradp1,cmat);
+      const tmatrix3f pk1kercorrp1=fmath::MulMatrix3x3(pk1p1,kercorrp1);
+
+      //-Get current mass of flexible structure particle.
+      const float mass0p1=vol0p1*rho0p1;
+      const float rhop1=rho0p1/(simulate2d? fmath::Determinant2x2(defgradp1): fmath::Determinant3x3(defgradp1));
+
+      //-Calculate structural speed of sound.
+      const float csp1=sqrt(youngmod*(1.0-poissratio)/(rhop1*(1.0+poissratio)*(1.0-2.0*poissratio)));
+
+      //-Obtains neighborhood search limits.
+      const StNgSearch ngs=nsearch::Init(dcell[p1],false,divdata);
+
+      //-Flexible structure-Fluid interaction.
+      for(int z=ngs.zini;z<ngs.zfin;z++){
+        for(int y=ngs.yini;y<ngs.yfin;y++){
+          const tuint2 pif=nsearch::ParticleRange(y,z,ngs,divdata);
+          for(unsigned p2=pif.x;p2<pif.y;p2++){
+            if(CODE_IsFluid(code[p2])){
+              const tdouble3 posp2=pos[p2];
+              const float drx=float(posp1.x-posp2.x);
+              const float dry=float(posp1.y-posp2.y);
+              const float drz=float(posp1.z-posp2.z);
+              const float rr2=drx*drx+dry*dry+drz*drz;
+              if(rr2<=KernelSize2&&rr2>=ALMOSTZERO){
+                //-Computes kernel.
+                const float fac=fsph::GetKernel_Fac<tker>(CSP,rr2);
+                const float frx=fac*drx,fry=fac*dry,frz=fac*drz; //-Gradients.
+                tfloat4 velrhop2=velrhop[p2];
+                const float dvx=velrhop1.x-velrhop2.x,dvy=velrhop1.y-velrhop2.y,dvz=velrhop1.z-velrhop2.z;
+                //-Laminar viscosity contribution.
+                const float robar2=(velrhop1.w+velrhop2.w);
+                const float temp=4.f*visco/((rr2+Eta2)*robar2);
+                const float vtemp=MassFluid*temp*(drx*frx+dry*fry+drz*frz);
+                acep1.x+=vtemp*dvx; acep1.y+=vtemp*dvy; acep1.z+=vtemp*dvz;
+                //-Velocity derivative (Momentum equation).
+                const float pressp2=press[p2];
+                const float prs=(pressp1+pressp2)/(velrhop1.w*velrhop2.w)+(tker==KERNEL_Cubic?fsph::GetKernelCubic_Tensil(CSP,rr2,velrhop1.w,pressp1,velrhop2.w,pressp2):0);
+                const float p_vpm=-prs*MassFluid*MassFluid/mass0p1;
+                acep1.x+=p_vpm*frx; acep1.y+=p_vpm*fry; acep1.z+=p_vpm*frz;
+              }
+            }
+          }
+        }
+      }
+
+      //-Loop through pairs and calculate forces.
+      for(unsigned pair=0;pair<numpairs[pfs1];pair++){
+        const unsigned pfs2=pairidx[pfs1][pair];
+        const tdouble3 pos0p2=pos0[pfs2];
+        const float drx0=float(pos0p1.x-pos0p2.x);
+        const float dry0=float(pos0p1.y-pos0p2.y);
+        const float drz0=float(pos0p1.z-pos0p2.z);
+        const float rr20=drx0*drx0+dry0*dry0+drz0*drz0;
+        const float fac0=fsph::GetKernel_Fac<tker>(CSP,rr20);
+        const float frx0=fac0*drx0,fry0=fac0*dry0,frz0=fac0*drz0; //-Gradients.
+        //-Acceleration due to structure.
+        const tmatrix3f defgradp2=defgrad[pfs2];
+        const tmatrix3f pk1p2=ComputePK1StressFlexStruc(defgradp2,cmat);
+        const tmatrix3f kercorrp2=kercorr[pfs2];
+        const tmatrix3f pk1kercorrp2=fmath::MulMatrix3x3(pk1p2,kercorrp2);
+        tmatrix3f pk1kercorrp1p2;
+        pk1kercorrp1p2.a11=pk1kercorrp1.a11+pk1kercorrp2.a11; pk1kercorrp1p2.a12=pk1kercorrp1.a12+pk1kercorrp2.a12; pk1kercorrp1p2.a13=pk1kercorrp1.a13+pk1kercorrp2.a13;
+        pk1kercorrp1p2.a21=pk1kercorrp1.a21+pk1kercorrp2.a21; pk1kercorrp1p2.a22=pk1kercorrp1.a22+pk1kercorrp2.a22; pk1kercorrp1p2.a23=pk1kercorrp1.a23+pk1kercorrp2.a23;
+        pk1kercorrp1p2.a31=pk1kercorrp1.a31+pk1kercorrp2.a31; pk1kercorrp1p2.a32=pk1kercorrp1.a32+pk1kercorrp2.a32; pk1kercorrp1p2.a33=pk1kercorrp1.a33+pk1kercorrp2.a33;
+        float3 pk1kercorrdw;
+        pk1kercorrdw.x=pk1kercorrp1p2.a11*frx0+pk1kercorrp1p2.a12*fry0+pk1kercorrp1p2.a13*frz0;
+        pk1kercorrdw.y=pk1kercorrp1p2.a21*frx0+pk1kercorrp1p2.a22*fry0+pk1kercorrp1p2.a23*frz0;
+        pk1kercorrdw.z=pk1kercorrp1p2.a31*frx0+pk1kercorrp1p2.a32*fry0+pk1kercorrp1p2.a33*frz0;
+        acep1.x+=pk1kercorrdw.x*vol0p1/rho0p1; acep1.y+=pk1kercorrdw.y*vol0p1/rho0p1; acep1.z+=pk1kercorrdw.z*vol0p1/rho0p1;
+        //-Hourglass correction.
+        if(hgfactor){
+          const unsigned p2=flexstrucridp[pfs2];
+          const tdouble3 posp2=pos[p2];
+          const float drx=float(posp1.x-posp2.x);
+          const float dry=float(posp1.y-posp2.y);
+          const float drz=float(posp1.z-posp2.z);
+          const float rr2=drx*drx+dry*dry+drz*drz;
+          const float wab=fsph::GetKernel_Wab<tker>(CSP,rr2);
+          const float xijbarx=defgradp1.a11*drx0+defgradp1.a12*dry0+defgradp1.a13*drz0;
+          const float xijbary=defgradp1.a21*drx0+defgradp1.a22*dry0+defgradp1.a23*drz0;
+          const float xijbarz=defgradp1.a31*drx0+defgradp1.a32*dry0+defgradp1.a33*drz0;
+          const float xjibarx=-(defgradp2.a11*drx0+defgradp2.a12*dry0+defgradp2.a13*drz0);
+          const float xjibary=-(defgradp2.a21*drx0+defgradp2.a22*dry0+defgradp2.a23*drz0);
+          const float xjibarz=-(defgradp2.a31*drx0+defgradp2.a32*dry0+defgradp2.a33*drz0);
+          const tfloat3 epsij=TFloat3(drx-xijbarx,dry-xijbary,drz-xijbarz);
+          const tfloat3 epsji=TFloat3(-drx-xjibarx,-dry-xjibary,-drz-xjibarz);
+          const float rr=sqrt(rr2);
+          const float deltaij=(epsij.x*drx+epsij.y*dry+epsij.z*drz)/rr;
+          const float deltaji=-(epsji.x*drx+epsji.y*dry+epsji.z*drz)/rr;
+          const float mulfac=(hgfactor*vol0p1*vol0p1*wab*youngmod/(rr20*rr*mass0p1)*0.5f*(deltaij+deltaji));
+          acep1.x-=mulfac*drx; acep1.y-=mulfac*dry; acep1.z-=mulfac*drz;
+        }
+      }
+
+      //-Store results.
+      if(acep1.x||acep1.y||acep1.z||csp1){
+        ace[p1]=ace[p1]+acep1;
+        const int th=omp_get_thread_num();
+        if(csp1>flexstructh[th*OMP_STRIDE])flexstructh[th*OMP_STRIDE]=csp1;
+      }
+    }
+  }
+  //-Keep max value in flexstrucdt.
+  for(int th=0;th<OmpThreads;th++)if(flexstrucdt<flexstructh[th*OMP_STRIDE])flexstrucdt=flexstructh[th*OMP_STRIDE];
+}
+
+template<TpKernel tker,bool simulate2d> void JSphCpu::Interaction_ForcesFlexStrucT(float &flexstrucdtmax)const{
+  if(CaseNflexstruc){
+    ComputeDefGradFlexStruc<tker,simulate2d>
+    (CaseNflexstruc,Posc,Codec,FlexStrucDatac,FlexStrucRidpc,Pos0c,NumPairsc,PairIdxc,KerCorrc,DefGradc);
+    InteractionForcesFlexStruc<tker,simulate2d>
+    (CaseNflexstruc,Visco*ViscoBoundFactor,DivData,Dcellc,Posc,Velrhopc,Pressc,Codec,FlexStrucDatac,FlexStrucRidpc,Pos0c,NumPairsc,PairIdxc,KerCorrc,DefGradc,flexstrucdtmax,Acec);
+  }
+}
+
+template<TpKernel tker> void JSphCpu::Interaction_ForcesFlexStruc_ct0(float &flexstrucdtmax)const{
+  if(Simulate2D)Interaction_ForcesFlexStrucT<tker,true> (flexstrucdtmax);
+  else          Interaction_ForcesFlexStrucT<tker,false>(flexstrucdtmax);
+}
+
+void JSphCpu::Interaction_ForcesFlexStruc(float &flexstrucdtmax)const{
+  if(TKernel==KERNEL_Wendland)  Interaction_ForcesFlexStruc_ct0<KERNEL_Wendland>(flexstrucdtmax);
+  else if(TKernel==KERNEL_Cubic)Interaction_ForcesFlexStruc_ct0<KERNEL_Cubic>   (flexstrucdtmax);
+}
+
 void JSphCpu::ComputeSemiImplicitEulerFlexStruc(double dt,tdouble3 *pos,unsigned *dcell,typecode *code)const
 {
   const tdouble3 gravity=ToTDouble3(Gravity);

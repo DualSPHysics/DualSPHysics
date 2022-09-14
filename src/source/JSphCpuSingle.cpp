@@ -542,6 +542,15 @@ void JSphCpuSingle::Interaction_Forces(TpInterStep interstep){
   res.viscdt=0;
   JSphCpu::Interaction_Forces_ct(parms,res);
 
+  //<vs_flexstruc_ini>
+  //-Interaction flexible structure-flexible structure.
+  if(FlexStruc){
+    Timersc->TmStart(TMC_SuFlexStruc);
+    JSphCpu::Interaction_ForcesFlexStruc(FlexStrucDtMax);
+    Timersc->TmStop(TMC_SuFlexStruc);
+  }
+  //<vs_flexstruc_end>
+
   //-For 2-D simulations zero the 2nd component. | Para simulaciones 2D anula siempre la 2nd componente.
   if(Simulate2D){
     const int ini=int(Npb),fin=int(Np),npf=int(Np-Npb);
@@ -564,15 +573,6 @@ void JSphCpuSingle::Interaction_Forces(TpInterStep interstep){
   ViscDtMax=res.viscdt;
   //-Calculates maximum value of Ace (periodic particles are ignored).
   AceMax=ComputeAceMax();
-
-  //<vs_flexstruc_ini>
-  //-Calculates maximum value of FlexStrucDt.
-//  if(CaseNflexstruc){
-//    Timersg->TmStart(TMG_SuFlexStruc,false);
-//    FlexStrucDtMax=cusph::ReduMaxFloat(CaseNflexstruc,0,FlexStrucDtg,CellDivSingle->GetAuxMem(cusph::ReduMaxFloatSize(CaseNflexstruc)));
-//    Timersg->TmStop(TMG_SuFlexStruc,false);
-//  }
-  //<vs_flexstruc_end>
 
   Timersc->TmStop(TMC_CfForces);
 }
