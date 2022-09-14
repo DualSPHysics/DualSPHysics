@@ -47,7 +47,7 @@ JCellDivCpu::JCellDivCpu(bool stable,bool floating,byte periactive
   CellPart=NULL;    SortPart=NULL;
   PartsInCell=NULL; BeginCell=NULL;
   VSort=NULL;
-  SortPart2=NULL; SortIdx=NULL; //<vs_flexstruc>
+  SortIdx=NULL; //<vs_flexstruc>
   Reset();
 }
 
@@ -102,7 +102,6 @@ void JCellDivCpu::FreeMemoryNp(){
   delete[] CellPart;    CellPart=NULL;
   delete[] SortPart;    SortPart=NULL;
   delete[] VSort;       SetMemoryVSort(NULL);
-  delete[] SortPart2;   SortPart2=NULL; //<vs_flexstruc>
   delete[] SortIdx;     SortIdx=NULL;   //<vs_flexstruc>
   MemAllocNp=0;
   BoundDivideOk=false;
@@ -145,7 +144,6 @@ void JCellDivCpu::AllocMemoryNp(ullong np){
     CellPart=new unsigned[SizeNp];                      MemAllocNp+=sizeof(unsigned)*SizeNp;
     SortPart=new unsigned[SizeNp];                      MemAllocNp+=sizeof(unsigned)*SizeNp;
     SetMemoryVSort(new byte[sizeof(tdouble3)*SizeNp]);  MemAllocNp+=sizeof(tdouble3)*SizeNp;
-    SortPart2=new unsigned[SizeNp];                     MemAllocNp+=sizeof(unsigned)*SizeNp;  //<vs_flexstruc>
     SortIdx=new unsigned[SizeNp];                       MemAllocNp+=sizeof(unsigned)*SizeNp;  //<vs_flexstruc>
   }
   catch(const std::bad_alloc){
@@ -480,8 +478,7 @@ StDivDataCpu JCellDivCpu::GetCellDivData()const{
 //<vs_flexstruc_ini>
 void JCellDivCpu::UpdateIndices(unsigned n,unsigned *idx){
   if(DivideFull){
-    memcpy(SortPart2,SortPart,sizeof(unsigned)*NpbFinal);
-    SortIndices(SortPart2,SortIdx,NpbFinal,Stable);
+    SortIndices(SortPart,SortIdx,NpbFinal,Stable);
     UpdateIndices(n,SortIdx,idx);
   }
 }
