@@ -1201,6 +1201,16 @@ void JSph::LoadCaseConfig(const JSphCfgRun *cfg){
     if(TVisco!=VISCO_Artificial)Run_Exceptioon("Symmetry is only allowed with Artificial viscosity.");
   } //<vs_syymmetry_end>
 
+  //<vs_flexstruc_ini>
+  //-Checks invalid options for flexible structures.
+  if(FlexStruc){
+    if(PartBegin)           Run_Exceptioon("Simulation restart not allowed when FlexStruc is used.");
+    if(PeriActive)          Run_Exceptioon("Flexible structures is not allowed with periodic conditions.");
+    if(Symmetry)            Run_Exceptioon("Flexible structures is not allowed with symmetry.");
+    if(TBoundary==BC_MDBC)  Run_Exceptioon("Flexible structures is not allowed with mDBC.");
+  }
+  //<vs_flexstruc_end>
+
   NpMinimum=CaseNp-unsigned(PartsOutMax*CaseNfluid);
   Log->Print("**Basic case configuration is loaded");
 }
