@@ -592,6 +592,7 @@ rem %CudaNvcc% -ccbin "$(VCInstallDir)bin" %gpuhw% -use_fast_math -c %ptxinfo% -
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">true</ExcludedFromBuild>
     </ClInclude>
+    <ClInclude Include="..\source\JDsMotionDef.h" />
     <ClInclude Include="..\source\JDsphConfig.h" />
     <ClInclude Include="..\source\JDsPips.h" />
     <ClInclude Include="..\source\JDsPips_ker.h">

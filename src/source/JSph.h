@@ -466,6 +466,10 @@ protected:
   void LoadCaseParticles();
   void InitRun(unsigned np,const unsigned *idp,const tdouble3 *pos);
 
+  void WavesInit(JGaugeSystem *gaugesystem,const JSphMk *mkinfo,double timemax,double timepart);
+  void WavesLoadLastGaugeResults();
+  void WavesUpdateGaugePoints();
+
   tfloat3 GetFtExternalForceLin(unsigned cf,double timestep)const;
   tfloat3 GetFtExternalForceAng(unsigned cf,double timestep)const;
 

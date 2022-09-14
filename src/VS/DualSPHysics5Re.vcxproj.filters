@@ -487,6 +487,9 @@
     <ClInclude Include="..\source\JDsGpuInfo.h">
       <Filter>Source</Filter>
     </ClInclude>
+    <ClInclude Include="..\source\JDsMotionDef.h">
+      <Filter>Source\Other</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\source\main.cpp">

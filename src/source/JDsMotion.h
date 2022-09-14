@@ -37,6 +37,7 @@
 #define _JDsMotion_
 
 #include "JObject.h"
+#include "JDsMotionDef.h"
 #include "DualSphDef.h"
 #include <string>
 
