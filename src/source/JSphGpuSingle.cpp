@@ -902,7 +902,7 @@ void JSphGpuSingle::SaveData(){
   //-Retrieves particle data from the GPU. | Recupera datos de particulas en GPU.
   if(save){
     Timersg->TmStart(TMG_SuDownData,false);
-    unsigned npnormal=ParticlesDataDown(Np,0,true,PeriActive!=0); //<vs_flexstruc> // TODO Set code=false after debugging.
+    unsigned npnormal=ParticlesDataDown(Np,0,false,PeriActive!=0);
     if(npnormal!=npsave)Run_Exceptioon("The number of particles is invalid.");
     Timersg->TmStop(TMG_SuDownData,false);
   }
@@ -936,7 +936,6 @@ void JSphGpuSingle::SaveData(){
   //-Stores particle data. | Graba datos de particulas.
   JDataArrays arrays;
   AddBasicArrays(arrays,npsave,AuxPos,Idp,AuxVel,AuxRhop);
-  arrays.AddArray("Code",npsave,Code); //<vs_flexstruc> //TODO Remove after debugging.
   JSph::SaveData(npsave,arrays,1,vdom,&infoplus);
   if(UseNormals && SvNormals)SaveVtkNormalsGpu("normals/Normals.vtk",Part,npsave,Npb,Posxyg,Poszg,Idpg,BoundNormalg);
   //-Save extra data.
@@ -1018,7 +1017,7 @@ void JSphGpuSingle::FlexStrucInit(){
   FlexStruc->ConfigCode(Npb,Code);
   cudaMemcpy(Codeg,Code,sizeof(typecode)*Npb,cudaMemcpyHostToDevice);
   cusph::SetClampCodes(Npb,PosCellg,FlexStrucDatag,Codeg);
-  cudaMemcpy(Code,Codeg,sizeof(typecode)*Npb,cudaMemcpyDeviceToHost); //TODO Remove after debugging
+  cudaMemcpy(Code,Codeg,sizeof(typecode)*Npb,cudaMemcpyDeviceToHost);
   //-Count number of flexible structure particles.
   CaseNflexstruc=cusph::CountFlexStrucParts(Npb,Codeg);
   //-Allocate arrays.
