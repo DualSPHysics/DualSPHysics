@@ -45,6 +45,7 @@
 #include "JSphShifting.h"
 
 #include <climits>
+#include <numeric>
 
 using namespace std;
 
@@ -1955,6 +1956,168 @@ void JSphCpu::InitFloating(){
 }
 
 //<vs_flexstruc_ini>
+void JSphCpu::SetClampCodes(unsigned n,const tdouble3 *pos,const StFlexStrucData *flexstrucdata,typecode *code)const{
+  //-Starts execution using OpenMP.
+  #ifdef OMP_USE
+    #pragma omp parallel for schedule (static) if(n>OMP_LIMIT_COMPUTESTEP)
+  #endif
+  for(unsigned p=0;p<n;p++){
+    const unsigned p1=p;      //-Number of particle.
+    const typecode codep1=code[p1];
+
+    //-If potentially a clamp particle.
+    if((CODE_IsFixed(codep1)||CODE_IsMoving(codep1))&&!CODE_IsFlexStrucAny(codep1)){
+
+      //-Loads particle p1 data.
+      const tdouble3 posp1=pos[p1];
+
+      //-Loop through other boundary particles.
+      for(unsigned p2=0;p2<n;p2++){
+        const typecode codep2=code[p2];
+        if(CODE_IsFlexStrucFlex(codep2)){
+          if(codep1==flexstrucdata[CODE_GetIbodyFlexStruc(codep2)].clampcode){
+            const tdouble3 posp2=pos[p2];
+            const float drx=float(posp1.x-posp2.x);
+            const float dry=float(posp1.y-posp2.y);
+            const float drz=float(posp1.z-posp2.z);
+            const float rr2=drx*drx+dry*dry+drz*drz;
+            if(rr2<=KernelSize2&&rr2>=ALMOSTZERO){
+              code[p1]=CODE_ToFlexStrucClamp(codep1,CODE_GetIbodyFlexStruc(codep2));
+              break;
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+unsigned JSphCpu::CountFlexStrucParts(unsigned npb,const typecode *code)const{
+  return count_if(code,code+npb,[](const typecode c){return CODE_IsFlexStrucAny(c);});
+}
+
+void JSphCpu::CalcFlexStrucRidp(unsigned npb,const typecode *code,unsigned *flexstrucridp)const{
+  vector<unsigned> idx(npb);
+  iota(idx.begin(),idx.end(),0);
+  copy_if(idx.begin(),idx.end(),flexstrucridp,[code](unsigned i){return CODE_IsFlexStrucAny(code[i]);});
+}
+
+void JSphCpu::GatherToFlexStrucArray(unsigned npfs,const unsigned *flexstrucridp,const tdouble3 *fullarray,tdouble3 *flexstrucarray)const{
+  //-Starts execution using OpenMP.
+  #ifdef OMP_USE
+    #pragma omp parallel for schedule (static) if(npfs>OMP_LIMIT_COMPUTESTEP)
+  #endif
+  for(unsigned p=0;p<npfs;p++)flexstrucarray[p]=fullarray[flexstrucridp[p]];
+}
+
+unsigned JSphCpu::CountFlexStrucPairs(unsigned n,const tdouble3 *pos0,unsigned *numpairs)const{
+  //-Starts execution using OpenMP.
+  #ifdef OMP_USE
+    #pragma omp parallel for schedule (static) if(n>OMP_LIMIT_COMPUTESTEP)
+  #endif
+  for(unsigned p=0;p<n;p++){
+    const unsigned pfs1=p;      //-Number of particle.
+    unsigned numpairsp1=0;
+
+    //-Loads particle p1 data.
+    const tdouble3 pos0p1=pos0[pfs1];
+
+    //-Loop through other flexible structure particles.
+    for(unsigned pfs2=0;pfs2<n;pfs2++){
+      const tdouble3 pos0p2=pos0[pfs2];
+      const float drx0=float(pos0p1.x-pos0p2.x);
+      const float dry0=float(pos0p1.y-pos0p2.y);
+      const float drz0=float(pos0p1.z-pos0p2.z);
+      const float rr20=drx0*drx0+dry0*dry0+drz0*drz0;
+      if(rr20<=KernelSize2&&rr20>=ALMOSTZERO)numpairsp1++;
+    }
+    numpairs[pfs1]=numpairsp1;
+  }
+  return accumulate(numpairs,numpairs+n,0);
+}
+
+void JSphCpu::SetFlexStrucPairs(unsigned n,const tdouble3 *pos0,unsigned **pairidx)const{
+  //-Starts execution using OpenMP.
+  #ifdef OMP_USE
+    #pragma omp parallel for schedule (static) if(n>OMP_LIMIT_COMPUTESTEP)
+  #endif
+  for(unsigned p=0;p<n;p++){
+    const unsigned pfs1=p;      //-Number of particle.
+    unsigned idx=0;
+
+    //-Loads particle p1 data.
+    const tdouble3 pos0p1=pos0[pfs1];
+
+    //-Loop through other flexible structure particles.
+    for(unsigned pfs2=0;pfs2<n;pfs2++){
+      const tdouble3 pos0p2=pos0[pfs2];
+      const float drx0=float(pos0p1.x-pos0p2.x);
+      const float dry0=float(pos0p1.y-pos0p2.y);
+      const float drz0=float(pos0p1.z-pos0p2.z);
+      const float rr20=drx0*drx0+dry0*dry0+drz0*drz0;
+      if(rr20<=KernelSize2&&rr20>=ALMOSTZERO)pairidx[pfs1][idx++]=pfs2;
+    }
+  }
+}
+
+template<TpKernel tker,bool simulate2d> void JSphCpu::CalcFlexStrucKerCorr(unsigned n,const typecode *code,const StFlexStrucData *flexstrucdata
+        ,const unsigned *flexstrucridp,const tdouble3 *pos0,const unsigned *numpairs,const unsigned *const *pairidx
+        ,tmatrix3f *kercorr)const{
+  //-Starts execution using OpenMP.
+  #ifdef OMP_USE
+    #pragma omp parallel for schedule (static) if(n>OMP_LIMIT_COMPUTESTEP)
+  #endif
+  for(unsigned p=0;p<n;p++){
+    const unsigned pfs1=p;      //-Number of particle.
+
+    //-Get number of pairs for this particle.
+    const unsigned numpairsp1=numpairs[pfs1];
+
+    //-If this particle has pairs.
+    if(numpairsp1){
+      tmatrix3f kercorrp1={0};
+
+      //-Obtains basic data of particle p1.
+      const float vol0p1=flexstrucdata[CODE_GetIbodyFlexStruc(code[flexstrucridp[pfs1]])].vol0;
+      const tdouble3 pos0p1=pos0[pfs1];
+
+      //-Calculate kernel correction matrix.
+      for(unsigned pair=0;pair<numpairsp1;pair++){
+        const unsigned pfs2=pairidx[pfs1][pair];
+        const tdouble3 pos0p2=pos0[pfs2];
+        const float drx0=float(pos0p1.x-pos0p2.x);
+        const float dry0=float(pos0p1.y-pos0p2.y);
+        const float drz0=float(pos0p1.z-pos0p2.z);
+        const float rr20=drx0*drx0+dry0*dry0+drz0*drz0;
+        //-Computes kernel.
+        const float fac0=fsph::GetKernel_Fac<tker>(CSP,rr20);
+        const float frx0=fac0*drx0,fry0=fac0*dry0,frz0=fac0*drz0; //-Gradients.
+        kercorrp1.a11-=vol0p1*drx0*frx0; kercorrp1.a12-=vol0p1*drx0*fry0; kercorrp1.a13-=vol0p1*drx0*frz0;
+        kercorrp1.a21-=vol0p1*dry0*frx0; kercorrp1.a22-=vol0p1*dry0*fry0; kercorrp1.a23-=vol0p1*dry0*frz0;
+        kercorrp1.a31-=vol0p1*drz0*frx0; kercorrp1.a32-=vol0p1*drz0*fry0; kercorrp1.a33-=vol0p1*drz0*frz0;
+      }
+      kercorr[pfs1]=(simulate2d? fmath::InverseMatrix2x2(kercorrp1): fmath::InverseMatrix3x3(kercorrp1));
+    }
+  }
+}
+
+template<TpKernel tker,bool simulate2d> void JSphCpu::CalcFlexStrucKerCorrT()const{
+  if(CaseNflexstruc){
+    CalcFlexStrucKerCorr<tker,simulate2d>
+      (CaseNflexstruc,Codec,FlexStrucDatac,FlexStrucRidpc,Pos0c,NumPairsc,PairIdxc,KerCorrc);
+  }
+}
+
+template<TpKernel tker> void JSphCpu::CalcFlexStrucKerCorr_ct0()const{
+  if(Simulate2D)CalcFlexStrucKerCorrT<tker,true> ();
+  else          CalcFlexStrucKerCorrT<tker,false>();
+}
+
+void JSphCpu::CalcFlexStrucKerCorr()const{
+  if(TKernel==KERNEL_Wendland)  CalcFlexStrucKerCorr_ct0<KERNEL_Wendland>();
+  else if(TKernel==KERNEL_Cubic)CalcFlexStrucKerCorr_ct0<KERNEL_Cubic>   ();
+}
+
 template<TpKernel tker,bool simulate2d> void JSphCpu::ComputeDefGradFlexStruc(unsigned n,const tdouble3 *pos,const typecode *code
     ,const StFlexStrucData *flexstrucdata,const unsigned *flexstrucridp
     ,const tdouble3 *pos0,const unsigned *numpairs,const unsigned *const *pairidx,const tmatrix3f *kercorr
@@ -2174,9 +2337,9 @@ template<TpKernel tker,bool simulate2d> void JSphCpu::InteractionForcesFlexStruc
 template<TpKernel tker,bool simulate2d> void JSphCpu::Interaction_ForcesFlexStrucT(float &flexstrucdtmax)const{
   if(CaseNflexstruc){
     ComputeDefGradFlexStruc<tker,simulate2d>
-    (CaseNflexstruc,Posc,Codec,FlexStrucDatac,FlexStrucRidpc,Pos0c,NumPairsc,PairIdxc,KerCorrc,DefGradc);
+      (CaseNflexstruc,Posc,Codec,FlexStrucDatac,FlexStrucRidpc,Pos0c,NumPairsc,PairIdxc,KerCorrc,DefGradc);
     InteractionForcesFlexStruc<tker,simulate2d>
-    (CaseNflexstruc,Visco*ViscoBoundFactor,DivData,Dcellc,Posc,Velrhopc,Pressc,Codec,FlexStrucDatac,FlexStrucRidpc,Pos0c,NumPairsc,PairIdxc,KerCorrc,DefGradc,flexstrucdtmax,Acec);
+      (CaseNflexstruc,Visco*ViscoBoundFactor,DivData,Dcellc,Posc,Velrhopc,Pressc,Codec,FlexStrucDatac,FlexStrucRidpc,Pos0c,NumPairsc,PairIdxc,KerCorrc,DefGradc,flexstrucdtmax,Acec);
   }
 }
 
