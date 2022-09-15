@@ -173,7 +173,7 @@ bool JSphFlexStruc::ExistMk(word mkbound)const{
 }
 
 //==============================================================================
-/// Loads initial conditions of XML object.
+/// Loads conditions of XML object.
 //==============================================================================
 void JSphFlexStruc::LoadXml(const JXml *sxml,const std::string &place){
   TiXmlNode* node=sxml->GetNodeSimple(place);
@@ -182,7 +182,7 @@ void JSphFlexStruc::LoadXml(const JXml *sxml,const std::string &place){
 }
 
 //==============================================================================
-/// Reads list of initial conditions in the XML node.
+/// Reads list of configurations in the XML node.
 //==============================================================================
 void JSphFlexStruc::ReadXml(const JXml *sxml,TiXmlElement* lis){
   //-Loads flexible structure body elements.
@@ -261,7 +261,6 @@ void JSphFlexStruc::VisuConfig(std::string txhead,std::string txfoot){
 
 //==============================================================================
 /// Configures particle codings for flexible structures.
-/// Configura codificaciones de partículas para estructuras flexibles.
 //==============================================================================
 void JSphFlexStruc::ConfigCode(unsigned npb,typecode *code){
   for(unsigned c=0;c<GetCount();c++){
@@ -274,7 +273,6 @@ void JSphFlexStruc::ConfigCode(unsigned npb,typecode *code){
 
 //==============================================================================
 /// Get maximum initial sound speed across all flexible structures.
-/// Obtenga la máxima velocidad de sonido inicial en todas las estructuras flexibles.
 //==============================================================================
 double JSphFlexStruc::GetInitialSoundSpeed(){
   double cs0=0.0;
@@ -284,7 +282,6 @@ double JSphFlexStruc::GetInitialSoundSpeed(){
 
 //==============================================================================
 /// Sets mass density for flexible structures.
-/// Establece la densidad de masa para estructuras flexibles.
 //==============================================================================
 void JSphFlexStruc::SetDensity(unsigned npb,const typecode *code,float *rhos){
   for(unsigned p=0;p<npb;p++)rhos[p]=(CODE_IsFlexStrucFlex(code[p])? GetBody(CODE_GetIbodyFlexStruc(code[p]))->GetDensity(): 0);

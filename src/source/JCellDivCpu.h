@@ -125,7 +125,7 @@ protected:
 
   bool DivideFull;      ///<Indicate that divie is applied to fluid & boundary (not only to fluid). | Indica que el divide se aplico a fluido y contorno (no solo al fluido).
 
-  unsigned *SortIdx;      ///<Indices to particles which are sorted.  //<vs_flexstruc>
+  unsigned *SortIdx;    ///<Indices to particles which are sorted.  //<vs_flexstruc>
 
   void Reset();
 
@@ -153,6 +153,9 @@ protected:
   void CalcCellDomainFluid(unsigned n,unsigned pini,unsigned n2,unsigned pini2,const unsigned* dcellc,const typecode *codec,tuint3 &cellmin,tuint3 &cellmax);
 
   unsigned CellSize(unsigned box)const{ return(BeginCell[box+1]-BeginCell[box]); }
+
+  void SortIndices(unsigned *sortpart,unsigned* sortidx,unsigned np,bool stable); //<vs_flexstruc>
+  void UpdateIndices(unsigned n,const unsigned *sortidx,unsigned *idx);           //<vs_flexstruc>
 
 public:
   JCellDivCpu(bool stable,bool floating,byte periactive
@@ -202,9 +205,7 @@ public:
 
   void SetIncreaseNp(unsigned increasenp){ IncreaseNp=increasenp; }
 
-  void UpdateIndices(unsigned n,unsigned *idx);                                   //<vs_flexstruc>
-  void SortIndices(unsigned *sortpart,unsigned* sortidx,unsigned np,bool stable); //<vs_flexstruc>
-  void UpdateIndices(unsigned n,const unsigned *sortidx,unsigned *idx);           //<vs_flexstruc>
+  void UpdateIndices(unsigned n,unsigned *idx); //<vs_flexstruc>
 
   //:bool CellNoEmpty(unsigned box,byte kind)const;
   //:unsigned CellBegin(unsigned box,byte kind)const;

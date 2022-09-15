@@ -1695,7 +1695,7 @@ void JSph::VisuRefs(){
   if(Moorings     )Log->Print("- Coupling with MoorDyn+ (Dominguez et al., 2019  https://doi.org/10.1016/j.coastaleng.2019.103560)");
   if(Shifting     )Log->Print("- Shifting algorithm (Lind et al., 2012  https://doi.org/10.1016/j.jcp.2011.10.027)");
   if(AccInput     )Log->Print("- External imposed forces (Longshaw and Rogers, 2015  https://doi.org/10.1016/j.advengsoft.2015.01.008)");
-  if(FlexStruc    )Log->Print("- Flexible fluid-structure interaction (O'Connor and Rogers, 2021  https://doi.org/10.1016/j.jfluidstructs.2021.103312)");
+  if(FlexStruc    )Log->Print("- Flexible fluid-structure interaction (O'Connor and Rogers, 2021  https://doi.org/10.1016/j.jfluidstructs.2021.103312)"); //<vs_flexstruc>
   //-Wave generation:
   const bool damp=(Damping!=NULL);
   const bool awas=(WaveGen && WaveGen->UseAwas());
@@ -2250,11 +2250,13 @@ void JSph::InitRun(unsigned np,const unsigned *idp,const tdouble3 *pos){
     SaveDt->VisuConfig("SaveDt configuration:"," ");
   }
 
+  //<vs_flexstruc_ini>
   //-Prepares flexible structures configuration.
   if(FlexStruc){
     Log->Printf("Flexible Structures configuration:");
     FlexStruc->VisuConfig(""," ");
   }
+  //<vs_flexstruc_end>
 
   //-Prepares BoundCorr configuration.
   if(BoundCorr){

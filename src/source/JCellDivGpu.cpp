@@ -406,6 +406,10 @@ tdouble3 JCellDivGpu::GetDomainLimits(bool limitmin,unsigned slicecellmin)const{
 }
 
 //<vs_flexstruc_ini>
+//==============================================================================
+/// Sorts and updates the indices of the flexible structure particles.
+/// Ordena y actualiza los índices de las partículas de estructura flexible.
+//==============================================================================
 void JCellDivGpu::UpdateIndices(unsigned n,unsigned *idx){
   if(DivideFull){
     cudaMemcpy(SortPart2,SortPart,sizeof(unsigned)*NpbFinal,cudaMemcpyDeviceToDevice);

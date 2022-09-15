@@ -993,6 +993,10 @@ void JSphGpuSingle::FinishRun(bool stop){
 }
 
 //<vs_flexstruc_ini>
+//==============================================================================
+/// Initialises the associated arrays for the flexible structures.
+/// Inicializa las matrices asociadas para las estructuras flexibles.
+//==============================================================================
 void JSphGpuSingle::FlexStrucInit(){
   //-Start timer and print info.
   Timersg->TmStart(TMG_SuFlexStruc,false);

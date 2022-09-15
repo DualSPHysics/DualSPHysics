@@ -357,7 +357,6 @@ void ComputeDampingCylinder(unsigned n,unsigned pini
   ,float4 *velrhop);
 
 //<vs_flexstruc_ini>
-//-Kernels for the flexible structure calculation.
 void SetClampCodes(unsigned npb,const float4 *poscell,const StFlexStrucData *flexstrucdata,typecode *code);
 unsigned CountFlexStrucParts(unsigned npb,const typecode *code);
 void CalcFlexStrucRidp(unsigned npb,const typecode *code,unsigned *flexstrucridp);

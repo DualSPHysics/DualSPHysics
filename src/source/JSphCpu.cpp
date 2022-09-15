@@ -111,14 +111,16 @@ void JSphCpu::FreeCpuMemoryFixed(){
   delete[] FtRidp;          FtRidp=NULL;
   delete[] FtoForces;       FtoForces=NULL;
   delete[] FtoForcesRes;    FtoForcesRes=NULL;
-  delete[] FlexStrucDatac;  FlexStrucDatac=NULL;  //<vs_flexstruc>
-  delete[] FlexStrucRidpc;  FlexStrucRidpc=NULL;  //<vs_flexstruc>
-  delete[] Pos0c;           Pos0c=NULL;           //<vs_flexstruc>
-  delete[] NumPairsc;       NumPairsc=NULL;       //<vs_flexstruc>
-  delete[] PairIdxBufferc;  PairIdxBufferc=NULL;  //<vs_flexstruc>
-  delete[] PairIdxc;        PairIdxc=NULL;        //<vs_flexstruc>
-  delete[] KerCorrc;        KerCorrc=NULL;        //<vs_flexstruc>
-  delete[] DefGradc;        DefGradc=NULL;        //<vs_flexstruc>
+  //<vs_flexstruc_ini>
+  delete[] FlexStrucDatac;  FlexStrucDatac=NULL;
+  delete[] FlexStrucRidpc;  FlexStrucRidpc=NULL;
+  delete[] Pos0c;           Pos0c=NULL;
+  delete[] NumPairsc;       NumPairsc=NULL;
+  delete[] PairIdxBufferc;  PairIdxBufferc=NULL;
+  delete[] PairIdxc;        PairIdxc=NULL;
+  delete[] KerCorrc;        KerCorrc=NULL;
+  delete[] DefGradc;        DefGradc=NULL;
+  //<vs_flexstruc_end>
 }
 
 //==============================================================================
@@ -1410,7 +1412,7 @@ void JSphCpu::ComputeVerlet(double dt){
     VerletStep=0;
   }
   //<vs_flexstruc_ini>
-  //-Computes displacement and velocity for flexible structures.
+  //-Computes new position and velocity for flexible structures.
   if(CaseNflexstruc){
     Timersc->TmStart(TMC_SuFlexStruc);
     ComputeSemiImplicitEulerFlexStruc(dt,Posc,Dcellc,Codec);
@@ -1523,7 +1525,7 @@ void JSphCpu::ComputeSymplecticPre(double dt){
   memcpy(Posc,PosPrec,sizeof(tdouble3)*Npb);
 
   //<vs_flexstruc_ini>
-  //-Computes displacement and velocity for flexible structures.
+  //-Computes new position and velocity for flexible structures.
   if(CaseNflexstruc){
     Timersc->TmStart(TMC_SuFlexStruc);
     ComputeSymplecticPreFlexStruc(dt05,Posc,Dcellc,Codec);
@@ -1632,6 +1634,7 @@ void JSphCpu::ComputeSymplecticCorr(double dt){
   }
 
   //<vs_flexstruc_ini>
+  //-Computes new position and velocity for flexible structures.
   if(CaseNflexstruc){
     Timersc->TmStart(TMC_SuFlexStruc);
     ComputeSymplecticCorrFlexStruc(dt05,dt,Posc,Dcellc,Codec);
@@ -1956,6 +1959,10 @@ void JSphCpu::InitFloating(){
 }
 
 //<vs_flexstruc_ini>
+//==============================================================================
+/// Finds the clamp particles and updates the code.
+/// Encuentra las partículas de abrazadera y actualiza el código.
+//==============================================================================
 void JSphCpu::SetClampCodes(unsigned n,const tdouble3 *pos,const StFlexStrucData *flexstrucdata,typecode *code)const{
   //-Starts execution using OpenMP.
   #ifdef OMP_USE
@@ -1992,16 +1999,28 @@ void JSphCpu::SetClampCodes(unsigned n,const tdouble3 *pos,const StFlexStrucData
   }
 }
 
+//==============================================================================
+/// Counts the number of flexible structure particles (includes clamps).
+/// Cuenta el número de partículas de estructura flexible (incluye abrazaderas).
+//==============================================================================
 unsigned JSphCpu::CountFlexStrucParts(unsigned npb,const typecode *code)const{
   return count_if(code,code+npb,[](const typecode c){return CODE_IsFlexStrucAny(c);});
 }
 
+//==============================================================================
+/// Calculates indices to the main arrays for the flexible structure particles.
+/// Calcula los índices de las matrices principales para las partículas de estructura flexible.
+//==============================================================================
 void JSphCpu::CalcFlexStrucRidp(unsigned npb,const typecode *code,unsigned *flexstrucridp)const{
   vector<unsigned> idx(npb);
   iota(idx.begin(),idx.end(),0);
   copy_if(idx.begin(),idx.end(),flexstrucridp,[code](unsigned i){return CODE_IsFlexStrucAny(code[i]);});
 }
 
+//==============================================================================
+/// Gathers values from a main array into the smaller flexible structure array.
+/// Reúne valores de una matriz principal en la matriz de estructura flexible más pequeña.
+//==============================================================================
 void JSphCpu::GatherToFlexStrucArray(unsigned npfs,const unsigned *flexstrucridp,const tdouble3 *fullarray,tdouble3 *flexstrucarray)const{
   //-Starts execution using OpenMP.
   #ifdef OMP_USE
@@ -2010,6 +2029,10 @@ void JSphCpu::GatherToFlexStrucArray(unsigned npfs,const unsigned *flexstrucridp
   for(unsigned p=0;p<npfs;p++)flexstrucarray[p]=fullarray[flexstrucridp[p]];
 }
 
+//==============================================================================
+/// Counts the total number of flexible structure pairs (neighbours).
+/// Cuenta el número total de pares de estructuras flexibles (vecinos).
+//==============================================================================
 unsigned JSphCpu::CountFlexStrucPairs(unsigned n,const tdouble3 *pos0,unsigned *numpairs)const{
   //-Starts execution using OpenMP.
   #ifdef OMP_USE
@@ -2036,6 +2059,10 @@ unsigned JSphCpu::CountFlexStrucPairs(unsigned n,const tdouble3 *pos0,unsigned *
   return accumulate(numpairs,numpairs+n,0);
 }
 
+//==============================================================================
+/// Sets the indices for each flexible structure pair.
+/// Establece los índices para cada par de estructuras flexibles.
+//==============================================================================
 void JSphCpu::SetFlexStrucPairs(unsigned n,const tdouble3 *pos0,unsigned **pairidx)const{
   //-Starts execution using OpenMP.
   #ifdef OMP_USE
@@ -2060,6 +2087,10 @@ void JSphCpu::SetFlexStrucPairs(unsigned n,const tdouble3 *pos0,unsigned **pairi
   }
 }
 
+//==============================================================================
+/// Calculates the kernel correction matrix for each flexible structure particle.
+/// Calcula la matriz de corrección del kernel para cada partícula de estructura flexible.
+//==============================================================================
 template<TpKernel tker,bool simulate2d> void JSphCpu::CalcFlexStrucKerCorr(unsigned n,const typecode *code,const StFlexStrucData *flexstrucdata
         ,const unsigned *flexstrucridp,const tdouble3 *pos0,const unsigned *numpairs,const unsigned *const *pairidx
         ,tmatrix3f *kercorr)const{
@@ -2101,6 +2132,10 @@ template<TpKernel tker,bool simulate2d> void JSphCpu::CalcFlexStrucKerCorr(unsig
   }
 }
 
+//==============================================================================
+/// Calculates the kernel correction matrix for each flexible structure particle.
+/// Calcula la matriz de corrección del kernel para cada partícula de estructura flexible.
+//==============================================================================
 template<TpKernel tker,bool simulate2d> void JSphCpu::CalcFlexStrucKerCorrT()const{
   if(CaseNflexstruc){
     CalcFlexStrucKerCorr<tker,simulate2d>
@@ -2108,16 +2143,28 @@ template<TpKernel tker,bool simulate2d> void JSphCpu::CalcFlexStrucKerCorrT()con
   }
 }
 
+//==============================================================================
+/// Calculates the kernel correction matrix for each flexible structure particle.
+/// Calcula la matriz de corrección del kernel para cada partícula de estructura flexible.
+//==============================================================================
 template<TpKernel tker> void JSphCpu::CalcFlexStrucKerCorr_ct0()const{
   if(Simulate2D)CalcFlexStrucKerCorrT<tker,true> ();
   else          CalcFlexStrucKerCorrT<tker,false>();
 }
 
+//==============================================================================
+/// Calculates the kernel correction matrix for each flexible structure particle.
+/// Calcula la matriz de corrección del kernel para cada partícula de estructura flexible.
+//==============================================================================
 void JSphCpu::CalcFlexStrucKerCorr()const{
   if(TKernel==KERNEL_Wendland)  CalcFlexStrucKerCorr_ct0<KERNEL_Wendland>();
   else if(TKernel==KERNEL_Cubic)CalcFlexStrucKerCorr_ct0<KERNEL_Cubic>   ();
 }
 
+//==============================================================================
+/// Calculates the deformation gradient matrix for each flexible structure particle.
+/// Calcula la matriz de gradiente de deformación para cada partícula de estructura flexible.
+//==============================================================================
 template<TpKernel tker,bool simulate2d> void JSphCpu::ComputeDefGradFlexStruc(unsigned n,const tdouble3 *pos,const typecode *code
     ,const StFlexStrucData *flexstrucdata,const unsigned *flexstrucridp
     ,const tdouble3 *pos0,const unsigned *numpairs,const unsigned *const *pairidx,const tmatrix3f *kercorr
@@ -2167,6 +2214,10 @@ template<TpKernel tker,bool simulate2d> void JSphCpu::ComputeDefGradFlexStruc(un
   }
 }
 
+//==============================================================================
+/// Calculates the PK1 stress matrix for each flexible structure particle.
+/// Calcula la matriz de tensión PK1 para cada partícula de estructura flexible.
+//==============================================================================
 inline tmatrix3f JSphCpu::ComputePK1StressFlexStruc(const tmatrix3f &defgrad,const tmatrix6f &cmat)const{
   //-Calculate Green-Lagrange strain from deformation gradient.
   tmatrix3f gl=fmath::MulMatrix3x3(fmath::TrasMatrix3x3(defgrad),defgrad);
@@ -2190,6 +2241,10 @@ inline tmatrix3f JSphCpu::ComputePK1StressFlexStruc(const tmatrix3f &defgrad,con
   return fmath::MulMatrix3x3(defgrad,pk2);
 }
 
+//==============================================================================
+/// Interaction forces for the flexible structure particles.
+/// Fuerzas de interacción para las partículas de estructura flexible.
+//==============================================================================
 template<TpKernel tker,bool simulate2d,bool lamsps> void JSphCpu::InteractionForcesFlexStruc(unsigned n,float visco
     ,StDivDataCpu divdata,const unsigned *dcell
     ,const tdouble3 *pos,const tfloat4 *velrhop,const float *press,const typecode *code
@@ -2347,6 +2402,10 @@ template<TpKernel tker,bool simulate2d,bool lamsps> void JSphCpu::InteractionFor
   for(int th=0;th<OmpThreads;th++)if(flexstrucdt<flexstructh[th*OMP_STRIDE])flexstrucdt=flexstructh[th*OMP_STRIDE];
 }
 
+//==============================================================================
+/// Interaction forces for the flexible structure particles.
+/// Fuerzas de interacción para las partículas de estructura flexible.
+//==============================================================================
 template<TpKernel tker,bool simulate2d,bool lamsps> void JSphCpu::Interaction_ForcesFlexStrucT(float &flexstrucdtmax)const{
   if(CaseNflexstruc){
     ComputeDefGradFlexStruc<tker,simulate2d>
@@ -2356,21 +2415,37 @@ template<TpKernel tker,bool simulate2d,bool lamsps> void JSphCpu::Interaction_Fo
   }
 }
 
+//==============================================================================
+/// Interaction forces for the flexible structure particles.
+/// Fuerzas de interacción para las partículas de estructura flexible.
+//==============================================================================
 template<TpKernel tker,bool simulate2d> void JSphCpu::Interaction_ForcesFlexStruc_ct1(float &flexstrucdtmax)const{
   if(TVisco==VISCO_LaminarSPS)Interaction_ForcesFlexStrucT<tker,simulate2d,true> (flexstrucdtmax);
   else                        Interaction_ForcesFlexStrucT<tker,simulate2d,false>(flexstrucdtmax);
 }
 
+//==============================================================================
+/// Interaction forces for the flexible structure particles.
+/// Fuerzas de interacción para las partículas de estructura flexible.
+//==============================================================================
 template<TpKernel tker> void JSphCpu::Interaction_ForcesFlexStruc_ct0(float &flexstrucdtmax)const{
   if(Simulate2D)Interaction_ForcesFlexStruc_ct1<tker,true> (flexstrucdtmax);
   else          Interaction_ForcesFlexStruc_ct1<tker,false>(flexstrucdtmax);
 }
 
+//==============================================================================
+/// Interaction forces for the flexible structure particles.
+/// Fuerzas de interacción para las partículas de estructura flexible.
+//==============================================================================
 void JSphCpu::Interaction_ForcesFlexStruc(float &flexstrucdtmax)const{
   if(TKernel==KERNEL_Wendland)  Interaction_ForcesFlexStruc_ct0<KERNEL_Wendland>(flexstrucdtmax);
   else if(TKernel==KERNEL_Cubic)Interaction_ForcesFlexStruc_ct0<KERNEL_Cubic>   (flexstrucdtmax);
 }
 
+//==============================================================================
+/// Updates position and velocity using semi-implicit Euler scheme (used with Verlet scheme).
+/// Actualiza la posición y la velocidad usando el esquema de Euler semiimplícito (usado con el esquema de Verlet).
+//==============================================================================
 void JSphCpu::ComputeSemiImplicitEulerFlexStruc(double dt,tdouble3 *pos,unsigned *dcell,typecode *code)const
 {
   const tdouble3 gravity=ToTDouble3(Gravity);
@@ -2402,6 +2477,10 @@ void JSphCpu::ComputeSemiImplicitEulerFlexStruc(double dt,tdouble3 *pos,unsigned
   }
 }
 
+//==============================================================================
+/// Updates position and velocity using symplectic predictor scheme.
+/// Actualiza la posición y la velocidad utilizando un esquema predictor simpléctico.
+//==============================================================================
 void JSphCpu::ComputeSymplecticPreFlexStruc(double dtm,tdouble3 *pos,unsigned *dcell,typecode *code)const
 {
   const tdouble3 gravity=ToTDouble3(Gravity);
@@ -2435,6 +2514,10 @@ void JSphCpu::ComputeSymplecticPreFlexStruc(double dtm,tdouble3 *pos,unsigned *d
   }
 }
 
+//==============================================================================
+/// Updates position and velocity using symplectic corrector scheme.
+/// Actualiza la posición y la velocidad utilizando un esquema corrector simpléctico.
+//==============================================================================
 void JSphCpu::ComputeSymplecticCorrFlexStruc(double dtm,double dt,tdouble3 *pos,unsigned *dcell,typecode *code)const
 {
   const tdouble3 gravity=ToTDouble3(Gravity);

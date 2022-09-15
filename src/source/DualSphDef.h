@@ -256,13 +256,13 @@ typedef struct{
 //<vs_flexstruc_ini>
 ///Structure with the information of the flexible structure.
 typedef struct{
-  typecode clampcode; ///< Code for clamping particles.
-  float vol0;         ///< Initial particle volume.
-  float rho0;         ///< Initial particle density.
-  float youngmod;     ///< Young's modulus.
-  float poissratio;   ///< Poisson ratio.
-  float hgfactor;     ///< Hourglass correction factor.
-  tmatrix6f cmat;     ///< Constitutive matrix.
+  typecode clampcode; ///<Code for clamping particles.
+  float vol0;         ///<Initial particle volume.
+  float rho0;         ///<Initial particle density.
+  float youngmod;     ///<Young's modulus.
+  float poissratio;   ///<Poisson ratio.
+  float hgfactor;     ///<Hourglass correction factor.
+  tmatrix6f cmat;     ///<Constitutive matrix.
 }StFlexStrucData;
 //<vs_flexstruc_end>
 

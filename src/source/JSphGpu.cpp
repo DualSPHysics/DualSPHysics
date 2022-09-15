@@ -213,15 +213,17 @@ void JSphGpu::FreeGpuMemoryFixed(){
   if(FtoInertiaini8g)   cudaFree(FtoInertiaini8g);    FtoInertiaini8g=NULL;
   if(FtoInertiaini1g)   cudaFree(FtoInertiaini1g);    FtoInertiaini1g=NULL;
   if(DemDatag)          cudaFree(DemDatag);           DemDatag=NULL;
-  if(FlexStrucDatag)    cudaFree(FlexStrucDatag);     FlexStrucDatag=NULL;  //<vs_flexstruc>
-  if(FlexStrucRidpg)    cudaFree(FlexStrucRidpg);     FlexStrucRidpg=NULL;  //<vs_flexstruc>
-  if(PosCell0g)         cudaFree(PosCell0g);          PosCell0g=NULL;       //<vs_flexstruc>
-  if(NumPairsg)         cudaFree(NumPairsg);          NumPairsg=NULL;       //<vs_flexstruc>
-  if(PairIdxBufferg)    cudaFree(PairIdxBufferg);     PairIdxBufferg=NULL;  //<vs_flexstruc>
-  if(PairIdxg)          cudaFree(PairIdxg);           PairIdxg=NULL;        //<vs_flexstruc>
-  if(KerCorrg)          cudaFree(KerCorrg);           KerCorrg=NULL;        //<vs_flexstruc>
-  if(FlexStrucDtg)      cudaFree(FlexStrucDtg);       FlexStrucDtg=NULL;    //<vs_flexstruc>
-  if(DefGradg)          cudaFree(DefGradg);           DefGradg=NULL;        //<vs_flexstruc>
+  //<vs_flexstruc_ini>
+  if(FlexStrucDatag)    cudaFree(FlexStrucDatag);     FlexStrucDatag=NULL;
+  if(FlexStrucRidpg)    cudaFree(FlexStrucRidpg);     FlexStrucRidpg=NULL;
+  if(PosCell0g)         cudaFree(PosCell0g);          PosCell0g=NULL;
+  if(NumPairsg)         cudaFree(NumPairsg);          NumPairsg=NULL;
+  if(PairIdxBufferg)    cudaFree(PairIdxBufferg);     PairIdxBufferg=NULL;
+  if(PairIdxg)          cudaFree(PairIdxg);           PairIdxg=NULL;
+  if(KerCorrg)          cudaFree(KerCorrg);           KerCorrg=NULL;
+  if(FlexStrucDtg)      cudaFree(FlexStrucDtg);       FlexStrucDtg=NULL;
+  if(DefGradg)          cudaFree(DefGradg);           DefGradg=NULL;
+  //<vs_flexstruc_end>
 }
 
 //==============================================================================
@@ -916,7 +918,7 @@ void JSphGpu::ComputeVerlet(double dt){  //pdtedom
   //-Aplica desplazamiento a las particulas fluid no periodicas.
   cusph::ComputeStepPos(PeriActive,WithFloating,Np,Npb,movxyg,movzg,Posxyg,Poszg,Dcellg,Codeg);
   //<vs_flexstruc_ini>
-  //-Computes displacement and velocity for flexible structures.
+  //-Computes new position and velocity for flexible structures.
   if(CaseNflexstruc){
     Timersg->TmStart(TMG_SuFlexStruc,false);
     cusphs::ComputeStepFlexStrucSemiImplicitEuler(CaseNflexstruc,Velrhopg,Codeg,FlexStrucRidpg,Aceg,dt,Gravity,movxyg,movzg,VelrhopM1g,NULL);
@@ -969,7 +971,7 @@ void JSphGpu::ComputeSymplecticPre(double dt){
   cudaMemcpy(Posxyg,PosxyPreg,sizeof(double2)*Npb,cudaMemcpyDeviceToDevice);
   cudaMemcpy(Poszg,PoszPreg,sizeof(double)*Npb,cudaMemcpyDeviceToDevice);
   //<vs_flexstruc_ini>
-  //-Applies predictor to flexible structure particles.
+  //-Computes new position and velocity for flexible structures.
   if(CaseNflexstruc){
     Timersg->TmStart(TMG_SuFlexStruc,false);
     cusphs::ComputeStepFlexStrucSymplecticPre(CaseNflexstruc,VelrhopPreg,Codeg,FlexStrucRidpg,Aceg,dt05,Gravity,movxyg,movzg,Velrhopg,NULL);
@@ -1006,7 +1008,7 @@ void JSphGpu::ComputeSymplecticCorr(double dt){
   cusph::ComputeStepPos2(PeriActive,WithFloating,Np,Npb,PosxyPreg,PoszPreg
     ,movxyg,movzg,Posxyg,Poszg,Dcellg,Codeg);
   //<vs_flexstruc_ini>
-  //-Applies corrector to flexible structure particles.
+  //-Computes new position and velocity for flexible structures.
   if(CaseNflexstruc){
     Timersg->TmStart(TMG_SuFlexStruc,false);
     cusphs::ComputeStepFlexStrucSymplecticCor(CaseNflexstruc,VelrhopPreg,Codeg,FlexStrucRidpg,Aceg,dt05,dt,Gravity,movxyg,movzg,Velrhopg,NULL);

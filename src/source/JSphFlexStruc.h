@@ -41,25 +41,25 @@ private:
   JLog2* Log;
 
   //-Selection of particles
-  typecode BoundCode;      ///<Code to select boundary particles.
-  typecode ClampCode;      ///<Code to select clamping particles.
+  typecode BoundCode;             ///<Code to select boundary particles.
+  typecode ClampCode;             ///<Code to select clamping particles.
 
   //-Body parameters
-  float ParticleVolume;
-  float Density;
-  float YoungMod;
-  float PoissRatio;
-  TpConstitModel ConstitModel;
-  float HgFactor;
+  float ParticleVolume;           ///<Initial particle volume.
+  float Density;                  ///<Initial particle density.
+  float YoungMod;                 ///<Young's modulus.
+  float PoissRatio;               ///<Poisson ratio.
+  TpConstitModel ConstitModel;    ///<Constitutive model.
+  float HgFactor;                 ///<Hourglass correction factor.
 
-  tmatrix6f ConstitMatrix;
+  tmatrix6f ConstitMatrix;        ///<Constitutive matrix.
 
   void Reset();
 
 public:
-  const unsigned IdBody;
-  const word MkBound;
-  const word MkClamp;
+  const unsigned IdBody;          ///<Flexible structure ID.
+  const word MkBound;             ///<MkBound of flexible structure.
+  const word MkClamp;             ///<MkBound of clamp.
 
   JSphFlexStrucBody(unsigned idbody,word mkbound,word mkclamp,float particlevolume,float density,double youngmod,double poissratio,TpConstitModel constitmodel,float hgfactor);
   ~JSphFlexStrucBody();
@@ -93,7 +93,7 @@ class JSphFlexStruc : protected JObject
 private:
   JLog2* Log;
   const bool Simulate2D;
-  const double Dp;       ///<Initial distance between particles [m].
+  const double Dp;                          ///<Initial distance between particles [m].
 
   std::vector<JSphFlexStrucBody*> List;     ///<List of flexible structure bodies.
 

@@ -109,7 +109,7 @@ bool ShowsVersionInfo(int argc,char** argv){
     features.push_back(fun::JSONProperty("CHRONO_Coupling",AVAILABLE_CHRONO));
     features.push_back(fun::JSONProperty("MoorDyn_Coupling",AVAILABLE_MOORDYN));
     features.push_back(fun::JSONProperty("WaveGen",AVAILABLE_WAVEGEN));
-    features.push_back(fun::JSONProperty("FlexibleStructures",true)); //<vs_flexstruc>
+    features.push_back(fun::JSONProperty("FlexStruc",true)); //<vs_flexstruc>
     features.push_back(fun::JSONProperty("DDT_Fourtakas",true));
     //-Defines main information about the version program.
     std::vector<std::string> info;
@@ -140,10 +140,10 @@ void PrintExceptionLog(const std::string &prefix,const std::string &text,JLog2 *
 int main(int argc, char** argv){
   int errcode=1;
 
-  //AppInfo.AddNameExtra("Symmetry");    //<vs_syymmetry>
+  //AppInfo.AddNameExtra("Symmetry");     //<vs_syymmetry>
   //AppInfo.AddNameExtra("SaveFtAce");
-  //AppInfo.AddNameExtra("SaveFtMotion");//<vs_ftmottionsv>
-  AppInfo.AddNameExtra("FlexibleStructures"); //<vs_flexstruc>
+  //AppInfo.AddNameExtra("SaveFtMotion"); //<vs_ftmottionsv>
+  AppInfo.AddNameExtra("FlexStruc");      //<vs_flexstruc>
   #ifdef CODE_SIZE4
     AppInfo.AddNameExtra("MK65k");
   #endif

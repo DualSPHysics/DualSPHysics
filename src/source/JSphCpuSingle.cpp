@@ -1214,6 +1214,10 @@ void JSphCpuSingle::FinishRun(bool stop){
 }
 
 //<vs_flexstruc_ini>
+//==============================================================================
+/// Initialises the associated arrays for the flexible structures.
+/// Inicializa las matrices asociadas para las estructuras flexibles.
+//==============================================================================
 void JSphCpuSingle::FlexStrucInit(){
   //-Start timer and print info.
   Timersc->TmStart(TMC_SuFlexStruc);
