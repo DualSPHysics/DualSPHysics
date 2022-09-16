@@ -31,8 +31,8 @@ School of Mechanical, Aerospace and Civil Engineering, University of Manchester,
 \section compile_sec Project files
 Please download source files and documentation from <a href="http://dual.sphysics.org">DualSPHysics website.</a> \n
 \author <a href="http://dual.sphysics.org/index.php/developers">DualSPHysics Developers.</a> 
-\version 5.0.235
-\date 27-06-2022
+\version 5.2.247
+\date 14-09-2022
 \copyright GNU Lesser General Public License <a href="http://www.gnu.org/licenses/">GNU licenses.</a>
 */
 
@@ -56,7 +56,7 @@ Please download source files and documentation from <a href="http://dual.sphysic
 
 using namespace std;
 
-JAppInfo AppInfo("DualSPHysics5","v5.2.235.003","16-09-2022");
+JAppInfo AppInfo("DualSPHysics5","v5.2.247","14-09-2022");
 //JAppInfo AppInfo("DualSPHysics5","v5.0.???","UserVersion","v1.0","??-??-????"); //-for user versions.
 
 //==============================================================================
@@ -140,9 +140,9 @@ void PrintExceptionLog(const std::string &prefix,const std::string &text,JLog2 *
 int main(int argc, char** argv){
   int errcode=1;
 
-  //AppInfo.AddNameExtra("Symmetry");     //<vs_syymmetry>
+  //AppInfo.AddNameExtra("Symmetry");    //<vs_syymmetry>
   //AppInfo.AddNameExtra("SaveFtAce");
-  //AppInfo.AddNameExtra("SaveFtMotion"); //<vs_ftmottionsv>
+  //AppInfo.AddNameExtra("SaveFtMotion");//<vs_ftmottionsv>
   AppInfo.AddNameExtra("FlexStruc");      //<vs_flexstruc>
   #ifdef CODE_SIZE4
     AppInfo.AddNameExtra("MK65k");

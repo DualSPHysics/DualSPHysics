@@ -3,8 +3,9 @@
  <GENCASE>  Copyright (c) 2020 by Dr Jose M. Dominguez
  All rights reserved.
 
- DualSPHysics is an international collaboration between University of Vigo 
- (Spain) and University of Manchester (UK). 
+ GenCase is a free tool for DualSPHysics simulations.
+ DualSPHysics project is an international collaboration between
+ University of Vigo (Spain) and University of Manchester (UK).
 
  Redistribution and use in source and binary forms, with or without
  modification, are permitted provided that the following conditions
@@ -14,7 +15,7 @@
  * Redistributions in binary form must reproduce the above copyright
    notice, this list of conditions and the following disclaimer in the
    documentation and/or other materials provided with the distribution.
- * Neither the name of the DualSPHysics nor the names of its contributors
+ * Neither the name of the GenCase nor the names of its contributors
    may be used to endorse or promote products derived from this software
    without specific prior written permission.
 
@@ -27,10 +28,10 @@
  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
- THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
+ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-GenCase v5.0.260 (08-05-2022)
+GenCase v5.0.268 (12-09-2022)
 ==============================
 LoadDsphConfig> .../bin/windows/DsphConfig.xml
 Execution parameters information:

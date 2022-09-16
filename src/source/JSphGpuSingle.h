@@ -88,8 +88,6 @@ protected:
   void InOutComputeStep(double stepdt);
   void InOutUpdatePartsData(double timestepnew);
   void InOutExtrapolateData(unsigned inoutcount,const int *inoutpart);
-
-  void BoundCorrectionData();
 };
 
 #endif

@@ -73,7 +73,6 @@ class JChronoObjects;
 class JDsMooredFloatings;
 class JDsFtForcePoints;
 class JSphInOut;
-class JSphBoundCorr;
 class JSphFlexStruc;  //<vs_flexstruc>
 class JDsPartsInit;
 class JDsPips;
@@ -81,7 +80,7 @@ class JLinearValue;
 class JCaseEParms;
 class JDataArrays;
 class JNumexLib;
-class JFtMotionSave;  //<vs_ftmottionsv>
+class JFtMotionSave; //<vs_ftmottionsv>
 class JDsExtraDataSave;
 
 //##############################################################################
@@ -199,7 +198,7 @@ protected:
   float MdbcThreshold;        ///<Kernel support limit to apply mDBC correction (default=0).
   bool UseNormals;            ///<Indicates use of normals for mDBC.
   bool UseNormalsFt;          ///<Indicates use of normals of floating bodies for mDBC.
-  bool SvNormals;             ///<Saves normals VTK each PART (for debug).
+  bool SvNormals;             ///<Saves normals VTK each PART (default=0).
 
   bool RhopOut;               ///<Indicates whether the RhopOut density correction is active or not.    | Indica si activa la correccion de densidad RhopOut o no.                       
   float RhopOutMin;           ///<Minimum limit for Rhopout correction.                                 | Limite minimo para la correccion de RhopOut.
@@ -346,7 +345,6 @@ protected:
   JDsAccInput *AccInput;    ///<Object for variable acceleration functionality.
 
   JSphInOut *InOut;         ///<Object for inlet/outlet conditions.
-  JSphBoundCorr *BoundCorr; ///<Object for boundary extrapolated correction (used in combination with InOut).
 
   JSphFlexStruc *FlexStruc; ///<Object for flexible structures. //<vs_flexstruc>
 
@@ -477,6 +475,10 @@ protected:
   void CheckRhopLimits();
   void LoadCaseParticles();
   void InitRun(unsigned np,const unsigned *idp,const tdouble3 *pos);
+
+  void WavesInit(JGaugeSystem *gaugesystem,const JSphMk *mkinfo,double timemax,double timepart);
+  void WavesLoadLastGaugeResults();
+  void WavesUpdateGaugePoints();
 
   tfloat3 GetFtExternalForceLin(unsigned cf,double timestep)const;
   tfloat3 GetFtExternalForceAng(unsigned cf,double timestep)const;

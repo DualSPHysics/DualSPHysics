@@ -40,7 +40,6 @@
 #include "JDsOutputTime.h"
 #include "JDsAccInput.h"
 #include "JDsGaugeSystem.h"
-#include "JSphBoundCorr.h"
 #include "JSphInOut.h"
 #include "JSphShifting.h"
 
@@ -1214,7 +1213,7 @@ template<TpKernel tker,bool sim2d,TpSlipMode tslip> void JSphCpu::InteractionMdb
 {
   const float determlimit=1e-3f;
   //-Interaction GhostBoundaryNodes-Fluid.
-  unsigned n=NpbOk;
+  const unsigned n=(UseNormalsFt? Np: NpbOk);
   if(Simulate2D){ const bool sim2d=true;
     if(slipmode==SLIP_Vel0    )InteractionMdbcCorrectionT2 <tker,sim2d,SLIP_Vel0    > (n,divdata,determlimit,MdbcThreshold,pos,code,idp,boundnormal,motionvel,velrhop);
     if(slipmode==SLIP_NoSlip  )InteractionMdbcCorrectionT2 <tker,sim2d,SLIP_NoSlip  > (n,divdata,determlimit,MdbcThreshold,pos,code,idp,boundnormal,motionvel,velrhop);
@@ -1834,8 +1833,6 @@ void JSphCpu::RunMotion(double stepdt){
         if(motsim)MoveMatBound   (m.count,m.idbegin-CaseNfixed,m.matmov,stepdt,RidpMove,Posc,Dcellc,Velrhopc,Codec,boundnormal); 
         //else    MoveMatBoundAce(m.count,m.idbegin-CaseNfixed,m.matmov,m.matmov2,stepdt,RidpMove,Posc,Dcellc,Velrhopc,Acec,Codec);
       }      
-      //-Applies predefined motion to BoundCorr configuration.
-      if(BoundCorr && BoundCorr->GetUseMotion())BoundCorr->RunMotion(m);
     }
   }
   //-Management of Multi-Layer Pistons.

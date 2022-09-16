@@ -684,7 +684,6 @@ void JSphCpuSingle::RunInitialDDTRamp(){
 /// calculadas en la interaccion usando Verlet.
 //==============================================================================
 double JSphCpuSingle::ComputeStep_Ver(){
-  if(BoundCorr)BoundCorrectionData();      //-Apply BoundCorrection.
   Interaction_Forces(INTERSTEP_Verlet);    //-Interaction.
   const double dt=DtVariable(true);        //-Calculate new dt.
   if(CaseNmoving)CalcMotion(dt);           //-Calculate motion for moving bodies.
@@ -711,7 +710,6 @@ double JSphCpuSingle::ComputeStep_Sym(){
   //-Predictor
   //-----------
   DemDtForce=dt*0.5f;                          //(DEM)
-  if(BoundCorr)BoundCorrectionData();          //-Apply BoundCorrection.
   Interaction_Forces(INTERSTEP_SymPredictor);  //-Interaction.
   const double ddt_p=DtVariable(false);        //-Calculate dt of predictor step.
   if(Shifting)RunShifting(dt*.5);              //-Shifting.
@@ -998,6 +996,19 @@ void JSphCpuSingle::RunFloating(double dt,bool predictor){
         FtObjs[cf].faceang=(fomega-FtObjs[cf].fomega)/float(dt);
         FtObjs[cf].fvel=fvel;
         FtObjs[cf].fomega=fomega;
+        //-Updates floating normals for mDBC.
+        if(UseNormalsFt){
+          const tdouble3 dang=ToTDouble3(FtObjs[cf].angles-fobj.angles)*TODEG;
+          const tdouble3 cen=FtObjs[cf].center;
+          JMatrix4d mat;
+          mat.Move(cen);
+          mat.Rotate(dang);
+          mat.Move(fobj.center*-1);
+          for(unsigned fp=fpini;fp<fpfin;fp++){
+            const int p=FtRidp[fp];
+            if(p!=UINT_MAX)BoundNormalc[p]=ToTFloat3(mat.MulNormal(ToTDouble3(BoundNormalc[p])));
+          }
+        }
         //<vs_ftmottionsv_ini>
         if(FtMotSave && FtMotSave->CheckTime(TimeStep+dt))
           FtMotSave->SaveFtDataCpu(TimeStep+dt,Nstep+1,FtObjs,Np,Posc,FtRidp);

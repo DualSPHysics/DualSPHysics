@@ -41,7 +41,6 @@
 #include "JDsAccInput.h"
 #include "JXml.h"
 #include "JDsGaugeSystem.h"
-#include "JSphBoundCorr.h"
 #include "JSphInOut.h"
 #include "JSphShifting.h"
 #include "JDataArrays.h"
@@ -537,7 +536,7 @@ void JSphGpu::ConstantDataUp(){
   ctes.kernelh=KernelH;
   ctes.kernelsize2=KernelSize2; 
   ctes.poscellsize=PosCellSize; 
-  //-Wendland constants are always computed since this kernel is used in some parts where other kernels are not defined (e.g. mDBC, inlet/outlet, boundcorr...).
+  //-Wendland constants are always computed since this kernel is used in some parts where other kernels are not defined (e.g. mDBC, inlet/outlet...).
   ctes.awen=KWend.awen; ctes.bwen=KWend.bwen;
   //-Copies constants for other kernels.
   if(TKernel==KERNEL_Cubic){
@@ -1110,8 +1109,6 @@ void JSphGpu::RunMotion(double stepdt){
         if(motsim)cusph::MoveMatBound   (PeriActive,Simulate2D,m.count,m.idbegin-CaseNfixed,m.matmov,stepdt,RidpMoveg,Posxyg,Poszg,Dcellg,Velrhopg,Codeg,boundnormal);
         //else    cusph::MoveMatBoundAce(PeriActive,Simulate2D,m.count,m.idbegin-CaseNfixed,m.matmov,m.matmov2,stepdt,RidpMoveg,Posxyg,Poszg,Dcellg,Velrhopg,Codeg);
       }      
-      //-Applies predefined motion to BoundCorr configuration.
-      if(BoundCorr && BoundCorr->GetUseMotion())BoundCorr->RunMotion(m);
     }
   }
   //-Management of Multi-Layer Pistons.
@@ -1160,7 +1157,7 @@ void JSphGpu::SaveVtkNormalsGpu(std::string filename,int numfile,unsigned np,uns
   ,const double2 *posxyg,const double *poszg,const unsigned *idpg,const float3 *boundnormalg)
 {
   //-Allocates memory.
-  unsigned n=npb;
+  const unsigned n=(UseNormalsFt? np: npb);
   tdouble3 *pos=fcuda::ToHostPosd3(0,n,posxyg,poszg);
   unsigned *idp=fcuda::ToHostUint(0,n,idpg);
   tfloat3  *nor=fcuda::ToHostFloat3(0,n,boundnormalg);

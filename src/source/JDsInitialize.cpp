@@ -19,6 +19,7 @@
 /// \file JDsInitialize.cpp \brief Implements the class \ref JDsInitialize.
 
 #include "JDsInitialize.h"
+#include "DualSphDef.h"
 #include "JCaseProperties.h"
 #include "Functions.h"
 #include "FunctionsMath.h"

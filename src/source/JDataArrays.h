@@ -139,6 +139,8 @@ public:
   void MoveArray(unsigned idx,unsigned idx2);
 
   void ReverseArrayData(unsigned idx);
+  void SetAddArrayData(unsigned idx,char selxyz,double v2);
+  void SetMulArrayData(unsigned idx,char selxyz,double v2);
 
   unsigned Count()const{ return(unsigned(Arrays.size())); }
 

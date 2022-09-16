@@ -22,6 +22,7 @@
 #define _DualSphDef_
 
 #include "TypesDef.h"
+#include "JAppInfoDef.h"
 #include "JParticlesDef.h"
 #include "JPeriodicDef.h"
 #include "FunSphKernelDef.h"
@@ -230,28 +231,6 @@
 
 #define CODE_ToFluidInout(code,izone) (code&(~CODE_MASKTYPEVALUE))|(CODE_TYPE_FLUID_INOUT|izone)
 #define CODE_GetIzoneFluidInout(code) (code&CODE_TYPE_FLUID_INOUTMASK)
-
-
-///Defines type of movement.
-typedef enum{ 
-  MOTT_None=0,    ///<No movement.
-  MOTT_Linear=1,  ///<Linear movement.
-  MOTT_Matrix=2   ///<Matrix movement (for rotations).
-}TpMotionType;   
-
-///Structure with the information for moving particles (lineal and matrix movement).
-typedef struct{
-  word ref;            ///<Idx of moving object.
-  word mkbound;        ///<MkBound of moving particles.
-  unsigned idbegin;    ///<First id of moving particles.
-  unsigned count;      ///<Number of moving particles.
-  TpMotionType type;   ///<Type of motion (none, linear, matrix).
-  tdouble3 linmov;     ///<Linear displacement to apply to the particles position.
-  tdouble3 linvel;     ///<Linear velocity for particles.
-  tdouble3 linace;     ///<Linear acceleration for particles (when acceleration movement is computed).
-  tmatrix4d matmov;    ///<Matrix transformation to apply to the particles position.
-  tmatrix4d matmov2;   ///Matrix transformation to compute acceleration of particles (when acceleration movement is computed).
-}StMotionData;
 
 //<vs_flexstruc_ini>
 ///Structure with the information of the flexible structure.

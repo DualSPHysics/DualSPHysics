@@ -8,6 +8,9 @@
     <Filter Include="Libs">
       <UniqueIdentifier>{99d1ade6-e68a-4751-ab48-b8d6bd2e501a}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source">
+      <UniqueIdentifier>{6de12eb8-c425-49be-b99c-8d64538d1569}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Common">
       <UniqueIdentifier>{f60090e0-1dd6-457c-ab56-cccbd3391527}</UniqueIdentifier>
     </Filter>
@@ -31,9 +34,6 @@
     </Filter>
     <Filter Include="Src_FSI">
       <UniqueIdentifier>{0e625a79-26ea-4ba9-b426-1311f7a59dbe}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source">
-      <UniqueIdentifier>{6de12eb8-c425-49be-b99c-8d64538d1569}</UniqueIdentifier>
     </Filter>
     <Filter Include="Source\CellDiv">
       <UniqueIdentifier>{a5e48308-a8b0-4f2e-a73d-ddec5dd622de}</UniqueIdentifier>
@@ -213,9 +213,6 @@
     </ClInclude>
     <ClInclude Include="..\source\JDataArrays.h">
       <Filter>Common</Filter>
-    </ClInclude>
-    <ClInclude Include="..\source\JNormalsMarrone.h">
-      <Filter>CommonDsph</Filter>
     </ClInclude>
     <ClInclude Include="..\source\JPartNormalData.h">
       <Filter>CommonDsph</Filter>
@@ -424,13 +421,7 @@
     <ClInclude Include="..\source\FunSphKernel_iker.h">
       <Filter>Cuda</Filter>
     </ClInclude>
-    <ClInclude Include="..\source\JWaveAwasZsurf.h">
-      <Filter>Src_JWave_MLP_RZ</Filter>
-    </ClInclude>
     <ClInclude Include="..\source\JSimpleNeigs.h">
-      <Filter>Source\Inlet</Filter>
-    </ClInclude>
-    <ClInclude Include="..\source\JSphBoundCorr.h">
       <Filter>Source\Inlet</Filter>
     </ClInclude>
     <ClInclude Include="..\source\JSphInOut.h">
@@ -498,6 +489,9 @@
     </ClInclude>
     <ClInclude Include="..\source\JDsGpuInfo.h">
       <Filter>Source</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JDsMotionDef.h">
+      <Filter>Source\Other</Filter>
     </ClInclude>
     <ClInclude Include="..\source\JSphFlexibleStructure.h">
       <Filter>Src_FSI</Filter>
@@ -608,9 +602,6 @@
     </ClCompile>
     <ClCompile Include="..\source\JDataArrays.cpp">
       <Filter>Common</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\JNormalsMarrone.cpp">
-      <Filter>CommonDsph</Filter>
     </ClCompile>
     <ClCompile Include="..\source\JPartNormalData.cpp">
       <Filter>CommonDsph</Filter>
@@ -738,13 +729,7 @@
     <ClCompile Include="..\source\FunSphKernelsCfg.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="..\source\JWaveAwasZsurf.cpp">
-      <Filter>Src_JWave_MLP_RZ</Filter>
-    </ClCompile>
     <ClCompile Include="..\source\JSimpleNeigs.cpp">
-      <Filter>Source\Inlet</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\JSphBoundCorr.cpp">
       <Filter>Source\Inlet</Filter>
     </ClCompile>
     <ClCompile Include="..\source\JSphCpu_InOut.cpp">

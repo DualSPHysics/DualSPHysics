@@ -369,27 +369,6 @@ protected:
   float Interaction_InOutZsurf(unsigned nptz,const tfloat3 *ptzpos,float maxdist,float zbottom
     ,const StDivDataCpu &divdata,const tdouble3 *pos,const typecode *code);
 
-
-  template<bool sim2d,TpKernel tker> void InteractionBoundCorr_Double
-    (unsigned npb,typecode boundcode,tplane3f plane,tfloat3 direction,float determlimit
-    ,const StDivDataCpu &dvd,const tdouble3 *pos,const typecode *code
-    ,const unsigned *idp,tfloat4 *velrhop);
-
-  template<bool sim2d,TpKernel tker> void InteractionBoundCorr_Single
-    (unsigned npb,typecode boundcode,tplane3f plane,tfloat3 direction,float determlimit
-    ,const StDivDataCpu &dvd,const tdouble3 *pos,const typecode *code
-    ,const unsigned *idp,tfloat4 *velrhop);
-
-  template<TpKernel tker> inline void Interaction_BoundCorrT
-    (byte doublemode,typecode boundcode
-    ,tplane3f plane,tfloat3 direction,float determlimit
-    ,const tdouble3 *pos,const typecode *code,const unsigned *idp
-    ,tfloat4 *velrhop);
-
-  void Interaction_BoundCorr(byte doublemode,typecode boundcode
-    ,tplane3f plane,tfloat3 direction,float determlimit
-    ,const tdouble3 *pos,const typecode *code,const unsigned *idp
-    ,tfloat4 *velrhop);
 };
 
 #endif

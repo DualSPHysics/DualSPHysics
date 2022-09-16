@@ -299,7 +299,7 @@ public:
   float GetMassLimit()const{ return(MassLimit); }
   const StGaugeSwlRes& GetResult()const{ return(Result); }
 
-  void SetPoints(const tdouble3 &point0,const tdouble3 &point2,double pointdp);
+  void SetPoints(const tdouble3 &point0,const tdouble3 &point2,double pointdp=0);
 
   template<TpKernel tker> void CalculeCpuT(double timestep,const StDivDataCpu &dvd
     ,unsigned npbok,unsigned npb,unsigned np,const tdouble3 *pos

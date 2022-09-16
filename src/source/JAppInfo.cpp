@@ -95,6 +95,13 @@ void JAppInfo::AddNameExtra(std::string extra){
 }
 
 //==============================================================================
+// Adds extra name.
+//==============================================================================
+void JAppInfo::SetMainName(const std::string &mname){ 
+  MainName=mname; 
+}
+
+//==============================================================================
 // Configures execution paths.
 //==============================================================================
 void JAppInfo::ConfigRunPaths(std::string runcommand){

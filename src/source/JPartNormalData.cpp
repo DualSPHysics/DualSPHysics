@@ -57,7 +57,7 @@ JPartNormalData::~JPartNormalData(){
 void JPartNormalData::Reset(){
   FmtVersion=FmtVersionDef;
   DirData="";
-  ConfigBasic("","",false,0,0,0,0,false);
+  ConfigBasic("","",false,0,0,0,0);
   PartNormalsName="";
   AllocNormals(0,0,false);
 }
@@ -95,7 +95,7 @@ JBinaryDataArray* JPartNormalData::GetArray(JBinaryData *bd,std::string name,JBi
 /// Configuration of basic variables.
 //==============================================================================
 void JPartNormalData::ConfigBasic(std::string appname,std::string casename
-  ,bool data2d,double data2dposy,double dp,double h,double dist,bool ftsupport)
+  ,bool data2d,double data2dposy,double dp,double h,double dist)
 {
   AppName=appname;
   Date=fun::GetDateTime();
@@ -105,7 +105,6 @@ void JPartNormalData::ConfigBasic(std::string appname,std::string casename
   Dp=dp;
   H=h;
   Dist=dist;
-  FtSupport=ftsupport;
 }
 
 //==============================================================================
@@ -169,8 +168,8 @@ void JPartNormalData::AddNormalData(
 //==============================================================================
 /// Returns file name and path.
 //==============================================================================
-std::string JPartNormalData::GetFileName(std::string casename,std::string dir){
-  return(fun::GetDirWithSlash(dir)+casename+"_NormalData.nbi4");
+std::string JPartNormalData::GetFileName(bool ndata,std::string casename,std::string dir){
+  return(fun::GetDirWithSlash(dir)+casename+(ndata? "_NormalData.nbi4": "_Normals.nbi4"));
 }
 
 //==============================================================================
@@ -192,11 +191,11 @@ void JPartNormalData::SaveFile(std::string dir){
   bdat.SetvDouble("H",H);
   //-Saves normal data.
   bdat.SetvDouble("Dist",Dist);
-  bdat.SetvBool("FtSupport",FtSupport);
   bdat.SetvText("PartNormalsName",PartNormalsName);
   bdat.SetvUint("Nbound",Nbound);
   bdat.SetvUint("CountNormals",CountNormals);
-  if(Nbound && CountNormals){
+  const bool ndata=(Nbound && CountNormals);
+  if(ndata){
     bdat.CreateArray("NormalBegin",JBinaryDataDef::DatUint   ,Nbound+1    ,NormalBegin,true);
     bdat.CreateArray("Normals"    ,JBinaryDataDef::DatDouble3,CountNormals,Normals    ,true);
     bdat.CreateArray("NormalsDist",JBinaryDataDef::DatDouble ,CountNormals,NormalsDist,true);
@@ -204,28 +203,28 @@ void JPartNormalData::SaveFile(std::string dir){
     bdat.CreateArray("OutVecsDist",JBinaryDataDef::DatDouble ,CountNormals,OutVecsDist,true);
   }
   if(PartNormals)bdat.CreateArray("PartNormals",JBinaryDataDef::DatDouble3,Nbound,PartNormals,true);
-  bdat.SaveFile(DirData+GetFileName(CaseName),false,true);
+  bdat.SaveFile(DirData+GetFileName(ndata,CaseName),false,true);
 }
 
 //==============================================================================
 /// Returns the file name with normal data.
 //==============================================================================
-std::string JPartNormalData::GetNormalDataFile(std::string casename){
+std::string JPartNormalData::GetNormalDataFile(bool ndata,std::string casename){
   const string dirdata=fun::GetDirWithSlash(fun::GetDirParent(casename));
   const string casenam=fun::GetWithoutExtension(fun::GetFile(casename));
-  return(GetFileName(dirdata+casenam));
+  return(GetFileName(ndata,dirdata+casenam));
 }
 
 //==============================================================================
 /// Loads binary file Part_Head.ibi4.
 //==============================================================================
-void JPartNormalData::LoadFile(std::string casename){
+void JPartNormalData::LoadFile(bool ndata,std::string casename){
   Reset();
   DirData=fun::GetDirWithSlash(fun::GetDirParent(casename));
   CaseName=fun::GetWithoutExtension(fun::GetFile(casename));
   //printf("----> dir:[%s] case:[%s]\n",DirData.c_str(),CaseName.c_str());
   JBinaryData bdat;
-  string file=GetFileName(DirData+CaseName);
+  string file=GetFileName(ndata,DirData+CaseName);
   //printf("----> file:[%s]\n",file.c_str());
   bdat.LoadFile(file,ClassName);
   FmtVersion=bdat.GetvUint("FmtVersion");
@@ -239,10 +238,9 @@ void JPartNormalData::LoadFile(std::string casename){
   H         =bdat.GetvDouble("H");
   //-Loads normal data.
   Dist           =bdat.GetvDouble("Dist");
-  FtSupport      =bdat.GetvBool("FtSupport",true,false);
   PartNormalsName=bdat.GetvText("PartNormalsName");
   Nbound         =bdat.GetvUint("Nbound");
-  CountNormals   =bdat.GetvUint("CountNormals");
+  CountNormals   =(!ndata? 0: bdat.GetvUint("CountNormals"));
   bool partnormals=(bdat.GetArray("PartNormals")!=NULL);
   //printf("----> PartNormalsName:[%s]\n",PartNormalsName.c_str());
   //printf("----> Nbound:[%d]\n",Nbound);
