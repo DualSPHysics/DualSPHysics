@@ -116,7 +116,6 @@ public:
 
   void ConfigCode(unsigned npb,typecode *code);
   double GetInitialSoundSpeed();
-  void SetDensity(unsigned npb,const typecode *code,float *rhos);
 };
 
 #endif

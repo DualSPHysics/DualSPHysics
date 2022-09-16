@@ -279,10 +279,3 @@ double JSphFlexStruc::GetInitialSoundSpeed(){
   for(unsigned c=0;c<GetCount();c++)cs0=max(cs0,double(List[c]->GetSoundSpeed()));
   return cs0;
 }
-
-//==============================================================================
-/// Sets mass density for flexible structures.
-//==============================================================================
-void JSphFlexStruc::SetDensity(unsigned npb,const typecode *code,float *rhos){
-  for(unsigned p=0;p<npb;p++)rhos[p]=(CODE_IsFlexStrucFlex(code[p])? GetBody(CODE_GetIbodyFlexStruc(code[p]))->GetDensity(): 0);
-}
