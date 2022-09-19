@@ -1684,7 +1684,7 @@ double JSphCpu::DtVariable(bool final){
     if(PartDtMin>dt)PartDtMin=dt;
     if(PartDtMax<dt)PartDtMax=dt;
     //-Saves detailed information about dt in SaveDt object.
-    if(SaveDt)SaveDt->AddValues(TimeStep,dt,dt1*CFLnumber,dt2*CFLnumber,AceMax,ViscDtMax,FlexStrucDtMax,VelMax);
+    if(SaveDt)SaveDt->AddValues(TimeStep,dt,dt1*CFLnumber,dt2*CFLnumber,dt3*CFLnumber,AceMax,ViscDtMax,FlexStrucDtMax,VelMax);
   }
   return(dt);
 }

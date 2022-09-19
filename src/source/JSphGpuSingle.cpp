@@ -1017,7 +1017,7 @@ void JSphGpuSingle::FinishRun(bool stop){
 void JSphGpuSingle::FlexStrucInit(){
   //-Start timer and print info.
   Timersg->TmStart(TMG_SuFlexStruc,false);
-  Log->Print("Initialising Flexible Structures...");
+  Log->Print("\nInitialising Flexible Structures...");
   //-Allocate array.
   size_t m=0;
   m=sizeof(StFlexStrucData)*FlexStrucCount; cudaMalloc((void**)&FlexStrucDatag,m); MemGpuFixed+=m;

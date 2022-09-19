@@ -1232,7 +1232,7 @@ void JSphCpuSingle::FinishRun(bool stop){
 void JSphCpuSingle::FlexStrucInit(){
   //-Start timer and print info.
   Timersc->TmStart(TMC_SuFlexStruc);
-  Log->Print("Initialising Flexible Structures...");
+  Log->Print("\nInitialising Flexible Structures...");
   //-Allocate array.
   FlexStrucDatac=new StFlexStrucData[FlexStrucCount]; MemCpuFixed+=(sizeof(StFlexStrucData)*FlexStrucCount);
   //-Get flexible structure data for each body and copy to GPU
