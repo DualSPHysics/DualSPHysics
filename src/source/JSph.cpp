@@ -233,6 +233,7 @@ void JSph::InitVars(){
 
   FtCount=0;
   FtPause=0;
+  RigidMode=FTRIGID_Sph;
   FtMode=FTMODE_Sph;
   FtConstraints=false;
   FtIgnoreRadius=false;
@@ -595,10 +596,10 @@ void JSph::LoadConfigParameters(const JXml *xml){
   if(eparms.Exists("SavePosDouble"))SvPosDouble=(eparms.GetValueInt("SavePosDouble",true,0)!=0);
   if(eparms.Exists("SaveExtraParts"))SvExtraParts=eparms.GetValue("SaveExtraParts");
   switch(eparms.GetValueInt("RigidAlgorithm",true,1)){ //(DEM)
-    case 0:  FtMode=FTMODE_Ext;                   break;
-    case 1:  FtMode=FTMODE_Sph;                   break;
-    case 2:  FtMode=FTMODE_Ext;  UseDEM=true;     break;
-    case 3:  FtMode=FTMODE_Ext;  UseChrono=true;  break;
+    case 0:  RigidMode=FTRIGID_Free;    FtMode=FTMODE_Ext;                   break;
+    case 1:  RigidMode=FTRIGID_Sph;     FtMode=FTMODE_Sph;                   break;
+    case 2:  RigidMode=FTRIGID_Dem;     FtMode=FTMODE_Ext;  UseDEM=true;     break;
+    case 3:  RigidMode=FTRIGID_Chrono;  FtMode=FTMODE_Ext;  UseChrono=true;  break;
     default: Run_Exceptioon("Rigid algorithm is not valid.");
   }
   switch(eparms.GetValueInt("StepAlgorithm",true,1)){
@@ -972,14 +973,14 @@ void JSph::LoadCaseConfig(const JSphCfgRun *cfg){
   }
 
   //-Configuration of ChronoObjects.
-  if(UseChrono){
-    if(xml.GetNodeSimple("case.execution.special.chrono",true)){
-      if(!JChronoObjects::Available())Run_Exceptioon("DSPHChronoLib to use Chrono is not included in the current compilation.");
-      ChronoObjects=new JChronoObjects(DirCase,CaseName,&xml,"case.execution.special.chrono",Dp,parts.GetMkBoundFirst(),Gravity,Simulate2D,FtPause);
-    }
-    else Run_ExceptioonFile("Chrono configuration in XML file is missing.",FileXml);
+  if(xml.GetNodeSimple("case.execution.special.chrono",true)){
+    if(!JChronoObjects::Available())Run_Exceptioon("DSPHChronoLib to use Chrono is not included in the current compilation.");
+    ChronoObjects=new JChronoObjects(DirCase,CaseName,&xml,"case.execution.special.chrono",Dp,parts.GetMkBoundFirst(),Gravity,Simulate2D,FtPause);
+    UseChrono=true;
+    if(RigidMode==FTRIGID_Chrono && !ChronoObjects->GetUseCollision())
+      Log->PrintfWarning("Collisions are configured in terms of Chrono (RigidAlgorithm=3) but the collisions are disabled in Chrono configuration.");
   }
-  else if(xml.GetNodeSimple("case.execution.special.chrono",true))Log->PrintfWarning("The use of Chrono is disabled (RigidAlgorithm is not 3) although XML file includes the Chrono configuration.");
+  else if(RigidMode==FTRIGID_Chrono)Run_ExceptioonFile("Chrono configuration in XML file for defined rigid-algorithm is missing.",FileXml);
 
   //-Loads and configures moving objects.
   if(parts.CountBlocks(TpPartMoving)>0){
@@ -1540,15 +1541,9 @@ void JSph::VisuConfig(){
   }
   else Log->Print(fun::VarStr("Shifting","None"));
   //-RigidAlgorithm.
-  string rigidalgorithm=(!FtCount? "None": (FtMode==FTMODE_Sph? "SPH": "Collision-Free"));
-  if(UseDEM)rigidalgorithm="SPH+DCDEM";
-  if(UseChrono)rigidalgorithm="SPH+CHRONO";
+  string rigidalgorithm=(!FtCount? "None": GetNameRigidMode(RigidMode));
   Log->Print(fun::VarStr("RigidAlgorithm",rigidalgorithm));
-  if(FtCount){
-    if(UseChrono)ConfigInfo=ConfigInfo+sep+"Ft-Chrono";
-    else if(UseDEM)ConfigInfo=ConfigInfo+sep+"Ft-DCDEM";
-    else ConfigInfo=ConfigInfo+sep+"Ft-SPH";
-  }
+  if(FtCount)ConfigInfo=ConfigInfo+sep+"Ft-"+rigidalgorithm;
   //-Moorings.
   if(Moorings)ConfigInfo=ConfigInfo+sep+"MoorDyn+";
   //-Other configurations. 

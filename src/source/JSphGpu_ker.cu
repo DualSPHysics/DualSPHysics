@@ -998,7 +998,7 @@ template<TpKernel tker,bool sim2d,TpSlipMode tslip> __global__ void KerInteracti
 
       //-Store the results.
       //--------------------
-      if(sumwab>=mdbcthreshold){
+      if(sumwab>=mdbcthreshold || (mdbcthreshold>=2 && sumwab+2>=mdbcthreshold)){
         const float3 dpos=make_float3(-bnormalp1.x,-bnormalp1.y,-bnormalp1.z); //-Boundary particle position - ghost node position.
         if(sim2d){
           const double determ=cumath::Determinant3x3dbl(a_corr2);

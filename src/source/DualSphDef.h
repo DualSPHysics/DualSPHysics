@@ -405,11 +405,30 @@ inline StCteSph CteSphNull(){
   return(c);
 }
 
+///Rigid Algorithm for floating collisions.
+typedef enum{ 
+   FTRIGID_Free=0    ///<Collision-free               (FtMode=FTMODE_Ext, UseDEM=false ). 
+  ,FTRIGID_Sph=1     ///<Collision in terms of SPH    (FtMode=FTMODE_Sph, UseDEM=false ). 
+  ,FTRIGID_Dem=2     ///<Collision in terms of DEM    (FtMode=FTMODE_Ext, UseDEM=true  ). 
+  ,FTRIGID_Chrono=3  ///<Collision in terms of Chrono (FtMode=FTMODE_Ext, UseDEM=true, UseChrono=true). 
+}TpRigidMode;  
+
+///Returns the name of the RigidMode in text format.
+inline const char* GetNameRigidMode(TpRigidMode rigidmode){
+  switch(rigidmode){
+    case FTRIGID_Free:   return("Collision-Free");
+    case FTRIGID_Sph:    return("SPH");
+    case FTRIGID_Dem:    return("DCDEM");
+    case FTRIGID_Chrono: return("CHRONO");
+  }
+  return("???");
+}
+
 ///Interaction mode for floatings.
 typedef enum{ 
-  FTMODE_None=0,            ///<There are not floatings.
-  FTMODE_Sph=1,             ///<Interaction between floatings and boundaries in terms of SPH.
-  FTMODE_Ext=2              ///<Interaction between floatings and boundaries in terms of DEM or CHRONO.
+   FTMODE_None=0            ///<There are not floatings.
+  ,FTMODE_Sph=1             ///<Interaction between floatings and boundaries in terms of SPH.
+  ,FTMODE_Ext=2              ///<Interaction between floatings and boundaries in terms of DEM or CHRONO.
 }TpFtMode;  
 
 #define USE_FLOATING (ftmode!=FTMODE_None)
