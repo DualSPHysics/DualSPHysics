@@ -63,7 +63,7 @@ protected:
   TpInBehaviour VelBehaviour; ///<Behaviour of inlet/outlet according to the velocity.
 
   float VelMin;        ///<Minimum input velocity or -FLT_MAX (when it is unknown).
-  float VelMax;        ///<Miximum input velocity or +FLT_MAX (when it is unknown).
+  float VelMax;        ///<Maximum input velocity or +FLT_MAX (when it is unknown).
 
   double CurrentTime;     ///<Timestep of current velocity data.
   tfloat4 CurrentCoefs0;  ///<Current velocity coefficients for fiexed or variable velocity.

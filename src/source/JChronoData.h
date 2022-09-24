@@ -322,7 +322,7 @@ public:
 protected:
   TpMotion MotionType;    ///<Type of motion: linear or rotational.
   tdouble3 MotionSimple;  ///<Linear displacement during dt.
-  tmatrix4d MotionMatrix; ///<Trasformation matrix for displacement during dt.
+  tmatrix4d MotionMatrix; ///<Transformation matrix for displacement during dt.
   double MotionDt;        ///<Stores the total dt even a predictor-corrector is used.
 
 public:

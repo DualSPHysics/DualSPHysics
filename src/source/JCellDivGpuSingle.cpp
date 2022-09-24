@@ -168,7 +168,7 @@ void JCellDivGpuSingle::Divide(unsigned npb1,unsigned npf1,unsigned npb2,unsigne
   //-Comprueba si hay memoria reservada y si es suficiente para Nptot.
   CheckMemoryNp(Nptot);
 
-  //-If the boundary postion changes or there are periodic conditions it is necessary to recalculate the limits and reorder every particle.
+  //-If the boundary position changes or there are periodic conditions it is necessary to recalculate the limits and reorder every particle.
   //-Si la posicion del contorno cambia o hay condiciones periodicas es necesario recalcular limites y reordenar todas las particulas. 
   if(boundchanged || PeriActive){
     BoundLimitOk=BoundDivideOk=false;

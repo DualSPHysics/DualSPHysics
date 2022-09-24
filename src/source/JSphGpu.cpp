@@ -498,7 +498,7 @@ llong JSphGpu::GetAllocMemoryGpu()const{
   s+=MemGpuParticles;
   //-Allocated in AllocGpuMemoryFixed().
   s+=MemGpuFixed;
-  //-Allocated in ther objects.
+  //-Allocated in the objects.
   if(MLPistons)s+=MLPistons->GetAllocMemoryGpu();
   return(s);
 }
@@ -575,7 +575,7 @@ void JSphGpu::ParticlesDataUp(unsigned n,const tfloat3 *boundnormal){
 /// Recovers particle data from the GPU and returns the particle number that
 /// are less than n if the paeriodic particles are removed.
 /// - code: Recovers data of Codeg.
-/// - onlynormal: Onlly retains the normal particles, removes the periodic ones.
+/// - onlynormal: Only retains the normal particles, removes the periodic ones.
 ///
 /// Recupera datos de particulas de la GPU y devuelve el numero de particulas que
 /// sera menor que n si se eliminaron las periodicas.
@@ -898,7 +898,7 @@ void JSphGpu::ComputeVerlet(double dt){  //pdtedom
   //-Applies displacement to non-periodic fluid particles.
   //-Aplica desplazamiento a las particulas fluid no periodicas.
   cusph::ComputeStepPos(PeriActive,WithFloating,Np,Npb,movxyg,movzg,Posxyg,Poszg,Dcellg,Codeg);
-  //-Frees memory allocated for the diplacement.
+  //-Frees memory allocated for the displacement.
   ArraysGpu->Free(movxyg);   movxyg=NULL;
   ArraysGpu->Free(movzg);    movzg=NULL;
   Timersg->TmStop(TMG_SuComputeStep,false);
@@ -921,7 +921,7 @@ void JSphGpu::ComputeSymplecticPre(double dt){
   swap(PosxyPreg,Posxyg);      //-PosxyPre[] <= Posxy[]
   swap(PoszPreg,Poszg);        //-PoszPre[] <= Posz[]
   swap(VelrhopPreg,Velrhopg);  //-VelrhopPre[] <= Velrhop[]
-  //-Allocate memory to compute the diplacement.
+  //-Allocate memory to compute the displacement.
   double2 *movxyg=ArraysGpu->ReserveDouble2();
   double *movzg=ArraysGpu->ReserveDouble();
   //-Compute displacement, velocity and density.
@@ -967,7 +967,7 @@ void JSphGpu::ComputeSymplecticCorr(double dt){
   //-Aplica desplazamiento a las particulas fluid no periodicas.
   cusph::ComputeStepPos2(PeriActive,WithFloating,Np,Npb,PosxyPreg,PoszPreg
     ,movxyg,movzg,Posxyg,Poszg,Dcellg,Codeg);
-  //-Frees memory allocated for diplacement.
+  //-Frees memory allocated for displacement.
   ArraysGpu->Free(movxyg);   movxyg=NULL;
   ArraysGpu->Free(movzg);    movzg=NULL;
   //-Frees memory allocated for the predictor variables in ComputeSymplecticPre().

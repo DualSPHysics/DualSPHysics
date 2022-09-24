@@ -261,7 +261,7 @@ void JDsAccInput::ComputeVelocity(const JLinearValue &acedata,JLinearValue &veld
       currvelang.y=velang0.y+(accang.y*dt);
       currvelang.z=velang0.z+(accang.z*dt);
     }
-    //SL: Save the calculated linar and angular velocity.
+    //SL: Save the calculated linear and angular velocity.
     veldata.AddTimeValue(atime,currvellin.x,currvellin.y,currvellin.z,currvelang.x,currvelang.y,currvelang.z);
     atime0=atime;
     vellin0=currvellin;

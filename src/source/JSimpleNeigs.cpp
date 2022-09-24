@@ -112,7 +112,7 @@ void JSimpleNeigs::DefineMapCells(){
 /// Crea mapa de celdas.
 //==============================================================================
 void JSimpleNeigs::CreateMapCells(){
-  if(Np==0)Run_Exceptioon("Nummber of positions is zero.");
+  if(Np==0)Run_Exceptioon("Number of positions is zero.");
   if(Scell<=0)Run_Exceptioon("Size of cells is invalid.");
   DefineMapCells();
   //-Allocate memory.
@@ -129,7 +129,7 @@ void JSimpleNeigs::CreateMapCells(){
   catch(const std::bad_alloc){
     Run_Exceptioon("Could not allocate the requested memory.");
   }
-  //-Computes cell of each particle and number of postions for each cell.
+  //-Computes cell of each particle and number of positions for each cell.
   memset(npcell,0,sizeof(unsigned)*Nct);
   bool error=false;
   for(unsigned p=0;p<Np;p++){

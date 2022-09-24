@@ -279,7 +279,7 @@ void JPartFloatBi4Save::AddPartData(unsigned cf,const tdouble3 &center
 
 //==============================================================================
 /// Anhade datos de posicion de particulas de de nuevo part.
-/// Adds postion reference data of particles to new part.
+/// Adds position reference data of particles to new part.
 //==============================================================================
 void JPartFloatBi4Save::AddPartDataPosRef(unsigned ftcount,const tdouble3 *posref)
 {
@@ -423,7 +423,7 @@ void JPartFloatBi4Load::ResizeFtData(unsigned ftcount){
   delete[] PartVelAng;  PartVelAng=NULL;
   delete[] PartAceLin;  PartAceLin=NULL;
   delete[] PartAceAng;  PartAceAng=NULL;
-  //-Asigna memoria. Asign memory
+  //-Asigna memoria. Assign memory
   if(FtCount){
     HeadMkbound=new word    [FtCount];
     HeadBegin  =new unsigned[FtCount];

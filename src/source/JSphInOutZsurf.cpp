@@ -265,7 +265,7 @@ void JSphInOutZsurf::FindTime(double timestep){
 //==============================================================================
 void JSphInOutZsurf::ComputeZsurfLine(bool forgauge,bool forceuniform){
   //-Computes reference points (only for horizontal direction).
-  if(fabs(Direction.z)>0.0001)Run_Exceptioon(fun::PrintStr("Inlet/outlet %d: Direction is invalid for Zsurf calulation. Only horizontal direction is valid.",IdZone));
+  if(fabs(Direction.z)>0.0001)Run_Exceptioon(fun::PrintStr("Inlet/outlet %d: Direction is invalid for Zsurf calculation. Only horizontal direction is valid.",IdZone));
   if(CSP.simulate2d){
     GaugePt0=ZonePosMin;
     GaugePtz=ZonePosMax;

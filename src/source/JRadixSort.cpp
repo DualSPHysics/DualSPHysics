@@ -296,7 +296,7 @@ template<class T> void JRadixSort::SortStepIndex(unsigned ck,const T* data,T* da
 void JRadixSort::IndexCreate(){
   const int threads=omp_get_max_threads();
   //-Reserva memoria.
-  //-Allocates memeory.
+  //-Allocates memory.
   try{
     Index=new unsigned[Size];
     PrevIndex=new unsigned[Size];

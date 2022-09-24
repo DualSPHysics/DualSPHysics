@@ -86,7 +86,7 @@ int JCasePropValue::GetIndexSubName(std::string subname)const{
 }
 
 //==============================================================================
-/// Retunrs value inline.
+/// Returns value inline.
 //==============================================================================
 std::string JCasePropValue::GetValue()const{
   if(!Simple)Run_Exceptioon("Value has one or more several subvalues.");
@@ -94,7 +94,7 @@ std::string JCasePropValue::GetValue()const{
 }
 
 //==============================================================================
-/// Retunrs a subvalue starting from the name.
+/// Returns a subvalue starting from the name.
 //==============================================================================
 std::string JCasePropValue::GetSubValue(std::string subname)const{
   subname=fun::StrLower(subname);

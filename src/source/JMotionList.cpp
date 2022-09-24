@@ -33,7 +33,7 @@ JMotionListData::JMotionListData(){
   Active=false;
   TypeSimple=true;
   MvSimple1=MvSimple2=TDouble3(0);
-  MvMatrix1=MvMatrix2=TMatrix4d(); //-Indentity matrix.
+  MvMatrix1=MvMatrix2=TMatrix4d(); //-Identity matrix.
   VelSimple=AceSimple=TDouble3(0);
 }
 
@@ -56,7 +56,7 @@ void JMotionListData::Sp_Movedt(const tmatrix4d &mvmatrix,double dt){
   Active=true;
   TypeSimple=false;
   MvMatrix1=mvmatrix;
-  MvMatrix2=TMatrix4d(); //-Indentity matrix.
+  MvMatrix2=TMatrix4d(); //-Identity matrix.
 }
 
 //==============================================================================
@@ -89,7 +89,7 @@ void JMotionListData::Ace2_Move1dt(const tmatrix4d &mvmatrix){
   Active=true;
   TypeSimple=false;
   MvMatrix1=mvmatrix;
-  MvMatrix2=TMatrix4d(); //-Indentity matrix.
+  MvMatrix2=TMatrix4d(); //-Identity matrix.
 }
 
 //==============================================================================
@@ -99,7 +99,7 @@ void JMotionListData::Ace2_Move2dt(const tmatrix4d &mvmatrix){
   if(!Active)Ace2_Move1dt(TMatrix4d());
   if(TypeSimple){
     TypeSimple=false;
-    MvMatrix1=TMatrix4d(); //-Indentity matrix.
+    MvMatrix1=TMatrix4d(); //-Identity matrix.
     MvMatrix1.a14=MvSimple1.x;
     MvMatrix1.a24=MvSimple1.y; 
     MvMatrix1.a34=MvSimple1.z;

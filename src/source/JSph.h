@@ -364,7 +364,7 @@ protected:
   tdouble3 Map_Size;       ///<Result of Map_Size = Map_PosMax - Map_PosMin
   tuint3 Map_Cells;        ///<Maximum number of cells within case limits. Map_Cells=TUint3(unsigned(ceil(Map_Size.xyz/Scell))             | Numero de celdas maximo segun los limites del caso.
 
-  //-Local domain of the simualtion.
+  //-Local domain of the simulation.
   //-Dominio local de la simulacion.
   tuint3 DomCelIni;        ///<First cell within the Map defining local simulation area. DomCelIni=TUint3(0) for Single-CPU | Celda inicial dentro de Map que define el area de simulacion local.
   tuint3 DomCelFin;        ///<Last cell within the Map defining local simulation area. DomCelIni=Map_Cells for Single-CPU  | Celda final dentro de Map que define el area de simulacion local.

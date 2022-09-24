@@ -147,7 +147,7 @@ __device__ float GetKernelWendland_Fac(float rr2){
 #endif
 
 //##############################################################################
-//# Computes kernel values usig templates.
+//# Computes kernel values using templates.
 //##############################################################################
 #ifdef CTE_AVAILABLE
 //------------------------------------------------------------------------------
