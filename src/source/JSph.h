@@ -298,6 +298,7 @@ protected:
   StFloatingData *FtObjs;        ///<Data of floating objects. [FtCount]
   unsigned FtCount;              ///<Number of floating objects.
   float FtPause;                 ///<Time to start floating bodies movement.
+  TpRigidMode RigidMode;         ///<Rigid Algorithm 0:collision-free, 1:SPH, 2:DEM, 3:Chrono (default=1).
   TpFtMode FtMode;               ///<Defines interaction mode for floatings and boundaries.
   bool FtConstraints;            ///<Some floating motion constraint is defined.
   JLinearValue **FtLinearVel;    ///<Imposed linear velocity [FtCount].

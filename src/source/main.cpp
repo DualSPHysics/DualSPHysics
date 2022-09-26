@@ -1,5 +1,5 @@
 /*
- <DUALSPHYSICS>  Copyright (c) 2020, 
+ <DUALSPHYSICS>  Copyright (c) 2022, 
  Dr Jose M. Dominguez Alonso, Dr Alejandro Crespo, 
  Prof. Moncho Gomez Gesteira, Prof. Benedict Rogers, 
  Dr Georgios Fourtakas, Prof. Peter Stansby, 
@@ -31,8 +31,8 @@ School of Mechanical, Aerospace and Civil Engineering, University of Manchester,
 \section compile_sec Project files
 Please download source files and documentation from <a href="http://dual.sphysics.org">DualSPHysics website.</a> \n
 \author <a href="http://dual.sphysics.org/index.php/developers">DualSPHysics Developers.</a> 
-\version 5.2.247
-\date 14-09-2022
+\version 5.2.251
+\date 23-09-2022
 \copyright GNU Lesser General Public License <a href="http://www.gnu.org/licenses/">GNU licenses.</a>
 */
 
@@ -56,7 +56,7 @@ Please download source files and documentation from <a href="http://dual.sphysic
 
 using namespace std;
 
-JAppInfo AppInfo("DualSPHysics5","v5.2.247","14-09-2022");
+JAppInfo AppInfo("DualSPHysics5","v5.2.251 beta","23-09-2022");
 //JAppInfo AppInfo("DualSPHysics5","v5.0.???","UserVersion","v1.0","??-??-????"); //-for user versions.
 
 //==============================================================================
@@ -64,7 +64,7 @@ JAppInfo AppInfo("DualSPHysics5","v5.2.247","14-09-2022");
 //==============================================================================
 std::string getlicense_lgpl(const std::string &name,bool simple){
   std::string tx=(simple? "": "\n");
-  tx=tx+"\n <"+fun::StrUpper(name)+"> Copyright (c) 2020 by"; 
+  tx=tx+"\n <"+fun::StrUpper(name)+"> Copyright (c) 2022 by"; 
   tx=tx+"\n Dr Jose M. Dominguez Alonso, Dr Alejandro Crespo,";
   tx=tx+"\n Prof. Moncho Gomez Gesteira, Prof. Benedict Rogers,";
   tx=tx+"\n Dr Georgios Fourtakas, Prof. Peter Stansby,";
