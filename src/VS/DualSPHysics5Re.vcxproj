@@ -664,8 +664,8 @@ rem %CudaNvcc% -ccbin "$(VCInstallDir)bin" %gpuhw% -use_fast_math -c %ptxinfo% -
     </ClInclude>
     <ClInclude Include="..\source\JSaveCsv2.h" />
     <ClInclude Include="..\source\JDsSaveDt.h" />
-    <ClInclude Include="..\source\JSphFlexibleStructure.h" />
     <ClInclude Include="..\source\JSphFlexibleStructureUndef.h" />
+    <ClInclude Include="..\source\JSphFlexStruc.h" />
     <ClInclude Include="..\source\JSphInOutDef.h" />
     <ClInclude Include="..\source\JSphInOutVel.h" />
     <ClInclude Include="..\source\JSphInOutVelAwas.h" />
@@ -838,7 +838,7 @@ rem %CudaNvcc% -ccbin "$(VCInstallDir)bin" %gpuhw% -use_fast_math -c %ptxinfo% -
     <ClCompile Include="..\source\JRelaxZonesGpu.cpp" />
     <ClCompile Include="..\source\JSaveCsv2.cpp" />
     <ClCompile Include="..\source\JDsSaveDt.cpp" />
-    <ClCompile Include="..\source\JSphFlexibleStructure.cpp" />
+    <ClCompile Include="..\source\JSphFlexStruc.cpp" />
     <ClCompile Include="..\source\JSphInOutVel.cpp" />
     <ClCompile Include="..\source\JSphInOutVelAwas.cpp" />
     <ClCompile Include="..\source\JSphInOutZsurf.cpp" />

@@ -501,7 +501,8 @@ void JCellDivCpu::SortIndices(unsigned *sortpart,unsigned* sortidx,unsigned np,b
 /// Updates the indices of the flexible structure particles.
 /// Actualiza los índices de las partículas de estructura flexible..
 //==============================================================================
-void JCellDivCpu::UpdateIndices(unsigned n,const unsigned *sortidx,unsigned *idx){
+void JCellDivCpu::UpdateIndices(unsigned np,const unsigned *sortidx,unsigned *idx){
+  const int n=int(np);
   #ifdef OMP_USE
     #pragma omp parallel for schedule (static) if(n>OMP_LIMIT_COMPUTELIGHT)
   #endif

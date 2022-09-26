@@ -80,7 +80,7 @@ public:
 
   float GetParticleMass()const{ return GetParticleVolume()*GetDensity(); };
   tmatrix6f GetConstitMatrix()const{ return ConstitMatrix; };
-  float GetSoundSpeed()const{ return sqrt(GetYoungMod()*(1.0-GetPoissRatio())/(GetDensity()*(1.0+GetPoissRatio())*(1.0-2.0*GetPoissRatio()))); }
+  float GetSoundSpeed()const{ return(float(sqrt(GetYoungMod()*(1.0-GetPoissRatio())/(GetDensity()*(1.0+GetPoissRatio())*(1.0-2.0*GetPoissRatio()))))); }
 
 };
 

@@ -1960,13 +1960,16 @@ void JSphCpu::InitFloating(){
 /// Finds the clamp particles and updates the code.
 /// Encuentra las partículas de abrazadera y actualiza el código.
 //==============================================================================
-void JSphCpu::SetClampCodes(unsigned n,const tdouble3 *pos,const StFlexStrucData *flexstrucdata,typecode *code)const{
+void JSphCpu::SetClampCodes(unsigned np,const tdouble3 *pos
+  ,const StFlexStrucData *flexstrucdata,typecode *code)const
+{
   //-Starts execution using OpenMP.
+  const int n=int(np);
   #ifdef OMP_USE
     #pragma omp parallel for schedule (static) if(n>OMP_LIMIT_COMPUTESTEP)
   #endif
-  for(unsigned p=0;p<n;p++){
-    const unsigned p1=p;      //-Number of particle.
+  for(int p=0;p<n;p++){
+    const int p1=p;      //-Number of particle.
     const typecode codep1=code[p1];
 
     //-If potentially a clamp particle.
@@ -1976,7 +1979,7 @@ void JSphCpu::SetClampCodes(unsigned n,const tdouble3 *pos,const StFlexStrucData
       const tdouble3 posp1=pos[p1];
 
       //-Loop through other boundary particles.
-      for(unsigned p2=0;p2<n;p2++){
+      for(int p2=0;p2<n;p2++){
         const typecode codep2=code[p2];
         if(CODE_IsFlexStrucFlex(codep2)){
           if(codep1==flexstrucdata[CODE_GetIbodyFlexStruc(codep2)].clampcode){
@@ -1985,7 +1988,7 @@ void JSphCpu::SetClampCodes(unsigned n,const tdouble3 *pos,const StFlexStrucData
             const float dry=float(posp1.y-posp2.y);
             const float drz=float(posp1.z-posp2.z);
             const float rr2=drx*drx+dry*dry+drz*drz;
-            if(rr2<=KernelSize2&&rr2>=ALMOSTZERO){
+            if(rr2<=KernelSize2 && rr2>=ALMOSTZERO){
               code[p1]=CODE_ToFlexStrucClamp(codep1,CODE_GetIbodyFlexStruc(codep2));
               break;
             }
@@ -2001,7 +2004,7 @@ void JSphCpu::SetClampCodes(unsigned n,const tdouble3 *pos,const StFlexStrucData
 /// Cuenta el número de partículas de estructura flexible (incluye abrazaderas).
 //==============================================================================
 unsigned JSphCpu::CountFlexStrucParts(unsigned npb,const typecode *code)const{
-  return count_if(code,code+npb,[](const typecode c){return CODE_IsFlexStrucAny(c);});
+  return(unsigned( count_if(code,code+npb,[](const typecode c){return CODE_IsFlexStrucAny(c);}) ));
 }
 
 //==============================================================================
@@ -2020,30 +2023,32 @@ void JSphCpu::CalcFlexStrucRidp(unsigned npb,const typecode *code,unsigned *flex
 //==============================================================================
 void JSphCpu::GatherToFlexStrucArray(unsigned npfs,const unsigned *flexstrucridp,const tdouble3 *fullarray,tdouble3 *flexstrucarray)const{
   //-Starts execution using OpenMP.
+  const int n=int(npfs);
   #ifdef OMP_USE
-    #pragma omp parallel for schedule (static) if(npfs>OMP_LIMIT_COMPUTESTEP)
+    #pragma omp parallel for schedule (static) if(n>OMP_LIMIT_COMPUTESTEP)
   #endif
-  for(unsigned p=0;p<npfs;p++)flexstrucarray[p]=fullarray[flexstrucridp[p]];
+  for(int p=0;p<n;p++)flexstrucarray[p]=fullarray[flexstrucridp[p]];
 }
 
 //==============================================================================
 /// Counts the total number of flexible structure pairs (neighbours).
 /// Cuenta el número total de pares de estructuras flexibles (vecinos).
 //==============================================================================
-unsigned JSphCpu::CountFlexStrucPairs(unsigned n,const tdouble3 *pos0,unsigned *numpairs)const{
+unsigned JSphCpu::CountFlexStrucPairs(unsigned np,const tdouble3 *pos0,unsigned *numpairs)const{
   //-Starts execution using OpenMP.
+  const int n=int(np);
   #ifdef OMP_USE
     #pragma omp parallel for schedule (static) if(n>OMP_LIMIT_COMPUTESTEP)
   #endif
-  for(unsigned p=0;p<n;p++){
-    const unsigned pfs1=p;      //-Number of particle.
+  for(int p=0;p<n;p++){
+    const int pfs1=p;      //-Number of particle.
     unsigned numpairsp1=0;
 
     //-Loads particle p1 data.
     const tdouble3 pos0p1=pos0[pfs1];
 
     //-Loop through other flexible structure particles.
-    for(unsigned pfs2=0;pfs2<n;pfs2++){
+    for(int pfs2=0;pfs2<n;pfs2++){
       const tdouble3 pos0p2=pos0[pfs2];
       const float drx0=float(pos0p1.x-pos0p2.x);
       const float dry0=float(pos0p1.y-pos0p2.y);
@@ -2060,20 +2065,21 @@ unsigned JSphCpu::CountFlexStrucPairs(unsigned n,const tdouble3 *pos0,unsigned *
 /// Sets the indices for each flexible structure pair.
 /// Establece los índices para cada par de estructuras flexibles.
 //==============================================================================
-void JSphCpu::SetFlexStrucPairs(unsigned n,const tdouble3 *pos0,unsigned **pairidx)const{
+void JSphCpu::SetFlexStrucPairs(unsigned np,const tdouble3 *pos0,unsigned **pairidx)const{
   //-Starts execution using OpenMP.
+  const int n=int(np);
   #ifdef OMP_USE
     #pragma omp parallel for schedule (static) if(n>OMP_LIMIT_COMPUTESTEP)
   #endif
-  for(unsigned p=0;p<n;p++){
-    const unsigned pfs1=p;      //-Number of particle.
+  for(int p=0;p<n;p++){
+    const int pfs1=p;      //-Number of particle.
     unsigned idx=0;
 
     //-Loads particle p1 data.
     const tdouble3 pos0p1=pos0[pfs1];
 
     //-Loop through other flexible structure particles.
-    for(unsigned pfs2=0;pfs2<n;pfs2++){
+    for(int pfs2=0;pfs2<n;pfs2++){
       const tdouble3 pos0p2=pos0[pfs2];
       const float drx0=float(pos0p1.x-pos0p2.x);
       const float dry0=float(pos0p1.y-pos0p2.y);
@@ -2088,14 +2094,16 @@ void JSphCpu::SetFlexStrucPairs(unsigned n,const tdouble3 *pos0,unsigned **pairi
 /// Calculates the kernel correction matrix for each flexible structure particle.
 /// Calcula la matriz de corrección del kernel para cada partícula de estructura flexible.
 //==============================================================================
-template<TpKernel tker,bool simulate2d> void JSphCpu::CalcFlexStrucKerCorr(unsigned n,const typecode *code,const StFlexStrucData *flexstrucdata
+template<TpKernel tker,bool simulate2d> void JSphCpu::CalcFlexStrucKerCorr(unsigned np,const typecode *code,const StFlexStrucData *flexstrucdata
         ,const unsigned *flexstrucridp,const tdouble3 *pos0,const unsigned *numpairs,const unsigned *const *pairidx
-        ,tmatrix3f *kercorr)const{
+        ,tmatrix3f *kercorr)const
+{
   //-Starts execution using OpenMP.
+  const int n=int(np);
   #ifdef OMP_USE
     #pragma omp parallel for schedule (static) if(n>OMP_LIMIT_COMPUTESTEP)
   #endif
-  for(unsigned p=0;p<n;p++){
+  for(int p=0;p<n;p++){
     const unsigned pfs1=p;      //-Number of particle.
 
     //-Get number of pairs for this particle.
@@ -2162,16 +2170,18 @@ void JSphCpu::CalcFlexStrucKerCorr()const{
 /// Calculates the deformation gradient matrix for each flexible structure particle.
 /// Calcula la matriz de gradiente de deformación para cada partícula de estructura flexible.
 //==============================================================================
-template<TpKernel tker,bool simulate2d> void JSphCpu::ComputeDefGradFlexStruc(unsigned n,const tdouble3 *pos,const typecode *code
+template<TpKernel tker,bool simulate2d> void JSphCpu::ComputeDefGradFlexStruc(unsigned np,const tdouble3 *pos,const typecode *code
     ,const StFlexStrucData *flexstrucdata,const unsigned *flexstrucridp
     ,const tdouble3 *pos0,const unsigned *numpairs,const unsigned *const *pairidx,const tmatrix3f *kercorr
-    ,tmatrix3f *defgrad)const{
+    ,tmatrix3f *defgrad)const
+{
   //-Starts execution using OpenMP.
+  const int n=int(np);
   #ifdef OMP_USE
     #pragma omp parallel for schedule (guided)
   #endif
-  for(unsigned p=0;p<n;p++){
-    const unsigned pfs1=p;      //-Number of particle.
+  for(int p=0;p<n;p++){
+    const int pfs1=p;      //-Number of particle.
 
     //-Get number of pairs for this particle.
     const unsigned numpairsp1=numpairs[pfs1];
@@ -2242,7 +2252,7 @@ inline tmatrix3f JSphCpu::ComputePK1StressFlexStruc(const tmatrix3f &defgrad,con
 /// Interaction forces for the flexible structure particles.
 /// Fuerzas de interacción para las partículas de estructura flexible.
 //==============================================================================
-template<TpKernel tker,bool simulate2d,bool lamsps> void JSphCpu::InteractionForcesFlexStruc(unsigned n,float visco
+template<TpKernel tker,bool simulate2d,bool lamsps> void JSphCpu::InteractionForcesFlexStruc(unsigned np,float visco
     ,StDivDataCpu divdata,const unsigned *dcell
     ,const tdouble3 *pos,const tfloat4 *velrhop,const float *press,const typecode *code
     ,const StFlexStrucData *flexstrucdata,const unsigned *flexstrucridp
@@ -2252,11 +2262,12 @@ template<TpKernel tker,bool simulate2d,bool lamsps> void JSphCpu::InteractionFor
   float flexstructh[OMP_MAXTHREADS*OMP_STRIDE];
   for(int th=0;th<OmpThreads;th++)flexstructh[th*OMP_STRIDE]=0;
   //-Starts execution using OpenMP.
+  const int n=int(np);
   #ifdef OMP_USE
     #pragma omp parallel for schedule (guided)
   #endif
-  for(unsigned p=0;p<n;p++){
-    const unsigned pfs1=p;      //-Number of particle.
+  for(int p=0;p<n;p++){
+    const int pfs1=p;      //-Number of particle.
     const unsigned p1=flexstrucridp[pfs1];
 
     //-Get codep1.
@@ -2287,7 +2298,7 @@ template<TpKernel tker,bool simulate2d,bool lamsps> void JSphCpu::InteractionFor
       const float rhop1=rho0p1/(simulate2d? fmath::Determinant2x2(defgradp1): fmath::Determinant3x3(defgradp1));
 
       //-Calculate structural speed of sound.
-      const float csp1=sqrt(youngmod*(1.0-poissratio)/(rhop1*(1.0+poissratio)*(1.0-2.0*poissratio)));
+      const float csp1=float( sqrt(youngmod*(1.0-poissratio)/(rhop1*(1.0+poissratio)*(1.0-2.0*poissratio))) );
 
       //-Obtains neighborhood search limits.
       const StNgSearch ngs=nsearch::Init(dcell[p1],false,divdata);
@@ -2446,10 +2457,11 @@ void JSphCpu::Interaction_ForcesFlexStruc(float &flexstrucdtmax)const{
 void JSphCpu::ComputeSemiImplicitEulerFlexStruc(double dt,tdouble3 *pos,unsigned *dcell,typecode *code)const
 {
   const tdouble3 gravity=ToTDouble3(Gravity);
+  const int nflex=int(CaseNflexstruc);
   #ifdef OMP_USE
-    #pragma omp parallel for schedule (static) if(CaseNflexstruc>OMP_LIMIT_COMPUTESTEP)
+    #pragma omp parallel for schedule (static) if(nflex>OMP_LIMIT_COMPUTESTEP)
   #endif
-  for(unsigned p=0;p<CaseNflexstruc;p++){
+  for(int p=0;p<nflex;p++){
     const unsigned p1=FlexStrucRidpc[p]; //-Number of particle.
     if(CODE_IsFlexStrucFlex(code[p1])){
       const tfloat4 rvelrhop=Velrhopc[p1];
@@ -2481,10 +2493,11 @@ void JSphCpu::ComputeSemiImplicitEulerFlexStruc(double dt,tdouble3 *pos,unsigned
 void JSphCpu::ComputeSymplecticPreFlexStruc(double dtm,tdouble3 *pos,unsigned *dcell,typecode *code)const
 {
   const tdouble3 gravity=ToTDouble3(Gravity);
+  const int nflex=int(CaseNflexstruc);
   #ifdef OMP_USE
-    #pragma omp parallel for schedule (static) if(CaseNflexstruc>OMP_LIMIT_COMPUTESTEP)
+    #pragma omp parallel for schedule (static) if(nflex>OMP_LIMIT_COMPUTESTEP)
   #endif
-  for(unsigned p=0;p<CaseNflexstruc;p++){
+  for(int p=0;p<nflex;p++){
     const unsigned p1=FlexStrucRidpc[p]; //-Number of particle.
     if(CODE_IsFlexStrucFlex(code[p1])){
       const tfloat4 rvelrhoppre=VelrhopPrec[p1];
@@ -2518,10 +2531,11 @@ void JSphCpu::ComputeSymplecticPreFlexStruc(double dtm,tdouble3 *pos,unsigned *d
 void JSphCpu::ComputeSymplecticCorrFlexStruc(double dtm,double dt,tdouble3 *pos,unsigned *dcell,typecode *code)const
 {
   const tdouble3 gravity=ToTDouble3(Gravity);
-#ifdef OMP_USE
-#pragma omp parallel for schedule (static) if(CaseNflexstruc>OMP_LIMIT_COMPUTESTEP)
-#endif
-  for(unsigned p=0;p<CaseNflexstruc;p++){
+  const int nflex=int(CaseNflexstruc);
+  #ifdef OMP_USE
+    #pragma omp parallel for schedule (static) if(nflex>OMP_LIMIT_COMPUTESTEP)
+  #endif
+  for(int p=0;p<nflex;p++){
     const unsigned p1=FlexStrucRidpc[p]; //-Number of particle.
     if(CODE_IsFlexStrucFlex(code[p1])){
       const tfloat4 rvelrhoppre=VelrhopPrec[p1];

@@ -493,7 +493,7 @@
     <ClInclude Include="..\source\JDsMotionDef.h">
       <Filter>Source\Other</Filter>
     </ClInclude>
-    <ClInclude Include="..\source\JSphFlexibleStructure.h">
+    <ClInclude Include="..\source\JSphFlexStruc.h">
       <Filter>Src_FSI</Filter>
     </ClInclude>
   </ItemGroup>
@@ -783,7 +783,7 @@
     <ClCompile Include="..\source\JDsGpuInfo.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="..\source\JSphFlexibleStructure.cpp">
+    <ClCompile Include="..\source\JSphFlexStruc.cpp">
       <Filter>Src_FSI</Filter>
     </ClCompile>
   </ItemGroup>

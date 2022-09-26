@@ -298,24 +298,24 @@ protected:
     ,const unsigned *ridpmv,tdouble3 *pos,unsigned *dcell,tfloat4 *velrhop,typecode *code)const;
 
   //<vs_flexstruc_ini>
-  void SetClampCodes(unsigned n,const tdouble3 *pos,const StFlexStrucData *flexstrucdata,typecode *code)const;
+  void SetClampCodes(unsigned np,const tdouble3 *pos,const StFlexStrucData *flexstrucdata,typecode *code)const;
   unsigned CountFlexStrucParts(unsigned npb,const typecode *code)const;
   void CalcFlexStrucRidp(unsigned npb,const typecode *code,unsigned *flexstrucridp)const;
   void GatherToFlexStrucArray(unsigned npfs,const unsigned *flexstrucridp,const tdouble3 *fullarray,tdouble3 *flexstrucarray)const;
-  unsigned CountFlexStrucPairs(unsigned n,const tdouble3 *pos0,unsigned *numpairs)const;
-  void SetFlexStrucPairs(unsigned n,const tdouble3 *pos0,unsigned **pairidx)const;
-  template<TpKernel tker,bool simulate2d> void CalcFlexStrucKerCorr(unsigned n,const typecode *code,const StFlexStrucData *flexstrucdata
+  unsigned CountFlexStrucPairs(unsigned np,const tdouble3 *pos0,unsigned *numpairs)const;
+  void SetFlexStrucPairs(unsigned np,const tdouble3 *pos0,unsigned **pairidx)const;
+  template<TpKernel tker,bool simulate2d> void CalcFlexStrucKerCorr(unsigned np,const typecode *code,const StFlexStrucData *flexstrucdata
       ,const unsigned *flexstrucridp,const tdouble3 *pos0,const unsigned *numpairs,const unsigned *const *pairidx
       ,tmatrix3f *kercorr)const;
   template<TpKernel tker,bool simulate2d> void CalcFlexStrucKerCorrT()const;
   template<TpKernel tker> void CalcFlexStrucKerCorr_ct0()const;
   void CalcFlexStrucKerCorr()const;
-  template<TpKernel tker,bool simulate2d> void ComputeDefGradFlexStruc(unsigned n,const tdouble3 *pos,const typecode *code
+  template<TpKernel tker,bool simulate2d> void ComputeDefGradFlexStruc(unsigned np,const tdouble3 *pos,const typecode *code
       ,const StFlexStrucData *flexstrucdata,const unsigned *flexstrucridp
       ,const tdouble3 *pos0,const unsigned *numpairs,const unsigned *const *pairidx,const tmatrix3f *kercorr
       ,tmatrix3f *defgrad)const;
   inline tmatrix3f ComputePK1StressFlexStruc(const tmatrix3f &defgrad,const tmatrix6f &cmat)const;
-  template<TpKernel tker,bool simulate2d,bool lamsps> void InteractionForcesFlexStruc(unsigned n,float visco
+  template<TpKernel tker,bool simulate2d,bool lamsps> void InteractionForcesFlexStruc(unsigned np,float visco
       ,StDivDataCpu divdata,const unsigned *dcell
       ,const tdouble3 *pos,const tfloat4 *velrhop,const float *press,const typecode *code
       ,const StFlexStrucData *flexstrucdata,const unsigned *flexstrucridp
