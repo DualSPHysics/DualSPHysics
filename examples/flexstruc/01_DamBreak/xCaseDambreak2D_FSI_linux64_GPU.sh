@@ -17,8 +17,8 @@ export diroutdata=${dirout}/data
 export dirbin=../../../bin/linux
 export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${dirbin}
 export gencase="${dirbin}/GenCase_linux64"
-export dualsphysicscpu="${dirbin}/DualSPHysics5.0CPU_linux64"
-export dualsphysicsgpu="${dirbin}/DualSPHysics5.0_linux64"
+export dualsphysicscpu="${dirbin}/DualSPHysics5.2CPU_linux64"
+export dualsphysicsgpu="${dirbin}/DualSPHysics5.2_linux64"
 export boundaryvtk="${dirbin}/BoundaryVTK_linux64"
 export partvtk="${dirbin}/PartVTK_linux64"
 export partvtkout="${dirbin}/PartVTKOut_linux64"
@@ -66,7 +66,16 @@ export dirout2=${dirout}/particles
 ${partvtk} -dirin ${diroutdata} -savevtk ${dirout2}/PartFluid -onlytype:-all,+fluid
 if [ $? -ne 0 ] ; then fail; fi
 
+${partvtk} -dirin ${diroutdata} -savevtk ${dirout2}/PartGate -onlymk:11
+if [ $? -ne 0 ] ; then fail; fi
+
+${partvtk} -dirin ${diroutdata} -savevtk ${dirout2}/PartFloor -onlymk:12
+if [ $? -ne 0 ] ; then fail; fi
+
 ${partvtk} -dirin ${diroutdata} -savevtk ${dirout2}/PartStructure -onlymk:13
+if [ $? -ne 0 ] ; then fail; fi
+
+${partvtk} -dirin ${diroutdata} -savevtk ${dirout2}/PartWalls -onlymk:14
 if [ $? -ne 0 ] ; then fail; fi
 
 fi

@@ -12,7 +12,7 @@
             <coefh value="1.0" comment="Coefficient to calculate the smoothing length (h=coefh*sqrt(3*dp^2) in 3D)" />
             <cflnumber value="0.1" comment="Coefficient to multiply dt" />	
         </constantsdef>	
-        <mkconfig boundcount="240" fluidcount="9" />
+        <mkconfig boundcount="240" fluidcount="10" />
         <geometry>
             <definition dp="0.005" units_comment="metres (m)">
                 <pointmin x="-0.1" y="0.0" z="-0.1" />

@@ -17,8 +17,8 @@ export diroutdata=${dirout}/data
 export dirbin=../../../bin/linux
 export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${dirbin}
 export gencase="${dirbin}/GenCase_linux64"
-export dualsphysicscpu="${dirbin}/DualSPHysics5.0CPU_linux64"
-export dualsphysicsgpu="${dirbin}/DualSPHysics5.0_linux64"
+export dualsphysicscpu="${dirbin}/DualSPHysics5.2CPU_linux64"
+export dualsphysicsgpu="${dirbin}/DualSPHysics5.2_linux64"
 export boundaryvtk="${dirbin}/BoundaryVTK_linux64"
 export partvtk="${dirbin}/PartVTK_linux64"
 export partvtkout="${dirbin}/PartVTKOut_linux64"
@@ -63,10 +63,10 @@ fi
 if [ $option -eq 2 -o $option -eq 1 ]; then
 # Executes PartVTK to create VTK files with particles.
 export dirout2=${dirout}/particles
-${partvtk} -dirin ${diroutdata} -savevtk ${dirout2}/PartFluid -onlytype:-all,+fluid
+${partvtk} -dirin ${diroutdata} -savevtk ${dirout2}/PartClamp -onlymk:11
 if [ $? -ne 0 ] ; then fail; fi
 
-${partvtk} -dirin ${diroutdata} -savevtk ${dirout2}/PartStructure -onlymk:13
+${partvtk} -dirin ${diroutdata} -savevtk ${dirout2}/PartStructure -onlymk:12
 if [ $? -ne 0 ] ; then fail; fi
 
 fi

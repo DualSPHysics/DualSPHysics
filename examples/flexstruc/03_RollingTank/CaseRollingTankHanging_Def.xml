@@ -10,13 +10,13 @@
             <coefsound value="10" comment="Coefficient to multiply speedsystem" />
             <speedsound value="0" auto="true" comment="Speed of sound to use in the simulation (by default speedofsound=coefsound*speedsystem)" />
             <coefh value="1.0" comment="Coefficient to calculate the smoothing length (h=coefh*sqrt(3*dp^2) in 3D)" />			
-            <cflnumber value="0.2" comment="Coefficient to multiply dt" />
+            <cflnumber value="0.1" comment="Coefficient to multiply dt" />	
         </constantsdef>
         <mkconfig boundcount="240" fluidcount="10" />
         <geometry>
             <definition dp="0.001" units_comment="metres (m)">
-                <pointmin x="-0.004" y="0" z="-0.008" />
-                <pointmax x="0.613" y="0" z="0.3525" />
+                <pointmin x="-0.005" y="0" z="-0.009" />
+                <pointmax x="0.616" y="0" z="0.3525" />
             </definition>
             <commands>
                 <mainlist>
@@ -52,7 +52,7 @@
 					<drawbox>
                         <boxfill>solid</boxfill>
                         <point x="0.3025" y="-0.01" z="0.0575" />
-                        <size x="0.004" y="0.02" z="0.29" />
+                        <size x="0.004" y="0.02" z="0.291" />
                     </drawbox>
                 </mainlist>
             </commands>
@@ -61,7 +61,7 @@
             <objreal ref="0">
                 <begin mov="1" start="0" />
                 <mvrotfile id="1" duration="100" anglesunits="degrees">
-                    <file name="TankRollTimeSeriesHanging.dat" />
+                    <file name="RollingTankHangingTimeSeries.csv" />
                     <axisp1 x="0.3045" y="-0.01" z="0" />
                     <axisp2 x="0.3045" y="0.02" z="0" />
                 </mvrotfile>
@@ -73,7 +73,8 @@
         </motion>
     </casedef>
     <execution>
-		<special>
+        <special>
+            <savedt/>
             <flexstrucs>
                 <flexstrucbody mkbound="1" mkclamp="0">
                     <density value="1900.0" comment="Mass density" units_comment="kg/m^3" />

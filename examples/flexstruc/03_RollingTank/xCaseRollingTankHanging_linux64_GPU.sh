@@ -8,7 +8,7 @@ fail () {
 
 # "name" and "dirout" are named according to the testcase
 
-export name=CaseDambreak2D_FSI
+export name=CaseRollingTankHanging
 export dirout=${name}_out
 export diroutdata=${dirout}/data
 
@@ -55,7 +55,7 @@ ${gencase} ${name}_Def ${dirout}/${name} -save:all
 if [ $? -ne 0 ] ; then fail; fi
 
 # Executes DualSPHysics to simulate SPH method.
-${dualsphysicscpu} ${dirout}/${name} ${dirout} -dirdataout data -svres
+${dualsphysicsgpu} -gpu ${dirout}/${name} ${dirout} -dirdataout data -svres
 if [ $? -ne 0 ] ; then fail; fi
 
 fi
@@ -66,16 +66,10 @@ export dirout2=${dirout}/particles
 ${partvtk} -dirin ${diroutdata} -savevtk ${dirout2}/PartFluid -onlytype:-all,+fluid
 if [ $? -ne 0 ] ; then fail; fi
 
-${partvtk} -dirin ${diroutdata} -savevtk ${dirout2}/PartGate -onlymk:11
+${partvtk} -dirin ${diroutdata} -savevtk ${dirout2}/PartTank -onlymk:11
 if [ $? -ne 0 ] ; then fail; fi
 
-${partvtk} -dirin ${diroutdata} -savevtk ${dirout2}/PartFloor -onlymk:12
-if [ $? -ne 0 ] ; then fail; fi
-
-${partvtk} -dirin ${diroutdata} -savevtk ${dirout2}/PartStructure -onlymk:13
-if [ $? -ne 0 ] ; then fail; fi
-
-${partvtk} -dirin ${diroutdata} -savevtk ${dirout2}/PartWalls -onlymk:14
+${partvtk} -dirin ${diroutdata} -savevtk ${dirout2}/PartStructure -onlymk:12
 if [ $? -ne 0 ] ; then fail; fi
 
 fi
