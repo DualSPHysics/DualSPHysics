@@ -160,9 +160,9 @@ else
 endif
 ifeq ($(USE_FAST_MATH), YES)
   NCCFLAGS+= -use_fast_math
-  ifeq ($(CUDAVER),11)	
-	NCCFLAGS+= -Wno-deprecated-gpu-targets
-  endif
+endif
+ifeq ($(CUDAVER),11)	
+  NCCFLAGS+= -Wno-deprecated-gpu-targets
 endif
 
 all:$(EXECS_DIRECTORY)/$(EXECNAME)
