@@ -4,7 +4,8 @@
  Prof. Moncho Gomez Gesteira, Prof. Benedict Rogers, 
  Dr Georgios Fourtakas, Prof. Peter Stansby, 
  Dr Renato Vacondio, Dr Corrado Altomare, Dr Angelo Tafuni, 
- Dr Orlando Garcia Feal, Ivan Martinez Estevez
+ Dr Orlando Garcia Feal, Ivan Martinez Estevez,
+ Dr Joseph O'Connor
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -69,7 +70,8 @@ std::string getlicense_lgpl(const std::string &name,bool simple){
   tx=tx+"\n Prof. Moncho Gomez Gesteira, Prof. Benedict Rogers,";
   tx=tx+"\n Dr Georgios Fourtakas, Prof. Peter Stansby,";
   tx=tx+"\n Dr Renato Vacondio, Dr Corrado Altomare, Dr Angelo Tafuni,";
-  tx=tx+"\n Dr Orlando Garcia Feal, Ivan Martinez Estevez\n";
+  tx=tx+"\n Dr Orlando Garcia Feal, Ivan Martinez Estevez,";
+  tx=tx+"\n Dr Joseph O'Connor\n";
   if(!simple){
     tx=tx+"\n EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo";
     tx=tx+"\n School of Mechanical, Aerospace and Civil Engineering, University of Manchester\n";
