@@ -164,7 +164,7 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
   
   if (CUDA_FOUND)
     target_link_libraries(DualSPHysics5.2_linux64 ${LINKER_FLAGS})
-    set_target_properties(DualSPHysics5.2_linux64 PROPERTIES COMPILE_FLAGS "-use_fast_math -O3 -fPIC -std=c++0x -Wno-deprecated-gpu-targets")
+    set_target_properties(DualSPHysics5.2_linux64 PROPERTIES COMPILE_FLAGS "-use_fast_math -O3 -D_WITHGPU -fPIC -std=c++0x -Wno-deprecated-gpu-targets")
   endif(CUDA_FOUND)
   
 elseif(MSVC)

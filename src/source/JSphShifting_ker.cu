@@ -141,9 +141,9 @@ __global__ void KerRunShifting(unsigned n,unsigned pini,double dt
       const float shiftdistx=float(double(rs.x)*umagn);
       const float shiftdisty=float(double(rs.y)*umagn);
       const float shiftdistz=float(double(rs.z)*umagn);
-      rs.x=(fabs(shiftdistx)<maxdist? shiftdistx: maxdist);
-      rs.y=(fabs(shiftdisty)<maxdist? shiftdisty: maxdist);
-      rs.z=(fabs(shiftdistz)<maxdist? shiftdistz: maxdist);
+      rs.x=(fabs(shiftdistx)<maxdist? shiftdistx: (shiftdistx>=0? maxdist: -maxdist));
+      rs.y=(fabs(shiftdisty)<maxdist? shiftdisty: (shiftdisty>=0? maxdist: -maxdist));
+      rs.z=(fabs(shiftdistz)<maxdist? shiftdistz: (shiftdistz>=0? maxdist: -maxdist));
     }
     else rs=make_float4(0,0,0,0); //-Cancels shifting close to the boundaries. | Anula shifting por proximidad del contorno. 
     shiftposfs[p1]=rs;
