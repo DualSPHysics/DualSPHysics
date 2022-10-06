@@ -112,6 +112,7 @@ Please read [CONTRIBUTING.md](CONTRIBUTING.md) if you want to make changes to th
 * **Dr Angelo Tafuni**
 * **Orlando Garcia Feal**
 * **Ivan Martinez Estevez**
+* **Dr Joseph O'Connor**
 
 
 ## Former people involved

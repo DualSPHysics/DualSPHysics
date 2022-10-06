@@ -409,9 +409,9 @@ void JSphShifting::RunCpu(unsigned n,unsigned pini,double dt,const tfloat4* velr
       const float shiftdistx=float(double(rs.x)*umagn);
       const float shiftdisty=float(double(rs.y)*umagn);
       const float shiftdistz=float(double(rs.z)*umagn);
-      shiftposfs[p].x=(fabs(shiftdistx)<maxdist? shiftdistx: maxdist);
-      shiftposfs[p].y=(fabs(shiftdisty)<maxdist? shiftdisty: maxdist);
-      shiftposfs[p].z=(fabs(shiftdistz)<maxdist? shiftdistz: maxdist);
+      shiftposfs[p].x=(fabs(shiftdistx)<maxdist? shiftdistx: (shiftdistx>=0? maxdist: -maxdist));
+      shiftposfs[p].y=(fabs(shiftdisty)<maxdist? shiftdisty: (shiftdisty>=0? maxdist: -maxdist));
+      shiftposfs[p].z=(fabs(shiftdistz)<maxdist? shiftdistz: (shiftdistz>=0? maxdist: -maxdist));
     }
     else shiftposfs[p]=TFloat4(0); //-Cancels shifting close to the boundaries. | Anula shifting por proximidad del contorno. 
   }
