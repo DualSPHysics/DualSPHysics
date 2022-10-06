@@ -2327,7 +2327,7 @@ template<TpKernel tker,bool simulate2d,bool lamsps> void JSphCpu::InteractionFor
                     const float dot_rr2=dot/(rr2+Eta2);
                     const float amubar=KernelH*dot_rr2;
                     const float robar=(velrhop1.w+velrhop2.w)*0.5f;
-                    const float pi_visc=(-visco*Cs0*amubar/robar)*MassFluid*(MassFluid/mass0p1);
+                    const float pi_visc=(float)(-visco*Cs0*amubar/robar)*MassFluid*(MassFluid/mass0p1);
                     acep1.x-=pi_visc*frx; acep1.y-=pi_visc*fry; acep1.z-=pi_visc*frz;
                   }
                 }
