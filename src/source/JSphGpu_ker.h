@@ -359,6 +359,7 @@ void ComputeDampingCylinder(unsigned n,unsigned pini
 
 //<vs_flexstruc_ini>
 void SetClampCodes(unsigned npb,const float4 *poscell,const StFlexStrucData *flexstrucdata,typecode *code);
+bool FlexStrucHasNormals(unsigned npb,const typecode *code,const float3 *boundnormals);
 unsigned CountFlexStrucParts(unsigned npb,const typecode *code);
 void CalcFlexStrucRidp(unsigned npb,const typecode *code,unsigned *flexstrucridp);
 void GatherToFlexStrucArray(unsigned npfs,const unsigned *flexstrucridp,const float4 *fullarray,float4 *flexstrucarray);

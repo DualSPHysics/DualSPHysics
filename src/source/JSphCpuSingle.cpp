@@ -1248,6 +1248,8 @@ void JSphCpuSingle::FlexStrucInit(){
   //-Configure code for flexible structures.
   FlexStruc->ConfigCode(Npb,Codec);
   JSphCpu::SetClampCodes(Npb,Posc,FlexStrucDatac,Codec);
+  //-Check that mDBC normals are not set on flexible structures.
+  if(TBoundary==BC_MDBC&&JSphCpu::FlexStrucHasNormals(Npb,Codec,BoundNormalc))Run_Exceptioon("mDBC normals are not permitted to be set for a flexible structure.");
   //-Count number of flexible structure particles.
   CaseNflexstruc=JSphCpu::CountFlexStrucParts(Npb,Codec);
   //-Allocate arrays.

@@ -1039,6 +1039,8 @@ void JSphGpuSingle::FlexStrucInit(){
   cudaMemcpy(Codeg,Code,sizeof(typecode)*Npb,cudaMemcpyHostToDevice);
   cusph::SetClampCodes(Npb,PosCellg,FlexStrucDatag,Codeg);
   cudaMemcpy(Code,Codeg,sizeof(typecode)*Npb,cudaMemcpyDeviceToHost);
+  //-Check that mDBC normals are not set on flexible structures.
+  if(TBoundary==BC_MDBC&&cusph::FlexStrucHasNormals(Npb,Codeg,BoundNormalg))Run_Exceptioon("mDBC normals are not permitted to be set for a flexible structure.");
   //-Count number of flexible structure particles.
   CaseNflexstruc=cusph::CountFlexStrucParts(Npb,Codeg);
   //-Allocate arrays.

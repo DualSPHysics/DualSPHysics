@@ -33,6 +33,7 @@
 #include <thrust/device_vector.h>
 #include <thrust/sort.h>
 #include <thrust/gather.h>
+#include <thrust/logical.h>
 
 __constant__ StCteInteraction CTE;
 #define CTE_AVAILABLE
@@ -2992,6 +2993,21 @@ void ComputeDampingCylinder(unsigned n,unsigned pini
 
 //<vs_flexstruc_ini>
 //==============================================================================
+/// Functor for checking if a flexible structure has a normal defined.
+/// Functor para verificar si una estructura flexible tiene una normal definida.
+//==============================================================================
+struct FlexStrucHasNormal{
+  FlexStrucHasNormal(const typecode *code,const float3 *boundnormals):code(code),boundnormals(boundnormals){};
+  __host__ __device__ bool operator()(unsigned idx){
+    const float3 bnormal=boundnormals[idx];
+    return CODE_IsFlexStrucFlex(code[idx]) && (bnormal.x!=0 || bnormal.y!=0 || bnormal.z!=0);
+  }
+private:
+  const typecode *code;
+  const float3 *boundnormals;
+};
+
+//==============================================================================
 /// Functor for checking if particle is a flexible structure particle.
 /// Funtor para verificar si la partícula es una partícula de estructura flexible.
 //==============================================================================
@@ -3043,6 +3059,19 @@ void SetClampCodes(unsigned npb,const float4 *poscell,const StFlexStrucData *fle
     dim3 sgridb=GetSimpleGridSize(npb,SPHBSIZE);
     KerSetClampCodes <<<sgridb,SPHBSIZE>>> (npb,poscell,flexstrucdata,code);
   }
+}
+
+//==============================================================================
+/// Checks if any normals are defined for the flexible structure particles.
+/// Comprueba si se han definido normales para las partículas de estructura flexible.
+//==============================================================================
+bool FlexStrucHasNormals(unsigned npb,const typecode *code,const float3 *boundnormals){
+  if(npb){
+    thrust::counting_iterator<unsigned> idx(0);
+    FlexStrucHasNormal pred=FlexStrucHasNormal(code,boundnormals);
+    return thrust::any_of(idx,idx+npb,pred);
+  }
+  return false;
 }
 
 //==============================================================================

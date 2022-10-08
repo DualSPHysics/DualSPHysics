@@ -1202,7 +1202,6 @@ void JSph::LoadCaseConfig(const JSphCfgRun *cfg){
     if(PartBegin)           Run_Exceptioon("Simulation restart not allowed when FlexStruc is used.");
     if(PeriActive)          Run_Exceptioon("Flexible structures is not allowed with periodic conditions.");
     if(Symmetry)            Run_Exceptioon("Flexible structures is not allowed with symmetry.");
-    if(TBoundary==BC_MDBC)  Run_Exceptioon("Flexible structures is not allowed with mDBC.");
   }
   //<vs_flexstruc_end>
 
