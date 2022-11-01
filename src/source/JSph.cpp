@@ -1671,7 +1671,7 @@ void JSph::VisuRefs(){
   if(InOut        )Log->Print("- Inflow-outflow boundary conditions (Tafuni et al., 2018  https://doi.org/10.1016/j.cma.2018.08.004)");
   if(WithFloating )Log->Print("- Floating objects (Canelas et al., 2015  https://doi.org/10.1002/fld.4031)");
   if(UseDEM       )Log->Print("- Coupling SPH-DCDEM (Canelas et al., 2017  https://doi.org/10.1061/(ASCE)HY.1943-7900.0001331)");
-  if(UseChrono    )Log->Print("- Coupling with Project Chrono (Canelas et al., 2018  https://doi.org/10.1016/j.apor.2018.04.015)");
+  if(UseChrono    )Log->Print("- New coupling with Project Chrono (Martinez-Estevez et al., 2022  https://doi.org/10.1016/j.cpc.2022.108581)");
   if(Moorings     )Log->Print("- Coupling with MoorDyn+ (Dominguez et al., 2019  https://doi.org/10.1016/j.coastaleng.2019.103560)");
   if(Shifting     )Log->Print("- Shifting algorithm (Lind et al., 2012  https://doi.org/10.1016/j.jcp.2011.10.027)");
   if(AccInput     )Log->Print("- External imposed forces (Longshaw and Rogers, 2015  https://doi.org/10.1016/j.advengsoft.2015.01.008)");

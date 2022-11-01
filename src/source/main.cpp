@@ -33,7 +33,7 @@ School of Mechanical, Aerospace and Civil Engineering, University of Manchester,
 Please download source files and documentation from <a href="http://dual.sphysics.org">DualSPHysics website.</a> \n
 \author <a href="http://dual.sphysics.org/index.php/developers">DualSPHysics Developers.</a> 
 \version 5.2.254
-\date 04-10-2022
+\date 01-11-2022
 \copyright GNU Lesser General Public License <a href="http://www.gnu.org/licenses/">GNU licenses.</a>
 */
 
@@ -57,7 +57,7 @@ Please download source files and documentation from <a href="http://dual.sphysic
 
 using namespace std;
 
-JAppInfo AppInfo("DualSPHysics5","v5.2.254 beta","FlexStruc","v1.0","04-10-2022");
+JAppInfo AppInfo("DualSPHysics5","v5.2.254 beta","FlexStruc","v1.0","01-11-2022");
 
 //==============================================================================
 /// LGPL License.

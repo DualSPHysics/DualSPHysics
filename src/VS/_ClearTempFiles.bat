@@ -1,4 +1,4 @@
-REM rd /s /q .vs
+rd /s /q .vs
 rd /s /q Intermediate
 rd /s /q ipch
 rd /s /q x64
