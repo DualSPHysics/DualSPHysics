@@ -144,7 +144,7 @@ int main(int argc, char** argv){
   //AppInfo.AddNameExtra("Symmetry");    //<vs_syymmetry>
   //AppInfo.AddNameExtra("SaveFtAce");
   //AppInfo.AddNameExtra("SaveFtMotion");//<vs_ftmottionsv>
-  AppInfo.AddNameExtra("FlexStruc");      //<vs_flexstruc>
+  //AppInfo.AddNameExtra("FlexStruc");   //<vs_flexstruc>
   #ifdef CODE_SIZE4
     AppInfo.AddNameExtra("MK65k");
   #endif
