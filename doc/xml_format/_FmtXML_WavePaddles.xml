@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<!-- *** DualSPHysics (31-08-2022) *** -->
+<!-- *** DualSPHysics (12-11-2022) *** -->
 <!-- *** class: JWavePaddles *** -->
 <!------------------------------------------------------------------------------->
 <!------------------------------------------------------------------------------->
@@ -63,7 +63,7 @@
 			<start value="2" comment="Start time (default=0)" />
 			<duration value="0" comment="Movement duration, Zero is the end of simulation (default=0)" />
 			<depth value="1.4" comment="Water depth (default=0)" />
-			<variabledraft value="0" comment="Position of the wavemaker hinge (above the bottom <0; below the bottom >0) (default=0)" />
+			<variabledraft value="0" comment="Position of the wavemaker hinge with respect to the bottom (above the bottom >0; below the bottom <0) (default=0)" />
 			<flapaxis0 x="3" y="0" z="0" comment="Point 0 of axis rotation" />
 			<flapaxis1 x="3" y="1" z="0" comment="Point 1 of axis rotation" />
 			<waveheight value="0.1" comment="Wave height" />
@@ -120,7 +120,7 @@
 		<flap_spectrum>
 			<mkbound value="12" comment="Mk-Bound of selected particles" />
 			<depth value="50" comment="Water depth (default=0)" />
-			<variabledraft value="0" comment="Position of the wavemaker hinge (above the bottom <0; below the bottom >0) (default=0)" />
+			<variabledraft value="0" comment="Position of the wavemaker hinge with respect to the bottom (above the bottom >0; below the bottom <0) (default=0)" />
 			<start value="0" comment="Start time (default=0)" />
 			<duration value="0" comment="Movement duration, Zero is the end of simulation (default=0)" />
 			<flapaxis0 x="3" y="0" z="0" comment="Point 0 of axis rotation" />
