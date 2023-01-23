@@ -323,7 +323,7 @@ template<bool periactive> __device__ void KerUpdatePos
 {
   //-Checks validity of displacement. | Comprueba validez del desplazamiento.
   const bool outmove=(fmaxf(fabsf(float(movx)),fmaxf(fabsf(float(movy)),fabsf(float(movz))))>CTE.movlimit);
-  //-Applies diplacement.
+  //-Applies displacement.
   double3 rpos=make_double3(rxy.x,rxy.y,rz);
   rpos.x+=movx; rpos.y+=movy; rpos.z+=movz;
   if(rpos.y<0 && CTE.symmetry)rpos.y=-rpos.y; //<vs_syymmetry>
@@ -907,7 +907,7 @@ __device__ float4 KerComputePosCell(const double3 &ps,const double3 &mapposmin,f
 }
 
 //------------------------------------------------------------------------------
-/// Perform interaction between ghost node of selected bondary and fluid.
+/// Perform interaction between ghost node of selected boundary and fluid.
 //------------------------------------------------------------------------------
 template<TpKernel tker,bool sim2d,TpSlipMode tslip> __global__ void KerInteractionMdbcCorrection_Fast
   (unsigned n,unsigned nbound,float determlimit,float mdbcthreshold
@@ -1058,7 +1058,7 @@ template<TpKernel tker,bool sim2d,TpSlipMode tslip> __global__ void KerInteracti
           float3 normal; // creating a normailsed boundary normal
           normal.x=fabs(bnormalp1.x)/norm; normal.y=fabs(bnormalp1.y)/norm; normal.z=fabs(bnormalp1.z)/norm;
 
-          // finding the velocity componants normal and tangential to boundary 
+          // finding the velocity components normal and tangential to boundary 
           float3 normvel=make_float3(velrhopfinal.x*normal.x,velrhopfinal.y*normal.y,velrhopfinal.z*normal.z); // velocity in direction of normal pointin ginto fluid)
           float3 tangvel=make_float3(velrhopfinal.x-normvel.x,velrhopfinal.y-normvel.y,velrhopfinal.z-normvel.z); // velocity tangential to normal
 
@@ -1066,7 +1066,7 @@ template<TpKernel tker,bool sim2d,TpSlipMode tslip> __global__ void KerInteracti
               float3 normmot=make_float3(v.x*normal.x,v.y*normal.y,v.z*normal.z); // boundary motion in direction normal to boundary 
               FSVelFinal=make_float3(normmot.x+normmot.x-normvel.x,normmot.y+normmot.y-normvel.y,normmot.z+normmot.z-normvel.z);
               // only velocity in normal direction for no-penetration
-              // fluid sees zero velocity in the tangetial direction
+              // fluid sees zero velocity in the tangential direction
           }
           else {
               FSVelFinal=make_float3(tangvel.x-normvel.x,tangvel.y-normvel.y,tangvel.z-normvel.z);
@@ -1083,7 +1083,7 @@ template<TpKernel tker,bool sim2d,TpSlipMode tslip> __global__ void KerInteracti
 }
 
 //------------------------------------------------------------------------------
-/// Perform interaction between ghost node of selected bondary and fluid.
+/// Perform interaction between ghost node of selected boundary and fluid.
 //------------------------------------------------------------------------------
 template<TpKernel tker,bool sim2d,TpSlipMode tslip> __global__ void KerInteractionMdbcCorrection_Dbl
   (unsigned n,unsigned nbound,float determlimit,float mdbcthreshold
@@ -1231,7 +1231,7 @@ template<TpKernel tker,bool sim2d,TpSlipMode tslip> __global__ void KerInteracti
           float3 normal; // creating a normailsed boundary normal
           normal.x=fabs(bnormalp1.x)/norm; normal.y=fabs(bnormalp1.y)/norm; normal.z=fabs(bnormalp1.z)/norm;
 
-          // finding the velocity componants normal and tangential to boundary 
+          // finding the velocity components normal and tangential to boundary 
           float3 normvel=make_float3(velrhopfinal.x*normal.x,velrhopfinal.y*normal.y,velrhopfinal.z*normal.z); // velocity in direction of normal pointin ginto fluid)
           float3 tangvel=make_float3(velrhopfinal.x-normvel.x,velrhopfinal.y-normvel.y,velrhopfinal.z-normvel.z); // velocity tangential to normal
 
@@ -1239,7 +1239,7 @@ template<TpKernel tker,bool sim2d,TpSlipMode tslip> __global__ void KerInteracti
               float3 normmot=make_float3(v.x*normal.x,v.y*normal.y,v.z*normal.z); // boundary motion in direction normal to boundary 
               FSVelFinal=make_float3(normmot.x+normmot.x-normvel.x,normmot.y+normmot.y-normvel.y,normmot.z+normmot.z-normvel.z);
               // only velocity in normal direction for no-penetration
-              // fluid sees zero velocity in the tangetial direction
+              // fluid sees zero velocity in the tangential direction
           }
           else {
               FSVelFinal=make_float3(tangvel.x-normvel.x,tangvel.y-normvel.y,tangvel.z-normvel.z);
@@ -2116,7 +2116,7 @@ __global__ void KerFtCalcForces(unsigned ftcount,float3 gravity
 
     //-Compute a cumulative rotation matrix.
     const tmatrix3f frot=cumath::RotMatrix3x3(fang);
-    //-Compute the inertia tensor by rotating the initial tensor to the curent orientation I=(R*I_0)*R^T.
+    //-Compute the inertia tensor by rotating the initial tensor to the current orientation I=(R*I_0)*R^T.
     inert=cumath::MulMatrix3x3(cumath::MulMatrix3x3(frot,inert),cumath::TrasMatrix3x3(frot));
     //-Calculates the inverse of the inertia matrix to compute the I^-1 * L= W
     const tmatrix3f invinert=cumath::InverseMatrix3x3(inert);

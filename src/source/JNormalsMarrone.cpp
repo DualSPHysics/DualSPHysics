@@ -208,7 +208,7 @@ void JNormalsMarrone::LoadBoundParticles(){
     Data2DPosY=PartPos[0].y;
   }
   //-Checks data of boundary particles.
-  for(unsigned p=0;p<SizePart;p++)if(PartPos[p].x==DBL_MAX)Run_Exceptioon("Some postion of bound particles is invalid.");
+  for(unsigned p=0;p<SizePart;p++)if(PartPos[p].x==DBL_MAX)Run_Exceptioon("Some position of bound particles is invalid.");
 }
 
 //==============================================================================

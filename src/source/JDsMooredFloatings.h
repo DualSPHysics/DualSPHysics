@@ -129,9 +129,9 @@ private:
 
   std::vector<JDsMooredFloating*> Floatings; ///<List of floatings with moorings.
 
-  bool MoorDynReady;   ///<Indicate if MoorDyn was initializated.
+  bool MoorDynReady;   ///<Indicate if MoorDyn was initialized.
 
-  bool FairArrays;          ///<Indicate if the fairlead arrays was initializated.
+  bool FairArrays;          ///<Indicate if the fairlead arrays was initialized.
   unsigned FairNftm;        ///<Number of moored floatings.
   unsigned* FairFtmNum;     ///<Number of fairleads per each moored floating [FairNftm].
   double*** FairleadPos;    ///<Stores link positions  [FairNftm][FairFtmNum[cf]][3].  

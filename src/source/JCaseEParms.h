@@ -30,7 +30,7 @@
 //:# - Nueva definicion del dominio de simulacion. (22-03-2019)
 //:# - Objeto JXml pasado como const para operaciones de lectura. (17-03-2020)  
 //:# - Comprueba que los valores enteros y reales sean validos. (17-03-2020)  
-//:# - Improved exception managment. (18-03-2020)
+//:# - Improved exception management. (18-03-2020)
 //:# - Cambio de nombre de J.SpaceEParms a J.CaseEParms. (28-06-2020)
 //:#############################################################################
 

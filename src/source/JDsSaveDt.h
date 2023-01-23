@@ -25,7 +25,7 @@
 //:# - Error corregido cuando TimeFinish=0. (22-01-2018)
 //:# - Error corregido al generar excepcion por error en fichero. (22-01-2018)
 //:# - Se escriben las unidades en las cabeceras de los ficheros CSV. (26-04-2018)
-//:# - Improved exception managment. (19-03-2020)  
+//:# - Improved exception management. (19-03-2020)  
 //:# - Objeto JXml pasado como const para operaciones de lectura. (19-03-2020)  
 //:# - Comprueba opcion active en elementos de primer y segundo nivel. (19-03-2020)  
 //:# - Cambio de nombre de J.SaveDt a J.DsSaveDt. (28-06-2020)

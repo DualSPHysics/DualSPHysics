@@ -147,7 +147,7 @@ void JSphCpuSingle::ConfigDomain(){
   //-Sets local domain of the simulation within Map_Cells and computes DomCellCode.
   //-Establece dominio de simulacion local dentro de Map_Cells y calcula DomCellCode.
   SelecDomain(TUint3(0,0,0),Map_Cells);
-  //-Computes inital cell of the particles and checks if there are unexpected excluded particles.
+  //-Computes initial cell of the particles and checks if there are unexpected excluded particles.
   //-Calcula celda inicial de particulas y comprueba si hay excluidas inesperadas.
   LoadDcellParticles(Np,Codec,Posc,Dcellc);
 
@@ -766,7 +766,7 @@ void JSphCpuSingle::FtCalcForces(StFtoForces *ftoforces)const{
 
     //-Compute a cumulative rotation matrix.
     const tmatrix3f frot=fmath::RotMatrix3x3(fang);
-    //-Compute the inertia tensor by rotating the initial tensor to the curent orientation I=(R*I_0)*R^T.
+    //-Compute the inertia tensor by rotating the initial tensor to the current orientation I=(R*I_0)*R^T.
     inert=fmath::MulMatrix3x3(fmath::MulMatrix3x3(frot,inert),fmath::TrasMatrix3x3(frot));
     //-Calculates the inverse of the inertia matrix to compute the I^-1 * L= W
     const tmatrix3f invinert=fmath::InverseMatrix3x3(inert);
@@ -774,7 +774,7 @@ void JSphCpuSingle::FtCalcForces(StFtoForces *ftoforces)const{
     //-Compute summation of linear and angular forces starting from acceleration of particles.
     tfloat3 face,fomegaace;
     FtCalcForcesSum(cf,face,fomegaace);
-    //-Adds inital external forces from ForcePoints, Moorings and external files.
+    //-Adds initial external forces from ForcePoints, Moorings and external files.
     face=face+ftoforces[cf].face;
     fomegaace=fomegaace+ftoforces[cf].fomegaace;
 

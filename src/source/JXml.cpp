@@ -312,7 +312,7 @@ void JXml::CheckElementNames(const TiXmlElement* lis,bool checkrepeated,std::str
 }
 
 //==============================================================================
-/// Checks if some or several attributes appers in the element. Returns number
+/// Checks if some or several attributes appears in the element. Returns number
 /// of found attribute (1...n), 0 none found and -1 several found.
 /// \param ele Xml element of the error.
 /// \param names Names of the requested attributes separated by by spaces.
@@ -372,7 +372,7 @@ bool JXml::ExistsAttribute(const TiXmlElement* ele,const std::string &name)const
 }
 
 //==============================================================================
-/// Checks if some or several attributes appers in the element. Returns number
+/// Checks if some or several attributes appears in the element. Returns number
 /// of found attribute (1...n), 0 none found and -1 several found.
 /// \param ele Xml element of the error.
 /// \param names Names of the requested attributes separated by spaces.
@@ -393,7 +393,7 @@ int JXml::CheckAttributes(const TiXmlElement* ele,std::string names,bool checkma
 }
 
 //==============================================================================
-/// Checks if some or several attributes appers in the element. Returns number
+/// Checks if some or several attributes appears in the element. Returns number
 /// of found attribute (1...n), 0 none found and -1 several found.
 /// \param lis List of Xml elements of the error.
 /// \param elementname Name of the requested element.

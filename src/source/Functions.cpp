@@ -792,7 +792,7 @@ std::string StrStripSlashes(const std::string &cad){
 }
 
 //==============================================================================
-/// Inidicates if the string cad only contains characters in the string chars.
+/// Indicates if the string cad only contains characters in the string chars.
 //==============================================================================
 bool StrOnlyChars(const std::string &cad,const std::string &chars){
   bool ok=true;
@@ -861,7 +861,7 @@ std::string StrFileError(int error){
 }
 
 //==============================================================================
-/// Returns the text untill the indicated mark and saves the rest in text format.
+/// Returns the text until the indicated mark and saves the rest in text format.
 //==============================================================================
 std::string StrSplit(const std::string mark,std::string &text){
   const unsigned smark=unsigned(mark.size());
@@ -1618,7 +1618,7 @@ std::string GetNewFileName(std::string fnamefmt,unsigned initialnum){
 }
 
 //==============================================================================
-/// Returns the filename with a requested size of characteres.
+/// Returns the filename with a requested size of characters.
 //==============================================================================
 std::string ShortFileName(const std::string &file,unsigned maxlen,bool withpoints){
   std::string file2;
@@ -1638,7 +1638,7 @@ std::string ShortFileName(const std::string &file,unsigned maxlen,bool withpoint
 }
 
 //==============================================================================
-/// Returns text and filename with a requested size of characteres.
+/// Returns text and filename with a requested size of characters.
 //==============================================================================
 std::string TextWithShortFileName(const std::string &txpre,const std::string &txpos,const std::string &file,unsigned maxlen){
   int size=int(txpre.size())+int(txpos.size());
@@ -1664,7 +1664,7 @@ bool FileMask(std::string text,std::string mask){
   int pos=(int)mask.find("|");
   if(pos>=0)return(FileMask(text,mask.substr(0,pos))||FileMask(text,mask.substr(pos+1)));
   else{
-  //-Checks corrleation of text with mask.
+  //-Checks correlation of text with mask.
     int stext=(int)text.length();
     int smask=(int)mask.length();
     if(!stext&&!smask)return(true);

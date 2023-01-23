@@ -268,10 +268,10 @@ inline float GetKernel_Factor(TpKernel tker){
 
 
 //##############################################################################
-//# Computes kernel values usig templates.
+//# Computes kernel values using templates.
 //##############################################################################
 //============================================================================== 
-/// Returns wab of kernel according to temaplate.
+/// Returns wab of kernel according to template.
 //==============================================================================
 template<TpKernel tker> inline float GetKernel_Wab(const StCteSph &csp,float rr2){
        if(tker==KERNEL_Wendland  )return(GetKernelWendland_Wab  (csp.kwend  ,csp.kernelh,rr2));

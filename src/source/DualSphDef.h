@@ -265,9 +265,9 @@ typedef struct{
 
 ///Structure with the information of the floating object in forces calculation.
 typedef struct{
-  tfloat3 fomegares;   ///<Calculated angular velocity to upadte floating body (units:rad/s).
-  tfloat3 fvelres;     ///<Calculated linear velocity to upadte floating body (units:m/s).
-  tdouble3 fcenterres; ///<Calculated center to upadte floating body (units:m).
+  tfloat3 fomegares;   ///<Calculated angular velocity to update floating body (units:rad/s).
+  tfloat3 fvelres;     ///<Calculated linear velocity to update floating body (units:m/s).
+  tdouble3 fcenterres; ///<Calculated center to update floating body (units:m).
 }StFtoForcesRes;
 
 ///Structure with the information of the solid object for DEM interaction (Discrete Element Method).
@@ -368,11 +368,11 @@ typedef enum{
   INTERSTEP_SymCorrector=3  ///<Interaction to compute forces using the Symplectic algorithm (corrector step). 
 }TpInterStep;
 
-///Types of density diffussion term.
+///Types of density diffusion term.
 typedef enum{ 
-  DDT_DDT2Full=3, ///<Density Diffussion Term 2 (Fourtakas et al 2019). It is applied to all fluid particles.
-  DDT_DDT2=2,     ///<Density Diffussion Term 2 (Fourtakas et al 2019). It is only applied to inner fluid particles.
-  DDT_DDT=1,      ///<Density Diffussion Term 1 (Molteni and Colagrossi 2009). It is only applied to inner fluid particles.
+  DDT_DDT2Full=3, ///<Density Diffusion Term 2 (Fourtakas et al 2019). It is applied to all fluid particles.
+  DDT_DDT2=2,     ///<Density Diffusion Term 2 (Fourtakas et al 2019). It is only applied to inner fluid particles.
+  DDT_DDT=1,      ///<Density Diffusion Term 1 (Molteni and Colagrossi 2009). It is only applied to inner fluid particles.
   DDT_None=0 
 }TpDensity;
 

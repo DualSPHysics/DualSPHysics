@@ -22,7 +22,7 @@
 //:# - Creacion para implementacion de kernels SPH. (03-07-2020)
 //:#############################################################################
 
-/// \file FunSphKernelDef.h \brief Defines structures for SPH kenerls.
+/// \file FunSphKernelDef.h \brief Defines structures for SPH kernels.
 
 #ifndef _FunSphKernelDef_
 #define _FunSphKernelDef_

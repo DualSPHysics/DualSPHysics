@@ -865,7 +865,7 @@ void JSph::LoadConfigCommands(const JSphCfgRun *cfg){
 /// Creates and load NuxLib object to evaluate user-defined expressions.
 //==============================================================================
 void JSph::LoadConfigVars(const JXml *xml){
-  if(!JNumexLib::Available())Log->PrintWarning("Code for JNumex libary is not included in the current compilation, so user-defined expresions in XML file are not evaluated.");
+  if(!JNumexLib::Available())Log->PrintWarning("Code for JNumex library is not included in the current compilation, so user-defined expressions in XML file are not evaluated.");
   else{
     NuxLib=new JNumexLib();
     //-Loads user variables from XML.
@@ -1639,7 +1639,7 @@ void JSph::VisuRefs(){
   if(TVisco==VISCO_Artificial)Log->Print("- Viscosity: Artificial (Monaghan, 1992  https://doi.org/10.1146/annurev.aa.30.090192.002551)");
   if(TVisco==VISCO_LaminarSPS)Log->Print("- Viscosity: Laminar + SPS turbulence model (Dalrymple and Rogers, 2006  https://doi.org/10.1016/j.coastaleng.2005.10.004)");
   if(ViscoBoundFactor!=1     )Log->Print("- Viscosity: ViscoBoundFactor coefficient (Barreiro et al., 2014  https://doi.org/10.1371/journal.pone.0111031)");
-  //-Kernel fuctions:
+  //-Kernel functions:
   if(TKernel==KERNEL_Cubic   )Log->Print("- Kernel: Cubic Spline (Monaghan, 1992  https://doi.org/10.1146/annurev.aa.30.090192.002551)");
   if(TKernel==KERNEL_Wendland)Log->Print("- Kernel: Quintic Wendland (Wendland, 1995  https://doi.org/10.1007/BF02123482)");
   //-Time integration scheme: 
@@ -2103,7 +2103,7 @@ void JSph::InitRun(unsigned np,const unsigned *idp,const tdouble3 *pos){
   //-Free memory of PartsLoaded.
   delete PartsLoaded; PartsLoaded=NULL;
 
-  //-Adjust paramaters to start.
+  //-Adjust parameters to start.
   PartIni=PartBeginFirst;
   TimeStepIni=(!PartIni? 0: PartBeginTimeStep);
   //-Adjust motion for the instant of the loaded PART.

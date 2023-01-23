@@ -28,7 +28,7 @@
 //# =========
 //# - Clase para gestionar uno o varios pistones de velocidad-X. (10-05-2014)
 //# - Remplaza long long por llong. (01-10-2015)
-//# - Improved exception managment. (19-03-2020)  
+//# - Improved exception management. (19-03-2020)  
 //# - Comprueba opcion active en elementos de primer y segundo nivel. (19-03-2020)  
 //# - Nueva funcion CalculateMontionInit() para permitir el reinicio. (30-10-2021)  
 //#############################################################################

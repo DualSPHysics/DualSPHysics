@@ -209,7 +209,7 @@ int _ConvertSMVer2Cores(int major, int minor){
   /// Defines for GPU Architecture types (using the SM version to determine the # of cores per SM).
   typedef struct
   {
-    int SM; // 0xMm (hexidecimal notation), M = SM Major version, and m = SM minor version
+    int SM; // 0xMm (hexadecimal notation), M = SM Major version, and m = SM minor version
     int Cores;
   } sSMtoCores;
 
@@ -667,7 +667,7 @@ tdouble3* ToHostPosd3(unsigned pini,unsigned n,const double2 *posxyg,const doubl
 }
 
 //==============================================================================
-/// Returns dynamic pointers with x,y,z data and w values are saved in ptr_w. (theses pointers must be deleted)
+/// Returns dynamic pointers with x,y,z data and w values are saved in ptr_w. (these pointers must be deleted)
 //==============================================================================
 tfloat3* ToHostFloatXYZ_W(unsigned pini,unsigned n,const float4 *ptrg,float **ptr_w){
   Check_CudaErroorFun("At the beginning.");

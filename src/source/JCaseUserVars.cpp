@@ -54,7 +54,7 @@ void JCaseUserVars::Reset(){
 }
 
 //==============================================================================
-/// Sort funtion.
+/// Sort function.
 //==============================================================================
 bool JCaseUserVarsSort(const JCaseUserVars::StVar &a,const JCaseUserVars::StVar &b){ 
   return (a.isnum!=b.isnum? !a.isnum: a.name<b.name);

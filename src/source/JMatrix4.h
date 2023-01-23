@@ -57,12 +57,12 @@ private:
 
 public:
 //==============================================================================
-/// Construtor of objects.
+/// Constructor of objects.
 //==============================================================================
   JMatrix4(){ SetIdentity(); }
 
 //==============================================================================
-/// Construtor of objects.
+/// Constructor of objects.
 //==============================================================================
   //JMatrix4(const JMatrix4 &m){ 
   //  //printf("***copia***\n");
@@ -73,7 +73,7 @@ public:
   //}
 
 //==============================================================================
-/// Construtor of objects.
+/// Constructor of objects.
 /// \param m structure of type matrix 4x4.
 //==============================================================================
   JMatrix4(TMAT m){ 
@@ -84,7 +84,7 @@ public:
   }
 
 //==============================================================================
-/// Becomes the indentity matrix.
+/// Becomes the identity matrix.
 //==============================================================================
   void SetIdentity(){
     a11=1; a12=0; a13=0; a14=0;
@@ -94,7 +94,7 @@ public:
   }
 
 //==============================================================================
-/// Returns true when matrix is the indentity matrix.
+/// Returns true when matrix is the identity matrix.
 //==============================================================================
   bool IsIdentity(){
     return(a11==1 && a12==0 && a13==0 && a14==0
@@ -231,7 +231,7 @@ public:
 
 //==============================================================================
 /// Rotational motion is applied over an arbitrary axis.
-/// \param ang Angle of roation (in degrees).
+/// \param ang Angle of rotation (in degrees).
 /// \param axisp1 Initial point of the array that defines the axis of rotation.
 /// \param axisp2 Final point of the array that defines the axis of rotation.
 //==============================================================================
@@ -241,14 +241,14 @@ public:
 
 //==============================================================================
 /// Rotational motion is applied.
-/// \param ang Angles of roation for each axis (in degrees).
+/// \param ang Angles of rotation for each axis (in degrees).
 //==============================================================================
   void Rotate(T3 ang){
     Mul(MatrixRot(ang));
   }
 
 //==============================================================================
-/// Scaling is aplied.
+/// Scaling is applied.
 /// \param p Array with the scale in every axis.
 //==============================================================================
   void Scale(const T3 &p){
@@ -277,7 +277,7 @@ public:
 
 //==============================================================================
 /// Returns a transformation matrix for a rotation in axis X.
-/// \param ang Angle of roation (in degrees).
+/// \param ang Angle of rotation (in degrees).
 //==============================================================================
   static JMatrix4 MatrixRotX(T ang){
     //MatrixRot(ang,TDouble3(0,0,0),TDouble3(-1,0,0));
@@ -289,7 +289,7 @@ public:
 
 //==============================================================================
 /// Returns a transformation matrix for a rotation in axis Y.
-/// \param ang Angle of roation (in degrees).
+/// \param ang Angle of rotation (in degrees).
 //==============================================================================
   static JMatrix4 MatrixRotY(T ang){
     //MatrixRot(ang,TDouble3(0,0,0),TDouble3(0,-1,0));
@@ -301,7 +301,7 @@ public:
 
 //==============================================================================
 /// Returns a transformation matrix for a rotation in axis Z.
-/// \param ang Angle of roation (in degrees).
+/// \param ang Angle of rotation (in degrees).
 //==============================================================================
   static JMatrix4 MatrixRotZ(T ang){
     //MatrixRot(ang,TDouble3(0,0,0),TDouble3(0,0,-1));
@@ -313,7 +313,7 @@ public:
 
 //==============================================================================
 /// Returns a transformation matrix for a rotation.
-/// \param ang Angle of roation in each axis (in degrees).
+/// \param ang Angle of rotation in each axis (in degrees).
 //==============================================================================
   static JMatrix4 MatrixRot(T3 ang){
     JMatrix4 m;
@@ -325,7 +325,7 @@ public:
 
 //==============================================================================
 /// Returns a transformation matrix for a rotation over an arbitrary axis.
-/// \param ang Angle of roation (in degrees).
+/// \param ang Angle of rotation (in degrees).
 /// \param axisp1 Initial point of the array that defines the axis of rotation.
 /// \param axisp2 Final point of the array that defines the axis of rotation.
 //==============================================================================
@@ -367,7 +367,7 @@ public:
 
 //==============================================================================
 /// Returns axis rotation and translation.
-/// \param rot Angles of roation (in degrees).
+/// \param rot Angles of rotation (in degrees).
 /// \param mov Translation.
 //==============================================================================
   void GetMotion(T3 &rot,T3 &mov)const{

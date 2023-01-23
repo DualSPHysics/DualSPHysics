@@ -207,7 +207,7 @@ void JSphInOutZone::ReadXml(const JXml *sxml,TiXmlElement* ele,const std::string
   }
   //-Loads layers value.
   unsigned layers=sxml->ReadElementUnsigned(ele,"layers","value");
-  if(layers<1)sxml->ErrReadElement(ele,"layers",false,"Minumum number of layers is 1.");
+  if(layers<1)sxml->ErrReadElement(ele,"layers",false,"Minimum number of layers is 1.");
   if(layers>250)sxml->ErrReadElement(ele,"layers",false,"Maximum number of layers is 250.");
   Layers=byte(layers);
   //-Creates inlet points.
@@ -318,7 +318,7 @@ byte JSphInOutZone::GetConfigUpdate()const{
 }
 
 //==============================================================================
-/// Loads positon of inlet/outlet points.
+/// Loads position of inlet/outlet points.
 //==============================================================================
 unsigned JSphInOutZone::LoadInletPoints(tdouble3 *pos){
   const tdouble3 *ptpos=Points->GetPoints();
@@ -328,7 +328,7 @@ unsigned JSphInOutZone::LoadInletPoints(tdouble3 *pos){
 }
 
 //==============================================================================
-/// Loads positon of initial inlet/outlet particles.
+/// Loads position of initial inlet/outlet particles.
 //==============================================================================
 void JSphInOutZone::LoadInitialParticles(unsigned npartinit,tdouble3 *pos){
   const tdouble3 *ptpos=Points->GetPoints();

@@ -249,9 +249,9 @@ void JDsMooredFloatings::Config(unsigned ftcount,const StFloatingData *ftdata
   if(nftm<1)Run_Exceptioon("There are not moored floatings.");
   //if(nftm>1)Run_Exceptioon("MoorDyn only supports one moored floating.");
   
-  //-Initilizes MoorDyn moorings.
+  //-Initializes MoorDyn moorings.
   {
-    //-Prepares data to initilize moorings.
+    //-Prepares data to initialize moorings.
     unsigned *ftmkb=new unsigned[nftm];
     tdouble3 *ftvellin=new tdouble3[nftm];
     tdouble3 *ftvelang=new tdouble3[nftm];
@@ -261,7 +261,7 @@ void JDsMooredFloatings::Config(unsigned ftcount,const StFloatingData *ftdata
       ftvellin[cfm]=ToTDouble3(ftdata[ftid].fvel);
       ftvelang[cfm]=ToTDouble3(ftdata[ftid].fomega);
     }
-    //-Initilizes MoorDyn.
+    //-Initializes MoorDyn.
     string filexml=FileLines;
     string nodexml="moordyn";
     if(filexml.empty()){

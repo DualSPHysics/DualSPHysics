@@ -20,7 +20,7 @@
 //:# Cambios:
 //:# =========
 //:# - Clase para gestionar zonas de shifting. (24-11-2019)
-//:# - Improved exception managment. (19-03-2020)  
+//:# - Improved exception management. (19-03-2020)  
 //:# - Objeto JXml pasado como const para operaciones de lectura. (19-03-2020)  
 //:# - Comprueba opcion active en elementos de primer y segundo nivel. (19-03-2020)  
 //:# - Nuevo metodo GetConfigInfo(). (03-06-2020)  

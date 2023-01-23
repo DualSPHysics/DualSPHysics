@@ -1015,7 +1015,7 @@ void JBinaryData::WriteArrayData(std::fstream *pf,const JBinaryDataArray *ar)con
   const unsigned countdata=ar->GetCount();
   const void* pointer=ar->GetPointer();
   if(countdata&&!pointer)Run_Exceptioon("Pointer of array with data is invalid.");
-  if(type==JBinaryDataDef::DatText){//-Array de strings. Stings Array
+  if(type==JBinaryDataDef::DatText){//-Array de strings. Strings Array
     const string *list=(string*)pointer;
     unsigned sbuf=0;
     for(unsigned c=0;c<countdata;c++)InStr(sbuf,0,NULL,list[c]);//-Calcula size de buffer. Calculate buffer size.

@@ -78,7 +78,7 @@ unsigned JDsViscoInput::GetAllocMemory()const{
 
 //==============================================================================
 /// Carga valores de viscosidad para diferentes instantes (en segundos).
-/// Loads viscosity values for different instants (in secods).
+/// Loads viscosity values for different instants (in seconds).
 //==============================================================================
 void JDsViscoInput::LoadFile(std::string file){
   Reset();

@@ -62,11 +62,11 @@ private:
   double Data2dPosY;     ///<Y value in 2D simulations.
   double Dp;
   double H;
-  double Dist;           ///<Distance used for calculating normal data (tipically KernelSize).
+  double Dist;           ///<Distance used for calculating normal data (typically KernelSize).
   bool FtSupport;        ///<Enables support for floating bodies.
 
   std::string PartNormalsName; ///<Name of normals approach used for PartNormals (Mean or Marrone).
-  unsigned Nbound;       ///<Number boudary particles.
+  unsigned Nbound;       ///<Number boundary particles.
   tdouble3 *PartNormals; ///<Final normals of particles [Nbound]
 
   unsigned CountNormals; ///<Total number of normals.
