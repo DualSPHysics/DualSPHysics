@@ -236,7 +236,7 @@ protected:
   float CteB;              ///<Constant used in the state equation [Pa].
   float Gamma;             ///<Politropic constant for water used in the state equation.
   float RhopZero;          ///<Reference density of the fluid [kg/m3].
-  float CFLnumber;         ///<Coefficient to multiply dt.
+  double CFLnumber;        ///<Coefficient to multiply dt.
   double Dp;               ///<Initial distance between particles [m].
   float MassFluid;         ///<Reference mass of the fluid particle [kg].
   float MassBound;         ///<Reference mass of the general boundary particle [kg].

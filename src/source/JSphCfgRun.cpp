@@ -67,6 +67,7 @@ void JSphCfgRun::Reset(){
   PartBegin=0; PartBeginFirst=0; PartBeginDir="";
   RestartChrono=false;
   TimeMax=-1; TimePart=-1;
+  CFLnumber=-1;
   RhopOutModif=false; RhopOutMin=700; RhopOutMax=1300;
   FtPause=-1;
   NstepsBreak=0;
@@ -168,6 +169,7 @@ void JSphCfgRun::VisuInfo()const{
   printf("    -tmax:<float>   Maximum time of simulation\n");
   printf("    -tout:<float>   Time between output files\n");
   printf("\n");
+  printf("    -cfl:<float> CFL number coefficient to multiply dt\n");
   printf("    -ftpause:<float> Time to start floating bodies movement. By default 0\n");
   printf("    -rhopout:min:max Excludes fluid particles out of these density limits\n");
   printf("    -domain_fixed:xmin:ymin:zmin:xmax:ymax:zmax    The domain is fixed\n");
@@ -395,6 +397,10 @@ void JSphCfgRun::LoadOpts(string *optlis,int optn,int lv,const std::string &file
         RhopOutMin=float(atof(txopt1.c_str())); 
         RhopOutMax=float(atof(txopt2.c_str())); 
         RhopOutModif=true;
+      }
+      else if(txword=="CFL"){ 
+        CFLnumber=atof(txoptfull.c_str()); 
+        if(CFLnumber<=0)ErrorParm(opt,c,lv,file);
       }
       else if(txword=="FTPAUSE"){ 
         FtPause=float(atof(txoptfull.c_str())); 

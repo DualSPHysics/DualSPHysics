@@ -205,7 +205,8 @@ void JSph::InitVars(){
   SvTimers=false;
   SvDomainVtk=false;
 
-  KernelH=CteB=Gamma=RhopZero=CFLnumber=0;
+  KernelH=CteB=Gamma=RhopZero=0;
+  CFLnumber=0;
   Dp=0;
   MassFluid=MassBound=0;
   Gravity=TFloat3(0);
@@ -573,7 +574,7 @@ void JSph::LoadConfigCtes(const JXml *xml){
   CteB=(float)ctes.GetB();
   Gamma=(float)ctes.GetGamma();
   RhopZero=(float)ctes.GetRhop0();
-  CFLnumber=(float)ctes.GetCFLnumber();
+  CFLnumber=ctes.GetCFLnumber();
   Dp=ctes.GetDp();
   MassFluid=(float)ctes.GetMassFluid();
   MassBound=(float)ctes.GetMassBound();
@@ -834,6 +835,7 @@ void JSph::LoadConfigCommands(const JSphCfgRun *cfg){
     Shifting->ConfigBasic(shiftmode);
   }
 
+  if(cfg->CFLnumber>0)CFLnumber=cfg->CFLnumber;
   if(cfg->FtPause>=0)FtPause=cfg->FtPause;
   if(cfg->TimeMax>0)TimeMax=cfg->TimeMax;
   NstepsBreak=cfg->NstepsBreak;
