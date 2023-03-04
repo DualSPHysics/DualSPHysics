@@ -42,6 +42,7 @@ typedef enum{
   ,TMC_SuChrono=14
   ,TMC_SuMoorings=15
   ,TMC_SuInOut=16
+  ,TMC_SuGauges=17
 }TpTimersCPU;
 
 //##############################################################################
@@ -81,6 +82,7 @@ public:
     Add(TMC_SuChrono     ,"SU-Chrono"     ,0,SvTimers);
     Add(TMC_SuMoorings   ,"SU-Moorings"   ,0,SvTimers);
     Add(TMC_SuInOut      ,"SU-InOut"      ,0,SvTimers);
+    Add(TMC_SuGauges     ,"SU-Gauges"     ,0,SvTimers);
   }
   
   //==============================================================================
