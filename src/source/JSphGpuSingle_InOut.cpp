@@ -200,15 +200,17 @@ void JSphGpuSingle::InOutComputeStep(double stepdt){
     //-Creates new inlet particles using advanced refilling mode.
     if(InOut->Use_RefillAdvanced()){
       //-Creates new inlet particles using advanced refilling mode.
-      float   *prodistg =ArraysGpu->ReserveFloat();
-      double2 *proposxyg=ArraysGpu->ReserveDouble2();
-      double  *proposzg =ArraysGpu->ReserveDouble();
-      newnp+=InOut->ComputeStepFillingGpu(Nstep,stepdt,inoutcountpre,inoutpart
-        ,IdMax+1+newnp,GpuParticlesSize,Np+newnp,Posxyg,Poszg,Dcellg,Codeg,Idpg,Velrhopg
-        ,zsurfok,prodistg,proposxyg,proposzg,Timersg);
-      ArraysGpu->Free(prodistg);
-      ArraysGpu->Free(proposxyg);
-      ArraysGpu->Free(proposzg);
+      if(!InOut->RefillingRate || (Nstep%InOut->RefillingRate)==0){
+        float   *prodistg =ArraysGpu->ReserveFloat();
+        double2 *proposxyg=ArraysGpu->ReserveDouble2();
+        double  *proposzg =ArraysGpu->ReserveDouble();
+        newnp+=InOut->ComputeStepFillingGpu(Nstep,stepdt,inoutcountpre,inoutpart
+          ,IdMax+1+newnp,GpuParticlesSize,Np+newnp,Posxyg,Poszg,Dcellg,Codeg,Idpg,Velrhopg
+          ,zsurfok,prodistg,proposxyg,proposzg,Timersg);
+        ArraysGpu->Free(prodistg);
+        ArraysGpu->Free(proposxyg);
+        ArraysGpu->Free(proposzg);
+      }
     }
     //-Free arrays.
     ArraysGpu->Free(inoutpart);

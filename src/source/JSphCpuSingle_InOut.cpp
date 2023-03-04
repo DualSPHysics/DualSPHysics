@@ -181,13 +181,15 @@ void JSphCpuSingle::InOutComputeStep(double stepdt){
     //-Creates new inlet particles using advanced refilling mode.
     if(InOut->Use_RefillAdvanced()){
       //-Creates new inlet particles using advanced refilling mode.
-      float    *prodist=ArraysCpu->ReserveFloat();
-      tdouble3 *propos =ArraysCpu->ReserveDouble3();
-      newnp+=InOut->ComputeStepFillingCpu(inoutcountpre,inoutpart
-        ,this,IdMax+1+newnp,CpuParticlesSize,Np+newnp,Posc,Dcellc,Codec,Idpc,Velrhopc
-        ,zsurfok,prodist,propos);
-      ArraysCpu->Free(prodist);
-      ArraysCpu->Free(propos);
+      if(!InOut->RefillingRate || (Nstep%InOut->RefillingRate)==0){
+        float    *prodist=ArraysCpu->ReserveFloat();
+        tdouble3 *propos =ArraysCpu->ReserveDouble3();
+        newnp+=InOut->ComputeStepFillingCpu(inoutcountpre,inoutpart
+          ,this,IdMax+1+newnp,CpuParticlesSize,Np+newnp,Posc,Dcellc,Codec,Idpc,Velrhopc
+          ,zsurfok,prodist,propos);
+        ArraysCpu->Free(prodist);
+        ArraysCpu->Free(propos);
+      }
     }
     //-Free arrays.
     ArraysCpu->Free(inoutpart);

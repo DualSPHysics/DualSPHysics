@@ -174,8 +174,9 @@ private:
 
 public:
   const bool Cpu;
-  const StCteSph CSP; ///<Structure with main SPH constants values and configurations.
-  unsigned Nstep;     ///<Number of step in execution (for debug).
+  const StCteSph CSP;     ///<Structure with main SPH constants values and configurations.
+  unsigned Nstep;         ///<Number of step in execution.
+  unsigned RefillingRate; ///<Advanced refilling rate to increase performance (default=10).
 
   std::vector<unsigned> MkFluidList;
     
