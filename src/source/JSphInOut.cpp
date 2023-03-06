@@ -149,8 +149,7 @@ void JSphInOut::LoadXmlInit(const JXml *sxml,const std::string &place){
   if(ExtrapolateMode<1)ExtrapolateMode=1;
   if(ExtrapolateMode<2 && Cpu)ExtrapolateMode=2;
   //-Loads RefillingRate.
-  RefillingRate=sxml->ReadElementInt(ele,"refillingrate","value",true,10);
-  RefillingRate=max(RefillingRate,0);
+  RefillingRate=sxml->ReadElementUnsigned(ele,"refillingrate","value",true,10);
   //-Loads UseBoxLimit.
   UseBoxLimit=sxml->ReadElementBool(ele,"useboxlimit","value",true,true);
   {
