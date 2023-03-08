@@ -987,7 +987,7 @@ double JSphGpu::DtVariable(bool final){
   //-dt2 combines the Courant and the viscous time-step controls.
   const double dt2=double(KernelH)/(max(Cs0,VelMax*10.)+double(KernelH)*ViscDtMax);
   //-dt new value of time step.
-  double dt=double(CFLnumber)*min(dt1,dt2);
+  double dt=CFLnumber*min(dt1,dt2);
   if(FixedDt)dt=FixedDt->GetDt(TimeStep,dt);
   if(fun::IsNAN(dt) || fun::IsInfinity(dt))Run_Exceptioon(fun::PrintStr("The computed Dt=%f (from AceMax=%f, VelMax=%f, ViscDtMax=%f) is NaN or infinity at nstep=%u.",dt,AceMax,VelMax,ViscDtMax,Nstep));
   if(dt<double(DtMin)){ 
