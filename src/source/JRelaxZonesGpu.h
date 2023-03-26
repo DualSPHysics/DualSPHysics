@@ -151,5 +151,46 @@ public:
 };
 
 
+//##############################################################################
+//# JRelaxZoneMeshdataExt
+//##############################################################################
+class JXml;
+class TiXmlElement;
+
+/// \brief Manages shared definitions for RZ application.
+class JRelaxZoneMeshdataExt : protected JObject
+{
+private:
+  const bool Cpu;
+  const std::string AppName;
+  const std::string DirData;
+  const tfloat3 Direction;
+  const byte Id1;
+  void* Ptr;
+
+public:
+  JRelaxZoneMeshdataExt(word id,std::string appname,std::string dirdata,tfloat3 dir,bool cpu);
+  ~JRelaxZoneMeshdataExt();
+  void Config(const JXml* sxml,TiXmlElement* lis);
+  void GetConfig(std::vector<std::string>& lines)const;
+
+  void SetFluidVelOmp(double timestep,unsigned n,unsigned pini
+    ,const byte* rzid,const float* rzfactor,const tdouble3* pos,tfloat4* velrhop);
+
+  void InitFindGpu(unsigned n,unsigned pini,byte* rzid);
+  void FindFluidVelGpu(unsigned n,unsigned pini
+    ,const tfloat4& cenpla,const tfloat4& dompla1
+    ,const tfloat4& dompla2,const tfloat4& dompla3
+    ,const float domsize1,const float domsize2,const float domsize3
+    ,float widthhalf,float coeff,double falpha,double fbeta,double fsub
+    ,double fdiv,unsigned fluidbeginidp
+    ,const tdouble2* posxy,const double* posz,const unsigned* idp
+    ,byte* rzid,float* rzfactor);
+  void SetFluidVelGpu(double timestep,unsigned n,unsigned pini
+    ,const byte* rzid,const float* rzfactor,const tdouble2* posxy
+    ,const double* posz,tfloat4* velrhop);
+};
+
+
 #endif
 

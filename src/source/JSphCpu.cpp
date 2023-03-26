@@ -1866,7 +1866,9 @@ void JSphCpu::MovePiston2d(unsigned np,unsigned ini
 //==============================================================================
 void JSphCpu::RunRelaxZone(double dt){
   Timersc->TmStart(TMC_SuMotion);
-  RelaxZones->SetFluidVel(TimeStep,dt,Np-Npb,Npb,Posc,Idpc,Velrhopc);
+  byte* rzid=NULL;
+  float* rzfactor=NULL; 
+  RelaxZones->SetFluidVel(TimeStep,dt,Np-Npb,Npb,Posc,Idpc,Velrhopc,rzid,rzfactor);
   Timersc->TmStop(TMC_SuMotion);
 }
 

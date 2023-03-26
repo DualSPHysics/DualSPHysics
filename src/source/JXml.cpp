@@ -68,7 +68,7 @@ void JXml::Reset(){
 /// \param createpath Allows to create the path if does not exist,
 /// otherwise returns \a NULL.
 //==============================================================================
-TiXmlNode* JXml::GetNode(const std::string &path,bool createpath){
+TiXmlNode* JXml::GetNode(const std::string& path,bool createpath){
   std::string pathx=path;
   TiXmlNode* node=NULL;
   TiXmlNode* base=Doc;
@@ -95,7 +95,7 @@ TiXmlNode* JXml::GetNode(const std::string &path,bool createpath){
   /// \param checkactive Checks if node is active.
 /// otherwise returns \a NULL.
 //==============================================================================
-TiXmlNode* JXml::GetNodeSimple(const std::string &path,bool checkactive)const{
+TiXmlNode* JXml::GetNodeSimple(const std::string& path,bool checkactive)const{
   std::string pathx=path;
   TiXmlNode* node=NULL;
   TiXmlNode* base=Doc;
@@ -116,7 +116,7 @@ TiXmlNode* JXml::GetNodeSimple(const std::string &path,bool checkactive)const{
 /// Returns the requested node and if does not exist an exception is thrown.
 /// \throw The requested node does not exist.
 //==============================================================================
-TiXmlNode* JXml::GetNodeError(const std::string &path){
+TiXmlNode* JXml::GetNodeError(const std::string& path){
   TiXmlNode* node=GetNode(path,false);
   if(!node){
     std::string tex="Error reading xml - can not find the element \'";
@@ -134,7 +134,9 @@ TiXmlNode* JXml::GetNodeError(const std::string &path){
 /// returns \a NULL instead of throwing an exception.
 /// \throw JException The requested element does not exist...
 //==============================================================================
-TiXmlElement* JXml::GetFirstElement(const TiXmlNode* node,const std::string &name,bool optional)const{
+TiXmlElement* JXml::GetFirstElement(const TiXmlNode* node
+  ,const std::string& name,bool optional)const
+{
   TiXmlElement* ret=(TiXmlElement*)node->FirstChildElement(name.c_str());
   if(!ret && !optional)ErrReadElement(node,name,true);
   return(ret);
@@ -148,7 +150,9 @@ TiXmlElement* JXml::GetFirstElement(const TiXmlNode* node,const std::string &nam
 /// returns \a NULL instead of throwing an exception.
 /// \throw JException The requested element does not exist...
 //==============================================================================
-TiXmlElement* JXml::GetNextElement(const TiXmlNode* node,const std::string &name,bool optional)const{
+TiXmlElement* JXml::GetNextElement(const TiXmlNode* node,const std::string& name
+  ,bool optional)const
+{
   const TiXmlElement* ret=node->NextSiblingElement(name.c_str());
   if(!ret && !optional)ErrReadElement(node,name,true);
   return((TiXmlElement*)ret);
@@ -159,7 +163,7 @@ TiXmlElement* JXml::GetNextElement(const TiXmlNode* node,const std::string &name
 /// \param node Xml node where the reach is performed.
 /// \param name Name of filtered elements (no filter using "").
 //==============================================================================
-unsigned JXml::CountElements(const TiXmlNode* node,const std::string &name)const{
+unsigned JXml::CountElements(const TiXmlNode* node,const std::string& name)const{
   unsigned count=0;
   TiXmlElement* ele=GetFirstElement(node,name,true);
   while(ele){
@@ -174,7 +178,7 @@ unsigned JXml::CountElements(const TiXmlNode* node,const std::string &name)const
 /// \param lis Xml element to look for requesed element name.
 /// \param name Element name to look for.
 //==============================================================================
-bool JXml::CheckElementActive(const TiXmlElement* lis,const std::string &name)const{
+bool JXml::CheckElementActive(const TiXmlElement* lis,const std::string& name)const{
   //return(lis? ReadElementBool(lis,name,"active",true,true): false);
   bool active=false;
   TiXmlElement* ele=(lis? GetFirstElement(lis,name,true): NULL);
@@ -194,7 +198,7 @@ bool JXml::CheckElementActive(const TiXmlElement* ele)const{
 /// Removes the requested node.
 /// \param path Path of the requested node.
 //==============================================================================
-void JXml::RemoveNode(const std::string &path){
+void JXml::RemoveNode(const std::string& path){
   TiXmlNode* node=GetNode(path,false);
   if(node)node->Parent()->RemoveChild(node);
 }
@@ -209,7 +213,9 @@ std::string JXml::ErrGetFileRow(const TiXmlNode* node)const{
 //==============================================================================
 /// Returns the filename of the current xml with row of the first element in the node.
 //==============================================================================
-std::string JXml::ErrGetFileRow(const TiXmlNode* node,const std::string &firstelement)const{
+std::string JXml::ErrGetFileRow(const TiXmlNode* node
+  ,const std::string& firstelement)const
+{
   TiXmlNode* ele=GetFirstElement(node,firstelement,true);
   return(ErrGetFileRow(ele? ele: node));
 }
@@ -221,7 +227,7 @@ std::string JXml::ErrGetFileRow(const TiXmlNode* node,const std::string &firstel
 /// \param missing Error because it does not exist.
 /// \throw JException Error in element...
 //==============================================================================
-void JXml::ErrReadElement(const TiXmlNode* node,const std::string &element
+void JXml::ErrReadElement(const TiXmlNode* node,const std::string& element
   ,bool missing,std::string errortext)const
 {
   std::string tex="Error reading xml - ";
@@ -239,7 +245,9 @@ void JXml::ErrReadElement(const TiXmlNode* node,const std::string &element
 /// \param missing Error because it does not exist.
 /// \throw JException Error in element...
 //==============================================================================
-void JXml::ErrReadAtrib(const TiXmlElement* ele,const std::string &atrib,bool missing,std::string errortext)const{
+void JXml::ErrReadAtrib(const TiXmlElement* ele,const std::string& atrib
+  ,bool missing,std::string errortext)const
+{
   std::string tex="Error reading xml - ";
   if(missing)tex=tex+"Attribute \'"+atrib+"\' is missing.";
   else{
@@ -255,7 +263,7 @@ void JXml::ErrReadAtrib(const TiXmlElement* ele,const std::string &atrib,bool mi
 /// \param missing Error because it does not exist.
 /// \throw JException Error in element...
 //==============================================================================
-void JXml::ErrUnknownAtrib(const TiXmlElement* ele,const std::string &atrib)const{
+void JXml::ErrUnknownAtrib(const TiXmlElement* ele,const std::string& atrib)const{
   std::string tex="Error reading xml - ";
   tex=tex+"Attribute \'"+atrib+"\' is unknown.";
   Run_ExceptioonFile(tex,ErrGetFileRow(ele));
@@ -271,7 +279,9 @@ void JXml::ErrUnknownAtrib(const TiXmlElement* ele,const std::string &atrib)cons
 /// \param names List of valid names (separated by spaces and *name for repeatable names).
 /// \param checkrepeated Checks if there are repeated elements.
 //==============================================================================
-void JXml::CheckElementNames(const TiXmlElement* lis,bool checkrepeated,std::string names)const{
+void JXml::CheckElementNames(const TiXmlElement* lis,bool checkrepeated
+  ,std::string names)const
+{
   //-Create list of elements.
   vector<string> vnames;
   vector<string> vnamesr;
@@ -321,7 +331,9 @@ void JXml::CheckElementNames(const TiXmlElement* lis,bool checkrepeated,std::str
 /// \param checkmanyatt Throw exception if several attributes exist.
 /// \param checkmanyele Throw exception if several elements exist.
 //==============================================================================
-int JXml::CheckElementAttributes(const TiXmlElement* ele,const std::string &name,std::string attnames,bool checkmanyatt,bool checkmanyele)const{
+int JXml::CheckElementAttributes(const TiXmlElement* ele,const std::string& name
+  ,std::string attnames,bool checkmanyatt,bool checkmanyele)const
+{
   if(checkmanyele && CountElements(ele,name)>1)Run_ExceptioonFile(string("Element \'"+name+"\' appears several times."),ErrGetFileRow(ele));
   TiXmlElement* ele2=GetFirstElement(ele,name,true); 
   if(ele2)return(CheckAttributes(ele2,attnames,checkmanyatt));
@@ -338,12 +350,12 @@ int JXml::CheckElementAttributes(const TiXmlElement* ele,const std::string &name
 /// \param names List of valid names (separated by spaces).
 /// \param checkrepeated Checks if there are repeated elements.
 //==============================================================================
-void JXml::CheckAttributeNames(TiXmlElement* ele,std::string names)const{
+void JXml::CheckAttributeNames(const TiXmlElement* ele,std::string names)const{
   //-Create list of elements.
   vector<string> vnames;
   const unsigned nv=fun::VectorSplitStr(" ",fun::StrTrimRepeated(names),vnames);
   vector<string> vused;
-  TiXmlAttribute* att=ele->FirstAttribute();
+  const TiXmlAttribute* att=ele->FirstAttribute();
   while(att){
     std::string ename=att->Name();
     if(!ename.empty() && ename[0]!='_'){
@@ -359,7 +371,9 @@ void JXml::CheckAttributeNames(TiXmlElement* ele,std::string names)const{
 /// \param names List of valid names (separated by spaces).
 /// \param checkrepeated Checks if there are repeated elements.
 //==============================================================================
-void JXml::CheckAttributeNames(TiXmlElement* lis,std::string elementname,std::string names)const{
+void JXml::CheckAttributeNames(const TiXmlElement* lis,std::string elementname
+  ,std::string names)const
+{
   TiXmlElement* ele=GetFirstElement(lis,elementname,true);
   if(ele)CheckAttributeNames(ele,names);
 }
@@ -369,7 +383,7 @@ void JXml::CheckAttributeNames(TiXmlElement* lis,std::string elementname,std::st
 /// \param ele Xml element of the error.
 /// \param name Name of the requested attribute.
 //==============================================================================
-bool JXml::ExistsAttribute(const TiXmlElement* ele,const std::string &name)const{
+bool JXml::ExistsAttribute(const TiXmlElement* ele,const std::string& name)const{
   return(ele->Attribute(name.c_str())!=NULL);
 }
 
@@ -380,7 +394,9 @@ bool JXml::ExistsAttribute(const TiXmlElement* ele,const std::string &name)const
 /// \param names Names of the requested attributes separated by spaces.
 /// \param checkmanyatt Throw exception if several attributes exist.
 //==============================================================================
-int JXml::CheckAttributes(const TiXmlElement* ele,std::string names,bool checkmanyatt)const{
+int JXml::CheckAttributes(const TiXmlElement* ele,std::string names
+  ,bool checkmanyatt)const
+{
   int ret=0;
   string severaldefs;
   for(int c=1;!names.empty() && ret!=-1;c++){
@@ -424,8 +440,8 @@ int JXml::CheckAttributes(const TiXmlElement* lis,std::string elementname
 /// \param valdef Value by default if it does not exist and \a optional was activated. 
 /// \throw JException The requested attribute does not exist...
 //==============================================================================
-std::string JXml::GetAttributeStrSimple(const TiXmlElement* ele,const std::string &name
-  ,bool optional,const std::string &valdef)const
+std::string JXml::GetAttributeStrSimple(const TiXmlElement* ele
+  ,const std::string& name,bool optional,const std::string& valdef)const
 {
   std::string ret;
   if(ele->Attribute(name.c_str()))ret=ele->Attribute(name.c_str());
@@ -443,8 +459,8 @@ std::string JXml::GetAttributeStrSimple(const TiXmlElement* ele,const std::strin
 /// \param valdef Value by default if it does not exist and \a optional was activated. 
 /// \throw JException The requested attribute does not exist...
 //==============================================================================
-std::string JXml::GetAttributeStr(const TiXmlElement* ele,const std::string &name
-  ,bool optional,const std::string &valdef)const
+std::string JXml::GetAttributeStr(const TiXmlElement* ele,const std::string& name
+  ,bool optional,const std::string& valdef)const
 {
   std::string ret;
   if(ele->Attribute(name.c_str()))ret=ele->Attribute(name.c_str());
@@ -470,7 +486,9 @@ std::string JXml::GetAttributeStr(const TiXmlElement* ele,const std::string &nam
 /// \param valdef Value by default if it does not exist and \a optional was activated. 
 /// \throw JException The requested attribute does not exist...
 //==============================================================================
-bool JXml::GetAttributeBool(const TiXmlElement* ele,const std::string &name,bool optional,bool valdef)const{
+bool JXml::GetAttributeBool(const TiXmlElement* ele,const std::string& name
+  ,bool optional,bool valdef)const
+{
   bool ret=false;
   if(ele->Attribute(name.c_str())){
     const string val=ele->Attribute(name.c_str());
@@ -496,7 +514,9 @@ bool JXml::GetAttributeBool(const TiXmlElement* ele,const std::string &name,bool
 /// \param valdef Value by default if it does not exist and \a optional was activated. 
 /// \throw JException The requested attribute does not exist...
 //==============================================================================
-byte JXml::GetAttributeByte(TiXmlElement* ele,const std::string &name,bool optional,byte valdef)const{
+byte JXml::GetAttributeByte(const TiXmlElement* ele,const std::string& name
+  ,bool optional,byte valdef)const
+{
   int ret=GetAttributeInt(ele,name,optional,int(valdef));
   if(ret<0||ret>255)ErrReadAtrib(ele,name,false);
   return(byte(ret));
@@ -510,7 +530,9 @@ byte JXml::GetAttributeByte(TiXmlElement* ele,const std::string &name,bool optio
 /// \param valdef Value by default if it does not exist and \a optional was activated. 
 /// \throw JException The requested attribute does not exist...
 //==============================================================================
-word JXml::GetAttributeWord(TiXmlElement* ele,const std::string &name,bool optional,word valdef)const{
+word JXml::GetAttributeWord(const TiXmlElement* ele,const std::string& name
+  ,bool optional,word valdef)const
+{
   int ret=GetAttributeInt(ele,name,optional,int(valdef));
   if(ret<0||ret>65535)ErrReadAtrib(ele,name,false);
   return(word(ret));
@@ -525,7 +547,9 @@ word JXml::GetAttributeWord(TiXmlElement* ele,const std::string &name,bool optio
 /// \param valdef Value by default if it does not exist and \a optional was activated. 
 /// \throw JException The requested attribute does not exist...
 //==============================================================================
-unsigned JXml::GetAttributeUnsigned(TiXmlElement* ele,const std::string &name,bool optional,unsigned valdef)const{
+unsigned JXml::GetAttributeUnsigned(const TiXmlElement* ele
+  ,const std::string& name,bool optional,unsigned valdef)const
+{
   int ret=GetAttributeInt(ele,name,optional,int(valdef));
   double retdbl=GetAttributeDouble(ele,name,optional,double(valdef));
   if(retdbl<0)ErrReadAtrib(ele,name,false);
@@ -541,7 +565,9 @@ unsigned JXml::GetAttributeUnsigned(TiXmlElement* ele,const std::string &name,bo
 /// \param valdef Value by default if it does not exist and \a optional was activated. 
 /// \throw JException The requested attribute does not exist...
 //==============================================================================
-int JXml::GetAttributeInt(TiXmlElement* ele,const std::string &name,bool optional,int valdef)const{
+int JXml::GetAttributeInt(const TiXmlElement* ele,const std::string& name
+  ,bool optional,int valdef)const
+{
   int ret;
   const char *vchar=ele->Attribute(name.c_str());
   if(vchar==NULL){
@@ -571,7 +597,7 @@ int JXml::GetAttributeInt(TiXmlElement* ele,const std::string &name,bool optiona
 /// \param valdef Value by default if it does not exist and \a optional was activated. 
 /// \throw JException The requested attribute does not exist...
 //==============================================================================
-double JXml::GetAttributeDouble(TiXmlElement* ele,const std::string &name
+double JXml::GetAttributeDouble(const TiXmlElement* ele,const std::string& name
   ,bool optional,double valdef)const
 {
   double ret;
@@ -605,8 +631,8 @@ double JXml::GetAttributeDouble(TiXmlElement* ele,const std::string &name
 /// if there are less elements than the requested ones.
 /// \throw JException Values missing or any value is not valid...
 //==============================================================================
-unsigned JXml::ReadArrayFloat3(const TiXmlNode* node,const std::string &name
-  ,tfloat3 *vec,unsigned count,bool readcount)const
+unsigned JXml::ReadArrayFloat3(const TiXmlNode* node,const std::string& name
+  ,tfloat3* vec,unsigned count,bool readcount)const
 {
   unsigned rcount=0;
   if(count){
@@ -630,8 +656,8 @@ unsigned JXml::ReadArrayFloat3(const TiXmlNode* node,const std::string &name
 /// if there are less elements than the requested ones.
 /// \throw JException Values missing or any value is not valid...
 //==============================================================================
-unsigned JXml::ReadArrayDouble3(const TiXmlNode* node,const std::string &name
-  ,tdouble3 *vec,unsigned count,bool readcount)const
+unsigned JXml::ReadArrayDouble3(const TiXmlNode* node,const std::string& name
+  ,tdouble3* vec,unsigned count,bool readcount)const
 {
   unsigned rcount=0;
   if(count){
@@ -655,8 +681,8 @@ unsigned JXml::ReadArrayDouble3(const TiXmlNode* node,const std::string &name
 /// if there are less elements than the requested ones.
 /// \throw JException Values missing or any value is not valid...
 //==============================================================================
-unsigned JXml::ReadArrayInt3(const TiXmlNode* node,const std::string &name
-  ,tint3 *vec,unsigned count,bool readcount)const
+unsigned JXml::ReadArrayInt3(const TiXmlNode* node,const std::string& name
+  ,tint3* vec,unsigned count,bool readcount)const
 {
   unsigned rcount=0;
   if(count){
@@ -683,8 +709,8 @@ unsigned JXml::ReadArrayInt3(const TiXmlNode* node,const std::string &name
 /// \throw JException Element is not found...
 /// \throw JException Values missing or any value is not valid...
 //==============================================================================
-unsigned JXml::ReadMatrixDouble(const TiXmlNode* node,const std::string &name
-  ,unsigned nrows,unsigned ncols,unsigned ndata,double *data
+unsigned JXml::ReadMatrixDouble(const TiXmlNode* node,const std::string& name
+  ,unsigned nrows,unsigned ncols,unsigned ndata,double* data
   ,bool optionalvalues,double valdef)const
 {
   TiXmlElement* ele=GetFirstElement(node,name);
@@ -740,7 +766,9 @@ std::string JXml::ToStr(double v,const char* fmt){
 /// \param v Value of the attribute.
 /// \param fmt Format to be converted into text (used by printf()).
 //==============================================================================
-void JXml::AddAttribute(TiXmlElement* ele,const std::string &attrib,double v,const char* fmt){
+void JXml::AddAttribute(TiXmlElement* ele,const std::string& attrib,double v
+  ,const char* fmt)
+{
   ele->SetAttribute(attrib.c_str(),ToStr(v,fmt).c_str());
 }
 
@@ -750,7 +778,7 @@ void JXml::AddAttribute(TiXmlElement* ele,const std::string &attrib,double v,con
 /// \param attrib Name of the attribute.
 /// \param v Value of the attribute.
 //==============================================================================
-void JXml::AddAttribute(TiXmlElement* ele,const std::string &attrib,bool v){
+void JXml::AddAttribute(TiXmlElement* ele,const std::string& attrib,bool v){
   ele->SetAttribute(attrib.c_str(),ToStr(v).c_str());
 }
 
@@ -760,7 +788,7 @@ void JXml::AddAttribute(TiXmlElement* ele,const std::string &attrib,bool v){
 /// \param attrib Name of the attribute.
 /// \param v Value of the attribute.
 //==============================================================================
-void JXml::AddAttribute(TiXmlElement* ele,const std::string &attrib,int v){
+void JXml::AddAttribute(TiXmlElement* ele,const std::string& attrib,int v){
   ele->SetAttribute(attrib.c_str(),v);
 }
 
@@ -770,7 +798,9 @@ void JXml::AddAttribute(TiXmlElement* ele,const std::string &attrib,int v){
 /// \param attrib Name of the attribute.
 /// \param v Value of the attribute.
 //==============================================================================
-void JXml::AddAttribute(TiXmlElement* ele,const std::string &attrib,const std::string &v){
+void JXml::AddAttribute(TiXmlElement* ele,const std::string& attrib
+  ,const std::string& v)
+{
   ele->SetAttribute(attrib.c_str(),v.c_str());
 }
 
@@ -782,7 +812,9 @@ void JXml::AddAttribute(TiXmlElement* ele,const std::string &attrib,const std::s
 /// \param name2 Name of the second attribute (y by default).
 /// \param name3 Name of the third attribute (z by default).
 //==============================================================================
-TiXmlElement JXml::MakeElementInt3(const std::string &name,const tint3 &v,const char* name1,const char* name2,const char* name3){
+TiXmlElement JXml::MakeElementInt3(const std::string& name,const tint3 &v
+  ,const char* name1,const char* name2,const char* name3)
+{
   TiXmlElement item(name.c_str());
   AddAttribute(&item,name1,v.x);
   AddAttribute(&item,name2,v.y);
@@ -798,7 +830,9 @@ TiXmlElement JXml::MakeElementInt3(const std::string &name,const tint3 &v,const 
 /// \param name2 Name of the second attribute (y by default).
 /// \param name3 Name of the third attribute (z by default).
 //==============================================================================
-TiXmlElement JXml::MakeElementDouble3(const std::string &name,const tdouble3 &v,const char* name1,const char* name2,const char* name3){
+TiXmlElement JXml::MakeElementDouble3(const std::string& name,const tdouble3 &v
+  ,const char* name1,const char* name2,const char* name3)
+{
   TiXmlElement item(name.c_str());
   AddAttribute(&item,name1,v.x);
   AddAttribute(&item,name2,v.y);
@@ -813,7 +847,7 @@ TiXmlElement JXml::MakeElementDouble3(const std::string &name,const tdouble3 &v,
 /// \param ncol Number of cols.
 /// \param values Values of the matrix.
 //==============================================================================
-TiXmlElement JXml::MakeElementMatrixDouble(const std::string &name
+TiXmlElement JXml::MakeElementMatrixDouble(const std::string& name
   ,unsigned nrows,unsigned ncols,const double* values)
 {
   const std::string fmt=(nrows>9 || ncols>9? "v%d_%d": "v%d%d");
@@ -836,7 +870,9 @@ TiXmlElement JXml::MakeElementMatrixDouble(const std::string &name
 /// \param v Value of the attribute.
 /// \param fmt Format to be converted into text (used by printf()).
 //==============================================================================
-TiXmlElement JXml::MakeElementAttrib(const std::string &name,const std::string &attrib,double v,const char* fmt){
+TiXmlElement JXml::MakeElementAttrib(const std::string& name
+  ,const std::string& attrib,double v,const char* fmt)
+{
   TiXmlElement item(name.c_str());
   item.SetAttribute(attrib.c_str(),ToStr(v,fmt).c_str());
   return(item);
@@ -848,7 +884,9 @@ TiXmlElement JXml::MakeElementAttrib(const std::string &name,const std::string &
 /// \param attrib Name of the attribute.
 /// \param v Value of the attribute.
 //==============================================================================
-TiXmlElement JXml::MakeElementAttrib(const std::string &name,const std::string &attrib,int v){
+TiXmlElement JXml::MakeElementAttrib(const std::string& name
+  ,const std::string& attrib,int v)
+{
   TiXmlElement item(name.c_str());
   item.SetAttribute(attrib.c_str(),v);
   return(item);
@@ -860,7 +898,9 @@ TiXmlElement JXml::MakeElementAttrib(const std::string &name,const std::string &
 /// \param attrib Name of the attribute.
 /// \param v Value of the attribute.
 //==============================================================================
-TiXmlElement JXml::MakeElementAttrib(const std::string &name,const std::string &attrib,const std::string &v){
+TiXmlElement JXml::MakeElementAttrib(const std::string& name
+  ,const std::string& attrib,const std::string& v)
+{
   TiXmlElement item(name.c_str());
   item.SetAttribute(attrib.c_str(),v.c_str());
   return(item);
@@ -877,7 +917,7 @@ TiXmlElement JXml::MakeElementAttrib(const std::string &name,const std::string &
 /// \param date Stores date and time of creation.
 /// \throw JException Problems with file access...
 //==============================================================================
-void JXml::SaveFile(const std::string &fname,const std::string &app,bool date){
+void JXml::SaveFile(const std::string& fname,const std::string& app,bool date){
   if((!app.empty()||date)&&Doc->FirstChild()){
     TiXmlElement* ele=Doc->FirstChildElement();
     if(!app.empty())AddAttribute(ele,"app",app);
@@ -891,7 +931,7 @@ void JXml::SaveFile(const std::string &fname,const std::string &app,bool date){
 /// \param fname Filename.
 /// \throw JException Problems with file access...
 //==============================================================================
-void JXml::LoadFile(const std::string &fname){
+void JXml::LoadFile(const std::string& fname){
   Reset();
   FileReading=fname;
   if(!Doc->LoadFile(FileReading.c_str())){
@@ -908,7 +948,7 @@ void JXml::LoadFile(const std::string &fname){
 /// \param fname Filename.
 /// \throw JException Problems with file access...
 //==============================================================================
-void JXml::CorrectFile(const std::string &fname){
+void JXml::CorrectFile(const std::string& fname){
   const unsigned sizemax=1024*1024*100;
   unsigned size=0;
   char *data=NULL;

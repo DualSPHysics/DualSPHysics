@@ -346,6 +346,7 @@ void JSphGpu::AllocGpuMemoryParticles(unsigned np,float over){
     //ArraysGpu->AddArrayCount(JArraysGpu::SIZE_4B,1);  //-InOutPartg
     ArraysGpu->AddArrayCount(JArraysGpu::SIZE_1B,2);  //-newizone,zsurfok
   }
+
   //-Shows the allocated memory.
   MemGpuParticles=ArraysGpu->GetAllocMemoryGpu();
   PrintSizeNp(GpuParticlesSize,MemGpuParticles,GpuParticlesAllocs);
@@ -1079,7 +1080,10 @@ void JSphGpu::RunMotion(double stepdt){
 //==============================================================================
 void JSphGpu::RunRelaxZone(double dt){
   Timersg->TmStart(TMG_SuMotion,false);
-  RelaxZones->SetFluidVelGpu(TimeStep,dt,Np-Npb,Npb,(const tdouble2*)Posxyg,Poszg,Idpg,(tfloat4*)Velrhopg);
+  byte* rzid=NULL; 
+  float* rzfactor=NULL; 
+  RelaxZones->SetFluidVelGpu(TimeStep,dt,Np-Npb,Npb,(const tdouble2*)Posxyg
+    ,Poszg,Idpg,(tfloat4*)Velrhopg,rzid,rzfactor);
   Timersg->TmStop(TMG_SuMotion,false);
 }
 

@@ -47,6 +47,7 @@ class JLog2;
 class JRelaxZone;
 class JRelaxZoneExternal;
 class JRelaxZoneUniform;
+class JRelaxZoneMeshdata;
 
 //##############################################################################
 //# XML format in _FmtXML_SourceGeneration.xml.
@@ -60,8 +61,9 @@ class JRelaxZoneUniform;
 class JRelaxZones : protected JObject
 {
 public:
-  JRelaxZones(bool useomp,bool usegpu,JLog2* log,std::string dirdata
-    ,bool withfloatings,unsigned fluidbeginidp,tdouble3 gravity3){}
+  JRelaxZones(bool useomp,bool usegpu,JLog2 *log,std::string appname
+    ,std::string dirdata,bool withfloatings,unsigned fluidbeginidp
+    ,tdouble3 gravity3){}
   ~JRelaxZones(){}
   void Reset(){}
   static bool Available(){ return(false); }
@@ -76,11 +78,14 @@ public:
   unsigned GetCount()const{ return(0); }
   unsigned GetCountExternal()const{ return(0); }
   unsigned GetCountUniform()const{ return(0); }
+  unsigned GetCountMeshdata()const{ return(0); }
 
   void SetFluidVel(double timestep,double dt,unsigned n,unsigned pini
-    ,const tdouble3 *pos,const unsigned *idp,tfloat4 *velrhop)const{}
+    ,const tdouble3* pos,const unsigned* idp,tfloat4* velrhop
+    ,byte* rzid,float* rzfactor)const{}
   void SetFluidVelGpu(double timestep,double dt,unsigned n,unsigned pini
-    ,const tdouble2 *posxy,const double *posz,const unsigned *idp,tfloat4 *velrhop)const{}
+    ,const tdouble2* posxy,const double* posz,const unsigned* idp
+    ,tfloat4* velrhop,byte* rzid,float* rzfactor)const{}
 };
 
 
@@ -91,30 +96,38 @@ private:
   const bool UseOmp;
   const bool UseGpu;
   JLog2 *Log;
-  const std::string DirData;
+  const std::string AppName;    ///<Nombre de aplicacion. Application Name.
+  const std::string DirData;    ///<Directorio de datos. Data Directory.
   const bool WithFloatings;
   const unsigned FluidBeginIdp; ///<Idp for first fluid particle.
-  const double Gravity;    ///<Gravity value (always positive).
+  const double Gravity;         ///<Gravity value (always positive).
 
   std::vector<JRelaxZone*> List;
   std::vector<JRelaxZoneExternal*> ListExternal; //-For external velocity (SWASH).
-  std::vector<JRelaxZoneUniform*> ListUniform;   //-For uniform velocity.
-  
+  std::vector<JRelaxZoneUniform* > ListUniform;  //-For uniform velocity.
+  std::vector<JRelaxZoneMeshdata*> ListMeshdata; //-For meshdata velocity.
+
+  bool UseMeshdata;
+
   void ReadXml_RelaxZone(bool wavereg,const JXml *sxml,TiXmlElement* ele);
   void ReadXml_RelaxZoneExternal(bool onedim,const JXml *sxml,TiXmlElement* ele);
   void ReadXml_RelaxZoneUniform(const JXml *sxml,TiXmlElement* ele);
+  void ReadXml_RelaxZoneMeshdata(const JXml *sxml,TiXmlElement* ele);
   void ReadXml(const JXml *sxml,TiXmlElement* lis);
   void SaveDomainVtk(std::string fname,tdouble3 center,float width,double swl,double depth);
 
 public:
-  JRelaxZones(bool useomp,bool usegpu,JLog2 *log,std::string dirdata
-    ,bool withfloatings,unsigned fluidbeginidp,tdouble3 gravity3);
+  JRelaxZones(bool useomp,bool usegpu,JLog2 *log,std::string appname
+    ,std::string dirdata,bool withfloatings,unsigned fluidbeginidp
+    ,tdouble3 gravity3);
   ~JRelaxZones();
   void Reset();
   static bool Available(){ return(true); }
 
   void LoadFileXml(const std::string &filexml,const std::string &place);
   void LoadXml(const JXml *sxml,const std::string &place);
+
+  bool Use_Meshdata()const{ return(UseMeshdata); }
 
   void Init(std::string dircase,double timemax,double dp);
 
@@ -123,11 +136,14 @@ public:
   unsigned GetCount()const{ return(unsigned(List.size())); }
   unsigned GetCountExternal()const{ return(unsigned(ListExternal.size())); }
   unsigned GetCountUniform()const{ return(unsigned(ListUniform.size())); }
+  unsigned GetCountMeshdata()const{ return(unsigned(ListMeshdata.size())); }
 
   void SetFluidVel(double timestep,double dt,unsigned n,unsigned pini
-    ,const tdouble3 *pos,const unsigned *idp,tfloat4 *velrhop)const;
+    ,const tdouble3* pos,const unsigned* idp,tfloat4* velrhop
+    ,byte* rzid,float* rzfactor)const;
   void SetFluidVelGpu(double timestep,double dt,unsigned n,unsigned pini
-    ,const tdouble2 *posxy,const double *posz,const unsigned *idp,tfloat4 *velrhop)const;
+    ,const tdouble2* posxy,const double* posz,const unsigned* idp
+    ,tfloat4* velrhop,byte* rzid,float* rzfactor)const;
 };
 #endif
 

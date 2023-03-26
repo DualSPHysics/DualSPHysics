@@ -1024,7 +1024,7 @@ void JSph::LoadCaseConfig(const JSphCfgRun *cfg){
     #ifdef OMP_USE_WAVEGEN
       useomp=(omp_get_max_threads()>1);
     #endif
-    RelaxZones=new JRelaxZones(useomp,!Cpu,Log,DirCase,CaseNfloat>0,CaseNbound,ToTDouble3(Gravity));
+    RelaxZones=new JRelaxZones(useomp,!Cpu,Log,AppName,DirCase,CaseNfloat>0,CaseNbound,ToTDouble3(Gravity));
     RelaxZones->LoadXml(&xml,"case.execution.special.relaxationzones");
   }
 
