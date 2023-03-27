@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<!-- *** DualSPHysics (25-03-2023) *** -->
+<!-- *** DualSPHysics (27-03-2023) *** -->
 <!-- *** class: JRelaxZones *** -->
 <!------------------------------------------------------------------------------->
 <!------------------------------------------------------------------------------->
@@ -34,8 +34,8 @@
 		<rzwaves_spectrum>
 			<start value="0" comment="Start time (def=0)" />
 			<duration value="0" comment="Movement duration, Zero is the end of simulation (def=0)" />
-			<peakcoef value="3.3" comment="Peak enhancement coefficient (default=3.3)" />
 			<spectrum value="jonswap" comment="Spectrum type: jonswap,pierson-moskowitz" />
+			<peakcoef value="3.3" comment="Peak enhancement coefficient for JONSWAP spectrum (default=3.3)" />
 			<discretization value="stretched" comment="Spectrum discretization: regular,random,stretched,cosstretched (default=stretched)" />
 			<waveorder value="1" comment="Order wave generation 1:1st order, 2:2nd order (default=1)" />
 			<waveheight value="0.1" comment="Significant Wave Height" />
