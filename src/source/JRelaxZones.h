@@ -71,6 +71,8 @@ public:
   void LoadFileXml(const std::string &filexml,const std::string &place){}
   void LoadXml(const JXml *sxml,const std::string &place){}
 
+  bool Use_Meshdata()const{ return(false); }
+
   void Init(std::string dircase,double timemax,double dp){}
 
   void VisuConfig(std::string txhead,std::string txfoot){}
