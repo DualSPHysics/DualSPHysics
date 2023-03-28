@@ -19,9 +19,9 @@
 /// \file JCfgRunBase.cpp \brief Implements the class \ref JCfgRunBase.
 
 #include "JCfgRunBase.h"
-#include "JAppInfo.h"
 
 #ifdef JCfgRunBase_UseDSCfg
+#include "JAppInfo.h"
 #include "JDsphConfig.h"
 #endif
 
@@ -63,7 +63,9 @@ void JCfgRunBase::LoadDsphConfig(std::string path){
 void JCfgRunBase::LoadArgv(int argc,char** argv){
   Reset();
   //-Loads configuration from DsphConfig.xml.
-  LoadDsphConfig(AppInfo.GetProgramPath());
+  #ifdef JCfgRunBase_UseDSCfg
+    LoadDsphConfig(AppInfo.GetProgramPath());
+  #endif
   //-Loads execution parameters.
   const int MAXOPTS=100;
   string *optlis=new string[MAXOPTS];

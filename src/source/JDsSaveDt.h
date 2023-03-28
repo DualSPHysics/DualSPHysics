@@ -98,8 +98,10 @@ private:
   unsigned CountAllDts;
 
   unsigned LastInterval;
-  StValue LastDtf,LastDt1,LastDt2,LastDt3;
-  StValue LastAceMax,LastViscDtMax,LastFlexStrucDtMax,LastVelMax;
+  StValue LastDtf,LastDt1,LastDt2;
+  StValue LastDt3;            //<vs_flexstruc>
+  StValue LastAceMax,LastViscDtMax,LastVelMax;
+  StValue LastFlexStrucDtMax; //<vs_flexstruc>
 
   void ReadXml(const JXml *sxml,TiXmlElement* ele);
   void LoadXml(const JXml *sxml,const std::string &place);

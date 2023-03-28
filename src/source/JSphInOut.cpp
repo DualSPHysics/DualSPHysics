@@ -85,6 +85,7 @@ JSphInOut::~JSphInOut(){
 //==============================================================================
 void JSphInOut::Reset(){
   Nstep=0;
+  RefillingRate=0;
   Stable=false;
   PeriActive=0;
   CoefHydro=0;
@@ -132,7 +133,7 @@ void JSphInOut::LoadXmlInit(const JXml *sxml,const std::string &place){
   //-Checks old configuration.
   if(sxml->ExistsElement(ele,"userefilling"))Run_ExceptioonFile("Inlet/outlet: <userefilling> is not supported by current inlet/outlet version.",sxml->ErrGetFileRow(ele,"userefilling"));
   //-Checks element names.
-  sxml->CheckElementNames(ele,true,"memoryresize useboxlimit determlimit extrapolatemode *inoutzone");
+  sxml->CheckElementNames(ele,true,"memoryresize useboxlimit determlimit extrapolatemode refillingrate *inoutzone");
   //-Loads general configuration.
   ReuseIds=false; //sxml->GetAttributeBool(ele,"reuseids",true,false);//-Since ReuseIds=true is not implemented.
   //-Loads configuration for memoryresize.
@@ -147,6 +148,8 @@ void JSphInOut::LoadXmlInit(const JXml *sxml,const std::string &place){
   if(ExtrapolateMode>3)ExtrapolateMode=3;
   if(ExtrapolateMode<1)ExtrapolateMode=1;
   if(ExtrapolateMode<2 && Cpu)ExtrapolateMode=2;
+  //-Loads RefillingRate.
+  RefillingRate=sxml->ReadElementUnsigned(ele,"refillingrate","value",true,10);
   //-Loads UseBoxLimit.
   UseBoxLimit=sxml->ReadElementBool(ele,"useboxlimit","value",true,true);
   {
@@ -1301,6 +1304,7 @@ void JSphInOut::VisuConfig(std::string txhead,std::string txfoot)const{
   }
   Log->Printf("DetermLimit.: %g %s",DetermLimit,(DetermLimit==1e-3f? "(1st order)": (DetermLimit==1e+3f? "(0th order)": " ")));
   Log->Printf("ExtrapolateMode: %s",(ExtrapolateMode==1? "FastSingle": (ExtrapolateMode==2? "Single": (ExtrapolateMode==3? "Double": "???"))));
+  if(Use_RefillAdvanced())Log->Printf("RefillingRate: %d",RefillingRate);
   for(unsigned ci=0;ci<GetCount();ci++){
     JSphInOutZone *izone=List[ci];
     Log->Printf("InOut_%u",izone->GetIdZone());

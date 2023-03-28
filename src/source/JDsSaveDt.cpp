@@ -59,8 +59,10 @@ void JDsSaveDt::Reset(){
   Count=0;
   LastInterval=0;
   memset(&ValueNull,0,sizeof(StValue));
-  LastDtf=LastDt1=LastDt2=LastDt3=ValueNull;
-  LastAceMax=LastViscDtMax=LastFlexStrucDtMax=LastVelMax=ValueNull;
+  LastDtf=LastDt1=LastDt2=ValueNull;
+  LastDt3=ValueNull;                              //<vs_flexstruc>
+  LastAceMax=LastViscDtMax=LastVelMax=ValueNull;
+  LastFlexStrucDtMax=ValueNull;                   //<vs_flexstruc>
   CountAllDts=0;
 }
 
@@ -144,10 +146,10 @@ void JDsSaveDt::SaveFileValues(){
     v=Dt2[c];        scsv << v.vmean << v.vmin << v.vmax;
     v=Dt3[c];        scsv << v.vmean << v.vmin << v.vmax;         //<vs_flexstruc>
     if(FullInfo){
-      v=AceMax[c];          scsv << v.vmean << v.vmin << v.vmax;
-      v=ViscDtMax[c];       scsv << v.vmean << v.vmin << v.vmax;
+      v=AceMax[c];     scsv << v.vmean << v.vmin << v.vmax;
+      v=ViscDtMax[c];  scsv << v.vmean << v.vmin << v.vmax;
+      v=VelMax[c];     scsv << v.vmean << v.vmin << v.vmax;
       v=FlexStrucDtMax[c];  scsv << v.vmean << v.vmin << v.vmax;  //<vs_flexstruc>
-      v=VelMax[c];          scsv << v.vmean << v.vmin << v.vmax;
     }
     scsv << jcsv::Endl();
   }
@@ -215,13 +217,15 @@ void JDsSaveDt::AddLastValues(){
   Dt1[Count]=LastDt1;
   Dt2[Count]=LastDt2;
   Dt3[Count]=LastDt3; //<vs_flexstruc>
-  LastDtf=LastDt1=LastDt2=LastDt3=ValueNull;
+  LastDtf=LastDt1=LastDt2=ValueNull;
+  LastDt3=ValueNull;  //<vs_flexstruc>
   if(FullInfo){
     AceMax[Count]=LastAceMax;
     ViscDtMax[Count]=LastViscDtMax;
     FlexStrucDtMax[Count]=LastFlexStrucDtMax; //<vs_flexstruc>
     VelMax[Count]=LastVelMax;
-    LastAceMax=LastViscDtMax=LastFlexStrucDtMax=LastVelMax=ValueNull;
+    LastAceMax=LastViscDtMax=LastVelMax=ValueNull;
+    LastFlexStrucDtMax=ValueNull; //<vs_flexstruc>
   }
   Count++;
 }

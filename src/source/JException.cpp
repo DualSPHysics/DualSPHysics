@@ -56,7 +56,11 @@ JException::JException(const std::string &srcfile,int srcline
   ,const std::string &text,const std::string &file)
 {
   ExName="JException";
-  SrcFile=srcfile;
+  #ifdef RunExceptSrc
+  SrcFile=std::string(RunExceptSrc)+fun::GetFile(srcfile);
+  #else
+  SrcFile=fun::GetFile(srcfile);
+  #endif
   SrcLine=srcline;
   ClassName=classname;
   Method=method;

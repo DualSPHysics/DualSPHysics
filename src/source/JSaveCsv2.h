@@ -34,6 +34,7 @@
 //:# - Gestion de excepciones mejorada.  (15-09-2019)
 //:# - Nuevo metodo AddHead3() y clase Head3 para cabeceras de datos triples. (02-11-2020)
 //:# - Soporta tipo tmatrix4d. (04-02-2021)
+//:# - Mejora de rendimiento para volumenes grandes usando append. (05-03-2023)
 //:# =========
 //:# To defnine output format use: 
 //:#   jcsv::JSaveCsv2 scsv( );
@@ -267,6 +268,8 @@ public:
     AddStr(ToStr(FmtCurrent[TpDouble1].c_str(),v.a44)); 
     return(*this); 
   }
+
+  unsigned GetDataSize()const{ return(unsigned(Data.size())); }
 
   void SaveData(bool closefile=false);
 };

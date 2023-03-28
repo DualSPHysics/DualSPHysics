@@ -121,8 +121,8 @@ void JCellDivGpu::AllocMemoryNp(ullong np){
   //-Reserva memoria para particulas.
   MemAllocGpuNp=0;
   size_t m=sizeof(unsigned)*SizeNp;
-  cudaMalloc((void**)&CellPart, m); MemAllocGpuNp+=m;
-  cudaMalloc((void**)&SortPart, m); MemAllocGpuNp+=m;
+  cudaMalloc((void**)&CellPart,m); MemAllocGpuNp+=m;
+  cudaMalloc((void**)&SortPart,m); MemAllocGpuNp+=m;
   SizeAuxMem=cudiv::LimitsPosSize(SizeNp);
   m=sizeof(float)*SizeAuxMem;
   cudaMalloc((void**)&AuxMem,m);   MemAllocGpuNp+=m;

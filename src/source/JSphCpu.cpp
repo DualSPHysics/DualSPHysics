@@ -106,10 +106,10 @@ void JSphCpu::InitVars(){
 //==============================================================================
 void JSphCpu::FreeCpuMemoryFixed(){
   MemCpuFixed=0;
-  delete[] RidpMove;        RidpMove=NULL;
-  delete[] FtRidp;          FtRidp=NULL;
-  delete[] FtoForces;       FtoForces=NULL;
-  delete[] FtoForcesRes;    FtoForcesRes=NULL;
+  delete[] RidpMove;     RidpMove=NULL;
+  delete[] FtRidp;       FtRidp=NULL;
+  delete[] FtoForces;    FtoForces=NULL;
+  delete[] FtoForcesRes; FtoForcesRes=NULL;
   //<vs_flexstruc_ini>
   delete[] FlexStrucDatac;  FlexStrucDatac=NULL;
   delete[] FlexStrucRidpc;  FlexStrucRidpc=NULL;
@@ -1665,7 +1665,7 @@ double JSphCpu::DtVariable(bool final){
   //-dt3 uses the maximum speed of sound across all structure particles.
   const double dt3=(FlexStrucDtMax? double(KernelH)/FlexStrucDtMax: DBL_MAX); //<vs_flexstruc>
   //-dt new value of time step.
-  double dt=double(CFLnumber)*min(dt1,min(dt2,dt3));
+  double dt=CFLnumber*min(dt1,min(dt2,dt3));
   if(FixedDt)dt=FixedDt->GetDt(TimeStep,dt);
   if(fun::IsNAN(dt) || fun::IsInfinity(dt)){
     if(FlexStruc)Run_Exceptioon(fun::PrintStr("The computed Dt=%f (from AceMax=%f, VelMax=%f, ViscDtMax=%f, FlexStrucDtMax=%f) is NaN or infinity at nstep=%u.",dt,AceMax,VelMax,ViscDtMax,FlexStrucDtMax,Nstep));
@@ -1917,7 +1917,9 @@ void JSphCpu::MovePiston2d(unsigned np,unsigned ini
 //==============================================================================
 void JSphCpu::RunRelaxZone(double dt){
   Timersc->TmStart(TMC_SuMotion);
-  RelaxZones->SetFluidVel(TimeStep,dt,Np-Npb,Npb,Posc,Idpc,Velrhopc);
+  byte* rzid=NULL;
+  float* rzfactor=NULL; 
+  RelaxZones->SetFluidVel(TimeStep,dt,Np-Npb,Npb,Posc,Idpc,Velrhopc,rzid,rzfactor);
   Timersc->TmStop(TMC_SuMotion);
 }
 

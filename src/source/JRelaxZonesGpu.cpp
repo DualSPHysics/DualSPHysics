@@ -260,7 +260,74 @@ void JRelaxZoneUniformGpu::SetFluidVelUniform(unsigned n,unsigned pini
 }
 
 
+//##############################################################################
+//# JRelaxZoneMeshdataExt
+//##############################################################################
+//==============================================================================
+/// Constructor.
+//==============================================================================
+JRelaxZoneMeshdataExt::JRelaxZoneMeshdataExt(word id,std::string appname
+  ,std::string dirdata,tfloat3 dir,bool cpu)
+  :Id1(byte(id+1)),AppName(appname),DirData(dirdata),Direction(dir),Cpu(cpu)
+{
+  ClassName="JRelaxZoneMeshdataExt";
+  Ptr=NULL;
+}
+//==============================================================================
+// Destructor.
+//==============================================================================
+JRelaxZoneMeshdataExt::~JRelaxZoneMeshdataExt(){
+  DestructorActive=true;
+  Ptr=NULL;
+}
+//==============================================================================
+// Loads velocity configuration from <meshdata>.
+//==============================================================================
+void JRelaxZoneMeshdataExt::Config(const JXml* sxml,TiXmlElement* xmes){
+}
+//==============================================================================
+// Introduce informacion de configuracion en lines.
+//==============================================================================
+void JRelaxZoneMeshdataExt::GetConfig(std::vector<std::string>& lines)const{
+}
+//==============================================================================
+/// Sets velocity of fluid.
+//==============================================================================
+void JRelaxZoneMeshdataExt::SetFluidVelOmp(double timestep,unsigned n,unsigned pini
+  ,const byte* rzid,const float* rzfactor,const tdouble3* pos,tfloat4* velrhop)
+{
+}
+//==============================================================================
+/// Initilise rzid[]=0 (for GPU).
+//==============================================================================
+void JRelaxZoneMeshdataExt::InitFindGpu(unsigned n,unsigned pini,byte* rzid)
+{
+}
 
+//==============================================================================
+/// Find fluid in RZ-Meshdata zones and compute rzfactor (for GPU).
+/// rzid is id+1 for selected particles and 0 for the unselected particles.
+/// rzfactor is only computed for for selected particles.
+//==============================================================================
+void JRelaxZoneMeshdataExt::FindFluidVelGpu(unsigned n,unsigned pini
+  ,const tfloat4& cenpla,const tfloat4& dompla1
+  ,const tfloat4& dompla2,const tfloat4& dompla3
+  ,const float domsize1,const float domsize2,const float domsize3
+  ,float widthhalf,float coeff,double falpha,double fbeta,double fsub
+  ,double fdiv,unsigned fluidbeginidp
+  ,const tdouble2* posxy,const double* posz,const unsigned* idp
+  ,byte* rzid,float* rzfactor)
+{
+}
+
+//==============================================================================
+/// Sets velocity of fluid to generate waves (for GPU).
+//==============================================================================
+void JRelaxZoneMeshdataExt::SetFluidVelGpu(double timestep,unsigned n,unsigned pini
+  ,const byte* rzid,const float* rzfactor,const tdouble2* posxy,const double* posz
+  ,tfloat4 *velrhop)
+{
+}
 
 
 

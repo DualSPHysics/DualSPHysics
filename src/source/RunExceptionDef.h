@@ -40,3 +40,6 @@
 #define Run_ExceptioonFile(msg,file) RunExceptioon(__FILE__,__LINE__,ClassName,__func__,msg,file)
 #endif
 
+#ifndef RunExceptSrc
+#define RunExceptSrc "DualSPHysics/source/"
+#endif

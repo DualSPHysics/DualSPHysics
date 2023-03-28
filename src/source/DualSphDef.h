@@ -56,6 +56,8 @@
 
 
 //-Defines AVAILABLE_VTKLIB when this feature is compiled.
+// *** VtkLib library must be disabled in JVtkLibDef.h *** 
+// *** or for all cpp files by compile parameters.     ***
 #ifdef DISABLE_VTKLIB
   #define AVAILABLE_VTKLIB false
 #else
@@ -63,6 +65,8 @@
 #endif
 
 //-Defines AVAILABLE_NUMEXLIB when this feature is compiled.
+// *** Numex library must be disabled in JNumexLibDef.h *** 
+// *** or for all cpp files by compile parameters.      ***
 #ifdef DISABLE_NUMEXLIB
   #define AVAILABLE_NUMEXLIB false
 #else
@@ -155,6 +159,7 @@
   #define CODE_TYPE_FLUID_INOUT     0x0003ffe0 //---First inlet/outlet code: 262112 (16 different codes for InOut zones + 16 to select input particles).
   #define CODE_TYPE_FLUID_INOUTNUM  16      //---Maximum number of valid inlet/outlet zones.
   #define CODE_TYPE_FLUID_INOUTMASK 31      //---Mask to obtain zone value.
+  #define CODE_TYPE_FLUID_INOUT015MASK 15   //---Mask to obtain zone value (ignore extra bit).
 #else
   #define CODE_MKRANGEMAX 2047      //-Maximum valid MK value. | Valor maximo de MK valido.
   typedef word typecode;            //-Type of the variable code using 2 bytes.

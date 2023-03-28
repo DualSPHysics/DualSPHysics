@@ -800,9 +800,13 @@ void JSphGpuSingle::RunFloating(double dt,bool predictor){
 /// Ejecuta calculos en las posiciones de medida configuradas.
 //==============================================================================
 void JSphGpuSingle::RunGaugeSystem(double timestep,bool saveinput){
-  //const bool svpart=(TimeStep>=TimePartNext);
-  GaugeSystem->CalculeGpu(timestep,DivData
-    ,NpbOk,Npb,Np,Posxyg,Poszg,Codeg,Idpg,Velrhopg,saveinput);
+  if(GaugeSystem->GetCount()){
+    Timersg->TmStart(TMG_SuGauges,false);
+    //const bool svpart=(TimeStep>=TimePartNext);
+    GaugeSystem->CalculeGpu(timestep,DivData
+      ,NpbOk,Npb,Np,Posxyg,Poszg,Codeg,Idpg,Velrhopg,saveinput);
+    Timersg->TmStop(TMG_SuGauges,false);
+  }
 }
 
 //==============================================================================

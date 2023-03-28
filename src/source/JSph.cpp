@@ -208,7 +208,8 @@ void JSph::InitVars(){
   SvTimers=false;
   SvDomainVtk=false;
 
-  KernelH=CteB=Gamma=RhopZero=CFLnumber=0;
+  KernelH=CteB=Gamma=RhopZero=0;
+  CFLnumber=0;
   Dp=0;
   MassFluid=MassBound=0;
   Gravity=TFloat3(0);
@@ -221,7 +222,8 @@ void JSph::InitVars(){
   memset(&CSP,0,sizeof(StCteSph));
 
   CasePosMin=CasePosMax=TDouble3(0);
-  CaseNp=CaseNbound=CaseNfixed=CaseNmoving=CaseNfloat=CaseNfluid=CaseNpb=CaseNflexstruc=0;
+  CaseNp=CaseNbound=CaseNfixed=CaseNmoving=CaseNfloat=CaseNfluid=CaseNpb=0;
+  CaseNflexstruc=0; //<vs_flexstruc>
 
   PeriActive=0; PeriX=PeriY=PeriZ=false;
   PeriXinc=PeriYinc=PeriZinc=TDouble3(0);
@@ -579,7 +581,7 @@ void JSph::LoadConfigCtes(const JXml *xml){
   CteB=(float)ctes.GetB();
   Gamma=(float)ctes.GetGamma();
   RhopZero=(float)ctes.GetRhop0();
-  CFLnumber=(float)ctes.GetCFLnumber();
+  CFLnumber=ctes.GetCFLnumber();
   Dp=ctes.GetDp();
   MassFluid=(float)ctes.GetMassFluid();
   MassBound=(float)ctes.GetMassBound();
@@ -840,6 +842,7 @@ void JSph::LoadConfigCommands(const JSphCfgRun *cfg){
     Shifting->ConfigBasic(shiftmode);
   }
 
+  if(cfg->CFLnumber>0)CFLnumber=cfg->CFLnumber;
   if(cfg->FtPause>=0)FtPause=cfg->FtPause;
   if(cfg->TimeMax>0)TimeMax=cfg->TimeMax;
   NstepsBreak=cfg->NstepsBreak;
@@ -1028,7 +1031,7 @@ void JSph::LoadCaseConfig(const JSphCfgRun *cfg){
     #ifdef OMP_USE_WAVEGEN
       useomp=(omp_get_max_threads()>1);
     #endif
-    RelaxZones=new JRelaxZones(useomp,!Cpu,Log,DirCase,CaseNfloat>0,CaseNbound,ToTDouble3(Gravity));
+    RelaxZones=new JRelaxZones(useomp,!Cpu,Log,AppName,DirCase,CaseNfloat>0,CaseNbound,ToTDouble3(Gravity));
     RelaxZones->LoadXml(&xml,"case.execution.special.relaxationzones");
   }
 
@@ -1671,7 +1674,7 @@ void JSph::VisuRefs(){
   if(InOut        )Log->Print("- Inflow-outflow boundary conditions (Tafuni et al., 2018  https://doi.org/10.1016/j.cma.2018.08.004)");
   if(WithFloating )Log->Print("- Floating objects (Canelas et al., 2015  https://doi.org/10.1002/fld.4031)");
   if(UseDEM       )Log->Print("- Coupling SPH-DCDEM (Canelas et al., 2017  https://doi.org/10.1061/(ASCE)HY.1943-7900.0001331)");
-  if(UseChrono    )Log->Print("- New coupling with Project Chrono (Martinez-Estevez et al., 2022  https://doi.org/10.1016/j.cpc.2022.108581)");
+  if(UseChrono    )Log->Print("- New coupling with Project Chrono (Martinez-Estevez et al., 2023  https://doi.org/10.1016/j.cpc.2022.108581)");
   if(Moorings     )Log->Print("- Coupling with MoorDyn+ (Dominguez et al., 2019  https://doi.org/10.1016/j.coastaleng.2019.103560)");
   if(Shifting     )Log->Print("- Shifting algorithm (Lind et al., 2012  https://doi.org/10.1016/j.jcp.2011.10.027)");
   if(AccInput     )Log->Print("- External imposed forces (Longshaw and Rogers, 2015  https://doi.org/10.1016/j.advengsoft.2015.01.008)");

@@ -359,6 +359,7 @@ void JSphGpu::AllocGpuMemoryParticles(unsigned np,float over){
     //ArraysGpu->AddArrayCount(JArraysGpu::SIZE_4B,1);  //-InOutPartg
     ArraysGpu->AddArrayCount(JArraysGpu::SIZE_1B,2);  //-newizone,zsurfok
   }
+
   //-Shows the allocated memory.
   MemGpuParticles=ArraysGpu->GetAllocMemoryGpu();
   PrintSizeNp(GpuParticlesSize,MemGpuParticles,GpuParticlesAllocs);
@@ -961,6 +962,7 @@ void JSphGpu::ComputeSymplecticPre(double dt){
   cusphs::ComputeStepSymplecticPre(WithFloating,shift,inout,Np,Npb,VelrhopPreg,Arg
     ,Aceg,ShiftPosfsg,indirvel,dt05,RhopZero,RhopOutMin,RhopOutMax,Gravity
     ,Codeg,movxyg,movzg,Velrhopg,NULL);
+
   //-Applies displacement to non-periodic fluid particles.
   //-Aplica desplazamiento a las particulas fluid no periodicas.
   cusph::ComputeStepPos2(PeriActive,WithFloating,Np,Npb,PosxyPreg,PoszPreg
@@ -1002,6 +1004,7 @@ void JSphGpu::ComputeSymplecticCorr(double dt){
   cusphs::ComputeStepSymplecticCor(WithFloating,shift,inout,Np,Npb,VelrhopPreg
     ,Arg,Aceg,ShiftPosfsg,indirvel,dt05,dt,RhopZero,RhopOutMin,RhopOutMax,Gravity
     ,Codeg,movxyg,movzg,Velrhopg,NULL);
+
   //-Applies displacement to non-periodic fluid particles.
   //-Aplica desplazamiento a las particulas fluid no periodicas.
   cusph::ComputeStepPos2(PeriActive,WithFloating,Np,Npb,PosxyPreg,PoszPreg
@@ -1039,7 +1042,7 @@ double JSphGpu::DtVariable(bool final){
   //-dt3 uses the maximum speed of sound across all structure particles.
   const double dt3=(FlexStrucDtMax? double(KernelH)/FlexStrucDtMax: DBL_MAX); //<vs_flexstruc>
   //-dt new value of time step.
-  double dt=double(CFLnumber)*min(dt1,min(dt2,dt3));
+  double dt=CFLnumber*min(dt1,min(dt2,dt3));
   if(FixedDt)dt=FixedDt->GetDt(TimeStep,dt);
   if(fun::IsNAN(dt) || fun::IsInfinity(dt)){
     if(FlexStruc)Run_Exceptioon(fun::PrintStr("The computed Dt=%f (from AceMax=%f, VelMax=%f, ViscDtMax=%f, FlexStrucDtMax=%f) is NaN or infinity at nstep=%u.",dt,AceMax,VelMax,ViscDtMax,FlexStrucDtMax,Nstep));
@@ -1134,7 +1137,10 @@ void JSphGpu::RunMotion(double stepdt){
 //==============================================================================
 void JSphGpu::RunRelaxZone(double dt){
   Timersg->TmStart(TMG_SuMotion,false);
-  RelaxZones->SetFluidVelGpu(TimeStep,dt,Np-Npb,Npb,(const tdouble2*)Posxyg,Poszg,Idpg,(tfloat4*)Velrhopg);
+  byte* rzid=NULL; 
+  float* rzfactor=NULL; 
+  RelaxZones->SetFluidVelGpu(TimeStep,dt,Np-Npb,Npb,(const tdouble2*)Posxyg
+    ,Poszg,Idpg,(tfloat4*)Velrhopg,rzid,rzfactor);
   Timersg->TmStop(TMG_SuMotion,false);
 }
 
