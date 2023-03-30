@@ -39,9 +39,9 @@ We appreciate your efforts! But please, if you are trying to develop/implement a
 
 ## Microsoft Windows
 
-This application is being developed in Visual Studio Community 2015 since it is free and compatible with CUDA 9.2 (<a href="https://www.visualstudio.com/vs/older-downloads/" target="_blank">download web</a>). The repository contains project files.
+This application is being developed in Visual Studio Community 2022 since it is free and compatible with CUDA 11.7 (<a href="https://www.visualstudio.com/vs/older-downloads/" target="_blank">download web</a>). The repository contains project files.
 
-Make sure that you install the CUDA SDK beforehand if you want to compile the GPU version, and configure the Visual Studio project to point to the CUDA libraries directory to compile (now prepared for CUDA 9.2).
+Make sure that you install the CUDA SDK beforehand if you want to compile the GPU version, and configure the Visual Studio project to point to the CUDA libraries directory to compile (now prepared for CUDA 11.7).
 
 You can also use the [Makefile](src/source/Makefile). It is possible that you'll need to edit it. Check the GNU/Linux guide on how to compile if you're using the makefile, as it is mostly the same, just installing the things manually by yourself.
 
@@ -55,12 +55,11 @@ You can build the project in GNU/Linux using the [Makefile](src/source/Makefile)
 2. In a terminal, go to the folder `cd DualSPHysics/src/source/`
 3. Edit the `Makefile` file with a text editor and then:
    * Set the `DIRTOOLKIT` variable with the path to CUDA in your system e.g. `DIRTOOLKIT=/opt/cuda`
-   * Make sure that your `G++` compiler version is compatible with the CUDA version installed in your system (e.g. CUDA 9.1 only supports G++ versions up to 6.x). If you want to use an specific version, you should modify the variable `CC`, for example: `CC=/usr/local/bin/g++-6`
-   * If you are using G++ version 5 of greater make sure to set `USE_GCC5=YES`
+   * Make sure that your `G++` compiler version is compatible with the CUDA version installed in your system (e.g. CUDA 11.7 supports G++ versions up to 11.x). If you want to use an specific version, you should modify the variable `CC`, for example: `CC=/usr/local/bin/g++-11`
 4. Execute `make clean` to make sure the environment is clean and ready to compile.
 5. Execute `make`
 
-After compiling you should see a message like `--- Compiled Release GPU/CPU version ---`. Go to `bin/linux/` to check that `DualSPHyiscs_linux64` or `DualSPHyiscsCPU_linux64` is there and build correctly.
+After compiling you should see a message like `--- Compiled Release GPU/CPU version ---`. Go to `bin/linux/` to check that `DualSPHyiscs5.2_linux64` or `DualSPHyiscs5.2CPU_linux64` is there and build correctly.
 
 **For the CPU version**: If you want to compile de CPU version just ignore CUDA and use the makefile `Makefile_cpu`. To specify a different file to `make`, use the `-f` parameter: `make -f Makefile_cpu`
 
@@ -71,7 +70,7 @@ Alternatively you can use [CMake](https://cmake.org) to compile DualSPHysics fol
 1. Clone this repository into your system `git clone https://github.com/DualSPHysics/DualSPHysics.git`
 2. In a terminal, go to the folder `cd DualSPHysics/src/source/`
 3. Create a temporal directory were the build files will be placed `mkdir build`
-4. Make sure that your `GCC` compiler version is compatible with the CUDA version installed in your system (e.g. CUDA 9.1 only supports G++ versions up to 6.x). If you want to use an specific version, you should modify the environment variable `CC` and `CXX`, for example: `export CC=/usr/local/bin/gcc-6; export CXX=/usr/local/bin/g++6`
+4. Make sure that your `GCC` compiler version is compatible with the CUDA version installed in your system (e.g. CUDA 11.7 supports G++ versions up to 11.x). If you want to use an specific version, you should modify the environment variable `CC` and `CXX`, for example: `export CC=/usr/local/bin/gcc-11; export CXX=/usr/local/bin/g++11`
 4. Go to the build folder and execute cmake `cd build; cmake ..`
 5. Execute `make`
 
@@ -113,6 +112,7 @@ Please read [CONTRIBUTING.md](CONTRIBUTING.md) if you want to make changes to th
 * **Orlando Garcia Feal**
 * **Ivan Martinez Estevez**
 * **Dr Joseph O'Connor**
+* **Dr Aaron English**
 
 
 ## Former people involved
