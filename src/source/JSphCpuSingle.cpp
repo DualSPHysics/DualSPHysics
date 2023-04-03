@@ -1020,7 +1020,7 @@ void JSphCpuSingle::RunFloating(double dt,bool predictor){
 /// Ejecuta calculos en las posiciones de medida configuradas.
 //==============================================================================
 void JSphCpuSingle::RunGaugeSystem(double timestep,bool saveinput){
-  if(GaugeSystem->GetCount()){
+  if(!Nstep || GaugeSystem->GetCount()){
     Timersc->TmStart(TMC_SuGauges);
     //const bool svpart=(TimeStep>=TimePartNext);
     GaugeSystem->CalculeCpu(timestep,DivData,NpbOk,Npb,Np
