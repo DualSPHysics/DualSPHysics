@@ -800,7 +800,7 @@ void JSphGpuSingle::RunFloating(double dt,bool predictor){
 /// Ejecuta calculos en las posiciones de medida configuradas.
 //==============================================================================
 void JSphGpuSingle::RunGaugeSystem(double timestep,bool saveinput){
-  if(GaugeSystem->GetCount()){
+  if(!Nstep || GaugeSystem->GetCount()){
     Timersg->TmStart(TMG_SuGauges,false);
     //const bool svpart=(TimeStep>=TimePartNext);
     GaugeSystem->CalculeGpu(timestep,DivData
