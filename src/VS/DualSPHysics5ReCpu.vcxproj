@@ -176,7 +176,7 @@
       <Defines>
       </Defines>
       <UseHostInclude>false</UseHostInclude>
-      <AdditionalOptions>-use_fast_math -Xcompiler "/wd 4267" %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>-use_fast_math -Xcompiler "/wd 4267" -Wno-deprecated-gpu-targets %(AdditionalOptions)</AdditionalOptions>
       <CodeGeneration>compute_35,sm_35;compute_60,sm_60;compute_61,sm_61;compute_70,sm_70;compute_80,sm_80</CodeGeneration>
     </CudaCompile>
   </ItemDefinitionGroup>
@@ -236,7 +236,7 @@
       <Defines>
       </Defines>
       <UseHostInclude>false</UseHostInclude>
-      <AdditionalOptions>-use_fast_math -Xcompiler "/wd 4267" %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>-use_fast_math -Xcompiler "/wd 4267" -Wno-deprecated-gpu-targets %(AdditionalOptions)</AdditionalOptions>
       <CodeGeneration>compute_35,sm_35;compute_50,sm_50;compute_52,sm_52;compute_61,sm_61;compute_70,sm_70</CodeGeneration>
     </CudaCompile>
   </ItemDefinitionGroup>
@@ -351,7 +351,7 @@
     </CudaCompile>
     <CudaCompile Include="..\source\JCellDivGpu_ker.cu">
       <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">rem ***Vars de compilacion
-set CudaPath=$(CUDA_PATH_V9_2)
+set CudaPath=$(CUDA_PATH_V11_7)
 set CudaNvcc="%CudaPath%\bin\nvcc.exe"
 set CudaInc="%CudaPath%\include"
 rem ***Seleccion de GPU hardware para compilacion
@@ -366,7 +366,7 @@ rem ***Sentencia de compilacion
 %CudaNvcc% -ccbin "$(VCInstallDir)bin" %gpuhw% -use_fast_math -c %ptxinfo% -DWIN32 -D_CONSOLE -D_MBCS -Xcompiler /EHsc,/W3,/nologo,/O2,/Zi,/MT -m 64 -I%CudaInc% -I./ -o Intermediate\$(Configuration)\%(Filename).obj ..\%(Filename)%(Extension)
 </Command>
       <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">rem ***Vars de compilacion
-set CudaPath=$(CUDA_PATH_V9_2)
+set CudaPath=$(CUDA_PATH_V11_7)
 set CudaNvcc="%CudaPath%\bin\nvcc.exe"
 set CudaInc="%CudaPath%\include"
 rem ***Seleccion de GPU hardware para compilacion
@@ -388,7 +388,7 @@ rem ***Sentencia de compilacion
     </CudaCompile>
     <CudaCompile Include="..\source\JCellDivGpuSingle_ker.cu">
       <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">rem ***Vars de compilacion
-set CudaPath=$(CUDA_PATH_V9_2)
+set CudaPath=$(CUDA_PATH_V11_7)
 set CudaNvcc="%CudaPath%\bin\nvcc.exe"
 set CudaInc="%CudaPath%\include"
 rem ***Seleccion de GPU hardware para compilacion
@@ -404,7 +404,7 @@ rem ***Sentencia de compilacion
 %CudaNvcc% -ccbin "$(VCInstallDir)bin" %gpuhw% -use_fast_math -c %ptxinfo% -DWIN32 -D_CONSOLE -D_MBCS -Xcompiler /EHsc,/W3,/nologo,/O2,/Zi,/MT -m 64 -I%CudaInc% -I./ -o Intermediate\$(Configuration)\%(Filename).obj ..\%(Filename)%(Extension)
 </Command>
       <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">rem ***Vars de compilacion
-set CudaPath=$(CUDA_PATH_V9_2)
+set CudaPath=$(CUDA_PATH_V11_7)
 set CudaNvcc="%CudaPath%\bin\nvcc.exe"
 set CudaInc="%CudaPath%\include"
 rem ***Seleccion de GPU hardware para compilacion
@@ -461,7 +461,7 @@ rem ***Sentencia de compilacion
     </CudaCompile>
     <CudaCompile Include="..\source\JSphGpu_ker.cu">
       <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">rem ***Vars de compilacion
-set CudaPath=$(CUDA_PATH_V9_2)
+set CudaPath=$(CUDA_PATH_V11_7)
 set CudaNvcc="%CudaPath%\bin\nvcc.exe"
 set CudaInc="%CudaPath%\include"
 rem ***Seleccion de GPU hardware para compilacion
@@ -479,7 +479,7 @@ rem ***Sentencia de compilacion con salida _ptxasinfo
 rem %CudaNvcc% -ccbin "$(VCInstallDir)bin" %gpuhw% -use_fast_math -c %ptxinfo% -DWIN32 -D_CONSOLE -D_MBCS -Xcompiler /EHsc,/W3,/nologo,/O2,/Zi,/MT -m 64 -I%CudaInc% -I./ -o Intermediate\$(Configuration)\%(Filename).obj ..\%(Filename)%(Extension) -D _CRT_SECURE_NO_DEPRECATE 1&gt;$(OutDir)$(ProjectName)_$(Configuration)64_ptxasinfo
 </Command>
       <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">rem ***Vars de compilacion
-set CudaPath=$(CUDA_PATH_V9_2)
+set CudaPath=$(CUDA_PATH_V11_7)
 set CudaNvcc="%CudaPath%\bin\nvcc.exe"
 set CudaInc="%CudaPath%\include"
 rem ***Seleccion de GPU hardware para compilacion
