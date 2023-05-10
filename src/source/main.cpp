@@ -1,10 +1,11 @@
 /*
- <DUALSPHYSICS>  Copyright (c) 2020, 
+ <DUALSPHYSICS>  Copyright (c) 2023, 
  Dr Jose M. Dominguez Alonso, Dr Alejandro Crespo, 
  Prof. Moncho Gomez Gesteira, Prof. Benedict Rogers, 
  Dr Georgios Fourtakas, Prof. Peter Stansby, 
  Dr Renato Vacondio, Dr Corrado Altomare, Dr Angelo Tafuni, 
- Dr Orlando Garcia Feal, Ivan Martinez Estevez
+ Dr Orlando Garcia Feal, Ivan Martinez Estevez,
+ Dr Joseph O'Connor, Dr Aaron English
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -18,6 +19,10 @@
  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details. 
 
  You should have received a copy of the GNU Lesser General Public License along with DualSPHysics. If not, see <http://www.gnu.org/licenses/>. 
+
+ Free download source files and documentation from DualSPHysics website (http://dual.sphysics.org).
+ Full list of developers and contributors is available at https://dual.sphysics.org/developers
+ Properly cite the use of DualSPHysics (Dominguez et al., 2022) (https://dual.sphysics.org/references).
 */
 
 /** \mainpage DualSPHysics Documentation
@@ -31,8 +36,8 @@ School of Mechanical, Aerospace and Civil Engineering, University of Manchester,
 \section compile_sec Project files
 Please download source files and documentation from <a href="http://dual.sphysics.org">DualSPHysics website.</a> \n
 \author <a href="http://dual.sphysics.org/index.php/developers">DualSPHysics Developers.</a> 
-\version 5.0.233
-\date 08-05-2022
+\version 5.2.269
+\date 03-04-2023
 \copyright GNU Lesser General Public License <a href="http://www.gnu.org/licenses/">GNU licenses.</a>
 */
 
@@ -56,7 +61,7 @@ Please download source files and documentation from <a href="http://dual.sphysic
 
 using namespace std;
 
-JAppInfo AppInfo("DualSPHysics5","v5.0.233","08-05-2022");
+JAppInfo AppInfo("DualSPHysics5","v5.2.269","03-04-2023");
 //JAppInfo AppInfo("DualSPHysics5","v5.0.???","UserVersion","v1.0","??-??-????"); //-for user versions.
 
 //==============================================================================
@@ -64,12 +69,13 @@ JAppInfo AppInfo("DualSPHysics5","v5.0.233","08-05-2022");
 //==============================================================================
 std::string getlicense_lgpl(const std::string &name,bool simple){
   std::string tx=(simple? "": "\n");
-  tx=tx+"\n <"+fun::StrUpper(name)+"> Copyright (c) 2020 by"; 
+  tx=tx+"\n <"+fun::StrUpper(name)+"> Copyright (c) 2023 by"; 
   tx=tx+"\n Dr Jose M. Dominguez Alonso, Dr Alejandro Crespo,";
   tx=tx+"\n Prof. Moncho Gomez Gesteira, Prof. Benedict Rogers,";
   tx=tx+"\n Dr Georgios Fourtakas, Prof. Peter Stansby,";
   tx=tx+"\n Dr Renato Vacondio, Dr Corrado Altomare, Dr Angelo Tafuni,";
-  tx=tx+"\n Dr Orlando Garcia Feal, Ivan Martinez Estevez\n";
+  tx=tx+"\n Dr Orlando Garcia Feal, Ivan Martinez Estevez,";
+  tx=tx+"\n Dr Joseph O'Connor, Dr Aaron English\n";
   if(!simple){
     tx=tx+"\n EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo";
     tx=tx+"\n School of Mechanical, Aerospace and Civil Engineering, University of Manchester\n";
@@ -82,7 +88,10 @@ std::string getlicense_lgpl(const std::string &name,bool simple){
     tx=tx+"\n MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the"; 
     tx=tx+"\n GNU Lesser General Public License for more details.\n";
     tx=tx+"\n You should have received a copy of the GNU Lesser General Public License"; 
-    tx=tx+"\n along with DualSPHysics. If not, see <http://www.gnu.org/licenses/>.\n\n";
+    tx=tx+"\n along with DualSPHysics. If not, see <http://www.gnu.org/licenses/>.\n";
+    tx=tx+"\n Free download source files and documentation from DualSPHysics website (http://dual.sphysics.org).";
+    tx=tx+"\n Full list of developers and contributors is available at https://dual.sphysics.org/developers";
+    tx=tx+"\n Properly cite the use of DualSPHysics (Dominguez et al., 2022) (https://dual.sphysics.org/references).\n\n";
   }
   return(tx);
 }

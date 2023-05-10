@@ -38,6 +38,7 @@
 //:# - Objeto JXml pasado como const para operaciones de lectura. (17-03-2020)  
 //:# - Mejora la gestion de excepciones. (06-05-2020)
 //:# - Cambio de nombre de J.SpaceCtes a J.CaseCtes. (28-06-2020)
+//:# - Nueva configuracion <rhopgradient> para densidad inicial y calculo de max. depth. (22-06-2022)
 //:#############################################################################
 
 /// \file JCaseCtes.h \brief Declares the class \ref JCaseCtes.
@@ -88,6 +89,25 @@ public:
   //  }
   //}StConstants;
 
+public:
+  /// Initial density gradient configuration.
+  typedef enum{ 
+    RHOG_None=0      ///< Unknown.
+   ,RHOG_Rhop0=1     ///< Rhop0
+   ,RHOG_WaterCol=2  ///< Water column
+   ,RHOG_MaxWaterH=3 ///< Max. water height
+  }TpRhoGradient;
+
+  static const int RhopGradientDef=2;
+
+  /// Returns gradient type according to code value.
+  TpRhoGradient GetRhoGradientType(int rgcode)const{
+    return(rgcode==1? RHOG_Rhop0: (rgcode==2? RHOG_WaterCol: (rgcode==3? RHOG_MaxWaterH: RHOG_None)));
+  }
+
+  /// Returns code value according to gradient type.
+  int GetRhoGradientCode(TpRhoGradient rgtype)const{  return(int(rgtype)); }
+
 private:
   bool Data2DDefined;     ///<Toggles 2D simulation (cancels forces in Y axis).
   bool Data2D;            ///<Data dimension (2D, 3D)) 2D simulation (cancels forces in Y axis).
@@ -103,7 +123,8 @@ private:
   double CoefSound;       ///<Coefficient to multiply speedsystem.
   bool SpeedSoundAuto;    ///<Activates the automatic computation of SpeedSound.
   double SpeedSound;      ///<Speed of sound to use in the simulation (by default speedofsound=coefsound*speedsystem).
-
+  TpRhoGradient RhopGradient;  ///<Initial density gradient 10:Rhop0, 2:Water column, 3:Max. water height (default=2).
+  
   double CoefH;           ///<Coefficient to calculate the smoothing length H (H=coefficient*sqrt(3*dp^2) in 3D).
   double CoefHdp;         ///<Relationship between h and dp. (it is optional).
   double Gamma;           ///<Polytropic constant. (1-7).
@@ -162,6 +183,7 @@ public:
   double GetCoefficient()const{ return(GetCoefH()); }
   double GetGamma()const{ return(Gamma); }
   double GetRhop0()const{ return(Rhop0); }
+  TpRhoGradient GetRhopGradient()const{ return(RhopGradient); }
   double GetEps()const{ return(Eps); }
 
   void SetData2D(bool data2d,double data2dposy=0){ Data2D=data2d; Data2DPosY=(data2d? data2dposy: 0); Data2DDefined=true; }
@@ -185,6 +207,7 @@ public:
   void SetCoefficient(double v){ SetCoefH(v); }
   void SetGamma(double v){ Gamma=v; }
   void SetRhop0(double v){ Rhop0=v; }
+  void SetRhopGradient(TpRhoGradient v){ RhopGradient=v; }
   void SetEps(double v){ Eps=v; }
 
   bool GetHAuto()const{ return(HAuto); }

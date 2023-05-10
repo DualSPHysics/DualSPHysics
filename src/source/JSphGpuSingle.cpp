@@ -491,7 +491,7 @@ void JSphGpuSingle::Interaction_Forces(TpInterStep interstep){
 //==============================================================================
 void JSphGpuSingle::MdbcBoundCorrection(){
   Timersg->TmStart(TMG_CfPreForces,false);
-  unsigned n=NpbOk;
+  const unsigned n=(UseNormalsFt? Np: NpbOk);
   cusph::Interaction_MdbcCorrection(TKernel,Simulate2D,SlipMode,MdbcFastSingle
     ,n,CaseNbound,MdbcThreshold,DivData,Map_PosMin,Posxyg,Poszg,PosCellg,Codeg
     ,Idpg,BoundNormalg,MotionVelg,Velrhopg);
@@ -513,6 +513,31 @@ double JSphGpuSingle::ComputeAceMax(float *auxmem){
   return(sqrt(double(acemax)));
 }
 
+//<vs_ddramp_ini>
+//==============================================================================
+/// Applies initial DDT ramp.
+//==============================================================================
+void JSphGpuSingle::RunInitialDDTRamp(){
+  if(TimeStep<DDTRamp.x){
+    if((Nstep%10)==0){//-DDTkh value is updated every 10 calculation steps.
+      if(TimeStep<=DDTRamp.y)DDTkh=KernelSize * float(DDTRamp.z);
+      else{
+        const double tt=TimeStep-DDTRamp.y;
+        const double tr=DDTRamp.x-DDTRamp.y;
+        DDTkh=KernelSize * float(((tr-tt)/tr)*(DDTRamp.z-DDTValue)+DDTValue);
+      }
+      ConstantDataUp(); //-Updates value in constant memory of GPU.
+    }
+  }
+  else{
+    if(DDTkh!=DDTkhCte){
+      CSP.ddtkh=DDTkh=DDTkhCte;
+      ConstantDataUp();
+    }
+    DDTRamp.x=0;
+  }
+}//<vs_ddramp_end>
+
 //==============================================================================
 /// Particle interaction and update of particle data according to
 /// the computed forces using the Verlet time stepping scheme.
@@ -521,7 +546,6 @@ double JSphGpuSingle::ComputeAceMax(float *auxmem){
 /// calculadas en la interaccion usando Verlet.
 //==============================================================================
 double JSphGpuSingle::ComputeStep_Ver(){
-  if(BoundCorr)BoundCorrectionData();      //-Apply BoundCorrection.
   Interaction_Forces(INTERSTEP_Verlet);    //-Interaction.
   const double dt=DtVariable(true);        //-Calculate new dt.
   if(CaseNmoving)CalcMotion(dt);           //-Calculate motion for moving bodies.
@@ -548,7 +572,6 @@ double JSphGpuSingle::ComputeStep_Sym(){
   //-Predictor
   //-----------
   DemDtForce=dt*0.5f;                          //(DEM)
-  if(BoundCorr)BoundCorrectionData();          //-Apply BoundCorrection.
   Interaction_Forces(INTERSTEP_SymPredictor);  //-Interaction.
   const double ddt_p=DtVariable(false);        //-Calculate dt of predictor step.
   if(Shifting)RunShifting(dt*.5);              //-Shifting.
@@ -709,6 +732,25 @@ void JSphGpuSingle::RunFloating(double dt,bool predictor){
     //-Stores floating data.
     if(!predictor){
       FtObjsOutdated=true;
+      //-Updates floating normals for mDBC.
+      if(UseNormalsFt){
+        tdouble3 *fcen=FtoAuxDouble6;
+        tfloat3  *fang=FtoAuxFloat15;
+        cudaMemcpy(fcen,FtoCenterg,sizeof(double3)*FtCount,cudaMemcpyDeviceToHost);
+        cudaMemcpy(fang,FtoAnglesg,sizeof(float3) *FtCount,cudaMemcpyDeviceToHost);
+        for(unsigned cf=0;cf<FtCount;cf++){
+          const StFloatingData fobj=FtObjs[cf];
+          FtObjs[cf].center=fcen[cf];
+          FtObjs[cf].angles=fang[cf];
+          const tdouble3 dang=ToTDouble3(FtObjs[cf].angles-fobj.angles)*TODEG;
+          const tdouble3 cen=FtObjs[cf].center;
+          JMatrix4d mat;
+          mat.Move(cen);
+          mat.Rotate(dang);
+          mat.Move(fobj.center*-1);
+          cusph::FtNormalsUpdate(fobj.count,fobj.begin-CaseNpb,mat.GetMatrix(),FtRidpg,BoundNormalg);
+        }
+      }
       //<vs_ftmottionsv_ini>
       if(FtMotSave && FtMotSave->CheckTime(TimeStep+dt)){
         UpdateFtObjs(); //-Updates floating information on CPU memory.
@@ -734,9 +776,13 @@ void JSphGpuSingle::RunFloating(double dt,bool predictor){
 /// Ejecuta calculos en las posiciones de medida configuradas.
 //==============================================================================
 void JSphGpuSingle::RunGaugeSystem(double timestep,bool saveinput){
-  //const bool svpart=(TimeStep>=TimePartNext);
-  GaugeSystem->CalculeGpu(timestep,DivData
-    ,NpbOk,Npb,Np,Posxyg,Poszg,Codeg,Idpg,Velrhopg,saveinput);
+  if(!Nstep || GaugeSystem->GetCount()){
+    Timersg->TmStart(TMG_SuGauges,false);
+    //const bool svpart=(TimeStep>=TimePartNext);
+    GaugeSystem->CalculeGpu(timestep,DivData
+      ,NpbOk,Npb,Np,Posxyg,Poszg,Codeg,Idpg,Velrhopg,saveinput);
+    Timersg->TmStop(TMG_SuGauges,false);
+  }
 }
 
 //==============================================================================
@@ -807,6 +853,7 @@ void JSphGpuSingle::Run(std::string appname,const JSphCfgRun *cfg,JLog2 *log){
   while(TimeStep<TimeMax){
     InterStep=(TStep==STEP_Symplectic? INTERSTEP_SymPredictor: INTERSTEP_Verlet);
     if(ViscoTime)Visco=ViscoTime->GetVisco(float(TimeStep));
+    if(DDTRamp.x)RunInitialDDTRamp(); //<vs_ddramp>
     double stepdt=ComputeStep();
     RunGaugeSystem(TimeStep+stepdt);
     if(CaseNmoving)RunMotion(stepdt);
@@ -905,7 +952,7 @@ void JSphGpuSingle::SaveExtraData(){
     tfloat3  *nor =NULL;
     typecode *code=NULL;
     if(BoundNormalg){
-      unsigned nsize=Npb;
+      const unsigned nsize=(UseNormalsFt? Np: Npb);
       idp=fcuda::ToHostUint  (0,nsize,Idpg);
       nor=fcuda::ToHostFloat3(0,nsize,BoundNormalg);
       if(PeriActive){

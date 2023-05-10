@@ -73,7 +73,6 @@ class JChronoObjects;
 class JDsMooredFloatings;
 class JDsFtForcePoints;
 class JSphInOut;
-class JSphBoundCorr;
 class JDsPartsInit;
 class JDsPips;
 class JLinearValue;
@@ -183,6 +182,7 @@ protected:
 
   TpDensity TDensity;         ///<Density Diffusion Term 0:None, 1:Molteni, 2:Fourtakas, 3:Fourtakas(full) (default=0)
   float DDTValue;             ///<Value used with Density Diffusion Term (default=0.1)
+  tdouble3 DDTRamp;           ///<Configuration of initial DDT ramp (Total time, time for maxvalue, maxvalue).  //<vs_ddramp>
   bool DDTArray;              ///<Use extra array to compute Density Diffusion Term. The correction is applied after particle interaction. 
 
   TpVisco TVisco;             ///<Viscosity type: Artificial,...                                         | Tipo de viscosidad: Artificial,...
@@ -197,7 +197,7 @@ protected:
   float MdbcThreshold;        ///<Kernel support limit to apply mDBC correction (default=0).
   bool UseNormals;            ///<Indicates use of normals for mDBC.
   bool UseNormalsFt;          ///<Indicates use of normals of floating bodies for mDBC.
-  bool SvNormals;             ///<Saves normals VTK each PART (for debug).
+  bool SvNormals;             ///<Saves normals VTK each PART (default=0).
 
   bool RhopOut;               ///<Indicates whether the RhopOut density correction is active or not.    | Indica si activa la correccion de densidad RhopOut o no.                       
   float RhopOutMin;           ///<Minimum limit for Rhopout correction.                                 | Limite minimo para la correccion de RhopOut.
@@ -236,7 +236,7 @@ protected:
   float CteB;              ///<Constant used in the state equation [Pa].
   float Gamma;             ///<Politropic constant for water used in the state equation.
   float RhopZero;          ///<Reference density of the fluid [kg/m3].
-  float CFLnumber;         ///<Coefficient to multiply dt.
+  double CFLnumber;        ///<Coefficient to multiply dt.
   double Dp;               ///<Initial distance between particles [m].
   float MassFluid;         ///<Reference mass of the fluid particle [kg].
   float MassBound;         ///<Reference mass of the general boundary particle [kg].
@@ -251,6 +251,7 @@ protected:
   //-Constants for computation 2 (computed starting from previous constants).
   float SpsSmag;           ///<Smagorinsky constant used in SPS turbulence model.
   float SpsBlin;           ///<Blin constant used in the SPS turbulence model.
+  float DDTkhCte;          ///<Store fixed constant DDTkh.
   float DDTkh;             ///<Constant for DDT1 & DDT2. DDTkh=DDTValue*KernelSize
   float DDTgz;             ///<Constant for DDT2.        DDTgz=RhopZero*Gravity.z/CteB
 
@@ -295,6 +296,7 @@ protected:
   StFloatingData *FtObjs;        ///<Data of floating objects. [FtCount]
   unsigned FtCount;              ///<Number of floating objects.
   float FtPause;                 ///<Time to start floating bodies movement.
+  TpRigidMode RigidMode;         ///<Rigid Algorithm 0:collision-free, 1:SPH, 2:DEM, 3:Chrono (default=1).
   TpFtMode FtMode;               ///<Defines interaction mode for floatings and boundaries.
   bool FtConstraints;            ///<Some floating motion constraint is defined.
   JLinearValue **FtLinearVel;    ///<Imposed linear velocity [FtCount].
@@ -336,7 +338,6 @@ protected:
   JDsAccInput *AccInput;    ///<Object for variable acceleration functionality.
 
   JSphInOut *InOut;         ///<Object for inlet/outlet conditions.
-  JSphBoundCorr *BoundCorr; ///<Object for boundary extrapolated correction (used in combination with InOut).
 
   JFtMotionSave *FtMotSave; ///<Object for saving floating motion data with high frequency. //<vs_ftmottionsv>
 
@@ -465,6 +466,10 @@ protected:
   void CheckRhopLimits();
   void LoadCaseParticles();
   void InitRun(unsigned np,const unsigned *idp,const tdouble3 *pos);
+
+  void WavesInit(JGaugeSystem *gaugesystem,const JSphMk *mkinfo,double timemax,double timepart);
+  void WavesLoadLastGaugeResults();
+  void WavesUpdateGaugePoints();
 
   tfloat3 GetFtExternalForceLin(unsigned cf,double timestep)const;
   tfloat3 GetFtExternalForceAng(unsigned cf,double timestep)const;

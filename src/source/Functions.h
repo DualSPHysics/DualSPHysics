@@ -98,6 +98,7 @@
 //:# - Nuevas funciones GetNewFileName().  (04-11-2021)
 //:# - Nuevas funciones VectorFind() para unsigned, float y double.  (06-11-2021)
 //:# - Nuevas funciones StrFillBegin(), StrFillEnd().  (08-05-2022)
+//:# - Nuevas funciones GetDateTimet(),GetDateValuesDMY(). (02-08-2022)
 //:#############################################################################
 
 /// \file Functions.h \brief Declares basic/general functions for the entire application.
@@ -120,6 +121,9 @@ void RunExceptioonFun(const std::string &srcfile,int srcline,const std::string &
 
 std::string GetHostName();
 
+time_t GetDateTimet();
+time_t GetDateTimet(int day,int month,int year,int hour=0,int min=0,int sec=0);
+std::string GetDateTimeFormat(time_t tt,const char* format,int nseg=0);
 std::string GetDateTimeFormat(const char* format,int nseg=0);
 inline std::string GetDateTime(){ return(GetDateTimeFormat("%d-%m-%Y %H:%M:%S",0)); }
 inline std::string GetDateTimeAfter(int nseg){ return(GetDateTimeFormat("%d-%m-%Y %H:%M:%S",nseg)); }
@@ -128,6 +132,8 @@ std::string GetDateTimeFormatUTC(const char* format,int day,int month,int year,i
 int GetWeekDay(int day,int month,int year);
 int GetYearDay(int day,int month,int year);
 int GetWeekNumber(int day,int month,int year);
+
+void GetDateValuesDMY(std::string datetx,int &day,int &month,int &year);
 
 void Delay(int ms);
 double GetRuntime();

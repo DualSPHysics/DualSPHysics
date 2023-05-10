@@ -19,9 +19,9 @@
 /// \file JCfgRunBase.cpp \brief Implements the class \ref JCfgRunBase.
 
 #include "JCfgRunBase.h"
-#include "JAppInfo.h"
 
 #ifdef JCfgRunBase_UseDSCfg
+#include "JAppInfo.h"
 #include "JDsphConfig.h"
 #endif
 
@@ -63,7 +63,9 @@ void JCfgRunBase::LoadDsphConfig(std::string path){
 void JCfgRunBase::LoadArgv(int argc,char** argv){
   Reset();
   //-Loads configuration from DsphConfig.xml.
-  LoadDsphConfig(AppInfo.GetProgramPath());
+  #ifdef JCfgRunBase_UseDSCfg
+    LoadDsphConfig(AppInfo.GetProgramPath());
+  #endif
   //-Loads execution parameters.
   const int MAXOPTS=100;
   string *optlis=new string[MAXOPTS];
@@ -322,12 +324,13 @@ void JCfgRunBase::LoadDouble6(std::string txopt,double def,tdouble3 &v1,tdouble3
 }
 
 //==============================================================================
-/// Splits options in txoptfull, txopt, txopt2, txopt3 and txopt4.
+/// Splits options in txoptfull, txopt, txopt2, txopt3, txopt4 and txopt5.
 //==============================================================================
-void JCfgRunBase::SplitsOpts(const std::string &opt,std::string &txword,std::string &txoptfull
-  ,std::string &txopt1,std::string &txopt2,std::string &txopt3,std::string &txopt4)const
+void JCfgRunBase::SplitsOpts(const std::string &opt,std::string &txword
+  ,std::string &txoptfull,std::string &txopt1,std::string &txopt2
+  ,std::string &txopt3,std::string &txopt4,std::string &txopt5)const
 {
-  txword=txoptfull=txopt1=txopt2=txopt3=txopt4="";
+  txword=txoptfull=txopt1=txopt2=txopt3=txopt4=txopt5="";
   string tx=opt.substr(1);
   int pos=int(tx.find("#"));
   if(pos>0)tx=tx.substr(0,pos);
@@ -347,6 +350,10 @@ void JCfgRunBase::SplitsOpts(const std::string &opt,std::string &txword,std::str
   pos=int(tx.find(":"));
   txopt3=(pos>=0? tx.substr(0,pos): tx);
   if(pos>=0)txopt4=tx.substr(pos+1);
+  tx=txopt4;
+  pos=int(tx.find(":"));
+  txopt4=(pos>=0? tx.substr(0,pos): tx);
+  if(pos>=0)txopt5=tx.substr(pos+1);
 }
 
 

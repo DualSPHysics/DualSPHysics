@@ -14,8 +14,8 @@ rem "executables" are renamed and called from their directory
 
 set dirbin=../../../bin/windows
 set gencase="%dirbin%/GenCase_win64.exe"
-set dualsphysicscpu="%dirbin%/DualSPHysics5.0CPU_win64.exe"
-set dualsphysicsgpu="%dirbin%/DualSPHysics5.0_win64.exe"
+set dualsphysicscpu="%dirbin%/DualSPHysics5.2CPU_win64.exe"
+set dualsphysicsgpu="%dirbin%/DualSPHysics5.2_win64.exe"
 set boundaryvtk="%dirbin%/BoundaryVTK_win64.exe"
 set partvtk="%dirbin%/PartVTK_win64.exe"
 set partvtkout="%dirbin%/PartVTKOut_win64.exe"
@@ -24,6 +24,7 @@ set computeforces="%dirbin%/ComputeForces_win64.exe"
 set isosurface="%dirbin%/IsoSurface_win64.exe"
 set flowtool="%dirbin%/FlowTool_win64.exe"
 set floatinginfo="%dirbin%/FloatingInfo_win64.exe"
+set tracerparts="%dirbin%/TracerParts_win64.exe"
 
 :menu
 if exist %dirout% ( 

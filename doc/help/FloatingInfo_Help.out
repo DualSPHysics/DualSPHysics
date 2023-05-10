@@ -3,8 +3,9 @@
  <FLOATINGINFO>  Copyright (c) 2020 by Dr Jose M. Dominguez
  All rights reserved.
 
- DualSPHysics is an international collaboration between University of Vigo 
- (Spain) and University of Manchester (UK). 
+ FloatingInfo is a free tool for DualSPHysics simulations.
+ DualSPHysics project is an international collaboration between
+ University of Vigo (Spain) and University of Manchester (UK).
 
  Redistribution and use in source and binary forms, with or without
  modification, are permitted provided that the following conditions
@@ -14,7 +15,7 @@
  * Redistributions in binary form must reproduce the above copyright
    notice, this list of conditions and the following disclaimer in the
    documentation and/or other materials provided with the distribution.
- * Neither the name of the DualSPHysics nor the names of its contributors
+ * Neither the name of the FloatingInfo nor the names of its contributors
    may be used to endorse or promote products derived from this software
    without specific prior written permission.
 
@@ -27,10 +28,10 @@
  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
- THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
+ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-FloatingInfo v5.0.176 (21-05-2022)
+FloatingInfo v5.0.206 (12-04-2023)
 ===================================
 LoadDsphConfig> .../bin/windows/DsphConfig.xml
 Information about parameters of execution:
@@ -59,7 +60,28 @@ Information about parameters of execution:
     -csvsep:<0/1>       Separator character in CSV files (0=semicolon, 1=coma)
                         (value by default is read from DsphConfig.xml or 0)
 
+  Information on output data stored by DualSPHysics on floating bodies:
+    fvel [m/s]..........: Linear velocity of the floating body.
+    fomega [rad/s]......: Angular velocity of the floating body.
+    center [m]..........: Position of the centre of mass.
+    surge [m]...........: Displacement of the centre of mass in X.
+    sway [m]............: Displacement of the centre of mass in Y.
+    heave [m]...........: Displacement of the centre of mass in Z.
+    roll [deg]..........: Rotation on the X-axis.
+    pitch [deg].........: Rotation on the X-axis.
+    yaw [deg]...........: Rotation on the X-axis.
+    face [m/s^2]........: Linear acceleration (calculated as (v_t1-v_t0)/dt).
+    faceomega [rad/s^2].: Angular acceleration (calculated as (v_t1-v_t0)/dt).
+    extforcelin [N].....: External linear forces (moorings and imposed forces).
+    extforceang [Nm]....: External angular forces (moorings and imposed forces).
+    fluidforcelin [N]...: Linear forces from fluid (sum in eq.48, Dominguez et al 2022).
+    fluidforceang [Nm]..: Angular forces from fluid (sum in eq.49, Dominguez et al 2022).
+    pre-acelin [m/s^2]..: Linear acceleration before constraints (includes external forces and gravity).
+    pre-aceang [rad/s^2]: Angular acceleration before constraints (multiplied by rotated inertia tensor).
+    *** Note that the sign of pitch has changed since v5.0.204
+
   Examples:
     FloatingInfo -savedata results
     FloatingInfo -dirin . -onlymk:61-65 -savemotion:0
+    FloatingInfo -dirin . -filein PartFloatMotion.fbi4 -savedata results
 

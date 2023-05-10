@@ -205,6 +205,11 @@ void JDsMooredFloatings::ReadXml(const JXml *sxml,TiXmlElement* lis){
       ele=ele->NextSiblingElement("floating");
     }
   }
+  #ifndef DISABLE_NUMEXLIB
+  //-Send the NumxLib object in order to read the user-defined variables from MoorDyn+
+  MoorDyn_NuxLibInit(sxml->GetNuxLib());
+  #endif // !DISABLE_NUMEXLIB
+
 }
 
 //==============================================================================

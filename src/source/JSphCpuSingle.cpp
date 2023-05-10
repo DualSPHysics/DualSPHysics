@@ -643,6 +643,27 @@ template<bool checkcode> double JSphCpuSingle::ComputeAceMaxOmp(unsigned np
   return(acemax);
 }
 
+//<vs_ddramp_ini>
+//==============================================================================
+/// Applies initial DDT ramp.
+//==============================================================================
+void JSphCpuSingle::RunInitialDDTRamp(){
+  if(TimeStep<DDTRamp.x){
+    if((Nstep%10)==0){//-DDTkh value is updated every 10 calculation steps.
+      if(TimeStep<=DDTRamp.y)DDTkh=KernelSize * float(DDTRamp.z);
+      else{
+        const double tt=TimeStep-DDTRamp.y;
+        const double tr=DDTRamp.x-DDTRamp.y;
+        DDTkh=KernelSize * float(((tr-tt)/tr)*(DDTRamp.z-DDTValue)+DDTValue);
+      }
+    }
+  }
+  else{
+    if(DDTkh!=DDTkhCte)CSP.ddtkh=DDTkh=DDTkhCte;
+    DDTRamp.x=0;
+  }
+}//<vs_ddramp_end>
+
 //==============================================================================
 /// Perform interactions and updates of particles according to forces 
 /// calculated in the interaction using Verlet.
@@ -651,7 +672,6 @@ template<bool checkcode> double JSphCpuSingle::ComputeAceMaxOmp(unsigned np
 /// calculadas en la interaccion usando Verlet.
 //==============================================================================
 double JSphCpuSingle::ComputeStep_Ver(){
-  if(BoundCorr)BoundCorrectionData();      //-Apply BoundCorrection.
   Interaction_Forces(INTERSTEP_Verlet);    //-Interaction.
   const double dt=DtVariable(true);        //-Calculate new dt.
   if(CaseNmoving)CalcMotion(dt);           //-Calculate motion for moving bodies.
@@ -678,7 +698,6 @@ double JSphCpuSingle::ComputeStep_Sym(){
   //-Predictor
   //-----------
   DemDtForce=dt*0.5f;                          //(DEM)
-  if(BoundCorr)BoundCorrectionData();          //-Apply BoundCorrection.
   Interaction_Forces(INTERSTEP_SymPredictor);  //-Interaction.
   const double ddt_p=DtVariable(false);        //-Calculate dt of predictor step.
   if(Shifting)RunShifting(dt*.5);              //-Shifting.
@@ -965,6 +984,19 @@ void JSphCpuSingle::RunFloating(double dt,bool predictor){
         FtObjs[cf].faceang=(fomega-FtObjs[cf].fomega)/float(dt);
         FtObjs[cf].fvel=fvel;
         FtObjs[cf].fomega=fomega;
+        //-Updates floating normals for mDBC.
+        if(UseNormalsFt){
+          const tdouble3 dang=ToTDouble3(FtObjs[cf].angles-fobj.angles)*TODEG;
+          const tdouble3 cen=FtObjs[cf].center;
+          JMatrix4d mat;
+          mat.Move(cen);
+          mat.Rotate(dang);
+          mat.Move(fobj.center*-1);
+          for(unsigned fp=fpini;fp<fpfin;fp++){
+            const int p=FtRidp[fp];
+            if(p!=UINT_MAX)BoundNormalc[p]=ToTFloat3(mat.MulNormal(ToTDouble3(BoundNormalc[p])));
+          }
+        }
         //<vs_ftmottionsv_ini>
         if(FtMotSave && FtMotSave->CheckTime(TimeStep+dt))
           FtMotSave->SaveFtDataCpu(TimeStep+dt,Nstep+1,FtObjs,Np,Posc,FtRidp);
@@ -988,8 +1020,13 @@ void JSphCpuSingle::RunFloating(double dt,bool predictor){
 /// Ejecuta calculos en las posiciones de medida configuradas.
 //==============================================================================
 void JSphCpuSingle::RunGaugeSystem(double timestep,bool saveinput){
-  //const bool svpart=(TimeStep>=TimePartNext);
-  GaugeSystem->CalculeCpu(timestep,DivData,NpbOk,Npb,Np,Posc,Codec,Idpc,Velrhopc,saveinput);
+  if(!Nstep || GaugeSystem->GetCount()){
+    Timersc->TmStart(TMC_SuGauges);
+    //const bool svpart=(TimeStep>=TimePartNext);
+    GaugeSystem->CalculeCpu(timestep,DivData,NpbOk,Npb,Np
+      ,Posc,Codec,Idpc,Velrhopc,saveinput);
+    Timersc->TmStop(TMC_SuGauges);
+  }
 }
 
 //==============================================================================
@@ -1053,6 +1090,7 @@ void JSphCpuSingle::Run(std::string appname,const JSphCfgRun *cfg,JLog2 *log){
   while(TimeStep<TimeMax){
     InterStep=(TStep==STEP_Symplectic? INTERSTEP_SymPredictor: INTERSTEP_Verlet);
     if(ViscoTime)Visco=ViscoTime->GetVisco(float(TimeStep));
+    if(DDTRamp.x)RunInitialDDTRamp(); //<vs_ddramp>
     double stepdt=ComputeStep();
     RunGaugeSystem(TimeStep+stepdt);
     if(CaseNmoving)RunMotion(stepdt);

@@ -55,12 +55,10 @@
 #include "JDsDamping.h"
 #include "JDsInitialize.h"
 #include "JSphInOut.h"
-#include "JSphBoundCorr.h"
 #include "JFtMotionSave.h"  //<vs_ftmottionsv>
 #include "JDsPips.h"
 #include "JLinearValue.h"
 #include "JPartNormalData.h"
-#include "JNormalsMarrone.h"
 #include "JDataArrays.h"
 #include "JOutputCsv.h"
 #include "JVtkLib.h"
@@ -109,7 +107,6 @@ JSph::JSph(bool cpu,bool mgpu,bool withmpi):Cpu(cpu),Mgpu(mgpu),WithMpi(withmpi)
   AccInput=NULL;
   PartsLoaded=NULL;
   InOut=NULL;
-  BoundCorr=NULL;
   FtMotSave=NULL; //<vs_ftmottionsv>
   DsPips=NULL;
   NuxLib=NULL;
@@ -147,7 +144,6 @@ JSph::~JSph(){
   delete AccInput;      AccInput=NULL; 
   delete PartsLoaded;   PartsLoaded=NULL;
   delete InOut;         InOut=NULL;
-  delete BoundCorr;     BoundCorr=NULL;
   delete FtMotSave;     FtMotSave=NULL;   //<vs_ftmottionsv>
   delete DsPips;        DsPips=NULL;
   delete NuxLib;        NuxLib=NULL;
@@ -178,6 +174,7 @@ void JSph::InitVars(){
   KWend  ={0,0};
   TVisco=VISCO_None;
   TDensity=DDT_None; DDTValue=0; DDTArray=false;
+  DDTRamp=TDouble3(0); //<vs_ddramp>
   ShiftingMode=(Shifting? Shifting->GetShiftMode(): SHIFT_None);
   Visco=0; ViscoBoundFactor=1;
   TBoundary=BC_DBC;
@@ -208,7 +205,8 @@ void JSph::InitVars(){
   SvTimers=false;
   SvDomainVtk=false;
 
-  KernelH=CteB=Gamma=RhopZero=CFLnumber=0;
+  KernelH=CteB=Gamma=RhopZero=0;
+  CFLnumber=0;
   Dp=0;
   MassFluid=MassBound=0;
   Gravity=TFloat3(0);
@@ -217,7 +215,7 @@ void JSph::InitVars(){
   Cs0=0;
   Eta2=0;
   SpsSmag=SpsBlin=0;
-  DDTkh=DDTgz=0;
+  DDTkhCte=DDTkh=DDTgz=0;
   memset(&CSP,0,sizeof(StCteSph));
 
   CasePosMin=CasePosMax=TDouble3(0);
@@ -236,6 +234,7 @@ void JSph::InitVars(){
 
   FtCount=0;
   FtPause=0;
+  RigidMode=FTRIGID_Sph;
   FtMode=FTMODE_Sph;
   FtConstraints=false;
   FtIgnoreRadius=false;
@@ -511,6 +510,7 @@ void JSph::LoadConfig(const JSphCfgRun *cfg){
   if(cfg->Sv_Binx)SvData|=byte(SDAT_Binx);
   if(cfg->Sv_Info)SvData|=byte(SDAT_Info);
   if(cfg->Sv_Vtk)SvData|=byte(SDAT_Vtk);
+  SvNormals=cfg->SvNormals;
   SvRes=cfg->SvRes;
   SvTimers=cfg->SvTimers;
   SvDomainVtk=cfg->SvDomainVtk;
@@ -574,7 +574,7 @@ void JSph::LoadConfigCtes(const JXml *xml){
   CteB=(float)ctes.GetB();
   Gamma=(float)ctes.GetGamma();
   RhopZero=(float)ctes.GetRhop0();
-  CFLnumber=(float)ctes.GetCFLnumber();
+  CFLnumber=ctes.GetCFLnumber();
   Dp=ctes.GetDp();
   MassFluid=(float)ctes.GetMassFluid();
   MassBound=(float)ctes.GetMassBound();
@@ -597,10 +597,10 @@ void JSph::LoadConfigParameters(const JXml *xml){
   if(eparms.Exists("SavePosDouble"))SvPosDouble=(eparms.GetValueInt("SavePosDouble",true,0)!=0);
   if(eparms.Exists("SaveExtraParts"))SvExtraParts=eparms.GetValue("SaveExtraParts");
   switch(eparms.GetValueInt("RigidAlgorithm",true,1)){ //(DEM)
-    case 0:  FtMode=FTMODE_Ext;                   break;
-    case 1:  FtMode=FTMODE_Sph;                   break;
-    case 2:  FtMode=FTMODE_Ext;  UseDEM=true;     break;
-    case 3:  FtMode=FTMODE_Ext;  UseChrono=true;  break;
+    case 0:  RigidMode=FTRIGID_Free;    FtMode=FTMODE_Ext;                   break;
+    case 1:  RigidMode=FTRIGID_Sph;     FtMode=FTMODE_Sph;                   break;
+    case 2:  RigidMode=FTRIGID_Dem;     FtMode=FTMODE_Ext;  UseDEM=true;     break;
+    case 3:  RigidMode=FTRIGID_Chrono;  FtMode=FTMODE_Ext;  UseChrono=true;  break;
     default: Run_Exceptioon("Rigid algorithm is not valid.");
   }
   switch(eparms.GetValueInt("StepAlgorithm",true,1)){
@@ -766,7 +766,6 @@ void JSph::LoadConfigCommands(const JSphCfgRun *cfg){
   if(cfg->TBoundary){
     TBoundary=BC_DBC;
     SlipMode=SLIP_Vel0;
-    MdbcCorrector=false;
     MdbcFastSingle=true;
     MdbcThreshold=0;
     switch(cfg->TBoundary){
@@ -781,6 +780,7 @@ void JSph::LoadConfigCommands(const JSphCfgRun *cfg){
       default: Run_Exceptioon("Slip mode for mDBC is not valid.");
     }
     UseNormals=(TBoundary==BC_MDBC);
+    if(TBoundary!=BC_MDBC)MdbcCorrector=false;
   }
   if(TBoundary==BC_MDBC){
     if(cfg->MdbcThreshold >=0)MdbcThreshold=cfg->MdbcThreshold;
@@ -808,6 +808,9 @@ void JSph::LoadConfigCommands(const JSphCfgRun *cfg){
   }
   if(TDensity==DDT_None)DDTValue=0;
   else if(cfg->DDTValue>=0)DDTValue=cfg->DDTValue;
+  if(TDensity!=DDT_None && cfg->DDTValueTRamp>0 && cfg->DDTValueMax>0){ //<vs_ddramp_ini>
+    DDTRamp=TDouble3(cfg->DDTValueTRamp,cfg->DDTValueTMax,cfg->DDTValueMax);
+  } //<vs_ddramp_end>
   DDTArray=(TDensity!=DDT_None && Cpu); //-It is necessary because the interaction is divided in two steps: fluid-fluid/float and fluid-bound.
   //-Checks warnings of DDT according to gravity.
   if(Gravity.z==0){
@@ -832,6 +835,7 @@ void JSph::LoadConfigCommands(const JSphCfgRun *cfg){
     Shifting->ConfigBasic(shiftmode);
   }
 
+  if(cfg->CFLnumber>0)CFLnumber=cfg->CFLnumber;
   if(cfg->FtPause>=0)FtPause=cfg->FtPause;
   if(cfg->TimeMax>0)TimeMax=cfg->TimeMax;
   NstepsBreak=cfg->NstepsBreak;
@@ -971,14 +975,14 @@ void JSph::LoadCaseConfig(const JSphCfgRun *cfg){
   }
 
   //-Configuration of ChronoObjects.
-  if(UseChrono){
-    if(xml.GetNodeSimple("case.execution.special.chrono",true)){
-      if(!JChronoObjects::Available())Run_Exceptioon("DSPHChronoLib to use Chrono is not included in the current compilation.");
-      ChronoObjects=new JChronoObjects(DirCase,CaseName,&xml,"case.execution.special.chrono",Dp,parts.GetMkBoundFirst(),Gravity,Simulate2D,FtPause);
-    }
-    else Run_ExceptioonFile("Chrono configuration in XML file is missing.",FileXml);
+  if(xml.GetNodeSimple("case.execution.special.chrono",true)){
+    if(!JChronoObjects::Available())Run_Exceptioon("DSPHChronoLib to use Chrono is not included in the current compilation.");
+    ChronoObjects=new JChronoObjects(DirCase,CaseName,&xml,"case.execution.special.chrono",Dp,parts.GetMkBoundFirst(),Gravity,Simulate2D,FtPause);
+    UseChrono=true;
+    if(RigidMode==FTRIGID_Chrono && !ChronoObjects->GetUseCollision())
+      Log->PrintfWarning("Collisions are configured in terms of Chrono (RigidAlgorithm=3) but the collisions are disabled in Chrono configuration.");
   }
-  else if(xml.GetNodeSimple("case.execution.special.chrono",true))Log->PrintfWarning("The use of Chrono is disabled (RigidAlgorithm is not 3) although XML file includes the Chrono configuration.");
+  else if(RigidMode==FTRIGID_Chrono)Run_ExceptioonFile("Chrono configuration in XML file for defined rigid-algorithm is missing.",FileXml);
 
   //-Loads and configures moving objects.
   if(parts.CountBlocks(TpPartMoving)>0){
@@ -996,7 +1000,7 @@ void JSph::LoadCaseConfig(const JSphCfgRun *cfg){
     WaveGen=new JWaveGen(useomp,!Cpu,Log,DirCase,&xml,"case.execution.special.wavepaddles",ToTDouble3(Gravity));
     if(DsMotion)for(unsigned ref=0;ref<DsMotion->GetNumObjects();ref++){
       const StMotionData& m=DsMotion->GetMotionData(ref);
-      WaveGen->ConfigPaddle(m.mkbound,ref,m.idbegin,m.count);
+      WaveGen->ConfigPaddleParts(m.mkbound,ref,m.idbegin,m.count);
     }
   }
 
@@ -1020,7 +1024,7 @@ void JSph::LoadCaseConfig(const JSphCfgRun *cfg){
     #ifdef OMP_USE_WAVEGEN
       useomp=(omp_get_max_threads()>1);
     #endif
-    RelaxZones=new JRelaxZones(useomp,!Cpu,Log,DirCase,CaseNfloat>0,CaseNbound,ToTDouble3(Gravity));
+    RelaxZones=new JRelaxZones(useomp,!Cpu,Log,AppName,DirCase,CaseNfloat>0,CaseNbound,ToTDouble3(Gravity));
     RelaxZones->LoadXml(&xml,"case.execution.special.relaxationzones");
   }
 
@@ -1144,10 +1148,8 @@ void JSph::LoadCaseConfig(const JSphCfgRun *cfg){
   }
   
   //-Configuration of boundary extrapolated correction.
-  if(xml.GetNodeSimple("case.execution.special.boundextrap",false))Run_Exceptioon("The XML section 'boundextrap' is obsolete.");
-  if(xml.GetNodeSimple("case.execution.special.boundcorr",true)){
-    BoundCorr=new JSphBoundCorr(Cpu,Dp,&xml,"case.execution.special.boundcorr",MkInfo);
-  }
+  if(xml.GetNodeSimple("case.execution.special.boundextrap",false))Run_Exceptioon("The XML section 'boundextrap' is obsolete. Use mDBC boundary conditions.");
+  if(xml.GetNodeSimple("case.execution.special.boundcorr",false))Run_Exceptioon("The XML section 'boundcorr' is obsolete. Use mDBC boundary conditions.");
  
   //-Configuration of Moorings object.
   if(xml.GetNodeSimple("case.execution.special.moorings",true)){
@@ -1174,7 +1176,6 @@ void JSph::LoadCaseConfig(const JSphCfgRun *cfg){
     if(PeriY)       Run_Exceptioon("Symmetry is not allowed with periodic conditions in axis Y.");
     if(WithFloating)Run_Exceptioon("Symmetry is not allowed with floating bodies.");
     if(UseChrono)   Run_Exceptioon("Symmetry is not allowed with Chrono objects.");
-    if(BoundCorr)   Run_Exceptioon("Symmetry is not allowed with BoundCor.");
     if(TVisco!=VISCO_Artificial)Run_Exceptioon("Symmetry is only allowed with Artificial viscosity.");
   } //<vs_syymmetry_end>
 
@@ -1266,36 +1267,28 @@ void JSph::LoadBoundNormals(unsigned np,unsigned npb,const unsigned *idp
 {
   memset(boundnormal,0,sizeof(tfloat3)*np);
   if(!PartBegin){
-    string filenordata=JNormalsMarrone::GetNormalDataFile(DirCase+CaseName);
-    if(fun::FileExists(filenordata)){
-      //-Load or compute final normals.
+    const string filenormals=JPartNormalData::GetNormalDataFile(false,DirCase+CaseName);
+    if(fun::FileExists(filenormals)){
+      //-Loads final normals.
       const tdouble3 *pnor=NULL;
       unsigned pnorsize=0;
       JPartNormalData nd;
-      JNormalsMarrone nmarrone;
-      nd.LoadFile(DirCase+CaseName);
-      UseNormalsFt=nd.GetFtSupport();
-      if(nd.GetCountNormals()){
-        //-Compute Marrone normals starting from normal data in NBI4 file.
-        nd.Reset();
-        const bool savevtknor=false; //-Saves normals calculated starting from NBI4 file.
-        nmarrone.RunCase(DirCase+CaseName,DirOut,savevtknor);
-        pnor=nmarrone.GetPartNor();
-        pnorsize=nmarrone.GetPartNorSize();
-      }
-      else{
-        //-Loads final normals in NBI4 file.
-        pnor=nd.GetPartNormals();
-        pnorsize=nd.GetNbound();
-      }
+      nd.LoadFile(false,DirCase+CaseName);
+      pnor=nd.GetPartNormals();
+      pnorsize=nd.GetNbound();
       //-Applies final normals. Loads normals from boundary particle to boundary limit.
       if(pnorsize){
-        if(pnorsize<npb)Run_ExceptioonFile("The number of final normals does not match fixed and moving particles.",filenordata);
-        for(unsigned p=0;p<npb;p++)boundnormal[p]=ToTFloat3(pnor[p]);  //-For fixed and moving particles.
-        Log->Printf("NormalDataFile=\"%s\"",filenordata.c_str());
+        Log->Printf("NormalDataFile=\"%s\"",filenormals.c_str());
+        if(pnorsize!=CaseNbound)Run_ExceptioonFile("The number of final normals does not match boundary particles.",filenormals);
+        for(unsigned p=0;p<pnorsize;p++)boundnormal[p]=ToTFloat3(pnor[p]);
       }
     }
-    else Log->Print("**File with normal data not found.");
+    else{
+      const string filenormals=JPartNormalData::GetNormalDataFile(true,DirCase+CaseName);
+      if(fun::FileExists(filenormals)){
+        Run_ExceptioonFile("Old normal data file format (XXX_NormalData.nbi4) is invalid for current version. Use GenCase version 5.0.268 or higher to generate a supported file with normal data (XXX_Normals.nbi4).",filenormals);
+      }
+    }
   }
 }
 
@@ -1308,14 +1301,10 @@ void JSph::ConfigBoundNormals(unsigned np,unsigned npb,const tdouble3 *pos
   //-Checks current normals.
   if(!PartBegin){
     bool ftnor=false;
-    for(unsigned p=0;p<np;p++)if(idp[p]<CaseNbound && boundnormal[p]!=TFloat3(0)){
-      if(idp[p]>=CaseNpb){
-        if(!UseNormalsFt)boundnormal[p]=TFloat3(0);
-      }
-    }
+    for(unsigned p=0;p<np && !ftnor;p++)ftnor=(idp[p]<CaseNbound && idp[p]>=CaseNpb && boundnormal[p]!=TFloat3(0));
     UseNormalsFt=ftnor;
   }
-  
+
   //-Loads normals for restart mode.
   if(PartBegin){
     if(JDsExtraDataLoad::ExistsPartData(PartBeginDir,int(PartBegin))){
@@ -1330,7 +1319,7 @@ void JSph::ConfigBoundNormals(unsigned np,unsigned npb,const tdouble3 *pos
   const string file1="CfgInit_Normals.vtk";
   Log->AddFileInfo(DirOut+file1,"Saves VTK file with initial normals (from boundary particles to boundary limit).");
   SaveVtkNormals(file1,-1,np,npb,pos,idp,boundnormal,(PartBegin? 0.5f: 1.f));
-  //-Config normals.
+  //-Counts the null normals.
   unsigned nerr=0,nerrft=0;
   for(unsigned p=0;p<np;p++)if(idp[p]<CaseNbound){
     if(boundnormal[p]==TFloat3(0)){
@@ -1343,7 +1332,11 @@ void JSph::ConfigBoundNormals(unsigned np,unsigned npb,const tdouble3 *pos
   const string file2="CfgInit_NormalsGhost.vtk";
   Log->AddFileInfo(DirOut+file2,"Saves VTK file with initial normals (from boundary particles to ghost node).");
   SaveVtkNormals(file2,-1,np,npb,pos,idp,boundnormal,1.f);
-  if(nerr>0)Log->PrintfWarning("There are %u of %u fixed or moving boundary particles without normal data.",nerr,npb);
+  if(nerr  >0)Log->PrintfWarning("There are %u of %u fixed or moving boundary particles without normal data.",nerr,npb);
+  if(nerrft>0)Log->PrintfWarning("There are %u of %u floating particles without normal data.",nerrft,CaseNfloat);
+  if(TBoundary==BC_MDBC && nerr==npb && nerrft==CaseNfloat)Run_Exceptioon("No valid normal vectors for using mDBC.");
+  if(UseNormalsFt && (!UseChrono || !ChronoObjects->GetUseCollision()))
+    Log->PrintWarning("When mDBC is applied to floating bodies, their collisions should be solved using Chrono (RigidAlgorithm=3).");
 }
 
 //==============================================================================
@@ -1449,7 +1442,7 @@ void JSph::ConfigConstants2(){
     SpsBlin=float((2./3.)*0.0066*dp_sps*dp_sps); 
   }
   //-Constants for DDT.
-  DDTkh=KernelSize*DDTValue;
+  DDTkhCte=DDTkh=KernelSize*DDTValue;
   DDTgz=float(double(RhopZero)*double(fabs(Gravity.z))/double(CteB));
   //-Constants for Dt.
   if(!DtIni)DtIni=KernelH/Cs0;
@@ -1458,6 +1451,7 @@ void JSph::ConfigConstants2(){
   //-Loads main SPH constants and configurations in CSP.
   CSP.spssmag       =SpsSmag;
   CSP.spsblin       =SpsBlin;
+  CSP.ddtkhcte      =DDTkhCte;
   CSP.ddtkh         =DDTkh;
   CSP.ddtgz         =DDTgz;
 }
@@ -1532,7 +1526,14 @@ void JSph::VisuConfig(){
   if(TDensity!=DDT_None){
     Log->Print(fun::VarStr("  DensityDiffusionValue",DDTValue));
     //Log->Print(fun::VarStr("DensityDiffusionArray",DDTArray));
-    ConfigInfo=ConfigInfo+fun::PrintStr("(%g)",DDTValue);
+    string cinfo=fun::PrintStr("(%g)",DDTValue);
+    if(DDTRamp.x){ //<vs_ddramp_ini>
+      Log->Print(fun::VarStr("  DensityDiffusionTRamp"   ,DDTRamp.x));
+      Log->Print(fun::VarStr("  DensityDiffusionTMax"    ,DDTRamp.y));
+      Log->Print(fun::VarStr("  DensityDiffusionValueMax",DDTRamp.z));
+      cinfo=fun::PrintStr("(%g:t%g:t%g:v%g)",DDTValue,DDTRamp.x,DDTRamp.y,DDTRamp.z);
+    } //<vs_ddramp_end>
+    ConfigInfo=ConfigInfo+cinfo;
   }
   if(TDensity==DDT_DDT2Full && KernelH/Dp>1.5)Log->PrintWarning("It is advised that selected DDT: \'Fourtakas et al 2019 (full)\' is used with several boundary layers of particles when h/dp>1.5 (2h <= layers*Dp)");
   //-Shifting.
@@ -1542,15 +1543,9 @@ void JSph::VisuConfig(){
   }
   else Log->Print(fun::VarStr("Shifting","None"));
   //-RigidAlgorithm.
-  string rigidalgorithm=(!FtCount? "None": (FtMode==FTMODE_Sph? "SPH": "Collision-Free"));
-  if(UseDEM)rigidalgorithm="SPH+DCDEM";
-  if(UseChrono)rigidalgorithm="SPH+CHRONO";
+  string rigidalgorithm=(!FtCount? "None": GetNameRigidMode(RigidMode));
   Log->Print(fun::VarStr("RigidAlgorithm",rigidalgorithm));
-  if(FtCount){
-    if(UseChrono)ConfigInfo=ConfigInfo+sep+"Ft-Chrono";
-    else if(UseDEM)ConfigInfo=ConfigInfo+sep+"Ft-DCDEM";
-    else ConfigInfo=ConfigInfo+sep+"Ft-SPH";
-  }
+  if(FtCount)ConfigInfo=ConfigInfo+sep+"Ft-"+rigidalgorithm;
   //-Moorings.
   if(Moorings)ConfigInfo=ConfigInfo+sep+"MoorDyn+";
   //-Other configurations. 
@@ -1623,8 +1618,8 @@ void JSph::VisuRefs(){
   Log->Print("- Official solver reference DualSPHysics v5.0: J.M. Dominguez, G. Fourtakas,");
   Log->Print("    C. Altomare, R.B. Canelas, A. Tafuni, O. Garcia-Feal, I. Martinez-Estevez,"); 
   Log->Print("    A. Mokos, R. Vacondio, A.J.C. Crespo, B.D. Rogers, P.K. Stansby, M. Gomez-Gesteira."); 
-  Log->Print("    2021. DualSPHysics: from fluid dynamics to multiphysics problems.");
-  Log->Print("    Computational Particle Mechanics. doi: https://doi.org/10.1007/s40571-021-00404-2");
+  Log->Print("    2022. DualSPHysics: from fluid dynamics to multiphysics problems.");
+  Log->Print("    Computational Particle Mechanics, 9:867-895. doi: https://doi.org/10.1007/s40571-021-00404-2");
   Log->Print("");
   //-Code implementation:
   Log->Print("- Optimised CPU multi-core and GPU implementation (Dominguez et al., 2013  https://doi.org/10.1016/j.cpc.2012.10.015)");
@@ -1650,7 +1645,7 @@ void JSph::VisuRefs(){
   if(InOut        )Log->Print("- Inflow-outflow boundary conditions (Tafuni et al., 2018  https://doi.org/10.1016/j.cma.2018.08.004)");
   if(WithFloating )Log->Print("- Floating objects (Canelas et al., 2015  https://doi.org/10.1002/fld.4031)");
   if(UseDEM       )Log->Print("- Coupling SPH-DCDEM (Canelas et al., 2017  https://doi.org/10.1061/(ASCE)HY.1943-7900.0001331)");
-  if(UseChrono    )Log->Print("- Coupling with Project Chrono (Canelas et al., 2018  https://doi.org/10.1016/j.apor.2018.04.015)");
+  if(UseChrono    )Log->Print("- New coupling with Project Chrono (Martinez-Estevez et al., 2023  https://doi.org/10.1016/j.cpc.2022.108581)");
   if(Moorings     )Log->Print("- Coupling with MoorDyn+ (Dominguez et al., 2019  https://doi.org/10.1016/j.coastaleng.2019.103560)");
   if(Shifting     )Log->Print("- Shifting algorithm (Lind et al., 2012  https://doi.org/10.1016/j.jcp.2011.10.027)");
   if(AccInput     )Log->Print("- External imposed forces (Longshaw and Rogers, 2015  https://doi.org/10.1016/j.advengsoft.2015.01.008)");
@@ -1659,9 +1654,11 @@ void JSph::VisuRefs(){
   const bool awas=(WaveGen && WaveGen->UseAwas());
   const bool lonw=(WaveGen && !WaveGen->WavesSolitary());
   const bool solw=(WaveGen && WaveGen->WavesSolitary());
+  const bool focw=(WaveGen && WaveGen->WavesFocused());
   const bool inow=(InOut && InOut->Use_AwasVel());
   if(lonw        )Log->Print("- Long-crested wave generation (Altomare et al., 2017  https://doi.org/10.1016/j.coastaleng.2017.06.004)");
   if(solw        )Log->Print("- Solitary wave generation (Dominguez et al., 2019  https://doi.org/10.1080/21664250.2018.1560682)");
+  if(focw        )Log->Print("- Focused waves theory (Whittaker et al., 2017  https://doi.org/10.1016/j.coastaleng.2016.12.001)");
   if(MLPistons   )Log->Print("- Multi-layer Piston for wave generation (Altomare et al., 2015  https://doi.org/10.1142/S0578563415500242)");
   if(RelaxZones  )Log->Print("- Relaxation Zone for wave generation (Altomare et al., 2018  https://doi.org/10.1016/j.apor.2018.09.013)");
   if(inow        )Log->Print("- Wave generation and absorption using open boundaries (Verbrugghe et al., 2019  https://doi.org/10.1016/j.cpc.2019.02.003)");
@@ -2144,7 +2141,7 @@ void JSph::InitRun(unsigned np,const unsigned *idp,const tdouble3 *pos){
   //-Prepares WaveGen configuration.
   if(WaveGen){
     Log->Print("Wave paddles configuration:");
-    WaveGen->Init(GaugeSystem,MkInfo,TimeMax,TimePart);
+    WavesInit(GaugeSystem,MkInfo,TimeMax,TimePart);
     WaveGen->VisuConfig(""," ");
   }
 
@@ -2208,14 +2205,6 @@ void JSph::InitRun(unsigned np,const unsigned *idp,const tdouble3 *pos){
     SaveDt->VisuConfig("SaveDt configuration:"," ");
   }
 
-  //-Prepares BoundCorr configuration.
-  if(BoundCorr){
-    Log->Print("BoundCorr configuration:");
-    if(PartBegin)Run_Exceptioon("Simulation restart not allowed when BoundCorr is used.");
-    BoundCorr->RunAutoConfig(PartsInit);
-    BoundCorr->VisuConfig(""," ");
-  }
-
   //-Shows configuration of JGaugeSystem.
   if(GaugeSystem->GetCount())GaugeSystem->VisuConfig("GaugeSystem configuration:"," ");
 
@@ -2232,6 +2221,70 @@ void JSph::InitRun(unsigned np,const unsigned *idp,const tdouble3 *pos){
   TimePartNext=(SvAllSteps? TimeStep: OutputTime->GetNextTime(TimeStep));
 }
 
+//==============================================================================
+/// Returns linear forces from external file according to timestep.
+//==============================================================================
+void JSph::WavesInit(JGaugeSystem *gaugesystem,const JSphMk *mkinfo
+  ,double timemax,double timepart)
+{
+  StWvgDimensions wdims;
+  wdims.dp=GaugeSystem->GetDp();
+  wdims.scell=GaugeSystem->GetScell();
+  wdims.kernelh=GaugeSystem->GetKernelH();
+  wdims.massfluid=GaugeSystem->GetMassFluid();
+  wdims.domposmin=GaugeSystem->GetDomPosMin();
+  wdims.domposmax=GaugeSystem->GetDomPosMax();
+  wdims.padposmin=wdims.padposmax=TDouble3(DBL_MAX);
+  for(unsigned cp=0;cp<WaveGen->GetCount();cp++){
+    const word mkbound=WaveGen->GetPaddleMkbound(cp);
+    //-Obtains initial limits of paddle for AWAS configuration.
+    const unsigned cmk=mkinfo->GetMkBlockByMkBound(mkbound);
+    if(cmk<mkinfo->Size()){
+      wdims.padposmin=mkinfo->Mkblock(cmk)->GetPosMin();
+      wdims.padposmax=mkinfo->Mkblock(cmk)->GetPosMax();
+    }
+    else wdims.padposmin=wdims.padposmax=TDouble3(DBL_MAX);
+    WaveGen->InitPaddle(cp,timemax,timepart,wdims);
+    //-Configures gauge according AWAS configuration.
+    if(WaveGen->PaddleUseAwas(cp)){
+      const string gname=fun::PrintStr("AwasMkb%02u",mkbound);
+      const double coefmassdef=(Simulate2D? 0.4: 0.5);
+      double masslimit,tstart,gdp;
+      tdouble3 point0,point2;
+      WaveGen->PaddleGetAwasInfo(cp,coefmassdef,wdims.massfluid,masslimit,tstart,gdp,point0,point2);
+      //-Creates gauge for AWAS.
+      JGaugeSwl *gswl=gaugesystem->AddGaugeSwl(gname,tstart,DBL_MAX,0,point0,point2,gdp,float(masslimit));
+      WaveGen->PaddleGaugeInit(cp,(void*)gswl);
+    }
+  }
+}
+
+//==============================================================================
+/// Loads the last gauge results.
+//==============================================================================
+void JSph::WavesLoadLastGaugeResults(){
+  for(unsigned cp=0;cp<WaveGen->GetCount();cp++){
+    const JGaugeSwl* gswl=(const JGaugeSwl*)WaveGen->PaddleGaugeGet(cp);
+    if(gswl){
+      WaveGen->LoadLastGaugeResults(cp,gswl->GetResult().timestep
+        ,gswl->GetResult().posswl,gswl->GetResult().point0);
+    }
+  }
+}
+
+//==============================================================================
+/// Updates measurement limits according cell size and last measurement.
+//==============================================================================
+void JSph::WavesUpdateGaugePoints(){
+  for(unsigned cp=0;cp<WaveGen->GetCount();cp++){
+    JGaugeSwl* gswl=(JGaugeSwl*)WaveGen->PaddleGaugeGet(cp);
+    if(gswl){
+      tdouble3 point0=TDouble3(0),point2=TDouble3(0);
+      WaveGen->GetUpdateGaugePoints(cp,gswl->GetResult().modified,point0,point2);
+      gswl->SetPoints(point0,point2);
+    }
+  }
+}
 
 //==============================================================================
 /// Returns linear forces from external file according to timestep.
@@ -2274,6 +2327,7 @@ bool JSph::CalcMotion(double stepdt){
 void JSph::CalcMotionWaveGen(double stepdt){
   const bool motsim=true;
   if(WaveGen){
+    if(WaveGen->UseAwas())WavesLoadLastGaugeResults();
     const bool svdata=(TimeStep+stepdt>=TimePartNext);
     for(unsigned c=0;c<WaveGen->GetCount();c++){
       const StMotionData m=(motsim? WaveGen->GetMotion(svdata,c,TimeStep,stepdt): WaveGen->GetMotionAce(svdata,c,TimeStep,stepdt));
@@ -2283,6 +2337,7 @@ void JSph::CalcMotionWaveGen(double stepdt){
         else      DsMotion->SetMotionDataAce(m);
       }
     }
+    if(WaveGen->UseAwas())WavesUpdateGaugePoints();
   }
 }
 
@@ -2728,7 +2783,6 @@ void JSph::SaveData(unsigned npok,const JDataArrays& arrays
   if(ChronoObjects)ChronoObjects->SavePart(Part);
   if(Moorings)Moorings->SaveData(Part);
   if(ForcePoints)ForcePoints->SaveData(Part);
-  if(BoundCorr && BoundCorr->GetUseMotion())BoundCorr->SaveData(Part);
   if(DsPips && DsPips->SvData && SvData!=SDAT_None)DsPips->SaveData();
 
   //-Checks request for simulation termination.
@@ -2863,6 +2917,12 @@ void JSph::SaveVtkNormals(std::string filename,int numfile,unsigned np,unsigned 
     //-Find floating particles.
     unsigned nfloat=0;
     unsigned* ftidx=NULL;
+    if(UseNormalsFt){
+      const unsigned size=min(CaseNfloat,np);
+      ftidx=new unsigned[size];
+      for(unsigned p=npb;p<np;p++)if(idp[p]<CaseNbound)ftidx[nfloat++]=p;
+      if(nfloat>CaseNfloat)Run_Exceptioon("More floating particles were found than expected.");
+    }
     //-Allocate memory for boundary particles.
     const unsigned npsel=npb+nfloat;
     JDataArrays arrays;
@@ -2876,6 +2936,15 @@ void JSph::SaveVtkNormals(std::string filename,int numfile,unsigned np,unsigned 
     memcpy(vidp,idp,sizeof(unsigned)*npb);
     MkInfo->GetMkByIds(npb,idp,vmk);
     memcpy(vnor,boundnormal,sizeof(tfloat3)*npb);
+    //-Loads data of floating particles.
+    for(unsigned p=0;p<nfloat;p++){
+      const unsigned idx=ftidx[p];
+      vpos[npb+p]=pos[idx];
+      vidp[npb+p]=idp[idx];
+      vmk [npb+p]=MkInfo->GetMkById(idp[idx]);
+      vnor[npb+p]=boundnormal[idx];
+    }
+    delete[] ftidx; ftidx=NULL;
     //-Computes normalsize.
     if(resize!=1.f)for(unsigned p=0;p<npsel;p++)vnor[p]=vnor[p]*resize;
     for(unsigned p=0;p<npsel;p++)vsnor[p]=fgeo::PointDist(vnor[p]);

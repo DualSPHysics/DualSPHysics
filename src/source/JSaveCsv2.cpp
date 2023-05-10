@@ -66,6 +66,7 @@ void JSaveCsv2::Reset(){
   Head="";
   HeadLineEmpty=true;
   Data="";
+  //Data.reserve(1048500);
   DataLineEmpty=true;
 }
 
@@ -135,16 +136,16 @@ void JSaveCsv2::AddStr(std::string tx){
 /// Adds one or several field separators.
 //==============================================================================
 void JSaveCsv2::AddSeparator(unsigned count){
-  if(DataSelected)for(unsigned c=0;c<count;c++)Data=Data+";";
-  else for(unsigned c=0;c<count;c++)Head=Head+";";
+  if(DataSelected)for(unsigned c=0;c<count;c++)Data.append(";");
+  else for(unsigned c=0;c<count;c++)Head.append(";");
 }
  
 //==============================================================================
 /// Adds end of line.
 //==============================================================================
 void JSaveCsv2::AddEndl(){
-  if(DataSelected)Data=Data+"\n";
-  else Head=Head+"\n";
+  if(DataSelected)Data.append("\n");
+  else Head.append("\n");
 }
  
 //==============================================================================

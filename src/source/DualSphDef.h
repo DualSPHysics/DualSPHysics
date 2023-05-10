@@ -22,6 +22,7 @@
 #define _DualSphDef_
 
 #include "TypesDef.h"
+#include "JAppInfoDef.h"
 #include "JParticlesDef.h"
 #include "JPeriodicDef.h"
 #include "FunSphKernelDef.h"
@@ -55,6 +56,8 @@
 
 
 //-Defines AVAILABLE_VTKLIB when this feature is compiled.
+// *** VtkLib library must be disabled in JVtkLibDef.h *** 
+// *** or for all cpp files by compile parameters.     ***
 #ifdef DISABLE_VTKLIB
   #define AVAILABLE_VTKLIB false
 #else
@@ -62,6 +65,8 @@
 #endif
 
 //-Defines AVAILABLE_NUMEXLIB when this feature is compiled.
+// *** Numex library must be disabled in JNumexLibDef.h *** 
+// *** or for all cpp files by compile parameters.      ***
 #ifdef DISABLE_NUMEXLIB
   #define AVAILABLE_NUMEXLIB false
 #else
@@ -154,6 +159,7 @@
   #define CODE_TYPE_FLUID_INOUT     0x0003ffe0 //---First inlet/outlet code: 262112 (16 different codes for InOut zones + 16 to select input particles).
   #define CODE_TYPE_FLUID_INOUTNUM  16      //---Maximum number of valid inlet/outlet zones.
   #define CODE_TYPE_FLUID_INOUTMASK 31      //---Mask to obtain zone value.
+  #define CODE_TYPE_FLUID_INOUT015MASK 15   //---Mask to obtain zone value (ignore extra bit).
 #else
   #define CODE_MKRANGEMAX 2047      //-Maximum valid MK value. | Valor maximo de MK valido.
   typedef word typecode;            //-Type of the variable code using 2 bytes.
@@ -216,27 +222,6 @@
 #define CODE_ToFluidInout(code,izone) (code&(~CODE_MASKTYPEVALUE))|(CODE_TYPE_FLUID_INOUT|izone)
 #define CODE_GetIzoneFluidInout(code) (code&CODE_TYPE_FLUID_INOUTMASK)
 
-
-///Defines type of movement.
-typedef enum{ 
-  MOTT_None=0,    ///<No movement.
-  MOTT_Linear=1,  ///<Linear movement.
-  MOTT_Matrix=2   ///<Matrix movement (for rotations).
-}TpMotionType;   
-
-///Structure with the information for moving particles (lineal and matrix movement).
-typedef struct{
-  word ref;            ///<Idx of moving object.
-  word mkbound;        ///<MkBound of moving particles.
-  unsigned idbegin;    ///<First id of moving particles.
-  unsigned count;      ///<Number of moving particles.
-  TpMotionType type;   ///<Type of motion (none, linear, matrix).
-  tdouble3 linmov;     ///<Linear displacement to apply to the particles position.
-  tdouble3 linvel;     ///<Linear velocity for particles.
-  tdouble3 linace;     ///<Linear acceleration for particles (when acceleration movement is computed).
-  tmatrix4d matmov;    ///<Matrix transformation to apply to the particles position.
-  tmatrix4d matmov2;   ///Matrix transformation to compute acceleration of particles (when acceleration movement is computed).
-}StMotionData;
 
 ///Structure with the information of the floating object.
 typedef struct{
@@ -411,6 +396,7 @@ typedef struct{
   float eta2;               ///<Constant related to H (Eta2=(h*0.1)*(h*0.1)).
   float spssmag;            ///<Smagorinsky constant used in SPS turbulence model.
   float spsblin;            ///<Blin constant used in the SPS turbulence model.
+  float ddtkhcte;           ///<Store fixed constant DDTkh.
   float ddtkh;              ///<Constant for DDT1 & DDT2. DDTkh=DDTValue*KernelSize
   float ddtgz;              ///<Constant for DDT2.        DDTgz=RhopZero*Gravity.z/CteB
 }StCteSph;
@@ -420,15 +406,34 @@ inline StCteSph CteSphNull(){
   StCteSph c={false,0,KERNEL_None
     ,{0,0,0,0,0,0,0,0}
     ,{0,0}
-    ,0,0,0,0,0,0,0,{0,0,0},0,0,0,0,0,0,0,0};
+    ,0,0,0,0,0,0,0,{0,0,0},0,0,0,0,0,0,0,0,0};
   return(c);
+}
+
+///Rigid Algorithm for floating collisions.
+typedef enum{ 
+   FTRIGID_Free=0    ///<Collision-free               (FtMode=FTMODE_Ext, UseDEM=false ). 
+  ,FTRIGID_Sph=1     ///<Collision in terms of SPH    (FtMode=FTMODE_Sph, UseDEM=false ). 
+  ,FTRIGID_Dem=2     ///<Collision in terms of DEM    (FtMode=FTMODE_Ext, UseDEM=true  ). 
+  ,FTRIGID_Chrono=3  ///<Collision in terms of Chrono (FtMode=FTMODE_Ext, UseDEM=true, UseChrono=true). 
+}TpRigidMode;  
+
+///Returns the name of the RigidMode in text format.
+inline const char* GetNameRigidMode(TpRigidMode rigidmode){
+  switch(rigidmode){
+    case FTRIGID_Free:   return("Collision-Free");
+    case FTRIGID_Sph:    return("SPH");
+    case FTRIGID_Dem:    return("DCDEM");
+    case FTRIGID_Chrono: return("CHRONO");
+  }
+  return("???");
 }
 
 ///Interaction mode for floatings.
 typedef enum{ 
-  FTMODE_None=0,            ///<There are not floatings.
-  FTMODE_Sph=1,             ///<Interaction between floatings and boundaries in terms of SPH.
-  FTMODE_Ext=2              ///<Interaction between floatings and boundaries in terms of DEM or CHRONO.
+   FTMODE_None=0            ///<There are not floatings.
+  ,FTMODE_Sph=1             ///<Interaction between floatings and boundaries in terms of SPH.
+  ,FTMODE_Ext=2              ///<Interaction between floatings and boundaries in terms of DEM or CHRONO.
 }TpFtMode;  
 
 #define USE_FLOATING (ftmode!=FTMODE_None)

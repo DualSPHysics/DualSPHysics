@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<!-- *** DualSPHysics (11-04-2020) *** -->
+<!-- *** DualSPHysics (27-03-2023) *** -->
 <!-- *** class: JWavePaddles *** -->
 <!------------------------------------------------------------------------------->
 <!------------------------------------------------------------------------------->
 <!-- *** Example to define the piston/flap particulas *** -->
-<case app="GenCase4 v4.0.045 (21-06-2017)" date="07-07-2017 14:03:16">
+<case app="GenCase v5.0.267 (05-08-2022)" date="31-08-2022 01:31:00">
 	<casedef>
 		...
 		<motion>
@@ -63,7 +63,7 @@
 			<start value="2" comment="Start time (default=0)" />
 			<duration value="0" comment="Movement duration, Zero is the end of simulation (default=0)" />
 			<depth value="1.4" comment="Water depth (default=0)" />
-			<variabledraft value="0" comment="Position of the wavemaker hinge (above the bottom <0; below the bottom >0) (default=0)" />
+			<variabledraft value="0" comment="Position of the wavemaker hinge with respect to the bottom (above the bottom >0; below the bottom <0) (default=0)" />
 			<flapaxis0 x="3" y="0" z="0" comment="Point 0 of axis rotation" />
 			<flapaxis1 x="3" y="1" z="0" comment="Point 1 of axis rotation" />
 			<waveheight value="0.1" comment="Wave height" />
@@ -96,7 +96,7 @@
 			<waveheight value="1.5" comment="Significant Wave Height (Hs)" />
 			<waveperiod value="9.5" comment="Peak Period" />
 			<gainstroke value="1" comment="Gain factor to amplify/reduce the paddle stroke (default=1)" />
-			<peakcoef value="3.3" comment="Peak enhancement coefficient (default=3.3)" />
+			<peakcoef value="3.3" comment="Peak enhancement coefficient for JONSWAP spectrum (default=3.3)" />
 			<waves value="3" comment="Number of waves to create irregular waves (default=50)" />
 			<randomseed value="2" comment="Random seed to initialize a pseudorandom number generator" />
 			<serieini value="0" autofit="true" comment="Initial time in irregular wave serie (default=0 and autofit=false)" />
@@ -120,17 +120,17 @@
 		<flap_spectrum>
 			<mkbound value="12" comment="Mk-Bound of selected particles" />
 			<depth value="50" comment="Water depth (default=0)" />
-			<variabledraft value="0" comment="Position of the wavemaker hinge (above the bottom <0; below the bottom >0) (default=0)" />
+			<variabledraft value="0" comment="Position of the wavemaker hinge with respect to the bottom (above the bottom >0; below the bottom <0) (default=0)" />
 			<start value="0" comment="Start time (default=0)" />
 			<duration value="0" comment="Movement duration, Zero is the end of simulation (default=0)" />
 			<flapaxis0 x="3" y="0" z="0" comment="Point 0 of axis rotation" />
 			<flapaxis1 x="3" y="1" z="0" comment="Point 1 of axis rotation" />
-			<spectrum value="jonswap" comment="Spectrum type: jonswap,pierson-moskowitz" />
+			<spectrum value="jonswap" comment="Spectrum type: jonswap, pierson-moskowitz" />
 			<discretization value="stretched" comment="Spectrum discretization: regular,random,stretched,cosstretched (default=stretched)" />
 			<waveheight value="1.5" comment="Significant Wave Height (Hs)" />
 			<waveperiod value="9.5" comment="Peak Period" />
 			<gainstroke value="1" comment="Gain factor to amplify/reduce the paddle stroke (default=1)" />
-			<peakcoef value="3.3" comment="Peak enhancement coefficient (default=3.3)" />
+			<peakcoef value="3.3" comment="Peak enhancement coefficient for JONSWAP spectrum (default=3.3)" />
 			<waves value="3" comment="Number of waves to create irregular waves (default=50)" />
 			<randomseed value="2" comment="Random seed to initialize a pseudorandom number generator" />
 			<serieini value="0" autofit="true" comment="Initial time in irregular wave serie (default=0 and autofit=false)" />
@@ -146,6 +146,42 @@
 		</flap_spectrum>
 	</wavepaddles>
 </special>
+<!------------------------------------------------------------------------------->
+<!------------------------------------------------------------------------------->
+<!-- *** Example for PISTON to create FOCUSED waves *** -->
+<special>
+	<wavepaddles>
+		<piston_focused>
+			<mkbound value="12" comment="Mk-Bound of selected particles" />
+			<depth value="0.6625" comment="Water depth (default=0)" />
+			<start value="0" comment="Start time (default=0)" />
+			<duration value="0" comment="Movement duration, Zero is the end of simulation (default=0)" />
+			<pistondir x="1" y="0" z="0" comment="Movement direction (default=(1,0,0))" />
+			<spectrum value="jonswap" comment="Spectrum type: jonswap,pierson-moskowitz" />
+			<discretization value="regular" comment="Spectrum discretization: regular,random,stretched,cosstretched (default=regular)" />
+			<randomseed value="2" comment="Random seed to initialize a pseudorandom number generator (only for random discretisation)" />
+			<waveorder value="1" comment="Order wave generation 1:1st order, 2:2nd order (default=1)" />
+			<waveheight value="0.13" comment="Significant Wave Height (Hs)" />
+			<waveperiod value="1.5" comment="Peak Period" />
+			<gainstroke value="1" comment="Gain factor to amplify/reduce the paddle stroke (default=1)" />
+			<peakcoef value="3.3" comment="Peak enhancement coefficient for JONSWAP spectrum (default=3.3)" />
+			<waves value="64" comment="Number of waves to create focused waves (default=128)" />
+			<xf value="12.5" comment="Focused location" />
+			<fphase value="250" comment="Focused phase [deg] (default=0)" />
+			<maxwaveh nwaves="1000" comment="Number of waves to compute maximum wave H (default=1000)" />
+			<maxwaveh time="0" comment="Time to compute maximum wave H (default=1000 waves)" />
+			<ramptime value="2" comment="Time for initial ramp generation (default=0)" />
+			<fpretime value="0" comment="Initial extra time for focus generation (default=5)." />
+			<fmovtime value="30" comment="Final time for paddle motion (default=0)" />
+			<fmovramp value="2" comment="Final ramp time before final time motion (default=0)" />
+			<!-- Each <savemotion> line generates a different file with paddle displacement and theoretical elevation and velocity. -->
+			<!-- In <savemotion> when "time" is not defined, it is automatically calculated accoding to simulation time. -->
+			<!-- In <savemotion> when "timedt" is not defined, it is automatically calculated accoding to TimeOut of simulation. -->
+			<savemotion xpos="0" zpos="-0.1" comment="Saves motion data. xpos and zpos are optional. zpos=-depth of the measuring point" />
+			<savemotion time="100" timedt="0.02" xpos="12.5" comment="Saves motion data. xpos and zpos are optional. zpos=-depth of the measuring point" />
+		</piston_focused>
+	</wavepaddles>
+</special>
 <!------------------------------------------------------------------------------------------->
 <!------------------------------------------------------------------------------------------->
 <!-- *** Attribute "active" in elements <wavepaddles> and its child elements to enable *** --> 
@@ -156,6 +192,7 @@
 	<flap active="true"/>
 	<piston_spectrum active="true"/>
 	<flap_spectrum active="true"/>
+	<piston_focused active="true"/>
 </wavepaddles>
 
 

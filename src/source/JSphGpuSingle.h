@@ -55,8 +55,9 @@ protected:
 
   double ComputeAceMax(float *auxmem);
 
-  double ComputeStep(){ return(TStep==STEP_Verlet? ComputeStep_Ver(): ComputeStep_Sym()); }
+  void RunInitialDDTRamp(); //<vs_ddramp>
 
+  double ComputeStep(){ return(TStep==STEP_Verlet? ComputeStep_Ver(): ComputeStep_Sym()); }
   double ComputeStep_Ver();
   double ComputeStep_Sym();
 
@@ -85,8 +86,6 @@ protected:
   void InOutComputeStep(double stepdt);
   void InOutUpdatePartsData(double timestepnew);
   void InOutExtrapolateData(unsigned inoutcount,const int *inoutpart);
-
-  void BoundCorrectionData();
 };
 
 #endif

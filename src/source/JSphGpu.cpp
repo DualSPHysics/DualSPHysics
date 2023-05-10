@@ -41,7 +41,6 @@
 #include "JDsAccInput.h"
 #include "JXml.h"
 #include "JDsGaugeSystem.h"
-#include "JSphBoundCorr.h"
 #include "JSphInOut.h"
 #include "JSphShifting.h"
 #include "JDataArrays.h"
@@ -347,6 +346,7 @@ void JSphGpu::AllocGpuMemoryParticles(unsigned np,float over){
     //ArraysGpu->AddArrayCount(JArraysGpu::SIZE_4B,1);  //-InOutPartg
     ArraysGpu->AddArrayCount(JArraysGpu::SIZE_1B,2);  //-newizone,zsurfok
   }
+
   //-Shows the allocated memory.
   MemGpuParticles=ArraysGpu->GetAllocMemoryGpu();
   PrintSizeNp(GpuParticlesSize,MemGpuParticles,GpuParticlesAllocs);
@@ -524,7 +524,7 @@ void JSphGpu::ConstantDataUp(){
   ctes.kernelh=KernelH;
   ctes.kernelsize2=KernelSize2; 
   ctes.poscellsize=PosCellSize; 
-  //-Wendland constants are always computed since this kernel is used in some parts where other kernels are not defined (e.g. mDBC, inlet/outlet, boundcorr...).
+  //-Wendland constants are always computed since this kernel is used in some parts where other kernels are not defined (e.g. mDBC, inlet/outlet...).
   ctes.awen=KWend.awen; ctes.bwen=KWend.bwen;
   //-Copies constants for other kernels.
   if(TKernel==KERNEL_Cubic){
@@ -988,7 +988,7 @@ double JSphGpu::DtVariable(bool final){
   //-dt2 combines the Courant and the viscous time-step controls.
   const double dt2=double(KernelH)/(max(Cs0,VelMax*10.)+double(KernelH)*ViscDtMax);
   //-dt new value of time step.
-  double dt=double(CFLnumber)*min(dt1,dt2);
+  double dt=CFLnumber*min(dt1,dt2);
   if(FixedDt)dt=FixedDt->GetDt(TimeStep,dt);
   if(fun::IsNAN(dt) || fun::IsInfinity(dt))Run_Exceptioon(fun::PrintStr("The computed Dt=%f (from AceMax=%f, VelMax=%f, ViscDtMax=%f) is NaN or infinity at nstep=%u.",dt,AceMax,VelMax,ViscDtMax,Nstep));
   if(dt<double(DtMin)){ 
@@ -1055,8 +1055,6 @@ void JSphGpu::RunMotion(double stepdt){
         if(motsim)cusph::MoveMatBound   (PeriActive,Simulate2D,m.count,m.idbegin-CaseNfixed,m.matmov,stepdt,RidpMoveg,Posxyg,Poszg,Dcellg,Velrhopg,Codeg,boundnormal);
         //else    cusph::MoveMatBoundAce(PeriActive,Simulate2D,m.count,m.idbegin-CaseNfixed,m.matmov,m.matmov2,stepdt,RidpMoveg,Posxyg,Poszg,Dcellg,Velrhopg,Codeg);
       }      
-      //-Applies predefined motion to BoundCorr configuration.
-      if(BoundCorr && BoundCorr->GetUseMotion())BoundCorr->RunMotion(m);
     }
   }
   //-Management of Multi-Layer Pistons.
@@ -1082,7 +1080,10 @@ void JSphGpu::RunMotion(double stepdt){
 //==============================================================================
 void JSphGpu::RunRelaxZone(double dt){
   Timersg->TmStart(TMG_SuMotion,false);
-  RelaxZones->SetFluidVelGpu(TimeStep,dt,Np-Npb,Npb,(const tdouble2*)Posxyg,Poszg,Idpg,(tfloat4*)Velrhopg);
+  byte* rzid=NULL; 
+  float* rzfactor=NULL; 
+  RelaxZones->SetFluidVelGpu(TimeStep,dt,Np-Npb,Npb,(const tdouble2*)Posxyg
+    ,Poszg,Idpg,(tfloat4*)Velrhopg,rzid,rzfactor);
   Timersg->TmStop(TMG_SuMotion,false);
 }
 
@@ -1105,7 +1106,7 @@ void JSphGpu::SaveVtkNormalsGpu(std::string filename,int numfile,unsigned np,uns
   ,const double2 *posxyg,const double *poszg,const unsigned *idpg,const float3 *boundnormalg)
 {
   //-Allocates memory.
-  unsigned n=npb;
+  const unsigned n=(UseNormalsFt? np: npb);
   tdouble3 *pos=fcuda::ToHostPosd3(0,n,posxyg,poszg);
   unsigned *idp=fcuda::ToHostUint(0,n,idpg);
   tfloat3  *nor=fcuda::ToHostFloat3(0,n,boundnormalg);
