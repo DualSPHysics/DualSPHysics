@@ -24,7 +24,6 @@
 #include "JSphMk.h"
 #include "JDsPartsInit.h"
 #include "JSphInOut.h"
-#include "JSphBoundCorr.h"
 #include "JSphGpu_InOut_iker.h"
 #include "JSphInOutPoints.h"
 #include "JSimpleNeigs.h"
@@ -201,15 +200,17 @@ void JSphGpuSingle::InOutComputeStep(double stepdt){
     //-Creates new inlet particles using advanced refilling mode.
     if(InOut->Use_RefillAdvanced()){
       //-Creates new inlet particles using advanced refilling mode.
-      float   *prodistg =ArraysGpu->ReserveFloat();
-      double2 *proposxyg=ArraysGpu->ReserveDouble2();
-      double  *proposzg =ArraysGpu->ReserveDouble();
-      newnp+=InOut->ComputeStepFillingGpu(Nstep,stepdt,inoutcountpre,inoutpart
-        ,IdMax+1+newnp,GpuParticlesSize,Np+newnp,Posxyg,Poszg,Dcellg,Codeg,Idpg,Velrhopg
-        ,zsurfok,prodistg,proposxyg,proposzg,Timersg);
-      ArraysGpu->Free(prodistg);
-      ArraysGpu->Free(proposxyg);
-      ArraysGpu->Free(proposzg);
+      if(!InOut->RefillingRate || (Nstep%InOut->RefillingRate)==0){
+        float   *prodistg =ArraysGpu->ReserveFloat();
+        double2 *proposxyg=ArraysGpu->ReserveDouble2();
+        double  *proposzg =ArraysGpu->ReserveDouble();
+        newnp+=InOut->ComputeStepFillingGpu(Nstep,stepdt,inoutcountpre,inoutpart
+          ,IdMax+1+newnp,GpuParticlesSize,Np+newnp,Posxyg,Poszg,Dcellg,Codeg,Idpg,Velrhopg
+          ,zsurfok,prodistg,proposxyg,proposzg,Timersg);
+        ArraysGpu->Free(prodistg);
+        ArraysGpu->Free(proposxyg);
+        ArraysGpu->Free(proposzg);
+      }
     }
     //-Free arrays.
     ArraysGpu->Free(inoutpart);
@@ -291,27 +292,6 @@ void JSphGpuSingle::InOutExtrapolateData(unsigned inoutcount,const int *inoutpar
     ,inoutcount,inoutpart,cfgzoneg,extraprhopmask,extrapvelmask
     ,planesg,widthg,dirdatag,determlimit
     ,DivData,Posxyg,Poszg,Codeg,Idpg,Velrhopg);
-}
-
-//==============================================================================
-/// Calculates extrapolated data for boundary particles from fluid domain.
-/// Calcula datos extrapolados en el contorno para las particulas inlet/outlet.
-//==============================================================================
-void JSphGpuSingle::BoundCorrectionData(){
-  Timersg->TmStart(TMG_SuBoundCorr,false);
-  const unsigned n=BoundCorr->GetCount();
-  const float determlimit=BoundCorr->GetDetermLimit();
-  const byte doublemode=BoundCorr->GetExtrapolateMode();
-  for(unsigned c=0;c<n;c++){
-    const JSphBoundCorrZone* zo=BoundCorr->GetMkZone(c);
-    const typecode boundcode=zo->GetBoundCode();
-    const tfloat4 plane=TPlane3fToTFloat4(zo->GetPlane());
-    const tfloat3 direction=ToTFloat3(zo->GetDirection());
-    cusphinout::Interaction_BoundCorr(doublemode,Simulate2D,TKernel,NpbOk
-      ,boundcode,plane,direction,determlimit
-      ,DivData,Posxyg,Poszg,Codeg,Idpg,Velrhopg);
-  }
-  Timersg->TmStop(TMG_SuBoundCorr,false);
 }
 
 

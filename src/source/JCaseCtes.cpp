@@ -68,6 +68,7 @@ void JCaseCtes::Reset(){
   CoefSound=0; 
   SpeedSoundAuto=true; SpeedSound=0;
   CoefH=CoefHdp=0; Gamma=0; Rhop0=0;
+  RhopGradient=RHOG_None;
   Eps=0; EpsDefined=false;
   HAuto=BAuto=MassBoundAuto=MassFluidAuto=true;
   H=B=MassBound=MassFluid=0;
@@ -90,6 +91,7 @@ void JCaseCtes::LoadDefault(){
   SetCoefH(0.866025);
   SetGamma(7);
   SetRhop0(1000);
+  SetRhopGradient(GetRhoGradientType(RhopGradientDef));
   SetEps(0);
   SetHAuto(true);  SetH(0);
   SetBAuto(true);  SetB(0);
@@ -130,6 +132,9 @@ void JCaseCtes::ReadXmlDef(JXml *sxml,TiXmlElement* node){
   if(chdp)SetCoefHdp(chdp);
   SetGamma(sxml->ReadElementDouble(node,"gamma","value"));
   SetRhop0(sxml->ReadElementDouble(node,"rhop0","value"));
+  const TpRhoGradient rhog=GetRhoGradientType(sxml->ReadElementInt(node,"rhopgradient","value",true,RhopGradientDef));
+  if(rhog==RHOG_None)Run_ExceptioonFile("Rho gradient configuration is invalid (rhopgradient).",sxml->ErrGetFileRow(node));
+  SetRhopGradient(rhog);
   EpsDefined=sxml->ExistsElement(node,"eps");
   SetEps(sxml->ReadElementDouble(node,"eps","value",true,0));
   ReadXmlElementAuto(sxml,node,true,"h",H,HAuto);
@@ -172,7 +177,8 @@ void JCaseCtes::WriteXmlDef(JXml *sxml,TiXmlElement* node,bool svtemplate)const{
   }
   WriteXmlElementComment(JXml::AddElementDouble3(node,"gravity",GetGravity()),"Gravitational acceleration","m/s^2");
   WriteXmlElementComment(JXml::AddElementAttrib(node,"rhop0","value",GetRhop0()),"Reference density of the fluid","kg/m^3");
-  WriteXmlElementAuto(sxml,node,"hswl",GetHSwl(),GetHSwlAuto(),"Maximum still water level to calculate speedofsound using coefsound","metres (m)");
+  WriteXmlElementComment(JXml::AddElementAttrib(node,"rhopgradient","value",GetRhopGradient()),fun::PrintStr("Initial density gradient 1:Rhop0, 2:Water column, 3:Max. water height (default=%d)",RhopGradientDef));
+  WriteXmlElementAuto(sxml,node,"hswl",GetHSwl(),GetHSwlAuto(),"Maximum height of still water to calculate speedofsound using coefsound","metres (m)");
   WriteXmlElementComment(JXml::AddElementAttrib(node,"gamma","value",GetGamma()),"Polytropic constant for water used in the state equation");
   WriteXmlElementAuto(sxml,node,"speedsystem",GetSpeedSystem(),GetSpeedSystemAuto(),"Maximum system speed (by default the dam-break propagation is used)");
   WriteXmlElementComment(JXml::AddElementAttrib(node,"coefsound","value",GetCoefSound()),"Coefficient to multiply speedsystem");

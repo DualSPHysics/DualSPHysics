@@ -63,6 +63,8 @@ protected:
   template<bool checkcode> double ComputeAceMaxSeq(unsigned np,const tfloat3* ace,const typecode *code)const;
   template<bool checkcode> double ComputeAceMaxOmp(unsigned np,const tfloat3* ace,const typecode *code)const;
   
+  void RunInitialDDTRamp(); //<vs_ddramp>
+
   double ComputeStep(){ return(TStep==STEP_Verlet? ComputeStep_Ver(): ComputeStep_Sym()); }
   double ComputeStep_Ver();
   double ComputeStep_Sym();
@@ -96,8 +98,6 @@ protected:
   void InOutComputeStep(double stepdt);
   void InOutUpdatePartsData(double timestepnew);
   void InOutExtrapolateData(unsigned inoutcount,const int *inoutpart);
-
-  void BoundCorrectionData();
 };
 
 #endif

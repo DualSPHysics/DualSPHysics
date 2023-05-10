@@ -998,7 +998,7 @@ template<TpKernel tker,bool sim2d,TpSlipMode tslip> __global__ void KerInteracti
 
       //-Store the results.
       //--------------------
-      if(sumwab>=mdbcthreshold){
+      if(sumwab>=mdbcthreshold || (mdbcthreshold>=2 && sumwab+2>=mdbcthreshold)){
         const float3 dpos=make_float3(-bnormalp1.x,-bnormalp1.y,-bnormalp1.z); //-Boundary particle position - ghost node position.
         if(sim2d){
           const double determ=cumath::Determinant3x3dbl(a_corr2);
@@ -1858,6 +1858,43 @@ void CopyMotionVel(unsigned nmoving,const unsigned *ridp,const float4 *velrhop,f
 {
   dim3 sgrid=GetSimpleGridSize(nmoving,SPHBSIZE);
   KerCopyMotionVel<true>  <<<sgrid,SPHBSIZE>>> (nmoving,ridp,velrhop,motionvel);
+}
+
+
+//------------------------------------------------------------------------------
+/// Applies a matrix movement to a set of particles.
+/// Aplica un movimiento matricial a un conjunto de particulas.
+//------------------------------------------------------------------------------
+__global__ void KerFtNormalsUpdate(unsigned n,unsigned fpini
+  ,double a11,double a12,double a13,double a21,double a22,double a23,double a31,double a32,double a33
+  ,const unsigned *ftridp,float3 *boundnormal)
+{
+  const unsigned fp=blockIdx.x*blockDim.x + threadIdx.x; //-Number of floating particle.
+  if(fp<n){
+    const unsigned p=ftridp[fp+fpini];
+    if(p!=UINT_MAX){
+      float3 rnor=boundnormal[p];
+      const double nx=rnor.x;
+      const double ny=rnor.y;
+      const double nz=rnor.z;
+      rnor.x=float(a11*nx + a12*ny + a13*nz);
+      rnor.y=float(a21*nx + a22*ny + a23*nz);
+      rnor.z=float(a31*nx + a32*ny + a33*nz);
+      boundnormal[p]=rnor;
+    }
+  }
+}
+
+//==============================================================================
+/// Applies a matrix movement to a set of particles.
+/// Aplica un movimiento matricial a un conjunto de particulas.
+//==============================================================================
+void FtNormalsUpdate(unsigned np,unsigned ini,tmatrix4d m,const unsigned *ftridp
+  ,float3 *boundnormal)
+{
+  dim3 sgrid=GetSimpleGridSize(np,SPHBSIZE);
+  if(np)KerFtNormalsUpdate <<<sgrid,SPHBSIZE>>> (np,ini,m.a11,m.a12,m.a13
+    ,m.a21,m.a22,m.a23,m.a31,m.a32,m.a33,ftridp,boundnormal);
 }
 
 
@@ -2957,8 +2994,8 @@ void ComputeDampingCylinder(unsigned n,unsigned pini
 
 
 //##############################################################################
-//# Kernels for InOut (JSphInOut) and BoundCorr (JSphBoundCorr).
-//# Kernels para InOut (JSphInOut) y BoundCorr (JSphBoundCorr).
+//# Kernels for InOut (JSphInOut).
+//# Kernels para InOut (JSphInOut).
 //##############################################################################
 #include "JSphGpu_InOut_iker.cu"
 

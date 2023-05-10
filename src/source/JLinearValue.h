@@ -44,6 +44,7 @@
 //:# - Con la opcion OptionalValues los valores que falten del XML se leen como 
 //:#   cero. No es compatible con la opcion SpecialValues. (24-04-2020)
 //:# - Nuevos metodos RnSetValues(). (05-09-2020)
+//:# - Nuevos metodos ConfigLoopTime() para definir bucle de tiempo. (04-08-2022)
 //:#############################################################################
 
 #include "JObject.h"
@@ -78,6 +79,10 @@ protected:
   unsigned Count;
   double *Times;
   double *Values;
+
+  double LoopTmax; ///<Final time of loop (DBL_MAX=disabled).
+  double LoopTsub; ///<Time interval to begin time of loop (0=disabled).
+  double LoopTbeg; ///<Begin time of loop (LoopTmax-LoopTsub).
 
   bool NewInterval;
 
@@ -123,6 +128,12 @@ public:
   double ReadNextDouble(JReadDatafile &rdat,bool in_line=false);
   void LoadFile(std::string file);
   std::string GetFile()const{ return(File); };
+
+  void ResetLoopTime();
+  void ConfigLoopTime(double tbegin,double tmax);
+  double GetLoopTmax()const{ return(LoopTmax); };
+  double GetLoopTsub()const{ return(LoopTsub); };
+  double GetLoopTbeg()const{ return(LoopTbeg); };
 
   unsigned GetCount()const{ return(Count); }
   void VisuData();

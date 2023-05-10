@@ -60,11 +60,18 @@ public:
   float Visco;
   float ViscoBoundFactor;
   double TimeMax,TimePart;
-  int TDensity;   ///<Density Diffusion Term 0:None, 1:Molteni, 2:Fourtakas, 3:Fourtakas(full) (default=0)
-  float DDTValue; ///<Value used with Density Diffusion Term (default=0.1)
+  double CFLnumber;  ///<Coefficient to multiply dt.
+  int TDensity;      ///<Density Diffusion Term 0:None, 1:Molteni, 2:Fourtakas, 3:Fourtakas(full) (default=0)
+  float DDTValue;    ///<Value used with Density Diffusion Term (default=0.1)
+  double DDTValueTRamp;  ///<Total time of initial ramp for DDT value (default=0)  //<vs_ddramp>
+  double DDTValueTMax;   ///<Time of maximum DDT value (default=0)                 //<vs_ddramp>
+  double DDTValueMax;    ///<Maximum DDT value for initial ramp (default=0)        //<vs_ddramp>
   int Shifting;   ///<Shifting mode -1:no defined, 0:none, 1:nobound, 2:nofixed, 3:full
-  bool SvRes,SvTimers,SvDomainVtk;
   bool Sv_Binx,Sv_Info,Sv_Csv,Sv_Vtk;
+  bool SvNormals; ///<Saves normals VTK each PART (default=0).
+  bool SvRes;
+  bool SvTimers;
+  bool SvDomainVtk;
   std::string CaseName,RunName,DirOut,DirDataOut;
   std::string PartBeginDir;
   unsigned PartBegin,PartBeginFirst;

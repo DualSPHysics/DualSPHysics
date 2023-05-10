@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<case app="GenCase v5.0.260 (08-05-2022)" date="23-05-2022 14:55:36">
-    <casedef requiredversion="v5.0.260">
+<case app="GenCase v5.0.278 (24-04-2023)" date="10-05-2023 18:26:46">
+    <casedef requiredversion="v5.0.278">
         <constantsdef>
             <lattice bound="2" fluid="1" comment="Type of lattice to create the initial particles (default=1)" />
             <gravity x="0" y="0" z="-9.81" comment="Gravitational acceleration" units_comment="m/s^2" />
             <rhop0 value="1000" comment="Reference density of the fluid" units_comment="kg/m^3" />
-            <hswl value="0" auto="true" comment="Maximum still water level to calculate speedofsound using coefsound" units_comment="metres (m)" />
+            <rhopgradient value="2" comment="Initial density gradient 1:Rhop0, 2:Water column, 3:Max. water height (default=2)" />
+            <hswl value="0" auto="true" comment="Maximum height of still water to calculate speedofsound using coefsound" units_comment="metres (m)" />
             <gamma value="7" comment="Polytropic constant for water used in the state equation" />
             <speedsystem value="0" auto="true" comment="Maximum system speed (by default the dam-break propagation is used)" />
             <coefsound value="20" comment="Coefficient to multiply speedsystem" />
@@ -49,6 +50,9 @@
             </pattern>
         </patterns>
         <geometry>
+            <predefinition>
+                <newvarcte VarSize="28.11" _rem="Example of variable" />
+            </predefinition>
             <definition dp="0.05" comment="Initial inter-particle distance" units_comment="metres (m)">
                 <pointref x="0" y="0" z="0" />
                 <pointmin x="-0.25" y="-0.05" z="-0.05" />
@@ -349,6 +353,9 @@
                         <drawrotate angx="10" angy="15" angz="30" />
                         <drawscale x="1" y="1" z="0.8" />
                     </drawfilestl>
+                    <drawfilestl file="File.stl" advanced="true">
+                        <depth depthmin="0.02" />
+                    </drawfilestl>
                     <drawfileply file="File.ply" />
                     <drawfileply file="File.ply">
                         <drawmove x="0.5" y="0" z="0" />
@@ -359,6 +366,11 @@
                     </drawfileply>
                     <drawfileply file="File.ply" autofill="true">
                         <drawrotate angx="10" angy="15" angz="30" />
+                    </drawfileply>
+                    <drawfileply file="File.ply" advanced="true">
+                        <drawmove x="0.5" y="0" z="0" />
+                        <drawrotate angx="10" angy="15" angz="30" />
+                        <depth depthmax="0.02" />
                     </drawfileply>
                     <drawfilevtk file="File.vtk" />
                     <drawfilevtk file="File.vtk">
@@ -378,6 +390,13 @@
                     </drawfilevtk>
                     <drawfilevtk file="File.vtk">
                         <polyselec>polygons</polyselec>
+                    </drawfilevtk>
+                    <drawfilevtk file="File.vtk" advanced="true" />
+                    <drawfilevtk file="File.vtk" advanced="true">
+                        <depth depthmin="0.02" depthmax="0.1" />
+                    </drawfilevtk>
+                    <drawfilevtk file="File.vtk" autofill="true" advanced="true">
+                        <depth depthmin="0.02" />
                     </drawfilevtk>
                     <drawfilecsv file="Bathymetry.csv" mode="bathymetry">
                         <drawmove x="0.5" y="0" z="0" />
@@ -606,10 +625,11 @@
                 <pos1 x="0" y="0" z="0" rhop="1000" comment="Initial density value" units_comment="kg/m^3" />
                 <pos2 x="0" y="0" z="-10" rhop="1002" comment="Final density value" units_comment="kg/m^3" />
             </densitygradient>
-            <densitydepth mkfluid="1">
+            <densitydepth mkfluid="1" comment="Position of surface water level is computed automatically" />
+            <densitydepth mkfluid="2">
                 <posswl x="0" y="0" z="10" comment="Position of surface water level" />
             </densitydepth>
-            <densitydepth mkfluid="2">
+            <densitydepth mkfluid="3">
                 <posswl x="0" y="0" z="10" comment="Position of surface water level" />
                 <gravity x="1" y="0" z="-9.81" comment="Gravitational acceleration" units_comment="m/s^2" />
                 <rhop0 value="1100" comment="Reference density" units_comment="kg/m^3" />
@@ -621,6 +641,9 @@
             </densitymesh>
             <move mkbound="0" x="0.1" y="0.4" z="0.2" />
             <move mkfluid="0" x="0.2" y="0" z="0" />
+            <moverandom mkfluid="10" randomseed="2810" dpxyz="0.01" />
+            <moverandom mkfluid="10" randomseed="2810" dpx="0.028" />
+            <moverandom mkfluid="10" randomseed="0" dpx="0.01" dpy="0.032" dpz="0.02" />
             <rotateaxis mkbound="0" angle="45" anglesunits="degrees">
                 <axisp1 x="0" y="0" z="0" />
                 <axisp2 x="0" y="1" z="0" />
@@ -905,17 +928,11 @@
             </objreal>
         </motion>
         <normals active="true">
+            <geometryfile file="[CaseName]_hdp_Actual.vtk" comment="File with boundary geometry (VTK format)" />
             <distanceh value="2.0" comment="Maximum distance (H*distanceh) to compute normals data (default=2)" />
-            <ftsupport value="0" comment="Enables support for floating bodies (default=0)" />
-            <geometryfile file="[CaseName]_hdp_Actual.vtk" comment="File with boundary geometry (VTK format). Use NONE to ignore it." />
-            <computenormals value="0" comment="Computes final normals for boundary particles 0:None, 1:Mean, 2:Marrone(unverified) (default=0)" />
-            <svnormaldata value="0" comment="Saves VTK with normal data for debug (default=0)" />
-            <svnormals value="0" comment="Saves VTK with particle normals according to <computenormals> for debug (default=0)" />
+            <svnormals value="1" comment="Saves VTK with particle normals according to <computenormals> for debug (default=0)" />
             <svshapes value="0" comment="Saves VTK with geometry in triangles and quads with its normals for debug (default=0)" />
-            <dg_svpartsnormal value="0" comment="Saves VTKs with normals and out-vectors for each particle (default=0)">
-                <onlypos xmin="-0.04" zmin="-0.04" xmax="0.06" zmax="0.06" />
-                <onlypos ymin="-0.1" ymax="0.1" />
-            </dg_svpartsnormal>
+            <svnormaldata value="0" comment="Saves binary and VTK with normal data for debug (default=0)" />
         </normals>
     </casedef>
     <execution>

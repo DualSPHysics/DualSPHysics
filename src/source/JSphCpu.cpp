@@ -40,7 +40,6 @@
 #include "JDsOutputTime.h"
 #include "JDsAccInput.h"
 #include "JDsGaugeSystem.h"
-#include "JSphBoundCorr.h"
 #include "JSphInOut.h"
 #include "JSphShifting.h"
 
@@ -1102,7 +1101,7 @@ template<TpKernel tker,bool sim2d,TpSlipMode tslip> void JSphCpu::InteractionMdb
 
     //-Store the results.
     //--------------------
-    if(sumwab>=mdbcthreshold){
+    if(sumwab>=mdbcthreshold || (mdbcthreshold>=2 && sumwab+2>=mdbcthreshold)){
       const tfloat3 dpos=(boundnormal[p1]*(-1.f)); //-Boundary particle position - ghost node position.
       if(sim2d){
         const double determ=fmath::Determinant3x3(a_corr2);
@@ -1197,7 +1196,7 @@ template<TpKernel tker,bool sim2d,TpSlipMode tslip> void JSphCpu::InteractionMdb
 {
   const float determlimit=1e-3f;
   //-Interaction GhostBoundaryNodes-Fluid.
-  unsigned n=NpbOk;
+  const unsigned n=(UseNormalsFt? Np: NpbOk);
   if(Simulate2D){ const bool sim2d=true;
     if(slipmode==SLIP_Vel0    )InteractionMdbcCorrectionT2 <tker,sim2d,SLIP_Vel0    > (n,divdata,determlimit,MdbcThreshold,pos,code,idp,boundnormal,motionvel,velrhop);
     if(slipmode==SLIP_NoSlip  )InteractionMdbcCorrectionT2 <tker,sim2d,SLIP_NoSlip  > (n,divdata,determlimit,MdbcThreshold,pos,code,idp,boundnormal,motionvel,velrhop);
@@ -1618,7 +1617,7 @@ double JSphCpu::DtVariable(bool final){
   //-dt2 combines the Courant and the viscous time-step controls.
   const double dt2=double(KernelH)/(max(Cs0,VelMax*10.)+double(KernelH)*ViscDtMax);
   //-dt new value of time step.
-  double dt=double(CFLnumber)*min(dt1,dt2);
+  double dt=CFLnumber*min(dt1,dt2);
   if(FixedDt)dt=FixedDt->GetDt(TimeStep,dt);
   if(fun::IsNAN(dt) || fun::IsInfinity(dt))Run_Exceptioon(fun::PrintStr("The computed Dt=%f (from AceMax=%f, VelMax=%f, ViscDtMax=%f) is NaN or infinity at nstep=%u.",dt,AceMax,VelMax,ViscDtMax,Nstep));
   if(dt<double(DtMin)){ 
@@ -1783,8 +1782,6 @@ void JSphCpu::RunMotion(double stepdt){
         if(motsim)MoveMatBound   (m.count,m.idbegin-CaseNfixed,m.matmov,stepdt,RidpMove,Posc,Dcellc,Velrhopc,Codec,boundnormal); 
         //else    MoveMatBoundAce(m.count,m.idbegin-CaseNfixed,m.matmov,m.matmov2,stepdt,RidpMove,Posc,Dcellc,Velrhopc,Acec,Codec);
       }      
-      //-Applies predefined motion to BoundCorr configuration.
-      if(BoundCorr && BoundCorr->GetUseMotion())BoundCorr->RunMotion(m);
     }
   }
   //-Management of Multi-Layer Pistons.
@@ -1869,7 +1866,9 @@ void JSphCpu::MovePiston2d(unsigned np,unsigned ini
 //==============================================================================
 void JSphCpu::RunRelaxZone(double dt){
   Timersc->TmStart(TMC_SuMotion);
-  RelaxZones->SetFluidVel(TimeStep,dt,Np-Npb,Npb,Posc,Idpc,Velrhopc);
+  byte* rzid=NULL;
+  float* rzfactor=NULL; 
+  RelaxZones->SetFluidVel(TimeStep,dt,Np-Npb,Npb,Posc,Idpc,Velrhopc,rzid,rzfactor);
   Timersc->TmStop(TMC_SuMotion);
 }
 

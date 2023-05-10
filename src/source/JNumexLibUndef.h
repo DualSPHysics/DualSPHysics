@@ -68,7 +68,7 @@ public:
   /// Returns value of requested variable according to index.
   std::string GetVarStr(unsigned idx)const{ return(""); }
   /// Returns list of selected variables to export or all variables.
-  unsigned GetExportVars(std::vector<unsigned> &vars)const{}
+  unsigned GetExportVars(std::vector<unsigned> &vars)const{ return(0); }
   /// Returns string with list of variables and its values in one line.
   std::string ListVarsToStr(unsigned firstvar=0)const{ return(""); }
 

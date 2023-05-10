@@ -17,8 +17,8 @@ export diroutdata=${dirout}/data
 export dirbin=../../../bin/linux
 export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${dirbin}
 export gencase="${dirbin}/GenCase_linux64"
-export dualsphysicscpu="${dirbin}/DualSPHysics5.0CPU_linux64"
-export dualsphysicsgpu="${dirbin}/DualSPHysics5.0_linux64"
+export dualsphysicscpu="${dirbin}/DualSPHysics5.2CPU_linux64"
+export dualsphysicsgpu="${dirbin}/DualSPHysics5.2_linux64"
 export boundaryvtk="${dirbin}/BoundaryVTK_linux64"
 export partvtk="${dirbin}/PartVTK_linux64"
 export partvtkout="${dirbin}/PartVTKOut_linux64"
@@ -27,6 +27,7 @@ export computeforces="${dirbin}/ComputeForces_linux64"
 export isosurface="${dirbin}/IsoSurface_linux64"
 export flowtool="${dirbin}/FlowTool_linux64"
 export floatinginfo="${dirbin}/FloatingInfo_linux64"
+export tracerparts="${dirbin}/TracerParts_linux64"
 
 option=-1
  if [ -e $dirout ]; then

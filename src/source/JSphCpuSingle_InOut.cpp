@@ -24,7 +24,6 @@
 #include "JSphInOut.h"
 #include "JSphMk.h"
 #include "JDsPartsInit.h"
-#include "JSphBoundCorr.h"
 #include "JSphInOutPoints.h"
 #include "JSimpleNeigs.h"
 #include "FunctionsMath.h"
@@ -182,13 +181,15 @@ void JSphCpuSingle::InOutComputeStep(double stepdt){
     //-Creates new inlet particles using advanced refilling mode.
     if(InOut->Use_RefillAdvanced()){
       //-Creates new inlet particles using advanced refilling mode.
-      float    *prodist=ArraysCpu->ReserveFloat();
-      tdouble3 *propos =ArraysCpu->ReserveDouble3();
-      newnp+=InOut->ComputeStepFillingCpu(inoutcountpre,inoutpart
-        ,this,IdMax+1+newnp,CpuParticlesSize,Np+newnp,Posc,Dcellc,Codec,Idpc,Velrhopc
-        ,zsurfok,prodist,propos);
-      ArraysCpu->Free(prodist);
-      ArraysCpu->Free(propos);
+      if(!InOut->RefillingRate || (Nstep%InOut->RefillingRate)==0){
+        float    *prodist=ArraysCpu->ReserveFloat();
+        tdouble3 *propos =ArraysCpu->ReserveDouble3();
+        newnp+=InOut->ComputeStepFillingCpu(inoutcountpre,inoutpart
+          ,this,IdMax+1+newnp,CpuParticlesSize,Np+newnp,Posc,Dcellc,Codec,Idpc,Velrhopc
+          ,zsurfok,prodist,propos);
+        ArraysCpu->Free(prodist);
+        ArraysCpu->Free(propos);
+      }
     }
     //-Free arrays.
     ArraysCpu->Free(inoutpart);
@@ -266,26 +267,6 @@ void JSphCpuSingle::InOutExtrapolateData(unsigned inoutcount,const int *inoutpar
   const byte doublemode=InOut->GetExtrapolateMode();
   Interaction_InOutExtrap(doublemode,inoutcount,inoutpart,cfgzone,planes,width,dirdata,determlimit
     ,Dcellc,Posc,Codec,Idpc,Velrhopc);
-}
-
-//==============================================================================
-/// Calculates extrapolated data for boundary particles from fluid domain.
-/// Calcula datos extrapolados en el contorno para las particulas inlet/outlet.
-//==============================================================================
-void JSphCpuSingle::BoundCorrectionData(){
-  Timersc->TmStart(TMC_SuBoundCorr);
-  const unsigned n=BoundCorr->GetCount();
-  const float determlimit=BoundCorr->GetDetermLimit();
-  const byte doublemode=BoundCorr->GetExtrapolateMode();
-  for(unsigned c=0;c<n;c++){
-    const JSphBoundCorrZone* zo=BoundCorr->GetMkZone(c);
-    const typecode boundcode=zo->GetBoundCode();
-    const tplane3f plane=zo->GetPlane();
-    const tfloat3 direction=ToTFloat3(zo->GetDirection());
-    Interaction_BoundCorr(doublemode,boundcode,plane,direction,determlimit
-      ,Posc,Codec,Idpc,Velrhopc);
-  }
-  Timersc->TmStop(TMC_SuBoundCorr);
 }
 
 

@@ -30,6 +30,7 @@
 #include <fstream>
 #include <cfloat>
 #include <climits>
+#include <cmath>
 #include <algorithm>
 
 using namespace std;
@@ -93,6 +94,7 @@ JLinearValue::~JLinearValue(){
 /// Initialization of variables.
 //==============================================================================
 void JLinearValue::Reset(){
+  ResetLoopTime();
   SetSize(0);
   File="";
   NewInterval=false;
@@ -112,6 +114,11 @@ void JLinearValue::CopyFrom(const JLinearValue &obj){
   memcpy(Times,obj.Times,sizeof(double)*Size);
   memcpy(Values,obj.Values,sizeof(double)*Nvalues*Size);
   Count        =obj.Count;
+
+  LoopTmax=obj.LoopTmax;
+  LoopTsub=obj.LoopTsub;
+  LoopTbeg=obj.LoopTbeg;
+
   NewInterval  =obj.NewInterval;
   TimeStep     =obj.TimeStep;
   Position     =obj.Position;
@@ -203,18 +210,20 @@ void JLinearValue::FindTime(double timestep){
   if(!Count)Run_Exceptioon("There are not times.");
   NewInterval=false;
   if(timestep!=TimeStep || Position==UINT_MAX){
+    const double timesteploop=(timestep>=LoopTmax? fmod((timestep-LoopTbeg),LoopTsub)+LoopTbeg: timestep);
+    const double timestep2=(timesteploop>=LoopTmax? timesteploop-LoopTsub: timesteploop);
     unsigned pos=(Position==UINT_MAX? 0: Position);
     unsigned posnext=pos;
     double tpre=Times[pos];
     double tnext=tpre;
     if(Count>1){
-      while(tpre>=timestep && pos>0){//-Retrocede.
+      while(tpre>=timestep2 && pos>0){//-Retrocede.
         pos--;
         tpre=Times[pos];
       }
       posnext=(pos+1<Count? pos+1: pos);
       tnext=Times[posnext];
-      while(tnext<timestep && posnext+1<Count){//-Avanza.
+      while(tnext<timestep2 && posnext+1<Count){//-Avanza.
         posnext++;
         tnext=Times[posnext];
       }
@@ -223,14 +232,17 @@ void JLinearValue::FindTime(double timestep){
         tpre=Times[pos];
       }
     }
-    NewInterval=(Position!=pos || (timestep>tnext && TimeStep<=tnext));
+    //NewInterval=(Position!=pos || (timestep>tnext && TimeStep<=tnext));
+    NewInterval=(Position!=pos || (timestep2>tnext && (timestep2-timestep+TimeStep)<=tnext));
     TimeStep=timestep;
     Position=pos;
     PositionNext=posnext;
     TimePre=tpre;
     TimeNext=tnext;
     const double tdif=TimeNext-TimePre;
-    TimeFactor=(tdif? (timestep-TimePre)/tdif: 0);
+    TimeFactor=(tdif? (timestep2-TimePre)/tdif: 0);
+    if(TimeFactor<0.)TimeFactor=0.;
+    if(TimeFactor>1.)TimeFactor=1.;
   }
 }
 
@@ -251,8 +263,8 @@ double JLinearValue::GetValue(double timestep,unsigned cvalue){
   double ret=0;
   FindTime(timestep);
   //printf("--> t:%f  [%u - %u]  [%f - %f]\n",timestep,Position,PositionNext,TimePre,TimeNext);
-  if(timestep<=TimePre)ret=Values[Nvalues*Position+cvalue];
-  else if(timestep>=TimeNext)ret=Values[Nvalues*PositionNext+cvalue];
+  if(TimeFactor==0)ret=Values[Nvalues*Position+cvalue];
+  else if(TimeFactor>=1.)ret=Values[Nvalues*PositionNext+cvalue];
   else{
     const double vini=Values[Nvalues*Position+cvalue];
     const double vnext=Values[Nvalues*PositionNext+cvalue];
@@ -290,11 +302,11 @@ tdouble3 JLinearValue::GetValue3d(double timestep){
   tdouble3 ret=TDouble3(0);
   FindTime(timestep);
   //printf("--> t:%f  [%u - %u]  [%f - %f]\n",timestep,Position,PositionNext,TimePre,TimeNext);
-  if(timestep<=TimePre){
+  if(TimeFactor==0){
     const unsigned rpos=Nvalues*Position;
     ret=TDouble3(Values[rpos],Values[rpos+1],Values[rpos+2]);
   }
-  else if(timestep>=TimeNext){
+  else if(TimeFactor>=1.){
     const unsigned rpos=Nvalues*PositionNext;
     ret=TDouble3(Values[rpos],Values[rpos+1],Values[rpos+2]);
   }
@@ -333,12 +345,12 @@ void JLinearValue::GetValue3d3d(double timestep,tdouble3 &v1,tdouble3 &v2){
   v1=v2=TDouble3(0);
   FindTime(timestep);
   //printf("--> t:%f  [%u - %u]  [%f - %f]\n",timestep,Position,PositionNext,TimePre,TimeNext);
-  if(timestep<=TimePre){
+  if(TimeFactor==0){
     const unsigned rpos=Nvalues*Position;
     v1=TDouble3(Values[rpos  ],Values[rpos+1],Values[rpos+2]);
     v2=TDouble3(Values[rpos+3],Values[rpos+4],Values[rpos+5]);
   }
-  else if(timestep>=TimeNext){
+  else if(TimeFactor>=1.){
     const unsigned rpos=Nvalues*PositionNext;
     v1=TDouble3(Values[rpos  ],Values[rpos+1],Values[rpos+2]);
     v2=TDouble3(Values[rpos+3],Values[rpos+4],Values[rpos+5]);
@@ -437,6 +449,25 @@ void JLinearValue::LoadFile(std::string file){
   }
   if(Count<2)Run_ExceptioonFile("Cannot be less than two values.",file);
   File=file;
+}
+
+//==============================================================================
+/// Reset loop time configuration.
+//==============================================================================
+void JLinearValue::ResetLoopTime(){
+  LoopTbeg=DBL_MAX;
+  LoopTmax=DBL_MAX;
+  LoopTsub=0;
+}
+
+//==============================================================================
+/// Configures loop time by start and end time.
+//==============================================================================
+void JLinearValue::ConfigLoopTime(double tbegin,double tmax){
+  if(tbegin>=tmax)Run_Exceptioon("The start time is greater than or equal to final time.");
+  LoopTbeg=tbegin;
+  LoopTmax=tmax;
+  LoopTsub=LoopTmax-LoopTbeg;
 }
 
 //==============================================================================

@@ -35,7 +35,9 @@
 #ifndef _JWaveGen_
 #define _JWaveGen_
 
-#include "DualSphDef.h"
+#include "TypesDef.h"
+#include "JDsMotionDef.h"
+#include "JObject.h"
 #include <string>
 
 //#define DISABLE_WAVEGEN     ///<It allows compile without WaveGen library.
@@ -43,8 +45,18 @@
 class JXml;
 class JLog2;
 class JWavePaddles;
-class JGaugeSystem;
-class JSphMk;
+
+/// Data for AWAS configuration.
+typedef struct{
+  double dp;            ///<Initial distance between particles [m].
+  float scell;          ///<Cell size: KernelSize/ScellDiv (KernelSize or KernelSize/2).
+  float kernelh;        ///<The smoothing length of SPH kernel [m].
+  float massfluid;      ///<Reference mass of the fluid particle [kg].
+  tdouble3 domposmin;   ///<Minimum position of domain.
+  tdouble3 domposmax;   ///<Maximum position of domain.
+  tdouble3 padposmin;   ///<Minimum position of paddle to locate gauge.
+  tdouble3 padposmax;   ///<Maximum position of paddle to locate gauge.
+}StWvgDimensions;
 
 //##############################################################################
 //# JWaveGen
@@ -54,8 +66,20 @@ class JSphMk;
 #ifdef DISABLE_WAVEGEN
 #include "JWaveGenUndef.h"
 #else
-class JWaveGen
+class JWaveGen : protected JObject
 {
+public:
+  ///Structure with the information on paddle-related particles.
+  typedef struct{
+    unsigned idxpaddle;      ///<Idx of paddle.
+    word mkbound;            ///<Mk-bound of particles.
+    word motionref;          ///<Id for motion.
+    unsigned idbegin;        ///<Id of first particle of paddle.
+    unsigned np;             ///<Number of particles in paddle.
+    StMotionData motiondata; ///<Motion data for particles.
+    void* gaugeswl;          ///<Object to measure the position of the free surface.
+  }StPaddleParts;
+
 private:
   const bool UseOmp;
   const bool UseGpu;
@@ -63,6 +87,7 @@ private:
 
   double TimeMod;          ///<Modifies the timestep for paddle motion.
   JWavePaddles* WavPad; 
+  std::vector<StPaddleParts> PaddleParts; 
 
   //-Auxiliary variables loaded after Init().
   unsigned Count;
@@ -70,8 +95,13 @@ private:
   bool Use_Awas;       ///<Use of AWAS-Zsurf.
   bool Waves_Regular;  ///<Regular waves configured.
   bool Waves_Spectrum; ///<Irregular waves configured.
+  bool Waves_Focused;  ///<Focused waves configured.
   bool Waves_File;     ///<Waves from external file configured.
   bool Waves_Solitary; ///<Solitary waves configured.
+
+private:
+  void Reset();
+  void CreatePaddleParts(unsigned n);
 
 public:
 
@@ -92,16 +122,9 @@ public:
   static bool Available(){ return(true); }
 
   //==============================================================================
-  /// Configura paddle con datos de las particulas.
   /// Set paddle with the particle data.
   //==============================================================================
-  bool ConfigPaddle(word mkbound,word motionref,unsigned idbegin,unsigned np);
-
-  //==============================================================================
-  /// Prepara movimiento de paddles.
-  /// Prepares paddle movement.
-  //==============================================================================
-  void Init(JGaugeSystem *gaugesystem,const JSphMk *mkinfo,double timemax,double timepart);
+  bool ConfigPaddleParts(word mkbound,word motionref,unsigned idbegin,unsigned np);
 
   //==============================================================================
   /// Adjust motion paddles for the first simulation instant.
@@ -109,9 +132,53 @@ public:
   void SetTimeMod(double timemod){ TimeMod=timemod; };
 
   //==============================================================================
+  /// Returns Mkbound of paddle.
+  //==============================================================================
+  word GetPaddleMkbound(unsigned cp)const;
+
+  //==============================================================================
+  /// Prepares paddle movement.
+  //==============================================================================
+  void InitPaddle(unsigned cp,double timemax,double timepart
+    ,const StWvgDimensions &wdims);
+
+  //==============================================================================
+  /// Returns true when paddle uses AWAS.
+  //==============================================================================
+  bool PaddleUseAwas(unsigned cp)const;
+
+  //==============================================================================
+  /// Returns AWAS information to define gauge.
+  //==============================================================================
+  void PaddleGetAwasInfo(unsigned cp,double coefmassdef,double massfluid
+    ,double &masslimit,double &tstart,double &gdp,tdouble3 &point0,tdouble3 &point2)const;
+
+  //==============================================================================
+  /// Defines gauge for paddle AWAS.
+  //==============================================================================
+  void PaddleGaugeInit(unsigned cp,void *gswl);
+
+  //==============================================================================
+  /// Returns gauge for paddle AWAS (NULL when it is undefined).
+  //==============================================================================
+  void* PaddleGaugeGet(unsigned cp)const;
+
+  //==============================================================================
   /// Shows object configuration using Log.
   //==============================================================================
   void VisuConfig(std::string txhead,std::string txfoot);
+
+
+  //==============================================================================
+  /// Loads the last gauge results.
+  //==============================================================================
+  void LoadLastGaugeResults(unsigned cp,double timestep,const tfloat3 &posswl,const tfloat3 &point0);
+
+  //==============================================================================
+  /// Returns new position for gauge.
+  //==============================================================================
+  void GetUpdateGaugePoints(unsigned cp,bool updatepoints,tdouble3 &point0,tdouble3 &point2)const;
+
 
   //==============================================================================
   /// Devuelve datos de movimiento nulo.
@@ -131,17 +198,14 @@ public:
   //==============================================================================
   const StMotionData& GetMotionAce(bool svdata,unsigned cp,double timestep,double dt);
 
-  //==============================================================================
-  /// Devuelve Mkbound de paddle.
-  /// Returns Mkbound of paddle.
-  //==============================================================================
-  word GetPaddleMkbound(unsigned cp)const;
 
   unsigned GetCount()const{ return(Count); }
+
 
   bool UseAwas()      const{ return(Use_Awas);       } 
   bool WavesRegular() const{ return(Waves_Regular);  } 
   bool WavesSpectrum()const{ return(Waves_Spectrum); } 
+  bool WavesFocused() const{ return(Waves_Focused);  } 
   bool WavesFile()    const{ return(Waves_File);     } 
   bool WavesSolitary()const{ return(Waves_Solitary); } 
 
@@ -149,5 +213,4 @@ public:
 #endif
 
 #endif
-
 

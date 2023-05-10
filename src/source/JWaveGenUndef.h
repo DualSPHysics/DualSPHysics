@@ -31,20 +31,34 @@ class JWaveGen
 {
 public:
   StMotionData MotionData;
-  JWaveGen(bool useomp,bool usegpu,JLog2 *log,std::string dirdata,const JXml *sxml,const std::string &place,tdouble3 gravity3){}
+  JWaveGen(bool useomp,bool usegpu,JLog2 *log,std::string dirdata,const JXml *sxml
+    ,const std::string &place,tdouble3 gravity3){}
   ~JWaveGen(){}
   static bool Available(){ return(false); }
-  bool ConfigPaddle(word mkbound,word motionref,unsigned idbegin,unsigned np){ return(false); }
-  void Init(JGaugeSystem *gaugesystem,const JSphMk *mkinfo,double timemax,double timepart){}
+  bool ConfigPaddleParts(word mkbound,word motionref,unsigned idbegin,unsigned np){ return(false); }
   void SetTimeMod(double timemod){}
+  word GetPaddleMkbound(unsigned cp)const{ return(0); }
+  void InitPaddle(unsigned cp,double timemax,double timepart
+    ,const StWvgDimensions &wdims){}
+  bool PaddleUseAwas(unsigned cp)const{ return(false); }
+  void PaddleGetAwasInfo(unsigned cp,double coefmassdef,double massfluid
+    ,double &masslimit,double &tstart,double &gdp,tdouble3 &point0,tdouble3 &point2)const{}
+  void PaddleGaugeInit(unsigned cp,void *gswl){}
+  void* PaddleGaugeGet(unsigned cp)const{ return(NULL); }
   void VisuConfig(std::string txhead,std::string txfoot){}
+
+  void LoadLastGaugeResults(unsigned cp,double timestep,const tfloat3 &posswl,const tfloat3 &point0){}
+  void GetUpdateGaugePoints(unsigned cp,bool updatepoints,tdouble3 &point0,tdouble3 &point2)const{}
+  
+  const StMotionData& GetMotionNull()const{ return(MotionData); };
   const StMotionData& GetMotion(bool svdata,unsigned cp,double timestep,double dt){ return(MotionData); }
   const StMotionData& GetMotionAce(bool svdata,unsigned cp,double timestep,double dt){ return(MotionData); }
-  word GetPaddleMkbound(unsigned cp)const{ return(0); }
+
   unsigned GetCount()const{ return(0); }
   bool UseAwas()const{ return(false); }
   bool WavesRegular() const{ return(false); }
   bool WavesSpectrum()const{ return(false); }
+  bool WavesFocused() const{ return(false); }
   bool WavesFile()    const{ return(false); }
   bool WavesSolitary()const{ return(false); }
 };

@@ -83,7 +83,7 @@ public:
   void ConfigRunPaths(std::string runcommand);
   void ConfigOutput(bool createdirs,bool csvsepcoma,std::string dirout,std::string dirdataout="");
 
-  void SetMainName(const std::string &mname){ MainName=mname; }
+  void SetMainName(const std::string &mname);
 
 #ifdef JAppInfo_UseLog
   void LogInit(std::string fname,bool mpirun=false,int mpirank=0,int mpilaunch=0);

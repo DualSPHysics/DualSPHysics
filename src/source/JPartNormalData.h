@@ -48,7 +48,8 @@
 class JPartNormalData : protected JObject
 {
 private:
-  static const unsigned FmtVersionDef=190407;    ///<Version de formato by default. Version of format by default.
+  //static const unsigned FmtVersionDef=190407;    ///<Version de formato by default. Version of format by default.
+  static const unsigned FmtVersionDef=220911;    ///<Version de formato by default. Version of format by default.
   unsigned FmtVersion;    ///<Version de formato. Version of format.
 
   std::string DirData;
@@ -63,7 +64,6 @@ private:
   double Dp;
   double H;
   double Dist;           ///<Distance used for calculating normal data (tipically KernelSize).
-  bool FtSupport;        ///<Enables support for floating bodies.
 
   std::string PartNormalsName; ///<Name of normals approach used for PartNormals (Mean or Marrone).
   unsigned Nbound;       ///<Number boudary particles.
@@ -86,7 +86,7 @@ public:
   ~JPartNormalData();
   void Reset();
   void ConfigBasic(std::string appname,std::string casename
-    ,bool data2d,double data2dposy,double dp,double h,double dist,bool ftsupport);
+    ,bool data2d,double data2dposy,double dp,double h,double dist);
   void AddNormalData(
     std::string partnorname,unsigned nbound,const tdouble3 *partnor
     ,const unsigned *norbegin,unsigned countnor
@@ -95,10 +95,10 @@ public:
   void AddNormalData(
     std::string partnorname,unsigned nbound,const tdouble3 *partnor);
 
-  static std::string GetFileName(std::string casename,std::string dir="");
-  static std::string GetNormalDataFile(std::string casename);
+  static std::string GetFileName(bool ndata,std::string casename,std::string dir="");
+  static std::string GetNormalDataFile(bool ndata,std::string casename);
 
-  void LoadFile(std::string casename);
+  void LoadFile(bool ndata,std::string casename);
   void SaveFile(std::string dir);
 
 //-Returns general values.
@@ -114,7 +114,7 @@ public:
 //-Returns normal data.
 //-----------------------
   double      GetDist()      const{ return(Dist);       }
-  bool        GetFtSupport() const{ return(FtSupport);  }
+  //bool        GetFtSupport() const{ return(true);  }
   unsigned    GetNbound()    const{ return(Nbound);     }
   std::string GetPartNormalsName()const{ return(PartNormalsName); }
   const tdouble3* GetPartNormals()const{ return(PartNormals);     }

@@ -54,14 +54,20 @@ void JSphCfgRun::Reset(){
   TVisco=VISCO_None; Visco=0; ViscoBoundFactor=-1;
   TDensity=-1;
   DDTValue=-1;
+  DDTValueTRamp=DDTValueTMax=DDTValueMax=0;  //<vs_ddramp>
   Shifting=-1;
-  SvRes=true; SvDomainVtk=false;
-  Sv_Binx=true; Sv_Info=true;
-  Sv_Vtk=false; Sv_Csv=false;
+  Sv_Binx=true; 
+  Sv_Info=true;
+  Sv_Vtk=false;
+  Sv_Csv=false;
+  SvNormals=false; 
+  SvRes=true; 
+  SvDomainVtk=false;
   CaseName=""; RunName=""; DirOut=""; DirDataOut=""; 
   PartBegin=0; PartBeginFirst=0; PartBeginDir="";
   RestartChrono=false;
   TimeMax=-1; TimePart=-1;
+  CFLnumber=-1;
   RhopOutModif=false; RhopOutMin=700; RhopOutMax=1300;
   FtPause=-1;
   NstepsBreak=0;
@@ -139,6 +145,7 @@ void JSphCfgRun::VisuInfo()const{
   printf("        2          Diffusion term by Fourtakas et al 2019 (inner fluid particles)\n");
   printf("        3          Diffusion term by Fourtakas et al 2019 (all fluid particles)\n");
   printf("    -ddtvalue:<float> Constant for DDT (0.1 by default)\n");
+  printf("    -ddtramp:tramp:tmax:maxvalue  Total time of DDT ramp and time for maxvalue\n"); //<vs_ddramp>
   printf("\n");
   printf("    -shifting:<mode> Specifies the use of Shifting correction\n");
   printf("        none       Shifting is disabled (by default)\n");
@@ -162,6 +169,7 @@ void JSphCfgRun::VisuInfo()const{
   printf("    -tmax:<float>   Maximum time of simulation\n");
   printf("    -tout:<float>   Time between output files\n");
   printf("\n");
+  printf("    -cfl:<float> CFL number coefficient to multiply dt\n");
   printf("    -ftpause:<float> Time to start floating bodies movement. By default 0\n");
   printf("    -rhopout:min:max Excludes fluid particles out of these density limits\n");
   printf("    -domain_fixed:xmin:ymin:zmin:xmax:ymax:zmax    The domain is fixed\n");
@@ -175,6 +183,7 @@ void JSphCfgRun::VisuInfo()const{
   printf("        info    Information about execution in .ibi4 format (by default)\n");
   printf("        vtk     VTK files\n");
   printf("        csv     CSV files\n");
+  printf("    -svnormals:<0/1> Saves normal vector of boundary particles (default=0)\n");
   printf("    -svres:<0/1>     Generates file that summarises the execution process\n");
   printf("    -svtimers:<0/1>  Obtains timing for each individual process\n");
   printf("    -svdomainvtk:<0/1>  Generates VTK file with domain limits\n");
@@ -263,8 +272,8 @@ void JSphCfgRun::LoadOpts(string *optlis,int optn,int lv,const std::string &file
     }
     else if(opt[0]=='-'){
       //-Splits options in txoptfull, txopt1, txopt2, txopt3 and txopt4.
-      string txword,txoptfull,txopt1,txopt2;
-      SplitsOpts(opt,txword,txoptfull,txopt1,txopt2);
+      string txword,txoptfull,txopt1,txopt2,txopt3;
+      SplitsOpts(opt,txword,txoptfull,txopt1,txopt2,txopt3);
       //-Checks keywords in commands.
       if(txword=="CPU"){ Cpu=true; Gpu=false; }
       else if(txword=="GPU"){ Gpu=true; Cpu=false;
@@ -334,6 +343,15 @@ void JSphCfgRun::LoadOpts(string *optlis,int optn,int lv,const std::string &file
         DDTValue=float(atof(txoptfull.c_str())); 
         if(DDTValue<0 || DDTValue>1)ErrorParm(opt,c,lv,file);
       }
+      else if(txword=="DDTRAMP"){ //<vs_ddramp_ini>
+        tdouble3 v;
+        LoadDouble3(txoptfull,0,v);
+        DDTValueTRamp=v.x;
+        DDTValueTMax=v.y;
+        DDTValueMax=v.z;
+        if(DDTValueTRamp<=0 || DDTValueMax<=0)DDTValueTRamp=DDTValueTMax=DDTValueMax=0;
+        if(DDTValueTMax>DDTValueTRamp)DDTValueTMax=DDTValueTRamp;
+      } //<vs_ddramp_end>
       else if(txword=="SHIFTING"){
         const string tx=fun::StrUpper(txoptfull);
         if(tx=="NONE")Shifting=0;
@@ -342,6 +360,7 @@ void JSphCfgRun::LoadOpts(string *optlis,int optn,int lv,const std::string &file
         else if(tx=="FULL")Shifting=3;
         else ErrorParm(opt,c,lv,file);
       }
+      else if(txword=="SVNORMALS")SvNormals=(txoptfull!=""? atoi(txoptfull.c_str()): 1)!=0;
       else if(txword=="SVRES")SvRes=(txoptfull!=""? atoi(txoptfull.c_str()): 1)!=0;
       else if(txword=="SVTIMERS")SvTimers=(txoptfull!=""? atoi(txoptfull.c_str()): 1)!=0;
       else if(txword=="SVDOMAINVTK")SvDomainVtk=(txoptfull!=""? atoi(txoptfull.c_str()): 1)!=0;
@@ -378,6 +397,10 @@ void JSphCfgRun::LoadOpts(string *optlis,int optn,int lv,const std::string &file
         RhopOutMin=float(atof(txopt1.c_str())); 
         RhopOutMax=float(atof(txopt2.c_str())); 
         RhopOutModif=true;
+      }
+      else if(txword=="CFL"){ 
+        CFLnumber=atof(txoptfull.c_str()); 
+        if(CFLnumber<=0)ErrorParm(opt,c,lv,file);
       }
       else if(txword=="FTPAUSE"){ 
         FtPause=float(atof(txoptfull.c_str())); 
