@@ -4,12 +4,14 @@
         <constantsdef>            			
             <gravity x="0" y="0" z="-9.81" comment="Gravitational acceleration" units_comment="m/s^2" />
             <rhop0 value="1000" comment="Reference density of the fluid" units_comment="kg/m^3" />
+            <rhopgradient value="2" comment="Initial density gradient 1:Rhop0, 2:Water column, 3:Max. water height (default=2)" />
             <hswl value="0" auto="true" comment="Maximum still water level to calculate speedofsound using coefsound" units_comment="metres (m)" />
             <gamma value="7" comment="Polytropic constant for water used in the state equation" />
             <speedsystem value="0" auto="true" comment="Maximum system speed (by default the dam-break propagation is used)" />
             <coefsound value="20" comment="Coefficient to multiply speedsystem" />
             <speedsound value="0" auto="true" comment="Speed of sound to use in the simulation (by default speedofsound=coefsound*speedsystem)" />
             <coefh value="1.0" comment="Coefficient to calculate the smoothing length (h=coefh*sqrt(3*dp^2) in 3D)" />		
+            <_hdp value="2" comment="Alternative option to calculate the smoothing length (h=hdp*dp)" />
             <cflnumber value="0.2" comment="Coefficient to multiply dt" />			
         </constantsdef>	
         <mkconfig boundcount="240" fluidcount="9"/>

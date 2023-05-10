@@ -1,0 +1,103 @@
+
+
+ <TRACERPARTS>  Copyright (c) 2020 by Dr Jose M. Dominguez
+ All rights reserved.
+
+ TracerParts is a free tool for DualSPHysics simulations.
+ DualSPHysics project is an international collaboration between
+ University of Vigo (Spain) and University of Manchester (UK).
+
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions
+ are met:
+ * Redistributions of source code must retain the above copyright
+   notice, this list of conditions and the following disclaimer.
+ * Redistributions in binary form must reproduce the above copyright
+   notice, this list of conditions and the following disclaimer in the
+   documentation and/or other materials provided with the distribution.
+ * Neither the name of the TracerParts nor the names of its contributors
+   may be used to endorse or promote products derived from this software
+   without specific prior written permission.
+
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER BE LIABLE FOR ANY
+ DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+
+TracerParts v5.0.206 (12-04-2023)
+==================================
+LoadDsphConfig> .../bin/windows/DsphConfig.xml
+Information about parameters of execution:
+
+  TracerParts <options>
+
+  Basic options:
+    -h             Shows information about parameters
+    -ver           Shows version information
+    -opt <file>    Load configuration of a file
+    -threads:<int>  Indicates the number of threads for parallel execution.
+     Uses 0 to take the number of cores of the device (default=1).
+
+  Defines input file:
+    -dirin <dir>       Directory with particle data bi4
+    -filexml file.xml  Loads xml file with information of mk and
+                       and other information. The word 'AUTO' can
+                       be used to load the xml used in the simulation.
+    -first:<int>       Indicates the first file to be computed
+    -last:<int>        Indicates the last file to be computed
+    -files:<values>    Indicates the number of files to be processed
+
+  Defines output file:
+    -savevtk <file.vtk>   Generates vtk(polydata) files with particles
+    -createdirs:<0/1>     Creates full path for output files
+                          (value by default is read from DsphConfig.xml or 1)
+
+  Selection of particles:
+    -onlymk:<values> Indicates the mk of selected particles
+    -onlyid:<values> Indicates the id of selected particles
+    -onlypos:xmin:ymin:zmin:xmax:ymax:zmax  Indicates limits of particles
+    -onlytype:<values>   Indicates the type of selected particles
+       (+ means include, - means do not include)
+       +/-all:       To choose or reject all options
+       +/-bound:     Boundary particles (fixed, moving and floating)
+       +/-fixed:     Boundary fixed particles
+       +/-moving:    Boundary moving particles
+       +/-floating:  Floating body particles
+       +/-fluid:     Fluid particles (no excluded)
+       (Preselected types: all)
+
+    -nearpartsdef:<def>  Definition of points to select the nearest particle. It
+       uses the same point definition format used by MeasureTool:
+           pt=<x>:<y>:<z>,pt=<x>:<y>:<z>...
+           ptls[x=<x0>:<dx>:<nx>,y=<y0>:<dy>:<ny>,z=<z0>:<dz>:<nz>]...
+           ptels[x=<x0>:<dx>:<xf>,y=<y0>:<dy>:<yf>,z=<z0>:<dz>:<zf>]...
+    -nearpartsdist:<float>  Defines the maximum distance to select the nearest
+       particles (default: no limit).
+
+    -limit:<int>     Limits number of selected particles (def=28118)
+    -limitrnd:<int>  Random seed for selection according to limit number (def=8)
+
+  Configuration for tail:
+    -tailsize:<int>  Indicates the number of steps to create the tail (def=20)
+    -maxdist:<float> Indicates the maximum distance to draw lines (def=0)
+    -drawpoints      Draws only points
+    -drawlines       Draws lines between points (default)
+
+    -vars:<values>   Indicates the stored variables of each particle
+       +/-all:         To choose or reject all options
+       +/-id:          Id of particle
+       +/-vel:         Velocity
+       +/-index:       Index of particle in selection
+       +/-tail:        Distance from the head
+       (Preselected variables: index,tail)
+
+  Examples:
+    TracerParts -onlyid:10-20,50-60 -savevtk dir/files.vtk
+

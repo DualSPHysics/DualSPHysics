@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<case app="GenCase v5.0.268 (12-09-2022)" date="13-09-2022 03:09:49">
-    <casedef requiredversion="v5.0.268">
+<case app="GenCase v5.0.278 (24-04-2023)" date="10-05-2023 18:26:46">
+    <casedef requiredversion="v5.0.278">
         <constantsdef>
             <lattice bound="2" fluid="1" comment="Type of lattice to create the initial particles (default=1)" />
             <gravity x="0" y="0" z="-9.81" comment="Gravitational acceleration" units_comment="m/s^2" />
@@ -353,6 +353,9 @@
                         <drawrotate angx="10" angy="15" angz="30" />
                         <drawscale x="1" y="1" z="0.8" />
                     </drawfilestl>
+                    <drawfilestl file="File.stl" advanced="true">
+                        <depth depthmin="0.02" />
+                    </drawfilestl>
                     <drawfileply file="File.ply" />
                     <drawfileply file="File.ply">
                         <drawmove x="0.5" y="0" z="0" />
@@ -363,6 +366,11 @@
                     </drawfileply>
                     <drawfileply file="File.ply" autofill="true">
                         <drawrotate angx="10" angy="15" angz="30" />
+                    </drawfileply>
+                    <drawfileply file="File.ply" advanced="true">
+                        <drawmove x="0.5" y="0" z="0" />
+                        <drawrotate angx="10" angy="15" angz="30" />
+                        <depth depthmax="0.02" />
                     </drawfileply>
                     <drawfilevtk file="File.vtk" />
                     <drawfilevtk file="File.vtk">
@@ -382,6 +390,13 @@
                     </drawfilevtk>
                     <drawfilevtk file="File.vtk">
                         <polyselec>polygons</polyselec>
+                    </drawfilevtk>
+                    <drawfilevtk file="File.vtk" advanced="true" />
+                    <drawfilevtk file="File.vtk" advanced="true">
+                        <depth depthmin="0.02" depthmax="0.1" />
+                    </drawfilevtk>
+                    <drawfilevtk file="File.vtk" autofill="true" advanced="true">
+                        <depth depthmin="0.02" />
                     </drawfilevtk>
                     <drawfilecsv file="Bathymetry.csv" mode="bathymetry">
                         <drawmove x="0.5" y="0" z="0" />
@@ -610,10 +625,11 @@
                 <pos1 x="0" y="0" z="0" rhop="1000" comment="Initial density value" units_comment="kg/m^3" />
                 <pos2 x="0" y="0" z="-10" rhop="1002" comment="Final density value" units_comment="kg/m^3" />
             </densitygradient>
-            <densitydepth mkfluid="1">
+            <densitydepth mkfluid="1" comment="Position of surface water level is computed automatically" />
+            <densitydepth mkfluid="2">
                 <posswl x="0" y="0" z="10" comment="Position of surface water level" />
             </densitydepth>
-            <densitydepth mkfluid="2">
+            <densitydepth mkfluid="3">
                 <posswl x="0" y="0" z="10" comment="Position of surface water level" />
                 <gravity x="1" y="0" z="-9.81" comment="Gravitational acceleration" units_comment="m/s^2" />
                 <rhop0 value="1100" comment="Reference density" units_comment="kg/m^3" />
@@ -625,6 +641,9 @@
             </densitymesh>
             <move mkbound="0" x="0.1" y="0.4" z="0.2" />
             <move mkfluid="0" x="0.2" y="0" z="0" />
+            <moverandom mkfluid="10" randomseed="2810" dpxyz="0.01" />
+            <moverandom mkfluid="10" randomseed="2810" dpx="0.028" />
+            <moverandom mkfluid="10" randomseed="0" dpx="0.01" dpy="0.032" dpz="0.02" />
             <rotateaxis mkbound="0" angle="45" anglesunits="degrees">
                 <axisp1 x="0" y="0" z="0" />
                 <axisp2 x="0" y="1" z="0" />
