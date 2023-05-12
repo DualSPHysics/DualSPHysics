@@ -71,7 +71,7 @@ protected:
 
   inline tfloat3 FtPeriodicDist(const tdouble3 &pos,const tdouble3 &center,float radius)const;
   void FtCalcForcesSum(unsigned cf,tfloat3 &face,tfloat3 &fomegaace)const;
-  void FtCalcForces(StFtoForces *ftoforces)const;
+  void FtCalcForces(StFtoForces *ftoforces,bool saveftvalues)const;
   void FtCalcForcesRes(double dt,const StFtoForces *ftoforces,StFtoForcesRes *ftoforcesres)const;
   void FtApplyImposedVel(StFtoForcesRes *ftoforcesres)const;
   void FtApplyConstraints(StFtoForces *ftoforces,StFtoForcesRes *ftoforcesres)const;

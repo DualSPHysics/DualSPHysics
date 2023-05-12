@@ -240,6 +240,13 @@ typedef struct{
   tfloat3 faceang;  ///<Angular acceleration of the floating object computed from velocity difference (units:rad/s^2).
   tmatrix3f inertiaini; ///<Initial state inertia tensor in world coordinates (computed or user-given).
   bool usechrono;   ///<Activates the use of Chrono library.
+  //-Additional data stored for output results only.
+  tfloat3 extforcelin;  ///<External linear forces (moorings and imposed forces) (units:N).
+  tfloat3 extforceang;  ///<External angular forces (moorings and imposed forces) (units:N*m*rad).
+  tfloat3 fluforcelin;  ///<Linear forces from fluid (sum in eq.48 at Dominguez et al 2022) (units:N).
+  tfloat3 fluforceang;  ///<Angular forces from fluid (sum in eq.49 at Dominguez et al 2022) (units:N*m*rad).
+  tfloat3 preacelin;    ///<Linear acceleration before constraints (includes external forces and gravity) (units:m/s^2).
+  tfloat3 preaceang;    ///<Angular acceleration before constraints (multiplied by rotated inertia tensor) (units:rad/s^2).
 }StFloatingData;
 
 ///Structure with the information of the floating object in forces calculation.

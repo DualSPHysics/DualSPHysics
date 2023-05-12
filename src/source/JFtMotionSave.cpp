@@ -163,7 +163,8 @@ void JFtMotionSave::SaveFtData(double timestep,unsigned nstep,const StFloatingDa
   //-Stores data from ftobjs.
   for(unsigned cf=0;cf<FtCount;cf++){
     const StFloatingData &v=ftobjs[cf];
-    FtData->AddPartData(cf,v.center,v.fvel,v.fomega,v.facelin,v.faceang);
+    FtData->AddPartData(cf,v.center,v.fvel,v.fomega,v.facelin,v.faceang
+     ,v.extforcelin,v.extforceang,v.fluforcelin,v.fluforceang,v.preacelin,v.preaceang);
   }
   //-Stores position data.
   FtData->AddPartDataPosRef(FtCount,PosRef);

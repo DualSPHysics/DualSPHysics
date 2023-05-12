@@ -36,6 +36,7 @@
 //:# - Graba numero de step. (19-10-2020)
 //:# - Permite graba posiciones de referencia para el calculo de movimiento. (19-10-2020)
 //:# - Nuevos metodos y otras mejoras. (20-10-2020)
+//:# - Graba mas valoras de fuerzas y aceleraciones. (30-03-2023)
 //:#############################################################################
 
 /// \file JPartFloatBi4.h \brief Declares the classes \ref JPartFloatBi4Save and class \ref JPartFloatBi4Load.
@@ -91,6 +92,13 @@ class JPartFloatBi4Save : protected JObject
   tfloat3  *PartVelAng; ///<Angular velocity of the floating object (units:rad/s) [FtCount].
   tfloat3  *PartAceLin; ///<Linear acceleration of the floating object (units:m/s^2) [FtCount].
   tfloat3  *PartAceAng; ///<Angular acceleration of the floating object (units:rad/s^2) [FtCount].
+  //-Extra data.
+  tfloat3* PartExtForceLin;///<External linear forces (moorings and imposed forces) (units:N) [FtCount].
+  tfloat3* PartExtForceAng;///<External angular forces (moorings and imposed forces) (units:N*m*rad) [FtCount].
+  tfloat3* PartFluForceLin;///<Linear forces from fluid (sum in eq.48 at Dominguez et al 2022) (units:N) [FtCount].
+  tfloat3* PartFluForceAng;///<Angular forces from fluid (sum in eq.49 at Dominguez et al 2022) (units:N*m*rad) [FtCount].
+  tfloat3* PartPreAceLin;  ///<Linear acceleration before constraints (includes external forces and gravity) (units:m/s^2) [FtCount].
+  tfloat3* PartPreAceAng;  ///<Angular acceleration before constraints (multiplied by rotated inertia tensor) (units:rad/s^2) [FtCount].
 
   //-Data of force points (PARTs).
   unsigned FptSize;
@@ -128,7 +136,10 @@ class JPartFloatBi4Save : protected JObject
 
   //-Configuracion de parts.  Parts Configuration.
   void AddPartData(unsigned cf,const tdouble3 &center,const tfloat3 &fvellin
-    ,const tfloat3 &fvelang,const tfloat3 &facelin,const tfloat3 &faceang);
+    ,const tfloat3 &fvelang,const tfloat3 &facelin,const tfloat3 &faceang
+    ,const tfloat3 &extforcelin,const tfloat3 &extforceang
+    ,const tfloat3 &fluforcelin,const tfloat3 &fluforceang
+    ,const tfloat3 &preacelin,const tfloat3 &preaceang);
   void AddPartDataPosRef(unsigned ftcount,const tdouble3 *posref);
   void AddPartDataForcePoints(unsigned npt,const word *mkbound,const tdouble3 *pos,const tfloat3 *force);
   JBinaryData* AddPartFloat(unsigned cpart,unsigned step,double timestep,double demdtforce);
@@ -177,6 +188,7 @@ class JPartFloatBi4Load : protected JObject
   double TimeStep;
   double DemDtForce;
   bool AceData;         ///<Linear and angular acceleration is available.  
+  bool ExtraData;       ///<Extra data is available.  
   //-Datos variables de floatings (PARTs). Data variables of floatings (parts).
   tdouble3 *PartCenter;
   tdouble3 *PartPosRef; ///<Reference positions of the floating object [FtCount*3]. 
@@ -184,6 +196,13 @@ class JPartFloatBi4Load : protected JObject
   tfloat3  *PartVelAng; ///<Angular velocity of the floating object (units:rad/s) [FtCount].
   tfloat3  *PartAceLin; ///<Linear acceleration of the floating object (units:m/s^2) [FtCount].
   tfloat3  *PartAceAng; ///<Angular acceleration of the floating object (units:rad/s^2) [FtCount].
+  //-Extra data.
+  tfloat3* PartExtForceLin;///<External linear forces (moorings and imposed forces) (units:N) [FtCount].
+  tfloat3* PartExtForceAng;///<External angular forces (moorings and imposed forces) (units:N*m*rad) [FtCount].
+  tfloat3* PartFluForceLin;///<Linear forces from fluid (sum in eq.48 at Dominguez et al 2022) (units:N) [FtCount].
+  tfloat3* PartFluForceAng;///<Angular forces from fluid (sum in eq.49 at Dominguez et al 2022) (units:N*m*rad) [FtCount].
+  tfloat3* PartPreAceLin;  ///<Linear acceleration before constraints (includes external forces and gravity) (units:m/s^2) [FtCount].
+  tfloat3* PartPreAceAng;  ///<Angular acceleration before constraints (multiplied by rotated inertia tensor) (units:rad/s^2) [FtCount].
 
   //-Data of force points (PARTs).
   unsigned FptSize;
@@ -235,6 +254,7 @@ class JPartFloatBi4Load : protected JObject
   double   GetPartTimeStep  ()const{ CheckPart(); return(TimeStep); }
   double   GetPartDemDtForce()const{ CheckPart(); return(DemDtForce); }
   bool     GetPartAceData   ()const{ return(AceData); }
+  bool     GetPartExtraData ()const{ return(ExtraData); }
   
   tdouble3 GetPartCenter(unsigned cf)const{ CheckFloating(cf); return(PartCenter[cf]); }
   tfloat3  GetPartVelLin(unsigned cf)const{ CheckFloating(cf); return(PartVelLin[cf]); }
@@ -242,11 +262,26 @@ class JPartFloatBi4Load : protected JObject
   tfloat3  GetPartAceLin(unsigned cf)const{ CheckFloating(cf); return(AceData? PartAceLin[cf]: TFloat3(0)); }
   tfloat3  GetPartAceAng(unsigned cf)const{ CheckFloating(cf); return(AceData? PartAceAng[cf]: TFloat3(0)); }
 
+  tfloat3  GetPartExtForceLin(unsigned cf)const{ CheckFloating(cf); return(ExtraData? PartExtForceLin[cf]: TFloat3(0)); }
+  tfloat3  GetPartExtForceAng(unsigned cf)const{ CheckFloating(cf); return(ExtraData? PartExtForceAng[cf]: TFloat3(0)); }
+  tfloat3  GetPartFluForceLin(unsigned cf)const{ CheckFloating(cf); return(ExtraData? PartFluForceLin[cf]: TFloat3(0)); }
+  tfloat3  GetPartFluForceAng(unsigned cf)const{ CheckFloating(cf); return(ExtraData? PartFluForceAng[cf]: TFloat3(0)); }
+  tfloat3  GetPartPreAceLin  (unsigned cf)const{ CheckFloating(cf); return(ExtraData? PartPreAceLin  [cf]: TFloat3(0)); }
+  tfloat3  GetPartPreAceAng  (unsigned cf)const{ CheckFloating(cf); return(ExtraData? PartPreAceAng  [cf]: TFloat3(0)); }
+
   const tdouble3* GetPartCenter()const{ CheckPart(); return(PartCenter); }
   const tfloat3*  GetPartVelLin()const{ CheckPart(); return(PartVelLin); }
   const tfloat3*  GetPartVelAng()const{ CheckPart(); return(PartVelAng); }
   const tfloat3*  GetPartAceLin()const{ CheckPart(); return(AceData? PartAceLin: NULL); }
   const tfloat3*  GetPartAceAng()const{ CheckPart(); return(AceData? PartAceAng: NULL); }
+
+  const tfloat3*  GetPartExtForceLin()const{ CheckPart(); return(ExtraData? PartExtForceLin: NULL); }
+  const tfloat3*  GetPartExtForceAng()const{ CheckPart(); return(ExtraData? PartExtForceAng: NULL); }
+  const tfloat3*  GetPartFluForceLin()const{ CheckPart(); return(ExtraData? PartFluForceLin: NULL); }
+  const tfloat3*  GetPartFluForceAng()const{ CheckPart(); return(ExtraData? PartFluForceAng: NULL); }
+  const tfloat3*  GetPartPreAceLin  ()const{ CheckPart(); return(ExtraData? PartPreAceLin:   NULL); }
+  const tfloat3*  GetPartPreAceAng  ()const{ CheckPart(); return(ExtraData? PartPreAceAng:   NULL); }
+
   const tdouble3* GetPartPosRef()const{ CheckPart(); return(PosRefData? PartPosRef: NULL); }
 
   unsigned        GetPartFptCount  ()const{ CheckPart(); return(FptCount); }

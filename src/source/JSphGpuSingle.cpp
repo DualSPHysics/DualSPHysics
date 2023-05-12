@@ -657,8 +657,10 @@ void JSphGpuSingle::FtApplyImposedVel(float3 *ftoforcesresg)const{
 //==============================================================================
 void JSphGpuSingle::RunFloating(double dt,bool predictor){
   Timersg->TmStart(TMG_SuFloating,false);
-  if(TimeStep>=FtPause){//-Operator >= is used because when FtPause=0 in symplectic-predictor, code would not enter here. | Se usa >= pq si FtPause es cero en symplectic-predictor no entraria.
-    
+  const bool saveftmot=(!predictor && FtMotSave && FtMotSave->CheckTime(TimeStep+dt)); //<vs_ftmottionsv>
+  const bool saveftvalues=(!predictor && (TimeStep+dt>=TimePartNext || saveftmot));
+
+  if(TimeStep>=FtPause || saveftvalues){
     //-Adds external forces (ForcePoints, Moorings, external file) to FtoForces[].
     if(ForcePoints!=NULL || FtLinearForce!=NULL){
       StFtoForces *ftoforces=(StFtoForces *)FtoAuxFloat15;
@@ -674,18 +676,48 @@ void JSphGpuSingle::RunFloating(double dt,bool predictor){
       }
       //-Copies data to GPU memory.
       cudaMemcpy(FtoForcesg,ftoforces,sizeof(StFtoForces)*FtCount,cudaMemcpyHostToDevice);
+      //-Saves sum of external forces applied to floating body.
+      if(saveftvalues)for(unsigned cf=0;cf<FtCount;cf++){
+        FtObjs[cf].extforcelin=ftoforces[cf].face;
+        FtObjs[cf].extforceang=ftoforces[cf].fomegaace;
+      }
     }
     else{
       //-Initialises forces of floatings when no external forces are applied.
       cudaMemset(FtoForcesg,0,sizeof(StFtoForces)*FtCount);
+      //-Saves sum of external forces applied to floating body.
+      if(saveftvalues)for(unsigned cf=0;cf<FtCount;cf++){
+        FtObjs[cf].extforcelin=TFloat3(0);
+        FtObjs[cf].extforceang=TFloat3(0);
+      }
     }
 
     //-Calculate forces summation (face,fomegaace) starting from floating particles and add in FtoForcesg[].
     cusph::FtCalcForcesSum(PeriActive!=0,FtCount,FtoDatpg,FtoCenterg,FtRidpg,Posxyg,Poszg,Aceg,FtoForcesg);
+    //-Saves sum of fluid forces applied to floating body.
+    if(saveftvalues){
+      StFtoForces *ftoforces=(StFtoForces *)FtoAuxFloat15;
+      cudaMemcpy(ftoforces,FtoForcesg,sizeof(StFtoForces)*FtCount,cudaMemcpyDeviceToHost);
+      for(unsigned cf=0;cf<FtCount;cf++){
+        FtObjs[cf].fluforcelin=ftoforces[cf].face-FtObjs[cf].extforcelin;
+        FtObjs[cf].fluforceang=ftoforces[cf].fomegaace-FtObjs[cf].extforceang;
+      }    
+    }
 
     //-Computes final acceleration from particles and from external forces in FtoForcesg[].
     cusph::FtCalcForces(FtCount,Gravity,FtoMassg,FtoAnglesg,FtoInertiaini8g,FtoInertiaini1g,FtoForcesg);
-    
+    //-Saves acceleration before constraints (includes external forces, gravity and rotated inertia tensor)
+    if(saveftvalues){
+      StFtoForces *ftoforces=(StFtoForces *)FtoAuxFloat15;
+      cudaMemcpy(ftoforces,FtoForcesg,sizeof(StFtoForces)*FtCount,cudaMemcpyDeviceToHost);
+      for(unsigned cf=0;cf<FtCount;cf++){
+        FtObjs[cf].preacelin=ftoforces[cf].face;
+        FtObjs[cf].preaceang=ftoforces[cf].fomegaace;
+      }    
+    }
+  }
+
+  if(TimeStep>=FtPause){//-Operator >= is used because when FtPause=0 in symplectic-predictor, code would not enter here. | Se usa >= pq si FtPause es cero en symplectic-predictor no entraria.
     //-Calculate data to update floatings / Calcula datos para actualizar floatings.
     cusph::FtCalcForcesRes(FtCount,Simulate2D,dt,FtoVelAceg,FtoCenterg,FtoForcesg,FtoForcesResg,FtoCenterResg);
     //-Applies imposed velocity.
@@ -751,16 +783,17 @@ void JSphGpuSingle::RunFloating(double dt,bool predictor){
           cusph::FtNormalsUpdate(fobj.count,fobj.begin-CaseNpb,mat.GetMatrix(),FtRidpg,BoundNormalg);
         }
       }
-      //<vs_ftmottionsv_ini>
-      if(FtMotSave && FtMotSave->CheckTime(TimeStep+dt)){
-        UpdateFtObjs(); //-Updates floating information on CPU memory.
-        FtMotSave->SaveFtDataGpu(TimeStep+dt,Nstep+1,FtObjs,Np,Posxyg,Poszg,FtRidpg);
-      }
-      //<vs_ftmottionsv_end>
     }
   }
-  //-Update data of points in FtForces and calculates motion data of affected floatings.
+  //<vs_ftmottionsv_ini>
+  if(saveftmot){
+    UpdateFtObjs(); //-Updates floating information on CPU memory.
+    FtMotSave->SaveFtDataGpu(TimeStep+dt,Nstep+1,FtObjs,Np,Posxyg,Poszg,FtRidpg);
+  }
+  //<vs_ftmottionsv_end>
   Timersg->TmStop(TMG_SuFloating,false);
+
+  //-Update data of points in FtForces and calculates motion data of affected floatings.
   if(!predictor && ForcePoints){
     Timersg->TmStart(TMG_SuMoorings,false);
     UpdateFtObjs(); //-Updates floating information on CPU memory.

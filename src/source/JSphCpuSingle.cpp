@@ -772,7 +772,7 @@ void JSphCpuSingle::FtCalcForcesSum(unsigned cf,tfloat3 &face,tfloat3 &fomegaace
 /// Computes final acceleration from particles and from external forces to ftoforces[].
 /// Calcula aceleracion final a parti de particulas y de fuerzas externas en ftoforces[].
 //==============================================================================
-void JSphCpuSingle::FtCalcForces(StFtoForces *ftoforces)const{
+void JSphCpuSingle::FtCalcForces(StFtoForces *ftoforces,bool saveftvalues)const{
   const int ftcount=int(FtCount);
   #ifdef OMP_USE
     #pragma omp parallel for schedule (guided)
@@ -793,6 +793,11 @@ void JSphCpuSingle::FtCalcForces(StFtoForces *ftoforces)const{
     //-Compute summation of linear and angular forces starting from acceleration of particles.
     tfloat3 face,fomegaace;
     FtCalcForcesSum(cf,face,fomegaace);
+    //-Saves sum of fluid forces applied to floating body.
+    if(saveftvalues){
+      FtObjs[cf].fluforcelin=face;
+      FtObjs[cf].fluforceang=fomegaace;
+    }
     //-Adds inital external forces from ForcePoints, Moorings and external files.
     face=face+ftoforces[cf].face;
     fomegaace=fomegaace+ftoforces[cf].fomegaace;
@@ -812,6 +817,12 @@ void JSphCpuSingle::FtCalcForces(StFtoForces *ftoforces)const{
     //-Keep result in ftoforces[]. | Guarda resultados en ftoforces[].
     ftoforces[cf].face=face; //-Saves acceleration (forces/fmass);
     ftoforces[cf].fomegaace=fomegaace;
+    //-Saves acceleration before constraints (includes external forces, 
+    //-gravity and rotated inertia tensor).
+    if(saveftvalues){
+      FtObjs[cf].preacelin=face;
+      FtObjs[cf].preaceang=fomegaace;
+    }
   }
 }
 
@@ -896,7 +907,10 @@ void JSphCpuSingle::FtApplyImposedVel(StFtoForcesRes *ftoforcesres)const{
 //==============================================================================
 void JSphCpuSingle::RunFloating(double dt,bool predictor){
   Timersc->TmStart(TMC_SuFloating);
-  if(TimeStep>=FtPause){//-Operator >= is used because when FtPause=0 in symplectic-predictor, code would not enter here. | Se usa >= pq si FtPause es cero en symplectic-predictor no entraria.
+  const bool saveftmot=(!predictor && FtMotSave && FtMotSave->CheckTime(TimeStep+dt)); //<vs_ftmottionsv>
+  const bool saveftvalues=(!predictor && (TimeStep+dt>=TimePartNext || saveftmot));
+
+  if(TimeStep>=FtPause || saveftvalues){
     //-Initialises forces of floatings.
     memset(FtoForces,0,sizeof(StFtoForces)*FtCount); 
 
@@ -912,10 +926,17 @@ void JSphCpuSingle::RunFloating(double dt,bool predictor){
         }
       }
     }
+    //-Saves sum of external forces applied to floating body.
+    if(saveftvalues)for(unsigned cf=0;cf<FtCount;cf++){
+      FtObjs[cf].extforcelin=FtoForces[cf].face;
+      FtObjs[cf].extforceang=FtoForces[cf].fomegaace;
+    }
 
     //-Computes final acceleration from particles and from external forces in FtoForces[].
-    FtCalcForces(FtoForces);
+    FtCalcForces(FtoForces,saveftvalues);
+  }
 
+  if(TimeStep>=FtPause){//-Operator >= is used because when FtPause=0 in symplectic-predictor, code would not enter here. | Se usa >= pq si FtPause es cero en symplectic-predictor no entraria.
     //-Calculate data to update floatings. | Calcula datos para actualizar floatings.
     FtCalcForcesRes(dt,FtoForces,FtoForcesRes);
     //-Applies imposed velocity.
@@ -997,14 +1018,14 @@ void JSphCpuSingle::RunFloating(double dt,bool predictor){
             if(p!=UINT_MAX)BoundNormalc[p]=ToTFloat3(mat.MulNormal(ToTDouble3(BoundNormalc[p])));
           }
         }
-        //<vs_ftmottionsv_ini>
-        if(FtMotSave && FtMotSave->CheckTime(TimeStep+dt))
-          FtMotSave->SaveFtDataCpu(TimeStep+dt,Nstep+1,FtObjs,Np,Posc,FtRidp);
-        //<vs_ftmottionsv_end>
       }
     }
   }
+  //<vs_ftmottionsv_ini>
+  if(saveftmot)FtMotSave->SaveFtDataCpu(TimeStep+dt,Nstep+1,FtObjs,Np,Posc,FtRidp);
+  //<vs_ftmottionsv_end>
   Timersc->TmStop(TMC_SuFloating);
+
   //-Update data of points in FtForces and calculates motion data of affected floatings.
   if(!predictor && ForcePoints){
     Timersc->TmStart(TMC_SuMoorings);

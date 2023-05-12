@@ -1092,6 +1092,13 @@ void JSph::LoadCaseConfig(const JSphCfgRun *cfg){
         fobj->usechrono=(ChronoObjects && ChronoObjects->ConfigBodyFloating(fblock.GetMkType()
           ,fblock.GetMassbody(),fblock.GetCenter(),inertiaini,fblock.GetTranslationFree()
           ,fblock.GetRotationFree(),fobj->fvel,fobj->fomega));
+        //-Additional data.
+        fobj->extforcelin=TFloat3(0);
+        fobj->extforceang=TFloat3(0);
+        fobj->fluforcelin=TFloat3(0);
+        fobj->fluforceang=TFloat3(0);
+        fobj->preacelin=TFloat3(0);
+        fobj->preaceang=TFloat3(0);
         cobj++;
       }
     }
@@ -2698,7 +2705,9 @@ void JSph::SavePartData(unsigned npok,unsigned nout,const JDataArrays& arrays
   if(DataFloatBi4){
     for(unsigned cf=0;cf<FtCount;cf++){
       const StFloatingData *v=FtObjs+cf;
-      DataFloatBi4->AddPartData(cf,v->center,v->fvel,v->fomega,v->facelin,v->faceang);
+      DataFloatBi4->AddPartData(cf,v->center,v->fvel,v->fomega
+        ,v->facelin,v->faceang,v->extforcelin,v->extforceang
+        ,v->fluforcelin,v->fluforceang,v->preacelin,v->preaceang);
     }
     if(ForcePoints)DataFloatBi4->AddPartDataForcePoints(ForcePoints->GetPtCount()
       ,ForcePoints->GetPtMkBound(),ForcePoints->GetPtPos(),ForcePoints->GetPtForce());

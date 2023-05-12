@@ -40,8 +40,12 @@ JPartFloatBi4Save::JPartFloatBi4Save(){
   Data=NULL;
   HeadMkbound=NULL; HeadBegin=NULL; HeadCount=NULL; 
   HeadMass=NULL; HeadMassp=NULL; HeadRadius=NULL;
-  PartCenter=NULL; PartPosRef=NULL; PartVelLin=NULL; PartVelAng=NULL;
-  PartAceLin=NULL; PartAceAng=NULL;
+  PartCenter=NULL; PartPosRef=NULL; 
+  PartVelLin=NULL;      PartVelAng=NULL;
+  PartAceLin=NULL;      PartAceAng=NULL;
+  PartExtForceLin=NULL; PartExtForceAng=NULL;
+  PartFluForceLin=NULL; PartFluForceAng=NULL;
+  PartPreAceLin=NULL;   PartPreAceAng=NULL;
   FptMkbound=NULL; FptPos=NULL; FptForce=NULL;
   Reset();
 }
@@ -108,6 +112,12 @@ long long JPartFloatBi4Save::GetAllocMemory()const{
   if(PartVelAng) s=s+sizeof(tfloat3) *FtCount;
   if(PartAceLin) s=s+sizeof(tfloat3) *FtCount;
   if(PartAceAng) s=s+sizeof(tfloat3) *FtCount;
+  if(PartExtForceLin)s=s+sizeof(tfloat3) *FtCount;
+  if(PartExtForceAng)s=s+sizeof(tfloat3) *FtCount;
+  if(PartFluForceLin)s=s+sizeof(tfloat3) *FtCount;
+  if(PartFluForceAng)s=s+sizeof(tfloat3) *FtCount;
+  if(PartPreAceLin)  s=s+sizeof(tfloat3) *FtCount;
+  if(PartPreAceAng)  s=s+sizeof(tfloat3) *FtCount;
   if(FptMkbound) s=s+sizeof(word)    *FptSize;
   if(FptPos)     s=s+sizeof(tdouble3)*FptSize;
   if(FptForce)   s=s+sizeof(tfloat3) *FptSize;
@@ -133,6 +143,12 @@ void JPartFloatBi4Save::ResizeFtData(unsigned ftcount){
   delete[] PartVelAng;  PartVelAng=NULL;
   delete[] PartAceLin;  PartAceLin=NULL;
   delete[] PartAceAng;  PartAceAng=NULL;
+  delete[] PartExtForceLin; PartExtForceLin=NULL;
+  delete[] PartExtForceAng; PartExtForceAng=NULL;
+  delete[] PartFluForceLin; PartFluForceLin=NULL;
+  delete[] PartFluForceAng; PartFluForceAng=NULL;
+  delete[] PartPreAceLin;   PartPreAceLin=NULL;
+  delete[] PartPreAceAng;   PartPreAceAng=NULL;
   //-Asigna memoria. Assign memory.
   if(FtCount){
     HeadMkbound=new word    [FtCount];
@@ -147,6 +163,12 @@ void JPartFloatBi4Save::ResizeFtData(unsigned ftcount){
     PartVelAng =new tfloat3 [FtCount];
     PartAceLin =new tfloat3 [FtCount];
     PartAceAng =new tfloat3 [FtCount];
+    PartExtForceLin=new tfloat3[FtCount];
+    PartExtForceAng=new tfloat3[FtCount];
+    PartFluForceLin=new tfloat3[FtCount];
+    PartFluForceAng=new tfloat3[FtCount];
+    PartPreAceLin  =new tfloat3[FtCount];
+    PartPreAceAng  =new tfloat3[FtCount];
     memset(HeadMkbound,0,sizeof(word)    *FtCount);
     memset(HeadBegin  ,0,sizeof(unsigned)*FtCount);
     memset(HeadCount  ,0,sizeof(unsigned)*FtCount);
@@ -187,6 +209,12 @@ void JPartFloatBi4Save::ClearPartData(){
   if(PartVelAng)memset(PartVelAng,0,sizeof(tfloat3) *FtCount);
   if(PartAceLin)memset(PartAceLin,0,sizeof(tfloat3) *FtCount);
   if(PartAceAng)memset(PartAceAng,0,sizeof(tfloat3) *FtCount);
+  if(PartExtForceLin)memset(PartExtForceLin,0,sizeof(tfloat3)*FtCount);
+  if(PartExtForceAng)memset(PartExtForceAng,0,sizeof(tfloat3)*FtCount);
+  if(PartFluForceLin)memset(PartFluForceLin,0,sizeof(tfloat3)*FtCount);
+  if(PartFluForceAng)memset(PartFluForceAng,0,sizeof(tfloat3)*FtCount);
+  if(PartPreAceLin  )memset(PartPreAceLin  ,0,sizeof(tfloat3)*FtCount);
+  if(PartPreAceAng  )memset(PartPreAceAng  ,0,sizeof(tfloat3)*FtCount);
   FptCount=0;
 }
 
@@ -267,7 +295,10 @@ void JPartFloatBi4Save::SaveInitial(std::string file){
 //==============================================================================
 void JPartFloatBi4Save::AddPartData(unsigned cf,const tdouble3 &center
   ,const tfloat3 &fvellin,const tfloat3 &fvelang
-  ,const tfloat3 &facelin,const tfloat3 &faceang)
+  ,const tfloat3 &facelin,const tfloat3 &faceang
+  ,const tfloat3 &extforcelin,const tfloat3 &extforceang
+  ,const tfloat3 &fluforcelin,const tfloat3 &fluforceang
+  ,const tfloat3 &preacelin,const tfloat3 &preaceang)
 {
   if(cf>=FtCount)Run_Exceptioon("Number of floating is invalid.");
   PartCenter[cf]=center;
@@ -275,6 +306,12 @@ void JPartFloatBi4Save::AddPartData(unsigned cf,const tdouble3 &center
   PartVelAng[cf]=fvelang;
   PartAceLin[cf]=facelin;
   PartAceAng[cf]=faceang;
+  PartExtForceLin[cf]=extforcelin;
+  PartExtForceAng[cf]=extforceang;
+  PartFluForceLin[cf]=fluforcelin;
+  PartFluForceAng[cf]=fluforceang;
+  PartPreAceLin  [cf]=preacelin;
+  PartPreAceAng  [cf]=preaceang;
 }
 
 //==============================================================================
@@ -325,6 +362,12 @@ JBinaryData* JPartFloatBi4Save::AddPartFloat(unsigned cpart,unsigned step
   Part->CreateArray("fomega" ,JBinaryDataDef::DatFloat3 ,FtCount,PartVelAng,false);
   Part->CreateArray("facelin",JBinaryDataDef::DatFloat3 ,FtCount,PartAceLin,false);
   Part->CreateArray("faceang",JBinaryDataDef::DatFloat3 ,FtCount,PartAceAng,false);
+  Part->CreateArray("extforcelin",JBinaryDataDef::DatFloat3,FtCount,PartExtForceLin,false);
+  Part->CreateArray("extforceang",JBinaryDataDef::DatFloat3,FtCount,PartExtForceAng,false);
+  Part->CreateArray("fluforcelin",JBinaryDataDef::DatFloat3,FtCount,PartFluForceLin,false);
+  Part->CreateArray("fluforceang",JBinaryDataDef::DatFloat3,FtCount,PartFluForceAng,false);
+  Part->CreateArray("preacelin"  ,JBinaryDataDef::DatFloat3,FtCount,PartPreAceLin  ,false);
+  Part->CreateArray("preaceang"  ,JBinaryDataDef::DatFloat3,FtCount,PartPreAceAng  ,false);
   if(PartPosRef)Part->CreateArray("posref" ,JBinaryDataDef::DatDouble3,FtCount*3,PartPosRef,false);
   //-Crea arrays con datos de force points. Create arrays with force points data.
   if(FptCount){
@@ -363,6 +406,9 @@ JPartFloatBi4Load::JPartFloatBi4Load(){
   PartCenter=NULL; PartPosRef=NULL;
   PartVelLin=NULL; PartVelAng=NULL;
   PartAceLin=NULL; PartAceAng=NULL;
+  PartExtForceLin=NULL; PartExtForceAng=NULL;
+  PartFluForceLin=NULL; PartFluForceAng=NULL;
+  PartPreAceLin=NULL;   PartPreAceAng=NULL;
   FptMkbound=NULL; FptPos=NULL; FptForce=NULL;
   Reset();
 }
@@ -423,6 +469,12 @@ void JPartFloatBi4Load::ResizeFtData(unsigned ftcount){
   delete[] PartVelAng;  PartVelAng=NULL;
   delete[] PartAceLin;  PartAceLin=NULL;
   delete[] PartAceAng;  PartAceAng=NULL;
+  delete[] PartExtForceLin; PartExtForceLin=NULL;
+  delete[] PartExtForceAng; PartExtForceAng=NULL;
+  delete[] PartFluForceLin; PartFluForceLin=NULL;
+  delete[] PartFluForceAng; PartFluForceAng=NULL;
+  delete[] PartPreAceLin;   PartPreAceLin=NULL;
+  delete[] PartPreAceAng;   PartPreAceAng=NULL;
   //-Asigna memoria. Asign memory
   if(FtCount){
     HeadMkbound=new word    [FtCount];
@@ -437,6 +489,12 @@ void JPartFloatBi4Load::ResizeFtData(unsigned ftcount){
     PartVelAng =new tfloat3 [FtCount];
     PartAceLin =new tfloat3 [FtCount];
     PartAceAng =new tfloat3 [FtCount];
+    PartExtForceLin=new tfloat3[FtCount];
+    PartExtForceAng=new tfloat3[FtCount];
+    PartFluForceLin=new tfloat3[FtCount];
+    PartFluForceAng=new tfloat3[FtCount];
+    PartPreAceLin  =new tfloat3[FtCount];
+    PartPreAceAng  =new tfloat3[FtCount];
     memset(HeadMkbound,0,sizeof(word)    *FtCount);
     memset(HeadBegin  ,0,sizeof(unsigned)*FtCount);
     memset(HeadCount  ,0,sizeof(unsigned)*FtCount);
@@ -449,6 +507,12 @@ void JPartFloatBi4Load::ResizeFtData(unsigned ftcount){
     memset(PartVelAng ,0,sizeof(tfloat3) *FtCount);
     memset(PartAceLin ,0,sizeof(tfloat3) *FtCount);
     memset(PartAceAng ,0,sizeof(tfloat3) *FtCount);
+    memset(PartExtForceLin,0,sizeof(tfloat3) *FtCount);
+    memset(PartExtForceAng,0,sizeof(tfloat3) *FtCount);
+    memset(PartFluForceLin,0,sizeof(tfloat3) *FtCount);
+    memset(PartFluForceAng,0,sizeof(tfloat3) *FtCount);
+    memset(PartPreAceLin  ,0,sizeof(tfloat3) *FtCount);
+    memset(PartPreAceAng  ,0,sizeof(tfloat3) *FtCount);
   }
 }
 
@@ -626,6 +690,26 @@ void JPartFloatBi4Load::LoadPartItem(unsigned cp){
       memcpy(PartAceAng,(const tfloat3 *)ar->GetDataPointer(),sizeof(tfloat3)*FtCount);
     }
   }
+
+  ExtraData=(Part->GetArray("extforcelin") && Part->GetArray("extforceang"));
+  ExtraData=ExtraData && (Part->GetArray("fluforcelin") && Part->GetArray("fluforceang"));
+  ExtraData=ExtraData && (Part->GetArray("preacelin") && Part->GetArray("preaceang"));
+  if(ExtraData){
+    JBinaryDataArray* ar;
+    ar=CheckArray(Part,"extforcelin",JBinaryDataDef::DatFloat3);
+    memcpy(PartExtForceLin,(const tfloat3 *)ar->GetDataPointer(),sizeof(tfloat3)*FtCount);
+    ar=CheckArray(Part,"extforceang",JBinaryDataDef::DatFloat3);
+    memcpy(PartExtForceAng,(const tfloat3 *)ar->GetDataPointer(),sizeof(tfloat3)*FtCount);
+    ar=CheckArray(Part,"fluforcelin",JBinaryDataDef::DatFloat3);
+    memcpy(PartFluForceLin,(const tfloat3 *)ar->GetDataPointer(),sizeof(tfloat3)*FtCount);
+    ar=CheckArray(Part,"fluforceang",JBinaryDataDef::DatFloat3);
+    memcpy(PartFluForceAng,(const tfloat3 *)ar->GetDataPointer(),sizeof(tfloat3)*FtCount);
+    ar=CheckArray(Part,"preacelin",JBinaryDataDef::DatFloat3);
+    memcpy(PartPreAceLin,(const tfloat3 *)ar->GetDataPointer(),sizeof(tfloat3)*FtCount);
+    ar=CheckArray(Part,"preaceang",JBinaryDataDef::DatFloat3);
+    memcpy(PartPreAceAng,(const tfloat3 *)ar->GetDataPointer(),sizeof(tfloat3)*FtCount);
+  }
+
   if(PartPosRef){//-Loads array posref.
     JBinaryDataArray *ar=CheckArray(Part,"posref",JBinaryDataDef::DatDouble3,FtCount*3);
     memcpy(PartPosRef,(const tdouble3 *)ar->GetDataPointer(),sizeof(tdouble3)*FtCount*3);
