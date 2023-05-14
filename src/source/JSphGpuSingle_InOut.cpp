@@ -65,7 +65,9 @@ void JSphGpuSingle::InOutIgnoreFluidDef(const std::vector<unsigned> &mkfluidlist
 void JSphGpuSingle::InOutCheckProximity(unsigned newnp){
   if(Np && newnp){
     //-Obtain particle data from GPU memory.
-    if(Np!=ParticlesDataDown(Np,0,true,false))Run_Exceptioon("The number of particles is invalid.");
+    unsigned nfilter=0;
+    if(Np!=ParticlesDataDown(Np,0,true,false,NULL,nfilter))
+      Run_Exceptioon("The number of particles is invalid.");
     //-Check proximity on CPU.
     InOut->InitCheckProximity(Np,newnp,Scell,AuxPos,Idp,Code);
     //-Uploads updated code of particles to the GPU.

@@ -47,6 +47,7 @@
 #include "JDsPips.h"
 #include "JDsExtraData.h"
 #include "FunctionsCuda.h"
+#include "JDsOutputParts.h" //<vs_outpaarts>
 
 #include <climits>
 
@@ -409,7 +410,8 @@ void JSphGpuSingle::RunCellDivide(bool updateperiodic){
   Timersg->TmStart(TMG_NlOutCheck,false);
   unsigned npfout=CellDivSingle->GetNpfOut();
   if(npfout){
-    ParticlesDataDown(npfout,Np,true,false);
+    unsigned nfilter=0;
+    ParticlesDataDown(npfout,Np,true,false,NULL,nfilter);
     AddParticlesOut(npfout,Idp,AuxPos,AuxVel,AuxRhop,Code);
   }
   Timersg->TmStop(TMG_NlOutCheck,true);
@@ -423,7 +425,8 @@ void JSphGpuSingle::RunCellDivide(bool updateperiodic){
 void JSphGpuSingle::AbortBoundOut(){
   const unsigned nboundout=CellDivSingle->GetNpbOut();
   //-Get data of excluded boundary particles.
-  ParticlesDataDown(nboundout,Np,true,false);
+  unsigned nfilter=0;
+  ParticlesDataDown(nboundout,Np,true,false,NULL,nfilter);
   //-Shows excluded particles information and aborts execution.
   JSph::AbortBoundOut(Log,nboundout,Idp,AuxPos,AuxVel,AuxRhop,Code);
 }
@@ -926,19 +929,31 @@ void JSphGpuSingle::Run(std::string appname,const JSphCfgRun *cfg,JLog2 *log){
 /// Genera los ficheros de salida de datos.
 //==============================================================================
 void JSphGpuSingle::SaveData(){
-  const bool save=(SvData!=SDAT_None && SvData!=SDAT_Info);
-  const unsigned npsave=Np-NpbPer-NpfPer; //-Subtracts the periodic particles if they exist. | Resta las periodicas si las hubiera.
-  //-Retrieves particle data from the GPU. | Recupera datos de particulas en GPU.
-  if(save){
-    Timersg->TmStart(TMG_SuDownData,false);
-    unsigned npnormal=ParticlesDataDown(Np,0,false,PeriActive!=0);
-    if(npnormal!=npsave)Run_Exceptioon("The number of particles is invalid.");
-    Timersg->TmStop(TMG_SuDownData,false);
-  }
   //-Retrieve floating object data from the GPU. | Recupera datos de floatings en GPU.
   if(FtCount){
     Timersg->TmStart(TMG_SuDownData,false);
     UpdateFtObjs();
+    Timersg->TmStop(TMG_SuDownData,false);
+  }
+  const bool save=(SvData!=SDAT_None && SvData!=SDAT_Info);
+  const unsigned npnormal=Np-NpbPer-NpfPer; //-Subtracts the periodic particles if they exist. | Resta las periodicas si las hubiera.
+  unsigned npsave=npnormal;
+  //-Retrieves particle data from the GPU. | Recupera datos de particulas en GPU.
+  if(save){
+    Timersg->TmStart(TMG_SuDownData,false);
+    //-Prepare filter for output particles data. //<vs_outpaarts>
+    byte* filter=NULL;
+    if(OutputParts){//<vs_outpaarts_ini>
+      filter=ArraysGpu->ReserveByte();
+      OutputParts->ComputeFilterGpu(Np,Posxyg,Poszg,Codeg,filter);
+    }//<vs_outpaarts_end>
+    //-Obtain output particles data.
+    unsigned npfilterdel=0;
+    const unsigned npsel=ParticlesDataDown(Np,0,false,PeriActive!=0
+      ,filter,npfilterdel);
+    if(filter)ArraysGpu->Free(filter); filter=NULL;
+    if(npsel+npfilterdel!=npnormal)Run_Exceptioon("The number of particles is invalid.");
+    npsave=npsel;
     Timersg->TmStop(TMG_SuDownData,false);
   }
   //-Collects additional information. | Reune informacion adicional.

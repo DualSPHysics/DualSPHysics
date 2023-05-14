@@ -183,6 +183,7 @@ void JSphCpu::AllocCpuMemoryParticles(unsigned np,float over){
     //ArraysCpu->AddArrayCount(JArraysCpu::SIZE_4B,1);  //-InOutPart
     ArraysCpu->AddArrayCount(JArraysCpu::SIZE_1B,2);  //-newizone,zsurfok
   }
+  ArraysCpu->AddArrayCount(JArraysCpu::SIZE_1B,1);     //-Auxiliar
   //-Shows the allocated memory.
   MemCpuParticles=ArraysCpu->GetAllocMemoryCpu();
   PrintSizeNp(CpuParticlesSize,MemCpuParticles,0);
@@ -326,7 +327,8 @@ void JSphCpu::PrintAllocMemory(llong mcpu)const{
 /// - onlynormal: Solo se queda con las normales, elimina las particulas periodicas.
 //==============================================================================
 unsigned JSphCpu::GetParticlesData(unsigned n,unsigned pini,bool onlynormal
-  ,unsigned *idp,tdouble3 *pos,tfloat3 *vel,float *rhop,typecode *code)
+  ,unsigned* idp,tdouble3* pos,tfloat3* vel,float* rhop,typecode* code
+  ,const byte* filter,unsigned &npfilterdel)
 {
   unsigned num=n;
   //-Copy selected values.
@@ -345,7 +347,9 @@ unsigned JSphCpu::GetParticlesData(unsigned n,unsigned pini,bool onlynormal
     if(rhop)for(unsigned p=0;p<n;p++)rhop[p]=Velrhopc[p+pini].w;
   }
   //-Eliminate non-normal particles (periodic & others). | Elimina particulas no normales (periodicas y otras).
-  if(onlynormal){
+  const bool usefilter=(filter!=NULL);
+  unsigned nfilter=0;
+  if(onlynormal || usefilter){
     if(!idp || !pos || !vel || !rhop)Run_Exceptioon("Pointers without data.");
     typecode *code2=code;
     if(!code2){
@@ -354,8 +358,9 @@ unsigned JSphCpu::GetParticlesData(unsigned n,unsigned pini,bool onlynormal
     }
     unsigned ndel=0;
     for(unsigned p=0;p<n;p++){
-      bool normal=CODE_IsNormal(code2[p]);
-      if(ndel && normal){
+      const bool isnormal=CODE_IsNormal(code2[p]);
+      const bool selected=(isnormal && (!usefilter || filter[p]));
+      if(ndel && selected){
         const unsigned pdel=p-ndel;
         idp[pdel]  =idp[p];
         pos[pdel]  =pos[p];
@@ -363,11 +368,15 @@ unsigned JSphCpu::GetParticlesData(unsigned n,unsigned pini,bool onlynormal
         rhop[pdel] =rhop[p];
         code2[pdel]=code2[p];
       }
-      if(!normal)ndel++;
+      if(!selected){
+        ndel++;
+        if(isnormal)nfilter++;//-Normal particles removed by filters.
+      }
     }
     num-=ndel;
     if(!code)ArraysCpu->Free(code2);
   }
+  npfilterdel=nfilter;
   return(num);
 }
 

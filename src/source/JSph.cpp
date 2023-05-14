@@ -56,6 +56,7 @@
 #include "JDsInitialize.h"
 #include "JSphInOut.h"
 #include "JFtMotionSave.h"  //<vs_ftmottionsv>
+#include "JDsOutputParts.h" //<vs_outpaarts>
 #include "JDsPips.h"
 #include "JLinearValue.h"
 #include "JPartNormalData.h"
@@ -108,6 +109,7 @@ JSph::JSph(bool cpu,bool mgpu,bool withmpi):Cpu(cpu),Mgpu(mgpu),WithMpi(withmpi)
   PartsLoaded=NULL;
   InOut=NULL;
   FtMotSave=NULL; //<vs_ftmottionsv>
+  OutputParts=NULL; //<vs_outpaarts>
   DsPips=NULL;
   NuxLib=NULL;
   InitVars();
@@ -146,6 +148,7 @@ JSph::~JSph(){
   delete InOut;         InOut=NULL;
   delete FtMotSave;     FtMotSave=NULL;   //<vs_ftmottionsv>
   delete DsPips;        DsPips=NULL;
+  delete OutputParts;   OutputParts=NULL; //<vs_outpaarts>
   delete NuxLib;        NuxLib=NULL;
 }
 
@@ -1176,6 +1179,12 @@ void JSph::LoadCaseConfig(const JSphCfgRun *cfg){
     }
     else Log->PrintWarning("The use of impossed force to floatings was disabled because there are no floating objects...");
   }
+
+  //-Configuration of OutputParts object. //<vs_outpaarts_ini>
+  if(xml.GetNodeSimple("case.execution.special.outputparts",true)){
+    OutputParts=new JDsOutputParts(Cpu,Dp*10);
+    OutputParts->LoadXml(&xml,"case.execution.special.outputparts");
+  } //<vs_outpaarts_end>
 
   //-Checks invalid options for symmetry. //<vs_syymmetry_ini>
   if(Symmetry){
@@ -2221,6 +2230,13 @@ void JSph::InitRun(unsigned np,const unsigned *idp,const tdouble3 *pos){
     OutputTime->GetConfig("TimeOut configuration:"," ",lines);
     Log->Print(lines);
   }
+
+  //-Shows configuration of JDsOutputParts. //<vs_outpaarts_ini>
+  if(OutputParts){
+    vector<string> lines;
+    OutputParts->GetConfig("Output particles filter configuration:"," ",lines);
+    Log->Print(lines);
+  } //<vs_outpaarts_end>
 
   Part=PartIni; Nstep=0; PartNstep=0; PartOut=0;
   TimeStep=TimeStepIni; TimeStepM1=TimeStep;

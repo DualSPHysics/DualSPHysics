@@ -293,6 +293,23 @@ void ComputeDampingCylinder(unsigned n,unsigned pini
   ,const double2 *posxy,const double *posz,const typecode *code
   ,float4 *velrhop);
 
+//<vs_outpaarts_ini>
+//-Kernels for OutputParts.
+void ComputeOutputPartsPos(byte resmask,bool cmband,bool inverse
+  ,double3 pmin,double3 pmax,unsigned n,unsigned pini
+  ,const double2* posxy,const double* posz,byte* sel);
+void ComputeOutputPartsPlane(byte resmask,bool cmband,bool inverse
+  ,double4 plane,float maxdist,unsigned n,unsigned pini
+  ,const double2* posxy,const double* posz,byte* sel);
+void ComputeOutputPartsSphere(byte resmask,bool cmband,bool inverse
+  ,double3 pcen,float radius2,unsigned n,unsigned pini
+  ,const double2* posxy,const double* posz,byte* sel);
+void ComputeOutputPartsCylinder(byte resmask,bool cmband,bool inverse
+  ,double4 plane,float maxdist,double3 pcen1,double3 pcen2,float radius
+  ,unsigned n,unsigned pini,const double2* posxy,const double* posz
+  ,byte* sel);
+//<vs_outpaarts_end>
+
 }
 
 

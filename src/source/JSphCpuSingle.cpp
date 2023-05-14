@@ -44,6 +44,7 @@
 #include "JSphShifting.h"
 #include "JDsPips.h"
 #include "JDsExtraData.h"
+#include "JDsOutputParts.h" //<vs_outpaarts>
 
 #include <climits>
 
@@ -488,7 +489,9 @@ void JSphCpuSingle::RunCellDivide(bool updateperiodic){
     tfloat3* vel=ArraysCpu->ReserveFloat3();
     float* rhop=ArraysCpu->ReserveFloat();
     typecode* code=ArraysCpu->ReserveTypeCode();
-    unsigned num=GetParticlesData(npfout,Np,false,idp,pos,vel,rhop,code);
+    unsigned nfilter=0;
+    unsigned num=GetParticlesData(npfout,Np,false,idp,pos,vel,rhop,code
+      ,NULL,nfilter);
     AddParticlesOut(npfout,idp,pos,vel,rhop,code);
     ArraysCpu->Free(idp);
     ArraysCpu->Free(pos);
@@ -512,7 +515,9 @@ void JSphCpuSingle::AbortBoundOut(){
   tfloat3* vel=ArraysCpu->ReserveFloat3();
   float* rhop=ArraysCpu->ReserveFloat();
   typecode* code=ArraysCpu->ReserveTypeCode();
-  GetParticlesData(nboundout,Np,false,idp,pos,vel,rhop,code);
+  unsigned nfilter=0;
+  GetParticlesData(nboundout,Np,false,idp,pos,vel,rhop,code
+    ,NULL,nfilter);
   //-Shows excluded particles information and aborts execution.
   JSph::AbortBoundOut(Log,nboundout,idp,pos,vel,rhop,code);
 }
@@ -1152,7 +1157,8 @@ void JSphCpuSingle::Run(std::string appname,const JSphCfgRun *cfg,JLog2 *log){
 //==============================================================================
 void JSphCpuSingle::SaveData(){
   const bool save=(SvData!=SDAT_None && SvData!=SDAT_Info);
-  const unsigned npsave=Np-NpbPer-NpfPer; //-Subtracts the periodic particles if they exist. | Resta las periodicas si las hubiera.
+  const unsigned npnormal=Np-NpbPer-NpfPer; //-Subtracts the periodic particles if they exist. | Resta las periodicas si las hubiera.
+  unsigned npsave=npnormal;
   Timersc->TmStart(TMC_SuSavePart);
   //-Collect particle values in original order. | Recupera datos de particulas en orden original.
   unsigned *idp=NULL;
@@ -1165,8 +1171,19 @@ void JSphCpuSingle::SaveData(){
     pos=ArraysCpu->ReserveDouble3();
     vel=ArraysCpu->ReserveFloat3();
     rhop=ArraysCpu->ReserveFloat();
-    unsigned npnormal=GetParticlesData(Np,0,PeriActive!=0,idp,pos,vel,rhop,NULL);
-    if(npnormal!=npsave)Run_Exceptioon("The number of particles is invalid.");
+    //-Prepare filter for output particles data. //<vs_outpaarts>
+    byte* filter=NULL;
+    if(OutputParts){//<vs_outpaarts_ini>
+      filter=ArraysCpu->ReserveByte();
+      OutputParts->ComputeFilterCpu(Np,Posc,Codec,filter);
+    }//<vs_outpaarts_end>
+    //-Obtain output particles data.
+    unsigned npfilterdel=0;
+    const unsigned npsel=GetParticlesData(Np,0,PeriActive!=0
+      ,idp,pos,vel,rhop,NULL,filter,npfilterdel);
+    if(filter)ArraysCpu->Free(filter); filter=NULL;
+    if(npsel+npfilterdel!=npnormal)Run_Exceptioon("The number of particles is invalid.");
+    npsave=npsel;
   }
   //-Gather additional information. | Reune informacion adicional.
   StInfoPartPlus infoplus;

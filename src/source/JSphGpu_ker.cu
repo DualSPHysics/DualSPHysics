@@ -2989,6 +2989,187 @@ void ComputeDampingCylinder(unsigned n,unsigned pini
   }
 }
 
+ //<vs_outpaarts_ini>
+//##############################################################################
+//# Kernels for OutputParts.
+//##############################################################################
+//------------------------------------------------------------------------------
+/// Compute filter for particles.
+//------------------------------------------------------------------------------
+__global__ void KerComputeOutputPartsPos(unsigned n,unsigned pini
+  ,byte resmask,bool cmband,bool inverse,double3 pmin,double3 pmax
+  ,const double2* posxy,const double* posz,byte* sel)
+{
+  unsigned pp=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
+  if(pp<n){
+    const unsigned p=pp+pini;
+    byte psel=sel[p];
+    bool r=((psel&resmask)!=0);
+    if(r==cmband){ //if((r && cmband) || (!r && !cmband)){
+      const double2 rposxy=posxy[p];
+      const double rposz=posz[p];
+      bool ok=(pmin.x<=rposxy.x && rposxy.x <=pmax.x &&
+               pmin.z<=rposz    && rposz    <=pmax.z &&
+               pmin.y<=rposxy.y && rposxy.y <=pmax.y);
+      if(inverse)ok=!ok;
+      r=(cmband? r&&ok: r||ok);
+      psel=psel&(~resmask);
+      if(r)psel=psel|resmask;
+      sel[p]=psel;
+    }
+  }
+}
+//==============================================================================
+/// Compute filter for particles.
+//==============================================================================
+void ComputeOutputPartsPos(byte resmask,bool cmband,bool inverse
+  ,double3 pmin,double3 pmax,unsigned n,unsigned pini
+  ,const double2* posxy,const double* posz,byte* sel)
+{
+  if(n){
+    dim3 sgrid=GetSimpleGridSize(n,SPHBSIZE);
+    KerComputeOutputPartsPos <<<sgrid,SPHBSIZE>>> (n,pini,resmask,cmband,inverse
+      ,pmin,pmax,posxy,posz,sel);
+  }
+}
+
+//------------------------------------------------------------------------------
+/// Compute filter for particles.
+//------------------------------------------------------------------------------
+__global__ void KerComputeOutputPartsPlane(unsigned n,unsigned pini
+  ,byte resmask,bool cmband,bool inverse,double4 plane,float maxdist
+  ,const double2* posxy,const double* posz,byte* sel)
+{
+  unsigned pp=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
+  if(pp<n){
+    const unsigned p=pp+pini;
+    byte psel=sel[p];
+    bool r=((psel&resmask)!=0);
+    if(r==cmband){ //if((r && cmband) || (!r && !cmband)){
+      const double2 rposxy=posxy[p];
+      const double rposz=posz[p];
+      const double dist=KerPointPlane(plane,rposxy.x,rposxy.y,rposz);  //fgeo::PlanePoint(plane,ps);
+      bool ok=(dist>=0 && dist<=maxdist);
+      if(inverse)ok=!ok;
+      r=(cmband? r&&ok: r||ok);
+      psel=psel&(~resmask);
+      if(r)psel=psel|resmask;
+      sel[p]=psel;
+    }
+  }
+}
+//==============================================================================
+/// Compute filter for particles.
+//==============================================================================
+void ComputeOutputPartsPlane(byte resmask,bool cmband,bool inverse
+  ,double4 plane,float maxdist,unsigned n,unsigned pini
+  ,const double2* posxy,const double* posz,byte* sel)
+{
+  if(n){
+    dim3 sgrid=GetSimpleGridSize(n,SPHBSIZE);
+    KerComputeOutputPartsPlane <<<sgrid,SPHBSIZE>>> (n,pini,resmask,cmband,inverse
+      ,plane,maxdist,posxy,posz,sel);
+  }
+}
+
+//------------------------------------------------------------------------------
+/// Compute filter for particles.
+//------------------------------------------------------------------------------
+__global__ void KerComputeOutputPartsSphere(unsigned n,unsigned pini
+  ,byte resmask,bool cmband,bool inverse,double3 pcen,float radius2
+  ,const double2* posxy,const double* posz,byte* sel)
+{
+  unsigned pp=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
+  if(pp<n){
+    const unsigned p=pp+pini;
+    byte psel=sel[p];
+    bool r=((psel&resmask)!=0);
+    if(r==cmband){ //if((r && cmband) || (!r && !cmband)){
+      const double2 rposxy=posxy[p];
+      const double rposz=posz[p];
+      const float dx=float(pcen.x-rposxy.x);
+      const float dy=float(pcen.y-rposxy.y);
+      const float dz=float(pcen.z-rposz);
+      bool ok=(dx*dx+dy*dy+dz*dz <= radius2);
+      if(inverse)ok=!ok;
+      r=(cmband? r&&ok: r||ok);
+      psel=psel&(~resmask);
+      if(r)psel=psel|resmask;
+      sel[p]=psel;
+    }
+  }
+}
+//==============================================================================
+/// Compute filter for particles.
+//==============================================================================
+void ComputeOutputPartsSphere(byte resmask,bool cmband,bool inverse
+  ,double3 pcen,float radius2,unsigned n,unsigned pini
+  ,const double2* posxy,const double* posz,byte* sel)
+{
+  if(n){
+    dim3 sgrid=GetSimpleGridSize(n,SPHBSIZE);
+    KerComputeOutputPartsSphere <<<sgrid,SPHBSIZE>>> (n,pini,resmask,cmband,inverse
+      ,pcen,radius2,posxy,posz,sel);
+  }
+}
+
+
+//------------------------------------------------------------------------------
+/// Compute filter for particles.
+//------------------------------------------------------------------------------
+template<bool isvertical> __global__ void KerComputeOutputPartsCylinder(unsigned n
+  ,unsigned pini,byte resmask,bool cmband,bool inverse
+  ,double4 plane,float maxdist,double3 pcen1,double3 pcen2,float radius
+  ,const double2* posxy,const double* posz,byte* sel)
+{
+  unsigned pp=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
+  if(pp<n){
+    const unsigned p=pp+pini;
+    byte psel=sel[p];
+    bool r=((psel&resmask)!=0);
+    if(r==cmband){ //if((r && cmband) || (!r && !cmband)){
+      const double2 rposxy=posxy[p];
+      const double rposz=posz[p];
+      const double dist=KerPointPlane(plane,rposxy.x,rposxy.y,rposz);  //fgeo::PlanePoint(plane,ps);
+      bool ok=(dist>=0 && dist<=maxdist);
+      if(ok && isvertical){
+        const float dx=float(rposxy.x-pcen1.x);
+        const float dy=float(rposxy.y-pcen1.y);
+        ok=(dx*dx+dy*dy<=radius);
+      }
+      if(ok && !isvertical){
+        //cugeo::LinePointDist(ps,Point1,Point2)
+        const double ar=cugeo::TriangleArea(make_double3(rposxy.x,rposxy.y,rposz),pcen1,pcen2);
+        const double dis=(ar*2)/maxdist;
+        ok=(dis<=radius);
+      }
+      if(inverse)ok=!ok;
+      r=(cmband? r&&ok: r||ok);
+      psel=psel&(~resmask);
+      if(r)psel=psel|resmask;
+      sel[p]=psel;
+    }
+  }
+}
+//==============================================================================
+/// Compute filter for particles.
+//==============================================================================
+void ComputeOutputPartsCylinder(byte resmask,bool cmband,bool inverse
+  ,double4 plane,float maxdist,double3 pcen1,double3 pcen2,float radius
+  ,unsigned n,unsigned pini,const double2* posxy,const double* posz,byte* sel)
+{
+  if(n){
+    const bool isvertical=(pcen1.x==pcen2.x && pcen1.y==pcen2.y);
+    dim3 sgrid=GetSimpleGridSize(n,SPHBSIZE);
+    if(isvertical) KerComputeOutputPartsCylinder<true > <<<sgrid,SPHBSIZE>>> (n,pini
+      ,resmask,cmband,inverse,plane,maxdist,pcen1,pcen2,radius,posxy,posz,sel);
+    if(!isvertical)KerComputeOutputPartsCylinder<false> <<<sgrid,SPHBSIZE>>> (n,pini
+      ,resmask,cmband,inverse,plane,maxdist,pcen1,pcen2,radius,posxy,posz,sel);
+  }
+}
+//<vs_outpaarts_end>
+
+
 
 }
 

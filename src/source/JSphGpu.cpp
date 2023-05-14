@@ -347,6 +347,7 @@ void JSphGpu::AllocGpuMemoryParticles(unsigned np,float over){
     ArraysGpu->AddArrayCount(JArraysGpu::SIZE_1B,2);  //-newizone,zsurfok
   }
 
+  ArraysGpu->AddArrayCount(JArraysGpu::SIZE_1B,1); //-Auxiliar
   //-Shows the allocated memory.
   MemGpuParticles=ArraysGpu->GetAllocMemoryGpu();
   PrintSizeNp(GpuParticlesSize,MemGpuParticles,GpuParticlesAllocs);
@@ -582,30 +583,46 @@ void JSphGpu::ParticlesDataUp(unsigned n,const tfloat3 *boundnormal){
 /// - code: Recupera datos de Codeg.
 /// - onlynormal: Solo se queda con las normales, elimina las particulas periodicas.
 //==============================================================================
-unsigned JSphGpu::ParticlesDataDown(unsigned n,unsigned pini,bool code,bool onlynormal){
+unsigned JSphGpu::ParticlesDataDown(unsigned n,unsigned pini,bool code
+  ,bool onlynormal,const byte* filterg,unsigned &npfilterdel)
+{
   unsigned num=n;
   cudaMemcpy(Idp    ,Idpg    +pini,sizeof(unsigned)*n,cudaMemcpyDeviceToHost);
   cudaMemcpy(Posxy  ,Posxyg  +pini,sizeof(double2) *n,cudaMemcpyDeviceToHost);
   cudaMemcpy(Posz   ,Poszg   +pini,sizeof(double)  *n,cudaMemcpyDeviceToHost);
   cudaMemcpy(Velrhop,Velrhopg+pini,sizeof(float4)  *n,cudaMemcpyDeviceToHost);
   if(code || onlynormal)cudaMemcpy(Code,Codeg+pini,sizeof(typecode)*n,cudaMemcpyDeviceToHost);
+  byte* filter=NULL; 
+  //-Obtain filter data on CPU memory. //<vs_outpaarts_ini>
+  if(filterg){
+    filter=(byte*)AuxRhop;
+    cudaMemcpy(filter,filterg+pini,sizeof(byte)*n,cudaMemcpyDeviceToHost);
+  }//<vs_outpaarts_end>
   Check_CudaErroor("Failed copying data from GPU.");
   //-Eliminates abnormal particles (periodic and others). | Elimina particulas no normales (periodicas y otras).
-  if(onlynormal){
+  const bool usefilter=(filter!=NULL);
+  unsigned nfilter=0;
+  if(onlynormal || usefilter){
     unsigned ndel=0;
     for(unsigned p=0;p<n;p++){
-      const bool normal=CODE_IsNormal(Code[p]);
-      if(ndel && normal){
+      const bool isnormal=CODE_IsNormal(Code[p]);
+      const bool selected=(isnormal && (!usefilter || filter[p]));
+      if(ndel && selected){
         Idp[p-ndel]    =Idp[p];
         Posxy[p-ndel]  =Posxy[p];
         Posz[p-ndel]   =Posz[p];
         Velrhop[p-ndel]=Velrhop[p];
         Code[p-ndel]   =Code[p];
       }
-      if(!normal)ndel++;
+      if(!selected){
+        ndel++;
+        if(isnormal)nfilter++;//-Normal particles removed by filters.
+      }
     }
     num-=ndel;
   }
+  npfilterdel=nfilter;
+  filter=NULL;
   //-Converts data to a simple format. | Convierte datos a formato simple.
   for(unsigned p=0;p<n;p++){
     AuxPos[p]=TDouble3(Posxy[p].x,Posxy[p].y,Posz[p]);
@@ -794,7 +811,8 @@ void JSphGpu::InitFloating(){
 /// Inicializa vectores y variables para la ejecucion.
 //==============================================================================
 void JSphGpu::InitRunGpu(){
-  ParticlesDataDown(Np,0,false,false);
+  unsigned nfilter=0;
+  ParticlesDataDown(Np,0,false,false,NULL,nfilter);
   InitRun(Np,Idp,AuxPos);
 
   if(TStep==STEP_Verlet)cudaMemcpy(VelrhopM1g,Velrhopg,sizeof(float4)*Np,cudaMemcpyDeviceToDevice);
@@ -1256,7 +1274,8 @@ void JSphGpu::DgSaveVtkParticlesGpu(std::string filename,int numfile,unsigned pi
   filename=DirDataOut+filename;
   //-Allocates memory.
   const unsigned n=pfin-pini;
-  ParticlesDataDown(n,pini,code,false);
+  unsigned nfilter=0;
+  ParticlesDataDown(n,pini,code,false,NULL,nfilter);
   tfloat3 *pos=new tfloat3[n];
   for(unsigned p=0;p<n;p++)pos[p]=ToTFloat3(AuxPos[p]);
   byte *type=new byte[n];

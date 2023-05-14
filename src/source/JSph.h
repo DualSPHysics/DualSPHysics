@@ -81,6 +81,7 @@ class JDataArrays;
 class JNumexLib;
 class JFtMotionSave; //<vs_ftmottionsv>
 class JDsExtraDataSave;
+class JDsOutputParts;//<vs_outpaarts>
 
 //##############################################################################
 //# XML format of execution parameters in _FmtXML__Parameters.xml.
@@ -343,6 +344,8 @@ protected:
 
   std::string SvExtraParts;         ///<Part interval (or list) for saving extra data for restart option (default=empty=disabled)
   JDsExtraDataSave *SvExtraDataBi4; ///<To store extra data for restart option (SvExtraParts).
+
+  JDsOutputParts* OutputParts;      ///<Object for output particle filter. //<vs_outpaarts>
 
   JDsPips *DsPips;          ///<Object for PIPS calculation.
 

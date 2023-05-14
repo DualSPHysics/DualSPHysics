@@ -230,7 +230,8 @@ protected:
 
   void ConstantDataUp();
   void ParticlesDataUp(unsigned n,const tfloat3 *boundnormal);
-  unsigned ParticlesDataDown(unsigned n,unsigned pini,bool code,bool onlynormal);
+  unsigned ParticlesDataDown(unsigned n,unsigned pini,bool code
+    ,bool onlynormal,const byte* filterg,unsigned &npfilterdel);
   
   void SelecDevice(int gpuid);
   void ConfigBlockSizes(bool usezone,bool useperi);

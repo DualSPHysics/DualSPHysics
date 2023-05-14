@@ -198,7 +198,8 @@ protected:
   void PrintAllocMemory(llong mcpu)const;
 
   unsigned GetParticlesData(unsigned n,unsigned pini,bool onlynormal
-    ,unsigned *idp,tdouble3 *pos,tfloat3 *vel,float *rhop,typecode *code);
+    ,unsigned* idp,tdouble3* pos,tfloat3* vel,float* rhop,typecode* code
+    ,const byte* filter,unsigned &npfilterdel);
   void ConfigOmp(const JSphCfgRun *cfg);
 
   void ConfigRunMode();
