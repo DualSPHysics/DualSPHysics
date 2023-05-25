@@ -2996,6 +2996,62 @@ void ComputeDampingCylinder(unsigned n,unsigned pini
 //------------------------------------------------------------------------------
 /// Compute filter for particles.
 //------------------------------------------------------------------------------
+__global__ void KerComputeOutputPartsInit(unsigned n,unsigned pini
+  ,byte resmask,bool selall,byte* sel)
+{
+  unsigned pp=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
+  if(pp<n){
+    const unsigned p=pp+pini;
+    byte psel=sel[p];
+    sel[p]=(selall? psel|resmask: psel&(~resmask));
+  }
+}
+//==============================================================================
+/// Compute filter for particles.
+//==============================================================================
+void ComputeOutputPartsInit(byte resmask,bool selall,unsigned n,unsigned pini
+  ,byte* sel)
+{
+  if(n){
+    dim3 sgrid=GetSimpleGridSize(n,SPHBSIZE);
+    KerComputeOutputPartsInit <<<sgrid,SPHBSIZE>>> (n,pini,resmask,selall,sel);
+  }
+}
+
+//------------------------------------------------------------------------------
+/// Compute filter for particles.
+//------------------------------------------------------------------------------
+__global__ void KerComputeOutputPartsGroup(unsigned n,unsigned pini
+  ,byte resmask,byte resprev,bool cmband,bool inverse,byte* sel)
+{
+  unsigned pp=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
+  if(pp<n){
+    const unsigned p=pp+pini;
+    byte psel=sel[p];
+    bool r=((psel&resprev)!=0);  //-lv=0
+    bool ok=((psel&resmask)!=0); //-lv+1
+    if(inverse)ok=!ok;
+    r=(cmband? r&&ok: r||ok);
+    psel=psel&(~resprev);
+    if(r)psel=psel|resprev;
+    sel[p]=psel;
+  }
+}
+//==============================================================================
+/// Compute filter for particles.
+//==============================================================================
+void ComputeOutputPartsGroup(byte resmask,byte resprev,bool cmband,bool inverse
+  ,unsigned n,unsigned pini,byte* sel)
+{
+  if(n){
+    dim3 sgrid=GetSimpleGridSize(n,SPHBSIZE);
+    KerComputeOutputPartsGroup <<<sgrid,SPHBSIZE>>> (n,pini,resmask,resprev,cmband,inverse,sel);
+  }
+}
+
+//------------------------------------------------------------------------------
+/// Compute filter for particles.
+//------------------------------------------------------------------------------
 __global__ void KerComputeOutputPartsPos(unsigned n,unsigned pini
   ,byte resmask,bool cmband,bool inverse,double3 pmin,double3 pmax
   ,const double2* posxy,const double* posz,byte* sel)
@@ -3167,6 +3223,83 @@ void ComputeOutputPartsCylinder(byte resmask,bool cmband,bool inverse
       ,resmask,cmband,inverse,plane,maxdist,pcen1,pcen2,radius,posxy,posz,sel);
   }
 }
+
+//------------------------------------------------------------------------------
+/// Compute filter for particles.
+//------------------------------------------------------------------------------
+__global__ void KerComputeOutputPartsType(unsigned n,unsigned pini
+  ,byte resmask,bool cmband,bool inverse,byte types
+  ,const typecode* code,byte* sel)
+{
+  unsigned pp=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
+  if(pp<n){
+    const unsigned p=pp+pini;
+    byte psel=sel[p];
+    bool r=((psel&resmask)!=0);
+    if(r==cmband){ //if((r && cmband) || (!r && !cmband)){
+      const typecode codetp=CODE_GetType(code[p]);
+      bool ok=((types&1 && codetp==CODE_TYPE_FIXED) ||
+               (types&2 && codetp==CODE_TYPE_MOVING) ||
+               (types&4 && codetp==CODE_TYPE_FLOATING) ||
+               (types&8 && codetp==CODE_TYPE_FLUID) );
+      if(inverse)ok=!ok;
+      r=(cmband? r&&ok: r||ok);
+      psel=psel&(~resmask);
+      if(r)psel=psel|resmask;
+      sel[p]=psel;
+    }
+  }
+}
+//==============================================================================
+/// Compute filter for particles.
+//==============================================================================
+void ComputeOutputPartsType(byte resmask,bool cmband,bool inverse
+  ,byte types,unsigned n,unsigned pini,const typecode* code,byte* sel)
+{
+  if(n){
+    dim3 sgrid=GetSimpleGridSize(n,SPHBSIZE);
+    KerComputeOutputPartsType <<<sgrid,SPHBSIZE>>> (n,pini,resmask,cmband,inverse
+      ,types,code,sel);
+  }
+}
+
+//------------------------------------------------------------------------------
+/// Compute filter for particles.
+//------------------------------------------------------------------------------
+__global__ void KerComputeOutputPartsMk(unsigned n,unsigned pini
+  ,byte resmask,bool cmband,bool inverse,typecode mkcode1,typecode mkcode2
+  ,const typecode* code,byte* sel)
+{
+  unsigned pp=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
+  if(pp<n){
+    const unsigned p=pp+pini;
+    byte psel=sel[p];
+    bool r=((psel&resmask)!=0);
+    if(r==cmband){ //if((r && cmband) || (!r && !cmband)){
+      const typecode codetp=CODE_GetTypeAndValue(code[p]);
+      bool ok=(mkcode1<=codetp && codetp<=mkcode2);
+      if(inverse)ok=!ok;
+      r=(cmband? r&&ok: r||ok);
+      psel=psel&(~resmask);
+      if(r)psel=psel|resmask;
+      sel[p]=psel;
+    }
+  }
+}
+//==============================================================================
+/// Compute filter for particles.
+//==============================================================================
+void ComputeOutputPartsMk(byte resmask,bool cmband,bool inverse
+  ,typecode mkcode1,typecode mkcode2,unsigned n,unsigned pini
+  ,const typecode* code,byte* sel)
+{
+  if(n){
+    dim3 sgrid=GetSimpleGridSize(n,SPHBSIZE);
+    KerComputeOutputPartsMk <<<sgrid,SPHBSIZE>>> (n,pini,resmask,cmband,inverse
+      ,mkcode1,mkcode2,code,sel);
+  }
+}
+
 //<vs_outpaarts_end>
 
 

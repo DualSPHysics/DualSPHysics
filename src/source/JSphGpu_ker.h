@@ -295,6 +295,10 @@ void ComputeDampingCylinder(unsigned n,unsigned pini
 
 //<vs_outpaarts_ini>
 //-Kernels for OutputParts.
+void ComputeOutputPartsInit(byte resmask,bool selall
+  ,unsigned n,unsigned pini,byte* sel);
+void ComputeOutputPartsGroup(byte resmask,byte resprev
+  ,bool cmband,bool inverse,unsigned n,unsigned pini,byte* sel);
 void ComputeOutputPartsPos(byte resmask,bool cmband,bool inverse
   ,double3 pmin,double3 pmax,unsigned n,unsigned pini
   ,const double2* posxy,const double* posz,byte* sel);
@@ -308,6 +312,12 @@ void ComputeOutputPartsCylinder(byte resmask,bool cmband,bool inverse
   ,double4 plane,float maxdist,double3 pcen1,double3 pcen2,float radius
   ,unsigned n,unsigned pini,const double2* posxy,const double* posz
   ,byte* sel);
+void ComputeOutputPartsType(byte resmask,bool cmband,bool inverse
+  ,byte types,unsigned n,unsigned pini,const typecode* code,byte* sel);
+void ComputeOutputPartsMk(byte resmask,bool cmband,bool inverse
+  ,typecode mkcode1,typecode mkcode2,unsigned n,unsigned pini
+  ,const typecode* code,byte* sel);
+
 //<vs_outpaarts_end>
 
 }

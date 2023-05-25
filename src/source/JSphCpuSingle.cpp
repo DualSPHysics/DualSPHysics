@@ -1173,9 +1173,12 @@ void JSphCpuSingle::SaveData(){
     rhop=ArraysCpu->ReserveFloat();
     //-Prepare filter for output particles data. //<vs_outpaarts>
     byte* filter=NULL;
-    if(OutputParts){//<vs_outpaarts_ini>
+    //<vs_outpaarts_ini>
+    const bool svextra=(SvExtraDataBi4 && SvExtraDataBi4->CheckSave(Part));
+    if(OutputParts && OutputParts->CheckFilters(Part) && !svextra){
       filter=ArraysCpu->ReserveByte();
-      OutputParts->ComputeFilterCpu(Np,Posc,Codec,filter);
+      OutputParts->UpdateFtPos(FtCount,FtObjs);
+      OutputParts->ComputeFilterCpu(Np,Idpc,Posc,Codec,filter);
     }//<vs_outpaarts_end>
     //-Obtain output particles data.
     unsigned npfilterdel=0;

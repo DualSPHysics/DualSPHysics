@@ -605,8 +605,8 @@ unsigned JSphGpu::ParticlesDataDown(unsigned n,unsigned pini,bool code
   if(onlynormal || usefilter){
     unsigned ndel=0;
     for(unsigned p=0;p<n;p++){
-      const bool isnormal=CODE_IsNormal(Code[p]);
-      const bool selected=(isnormal && (!usefilter || filter[p]));
+      const bool isnormal=(!onlynormal || CODE_IsNormal(Code[p]));
+      const bool selected=(isnormal && (!usefilter || (filter[p]&1)));
       if(ndel && selected){
         Idp[p-ndel]    =Idp[p];
         Posxy[p-ndel]  =Posxy[p];

@@ -358,8 +358,8 @@ unsigned JSphCpu::GetParticlesData(unsigned n,unsigned pini,bool onlynormal
     }
     unsigned ndel=0;
     for(unsigned p=0;p<n;p++){
-      const bool isnormal=CODE_IsNormal(code2[p]);
-      const bool selected=(isnormal && (!usefilter || filter[p]));
+      const bool isnormal=(!onlynormal || CODE_IsNormal(code2[p]));
+      const bool selected=(isnormal && (!usefilter || (filter[p]&1)));
       if(ndel && selected){
         const unsigned pdel=p-ndel;
         idp[pdel]  =idp[p];

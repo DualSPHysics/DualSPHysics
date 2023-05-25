@@ -270,7 +270,7 @@ protected:
   unsigned CaseNpb;          ///<Number of particles of the boundary block ( \ref Nbound - \ref Nfloat ) or ( \ref Nfixed + \ref Nmoving).
 
   JSphMk *MkInfo;            ///<Stores information for the Mk of the particles.
-  JDsPartsInit *PartsInit;  ///<Stores initial particles data for automatic configurations.
+  JDsPartsInit *PartsInit;   ///<Stores initial particles data for automatic configurations.
 
   //-Variables for periodic conditions.
   byte PeriActive;

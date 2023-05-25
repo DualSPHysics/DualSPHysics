@@ -943,8 +943,11 @@ void JSphGpuSingle::SaveData(){
     Timersg->TmStart(TMG_SuDownData,false);
     //-Prepare filter for output particles data. //<vs_outpaarts>
     byte* filter=NULL;
-    if(OutputParts){//<vs_outpaarts_ini>
+    //<vs_outpaarts_ini>
+    const bool svextra=(SvExtraDataBi4 && SvExtraDataBi4->CheckSave(Part));
+    if(OutputParts && OutputParts->CheckFilters(Part) && !svextra){
       filter=ArraysGpu->ReserveByte();
+      OutputParts->UpdateFtPos(FtCount,FtObjs);
       OutputParts->ComputeFilterGpu(Np,Posxyg,Poszg,Codeg,filter);
     }//<vs_outpaarts_end>
     //-Obtain output particles data.

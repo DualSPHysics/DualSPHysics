@@ -1183,7 +1183,8 @@ void JSph::LoadCaseConfig(const JSphCfgRun *cfg){
   //-Configuration of OutputParts object. //<vs_outpaarts_ini>
   if(xml.GetNodeSimple("case.execution.special.outputparts",true)){
     OutputParts=new JDsOutputParts(Cpu,Dp*10);
-    OutputParts->LoadXml(&xml,"case.execution.special.outputparts");
+    OutputParts->LoadXml(&xml,"case.execution.special.outputparts"
+      ,MkInfo,FtCount,FtObjs);
   } //<vs_outpaarts_end>
 
   //-Checks invalid options for symmetry. //<vs_syymmetry_ini>
