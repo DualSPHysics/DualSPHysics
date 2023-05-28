@@ -966,6 +966,10 @@ void JSphGpuSingle::SaveExtraData(){
     }
     //-Saves file.
     SvExtraDataBi4->SavePartData();
+    //-Free memory.
+    delete[] idp;  idp=NULL;
+    delete[] nor;  nor=NULL;
+    delete[] code; code=NULL;
   }
 }
 
