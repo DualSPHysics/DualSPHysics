@@ -45,6 +45,7 @@
 //:#   cero. No es compatible con la opcion SpecialValues. (24-04-2020)
 //:# - Nuevos metodos RnSetValues(). (05-09-2020)
 //:# - Nuevos metodos ConfigLoopTime() para definir bucle de tiempo. (04-08-2022)
+//:# - Error corregido en GetValue() y GetValue3d() con valores none. (12-06-2023)
 //:#############################################################################
 
 #include "JObject.h"

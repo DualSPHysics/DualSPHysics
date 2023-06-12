@@ -263,8 +263,8 @@ double JLinearValue::GetValue(double timestep,unsigned cvalue){
   double ret=0;
   FindTime(timestep);
   //printf("--> t:%f  [%u - %u]  [%f - %f]\n",timestep,Position,PositionNext,TimePre,TimeNext);
-  if(TimeFactor==0)ret=Values[Nvalues*Position+cvalue];
-  else if(TimeFactor>=1.)ret=Values[Nvalues*PositionNext+cvalue];
+  if(LoopTsub? TimeFactor==0: timestep<=TimePre)ret=Values[Nvalues*Position+cvalue];
+  else if(LoopTsub? TimeFactor>=1.: timestep>=TimeNext)ret=Values[Nvalues*PositionNext+cvalue];
   else{
     const double vini=Values[Nvalues*Position+cvalue];
     const double vnext=Values[Nvalues*PositionNext+cvalue];
@@ -302,11 +302,11 @@ tdouble3 JLinearValue::GetValue3d(double timestep){
   tdouble3 ret=TDouble3(0);
   FindTime(timestep);
   //printf("--> t:%f  [%u - %u]  [%f - %f]\n",timestep,Position,PositionNext,TimePre,TimeNext);
-  if(TimeFactor==0){
+  if(LoopTsub? TimeFactor==0: timestep<=TimePre){
     const unsigned rpos=Nvalues*Position;
     ret=TDouble3(Values[rpos],Values[rpos+1],Values[rpos+2]);
   }
-  else if(TimeFactor>=1.){
+  else if(LoopTsub? TimeFactor>=1.: timestep>=TimeNext){
     const unsigned rpos=Nvalues*PositionNext;
     ret=TDouble3(Values[rpos],Values[rpos+1],Values[rpos+2]);
   }
