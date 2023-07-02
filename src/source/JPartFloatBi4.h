@@ -37,6 +37,7 @@
 //:# - Permite graba posiciones de referencia para el calculo de movimiento. (19-10-2020)
 //:# - Nuevos metodos y otras mejoras. (20-10-2020)
 //:# - Graba mas valoras de fuerzas y aceleraciones. (30-03-2023)
+//:# - Updated for JBinaryData with 64-bit size. (20-06-2023)
 //:#############################################################################
 
 /// \file JPartFloatBi4.h \brief Declares the classes \ref JPartFloatBi4Save and class \ref JPartFloatBi4Load.

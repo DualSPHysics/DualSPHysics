@@ -212,7 +212,7 @@ bool JDsExtraDataLoad::LoadNormals(unsigned np,unsigned npb
   const bool usenormalsft=Data->GetvBool("UseNormalsFt");
   JBinaryDataArray *ar=Data->GetArray("Normals");
   if(!ar || ar->GetType()!=JBinaryDataDef::DatFloat3)Run_ExceptioonFile("The array \'Normals\' is missing or type invalid.",FileData);
-  const unsigned nsize=ar->GetCount();
+  const unsigned nsize=unsigned(ar->GetCount());
   const tfloat3 *vnor=(const tfloat3 *)ar->GetDataPointer();
   //-Fixed and moving boundary particles.
   for(unsigned p=0;p<npb;p++)if(idp[p]<nsize)boundnormal[p]=vnor[idp[p]]; 

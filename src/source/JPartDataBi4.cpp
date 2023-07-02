@@ -95,7 +95,9 @@ long long JPartDataBi4::GetAllocMemory()const{
 /// Devuelve nombre de fichero PART segun los parametros indicados.
 /// Returns the filename PART according to the specified parameters.
 //==============================================================================
-std::string JPartDataBi4::GetFileNamePart(unsigned cpart,unsigned piece,unsigned npiece){
+std::string JPartDataBi4::GetFileNamePart(unsigned cpart,unsigned piece
+  ,unsigned npiece)
+{
   string fname="Part";
   if(npiece>1)fname=fname+fun::PrintStr("_p%02d",piece);
   return(fname+fun::PrintStr("_%04u.bi4",cpart));
@@ -105,7 +107,9 @@ std::string JPartDataBi4::GetFileNamePart(unsigned cpart,unsigned piece,unsigned
 /// Devuelve nombre de fichero de caso segun los parametros indicados.
 /// Returns filename's case according to the specified parameters.
 //==============================================================================
-std::string JPartDataBi4::GetFileNameCase(const std::string &casename,unsigned piece,unsigned npiece){
+std::string JPartDataBi4::GetFileNameCase(const std::string& casename
+  ,unsigned piece,unsigned npiece)
+{
   string fname=casename;
   if(npiece>1)fname=fname+fun::PrintStr("_p%02d",piece);
   return(fname+".bi4");
@@ -128,7 +132,9 @@ std::string JPartDataBi4::GetFileNameInfo(unsigned piece,unsigned npiece){
 /// whether or not it is divided into several parts
 /// (0:not found, 1:a piece, 2:Several parts).
 //==============================================================================
-std::string JPartDataBi4::GetFileData(std::string casename,std::string dirname,unsigned cpart,byte &npiece){
+std::string JPartDataBi4::GetFileData(std::string casename,std::string dirname
+  ,unsigned cpart,byte& npiece)
+{
   byte npie=0;
   string file;
   if(casename.empty()){
@@ -181,7 +187,8 @@ void JPartDataBi4::Config(bool nortimes,unsigned piece,unsigned npiece
 /// Configuration of basic variables.
 //==============================================================================
 void JPartDataBi4::ConfigBasic(unsigned piece,unsigned npiece,std::string runcode
-  ,std::string appname,std::string casename,bool data2d,double data2dposy,const std::string &dir)
+  ,std::string appname,std::string casename,bool data2d,double data2dposy
+  ,const std::string& dir)
 {
   ResetData();
   Piece=piece; Npiece=npiece;
@@ -223,8 +230,8 @@ void JPartDataBi4::ConfigParticles(ullong casenp,ullong casenfixed,ullong casenm
 /// Configuracion de constantes.
 /// Configuration of constants.
 //==============================================================================
-void JPartDataBi4::ConfigCtes(double dp,double h,double b,double rhop0,double gamma
-  ,double massbound,double massfluid)
+void JPartDataBi4::ConfigCtes(double dp,double h,double b,double rhop0
+  ,double gamma,double massbound,double massfluid)
 {
   Data->SetvDouble("Dp",dp);
   Data->SetvDouble("H",h);
@@ -248,7 +255,9 @@ void JPartDataBi4::ConfigSimMap(tdouble3 mapposmin,tdouble3 mapposmax){
 /// Configuracion de variables de condiciones periodicas.
 /// Configuration of variables of periodic conditions.
 //==============================================================================
-void JPartDataBi4::ConfigSimPeri(TpPeri tperi,tdouble3 perixinc,tdouble3 periyinc,tdouble3 perizinc){
+void JPartDataBi4::ConfigSimPeri(TpPeri tperi,tdouble3 perixinc
+  ,tdouble3 periyinc,tdouble3 perizinc)
+{
   Data->SetvInt("PeriMode",int(tperi));
   Data->SetvDouble3("PeriXinc",perixinc);
   Data->SetvDouble3("PeriYinc",periyinc);
@@ -262,7 +271,8 @@ void JPartDataBi4::ConfigSimPeri(TpPeri tperi,tdouble3 perixinc,tdouble3 periyin
 TpPeri JPartDataBi4::Get_PeriMode()const{
   string varname="PeriMode";
   //-Maintains backwards compatibility with previous formats (27-04-2018).
-  if(!GetData()->ExistsValue("PeriMode",JBinaryDataDef::DatInt) && GetData()->ExistsValue("PeriActive",JBinaryDataDef::DatInt))varname="PeriActive";
+  if(!GetData()->ExistsValue("PeriMode",JBinaryDataDef::DatInt) 
+    && GetData()->ExistsValue("PeriActive",JBinaryDataDef::DatInt))varname="PeriActive";
   return((TpPeri)GetData()->GetvInt(varname)); 
 }
 
@@ -302,7 +312,10 @@ std::string JPartDataBi4::GetNamePart(unsigned cpart){
 /// Incorpora informacion de nuevo part.
 // Add information to new part.
 //==============================================================================
-JBinaryData* JPartDataBi4::AddPartInfo(unsigned cpart,double timestep,unsigned npok,unsigned nout,unsigned step,double runtime,tdouble3 domainmin,tdouble3 domainmax,ullong nptotal,ullong idmax){
+JBinaryData* JPartDataBi4::AddPartInfo(unsigned cpart,double timestep
+  ,unsigned npok,unsigned nout,unsigned step,double runtime
+  ,tdouble3 domainmin,tdouble3 domainmax,ullong nptotal,ullong idmax)
+{
   Part->Clear();
   Cpart=cpart;
   Part->SetName(GetNamePart(cpart));
@@ -323,7 +336,9 @@ JBinaryData* JPartDataBi4::AddPartInfo(unsigned cpart,double timestep,unsigned n
 /// Incorpora datos (definidos por el usuario) de particulas de de nuevo part.
 /// Add data (defined by user) of particles to new part.
 //==============================================================================
-void JPartDataBi4::AddPartDataVar(const std::string &name,JBinaryDataDef::TpData type,unsigned npok,const void *v,bool externalpointer){
+void JPartDataBi4::AddPartDataVar(const std::string& name
+  ,JBinaryDataDef::TpData type,unsigned npok,const void* v,bool externalpointer)
+{
   if(!v)Run_Exceptioon("The pointer data is invalid.");
   //-Comprueba valor de npok. Checks value of npok.
   if(Part->GetvUint("Npok")!=npok)Run_Exceptioon("Part information is invalid.");
@@ -335,8 +350,8 @@ void JPartDataBi4::AddPartDataVar(const std::string &name,JBinaryDataDef::TpData
 /// Incorpora datos (definidos por el usuario) de particulas de de nuevo part.
 /// Add data (defined by user) of particles to new part.
 //==============================================================================
-void JPartDataBi4::AddPartData(const std::string &name,unsigned npok,const void *v
-  ,TpTypeData type,bool externalpointer)
+void JPartDataBi4::AddPartData(const std::string& name,unsigned npok
+  ,const void* v,TpTypeData type,bool externalpointer)
 {
   switch(type){
     case TypeUchar:    AddPartData(name,npok,(byte    *)v,externalpointer);   break;
@@ -355,9 +370,9 @@ void JPartDataBi4::AddPartData(const std::string &name,unsigned npok,const void 
 /// Incorpora datos de particulas de de nuevo part.
 /// Adds data of particles to new part.
 //==============================================================================
-void JPartDataBi4::AddPartData(unsigned npok,const unsigned *idp,const ullong *idpd
-  ,const tfloat3 *pos,const tdouble3 *posd,const tfloat3 *vel,const float *rhop
-  ,bool externalpointer)
+void JPartDataBi4::AddPartData(unsigned npok,const unsigned* idp
+  ,const ullong* idpd,const tfloat3* pos,const tdouble3* posd
+  ,const tfloat3* vel,const float* rhop,bool externalpointer)
 {
   if(!idp&&!idpd)Run_Exceptioon("The id of particles is invalid.");
   if(!pos&&!posd)Run_Exceptioon("The position of particles is invalid.");
@@ -376,8 +391,8 @@ void JPartDataBi4::AddPartData(unsigned npok,const unsigned *idp,const ullong *i
 /// Incorpora datos Splitting de particulas de de nuevo part.
 /// Add data Splitting of particles to new part.
 //==============================================================================
-void JPartDataBi4::AddPartDataSplitting(unsigned npok,const float *mass
-  ,const float *hvar,bool externalpointer)
+void JPartDataBi4::AddPartDataSplitting(unsigned npok,const float* mass
+  ,const float* hvar,bool externalpointer)
 {
   if(!mass || !hvar)Run_Exceptioon("The pointer data is invalid.");
   //-Comprueba valor de npok. Checks value of npok.
@@ -489,7 +504,9 @@ unsigned JPartDataBi4::GetPiecesFilePart(std::string dir,unsigned cpart)const{
 /// Graba fichero BI4 con el nombre da caso indicado.
 /// Writes file BI4 with the case name indicated.
 //==============================================================================
-void JPartDataBi4::LoadFileData(std::string file,unsigned cpart,unsigned piece,unsigned npiece){
+void JPartDataBi4::LoadFileData(std::string file,unsigned cpart,unsigned piece
+  ,unsigned npiece)
+{
   ResetData();
   Cpart=cpart; Piece=piece; Npiece=npiece;
   Data->OpenFileStructure(file,ClassName);
@@ -503,7 +520,9 @@ void JPartDataBi4::LoadFileData(std::string file,unsigned cpart,unsigned piece,u
 /// Carga fichero BI4 con el nombre da caso indicado.
 /// Load file BI4 with the case name indicated.
 //==============================================================================
-void JPartDataBi4::LoadFileCase(std::string dir,std::string casename,unsigned piece,unsigned npiece){
+void JPartDataBi4::LoadFileCase(std::string dir,std::string casename
+  ,unsigned piece,unsigned npiece)
+{
   LoadFileData(fun::GetDirWithSlash(dir)+GetFileNameCase(casename,piece,npiece),0,piece,npiece);
 }
 
@@ -511,7 +530,9 @@ void JPartDataBi4::LoadFileCase(std::string dir,std::string casename,unsigned pi
 /// Carga fichero PART con datos de particulas.
 /// Load file PART with data of particles.
 //==============================================================================
-void JPartDataBi4::LoadFilePart(std::string dir,unsigned cpart,unsigned piece,unsigned npiece){
+void JPartDataBi4::LoadFilePart(std::string dir,unsigned cpart,unsigned piece
+  ,unsigned npiece)
+{
   LoadFileData(fun::GetDirWithSlash(dir)+GetFileNamePart(cpart,piece,npiece),cpart,piece,npiece);
 }
 
@@ -538,7 +559,7 @@ JBinaryData* JPartDataBi4::GetPart()const{
 /// Returns number of arrays in PART data.
 //==============================================================================
 unsigned JPartDataBi4::ArraysCount()const{
-  return(GetPart()->GetArraysCount());
+  return(unsigned(GetPart()->GetArraysCount()));
 }
 
 //==============================================================================
@@ -581,7 +602,9 @@ JBinaryDataArray* JPartDataBi4::GetArray(std::string name)const{
 /// Devuelve el puntero a Part con los datos del PART y comprueba el tipo.
 /// Returns a pointer to Part with the data of the PART and checks the type.
 //==============================================================================
-JBinaryDataArray* JPartDataBi4::GetArray(std::string name,JBinaryDataDef::TpData type)const{
+JBinaryDataArray* JPartDataBi4::GetArray(std::string name
+  ,JBinaryDataDef::TpData type)const
+{
   JBinaryDataArray* ar=GetArray(name);
   if(ar->GetType()!=type)Run_Exceptioon(fun::PrintStr("Type of array \'%s\' is not %s.",name.c_str(),JBinaryDataDef::TypeToStr(type).c_str()));
   return(ar);
@@ -598,13 +621,13 @@ double JPartDataBi4::Get_Particles2dPosY()const{
     unsigned np=Get_Npok();
     if(!np)Run_Exceptioon("Number of particles is invalid to calculates Y in 2D simulations.");
     if(Get_PosSimple()){
-      tfloat3 *pos=new tfloat3[np];
+      tfloat3* pos=new tfloat3[np];
       Get_Pos(np,pos);
       posy=pos[0].y;
       delete[] pos;
     }
     else{
-      tdouble3 *posd=new tdouble3[np];
+      tdouble3* posd=new tdouble3[np];
       Get_Posd(np,posd);
       posy=posd[0].y;
       delete[] posd;

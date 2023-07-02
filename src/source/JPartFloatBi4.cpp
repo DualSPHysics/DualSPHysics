@@ -563,10 +563,10 @@ JBinaryDataArray* JPartFloatBi4Load::CheckArray(JBinaryData *bd,const std::strin
 /// Check list of loaded PARTs.
 //==============================================================================
 void JPartFloatBi4Load::CheckPartList()const{
-  unsigned nitem=Data->GetItemsCount();
+  const size_t nitem=Data->GetItemsCount();
   if(nitem>1){
     unsigned cpart=Data->GetItem(1)->GetvUint("Cpart");
-    for(unsigned c=2;c<nitem;c++){
+    for(size_t c=2;c<nitem;c++){
       const unsigned cpart2=Data->GetItem(c)->GetvUint("Cpart");
       if(cpart2!=cpart+1)Run_ExceptioonFile("Loaded data is corrupted. The data could have been modified by several simultaneous executions.",FileData);
       cpart=cpart2;
@@ -599,7 +599,7 @@ void JPartFloatBi4Load::LoadFile(const std::string &dir,std::string filename){
   MkBoundFirst=head->GetvUshort("MkBoundFirst",true,0);
   PosRefData=head->GetvBool("PosRefData",true,false);
   FtCount=head->GetvUint("FtCount",true,0);
-  PartCount=Data->GetItemsCount()-1;
+  PartCount=unsigned(Data->GetItemsCount()-1);
   FirstPart=(PartCount? Data->GetItem(1)->GetvUint("Cpart",true,0): 0);
   CheckPartList();
 
@@ -742,17 +742,17 @@ void JPartFloatBi4Load::LoadPart(unsigned cpart){
   ResetPart();
   if(!Data)Run_Exceptioon("No loaded data.");
   //-Looks for selected PART.
-  string partname=fun::PrintStr("PART_%04u",cpart);
-  unsigned spartname=unsigned(partname.size());
-  const unsigned count=Data->GetItemsCount();
-  unsigned cp=UINT_MAX; 
-  for(unsigned c=1;c<count && cp==UINT_MAX;c++){
-    string name=Data->GetItem(c)->GetName();
-    unsigned sname=unsigned(name.size());
-    if(sname>spartname && name.substr(sname-spartname)==partname)cp=c-1;
+  const string partname=fun::PrintStr("PART_%04u",cpart);
+  const size_t spartname=partname.size();
+  const size_t count=Data->GetItemsCount();
+  size_t cp=SIZE_MAX; 
+  for(size_t c=1;c<count && cp==SIZE_MAX;c++){
+    const string name=Data->GetItem(c)->GetName();
+    const size_t sname=name.size();
+    if(sname>spartname && name.substr(sname-spartname)==partname)cp=(c-1);
   }
   //-Loads data of selected PART.
-  if(cp+1<count)LoadPartItem(cp);
+  if(cp+1<count)LoadPartItem(unsigned(cp));
   else Run_Exceptioon("PART not found.");
 }
 

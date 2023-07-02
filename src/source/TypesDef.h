@@ -27,8 +27,8 @@
 #define TORAD 0.017453292519943295769  ///<Constant for conversion to radians. rad=degrees*TORAD (TORAD=PI/180)
 #define TODEG 57.29577951308232087684  ///<Constant for conversion to degrees. degrees=rad*TODEG (TODEG=180/PI)
 #define EULER 2.71828182845904523536   ///<Value of cte E (Euler's number or Napier's constant), E=std::exp(1.0);
-#define MEBIBYTE 1048576               ///<Value of 1 MIB 2^20=1024*1024
-#define GIBIBYTE 1073741824            ///<Value of 1 MIB 2^30=1024*1024*1024
+#define MEBIBYTE 1048576               ///<Value of 1 MiB 2^20=1024*1024
+#define GIBIBYTE 1073741824            ///<Value of 1 MiB 2^30=1024*1024*1024
 
 typedef unsigned char byte;
 typedef unsigned short word;
