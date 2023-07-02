@@ -61,11 +61,12 @@ JTimeControl::JTimeControl(const std::string &times){
   ConfigTimes(times);
 }
 
-////==============================================================================
-///// Destructor.
-////==============================================================================
-//JTimeControl::~JTimeControl(){
-//}
+//==============================================================================
+/// Destructor.
+//==============================================================================
+JTimeControl::~JTimeControl(){
+  //printf("----> NumCheckTime:%u\n",NumCheckTime);
+}
 
 //==============================================================================
 /// Initialization of variables.
@@ -76,6 +77,7 @@ void JTimeControl::Reset(){
   NextTime=0;
   Periodic=false;
   FirstTime=TimeOut=0;
+  //NumCheckTime=0;
   TimeOutNum=0;
   Times.clear();
   IteStart=0;
@@ -163,6 +165,7 @@ double JTimeControl::CalcNextTime(){
 /// Devuelve true si paso el siguiente NextTime.
 //==============================================================================
 bool JTimeControl::CheckRealTime(){
+  //NumCheckTime++;
   bool ret=false;
   Timer.Stop();
   const double t=Timer.GetElapsedTimeD()/1000.0;//-En segundos.

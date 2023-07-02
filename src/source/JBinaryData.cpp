@@ -376,7 +376,7 @@ void JBinaryDataArray::ReadFileData(bool resize){
 }
 
 //==============================================================================
-/// Anhade elementos al array de un fichero.
+/// Incorpora elementos al array de un fichero.
 /// Si es ExternalPointer no permite redimensionar la memoria asignada.
 /// Add elements to the array of a file. 
 /// If ExternalPointer will not allow to resize the allocated memory.
@@ -404,7 +404,7 @@ void JBinaryDataArray::ReadData(unsigned count,unsigned size,std::ifstream *pf,b
 }
 
 //==============================================================================
-/// Anhade elementos al array.
+/// Incorpora elementos al array.
 /// Si es ExternalPointer no permite redimensionar la memoria asignada.
 /// Add elements to the array.
 /// If ExternalPointer will not allow to resize the allocated memory.
@@ -414,7 +414,7 @@ void JBinaryDataArray::AddData(unsigned count,const void* data,bool resize){
     //-Reserva memoria si fuese necesario.
     //-Allocates memory if necessary.
     CheckMemory(count,resize);
-    //-Anhade datos al puntero.
+    //-Incorpora datos al puntero.
     //-Add data to the pointer.
     if(Type==JBinaryDataDef::DatText){
       string *strings=(string*)Pointer;
@@ -447,7 +447,7 @@ void JBinaryDataArray::SetData(unsigned count,const void* data,bool externalpoin
 }
 
 //==============================================================================
-/// Anhade un string al array.
+/// Incorpora un string al array.
 /// Si es ExternalPointer no permite redimensionar la memoria asignada.
 /// Add a string to array.
 /// If ExternalPointer will not allow to resize the allocated memory.
@@ -459,7 +459,7 @@ void JBinaryDataArray::AddText(const std::string &str,bool resize){
     //-Reserva memoria si fuese necesario.
     //-Allocates memory if necessary.
     CheckMemory(count,resize);
-    //-Anhade string al array.
+    //-Incorpora string al array.
     //-Add string to array.
     string *strings=(string*)Pointer;
     strings[Count]=str;
@@ -468,7 +468,7 @@ void JBinaryDataArray::AddText(const std::string &str,bool resize){
 }
 
 //==============================================================================
-/// Anhade array de strings al array.
+/// Incorpora array de strings al array.
 /// Si es ExternalPointer no permite redimensionar la memoria asignada.
 /// Add array of strings to array.
 /// If ExternalPointer will not allow to resize the allocated memory.

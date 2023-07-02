@@ -362,7 +362,6 @@ std::string RealStr(double v,unsigned ndigits,bool removezeros){
   ndigits=max(ndigits,1u);
   string fmt=NaturalFmt(v,ndigits,removezeros);
   string ret=PrintStr(fmt.c_str(),v);
-
   const int smax=ndigits+5+(v>=0? 0: 1);
   if(ret.size()>smax || fabs(v)>pow(10,ndigits))ret=PrintStr("%.*e",ndigits-1,v);
   return(ret);
@@ -1346,6 +1345,9 @@ std::string VarStr(const std::string &name,unsigned n,const tdouble3 *values,std
 std::string VarStr(const std::string &name,const std::vector<int> &values,std::string size){
   return(VarStr(name,unsigned(values.size()),values.data(),size));
 }
+std::string VarStr(const std::string &name,const std::vector<unsigned> &values,std::string size){
+  return(VarStr(name,unsigned(values.size()),values.data(),size));
+}
 std::string VarStr(const std::string &name,const std::vector<tdouble3> &values,std::string size,const char *fmt){
   return(VarStr(name,unsigned(values.size()),values.data(),size,fmt));
 }
@@ -1597,7 +1599,7 @@ std::string GetDirWithSlash(const std::string &ruta){
 //==============================================================================
 std::string GetDirWithoutSlash(const std::string &ruta){
   char last=ruta[ruta.length()-1];
-  if(last=='\\'||last=='/')return(ruta.substr(0,ruta.length()-1));
+  if(last=='\\' || last=='/')return(ruta.substr(0,ruta.length()-1));
   return(ruta);
 }
 
@@ -1608,7 +1610,7 @@ std::string GetExtension(const std::string &file){
   std::string ext;
   int pos=(int)file.find_last_of(".");
   int posmin=std::max((int)file.find_last_of("/"),(int)file.find_last_of("\\"));
-  if(pos>=0&&pos>posmin)ext=file.substr(pos+1);
+  if(pos>=0 && pos>posmin)ext=file.substr(pos+1);
   return(ext);
 }
 

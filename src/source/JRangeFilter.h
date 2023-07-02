@@ -28,6 +28,8 @@
 //:# - Error corregido en Config(). (23-01-2017)
 //:# - Nueva funcion GetValues(). (30-07-2018)
 //:# - Nuevo metodo para cargar vector de valores. (21-10-2020)
+//:# - Nuevo metodo GetValuesSta() para cargar vector de valores. (22-04-2023)
+//:# - Nuevo metodo ToStringFull(). (23-04-2023)
 //:#############################################################################
 
 /// \file JRangeFilter.h \brief Declares the class \ref JRangeFilter.
@@ -77,7 +79,11 @@ public:
   unsigned GetNextValue(unsigned v)const;
   bool Empty()const{ return(!Count); }
   std::string ToString()const;
+  std::string ToStringFull()const;
   void GetValues(std::vector<unsigned> &values)const;
+
+  static unsigned GetValuesSta(std::string filter,std::vector<unsigned> &values);
+
 };
 
 #endif

@@ -285,7 +285,8 @@ std::string VarStr(const std::string &name,unsigned n,const float *values,std::s
 std::string VarStr(const std::string &name,unsigned n,const double *values,std::string size="?",const char *fmt="%f");
 std::string VarStr(const std::string &name,unsigned n,const tdouble3 *values,std::string size="?",const char *fmt="%g");
 
-std::string VarStr(const std::string &name,const std::vector<int> &values,std::string size="?");
+std::string VarStr(const std::string &name,const std::vector<int>      &values,std::string size="?");
+std::string VarStr(const std::string &name,const std::vector<unsigned> &values,std::string size="?");
 std::string VarStr(const std::string &name,const std::vector<tdouble3> &values,std::string size="?",const char *fmt="%g");
 
 

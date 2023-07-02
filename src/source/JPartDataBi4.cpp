@@ -299,7 +299,7 @@ std::string JPartDataBi4::GetNamePart(unsigned cpart){
 }
 
 //==============================================================================
-/// Anhade informacion de nuevo part.
+/// Incorpora informacion de nuevo part.
 // Add information to new part.
 //==============================================================================
 JBinaryData* JPartDataBi4::AddPartInfo(unsigned cpart,double timestep,unsigned npok,unsigned nout,unsigned step,double runtime,tdouble3 domainmin,tdouble3 domainmax,ullong nptotal,ullong idmax){
@@ -320,7 +320,7 @@ JBinaryData* JPartDataBi4::AddPartInfo(unsigned cpart,double timestep,unsigned n
 }
 
 //==============================================================================
-/// Anhade datos (definidos por el usuario) de particulas de de nuevo part.
+/// Incorpora datos (definidos por el usuario) de particulas de de nuevo part.
 /// Add data (defined by user) of particles to new part.
 //==============================================================================
 void JPartDataBi4::AddPartDataVar(const std::string &name,JBinaryDataDef::TpData type,unsigned npok,const void *v,bool externalpointer){
@@ -332,7 +332,7 @@ void JPartDataBi4::AddPartDataVar(const std::string &name,JBinaryDataDef::TpData
 }
 
 //==============================================================================
-/// Anhade datos (definidos por el usuario) de particulas de de nuevo part.
+/// Incorpora datos (definidos por el usuario) de particulas de de nuevo part.
 /// Add data (defined by user) of particles to new part.
 //==============================================================================
 void JPartDataBi4::AddPartData(const std::string &name,unsigned npok,const void *v
@@ -352,7 +352,7 @@ void JPartDataBi4::AddPartData(const std::string &name,unsigned npok,const void 
 }
 
 //==============================================================================
-/// Anhade datos de particulas de de nuevo part.
+/// Incorpora datos de particulas de de nuevo part.
 /// Adds data of particles to new part.
 //==============================================================================
 void JPartDataBi4::AddPartData(unsigned npok,const unsigned *idp,const ullong *idpd
@@ -373,7 +373,7 @@ void JPartDataBi4::AddPartData(unsigned npok,const unsigned *idp,const ullong *i
 }
 
 //==============================================================================
-/// Anhade datos Splitting de particulas de de nuevo part.
+/// Incorpora datos Splitting de particulas de de nuevo part.
 /// Add data Splitting of particles to new part.
 //==============================================================================
 void JPartDataBi4::AddPartDataSplitting(unsigned npok,const float *mass

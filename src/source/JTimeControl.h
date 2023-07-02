@@ -56,6 +56,8 @@ protected:
   double FirstTime;     ///<First time to evaluate (when it is less than timeout and not zero). | Primer instante a evaluar (cuando es menor que timeout y no es cero).
   double TimeOut;       ///<Periodic interval duration (in seconds). | Duracion de intervalo periodico (en segundos).
 
+  //unsigned NumCheckTime;
+
   unsigned TimeOutNum;  //<Number of intervals processed with Periodic or Times. | Numero de intervalos procesados con Periodic o Times.
 
   unsigned TimesSize;        ///<Number of elements of Times. | Numero de elementos de Times. 
@@ -83,7 +85,7 @@ public:
   JTimeControl(double tfirst,double tout);
   JTimeControl(unsigned ntimes,const double *vtimes);
   JTimeControl(const std::string &times);
-  //~JTimeControl();
+  ~JTimeControl();
 
   void Reset();
 

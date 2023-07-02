@@ -108,7 +108,7 @@ bool JMotion::ExistsObj(JMotionObj* obj)const{
 }
 
 //==============================================================================
-// Anhade un objeto
+// Incorpora un objeto
 // - id: Es el identificador del objeto tiene que ser mayor que cero.
 // - idparent: Id del objeto padre, es 0 cuando no tiene padre.
 // - ref: Referencia (Mk) al objeto real que se mueve. Menor que cero cuando se 
@@ -128,7 +128,7 @@ void JMotion::ObjAdd(unsigned id,unsigned idparent,int ref){
 }
 
 //==============================================================================
-// Anhade un evento
+// Incorpora un evento
 // - timefinish: Indica el tiempo maximo del movimiento/s iniciados por este 
 //   evento, si es menor que cero se ignora.
 //==============================================================================
@@ -145,7 +145,7 @@ void JMotion::EventAdd(unsigned objid,unsigned movid,double timestart,double tim
 }
 
 //==============================================================================
-// Anhade (si es necesario) un nuevo eje para un objeto y lo devuelve.
+// Incorpora (si es necesario) un nuevo eje para un objeto y lo devuelve.
 //==============================================================================
 JMotionAxis* JMotion::AxisAdd(unsigned objid,const tdouble3 &p1,const tdouble3 &p2){
   if(Prepared)Run_Exceptioon("Invalid method in execution mode.");
@@ -162,7 +162,7 @@ JMotionAxis* JMotion::AxisAdd(unsigned objid,const tdouble3 &p1,const tdouble3 &
 }
 
 //==============================================================================
-// Anhade un nuevo movimiento
+// Incorpora un nuevo movimiento
 //==============================================================================
 void JMotion::MovAdd(unsigned objid,JMotionMov* mov){
   if(Prepared)Run_Exceptioon("Invalid method in execution mode.");
@@ -175,39 +175,39 @@ void JMotion::MovAdd(unsigned objid,JMotionMov* mov){
 }
 
 //==============================================================================
-// Anhade un tiempo de espera
+// Incorpora un tiempo de espera
 //==============================================================================
 void JMotion::MovAddWait(unsigned objid,unsigned id,unsigned nextid,double time){
   if(time<0)Run_Exceptioon("Wating times lenght lower than zero are not allowed.");
   MovAdd(objid,new JMotionMovWait(id,nextid,time));
 }
 //==============================================================================
-// Anhade un desplazamiento instantaneo
+// Incorpora un desplazamiento instantaneo
 //==============================================================================
 void JMotion::MovAddTeleport(unsigned objid,unsigned id,unsigned nextid,const tdouble3 &mpos){
   MovAdd(objid,new JMotionMovRect(id,nextid,-1,mpos));
 }
 //==============================================================================
-// Anhade un movimiento rectilineo uniforme
+// Incorpora un movimiento rectilineo uniforme
 //==============================================================================
 void JMotion::MovAddRectilinear(unsigned objid,unsigned id,unsigned nextid,double time,const tdouble3 &vel){
   MovAdd(objid,new JMotionMovRect(id,nextid,time,vel));
 }
 //==============================================================================
-// Anhade un movimiento rectilineo uniformemente acelerado
+// Incorpora un movimiento rectilineo uniformemente acelerado
 //==============================================================================
 void JMotion::MovAddRectilinearAce(unsigned objid,unsigned id,unsigned nextid,double time,const tdouble3 &ace,const tdouble3 &vel,bool velpre){
   MovAdd(objid,new JMotionMovRectAce(id,nextid,time,ace,vel,velpre));
 }
 //==============================================================================
-// Anhade un movimiento rotacion
+// Incorpora un movimiento rotacion
 //==============================================================================
 void JMotion::MovAddRotation(unsigned objid,unsigned id,unsigned nextid,double time,bool angdegrees,const tdouble3 &axisp1,const tdouble3 &axisp2,double velang,bool useangdegrees){
   if(useangdegrees && !angdegrees)velang=velang*TODEG;
   MovAdd(objid,new JMotionMovRot(id,nextid,time,angdegrees,AxisAdd(objid,axisp1,axisp2),velang));
 }
 //==============================================================================
-// Anhade un movimiento rotacion uniformemente acelerado
+// Incorpora un movimiento rotacion uniformemente acelerado
 //==============================================================================
 void JMotion::MovAddRotationAce(unsigned objid,unsigned id,unsigned nextid,double time,bool angdegrees,const tdouble3 &axisp1,const tdouble3 &axisp2,double aceang,double velang,bool velpre,bool useangdegrees){
   if(useangdegrees && !angdegrees){
@@ -217,14 +217,14 @@ void JMotion::MovAddRotationAce(unsigned objid,unsigned id,unsigned nextid,doubl
   MovAdd(objid,new JMotionMovRotAce(id,nextid,time,angdegrees,AxisAdd(objid,axisp1,axisp2),aceang,velang,velpre));
 }
 //==============================================================================
-// Anhade un movimiento circular sin rotacion
+// Incorpora un movimiento circular sin rotacion
 //==============================================================================
 void JMotion::MovAddCircular(unsigned objid,unsigned id,unsigned nextid,double time,bool angdegrees,const tdouble3 &axisp1,const tdouble3 &axisp2,const tdouble3 &ref,double velang,bool useangdegrees){
   if(useangdegrees && !angdegrees)velang=velang*TODEG;
   MovAdd(objid,new JMotionMovCir(id,nextid,time,angdegrees,AxisAdd(objid,axisp1,axisp2),AxisAdd(objid,ref,ref),velang));
 }
 //==============================================================================
-// Anhade un movimiento circular sin rotacion uniformemente acelerado
+// Incorpora un movimiento circular sin rotacion uniformemente acelerado
 //==============================================================================
 void JMotion::MovAddCircularAce(unsigned objid,unsigned id,unsigned nextid,double time,bool angdegrees,const tdouble3 &axisp1,const tdouble3 &axisp2,const tdouble3 &ref,double aceang,double velang,bool velpre,bool useangdegrees){
   if(useangdegrees && !angdegrees){
@@ -234,14 +234,14 @@ void JMotion::MovAddCircularAce(unsigned objid,unsigned id,unsigned nextid,doubl
   MovAdd(objid,new JMotionMovCirAce(id,nextid,time,angdegrees,AxisAdd(objid,axisp1,axisp2),AxisAdd(objid,ref,ref),aceang,velang,velpre));
 }
 //==============================================================================
-// Anhade un movimiento rectilineo sinusoidal
+// Incorpora un movimiento rectilineo sinusoidal
 //==============================================================================
 void JMotion::MovAddRecSinu(unsigned objid,unsigned id,unsigned nextid,double time,bool angdegrees,const tdouble3 &freq,const tdouble3 &ampl,tdouble3 phase,bool phaseprev,bool useangdegrees){
   if(useangdegrees && angdegrees)phase=phase*TDouble3(TORAD); //-Convierte a radianes.
   MovAdd(objid,new JMotionMovRectSinu(id,nextid,time,angdegrees,freq,ampl,phase,phaseprev));
 }
 //==============================================================================
-// Anhade un movimiento de rotacion sinusoidal
+// Incorpora un movimiento de rotacion sinusoidal
 //==============================================================================
 void JMotion::MovAddRotSinu(unsigned objid,unsigned id,unsigned nextid,double time,bool angdegrees,const tdouble3 &axisp1,const tdouble3 &axisp2,double freq,double ampl,double phase,bool phaseprev,bool useangdegrees){
   if(useangdegrees && !angdegrees)ampl=ampl*TODEG;
@@ -249,7 +249,7 @@ void JMotion::MovAddRotSinu(unsigned objid,unsigned id,unsigned nextid,double ti
   MovAdd(objid,new JMotionMovRotSinu(id,nextid,time,angdegrees,AxisAdd(objid,axisp1,axisp2),freq,ampl,phase,phaseprev));
 }
 //==============================================================================
-// Anhade un movimiento circular sinusoidal
+// Incorpora un movimiento circular sinusoidal
 //==============================================================================
 void JMotion::MovAddCirSinu(unsigned objid,unsigned id,unsigned nextid,double time,bool angdegrees,const tdouble3 &axisp1,const tdouble3 &axisp2,const tdouble3 &ref,double freq,double ampl,double phase,bool phaseprev,bool useangdegrees){
   if(useangdegrees && !angdegrees)ampl=ampl*TODEG;
@@ -257,7 +257,7 @@ void JMotion::MovAddCirSinu(unsigned objid,unsigned id,unsigned nextid,double ti
   MovAdd(objid,new JMotionMovCirSinu(id,nextid,time,angdegrees,AxisAdd(objid,axisp1,axisp2),AxisAdd(objid,ref,ref),freq,ampl,phase,phaseprev));
 }
 //==============================================================================
-// Anhade un movimiento rectilineo a partir de datos de un fichero.
+// Incorpora un movimiento rectilineo a partir de datos de un fichero.
 // - fields: Numero total de campos en el fichero.
 // - fieldtime: Posicion del campo time dentro de fields.
 // - fieldx: Posicion del campo x dentro de fields (menor que 0 se ignora).
@@ -274,7 +274,7 @@ void JMotion::MovAddRectilinearFile(unsigned objid,unsigned id,unsigned nextid,d
   MovAdd(objid,new JMotionMovRectFile(id,nextid,time,&DirData,file,fields,fieldtime,fieldx,fieldy,fieldz));
 }
 //==============================================================================
-// Anhade un movimiento de rotacion a partir de datos de un fichero.
+// Incorpora un movimiento de rotacion a partir de datos de un fichero.
 //==============================================================================
 void JMotion::MovAddRotationFile(unsigned objid,unsigned id,unsigned nextid,double time,bool angdegrees
   ,const tdouble3 &axisp1,const tdouble3 &axisp2,const std::string &file)
@@ -283,7 +283,7 @@ void JMotion::MovAddRotationFile(unsigned objid,unsigned id,unsigned nextid,doub
 }
 
 //==============================================================================
-// Anhade un movimiento nulo
+// Incorpora un movimiento nulo
 //==============================================================================
 void JMotion::MovAddNull(unsigned objid,unsigned id){
   MovAdd(objid,new JMotionMovNull(id));

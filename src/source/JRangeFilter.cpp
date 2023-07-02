@@ -173,6 +173,19 @@ std::string JRangeFilter::ToString()const{
 }
 
 //==============================================================================
+/// Returns all values in text format.
+//==============================================================================
+std::string JRangeFilter::ToStringFull()const{
+  std::string tx="";
+  unsigned v=GetFirstValue();
+  while(v!=UINT_MAX){
+    tx=tx+(tx.empty()? fun::UintStr(v): fun::PrintStr(",%u",v));
+    v=GetNextValue(v);
+  }
+  return(tx);
+}
+
+//==============================================================================
 /// Configures the given filter.
 //==============================================================================
 void JRangeFilter::Config(std::string filter){
@@ -280,6 +293,15 @@ void JRangeFilter::GetValues(std::vector<unsigned> &values)const{
     values.push_back(v);
     v=GetNextValue(v);
   }
+}
+
+//==============================================================================
+/// Static member to return vector with values.
+//==============================================================================
+unsigned JRangeFilter::GetValuesSta(std::string filter,std::vector<unsigned> &values){
+  JRangeFilter rg(filter);
+  rg.GetValues(values);
+  return(unsigned(values.size()));
 }
 
 
