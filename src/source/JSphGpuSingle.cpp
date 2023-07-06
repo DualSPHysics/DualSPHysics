@@ -657,7 +657,9 @@ void JSphGpuSingle::FtApplyImposedVel(float3 *ftoforcesresg)const{
 //==============================================================================
 void JSphGpuSingle::RunFloating(double dt,bool predictor){
   Timersg->TmStart(TMG_SuFloating,false);
-  if(TimeStep>=FtPause){//-Operator >= is used because when FtPause=0 in symplectic-predictor, code would not enter here. | Se usa >= pq si FtPause es cero en symplectic-predictor no entraria.
+  const bool ftpaused=(TimeStep<FtPause);//-Operator !(>=) is used because when FtPause=0 in symplectic-predictor, code would not enter here. | Se usa !(>=) pq si FtPause es cero en symplectic-predictor no entraria.
+
+  if(!ftpaused){
     
     //-Adds external forces (ForcePoints, Moorings, external file) to FtoForces[].
     if(ForcePoints!=NULL || FtLinearForce!=NULL){
@@ -764,7 +766,7 @@ void JSphGpuSingle::RunFloating(double dt,bool predictor){
   if(!predictor && ForcePoints){
     Timersg->TmStart(TMG_SuMoorings,false);
     UpdateFtObjs(); //-Updates floating information on CPU memory.
-    ForcePoints->UpdatePoints(TimeStep,dt,FtObjs);
+    ForcePoints->UpdatePoints(TimeStep,dt,ftpaused,FtObjs);
     if(Moorings)Moorings->ComputeForces(Nstep,TimeStep,dt,ForcePoints);
     ForcePoints->ComputeForcesSum();
     Timersg->TmStop(TMG_SuMoorings,false);
