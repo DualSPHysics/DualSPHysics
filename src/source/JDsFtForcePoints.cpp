@@ -349,9 +349,12 @@ tfloat3 JDsFtForcePoints::FtPeriodicDist(const tdouble3 &pos,const tdouble3 &cen
 //==============================================================================
 /// Updates position and velocity of points.
 //==============================================================================
-void JDsFtForcePoints::UpdatePoints(double timestep,double dt,const StFloatingData *ftdata){
+void JDsFtForcePoints::UpdatePoints(double timestep,double dt,bool ftpaused
+  ,const StFloatingData* ftdata)
+{
   TimeStep=timestep+dt;
-  for(word c=0;c<PtCount;c++){
+  if(ftpaused)for(word c=0;c<PtCount;c++)PtForce[c]=TFloat3(0);
+  else for(word c=0;c<PtCount;c++){
     const word ftid=PtFtid[c];
     tdouble3 pos=PtPos[c];
     tfloat3 vel=PtVel[c];

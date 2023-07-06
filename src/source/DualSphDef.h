@@ -440,7 +440,7 @@ inline const char* GetNameRigidMode(TpRigidMode rigidmode){
 typedef enum{ 
    FTMODE_None=0            ///<There are not floatings.
   ,FTMODE_Sph=1             ///<Interaction between floatings and boundaries in terms of SPH.
-  ,FTMODE_Ext=2              ///<Interaction between floatings and boundaries in terms of DEM or CHRONO.
+  ,FTMODE_Ext=2             ///<Interaction between floatings and boundaries in terms of DEM or CHRONO.
 }TpFtMode;  
 
 #define USE_FLOATING (ftmode!=FTMODE_None)

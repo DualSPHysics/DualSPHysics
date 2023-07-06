@@ -120,7 +120,7 @@ public:
   void CheckPoints(const JSphMk *mkinfo,unsigned np,const unsigned *idp,const tdouble3 *pos);
   void VisuConfig(std::string txhead,std::string txfoot,unsigned ftcount,const StFloatingData *ftdata)const;
 
-  void UpdatePoints(double timestep,double dt,const StFloatingData *ftdata);
+  void UpdatePoints(double timestep,double dt,bool ftpaused,const StFloatingData* ftdata);
 
   tdouble3 GetPos(word idx)const{ return(PtPos[idx]); }
   tfloat3 GetVel(word idx)const{ return(PtVel[idx]); }

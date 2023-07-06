@@ -662,8 +662,9 @@ void JSphGpuSingle::RunFloating(double dt,bool predictor){
   Timersg->TmStart(TMG_SuFloating,false);
   const bool saveftmot=(!predictor && FtMotSave && FtMotSave->CheckTime(TimeStep+dt)); //<vs_ftmottionsv>
   const bool saveftvalues=(!predictor && (TimeStep+dt>=TimePartNext || saveftmot));
+  const bool ftpaused=(TimeStep<FtPause);
 
-  if(TimeStep>=FtPause || saveftvalues){
+  if(!ftpaused || saveftvalues){
     //-Adds external forces (ForcePoints, Moorings, external file) to FtoForces[].
     if(ForcePoints!=NULL || FtLinearForce!=NULL){
       StFtoForces *ftoforces=(StFtoForces *)FtoAuxFloat15;
@@ -720,7 +721,7 @@ void JSphGpuSingle::RunFloating(double dt,bool predictor){
     }
   }
 
-  if(TimeStep>=FtPause){//-Operator >= is used because when FtPause=0 in symplectic-predictor, code would not enter here. | Se usa >= pq si FtPause es cero en symplectic-predictor no entraria.
+  if(!ftpaused){//-Operator >= is used because when FtPause=0 in symplectic-predictor, code would not enter here. | Se usa >= pq si FtPause es cero en symplectic-predictor no entraria.
     //-Calculate data to update floatings / Calcula datos para actualizar floatings.
     cusph::FtCalcForcesRes(FtCount,Simulate2D,dt,FtoVelAceg,FtoCenterg,FtoForcesg,FtoForcesResg,FtoCenterResg);
     //-Applies imposed velocity.
@@ -800,7 +801,7 @@ void JSphGpuSingle::RunFloating(double dt,bool predictor){
   if(!predictor && ForcePoints){
     Timersg->TmStart(TMG_SuMoorings,false);
     UpdateFtObjs(); //-Updates floating information on CPU memory.
-    ForcePoints->UpdatePoints(TimeStep,dt,FtObjs);
+    ForcePoints->UpdatePoints(TimeStep,dt,ftpaused,FtObjs);
     if(Moorings)Moorings->ComputeForces(Nstep,TimeStep,dt,ForcePoints);
     ForcePoints->ComputeForcesSum();
     Timersg->TmStop(TMG_SuMoorings,false);
