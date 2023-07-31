@@ -53,6 +53,8 @@
 //:#   obsoletos que no reconocen head.si64. (20-06-2023)
 //:# - Graba datos en partes de MaxSizeSi32 para evitar errores de escritura y 
 //:#   comprueba lecturas y escrituras principales. (21-06-2023) 
+//:# - Nuevos metodos CreateArrayTYPE() para facilitar un uso eficiente. (23-07-2023)
+//:# - Nuevos metodos GetArrayType() y GetArrayTpSize() para obtener arrays comprobados. (28-07-2023)
 //:#############################################################################
 
 /// \file JBinaryData.h \brief Declares the class \ref JBinaryData.
@@ -203,7 +205,7 @@ class JBinaryData : protected JObject
     std::string vtext;
     union{
       char vchar;
-      unsigned char vuchar;
+      byte vuchar;
       short vshort;
       unsigned vushort;
       int vint;
@@ -247,39 +249,39 @@ class JBinaryData : protected JObject
 
   void InData   (size_t& count,size_t size,byte* ptr,const byte* dat,size_t sdat)const;
   void InStr    (size_t& count,size_t size,byte* ptr,const std::string& cad)const;
-  void InBool   (size_t& count,size_t size,byte* ptr,bool v)const{            int vv=(v? 1: 0); InInt(count,size,ptr,vv);               }  ///<Introduce bool en ptr. Introduces bool in ptr.
-  void InChar   (size_t& count,size_t size,byte* ptr,char v)const{            InData(count,size,ptr,(byte*)&v,sizeof(char));            }  ///<Introduce char en ptr. Introduces char in ptr.
-  void InUchar  (size_t& count,size_t size,byte* ptr,unsigned char v)const{   InData(count,size,ptr,(byte*)&v,sizeof(unsigned char));   }  ///<Introduce unsigned char en ptr. Introduces unsigned char in ptr.
-  void InShort  (size_t& count,size_t size,byte* ptr,short v)const{           InData(count,size,ptr,(byte*)&v,sizeof(short));           }  ///<Introduce short en ptr. Introduces short in ptr.
-  void InUshort (size_t& count,size_t size,byte* ptr,unsigned short v)const{  InData(count,size,ptr,(byte*)&v,sizeof(unsigned short));  }  ///<Introduce unsigned short en ptr. Introduces unsigned short in ptr.
-  void InInt    (size_t& count,size_t size,byte* ptr,int v)const{             InData(count,size,ptr,(byte*)&v,sizeof(int));             }  ///<Introduce int en ptr. Introduces int in ptr.
-  void InUint   (size_t& count,size_t size,byte* ptr,unsigned v)const{        InData(count,size,ptr,(byte*)&v,sizeof(unsigned));        }  ///<Introduce unsigned en ptr. Introduces unsigned in ptr
-  void InLlong  (size_t& count,size_t size,byte* ptr,llong v)const{           InData(count,size,ptr,(byte*)&v,sizeof(llong));           }  ///<Introduce long long en ptr. Introduces long long in ptr
-  void InUllong (size_t& count,size_t size,byte* ptr,ullong v)const{          InData(count,size,ptr,(byte*)&v,sizeof(ullong));          }  ///<Introduce unsigned long long en ptr. Introduces unsigned long in ptr
-  void InFloat  (size_t& count,size_t size,byte* ptr,float v)const{           InData(count,size,ptr,(byte*)&v,sizeof(float));           }  ///<Introduce float en ptr. Introduces float in ptr
-  void InDouble (size_t& count,size_t size,byte* ptr,double v)const{          InData(count,size,ptr,(byte*)&v,sizeof(double));          }  ///<Introduce double en ptr. Introduces double in ptr
-  void InInt3   (size_t& count,size_t size,byte* ptr,tint3 v)const{           InData(count,size,ptr,(byte*)&v,sizeof(tint3));           }  ///<Introduce tint3 en ptr. Introduces tint3 in ptr
-  void InUint3  (size_t& count,size_t size,byte* ptr,tuint3 v)const{          InData(count,size,ptr,(byte*)&v,sizeof(tuint3));          }  ///<Introduce tuint3 en ptr. Introduces tuint3 in ptr
-  void InFloat3 (size_t& count,size_t size,byte* ptr,tfloat3 v)const{         InData(count,size,ptr,(byte*)&v,sizeof(tfloat3));         }  ///<Introduce tfloat3 en ptr. Introduces tfloat3 in ptr
-  void InDouble3(size_t& count,size_t size,byte* ptr,tdouble3 v)const{        InData(count,size,ptr,(byte*)&v,sizeof(tdouble3));        }  ///<Introduce tdouble3 en ptr. Introduces tdouble3 in ptr
+  void InBool   (size_t& count,size_t size,byte* ptr,bool v)const{     int vv=(v? 1: 0); InInt(count,size,ptr,vv);                }  ///<Introduce bool en ptr. Introduces bool in ptr.
+  void InChar   (size_t& count,size_t size,byte* ptr,char v)const{     InData(count,size,ptr,(byte*)&v,sizeof(char));     }  ///<Introduce char en ptr. Introduces char in ptr.
+  void InUchar  (size_t& count,size_t size,byte* ptr,byte v)const{     InData(count,size,ptr,(byte*)&v,sizeof(byte));     }  ///<Introduce byte en ptr. Introduces byte in ptr.
+  void InShort  (size_t& count,size_t size,byte* ptr,short v)const{    InData(count,size,ptr,(byte*)&v,sizeof(short));    }  ///<Introduce short en ptr. Introduces short in ptr.
+  void InUshort (size_t& count,size_t size,byte* ptr,word v)const{     InData(count,size,ptr,(byte*)&v,sizeof(word));     }  ///<Introduce word en ptr. Introduces word in ptr.
+  void InInt    (size_t& count,size_t size,byte* ptr,int v)const{      InData(count,size,ptr,(byte*)&v,sizeof(int));      }  ///<Introduce int en ptr. Introduces int in ptr.
+  void InUint   (size_t& count,size_t size,byte* ptr,unsigned v)const{ InData(count,size,ptr,(byte*)&v,sizeof(unsigned)); }  ///<Introduce unsigned en ptr. Introduces unsigned in ptr
+  void InLlong  (size_t& count,size_t size,byte* ptr,llong v)const{    InData(count,size,ptr,(byte*)&v,sizeof(llong));    }  ///<Introduce long long en ptr. Introduces long long in ptr
+  void InUllong (size_t& count,size_t size,byte* ptr,ullong v)const{   InData(count,size,ptr,(byte*)&v,sizeof(ullong));   }  ///<Introduce unsigned long long en ptr. Introduces unsigned long in ptr
+  void InFloat  (size_t& count,size_t size,byte* ptr,float v)const{    InData(count,size,ptr,(byte*)&v,sizeof(float));    }  ///<Introduce float en ptr. Introduces float in ptr
+  void InDouble (size_t& count,size_t size,byte* ptr,double v)const{   InData(count,size,ptr,(byte*)&v,sizeof(double));   }  ///<Introduce double en ptr. Introduces double in ptr
+  void InInt3   (size_t& count,size_t size,byte* ptr,tint3 v)const{    InData(count,size,ptr,(byte*)&v,sizeof(tint3));    }  ///<Introduce tint3 en ptr. Introduces tint3 in ptr
+  void InUint3  (size_t& count,size_t size,byte* ptr,tuint3 v)const{   InData(count,size,ptr,(byte*)&v,sizeof(tuint3));   }  ///<Introduce tuint3 en ptr. Introduces tuint3 in ptr
+  void InFloat3 (size_t& count,size_t size,byte* ptr,tfloat3 v)const{  InData(count,size,ptr,(byte*)&v,sizeof(tfloat3));  }  ///<Introduce tfloat3 en ptr. Introduces tfloat3 in ptr
+  void InDouble3(size_t& count,size_t size,byte* ptr,tdouble3 v)const{ InData(count,size,ptr,(byte*)&v,sizeof(tdouble3)); }  ///<Introduce tdouble3 en ptr. Introduces tdouble3 in ptr
 
-  void           OutData   (size_t& count,size_t size,const byte* ptr,byte* dat,size_t sdat)const;
-  std::string    OutStr    (size_t& count,size_t size,const byte* ptr)const;
-  bool           OutBool   (size_t& count,size_t size,const byte* ptr)const{  return(OutInt(count,size,ptr)!=0);  }  /// Extrae bool de ptr.
-  char           OutChar   (size_t& count,size_t size,const byte* ptr)const{  char v;           OutData(count,size,ptr,(byte*)&v,sizeof(char));           return(v);  }  ///< Extrae char de ptr. Extracts char of ptr.
-  unsigned char  OutUchar  (size_t& count,size_t size,const byte* ptr)const{  unsigned char v;  OutData(count,size,ptr,(byte*)&v,sizeof(unsigned char));  return(v);  }  ///< Extrae unsigned char de ptr. Extracts unsigned char of ptr.
-  short          OutShort  (size_t& count,size_t size,const byte* ptr)const{  short v;          OutData(count,size,ptr,(byte*)&v,sizeof(short));          return(v);  }  ///< Extrae short de ptr. Extracts short of ptr.
-  unsigned short OutUshort (size_t& count,size_t size,const byte* ptr)const{  unsigned short v; OutData(count,size,ptr,(byte*)&v,sizeof(unsigned short)); return(v);  }  ///< Extrae unsigned short de ptr. Extracts unsigned short of ptr.
-  int            OutInt    (size_t& count,size_t size,const byte* ptr)const{  int v;            OutData(count,size,ptr,(byte*)&v,sizeof(int));            return(v);  }  ///< Extrae int de ptr. Extracts int of ptr.
-  unsigned       OutUint   (size_t& count,size_t size,const byte* ptr)const{  unsigned v;       OutData(count,size,ptr,(byte*)&v,sizeof(unsigned));       return(v);  }  ///< Extrae unsigned de ptr. Extracts unsigned of ptr.
-  llong          OutLlong  (size_t& count,size_t size,const byte* ptr)const{  llong v;          OutData(count,size,ptr,(byte*)&v,sizeof(llong));          return(v);  }  ///< Extrae long long de ptr. Extracts long long of ptr.
-  ullong         OutUllong (size_t& count,size_t size,const byte* ptr)const{  ullong v;         OutData(count,size,ptr,(byte*)&v,sizeof(ullong));         return(v);  }  ///< Extrae unsigned long long de ptr. Extracts unsigned long long of ptr.
-  float          OutFloat  (size_t& count,size_t size,const byte* ptr)const{  float v;          OutData(count,size,ptr,(byte*)&v,sizeof(float));          return(v);  }  ///< Extrae float de ptr. Extracts float of ptr.
-  double         OutDouble (size_t& count,size_t size,const byte* ptr)const{  double v;         OutData(count,size,ptr,(byte*)&v,sizeof(double));         return(v);  }  ///< Extrae double de ptr. Extracts double of ptr.
-  tint3          OutInt3   (size_t& count,size_t size,const byte* ptr)const{  tint3 v;          OutData(count,size,ptr,(byte*)&v,sizeof(tint3));          return(v);  }  ///< Extrae tint3 de ptr. Extracts tint3 of ptr.
-  tuint3         OutUint3  (size_t& count,size_t size,const byte* ptr)const{  tuint3 v;         OutData(count,size,ptr,(byte*)&v,sizeof(tuint3));         return(v);  }  ///< Extrae tuint3 de ptr. Extracts tuint3 of ptr.
-  tfloat3        OutFloat3 (size_t& count,size_t size,const byte* ptr)const{  tfloat3 v;        OutData(count,size,ptr,(byte*)&v,sizeof(tfloat3));        return(v);  }  ///< Extrae tfloat3 de ptr. Extracts tfloat3 of ptr.
-  tdouble3       OutDouble3(size_t& count,size_t size,const byte* ptr)const{  tdouble3 v;       OutData(count,size,ptr,(byte*)&v,sizeof(tdouble3));       return(v);  }  ///< Extrae tdouble3 de ptr. Extracts tdouble3 of ptr.
+  void         OutData   (size_t& count,size_t size,const byte* ptr,byte* dat,size_t sdat)const;
+  std::string  OutStr    (size_t& count,size_t size,const byte* ptr)const;
+  bool         OutBool   (size_t& count,size_t size,const byte* ptr)const{  return(OutInt(count,size,ptr)!=0);  }  /// Extrae bool de ptr.
+  char         OutChar   (size_t& count,size_t size,const byte* ptr)const{  char v;     OutData(count,size,ptr,(byte*)&v,sizeof(char));     return(v);  }  ///< Extrae char de ptr. Extracts char of ptr.
+  byte         OutUchar  (size_t& count,size_t size,const byte* ptr)const{  byte v;     OutData(count,size,ptr,(byte*)&v,sizeof(byte));     return(v);  }  ///< Extrae byte de ptr. Extracts byte of ptr.
+  short        OutShort  (size_t& count,size_t size,const byte* ptr)const{  short v;    OutData(count,size,ptr,(byte*)&v,sizeof(short));    return(v);  }  ///< Extrae short de ptr. Extracts short of ptr.
+  word         OutUshort (size_t& count,size_t size,const byte* ptr)const{  word v;     OutData(count,size,ptr,(byte*)&v,sizeof(word));     return(v);  }  ///< Extrae word de ptr. Extracts word of ptr.
+  int          OutInt    (size_t& count,size_t size,const byte* ptr)const{  int v;      OutData(count,size,ptr,(byte*)&v,sizeof(int));      return(v);  }  ///< Extrae int de ptr. Extracts int of ptr.
+  unsigned     OutUint   (size_t& count,size_t size,const byte* ptr)const{  unsigned v; OutData(count,size,ptr,(byte*)&v,sizeof(unsigned)); return(v);  }  ///< Extrae unsigned de ptr. Extracts unsigned of ptr.
+  llong        OutLlong  (size_t& count,size_t size,const byte* ptr)const{  llong v;    OutData(count,size,ptr,(byte*)&v,sizeof(llong));    return(v);  }  ///< Extrae long long de ptr. Extracts long long of ptr.
+  ullong       OutUllong (size_t& count,size_t size,const byte* ptr)const{  ullong v;   OutData(count,size,ptr,(byte*)&v,sizeof(ullong));   return(v);  }  ///< Extrae unsigned long long de ptr. Extracts unsigned long long of ptr.
+  float        OutFloat  (size_t& count,size_t size,const byte* ptr)const{  float v;    OutData(count,size,ptr,(byte*)&v,sizeof(float));    return(v);  }  ///< Extrae float de ptr. Extracts float of ptr.
+  double       OutDouble (size_t& count,size_t size,const byte* ptr)const{  double v;   OutData(count,size,ptr,(byte*)&v,sizeof(double));   return(v);  }  ///< Extrae double de ptr. Extracts double of ptr.
+  tint3        OutInt3   (size_t& count,size_t size,const byte* ptr)const{  tint3 v;    OutData(count,size,ptr,(byte*)&v,sizeof(tint3));    return(v);  }  ///< Extrae tint3 de ptr. Extracts tint3 of ptr.
+  tuint3       OutUint3  (size_t& count,size_t size,const byte* ptr)const{  tuint3 v;   OutData(count,size,ptr,(byte*)&v,sizeof(tuint3));   return(v);  }  ///< Extrae tuint3 de ptr. Extracts tuint3 of ptr.
+  tfloat3      OutFloat3 (size_t& count,size_t size,const byte* ptr)const{  tfloat3 v;  OutData(count,size,ptr,(byte*)&v,sizeof(tfloat3));  return(v);  }  ///< Extrae tfloat3 de ptr. Extracts tfloat3 of ptr.
+  tdouble3     OutDouble3(size_t& count,size_t size,const byte* ptr)const{  tdouble3 v; OutData(count,size,ptr,(byte*)&v,sizeof(tdouble3)); return(v);  }  ///< Extrae tdouble3 de ptr. Extracts tdouble3 of ptr.
 
   void InValue(size_t& count,size_t size,byte* ptr,const StValue& v)const;
   void OutValue(size_t& count,size_t size,const byte* ptr);
@@ -380,28 +382,35 @@ class JBinaryData : protected JObject
   size_t GetArrayIndex64(const std::string& name)const;
   JBinaryDataArray* GetArray(const std::string& name);
   JBinaryDataArray* GetArray(size_t index);
+  JBinaryDataArray* GetArrayType(const std::string& name,JBinaryDataDef::TpData type,std::string filerror="");
+  JBinaryDataArray* GetArrayTpSize(const std::string& name,JBinaryDataDef::TpData type,size_t count,std::string filerror="");
   JBinaryDataArray* CreateArray(const std::string& name,JBinaryDataDef::TpData type);
   JBinaryDataArray* CreateArray(const std::string& name,JBinaryDataDef::TpData type,size_t count,const void* data,bool externalpointer);
 
-  tfloat3* CreateArrayFloat3(const std::string& name,size_t count,bool clear);
+  word*     CreateArrayUshort (const std::string& name,size_t count,bool clear);
+  unsigned* CreateArrayUint   (const std::string& name,size_t count,bool clear);
+  float*    CreateArrayFloat  (const std::string& name,size_t count,bool clear);
+  double*   CreateArrayDouble (const std::string& name,size_t count,bool clear);
+  tfloat3*  CreateArrayFloat3 (const std::string& name,size_t count,bool clear);
+  tdouble3* CreateArrayDouble3(const std::string& name,size_t count,bool clear);
 
   void RemoveArray(const std::string& name);
   void RemoveArrays();
   JBinaryDataArray* CheckCopyArrayData(const std::string& name,size_t size,JBinaryDataDef::TpData type);
-  void CopyArrayData(const std::string& name,size_t size,char*           ptr);
-  void CopyArrayData(const std::string& name,size_t size,unsigned char*  ptr);
-  void CopyArrayData(const std::string& name,size_t size,short*          ptr);
-  void CopyArrayData(const std::string& name,size_t size,unsigned short* ptr);
-  void CopyArrayData(const std::string& name,size_t size,int*            ptr);
-  void CopyArrayData(const std::string& name,size_t size,unsigned*       ptr);
-  void CopyArrayData(const std::string& name,size_t size,llong*          ptr);
-  void CopyArrayData(const std::string& name,size_t size,ullong*         ptr);
-  void CopyArrayData(const std::string& name,size_t size,float*          ptr);
-  void CopyArrayData(const std::string& name,size_t size,double*         ptr);
-  void CopyArrayData(const std::string& name,size_t size,tint3*          ptr);
-  void CopyArrayData(const std::string& name,size_t size,tuint3*         ptr);
-  void CopyArrayData(const std::string& name,size_t size,tfloat3*        ptr);
-  void CopyArrayData(const std::string& name,size_t size,tdouble3*       ptr);
+  void CopyArrayData(const std::string& name,size_t size,char*     ptr);
+  void CopyArrayData(const std::string& name,size_t size,byte*     ptr);
+  void CopyArrayData(const std::string& name,size_t size,short*    ptr);
+  void CopyArrayData(const std::string& name,size_t size,word*     ptr);
+  void CopyArrayData(const std::string& name,size_t size,int*      ptr);
+  void CopyArrayData(const std::string& name,size_t size,unsigned* ptr);
+  void CopyArrayData(const std::string& name,size_t size,llong*    ptr);
+  void CopyArrayData(const std::string& name,size_t size,ullong*   ptr);
+  void CopyArrayData(const std::string& name,size_t size,float*    ptr);
+  void CopyArrayData(const std::string& name,size_t size,double*   ptr);
+  void CopyArrayData(const std::string& name,size_t size,tint3*    ptr);
+  void CopyArrayData(const std::string& name,size_t size,tuint3*   ptr);
+  void CopyArrayData(const std::string& name,size_t size,tfloat3*  ptr);
+  void CopyArrayData(const std::string& name,size_t size,tdouble3* ptr);
 
   //-Gestion de values. Management of values.
   size_t GetValuesCount()const{ return(Values.size()); }
@@ -414,29 +423,29 @@ class JBinaryData : protected JObject
   void RemoveValue(const std::string& name);
   void RemoveValues();
   
-  std::string    GetvText   (const std::string& name,bool optional=false,std::string valdef="")const;
-  bool           GetvBool   (const std::string& name,bool optional=false,bool valdef=false)const;
-  char           GetvChar   (const std::string& name,bool optional=false,char valdef=0)const;
-  unsigned char  GetvUchar  (const std::string& name,bool optional=false,unsigned char valdef=0)const;
-  short          GetvShort  (const std::string& name,bool optional=false,short valdef=0)const;
-  unsigned short GetvUshort (const std::string& name,bool optional=false,unsigned short valdef=0)const;
-  int            GetvInt    (const std::string& name,bool optional=false,int valdef=0)const;
-  unsigned       GetvUint   (const std::string& name,bool optional=false,unsigned valdef=0)const;
-  llong          GetvLlong  (const std::string& name,bool optional=false,llong valdef=0)const;
-  ullong         GetvUllong (const std::string& name,bool optional=false,ullong valdef=0)const;
-  float          GetvFloat  (const std::string& name,bool optional=false,float valdef=0)const;
-  double         GetvDouble (const std::string& name,bool optional=false,double valdef=0)const;
-  tint3          GetvInt3   (const std::string& name,bool optional=false,tint3 valdef=TInt3(0))const;
-  tuint3         GetvUint3  (const std::string& name,bool optional=false,tuint3 valdef=TUint3(0))const;
-  tfloat3        GetvFloat3 (const std::string& name,bool optional=false,tfloat3 valdef=TFloat3(0))const;
-  tdouble3       GetvDouble3(const std::string& name,bool optional=false,tdouble3 valdef=TDouble3(0))const;
+  std::string GetvText   (const std::string& name,bool optional=false,std::string valdef="")const;
+  bool        GetvBool   (const std::string& name,bool optional=false,bool valdef=false)const;
+  char        GetvChar   (const std::string& name,bool optional=false,char valdef=0)const;
+  byte        GetvUchar  (const std::string& name,bool optional=false,byte valdef=0)const;
+  short       GetvShort  (const std::string& name,bool optional=false,short valdef=0)const;
+  word        GetvUshort (const std::string& name,bool optional=false,word valdef=0)const;
+  int         GetvInt    (const std::string& name,bool optional=false,int valdef=0)const;
+  unsigned    GetvUint   (const std::string& name,bool optional=false,unsigned valdef=0)const;
+  llong       GetvLlong  (const std::string& name,bool optional=false,llong valdef=0)const;
+  ullong      GetvUllong (const std::string& name,bool optional=false,ullong valdef=0)const;
+  float       GetvFloat  (const std::string& name,bool optional=false,float valdef=0)const;
+  double      GetvDouble (const std::string& name,bool optional=false,double valdef=0)const;
+  tint3       GetvInt3   (const std::string& name,bool optional=false,tint3 valdef=TInt3(0))const;
+  tuint3      GetvUint3  (const std::string& name,bool optional=false,tuint3 valdef=TUint3(0))const;
+  tfloat3     GetvFloat3 (const std::string& name,bool optional=false,tfloat3 valdef=TFloat3(0))const;
+  tdouble3    GetvDouble3(const std::string& name,bool optional=false,tdouble3 valdef=TDouble3(0))const;
 
   void SetvText   (const std::string& name,const std::string& v);
   void SetvBool   (const std::string& name,bool v);
   void SetvChar   (const std::string& name,char v);
-  void SetvUchar  (const std::string& name,unsigned char v);
+  void SetvUchar  (const std::string& name,byte v);
   void SetvShort  (const std::string& name,short v);
-  void SetvUshort (const std::string& name,unsigned short v);
+  void SetvUshort (const std::string& name,word v);
   void SetvInt    (const std::string& name,int v);
   void SetvUint   (const std::string& name,unsigned v);
   void SetvLlong  (const std::string& name,llong v);

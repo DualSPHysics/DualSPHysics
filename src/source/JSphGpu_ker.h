@@ -230,24 +230,31 @@ void ComputeStepPos2(byte periactive,bool floatings,unsigned np,unsigned npb
   ,double2 *posxy,double *posz,unsigned *dcell,typecode *code);
 
 //-Kernels for Motion.
-void CalcRidp(bool periactive,unsigned np,unsigned pini,unsigned idini,unsigned idfin
-  ,const typecode *code,const unsigned *idp,unsigned *ridp);
+void CalcRidp(bool periactive,unsigned np,unsigned pini,unsigned idini
+  ,unsigned idfin,const typecode* code,const unsigned* idp,unsigned* ridp);
+void LoadPosRef(unsigned pscount,unsigned casenfixed,unsigned np
+  ,const double2* posxy,const double* posz,const unsigned* ridpmot
+  ,const unsigned* idpref,double3* posref);
 void MoveLinBound(byte periactive,unsigned np,unsigned ini,tdouble3 mvpos,tfloat3 mvvel
-  ,const unsigned *ridp,double2 *posxy,double *posz,unsigned *dcell,float4 *velrhop,typecode *code);
+  ,const unsigned* ridpmot,double2* posxy,double* posz,unsigned* dcell,float4* velrhop,typecode* code);
 void MoveMatBound(byte periactive,bool simulate2d,unsigned np,unsigned ini,tmatrix4d m,double dt
-  ,const unsigned *ridpmv,double2 *posxy,double *posz,unsigned *dcell,float4 *velrhop,typecode *code,float3 *boundnormal);
-void CopyMotionVel(unsigned nmoving,const unsigned *ridpmv,const float4 *velrhop,float3 *motionvel);
-void FtNormalsUpdate(unsigned np,unsigned ini,tmatrix4d m,const unsigned *ftridp,float3 *boundnormal);
+  ,const unsigned* ridpmot,double2* posxy,double* posz,unsigned* dcell,float4* velrhop,typecode* code,float3* boundnormal);
+void CopyMotionVel(unsigned nmoving,const unsigned* ridpmot,const float4* velrhop,float3* motionvel);
+void FtNormalsUpdate(unsigned np,unsigned ini,tmatrix4d m,const unsigned* ridpmot,float3* boundnormal);
 
 //-Kernels for MLPistons motion.
-void MovePiston1d(bool periactive,unsigned np,unsigned idini,double dp,double poszmin,unsigned poszcount,const byte *pistonid,const double* movx,const double* velx,const unsigned *ridpmv,double2 *posxy,double *posz,unsigned *dcell,float4 *velrhop,typecode *code);
-void MovePiston2d(bool periactive,unsigned np,unsigned idini,double dp,double posymin,double poszmin,unsigned poszcount,const double* movx,const double* velx,const unsigned *ridpmv,double2 *posxy,double *posz,unsigned *dcell,float4 *velrhop,typecode *code);
+void MovePiston1d(bool periactive,unsigned np,unsigned idini,double dp,double poszmin
+  ,unsigned poszcount,const byte* pistonid,const double* movx,const double* velx
+  ,const unsigned* ridpmot,double2* posxy,double* posz,unsigned* dcell,float4* velrhop,typecode* code);
+void MovePiston2d(bool periactive,unsigned np,unsigned idini,double dp,double posymin
+  ,double poszmin,unsigned poszcount,const double* movx,const double* velx,const unsigned* ridpmot
+  ,double2* posxy,double* posz,unsigned* dcell,float4* velrhop,typecode* code);
 
 //-Kernels for Floating bodies.
 void FtCalcForcesSum(bool periactive,unsigned ftcount
-  ,const float4 *ftodata,const double3 *ftocenter,const unsigned *ftridp
-  ,const double2 *posxy,const double *posz,const float3 *ace
-  ,float3 *ftoforcessum);
+  ,const float4* ftodata,const double3* ftocenter,const unsigned* ridpmot
+  ,const double2* posxy,const double* posz,const float3* ace
+  ,float3* ftoforcessum);
 void FtCalcForces(unsigned ftcount,tfloat3 gravity
   ,const float *ftomass,const float3 *ftoangles
   ,const float4 *ftoinertiaini8,const float *ftoinertiaini1
@@ -258,11 +265,9 @@ void FtCalcForcesRes(unsigned ftcount,bool simulate2d,double dt
 void FtApplyConstraints(unsigned ftcount,const byte *ftoconstraints
   ,float3 *ftoforces,float3 *ftoforcesres);
 void FtUpdate(bool periactive,bool predictor,unsigned ftcount,double dt
-  ,const float4 *ftodatp,const float3 *ftoforcesres,double3 *ftocenterres,const unsigned *ftridp
-  ,double3 *ftocenter,float3 *ftoangles,float3 *ftovelace
-  ,double2 *posxy,double *posz,unsigned *dcell,float4 *velrhop,typecode *code);
-void FtGetPosRef(unsigned np,const unsigned *idpref,const unsigned *ftridp //<vs_ftmottionsv>
-  ,const double2 *posxy,const double *posz,double *posref);                 //<vs_ftmottionsv>
+  ,const float4* ftodatp,const float3* ftoforcesres,double3* ftocenterres,const unsigned* ridpmot
+  ,double3* ftocenter,float3* ftoangles,float3* ftovelace
+  ,double2* posxy,double* posz,unsigned* dcell,float4* velrhop,typecode* code);
 
 //-Kernels for periodic conditions.
 void PeriodicIgnore(unsigned n,typecode *code);

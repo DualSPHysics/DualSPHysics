@@ -56,16 +56,20 @@ public:
   TpStep TStep;
   int VerletSteps;
   TpKernel TKernel;
-  TpVisco TVisco;
-  float Visco;
-  float ViscoBoundFactor;
-  double TimeMax,TimePart;
-  double CFLnumber;  ///<Coefficient to multiply dt.
-  int TDensity;      ///<Density Diffusion Term 0:None, 1:Molteni, 2:Fourtakas, 3:Fourtakas(full) (default=0)
-  float DDTValue;    ///<Value used with Density Diffusion Term (default=0.1)
-  double DDTValueTRamp;  ///<Total time of initial ramp for DDT value (default=0)  //<vs_ddramp>
-  double DDTValueTMax;   ///<Time of maximum DDT value (default=0)                 //<vs_ddramp>
-  double DDTValueMax;    ///<Maximum DDT value for initial ramp (default=0)        //<vs_ddramp>
+  TpVisco TVisco;         ///<Viscosity type: Artificial,Laminar...
+  float Visco;            ///<Viscosity value.
+  float ViscoBoundFactor; ///<For boundary interaction use Visco*ViscoBoundFactor.
+
+  double TimeMax;         ///<Total time to simulate [s].
+  double TimePart;        ///<Time of output data [s].
+  double TimePartExtra;   ///<Time for extra output data on motion and floating information (-1:Disabled) [s].
+
+  double CFLnumber;       ///<Coefficient to multiply dt.
+  int TDensity;           ///<Density Diffusion Term 0:None, 1:Molteni, 2:Fourtakas, 3:Fourtakas(full) (default=0)
+  float DDTValue;         ///<Value used with Density Diffusion Term (default=0.1)
+  double DDTValueTRamp;   ///<Total time of initial ramp for DDT value (default=0)  //<vs_ddramp>
+  double DDTValueTMax;    ///<Time of maximum DDT value (default=0)                 //<vs_ddramp>
+  double DDTValueMax;     ///<Maximum DDT value for initial ramp (default=0)        //<vs_ddramp>
   int Shifting;   ///<Shifting mode -1:no defined, 0:none, 1:nobound, 2:nofixed, 3:full
   bool Sv_Binx,Sv_Info,Sv_Csv,Sv_Vtk;
   bool SvNormals; ///<Saves normals VTK each PART (default=0).

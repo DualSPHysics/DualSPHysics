@@ -24,7 +24,6 @@
 #include "JSphGpuSimple_ker.h"
 #include "JCellDivGpu.h"
 #include "JDsGpuInfo.h"
-#include "JPartFloatBi4.h"
 #include "Functions.h"
 #include "FunctionsCuda.h"
 #include "JDsMotion.h"
@@ -146,8 +145,8 @@ void JSphGpu::InitVars(){
   ViscDtg=NULL; 
   Arg=NULL; Aceg=NULL; Deltag=NULL;
   ShiftPosfsg=NULL;                                //-Shifting.
-  RidpMoveg=NULL;
-  FtRidpg=NULL;   FtoMasspg=NULL;                  //-Floatings.
+  RidpMotg=NULL;
+  FtoMasspg=NULL;                  //-Floatings.
   FtoDatpg=NULL;  FtoMassg=NULL;  FtoConstraintsg=NULL;                           //-Calculates forces on floating bodies.
   FtoForcesg=NULL;  FtoForcesResg=NULL;  FtoCenterResg=NULL; //-Calculates forces on floating bodies.
   FtoCenterg=NULL; FtoAnglesg=NULL; FtoVelAceg=NULL;//-Management of floating bodies.
@@ -196,8 +195,7 @@ void JSphGpu::AllocCpuMemoryFixed(){
 //==============================================================================
 void JSphGpu::FreeGpuMemoryFixed(){
   MemGpuFixed=0;
-  if(RidpMoveg)         cudaFree(RidpMoveg);          RidpMoveg=NULL;
-  if(FtRidpg)           cudaFree(FtRidpg);            FtRidpg=NULL;
+  if(RidpMotg)          cudaFree(RidpMotg);           RidpMotg=NULL;
   if(FtoMasspg)         cudaFree(FtoMasspg);          FtoMasspg=NULL;
   if(FtoDatpg)          cudaFree(FtoDatpg);           FtoDatpg=NULL;
   if(FtoMassg)          cudaFree(FtoMassg);           FtoMassg=NULL;
@@ -217,15 +215,14 @@ void JSphGpu::FreeGpuMemoryFixed(){
 //==============================================================================
 void JSphGpu::AllocGpuMemoryFixed(){
   MemGpuFixed=0;
-  //-Allocates memory for moving objects.
-  if(CaseNmoving){
-    size_t m=sizeof(unsigned)*CaseNmoving;
-    cudaMalloc((void**)&RidpMoveg,m);   MemGpuFixed+=m;
+  //-Allocates memory for moving and floating objects.
+  if(CaseNmoving || CaseNfloat){
+    size_t m=sizeof(unsigned)*(CaseNmoving+CaseNfloat);
+    cudaMalloc((void**)&RidpMotg,m);  MemGpuFixed+=m;
   }
   //-Allocates memory for floating bodies.
   if(CaseNfloat){
     size_t m=0;
-    m=sizeof(unsigned)*CaseNfloat;  cudaMalloc((void**)&FtRidpg           ,m);  MemGpuFixed+=m;
     m=sizeof(float)   *FtCount;     cudaMalloc((void**)&FtoMasspg         ,m);  MemGpuFixed+=m;
     m=sizeof(float4)  *FtCount;     cudaMalloc((void**)&FtoDatpg          ,m);  MemGpuFixed+=m;
     m=sizeof(float)   *FtCount;     cudaMalloc((void**)&FtoMassg          ,m);  MemGpuFixed+=m;
@@ -712,28 +709,11 @@ void JSphGpu::ConfigRunMode(){
 }
 
 //==============================================================================
-/// Adjusts variables of particles of floating bodies.
+/// Adjusts variables of particles of floating bodies for GPU execution.
 //==============================================================================
-void JSphGpu::InitFloating(){
-  if(PartBegin){
-    JPartFloatBi4Load ftdata;
-    ftdata.LoadFile(PartBeginDir);
-    //-Checks if the constant data match.
-    //-Comprueba coincidencia de datos constantes.
-    for(unsigned cf=0;cf<FtCount;cf++){
-      const StFloatingData &ft=FtObjs[cf];
-      ftdata.CheckHeadData(cf,ft.mkbound,ft.begin,ft.count,ft.mass,ft.massp);
-    }
-    //-Loads PART data.
-    ftdata.LoadPart(PartBegin);
-    for(unsigned cf=0;cf<FtCount;cf++){
-      FtObjs[cf].center=ftdata.GetPartCenter(cf);
-      FtObjs[cf].fvel  =ftdata.GetPartVelLin(cf);
-      FtObjs[cf].fomega=ftdata.GetPartVelAng(cf);
-      FtObjs[cf].radius=ftdata.GetHeadRadius(cf);
-    }
-    DemDtForce=ftdata.GetPartDemDtForce();
-  }
+void JSphGpu::InitFloatingsGpu(){
+  //-Adjusts variables of floating bodies on CPU.
+  InitFloatings();
   //-Copies massp values to GPU.
   {
     float *massp=new float[FtCount];
@@ -761,7 +741,7 @@ void JSphGpu::InitFloating(){
     memset(velace,0,sizeof(tfloat3)*FtCount*4);
     for(unsigned cf=0;cf<FtCount;cf++){
       const StFloatingData &fobj=FtObjs[cf];
-      datp[cf].pini=fobj.begin-CaseNpb;
+      datp[cf].pini=fobj.begin-CaseNfixed;
       datp[cf].np=fobj.count;
       datp[cf].radius=fobj.radius;
       datp[cf].massp=fobj.massp;
@@ -817,7 +797,7 @@ void JSphGpu::InitRunGpu(){
 
   if(TStep==STEP_Verlet)cudaMemcpy(VelrhopM1g,Velrhopg,sizeof(float4)*Np,cudaMemcpyDeviceToDevice);
   if(TVisco==VISCO_LaminarSPS)cudaMemset(SpsTaug,0,sizeof(tsymatrix3f)*Np);
-  if(CaseNfloat)InitFloating();
+  if(CaseNfloat)InitFloatingsGpu();
   if(MotionVelg)cudaMemset(MotionVelg,0,sizeof(float3)*Np);
   Check_CudaErroor("Failed initializing variables for execution.");
 }
@@ -1060,35 +1040,33 @@ void JSphGpu::RunMotion(double stepdt){
   if(WaveGen)CalcMotionWaveGen(stepdt);
   //-Process particles motion.
   if(DsMotion->GetActiveMotion()){
-    cusph::CalcRidp(PeriActive!=0,Npb,0,CaseNfixed,CaseNfixed+CaseNmoving,Codeg,Idpg,RidpMoveg);
     BoundChanged=true;
     const unsigned nref=DsMotion->GetNumObjects();
     for(unsigned ref=0;ref<nref;ref++){
       const StMotionData& m=DsMotion->GetMotionData(ref);
       if(m.type==MOTT_Linear){//-Linear movement.
-        if(motsim)cusph::MoveLinBound   (PeriActive,m.count,m.idbegin-CaseNfixed,m.linmov,ToTFloat3(m.linvel),RidpMoveg,Posxyg,Poszg,Dcellg,Velrhopg,Codeg);
+        if(motsim)cusph::MoveLinBound   (PeriActive,m.count,m.idbegin-CaseNfixed,m.linmov,ToTFloat3(m.linvel),RidpMotg,Posxyg,Poszg,Dcellg,Velrhopg,Codeg);
         //else    cusph::MoveLinBoundAce(PeriActive,m.count,m.idbegin-CaseNfixed,m.linmov,ToTFloat3(m.linvel),ToTFloat3(m.linace),RidpMoveg,Posxyg,Poszg,Dcellg,Velrhopg,Codeg);
       }
       if(m.type==MOTT_Matrix){//-Matrix movement (for rotations).
-        if(motsim)cusph::MoveMatBound   (PeriActive,Simulate2D,m.count,m.idbegin-CaseNfixed,m.matmov,stepdt,RidpMoveg,Posxyg,Poszg,Dcellg,Velrhopg,Codeg,boundnormal);
+        if(motsim)cusph::MoveMatBound   (PeriActive,Simulate2D,m.count,m.idbegin-CaseNfixed,m.matmov,stepdt,RidpMotg,Posxyg,Poszg,Dcellg,Velrhopg,Codeg,boundnormal);
         //else    cusph::MoveMatBoundAce(PeriActive,Simulate2D,m.count,m.idbegin-CaseNfixed,m.matmov,m.matmov2,stepdt,RidpMoveg,Posxyg,Poszg,Dcellg,Velrhopg,Codeg);
       }      
     }
   }
   //-Management of Multi-Layer Pistons.
   if(MLPistons){
-    if(!BoundChanged)cusph::CalcRidp(PeriActive!=0,Npb,0,CaseNfixed,CaseNfixed+CaseNmoving,Codeg,Idpg,RidpMoveg);
     BoundChanged=true;
     if(MLPistons->GetPiston1dCount()){//-Process motion for pistons 1D.
       MLPistons->CalculateMotion1d(TimeStep+MLPistons->GetTimeMod()+stepdt);
-      cusph::MovePiston1d(PeriActive!=0,CaseNmoving,0,Dp,MLPistons->GetPoszMin(),MLPistons->GetPoszCount(),MLPistons->GetPistonIdGpu(),MLPistons->GetMovxGpu(),MLPistons->GetVelxGpu(),RidpMoveg,Posxyg,Poszg,Dcellg,Velrhopg,Codeg);
+      cusph::MovePiston1d(PeriActive!=0,CaseNmoving,0,Dp,MLPistons->GetPoszMin(),MLPistons->GetPoszCount(),MLPistons->GetPistonIdGpu(),MLPistons->GetMovxGpu(),MLPistons->GetVelxGpu(),RidpMotg,Posxyg,Poszg,Dcellg,Velrhopg,Codeg);
     }
     for(unsigned cp=0;cp<MLPistons->GetPiston2dCount();cp++){//-Process motion for pistons 2D.
       JMLPistons::StMotionInfoPiston2D mot=MLPistons->CalculateMotion2d(cp,TimeStep+MLPistons->GetTimeMod()+stepdt);
-      cusph::MovePiston2d(PeriActive!=0,mot.np,mot.idbegin-CaseNfixed,Dp,mot.posymin,mot.poszmin,mot.poszcount,mot.movyz,mot.velyz,RidpMoveg,Posxyg,Poszg,Dcellg,Velrhopg,Codeg);
+      cusph::MovePiston2d(PeriActive!=0,mot.np,mot.idbegin-CaseNfixed,Dp,mot.posymin,mot.poszmin,mot.poszcount,mot.movyz,mot.velyz,RidpMotg,Posxyg,Poszg,Dcellg,Velrhopg,Codeg);
     }
   }
-  if(MotionVelg)cusph::CopyMotionVel(CaseNmoving,RidpMoveg,Velrhopg,MotionVelg);
+  if(MotionVelg)cusph::CopyMotionVel(CaseNmoving,RidpMotg,Velrhopg,MotionVelg);
   Timersg->TmStop(TMG_SuMotion,false);
 }
 

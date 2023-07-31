@@ -39,7 +39,8 @@
 #include "JSphGpuSimple_ker.h"
 #include "JDsGaugeSystem.h"
 #include "JSphInOut.h"
-#include "JFtMotionSave.h" //<vs_ftmottionsv>  
+#include "JDsPartMotionSave.h"
+#include "JDsPartFloatSave.h"
 #include "JLinearValue.h"
 #include "JDataArrays.h"
 #include "JDebugSphGpu.h"
@@ -158,8 +159,6 @@ void JSphGpuSingle::ConfigDomain(){
 
   //-Computes radius of floating bodies.
   if(CaseNfloat && PeriActive!=0 && !PartBegin)CalcFloatingRadius(Np,AuxPos,Idp);
-  //-Configures floating motion data storage with high frequency. //<vs_ftmottionsv>  
-  if(FtMotSave)ConfigFtMotionSave(Np,AuxPos,Idp);                 //<vs_ftmottionsv>  
 
   //-Configures Multi-Layer Pistons according particles. | Configura pistones Multi-Layer segun particulas.
   if(MLPistons)MLPistons->PreparePiston(Dp,Np,Idp,AuxPos);
@@ -207,7 +206,7 @@ void JSphGpuSingle::ConfigDomain(){
   ConfigCellDiv((JCellDivGpu*)CellDivSingle);
 
   ConfigBlockSizes(false,PeriActive!=0);
-  ConfigSaveData(0,1,"");
+  ConfigSaveData(0,1,"",Np,AuxPos,Idp);
 
   //-Reorders particles according to cells.
   //-Reordena particulas por celda.
@@ -401,8 +400,12 @@ void JSphGpuSingle::RunCellDivide(bool updateperiodic){
   //-Manages excluded particles fixed, moving and floating before aborting the execution.
   if(CellDivSingle->GetNpbOut())AbortBoundOut();
 
-  //-Collect position of floating particles. | Recupera posiciones de floatings.
-  if(CaseNfloat)cusph::CalcRidp(PeriActive!=0,Np-Npb,Npb,CaseNpb,CaseNpb+CaseNfloat,Codeg,Idpg,FtRidpg);
+  //-Collects index of moving and floating particles.
+  if(CaseNmoving || CaseNfloat){
+    const unsigned np=(CaseNmoving? Npb: 0) + (CaseNfloat? Np-Npb: 0);
+    const unsigned pini=(CaseNmoving? 0: Npb);
+    cusph::CalcRidp(PeriActive!=0,np,pini,CaseNfixed,CaseNbound,Codeg,Idpg,RidpMotg);
+  }
   Timersg->TmStop(TMG_NlSortData,false);
 
   //-Control of excluded particles (only fluid because excluded boundary are checked before).
@@ -464,7 +467,7 @@ void JSphGpuSingle::Interaction_Forces(TpInterStep interstep){
 
   //-Interaction DEM Floating-Bound & Floating-Floating. //(DEM)
   if(UseDEM)cusph::Interaction_ForcesDem(BlockSizes.forcesdem,CaseNfloat
-    ,DivData,Dcellg,FtRidpg,DemDatag,FtoMasspg,float(DemDtForce)
+    ,DivData,Dcellg,RidpMotg+CaseNmoving,DemDatag,FtoMasspg,float(DemDtForce)
     ,PosCellg,Velrhopg,Codeg,Idpg,ViscDtg,Aceg,NULL);
 
   //-For 2D simulations always overrides the 2nd component (Y axis).
@@ -552,7 +555,7 @@ double JSphGpuSingle::ComputeStep_Ver(){
   Interaction_Forces(INTERSTEP_Verlet);    //-Interaction.
   const double dt=DtVariable(true);        //-Calculate new dt.
   if(CaseNmoving)CalcMotion(dt);           //-Calculate motion for moving bodies.
-  DemDtForce=dt;                           //(DEM)
+  DemDtForce=dt;                           //-For DEM interaction.
   if(Shifting)RunShifting(dt);             //-Shifting.
   ComputeVerlet(dt);                       //-Update particles using Verlet (periodic particles become invalid).
   if(CaseNfloat)RunFloating(dt,false);     //-Control of floating bodies.
@@ -574,7 +577,7 @@ double JSphGpuSingle::ComputeStep_Sym(){
   if(CaseNmoving)CalcMotion(dt);               //-Calculate motion for moving bodies.
   //-Predictor
   //-----------
-  DemDtForce=dt*0.5f;                          //(DEM)
+  DemDtForce=dt*0.5f;                          //-For DEM interaction.
   Interaction_Forces(INTERSTEP_SymPredictor);  //-Interaction.
   const double ddt_p=DtVariable(false);        //-Calculate dt of predictor step.
   if(Shifting)RunShifting(dt*.5);              //-Shifting.
@@ -583,7 +586,7 @@ double JSphGpuSingle::ComputeStep_Sym(){
   PosInteraction_Forces();                     //-Free memory used for interaction.
   //-Corrector
   //-----------
-  DemDtForce=dt;                               //(DEM)
+  DemDtForce=dt;                               //-For DEM interaction.
   RunCellDivide(true);
   Interaction_Forces(INTERSTEP_SymCorrector);  //-Interaction.
   const double ddt_c=DtVariable(true);         //-Calculate dt of corrector step.
@@ -660,7 +663,7 @@ void JSphGpuSingle::FtApplyImposedVel(float3 *ftoforcesresg)const{
 //==============================================================================
 void JSphGpuSingle::RunFloating(double dt,bool predictor){
   Timersg->TmStart(TMG_SuFloating,false);
-  const bool saveftmot=(!predictor && FtMotSave && FtMotSave->CheckTime(TimeStep+dt)); //<vs_ftmottionsv>
+  const bool saveftmot=(!predictor && (PartFloatSave && TimeOutExtraCheck(TimeStep+dt)) );
   const bool saveftvalues=(!predictor && (TimeStep+dt>=TimePartNext || saveftmot));
   const bool ftpaused=(TimeStep<FtPause);
 
@@ -697,7 +700,7 @@ void JSphGpuSingle::RunFloating(double dt,bool predictor){
     }
 
     //-Calculate forces summation (face,fomegaace) starting from floating particles and add in FtoForcesg[].
-    cusph::FtCalcForcesSum(PeriActive!=0,FtCount,FtoDatpg,FtoCenterg,FtRidpg,Posxyg,Poszg,Aceg,FtoForcesg);
+    cusph::FtCalcForcesSum(PeriActive!=0,FtCount,FtoDatpg,FtoCenterg,RidpMotg,Posxyg,Poszg,Aceg,FtoForcesg);
     //-Saves sum of fluid forces applied to floating body.
     if(saveftvalues){
       StFtoForces *ftoforces=(StFtoForces *)FtoAuxFloat15;
@@ -763,7 +766,7 @@ void JSphGpuSingle::RunFloating(double dt,bool predictor){
 
     //-Apply movement around floating objects / Aplica movimiento sobre floatings.
     cusph::FtUpdate(PeriActive!=0,predictor,FtCount,dt,FtoDatpg,FtoForcesResg,FtoCenterResg
-      ,FtRidpg,FtoCenterg,FtoAnglesg,FtoVelAceg,Posxyg,Poszg,Dcellg,Velrhopg,Codeg);
+      ,RidpMotg,FtoCenterg,FtoAnglesg,FtoVelAceg,Posxyg,Poszg,Dcellg,Velrhopg,Codeg);
 
     //-Stores floating data.
     if(!predictor){
@@ -784,17 +787,16 @@ void JSphGpuSingle::RunFloating(double dt,bool predictor){
           mat.Move(cen);
           mat.Rotate(dang);
           mat.Move(fobj.center*-1);
-          cusph::FtNormalsUpdate(fobj.count,fobj.begin-CaseNpb,mat.GetMatrix(),FtRidpg,BoundNormalg);
+          cusph::FtNormalsUpdate(fobj.count,fobj.begin-CaseNfixed,mat.GetMatrix(),RidpMotg,BoundNormalg);
         }
       }
     }
   }
-  //<vs_ftmottionsv_ini>
-  if(saveftmot){
+  //-Saves current floating data for output.
+  if(saveftvalues){
     UpdateFtObjs(); //-Updates floating information on CPU memory.
-    FtMotSave->SaveFtDataGpu(TimeStep+dt,Nstep+1,FtObjs,Np,Posxyg,Poszg,FtRidpg);
+    if(PartFloatSave)PartFloatSave->SetFtData(Part,TimeStep+dt,Nstep+1,FtObjs,ForcePoints);
   }
-  //<vs_ftmottionsv_end>
   Timersg->TmStop(TMG_SuFloating,false);
 
   //-Update data of points in FtForces and calculates motion data of affected floatings.
@@ -891,13 +893,21 @@ void JSphGpuSingle::Run(std::string appname,const JSphCfgRun *cfg,JLog2 *log){
     InterStep=(TStep==STEP_Symplectic? INTERSTEP_SymPredictor: INTERSTEP_Verlet);
     if(ViscoTime)Visco=ViscoTime->GetVisco(float(TimeStep));
     if(DDTRamp.x)RunInitialDDTRamp(); //<vs_ddramp>
-    double stepdt=ComputeStep();
+    const double stepdt=ComputeStep();
     RunGaugeSystem(TimeStep+stepdt);
     if(CaseNmoving)RunMotion(stepdt);
     if(InOut)InOutComputeStep(stepdt);
     else RunCellDivide(true);
     TimeStep+=stepdt;
     LastDt=stepdt;
+    Nstep++;
+    //-Save extra PART data.
+    if(TimeOutExtraCheck(TimeStep)){
+      if(PartFloatSave)PartFloatSave->AddDataExtra(Part,TimeStep,Nstep);
+      if(PartMotionSave)PartMotionSave->AddDataExtraGpu(Part,TimeStep,Nstep,Np,Posxyg,Poszg,RidpMotg);
+      TimeOutExtraUpdate(TimeStep);
+    }
+    //-Save main PART data.
     partoutstop=(Np<NpMinimum || !Np);
     if(TimeStep>=TimePartNext || partoutstop){
       if(partoutstop){
@@ -912,7 +922,6 @@ void JSphGpuSingle::Run(std::string appname,const JSphCfgRun *cfg,JLog2 *log){
       TimerPart.Start();
     }
     UpdateMaxValues();
-    Nstep++;
     const bool laststep=(TimeStep>=TimeMax || (NstepsBreak && Nstep>=NstepsBreak));
     if(DsPips)ComputePips(laststep);
     if(Part<=PartIni+1 && tc.CheckTime())Log->Print(string("  ")+tc.GetInfoFinish((TimeStep-TimeStepIni)/(TimeMax-TimeStepIni)));
@@ -960,8 +969,15 @@ void JSphGpuSingle::SaveData(){
     npsave=npsel;
     Timersg->TmStop(TMG_SuDownData,false);
   }
-  //-Collects additional information. | Reune informacion adicional.
+
   Timersg->TmStart(TMG_SuSavePart,false);
+  //-Saves main motion reference data from particles (moving and floating bodies).
+  if(PartMotionSave){
+    PartMotionSave->SaveDataMainGpu(Part,TimeStep,Nstep,Np,Posxyg,Poszg,RidpMotg);
+    PartMotionSave->SaveDataExtra();
+  }
+
+  //-Collects additional information. | Reune informacion adicional.
   StInfoPartPlus infoplus;
   memset(&infoplus,0,sizeof(StInfoPartPlus));
   if(SvData&SDAT_Info){

@@ -1730,7 +1730,9 @@ __global__ void KerCalcRidp(unsigned n,unsigned ini,unsigned idini,unsigned idfi
 /// Cuando periactive es False sumpone que no hay particulas duplicadas (periodicas)
 /// y todas son CODE_NORMAL.
 //==============================================================================
-void CalcRidp(bool periactive,unsigned np,unsigned pini,unsigned idini,unsigned idfin,const typecode *code,const unsigned *idp,unsigned *ridp){
+void CalcRidp(bool periactive,unsigned np,unsigned pini,unsigned idini
+  ,unsigned idfin,const typecode* code,const unsigned* idp,unsigned* ridp)
+{
   //-Assigns values UINT_MAX
   const unsigned nsel=idfin-idini;
   cudaMemset(ridp,255,sizeof(unsigned)*nsel); 
@@ -1742,16 +1744,53 @@ void CalcRidp(bool periactive,unsigned np,unsigned pini,unsigned idini,unsigned 
   }
 }
 
+
+//------------------------------------------------------------------------------
+/// Load current reference position data from particle data.
+//------------------------------------------------------------------------------
+__global__ void KerLoadPosRef(unsigned pscount,unsigned casenfixed,unsigned np
+  ,const double2* posxy,const double* posz,const unsigned* ridpmot
+  ,const unsigned* idpref,double3* posref)
+{
+  unsigned cp=blockIdx.x*blockDim.x + threadIdx.x;
+  if(cp<pscount){
+    const unsigned iref=idpref[cp]-casenfixed;
+    const unsigned p=ridpmot[iref];
+    if(p<np){
+      const double2 rxy=posxy[p];
+      const double rz=posz[p];
+      posref[cp]=make_double3(rxy.x,rxy.y,rz);
+    }
+  }
+}
+
+//==============================================================================
+/// Load current reference position data from particle data.
+//==============================================================================
+void LoadPosRef(unsigned pscount,unsigned casenfixed,unsigned np
+  ,const double2* posxy,const double* posz,const unsigned* ridpmot
+  ,const unsigned* idpref,double3* posref)
+{
+  //-Computes position according to id. | Calcula posicion segun id.
+  if(pscount){
+    const dim3 sgrid=GetSimpleGridSize(pscount,SPHBSIZE);
+    KerLoadPosRef <<<sgrid,SPHBSIZE>>> (pscount,casenfixed,np,posxy,posz
+      ,ridpmot,idpref,posref);
+  }
+}
+
+
 //------------------------------------------------------------------------------
 /// Applies a linear movement to a set of particles.
 /// Aplica un movimiento lineal a un conjunto de particulas.
 //------------------------------------------------------------------------------
-template<bool periactive> __global__ void KerMoveLinBound(unsigned n,unsigned ini,double3 mvpos,float3 mvvel
-  ,const unsigned *ridpmv,double2 *posxy,double *posz,unsigned *dcell,float4 *velrhop,typecode *code)
+template<bool periactive> __global__ void KerMoveLinBound(unsigned n,unsigned ini
+  ,double3 mvpos,float3 mvvel,const unsigned* ridpmot,double2* posxy,double* posz
+  ,unsigned* dcell,float4* velrhop,typecode* code)
 {
   unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
   if(p<n){
-    int pid=ridpmv[p+ini];
+    int pid=ridpmot[p+ini];
     if(pid>=0){
       //-Computes displacement and updates position.
       KerUpdatePos<periactive>(posxy[pid],posz[pid],mvpos.x,mvpos.y,mvpos.z,false,pid,posxy,posz,dcell,code);
@@ -1765,12 +1804,13 @@ template<bool periactive> __global__ void KerMoveLinBound(unsigned n,unsigned in
 /// Applies a linear movement to a set of particles.
 /// Aplica un movimiento lineal a un conjunto de particulas.
 //==============================================================================
-void MoveLinBound(byte periactive,unsigned np,unsigned ini,tdouble3 mvpos,tfloat3 mvvel
-  ,const unsigned *ridp,double2 *posxy,double *posz,unsigned *dcell,float4 *velrhop,typecode *code)
+void MoveLinBound(byte periactive,unsigned np,unsigned ini,tdouble3 mvpos
+  ,tfloat3 mvvel,const unsigned* ridpmot,double2* posxy,double* posz
+  ,unsigned* dcell,float4* velrhop,typecode* code)
 {
   dim3 sgrid=GetSimpleGridSize(np,SPHBSIZE);
-  if(periactive)KerMoveLinBound<true>  <<<sgrid,SPHBSIZE>>> (np,ini,Double3(mvpos),Float3(mvvel),ridp,posxy,posz,dcell,velrhop,code);
-  else          KerMoveLinBound<false> <<<sgrid,SPHBSIZE>>> (np,ini,Double3(mvpos),Float3(mvvel),ridp,posxy,posz,dcell,velrhop,code);
+  if(periactive)KerMoveLinBound<true>  <<<sgrid,SPHBSIZE>>> (np,ini,Double3(mvpos),Float3(mvvel),ridpmot,posxy,posz,dcell,velrhop,code);
+  else          KerMoveLinBound<false> <<<sgrid,SPHBSIZE>>> (np,ini,Double3(mvpos),Float3(mvvel),ridpmot,posxy,posz,dcell,velrhop,code);
 }
 
 
@@ -1779,12 +1819,13 @@ void MoveLinBound(byte periactive,unsigned np,unsigned ini,tdouble3 mvpos,tfloat
 /// Applies a matrix movement to a set of particles.
 /// Aplica un movimiento matricial a un conjunto de particulas.
 //------------------------------------------------------------------------------
-template<bool periactive,bool simulate2d> __global__ void KerMoveMatBound(unsigned n,unsigned ini,tmatrix4d m,double dt
-  ,const unsigned *ridpmv,double2 *posxy,double *posz,unsigned *dcell,float4 *velrhop,typecode *code,float3 *boundnormal)
+template<bool periactive,bool simulate2d> __global__ void KerMoveMatBound(unsigned n
+  ,unsigned ini,tmatrix4d m,double dt,const unsigned* ridmot,double2* posxy
+  ,double* posz,unsigned* dcell,float4* velrhop,typecode* code,float3* boundnormal)
 {
   unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
   if(p<n){
-    int pid=ridpmv[p+ini];
+    int pid=ridmot[p+ini];
     if(pid>=0){
       double2 rxy=posxy[pid];
       double3 rpos=make_double3(rxy.x,rxy.y,posz[pid]);
@@ -1818,17 +1859,18 @@ template<bool periactive,bool simulate2d> __global__ void KerMoveMatBound(unsign
 /// Applies a matrix movement to a set of particles.
 /// Aplica un movimiento matricial a un conjunto de particulas.
 //==============================================================================
-void MoveMatBound(byte periactive,bool simulate2d,unsigned np,unsigned ini,tmatrix4d m,double dt
-  ,const unsigned *ridpmv,double2 *posxy,double *posz,unsigned *dcell,float4 *velrhop,typecode *code,float3 *boundnormal)
+void MoveMatBound(byte periactive,bool simulate2d,unsigned np,unsigned ini
+  ,tmatrix4d m,double dt,const unsigned* ridpmot,double2* posxy,double* posz
+  ,unsigned* dcell,float4* velrhop,typecode* code,float3* boundnormal)
 {
   dim3 sgrid=GetSimpleGridSize(np,SPHBSIZE);
   if(periactive){ const bool peri=true;
-    if(simulate2d)KerMoveMatBound<peri,true>  <<<sgrid,SPHBSIZE>>> (np,ini,m,dt,ridpmv,posxy,posz,dcell,velrhop,code,boundnormal);
-    else          KerMoveMatBound<peri,false> <<<sgrid,SPHBSIZE>>> (np,ini,m,dt,ridpmv,posxy,posz,dcell,velrhop,code,boundnormal);
+    if(simulate2d)KerMoveMatBound<peri,true>  <<<sgrid,SPHBSIZE>>> (np,ini,m,dt,ridpmot,posxy,posz,dcell,velrhop,code,boundnormal);
+    else          KerMoveMatBound<peri,false> <<<sgrid,SPHBSIZE>>> (np,ini,m,dt,ridpmot,posxy,posz,dcell,velrhop,code,boundnormal);
   }
   else{ const bool peri=false;
-    if(simulate2d)KerMoveMatBound<peri,true>  <<<sgrid,SPHBSIZE>>> (np,ini,m,dt,ridpmv,posxy,posz,dcell,velrhop,code,boundnormal);
-    else          KerMoveMatBound<peri,false> <<<sgrid,SPHBSIZE>>> (np,ini,m,dt,ridpmv,posxy,posz,dcell,velrhop,code,boundnormal);
+    if(simulate2d)KerMoveMatBound<peri,true>  <<<sgrid,SPHBSIZE>>> (np,ini,m,dt,ridpmot,posxy,posz,dcell,velrhop,code,boundnormal);
+    else          KerMoveMatBound<peri,false> <<<sgrid,SPHBSIZE>>> (np,ini,m,dt,ridpmot,posxy,posz,dcell,velrhop,code,boundnormal);
   }
 }
 
@@ -1837,11 +1879,11 @@ void MoveMatBound(byte periactive,bool simulate2d,unsigned np,unsigned ini,tmatr
 /// Copia velocidad de movimiento a MotionVel[].
 //------------------------------------------------------------------------------
 template<bool periactive> __global__ void KerCopyMotionVel(unsigned n
-  ,const unsigned *ridpmv,const float4 *velrhop,float3 *motionvel)
+  ,const unsigned* ridpmot,const float4* velrhop,float3* motionvel)
 {
   unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
   if(p<n){
-    int pid=ridpmv[p];
+    int pid=ridpmot[p];
     if(pid>=0){
       //-Computes velocity.
       const float4 v=velrhop[pid];
@@ -1854,10 +1896,11 @@ template<bool periactive> __global__ void KerCopyMotionVel(unsigned n
 /// Copy motion velocity to MotionVel[].
 /// Copia velocidad de movimiento a MotionVel[].
 //==============================================================================
-void CopyMotionVel(unsigned nmoving,const unsigned *ridp,const float4 *velrhop,float3 *motionvel)
+void CopyMotionVel(unsigned nmoving,const unsigned* ridpmot
+  ,const float4* velrhop,float3* motionvel)
 {
   dim3 sgrid=GetSimpleGridSize(nmoving,SPHBSIZE);
-  KerCopyMotionVel<true>  <<<sgrid,SPHBSIZE>>> (nmoving,ridp,velrhop,motionvel);
+  KerCopyMotionVel<true>  <<<sgrid,SPHBSIZE>>> (nmoving,ridpmot,velrhop,motionvel);
 }
 
 
@@ -1866,12 +1909,13 @@ void CopyMotionVel(unsigned nmoving,const unsigned *ridp,const float4 *velrhop,f
 /// Aplica un movimiento matricial a un conjunto de particulas.
 //------------------------------------------------------------------------------
 __global__ void KerFtNormalsUpdate(unsigned n,unsigned fpini
-  ,double a11,double a12,double a13,double a21,double a22,double a23,double a31,double a32,double a33
-  ,const unsigned *ftridp,float3 *boundnormal)
+  ,double a11,double a12,double a13,double a21,double a22,double a23
+  ,double a31,double a32,double a33
+  ,const unsigned* ridpmot,float3* boundnormal)
 {
   const unsigned fp=blockIdx.x*blockDim.x + threadIdx.x; //-Number of floating particle.
   if(fp<n){
-    const unsigned p=ftridp[fp+fpini];
+    const unsigned p=ridpmot[fp+fpini];
     if(p!=UINT_MAX){
       float3 rnor=boundnormal[p];
       const double nx=rnor.x;
@@ -1889,12 +1933,12 @@ __global__ void KerFtNormalsUpdate(unsigned n,unsigned fpini
 /// Applies a matrix movement to a set of particles.
 /// Aplica un movimiento matricial a un conjunto de particulas.
 //==============================================================================
-void FtNormalsUpdate(unsigned np,unsigned ini,tmatrix4d m,const unsigned *ftridp
-  ,float3 *boundnormal)
+void FtNormalsUpdate(unsigned np,unsigned ini,tmatrix4d m,const unsigned* ridpmot
+  ,float3* boundnormal)
 {
   dim3 sgrid=GetSimpleGridSize(np,SPHBSIZE);
   if(np)KerFtNormalsUpdate <<<sgrid,SPHBSIZE>>> (np,ini,m.a11,m.a12,m.a13
-    ,m.a21,m.a22,m.a23,m.a31,m.a32,m.a33,ftridp,boundnormal);
+    ,m.a21,m.a22,m.a23,m.a31,m.a32,m.a33,ridpmot,boundnormal);
 }
 
 
@@ -1951,13 +1995,14 @@ void MovePiston1d(bool periactive,unsigned np,unsigned idini
 /// Aplica movimiento y velocidad de piston 2D a conjunto de particulas.
 //------------------------------------------------------------------------------
 template<byte periactive> __global__ void KerMovePiston2d(unsigned n,unsigned idini
-  ,double dp,double posymin,double poszmin,unsigned poszcount,const double* movx,const double* velx
-  ,const unsigned *ridpmv,double2 *posxy,double *posz,unsigned *dcell,float4 *velrhop,typecode *code)
+  ,double dp,double posymin,double poszmin,unsigned poszcount,const double* movx
+  ,const double* velx,const unsigned* ridpmot,double2* posxy,double* posz
+  ,unsigned* dcell,float4* velrhop,typecode* code)
 {
   unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle
   if(p<n){
     const unsigned id=p+idini;
-    int pid=ridpmv[id];
+    int pid=ridpmot[id];
     if(pid>=0){
       const double2 rpxy=posxy[pid];
       const double rpz=posz[pid];
@@ -1977,14 +2022,15 @@ template<byte periactive> __global__ void KerMovePiston2d(unsigned n,unsigned id
 /// Applies movement and velocity of piston 2D to a group of particles.
 /// Aplica movimiento y velocidad de piston 2D a conjunto de particulas.
 //==============================================================================
-void MovePiston2d(bool periactive,unsigned np,unsigned idini
-  ,double dp,double posymin,double poszmin,unsigned poszcount,const double* movx,const double* velx
-  ,const unsigned *ridpmv,double2 *posxy,double *posz,unsigned *dcell,float4 *velrhop,typecode *code)
+void MovePiston2d(bool periactive,unsigned np,unsigned idini,double dp
+  ,double posymin,double poszmin,unsigned poszcount,const double* movx
+  ,const double* velx,const unsigned* ridpmot,double2* posxy,double* posz
+  ,unsigned* dcell,float4* velrhop,typecode* code)
 {
   if(np){
     dim3 sgrid=GetSimpleGridSize(np,SPHBSIZE);
-    if(periactive)KerMovePiston2d<true>  <<<sgrid,SPHBSIZE>>> (np,idini,dp,posymin,poszmin,poszcount,movx,velx,ridpmv,posxy,posz,dcell,velrhop,code);
-    else          KerMovePiston2d<false> <<<sgrid,SPHBSIZE>>> (np,idini,dp,posymin,poszmin,poszcount,movx,velx,ridpmv,posxy,posz,dcell,velrhop,code);
+    if(periactive)KerMovePiston2d<true>  <<<sgrid,SPHBSIZE>>> (np,idini,dp,posymin,poszmin,poszcount,movx,velx,ridpmot,posxy,posz,dcell,velrhop,code);
+    else          KerMovePiston2d<false> <<<sgrid,SPHBSIZE>>> (np,idini,dp,posymin,poszmin,poszcount,movx,velx,ridpmot,posxy,posz,dcell,velrhop,code);
   }
 }
 
@@ -2029,10 +2075,10 @@ template<bool periactive> __device__ void KerFtPeriodicDist(double px,double py,
 /// Calculate summation: face, fomegaace in ftoforcessum[].
 /// Calcula suma de face y fomegaace a partir de particulas floating en ftoforcessum[].
 //------------------------------------------------------------------------------
-template<bool periactive> __global__ void KerFtCalcForcesSum( //ftodatp={pini,np,radius,massp}
-  const float4 *ftodatp,const double3 *ftocenter,const unsigned *ftridp
-  ,const double2 *posxy,const double *posz,const float3 *ace
-  ,float3 *ftoforcessum)
+template<bool periactive> __global__ void KerFtCalcForcesSum( //ftodatp={pini-CaseNfixed,np,radius,massp}
+  const float4* ftodatp,const double3* ftocenter,const unsigned* ridpmot
+  ,const double2* posxy,const double* posz,const float3* ace
+  ,float3* ftoforcessum)
 {
   extern __shared__ float rfacex[];
   float *rfacey=rfacex+blockDim.x;
@@ -2064,7 +2110,7 @@ template<bool periactive> __global__ void KerFtCalcForcesSum( //ftodatp={pini,np
   for(unsigned cfor=0;cfor<nfor;cfor++){
     unsigned p=cfor*blockDim.x+tid;
     if(p<fnp){
-      const unsigned rp=ftridp[p+fpini];
+      const unsigned rp=ridpmot[p+fpini];
       if(rp!=UINT_MAX){
         float3 force=ace[rp];
         force.x*=fmassp; force.y*=fmassp; force.z*=fmassp;
@@ -2108,16 +2154,16 @@ template<bool periactive> __global__ void KerFtCalcForcesSum( //ftodatp={pini,np
 /// Calcula suma de face y fomegaace a partir de particulas floating en ftoforcessum[].
 //==============================================================================
 void FtCalcForcesSum(bool periactive,unsigned ftcount
-  ,const float4 *ftodatp,const double3 *ftocenter,const unsigned *ftridp
-  ,const double2 *posxy,const double *posz,const float3 *ace
+  ,const float4* ftodatp,const double3* ftocenter,const unsigned* ridpmot
+  ,const double2* posxy,const double* posz,const float3* ace
   ,float3 *ftoforcessum)
 {
   if(ftcount){
     const unsigned bsize=256;
     const unsigned smem=sizeof(float)*(3+3)*bsize;
     dim3 sgrid=GetSimpleGridSize(ftcount*bsize,bsize);
-    if(periactive)KerFtCalcForcesSum<true>  <<<sgrid,bsize,smem>>> (ftodatp,ftocenter,ftridp,posxy,posz,ace,ftoforcessum);
-    else          KerFtCalcForcesSum<false> <<<sgrid,bsize,smem>>> (ftodatp,ftocenter,ftridp,posxy,posz,ace,ftoforcessum);
+    if(periactive)KerFtCalcForcesSum<true>  <<<sgrid,bsize,smem>>> (ftodatp,ftocenter,ridpmot,posxy,posz,ace,ftoforcessum);
+    else          KerFtCalcForcesSum<false> <<<sgrid,bsize,smem>>> (ftodatp,ftocenter,ridpmot,posxy,posz,ace,ftoforcessum);
   }
 }
 
@@ -2308,11 +2354,11 @@ void FtApplyConstraints(unsigned ftcount,const byte *ftoconstraints
 //------------------------------------------------------------------------------
 /// Updates information and particles of floating bodies.
 //------------------------------------------------------------------------------
-template<bool periactive> __global__ void KerFtUpdate(bool predictor,double dt //ftodata={pini,np,radius,massp}
-  ,unsigned nft,const float4 *ftodatp,const float3 *ftoforcesres
-  ,double3 *ftocenterres,const unsigned *ftridp
-  ,double3 *ftocenter,float3 *ftoangles,float3 *ftovelace
-  ,double2 *posxy,double *posz,unsigned *dcell,float4 *velrhop,typecode *code)
+template<bool periactive> __global__ void KerFtUpdate(bool predictor,double dt //ftodata={pini-CaseNfixed,np,radius,massp}
+  ,unsigned nft,const float4* ftodatp,const float3* ftoforcesres
+  ,double3* ftocenterres,const unsigned* ridpmot
+  ,double3* ftocenter,float3* ftoangles,float3* ftovelace
+  ,double2* posxy,double* posz,unsigned* dcell,float4* velrhop,typecode* code)
 {
   const unsigned tid=threadIdx.x;  //-Thread number.
   const unsigned cf=blockIdx.x;    //-Floating number.
@@ -2329,7 +2375,7 @@ template<bool periactive> __global__ void KerFtUpdate(bool predictor,double dt /
   for(unsigned cfor=0;cfor<nfor;cfor++){
     unsigned fp=cfor*blockDim.x+tid;
     if(fp<fnp){
-      const unsigned p=ftridp[fp+fpini];
+      const unsigned p=ridpmot[fp+fpini];
       if(p!=UINT_MAX){
         double2 rposxy=posxy[p];
         double rposz=posz[p];
@@ -2380,58 +2426,18 @@ template<bool periactive> __global__ void KerFtUpdate(bool predictor,double dt /
 /// Updates information and particles of floating bodies.
 //==============================================================================
 void FtUpdate(bool periactive,bool predictor,unsigned ftcount,double dt
-  ,const float4 *ftodatp,const float3 *ftoforcesres,double3 *ftocenterres,const unsigned *ftridp
-  ,double3 *ftocenter,float3 *ftoangles,float3 *ftovelace
-  ,double2 *posxy,double *posz,unsigned *dcell,float4 *velrhop,typecode *code)
+  ,const float4* ftodatp,const float3* ftoforcesres,double3* ftocenterres
+  ,const unsigned* ridpmot
+  ,double3* ftocenter,float3* ftoangles,float3* ftovelace
+  ,double2* posxy,double* posz,unsigned* dcell,float4* velrhop,typecode* code)
 {
   if(ftcount){
     const unsigned bsize=128; 
     dim3 sgrid=GetSimpleGridSize(ftcount*bsize,bsize);
-    if(periactive)KerFtUpdate<true>  <<<sgrid,bsize>>> (predictor,dt,ftcount,ftodatp,ftoforcesres,ftocenterres,ftridp,ftocenter,ftoangles,ftovelace,posxy,posz,dcell,velrhop,code);
-    else          KerFtUpdate<false> <<<sgrid,bsize>>> (predictor,dt,ftcount,ftodatp,ftoforcesres,ftocenterres,ftridp,ftocenter,ftoangles,ftovelace,posxy,posz,dcell,velrhop,code);
+    if(periactive)KerFtUpdate<true>  <<<sgrid,bsize>>> (predictor,dt,ftcount,ftodatp,ftoforcesres,ftocenterres,ridpmot,ftocenter,ftoangles,ftovelace,posxy,posz,dcell,velrhop,code);
+    else          KerFtUpdate<false> <<<sgrid,bsize>>> (predictor,dt,ftcount,ftodatp,ftoforcesres,ftocenterres,ridpmot,ftocenter,ftoangles,ftovelace,posxy,posz,dcell,velrhop,code);
   }
 }
-
-
-//<vs_ftmottionsv_ini>
-//------------------------------------------------------------------------------
-/// Get reference position of floating bodies.
-//------------------------------------------------------------------------------
-__global__ void KerFtGetPosRef(unsigned np,const unsigned *idpref
-  ,const unsigned *ftridp,const double2 *posxy,const double *posz,double *posref)
-{
-  unsigned cp=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle
-  if(cp<np){
-    bool ok=false;
-    const unsigned cid=idpref[cp];
-    if(cid!=UINT_MAX){
-      const unsigned p=ftridp[cid];
-      if(p!=UINT_MAX){
-        const double2 rxy=posxy[p];
-        const unsigned c=cp*3;
-        posref[c  ]=rxy.x;
-        posref[c+1]=rxy.y;
-        posref[c+2]=posz[p];
-        ok=true;
-      }
-    }
-    if(!ok)posref[cp*3]=DBL_MAX;
-  }
-}
-//==============================================================================
-/// Get reference position of floating bodies.
-//==============================================================================
-void FtGetPosRef(unsigned np,const unsigned *idpref,const unsigned *ftridp
-  ,const double2 *posxy,const double *posz,double *posref)
-{
-  if(np){
-    const unsigned bsize=128; 
-    dim3 sgrid=GetSimpleGridSize(np,bsize);
-    KerFtGetPosRef <<<sgrid,bsize>>> (np,idpref,ftridp,posxy,posz,posref);
-  }
-}
-//<vs_ftmottionsv_end>
-
 
 
 //##############################################################################

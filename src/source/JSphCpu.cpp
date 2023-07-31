@@ -21,7 +21,6 @@
 #include "JSphCpu.h"
 #include "JCellSearch_inline.h"
 #include "JCellDivCpu.h"
-#include "JPartFloatBi4.h"
 #include "FunSphKernel.h"
 #include "FunSphEos.h"
 #include "Functions.h"
@@ -89,8 +88,7 @@ void JSphCpu::InitVars(){
   Arc=NULL; Acec=NULL; Deltac=NULL;
   ShiftPosfsc=NULL;               //-Shifting.
   Pressc=NULL;
-  RidpMove=NULL; 
-  FtRidp=NULL;
+  RidpMot=NULL;
   FtoForces=NULL;
   FtoForcesRes=NULL;
   FreeCpuMemoryParticles();
@@ -103,8 +101,7 @@ void JSphCpu::InitVars(){
 //==============================================================================
 void JSphCpu::FreeCpuMemoryFixed(){
   MemCpuFixed=0;
-  delete[] RidpMove;     RidpMove=NULL;
-  delete[] FtRidp;       FtRidp=NULL;
+  delete[] RidpMot;      RidpMot=NULL;
   delete[] FtoForces;    FtoForces=NULL;
   delete[] FtoForcesRes; FtoForcesRes=NULL;
 }
@@ -115,13 +112,13 @@ void JSphCpu::FreeCpuMemoryFixed(){
 void JSphCpu::AllocCpuMemoryFixed(){
   MemCpuFixed=0;
   try{
-    //-Allocates memory for moving objects.
-    if(CaseNmoving){
-      RidpMove=new unsigned[CaseNmoving];  MemCpuFixed+=(sizeof(unsigned)*CaseNmoving);
+    //-Allocates memory for moving and floating objects.
+    if(CaseNmoving || CaseNfloat){
+      const unsigned sizen=CaseNmoving+CaseNfloat;
+      RidpMot=new unsigned[sizen];  MemCpuFixed+=(sizeof(unsigned)*sizen);
     }
     //-Allocates memory for floating bodies.
     if(CaseNfloat){
-      FtRidp      =new unsigned[CaseNfloat];     MemCpuFixed+=(sizeof(unsigned)*CaseNfloat);
       FtoForces   =new StFtoForces[FtCount];     MemCpuFixed+=(sizeof(StFtoForces)*FtCount);
       FtoForcesRes=new StFtoForcesRes[FtCount];  MemCpuFixed+=(sizeof(StFtoForcesRes)*FtCount);
     }
@@ -430,7 +427,7 @@ void JSphCpu::InitRunCpu(){
 
   if(TStep==STEP_Verlet)memcpy(VelrhopM1c,Velrhopc,sizeof(tfloat4)*Np);
   if(TVisco==VISCO_LaminarSPS)memset(SpsTauc,0,sizeof(tsymatrix3f)*Np);
-  if(CaseNfloat)InitFloating();
+  if(CaseNfloat)InitFloatings();
   if(MotionVelc)memset(MotionVelc,0,sizeof(tfloat3)*Np);
 }
 
@@ -834,11 +831,11 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity,bool sh
 /// Perform DEM interaction between particles Floating-Bound & Floating-Floating //(DEM)
 /// Realiza interaccion DEM entre particulas Floating-Bound & Floating-Floating //(DEM)
 //==============================================================================
-void JSphCpu::InteractionForcesDEM(unsigned nfloat,StDivDataCpu divdata,const unsigned *dcell
-  ,const unsigned *ftridp,const StDemData* demdata
-  ,const tdouble3 *pos,const tfloat4 *velrhop
-  ,const typecode *code,const unsigned *idp
-  ,float &viscdt,tfloat3 *ace)const
+void JSphCpu::InteractionForcesDEM(unsigned nfloat,StDivDataCpu divdata
+  ,const unsigned* dcell,const unsigned* ftridp,const StDemData* demdata
+  ,const tdouble3* pos,const tfloat4* velrhop
+  ,const typecode* code,const unsigned* idp
+  ,float& viscdt,tfloat3* ace)const
 {
   //-Initialise demdtth to calculate max demdt with OpenMP. | Inicializa demdtth para calcular demdt maximo con OpenMP.
   float demdtth[OMP_MAXTHREADS*OMP_STRIDE];
@@ -982,7 +979,7 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity,bool sh
 
     //-Interaction of DEM Floating-Bound & Floating-Floating. //(DEM)
     if(UseDEM)InteractionForcesDEM(CaseNfloat,t.divdata,t.dcell
-      ,FtRidp,DemData,t.pos,t.velrhop,t.code,t.idp,viscdt,t.ace);
+      ,RidpMot+CaseNmoving,DemData,t.pos,t.velrhop,t.code,t.idp,viscdt,t.ace);
 
     //-Computes tau for Laminar+SPS.
     if(tvisco==VISCO_LaminarSPS)ComputeSpsTau(t.npf,t.npb,t.velrhop,t.spsgradvel,t.spstau);
@@ -1666,7 +1663,9 @@ void JSphCpu::RunShifting(double dt){
 /// Cuando periactive es False supone que no hay particulas duplicadas (periodicas)
 /// y todas son CODE_NORMAL.
 //==============================================================================
-void JSphCpu::CalcRidp(bool periactive,unsigned np,unsigned pini,unsigned idini,unsigned idfin,const typecode *code,const unsigned *idp,unsigned *ridp)const{
+void JSphCpu::CalcRidp(bool periactive,unsigned np,unsigned pini,unsigned idini
+  ,unsigned idfin,const typecode* code,const unsigned* idp,unsigned* ridp)const
+{
   //-Assign values UINT_MAX. | Asigna valores UINT_MAX.
   const unsigned nsel=idfin-idini;
   memset(ridp,255,sizeof(unsigned)*nsel); 
@@ -1698,12 +1697,13 @@ void JSphCpu::CalcRidp(bool periactive,unsigned np,unsigned pini,unsigned idini,
 /// Applies a linear movement to a group of particles.
 /// Aplica un movimiento lineal a un conjunto de particulas.
 //==============================================================================
-void JSphCpu::MoveLinBound(unsigned np,unsigned ini,const tdouble3 &mvpos,const tfloat3 &mvvel
-  ,const unsigned *ridp,tdouble3 *pos,unsigned *dcell,tfloat4 *velrhop,typecode *code)const
+void JSphCpu::MoveLinBound(unsigned np,unsigned ini,const tdouble3& mvpos
+  ,const tfloat3& mvvel,const unsigned* ridpmot,tdouble3* pos,unsigned* dcell
+  ,tfloat4* velrhop,typecode* code)const
 {
   const unsigned fin=ini+np;
   for(unsigned id=ini;id<fin;id++){
-    const unsigned pid=RidpMove[id];
+    const unsigned pid=ridpmot[id];
     if(pid!=UINT_MAX){
       UpdatePos(pos[pid],mvpos.x,mvpos.y,mvpos.z,false,pid,pos,dcell,code);
       velrhop[pid].x=mvvel.x;  velrhop[pid].y=mvvel.y;  velrhop[pid].z=mvvel.z;
@@ -1715,12 +1715,13 @@ void JSphCpu::MoveLinBound(unsigned np,unsigned ini,const tdouble3 &mvpos,const 
 /// Applies a matrix movement to a group of particles.
 /// Aplica un movimiento matricial a un conjunto de particulas.
 //==============================================================================
-void JSphCpu::MoveMatBound(unsigned np,unsigned ini,tmatrix4d m,double dt,const unsigned *ridpmv
-  ,tdouble3 *pos,unsigned *dcell,tfloat4 *velrhop,typecode *code,tfloat3 *boundnormal)const
+void JSphCpu::MoveMatBound(unsigned np,unsigned ini,tmatrix4d m,double dt
+  ,const unsigned* ridpmot,tdouble3* pos,unsigned* dcell,tfloat4* velrhop
+  ,typecode* code,tfloat3* boundnormal)const
 {
   const unsigned fin=ini+np;
   for(unsigned id=ini;id<fin;id++){
-    const unsigned pid=RidpMove[id];
+    const unsigned pid=ridpmot[id];
     if(pid!=UINT_MAX){
       const tdouble3 ps=pos[pid];
       tdouble3 ps2=MatrixMulPoint(m,ps);
@@ -1742,11 +1743,11 @@ void JSphCpu::MoveMatBound(unsigned np,unsigned ini,tmatrix4d m,double dt,const 
 /// Copy motion velocity to MotionVel[].
 /// Copia velocidad de movimiento a MotionVel[].
 //==============================================================================
-void JSphCpu::CopyMotionVel(unsigned nmoving,const unsigned *ridp
-  ,const tfloat4 *velrhop,tfloat3 *motionvel)const
+void JSphCpu::CopyMotionVel(unsigned nmoving,const unsigned* ridpmot
+  ,const tfloat4* velrhop,tfloat3* motionvel)const
 {
   for(unsigned id=0;id<nmoving;id++){
-    const unsigned pid=RidpMove[id];
+    const unsigned pid=ridpmot[id];
     if(pid!=UINT_MAX){
       const tfloat4 v=velrhop[pid];
       motionvel[pid]=TFloat3(v.x,v.y,v.z);
@@ -1778,38 +1779,36 @@ void JSphCpu::RunMotion(double stepdt){
   if(WaveGen)CalcMotionWaveGen(stepdt);
   //-Process particles motion.
   if(DsMotion->GetActiveMotion()){
-    CalcRidp(PeriActive!=0,Npb,0,CaseNfixed,CaseNfixed+CaseNmoving,Codec,Idpc,RidpMove);
     BoundChanged=true;
     const unsigned nref=DsMotion->GetNumObjects();
     for(unsigned ref=0;ref<nref;ref++){
       const StMotionData& m=DsMotion->GetMotionData(ref);
       if(m.type==MOTT_Linear){//-Linear movement.
-        if(motsim)MoveLinBound   (m.count,m.idbegin-CaseNfixed,m.linmov,ToTFloat3(m.linvel),RidpMove,Posc,Dcellc,Velrhopc,Codec);
+        if(motsim)MoveLinBound   (m.count,m.idbegin-CaseNfixed,m.linmov,ToTFloat3(m.linvel),RidpMot,Posc,Dcellc,Velrhopc,Codec);
         //else    MoveLinBoundAce(m.count,m.idbegin-CaseNfixed,m.linmov,ToTFloat3(m.linvel),ToTFloat3(m.linace),RidpMove,Posc,Dcellc,Velrhopc,Acec,Codec);
       }
       if(m.type==MOTT_Matrix){//-Matrix movement (for rotations).
-        if(motsim)MoveMatBound   (m.count,m.idbegin-CaseNfixed,m.matmov,stepdt,RidpMove,Posc,Dcellc,Velrhopc,Codec,boundnormal); 
+        if(motsim)MoveMatBound   (m.count,m.idbegin-CaseNfixed,m.matmov,stepdt,RidpMot,Posc,Dcellc,Velrhopc,Codec,boundnormal); 
         //else    MoveMatBoundAce(m.count,m.idbegin-CaseNfixed,m.matmov,m.matmov2,stepdt,RidpMove,Posc,Dcellc,Velrhopc,Acec,Codec);
       }      
     }
   }
   //-Management of Multi-Layer Pistons.
   if(MLPistons){
-    if(!BoundChanged)CalcRidp(PeriActive!=0,Npb,0,CaseNfixed,CaseNfixed+CaseNmoving,Codec,Idpc,RidpMove);
     BoundChanged=true;
     if(MLPistons->GetPiston1dCount()){//-Process motion for pistons 1D.
       MLPistons->CalculateMotion1d(TimeStep+MLPistons->GetTimeMod()+stepdt);
       MovePiston1d(CaseNmoving,0,MLPistons->GetPoszMin(),MLPistons->GetPoszCount()
         ,MLPistons->GetPistonId(),MLPistons->GetMovx(),MLPistons->GetVelx()
-        ,RidpMove,Posc,Dcellc,Velrhopc,Codec);
+        ,RidpMot,Posc,Dcellc,Velrhopc,Codec);
     }
     for(unsigned cp=0;cp<MLPistons->GetPiston2dCount();cp++){//-Process motion for pistons 2D.
       JMLPistons::StMotionInfoPiston2D mot=MLPistons->CalculateMotion2d(cp,TimeStep+MLPistons->GetTimeMod()+stepdt);
       MovePiston2d(mot.np,mot.idbegin-CaseNfixed,mot.posymin,mot.poszmin,mot.poszcount,mot.movyz,mot.velyz
-        ,RidpMove,Posc,Dcellc,Velrhopc,Codec);
+        ,RidpMot,Posc,Dcellc,Velrhopc,Codec);
     }
   }
-  if(MotionVelc)CopyMotionVel(CaseNmoving,RidpMove,Velrhopc,MotionVelc);
+  if(MotionVelc)CopyMotionVel(CaseNmoving,RidpMot,Velrhopc,MotionVelc);
   Timersc->TmStop(TMC_SuMotion);
 }
 
@@ -1818,15 +1817,16 @@ void JSphCpu::RunMotion(double stepdt){
 /// Aplica movimiento y velocidad de piston 1D a conjunto de particulas.
 //==============================================================================
 void JSphCpu::MovePiston1d(unsigned np,unsigned ini
-  ,double poszmin,unsigned poszcount,const byte *pistonid,const double* movx,const double* velx
-  ,const unsigned *ridpmv,tdouble3 *pos,unsigned *dcell,tfloat4 *velrhop,typecode *code)const
+  ,double poszmin,unsigned poszcount,const byte *pistonid,const double* movx
+  ,const double* velx,const unsigned* ridpmot,tdouble3* pos,unsigned* dcell
+  ,tfloat4* velrhop,typecode* code)const
 {
   const int fin=int(ini+np);
   #ifdef OMP_USE
     #pragma omp parallel for schedule (static) if(fin>OMP_LIMIT_LIGHT)
   #endif
   for(int id=int(ini);id<fin;id++){
-    const unsigned pid=ridpmv[id];
+    const unsigned pid=ridpmot[id];
     if(pid!=UINT_MAX){
       const unsigned pisid=pistonid[CODE_GetTypeValue(code[pid])];
       if(pisid<255){
@@ -1846,15 +1846,16 @@ void JSphCpu::MovePiston1d(unsigned np,unsigned ini
 /// Aplica movimiento y velocidad de piston 2D a conjunto de particulas.
 //==============================================================================
 void JSphCpu::MovePiston2d(unsigned np,unsigned ini
-  ,double posymin,double poszmin,unsigned poszcount,const double* movx,const double* velx
-  ,const unsigned *ridpmv,tdouble3 *pos,unsigned *dcell,tfloat4 *velrhop,typecode *code)const
+  ,double posymin,double poszmin,unsigned poszcount,const double* movx
+  ,const double* velx,const unsigned* ridpmot,tdouble3* pos,unsigned* dcell
+  ,tfloat4* velrhop,typecode* code)const
 {
   const int fin=int(ini+np);
   #ifdef OMP_USE
     #pragma omp parallel for schedule (static) if(fin>OMP_LIMIT_LIGHT)
   #endif
   for(int id=int(ini);id<fin;id++){
-    const unsigned pid=ridpmv[id];
+    const unsigned pid=ridpmot[id];
     if(pid!=UINT_MAX){
       const tdouble3 ps=pos[pid];
       const unsigned cy=unsigned((ps.y-posymin)/Dp);
@@ -1888,31 +1889,6 @@ void JSphCpu::RunRelaxZone(double dt){
 void JSphCpu::RunDamping(double dt,unsigned np,unsigned npb,const tdouble3 *pos,const typecode *code,tfloat4 *velrhop)const{
   const typecode *codeptr=(CaseNfloat || PeriActive? code: NULL);
   Damping->ComputeDampingCpu(TimeStep,dt,np-npb,npb,pos,codeptr,velrhop);
-}
-
-//==============================================================================
-/// Adjust variables of floating body particles.
-/// Ajusta variables de particulas floating body.
-//==============================================================================
-void JSphCpu::InitFloating(){
-  if(PartBegin){
-    JPartFloatBi4Load ftdata;
-    ftdata.LoadFile(PartBeginDir);
-    //-Check cases of constant values. | Comprueba coincidencia de datos constantes.
-    for(unsigned cf=0;cf<FtCount;cf++){
-      const StFloatingData &ft=FtObjs[cf];
-      ftdata.CheckHeadData(cf,ft.mkbound,ft.begin,ft.count,ft.mass,ft.massp);
-    }
-    //-Load PART data. | Carga datos de PART.
-    ftdata.LoadPart(PartBegin);
-    for(unsigned cf=0;cf<FtCount;cf++){
-      FtObjs[cf].center=ftdata.GetPartCenter(cf);
-      FtObjs[cf].fvel  =ftdata.GetPartVelLin(cf);
-      FtObjs[cf].fomega=ftdata.GetPartVelAng(cf);
-      FtObjs[cf].radius=ftdata.GetHeadRadius(cf);
-    }
-    DemDtForce=ftdata.GetPartDemDtForce();
-  }
 }
 
 

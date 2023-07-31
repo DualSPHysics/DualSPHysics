@@ -58,9 +58,6 @@
     <ClInclude Include="..\source\JPartOutBi4Save.h">
       <Filter>CommonDsph</Filter>
     </ClInclude>
-    <ClInclude Include="..\source\JPartFloatBi4.h">
-      <Filter>CommonDsph</Filter>
-    </ClInclude>
     <ClInclude Include="..\source\JWaveGen.h">
       <Filter>Libs</Filter>
     </ClInclude>
@@ -448,9 +445,6 @@
     <ClInclude Include="..\source\JComputeMotionRef.h">
       <Filter>Source\Other</Filter>
     </ClInclude>
-    <ClInclude Include="..\source\JFtMotionSave.h">
-      <Filter>Source\Other</Filter>
-    </ClInclude>
     <ClInclude Include="..\source\JPartMotionDef.h">
       <Filter>Source\Other</Filter>
     </ClInclude>
@@ -493,6 +487,18 @@
     <ClInclude Include="..\source\JDsOutputParts.h">
       <Filter>Source\Other</Filter>
     </ClInclude>
+    <ClInclude Include="..\source\JDsPartFloatSave.h">
+      <Filter>Source\Other</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JDsPartMotionSave.h">
+      <Filter>Source\Other</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JPartMotRefBi4Save.h">
+      <Filter>Source\Other</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JPartFloatInfoBi4.h">
+      <Filter>CommonDsph</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\source\main.cpp">
@@ -502,9 +508,6 @@
       <Filter>CommonDsph</Filter>
     </ClCompile>
     <ClCompile Include="..\source\JPartOutBi4Save.cpp">
-      <Filter>CommonDsph</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\JPartFloatBi4.cpp">
       <Filter>CommonDsph</Filter>
     </ClCompile>
     <ClCompile Include="..\source\JDsphConfig.cpp">
@@ -762,9 +765,6 @@
     <ClCompile Include="..\source\JComputeMotionRef.cpp">
       <Filter>Source\Other</Filter>
     </ClCompile>
-    <ClCompile Include="..\source\JFtMotionSave.cpp">
-      <Filter>Source\Other</Filter>
-    </ClCompile>
     <ClCompile Include="..\source\FunGeo3d.cpp">
       <Filter>Common</Filter>
     </ClCompile>
@@ -782,6 +782,18 @@
     </ClCompile>
     <ClCompile Include="..\source\JDsOutputParts.cpp">
       <Filter>Source\Other</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JDsPartFloatSave.cpp">
+      <Filter>Source\Other</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JDsPartMotionSave.cpp">
+      <Filter>Source\Other</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JPartMotRefBi4Save.cpp">
+      <Filter>Source\Other</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JPartFloatInfoBi4.cpp">
+      <Filter>CommonDsph</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

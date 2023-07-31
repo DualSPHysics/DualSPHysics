@@ -113,8 +113,7 @@ protected:
   llong MemCpuParticles;      ///<Memory reserved for particles' vectors. | Mermoria reservada para vectores de datos de particulas.
   llong MemCpuFixed;          ///<Memory reserved in AllocMemoryFixed. | Mermoria reservada en AllocMemoryFixed.
 
-  //-Particle Position according to id. | Posicion de particula segun id.
-  unsigned *RidpMove; ///<Only for moving boundary particles [CaseNmoving] and when CaseNmoving!=0 | Solo para boundary moving particles [CaseNmoving] y cuando CaseNmoving!=0 
+  unsigned* RidpMot; ///<Particle index according to Idp (only for moving and floating particles and updated after RunCellDivide) [CaseNmoving+CaseNfloat]. 
 
   //-List of particle arrays on CPU. | Lista de arrays en CPU para particulas.
   JArraysCpu* ArraysCpu;
@@ -137,7 +136,6 @@ protected:
   tfloat4 *VelrhopPrec;
 
   //-Variables for floating bodies.
-  unsigned *FtRidp;             ///<Identifier to access to the particles of the floating object [CaseNfloat].
   StFtoForces *FtoForces;       ///<Stores forces of floatings [FtCount].
   StFtoForcesRes *FtoForcesRes; ///<Stores data to update floatings [FtCount].
 
@@ -204,7 +202,6 @@ protected:
 
   void ConfigRunMode();
   void ConfigCellDiv(JCellDivCpu* celldiv){ CellDiv=celldiv; }
-  void InitFloating();
   void InitRunCpu();
 
   float CalcVelMaxSeq(unsigned np,const tfloat4* velrhop)const;
@@ -228,10 +225,10 @@ protected:
     ,float &viscdt,float *ar,tfloat3 *ace,float *delta
     ,TpShifting shiftmode,tfloat4 *shiftposfs)const;
 
-  void InteractionForcesDEM(unsigned nfloat,StDivDataCpu divdata,const unsigned *dcell
-    ,const unsigned *ftridp,const StDemData* demobjs
-    ,const tdouble3 *pos,const tfloat4 *velrhop,const typecode *code,const unsigned *idp
-    ,float &viscdt,tfloat3 *ace)const;
+  void InteractionForcesDEM(unsigned nfloat,StDivDataCpu divdata,const unsigned* dcell
+    ,const unsigned* ftridp,const StDemData* demobjs
+    ,const tdouble3* pos,const tfloat4* velrhop,const typecode* code,const unsigned* idp
+    ,float& viscdt,tfloat3* ace)const;
 
   template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity,bool shift> 
     void Interaction_ForcesCpuT(const stinterparmsc &t,StInterResultc &res)const;
@@ -266,23 +263,23 @@ protected:
   void RunShifting(double dt);
 
   void CalcRidp(bool periactive,unsigned np,unsigned pini,unsigned idini,unsigned idfin
-    ,const typecode *code,const unsigned *idp,unsigned *ridp)const;
-  void MoveLinBound(unsigned np,unsigned ini,const tdouble3 &mvpos,const tfloat3 &mvvel
-    ,const unsigned *ridp,tdouble3 *pos,unsigned *dcell,tfloat4 *velrhop,typecode *code)const;
-  void MoveMatBound(unsigned np,unsigned ini,tmatrix4d m,double dt,const unsigned *ridpmv
-    ,tdouble3 *pos,unsigned *dcell,tfloat4 *velrhop,typecode *code,tfloat3 *boundnormal)const;
-  void CopyMotionVel(unsigned nmoving,const unsigned *ridp,const tfloat4 *velrhop,tfloat3 *motionvel)const;
+    ,const typecode* code,const unsigned* idp,unsigned* ridp)const;
+  void MoveLinBound(unsigned np,unsigned ini,const tdouble3& mvpos,const tfloat3& mvvel
+    ,const unsigned* ridpmot,tdouble3* pos,unsigned* dcell,tfloat4* velrhop,typecode* code)const;
+  void MoveMatBound(unsigned np,unsigned ini,tmatrix4d m,double dt,const unsigned* ridpmot
+    ,tdouble3* pos,unsigned* dcell,tfloat4* velrhop,typecode* code,tfloat3* boundnormal)const;
+  void CopyMotionVel(unsigned nmoving,const unsigned* ridpmot,const tfloat4* velrhop,tfloat3* motionvel)const;
   void CalcMotion(double stepdt);
   void RunMotion(double stepdt);
   void RunRelaxZone(double dt);
   void RunDamping(double dt,unsigned np,unsigned npb,const tdouble3 *pos,const typecode *code,tfloat4 *velrhop)const;
 
   void MovePiston1d(unsigned np,unsigned ini,double poszmin,unsigned poszcount
-    ,const byte *pistonid,const double* movx,const double* velx
-    ,const unsigned *ridpmv,tdouble3 *pos,unsigned *dcell,tfloat4 *velrhop,typecode *code)const;
+    ,const byte* pistonid,const double* movx,const double* velx
+    ,const unsigned* ridpmot,tdouble3* pos,unsigned* dcell,tfloat4* velrhop,typecode* code)const;
   void MovePiston2d(unsigned np,unsigned ini
     ,double posymin,double poszmin,unsigned poszcount,const double* movx,const double* velx
-    ,const unsigned *ridpmv,tdouble3 *pos,unsigned *dcell,tfloat4 *velrhop,typecode *code)const;
+    ,const unsigned* ridpmot,tdouble3* pos,unsigned* dcell,tfloat4* velrhop,typecode* code)const;
 
 public:
   JSphCpu(bool withmpi);

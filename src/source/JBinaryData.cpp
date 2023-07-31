@@ -86,21 +86,21 @@ size_t JBinaryDataDef::SizeOfType(TpData type){
   size_t ret=0;
   switch(type){
     //case JBinaryDataDef::DatText:
-    case JBinaryDataDef::DatBool:     ret=sizeof(int);             break;
-    case JBinaryDataDef::DatChar:     ret=sizeof(char);            break;
-    case JBinaryDataDef::DatUchar:    ret=sizeof(unsigned char);   break;
-    case JBinaryDataDef::DatShort:    ret=sizeof(short);           break;
-    case JBinaryDataDef::DatUshort:   ret=sizeof(unsigned short);  break;
-    case JBinaryDataDef::DatInt:      ret=sizeof(int);             break;
-    case JBinaryDataDef::DatUint:     ret=sizeof(unsigned);        break;
-    case JBinaryDataDef::DatLlong:    ret=sizeof(llong);           break;
-    case JBinaryDataDef::DatUllong:   ret=sizeof(ullong);          break;
-    case JBinaryDataDef::DatFloat:    ret=sizeof(float);           break;
-    case JBinaryDataDef::DatDouble:   ret=sizeof(double);          break;
-    case JBinaryDataDef::DatInt3:     ret=sizeof(tint3);           break;
-    case JBinaryDataDef::DatUint3:    ret=sizeof(tuint3);          break;
-    case JBinaryDataDef::DatFloat3:   ret=sizeof(tfloat3);         break;
-    case JBinaryDataDef::DatDouble3:  ret=sizeof(tdouble3);        break;
+    case JBinaryDataDef::DatBool:     ret=sizeof(int);       break;
+    case JBinaryDataDef::DatChar:     ret=sizeof(char);      break;
+    case JBinaryDataDef::DatUchar:    ret=sizeof(byte);      break;
+    case JBinaryDataDef::DatShort:    ret=sizeof(short);     break;
+    case JBinaryDataDef::DatUshort:   ret=sizeof(word);      break;
+    case JBinaryDataDef::DatInt:      ret=sizeof(int);       break;
+    case JBinaryDataDef::DatUint:     ret=sizeof(unsigned);  break;
+    case JBinaryDataDef::DatLlong:    ret=sizeof(llong);     break;
+    case JBinaryDataDef::DatUllong:   ret=sizeof(ullong);    break;
+    case JBinaryDataDef::DatFloat:    ret=sizeof(float);     break;
+    case JBinaryDataDef::DatDouble:   ret=sizeof(double);    break;
+    case JBinaryDataDef::DatInt3:     ret=sizeof(tint3);     break;
+    case JBinaryDataDef::DatUint3:    ret=sizeof(tuint3);    break;
+    case JBinaryDataDef::DatFloat3:   ret=sizeof(tfloat3);   break;
+    case JBinaryDataDef::DatDouble3:  ret=sizeof(tdouble3);  break;
     default:  Run_ExceptioonSta("Type of data invalid.");
   }
   return(ret);
@@ -197,22 +197,22 @@ void JBinaryDataArray::SetName(const std::string& name){
 //ok
 void JBinaryDataArray::FreePointer(void* ptr)const{
   if(ptr)switch(Type){
-    case JBinaryDataDef::DatText:     delete[] (string*)ptr;          break;
-    case JBinaryDataDef::DatBool:     delete[] (bool*)ptr;            break;
-    case JBinaryDataDef::DatInt:      delete[] (int*)ptr;             break;
-    case JBinaryDataDef::DatUint:     delete[] (unsigned int*)ptr;    break;
-    case JBinaryDataDef::DatChar:     delete[] (char*)ptr;            break;
-    case JBinaryDataDef::DatUchar:    delete[] (unsigned char*)ptr;   break;
-    case JBinaryDataDef::DatShort:    delete[] (short*)ptr;           break;
-    case JBinaryDataDef::DatUshort:   delete[] (unsigned short*)ptr;  break;
-    case JBinaryDataDef::DatLlong:    delete[] (llong*)ptr;           break;
-    case JBinaryDataDef::DatUllong:   delete[] (ullong*)ptr;          break;
-    case JBinaryDataDef::DatFloat:    delete[] (float*)ptr;           break;
-    case JBinaryDataDef::DatDouble:   delete[] (double*)ptr;          break;
-    case JBinaryDataDef::DatInt3:     delete[] (tint3*)ptr;           break;  
-    case JBinaryDataDef::DatUint3:    delete[] (tuint3*)ptr;          break;
-    case JBinaryDataDef::DatFloat3:   delete[] (tfloat3*)ptr;         break;
-    case JBinaryDataDef::DatDouble3:  delete[] (tdouble3*)ptr;        break;
+    case JBinaryDataDef::DatText:     delete[] (string*)ptr;    break;
+    case JBinaryDataDef::DatBool:     delete[] (bool*)ptr;      break;
+    case JBinaryDataDef::DatInt:      delete[] (int*)ptr;       break;
+    case JBinaryDataDef::DatUint:     delete[] (unsigned*)ptr;  break;
+    case JBinaryDataDef::DatChar:     delete[] (char*)ptr;      break;
+    case JBinaryDataDef::DatUchar:    delete[] (byte*)ptr;      break;
+    case JBinaryDataDef::DatShort:    delete[] (short*)ptr;     break;
+    case JBinaryDataDef::DatUshort:   delete[] (word*)ptr;      break;
+    case JBinaryDataDef::DatLlong:    delete[] (llong*)ptr;     break;
+    case JBinaryDataDef::DatUllong:   delete[] (ullong*)ptr;    break;
+    case JBinaryDataDef::DatFloat:    delete[] (float*)ptr;     break;
+    case JBinaryDataDef::DatDouble:   delete[] (double*)ptr;    break;
+    case JBinaryDataDef::DatInt3:     delete[] (tint3*)ptr;     break;  
+    case JBinaryDataDef::DatUint3:    delete[] (tuint3*)ptr;    break;
+    case JBinaryDataDef::DatFloat3:   delete[] (tfloat3*)ptr;   break;
+    case JBinaryDataDef::DatDouble3:  delete[] (tdouble3*)ptr;  break;
     default: Run_Exceptioon("Type of array invalid.");
   }
 }
@@ -227,22 +227,22 @@ void* JBinaryDataArray::AllocPointer(size_t size)const{
   if(size){
     try{
       switch(Type){
-        case JBinaryDataDef::DatText:     ptr=new string[size];          break;
-        case JBinaryDataDef::DatBool:     ptr=new bool[size];            break;
-        case JBinaryDataDef::DatInt:      ptr=new int[size];             break;
-        case JBinaryDataDef::DatUint:     ptr=new unsigned int[size];    break;
-        case JBinaryDataDef::DatChar:     ptr=new char[size];            break;
-        case JBinaryDataDef::DatUchar:    ptr=new unsigned char[size];   break;
-        case JBinaryDataDef::DatShort:    ptr=new short[size];           break;
-        case JBinaryDataDef::DatUshort:   ptr=new unsigned short[size];  break;
-        case JBinaryDataDef::DatLlong:    ptr=new llong[size];           break;
-        case JBinaryDataDef::DatUllong:   ptr=new ullong[size];          break;
-        case JBinaryDataDef::DatFloat:    ptr=new float[size];           break;
-        case JBinaryDataDef::DatDouble:   ptr=new double[size];          break;
-        case JBinaryDataDef::DatInt3:     ptr=new tint3[size];           break;
-        case JBinaryDataDef::DatUint3:    ptr=new tuint3[size];          break;
-        case JBinaryDataDef::DatFloat3:   ptr=new tfloat3[size];         break;
-        case JBinaryDataDef::DatDouble3:  ptr=new tdouble3[size];        break;
+        case JBinaryDataDef::DatText:     ptr=new string[size];    break;
+        case JBinaryDataDef::DatBool:     ptr=new bool[size];      break;
+        case JBinaryDataDef::DatInt:      ptr=new int[size];       break;
+        case JBinaryDataDef::DatUint:     ptr=new unsigned[size];  break;
+        case JBinaryDataDef::DatChar:     ptr=new char[size];      break;
+        case JBinaryDataDef::DatUchar:    ptr=new byte[size];      break;
+        case JBinaryDataDef::DatShort:    ptr=new short[size];     break;
+        case JBinaryDataDef::DatUshort:   ptr=new word[size];      break;
+        case JBinaryDataDef::DatLlong:    ptr=new llong[size];     break;
+        case JBinaryDataDef::DatUllong:   ptr=new ullong[size];    break;
+        case JBinaryDataDef::DatFloat:    ptr=new float[size];     break;
+        case JBinaryDataDef::DatDouble:   ptr=new double[size];    break;
+        case JBinaryDataDef::DatInt3:     ptr=new tint3[size];     break;
+        case JBinaryDataDef::DatUint3:    ptr=new tuint3[size];    break;
+        case JBinaryDataDef::DatFloat3:   ptr=new tfloat3[size];   break;
+        case JBinaryDataDef::DatDouble3:  ptr=new tdouble3[size];  break;
         default: Run_Exceptioon("Type of array invalid.");
       }
     }
@@ -838,7 +838,7 @@ void JBinaryData::InValue(size_t& count,size_t size,byte* ptr
   InStr(count,size,ptr,v.name);
   InInt(count,size,ptr,int(v.type));
   switch(v.type){
-    case JBinaryDataDef::DatText:     InStr    (count,size,ptr,v.vtext);     break;
+    case JBinaryDataDef::DatText:     InStr    (count,size,ptr,v.vtext);  break;
     case JBinaryDataDef::DatBool:     InBool   (count,size,ptr,v.vint!=0);   break;    
     case JBinaryDataDef::DatChar:     InChar   (count,size,ptr,v.vchar);     break;    
     case JBinaryDataDef::DatUchar:    InUchar  (count,size,ptr,v.vuchar);    break;    
@@ -1505,22 +1505,22 @@ void JBinaryData::WriteFileXmlArray(const std::string& tabs,std::ofstream* pf
     for(size_t c=0;c<count;c++){
       v.name=fun::UlongStr(c);
       switch(v.type){
-        case JBinaryDataDef::DatText:     v.vtext=   ((const string *)       data)[c];   break;
-        case JBinaryDataDef::DatBool:     v.vint=   (((const bool *)data)[c]? 1: 0);     break;
-        case JBinaryDataDef::DatChar:     v.vchar=   ((const char *)         data)[c];   break;
-        case JBinaryDataDef::DatUchar:    v.vuchar=  ((const unsigned char *)data)[c];   break;
-        case JBinaryDataDef::DatShort:    v.vshort=  ((const short *)        data)[c];   break;
-        case JBinaryDataDef::DatUshort:   v.vushort= ((const word *)         data)[c];   break;
-        case JBinaryDataDef::DatInt:      v.vint=    ((const int *)          data)[c];   break;   
-        case JBinaryDataDef::DatUint:     v.vuint=   ((const unsigned *)     data)[c];   break;   
-        case JBinaryDataDef::DatLlong:    v.vllong=  ((const llong *)        data)[c];   break;   
-        case JBinaryDataDef::DatUllong:   v.vullong= ((const ullong *)       data)[c];   break;   
-        case JBinaryDataDef::DatFloat:    v.vfloat=  ((const float *)        data)[c];   break;   
-        case JBinaryDataDef::DatDouble:   v.vdouble= ((const double *)       data)[c];   break;   
-        case JBinaryDataDef::DatInt3:     v.vint3=   ((const tint3 *)        data)[c];   break;   
-        case JBinaryDataDef::DatUint3:    v.vuint3=  ((const tuint3 *)       data)[c];   break;   
-        case JBinaryDataDef::DatFloat3:   v.vfloat3= ((const tfloat3 *)      data)[c];   break;   
-        case JBinaryDataDef::DatDouble3:  v.vdouble3=((const tdouble3 *)     data)[c];   break;   
+        case JBinaryDataDef::DatText:     v.vtext=   ((const string*)   data)[c];   break;
+        case JBinaryDataDef::DatBool:     v.vint=    (((const bool*)    data)[c]? 1: 0); break;
+        case JBinaryDataDef::DatChar:     v.vchar=   ((const char*)     data)[c];   break;
+        case JBinaryDataDef::DatUchar:    v.vuchar=  ((const byte*)     data)[c];   break;
+        case JBinaryDataDef::DatShort:    v.vshort=  ((const short*)    data)[c];   break;
+        case JBinaryDataDef::DatUshort:   v.vushort= ((const word*)     data)[c];   break;
+        case JBinaryDataDef::DatInt:      v.vint=    ((const int*)      data)[c];   break;   
+        case JBinaryDataDef::DatUint:     v.vuint=   ((const unsigned*) data)[c];   break;   
+        case JBinaryDataDef::DatLlong:    v.vllong=  ((const llong*)    data)[c];   break;   
+        case JBinaryDataDef::DatUllong:   v.vullong= ((const ullong*)   data)[c];   break;   
+        case JBinaryDataDef::DatFloat:    v.vfloat=  ((const float*)    data)[c];   break;   
+        case JBinaryDataDef::DatDouble:   v.vdouble= ((const double*)   data)[c];   break;   
+        case JBinaryDataDef::DatInt3:     v.vint3=   ((const tint3*)    data)[c];   break;   
+        case JBinaryDataDef::DatUint3:    v.vuint3=  ((const tuint3*)   data)[c];   break;   
+        case JBinaryDataDef::DatFloat3:   v.vfloat3= ((const tfloat3*)  data)[c];   break;   
+        case JBinaryDataDef::DatDouble3:  v.vdouble3=((const tdouble3*) data)[c];   break;   
         default: Run_Exceptioon("Type of value invalid.");
       }
       (*pf) << tabs << "\t" << ValueToXml(v) << endl;
@@ -2107,6 +2107,35 @@ JBinaryDataArray* JBinaryData::GetArray(size_t index){
 }
 
 //==============================================================================
+/// Comprueba y devuelve el array solicitado.
+/// Checks and returns the requested array.
+//==============================================================================
+//ok
+JBinaryDataArray* JBinaryData::GetArrayType(const std::string& name
+  ,JBinaryDataDef::TpData type,std::string filerror)
+{
+  JBinaryDataArray* ar=GetArray(name);
+  if(!ar)Run_ExceptioonFile(string("The array ")+name+" is missing.",filerror);
+  if(ar->GetType()!=type)Run_ExceptioonFile(string("The type of array ")+name+" does not match.",filerror);
+  return(ar);
+}
+
+//==============================================================================
+/// Comprueba y devuelve el array solicitado.
+/// Checks and returns the requested array.
+//==============================================================================
+//ok
+JBinaryDataArray* JBinaryData::GetArrayTpSize(const std::string& name
+  ,JBinaryDataDef::TpData type,size_t count,std::string filerror)
+{
+  JBinaryDataArray* ar=GetArray(name);
+  if(!ar)Run_ExceptioonFile(string("The array ")+name+" is missing.",filerror);
+  if(ar->GetType()!=type)Run_ExceptioonFile(string("The type of array ")+name+" does not match.",filerror);
+  if(ar->GetCount()!=count)Run_ExceptioonFile(string("The size of array ")+name+" does not match.",filerror);
+  return(ar);
+}
+
+//==============================================================================
 /// Crea y devuelve array con el nombre. Genera excepcion si ya existe.
 /// Creates and returns array with the name. It generates exception if it already exists.
 //==============================================================================
@@ -2137,12 +2166,77 @@ JBinaryDataArray* JBinaryData::CreateArray(const std::string& name
 /// Creates array and returns pointer to data array.
 //==============================================================================
 //ok
+word* JBinaryData::CreateArrayUshort(const std::string& name,size_t count
+  ,bool clear)
+{
+  JBinaryDataArray* ar=CreateArray(name,JBinaryDataDef::DatUshort);
+  ar->AllocMemoryCount(count,clear);
+  return((word*)ar->GetPointer());
+}
+
+//==============================================================================
+/// Crea array y devuelve puntero a datos del array.
+/// Creates array and returns pointer to data array.
+//==============================================================================
+//ok
+unsigned* JBinaryData::CreateArrayUint(const std::string& name,size_t count
+  ,bool clear)
+{
+  JBinaryDataArray* ar=CreateArray(name,JBinaryDataDef::DatUint);
+  ar->AllocMemoryCount(count,clear);
+  return((unsigned*)ar->GetPointer());
+}
+
+//==============================================================================
+/// Crea array y devuelve puntero a datos del array.
+/// Creates array and returns pointer to data array.
+//==============================================================================
+//ok
+float* JBinaryData::CreateArrayFloat(const std::string& name,size_t count
+  ,bool clear)
+{
+  JBinaryDataArray* ar=CreateArray(name,JBinaryDataDef::DatFloat);
+  ar->AllocMemoryCount(count,clear);
+  return((float*)ar->GetPointer());
+}
+
+//==============================================================================
+/// Crea array y devuelve puntero a datos del array.
+/// Creates array and returns pointer to data array.
+//==============================================================================
+//ok
+double* JBinaryData::CreateArrayDouble(const std::string& name,size_t count
+  ,bool clear)
+{
+  JBinaryDataArray* ar=CreateArray(name,JBinaryDataDef::DatDouble);
+  ar->AllocMemoryCount(count,clear);
+  return((double*)ar->GetPointer());
+}
+
+//==============================================================================
+/// Crea array y devuelve puntero a datos del array.
+/// Creates array and returns pointer to data array.
+//==============================================================================
+//ok
 tfloat3* JBinaryData::CreateArrayFloat3(const std::string& name,size_t count
   ,bool clear)
 {
   JBinaryDataArray* ar=CreateArray(name,JBinaryDataDef::DatFloat3);
   ar->AllocMemoryCount(count,clear);
   return((tfloat3*)ar->GetPointer());
+}
+
+//==============================================================================
+/// Crea array y devuelve puntero a datos del array.
+/// Creates array and returns pointer to data array.
+//==============================================================================
+//ok
+tdouble3* JBinaryData::CreateArrayDouble3(const std::string& name,size_t count
+  ,bool clear)
+{
+  JBinaryDataArray* ar=CreateArray(name,JBinaryDataDef::DatDouble3);
+  ar->AllocMemoryCount(count,clear);
+  return((tdouble3*)ar->GetPointer());
 }
 
 //==============================================================================
@@ -2198,8 +2292,7 @@ void JBinaryData::CopyArrayData(const std::string& name,size_t size
 /// Copy data from array after checking type and size.
 //==============================================================================
 //ok
-void JBinaryData::CopyArrayData(const std::string& name,size_t size
-  ,unsigned char* ptr)
+void JBinaryData::CopyArrayData(const std::string& name,size_t size,byte* ptr)
 {
   CheckCopyArrayData(name,size,JBinaryDataDef::DatUchar)->GetDataCopy(size,ptr);
 }
@@ -2219,7 +2312,7 @@ void JBinaryData::CopyArrayData(const std::string& name,size_t size
 //==============================================================================
 //ok
 void JBinaryData::CopyArrayData(const std::string& name,size_t size
-  ,unsigned short* ptr)
+  ,word* ptr)
 {
   CheckCopyArrayData(name,size,JBinaryDataDef::DatUshort)->GetDataCopy(size,ptr);
 }
@@ -2443,12 +2536,12 @@ char JBinaryData::GetvChar(const std::string& name,bool optional
 }
 
 //==============================================================================
-/// Devuelve el valor solicitado de tipo unsigned char.
-/// Returns the requested value of unsigned char type.
+/// Devuelve el valor solicitado de tipo byte.
+/// Returns the requested value of byte type.
 //==============================================================================
 //ok
-unsigned char JBinaryData::GetvUchar(const std::string& name,bool optional
-  ,unsigned char valdef)const
+byte JBinaryData::GetvUchar(const std::string& name,bool optional
+  ,byte valdef)const
 {
   const size_t pos=ChecksGetValue(name,optional,JBinaryDataDef::DatUchar);
   return(pos==SIZE_MAX? valdef: Values[pos].vuchar);
@@ -2467,12 +2560,12 @@ short JBinaryData::GetvShort(const std::string& name,bool optional
 }
 
 //==============================================================================
-/// Devuelve el valor solicitado de tipo unsigned short.
-/// Returns the requested value of type unsigned short.
+/// Devuelve el valor solicitado de tipo word.
+/// Returns the requested value of type word.
 //==============================================================================
 //ok
-unsigned short JBinaryData::GetvUshort(const std::string& name,bool optional
-  ,unsigned short valdef)const
+word JBinaryData::GetvUshort(const std::string& name,bool optional
+  ,word valdef)const
 {
   const size_t pos=ChecksGetValue(name,optional,JBinaryDataDef::DatUshort);
   return(pos==SIZE_MAX? valdef: Values[pos].vushort);
@@ -2626,11 +2719,11 @@ void JBinaryData::SetvChar(const std::string& name,char v){
 }
 
 //==============================================================================
-/// Crea o modifica un valor de tipo unsigned char.
-/// Creates or modifies a value of type unsigned char.
+/// Crea o modifica un valor de tipo byte.
+/// Creates or modifies a value of type byte.
 //==============================================================================
 //ok
-void JBinaryData::SetvUchar(const std::string& name,unsigned char v){
+void JBinaryData::SetvUchar(const std::string& name,byte v){
   Values[ChecksSetValue(name,JBinaryDataDef::DatUchar)].vuchar=v;
 }
 
@@ -2644,11 +2737,11 @@ void JBinaryData::SetvShort(const std::string& name,short v){
 }
 
 //==============================================================================
-/// Crea o modifica un valor de tipo unsigned short.
-/// Creates or modifies a value of type unsigned short
+/// Crea o modifica un valor de tipo word.
+/// Creates or modifies a value of type word
 //==============================================================================
 //ok
-void JBinaryData::SetvUshort(const std::string& name,unsigned short v){
+void JBinaryData::SetvUshort(const std::string& name,word v){
   Values[ChecksSetValue(name,JBinaryDataDef::DatUshort)].vushort=v;
 }
 

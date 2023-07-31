@@ -115,9 +115,7 @@ protected:
   llong MemGpuParticles;      ///<Allocated GPU memory for arrays with particle data. | Mermoria reservada para vectores de datos de particulas.
   llong MemGpuFixed;          ///<Allocated memory in AllocGpuMemoryFixed. | Memoria reservada en AllocGpuMemoryFixed. 
 
-  //-Particle position according to the identifier for the motion.
-  //-Posicion de particula segun id para motion.
-  unsigned *RidpMoveg;  ///<Only for moving boundary particles [CaseNmoving] and when CaseNmoving!=0 | Solo para boundary moving particles [CaseNmoving] y cuando CaseNmoving!=0 
+  unsigned* RidpMotg;  ///<Particle index according to Idp (only for moving and floating particles and updated after RunCellDivide) [CaseNmoving+CaseNfloat]. 
 
   //-List of particle arrays on GPU. | Lista de arrays en GPU para particulas.
   JArraysGpu* ArraysGpu;
@@ -143,7 +141,6 @@ protected:
   float4 *VelrhopPreg;
 
   //-Variables for floating bodies.
-  unsigned *FtRidpg;      ///<Identifier to access to the particles of the floating object [CaseNfloat].
   float *FtoMasspg;       ///<Mass of the particle for each floating body [FtCount] in GPU (used in interaction forces).
 
   float4 *FtoDatpg;        ///<Constant data of floatings {pini_u,np_u,radius_f,massp_f} [FtCount] //__device__ int __float_as_int(float x) //__device__ float __int_as_float(int x).
@@ -238,7 +235,7 @@ protected:
 
   void ConfigRunMode();
   void ConfigCellDiv(JCellDivGpu* celldiv){ CellDiv=celldiv; }
-  void InitFloating();
+  void InitFloatingsGpu();
   void InitRunGpu();
 
   void PreInteractionVars_Forces(unsigned np,unsigned npb);

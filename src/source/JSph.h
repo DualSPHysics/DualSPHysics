@@ -60,7 +60,8 @@ class JDsAccInput;
 class JCaseParts;
 class JPartDataBi4;
 class JPartOutBi4Save;
-class JPartFloatBi4Save;
+class JDsPartMotionSave;
+class JDsPartFloatSave;
 class JDsPartsOut;
 class JSphShifting;
 class JDsDamping;
@@ -79,7 +80,6 @@ class JLinearValue;
 class JCaseEParms;
 class JDataArrays;
 class JNumexLib;
-class JFtMotionSave; //<vs_ftmottionsv>
 class JDsExtraDataSave;
 class JDsOutputParts;//<vs_outpaarts>
 
@@ -128,10 +128,13 @@ private:
 
   //-Object for saving particles and information in files.
   //-Objeto para la grabacion de particulas e informacion en ficheros.
-  JPartDataBi4 *DataBi4;            ///<To store particles and info in bi4 format.      | Para grabar particulas e info en formato bi4.
-  JPartOutBi4Save *DataOutBi4;      ///<To store excluded particles in bi4 format.      | Para grabar particulas excluidas en formato bi4.
-  JPartFloatBi4Save *DataFloatBi4;  ///<To store floating data in bi4 format.           | Para grabar datos de floatings en formato bi4.
+  JPartDataBi4* DataBi4;             ///<To store particles and info in bi4 format.      | Para grabar particulas e info en formato bi4.
+  JPartOutBi4Save* DataOutBi4;       ///<To store excluded particles in bi4 format.      | Para grabar particulas excluidas en formato bi4.
+public:
+  JDsPartMotionSave* PartMotionSave; ///<To store motion reference data of moving and floating objects in bi4 format with several frecuencies.
+  JDsPartFloatSave* PartFloatSave;   ///<To store floating data in bi4 format with several frecuencies.
 
+private:
   //-Total number of excluded particles according to reason for exclusion.
   //-Numero acumulado de particulas excluidas segun motivo.
   unsigned OutPosCount,OutRhopCount,OutMoveCount;
@@ -186,8 +189,8 @@ protected:
   tdouble3 DDTRamp;           ///<Configuration of initial DDT ramp (Total time, time for maxvalue, maxvalue).  //<vs_ddramp>
   bool DDTArray;              ///<Use extra array to compute Density Diffusion Term. The correction is applied after particle interaction. 
 
-  TpVisco TVisco;             ///<Viscosity type: Artificial,...                                         | Tipo de viscosidad: Artificial,...
-  float Visco;  
+  TpVisco TVisco;             ///<Viscosity type: Artificial,Laminar...
+  float Visco;                ///<Viscosity value.
   float ViscoBoundFactor;     ///<For boundary interaction use Visco*ViscoBoundFactor.                  | Para interaccion con contorno usa Visco*ViscoBoundFactor.
   JDsViscoInput *ViscoTime;   ///<Provides a viscosity value as a function of simulation time.          | Proporciona un valor de viscosidad en funcion del instante de la simulacion.
 
@@ -206,6 +209,10 @@ protected:
 
   double TimeMax;             ///<Total time to simulate [s].
   double TimePart;            ///<Time of output data [s].
+
+  double TimePartExtra;       ///<Time for extra output data on motion and floating information (-1:Disabled) [s].
+  double TimePartExtraNext;   ///<Next time for extra output data.
+
   JDsOutputTime *OutputTime;  ///<Manage the use of variable output time to save PARTs.
   int NstepsBreak;            ///<Maximum number of steps allowed (debug).
   bool SvAllSteps;            ///<Saves a PART for each step (debug).
@@ -269,8 +276,8 @@ protected:
   unsigned CaseNbound;       ///<Number of boundary particles ( \ref Nfixed + \ref Nmoving + \ref Nfloat ).
   unsigned CaseNpb;          ///<Number of particles of the boundary block ( \ref Nbound - \ref Nfloat ) or ( \ref Nfixed + \ref Nmoving).
 
-  JSphMk *MkInfo;            ///<Stores information for the Mk of the particles.
-  JDsPartsInit *PartsInit;   ///<Stores initial particles data for automatic configurations.
+  JSphMk* MkInfo;            ///<Stores information for the Mk of the particles.
+  JDsPartsInit* PartsInit;   ///<Stores initial particles data for automatic configurations.
 
   //-Variables for periodic conditions.
   byte PeriActive;
@@ -339,8 +346,6 @@ protected:
   JDsAccInput *AccInput;    ///<Object for variable acceleration functionality.
 
   JSphInOut *InOut;         ///<Object for inlet/outlet conditions.
-
-  JFtMotionSave *FtMotSave; ///<Object for saving floating motion data with high frequency. //<vs_ftmottionsv>
 
   std::string SvExtraParts;         ///<Part interval (or list) for saving extra data for restart option (default=empty=disabled)
   JDsExtraDataSave *SvExtraDataBi4; ///<To store extra data for restart option (SvExtraParts).
@@ -468,7 +473,8 @@ protected:
   void RestartCheckData(bool loadpsingle);
   void CheckRhopLimits();
   void LoadCaseParticles();
-  void InitRun(unsigned np,const unsigned *idp,const tdouble3 *pos);
+  void InitRun(unsigned np,const unsigned* idp,const tdouble3* pos);
+  void InitFloatings();
 
   void WavesInit(JGaugeSystem *gaugesystem,const JSphMk *mkinfo,double timemax,double timepart);
   void WavesLoadLastGaugeResults();
@@ -483,8 +489,7 @@ protected:
   void PrintSizeNp(unsigned np,llong size,unsigned allocs)const;
   void PrintHeadPart();
 
-  void ConfigSaveData(unsigned piece,unsigned pieces,std::string div);
-  void ConfigFtMotionSave(unsigned np,const tdouble3 *pos,const unsigned *idp); //<vs_ftmottionsv>
+  void ConfigSaveData(unsigned piece,unsigned pieces,std::string div,unsigned np,const tdouble3* pos,const unsigned* idp);
   void AddParticlesOut(unsigned nout,const unsigned *idp,const tdouble3 *pos,const tfloat3 *vel,const float *rhop,const typecode *code);
   void AbortBoundOut(JLog2 *log,unsigned nout,const unsigned *idp,const tdouble3 *pos,const tfloat3 *vel,const float *rhop,const typecode *code);
 
@@ -495,6 +500,8 @@ protected:
   void SaveData(unsigned npok,const JDataArrays& arrays,unsigned ndom,const tdouble3 *vdom,const StInfoPartPlus *infoplus);
 
   void CheckTermination();
+  void TimeOutExtraUpdate(double timestep);
+  bool TimeOutExtraCheck(double timestep)const{ return(timestep>=TimePartExtraNext); }
   void SaveDomainVtk(unsigned ndom,const tdouble3 *vdom)const;
   void SaveInitialDomainVtk()const;
   unsigned SaveMapCellsVtkSize()const;

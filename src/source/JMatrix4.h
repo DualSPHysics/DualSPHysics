@@ -30,6 +30,7 @@
 //:# - Cambio en GetMotion() para mantener compatibilidad con Linux. (01-02-2016)
 //:# - Nuevos metodos para la rotacion. (05-04-2020)
 //:# - Nuevos metodos IsIdentity() y IsMovMatrix(). (20-12-2020)
+//:# - Nuevo metodo RotatedAxis(). (18-07-2023)
 //:#############################################################################
 
 /// \file JMatrix4.h \brief Declares the template \ref JMatrix4
@@ -363,6 +364,27 @@ public:
     t.Mul(tm1);
     //t.SetIdentity();
     return(t);
+  }
+
+//==============================================================================
+/// Returns rotated axis vectors.
+/// \param ang Angle of roation in each axis (in degrees).
+//==============================================================================
+  static void RotatedAxis(const T3& ang,const T3& size,T3& vx,T3& vy,T3& vz){
+    const JMatrix4 m=MatrixRot(ang);
+    if(ang.x==0 && ang.y==0 && ang.z==0){
+      vx.x=size.x; vx.y=0;      vx.z=0;
+      vy.x=0;      vy.y=size.y; vy.z=0;
+      vz.x=0;      vz.y=0;      vz.z=size.z;
+    }
+    else{
+      vx.x=1; vx.y=0; vx.z=0;
+      vy.x=0; vy.y=1; vy.z=0;
+      vz.x=0; vz.y=0; vz.z=1;
+      vx=m.MulPoint(vx)*size.x;
+      vy=m.MulPoint(vy)*size.y;
+      vz=m.MulPoint(vz)*size.z;
+    }
   }
 
 //==============================================================================

@@ -21,6 +21,7 @@
 #include "JSphCfgRun.h"
 #include "JAppInfo.h"
 #include "JDsphConfig.h"
+#include <cfloat>
 
 using namespace std;
 
@@ -51,7 +52,12 @@ void JSphCfgRun::Reset(){
   DomainFixedMin=DomainFixedMax=TDouble3(0);
   TStep=STEP_None; VerletSteps=-1;
   TKernel=KERNEL_None;
-  TVisco=VISCO_None; Visco=0; ViscoBoundFactor=-1;
+  TVisco=VISCO_None;
+  Visco=0;
+  ViscoBoundFactor=-1;
+  TimeMax=-1;
+  TimePart=-1;
+  TimePartExtra=DBL_MAX;
   TDensity=-1;
   DDTValue=-1;
   DDTValueTRamp=DDTValueTMax=DDTValueMax=0;  //<vs_ddramp>
@@ -66,7 +72,6 @@ void JSphCfgRun::Reset(){
   CaseName=""; RunName=""; DirOut=""; DirDataOut=""; 
   PartBegin=0; PartBeginFirst=0; PartBeginDir="";
   RestartChrono=false;
-  TimeMax=-1; TimePart=-1;
   CFLnumber=-1;
   RhopOutModif=false; RhopOutMin=700; RhopOutMax=1300;
   FtPause=-1;
@@ -168,6 +173,7 @@ void JSphCfgRun::VisuInfo()const{
   printf("\n");
   printf("    -tmax:<float>   Maximum time of simulation\n");
   printf("    -tout:<float>   Time between output files\n");
+  printf("    -toutx:<float>  Time between extra output files on motion and floatings\n");
   printf("\n");
   printf("    -cfl:<float> CFL number coefficient to multiply dt\n");
   printf("    -ftpause:<float> Time to start floating bodies movement. By default 0\n");
@@ -413,6 +419,9 @@ void JSphCfgRun::LoadOpts(string *optlis,int optn,int lv,const std::string &file
       else if(txword=="TOUT"){ 
         TimePart=float(atof(txoptfull.c_str())); 
         if(TimePart<0)ErrorParm(opt,c,lv,file);
+      }
+      else if(txword=="TOUTX"){ 
+        TimePartExtra=float(atof(txoptfull.c_str())); 
       }
       else if(txword=="DOMAIN_FIXED"){
         LoadDouble6(txoptfull,0,DomainFixedMin,DomainFixedMax);

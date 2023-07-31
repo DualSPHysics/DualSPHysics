@@ -1577,7 +1577,7 @@ std::string GetPathLevels(std::string path,unsigned levels){
 std::string GetFile(const std::string &ruta){
   std::string file;
   int c;
-  for(c=int(ruta.size())-1;c>=0&&ruta[c]!='\\'&&ruta[c]!='/';c--);
+  for(c=int(ruta.size())-1;c>=0 && ruta[c]!='\\' && ruta[c]!='/';c--);
   file=(c<0? ruta: ruta.substr(c+1));
   return(file);
 }
@@ -1589,7 +1589,7 @@ std::string GetDirWithSlash(const std::string &ruta){
   std::string rut=ruta;
   if(!ruta.empty()){
     char last=ruta[ruta.length()-1];
-    if(last!='\\'&&last!='/')rut=ruta+"/";
+    if(last!='\\' && last!='/')rut=ruta+"/";
   }
   return(rut);
 }

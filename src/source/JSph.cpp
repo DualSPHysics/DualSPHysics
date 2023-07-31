@@ -48,14 +48,15 @@
 #include "JDsAccInput.h"
 #include "JPartDataBi4.h"
 #include "JPartOutBi4Save.h"
-#include "JPartFloatBi4.h"
+#include "JDsPartMotionSave.h"
+#include "JDsPartFloatSave.h"
+#include "JPartFloatInfoBi4.h"
 #include "JDsExtraData.h"
 #include "JDsPartsOut.h"
 #include "JSphShifting.h"
 #include "JDsDamping.h"
 #include "JDsInitialize.h"
 #include "JSphInOut.h"
-#include "JFtMotionSave.h"  //<vs_ftmottionsv>
 #include "JDsOutputParts.h" //<vs_outpaarts>
 #include "JDsPips.h"
 #include "JLinearValue.h"
@@ -78,7 +79,8 @@ JSph::JSph(bool cpu,bool mgpu,bool withmpi):Cpu(cpu),Mgpu(mgpu),WithMpi(withmpi)
   DgNum=0;
   DataBi4=NULL;
   DataOutBi4=NULL;
-  DataFloatBi4=NULL;
+  PartMotionSave=NULL;
+  PartFloatSave=NULL;
   SvExtraDataBi4=NULL;
   PartsOut=NULL;
   Log=NULL;
@@ -108,7 +110,6 @@ JSph::JSph(bool cpu,bool mgpu,bool withmpi):Cpu(cpu),Mgpu(mgpu),WithMpi(withmpi)
   AccInput=NULL;
   PartsLoaded=NULL;
   InOut=NULL;
-  FtMotSave=NULL; //<vs_ftmottionsv>
   OutputParts=NULL; //<vs_outpaarts>
   DsPips=NULL;
   NuxLib=NULL;
@@ -122,7 +123,8 @@ JSph::~JSph(){
   DestructorActive=true;
   delete DataBi4;        DataBi4=NULL;
   delete DataOutBi4;     DataOutBi4=NULL;
-  delete DataFloatBi4;   DataFloatBi4=NULL;
+  delete PartMotionSave; PartMotionSave=NULL;
+  delete PartFloatSave;  PartFloatSave=NULL;
   delete SvExtraDataBi4; SvExtraDataBi4=NULL;
   delete PartsOut;       PartsOut=NULL;
   delete ViscoTime;      ViscoTime=NULL;
@@ -146,7 +148,6 @@ JSph::~JSph(){
   delete AccInput;      AccInput=NULL; 
   delete PartsLoaded;   PartsLoaded=NULL;
   delete InOut;         InOut=NULL;
-  delete FtMotSave;     FtMotSave=NULL;   //<vs_ftmottionsv>
   delete DsPips;        DsPips=NULL;
   delete OutputParts;   OutputParts=NULL; //<vs_outpaarts>
   delete NuxLib;        NuxLib=NULL;
@@ -193,6 +194,8 @@ void JSph::InitVars(){
   UseChrono=false;
   RhopOut=true; RhopOutMin=700; RhopOutMax=1300;
   TimeMax=TimePart=0;
+  TimePartExtra=-1;
+  TimePartExtraNext=DBL_MAX;
   NstepsBreak=0;
   SvAllSteps=false;
   NoRtimes=false;
@@ -271,7 +274,7 @@ void JSph::InitVars(){
   PartDtMin=DBL_MAX; PartDtMax=-DBL_MAX;
 
   PartIni=Part=0; 
-  Nstep=0; PartNstep=-1;
+  Nstep=0; PartNstep=0;
   PartOut=0;
 
   TimeStepIni=0;
@@ -592,7 +595,6 @@ void JSph::LoadConfigParameters(const JXml *xml){
   JCaseEParms eparms;
   eparms.LoadXml(xml,"case.execution.parameters");
   if(eparms.Exists("FtSaveAce"))SaveFtAce=(eparms.GetValueInt("FtSaveAce",true,0)!=0); //-For Debug.
-  if(eparms.GetValueDouble("FtSaveMotion",true,-1.)>=0)FtMotSave=new JFtMotionSave(eparms.GetValueDouble("FtSaveMotion")); //<vs_ftmottionsv>
   if(eparms.Exists("PosDouble")){
     Log->PrintWarning("The parameter \'PosDouble\' is deprecated.");
     SvPosDouble=(eparms.GetValueInt("PosDouble")==2);
@@ -694,6 +696,9 @@ void JSph::LoadConfigParameters(const JXml *xml){
   TimeMax=eparms.GetValueDouble("TimeMax");
   TimePart=eparms.GetValueDouble("TimeOut");
 
+  TimePartExtra=eparms.GetValueDouble("TimeOutExtra",true,-1);
+  if(TimePartExtra>=0)TimePartExtraNext=0;
+
   DtIni=max(0.0,eparms.GetValueDouble("DtIni",true,0));
   DtMin=max(0.0,eparms.GetValueDouble("DtMin",true,0));
   CoefDtMin=eparms.GetValueFloat("CoefDtMin",true,0.05f);
@@ -757,6 +762,21 @@ void JSph::LoadConfigParameters(const JXml *xml){
   ConfigDomainResize("Xmax",&eparms);
   ConfigDomainResize("Ymax",&eparms);
   ConfigDomainResize("Zmax",&eparms);
+}
+
+//==============================================================================
+/// Computes next time for extra output data.
+//==============================================================================
+void JSph::TimeOutExtraUpdate(double timestep){
+  if(TimePartExtra>=0){
+    double tnext=timestep;
+    if(TimePartExtra){
+      unsigned ct=unsigned(timestep/TimePartExtra);
+      tnext=TimePartExtra*ct;
+      for(;tnext<=timestep;ct++)tnext=TimePartExtra*ct;
+    }
+    TimePartExtraNext=tnext;
+  }
 }
 
 //==============================================================================
@@ -852,6 +872,15 @@ void JSph::LoadConfigCommands(const JSphCfgRun *cfg){
     OutputTime->Config(TimePart);
   }
   else OutputTime->Config(FileXml,"case.execution.special.timeout",TimePart);
+  //-Configuration of extra output time.
+  if(cfg->TimePartExtra!=DBL_MAX){
+    TimePartExtra=-1;
+    TimePartExtraNext=DBL_MAX;
+    if(cfg->TimePartExtra>=0){
+      TimePartExtra=cfg->TimePartExtra;
+      TimePartExtraNext=0;
+    }
+  }
 
   //-Configuration of domain limits.
   CellDomFixed=cfg->CellDomFixed;
@@ -1500,7 +1529,6 @@ void JSph::VisuConfig(){
   if(!SvExtraParts.empty())ConfigInfo=ConfigInfo+sep+"SvExtraParts";
   //-Other configurations. 
   Log->Print(fun::VarStr("SaveFtAce",SaveFtAce));
-  if(FtMotSave)Log->Printf("SaveFtMotion=%s  (tout:%g)",(FtMotSave? "True": "False"),FtMotSave->GetTimeOut()); //<vs_ftmottionsv>
   Log->Print(fun::VarStr("SvTimers",SvTimers));
   if(DsPips)Log->Print(fun::VarStr("PIPS-steps",DsPips->StepsNum));
   //-Boundary. 
@@ -1609,8 +1637,9 @@ void JSph::VisuConfig(){
   }
   if(UseDEM)VisuDemCoefficients();
   if(CaseNfloat)Log->Print(fun::VarStr("FtPause",FtPause));
-  Log->Print(fun::VarStr("TimeMax",TimeMax));
-  Log->Print(fun::VarStr("TimePart",TimePart));
+  Log->Printf("TimeMax=%g",TimeMax);
+  Log->Printf("TimePart=%g",TimePart);
+  if(TimePartExtra>=0)Log->Printf("TimePartExtra=%g",TimePartExtra);
   Log->Print(fun::VarStr("Gravity",Gravity));
   Log->Print(fun::VarStr("NpMinimum",NpMinimum));
   //-RhopOut limits.
@@ -2101,7 +2130,7 @@ void JSph::LoadCaseParticles(){
 /// Initialisation of variables and objects for execution.
 /// Inicializa variables y objetos para la ejecucion.
 //==============================================================================
-void JSph::InitRun(unsigned np,const unsigned *idp,const tdouble3 *pos){
+void JSph::InitRun(unsigned np,const unsigned* idp,const tdouble3* pos){
   InterStep=(TStep==STEP_Symplectic? INTERSTEP_SymPredictor: INTERSTEP_Verlet);
   VerletStep=0;
   if(TStep==STEP_Symplectic)SymplecticDtPre=DtIni;
@@ -2112,7 +2141,7 @@ void JSph::InitRun(unsigned np,const unsigned *idp,const tdouble3 *pos){
     PartBeginTimeStep=PartsLoaded->GetPartBeginTimeStep();
     PartBeginTotalNp=PartsLoaded->GetPartBeginTotalNp();
     if(TStep==STEP_Symplectic && PartsLoaded->GetSymplecticDtPre())SymplecticDtPre=PartsLoaded->GetSymplecticDtPre();
-    if(UseDEM  && PartsLoaded->GetDemDtForce())DemDtForce=PartsLoaded->GetDemDtForce(); //(DEM)
+    if(UseDEM && PartsLoaded->GetDemDtForce())DemDtForce=PartsLoaded->GetDemDtForce(); //(DEM)
   }
   //-Free memory of PartsLoaded.
   delete PartsLoaded; PartsLoaded=NULL;
@@ -2203,6 +2232,11 @@ void JSph::InitRun(unsigned np,const unsigned *idp,const tdouble3 *pos){
     ForcePoints->VisuConfig(""," ",FtCount,FtObjs);
   }
 
+  //-Reconfigures PartFloatSave to include information from ForcePoints.
+  if(ForcePoints && ForcePoints->GetPtCount() && PartFloatSave){
+    PartFloatSave->ReconfigForcePoints(ForcePoints);
+  }
+
   //-Prepares Damping configuration.
   if(Damping){
     Damping->VisuConfig("Damping configuration:"," ");
@@ -2243,6 +2277,33 @@ void JSph::InitRun(unsigned np,const unsigned *idp,const tdouble3 *pos){
   TimeStep=TimeStepIni; TimeStepM1=TimeStep;
   if(FixedDt)DtIni=FixedDt->GetDt(TimeStep,DtIni);
   TimePartNext=(SvAllSteps? TimeStep: OutputTime->GetNextTime(TimeStep));
+}
+
+//==============================================================================
+/// Adjust variables of floating body particles.
+/// Ajusta variables de particulas floating body.
+//==============================================================================
+void JSph::InitFloatings(){
+  if(PartBegin){
+    JPartFloatInfoBi4Load ftfile;
+    const string filedata=JPartFloatInfoBi4Load::GetFileNameDef(true,PartBeginDir);
+    ftfile.LoadFile(filedata);
+    //-Checks if the constant data match.
+    for(unsigned cf=0;cf<FtCount;cf++){
+      const StFloatingData& ft=FtObjs[cf];
+      ftfile.CheckHeadData(cf,ft.mkbound,ft.begin,ft.count,ft.mass,ft.massp);
+    }
+    //-Load PART data. | Carga datos de PART.
+    const JPartFloatInfoBi4Data* ftdata=ftfile.GetFtData();
+    const unsigned idx=ftdata->GetIdxPart(PartBegin,true);
+    for(unsigned cf=0;cf<FtCount;cf++){
+      FtObjs[cf].center=ftdata->GetPartCenter(idx,cf);
+      FtObjs[cf].fvel  =ftdata->GetPartVelLin(idx,cf);
+      FtObjs[cf].fomega=ftdata->GetPartVelAng(idx,cf);
+      FtObjs[cf].radius=ftdata->GetHeadRadius(cf);
+    }
+    //DemDtForce=0;
+  }
 }
 
 //==============================================================================
@@ -2402,7 +2463,9 @@ void JSph::PrintHeadPart(){
 /// Sets configuration for recordering of particles.
 /// Establece configuracion para grabacion de particulas.
 //==============================================================================
-void JSph::ConfigSaveData(unsigned piece,unsigned pieces,std::string div){
+void JSph::ConfigSaveData(unsigned piece,unsigned pieces,std::string div
+  ,unsigned np,const tdouble3* pos,const unsigned* idp)
+{
   //-Stores basic information of simulation data.
   JPartDataHead parthead;
   parthead.ConfigBasic(RunCode,AppName,CaseName,CasePosMin,CasePosMax
@@ -2446,18 +2509,45 @@ void JSph::ConfigSaveData(unsigned piece,unsigned pieces,std::string div){
     DataOutBi4->SaveInitial();
     Log->AddFileInfo(DirDataOut+"PartOut_???.obi4","Binary file with particles excluded during simulation (input for PartVtkOut program).");
   }
-  //-Configures object to store data of floatings.
-  //-Configura objeto para grabacion de datos de floatings.
-  if(SvData&SDAT_Binx && FtCount){
-    DataFloatBi4=new JPartFloatBi4Save();
-    DataFloatBi4->Config(AppName,DirDataOut,MkInfo->GetMkBoundFirst(),FtCount,false);
-    for(unsigned cf=0;cf<FtCount;cf++){
-      const StFloatingData &ft=FtObjs[cf];
-      DataFloatBi4->AddHeadData(cf,ft.mkbound,ft.begin,ft.count,ft.mass,ft.massp,ft.radius);
+  //-Configures object to store motion reference data.
+  //-Configura objeto para grabacion de datos de referencia de movimiento.
+  if(SvData&SDAT_Binx && (CaseNmoving || CaseNfloat)){
+    const word mkboundfirst=MkInfo->GetMkBoundFirst();
+    const unsigned countmk=MkInfo->CountBlockType(TpPartMoving)+MkInfo->CountBlockType(TpPartFloating);
+    PartMotionSave=new JDsPartMotionSave(Cpu,AppName,DirDataOut,CaseNfixed,CaseNmoving,CaseNfloat,mkboundfirst,countmk,TimePart,TimePartExtra);
+    for(unsigned cmk=0;cmk<MkInfo->Size();cmk++){
+      const JSphMkBlock* pmk=MkInfo->Mkblock(cmk);
+      if(pmk->Type==TpPartMoving  )PartMotionSave->ConfigAddMovingMk  (pmk->MkType,pmk->Begin,pmk->Count);
+      if(pmk->Type==TpPartFloating)PartMotionSave->ConfigAddFloatingMk(pmk->MkType,pmk->Begin,pmk->Count);
     }
-    DataFloatBi4->SaveInitial();
-    Log->AddFileInfo(DirDataOut+"PartFloat.fbi4","Binary file with floating body information for each instant (input for FloatingInfo program).");
+    PartMotionSave->ConfigMotionRefs(np,pos,idp);
+    PartMotionSave->SaveInitial();
+    Log->AddFileInfo(DirDataOut+PartMotionSave->GetFileName(true)
+      ,"Main binary file with motion reference data of moving and floating objects during simulation.");
+    if(PartMotionSave->ExtraIsActive()){
+      PartMotionSave->AddDataExtraCpu(Part,TimeStep,Nstep,np,NULL,NULL);
+      Log->AddFileInfo(DirDataOut+PartMotionSave->GetFileName(false)
+        ,"Extra binary file with motion reference data of moving and floating objects during simulation.");
+    }
   }
+  //-Configures object to store floating data.
+  //-Configura objeto para grabacion de datos de objetos flotantes.
+  if(SvData&SDAT_Binx && CaseNfloat){
+    const word mkboundfirst=MkInfo->GetMkBoundFirst();
+    PartFloatSave=new JDsPartFloatSave(Cpu,AppName,DirDataOut,mkboundfirst
+      ,FtCount,TimePart,TimePartExtra);
+    PartFloatSave->ConfigFtData(FtCount,FtObjs);
+    PartFloatSave->SetFtData(Part,TimeStep,Nstep,FtObjs,NULL);
+    PartFloatSave->SaveInitial();
+    Log->AddFileInfo(DirDataOut+PartFloatSave->GetFileName(true)
+      ,"Main binary file with floating data during simulation.");
+    if(PartFloatSave->ExtraIsActive()){
+      PartFloatSave->AddDataExtra(Part,TimeStep,Nstep);
+      Log->AddFileInfo(DirDataOut+PartFloatSave->GetFileName(false)
+        ,"Extra binary file with floating data during simulation.");
+    }
+  }
+  TimeOutExtraUpdate(TimeStep);
   //-Configures object to store extra data.
   if(SvData&SDAT_Binx && !SvExtraParts.empty()){
     if(TBoundary==BC_MDBC || !SvPosDouble){
@@ -2469,20 +2559,6 @@ void JSph::ConfigSaveData(unsigned piece,unsigned pieces,std::string div){
   //-Crea objeto para almacenar las particulas excluidas hasta su grabacion.
   PartsOut=new JDsPartsOut();
 }
-
-//<vs_ftmottionsv_ini>  
-//==============================================================================
-/// Configures object to store floating motion data with high frequency.
-//==============================================================================
-void JSph::ConfigFtMotionSave(unsigned np,const tdouble3 *pos,const unsigned *idp){
-  if(FtCount){
-    FtMotSave->Config(AppName,DirDataOut,MkInfo->GetMkBoundFirst(),FtCount,FtObjs,np,pos,idp);
-  }
-  else{ 
-    delete FtMotSave; FtMotSave=NULL; 
-  }
-}
-//<vs_ftmottionsv_end>
 
 //==============================================================================
 /// Stores new excluded particles until recordering next PART.
@@ -2616,7 +2692,8 @@ void JSph::SavePartData(unsigned npok,unsigned nout,const JDataArrays& arrays
       domainmin=MinValues(domainmin,vdom[c*2  ]);
       domainmax=MaxValues(domainmax,vdom[c*2+1]);
     }
-    JBinaryData* bdpart=DataBi4->AddPartInfo(Part,TimeStep,npok,nout,Nstep,TimerPart.GetElapsedTimeD()/1000.,domainmin,domainmax,TotalNp);
+    JBinaryData* bdpart=DataBi4->AddPartInfo(Part,TimeStep,npok,nout,Nstep
+      ,TimerPart.GetElapsedTimeD()/1000.,domainmin,domainmax,TotalNp);
     if(TStep==STEP_Symplectic)bdpart->SetvDouble("SymplecticDtPre",SymplecticDtPre);
     if(UseDEM)bdpart->SetvDouble("DemDtForce",DemDtForce); //(DEM)
     if(infoplus && SvData&SDAT_Info){
@@ -2718,17 +2795,10 @@ void JSph::SavePartData(unsigned npok,unsigned nout,const JDataArrays& arrays
     DataOutBi4->SavePartOut(SvPosDouble,Part,TimeStep,PartsOut->GetCount(),PartsOut->GetIdpOut(),NULL,PartsOut->GetPosOut(),PartsOut->GetVelOut(),PartsOut->GetRhopOut(),PartsOut->GetMotiveOut());
   }
 
-  //-Stores data of floating bodies (and force points).
-  if(DataFloatBi4){
-    for(unsigned cf=0;cf<FtCount;cf++){
-      const StFloatingData *v=FtObjs+cf;
-      DataFloatBi4->AddPartData(cf,v->center,v->fvel,v->fomega
-        ,v->facelin,v->faceang,v->extforcelin,v->extforceang
-        ,v->fluforcelin,v->fluforceang,v->preacelin,v->preaceang);
-    }
-    if(ForcePoints)DataFloatBi4->AddPartDataForcePoints(ForcePoints->GetPtCount()
-      ,ForcePoints->GetPtMkBound(),ForcePoints->GetPtPos(),ForcePoints->GetPtForce());
-    DataFloatBi4->SavePartFloat(Part,Nstep,TimeStep,(UseDEM? DemDtForce: 0));
+  //-Saves data of floating bodies (and force points) collected in RunFloating().
+  if(PartFloatSave){
+    PartFloatSave->SaveDataMain(Part,TimeStep,Nstep);
+    PartFloatSave->SaveDataExtra();
   }
 
   //-Empties stock of excluded particles.
@@ -2747,7 +2817,9 @@ void JSph::SaveData(unsigned npok,const JDataArrays& arrays
 
   //-Counts new excluded particles.
   //-Contabiliza nuevas particulas excluidas.
-  const unsigned noutpos=PartsOut->GetOutPosCount(),noutrhop=PartsOut->GetOutRhopCount(),noutmove=PartsOut->GetOutMoveCount();
+  const unsigned noutpos=PartsOut->GetOutPosCount();
+  const unsigned noutrhop=PartsOut->GetOutRhopCount();
+  const unsigned noutmove=PartsOut->GetOutMoveCount();
   const unsigned nout=noutpos+noutrhop+noutmove;
   if(nout!=PartsOut->GetCount())Run_Exceptioon("Excluded particles with unknown reason.");
   AddOutCount(noutpos,noutrhop,noutmove);
@@ -2766,14 +2838,16 @@ void JSph::SaveData(unsigned npok,const JDataArrays& arrays
     TimerSim.Stop();
     double tcalc=TimerSim.GetElapsedTimeD()/1000;
     double tleft=(tcalc/(TimeStep-TimeStepIni))*(TimeMax-TimeStep);
-    Log->Printf("Part%s  %12.6f  %12d  %7d  %9.2f  %14s",suffixpartx.c_str(),TimeStep,(Nstep+1),Nstep-PartNstep,tseg,fun::GetDateTimeAfter(int(tleft)).c_str());
+    Log->Printf("Part%s  %12.6f  %12d  %7d  %9.2f  %14s",suffixpartx.c_str()
+      ,TimeStep,Nstep,Nstep-PartNstep,tseg,fun::GetDateTimeAfter(int(tleft)).c_str());
   }
   else Log->Printf("Part%s        %u particles successfully stored",suffixpartx.c_str(),npok);   
   
   //-Shows info of the new inlet particles.
   bool printnp=true;
   if(InOut && InOut->GetNewNpPart()){
-    Log->Printf("  Particles new: %u (total new: %llu)  -  Current np: %u",InOut->GetNewNpPart(),InOut->GetNewNpTotal(),npok);
+    Log->Printf("  Particles new: %u (total new: %llu)  -  Current np: %u"
+      ,InOut->GetNewNpPart(),InOut->GetNewNpTotal(),npok);
     InOut->ClearNewNpPart();
     printnp=false;
   }
@@ -2789,7 +2863,8 @@ void JSph::SaveData(unsigned npok,const JDataArrays& arrays
   if(WrnPartsOut && nout){
     //-Cheks number of excluded particles in one PART.
     if(PartsOutWrn<=100 && nout>=float(max(CaseNfluid,infoplus->npf))*(float(PartsOutWrn)/100.f)){
-      Log->PrintfWarning("More than %d%% of current fluid particles were excluded in one PART (t:%g, nstep:%u)",PartsOutWrn,TimeStep,Nstep);
+      Log->PrintfWarning("More than %d%% of current fluid particles were excluded in one PART (t:%g, nstep:%u)"
+        ,PartsOutWrn,TimeStep,Nstep);
       if(PartsOutWrn==1)PartsOutWrn=2;
       else if(PartsOutWrn==2)PartsOutWrn=5;
       else if(PartsOutWrn==5)PartsOutWrn=10;
@@ -2798,7 +2873,8 @@ void JSph::SaveData(unsigned npok,const JDataArrays& arrays
     //-Cheks number of total excluded particles.
     const unsigned noutt=GetOutPosCount()+GetOutRhopCount()+GetOutMoveCount();
     if(PartsOutTotWrn<=100 && noutt>=float(TotalNp)*(float(PartsOutTotWrn)/100.f)){
-      Log->PrintfWarning("More than %d%% of particles were excluded (t:%g, nstep:%u)",PartsOutTotWrn,TimeStep,Nstep);
+      Log->PrintfWarning("More than %d%% of particles were excluded (t:%g, nstep:%u)"
+        ,PartsOutTotWrn,TimeStep,Nstep);
       PartsOutTotWrn+=10;
     }
   }  
