@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<!-- *** DualSPHysics (31-07-2020) *** -->
+<!-- *** DualSPHysics (30-07-2023) *** -->
 <!-- *** class: JSph (JSpaceEParms)  *** -->
 <!------------------------------------------------------------------------------->
 <!------------------------------------------------------------------------------->
@@ -34,6 +34,7 @@
 		<parameter key="DtAllParticles" value="0" comment="Velocity of particles used to calculate DT. 1:All, 0:Only fluid/floating (default=0)" />
 		<parameter key="TimeMax" value="1.5" comment="Time of simulation" units_comment="seconds" />
 		<parameter key="TimeOut" value="0.01" comment="Time out data" units_comment="seconds" />
+		<parameter key="TimeOutExtra" value="0.001" comment="Time out for extra output data on motion and floating information" units_comment="seconds" />
 		<parameter key="RhopOutMin" value="700" comment="Minimum rhop valid (default=700)" units_comment="kg/m^3" />
 		<parameter key="RhopOutMax" value="1300" comment="Maximum rhop valid (default=1300)" units_comment="kg/m^3" />
 		<parameter key="PartsOutMax" value="1" comment="%/100 of fluid particles allowed to be excluded from domain (default=1)" units_comment="decimal" />
