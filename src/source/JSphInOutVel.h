@@ -84,9 +84,10 @@ protected:
   
   //-Velocity according flow [l/s].
   bool FlowActive;
-  float FlowRatio;       ///<It is used to compute particle volume (ratio*dp^3). 
+  std::string FlowUnits; ///<Flow units: l/s, gal/s or gal/min. 
+  float FlowRatio;       ///<It is used to compute particle volume (ratio*dp^3) and to compute flow as l/s from gal/s or gal/min. 
   unsigned FlowPointsOk; ///<Initial active inlet points (below zsurf). 
-  float FlowToVel;       ///<Factor to compute velocity [m/s] starting from flow [l/s]. 
+  float FlowToVel;       ///<Factor to compute velocity [m/s] starting from flow [l/s, gal/s, gal/min...]. 
 
   //unsigned TimeVelIdx0,TimeVelIdx1; ///<Interval of time for velocity variable.
   bool SaveVelProfile;              ///<Indicate when input velocity profile must be saved in CSV file.

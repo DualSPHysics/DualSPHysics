@@ -25,6 +25,7 @@
 //:# - Uso de JNumexLib para evaluar expresiones del XML. (18-03-2020)  
 //:# - Comprueba opcion active en elementos de primer y segundo nivel. (18-03-2020)  
 //:# - Memory resizing configuration was improved. (02-07-2020)
+//:# - Definition of inlet velocity as flow in l/s, gal/s or gal/min. (08-08-2023)
 //:#############################################################################
 
 /// \file JSphInOut.h \brief Declares the class \ref JSphInOut.

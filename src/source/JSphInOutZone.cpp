@@ -267,7 +267,8 @@ void JSphInOutZone::ReadXml(const JXml *sxml,TiXmlElement* ele,const std::string
 
   //-Compute flow velocity factor.
   if(InOutVel->GetFlowActive()){
-    if(ZsurfMode!=InZsurf_Fixed)Run_Exceptioon(fun::PrintStr("Inlet/outlet zone %d: The use of flow velocity is only supported by fixed zsurf configuration.",IdZone));
+    if(ZsurfMode!=InZsurf_Fixed && ZsurfMode!=InZsurf_Undefined)
+      Run_Exceptioon(fun::PrintStr("Inlet/outlet zone %d: The use of flow velocity is only supported by fixed or default zsurf configuration.",IdZone));
     const unsigned nptok=InOutZsurf->ComputeActivePoints(Points->GetCount(),Points->GetPoints());
     InOutVel->ConfigFlowToVel(nptok);
   }

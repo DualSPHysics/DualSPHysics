@@ -89,6 +89,7 @@ void JSphInOutVel::Reset(){
   TimeVelIdx0=TimeVelIdx1=UINT_MAX; 
 
   FlowActive=false;
+  FlowUnits="???";
   FlowRatio=0;
   FlowPointsOk=0;
   FlowToVel=1.f;
@@ -243,14 +244,20 @@ TpInVelMode JSphInOutVel::ReadXml(const JXml *sxml,TiXmlElement *ele
       }
     }
     else if(VelMode!=InVelM_Extrapolated)Run_Exceptioon("Inlet/outlet velocity profile is unknown.");
-    //-Loads flow configuration.
+    //-Loads flow configuration as l/s or gal/min.
     {
-      sxml->CheckAttributeNames(xele,"flowvelocity","active ratio comment");
+      sxml->CheckAttributeNames(xele,"flowvelocity","active units ratio comment");
       FlowActive=sxml->ReadElementBool(xele,"flowvelocity","active",true,false);
       if(FlowActive){
         if(VelMode!=InVelM_Fixed && VelMode!=InVelM_Variable)sxml->ErrReadElement(xele,"flowvelocity",false,"The use of flow velocity is only supported by fixed or variable velocity.");
         if(VelProfile!=InVelP_Uniform)sxml->ErrReadElement(xele,"flowvelocity",false,"The use of flow velocity is only supported by uniform velocity profile.");
         FlowRatio=sxml->ReadElementFloat(xele,"flowvelocity","ratio",true,1.f);
+        FlowUnits=fun::StrLower(sxml->ReadElementStr(xele,"flowvelocity","units",true,"l/s"));
+        if(FlowUnits=="l/s")FlowRatio=FlowRatio;
+        else if(FlowUnits=="gal/s")FlowRatio=FlowRatio*(0.264172f);
+        else if(FlowUnits=="gal/min")FlowRatio=FlowRatio*(0.264172f*60);
+        else sxml->ErrReadElement(xele,"flowvelocity",false
+          ,"The value of units is invalid. Use \'l/s\', \'gal/s\' or \'gal/min\'.");
       }
     }
   }
@@ -370,13 +377,15 @@ void JSphInOutVel::GetConfig(std::vector<std::string> &lines)const{
   lines.push_back(fun::PrintStr("Velocity mode: %s",TpInVelModeText(VelMode)));
   if(VelMode==InVelM_Fixed || VelMode==InVelM_Variable){
     if(FlowActive){
-      lines.push_back(fun::PrintStr("  Flow velocity configuration: True  (flow to velocity: %g m/l  volratio:%g)",FlowToVel,FlowRatio));
+      lines.push_back(fun::PrintStr("  Flow velocity configuration: True  (flow %s to velocity:%g  vol_ratio_units:%g)"
+        ,FlowUnits.c_str(),FlowToVel,FlowRatio));
       lines.push_back(fun::PrintStr("  Active InOut points: %u",FlowPointsOk));
     }
     if(VelMode==InVelM_Variable && !InputTimeVel->GetFile().empty())lines.push_back(fun::PrintStr("  Velocity file: %s",InputTimeVel->GetFile().c_str()));
     if(FlowActive){
-      if(VelProfile==InVelP_Uniform && VelMode==InVelM_Fixed)
-        lines.push_back(fun::PrintStr("  Velocity profile: Uniform %g m/s  (%g l/s)",InputVel*FlowToVel,InputVel));
+      if(VelProfile==InVelP_Uniform && VelMode==InVelM_Fixed){
+        lines.push_back(fun::PrintStr("  Velocity profile: Uniform %g m/s  (%g %s)",InputVel*FlowToVel,InputVel,FlowUnits.c_str()));
+      }
     }
     else{
       if(VelProfile==InVelP_Uniform && VelMode==InVelM_Fixed)
