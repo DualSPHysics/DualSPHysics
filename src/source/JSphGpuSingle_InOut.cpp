@@ -97,7 +97,7 @@ void JSphGpuSingle::InOutInit(double timestepini){
   //-Resizes memory when it is necessary (always at the beginning).
   if(true || !CheckGpuParticlesSize(Np+newnp)){
     const unsigned newnp2=newnp+InOut->GetNpResizePlus0();
-    Timersg->TmStop(TMG_SuInOut,false);
+    Timersg->TmStop(TMG_SuInOut,true);
     ResizeParticlesSize(Np+newnp2,0,false);
     CellDivSingle->SetIncreaseNp(newnp2);
     Timersg->TmStart(TMG_SuInOut,false);
@@ -140,7 +140,7 @@ void JSphGpuSingle::InOutInit(double timestepini){
   if(Symmetry && InOut->Use_ExtrapolatedData())Run_Exceptioon("Symmetry is not allowed with inlet/outlet conditions when extrapolate option is enabled."); //<vs_syymmetry>
 
   //-Updates divide information.
-  Timersg->TmStop(TMG_SuInOut,false);
+  Timersg->TmStop(TMG_SuInOut,true);
   RunCellDivide(true);
   Timersg->TmStart(TMG_SuInOut,false);
   if(DBG_INOUT_PARTINIT)DgSaveVtkParticlesGpu("CfgInOut_InletIni.vtk",1,0,Np,Posxyg,Poszg,Codeg,Idpg,Velrhopg);
@@ -154,7 +154,7 @@ void JSphGpuSingle::InOutInit(double timestepini){
   InOutUpdatePartsData(timestepini);
 
   if(DBG_INOUT_PARTINIT)DgSaveVtkParticlesGpu("CfgInOut_InletIni.vtk",2,0,Np,Posxyg,Poszg,Codeg,Idpg,Velrhopg);
-  Timersg->TmStop(TMG_SuInOut,false);
+  Timersg->TmStop(TMG_SuInOut,true);
 }
 
 //==============================================================================
@@ -174,7 +174,7 @@ void JSphGpuSingle::InOutComputeStep(double stepdt){
   if(!CheckGpuParticlesSize(Np+InOut->GetCurrentNp())){
     if(!InOut->GetNpResizePlus1())Run_Exceptioon("Allocated memory is not enough and resizing is not allowed by XML configuration (check the value inout.memoryresize.size).");
     const unsigned newnp2=InOut->GetCurrentNp()+InOut->GetNpResizePlus1();
-    Timersg->TmStop(TMG_SuInOut,false);
+    Timersg->TmStop(TMG_SuInOut,true);
     ResizeParticlesSize(Np+newnp2,0,false);
     CellDivSingle->SetIncreaseNp(newnp2);
     Timersg->TmStart(TMG_SuInOut,false);
@@ -232,7 +232,7 @@ void JSphGpuSingle::InOutComputeStep(double stepdt){
   }
 
   //-Updates divide information.
-  Timersg->TmStop(TMG_SuInOut,false);
+  Timersg->TmStop(TMG_SuInOut,true);
   RunCellDivide(true);
   Timersg->TmStart(TMG_SuInOut,false);
 
@@ -242,7 +242,7 @@ void JSphGpuSingle::InOutComputeStep(double stepdt){
   //-Saves files per PART.
   if(TimeStep+stepdt>=TimePartNext)InOut->SavePartFiles(Part);
 
-  Timersg->TmStop(TMG_SuInOut,false);
+  Timersg->TmStop(TMG_SuInOut,true);
 }
 
 //==============================================================================

@@ -229,7 +229,7 @@ void JSphGpuSingle::ResizeParticlesSize(unsigned newsize,float oversize,bool upd
   DivData=DivDataGpuNull();
   ResizeGpuMemoryParticles(newsize);
   AllocCpuMemoryParticles(newsize);
-  Timersg->TmStop(TMG_SuResizeNp,false);
+  Timersg->TmStop(TMG_SuResizeNp,true);
   if(updatedivide)RunCellDivide(true);
 }
 
@@ -292,7 +292,7 @@ void JSphGpuSingle::RunPeriodic(){
           //-Redimensiona memoria para particulas si no hay espacio suficiente y repite el proceso de busqueda.
           if(count>nmax || !CheckGpuParticlesSize(count+Np)){
             ArraysGpu->Free(listpg); listpg=NULL;
-            Timersg->TmStop(TMG_SuPeriodic,false);
+            Timersg->TmStop(TMG_SuPeriodic,true);
             ResizeParticlesSize(Np+count,PERIODIC_OVERMEMORYNP,false);
             Timersg->TmStart(TMG_SuPeriodic,false);
           }
@@ -406,7 +406,7 @@ void JSphGpuSingle::RunCellDivide(bool updateperiodic){
     const unsigned pini=(CaseNmoving? 0: Npb);
     cusph::CalcRidp(PeriActive!=0,np,pini,CaseNfixed,CaseNbound,Codeg,Idpg,RidpMotg);
   }
-  Timersg->TmStop(TMG_NlSortData,false);
+  Timersg->TmStop(TMG_NlSortData,true);
 
   //-Control of excluded particles (only fluid because excluded boundary are checked before).
   //-Gestion de particulas excluidas (solo fluid porque las boundary excluidas se comprueban antes).
@@ -501,7 +501,7 @@ void JSphGpuSingle::MdbcBoundCorrection(){
   cusph::Interaction_MdbcCorrection(TKernel,Simulate2D,SlipMode,MdbcFastSingle
     ,n,CaseNbound,MdbcThreshold,DivData,Map_PosMin,Posxyg,Poszg,PosCellg,Codeg
     ,Idpg,BoundNormalg,MotionVelg,Velrhopg);
-  Timersg->TmStop(TMG_CfPreForces,false);
+  Timersg->TmStop(TMG_CfPreForces,true);
 }
 
 
@@ -741,7 +741,7 @@ void JSphGpuSingle::RunFloating(double dt,bool predictor){
 
     //-Run floating with Chrono library.
     if(ChronoObjects){      
-      Timersg->TmStop(TMG_SuFloating,false);
+      Timersg->TmStop(TMG_SuFloating,true);
       Timersg->TmStart(TMG_SuChrono,false);
       //-Export data / Exporta datos.
       tfloat3* ftoforces=FtoAuxFloat15;
@@ -797,7 +797,7 @@ void JSphGpuSingle::RunFloating(double dt,bool predictor){
     UpdateFtObjs(); //-Updates floating information on CPU memory.
     if(PartFloatSave)PartFloatSave->SetFtData(Part,TimeStep+dt,Nstep+1,FtObjs,ForcePoints);
   }
-  Timersg->TmStop(TMG_SuFloating,false);
+  Timersg->TmStop(TMG_SuFloating,true);
 
   //-Update data of points in FtForces and calculates motion data of affected floatings.
   if(!predictor && ForcePoints){
@@ -806,7 +806,7 @@ void JSphGpuSingle::RunFloating(double dt,bool predictor){
     ForcePoints->UpdatePoints(TimeStep,dt,ftpaused,FtObjs);
     if(Moorings)Moorings->ComputeForces(Nstep,TimeStep,dt,ForcePoints);
     ForcePoints->ComputeForcesSum();
-    Timersg->TmStop(TMG_SuMoorings,false);
+    Timersg->TmStop(TMG_SuMoorings,true);
   }
 }
 
@@ -820,7 +820,7 @@ void JSphGpuSingle::RunGaugeSystem(double timestep,bool saveinput){
     //const bool svpart=(TimeStep>=TimePartNext);
     GaugeSystem->CalculeGpu(timestep,DivData
       ,NpbOk,Npb,Np,Posxyg,Poszg,Codeg,Idpg,Velrhopg,saveinput);
-    Timersg->TmStop(TMG_SuGauges,false);
+    Timersg->TmStop(TMG_SuGauges,true);
   }
 }
 
@@ -876,7 +876,7 @@ void JSphGpuSingle::Run(std::string appname,const JSphCfgRun *cfg,JLog2 *log){
   PrintAllocMemory(GetAllocMemoryCpu(),GetAllocMemoryGpu());
   SaveData(); 
   Timersg->ResetTimes();
-  Timersg->TmStop(TMG_Init,false);
+  Timersg->TmStop(TMG_Init,true);
   if(Log->WarningCount())Log->PrintWarningList("\n[WARNINGS]","");
   PartNstep=-1; Part++;
 
@@ -943,7 +943,7 @@ void JSphGpuSingle::SaveData(){
   if(FtCount){
     Timersg->TmStart(TMG_SuDownData,false);
     UpdateFtObjs();
-    Timersg->TmStop(TMG_SuDownData,false);
+    Timersg->TmStop(TMG_SuDownData,true);
   }
   const bool save=(SvData!=SDAT_None && SvData!=SDAT_Info);
   const unsigned npnormal=Np-NpbPer-NpfPer; //-Subtracts the periodic particles if they exist. | Resta las periodicas si las hubiera.
@@ -967,7 +967,7 @@ void JSphGpuSingle::SaveData(){
     if(filter)ArraysGpu->Free(filter); filter=NULL;
     if(npsel+npfilterdel!=npnormal)Run_Exceptioon("The number of particles is invalid.");
     npsave=npsel;
-    Timersg->TmStop(TMG_SuDownData,false);
+    Timersg->TmStop(TMG_SuDownData,true);
   }
 
   Timersg->TmStart(TMG_SuSavePart,false);
@@ -1004,7 +1004,7 @@ void JSphGpuSingle::SaveData(){
   if(UseNormals && SvNormals)SaveVtkNormalsGpu("normals/Normals.vtk",Part,npsave,Npb,Posxyg,Poszg,Idpg,BoundNormalg);
   //-Save extra data.
   if(SvExtraDataBi4)SaveExtraData();
-  Timersg->TmStop(TMG_SuSavePart,false);
+  Timersg->TmStop(TMG_SuSavePart,true);
 }
 
 //==============================================================================

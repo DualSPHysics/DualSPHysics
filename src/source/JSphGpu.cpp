@@ -899,7 +899,7 @@ void JSphGpu::ComputeVerlet(double dt){  //pdtedom
   //-Frees memory allocated for the diplacement.
   ArraysGpu->Free(movxyg);   movxyg=NULL;
   ArraysGpu->Free(movzg);    movzg=NULL;
-  Timersg->TmStop(TMG_SuComputeStep,false);
+  Timersg->TmStop(TMG_SuComputeStep,true);
 }
 
 //==============================================================================
@@ -972,7 +972,7 @@ void JSphGpu::ComputeSymplecticCorr(double dt){
   ArraysGpu->Free(PosxyPreg);    PosxyPreg=NULL;
   ArraysGpu->Free(PoszPreg);     PoszPreg=NULL;
   ArraysGpu->Free(VelrhopPreg);  VelrhopPreg=NULL;
-  Timersg->TmStop(TMG_SuComputeStep,false);
+  Timersg->TmStop(TMG_SuComputeStep,true);
 }
 
 //==============================================================================
@@ -1013,7 +1013,7 @@ double JSphGpu::DtVariable(bool final){
 void JSphGpu::RunShifting(double dt){
   Timersg->TmStart(TMG_SuShifting,false);
   Shifting->RunGpu(Np-Npb,Npb,dt,Velrhopg,ShiftPosfsg);
-  Timersg->TmStop(TMG_SuShifting,false);
+  Timersg->TmStop(TMG_SuShifting,true);
 }
 
 //==============================================================================
@@ -1067,7 +1067,7 @@ void JSphGpu::RunMotion(double stepdt){
     }
   }
   if(MotionVelg)cusph::CopyMotionVel(CaseNmoving,RidpMotg,Velrhopg,MotionVelg);
-  Timersg->TmStop(TMG_SuMotion,false);
+  Timersg->TmStop(TMG_SuMotion,true);
 }
 
 //==============================================================================
@@ -1080,7 +1080,7 @@ void JSphGpu::RunRelaxZone(double dt){
   float* rzfactor=NULL; 
   RelaxZones->SetFluidVelGpu(TimeStep,dt,Np-Npb,Npb,(const tdouble2*)Posxyg
     ,Poszg,Idpg,(tfloat4*)Velrhopg,rzid,rzfactor);
-  Timersg->TmStop(TMG_SuMotion,false);
+  Timersg->TmStop(TMG_SuMotion,true);
 }
 
 //==============================================================================
