@@ -101,24 +101,6 @@ public:
     float od_wdeltap;        ///<Parameter for tensile instability correction.  
   }StCubicCte;
 
-/// Structure that saves extra information about the execution.
-  typedef struct {
-    double timesim;      ///<Seconds from the start of the simulation (after loading the initial data).                    | Segundos desde el inicio de la simulacion (despues de cargar los datos iniciales).
-    unsigned nct;        ///<Number of cells used in the divide.                                                           | Numero de celdas usadas en el divide.                                                    
-    unsigned npbin;      ///<Number of boundary particles within the area of the divide (includes periodic particles).     | Numero de particulas bound dentro del area del divide (incluye particulas periodicas).
-    unsigned npbout;     ///<Number of boundary particles outside of the area of the divide (includes periodic particles). | Numero de particulas bound fuera del area del divide (incluye particulas periodicas).    
-    unsigned npf;        ///<Number of fluid particles (includes periodic particles).                                      | Numero de particulas fluid (incluye particulas periodicas).                              
-    unsigned npbper;     ///<Number of periodic boundary particles (inside and outside the area of the split).             | Numero de particulas bound periodicas (dentro y fuera del area del divide).              
-    unsigned npfper;     ///<Number of periodic fluid particles.                                                           | Numero de particulas fluid periodicas.                                                   
-    unsigned newnp;      ///<Number of new fluid particles (inlet conditions)                                              | Numero de nuevas particulas fluid (inlet conditions).                                    
-    llong memorycpualloc;
-    bool gpudata;
-    llong memorynpalloc;
-    llong memorynpused;
-    llong memorynctalloc;
-    llong memorynctused;
-  }StInfoPartPlus;
-
 private:
   //-Configuration variables to compute the case limits.
   //-Variables de configuracion para calcular el limite del caso.
@@ -496,8 +478,8 @@ protected:
   tfloat3* GetPointerDataFloat3(unsigned n,const tdouble3* v)const;
   void AddBasicArrays(JDataArrays &arrays,unsigned np,const tdouble3 *pos
     ,const unsigned *idp,const tfloat3 *vel,const float *rhop)const;
-  void SavePartData(unsigned npok,unsigned nout,const JDataArrays& arrays,unsigned ndom,const tdouble3 *vdom,const StInfoPartPlus *infoplus);
-  void SaveData(unsigned npok,const JDataArrays& arrays,unsigned ndom,const tdouble3 *vdom,const StInfoPartPlus *infoplus);
+  void SavePartData(unsigned npok,unsigned nout,const JDataArrays& arrays,unsigned ndom,const tdouble3* vdom,const StInfoPartPlus& infoplus);
+  void SaveData(unsigned npsave,const JDataArrays& arrays,unsigned ndom,const tdouble3* vdom,StInfoPartPlus infoplus);
 
   void CheckTermination();
   void TimeOutExtraUpdate(double timestep);

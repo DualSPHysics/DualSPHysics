@@ -32,15 +32,17 @@ using namespace std;
 JCellDivCpu::JCellDivCpu(bool stable,bool floating,byte periactive
   ,bool celldomfixed,TpCellMode cellmode,float scell
   ,tdouble3 mapposmin,tdouble3 mapposmax,tuint3 mapcells
-  ,unsigned casenbound,unsigned casenfixed,unsigned casenpb,std::string dirout
-  ,bool allocfullnct,float overmemorynp,word overmemorycells)
+  ,unsigned casenbound,unsigned casenfixed,unsigned casenpb
+  ,std::string dirout,bool allocfullnct
+  ,float overmemorynp,word overmemorycells,unsigned overmemoryncells)
   :Log(AppInfo.LogPtr()),Stable(stable),Floating(floating),PeriActive(periactive)
   ,CellDomFixed(celldomfixed),CellMode(cellmode)
   ,ScellDiv(cellmode==CELLMODE_Full? 1: (cellmode==CELLMODE_Half? 2: 0))
   ,Scell(scell),OvScell(1.f/scell)
   ,Map_PosMin(mapposmin),Map_PosMax(mapposmax),Map_PosDif(mapposmax-mapposmin)
   ,Map_Cells(mapcells),CaseNbound(casenbound),CaseNfixed(casenfixed),CaseNpb(casenpb)
-  ,DirOut(dirout),AllocFullNct(allocfullnct),OverMemoryNp(overmemorynp),OverMemoryCells(overmemorycells)
+  ,DirOut(dirout),AllocFullNct(allocfullnct),OverMemoryNp(overmemorynp)
+  ,OverMemoryCells(overmemorycells),OverMemoryNCells(overmemoryncells)
 {
   ClassName="JCellDivCpu";
   CellPart=NULL;    SortPart=NULL;
@@ -129,7 +131,7 @@ void JCellDivCpu::SetMemoryVSort(byte *vsort){
 /// Assign memory according to number of particles. 
 /// Asigna memoria segun numero de particulas. 
 //==============================================================================
-void JCellDivCpu::AllocMemoryNp(ullong np){
+void JCellDivCpu::AllocMemoryNp(ullong np,ullong npmin){
   FreeMemoryNp();
   np=np+PARTICLES_OVERMEMORY_MIN;
   SizeNp=unsigned(np);
@@ -143,17 +145,20 @@ void JCellDivCpu::AllocMemoryNp(ullong np){
     SetMemoryVSort(new byte[sizeof(tdouble3)*SizeNp]);  MemAllocNp+=sizeof(tdouble3)*SizeNp;
   }
   catch(const std::bad_alloc){
-    Run_Exceptioon(fun::PrintStr("Failed CPU memory allocation of %.1f MB for %u particles.",double(MemAllocNp)/(1024*1024),SizeNp));
+    Run_Exceptioon(fun::PrintStr("Failed CPU memory allocation of %.1f MB for %u particles."
+      ,double(MemAllocNp)/MEBIBYTE,SizeNp));
   }
-  //-Show requested memory | Muestra la memoria solicitada.
-  Log->Printf("**CellDiv: Requested cpu memory for %u particles: %.1f MB.",SizeNp,double(MemAllocNp)/(1024*1024));
+  //-Show requested memory.
+  const string txover=(npmin>1? fun::PrintStr(" (over-allocation: %.2fX)",double(SizeNp)/npmin): "");
+  Log->Printf("**CellDiv: Requested cpu memory for %u particles%s: %.1f MiB."
+    ,SizeNp,txover.c_str(),double(MemAllocNp)/MEBIBYTE);
 }
 
 //==============================================================================
 /// Assign memory according to number of cells. 
 /// Asigna memoria segun numero de celdas. 
 //==============================================================================
-void JCellDivCpu::AllocMemoryNct(ullong nct){
+void JCellDivCpu::AllocMemoryNct(ullong nct,ullong nctmin){
   FreeMemoryNct();
   SizeNct=unsigned(nct);
   //-Check number of cells | Comprueba numero de celdas.
@@ -166,10 +171,13 @@ void JCellDivCpu::AllocMemoryNct(ullong nct){
     BeginCell=new unsigned[nc];      MemAllocNct+=sizeof(unsigned)*(nc);
   }
   catch(const std::bad_alloc){
-    Run_Exceptioon(fun::PrintStr("Failed CPU memory allocation of %.1f MB for %u cells.",double(MemAllocNct)/(1024*1024),SizeNct));
+    Run_Exceptioon(fun::PrintStr("Failed CPU memory allocation of %.1f MiB for %u cells."
+      ,double(MemAllocNct)/MEBIBYTE,SizeNct));
   }
-  //-Show requested memory | Muestra la memoria solicitada.
-  Log->Printf("**CellDiv: Requested cpu memory for %u cells (CellMode=%s): %.1f MB.",SizeNct,GetNameCellMode(CellMode),double(MemAllocNct)/(1024*1024));
+  //-Show requested memory.
+  const string txover=(nctmin>1? fun::PrintStr(" (over-allocation: %.2fX)",double(SizeNct)/nctmin): "");
+  Log->Printf("**CellDiv: Requested cpu memory for %u cells%s: %.1f MiB."
+    ,SizeNct,txover.c_str(),double(MemAllocNct)/MEBIBYTE);
 }
 
 //==============================================================================
@@ -181,11 +189,11 @@ void JCellDivCpu::AllocMemoryNct(ullong nct){
 //==============================================================================
 void JCellDivCpu::CheckMemoryNp(unsigned npmin){
   if(SizeNp<npmin+PARTICLES_OVERMEMORY_MIN){
-    AllocMemoryNp(ullong(npmin)+ullong(OverMemoryNp*npmin)+IncreaseNp);
+    AllocMemoryNp(ullong(npmin)+ullong(OverMemoryNp*npmin)+IncreaseNp,npmin);
     IncreaseNp=0;
   }
   else if(!CellPart){
-    AllocMemoryNp(SizeNp+IncreaseNp);
+    AllocMemoryNp(SizeNp+IncreaseNp,npmin);
     IncreaseNp=0;
   }
 }
@@ -199,16 +207,17 @@ void JCellDivCpu::CheckMemoryNp(unsigned npmin){
 //==============================================================================
 void JCellDivCpu::CheckMemoryNct(unsigned nctmin){
   if(SizeNct<nctmin){
-    unsigned overnct=0;
+    unsigned nctnew=nctmin;
     if(OverMemoryCells>0){
-      ullong nct=ullong(Ncx+OverMemoryCells)*ullong(Ncy+OverMemoryCells)*ullong(Ncz+OverMemoryCells);
-      ullong nctt=SizeBeginCell(nct);
-      if(nctt!=unsigned(nctt))Run_Exceptioon("The number of cells is too big.");
-      overnct=unsigned(nct);
+      const ullong nct1=ullong(Ncx+OverMemoryCells)*ullong(Ncy+OverMemoryCells)*ullong(Ncz+OverMemoryCells);
+      const ullong nct2=ullong(nctmin)+OverMemoryNCells;
+      const ullong nct3=(nct1>nct2? nct1: nct2);
+      if(SizeBeginCell(nct3)>=UINT_MAX)Run_Exceptioon("The number of cells is too big.");
+      nctnew=unsigned(nct3);
     }
-    AllocMemoryNct(nctmin>overnct? nctmin: overnct);
+    AllocMemoryNct(nctnew,nctmin);
   }
-  else if(!BeginCell)AllocMemoryNct(SizeNct);  
+  else if(!BeginCell)AllocMemoryNct(SizeNct,nctmin);  
 }
 
 //==============================================================================

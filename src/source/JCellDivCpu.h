@@ -58,6 +58,7 @@ protected:
   bool AllocFullNct;     ///<Resserve memory for max number of cells of domain (DomCells). | Reserva memoria para el numero maximo de celdas del dominio (DomCells).
   float OverMemoryNp;    ///<Percentage that is added to the memory reserved for Np. (def=0) | Porcentaje que se anhade a la reserva de memoria de Np. (def=0).
   word OverMemoryCells;  ///<Cell number that is incremented in each dimension to reserve memory. | Numero celdas que se incrementa en cada dimension reservar memoria. (def=0).
+  unsigned OverMemoryNCells; ///<Minimum number of cells that is incremented to reserve memory.
 
   //-Variables to define the domain.
   unsigned DomCellCode;  ///<Key for codifying cell of position. | Clave para la codificacion de la celda de posicion.
@@ -133,8 +134,8 @@ protected:
   void FreeMemoryNp();
   void FreeMemoryAll();
   void SetMemoryVSort(byte *vsort);
-  void AllocMemoryNp(ullong np);
-  void AllocMemoryNct(ullong nct);
+  void AllocMemoryNp(ullong np,ullong npmin);
+  void AllocMemoryNct(ullong nct,ullong nctmin);
   void CheckMemoryNp(unsigned npmin);
   void CheckMemoryNct(unsigned nctmin);
 
@@ -156,8 +157,11 @@ public:
   JCellDivCpu(bool stable,bool floating,byte periactive
     ,bool celldomfixed,TpCellMode cellmode,float scell
     ,tdouble3 mapposmin,tdouble3 mapposmax,tuint3 mapcells
-    ,unsigned casenbound,unsigned casenfixed,unsigned casenpb,std::string dirout
-    ,bool allocfullnct=true,float overmemorynp=CELLDIV_OVERMEMORYNP,word overmemorycells=CELLDIV_OVERMEMORYCELLS);
+    ,unsigned casenbound,unsigned casenfixed,unsigned casenpb
+    ,std::string dirout,bool allocfullnct=true
+    ,float overmemorynp=CELLDIV_OVERMEMORYNP
+    ,word overmemorycells=CELLDIV_OVERMEMORYCELLS
+    ,unsigned overmemoryncells=CELLDIV_OVERMEMORYNCELLS);
   ~JCellDivCpu();
 
   void DefineDomain(unsigned cellcode,tuint3 domcelini,tuint3 domcelfin,tdouble3 domposmin,tdouble3 domposmax);
@@ -173,6 +177,8 @@ public:
   TpCellMode GetCellMode()const{ return(CellMode); }
   int GetScellDiv()const{ return(ScellDiv); }
   float GetScell()const{ return(Scell); }
+
+  unsigned GetSizeNct()const{ return(SizeNct); }
 
   unsigned GetNct()const{ return(Nct); }
   unsigned GetNcx()const{ return(Ncx); }

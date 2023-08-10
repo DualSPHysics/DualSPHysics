@@ -91,19 +91,19 @@ void JDsPartsOut::AllocMemory(unsigned size,bool reset){
 //==============================================================================
 void JDsPartsOut::AddData(unsigned np,const typecode* code){
   //-Checks reason for exclusion.
-  unsigned outpos=0,outrhop=0,outmove=0;
+  unsigned outpos=0,outrho=0,outmov=0;
   for(unsigned c=0;c<np;c++){
     switch(CODE_GetSpecialValue(code[c])){
       case CODE_OUTPOS:   Motive[Count+c]=1; outpos++;   break;
-      case CODE_OUTRHOP:  Motive[Count+c]=2; outrhop++;  break; 
-      case CODE_OUTMOVE:  Motive[Count+c]=3; outmove++;  break; 
+      case CODE_OUTRHOP:  Motive[Count+c]=2; outrho++;  break; 
+      case CODE_OUTMOVE:  Motive[Count+c]=3; outmov++;  break; 
     }
   }
   //-Updates numbers.
   Count+=np;
   OutPosCount+=outpos;
-  OutRhopCount+=outrhop;
-  OutMoveCount+=outmove;
+  OutRhoCount+=outrho;
+  OutMovCount+=outmov;
   //printf("\n=====> count:%d outpos:%d\n",Count,OutPosCount);
 }
 

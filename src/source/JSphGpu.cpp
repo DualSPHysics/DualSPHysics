@@ -354,7 +354,7 @@ void JSphGpu::AllocGpuMemoryParticles(unsigned np,float over){
 //==============================================================================
 /// Resizes space in GPU memory for particles.
 //==============================================================================
-void JSphGpu::ResizeGpuMemoryParticles(unsigned npnew){
+void JSphGpu::ResizeGpuMemoryParticles(unsigned npnew,unsigned npmin){
   npnew=npnew+PARTICLES_OVERMEMORY_MIN;
   //-Saves current data from GPU.
   unsigned    *idp        =SaveArrayGpu(Np,Idpg);
@@ -387,8 +387,9 @@ void JSphGpu::ResizeGpuMemoryParticles(unsigned npnew){
   ArraysGpu->Free(BoundNormalg);
   ArraysGpu->Free(MotionVelg);
   //-Resizes GPU memory allocation.
-  const double mbparticle=(double(MemGpuParticles)/(1024*1024))/GpuParticlesSize; //-MB por particula.
-  Log->Printf("**JSphGpu: Requesting gpu memory for %u particles: %.1f MB.",npnew,mbparticle*npnew);
+  const double mbparticle=(double(MemGpuParticles)/MEBIBYTE)/GpuParticlesSize; //-MiB per particle.
+  const string txover=(npmin>1? fun::PrintStr(" (over-allocation: %.2fX)",double(npnew)/npmin): "");
+  Log->Printf("**JSphGpu: Requesting gpu memory for %u particles%s: %.1f MiB.",npnew,txover.c_str(),mbparticle*npnew);
   ArraysGpu->SetArraySize(npnew);
   //-Reserve pointers.
   Idpg    =ArraysGpu->ReserveUint();

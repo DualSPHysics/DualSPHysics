@@ -173,10 +173,12 @@ void JSphCpuSingle::ConfigDomain(){
 /// Redimensiona el espacio reservado para particulas en CPU midiendo el
 /// tiempo consumido con TMC_SuResizeNp. Al terminar actualiza el divide.
 //==============================================================================
-void JSphCpuSingle::ResizeParticlesSize(unsigned newsize,float oversize,bool updatedivide){
+void JSphCpuSingle::ResizeParticlesSize(unsigned newsize,unsigned minsize
+  ,float oversize,bool updatedivide)
+{
   Timersc->TmStart(TMC_SuResizeNp);
   newsize+=(oversize>0? unsigned(oversize*newsize): 0);
-  ResizeCpuMemoryParticles(newsize);
+  ResizeCpuMemoryParticles(newsize,minsize);
   Timersc->TmStop(TMC_SuResizeNp);
   if(updatedivide)RunCellDivide(true);
 }
@@ -402,7 +404,7 @@ void JSphCpuSingle::RunPeriodic(){
           if(count>nmax || !CheckCpuParticlesSize(count+Np)){
             ArraysCpu->Free(listp); listp=NULL;
             Timersc->TmStop(TMC_SuPeriodic);
-            ResizeParticlesSize(Np+count,PERIODIC_OVERMEMORYNP,false);
+            ResizeParticlesSize(Np+count,Np+count,PERIODIC_OVERMEMORYNP,false);
             Timersc->TmStart(TMC_SuPeriodic);
           }
           else{
@@ -1206,19 +1208,15 @@ void JSphCpuSingle::SaveData(){
     PartMotionSave->SaveDataExtra();
   }
 
-  //-Collects additional information. | Reune informacion adicional.
+  //-Collects additional information.
   StInfoPartPlus infoplus;
-  memset(&infoplus,0,sizeof(StInfoPartPlus));
   if(SvData&SDAT_Info){
-    infoplus.nct=CellDivSingle->GetNct();
-    infoplus.npbin=NpbOk;
-    infoplus.npbout=Npb-NpbOk;
-    infoplus.npf=Np-Npb;
-    infoplus.npbper=NpbPer;
-    infoplus.npfper=NpfPer;
-    infoplus.newnp=(InOut? InOut->GetNewNpPart(): 0);
-    infoplus.memorycpualloc=this->GetAllocMemoryCpu();
     infoplus.gpudata=false;
+    infoplus.SetNct(CellDivSingle->GetNct(),CellDivSingle->GetSizeNct());
+    infoplus.SetNp(Np,CpuParticlesSize,npnormal,npsave);
+    if(InOut)infoplus.npnew=InOut->GetNewNpPart();
+    infoplus.SetNpExtra(NpbOk,Npb-NpbOk,Np-Npb,NpbPer,NpfPer);
+    infoplus.memorycpualloc=GetAllocMemoryCpu();
     TimerSim.Stop();
     infoplus.timesim=TimerSim.GetElapsedTimeD()/1000.;
   }
@@ -1227,7 +1225,7 @@ void JSphCpuSingle::SaveData(){
   //-Stores particle data. | Graba datos de particulas.
   JDataArrays arrays;
   AddBasicArrays(arrays,npsave,pos,idp,vel,rhop);
-  JSph::SaveData(npsave,arrays,1,vdom,&infoplus);
+  JSph::SaveData(npsave,arrays,1,vdom,infoplus);
   //-Free auxiliary memory for particle data. | Libera memoria auxiliar para datos de particulas.
   ArraysCpu->Free(idp);
   ArraysCpu->Free(pos);

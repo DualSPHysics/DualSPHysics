@@ -42,7 +42,7 @@ protected:
   void LoadConfig(const JSphCfgRun *cfg);
   void ConfigDomain();
 
-  void ResizeParticlesSize(unsigned newsize,float oversize,bool updatedivide);
+  void ResizeParticlesSize(unsigned newsize,unsigned minsize,float oversize,bool updatedivide);
   unsigned PeriodicMakeList(unsigned np,unsigned pini,bool stable,unsigned nmax,tdouble3 perinc,const tdouble3 *pos,const typecode *code,unsigned *listp)const;
   void PeriodicDuplicatePos(unsigned pnew,unsigned pcopy,bool inverse,double dx,double dy,double dz,tuint3 cellmax,tdouble3 *pos,unsigned *dcell)const;
   void PeriodicDuplicateVerlet(unsigned np,unsigned pini,tuint3 cellmax,tdouble3 perinc,const unsigned *listp

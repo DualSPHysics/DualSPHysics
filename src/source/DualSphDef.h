@@ -123,7 +123,8 @@
 #define DELTA_HEAVYFLOATING  ///<Applies DDT to fluid particles interacting with floatings with higher density (massp>MassFluid*1.2). | Aplica DDT a fluido que interaccionan con floatings pesados (massp>MassFluid*1.2). NO_COMENTARIO
 
 #define CELLDIV_OVERMEMORYNP 0.05f   ///<Memory that is reserved for the particle management in JCellDivGpu. | Memoria que se reserva de mas para la gestion de particulas en JCellDivGpu.
-#define CELLDIV_OVERMEMORYCELLS 1    ///<Number of cells in each dimension is increased to allocate memory for JCellDivGpu cells. | Numero celdas que se incrementa en cada dimension al reservar memoria para celdas en JCellDivGpu.
+#define CELLDIV_OVERMEMORYCELLS 2    ///<Number of cells in each dimension is increased to allocate memory for JCellDivGpu cells. | Numero celdas que se incrementa en cada dimension al reservar memoria para celdas en JCellDivGpu.
+#define CELLDIV_OVERMEMORYNCELLS 6553598 ///<Number of cells (6.5M for 100 MiB on GPU) to increase memory allocation for JCellDivGpu cells.
 #define PERIODIC_OVERMEMORYNP 0.05f  ///<Memory reserved for the creation of periodic particles in JSphGpuSingle::RunPeriodic(). | Mermoria que se reserva de mas para la creacion de particulas periodicas en JSphGpuSingle::RunPeriodic().
 #define PARTICLES_OVERMEMORY_MIN 128 ///<Minimum over memory allocated on CPU or GPU according number of particles.
 
@@ -273,6 +274,60 @@ typedef struct{ //(DEM)
   float tau;          ///<Value of (1-poisson^2)/young (units:-).
   float restitu;      ///<Restitution Coefficient (units:-).
 }StDemData;
+
+///Structure that saves extra information about the execution.
+typedef struct StrInfoPartPlus{
+  unsigned nct;        ///<Number of cells used in the divide.
+  unsigned nctsize;    ///<Number of cells with allocated memory.
+  unsigned npsim;      ///<Number of particles used in simulation (normal + periodic particles).
+  unsigned npsize;     ///<Number of particles with allocated memory.
+  unsigned npnormal;   ///<Number of normal particles used in simulation (without periodic particles).
+  unsigned npsave;     ///<Number of selected particles to save.
+  unsigned npnew;      ///<Number of new fluid particles (inlet conditions).
+  unsigned noutpos;    ///<Number of excluded particles due position.
+  unsigned noutrho;    ///<Number of excluded particles due density.
+  unsigned noutmov;    ///<Number of excluded particles due movement.
+  unsigned npbin;      ///<Number of boundary particles within the area of the divide (includes periodic particles).
+  unsigned npbout;     ///<Number of boundary particles outside of the area of the divide (includes periodic particles).
+  unsigned npf;        ///<Number of floating+fluid particles (includes periodic particles).
+  unsigned npbper;     ///<Number of periodic boundary particles (inside and outside the area of the split).
+  unsigned npfper;     ///<Number of periodic floating+fluid particles.
+  llong memorycpualloc;
+  llong memorynpalloc;
+  llong memorynpused;
+  llong memorynctalloc;
+  llong memorynctused;
+  double timesim;      ///<Seconds from the start of the simulation (after loading the initial data).                    | Segundos desde el inicio de la simulacion (despues de cargar los datos iniciales).
+  bool gpudata;
+
+  StrInfoPartPlus(){ 
+    nct=nctsize=0;
+    npsim=npsize=npnormal=npsave=0;
+    npnew=0;
+    noutpos=noutrho=noutmov=0;
+    npbin=npbout=npf=npbper=npfper=0;
+    memorycpualloc=memorynpalloc=memorynpused=0;
+    memorynctalloc=memorynctused=0;
+    timesim=0;
+    gpudata=false;
+  }
+  void SetNct(unsigned nct,unsigned nctsize){
+    this->nct=nct; this->nctsize=nctsize;
+  }
+  void SetNp(unsigned npsim,unsigned npsize,unsigned npnormal,unsigned npsave){
+    this->npsim=npsim;       this->npsize=npsize; 
+    this->npnormal=npnormal; this->npsave=npsave;
+  }
+  void SetNout(unsigned noutpos,unsigned noutrho,unsigned noutmov){
+    this->noutpos=noutpos; this->noutrho=noutrho; this->noutmov=noutmov;
+  }
+  void SetNpExtra(unsigned npbin,unsigned npbout,unsigned npf
+    ,unsigned npbper,unsigned npfper)
+  {
+    this->npbin=npbin;   this->npbout=npbout;  this->npf=npf;
+    this->npbper=npbper; this->npfper=npfper;
+  }
+}StInfoPartPlus;
 
 ///Structure that stores the maximum values (or almost) achieved during the simulation.
 typedef struct StrMaxNumbers{

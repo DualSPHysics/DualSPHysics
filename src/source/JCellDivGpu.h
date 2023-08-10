@@ -58,7 +58,8 @@ protected:
   bool AllocFullNct;     ///<Resserve memory for max number of cells of domain (DomCells). | Reserva memoria para el numero maximo de celdas del dominio (DomCells).
   float OverMemoryNp;    ///<Percentage that is added to the memory reserved for Np. (def=0) | Porcentaje que se anhade a la reserva de memoria de Np. (def=0).
   word OverMemoryCells;  ///<Cell number that is incremented in each dimension to reserve memory. | Numero celdas que se incrementa en cada dimension reservar memoria. (def=0).
-
+  unsigned OverMemoryNCells; ///<Minimum number of cells that is incremented to reserve memory.
+                             
   //-Variables to define the domain.
   unsigned DomCellCode;  ///<Key for codifying cell of position. | Clave para la codificacion de la celda de posicion.
   tuint3 DomCelIni,DomCelFin;
@@ -120,12 +121,15 @@ protected:
   //-Gestion de reserva dinamica de memoria.
   void FreeMemoryNct();
   void FreeMemoryAll();
-  void AllocMemoryNp(ullong np);
-  void AllocMemoryNct(ullong nct);
+  void AllocMemoryNp(ullong np,ullong npmin);
+  void AllocMemoryNct(ullong nct,ullong nctmin);
   void CheckMemoryNp(unsigned npmin);
   void CheckMemoryNct(unsigned nctmin);
 
   ullong SizeBeginEndCell(ullong nct)const{ return((nct*2)+5); } //-[BoundOk(nct),BoundIgnore(1),Fluid(nct),BoundOut(1),FluidOut(1),BoundOutIgnore(1),FluidOutIgnore(1)]
+  unsigned NctFromSizeMBytes(unsigned megabytes)const{ 
+    return(unsigned(double(megabytes)/16*MEBIBYTE-(40./16.)));
+  }
 
   ullong GetAllocMemoryCpu()const{ return(0); }
   ullong GetAllocMemoryGpuNp()const{ return(MemAllocGpuNp); };
@@ -145,8 +149,11 @@ public:
     ,float kernelsize2,float poscellsize
     ,bool celldomfixed,TpCellMode cellmode,float scell
     ,tdouble3 mapposmin,tdouble3 mapposmax,tuint3 mapcells
-    ,unsigned casenbound,unsigned casenfixed,unsigned casenpb,std::string dirout
-    ,bool allocfullnct=true,float overmemorynp=CELLDIV_OVERMEMORYNP,word overmemorycells=CELLDIV_OVERMEMORYCELLS);
+    ,unsigned casenbound,unsigned casenfixed,unsigned casenpb
+    ,std::string dirout,bool allocfullnct=true
+    ,float overmemorynp=CELLDIV_OVERMEMORYNP
+    ,word overmemorycells=CELLDIV_OVERMEMORYCELLS
+    ,unsigned overmemoryncells=CELLDIV_OVERMEMORYNCELLS);
   ~JCellDivGpu();
   void FreeMemoryGpu(){ FreeMemoryAll(); }
 
@@ -167,6 +174,8 @@ public:
   float GetScell()const{ return(Scell); }
 //:  tuint3 GetDomCells()const{ return(DomCells); };
 //:  unsigned GetCellCode()const{ return(DomCellCode); };
+
+  unsigned GetSizeNct()const{ return(SizeNct); }
 
   unsigned GetNct()const{ return(Nct); }
   unsigned GetNcx()const{ return(Ncx); }

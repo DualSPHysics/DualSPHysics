@@ -98,7 +98,7 @@ void JSphGpuSingle::InOutInit(double timestepini){
   if(true || !CheckGpuParticlesSize(Np+newnp)){
     const unsigned newnp2=newnp+InOut->GetNpResizePlus0();
     Timersg->TmStop(TMG_SuInOut,true);
-    ResizeParticlesSize(Np+newnp2,0,false);
+    ResizeParticlesSize(Np+newnp2,Np+newnp,0,false);
     CellDivSingle->SetIncreaseNp(newnp2);
     Timersg->TmStart(TMG_SuInOut,false);
   }
@@ -175,7 +175,7 @@ void JSphGpuSingle::InOutComputeStep(double stepdt){
     if(!InOut->GetNpResizePlus1())Run_Exceptioon("Allocated memory is not enough and resizing is not allowed by XML configuration (check the value inout.memoryresize.size).");
     const unsigned newnp2=InOut->GetCurrentNp()+InOut->GetNpResizePlus1();
     Timersg->TmStop(TMG_SuInOut,true);
-    ResizeParticlesSize(Np+newnp2,0,false);
+    ResizeParticlesSize(Np+newnp2,Np+InOut->GetCurrentNp(),0,false);
     CellDivSingle->SetIncreaseNp(newnp2);
     Timersg->TmStart(TMG_SuInOut,false);
   }

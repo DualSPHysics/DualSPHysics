@@ -166,7 +166,7 @@ protected:
   void FreeCpuMemoryParticles();
   void AllocCpuMemoryParticles(unsigned np,float over);
 
-  void ResizeCpuMemoryParticles(unsigned np);
+  void ResizeCpuMemoryParticles(unsigned np,unsigned npmin);
   void ReserveBasicArraysCpu();
 
   bool CheckCpuParticlesSize(unsigned requirednp){ return(requirednp+PARTICLES_OVERMEMORY_MIN<=CpuParticlesSize); }

@@ -189,7 +189,7 @@ void JSphCpu::AllocCpuMemoryParticles(unsigned np,float over){
 //==============================================================================
 /// Resizes space in CPU memory for particles.
 //==============================================================================
-void JSphCpu::ResizeCpuMemoryParticles(unsigned npnew){
+void JSphCpu::ResizeCpuMemoryParticles(unsigned npnew,unsigned npmin){
   npnew=npnew+PARTICLES_OVERMEMORY_MIN;
   //-Saves current data from CPU.
   unsigned    *idp        =SaveArrayCpu(Np,Idpc);
@@ -216,8 +216,9 @@ void JSphCpu::ResizeCpuMemoryParticles(unsigned npnew){
   ArraysCpu->Free(BoundNormalc);
   ArraysCpu->Free(MotionVelc);
   //-Resizes CPU memory allocation.
-  const double mbparticle=(double(MemCpuParticles)/(1024*1024))/CpuParticlesSize; //-MB por particula.
-  Log->Printf("**JSphCpu: Requesting cpu memory for %u particles: %.1f MB.",npnew,mbparticle*npnew);
+  const double mbparticle=(double(MemCpuParticles)/MEBIBYTE)/CpuParticlesSize; //-MB por particula.
+  const string txover=(npmin>1? fun::PrintStr(" (over-allocation: %.2fX)",double(npnew)/npmin): "");
+  Log->Printf("**JSphCpu: Requesting cpu memory for %u particles%s: %.1f MiB.",npnew,txover.c_str(),mbparticle*npnew);
   ArraysCpu->SetArraySize(npnew);
   //-Reserve pointers.
   Idpc    =ArraysCpu->ReserveUint();

@@ -2444,9 +2444,9 @@ void JSph::ChronoFtApplyImposedVel(){
 /// Muestra un mensaje con la memoria reservada para los datos basicos de las particulas.
 //==============================================================================
 void JSph::PrintSizeNp(unsigned np,llong size,unsigned allocs)const{
-  const double s=double(size)/(1024*1024);
-  if(Cpu)Log->Printf("**Requested CPU memory for %u particles: %.1f MB.",np,s);
-  else   Log->Printf("**Requested GPU memory for %u particles: %.1f MB (%u times).",np,s,allocs);
+  const double s=double(size)/MEBIBYTE;
+  if(Cpu)Log->Printf("**Requested CPU memory for %u particles: %.1f MiB.",np,s);
+  else   Log->Printf("**Requested GPU memory for %u particles: %.1f MiB (%u times).",np,s,allocs);
 }
 
 //==============================================================================
@@ -2679,7 +2679,7 @@ void JSph::AddBasicArrays(JDataArrays &arrays,unsigned np,const tdouble3 *pos
 /// Graba los ficheros de datos de particulas.
 //==============================================================================
 void JSph::SavePartData(unsigned npok,unsigned nout,const JDataArrays& arrays
-  ,unsigned ndom,const tdouble3 *vdom,const StInfoPartPlus *infoplus)
+  ,unsigned ndom,const tdouble3* vdom,const StInfoPartPlus& infoplus)
 {
   //-Stores particle data and/or information in bi4 format.
   //-Graba datos de particulas y/o informacion en formato bi4.
@@ -2696,25 +2696,33 @@ void JSph::SavePartData(unsigned npok,unsigned nout,const JDataArrays& arrays
       ,TimerPart.GetElapsedTimeD()/1000.,domainmin,domainmax,TotalNp);
     if(TStep==STEP_Symplectic)bdpart->SetvDouble("SymplecticDtPre",SymplecticDtPre);
     if(UseDEM)bdpart->SetvDouble("DemDtForce",DemDtForce); //(DEM)
-    if(infoplus && SvData&SDAT_Info){
+    if(SvData&SDAT_Info){
       bdpart->SetvDouble("dtmean",(!Nstep? 0: (TimeStep-TimeStepM1)/(Nstep-PartNstep)));
       bdpart->SetvDouble("dtmin",(!Nstep? 0: PartDtMin));
       bdpart->SetvDouble("dtmax",(!Nstep? 0: PartDtMax));
       if(FixedDt)bdpart->SetvDouble("dterror",FixedDt->GetDtError(true));
-      bdpart->SetvDouble("timesim",infoplus->timesim);
-      bdpart->SetvUint("nct",infoplus->nct);
-      bdpart->SetvUint("npbin",infoplus->npbin);
-      bdpart->SetvUint("npbout",infoplus->npbout);
-      bdpart->SetvUint("npf",infoplus->npf);
-      bdpart->SetvUint("npbper",infoplus->npbper);
-      bdpart->SetvUint("npfper",infoplus->npfper);
-      bdpart->SetvUint("newnp",infoplus->newnp);
-      bdpart->SetvLlong("cpualloc",infoplus->memorycpualloc);
-      if(infoplus->gpudata){
-        bdpart->SetvLlong("nctalloc",infoplus->memorynctalloc);
-        bdpart->SetvLlong("nctused",infoplus->memorynctused);
-        bdpart->SetvLlong("npalloc",infoplus->memorynpalloc);
-        bdpart->SetvLlong("npused",infoplus->memorynpused);
+      bdpart->SetvDouble("timesim",infoplus.timesim);
+      bdpart->SetvUint("nct"     ,infoplus.nct);
+      bdpart->SetvUint("nctsize" ,infoplus.nctsize);
+      bdpart->SetvUint("npsim"   ,infoplus.npsim);
+      bdpart->SetvUint("npsize"  ,infoplus.npsize);
+      bdpart->SetvUint("npnormal",infoplus.npnormal);
+      bdpart->SetvUint("npsave"  ,infoplus.npsave);
+      bdpart->SetvUint("npnew"   ,infoplus.npnew);
+      bdpart->SetvUint("noutpos" ,infoplus.noutpos);
+      bdpart->SetvUint("noutrho" ,infoplus.noutrho);
+      bdpart->SetvUint("noutmov" ,infoplus.noutmov);
+      bdpart->SetvUint("npbin"   ,infoplus.npbin);
+      bdpart->SetvUint("npbout"  ,infoplus.npbout);
+      bdpart->SetvUint("npf"     ,infoplus.npf);
+      bdpart->SetvUint("npbper"  ,infoplus.npbper);
+      bdpart->SetvUint("npfper"  ,infoplus.npfper);
+      bdpart->SetvLlong("cpualloc",infoplus.memorycpualloc);
+      if(infoplus.gpudata){
+        bdpart->SetvLlong("nctalloc",infoplus.memorynctalloc);
+        bdpart->SetvLlong("nctused" ,infoplus.memorynctused);
+        bdpart->SetvLlong("npalloc" ,infoplus.memorynpalloc);
+        bdpart->SetvLlong("npused"  ,infoplus.memorynpused);
       }
       if(ndom>1){
         bdpart->SetvUint("subdomain_count",ndom);
@@ -2810,22 +2818,22 @@ void JSph::SavePartData(unsigned npok,unsigned nout,const JDataArrays& arrays
 /// Generates data output files.
 /// Genera los ficheros de salida de datos.
 //==============================================================================
-void JSph::SaveData(unsigned npok,const JDataArrays& arrays
-  ,unsigned ndom,const tdouble3 *vdom,const StInfoPartPlus *infoplus)
+void JSph::SaveData(unsigned npsave,const JDataArrays& arrays
+  ,unsigned ndom,const tdouble3* vdom,StInfoPartPlus infoplus)
 {
   string suffixpartx=fun::PrintStr("_%04d",Part);
 
   //-Counts new excluded particles.
-  //-Contabiliza nuevas particulas excluidas.
   const unsigned noutpos=PartsOut->GetOutPosCount();
-  const unsigned noutrhop=PartsOut->GetOutRhopCount();
-  const unsigned noutmove=PartsOut->GetOutMoveCount();
-  const unsigned nout=noutpos+noutrhop+noutmove;
+  const unsigned noutrho=PartsOut->GetOutRhoCount();
+  const unsigned noutmov=PartsOut->GetOutMovCount();
+  const unsigned nout=noutpos+noutrho+noutmov;
   if(nout!=PartsOut->GetCount())Run_Exceptioon("Excluded particles with unknown reason.");
-  AddOutCount(noutpos,noutrhop,noutmove);
+  AddOutCount(noutpos,noutrho,noutmov);
+  infoplus.SetNout(noutpos,noutrho,noutmov);
 
   //-Stores data files of particles.
-  SavePartData(npok,nout,arrays,ndom,vdom,infoplus);
+  SavePartData(npsave,nout,arrays,ndom,vdom,infoplus);
 
   //-Reinitialises limits of dt. | Reinicia limites de dt.
   PartDtMin=DBL_MAX; PartDtMax=-DBL_MAX;
@@ -2841,13 +2849,14 @@ void JSph::SaveData(unsigned npok,const JDataArrays& arrays
     Log->Printf("Part%s  %12.6f  %12d  %7d  %9.2f  %14s",suffixpartx.c_str()
       ,TimeStep,Nstep,Nstep-PartNstep,tseg,fun::GetDateTimeAfter(int(tleft)).c_str());
   }
-  else Log->Printf("Part%s        %u particles successfully stored",suffixpartx.c_str(),npok);   
+  else Log->Printf("Part%s        %u (%.1f%%) particles successfully stored"
+    ,suffixpartx.c_str(),npsave,double(npsave)/infoplus.npnormal*100.);   
   
   //-Shows info of the new inlet particles.
   bool printnp=true;
   if(InOut && InOut->GetNewNpPart()){
     Log->Printf("  Particles new: %u (total new: %llu)  -  Current np: %u"
-      ,InOut->GetNewNpPart(),InOut->GetNewNpTotal(),npok);
+      ,InOut->GetNewNpPart(),InOut->GetNewNpTotal(),infoplus.npsim);
     InOut->ClearNewNpPart();
     printnp=false;
   }
@@ -2855,14 +2864,14 @@ void JSph::SaveData(unsigned npok,const JDataArrays& arrays
   //-Shows info of the excluded particles.
   if(nout){
     PartOut+=nout;
-    if(printnp)Log->Printf("  Particles out: %u  (total out: %u)  -  Current np: %u",nout,PartOut,npok);
+    if(printnp)Log->Printf("  Particles out: %u  (total out: %u)  -  Current np: %u",nout,PartOut,infoplus.npsim);
     else       Log->Printf("  Particles out: %u  (total out: %u)",nout,PartOut);
   }
 
   //-Cheks number of excluded particles.
   if(WrnPartsOut && nout){
     //-Cheks number of excluded particles in one PART.
-    if(PartsOutWrn<=100 && nout>=float(max(CaseNfluid,infoplus->npf))*(float(PartsOutWrn)/100.f)){
+    if(PartsOutWrn<=100 && nout>=float(max(CaseNfluid,infoplus.npf))*(float(PartsOutWrn)/100.f)){
       Log->PrintfWarning("More than %d%% of current fluid particles were excluded in one PART (t:%g, nstep:%u)"
         ,PartsOutWrn,TimeStep,Nstep);
       if(PartsOutWrn==1)PartsOutWrn=2;

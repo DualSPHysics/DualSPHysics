@@ -195,7 +195,7 @@ protected:
   void FreeGpuMemoryParticles();
   void AllocGpuMemoryParticles(unsigned np,float over);
 
-  void ResizeGpuMemoryParticles(unsigned np);
+  void ResizeGpuMemoryParticles(unsigned np,unsigned npmin);
   void ReserveBasicArraysGpu();
 
   bool CheckGpuParticlesSize(unsigned requirednp){ return(requirednp+PARTICLES_OVERMEMORY_MIN<=GpuParticlesSize); }

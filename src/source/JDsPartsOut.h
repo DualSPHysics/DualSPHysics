@@ -50,7 +50,9 @@ protected:
   unsigned Size;
   unsigned Count;
   
-  unsigned OutPosCount,OutRhopCount,OutMoveCount;
+  unsigned OutPosCount;  ///<Number of excluded particles due position.
+  unsigned OutRhoCount;  ///<Number of excluded particles due density.
+  unsigned OutMovCount;  ///<Number of excluded particles due movement.
 
   //-Normal CPU memory pointers.
   unsigned *Idp;
@@ -81,8 +83,8 @@ public:
   unsigned GetCount()const{ return(Count); }
 
   unsigned GetOutPosCount()const{ return(OutPosCount); }
-  unsigned GetOutRhopCount()const{ return(OutRhopCount); }
-  unsigned GetOutMoveCount()const{ return(OutMoveCount); }
+  unsigned GetOutRhoCount()const{ return(OutRhoCount); }
+  unsigned GetOutMovCount()const{ return(OutMovCount); }
 
   const unsigned* GetIdpOut(){ return(Idp); }
   const tdouble3* GetPosOut(){ return(Pos); }
@@ -90,7 +92,7 @@ public:
   const float* GetRhopOut(){ return(Rhop); }
   const byte* GetMotiveOut(){ return(Motive); }
 
-  void Clear(){ Count=0; OutPosCount=OutRhopCount=OutMoveCount=0; };
+  void Clear(){ Count=0; OutPosCount=OutRhoCount=OutMovCount=0; };
 };
 
 #endif

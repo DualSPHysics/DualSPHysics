@@ -88,7 +88,7 @@ void JSphCpuSingle::InOutInit(double timestepini){
   if(true || !CheckCpuParticlesSize(Np+newnp)){
     const unsigned newnp2=newnp+InOut->GetNpResizePlus0();
     Timersc->TmStop(TMC_SuInOut);
-    ResizeParticlesSize(Np+newnp2,0,false);
+    ResizeParticlesSize(Np+newnp2,Np+newnp,0,false);
     CellDivSingle->SetIncreaseNp(newnp2);
     Timersc->TmStart(TMC_SuInOut);
   }
@@ -154,7 +154,7 @@ void JSphCpuSingle::InOutComputeStep(double stepdt){
     if(!InOut->GetNpResizePlus1())Run_Exceptioon("Allocated memory is not enough and resizing is not allowed by XML configuration (check the value inout.memoryresize.size).");
     const unsigned newnp2=InOut->GetCurrentNp()+InOut->GetNpResizePlus1();
     Timersc->TmStop(TMC_SuInOut);
-    ResizeParticlesSize(Np+newnp2,0,false);
+    ResizeParticlesSize(Np+newnp2,Np+InOut->GetCurrentNp(),0,false);
     CellDivSingle->SetIncreaseNp(newnp2);
     Timersc->TmStart(TMC_SuInOut);
   }

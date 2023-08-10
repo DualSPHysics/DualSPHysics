@@ -45,7 +45,7 @@ protected:
   void LoadConfig(const JSphCfgRun *cfg);
   void ConfigDomain();
 
-  void ResizeParticlesSize(unsigned newsize,float oversize,bool updatedivide);
+  void ResizeParticlesSize(unsigned newsize,unsigned minsize,float oversize,bool updatedivide);
   void RunPeriodic();
   void RunCellDivide(bool updateperiodic);
   void AbortBoundOut();

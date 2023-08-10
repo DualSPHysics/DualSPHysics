@@ -221,13 +221,15 @@ void JSphGpuSingle::ConfigDomain(){
 /// Redimensiona el espacio reservado para particulas en CPU y GPU midiendo el
 /// tiempo consumido con TMG_SuResizeNp. Al terminar actualiza el divide.
 //==============================================================================
-void JSphGpuSingle::ResizeParticlesSize(unsigned newsize,float oversize,bool updatedivide){
+void JSphGpuSingle::ResizeParticlesSize(unsigned newsize,unsigned minsize
+  ,float oversize,bool updatedivide)
+{
   Timersg->TmStart(TMG_SuResizeNp,false);
-  newsize+=(oversize>0? unsigned(oversize*newsize): 0);
+  newsize=newsize+(oversize>0? unsigned(oversize*newsize): 0);
   FreeCpuMemoryParticles();
   CellDivSingle->FreeMemoryGpu();
   DivData=DivDataGpuNull();
-  ResizeGpuMemoryParticles(newsize);
+  ResizeGpuMemoryParticles(newsize,minsize);
   AllocCpuMemoryParticles(newsize);
   Timersg->TmStop(TMG_SuResizeNp,true);
   if(updatedivide)RunCellDivide(true);
@@ -293,7 +295,7 @@ void JSphGpuSingle::RunPeriodic(){
           if(count>nmax || !CheckGpuParticlesSize(count+Np)){
             ArraysGpu->Free(listpg); listpg=NULL;
             Timersg->TmStop(TMG_SuPeriodic,true);
-            ResizeParticlesSize(Np+count,PERIODIC_OVERMEMORYNP,false);
+            ResizeParticlesSize(Np+count,Np+count,PERIODIC_OVERMEMORYNP,false);
             Timersg->TmStart(TMG_SuPeriodic,false);
           }
           else{
@@ -977,19 +979,15 @@ void JSphGpuSingle::SaveData(){
     PartMotionSave->SaveDataExtra();
   }
 
-  //-Collects additional information. | Reune informacion adicional.
+  //-Collects additional information.
   StInfoPartPlus infoplus;
-  memset(&infoplus,0,sizeof(StInfoPartPlus));
   if(SvData&SDAT_Info){
-    infoplus.nct=CellDivSingle->GetNct();
-    infoplus.npbin=NpbOk;
-    infoplus.npbout=Npb-NpbOk;
-    infoplus.npf=Np-Npb;
-    infoplus.npbper=NpbPer;
-    infoplus.npfper=NpfPer;
-    infoplus.newnp=(InOut? InOut->GetNewNpPart(): 0);
-    infoplus.memorycpualloc=this->GetAllocMemoryCpu();
     infoplus.gpudata=true;
+    infoplus.SetNct(CellDivSingle->GetNct(),CellDivSingle->GetSizeNct());
+    infoplus.SetNp(Np,GpuParticlesSize,npnormal,npsave);
+    if(InOut)infoplus.npnew=InOut->GetNewNpPart();
+    infoplus.SetNpExtra(NpbOk,Npb-NpbOk,Np-Npb,NpbPer,NpfPer);
+    infoplus.memorycpualloc=GetAllocMemoryCpu();
     infoplus.memorynctalloc=infoplus.memorynctused=GetMemoryGpuNct();
     infoplus.memorynpalloc=infoplus.memorynpused=GetMemoryGpuNp();
     TimerSim.Stop();
@@ -1000,7 +998,7 @@ void JSphGpuSingle::SaveData(){
   //-Stores particle data. | Graba datos de particulas.
   JDataArrays arrays;
   AddBasicArrays(arrays,npsave,AuxPos,Idp,AuxVel,AuxRhop);
-  JSph::SaveData(npsave,arrays,1,vdom,&infoplus);
+  JSph::SaveData(npsave,arrays,1,vdom,infoplus);
   if(UseNormals && SvNormals)SaveVtkNormalsGpu("normals/Normals.vtk",Part,npsave,Npb,Posxyg,Poszg,Idpg,BoundNormalg);
   //-Save extra data.
   if(SvExtraDataBi4)SaveExtraData();
