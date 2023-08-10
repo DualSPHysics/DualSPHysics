@@ -443,6 +443,70 @@ std::string Uint3Str(const tuint3 &v){
 }
 
 //==============================================================================
+/// Converts integral or real value to string with thousands seperator.
+//==============================================================================
+std::string KnumStr(const char* v){
+  const unsigned s=unsigned(strlen(v));
+  const bool neg=(s && v[0]=='-');
+  const unsigned ci=(neg? 1: 0);
+  unsigned cf=s;
+  //-Looks for end of integral part.
+  for(unsigned c=ci;c<s && cf==s;c++){
+    if(v[c]<'0' || v[c]>'9')cf=c;
+  }
+  string num;
+  if(cf-ci>3){
+    //-Add thousands separators in integral part.
+    num.reserve(s+(s/3)+7);
+    if(neg)num.push_back('-');
+    for(unsigned c=ci;c<cf;c++){
+      num.push_back(v[c]);
+      if(cf>c+1 && (cf-c-1)%3==0)num.push_back(',');
+    }
+    //-Add real part.
+    for(unsigned c=cf;c<s;c++)num.push_back(v[c]);
+  }
+  else num=string(v);
+  return(num);
+}
+
+//==============================================================================
+/// Converts unsigned value to string with thousands seperator.
+//==============================================================================
+std::string KintStr(unsigned v){
+  char cad[128];
+  sprintf(cad,"%u",v);
+  return(KnumStr(cad));
+}
+
+//==============================================================================
+/// Converts integer value to string with thousands seperator.
+//==============================================================================
+std::string KintStr(int v){
+  char cad[128];
+  sprintf(cad,"%d",v);
+  return(KnumStr(cad));
+}
+
+//==============================================================================
+/// Converts ullong value to string with thousands seperator.
+//==============================================================================
+std::string KintStr(ullong v){
+  char cad[128];
+  sprintf(cad,"%llu",v);
+  return(KnumStr(cad));
+}
+
+//==============================================================================
+/// Converts llong value to string with thousands seperator.
+//==============================================================================
+std::string KintStr(llong v){
+  char cad[128];
+  sprintf(cad,"%lld",v);
+  return(KnumStr(cad));
+}
+
+//==============================================================================
 /// Converts real value to string.
 //==============================================================================
 std::string FloatStr(float v,const char* fmt){
@@ -1311,6 +1375,9 @@ std::string VarStr(const std::string &name,unsigned value){
   char cad[30];
   sprintf(cad,"=%u",value);
   return(name+cad);
+}
+std::string VarKStr(const std::string &name,unsigned value){
+  return(name+"="+KintStr(value));
 }
 std::string VarStr(const std::string &name,unsigned n,const int *values,std::string size){
   std::string tex=name+"["+(size=="?"? UintStr(n): size)+"]=[";

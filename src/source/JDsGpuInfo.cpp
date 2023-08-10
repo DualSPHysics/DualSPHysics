@@ -116,7 +116,7 @@ int JDsGpuInfo::SelectGpu(int gpuid){
 void JDsGpuInfo::ShowSelectGpusInfo(JLog2 *log){
   log->Printf("Device %s: %d \"%s\"",(AutoSelect? "default": "selected"),GpuId,Name.c_str());
   log->Printf("Compute capability: %.1f",float(Compute)/10);
-  log->Printf("Memory global: %d MB",int(GlobalMem/(1024*1024)));
+  log->Printf("Memory global: %d MiB",int(GlobalMem/MEBIBYTE));
   log->Printf("Memory shared: %u Bytes",SharedMem);
   log->Print(" ");
 }

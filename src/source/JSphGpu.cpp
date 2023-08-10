@@ -389,7 +389,8 @@ void JSphGpu::ResizeGpuMemoryParticles(unsigned npnew,unsigned npmin){
   //-Resizes GPU memory allocation.
   const double mbparticle=(double(MemGpuParticles)/MEBIBYTE)/GpuParticlesSize; //-MiB per particle.
   const string txover=(npmin>1? fun::PrintStr(" (over-allocation: %.2fX)",double(npnew)/npmin): "");
-  Log->Printf("**JSphGpu: Requesting gpu memory for %u particles%s: %.1f MiB.",npnew,txover.c_str(),mbparticle*npnew);
+  Log->Printf("**JSphGpu: Requesting gpu memory for %s particles%s: %.1f MiB."
+    ,KINT(npnew),txover.c_str(),mbparticle*npnew);
   ArraysGpu->SetArraySize(npnew);
   //-Reserve pointers.
   Idpg    =ArraysGpu->ReserveUint();
@@ -507,8 +508,8 @@ llong JSphGpu::GetAllocMemoryGpu()const{
 /// Visualiza la memoria reservada.
 //==============================================================================
 void JSphGpu::PrintAllocMemory(llong mcpu,llong mgpu)const{
-  Log->Printf("Allocated memory in CPU: %lld (%.2f MB)",mcpu,double(mcpu)/(1024*1024));
-  Log->Printf("Allocated memory in GPU: %lld (%.2f MB)",mgpu,double(mgpu)/(1024*1024));
+  Log->Printf("Allocated memory in CPU: %s (%.2f MiB)",KINT(mcpu),double(mcpu)/MEBIBYTE);
+  Log->Printf("Allocated memory in GPU: %s (%.2f MiB)",KINT(mgpu),double(mgpu)/MEBIBYTE);
 }
 
 //==============================================================================

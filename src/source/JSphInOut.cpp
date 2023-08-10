@@ -1296,7 +1296,8 @@ void JSphInOut::UpdateVelrhopM1Gpu(unsigned inoutcount,const int *inoutpartg
 //==============================================================================
 void JSphInOut::VisuConfig(std::string txhead,std::string txfoot)const{
   if(!txhead.empty())Log->Print(txhead);
-  Log->Printf("MemoryResizeNp: +%u particles (initial: +%u particles)",GetNpResizePlus1(),GetNpResizePlus0());
+  Log->Printf("MemoryResizeNp: +%s particles (initial: +%s particles)"
+    ,KINT(GetNpResizePlus1()),KINT(GetNpResizePlus0()));
   Log->Printf("UseBoxLimit: %s",(UseBoxLimit? "True": "False"));
   if(UseBoxLimit){
     Log->Printf("  FreeLimits:%s",fun::Float3xRangeStr(FreeLimitMin,FreeLimitMax,"%g").c_str());

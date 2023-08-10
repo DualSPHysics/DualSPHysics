@@ -134,8 +134,8 @@ void JCellDivGpu::AllocMemoryNp(ullong np,ullong npmin){
   }
   //-Show requested memory.
   const string txover=(npmin>1? fun::PrintStr(" (over-allocation: %.2fX)",double(SizeNp)/npmin): "");
-  Log->Printf("**CellDiv: Requested gpu memory for %u particles%s: %.1f MiB."
-    ,SizeNp,txover.c_str(),double(MemAllocGpuNp)/MEBIBYTE);
+  Log->Printf("**CellDiv: Requested gpu memory for %s particles%s: %.1f MiB."
+    ,KINT(SizeNp),txover.c_str(),double(MemAllocGpuNp)/MEBIBYTE);
 }
 
 //==============================================================================
@@ -162,8 +162,8 @@ void JCellDivGpu::AllocMemoryNct(ullong nct,ullong nctmin){
   }
   //-Show requested memory.
   const string txover=(nctmin>1? fun::PrintStr(" (over-allocation: %.2fX)",double(SizeNct)/nctmin): "");
-  Log->Printf("**CellDiv: Requested gpu memory for %u cells%s: %.1f MiB."
-    ,SizeNct,txover.c_str(),double(MemAllocGpuNct)/MEBIBYTE);
+  Log->Printf("**CellDiv: Requested gpu memory for %s cells%s: %.1f MiB."
+    ,KINT(SizeNct),txover.c_str(),double(MemAllocGpuNct)/MEBIBYTE);
 }
 
 //==============================================================================

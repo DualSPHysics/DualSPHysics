@@ -99,12 +99,15 @@
 //:# - Nuevas funciones VectorFind() para unsigned, float y double.  (06-11-2021)
 //:# - Nuevas funciones StrFillBegin(), StrFillEnd().  (08-05-2022)
 //:# - Nuevas funciones GetDateTimet(),GetDateValuesDMY(). (02-08-2022)
+//:# - Nuevas funciones KnumStr(),KintStr(). (10-08-2023)
 //:#############################################################################
 
 /// \file Functions.h \brief Declares basic/general functions for the entire application.
 
 #ifndef _Functions_
 #define _Functions_
+
+#define KINT(a) fun::KintStr(a).c_str()
 
 #include <ctime>
 #include <string>
@@ -160,6 +163,14 @@ std::string UintStr(unsigned v,const char* fmt="%u");
 std::string IntStr(int v);
 std::string Int3Str(const tint3 &v);
 std::string Uint3Str(const tuint3 &v);
+
+std::string KnumStr(const char* v);
+inline std::string KnumStr(std::string v){ return(KnumStr(v.c_str())); }
+std::string KintStr(unsigned v);
+std::string KintStr(int v);
+std::string KintStr(ullong v);
+std::string KintStr(llong v);
+
 /// Converts range of tint3 values to string.  
 inline std::string Int3RangeStr(const tint3 &v,const tint3 &v2){ return(std::string("(")+Int3Str(v)+")-("+Int3Str(v2)+")"); }
 /// Converts range of tuint3 values to string.  
@@ -277,6 +288,7 @@ std::string VarStr(const std::string &name,tdouble3 value);
 std::string VarStr(const std::string &name,bool value);
 std::string VarStr(const std::string &name,int value);
 std::string VarStr(const std::string &name,unsigned value);
+std::string VarKStr(const std::string &name,unsigned value);
 
 std::string VarStr(const std::string &name,unsigned n,const int *values,std::string size="?");
 std::string VarStr(const std::string &name,unsigned n,const unsigned *values,std::string size="?");

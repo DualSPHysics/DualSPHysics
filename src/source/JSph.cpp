@@ -1598,12 +1598,12 @@ void JSph::VisuConfig(){
   if(FtCount)Log->Print(fun::VarStr("FtPause",FtPause));
   if(FtCount)Log->Print(fun::VarStr("FtConstraints",FtConstraints));
   if(FtCount)Log->Print(fun::VarStr("FtIgnoreRadius",FtIgnoreRadius));
-  Log->Print(fun::VarStr("CaseNp",CaseNp));
-  Log->Print(fun::VarStr("CaseNbound",CaseNbound));
-  Log->Print(fun::VarStr("CaseNfixed",CaseNfixed));
-  Log->Print(fun::VarStr("CaseNmoving",CaseNmoving));
-  Log->Print(fun::VarStr("CaseNfloat",CaseNfloat));
-  Log->Print(fun::VarStr("CaseNfluid",CaseNfluid));
+  Log->Print(fun::VarKStr("CaseNp",CaseNp));
+  Log->Print(fun::VarKStr("CaseNbound",CaseNbound));
+  Log->Print(fun::VarKStr("CaseNfixed",CaseNfixed));
+  Log->Print(fun::VarKStr("CaseNmoving",CaseNmoving));
+  Log->Print(fun::VarKStr("CaseNfloat",CaseNfloat));
+  Log->Print(fun::VarKStr("CaseNfluid",CaseNfluid));
   //-Periodic boundaries.
   Log->Print(fun::VarStr("PeriodicActive",TpPeriName(TpPeri(PeriActive))));
   if(PeriX)Log->Print(fun::VarStr("PeriodicXinc",PeriXinc));
@@ -1641,7 +1641,7 @@ void JSph::VisuConfig(){
   Log->Printf("TimePart=%g",TimePart);
   if(TimePartExtra>=0)Log->Printf("TimePartExtra=%g",TimePartExtra);
   Log->Print(fun::VarStr("Gravity",Gravity));
-  Log->Print(fun::VarStr("NpMinimum",NpMinimum));
+  Log->Print(fun::VarKStr("NpMinimum",NpMinimum));
   //-RhopOut limits.
   Log->Print(fun::VarStr("RhopOut",RhopOut));
   if(RhopOut){
@@ -2086,7 +2086,7 @@ void JSph::LoadCaseParticles(){
   PartsLoaded->CheckConfig(CaseNp,CaseNfixed,CaseNmoving,CaseNfloat,CaseNfluid,Simulate2D,Simulate2DPosY,TpPeri(PeriActive));
 
   if(PartBegin)RestartCheckData(PartsLoaded->GetPosSingle());
-  Log->Printf("Loaded particles: %u",PartsLoaded->GetCount());
+  Log->Printf("Loaded particles: %s",KINT(PartsLoaded->GetCount()));
 
   //-Checks if the initial density of fluid particles is out of limits.
   //-Comprueba si la densidad inicial de las particulas fluido esta fuera de los limites.
@@ -2445,8 +2445,8 @@ void JSph::ChronoFtApplyImposedVel(){
 //==============================================================================
 void JSph::PrintSizeNp(unsigned np,llong size,unsigned allocs)const{
   const double s=double(size)/MEBIBYTE;
-  if(Cpu)Log->Printf("**Requested CPU memory for %u particles: %.1f MiB.",np,s);
-  else   Log->Printf("**Requested GPU memory for %u particles: %.1f MiB (%u times).",np,s,allocs);
+  if(Cpu)Log->Printf("**Requested CPU memory for %s particles: %.1f MiB.",KINT(np),s);
+  else   Log->Printf("**Requested GPU memory for %s particles: %.1f MiB (%u times).",KINT(np),s,allocs);
 }
 
 //==============================================================================
@@ -2849,14 +2849,14 @@ void JSph::SaveData(unsigned npsave,const JDataArrays& arrays
     Log->Printf("Part%s  %12.6f  %12d  %7d  %9.2f  %14s",suffixpartx.c_str()
       ,TimeStep,Nstep,Nstep-PartNstep,tseg,fun::GetDateTimeAfter(int(tleft)).c_str());
   }
-  else Log->Printf("Part%s        %u (%.1f%%) particles successfully stored"
-    ,suffixpartx.c_str(),npsave,double(npsave)/infoplus.npnormal*100.);   
+  else Log->Printf("Part%s        %s (%.1f%%) particles successfully stored"
+    ,suffixpartx.c_str(),KINT(npsave),double(npsave)/infoplus.npnormal*100.);   
   
   //-Shows info of the new inlet particles.
   bool printnp=true;
   if(InOut && InOut->GetNewNpPart()){
-    Log->Printf("  Particles new: %u (total new: %llu)  -  Current np: %u"
-      ,InOut->GetNewNpPart(),InOut->GetNewNpTotal(),infoplus.npsim);
+    Log->Printf("  Particles new: %s (total new: %s)  -  Current np: %s"
+      ,KINT(InOut->GetNewNpPart()),KINT(InOut->GetNewNpTotal()),KINT(infoplus.npsim));
     InOut->ClearNewNpPart();
     printnp=false;
   }
@@ -2864,8 +2864,8 @@ void JSph::SaveData(unsigned npsave,const JDataArrays& arrays
   //-Shows info of the excluded particles.
   if(nout){
     PartOut+=nout;
-    if(printnp)Log->Printf("  Particles out: %u  (total out: %u)  -  Current np: %u",nout,PartOut,infoplus.npsim);
-    else       Log->Printf("  Particles out: %u  (total out: %u)",nout,PartOut);
+    if(printnp)Log->Printf("  Particles out: %s  (total out: %s)  -  Current np: %s",KINT(nout),KINT(PartOut),KINT(infoplus.npsim));
+    else       Log->Printf("  Particles out: %s  (total out: %s)",KINT(nout),KINT(PartOut));
   }
 
   //-Cheks number of excluded particles.
@@ -3119,14 +3119,14 @@ void JSph::SaveRes(float tsim,float ttot,const std::string &headplus,const std::
 void JSph::ShowResume(bool stop,float tsim,float ttot,bool all,std::string infoplus){
   if(DsPips && DsPips->SvData)DsPips->SaveData();
   Log->Printf("\n[Simulation %s  %s]",(stop? "INTERRUPTED": "finished"),fun::GetDateTime().c_str());
-  Log->Printf("Particles of simulation (initial): %u",CaseNp);
-  if(NpDynamic)Log->Printf("Particles of simulation (total)..: %llu",TotalNp);
+  Log->Printf("Particles of simulation (initial): %s",KINT(CaseNp));
+  if(NpDynamic)Log->Printf("Particles of simulation (total)..: %s",KINT(TotalNp));
   if(all){
-    Log->Printf("DTs adjusted to DtMin............: %d",DtModif);
+    Log->Printf("DTs adjusted to DtMin............: %s",KINT(DtModif));
     const unsigned nout=GetOutPosCount()+GetOutRhopCount()+GetOutMoveCount();
-    Log->Printf("Excluded particles...............: %d",nout);
-    if(GetOutRhopCount())Log->Printf("Excluded particles due to RhopOut: %u",GetOutRhopCount());
-    if(GetOutMoveCount())Log->Printf("Excluded particles due to Velocity: %u",GetOutMoveCount());
+    Log->Printf("Excluded particles...............: %s",KINT(nout));
+    if(GetOutRhopCount())Log->Printf("Excluded particles due to RhopOut: %s",KINT(GetOutRhopCount()));
+    if(GetOutMoveCount())Log->Printf("Excluded particles due to Velocity: %s",KINT(GetOutMoveCount()));
   }
   Log->Printf("Total Runtime....................: %f sec.",ttot);
   Log->Printf("Simulation Runtime...............: %f sec.",tsim);
@@ -3136,7 +3136,7 @@ void JSph::ShowResume(bool stop,float tsim,float ttot,bool all,std::string infop
     Log->Printf("Runtime per physical second......: %f sec.",tseg);
     //Log->Printf("Time per second of simulation....: %f sec.",tseg);
     Log->Printf("Steps per second.................: %f",nstepseg);
-    Log->Printf("Steps of simulation..............: %d",Nstep);
+    Log->Printf("Steps of simulation..............: %s",KINT(Nstep));
     if(DsPips){
       Log->Printf("Particle Interactions Per Second.: %.8f GPIPS",DsPips->GetGPIPS(tsim));
       Log->Printf("Total particle interactions (f+b): %s",DsPips->GetTotalPIsInfo().c_str());
@@ -3152,10 +3152,12 @@ void JSph::ShowResume(bool stop,float tsim,float ttot,bool all,std::string infop
       }
     }
   }
-  Log->Printf("Maximum number of particles......: %u",MaxNumbers.particles);
-  Log->Printf("Maximum number of cells..........: %u",MaxNumbers.cells);
-  Log->Printf("CPU Memory.......................: %lld (%.2f MB)",MaxNumbers.memcpu,double(MaxNumbers.memcpu)/(1024*1024));
-  if(MaxNumbers.memgpu)Log->Printf("GPU Memory.......................: %lld (%.2f MB)",MaxNumbers.memgpu,double(MaxNumbers.memgpu)/(1024*1024));
+  Log->Printf("Maximum number of particles......: %s",KINT(MaxNumbers.particles));
+  Log->Printf("Maximum number of cells..........: %s",KINT(MaxNumbers.cells));
+  Log->Printf("CPU Memory.......................: %s (%.2f MiB)"
+    ,KINT(MaxNumbers.memcpu),double(MaxNumbers.memcpu)/MEBIBYTE);
+  if(MaxNumbers.memgpu)Log->Printf("GPU Memory.......................: %s (%.2f MiB)"
+    ,KINT(MaxNumbers.memgpu),double(MaxNumbers.memgpu)/MEBIBYTE);
 }
 
 //==============================================================================

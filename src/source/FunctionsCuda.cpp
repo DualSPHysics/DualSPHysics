@@ -160,16 +160,16 @@ int GetCudaDevicesInfo(std::vector<std::string> *gpuinfo,std::vector<StGpuInfo> 
       gpuinfo->push_back(" ");
       gpuinfo->push_back(fun::PrintStr("Device %d: \"%s\"",dev,g.name.c_str()));
       gpuinfo->push_back(fun::PrintStr("  CUDA Capability Major....: %d.%d",g.ccmajor,g.ccminor));
-      gpuinfo->push_back(fun::PrintStr("  Global memory............: %.0f MBytes",(float)g.globalmem/1048576.0f));
+      gpuinfo->push_back(fun::PrintStr("  Global memory............: %.0f MiB",double(g.globalmem)/MEBIBYTE));
       gpuinfo->push_back(fun::PrintStr("  CUDA Cores...............: %d (%2d Multiprocessors, %3d CUDA Cores/MP)",g.cores,g.mp,g.coresmp));
       gpuinfo->push_back(fun::PrintStr("  GPU Max Clock rate.......: %.0f MHz (%0.2f GHz)",1e-3f*g.clockrate,1e-6f*g.clockrate));
 #if CUDART_VERSION >= 5000
       gpuinfo->push_back(fun::PrintStr("  Memory Clock rate........: %.0f Mhz",1e-3f*g.clockratemem));
       gpuinfo->push_back(fun::PrintStr("  Memory Bus Width.........: %d-bit",g.busmem));
-      gpuinfo->push_back(fun::PrintStr("  L2 Cache Size............: %.0f KBytes",(float)g.cachelv2/1024.f));
+      gpuinfo->push_back(fun::PrintStr("  L2 Cache Size............: %.0f KiB",double(g.cachelv2)/1024));
 #endif
-      gpuinfo->push_back(fun::PrintStr("  Constant memory..........: %.0f KBytes",(float)g.constantmem/1024.f));
-      gpuinfo->push_back(fun::PrintStr("  Shared memory per block..: %.0f KBytes",(float)g.sharedmem/1024.f));
+      gpuinfo->push_back(fun::PrintStr("  Constant memory..........: %.0f KiB",double(g.constantmem)/1024));
+      gpuinfo->push_back(fun::PrintStr("  Shared memory per block..: %.0f KiB",double(g.sharedmem)/1024));
       gpuinfo->push_back(fun::PrintStr("  Registers per block......: %d",g.regsblock));
       gpuinfo->push_back(fun::PrintStr("  Maximum threads per MP...: %d",g.maxthmp));
       gpuinfo->push_back(fun::PrintStr("  Maximum threads per block: %d",g.maxthblock));

@@ -648,7 +648,7 @@ void JCaseParts::GetParticleSummary(std::vector<std::string> &out)const{
   StSummaryData dat=GetSummaryData();
   const unsigned ntp=TPPARTICLES_COUNT;
   //-Configures output format.
-  string fmt="%u  id:(%u-%u)   MKs:%u (%s)";
+  string fmt="%s  id:(%u-%u)   MKs:%u (%s)";
   const bool aligned=false;
   if(aligned){
     unsigned snp=0,snm=0,sid=0,sid2=0;
@@ -668,12 +668,25 @@ void JCaseParts::GetParticleSummary(std::vector<std::string> &out)const{
   string txtype[ntp]={"  Fixed....: ","  Moving...: ","  Floating.: ","  Fluid....: "};
   out.push_back("Particle summary:");
   for(unsigned c=0;c<ntp;c++){
-    out.push_back(txtype[c]+(dat.np[c]? fun::PrintStr(fmt.c_str(),dat.np[c],dat.idini[c],dat.idlast[c],dat.nmk[c],dat.mklist[c].c_str()): "0"));
+    if(!dat.np[c])out.push_back(txtype[c]+"0");
+    else{
+      if(aligned)out.push_back(txtype[c] + fun::PrintStr(fmt.c_str(),dat.np[c],dat.idini[c],dat.idlast[c],dat.nmk[c],dat.mklist[c].c_str()));
+      else       out.push_back(txtype[c] + fun::PrintStr(fmt.c_str(),KINT(dat.np[c]),dat.idini[c],dat.idlast[c],dat.nmk[c],dat.mklist[c].c_str()));
+    }
   }
   out.push_back("");
   const unsigned nb=dat.np[0]+dat.np[1]+dat.np[2],nt=nb+dat.np[3];
   const unsigned mb=dat.nmk[0]+dat.nmk[1]+dat.nmk[2],mt=mb+dat.nmk[3];
-  out.push_back(fun::PrintStr("Total particles: %u (bound=%u (fx=%u mv=%u ft=%u) fluid=%u)",nt,nb,dat.np[0],dat.np[1],dat.np[2],dat.np[3]));
+  if(1)out.push_back(fun::PrintStr("Total particles: %u (bound=%u (fx=%u mv=%u ft=%u) fluid=%u)",nt,nb,dat.np[0],dat.np[1],dat.np[2],dat.np[3]));
+  else{
+    const string knt=fun::KintStr(nt);
+    const string knb=fun::KintStr(nb);
+    const string knfx=fun::KintStr(dat.np[0]);
+    const string knmv=fun::KintStr(dat.np[1]);
+    const string knft=fun::KintStr(dat.np[2]);
+    const string knfl=fun::KintStr(dat.np[3]);
+    out.push_back(string("Total particles: ")+knt+" (bound="+knb+" (fx="+knfx+" mv="+knmv+" ft="+knft+") fluid="+knfl+")");
+  }
   out.push_back(fun::PrintStr("Total MK blocks: %u (bound=%u (fx=%u mv=%u ft=%u) fluid=%u)",mt,mb,dat.nmk[0],dat.nmk[1],dat.nmk[2],dat.nmk[3]));
 }
 

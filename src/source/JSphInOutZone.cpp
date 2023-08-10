@@ -112,8 +112,8 @@ void JSphInOutZone::GetConfig(std::vector<std::string> &lines)const{
   else          lines.push_back(fun::PrintStr("InOut Position: (%g,%g,%g)",PtPlane.x,PtPlane.y,PtPlane.z));
   if(simulate2d)lines.push_back(fun::PrintStr("InOut Direction(x,z): (%g,%g)",Direction.x,Direction.z));
   else          lines.push_back(fun::PrintStr("InOut Direction: (%g,%g,%g)",Direction.x,Direction.y,Direction.z));
-  lines.push_back(fun::PrintStr("InOut points: %u",NptInit));
-  lines.push_back(fun::PrintStr("Initial InOut particles: %u",NpartInit));
+  lines.push_back(fun::PrintStr("InOut points: %s",KINT(NptInit)));
+  lines.push_back(fun::PrintStr("Initial InOut particles: %s",KINT(NpartInit)));
   lines.push_back(fun::PrintStr("Layers: %u",Layers));
   lines.push_back(fun::PrintStr("Refilling mode: %s",(RefillingMode==InRefill_SimpleFull? "Simple-Full": (RefillingMode==InRefill_SimpleZsurf? "Simple-Zsurf": (RefillingMode==InRefill_Advanced? "Advanced": "???")))));
   lines.push_back(fun::PrintStr("Input treatment: %s",(InputMode==InInput_Free? "Free (no changes)": (InputMode==InInput_Convert? "Convert fluid": (InputMode==InInput_Remove? "Remove fluid": "???")))));

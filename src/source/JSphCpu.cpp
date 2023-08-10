@@ -218,7 +218,8 @@ void JSphCpu::ResizeCpuMemoryParticles(unsigned npnew,unsigned npmin){
   //-Resizes CPU memory allocation.
   const double mbparticle=(double(MemCpuParticles)/MEBIBYTE)/CpuParticlesSize; //-MB por particula.
   const string txover=(npmin>1? fun::PrintStr(" (over-allocation: %.2fX)",double(npnew)/npmin): "");
-  Log->Printf("**JSphCpu: Requesting cpu memory for %u particles%s: %.1f MiB.",npnew,txover.c_str(),mbparticle*npnew);
+  Log->Printf("**JSphCpu: Requesting cpu memory for %s particles%s: %.1f MiB."
+    ,KINT(npnew),txover.c_str(),mbparticle*npnew);
   ArraysCpu->SetArraySize(npnew);
   //-Reserve pointers.
   Idpc    =ArraysCpu->ReserveUint();
@@ -312,7 +313,7 @@ llong JSphCpu::GetAllocMemoryCpu()const{
 /// Visualiza la memoria reservada.
 //==============================================================================
 void JSphCpu::PrintAllocMemory(llong mcpu)const{
-  Log->Printf("Allocated memory in CPU: %lld (%.2f MB)",mcpu,double(mcpu)/(1024*1024));
+  Log->Printf("Allocated memory in CPU: %s (%.2f MiB)",KINT(mcpu),double(mcpu)/MEBIBYTE);
 }
 
 //==============================================================================

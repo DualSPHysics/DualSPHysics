@@ -150,8 +150,8 @@ void JCellDivCpu::AllocMemoryNp(ullong np,ullong npmin){
   }
   //-Show requested memory.
   const string txover=(npmin>1? fun::PrintStr(" (over-allocation: %.2fX)",double(SizeNp)/npmin): "");
-  Log->Printf("**CellDiv: Requested cpu memory for %u particles%s: %.1f MiB."
-    ,SizeNp,txover.c_str(),double(MemAllocNp)/MEBIBYTE);
+  Log->Printf("**CellDiv: Requested cpu memory for %s particles%s: %.1f MiB."
+    ,KINT(SizeNp),txover.c_str(),double(MemAllocNp)/MEBIBYTE);
 }
 
 //==============================================================================
@@ -176,8 +176,8 @@ void JCellDivCpu::AllocMemoryNct(ullong nct,ullong nctmin){
   }
   //-Show requested memory.
   const string txover=(nctmin>1? fun::PrintStr(" (over-allocation: %.2fX)",double(SizeNct)/nctmin): "");
-  Log->Printf("**CellDiv: Requested cpu memory for %u cells%s: %.1f MiB."
-    ,SizeNct,txover.c_str(),double(MemAllocNct)/MEBIBYTE);
+  Log->Printf("**CellDiv: Requested cpu memory for %s cells%s: %.1f MiB."
+    ,KINT(SizeNct),txover.c_str(),double(MemAllocNct)/MEBIBYTE);
 }
 
 //==============================================================================
