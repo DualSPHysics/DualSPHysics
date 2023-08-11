@@ -278,15 +278,15 @@ typedef struct{ //(DEM)
 ///Structure that saves extra information about the execution.
 typedef struct StrInfoPartPlus{
   unsigned nct;        ///<Number of cells used in the divide.
-  unsigned nctsize;    ///<Number of cells with allocated memory.
+  unsigned nctsize;    ///<Number of supported cells with memory allocated.
   unsigned npsim;      ///<Number of particles used in simulation (normal + periodic particles).
-  unsigned npsize;     ///<Number of particles with allocated memory.
+  unsigned npsize;     ///<Number of supported particles with memory allocated.
   unsigned npnormal;   ///<Number of normal particles used in simulation (without periodic particles).
   unsigned npsave;     ///<Number of selected particles to save.
   unsigned npnew;      ///<Number of new fluid particles (inlet conditions).
-  unsigned noutpos;    ///<Number of excluded particles due position.
-  unsigned noutrho;    ///<Number of excluded particles due density.
-  unsigned noutmov;    ///<Number of excluded particles due movement.
+  unsigned noutpos;    ///<Number of excluded particles due to invalid position.
+  unsigned noutrho;    ///<Number of excluded particles due to invalid density.
+  unsigned noutmov;    ///<Number of excluded particles due to invalid movement.
   unsigned npbin;      ///<Number of boundary particles within the area of the divide (includes periodic particles).
   unsigned npbout;     ///<Number of boundary particles outside of the area of the divide (includes periodic particles).
   unsigned npf;        ///<Number of floating+fluid particles (includes periodic particles).
@@ -331,16 +331,24 @@ typedef struct StrInfoPartPlus{
 
 ///Structure that stores the maximum values (or almost) achieved during the simulation.
 typedef struct StrMaxNumbers{
-  llong memcpu;       ///<Amount of reserved CPU memory. | Cantidad de memoria Cpu reservada.            
-  llong memgpu;       ///<Amount of reserved GPU memory. | Cantidad de memoria Gpu reservada.
-  unsigned particles; ///<Maximum number of particles.   | Numero maximo de particulas.
-  unsigned cells;     ///<Maximum number of cells.       | Numero maximo de celdas.                   
+  llong memcpu;       ///<Amount of reserved CPU memory.
+  llong memgpu;       ///<Amount of reserved GPU memory.
+  llong memgpunct;    ///<Amount of reserved GPU memory for cells in memgpu.
+  unsigned particles; ///<Maximum number of particles in simulation.
+  unsigned cells;     ///<Maximum number of cells in simulation.
   StrMaxNumbers(){ Clear(); }
-  StrMaxNumbers(llong vmemcpu,llong vmemgpu,unsigned vparticles,unsigned vcells){
-    memcpu=vmemcpu; memgpu=vmemgpu; particles=vparticles; cells=vcells;
+  StrMaxNumbers(llong memcpu,llong memgpu,llong memgpunct
+    ,unsigned particles,unsigned cells)
+  {
+    this->memcpu=memcpu; 
+    this->memgpu=memgpu; 
+    this->memgpunct=memgpunct;
+    this->particles=particles; 
+    this->cells=cells;
   }
   void Clear(){ 
-    memcpu=memgpu=0; particles=cells=0;
+    memcpu=memgpu=memgpunct=0;
+    particles=cells=0;
   }
 }StMaxNumbers;
 

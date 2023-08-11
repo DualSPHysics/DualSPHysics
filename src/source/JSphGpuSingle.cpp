@@ -107,8 +107,7 @@ llong JSphGpuSingle::GetMemoryGpuNp()const{
 /// Devuelve la memoria GPU reservada o usada para celdas.
 //==============================================================================
 llong JSphGpuSingle::GetMemoryGpuNct()const{
-  llong s=CellDivSingle->GetAllocMemoryGpuNct();
-  return(CellDivSingle->GetAllocMemoryGpuNct());
+  return(CellDivSingle? CellDivSingle->GetAllocMemoryGpuNct(): 0);
 }
 
 //==============================================================================
@@ -119,7 +118,10 @@ void JSphGpuSingle::UpdateMaxValues(){
   const llong mcpu=GetAllocMemoryCpu();
   const llong mgpu=GetAllocMemoryGpu();
   MaxNumbers.memcpu=max(MaxNumbers.memcpu,mcpu);
-  MaxNumbers.memgpu=max(MaxNumbers.memgpu,mgpu);
+  if(mgpu>MaxNumbers.memgpu){
+     MaxNumbers.memgpu=mgpu;
+     MaxNumbers.memgpunct=GetMemoryGpuNct();
+  }
   MaxNumbers.particles=max(MaxNumbers.particles,Np);
   if(CellDivSingle)MaxNumbers.cells=max(MaxNumbers.cells,CellDivSingle->GetNct());
 }
@@ -1053,6 +1055,7 @@ void JSphGpuSingle::FinishRun(bool stop){
     Timersg->GetTimersInfo(hinfo,dinfo);
   }
   if(SvRes)SaveRes(tsim,ttot,hinfo,dinfo);
+  if(SvData&SDAT_Info)SaveRunPartsCsvFinal();
   Log->PrintFilesList();
   Log->PrintWarningList();
   VisuRefs();

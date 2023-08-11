@@ -272,6 +272,7 @@ void JSph::InitVars(){
   DtModif=0;
   DtModifWrn=1;
   PartDtMin=DBL_MAX; PartDtMax=-DBL_MAX;
+  PartDtModif=0;
 
   PartIni=Part=0; 
   Nstep=0; PartNstep=0;
@@ -2454,8 +2455,8 @@ void JSph::PrintSizeNp(unsigned np,llong size,unsigned allocs)const{
 /// Visualiza cabeceras de PARTs.
 //==============================================================================
 void JSph::PrintHeadPart(){
-  Log->Print("PART       PartTime      TotalSteps    Steps    Time/Sec   Finish time        ");
-  Log->Print("=========  ============  ============  =======  =========  ===================");
+  Log->Print("PART   PartTime   TotalSteps   Steps    Particles    Cells        Time/Sec   Finish time        ");
+  Log->Print("=====  =========  ===========  =======  ===========  ===========  =========  ===================");
   fflush(stdout);
 }
 
@@ -2675,24 +2676,112 @@ void JSph::AddBasicArrays(JDataArrays &arrays,unsigned np,const tdouble3 *pos
 }
 
 //==============================================================================
+/// Saves RunPARTs.csv with extra information of simulated PARTs.
+//==============================================================================
+void JSph::SaveRunPartsCsv(const StInfoPartPlus& infoplus,double tpart
+  ,double tsim)const
+{
+  const string file=AppInfo.GetDirOut()+"RunPARTs.csv";
+  jcsv::JSaveCsv2 scsv(file,true,false);
+  if(!scsv.GetAppendMode()){
+    Log->AddFileInfo("RunPARTs.csv","Saves extra information of simulated PARTs.");
+    //-Saves head.
+    scsv.SetHead();
+    scsv << "Part;TimeStep [s];Steps";
+    scsv << "DTsMin;PartRuntime [s]";
+    scsv << "NpSave;NpSim;NpNew;NpOut";
+    scsv << "NctSim;NpAlloc [X];NctAlloc [X]";
+    scsv << "SimRuntime [s];NpbSim;NpfSim;NpNormal";
+    scsv << "NpOutPos;NpOutRho;NpOutMov";
+    scsv << "DtMin [s];DtMax [s]";
+    scsv << "MemCPU [MiB];MemGPU [MiB];MemGPU_Cells [MiB]";
+    scsv << "NpAlloc;NctAlloc";
+    scsv << jcsv::Endl();
+  }
+  //-Saves data.
+  scsv.SetData();
+  scsv << jcsv::AutoSepOff();
+  const int partnsteps=(Nstep-PartNstep);
+  scsv << Part << fun::RealStr(TimeStep) << KINT(partnsteps);
+  scsv << KINT(DtModif-PartDtModif) << tpart;
+  const unsigned nout=(infoplus.noutpos+infoplus.noutrho+infoplus.noutmov);
+  scsv << KINT(infoplus.npsave) << KINT(infoplus.npsim) << KINT(infoplus.npnew) << KINT(nout);
+  scsv << KINT(infoplus.nct) << double(infoplus.npsize)/infoplus.npsim << double(infoplus.nctsize)/infoplus.nct;
+  scsv << tsim;
+  scsv << KINT(infoplus.npbin+infoplus.npbout) << KINT(infoplus.npf) << KINT(infoplus.npnormal);
+  scsv << KINT(infoplus.noutpos) << KINT(infoplus.noutrho) << KINT(infoplus.noutmov);
+  //scsv << jcsv::Fmt(jcsv::TpDouble1,"%g") << jcsv::Fmt(jcsv::TpDouble1,"%20.12E");
+  scsv << fun::RealStr(partnsteps? PartDtMin: 0) << fun::RealStr(partnsteps? PartDtMax: 0);
+  const double memgpunp =(!Cpu? double(infoplus.memorynpalloc)/MEBIBYTE: 0);
+  const double memgpunct=(!Cpu? double(infoplus.memorynctalloc)/MEBIBYTE: 0);
+  scsv << double(infoplus.memorycpualloc)/MEBIBYTE << memgpunp+memgpunct << memgpunct;
+  scsv << KINT(infoplus.npsize) << KINT(infoplus.nctsize);
+  scsv << jcsv::Endl();
+  scsv.SaveData(true);
+}
+
+//==============================================================================
+/// Saves RunPARTs.csv with extra information of simulated PARTs.
+//==============================================================================
+void JSph::SaveRunPartsCsvFinal()const{
+  const string file=AppInfo.GetDirOut()+"RunPARTs.csv";
+  jcsv::JSaveCsv2 scsv(file,true,false);
+  if(scsv.GetAppendMode()){
+    scsv.SetData();
+    scsv << jcsv::AutoSepOff();
+    scsv << jcsv::Endl();
+    scsv << "# Part:  Number of output file with particles data." << jcsv::Endl();
+    scsv << "# TimeStep [s]:  Physical time of simulation." << jcsv::Endl();
+    scsv << "# Steps:  Number of calculation steps since the previous PART." << jcsv::Endl();
+    scsv << "# DTsMin:  Number of times the Dt is updated with the minimum allowed value (can be 2 times per step when Symplectic is used)." << jcsv::Endl();
+    scsv << "# PartRuntime [s]:  Runtime of last PART simulation." << jcsv::Endl();
+    scsv << "# NpSave:  Number of selected particles to save." << jcsv::Endl();
+    scsv << "# NpSim:  Number of particles used in simulation (normal + periodic particles)." << jcsv::Endl();
+    scsv << "# NpNew:  Number of new fluid particles created by inlet conditions since the previous PART." << jcsv::Endl();
+    scsv << "# NpOut:  Number of excluded fluid particles since the previous PART." << jcsv::Endl();
+    scsv << "# NctSim:  Number of cells used in simulation for particle search." << jcsv::Endl();
+    scsv << "# NpAlloc [X]:  Over-allocation memory for particles NpAlloc/NpSim." << jcsv::Endl();
+    scsv << "# NctAlloc [X]:  Over-allocation memory for cells NctAlloc/NctSim." << jcsv::Endl();
+    scsv << "# SimRuntime [s]:  Total runtime of simulation (initialisation tasks not included)." << jcsv::Endl();
+    scsv << "# NpbSim:  Number of fixed and moving particles (includes periodic particles)." << jcsv::Endl();
+    scsv << "# NpfSim:  Number of fluid and floating particles (includes periodic particles)." << jcsv::Endl();
+    scsv << "# NpNormal:  Total number of particles without periodic particles." << jcsv::Endl();
+    scsv << "# NpOutPos:  Number of excluded particles due to invalid position." << jcsv::Endl();
+    scsv << "# NpOutRho:  Number of excluded particles due to invalid density." << jcsv::Endl();
+    scsv << "# NpOutMov:  Number of excluded particles due to invalid movement." << jcsv::Endl();
+    scsv << "# DtMin [s]:  Minimum value of Dt since the previous PART." << jcsv::Endl();
+    scsv << "# DtMax [s]:  Maximum value of Dt since the previous PART." << jcsv::Endl();
+    scsv << "# MemCPU [MiB]:  Current CPU memory allocated (only includes the most memory intensive objects)." << jcsv::Endl();
+    scsv << "# MemGPU [MiB]:  Current GPU memory allocated (only includes the most memory intensive objects)." << jcsv::Endl();
+    scsv << "# MemGPU_Cells [MiB]:  Current GPU memory allocated for cells according to NctAlloc." << jcsv::Endl();
+    scsv << "# NpAlloc:  Number of supported particles with memory allocated." << jcsv::Endl();
+    scsv << "# NctAlloc:  Number of supported cells with memory allocated." << jcsv::Endl();
+  }
+}
+//==============================================================================
 /// Stores files of particle data.
 /// Graba los ficheros de datos de particulas.
 //==============================================================================
-void JSph::SavePartData(unsigned npok,unsigned nout,const JDataArrays& arrays
+void JSph::SavePartData(unsigned npsave,unsigned nout,const JDataArrays& arrays
   ,unsigned ndom,const tdouble3* vdom,const StInfoPartPlus& infoplus)
 {
-  //-Stores particle data and/or information in bi4 format.
-  //-Graba datos de particulas y/o informacion en formato bi4.
+  TimerPart.Stop();
+  TimerSim.Stop();
+  //-Saves RunPARTs.csv
+  if(SvData&SDAT_Info){
+    SaveRunPartsCsv(infoplus,TimerPart.GetElapsedTimeD()/1000.,TimerSim.GetElapsedTimeD()/1000.);
+  }
+
+  //-Stores particle data and other information in bi4 format.
   if(DataBi4){
     tfloat3* posf3=NULL;
-    TimerPart.Stop();
     tdouble3 domainmin=vdom[0];
     tdouble3 domainmax=vdom[1];
     for(unsigned c=1;c<ndom;c++){
       domainmin=MinValues(domainmin,vdom[c*2  ]);
       domainmax=MaxValues(domainmax,vdom[c*2+1]);
     }
-    JBinaryData* bdpart=DataBi4->AddPartInfo(Part,TimeStep,npok,nout,Nstep
+    JBinaryData* bdpart=DataBi4->AddPartInfo(Part,TimeStep,npsave,nout,Nstep
       ,TimerPart.GetElapsedTimeD()/1000.,domainmin,domainmax,TotalNp);
     if(TStep==STEP_Symplectic)bdpart->SetvDouble("SymplecticDtPre",SymplecticDtPre);
     if(UseDEM)bdpart->SetvDouble("DemDtForce",DemDtForce); //(DEM)
@@ -2734,27 +2823,27 @@ void JSph::SavePartData(unsigned npok,unsigned nout,const JDataArrays& arrays
     }
     if(SvData&SDAT_Binx){
       string err;
-      if(!(err=arrays.CheckErrorArray("Pos" ,TypeDouble3,npok)).empty())Run_Exceptioon(err);
-      if(!(err=arrays.CheckErrorArray("Idp" ,TypeUint   ,npok)).empty())Run_Exceptioon(err);
-      if(!(err=arrays.CheckErrorArray("Vel" ,TypeFloat3 ,npok)).empty())Run_Exceptioon(err);
-      if(!(err=arrays.CheckErrorArray("Rhop",TypeFloat  ,npok)).empty())Run_Exceptioon(err);
+      if(!(err=arrays.CheckErrorArray("Pos" ,TypeDouble3,npsave)).empty())Run_Exceptioon(err);
+      if(!(err=arrays.CheckErrorArray("Idp" ,TypeUint   ,npsave)).empty())Run_Exceptioon(err);
+      if(!(err=arrays.CheckErrorArray("Vel" ,TypeFloat3 ,npsave)).empty())Run_Exceptioon(err);
+      if(!(err=arrays.CheckErrorArray("Rhop",TypeFloat  ,npsave)).empty())Run_Exceptioon(err);
       const tdouble3 *pos =arrays.GetArrayDouble3("Pos");
       const unsigned *idp =arrays.GetArrayUint   ("Idp");
       const tfloat3  *vel =arrays.GetArrayFloat3 ("Vel");
       const float    *rhop=arrays.GetArrayFloat  ("Rhop");
       if(SvPosDouble || (SvExtraDataBi4 && SvExtraDataBi4->CheckSave(Part))){
-        DataBi4->AddPartData(npok,idp,pos,vel,rhop);
+        DataBi4->AddPartData(npsave,idp,pos,vel,rhop);
       }
       else{
-        posf3=GetPointerDataFloat3(npok,pos);
-        DataBi4->AddPartData(npok,idp,posf3,vel,rhop);
+        posf3=GetPointerDataFloat3(npsave,pos);
+        DataBi4->AddPartData(npsave,idp,posf3,vel,rhop);
       }
       //-Adds other arrays.
       const string arrignore=":Pos:Idp:Vel:Rhop:";
       for(unsigned ca=0;ca<arrays.Count();ca++){
         const JDataArrays::StDataArray arr=arrays.GetArrayData(ca);
         if(int(arrignore.find(string(":")+arr.keyname+":"))<0){//-Ignore main arrays.
-          DataBi4->AddPartData(arr.keyname,npok,arr.ptr,arr.type);
+          DataBi4->AddPartData(arr.keyname,npsave,arr.ptr,arr.type);
         }
       }
       DataBi4->SaveFilePart();
@@ -2769,21 +2858,21 @@ void JSph::SavePartData(unsigned npok,unsigned nout,const JDataArrays& arrays
     arrays2.CopyFrom(arrays);
 
     string err;
-    if(!(err=arrays2.CheckErrorArray("Pos" ,TypeDouble3,npok)).empty())Run_Exceptioon(err);
-    if(!(err=arrays2.CheckErrorArray("Idp" ,TypeUint   ,npok)).empty())Run_Exceptioon(err);
+    if(!(err=arrays2.CheckErrorArray("Pos" ,TypeDouble3,npsave)).empty())Run_Exceptioon(err);
+    if(!(err=arrays2.CheckErrorArray("Idp" ,TypeUint   ,npsave)).empty())Run_Exceptioon(err);
     const tdouble3 *pos =arrays2.GetArrayDouble3("Pos");
     const unsigned *idp =arrays2.GetArrayUint   ("Idp");
     //-Generates array with posf3 and type of particle.
-    tfloat3* posf3=GetPointerDataFloat3(npok,pos);
-    byte *type=new byte[npok];
-    for(unsigned p=0;p<npok;p++){
+    tfloat3* posf3=GetPointerDataFloat3(npsave,pos);
+    byte *type=new byte[npsave];
+    for(unsigned p=0;p<npsave;p++){
       const unsigned id=idp[p];
       type[p]=(id>=CaseNbound? 3: (id<CaseNfixed? 0: (id<CaseNpb? 1: 2)));
     }
     arrays2.DeleteArray("Pos");
-    arrays2.AddArray("Pos",npok,posf3);
+    arrays2.AddArray("Pos",npsave,posf3);
     arrays2.MoveArray(arrays2.Count()-1,0);
-    arrays2.AddArray("Type",npok,type);
+    arrays2.AddArray("Type",npsave,type);
     arrays2.MoveArray(arrays2.Count()-1,4);
     //-Defines fields to be stored.
     if(SvData&SDAT_Vtk){
@@ -2837,17 +2926,23 @@ void JSph::SaveData(unsigned npsave,const JDataArrays& arrays
 
   //-Reinitialises limits of dt. | Reinicia limites de dt.
   PartDtMin=DBL_MAX; PartDtMax=-DBL_MAX;
+  PartDtModif=DtModif;
 
   //-Computation of time.
   if(Part>PartIni || Nstep){
     TimerPart.Stop();
-    double tpart=TimerPart.GetElapsedTimeD()/1000;
-    double tseg=tpart/(TimeStep-TimeStepM1);
+    const double tpart=TimerPart.GetElapsedTimeD()/1000;
+    const double tseg=tpart/(TimeStep-TimeStepM1);
     TimerSim.Stop();
-    double tcalc=TimerSim.GetElapsedTimeD()/1000;
-    double tleft=(tcalc/(TimeStep-TimeStepIni))*(TimeMax-TimeStep);
-    Log->Printf("Part%s  %12.6f  %12d  %7d  %9.2f  %14s",suffixpartx.c_str()
-      ,TimeStep,Nstep,Nstep-PartNstep,tseg,fun::GetDateTimeAfter(int(tleft)).c_str());
+    const double tcalc=TimerSim.GetElapsedTimeD()/1000;
+    const double tleft=(tcalc/(TimeStep-TimeStepIni))*(TimeMax-TimeStep);
+    const string xparttime=fun::PrintStr((TimeStep>=100? "%9.4f": (TimeStep>=10? "%9.5f": "%9.6f")),TimeStep);
+    string xtseg=fun::PrintStr("%9.2f",tseg);
+    if(xtseg.size()>9)xtseg=fun::PrintStr("%6.3e",tseg);
+    Log->Printf("%05d  %s  %11s  %7s  %11s  %11s  %s  %14s"
+      ,Part,xparttime.c_str(),KINT(Nstep),KINT(Nstep-PartNstep)
+      ,KINT(infoplus.npsim),KINT(infoplus.nct),xtseg.c_str()
+      ,fun::GetDateTimeAfter(int(tleft)).c_str());
   }
   else Log->Printf("Part%s        %s (%.1f%%) particles successfully stored"
     ,suffixpartx.c_str(),KINT(npsave),double(npsave)/infoplus.npnormal*100.);   
@@ -3073,22 +3168,24 @@ void JSph::SaveVtkNormals(std::string filename,int numfile,unsigned np,unsigned 
 void JSph::GetResInfo(float tsim,float ttot,std::string headplus,std::string detplus
   ,std::string &hinfo,std::string &dinfo)const
 {
-  hinfo=hinfo+"#RunName;Rcode-VersionInfo;DateTime;Np;TSimul;TSeg;TTotal;MemCpu;MemGpu";
-  dinfo=dinfo+ RunName+ ";"+ RunCode+ "-"+ AppName+ ";"+ RunTimeDate+ ";"+ fun::UintStr(CaseNp);
+  hinfo=hinfo+"#RunName;Rcode-VersionInfo;DateTime;Np;TSimul;TSeg;TTotal;MemCpu;MemGpu;MemGpuCells";
+  dinfo=dinfo+ RunName+ ";"+ RunCode+ "-"+ AppName+ ";"+ RunTimeDate+ ";"+ KINT(CaseNp);
   dinfo=dinfo+ ";"+ fun::FloatStr(tsim)+ ";"+ fun::FloatStr(tsim/float(TimeStep))+ ";"+ fun::FloatStr(ttot);
-  dinfo=dinfo+ ";"+ fun::LongStr(MaxNumbers.memcpu)+ ";"+ fun::LongStr(MaxNumbers.memgpu);
+  dinfo=dinfo+ ";"+ KINT(MaxNumbers.memcpu);
+  dinfo=dinfo+ ";"+ KINT(MaxNumbers.memgpu)+ ";"+ KINT(MaxNumbers.memgpunct);
   hinfo=hinfo+";Steps;GPIPS;PhysicalTime;PartFiles;PartsOut;MaxParticles;MaxCells";
   const unsigned nout=GetOutPosCount()+GetOutRhopCount()+GetOutMoveCount();
   const string gpips=(DsPips? fun::DoublexStr(DsPips->GetGPIPS(tsim),"%.10f"): "");
-  dinfo=dinfo+ ";"+ fun::IntStr(Nstep)+ ";"+ gpips+ ";"+ fun::DoublexStr(TimeStep) + ";"+ fun::IntStr(Part)+ ";"+ fun::UintStr(nout);
-  dinfo=dinfo+ ";"+ fun::UintStr(MaxNumbers.particles)+ ";"+ fun::UintStr(MaxNumbers.cells);
+  dinfo=dinfo+ ";"+ KINT(Nstep)+ ";"+ gpips+ ";"+ fun::DoublexStr(TimeStep);
+  dinfo=dinfo+ ";"+ fun::IntStr(Part)+ ";"+ KINT(nout);
+  dinfo=dinfo+ ";"+ KINT(MaxNumbers.particles)+ ";"+ KINT(MaxNumbers.cells);
   hinfo=hinfo+";Hardware;RunMode;Configuration";
   dinfo=dinfo+ ";"+ Hardware+ ";"+ "Cells"+GetNameCellMode(CellMode) + " - " + RunMode+ ";"+ ConfigInfo;
   hinfo=hinfo+";Nbound;Nfixed;Dp;H";
-  dinfo=dinfo+ ";"+ fun::UintStr(CaseNbound)+ ";"+ fun::UintStr(CaseNfixed);
+  dinfo=dinfo+ ";"+ KINT(CaseNbound)+ ";"+ KINT(CaseNfixed);
   dinfo=dinfo+ ";"+ fun::FloatStr(float(Dp))+ ";"+ fun::FloatStr(KernelH);
   hinfo=hinfo+";PartsOutRhop;PartsOutVel";
-  dinfo=dinfo+ ";"+ fun::UintStr(GetOutRhopCount())+ ";"+ fun::UintStr(GetOutMoveCount());
+  dinfo=dinfo+ ";"+ KINT(GetOutRhopCount())+ ";"+ KINT(GetOutMoveCount());
   hinfo=hinfo+ headplus;
   dinfo=dinfo+ detplus;
 }
@@ -3097,7 +3194,9 @@ void JSph::GetResInfo(float tsim,float ttot,std::string headplus,std::string det
 /// Generates file Run.csv with resume of execution.
 /// Genera fichero Run.csv con resumen de ejecucion.
 //==============================================================================
-void JSph::SaveRes(float tsim,float ttot,const std::string &headplus,const std::string &detplus){
+void JSph::SaveRes(float tsim,float ttot,const std::string& headplus
+  ,const std::string& detplus)
+{
   const string fname=DirOut+"Run.csv";
   Log->AddFileInfo(fname,"One line CSV file with execution parameters and other simulation data.");
   ofstream pf;
@@ -3105,7 +3204,8 @@ void JSph::SaveRes(float tsim,float ttot,const std::string &headplus,const std::
   if(pf){
     string hinfo,dinfo;
     GetResInfo(tsim,ttot,headplus,detplus,hinfo,dinfo);
-    pf << fun::StrCsvSep(CsvSepComa,hinfo) << endl << fun::StrCsvSep(CsvSepComa,dinfo) << endl;
+    pf << hinfo << endl;
+    pf << dinfo << endl;
     if(pf.fail())Run_ExceptioonFile("Failed writing to file.",fname);
     pf.close();
   }
@@ -3156,8 +3256,10 @@ void JSph::ShowResume(bool stop,float tsim,float ttot,bool all,std::string infop
   Log->Printf("Maximum number of cells..........: %s",KINT(MaxNumbers.cells));
   Log->Printf("CPU Memory.......................: %s (%.2f MiB)"
     ,KINT(MaxNumbers.memcpu),double(MaxNumbers.memcpu)/MEBIBYTE);
-  if(MaxNumbers.memgpu)Log->Printf("GPU Memory.......................: %s (%.2f MiB)"
+  if(MaxNumbers.memgpu)   Log->Printf("GPU Memory.......................: %s (%.2f MiB)"
     ,KINT(MaxNumbers.memgpu),double(MaxNumbers.memgpu)/MEBIBYTE);
+  if(MaxNumbers.memgpunct)Log->Printf("GPU Memory (for cells)...........: %s (%.2f MiB)"
+    ,KINT(MaxNumbers.memgpunct),double(MaxNumbers.memgpunct)/MEBIBYTE);
 }
 
 //==============================================================================

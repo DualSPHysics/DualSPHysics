@@ -108,6 +108,7 @@
 #define _Functions_
 
 #define KINT(a) fun::KintStr(a).c_str()
+#define KSTR(a) fun::KnumStr(a).c_str()
 
 #include <ctime>
 #include <string>

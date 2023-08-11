@@ -376,10 +376,11 @@ protected:
   unsigned IdMax;          ///<It is the maximum Id used.
 
   //-Monitors dt value.
-  unsigned DtModif;       ///<Number of modifications on  dt computed when it is too low. | Numero de modificaciones del dt calculado por ser demasiado bajo.         
+  unsigned DtModif;       ///<Number of modifications on dt computed when it is too low. | Numero de modificaciones del dt calculado por ser demasiado bajo.         
   unsigned DtModifWrn;    ///<Limit number for warning generation.
   double PartDtMin;       ///<Minimum value of dt in the current PART. | Valor minimo de dt en el PART actual.
   double PartDtMax;       ///<Maximum value of dt in the current PART. | Valor maximo de dt en el PART actual.
+  unsigned PartDtModif;   ///<Number of modifications on dt when last PART was saved.
   
   //-Variables for simulation of PARTs.
   int PartIni;            ///<First generated PART.  | Primer PART generado. 
@@ -478,7 +479,9 @@ protected:
   tfloat3* GetPointerDataFloat3(unsigned n,const tdouble3* v)const;
   void AddBasicArrays(JDataArrays &arrays,unsigned np,const tdouble3 *pos
     ,const unsigned *idp,const tfloat3 *vel,const float *rhop)const;
-  void SavePartData(unsigned npok,unsigned nout,const JDataArrays& arrays,unsigned ndom,const tdouble3* vdom,const StInfoPartPlus& infoplus);
+  void SaveRunPartsCsv(const StInfoPartPlus& infoplus,double tpart,double tsim)const;
+  void SaveRunPartsCsvFinal()const;
+  void SavePartData(unsigned npsave,unsigned nout,const JDataArrays& arrays,unsigned ndom,const tdouble3* vdom,const StInfoPartPlus& infoplus);
   void SaveData(unsigned npsave,const JDataArrays& arrays,unsigned ndom,const tdouble3* vdom,StInfoPartPlus infoplus);
 
   void CheckTermination();
@@ -493,7 +496,7 @@ protected:
  
   void GetResInfo(float tsim,float ttot,std::string headplus,std::string detplus
     ,std::string &hinfo,std::string &dinfo)const;
-  void SaveRes(float tsim,float ttot,const std::string &headplus="",const std::string &detplus="");
+  void SaveRes(float tsim,float ttot,const std::string& headplus="",const std::string& detplus="");
   void ShowResume(bool stop,float tsim,float ttot,bool all,std::string infoplus);
 
   unsigned GetOutPosCount()const{ return(OutPosCount); }

@@ -84,7 +84,7 @@ llong JSphCpuSingle::GetAllocMemoryCpu()const{
 void JSphCpuSingle::UpdateMaxValues(){
   const llong mcpu=GetAllocMemoryCpu();
   MaxNumbers.memcpu=max(MaxNumbers.memcpu,mcpu);
-  MaxNumbers.memgpu=0;
+  MaxNumbers.memgpu=MaxNumbers.memgpunct=0;
   MaxNumbers.particles=max(MaxNumbers.particles,Np);
   if(CellDivSingle)MaxNumbers.cells=max(MaxNumbers.cells,CellDivSingle->GetNct());
 }
@@ -1268,6 +1268,7 @@ void JSphCpuSingle::FinishRun(bool stop){
     Timersc->GetTimersInfo(hinfo,dinfo);
   }
   if(SvRes)SaveRes(tsim,ttot,hinfo,dinfo);
+  if(SvData&SDAT_Info)SaveRunPartsCsvFinal();
   Log->PrintFilesList();
   Log->PrintWarningList();
   VisuRefs();

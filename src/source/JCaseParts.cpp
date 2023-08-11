@@ -677,7 +677,8 @@ void JCaseParts::GetParticleSummary(std::vector<std::string> &out)const{
   out.push_back("");
   const unsigned nb=dat.np[0]+dat.np[1]+dat.np[2],nt=nb+dat.np[3];
   const unsigned mb=dat.nmk[0]+dat.nmk[1]+dat.nmk[2],mt=mb+dat.nmk[3];
-  if(1)out.push_back(fun::PrintStr("Total particles: %u (bound=%u (fx=%u mv=%u ft=%u) fluid=%u)",nt,nb,dat.np[0],dat.np[1],dat.np[2],dat.np[3]));
+  if(1)out.push_back(fun::PrintStr("Total particles: %s (bound=%u (fx=%u mv=%u ft=%u) fluid=%u)"
+    ,KINT(nt),nb,dat.np[0],dat.np[1],dat.np[2],dat.np[3]));
   else{
     const string knt=fun::KintStr(nt);
     const string knb=fun::KintStr(nb);

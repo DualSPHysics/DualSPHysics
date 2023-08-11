@@ -254,8 +254,8 @@ TpInVelMode JSphInOutVel::ReadXml(const JXml *sxml,TiXmlElement *ele
         FlowRatio=sxml->ReadElementFloat(xele,"flowvelocity","ratio",true,1.f);
         FlowUnits=fun::StrLower(sxml->ReadElementStr(xele,"flowvelocity","units",true,"l/s"));
         if(FlowUnits=="l/s")FlowRatio=FlowRatio;
-        else if(FlowUnits=="gal/s")FlowRatio=FlowRatio*(0.264172f);
-        else if(FlowUnits=="gal/min")FlowRatio=FlowRatio*(0.264172f*60);
+        else if(FlowUnits=="gal/s")FlowRatio=FlowRatio*float(TOGALLON);
+        else if(FlowUnits=="gal/min")FlowRatio=FlowRatio*float(TOGALLON*60);
         else sxml->ErrReadElement(xele,"flowvelocity",false
           ,"The value of units is invalid. Use \'l/s\', \'gal/s\' or \'gal/min\'.");
       }
@@ -379,7 +379,7 @@ void JSphInOutVel::GetConfig(std::vector<std::string> &lines)const{
     if(FlowActive){
       lines.push_back(fun::PrintStr("  Flow velocity configuration: True  (flow %s to velocity:%g  vol_ratio_units:%g)"
         ,FlowUnits.c_str(),FlowToVel,FlowRatio));
-      lines.push_back(fun::PrintStr("  Active InOut points: %u",FlowPointsOk));
+      lines.push_back(fun::PrintStr("  Active InOut points: %s",KINT(FlowPointsOk)));
     }
     if(VelMode==InVelM_Variable && !InputTimeVel->GetFile().empty())lines.push_back(fun::PrintStr("  Velocity file: %s",InputTimeVel->GetFile().c_str()));
     if(FlowActive){
