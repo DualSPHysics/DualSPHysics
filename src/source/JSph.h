@@ -442,9 +442,9 @@ protected:
   void VisuRefs();
   void VisuParticleSummary()const;
   void LoadDcellParticles(unsigned n,const typecode *code,const tdouble3 *pos,unsigned *dcell)const;
-  void RunInitialize(unsigned np,unsigned npb,const tdouble3 *pos,const unsigned *idp
-    ,const typecode *code,tfloat4 *velrhop,tfloat3 *boundnormal);
-  void CreatePartsInit(unsigned np,const tdouble3 *pos,const typecode *code);
+  void RunInitialize(unsigned np,unsigned npb,const tdouble3* pos,const unsigned* idp
+    ,const typecode* code,tfloat4* velrhop,tfloat3* boundnormal);
+  void CreatePartsInit(unsigned np,const tdouble3* pos,const typecode* code);
   void FreePartsInit();
 
   void ConfigCellDivision();

@@ -111,9 +111,10 @@ void JSphCpuSingle::ConfigDomain(){
   ConfigCellDivision();
   //-Calculate number of particles. | Calcula numero de particulas.
   Np=PartsLoaded->GetCount(); Npb=CaseNpb; NpbOk=Npb;
-  //-Allocates fixed memory for moving & floating particles. | Reserva memoria fija para moving y floating.
+
+  //-Allocates fixed memory for moving & floating particles.
   AllocCpuMemoryFixed();
-  //-Allocates memory in CPU for particles. | Reserva memoria en Cpu para particulas.
+  //-Allocates CPU memory for particles.
   AllocCpuMemoryParticles(Np,0);
 
   //-Copies particle data.

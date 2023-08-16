@@ -175,6 +175,7 @@ void JSphGpu::FreeCpuMemoryFixed(){
 //==============================================================================
 void JSphGpu::AllocCpuMemoryFixed(){
   MemCpuFixed=0;
+  //-Check size data matching.
   if(sizeof(tfloat3)*2!=sizeof(StFtoForces))Run_Exceptioon("Error: FtoForcesg does not match float3*2.");
   if(sizeof(float)*9!=sizeof(tmatrix3f))Run_Exceptioon("Error: FtoInertiainig does not match float*9.");
   try{

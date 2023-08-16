@@ -1762,8 +1762,8 @@ void JSph::LoadDcellParticles(unsigned n,const typecode *code,const tdouble3 *po
 ///
 /// Inicializa datos de las particulas a partir de la configuracion en el XML.
 //==============================================================================
-void JSph::RunInitialize(unsigned np,unsigned npb,const tdouble3 *pos,const unsigned *idp
-  ,const typecode *code,tfloat4 *velrhop,tfloat3 *boundnormal)
+void JSph::RunInitialize(unsigned np,unsigned npb,const tdouble3* pos
+  ,const unsigned* idp,const typecode* code,tfloat4* velrhop,tfloat3* boundnormal)
 {
   if(!PartBegin){
     JDsInitialize init(Simulate2D,Simulate2DPosY,MapRealPosMin,MapRealPosMax,Dp,KernelH,DirCase,CaseNbound,boundnormal!=NULL);
@@ -1800,7 +1800,7 @@ void JSph::RunInitialize(unsigned np,unsigned npb,const tdouble3 *pos,const unsi
 /// Crea el objeto PartsInit con los datos iniciales de las particulas para 
 /// configuraciones automaticas.
 //==============================================================================
-void JSph::CreatePartsInit(unsigned np,const tdouble3 *pos,const typecode *code){
+void JSph::CreatePartsInit(unsigned np,const tdouble3* pos,const typecode* code){
   PartsInit=new JDsPartsInit(Simulate2D,Simulate2DPosY,Dp,MkInfo,np,pos,code);
 }
 
@@ -1866,7 +1866,7 @@ void JSph::SelecDomain(tuint3 celini,tuint3 celfin){
   if(DomRealPosMin.x<MapRealPosMin.x)DomRealPosMin.x=MapRealPosMin.x;
   if(DomRealPosMin.y<MapRealPosMin.y)DomRealPosMin.y=MapRealPosMin.y;
   if(DomRealPosMin.z<MapRealPosMin.z)DomRealPosMin.z=MapRealPosMin.z;
-  //-Computes cofification of cells for the selected domain.
+  //-Computes codification of cells for the selected domain.
   //-Calcula codificacion de celdas para el dominio seleccionado.
   DomCellCode=JDsDcell::CalcCellCode(DomCells+TUint3(1));
   if(!DomCellCode)Run_Exceptioon(string("Failed to select a valid CellCode for ")+fun::UintStr(DomCells.x)+"x"+fun::UintStr(DomCells.y)+"x"+fun::UintStr(DomCells.z)+" cells (CellMode="+GetNameCellMode(CellMode)+").");
@@ -2123,7 +2123,7 @@ void JSph::LoadCaseParticles(){
   Map_Size=Map_PosMax-Map_PosMin;
   //-Defines PosCellSize for PosCell on GPU according to Map_Size and KernelSize.
   if(!Cpu)ConfigPosCellGpu();
-  //-Saves initial domain in a VTK file (CasePosMin/Max, MapRealPosMin/Max and Map_PosMin/Max).
+  //-Saves initial domain in CfgInit_Domain.vtk (CasePosMin/Max, MapRealPosMin/Max and Map_PosMin/Max).
   SaveInitialDomainVtk();
 }
 

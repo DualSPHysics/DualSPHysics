@@ -450,7 +450,7 @@ typedef struct{
   fsph::StKCubicCte      kcubic;  ///<Constants for the Cubic Spline kernel.
   fsph::StKWendlandCte   kwend;   ///<Constants for the Wendland kernel.
 
-  float kernelh;            ///<The smoothing length of SPH kernel [m].
+  float kernelh;            ///<The smoothing length of SPH kernel (h) [m].
   float cteb;               ///<Constant used in the state equation [Pa].
   float gamma;              ///<Politropic constant for water used in the state equation.
   float rhopzero;           ///<Reference density of the fluid [kg/m3].
@@ -460,10 +460,11 @@ typedef struct{
   tfloat3 gravity;          ///<Gravitational acceleration [m/s^2].
 
   //-Constants for computation (computed starting from previous constants).
-  float kernelsize;         ///<Maximum interaction distance between particles (KernelK*KernelH).
-  float kernelsize2;        ///<Maximum interaction distance squared (KernelSize^2).
+  float kernelsize;         ///<Maximum interaction distance between particles (2h) (KernelK*KernelH).
+  float kernelsize2;        ///<Maximum interaction distance squared (2h*2h) (KernelSize^2).
   double cs0;               ///<Speed of sound at the reference density.
   float eta2;               ///<Constant related to H (Eta2=(h*0.1)*(h*0.1)).
+  //-Other constants for computation of special features.
   float spssmag;            ///<Smagorinsky constant used in SPS turbulence model.
   float spsblin;            ///<Blin constant used in the SPS turbulence model.
   float ddtkhcte;           ///<Store fixed constant DDTkh.

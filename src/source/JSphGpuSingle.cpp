@@ -146,13 +146,15 @@ void JSphGpuSingle::ConfigDomain(){
   ConfigCellDivision();
   //-Computes the number of particles.
   Np=PartsLoaded->GetCount(); Npb=CaseNpb; NpbOk=Npb;
-  //-Allocates memory for arrays with fixed size (motion and floating bodies).
-  AllocGpuMemoryFixed();
-  //-Allocates GPU memory for particles.
-  AllocGpuMemoryParticles(Np,0);
+
   //-Allocates memory on the CPU.
   AllocCpuMemoryFixed();
   AllocCpuMemoryParticles(Np);
+
+  //-Allocates fixed memory for moving & floating particles.
+  AllocGpuMemoryFixed();
+  //-Allocates GPU memory for particles.
+  AllocGpuMemoryParticles(Np,0);
 
   //-Copies particle data.
   memcpy(AuxPos,PartsLoaded->GetPos(),sizeof(tdouble3)*Np);
