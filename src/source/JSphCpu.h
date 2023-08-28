@@ -114,43 +114,45 @@ protected:
 
   unsigned* RidpMot; ///<Particle index according to Idp (only for moving and floating particles and updated after RunCellDivide) [CaseNmoving+CaseNfloat]. 
 
-  //-List of particle arrays on CPU. | Lista de arrays en CPU para particulas.
+  //-List of particle arrays on CPU [CpuParticlesSize].
   JArraysCpu* Arrays_Cpu;
 
-  //-Execution Variables for particles (size=ParticlesSize). | Variables con datos de las particulas para ejecucion (size=ParticlesSize).
-  acuint*     Idp_c;       ///<Identifier of particle | Identificador de particula.
-  actypecode* Code_c;  ///<Indicator of group of particles & other special markers. | Indica el grupo de las particulas y otras marcas especiales.
-  acuint*     Dcell_c;     ///<Cells inside DomCells coded with DomCellCode. | Celda dentro de DomCells codificada con DomCellCode.
+  //-Execution Variables for particles [CpuParticlesSize].
+  acuint*     Idp_c;     ///<Identifier of particle.
+  actypecode* Code_c;    ///<Indicator of group of particles & other special markers.
+  acuint*     Dcell_c;   ///<Cells inside DomCells coded with DomCellCode.
   acdouble3*  Pos_c;
   acfloat4*   Velrho_c;
 
-  acfloat3*   BoundNormal_c;  ///<Normal (x,y,z) pointing from boundary particles to ghost nodes.
-  acfloat3*   MotionVel_c;    ///<Velocity of a moving boundary particle.
+  //-Variables for mDBC (Opt).
+  acfloat3*   BoundNormal_c;  ///<Normal (x,y,z) pointing from boundary particles to ghost nodes (Opt).
+  acfloat3*   MotionVel_c;    ///<Velocity of a moving boundary particle (Opt).
     
-  //-Variables for compute step: VERLET. | Vars. para compute step: VERLET.
-  acfloat4*   VelrhoM1_c;  ///<Verlet: in order to keep previous values. | Verlet: para guardar valores anteriores.
-  //-Variables for compute step: SYMPLECTIC. | Vars. para compute step: SYMPLECTIC.
-  acdouble3*  PosPre_c;    ///<Sympletic: in order to keep previous values. | Sympletic: para guardar valores en predictor.
-  acfloat4*   VelrhoPre_c;
+  //-Variables for compute step VERLET (Opt).
+  acfloat4*   VelrhoM1_c;     ///<Verlet: in order to keep previous values (Opt).
+
+  //-Variables for compute step SYMPLECTIC (Opt,Null).
+  acdouble3*  PosPre_c;       ///<Sympletic: in order to keep predictor values (Opt,Null).
+  acfloat4*   VelrhoPre_c;    ///<Sympletic: in order to keep predictor values (Opt,Null).
 
   //-Variables for floating bodies.
   StFtoForces*    FtoForces;    ///<Stores forces of floatings [FtCount].
   StFtoForcesRes* FtoForcesRes; ///<Stores data to update floatings [FtCount].
 
-  //-Variables for computing forces.
-  acfloat3*   Ace_c;        ///<Sum of interaction forces | Acumula fuerzas de interaccion
-  acfloat*    Ar_c; 
-  acfloat*    Press_c;      ///<Pressure computed starting from density for interaction. Press[]=fsph::ComputePress(Rhop,CSP)
-  acfloat*    Delta_c;      ///<Adjusted sum with Delta-SPH with DELTA_DynamicExt | Acumula ajuste de Delta-SPH con DELTA_DynamicExt
-  acfloat4*   ShiftPosfs_c; ///<Particle displacement and free surface detection for Shifting.
+  //-Variables for computing forces (Null).
+  acfloat3*   Ace_c;        ///<Sum of interaction acceleration (Null).
+  acfloat*    Ar_c;         ///<Sum of density variation (Null). 
+  acfloat*    Press_c;      ///<Pressure computed starting from density for interaction (Null). Press[]=fsph::ComputePress(Rhop,CSP)
+  acfloat*    Delta_c;      ///<Sum of Delta-SPH value when DELTA_DynamicExt (Null).
+  acfloat4*   ShiftPosfs_c; ///<Particle displacement and free surface detection for Shifting (Null).
 
   double VelMax;        ///<Maximum value of Vel[] sqrt(vel.x^2 + vel.y^2 + vel.z^2) computed in PreInteraction_Forces().
   double AceMax;        ///<Maximum value of Ace[] sqrt(ace.x^2 + ace.y^2 + ace.z^2) computed in Interaction_Forces().
   float ViscDtMax;      ///<Max value of ViscDt calculated in Interaction_Forces().
 
-  //-Variables for Laminar+SPS viscosity.  
-  acsymatrix3f* SpsTau_c;     ///<SPS sub-particle stress tensor.
-  acsymatrix3f* SpsGradvel_c; ///<Velocity gradients.
+  //-Variables for Laminar+SPS viscosity (Opt) & (Opt,Null).  
+  acsymatrix3f* SpsTau_c;     ///<SPS sub-particle stress tensor (Opt).
+  acsymatrix3f* SpsGradvel_c; ///<Velocity gradients (Opt,Null).
 
   JDsTimersCpu* Timersc;  ///<Manages timers for CPU execution.
 

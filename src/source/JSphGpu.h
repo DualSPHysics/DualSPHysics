@@ -94,17 +94,18 @@ protected:
   unsigned CpuParticlesSize; ///<Number of particles for which CPU memory was allocated. | Numero de particulas para las cuales se reservo memoria en cpu. 
   llong MemCpuFixed;         ///<Allocated memory in AllocCpuMemoryFixed. | Mermoria reservada en AllocCpuMemoryFixed. 
 
-  //-List of particle arrays on CPU. | Lista de arrays en CPU para particulas.
+  //-List of particle arrays on CPU [CpuParticlesSize=GpuParticlesSize].
   JArraysCpu* Arrays_Cpu;
 
-  acuint*     Idp_c;    ///<Identifier of particle | Identificador de particula.
-  actypecode* Code_c;   ///<Indicator of group of particles & other special markers. | Indica el grupo de las particulas y otras marcas especiales.
-  acuint*     Dcell_c;  ///<Cells inside DomCells coded with DomCellCode. | Celda dentro de DomCells codificada con DomCellCode.
+  //-Execution Variables for particles [CpuParticlesSize].
+  acuint*     Idp_c;    ///<Identifier of particle.
+  actypecode* Code_c;   ///<Indicator of group of particles & other special markers.
+  acuint*     Dcell_c;  ///<Cells inside DomCells coded with DomCellCode.
   acdouble2*  Posxy_c;
   acdouble*   Posz_c;
   acfloat4*   Velrho_c;
 
-  //-Auxiliary variables for the conversion (size=ParticlesSize).
+  //-Auxiliary variables for the conversion [CpuParticlesSize].
   acdouble3*  AuxPos_c;
   acfloat3*   AuxVel_c; 
   acfloat*    AuxRho_c;
@@ -115,28 +116,29 @@ protected:
 
   unsigned* RidpMotg;  ///<Particle index according to Idp (only for moving and floating particles and updated after RunCellDivide) [CaseNmoving+CaseNfloat]. 
 
-  //-List of particle arrays on GPU. | Lista de arrays en GPU para particulas.
+  //-List of particle arrays on GPU [GpuParticlesSize=CpuParticlesSize].
   JArraysGpu* Arrays_Gpu;
-  //-Variables holding particle data for the execution (size=ParticlesSize).
-  //-Variables con datos de las particulas para ejecucion (size=ParticlesSize).
-  aguint*     Idp_g;     ///<Identifier of particle | Identificador de particula.
-  agtypecode* Code_g;    ///<Indicator of group of particles & other special markers. | Indica el grupo de las particulas y otras marcas especiales.
-  aguint*     Dcell_g;   ///<Cells inside DomCells coded with DomCellCode. | Celda dentro de DomCells codificada con DomCellCode.
+  
+  //-Execution Variables for particles on GPU [GpuParticlesSize].
+  aguint*     Idp_g;     ///<Identifier of particle.
+  agtypecode* Code_g;    ///<Indicator of group of particles & other special markers.
+  aguint*     Dcell_g;   ///<Cells inside DomCells coded with DomCellCode.
   agdouble2*  Posxy_g;
   agdouble*   Posz_g;
   agfloat4*   PosCell_g; ///<Relative position and cell coordiantes for particle interaction {posx,posy,posz,cellxyz}
   agfloat4*   Velrho_g;
 
-  agfloat3*   BoundNormal_g; ///<Normal (x,y,z) pointing from boundary particles to ghost nodes.
-  agfloat3*   MotionVel_g;   ///<Velocity of a moving boundary particle.
+  //-Variables for mDBC (Opt).
+  agfloat3*   BoundNormal_g; ///<Normal (x,y,z) pointing from boundary particles to ghost nodes (Opt).
+  agfloat3*   MotionVel_g;   ///<Velocity of a moving boundary particle (Opt).
     
-  //-Variables for compute step: VERLET.
-  agfloat4*   VelrhoM1_g;   ///<Verlet: in order to keep previous values. | Verlet: para guardar valores anteriores.
+  //-Variables for compute step VERLET (Opt).
+  agfloat4*   VelrhoM1_g;   ///<Verlet: in order to keep previous values (Opt).
 
-  //-Variables for compute step: SYMPLECTIC.
-  agdouble2*  PosxyPre_g;  ///<Sympletic: in order to keep previous values. | Sympletic: para guardar valores en predictor.
-  agdouble*   PoszPre_g;
-  agfloat4*   VelrhoPre_g;
+  //-Variables for compute step SYMPLECTIC (Opt,Null).
+  agdouble2*  PosxyPre_g;  ///<Sympletic: in order to keep predictor values (Opt,Null).
+  agdouble*   PoszPre_g;   ///<Sympletic: in order to keep predictor values (Opt,Null).
+  agfloat4*   VelrhoPre_g; ///<Sympletic: in order to keep predictor values (Opt,Null).
 
   //-Variables for floating bodies.
   float*    FtoMasspg;       ///<Mass of the particle for each floating body [FtCount] in GPU (used in interaction forces).
@@ -161,21 +163,20 @@ protected:
   //-Variables for DEM.
   float4*   DemDatag;  ///<Data of the object {mass, (1-poisson^2)/young, kfric, restitu} in GPU [DemObjsSize].
 
-  //-Variables for computing forces.
-  agfloat*  ViscDt_g;
-  agfloat3* Ace_g;        ///<Accumulates acceleration of the particles. | Acumula fuerzas de interaccion.
-  agfloat*  Ar_g; 
-  agfloat*  Delta_g;      ///<Accumulates adjustment of Delta-SPH with DELTA_DynamicExt. | Acumula ajuste de Delta-SPH con DELTA_DynamicExt.
-
-  agfloat4* ShiftPosfs_g; ///<Particle displacement and free surface detection for Shifting.
+  //-Variables for computing forces (Null).
+  agfloat*  ViscDt_g;     ///< (Null).
+  agfloat3* Ace_g;        ///<Sum of interaction acceleration (Null).
+  agfloat*  Ar_g;         ///<Sum of density variation (Null). 
+  agfloat*  Delta_g;      ///<Sum of Delta-SPH value when DELTA_DynamicExt (Null).
+  agfloat4* ShiftPosfs_g; ///<Particle displacement and free surface detection for Shifting (Null).
 
   double VelMax;      ///<Maximum value of Vel[] sqrt(vel.x^2 + vel.y^2 + vel.z^2) computed in PreInteraction_Forces().
   double AceMax;      ///<Maximum value of Ace[] (ace.x^2 + ace.y^2 + ace.z^2) computed in Interaction_Forces().
   float ViscDtMax;    ///<Maximum value of ViscDt computed in Interaction_Forces().
 
-  //-Variables for Laminar+SPS viscosity.  
-  agsymatrix3f* SpsTau_g;     ///<SPS sub-particle stress tensor.
-  agsymatrix3f* SpsGradvel_g; ///<Velocity gradients.
+  //-Variables for Laminar+SPS viscosity (Opt) & (Opt,Null).  
+  agsymatrix3f* SpsTau_g;     ///<SPS sub-particle stress tensor (Opt).
+  agsymatrix3f* SpsGradvel_g; ///<Velocity gradients (Opt,Null).
 
   JDsTimersGpu* Timersg;  ///<Manages timers for GPU execution.
 
