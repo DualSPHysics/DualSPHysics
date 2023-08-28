@@ -107,7 +107,7 @@ void JCellDivCpuSingle::PrepareNct(){
   Ncx=CellDomainMax.x-CellDomainMin.x+1;
   Ncy=CellDomainMax.y-CellDomainMin.y+1;
   Ncz=CellDomainMax.z-CellDomainMin.z+1;
-  //:printf("======  ncx:%u ncy:%u ncz:%u\n",Ncx,Ncy,Ncz);
+  //Log->Printf("======  ncx:%u ncy:%u ncz:%u\n",Ncx,Ncy,Ncz);
   Nsheet=Ncx*Ncy; Nct=Nsheet*Ncz; Nctt=SizeBeginCell(Nct);
   if(Nctt!=unsigned(Nctt))Run_Exceptioon("The number of cells is too big.");
   BoxBoundIgnore=Nct; 

@@ -65,6 +65,7 @@ protected:
   tuint3 DomCelIni,DomCelFin;
   tdouble3 DomPosMin,DomPosMax;
   tuint3 DomCells;
+  ullong MaxDomCells;    ///<Maximum number of cells according to DomCells.
 
   //-Variables with allocated memory as a function of the number of particles in CPU.
   //-Memoria reservada en funcion de particulas en GPU.

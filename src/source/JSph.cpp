@@ -1828,10 +1828,11 @@ void JSph::ConfigCellDivision(){
   //-Prints configuration.
   Log->Print(fun::VarStr("CellMode",string(GetNameCellMode(CellMode))));
   Log->Print(fun::VarStr("ScellDiv",ScellDiv));
-  Log->Print(string("MapCells=(")+fun::Uint3Str(Map_Cells)+")");
+  const ullong ncells=ullong(Map_Cells.x)*ullong(Map_Cells.y)*ullong(Map_Cells.z);
+  Log->Printf("MapCells=(%s)  (%s cells)",fun::Uint3Str(Map_Cells).c_str(),KINT(ncells));
   Log->Print(fun::VarStr("CellDomFixed",CellDomFixed));
   //-Creates VTK file with map cells.
-  if(SaveMapCellsVtkSize()<1024*1024*10)SaveMapCellsVtk(Scell);
+  if(SaveMapCellsVtkSize()<10*MEBIBYTE)SaveMapCellsVtk(Scell);
   else Log->PrintWarning("File CfgInit_MapCells.vtk was not created because number of cells is too high.");
 }
 
@@ -1872,7 +1873,8 @@ void JSph::SelecDomain(tuint3 celini,tuint3 celfin){
   DomCellCode=JDsDcell::CalcCellCode(DomCells+TUint3(1));
   if(!DomCellCode)Run_Exceptioon(string("Failed to select a valid CellCode for ")+fun::UintStr(DomCells.x)+"x"+fun::UintStr(DomCells.y)+"x"+fun::UintStr(DomCells.z)+" cells (CellMode="+GetNameCellMode(CellMode)+").");
   //-Prints configurantion.
-  Log->Print(string("DomCells=(")+fun::Uint3Str(DomCells)+")");
+  const ullong ncells=ullong(DomCells.x)*ullong(DomCells.y)*ullong(DomCells.z);
+  Log->Printf("DomCells=(%s)  (%s cells)",fun::Uint3Str(DomCells).c_str(),KINT(ncells));
   Log->Print(fun::VarStr("DomCellCode",JDsDcell::DcellCodeStr(DomCellCode)));
 }
 

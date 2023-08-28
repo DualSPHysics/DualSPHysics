@@ -197,7 +197,7 @@ void JCellDivGpu::CheckMemoryNct(unsigned nctmin){
     if(OverMemoryCells>0){
       const ullong nct1=ullong(Ncx+OverMemoryCells)*ullong(Ncy+OverMemoryCells)*ullong(Ncz+OverMemoryCells);
       const ullong nct2=ullong(nctmin)+OverMemoryNCells;
-      const ullong nct3=(nct1>nct2? nct1: nct2);
+      const ullong nct3=min(MaxDomCells,(nct1>nct2? nct1: nct2));
       if(SizeBeginEndCell(nct3)>=UINT_MAX)Run_Exceptioon("The number of cells is too big.");
       nctnew=unsigned(nct3);
     }
@@ -210,13 +210,17 @@ void JCellDivGpu::CheckMemoryNct(unsigned nctmin){
 /// Defines the domain to be used by the simulation.
 /// Define el dominio de simulacion a usar.
 //==============================================================================
-void JCellDivGpu::DefineDomain(unsigned cellcode,tuint3 domcelini,tuint3 domcelfin,tdouble3 domposmin,tdouble3 domposmax){
+void JCellDivGpu::DefineDomain(unsigned cellcode,tuint3 domcelini,tuint3 domcelfin
+  ,tdouble3 domposmin,tdouble3 domposmax)
+{
   DomCellCode=cellcode;
   DomCelIni=domcelini;
   DomCelFin=domcelfin;
   DomPosMin=domposmin;
   DomPosMax=domposmax;
   DomCells=DomCelFin-DomCelIni;
+  MaxDomCells=ullong(DomCells.x)*ullong(DomCells.y)*ullong(DomCells.z);
+  //Log->Printf("-----> MaxDomCells:%s",KINT(MaxDomCells));
 }
 
 /*:/==============================================================================
