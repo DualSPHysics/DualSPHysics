@@ -673,7 +673,7 @@ unsigned JSphInOut::Config(double timestep,bool stable,byte periactive
 /// Loads basic data (pos,idp,code,velrhop=0) for initial inout particles.
 //==============================================================================
 void JSphInOut::LoadInitPartsData(unsigned idpfirst,unsigned nparttot
-  ,unsigned* idp,typecode* code,tdouble3* pos,tfloat4* velrhop)
+  ,unsigned* idp,typecode* code,tdouble3* pos,tfloat4* velrho)
 {
   //Log->Printf(" LoadInitPartsData--> nparttot:%u",nparttot);
   unsigned npart=0;
@@ -684,9 +684,9 @@ void JSphInOut::LoadInitPartsData(unsigned idpfirst,unsigned nparttot
     List[ci]->LoadInitialParticles(np,pos+npart);
     for(unsigned cp=0;cp<np;cp++){
       const unsigned p=npart+cp;
-      idp[p]=idpfirst+p;
-      code[p]=typecode(CODE_TYPE_FLUID_INOUT)+ci;
-      velrhop[p]=TFloat4(0,0,0,1000);
+      idp   [p]=idpfirst+p;
+      code  [p]=typecode(CODE_TYPE_FLUID_INOUT)+ci;
+      velrho[p]=TFloat4(0,0,0,1000);
     }
     npart+=np;
   }
@@ -702,7 +702,7 @@ void JSphInOut::LoadInitPartsData(unsigned idpfirst,unsigned nparttot
 /// particulas fluid cerca de particulas inout.
 //==============================================================================
 void JSphInOut::InitCheckProximity(unsigned np,unsigned newnp,float scell
-  ,const tdouble3* pos,const unsigned *idp,typecode *code)
+  ,const tdouble3* pos,const unsigned* idp,typecode* code)
 {
   //-Look for nearby particles.
   const double disterror=CSP.dp*0.8;
@@ -744,7 +744,7 @@ void JSphInOut::InitCheckProximity(unsigned np,unsigned newnp,float scell
   if(nerr>0){
     const unsigned n=nfluid+nfluidinout+nbound;
     tfloat3* vpos=new tfloat3[n];
-    byte* vtype=new byte[n];
+    byte*    vtype=new byte[n];
     unsigned pp=0;
     for(unsigned p=0;p<np;p++)if(errpart[p]){
       vpos[pp]=ToTFloat3(pos[p]);
@@ -778,7 +778,7 @@ void JSphInOut::InitCheckProximity(unsigned np,unsigned newnp,float scell
 /// Creates list with current inout particles (normal and periodic).
 //==============================================================================
 unsigned JSphInOut::CreateListSimpleCpu(unsigned npf,unsigned pini
-  ,const typecode *code,int *inoutpart)
+  ,const typecode* code,int* inoutpart)
 {
   unsigned count=0;
   if(ListSize){
@@ -835,7 +835,7 @@ unsigned JSphInOut::CreateListCpu(unsigned npf,unsigned pini
 /// Creates list with current inout particles (normal and periodic).
 //==============================================================================
 unsigned JSphInOut::CreateListSimpleGpu(unsigned npf,unsigned pini
-  ,const typecode *codeg,unsigned size,int *inoutpartg)
+  ,const typecode* codeg,unsigned size,int* inoutpartg)
 {
   unsigned count=0;
   if(ListSize){
@@ -988,8 +988,9 @@ void JSphInOut::SetAnalyticalDataGpu(float timestep,unsigned inoutcount
 /// Interpolate velocity of inlet/outlet particles from data in InputVelGrid object.
 /// Interpola velocidad de particulas inlet/outlet a partir de datos en el objeto InputVelGrid.
 //==============================================================================
-void JSphInOut::InterpolateVelCpu(float timestep,unsigned inoutcount,const int *inoutpart
-  ,const tdouble3 *pos,const typecode *code,const unsigned *idp,tfloat4 *velrhop)
+void JSphInOut::InterpolateVelCpu(float timestep,unsigned inoutcount
+  ,const int* inoutpart,const tdouble3* pos,const typecode* code
+  ,const unsigned* idp,tfloat4* velrhop)
 {
   for(unsigned ci=0;ci<GetCount();ci++)if(List[ci]->Use_InterpolatedVel())
     List[ci]->GetInOutVel()->UpdateVelInterpolateCpu(timestep
@@ -1001,9 +1002,9 @@ void JSphInOut::InterpolateVelCpu(float timestep,unsigned inoutcount,const int *
 /// Interpolate velocity of inlet/outlet particles from data in InputVelGrid object.
 /// Interpola velocidad de particulas inlet/outlet a partir de datos en el objeto InputVelGrid.
 //==============================================================================
-void JSphInOut::InterpolateVelGpu(float timestep,unsigned inoutcount,const int *inoutpartg
-  ,const double2 *posxyg,const double *poszg,const typecode *codeg,const unsigned *idpg
-  ,float4 *velrhopg)
+void JSphInOut::InterpolateVelGpu(float timestep,unsigned inoutcount
+  ,const int* inoutpartg,const double2* posxyg,const double* poszg
+  ,const typecode* codeg,const unsigned* idpg,float4* velrhopg)
 {
   for(unsigned ci=0;ci<GetCount();ci++)if(List[ci]->Use_InterpolatedVel())
     List[ci]->GetInOutVel()->UpdateVelInterpolateGpu(timestep
@@ -1142,10 +1143,10 @@ unsigned JSphInOut::ComputeStepGpu(unsigned inoutcount,int *inoutpartg
 ///   it creates a new inout particle.
 /// - If particle is moved out the domain then it changes to ignore particle.
 //==============================================================================
-unsigned JSphInOut::ComputeStepFillingCpu(unsigned inoutcount,int *inoutpart
-  ,const JSphCpu *sphcpu,unsigned idnext,unsigned sizenp,unsigned np
-  ,tdouble3 *pos,unsigned *dcell,typecode *code,unsigned *idp,tfloat4 *velrhop
-  ,const byte *zsurfok,float *prodist,tdouble3 *propos)
+unsigned JSphInOut::ComputeStepFillingCpu(unsigned inoutcount,int* inoutpart
+  ,const JSphCpu* sphcpu,unsigned idnext,unsigned sizenp,unsigned np
+  ,tdouble3* pos,unsigned* dcell,typecode* code,unsigned* idp,tfloat4* velrhop
+  ,const byte* zsurfok,float* prodist,tdouble3* propos)
 {
   //-Updates position of particles and computes projection data to filling mode.
   const int ncp=int(inoutcount);
@@ -1238,10 +1239,11 @@ unsigned JSphInOut::ComputeStepFillingCpu(unsigned inoutcount,int *inoutpart
 ///   it creates a new in/out particle.
 /// - If particle is moved out the domain then it changes to ignore particle.
 //==============================================================================
-unsigned JSphInOut::ComputeStepFillingGpu(unsigned nstep,double dt,unsigned inoutcount,int *inoutpartg
-  ,unsigned idnext,unsigned sizenp,unsigned np
-  ,double2 *posxyg,double *poszg,unsigned *dcellg,typecode *codeg,unsigned *idpg,float4 *velrhopg
-  ,const byte* zsurfokg,float *prodistg,double2 *proposxyg,double *proposzg,JDsTimersGpu *timersg)
+unsigned JSphInOut::ComputeStepFillingGpu(unsigned nstep,double dt
+  ,unsigned inoutcount,int* inoutpartg,unsigned idnext,unsigned sizenp
+  ,unsigned np,double2* posxyg,double* poszg,unsigned* dcellg,typecode* codeg
+  ,unsigned* idpg,float4* velrhopg,const byte* zsurfokg,float* prodistg
+  ,double2* proposxyg,double* proposzg,JDsTimersGpu* timersg)
 {
   //-Computes projection data to filling mode.
   cusphinout::InOutFillProjection(inoutcount,(unsigned *)inoutpartg,CfgUpdateg,Planesg,posxyg,poszg
@@ -1266,8 +1268,8 @@ unsigned JSphInOut::ComputeStepFillingGpu(unsigned nstep,double dt,unsigned inou
 /// Updates velocity and rhop for M1 variable when Verlet is used. 
 /// Actualiza velocidad y densidad de varible M1 cuando se usa Verlet.
 //==============================================================================
-void JSphInOut::UpdateVelrhopM1Cpu(unsigned inoutcount,const int *inoutpart
-  ,const tfloat4 *velrhop,tfloat4 *velrhopm1)
+void JSphInOut::UpdateVelrhopM1Cpu(unsigned inoutcount,const int* inoutpart
+  ,const tfloat4* velrho,tfloat4* velrhom1)
 {
   const int ncp=int(inoutcount);
   #ifdef OMP_USE
@@ -1275,7 +1277,7 @@ void JSphInOut::UpdateVelrhopM1Cpu(unsigned inoutcount,const int *inoutpart
   #endif
   for(int cp=0;cp<ncp;cp++){
     const unsigned p=(unsigned)inoutpart[cp];
-    velrhopm1[p]=velrhop[p];
+    velrhom1[p]=velrho[p];
   }
 }
 
@@ -1284,8 +1286,8 @@ void JSphInOut::UpdateVelrhopM1Cpu(unsigned inoutcount,const int *inoutpart
 /// Updates velocity and rhop for M1 variable when Verlet is used. 
 /// Actualiza velocidad y densidad de varible M1 cuando se usa Verlet.
 //==============================================================================
-void JSphInOut::UpdateVelrhopM1Gpu(unsigned inoutcount,const int *inoutpartg
-  ,const float4 *velrhopg,float4 *velrhopm1g)
+void JSphInOut::UpdateVelrhopM1Gpu(unsigned inoutcount,const int* inoutpartg
+  ,const float4* velrhopg,float4* velrhopm1g)
 {
   cusphinout::InOutUpdateVelrhopM1(inoutcount,inoutpartg,velrhopg,velrhopm1g);
 }

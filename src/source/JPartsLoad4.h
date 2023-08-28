@@ -73,27 +73,28 @@ protected:
   tdouble3 PeriYinc;
   tdouble3 PeriZinc;
 
-  bool MapSize;                  ///<Indicates whether MapPosMin and MapPosMax are valid. | Indica si MapPosMin y MapPosMax son validos.
-  tdouble3 MapPosMin,MapPosMax;  ///<Domain limits that already include the border. | Limites del dominio que ya incluyen el borde.
-
-  tdouble3 CasePosMin,CasePosMax;
+  bool MapSize;            ///<Indicates whether MapPosMin and MapPosMax are valid. | Indica si MapPosMin y MapPosMax son validos.
+  tdouble3 MapPosMin;      ///<Domain limits that already include the border. | Limites del dominio que ya incluyen el borde.
+  tdouble3 MapPosMax;      ///<Domain limits that already include the border. | Limites del dominio que ya incluyen el borde.
+  tdouble3 CasePosMin;
+  tdouble3 CasePosMax;
 
   unsigned PartBegin;
   double PartBeginTimeStep;
-  ullong PartBeginTotalNp;        ///<Total number of simulated particles.
+  ullong PartBeginTotalNp;    ///<Total number of simulated particles.
 
   //-Variables to restart.
-  double SymplecticDtPre;        ///<Previous Dt to use with Symplectic.
-  double DemDtForce;             ///<Dt for tangencial acceleration in DEM calculations.
+  double SymplecticDtPre;     ///<Previous Dt to use with Symplectic.
+  double DemDtForce;          ///<Dt for tangencial acceleration in DEM calculations.
 
   //-Variables for particles.
   unsigned Count;    //-Number of particles.
-  unsigned *Idp;
-  tdouble3 *Pos;
-  tfloat4 *VelRhop;
+  unsigned* Idp;
+  tdouble3* Pos;
+  tfloat4*  VelRho;
 
   void AllocMemory(unsigned count);
-  template<typename T> T* SortParticles(const unsigned *vsort,unsigned count,T *v)const;
+  template<typename T> T* SortParticles(const unsigned* vsort,unsigned count,T* v)const;
   void CheckSortParticles();
   void SortParticles();
   void CalculateCasePos();
@@ -103,7 +104,7 @@ public:
   ~JPartsLoad4();
   void Reset();
 
-  void LoadParticles(const std::string &casedir,const std::string &casename,unsigned partbegin,const std::string &casedirbegin);
+  void LoadParticles(const std::string& casedir,const std::string& casename,unsigned partbegin,const std::string& casedirbegin);
   void CheckConfig(ullong casenp,ullong casenfixed,ullong casenmoving,ullong casenfloat,ullong casenfluid,bool simulate2d,double simulate2dposy,TpPeri tperi)const;
   void CheckConfig(ullong casenp,ullong casenfixed,ullong casenmoving,ullong casenfloat,ullong casenfluid)const;
   void RemoveBoundary();
@@ -111,8 +112,9 @@ public:
   unsigned GetCount()const{ return(Count); }
 
   bool MapSizeLoaded()const{ return(MapSize); }
-  void GetMapSize(tdouble3 &mapmin,tdouble3 &mapmax)const;
-  void CalculeLimits(double border,double borderperi,bool perix,bool periy,bool periz,tdouble3 &mapmin,tdouble3 &mapmax);
+  void GetMapSize(tdouble3& mapmin,tdouble3& mapmax)const;
+  void CalculeLimits(double border,double borderperi
+    ,bool perix,bool periy,bool periz,tdouble3& mapmin,tdouble3& mapmax);
 
   bool GetSimulate2D()const{ return(Simulate2D); }
   double GetSimulate2DPosY()const{ return(Simulate2DPosY); }
@@ -122,7 +124,7 @@ public:
 
   const unsigned* GetIdp(){ return(Idp); }
   const tdouble3* GetPos(){ return(Pos); }
-  const tfloat4* GetVelRhop(){ return(VelRhop); }
+  const tfloat4*  GetVelRho(){ return(VelRho); }
 
   tdouble3 GetCasePosMin()const{ return(CasePosMin); }
   tdouble3 GetCasePosMax()const{ return(CasePosMax); }

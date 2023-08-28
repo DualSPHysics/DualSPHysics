@@ -55,8 +55,9 @@ void JObjectGpu::RunExceptioonCuda(const std::string &srcfile,int srcline
   ,const std::string &classname,const std::string &method
   ,cudaError_t cuerr,std::string msg)const
 {
+  const std::string oid=ObjectId();
   msg=msg+fun::PrintStr(" (CUDA error %d (%s)).\n",cuerr,cudaGetErrorString(cuerr));
-  throw JException(srcfile,srcline,classname,method,msg,"");
+  throw JException(srcfile,srcline,(oid.empty()? classname: oid),method,msg,"");
 }
 
 //==============================================================================
@@ -68,7 +69,9 @@ void JObjectGpu::CheckCudaErroor(const std::string &srcfile,int srcline
   ,std::string msg)const
 {
   cudaError_t cuerr=cudaGetLastError();
-  if(cuerr!=cudaSuccess)RunExceptioonCuda(srcfile,srcline,classname,method,cuerr,msg);
+  const std::string oid=ObjectId();
+  if(cuerr!=cudaSuccess)RunExceptioonCuda(srcfile,srcline
+    ,(oid.empty()? ClassName: oid),method,cuerr,msg);
 }
 
 

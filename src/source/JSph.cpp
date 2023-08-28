@@ -158,7 +158,7 @@ JSph::~JSph(){
 //==============================================================================
 void JSph::InitVars(){
   ClearCfgDomain();
-  OutPosCount=OutRhopCount=OutMoveCount=0;
+  OutPosCount=OutRhoCount=OutMovCount=0;
   Simulate2D=false;
   Simulate2DPosY=0;
   Symmetry=false;
@@ -1301,7 +1301,7 @@ void JSph::VisuDemCoefficients()const{
 /// Carga el codigo de grupo de las particulas y marca las nout ultimas
 /// particulas como excluidas.
 //==============================================================================
-void JSph::LoadCodeParticles(unsigned np,const unsigned *idp,typecode *code)const{
+void JSph::LoadCodeParticles(unsigned np,const unsigned* idp,typecode* code)const{
   //-Assigns code to each group of particles.
   for(unsigned p=0;p<np;p++)code[p]=MkInfo->GetCodeById(idp[p]);
 }
@@ -1309,15 +1309,15 @@ void JSph::LoadCodeParticles(unsigned np,const unsigned *idp,typecode *code)cons
 //==============================================================================
 /// Load normals for boundary particles (fixed and moving).
 //==============================================================================
-void JSph::LoadBoundNormals(unsigned np,unsigned npb,const unsigned *idp
-  ,const typecode *code,tfloat3 *boundnormal)
+void JSph::LoadBoundNormals(unsigned np,unsigned npb,const unsigned* idp
+  ,const typecode* code,tfloat3* boundnormal)
 {
   memset(boundnormal,0,sizeof(tfloat3)*np);
   if(!PartBegin){
     const string filenormals=JPartNormalData::GetNormalDataFile(false,DirCase+CaseName);
     if(fun::FileExists(filenormals)){
       //-Loads final normals.
-      const tdouble3 *pnor=NULL;
+      const tdouble3* pnor=NULL;
       unsigned pnorsize=0;
       JPartNormalData nd;
       nd.LoadFile(false,DirCase+CaseName);
@@ -1342,13 +1342,14 @@ void JSph::LoadBoundNormals(unsigned np,unsigned npb,const unsigned *idp
 //==============================================================================
 /// Config normals to point from boundary particle to ghost node (full distance).
 //==============================================================================
-void JSph::ConfigBoundNormals(unsigned np,unsigned npb,const tdouble3 *pos
-  ,const unsigned *idp,tfloat3 *boundnormal)
+void JSph::ConfigBoundNormals(unsigned np,unsigned npb,const tdouble3* pos
+  ,const unsigned* idp,tfloat3* boundnormal)
 {
   //-Checks current normals.
   if(!PartBegin){
     bool ftnor=false;
-    for(unsigned p=0;p<np && !ftnor;p++)ftnor=(idp[p]<CaseNbound && idp[p]>=CaseNpb && boundnormal[p]!=TFloat3(0));
+    for(unsigned p=0;p<np && !ftnor;p++)
+      ftnor=(idp[p]<CaseNbound && idp[p]>=CaseNpb && boundnormal[p]!=TFloat3(0));
     UseNormalsFt=ftnor;
   }
 
@@ -1949,9 +1950,9 @@ void JSph::ConfigPosCellGpu(){
 /// Computes maximum distance between particles and center of floating.
 /// Calcula distancia maxima entre particulas y centro de cada floating.
 //==============================================================================
-void JSph::CalcFloatingRadius(unsigned np,const tdouble3 *pos,const unsigned *idp){
+void JSph::CalcFloatingRadius(unsigned np,const tdouble3* pos,const unsigned* idp){
   const float overradius=1.2f; //-Percentage of ration increase. | Porcentaje de incremento de radio. 
-  unsigned *ridp=new unsigned[CaseNfloat];
+  unsigned* ridp=new unsigned[CaseNfloat];
   //-Assigns values UINT_MAX. 
   memset(ridp,255,sizeof(unsigned)*CaseNfloat); 
   //-Computes position according to id assuming that all particles are not periodic.
@@ -2065,13 +2066,13 @@ void JSph::RestartCheckData(bool loadpsingle){
 /// Comprueba la densidad inicial de las particulas fluido. Si alguna particula 
 /// esta fuera de los limites, lanza una excepcion.
 //==============================================================================
-void JSph::CheckRhopLimits(){
-  const tfloat4 *velrhop=PartsLoaded->GetVelRhop(); ///<Velocity and density of each particle
-  const unsigned *idp   =PartsLoaded->GetIdp();     ///<Identifier of each particle
+void JSph::CheckRhoLimits(){
+  const tfloat4*  velrho=PartsLoaded->GetVelRho(); ///<Velocity and density of each particle
+  const unsigned* idp   =PartsLoaded->GetIdp();    ///<Identifier of each particle
   const unsigned n=PartsLoaded->GetCount();
   //-Checks the initial density of each fluid particle
   for(unsigned p=0;p<n;p++)if(idp[p]>=CaseNbound){
-    if(velrhop[p].w<RhopOutMin || RhopOutMax<velrhop[p].w)
+    if(velrho[p].w<RhopOutMin || RhopOutMax<velrho[p].w)
       Run_Exceptioon("Initial fluid density is out of limits. *** To change the limits modify the value of \'RhopOutMin\' and \'RhopOutMax\' in the XML file (parameters section).");
   }
 }
@@ -2091,7 +2092,7 @@ void JSph::LoadCaseParticles(){
 
   //-Checks if the initial density of fluid particles is out of limits.
   //-Comprueba si la densidad inicial de las particulas fluido esta fuera de los limites.
-  CheckRhopLimits();
+  CheckRhoLimits();
 
   //-Collect information of loaded particles.
   //-Recupera informacion de las particulas cargadas.
@@ -2416,7 +2417,8 @@ void JSph::CalcMotionWaveGen(double stepdt){
     if(WaveGen->UseAwas())WavesLoadLastGaugeResults();
     const bool svdata=(TimeStep+stepdt>=TimePartNext);
     for(unsigned c=0;c<WaveGen->GetCount();c++){
-      const StMotionData m=(motsim? WaveGen->GetMotion(svdata,c,TimeStep,stepdt): WaveGen->GetMotionAce(svdata,c,TimeStep,stepdt));
+      const StMotionData m=(motsim? WaveGen->GetMotion(svdata,c,TimeStep,stepdt):
+                                    WaveGen->GetMotionAce(svdata,c,TimeStep,stepdt));
       //Log->Printf("%u> t:%f  tp:%d  mx:%f  SetMotionData-WaveGen",Nstep,TimeStep,m.type,m.linmov.x);
       if(m.type!=MOTT_None){
         if(motsim)DsMotion->SetMotionData   (m);
@@ -2565,24 +2567,24 @@ void JSph::ConfigSaveData(unsigned piece,unsigned pieces,std::string div
 /// Stores new excluded particles until recordering next PART.
 /// Almacena nuevas particulas excluidas hasta la grabacion del proximo PART.
 //==============================================================================
-void JSph::AddParticlesOut(unsigned nout,const unsigned *idp,const tdouble3 *pos
-  ,const tfloat3 *vel,const float *rhop,const typecode *code)
+void JSph::AddParticlesOut(unsigned nout,const unsigned* idp,const tdouble3* pos
+  ,const tfloat3* vel,const float* rho,const typecode* code)
 {
-  PartsOut->AddParticles(nout,idp,pos,vel,rhop,code);
+  PartsOut->AddParticles(nout,idp,pos,vel,rho,code);
 }
 
 //==============================================================================
 /// Manages excluded particles fixed, moving and floating before aborting the execution.
 /// Gestiona particulas excluidas fixed, moving y floating antes de abortar la ejecucion.
 //==============================================================================
-void JSph::AbortBoundOut(JLog2 *log,unsigned nout,const unsigned *idp,const tdouble3 *pos
-  ,const tfloat3 *vel,const float *rhop,const typecode *code)
+void JSph::AbortBoundOut(JLog2* log,unsigned nout,const unsigned* idp
+  ,const tdouble3* pos,const tfloat3* vel,const float* rho,const typecode* code)
 {
   //-Prepares data of excluded boundary particles.
   byte* type=new byte[nout];
   byte* motive=new byte[nout];
   unsigned outfixed=0,outmoving=0,outfloat=0;
-  unsigned outpos=0,outrhop=0,outmove=0;
+  unsigned outpos=0,outrho=0,outmov=0;
   bool outxmin=false,outymin=false,outzmin=false;
   bool outxmax=false,outymax=false,outzmax=false;
   for(unsigned p=0;p<nout;p++){
@@ -2595,10 +2597,10 @@ void JSph::AbortBoundOut(JLog2 *log,unsigned nout,const unsigned *idp,const tdou
     }
     //-Checks reason for exclusion.
     switch(CODE_GetSpecialValue(code[p])){
-      case CODE_OUTPOS:   motive[p]=1; outpos++;   break;
-      case CODE_OUTRHOP:  motive[p]=2; outrhop++;  break; 
-      case CODE_OUTMOVE:  motive[p]=3; outmove++;  break; 
-      default:            motive[p]=0;             break; 
+      case CODE_OUTPOS:   motive[p]=1; outpos++;  break;
+      case CODE_OUTRHOP:  motive[p]=2; outrho++;  break; 
+      case CODE_OUTMOVE:  motive[p]=3; outmov++;  break; 
+      default:            motive[p]=0;            break; 
     }
     //-Checks out-position limits.
     if(CODE_GetSpecialValue(code[p])==CODE_OUTPOS){
@@ -2623,9 +2625,9 @@ void JSph::AbortBoundOut(JLog2 *log,unsigned nout,const unsigned *idp,const tdou
   unsigned npunknown=nout-outfixed-outmoving-outfloat;
   if(!npunknown)log->Printf("Total boundary: %u  (fixed=%u  moving=%u  floating=%u)",nout,outfixed,outmoving,outfloat);
   else log->Printf("Total boundary: %u  (fixed=%u  moving=%u  floating=%u  UNKNOWN=%u)",nout,outfixed,outmoving,outfloat,npunknown);
-  npunknown=nout-outpos-outrhop-outmove;
-  if(!npunknown)log->Printf("Excluded for: position=%u  rhop=%u  velocity=%u",outpos,outrhop,outmove);
-  else log->Printf("Excluded for: position=%u  rhop=%u  velocity=%u  UNKNOWN=%u",outpos,outrhop,outmove,npunknown);
+  npunknown=nout-outpos-outrho-outmov;
+  if(!npunknown)log->Printf("Excluded for: position=%u  rhop=%u  velocity=%u",outpos,outrho,outmov);
+  else log->Printf("Excluded for: position=%u  rhop=%u  velocity=%u  UNKNOWN=%u",outpos,outrho,outmov,npunknown);
   if(outxmin)log->Print("Some boundary particle exceeded the -X limit (left limit) of the simulation domain.");
   if(outxmax)log->Print("Some boundary particle exceeded the +X limit (right limit) of the simulation domain.");
   if(outymin)log->Print("Some boundary particle exceeded the -Y limit (front limit) of the simulation domain.");
@@ -2639,7 +2641,7 @@ void JSph::AbortBoundOut(JLog2 *log,unsigned nout,const unsigned *idp,const tdou
     arrays.AddArray("Pos"   ,nout,pos   ,false);
     arrays.AddArray("Idp"   ,nout,idp   ,false);
     arrays.AddArray("Vel"   ,nout,vel   ,false);
-    arrays.AddArray("Rhop"  ,nout,rhop  ,false);
+    arrays.AddArray("Rho"   ,nout,rho   ,false);
     arrays.AddArray("Type"  ,nout,type  ,false);
     arrays.AddArray("Motive",nout,motive,false);
     const string file=DirOut+"Error_BoundaryOut.vtk";
@@ -2648,6 +2650,44 @@ void JSph::AbortBoundOut(JLog2 *log,unsigned nout,const unsigned *idp,const tdou
   }
   //-Aborts execution.
   Run_Exceptioon("Fixed, moving or floating particles were excluded. Check VTK file Error_BoundaryOut.vtk with excluded particles.");
+}
+
+//==============================================================================
+/// Loads array tdouble3 with position in tdouble2+double.
+//==============================================================================
+void JSph::Pos21ToPos3(unsigned n,const tdouble2* posxy,const double* posz
+  ,tdouble3* pos)const
+{
+  for(unsigned p=0;p<n;p++){
+    pos[p]=TDouble3(posxy[p].x,posxy[p].y,posz[p]);
+  }
+}
+
+//==============================================================================
+/// Loads arrays tdouble2+double with position in tdouble3.
+//==============================================================================
+void JSph::Pos3ToPos21(unsigned n,const tdouble3* pos,tdouble2* posxy
+  ,double* posz)const
+{
+  for(unsigned p=0;p<n;p++){
+    posxy[p]=TDouble2(pos[p].x,pos[p].y);
+    posz [p]=pos[p].z;
+  }
+}
+
+//==============================================================================
+/// Loads arrays pos3,vel3,rho from posxy,posz,velrho.
+//==============================================================================
+void JSph::Pos21Vel4ToPos3Vel31(unsigned n,const tdouble2* posxy
+  ,const double* posz,const tfloat4* velrho,tdouble3* pos,tfloat3* vel
+  ,float* rho)const
+{
+  for(unsigned p=0;p<n;p++){
+    pos[p]=TDouble3(posxy[p].x,posxy[p].y,posz[p]);
+    const tfloat4 vr=velrho[p];
+    vel[p]=TFloat3(vr.x,vr.y,vr.z);
+    rho[p]=vr.w;
+  }
 }
 
 //==============================================================================
@@ -2666,13 +2706,13 @@ tfloat3* JSph::GetPointerDataFloat3(unsigned n,const tdouble3* v)const{
 //==============================================================================
 /// Adds basic data arrays in object JDataArrays.
 //==============================================================================
-void JSph::AddBasicArrays(JDataArrays &arrays,unsigned np,const tdouble3 *pos
-  ,const unsigned *idp,const tfloat3 *vel,const float *rhop)const
+void JSph::AddBasicArrays(JDataArrays& arrays,unsigned np,const tdouble3* pos
+  ,const unsigned* idp,const tfloat3* vel,const float* rho)const
 {
-  arrays.AddArray("Pos" ,np,pos);
-  arrays.AddArray("Idp" ,np,idp);
-  arrays.AddArray("Vel" ,np,vel);
-  arrays.AddArray("Rhop",np,rhop);
+  arrays.AddArray("Pos",np,pos);
+  arrays.AddArray("Idp",np,idp);
+  arrays.AddArray("Vel",np,vel);
+  arrays.AddArray("Rho",np,rho);
 }
 
 //==============================================================================
@@ -2823,23 +2863,23 @@ void JSph::SavePartData(unsigned npsave,unsigned nout,const JDataArrays& arrays
     }
     if(SvData&SDAT_Binx){
       string err;
-      if(!(err=arrays.CheckErrorArray("Pos" ,TypeDouble3,npsave)).empty())Run_Exceptioon(err);
-      if(!(err=arrays.CheckErrorArray("Idp" ,TypeUint   ,npsave)).empty())Run_Exceptioon(err);
-      if(!(err=arrays.CheckErrorArray("Vel" ,TypeFloat3 ,npsave)).empty())Run_Exceptioon(err);
-      if(!(err=arrays.CheckErrorArray("Rhop",TypeFloat  ,npsave)).empty())Run_Exceptioon(err);
-      const tdouble3 *pos =arrays.GetArrayDouble3("Pos");
-      const unsigned *idp =arrays.GetArrayUint   ("Idp");
-      const tfloat3  *vel =arrays.GetArrayFloat3 ("Vel");
-      const float    *rhop=arrays.GetArrayFloat  ("Rhop");
+      if(!(err=arrays.CheckErrorArray("Pos",TypeDouble3,npsave)).empty())Run_Exceptioon(err);
+      if(!(err=arrays.CheckErrorArray("Idp",TypeUint   ,npsave)).empty())Run_Exceptioon(err);
+      if(!(err=arrays.CheckErrorArray("Vel",TypeFloat3 ,npsave)).empty())Run_Exceptioon(err);
+      if(!(err=arrays.CheckErrorArray("Rho",TypeFloat  ,npsave)).empty())Run_Exceptioon(err);
+      const tdouble3* pos=arrays.GetArrayDouble3("Pos");
+      const unsigned* idp=arrays.GetArrayUint   ("Idp");
+      const tfloat3*  vel=arrays.GetArrayFloat3 ("Vel");
+      const float*    rho=arrays.GetArrayFloat  ("Rho");
       if(SvPosDouble || (SvExtraDataBi4 && SvExtraDataBi4->CheckSave(Part))){
-        DataBi4->AddPartData(npsave,idp,pos,vel,rhop);
+        DataBi4->AddPartData(npsave,idp,pos,vel,rho);
       }
       else{
         posf3=GetPointerDataFloat3(npsave,pos);
-        DataBi4->AddPartData(npsave,idp,posf3,vel,rhop);
+        DataBi4->AddPartData(npsave,idp,posf3,vel,rho);
       }
       //-Adds other arrays.
-      const string arrignore=":Pos:Idp:Vel:Rhop:";
+      const string arrignore=":Pos:Idp:Vel:Rho:";
       for(unsigned ca=0;ca<arrays.Count();ca++){
         const JDataArrays::StDataArray arr=arrays.GetArrayData(ca);
         if(int(arrignore.find(string(":")+arr.keyname+":"))<0){//-Ignore main arrays.
@@ -2864,7 +2904,7 @@ void JSph::SavePartData(unsigned npsave,unsigned nout,const JDataArrays& arrays
     const unsigned *idp =arrays2.GetArrayUint   ("Idp");
     //-Generates array with posf3 and type of particle.
     tfloat3* posf3=GetPointerDataFloat3(npsave,pos);
-    byte *type=new byte[npsave];
+    byte*    type=new byte[npsave];
     for(unsigned p=0;p<npsave;p++){
       const unsigned id=idp[p];
       type[p]=(id>=CaseNbound? 3: (id<CaseNfixed? 0: (id<CaseNpb? 1: 2)));
@@ -2889,7 +2929,9 @@ void JSph::SavePartData(unsigned npsave,unsigned nout,const JDataArrays& arrays
 
   //-Stores data of excluded particles.
   if(DataOutBi4 && PartsOut->GetCount()){
-    DataOutBi4->SavePartOut(SvPosDouble,Part,TimeStep,PartsOut->GetCount(),PartsOut->GetIdpOut(),NULL,PartsOut->GetPosOut(),PartsOut->GetVelOut(),PartsOut->GetRhopOut(),PartsOut->GetMotiveOut());
+    DataOutBi4->SavePartOut(SvPosDouble,Part,TimeStep,PartsOut->GetCount()
+      ,PartsOut->GetIdpOut(),NULL,PartsOut->GetPosOut(),PartsOut->GetVelOut()
+      ,PartsOut->GetRhoOut(),PartsOut->GetMotiveOut());
   }
 
   //-Saves data of floating bodies (and force points) collected in RunFloating().
@@ -2975,7 +3017,7 @@ void JSph::SaveData(unsigned npsave,const JDataArrays& arrays
       else PartsOutWrn+=10;
     }
     //-Cheks number of total excluded particles.
-    const unsigned noutt=GetOutPosCount()+GetOutRhopCount()+GetOutMoveCount();
+    const unsigned noutt=GetOutTotCount();
     if(PartsOutTotWrn<=100 && noutt>=float(TotalNp)*(float(PartsOutTotWrn)/100.f)){
       Log->PrintfWarning("More than %d%% of particles were excluded (t:%g, nstep:%u)"
         ,PartsOutTotWrn,TimeStep,Nstep);
@@ -3174,7 +3216,7 @@ void JSph::GetResInfo(float tsim,float ttot,std::string headplus,std::string det
   dinfo=dinfo+ ";"+ KINT(MaxNumbers.memcpu);
   dinfo=dinfo+ ";"+ KINT(MaxNumbers.memgpu)+ ";"+ KINT(MaxNumbers.memgpunct);
   hinfo=hinfo+";Steps;GPIPS;PhysicalTime;PartFiles;PartsOut;MaxParticles;MaxCells";
-  const unsigned nout=GetOutPosCount()+GetOutRhopCount()+GetOutMoveCount();
+  const unsigned nout=GetOutTotCount();
   const string gpips=(DsPips? fun::DoublexStr(DsPips->GetGPIPS(tsim),"%.10f"): "");
   dinfo=dinfo+ ";"+ KINT(Nstep)+ ";"+ gpips+ ";"+ fun::DoublexStr(TimeStep);
   dinfo=dinfo+ ";"+ fun::IntStr(Part)+ ";"+ KINT(nout);
@@ -3184,8 +3226,8 @@ void JSph::GetResInfo(float tsim,float ttot,std::string headplus,std::string det
   hinfo=hinfo+";Nbound;Nfixed;Dp;H";
   dinfo=dinfo+ ";"+ KINT(CaseNbound)+ ";"+ KINT(CaseNfixed);
   dinfo=dinfo+ ";"+ fun::FloatStr(float(Dp))+ ";"+ fun::FloatStr(KernelH);
-  hinfo=hinfo+";PartsOutRhop;PartsOutVel";
-  dinfo=dinfo+ ";"+ KINT(GetOutRhopCount())+ ";"+ KINT(GetOutMoveCount());
+  hinfo=hinfo+";PartsOutRho;PartsOutVel";
+  dinfo=dinfo+ ";"+ KINT(GetOutRhoCount())+ ";"+ KINT(GetOutMovCount());
   hinfo=hinfo+ headplus;
   dinfo=dinfo+ detplus;
 }
@@ -3223,10 +3265,10 @@ void JSph::ShowResume(bool stop,float tsim,float ttot,bool all,std::string infop
   if(NpDynamic)Log->Printf("Particles of simulation (total)..: %s",KINT(TotalNp));
   if(all){
     Log->Printf("DTs adjusted to DtMin............: %s",KINT(DtModif));
-    const unsigned nout=GetOutPosCount()+GetOutRhopCount()+GetOutMoveCount();
+    const unsigned nout=GetOutTotCount();
     Log->Printf("Excluded particles...............: %s",KINT(nout));
-    if(GetOutRhopCount())Log->Printf("Excluded particles due to RhopOut: %s",KINT(GetOutRhopCount()));
-    if(GetOutMoveCount())Log->Printf("Excluded particles due to Velocity: %s",KINT(GetOutMoveCount()));
+    if(GetOutRhoCount())Log->Printf("Excluded particles due to Density: %s",KINT(GetOutRhoCount()));
+    if(GetOutMovCount())Log->Printf("Excluded particles due to Velocity: %s",KINT(GetOutMovCount()));
   }
   Log->Printf("Total Runtime....................: %f sec.",ttot);
   Log->Printf("Simulation Runtime...............: %f sec.",tsim);

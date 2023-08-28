@@ -257,7 +257,7 @@ typecode JSphMk::CodeSetType(typecode code,TpParticles type,unsigned value)const
 //==============================================================================
 /// Calculates domain limits for each Mk value.
 //==============================================================================
-void JSphMk::ComputeMkDomains(unsigned np,const tdouble3 *pos,const typecode *code){
+void JSphMk::ComputeMkDomains(unsigned np,const tdouble3* pos,const typecode* code){
   //-Allocates memory and initializes dommain limits.
   tdouble3 *pmin=new tdouble3[MkListSize];
   tdouble3 *pmax=new tdouble3[MkListSize];

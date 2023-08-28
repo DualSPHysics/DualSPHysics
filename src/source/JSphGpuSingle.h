@@ -45,15 +45,16 @@ protected:
   void LoadConfig(const JSphCfgRun *cfg);
   void ConfigDomain();
 
-  void ResizeParticlesSize(unsigned newsize,unsigned minsize,float oversize,bool updatedivide);
+  void ResizeParticlesSizeData(unsigned ndatacpu,unsigned ndatagpu,unsigned newsize,unsigned minsize,float oversize,bool updatedivide);
   void RunPeriodic();
   void RunCellDivide(bool updateperiodic);
   void AbortBoundOut();
+  void SaveFluidOut();
 
   void Interaction_Forces(TpInterStep interstep);
   void MdbcBoundCorrection();
 
-  double ComputeAceMax(float *auxmem);
+  double ComputeAceMax(float* auxmemg);
 
   void RunInitialDDTRamp(); //<vs_ddramp>
 
@@ -75,17 +76,17 @@ protected:
 public:
   JSphGpuSingle();
   ~JSphGpuSingle();
-  void Run(std::string appname,const JSphCfgRun *cfg,JLog2 *log);
+  void Run(std::string appname,const JSphCfgRun* cfg,JLog2* log);
 
 //-Code for InOut in JSphGpuSingle_InOut.cpp
 //--------------------------------------------
 protected:
   void InOutInit(double timestepini);
-  void InOutIgnoreFluidDef(const std::vector<unsigned> &mkfluidlist);
+  void InOutIgnoreFluidDef(const std::vector<unsigned>& mkfluidlist,typecode* codeg);
   void InOutCheckProximity(unsigned newnp);
   void InOutComputeStep(double stepdt);
   void InOutUpdatePartsData(double timestepnew);
-  void InOutExtrapolateData(unsigned inoutcount,const int *inoutpart);
+  void InOutExtrapolateData(unsigned inoutcount,const int* inoutpart);
 };
 
 #endif

@@ -80,8 +80,8 @@ public:
 
   static std::string GetFileName(std::string filename,int numfile,int gid=-1);
 
-  static void LoadParticlesData(const JSphGpuSingle *gp,unsigned pini,unsigned pfin,std::string vars,JDataArrays *arrays,std::string file="");
-  static void SaveVtk(std::string filename,int numfile,unsigned pini,unsigned pfin,std::string vars,const JSphGpuSingle *gp);
+  static void LoadParticlesData(const JSphGpuSingle* gp,unsigned pini,unsigned pfin,std::string vars,JDataArrays* arrays,std::string file="");
+  static void SaveVtk(std::string filename,int numfile,unsigned pini,unsigned pfin,std::string vars,const JSphGpuSingle* gp);
 
 };
 

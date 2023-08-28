@@ -190,13 +190,13 @@ public:
     ,tdouble3 posmin,tdouble3 posmax,typecode codenewpart,const JDsPartsInit *partsdata
     ,JGaugeSystem *gaugesystem,JNumexLib *nuxlib);
     
-  void LoadInitPartsData(unsigned idpfirst,unsigned npart,unsigned* idp,typecode* code,tdouble3* pos,tfloat4* velrhop);
-  void InitCheckProximity(unsigned np,unsigned newnp,float scell,const tdouble3* pos,const unsigned *idp,typecode *code);
+  void LoadInitPartsData(unsigned idpfirst,unsigned npart,unsigned* idp,typecode* code,tdouble3* pos,tfloat4* velrho);
+  void InitCheckProximity(unsigned np,unsigned newnp,float scell,const tdouble3* pos,const unsigned* idp,typecode* code);
 
 
 //-Specific code for CPU.
   unsigned CreateListSimpleCpu(unsigned npf,unsigned pini
-    ,const typecode *code,int *inoutpart);
+    ,const typecode* code,int* inoutpart);
   unsigned CreateListCpu(unsigned npf,unsigned pini
     ,const tdouble3 *pos,const unsigned *idp,typecode *code,int *inoutpart);
 
@@ -204,8 +204,8 @@ public:
     ,const tdouble3 *pos,const typecode *code,const unsigned *idp,const float *zsurfpart
     ,tfloat4 *velrhop);
 
-  void InterpolateVelCpu(float timestep,unsigned inoutcount,const int *inoutpart
-    ,const tdouble3 *pos,const typecode *code,const unsigned *idp,tfloat4 *velrhop);
+  void InterpolateVelCpu(float timestep,unsigned inoutcount,const int* inoutpart
+    ,const tdouble3* pos,const typecode* code,const unsigned* idp,tfloat4* velrhop);
 
 
   void CheckPartsIzone(std::string key,unsigned nstep,unsigned inoutcount,const int *inoutpart,typecode *code,unsigned *idp);
@@ -213,13 +213,13 @@ public:
     ,const JSphCpu *sphcpu,unsigned idnext,unsigned sizenp,unsigned np
     ,tdouble3 *pos,unsigned *dcell,typecode *code,unsigned *idp,const byte *zsurfok
     ,tfloat4 *velrhop,byte *newizone);
-  unsigned ComputeStepFillingCpu(unsigned inoutcount,int *inoutpart
-    ,const JSphCpu *sphcpu,unsigned idnext,unsigned sizenp,unsigned np
-    ,tdouble3 *pos,unsigned *dcell,typecode *code,unsigned *idp,tfloat4 *velrhop
-    ,const byte *zsurfok,float *prodist,tdouble3 *propos);
+  unsigned ComputeStepFillingCpu(unsigned inoutcount,int* inoutpart
+    ,const JSphCpu* sphcpu,unsigned idnext,unsigned sizenp,unsigned np
+    ,tdouble3* pos,unsigned* dcell,typecode* code,unsigned* idp
+    ,tfloat4* velrhop,const byte* zsurfok,float* prodist,tdouble3* propos);
 
-  void UpdateVelrhopM1Cpu(unsigned inoutcount,const int *inoutpart
-    ,const tfloat4 *velrhop,tfloat4 *velrhopm1);
+  void UpdateVelrhopM1Cpu(unsigned inoutcount,const int* inoutpart
+    ,const tfloat4* velrho,tfloat4* velrhom1);
 
 
 //-Specific code for GPU.
@@ -233,21 +233,22 @@ public:
     ,const double2 *posxyg,const double *poszg,const typecode *codeg,const unsigned *idpg
     ,const float *zsurfpart,float4 *velrhopg);
 
-  void InterpolateVelGpu(float timestep,unsigned inoutcount,const int *inoutpartg
-    ,const double2 *posxyg,const double *poszg,const typecode *codeg
-    ,const unsigned *idpg,float4 *velrhopg);
+  void InterpolateVelGpu(float timestep,unsigned inoutcount,const int* inoutpartg
+    ,const double2* posxyg,const double* poszg,const typecode* codeg
+    ,const unsigned* idpg,float4* velrhopg);
 
   unsigned ComputeStepGpu(unsigned inoutcount,int *inoutpartg
-    ,unsigned idnext,unsigned sizenp,unsigned np,double2 *posxyg,double *poszg
-    ,unsigned *dcellg,typecode *codeg,unsigned *idpg,const byte *zsurfok
-    ,float4 *velrhopg,byte *newizoneg,const JSphGpuSingle *gp);
-  unsigned ComputeStepFillingGpu(unsigned nstep,double dt,unsigned inoutcount,int *inoutpartg
-    ,unsigned idnext,unsigned sizenp,unsigned np
-    ,double2 *posxyg,double *poszg,unsigned *dcellg,typecode *codeg,unsigned *idpg,float4 *velrhopg
-    ,const byte* zsurfokg,float *prodistg,double2 *proposxyg,double *proposzg,JDsTimersGpu *timersg);
+    ,unsigned idnext,unsigned sizenp,unsigned np,double2* posxyg,double* poszg
+    ,unsigned* dcellg,typecode* codeg,unsigned* idpg,const byte* zsurfok
+    ,float4* velrhopg,byte* newizoneg,const JSphGpuSingle* gp);
+  unsigned ComputeStepFillingGpu(unsigned nstep,double dt,unsigned inoutcount
+    ,int* inoutpartg,unsigned idnext,unsigned sizenp,unsigned np
+    ,double2* posxyg,double* poszg,unsigned* dcellg,typecode* codeg
+    ,unsigned* idpg,float4* velrhopg,const byte* zsurfokg,float* prodistg
+    ,double2* proposxyg,double* proposzg,JDsTimersGpu* timersg);
 
-  void UpdateVelrhopM1Gpu(unsigned inoutcount,const int *inoutpartg
-    ,const float4 *velrhopg,float4 *velrhopm1g);
+  void UpdateVelrhopM1Gpu(unsigned inoutcount,const int* inoutpartg
+    ,const float4* velrhopg,float4* velrhopm1g);
 #endif
 
   void UpdateVelData(double timestep);

@@ -87,7 +87,7 @@ public:
   bool ConfigPiston(word mkbound,word pistonid,unsigned idbegin,unsigned np,double timemax){ return(false); }
   bool ExistsPistonByMk(word mkbound){ return(false); }
   void CheckPistons(){}
-  void PreparePiston(double dp,unsigned np,const unsigned *idp,const tdouble3 *pos){}
+  void PreparePiston(double dp,unsigned np,const unsigned* idp,const tdouble3* pos){}
 
   void VisuConfig(std::string txhead,std::string txfoot){}
 
@@ -174,7 +174,7 @@ public:
   bool ConfigPiston(word mkbound,word pistonid,unsigned idbegin,unsigned np,double timemax);
   bool ExistsPistonByMk(word mkbound);
   void CheckPistons();
-  void PreparePiston(double dp,unsigned np,const unsigned *idp,const tdouble3 *pos);
+  void PreparePiston(double dp,unsigned np,const unsigned* idp,const tdouble3* pos);
 
   void VisuConfig(std::string txhead,std::string txfoot);
 

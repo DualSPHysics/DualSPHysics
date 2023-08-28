@@ -186,8 +186,8 @@ std::string JDebugSphGpu::GetFileName(std::string filename,int numfile,int gid){
 /// Loads particle data in object ffdata
 /// Carga datos de las particulas en el objeto ffdata.
 //==============================================================================
-void JDebugSphGpu::LoadParticlesData(const JSphGpuSingle *gp,unsigned pini,unsigned pfin
-  ,std::string vars,JDataArrays *arrays,std::string file)
+void JDebugSphGpu::LoadParticlesData(const JSphGpuSingle* gp,unsigned pini
+  ,unsigned pfin,std::string vars,JDataArrays* arrays,std::string file)
 {
   //const bool DG=(file.find("_FcHaloRig")>=0);
   //if(DG)AppInfo.LogPtr()->Printf("file [%s]",file.c_str());
@@ -201,7 +201,7 @@ void JDebugSphGpu::LoadParticlesData(const JSphGpuSingle *gp,unsigned pini,unsig
   //-Loads data in arrays object.
   arrays->Reset();
   if(all || FindVar("idp",vars)){
-    const unsigned *idp=fcuda::ToHostUint(pini,n,gp->Idpg);
+    const unsigned* idp=fcuda::ToHostUint(pini,n,gp->Idp_g->cptr());
     arrays->AddArray("Idp",n,idp,true);
   }
   if(all || FindVar("seq",vars)){
@@ -209,35 +209,35 @@ void JDebugSphGpu::LoadParticlesData(const JSphGpuSingle *gp,unsigned pini,unsig
   }
   //-Loads dcell.
   if(all || FindVar("cell",vars)){
-    const unsigned *dcell=fcuda::ToHostUint(pini,n,gp->Dcellg);
+    const unsigned* dcell=fcuda::ToHostUint(pini,n,gp->Dcell_g->cptr());
     arrays->AddArray("Cell",n,GetCell3(n,dcell,gp->DomCellCode),true);
     delete[] dcell; dcell=NULL;
   }
   //-Loads vel and rhop.
   if(all || FindVar("vel",vars) || FindVar("rhop",vars)){
-    const tfloat4 *velrhop=fcuda::ToHostFloat4(pini,n,gp->Velrhopg);
-    if(all || FindVar("vel",vars)) arrays->AddArray("Vel" ,n,JDataArrays::NewArrayFloat3xyz(n,velrhop),true);
-    if(all || FindVar("rhop",vars))arrays->AddArray("Rhop",n,JDataArrays::NewArrayFloat1w(n,velrhop),true);
-    delete[] velrhop; velrhop=NULL;
+    const tfloat4* velrho=fcuda::ToHostFloat4(pini,n,gp->Velrho_g->cptr());
+    if(all || FindVar("vel",vars)) arrays->AddArray("Vel" ,n,JDataArrays::NewArrayFloat3xyz(n,velrho),true);
+    if(all || FindVar("rhop",vars))arrays->AddArray("Rhop",n,JDataArrays::NewArrayFloat1w(n,velrho),true);
+    delete[] velrho; velrho=NULL;
   }
   //-Loads code.
   if(all || FindVar("code",vars)){
     #ifdef CODE_SIZE4
-      const typecode *code=fcuda::ToHostUint(pini,n,gp->Codeg);
+      const typecode* code=fcuda::ToHostUint(pini,n,gp->Code_g->cptr());
     #else
-      const typecode *code=fcuda::ToHostWord(pini,n,gp->Codeg);
+      const typecode* code=fcuda::ToHostWord(pini,n,gp->Code_g->cptr());
     #endif
     arrays->AddArray("Code",n,code,true);
     arrays->AddArray("Type",n,GetCodeType(n,code),true);
-    byte *typesp=new byte[n];
+    byte* typesp=new byte[n];
     for(unsigned p=0;p<n;p++)typesp[p]=byte(CODE_GetSpecialByte(code[p]));
     arrays->AddArray("TypeSp",n,typesp,true);
     arrays->AddArray("TypeValue",n,GetCodeTypeValue(n,code),true);
   }
   //-Loads pos.
   {
-    const tdouble2 *posxy=fcuda::ToHostDouble2(pini,n,gp->Posxyg);
-    const double   *posz =fcuda::ToHostDouble (pini,n,gp->Poszg);
+    const tdouble2* posxy=fcuda::ToHostDouble2(pini,n,gp->Posxy_g->cptr());
+    const double*   posz =fcuda::ToHostDouble (pini,n,gp->Posz_g->cptr());
     if(FindVar("posd",vars))arrays->AddArray("Pos",n,GetPosd3(n,posxy,posz),true);
     else                    arrays->AddArray("Pos",n,GetPosf3(n,posxy,posz),true);
     delete[] posxy; posxy=NULL;
@@ -245,9 +245,9 @@ void JDebugSphGpu::LoadParticlesData(const JSphGpuSingle *gp,unsigned pini,unsig
   }
   //-Loads poscell. //<vs_tesmode_ini> 
   if(all || FindVar("poscell",vars)){
-    const float4 *ptrg=gp->PosCellg;
+    const float4* ptrg=gp->PosCell_g->cptr();
     if(ptrg){
-      const tfloat4 *poscell=fcuda::ToHostFloat4(pini,n,ptrg);
+      const tfloat4* poscell=fcuda::ToHostFloat4(pini,n,ptrg);
       arrays->AddArray("poscell_Pos" ,n,GetPosCell_Pos (n,poscell),true);
       arrays->AddArray("poscell_Cell",n,GetPosCell_Cell(n,poscell),true);
       delete[] poscell; poscell=NULL;
@@ -256,13 +256,13 @@ void JDebugSphGpu::LoadParticlesData(const JSphGpuSingle *gp,unsigned pini,unsig
   } //<vs_tesmode_end> 
   //-Loads ace.
   if(all || FindVar("ace",vars)){
-    const float3 *ptrg=gp->Aceg;
+    const float3* ptrg=gp->Ace_g->cptr();
     if(ptrg)arrays->AddArray("Ace",n,fcuda::ToHostFloat3(pini,n,ptrg),true);
     else if(!all)Run_ExceptioonFileSta("The variable Aceg is NULL.",file);
   }
   //-Loads ar.
   if(all || FindVar("ar",vars)){
-    const float *ptrg=gp->Arg;
+    const float* ptrg=gp->Ar_g->cptr();
     if(ptrg)arrays->AddArray("Ar",n,fcuda::ToHostFloat(pini,n,ptrg),true);
     else if(!all)Run_ExceptioonFileSta("The variable Arg is NULL.",file);
   }

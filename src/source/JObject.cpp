@@ -45,7 +45,8 @@ void JObject::RunExceptioon(const std::string &srcfile,int srcline
   ,const std::string &classname,const std::string &method
   ,const std::string &msg,const std::string &file)const
 {
-  throw JException(srcfile,srcline,classname,method,msg,file);
+  const std::string oid=ObjectId();
+  throw JException(srcfile,srcline,(oid.empty()? classname: oid),method,msg,file);
 }
 
 //==============================================================================
@@ -56,7 +57,15 @@ void JObject::RunException(const std::string &method,const std::string &msg
 {
   //if(DestructorActive)PrintException(method,msg,file);
   //PrintException(method,msg,file);
-  throw JException(ClassName,method,msg,file);
+  const std::string oid=ObjectId();
+  throw JException((oid.empty()? ClassName: oid),method,msg,file);
+}
+
+//==============================================================================
+/// Returns the object identification for exception message and debug.
+//==============================================================================
+std::string JObject::ObjectId()const{
+  return("");
 }
 
 ////==============================================================================

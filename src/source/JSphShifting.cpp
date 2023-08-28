@@ -343,7 +343,9 @@ template<bool first,bool dbl> void JSphShifting::InitCpuPlanes(unsigned n,unsign
 /// Select particles for shifting and initialize shiftposfs[].
 /// Selecciona particulas para shifting e inicializa shiftposfs[].
 //==============================================================================
-void JSphShifting::InitCpu(unsigned n,unsigned pini,const tdouble3* pos,tfloat4* shiftposfs)const{
+void JSphShifting::InitCpu(unsigned n,unsigned pini,const tdouble3* pos
+  ,tfloat4* shiftposfs)const
+{
   const unsigned nz=GetCount();
   if(!nz)memset(shiftposfs+pini,0,sizeof(tfloat4)*n);   //shiftposfs[]=0
   else{
@@ -422,8 +424,8 @@ void JSphShifting::RunCpu(unsigned n,unsigned pini,double dt,const tfloat4* velr
 /// Select particles for shifting and initialize shiftposfs[].
 /// Selecciona particulas para shifting e inicializa shiftposfs[].
 //==============================================================================
-void JSphShifting::InitGpu(unsigned n,unsigned pini,const double2* posxy,const double* posz
-  ,float4* shiftposfs,cudaStream_t stm)const
+void JSphShifting::InitGpu(unsigned n,unsigned pini,const double2* posxy
+  ,const double* posz,float4* shiftposfs,cudaStream_t stm)const
 {
   const unsigned nz=GetCount();
   if(!nz)cudaMemsetAsync(shiftposfs+pini,0,sizeof(float4)*n,stm);  //ShiftPosfsg[]=0

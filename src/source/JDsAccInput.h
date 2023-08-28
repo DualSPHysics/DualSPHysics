@@ -132,11 +132,11 @@ public:
   const StAceInput& GetAccValues(unsigned cinput,double timestep); //SL: Added linear and angular velocity and set gravity flag
 
   void RunCpu(double timestep,tfloat3 gravity,unsigned n,unsigned pini
-    ,const typecode *code,const tdouble3 *pos,const tfloat4 *velrhop,tfloat3 *ace);
+    ,const typecode* code,const tdouble3* pos,const tfloat4* velrho,tfloat3* ace);
 
 #ifdef _WITHGPU
   void RunGpu(double timestep,tfloat3 gravity,unsigned n,unsigned pini
-    ,const typecode *code,const double2 *posxy,const double *posz,const float4 *velrhop,float3 *ace);
+    ,const typecode* code,const double2* posxy,const double* posz,const float4* velrho,float3* ace);
 #endif
 };
 

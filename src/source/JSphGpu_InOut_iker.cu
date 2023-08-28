@@ -42,7 +42,8 @@ namespace cusphinout{
 /// Mark special fluid particles to ignore.
 /// Marca las particulas fluidas especiales para ignorar.
 //------------------------------------------------------------------------------
-__global__ void KerInOutIgnoreFluidDef(unsigned n,typecode cod,typecode codnew,typecode *code)
+__global__ void KerInOutIgnoreFluidDef(unsigned n,typecode cod,typecode codnew
+  ,typecode* code)
 {
   const unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
   if(p<n){
@@ -54,7 +55,7 @@ __global__ void KerInOutIgnoreFluidDef(unsigned n,typecode cod,typecode codnew,t
 /// Mark special fluid particles to ignore.
 /// Marca las particulas fluidas especiales para ignorar.
 //==============================================================================
-void InOutIgnoreFluidDef(unsigned n,typecode cod,typecode codnew,typecode *code){
+void InOutIgnoreFluidDef(unsigned n,typecode cod,typecode codnew,typecode* code){
   if(n){
     dim3 sgrid=GetSimpleGridSize(n,SPHBSIZE);
     KerInOutIgnoreFluidDef <<<sgrid,SPHBSIZE>>> (n,cod,codnew,code);
@@ -118,7 +119,7 @@ void UpdatePosFluid(byte periactive,unsigned n,unsigned pini
 /// Creates list with current inout particles (normal and periodic).
 //------------------------------------------------------------------------------
 __global__ void KerInOutCreateListSimple(unsigned n,unsigned pini
-  ,const typecode *code,unsigned *listp)
+  ,const typecode* code,unsigned* listp)
 {
   extern __shared__ unsigned slist[];
   if(!threadIdx.x)slist[0]=0;
@@ -146,7 +147,7 @@ __global__ void KerInOutCreateListSimple(unsigned n,unsigned pini
 /// With stable activated reorders perioc list.
 //==============================================================================
 unsigned InOutCreateListSimple(bool stable,unsigned n,unsigned pini
-  ,const typecode *code,unsigned *listp)
+  ,const typecode* code,unsigned* listp)
 {
   unsigned count=0;
   if(n){

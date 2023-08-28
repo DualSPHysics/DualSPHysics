@@ -37,11 +37,11 @@ namespace cusphinout{
 //inline tfloat3 ToTFloat3(const float3& v){ return(TFloat3(v.x,v.y,v.z)); }
 
 //-Kernels for inlet/outlet (JSphInOut).
-void InOutIgnoreFluidDef(unsigned n,typecode cod,typecode codnew,typecode *code);
+void InOutIgnoreFluidDef(unsigned n,typecode cod,typecode codnew,typecode* code);
 void UpdatePosFluid(byte periactive,unsigned n,unsigned pini
   ,double2 *posxy,double *posz,unsigned *dcell,typecode *code);
 unsigned InOutCreateListSimple(bool stable,unsigned n,unsigned pini
-  ,const typecode *code,unsigned *listp);
+  ,const typecode* code,unsigned* listp);
 unsigned InOutCreateList(bool stable,unsigned n,unsigned pini
   ,byte chkinputmask,byte nzone,const byte *cfgzone,const float4 *planes
   ,tfloat3 freemin,tfloat3 freemax

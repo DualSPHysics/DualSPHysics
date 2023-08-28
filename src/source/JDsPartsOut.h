@@ -55,16 +55,16 @@ protected:
   unsigned OutMovCount;  ///<Number of excluded particles due movement.
 
   //-Normal CPU memory pointers.
-  unsigned *Idp;
-  tdouble3 *Pos;
-  tfloat3 *Vel;
-  float *Rhop;
-  byte *Motive; ///<Motives for exclusion. 1:position, 2:rhop, 3:velocity.
+  unsigned* Idp;
+  tdouble3* Pos;
+  tfloat3*  Vel;
+  float*    Rho;
+  byte*     Motive; ///<Motives for exclusion. 1:position, 2:rhop, 3:velocity.
 
   unsigned MemAllocs;     ///<Number of allocations.
   llong MemCpuParticles;  ///<Allocated normal CPU memory.
 
-
+protected:
   void AllocMemory(unsigned size,bool reset);
   void AddData(unsigned np,const typecode* code);
 
@@ -77,7 +77,7 @@ public:
   llong GetAllocMemory()const{ return(MemCpuParticles); }
 
   void AddParticles(unsigned np,const unsigned* idp,const tdouble3* pos
-    ,const tfloat3* vel,const float* rhop,const typecode* code);
+    ,const tfloat3* vel,const float* rho,const typecode* code);
 
   unsigned GetSize()const{ return(Size); }
   unsigned GetCount()const{ return(Count); }
@@ -88,9 +88,9 @@ public:
 
   const unsigned* GetIdpOut(){ return(Idp); }
   const tdouble3* GetPosOut(){ return(Pos); }
-  const tfloat3* GetVelOut(){ return(Vel); }
-  const float* GetRhopOut(){ return(Rhop); }
-  const byte* GetMotiveOut(){ return(Motive); }
+  const tfloat3*  GetVelOut(){ return(Vel); }
+  const float*    GetRhoOut(){ return(Rho); }
+  const byte*     GetMotiveOut(){ return(Motive); }
 
   void Clear(){ Count=0; OutPosCount=OutRhoCount=OutMovCount=0; };
 };

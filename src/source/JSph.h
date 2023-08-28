@@ -23,7 +23,7 @@
 //:#   despues se convierte a float (22-04-2013)
 //:# - Mejora la gestion de excepciones. (06-05-2020)
 //:# - Comprobacion de la densidad inicial de las particulas fluido en la funcion
-//:#   CheckRhopLimits(). (24-06-2020)
+//:#   CheckRhoLimits(). (24-06-2020)
 //:# - Funcion FtApplyExternalVel() para aplicar una velocidad externa a objetos
 //:#   flotantes usando Chrono. (01-07-2020)
 //:#############################################################################
@@ -119,11 +119,13 @@ public:
 private:
   //-Total number of excluded particles according to reason for exclusion.
   //-Numero acumulado de particulas excluidas segun motivo.
-  unsigned OutPosCount,OutRhopCount,OutMoveCount;
+  unsigned OutPosCount,OutRhoCount,OutMovCount;
 
   void InitVars();
   std::string CalcRunCode()const;
-  void AddOutCount(unsigned outpos,unsigned outrhop,unsigned outmove){ OutPosCount+=outpos; OutRhopCount+=outrhop; OutMoveCount+=outmove; }
+  void AddOutCount(unsigned outpos,unsigned outrho,unsigned outmov){ 
+    OutPosCount+=outpos; OutRhoCount+=outrho; OutMovCount+=outmov; 
+  }
   void ClearCfgDomain();
   void ConfigDomainFixed(tdouble3 vmin,tdouble3 vmax);
   void ConfigDomainFixedValue(std::string key,double v);
@@ -400,7 +402,7 @@ protected:
   JTimer TimerPart;        ///<Measueres runtime since last PART.                | Mide el tiempo de ejecucion desde el ultimo PART.
   
   //-Execution variables.
-  JPartsLoad4 *PartsLoaded;
+  JPartsLoad4* PartsLoaded;
   TpInterStep InterStep;
   int VerletStep;
   double SymplecticDtPre;  ///<Previous Dt to use with Symplectic.
@@ -429,9 +431,9 @@ protected:
   StDemData LoadDemData(bool checkdata,const JCasePartBlock* block)const;
   void VisuDemCoefficients()const;
 
-  void LoadCodeParticles(unsigned np,const unsigned *idp,typecode *code)const;
-  void LoadBoundNormals(unsigned np,unsigned npb,const unsigned *idp,const typecode *code,tfloat3 *boundnormal);
-  void ConfigBoundNormals(unsigned np,unsigned npb,const tdouble3 *pos,const unsigned *idp,tfloat3 *boundnormal);
+  void LoadCodeParticles(unsigned np,const unsigned* idp,typecode* code)const;
+  void LoadBoundNormals(unsigned np,unsigned npb,const unsigned* idp,const typecode* code,tfloat3* boundnormal);
+  void ConfigBoundNormals(unsigned np,unsigned npb,const tdouble3* pos,const unsigned* idp,tfloat3* boundnormal);
 
   void PrepareCfgDomainValues(tdouble3 &v,tdouble3 vdef=TDouble3(0))const;
   void ResizeMapLimits();
@@ -450,11 +452,11 @@ protected:
   void ConfigCellDivision();
   void SelecDomain(tuint3 celini,tuint3 celfin);
   void ConfigPosCellGpu();
-  void CalcFloatingRadius(unsigned np,const tdouble3 *pos,const unsigned *idp);
+  void CalcFloatingRadius(unsigned np,const tdouble3* pos,const unsigned* idp);
   tdouble3 UpdatePeriodicPos(tdouble3 ps)const;
 
   void RestartCheckData(bool loadpsingle);
-  void CheckRhopLimits();
+  void CheckRhoLimits();
   void LoadCaseParticles();
   void InitRun(unsigned np,const unsigned* idp,const tdouble3* pos);
   void InitFloatings();
@@ -472,13 +474,22 @@ protected:
   void PrintSizeNp(unsigned np,llong size,unsigned allocs)const;
   void PrintHeadPart();
 
-  void ConfigSaveData(unsigned piece,unsigned pieces,std::string div,unsigned np,const tdouble3* pos,const unsigned* idp);
-  void AddParticlesOut(unsigned nout,const unsigned *idp,const tdouble3 *pos,const tfloat3 *vel,const float *rhop,const typecode *code);
-  void AbortBoundOut(JLog2 *log,unsigned nout,const unsigned *idp,const tdouble3 *pos,const tfloat3 *vel,const float *rhop,const typecode *code);
+  void ConfigSaveData(unsigned piece,unsigned pieces,std::string div
+    ,unsigned np,const tdouble3* pos,const unsigned* idp);
+  void AddParticlesOut(unsigned nout,const unsigned* idp,const tdouble3* pos
+    ,const tfloat3* vel,const float* rho,const typecode* code);
+  void AbortBoundOut(JLog2* log,unsigned nout,const unsigned* idp
+    ,const tdouble3* pos,const tfloat3* vel,const float* rho
+    ,const typecode* code);
+
+  void Pos21ToPos3(unsigned n,const tdouble2* posxy,const double* posz,tdouble3* pos)const;
+  void Pos3ToPos21(unsigned n,const tdouble3* pos,tdouble2* posxy,double* posz)const;
+  void Pos21Vel4ToPos3Vel31(unsigned n,const tdouble2* posxy,const double* posz
+    ,const tfloat4* velrho,tdouble3* pos,tfloat3* vel,float* rho)const;
 
   tfloat3* GetPointerDataFloat3(unsigned n,const tdouble3* v)const;
-  void AddBasicArrays(JDataArrays &arrays,unsigned np,const tdouble3 *pos
-    ,const unsigned *idp,const tfloat3 *vel,const float *rhop)const;
+  void AddBasicArrays(JDataArrays& arrays,unsigned np,const tdouble3* pos
+    ,const unsigned* idp,const tfloat3* vel,const float* rho)const;
   void SaveRunPartsCsv(const StInfoPartPlus& infoplus,double tpart,double tsim)const;
   void SaveRunPartsCsvFinal()const;
   void SavePartData(unsigned npsave,unsigned nout,const JDataArrays& arrays,unsigned ndom,const tdouble3* vdom,const StInfoPartPlus& infoplus);
@@ -500,8 +511,9 @@ protected:
   void ShowResume(bool stop,float tsim,float ttot,bool all,std::string infoplus);
 
   unsigned GetOutPosCount()const{ return(OutPosCount); }
-  unsigned GetOutRhopCount()const{ return(OutRhopCount); }
-  unsigned GetOutMoveCount()const{ return(OutMoveCount); }
+  unsigned GetOutRhoCount()const{ return(OutRhoCount); }
+  unsigned GetOutMovCount()const{ return(OutMovCount); }
+  unsigned GetOutTotCount()const{ return(OutPosCount+OutRhoCount+OutMovCount); }
 
 public:
   JSph(bool cpu,bool mgpu,bool withmpi);

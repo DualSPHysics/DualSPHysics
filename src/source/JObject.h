@@ -57,7 +57,7 @@ protected:
 
 public:  
   JObject():ClassName("JObject"),DestructorActive(false){} ///<Constructor of objects.
-
+  virtual std::string ObjectId()const;
 
 };
 

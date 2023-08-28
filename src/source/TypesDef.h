@@ -261,6 +261,21 @@ inline tfloat3 ToTFloat3(const tdouble3& v){ return(TFloat3(float(v.x),float(v.y
 inline tdouble3 ToTDouble3(const tfloat3& v){ return(TDouble3(v.x,v.y,v.z)); }
 
 
+///Structure of 4 variables of type word.
+typedef struct{
+  word x,y,z,w;
+}tword4;
+
+inline tword4 TWord4(word v){ tword4 p={v,v,v,v}; return(p); }
+inline tword4 TWord4(word x,word y,word z,word w){ tword4 p={x,y,z,w}; return(p); }
+inline bool  operator ==(const tword4& a, const tword4& b){ return(a.x==b.x&&a.y==b.y&&a.z==b.z&&a.w==b.w); }
+inline bool  operator !=(const tword4& a, const tword4& b){ return(a.x!=b.x||a.y!=b.y||a.z!=b.z||a.w!=b.w); }
+inline tword4 operator +(const tword4& a, const tword4& b){ return(TWord4(a.x+b.x,a.y+b.y,a.z+b.z,a.w+b.w)); }
+inline tword4 operator -(const tword4& a, const tword4& b){ return(TWord4(a.x-b.x,a.y-b.y,a.z-b.z,a.w-b.w)); }
+inline tword4 operator *(const tword4& a, const tword4& b){ return(TWord4(a.x*b.x,a.y*b.y,a.z*b.z,a.w*b.w)); }
+inline tword4 operator /(const tword4& a, const tword4& b){ return(TWord4(a.x/b.x,a.y/b.y,a.z/b.z,a.w/b.w)); }
+
+
 ///Structure of 4 variables of type int.
 typedef struct{
   int x,y,z,w;

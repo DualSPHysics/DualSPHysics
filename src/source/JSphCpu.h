@@ -25,6 +25,7 @@
 #include "JDsTimersCpu.h"
 #include "JCellDivDataCpu.h"
 #include "JSph.h"
+#include "JArraysCpu.h"
 #include <string>
 
 
@@ -32,37 +33,37 @@
 typedef struct{
   unsigned np,npb,npbok,npf; // npf=np-npb
   StDivDataCpu divdata;
-  const unsigned *dcell;
-  const tdouble3 *pos;
-  const tfloat4 *velrhop;
-  const unsigned *idp;
-  const typecode *code;
-  const float *press;
-  const tfloat3 *dengradcorr;
-  float* ar;
-  tfloat3 *ace;
-  float *delta;
+  const unsigned* dcell;
+  const tdouble3* pos;
+  const tfloat4*  velrho;
+  const unsigned* idp;
+  const typecode* code;
+  const float*    press;
+  const tfloat3*  dengradcorr;
+  float*   ar;
+  tfloat3* ace;
+  float*   delta;
   TpShifting shiftmode;
-  tfloat4 *shiftposfs;
-  tsymatrix3f *spstau;
-  tsymatrix3f *spsgradvel;
+  tfloat4*   shiftposfs;
+  tsymatrix3f* spstau;
+  tsymatrix3f* spsgradvel;
 }stinterparmsc;
 
 ///Collects parameters for particle interaction on CPU.
 inline stinterparmsc StInterparmsc(unsigned np,unsigned npb,unsigned npbok
-  ,StDivDataCpu divdata,const unsigned *dcell
-  ,const tdouble3 *pos,const tfloat4 *velrhop,const unsigned *idp,const typecode *code
-  ,const float *press
-  ,const tfloat3 *dengradcorr
-  ,float* ar,tfloat3 *ace,float *delta
-  ,TpShifting shiftmode,tfloat4 *shiftposfs
-  ,tsymatrix3f *spstau,tsymatrix3f *spsgradvel
+  ,StDivDataCpu divdata,const unsigned* dcell
+  ,const tdouble3* pos,const tfloat4* velrho,const unsigned* idp
+  ,const typecode* code,const float* press
+  ,const tfloat3* dengradcorr
+  ,float* ar,tfloat3* ace,float* delta
+  ,TpShifting shiftmode,tfloat4* shiftposfs
+  ,tsymatrix3f* spstau,tsymatrix3f* spsgradvel
 )
 {
   stinterparmsc d={np,npb,npbok,(np-npb)
     ,divdata,dcell
-    ,pos,velrhop,idp,code
-    ,press
+    ,pos,velrho,idp
+    ,code,press
     ,dengradcorr
     ,ar,ace,delta
     ,shiftmode,shiftposfs
@@ -79,7 +80,6 @@ typedef struct{
 
 
 class JDsPartsOut;
-class JArraysCpu;
 class JCellDivCpu;
 
 //##############################################################################
@@ -110,54 +110,49 @@ protected:
   bool BoundChanged;  ///<Indicates if selected boundary has changed since last call of divide. | Indica si el contorno seleccionado a cambiado desde el ultimo divide.
 
   unsigned CpuParticlesSize;  ///<Number of particles with reserved memory on the CPU. | Numero de particulas para las cuales se reservo memoria en cpu.
-  llong MemCpuParticles;      ///<Memory reserved for particles' vectors. | Mermoria reservada para vectores de datos de particulas.
   llong MemCpuFixed;          ///<Memory reserved in AllocMemoryFixed. | Mermoria reservada en AllocMemoryFixed.
 
   unsigned* RidpMot; ///<Particle index according to Idp (only for moving and floating particles and updated after RunCellDivide) [CaseNmoving+CaseNfloat]. 
 
   //-List of particle arrays on CPU. | Lista de arrays en CPU para particulas.
-  JArraysCpu* ArraysCpu;
+  JArraysCpu* Arrays_Cpu;
 
   //-Execution Variables for particles (size=ParticlesSize). | Variables con datos de las particulas para ejecucion (size=ParticlesSize).
-  unsigned *Idpc;    ///<Identifier of particle | Identificador de particula.
-  typecode *Codec;   ///<Indicator of group of particles & other special markers. | Indica el grupo de las particulas y otras marcas especiales.
-  unsigned *Dcellc;  ///<Cells inside DomCells coded with DomCellCode. | Celda dentro de DomCells codificada con DomCellCode.
-  tdouble3 *Posc;
-  tfloat4 *Velrhopc;
+  acuint*     Idp_c;       ///<Identifier of particle | Identificador de particula.
+  actypecode* Code_c;  ///<Indicator of group of particles & other special markers. | Indica el grupo de las particulas y otras marcas especiales.
+  acuint*     Dcell_c;     ///<Cells inside DomCells coded with DomCellCode. | Celda dentro de DomCells codificada con DomCellCode.
+  acdouble3*  Pos_c;
+  acfloat4*   Velrho_c;
 
-  tfloat3 *BoundNormalc;  ///<Normal (x,y,z) pointing from boundary particles to ghost nodes.
-  tfloat3 *MotionVelc;    ///<Velocity of a moving boundary particle.
+  acfloat3*   BoundNormal_c;  ///<Normal (x,y,z) pointing from boundary particles to ghost nodes.
+  acfloat3*   MotionVel_c;    ///<Velocity of a moving boundary particle.
     
   //-Variables for compute step: VERLET. | Vars. para compute step: VERLET.
-  tfloat4 *VelrhopM1c;  ///<Verlet: in order to keep previous values. | Verlet: para guardar valores anteriores.
-
+  acfloat4*   VelrhoM1_c;  ///<Verlet: in order to keep previous values. | Verlet: para guardar valores anteriores.
   //-Variables for compute step: SYMPLECTIC. | Vars. para compute step: SYMPLECTIC.
-  tdouble3 *PosPrec;    ///<Sympletic: in order to keep previous values. | Sympletic: para guardar valores en predictor.
-  tfloat4 *VelrhopPrec;
+  acdouble3*  PosPre_c;    ///<Sympletic: in order to keep previous values. | Sympletic: para guardar valores en predictor.
+  acfloat4*   VelrhoPre_c;
 
   //-Variables for floating bodies.
-  StFtoForces *FtoForces;       ///<Stores forces of floatings [FtCount].
-  StFtoForcesRes *FtoForcesRes; ///<Stores data to update floatings [FtCount].
+  StFtoForces*    FtoForces;    ///<Stores forces of floatings [FtCount].
+  StFtoForcesRes* FtoForcesRes; ///<Stores data to update floatings [FtCount].
 
-  //-Variables for computation of forces | Vars. para computo de fuerzas.
-  tfloat3 *Acec;         ///<Sum of interaction forces | Acumula fuerzas de interaccion
-  float *Arc; 
-  float *Deltac;         ///<Adjusted sum with Delta-SPH with DELTA_DynamicExt | Acumula ajuste de Delta-SPH con DELTA_DynamicExt
-
-  tfloat4 *ShiftPosfsc;    ///<Particle displacement and free surface detection for Shifting.
+  //-Variables for computing forces.
+  acfloat3*   Ace_c;        ///<Sum of interaction forces | Acumula fuerzas de interaccion
+  acfloat*    Ar_c; 
+  acfloat*    Press_c;      ///<Pressure computed starting from density for interaction. Press[]=fsph::ComputePress(Rhop,CSP)
+  acfloat*    Delta_c;      ///<Adjusted sum with Delta-SPH with DELTA_DynamicExt | Acumula ajuste de Delta-SPH con DELTA_DynamicExt
+  acfloat4*   ShiftPosfs_c; ///<Particle displacement and free surface detection for Shifting.
 
   double VelMax;        ///<Maximum value of Vel[] sqrt(vel.x^2 + vel.y^2 + vel.z^2) computed in PreInteraction_Forces().
   double AceMax;        ///<Maximum value of Ace[] sqrt(ace.x^2 + ace.y^2 + ace.z^2) computed in Interaction_Forces().
   float ViscDtMax;      ///<Max value of ViscDt calculated in Interaction_Forces().
 
-  //-Variables for computing forces. | Vars. derivadas para computo de fuerzas.
-  float *Pressc;       ///<Pressure computed starting from density for interaction. Press[]=fsph::ComputePress(Rhop,CSP)
-
   //-Variables for Laminar+SPS viscosity.  
-  tsymatrix3f *SpsTauc;       ///<SPS sub-particle stress tensor.
-  tsymatrix3f *SpsGradvelc;   ///<Velocity gradients.
+  acsymatrix3f* SpsTau_c;     ///<SPS sub-particle stress tensor.
+  acsymatrix3f* SpsGradvel_c; ///<Velocity gradients.
 
-  JDsTimersCpu *Timersc;  ///<Manages timers for CPU execution.
+  JDsTimersCpu* Timersc;  ///<Manages timers for CPU execution.
 
   void InitVars();
 
@@ -166,39 +161,18 @@ protected:
   void FreeCpuMemoryParticles();
   void AllocCpuMemoryParticles(unsigned np,float over);
 
-  void ResizeCpuMemoryParticles(unsigned np,unsigned npmin);
-  void ReserveBasicArraysCpu();
-
-  bool CheckCpuParticlesSize(unsigned requirednp){ return(requirednp+PARTICLES_OVERMEMORY_MIN<=CpuParticlesSize); }
-
-  template<class T> T* TSaveArrayCpu(unsigned np,const T *datasrc)const;
-  word*        SaveArrayCpu(unsigned np,const word        *datasrc)const{ return(TSaveArrayCpu<word>       (np,datasrc)); }
-  unsigned*    SaveArrayCpu(unsigned np,const unsigned    *datasrc)const{ return(TSaveArrayCpu<unsigned>   (np,datasrc)); }
-  int*         SaveArrayCpu(unsigned np,const int         *datasrc)const{ return(TSaveArrayCpu<int>        (np,datasrc)); }
-  float*       SaveArrayCpu(unsigned np,const float       *datasrc)const{ return(TSaveArrayCpu<float>      (np,datasrc)); }
-  tfloat3*     SaveArrayCpu(unsigned np,const tfloat3     *datasrc)const{ return(TSaveArrayCpu<tfloat3>    (np,datasrc)); }
-  tfloat4*     SaveArrayCpu(unsigned np,const tfloat4     *datasrc)const{ return(TSaveArrayCpu<tfloat4>    (np,datasrc)); }
-  double*      SaveArrayCpu(unsigned np,const double      *datasrc)const{ return(TSaveArrayCpu<double>     (np,datasrc)); }
-  tdouble3*    SaveArrayCpu(unsigned np,const tdouble3    *datasrc)const{ return(TSaveArrayCpu<tdouble3>   (np,datasrc)); }
-  tsymatrix3f* SaveArrayCpu(unsigned np,const tsymatrix3f *datasrc)const{ return(TSaveArrayCpu<tsymatrix3f>(np,datasrc)); }
-  template<class T> void TRestoreArrayCpu(unsigned np,T *data,T *datanew)const;
-  void RestoreArrayCpu(unsigned np,word        *data,word        *datanew)const{ TRestoreArrayCpu<word>       (np,data,datanew); }
-  void RestoreArrayCpu(unsigned np,unsigned    *data,unsigned    *datanew)const{ TRestoreArrayCpu<unsigned>   (np,data,datanew); }
-  void RestoreArrayCpu(unsigned np,int         *data,int         *datanew)const{ TRestoreArrayCpu<int>        (np,data,datanew); }
-  void RestoreArrayCpu(unsigned np,float       *data,float       *datanew)const{ TRestoreArrayCpu<float>      (np,data,datanew); }
-  void RestoreArrayCpu(unsigned np,tfloat3     *data,tfloat3     *datanew)const{ TRestoreArrayCpu<tfloat3>    (np,data,datanew); }
-  void RestoreArrayCpu(unsigned np,tfloat4     *data,tfloat4     *datanew)const{ TRestoreArrayCpu<tfloat4>    (np,data,datanew); }
-  void RestoreArrayCpu(unsigned np,double      *data,double      *datanew)const{ TRestoreArrayCpu<double>     (np,data,datanew); }
-  void RestoreArrayCpu(unsigned np,tdouble3    *data,tdouble3    *datanew)const{ TRestoreArrayCpu<tdouble3>   (np,data,datanew); }
-  void RestoreArrayCpu(unsigned np,tsymatrix3f *data,tsymatrix3f *datanew)const{ TRestoreArrayCpu<tsymatrix3f>(np,data,datanew); }
+  void ResizeCpuMemoryParticlesData(unsigned ndatacpu,unsigned np,unsigned npmin);
+  bool CheckCpuParticlesSize(unsigned requirednp)const{ 
+    return(requirednp+PARTICLES_OVERMEMORY_MIN<=CpuParticlesSize);
+  }
 
   llong GetAllocMemoryCpu()const;
   void PrintAllocMemory(llong mcpu)const;
 
   unsigned GetParticlesData(unsigned n,unsigned pini,bool onlynormal
-    ,unsigned* idp,tdouble3* pos,tfloat3* vel,float* rhop,typecode* code
+    ,unsigned* idp,tdouble3* pos,tfloat3* vel,float* rho,typecode* code
     ,const byte* filter,unsigned &npfilterdel);
-  void ConfigOmp(const JSphCfgRun *cfg);
+  void ConfigOmp(const JSphCfgRun* cfg);
 
   void ConfigRunMode();
   void ConfigCellDiv(JCellDivCpu* celldiv){ CellDiv=celldiv; }
@@ -212,18 +186,18 @@ protected:
   void PosInteraction_Forces();
 
   template<TpKernel tker,TpFtMode ftmode> void InteractionForcesBound
-    (unsigned n,unsigned pini,StDivDataCpu divdata,const unsigned *dcell
-    ,const tdouble3 *pos,const tfloat4 *velrhop,const typecode *code,const unsigned *id
-    ,float &viscdt,float *ar)const;
+    (unsigned n,unsigned pini,StDivDataCpu divdata,const unsigned* dcell
+    ,const tdouble3* pos,const tfloat4* velrhop,const typecode* code,const unsigned* id
+    ,float &viscdt,float* ar)const;
 
   template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity,bool shift> 
     void InteractionForcesFluid(unsigned n,unsigned pini,bool boundp2,float visco
-    ,StDivDataCpu divdata,const unsigned *dcell
+    ,StDivDataCpu divdata,const unsigned* dcell
     ,const tsymatrix3f* tau,tsymatrix3f* gradvel
-    ,const tdouble3 *pos,const tfloat4 *velrhop,const typecode *code,const unsigned *idp
-    ,const float *press,const tfloat3 *dengradcorr
-    ,float &viscdt,float *ar,tfloat3 *ace,float *delta
-    ,TpShifting shiftmode,tfloat4 *shiftposfs)const;
+    ,const tdouble3* pos,const tfloat4* velrhop,const typecode* code,const unsigned* idp
+    ,const float* press,const tfloat3* dengradcorr
+    ,float &viscdt,float* ar,tfloat3* ace,float* delta
+    ,TpShifting shiftmode,tfloat4* shiftposfs)const;
 
   void InteractionForcesDEM(unsigned nfloat,StDivDataCpu divdata,const unsigned* dcell
     ,const unsigned* ftridp,const StDemData* demobjs
@@ -231,7 +205,7 @@ protected:
     ,float& viscdt,tfloat3* ace)const;
 
   template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity,bool shift> 
-    void Interaction_ForcesCpuT(const stinterparmsc &t,StInterResultc &res)const;
+    void Interaction_ForcesCpuT(const stinterparmsc& t,StInterResultc& res)const;
   template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity> void Interaction_Forces_ct5(const stinterparmsc &t,StInterResultc &res)const;
   template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco> void Interaction_Forces_ct4(const stinterparmsc &t,StInterResultc &res)const;
   template<TpKernel tker,TpFtMode ftmode> void Interaction_Forces_ct3(const stinterparmsc &t,StInterResultc &res)const;
@@ -240,19 +214,23 @@ protected:
 
   template<TpKernel tker,bool sim2d,TpSlipMode tslip> void InteractionMdbcCorrectionT2
     (unsigned n,StDivDataCpu divdata,float determlimit,float mdbcthreshold
-    ,const tdouble3 *pos,const typecode *code,const unsigned *idp
-    ,const tfloat3 *boundnormal,const tfloat3 *motionvel,tfloat4 *velrhop);
+    ,const tdouble3* pos,const typecode* code,const unsigned* idp
+    ,const tfloat3* boundnormal,const tfloat3* motionvel,tfloat4* velrhop);
   template<TpKernel tker> void Interaction_MdbcCorrectionT(TpSlipMode slipmode,const StDivDataCpu &divdata
-    ,const tdouble3 *pos,const typecode *code,const unsigned *idp
-    ,const tfloat3 *boundnormal,const tfloat3 *motionvel,tfloat4 *velrhop);
+    ,const tdouble3* pos,const typecode* code,const unsigned* idp
+    ,const tfloat3* boundnormal,const tfloat3* motionvel,tfloat4* velrhop);
   void Interaction_MdbcCorrection(TpSlipMode slipmode,const StDivDataCpu &divdata
-    ,const tdouble3 *pos,const typecode *code,const unsigned *idp
-    ,const tfloat3 *boundnormal,const tfloat3 *motionvel,tfloat4 *velrhop);
+    ,const tdouble3* pos,const typecode* code,const unsigned* idp
+    ,const tfloat3* boundnormal,const tfloat3* motionvel,tfloat4* velrhop);
 
-  void ComputeSpsTau(unsigned n,unsigned pini,const tfloat4 *velrhop,const tsymatrix3f *gradvel,tsymatrix3f *tau)const;
+  void ComputeSpsTau(unsigned n,unsigned pini,const tfloat4* velrhop,const tsymatrix3f* spsgradvel,tsymatrix3f* tau)const;
 
-  void ComputeVerletVarsFluid(bool shift,const tfloat3 *indirvel,const tfloat4 *velrhop1,const tfloat4 *velrhop2,double dt,double dt2,tdouble3 *pos,unsigned *cell,typecode *code,tfloat4 *velrhopnew)const;
-  void ComputeVelrhopBound(const tfloat4* velrhopold,double armul,tfloat4* velrhopnew)const;
+  void ComputeVerletVarsFluid(bool shift,const tfloat3* indirvel
+    ,const tfloat4* velrho1,const tfloat4* velrho2,double dt,double dt2
+    ,const float* ar,const tfloat3* ace,const tfloat4* shiftposfs 
+    ,tdouble3* pos,unsigned* cell,typecode* code,tfloat4* velrhonew)const;
+  void ComputeVelrhopBound(const tfloat4* velrhoold,const float* ar
+    ,double armul,tfloat4* velrhonew)const;
   void ComputeVerlet(double dt);
 
   void ComputeSymplecticPre(double dt);
@@ -272,7 +250,7 @@ protected:
   void CalcMotion(double stepdt);
   void RunMotion(double stepdt);
   void RunRelaxZone(double dt);
-  void RunDamping(double dt,unsigned np,unsigned npb,const tdouble3 *pos,const typecode *code,tfloat4 *velrhop)const;
+  void RunDamping(double dt);
 
   void MovePiston1d(unsigned np,unsigned ini,double poszmin,unsigned poszcount
     ,const byte* pistonid,const double* movx,const double* velx
@@ -285,7 +263,7 @@ public:
   JSphCpu(bool withmpi);
   ~JSphCpu();
 
-  void UpdatePos(tdouble3 pos0,double dx,double dy,double dz,bool outrhop,unsigned p,tdouble3 *pos,unsigned *cell,typecode *code)const;
+  void UpdatePos(tdouble3 pos0,double dx,double dy,double dz,bool outrhop,unsigned p,tdouble3* pos,unsigned* cell,typecode* code)const;
 
 //-Code for InOut in JSphCpu_InOut.cpp
 //--------------------------------------
@@ -293,32 +271,32 @@ protected:
   tdouble3 Interaction_PosNoPeriodic(tdouble3 posp1)const;
 
   template<bool sim2d,TpKernel tker> void InteractionInOutExtrap_Double
-    (unsigned inoutcount,const int *inoutpart,const byte *cfgzone
-    ,const tplane3f *planes,const float* width,const tfloat3 *dirdata,float determlimit
-    ,StDivDataCpu dvd,const unsigned *dcell,const tdouble3 *pos,const typecode *code
-    ,const unsigned *idp,tfloat4 *velrhop);
+    (unsigned inoutcount,const int* inoutpart,const byte* cfgzone
+    ,const tplane3f* planes,const float* width,const tfloat3* dirdata,float determlimit
+    ,StDivDataCpu dvd,const unsigned* dcell,const tdouble3* pos,const typecode* code
+    ,const unsigned* idp,tfloat4* velrhop);
   
   template<bool sim2d,TpKernel tker> void InteractionInOutExtrap_Single
-    (unsigned inoutcount,const int *inoutpart,const byte *cfgzone
-    ,const tplane3f *planes,const float* width,const tfloat3 *dirdata,float determlimit
-    ,StDivDataCpu dvd,const unsigned *dcell,const tdouble3 *pos,const typecode *code
-    ,const unsigned *idp,tfloat4 *velrhop);
+    (unsigned inoutcount,const int* inoutpart,const byte* cfgzone
+    ,const tplane3f* planes,const float* width,const tfloat3* dirdata,float determlimit
+    ,StDivDataCpu dvd,const unsigned* dcell,const tdouble3* pos,const typecode* code
+    ,const unsigned* idp,tfloat4* velrhop);
   
   template<TpKernel tker> inline void Interaction_InOutExtrapT
-    (byte doublemode,unsigned inoutcount,const int *inoutpart
-    ,const byte *cfgzone,const tplane3f *planes
-    ,const float* width,const tfloat3 *dirdata,float determlimit
-    ,const unsigned *dcell,const tdouble3 *pos,const typecode *code
-    ,const unsigned *idp,tfloat4 *velrhop);
+    (byte doublemode,unsigned inoutcount,const int* inoutpart
+    ,const byte* cfgzone,const tplane3f* planes
+    ,const float* width,const tfloat3* dirdata,float determlimit
+    ,const unsigned* dcell,const tdouble3* pos,const typecode* code
+    ,const unsigned* idp,tfloat4* velrhop);
 
-  void Interaction_InOutExtrap(byte doublemode,unsigned inoutcount,const int *inoutpart
-    ,const byte *cfgzone,const tplane3f *planes
-    ,const float* width,const tfloat3 *dirdata,float determlimit
-    ,const unsigned *dcell,const tdouble3 *pos,const typecode *code
-    ,const unsigned *idp,tfloat4 *velrhop);
+  void Interaction_InOutExtrap(byte doublemode,unsigned inoutcount,const int* inoutpart
+    ,const byte* cfgzone,const tplane3f* planes
+    ,const float* width,const tfloat3* dirdata,float determlimit
+    ,const unsigned* dcell,const tdouble3* pos,const typecode* code
+    ,const unsigned* idp,tfloat4* velrhop);
 
-  float Interaction_InOutZsurf(unsigned nptz,const tfloat3 *ptzpos,float maxdist,float zbottom
-    ,const StDivDataCpu &divdata,const tdouble3 *pos,const typecode *code);
+  float Interaction_InOutZsurf(unsigned nptz,const tfloat3* ptzpos,float maxdist,float zbottom
+    ,const StDivDataCpu &divdata,const tdouble3* pos,const typecode* code);
 
 };
 

@@ -33,7 +33,10 @@ using namespace std;
 JDsPartsOut::JDsPartsOut(unsigned sizeunit):SizeUnit(sizeunit)
 {
   ClassName="JDsPartsOut";
-  Idp=NULL; Pos=NULL; Vel=NULL; Rhop=NULL;
+  Idp=NULL;
+  Pos=NULL;
+  Vel=NULL;
+  Rho=NULL;
   Motive=NULL;
   Reset();
   AllocMemory(SizeUnit,true);
@@ -66,7 +69,7 @@ void JDsPartsOut::AllocMemory(unsigned size,bool reset){
     delete[] Idp;    Idp=NULL;
     delete[] Pos;    Pos=NULL;
     delete[] Vel;    Vel=NULL;
-    delete[] Rhop;   Rhop=NULL;
+    delete[] Rho;    Rho=NULL;
     delete[] Motive; Motive=NULL;
   }
   Size=unsigned((size+SizeUnit-1)/SizeUnit)*SizeUnit;
@@ -77,7 +80,7 @@ void JDsPartsOut::AllocMemory(unsigned size,bool reset){
       Idp   =fun::ResizeAlloc(Idp   ,Count,Size);  MemCpuParticles+=sizeof(unsigned)*Size;
       Pos   =fun::ResizeAlloc(Pos   ,Count,Size);  MemCpuParticles+=sizeof(tdouble3)*Size;
       Vel   =fun::ResizeAlloc(Vel   ,Count,Size);  MemCpuParticles+=sizeof(tfloat3) *Size;
-      Rhop  =fun::ResizeAlloc(Rhop  ,Count,Size);  MemCpuParticles+=sizeof(float)   *Size;
+      Rho   =fun::ResizeAlloc(Rho   ,Count,Size);  MemCpuParticles+=sizeof(float)   *Size;
       Motive=fun::ResizeAlloc(Motive,Count,Size);  MemCpuParticles+=sizeof(byte)    *Size;
     }
     catch(const std::bad_alloc){
@@ -111,16 +114,15 @@ void JDsPartsOut::AddData(unsigned np,const typecode* code){
 /// Adds out particles data.
 //==============================================================================
 void JDsPartsOut::AddParticles(unsigned np,const unsigned* idp,const tdouble3* pos
-  ,const tfloat3* vel,const float* rhop,const typecode* code)
+  ,const tfloat3* vel,const float* rho,const typecode* code)
 {
   if(Count+np>Size)AllocMemory(Count+np+SizeUnit,false);
-  memcpy(Idp +Count,idp ,sizeof(unsigned)*np);
-  memcpy(Pos +Count,pos ,sizeof(tdouble3)*np);
-  memcpy(Vel +Count,vel ,sizeof(tfloat3 )*np);
-  memcpy(Rhop+Count,rhop,sizeof(float   )*np);
+  memcpy(Idp+Count,idp,sizeof(unsigned)*np);
+  memcpy(Pos+Count,pos,sizeof(tdouble3)*np);
+  memcpy(Vel+Count,vel,sizeof(tfloat3 )*np);
+  memcpy(Rho+Count,rho,sizeof(float   )*np);
   //-Adds motive information and updates numbers.
   AddData(np,code);
 }
-
 
 

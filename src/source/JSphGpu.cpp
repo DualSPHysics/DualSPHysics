@@ -27,7 +27,6 @@
 #include "Functions.h"
 #include "FunctionsCuda.h"
 #include "JDsMotion.h"
-#include "JArraysGpu.h"
 #include "JDsFixedDt.h"
 #include "JDsSaveDt.h"
 #include "JDsOutputTime.h"
@@ -54,12 +53,10 @@ using namespace std;
 //==============================================================================
 JSphGpu::JSphGpu(bool withmpi):JSph(false,false,withmpi),DivAxis(MGDIV_None){
   ClassName="JSphGpu";
-  Idp=NULL; Code=NULL; Dcell=NULL; Posxy=NULL; Posz=NULL; Velrhop=NULL;
-  AuxPos=NULL; AuxVel=NULL; AuxRhop=NULL;
   CellDiv=NULL;
-  FtoAuxDouble6=NULL; FtoAuxFloat15=NULL; //-Calculates forces on floating bodies.
+  Arrays_Cpu=NULL;
+  Arrays_Gpu=NULL;
   GpuInfo=new JDsGpuInfo;
-  ArraysGpu=new JArraysGpu;
   Timersg=new JDsTimersGpu;
   InitVars();
 }
@@ -72,8 +69,9 @@ JSphGpu::~JSphGpu(){
   FreeCpuMemoryParticles();
   FreeGpuMemoryParticles();
   FreeGpuMemoryFixed();
-  delete ArraysGpu; ArraysGpu=NULL;
-  delete GpuInfo;   GpuInfo=NULL;
+  delete Arrays_Cpu; Arrays_Cpu=NULL;
+  delete Arrays_Gpu; Arrays_Gpu=NULL;
+  delete GpuInfo;    GpuInfo=NULL;
   delete Timersg;    Timersg=NULL;
   cudaDeviceReset();
 }
@@ -133,30 +131,73 @@ void JSphGpu::InitVars(){
   DivData=DivDataGpuNull();
 
   Np=Npb=NpbOk=0;
-  NpbPer=NpfPer=0;
+  NpfPer=0;
+  NpbPer=0;
+  NpfPerM1=0;
+  NpbPerM1=0;
 
+  Idp_c=NULL;
+  Code_c=NULL;
+  Dcell_c=NULL;
+  Posxy_c=NULL;
+  Posz_c=NULL;
+  Velrho_c=NULL;
+
+  AuxPos_c=NULL;
+  AuxVel_c=NULL;
+  AuxRho_c=NULL;
   FreeCpuMemoryParticles();
+
+  FtoAuxDouble6=NULL; //-Calculates forces on floating bodies.
+  FtoAuxFloat15=NULL; //-Calculates forces on floating bodies.
   FreeCpuMemoryFixed();
-  Idpg=NULL; Codeg=NULL; Dcellg=NULL; Posxyg=NULL; Poszg=NULL; PosCellg=NULL; Velrhopg=NULL;
-  BoundNormalg=NULL; MotionVelg=NULL; //-mDBC
-  VelrhopM1g=NULL;                                 //-Verlet
-  PosxyPreg=NULL; PoszPreg=NULL; VelrhopPreg=NULL; //-Symplectic
-  SpsTaug=NULL; SpsGradvelg=NULL;                  //-Laminar+SPS. 
-  ViscDtg=NULL; 
-  Arg=NULL; Aceg=NULL; Deltag=NULL;
-  ShiftPosfsg=NULL;                                //-Shifting.
-  RidpMotg=NULL;
-  FtoMasspg=NULL;                  //-Floatings.
-  FtoDatpg=NULL;  FtoMassg=NULL;  FtoConstraintsg=NULL;                           //-Calculates forces on floating bodies.
-  FtoForcesg=NULL;  FtoForcesResg=NULL;  FtoCenterResg=NULL; //-Calculates forces on floating bodies.
-  FtoCenterg=NULL; FtoAnglesg=NULL; FtoVelAceg=NULL;//-Management of floating bodies.
-  FtoInertiaini8g=NULL; FtoInertiaini1g=NULL;//-Management of floating bodies.
-  FtObjsOutdated=true;
-  DemDatag=NULL; //(DEM)
-  GpuParticlesAllocs=0;
-  GpuParticlesSize=0;
-  MemGpuParticles=MemGpuFixed=0;
+
+  Idp_g=NULL;
+  Code_g=NULL;
+  Dcell_g=NULL;
+  Posxy_g=NULL;
+  Posz_g=NULL;
+  PosCell_g=NULL;
+  Velrho_g=NULL;
+
+  BoundNormal_g=NULL;  //-mDBC
+  MotionVel_g=NULL;    //-mDBC
+
+  VelrhoM1_g=NULL;     //-Verlet
+  PosxyPre_g=NULL;     //-Symplectic
+  PoszPre_g=NULL;      //-Symplectic
+  VelrhoPre_g=NULL;    //-Symplectic
+
+  ViscDt_g=NULL; 
+  Ace_g=NULL;
+  Ar_g=NULL;
+  Delta_g=NULL;
+  ShiftPosfs_g=NULL;   //-Shifting.
+
+  SpsTau_g=NULL;       //-Laminar+SPS.
+  SpsGradvel_g=NULL;   //-Laminar+SPS.
+
   FreeGpuMemoryParticles();
+
+  RidpMotg=NULL;
+  //-Floatings.
+  FtoMasspg=NULL;
+  FtoDatpg=NULL;
+  FtoMassg=NULL;
+  //-Calculates forces on floating bodies.
+  FtoConstraintsg=NULL;                           
+  FtoForcesg=NULL;
+  FtoForcesResg=NULL;
+  FtoCenterResg=NULL;
+  //-Management of floating bodies.
+  FtoCenterg=NULL;
+  FtoAnglesg=NULL;
+  FtoVelAceg=NULL;
+  FtoInertiaini8g=NULL;
+  FtoInertiaini1g=NULL;
+  FtObjsOutdated=true;
+  //-DEM.
+  DemDatag=NULL;
   FreeGpuMemoryFixed();
 }
 
@@ -203,6 +244,7 @@ void JSphGpu::FreeGpuMemoryFixed(){
   if(FtoConstraintsg)   cudaFree(FtoConstraintsg);    FtoConstraintsg=NULL;
   if(FtoForcesg)        cudaFree(FtoForcesg);         FtoForcesg=NULL;
   if(FtoForcesResg)     cudaFree(FtoForcesResg);      FtoForcesResg=NULL;
+  if(FtoCenterResg)     cudaFree(FtoCenterResg);      FtoCenterResg=NULL;
   if(FtoCenterg)        cudaFree(FtoCenterg);         FtoCenterg=NULL;
   if(FtoAnglesg)        cudaFree(FtoAnglesg);         FtoAnglesg=NULL;
   if(FtoVelAceg)        cudaFree(FtoVelAceg);         FtoVelAceg=NULL;
@@ -218,7 +260,7 @@ void JSphGpu::AllocGpuMemoryFixed(){
   MemGpuFixed=0;
   //-Allocates memory for moving and floating objects.
   if(CaseNmoving || CaseNfloat){
-    size_t m=sizeof(unsigned)*(CaseNmoving+CaseNfloat);
+    const size_t m=sizeof(unsigned)*(CaseNmoving+CaseNfloat);
     cudaMalloc((void**)&RidpMotg,m);  MemGpuFixed+=m;
   }
   //-Allocates memory for floating bodies.
@@ -237,9 +279,9 @@ void JSphGpu::AllocGpuMemoryFixed(){
     m=sizeof(float4)  *FtCount*2;   cudaMalloc((void**)&FtoInertiaini8g   ,m);  MemGpuFixed+=m;
     m=sizeof(float)   *FtCount;     cudaMalloc((void**)&FtoInertiaini1g   ,m);  MemGpuFixed+=m;
   }
-  if(UseDEM){ //(DEM)
-    size_t m=sizeof(float4)*DemDataSize;
-    cudaMalloc((void**)&DemDatag,m);     MemGpuFixed+=m;
+  if(UseDEM){ //-DEM.
+    const size_t m=sizeof(float4)*DemDataSize;
+    cudaMalloc((void**)&DemDatag,m);  MemGpuFixed+=m;
   }
 }
 
@@ -248,17 +290,21 @@ void JSphGpu::AllocGpuMemoryFixed(){
 /// Libera memoria para datos principales de particulas.
 //==============================================================================
 void JSphGpu::FreeCpuMemoryParticles(){
+  //-Free array objects.
+  delete Idp_c;      Idp_c=NULL;
+  delete Code_c;     Code_c=NULL;
+  delete Dcell_c;    Dcell_c=NULL;
+  delete Posxy_c;    Posxy_c=NULL;
+  delete Posz_c;     Posz_c=NULL;
+  delete Velrho_c;   Velrho_c=NULL;
+
+  delete AuxPos_c;   AuxPos_c=NULL;
+  delete AuxVel_c;   AuxVel_c=NULL;
+  delete AuxRho_c;   AuxRho_c=NULL;
+  
+  //-Free CPU memory for array objects.
   CpuParticlesSize=0;
-  MemCpuParticles=0;
-  delete[] Idp;        Idp=NULL;
-  delete[] Code;       Code=NULL;
-  delete[] Dcell;      Dcell=NULL;
-  delete[] Posxy;      Posxy=NULL;
-  delete[] Posz;       Posz=NULL;
-  delete[] Velrhop;    Velrhop=NULL;
-  delete[] AuxPos;     AuxPos=NULL;
-  delete[] AuxVel;     AuxVel=NULL;
-  delete[] AuxRhop;    AuxRhop=NULL;
+  if(Arrays_Cpu)Arrays_Cpu->Reset();
 }
 
 //==============================================================================
@@ -267,35 +313,58 @@ void JSphGpu::FreeCpuMemoryParticles(){
 //==============================================================================
 void JSphGpu::AllocCpuMemoryParticles(unsigned np){
   FreeCpuMemoryParticles();
+  //-Calculate number of partices to allocate memory.
   if(np>0)np=np+PARTICLES_OVERMEMORY_MIN;
   CpuParticlesSize=np;
-  if(np>0){
-    try{
-      Idp=new unsigned[np];      MemCpuParticles+=sizeof(unsigned)*np;
-      Code=new typecode[np];     MemCpuParticles+=sizeof(typecode)*np;
-      Dcell=new unsigned[np];    MemCpuParticles+=sizeof(unsigned)*np;
-      Posxy=new tdouble2[np];    MemCpuParticles+=sizeof(tdouble2)*np;
-      Posz=new double[np];       MemCpuParticles+=sizeof(double)*np;
-      Velrhop=new tfloat4[np];   MemCpuParticles+=sizeof(tfloat4)*np;
-      AuxPos=new tdouble3[np];   MemCpuParticles+=sizeof(tdouble3)*np; 
-      AuxVel=new tfloat3[np];    MemCpuParticles+=sizeof(tfloat3)*np;
-      AuxRhop=new float[np];     MemCpuParticles+=sizeof(float)*np;
-    }
-    catch(const std::bad_alloc){
-      Run_Exceptioon(fun::PrintStr("Could not allocate the requested memory (np=%u).",np));
-    }
-  }
+  //-Set size of arrays.
+  Arrays_Cpu->SetArraySize(CpuParticlesSize);
+  //-Create arrays for basic particle data.
+  Idp_c   =new acuint    ("Idpc"   ,Arrays_Cpu,true);
+  Code_c  =new actypecode("Codec"  ,Arrays_Cpu,true);
+  Dcell_c =new acuint    ("Dcellc" ,Arrays_Cpu,true);
+  Posxy_c =new acdouble2 ("Posxyc" ,Arrays_Cpu,true);
+  Posz_c  =new acdouble  ("Poszc"  ,Arrays_Cpu,true);
+  Velrho_c=new acfloat4  ("Velrhoc",Arrays_Cpu,true);
+
+  AuxPos_c=new acdouble3 ("AuxPosc",Arrays_Cpu,true);
+  AuxVel_c=new acfloat3  ("AuxVelc",Arrays_Cpu,true);
+  AuxRho_c=new acfloat   ("AuxRhoc",Arrays_Cpu,true);
 }
 
 //==============================================================================
 /// Frees GPU memory for the particles.
-/// Libera memoria en Gpu para particulas.
+/// Libera memoria en GPU para particulas.
 //==============================================================================
 void JSphGpu::FreeGpuMemoryParticles(){
-  //GpuParticlesAllocs=0; This values is kept.
+  //-Free array objects.
+  delete Idp_g;         Idp_g=NULL;
+  delete Code_g;        Code_g=NULL;
+  delete Dcell_g;       Dcell_g=NULL;
+  delete Posxy_g;       Posxy_g=NULL;
+  delete Posz_g;        Posz_g=NULL;
+  delete PosCell_g;     PosCell_g=NULL;
+  delete Velrho_g;      Velrho_g=NULL;
+
+  delete BoundNormal_g; BoundNormal_g=NULL;  //-mDBC
+  delete MotionVel_g;   MotionVel_g=NULL;    //-mDBC
+
+  delete VelrhoM1_g;    VelrhoM1_g=NULL;     //-Verlet
+  delete PosxyPre_g;    PosxyPre_g=NULL;     //-Symplectic
+  delete PoszPre_g;     PoszPre_g=NULL;      //-Symplectic
+  delete VelrhoPre_g;   VelrhoPre_g=NULL;    //-Symplectic
+
+  delete ViscDt_g;      ViscDt_g=NULL; 
+  delete Ace_g;         Ace_g=NULL;
+  delete Ar_g;          Ar_g=NULL;
+  delete Delta_g;       Delta_g=NULL;
+  delete ShiftPosfs_g;  ShiftPosfs_g=NULL;   //-Shifting.
+
+  delete SpsTau_g;      SpsTau_g=NULL;       //-Laminar+SPS.
+  delete SpsGradvel_g;  SpsGradvel_g=NULL;   //-Laminar+SPS.
+
+  //-Free GPU memory for array objects.
   GpuParticlesSize=0;
-  MemGpuParticles=0;
-  ArraysGpu->Reset();
+  if(Arrays_Gpu)Arrays_Gpu->Reset();
 }
 
 //==============================================================================
@@ -304,174 +373,72 @@ void JSphGpu::FreeGpuMemoryParticles(){
 //==============================================================================
 void JSphGpu::AllocGpuMemoryParticles(unsigned np,float over){
   FreeGpuMemoryParticles();
-  //-Computes number of particles for which memory will be allocated.
-  //-Calcula numero de particulas para las que se reserva memoria.
+  //-Calculate number of partices to allocate memory.
   const unsigned np2=(over>0? unsigned(over*np): np);
   GpuParticlesSize=np2+PARTICLES_OVERMEMORY_MIN;
-  //-Define number or arrays to use. | Establece numero de arrays a usar.
-  ArraysGpu->SetArraySize(GpuParticlesSize);
-  #ifdef CODE_SIZE4
-    ArraysGpu->AddArrayCount(JArraysGpu::SIZE_4B,2);  //-code,code2
-  #else
-    ArraysGpu->AddArrayCount(JArraysGpu::SIZE_2B,2);  //-code,code2
-  #endif
-  ArraysGpu->AddArrayCount(JArraysGpu::SIZE_4B,4);  //-idp,ar,viscdt,dcell
-  if(DDTArray)ArraysGpu->AddArrayCount(JArraysGpu::SIZE_4B,1);  //-delta
-  ArraysGpu->AddArrayCount(JArraysGpu::SIZE_12B,1); //-ace
-  ArraysGpu->AddArrayCount(JArraysGpu::SIZE_16B,5); //-velrhop,posxy,poscell
-  ArraysGpu->AddArrayCount(JArraysGpu::SIZE_8B,2);  //-posz
-  if(TStep==STEP_Verlet){
-    ArraysGpu->AddArrayCount(JArraysGpu::SIZE_16B,1); //-velrhopm1
-  }
-  else if(TStep==STEP_Symplectic){
-    ArraysGpu->AddArrayCount(JArraysGpu::SIZE_8B,1);  //-poszpre
-    ArraysGpu->AddArrayCount(JArraysGpu::SIZE_16B,2); //-posxypre,velrhoppre
-  }
-  if(TVisco==VISCO_LaminarSPS){     
-    ArraysGpu->AddArrayCount(JArraysGpu::SIZE_24B,2); //-SpsTau,SpsGradvel
-  }
-  if(CaseNfloat){
-    ArraysGpu->AddArrayCount(JArraysGpu::SIZE_4B,4);  //-FtMasspg
-  }
-  if(Shifting){
-    ArraysGpu->AddArrayCount(JArraysGpu::SIZE_16B,1); //-shiftposfs
-  }
+  //-Set size of arrays.
+  Arrays_Gpu->SetArraySize(GpuParticlesSize);
+  //-Create arrays for basic particle data.
+  Idp_g    =new aguint    ("Idpg"    ,Arrays_Gpu,true);
+  Code_g   =new agtypecode("Codeg"   ,Arrays_Gpu,true);
+  Dcell_g  =new aguint    ("Dcellg"  ,Arrays_Gpu,true);
+  Posxy_g  =new agdouble2 ("Posxyg"  ,Arrays_Gpu,true);
+  Posz_g   =new agdouble  ("Poszg"   ,Arrays_Gpu,true);
+  PosCell_g=new agfloat4  ("PosCellg",Arrays_Gpu,true);
+  Velrho_g =new agfloat4  ("Velrhog" ,Arrays_Gpu,true);
+  //-Arrays for mDBC.
   if(UseNormals){
-    ArraysGpu->AddArrayCount(JArraysGpu::SIZE_12B,1); //-BoundNormal
-    if(SlipMode!=SLIP_Vel0)ArraysGpu->AddArrayCount(JArraysGpu::SIZE_12B,1); //-MotionVel
+    BoundNormal_g=new agfloat3("BoundNormalg",Arrays_Gpu,true);
+    if(SlipMode!=SLIP_Vel0){
+      MotionVel_g=new agfloat3("MotionVelg"  ,Arrays_Gpu,true);
+    }
   }
-  if(InOut){
-    //ArraysGpu->AddArrayCount(JArraysGpu::SIZE_4B,1);  //-InOutPartg
-    ArraysGpu->AddArrayCount(JArraysGpu::SIZE_1B,2);  //-newizone,zsurfok
+  //-Arrays for Verlet.
+  if(TStep==STEP_Verlet){
+    VelrhoM1_g=new agfloat4  ("VelrhoM1g",Arrays_Gpu,true);
+  }
+  //-Arrays for Symplectic.
+  if(TStep==STEP_Symplectic){
+    PosxyPre_g =new agdouble2("PosxyPreg" ,Arrays_Gpu,false); //-NO INITIAL MEMORY.
+    PoszPre_g  =new agdouble ("PoszPreg"  ,Arrays_Gpu,false); //-NO INITIAL MEMORY.
+    VelrhoPre_g=new agfloat4 ("VelrhoPreg",Arrays_Gpu,false); //-NO INITIAL MEMORY.
+  }
+  //-Arrays for forces computation.
+  ViscDt_g    =new agfloat ("ViscDtg",Arrays_Gpu,false); //-NO INITIAL MEMORY.
+  Ace_g       =new agfloat3("Aceg"   ,Arrays_Gpu,false); //-NO INITIAL MEMORY.
+  Ar_g        =new agfloat ("Arg"    ,Arrays_Gpu,false); //-NO INITIAL MEMORY.
+  Delta_g     =new agfloat ("Deltag" ,Arrays_Gpu,false); //-NO INITIAL MEMORY.
+  //-Arrays for Shifting.
+  ShiftPosfs_g=new agfloat4("ShiftPosfsg",Arrays_Gpu,false); //-NO INITIAL MEMORY.
+  //-Arrays for Laminar+SPS.
+  if(TVisco==VISCO_LaminarSPS){
+    SpsTau_g    =new agsymatrix3f("SpsTaug"    ,Arrays_Gpu,true);
+    SpsGradvel_g=new agsymatrix3f("SpsGradvelg",Arrays_Gpu,false); //-NO INITIAL MEMORY.
   }
 
-  ArraysGpu->AddArrayCount(JArraysGpu::SIZE_1B,1); //-Auxiliar
+
   //-Shows the allocated memory.
-  MemGpuParticles=ArraysGpu->GetAllocMemoryGpu();
-  PrintSizeNp(GpuParticlesSize,MemGpuParticles,GpuParticlesAllocs);
+  //PrintSizeNp(GpuParticlesSize,MemGpuParticles,GpuParticlesAllocs);
   Check_CudaErroor("Failed GPU memory allocation.");
 }
 
 //==============================================================================
-/// Resizes space in GPU memory for particles.
+/// Resizes GPU memory for particles saving current data (ndatagpu).
 //==============================================================================
-void JSphGpu::ResizeGpuMemoryParticles(unsigned npnew,unsigned npmin){
+void JSphGpu::ResizeGpuMemoryParticlesData(unsigned ndatagpu
+  ,unsigned npnew,unsigned npmin)
+{
   npnew=npnew+PARTICLES_OVERMEMORY_MIN;
-  //-Saves current data from GPU.
-  unsigned    *idp        =SaveArrayGpu(Np,Idpg);
-  typecode    *code       =SaveArrayGpu(Np,Codeg);
-  unsigned    *dcell      =SaveArrayGpu(Np,Dcellg);
-  double2     *posxy      =SaveArrayGpu(Np,Posxyg);
-  double      *posz       =SaveArrayGpu(Np,Poszg);
-  float4      *poscell    =SaveArrayGpu(Np,PosCellg);
-  float4      *velrhop    =SaveArrayGpu(Np,Velrhopg);
-  float4      *velrhopm1  =SaveArrayGpu(Np,VelrhopM1g);
-  double2     *posxypre   =SaveArrayGpu(Np,PosxyPreg);
-  double      *poszpre    =SaveArrayGpu(Np,PoszPreg);
-  float4      *velrhoppre =SaveArrayGpu(Np,VelrhopPreg);
-  tsymatrix3f *spstau     =SaveArrayGpu(Np,SpsTaug);
-  float3      *boundnormal=SaveArrayGpu(Np,BoundNormalg);
-  float3      *motionvel  =SaveArrayGpu(Np,MotionVelg);
-  //-Frees pointers.
-  ArraysGpu->Free(Idpg);
-  ArraysGpu->Free(Codeg);
-  ArraysGpu->Free(Dcellg);
-  ArraysGpu->Free(Posxyg);
-  ArraysGpu->Free(Poszg);
-  ArraysGpu->Free(PosCellg);
-  ArraysGpu->Free(Velrhopg);
-  ArraysGpu->Free(VelrhopM1g);
-  ArraysGpu->Free(PosxyPreg);
-  ArraysGpu->Free(PoszPreg);
-  ArraysGpu->Free(VelrhopPreg);
-  ArraysGpu->Free(SpsTaug);
-  ArraysGpu->Free(BoundNormalg);
-  ArraysGpu->Free(MotionVelg);
-  //-Resizes GPU memory allocation.
-  const double mbparticle=(double(MemGpuParticles)/MEBIBYTE)/GpuParticlesSize; //-MiB per particle.
+  //-Shows GPU memory allocation.
+  const llong memgpuparticles=Arrays_Gpu->GetAllocMemoryGpu();
+  const double mbparticle=(double(memgpuparticles)/MEBIBYTE)/GpuParticlesSize; //-MiB per particle.
   const string txover=(npmin>1? fun::PrintStr(" (over-allocation: %.2fX)",double(npnew)/npmin): "");
-  Log->Printf("**JSphGpu: Requesting gpu memory for %s particles%s: %.1f MiB."
+  Log->Printf("**JSphGpu: Requesting GPU memory for %s particles%s: %.1f MiB."
     ,KINT(npnew),txover.c_str(),mbparticle*npnew);
-  ArraysGpu->SetArraySize(npnew);
-  //-Reserve pointers.
-  Idpg    =ArraysGpu->ReserveUint();
-  Codeg   =ArraysGpu->ReserveTypeCode();
-  Dcellg  =ArraysGpu->ReserveUint();
-  Posxyg  =ArraysGpu->ReserveDouble2();
-  Poszg   =ArraysGpu->ReserveDouble();
-  PosCellg=ArraysGpu->ReserveFloat4();
-  Velrhopg=ArraysGpu->ReserveFloat4();
-  if(velrhopm1)  VelrhopM1g  =ArraysGpu->ReserveFloat4();
-  if(posxypre)   PosxyPreg   =ArraysGpu->ReserveDouble2();
-  if(poszpre)    PoszPreg    =ArraysGpu->ReserveDouble();
-  if(velrhoppre) VelrhopPreg =ArraysGpu->ReserveFloat4();
-  if(spstau)     SpsTaug     =ArraysGpu->ReserveSymatrix3f();
-  if(boundnormal)BoundNormalg=ArraysGpu->ReserveFloat3();
-  if(motionvel)  MotionVelg  =ArraysGpu->ReserveFloat3();
-  //-Restore data in GPU memory.
-  RestoreArrayGpu(Np,idp,Idpg);
-  RestoreArrayGpu(Np,code,Codeg);
-  RestoreArrayGpu(Np,dcell,Dcellg);
-  RestoreArrayGpu(Np,posxy,Posxyg);
-  RestoreArrayGpu(Np,posz,Poszg);
-  RestoreArrayGpu(Np,poscell,PosCellg);
-  RestoreArrayGpu(Np,velrhop,Velrhopg);
-  RestoreArrayGpu(Np,velrhopm1,VelrhopM1g);
-  RestoreArrayGpu(Np,posxypre,PosxyPreg);
-  RestoreArrayGpu(Np,poszpre,PoszPreg);
-  RestoreArrayGpu(Np,velrhoppre,VelrhopPreg);
-  RestoreArrayGpu(Np,spstau,SpsTaug);
-  RestoreArrayGpu(Np,boundnormal,BoundNormalg);
-  RestoreArrayGpu(Np,motionvel,MotionVelg);
+  //-Resizes GPU memory allocation.
+  Arrays_Gpu->SetDataArraySize(npnew,ndatagpu);
   //-Updates values.
-  GpuParticlesAllocs++;
   GpuParticlesSize=npnew;
-  MemGpuParticles=ArraysGpu->GetAllocMemoryGpu();
-}
-
-//==============================================================================
-/// Saves a GPU array in CPU memory. 
-//==============================================================================
-template<class T> T* JSphGpu::TSaveArrayGpu(unsigned np,const T *datasrc)const{
-  T *data=NULL;
-  if(datasrc){
-    try{
-      data=new T[np];
-    }
-    catch(const std::bad_alloc){
-      Run_Exceptioon("Could not allocate the requested memory.");
-    }
-    cudaMemcpy(data,datasrc,sizeof(T)*np,cudaMemcpyDeviceToHost);
-  }
-  return(data);
-}
-
-//==============================================================================
-/// Restores a GPU array (generic) from CPU memory. 
-//==============================================================================
-template<class T> void JSphGpu::TRestoreArrayGpu(unsigned np,T *data,T *datanew)const{
-  if(data&&datanew)cudaMemcpy(datanew,data,sizeof(T)*np,cudaMemcpyHostToDevice);
-  delete[] data;
-}
-
-//==============================================================================
-/// Arrays for basic particle data.
-/// Arrays para datos basicos de las particulas. 
-//==============================================================================
-void JSphGpu::ReserveBasicArraysGpu(){
-  Idpg=ArraysGpu->ReserveUint();
-  Codeg=ArraysGpu->ReserveTypeCode();
-  Dcellg=ArraysGpu->ReserveUint();
-  Posxyg=ArraysGpu->ReserveDouble2();
-  Poszg=ArraysGpu->ReserveDouble();
-  PosCellg=ArraysGpu->ReserveFloat4();
-  Velrhopg=ArraysGpu->ReserveFloat4();
-  if(TStep==STEP_Verlet)VelrhopM1g=ArraysGpu->ReserveFloat4();
-  if(TVisco==VISCO_LaminarSPS)SpsTaug=ArraysGpu->ReserveSymatrix3f();
-  if(UseNormals){
-    BoundNormalg=ArraysGpu->ReserveFloat3();
-    if(SlipMode!=SLIP_Vel0)MotionVelg=ArraysGpu->ReserveFloat3();
-  }
 }
 
 //==============================================================================
@@ -480,10 +447,10 @@ void JSphGpu::ReserveBasicArraysGpu(){
 //==============================================================================
 llong JSphGpu::GetAllocMemoryCpu()const{  
   llong s=JSph::GetAllocMemoryCpu();
+  //-Allocated for particle arrays on CPU.
+  if(Arrays_Cpu)s+=Arrays_Cpu->GetAllocMemoryCpu();
   //-Allocated in AllocCpuMemoryFixed().
   s+=MemCpuFixed;
-  //-Allocated in AllocMemoryParticles().
-  s+=MemCpuParticles;
   //-Allocated in other objects.
   if(MLPistons)s+=MLPistons->GetAllocMemoryCpu();
   return(s);
@@ -495,8 +462,8 @@ llong JSphGpu::GetAllocMemoryCpu()const{
 //==============================================================================
 llong JSphGpu::GetAllocMemoryGpu()const{  
   llong s=0;
-  //-Allocated in AllocGpuMemoryParticles().
-  s+=MemGpuParticles;
+  //-Allocated for particle arrays on GPU.
+  if(Arrays_Gpu)s+=Arrays_Gpu->GetAllocMemoryGpu();
   //-Allocated in AllocGpuMemoryFixed().
   s+=MemGpuFixed;
   //-Allocated in ther objects.
@@ -561,14 +528,16 @@ void JSphGpu::ConstantDataUp(){
 /// Uploads particle data to the GPU.
 /// Sube datos de particulas a la GPU.
 //==============================================================================
-void JSphGpu::ParticlesDataUp(unsigned n,const tfloat3 *boundnormal){
-  cudaMemcpy(Idpg    ,Idp    ,sizeof(unsigned)*n,cudaMemcpyHostToDevice);
-  cudaMemcpy(Codeg   ,Code   ,sizeof(typecode)*n,cudaMemcpyHostToDevice);
-  cudaMemcpy(Dcellg  ,Dcell  ,sizeof(unsigned)*n,cudaMemcpyHostToDevice);
-  cudaMemcpy(Posxyg  ,Posxy  ,sizeof(double2)*n ,cudaMemcpyHostToDevice);
-  cudaMemcpy(Poszg   ,Posz   ,sizeof(double)*n  ,cudaMemcpyHostToDevice);
-  cudaMemcpy(Velrhopg,Velrhop,sizeof(float4)*n  ,cudaMemcpyHostToDevice);
-  if(UseNormals)cudaMemcpy(BoundNormalg,boundnormal,sizeof(float3)*n,cudaMemcpyHostToDevice);
+void JSphGpu::ParticlesDataUp(unsigned n,const tfloat3* boundnormal){
+  Idp_g   ->CuCopyFromHost(Idp_c,n);
+  Code_g  ->CuCopyFromHost(Code_c,n);
+  Dcell_g ->CuCopyFromHost(Dcell_c,n);
+  Posxy_g ->CuCopyFromHost(Posxy_c,n);
+  Posz_g  ->CuCopyFromHost(Posz_c,n);
+  Velrho_g->CuCopyFromHost(Velrho_c,n);
+  if(UseNormals){
+    BoundNormal_g->CuCopyFromHost2(boundnormal,n);
+  }
   Check_CudaErroor("Failed copying data to GPU.");
 }
 
@@ -584,35 +553,47 @@ void JSphGpu::ParticlesDataUp(unsigned n,const tfloat3 *boundnormal){
 /// - onlynormal: Solo se queda con las normales, elimina las particulas periodicas.
 //==============================================================================
 unsigned JSphGpu::ParticlesDataDown(unsigned n,unsigned pini,bool code
-  ,bool onlynormal,const byte* filterg,unsigned &npfilterdel)
+  ,bool onlynormal,const byte* filterg,unsigned& npfilterdel)
 {
   unsigned num=n;
-  cudaMemcpy(Idp    ,Idpg    +pini,sizeof(unsigned)*n,cudaMemcpyDeviceToHost);
-  cudaMemcpy(Posxy  ,Posxyg  +pini,sizeof(double2) *n,cudaMemcpyDeviceToHost);
-  cudaMemcpy(Posz   ,Poszg   +pini,sizeof(double)  *n,cudaMemcpyDeviceToHost);
-  cudaMemcpy(Velrhop,Velrhopg+pini,sizeof(float4)  *n,cudaMemcpyDeviceToHost);
-  if(code || onlynormal)cudaMemcpy(Code,Codeg+pini,sizeof(typecode)*n,cudaMemcpyDeviceToHost);
-  byte* filter=NULL; 
+  //-Copy data from GPU memory.
+  Idp_g   ->CuCopyToHostOffset(pini,Idp_c  ,0,n);
+  Posxy_g ->CuCopyToHostOffset(pini,Posxy_c,0,n);
+  Posz_g  ->CuCopyToHostOffset(pini,Posz_c,0,n);
+  Velrho_g->CuCopyToHostOffset(pini,Velrho_c,0,n);
+  if(code || onlynormal){
+    Code_g->CuCopyToHostOffset(pini,Code_c,0,n);
+  }
+  //-Creates simple CPU pointers.
+  unsigned* idpc   =Idp_c->ptr(); 
+  tdouble2* posxyc =Posxy_c->ptr(); 
+  double*   poszc  =Posz_c->ptr(); 
+  tfloat4*  velrhoc=Velrho_c->ptr(); 
+  typecode* codec  =Code_c->ptr();
+
   //-Obtain filter data on CPU memory. //<vs_outpaarts_ini>
+  byte* filter=NULL; 
   if(filterg){
-    filter=(byte*)AuxRhop;
+    filter=(byte*)AuxRho_c->ptr();
     cudaMemcpy(filter,filterg+pini,sizeof(byte)*n,cudaMemcpyDeviceToHost);
   }//<vs_outpaarts_end>
   Check_CudaErroor("Failed copying data from GPU.");
-  //-Eliminates abnormal particles (periodic and others). | Elimina particulas no normales (periodicas y otras).
+  
+  //-Eliminate non-normal particles (periodic & others).
   const bool usefilter=(filter!=NULL);
   unsigned nfilter=0;
   if(onlynormal || usefilter){
     unsigned ndel=0;
     for(unsigned p=0;p<n;p++){
-      const bool isnormal=(!onlynormal || CODE_IsNormal(Code[p]));
+      const bool isnormal=(!onlynormal || CODE_IsNormal(codec[p]));
       const bool selected=(isnormal && (!usefilter || (filter[p]&1)));
       if(ndel && selected){
-        Idp[p-ndel]    =Idp[p];
-        Posxy[p-ndel]  =Posxy[p];
-        Posz[p-ndel]   =Posz[p];
-        Velrhop[p-ndel]=Velrhop[p];
-        Code[p-ndel]   =Code[p];
+        const unsigned p2=p-ndel;
+        idpc   [p2]=idpc   [p];
+        posxyc [p2]=posxyc [p];
+        poszc  [p2]=poszc  [p];
+        velrhoc[p2]=velrhoc[p];
+        codec  [p2]=codec  [p];
       }
       if(!selected){
         ndel++;
@@ -623,20 +604,17 @@ unsigned JSphGpu::ParticlesDataDown(unsigned n,unsigned pini,bool code
   }
   npfilterdel=nfilter;
   filter=NULL;
-  //-Converts data to a simple format. | Convierte datos a formato simple.
-  for(unsigned p=0;p<n;p++){
-    AuxPos[p]=TDouble3(Posxy[p].x,Posxy[p].y,Posz[p]);
-    AuxVel[p]=TFloat3(Velrhop[p].x,Velrhop[p].y,Velrhop[p].z);
-    AuxRhop[p]=Velrhop[p].w;
-  }
+  //-Converts data to a simple format in AuxPos_c ,AuxVel_c and AuxRhop_c.
+  Pos21Vel4ToPos3Vel31(num,posxyc,poszc,velrhoc
+    ,AuxPos_c->ptr(),AuxVel_c->ptr(),AuxRho_c->ptr());
   return(num);
 }
 
 //==============================================================================
-/// Initialises CUDA device.
-/// Inicializa dispositivo CUDA.
+/// Initialises CUDA device and returns GPU id.
+/// Inicializa dispositivo CUDA y devuelve id de GPU.
 //==============================================================================
-void JSphGpu::SelecDevice(int gpuid){
+int JSphGpu::SelecDevice(int gpuid){
   //-Shows information on available GPUs.
   JDsGpuInfo::ShowGpusInfo(Log);
   //-GPU selection.
@@ -644,6 +622,7 @@ void JSphGpu::SelecDevice(int gpuid){
   GpuInfo->SelectGpu(gpuid);
   GpuInfo->ShowSelectGpusInfo(Log);
   cudaSetDevice(GpuInfo->GetGpuId());
+  return(GpuInfo->GetGpuId());
 }
 
 //==============================================================================
@@ -796,12 +775,11 @@ void JSphGpu::InitFloatingsGpu(){
 void JSphGpu::InitRunGpu(){
   unsigned nfilter=0;
   ParticlesDataDown(Np,0,false,false,NULL,nfilter);
-  InitRun(Np,Idp,AuxPos);
-
-  if(TStep==STEP_Verlet)cudaMemcpy(VelrhopM1g,Velrhopg,sizeof(float4)*Np,cudaMemcpyDeviceToDevice);
-  if(TVisco==VISCO_LaminarSPS)cudaMemset(SpsTaug,0,sizeof(tsymatrix3f)*Np);
+  InitRun(Np,Idp_c->cptr(),AuxPos_c->cptr());
+  if(TStep==STEP_Verlet)VelrhoM1_g->CuCopyFrom(Velrho_g,Np);
+  if(TVisco==VISCO_LaminarSPS)SpsTau_g->CuMemset(0,Np);
   if(CaseNfloat)InitFloatingsGpu();
-  if(MotionVelg)cudaMemset(MotionVelg,0,sizeof(float3)*Np);
+  if(MotionVel_g)MotionVel_g->CuMemset(0,Np);
   Check_CudaErroor("Failed initializing variables for execution.");
 }
 
@@ -812,17 +790,19 @@ void JSphGpu::InitRunGpu(){
 void JSphGpu::PreInteractionVars_Forces(unsigned np,unsigned npb){
   //-Initialise arrays.
   const unsigned npf=np-npb;
-  cudaMemset(ViscDtg,0,sizeof(float)*np);                                //ViscDtg[]=0
-  cudaMemset(Arg,0,sizeof(float)*np);                                    //Arg[]=0
-  if(Deltag)cudaMemset(Deltag,0,sizeof(float)*np);                       //Deltag[]=0
-  cudaMemset(Aceg,0,sizeof(tfloat3)*np);                                 //Aceg[]=(0,0,0)
-  if(SpsGradvelg)cudaMemset(SpsGradvelg+npb,0,sizeof(tsymatrix3f)*npf);  //SpsGradvelg[]=(0,0,0,0,0,0).
-
+  ViscDt_g->CuMemset(0,np);                                         //ViscDtg[]=0
+  Ar_g->CuMemset(0,np);                                             //Arc[]=0
+  Ace_g->CuMemset(0,np);                                            //Acec[]=(0)
+  if(AG_CPTR(Delta_g))Delta_g->CuMemset(0,np);                      //Deltac[]=0
+  if(AG_CPTR(SpsGradvel_g))SpsGradvel_g->CuMemsetOffset(npb,0,npf); //SpsGradvelc[]=(0).
+  
   //-Select particles for shifting.
-  if(ShiftPosfsg)Shifting->InitGpu(npf,npb,Posxyg,Poszg,ShiftPosfsg);
+  if(AC_CPTR(ShiftPosfs_g))Shifting->InitGpu(npf,npb,Posxy_g->cptr()
+    ,Posz_g->cptr(),ShiftPosfs_g->ptr());
 
   //-Apply the extra forces to the correct particle sets.
-  if(AccInput)AccInput->RunGpu(TimeStep,Gravity,npf,npb,Codeg,Posxyg,Poszg,Velrhopg,Aceg);
+  if(AccInput)AccInput->RunGpu(TimeStep,Gravity,npf,npb,Code_g->cptr()
+    ,Posxy_g->cptr(),Posz_g->cptr(),Velrho_g->cptr(),Ace_g->ptr());
 }
 
 //==============================================================================
@@ -832,12 +812,12 @@ void JSphGpu::PreInteractionVars_Forces(unsigned np,unsigned npb){
 void JSphGpu::PreInteraction_Forces(){
   Timersg->TmStart(TMG_CfPreForces,false);
   //-Assign memory.
-  ViscDtg=ArraysGpu->ReserveFloat();
-  Arg=ArraysGpu->ReserveFloat();
-  Aceg=ArraysGpu->ReserveFloat3();
-  if(DDTArray)Deltag=ArraysGpu->ReserveFloat();
-  if(Shifting)ShiftPosfsg=ArraysGpu->ReserveFloat4();
-  if(TVisco==VISCO_LaminarSPS)SpsGradvelg=ArraysGpu->ReserveSymatrix3f();
+  ViscDt_g->Reserve();
+  Ar_g->Reserve();
+  Ace_g->Reserve();
+  if(DDTArray)Delta_g->Reserve();
+  if(Shifting)ShiftPosfs_g->Reserve();
+  if(TVisco==VISCO_LaminarSPS)SpsGradvel_g->Reserve();
 
   //-Initialise arrays.
   PreInteractionVars_Forces(Np,Npb);
@@ -845,27 +825,29 @@ void JSphGpu::PreInteraction_Forces(){
   //-Computes VelMax: Includes the particles from floating bodies and does not affect the periodic conditions.
   //-Calcula VelMax: Se incluyen las particulas floatings y no afecta el uso de condiciones periodicas.
   const unsigned pini=(DtAllParticles? 0: Npb);
-  cusph::ComputeVelMod(Np-pini,Velrhopg+pini,ViscDtg);
-  float velmax=cusph::ReduMaxFloat(Np-pini,0,ViscDtg,CellDiv->GetAuxMem(cusph::ReduMaxFloatSize(Np-pini)));
+  cusph::ComputeVelMod(Np-pini,Velrho_g->cptr()+pini,ViscDt_g->ptr());
+  const float velmax=cusph::ReduMaxFloat(Np-pini,0,ViscDt_g->ptr()
+    ,CellDiv->GetAuxMem(cusph::ReduMaxFloatSize(Np-pini)));
   VelMax=sqrt(velmax);
-  cudaMemset(ViscDtg,0,sizeof(float)*Np);           //ViscDtg[]=0
+
+  ViscDt_g->CuMemset(0,Np);           //ViscDtg[]=0
   ViscDtMax=0;
   Timersg->TmStop(TMG_CfPreForces,true);
   Check_CudaErroor("Failed calculating VelMax.");
 }
 
 //==============================================================================
-/// Frees memory allocated for ArraysGpu.
-/// Libera memoria asignada de ArraysGpu.
+/// Frees memory allocated from Arrays_Gpu.
+/// Libera memoria asignada de Arrays_Gpu.
 //==============================================================================
 void JSphGpu::PosInteraction_Forces(){
   //-Frees memory allocated in PreInteraction_Forces().
-  ArraysGpu->Free(Arg);          Arg=NULL;
-  ArraysGpu->Free(Aceg);         Aceg=NULL;
-  ArraysGpu->Free(ViscDtg);      ViscDtg=NULL;
-  ArraysGpu->Free(Deltag);       Deltag=NULL;
-  ArraysGpu->Free(ShiftPosfsg);  ShiftPosfsg=NULL;
-  ArraysGpu->Free(SpsGradvelg);  SpsGradvelg=NULL;
+  ViscDt_g->Free();
+  Ar_g->Free();
+  Ace_g->Free();
+  Delta_g->Free();
+  ShiftPosfs_g->Free();
+  if(SpsGradvel_g)SpsGradvel_g->Free();
 }
 
 //==============================================================================
@@ -876,32 +858,34 @@ void JSphGpu::ComputeVerlet(double dt){  //pdtedom
   Timersg->TmStart(TMG_SuComputeStep,false);
   const bool shift=(ShiftingMode!=SHIFT_None);
   const bool inout=(InOut!=NULL);
-  const float3 *indirvel=(inout? InOut->GetDirVelg(): NULL);
+  const float3* indirvel=(inout? InOut->GetDirVelg(): NULL);
   VerletStep++;
   //-Allocates memory to compute the displacement.
   //-Asigna memoria para calcular el desplazamiento.
-  double2 *movxyg=ArraysGpu->ReserveDouble2();
-  double *movzg=ArraysGpu->ReserveDouble();
+  agdouble2 movxyg("movxyg",Arrays_Gpu,true);
+  agdouble movzg("movzg",Arrays_Gpu,true);
   //-Computes displacement, velocity and density.
   //-Calcula desplazamiento, velocidad y densidad.
   if(VerletStep<VerletSteps){
-    cusphs::ComputeStepVerlet(WithFloating,shift,inout,Np,Npb,Velrhopg,VelrhopM1g,Arg
-      ,Aceg,ShiftPosfsg,indirvel,dt,dt+dt,RhopZero,RhopOutMin,RhopOutMax,Gravity,Codeg,movxyg,movzg,VelrhopM1g,NULL);
+    cusphs::ComputeStepVerlet(WithFloating,shift,inout,Np,Npb
+      ,Velrho_g->cptr(),VelrhoM1_g->cptr(),Ar_g->cptr(),Ace_g->cptr()
+      ,ShiftPosfs_g->cptr(),indirvel,dt,dt+dt,RhopZero,RhopOutMin,RhopOutMax
+      ,Gravity,Code_g->ptr(),movxyg.ptr(),movzg.ptr(),VelrhoM1_g->ptr(),NULL);
   }
   else{
-    cusphs::ComputeStepVerlet(WithFloating,shift,inout,Np,Npb,Velrhopg,Velrhopg,Arg
-      ,Aceg,ShiftPosfsg,indirvel,dt,dt,RhopZero,RhopOutMin,RhopOutMax,Gravity,Codeg,movxyg,movzg,VelrhopM1g,NULL);
+    cusphs::ComputeStepVerlet(WithFloating,shift,inout,Np,Npb
+      ,Velrho_g->cptr(),Velrho_g->cptr(),Ar_g->cptr(),Ace_g->cptr()
+      ,ShiftPosfs_g->cptr(),indirvel,dt,dt,RhopZero,RhopOutMin,RhopOutMax
+      ,Gravity,Code_g->ptr(),movxyg.ptr(),movzg.ptr(),VelrhoM1_g->ptr(),NULL);
     VerletStep=0;
   }
-  //-The new values are calculated in VelRhopM1g.
+  //-The new values are calculated in VelRhoM1_g.
   //-Los nuevos valores se calculan en VelrhopM1g.
-  swap(Velrhopg,VelrhopM1g);   //-Exchanges Velrhopg and VelrhopM1g. | Intercambia Velrhopg y VelrhopM1g.
+  Velrho_g->SwapPtr(VelrhoM1_g); //-Exchanges Velrho_g and VelrhoM1_g. | Intercambia Velrho_g y VelrhoM1_g.
   //-Applies displacement to non-periodic fluid particles.
   //-Aplica desplazamiento a las particulas fluid no periodicas.
-  cusph::ComputeStepPos(PeriActive,WithFloating,Np,Npb,movxyg,movzg,Posxyg,Poszg,Dcellg,Codeg);
-  //-Frees memory allocated for the diplacement.
-  ArraysGpu->Free(movxyg);   movxyg=NULL;
-  ArraysGpu->Free(movzg);    movzg=NULL;
+  cusph::ComputeStepPos(PeriActive,WithFloating,Np,Npb,movxyg.cptr(),movzg.cptr()
+    ,Posxy_g->ptr(),Posz_g->ptr(),Dcell_g->ptr(),Code_g->ptr());
   Timersg->TmStop(TMG_SuComputeStep,true);
 }
 
@@ -913,36 +897,32 @@ void JSphGpu::ComputeSymplecticPre(double dt){
   Timersg->TmStart(TMG_SuComputeStep,false);
   const bool shift=false; //(ShiftingMode!=SHIFT_None); //-We strongly recommend running the shifting correction only for the corrector. If you want to re-enable shifting in the predictor, change the value here to "true".
   const bool inout=(InOut!=NULL);
-  //-Allocates memory to PRE variables.
-  PosxyPreg=ArraysGpu->ReserveDouble2();
-  PoszPreg=ArraysGpu->ReserveDouble();
-  VelrhopPreg=ArraysGpu->ReserveFloat4();
-  //-Changes data of PRE variables for calculating the new data.
-  //-Cambia datos a variables PRE para calcular nuevos datos.
-  swap(PosxyPreg,Posxyg);      //-PosxyPre[] <= Posxy[]
-  swap(PoszPreg,Poszg);        //-PoszPre[] <= Posz[]
-  swap(VelrhopPreg,Velrhopg);  //-VelrhopPre[] <= Velrhop[]
+  //-Assign memory to PRE variables.
+  PosxyPre_g->Reserve();
+  PoszPre_g->Reserve();
+  VelrhoPre_g->Reserve();
+  //-Move current data to PRE variables for calculating the new data.
+  PosxyPre_g->SwapPtr(Posxy_g);   //- PosxyPre_g[]   <= Posxy_g[]
+  PoszPre_g->SwapPtr(Posz_g);     //- PoszPre_g[]    <= Posz_g[]
+  VelrhoPre_g->SwapPtr(Velrho_g); //- VelrhopPre_g[] <= Velrhop_g[]
   //-Allocate memory to compute the diplacement.
-  double2 *movxyg=ArraysGpu->ReserveDouble2();
-  double *movzg=ArraysGpu->ReserveDouble();
+  agdouble2 movxyg("movxyg",Arrays_Gpu,true);
+  agdouble  movzg("movzg",Arrays_Gpu,true);
   //-Compute displacement, velocity and density.
   const double dt05=dt*.5;
-  const float3 *indirvel=(InOut? InOut->GetDirVelg(): NULL);
-  cusphs::ComputeStepSymplecticPre(WithFloating,shift,inout,Np,Npb,VelrhopPreg,Arg
-    ,Aceg,ShiftPosfsg,indirvel,dt05,RhopZero,RhopOutMin,RhopOutMax,Gravity
-    ,Codeg,movxyg,movzg,Velrhopg,NULL);
+  const float3* indirvel=(InOut? InOut->GetDirVelg(): NULL);
+  cusphs::ComputeStepSymplecticPre(WithFloating,shift,inout,Np,Npb
+    ,VelrhoPre_g->cptr(),Ar_g->cptr(),Ace_g->cptr(),ShiftPosfs_g->cptr()
+    ,indirvel,dt05,RhopZero,RhopOutMin,RhopOutMax,Gravity
+    ,Code_g->ptr(),movxyg.ptr(),movzg.ptr(),Velrho_g->ptr(),NULL);
 
   //-Applies displacement to non-periodic fluid particles.
-  //-Aplica desplazamiento a las particulas fluid no periodicas.
-  cusph::ComputeStepPos2(PeriActive,WithFloating,Np,Npb,PosxyPreg,PoszPreg
-    ,movxyg,movzg,Posxyg,Poszg,Dcellg,Codeg);
-  //-Frees memory allocated for the displacement.
-  ArraysGpu->Free(movxyg);   movxyg=NULL;
-  ArraysGpu->Free(movzg);    movzg=NULL;
-  //-Copies previous position of the boundaries.
-  //-Copia posicion anterior del contorno.
-  cudaMemcpy(Posxyg,PosxyPreg,sizeof(double2)*Npb,cudaMemcpyDeviceToDevice);
-  cudaMemcpy(Poszg,PoszPreg,sizeof(double)*Npb,cudaMemcpyDeviceToDevice);
+  cusph::ComputeStepPos2(PeriActive,WithFloating,Np,Npb
+    ,PosxyPre_g->cptr(),PoszPre_g->cptr(),movxyg.cptr(),movzg.cptr()
+    ,Posxy_g->ptr(),Posz_g->ptr(),Dcell_g->ptr(),Code_g->ptr());
+  //-Copy previous position of the boundary particles.
+  Posxy_g->CuCopyFrom(PosxyPre_g,Npb);
+  Posz_g->CuCopyFrom(PoszPre_g,Npb);
   Timersg->TmStop(TMG_SuComputeStep,false);
 }
 
@@ -954,27 +934,26 @@ void JSphGpu::ComputeSymplecticCorr(double dt){
   Timersg->TmStart(TMG_SuComputeStep,false);
   const bool shift=(ShiftingMode!=SHIFT_None);
   const bool inout=(InOut!=NULL);
-  //-Allocates memory to calculate the displacement.
-  double2 *movxyg=ArraysGpu->ReserveDouble2();
-  double *movzg=ArraysGpu->ReserveDouble();
+  //-Allocate memory to compute the diplacement.
+  agdouble2 movxyg("movxyg",Arrays_Gpu,true);
+  agdouble  movzg("movzg",Arrays_Gpu,true);
   //-Computes displacement, velocity and density.
   const double dt05=dt*.5;
-  const float3 *indirvel=(InOut? InOut->GetDirVelg(): NULL);
-  cusphs::ComputeStepSymplecticCor(WithFloating,shift,inout,Np,Npb,VelrhopPreg
-    ,Arg,Aceg,ShiftPosfsg,indirvel,dt05,dt,RhopZero,RhopOutMin,RhopOutMax,Gravity
-    ,Codeg,movxyg,movzg,Velrhopg,NULL);
+  const float3* indirvel=(InOut? InOut->GetDirVelg(): NULL);
+  cusphs::ComputeStepSymplecticCor(WithFloating,shift,inout,Np,Npb
+    ,VelrhoPre_g->cptr(),Ar_g->cptr(),Ace_g->cptr(),ShiftPosfs_g->cptr()
+    ,indirvel,dt05,dt,RhopZero,RhopOutMin,RhopOutMax,Gravity
+    ,Code_g->ptr(),movxyg.ptr(),movzg.ptr(),Velrho_g->ptr(),NULL);
 
   //-Applies displacement to non-periodic fluid particles.
-  //-Aplica desplazamiento a las particulas fluid no periodicas.
-  cusph::ComputeStepPos2(PeriActive,WithFloating,Np,Npb,PosxyPreg,PoszPreg
-    ,movxyg,movzg,Posxyg,Poszg,Dcellg,Codeg);
-  //-Frees memory allocated for diplacement.
-  ArraysGpu->Free(movxyg);   movxyg=NULL;
-  ArraysGpu->Free(movzg);    movzg=NULL;
-  //-Frees memory allocated for the predictor variables in ComputeSymplecticPre().
-  ArraysGpu->Free(PosxyPreg);    PosxyPreg=NULL;
-  ArraysGpu->Free(PoszPreg);     PoszPreg=NULL;
-  ArraysGpu->Free(VelrhopPreg);  VelrhopPreg=NULL;
+  cusph::ComputeStepPos2(PeriActive,WithFloating,Np,Npb
+    ,PosxyPre_g->cptr(),PoszPre_g->cptr(),movxyg.cptr(),movzg.cptr()
+    ,Posxy_g->ptr(),Posz_g->ptr(),Dcell_g->ptr(),Code_g->ptr());
+
+  //-Free memory assigned to PRE variables in ComputeSymplecticPre().
+  PosxyPre_g->Free();
+  PoszPre_g->Free();
+  VelrhoPre_g->Free();
   Timersg->TmStop(TMG_SuComputeStep,true);
 }
 
@@ -1015,7 +994,7 @@ double JSphGpu::DtVariable(bool final){
 //==============================================================================
 void JSphGpu::RunShifting(double dt){
   Timersg->TmStart(TMG_SuShifting,false);
-  Shifting->RunGpu(Np-Npb,Npb,dt,Velrhopg,ShiftPosfsg);
+  Shifting->RunGpu(Np-Npb,Npb,dt,Velrho_g->cptr(),ShiftPosfs_g->ptr());
   Timersg->TmStop(TMG_SuShifting,true);
 }
 
@@ -1035,9 +1014,6 @@ void JSphGpu::CalcMotion(double stepdt){
 //==============================================================================
 void JSphGpu::RunMotion(double stepdt){
   Timersg->TmStart(TMG_SuMotion,false);
-  float3 *boundnormal=NULL;
-  boundnormal=BoundNormalg;
-  const bool motsim=true;
   BoundChanged=false;
   //-Add motion from automatic wave generation.
   if(WaveGen)CalcMotionWaveGen(stepdt);
@@ -1048,12 +1024,14 @@ void JSphGpu::RunMotion(double stepdt){
     for(unsigned ref=0;ref<nref;ref++){
       const StMotionData& m=DsMotion->GetMotionData(ref);
       if(m.type==MOTT_Linear){//-Linear movement.
-        if(motsim)cusph::MoveLinBound   (PeriActive,m.count,m.idbegin-CaseNfixed,m.linmov,ToTFloat3(m.linvel),RidpMotg,Posxyg,Poszg,Dcellg,Velrhopg,Codeg);
-        //else    cusph::MoveLinBoundAce(PeriActive,m.count,m.idbegin-CaseNfixed,m.linmov,ToTFloat3(m.linvel),ToTFloat3(m.linace),RidpMoveg,Posxyg,Poszg,Dcellg,Velrhopg,Codeg);
+        cusph::MoveLinBound(PeriActive,m.count,m.idbegin-CaseNfixed,m.linmov
+          ,ToTFloat3(m.linvel),RidpMotg,Posxy_g->ptr(),Posz_g->ptr()
+          ,Dcell_g->ptr(),Velrho_g->ptr(),Code_g->ptr());
       }
       if(m.type==MOTT_Matrix){//-Matrix movement (for rotations).
-        if(motsim)cusph::MoveMatBound   (PeriActive,Simulate2D,m.count,m.idbegin-CaseNfixed,m.matmov,stepdt,RidpMotg,Posxyg,Poszg,Dcellg,Velrhopg,Codeg,boundnormal);
-        //else    cusph::MoveMatBoundAce(PeriActive,Simulate2D,m.count,m.idbegin-CaseNfixed,m.matmov,m.matmov2,stepdt,RidpMoveg,Posxyg,Poszg,Dcellg,Velrhopg,Codeg);
+        cusph::MoveMatBound(PeriActive,Simulate2D,m.count,m.idbegin-CaseNfixed
+          ,m.matmov,stepdt,RidpMotg,Posxy_g->ptr(),Posz_g->ptr(),Dcell_g->ptr()
+          ,Velrho_g->ptr(),Code_g->ptr(),AG_PTR(BoundNormal_g));
       }      
     }
   }
@@ -1062,14 +1040,24 @@ void JSphGpu::RunMotion(double stepdt){
     BoundChanged=true;
     if(MLPistons->GetPiston1dCount()){//-Process motion for pistons 1D.
       MLPistons->CalculateMotion1d(TimeStep+MLPistons->GetTimeMod()+stepdt);
-      cusph::MovePiston1d(PeriActive!=0,CaseNmoving,0,Dp,MLPistons->GetPoszMin(),MLPistons->GetPoszCount(),MLPistons->GetPistonIdGpu(),MLPistons->GetMovxGpu(),MLPistons->GetVelxGpu(),RidpMotg,Posxyg,Poszg,Dcellg,Velrhopg,Codeg);
+      cusph::MovePiston1d(PeriActive!=0,CaseNmoving,0,Dp,MLPistons->GetPoszMin()
+        ,MLPistons->GetPoszCount(),MLPistons->GetPistonIdGpu()
+        ,MLPistons->GetMovxGpu(),MLPistons->GetVelxGpu(),RidpMotg
+        ,Posxy_g->ptr(),Posz_g->ptr(),Dcell_g->ptr(),Velrho_g->ptr()
+        ,Code_g->ptr());
     }
     for(unsigned cp=0;cp<MLPistons->GetPiston2dCount();cp++){//-Process motion for pistons 2D.
-      JMLPistons::StMotionInfoPiston2D mot=MLPistons->CalculateMotion2d(cp,TimeStep+MLPistons->GetTimeMod()+stepdt);
-      cusph::MovePiston2d(PeriActive!=0,mot.np,mot.idbegin-CaseNfixed,Dp,mot.posymin,mot.poszmin,mot.poszcount,mot.movyz,mot.velyz,RidpMotg,Posxyg,Poszg,Dcellg,Velrhopg,Codeg);
+      const JMLPistons::StMotionInfoPiston2D mot=MLPistons->CalculateMotion2d(cp
+        ,TimeStep+MLPistons->GetTimeMod()+stepdt);
+      cusph::MovePiston2d(PeriActive!=0,mot.np,mot.idbegin-CaseNfixed,Dp
+        ,mot.posymin,mot.poszmin,mot.poszcount,mot.movyz,mot.velyz,RidpMotg
+        ,Posxy_g->ptr(),Posz_g->ptr(),Dcell_g->ptr(),Velrho_g->ptr()
+        ,Code_g->ptr());
     }
   }
-  if(MotionVelg)cusph::CopyMotionVel(CaseNmoving,RidpMotg,Velrhopg,MotionVelg);
+  if(MotionVel_g){
+    cusph::CopyMotionVel(CaseNmoving,RidpMotg,Velrho_g->cptr(),MotionVel_g->ptr());
+  }
   Timersg->TmStop(TMG_SuMotion,true);
 }
 
@@ -1079,10 +1067,10 @@ void JSphGpu::RunMotion(double stepdt){
 //==============================================================================
 void JSphGpu::RunRelaxZone(double dt){
   Timersg->TmStart(TMG_SuMotion,false);
-  byte* rzid=NULL; 
-  float* rzfactor=NULL; 
-  RelaxZones->SetFluidVelGpu(TimeStep,dt,Np-Npb,Npb,(const tdouble2*)Posxyg
-    ,Poszg,Idpg,(tfloat4*)Velrhopg,rzid,rzfactor);
+  agbyte  rzid("rzid",Arrays_Gpu,false);
+  agfloat rzfactor("rzfactor",Arrays_Gpu,false);
+  RelaxZones->SetFluidVelGpu(TimeStep,dt,Np-Npb,Npb,(const tdouble2*)Posxy_g->cptr()
+    ,Posz_g->cptr(),Idp_g->cptr(),(tfloat4*)Velrho_g->ptr(),rzid.ptr(),rzfactor.ptr());
   Timersg->TmStop(TMG_SuMotion,true);
 }
 
@@ -1090,11 +1078,10 @@ void JSphGpu::RunRelaxZone(double dt){
 /// Applies Damping to indicated particles.
 /// Aplica Damping a las particulas indicadas.
 //==============================================================================
-void JSphGpu::RunDamping(double dt,unsigned np,unsigned npb,const double2 *posxy
-  ,const double *posz,const typecode *code,float4 *velrhop)
-{
-  const typecode *codeptr=(CaseNfloat || PeriActive? code: NULL);
-  Damping->ComputeDampingGpu(TimeStep,dt,np-npb,npb,posxy,posz,codeptr,velrhop);
+void JSphGpu::RunDamping(double dt){
+  const typecode* codeptr=(CaseNfloat || PeriActive? Code_g->cptr(): NULL);
+  Damping->ComputeDampingGpu(TimeStep,dt,Np-Npb,Npb,Posxy_g->cptr(),Posz_g->cptr()
+    ,codeptr,Velrho_g->ptr());
 }
 
 //==============================================================================
@@ -1248,7 +1235,8 @@ void JSphGpu::DgSaveVtkParticlesGpu(std::string filename,int numfile,unsigned pi
 /// Save VTK file with particle data (debug).
 /// Graba fichero VTK con datos de las particulas (debug).
 //==============================================================================
-void JSphGpu::DgSaveVtkParticlesGpu(std::string filename,int numfile,unsigned pini,unsigned pfin,bool idp,bool vel,bool rhop,bool code)
+void JSphGpu::DgSaveVtkParticlesGpu(std::string filename,int numfile
+  ,unsigned pini,unsigned pfin,bool idp,bool vel,bool rhop,bool code)
 {
   if(numfile>=0)filename=fun::FileNameSec(filename,numfile);
   if(Log->GetMpiRank()>=0)filename=string("p")+fun::IntStr(Log->GetMpiRank())+"_"+filename;
@@ -1258,10 +1246,10 @@ void JSphGpu::DgSaveVtkParticlesGpu(std::string filename,int numfile,unsigned pi
   unsigned nfilter=0;
   ParticlesDataDown(n,pini,code,false,NULL,nfilter);
   tfloat3 *pos=new tfloat3[n];
-  for(unsigned p=0;p<n;p++)pos[p]=ToTFloat3(AuxPos[p]);
+  for(unsigned p=0;p<n;p++)pos[p]=ToTFloat3(AuxPos_c->cptr()[p]);
   byte *type=new byte[n];
   for(unsigned p=0;p<n;p++){
-    const typecode cod=Code[p];
+    const typecode cod=Code_c->cptr()[p];
     byte tp=99;
     if(CODE_IsFixed(cod))tp=0;
     else if(CODE_IsMoving(cod))tp=1;
@@ -1276,14 +1264,14 @@ void JSphGpu::DgSaveVtkParticlesGpu(std::string filename,int numfile,unsigned pi
   //-Saves VTK file.
   JDataArrays arrays;
   arrays.AddArray("Pos",n,pos,true);
-  if(idp) arrays.AddArray("Idp"  ,n,Idp    ,false);
-  if(type)arrays.AddArray("Typex",n,type   ,true);
-  if(vel) arrays.AddArray("Vel"  ,n,AuxVel ,false);
-  if(rhop)arrays.AddArray("Rhop" ,n,AuxRhop,false);
+  if(idp) arrays.AddArray("Idp"  ,n,Idp_c->cptr()   ,false);
+  if(type)arrays.AddArray("Typex",n,type            ,true);
+  if(vel) arrays.AddArray("Vel"  ,n,AuxVel_c->cptr(),false);
+  if(rhop)arrays.AddArray("Rhop" ,n,AuxRho_c->cptr(),false);
 #ifdef CODE_SIZE4
-  if(code)arrays.AddArray("Code" ,n,(unsigned*)Code,false);
+  if(code)arrays.AddArray("Code" ,n,(unsigned*)Code_c->cptr(),false);
 #else
-  if(code)arrays.AddArray("Code" ,n,(word*)    Code,false);
+  if(code)arrays.AddArray("Code" ,n,(word*)    Code_c->cptr(),false);
 #endif
   JVtkLib::SaveVtkData(filename,arrays,"Pos");
   arrays.Reset();

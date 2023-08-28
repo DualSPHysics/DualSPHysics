@@ -278,7 +278,7 @@ void ComputeAceMod(unsigned n,const typecode *code,const float3 *ace,float *acem
 //------------------------------------------------------------------------------
 /// Calculates module^2 of vel.
 //------------------------------------------------------------------------------
-__global__ void KerComputeVelMod(unsigned n,const float4 *vel,float *velmod)
+__global__ void KerComputeVelMod(unsigned n,const float4* vel,float* velmod)
 {
   unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
   if(p<n){
@@ -290,7 +290,7 @@ __global__ void KerComputeVelMod(unsigned n,const float4 *vel,float *velmod)
 //==============================================================================
 /// Calculates module^2 of vel.
 //==============================================================================
-void ComputeVelMod(unsigned n,const float4 *vel,float *velmod){
+void ComputeVelMod(unsigned n,const float4* vel,float* velmod){
   if(n){
     dim3 sgrid=GetSimpleGridSize(n,SPHBSIZE);
     KerComputeVelMod <<<sgrid,SPHBSIZE>>> (n,vel,velmod);
@@ -786,7 +786,7 @@ template<TpKernel tker,TpFtMode ftmode,bool lamsps,TpDensity tdensity,bool shift
 /// Interaccion para el calculo de fuerzas.
 //==============================================================================
 template<TpKernel tker,TpFtMode ftmode,bool lamsps,TpDensity tdensity,bool shift> 
-  void Interaction_ForcesGpuT(const StInterParmsg &t)
+  void Interaction_ForcesGpuT(const StInterParmsg& t)
 {
   //-Collects kernel information.
 #ifndef DISABLE_BSMODES
@@ -804,12 +804,12 @@ template<TpKernel tker,TpFtMode ftmode,bool lamsps,TpDensity tdensity,bool shift
     if(t.symmetry) //<vs_syymmetry_ini>
       KerInteractionForcesFluid<tker,ftmode,lamsps,tdensity,shift,true> <<<sgridf,t.bsfluid,0,t.stm>>> 
       (t.fluidnum,t.fluidini,t.viscob,t.viscof,dvd.scelldiv,dvd.nc,dvd.cellzero,dvd.beginendcell,dvd.cellfluid,t.dcell
-      ,t.ftomassp,(const float2*)t.tau,(float2*)t.gradvel,t.dengradcorr,t.poscell,t.velrhop,t.code,t.idp
+      ,t.ftomassp,(const float2*)t.tau,(float2*)t.gradvel,t.dengradcorr,t.poscell,t.velrho,t.code,t.idp
       ,t.viscdt,t.ar,t.ace,t.delta,t.shiftmode,t.shiftposfs);
     else //<vs_syymmetry_end>
       KerInteractionForcesFluid<tker,ftmode,lamsps,tdensity,shift,false> <<<sgridf,t.bsfluid,0,t.stm>>> 
       (t.fluidnum,t.fluidini,t.viscob,t.viscof,dvd.scelldiv,dvd.nc,dvd.cellzero,dvd.beginendcell,dvd.cellfluid,t.dcell
-      ,t.ftomassp,(const float2*)t.tau,(float2*)t.gradvel,t.dengradcorr,t.poscell,t.velrhop,t.code,t.idp
+      ,t.ftomassp,(const float2*)t.tau,(float2*)t.gradvel,t.dengradcorr,t.poscell,t.velrho,t.code,t.idp
       ,t.viscdt,t.ar,t.ace,t.delta,t.shiftmode,t.shiftposfs);
       //KerInteractionForcesFluid<tker,ftmode,lamsps,tdensity,shift,false> <<<sgridf,t.bsfluid,0,t.stm>>> (t.fluidnum,t.fluidini,t.scelldiv,t.nc,t.cellfluid,t.viscob,t.viscof,t.begincell,Int3(t.cellmin),t.dcell,t.ftomassp,(const float2*)t.tau,(float2*)t.gradvel,t.poscell,t.velrhop,t.code,t.idp,t.viscdt,t.ar,t.ace,t.delta,t.shiftmode,t.shiftposfs);
   }
@@ -821,17 +821,19 @@ template<TpKernel tker,TpFtMode ftmode,bool lamsps,TpDensity tdensity,bool shift
     if(t.symmetry) //<vs_syymmetry_ini>
       KerInteractionForcesBound<tker,ftmode,true > <<<sgridb,t.bsbound,0,t.stm>>> 
       (t.boundnum,t.boundini,dvd.scelldiv,dvd.nc,dvd.cellzero,beginendcell+dvd.cellfluid,t.dcell
-        ,t.ftomassp,t.poscell,t.velrhop,t.code,t.idp,t.viscdt,t.ar);
+        ,t.ftomassp,t.poscell,t.velrho,t.code,t.idp,t.viscdt,t.ar);
     else //<vs_syymmetry_end>
       KerInteractionForcesBound<tker,ftmode,false> <<<sgridb,t.bsbound,0,t.stm>>> 
       (t.boundnum,t.boundini,dvd.scelldiv,dvd.nc,dvd.cellzero,beginendcellfluid,t.dcell
-        ,t.ftomassp,t.poscell,t.velrhop,t.code,t.idp,t.viscdt,t.ar);
+        ,t.ftomassp,t.poscell,t.velrho,t.code,t.idp,t.viscdt,t.ar);
   }
 }
 
 //==============================================================================
 //#define FAST_COMPILATION
-template<TpKernel tker,TpFtMode ftmode,bool lamsps> void Interaction_Forces_gt2(const StInterParmsg &t){
+template<TpKernel tker,TpFtMode ftmode,bool lamsps>
+  void Interaction_Forces_gt2(const StInterParmsg& t)
+{
 #ifdef FAST_COMPILATION
   if(t.shiftmode || t.tdensity!=DDT_DDT4)throw "Shifting and extra DDT are disabled for FastCompilation...";
   Interaction_ForcesGpuT<tker,ftmode,lamsps,DDT_DDT4,false> (t);
@@ -851,7 +853,9 @@ template<TpKernel tker,TpFtMode ftmode,bool lamsps> void Interaction_Forces_gt2(
 #endif
 }
 //==============================================================================
-template<TpKernel tker,TpFtMode ftmode> void Interaction_Forces_gt1(const StInterParmsg &t){
+template<TpKernel tker,TpFtMode ftmode> 
+  void Interaction_Forces_gt1(const StInterParmsg& t)
+{
 #ifdef FAST_COMPILATION
   if(t.lamsps)throw "Extra viscosity options are disabled for FastCompilation...";
   Interaction_Forces_gt2<tker,ftmode,false> (t);
@@ -861,7 +865,7 @@ template<TpKernel tker,TpFtMode ftmode> void Interaction_Forces_gt1(const StInte
 #endif
 }
 //==============================================================================
-template<TpKernel tker> void Interaction_Forces_gt0(const StInterParmsg &t){
+template<TpKernel tker> void Interaction_Forces_gt0(const StInterParmsg& t){
 #ifdef FAST_COMPILATION
   if(t.ftmode!=FTMODE_None)throw "Extra FtMode options are disabled for FastCompilation...";
   Interaction_Forces_gt1<tker,FTMODE_None> (t);
@@ -872,7 +876,7 @@ template<TpKernel tker> void Interaction_Forces_gt0(const StInterParmsg &t){
 #endif
 }
 //==============================================================================
-void Interaction_Forces(const StInterParmsg &t){
+void Interaction_Forces(const StInterParmsg& t){
 #ifdef FAST_COMPILATION
   if(t.tkernel!=KERNEL_Wendland)throw "Extra kernels are disabled for FastCompilation...";
   Interaction_Forces_gt0<KERNEL_Wendland> (t);
@@ -1699,7 +1703,8 @@ void ComputeStepPos2(byte periactive,bool floatings,unsigned np,unsigned npb
 /// Computes for a range of particles, their position according to idp[].
 /// Calcula para un rango de particulas calcula su posicion segun idp[].
 //------------------------------------------------------------------------------
-__global__ void KerCalcRidp(unsigned n,unsigned ini,unsigned idini,unsigned idfin,const typecode *code,const unsigned *idp,unsigned *ridp)
+__global__ void KerCalcRidp(unsigned n,unsigned ini,unsigned idini,unsigned idfin
+  ,const typecode* code,const unsigned* idp,unsigned* ridp)
 {
   unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
   if(p<n){
@@ -1711,7 +1716,8 @@ __global__ void KerCalcRidp(unsigned n,unsigned ini,unsigned idini,unsigned idfi
   }
 }
 //------------------------------------------------------------------------------
-__global__ void KerCalcRidp(unsigned n,unsigned ini,unsigned idini,unsigned idfin,const unsigned *idp,unsigned *ridp)
+__global__ void KerCalcRidp(unsigned n,unsigned ini,unsigned idini,unsigned idfin
+  ,const unsigned* idp,unsigned* ridp)
 {
   unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
   if(p<n){
@@ -2448,7 +2454,7 @@ void FtUpdate(bool periactive,bool predictor,unsigned ftcount,double dt
 /// Marks current periodics to be ignored.
 /// Marca las periodicas actuales como ignorar.
 //------------------------------------------------------------------------------
-__global__ void KerPeriodicIgnore(unsigned n,typecode *code)
+__global__ void KerPeriodicIgnore(unsigned n,typecode* code)
 {
   const unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
   if(p<n){
@@ -2463,7 +2469,7 @@ __global__ void KerPeriodicIgnore(unsigned n,typecode *code)
 /// Marks current periodics to be ignored.
 /// Marca las periodicas actuales como ignorar.
 //==============================================================================
-void PeriodicIgnore(unsigned n,typecode *code){
+void PeriodicIgnore(unsigned n,typecode* code){
   if(n){
     dim3 sgrid=GetSimpleGridSize(n,SPHBSIZE);
     KerPeriodicIgnore <<<sgrid,SPHBSIZE>>> (n,code);
@@ -2602,9 +2608,9 @@ __device__ void KerPeriodicDuplicatePos(unsigned pnew,unsigned pcopy
 /// Se presupone que todas las particulas son validas.
 /// Este kernel vale para single-gpu y multi-gpu porque usa domposmin. 
 //------------------------------------------------------------------------------
-__global__ void KerPeriodicDuplicateVerlet(unsigned n,unsigned pini,uint3 cellmax,double3 perinc
-  ,const unsigned *listp,unsigned *idp,typecode *code,unsigned *dcell
-  ,double2 *posxy,double *posz,float4 *velrhop,tsymatrix3f *spstau,float4 *velrhopm1)
+__global__ void KerPeriodicDuplicateVerlet(unsigned n,unsigned pini,uint3 cellmax
+  ,double3 perinc,const unsigned* listp,unsigned* idp,typecode* code,unsigned* dcell
+  ,double2* posxy,double* posz,float4* velrho,tsymatrix3f* spstau,float4* velrhom1)
 {
   const unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
   if(p<n){
@@ -2613,13 +2619,14 @@ __global__ void KerPeriodicDuplicateVerlet(unsigned n,unsigned pini,uint3 cellma
     const unsigned pcopy=(rp&0x7FFFFFFF);
     //-Adjusts cell position of the new particles.
     //-Ajusta posicion y celda de nueva particula.
-    KerPeriodicDuplicatePos(pnew,pcopy,(rp>=0x80000000),perinc.x,perinc.y,perinc.z,cellmax,posxy,posz,dcell);
+    KerPeriodicDuplicatePos(pnew,pcopy,(rp>=0x80000000)
+      ,perinc.x,perinc.y,perinc.z,cellmax,posxy,posz,dcell);
     //-Copies the remaining data.
     //-Copia el resto de datos.
-    idp[pnew]=idp[pcopy];
-    code[pnew]=CODE_SetPeriodic(code[pcopy]);
-    velrhop[pnew]=velrhop[pcopy];
-    velrhopm1[pnew]=velrhopm1[pcopy];
+    idp     [pnew]=idp[pcopy];
+    code    [pnew]=CODE_SetPeriodic(code[pcopy]);
+    velrho  [pnew]=velrho[pcopy];
+    velrhom1[pnew]=velrhom1[pcopy];
     if(spstau)spstau[pnew]=spstau[pcopy];
   }
 }
@@ -2628,14 +2635,16 @@ __global__ void KerPeriodicDuplicateVerlet(unsigned n,unsigned pini,uint3 cellma
 /// Creates periodic particles from a list of particles to duplicate.
 /// Crea particulas periodicas a partir de una lista con las particulas a duplicar.
 //==============================================================================
-void PeriodicDuplicateVerlet(unsigned n,unsigned pini,tuint3 domcells,tdouble3 perinc
-  ,const unsigned *listp,unsigned *idp,typecode *code,unsigned *dcell
-  ,double2 *posxy,double *posz,float4 *velrhop,tsymatrix3f *spstau,float4 *velrhopm1)
+void PeriodicDuplicateVerlet(unsigned n,unsigned pini,tuint3 domcells
+  ,tdouble3 perinc,const unsigned* listp,unsigned* idp,typecode* code
+  ,unsigned* dcell,double2* posxy,double* posz,float4* velrho
+  ,tsymatrix3f* spstau,float4* velrhom1)
 {
   if(n){
     uint3 cellmax=make_uint3(domcells.x-1,domcells.y-1,domcells.z-1);
     dim3 sgrid=GetSimpleGridSize(n,SPHBSIZE);
-    KerPeriodicDuplicateVerlet <<<sgrid,SPHBSIZE>>> (n,pini,cellmax,Double3(perinc),listp,idp,code,dcell,posxy,posz,velrhop,spstau,velrhopm1);
+    KerPeriodicDuplicateVerlet <<<sgrid,SPHBSIZE>>> (n,pini,cellmax,Double3(perinc)
+      ,listp,idp,code,dcell,posxy,posz,velrho,spstau,velrhom1);
   }
 }
 
@@ -2648,9 +2657,10 @@ void PeriodicDuplicateVerlet(unsigned n,unsigned pini,tuint3 domcells,tdouble3 p
 /// Se presupone que todas las particulas son validas.
 /// Este kernel vale para single-gpu y multi-gpu porque usa domposmin. 
 //------------------------------------------------------------------------------
-template<bool varspre> __global__ void KerPeriodicDuplicateSymplectic(unsigned n,unsigned pini
-  ,uint3 cellmax,double3 perinc,const unsigned *listp,unsigned *idp,typecode *code,unsigned *dcell
-  ,double2 *posxy,double *posz,float4 *velrhop,tsymatrix3f *spstau,double2 *posxypre,double *poszpre,float4 *velrhoppre)
+template<bool varspre> __global__ void KerPeriodicDuplicateSymplectic(unsigned n
+  ,unsigned pini,uint3 cellmax,double3 perinc,const unsigned* listp,unsigned* idp
+  ,typecode* code,unsigned* dcell,double2* posxy,double* posz,float4* velrho
+  ,tsymatrix3f* spstau,double2* posxypre,double* poszpre,float4* velrhopre)
 {
   const unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
   if(p<n){
@@ -2662,13 +2672,13 @@ template<bool varspre> __global__ void KerPeriodicDuplicateSymplectic(unsigned n
     KerPeriodicDuplicatePos(pnew,pcopy,(rp>=0x80000000),perinc.x,perinc.y,perinc.z,cellmax,posxy,posz,dcell);
     //-Copies the remaining data.
     //-Copia el resto de datos.
-    idp[pnew]=idp[pcopy];
-    code[pnew]=CODE_SetPeriodic(code[pcopy]);
-    velrhop[pnew]=velrhop[pcopy];
+    idp   [pnew]=idp[pcopy];
+    code  [pnew]=CODE_SetPeriodic(code[pcopy]);
+    velrho[pnew]=velrho[pcopy];
     if(varspre){
-      posxypre[pnew]=posxypre[pcopy];
-      poszpre[pnew]=poszpre[pcopy];
-      velrhoppre[pnew]=velrhoppre[pcopy];
+      posxypre [pnew]=posxypre[pcopy];
+      poszpre  [pnew]=poszpre[pcopy];
+      velrhopre[pnew]=velrhopre[pcopy];
     }
     if(spstau)spstau[pnew]=spstau[pcopy];
   }
@@ -2679,14 +2689,19 @@ template<bool varspre> __global__ void KerPeriodicDuplicateSymplectic(unsigned n
 /// Crea particulas periodicas a partir de una lista con las particulas a duplicar.
 //==============================================================================
 void PeriodicDuplicateSymplectic(unsigned n,unsigned pini
-  ,tuint3 domcells,tdouble3 perinc,const unsigned *listp,unsigned *idp,typecode *code,unsigned *dcell
-  ,double2 *posxy,double *posz,float4 *velrhop,tsymatrix3f *spstau,double2 *posxypre,double *poszpre,float4 *velrhoppre)
+  ,tuint3 domcells,tdouble3 perinc,const unsigned* listp,unsigned* idp
+  ,typecode* code,unsigned* dcell,double2* posxy,double* posz,float4* velrho
+  ,tsymatrix3f* spstau,double2* posxypre,double* poszpre,float4* velrhopre)
 {
   if(n){
     uint3 cellmax=make_uint3(domcells.x-1,domcells.y-1,domcells.z-1);
     dim3 sgrid=GetSimpleGridSize(n,SPHBSIZE);
-    if(posxypre!=NULL)KerPeriodicDuplicateSymplectic<true>  <<<sgrid,SPHBSIZE>>> (n,pini,cellmax,Double3(perinc),listp,idp,code,dcell,posxy,posz,velrhop,spstau,posxypre,poszpre,velrhoppre);
-    else              KerPeriodicDuplicateSymplectic<false> <<<sgrid,SPHBSIZE>>> (n,pini,cellmax,Double3(perinc),listp,idp,code,dcell,posxy,posz,velrhop,spstau,posxypre,poszpre,velrhoppre);
+    if(posxypre!=NULL)KerPeriodicDuplicateSymplectic<true>  <<<sgrid,SPHBSIZE>>> 
+      (n,pini,cellmax,Double3(perinc),listp,idp,code,dcell,posxy,posz,velrho,spstau
+        ,posxypre,poszpre,velrhopre);
+    else              KerPeriodicDuplicateSymplectic<false> <<<sgrid,SPHBSIZE>>> 
+      (n,pini,cellmax,Double3(perinc),listp,idp,code,dcell,posxy,posz,velrho,spstau
+        ,posxypre,poszpre,velrhopre);
   }
 }
 
@@ -2699,7 +2714,8 @@ void PeriodicDuplicateSymplectic(unsigned n,unsigned pini
 /// Se presupone que todas las particulas son validas.
 /// Este kernel vale para single-gpu y multi-gpu porque usa domposmin. 
 //------------------------------------------------------------------------------
-__global__ void KerPeriodicDuplicateNormals(unsigned n,unsigned pini,const unsigned *listp,float3 *normals,float3 *motionvel)
+__global__ void KerPeriodicDuplicateNormals(unsigned n,unsigned pini
+  ,const unsigned* listp,float3* normals,float3* motionvel)
 {
   const unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
   if(p<n){
@@ -2715,7 +2731,8 @@ __global__ void KerPeriodicDuplicateNormals(unsigned n,unsigned pini,const unsig
 /// Creates periodic particles from a list of particles to duplicate.
 /// Crea particulas periodicas a partir de una lista con las particulas a duplicar.
 //==============================================================================
-void PeriodicDuplicateNormals(unsigned n,unsigned pini,const unsigned *listp,float3 *normals,float3 *motionvel)
+void PeriodicDuplicateNormals(unsigned n,unsigned pini,const unsigned* listp
+  ,float3* normals,float3* motionvel)
 {
   if(n){
     dim3 sgrid=GetSimpleGridSize(n,SPHBSIZE);

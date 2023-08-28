@@ -339,7 +339,7 @@ const StAceInput& JDsAccInput::GetAccValues(unsigned cinput,double timestep){
 /// Adds variable acceleration from input configurations.
 //==============================================================================
 void JDsAccInput::RunCpu(double timestep,tfloat3 gravity,unsigned n,unsigned pini
-  ,const typecode *code,const tdouble3 *pos,const tfloat4 *velrhop,tfloat3 *ace)
+  ,const typecode* code,const tdouble3* pos,const tfloat4* velrho,tfloat3* ace)
 {
   for(unsigned c=0;c<GetCount();c++){
     const StAceInput v=GetAccValues(c,timestep);
@@ -361,7 +361,7 @@ void JDsAccInput::RunCpu(double timestep,tfloat3 gravity,unsigned n,unsigned pin
           if(!v.setgravity)acc=acc-ToTDouble3(gravity); //-Subtract global gravity from the acceleration if it is set in the input file
           if(withaccang){                               //-Adds angular acceleration.
             const tdouble3 dc=pos[p]-v.centre;
-            const tdouble3 vel=TDouble3(velrhop[p].x,velrhop[p].y,velrhop[p].z);//-Get the current particle's velocity
+            const tdouble3 vel=TDouble3(velrho[p].x,velrho[p].y,velrho[p].z);//-Get the current particle's velocity
 
             //-Calculate angular acceleration ((Dw/Dt) x (r_i - r)) + (w x (w x (r_i - r))) + (2w x (v_i - v))
             //(Dw/Dt) x (r_i - r) (term1)
@@ -397,7 +397,8 @@ void JDsAccInput::RunCpu(double timestep,tfloat3 gravity,unsigned n,unsigned pin
 /// Adds variable acceleration from input configurations.
 //==============================================================================
 void JDsAccInput::RunGpu(double timestep,tfloat3 gravity,unsigned n,unsigned pini
-    ,const typecode *code,const double2 *posxy,const double *posz,const float4 *velrhop,float3 *ace)
+  ,const typecode* code,const double2* posxy,const double* posz
+  ,const float4* velrho,float3* ace)
 {
   for(unsigned c=0;c<GetCount();c++){
     const StAceInput v=GetAccValues(c,timestep);
@@ -405,7 +406,7 @@ void JDsAccInput::RunGpu(double timestep,tfloat3 gravity,unsigned n,unsigned pin
       const typecode codesel1=typecode(v.codesel1);
       const typecode codesel2=typecode(v.codesel2);
       cuaccin::AddAccInput(n,pini,codesel1,codesel2,v.acclin,v.accang,v.centre
-        ,v.velang,v.vellin,v.setgravity,gravity,code,posxy,posz,velrhop,ace,NULL);
+        ,v.velang,v.vellin,v.setgravity,gravity,code,posxy,posz,velrho,ace,NULL);
     }
   }
 }

@@ -55,11 +55,11 @@ class JGaugeItem : protected JObject
 {
 protected:
  #ifdef _WITHGPU
-  void RunExceptioonCuda(const std::string &srcfile,int srcline
-    ,const std::string &classname,const std::string &method
+  void RunExceptioonCuda(const std::string& srcfile,int srcline
+    ,const std::string& classname,const std::string& method
     ,cudaError_t cuerr,std::string msg)const;
-  void CheckCudaErroor(const std::string &srcfile,int srcline
-    ,const std::string &classname,const std::string &method
+  void CheckCudaErroor(const std::string& srcfile,int srcline
+    ,const std::string& classname,const std::string& method
     ,std::string msg)const;
  #endif
 
@@ -135,20 +135,20 @@ public:
   const unsigned Idx;
   const std::string Name;
 
-  void Config(const StCteSph & csp,bool symmetry,tdouble3 domposmin
+  void Config(const StCteSph& csp,bool symmetry,tdouble3 domposmin
     ,tdouble3 domposmax,float scell,int scelldiv);
   void SetSaveVtkPart(bool save){ SaveVtkPart=save; }
   void ConfigComputeTiming(double start,double end,double dt);
   void ConfigOutputTiming(bool save,double start,double end,double dt);
 
-  void GetConfig(std::vector<std::string> &lines)const;
+  void GetConfig(std::vector<std::string>& lines)const;
 
-  std::string GetResultsFile(bool dirdata,const std::string &fext,const std::string &subname="")const;
-  std::string GetResultsFileCsv(const std::string &subname="")const;
-  std::string GetResultsFileVtk(const std::string &subname="")const;
+  std::string GetResultsFile(bool dirdata,const std::string& fext,const std::string& subname="")const;
+  std::string GetResultsFileCsv(const std::string& subname="")const;
+  std::string GetResultsFileVtk(const std::string& subname="")const;
   virtual void SaveResults()=0;
   virtual void SaveVtkResult(unsigned cpart)=0;
-  virtual unsigned GetPointDef(std::vector<tfloat3> &points)const=0;
+  virtual unsigned GetPointDef(std::vector<tfloat3>& points)const=0;
   virtual void SaveVtkScheme()const{};
 
   void SaveResults(unsigned cpart);
@@ -164,14 +164,14 @@ public:
   bool Update(double timestep)const{ return(timestep>=ComputeNext && ComputeStart<=timestep && timestep<=ComputeEnd); }
   bool Output(double timestep)const{ return(OutputSave && timestep>=OutputNext && OutputStart<=timestep && timestep<=OutputEnd); }
 
-  virtual void CalculeCpu(double timestep,const StDivDataCpu &dvd
-    ,unsigned npbok,unsigned npb,unsigned np,const tdouble3 *pos
-    ,const typecode *code,const unsigned *idp,const tfloat4 *velrhop)=0;
+  virtual void CalculeCpu(double timestep,const StDivDataCpu& dvd
+    ,unsigned npbok,unsigned npb,unsigned np,const tdouble3* pos
+    ,const typecode* code,const unsigned* idp,const tfloat4* velrho)=0;
 
  #ifdef _WITHGPU
-  virtual void CalculeGpu(double timestep,const StDivDataGpu &dvd
-    ,unsigned npbok,unsigned npb,unsigned np,const double2 *posxy,const double *posz
-    ,const typecode *code,const unsigned *idp,const float4 *velrhop,float3 *aux)=0;
+  virtual void CalculeGpu(double timestep,const StDivDataGpu& dvd
+    ,unsigned npbok,unsigned npb,unsigned np,const double2* posxy,const double* posz
+    ,const typecode* code,const unsigned* idp,const float4* velrho,float3* aux)=0;
  #endif
 };
 
@@ -194,8 +194,8 @@ public:
       Set(0,TFloat3(0),TFloat3(0));
       modified=false;
     }
-    void Set(double t,const tfloat3 &pt,const tfloat3 &ve){
-      timestep=t; point=pt; vel=ve; modified=true;
+    void Set(double t,const tfloat3& pt,const tfloat3& vel){
+      timestep=t; point=pt; this->vel=vel; modified=true;
     }
   }StGaugeVelRes;
 
@@ -217,25 +217,25 @@ public:
 
   void SaveResults();
   void SaveVtkResult(unsigned cpart);
-  unsigned GetPointDef(std::vector<tfloat3> &points)const;
+  unsigned GetPointDef(std::vector<tfloat3>& points)const;
 
   tdouble3 GetPoint()const{ return(Point); }
   const StGaugeVelRes& GetResult()const{ return(Result); }
 
-  void SetPoint(const tdouble3 &point){ ClearResult(); Point=point; }
+  void SetPoint(const tdouble3& point){ ClearResult(); Point=point; }
 
-  template<TpKernel tker> void CalculeCpuT(double timestep,const StDivDataCpu &dvd
-    ,unsigned npbok,unsigned npb,unsigned np,const tdouble3 *pos
-    ,const typecode *code,const unsigned *idp,const tfloat4 *velrhop);
+  template<TpKernel tker> void CalculeCpuT(double timestep,const StDivDataCpu& dvd
+    ,unsigned npbok,unsigned npb,unsigned np,const tdouble3* pos
+    ,const typecode* code,const unsigned* idp,const tfloat4* velrho);
 
-   void CalculeCpu(double timestep,const StDivDataCpu &dvd
-    ,unsigned npbok,unsigned npb,unsigned np,const tdouble3 *pos
-    ,const typecode *code,const unsigned *idp,const tfloat4 *velrhop);
+   void CalculeCpu(double timestep,const StDivDataCpu& dvd
+    ,unsigned npbok,unsigned npb,unsigned np,const tdouble3* pos
+    ,const typecode* code,const unsigned* idp,const tfloat4* velrho);
 
  #ifdef _WITHGPU
-  void CalculeGpu(double timestep,const StDivDataGpu &dvd
-    ,unsigned npbok,unsigned npb,unsigned np,const double2 *posxy,const double *posz
-    ,const typecode *code,const unsigned *idp,const float4 *velrhop,float3 *aux);
+  void CalculeGpu(double timestep,const StDivDataGpu& dvd
+    ,unsigned npbok,unsigned npb,unsigned np,const double2* posxy,const double* posz
+    ,const typecode* code,const unsigned* idp,const float4* velrho,float3* aux);
  #endif
 
 };
@@ -260,7 +260,7 @@ public:
       Set(0,TFloat3(0),TFloat3(0),TFloat3(0));
       modified=false;
     }
-    void Set(double t,const tfloat3 &pt0,const tfloat3 &pt2,const tfloat3 &ps){
+    void Set(double t,const tfloat3& pt0,const tfloat3& pt2,const tfloat3& ps){
       timestep=t; point0=pt0; point2=pt2; posswl=ps; modified=true;
     }
   }StGaugeSwlRes;
@@ -282,16 +282,17 @@ protected:
   void Reset();
   void ClearResult(){ Result.Reset(); }
   void StoreResult();
-  template<TpKernel tker> float CalculeMassCpu(const tdouble3 &ptpos,const StDivDataCpu &dvd
-    ,const tdouble3 *pos,const typecode *code,const tfloat4 *velrhop)const;
+  template<TpKernel tker> float CalculeMassCpu(const tdouble3& ptpos,const StDivDataCpu& dvd
+    ,const tdouble3* pos,const typecode* code,const tfloat4* velrho)const;
 
 public:
-  JGaugeSwl(unsigned idx,std::string name,tdouble3 point0,tdouble3 point2,double pointdp,float masslimit,bool cpu);
+  JGaugeSwl(unsigned idx,std::string name,tdouble3 point0,tdouble3 point2
+    ,double pointdp,float masslimit,bool cpu);
   ~JGaugeSwl();
 
   void SaveResults();
   void SaveVtkResult(unsigned cpart);
-  unsigned GetPointDef(std::vector<tfloat3> &points)const;
+  unsigned GetPointDef(std::vector<tfloat3>& points)const;
 
   tdouble3 GetPoint0()const{ return(Point0); }
   tdouble3 GetPoint2()const{ return(Point2); }
@@ -299,20 +300,20 @@ public:
   float GetMassLimit()const{ return(MassLimit); }
   const StGaugeSwlRes& GetResult()const{ return(Result); }
 
-  void SetPoints(const tdouble3 &point0,const tdouble3 &point2,double pointdp=0);
+  void SetPoints(const tdouble3& point0,const tdouble3& point2,double pointdp=0);
 
-  template<TpKernel tker> void CalculeCpuT(double timestep,const StDivDataCpu &dvd
-    ,unsigned npbok,unsigned npb,unsigned np,const tdouble3 *pos
-    ,const typecode *code,const unsigned *idp,const tfloat4 *velrhop);
+  template<TpKernel tker> void CalculeCpuT(double timestep,const StDivDataCpu& dvd
+    ,unsigned npbok,unsigned npb,unsigned np,const tdouble3* pos
+    ,const typecode* code,const unsigned* idp,const tfloat4* velrho);
 
-   void CalculeCpu(double timestep,const StDivDataCpu &dvd
-    ,unsigned npbok,unsigned npb,unsigned np,const tdouble3 *pos
-    ,const typecode *code,const unsigned *idp,const tfloat4 *velrhop);
+   void CalculeCpu(double timestep,const StDivDataCpu& dvd
+    ,unsigned npbok,unsigned npb,unsigned np,const tdouble3* pos
+    ,const typecode* code,const unsigned* idp,const tfloat4* velrho);
 
  #ifdef _WITHGPU
-  void CalculeGpu(double timestep,const StDivDataGpu &dvd
-    ,unsigned npbok,unsigned npb,unsigned np,const double2 *posxy,const double *posz
-    ,const typecode *code,const unsigned *idp,const float4 *velrhop,float3 *aux);
+  void CalculeGpu(double timestep,const StDivDataGpu& dvd
+    ,unsigned npbok,unsigned npb,unsigned np,const double2* posxy,const double* posz
+    ,const typecode* code,const unsigned* idp,const float4* velrho,float3* aux);
  #endif
 
 };
@@ -336,7 +337,7 @@ public:
       Set(0,TFloat3(0),0);
       modified=false;
     }
-    void Set(double t,const tfloat3 &pt,float z){
+    void Set(double t,const tfloat3& pt,float z){
       timestep=t; point0=pt; zmax=z; modified=true;
     }
   }StGaugeMaxzRes;
@@ -354,8 +355,8 @@ protected:
   void Reset();
   void ClearResult(){ Result.Reset(); }
   void StoreResult();
-  void GetInteractionCellsMaxZ(const tdouble3 &pos,const tint4 &nc,const tint3 &cellzero
-    ,int &cxini,int &cxfin,int &yini,int &yfin,int &zini,int &zfin)const;
+  void GetInteractionCellsMaxZ(const tdouble3& pos,const tint4& nc,const tint3& cellzero
+    ,int& cxini,int& cxfin,int& yini,int& yfin,int& zini,int& zfin)const;
 
 public:
   JGaugeMaxZ(unsigned idx,std::string name,tdouble3 point0,double height,float distlimit,bool cpu);
@@ -363,25 +364,25 @@ public:
 
   void SaveResults();
   void SaveVtkResult(unsigned cpart);
-  unsigned GetPointDef(std::vector<tfloat3> &points)const;
+  unsigned GetPointDef(std::vector<tfloat3>& points)const;
 
   tdouble3 GetPoint0()const{ return(Point0); }
   double GetHeight()const{ return(Height); }
   float GetDistLimit()const{ return(DistLimit); }
   const StGaugeMaxzRes& GetResult()const{ return(Result); }
 
-  void SetPoint0   (const tdouble3 &point0){ ClearResult(); Point0=point0; }
+  void SetPoint0   (const tdouble3& point0){ ClearResult(); Point0=point0; }
   void SetHeight   (double height){          ClearResult(); Height=height; }
   void SetDistLimit(float distlimit){        ClearResult(); DistLimit=distlimit; }
 
-   void CalculeCpu(double timestep,const StDivDataCpu &dvd
-    ,unsigned npbok,unsigned npb,unsigned np,const tdouble3 *pos
-    ,const typecode *code,const unsigned *idp,const tfloat4 *velrhop);
+   void CalculeCpu(double timestep,const StDivDataCpu& dvd
+    ,unsigned npbok,unsigned npb,unsigned np,const tdouble3* pos
+    ,const typecode* code,const unsigned* idp,const tfloat4* velrho);
 
  #ifdef _WITHGPU
-  void CalculeGpu(double timestep,const StDivDataGpu &dvd
-    ,unsigned npbok,unsigned npb,unsigned np,const double2 *posxy,const double *posz
-    ,const typecode *code,const unsigned *idp,const float4 *velrhop,float3 *aux);
+  void CalculeGpu(double timestep,const StDivDataGpu& dvd
+    ,unsigned npbok,unsigned npb,unsigned np,const double2* posxy,const double* posz
+    ,const typecode* code,const unsigned* idp,const float4* velrho,float3* aux);
  #endif
 };
 
@@ -404,7 +405,7 @@ public:
       Set(0,TFloat3(0));
       modified=false;
     }
-    void Set(double t,const tfloat3 &forceres){
+    void Set(double t,const tfloat3& forceres){
       timestep=t; force=forceres; modified=true;
     }
   }StGaugeForceRes;
@@ -419,10 +420,10 @@ protected:
   tfloat3 InitialCenter;
 
   //-Auxiliary variables.
-  tfloat3 *PartAcec;
+  tfloat3* PartAcec;
  #ifdef _WITHGPU
-  float3 *PartAceg;
-  float3 *Auxg;
+  float3* PartAceg;
+  float3* Auxg;
  #endif
 
   StGaugeForceRes Result; ///<Result of the last measure.
@@ -440,7 +441,7 @@ public:
 
   void SaveResults();
   void SaveVtkResult(unsigned cpart);
-  unsigned GetPointDef(std::vector<tfloat3> &points)const;
+  unsigned GetPointDef(std::vector<tfloat3>& points)const;
 
   word        GetMkBound()  const{ return(MkBound); }
   TpParticles GetTypeParts()const{ return(TypeParts); }
@@ -450,18 +451,18 @@ public:
   tfloat3     GetInitialCenter()const{ return(InitialCenter); }
   const StGaugeForceRes& GetResult()const{ return(Result); }
 
-  template<TpKernel tker> void CalculeCpuT(double timestep,const StDivDataCpu &dvd
-    ,unsigned npbok,unsigned npb,unsigned np,const tdouble3 *pos
-    ,const typecode *code,const unsigned *idp,const tfloat4 *velrhop);
+  template<TpKernel tker> void CalculeCpuT(double timestep,const StDivDataCpu& dvd
+    ,unsigned npbok,unsigned npb,unsigned np,const tdouble3* pos
+    ,const typecode* code,const unsigned* idp,const tfloat4* velrho);
 
-  void CalculeCpu(double timestep,const StDivDataCpu &dvd
-    ,unsigned npbok,unsigned npb,unsigned np,const tdouble3 *pos
-    ,const typecode *code,const unsigned *idp,const tfloat4 *velrhop);
+  void CalculeCpu(double timestep,const StDivDataCpu& dvd
+    ,unsigned npbok,unsigned npb,unsigned np,const tdouble3* pos
+    ,const typecode* code,const unsigned* idp,const tfloat4* velrho);
 
  #ifdef _WITHGPU
-  void CalculeGpu(double timestep,const StDivDataGpu &dvd
-    ,unsigned npbok,unsigned npb,unsigned np,const double2 *posxy,const double *posz
-    ,const typecode *code,const unsigned *idp,const float4 *velrhop,float3 *aux);
+  void CalculeGpu(double timestep,const StDivDataGpu& dvd
+    ,unsigned npbok,unsigned npb,unsigned np,const double2* posxy,const double* posz
+    ,const typecode* code,const unsigned* idp,const float4* velrho,float3* aux);
  #endif
 };
 
