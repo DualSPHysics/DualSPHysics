@@ -129,11 +129,11 @@ protected:
   agfloat4*   Velrho_g;
 
   //-Variables for mDBC (Opt).
-  agfloat3*   BoundNormal_g; ///<Normal (x,y,z) pointing from boundary particles to ghost nodes (Opt).
-  agfloat3*   MotionVel_g;   ///<Velocity of a moving boundary particle (Opt).
+  agfloat3*   BoundNor_g;  ///<Normal (x,y,z) pointing from boundary particles to ghost nodes (Opt).
+  agfloat3*   MotionVel_g; ///<Velocity of a moving boundary particle (Opt).
     
   //-Variables for compute step VERLET (Opt).
-  agfloat4*   VelrhoM1_g;   ///<Verlet: in order to keep previous values (Opt).
+  agfloat4*   VelrhoM1_g;  ///<Verlet: in order to keep previous values (Opt).
 
   //-Variables for compute step SYMPLECTIC (Opt,Null).
   agdouble2*  PosxyPre_g;  ///<Sympletic: in order to keep predictor values (Opt,Null).
@@ -201,7 +201,7 @@ protected:
   void PrintAllocMemory(llong mcpu,llong mgpu)const;
 
   void ConstantDataUp();
-  void ParticlesDataUp(unsigned n,const tfloat3* boundnormal);
+  void ParticlesDataUp(unsigned n,const tfloat3* boundnor);
   unsigned ParticlesDataDown(unsigned n,unsigned pini,bool code
     ,bool onlynormal,const byte* filterg,unsigned &npfilterdel);
   
@@ -230,7 +230,7 @@ protected:
   void RunDamping(double dt);
 
   void SaveVtkNormalsGpu(std::string filename,int numfile,unsigned np,unsigned npb
-    ,const double2 *posxyg,const double *poszg,const unsigned *idpg,const float3 *boundnormalg);
+    ,const double2 *posxyg,const double *poszg,const unsigned *idpg,const float3 *boundnorg);
 
 public:
   JSphGpu(bool withmpi);

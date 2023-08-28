@@ -173,10 +173,10 @@ void JSphGpuSingle::ConfigDomain(){
   LoadCodeParticles(Np,Idp_c->cptr(),Code_c->ptr());
 
   //-Load normals for boundary particles (fixed and moving).
-  tfloat3* boundnormal=NULL;
+  tfloat3* boundnor=NULL;
   if(UseNormals){
-    boundnormal=new tfloat3[Np];
-    LoadBoundNormals(Np,Npb,Idp_c->cptr(),Code_c->cptr(),boundnormal);
+    boundnor=new tfloat3[Np];
+    LoadBoundNormals(Np,Npb,Idp_c->cptr(),Code_c->cptr(),boundnor);
   }
 
   //-Creates PartsInit object with initial particle data for automatic configurations.
@@ -184,8 +184,8 @@ void JSphGpuSingle::ConfigDomain(){
 
   //-Runs initialization operations from XML.
   RunInitialize(Np,Npb,AuxPos_c->cptr(),Idp_c->cptr(),Code_c->cptr()
-    ,Velrho_c->ptr(),boundnormal);
-  if(UseNormals)ConfigBoundNormals(Np,Npb,AuxPos_c->cptr(),Idp_c->cptr(),boundnormal);
+    ,Velrho_c->ptr(),boundnor);
+  if(UseNormals)ConfigBoundNormals(Np,Npb,AuxPos_c->cptr(),Idp_c->cptr(),boundnor);
 
   //-Computes MK domain for boundary and fluid particles.
   MkInfo->ComputeMkDomains(Np,AuxPos_c->cptr(),Code_c->cptr());
@@ -204,8 +204,8 @@ void JSphGpuSingle::ConfigDomain(){
 
   //-Uploads particle data on the GPU.
   Pos3ToPos21(Np,AuxPos_c->cptr(),Posxy_c->ptr(),Posz_c->ptr());
-  ParticlesDataUp(Np,boundnormal);
-  delete[] boundnormal; boundnormal=NULL;
+  ParticlesDataUp(Np,boundnor);
+  delete[] boundnor; boundnor=NULL;
   //-Uploads constants on the GPU.
   ConstantDataUp();
 
@@ -338,7 +338,7 @@ void JSphGpuSingle::RunPeriodic(){
             }
             if(UseNormals){
               cusph::PeriodicDuplicateNormals(count,Np,listpg.cptr()
-                ,BoundNormal_g->ptr(),AG_PTR(MotionVel_g));
+                ,BoundNor_g->ptr(),AG_PTR(MotionVel_g));
             }
             //-Update the total number of particles.
             Np+=count;
@@ -418,8 +418,8 @@ void JSphGpuSingle::RunCellDivide(bool updateperiodic){
   }
   if(UseNormals){
     agfloat3 auxg("-",Arrays_Gpu,true);
-    CellDivSingle->SortDataArrays(BoundNormal_g->cptr(),auxg.ptr());
-    BoundNormal_g->SwapPtr(&auxg);
+    CellDivSingle->SortDataArrays(BoundNor_g->cptr(),auxg.ptr());
+    BoundNor_g->SwapPtr(&auxg);
     if(MotionVel_g){
       CellDivSingle->SortDataArrays(MotionVel_g->cptr(),auxg.ptr());
       MotionVel_g->SwapPtr(&auxg);
@@ -558,7 +558,7 @@ void JSphGpuSingle::MdbcBoundCorrection(){
   const unsigned n=(UseNormalsFt? Np: NpbOk);
   cusph::Interaction_MdbcCorrection(TKernel,Simulate2D,SlipMode,MdbcFastSingle
     ,n,CaseNbound,MdbcThreshold,DivData,Map_PosMin,Posxy_g->cptr(),Posz_g->cptr()
-    ,PosCell_g->cptr(),Code_g->cptr(),Idp_g->cptr(),BoundNormal_g->cptr()
+    ,PosCell_g->cptr(),Code_g->cptr(),Idp_g->cptr(),BoundNor_g->cptr()
     ,AG_CPTR(MotionVel_g),Velrho_g->ptr());
   Timersg->TmStop(TMG_CfPreForces,true);
 }
@@ -849,7 +849,7 @@ void JSphGpuSingle::RunFloating(double dt,bool predictor){
           mat.Rotate(dang);
           mat.Move(fobj.center*-1);
           cusph::FtNormalsUpdate(fobj.count,fobj.begin-CaseNfixed,mat.GetMatrix()
-            ,RidpMotg,BoundNormal_g->ptr());
+            ,RidpMotg,AG_PTR(BoundNor_g));
         }
       }
     }
@@ -1066,7 +1066,7 @@ void JSphGpuSingle::SaveData(){
   AddBasicArrays(arrays,npsave,AuxPos_c->cptr(),Idp_c->cptr(),AuxVel_c->cptr(),AuxRho_c->cptr());
   JSph::SaveData(npsave,arrays,1,vdom,infoplus);
   if(UseNormals && SvNormals)SaveVtkNormalsGpu("normals/Normals.vtk",Part
-    ,npsave,Npb,Posxy_g->cptr(),Posz_g->cptr(),Idp_g->cptr(),BoundNormal_g->cptr());
+    ,npsave,Npb,Posxy_g->cptr(),Posz_g->cptr(),Idp_g->cptr(),BoundNor_g->cptr());
   //-Save extra data.
   if(SvExtraDataBi4)SaveExtraData();
   Timersg->TmStop(TMG_SuSavePart,true);
@@ -1077,15 +1077,15 @@ void JSphGpuSingle::SaveData(){
 /// Muestra y graba resumen final de ejecucion.
 //==============================================================================
 void JSphGpuSingle::SaveExtraData(){
-  const bool svextra=(BoundNormal_g!=NULL);
+  const bool svextra=(BoundNor_g!=NULL);
   if(svextra && SvExtraDataBi4->CheckSave(Part)){
     SvExtraDataBi4->InitPartData(Part,TimeStep,Nstep);
     //-Saves normals of mDBC.
-    if(BoundNormal_g){
+    if(BoundNor_g){
       acfloat3* nor_c=AuxVel_c;
       const unsigned nsize=(UseNormalsFt? Np: Npb);
       Idp_g->CuCopyToHost(Idp_c,nsize);
-      BoundNormal_g->CuCopyToHost(nor_c,nsize);
+      BoundNor_g->CuCopyToHost(nor_c,nsize);
       if(PeriActive)Code_g->CuCopyToHost(Code_c,nsize);
       SvExtraDataBi4->AddNormals(UseNormalsFt,Np,Npb,Idp_c->cptr()
         ,(PeriActive? Code_c->cptr(): NULL),nor_c->cptr());

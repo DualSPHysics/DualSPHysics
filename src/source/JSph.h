@@ -432,8 +432,8 @@ protected:
   void VisuDemCoefficients()const;
 
   void LoadCodeParticles(unsigned np,const unsigned* idp,typecode* code)const;
-  void LoadBoundNormals(unsigned np,unsigned npb,const unsigned* idp,const typecode* code,tfloat3* boundnormal);
-  void ConfigBoundNormals(unsigned np,unsigned npb,const tdouble3* pos,const unsigned* idp,tfloat3* boundnormal);
+  void LoadBoundNormals(unsigned np,unsigned npb,const unsigned* idp,const typecode* code,tfloat3* boundnor);
+  void ConfigBoundNormals(unsigned np,unsigned npb,const tdouble3* pos,const unsigned* idp,tfloat3* boundnor);
 
   void PrepareCfgDomainValues(tdouble3 &v,tdouble3 vdef=TDouble3(0))const;
   void ResizeMapLimits();
@@ -445,7 +445,7 @@ protected:
   void VisuParticleSummary()const;
   void LoadDcellParticles(unsigned n,const typecode *code,const tdouble3 *pos,unsigned *dcell)const;
   void RunInitialize(unsigned np,unsigned npb,const tdouble3* pos,const unsigned* idp
-    ,const typecode* code,tfloat4* velrhop,tfloat3* boundnormal);
+    ,const typecode* code,tfloat4* velrhop,tfloat3* boundnor);
   void CreatePartsInit(unsigned np,const tdouble3* pos,const typecode* code);
   void FreePartsInit();
 
@@ -503,7 +503,7 @@ protected:
   unsigned SaveMapCellsVtkSize()const;
   void SaveMapCellsVtk(float scell)const;
   void SaveVtkNormals(std::string filename,int numfile,unsigned np,unsigned npb
-    ,const tdouble3 *pos,const unsigned *idp,const tfloat3 *boundnormal,float resize)const;
+    ,const tdouble3 *pos,const unsigned *idp,const tfloat3 *boundnor,float resize)const;
  
   void GetResInfo(float tsim,float ttot,std::string headplus,std::string detplus
     ,std::string &hinfo,std::string &dinfo)const;

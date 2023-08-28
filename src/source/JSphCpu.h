@@ -125,15 +125,15 @@ protected:
   acfloat4*   Velrho_c;
 
   //-Variables for mDBC (Opt).
-  acfloat3*   BoundNormal_c;  ///<Normal (x,y,z) pointing from boundary particles to ghost nodes (Opt).
-  acfloat3*   MotionVel_c;    ///<Velocity of a moving boundary particle (Opt).
+  acfloat3*   BoundNor_c;   ///<Normal (x,y,z) pointing from boundary particles to ghost nodes (Opt).
+  acfloat3*   MotionVel_c;  ///<Velocity of a moving boundary particle (Opt).
     
   //-Variables for compute step VERLET (Opt).
-  acfloat4*   VelrhoM1_c;     ///<Verlet: in order to keep previous values (Opt).
+  acfloat4*   VelrhoM1_c;   ///<Verlet: in order to keep previous values (Opt).
 
   //-Variables for compute step SYMPLECTIC (Opt,Null).
-  acdouble3*  PosPre_c;       ///<Sympletic: in order to keep predictor values (Opt,Null).
-  acfloat4*   VelrhoPre_c;    ///<Sympletic: in order to keep predictor values (Opt,Null).
+  acdouble3*  PosPre_c;     ///<Sympletic: in order to keep predictor values (Opt,Null).
+  acfloat4*   VelrhoPre_c;  ///<Sympletic: in order to keep predictor values (Opt,Null).
 
   //-Variables for floating bodies.
   StFtoForces*    FtoForces;    ///<Stores forces of floatings [FtCount].
@@ -217,13 +217,13 @@ protected:
   template<TpKernel tker,bool sim2d,TpSlipMode tslip> void InteractionMdbcCorrectionT2
     (unsigned n,StDivDataCpu divdata,float determlimit,float mdbcthreshold
     ,const tdouble3* pos,const typecode* code,const unsigned* idp
-    ,const tfloat3* boundnormal,const tfloat3* motionvel,tfloat4* velrhop);
+    ,const tfloat3* boundnor,const tfloat3* motionvel,tfloat4* velrhop);
   template<TpKernel tker> void Interaction_MdbcCorrectionT(TpSlipMode slipmode,const StDivDataCpu &divdata
     ,const tdouble3* pos,const typecode* code,const unsigned* idp
-    ,const tfloat3* boundnormal,const tfloat3* motionvel,tfloat4* velrhop);
+    ,const tfloat3* boundnor,const tfloat3* motionvel,tfloat4* velrhop);
   void Interaction_MdbcCorrection(TpSlipMode slipmode,const StDivDataCpu &divdata
     ,const tdouble3* pos,const typecode* code,const unsigned* idp
-    ,const tfloat3* boundnormal,const tfloat3* motionvel,tfloat4* velrhop);
+    ,const tfloat3* boundnor,const tfloat3* motionvel,tfloat4* velrhop);
 
   void ComputeSpsTau(unsigned n,unsigned pini,const tfloat4* velrhop,const tsymatrix3f* spsgradvel,tsymatrix3f* tau)const;
 
@@ -247,7 +247,7 @@ protected:
   void MoveLinBound(unsigned np,unsigned ini,const tdouble3& mvpos,const tfloat3& mvvel
     ,const unsigned* ridpmot,tdouble3* pos,unsigned* dcell,tfloat4* velrhop,typecode* code)const;
   void MoveMatBound(unsigned np,unsigned ini,tmatrix4d m,double dt,const unsigned* ridpmot
-    ,tdouble3* pos,unsigned* dcell,tfloat4* velrhop,typecode* code,tfloat3* boundnormal)const;
+    ,tdouble3* pos,unsigned* dcell,tfloat4* velrhop,typecode* code,tfloat3* boundnor)const;
   void CopyMotionVel(unsigned nmoving,const unsigned* ridpmot,const tfloat4* velrhop,tfloat3* motionvel)const;
   void CalcMotion(double stepdt);
   void RunMotion(double stepdt);

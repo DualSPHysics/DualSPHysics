@@ -232,7 +232,7 @@ void JSphGpuSingle::InOutComputeStep(double stepdt){
 
   //-Updates new particle values for Laminar+SPS and normals for mDBC.
   if(SpsTau_g)SpsTau_g->CuMemsetOffset(Np,0,newnp);
-  if(BoundNormal_g)BoundNormal_g->CuMemsetOffset(Np,0,newnp);
+  if(BoundNor_g)BoundNor_g->CuMemsetOffset(Np,0,newnp);
 
   //-Updates number of particles.
   if(newnp){

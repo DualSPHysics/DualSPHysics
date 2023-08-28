@@ -219,7 +219,7 @@ void Interaction_MdbcCorrection(TpKernel tkernel,bool simulate2d
   ,TpSlipMode slipmode,bool fastsingle,unsigned n,unsigned nbound
   ,float mdbcthreshold,const StDivDataGpu &dvd,const tdouble3 &mapposmin
   ,const double2 *posxy,const double *posz,const float4 *poscell
-  ,const typecode *code,const unsigned *idp,const float3 *boundnormal
+  ,const typecode *code,const unsigned *idp,const float3 *boundnor
   ,const float3 *motionvel,float4 *velrhop);
 
 //-Kernels for the calculation of the DEM forces.
@@ -253,9 +253,9 @@ void LoadPosRef(unsigned pscount,unsigned casenfixed,unsigned np
 void MoveLinBound(byte periactive,unsigned np,unsigned ini,tdouble3 mvpos,tfloat3 mvvel
   ,const unsigned* ridpmot,double2* posxy,double* posz,unsigned* dcell,float4* velrhop,typecode* code);
 void MoveMatBound(byte periactive,bool simulate2d,unsigned np,unsigned ini,tmatrix4d m,double dt
-  ,const unsigned* ridpmot,double2* posxy,double* posz,unsigned* dcell,float4* velrhop,typecode* code,float3* boundnormal);
+  ,const unsigned* ridpmot,double2* posxy,double* posz,unsigned* dcell,float4* velrhop,typecode* code,float3* boundnor);
 void CopyMotionVel(unsigned nmoving,const unsigned* ridpmot,const float4* velrhop,float3* motionvel);
-void FtNormalsUpdate(unsigned np,unsigned ini,tmatrix4d m,const unsigned* ridpmot,float3* boundnormal);
+void FtNormalsUpdate(unsigned np,unsigned ini,tmatrix4d m,const unsigned* ridpmot,float3* boundnor);
 
 //-Kernels for MLPistons motion.
 void MovePiston1d(bool periactive,unsigned np,unsigned idini,double dp,double poszmin

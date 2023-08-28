@@ -138,15 +138,15 @@ void JSphCpuSingle::ConfigDomain(){
   LoadCodeParticles(Np,Idp_c->cptr(),Code_c->ptr());
 
   //-Load normals for boundary particles (fixed and moving).
-  if(UseNormals)LoadBoundNormals(Np,Npb,Idp_c->cptr(),Code_c->cptr(),BoundNormal_c->ptr());
+  if(UseNormals)LoadBoundNormals(Np,Npb,Idp_c->cptr(),Code_c->cptr(),BoundNor_c->ptr());
 
   //-Creates PartsInit object with initial particle data for automatic configurations.
   CreatePartsInit(Np,Pos_c->cptr(),Code_c->cptr());
 
   //-Runs initialization operations from XML.
   RunInitialize(Np,Npb,Pos_c->cptr(),Idp_c->cptr(),Code_c->cptr()
-    ,Velrho_c->ptr(),AC_PTR(BoundNormal_c));
-  if(UseNormals)ConfigBoundNormals(Np,Npb,Pos_c->cptr(),Idp_c->cptr(),BoundNormal_c->ptr());
+    ,Velrho_c->ptr(),AC_PTR(BoundNor_c));
+  if(UseNormals)ConfigBoundNormals(Np,Npb,Pos_c->cptr(),Idp_c->cptr(),BoundNor_c->ptr());
 
   //-Computes MK domain for boundary and fluid particles.
   MkInfo->ComputeMkDomains(Np,Pos_c->cptr(),Code_c->cptr());
@@ -455,7 +455,7 @@ void JSphCpuSingle::RunPeriodic(){
             }
             if(UseNormals){
               PeriodicDuplicateNormals(count,Np,DomCells,perinc,listp.cptr()
-                ,BoundNormal_c->ptr(),AC_PTR(MotionVel_c));
+                ,BoundNor_c->ptr(),AC_PTR(MotionVel_c));
             }
             //-Update the total number of particles.
             Np+=count;
@@ -506,7 +506,7 @@ void JSphCpuSingle::RunCellDivide(bool updateperiodic){
     CellDivSingle->SortArray(SpsTau_c->ptr());
   }
   if(UseNormals){
-    CellDivSingle->SortArray(BoundNormal_c->ptr());
+    CellDivSingle->SortArray(BoundNor_c->ptr());
     if(MotionVel_c)CellDivSingle->SortArray(MotionVel_c->ptr());
   }
 
@@ -640,7 +640,7 @@ void JSphCpuSingle::Interaction_Forces(TpInterStep interstep){
 void JSphCpuSingle::MdbcBoundCorrection(){
   Timersc->TmStart(TMC_CfPreForces);
   Interaction_MdbcCorrection(SlipMode,DivData,Pos_c->cptr(),Code_c->cptr()
-    ,Idp_c->cptr(),BoundNormal_c->cptr(),AC_CPTR(MotionVel_c),Velrho_c->ptr());
+    ,Idp_c->cptr(),BoundNor_c->cptr(),AC_CPTR(MotionVel_c),Velrho_c->ptr());
   Timersc->TmStop(TMC_CfPreForces);
 }
 
@@ -1053,7 +1053,7 @@ void JSphCpuSingle::RunFloating(double dt,bool predictor){
       tfloat4*  velrhoc =Velrho_c->ptr();
       unsigned* dcellc  =Dcell_c->ptr();
       typecode* codec   =Code_c->ptr();
-      tfloat3*  bnormalc=BoundNormal_c->ptr();
+      tfloat3*  bnormalc=AC_PTR(BoundNor_c);
       const int ftcount=int(FtCount);
       #ifdef OMP_USE
         #pragma omp parallel for schedule (guided)
@@ -1309,7 +1309,7 @@ void JSphCpuSingle::SaveData(){
   JSph::SaveData(npsave,arrays,1,vdom,infoplus);
   //-Free auxiliary memory for particle data. | Libera memoria auxiliar para datos de particulas.
   if(UseNormals && SvNormals)SaveVtkNormals("normals/Normals.vtk",Part
-    ,npsave,Npb,Pos_c->cptr(),Idp_c->cptr(),BoundNormal_c->cptr(),1.f);
+    ,npsave,Npb,Pos_c->cptr(),Idp_c->cptr(),BoundNor_c->cptr(),1.f);
   //-Save extra data.
   if(SvExtraDataBi4)SaveExtraData();
   Timersc->TmStop(TMC_SuSavePart);
@@ -1320,13 +1320,13 @@ void JSphCpuSingle::SaveData(){
 /// Muestra y graba resumen final de ejecucion.
 //==============================================================================
 void JSphCpuSingle::SaveExtraData(){
-  const bool svextra=(BoundNormal_c!=NULL);
+  const bool svextra=(BoundNor_c!=NULL);
   if(svextra && SvExtraDataBi4->CheckSave(Part)){
     SvExtraDataBi4->InitPartData(Part,TimeStep,Nstep);
     //-Saves normals of mDBC.
-    if(BoundNormal_c){
+    if(BoundNor_c){
       SvExtraDataBi4->AddNormals(UseNormalsFt,Np,Npb,Idp_c->cptr()
-        ,(PeriActive? Code_c->cptr(): NULL),BoundNormal_c->cptr());
+        ,(PeriActive? Code_c->cptr(): NULL),BoundNor_c->cptr());
     }
     //-Saves file.
     SvExtraDataBi4->SavePartData();

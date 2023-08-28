@@ -64,7 +64,7 @@ public:
 
   void InitPartData(int cpart,double timestep,int nstep);
   void AddNormals(bool usenormalsft,unsigned np,unsigned npb
-    ,const unsigned *idp,const typecode *code,const tfloat3 *boundnormal);
+    ,const unsigned *idp,const typecode *code,const tfloat3 *boundnor);
   void SavePartData();
 };
 
@@ -97,7 +97,7 @@ public:
   static bool ExistsPartData(std::string dir,int cpart);
   void LoadPartData(std::string dir,int cpart);
 
-  bool LoadNormals(unsigned np,unsigned npb,const unsigned *idp,tfloat3 *boundnormal);
+  bool LoadNormals(unsigned np,unsigned npb,const unsigned *idp,tfloat3 *boundnor);
 
 };
 

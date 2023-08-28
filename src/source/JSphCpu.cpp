@@ -88,7 +88,7 @@ void JSphCpu::InitVars(){
   Pos_c=NULL;
   Velrho_c=NULL;
 
-  BoundNormal_c=NULL; //-mDBC
+  BoundNor_c=NULL;    //-mDBC
   MotionVel_c=NULL;   //-mDBC
 
   VelrhoM1_c=NULL;    //-Verlet
@@ -158,7 +158,7 @@ void JSphCpu::FreeCpuMemoryParticles(){
   delete Pos_c;         Pos_c=NULL;
   delete Velrho_c;      Velrho_c=NULL;
 
-  delete BoundNormal_c; BoundNormal_c=NULL; //-mDBC
+  delete BoundNor_c;    BoundNor_c=NULL; //-mDBC
   delete MotionVel_c;   MotionVel_c=NULL;   //-mDBC
 
   delete VelrhoM1_c;    VelrhoM1_c=NULL;    //-Verlet
@@ -198,7 +198,7 @@ void JSphCpu::AllocCpuMemoryParticles(unsigned np,float over){
   Velrho_c=new acfloat4  ("Velrhoc",Arrays_Cpu,true);
   //-Arrays for mDBC.
   if(UseNormals){
-    BoundNormal_c=new acfloat3("BoundNormalc",Arrays_Cpu,true);
+    BoundNor_c=new acfloat3("BoundNorc",Arrays_Cpu,true);
     if(SlipMode!=SLIP_Vel0){
       MotionVel_c=new acfloat3("MotionVelc"  ,Arrays_Cpu,true);
     }
@@ -1008,20 +1008,20 @@ void JSphCpu::Interaction_Forces_ct(const stinterparmsc& t,StInterResultc& res)c
 template<TpKernel tker,bool sim2d,TpSlipMode tslip> void JSphCpu::InteractionMdbcCorrectionT2
   (unsigned n,StDivDataCpu divdata,float determlimit,float mdbcthreshold
   ,const tdouble3 *pos,const typecode *code,const unsigned *idp
-  ,const tfloat3 *boundnormal,const tfloat3 *motionvel,tfloat4 *velrhop)
+  ,const tfloat3 *boundnor,const tfloat3 *motionvel,tfloat4 *velrhop)
 {
   if(tslip==SLIP_FreeSlip)Run_Exceptioon("SlipMode=\'Free slip\' is not yet implemented...");
   const int nn=int(n);
   #ifdef OMP_USE
     #pragma omp parallel for schedule (guided)
   #endif
-  for(int p1=0;p1<nn;p1++)if(boundnormal[p1]!=TFloat3(0)){
+  for(int p1=0;p1<nn;p1++)if(boundnor[p1]!=TFloat3(0)){
     float rhopfinal=FLT_MAX;
     tfloat3 velrhopfinal=TFloat3(0);
     float sumwab=0;
 
     //-Calculates ghost node position.
-    tdouble3 gposp1=pos[p1]+ToTDouble3(boundnormal[p1]);
+    tdouble3 gposp1=pos[p1]+ToTDouble3(boundnor[p1]);
     gposp1=(PeriActive!=0? UpdatePeriodicPos(gposp1): gposp1); //-Corrected interface Position.
     //-Initializes variables for calculation.
     float rhopp1=0;
@@ -1090,7 +1090,7 @@ template<TpKernel tker,bool sim2d,TpSlipMode tslip> void JSphCpu::InteractionMdb
     //-Store the results.
     //--------------------
     if(sumwab>=mdbcthreshold || (mdbcthreshold>=2 && sumwab+2>=mdbcthreshold)){
-      const tfloat3 dpos=(boundnormal[p1]*(-1.f)); //-Boundary particle position - ghost node position.
+      const tfloat3 dpos=(boundnor[p1]*(-1.f)); //-Boundary particle position - ghost node position.
       if(sim2d){
         const double determ=fmath::Determinant3x3(a_corr2);
         if(fabs(determ)>=determlimit){//-Use 1e-3f (first_order) or 1e+3f (zeroth_order).
@@ -1146,9 +1146,9 @@ template<TpKernel tker,bool sim2d,TpSlipMode tslip> void JSphCpu::InteractionMdb
 		tfloat3 FSVelFinal; // final free slip boundary velocity
 		const tfloat3 v = motionvel[p1];
 		float motion = sqrt(v.x*v.x + v.y*v.y + v.z*v.z); // to check if boundary moving
-		float norm = sqrt(boundnormal[p1].x*boundnormal[p1].x + boundnormal[p1].y*boundnormal[p1].y + boundnormal[p1].z*boundnormal[p1].z);
+		float norm = sqrt(boundnor[p1].x*boundnor[p1].x + boundnor[p1].y*boundnor[p1].y + boundnor[p1].z*boundnor[p1].z);
 		tfloat3 normal; // creating a normailsed boundary normal
-		normal.x = fabs(boundnormal[p1].x )/ norm; normal.y = fabs(boundnormal[p1].y) / norm; normal.z = fabs(boundnormal[p1].z) / norm;
+		normal.x = fabs(boundnor[p1].x )/ norm; normal.y = fabs(boundnor[p1].y) / norm; normal.z = fabs(boundnor[p1].z) / norm;
 		
 		// finding the velocity componants normal and tangential to boundary 
 		tfloat3 normvel = TFloat3(velrhopfinal.x*normal.x, velrhopfinal.y*normal.y, velrhopfinal.z*normal.z); // velocity in direction of normal pointin ginto fluid)
@@ -1179,20 +1179,21 @@ template<TpKernel tker,bool sim2d,TpSlipMode tslip> void JSphCpu::InteractionMdb
 /// Calcula datos extrapolados en el contorno para mDBC.
 //==============================================================================
  template<TpKernel tker> void JSphCpu::Interaction_MdbcCorrectionT(TpSlipMode slipmode
-  ,const StDivDataCpu &divdata,const tdouble3 *pos,const typecode *code,const unsigned *idp
-  ,const tfloat3 *boundnormal,const tfloat3 *motionvel,tfloat4 *velrhop)
+  ,const StDivDataCpu &divdata,const tdouble3 *pos,const typecode *code
+  ,const unsigned *idp,const tfloat3 *boundnor,const tfloat3 *motionvel
+  ,tfloat4 *velrhop)
 {
   const float determlimit=1e-3f;
   //-Interaction GhostBoundaryNodes-Fluid.
   const unsigned n=(UseNormalsFt? Np: NpbOk);
   if(Simulate2D){ const bool sim2d=true;
-    if(slipmode==SLIP_Vel0    )InteractionMdbcCorrectionT2 <tker,sim2d,SLIP_Vel0    > (n,divdata,determlimit,MdbcThreshold,pos,code,idp,boundnormal,motionvel,velrhop);
-    if(slipmode==SLIP_NoSlip  )InteractionMdbcCorrectionT2 <tker,sim2d,SLIP_NoSlip  > (n,divdata,determlimit,MdbcThreshold,pos,code,idp,boundnormal,motionvel,velrhop);
-    if(slipmode==SLIP_FreeSlip)InteractionMdbcCorrectionT2 <tker,sim2d,SLIP_FreeSlip> (n,divdata,determlimit,MdbcThreshold,pos,code,idp,boundnormal,motionvel,velrhop);
+    if(slipmode==SLIP_Vel0    )InteractionMdbcCorrectionT2 <tker,sim2d,SLIP_Vel0    > (n,divdata,determlimit,MdbcThreshold,pos,code,idp,boundnor,motionvel,velrhop);
+    if(slipmode==SLIP_NoSlip  )InteractionMdbcCorrectionT2 <tker,sim2d,SLIP_NoSlip  > (n,divdata,determlimit,MdbcThreshold,pos,code,idp,boundnor,motionvel,velrhop);
+    if(slipmode==SLIP_FreeSlip)InteractionMdbcCorrectionT2 <tker,sim2d,SLIP_FreeSlip> (n,divdata,determlimit,MdbcThreshold,pos,code,idp,boundnor,motionvel,velrhop);
   }else{          const bool sim2d=false;
-    if(slipmode==SLIP_Vel0    )InteractionMdbcCorrectionT2 <tker,sim2d,SLIP_Vel0    > (n,divdata,determlimit,MdbcThreshold,pos,code,idp,boundnormal,motionvel,velrhop);
-    if(slipmode==SLIP_NoSlip  )InteractionMdbcCorrectionT2 <tker,sim2d,SLIP_NoSlip  > (n,divdata,determlimit,MdbcThreshold,pos,code,idp,boundnormal,motionvel,velrhop);
-    if(slipmode==SLIP_FreeSlip)InteractionMdbcCorrectionT2 <tker,sim2d,SLIP_FreeSlip> (n,divdata,determlimit,MdbcThreshold,pos,code,idp,boundnormal,motionvel,velrhop);
+    if(slipmode==SLIP_Vel0    )InteractionMdbcCorrectionT2 <tker,sim2d,SLIP_Vel0    > (n,divdata,determlimit,MdbcThreshold,pos,code,idp,boundnor,motionvel,velrhop);
+    if(slipmode==SLIP_NoSlip  )InteractionMdbcCorrectionT2 <tker,sim2d,SLIP_NoSlip  > (n,divdata,determlimit,MdbcThreshold,pos,code,idp,boundnor,motionvel,velrhop);
+    if(slipmode==SLIP_FreeSlip)InteractionMdbcCorrectionT2 <tker,sim2d,SLIP_FreeSlip> (n,divdata,determlimit,MdbcThreshold,pos,code,idp,boundnor,motionvel,velrhop);
   }
 }
 
@@ -1200,13 +1201,14 @@ template<TpKernel tker,bool sim2d,TpSlipMode tslip> void JSphCpu::InteractionMdb
 /// Calculates extrapolated data on boundary particles from fluid domain for mDBC.
 /// Calcula datos extrapolados en el contorno para mDBC.
 //==============================================================================
-void JSphCpu::Interaction_MdbcCorrection(TpSlipMode slipmode,const StDivDataCpu &divdata
-  ,const tdouble3 *pos,const typecode *code,const unsigned *idp
-  ,const tfloat3 *boundnormal,const tfloat3 *motionvel,tfloat4 *velrhop)
+void JSphCpu::Interaction_MdbcCorrection(TpSlipMode slipmode
+  ,const StDivDataCpu &divdata,const tdouble3 *pos,const typecode *code
+  ,const unsigned *idp,const tfloat3 *boundnor,const tfloat3 *motionvel
+  ,tfloat4 *velrhop)
 {
   switch(TKernel){
-    case KERNEL_Cubic:       Interaction_MdbcCorrectionT <KERNEL_Cubic     > (slipmode,divdata,pos,code,idp,boundnormal,motionvel,velrhop);  break;
-    case KERNEL_Wendland:    Interaction_MdbcCorrectionT <KERNEL_Wendland  > (slipmode,divdata,pos,code,idp,boundnormal,motionvel,velrhop);  break;
+    case KERNEL_Cubic:       Interaction_MdbcCorrectionT <KERNEL_Cubic     > (slipmode,divdata,pos,code,idp,boundnor,motionvel,velrhop);  break;
+    case KERNEL_Wendland:    Interaction_MdbcCorrectionT <KERNEL_Wendland  > (slipmode,divdata,pos,code,idp,boundnor,motionvel,velrhop);  break;
     default: Run_Exceptioon("Kernel unknown.");
   }
 }
@@ -1741,7 +1743,7 @@ void JSphCpu::MoveLinBound(unsigned np,unsigned ini,const tdouble3& mvpos
 //==============================================================================
 void JSphCpu::MoveMatBound(unsigned np,unsigned ini,tmatrix4d m,double dt
   ,const unsigned* ridpmot,tdouble3* pos,unsigned* dcell,tfloat4* velrhop
-  ,typecode* code,tfloat3* boundnormal)const
+  ,typecode* code,tfloat3* boundnor)const
 {
   const unsigned fin=ini+np;
   for(unsigned id=ini;id<fin;id++){
@@ -1754,10 +1756,10 @@ void JSphCpu::MoveMatBound(unsigned np,unsigned ini,tmatrix4d m,double dt
       UpdatePos(ps,dx,dy,dz,false,pid,pos,dcell,code);
       velrhop[pid].x=float(dx/dt);  velrhop[pid].y=float(dy/dt);  velrhop[pid].z=float(dz/dt);
       //-Computes normal.
-      if(boundnormal){
-        const tdouble3 gs=ps+ToTDouble3(boundnormal[pid]);
+      if(boundnor){
+        const tdouble3 gs=ps+ToTDouble3(boundnor[pid]);
         const tdouble3 gs2=MatrixMulPoint(m,gs);
-        boundnormal[pid]=ToTFloat3(gs2-ps2);
+        boundnor[pid]=ToTFloat3(gs2-ps2);
       }
     }
   }
@@ -1811,7 +1813,7 @@ void JSphCpu::RunMotion(double stepdt){
       if(m.type==MOTT_Matrix){//-Matrix movement (for rotations).
         MoveMatBound(m.count,m.idbegin-CaseNfixed,m.matmov,stepdt,RidpMot
           ,Pos_c->ptr(),Dcell_c->ptr(),Velrho_c->ptr(),Code_c->ptr()
-          ,AC_PTR(BoundNormal_c)); 
+          ,AC_PTR(BoundNor_c)); 
       }      
     }
   }

@@ -918,11 +918,11 @@ template<TpKernel tker,bool sim2d,TpSlipMode tslip> __global__ void KerInteracti
   ,double3 mapposmin,float poscellsize,const float4 *poscell
   ,int scelldiv,int4 nc,int3 cellzero,const int2 *beginendcellfluid
   ,const double2 *posxy,const double *posz,const typecode *code,const unsigned *idp
-  ,const float3 *boundnormal,const float3 *motionvel,float4 *velrhop)
+  ,const float3 *boundnor,const float3 *motionvel,float4 *velrhop)
 {
   const unsigned p1=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
   if(p1<n){
-    const float3 bnormalp1=boundnormal[p1];
+    const float3 bnormalp1=boundnor[p1];
     if(bnormalp1.x!=0 || bnormalp1.y!=0 || bnormalp1.z!=0){
       float rhopfinal=FLT_MAX;
       float3 velrhopfinal=make_float3(0,0,0);
@@ -1093,11 +1093,11 @@ template<TpKernel tker,bool sim2d,TpSlipMode tslip> __global__ void KerInteracti
   (unsigned n,unsigned nbound,float determlimit,float mdbcthreshold
   ,int scelldiv,int4 nc,int3 cellzero,const int2 *beginendcellfluid
   ,const double2 *posxy,const double *posz,const typecode *code,const unsigned *idp
-  ,const float3 *boundnormal,const float3 *motionvel,float4 *velrhop)
+  ,const float3 *boundnor,const float3 *motionvel,float4 *velrhop)
 {
   const unsigned p1=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
   if(p1<n){
-    const float3 bnormalp1=boundnormal[p1];
+    const float3 bnormalp1=boundnor[p1];
     if(bnormalp1.x!=0 || bnormalp1.y!=0 || bnormalp1.z!=0){
       float rhopfinal=FLT_MAX;
       float3 velrhopfinal=make_float3(0,0,0);
@@ -1267,7 +1267,7 @@ template<TpKernel tker,bool sim2d,TpSlipMode tslip> __global__ void KerInteracti
 template<TpKernel tker,bool sim2d,TpSlipMode tslip> void Interaction_MdbcCorrectionT2(
   bool fastsingle,unsigned n,unsigned nbound,float mdbcthreshold,const StDivDataGpu &dvd
   ,const tdouble3 &mapposmin,const double2 *posxy,const double *posz,const float4 *poscell
-  ,const typecode *code,const unsigned *idp,const float3 *boundnormal,const float3 *motionvel
+  ,const typecode *code,const unsigned *idp,const float3 *boundnor,const float3 *motionvel
   ,float4 *velrhop)
 {
   const int2* beginendcellfluid=dvd.beginendcell+dvd.cellfluid;
@@ -1280,12 +1280,12 @@ template<TpKernel tker,bool sim2d,TpSlipMode tslip> void Interaction_MdbcCorrect
       KerInteractionMdbcCorrection_Fast <tker,sim2d,tslip> <<<sgridb,bsbound>>> (n,nbound
         ,determlimit,mdbcthreshold,Double3(mapposmin),dvd.poscellsize,poscell
         ,dvd.scelldiv,dvd.nc,dvd.cellzero,beginendcellfluid
-        ,posxy,posz,code,idp,boundnormal,motionvel,velrhop);
+        ,posxy,posz,code,idp,boundnor,motionvel,velrhop);
     }
     else{//-mDBC_v0
       KerInteractionMdbcCorrection_Dbl <tker,sim2d,tslip> <<<sgridb,bsbound>>> (n,nbound
         ,determlimit,mdbcthreshold,dvd.scelldiv,dvd.nc,dvd.cellzero,beginendcellfluid
-        ,posxy,posz,code,idp,boundnormal,motionvel,velrhop);
+        ,posxy,posz,code,idp,boundnor,motionvel,velrhop);
     }
   }
 }
@@ -1294,21 +1294,21 @@ template<TpKernel tker> void Interaction_MdbcCorrectionT(bool simulate2d
   ,TpSlipMode slipmode,bool fastsingle,unsigned n,unsigned nbound
   ,float mdbcthreshold,const StDivDataGpu &dvd,const tdouble3 &mapposmin
   ,const double2 *posxy,const double *posz,const float4 *poscell,const typecode *code
-  ,const unsigned *idp,const float3 *boundnormal,const float3 *motionvel,float4 *velrhop)
+  ,const unsigned *idp,const float3 *boundnor,const float3 *motionvel,float4 *velrhop)
 {
   switch(slipmode){
     case SLIP_Vel0:{ const TpSlipMode tslip=SLIP_Vel0;
-      if(simulate2d)Interaction_MdbcCorrectionT2 <tker,true ,tslip> (fastsingle,n,nbound,mdbcthreshold,dvd,mapposmin,posxy,posz,poscell,code,idp,boundnormal,motionvel,velrhop);
-      else          Interaction_MdbcCorrectionT2 <tker,false,tslip> (fastsingle,n,nbound,mdbcthreshold,dvd,mapposmin,posxy,posz,poscell,code,idp,boundnormal,motionvel,velrhop);
+      if(simulate2d)Interaction_MdbcCorrectionT2 <tker,true ,tslip> (fastsingle,n,nbound,mdbcthreshold,dvd,mapposmin,posxy,posz,poscell,code,idp,boundnor,motionvel,velrhop);
+      else          Interaction_MdbcCorrectionT2 <tker,false,tslip> (fastsingle,n,nbound,mdbcthreshold,dvd,mapposmin,posxy,posz,poscell,code,idp,boundnor,motionvel,velrhop);
     }break;
 #ifndef DISABLE_MDBC_EXTRAMODES
     case SLIP_NoSlip:{ const TpSlipMode tslip=SLIP_NoSlip;
-      if(simulate2d)Interaction_MdbcCorrectionT2 <tker,true ,tslip> (fastsingle,n,nbound,mdbcthreshold,dvd,mapposmin,posxy,posz,poscell,code,idp,boundnormal,motionvel,velrhop);
-      else          Interaction_MdbcCorrectionT2 <tker,false,tslip> (fastsingle,n,nbound,mdbcthreshold,dvd,mapposmin,posxy,posz,poscell,code,idp,boundnormal,motionvel,velrhop);
+      if(simulate2d)Interaction_MdbcCorrectionT2 <tker,true ,tslip> (fastsingle,n,nbound,mdbcthreshold,dvd,mapposmin,posxy,posz,poscell,code,idp,boundnor,motionvel,velrhop);
+      else          Interaction_MdbcCorrectionT2 <tker,false,tslip> (fastsingle,n,nbound,mdbcthreshold,dvd,mapposmin,posxy,posz,poscell,code,idp,boundnor,motionvel,velrhop);
     }break;
     case SLIP_FreeSlip:{ const TpSlipMode tslip=SLIP_FreeSlip;
-      if(simulate2d)Interaction_MdbcCorrectionT2 <tker,true ,tslip> (fastsingle,n,nbound,mdbcthreshold,dvd,mapposmin,posxy,posz,poscell,code,idp,boundnormal,motionvel,velrhop);
-      else          Interaction_MdbcCorrectionT2 <tker,false,tslip> (fastsingle,n,nbound,mdbcthreshold,dvd,mapposmin,posxy,posz,poscell,code,idp,boundnormal,motionvel,velrhop);
+      if(simulate2d)Interaction_MdbcCorrectionT2 <tker,true ,tslip> (fastsingle,n,nbound,mdbcthreshold,dvd,mapposmin,posxy,posz,poscell,code,idp,boundnor,motionvel,velrhop);
+      else          Interaction_MdbcCorrectionT2 <tker,false,tslip> (fastsingle,n,nbound,mdbcthreshold,dvd,mapposmin,posxy,posz,poscell,code,idp,boundnor,motionvel,velrhop);
     }break;
 #endif
     default: throw "SlipMode unknown at Interaction_MdbcCorrectionT().";
@@ -1322,17 +1322,17 @@ void Interaction_MdbcCorrection(TpKernel tkernel,bool simulate2d,TpSlipMode slip
   ,bool fastsingle,unsigned n,unsigned nbound,float mdbcthreshold
   ,const StDivDataGpu &dvd,const tdouble3 &mapposmin
   ,const double2 *posxy,const double *posz,const float4 *poscell,const typecode *code
-  ,const unsigned *idp,const float3 *boundnormal,const float3 *motionvel,float4 *velrhop)
+  ,const unsigned *idp,const float3 *boundnor,const float3 *motionvel,float4 *velrhop)
 {
   switch(tkernel){
     case KERNEL_Wendland:{ const TpKernel tker=KERNEL_Wendland;
       Interaction_MdbcCorrectionT <tker> (simulate2d,slipmode,fastsingle,n,nbound,mdbcthreshold
-        ,dvd,mapposmin,posxy,posz,poscell,code,idp,boundnormal,motionvel,velrhop);
+        ,dvd,mapposmin,posxy,posz,poscell,code,idp,boundnor,motionvel,velrhop);
     }break;
 #ifndef DISABLE_KERNELS_EXTRA
     case KERNEL_Cubic:{ const TpKernel tker=KERNEL_Cubic;
       Interaction_MdbcCorrectionT <tker> (simulate2d,slipmode,fastsingle,n,nbound,mdbcthreshold
-        ,dvd,mapposmin,posxy,posz,poscell,code,idp,boundnormal,motionvel,velrhop);
+        ,dvd,mapposmin,posxy,posz,poscell,code,idp,boundnor,motionvel,velrhop);
     }break;
 #endif
     default: throw "Kernel unknown at Interaction_MdbcCorrection().";
@@ -1827,7 +1827,7 @@ void MoveLinBound(byte periactive,unsigned np,unsigned ini,tdouble3 mvpos
 //------------------------------------------------------------------------------
 template<bool periactive,bool simulate2d> __global__ void KerMoveMatBound(unsigned n
   ,unsigned ini,tmatrix4d m,double dt,const unsigned* ridmot,double2* posxy
-  ,double* posz,unsigned* dcell,float4* velrhop,typecode* code,float3* boundnormal)
+  ,double* posz,unsigned* dcell,float4* velrhop,typecode* code,float3* boundnor)
 {
   unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
   if(p<n){
@@ -1849,13 +1849,13 @@ template<bool periactive,bool simulate2d> __global__ void KerMoveMatBound(unsign
       //-Computes velocity.
       velrhop[pid]=make_float4(float(dx/dt),float(dy/dt),float(dz/dt),velrhop[pid].w);
       //-Computes normal.
-      if(boundnormal){
-        const float3 bnor=boundnormal[pid];
+      if(boundnor){
+        const float3 bnor=boundnor[pid];
         const double3 gs=make_double3(rpos.x+bnor.x,rpos.y+bnor.y,rpos.z+bnor.z);
         const double gs2x=gs.x*m.a11 + gs.y*m.a12 + gs.z*m.a13 + m.a14;
         const double gs2y=gs.x*m.a21 + gs.y*m.a22 + gs.z*m.a23 + m.a24;
         const double gs2z=gs.x*m.a31 + gs.y*m.a32 + gs.z*m.a33 + m.a34;
-        boundnormal[pid]=make_float3(gs2x-rpos2.x,gs2y-rpos2.y,gs2z-rpos2.z);
+        boundnor[pid]=make_float3(gs2x-rpos2.x,gs2y-rpos2.y,gs2z-rpos2.z);
       }
     }
   }
@@ -1867,16 +1867,16 @@ template<bool periactive,bool simulate2d> __global__ void KerMoveMatBound(unsign
 //==============================================================================
 void MoveMatBound(byte periactive,bool simulate2d,unsigned np,unsigned ini
   ,tmatrix4d m,double dt,const unsigned* ridpmot,double2* posxy,double* posz
-  ,unsigned* dcell,float4* velrhop,typecode* code,float3* boundnormal)
+  ,unsigned* dcell,float4* velrhop,typecode* code,float3* boundnor)
 {
   dim3 sgrid=GetSimpleGridSize(np,SPHBSIZE);
   if(periactive){ const bool peri=true;
-    if(simulate2d)KerMoveMatBound<peri,true>  <<<sgrid,SPHBSIZE>>> (np,ini,m,dt,ridpmot,posxy,posz,dcell,velrhop,code,boundnormal);
-    else          KerMoveMatBound<peri,false> <<<sgrid,SPHBSIZE>>> (np,ini,m,dt,ridpmot,posxy,posz,dcell,velrhop,code,boundnormal);
+    if(simulate2d)KerMoveMatBound<peri,true>  <<<sgrid,SPHBSIZE>>> (np,ini,m,dt,ridpmot,posxy,posz,dcell,velrhop,code,boundnor);
+    else          KerMoveMatBound<peri,false> <<<sgrid,SPHBSIZE>>> (np,ini,m,dt,ridpmot,posxy,posz,dcell,velrhop,code,boundnor);
   }
   else{ const bool peri=false;
-    if(simulate2d)KerMoveMatBound<peri,true>  <<<sgrid,SPHBSIZE>>> (np,ini,m,dt,ridpmot,posxy,posz,dcell,velrhop,code,boundnormal);
-    else          KerMoveMatBound<peri,false> <<<sgrid,SPHBSIZE>>> (np,ini,m,dt,ridpmot,posxy,posz,dcell,velrhop,code,boundnormal);
+    if(simulate2d)KerMoveMatBound<peri,true>  <<<sgrid,SPHBSIZE>>> (np,ini,m,dt,ridpmot,posxy,posz,dcell,velrhop,code,boundnor);
+    else          KerMoveMatBound<peri,false> <<<sgrid,SPHBSIZE>>> (np,ini,m,dt,ridpmot,posxy,posz,dcell,velrhop,code,boundnor);
   }
 }
 
@@ -1917,20 +1917,20 @@ void CopyMotionVel(unsigned nmoving,const unsigned* ridpmot
 __global__ void KerFtNormalsUpdate(unsigned n,unsigned fpini
   ,double a11,double a12,double a13,double a21,double a22,double a23
   ,double a31,double a32,double a33
-  ,const unsigned* ridpmot,float3* boundnormal)
+  ,const unsigned* ridpmot,float3* boundnor)
 {
   const unsigned fp=blockIdx.x*blockDim.x + threadIdx.x; //-Number of floating particle.
   if(fp<n){
     const unsigned p=ridpmot[fp+fpini];
     if(p!=UINT_MAX){
-      float3 rnor=boundnormal[p];
+      float3 rnor=boundnor[p];
       const double nx=rnor.x;
       const double ny=rnor.y;
       const double nz=rnor.z;
       rnor.x=float(a11*nx + a12*ny + a13*nz);
       rnor.y=float(a21*nx + a22*ny + a23*nz);
       rnor.z=float(a31*nx + a32*ny + a33*nz);
-      boundnormal[p]=rnor;
+      boundnor[p]=rnor;
     }
   }
 }
@@ -1940,11 +1940,11 @@ __global__ void KerFtNormalsUpdate(unsigned n,unsigned fpini
 /// Aplica un movimiento matricial a un conjunto de particulas.
 //==============================================================================
 void FtNormalsUpdate(unsigned np,unsigned ini,tmatrix4d m,const unsigned* ridpmot
-  ,float3* boundnormal)
+  ,float3* boundnor)
 {
   dim3 sgrid=GetSimpleGridSize(np,SPHBSIZE);
   if(np)KerFtNormalsUpdate <<<sgrid,SPHBSIZE>>> (np,ini,m.a11,m.a12,m.a13
-    ,m.a21,m.a22,m.a23,m.a31,m.a32,m.a33,ridpmot,boundnormal);
+    ,m.a21,m.a22,m.a23,m.a31,m.a32,m.a33,ridpmot,boundnor);
 }
 
 

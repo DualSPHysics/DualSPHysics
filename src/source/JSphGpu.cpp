@@ -160,7 +160,7 @@ void JSphGpu::InitVars(){
   PosCell_g=NULL;
   Velrho_g=NULL;
 
-  BoundNormal_g=NULL;  //-mDBC
+  BoundNor_g=NULL;     //-mDBC
   MotionVel_g=NULL;    //-mDBC
 
   VelrhoM1_g=NULL;     //-Verlet
@@ -345,22 +345,22 @@ void JSphGpu::FreeGpuMemoryParticles(){
   delete PosCell_g;     PosCell_g=NULL;
   delete Velrho_g;      Velrho_g=NULL;
 
-  delete BoundNormal_g; BoundNormal_g=NULL;  //-mDBC
-  delete MotionVel_g;   MotionVel_g=NULL;    //-mDBC
+  delete BoundNor_g;    BoundNor_g=NULL;    //-mDBC
+  delete MotionVel_g;   MotionVel_g=NULL;   //-mDBC
 
-  delete VelrhoM1_g;    VelrhoM1_g=NULL;     //-Verlet
-  delete PosxyPre_g;    PosxyPre_g=NULL;     //-Symplectic
-  delete PoszPre_g;     PoszPre_g=NULL;      //-Symplectic
-  delete VelrhoPre_g;   VelrhoPre_g=NULL;    //-Symplectic
+  delete VelrhoM1_g;    VelrhoM1_g=NULL;    //-Verlet
+  delete PosxyPre_g;    PosxyPre_g=NULL;    //-Symplectic
+  delete PoszPre_g;     PoszPre_g=NULL;     //-Symplectic
+  delete VelrhoPre_g;   VelrhoPre_g=NULL;   //-Symplectic
 
   delete ViscDt_g;      ViscDt_g=NULL; 
   delete Ace_g;         Ace_g=NULL;
   delete Ar_g;          Ar_g=NULL;
   delete Delta_g;       Delta_g=NULL;
-  delete ShiftPosfs_g;  ShiftPosfs_g=NULL;   //-Shifting.
+  delete ShiftPosfs_g;  ShiftPosfs_g=NULL;  //-Shifting.
 
-  delete SpsTau_g;      SpsTau_g=NULL;       //-Laminar+SPS.
-  delete SpsGradvel_g;  SpsGradvel_g=NULL;   //-Laminar+SPS.
+  delete SpsTau_g;      SpsTau_g=NULL;      //-Laminar+SPS.
+  delete SpsGradvel_g;  SpsGradvel_g=NULL;  //-Laminar+SPS.
 
   //-Free GPU memory for array objects.
   GpuParticlesSize=0;
@@ -388,7 +388,7 @@ void JSphGpu::AllocGpuMemoryParticles(unsigned np,float over){
   Velrho_g =new agfloat4  ("Velrhog" ,Arrays_Gpu,true);
   //-Arrays for mDBC.
   if(UseNormals){
-    BoundNormal_g=new agfloat3("BoundNormalg",Arrays_Gpu,true);
+    BoundNor_g=new agfloat3("BoundNorg",Arrays_Gpu,true);
     if(SlipMode!=SLIP_Vel0){
       MotionVel_g=new agfloat3("MotionVelg"  ,Arrays_Gpu,true);
     }
@@ -532,7 +532,7 @@ void JSphGpu::ConstantDataUp(){
 /// Uploads particle data to the GPU.
 /// Sube datos de particulas a la GPU.
 //==============================================================================
-void JSphGpu::ParticlesDataUp(unsigned n,const tfloat3* boundnormal){
+void JSphGpu::ParticlesDataUp(unsigned n,const tfloat3* boundnor){
   Idp_g   ->CuCopyFromHost(Idp_c,n);
   Code_g  ->CuCopyFromHost(Code_c,n);
   Dcell_g ->CuCopyFromHost(Dcell_c,n);
@@ -540,7 +540,7 @@ void JSphGpu::ParticlesDataUp(unsigned n,const tfloat3* boundnormal){
   Posz_g  ->CuCopyFromHost(Posz_c,n);
   Velrho_g->CuCopyFromHost(Velrho_c,n);
   if(UseNormals){
-    BoundNormal_g->CuCopyFromHost2(boundnormal,n);
+    BoundNor_g->CuCopyFromHost2(boundnor,n);
   }
   Check_CudaErroor("Failed copying data to GPU.");
 }
@@ -1035,7 +1035,7 @@ void JSphGpu::RunMotion(double stepdt){
       if(m.type==MOTT_Matrix){//-Matrix movement (for rotations).
         cusph::MoveMatBound(PeriActive,Simulate2D,m.count,m.idbegin-CaseNfixed
           ,m.matmov,stepdt,RidpMotg,Posxy_g->ptr(),Posz_g->ptr(),Dcell_g->ptr()
-          ,Velrho_g->ptr(),Code_g->ptr(),AG_PTR(BoundNormal_g));
+          ,Velrho_g->ptr(),Code_g->ptr(),AG_PTR(BoundNor_g));
       }      
     }
   }
@@ -1093,13 +1093,13 @@ void JSphGpu::RunDamping(double dt){
 /// Graba fichero VTK con datos de las particulas (debug).
 //==============================================================================
 void JSphGpu::SaveVtkNormalsGpu(std::string filename,int numfile,unsigned np,unsigned npb
-  ,const double2 *posxyg,const double *poszg,const unsigned *idpg,const float3 *boundnormalg)
+  ,const double2 *posxyg,const double *poszg,const unsigned *idpg,const float3 *boundnorg)
 {
   //-Allocates memory.
   const unsigned n=(UseNormalsFt? np: npb);
   tdouble3 *pos=fcuda::ToHostPosd3(0,n,posxyg,poszg);
   unsigned *idp=fcuda::ToHostUint(0,n,idpg);
-  tfloat3  *nor=fcuda::ToHostFloat3(0,n,boundnormalg);
+  tfloat3  *nor=fcuda::ToHostFloat3(0,n,boundnorg);
   //-Generates VTK file.
   SaveVtkNormals(filename,numfile,np,npb,pos,idp,nor,1.f);
   //-Frees memory.

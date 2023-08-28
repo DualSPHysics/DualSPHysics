@@ -1310,9 +1310,9 @@ void JSph::LoadCodeParticles(unsigned np,const unsigned* idp,typecode* code)cons
 /// Load normals for boundary particles (fixed and moving).
 //==============================================================================
 void JSph::LoadBoundNormals(unsigned np,unsigned npb,const unsigned* idp
-  ,const typecode* code,tfloat3* boundnormal)
+  ,const typecode* code,tfloat3* boundnor)
 {
-  memset(boundnormal,0,sizeof(tfloat3)*np);
+  memset(boundnor,0,sizeof(tfloat3)*np);
   if(!PartBegin){
     const string filenormals=JPartNormalData::GetNormalDataFile(false,DirCase+CaseName);
     if(fun::FileExists(filenormals)){
@@ -1327,7 +1327,7 @@ void JSph::LoadBoundNormals(unsigned np,unsigned npb,const unsigned* idp
       if(pnorsize){
         Log->Printf("NormalDataFile=\"%s\"",filenormals.c_str());
         if(pnorsize!=CaseNbound)Run_ExceptioonFile("The number of final normals does not match boundary particles.",filenormals);
-        for(unsigned p=0;p<pnorsize;p++)boundnormal[p]=ToTFloat3(pnor[p]);
+        for(unsigned p=0;p<pnorsize;p++)boundnor[p]=ToTFloat3(pnor[p]);
       }
     }
     else{
@@ -1343,13 +1343,13 @@ void JSph::LoadBoundNormals(unsigned np,unsigned npb,const unsigned* idp
 /// Config normals to point from boundary particle to ghost node (full distance).
 //==============================================================================
 void JSph::ConfigBoundNormals(unsigned np,unsigned npb,const tdouble3* pos
-  ,const unsigned* idp,tfloat3* boundnormal)
+  ,const unsigned* idp,tfloat3* boundnor)
 {
   //-Checks current normals.
   if(!PartBegin){
     bool ftnor=false;
     for(unsigned p=0;p<np && !ftnor;p++)
-      ftnor=(idp[p]<CaseNbound && idp[p]>=CaseNpb && boundnormal[p]!=TFloat3(0));
+      ftnor=(idp[p]<CaseNbound && idp[p]>=CaseNpb && boundnor[p]!=TFloat3(0));
     UseNormalsFt=ftnor;
   }
 
@@ -1358,7 +1358,7 @@ void JSph::ConfigBoundNormals(unsigned np,unsigned npb,const tdouble3* pos
     if(JDsExtraDataLoad::ExistsPartData(PartBeginDir,int(PartBegin))){
       JDsExtraDataLoad edat(CaseNbound,CaseNfloat,Log);
       edat.LoadPartData(PartBeginDir,int(PartBegin));
-      UseNormalsFt=edat.LoadNormals(np,npb,idp,boundnormal);
+      UseNormalsFt=edat.LoadNormals(np,npb,idp,boundnor);
     }
     else Run_Exceptioon(fun::PrintStr("No extra data available to restart at PART_%04d with mDBC.",PartBegin).c_str());
   }
@@ -1366,20 +1366,20 @@ void JSph::ConfigBoundNormals(unsigned np,unsigned npb,const tdouble3* pos
   //-Saves normals from boundary particles to boundary limit.
   const string file1="CfgInit_Normals.vtk";
   Log->AddFileInfo(DirOut+file1,"Saves VTK file with initial normals (from boundary particles to boundary limit).");
-  SaveVtkNormals(file1,-1,np,npb,pos,idp,boundnormal,(PartBegin? 0.5f: 1.f));
+  SaveVtkNormals(file1,-1,np,npb,pos,idp,boundnor,(PartBegin? 0.5f: 1.f));
   //-Counts the null normals.
   unsigned nerr=0,nerrft=0;
   for(unsigned p=0;p<np;p++)if(idp[p]<CaseNbound){
-    if(boundnormal[p]==TFloat3(0)){
+    if(boundnor[p]==TFloat3(0)){
       if(idp[p]<CaseNpb)nerr++;
       else nerrft++;
     }
-    if(!PartBegin)boundnormal[p]=(boundnormal[p]*2.f);
+    if(!PartBegin)boundnor[p]=(boundnor[p]*2.f);
   }
   //-Saves normals from boundary particles to ghost node.
   const string file2="CfgInit_NormalsGhost.vtk";
   Log->AddFileInfo(DirOut+file2,"Saves VTK file with initial normals (from boundary particles to ghost node).");
-  SaveVtkNormals(file2,-1,np,npb,pos,idp,boundnormal,1.f);
+  SaveVtkNormals(file2,-1,np,npb,pos,idp,boundnor,1.f);
   if(nerr  >0)Log->PrintfWarning("There are %u of %u fixed or moving boundary particles without normal data.",nerr,npb);
   if(nerrft>0)Log->PrintfWarning("There are %u of %u floating particles without normal data.",nerrft,CaseNfloat);
   if(TBoundary==BC_MDBC && nerr==npb && nerrft==CaseNfloat)Run_Exceptioon("No valid normal vectors for using mDBC.");
@@ -1764,10 +1764,11 @@ void JSph::LoadDcellParticles(unsigned n,const typecode *code,const tdouble3 *po
 /// Inicializa datos de las particulas a partir de la configuracion en el XML.
 //==============================================================================
 void JSph::RunInitialize(unsigned np,unsigned npb,const tdouble3* pos
-  ,const unsigned* idp,const typecode* code,tfloat4* velrhop,tfloat3* boundnormal)
+  ,const unsigned* idp,const typecode* code,tfloat4* velrhop,tfloat3* boundnor)
 {
   if(!PartBegin){
-    JDsInitialize init(Simulate2D,Simulate2DPosY,MapRealPosMin,MapRealPosMax,Dp,KernelH,DirCase,CaseNbound,boundnormal!=NULL);
+    JDsInitialize init(Simulate2D,Simulate2DPosY,MapRealPosMin,MapRealPosMax
+      ,Dp,KernelH,DirCase,CaseNbound,boundnor!=NULL);
     //-Loads configuration from XML.
     {
       JXml xml; xml.LoadFile(FileXml);
@@ -1786,7 +1787,7 @@ void JSph::RunInitialize(unsigned np,unsigned npb,const tdouble3* pos
         const unsigned cmk=MkInfo->GetMkBlockByCode(code[p]);
         mktype[p]=(cmk<MkInfo->Size()? word(MkInfo->Mkblock(cmk)->MkType): USHRT_MAX);
       }
-      init.Run(np,npb,pos,idp,mktype,velrhop,boundnormal);
+      init.Run(np,npb,pos,idp,mktype,velrhop,boundnor);
       init.GetConfig(InitializeInfo);
       //-Frees memory.
       delete[] mktype; mktype=NULL;
@@ -1871,7 +1872,10 @@ void JSph::SelecDomain(tuint3 celini,tuint3 celfin){
   //-Computes codification of cells for the selected domain.
   //-Calcula codificacion de celdas para el dominio seleccionado.
   DomCellCode=JDsDcell::CalcCellCode(DomCells+TUint3(1));
-  if(!DomCellCode)Run_Exceptioon(string("Failed to select a valid CellCode for ")+fun::UintStr(DomCells.x)+"x"+fun::UintStr(DomCells.y)+"x"+fun::UintStr(DomCells.z)+" cells (CellMode="+GetNameCellMode(CellMode)+").");
+  if(!DomCellCode){
+    Run_Exceptioon(fun::PrintStr("Failed to select a valid CellCode for %ux%ux%u cells (CellMode=%s)."
+      ,DomCells.x,DomCells.y,DomCells.z,GetNameCellMode(CellMode)));
+  }
   //-Prints configurantion.
   const ullong ncells=ullong(DomCells.x)*ullong(DomCells.y)*ullong(DomCells.z);
   Log->Printf("DomCells=(%s)  (%s cells)",fun::Uint3Str(DomCells).c_str(),KINT(ncells));
@@ -3159,7 +3163,7 @@ void JSph::SaveMapCellsVtk(float scell)const{
 /// Solo se permiten particulas normales (no periodicas).
 //==============================================================================
 void JSph::SaveVtkNormals(std::string filename,int numfile,unsigned np,unsigned npb
-  ,const tdouble3 *pos,const unsigned *idp,const tfloat3 *boundnormal,float resize)const
+  ,const tdouble3 *pos,const unsigned *idp,const tfloat3 *boundnor,float resize)const
 {
   if(JVtkLib::Available()){
     if(numfile>=0)filename=fun::FileNameSec(filename,numfile);
@@ -3185,14 +3189,14 @@ void JSph::SaveVtkNormals(std::string filename,int numfile,unsigned np,unsigned 
     memcpy(vpos,pos,sizeof(tdouble3)*npb);
     memcpy(vidp,idp,sizeof(unsigned)*npb);
     MkInfo->GetMkByIds(npb,idp,vmk);
-    memcpy(vnor,boundnormal,sizeof(tfloat3)*npb);
+    memcpy(vnor,boundnor,sizeof(tfloat3)*npb);
     //-Loads data of floating particles.
     for(unsigned p=0;p<nfloat;p++){
       const unsigned idx=ftidx[p];
       vpos[npb+p]=pos[idx];
       vidp[npb+p]=idp[idx];
       vmk [npb+p]=MkInfo->GetMkById(idp[idx]);
-      vnor[npb+p]=boundnormal[idx];
+      vnor[npb+p]=boundnor[idx];
     }
     delete[] ftidx; ftidx=NULL;
     //-Computes normalsize.

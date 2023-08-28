@@ -184,7 +184,7 @@ void JDsInitializeOp_FluidVel::ReadXml(const JXml *sxml,TiXmlElement* xele){
 /// Initializes data of particles according XML configuration.
 //==============================================================================
 void JDsInitializeOp_FluidVel::Run(unsigned np,unsigned npb,const tdouble3 *pos
-  ,const unsigned *idp,const word *mktype,tfloat4 *velrhop,tfloat3 *boundnormal)
+  ,const unsigned *idp,const word *mktype,tfloat4 *velrhop,tfloat3 *boundnor)
 {
   const tfloat3 dir=fgeo::VecUnitary(Direction);
   float m2=0,b2=0;
@@ -257,12 +257,12 @@ void JDsInitializeOp_BoundNormalSet::ReadXml(const JXml *sxml,TiXmlElement* xele
 /// Initializes data of particles according XML configuration.
 //==============================================================================
 void JDsInitializeOp_BoundNormalSet::Run(unsigned np,unsigned npb,const tdouble3 *pos
-  ,const unsigned *idp,const word *mktype,tfloat4 *velrhop,tfloat3 *boundnormal)
+  ,const unsigned *idp,const word *mktype,tfloat4 *velrhop,tfloat3 *boundnor)
 {
   JRangeFilter rg(MkBound);
   const bool all=(MkBound.empty());
   for(unsigned p=0;p<np;p++)if(idp[p]<InitCt.nbound && (all || rg.CheckValue(mktype[p])) && CheckPos(p,pos)){
-    boundnormal[p]=Normal;
+    boundnor[p]=Normal;
   }
 }
 
@@ -361,7 +361,7 @@ void JDsInitializeOp_BoundNormalPlane::ReadKeyvals(const std::string &eparm){
 /// Initializes data of particles according XML configuration.
 //==============================================================================
 void JDsInitializeOp_BoundNormalPlane::Run(unsigned np,unsigned npb,const tdouble3 *pos
-  ,const unsigned *idp,const word *mktype,tfloat4 *velrhop,tfloat3 *boundnormal)
+  ,const unsigned *idp,const word *mktype,tfloat4 *velrhop,tfloat3 *boundnor)
 {
   const double maxdist=(MaxDisteH>0? InitCt.kernelh*MaxDisteH: DBL_MAX);
   const double limitdis=InitCt.dp*LimitDist;
@@ -415,8 +415,8 @@ void JDsInitializeOp_BoundNormalPlane::Run(unsigned np,unsigned npb,const tdoubl
     for(unsigned p=0;p<np;p++)if(mktype[p]==mktp && idp[p]<InitCt.nbound && CheckPos(p,pos)){
       const tdouble3 ps=pos[p];
       const tdouble3 psb=fgeo::PlaneOrthogonalPoint(ps,pla);
-      if(fgeo::PointsDist(ps,psb)<maxdist)boundnormal[p]=ToTFloat3(psb-ps);
-      else if(InitClear)boundnormal[p]=TFloat3(0);
+      if(fgeo::PointsDist(ps,psb)<maxdist)boundnor[p]=ToTFloat3(psb-ps);
+      else if(InitClear)boundnor[p]=TFloat3(0);
     }
     //-Next mktp value.
     v=rg.GetNextValue(v);
@@ -472,7 +472,7 @@ void JDsInitializeOp_BoundNormalSphere::ReadXml(const JXml *sxml,TiXmlElement* x
 /// Initializes data of particles according XML configuration.
 //==============================================================================
 void JDsInitializeOp_BoundNormalSphere::Run(unsigned np,unsigned npb,const tdouble3 *pos
-  ,const unsigned *idp,const word *mktype,tfloat4 *velrhop,tfloat3 *boundnormal)
+  ,const unsigned *idp,const word *mktype,tfloat4 *velrhop,tfloat3 *boundnor)
 {
   const tdouble3 pcen=ToTDouble3(Center);
   const double ra=double(Radius);
@@ -489,8 +489,8 @@ void JDsInitializeOp_BoundNormalSphere::Run(unsigned np,unsigned npb,const tdoub
     if((Inside  && ps_in  && dissurf<=maxdist) || (!Inside && ps_out && fabs(dissurf)<=maxdist)){
       psb=pcen+(fgeo::VecUnitary(ps-pcen)*ra); //-Normal to surface limit.
     }
-    if(psb.x!=DBL_MAX)boundnormal[p]=ToTFloat3(psb-ps);
-    else if(InitClear)boundnormal[p]=TFloat3(0);
+    if(psb.x!=DBL_MAX)boundnor[p]=ToTFloat3(psb-ps);
+    else if(InitClear)boundnor[p]=TFloat3(0);
   }
 }
 
@@ -547,7 +547,7 @@ void JDsInitializeOp_BoundNormalCylinder::ReadXml(const JXml *sxml,TiXmlElement*
 /// Initializes data of particles according XML configuration.
 //==============================================================================
 void JDsInitializeOp_BoundNormalCylinder::Run(unsigned np,unsigned npb,const tdouble3 *pos
-  ,const unsigned *idp,const word *mktype,tfloat4 *velrhop,tfloat3 *boundnormal)
+  ,const unsigned *idp,const word *mktype,tfloat4 *velrhop,tfloat3 *boundnor)
 {
   const tdouble3 cen1=ToTDouble3(Center1);
   const tdouble3 cen2=ToTDouble3(Center2);
@@ -599,8 +599,8 @@ void JDsInitializeOp_BoundNormalCylinder::Run(unsigned np,unsigned npb,const tdo
       else if(disbot<0)psb=ps+vbot*disbot; //-Normal to bottom limit.
       else if(distop<0)psb=ps+vtop*distop; //-Normal to top limit.
     }
-    if(psb.x!=DBL_MAX)boundnormal[p]=ToTFloat3(psb-ps);
-    else if(InitClear)boundnormal[p]=TFloat3(0);
+    if(psb.x!=DBL_MAX)boundnor[p]=ToTFloat3(psb-ps);
+    else if(InitClear)boundnor[p]=TFloat3(0);
   }
 }
 
@@ -681,7 +681,7 @@ void JDsInitializeOp_BoundNormalParts::ReadKeyvals(const std::string &eparm){
 /// Initializes data of particles according XML configuration.
 //==============================================================================
 void JDsInitializeOp_BoundNormalParts::Run(unsigned np,unsigned npb,const tdouble3 *pos
-  ,const unsigned *idp,const word *mktype,tfloat4 *velrhop,tfloat3 *boundnormal)
+  ,const unsigned *idp,const word *mktype,tfloat4 *velrhop,tfloat3 *boundnor)
 {
   if(!InitCt.simulate2d)Run_Exceptioon("Initialize option BoundNormalParts is not supported for 3D simulations.");
   //-Select particles to process.
@@ -696,7 +696,7 @@ void JDsInitializeOp_BoundNormalParts::Run(unsigned np,unsigned npb,const tdoubl
   const double maxdist=InitCt.kernelh*min(MaxDisteH,10.f);
   JVtkLib::ComputeNormalsPartCells(InitCt.simulate2d,InitCt.simulate2dposy,InitCt.dp
     ,InitCt.maprealposmin,InitCt.maprealposmax,maxdist,AppInfo.GetDirOut()
-    ,nsel,partsel,np,pos,boundnormal);
+    ,nsel,partsel,np,pos,boundnor);
   //-Free memory.
   delete[] partsel; partsel=NULL;
 }
@@ -807,10 +807,10 @@ void JDsInitialize::LoadExecParms(const std::vector<std::string> &execparms){
 /// Initializes data of particles according XML configuration.
 //==============================================================================
 void JDsInitialize::Run(unsigned np,unsigned npb,const tdouble3 *pos
-  ,const unsigned *idp,const word *mktype,tfloat4 *velrhop,tfloat3 *boundnormal)
+  ,const unsigned *idp,const word *mktype,tfloat4 *velrhop,tfloat3 *boundnor)
 {
   for(unsigned c=0;c<Count();c++){
-    Opes[c]->Run(np,npb,pos,idp,mktype,velrhop,boundnormal);
+    Opes[c]->Run(np,npb,pos,idp,mktype,velrhop,boundnor);
   }
 }
 

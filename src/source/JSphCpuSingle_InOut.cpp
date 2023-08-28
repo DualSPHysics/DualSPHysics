@@ -209,7 +209,7 @@ void JSphCpuSingle::InOutComputeStep(double stepdt){
 
   //-Updates new particle values for Laminar+SPS and normals for mDBC.
   if(SpsTau_c)SpsTau_c->MemsetOffset(Np,0,newnp);
-  if(BoundNormal_c)BoundNormal_c->MemsetOffset(Np,0,newnp);
+  if(BoundNor_c)BoundNor_c->MemsetOffset(Np,0,newnp);
 
   //-Updates number of particles.
   if(newnp){
