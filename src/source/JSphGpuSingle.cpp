@@ -123,6 +123,10 @@ void JSphGpuSingle::UpdateMaxValues(){
   }
   MaxNumbers.particles=max(MaxNumbers.particles,Np);
   if(CellDivSingle)MaxNumbers.cells=max(MaxNumbers.cells,CellDivSingle->GetNct());
+  //-Prints allocated arrays when it is changed.
+  if(Arrays_Cpu->GetArrayCountUpdated() || Arrays_Gpu->GetArrayCountUpdated()){
+    PrintAllocMemory(GetAllocMemoryCpu(),GetAllocMemoryGpu());
+  }
 }
 
 //==============================================================================
@@ -933,8 +937,8 @@ void JSphGpuSingle::Run(std::string appname,const JSphCfgRun* cfg,JLog2* log){
   RunGaugeSystem(TimeStep,true);
   if(InOut)InOutInit(TimeStepIni);
   FreePartsInit();
-  UpdateMaxValues();
   PrintAllocMemory(GetAllocMemoryCpu(),GetAllocMemoryGpu());
+  UpdateMaxValues();
   SaveData(); 
   Timersg->ResetTimes();
   Timersg->TmStop(TMG_Init,true);

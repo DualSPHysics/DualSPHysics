@@ -306,6 +306,7 @@ JArraysGpu::~JArraysGpu(){
 void JArraysGpu::Reset(){
   for(unsigned a=0;a<MAX_ASIZE;a++)ArraysList[a]->Reset(); 
   CountResizeDataCalls=0;
+  LastCountArrays=0;
 }
  
 //==============================================================================
@@ -341,6 +342,25 @@ void JArraysGpu::PrintAllocMemory(bool all)const{
 //==============================================================================
 void JArraysGpu::SetAutoAddArrays(bool active){
   for(unsigned a=0;a<MAX_ASIZE;a++)ArraysList[a]->SetAutoAddArrays(active);
+}
+
+//==============================================================================
+/// Return the total number of allocated arrays.
+//==============================================================================
+unsigned JArraysGpu::GetArrayCount()const{
+  unsigned n=0;
+  for(unsigned a=0;a<MAX_ASIZE;a++)n+=ArraysList[a]->GetArrayCount();
+  return(n);
+}
+
+//==============================================================================
+/// Return the total number of allocated arrays when it was changed.
+//==============================================================================
+unsigned JArraysGpu::GetArrayCountUpdated(){
+  unsigned n=GetArrayCount();
+  if(LastCountArrays!=n)LastCountArrays=n;
+  else n=0;
+  return(n);
 }
 
 //==============================================================================

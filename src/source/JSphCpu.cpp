@@ -269,7 +269,9 @@ llong JSphCpu::GetAllocMemoryCpu()const{
 /// Visualiza la memoria reservada.
 //==============================================================================
 void JSphCpu::PrintAllocMemory(llong mcpu)const{
-  Log->Printf("Allocated memory in CPU: %s (%.2f MiB)",KINT(mcpu),double(mcpu)/MEBIBYTE);
+  Log->Printf("%s allocated memory in CPU: %s (%.2f MiB)  (%u particle arrays)"
+    ,(!Nstep? "Initial": "**Updated"),KINT(mcpu),double(mcpu)/MEBIBYTE,Arrays_Cpu->GetArrayCount());
+  Arrays_Cpu->GetArrayCountUpdated();
 }
 
 //==============================================================================

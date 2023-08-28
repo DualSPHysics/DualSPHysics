@@ -86,6 +86,10 @@ void JSphCpuSingle::UpdateMaxValues(){
   MaxNumbers.memgpu=MaxNumbers.memgpunct=0;
   MaxNumbers.particles=max(MaxNumbers.particles,Np);
   if(CellDivSingle)MaxNumbers.cells=max(MaxNumbers.cells,CellDivSingle->GetNct());
+  //-Prints allocated arrays when it is changed.
+  if(Arrays_Cpu->GetArrayCountUpdated()){
+    PrintAllocMemory(GetAllocMemoryCpu());
+  }
 }
 
 //==============================================================================
@@ -1181,8 +1185,8 @@ void JSphCpuSingle::Run(std::string appname,const JSphCfgRun* cfg,JLog2* log){
   RunGaugeSystem(TimeStep,true);
   if(InOut)InOutInit(TimeStepIni);
   FreePartsInit();
-  UpdateMaxValues();
   PrintAllocMemory(GetAllocMemoryCpu());
+  UpdateMaxValues();
   SaveData(); 
   Timersc->ResetTimes();
   Timersc->TmStop(TMC_Init);

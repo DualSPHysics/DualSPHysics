@@ -150,6 +150,7 @@ public:
 protected:
   JArraysGpuList* ArraysList[MAX_ASIZE];
   unsigned CountResizeDataCalls;  ///<Number of calls to SetDataArraySize().
+  unsigned LastCountArrays;       ///<Number of arrays updated by GetArrayCountUpdated().
 
 protected:
   JArraysGpuList* GetArraysList(TpASizeId asize)const{ 
@@ -174,6 +175,9 @@ public:
 
   unsigned GetArrayCount(TpASizeId asize)const{     return(ArraysList[asize]->GetArrayCount()); }
   unsigned GetArrayCountUsed(TpASizeId asize)const{ return(ArraysList[asize]->GetArrayCountUsed()); }
+
+  unsigned GetArrayCount()const;
+  unsigned GetArrayCountUpdated();
 
   void AddArrayCount(TpASizeId asize,unsigned count);
 
