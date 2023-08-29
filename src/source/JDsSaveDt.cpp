@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2023 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -67,7 +67,9 @@ void JDsSaveDt::Reset(){
 //==============================================================================
 /// Configures object.
 //==============================================================================
-void JDsSaveDt::Config(const JXml *sxml,const std::string &place,double timemax,double timeout){
+void JDsSaveDt::Config(const JXml* sxml,const std::string& place,double timemax
+  ,double timeout)
+{
   Reset();
   LoadXml(sxml,place);
   if(TimeFinish<=0)TimeFinish=DBL_MAX;
@@ -79,7 +81,7 @@ void JDsSaveDt::Config(const JXml *sxml,const std::string &place,double timemax,
 //==============================================================================
 /// Loads initial conditions of XML object.
 //==============================================================================
-void JDsSaveDt::LoadXml(const JXml *sxml,const std::string &place){
+void JDsSaveDt::LoadXml(const JXml* sxml,const std::string& place){
   TiXmlNode* node=sxml->GetNodeSimple(place);
   if(!node)Run_Exceptioon(string("Cannot find the element \'")+place+"\'.");
   if(sxml->CheckNodeActive(node))ReadXml(sxml,node->ToElement());
@@ -88,7 +90,7 @@ void JDsSaveDt::LoadXml(const JXml *sxml,const std::string &place){
 //==============================================================================
 /// Reads list of initial conditions in the XML node.
 //==============================================================================
-void JDsSaveDt::ReadXml(const JXml *sxml,TiXmlElement* ele){
+void JDsSaveDt::ReadXml(const JXml* sxml,TiXmlElement* ele){
   TimeStart=sxml->ReadElementFloat(ele,"start","value",true);
   TimeFinish=sxml->ReadElementFloat(ele,"finish","value",true,-1);
   TimeInterval=sxml->ReadElementFloat(ele,"interval","value",true,-1);
@@ -187,7 +189,7 @@ void JDsSaveDt::SaveFileAllDts(){
 /// Saves indicated info for dt. If it matches with timestep.
 /// Guarda info del dt inicado. Si coincide timestep lo sobre.
 //==============================================================================
-void JDsSaveDt::AddValueData(double timestep,double dt,StValue &value){
+void JDsSaveDt::AddValueData(double timestep,double dt,StValue& value){
   if(!value.num){
     value.tini=timestep;
     value.vmean=value.vmin=value.vmax=dt;

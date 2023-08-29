@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2023 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -294,7 +294,7 @@ void JSph::InitVars(){
 //==============================================================================
 /// Saves the linear and angular acceleration of each floating object in a csv file
 //==============================================================================
-void JSph::SaveFtAceFun(double dt,bool predictor,StFtoForces *ftoforces){
+void JSph::SaveFtAceFun(double dt,bool predictor,StFtoForces* ftoforces){
   const unsigned nstep=Nstep;
   const double timestep=TimeStep;
   const bool savedata=!(timestep<(floor((timestep-dt)/TimePart)+1.0)*TimePart);
@@ -411,7 +411,7 @@ void JSph::ConfigDomainParticlesPrcValue(std::string key,double v){
 //==============================================================================
 /// Loads the case configuration to be executed.
 //==============================================================================
-void JSph::ConfigDomainResize(std::string key,const JCaseEParms *eparms){
+void JSph::ConfigDomainResize(std::string key,const JCaseEParms* eparms){
   const char axis=fun::StrLower(key)[0];
   if(axis!='x' && axis!='y' && axis!='z')Run_Exceptioon("Axis value is invalid.");
   if(key.substr(1,3)!="min" && key.substr(1,3)!="max")Run_Exceptioon("Key value is invalid.");
@@ -489,7 +489,7 @@ llong JSph::GetAllocMemoryCpu()const{
 //==============================================================================
 /// Loads the configuration of the execution.
 //==============================================================================
-void JSph::LoadConfig(const JSphCfgRun *cfg){
+void JSph::LoadConfig(const JSphCfgRun* cfg){
   TimerTot.Start();
 
   //-Loads basic configuration from execution parameters.
@@ -555,7 +555,7 @@ void JSph::LoadConfig(const JSphCfgRun *cfg){
 //==============================================================================
 /// Loads kernel selection to compute kernel values.
 //==============================================================================
-void JSph::LoadKernelSelection(const JSphCfgRun *cfg,const JXml *xml){
+void JSph::LoadKernelSelection(const JSphCfgRun* cfg,const JXml* xml){
   //-Load kernel selection from execution parameters from XML.
   JCaseEParms eparms;
   eparms.LoadXml(xml,"case.execution.parameters");
@@ -571,7 +571,7 @@ void JSph::LoadKernelSelection(const JSphCfgRun *cfg,const JXml *xml){
 //==============================================================================
 /// Loads predefined constans from XML.
 //==============================================================================
-void JSph::LoadConfigCtes(const JXml *xml){
+void JSph::LoadConfigCtes(const JXml* xml){
   JCaseCtes ctes;
   ctes.LoadXmlRun(xml,"case.execution.constants");
 
@@ -592,7 +592,7 @@ void JSph::LoadConfigCtes(const JXml *xml){
 //==============================================================================
 /// Loads execution parameters from XML.
 //==============================================================================
-void JSph::LoadConfigParameters(const JXml *xml){
+void JSph::LoadConfigParameters(const JXml* xml){
   JCaseEParms eparms;
   eparms.LoadXml(xml,"case.execution.parameters");
   if(eparms.Exists("FtSaveAce"))SaveFtAce=(eparms.GetValueInt("FtSaveAce",true,0)!=0); //-For Debug.
@@ -783,7 +783,7 @@ void JSph::TimeOutExtraUpdate(double timestep){
 //==============================================================================
 /// Loads the case configuration to be executed.
 //==============================================================================
-void JSph::LoadConfigCommands(const JSphCfgRun *cfg){
+void JSph::LoadConfigCommands(const JSphCfgRun* cfg){
   //-Aplies configuration using command line.
   if(cfg->SvPosDouble>=0)SvPosDouble=(cfg->SvPosDouble!=0);
   if(cfg->SvExtraParts!="undefined")SvExtraParts=cfg->SvExtraParts;
@@ -901,7 +901,7 @@ void JSph::LoadConfigCommands(const JSphCfgRun *cfg){
 //==============================================================================
 /// Creates and load NuxLib object to evaluate user-defined expressions.
 //==============================================================================
-void JSph::LoadConfigVars(const JXml *xml){
+void JSph::LoadConfigVars(const JXml* xml){
   if(!JNumexLib::Available())Log->PrintWarning("Code for JNumex libary is not included in the current compilation, so user-defined expresions in XML file are not evaluated.");
   else{
     NuxLib=new JNumexLib();
@@ -953,7 +953,7 @@ void JSph::LoadConfigVarsExec(){
 //==============================================================================
 /// Loads the case configuration to be executed.
 //==============================================================================
-void JSph::LoadCaseConfig(const JSphCfgRun *cfg){
+void JSph::LoadCaseConfig(const JSphCfgRun* cfg){
   if(!fun::FileExists(FileXml))Run_ExceptioonFile("Case configuration was not found.",FileXml);
   JXml xml; xml.LoadFile(FileXml);
   //-Shows pre-processing application generating the XML file.
@@ -1084,9 +1084,9 @@ void JSph::LoadCaseConfig(const JSphCfgRun *cfg){
     AllocMemoryFloating(FtCount,parts.UseImposedFtVel(),parts.UseAddedFtForce());
     unsigned cobj=0;
     for(unsigned c=0;c<parts.CountBlocks()&&cobj<FtCount;c++){
-      const JCasePartBlock &block=parts.GetBlock(c);
+      const JCasePartBlock& block=parts.GetBlock(c);
       if(block.Type==TpPartFloating){
-        const JCasePartBlock_Floating &fblock=(const JCasePartBlock_Floating &)block;
+        const JCasePartBlock_Floating& fblock=(const JCasePartBlock_Floating&)block;
         StFloatingData* fobj=FtObjs+cobj;
         fobj->mkbound=fblock.GetMkType();
         fobj->begin=fblock.GetBegin();
@@ -1158,7 +1158,7 @@ void JSph::LoadCaseConfig(const JSphCfgRun *cfg){
       memset(DemData,0,sizeof(StDemData)*DemDataSize);
     }
     for(unsigned c=0;c<parts.CountBlocks();c++){
-      const JCasePartBlock &block=parts.GetBlock(c);
+      const JCasePartBlock& block=parts.GetBlock(c);
       if(IsBound(block.Type)){
         const word mkbound=block.GetMkType();
         const unsigned cmk=MkInfo->GetMkBlockByMkBound(mkbound);
@@ -1265,7 +1265,7 @@ StDemData JSph::LoadDemData(bool checkdata,const JCasePartBlock* block)const{
   //-Loads necessary values for DEM.
   data.massp=MassBound;
   if(block->Type==TpPartFloating){
-    const JCasePartBlock_Floating *fblock=(const JCasePartBlock_Floating *)block;
+    const JCasePartBlock_Floating* fblock=(const JCasePartBlock_Floating* )block;
     data.mass=(float)fblock->GetMassbody();
     data.massp=(float)fblock->GetMasspart();
   }
@@ -1280,7 +1280,7 @@ void JSph::VisuDemCoefficients()const{
   //-Gets info for each block of particles.
   Log->Printf("Coefficients for DEM:");
   for(unsigned c=0;c<MkInfo->Size();c++){
-    const JSphMkBlock *pmk=MkInfo->Mkblock(c);
+    const JSphMkBlock* pmk=MkInfo->Mkblock(c);
     const typecode code=pmk->Code;
     const typecode type=CODE_GetType(code);
     const unsigned tav=CODE_GetTypeAndValue(code);
@@ -1390,7 +1390,7 @@ void JSph::ConfigBoundNormals(unsigned np,unsigned npb,const tdouble3* pos
 //==============================================================================
 /// Sets DBL_MAX values by indicated values.
 //==============================================================================
-void JSph::PrepareCfgDomainValues(tdouble3 &v,tdouble3 vdef)const{
+void JSph::PrepareCfgDomainValues(tdouble3& v,tdouble3 vdef)const{
   if(v.x==DBL_MAX)v.x=vdef.x;
   if(v.y==DBL_MAX)v.y=vdef.y;
   if(v.z==DBL_MAX)v.z=vdef.z;
@@ -1735,7 +1735,9 @@ void JSph::VisuParticleSummary()const{
 /// Calcula celda de las particulas y comprueba que no existan mas particulas
 /// excluidas de las previstas.
 //==============================================================================
-void JSph::LoadDcellParticles(unsigned n,const typecode *code,const tdouble3 *pos,unsigned *dcell)const{
+void JSph::LoadDcellParticles(unsigned n,const typecode* code,const tdouble3* pos
+  ,unsigned* dcell)const
+{
   for(unsigned p=0;p<n;p++){
     typecode codeout=CODE_GetSpecialValue(code[p]);
     if(codeout<CODE_OUTIGNORE){
@@ -1782,7 +1784,7 @@ void JSph::RunInitialize(unsigned np,unsigned npb,const tdouble3* pos
     //-Executes initialize tasks.
     if(init.Count()){
       //-Creates array with mktype value.
-      word *mktype=new word[np];
+      word* mktype=new word[np];
       for(unsigned p=0;p<np;p++){
         const unsigned cmk=MkInfo->GetMkBlockByCode(code[p]);
         mktype[p]=(cmk<MkInfo->Size()? word(MkInfo->Mkblock(cmk)->MkType): USHRT_MAX);
@@ -1819,7 +1821,8 @@ void JSph::FreePartsInit(){
 /// Configure cell map division (defines ScellDiv, Scell, Map_Cells). 
 //==============================================================================
 void JSph::ConfigCellDivision(){
-  if(CellMode!=CELLMODE_Full && CellMode!=CELLMODE_Half)Run_Exceptioon("The CellMode is invalid.");
+  if(CellMode!=CELLMODE_Full && CellMode!=CELLMODE_Half)
+    Run_Exceptioon("The CellMode is invalid.");
   ScellDiv=(CellMode==CELLMODE_Full? 1: 2);
   Scell=KernelSize/ScellDiv;
   MovLimit=Scell*0.9f;
@@ -1845,9 +1848,12 @@ void JSph::SelecDomain(tuint3 celini,tuint3 celfin){
   DomCelIni=celini;
   DomCelFin=celfin;
   DomCells=DomCelFin-DomCelIni;
-  if(DomCelIni.x>=Map_Cells.x || DomCelIni.y>=Map_Cells.y || DomCelIni.z>=Map_Cells.z )Run_Exceptioon("DomCelIni is invalid.");
-  if(DomCelFin.x>Map_Cells.x || DomCelFin.y>Map_Cells.y || DomCelFin.z>Map_Cells.z )Run_Exceptioon("DomCelFin is invalid.");
-  if(DomCells.x<1 || DomCells.y<1 || DomCells.z<1 )Run_Exceptioon("The domain of cells is invalid.");
+  if(DomCelIni.x>=Map_Cells.x || DomCelIni.y>=Map_Cells.y || DomCelIni.z>=Map_Cells.z )
+    Run_Exceptioon("DomCelIni is invalid.");
+  if(DomCelFin.x>Map_Cells.x || DomCelFin.y>Map_Cells.y || DomCelFin.z>Map_Cells.z )
+    Run_Exceptioon("DomCelFin is invalid.");
+  if(DomCells.x<1 || DomCells.y<1 || DomCells.z<1 )
+    Run_Exceptioon("The domain of cells is invalid.");
   //-Computes local domain limits.
   DomPosMin.x=Map_PosMin.x+(DomCelIni.x*Scell);
   DomPosMin.y=Map_PosMin.y+(DomCelIni.y*Scell);
@@ -1925,7 +1931,8 @@ void JSph::ConfigPosCellGpu(){
     Log->Printf("%s (%u x %u x %u cells), %s %u x %u x %u cells.",tx1.c_str()
       ,Map_Cells.x,Map_Cells.y,Map_Cells.z,tx2.c_str(),nx,ny,nz);
     const tuint3 scells=JDsDcell::CalcCellDistribution(Map_Cells,32);
-    if(scells==TUint3(0) || scells.x+scells.y+scells.z>32)Run_Exceptioon("The number of cells is too large for a 32-bit PosCell configuration. The number of cells should be reduced.");
+    if(scells==TUint3(0) || scells.x+scells.y+scells.z>32)
+      Run_Exceptioon("The number of cells is too large for a 32-bit PosCell configuration. The number of cells should be reduced.");
     Log->Printf("\nThe current configuration can be changed by the user by modifying the DualSphDef.h file and compiling the program again. ");
     Log->Printf("Replace the following code in DualSphDef.h:");
     Log->Printf("  //#define PSCEL_CONFIG_USER");
@@ -1977,7 +1984,7 @@ void JSph::CalcFloatingRadius(unsigned np,const tdouble3* pos,const unsigned* id
   //-Calcula distancia maxima entre particulas y centro de floating (todas son validas).
   float radiusmax=0;
   for(unsigned cf=0;cf<FtCount;cf++){
-    StFloatingData *fobj=FtObjs+cf;
+    StFloatingData* fobj=FtObjs+cf;
     const unsigned fpini=fobj->begin-CaseNpb;
     const unsigned fpfin=fpini+fobj->count;
     const tdouble3 fcen=fobj->center;
@@ -2317,7 +2324,7 @@ void JSph::InitFloatings(){
 //==============================================================================
 /// Returns linear forces from external file according to timestep.
 //==============================================================================
-void JSph::WavesInit(JGaugeSystem *gaugesystem,const JSphMk *mkinfo
+void JSph::WavesInit(JGaugeSystem* gaugesystem,const JSphMk* mkinfo
   ,double timemax,double timepart)
 {
   StWvgDimensions wdims;
@@ -2346,7 +2353,7 @@ void JSph::WavesInit(JGaugeSystem *gaugesystem,const JSphMk *mkinfo
       tdouble3 point0,point2;
       WaveGen->PaddleGetAwasInfo(cp,coefmassdef,wdims.massfluid,masslimit,tstart,gdp,point0,point2);
       //-Creates gauge for AWAS.
-      JGaugeSwl *gswl=gaugesystem->AddGaugeSwl(gname,tstart,DBL_MAX,0,point0,point2,gdp,float(masslimit));
+      JGaugeSwl* gswl=gaugesystem->AddGaugeSwl(gname,tstart,DBL_MAX,0,point0,point2,gdp,float(masslimit));
       WaveGen->PaddleGaugeInit(cp,(void*)gswl);
     }
   }
@@ -2906,8 +2913,8 @@ void JSph::SavePartData(unsigned npsave,unsigned nout,const JDataArrays& arrays
     string err;
     if(!(err=arrays2.CheckErrorArray("Pos" ,TypeDouble3,npsave)).empty())Run_Exceptioon(err);
     if(!(err=arrays2.CheckErrorArray("Idp" ,TypeUint   ,npsave)).empty())Run_Exceptioon(err);
-    const tdouble3 *pos =arrays2.GetArrayDouble3("Pos");
-    const unsigned *idp =arrays2.GetArrayUint   ("Idp");
+    const tdouble3* pos =arrays2.GetArrayDouble3("Pos");
+    const unsigned* idp =arrays2.GetArrayUint   ("Idp");
     //-Generates array with posf3 and type of particle.
     tfloat3* posf3=GetPointerDataFloat3(npsave,pos);
     byte*    type=new byte[npsave];
@@ -3077,7 +3084,7 @@ void JSph::CheckTermination(){
 /// Generates VTK file with domain of the particles.
 /// Genera fichero VTK con el dominio de las particulas.
 //==============================================================================
-void JSph::SaveDomainVtk(unsigned ndom,const tdouble3 *vdom)const{ 
+void JSph::SaveDomainVtk(unsigned ndom,const tdouble3* vdom)const{ 
   if(vdom){
     string fname=fun::FileNameSec("Domain.vtk",Part);
     JVtkLib::SaveVtkBoxes(DirDataOut+fname,ndom,vdom,KernelH*0.5f);
@@ -3093,7 +3100,7 @@ void JSph::SaveDomainVtk(unsigned ndom,const tdouble3 *vdom)const{
 //==============================================================================
 void JSph::SaveInitialDomainVtk()const{
   const unsigned nbox=(MapRealPosMin!=Map_PosMin || MapRealPosMax!=Map_PosMax? 3: 2);
-  tfloat3 *vdomf3=new tfloat3[nbox*2];
+  tfloat3* vdomf3=new tfloat3[nbox*2];
   vdomf3[0]=ToTFloat3(CasePosMin);
   vdomf3[1]=ToTFloat3(CasePosMax);
   vdomf3[2]=ToTFloat3(MapRealPosMin);
@@ -3163,7 +3170,7 @@ void JSph::SaveMapCellsVtk(float scell)const{
 /// Solo se permiten particulas normales (no periodicas).
 //==============================================================================
 void JSph::SaveVtkNormals(std::string filename,int numfile,unsigned np,unsigned npb
-  ,const tdouble3 *pos,const unsigned *idp,const tfloat3 *boundnor,float resize)const
+  ,const tdouble3* pos,const unsigned* idp,const tfloat3* boundnor,float resize)const
 {
   if(JVtkLib::Available()){
     if(numfile>=0)filename=fun::FileNameSec(filename,numfile);
@@ -3214,7 +3221,7 @@ void JSph::SaveVtkNormals(std::string filename,int numfile,unsigned np,unsigned 
 /// Anhade la informacion basica de resumen a hinfo y dinfo.
 //==============================================================================
 void JSph::GetResInfo(float tsim,float ttot,std::string headplus,std::string detplus
-  ,std::string &hinfo,std::string &dinfo)const
+  ,std::string& hinfo,std::string& dinfo)const
 {
   hinfo=hinfo+"#RunName;Rcode-VersionInfo;DateTime;Np;TSimul;TSeg;TTotal;MemCpu;MemGpu;MemGpuCells";
   dinfo=dinfo+ RunName+ ";"+ RunCode+ "-"+ AppName+ ";"+ RunTimeDate+ ";"+ KINT(CaseNp);
@@ -3387,9 +3394,9 @@ std::string JSph::GetDDTConfig()const{
 /// Saves VTK file with particle data (degug).
 /// Graba fichero VTK con datos de las particulas (degug).
 //==============================================================================
-void JSph::DgSaveVtkParticlesCpu(std::string filename,int numfile,unsigned pini,unsigned pfin
-  ,const tdouble3 *pos,const typecode *code,const unsigned *idp,const tfloat4 *velrhop
-  ,const tfloat3 *ace)const
+void JSph::DgSaveVtkParticlesCpu(std::string filename,int numfile
+  ,unsigned pini,unsigned pfin,const tdouble3* pos,const typecode* code
+  ,const unsigned* idp,const tfloat4* velrhop,const tfloat3* ace)const
 {
   int mpirank=Log->GetMpiRank();
   if(mpirank>=0)filename=string("p")+fun::IntStr(mpirank)+"_"+filename;
@@ -3397,12 +3404,12 @@ void JSph::DgSaveVtkParticlesCpu(std::string filename,int numfile,unsigned pini,
   filename=DirDataOut+filename;
   //-Allocates memory.
   const unsigned np=pfin-pini;
-  tfloat3 *xpos=new tfloat3[np];
-  tfloat3 *xvel=new tfloat3[np];
-  tfloat3 *xace=(ace? new tfloat3[np]: NULL);
-  float *xrhop=new float[np];
-  byte *xtype=new byte[np];
-  byte *xkind=new byte[np];
+  tfloat3* xpos=new tfloat3[np];
+  tfloat3* xvel=new tfloat3[np];
+  tfloat3* xace=(ace? new tfloat3[np]: NULL);
+  float*   xrhop=new float[np];
+  byte*    xtype=new byte[np];
+  byte*    xkind=new byte[np];
   for(unsigned p=0;p<np;p++){
     xpos[p]=ToTFloat3(pos[p+pini]);
     tfloat4 vr=velrhop[p+pini];
@@ -3435,14 +3442,17 @@ void JSph::DgSaveVtkParticlesCpu(std::string filename,int numfile,unsigned pini,
 /// Saves VTK file with particle data (degug).
 /// Graba fichero VTK con datos de las particulas (degug).
 //==============================================================================
-void JSph::DgSaveVtkParticlesCpu(std::string filename,int numfile,unsigned pini,unsigned pfin,const tfloat3 *pos,const byte *check,const unsigned *idp,const tfloat3 *vel,const float *rhop){
+void JSph::DgSaveVtkParticlesCpu(std::string filename,int numfile
+  ,unsigned pini,unsigned pfin,const tfloat3* pos,const byte* check
+  ,const unsigned* idp,const tfloat3* vel,const float* rhop)
+{
   int mpirank=Log->GetMpiRank();
   if(mpirank>=0)filename=string("p")+fun::IntStr(mpirank)+"_"+filename;
   if(numfile>=0)filename=fun::FileNameSec(filename,numfile);
   filename=DirDataOut+filename;
   //-Reserva memoria basica.
   const unsigned n=pfin-pini;
-  unsigned *num=new unsigned[n];
+  unsigned* num=new unsigned[n];
   for(unsigned p=0;p<n;p++)num[p]=p;
   //-Generates VTK file.
   JDataArrays arrays;
@@ -3460,9 +3470,10 @@ void JSph::DgSaveVtkParticlesCpu(std::string filename,int numfile,unsigned pini,
 /// Saves CSV file with particle data (degug).
 /// Graba fichero CSV con datos de las particulas (degug).
 //==============================================================================
-void JSph::DgSaveCsvParticlesCpu(std::string filename,int numfile,unsigned pini,unsigned pfin
-  ,std::string head,const tfloat3 *pos,const unsigned *idp,const tfloat3 *vel
-  ,const float *rhop,const float *ar,const tfloat3 *ace,const tfloat3 *vcorr)
+void JSph::DgSaveCsvParticlesCpu(std::string filename,int numfile
+  ,unsigned pini,unsigned pfin,std::string head,const tfloat3* pos
+  ,const unsigned* idp,const tfloat3* vel,const float* rhop,const float* ar
+  ,const tfloat3* ace,const tfloat3* vcorr)
 {
   int mpirank=Log->GetMpiRank();
   if(mpirank>=0)filename=string("p")+fun::IntStr(mpirank)+"_"+filename;

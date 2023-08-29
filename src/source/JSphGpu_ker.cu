@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2023 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -49,7 +49,9 @@ namespace cusph{
 /// Reduction using maximum of float values in shared memory for a warp.
 /// Reduccion mediante maximo de valores float en memoria shared para un warp.
 //==============================================================================
-template <unsigned blockSize> __device__ void KerReduMaxFloatWarp(volatile float* sdat,unsigned tid){
+template <unsigned blockSize> __device__ void KerReduMaxFloatWarp(
+  volatile float* sdat,unsigned tid)
+{
   if(blockSize>=64)sdat[tid]=max(sdat[tid],sdat[tid+32]);
   if(blockSize>=32)sdat[tid]=max(sdat[tid],sdat[tid+16]);
   if(blockSize>=16)sdat[tid]=max(sdat[tid],sdat[tid+8]);
@@ -67,7 +69,9 @@ template <unsigned blockSize> __device__ void KerReduMaxFloatWarp(volatile float
 /// principio de res[] (Se usan tantas posiciones del res[] como bloques, 
 /// quedando el resultado final en res[0]).
 //==============================================================================
-template <unsigned blockSize> __global__ void KerReduMaxFloat(unsigned n,unsigned ini,const float *dat,float *res){
+template <unsigned blockSize> __global__ void KerReduMaxFloat(unsigned n
+  ,unsigned ini,const float* dat,float* res)
+{
   extern __shared__ float sdat[];
   unsigned tid=threadIdx.x;
   unsigned c=blockIdx.x*blockDim.x + threadIdx.x;
@@ -94,9 +98,10 @@ float ReduMaxFloat(unsigned ndata,unsigned inidata,float* data,float* resu){
     unsigned smemSize=SPHBSIZE*sizeof(float);
     dim3 sgrid=GetSimpleGridSize(n,SPHBSIZE);
     unsigned n_blocks=sgrid.x*sgrid.y;
-    float *dat=data;
-    float *resu1=resu,*resu2=resu+n_blocks;
-    float *res=resu1;
+    float* dat=data;
+    float* resu1=resu;
+    float* resu2=resu+n_blocks;
+    float* res=resu1;
     while(n>1){
       KerReduMaxFloat<SPHBSIZE><<<sgrid,SPHBSIZE,smemSize>>>(n,ini,dat,res);
       n=n_blocks; ini=0;
@@ -125,7 +130,9 @@ float ReduMaxFloat(unsigned ndata,unsigned inidata,float* data,float* resu){
 /// principio de res[] (Se usan tantas posiciones del res[] como bloques, 
 /// quedando el resultado final en res[0]).
 //==============================================================================
-template <unsigned blockSize> __global__ void KerReduMaxFloat_w(unsigned n,unsigned ini,const float4 *dat,float *res){
+template <unsigned blockSize> __global__ void KerReduMaxFloat_w(unsigned n
+  ,unsigned ini,const float4* dat,float* res)
+{
   extern __shared__ float sdat[];
   unsigned tid=threadIdx.x;
   unsigned c=blockIdx.x*blockDim.x + threadIdx.x;
@@ -150,9 +157,10 @@ float ReduMaxFloat_w(unsigned ndata,unsigned inidata,float4* data,float* resu){
   unsigned smemSize=SPHBSIZE*sizeof(float);
   dim3 sgrid=GetSimpleGridSize(n,SPHBSIZE);
   unsigned n_blocks=sgrid.x*sgrid.y;
-  float *dat=NULL;
-  float *resu1=resu,*resu2=resu+n_blocks;
-  float *res=resu1;
+  float* dat=NULL;
+  float* resu1=resu;
+  float* resu2=resu+n_blocks;
+  float* res=resu1;
   while(n>1){
     if(!dat)KerReduMaxFloat_w<SPHBSIZE><<<sgrid,SPHBSIZE,smemSize>>>(n,ini,data,res);
     else KerReduMaxFloat<SPHBSIZE><<<sgrid,SPHBSIZE,smemSize>>>(n,ini,dat,res);
@@ -177,7 +185,7 @@ float ReduMaxFloat_w(unsigned ndata,unsigned inidata,float4* data,float* resu){
 /// Stores constants for the GPU interaction.
 /// Graba constantes para la interaccion a la GPU.
 //==============================================================================
-void CteInteractionUp(const StCteInteraction *cte){
+void CteInteractionUp(const StCteInteraction* cte){
   cudaMemcpyToSymbol(CTE,cte,sizeof(StCteInteraction));
 }
 
@@ -185,7 +193,7 @@ void CteInteractionUp(const StCteInteraction *cte){
 /// Initialises array with the indicated value.
 /// Inicializa array con el valor indicado.
 //------------------------------------------------------------------------------
-__global__ void KerInitArray(unsigned n,float3 *v,float3 value)
+__global__ void KerInitArray(unsigned n,float3* v,float3 value)
 {
   unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
   if(p<n)v[p]=value;
@@ -195,7 +203,7 @@ __global__ void KerInitArray(unsigned n,float3 *v,float3 value)
 /// Initialises array with the indicated value.
 /// Inicializa array con el valor indicado.
 //==============================================================================
-void InitArray(unsigned n,float3 *v,tfloat3 value){
+void InitArray(unsigned n,float3* v,tfloat3 value){
   if(n){
     dim3 sgrid=GetSimpleGridSize(n,SPHBSIZE);
     KerInitArray <<<sgrid,SPHBSIZE>>> (n,v,Float3(value));
@@ -206,7 +214,7 @@ void InitArray(unsigned n,float3 *v,tfloat3 value){
 /// Sets v[].y to zero.
 /// Pone v[].y a cero.
 //------------------------------------------------------------------------------
-__global__ void KerResety(unsigned n,unsigned ini,float3 *v)
+__global__ void KerResety(unsigned n,unsigned ini,float3* v)
 {
   unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
   if(p<n)v[p+ini].y=0;
@@ -216,7 +224,7 @@ __global__ void KerResety(unsigned n,unsigned ini,float3 *v)
 /// Sets v[].y to zero.
 /// Pone v[].y a cero.
 //==============================================================================
-void Resety(unsigned n,unsigned ini,float3 *v){
+void Resety(unsigned n,unsigned ini,float3* v){
   if(n){
     dim3 sgrid=GetSimpleGridSize(n,SPHBSIZE);
     KerResety <<<sgrid,SPHBSIZE>>> (n,ini,v);
@@ -226,7 +234,7 @@ void Resety(unsigned n,unsigned ini,float3 *v){
 //------------------------------------------------------------------------------
 /// Calculates module^2 of ace.
 //------------------------------------------------------------------------------
-__global__ void KerComputeAceMod(unsigned n,const float3 *ace,float *acemod)
+__global__ void KerComputeAceMod(unsigned n,const float3* ace,float* acemod)
 {
   unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
   if(p<n){
@@ -238,7 +246,7 @@ __global__ void KerComputeAceMod(unsigned n,const float3 *ace,float *acemod)
 //==============================================================================
 /// Calculates module^2 of ace.
 //==============================================================================
-void ComputeAceMod(unsigned n,const float3 *ace,float *acemod){
+void ComputeAceMod(unsigned n,const float3* ace,float* acemod){
   if(n){
     dim3 sgrid=GetSimpleGridSize(n,SPHBSIZE);
     KerComputeAceMod <<<sgrid,SPHBSIZE>>> (n,ace,acemod);
@@ -249,7 +257,8 @@ void ComputeAceMod(unsigned n,const float3 *ace,float *acemod){
 /// Calculates module^2 of ace, comprobando que la particula sea normal.
 /// Uses zero for periodic particles.
 //------------------------------------------------------------------------------
-__global__ void KerComputeAceMod(unsigned n,const typecode *code,const float3 *ace,float *acemod)
+__global__ void KerComputeAceMod(unsigned n,const typecode* code
+  ,const float3* ace,float* acemod)
 {
   unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
   if(p<n){
@@ -263,7 +272,9 @@ __global__ void KerComputeAceMod(unsigned n,const typecode *code,const float3 *a
 /// Calculates module^2 of ace, comprobando que la particula sea normal.
 /// Uses zero for periodic particles.
 //==============================================================================
-void ComputeAceMod(unsigned n,const typecode *code,const float3 *ace,float *acemod){
+void ComputeAceMod(unsigned n,const typecode* code,const float3* ace
+  ,float* acemod)
+{
   if(n){
     dim3 sgrid=GetSimpleGridSize(n,SPHBSIZE);
     KerComputeAceMod <<<sgrid,SPHBSIZE>>> (n,code,ace,acemod);
@@ -317,9 +328,10 @@ void ComputeVelMod(unsigned n,const float4* vel,float* velmod){
 /// para single-gpu pq domrealpos y maprealpos son iguales. Para multi-gpu seria 
 /// necesario marcar las particulas q salgan del dominio sin salir del mapa.
 //------------------------------------------------------------------------------
-template<bool periactive> __device__ void KerUpdatePos
-  (double2 rxy,double rz,double movx,double movy,double movz
-  ,bool outrhop,unsigned p,double2 *posxy,double *posz,unsigned *dcell,typecode *code)
+template<bool periactive> __device__ void KerUpdatePos(
+  double2 rxy,double rz,double movx,double movy,double movz
+  ,bool outrhop,unsigned p,double2* posxy,double* posz,unsigned* dcell
+  ,typecode* code)
 {
   //-Checks validity of displacement. | Comprueba validez del desplazamiento.
   const bool outmove=(fmaxf(fabsf(float(movx)),fmaxf(fabsf(float(movy)),fabsf(float(movz))))>CTE.movlimit);
@@ -419,10 +431,10 @@ __device__ double3 KerUpdatePeriodicPos(double3 ps)
 //------------------------------------------------------------------------------
 template<TpKernel tker,TpFtMode ftmode,bool symm>
   __device__ void KerInteractionForcesBoundBox
-  (unsigned p1,const unsigned &pini,const unsigned &pfin
-  ,const float *ftomassp
-  ,const float4 *poscell,const float4 *velrhop,const typecode *code,const unsigned* idp
-  ,float massf,const float4 &pscellp1,const float4 &velrhop1,float &arp1,float &visc)
+  (unsigned p1,const unsigned& pini,const unsigned& pfin
+  ,const float* ftomassp
+  ,const float4* poscell,const float4* velrhop,const typecode* code,const unsigned* idp
+  ,float massf,const float4& pscellp1,const float4& velrhop1,float& arp1,float& visc)
 {
   for(int p2=pini;p2<pfin;p2++){
     const float4 pscellp2=poscell[p2];
@@ -470,10 +482,10 @@ template<TpKernel tker,TpFtMode ftmode,bool symm>
 //------------------------------------------------------------------------------
 template<TpKernel tker,TpFtMode ftmode,bool symm> 
   __global__ void KerInteractionForcesBound(unsigned n,unsigned pinit
-  ,int scelldiv,int4 nc,int3 cellzero,const int2 *beginendcellfluid,const unsigned *dcell
-  ,const float *ftomassp
-  ,const float4 *poscell,const float4 *velrhop,const typecode *code,const unsigned *idp
-  ,float *viscdt,float *ar)
+  ,int scelldiv,int4 nc,int3 cellzero,const int2* beginendcellfluid,const unsigned* dcell
+  ,const float* ftomassp
+  ,const float4* poscell,const float4* velrhop,const typecode* code,const unsigned* idp
+  ,float* viscdt,float* ar)
 {
   const unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Number of thread.
   if(p<n){
@@ -511,15 +523,15 @@ template<TpKernel tker,TpFtMode ftmode,bool symm>
 //------------------------------------------------------------------------------
 template<TpKernel tker,TpFtMode ftmode,bool lamsps,TpDensity tdensity,bool shift,bool symm>
   __device__ void KerInteractionForcesFluidBox(bool boundp2,unsigned p1
-  ,const unsigned &pini,const unsigned &pfin,float visco
-  ,const float *ftomassp,const float2 *tauff,const float3 *dengradcorr
-  ,const float4 *poscell,const float4 *velrhop,const typecode *code,const unsigned *idp
+  ,const unsigned& pini,const unsigned& pfin,float visco
+  ,const float* ftomassp,const float2* tauff,const float3* dengradcorr
+  ,const float4* poscell,const float4* velrhop,const typecode* code,const unsigned* idp
   ,float massp2,bool ftp1
-  ,const float4 &pscellp1,const float4 &velrhop1,float pressp1
-  ,const float2 &taup1_xx_xy,const float2 &taup1_xz_yy,const float2 &taup1_yz_zz
-  ,float2 &grap1_xx_xy,float2 &grap1_xz_yy,float2 &grap1_yz_zz
-  ,float3 &acep1,float &arp1,float &visc,float &deltap1
-  ,TpShifting shiftmode,float4 &shiftposfsp1)
+  ,const float4& pscellp1,const float4& velrhop1,float pressp1
+  ,const float2& taup1_xx_xy,const float2& taup1_xz_yy,const float2& taup1_yz_zz
+  ,float2& grap1_xx_xy,float2& grap1_xz_yy,float2& grap1_yz_zz
+  ,float3& acep1,float& arp1,float& visc,float& deltap1
+  ,TpShifting shiftmode,float4& shiftposfsp1)
 {
   for(int p2=pini;p2<pfin;p2++){
     const float4 pscellp2=poscell[p2];
@@ -652,11 +664,11 @@ template<TpKernel tker,TpFtMode ftmode,bool lamsps,TpDensity tdensity,bool shift
 //------------------------------------------------------------------------------
 template<TpKernel tker,TpFtMode ftmode,bool lamsps,TpDensity tdensity,bool shift,bool symm>
   __global__ void KerInteractionForcesFluid(unsigned n,unsigned pinit,float viscob,float viscof
-  ,int scelldiv,int4 nc,int3 cellzero,const int2 *begincell,unsigned cellfluid,const unsigned *dcell
-  ,const float *ftomassp,const float2 *tauff,float2 *gradvelff,const float3 *dengradcorr
-  ,const float4 *poscell,const float4 *velrhop,const typecode *code,const unsigned *idp
-  ,float *viscdt,float *ar,float3 *ace,float *delta
-  ,TpShifting shiftmode,float4 *shiftposfs)
+  ,int scelldiv,int4 nc,int3 cellzero,const int2* begincell,unsigned cellfluid
+  ,const unsigned* dcell,const float* ftomassp,const float2* tauff,float2* gradvelff
+  ,const float3* dengradcorr,const float4* poscell,const float4* velrhop
+  ,const typecode* code,const unsigned* idp,float* viscdt,float* ar,float3* ace
+  ,float* delta,TpShifting shiftmode,float4* shiftposfs)
 {
   const unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
   if(p<n){
@@ -749,7 +761,7 @@ template<TpKernel tker,TpFtMode ftmode,bool lamsps,TpDensity tdensity,bool shift
 /// Collects kernel information.
 //==============================================================================
 template<TpKernel tker,TpFtMode ftmode,bool lamsps,TpDensity tdensity,bool shift,bool symm> 
-  void Interaction_ForcesT_KerInfo(StKerInfo *kerinfo)
+  void Interaction_ForcesT_KerInfo(StKerInfo* kerinfo)
 {
  #if CUDART_VERSION >= 6050
   {
@@ -795,7 +807,7 @@ template<TpKernel tker,TpFtMode ftmode,bool lamsps,TpDensity tdensity,bool shift
     return;
   }
 #endif
-  const StDivDataGpu &dvd=t.divdatag;
+  const StDivDataGpu& dvd=t.divdatag;
   const int2* beginendcell=dvd.beginendcell;
   //-Interaction Fluid-Fluid & Fluid-Bound.
   if(t.fluidnum){
@@ -892,7 +904,8 @@ void Interaction_Forces(const StInterParmsg& t){
 /// Returns the corrected position after applying periodic conditions.
 /// Devuelve la posicion corregida tras aplicar condiciones periodicas.
 //------------------------------------------------------------------------------
-__device__ float4 KerComputePosCell(const double3 &ps,const double3 &mapposmin,float poscellsize)
+__device__ float4 KerComputePosCell(const double3& ps,const double3& mapposmin
+  ,float poscellsize)
 {
   const double dx=ps.x-mapposmin.x;
   const double dy=ps.y-mapposmin.y;
@@ -913,12 +926,13 @@ __device__ float4 KerComputePosCell(const double3 &ps,const double3 &mapposmin,f
 //------------------------------------------------------------------------------
 /// Perform interaction between ghost node of selected bondary and fluid.
 //------------------------------------------------------------------------------
-template<TpKernel tker,bool sim2d,TpSlipMode tslip> __global__ void KerInteractionMdbcCorrection_Fast
+template<TpKernel tker,bool sim2d,TpSlipMode tslip>
+  __global__ void KerInteractionMdbcCorrection_Fast
   (unsigned n,unsigned nbound,float determlimit,float mdbcthreshold
-  ,double3 mapposmin,float poscellsize,const float4 *poscell
-  ,int scelldiv,int4 nc,int3 cellzero,const int2 *beginendcellfluid
-  ,const double2 *posxy,const double *posz,const typecode *code,const unsigned *idp
-  ,const float3 *boundnor,const float3 *motionvel,float4 *velrhop)
+  ,double3 mapposmin,float poscellsize,const float4* poscell
+  ,int scelldiv,int4 nc,int3 cellzero,const int2* beginendcellfluid
+  ,const double2* posxy,const double* posz,const typecode* code,const unsigned* idp
+  ,const float3* boundnor,const float3* motionvel,float4* velrhop)
 {
   const unsigned p1=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
   if(p1<n){
@@ -1089,11 +1103,12 @@ template<TpKernel tker,bool sim2d,TpSlipMode tslip> __global__ void KerInteracti
 //------------------------------------------------------------------------------
 /// Perform interaction between ghost node of selected bondary and fluid.
 //------------------------------------------------------------------------------
-template<TpKernel tker,bool sim2d,TpSlipMode tslip> __global__ void KerInteractionMdbcCorrection_Dbl
+template<TpKernel tker,bool sim2d,TpSlipMode tslip>
+  __global__ void KerInteractionMdbcCorrection_Dbl
   (unsigned n,unsigned nbound,float determlimit,float mdbcthreshold
-  ,int scelldiv,int4 nc,int3 cellzero,const int2 *beginendcellfluid
-  ,const double2 *posxy,const double *posz,const typecode *code,const unsigned *idp
-  ,const float3 *boundnor,const float3 *motionvel,float4 *velrhop)
+  ,int scelldiv,int4 nc,int3 cellzero,const int2* beginendcellfluid
+  ,const double2* posxy,const double* posz,const typecode* code,const unsigned* idp
+  ,const float3* boundnor,const float3* motionvel,float4* velrhop)
 {
   const unsigned p1=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
   if(p1<n){
@@ -1265,10 +1280,11 @@ template<TpKernel tker,bool sim2d,TpSlipMode tslip> __global__ void KerInteracti
 /// Calcula datos extrapolados en el contorno para mDBC.
 //==============================================================================
 template<TpKernel tker,bool sim2d,TpSlipMode tslip> void Interaction_MdbcCorrectionT2(
-  bool fastsingle,unsigned n,unsigned nbound,float mdbcthreshold,const StDivDataGpu &dvd
-  ,const tdouble3 &mapposmin,const double2 *posxy,const double *posz,const float4 *poscell
-  ,const typecode *code,const unsigned *idp,const float3 *boundnor,const float3 *motionvel
-  ,float4 *velrhop)
+  bool fastsingle,unsigned n,unsigned nbound,float mdbcthreshold
+  ,const StDivDataGpu& dvd,const tdouble3& mapposmin,const double2* posxy
+  ,const double* posz,const float4* poscell,const typecode* code
+  ,const unsigned* idp,const float3* boundnor,const float3* motionvel
+  ,float4* velrhop)
 {
   const int2* beginendcellfluid=dvd.beginendcell+dvd.cellfluid;
   const float determlimit=1e-3f;
@@ -1292,9 +1308,10 @@ template<TpKernel tker,bool sim2d,TpSlipMode tslip> void Interaction_MdbcCorrect
 //==============================================================================
 template<TpKernel tker> void Interaction_MdbcCorrectionT(bool simulate2d
   ,TpSlipMode slipmode,bool fastsingle,unsigned n,unsigned nbound
-  ,float mdbcthreshold,const StDivDataGpu &dvd,const tdouble3 &mapposmin
-  ,const double2 *posxy,const double *posz,const float4 *poscell,const typecode *code
-  ,const unsigned *idp,const float3 *boundnor,const float3 *motionvel,float4 *velrhop)
+  ,float mdbcthreshold,const StDivDataGpu& dvd,const tdouble3& mapposmin
+  ,const double2* posxy,const double* posz,const float4* poscell
+  ,const typecode* code,const unsigned* idp,const float3* boundnor
+  ,const float3* motionvel,float4* velrhop)
 {
   switch(slipmode){
     case SLIP_Vel0:{ const TpSlipMode tslip=SLIP_Vel0;
@@ -1320,9 +1337,10 @@ template<TpKernel tker> void Interaction_MdbcCorrectionT(bool simulate2d
 //==============================================================================
 void Interaction_MdbcCorrection(TpKernel tkernel,bool simulate2d,TpSlipMode slipmode
   ,bool fastsingle,unsigned n,unsigned nbound,float mdbcthreshold
-  ,const StDivDataGpu &dvd,const tdouble3 &mapposmin
-  ,const double2 *posxy,const double *posz,const float4 *poscell,const typecode *code
-  ,const unsigned *idp,const float3 *boundnor,const float3 *motionvel,float4 *velrhop)
+  ,const StDivDataGpu& dvd,const tdouble3& mapposmin
+  ,const double2* posxy,const double* posz,const float4* poscell
+  ,const typecode* code,const unsigned* idp,const float3* boundnor
+  ,const float3* motionvel,float4* velrhop)
 {
   switch(tkernel){
     case KERNEL_Wendland:{ const TpKernel tker=KERNEL_Wendland;
@@ -1348,13 +1366,13 @@ void Interaction_MdbcCorrection(TpKernel tkernel,bool simulate2d,TpSlipMode slip
 /// DEM interaction of a particle with a set of particles. (Float-Float/Bound)
 /// Realiza la interaccion DEM de una particula con un conjunto de ellas. (Float-Float/Bound)
 //------------------------------------------------------------------------------
-__device__ void KerInteractionForcesDemBox 
-  (bool boundp2,const unsigned &pini,const unsigned &pfin
-  ,const float4 *demdata,float dtforce
-  ,const float4 *poscell,const float4 *velrhop,const typecode *code,const unsigned *idp
-  ,const float4 &pscellp1,const float4 &velp1,typecode tavp1,float masstotp1
-  ,float ftmassp1,float taup1,float kfricp1,float restitup1
-  ,float3 &acep1,float &demdtp1)
+__device__ void KerInteractionForcesDemBox(
+  bool boundp2,const unsigned& pini,const unsigned& pfin
+  ,const float4* demdata,float dtforce
+  ,const float4* poscell,const float4* velrhop,const typecode* code
+  ,const unsigned* idp,const float4& pscellp1,const float4& velp1
+  ,typecode tavp1,float masstotp1,float ftmassp1,float taup1,float kfricp1
+  ,float restitup1,float3& acep1,float& demdtp1)
 {
   for(int p2=pini;p2<pfin;p2++){
     const typecode codep2=code[p2];
@@ -1409,10 +1427,10 @@ __device__ void KerInteractionForcesDemBox
 /// Incluye visco artificial/laminar y floatings normales/dem.
 //------------------------------------------------------------------------------
 __global__ void KerInteractionForcesDem(unsigned nfloat
-  ,int scelldiv,int4 nc,int3 cellzero,const int2 *begincell,unsigned cellfluid,const unsigned *dcell
-  ,const unsigned *ftridp,const float4 *demdata,const float *ftomassp,float dtforce
-  ,const float4 *poscell,const float4 *velrhop,const typecode *code,const unsigned *idp
-  ,float *viscdt,float3 *ace)
+  ,int scelldiv,int4 nc,int3 cellzero,const int2* begincell,unsigned cellfluid
+  ,const unsigned* dcell,const unsigned* ftridp,const float4* demdata
+  ,const float* ftomassp,float dtforce,const float4* poscell,const float4* velrhop
+  ,const typecode* code,const unsigned* idp,float* viscdt,float3* ace)
 {
   const unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
   if(p<nfloat){
@@ -1463,7 +1481,7 @@ __global__ void KerInteractionForcesDem(unsigned nfloat
 //==============================================================================
 /// Collects kernel information.
 //==============================================================================
-void Interaction_ForcesDemT_KerInfo(StKerInfo *kerinfo)
+void Interaction_ForcesDemT_KerInfo(StKerInfo* kerinfo)
 {
 #if CUDART_VERSION >= 6050
   {
@@ -1488,10 +1506,11 @@ void Interaction_ForcesDemT_KerInfo(StKerInfo *kerinfo)
 /// Interaccion para el calculo de fuerzas.
 //==============================================================================
 void Interaction_ForcesDem(unsigned bsize,unsigned nfloat
-  ,const StDivDataGpu &dvd,const unsigned *dcell
-  ,const unsigned *ftridp,const float4 *demdata,const float *ftomassp,float dtforce
-  ,const float4 *poscell,const float4 *velrhop
-  ,const typecode *code,const unsigned *idp,float *viscdt,float3 *ace,StKerInfo *kerinfo)
+  ,const StDivDataGpu& dvd,const unsigned* dcell
+  ,const unsigned* ftridp,const float4* demdata,const float* ftomassp,float dtforce
+  ,const float4* poscell,const float4* velrhop
+  ,const typecode* code,const unsigned* idp,float* viscdt,float3* ace
+  ,StKerInfo* kerinfo)
 {
   const int2* beginendcell=dvd.beginendcell;
   //-Collects kernel information.
@@ -1518,7 +1537,7 @@ void Interaction_ForcesDem(unsigned bsize,unsigned nfloat
 /// Computes sub-particle stress tensor (Tau) for SPS turbulence model.
 //------------------------------------------------------------------------------
 __global__ void KerComputeSpsTau(unsigned n,unsigned pini,float smag,float blin
-  ,const float4 *velrhop,const float2 *gradvelff,float2 *tauff)
+  ,const float4* velrhop,const float2* gradvelff,float2* tauff)
 {
   unsigned p=blockIdx.x*blockDim.x + threadIdx.x; 
   if(p<n){
@@ -1552,7 +1571,8 @@ __global__ void KerComputeSpsTau(unsigned n,unsigned pini,float smag,float blin
 /// Computes sub-particle stress tensor (Tau) for SPS turbulence model.
 //==============================================================================
 void ComputeSpsTau(unsigned np,unsigned npb,float smag,float blin
-  ,const float4 *velrhop,const tsymatrix3f *gradvelg,tsymatrix3f *tau,cudaStream_t stm)
+  ,const float4* velrhop,const tsymatrix3f* gradvelg,tsymatrix3f* tau
+  ,cudaStream_t stm)
 {
   const unsigned npf=np-npb;
   if(npf){
@@ -1570,7 +1590,7 @@ void ComputeSpsTau(unsigned np,unsigned npb,float smag,float blin
 /// Adds value of delta[] to ar[] provided it is not FLT_MAX.
 /// Anhade valor de delta[] a ar[] siempre que no sea FLT_MAX.
 //------------------------------------------------------------------------------
-__global__ void KerAddDelta(unsigned n,const float *delta,float *ar)
+__global__ void KerAddDelta(unsigned n,const float* delta,float* ar)
 {
   unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
   if(p<n){
@@ -1583,7 +1603,7 @@ __global__ void KerAddDelta(unsigned n,const float *delta,float *ar)
 /// Adds value of delta[] to ar[] provided it is not FLT_MAX.
 /// Anhade valor de delta[] a ar[] siempre que no sea FLT_MAX.
 //==============================================================================
-void AddDelta(unsigned n,const float *delta,float *ar,cudaStream_t stm){
+void AddDelta(unsigned n,const float* delta,float* ar,cudaStream_t stm){
   if(n){
     dim3 sgrid=GetSimpleGridSize(n,SPHBSIZE);
     KerAddDelta <<<sgrid,SPHBSIZE,0,stm>>> (n,delta,ar);
@@ -1599,9 +1619,9 @@ void AddDelta(unsigned n,const float *delta,float *ar,cudaStream_t stm){
 /// Updates particle position according to displacement.
 /// Actualizacion de posicion de particulas segun desplazamiento.
 //------------------------------------------------------------------------------
-template<bool periactive,bool floatings> __global__ void KerComputeStepPos(unsigned n,unsigned pini
-  ,const double2 *movxy,const double *movz
-  ,double2 *posxy,double *posz,unsigned *dcell,typecode *code)
+template<bool periactive,bool floatings> __global__ void KerComputeStepPos(
+  unsigned n,unsigned pini,const double2* movxy,const double* movz
+  ,double2* posxy,double* posz,unsigned* dcell,typecode* code)
 {
   unsigned pt=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
   if(pt<n){
@@ -1624,8 +1644,8 @@ template<bool periactive,bool floatings> __global__ void KerComputeStepPos(unsig
 /// Actualizacion de posicion de particulas segun desplazamiento.
 //==============================================================================
 void ComputeStepPos(byte periactive,bool floatings,unsigned np,unsigned npb
-  ,const double2 *movxy,const double *movz
-  ,double2 *posxy,double *posz,unsigned *dcell,typecode *code)
+  ,const double2* movxy,const double* movz
+  ,double2* posxy,double* posz,unsigned* dcell,typecode* code)
 {
   const unsigned pini=npb;
   const unsigned npf=np-pini;
@@ -1646,9 +1666,10 @@ void ComputeStepPos(byte periactive,bool floatings,unsigned np,unsigned npb
 /// Updates particle position according to displacement.
 /// Actualizacion de posicion de particulas segun desplazamiento.
 //------------------------------------------------------------------------------
-template<bool periactive,bool floatings> __global__ void KerComputeStepPos2(unsigned n,unsigned pini
-  ,const double2 *posxypre,const double *poszpre,const double2 *movxy,const double *movz
-  ,double2 *posxy,double *posz,unsigned *dcell,typecode *code)
+template<bool periactive,bool floatings> __global__ void KerComputeStepPos2(
+  unsigned n,unsigned pini,const double2* posxypre,const double* poszpre
+  ,const double2* movxy,const double* movz,double2* posxy,double* posz
+  ,unsigned* dcell,typecode* code)
 {
   unsigned pt=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
   if(pt<n){
@@ -1675,8 +1696,8 @@ template<bool periactive,bool floatings> __global__ void KerComputeStepPos2(unsi
 /// Actualizacion de posicion de particulas segun desplazamiento.
 //==============================================================================
 void ComputeStepPos2(byte periactive,bool floatings,unsigned np,unsigned npb
-  ,const double2 *posxypre,const double *poszpre,const double2 *movxy,const double *movz
-  ,double2 *posxy,double *posz,unsigned *dcell,typecode *code)
+  ,const double2* posxypre,const double* poszpre,const double2* movxy
+  ,const double* movz,double2* posxy,double* posz,unsigned* dcell,typecode* code)
 {
   const unsigned pini=npb;
   const unsigned npf=np-pini;
@@ -1825,9 +1846,10 @@ void MoveLinBound(byte periactive,unsigned np,unsigned ini,tdouble3 mvpos
 /// Applies a matrix movement to a set of particles.
 /// Aplica un movimiento matricial a un conjunto de particulas.
 //------------------------------------------------------------------------------
-template<bool periactive,bool simulate2d> __global__ void KerMoveMatBound(unsigned n
-  ,unsigned ini,tmatrix4d m,double dt,const unsigned* ridmot,double2* posxy
-  ,double* posz,unsigned* dcell,float4* velrhop,typecode* code,float3* boundnor)
+template<bool periactive,bool simulate2d> __global__ void KerMoveMatBound(
+  unsigned n,unsigned ini,tmatrix4d m,double dt,const unsigned* ridmot
+  ,double2* posxy,double* posz,unsigned* dcell,float4* velrhop,typecode* code
+  ,float3* boundnor)
 {
   unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
   if(p<n){
@@ -1957,8 +1979,9 @@ void FtNormalsUpdate(unsigned np,unsigned ini,tmatrix4d m,const unsigned* ridpmo
 /// Aplica movimiento y velocidad de piston 1D a conjunto de particulas.
 //------------------------------------------------------------------------------
 template<byte periactive> __global__ void KerMovePiston1d(unsigned n,unsigned idini
-  ,double dp,double poszmin,unsigned poszcount,const byte *pistonid,const double* movx,const double* velx
-  ,const unsigned *ridpmv,double2 *posxy,double *posz,unsigned *dcell,float4 *velrhop,typecode *code)
+  ,double dp,double poszmin,unsigned poszcount,const byte* pistonid
+  ,const double* movx,const double* velx,const unsigned* ridpmv,double2* posxy
+  ,double* posz,unsigned* dcell,float4* velrhop,typecode* code)
 {
   unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle
   if(p<n){
@@ -1986,8 +2009,9 @@ template<byte periactive> __global__ void KerMovePiston1d(unsigned n,unsigned id
 /// Aplica movimiento y velocidad de piston 1D a conjunto de particulas.
 //==============================================================================
 void MovePiston1d(bool periactive,unsigned np,unsigned idini
-  ,double dp,double poszmin,unsigned poszcount,const byte *pistonid,const double* movx,const double* velx
-  ,const unsigned *ridpmv,double2 *posxy,double *posz,unsigned *dcell,float4 *velrhop,typecode *code)
+  ,double dp,double poszmin,unsigned poszcount,const byte* pistonid
+  ,const double* movx,const double* velx,const unsigned* ridpmv,double2* posxy
+  ,double* posz,unsigned* dcell,float4* velrhop,typecode* code)
 {
   if(np){
     dim3 sgrid=GetSimpleGridSize(np,SPHBSIZE);
@@ -2048,7 +2072,10 @@ void MovePiston2d(bool periactive,unsigned np,unsigned idini,double dp
 /// Computes distance between floating and centre particles according to periodic conditions.
 /// Calcula distancia entre pariculas floating y centro segun condiciones periodicas.
 //==============================================================================
-template<bool periactive> __device__ void KerFtPeriodicDist(double px,double py,double pz,double cenx,double ceny,double cenz,float radius,float &dx,float &dy,float &dz){
+template<bool periactive> __device__ void KerFtPeriodicDist(double px,double py
+  ,double pz,double cenx,double ceny,double cenz,float radius,float& dx
+  ,float& dy,float& dz)
+{
   if(periactive){
     double ddx=px-cenx;
     double ddy=py-ceny;
@@ -2087,11 +2114,11 @@ template<bool periactive> __global__ void KerFtCalcForcesSum( //ftodatp={pini-Ca
   ,float3* ftoforcessum)
 {
   extern __shared__ float rfacex[];
-  float *rfacey=rfacex+blockDim.x;
-  float *rfacez=rfacey+blockDim.x;
-  float *rfomegaacex=rfacez+blockDim.x;
-  float *rfomegaacey=rfomegaacex+blockDim.x;
-  float *rfomegaacez=rfomegaacey+blockDim.x;
+  float* rfacey=rfacex+blockDim.x;
+  float* rfacez=rfacey+blockDim.x;
+  float* rfomegaacex=rfacez+blockDim.x;
+  float* rfomegaacey=rfomegaacex+blockDim.x;
+  float* rfomegaacez=rfomegaacey+blockDim.x;
 
   const unsigned tid=threadIdx.x;  //-Thread number.
   const unsigned cf=blockIdx.x;    //-Floating number.
@@ -2162,7 +2189,7 @@ template<bool periactive> __global__ void KerFtCalcForcesSum( //ftodatp={pini-Ca
 void FtCalcForcesSum(bool periactive,unsigned ftcount
   ,const float4* ftodatp,const double3* ftocenter,const unsigned* ridpmot
   ,const double2* posxy,const double* posz,const float3* ace
-  ,float3 *ftoforcessum)
+  ,float3* ftoforcessum)
 {
   if(ftcount){
     const unsigned bsize=256;
@@ -2177,7 +2204,8 @@ void FtCalcForcesSum(bool periactive,unsigned ftcount
 /// Carga valores de matriz 3x3 en bloques de 4, 4 y 1.
 /// Loads values of matrix 3x3 in blocks of 4, 4 y 1.
 //------------------------------------------------------------------------------
-__device__ void KerLoadMatrix3f(unsigned c,const float4 *data8,const float *data1,tmatrix3f &v)
+__device__ void KerLoadMatrix3f(unsigned c,const float4* data8
+  ,const float* data1,tmatrix3f& v)
 {
   float4 v4=data8[c*2];
   v.a11=v4.x; v.a12=v4.y; v.a13=v4.z; v.a21=v4.w;
@@ -2191,9 +2219,9 @@ __device__ void KerLoadMatrix3f(unsigned c,const float4 *data8,const float *data
 /// Calcula aceleracion final a parti de particulas y de fuerzas externas en ftoforces[].
 //------------------------------------------------------------------------------
 __global__ void KerFtCalcForces(unsigned ftcount,float3 gravity
-  ,const float *ftomass,const float3 *ftoangles
-  ,const float4 *ftoinertiaini8,const float *ftoinertiaini1
-  ,float3 *ftoforces) //fdata={pini,np,radius,mass}
+  ,const float* ftomass,const float3* ftoangles
+  ,const float4* ftoinertiaini8,const float* ftoinertiaini1
+  ,float3* ftoforces) //fdata={pini,np,radius,mass}
 {
   const unsigned cf=blockIdx.x*blockDim.x + threadIdx.x; //-Number of floating.
   if(cf<ftcount){
@@ -2238,9 +2266,9 @@ __global__ void KerFtCalcForces(unsigned ftcount,float3 gravity
 /// Calcula aceleracion final a parti de particulas y de fuerzas externas en ftoforces[].
 //==============================================================================
 void FtCalcForces(unsigned ftcount,tfloat3 gravity
-  ,const float *ftomass,const float3 *ftoangles
-  ,const float4 *ftoinertiaini8,const float *ftoinertiaini1
-  ,float3 *ftoforces)
+  ,const float* ftomass,const float3* ftoangles
+  ,const float4* ftoinertiaini8,const float* ftoinertiaini1
+  ,float3* ftoforces)
 {
   if(ftcount){
     dim3 sgrid=GetSimpleGridSize(ftcount,SPHBSIZE);
@@ -2255,8 +2283,8 @@ void FtCalcForces(unsigned ftcount,tfloat3 gravity
 /// Calcula datos para actualizar floatings.
 //------------------------------------------------------------------------------
 __global__ void KerFtCalcForcesRes(unsigned ftcount,bool simulate2d,double dt
-  ,const float3 *ftovelace,const double3 *ftocenter,const float3 *ftoforces
-  ,float3 *ftoforcesres,double3 *ftocenterres)
+  ,const float3* ftovelace,const double3* ftocenter,const float3* ftoforces
+  ,float3* ftoforcesres,double3* ftocenterres)
 {
   const unsigned cf=blockIdx.x*blockDim.x + threadIdx.x; //-Floating number.
   if(cf<ftcount){
@@ -2293,8 +2321,8 @@ __global__ void KerFtCalcForcesRes(unsigned ftcount,bool simulate2d,double dt
 /// Calcula fuerzas sobre floatings.
 //==============================================================================
 void FtCalcForcesRes(unsigned ftcount,bool simulate2d,double dt
-  ,const float3 *ftovelace,const double3 *ftocenter,const float3 *ftoforces
-  ,float3 *ftoforcesres,double3 *ftocenterres)
+  ,const float3* ftovelace,const double3* ftocenter,const float3* ftoforces
+  ,float3* ftoforcesres,double3* ftocenterres)
 {
   if(ftcount){
     dim3 sgrid=GetSimpleGridSize(ftcount,SPHBSIZE);
@@ -2307,8 +2335,8 @@ void FtCalcForcesRes(unsigned ftcount,bool simulate2d,double dt
 /// Applies motion constraints.
 /// Aplica restricciones de movimiento.
 //------------------------------------------------------------------------------
-__global__ void KerFtApplyConstraints(unsigned ftcount,const byte *ftoconstraints
-  ,float3 *ftoforces,float3 *ftoforcesres)
+__global__ void KerFtApplyConstraints(unsigned ftcount,const byte* ftoconstraints
+  ,float3* ftoforces,float3* ftoforcesres)
 {
   const unsigned cf=blockIdx.x*blockDim.x + threadIdx.x; //-Floating number.
   if(cf<ftcount){
@@ -2347,8 +2375,8 @@ __global__ void KerFtApplyConstraints(unsigned ftcount,const byte *ftoconstraint
 /// Applies motion constraints.
 /// Aplica restricciones de movimiento.
 //==============================================================================
-void FtApplyConstraints(unsigned ftcount,const byte *ftoconstraints
-  ,float3 *ftoforces,float3 *ftoforcesres)
+void FtApplyConstraints(unsigned ftcount,const byte* ftoconstraints
+  ,float3* ftoforces,float3* ftoforcesres)
 {
   if(ftcount){
     dim3 sgrid=GetSimpleGridSize(ftcount,SPHBSIZE);
@@ -2485,7 +2513,7 @@ void PeriodicIgnore(unsigned n,typecode* code){
 //------------------------------------------------------------------------------
 __global__ void KerPeriodicMakeList(unsigned n,unsigned pini,unsigned nmax
   ,double3 mapposmin,double3 mapposmax,double3 perinc
-  ,const double2 *posxy,const double *posz,const typecode *code,unsigned *listp)
+  ,const double2* posxy,const double* posz,const typecode* code,unsigned* listp)
 {
   extern __shared__ unsigned slist[];
   if(!threadIdx.x)slist[0]=0;
@@ -2534,7 +2562,7 @@ __global__ void KerPeriodicMakeList(unsigned n,unsigned pini,unsigned nmax
 //==============================================================================
 unsigned PeriodicMakeList(unsigned n,unsigned pini,bool stable,unsigned nmax
   ,tdouble3 mapposmin,tdouble3 mapposmax,tdouble3 perinc
-  ,const double2 *posxy,const double *posz,const typecode *code,unsigned *listp)
+  ,const double2* posxy,const double* posz,const typecode* code,unsigned* listp)
 {
   unsigned count=0;
   if(n){
@@ -2572,7 +2600,7 @@ unsigned PeriodicMakeList(unsigned n,unsigned pini,bool stable,unsigned nmax
 //------------------------------------------------------------------------------
 __device__ void KerPeriodicDuplicatePos(unsigned pnew,unsigned pcopy
   ,bool inverse,double dx,double dy,double dz,uint3 cellmax
-  ,double2 *posxy,double *posz,unsigned *dcell)
+  ,double2* posxy,double* posz,unsigned* dcell)
 {
   //-Obtains position of the particle to be duplicated.
   //-Obtiene pos de particula a duplicar.
@@ -2746,7 +2774,7 @@ void PeriodicDuplicateNormals(unsigned n,unsigned pini,const unsigned* listp
 //------------------------------------------------------------------------------
 /// Returns TRUE when code==NULL or particle is normal and fluid.
 //------------------------------------------------------------------------------
-__device__ bool KerIsNormalFluid(const typecode *code,unsigned p){
+__device__ bool KerIsNormalFluid(const typecode* code,unsigned p){
   if(code){//-Descarta particulas floating o periodicas.
     const typecode cod=code[p];
     return(CODE_IsNormal(cod) && CODE_IsFluid(cod));
@@ -2757,7 +2785,8 @@ __device__ bool KerIsNormalFluid(const typecode *code,unsigned p){
 /// Checks position is inside box limits.
 /// Comprueba si la posicion esta dentro de los limites.
 //------------------------------------------------------------------------------
-__device__ bool KerPointInBox(double px,double py,double pz,const double3 &p1,const double3 &p2)
+__device__ bool KerPointInBox(double px,double py,double pz,const double3& p1
+  ,const double3& p2)
 {
   return(p1.x<=px && p1.y<=py && p1.z<=pz && px<=p2.x && py<=p2.y && pz<=p2.z);
 }
@@ -2765,7 +2794,7 @@ __device__ bool KerPointInBox(double px,double py,double pz,const double3 &p1,co
 /// Solves point on the plane.
 /// Resuelve punto en el plano.
 //------------------------------------------------------------------------------
-__device__ double KerPointPlane(const double4 &pla,double px,double py,double pz)
+__device__ double KerPointPlane(const double4& pla,double px,double py,double pz)
 {
   return(pla.x*px+pla.y*py+pla.z*pz+pla.w);
 }
@@ -2773,7 +2802,7 @@ __device__ double KerPointPlane(const double4 &pla,double px,double py,double pz
 /// Solves point on the plane.
 /// Resuelve punto en el plano.
 //------------------------------------------------------------------------------
-__device__ double KerPointPlane(const double4 &pla,const double3 &pt)
+__device__ double KerPointPlane(const double4& pla,const double3& pt)
 {
   return(pla.x*pt.x+pla.y*pt.y+pla.z*pt.z+pla.w);
 }
@@ -2784,8 +2813,8 @@ __device__ double KerPointPlane(const double4 &pla,const double3 &pt)
 //------------------------------------------------------------------------------
 __global__ void KerComputeDampingPlane(unsigned n,unsigned pini
   ,double dt,double4 plane,float dist,float over,float3 factorxyz,float redumax
-  ,const double2 *posxy,const double *posz,const typecode *code
-  ,float4 *velrhop)
+  ,const double2* posxy,const double* posz,const typecode* code
+  ,float4* velrhop)
 {
   unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
   if(p<n){
@@ -2819,7 +2848,7 @@ __global__ void KerComputeDampingPlane(unsigned n,unsigned pini
 //==============================================================================
 void ComputeDampingPlane(double dt,double4 plane,float dist,float over
   ,float3 factorxyz,float redumax,unsigned n,unsigned pini
-  ,const double2 *posxy,const double *posz,const typecode *code,float4 *velrhop)
+  ,const double2* posxy,const double* posz,const typecode* code,float4* velrhop)
 {
   if(n){
     dim3 sgridf=GetSimpleGridSize(n,SPHBSIZE);
@@ -2835,8 +2864,8 @@ void ComputeDampingPlane(double dt,double4 plane,float dist,float over
 __global__ void KerComputeDampingPlaneDom(unsigned n,unsigned pini
   ,double dt,double4 plane,float dist,float over,float3 factorxyz,float redumax
   ,double zmin,double zmax,double4 pla0,double4 pla1,double4 pla2,double4 pla3
-  ,const double2 *posxy,const double *posz,const typecode *code
-  ,float4 *velrhop)
+  ,const double2* posxy,const double* posz,const typecode* code
+  ,float4* velrhop)
 {
   unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
   if(p<n){
@@ -2874,8 +2903,8 @@ __global__ void KerComputeDampingPlaneDom(unsigned n,unsigned pini
 void ComputeDampingPlaneDom(double dt,double4 plane,float dist,float over
   ,float3 factorxyz,float redumax
   ,double zmin,double zmax,double4 pla0,double4 pla1,double4 pla2,double4 pla3
-  ,unsigned n,unsigned pini,const double2 *posxy,const double *posz,const typecode *code
-  ,float4 *velrhop)
+  ,unsigned n,unsigned pini,const double2* posxy,const double* posz
+  ,const typecode* code,float4* velrhop)
 {
   if(n){
     dim3 sgridf=GetSimpleGridSize(n,SPHBSIZE);
@@ -2893,8 +2922,8 @@ __global__ void KerComputeDampingBox(unsigned n,unsigned pini
   ,double dt,float3 factorxyz,float redumax
   ,double3 limitmin1,double3 limitmin2,double3 limitmax1,double3 limitmax2
   ,double3 limitover1,double3 limitover2,double3 boxsize1,double3 boxsize2
-  ,const double2 *posxy,const double *posz,const typecode *code
-  ,float4 *velrhop)
+  ,const double2* posxy,const double* posz,const typecode* code
+  ,float4* velrhop)
 {
   unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
   if(p<n){
@@ -2941,7 +2970,7 @@ __global__ void KerComputeDampingBox(unsigned n,unsigned pini
 void ComputeDampingBox(unsigned n,unsigned pini,double dt,float3 factorxyz,float redumax
   ,double3 limitmin1,double3 limitmin2,double3 limitmax1,double3 limitmax2
   ,double3 limitover1,double3 limitover2,double3 boxsize1,double3 boxsize2
-  ,const double2 *posxy,const double *posz,const typecode *code,float4 *velrhop)
+  ,const double2* posxy,const double* posz,const typecode* code,float4* velrhop)
 {
   if(n){
     dim3 sgridf=GetSimpleGridSize(n,SPHBSIZE);
@@ -2959,8 +2988,8 @@ void ComputeDampingBox(unsigned n,unsigned pini,double dt,float3 factorxyz,float
 __global__ void KerComputeDampingCylinder(unsigned n,unsigned pini
   ,double dt,bool isvertical,double3 point1,double3 point2,double limitmin
   ,float dist,float over,float3 factorxyz,float redumax
-  ,const double2 *posxy,const double *posz,const typecode *code
-  ,float4 *velrhop)
+  ,const double2* posxy,const double* posz,const typecode* code
+  ,float4* velrhop)
 {
   unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
   if(p<n){
@@ -3000,8 +3029,8 @@ __global__ void KerComputeDampingCylinder(unsigned n,unsigned pini
 void ComputeDampingCylinder(unsigned n,unsigned pini
   ,double dt,double3 point1,double3 point2,double limitmin
   ,float dist,float over,float3 factorxyz,float redumax
-  ,const double2 *posxy,const double *posz,const typecode *code
-  ,float4 *velrhop)
+  ,const double2* posxy,const double* posz,const typecode* code
+  ,float4* velrhop)
 {
   if(n){
     const bool isvertical=(point1.x==point2.x && point1.y==point2.y);

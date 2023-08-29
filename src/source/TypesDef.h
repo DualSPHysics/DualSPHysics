@@ -1,6 +1,6 @@
 //HEAD_DSCODES
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2023 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -423,7 +423,7 @@ inline tmatrix4f TMatrix4f(float a11,float a12,float a13,float a14,float a21,flo
 inline tmatrix4f TMatrix4f(float v){ tmatrix4f m={v,v,v,v,v,v,v,v,v,v,v,v,v,v,v,v}; return(m); }
 inline bool operator ==(const tmatrix4f& a, const tmatrix4f& b){ return(a.a11==b.a11 && a.a12==b.a12 && a.a13==b.a13 && a.a14==b.a14 && a.a21==b.a21 && a.a22==b.a22 && a.a23==b.a23 && a.a24==b.a24 && a.a31==b.a31 && a.a32==b.a32 && a.a33==b.a33 && a.a34==b.a34 && a.a41==b.a41 && a.a42==b.a42 && a.a43==b.a43 && a.a44==b.a44); }
 inline bool operator !=(const tmatrix4f& a, const tmatrix4f& b){ return(a.a11!=b.a11 || a.a12!=b.a12 || a.a13!=b.a13 || a.a14!=b.a14 || a.a21!=b.a21 || a.a22!=b.a22 || a.a23!=b.a23 || a.a24!=b.a24 || a.a31!=b.a31 || a.a32!=b.a32 || a.a33!=b.a33 || a.a34!=b.a34 || a.a41!=b.a41 || a.a42!=b.a42 || a.a43!=b.a43 || a.a44!=b.a44); }
-inline tfloat3 MatrixMulPoint(const tmatrix4f &m,const tfloat3 &p){ return(TFloat3(m.a11*p.x + m.a12*p.y + m.a13*p.z + m.a14, m.a21*p.x + m.a22*p.y + m.a23*p.z + m.a24, m.a31*p.x + m.a32*p.y + m.a33*p.z + m.a34)); }
+inline tfloat3 MatrixMulPoint(const tmatrix4f& m,const tfloat3& p){ return(TFloat3(m.a11*p.x + m.a12*p.y + m.a13*p.z + m.a14, m.a21*p.x + m.a22*p.y + m.a23*p.z + m.a24, m.a31*p.x + m.a32*p.y + m.a33*p.z + m.a34)); }
 
 
 ///Matrix of 4x4 values of type double.
@@ -440,8 +440,8 @@ inline tmatrix4d TMatrix4d(double a11,double a12,double a13,double a14,double a2
 inline tmatrix4d TMatrix4d(double v){ tmatrix4d m={v,v,v,v,v,v,v,v,v,v,v,v,v,v,v,v}; return(m); }
 inline bool operator ==(const tmatrix4d& a, const tmatrix4d& b){ return(a.a11==b.a11 && a.a12==b.a12 && a.a13==b.a13 && a.a14==b.a14 && a.a21==b.a21 && a.a22==b.a22 && a.a23==b.a23 && a.a24==b.a24 && a.a31==b.a31 && a.a32==b.a32 && a.a33==b.a33 && a.a34==b.a34 && a.a41==b.a41 && a.a42==b.a42 && a.a43==b.a43 && a.a44==b.a44); }
 inline bool operator !=(const tmatrix4d& a, const tmatrix4d& b){ return(a.a11!=b.a11 || a.a12!=b.a12 || a.a13!=b.a13 || a.a14!=b.a14 || a.a21!=b.a21 || a.a22!=b.a22 || a.a23!=b.a23 || a.a24!=b.a24 || a.a31!=b.a31 || a.a32!=b.a32 || a.a33!=b.a33 || a.a34!=b.a34 || a.a41!=b.a41 || a.a42!=b.a42 || a.a43!=b.a43 || a.a44!=b.a44); }
-inline tdouble3 MatrixMulPoint(const tmatrix4d &m,const tdouble3 &p){ return(TDouble3(m.a11*p.x + m.a12*p.y + m.a13*p.z + m.a14, m.a21*p.x + m.a22*p.y + m.a23*p.z + m.a24, m.a31*p.x + m.a32*p.y + m.a33*p.z + m.a34)); }
-inline tfloat3 MatrixMulPointNormal(const tmatrix4d &m,const tfloat3 &p){ return(ToTFloat3(TDouble3(m.a11*p.x + m.a12*p.y + m.a13*p.z, m.a21*p.x + m.a22*p.y + m.a23*p.z, m.a31*p.x + m.a32*p.y + m.a33*p.z))); }
+inline tdouble3 MatrixMulPoint(const tmatrix4d& m,const tdouble3& p){ return(TDouble3(m.a11*p.x + m.a12*p.y + m.a13*p.z + m.a14, m.a21*p.x + m.a22*p.y + m.a23*p.z + m.a24, m.a31*p.x + m.a32*p.y + m.a33*p.z + m.a34)); }
+inline tfloat3 MatrixMulPointNormal(const tmatrix4d& m,const tfloat3& p){ return(ToTFloat3(TDouble3(m.a11*p.x + m.a12*p.y + m.a13*p.z, m.a21*p.x + m.a22*p.y + m.a23*p.z, m.a31*p.x + m.a32*p.y + m.a33*p.z))); }
 
 
 ///Symmetric matrix 3x3 of 6 values of type float.
@@ -476,14 +476,14 @@ inline tsymatrix4f TSymMatrix4f(){ tsymatrix4f m={0,0,0,0,0,0,0,0,0,0}; return(m
 //##############################################################################
 //# Geometry type and functions
 //##############################################################################
-inline tdouble3 Point3dxy(const tdouble2 &p){ return(TDouble3(p.x,p.y,0)); }
-inline tdouble3 Point3dxz(const tdouble2 &p){ return(TDouble3(p.x,0,p.y)); }
-inline tdouble3 Point3dxy(const tfloat2  &p){ return(TDouble3(p.x,p.y,0)); }
-inline tdouble3 Point3dxz(const tfloat2  &p){ return(TDouble3(p.x,0,p.y)); }
-inline tfloat3  Point3fxy(const tfloat2  &p){ return(TFloat3 (p.x,p.y,0)); }
-inline tfloat3  Point3fxz(const tfloat2  &p){ return(TFloat3 (p.x,0,p.y)); }
-inline tfloat3  Point3fxy(const tdouble2 &p){ return(TFloat3 (float(p.x),float(p.y),0)); }
-inline tfloat3  Point3fxz(const tdouble2 &p){ return(TFloat3 (float(p.x),0,float(p.y))); }
+inline tdouble3 Point3dxy(const tdouble2& p){ return(TDouble3(p.x,p.y,0)); }
+inline tdouble3 Point3dxz(const tdouble2& p){ return(TDouble3(p.x,0,p.y)); }
+inline tdouble3 Point3dxy(const tfloat2&  p){ return(TDouble3(p.x,p.y,0)); }
+inline tdouble3 Point3dxz(const tfloat2&  p){ return(TDouble3(p.x,0,p.y)); }
+inline tfloat3  Point3fxy(const tfloat2&  p){ return(TFloat3 (p.x,p.y,0)); }
+inline tfloat3  Point3fxz(const tfloat2&  p){ return(TFloat3 (p.x,0,p.y)); }
+inline tfloat3  Point3fxy(const tdouble2& p){ return(TFloat3 (float(p.x),float(p.y),0)); }
+inline tfloat3  Point3fxz(const tdouble2& p){ return(TFloat3 (float(p.x),0,float(p.y))); }
 
 ///Plane definition on 3D using double values.
 typedef struct{
@@ -498,18 +498,18 @@ typedef struct{
 
 inline tplane3d TPlane3d(double v){ tplane3d p={v,v,v,v}; return(p); }
 inline tplane3d TPlane3d(double a,double b,double c,double d){ tplane3d p={a,b,c,d}; return(p); }
-inline tplane3d TPlane3d(const tdouble4 &v){ return(TPlane3d(v.x,v.y,v.z,v.w)); }
-inline tplane3d TPlane3d(const tplane3f &v){ return(TPlane3d(v.a,v.b,v.c,v.d)); }
+inline tplane3d TPlane3d(const tdouble4& v){ return(TPlane3d(v.x,v.y,v.z,v.w)); }
+inline tplane3d TPlane3d(const tplane3f& v){ return(TPlane3d(v.a,v.b,v.c,v.d)); }
 
 inline tplane3f TPlane3f(float v){ tplane3f p={v,v,v,v}; return(p); }
 inline tplane3f TPlane3f(float a,float b,float c,float d){ tplane3f p={a,b,c,d}; return(p); }
-inline tplane3f TPlane3f(const tfloat4 &v){ return(TPlane3f(v.x,v.y,v.z,v.w)); }
-inline tplane3f TPlane3f(const tplane3d &v){ return(TPlane3f(float(v.a),float(v.b),float(v.c),float(v.d))); }
+inline tplane3f TPlane3f(const tfloat4& v){ return(TPlane3f(v.x,v.y,v.z,v.w)); }
+inline tplane3f TPlane3f(const tplane3d& v){ return(TPlane3f(float(v.a),float(v.b),float(v.c),float(v.d))); }
 
-inline tfloat4  TPlane3fToTFloat4 (const tplane3f &v){ return(TFloat4(v.a,v.b,v.c,v.d)); }
-inline tfloat4  TPlane3dToTFloat4 (const tplane3d &v){ return(TPlane3fToTFloat4(TPlane3f(v))); }
-inline tdouble4 TPlane3fToTDouble4(const tplane3f &v){ return(TDouble4(v.a,v.b,v.c,v.d)); }
-inline tdouble4 TPlane3dToTDouble4(const tplane3d &v){ return(TDouble4(v.a,v.b,v.c,v.d)); }
+inline tfloat4  TPlane3fToTFloat4 (const tplane3f& v){ return(TFloat4(v.a,v.b,v.c,v.d)); }
+inline tfloat4  TPlane3dToTFloat4 (const tplane3d& v){ return(TPlane3fToTFloat4(TPlane3f(v))); }
+inline tdouble4 TPlane3fToTDouble4(const tplane3f& v){ return(TDouble4(v.a,v.b,v.c,v.d)); }
+inline tdouble4 TPlane3dToTDouble4(const tplane3d& v){ return(TDouble4(v.a,v.b,v.c,v.d)); }
 
 ///Line definition on 3D using double values.
 typedef struct{

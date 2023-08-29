@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2023 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -173,7 +173,7 @@ protected:
 
   unsigned GetParticlesData(unsigned n,unsigned pini,bool onlynormal
     ,unsigned* idp,tdouble3* pos,tfloat3* vel,float* rho,typecode* code
-    ,const byte* filter,unsigned &npfilterdel);
+    ,const byte* filter,unsigned& npfilterdel);
   void ConfigOmp(const JSphCfgRun* cfg);
 
   void ConfigRunMode();
@@ -190,7 +190,7 @@ protected:
   template<TpKernel tker,TpFtMode ftmode> void InteractionForcesBound
     (unsigned n,unsigned pini,StDivDataCpu divdata,const unsigned* dcell
     ,const tdouble3* pos,const tfloat4* velrhop,const typecode* code,const unsigned* id
-    ,float &viscdt,float* ar)const;
+    ,float& viscdt,float* ar)const;
 
   template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity,bool shift> 
     void InteractionForcesFluid(unsigned n,unsigned pini,bool boundp2,float visco
@@ -198,7 +198,7 @@ protected:
     ,const tsymatrix3f* tau,tsymatrix3f* gradvel
     ,const tdouble3* pos,const tfloat4* velrhop,const typecode* code,const unsigned* idp
     ,const float* press,const tfloat3* dengradcorr
-    ,float &viscdt,float* ar,tfloat3* ace,float* delta
+    ,float& viscdt,float* ar,tfloat3* ace,float* delta
     ,TpShifting shiftmode,tfloat4* shiftposfs)const;
 
   void InteractionForcesDEM(unsigned nfloat,StDivDataCpu divdata,const unsigned* dcell
@@ -208,20 +208,20 @@ protected:
 
   template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity,bool shift> 
     void Interaction_ForcesCpuT(const stinterparmsc& t,StInterResultc& res)const;
-  template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity> void Interaction_Forces_ct5(const stinterparmsc &t,StInterResultc &res)const;
-  template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco> void Interaction_Forces_ct4(const stinterparmsc &t,StInterResultc &res)const;
-  template<TpKernel tker,TpFtMode ftmode> void Interaction_Forces_ct3(const stinterparmsc &t,StInterResultc &res)const;
-  template<TpKernel tker> void Interaction_Forces_ct2(const stinterparmsc &t,StInterResultc &res)const;
-  void Interaction_Forces_ct(const stinterparmsc &t,StInterResultc &res)const;
+  template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity> void Interaction_Forces_ct5(const stinterparmsc& t,StInterResultc& res)const;
+  template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco> void Interaction_Forces_ct4(const stinterparmsc& t,StInterResultc& res)const;
+  template<TpKernel tker,TpFtMode ftmode> void Interaction_Forces_ct3(const stinterparmsc& t,StInterResultc& res)const;
+  template<TpKernel tker> void Interaction_Forces_ct2(const stinterparmsc& t,StInterResultc& res)const;
+  void Interaction_Forces_ct(const stinterparmsc& t,StInterResultc& res)const;
 
   template<TpKernel tker,bool sim2d,TpSlipMode tslip> void InteractionMdbcCorrectionT2
     (unsigned n,StDivDataCpu divdata,float determlimit,float mdbcthreshold
     ,const tdouble3* pos,const typecode* code,const unsigned* idp
     ,const tfloat3* boundnor,const tfloat3* motionvel,tfloat4* velrhop);
-  template<TpKernel tker> void Interaction_MdbcCorrectionT(TpSlipMode slipmode,const StDivDataCpu &divdata
+  template<TpKernel tker> void Interaction_MdbcCorrectionT(TpSlipMode slipmode,const StDivDataCpu& divdata
     ,const tdouble3* pos,const typecode* code,const unsigned* idp
     ,const tfloat3* boundnor,const tfloat3* motionvel,tfloat4* velrhop);
-  void Interaction_MdbcCorrection(TpSlipMode slipmode,const StDivDataCpu &divdata
+  void Interaction_MdbcCorrection(TpSlipMode slipmode,const StDivDataCpu& divdata
     ,const tdouble3* pos,const typecode* code,const unsigned* idp
     ,const tfloat3* boundnor,const tfloat3* motionvel,tfloat4* velrhop);
 
@@ -298,7 +298,7 @@ protected:
     ,const unsigned* idp,tfloat4* velrhop);
 
   float Interaction_InOutZsurf(unsigned nptz,const tfloat3* ptzpos,float maxdist,float zbottom
-    ,const StDivDataCpu &divdata,const tdouble3* pos,const typecode* code);
+    ,const StDivDataCpu& divdata,const tdouble3* pos,const typecode* code);
 
 };
 

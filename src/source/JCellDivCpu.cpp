@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2023 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -119,7 +119,7 @@ void JCellDivCpu::FreeMemoryAll(){
 /// Adjust buffers to reorder particle values.
 /// Ajusta buffers para reordenar datos de particulas.
 //==============================================================================
-void JCellDivCpu::SetMemoryVSort(byte *vsort){
+void JCellDivCpu::SetMemoryVSort(byte* vsort){
   VSort=vsort;
   VSortInt=(int*)VSort;        VSortWord=(word*)VSort;
   VSortFloat=(float*)VSort;    VSortFloat3=(tfloat3*)VSort;
@@ -241,7 +241,7 @@ void JCellDivCpu::DefineDomain(unsigned cellcode,tuint3 domcelini,tuint3 domcelf
 //==============================================================================
 // Devuelve coordenadas de celda a partir de una posicion.
 //==============================================================================
-//tuint3 JCellDivCpu::GetMapCell(const tfloat3 &pos)const{
+//tuint3 JCellDivCpu::GetMapCell(const tfloat3& pos)const{
 //  float dx=pos.x-MapPosMin.x,dy=pos.y-MapPosMin.y,dz=pos.z-MapPosMin.z;
 //  unsigned cx=unsigned(dx*OvScell),cy=unsigned(dy*OvScell),cz=unsigned(dz*OvScell);
 //  return(TUint3(cx,cy,cz));
@@ -257,7 +257,7 @@ void JCellDivCpu::DefineDomain(unsigned cellcode,tuint3 domcelini,tuint3 domcelf
 /// En caso de no haber ninguna particula valida el minimo sera mayor que el maximo.
 //==============================================================================
 void JCellDivCpu::LimitsCellBound(unsigned n,unsigned pini,const unsigned* dcellc
-  ,const typecode *codec,tuint3 &cellmin,tuint3 &cellmax)const
+  ,const typecode* codec,tuint3& cellmin,tuint3& cellmax)const
 {
   tuint3 cmin=TUint3(UINT_MAX);
   tuint3 cmax=TUint3(0);
@@ -290,7 +290,7 @@ void JCellDivCpu::LimitsCellBound(unsigned n,unsigned pini,const unsigned* dcell
 /// En code[] ya estan marcadas las particulas excluidas.
 //==============================================================================
 void JCellDivCpu::CalcCellDomainBound(unsigned n,unsigned pini,unsigned n2,unsigned pini2
-  ,const unsigned* dcellc,const typecode *codec,tuint3 &cellmin,tuint3 &cellmax)
+  ,const unsigned* dcellc,const typecode* codec,tuint3& cellmin,tuint3& cellmax)
 {
   tuint3 cmin,cmax;
   LimitsCellBound(n,pini,dcellc,codec,cmin,cmax);
@@ -315,7 +315,7 @@ void JCellDivCpu::CalcCellDomainBound(unsigned n,unsigned pini,unsigned n2,unsig
 /// En caso de no haber ninguna particula valida el minimo sera mayor que el maximo.
 //==============================================================================
 void JCellDivCpu::LimitsCellFluid(unsigned n,unsigned pini,const unsigned* dcellc
-  ,const typecode *codec,tuint3 &cellmin,tuint3 &cellmax)const
+  ,const typecode* codec,tuint3& cellmin,tuint3& cellmax)const
 {
   tuint3 cmin=TUint3(UINT_MAX);
   tuint3 cmax=TUint3(0);
@@ -346,7 +346,7 @@ void JCellDivCpu::LimitsCellFluid(unsigned n,unsigned pini,const unsigned* dcell
 /// Ignora particulas excluidas que ya estan marcadas en code[].
 //==============================================================================
 void JCellDivCpu::CalcCellDomainFluid(unsigned n,unsigned pini,unsigned n2,unsigned pini2
-  ,const unsigned* dcellc,const typecode *codec,tuint3 &cellmin,tuint3 &cellmax)
+  ,const unsigned* dcellc,const typecode* codec,tuint3& cellmin,tuint3& cellmax)
 {
   tuint3 cmin,cmax;
   LimitsCellFluid(n,pini,dcellc,codec,cmin,cmax);
@@ -366,7 +366,7 @@ void JCellDivCpu::CalcCellDomainFluid(unsigned n,unsigned pini,unsigned n2,unsig
 /// Reorder values of all particles (for type word).
 /// Reordena datos de todas las particulas (para tipo word).
 //==============================================================================
-void JCellDivCpu::SortArray(word *vec){
+void JCellDivCpu::SortArray(word* vec){
   const int n=int(Nptot);
   const int ini=(DivideFull? 0: int(NpbFinal));
   #ifdef OMP_USE
@@ -380,7 +380,7 @@ void JCellDivCpu::SortArray(word *vec){
 /// Reorder values of all particles (for type unsigned).
 /// Reordena datos de todas las particulas (para tipo unsigned).
 //==============================================================================
-void JCellDivCpu::SortArray(unsigned *vec){
+void JCellDivCpu::SortArray(unsigned* vec){
   const int n=int(Nptot);
   const int ini=(DivideFull? 0: int(NpbFinal));
   #ifdef OMP_USE
@@ -394,7 +394,7 @@ void JCellDivCpu::SortArray(unsigned *vec){
 /// Reorder values of all particles (for type float).
 /// Reordena datos de todas las particulas (para tipo float).
 //==============================================================================
-void JCellDivCpu::SortArray(float *vec){
+void JCellDivCpu::SortArray(float* vec){
   const int n=int(Nptot);
   const int ini=(DivideFull? 0: int(NpbFinal));
   #ifdef OMP_USE
@@ -408,7 +408,7 @@ void JCellDivCpu::SortArray(float *vec){
 /// Reorder values of all particles (for type tdouble3).
 /// Reordena datos de todas las particulas (para tipo tdouble3).
 //==============================================================================
-void JCellDivCpu::SortArray(tdouble3 *vec){
+void JCellDivCpu::SortArray(tdouble3* vec){
   const int n=int(Nptot);
   const int ini=(DivideFull? 0: int(NpbFinal));
   #ifdef OMP_USE
@@ -422,7 +422,7 @@ void JCellDivCpu::SortArray(tdouble3 *vec){
 /// Reorder values of all particles (for type tfloat3).
 /// Reordena datos de todas las particulas (para tipo tfloat3).
 //==============================================================================
-void JCellDivCpu::SortArray(tfloat3 *vec){
+void JCellDivCpu::SortArray(tfloat3* vec){
   const int n=int(Nptot);
   const int ini=(DivideFull? 0: int(NpbFinal));
   #ifdef OMP_USE
@@ -436,7 +436,7 @@ void JCellDivCpu::SortArray(tfloat3 *vec){
 /// Reorder values of all particles (for type tfloat4).
 /// Reordena datos de todas las particulas (para tipo tfloat4).
 //==============================================================================
-void JCellDivCpu::SortArray(tfloat4 *vec){
+void JCellDivCpu::SortArray(tfloat4* vec){
   const int n=int(Nptot);
   const int ini=(DivideFull? 0: int(NpbFinal));
   #ifdef OMP_USE
@@ -450,7 +450,7 @@ void JCellDivCpu::SortArray(tfloat4 *vec){
 /// Reorder values of all particles (for type tsymatrix3f).
 /// Reordena datos de todas las particulas (para tipo tsymatrix3f).
 //==============================================================================
-void JCellDivCpu::SortArray(tsymatrix3f *vec){
+void JCellDivCpu::SortArray(tsymatrix3f* vec){
   const int n=int(Nptot);
   const int ini=(DivideFull? 0: int(NpbFinal));
   #ifdef OMP_USE

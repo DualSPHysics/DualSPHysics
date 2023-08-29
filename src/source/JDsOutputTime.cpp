@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2023 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -79,7 +79,9 @@ void JDsOutputTime::Config(double timeoutdef){
 //==============================================================================
 /// Configures object.
 //==============================================================================
-void JDsOutputTime::Config(std::string filexml,const std::string &place,double timeoutdef){
+void JDsOutputTime::Config(std::string filexml,const std::string& place
+  ,double timeoutdef)
+{
   Reset();
   JXml xml; xml.LoadFile(filexml);
   LoadXml(&xml,place);
@@ -108,7 +110,7 @@ bool JDsOutputTime::AddTimeOut(double t,double tout){
 //==============================================================================
 /// Reads configuration from the XML node.
 //==============================================================================
-void JDsOutputTime::ReadXml(const JXml *sxml,TiXmlElement* ele){
+void JDsOutputTime::ReadXml(const JXml* sxml,TiXmlElement* ele){
   TiXmlElement* elet=ele->FirstChildElement("tout"); 
   while(elet){
     double t=sxml->GetAttributeDouble(elet,"time");
@@ -121,7 +123,7 @@ void JDsOutputTime::ReadXml(const JXml *sxml,TiXmlElement* ele){
 //==============================================================================
 /// Loads configuration from XML object.
 //==============================================================================
-void JDsOutputTime::LoadXml(const JXml *sxml,const std::string &place){
+void JDsOutputTime::LoadXml(const JXml* sxml,const std::string& place){
   TiXmlNode* node=sxml->GetNodeSimple(place);
   //if(!node)Run_Exception(string("Cannot find the element \'")+place+"\'.");
   if(sxml->CheckNodeActive(node))ReadXml(sxml,node->ToElement());
@@ -142,7 +144,7 @@ void JDsOutputTime::VisuConfig(std::string txhead,std::string txfoot)const{
 /// Returns configuration information.
 //==============================================================================
 void JDsOutputTime::GetConfig(std::string txhead,std::string txfoot
-  ,std::vector<std::string> &lines)const
+  ,std::vector<std::string>& lines)const
 {
   if(!txhead.empty())lines.push_back(txhead); 
   for(unsigned c=0;c<GetCount();c++){

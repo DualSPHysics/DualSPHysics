@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2023 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -39,7 +39,7 @@ namespace cusphs{
 /// Actualiza PosCellg[] segun la posicion de las particulas.
 //------------------------------------------------------------------------------
 __global__ void KerUpdatePosCell(unsigned np,double3 posmin,float poscellsize
-  ,const double2 *posxy,const double *posz,float4 *poscell)
+  ,const double2* posxy,const double* posz,float4* poscell)
 {
   const unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
   if(p<np){
@@ -62,7 +62,7 @@ __global__ void KerUpdatePosCell(unsigned np,double3 posmin,float poscellsize
 /// Actualiza PosCellg[] segun la posicion de las particulas.
 //==============================================================================
 void UpdatePosCell(unsigned np,tdouble3 posmin,float poscellsize
-  ,const double2 *posxy,const double *posz,float4 *poscell,cudaStream_t stm)
+  ,const double2* posxy,const double* posz,float4* poscell,cudaStream_t stm)
 {
   const dim3 sgrid=GetSimpleGridSize(np,SPHBSIZE);
   if(np)KerUpdatePosCell <<<sgrid,SPHBSIZE,0,stm>>> (np,Double3(posmin),poscellsize,posxy,posz,poscell);
@@ -72,7 +72,8 @@ void UpdatePosCell(unsigned np,tdouble3 posmin,float poscellsize
 /// Initialises ace array with 0 for bound and gravity for fluid.
 /// Inicializa el array ace con 0 para contorno y gravity para fluido.
 //------------------------------------------------------------------------------
-__global__ void KerInitAceGravity(unsigned np,unsigned npb,float3 gravity,float3 *ace)
+__global__ void KerInitAceGravity(unsigned np,unsigned npb,float3 gravity
+  ,float3* ace)
 {
   unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
   if(p<np){
@@ -83,7 +84,9 @@ __global__ void KerInitAceGravity(unsigned np,unsigned npb,float3 gravity,float3
 /// Initialises ace array with 0 for bound and gravity for fluid.
 /// Inicializa el array ace con 0 para contorno y gravity para fluido.
 //==============================================================================
-void InitAceGravity(unsigned np,unsigned npb,tfloat3 gravity,float3 *ace,cudaStream_t stm){
+void InitAceGravity(unsigned np,unsigned npb,tfloat3 gravity,float3* ace
+  ,cudaStream_t stm)
+{
   if(np){
     dim3 sgrid=GetSimpleGridSize(np,SPHBSIZE);
     KerInitAceGravity <<<sgrid,SPHBSIZE,0,stm>>> (np,npb,Float3(gravity),ace);
@@ -98,7 +101,7 @@ void InitAceGravity(unsigned np,unsigned npb,tfloat3 gravity,float3 *ace,cudaStr
 /// Sets v[].y to zero.
 /// Pone v[].y a cero.
 //------------------------------------------------------------------------------
-__global__ void KerResety(unsigned n,unsigned ini,float3 *v)
+__global__ void KerResety(unsigned n,unsigned ini,float3* v)
 {
   unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
   if(p<n)v[p+ini].y=0;
@@ -107,7 +110,7 @@ __global__ void KerResety(unsigned n,unsigned ini,float3 *v)
 /// Sets v[].y to zero.
 /// Pone v[].y a cero.
 //==============================================================================
-void Resety(unsigned n,unsigned ini,float3 *v,cudaStream_t stm){
+void Resety(unsigned n,unsigned ini,float3* v,cudaStream_t stm){
   if(n){
     dim3 sgrid=GetSimpleGridSize(n,SPHBSIZE);
     KerResety <<<sgrid,SPHBSIZE,0,stm>>> (n,ini,v);
@@ -128,10 +131,10 @@ void Resety(unsigned n,unsigned ini,float3 *v,cudaStream_t stm){
 //------------------------------------------------------------------------------
 template<bool floating,bool shift,bool inout> __global__ void KerComputeStepVerlet
   (unsigned n,unsigned npb,float rhopzero,float rhopoutmin,float rhopoutmax
-  ,const float4 *velrhop1,const float4 *velrhop2
-  ,const float *ar,const float3 *ace,const float4 *shiftposfs,const float3 *indirvel
+  ,const float4* velrhop1,const float4* velrhop2
+  ,const float* ar,const float3* ace,const float4* shiftposfs,const float3* indirvel
   ,double dt,double dt205,double dt2,float3 gravity
-  ,double2 *movxy,double *movz,typecode *code,float4 *velrhopnew)
+  ,double2* movxy,double* movz,typecode* code,float4* velrhopnew)
 {
   unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
   if(p<n){
@@ -205,10 +208,10 @@ template<bool floating,bool shift,bool inout> __global__ void KerComputeStepVerl
 /// Actualizacion de particulas segun fuerzas y dt usando Verlet.
 //==============================================================================
 void ComputeStepVerlet(bool floating,bool shift,bool inout,unsigned np,unsigned npb
-  ,const float4 *velrhop1,const float4 *velrhop2
-  ,const float *ar,const float3 *ace,const float4 *shiftposfs,const float3 *indirvel
+  ,const float4* velrhop1,const float4* velrhop2
+  ,const float* ar,const float3* ace,const float4* shiftposfs,const float3* indirvel
   ,double dt,double dt2,float rhopzero,float rhopoutmin,float rhopoutmax,tfloat3 gravity
-  ,typecode *code,double2 *movxy,double *movz,float4 *velrhopnew,cudaStream_t stm)
+  ,typecode* code,double2* movxy,double* movz,float4* velrhopnew,cudaStream_t stm)
 {
   double dt205=(0.5*dt*dt);
   if(np){
@@ -238,11 +241,11 @@ void ComputeStepVerlet(bool floating,bool shift,bool inout,unsigned np,unsigned 
 /// Computes new values for Pos, Check, Vel and Ros (used with Symplectic-Predictor).
 /// Calcula los nuevos valores de Pos, Vel y Rhop (usando para Symplectic-Predictor).
 //------------------------------------------------------------------------------
-template<bool floating,bool shift,bool inout> __global__ void KerComputeStepSymplecticPre
-  (unsigned n,unsigned npb
-  ,const float4 *velrhoppre,const float *ar,const float3 *ace,const float4 *shiftposfs
-  ,const float3 *indirvel,double dtm,float rhopzero,float rhopoutmin,float rhopoutmax,float3 gravity
-  ,typecode *code,double2 *movxy,double *movz,float4 *velrhop)
+template<bool floating,bool shift,bool inout> __global__ void KerComputeStepSymplecticPre(
+  unsigned n,unsigned npb,const float4* velrhoppre,const float* ar
+  ,const float3* ace,const float4* shiftposfs,const float3* indirvel
+  ,double dtm,float rhopzero,float rhopoutmin,float rhopoutmax,float3 gravity
+  ,typecode* code,double2* movxy,double* movz,float4* velrhop)
 {
   unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
   if(p<n){
@@ -306,10 +309,11 @@ template<bool floating,bool shift,bool inout> __global__ void KerComputeStepSymp
 /// Updates particles using Symplectic-Predictor.
 /// Actualizacion de particulas usando Symplectic-Predictor.
 //==============================================================================   
-void ComputeStepSymplecticPre(bool floating,bool shift,bool inout,unsigned np,unsigned npb
-  ,const float4 *velrhoppre,const float *ar,const float3 *ace,const float4 *shiftposfs
-  ,const float3 *indirvel,double dtm,float rhopzero,float rhopoutmin,float rhopoutmax,tfloat3 gravity
-  ,typecode *code,double2 *movxy,double *movz,float4 *velrhop,cudaStream_t stm)
+void ComputeStepSymplecticPre(bool floating,bool shift,bool inout,unsigned np
+  ,unsigned npb,const float4* velrhoppre,const float* ar,const float3* ace
+  ,const float4* shiftposfs,const float3* indirvel,double dtm,float rhopzero
+  ,float rhopoutmin,float rhopoutmax,tfloat3 gravity,typecode* code
+  ,double2* movxy,double* movz,float4* velrhop,cudaStream_t stm)
 {
   if(np){
     dim3 sgrid=GetSimpleGridSize(np,SPHBSIZE);
@@ -341,11 +345,11 @@ void ComputeStepSymplecticPre(bool floating,bool shift,bool inout,unsigned np,un
 /// Calcula los nuevos valores de Pos, Vel y Rhop (usandopara Symplectic-Corrector).
 /// Pone vel de contorno a cero.
 //------------------------------------------------------------------------------
-template<bool floating,bool shift,bool inout> __global__ void KerComputeStepSymplecticCor
-  (unsigned n,unsigned npb
-  ,const float4 *velrhoppre,const float *ar,const float3 *ace,const float4 *shiftposfs
-  ,const float3 *indirvel,double dtm,double dt,float rhopzero,float rhopoutmin,float rhopoutmax,float3 gravity
-  ,typecode *code,double2 *movxy,double *movz,float4 *velrhop)
+template<bool floating,bool shift,bool inout> __global__ void KerComputeStepSymplecticCor(
+  unsigned n,unsigned npb,const float4* velrhoppre,const float* ar
+  ,const float3* ace,const float4* shiftposfs,const float3* indirvel
+  ,double dtm,double dt,float rhopzero,float rhopoutmin,float rhopoutmax
+  ,float3 gravity,typecode* code,double2* movxy,double* movz,float4* velrhop)
 {
   unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
   if(p<n){
@@ -416,10 +420,11 @@ template<bool floating,bool shift,bool inout> __global__ void KerComputeStepSymp
 /// Updates particles using Symplectic-Corrector.
 /// Actualizacion de particulas usando Symplectic-Corrector.
 //==============================================================================   
-void ComputeStepSymplecticCor(bool floating,bool shift,bool inout,unsigned np,unsigned npb
-  ,const float4 *velrhoppre,const float *ar,const float3 *ace,const float4 *shiftposfs
-  ,const float3 *indirvel,double dtm,double dt,float rhopzero,float rhopoutmin,float rhopoutmax,tfloat3 gravity
-  ,typecode *code,double2 *movxy,double *movz,float4 *velrhop,cudaStream_t stm)
+void ComputeStepSymplecticCor(bool floating,bool shift,bool inout,unsigned np
+  ,unsigned npb,const float4* velrhoppre,const float* ar,const float3* ace
+  ,const float4* shiftposfs,const float3* indirvel,double dtm,double dt
+  ,float rhopzero,float rhopoutmin,float rhopoutmax,tfloat3 gravity
+  ,typecode* code,double2* movxy,double* movz,float4* velrhop,cudaStream_t stm)
 {
   if(np){
     dim3 sgrid=GetSimpleGridSize(np,SPHBSIZE);

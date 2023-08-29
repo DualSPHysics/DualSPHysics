@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2023 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -26,12 +26,14 @@ namespace cuaccin{
 //##############################################################################
 //# Kernels for external forces (JDsAccInput).
 //##############################################################################
-//------------------------------------------------------
+//------------------------------------------------------------------------------ 
 /// Adds variable forces to particle sets.
-//------------------------------------------------------
-__global__ void KerAddAccInputAng(unsigned n,unsigned pini,typecode codesel1,typecode codesel2
-  ,float3 gravity,bool setgravity,double3 acclin,double3 accang,double3 centre,double3 velang,double3 vellin
-  ,const typecode *code,const double2 *posxy,const double *posz,const float4 *velrhop,float3 *ace)
+//------------------------------------------------------------------------------
+__global__ void KerAddAccInputAng(unsigned n,unsigned pini,typecode codesel1
+  ,typecode codesel2,float3 gravity,bool setgravity,double3 acclin
+  ,double3 accang,double3 centre,double3 velang,double3 vellin
+  ,const typecode* code,const double2* posxy,const double* posz
+  ,const float4* velrhop,float3* ace)
 {
   const unsigned pp=blockIdx.x*blockDim.x + threadIdx.x;
   if(pp<n){
@@ -86,11 +88,12 @@ __global__ void KerAddAccInputAng(unsigned n,unsigned pini,typecode codesel1,typ
   }
 }
 
-//------------------------------------------------------
+//------------------------------------------------------------------------------ 
 /// Adds variable forces to particle sets.
-//------------------------------------------------------
-__global__ void KerAddAccInputLin(unsigned n,unsigned pini,typecode codesel1,typecode codesel2
-  ,float3 gravity,bool setgravity,double3 acclin,const typecode *code,float3 *ace)
+//------------------------------------------------------------------------------ 
+__global__ void KerAddAccInputLin(unsigned n,unsigned pini
+  ,typecode codesel1,typecode codesel2,float3 gravity,bool setgravity
+  ,double3 acclin,const typecode* code,float3* ace)
 {
   const unsigned pp=blockIdx.x*blockDim.x + threadIdx.x;
   if(pp<n){
@@ -115,9 +118,10 @@ __global__ void KerAddAccInputLin(unsigned n,unsigned pini,typecode codesel1,typ
 //==================================================================================================
 /// Adds external variable acceleration forces for particles according MK.
 //==================================================================================================
-void AddAccInput(unsigned n,unsigned pini,typecode codesel1,typecode codesel2
-  ,tdouble3 acclin,tdouble3 accang,tdouble3 centre,tdouble3 velang,tdouble3 vellin,bool setgravity
-  ,tfloat3 gravity,const typecode *code,const double2 *posxy,const double *posz,const float4 *velrhop,float3 *ace,cudaStream_t stm)
+void AddAccInput(unsigned n,unsigned pini,typecode codesel1,typecode codesel2,tdouble3 acclin
+  ,tdouble3 accang,tdouble3 centre,tdouble3 velang,tdouble3 vellin,bool setgravity,tfloat3 gravity
+  ,const typecode* code,const double2* posxy,const double* posz,const float4* velrhop,float3* ace
+  ,cudaStream_t stm)
 {
   if(n){
     dim3 sgrid=GetSimpleGridSize(n,SPHBSIZE);

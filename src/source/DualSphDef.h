@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2023 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -524,7 +524,7 @@ typedef enum{
 }TpFtConstrains;
 
 ///Returns combination of TpFtConstrains values to define the constraints.
-inline byte ComputeConstraintsValue(const tint3 &translationfree,const tint3 &rotationfree){
+inline byte ComputeConstraintsValue(const tint3& translationfree,const tint3& rotationfree){
   return((translationfree.x? 0: FTCON_MoveX)
         +(translationfree.y? 0: FTCON_MoveY)
         +(translationfree.z? 0: FTCON_MoveZ)
@@ -534,7 +534,7 @@ inline byte ComputeConstraintsValue(const tint3 &translationfree,const tint3 &ro
 }
 
 ///Applies constraints.
-inline void ApplyConstraints(byte constraints,tfloat3 &linear,tfloat3 &angular){
+inline void ApplyConstraints(byte constraints,tfloat3& linear,tfloat3& angular){
   if(constraints&FTCON_MoveX  )linear.x=0;
   if(constraints&FTCON_MoveY  )linear.y=0;
   if(constraints&FTCON_MoveZ  )linear.z=0;

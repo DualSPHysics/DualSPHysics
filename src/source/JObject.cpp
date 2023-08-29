@@ -1,6 +1,6 @@
 //HEAD_DSCODES
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2023 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -31,9 +31,9 @@
 ////==============================================================================
 ///// Throws exception related to a file from a static method.
 ////==============================================================================
-//void JObject::RunExceptioonStatic(const std::string &srcfile,int srcline
-//  ,const std::string &method
-//  ,const std::string &msg,const std::string &file)
+//void JObject::RunExceptioonStatic(const std::string& srcfile,int srcline
+//  ,const std::string& method
+//  ,const std::string& msg,const std::string& file)
 //{
 //  throw JException(srcfile,srcline,"JObject",method,msg,file);
 //}
@@ -41,9 +41,9 @@
 //==============================================================================
 /// Throws exception related to a file or not.
 //==============================================================================
-void JObject::RunExceptioon(const std::string &srcfile,int srcline
-  ,const std::string &classname,const std::string &method
-  ,const std::string &msg,const std::string &file)const
+void JObject::RunExceptioon(const std::string& srcfile,int srcline
+  ,const std::string& classname,const std::string& method
+  ,const std::string& msg,const std::string& file)const
 {
   const std::string oid=ObjectId();
   throw JException(srcfile,srcline,(oid.empty()? classname: oid),method,msg,file);
@@ -52,8 +52,8 @@ void JObject::RunExceptioon(const std::string &srcfile,int srcline
 //==============================================================================
 /// Throws exception related to a file or not.
 //==============================================================================
-void JObject::RunException(const std::string &method,const std::string &msg
-  ,const std::string &file)const
+void JObject::RunException(const std::string& method,const std::string& msg
+  ,const std::string& file)const
 {
   //if(DestructorActive)PrintException(method,msg,file);
   //PrintException(method,msg,file);
@@ -73,7 +73,7 @@ std::string JObject::ObjectId()const{
 ///// \param method Name of the method that throws an exception.
 ///// \param msg Text of the exception.
 ////==============================================================================
-//std::string JObject::GetExceptionText(const std::string &method,const std::string &msg)const{
+//std::string JObject::GetExceptionText(const std::string& method,const std::string& msg)const{
 //  return(JException(ClassName,method,msg,"").ToStr());
 //}
 //
@@ -83,7 +83,7 @@ std::string JObject::ObjectId()const{
 ///// \param msg Text of the exception.
 ///// \param file Name of the file.
 ////==============================================================================
-//std::string JObject::GetExceptionText(const std::string &method,const std::string &msg,const std::string &file)const{
+//std::string JObject::GetExceptionText(const std::string& method,const std::string& msg,const std::string& file)const{
 //  return(JException(ClassName,method,msg,file).ToStr());
 //}
 //
@@ -93,7 +93,7 @@ std::string JObject::ObjectId()const{
 ///// \param msg Text of the exception.
 ///// \param file Name of the file (is optional).
 ////==============================================================================
-//void JObject::PrintException(const std::string &method,const std::string &msg,const std::string &file)const{
+//void JObject::PrintException(const std::string& method,const std::string& msg,const std::string& file)const{
 //  std::string text=(file.empty()? GetExceptionText(method,msg): GetExceptionText(method,msg,file));
 //  printf("\n*** %s\n",text.c_str());
 //  fflush(stdout);

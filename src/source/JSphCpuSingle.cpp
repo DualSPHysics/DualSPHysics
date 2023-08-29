@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2023 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -96,7 +96,7 @@ void JSphCpuSingle::UpdateMaxValues(){
 /// Load the execution configuration.
 /// Carga la configuracion de ejecucion.
 //==============================================================================
-void JSphCpuSingle::LoadConfig(const JSphCfgRun *cfg){
+void JSphCpuSingle::LoadConfig(const JSphCfgRun* cfg){
   //-Load OpenMP configuraction. | Carga configuracion de OpenMP.
   ConfigOmp(cfg);
   //-Load basic general configuraction. | Carga configuracion basica general.
@@ -200,8 +200,8 @@ void JSphCpuSingle::ResizeParticlesSizeData(unsigned ndatacpu
 /// Con stable activado reordena lista de periodicas.
 //==============================================================================
 unsigned JSphCpuSingle::PeriodicMakeList(unsigned n,unsigned pini,bool stable
-  ,unsigned nmax,tdouble3 perinc,const tdouble3 *pos,const typecode *code
-  ,unsigned *listp)const
+  ,unsigned nmax,tdouble3 perinc,const tdouble3* pos,const typecode* code
+  ,unsigned* listp)const
 {
   unsigned count=0;
   if(n){
@@ -247,7 +247,9 @@ unsigned JSphCpuSingle::PeriodicMakeList(unsigned n,unsigned pini,bool stable
 /// a partir de domposmin.
 /// Se controla que las coordendas de celda no sobrepasen el maximo.
 //==============================================================================
-void JSphCpuSingle::PeriodicDuplicatePos(unsigned pnew,unsigned pcopy,bool inverse,double dx,double dy,double dz,tuint3 cellmax,tdouble3 *pos,unsigned *dcell)const{
+void JSphCpuSingle::PeriodicDuplicatePos(unsigned pnew,unsigned pcopy,bool inverse
+  ,double dx,double dy,double dz,tuint3 cellmax,tdouble3* pos,unsigned* dcell)const
+{
   //-Get pos of particle to be duplicated. | Obtiene pos de particula a duplicar.
   tdouble3 ps=pos[pcopy];
   //-Apply displacement. | Aplica desplazamiento.
@@ -661,7 +663,7 @@ double JSphCpuSingle::ComputeAceMax()const{
 /// Devuelve el valor maximo de ace (modulo), se deben ignorar las particulas periodicas.
 //==============================================================================
 template<bool checkcode> double JSphCpuSingle::ComputeAceMaxSeq(unsigned np
-  ,const tfloat3* ace,const typecode *code)const
+  ,const tfloat3* ace,const typecode* code)const
 {
   float acemax=0;
   const int n=int(np);
@@ -679,7 +681,7 @@ template<bool checkcode> double JSphCpuSingle::ComputeAceMaxSeq(unsigned np
 /// Devuelve el valor maximo de ace (modulo) using OpenMP, se deben ignorar las particulas periodicas.
 //==============================================================================
 template<bool checkcode> double JSphCpuSingle::ComputeAceMaxOmp(unsigned np
-  ,const tfloat3* ace,const typecode *code)const
+  ,const tfloat3* ace,const typecode* code)const
 {
   double acemax=0;
   #ifdef OMP_USE
@@ -845,7 +847,7 @@ void JSphCpuSingle::FtCalcForcesSum(unsigned cf,tfloat3& face,tfloat3& fomegaace
 /// Computes final acceleration from particles and from external forces to ftoforces[].
 /// Calcula aceleracion final a parti de particulas y de fuerzas externas en ftoforces[].
 //==============================================================================
-void JSphCpuSingle::FtCalcForces(StFtoForces *ftoforces,bool saveftvalues)const{
+void JSphCpuSingle::FtCalcForces(StFtoForces* ftoforces,bool saveftvalues)const{
   const int ftcount=int(FtCount);
   #ifdef OMP_USE
     #pragma omp parallel for schedule (guided)

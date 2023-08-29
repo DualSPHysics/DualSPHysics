@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2023 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -99,7 +99,9 @@ void JSphInOutPoints::ResizeMemory(unsigned newnpt){
 //==============================================================================
 /// Returns matrix for rotation in 2D.
 //==============================================================================
-JMatrix4d JSphInOutPoints::ReadRotate2D(const JXml *sxml,TiXmlElement* ele,const tdouble3 &pt){
+JMatrix4d JSphInOutPoints::ReadRotate2D(const JXml* sxml,TiXmlElement* ele
+  ,const tdouble3& pt)
+{
   double rotate=sxml->ReadElementDouble(ele,"rotate","angle",true);
   string angunits=fun::StrLower(sxml->ReadElementStr(ele,"rotate","anglesunits"));
   if(angunits=="radians")rotate=rotate*TODEG;
@@ -113,7 +115,7 @@ JMatrix4d JSphInOutPoints::ReadRotate2D(const JXml *sxml,TiXmlElement* ele,const
 //==============================================================================
 /// Returns direction vector starting from direction in text.
 //==============================================================================
-tdouble3 JSphInOutPoints::DirectionFromStr(const std::string &strdir)const{
+tdouble3 JSphInOutPoints::DirectionFromStr(const std::string& strdir)const{
   tdouble3 dir=TDouble3(0);
   if     (strdir=="top"   )dir.z= 1;
   else if(strdir=="bottom")dir.z=-1;
@@ -127,7 +129,9 @@ tdouble3 JSphInOutPoints::DirectionFromStr(const std::string &strdir)const{
 //==============================================================================
 /// Returns direction vector starting from direction in text.
 //==============================================================================
-std::string JSphInOutPoints::CheckParticlesDirection(const JSphMkBlock *pmk,const tdouble3 &dir)const{
+std::string JSphInOutPoints::CheckParticlesDirection(const JSphMkBlock* pmk
+  ,const tdouble3& dir)const
+{
   const tdouble3 size=pmk->GetPosMax()-pmk->GetPosMin();
   std::string error;
   const unsigned ndir=(dir.z!=0? 1: 0)+(dir.y!=0? 1: 0)+(dir.x!=0? 1: 0);
@@ -143,8 +147,8 @@ std::string JSphInOutPoints::CheckParticlesDirection(const JSphMkBlock *pmk,cons
 //==============================================================================
 /// Creates points starting from special fluid particles.
 //==============================================================================
-void JSphInOutPoints::Create2d3d_Particles(const JXml *sxml,TiXmlElement* ele
-  ,const JDsPartsInit *partsdata)
+void JSphInOutPoints::Create2d3d_Particles(const JXml* sxml,TiXmlElement* ele
+  ,const JDsPartsInit* partsdata)
 {
   if(Count)Run_ExceptioonFile("There are previous definitions of inout points.",sxml->ErrGetFileRow(ele));
   unsigned mkfluid=sxml->GetAttributeUint(ele,"mkfluid");
@@ -195,7 +199,7 @@ void JSphInOutPoints::Create2d3d_Particles(const JXml *sxml,TiXmlElement* ele
 //==============================================================================
 /// Creates points in a line.
 //==============================================================================
-void JSphInOutPoints::Create2d_Line(const JXml *sxml,TiXmlElement* ele){
+void JSphInOutPoints::Create2d_Line(const JXml* sxml,TiXmlElement* ele){
   if(Count)Run_Exceptioon("Only one description zone is allowed for inlet/outlet points.");
   //-Load basic data.
   double px1=sxml->ReadElementFloat(ele,"point","x");
@@ -261,7 +265,7 @@ void JSphInOutPoints::Create2d_Line(const JXml *sxml,TiXmlElement* ele){
 //==============================================================================
 /// Returns matrix for rotation in 3D.
 //==============================================================================
-JMatrix4d JSphInOutPoints::ReadRotate3D(const JXml *sxml,TiXmlElement* ele){
+JMatrix4d JSphInOutPoints::ReadRotate3D(const JXml* sxml,TiXmlElement* ele){
   double rotate=sxml->ReadElementDouble(ele,"rotateaxis","angle",true);
   string angunits=fun::StrLower(sxml->ReadElementStr(ele,"rotateaxis","anglesunits"));
   if(angunits=="radians")rotate=rotate*TODEG;
@@ -278,7 +282,7 @@ JMatrix4d JSphInOutPoints::ReadRotate3D(const JXml *sxml,TiXmlElement* ele){
 //==============================================================================
 /// Creates points in a box.
 //==============================================================================
-void JSphInOutPoints::Create3d_Box(const JXml *sxml,TiXmlElement* ele){
+void JSphInOutPoints::Create3d_Box(const JXml* sxml,TiXmlElement* ele){
   if(Count)Run_Exceptioon("Only one description zone is allowed for inlet/outlet points.");
   //-Load basic data.
   tdouble3 pt0=sxml->ReadElementDouble3(ele,"point");
@@ -364,7 +368,7 @@ void JSphInOutPoints::Create3d_Box(const JXml *sxml,TiXmlElement* ele){
 //==============================================================================
 /// Creates points in a circle.
 //==============================================================================
-void JSphInOutPoints::Create3d_Circle(const JXml *sxml,TiXmlElement* ele){
+void JSphInOutPoints::Create3d_Circle(const JXml* sxml,TiXmlElement* ele){
   if(Count)Run_Exceptioon("Only one description zone is allowed for inlet/outlet points.");
   //-Load basic data.
   const tdouble3 pt0=sxml->ReadElementDouble3(ele,"point");
@@ -448,8 +452,8 @@ void JSphInOutPoints::Create3d_Circle(const JXml *sxml,TiXmlElement* ele){
 //==============================================================================
 /// Reads definition of inlet points in the XML node and creates points.
 //==============================================================================
-void JSphInOutPoints::CreatePoints(const JXml *sxml,TiXmlElement* lis
-  ,const JDsPartsInit *partsdata)
+void JSphInOutPoints::CreatePoints(const JXml* sxml,TiXmlElement* lis
+  ,const JDsPartsInit* partsdata)
 {
   string xmlrow=sxml->ErrGetFileRow(lis);
   TiXmlElement* ele=lis->FirstChildElement();
@@ -481,7 +485,7 @@ void JSphInOutPoints::CreatePoints(const JXml *sxml,TiXmlElement* lis
 //==============================================================================
 /// Compute domain limits from inout points.
 //==============================================================================
-void JSphInOutPoints::ComputeDomainLimits(tdouble3 &posmin,tdouble3 &posmax)const{
+void JSphInOutPoints::ComputeDomainLimits(tdouble3& posmin,tdouble3& posmax)const{
   if(Count==0)Run_Exceptioon("There are not defined points.");
   tdouble3 pmin=Points[0],pmax=Points[0];
   //-Calculates minimum and maximum position of inout points. 
@@ -584,7 +588,7 @@ void JSphInOutPoints::ComputeDomainFromPoints(){
 //==============================================================================
 /// Checks direction and position of points in simulation domain.
 //==============================================================================
-void JSphInOutPoints::CheckPoints(const std::string &xmlrow){
+void JSphInOutPoints::CheckPoints(const std::string& xmlrow){
   //-Checks direction.
   if(Simulate2D && Direction.y!=0)Run_ExceptioonFile("Direction.y is not zero.",xmlrow);
   if(Direction==TDouble3(0))Run_ExceptioonFile("Direction vector is zero.",xmlrow);
@@ -603,9 +607,9 @@ void JSphInOutPoints::CheckPoints(const std::string &xmlrow){
   if(error){
     //-Allocates memory.
     const unsigned np=Count*(Layers+1);
-    tfloat3 *pos=new tfloat3[np];
-    byte *layer=new byte[np];
-    byte *outside=new byte[np];
+    tfloat3* pos=new tfloat3[np];
+    byte*    layer=new byte[np];
+    byte*    outside=new byte[np];
     //-Loads point data.
     for(unsigned c=0;c<=Layers;c++){
       const tdouble3 sub=(Direction*double(Dp*c+InitialMove));
@@ -636,7 +640,7 @@ void JSphInOutPoints::CheckPoints(const std::string &xmlrow){
 //==============================================================================
 /// Loads lines with configuration information.
 //==============================================================================
-void JSphInOutPoints::GetConfig(std::vector<std::string> &lines)const{
+void JSphInOutPoints::GetConfig(std::vector<std::string>& lines)const{
   lines.push_back("InOut point definition:");
   for(unsigned i=0;i<unsigned(ConfigInfo.size());i++)lines.push_back(string("  ")+ConfigInfo[i]);
 }
@@ -660,7 +664,7 @@ unsigned JSphInOutPoints::CountPointsInit()const{
 //==============================================================================
 /// Returns border points of the domain of inlet points.
 //==============================================================================
-void JSphInOutPoints::GetPtDomain(std::vector<tdouble3> &ptdom)const{
+void JSphInOutPoints::GetPtDomain(std::vector<tdouble3>& ptdom)const{
   ptdom.clear();
   for(unsigned p=0;p<10;p++)ptdom.push_back(PtDom[p]);
 }

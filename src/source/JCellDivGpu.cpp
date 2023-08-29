@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2023 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -226,7 +226,7 @@ void JCellDivGpu::DefineDomain(unsigned cellcode,tuint3 domcelini,tuint3 domcelf
 /*:/==============================================================================
 // Devuelve coordenadas de celda a partir de una posicion.
 //==============================================================================
-//tuint3 JCellDivGpu::GetMapCell(const tfloat3 &pos)const{ pdtecell
+//tuint3 JCellDivGpu::GetMapCell(const tfloat3& pos)const{ pdtecell
 //  float dx=pos.x-MapPosMin.x,dy=pos.y-MapPosMin.y,dz=pos.z-MapPosMin.z;
 //  unsigned cx=unsigned(dx*OvScell),cy=unsigned(dy*OvScell),cz=unsigned(dz*OvScell);
 //  return(TUint3(cx,cy,cz));
@@ -239,8 +239,9 @@ void JCellDivGpu::DefineDomain(unsigned cellcode,tuint3 domcelini,tuint3 domcelf
 /// Calcula posiciones minimas y maximas del rango de particulas Bound indicado.
 /// En code[] ya estan marcadas las particulas excluidas.
 //==============================================================================
-void JCellDivGpu::CalcCellDomainBound(unsigned n,unsigned pini,unsigned n2,unsigned pini2
-  ,const unsigned* dcellg,const typecode *codeg,tuint3 &cellmin,tuint3 &cellmax)
+void JCellDivGpu::CalcCellDomainBound(unsigned n,unsigned pini,unsigned n2
+  ,unsigned pini2,const unsigned* dcellg,const typecode* codeg
+  ,tuint3& cellmin,tuint3& cellmax)
 {
   tuint3 cmin,cmax;
   cudiv::LimitsCell(n,pini,DomCellCode,dcellg,codeg,(unsigned*)AuxMem,cmin,cmax);
@@ -263,8 +264,9 @@ void JCellDivGpu::CalcCellDomainBound(unsigned n,unsigned pini,unsigned n2,unsig
 /// Calcula posiciones minimas y maximas del rango de particulas Fluid indicado.
 /// Ignora particulas excluidas que ya estan marcadas en code[].
 //==============================================================================
-void JCellDivGpu::CalcCellDomainFluid(unsigned n,unsigned pini,unsigned n2,unsigned pini2
-  ,const unsigned* dcellg,const typecode *codeg,tuint3 &cellmin,tuint3 &cellmax)
+void JCellDivGpu::CalcCellDomainFluid(unsigned n,unsigned pini,unsigned n2
+  ,unsigned pini2,const unsigned* dcellg,const typecode* codeg
+  ,tuint3& cellmin,tuint3& cellmax)
 {
   tuint3 cmin,cmax;
   cudiv::LimitsCell(n,pini,DomCellCode,dcellg,codeg,(unsigned*)AuxMem,cmin,cmax);
@@ -316,18 +318,21 @@ std::string JCellDivGpu::GetFileName(std::string name,std::string ext,int num)co
 /// Reorders basic arrays according to SortPart.
 /// Ordena arrays basicos segun SortPart. 
 //==============================================================================
-void JCellDivGpu::SortBasicArrays(const unsigned *idp,const typecode *code,const unsigned *dcell,const double2 *posxy,const double *posz,const float4 *velrhop
-  ,unsigned *idp2,typecode *code2,unsigned *dcell2,double2 *posxy2,double *posz2,float4 *velrhop2)
+void JCellDivGpu::SortBasicArrays(const unsigned* idp,const typecode* code
+  ,const unsigned* dcell,const double2* posxy,const double* posz
+  ,const float4* velrhop,unsigned* idp2,typecode* code2,unsigned* dcell2
+  ,double2* posxy2,double* posz2,float4* velrhop2)
 {
   const unsigned pini=(DivideFull? 0: NpbFinal);
-  cudiv::SortDataParticles(Nptot,pini,SortPart,idp,code,dcell,posxy,posz,velrhop,idp2,code2,dcell2,posxy2,posz2,velrhop2);
+  cudiv::SortDataParticles(Nptot,pini,SortPart,idp,code,dcell,posxy,posz,velrhop
+    ,idp2,code2,dcell2,posxy2,posz2,velrhop2);
 }
 
 //==============================================================================
 /// Reorders data arrays according to SortPart (for type float4).
 /// Ordena arrays de datos segun SortPart (para tipo float4).
 //==============================================================================
-void JCellDivGpu::SortDataArrays(const float4 *a,float4 *a2){
+void JCellDivGpu::SortDataArrays(const float4* a,float4* a2){
   const unsigned pini=(DivideFull? 0: NpbFinal);
   cudiv::SortDataParticles(Nptot,pini,SortPart,a,a2);
 }
@@ -336,7 +341,7 @@ void JCellDivGpu::SortDataArrays(const float4 *a,float4 *a2){
 /// Reorders data arrays according to SortPart (for float values).
 /// Ordena arrays de datos segun SortPart (para valores float).
 //==============================================================================
-void JCellDivGpu::SortDataArrays(const float *a,const float *b,float *a2,float *b2){
+void JCellDivGpu::SortDataArrays(const float* a,const float* b,float* a2,float* b2){
   const unsigned pini=(DivideFull? 0: NpbFinal);
   cudiv::SortDataParticles(Nptot,pini,SortPart,a,b,a2,b2);
 }
@@ -345,7 +350,9 @@ void JCellDivGpu::SortDataArrays(const float *a,const float *b,float *a2,float *
 /// Reorders data arrays according to SortPart (for double and double2 values).
 /// Ordena arrays de datos segun SortPart (para valores double y double2).
 //==============================================================================
-void JCellDivGpu::SortDataArrays(const double2 *a,const double *b,const float4 *c,double2 *a2,double *b2,float4 *c2){
+void JCellDivGpu::SortDataArrays(const double2* a,const double* b,const float4* c
+  ,double2* a2,double* b2,float4* c2)
+{
   const unsigned pini=(DivideFull? 0: NpbFinal);
   cudiv::SortDataParticles(Nptot,pini,SortPart,a,b,c,a2,b2,c2);
 }
@@ -354,7 +361,7 @@ void JCellDivGpu::SortDataArrays(const double2 *a,const double *b,const float4 *
 /// Reorders data arrays according to SortPart (for type tsymatrix3f).
 /// Ordena arrays de datos segun SortPart (para tipo tsymatrix3f).
 //==============================================================================
-void JCellDivGpu::SortDataArrays(const tsymatrix3f *a,tsymatrix3f *a2){
+void JCellDivGpu::SortDataArrays(const tsymatrix3f* a,tsymatrix3f* a2){
   const unsigned pini=(DivideFull? 0: NpbFinal);
   cudiv::SortDataParticles(Nptot,pini,SortPart,a,a2);
 }
@@ -363,7 +370,7 @@ void JCellDivGpu::SortDataArrays(const tsymatrix3f *a,tsymatrix3f *a2){
 /// Reorders data arrays according to SortPart (for type float3).
 /// Ordena arrays de datos segun SortPart (para tipo float3).
 //==============================================================================
-void JCellDivGpu::SortDataArrays(const float3 *a,float3 *a2){
+void JCellDivGpu::SortDataArrays(const float3* a,float3* a2){
   const unsigned pini=(DivideFull? 0: NpbFinal);
   cudiv::SortDataParticles(Nptot,pini,SortPart,a,a2);
 }
@@ -372,7 +379,7 @@ void JCellDivGpu::SortDataArrays(const float3 *a,float3 *a2){
 /// Reorders data arrays according to SortPart (for float values).
 /// Ordena arrays de datos segun SortPart (para valores float).
 //==============================================================================
-void JCellDivGpu::SortDataArrays(const float *a, float *a2) {
+void JCellDivGpu::SortDataArrays(const float* a, float* a2){
   const unsigned pini=(DivideFull? 0: NpbFinal);
   cudiv::SortDataParticles(Nptot,pini,SortPart,a,a2);
 }
@@ -419,7 +426,7 @@ tdouble3 JCellDivGpu::GetDomainLimits(bool limitmin,unsigned slicecellmin)const{
 //  unsigned pmin=UINT_MAX,pmax=0;
 //  if(celini<celfin){
 //    bool memorynew=false;
-//    unsigned *auxg=NULL;
+//    unsigned* auxg=NULL;
 //    unsigned size=cudiv::GetRangeParticlesCellsSizeAux(celini,celfin);
 //    if(size<=SizeAuxMem)auxg=(unsigned*)AuxMem;
 //    else{
@@ -440,7 +447,7 @@ tdouble3 JCellDivGpu::GetDomainLimits(bool limitmin,unsigned slicecellmin)const{
 //  unsigned count=0;
 //  if(celini<celfin){
 //    bool memorynew=false;
-//    unsigned *auxg=NULL;
+//    unsigned* auxg=NULL;
 //    unsigned size=cudiv::GetParticlesCellsSizeAux(celini,celfin);
 //    if(size<=SizeAuxMem)auxg=(unsigned*)AuxMem;
 //    else{
@@ -457,13 +464,15 @@ tdouble3 JCellDivGpu::GetDomainLimits(bool limitmin,unsigned slicecellmin)const{
 //==============================================================================
 // Graba fichero vtk con el rango de particulas indicado.
 //==============================================================================
-void JCellDivGpu::DgSaveVktRange(std::string file,unsigned pini,unsigned pfin,const unsigned *idpg,const float3 *posg)const{
+void JCellDivGpu::DgSaveVktRange(std::string file,unsigned pini,unsigned pfin
+  ,const unsigned* idpg,const float3* posg)const
+{
   int mpirank=Log->GetMpiRank();
   if(mpirank>=0)file=string("p")+fun::IntStr(mpirank)+"_"+file;
   file=DirOut+file;
   unsigned np=pfin-pini;
-  tfloat3 *pos=new tfloat3[np];
-  unsigned *idp=new unsigned[np];
+  tfloat3* pos=new tfloat3[np];
+  unsigned* idp=new unsigned[np];
   cudaMemcpy(idp,idpg+pini,sizeof(unsigned)*np,cudaMemcpyDeviceToHost);
   cudaMemcpy(pos,posg+pini,sizeof(float3)*np,cudaMemcpyDeviceToHost);
   JFormatFiles2::ParticlesToVtk(file,pfin-pini,pos,NULL,NULL,NULL,NULL,idp,NULL,NULL,NULL,NULL);

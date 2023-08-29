@@ -1,6 +1,6 @@
 //HEAD_DSCODES
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2023 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -104,7 +104,7 @@ inline const char* TpInZsurfModeText(const TpInZsurfMode t){
 ///Structure with zsurf results.
 typedef struct{
   unsigned npt;        ///<Number of zsurf values (uniform=1).
-  const float *zsurf;  ///<Pointer to zsurf values [npt].
+  const float* zsurf;  ///<Pointer to zsurf values [npt].
   tdouble3 pt;         ///<Reference point of gauge points.
   tdouble3 vdp;        ///<Vector to compute gauge positions.
   tdouble3 direction;  ///<Inflow direction.

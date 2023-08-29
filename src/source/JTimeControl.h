@@ -1,6 +1,6 @@
 //HEAD_DSCODES
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2023 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -72,7 +72,7 @@ protected:
   unsigned OutNum;
 
   void ConfigPeriodic(double tfirst,double tout);
-  void ConfigTimes(unsigned ntimes,const double *vtimes);
+  void ConfigTimes(unsigned ntimes,const double* vtimes);
   void ConfigTimes(std::string times);
   void PrepareTimes();
 
@@ -83,8 +83,8 @@ protected:
 public:
   JTimeControl(double tout);
   JTimeControl(double tfirst,double tout);
-  JTimeControl(unsigned ntimes,const double *vtimes);
-  JTimeControl(const std::string &times);
+  JTimeControl(unsigned ntimes,const double* vtimes);
+  JTimeControl(const std::string& times);
   ~JTimeControl();
 
   void Reset();

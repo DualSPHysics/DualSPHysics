@@ -1,6 +1,6 @@
 //HEAD_DSCODES
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2023 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -76,7 +76,7 @@ void JMotion::Reset(){
 //==============================================================================
 // Configura el directorio para datos de entrada.
 //==============================================================================
-void JMotion::SetDirData(const std::string &dirdata){
+void JMotion::SetDirData(const std::string& dirdata){
   DirData=fun::GetDirWithSlash(dirdata);
 }
 
@@ -84,7 +84,7 @@ void JMotion::SetDirData(const std::string &dirdata){
 // Devuelve puntero al objeto con el id indicado
 //==============================================================================
 JMotionObj* JMotion::ObjGetPointer(unsigned id)const{
-  JMotionObj *obj=NULL;
+  JMotionObj* obj=NULL;
   for(unsigned c=0;c<Objs.size()&&!obj;c++)obj=Objs[c]->ObjGetPointer(id);
   return(obj);
 }
@@ -93,7 +93,7 @@ JMotionObj* JMotion::ObjGetPointer(unsigned id)const{
 // Devuelve puntero al objeto con la referencia indicada
 //==============================================================================
 JMotionObj* JMotion::ObjGetPointerByRef(int ref)const{
-  JMotionObj *obj=NULL;
+  JMotionObj* obj=NULL;
   for(unsigned c=0;c<Objs.size()&&!obj;c++)obj=Objs[c]->ObjGetPointerByRef(ref);
   return(obj);
 }
@@ -132,7 +132,9 @@ void JMotion::ObjAdd(unsigned id,unsigned idparent,int ref){
 // - timefinish: Indica el tiempo maximo del movimiento/s iniciados por este 
 //   evento, si es menor que cero se ignora.
 //==============================================================================
-void JMotion::EventAdd(unsigned objid,unsigned movid,double timestart,double timefinish){
+void JMotion::EventAdd(unsigned objid,unsigned movid,double timestart
+  ,double timefinish)
+{
   if(Prepared)Run_Exceptioon("Invalid method in execution mode.");
   JMotionObj* obj=ObjGetPointer(objid);
   if(!obj)Run_Exceptioon(fun::PrintStr("Missing object with id=%u.",objid));
@@ -147,7 +149,9 @@ void JMotion::EventAdd(unsigned objid,unsigned movid,double timestart,double tim
 //==============================================================================
 // Incorpora (si es necesario) un nuevo eje para un objeto y lo devuelve.
 //==============================================================================
-JMotionAxis* JMotion::AxisAdd(unsigned objid,const tdouble3 &p1,const tdouble3 &p2){
+JMotionAxis* JMotion::AxisAdd(unsigned objid,const tdouble3& p1
+  ,const tdouble3& p2)
+{
   if(Prepared)Run_Exceptioon("Invalid method in execution mode.");
   JMotionAxis* axis=NULL;
   JMotionObj* obj=ObjGetPointer(objid);
@@ -170,7 +174,8 @@ void JMotion::MovAdd(unsigned objid,JMotionMov* mov){
   if(!mov->Id)Run_Exceptioon("The movement id must be greater than zero.");
   JMotionObj* obj=ObjGetPointer(objid);
   if(!obj)Run_Exceptioon("Missing object.");
-  if(obj->MovGetPointer(mov->Id))Run_Exceptioon("Cannot add a movement with a existing id inside the object.");
+  if(obj->MovGetPointer(mov->Id))
+    Run_Exceptioon("Cannot add a movement with a existing id inside the object.");
   obj->AddMov(mov);
 }
 
@@ -184,77 +189,110 @@ void JMotion::MovAddWait(unsigned objid,unsigned id,unsigned nextid,double time)
 //==============================================================================
 // Incorpora un desplazamiento instantaneo
 //==============================================================================
-void JMotion::MovAddTeleport(unsigned objid,unsigned id,unsigned nextid,const tdouble3 &mpos){
+void JMotion::MovAddTeleport(unsigned objid,unsigned id,unsigned nextid
+  ,const tdouble3& mpos)
+{
   MovAdd(objid,new JMotionMovRect(id,nextid,-1,mpos));
 }
 //==============================================================================
 // Incorpora un movimiento rectilineo uniforme
 //==============================================================================
-void JMotion::MovAddRectilinear(unsigned objid,unsigned id,unsigned nextid,double time,const tdouble3 &vel){
+void JMotion::MovAddRectilinear(unsigned objid,unsigned id,unsigned nextid
+  ,double time,const tdouble3& vel)
+{
   MovAdd(objid,new JMotionMovRect(id,nextid,time,vel));
 }
 //==============================================================================
 // Incorpora un movimiento rectilineo uniformemente acelerado
 //==============================================================================
-void JMotion::MovAddRectilinearAce(unsigned objid,unsigned id,unsigned nextid,double time,const tdouble3 &ace,const tdouble3 &vel,bool velpre){
+void JMotion::MovAddRectilinearAce(unsigned objid,unsigned id,unsigned nextid
+  ,double time,const tdouble3& ace,const tdouble3& vel,bool velpre)
+{
   MovAdd(objid,new JMotionMovRectAce(id,nextid,time,ace,vel,velpre));
 }
 //==============================================================================
 // Incorpora un movimiento rotacion
 //==============================================================================
-void JMotion::MovAddRotation(unsigned objid,unsigned id,unsigned nextid,double time,bool angdegrees,const tdouble3 &axisp1,const tdouble3 &axisp2,double velang,bool useangdegrees){
+void JMotion::MovAddRotation(unsigned objid,unsigned id,unsigned nextid
+  ,double time,bool angdegrees,const tdouble3& axisp1,const tdouble3& axisp2
+  ,double velang,bool useangdegrees)
+{
   if(useangdegrees && !angdegrees)velang=velang*TODEG;
   MovAdd(objid,new JMotionMovRot(id,nextid,time,angdegrees,AxisAdd(objid,axisp1,axisp2),velang));
 }
 //==============================================================================
 // Incorpora un movimiento rotacion uniformemente acelerado
 //==============================================================================
-void JMotion::MovAddRotationAce(unsigned objid,unsigned id,unsigned nextid,double time,bool angdegrees,const tdouble3 &axisp1,const tdouble3 &axisp2,double aceang,double velang,bool velpre,bool useangdegrees){
+void JMotion::MovAddRotationAce(unsigned objid,unsigned id,unsigned nextid
+  ,double time,bool angdegrees,const tdouble3& axisp1,const tdouble3& axisp2
+  ,double aceang,double velang,bool velpre,bool useangdegrees)
+{
   if(useangdegrees && !angdegrees){
     aceang=aceang*TODEG;
     velang=velang*TODEG;
   }
-  MovAdd(objid,new JMotionMovRotAce(id,nextid,time,angdegrees,AxisAdd(objid,axisp1,axisp2),aceang,velang,velpre));
+  MovAdd(objid,new JMotionMovRotAce(id,nextid,time,angdegrees
+    ,AxisAdd(objid,axisp1,axisp2),aceang,velang,velpre));
 }
 //==============================================================================
 // Incorpora un movimiento circular sin rotacion
 //==============================================================================
-void JMotion::MovAddCircular(unsigned objid,unsigned id,unsigned nextid,double time,bool angdegrees,const tdouble3 &axisp1,const tdouble3 &axisp2,const tdouble3 &ref,double velang,bool useangdegrees){
+void JMotion::MovAddCircular(unsigned objid,unsigned id,unsigned nextid
+  ,double time,bool angdegrees,const tdouble3& axisp1,const tdouble3& axisp2
+  ,const tdouble3& ref,double velang,bool useangdegrees)
+{
   if(useangdegrees && !angdegrees)velang=velang*TODEG;
-  MovAdd(objid,new JMotionMovCir(id,nextid,time,angdegrees,AxisAdd(objid,axisp1,axisp2),AxisAdd(objid,ref,ref),velang));
+  MovAdd(objid,new JMotionMovCir(id,nextid,time,angdegrees
+    ,AxisAdd(objid,axisp1,axisp2),AxisAdd(objid,ref,ref),velang));
 }
 //==============================================================================
 // Incorpora un movimiento circular sin rotacion uniformemente acelerado
 //==============================================================================
-void JMotion::MovAddCircularAce(unsigned objid,unsigned id,unsigned nextid,double time,bool angdegrees,const tdouble3 &axisp1,const tdouble3 &axisp2,const tdouble3 &ref,double aceang,double velang,bool velpre,bool useangdegrees){
+void JMotion::MovAddCircularAce(unsigned objid,unsigned id,unsigned nextid
+  ,double time,bool angdegrees,const tdouble3& axisp1,const tdouble3& axisp2
+  ,const tdouble3& ref,double aceang,double velang,bool velpre,bool useangdegrees)
+{
   if(useangdegrees && !angdegrees){
     aceang=aceang*TODEG;
     velang=velang*TODEG;
   }
-  MovAdd(objid,new JMotionMovCirAce(id,nextid,time,angdegrees,AxisAdd(objid,axisp1,axisp2),AxisAdd(objid,ref,ref),aceang,velang,velpre));
+  MovAdd(objid,new JMotionMovCirAce(id,nextid,time,angdegrees
+    ,AxisAdd(objid,axisp1,axisp2),AxisAdd(objid,ref,ref),aceang,velang,velpre));
 }
 //==============================================================================
 // Incorpora un movimiento rectilineo sinusoidal
 //==============================================================================
-void JMotion::MovAddRecSinu(unsigned objid,unsigned id,unsigned nextid,double time,bool angdegrees,const tdouble3 &freq,const tdouble3 &ampl,tdouble3 phase,bool phaseprev,bool useangdegrees){
+void JMotion::MovAddRecSinu(unsigned objid,unsigned id,unsigned nextid
+  ,double time,bool angdegrees,const tdouble3& freq,const tdouble3& ampl
+  ,tdouble3 phase,bool phaseprev,bool useangdegrees)
+{
   if(useangdegrees && angdegrees)phase=phase*TDouble3(TORAD); //-Convierte a radianes.
   MovAdd(objid,new JMotionMovRectSinu(id,nextid,time,angdegrees,freq,ampl,phase,phaseprev));
 }
 //==============================================================================
 // Incorpora un movimiento de rotacion sinusoidal
 //==============================================================================
-void JMotion::MovAddRotSinu(unsigned objid,unsigned id,unsigned nextid,double time,bool angdegrees,const tdouble3 &axisp1,const tdouble3 &axisp2,double freq,double ampl,double phase,bool phaseprev,bool useangdegrees){
+void JMotion::MovAddRotSinu(unsigned objid,unsigned id,unsigned nextid
+  ,double time,bool angdegrees,const tdouble3& axisp1,const tdouble3& axisp2
+  ,double freq,double ampl,double phase,bool phaseprev,bool useangdegrees)
+{
   if(useangdegrees && !angdegrees)ampl=ampl*TODEG;
   if(useangdegrees && angdegrees)phase=phase*TORAD; //-Convierte a radianes.
-  MovAdd(objid,new JMotionMovRotSinu(id,nextid,time,angdegrees,AxisAdd(objid,axisp1,axisp2),freq,ampl,phase,phaseprev));
+  MovAdd(objid,new JMotionMovRotSinu(id,nextid,time,angdegrees
+    ,AxisAdd(objid,axisp1,axisp2),freq,ampl,phase,phaseprev));
 }
 //==============================================================================
 // Incorpora un movimiento circular sinusoidal
 //==============================================================================
-void JMotion::MovAddCirSinu(unsigned objid,unsigned id,unsigned nextid,double time,bool angdegrees,const tdouble3 &axisp1,const tdouble3 &axisp2,const tdouble3 &ref,double freq,double ampl,double phase,bool phaseprev,bool useangdegrees){
+void JMotion::MovAddCirSinu(unsigned objid,unsigned id,unsigned nextid
+  ,double time,bool angdegrees,const tdouble3& axisp1,const tdouble3& axisp2
+  ,const tdouble3& ref,double freq,double ampl,double phase,bool phaseprev
+  ,bool useangdegrees)
+{
   if(useangdegrees && !angdegrees)ampl=ampl*TODEG;
   if(useangdegrees && angdegrees)phase=phase*TORAD; //-Convierte a radianes.
-  MovAdd(objid,new JMotionMovCirSinu(id,nextid,time,angdegrees,AxisAdd(objid,axisp1,axisp2),AxisAdd(objid,ref,ref),freq,ampl,phase,phaseprev));
+  MovAdd(objid,new JMotionMovCirSinu(id,nextid,time,angdegrees
+    ,AxisAdd(objid,axisp1,axisp2),AxisAdd(objid,ref,ref),freq,ampl,phase,phaseprev));
 }
 //==============================================================================
 // Incorpora un movimiento rectilineo a partir de datos de un fichero.
@@ -264,7 +302,10 @@ void JMotion::MovAddCirSinu(unsigned objid,unsigned id,unsigned nextid,double ti
 // - fieldy: Posicion del campo y dentro de fields (menor que 0 se ignora).
 // - fieldz: Posicion del campo z dentro de fields (menor que 0 se ignora).
 //==============================================================================
-void JMotion::MovAddRectilinearFile(unsigned objid,unsigned id,unsigned nextid,double time,const std::string &file,int fields,int fieldtime,int fieldx,int fieldy,int fieldz){
+void JMotion::MovAddRectilinearFile(unsigned objid,unsigned id,unsigned nextid
+  ,double time,const std::string& file,int fields,int fieldtime,int fieldx
+  ,int fieldy,int fieldz)
+{
   if(fieldtime<0)Run_Exceptioon("The \'time\' is not defined.");
   if(fieldtime>=0 && fieldtime>=fields)Run_Exceptioon("the position of field \'time\' is invalid.");
   if(fieldx<0 && fieldy<0 && fieldz<0)Run_Exceptioon("You need at least one position field.");
@@ -276,10 +317,12 @@ void JMotion::MovAddRectilinearFile(unsigned objid,unsigned id,unsigned nextid,d
 //==============================================================================
 // Incorpora un movimiento de rotacion a partir de datos de un fichero.
 //==============================================================================
-void JMotion::MovAddRotationFile(unsigned objid,unsigned id,unsigned nextid,double time,bool angdegrees
-  ,const tdouble3 &axisp1,const tdouble3 &axisp2,const std::string &file)
+void JMotion::MovAddRotationFile(unsigned objid,unsigned id,unsigned nextid
+  ,double time,bool angdegrees,const tdouble3& axisp1,const tdouble3& axisp2
+  ,const std::string& file)
 {
-  MovAdd(objid,new JMotionMovRotFile(id,nextid,time,angdegrees,AxisAdd(objid,axisp1,axisp2),&DirData,file));
+  MovAdd(objid,new JMotionMovRotFile(id,nextid,time,angdegrees
+    ,AxisAdd(objid,axisp1,axisp2),&DirData,file));
 }
 
 //==============================================================================
@@ -304,7 +347,9 @@ void JMotion::Prepare(){
   if(Prepared)Run_Exceptioon("Invalid method in execution mode.");
   CheckLinkMovs();
   //-Ordena eventos de ultimo a primero.
-  if(Events.size())for(unsigned c=0;c<Events.size()-1;c++)for(unsigned c2=c+1;c2<Events.size();c2++)if(Events[c]->TimeStart<Events[c2]->TimeStart)swap(Events[c],Events[c2]);
+  if(Events.size())for(unsigned c=0;c<Events.size()-1;c++)
+    for(unsigned c2=c+1;c2<Events.size();c2++)
+      if(Events[c]->TimeStart<Events[c2]->TimeStart)swap(Events[c],Events[c2]);
 //for(unsigned c=0;c<Events.size();c++)printf("Evt[%d].start: %G\n",c,Events[c]->TimeStart);
   EventNext=int(Events.size())-1;
   //-Contabiliza el numero de objetos totales
@@ -411,8 +456,9 @@ bool JMotion::ProcesTimeAce(double timestep,double dt){
 // Nuevo metodo para devolver resultados de ProcesTimeSimple() o ProcesTimeAce().
 // Returns data of one moving object. Returns true when the motion is active.
 //==============================================================================
-bool JMotion::ProcesTimeGetData(unsigned ref,bool &typesimple,tdouble3 &simplemov
-  ,tdouble3 &simplevel,tdouble3 &simpleace,tmatrix4d &matmov,tmatrix4d &matmov2)const
+bool JMotion::ProcesTimeGetData(unsigned ref,bool& typesimple
+  ,tdouble3& simplemov,tdouble3& simplevel,tdouble3& simpleace
+  ,tmatrix4d& matmov,tmatrix4d& matmov2)const
 {
   return(MotList->GetData(ref,typesimple,simplemov,simplevel,simpleace,matmov,matmov2));
 }
@@ -421,7 +467,8 @@ bool JMotion::ProcesTimeGetData(unsigned ref,bool &typesimple,tdouble3 &simplemo
 // Nuevo metodo para devolver resultados de ProcesTimeSimple() o ProcesTimeAce().
 // Returns data of one moving object. Returns true when the motion is active.
 //==============================================================================
-bool JMotion::ProcesTimeGetData(unsigned ref,bool &typesimple,tdouble3 &simplemov,tmatrix4d &matmov)const
+bool JMotion::ProcesTimeGetData(unsigned ref,bool& typesimple
+  ,tdouble3& simplemov,tmatrix4d& matmov)const
 {
   return(MotList->GetData(ref,typesimple,simplemov,matmov));
 }
@@ -471,7 +518,9 @@ bool JMotion::ProcesTime(double timestep,double dt){
 //==============================================================================
 // Devuelve datos de movimiento de un objeto.
 //==============================================================================
-bool JMotion::GetMov(unsigned pos,unsigned &ref,tdouble3 &mvsimple,JMatrix4d &mvmatrix)const{
+bool JMotion::GetMov(unsigned pos,unsigned& ref,tdouble3& mvsimple
+  ,JMatrix4d& mvmatrix)const
+{
   if(pos>=LisMovCount)Run_Exceptioon("The requested movement is invalid.");
   return(LisMov[pos]->GetMov(ref,mvsimple,mvmatrix));
 }
@@ -499,11 +548,12 @@ int JMotion::GetMaxRef()const{
 //==============================================================================
 // Copia los datos de configuracion (Objs,Movs,Events) a mot.
 //==============================================================================
-void JMotion::CopyConfig(JMotion &mot)const{
+void JMotion::CopyConfig(JMotion& mot)const{
   mot.Reset();
   mot.DirData=DirData;
   for(int c=0;c<int(Objs.size());c++)Objs[c]->CopyConfig(mot);
-  for(int c=0;c<int(Events.size());c++)mot.EventAdd(Events[c]->Obj->Id,Events[c]->Mov->Id,Events[c]->TimeStart,Events[c]->TimeFinish);
+  for(int c=0;c<int(Events.size());c++)
+    mot.EventAdd(Events[c]->Obj->Id,Events[c]->Mov->Id,Events[c]->TimeStart,Events[c]->TimeFinish);
   mot.CheckLinkMovs();
 }
 
@@ -512,10 +562,13 @@ void JMotion::CopyConfig(JMotion &mot)const{
 // Solo copia los datos de configuracion (Objs,Movs,Events).
 // Las referencias que no aparezcan pasan a ser -1.
 //==============================================================================
-void JMotion::CopyChangeRef(JMotion &mot,const int* ref,const int* refnew,unsigned refcount)const{
+void JMotion::CopyChangeRef(JMotion& mot,const int* ref,const int* refnew
+  ,unsigned refcount)const
+{
   mot.Reset();
   for(int c=0;c<int(Objs.size());c++)Objs[c]->CopyChangeRef(mot,ref,refnew,refcount);
-  for(int c=0;c<int(Events.size());c++)mot.EventAdd(Events[c]->Obj->Id,Events[c]->Mov->Id,Events[c]->TimeStart,Events[c]->TimeFinish);
+  for(int c=0;c<int(Events.size());c++)
+    mot.EventAdd(Events[c]->Obj->Id,Events[c]->Mov->Id,Events[c]->TimeStart,Events[c]->TimeFinish);
   mot.CheckLinkMovs();
 }
 
@@ -544,7 +597,7 @@ void JMotion::Optimize(){
 //==============================================================================
 // Guarda configuracion de motion en formato xml
 //==============================================================================
-void JMotion::WriteXml(JXml *jxml,const std::string &path)const{
+void JMotion::WriteXml(JXml* jxml,const std::string& path)const{
   jxml->RemoveNode(path);
   CheckLinkMovs();
   TiXmlNode* node=jxml->GetNode(path,true);
@@ -554,7 +607,9 @@ void JMotion::WriteXml(JXml *jxml,const std::string &path)const{
 //==============================================================================
 // Carga configuracion de motion en formato xml
 //==============================================================================
-void JMotion::ReadXml(const std::string &dirdata,JXml *jxml,TiXmlNode* node,unsigned &id,unsigned idp){
+void JMotion::ReadXml(const std::string& dirdata,JXml* jxml,TiXmlNode* node
+  ,unsigned& id,unsigned idp)
+{
   TiXmlElement* ele=node->FirstChildElement(); 
   while(ele){
     string name=ele->Value();
@@ -700,7 +755,9 @@ void JMotion::ReadXml(const std::string &dirdata,JXml *jxml,TiXmlNode* node,unsi
 //==============================================================================
 // Carga configuracion de motion en formato xml
 //==============================================================================
-void JMotion::ReadXml(const std::string &dirdata,JXml *jxml,const std::string &path,bool checkexists){
+void JMotion::ReadXml(const std::string& dirdata,JXml* jxml
+  ,const std::string& path,bool checkexists)
+{
   Reset();
   DirData=fun::GetDirWithSlash(dirdata);
   unsigned id=0;
@@ -715,7 +772,9 @@ void JMotion::ReadXml(const std::string &dirdata,JXml *jxml,const std::string &p
 //==============================================================================
 // Carga configuracion de motion en formato xml de un fichero
 //==============================================================================
-void JMotion::LoadFileXml(const std::string &dirdata,const std::string &file,const string &path){
+void JMotion::LoadFileXml(const std::string& dirdata,const std::string& file
+  ,const string& path)
+{
   JXml jxml;
   jxml.LoadFile(file);
   ReadXml(dirdata,&jxml,path);
@@ -724,7 +783,9 @@ void JMotion::LoadFileXml(const std::string &dirdata,const std::string &file,con
 //==============================================================================
 // Graba configuracion de motion en formato xml en un fichero
 //==============================================================================
-void JMotion::SaveFileXml(const std::string &file,const std::string &path,bool newfile)const{
+void JMotion::SaveFileXml(const std::string& file,const std::string& path
+  ,bool newfile)const
+{
   JXml jxml;
   if(!newfile)jxml.LoadFile(file);
   WriteXml(&jxml,path);

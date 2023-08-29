@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2023 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -44,17 +44,17 @@ class JSphGpu : public JSph
   friend class JDebugSphGpu;
 
 protected:
-  static void RunExceptioonCudaStatic(const std::string &srcfile,int srcline
-    ,const std::string &method
+  static void RunExceptioonCudaStatic(const std::string& srcfile,int srcline
+    ,const std::string& method
     ,cudaError_t cuerr,std::string msg);
-  static void CheckCudaErroorStatic(const std::string &srcfile,int srcline
-    ,const std::string &method
+  static void CheckCudaErroorStatic(const std::string& srcfile,int srcline
+    ,const std::string& method
     ,std::string msg);
-  void RunExceptioonCuda(const std::string &srcfile,int srcline
-    ,const std::string &classname,const std::string &method
+  void RunExceptioonCuda(const std::string& srcfile,int srcline
+    ,const std::string& classname,const std::string& method
     ,cudaError_t cuerr,std::string msg)const;
-  void CheckCudaErroor(const std::string &srcfile,int srcline
-    ,const std::string &classname,const std::string &method
+  void CheckCudaErroor(const std::string& srcfile,int srcline
+    ,const std::string& classname,const std::string& method
     ,std::string msg)const;
 
 private:
@@ -203,7 +203,7 @@ protected:
   void ConstantDataUp();
   void ParticlesDataUp(unsigned n,const tfloat3* boundnor);
   unsigned ParticlesDataDown(unsigned n,unsigned pini,bool code
-    ,bool onlynormal,const byte* filterg,unsigned &npfilterdel);
+    ,bool onlynormal,const byte* filterg,unsigned& npfilterdel);
   
   int SelecDevice(int gpuid);
   void ConfigBlockSizes(bool usezone,bool useperi);
@@ -230,7 +230,7 @@ protected:
   void RunDamping(double dt);
 
   void SaveVtkNormalsGpu(std::string filename,int numfile,unsigned np,unsigned npb
-    ,const double2 *posxyg,const double *poszg,const unsigned *idpg,const float3 *boundnorg);
+    ,const double2* posxyg,const double* poszg,const unsigned* idpg,const float3* boundnorg);
 
 public:
   JSphGpu(bool withmpi);
@@ -239,13 +239,30 @@ public:
 //-Functions for debug.
 //----------------------
 public:
-  void DgSaveVtkParticlesGpu(std::string filename,int numfile,unsigned pini,unsigned pfin,const double2 *posxyg,const double *poszg,const typecode *codeg,const unsigned *idpg,const float4 *velrhopg)const;
-  void DgSaveVtkParticlesGpu(std::string filename,int numfile,unsigned pini,unsigned pfin,unsigned cellcode,const double2 *posxyg,const double *poszg,const unsigned *idpg,const unsigned *dcelg,const typecode *codeg,const float4 *velrhopg,const float4 *velrhopm1g,const float3 *aceg);
-  void DgSaveVtkParticlesGpu(std::string filename,int numfile,unsigned pini,unsigned pfin,bool idp,bool vel,bool rhop,bool code);
-  void DgSaveVtkParticlesGpu(std::string filename,int numfile,unsigned pini,unsigned pfin,const float3 *posg,const byte *checkg=NULL,const unsigned *idpg=NULL,const float3 *velg=NULL,const float *rhopg=NULL);
-  void DgSaveCsvParticlesGpu(std::string filename,int numfile,unsigned pini,unsigned pfin,std::string head,const float3 *posg=NULL,const unsigned *idpg=NULL,const float3 *velg=NULL,const float *rhopg=NULL,const float *arg=NULL,const float3 *aceg=NULL,const float3 *vcorrg=NULL);
-  void DgSaveCsvParticlesGpu2(std::string filename,int numfile,unsigned pini,unsigned pfin,std::string head,const float3 *posg=NULL,const unsigned *idpg=NULL,const float3 *velg=NULL,const float *rhopg=NULL,const float4 *pospres=NULL,const float4 *velrhop=NULL);
-  void DgSaveCsvParticles2(std::string filename,int numfile,unsigned pini,unsigned pfin,std::string head,const tfloat3 *pos=NULL,const unsigned *idp=NULL,const tfloat3 *vel=NULL,const float *rhop=NULL,const tfloat4 *pospres=NULL,const tfloat4 *velrhop=NULL);
+  void DgSaveVtkParticlesGpu(std::string filename,int numfile,unsigned pini,unsigned pfin
+    ,const double2* posxyg,const double* poszg,const typecode* codeg,const unsigned* idpg
+    ,const float4* velrhopg)const;
+  void DgSaveVtkParticlesGpu(std::string filename,int numfile,unsigned pini,unsigned pfin
+    ,unsigned cellcode,const double2* posxyg,const double* poszg,const unsigned* idpg
+    ,const unsigned* dcelg,const typecode* codeg,const float4* velrhopg
+    ,const float4* velrhopm1g,const float3* aceg);
+  void DgSaveVtkParticlesGpu(std::string filename,int numfile,unsigned pini,unsigned pfin
+    ,bool idp,bool vel,bool rhop,bool code);
+  void DgSaveVtkParticlesGpu(std::string filename,int numfile,unsigned pini,unsigned pfin
+    ,const float3* posg,const byte* checkg=NULL,const unsigned* idpg=NULL
+    ,const float3* velg=NULL,const float* rhopg=NULL);
+  void DgSaveCsvParticlesGpu(std::string filename,int numfile,unsigned pini,unsigned pfin
+    ,std::string head,const float3* posg=NULL,const unsigned* idpg=NULL
+    ,const float3* velg=NULL,const float* rhopg=NULL,const float* arg=NULL
+    ,const float3* aceg=NULL,const float3* vcorrg=NULL);
+  void DgSaveCsvParticlesGpu2(std::string filename,int numfile,unsigned pini,unsigned pfin
+    ,std::string head,const float3* posg=NULL,const unsigned* idpg=NULL
+    ,const float3* velg=NULL,const float* rhopg=NULL,const float4* pospres=NULL
+    ,const float4* velrhop=NULL);
+  void DgSaveCsvParticles2(std::string filename,int numfile,unsigned pini,unsigned pfin
+    ,std::string head,const tfloat3* pos=NULL,const unsigned* idp=NULL
+    ,const tfloat3* vel=NULL,const float* rhop=NULL,const tfloat4* pospres=NULL
+    ,const tfloat4* velrhop=NULL);
 };
 
 #endif

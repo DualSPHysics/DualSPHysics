@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2023 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -50,7 +50,7 @@ void JDsInitializeOp::Reset(){
 //==============================================================================
 /// Reads onlypos filter information.
 //==============================================================================
-void JDsInitializeOp::ReadXmlOnlyPos(const JXml *sxml,TiXmlElement* ele){
+void JDsInitializeOp::ReadXmlOnlyPos(const JXml* sxml,TiXmlElement* ele){
   OnlyPos=false;
   OnlyPosMin=OnlyPosMax=TDouble3(0);
   ele=ele->FirstChildElement("onlypos"); 
@@ -79,8 +79,8 @@ void JDsInitializeOp::ReadXmlOnlyPos(const JXml *sxml,TiXmlElement* ele){
 /// Calculates domain limits of MkType particles and returns number of particles.
 //==============================================================================
 unsigned JDsInitializeOp::ComputeDomainMk(bool bound,word mktp,unsigned np
-  ,const word *mktype,const unsigned *idp,const tdouble3 *pos
-  ,tdouble3 &posmin,tdouble3 &posmax)const
+  ,const word* mktype,const unsigned* idp,const tdouble3* pos
+  ,tdouble3& posmin,tdouble3& posmax)const
 {
   tdouble3 pmin=TDouble3(DBL_MAX),pmax=TDouble3(-DBL_MAX);
   unsigned n=0;
@@ -149,7 +149,7 @@ void JDsInitializeOp_FluidVel::Reset(){
 //==============================================================================
 /// Reads particles information in xml format.
 //==============================================================================
-void JDsInitializeOp_FluidVel::ReadXml(const JXml *sxml,TiXmlElement* xele){
+void JDsInitializeOp_FluidVel::ReadXml(const JXml* sxml,TiXmlElement* xele){
   sxml->CheckElementNames(xele,true,"onlypos direction velocity velocity2 velocity3");
   ReadXmlOnlyPos(sxml,xele);
   MkFluid=sxml->GetAttributeStr(xele,"mkfluid",true);
@@ -183,8 +183,8 @@ void JDsInitializeOp_FluidVel::ReadXml(const JXml *sxml,TiXmlElement* xele){
 //==============================================================================
 /// Initializes data of particles according XML configuration.
 //==============================================================================
-void JDsInitializeOp_FluidVel::Run(unsigned np,unsigned npb,const tdouble3 *pos
-  ,const unsigned *idp,const word *mktype,tfloat4 *velrhop,tfloat3 *boundnor)
+void JDsInitializeOp_FluidVel::Run(unsigned np,unsigned npb,const tdouble3* pos
+  ,const unsigned* idp,const word* mktype,tfloat4* velrhop,tfloat3* boundnor)
 {
   const tfloat3 dir=fgeo::VecUnitary(Direction);
   float m2=0,b2=0;
@@ -220,7 +220,7 @@ void JDsInitializeOp_FluidVel::Run(unsigned np,unsigned npb,const tdouble3 *pos
 //==============================================================================
 /// Returns strings with configuration.
 //==============================================================================
-void JDsInitializeOp_FluidVel::GetConfig(std::vector<std::string> &lines)const{
+void JDsInitializeOp_FluidVel::GetConfig(std::vector<std::string>& lines)const{
   lines.push_back(fun::PrintStr("  Operation: %s",ClassName.substr(BaseNameSize).c_str()));
   lines.push_back(GetConfigMkFluid(MkFluid));
   if(OnlyPos)lines.push_back(GetConfigOnlyPos());
@@ -246,7 +246,7 @@ void JDsInitializeOp_BoundNormalSet::Reset(){
 //==============================================================================
 /// Reads particles information in xml format.
 //==============================================================================
-void JDsInitializeOp_BoundNormalSet::ReadXml(const JXml *sxml,TiXmlElement* xele){
+void JDsInitializeOp_BoundNormalSet::ReadXml(const JXml* sxml,TiXmlElement* xele){
   sxml->CheckElementNames(xele,true,"onlypos normal");
   ReadXmlOnlyPos(sxml,xele);
   MkBound=sxml->GetAttributeStr(xele,"mkbound",true);
@@ -256,8 +256,9 @@ void JDsInitializeOp_BoundNormalSet::ReadXml(const JXml *sxml,TiXmlElement* xele
 //==============================================================================
 /// Initializes data of particles according XML configuration.
 //==============================================================================
-void JDsInitializeOp_BoundNormalSet::Run(unsigned np,unsigned npb,const tdouble3 *pos
-  ,const unsigned *idp,const word *mktype,tfloat4 *velrhop,tfloat3 *boundnor)
+void JDsInitializeOp_BoundNormalSet::Run(unsigned np,unsigned npb
+  ,const tdouble3* pos,const unsigned* idp,const word* mktype,tfloat4* velrhop
+  ,tfloat3* boundnor)
 {
   JRangeFilter rg(MkBound);
   const bool all=(MkBound.empty());
@@ -269,7 +270,7 @@ void JDsInitializeOp_BoundNormalSet::Run(unsigned np,unsigned npb,const tdouble3
 //==============================================================================
 /// Returns strings with configuration.
 //==============================================================================
-void JDsInitializeOp_BoundNormalSet::GetConfig(std::vector<std::string> &lines)const{
+void JDsInitializeOp_BoundNormalSet::GetConfig(std::vector<std::string>& lines)const{
   lines.push_back(fun::PrintStr("  Operation: %s",ClassName.substr(BaseNameSize).c_str()));
   lines.push_back(GetConfigMkBound(MkBound));
   if(OnlyPos)lines.push_back(GetConfigOnlyPos());
@@ -296,7 +297,7 @@ void JDsInitializeOp_BoundNormalPlane::Reset(){
 //==============================================================================
 /// Reads configuration from XML.
 //==============================================================================
-void JDsInitializeOp_BoundNormalPlane::ReadXml(const JXml *sxml,TiXmlElement* xele){
+void JDsInitializeOp_BoundNormalPlane::ReadXml(const JXml* sxml,TiXmlElement* xele){
   sxml->CheckElementNames(xele,true,"onlypos point limitdist normal maxdisth clear");
   ReadXmlOnlyPos(sxml,xele);
   MkBound=sxml->GetAttributeStr(xele,"mkbound",true);
@@ -311,7 +312,7 @@ void JDsInitializeOp_BoundNormalPlane::ReadXml(const JXml *sxml,TiXmlElement* xe
 //==============================================================================
 /// Reads configuration from execution parameter.
 //==============================================================================
-void JDsInitializeOp_BoundNormalPlane::ReadKeyvals(const std::string &eparm){
+void JDsInitializeOp_BoundNormalPlane::ReadKeyvals(const std::string& eparm){
   //-Initial values.
   OnlyPos=false;
   OnlyPosMin=OnlyPosMax=TDouble3(0);
@@ -360,8 +361,9 @@ void JDsInitializeOp_BoundNormalPlane::ReadKeyvals(const std::string &eparm){
 //==============================================================================
 /// Initializes data of particles according XML configuration.
 //==============================================================================
-void JDsInitializeOp_BoundNormalPlane::Run(unsigned np,unsigned npb,const tdouble3 *pos
-  ,const unsigned *idp,const word *mktype,tfloat4 *velrhop,tfloat3 *boundnor)
+void JDsInitializeOp_BoundNormalPlane::Run(unsigned np,unsigned npb
+  ,const tdouble3* pos,const unsigned* idp,const word* mktype,tfloat4* velrhop
+  ,tfloat3* boundnor)
 {
   const double maxdist=(MaxDisteH>0? InitCt.kernelh*MaxDisteH: DBL_MAX);
   const double limitdis=InitCt.dp*LimitDist;
@@ -426,7 +428,7 @@ void JDsInitializeOp_BoundNormalPlane::Run(unsigned np,unsigned npb,const tdoubl
 //==============================================================================
 /// Returns strings with configuration.
 //==============================================================================
-void JDsInitializeOp_BoundNormalPlane::GetConfig(std::vector<std::string> &lines)const{
+void JDsInitializeOp_BoundNormalPlane::GetConfig(std::vector<std::string>& lines)const{
   lines.push_back(fun::PrintStr("  Operation: %s",ClassName.substr(BaseNameSize).c_str()));
   lines.push_back(GetConfigMkBound(MkBound));
   if(OnlyPos)lines.push_back(GetConfigOnlyPos());
@@ -457,7 +459,7 @@ void JDsInitializeOp_BoundNormalSphere::Reset(){
 //==============================================================================
 /// Reads particles information in xml format.
 //==============================================================================
-void JDsInitializeOp_BoundNormalSphere::ReadXml(const JXml *sxml,TiXmlElement* xele){
+void JDsInitializeOp_BoundNormalSphere::ReadXml(const JXml* sxml,TiXmlElement* xele){
   sxml->CheckElementNames(xele,true,"onlypos center radius inside maxdisth clear");
   ReadXmlOnlyPos(sxml,xele);
   MkBound=sxml->GetAttributeStr(xele,"mkbound",true);
@@ -471,8 +473,9 @@ void JDsInitializeOp_BoundNormalSphere::ReadXml(const JXml *sxml,TiXmlElement* x
 //==============================================================================
 /// Initializes data of particles according XML configuration.
 //==============================================================================
-void JDsInitializeOp_BoundNormalSphere::Run(unsigned np,unsigned npb,const tdouble3 *pos
-  ,const unsigned *idp,const word *mktype,tfloat4 *velrhop,tfloat3 *boundnor)
+void JDsInitializeOp_BoundNormalSphere::Run(unsigned np,unsigned npb
+  ,const tdouble3* pos,const unsigned* idp,const word* mktype,tfloat4* velrhop
+  ,tfloat3* boundnor)
 {
   const tdouble3 pcen=ToTDouble3(Center);
   const double ra=double(Radius);
@@ -497,7 +500,7 @@ void JDsInitializeOp_BoundNormalSphere::Run(unsigned np,unsigned npb,const tdoub
 //==============================================================================
 /// Returns strings with configuration.
 //==============================================================================
-void JDsInitializeOp_BoundNormalSphere::GetConfig(std::vector<std::string> &lines)const{
+void JDsInitializeOp_BoundNormalSphere::GetConfig(std::vector<std::string>& lines)const{
   lines.push_back(fun::PrintStr("  Operation: %s",ClassName.substr(BaseNameSize).c_str()));
   lines.push_back(GetConfigMkBound(MkBound));
   if(OnlyPos)lines.push_back(GetConfigOnlyPos());
@@ -529,7 +532,9 @@ void JDsInitializeOp_BoundNormalCylinder::Reset(){
 //==============================================================================
 /// Reads particles information in xml format.
 //==============================================================================
-void JDsInitializeOp_BoundNormalCylinder::ReadXml(const JXml *sxml,TiXmlElement* xele){
+void JDsInitializeOp_BoundNormalCylinder::ReadXml(const JXml* sxml
+  ,TiXmlElement* xele)
+{
   sxml->CheckElementNames(xele,true,"onlypos center1 center2 radius inside limit1 limit2 maxdisth clear");
   ReadXmlOnlyPos(sxml,xele);
   MkBound=sxml->GetAttributeStr(xele,"mkbound",true);
@@ -546,8 +551,9 @@ void JDsInitializeOp_BoundNormalCylinder::ReadXml(const JXml *sxml,TiXmlElement*
 //==============================================================================
 /// Initializes data of particles according XML configuration.
 //==============================================================================
-void JDsInitializeOp_BoundNormalCylinder::Run(unsigned np,unsigned npb,const tdouble3 *pos
-  ,const unsigned *idp,const word *mktype,tfloat4 *velrhop,tfloat3 *boundnor)
+void JDsInitializeOp_BoundNormalCylinder::Run(unsigned np,unsigned npb
+  ,const tdouble3* pos,const unsigned* idp,const word* mktype,tfloat4* velrhop
+  ,tfloat3* boundnor)
 {
   const tdouble3 cen1=ToTDouble3(Center1);
   const tdouble3 cen2=ToTDouble3(Center2);
@@ -607,7 +613,7 @@ void JDsInitializeOp_BoundNormalCylinder::Run(unsigned np,unsigned npb,const tdo
 //==============================================================================
 /// Returns strings with configuration.
 //==============================================================================
-void JDsInitializeOp_BoundNormalCylinder::GetConfig(std::vector<std::string> &lines)const{
+void JDsInitializeOp_BoundNormalCylinder::GetConfig(std::vector<std::string>& lines)const{
   lines.push_back(fun::PrintStr("  Operation: %s",ClassName.substr(BaseNameSize).c_str()));
   lines.push_back(GetConfigMkBound(MkBound));
   if(OnlyPos)lines.push_back(GetConfigOnlyPos());
@@ -636,7 +642,9 @@ void JDsInitializeOp_BoundNormalParts::Reset(){
 //==============================================================================
 /// Reads configuration from XML.
 //==============================================================================
-void JDsInitializeOp_BoundNormalParts::ReadXml(const JXml *sxml,TiXmlElement* xele){
+void JDsInitializeOp_BoundNormalParts::ReadXml(const JXml* sxml
+  ,TiXmlElement* xele)
+{
   sxml->CheckElementNames(xele,true,"maxdisth");
   ReadXmlOnlyPos(sxml,xele);
   MkBound=sxml->GetAttributeStr(xele,"mkbound",true);
@@ -646,7 +654,7 @@ void JDsInitializeOp_BoundNormalParts::ReadXml(const JXml *sxml,TiXmlElement* xe
 //==============================================================================
 /// Reads configuration from execution parameter.
 //==============================================================================
-void JDsInitializeOp_BoundNormalParts::ReadKeyvals(const std::string &eparm){
+void JDsInitializeOp_BoundNormalParts::ReadKeyvals(const std::string& eparm){
   //-Initial values.
   OnlyPos=false;
   OnlyPosMin=OnlyPosMax=TDouble3(0);
@@ -680,12 +688,13 @@ void JDsInitializeOp_BoundNormalParts::ReadKeyvals(const std::string &eparm){
 //==============================================================================
 /// Initializes data of particles according XML configuration.
 //==============================================================================
-void JDsInitializeOp_BoundNormalParts::Run(unsigned np,unsigned npb,const tdouble3 *pos
-  ,const unsigned *idp,const word *mktype,tfloat4 *velrhop,tfloat3 *boundnor)
+void JDsInitializeOp_BoundNormalParts::Run(unsigned np,unsigned npb
+  ,const tdouble3* pos,const unsigned* idp,const word* mktype,tfloat4* velrhop
+  ,tfloat3* boundnor)
 {
   if(!InitCt.simulate2d)Run_Exceptioon("Initialize option BoundNormalParts is not supported for 3D simulations.");
   //-Select particles to process.
-  unsigned *partsel=new unsigned[np];
+  unsigned* partsel=new unsigned[np];
   unsigned nsel=0;
   JRangeFilter rg(MkBound);
   const bool all=(MkBound.empty());
@@ -704,7 +713,7 @@ void JDsInitializeOp_BoundNormalParts::Run(unsigned np,unsigned npb,const tdoubl
 //==============================================================================
 /// Returns strings with configuration.
 //==============================================================================
-void JDsInitializeOp_BoundNormalParts::GetConfig(std::vector<std::string> &lines)const{
+void JDsInitializeOp_BoundNormalParts::GetConfig(std::vector<std::string>& lines)const{
   lines.push_back(fun::PrintStr("  Operation: %s",ClassName.substr(BaseNameSize).c_str()));
   lines.push_back(GetConfigMkBound(MkBound));
   if(OnlyPos)lines.push_back(GetConfigOnlyPos());
@@ -719,7 +728,7 @@ void JDsInitializeOp_BoundNormalParts::GetConfig(std::vector<std::string> &lines
 /// Constructor.
 //==============================================================================
 JDsInitialize::JDsInitialize(bool sim2d,double sim2dy,tdouble3 posmin,tdouble3 posmax
-  ,double dp,float kernelh,const std::string &dirdatafile
+  ,double dp,float kernelh,const std::string& dirdatafile
   ,unsigned nbound,bool boundnormals):BoundNormals(boundnormals)
   ,InitCt(JDsInitializeOp::StrInitCt(sim2d,sim2dy,posmin,posmax,dp,kernelh,nbound,dirdatafile))
 {
@@ -746,7 +755,7 @@ void JDsInitialize::Reset(){
 //==============================================================================
 /// Loads data in XML format from a file.
 //==============================================================================
-void JDsInitialize::LoadFileXml(const std::string &file,const std::string &path){
+void JDsInitialize::LoadFileXml(const std::string& file,const std::string& path){
   JXml jxml;
   jxml.LoadFile(file);
   LoadXml(&jxml,path);
@@ -755,7 +764,7 @@ void JDsInitialize::LoadFileXml(const std::string &file,const std::string &path)
 //==============================================================================
 /// Loads particles information from the object XML.
 //==============================================================================
-void JDsInitialize::LoadXml(const JXml *sxml,const std::string &place){
+void JDsInitialize::LoadXml(const JXml* sxml,const std::string& place){
   //Reset();
   TiXmlNode* node=sxml->GetNodeSimple(place);
   //if(!node)Run_Exceptioon(std::string("Cannot find the element \'")+place+"\'.");
@@ -765,7 +774,7 @@ void JDsInitialize::LoadXml(const JXml *sxml,const std::string &place){
 //==============================================================================
 /// Reads particles information in XML format.
 //==============================================================================
-void JDsInitialize::ReadXml(const JXml *sxml,TiXmlElement* lis){
+void JDsInitialize::ReadXml(const JXml* sxml,TiXmlElement* lis){
   //-Loads elements.
   TiXmlElement* ele=lis->FirstChildElement(); 
   while(ele){
@@ -773,14 +782,14 @@ void JDsInitialize::ReadXml(const JXml *sxml,TiXmlElement* lis){
     if(cmd.length() && cmd[0]!='_' && sxml->CheckElementActive(ele)){
       //printf("-----------> [%s]\n",cmd.c_str());
       if(cmd=="fluidvelocity"){ 
-        JDsInitializeOp_FluidVel *ope=new JDsInitializeOp_FluidVel(sxml,ele,InitCt);
+        JDsInitializeOp_FluidVel* ope=new JDsInitializeOp_FluidVel(sxml,ele,InitCt);
         Opes.push_back(ope); 
       }
-      else if(cmd=="boundnormal_set"     ){ if(BoundNormals){ JDsInitializeOp_BoundNormalSet      *ope=new JDsInitializeOp_BoundNormalSet     (sxml,ele,InitCt); Opes.push_back(ope); } }
-      else if(cmd=="boundnormal_plane"   ){ if(BoundNormals){ JDsInitializeOp_BoundNormalPlane    *ope=new JDsInitializeOp_BoundNormalPlane   (sxml,ele,InitCt); Opes.push_back(ope); } }
-      else if(cmd=="boundnormal_sphere"  ){ if(BoundNormals){ JDsInitializeOp_BoundNormalSphere   *ope=new JDsInitializeOp_BoundNormalSphere  (sxml,ele,InitCt); Opes.push_back(ope); } }
-      else if(cmd=="boundnormal_cylinder"){ if(BoundNormals){ JDsInitializeOp_BoundNormalCylinder *ope=new JDsInitializeOp_BoundNormalCylinder(sxml,ele,InitCt); Opes.push_back(ope); } }
-      else if(cmd=="boundnormal_parts"   ){ if(BoundNormals){ JDsInitializeOp_BoundNormalParts    *ope=new JDsInitializeOp_BoundNormalParts   (sxml,ele,InitCt); Opes.push_back(ope); } }
+      else if(cmd=="boundnormal_set"     ){ if(BoundNormals){ JDsInitializeOp_BoundNormalSet*      ope=new JDsInitializeOp_BoundNormalSet     (sxml,ele,InitCt); Opes.push_back(ope); } }
+      else if(cmd=="boundnormal_plane"   ){ if(BoundNormals){ JDsInitializeOp_BoundNormalPlane*    ope=new JDsInitializeOp_BoundNormalPlane   (sxml,ele,InitCt); Opes.push_back(ope); } }
+      else if(cmd=="boundnormal_sphere"  ){ if(BoundNormals){ JDsInitializeOp_BoundNormalSphere*   ope=new JDsInitializeOp_BoundNormalSphere  (sxml,ele,InitCt); Opes.push_back(ope); } }
+      else if(cmd=="boundnormal_cylinder"){ if(BoundNormals){ JDsInitializeOp_BoundNormalCylinder* ope=new JDsInitializeOp_BoundNormalCylinder(sxml,ele,InitCt); Opes.push_back(ope); } }
+      else if(cmd=="boundnormal_parts"   ){ if(BoundNormals){ JDsInitializeOp_BoundNormalParts*    ope=new JDsInitializeOp_BoundNormalParts   (sxml,ele,InitCt); Opes.push_back(ope); } }
       else sxml->ErrReadElement(ele,cmd,false);
     }
     ele=ele->NextSiblingElement();
@@ -790,15 +799,15 @@ void JDsInitialize::ReadXml(const JXml *sxml,TiXmlElement* lis){
 //==============================================================================
 /// Loads configuration from execution parameters.
 //==============================================================================
-void JDsInitialize::LoadExecParms(const std::vector<std::string> &execparms){
+void JDsInitialize::LoadExecParms(const std::vector<std::string>& execparms){
   const unsigned nparms=unsigned(execparms.size());
   for(unsigned c=0;c<nparms;c++){
     const string eparm=execparms[c];
     const string cmd=fun::StrLower(fun::StrRemoveBefore(fun::StrRemoveAfter(eparm,":"),"-"));
     //const string keyvals=fun::StrRemoveBefore(eparm,":");
     //printf("==> eparm=[%s]_[%s]_[%s]\n",eparm.c_str(),cmd.c_str(),keyvals.c_str());
-         if(cmd=="initnorpla" ){ if(BoundNormals){ JDsInitializeOp_BoundNormalPlane *ope=new JDsInitializeOp_BoundNormalPlane(eparm,InitCt); Opes.push_back(ope); } }
-    else if(cmd=="initnorpart"){ if(BoundNormals){ JDsInitializeOp_BoundNormalParts *ope=new JDsInitializeOp_BoundNormalParts(eparm,InitCt); Opes.push_back(ope); } }
+         if(cmd=="initnorpla" ){ if(BoundNormals){ JDsInitializeOp_BoundNormalPlane* ope=new JDsInitializeOp_BoundNormalPlane(eparm,InitCt); Opes.push_back(ope); } }
+    else if(cmd=="initnorpart"){ if(BoundNormals){ JDsInitializeOp_BoundNormalParts* ope=new JDsInitializeOp_BoundNormalParts(eparm,InitCt); Opes.push_back(ope); } }
     else Run_Exceptioon(fun::PrintStr("Execution parameter \'%s\' is invalid.",eparm.c_str()));
   }
 }
@@ -806,8 +815,8 @@ void JDsInitialize::LoadExecParms(const std::vector<std::string> &execparms){
 //==============================================================================
 /// Initializes data of particles according XML configuration.
 //==============================================================================
-void JDsInitialize::Run(unsigned np,unsigned npb,const tdouble3 *pos
-  ,const unsigned *idp,const word *mktype,tfloat4 *velrhop,tfloat3 *boundnor)
+void JDsInitialize::Run(unsigned np,unsigned npb,const tdouble3* pos
+  ,const unsigned* idp,const word* mktype,tfloat4* velrhop,tfloat3* boundnor)
 {
   for(unsigned c=0;c<Count();c++){
     Opes[c]->Run(np,npb,pos,idp,mktype,velrhop,boundnor);
@@ -817,7 +826,7 @@ void JDsInitialize::Run(unsigned np,unsigned npb,const tdouble3 *pos
 //==============================================================================
 /// Returns strings with configuration.
 //==============================================================================
-void JDsInitialize::GetConfig(std::vector<std::string> &lines)const{
+void JDsInitialize::GetConfig(std::vector<std::string>& lines)const{
   for(unsigned c=0;c<Count();c++){
     lines.push_back(fun::PrintStr("Initialize_%u",c));
     Opes[c]->GetConfig(lines);

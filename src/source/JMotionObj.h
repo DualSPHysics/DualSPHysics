@@ -1,6 +1,6 @@
 //HEAD_DSCODES
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2023 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -56,9 +56,9 @@ public:
   unsigned DfIndex;  //-Indice de posicionamiento temporal
   tdouble3 DfLastPos;
   double DfLastAng;
-  const double *DfTimes;   //-Tiempos
-  const tdouble3 *DfPos;   //-Posiciones
-  const double *DfAng;     //-Angulos, siemgre en grados.
+  const double*   DfTimes; //-Tiempos
+  const tdouble3* DfPos;   //-Posiciones
+  const double*   DfAng;   //-Angulos, siemgre en grados.
 
   JMotionMov* Mov;
   bool Del;
@@ -72,7 +72,7 @@ public:
   void DfReset();
   void DfConfig(bool postype);
 
-  static unsigned BinarySearch(unsigned size,const double *times,double t);
+  static unsigned BinarySearch(unsigned size,const double* times,double t);
   tdouble3 DfGetNewPos(double t);
   double DfGetNewAng(double t);
 };
@@ -99,7 +99,7 @@ private:
   std::vector<JMotionMovActive*> ActiveMovs;  //-Movimientos activos
 
   int GetPosMov(JMotionMov* mv)const;
-  void WriteXml(TiXmlNode* node,const JMotionEvent &evt)const;
+  void WriteXml(TiXmlNode* node,const JMotionEvent& evt)const;
 public:
   const unsigned Id; //-Identificador de objeto
   const int Ref;     //-Referencia a objeto real (ref<0 lo trata como un obj virtual)
@@ -112,7 +112,7 @@ public:
   JMotionObj* ObjGetPointer(unsigned id);
   JMotionObj* ObjGetPointerByRef(int ref);
   JMotionMov* MovGetPointer(unsigned id)const;
-  JMotionAxis* AxisGetPointer(const tdouble3 &p1,const tdouble3 &p2)const;
+  JMotionAxis* AxisGetPointer(const tdouble3& p1,const tdouble3& p2)const;
   void AddChild(JMotionObj* obj);
   void AddMov(JMotionMov* mov);
   void AddAxis(JMotionAxis* axis);
@@ -122,14 +122,14 @@ public:
   void BeginEvent(double start,double eventfinish,JMotionMov* mov);
  
   void ResetTime();
-  bool ProcesTime(double timestep,double dt,JMotionObj** lismov,unsigned &lismovcount,JMotionObj** lisstop,unsigned &lisstopcount);
-  bool GetMov(unsigned &ref,tdouble3 &mvsimple,JMatrix4d &mvmatrix)const;
+  bool ProcesTime(double timestep,double dt,JMotionObj** lismov,unsigned& lismovcount,JMotionObj** lisstop,unsigned& lisstopcount);
+  bool GetMov(unsigned& ref,tdouble3& mvsimple,JMatrix4d& mvmatrix)const;
   int GetMaxRef()const;
-  void GetRefs(std::vector<int> &refs)const;
+  void GetRefs(std::vector<int>& refs)const;
 
-  void CopyConfigMovs(JMotion &mot)const;
-  void CopyConfig(JMotion &mot)const;
-  void CopyChangeRef(JMotion &mot,const int* ref,const int* refnew,unsigned refcount)const;
+  void CopyConfigMovs(JMotion& mot)const;
+  void CopyConfig(JMotion& mot)const;
+  void CopyChangeRef(JMotion& mot,const int* ref,const int* refnew,unsigned refcount)const;
   bool ExistsObj(JMotionObj* obj)const;
   bool Optimize();
 

@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2023 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -133,7 +133,7 @@ void JSphGpuSingle::UpdateMaxValues(){
 /// Loads the configuration of the execution.
 /// Carga la configuracion de ejecucion.
 //==============================================================================
-void JSphGpuSingle::LoadConfig(const JSphCfgRun *cfg){
+void JSphGpuSingle::LoadConfig(const JSphCfgRun* cfg){
   //-Loads general configuration.
   JSph::LoadConfig(cfg);
   //-Checks compatibility of selected options.
@@ -666,12 +666,12 @@ double JSphGpuSingle::ComputeStep_Sym(){
 //==============================================================================
 void JSphGpuSingle::UpdateFtObjs(){
   if(FtCount && FtObjsOutdated){
-    tdouble3 *fcen=FtoAuxDouble6;
-    tfloat3  *fang=FtoAuxFloat15;
-    tfloat3  *fvellin=fang+FtCount;
-    tfloat3  *fvelang=fvellin+FtCount;
-    tfloat3  *facelin=fvelang+FtCount;
-    tfloat3  *faceang=facelin+FtCount;
+    tdouble3* fcen=FtoAuxDouble6;
+    tfloat3*  fang=FtoAuxFloat15;
+    tfloat3*  fvellin=fang+FtCount;
+    tfloat3*  fvelang=fvellin+FtCount;
+    tfloat3*  facelin=fvelang+FtCount;
+    tfloat3*  faceang=facelin+FtCount;
     cudaMemcpy(fcen,FtoCenterg,sizeof(double3)*FtCount,cudaMemcpyDeviceToHost);
     cudaMemcpy(fang,FtoAnglesg,sizeof(float3) *FtCount,cudaMemcpyDeviceToHost);
     cudaMemcpy(fvellin,FtoVelAceg,sizeof(float3)*FtCount*4,cudaMemcpyDeviceToHost);
@@ -691,8 +691,8 @@ void JSphGpuSingle::UpdateFtObjs(){
 /// Applies imposed velocity.
 /// Aplica velocidad predefinida.
 //==============================================================================
-void JSphGpuSingle::FtApplyImposedVel(float3 *ftoforcesresg)const{
-  tfloat3 *ftoforcesresc=NULL;
+void JSphGpuSingle::FtApplyImposedVel(float3* ftoforcesresg)const{
+  tfloat3* ftoforcesresc=NULL;
   for(unsigned cf=0;cf<FtCount;cf++)if(!FtObjs[cf].usechrono && (FtLinearVel[cf]!=NULL || FtAngularVel[cf]!=NULL)){
     const tfloat3 v1=(FtLinearVel [cf]!=NULL? FtLinearVel [cf]->GetValue3f(TimeStep): TFloat3(FLT_MAX));
     const tfloat3 v2=(FtAngularVel[cf]!=NULL? FtAngularVel[cf]->GetValue3f(TimeStep): TFloat3(FLT_MAX));
@@ -729,7 +729,7 @@ void JSphGpuSingle::RunFloating(double dt,bool predictor){
   if(!ftpaused || saveftvalues){
     //-Adds external forces (ForcePoints, Moorings, external file) to FtoForces[].
     if(ForcePoints!=NULL || FtLinearForce!=NULL){
-      StFtoForces *ftoforces=(StFtoForces *)FtoAuxFloat15;
+      StFtoForces* ftoforces=(StFtoForces*)FtoAuxFloat15;
       memset(ftoforces,0,sizeof(StFtoForces)*FtCount);
       //-Loads sum of linear and angular forces from ForcePoints and Moorings.
       if(ForcePoints)ForcePoints->GetFtForcesSum(ftoforces);
@@ -763,7 +763,7 @@ void JSphGpuSingle::RunFloating(double dt,bool predictor){
       ,Posxy_g->cptr(),Posz_g->cptr(),Ace_g->cptr(),FtoForcesg);
     //-Saves sum of fluid forces applied to floating body.
     if(saveftvalues){
-      StFtoForces *ftoforces=(StFtoForces *)FtoAuxFloat15;
+      StFtoForces* ftoforces=(StFtoForces*)FtoAuxFloat15;
       cudaMemcpy(ftoforces,FtoForcesg,sizeof(StFtoForces)*FtCount,cudaMemcpyDeviceToHost);
       for(unsigned cf=0;cf<FtCount;cf++){
         FtObjs[cf].fluforcelin=ftoforces[cf].face-FtObjs[cf].extforcelin;
@@ -775,7 +775,7 @@ void JSphGpuSingle::RunFloating(double dt,bool predictor){
     cusph::FtCalcForces(FtCount,Gravity,FtoMassg,FtoAnglesg,FtoInertiaini8g,FtoInertiaini1g,FtoForcesg);
     //-Saves acceleration before constraints (includes external forces, gravity and rotated inertia tensor)
     if(saveftvalues){
-      StFtoForces *ftoforces=(StFtoForces *)FtoAuxFloat15;
+      StFtoForces* ftoforces=(StFtoForces*)FtoAuxFloat15;
       cudaMemcpy(ftoforces,FtoForcesg,sizeof(StFtoForces)*FtCount,cudaMemcpyDeviceToHost);
       for(unsigned cf=0;cf<FtCount;cf++){
         FtObjs[cf].preacelin=ftoforces[cf].face;
@@ -794,7 +794,7 @@ void JSphGpuSingle::RunFloating(double dt,bool predictor){
     
     //-Saves face and fomegace for debug.
     if(SaveFtAce){
-      StFtoForces *ftoforces=(StFtoForces *)FtoAuxFloat15;
+      StFtoForces* ftoforces=(StFtoForces*)FtoAuxFloat15;
       cudaMemcpy(ftoforces,FtoForcesg,sizeof(tfloat3)*FtCount*2,cudaMemcpyDeviceToHost);
       SaveFtAceFun(dt,predictor,ftoforces);
     }
@@ -834,8 +834,8 @@ void JSphGpuSingle::RunFloating(double dt,bool predictor){
       FtObjsOutdated=true;
       //-Updates floating normals for mDBC.
       if(UseNormalsFt){
-        tdouble3 *fcen=FtoAuxDouble6;
-        tfloat3  *fang=FtoAuxFloat15;
+        tdouble3* fcen=FtoAuxDouble6;
+        tfloat3*  fang=FtoAuxFloat15;
         cudaMemcpy(fcen,FtoCenterg,sizeof(double3)*FtCount,cudaMemcpyDeviceToHost);
         cudaMemcpy(fang,FtoAnglesg,sizeof(float3) *FtCount,cudaMemcpyDeviceToHost);
         for(unsigned cf=0;cf<FtCount;cf++){

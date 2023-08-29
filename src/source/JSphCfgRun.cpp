@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2023 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -267,7 +267,7 @@ void JSphCfgRun::VisuConfig()const{
 //==============================================================================
 /// Loads execution parameters.
 //==============================================================================
-void JSphCfgRun::LoadOpts(string *optlis,int optn,int lv,const std::string &file){
+void JSphCfgRun::LoadOpts(string* optlis,int optn,int lv,const std::string& file){
   if(lv>=10)Run_Exceptioon("No more than 10 levels of recursive configuration.");
   for(int c=0;c<optn;c++){
     const string opt=optlis[c];
@@ -384,14 +384,14 @@ void JSphCfgRun::LoadOpts(string *optlis,int optn,int lv,const std::string &file
       }
       else if(txword=="CREATEDIRS")CreateDirs=(txoptfull!=""? atoi(txoptfull.c_str()): 1)!=0;
       else if(txword=="CSVSEP")CsvSepComa=(txoptfull!=""? atoi(txoptfull.c_str()): 1)!=0;
-      else if(txword=="NAME"&&c+1<optn){ CaseName=optlis[c+1]; c++; }
-      else if(txword=="RUNNAME"&&c+1<optn){ RunName=optlis[c+1]; c++; }
-      else if(txword=="DIROUT"&&c+1<optn){ DirOut=optlis[c+1]; c++; }
+      else if(txword=="NAME" && c+1<optn){ CaseName=optlis[c+1]; c++; }
+      else if(txword=="RUNNAME" && c+1<optn){ RunName=optlis[c+1]; c++; }
+      else if(txword=="DIROUT" && c+1<optn){ DirOut=optlis[c+1]; c++; }
       else if(txword=="DIRDATAOUT" && c+1<optn){ DirDataOut=optlis[c+1]; c++; }
-      else if(txword=="PARTBEGIN"&&c+1<optn){ 
+      else if(txword=="PARTBEGIN" && c+1<optn){ 
         int v1=atoi(txopt1.c_str());
         int v2=atoi(txopt2.c_str());
-        if(v1<0||v2<0)ErrorParm(opt,c,lv,file);
+        if(v1<0 || v2<0)ErrorParm(opt,c,lv,file);
         else{
           PartBegin=unsigned(v1);
           PartBeginFirst=(txopt2.empty()? PartBegin: unsigned(v2));
@@ -441,8 +441,8 @@ void JSphCfgRun::LoadOpts(string *optlis,int optn,int lv,const std::string &file
         if(PipsMode>2)ErrorParm(opt,c,lv,file);
         if(!txopt2.empty())PipsSteps=(unsigned)atoi(txopt2.c_str());
       }
-      else if(txword=="OPT"&&c+1<optn){ LoadFile(optlis[c+1],lv+1); c++; }
-      else if(txword=="H"||txword=="HELP"||txword=="?")PrintInfo=true;
+      else if(txword=="OPT" && c+1<optn){ LoadFile(optlis[c+1],lv+1); c++; }
+      else if(txword=="H" || txword=="HELP" || txword=="?")PrintInfo=true;
       else ErrorParm(opt,c,lv,file);
     }
   }

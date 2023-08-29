@@ -1,6 +1,6 @@
 //HEAD_DSCODES
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2023 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -66,7 +66,7 @@ void JPartNormalData::Reset(){
 /// Devuelve true si existe el array indicado.
 /// Returns true if the indicated array exists.
 //==============================================================================
-bool JPartNormalData::ArrayExists(JBinaryData *bd,std::string name)const{
+bool JPartNormalData::ArrayExists(JBinaryData* bd,std::string name)const{
   return(bd->GetArray(name)!=NULL);
 }
 
@@ -74,7 +74,7 @@ bool JPartNormalData::ArrayExists(JBinaryData *bd,std::string name)const{
 /// Devuelve el puntero al array indicado.
 /// Returns the pointer to the indicated array.
 //==============================================================================
-JBinaryDataArray* JPartNormalData::GetArray(JBinaryData *bd,std::string name)const{
+JBinaryDataArray* JPartNormalData::GetArray(JBinaryData* bd,std::string name)const{
   JBinaryDataArray* ar=bd->GetArray(name);
   if(!ar)Run_Exceptioon(fun::PrintStr("Array \'%s\' is not available.",name.c_str()));
   return(ar);
@@ -84,7 +84,9 @@ JBinaryDataArray* JPartNormalData::GetArray(JBinaryData *bd,std::string name)con
 /// Devuelve el puntero al array indicado y comprueba el tipo.
 /// Returns the pointer to the indicated array and checks the type.
 //==============================================================================
-JBinaryDataArray* JPartNormalData::GetArray(JBinaryData *bd,std::string name,JBinaryDataDef::TpData type)const{
+JBinaryDataArray* JPartNormalData::GetArray(JBinaryData* bd,std::string name
+  ,JBinaryDataDef::TpData type)const
+{
   JBinaryDataArray* ar=bd->GetArray(name);
   if(ar->GetType()!=type)Run_Exceptioon(fun::PrintStr("Type of array \'%s\' is not %s.",name.c_str(),JBinaryDataDef::TypeToStr(type).c_str()));
   return(ar);
@@ -110,7 +112,9 @@ void JPartNormalData::ConfigBasic(std::string appname,std::string casename
 //==============================================================================
 /// Allocates or frees memory for particles.
 //==============================================================================
-void JPartNormalData::AllocNormals(unsigned nbound,unsigned countnor,bool usepartnormals){
+void JPartNormalData::AllocNormals(unsigned nbound,unsigned countnor
+  ,bool usepartnormals)
+{
   Nbound=CountNormals=0;
   delete[] PartNormals; PartNormals=NULL;
   delete[] NormalBegin; NormalBegin=NULL;
@@ -139,10 +143,10 @@ void JPartNormalData::AllocNormals(unsigned nbound,unsigned countnor,bool usepar
 /// Add normal data and final normals of particles.
 //==============================================================================
 void JPartNormalData::AddNormalData(
-  std::string partnorname,unsigned nbound,const tdouble3 *partnor
-  ,const unsigned *norbegin,unsigned countnor
-  ,const tdouble3 *nordata,const double *nordist
-  ,const tdouble3 *outdata,const double *outdist)
+  std::string partnorname,unsigned nbound,const tdouble3* partnor
+  ,const unsigned* norbegin,unsigned countnor
+  ,const tdouble3* nordata,const double* nordist
+  ,const tdouble3* outdata,const double* outdist)
 {
   PartNormalsName=partnorname;
   AllocNormals(nbound,countnor,partnor!=NULL);
@@ -159,8 +163,8 @@ void JPartNormalData::AddNormalData(
 //==============================================================================
 /// Add final normals of particles.
 //==============================================================================
-void JPartNormalData::AddNormalData(
-  std::string partnorname,unsigned nbound,const tdouble3 *partnor)
+void JPartNormalData::AddNormalData(std::string partnorname,unsigned nbound
+  ,const tdouble3* partnor)
 {
   AddNormalData(partnorname,nbound,partnor,NULL,0,NULL,NULL,NULL,NULL);
 }

@@ -36,8 +36,8 @@ School of Mechanical, Aerospace and Civil Engineering, University of Manchester,
 \section compile_sec Project files
 Please download source files and documentation from <a href="http://dual.sphysics.org">DualSPHysics website.</a> \n
 \author <a href="http://dual.sphysics.org/index.php/developers">DualSPHysics Developers.</a> 
-\version 5.3.282
-\date 28-08-2023
+\version 5.3.283
+\date 29-08-2023
 \copyright GNU Lesser General Public License <a href="http://www.gnu.org/licenses/">GNU licenses.</a>
 */
 
@@ -61,13 +61,13 @@ Please download source files and documentation from <a href="http://dual.sphysic
 
 using namespace std;
 
-JAppInfo AppInfo("DualSPHysics5","v5.3.282","28-08-2023");
+JAppInfo AppInfo("DualSPHysics5","v5.3.283","29-08-2023");
 //JAppInfo AppInfo("DualSPHysics5","v5.0.???","UserVersion","v1.0","??-??-????"); //-for user versions.
 
 //==============================================================================
 /// LGPL License.
 //==============================================================================
-std::string getlicense_lgpl(const std::string &name,bool simple){
+std::string getlicense_lgpl(const std::string& name,bool simple){
   std::string tx=(simple? "": "\n");
   tx=tx+"\n <"+fun::StrUpper(name)+"> Copyright (c) 2023 by"; 
   tx=tx+"\n Dr Jose M. Dominguez Alonso, Dr Alejandro Crespo,";
@@ -135,7 +135,7 @@ bool ShowsVersionInfo(int argc,char** argv){
 //==============================================================================
 ///  Print exception message on screen and log file.
 //==============================================================================
-void PrintExceptionLog(const std::string &prefix,const std::string &text,JLog2 *log){
+void PrintExceptionLog(const std::string& prefix,const std::string& text,JLog2* log){
   const bool prt=(text.empty() || text[0]!='#');
   const string tx=(prt? prefix+text: text.substr(1));
   if(prt)printf("%s\n",tx.c_str());
@@ -161,7 +161,7 @@ int main(int argc, char** argv){
   std::string appname=AppInfo.GetFullName();
   std::string appnamesub=fun::StrFillEnd("","=",unsigned(appname.size())+1);
   printf("\n%s\n%s\n",appname.c_str(),appnamesub.c_str());
-  JLog2 *log=NULL;
+  JLog2* log=NULL;
   JSphCfgRun cfg;
   try{
     cfg.LoadArgv(argc,argv);
@@ -191,16 +191,16 @@ int main(int argc, char** argv){
     }
     errcode=0;
   }
-  catch(const char *cad){
+  catch(const char* cad){
     PrintExceptionLog("\n*** Exception(chr): ",cad,log);
   }
-  catch(const string &e){
+  catch(const string& e){
     PrintExceptionLog("\n*** Exception(str): ",e,log);
   }
-  catch (const JException &e){
+  catch (const JException& e){
     if(log && log->IsOk())log->PrintFile(e.what());
   }
-  catch (const exception &e){
+  catch (const exception& e){
     PrintExceptionLog("\n*** Exception(exc): ",e.what(),log);
   }
   catch(...){

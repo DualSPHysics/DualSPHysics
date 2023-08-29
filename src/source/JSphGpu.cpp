@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2023 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -79,8 +79,8 @@ JSphGpu::~JSphGpu(){
 //==============================================================================
 /// Throws exception related to a CUDA error from a static method.
 //==============================================================================
-void JSphGpu::RunExceptioonCudaStatic(const std::string &srcfile,int srcline
-  ,const std::string &method
+void JSphGpu::RunExceptioonCudaStatic(const std::string& srcfile,int srcline
+  ,const std::string& method
   ,cudaError_t cuerr,std::string msg)
 {
   msg=msg+fun::PrintStr(" (CUDA error %d (%s)).\n",cuerr,cudaGetErrorString(cuerr));
@@ -90,8 +90,8 @@ void JSphGpu::RunExceptioonCudaStatic(const std::string &srcfile,int srcline
 //==============================================================================
 /// Checks CUDA error and throws exception from a static method.
 //==============================================================================
-void JSphGpu::CheckCudaErroorStatic(const std::string &srcfile,int srcline
-  ,const std::string &method,std::string msg)
+void JSphGpu::CheckCudaErroorStatic(const std::string& srcfile,int srcline
+  ,const std::string& method,std::string msg)
 {
   const cudaError_t cuerr=cudaGetLastError();
   if(cuerr!=cudaSuccess)RunExceptioonCudaStatic(srcfile,srcline,method,cuerr,msg);
@@ -100,8 +100,8 @@ void JSphGpu::CheckCudaErroorStatic(const std::string &srcfile,int srcline
 //==============================================================================
 /// Throws exception related to a CUDA error.
 //==============================================================================
-void JSphGpu::RunExceptioonCuda(const std::string &srcfile,int srcline
-  ,const std::string &classname,const std::string &method
+void JSphGpu::RunExceptioonCuda(const std::string& srcfile,int srcline
+  ,const std::string& classname,const std::string& method
   ,cudaError_t cuerr,std::string msg)const
 {
   msg=msg+fun::PrintStr(" (CUDA error %d (%s)).\n",cuerr,cudaGetErrorString(cuerr));
@@ -112,8 +112,8 @@ void JSphGpu::RunExceptioonCuda(const std::string &srcfile,int srcline
 /// Checks CUDA error and throws exception.
 /// Comprueba error de CUDA y lanza excepcion si lo hubiera.
 //==============================================================================
-void JSphGpu::CheckCudaErroor(const std::string &srcfile,int srcline
-  ,const std::string &classname,const std::string &method
+void JSphGpu::CheckCudaErroor(const std::string& srcfile,int srcline
+  ,const std::string& classname,const std::string& method
   ,std::string msg)const
 {
   cudaError_t cuerr=cudaGetLastError();
@@ -702,7 +702,7 @@ void JSphGpu::InitFloatingsGpu(){
   InitFloatings();
   //-Copies massp values to GPU.
   {
-    float *massp=new float[FtCount];
+    float* massp=new float[FtCount];
     for(unsigned cf=0;cf<FtCount;cf++)massp[cf]=FtObjs[cf].massp;
     cudaMemcpy(FtoMasspg,massp,sizeof(float)*FtCount,cudaMemcpyHostToDevice);
     delete[] massp;
@@ -716,17 +716,17 @@ void JSphGpu::InitFloatingsGpu(){
       float massp;
     }stdata;
 
-    stdata   *datp  =new stdata  [FtCount];
-    float    *ftmass=new float   [FtCount];
-    byte     *constr=new byte    [FtCount];
-    tdouble3 *center=new tdouble3[FtCount];
-    tfloat3  *angles=new tfloat3 [FtCount];
-    tfloat3  *velace=new tfloat3 [FtCount*4];
-    tfloat4  *inert8=new tfloat4 [FtCount*2];
-    float    *inert1=new float   [FtCount];
+    stdata*   datp  =new stdata  [FtCount];
+    float*    ftmass=new float   [FtCount];
+    byte*     constr=new byte    [FtCount];
+    tdouble3* center=new tdouble3[FtCount];
+    tfloat3*  angles=new tfloat3 [FtCount];
+    tfloat3*  velace=new tfloat3 [FtCount*4];
+    tfloat4*  inert8=new tfloat4 [FtCount*2];
+    float*    inert1=new float   [FtCount];
     memset(velace,0,sizeof(tfloat3)*FtCount*4);
     for(unsigned cf=0;cf<FtCount;cf++){
-      const StFloatingData &fobj=FtObjs[cf];
+      const StFloatingData& fobj=FtObjs[cf];
       datp[cf].pini=fobj.begin-CaseNfixed;
       datp[cf].np=fobj.count;
       datp[cf].radius=fobj.radius;
@@ -760,7 +760,7 @@ void JSphGpu::InitFloatingsGpu(){
   }
   //-Copies data object for DEM to GPU.
   if(UseDEM){ //(DEM)
-    float4 *data=new float4[DemDataSize];
+    float4* data=new float4[DemDataSize];
     for(unsigned c=0;c<DemDataSize;c++){
       data[c].x=DemData[c].mass;
       data[c].y=DemData[c].tau;
@@ -1093,13 +1093,13 @@ void JSphGpu::RunDamping(double dt){
 /// Graba fichero VTK con datos de las particulas (debug).
 //==============================================================================
 void JSphGpu::SaveVtkNormalsGpu(std::string filename,int numfile,unsigned np,unsigned npb
-  ,const double2 *posxyg,const double *poszg,const unsigned *idpg,const float3 *boundnorg)
+  ,const double2* posxyg,const double* poszg,const unsigned* idpg,const float3* boundnorg)
 {
   //-Allocates memory.
   const unsigned n=(UseNormalsFt? np: npb);
-  tdouble3 *pos=fcuda::ToHostPosd3(0,n,posxyg,poszg);
-  unsigned *idp=fcuda::ToHostUint(0,n,idpg);
-  tfloat3  *nor=fcuda::ToHostFloat3(0,n,boundnorg);
+  tdouble3* pos=fcuda::ToHostPosd3(0,n,posxyg,poszg);
+  unsigned* idp=fcuda::ToHostUint(0,n,idpg);
+  tfloat3*  nor=fcuda::ToHostFloat3(0,n,boundnorg);
   //-Generates VTK file.
   SaveVtkNormals(filename,numfile,np,npb,pos,idp,nor,1.f);
   //-Frees memory.
@@ -1112,20 +1112,20 @@ void JSphGpu::SaveVtkNormalsGpu(std::string filename,int numfile,unsigned np,uns
 /// Saves VTK file with particle data (degug).
 /// Graba fichero VTK con datos de las particulas (degug).
 //==============================================================================
-void JSphGpu::DgSaveVtkParticlesGpu(std::string filename,int numfile,unsigned pini,unsigned pfin
- ,const double2 *posxyg,const double *poszg,const typecode *codeg,const unsigned *idpg
- ,const float4 *velrhopg)const
+void JSphGpu::DgSaveVtkParticlesGpu(std::string filename,int numfile
+  ,unsigned pini,unsigned pfin,const double2* posxyg,const double* poszg
+  ,const typecode* codeg,const unsigned* idpg,const float4* velrhopg)const
 {
   const unsigned np=pfin-pini;
   //-Copy data to CPU memory.
-  tdouble3 *posh=fcuda::ToHostPosd3(pini,np,posxyg,poszg);
+  tdouble3* posh=fcuda::ToHostPosd3(pini,np,posxyg,poszg);
   #ifdef CODE_SIZE4
-    typecode *codeh=fcuda::ToHostUint(pini,np,codeg);
+    typecode* codeh=fcuda::ToHostUint(pini,np,codeg);
   #else
-    typecode *codeh=fcuda::ToHostWord(pini,np,codeg);
+    typecode* codeh=fcuda::ToHostWord(pini,np,codeg);
   #endif
-  unsigned *idph=fcuda::ToHostUint(pini,np,idpg);
-  tfloat4  *velrhoph=fcuda::ToHostFloat4(pini,np,velrhopg);
+  unsigned* idph=fcuda::ToHostUint(pini,np,idpg);
+  tfloat4*  velrhoph=fcuda::ToHostFloat4(pini,np,velrhopg);
   //-Creates VTK file.
   DgSaveVtkParticlesCpu(filename,numfile,0,np,posh,codeh,idph,velrhoph);
   //-Deallocates memory.
@@ -1139,17 +1139,19 @@ void JSphGpu::DgSaveVtkParticlesGpu(std::string filename,int numfile,unsigned pi
 /// Saves VTK file with particle data (debug).
 /// Graba fichero vtk con datos de las particulas (debug).
 //==============================================================================
-void JSphGpu::DgSaveVtkParticlesGpu(std::string filename,int numfile,unsigned pini,unsigned pfin,unsigned cellcode
-  ,const double2 *posxyg,const double *poszg,const unsigned *idpg,const unsigned *dcelg
-  ,const typecode *codeg,const float4 *velrhopg,const float4 *velrhopm1g,const float3 *aceg)
+void JSphGpu::DgSaveVtkParticlesGpu(std::string filename,int numfile
+  ,unsigned pini,unsigned pfin,unsigned cellcode,const double2* posxyg
+  ,const double* poszg,const unsigned* idpg,const unsigned* dcelg
+  ,const typecode* codeg,const float4* velrhopg,const float4* velrhopm1g
+  ,const float3* aceg)
 {
   //-Allocates memory.
   const unsigned n=pfin-pini;
   //-Loads position.
-  tfloat3 *pos=new tfloat3[n];
+  tfloat3* pos=new tfloat3[n];
   {
-    tdouble2 *pxy=new tdouble2[n];
-    double *pz=new double[n];
+    tdouble2* pxy=new tdouble2[n];
+    double* pz=new double[n];
     cudaMemcpy(pxy,posxyg+pini,sizeof(double2)*n,cudaMemcpyDeviceToHost);
     cudaMemcpy(pz,poszg+pini,sizeof(double)*n,cudaMemcpyDeviceToHost);
     for(unsigned p=0;p<n;p++)pos[p]=TFloat3(float(pxy[p].x),float(pxy[p].y),float(pz[p]));
@@ -1157,53 +1159,53 @@ void JSphGpu::DgSaveVtkParticlesGpu(std::string filename,int numfile,unsigned pi
     delete[] pz;
   }
   //-Loads idp.
-  unsigned *idp=NULL;
+  unsigned* idp=NULL;
   if(idpg){
     idp=new unsigned[n];
     cudaMemcpy(idp,idpg+pini,sizeof(unsigned)*n,cudaMemcpyDeviceToHost);
   }
   //-Loads dcel.
-  tuint3 *dcel=NULL;
+  tuint3* dcel=NULL;
   if(dcelg){
     dcel=new tuint3[n];
-    unsigned *aux=new unsigned[n];
+    unsigned* aux=new unsigned[n];
     cudaMemcpy(aux,dcelg+pini,sizeof(unsigned)*n,cudaMemcpyDeviceToHost);
     for(unsigned p=0;p<n;p++)dcel[p]=TUint3(unsigned(DCEL_Cellx(cellcode,aux[p])),unsigned(DCEL_Celly(cellcode,aux[p])),unsigned(DCEL_Cellz(cellcode,aux[p])));
     delete[] aux;
   }
   //-Loads vel and rhop.
-  tfloat3 *vel=NULL;
-  float *rhop=NULL;
+  tfloat3* vel=NULL;
+  float* rhop=NULL;
   if(velrhopg){
     vel=new tfloat3[n];
     rhop=new float[n];
-    tfloat4 *aux=new tfloat4[n];
+    tfloat4* aux=new tfloat4[n];
     cudaMemcpy(aux,velrhopg+pini,sizeof(float4)*n,cudaMemcpyDeviceToHost);
     for(unsigned p=0;p<n;p++){ vel[p]=TFloat3(aux[p].x,aux[p].y,aux[p].z); rhop[p]=aux[p].w; }
     delete[] aux;
   }
   //-Loads velm1 and rhopm1.
-  tfloat3 *velm1=NULL;
-  float *rhopm1=NULL;
+  tfloat3* velm1=NULL;
+  float* rhopm1=NULL;
   if(velrhopm1g){
     velm1=new tfloat3[n];
     rhopm1=new float[n];
-    tfloat4 *aux=new tfloat4[n];
+    tfloat4* aux=new tfloat4[n];
     cudaMemcpy(aux,velrhopm1g+pini,sizeof(float4)*n,cudaMemcpyDeviceToHost);
     for(unsigned p=0;p<n;p++){ velm1[p]=TFloat3(aux[p].x,aux[p].y,aux[p].z); rhopm1[p]=aux[p].w; }
     delete[] aux;
   }
   //-Loads ace.
-  tfloat3 *ace=NULL;
+  tfloat3* ace=NULL;
   if(aceg){
     ace=new tfloat3[n];
     cudaMemcpy(ace,aceg+pini,sizeof(float3)*n,cudaMemcpyDeviceToHost);
   }
   //-Loads type.
-  byte *type=NULL;
+  byte* type=NULL;
   if(codeg){
     type=new byte[n];
-    typecode *aux=new typecode[n];
+    typecode* aux=new typecode[n];
     cudaMemcpy(aux,codeg+pini,sizeof(typecode)*n,cudaMemcpyDeviceToHost);
     for(unsigned p=0;p<n;p++){ 
       const typecode cod=aux[p];
@@ -1249,9 +1251,9 @@ void JSphGpu::DgSaveVtkParticlesGpu(std::string filename,int numfile
   const unsigned n=pfin-pini;
   unsigned nfilter=0;
   ParticlesDataDown(n,pini,code,false,NULL,nfilter);
-  tfloat3 *pos=new tfloat3[n];
+  tfloat3* pos=new tfloat3[n];
   for(unsigned p=0;p<n;p++)pos[p]=ToTFloat3(AuxPos_c->cptr()[p]);
-  byte *type=new byte[n];
+  byte* type=new byte[n];
   for(unsigned p=0;p<n;p++){
     const typecode cod=Code_c->cptr()[p];
     byte tp=99;
@@ -1285,64 +1287,71 @@ void JSphGpu::DgSaveVtkParticlesGpu(std::string filename,int numfile
 /// Save VTK file with particle data (debug).
 /// Graba fichero VTK con datos de las particulas (debug).
 //==============================================================================
-void JSphGpu::DgSaveVtkParticlesGpu(std::string filename,int numfile,unsigned pini,unsigned pfin,const float3 *posg,const byte *checkg,const unsigned *idpg,const float3 *velg,const float *rhopg){
+void JSphGpu::DgSaveVtkParticlesGpu(std::string filename,int numfile
+  ,unsigned pini,unsigned pfin,const float3* posg,const byte* checkg
+  ,const unsigned* idpg,const float3* velg,const float* rhog)
+{
   //-Allocates memory.
   const unsigned n=pfin-pini;
-  tfloat3 *pos=new tfloat3[n];
-  byte *check=NULL;
-  unsigned *idp=NULL;
-  tfloat3 *vel=NULL;
-  float *rhop=NULL;
+  tfloat3*  pos=new tfloat3[n];
+  byte*     check=NULL;
+  unsigned* idp=NULL;
+  tfloat3*  vel=NULL;
+  float*    rho=NULL;
   if(checkg)check=new byte[n];
-  if(idpg)idp=new unsigned[n];
-  if(velg)vel=new tfloat3[n];
-  if(rhopg)rhop=new float[n];
+  if(idpg)  idp=new unsigned[n];
+  if(velg)  vel=new tfloat3[n];
+  if(rhog)  rho=new float[n];
   //-Copies data from GPU.
   cudaMemcpy(pos,posg+pini,sizeof(float3)*n,cudaMemcpyDeviceToHost);
   if(checkg)cudaMemcpy(check,checkg+pini,sizeof(byte)*n,cudaMemcpyDeviceToHost);
   if(idpg)cudaMemcpy(idp,idpg+pini,sizeof(unsigned)*n,cudaMemcpyDeviceToHost);
   if(velg)cudaMemcpy(vel,velg+pini,sizeof(float3)*n,cudaMemcpyDeviceToHost);
-  if(rhopg)cudaMemcpy(rhop,rhopg+pini,sizeof(float)*n,cudaMemcpyDeviceToHost);
+  if(rhog)cudaMemcpy(rho,rhog+pini,sizeof(float)*n,cudaMemcpyDeviceToHost);
   //-Generates VTK file.
-  DgSaveVtkParticlesCpu(filename,numfile,0,n,pos,check,idp,vel,rhop);
+  DgSaveVtkParticlesCpu(filename,numfile,0,n,pos,check,idp,vel,rho);
   //-Frees memory.
   delete[] pos;
   delete[] check;
   delete[] idp;
   delete[] vel;
-  delete[] rhop;
+  delete[] rho;
 }
 
 //==============================================================================
 /// Save CSV file with particle data (debug).
 /// Graba fichero CSV con datos de las particulas (debug).
 //==============================================================================
-void JSphGpu::DgSaveCsvParticlesGpu(std::string filename,int numfile,unsigned pini,unsigned pfin,std::string head,const float3 *posg,const unsigned *idpg,const float3 *velg,const float *rhopg,const float *arg,const float3 *aceg,const float3 *vcorrg){
+void JSphGpu::DgSaveCsvParticlesGpu(std::string filename,int numfile
+  ,unsigned pini,unsigned pfin,std::string head,const float3* posg
+  ,const unsigned* idpg,const float3* velg,const float* rhog,const float* arg
+  ,const float3* aceg,const float3* vcorrg)
+{
   //-Allocates memory.
   const unsigned n=pfin-pini;
-  unsigned *idp=NULL;  if(idpg)idp=new unsigned[n];
-  tfloat3 *pos=NULL;   if(posg)pos=new tfloat3[n];
-  tfloat3 *vel=NULL;   if(velg)vel=new tfloat3[n];
-  float *rhop=NULL;    if(rhopg)rhop=new float[n];
-  float *ar=NULL;      if(arg)ar=new float[n];
-  tfloat3 *ace=NULL;   if(aceg)ace=new tfloat3[n];
-  tfloat3 *vcorr=NULL; if(vcorrg)vcorr=new tfloat3[n];
+  unsigned* idp=NULL;   if(idpg)idp=new unsigned[n];
+  tfloat3*  pos=NULL;   if(posg)pos=new tfloat3[n];
+  tfloat3*  vel=NULL;   if(velg)vel=new tfloat3[n];
+  float*    rho=NULL;   if(rhog)rho=new float[n];
+  float*    ar=NULL;    if(arg) ar=new float[n];
+  tfloat3*  ace=NULL;   if(aceg)ace=new tfloat3[n];
+  tfloat3*  vcorr=NULL; if(vcorrg)vcorr=new tfloat3[n];
   //-Copies data from GPU.
   if(idpg)cudaMemcpy(idp,idpg+pini,sizeof(unsigned)*n,cudaMemcpyDeviceToHost);
   if(posg)cudaMemcpy(pos,posg+pini,sizeof(float3)*n,cudaMemcpyDeviceToHost);
   if(velg)cudaMemcpy(vel,velg+pini,sizeof(float3)*n,cudaMemcpyDeviceToHost);
-  if(rhopg)cudaMemcpy(rhop,rhopg+pini,sizeof(float)*n,cudaMemcpyDeviceToHost);
+  if(rhog)cudaMemcpy(rho,rhog+pini,sizeof(float)*n,cudaMemcpyDeviceToHost);
   if(arg)cudaMemcpy(ar,arg+pini,sizeof(float)*n,cudaMemcpyDeviceToHost);
   if(aceg)cudaMemcpy(ace,aceg+pini,sizeof(float3)*n,cudaMemcpyDeviceToHost);
   if(vcorrg)cudaMemcpy(vcorr,vcorrg+pini,sizeof(float3)*n,cudaMemcpyDeviceToHost);
   Check_CudaErroor("Failed copying data from GPU.");
   //-Generates CSV file.
-  DgSaveCsvParticlesCpu(filename,numfile,0,n,head,pos,idp,vel,rhop,ar,ace,vcorr);
+  DgSaveCsvParticlesCpu(filename,numfile,0,n,head,pos,idp,vel,rho,ar,ace,vcorr);
   //-Frees memory.
   delete[] idp;
   delete[] pos;
   delete[] vel;
-  delete[] rhop;
+  delete[] rho;
   delete[] ar;
   delete[] ace;
   delete[] vcorr;
@@ -1352,39 +1361,47 @@ void JSphGpu::DgSaveCsvParticlesGpu(std::string filename,int numfile,unsigned pi
 /// Save CSV file with particle data (debug).
 /// Graba fichero CSV con datos de las particulas (debug).
 //==============================================================================
-void JSphGpu::DgSaveCsvParticlesGpu2(std::string filename,int numfile,unsigned pini,unsigned pfin,std::string head,const float3 *posg,const unsigned *idpg,const float3 *velg,const float *rhopg,const float4 *pospresg,const float4 *velrhopg){
+void JSphGpu::DgSaveCsvParticlesGpu2(std::string filename,int numfile
+  ,unsigned pini,unsigned pfin,std::string head,const float3* posg
+  ,const unsigned* idpg,const float3* velg,const float* rhog
+  ,const float4* pospresg,const float4* velrhog)
+{
   //-Allocates memory.
   const unsigned n=pfin-pini;
-  unsigned *idp=NULL;  if(idpg)idp=new unsigned[n];
-  tfloat3 *pos=NULL;   if(posg)pos=new tfloat3[n];
-  tfloat3 *vel=NULL;   if(velg)vel=new tfloat3[n];
-  float *rhop=NULL;    if(rhopg)rhop=new float[n];
-  tfloat4 *pospres=NULL;  if(pospresg)pospres=new tfloat4[n];
-  tfloat4 *velrhop=NULL;  if(velrhopg)velrhop=new tfloat4[n];
+  unsigned* idp=NULL;     if(idpg)idp=new unsigned[n];
+  tfloat3*  pos=NULL;     if(posg)pos=new tfloat3[n];
+  tfloat3*  vel=NULL;     if(velg)vel=new tfloat3[n];
+  float*    rho=NULL;     if(rhog)rho=new float[n];
+  tfloat4*  pospres=NULL; if(pospresg)pospres=new tfloat4[n];
+  tfloat4*  velrho=NULL;  if(velrhog)velrho=new tfloat4[n];
   //-Copies data from GPU.
   if(idpg)cudaMemcpy(idp,idpg+pini,sizeof(unsigned)*n,cudaMemcpyDeviceToHost);
   if(posg)cudaMemcpy(pos,posg+pini,sizeof(float3)*n,cudaMemcpyDeviceToHost);
   if(velg)cudaMemcpy(vel,velg+pini,sizeof(float3)*n,cudaMemcpyDeviceToHost);
-  if(rhopg)cudaMemcpy(rhop,rhopg+pini,sizeof(float)*n,cudaMemcpyDeviceToHost);
+  if(rhog)cudaMemcpy(rho,rhog+pini,sizeof(float)*n,cudaMemcpyDeviceToHost);
   if(pospresg)cudaMemcpy(pospres,pospresg+pini,sizeof(float4)*n,cudaMemcpyDeviceToHost);
-  if(velrhopg)cudaMemcpy(velrhop,velrhopg+pini,sizeof(float4)*n,cudaMemcpyDeviceToHost);
+  if(velrhog)cudaMemcpy(velrho,velrhog+pini,sizeof(float4)*n,cudaMemcpyDeviceToHost);
   Check_CudaErroor("Failed copying data from GPU.");
   //-Generates CSV file.
-  DgSaveCsvParticles2(filename,numfile,0,n,head,pos,idp,vel,rhop,pospres,velrhop);
+  DgSaveCsvParticles2(filename,numfile,0,n,head,pos,idp,vel,rho,pospres,velrho);
   //-Frees memory.
   delete[] idp;
   delete[] pos;
   delete[] vel;
-  delete[] rhop;
+  delete[] rho;
   delete[] pospres;
-  delete[] velrhop;
+  delete[] velrho;
 }
 
 //==============================================================================
 /// Save CSV file with particle data (debug).
 /// Graba fichero CSV con datos de las particulas (debug).
 //==============================================================================
-void JSphGpu::DgSaveCsvParticles2(std::string filename,int numfile,unsigned pini,unsigned pfin,std::string head,const tfloat3 *pos,const unsigned *idp,const tfloat3 *vel,const float *rhop,const tfloat4 *pospres,const tfloat4 *velrhop){
+void JSphGpu::DgSaveCsvParticles2(std::string filename,int numfile
+  ,unsigned pini,unsigned pfin,std::string head,const tfloat3* pos
+  ,const unsigned* idp,const tfloat3* vel,const float* rhop
+  ,const tfloat4* pospres,const tfloat4* velrhop)
+{
   int mpirank=Log->GetMpiRank();
   if(mpirank>=0)filename=string("p")+fun::IntStr(mpirank)+"_"+filename;
   if(numfile>=0)filename=fun::FileNameSec(filename,numfile);

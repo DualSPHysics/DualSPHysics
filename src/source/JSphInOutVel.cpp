@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2023 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -46,7 +46,7 @@ using namespace std;
 //==============================================================================
 /// Constructor.
 //==============================================================================
-JSphInOutVel::JSphInOutVel(bool cpu,unsigned idzone,const StCteSph &csp
+JSphInOutVel::JSphInOutVel(bool cpu,unsigned idzone,const StCteSph& csp
   ,tdouble3 direction,tdouble3 ptplane,tdouble3 zoneposmin,tdouble3 zoneposmax)
   :Log(AppInfo.LogPtr()),Cpu(cpu),IdZone(idzone),CSP(csp),Direction(direction)
   ,PtPlane(ptplane),ZonePosMin(zoneposmin),ZonePosMax(zoneposmax)
@@ -105,10 +105,10 @@ void JSphInOutVel::Reset(){
 //==============================================================================
 /// Reads initial configuration in the XML node.
 //==============================================================================
-TpInVelMode JSphInOutVel::ReadXml(const JXml *sxml,TiXmlElement *ele
-  ,const std::string &dirdatafile,JGaugeSystem *gaugesystem,double maprealposminy)
+TpInVelMode JSphInOutVel::ReadXml(const JXml* sxml,TiXmlElement* ele
+  ,const std::string& dirdatafile,JGaugeSystem* gaugesystem,double maprealposminy)
 {
-  TiXmlElement *xele=ele->FirstChildElement("imposevelocity");
+  TiXmlElement* xele=ele->FirstChildElement("imposevelocity");
   if(xele){
     const unsigned mode=sxml->GetAttributeUint(xele,"mode",true);
     switch(mode){
@@ -274,7 +274,7 @@ TpInVelMode JSphInOutVel::ReadXml(const JXml *sxml,TiXmlElement *ele
 /// Calculates minimum and maximum velocity according velocity configuration.
 /// Returns -FLT_MAX and FLT_MAX when velocity is unknown.
 //==============================================================================
-void JSphInOutVel::CalculateVelMinMax(float &velmin,float &velmax)const{
+void JSphInOutVel::CalculateVelMinMax(float& velmin,float& velmax)const{
   velmin=FLT_MAX;
   velmax=-FLT_MAX;
   if(VelMode==InVelM_Fixed){
@@ -372,7 +372,7 @@ void JSphInOutVel::ConfigFlowToVel(unsigned initnptok){
 //==============================================================================
 /// Loads lines with configuration information.
 //==============================================================================
-void JSphInOutVel::GetConfig(std::vector<std::string> &lines)const{
+void JSphInOutVel::GetConfig(std::vector<std::string>& lines)const{
   const bool simulate2d=CSP.simulate2d;
   lines.push_back(fun::PrintStr("Velocity mode: %s",TpInVelModeText(VelMode)));
   if(VelMode==InVelM_Fixed || VelMode==InVelM_Variable){
@@ -489,8 +489,8 @@ void JSphInOutVel::UpdateVel(double timestep){
 /// Applies interpolated velocity to inout fluid according to the timestep on CPU. 
 //==============================================================================
 void JSphInOutVel::UpdateVelInterpolateCpu(double timestep,unsigned nplist
-  ,const int *plist,const tdouble3 *pos,const typecode *code
-  ,const unsigned *idp,tfloat4 *velrhop)
+  ,const int* plist,const tdouble3* pos,const typecode* code
+  ,const unsigned* idp,tfloat4* velrhop)
 {
   if(InputVelGrid){
     const float velcorr=(AwasVel? AwasVel->GetVelCorr(timestep): 0);
@@ -515,9 +515,9 @@ void JSphInOutVel::UpdateVelInterpolateCpu(double timestep,unsigned nplist
 //==============================================================================
 /// Applies interpolated velocity to inout fluid according to the timestep on GPU. 
 //==============================================================================
-void JSphInOutVel::UpdateVelInterpolateGpu(double timestep,unsigned nplist,const int *plist
-  ,const double2 *posxyg,const double *poszg,const typecode *codeg
-  ,const unsigned *idpg,float4 *velrhopg)
+void JSphInOutVel::UpdateVelInterpolateGpu(double timestep,unsigned nplist
+  ,const int* plist,const double2* posxyg,const double* poszg
+  ,const typecode* codeg,const unsigned* idpg,float4* velrhopg)
 {
   if(InputVelGrid){
     const float velcorr=(AwasVel? AwasVel->GetVelCorr(timestep): 0);

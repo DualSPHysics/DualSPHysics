@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2023 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -133,15 +133,15 @@ private:
   void ConfigDomainParticlesValue(std::string key,double v);
   void ConfigDomainParticlesPrc(tdouble3 vmin,tdouble3 vmax);
   void ConfigDomainParticlesPrcValue(std::string key,double v);
-  void ConfigDomainResize(std::string key,const JCaseEParms *eparms);
+  void ConfigDomainResize(std::string key,const JCaseEParms* eparms);
 
 protected:
   const bool Cpu;
   const bool Mgpu;
   const bool WithMpi;
-  JLog2 *Log;
+  JLog2* Log;
 
-  const JSphCfgRun *CfgRun;
+  const JSphCfgRun* CfgRun;
 
   bool Simulate2D;       ///<Toggles 2D simulation (cancels forces in Y axis). | Activa o desactiva simulacion en 2D (anula fuerzas en eje Y).
   double Simulate2DPosY; ///<Y value in 2D simulations.                        | Valor de Y en simulaciones 2D.
@@ -176,7 +176,7 @@ protected:
   TpVisco TVisco;             ///<Viscosity type: Artificial,Laminar...
   float Visco;                ///<Viscosity value.
   float ViscoBoundFactor;     ///<For boundary interaction use Visco*ViscoBoundFactor.                  | Para interaccion con contorno usa Visco*ViscoBoundFactor.
-  JDsViscoInput *ViscoTime;   ///<Provides a viscosity value as a function of simulation time.          | Proporciona un valor de viscosidad en funcion del instante de la simulacion.
+  JDsViscoInput* ViscoTime;   ///<Provides a viscosity value as a function of simulation time.          | Proporciona un valor de viscosidad en funcion del instante de la simulacion.
 
   TpBoundary TBoundary;       ///<Boundary condition: DBC, M-DBC.
   TpSlipMode SlipMode;        ///<Slip mode for mDBC 1:DBC vel=0, 2:No-slip, 3:Free slip (default=1).
@@ -197,7 +197,7 @@ protected:
   double TimePartExtra;       ///<Time for extra output data on motion and floating information (-1:Disabled) [s].
   double TimePartExtraNext;   ///<Next time for extra output data.
 
-  JDsOutputTime *OutputTime;  ///<Manage the use of variable output time to save PARTs.
+  JDsOutputTime* OutputTime;  ///<Manage the use of variable output time to save PARTs.
   int NstepsBreak;            ///<Maximum number of steps allowed (debug).
   bool SvAllSteps;            ///<Saves a PART for each step (debug).
   bool NoRtimes;              ///<Removes execution dependent values from bi4 files (debug).
@@ -207,8 +207,8 @@ protected:
   double DtMin;              ///<Minimum allowed Dt (if the calculated value is lower is replaced by DTmin).
   float CoefDtMin;           ///<Coefficient to calculate minimum time step. dtmin=coefdtmin*h/speedsound (def=0.03).
   bool DtAllParticles;       ///<Velocity of particles used to calculate DT. 1:All, 0:Only fluid/floating (def=0).
-  JDsFixedDt *FixedDt;
-  JDsSaveDt *SaveDt;
+  JDsFixedDt* FixedDt;
+  JDsSaveDt* SaveDt;
 
   float PartsOutMax;         ///<Allowed percentage of fluid particles out of the domain. | Porcentaje maximo de particulas excluidas permitidas.                                  
   unsigned NpMinimum;        ///<Minimum number of particles allowed.                     | Numero minimo de particulas permitidas.                                                
@@ -278,65 +278,65 @@ protected:
   ullong PartBeginTotalNp;    ///<Total number of simulated particles.
   bool RestartChrono;         ///<Allows restart with Chrono active (default=0).
 
-  JDsPartsOut *PartsOut;        ///<Stores excluded particles until they are saved. | Almacena las particulas excluidas hasta su grabacion.
+  JDsPartsOut* PartsOut;        ///<Stores excluded particles until they are saved. | Almacena las particulas excluidas hasta su grabacion.
   bool WrnPartsOut;           ///<Active warning according to number of out particles (default=1).
 
   //-Variables for predefined movement.
-  JDsMotion *DsMotion;      ///<Manages moving objects. It is NULL when there are not moving objects.
+  JDsMotion* DsMotion;      ///<Manages moving objects. It is NULL when there are not moving objects.
 
   //-Variables for floating bodies.
-  StFloatingData *FtObjs;        ///<Data of floating objects. [FtCount]
+  StFloatingData* FtObjs;        ///<Data of floating objects. [FtCount]
   unsigned FtCount;              ///<Number of floating objects.
   float FtPause;                 ///<Time to start floating bodies movement.
   TpRigidMode RigidMode;         ///<Rigid Algorithm 0:collision-free, 1:SPH, 2:DEM, 3:Chrono (default=1).
   TpFtMode FtMode;               ///<Defines interaction mode for floatings and boundaries.
   bool FtConstraints;            ///<Some floating motion constraint is defined.
-  JLinearValue **FtLinearVel;    ///<Imposed linear velocity [FtCount].
-  JLinearValue **FtAngularVel;   ///<Imposed angular velocity [FtCount].
-  JLinearValue **FtLinearForce;  ///<Added linear force [FtCount].
-  JLinearValue **FtAngularForce; ///<Added angular force [FtCount].
+  JLinearValue** FtLinearVel;    ///<Imposed linear velocity [FtCount].
+  JLinearValue** FtAngularVel;   ///<Imposed angular velocity [FtCount].
+  JLinearValue** FtLinearForce;  ///<Added linear force [FtCount].
+  JLinearValue** FtAngularForce; ///<Added angular force [FtCount].
   bool FtIgnoreRadius;           ///<Ignores floating body radius with periodic boundary conditions (def=false).
   bool WithFloating;
 
   //-Variables for DEM (DEM).
   bool UseDEM;         ///<Use DEM for boundary collisions.
   static const unsigned DemDataSize=CODE_TYPE_FLUID;
-  StDemData *DemData;  ///<Data of DEM objects. [DemDataSize]
+  StDemData* DemData;  ///<Data of DEM objects. [DemDataSize]
 
   //-Variables for Chrono use.
   bool UseChrono;  ///<Use Chrono library for rigid body dynamics.
-  JChronoObjects *ChronoObjects;  ///<Object for integration with Chrono Engine.
+  JChronoObjects* ChronoObjects;  ///<Object for integration with Chrono Engine.
 
   JDsMooredFloatings* Moorings;     ///<Manages floating bodies with moorings. | Gestiona floating bodies con amarres.
   JDsFtForcePoints* ForcePoints; ///<Manages forces to apply on floating bodies.
 
   std::vector<std::string> InitializeInfo; ///<Stores information about initialize configuration applied.
 
-  JNumexLib *NuxLib;            ///<Object to evaluate user-defined expressions in XML.
+  JNumexLib* NuxLib;            ///<Object to evaluate user-defined expressions in XML.
 
-  JGaugeSystem *GaugeSystem;    ///<Object for automatic gauge system.
+  JGaugeSystem* GaugeSystem;    ///<Object for automatic gauge system.
 
-  JWaveGen *WaveGen;            ///<Object for wave generation.
+  JWaveGen* WaveGen;            ///<Object for wave generation.
 
-  JMLPistons *MLPistons;        ///<Object for Multi-Layer Pistons.
+  JMLPistons* MLPistons;        ///<Object for Multi-Layer Pistons.
 
-  JRelaxZones *RelaxZones;      ///<Object for wave generation using Relaxation Zone (RZ).
+  JRelaxZones* RelaxZones;      ///<Object for wave generation using Relaxation Zone (RZ).
 
-  JSphShifting *Shifting;       ///<Object for shifting correction.
+  JSphShifting* Shifting;       ///<Object for shifting correction.
   TpShifting ShiftingMode;      ///<Mode of Shifting: None, NoBound, NoFixed, Full.
 
-  JDsDamping *Damping;          ///<Object for damping zones.
+  JDsDamping* Damping;          ///<Object for damping zones.
 
-  JDsAccInput *AccInput;    ///<Object for variable acceleration functionality.
+  JDsAccInput* AccInput;    ///<Object for variable acceleration functionality.
 
-  JSphInOut *InOut;         ///<Object for inlet/outlet conditions.
+  JSphInOut* InOut;         ///<Object for inlet/outlet conditions.
 
   std::string SvExtraParts;         ///<Part interval (or list) for saving extra data for restart option (default=empty=disabled)
-  JDsExtraDataSave *SvExtraDataBi4; ///<To store extra data for restart option (SvExtraParts).
+  JDsExtraDataSave* SvExtraDataBi4; ///<To store extra data for restart option (SvExtraParts).
 
   JDsOutputParts* OutputParts;      ///<Object for output particle filter. //<vs_outpaarts>
 
-  JDsPips *DsPips;          ///<Object for PIPS calculation.
+  JDsPips* DsPips;          ///<Object for PIPS calculation.
 
   //-Variables for division in cells.
   bool CellDomFixed;       ///<The Cell domain is fixed according maximum domain size.
@@ -411,7 +411,7 @@ protected:
 
 
   bool SaveFtAce;    ///<Indicates whether linear and angular accelerations of each floating objects are saved.
-  void SaveFtAceFun(double dt,bool predictor,StFtoForces *ftoforces);
+  void SaveFtAceFun(double dt,bool predictor,StFtoForces* ftoforces);
 
 
 protected:
@@ -419,23 +419,25 @@ protected:
   llong GetAllocMemoryCpu()const;
 
 
-  void LoadConfig(const JSphCfgRun *cfg);
-  void LoadKernelSelection(const JSphCfgRun *cfg,const JXml *xml);
-  void LoadConfigCtes(const JXml *xml);
-  void LoadConfigVars(const JXml *xml);
+  void LoadConfig(const JSphCfgRun* cfg);
+  void LoadKernelSelection(const JSphCfgRun* cfg,const JXml* xml);
+  void LoadConfigCtes(const JXml* xml);
+  void LoadConfigVars(const JXml* xml);
   void LoadConfigVarsExec();
-  void LoadConfigParameters(const JXml *xml);
-  void LoadConfigCommands(const JSphCfgRun *cfg);
-  void LoadCaseConfig(const JSphCfgRun *cfg);
+  void LoadConfigParameters(const JXml* xml);
+  void LoadConfigCommands(const JSphCfgRun* cfg);
+  void LoadCaseConfig(const JSphCfgRun* cfg);
 
   StDemData LoadDemData(bool checkdata,const JCasePartBlock* block)const;
   void VisuDemCoefficients()const;
 
   void LoadCodeParticles(unsigned np,const unsigned* idp,typecode* code)const;
-  void LoadBoundNormals(unsigned np,unsigned npb,const unsigned* idp,const typecode* code,tfloat3* boundnor);
-  void ConfigBoundNormals(unsigned np,unsigned npb,const tdouble3* pos,const unsigned* idp,tfloat3* boundnor);
+  void LoadBoundNormals(unsigned np,unsigned npb,const unsigned* idp
+    ,const typecode* code,tfloat3* boundnor);
+  void ConfigBoundNormals(unsigned np,unsigned npb,const tdouble3* pos
+    ,const unsigned* idp,tfloat3* boundnor);
 
-  void PrepareCfgDomainValues(tdouble3 &v,tdouble3 vdef=TDouble3(0))const;
+  void PrepareCfgDomainValues(tdouble3& v,tdouble3 vdef=TDouble3(0))const;
   void ResizeMapLimits();
 
   void ConfigConstants1(bool simulate2d);
@@ -443,7 +445,8 @@ protected:
   void VisuConfig();
   void VisuRefs();
   void VisuParticleSummary()const;
-  void LoadDcellParticles(unsigned n,const typecode *code,const tdouble3 *pos,unsigned *dcell)const;
+  void LoadDcellParticles(unsigned n,const typecode* code,const tdouble3* pos
+    ,unsigned* dcell)const;
   void RunInitialize(unsigned np,unsigned npb,const tdouble3* pos,const unsigned* idp
     ,const typecode* code,tfloat4* velrhop,tfloat3* boundnor);
   void CreatePartsInit(unsigned np,const tdouble3* pos,const typecode* code);
@@ -461,7 +464,8 @@ protected:
   void InitRun(unsigned np,const unsigned* idp,const tdouble3* pos);
   void InitFloatings();
 
-  void WavesInit(JGaugeSystem *gaugesystem,const JSphMk *mkinfo,double timemax,double timepart);
+  void WavesInit(JGaugeSystem* gaugesystem,const JSphMk* mkinfo,double timemax
+    ,double timepart);
   void WavesLoadLastGaugeResults();
   void WavesUpdateGaugePoints();
 
@@ -492,21 +496,23 @@ protected:
     ,const unsigned* idp,const tfloat3* vel,const float* rho)const;
   void SaveRunPartsCsv(const StInfoPartPlus& infoplus,double tpart,double tsim)const;
   void SaveRunPartsCsvFinal()const;
-  void SavePartData(unsigned npsave,unsigned nout,const JDataArrays& arrays,unsigned ndom,const tdouble3* vdom,const StInfoPartPlus& infoplus);
-  void SaveData(unsigned npsave,const JDataArrays& arrays,unsigned ndom,const tdouble3* vdom,StInfoPartPlus infoplus);
+  void SavePartData(unsigned npsave,unsigned nout,const JDataArrays& arrays
+    ,unsigned ndom,const tdouble3* vdom,const StInfoPartPlus& infoplus);
+  void SaveData(unsigned npsave,const JDataArrays& arrays,unsigned ndom
+    ,const tdouble3* vdom,StInfoPartPlus infoplus);
 
   void CheckTermination();
   void TimeOutExtraUpdate(double timestep);
   bool TimeOutExtraCheck(double timestep)const{ return(timestep>=TimePartExtraNext); }
-  void SaveDomainVtk(unsigned ndom,const tdouble3 *vdom)const;
+  void SaveDomainVtk(unsigned ndom,const tdouble3* vdom)const;
   void SaveInitialDomainVtk()const;
   unsigned SaveMapCellsVtkSize()const;
   void SaveMapCellsVtk(float scell)const;
   void SaveVtkNormals(std::string filename,int numfile,unsigned np,unsigned npb
-    ,const tdouble3 *pos,const unsigned *idp,const tfloat3 *boundnor,float resize)const;
+    ,const tdouble3* pos,const unsigned* idp,const tfloat3* boundnor,float resize)const;
  
   void GetResInfo(float tsim,float ttot,std::string headplus,std::string detplus
-    ,std::string &hinfo,std::string &dinfo)const;
+    ,std::string& hinfo,std::string& dinfo)const;
   void SaveRes(float tsim,float ttot,const std::string& headplus="",const std::string& detplus="");
   void ShowResume(bool stop,float tsim,float ttot,bool all,std::string infoplus);
 
@@ -531,9 +537,16 @@ public:
 //----------------------
 public:
   unsigned DgNum;
-  void DgSaveVtkParticlesCpu(std::string filename,int numfile,unsigned pini,unsigned pfin,const tdouble3 *pos,const typecode *code,const unsigned *idp,const tfloat4 *velrhop,const tfloat3 *ace=NULL)const;
-  void DgSaveVtkParticlesCpu(std::string filename,int numfile,unsigned pini,unsigned pfin,const tfloat3 *pos,const byte *check,const unsigned *idp,const tfloat3 *vel,const float *rhop);
-  void DgSaveCsvParticlesCpu(std::string filename,int numfile,unsigned pini,unsigned pfin,std::string head,const tfloat3 *pos,const unsigned *idp=NULL,const tfloat3 *vel=NULL,const float *rhop=NULL,const float *ar=NULL,const tfloat3 *ace=NULL,const tfloat3 *vcorr=NULL);
+  void DgSaveVtkParticlesCpu(std::string filename,int numfile
+    ,unsigned pini,unsigned pfin,const tdouble3* pos,const typecode* code
+    ,const unsigned* idp,const tfloat4* velrhop,const tfloat3* ace=NULL)const;
+  void DgSaveVtkParticlesCpu(std::string filename,int numfile
+    ,unsigned pini,unsigned pfin,const tfloat3* pos,const byte* check
+    ,const unsigned* idp,const tfloat3* vel,const float* rhop);
+  void DgSaveCsvParticlesCpu(std::string filename,int numfile
+    ,unsigned pini,unsigned pfin,std::string head,const tfloat3* pos
+    ,const unsigned* idp=NULL,const tfloat3* vel=NULL,const float* rhop=NULL
+    ,const float* ar=NULL,const tfloat3* ace=NULL,const tfloat3* vcorr=NULL);
 };
 
 /*:

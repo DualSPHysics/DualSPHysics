@@ -1,6 +1,6 @@
 //HEAD_DSCODES
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2023 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -64,15 +64,15 @@ public:
   typedef struct StrFileInfo{
     std::string file;
     std::string info;
-    StrFileInfo(const std::string &xfile,const std::string &xinfo){ file=xfile; info=xinfo; }
+    StrFileInfo(const std::string& xfile,const std::string& xinfo){ file=xfile; info=xinfo; }
   }StFileInfo;
 
 protected:
-  JLog2 *Parent;
+  JLog2* Parent;
   std::string ParentPrefix;
 
   std::string FileName;
-  std::ofstream *Pf;
+  std::ofstream* Pf;
   bool Ok;
   bool MpiRun;
   int MpiRank,MpiLaunch;
@@ -87,42 +87,42 @@ protected:
 
 public:
   JLog2(TpMode_Out modeoutdef=Out_ScrFile);
-  JLog2(JLog2 *parent,std::string prefix);
+  JLog2(JLog2* parent,std::string prefix);
   ~JLog2();
   void Reset();
   void Init(std::string fname,bool mpirun=false,int mpirank=0,int mpilaunch=0);
   void SetModeOutDef(TpMode_Out modeoutdef){ ModeOutDef=modeoutdef; }
-  void Print(const std::string &tx,TpMode_Out mode=Out_Default,bool flush=false);
-  void Print(const std::vector<std::string> &lines,TpMode_Out mode=Out_Default,bool flush=false);
-  void PrintDbg(const std::string &tx,TpMode_Out mode=Out_Default){ Print(tx,mode,true); }
-  void PrintFile(const std::string &tx,bool flush=false){ Print(tx,Out_File,flush); }
+  void Print(const std::string& tx,TpMode_Out mode=Out_Default,bool flush=false);
+  void Print(const std::vector<std::string>& lines,TpMode_Out mode=Out_Default,bool flush=false);
+  void PrintDbg(const std::string& tx,TpMode_Out mode=Out_Default){ Print(tx,mode,true); }
+  void PrintFile(const std::string& tx,bool flush=false){ Print(tx,Out_File,flush); }
   bool IsOk()const{ return(Ok); }
   int GetMpiRank()const{ return(MpiRun? MpiRank: -1); }
   std::string GetParentPrefix()const{ return(ParentPrefix); }
 
   //std::string GetDirOut()const{ return(DirOut); }
 
-  void Printf(const char *format,...);
-  void PrintfDbg(const char *format,...);
+  void Printf(const char* format,...);
+  void PrintfDbg(const char* format,...);
   //-Adding a prefix.
-  void Printp(const std::string &prefix,const std::string &tx,TpMode_Out mode=Out_Default,bool flush=false){ Print(prefix+tx,mode,flush); }
-  void Printp(const std::string &prefix,const std::vector<std::string> &lines,TpMode_Out mode=Out_Default,bool flush=false);
-  void PrintpDbg(const std::string &prefix,const std::string &tx,TpMode_Out mode=Out_Default){ Printp(prefix,tx,mode,true); }
-  void Printfp(const std::string &prefix,const char *format,...);
-  void PrintfpDbg(const std::string &prefix,const char *format,...);
+  void Printp(const std::string& prefix,const std::string& tx,TpMode_Out mode=Out_Default,bool flush=false){ Print(prefix+tx,mode,flush); }
+  void Printp(const std::string& prefix,const std::vector<std::string>& lines,TpMode_Out mode=Out_Default,bool flush=false);
+  void PrintpDbg(const std::string& prefix,const std::string& tx,TpMode_Out mode=Out_Default){ Printp(prefix,tx,mode,true); }
+  void Printfp(const std::string& prefix,const char* format,...);
+  void PrintfpDbg(const std::string& prefix,const char* format,...);
 
   //-Warning system.
-  void AddWarning(const std::string &tx);
-  void PrintWarning(const std::string &tx,TpMode_Out mode=Out_Default,bool flush=false);
-  void PrintfWarning(const char *format,...);
+  void AddWarning(const std::string& tx);
+  void PrintWarning(const std::string& tx,TpMode_Out mode=Out_Default,bool flush=false);
+  void PrintfWarning(const char* format,...);
   unsigned WarningCount()const{ return(unsigned(Warnings.size())); }
-  void PrintWarningList(const std::string &txhead,const std::string &txfoot,TpMode_Out mode=Out_Default,bool flush=false);
+  void PrintWarningList(const std::string& txhead,const std::string& txfoot,TpMode_Out mode=Out_Default,bool flush=false);
   void PrintWarningList(TpMode_Out mode=Out_Default,bool flush=false);
 
   //-File description.
-  void AddFileInfo(std::string fname,const std::string &finfo);
+  void AddFileInfo(std::string fname,const std::string& finfo);
   unsigned FilesCount()const{ return(unsigned(FileInfo.size())); }
-  void PrintFilesList(const std::string &txhead,const std::string &txfoot,TpMode_Out mode=Out_Default,bool flush=false);
+  void PrintFilesList(const std::string& txhead,const std::string& txfoot,TpMode_Out mode=Out_Default,bool flush=false);
   void PrintFilesList(TpMode_Out mode=Out_Default,bool flush=false);
 
 };

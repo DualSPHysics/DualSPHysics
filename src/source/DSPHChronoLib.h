@@ -1,5 +1,5 @@
 /*
- <DUALSPHYSICS>  Copyright (c) 2019, Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/).
+ <DUALSPHYSICS>  Copyright (c) 2023, Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/).
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -121,7 +121,7 @@ protected:
   double CollisionCoef;
 
   /// Constructor
-  DSPHChronoLib(const JChronoData &chdata);
+  DSPHChronoLib(const JChronoData& chdata);
 
   /// Initialisation of variables
   void Reset();
@@ -133,13 +133,13 @@ protected:
   virtual void SetVariableCoeff(){};
   
   /// Adds the material properties to a object to enable collisions
-  void ConfigSurfaceBody(const JChBody &body,chrono::ChBody *chbody);
+  void ConfigSurfaceBody(const JChBody& body,chrono::ChBody* chbody);
 
   /// Adds the initial velocity.
-  void ApplyInitialVel(const JChBody &body,chrono::ChBody *chbody);
+  void ApplyInitialVel(const JChBody& body,chrono::ChBody* chbody);
 
   /// Adds the imposed velocity.
-  void ApplyImposedVel(const JChBodyFloating &body,chrono::ChBody *chbody);
+  void ApplyImposedVel(const JChBodyFloating& body,chrono::ChBody* chbody);
 
 public:
 
@@ -156,31 +156,31 @@ public:
   virtual void SaveForces(){};
 
   /// Obtains positions of Spring link.
-  virtual bool GetSpringLinkPositions(const std::string &linkname,tdouble3 &p1,tdouble3 &p2)const=0;
+  virtual bool GetSpringLinkPositions(const std::string& linkname,tdouble3& p1,tdouble3& p2)const=0;
 
   /// Obtains RestLength of Spring link.
-  virtual double GetSpringLinkRestLength(const std::string &linkname)const=0;
+  virtual double GetSpringLinkRestLength(const std::string& linkname)const=0;
 
   /// Modifies RestLength of Spring link.
-  virtual void SetSpringLinkRestLength(const std::string &linkname,double restlength)const{};
+  virtual void SetSpringLinkRestLength(const std::string& linkname,double restlength)const{};
 
   /// Obtains center of body.
-  virtual bool GetBodyCenter(const std::string &bodyname,tdouble3 &pcen)const=0;
+  virtual bool GetBodyCenter(const std::string& bodyname,tdouble3& pcen)const=0;
 
   /// Returns pointer to ChronoData object.
   const JChronoData* GetChronoData(){ return(&ChData); }
 
   /// Loads floating data to calculate coupling with Chrono.
-  bool SetFtData(word mkbound,const tfloat3 &face,const tfloat3 &fomegaace);
+  bool SetFtData(word mkbound,const tfloat3& face,const tfloat3& fomegaace);
 
   /// Loads imposed velocity for floating to calculate coupling with Chrono.
-  bool SetFtDataVel(word mkbound,const tfloat3 &vlin,const tfloat3 &vang); 
+  bool SetFtDataVel(word mkbound,const tfloat3& vlin,const tfloat3& vang); 
   
   /// Obtains floating data from coupling with Chrono.
-  bool GetFtData(word mkbound,tdouble3 &fcenter,tfloat3 &fvel,tfloat3 &fomega)const;
+  bool GetFtData(word mkbound,tdouble3& fcenter,tfloat3& fvel,tfloat3& fomega)const;
 
   /// Loads motion data to calculate coupling with Chrono.
-  bool SetMovingData(word mkbound,bool simple,const tdouble3 &msimple,const tmatrix4d &mmatrix,double stepdt);
+  bool SetMovingData(word mkbound,bool simple,const tdouble3& msimple,const tmatrix4d& mmatrix,double stepdt);
 };
 
 //##############################################################################
@@ -189,7 +189,7 @@ public:
 /// \brief Defines the class for single-core executions.
 class DSPHChronoLibSC : public DSPHChronoLib {
 private:
-  chrono::ChSystem *MphysicalSystem; ///<Pointer to Chrono System
+  chrono::ChSystem* MphysicalSystem; ///<Pointer to Chrono System
 
   /// Establishes the variable coefficients to the link objects.
   virtual void SetVariableCoeff();
@@ -208,7 +208,7 @@ private:
 
 public:
   /// Constructor
-  DSPHChronoLibSC(const JChronoData &chdata);
+  DSPHChronoLibSC(const JChronoData& chdata);
 
   /// Destructor
   ~DSPHChronoLibSC();
@@ -226,15 +226,15 @@ public:
   void SaveForces();
 
   /// Obtains positions of Spring link.
-  bool GetSpringLinkPositions(const std::string &linkname,tdouble3 &p1,tdouble3 &p2)const;
+  bool GetSpringLinkPositions(const std::string& linkname,tdouble3& p1,tdouble3& p2)const;
 
   /// Obtains RestLength of Spring link.
-  double GetSpringLinkRestLength(const std::string &linkname)const;
+  double GetSpringLinkRestLength(const std::string& linkname)const;
 
   /// Modifies RestLength of Spring link.
-  void SetSpringLinkRestLength(const std::string &linkname,double restlength)const;
+  void SetSpringLinkRestLength(const std::string& linkname,double restlength)const;
 
   /// Obtains center of body.
-  bool GetBodyCenter(const std::string &bodyname,tdouble3 &pcen)const;
+  bool GetBodyCenter(const std::string& bodyname,tdouble3& pcen)const;
 };
 #endif //!DSPHCHRONOLIB_H

@@ -158,7 +158,7 @@ protected:
   }
   
 public:
-  JLog2 *Log;
+  JLog2* Log;
   const int GpuId;
   const int Id;
 

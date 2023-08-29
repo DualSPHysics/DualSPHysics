@@ -1,6 +1,6 @@
 //HEAD_DSCODES
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2023 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -55,19 +55,19 @@ public:
 private:
   std::vector<StVar> Vars;
 
-  void ReadXml(const JXml *sxml,TiXmlElement* lis);
-  void WriteXml(JXml *sxml,TiXmlElement* lis)const;
+  void ReadXml(const JXml* sxml,TiXmlElement* lis);
+  void WriteXml(JXml* sxml,TiXmlElement* lis)const;
 
 public:
   JCaseUserVars();
   ~JCaseUserVars();
   void Reset();
 
-  void LoadExportVars(const JNumexLib *nuxlib);
-  void SaveXml(JXml *sxml,const std::string &place)const;
+  void LoadExportVars(const JNumexLib* nuxlib);
+  void SaveXml(JXml* sxml,const std::string& place)const;
 
-  void LoadFileXml(const std::string &file,const std::string &path);
-  void LoadXml(const JXml *sxml,const std::string &place,bool optional);
+  void LoadFileXml(const std::string& file,const std::string& path);
+  void LoadXml(const JXml* sxml,const std::string& place,bool optional);
 
   unsigned CountVars()const{ return(unsigned(Vars.size())); };
   StVar GetVar(unsigned idx)const;

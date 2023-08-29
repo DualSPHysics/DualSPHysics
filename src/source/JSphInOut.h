@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2023 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -69,7 +69,7 @@ class JNumexLib;
 class JSphInOut : protected JObject
 {
 private:
-  JLog2 *Log;
+  JLog2* Log;
   const std::string XmlFile;
   const std::string XmlPath;
   static const unsigned MaxZones=CODE_TYPE_FLUID_INOUTNUM;  ///<Maximum number of inout configurations.
@@ -113,48 +113,48 @@ private:
   unsigned ListSize;  ///<Number of inlet/outlet configurations.
 
   //-Data to manage all inlet/outlet conditions.
-  tplane3f *Planes;    ///<Planes for inlet/outlet zones [ListSize].
-  byte     *CfgZone;   ///<Information about VelMode, VelProfile, RhopMode and ConvertFluid. [ListSize].
-  byte     *CfgUpdate; ///<Information about refilling mode, InputMode and RemoveZsurf. [ListSize].
-  float    *Width;     ///<Zone width [ListSize].
-  tfloat3  *DirData;   ///<Inflow direction [ListSize].
-  tfloat3  *DirVel;    ///<Inflow direction for velocity (use FLT_MAX to ignore it). [ListSize].
-  tfloat4  *VelData;   ///<Velocity coefficients for imposed velocity [ListSize*2].
-  float    *Zsurf;     ///<Zsurf (it can be variable) [ListSize].
+  tplane3f* Planes;    ///<Planes for inlet/outlet zones [ListSize].
+  byte*     CfgZone;   ///<Information about VelMode, VelProfile, RhopMode and ConvertFluid. [ListSize].
+  byte*     CfgUpdate; ///<Information about refilling mode, InputMode and RemoveZsurf. [ListSize].
+  float*    Width;     ///<Zone width [ListSize].
+  tfloat3*  DirData;   ///<Inflow direction [ListSize].
+  tfloat3*  DirVel;    ///<Inflow direction for velocity (use FLT_MAX to ignore it). [ListSize].
+  tfloat4*  VelData;   ///<Velocity coefficients for imposed velocity [ListSize*2].
+  float*    Zsurf;     ///<Zsurf (it can be variable) [ListSize].
   
 #ifdef _WITHGPU
   //-Data to manage all inlet/outlet conditions on GPU.
-  float4 *Planesg;    ///<Planes for inlet/outlet zones [ListSize].
-  float2 *BoxLimitg;  ///<BoxLimitMin/Max for inlet/outlet zones [ListSize*(xmin,xmax),ListSize*(ymin,ymax),ListSize*(zmin,zmax)]=[3*ListSize].
-  byte   *CfgZoneg;   ///<Information about VelMode, VelProfile, RhopMode and ConvertFluid. [ListSize].
-  byte   *CfgUpdateg; ///<Information about refilling mode, InputMode and RemoveZsurf. [ListSize].
-  float  *Widthg;     ///<Zone width [ListSize].
-  float3 *DirDatag;   ///<Inflow direction [ListSize].
-  float3 *DirVelg;    ///<Inflow direction for velocity (use FLT_MAX to ignore it). [ListSize].
-  float  *Zsurfg;     ///<Zsurf (it can be variable) [ListSize].
+  float4* Planesg;    ///<Planes for inlet/outlet zones [ListSize].
+  float2* BoxLimitg;  ///<BoxLimitMin/Max for inlet/outlet zones [ListSize*(xmin,xmax),ListSize*(ymin,ymax),ListSize*(zmin,zmax)]=[3*ListSize].
+  byte*   CfgZoneg;   ///<Information about VelMode, VelProfile, RhopMode and ConvertFluid. [ListSize].
+  byte*   CfgUpdateg; ///<Information about refilling mode, InputMode and RemoveZsurf. [ListSize].
+  float*  Widthg;     ///<Zone width [ListSize].
+  float3* DirDatag;   ///<Inflow direction [ListSize].
+  float3* DirVelg;    ///<Inflow direction for velocity (use FLT_MAX to ignore it). [ListSize].
+  float*  Zsurfg;     ///<Zsurf (it can be variable) [ListSize].
 #endif
 
   //-Data to refill inlet/outlet zone.
   unsigned PtCount;  ///<Number of points.
-  byte     *PtZone;  ///<Zone for each point [PtCount]. Data is constant after configuration.
-  tdouble3 *PtPos;   ///<Position of points [PtCount]. Data is constant after configuration.
-  float    *PtAuxDist;
+  byte*     PtZone;  ///<Zone for each point [PtCount]. Data is constant after configuration.
+  tdouble3* PtPos;   ///<Position of points [PtCount]. Data is constant after configuration.
+  float*    PtAuxDist;
 
 #ifdef _WITHGPU
   //-Data to refill inlet/outlet zone on GPU.
-  byte    *PtZoneg;   ///<Zone for each point [PtCount]. Data is constant after configuration.
-  double2 *PtPosxyg;  ///<Position of points [PtCount]. Data is constant after configuration.
-  double  *PtPoszg;   ///<Position of points [PtCount]. Data is constant after configuration.
-  float   *PtAuxDistg;
+  byte*    PtZoneg;   ///<Zone for each point [PtCount]. Data is constant after configuration.
+  double2* PtPosxyg;  ///<Position of points [PtCount]. Data is constant after configuration.
+  double*  PtPoszg;   ///<Position of points [PtCount]. Data is constant after configuration.
+  float*   PtAuxDistg;
 #endif
 
-  void LoadXmlInit(const JXml *sxml,const std::string &place);
-  void LoadFileXml(const std::string &file,const std::string &path
-    ,JNumexLib *nuxlib,const JDsPartsInit *partsdata,JGaugeSystem *gaugesystem);
-  void LoadXml(const JXml *sxml,const std::string &place
-    ,const JDsPartsInit *partsdata,JGaugeSystem *gaugesystem);
-  void ReadXml(const JXml *sxml,TiXmlElement* ele
-    ,const JDsPartsInit *partsdata,JGaugeSystem *gaugesystem);
+  void LoadXmlInit(const JXml* sxml,const std::string& place);
+  void LoadFileXml(const std::string& file,const std::string& path
+    ,JNumexLib* nuxlib,const JDsPartsInit* partsdata,JGaugeSystem* gaugesystem);
+  void LoadXml(const JXml* sxml,const std::string& place
+    ,const JDsPartsInit* partsdata,JGaugeSystem* gaugesystem);
+  void ReadXml(const JXml* sxml,TiXmlElement* ele
+    ,const JDsPartsInit* partsdata,JGaugeSystem* gaugesystem);
 
   void ComputeFreeDomain();
   void SaveVtkDomains();
@@ -181,38 +181,41 @@ public:
 
   std::vector<unsigned> MkFluidList;
     
-  JSphInOut(bool cpu,const StCteSph &csp,std::string xmlfile,JXml *sxml
-    ,std::string xmlpath,const std::string &dirdatafile);
+  JSphInOut(bool cpu,const StCteSph& csp,std::string xmlfile,JXml* sxml
+    ,std::string xmlpath,const std::string& dirdatafile);
   ~JSphInOut();
   void Reset();
 
   unsigned Config(double timestep,bool stable,byte periactive
-    ,tdouble3 posmin,tdouble3 posmax,typecode codenewpart,const JDsPartsInit *partsdata
-    ,JGaugeSystem *gaugesystem,JNumexLib *nuxlib);
+    ,tdouble3 posmin,tdouble3 posmax,typecode codenewpart,const JDsPartsInit* partsdata
+    ,JGaugeSystem* gaugesystem,JNumexLib* nuxlib);
     
-  void LoadInitPartsData(unsigned idpfirst,unsigned npart,unsigned* idp,typecode* code,tdouble3* pos,tfloat4* velrho);
-  void InitCheckProximity(unsigned np,unsigned newnp,float scell,const tdouble3* pos,const unsigned* idp,typecode* code);
+  void LoadInitPartsData(unsigned idpfirst,unsigned npart,unsigned* idp
+    ,typecode* code,tdouble3* pos,tfloat4* velrho);
+  void InitCheckProximity(unsigned np,unsigned newnp,float scell
+    ,const tdouble3* pos,const unsigned* idp,typecode* code);
 
 
 //-Specific code for CPU.
   unsigned CreateListSimpleCpu(unsigned npf,unsigned pini
     ,const typecode* code,int* inoutpart);
   unsigned CreateListCpu(unsigned npf,unsigned pini
-    ,const tdouble3 *pos,const unsigned *idp,typecode *code,int *inoutpart);
+    ,const tdouble3* pos,const unsigned* idp,typecode* code,int* inoutpart);
 
-  void SetAnalyticalDataCpu(float timestep,unsigned inoutcount,const int *inoutpart
-    ,const tdouble3 *pos,const typecode *code,const unsigned *idp,const float *zsurfpart
-    ,tfloat4 *velrhop);
+  void SetAnalyticalDataCpu(float timestep,unsigned inoutcount,const int* inoutpart
+    ,const tdouble3* pos,const typecode* code,const unsigned* idp,const float* zsurfpart
+    ,tfloat4* velrhop);
 
   void InterpolateVelCpu(float timestep,unsigned inoutcount,const int* inoutpart
     ,const tdouble3* pos,const typecode* code,const unsigned* idp,tfloat4* velrhop);
 
 
-  void CheckPartsIzone(std::string key,unsigned nstep,unsigned inoutcount,const int *inoutpart,typecode *code,unsigned *idp);
-  unsigned ComputeStepCpu(unsigned inoutcount,int *inoutpart
-    ,const JSphCpu *sphcpu,unsigned idnext,unsigned sizenp,unsigned np
-    ,tdouble3 *pos,unsigned *dcell,typecode *code,unsigned *idp,const byte *zsurfok
-    ,tfloat4 *velrhop,byte *newizone);
+  void CheckPartsIzone(std::string key,unsigned nstep,unsigned inoutcount
+    ,const int* inoutpart,typecode* code,unsigned* idp);
+  unsigned ComputeStepCpu(unsigned inoutcount,int* inoutpart
+    ,const JSphCpu* sphcpu,unsigned idnext,unsigned sizenp,unsigned np
+    ,tdouble3* pos,unsigned* dcell,typecode* code,unsigned* idp
+    ,const byte* zsurfok,tfloat4* velrhop,byte* newizone);
   unsigned ComputeStepFillingCpu(unsigned inoutcount,int* inoutpart
     ,const JSphCpu* sphcpu,unsigned idnext,unsigned sizenp,unsigned np
     ,tdouble3* pos,unsigned* dcell,typecode* code,unsigned* idp
@@ -225,19 +228,20 @@ public:
 //-Specific code for GPU.
 #ifdef _WITHGPU
   unsigned CreateListSimpleGpu(unsigned npf,unsigned pini
-    ,const typecode *codeg,unsigned size,int *inoutpartg);
+    ,const typecode* codeg,unsigned size,int* inoutpartg);
   unsigned CreateListGpu(unsigned npf,unsigned pini
-    ,const double2 *posxyg,const double *poszg,typecode *codeg,unsigned size,int *inoutpartg);
+    ,const double2* posxyg,const double* poszg,typecode* codeg
+    ,unsigned size,int* inoutpartg);
 
-  void SetAnalyticalDataGpu(float timestep,unsigned inoutcount,const int *inoutpartg
-    ,const double2 *posxyg,const double *poszg,const typecode *codeg,const unsigned *idpg
-    ,const float *zsurfpart,float4 *velrhopg);
+  void SetAnalyticalDataGpu(float timestep,unsigned inoutcount,const int* inoutpartg
+    ,const double2* posxyg,const double* poszg,const typecode* codeg
+    ,const unsigned* idpg,const float* zsurfpart,float4* velrhopg);
 
   void InterpolateVelGpu(float timestep,unsigned inoutcount,const int* inoutpartg
     ,const double2* posxyg,const double* poszg,const typecode* codeg
     ,const unsigned* idpg,float4* velrhopg);
 
-  unsigned ComputeStepGpu(unsigned inoutcount,int *inoutpartg
+  unsigned ComputeStepGpu(unsigned inoutcount,int* inoutpartg
     ,unsigned idnext,unsigned sizenp,unsigned np,double2* posxyg,double* poszg
     ,unsigned* dcellg,typecode* codeg,unsigned* idpg,const byte* zsurfok
     ,float4* velrhopg,byte* newizoneg,const JSphGpuSingle* gp);

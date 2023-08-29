@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2023 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -47,12 +47,12 @@ namespace cugauge{
 /// Realiza interaccion entre particulas. Fluid/Float-Fluid/Float or Fluid/Float-Bound
 /// Incluye visco artificial/laminar y floatings SPH/DEM.
 //------------------------------------------------------------------------------
-template<TpKernel tker> __global__ void KerInteractionGaugeVel(float aker,double3 ptpos
-  ,int scelldiv,int4 nc,int3 cellzero,const int2 *beginendcellfluid
+template<TpKernel tker> __global__ void KerInteractionGaugeVel(float aker
+  ,double3 ptpos,int scelldiv,int4 nc,int3 cellzero,const int2* beginendcellfluid
   ,unsigned axis,unsigned cellcode,double3 domposmin,float scell,float poscellsize
   ,float kernelsize2,float kernelh,float massf
-  ,const double2 *posxy,const double *posz,const typecode *code,const float4 *velrhop
-  ,float3 *ptvel)
+  ,const double2* posxy,const double* posz,const typecode* code,const float4* velrhop
+  ,float3* ptvel)
 {
   unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle
   if(!p){
@@ -103,13 +103,13 @@ template<TpKernel tker> __global__ void KerInteractionGaugeVel(float aker,double
 //==============================================================================
 /// Calculates velocity in indicated point.
 //==============================================================================
-void Interaction_GaugeVel(const StCteSph &CSP,const StDivDataGpu &dvd,tdouble3 ptpos
-  ,const double2 *posxy,const double *posz,const typecode *code
-  ,const float4 *velrhop,float3 *ptvel)
+void Interaction_GaugeVel(const StCteSph& CSP,const StDivDataGpu& dvd
+  ,tdouble3 ptpos,const double2* posxy,const double* posz,const typecode* code
+  ,const float4* velrhop,float3* ptvel)
   //,tdouble3 domposmin,float scell,float kernelsize2,float h,float massf)
 {
   //-Interaction Fluid-Fluid & Fluid-Bound.
-  const int2 *beginendcellfluid=dvd.beginendcell+dvd.cellfluid;
+  const int2* beginendcellfluid=dvd.beginendcell+dvd.cellfluid;
   const unsigned bsize=32;
   dim3 sgrid=GetSimpleGridSize(1,bsize);
   //:JDgKerPrint info;
@@ -133,9 +133,10 @@ void Interaction_GaugeVel(const StCteSph &CSP,const StDivDataGpu &dvd,tdouble3 p
 //------------------------------------------------------------------------------
 template<TpKernel tker> __device__ float KerCalculeMass(float aker
   ,double px,double py,double pz,float kernelsize2,float kernelh,float massf
-  ,int scelldiv,int4 nc,int3 cellzero,const int2 *beginendcellfluid
+  ,int scelldiv,int4 nc,int3 cellzero,const int2* beginendcellfluid
   ,unsigned axis,unsigned cellcode,double3 domposmin,float scell,float poscellsize
-  ,const double2 *posxy,const double *posz,const typecode *code,const float4 *velrhop)
+  ,const double2* posxy,const double* posz,const typecode* code
+  ,const float4* velrhop)
 {
   double summass=0;
 
@@ -168,10 +169,10 @@ template<TpKernel tker> __device__ float KerCalculeMass(float aker
 template<TpKernel tker> __global__ void KerInteractionGaugeSwl(float aker
   ,double p0x,double p0y,double p0z,double pdirx,double pdiry,double pdirz
   ,unsigned pointnp,float masslimit,float kernelsize2,float kernelh,float massf
-  ,int scelldiv,int4 nc,int3 cellzero,const int2 *beginendcellfluid
+  ,int scelldiv,int4 nc,int3 cellzero,const int2* beginendcellfluid
   ,unsigned axis,unsigned cellcode,double3 domposmin,float scell,float poscellsize
-  ,const double2 *posxy,const double *posz,const typecode *code,const float4 *velrhop
-  ,float3 *ptres)
+  ,const double2* posxy,const double* posz,const typecode* code
+  ,const float4* velrhop,float3* ptres)
 {
   extern __shared__ float shmass[];
   const unsigned tid=threadIdx.x;
@@ -221,12 +222,12 @@ template<TpKernel tker> __global__ void KerInteractionGaugeSwl(float aker
 //==============================================================================
 /// Calculates surface water level at indicated line.
 //==============================================================================
-void Interaction_GaugeSwl(const StCteSph &CSP,const StDivDataGpu &dvd
+void Interaction_GaugeSwl(const StCteSph& CSP,const StDivDataGpu& dvd
   ,tdouble3 point0,tdouble3 pointdir,unsigned pointnp,float masslimit
-  ,const double2 *posxy,const double *posz,const typecode *code
-  ,const float4 *velrhop,float3 *ptres)
+  ,const double2* posxy,const double* posz,const typecode* code
+  ,const float4* velrhop,float3* ptres)
 {
-  const int2 *beginendcellfluid=dvd.beginendcell+dvd.cellfluid;
+  const int2* beginendcellfluid=dvd.beginendcell+dvd.cellfluid;
   const unsigned bsize=128;
   dim3 sgrid=GetSimpleGridSize(bsize,bsize);
   const unsigned smem=sizeof(float)*(bsize+1);
@@ -249,9 +250,9 @@ void Interaction_GaugeSwl(const StCteSph &CSP,const StDivDataGpu &dvd
 //------------------------------------------------------------------------------
 __global__ void KerInteractionGaugeMaxz(double p0x,double p0y,float maxdist2
   ,int cxini,int cxfin,int yini,int yfin,int zini,int zfin
-  ,int4 nc,unsigned cellfluid,const int2 *begincell
-  ,const double2 *posxy,const double *posz,const typecode *code
-  ,float3 *ptres)
+  ,int4 nc,unsigned cellfluid,const int2* begincell
+  ,const double2* posxy,const double* posz,const typecode* code
+  ,float3* ptres)
 {
   if(threadIdx.x==0){
     unsigned pmax=UINT_MAX;
@@ -291,10 +292,10 @@ __global__ void KerInteractionGaugeMaxz(double p0x,double p0y,float maxdist2
 //==============================================================================
 /// Calculates maximum z of fluid at distance of a vertical line.
 //==============================================================================
-void Interaction_GaugeMaxz(tdouble3 point0,float maxdist2,const StDivDataGpu &dvd
+void Interaction_GaugeMaxz(tdouble3 point0,float maxdist2,const StDivDataGpu& dvd
   ,int cxini,int cxfin,int yini,int yfin,int zini,int zfin
-  ,const double2 *posxy,const double *posz,const typecode *code
-  ,float3 *ptres)
+  ,const double2* posxy,const double* posz,const typecode* code
+  ,float3* ptres)
 {
   const unsigned bsize=128;
   dim3 sgrid=GetSimpleGridSize(1,bsize);
@@ -310,11 +311,11 @@ void Interaction_GaugeMaxz(tdouble3 point0,float maxdist2,const StDivDataGpu &dv
 //------------------------------------------------------------------------------
 template<TpKernel tker> __global__ void KerInteractionGaugeForce(float bker
   ,unsigned n,unsigned idbegin,typecode codesel
-  ,int scelldiv,int4 nc,int3 cellzero,const int2 *beginendcellfluid
+  ,int scelldiv,int4 nc,int3 cellzero,const int2* beginendcellfluid
   ,unsigned axis,unsigned cellcode,double3 domposmin,float scell,float poscellsize
   ,float kernelsize2,float kernelh,float massf,float cteb,float rhopzero,float gamma,float cs0
-  ,const double2 *posxy,const double *posz,const typecode *code,const unsigned *idp
-  ,const float4 *velrhop,float3 *partace)
+  ,const double2* posxy,const double* posz,const typecode* code
+  ,const unsigned* idp,const float4* velrhop,float3* partace)
 {
   unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
   if(p<n){
@@ -370,15 +371,15 @@ template<TpKernel tker> __global__ void KerInteractionGaugeForce(float bker
 /// Calculates force on selected fixed or moving particles using only fluid particles.
 /// Ignores periodic boundary particles to avoid race condition problems.
 //==============================================================================
-void Interaction_GaugeForce(const StCteSph &CSP,const StDivDataGpu &dvd
-  ,unsigned n,unsigned idbegin,typecode codesel,const double2 *posxy,const double *posz
-  ,const typecode *code,const unsigned *idp,const float4 *velrhop
-  ,float3 *partace)
+void Interaction_GaugeForce(const StCteSph& CSP,const StDivDataGpu& dvd
+  ,unsigned n,unsigned idbegin,typecode codesel,const double2* posxy
+  ,const double* posz,const typecode* code,const unsigned* idp
+  ,const float4* velrhop,float3* partace)
 {
   //const float ovrhopzero=1.f/rhopzero;
   //-Interaction bound-Fluid.
   if(n){
-    const int2 *beginendcellfluid=dvd.beginendcell+dvd.cellfluid;
+    const int2* beginendcellfluid=dvd.beginendcell+dvd.cellfluid;
     const unsigned bsize=128;
     dim3 sgrid=GetSimpleGridSize(n,bsize);
     switch(CSP.tkernel){

@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2023 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -55,7 +55,7 @@ JLinearValue::JLinearValue(unsigned nvalues,bool specialvalues,bool optionalvalu
 //==============================================================================
 /// Constructor with input file.
 //==============================================================================
-JLinearValue::JLinearValue(const std::string &inputfile,unsigned nvalues
+JLinearValue::JLinearValue(const std::string& inputfile,unsigned nvalues
   ,bool specialvalues,bool optionalvalues)
   :Nvalues(max(1u,nvalues)),SpecialValues(specialvalues),OptionalValues(optionalvalues)
 {
@@ -71,7 +71,7 @@ JLinearValue::JLinearValue(const std::string &inputfile,unsigned nvalues
 //==============================================================================
 /// Constructor for copy.
 //==============================================================================
-JLinearValue::JLinearValue(const JLinearValue &obj)
+JLinearValue::JLinearValue(const JLinearValue& obj)
   :Nvalues(obj.Nvalues),SpecialValues(obj.SpecialValues),OptionalValues(obj.OptionalValues)
 {
   ClassName="JLinearValue";
@@ -104,7 +104,7 @@ void JLinearValue::Reset(){
 //==============================================================================
 /// Copy data from other object.
 //==============================================================================
-void JLinearValue::CopyFrom(const JLinearValue &obj){
+void JLinearValue::CopyFrom(const JLinearValue& obj){
   if(Nvalues!=obj.Nvalues)Run_Exceptioon("The copy is invalid since Nvalues does not match.");
   if(SpecialValues!=obj.SpecialValues)Run_Exceptioon("The copy is invalid since SpecialValues does not match.");
   if(OptionalValues!=obj.OptionalValues)Run_Exceptioon("The copy is invalid since OptionalValues does not match.");
@@ -341,7 +341,7 @@ tdouble3 JLinearValue::GetValue3d(double timestep){
 /// Si el t indicado es menor que el minimo devuelve el primer valor.
 /// Si el t indicado es mayor que el maximo devuelve el ultimo valor.
 //==============================================================================
-void JLinearValue::GetValue3d3d(double timestep,tdouble3 &v1,tdouble3 &v2){
+void JLinearValue::GetValue3d3d(double timestep,tdouble3& v1,tdouble3& v2){
   v1=v2=TDouble3(0);
   FindTime(timestep);
   //printf("--> t:%f  [%u - %u]  [%f - %f]\n",timestep,Position,PositionNext,TimePre,TimeNext);
@@ -424,7 +424,7 @@ tdouble3 JLinearValue::GetValue3ByIdx(unsigned idx,unsigned cvalue3)const{
 /// Reads value and checks special values when SpecialValues is true.
 /// Lee un valor comprobando si es especial cuando SpecialValues es true.
 //==============================================================================
-double JLinearValue::ReadNextDouble(JReadDatafile &rdat,bool in_line){
+double JLinearValue::ReadNextDouble(JReadDatafile& rdat,bool in_line){
   const string value=rdat.ReadNextValue(in_line);
   double v=atof(value.c_str());
   if(SpecialValues && fun::StrLower(value)=="none")v=DBL_MAX;
@@ -490,8 +490,8 @@ void JLinearValue::VisuData(){
 /// Reads data from XML.
 /// Lee datos del XML.
 //==============================================================================
-void JLinearValue::ReadXmlValues(const JXml *sxml,TiXmlElement* ele,std::string name
-  ,std::string subname,std::string attributes)
+void JLinearValue::ReadXmlValues(const JXml* sxml,TiXmlElement* ele
+  ,std::string name,std::string subname,std::string attributes)
 {
   Reset();
   if(sxml->ExistsElement(ele,name)){
@@ -530,8 +530,8 @@ void JLinearValue::ReadXmlValues(const JXml *sxml,TiXmlElement* ele,std::string 
 /// Writes data on XML.
 /// Escribe datos en XML.
 //==============================================================================
-TiXmlElement* JLinearValue::WriteXmlValues(JXml *sxml,TiXmlElement* ele,std::string name
-  ,std::string subname,std::string attributes)const
+TiXmlElement* JLinearValue::WriteXmlValues(JXml* sxml,TiXmlElement* ele
+  ,std::string name,std::string subname,std::string attributes)const
 {
   TiXmlElement* rele=NULL;
   if(!GetFile().empty())rele=sxml->AddElementAttrib(ele,name,"file",GetFile());
@@ -539,7 +539,7 @@ TiXmlElement* JLinearValue::WriteXmlValues(JXml *sxml,TiXmlElement* ele,std::str
     TiXmlElement* xlis=sxml->AddElement(ele,name);
     const unsigned nv=GetCount();
     //-Checks values.
-    bool *vvoid=new bool[Nvalues];
+    bool* vvoid=new bool[Nvalues];
     for(unsigned ca=0;ca<Nvalues;ca++)vvoid[ca]=true;
     for(unsigned c=0;c<nv;c++){
       for(unsigned ca=0;ca<Nvalues;ca++)if(vvoid[ca] && GetValueByIdx(c,ca)!=DBL_MAX)vvoid[ca]=false;

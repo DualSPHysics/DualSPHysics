@@ -1,5 +1,5 @@
 /*
- <DUALSPHYSICS>  Copyright (c) 2020, Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/).
+ <DUALSPHYSICS>  Copyright (c) 2023, Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/).
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -85,9 +85,9 @@ class JChBase
 {
 protected:
   std::string ClassName;  ///<Name of the class.
-  void RunExceptioon(const std::string &srcfile,int srcline
-    ,const std::string &classname,const std::string &method
-    ,const std::string &msg,const std::string &file="")const;
+  void RunExceptioon(const std::string& srcfile,int srcline
+    ,const std::string& classname,const std::string& method
+    ,const std::string& msg,const std::string& file="")const;
 public:
   JChBase() : ClassName("JChBase"){} ///<Constructor of objects.
 };
@@ -124,8 +124,8 @@ private:
   std::vector<StValue> LisValue;
 
   StValue GetValueVoid(TpValue type=TP_Int,const std::string name="")const;
-  void AddValue(const StValue &va);
-  unsigned CheckValueType(const std::string &name,TpValue type,bool optional)const;
+  void AddValue(const StValue& va);
+  unsigned CheckValueType(const std::string& name,TpValue type,bool optional)const;
 
 public:
   JChValues();
@@ -133,26 +133,26 @@ public:
   void Reset();
 
   unsigned GetCount()const{ return(unsigned(LisValue.size())); }
-  unsigned IndexByName(const std::string &name)const;
+  unsigned IndexByName(const std::string& name)const;
 
-  void AddValueStr    (const std::string &name,std::string v);
-  void AddValueInt    (const std::string &name,int         v);
-  void AddValueUint   (const std::string &name,unsigned    v);
-  void AddValueDouble (const std::string &name,double      v);
-  void AddValueInt3   (const std::string &name,tint3       v);
-  void AddValueUint3  (const std::string &name,tuint3      v);
-  void AddValueDouble3(const std::string &name,tdouble3    v);
+  void AddValueStr    (const std::string& name,std::string v);
+  void AddValueInt    (const std::string& name,int         v);
+  void AddValueUint   (const std::string& name,unsigned    v);
+  void AddValueDouble (const std::string& name,double      v);
+  void AddValueInt3   (const std::string& name,tint3       v);
+  void AddValueUint3  (const std::string& name,tuint3      v);
+  void AddValueDouble3(const std::string& name,tdouble3    v);
 
-  bool ExistsValue(const std::string &name)const;
-  bool ExistsValue(const std::string &name,TpValue type)const;
+  bool ExistsValue(const std::string& name)const;
+  bool ExistsValue(const std::string& name,TpValue type)const;
 
-  std::string GetValueStr    (const std::string &name,bool optional=false,std::string v=""         )const;
-  int         GetValueInt    (const std::string &name,bool optional=false,int         v=0          )const;
-  unsigned    GetValueUint   (const std::string &name,bool optional=false,unsigned    v=0          )const;
-  double      GetValueDouble (const std::string &name,bool optional=false,double      v=0          )const;
-  tint3       GetValueInt3   (const std::string &name,bool optional=false,tint3       v=TInt3(0)   )const;
-  tuint3      GetValueUint3  (const std::string &name,bool optional=false,tuint3      v=TUint3(0)  )const;
-  tdouble3    GetValueDouble3(const std::string &name,bool optional=false,tdouble3    v=TDouble3(0))const;
+  std::string GetValueStr    (const std::string& name,bool optional=false,std::string v=""         )const;
+  int         GetValueInt    (const std::string& name,bool optional=false,int         v=0          )const;
+  unsigned    GetValueUint   (const std::string& name,bool optional=false,unsigned    v=0          )const;
+  double      GetValueDouble (const std::string& name,bool optional=false,double      v=0          )const;
+  tint3       GetValueInt3   (const std::string& name,bool optional=false,tint3       v=TInt3(0)   )const;
+  tuint3      GetValueUint3  (const std::string& name,bool optional=false,tuint3      v=TUint3(0)  )const;
+  tdouble3    GetValueDouble3(const std::string& name,bool optional=false,tdouble3    v=TDouble3(0))const;
 
   const StValue* GetValue(unsigned ipos)const;
 
@@ -172,16 +172,16 @@ public:
 
   JChValues* GetValuesPtr()const{ return((JChValues*)&Values); }
 
-  bool ExistsValue(const std::string &name)const{ return(Values.ExistsValue(name)); }
-  bool ExistsValue(const std::string &name,JChValues::TpValue type)const{ return(Values.ExistsValue(name,type)); }
+  bool ExistsValue(const std::string& name)const{ return(Values.ExistsValue(name)); }
+  bool ExistsValue(const std::string& name,JChValues::TpValue type)const{ return(Values.ExistsValue(name,type)); }
 
-  std::string GetValueStr    (const std::string &name,bool optional=false,std::string v=""         )const{ return(GetValueStr    (name,optional,v)); }
-  int         GetValueInt    (const std::string &name,bool optional=false,int         v=0          )const{ return(GetValueInt    (name,optional,v)); }
-  unsigned    GetValueUint   (const std::string &name,bool optional=false,unsigned    v=0          )const{ return(GetValueUint   (name,optional,v)); }
-  double      GetValueDouble (const std::string &name,bool optional=false,double      v=0          )const{ return(GetValueDouble (name,optional,v)); }
-  tint3       GetValueInt3   (const std::string &name,bool optional=false,tint3       v=TInt3(0)   )const{ return(GetValueInt3   (name,optional,v)); }
-  tuint3      GetValueUint3  (const std::string &name,bool optional=false,tuint3      v=TUint3(0)  )const{ return(GetValueUint3  (name,optional,v)); }
-  tdouble3    GetValueDouble3(const std::string &name,bool optional=false,tdouble3    v=TDouble3(0))const{ return(GetValueDouble3(name,optional,v)); }
+  std::string GetValueStr    (const std::string& name,bool optional=false,std::string v=""         )const{ return(GetValueStr    (name,optional,v)); }
+  int         GetValueInt    (const std::string& name,bool optional=false,int         v=0          )const{ return(GetValueInt    (name,optional,v)); }
+  unsigned    GetValueUint   (const std::string& name,bool optional=false,unsigned    v=0          )const{ return(GetValueUint   (name,optional,v)); }
+  double      GetValueDouble (const std::string& name,bool optional=false,double      v=0          )const{ return(GetValueDouble (name,optional,v)); }
+  tint3       GetValueInt3   (const std::string& name,bool optional=false,tint3       v=TInt3(0)   )const{ return(GetValueInt3   (name,optional,v)); }
+  tuint3      GetValueUint3  (const std::string& name,bool optional=false,tuint3      v=TUint3(0)  )const{ return(GetValueUint3  (name,optional,v)); }
+  tdouble3    GetValueDouble3(const std::string& name,bool optional=false,tdouble3    v=TDouble3(0))const{ return(GetValueDouble3(name,optional,v)); }
 };
 
 
@@ -224,7 +224,7 @@ protected:
   float Young; ///< Young modulus
   float Poisson; ///< Poisson ratio
 
-  void CopyFrom(const JChBody &src);
+  void CopyFrom(const JChBody& src);
 
 public:
   const unsigned Idb;
@@ -262,7 +262,7 @@ public:
   bool          GetImposeFric()  const{ return(ImposeFric);  } 
   void          SetImposeFric(const bool i)  { ImposeFric=i; } 
 
-  void SetModel(const std::string &file,TpModelNormal normal){ ModelFile=file; ModelNormal=normal; }
+  void SetModel(const std::string& file,TpModelNormal normal){ ModelFile=file; ModelNormal=normal; }
   void SetCollisionData(float kfric,float sfric,float restitu,float young,float poisson);
   
   void SetVelIni(tfloat3 linvelini,tfloat3 angvelini);
@@ -290,15 +290,21 @@ protected:
 
 public:
   JChBodyFloating(unsigned idb,std::string idname,word mkbound);
-  JChBodyFloating(const JChBodyFloating &src);
+  JChBodyFloating(const JChBodyFloating& src);
   void Reset();
   void SetFloatingData(double mass,tdouble3 center,tmatrix3d inertia
     ,tint3 translationfree,tint3 rotationfree,tfloat3 linvelini,tfloat3 angvelini);
 
   void ResetInputData(){ InputData=false; }
-  void SetInputData(const tfloat3 &face,const tfloat3 &fomegaace)  { InputData=true; InputFace=face; InputFomegaAce=fomegaace; }
-  void SetInputDataVel(const tfloat3 &vlin,const tfloat3 &vang)    { InputLinearVel=vlin; InputAngularVel=vang; }
-  void SetOutputData(const tdouble3 &center,const tfloat3 &vel,const tfloat3 &omega){ OutputCenter=center; OutputVel=vel; OutputOmega=omega; }
+  void SetInputData(const tfloat3& face,const tfloat3& fomegaace){ 
+    InputData=true; InputFace=face; InputFomegaAce=fomegaace; 
+  }
+  void SetInputDataVel(const tfloat3& vlin,const tfloat3& vang){ 
+    InputLinearVel=vlin; InputAngularVel=vang; 
+  }
+  void SetOutputData(const tdouble3& center,const tfloat3& vel,const tfloat3& omega){ 
+    OutputCenter=center; OutputVel=vel; OutputOmega=omega;
+  }
 
   bool     GetInputData()        const{ return(InputData);        }
   tfloat3  GetInputFace()        const{ return(InputFace);        }
@@ -327,13 +333,17 @@ protected:
 
 public:
   JChBodyMoving(unsigned idb,std::string idname,word mkbound,double mass);
-  JChBodyMoving(const JChBodyMoving &src);
+  JChBodyMoving(const JChBodyMoving& src);
   void Reset();
-  void SetInitialCenter(const tdouble3  &center){ Center=center; }
+  void SetInitialCenter(const tdouble3& center){ Center=center; }
 
   void ResetMotion(){ MotionType=MV_None; }
-  void SetMotionSimple(double dt,const tdouble3  &msimple){ MotionType=MV_Simple; MotionDt=dt; MotionSimple=msimple; }
-  void SetMotionMatrix(double dt,const tmatrix4d &mmatrix){ MotionType=MV_Matrix; MotionDt=dt; MotionMatrix=mmatrix; }
+  void SetMotionSimple(double dt,const tdouble3& msimple){ 
+    MotionType=MV_Simple; MotionDt=dt; MotionSimple=msimple;
+  }
+  void SetMotionMatrix(double dt,const tmatrix4d& mmatrix){
+    MotionType=MV_Matrix; MotionDt=dt; MotionMatrix=mmatrix;
+  }
 
   TpMotion GetMotionType()    const{ return(MotionType);    } 
   tdouble3 GetMotionSimple()  const{ return(MotionSimple);  }
@@ -349,7 +359,7 @@ class JChBodyFixed : public JChBody
 {
 public:
   JChBodyFixed(unsigned idb,std::string idname,word mkbound);
-  JChBodyFixed(const JChBodyFixed &src);
+  JChBodyFixed(const JChBodyFixed& src);
   void Reset();
 };
 
@@ -407,7 +417,7 @@ protected:
   double CoulombDamping;  ///<Coulomb damping value. Not applied when it is zero. (default=0).
 
 protected:
-  void CopyFrom(const JChLink &src);
+  void CopyFrom(const JChLink& src);
 
 public:
   const unsigned IdBody1;
@@ -445,7 +455,7 @@ class JChLinkHinge : public JChLink
 {
 public:
   JChLinkHinge(std::string name,unsigned idbody1,unsigned idbody2);
-  JChLinkHinge(const JChLinkHinge &src);
+  JChLinkHinge(const JChLinkHinge& src);
 
   tdouble3 GetRotPoint() const{ return(RotPoint);   } 
   tdouble3 GetRotVector()const{ return(RotVector);  }  
@@ -462,7 +472,7 @@ class JChLinkSpheric : public JChLink
 {
 public:
   JChLinkSpheric(std::string name,unsigned idbody1,unsigned idbody2);
-  JChLinkSpheric(const JChLinkSpheric &src);
+  JChLinkSpheric(const JChLinkSpheric& src);
 
   tdouble3 GetRotPoint()const{ return(RotPoint); }
 
@@ -477,7 +487,7 @@ class JChLinkPointLine : public JChLink
 {
 public:
   JChLinkPointLine(std::string name,unsigned idbody1,unsigned idbody2);
-  JChLinkPointLine(const JChLinkPointLine &src);
+  JChLinkPointLine(const JChLinkPointLine& src);
 
   tdouble3 GetSlidingVector() const{ return(SlidingVector); }  
   tdouble3 GetRotPoint()      const{ return(RotPoint);      } 
@@ -498,7 +508,7 @@ class JChLinkLinearSpring : public JChLink
 {
 public:
   JChLinkLinearSpring(std::string name,unsigned idbody1,unsigned idbody2);
-  JChLinkLinearSpring(const JChLinkLinearSpring &src);
+  JChLinkLinearSpring(const JChLinkLinearSpring& src);
 
   tdouble3 GetPointfb0()const{ return(Pointfb0); }
   tdouble3 GetPointfb1()const{ return(Pointfb1); }
@@ -508,7 +518,7 @@ public:
   void SetPointfb0  (tdouble3 v){ Pointfb0 =v; }
   void SetPointfb1  (tdouble3 v){ Pointfb1 =v; }
   void SetRestLength(double   v){ RestLength=v; }
-  void SetSvSpring  (const StSaveSpring &v){ SvSpring=v; }
+  void SetSvSpring  (const StSaveSpring& v){ SvSpring=v; }
 };
 
 //##############################################################################
@@ -519,7 +529,7 @@ class JChLinkCoulombDamping : public JChLink
 {
 public:
   JChLinkCoulombDamping(std::string name,unsigned idbody1,unsigned idbody2);
-  JChLinkCoulombDamping(const JChLinkCoulombDamping &src);
+  JChLinkCoulombDamping(const JChLinkCoulombDamping& src);
 
   tdouble3 GetPointfb0()const{ return(Pointfb0); }
   tdouble3 GetPointfb1()const{ return(Pointfb1); }
@@ -531,7 +541,7 @@ public:
   void SetPointfb1  (tdouble3 v){ Pointfb1 =v; }
   void SetRestLength(double   v){ RestLength=v; }
   void SetCoulombDamping(double v){ CoulombDamping=v; }
-  void SetSvSpring  (const StSaveSpring &v){ SvSpring=v; }
+  void SetSvSpring  (const StSaveSpring& v){ SvSpring=v; }
 
 };
 
@@ -544,10 +554,10 @@ class JChLinkPulley : public JChLink
 private:
   float Radius;
   float Radius2;
-  void CopyFrom(const JChLinkPulley &src);
+  void CopyFrom(const JChLinkPulley& src);
 public:
   JChLinkPulley(std::string name,unsigned idbody1,unsigned idbody2);
-  JChLinkPulley(const JChLinkPulley &src);
+  JChLinkPulley(const JChLinkPulley& src);
 
   tdouble3 GetRotPoint() const{ return(RotPoint);  } 
   tdouble3 GetRotVector()const{ return(RotVector); }  
@@ -592,14 +602,14 @@ private:
 
 public:
   JChronoData();
-  JChronoData(const JChronoData &src);
+  JChronoData(const JChronoData& src);
   ~JChronoData();
-  JChronoData& operator=(const JChronoData &src);
+  JChronoData& operator=(const JChronoData& src);
   void Reset();
   void Prepare();
   void CheckData();
 
-  void SetDataDir(const std::string &datadir){ DataDir=datadir; }
+  void SetDataDir(const std::string& datadir){ DataDir=datadir; }
   std::string GetDataDir()const{ return(DataDir); }
 
   void SetUseCollision(bool c){ UseCollision=c; }
@@ -659,13 +669,13 @@ public:
 
   unsigned BodyIndexById(unsigned idb)const;
   unsigned BodyIndexByMkBound(word mkbound)const;
-  unsigned BodyIndexByName(const std::string &name)const;
-  unsigned LinkIndexByName(const std::string &name)const;
+  unsigned BodyIndexByName(const std::string& name)const;
+  unsigned LinkIndexByName(const std::string& name)const;
 
   const JChBody* GetBody(unsigned ipos)const;
   const JChBody* GetBodyByMk(word mkbound)const;
   JChLink* GetLink(unsigned ipos)const;
-  unsigned GetPosLink(const JChLink *link)const;
+  unsigned GetPosLink(const JChLink* link)const;
 
   std::vector<const JChLink*> GetLinkByTp(JChLink::TpLink type)const;
   bool BodyBelongsLink(unsigned idbody1,JChLink::TpLink type)const;

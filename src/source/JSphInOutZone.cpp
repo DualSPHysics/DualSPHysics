@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2023 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -49,10 +49,10 @@ using namespace std;
 //==============================================================================
 /// Constructor.
 //==============================================================================
-JSphInOutZone::JSphInOutZone(bool cpu,unsigned idzone,const StCteSph &csp
-  ,const tdouble3 &posmin,const tdouble3 &posmax
-  ,const JXml *sxml,TiXmlElement* ele,const std::string &dirdatafile
-  ,const JDsPartsInit *partsdata,JGaugeSystem *gaugesystem)
+JSphInOutZone::JSphInOutZone(bool cpu,unsigned idzone,const StCteSph& csp
+  ,const tdouble3& posmin,const tdouble3& posmax
+  ,const JXml* sxml,TiXmlElement* ele,const std::string& dirdatafile
+  ,const JDsPartsInit* partsdata,JGaugeSystem* gaugesystem)
   :Log(AppInfo.LogPtr()),Cpu(cpu),IdZone(idzone),CSP(csp),MapRealPosMin(posmin),MapRealPosMax(posmax)
 {
   ClassName="JSphInOutZone";
@@ -104,7 +104,7 @@ void JSphInOutZone::Reset(){
 //==============================================================================
 /// Loads lines with configuration information.
 //==============================================================================
-void JSphInOutZone::GetConfig(std::vector<std::string> &lines)const{
+void JSphInOutZone::GetConfig(std::vector<std::string>& lines)const{
   const bool simulate2d=CSP.simulate2d;
   lines.push_back(fun::PrintStr("Zone type: %s",InOutVel->GetInletBehaviourName().c_str()));
   Points->GetConfig(lines);
@@ -177,8 +177,9 @@ void JSphInOutZone::LoadDomain(){
 //==============================================================================
 /// Reads initial configuration in the XML node.
 //==============================================================================
-void JSphInOutZone::ReadXml(const JXml *sxml,TiXmlElement* ele,const std::string &dirdatafile
-  ,const JDsPartsInit *partsdata,JGaugeSystem *gaugesystem)
+void JSphInOutZone::ReadXml(const JXml* sxml,TiXmlElement* ele
+  ,const std::string& dirdatafile,const JDsPartsInit* partsdata
+  ,JGaugeSystem* gaugesystem)
 {
   //-Checks old configuration.
   if(sxml->ExistsElement(ele,"userefilling"))Run_ExceptioonFile(fun::PrintStr("Inlet/outlet zone %d: <userefilling> is not supported by current inlet/outlet version.",IdZone),sxml->ErrGetFileRow(ele,"userefilling"));
@@ -241,7 +242,7 @@ void JSphInOutZone::ReadXml(const JXml *sxml,TiXmlElement* ele,const std::string
   ZsurfMode=InOutZsurf->ReadXml(sxml,ele,dirdatafile,gaugesystem);
 
   //-Rhop configuration.
-  TiXmlElement *xele=ele->FirstChildElement("imposerhop");
+  TiXmlElement* xele=ele->FirstChildElement("imposerhop");
   if(xele){
     const unsigned mode=sxml->GetAttributeUint(xele,"mode",true);
     switch(mode){
@@ -321,8 +322,8 @@ byte JSphInOutZone::GetConfigUpdate()const{
 //==============================================================================
 /// Loads positon of inlet/outlet points.
 //==============================================================================
-unsigned JSphInOutZone::LoadInletPoints(tdouble3 *pos){
-  const tdouble3 *ptpos=Points->GetPoints();
+unsigned JSphInOutZone::LoadInletPoints(tdouble3* pos){
+  const tdouble3* ptpos=Points->GetPoints();
   const tdouble3 dir=Direction*(CSP.dp/2);
   for(unsigned cp=0;cp<NptInit;cp++)pos[cp]=ptpos[cp]+dir;
   return(NptInit);
@@ -331,9 +332,9 @@ unsigned JSphInOutZone::LoadInletPoints(tdouble3 *pos){
 //==============================================================================
 /// Loads positon of initial inlet/outlet particles.
 //==============================================================================
-void JSphInOutZone::LoadInitialParticles(unsigned npartinit,tdouble3 *pos){
-  const tdouble3 *ptpos=Points->GetPoints();
-  const byte *ptok=Points->GetPointsInit();
+void JSphInOutZone::LoadInitialParticles(unsigned npartinit,tdouble3* pos){
+  const tdouble3* ptpos=Points->GetPoints();
+  const byte* ptok=Points->GetPointsInit();
   unsigned p=0;
   for(unsigned layer=0;layer<Layers;layer++){
     const tdouble3 dir=Direction*(-CSP.dp*layer);
@@ -350,7 +351,9 @@ void JSphInOutZone::LoadInitialParticles(unsigned npartinit,tdouble3 *pos){
 //==============================================================================
 /// Returns velocity according profile configuration.
 //==============================================================================
-float JSphInOutZone::CalcVel(TpInVelProfile vprof,const tfloat4 &vdata,double posz){
+float JSphInOutZone::CalcVel(TpInVelProfile vprof,const tfloat4& vdata
+  ,double posz)
+{
   float vel=0;
   if(vprof==InVelP_Uniform)vel=vdata.x;
   else if(vprof==InVelP_Linear){
@@ -370,14 +373,15 @@ float JSphInOutZone::CalcVel(TpInVelProfile vprof,const tfloat4 &vdata,double po
 //==============================================================================
 /// Indicates if position is inside inlet zone using BoxLimitMin/Max.
 //==============================================================================
-bool JSphInOutZone::InZoneBox(const tfloat3 &ps)const{
-  return(BoxLimitMin.x<=ps.x && ps.x<=BoxLimitMax.x && BoxLimitMin.y<=ps.y && ps.y<=BoxLimitMax.y && BoxLimitMin.z<=ps.z && ps.z<=BoxLimitMax.z);
+bool JSphInOutZone::InZoneBox(const tfloat3& ps)const{
+  return(BoxLimitMin.x<=ps.x && ps.x<=BoxLimitMax.x && BoxLimitMin.y<=ps.y 
+    && ps.y<=BoxLimitMax.y && BoxLimitMin.z<=ps.z && ps.z<=BoxLimitMax.z);
 }
 
 //==============================================================================
 /// Indicates if position is inside inlet zone, using plane and BoxLimitMin/Max.
 //==============================================================================
-bool JSphInOutZone::InZone(bool useboxlimit,const tfloat3 &ps)const{
+bool JSphInOutZone::InZone(bool useboxlimit,const tfloat3& ps)const{
   return((!useboxlimit || InZoneBox(ps)) && fgeo::PlanePoint(Plane,ps)<0);
 }
 

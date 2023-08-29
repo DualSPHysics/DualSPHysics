@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2023 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -53,9 +53,9 @@
 class JDataArrays : protected JObject
 {
 protected:
-  static void RunExceptioonStatic(const std::string &srcfile,int srcline
-    ,const std::string &method
-    ,const std::string &msg,const std::string &file="");
+  static void RunExceptioonStatic(const std::string& srcfile,int srcline
+    ,const std::string& method
+    ,const std::string& msg,const std::string& file="");
 
 public:
   typedef struct {
@@ -64,51 +64,51 @@ public:
     TpTypeData type;      ///<Type of values.
     int tag;              ///<Label variable for user purposes.
     unsigned count;       ///<Number of values in pointer.
-    void *ptr;            ///<Data pointer [count].
+    void* ptr;            ///<Data pointer [count].
     bool delptr;          ///<Automatically frees memory in destructor or Reset() method.
   }StDataArray;
 
 protected:
   std::vector<StDataArray> Arrays;
 
-  void FreeMemory(StDataArray &arr);
+  void FreeMemory(StDataArray& arr);
   void FreeMemory();
 
-  template<class T> void TReindexData(unsigned sreindex,const unsigned *reindex,unsigned ndata,T *data,T *aux)const;
-  void ReindexData(unsigned sreindex,const unsigned *reindex,unsigned ndata,byte     *data,byte     *aux)const{ TReindexData<byte>    (sreindex,reindex,ndata,data,aux); }
-  void ReindexData(unsigned sreindex,const unsigned *reindex,unsigned ndata,word     *data,word     *aux)const{ TReindexData<word>    (sreindex,reindex,ndata,data,aux); }
-  void ReindexData(unsigned sreindex,const unsigned *reindex,unsigned ndata,unsigned *data,unsigned *aux)const{ TReindexData<unsigned>(sreindex,reindex,ndata,data,aux); }
-  void ReindexData(unsigned sreindex,const unsigned *reindex,unsigned ndata,int      *data,int      *aux)const{ TReindexData<int>     (sreindex,reindex,ndata,data,aux); }
-  void ReindexData(unsigned sreindex,const unsigned *reindex,unsigned ndata,float    *data,float    *aux)const{ TReindexData<float>   (sreindex,reindex,ndata,data,aux); }
-  void ReindexData(unsigned sreindex,const unsigned *reindex,unsigned ndata,double   *data,double   *aux)const{ TReindexData<double>  (sreindex,reindex,ndata,data,aux); }
-  void ReindexData(unsigned sreindex,const unsigned *reindex,unsigned ndata,tuint3   *data,tuint3   *aux)const{ TReindexData<tuint3>  (sreindex,reindex,ndata,data,aux); }
-  void ReindexData(unsigned sreindex,const unsigned *reindex,unsigned ndata,tint3    *data,tint3    *aux)const{ TReindexData<tint3>   (sreindex,reindex,ndata,data,aux); }
-  void ReindexData(unsigned sreindex,const unsigned *reindex,unsigned ndata,tfloat3  *data,tfloat3  *aux)const{ TReindexData<tfloat3> (sreindex,reindex,ndata,data,aux); }
-  void ReindexData(unsigned sreindex,const unsigned *reindex,unsigned ndata,tdouble3 *data,tdouble3 *aux)const{ TReindexData<tdouble3>(sreindex,reindex,ndata,data,aux); }
+  template<class T> void TReindexData(unsigned sreindex,const unsigned* reindex,unsigned ndata,T* data,T* aux)const;
+  void ReindexData(unsigned sreindex,const unsigned* reindex,unsigned ndata,byte*     data,byte*     aux)const{ TReindexData<byte>    (sreindex,reindex,ndata,data,aux); }
+  void ReindexData(unsigned sreindex,const unsigned* reindex,unsigned ndata,word*     data,word*     aux)const{ TReindexData<word>    (sreindex,reindex,ndata,data,aux); }
+  void ReindexData(unsigned sreindex,const unsigned* reindex,unsigned ndata,unsigned* data,unsigned* aux)const{ TReindexData<unsigned>(sreindex,reindex,ndata,data,aux); }
+  void ReindexData(unsigned sreindex,const unsigned* reindex,unsigned ndata,int*      data,int*      aux)const{ TReindexData<int>     (sreindex,reindex,ndata,data,aux); }
+  void ReindexData(unsigned sreindex,const unsigned* reindex,unsigned ndata,float*    data,float*    aux)const{ TReindexData<float>   (sreindex,reindex,ndata,data,aux); }
+  void ReindexData(unsigned sreindex,const unsigned* reindex,unsigned ndata,double*   data,double*   aux)const{ TReindexData<double>  (sreindex,reindex,ndata,data,aux); }
+  void ReindexData(unsigned sreindex,const unsigned* reindex,unsigned ndata,tuint3*   data,tuint3*   aux)const{ TReindexData<tuint3>  (sreindex,reindex,ndata,data,aux); }
+  void ReindexData(unsigned sreindex,const unsigned* reindex,unsigned ndata,tint3*    data,tint3*    aux)const{ TReindexData<tint3>   (sreindex,reindex,ndata,data,aux); }
+  void ReindexData(unsigned sreindex,const unsigned* reindex,unsigned ndata,tfloat3*  data,tfloat3*  aux)const{ TReindexData<tfloat3> (sreindex,reindex,ndata,data,aux); }
+  void ReindexData(unsigned sreindex,const unsigned* reindex,unsigned ndata,tdouble3* data,tdouble3* aux)const{ TReindexData<tdouble3>(sreindex,reindex,ndata,data,aux); }
 
-  unsigned SortData(unsigned count,const unsigned *reindex);
+  unsigned SortData(unsigned count,const unsigned* reindex);
 
 public:
   JDataArrays();
   ~JDataArrays();
   void Reset();
 
-  void CopyFrom(const JDataArrays &arr);
-  void CopyDataFrom(const JDataArrays &arr,bool filterarrays);
+  void CopyFrom(const JDataArrays& arr);
+  void CopyDataFrom(const JDataArrays& arr,bool filterarrays);
 
-  bool EqualStructure(const JDataArrays &arr,bool cmptag=true)const;
+  bool EqualStructure(const JDataArrays& arr,bool cmptag=true)const;
 
-  unsigned AddArray(std::string fullname,TpTypeData type,unsigned count,void *ptr,bool delptr);
-  unsigned AddArray(std::string fullname,unsigned count,const byte     *ptr,bool delptr=false){ return(AddArray(fullname,TypeUchar  ,count,(void*)ptr,delptr)); }
-  unsigned AddArray(std::string fullname,unsigned count,const word     *ptr,bool delptr=false){ return(AddArray(fullname,TypeUshort ,count,(void*)ptr,delptr)); }
-  unsigned AddArray(std::string fullname,unsigned count,const unsigned *ptr,bool delptr=false){ return(AddArray(fullname,TypeUint   ,count,(void*)ptr,delptr)); }
-  unsigned AddArray(std::string fullname,unsigned count,const int      *ptr,bool delptr=false){ return(AddArray(fullname,TypeInt    ,count,(void*)ptr,delptr)); }
-  unsigned AddArray(std::string fullname,unsigned count,const float    *ptr,bool delptr=false){ return(AddArray(fullname,TypeFloat  ,count,(void*)ptr,delptr)); }
-  unsigned AddArray(std::string fullname,unsigned count,const double   *ptr,bool delptr=false){ return(AddArray(fullname,TypeDouble ,count,(void*)ptr,delptr)); }
-  unsigned AddArray(std::string fullname,unsigned count,const tuint3   *ptr,bool delptr=false){ return(AddArray(fullname,TypeUint3  ,count,(void*)ptr,delptr)); }
-  unsigned AddArray(std::string fullname,unsigned count,const tint3    *ptr,bool delptr=false){ return(AddArray(fullname,TypeInt3   ,count,(void*)ptr,delptr)); }
-  unsigned AddArray(std::string fullname,unsigned count,const tfloat3  *ptr,bool delptr=false){ return(AddArray(fullname,TypeFloat3 ,count,(void*)ptr,delptr)); }
-  unsigned AddArray(std::string fullname,unsigned count,const tdouble3 *ptr,bool delptr=false){ return(AddArray(fullname,TypeDouble3,count,(void*)ptr,delptr)); }
+  unsigned AddArray(std::string fullname,TpTypeData type,unsigned count,void* ptr,bool delptr);
+  unsigned AddArray(std::string fullname,unsigned count,const byte*     ptr,bool delptr=false){ return(AddArray(fullname,TypeUchar  ,count,(void*)ptr,delptr)); }
+  unsigned AddArray(std::string fullname,unsigned count,const word*     ptr,bool delptr=false){ return(AddArray(fullname,TypeUshort ,count,(void*)ptr,delptr)); }
+  unsigned AddArray(std::string fullname,unsigned count,const unsigned* ptr,bool delptr=false){ return(AddArray(fullname,TypeUint   ,count,(void*)ptr,delptr)); }
+  unsigned AddArray(std::string fullname,unsigned count,const int*      ptr,bool delptr=false){ return(AddArray(fullname,TypeInt    ,count,(void*)ptr,delptr)); }
+  unsigned AddArray(std::string fullname,unsigned count,const float*    ptr,bool delptr=false){ return(AddArray(fullname,TypeFloat  ,count,(void*)ptr,delptr)); }
+  unsigned AddArray(std::string fullname,unsigned count,const double*   ptr,bool delptr=false){ return(AddArray(fullname,TypeDouble ,count,(void*)ptr,delptr)); }
+  unsigned AddArray(std::string fullname,unsigned count,const tuint3*   ptr,bool delptr=false){ return(AddArray(fullname,TypeUint3  ,count,(void*)ptr,delptr)); }
+  unsigned AddArray(std::string fullname,unsigned count,const tint3*    ptr,bool delptr=false){ return(AddArray(fullname,TypeInt3   ,count,(void*)ptr,delptr)); }
+  unsigned AddArray(std::string fullname,unsigned count,const tfloat3*  ptr,bool delptr=false){ return(AddArray(fullname,TypeFloat3 ,count,(void*)ptr,delptr)); }
+  unsigned AddArray(std::string fullname,unsigned count,const tdouble3* ptr,bool delptr=false){ return(AddArray(fullname,TypeDouble3,count,(void*)ptr,delptr)); }
 
   unsigned CreateArrayByte   (std::string fullname,unsigned count,bool defvalue=true,byte     value=0          ,bool delptr=true){ return(AddArray(fullname,count,NewArrayByte   (count,defvalue,value),delptr)); }
   unsigned CreateArrayWord   (std::string fullname,unsigned count,bool defvalue=true,word     value=0          ,bool delptr=true){ return(AddArray(fullname,count,NewArrayWord   (count,defvalue,value),delptr)); }
@@ -147,20 +147,20 @@ public:
   unsigned GetDataCount(bool minimum)const;
   unsigned GetDataCount()const;
 
-  unsigned GetIdxName(const std::string &keyname)const;
-  bool ExistsName(const std::string &keyname)const{ return(GetIdxName(keyname)!=UINT_MAX); }
+  unsigned GetIdxName(const std::string& keyname)const;
+  bool ExistsName(const std::string& keyname)const{ return(GetIdxName(keyname)!=UINT_MAX); }
 
   std::string CheckErrorArray(unsigned idx,TpTypeData type,unsigned count)const;
-  std::string CheckErrorArray(const std::string &keyname,TpTypeData type,unsigned count)const;
+  std::string CheckErrorArray(const std::string& keyname,TpTypeData type,unsigned count)const;
 
   JDataArrays::StDataArray& GetArray(unsigned idx);
-  JDataArrays::StDataArray& GetArray(const std::string &keyname);
+  JDataArrays::StDataArray& GetArray(const std::string& keyname);
 
   const JDataArrays::StDataArray& GetArrayCte(unsigned idx)const;
-  const JDataArrays::StDataArray& GetArrayCte(const std::string &keyname)const;
+  const JDataArrays::StDataArray& GetArrayCte(const std::string& keyname)const;
 
   JDataArrays::StDataArray GetArrayData(unsigned idx)const;
-  JDataArrays::StDataArray GetArrayData(const std::string &keyname)const;
+  JDataArrays::StDataArray GetArrayData(const std::string& keyname)const;
 
   int GetArrayDim(unsigned idx)const;
 
@@ -182,17 +182,17 @@ public:
   const tfloat3*  GetArrayFloat3 (unsigned idx,unsigned count=0)const{ return((tfloat3* )GetArrayPtr(idx,TypeFloat3 ,count)); }
   const tdouble3* GetArrayDouble3(unsigned idx,unsigned count=0)const{ return((tdouble3*)GetArrayPtr(idx,TypeDouble3,count)); }
 
-  const void* GetArrayPtr(const std::string &keyname,TpTypeData type,unsigned count=0)const;
-  const byte*     GetArrayByte   (const std::string &keyname,unsigned count=0)const{ return((byte*    )GetArrayPtr(keyname,TypeUchar  ,count)); }
-  const word*     GetArrayWord   (const std::string &keyname,unsigned count=0)const{ return((word*    )GetArrayPtr(keyname,TypeUshort ,count)); }
-  const unsigned* GetArrayUint   (const std::string &keyname,unsigned count=0)const{ return((unsigned*)GetArrayPtr(keyname,TypeUint   ,count)); }
-  const int*      GetArrayInt    (const std::string &keyname,unsigned count=0)const{ return((int*     )GetArrayPtr(keyname,TypeInt    ,count)); }
-  const float*    GetArrayFloat  (const std::string &keyname,unsigned count=0)const{ return((float*   )GetArrayPtr(keyname,TypeFloat  ,count)); }
-  const double*   GetArrayDouble (const std::string &keyname,unsigned count=0)const{ return((double*  )GetArrayPtr(keyname,TypeDouble ,count)); }
-  const tuint3*   GetArrayUint3  (const std::string &keyname,unsigned count=0)const{ return((tuint3*  )GetArrayPtr(keyname,TypeUint3  ,count)); }
-  const tint3*    GetArrayInt3   (const std::string &keyname,unsigned count=0)const{ return((tint3*   )GetArrayPtr(keyname,TypeInt3   ,count)); }
-  const tfloat3*  GetArrayFloat3 (const std::string &keyname,unsigned count=0)const{ return((tfloat3* )GetArrayPtr(keyname,TypeFloat3 ,count)); }
-  const tdouble3* GetArrayDouble3(const std::string &keyname,unsigned count=0)const{ return((tdouble3*)GetArrayPtr(keyname,TypeDouble3,count)); }
+  const void* GetArrayPtr(const std::string& keyname,TpTypeData type,unsigned count=0)const;
+  const byte*     GetArrayByte   (const std::string& keyname,unsigned count=0)const{ return((byte*    )GetArrayPtr(keyname,TypeUchar  ,count)); }
+  const word*     GetArrayWord   (const std::string& keyname,unsigned count=0)const{ return((word*    )GetArrayPtr(keyname,TypeUshort ,count)); }
+  const unsigned* GetArrayUint   (const std::string& keyname,unsigned count=0)const{ return((unsigned*)GetArrayPtr(keyname,TypeUint   ,count)); }
+  const int*      GetArrayInt    (const std::string& keyname,unsigned count=0)const{ return((int*     )GetArrayPtr(keyname,TypeInt    ,count)); }
+  const float*    GetArrayFloat  (const std::string& keyname,unsigned count=0)const{ return((float*   )GetArrayPtr(keyname,TypeFloat  ,count)); }
+  const double*   GetArrayDouble (const std::string& keyname,unsigned count=0)const{ return((double*  )GetArrayPtr(keyname,TypeDouble ,count)); }
+  const tuint3*   GetArrayUint3  (const std::string& keyname,unsigned count=0)const{ return((tuint3*  )GetArrayPtr(keyname,TypeUint3  ,count)); }
+  const tint3*    GetArrayInt3   (const std::string& keyname,unsigned count=0)const{ return((tint3*   )GetArrayPtr(keyname,TypeInt3   ,count)); }
+  const tfloat3*  GetArrayFloat3 (const std::string& keyname,unsigned count=0)const{ return((tfloat3* )GetArrayPtr(keyname,TypeFloat3 ,count)); }
+  const tdouble3* GetArrayDouble3(const std::string& keyname,unsigned count=0)const{ return((tdouble3*)GetArrayPtr(keyname,TypeDouble3,count)); }
 
   void Print()const;
 
@@ -209,14 +209,14 @@ public:
   static tdouble3* NewArrayDouble3(unsigned count,bool defvalue=false,tdouble3 value=TDouble3(0));
   static unsigned* NewArraySeqUint(unsigned count,unsigned start=0,unsigned step=1);
 
-  static void ToFloat3xyz(unsigned count,const tfloat4 *data,tfloat3 *dest);
-  static void ToFloat1w  (unsigned count,const tfloat4 *data,float   *dest);
-  static tfloat3*  NewArrayFloat3xyz(unsigned count,const tfloat4 *data);
-  static float*    NewArrayFloat1w  (unsigned count,const tfloat4 *data);
+  static void ToFloat3xyz(unsigned count,const tfloat4* data,tfloat3* dest);
+  static void ToFloat1w  (unsigned count,const tfloat4* data,float*   dest);
+  static tfloat3*  NewArrayFloat3xyz(unsigned count,const tfloat4* data);
+  static float*    NewArrayFloat1w  (unsigned count,const tfloat4* data);
 
-  unsigned FilterApply(unsigned count,const byte *filter);
-  unsigned FilterList(unsigned n,const unsigned *list);
-  unsigned FilterSortList(unsigned n,const unsigned *list);
+  unsigned FilterApply(unsigned count,const byte* filter);
+  unsigned FilterList(unsigned n,const unsigned* list);
+  unsigned FilterSortList(unsigned n,const unsigned* list);
 
 };
 

@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2023 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -216,8 +216,8 @@ void JPartsLoad4::LoadParticles(const std::string& casedir
   {
     unsigned ntot=0;
     unsigned auxsize=0;
-    tfloat3 *auxf3=NULL;
-    float *auxf=NULL;
+    tfloat3* auxf3=NULL;
+    float* auxf=NULL;
     for(unsigned piece=0;piece<Npiece;piece++){
       if(piece){
         if(!PartBegin)pd.LoadFileCase(dir,casename,piece,Npiece);

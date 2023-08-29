@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2023 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -88,7 +88,7 @@ __device__ double3 KerInteraction_PosNoPeriodic(double3 posp1)
 /// Actualizacion de posicion de particulas fluidas segun posicion actual.
 //------------------------------------------------------------------------------
 template<bool periactive> __global__ void KerUpdatePosFluid(unsigned n,unsigned pini
-  ,double2 *posxy,double *posz,unsigned *dcell,typecode *code)
+  ,double2* posxy,double* posz,unsigned* dcell,typecode* code)
 {
   const unsigned pp=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
   if(pp<n){
@@ -104,7 +104,7 @@ template<bool periactive> __global__ void KerUpdatePosFluid(unsigned n,unsigned 
 /// Actualizacion de posicion de particulas fluidas segun posicion actual.
 //==============================================================================
 void UpdatePosFluid(byte periactive,unsigned n,unsigned pini
-  ,double2 *posxy,double *posz,unsigned *dcell,typecode *code)
+  ,double2* posxy,double* posz,unsigned* dcell,typecode* code)
 {
   if(n){
     dim3 sgrid=GetSimpleGridSize(n,SPHBSIZE);
@@ -173,13 +173,13 @@ unsigned InOutCreateListSimple(bool stable,unsigned n,unsigned pini
 /// inlet/outlet zones (update its code).
 //------------------------------------------------------------------------------
 __global__ void KerInOutCreateList(unsigned n,unsigned pini
-  ,byte chkinputmask,byte nzone,const byte *cfgzone,const float4 *planes
+  ,byte chkinputmask,byte nzone,const byte* cfgzone,const float4* planes
   ,float3 freemin,float3 freemax
-  ,const float2 *boxlimit,const double2 *posxy,const double *posz
-  ,typecode *code,unsigned *listp)
+  ,const float2* boxlimit,const double2* posxy,const double* posz
+  ,typecode* code,unsigned* listp)
 {
   extern __shared__ unsigned slist[];
-  //float *splanes=(float*)(slist+(n+1));
+  //float* splanes=(float*)(slist+(n+1));
   if(!threadIdx.x)slist[0]=0;
   __syncthreads();
   const unsigned pp=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
@@ -235,10 +235,10 @@ __global__ void KerInOutCreateList(unsigned n,unsigned pini
 /// inlet/outlet zones (update its code).
 //==============================================================================
 unsigned InOutCreateList(bool stable,unsigned n,unsigned pini
-  ,byte chkinputmask,byte nzone,const byte *cfgzone,const float4 *planes
+  ,byte chkinputmask,byte nzone,const byte* cfgzone,const float4* planes
   ,tfloat3 freemin,tfloat3 freemax
-  ,const float2 *boxlimit,const double2 *posxy,const double *posz
-  ,typecode *code,unsigned *listp)
+  ,const float2* boxlimit,const double2* posxy,const double* posz
+  ,typecode* code,unsigned* listp)
 {
   unsigned count=0;
   if(n){
@@ -264,7 +264,7 @@ unsigned InOutCreateList(bool stable,unsigned n,unsigned pini
 //------------------------------------------------------------------------------
 /// Returns velocity according profile configuration (JSphInOutZone::TpVelProfile).
 //------------------------------------------------------------------------------
-__device__ float KerInOutCalcVel(byte vprof,const float4 &vdata,float posz){
+__device__ float KerInOutCalcVel(byte vprof,const float4& vdata,float posz){
   float vel=0;
   if(vprof==0)vel=vdata.x;  //-InVelP_Uniform
   else if(vprof==1){        //-InVelP_Linear
@@ -285,11 +285,11 @@ __device__ float KerInOutCalcVel(byte vprof,const float4 &vdata,float posz){
 /// Updates velocity and rhop of inlet/outlet particles when it uses an 
 /// analytical solution.
 //------------------------------------------------------------------------------
-__global__ void KerInOutSetAnalyticalData(unsigned n,const unsigned *inoutpart
+__global__ void KerInOutSetAnalyticalData(unsigned n,const unsigned* inoutpart
   ,byte izone,byte rmode,byte vmode,byte vprof,byte refillspfull
   ,float timestep,float zsurfv,float4 veldata,float4 veldata2,float3 dirdata
   ,float coefhydro,float rhopzero,float gamma
-  ,const typecode *code,const double *posz,const float *zsurfpart,float4 *velrhop)
+  ,const typecode* code,const double* posz,const float* zsurfpart,float4* velrhop)
 {
   const unsigned cp=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
   if(cp<n){
@@ -337,11 +337,11 @@ __global__ void KerInOutSetAnalyticalData(unsigned n,const unsigned *inoutpart
 /// Updates velocity and rhop of inlet/outlet particles when it uses an 
 /// analytical solution.
 //==============================================================================
-void InOutSetAnalyticalData(unsigned n,const unsigned *inoutpart
+void InOutSetAnalyticalData(unsigned n,const unsigned* inoutpart
   ,byte izone,byte rmode,byte vmode,byte vprof,byte refillspfull
   ,float timestep,float zsurfv,tfloat4 veldata,tfloat4 veldata2,tfloat3 dirdata
   ,float coefhydro,float rhopzero,float gamma
-  ,const typecode *code,const double *posz,const float *zsurfpart,float4 *velrhop)
+  ,const typecode* code,const double* posz,const float* zsurfpart,float4* velrhop)
 {
   if(n){
     dim3 sgrid=GetSimpleGridSize(n,SPHBSIZE);
@@ -356,8 +356,8 @@ void InOutSetAnalyticalData(unsigned n,const unsigned *inoutpart
 /// Updates velocity and rhop of inlet/outlet particles when it is not extrapolated. 
 /// Actualiza velocidad y densidad de particulas inlet/outlet cuando no es extrapolada.
 //------------------------------------------------------------------------------
-__global__ void KerInoutClearInteractionVars(unsigned n,unsigned pini,const typecode *code
-  ,float3 *ace,float *ar,float *viscdt,float4 *shiftposfs)
+__global__ void KerInoutClearInteractionVars(unsigned n,unsigned pini
+  ,const typecode* code,float3* ace,float* ar,float* viscdt,float4* shiftposfs)
 {
   const unsigned pp=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
   if(pp<n){
@@ -375,8 +375,8 @@ __global__ void KerInoutClearInteractionVars(unsigned n,unsigned pini,const type
 /// Updates velocity and rhop of inlet/outlet particles when it is not extrapolated. 
 /// Actualiza velocidad y densidad de particulas inlet/outlet cuando no es extrapolada.
 //==============================================================================
-void InoutClearInteractionVars(unsigned npf,unsigned pini,const typecode *code
-  ,float3 *ace,float *ar,float *viscdt,float4 *shiftposfs)
+void InoutClearInteractionVars(unsigned npf,unsigned pini,const typecode* code
+  ,float3* ace,float* ar,float* viscdt,float4* shiftposfs)
 {
   if(npf){
     dim3 sgrid=GetSimpleGridSize(npf,SPHBSIZE);
@@ -389,8 +389,8 @@ void InoutClearInteractionVars(unsigned npf,unsigned pini,const typecode *code
 /// Updates velocity and rhop for M1 variable when Verlet is used. 
 /// Actualiza velocidad y densidad de varible M1 cuando se usa Verlet.
 //------------------------------------------------------------------------------
-__global__ void KerInOutUpdateVelrhopM1(unsigned n,const int *inoutpart
-  ,const float4 *velrhop,float4 *velrhopm1)
+__global__ void KerInOutUpdateVelrhopM1(unsigned n,const int* inoutpart
+  ,const float4* velrhop,float4* velrhopm1)
 {
   const unsigned cp=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
   if(cp<n){
@@ -403,8 +403,8 @@ __global__ void KerInOutUpdateVelrhopM1(unsigned n,const int *inoutpart
 /// Updates velocity and rhop for M1 variable when Verlet is used. 
 /// Actualiza velocidad y densidad de varible M1 cuando se usa Verlet.
 //==============================================================================
-void InOutUpdateVelrhopM1(unsigned n,const int *inoutpart
-  ,const float4 *velrhop,float4 *velrhopm1)
+void InOutUpdateVelrhopM1(unsigned n,const int* inoutpart
+  ,const float4* velrhop,float4* velrhopm1)
 {
   if(n){
     dim3 sgrid=GetSimpleGridSize(n,SPHBSIZE);
@@ -419,10 +419,10 @@ void InOutUpdateVelrhopM1(unsigned n,const int *inoutpart
 /// it creates a new in/out particle.
 /// If particle is moved out the domain then it changes to ignore particle.
 //------------------------------------------------------------------------------
-__global__ void KerInOutComputeStep(unsigned n,int *inoutpart,const float4 *planes
-  ,const float *width,const byte *cfgupdate,const float *zsurfv,typecode codenewpart
-  ,const double2 *posxy,const double *posz,const byte *zsurfok
-  ,typecode *code,byte *newizone)
+__global__ void KerInOutComputeStep(unsigned n,int* inoutpart,const float4* planes
+  ,const float* width,const byte* cfgupdate,const float* zsurfv,typecode codenewpart
+  ,const double2* posxy,const double* posz,const byte* zsurfok
+  ,typecode* code,byte* newizone)
 {
   const unsigned cp=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
   if(cp<n){
@@ -466,10 +466,10 @@ __global__ void KerInOutComputeStep(unsigned n,int *inoutpart,const float4 *plan
 /// it creates a new in/out particle.
 /// If particle is moved out the domain then it changes to ignore particle.
 //==============================================================================
-void InOutComputeStep(unsigned n,int *inoutpart,const float4 *planes
-  ,const float *width,const byte *cfgupdate,const float *zsurfv,typecode codenewpart
-  ,const double2 *posxy,const double *posz,const byte *zsurfok
-  ,typecode *code,byte *newizone)
+void InOutComputeStep(unsigned n,int* inoutpart,const float4* planes
+  ,const float* width,const byte* cfgupdate,const float* zsurfv,typecode codenewpart
+  ,const double2* posxy,const double* posz,const byte* zsurfok
+  ,typecode* code,byte* newizone)
 {
   if(n){
     dim3 sgrid=GetSimpleGridSize(n,SPHBSIZE);
@@ -483,7 +483,8 @@ void InOutComputeStep(unsigned n,int *inoutpart,const float4 *planes
 /// Create list for new inlet particles to create.
 /// Crea lista de nuevas particulas inlet a crear.
 //------------------------------------------------------------------------------
-__global__ void KerInOutListCreate(unsigned n,unsigned nmax,const byte *newizone,int *inoutpart)
+__global__ void KerInOutListCreate(unsigned n,unsigned nmax,const byte* newizone
+  ,int* inoutpart)
 {
   extern __shared__ unsigned slist[];
   if(!threadIdx.x)slist[0]=0;
@@ -510,7 +511,8 @@ __global__ void KerInOutListCreate(unsigned n,unsigned nmax,const byte *newizone
 /// Crea lista de nuevas particulas inlet a crear al final de inoutpart[].
 /// Devuelve el numero de las nuevas particulas para crear.
 //==============================================================================
-unsigned InOutListCreate(bool stable,unsigned n,unsigned nmax,const byte *newizone,int *inoutpart)
+unsigned InOutListCreate(bool stable,unsigned n,unsigned nmax
+  ,const byte* newizone,int* inoutpart)
 {
   unsigned count=0;
   if(n){
@@ -536,9 +538,10 @@ unsigned InOutListCreate(bool stable,unsigned n,unsigned nmax,const byte *newizo
 /// Creates new inlet particles to replace the particles moved to fluid domain.
 //------------------------------------------------------------------------------
 template<bool periactive> __global__ void KerInOutCreateNewInlet(unsigned newn
-  ,const unsigned *inoutpart,unsigned inoutcount,const byte *newizone
-  ,unsigned np,unsigned idnext,typecode codenewpart,const float3 *dirdata,const float *width
-  ,double2 *posxy,double *posz,unsigned *dcell,typecode *code,unsigned *idp,float4 *velrhop)
+  ,const unsigned* inoutpart,unsigned inoutcount,const byte* newizone
+  ,unsigned np,unsigned idnext,typecode codenewpart,const float3* dirdata
+  ,const float* width,double2* posxy,double* posz,unsigned* dcell,typecode* code
+  ,unsigned* idp,float4* velrhop)
 {
   const unsigned cp=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
   if(cp<newn){
@@ -564,9 +567,10 @@ template<bool periactive> __global__ void KerInOutCreateNewInlet(unsigned newn
 /// Creates new inlet particles to replace the particles moved to fluid domain.
 //==============================================================================
 void InOutCreateNewInlet(byte periactive,unsigned newn
-  ,const unsigned *inoutpart,unsigned inoutcount,const byte *newizone
-  ,unsigned np,unsigned idnext,typecode codenewpart,const float3 *dirdata,const float *width
-  ,double2 *posxy,double *posz,unsigned *dcell,typecode *code,unsigned *idp,float4 *velrhop)
+  ,const unsigned* inoutpart,unsigned inoutcount,const byte* newizone
+  ,unsigned np,unsigned idnext,typecode codenewpart,const float3* dirdata
+  ,const float* width,double2* posxy,double* posz,unsigned* dcell,typecode* code
+  ,unsigned* idp,float4* velrhop)
 {
   if(newn){
     dim3 sgrid=GetSimpleGridSize(newn,SPHBSIZE);
@@ -579,9 +583,9 @@ void InOutCreateNewInlet(byte periactive,unsigned newn
 //------------------------------------------------------------------------------
 /// Move in/out particles according its velocity.
 //------------------------------------------------------------------------------
-template<bool periactive> __global__ void KerInOutFillMove(unsigned n,const unsigned *inoutpart
-  ,double dt,const float4 *velrhop
-  ,double2 *posxy,double *posz,unsigned *dcell,typecode *code)
+template<bool periactive> __global__ void KerInOutFillMove(unsigned n
+  ,const unsigned* inoutpart,double dt,const float4* velrhop
+  ,double2* posxy,double* posz,unsigned* dcell,typecode* code)
 {
   const unsigned cp=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
   if(cp<n){
@@ -598,9 +602,9 @@ template<bool periactive> __global__ void KerInOutFillMove(unsigned n,const unsi
 //==============================================================================
 /// Move particles in/out according its velocity.
 //==============================================================================
-void InOutFillMove(byte periactive,unsigned n,const unsigned *inoutpart
-  ,double dt,const float4 *velrhop
-  ,double2 *posxy,double *posz,unsigned *dcell,typecode *code)
+void InOutFillMove(byte periactive,unsigned n,const unsigned* inoutpart
+  ,double dt,const float4* velrhop
+  ,double2* posxy,double* posz,unsigned* dcell,typecode* code)
 {
   if(n){
     dim3 sgrid=GetSimpleGridSize(n,SPHBSIZE);
@@ -613,9 +617,10 @@ void InOutFillMove(byte periactive,unsigned n,const unsigned *inoutpart
 //------------------------------------------------------------------------------
 /// Computes projection data to filling mode.
 //------------------------------------------------------------------------------
-__global__ void KerInOutFillProjection(unsigned n,const unsigned *inoutpart
-  ,const byte *cfgupdate,const float4 *planes,const double2 *posxy,const double *posz
-  ,const typecode *code,float *prodist,double2 *proposxy,double *proposz)
+__global__ void KerInOutFillProjection(unsigned n,const unsigned* inoutpart
+  ,const byte* cfgupdate,const float4* planes,const double2* posxy
+  ,const double* posz,const typecode* code,float* prodist,double2* proposxy
+  ,double* proposz)
 {
   const unsigned cp=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
   if(cp<n){
@@ -651,9 +656,10 @@ __global__ void KerInOutFillProjection(unsigned n,const unsigned *inoutpart
 //==============================================================================
 /// Computes projection data to filling mode.
 //==============================================================================
-void InOutFillProjection(unsigned n,const unsigned *inoutpart
-  ,const byte *cfgupdate,const float4 *planes,const double2 *posxy,const double *posz
-  ,const typecode *code,float *prodist,double2 *proposxy,double *proposz)
+void InOutFillProjection(unsigned n,const unsigned* inoutpart
+  ,const byte* cfgupdate,const float4* planes,const double2* posxy
+  ,const double* posz,const typecode* code,float* prodist,double2* proposxy
+  ,double* proposz)
 {
   if(n){
     dim3 sgrid=GetSimpleGridSize(n,SPHBSIZE);
@@ -668,13 +674,13 @@ void InOutFillProjection(unsigned n,const unsigned *inoutpart
 /// Create list of selected ptpoints and its distance for new inlet/outlet particles.
 //------------------------------------------------------------------------------
 __global__ void KerInOutFillListCreate(unsigned npt
-  ,const double2 *ptposxy,const double *ptposz,const byte *zsurfok
-  ,const byte *ptzone,const byte *cfgupdate,const float *zsurf,const float *width
-  ,unsigned npropt,const float *prodist,const double2 *proposxy,const double *proposz
-  ,float dpmin,float dpmin2,float dp,float *ptdist,unsigned nmax,unsigned *inoutpart)
+  ,const double2* ptposxy,const double* ptposz,const byte* zsurfok
+  ,const byte* ptzone,const byte* cfgupdate,const float* zsurf,const float* width
+  ,unsigned npropt,const float* prodist,const double2* proposxy,const double* proposz
+  ,float dpmin,float dpmin2,float dp,float* ptdist,unsigned nmax,unsigned* inoutpart)
 {
   extern __shared__ unsigned slist[];
-  //float *sdist=(float*)(slist+(blockDim.x+1));
+  //float* sdist=(float*)(slist+(blockDim.x+1));
   if(!threadIdx.x)slist[0]=0;
   __syncthreads();
   const unsigned cpt=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
@@ -726,10 +732,10 @@ __global__ void KerInOutFillListCreate(unsigned npt
 /// Returns number of new particles to create.
 //==============================================================================
 unsigned InOutFillListCreate(bool stable,unsigned npt
-  ,const double2 *ptposxy,const double *ptposz,const byte *zsurfok
-  ,const byte *ptzone,const byte *cfgupdate,const float *zsurf,const float *width
-  ,unsigned npropt,const float *prodist,const double2 *proposxy,const double *proposz
-  ,float dpmin,float dpmin2,float dp,float *ptdist,unsigned nmax,unsigned *inoutpart)
+  ,const double2* ptposxy,const double* ptposz,const byte* zsurfok
+  ,const byte* ptzone,const byte* cfgupdate,const float* zsurf,const float* width
+  ,unsigned npropt,const float* prodist,const double2* proposxy,const double* proposz
+  ,float dpmin,float dpmin2,float dp,float* ptdist,unsigned nmax,unsigned* inoutpart)
 {
   unsigned count=0;
   if(npt){
@@ -756,10 +762,12 @@ unsigned InOutFillListCreate(bool stable,unsigned npt
 //------------------------------------------------------------------------------
 /// Creates new inlet/outlet particles to fill inlet/outlet domain.
 //------------------------------------------------------------------------------
-template<bool periactive> __global__ void KerInOutFillCreate(unsigned newn,const unsigned *newinoutpart
-  ,const double2 *ptposxy,const double *ptposz,const byte *ptzone,const float *ptauxdist
-  ,unsigned np,unsigned idnext,typecode codenewpart,const float3 *dirdata
-  ,double2 *posxy,double *posz,unsigned *dcell,typecode *code,unsigned *idp,float4 *velrhop)
+template<bool periactive> __global__ void KerInOutFillCreate(unsigned newn
+  ,const unsigned* newinoutpart,const double2* ptposxy,const double* ptposz
+  ,const byte* ptzone,const float* ptauxdist
+  ,unsigned np,unsigned idnext,typecode codenewpart,const float3* dirdata
+  ,double2* posxy,double* posz,unsigned* dcell,typecode* code,unsigned* idp
+  ,float4* velrhop)
 {
   const unsigned cp=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
   if(cp<newn){
@@ -783,10 +791,11 @@ template<bool periactive> __global__ void KerInOutFillCreate(unsigned newn,const
 //==============================================================================
 /// Creates new inlet/outlet particles to fill inlet/outlet domain.
 //==============================================================================
-void InOutFillCreate(byte periactive,unsigned newn,const unsigned *newinoutpart
-  ,const double2 *ptposxy,const double *ptposz,const byte *ptzone,const float *ptauxdist
-  ,unsigned np,unsigned idnext,typecode codenewpart,const float3 *dirdata
-  ,double2 *posxy,double *posz,unsigned *dcell,typecode *code,unsigned *idp,float4 *velrhop)
+void InOutFillCreate(byte periactive,unsigned newn,const unsigned* newinoutpart
+  ,const double2* ptposxy,const double* ptposz,const byte* ptzone
+  ,const float* ptauxdist,unsigned np,unsigned idnext,typecode codenewpart
+  ,const float3* dirdata,double2* posxy,double* posz,unsigned* dcell
+  ,typecode* code,unsigned* idp,float4* velrhop)
 {
   if(newn){
     dim3 sgrid=GetSimpleGridSize(newn,SPHBSIZE);
@@ -800,12 +809,13 @@ void InOutFillCreate(byte periactive,unsigned newn,const unsigned *newinoutpart
 /// Perform interaction between ghost inlet/outlet nodes and fluid particles. GhostNodes-Fluid
 /// Realiza interaccion entre ghost inlet/outlet nodes y particulas de fluido. GhostNodes-Fluid
 //------------------------------------------------------------------------------
-template<bool sim2d,TpKernel tker> __global__ void KerInteractionInOutExtrap_Double
-  (unsigned inoutcount,const int *inoutpart,const byte *cfgzone,byte computerhopmask,byte computevelmask
-  ,const float4 *planes,const float* width,const float3 *dirdata,float determlimit
-  ,int scelldiv,int4 nc,int3 cellzero,const int2 *beginendcellfluid
-  ,const double2 *posxy,const double *posz,const typecode *code,const unsigned *idp
-  ,float4 *velrhop)
+template<bool sim2d,TpKernel tker> __global__ void KerInteractionInOutExtrap_Double(
+  unsigned inoutcount,const int* inoutpart,const byte* cfgzone
+  ,byte computerhopmask,byte computevelmask,const float4* planes
+  ,const float* width,const float3* dirdata,float determlimit
+  ,int scelldiv,int4 nc,int3 cellzero,const int2* beginendcellfluid
+  ,const double2* posxy,const double* posz,const typecode* code
+  ,const unsigned* idp,float4* velrhop)
 {
   const unsigned cp=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
   if(cp<inoutcount){
@@ -985,12 +995,13 @@ template<bool sim2d,TpKernel tker> __global__ void KerInteractionInOutExtrap_Dou
 /// Perform interaction between ghost inlet/outlet nodes and fluid particles. GhostNodes-Fluid
 /// Realiza interaccion entre ghost inlet/outlet nodes y particulas de fluido. GhostNodes-Fluid
 //------------------------------------------------------------------------------
-template<bool sim2d,TpKernel tker> __global__ void KerInteractionInOutExtrap_Single
-  (unsigned inoutcount,const int *inoutpart,const byte *cfgzone,byte computerhopmask,byte computevelmask
-  ,const float4 *planes,const float* width,const float3 *dirdata,float determlimit
-  ,int scelldiv,int4 nc,int3 cellzero,const int2 *beginendcellfluid
-  ,const double2 *posxy,const double *posz,const typecode *code,const unsigned *idp
-  ,float4 *velrhop)
+template<bool sim2d,TpKernel tker> __global__ void KerInteractionInOutExtrap_Single(
+  unsigned inoutcount,const int* inoutpart,const byte* cfgzone
+  ,byte computerhopmask,byte computevelmask
+  ,const float4* planes,const float* width,const float3* dirdata,float determlimit
+  ,int scelldiv,int4 nc,int3 cellzero,const int2* beginendcellfluid
+  ,const double2* posxy,const double* posz,const typecode* code
+  ,const unsigned* idp,float4* velrhop)
 {
   const unsigned cp=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
   if(cp<inoutcount){
@@ -1170,12 +1181,13 @@ template<bool sim2d,TpKernel tker> __global__ void KerInteractionInOutExtrap_Sin
 /// Perform interaction between ghost inlet/outlet nodes and fluid particles. GhostNodes-Fluid
 /// Realiza interaccion entre ghost inlet/outlet nodes y particulas de fluido. GhostNodes-Fluid
 //------------------------------------------------------------------------------
-template<bool sim2d,TpKernel tker> __global__ void KerInteractionInOutExtrap_FastSingle
-  (unsigned inoutcount,const int *inoutpart,const byte *cfgzone,byte computerhopmask,byte computevelmask
-  ,const float4 *planes,const float* width,const float3 *dirdata,float determlimit
-  ,int scelldiv,int4 nc,int3 cellzero,const int2 *beginendcellfluid
-  ,const double2 *posxy,const double *posz,const typecode *code,const unsigned *idp
-  ,float4 *velrhop)
+template<bool sim2d,TpKernel tker> __global__ void KerInteractionInOutExtrap_FastSingle(
+  unsigned inoutcount,const int* inoutpart,const byte* cfgzone
+  ,byte computerhopmask,byte computevelmask
+  ,const float4* planes,const float* width,const float3* dirdata,float determlimit
+  ,int scelldiv,int4 nc,int3 cellzero,const int2* beginendcellfluid
+  ,const double2* posxy,const double* posz,const typecode* code
+  ,const unsigned* idp,float4* velrhop)
 {
   const unsigned cp=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
   if(cp<inoutcount){
@@ -1354,11 +1366,12 @@ template<bool sim2d,TpKernel tker> __global__ void KerInteractionInOutExtrap_Fas
 /// Perform interaction between ghost inlet/outlet nodes and fluid particles. GhostNodes-Fluid
 /// Realiza interaccion entre ghost inlet/outlet nodes y particulas de fluido. GhostNodes-Fluid
 //==============================================================================
-template<TpKernel tker> void Interaction_InOutExtrapT(byte doublemode,bool simulate2d
-  ,unsigned inoutcount,const int *inoutpart,const byte *cfgzone,byte computerhopmask,byte computevelmask
-  ,const float4 *planes,const float* width,const float3 *dirdata,float determlimit
-  ,const StDivDataGpu &dvd,const double2 *posxy,const double *posz,const typecode *code
-  ,const unsigned *idp,float4 *velrhop)
+template<TpKernel tker> void Interaction_InOutExtrapT(byte doublemode
+  ,bool simulate2d,unsigned inoutcount,const int* inoutpart,const byte* cfgzone
+  ,byte computerhopmask,byte computevelmask,const float4* planes,const float* width
+  ,const float3* dirdata,float determlimit,const StDivDataGpu& dvd
+  ,const double2* posxy,const double* posz,const typecode* code
+  ,const unsigned* idp,float4* velrhop)
 {
   const int2* beginendcellfluid=dvd.beginendcell+dvd.cellfluid;
   //-Interaction GhostBoundaryNodes-Fluid.
@@ -1387,10 +1400,11 @@ template<TpKernel tker> void Interaction_InOutExtrapT(byte doublemode,bool simul
 /// Realiza interaccion entre ghost inlet/outlet nodes y particulas de fluido. GhostNodes-Fluid
 //==============================================================================
 void Interaction_InOutExtrap(byte doublemode,bool simulate2d,TpKernel tkernel
-  ,unsigned inoutcount,const int *inoutpart,const byte *cfgzone,byte computerhopmask,byte computevelmask
-  ,const float4 *planes,const float* width,const float3 *dirdata,float determlimit
-  ,const StDivDataGpu &dvd,const double2 *posxy,const double *posz,const typecode *code
-  ,const unsigned *idp,float4 *velrhop)
+  ,unsigned inoutcount,const int* inoutpart,const byte* cfgzone
+  ,byte computerhopmask,byte computevelmask,const float4* planes
+  ,const float* width,const float3* dirdata,float determlimit
+  ,const StDivDataGpu& dvd,const double2* posxy,const double* posz
+  ,const typecode* code,const unsigned* idp,float4* velrhop)
 {
   switch(tkernel){
     case KERNEL_Wendland:
@@ -1418,7 +1432,7 @@ void Interaction_InOutExtrap(byte doublemode,bool simulate2d,TpKernel tkernel
 /// Interpolate data between time0 and time1.
 //------------------------------------------------------------------------------
 __global__ void KerInOutInterpolateTime(unsigned npt,double fxtime
-  ,const float *vel0,const float *vel1,float *vel)
+  ,const float* vel0,const float* vel1,float* vel)
 {
   const unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
   if(p<npt){
@@ -1431,8 +1445,8 @@ __global__ void KerInOutInterpolateTime(unsigned npt,double fxtime
 /// Interpolate data between time0 and time1.
 //==============================================================================
 void InOutInterpolateTime(unsigned npt,double time,double t0,double t1
-  ,const float *velx0,const float *velx1,float *velx
-  ,const float *velz0,const float *velz1,float *velz)
+  ,const float* velx0,const float* velx1,float* velx
+  ,const float* velz0,const float* velz1,float* velz)
 {
   if(npt){
     const double fxtime=((time-t0)/(t1-t0));
@@ -1445,9 +1459,9 @@ void InOutInterpolateTime(unsigned npt,double time,double t0,double t1
 //------------------------------------------------------------------------------
 /// Interpolate velocity in time and Z-position of selected partiles in a list.
 //------------------------------------------------------------------------------
-__global__ void KerInOutInterpolateZVel(unsigned izone,double posminz,double dpz,int nz1
-  ,const float *velx,const float *velz,unsigned np,const int *plist,const double *posz
-  ,const typecode *code,float4 *velrhop,float velcorr)
+__global__ void KerInOutInterpolateZVel(unsigned izone,double posminz,double dpz
+  ,int nz1,const float* velx,const float* velz,unsigned np,const int* plist
+  ,const double* posz,const typecode* code,float4* velrhop,float velcorr)
 {
   const unsigned cp=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
   if(cp<np){
@@ -1478,8 +1492,8 @@ __global__ void KerInOutInterpolateZVel(unsigned izone,double posminz,double dpz
 /// Interpolate velocity in time and Z-position of selected partiles in a list.
 //==============================================================================
 void InOutInterpolateZVel(unsigned izone,double posminz,double dpz,int nz1
-  ,const float *velx,const float *velz,unsigned np,const int *plist
-  ,const double *posz,const typecode *code,float4 *velrhop,float velcorr)
+  ,const float* velx,const float* velz,unsigned np,const int* plist
+  ,const double* posz,const typecode* code,float4* velrhop,float velcorr)
 {
   if(np){
     dim3 sgrid=GetSimpleGridSize(np,SPHBSIZE);
@@ -1490,8 +1504,8 @@ void InOutInterpolateZVel(unsigned izone,double posminz,double dpz,int nz1
 //------------------------------------------------------------------------------
 /// Removes interpolated Z velocity of inlet/outlet particles.
 //------------------------------------------------------------------------------
-__global__ void KerInOutInterpolateResetZVel(unsigned izone,unsigned np,const int *plist
-  ,const typecode *code,float4 *velrhop)
+__global__ void KerInOutInterpolateResetZVel(unsigned izone,unsigned np
+  ,const int* plist,const typecode* code,float4* velrhop)
 {
   const unsigned cp=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
   if(cp<np){
@@ -1503,8 +1517,8 @@ __global__ void KerInOutInterpolateResetZVel(unsigned izone,unsigned np,const in
 //==============================================================================
 /// Removes interpolated Z velocity of inlet/outlet particles.
 //==============================================================================
-void InOutInterpolateResetZVel(unsigned izone,unsigned np,const int *plist
-  ,const typecode *code,float4 *velrhop)
+void InOutInterpolateResetZVel(unsigned izone,unsigned np,const int* plist
+  ,const typecode* code,float4* velrhop)
 {
   if(np){
     dim3 sgrid=GetSimpleGridSize(np,SPHBSIZE);

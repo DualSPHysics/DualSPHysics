@@ -1,6 +1,6 @@
 //HEAD_DSCODES
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2023 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -65,7 +65,7 @@ __device__ float GetKernelCubic_Fac(float rr2){
 //------------------------------------------------------------------------------
 /// Returns wab and fac of kernel.
 //------------------------------------------------------------------------------
-__device__ float GetKernelCubic_WabFac(float rr2,float &fac){
+__device__ float GetKernelCubic_WabFac(float rr2,float& fac){
   const float rad=sqrt(rr2);
   const float qq=rad/CTE.kernelh;
   if(rad>CTE.kernelh){
@@ -123,7 +123,7 @@ __device__ float GetKernelWendland_Fac(float rr2,float h,float bwen){
 //------------------------------------------------------------------------------
 /// Returns wab and fac of kernel.
 //------------------------------------------------------------------------------
-__device__ float GetKernelWendland_WabFac(float rr2,float &fac){
+__device__ float GetKernelWendland_WabFac(float rr2,float& fac){
   const float rad=sqrt(rr2);
   const float qq=rad/CTE.kernelh;
   const float wqq1=1.f-0.5f*qq;
@@ -169,7 +169,7 @@ template<TpKernel tker> __device__ float GetKernel_Fac(float rr2){
 //------------------------------------------------------------------------------
 /// Returns wab and fac of kernel according to template.
 //------------------------------------------------------------------------------
-template<TpKernel tker> __device__ float GetKernel_WabFac(float rr2,float &fac){
+template<TpKernel tker> __device__ float GetKernel_WabFac(float rr2,float& fac){
        if(tker==KERNEL_Wendland  )return(GetKernelWendland_WabFac  (rr2,fac));
   else if(tker==KERNEL_Cubic     )return(GetKernelCubic_WabFac     (rr2,fac));
   else return(0);

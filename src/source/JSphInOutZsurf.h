@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2023 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -42,7 +42,7 @@ class JGaugeSwl;
 class JSphInOutZsurf : protected JObject
 {
 protected:
-  JLog2 *Log;
+  JLog2* Log;
   const bool Cpu;
   const StCteSph CSP; ///<Structure with main SPH constants values and configurations.
   const unsigned IdZone;
@@ -60,7 +60,7 @@ protected:
   bool SvVtkZsurf;         ///<Creates VTK files with Zsurf for each PART (default=false).
   double ZsurfMin;         ///<Minimum Z-surface to reduce the calculation area (default=minimun Z inlet).
   float ZsurfFit;          ///<Set calculated zsurf (default -0.5*dp).
-  JLinearValue *InputTime; ///<Input zsurf in time (for ZsurfMode==InZsurf_Variable).
+  JLinearValue* InputTime; ///<Input zsurf in time (for ZsurfMode==InZsurf_Variable).
 
   StZsurfResult ZsurfResults; ///<Stores zsurf results to send. 
 
@@ -74,19 +74,19 @@ protected:
   unsigned Nptx;      ///<Number of points in horizontal direction.
   tplane3d PlaDisx;   ///<Reference plane to compute horizontal distance.
 
-  JGaugeSwl  *GaugeSwl;  ///<Gauge object to compute zsurf value.
+  JGaugeSwl*  GaugeSwl;  ///<Gauge object to compute zsurf value.
 
 
   //-Zsurf data when UniformZsurf==false (calculated or from mesh data file).
   unsigned TimeCount;    ///<Number times with zsurf data.
-  double   *Times;       ///<Times with data (minumum allocated size is 2). [TimeCount]
-  float    *TimesZsurf;  ///<Zsurf data for different times and positions on CPU (minumum size is 2*Nptx). [Nptx*TimeCount]
-  float    *TimesZsurfg; ///<Zsurf data for different times and positions on GPU (minumum size is 2*Nptx). [Nptx*TimeCount]
+  double*  Times;       ///<Times with data (minumum allocated size is 2). [TimeCount]
+  float*   TimesZsurf;  ///<Zsurf data for different times and positions on CPU (minumum size is 2*Nptx). [Nptx*TimeCount]
+  float*   TimesZsurfg; ///<Zsurf data for different times and positions on GPU (minumum size is 2*Nptx). [Nptx*TimeCount]
 
   double CurrentTime;      ///<Timestep of zsurf in Zsurf line.
   bool   CurrentExternal;  ///<Pointers CurrentZsurf and CurrentZsurfg are external from GaugeMesh object.
-  float  *CurrentZsurf;    ///<Zsurf data for timestep==CurrentTime on CPU. [Nptx]
-  float  *CurrentZsurfg;   ///<Zsurf data for timestep==CurrentTime on GPU. [Nptx]
+  float* CurrentZsurf;    ///<Zsurf data for timestep==CurrentTime on CPU. [Nptx]
+  float* CurrentZsurfg;   ///<Zsurf data for timestep==CurrentTime on GPU. [Nptx]
 
   //-Variables with last search in Times[].
   double TimeStep;
@@ -98,7 +98,7 @@ protected:
 
 protected:
   void ComputeZsurfLine(bool forgauge,bool forceuniform);
-  bool ConfigGaugeZsurf(JGaugeSystem *gaugesystem);
+  bool ConfigGaugeZsurf(JGaugeSystem* gaugesystem);
 
   void ConfigZsurfResults();
 
@@ -107,14 +107,14 @@ protected:
   void InterpolateZsurfTime(double timestep,bool full);
 
 public:
-  JSphInOutZsurf(bool cpu,unsigned idzone,const StCteSph &csp,tdouble3 direction
-    ,tdouble3 zoneposmin,tdouble3 zoneposmax);
+  JSphInOutZsurf(bool cpu,unsigned idzone,const StCteSph& csp
+    ,tdouble3 direction,tdouble3 zoneposmin,tdouble3 zoneposmax);
   ~JSphInOutZsurf();
   void Reset();
-  TpInZsurfMode ReadXml(const JXml *sxml,TiXmlElement* lis,const std::string &dirdatafile
-    ,JGaugeSystem *gaugesystem);
+  TpInZsurfMode ReadXml(const JXml* sxml,TiXmlElement* lis
+    ,const std::string& dirdatafile,JGaugeSystem* gaugesystem);
 
-  void GetConfig(std::vector<std::string> &lines)const;
+  void GetConfig(std::vector<std::string>& lines)const;
 
   TpInZsurfMode GetZsurfMode()const{ return(ZsurfMode); }
   bool GetUniformZsurf()const{ return(UniformZsurf); }
@@ -123,12 +123,12 @@ public:
   bool GetRemoveZsurf()const{ return(RemoveZsurf); }
   bool GetSvVtkZsurf()const{ return(SvVtkZsurf); }
 
-  unsigned ComputeActivePoints(unsigned npt,const tdouble3 *ptpos)const;
-  void SetInitialPoints(unsigned npt,const tdouble3 *ptpos,byte *ptok)const;
+  unsigned ComputeActivePoints(unsigned npt,const tdouble3* ptpos)const;
+  void SetInitialPoints(unsigned npt,const tdouble3* ptpos,byte* ptok)const;
 
   float UpdateZsurf(double timestep);
   float GetCurrentZsurfUniform()const{ return(InputZsurf); }
-  float GetCurrentZsurfNonUniform(const tdouble3 &ps)const;
+  float GetCurrentZsurfNonUniform(const tdouble3& ps)const;
 
   tplane3d GetPlaDisx()const{ return(PlaDisx); }
   unsigned GetNptx()const{ return(Nptx); }

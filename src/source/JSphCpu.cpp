@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2023 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -285,7 +285,7 @@ void JSphCpu::PrintAllocMemory(llong mcpu)const{
 //==============================================================================
 unsigned JSphCpu::GetParticlesData(unsigned n,unsigned pini,bool onlynormal
   ,unsigned* idp,tdouble3* pos,tfloat3* vel,float* rho,typecode* code
-  ,const byte* filter,unsigned &npfilterdel)
+  ,const byte* filter,unsigned& npfilterdel)
 {
   unsigned num=n;
   //-Copy selected values.
@@ -308,7 +308,7 @@ unsigned JSphCpu::GetParticlesData(unsigned n,unsigned pini,bool onlynormal
     if(rho)for(unsigned p=0;p<n;p++)rho[p]=velrhoc[p+pini].w;
   }
 
-  //-Eliminate non-normal particles (periodic & others).
+  //-Eliminate non-normal particles (periodic&  others).
   const bool usefilter=(filter!=NULL);
   unsigned nfilter=0;
   if(onlynormal || usefilter){
@@ -348,7 +348,7 @@ unsigned JSphCpu::GetParticlesData(unsigned n,unsigned pini,bool onlynormal
 /// Load the execution configuration with OpenMP.
 /// Carga la configuracion de ejecucion con OpenMP.
 //==============================================================================
-void JSphCpu::ConfigOmp(const JSphCfgRun *cfg){
+void JSphCpu::ConfigOmp(const JSphCfgRun* cfg){
 #ifdef OMP_USE
   //-Determine number of threads for host with OpenMP. | Determina numero de threads por host con OpenMP.
   if(Cpu && cfg->OmpThreads!=1){
@@ -524,9 +524,9 @@ void JSphCpu::PosInteraction_Forces(){
 /// Realiza interaccion entre particulas. Bound-Fluid/Float
 //==============================================================================
 template<TpKernel tker,TpFtMode ftmode> void JSphCpu::InteractionForcesBound
-  (unsigned n,unsigned pinit,StDivDataCpu divdata,const unsigned *dcell
-  ,const tdouble3 *pos,const tfloat4 *velrhop,const typecode *code,const unsigned *idp
-  ,float &viscdt,float *ar)const
+  (unsigned n,unsigned pinit,StDivDataCpu divdata,const unsigned* dcell
+  ,const tdouble3* pos,const tfloat4* velrhop,const typecode* code,const unsigned* idp
+  ,float& viscdt,float* ar)const
 {
   //-Initialize viscth to calculate max viscdt with OpenMP. | Inicializa viscth para calcular visdt maximo con OpenMP.
   float viscth[OMP_MAXTHREADS*OMP_STRIDE];
@@ -608,12 +608,12 @@ template<TpKernel tker,TpFtMode ftmode> void JSphCpu::InteractionForcesBound
 //==============================================================================
 template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity,bool shift> 
   void JSphCpu::InteractionForcesFluid(unsigned n,unsigned pinit,bool boundp2,float visco
-  ,StDivDataCpu divdata,const unsigned *dcell
+  ,StDivDataCpu divdata,const unsigned* dcell
   ,const tsymatrix3f* tau,tsymatrix3f* gradvel
-  ,const tdouble3 *pos,const tfloat4 *velrhop,const typecode *code,const unsigned *idp
-  ,const float *press,const tfloat3 *dengradcorr
-  ,float &viscdt,float *ar,tfloat3 *ace,float *delta
-  ,TpShifting shiftmode,tfloat4 *shiftposfs)const
+  ,const tdouble3* pos,const tfloat4* velrhop,const typecode* code,const unsigned* idp
+  ,const float* press,const tfloat3* dengradcorr
+  ,float& viscdt,float* ar,tfloat3* ace,float* delta
+  ,TpShifting shiftmode,tfloat4* shiftposfs)const
 {
   //-Initialize viscth to calculate viscdt maximo con OpenMP. | Inicializa viscth para calcular visdt maximo con OpenMP.
   float viscth[OMP_MAXTHREADS*OMP_STRIDE];
@@ -853,7 +853,7 @@ void JSphCpu::InteractionForcesDEM(unsigned nfloat,StDivDataCpu divdata
             const float taup2=demdata[tavp2].tau;
             const float kfricp2=demdata[tavp2].kfric;
             const float restitup2=demdata[tavp2].restitu;
-            //const StDemData *demp2=demobjs+CODE_GetTypeAndValue(code[p2]);
+            //const StDemData* demp2=demobjs+CODE_GetTypeAndValue(code[p2]);
 
             const float nu_mass=(!tpfluid? masstotp1/2: masstotp1*masstotp2/(masstotp1+masstotp2)); //-Con boundary toma la propia masa del floating 1.
             const float kn=4/(3*(taup1+taup2))*sqrt(float(Dp)/4); //-Generalized rigidity - Lemieux 2008.
@@ -925,10 +925,10 @@ void JSphCpu::ComputeSpsTau(unsigned n,unsigned pini,const tfloat4* velrho
     const float twovisc_sps=(visc_sps+visc_sps);
     const float one_rho2=1.0f/velrho[p].w;   
     tau[p].xx=one_rho2*(twovisc_sps*gradvel.xx +sumsps);
-    tau[p].xy=one_rho2*(visc_sps   *gradvel.xy);
-    tau[p].xz=one_rho2*(visc_sps   *gradvel.xz);
+    tau[p].xy=one_rho2*(visc_sps  * gradvel.xy);
+    tau[p].xz=one_rho2*(visc_sps  * gradvel.xz);
     tau[p].yy=one_rho2*(twovisc_sps*gradvel.yy +sumsps);
-    tau[p].yz=one_rho2*(visc_sps   *gradvel.yz);
+    tau[p].yz=one_rho2*(visc_sps  * gradvel.yz);
     tau[p].zz=one_rho2*(twovisc_sps*gradvel.zz +sumsps);
   }
 }
@@ -1007,8 +1007,8 @@ void JSphCpu::Interaction_Forces_ct(const stinterparmsc& t,StInterResultc& res)c
 //==============================================================================
 template<TpKernel tker,bool sim2d,TpSlipMode tslip> void JSphCpu::InteractionMdbcCorrectionT2
   (unsigned n,StDivDataCpu divdata,float determlimit,float mdbcthreshold
-  ,const tdouble3 *pos,const typecode *code,const unsigned *idp
-  ,const tfloat3 *boundnor,const tfloat3 *motionvel,tfloat4 *velrhop)
+  ,const tdouble3* pos,const typecode* code,const unsigned* idp
+  ,const tfloat3* boundnor,const tfloat3* motionvel,tfloat4* velrhop)
 {
   if(tslip==SLIP_FreeSlip)Run_Exceptioon("SlipMode=\'Free slip\' is not yet implemented...");
   const int nn=int(n);
@@ -1179,9 +1179,9 @@ template<TpKernel tker,bool sim2d,TpSlipMode tslip> void JSphCpu::InteractionMdb
 /// Calcula datos extrapolados en el contorno para mDBC.
 //==============================================================================
  template<TpKernel tker> void JSphCpu::Interaction_MdbcCorrectionT(TpSlipMode slipmode
-  ,const StDivDataCpu &divdata,const tdouble3 *pos,const typecode *code
-  ,const unsigned *idp,const tfloat3 *boundnor,const tfloat3 *motionvel
-  ,tfloat4 *velrhop)
+  ,const StDivDataCpu &divdata,const tdouble3* pos,const typecode* code
+  ,const unsigned* idp,const tfloat3* boundnor,const tfloat3* motionvel
+  ,tfloat4* velrhop)
 {
   const float determlimit=1e-3f;
   //-Interaction GhostBoundaryNodes-Fluid.
@@ -1202,9 +1202,9 @@ template<TpKernel tker,bool sim2d,TpSlipMode tslip> void JSphCpu::InteractionMdb
 /// Calcula datos extrapolados en el contorno para mDBC.
 //==============================================================================
 void JSphCpu::Interaction_MdbcCorrection(TpSlipMode slipmode
-  ,const StDivDataCpu &divdata,const tdouble3 *pos,const typecode *code
-  ,const unsigned *idp,const tfloat3 *boundnor,const tfloat3 *motionvel
-  ,tfloat4 *velrhop)
+  ,const StDivDataCpu &divdata,const tdouble3* pos,const typecode* code
+  ,const unsigned* idp,const tfloat3* boundnor,const tfloat3* motionvel
+  ,tfloat4* velrhop)
 {
   switch(TKernel){
     case KERNEL_Cubic:       Interaction_MdbcCorrectionT <KERNEL_Cubic     > (slipmode,divdata,pos,code,idp,boundnor,motionvel,velrhop);  break;
@@ -1228,7 +1228,7 @@ void JSphCpu::Interaction_MdbcCorrection(TpSlipMode slipmode
 /// necesario marcar las particulas q salgan del dominio sin salir del mapa.
 //==============================================================================
 void JSphCpu::UpdatePos(tdouble3 rpos,double movx,double movy,double movz
-  ,bool outrhop,unsigned p,tdouble3 *pos,unsigned *cell,typecode *code)const
+  ,bool outrhop,unsigned p,tdouble3* pos,unsigned* cell,typecode* code)const
 {
   //-Check validity of displacement. | Comprueba validez del desplazamiento.
   bool outmove=(fabs(float(movx))>MovLimit || fabs(float(movy))>MovLimit || fabs(float(movz))>MovLimit);
@@ -1326,14 +1326,14 @@ void JSphCpu::ComputeVerletVarsFluid(bool shift,const tfloat3* indirvel
         const tfloat3 vd=indirvel[CODE_GetIzoneFluidInout(code[p])];
         if(vd.x!=FLT_MAX){
           const float v=velrho1[p].x*vd.x + velrho1[p].y*vd.y + velrho1[p].z*vd.z;
-          dx=double(v*vd.x) * dt;
-          dy=double(v*vd.y) * dt;
-          dz=double(v*vd.z) * dt;
+          dx=double(v*vd.x)*  dt;
+          dy=double(v*vd.y)*  dt;
+          dz=double(v*vd.z)*  dt;
         }
         else{
-          dx=double(velrho1[p].x) * dt;
-          dy=double(velrho1[p].y) * dt;
-          dz=double(velrho1[p].z) * dt;
+          dx=double(velrho1[p].x)*  dt;
+          dy=double(velrho1[p].y)*  dt;
+          dz=double(velrho1[p].z)*  dt;
         }
       }
       //-Update particle data.
@@ -1461,9 +1461,9 @@ void JSphCpu::ComputeSymplecticPre(double dt){
         bool outrho=(rhonew<RhopOutMin || rhonew>RhopOutMax);
         //-Calculate velocity & density. | Calcula velocidad y densidad.
         tfloat4 rvelrhonew=TFloat4(
-          float(double(velrhoprec[p].x) + (double(acec[p].x)+Gravity.x) * dt05),
-          float(double(velrhoprec[p].y) + (double(acec[p].y)+Gravity.y) * dt05),
-          float(double(velrhoprec[p].z) + (double(acec[p].z)+Gravity.z) * dt05),
+          float(double(velrhoprec[p].x) + (double(acec[p].x)+Gravity.x)*  dt05),
+          float(double(velrhoprec[p].y) + (double(acec[p].y)+Gravity.y)*  dt05),
+          float(double(velrhoprec[p].z) + (double(acec[p].z)+Gravity.z)*  dt05),
           rhonew);
         //-Restore data of inout particles.
         if(InOut && CODE_IsFluidInout(rcode)){
@@ -1472,9 +1472,9 @@ void JSphCpu::ComputeSymplecticPre(double dt){
           const tfloat3 vd=indirvel[CODE_GetIzoneFluidInout(rcode)];
           if(vd.x!=FLT_MAX){
             const float v=rvelrhonew.x*vd.x + rvelrhonew.y*vd.y + rvelrhonew.z*vd.z;
-            dx=double(v*vd.x) * dt05;
-            dy=double(v*vd.y) * dt05;
-            dz=double(v*vd.z) * dt05;
+            dx=double(v*vd.x)*  dt05;
+            dy=double(v*vd.y)*  dt05;
+            dz=double(v*vd.z)*  dt05;
           }
         }
         //-Update particle data.
@@ -1538,7 +1538,7 @@ void JSphCpu::ComputeSymplecticCorr(double dt){
     #endif
     for(int p=0;p<npb;p++){
       const double epsilon_rdot=(-double(arc[p])/double(velrhoc[p].w))*dt;
-      const float rhonew=float(double(velrhoprec[p].w) * (2.-epsilon_rdot)/(2.+epsilon_rdot));
+      const float rhonew=float(double(velrhoprec[p].w)*  (2.-epsilon_rdot)/(2.+epsilon_rdot));
       velrhoc[p]=TFloat4(0,0,0,(rhonew<RhopZero? RhopZero: rhonew));//-Avoid fluid particles being absorbed by boundary ones. | Evita q las boundary absorvan a las fluidas.
     }
   }
@@ -1561,18 +1561,18 @@ void JSphCpu::ComputeSymplecticCorr(double dt){
     for(int p=npb;p<np;p++){
       const typecode rcode=codec[p];
       const double epsilon_rdot=(-double(arc[p])/double(velrhoc[p].w))*dt;
-      const float rhonew=float(double(velrhoprec[p].w) * (2.-epsilon_rdot)/(2.+epsilon_rdot));
+      const float rhonew=float(double(velrhoprec[p].w)*  (2.-epsilon_rdot)/(2.+epsilon_rdot));
       if(!WithFloating || CODE_IsFluid(rcode)){//-Fluid Particles.
         //-Calculate velocity & density. | Calcula velocidad y densidad.
         tfloat4 rvelrhonew=TFloat4(
-          float(double(velrhoprec[p].x) + (double(acec[p].x)+Gravity.x) * dt), 
-          float(double(velrhoprec[p].y) + (double(acec[p].y)+Gravity.y) * dt), 
-          float(double(velrhoprec[p].z) + (double(acec[p].z)+Gravity.z) * dt),
+          float(double(velrhoprec[p].x) + (double(acec[p].x)+Gravity.x)*  dt), 
+          float(double(velrhoprec[p].y) + (double(acec[p].y)+Gravity.y)*  dt), 
+          float(double(velrhoprec[p].z) + (double(acec[p].z)+Gravity.z)*  dt),
           rhonew);
         //-Calculate displacement. | Calcula desplazamiento.
-        double dx=(double(velrhoprec[p].x)+double(rvelrhonew.x)) * dt05; 
-        double dy=(double(velrhoprec[p].y)+double(rvelrhonew.y)) * dt05; 
-        double dz=(double(velrhoprec[p].z)+double(rvelrhonew.z)) * dt05;
+        double dx=(double(velrhoprec[p].x)+double(rvelrhonew.x))*  dt05; 
+        double dy=(double(velrhoprec[p].y)+double(rvelrhonew.y))*  dt05; 
+        double dz=(double(velrhoprec[p].z)+double(rvelrhonew.z))*  dt05;
         if(shift){
           dx+=double(shiftposfc[p].x);
           dy+=double(shiftposfc[p].y);
@@ -1586,14 +1586,14 @@ void JSphCpu::ComputeSymplecticCorr(double dt){
           const tfloat3 vd=indirvel[CODE_GetIzoneFluidInout(rcode)];
           if(vd.x!=FLT_MAX){
             const float v=rvelrhonew.x*vd.x + rvelrhonew.y*vd.y + rvelrhonew.z*vd.z;
-            dx=double(v*vd.x) * dt;
-            dy=double(v*vd.y) * dt;
-            dz=double(v*vd.z) * dt;
+            dx=double(v*vd.x)*  dt;
+            dy=double(v*vd.y)*  dt;
+            dz=double(v*vd.z)*  dt;
           }
           else{
-            dx=double(rvelrhonew.x) * dt; 
-            dy=double(rvelrhonew.y) * dt; 
-            dz=double(rvelrhonew.z) * dt;
+            dx=double(rvelrhonew.x)*  dt; 
+            dy=double(rvelrhonew.y)*  dt; 
+            dz=double(rvelrhonew.z)*  dt;
           }
         }
         //-Update particle data.
@@ -1845,7 +1845,7 @@ void JSphCpu::RunMotion(double stepdt){
 /// Aplica movimiento y velocidad de piston 1D a conjunto de particulas.
 //==============================================================================
 void JSphCpu::MovePiston1d(unsigned np,unsigned ini
-  ,double poszmin,unsigned poszcount,const byte *pistonid,const double* movx
+  ,double poszmin,unsigned poszcount,const byte* pistonid,const double* movx
   ,const double* velx,const unsigned* ridpmot,tdouble3* pos,unsigned* dcell
   ,tfloat4* velrhop,typecode* code)const
 {

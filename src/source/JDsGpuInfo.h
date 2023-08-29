@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2021 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2023 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -49,11 +49,11 @@ public:
 
   void Reset();
 
-  static int ShowGpusInfo(JLog2 *log);
+  static int ShowGpusInfo(JLog2* log);
   int GetNgpus();
 
   int SelectGpu(int gpuid);
-  void ShowSelectGpusInfo(JLog2 *log);
+  void ShowSelectGpusInfo(JLog2* log);
 
   int         GetGpuId   ()const{ return(GpuId);    }
   std::string GetName    ()const{ return(Name);     }

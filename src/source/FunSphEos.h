@@ -1,6 +1,6 @@
 ﻿//HEAD_DSCODES
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2023 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -42,7 +42,7 @@ inline float ComputePressMonaghan(float rhop,float rhop0,float b,float gamma){
 /// Returns pressure starting from density using equation of state 
 /// based on [Monaghan, 1994].
 //==============================================================================
-inline float ComputePressMonaghan(float rhop,const StCteSph &csp){
+inline float ComputePressMonaghan(float rhop,const StCteSph& csp){
   return(ComputePressMonaghan(rhop,csp.rhopzero,csp.cteb,csp.gamma));
 }
 
@@ -60,7 +60,7 @@ inline float ComputePress(float rhop,float rhop0,float b,float gamma,float cs0){
 //------------------------------------------------------------------------------
 /// Returns pressure starting from density using default equation of state.
 //------------------------------------------------------------------------------
-inline float ComputePress(float rhop,const StCteSph &csp){ 
+inline float ComputePress(float rhop,const StCteSph& csp){ 
   return(ComputePressMonaghan(rhop,csp));
 }
 

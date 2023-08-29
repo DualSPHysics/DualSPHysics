@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2023 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -92,7 +92,9 @@ public:
   const float*    GetRhoOut(){ return(Rho); }
   const byte*     GetMotiveOut(){ return(Motive); }
 
-  void Clear(){ Count=0; OutPosCount=OutRhoCount=OutMovCount=0; };
+  void Clear(){
+    Count=0; OutPosCount=OutRhoCount=OutMovCount=0;
+  };
 };
 
 #endif

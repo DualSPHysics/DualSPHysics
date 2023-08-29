@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2023 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -52,7 +52,7 @@ protected:
   const tdouble3 Map_PosMin,Map_PosMax,Map_PosDif;
   const tuint3 Map_Cells;
   const unsigned CaseNbound,CaseNfixed,CaseNpb;
-  JLog2 *Log;
+  JLog2* Log;
   std::string DirOut;
 
   bool AllocFullNct;     ///<Resserve memory for max number of cells of domain (DomCells). | Reserva memoria para el numero maximo de celdas del dominio (DomCells).
@@ -70,17 +70,17 @@ protected:
   //-Variables with allocated memory as a function of the number of particles in CPU.
   //-Memoria reservada en funcion de particulas en GPU.
   unsigned SizeNp;
-  unsigned *CellPart;
-  unsigned *SortPart;
+  unsigned* CellPart;
+  unsigned* SortPart;
   unsigned SizeAuxMem;
-  float *AuxMem;
+  float* AuxMem;
 
   unsigned IncreaseNp; ///<Possible number of particles to be created in the near future.
 
   //-Variables with allocated memory as a function of the number of cells in GPU.
   //-Memoria reservada en funcion de celdas en GPU.
   unsigned SizeNct;
-  int2 *BeginEndCell;  ///<Contains the first and final particle of each cell. | Contiene el principio y final de cada celda. 
+  int2* BeginEndCell;  ///<Contains the first and final particle of each cell. | Contiene el principio y final de cada celda. 
   // BeginEndCell=[BoundOk(nct),BoundIgnore(1),Fluid(nct),BoundOut(1),FluidOut(1),BoundOutIgnore(1),FluidOutIgnore(1)]
 
   ullong MemAllocGpuNp;  ///<GPU memory reserved for particles. | Mermoria GPU reservada para particulas.
@@ -137,9 +137,11 @@ protected:
   ullong GetAllocMemoryGpuNct()const{ return(MemAllocGpuNct); };
   ullong GetAllocMemoryGpu()const{ return(GetAllocMemoryGpuNp()+GetAllocMemoryGpuNct()); };
 
-  //:tuint3 GetMapCell(const tfloat3 &pos)const;
-  void CalcCellDomainBound(unsigned n,unsigned pini,unsigned n2,unsigned pini2,const unsigned* dcellg,const typecode *codeg,tuint3 &cellmin,tuint3 &cellmax);
-  void CalcCellDomainFluid(unsigned n,unsigned pini,unsigned n2,unsigned pini2,const unsigned* dcellg,const typecode *codeg,tuint3 &cellmin,tuint3 &cellmax);
+  //:tuint3 GetMapCell(const tfloat3& pos)const;
+  void CalcCellDomainBound(unsigned n,unsigned pini,unsigned n2,unsigned pini2
+    ,const unsigned* dcellg,const typecode* codeg,tuint3& cellmin,tuint3& cellmax);
+  void CalcCellDomainFluid(unsigned n,unsigned pini,unsigned n2,unsigned pini2
+    ,const unsigned* dcellg,const typecode* codeg,tuint3& cellmin,tuint3& cellmax);
 
   void CellBeginEnd(unsigned cell,unsigned ndata,unsigned* data)const;
   int2 CellBeginEnd(unsigned cell)const;
@@ -160,13 +162,15 @@ public:
 
   void DefineDomain(unsigned cellcode,tuint3 domcelini,tuint3 domcelfin,tdouble3 domposmin,tdouble3 domposmax);
 
-  void SortBasicArrays(const unsigned *idp,const typecode *code,const unsigned *dcell,const double2 *posxy,const double *posz,const float4 *velrhop,unsigned *idp2,typecode *code2,unsigned *dcell2,double2 *posxy2,double *posz2,float4 *velrhop2);
-  void SortDataArrays(const float4 *a,float4 *a2);
-  void SortDataArrays(const float *a,const float *b,float *a2,float *b2);
-  void SortDataArrays(const double2 *a,const double *b,const float4 *c,double2 *a2,double *b2,float4 *c2);
-  void SortDataArrays(const tsymatrix3f *a,tsymatrix3f *a2);
-  void SortDataArrays(const float3 *a,float3 *a2);
-  void SortDataArrays(const float *a,float *a2);
+  void SortBasicArrays(const unsigned* idp,const typecode* code,const unsigned* dcell
+    ,const double2* posxy,const double* posz,const float4* velrhop,unsigned* idp2
+    ,typecode* code2,unsigned* dcell2,double2* posxy2,double* posz2,float4* velrhop2);
+  void SortDataArrays(const float4* a,float4* a2);
+  void SortDataArrays(const float* a,const float* b,float* a2,float* b2);
+  void SortDataArrays(const double2* a,const double* b,const float4* c,double2* a2,double* b2,float4* c2);
+  void SortDataArrays(const tsymatrix3f* a,tsymatrix3f* a2);
+  void SortDataArrays(const float3* a,float3* a2);
+  void SortDataArrays(const float* a,float* a2);
 
   float* GetAuxMem(unsigned size);
 
@@ -206,9 +210,9 @@ public:
   //:unsigned GetParticlesCells(unsigned celini,unsigned celfin);
 
 
-  //:tuint3 DgGetCell(const tfloat3 &pos)const;
-  //:void DgSaveVktIdx(std::string file,unsigned np,const unsigned *idx,const unsigned *idp,const tfloat3 *pos)const;
-  //:void DgSaveVktRange(std::string file,unsigned pini,unsigned pfin,const unsigned *idpg,const float3 *posg)const;
+  //:tuint3 DgGetCell(const tfloat3& pos)const;
+  //:void DgSaveVktIdx(std::string file,unsigned np,const unsigned* idx,const unsigned* idp,const tfloat3* pos)const;
+  //:void DgSaveVktRange(std::string file,unsigned pini,unsigned pfin,const unsigned* idpg,const float3* posg)const;
 };
 
 #endif

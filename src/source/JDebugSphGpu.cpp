@@ -1,6 +1,6 @@
 //HEAD_DSCODES
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2023 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -37,17 +37,17 @@ using namespace std;
 //==============================================================================
 /// Throws exception related to a file from a static method.
 //==============================================================================
-void JDebugSphGpu::RunExceptioonStatic(const std::string &srcfile,int srcline
-  ,const std::string &method
-  ,const std::string &msg,const std::string &file)
+void JDebugSphGpu::RunExceptioonStatic(const std::string& srcfile,int srcline
+  ,const std::string& method
+  ,const std::string& msg,const std::string& file)
 {
   throw JException(srcfile,srcline,"JDebugSphGpu",method,msg,file);
 }
 //==============================================================================
 /// Throws exception related to a CUDA error from a static method.
 //==============================================================================
-void JDebugSphGpu::RunExceptioonCudaStatic(const std::string &srcfile,int srcline
-  ,const std::string &method
+void JDebugSphGpu::RunExceptioonCudaStatic(const std::string& srcfile,int srcline
+  ,const std::string& method
   ,cudaError_t cuerr,std::string msg)
 {
   msg=msg+fun::PrintStr(" (CUDA error %d (%s)).\n",cuerr,cudaGetErrorString(cuerr));
@@ -56,8 +56,8 @@ void JDebugSphGpu::RunExceptioonCudaStatic(const std::string &srcfile,int srclin
 //==============================================================================
 /// Checks CUDA error and throws exception from a static method.
 //==============================================================================
-void JDebugSphGpu::CheckCudaErroorStatic(const std::string &srcfile,int srcline
-  ,const std::string &method,std::string msg)
+void JDebugSphGpu::CheckCudaErroorStatic(const std::string& srcfile,int srcline
+  ,const std::string& method,std::string msg)
 {
   cudaError_t cuerr=cudaGetLastError();
   if(cuerr!=cudaSuccess)RunExceptioonCudaStatic(srcfile,srcline,method,cuerr,msg);
@@ -66,8 +66,8 @@ void JDebugSphGpu::CheckCudaErroorStatic(const std::string &srcfile,int srcline
 //==============================================================================
 /// Returns dynamic pointer with code-type of particles. (this pointer must be deleted)
 //==============================================================================
-byte* JDebugSphGpu::GetCodeType(unsigned n,const typecode *code){
-  byte *codetype=JDataArrays::NewArrayByte(n,false);
+byte* JDebugSphGpu::GetCodeType(unsigned n,const typecode* code){
+  byte* codetype=JDataArrays::NewArrayByte(n,false);
   for(unsigned p=0;p<n;p++){
     const typecode type=CODE_GetType(code[p]);
     codetype[p]=(type==CODE_TYPE_FIXED? 0: (type==CODE_TYPE_MOVING? 1: (type==CODE_TYPE_FLOATING? 2: (type==CODE_TYPE_FLUID? 3: 99))));
@@ -78,11 +78,11 @@ byte* JDebugSphGpu::GetCodeType(unsigned n,const typecode *code){
 //==============================================================================
 /// Returns dynamic pointer with code-typevalue of particles. (this pointer must be deleted)
 //==============================================================================
-typecode* JDebugSphGpu::GetCodeTypeValue(unsigned n,const typecode *code){
+typecode* JDebugSphGpu::GetCodeTypeValue(unsigned n,const typecode* code){
   #ifdef CODE_SIZE4
-    typecode *codetval=JDataArrays::NewArrayUint(n,false);
+    typecode* codetval=JDataArrays::NewArrayUint(n,false);
   #else
-    typecode *codetval=JDataArrays::NewArrayWord(n,false);
+    typecode* codetval=JDataArrays::NewArrayWord(n,false);
   #endif
   for(unsigned c=0;c<n;c++)codetval[c]=CODE_GetTypeValue(code[c]);
   return(codetval);
@@ -91,8 +91,8 @@ typecode* JDebugSphGpu::GetCodeTypeValue(unsigned n,const typecode *code){
 //==============================================================================
 /// Returns dynamic pointer with cell coordinates of particles. (this pointer must be deleted)
 //==============================================================================
-tuint3* JDebugSphGpu::GetCell3(unsigned n,const unsigned *dcell,unsigned cellcode){
-  tuint3 *cell3=JDataArrays::NewArrayUint3(n,false);
+tuint3* JDebugSphGpu::GetCell3(unsigned n,const unsigned* dcell,unsigned cellcode){
+  tuint3* cell3=JDataArrays::NewArrayUint3(n,false);
   for(unsigned c=0;c<n;c++){
     const unsigned dcel=dcell[c];
     cell3[c]=TUint3(unsigned(DCEL_Cellx(cellcode,dcel)),unsigned(DCEL_Celly(cellcode,dcel)),unsigned(DCEL_Cellz(cellcode,dcel)));
@@ -103,8 +103,8 @@ tuint3* JDebugSphGpu::GetCell3(unsigned n,const unsigned *dcell,unsigned cellcod
 //==============================================================================
 /// Returns dynamic pointer with position as tfloat3. (this pointer must be deleted)
 //==============================================================================
-tfloat3* JDebugSphGpu::GetPosf3(unsigned n,const tdouble3 *pos){
-  tfloat3 *posf=JDataArrays::NewArrayFloat3(n,false);
+tfloat3* JDebugSphGpu::GetPosf3(unsigned n,const tdouble3* pos){
+  tfloat3* posf=JDataArrays::NewArrayFloat3(n,false);
   for(unsigned c=0;c<n;c++)posf[c]=ToTFloat3(pos[c]);
   return(posf);
 }
@@ -112,8 +112,10 @@ tfloat3* JDebugSphGpu::GetPosf3(unsigned n,const tdouble3 *pos){
 //==============================================================================
 /// Returns dynamic pointer with position as tfloat3. (this pointer must be deleted)
 //==============================================================================
-tfloat3* JDebugSphGpu::GetPosf3(unsigned n,const tdouble2 *posxy,const double *posz){
-  tfloat3 *posf=JDataArrays::NewArrayFloat3(n,false);
+tfloat3* JDebugSphGpu::GetPosf3(unsigned n,const tdouble2* posxy
+  ,const double* posz)
+{
+  tfloat3* posf=JDataArrays::NewArrayFloat3(n,false);
   for(unsigned c=0;c<n;c++)posf[c]=TFloat3(float(posxy[c].x),float(posxy[c].y),float(posz[c]));
   return(posf);
 }
@@ -121,8 +123,10 @@ tfloat3* JDebugSphGpu::GetPosf3(unsigned n,const tdouble2 *posxy,const double *p
 //==============================================================================
 /// Returns dynamic pointer with position as tdouble3. (this pointer must be deleted)
 //==============================================================================
-tdouble3* JDebugSphGpu::GetPosd3(unsigned n,const tdouble2 *posxy,const double *posz){
-  tdouble3 *posd=JDataArrays::NewArrayDouble3(n,false);
+tdouble3* JDebugSphGpu::GetPosd3(unsigned n,const tdouble2* posxy
+  ,const double* posz)
+{
+  tdouble3* posd=JDataArrays::NewArrayDouble3(n,false);
   for(unsigned c=0;c<n;c++)posd[c]=TDouble3(posxy[c].x,posxy[c].y,posz[c]);
   return(posd);
 }
@@ -130,8 +134,8 @@ tdouble3* JDebugSphGpu::GetPosd3(unsigned n,const tdouble2 *posxy,const double *
 //==============================================================================
 /// Returns dynamic pointer with relative position from PosCell. (this pointer must be deleted)
 //==============================================================================
-tfloat3* JDebugSphGpu::GetPosCell_Pos(unsigned n,const tfloat4 *poscell){
-  tfloat3 *posf=JDataArrays::NewArrayFloat3(n,false);
+tfloat3* JDebugSphGpu::GetPosCell_Pos(unsigned n,const tfloat4* poscell){
+  tfloat3* posf=JDataArrays::NewArrayFloat3(n,false);
   for(unsigned c=0;c<n;c++){
     const tfloat4 ps=poscell[c];
     posf[c]=TFloat3(ps.x,ps.y,ps.z);
@@ -142,9 +146,9 @@ tfloat3* JDebugSphGpu::GetPosCell_Pos(unsigned n,const tfloat4 *poscell){
 //==============================================================================
 /// Returns dynamic pointer with cell coordinates from PosCell. (this pointer must be deleted)
 //==============================================================================
-tuint3* JDebugSphGpu::GetPosCell_Cell(unsigned n,const tfloat4 *poscell){
+tuint3* JDebugSphGpu::GetPosCell_Cell(unsigned n,const tfloat4* poscell){
   const tuint4* poscellu=(const tuint4*)poscell;
-  tuint3 *cell=JDataArrays::NewArrayUint3(n,false);
+  tuint3* cell=JDataArrays::NewArrayUint3(n,false);
   for(unsigned c=0;c<n;c++){
     const unsigned cellu=poscellu[c].w;
     cell[c]=TUint3(PSCEL_GetX(cellu),PSCEL_GetY(cellu),PSCEL_GetZ(cellu));
@@ -155,7 +159,7 @@ tuint3* JDebugSphGpu::GetPosCell_Cell(unsigned n,const tfloat4 *poscell){
 //==============================================================================
 /// Checks list of variables and returns the unknown variable.
 //==============================================================================
-std::string JDebugSphGpu::PrepareVars(const std::string &vlist){
+std::string JDebugSphGpu::PrepareVars(const std::string& vlist){
   return(string(",")+fun::StrLower(vlist)+",");
 }
 
@@ -272,7 +276,7 @@ void JDebugSphGpu::LoadParticlesData(const JSphGpuSingle* gp,unsigned pini
 /// Stores data in VTK format.
 //============================================================================== 
 void JDebugSphGpu::SaveVtk(std::string filename,int numfile,unsigned pini,unsigned pfin
-  ,std::string vars,const JSphGpuSingle *gp)
+  ,std::string vars,const JSphGpuSingle* gp)
 {
   const string file=GetFileName(filename,numfile);
   JDataArrays arrays;

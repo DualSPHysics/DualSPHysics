@@ -1,6 +1,6 @@
 //HEAD_DSCODES
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2023 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -29,8 +29,8 @@
 /// \param text Text of the exception.
 /// \param file Name of the file related to the exception.
 //==============================================================================
-JException::JException(const std::string &classname,const std::string &method
-  ,const std::string &text,const std::string &file)
+JException::JException(const std::string& classname,const std::string& method
+  ,const std::string& text,const std::string& file)
 {
   ExName="JException";
   SrcFile="";
@@ -51,9 +51,9 @@ JException::JException(const std::string &classname,const std::string &method
 /// \param text Text of the exception.
 /// \param file Name of the file related to the exception.
 //==============================================================================
-JException::JException(const std::string &srcfile,int srcline
-  ,const std::string &classname,const std::string &method
-  ,const std::string &text,const std::string &file)
+JException::JException(const std::string& srcfile,int srcline
+  ,const std::string& classname,const std::string& method
+  ,const std::string& text,const std::string& file)
 {
   ExName="JException";
   #ifdef RunExceptSrc

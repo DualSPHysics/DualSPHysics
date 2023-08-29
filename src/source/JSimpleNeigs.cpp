@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2023 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -116,8 +116,8 @@ void JSimpleNeigs::CreateMapCells(){
   if(Scell<=0)Run_Exceptioon("Size of cells is invalid.");
   DefineMapCells();
   //-Allocate memory.
-  unsigned *poscell=NULL;
-  unsigned *npcell=NULL;
+  unsigned* poscell=NULL;
+  unsigned* npcell=NULL;
   try{
     poscell=new unsigned[Np];
     npcell=new unsigned[Nct];
@@ -160,7 +160,9 @@ void JSimpleNeigs::CreateMapCells(){
 /// Return cell limits for interaction starting from position.
 /// Devuelve limites de celdas para interaccion a partir de posicion.
 //==============================================================================
-void JSimpleNeigs::GetNearbyCells(const tdouble3 &ps,double dist,tint3 &celmin,tint3 &celmax)const{
+void JSimpleNeigs::GetNearbyCells(const tdouble3& ps,double dist
+  ,tint3& celmin,tint3& celmax)const
+{
   //-Compute distance in cells.
   const int celdist=int(dist/Scell)+1;
   //-Get cell coordinates of position.
@@ -187,7 +189,9 @@ void JSimpleNeigs::SelectAdd(unsigned p){
 /// Store nearby positions in SelectPos[] and returns number of selected positions.
 /// Guarda las posiciones cercanas en SelectPos[] y devuelve el numero de posiciones seleccionadas.
 //==============================================================================
-unsigned JSimpleNeigs::NearbyPositions(const tdouble3 &ps,unsigned pignore,double dist){
+unsigned JSimpleNeigs::NearbyPositions(const tdouble3& ps,unsigned pignore
+  ,double dist)
+{
   const double dist2=dist*dist;
   CountSelect=0;
   //printf("==> pos:(%f,%f,%f)\n",ps.x,ps.y,ps.z);
@@ -212,8 +216,8 @@ unsigned JSimpleNeigs::NearbyPositions(const tdouble3 &ps,unsigned pignore,doubl
 /// Store nearby positions in vector vsel and returns number of selected positions.
 /// Guarda las posiciones cercanas en vsel y devuelve el numero de posiciones seleccionadas.
 //==============================================================================
-unsigned JSimpleNeigs::NearbyPositionsLt(const tdouble3 &ps,unsigned pignore
-  ,double dist,std::vector<unsigned> &vsel)const
+unsigned JSimpleNeigs::NearbyPositionsLt(const tdouble3& ps,unsigned pignore
+  ,double dist,std::vector<unsigned>& vsel)const
 {
   vsel.clear();
   const double dist2=dist*dist;

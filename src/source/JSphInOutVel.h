@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2023 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -49,7 +49,7 @@ class JGaugeSystem;
 class JSphInOutVel : protected JObject
 {
 protected:
-  JLog2 *Log;
+  JLog2* Log;
   const bool Cpu;
   const StCteSph CSP; ///<Structure with main SPH constants values and configurations.
   const unsigned IdZone;
@@ -78,7 +78,7 @@ protected:
   float InputVelPosz2;        ///<2nd input velocity Z (used when VelMode==InVelM_Fixed).
   float InputVelPosz3;        ///<3rd input velocity Z (used when VelMode==InVelM_Fixed).
 
-  JLinearValue *InputTimeVel; ///<Input velocity in time (for VelMode==InVelM_Variable).
+  JLinearValue* InputTimeVel; ///<Input velocity in time (for VelMode==InVelM_Variable).
   unsigned TimeVelIdx0;
   unsigned TimeVelIdx1;
   
@@ -94,27 +94,27 @@ protected:
 
   JSphInOutVelAwas* AwasVel;     ///<AWAS object to compute velocity.
 
-  JSphInOutGridData *InputVelGrid;  ///<Input velocity is interpolated in time from a data grid (for VelMode==InVelM_Interpolated).
+  JSphInOutGridData* InputVelGrid;  ///<Input velocity is interpolated in time from a data grid (for VelMode==InVelM_Interpolated).
 
 protected:
-  void CalculateVelMinMax(float &velmin,float &velmax)const;
+  void CalculateVelMinMax(float& velmin,float& velmax)const;
   void DefineBehaviour();
   void ComputeInitialVel();
   void UpdateVelVariable(double timestep);
 
 
 public:
-  JSphInOutVel(bool cpu,unsigned idzone,const StCteSph &csp,tdouble3 direction
+  JSphInOutVel(bool cpu,unsigned idzone,const StCteSph& csp,tdouble3 direction
     ,tdouble3 ptplane,tdouble3 zoneposmin,tdouble3 zoneposmax);
   ~JSphInOutVel();
   void Reset();
-  TpInVelMode ReadXml(const JXml *sxml,TiXmlElement *lis,const std::string &dirdatafile
-    ,JGaugeSystem *gaugesystem,double maprealposminy);
+  TpInVelMode ReadXml(const JXml* sxml,TiXmlElement* lis,const std::string& dirdatafile
+    ,JGaugeSystem* gaugesystem,double maprealposminy);
 
   bool GetFlowActive()const{ return(FlowActive); }
   void ConfigFlowToVel(unsigned initnptok);
 
-  void GetConfig(std::vector<std::string> &lines)const;
+  void GetConfig(std::vector<std::string>& lines)const;
 
   float GetVelMin()const{ return(VelMin); }
   float GetVelMax()const{ return(VelMax); }
@@ -129,13 +129,13 @@ public:
 
   void UpdateVel(double timestep);
 
-  void UpdateVelInterpolateCpu(double timestep,unsigned nplist,const int *plist
-    ,const tdouble3 *pos,const typecode *code,const unsigned *idp,tfloat4 *velrhop);
+  void UpdateVelInterpolateCpu(double timestep,unsigned nplist,const int* plist
+    ,const tdouble3* pos,const typecode* code,const unsigned* idp,tfloat4* velrhop);
 
 #ifdef _WITHGPU
-  void UpdateVelInterpolateGpu(double timestep,unsigned nplist,const int *plist
-    ,const double2 *posxyg,const double *poszg,const typecode *codeg
-    ,const unsigned *idpg,float4 *velrhopg);
+  void UpdateVelInterpolateGpu(double timestep,unsigned nplist,const int* plist
+    ,const double2* posxyg,const double* poszg,const typecode* codeg
+    ,const unsigned* idpg,float4* velrhopg);
 #endif
 
 

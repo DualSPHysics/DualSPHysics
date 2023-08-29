@@ -1,6 +1,6 @@
 //HEAD_DSCODES
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2023 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -162,7 +162,7 @@ void JDsPartFloatSave::SetFtData(int cpart,double timestep,unsigned nstep
   //  ,nstep,timestep,FtCount,(forcepoints? forcepoints->GetPtCount(): 0));
   //-Stores data from ftobjs.
   for(unsigned cf=0;cf<FtCount;cf++){
-    const StFloatingData &v=ftobjs[cf];
+    const StFloatingData& v=ftobjs[cf];
     FtData->SetPartData0(cf,v.center,v.fvel,v.fomega,v.facelin,v.faceang
      ,v.extforcelin,v.extforceang,v.fluforcelin,v.fluforceang,v.preacelin,v.preaceang);
   }

@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2023 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -56,11 +56,11 @@ public:
   typedef struct StrPartData{
     const JSphMk* mkinfo;
     unsigned np;
-    const tdouble3 *pos;
-    const typecode *code;
+    const tdouble3* pos;
+    const typecode* code;
 
     StrPartData(){ Clear(); }
-    StrPartData(const JSphMk* vmkinfo,unsigned vnp,const tdouble3 *vpos,const typecode *vcode){
+    StrPartData(const JSphMk* vmkinfo,unsigned vnp,const tdouble3* vpos,const typecode* vcode){
       mkinfo=vmkinfo; np=vnp; pos=vpos; code=vcode;
     }
     void Clear(){ 
@@ -69,7 +69,7 @@ public:
   }StPartData;
 
 private:
-  JLog2 *Log;
+  JLog2* Log;
 
   //-Basic simulation parameters.
   const bool Simulate2D;        ///<Indicates 2D simulation.
@@ -86,8 +86,8 @@ private:
 
   unsigned Size;        ///<Size of allocated memory for Points[].
   unsigned Count;       ///<Number of valid points.
-  tdouble3 *Points;     ///<Position of points [Size].
-  byte     *PointsInit; ///<Indicates an initial valid (z<zsurf) point [Size].
+  tdouble3* Points;     ///<Position of points [Size].
+  byte*     PointsInit; ///<Indicates an initial valid (z<zsurf) point [Size].
 
   //-Domain data. PtDom[8] is the reference point in inout plane.
   tdouble3 PtDom[10]; 
@@ -96,19 +96,19 @@ private:
   tdouble3 ZonePosMax;
 
   void ResizeMemory(unsigned newnpt);
-  JMatrix4d ReadRotate2D(const JXml *sxml,TiXmlElement* ele,const tdouble3 &pt);
-  JMatrix4d ReadRotate3D(const JXml *sxml,TiXmlElement* ele);
+  JMatrix4d ReadRotate2D(const JXml* sxml,TiXmlElement* ele,const tdouble3& pt);
+  JMatrix4d ReadRotate3D(const JXml* sxml,TiXmlElement* ele);
 
-  tdouble3 DirectionFromStr(const std::string &strdir)const;
-  std::string CheckParticlesDirection(const JSphMkBlock *pmk,const tdouble3 &dir)const;
+  tdouble3 DirectionFromStr(const std::string& strdir)const;
+  std::string CheckParticlesDirection(const JSphMkBlock* pmk,const tdouble3& dir)const;
 
 
-  void Create2d3d_Particles(const JXml *sxml,TiXmlElement* ele,const JDsPartsInit *partsdata);
-  void Create2d_Line(const JXml *sxml,TiXmlElement* ele);
-  void Create3d_Box(const JXml *sxml,TiXmlElement* ele);
-  void Create3d_Circle(const JXml *sxml,TiXmlElement* ele);
-  void CheckPoints(const std::string &xmlrow);
-  void ComputeDomainLimits(tdouble3 &posmin,tdouble3 &posmax)const;
+  void Create2d3d_Particles(const JXml* sxml,TiXmlElement* ele,const JDsPartsInit* partsdata);
+  void Create2d_Line(const JXml* sxml,TiXmlElement* ele);
+  void Create3d_Box(const JXml* sxml,TiXmlElement* ele);
+  void Create3d_Circle(const JXml* sxml,TiXmlElement* ele);
+  void CheckPoints(const std::string& xmlrow);
+  void ComputeDomainLimits(tdouble3& posmin,tdouble3& posmax)const;
   void ComputeDomainFromPoints();
 
 public:
@@ -118,9 +118,9 @@ public:
   void Reset();
   void ResetPoints();
 
-  void CreatePoints(const JXml *sxml,TiXmlElement* ele,const JDsPartsInit *partsdata);
+  void CreatePoints(const JXml* sxml,TiXmlElement* ele,const JDsPartsInit* partsdata);
 
-  void GetConfig(std::vector<std::string> &lines)const;
+  void GetConfig(std::vector<std::string>& lines)const;
 
   tdouble3 GetDirection()const{ return(Direction); }
   unsigned GetCount()const{ return(Count); }
@@ -131,7 +131,7 @@ public:
   unsigned CountPointsInit()const;
 
   const tdouble3* GetPtDomain()const{ return(PtDom); };
-  void GetPtDomain(std::vector<tdouble3> &ptdom)const;
+  void GetPtDomain(std::vector<tdouble3>& ptdom)const;
 
   tdouble3 GetZonePosMin()const{ return(ZonePosMin); }
   tdouble3 GetZonePosMax()const{ return(ZonePosMax); }

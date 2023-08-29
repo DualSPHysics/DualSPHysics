@@ -1,6 +1,6 @@
 //HEAD_DSCODES
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2023 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -43,7 +43,7 @@ void JMotionPos::Reset(){
 //==============================================================================
 // Aplica movimiento lineal.
 //==============================================================================
-void JMotionPos::Move(const tdouble3 &dis){
+void JMotionPos::Move(const tdouble3& dis){
   if(TypeSimple)PosSimple=TDouble3(PosSimple.x+dis.x,PosSimple.y+dis.y,PosSimple.z+dis.z);
   else PosMatrix.Mul(JMatrix4d::MatrixMov(dis));
 /*
@@ -58,7 +58,7 @@ void JMotionPos::Move(const tdouble3 &dis){
 //==============================================================================
 // Aplica rotacion.
 //==============================================================================
-void JMotionPos::Rotate(double ang,const tdouble3 &axisp1,const tdouble3 &axisp2){
+void JMotionPos::Rotate(double ang,const tdouble3& axisp1,const tdouble3& axisp2){
   if(TypeSimple)ToMatrix();
 //  JMatrix4d m=JMatrix4d::MatrixRot(ang,axisp1,axisp2);
 //  m.Print("m");
@@ -80,7 +80,7 @@ void JMotionPos::Rotate(double ang,const tdouble3 &axisp1,const tdouble3 &axisp2
 //==============================================================================
 // Aplica movimiento.
 //==============================================================================
-void JMotionPos::MoveMix(const JMotionPos &modpos){
+void JMotionPos::MoveMix(const JMotionPos& modpos){
   if(TypeSimple&&!modpos.TypeSimple)ToMatrix();
   if(modpos.TypeSimple)Move(modpos.PosSimple);
   else PosMatrix.Mul(modpos.PosMatrix);//<-Usando MulPre() da problemas...
@@ -101,7 +101,7 @@ void JMotionPos::ToMatrix(){
 //==============================================================================
 // Devuelve punto modificado al aplicarle el desplazamiento de PosSimple/PosMatrix
 //==============================================================================
-tdouble3 JMotionPos::PointMove(const tdouble3 &p) const{
+tdouble3 JMotionPos::PointMove(const tdouble3& p)const{
   return(TypeSimple? TDouble3(p.x+PosSimple.x,p.y+PosSimple.y,p.z+PosSimple.z): PosMatrix.MulPoint(p));
 }
 
