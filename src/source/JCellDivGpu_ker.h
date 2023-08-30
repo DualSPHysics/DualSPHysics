@@ -70,7 +70,6 @@ void SortDataParticles(unsigned np,unsigned pini,const unsigned* sortpart
   ,const float3* a,float3* a2);
 void SortDataParticles(unsigned np,unsigned pini,const unsigned* sortpart
   ,const float* a,float* a2);
-void SortArrayPeriParent(unsigned np,const unsigned* sortpart,unsigned* rsortpart
 
 //:inline unsigned GetRangeParticlesCellsSizeAux(unsigned celini,unsigned celfin){ unsigned n=2,s=(((celfin-celini)/DIVBSIZE)+1); return((s*n + ((s/DIVBSIZE)+1)*n) + DIVBSIZE); } 
 //:void GetRangeParticlesCells(unsigned celini,unsigned celfin,const int2* begcell,unsigned* aux,unsigned& pmin,unsigned& pmax);
