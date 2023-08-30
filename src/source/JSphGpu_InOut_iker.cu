@@ -94,7 +94,7 @@ template<bool periactive> __global__ void KerUpdatePosFluid(unsigned n,unsigned 
   if(pp<n){
     unsigned p=pp+pini;
     const typecode rcode=code[p];
-    const bool outrhop=(CODE_GetSpecialValue(rcode)==CODE_OUTRHOP);
+    const bool outrhop=(CODE_GetSpecialValue(rcode)==CODE_OUTRHO);
     cusph::KerUpdatePos<periactive>(posxy[p],posz[p],0,0,0,outrhop,p,posxy,posz,dcell,code);
   }
 }
@@ -282,7 +282,7 @@ __device__ float KerInOutCalcVel(byte vprof,const float4& vdata,float posz){
 }
 
 //------------------------------------------------------------------------------
-/// Updates velocity and rhop of inlet/outlet particles when it uses an 
+/// Updates velocity and rho of inlet/outlet particles when it uses an 
 /// analytical solution.
 //------------------------------------------------------------------------------
 __global__ void KerInOutSetAnalyticalData(unsigned n,const unsigned* inoutpart
@@ -298,14 +298,14 @@ __global__ void KerInOutSetAnalyticalData(unsigned n,const unsigned* inoutpart
       const float zsurf=(zsurfpart? zsurfpart[cp]: zsurfv);
       const double rposz=posz[p];
       float4 rvelrhop=velrhop[p];
-      //-Compute rhop value.
+      //-Compute rho value.
       if(rmode==0)rvelrhop.w=rhopzero; //-InRhop_Constant
       if(rmode==1){                    //-InRhop_Hydrostatic
         const float depth=float(double(zsurf)-rposz);
         const float rh=1.f+coefhydro*depth;     //rh=1.+rhop0*(-gravity.z)*(Dp*ptdata.GetDepth(p))/vCteB;
-        const float frhop=pow(rh,1.f/gamma);    //rhop[id]=rhop0*pow(rh,(1./gamma));
-        rvelrhop.w=rhopzero*(frhop<1.f? 1.f: frhop);//-Avoid rhop lower thand rhopzero to prevent suction.
-        //rvelrhop.w=rhopzero*pow(rh,1.f/gamma);  //rhop[id]=rhop0*pow(rh,(1./gamma));
+        const float frhop=pow(rh,1.f/gamma);    //rho[id]=rhop0*pow(rh,(1./gamma));
+        rvelrhop.w=rhopzero*(frhop<1.f? 1.f: frhop);//-Avoid rho lower thand rhopzero to prevent suction.
+        //rvelrhop.w=rhopzero*pow(rh,1.f/gamma);  //rho[id]=rhop0*pow(rh,(1./gamma));
       }
       //-Compute velocity value.
       if(vmode<2){//-VelMode InVelM_Fixed or InVelM_Variable.
@@ -334,7 +334,7 @@ __global__ void KerInOutSetAnalyticalData(unsigned n,const unsigned* inoutpart
 }
 
 //==============================================================================
-/// Updates velocity and rhop of inlet/outlet particles when it uses an 
+/// Updates velocity and rho of inlet/outlet particles when it uses an 
 /// analytical solution.
 //==============================================================================
 void InOutSetAnalyticalData(unsigned n,const unsigned* inoutpart
@@ -353,7 +353,7 @@ void InOutSetAnalyticalData(unsigned n,const unsigned* inoutpart
 
 
 //------------------------------------------------------------------------------
-/// Updates velocity and rhop of inlet/outlet particles when it is not extrapolated. 
+/// Updates velocity and rho of inlet/outlet particles when it is not extrapolated. 
 /// Actualiza velocidad y densidad de particulas inlet/outlet cuando no es extrapolada.
 //------------------------------------------------------------------------------
 __global__ void KerInoutClearInteractionVars(unsigned n,unsigned pini

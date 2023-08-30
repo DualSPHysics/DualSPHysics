@@ -220,18 +220,18 @@ void Interaction_MdbcCorrection(TpKernel tkernel,bool simulate2d
   ,float mdbcthreshold,const StDivDataGpu& dvd,const tdouble3& mapposmin
   ,const double2* posxy,const double* posz,const float4* poscell
   ,const typecode* code,const unsigned* idp,const float3* boundnor
-  ,const float3* motionvel,float4* velrhop);
+  ,const float3* motionvel,float4* velrho);
 
 //-Kernels for the calculation of the DEM forces.
 void Interaction_ForcesDem(unsigned bsize,unsigned nfloat
   ,const StDivDataGpu& dvd,const unsigned* dcell
   ,const unsigned* ftridp,const float4* demdata,const float* ftomassp,float dtforce
-  ,const float4* poscell,const float4* velrhop
+  ,const float4* poscell,const float4* velrho
   ,const typecode* code,const unsigned* idp,float* viscdt,float3* ace,StKerInfo* kerinfo);
 
 //-Kernels for calculating the Laminar+SPS viscosity.
 void ComputeSpsTau(unsigned np,unsigned npb,float smag,float blin
-  ,const float4* velrhop,const tsymatrix3f* gradvelg,tsymatrix3f* tau
+  ,const float4* velrho,const tsymatrix3f* gradvelg,tsymatrix3f* tau
   ,cudaStream_t stm=NULL);
 
 //-Kernels for Delta-SPH.
@@ -252,19 +252,19 @@ void LoadPosRef(unsigned pscount,unsigned casenfixed,unsigned np
   ,const double2* posxy,const double* posz,const unsigned* ridpmot
   ,const unsigned* idpref,double3* posref);
 void MoveLinBound(byte periactive,unsigned np,unsigned ini,tdouble3 mvpos,tfloat3 mvvel
-  ,const unsigned* ridpmot,double2* posxy,double* posz,unsigned* dcell,float4* velrhop,typecode* code);
+  ,const unsigned* ridpmot,double2* posxy,double* posz,unsigned* dcell,float4* velrho,typecode* code);
 void MoveMatBound(byte periactive,bool simulate2d,unsigned np,unsigned ini,tmatrix4d m,double dt
-  ,const unsigned* ridpmot,double2* posxy,double* posz,unsigned* dcell,float4* velrhop,typecode* code,float3* boundnor);
-void CopyMotionVel(unsigned nmoving,const unsigned* ridpmot,const float4* velrhop,float3* motionvel);
+  ,const unsigned* ridpmot,double2* posxy,double* posz,unsigned* dcell,float4* velrho,typecode* code,float3* boundnor);
+void CopyMotionVel(unsigned nmoving,const unsigned* ridpmot,const float4* velrho,float3* motionvel);
 void FtNormalsUpdate(unsigned np,unsigned ini,tmatrix4d m,const unsigned* ridpmot,float3* boundnor);
 
 //-Kernels for MLPistons motion.
 void MovePiston1d(bool periactive,unsigned np,unsigned idini,double dp,double poszmin
   ,unsigned poszcount,const byte* pistonid,const double* movx,const double* velx
-  ,const unsigned* ridpmot,double2* posxy,double* posz,unsigned* dcell,float4* velrhop,typecode* code);
+  ,const unsigned* ridpmot,double2* posxy,double* posz,unsigned* dcell,float4* velrho,typecode* code);
 void MovePiston2d(bool periactive,unsigned np,unsigned idini,double dp,double posymin
   ,double poszmin,unsigned poszcount,const double* movx,const double* velx,const unsigned* ridpmot
-  ,double2* posxy,double* posz,unsigned* dcell,float4* velrhop,typecode* code);
+  ,double2* posxy,double* posz,unsigned* dcell,float4* velrho,typecode* code);
 
 //-Kernels for Floating bodies.
 void FtCalcForcesSum(bool periactive,unsigned ftcount
@@ -283,7 +283,7 @@ void FtApplyConstraints(unsigned ftcount,const byte* ftoconstraints
 void FtUpdate(bool periactive,bool predictor,unsigned ftcount,double dt
   ,const float4* ftodatp,const float3* ftoforcesres,double3* ftocenterres,const unsigned* ridpmot
   ,double3* ftocenter,float3* ftoangles,float3* ftovelace
-  ,double2* posxy,double* posz,unsigned* dcell,float4* velrhop,typecode* code);
+  ,double2* posxy,double* posz,unsigned* dcell,float4* velrho,typecode* code);
 
 //-Kernels for periodic conditions.
 void PeriodicIgnore(unsigned n,typecode* code);
@@ -303,20 +303,20 @@ void PeriodicDuplicateNormals(unsigned n,unsigned pini,const unsigned* listp
 //-Kernels for Damping.
 void ComputeDampingPlane(double dt,double4 plane,float dist,float over
   ,float3 factorxyz,float redumax,unsigned n,unsigned pini
-  ,const double2* posxy,const double* posz,const typecode* code,float4* velrhop);
+  ,const double2* posxy,const double* posz,const typecode* code,float4* velrho);
 void ComputeDampingPlaneDom(double dt,double4 plane,float dist,float over,float3 factorxyz
   ,float redumax,double zmin,double zmax,double4 pla0,double4 pla1,double4 pla2,double4 pla3
   ,unsigned n,unsigned pini,const double2* posxy,const double* posz,const typecode* code
-  ,float4* velrhop);
+  ,float4* velrho);
 void ComputeDampingBox(unsigned n,unsigned pini,double dt,float3 factorxyz,float redumax
   ,double3 limitmin1,double3 limitmin2,double3 limitmax1,double3 limitmax2
   ,double3 limitover1,double3 limitover2,double3 boxsize1,double3 boxsize2
-  ,const double2* posxy,const double* posz,const typecode* code,float4* velrhop);
+  ,const double2* posxy,const double* posz,const typecode* code,float4* velrho);
 void ComputeDampingCylinder(unsigned n,unsigned pini
   ,double dt,double3 point1,double3 point2,double limitmin
   ,float dist,float over,float3 factorxyz,float redumax
   ,const double2* posxy,const double* posz,const typecode* code
-  ,float4* velrhop);
+  ,float4* velrho);
 
 //<vs_outpaarts_ini>
 //-Kernels for OutputParts.

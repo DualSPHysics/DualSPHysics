@@ -144,9 +144,9 @@
   #define CODE_NORMAL   0x0            //-0  Particulas normales no excluidas.                              | 0 Normal particles (not excluded)
   #define CODE_PERIODIC 0x20000000     //-1  Particulas duplicadas por periodicas.                          | 1 Duplicate particles for periodic
   #define CODE_OUTIGNORE 0x40000000    //-2  Marca particulas que se van a ignorar en el siguiente divide.  | 2 Brands particles to be ignored in the next division.
-  #define CODE_OUTMOVE 0x60000000      //-3  Particulas normales excluidas por movimiento.                  | 3 Normal particles excluded for motion
+  #define CODE_OUTMOV 0x60000000       //-3  Particulas normales excluidas por movimiento.                  | 3 Normal particles excluded for motion
   #define CODE_OUTPOS 0x80000000       //-4  Particulas normales excluidas por posicion.                    | 4 Normal particles excluded for position
-  #define CODE_OUTRHOP 0xA0000000      //-5  Particulas normales excluidas por densidad.                    | 5 Normal particles excluded for density
+  #define CODE_OUTRHO 0xA0000000       //-5  Particulas normales excluidas por densidad.                    | 5 Normal particles excluded for density
 
   #define CODE_MASKTYPEVALUE 0x0003ffff //-Bits for type: 00000000 00000011 11111111 11111111
   #define CODE_MASKTYPE 0x00030000      //-Bits for type: 00000000 00000011 00000000 00000000
@@ -170,9 +170,9 @@
   #define CODE_NORMAL   0x0         //-0  Particulas normales no excluidas.                              | 0 Normal particles (not excluded)
   #define CODE_PERIODIC 0x2000      //-1  Particulas duplicadas por periodicas.                          | 1 Duplicate particles for periodic
   #define CODE_OUTIGNORE 0x4000     //-2  Marca particulas que se van a ignorar en el siguiente divide.  | 2 Brands particles to be ignored in the next division.
-  #define CODE_OUTMOVE 0x6000       //-3  Particulas normales excluidas por movimiento.                  | 3 Normal particles excluded for motion
+  #define CODE_OUTMOV 0x6000        //-3  Particulas normales excluidas por movimiento.                  | 3 Normal particles excluded for motion
   #define CODE_OUTPOS 0x8000        //-4  Particulas normales excluidas por posicion.                    | 4 Normal particles excluded for position
-  #define CODE_OUTRHOP 0xA000       //-5  Particulas normales excluidas por densidad.                    | 5 Normal particles excluded for density
+  #define CODE_OUTRHO 0xA000        //-5  Particulas normales excluidas por densidad.                    | 5 Normal particles excluded for density
   //#define CODE_SPECIAL1 0xC000    //-6  Por ejemplo, CODE_DOMAINPREV pertenece a Proceso-1             | 6 For example, CODE_DOMAINPREV belongs to Process-1
   //#define CODE_SPECIAL2 0xE000    //-7  Por ejemplo, CODE_DOMAINNEXT pertenece a Proceso+1             | 7 For example, CODE_DOMAINNEXT belongs to Process+1
 
@@ -195,8 +195,8 @@
 #define CODE_SetPeriodic(code)  (CODE_SetNormal(code)|CODE_PERIODIC)
 #define CODE_SetOutIgnore(code) (CODE_SetNormal(code)|CODE_OUTIGNORE)
 #define CODE_SetOutPos(code)    (CODE_SetNormal(code)|CODE_OUTPOS)
-#define CODE_SetOutMove(code)   (CODE_SetNormal(code)|CODE_OUTMOVE)
-#define CODE_SetOutRhop(code)   (CODE_SetNormal(code)|CODE_OUTRHOP)
+#define CODE_SetOutMov(code)    (CODE_SetNormal(code)|CODE_OUTMOV)
+#define CODE_SetOutRho(code)    (CODE_SetNormal(code)|CODE_OUTRHO)
 #define CODE_GetSpecialValue(code) (code&CODE_MASKSPECIAL)
 #define CODE_GetSpecialByte(code) (CODE_GetSpecialValue(code)>>CODE_MASKSPECIALMV)
 
@@ -207,7 +207,7 @@
 #define CODE_IsNormal(code)    (CODE_GetSpecialValue(code)==CODE_NORMAL)
 #define CODE_IsPeriodic(code)  (CODE_GetSpecialValue(code)==CODE_PERIODIC)
 #define CODE_IsNotOut(code)    (CODE_GetSpecialValue(code)<=CODE_PERIODIC)
-#define CODE_IsOutRhop(code)   (CODE_GetSpecialValue(code)==CODE_OUTRHOP)
+#define CODE_IsOutRho(code)   (CODE_GetSpecialValue(code)==CODE_OUTRHO)
 #define CODE_IsOutIgnore(code) (CODE_GetSpecialValue(code)==CODE_OUTIGNORE)
 
 #define CODE_IsFixed(code)    (CODE_GetType(code)==CODE_TYPE_FIXED)

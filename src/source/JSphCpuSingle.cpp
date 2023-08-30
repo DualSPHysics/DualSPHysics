@@ -313,7 +313,7 @@ void JSphCpuSingle::PeriodicDuplicateVerlet(unsigned np,unsigned pini
 //==============================================================================
 void JSphCpuSingle::PeriodicDuplicateSymplectic(unsigned np,unsigned pini
   ,tuint3 cellmax,tdouble3 perinc,const unsigned* listp,unsigned* idp
-  ,typecode* code,unsigned* dcell,tdouble3* pos,tfloat4* velrhop
+  ,typecode* code,unsigned* dcell,tdouble3* pos,tfloat4* velrho
   ,tsymatrix3f* spstau,tdouble3* pospre,tfloat4* velrhopre)const
 {
   const int n=int(np);
@@ -327,9 +327,9 @@ void JSphCpuSingle::PeriodicDuplicateSymplectic(unsigned np,unsigned pini
     //-Adjust position and cell of new particle. | Ajusta posicion y celda de nueva particula.
     PeriodicDuplicatePos(pnew,pcopy,(rp>=0x80000000),perinc.x,perinc.y,perinc.z,cellmax,pos,dcell);
     //-Copy the rest of the values. | Copia el resto de datos.
-    idp    [pnew]=idp[pcopy];
-    code   [pnew]=CODE_SetPeriodic(code[pcopy]);
-    velrhop[pnew]=velrhop[pcopy];
+    idp   [pnew]=idp[pcopy];
+    code  [pnew]=CODE_SetPeriodic(code[pcopy]);
+    velrho[pnew]=velrho[pcopy];
     if(pospre)   pospre   [pnew]=pospre[pcopy];
     if(velrhopre)velrhopre[pnew]=velrhopre[pcopy];
     if(spstau)   spstau   [pnew]=spstau[pcopy];

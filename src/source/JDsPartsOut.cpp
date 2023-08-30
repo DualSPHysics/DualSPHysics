@@ -97,9 +97,9 @@ void JDsPartsOut::AddData(unsigned np,const typecode* code){
   unsigned outpos=0,outrho=0,outmov=0;
   for(unsigned c=0;c<np;c++){
     switch(CODE_GetSpecialValue(code[c])){
-      case CODE_OUTPOS:   Motive[Count+c]=1; outpos++;   break;
-      case CODE_OUTRHOP:  Motive[Count+c]=2; outrho++;  break; 
-      case CODE_OUTMOVE:  Motive[Count+c]=3; outmov++;  break; 
+      case CODE_OUTPOS:  Motive[Count+c]=1; outpos++;  break;
+      case CODE_OUTRHO:  Motive[Count+c]=2; outrho++;  break; 
+      case CODE_OUTMOV:  Motive[Count+c]=3; outmov++;  break; 
     }
   }
   //-Updates numbers.

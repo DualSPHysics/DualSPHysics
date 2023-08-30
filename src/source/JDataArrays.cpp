@@ -464,7 +464,7 @@ std::string JDataArrays::GetUnitsByName(std::string keyname){
   if(var=="pos")return(" [m]");
   else if(var=="vel")return(" [m/s]");
   else if(var=="veldir")return(" [m/s]");
-  else if(var=="rhop")return(" [kg/m^3]");
+  else if(var=="rhop" || var=="rho")return(" [kg/m^3]");
   else if(var=="mass")return(" [kg]");
   else if(var=="press")return(" [Pa]");
   else if(var=="vol")return(" [m^3]");

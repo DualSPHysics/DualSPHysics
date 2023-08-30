@@ -241,28 +241,28 @@ public:
 public:
   void DgSaveVtkParticlesGpu(std::string filename,int numfile,unsigned pini,unsigned pfin
     ,const double2* posxyg,const double* poszg,const typecode* codeg,const unsigned* idpg
-    ,const float4* velrhopg)const;
+    ,const float4* velrhog)const;
   void DgSaveVtkParticlesGpu(std::string filename,int numfile,unsigned pini,unsigned pfin
     ,unsigned cellcode,const double2* posxyg,const double* poszg,const unsigned* idpg
-    ,const unsigned* dcelg,const typecode* codeg,const float4* velrhopg
-    ,const float4* velrhopm1g,const float3* aceg);
+    ,const unsigned* dcelg,const typecode* codeg,const float4* velrhog
+    ,const float4* velrhom1g,const float3* aceg);
   void DgSaveVtkParticlesGpu(std::string filename,int numfile,unsigned pini,unsigned pfin
-    ,bool idp,bool vel,bool rhop,bool code);
+    ,bool idp,bool vel,bool rho,bool code);
   void DgSaveVtkParticlesGpu(std::string filename,int numfile,unsigned pini,unsigned pfin
     ,const float3* posg,const byte* checkg=NULL,const unsigned* idpg=NULL
-    ,const float3* velg=NULL,const float* rhopg=NULL);
+    ,const float3* velg=NULL,const float* rhog=NULL);
   void DgSaveCsvParticlesGpu(std::string filename,int numfile,unsigned pini,unsigned pfin
     ,std::string head,const float3* posg=NULL,const unsigned* idpg=NULL
-    ,const float3* velg=NULL,const float* rhopg=NULL,const float* arg=NULL
+    ,const float3* velg=NULL,const float* rhog=NULL,const float* arg=NULL
     ,const float3* aceg=NULL,const float3* vcorrg=NULL);
   void DgSaveCsvParticlesGpu2(std::string filename,int numfile,unsigned pini,unsigned pfin
     ,std::string head,const float3* posg=NULL,const unsigned* idpg=NULL
-    ,const float3* velg=NULL,const float* rhopg=NULL,const float4* pospres=NULL
-    ,const float4* velrhop=NULL);
+    ,const float3* velg=NULL,const float* rhog=NULL,const float4* pospres=NULL
+    ,const float4* velrho=NULL);
   void DgSaveCsvParticles2(std::string filename,int numfile,unsigned pini,unsigned pfin
     ,std::string head,const tfloat3* pos=NULL,const unsigned* idp=NULL
-    ,const tfloat3* vel=NULL,const float* rhop=NULL,const tfloat4* pospres=NULL
-    ,const tfloat4* velrhop=NULL);
+    ,const tfloat3* vel=NULL,const float* rho=NULL,const tfloat4* pospres=NULL
+    ,const tfloat4* velrho=NULL);
 };
 
 #endif

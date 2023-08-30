@@ -142,7 +142,7 @@ protected:
   //-Variables for computing forces (Null).
   acfloat3*   Ace_c;        ///<Sum of interaction acceleration (Null).
   acfloat*    Ar_c;         ///<Sum of density variation (Null). 
-  acfloat*    Press_c;      ///<Pressure computed starting from density for interaction (Null). Press[]=fsph::ComputePress(Rhop,CSP)
+  acfloat*    Press_c;      ///<Pressure computed starting from density for interaction (Null). Press[]=fsph::ComputePress(Rho,CSP)
   acfloat*    Delta_c;      ///<Sum of Delta-SPH value when DELTA_DynamicExt (Null).
   acfloat4*   ShiftPosfs_c; ///<Particle displacement and free surface detection for Shifting (Null).
 
@@ -180,8 +180,8 @@ protected:
   void ConfigCellDiv(JCellDivCpu* celldiv){ CellDiv=celldiv; }
   void InitRunCpu();
 
-  float CalcVelMaxSeq(unsigned np,const tfloat4* velrhop)const;
-  float CalcVelMaxOmp(unsigned np,const tfloat4* velrhop)const;
+  float CalcVelMaxSeq(unsigned np,const tfloat4* velrho)const;
+  float CalcVelMaxOmp(unsigned np,const tfloat4* velrho)const;
 
   void PreInteractionVars_Forces(unsigned np,unsigned npb);
   void PreInteraction_Forces();
@@ -189,21 +189,21 @@ protected:
 
   template<TpKernel tker,TpFtMode ftmode> void InteractionForcesBound
     (unsigned n,unsigned pini,StDivDataCpu divdata,const unsigned* dcell
-    ,const tdouble3* pos,const tfloat4* velrhop,const typecode* code,const unsigned* id
+    ,const tdouble3* pos,const tfloat4* velrho,const typecode* code,const unsigned* id
     ,float& viscdt,float* ar)const;
 
   template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity,bool shift> 
     void InteractionForcesFluid(unsigned n,unsigned pini,bool boundp2,float visco
     ,StDivDataCpu divdata,const unsigned* dcell
     ,const tsymatrix3f* tau,tsymatrix3f* gradvel
-    ,const tdouble3* pos,const tfloat4* velrhop,const typecode* code,const unsigned* idp
+    ,const tdouble3* pos,const tfloat4* velrho,const typecode* code,const unsigned* idp
     ,const float* press,const tfloat3* dengradcorr
     ,float& viscdt,float* ar,tfloat3* ace,float* delta
     ,TpShifting shiftmode,tfloat4* shiftposfs)const;
 
   void InteractionForcesDEM(unsigned nfloat,StDivDataCpu divdata,const unsigned* dcell
     ,const unsigned* ftridp,const StDemData* demobjs
-    ,const tdouble3* pos,const tfloat4* velrhop,const typecode* code,const unsigned* idp
+    ,const tdouble3* pos,const tfloat4* velrho,const typecode* code,const unsigned* idp
     ,float& viscdt,tfloat3* ace)const;
 
   template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity,bool shift> 
@@ -217,21 +217,22 @@ protected:
   template<TpKernel tker,bool sim2d,TpSlipMode tslip> void InteractionMdbcCorrectionT2
     (unsigned n,StDivDataCpu divdata,float determlimit,float mdbcthreshold
     ,const tdouble3* pos,const typecode* code,const unsigned* idp
-    ,const tfloat3* boundnor,const tfloat3* motionvel,tfloat4* velrhop);
+    ,const tfloat3* boundnor,const tfloat3* motionvel,tfloat4* velrho);
   template<TpKernel tker> void Interaction_MdbcCorrectionT(TpSlipMode slipmode,const StDivDataCpu& divdata
     ,const tdouble3* pos,const typecode* code,const unsigned* idp
-    ,const tfloat3* boundnor,const tfloat3* motionvel,tfloat4* velrhop);
+    ,const tfloat3* boundnor,const tfloat3* motionvel,tfloat4* velrho);
   void Interaction_MdbcCorrection(TpSlipMode slipmode,const StDivDataCpu& divdata
     ,const tdouble3* pos,const typecode* code,const unsigned* idp
-    ,const tfloat3* boundnor,const tfloat3* motionvel,tfloat4* velrhop);
+    ,const tfloat3* boundnor,const tfloat3* motionvel,tfloat4* velrho);
 
-  void ComputeSpsTau(unsigned n,unsigned pini,const tfloat4* velrhop,const tsymatrix3f* spsgradvel,tsymatrix3f* tau)const;
+  void ComputeSpsTau(unsigned n,unsigned pini,const tfloat4* velrho
+    ,const tsymatrix3f* spsgradvel,tsymatrix3f* tau)const;
 
   void ComputeVerletVarsFluid(bool shift,const tfloat3* indirvel
     ,const tfloat4* velrho1,const tfloat4* velrho2,double dt,double dt2
     ,const float* ar,const tfloat3* ace,const tfloat4* shiftposfs 
     ,tdouble3* pos,unsigned* cell,typecode* code,tfloat4* velrhonew)const;
-  void ComputeVelrhopBound(const tfloat4* velrhoold,const float* ar
+  void ComputeVelrhoBound(const tfloat4* velrhoold,const float* ar
     ,double armul,tfloat4* velrhonew)const;
   void ComputeVerlet(double dt);
 
@@ -245,10 +246,10 @@ protected:
   void CalcRidp(bool periactive,unsigned np,unsigned pini,unsigned idini,unsigned idfin
     ,const typecode* code,const unsigned* idp,unsigned* ridp)const;
   void MoveLinBound(unsigned np,unsigned ini,const tdouble3& mvpos,const tfloat3& mvvel
-    ,const unsigned* ridpmot,tdouble3* pos,unsigned* dcell,tfloat4* velrhop,typecode* code)const;
+    ,const unsigned* ridpmot,tdouble3* pos,unsigned* dcell,tfloat4* velrho,typecode* code)const;
   void MoveMatBound(unsigned np,unsigned ini,tmatrix4d m,double dt,const unsigned* ridpmot
-    ,tdouble3* pos,unsigned* dcell,tfloat4* velrhop,typecode* code,tfloat3* boundnor)const;
-  void CopyMotionVel(unsigned nmoving,const unsigned* ridpmot,const tfloat4* velrhop,tfloat3* motionvel)const;
+    ,tdouble3* pos,unsigned* dcell,tfloat4* velrho,typecode* code,tfloat3* boundnor)const;
+  void CopyMotionVel(unsigned nmoving,const unsigned* ridpmot,const tfloat4* velrho,tfloat3* motionvel)const;
   void CalcMotion(double stepdt);
   void RunMotion(double stepdt);
   void RunRelaxZone(double dt);
@@ -256,16 +257,17 @@ protected:
 
   void MovePiston1d(unsigned np,unsigned ini,double poszmin,unsigned poszcount
     ,const byte* pistonid,const double* movx,const double* velx
-    ,const unsigned* ridpmot,tdouble3* pos,unsigned* dcell,tfloat4* velrhop,typecode* code)const;
+    ,const unsigned* ridpmot,tdouble3* pos,unsigned* dcell,tfloat4* velrho,typecode* code)const;
   void MovePiston2d(unsigned np,unsigned ini
     ,double posymin,double poszmin,unsigned poszcount,const double* movx,const double* velx
-    ,const unsigned* ridpmot,tdouble3* pos,unsigned* dcell,tfloat4* velrhop,typecode* code)const;
+    ,const unsigned* ridpmot,tdouble3* pos,unsigned* dcell,tfloat4* velrho,typecode* code)const;
 
 public:
   JSphCpu(bool withmpi);
   ~JSphCpu();
 
-  void UpdatePos(tdouble3 pos0,double dx,double dy,double dz,bool outrhop,unsigned p,tdouble3* pos,unsigned* cell,typecode* code)const;
+  void UpdatePos(tdouble3 pos0,double dx,double dy,double dz,bool outrho
+    ,unsigned p,tdouble3* pos,unsigned* cell,typecode* code)const;
 
 //-Code for InOut in JSphCpu_InOut.cpp
 //--------------------------------------
@@ -276,26 +278,26 @@ protected:
     (unsigned inoutcount,const int* inoutpart,const byte* cfgzone
     ,const tplane3f* planes,const float* width,const tfloat3* dirdata,float determlimit
     ,StDivDataCpu dvd,const unsigned* dcell,const tdouble3* pos,const typecode* code
-    ,const unsigned* idp,tfloat4* velrhop);
+    ,const unsigned* idp,tfloat4* velrho);
   
   template<bool sim2d,TpKernel tker> void InteractionInOutExtrap_Single
     (unsigned inoutcount,const int* inoutpart,const byte* cfgzone
     ,const tplane3f* planes,const float* width,const tfloat3* dirdata,float determlimit
     ,StDivDataCpu dvd,const unsigned* dcell,const tdouble3* pos,const typecode* code
-    ,const unsigned* idp,tfloat4* velrhop);
+    ,const unsigned* idp,tfloat4* velrho);
   
   template<TpKernel tker> inline void Interaction_InOutExtrapT
     (byte doublemode,unsigned inoutcount,const int* inoutpart
     ,const byte* cfgzone,const tplane3f* planes
     ,const float* width,const tfloat3* dirdata,float determlimit
     ,const unsigned* dcell,const tdouble3* pos,const typecode* code
-    ,const unsigned* idp,tfloat4* velrhop);
+    ,const unsigned* idp,tfloat4* velrho);
 
   void Interaction_InOutExtrap(byte doublemode,unsigned inoutcount,const int* inoutpart
     ,const byte* cfgzone,const tplane3f* planes
     ,const float* width,const tfloat3* dirdata,float determlimit
     ,const unsigned* dcell,const tdouble3* pos,const typecode* code
-    ,const unsigned* idp,tfloat4* velrhop);
+    ,const unsigned* idp,tfloat4* velrho);
 
   float Interaction_InOutZsurf(unsigned nptz,const tfloat3* ptzpos,float maxdist,float zbottom
     ,const StDivDataCpu& divdata,const tdouble3* pos,const typecode* code);

@@ -119,8 +119,8 @@ void Resety(unsigned n,unsigned ini,float3* v,cudaStream_t stm){
 
 
 //##############################################################################
-//# Kernels for ComputeStep (vel & rhop).
-//# Kernels para ComputeStep (vel & rhop).
+//# Kernels for ComputeStep (vel & rho).
+//# Kernels para ComputeStep (vel & rho).
 //##############################################################################
 //------------------------------------------------------------------------------
 /// Computes new values for Pos, Check, Vel and Ros (using Verlet).
@@ -131,24 +131,24 @@ void Resety(unsigned n,unsigned ini,float3* v,cudaStream_t stm){
 //------------------------------------------------------------------------------
 template<bool floating,bool shift,bool inout> __global__ void KerComputeStepVerlet
   (unsigned n,unsigned npb,float rhopzero,float rhopoutmin,float rhopoutmax
-  ,const float4* velrhop1,const float4* velrhop2
+  ,const float4* velrho1,const float4* velrho2
   ,const float* ar,const float3* ace,const float4* shiftposfs,const float3* indirvel
   ,double dt,double dt205,double dt2,float3 gravity
-  ,double2* movxy,double* movz,typecode* code,float4* velrhopnew)
+  ,double2* movxy,double* movz,typecode* code,float4* velrhonew)
 {
   unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
   if(p<n){
     if(p<npb){ //-Particles: Fixed & Moving.
-      float rrhop=float(double(velrhop2[p].w)+dt2*ar[p]);
-      rrhop=(rrhop<rhopzero? rhopzero: rrhop); //-To prevent absorption of fluid particles by boundaries. | Evita q las boundary absorvan a las fluidas.
-      velrhopnew[p]=make_float4(0,0,0,rrhop);
+      float rrho=float(double(velrho2[p].w)+dt2*ar[p]);
+      rrho=(rrho<rhopzero? rhopzero: rrho); //-To prevent absorption of fluid particles by boundaries. | Evita q las boundary absorvan a las fluidas.
+      velrhonew[p]=make_float4(0,0,0,rrho);
     }
     else{ //-Particles: Floating & Fluid.
       const typecode rcode=code[p];
       //-Updates density.
-      const float4 rvelrhop2=velrhop2[p];
-      const float rhopnew=float(double(velrhop2[p].w)+dt2*ar[p]);
-      float4 rvel1=velrhop1[p];
+      const float4 rvelrho2=velrho2[p];
+      const float rhonew=float(double(velrho2[p].w)+dt2*ar[p]);
+      float4 rvel1=velrho1[p];
       if(!floating || CODE_IsFluid(rcode)){ //-Particles: Fluid.
         //-Calculate displacement. | Calcula desplazamiento.
         const float3 race=ace[p];
@@ -164,17 +164,17 @@ template<bool floating,bool shift,bool inout> __global__ void KerComputeStepVerl
           dy+=double(rshiftpos.y);
           dz+=double(rshiftpos.z);
         }
-        bool outrhop=(rhopnew<rhopoutmin || rhopnew>rhopoutmax);
+        bool outrho=(rhonew<rhopoutmin || rhonew>rhopoutmax);
         //-Calculate velocity & density. | Calcula velocidad y densidad.
-        float4 rvelrhopnew=make_float4(
-          float(double(rvelrhop2.x) + acegrx*dt2),
-          float(double(rvelrhop2.y) + acegry*dt2),
-          float(double(rvelrhop2.z) + acegrz*dt2),
-          rhopnew);
+        float4 rvelrhonew=make_float4(
+          float(double(rvelrho2.x) + acegrx*dt2),
+          float(double(rvelrho2.y) + acegry*dt2),
+          float(double(rvelrho2.z) + acegrz*dt2),
+          rhonew);
         //-Restore data of inout particles.
         if(inout && CODE_IsFluidInout(rcode)){
-          outrhop=false;
-          rvelrhopnew=rvelrhop2;
+          outrho=false;
+          rvelrhonew=rvelrho2;
           const float3 vd=indirvel[CODE_GetIzoneFluidInout(rcode)];
           if(vd.x!=FLT_MAX){
             const float v=rvel1.x*vd.x + rvel1.y*vd.y + rvel1.z*vd.z;
@@ -191,14 +191,14 @@ template<bool floating,bool shift,bool inout> __global__ void KerComputeStepVerl
         //-Update particle data.
         movxy[p]=make_double2(dx,dy);
         movz[p]=dz;
-        if(outrhop){ //-Only brands as excluded normal particles (not periodic). | Solo marca como excluidas las normales (no periodicas).
-          if(CODE_IsNormal(rcode))code[p]=CODE_SetOutRhop(rcode);
+        if(outrho){ //-Only brands as excluded normal particles (not periodic). | Solo marca como excluidas las normales (no periodicas).
+          if(CODE_IsNormal(rcode))code[p]=CODE_SetOutRho(rcode);
         }
-        velrhopnew[p]=rvelrhopnew;
+        velrhonew[p]=rvelrhonew;
       }
       else{ //-Particles: Floating.
-        rvel1.w=(rhopnew<rhopzero? rhopzero: rhopnew); //-To prevent absorption of fluid particles by boundaries. | Evita q las floating absorvan a las fluidas.
-        velrhopnew[p]=rvel1;
+        rvel1.w=(rhonew<rhopzero? rhopzero: rhonew); //-To prevent absorption of fluid particles by boundaries. | Evita q las floating absorvan a las fluidas.
+        velrhonew[p]=rvel1;
       }
     }
   }
@@ -208,30 +208,30 @@ template<bool floating,bool shift,bool inout> __global__ void KerComputeStepVerl
 /// Actualizacion de particulas segun fuerzas y dt usando Verlet.
 //==============================================================================
 void ComputeStepVerlet(bool floating,bool shift,bool inout,unsigned np,unsigned npb
-  ,const float4* velrhop1,const float4* velrhop2
+  ,const float4* velrho1,const float4* velrho2
   ,const float* ar,const float3* ace,const float4* shiftposfs,const float3* indirvel
   ,double dt,double dt2,float rhopzero,float rhopoutmin,float rhopoutmax,tfloat3 gravity
-  ,typecode* code,double2* movxy,double* movz,float4* velrhopnew,cudaStream_t stm)
+  ,typecode* code,double2* movxy,double* movz,float4* velrhonew,cudaStream_t stm)
 {
   double dt205=(0.5*dt*dt);
   if(np){
     dim3 sgrid=GetSimpleGridSize(np,SPHBSIZE);
     if(inout){      const bool tinout=true;
       if(shift){    const bool shift=true;
-        if(floating)KerComputeStepVerlet<true ,shift,tinout> <<<sgrid,SPHBSIZE,0,stm>>> (np,npb,rhopzero,rhopoutmin,rhopoutmax,velrhop1,velrhop2,ar,ace,shiftposfs,indirvel,dt,dt205,dt2,Float3(gravity),movxy,movz,code,velrhopnew);
-        else        KerComputeStepVerlet<false,shift,tinout> <<<sgrid,SPHBSIZE,0,stm>>> (np,npb,rhopzero,rhopoutmin,rhopoutmax,velrhop1,velrhop2,ar,ace,shiftposfs,indirvel,dt,dt205,dt2,Float3(gravity),movxy,movz,code,velrhopnew);
+        if(floating)KerComputeStepVerlet<true ,shift,tinout> <<<sgrid,SPHBSIZE,0,stm>>> (np,npb,rhopzero,rhopoutmin,rhopoutmax,velrho1,velrho2,ar,ace,shiftposfs,indirvel,dt,dt205,dt2,Float3(gravity),movxy,movz,code,velrhonew);
+        else        KerComputeStepVerlet<false,shift,tinout> <<<sgrid,SPHBSIZE,0,stm>>> (np,npb,rhopzero,rhopoutmin,rhopoutmax,velrho1,velrho2,ar,ace,shiftposfs,indirvel,dt,dt205,dt2,Float3(gravity),movxy,movz,code,velrhonew);
       }else{        const bool shift=false;
-        if(floating)KerComputeStepVerlet<true ,shift,tinout> <<<sgrid,SPHBSIZE,0,stm>>> (np,npb,rhopzero,rhopoutmin,rhopoutmax,velrhop1,velrhop2,ar,ace,shiftposfs,indirvel,dt,dt205,dt2,Float3(gravity),movxy,movz,code,velrhopnew);
-        else        KerComputeStepVerlet<false,shift,tinout> <<<sgrid,SPHBSIZE,0,stm>>> (np,npb,rhopzero,rhopoutmin,rhopoutmax,velrhop1,velrhop2,ar,ace,shiftposfs,indirvel,dt,dt205,dt2,Float3(gravity),movxy,movz,code,velrhopnew);
+        if(floating)KerComputeStepVerlet<true ,shift,tinout> <<<sgrid,SPHBSIZE,0,stm>>> (np,npb,rhopzero,rhopoutmin,rhopoutmax,velrho1,velrho2,ar,ace,shiftposfs,indirvel,dt,dt205,dt2,Float3(gravity),movxy,movz,code,velrhonew);
+        else        KerComputeStepVerlet<false,shift,tinout> <<<sgrid,SPHBSIZE,0,stm>>> (np,npb,rhopzero,rhopoutmin,rhopoutmax,velrho1,velrho2,ar,ace,shiftposfs,indirvel,dt,dt205,dt2,Float3(gravity),movxy,movz,code,velrhonew);
       }
     }
     else{           const bool tinout=false;
       if(shift){    const bool shift=true;
-        if(floating)KerComputeStepVerlet<true ,shift,tinout> <<<sgrid,SPHBSIZE,0,stm>>> (np,npb,rhopzero,rhopoutmin,rhopoutmax,velrhop1,velrhop2,ar,ace,shiftposfs,indirvel,dt,dt205,dt2,Float3(gravity),movxy,movz,code,velrhopnew);
-        else        KerComputeStepVerlet<false,shift,tinout> <<<sgrid,SPHBSIZE,0,stm>>> (np,npb,rhopzero,rhopoutmin,rhopoutmax,velrhop1,velrhop2,ar,ace,shiftposfs,indirvel,dt,dt205,dt2,Float3(gravity),movxy,movz,code,velrhopnew);
+        if(floating)KerComputeStepVerlet<true ,shift,tinout> <<<sgrid,SPHBSIZE,0,stm>>> (np,npb,rhopzero,rhopoutmin,rhopoutmax,velrho1,velrho2,ar,ace,shiftposfs,indirvel,dt,dt205,dt2,Float3(gravity),movxy,movz,code,velrhonew);
+        else        KerComputeStepVerlet<false,shift,tinout> <<<sgrid,SPHBSIZE,0,stm>>> (np,npb,rhopzero,rhopoutmin,rhopoutmax,velrho1,velrho2,ar,ace,shiftposfs,indirvel,dt,dt205,dt2,Float3(gravity),movxy,movz,code,velrhonew);
       }else{        const bool shift=false;
-        if(floating)KerComputeStepVerlet<true ,shift,tinout> <<<sgrid,SPHBSIZE,0,stm>>> (np,npb,rhopzero,rhopoutmin,rhopoutmax,velrhop1,velrhop2,ar,ace,shiftposfs,indirvel,dt,dt205,dt2,Float3(gravity),movxy,movz,code,velrhopnew);
-        else        KerComputeStepVerlet<false,shift,tinout> <<<sgrid,SPHBSIZE,0,stm>>> (np,npb,rhopzero,rhopoutmin,rhopoutmax,velrhop1,velrhop2,ar,ace,shiftposfs,indirvel,dt,dt205,dt2,Float3(gravity),movxy,movz,code,velrhopnew);
+        if(floating)KerComputeStepVerlet<true ,shift,tinout> <<<sgrid,SPHBSIZE,0,stm>>> (np,npb,rhopzero,rhopoutmin,rhopoutmax,velrho1,velrho2,ar,ace,shiftposfs,indirvel,dt,dt205,dt2,Float3(gravity),movxy,movz,code,velrhonew);
+        else        KerComputeStepVerlet<false,shift,tinout> <<<sgrid,SPHBSIZE,0,stm>>> (np,npb,rhopzero,rhopoutmin,rhopoutmax,velrho1,velrho2,ar,ace,shiftposfs,indirvel,dt,dt205,dt2,Float3(gravity),movxy,movz,code,velrhonew);
       }
     }
   }
@@ -242,49 +242,49 @@ void ComputeStepVerlet(bool floating,bool shift,bool inout,unsigned np,unsigned 
 /// Calcula los nuevos valores de Pos, Vel y Rhop (usando para Symplectic-Predictor).
 //------------------------------------------------------------------------------
 template<bool floating,bool shift,bool inout> __global__ void KerComputeStepSymplecticPre(
-  unsigned n,unsigned npb,const float4* velrhoppre,const float* ar
+  unsigned n,unsigned npb,const float4* velrhopre,const float* ar
   ,const float3* ace,const float4* shiftposfs,const float3* indirvel
   ,double dtm,float rhopzero,float rhopoutmin,float rhopoutmax,float3 gravity
-  ,typecode* code,double2* movxy,double* movz,float4* velrhop)
+  ,typecode* code,double2* movxy,double* movz,float4* velrho)
 {
   unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
   if(p<n){
     if(p<npb){ //-Particles: Fixed & Moving.
-      float4 rvelrhop=velrhoppre[p];
-      rvelrhop.w=float(double(rvelrhop.w)+dtm*ar[p]);
-      rvelrhop.w=(rvelrhop.w<rhopzero? rhopzero: rvelrhop.w); //-To prevent absorption of fluid particles by boundaries. | Evita que las boundary absorvan a las fluidas.
-      velrhop[p]=rvelrhop;
+      float4 rvelrho=velrhopre[p];
+      rvelrho.w=float(double(rvelrho.w)+dtm*ar[p]);
+      rvelrho.w=(rvelrho.w<rhopzero? rhopzero: rvelrho.w); //-To prevent absorption of fluid particles by boundaries. | Evita que las boundary absorvan a las fluidas.
+      velrho[p]=rvelrho;
     }
     else{ //-Particles: Floating & Fluid.
       const typecode rcode=code[p];
       //-Updates density.
-      const float4 rvelrhoppre=velrhoppre[p];
-      float4 rvelrhopnew=rvelrhoppre;
-      rvelrhopnew.w=float(double(rvelrhoppre.w)+dtm*ar[p]);
+      const float4 rvelrhopre=velrhopre[p];
+      float4 rvelrhonew=rvelrhopre;
+      rvelrhonew.w=float(double(rvelrhopre.w)+dtm*ar[p]);
       if(!floating || CODE_IsFluid(rcode)){ //-Particles: Fluid.
         //-Calculate displacement. | Calcula desplazamiento.
-        double dx=double(rvelrhoppre.x)*dtm;
-        double dy=double(rvelrhoppre.y)*dtm;
-        double dz=double(rvelrhoppre.z)*dtm;
+        double dx=double(rvelrhopre.x)*dtm;
+        double dy=double(rvelrhopre.y)*dtm;
+        double dz=double(rvelrhopre.z)*dtm;
         if(shift){
           const float4 rshiftpos=shiftposfs[p];
           dx+=double(rshiftpos.x);
           dy+=double(rshiftpos.y);
           dz+=double(rshiftpos.z);
         }
-        bool outrhop=(rvelrhopnew.w<rhopoutmin || rvelrhopnew.w>rhopoutmax);
+        bool outrho=(rvelrhonew.w<rhopoutmin || rvelrhonew.w>rhopoutmax);
         //-Calculate velocity & density. | Calcula velocidad y densidad.
         const float3 race=ace[p];
-        rvelrhopnew.x=float(double(rvelrhoppre.x) + (double(race.x)+gravity.x) * dtm);
-        rvelrhopnew.y=float(double(rvelrhoppre.y) + (double(race.y)+gravity.y) * dtm);
-        rvelrhopnew.z=float(double(rvelrhoppre.z) + (double(race.z)+gravity.z) * dtm);
+        rvelrhonew.x=float(double(rvelrhopre.x) + (double(race.x)+gravity.x) * dtm);
+        rvelrhonew.y=float(double(rvelrhopre.y) + (double(race.y)+gravity.y) * dtm);
+        rvelrhonew.z=float(double(rvelrhopre.z) + (double(race.z)+gravity.z) * dtm);
         //-Restore data of inout particles.
         if(inout && CODE_IsFluidInout(rcode)){
-          outrhop=false;
-          rvelrhopnew=rvelrhoppre;
+          outrho=false;
+          rvelrhonew=rvelrhopre;
           const float3 vd=indirvel[CODE_GetIzoneFluidInout(rcode)];
           if(vd.x!=FLT_MAX){
-            const float v=rvelrhopnew.x*vd.x + rvelrhopnew.y*vd.y + rvelrhopnew.z*vd.z;
+            const float v=rvelrhonew.x*vd.x + rvelrhonew.y*vd.y + rvelrhonew.z*vd.z;
             dx=double(v*vd.x) * dtm;
             dy=double(v*vd.y) * dtm;
             dz=double(v*vd.z) * dtm;
@@ -293,15 +293,15 @@ template<bool floating,bool shift,bool inout> __global__ void KerComputeStepSymp
         //-Update particle data.
         movxy[p]=make_double2(dx,dy);
         movz[p]=dz;
-        if(outrhop){ //-Only brands as excluded normal particles (not periodic). | Solo marca como excluidas las normales (no periodicas).
-          if(CODE_IsNormal(rcode))code[p]=CODE_SetOutRhop(rcode);
+        if(outrho){ //-Only brands as excluded normal particles (not periodic). | Solo marca como excluidas las normales (no periodicas).
+          if(CODE_IsNormal(rcode))code[p]=CODE_SetOutRho(rcode);
         }
       }
       else{ //-Particles: Floating.
-        rvelrhopnew.w=(rvelrhopnew.w<rhopzero? rhopzero: rvelrhopnew.w); //-To prevent absorption of fluid particles by boundaries. | Evita q las floating absorvan a las fluidas.
+        rvelrhonew.w=(rvelrhonew.w<rhopzero? rhopzero: rvelrhonew.w); //-To prevent absorption of fluid particles by boundaries. | Evita q las floating absorvan a las fluidas.
       }
       //-Stores new velocity and density.
-      velrhop[p]=rvelrhopnew;
+      velrho[p]=rvelrhonew;
     }
   }
 }
@@ -310,29 +310,29 @@ template<bool floating,bool shift,bool inout> __global__ void KerComputeStepSymp
 /// Actualizacion de particulas usando Symplectic-Predictor.
 //==============================================================================   
 void ComputeStepSymplecticPre(bool floating,bool shift,bool inout,unsigned np
-  ,unsigned npb,const float4* velrhoppre,const float* ar,const float3* ace
+  ,unsigned npb,const float4* velrhopre,const float* ar,const float3* ace
   ,const float4* shiftposfs,const float3* indirvel,double dtm,float rhopzero
   ,float rhopoutmin,float rhopoutmax,tfloat3 gravity,typecode* code
-  ,double2* movxy,double* movz,float4* velrhop,cudaStream_t stm)
+  ,double2* movxy,double* movz,float4* velrho,cudaStream_t stm)
 {
   if(np){
     dim3 sgrid=GetSimpleGridSize(np,SPHBSIZE);
     if(inout){      const bool tinout=true;
       if(shift){    const bool shift=true;
-        if(floating)KerComputeStepSymplecticPre<true ,shift,tinout> <<<sgrid,SPHBSIZE,0,stm>>> (np,npb,velrhoppre,ar,ace,shiftposfs,indirvel,dtm,rhopzero,rhopoutmin,rhopoutmax,Float3(gravity),code,movxy,movz,velrhop);
-        else        KerComputeStepSymplecticPre<false,shift,tinout> <<<sgrid,SPHBSIZE,0,stm>>> (np,npb,velrhoppre,ar,ace,shiftposfs,indirvel,dtm,rhopzero,rhopoutmin,rhopoutmax,Float3(gravity),code,movxy,movz,velrhop);
+        if(floating)KerComputeStepSymplecticPre<true ,shift,tinout> <<<sgrid,SPHBSIZE,0,stm>>> (np,npb,velrhopre,ar,ace,shiftposfs,indirvel,dtm,rhopzero,rhopoutmin,rhopoutmax,Float3(gravity),code,movxy,movz,velrho);
+        else        KerComputeStepSymplecticPre<false,shift,tinout> <<<sgrid,SPHBSIZE,0,stm>>> (np,npb,velrhopre,ar,ace,shiftposfs,indirvel,dtm,rhopzero,rhopoutmin,rhopoutmax,Float3(gravity),code,movxy,movz,velrho);
       }else{        const bool shift=false;
-        if(floating)KerComputeStepSymplecticPre<true ,shift,tinout> <<<sgrid,SPHBSIZE,0,stm>>> (np,npb,velrhoppre,ar,ace,shiftposfs,indirvel,dtm,rhopzero,rhopoutmin,rhopoutmax,Float3(gravity),code,movxy,movz,velrhop);
-        else        KerComputeStepSymplecticPre<false,shift,tinout> <<<sgrid,SPHBSIZE,0,stm>>> (np,npb,velrhoppre,ar,ace,shiftposfs,indirvel,dtm,rhopzero,rhopoutmin,rhopoutmax,Float3(gravity),code,movxy,movz,velrhop);
+        if(floating)KerComputeStepSymplecticPre<true ,shift,tinout> <<<sgrid,SPHBSIZE,0,stm>>> (np,npb,velrhopre,ar,ace,shiftposfs,indirvel,dtm,rhopzero,rhopoutmin,rhopoutmax,Float3(gravity),code,movxy,movz,velrho);
+        else        KerComputeStepSymplecticPre<false,shift,tinout> <<<sgrid,SPHBSIZE,0,stm>>> (np,npb,velrhopre,ar,ace,shiftposfs,indirvel,dtm,rhopzero,rhopoutmin,rhopoutmax,Float3(gravity),code,movxy,movz,velrho);
       }
     }
     else{           const bool tinout=false;
       if(shift){    const bool shift=true;
-        if(floating)KerComputeStepSymplecticPre<true ,shift,tinout> <<<sgrid,SPHBSIZE,0,stm>>> (np,npb,velrhoppre,ar,ace,shiftposfs,indirvel,dtm,rhopzero,rhopoutmin,rhopoutmax,Float3(gravity),code,movxy,movz,velrhop);
-        else        KerComputeStepSymplecticPre<false,shift,tinout> <<<sgrid,SPHBSIZE,0,stm>>> (np,npb,velrhoppre,ar,ace,shiftposfs,indirvel,dtm,rhopzero,rhopoutmin,rhopoutmax,Float3(gravity),code,movxy,movz,velrhop);
+        if(floating)KerComputeStepSymplecticPre<true ,shift,tinout> <<<sgrid,SPHBSIZE,0,stm>>> (np,npb,velrhopre,ar,ace,shiftposfs,indirvel,dtm,rhopzero,rhopoutmin,rhopoutmax,Float3(gravity),code,movxy,movz,velrho);
+        else        KerComputeStepSymplecticPre<false,shift,tinout> <<<sgrid,SPHBSIZE,0,stm>>> (np,npb,velrhopre,ar,ace,shiftposfs,indirvel,dtm,rhopzero,rhopoutmin,rhopoutmax,Float3(gravity),code,movxy,movz,velrho);
       }else{        const bool shift=false;
-        if(floating)KerComputeStepSymplecticPre<true ,shift,tinout> <<<sgrid,SPHBSIZE,0,stm>>> (np,npb,velrhoppre,ar,ace,shiftposfs,indirvel,dtm,rhopzero,rhopoutmin,rhopoutmax,Float3(gravity),code,movxy,movz,velrhop);
-        else        KerComputeStepSymplecticPre<false,shift,tinout> <<<sgrid,SPHBSIZE,0,stm>>> (np,npb,velrhoppre,ar,ace,shiftposfs,indirvel,dtm,rhopzero,rhopoutmin,rhopoutmax,Float3(gravity),code,movxy,movz,velrhop);
+        if(floating)KerComputeStepSymplecticPre<true ,shift,tinout> <<<sgrid,SPHBSIZE,0,stm>>> (np,npb,velrhopre,ar,ace,shiftposfs,indirvel,dtm,rhopzero,rhopoutmin,rhopoutmax,Float3(gravity),code,movxy,movz,velrho);
+        else        KerComputeStepSymplecticPre<false,shift,tinout> <<<sgrid,SPHBSIZE,0,stm>>> (np,npb,velrhopre,ar,ace,shiftposfs,indirvel,dtm,rhopzero,rhopoutmin,rhopoutmax,Float3(gravity),code,movxy,movz,velrho);
       }
     }
   }
@@ -346,73 +346,73 @@ void ComputeStepSymplecticPre(bool floating,bool shift,bool inout,unsigned np
 /// Pone vel de contorno a cero.
 //------------------------------------------------------------------------------
 template<bool floating,bool shift,bool inout> __global__ void KerComputeStepSymplecticCor(
-  unsigned n,unsigned npb,const float4* velrhoppre,const float* ar
+  unsigned n,unsigned npb,const float4* velrhopre,const float* ar
   ,const float3* ace,const float4* shiftposfs,const float3* indirvel
   ,double dtm,double dt,float rhopzero,float rhopoutmin,float rhopoutmax
-  ,float3 gravity,typecode* code,double2* movxy,double* movz,float4* velrhop)
+  ,float3 gravity,typecode* code,double2* movxy,double* movz,float4* velrho)
 {
   unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
   if(p<n){
     if(p<npb){ //-Particles: Fixed & Moving.
-      double epsilon_rdot=(-double(ar[p])/double(velrhop[p].w))*dt;
-      float rrhop=float(double(velrhoppre[p].w) * (2.-epsilon_rdot)/(2.+epsilon_rdot));
-      rrhop=(rrhop<rhopzero? rhopzero: rrhop); //-To prevent absorption of fluid particles by boundaries. | Evita q las boundary absorvan a las fluidas.
-      velrhop[p]=make_float4(0,0,0,rrhop);
+      double epsilon_rdot=(-double(ar[p])/double(velrho[p].w))*dt;
+      float rrho=float(double(velrhopre[p].w) * (2.-epsilon_rdot)/(2.+epsilon_rdot));
+      rrho=(rrho<rhopzero? rhopzero: rrho); //-To prevent absorption of fluid particles by boundaries. | Evita q las boundary absorvan a las fluidas.
+      velrho[p]=make_float4(0,0,0,rrho);
     }
     else{ //-Particles: Floating & Fluid.
       const typecode rcode=code[p];
       //-Updates density.
-      const double epsilon_rdot=(-double(ar[p])/double(velrhop[p].w))*dt;
-      const float4 rvelrhoppre=velrhoppre[p];
-      float4 rvelrhopnew=rvelrhoppre;
-      rvelrhopnew.w=float(double(rvelrhoppre.w) * (2.-epsilon_rdot)/(2.+epsilon_rdot));
+      const double epsilon_rdot=(-double(ar[p])/double(velrho[p].w))*dt;
+      const float4 rvelrhopre=velrhopre[p];
+      float4 rvelrhonew=rvelrhopre;
+      rvelrhonew.w=float(double(rvelrhopre.w) * (2.-epsilon_rdot)/(2.+epsilon_rdot));
       if(!floating || CODE_IsFluid(rcode)){//-Particles: Fluid.
         //-Calculate velocity. | Calcula velocidad.
         const float3 race=ace[p];
-        rvelrhopnew.x=float(double(rvelrhoppre.x) + (double(race.x)+gravity.x) * dt);
-        rvelrhopnew.y=float(double(rvelrhoppre.y) + (double(race.y)+gravity.y) * dt);
-        rvelrhopnew.z=float(double(rvelrhoppre.z) + (double(race.z)+gravity.z) * dt);
+        rvelrhonew.x=float(double(rvelrhopre.x) + (double(race.x)+gravity.x) * dt);
+        rvelrhonew.y=float(double(rvelrhopre.y) + (double(race.y)+gravity.y) * dt);
+        rvelrhonew.z=float(double(rvelrhopre.z) + (double(race.z)+gravity.z) * dt);
         //-Calculate displacement. | Calcula desplazamiento.
-        double dx=(double(rvelrhoppre.x)+double(rvelrhopnew.x)) * dtm;
-        double dy=(double(rvelrhoppre.y)+double(rvelrhopnew.y)) * dtm;
-        double dz=(double(rvelrhoppre.z)+double(rvelrhopnew.z)) * dtm;
+        double dx=(double(rvelrhopre.x)+double(rvelrhonew.x)) * dtm;
+        double dy=(double(rvelrhopre.y)+double(rvelrhonew.y)) * dtm;
+        double dz=(double(rvelrhopre.z)+double(rvelrhonew.z)) * dtm;
         if(shift){
           const float4 rshiftpos=shiftposfs[p];
           dx+=double(rshiftpos.x);
           dy+=double(rshiftpos.y);
           dz+=double(rshiftpos.z);
         }
-        bool outrhop=(rvelrhopnew.w<rhopoutmin || rvelrhopnew.w>rhopoutmax);
+        bool outrho=(rvelrhonew.w<rhopoutmin || rvelrhonew.w>rhopoutmax);
         //-Restore data of inout particles.
         if(inout && CODE_IsFluidInout(rcode)){
-          outrhop=false;
-          rvelrhopnew=rvelrhoppre;
+          outrho=false;
+          rvelrhonew=rvelrhopre;
           const float3 vd=indirvel[CODE_GetIzoneFluidInout(rcode)];
           if(vd.x!=FLT_MAX){
-            const float v=rvelrhopnew.x*vd.x + rvelrhopnew.y*vd.y + rvelrhopnew.z*vd.z;
+            const float v=rvelrhonew.x*vd.x + rvelrhonew.y*vd.y + rvelrhonew.z*vd.z;
             dx=double(v*vd.x) * dt;
             dy=double(v*vd.y) * dt;
             dz=double(v*vd.z) * dt;
           }
           else{
-            dx=double(rvelrhopnew.x) * dt; 
-            dy=double(rvelrhopnew.y) * dt; 
-            dz=double(rvelrhopnew.z) * dt;
+            dx=double(rvelrhonew.x) * dt; 
+            dy=double(rvelrhonew.y) * dt; 
+            dz=double(rvelrhonew.z) * dt;
           }
         }
         //-Update particle data.
         movxy[p]=make_double2(dx,dy);
         movz[p]=dz;
-        if(outrhop){ //-Only brands as excluded normal particles (not periodic). | Solo marca como excluidas las normales (no periodicas).
+        if(outrho){ //-Only brands as excluded normal particles (not periodic). | Solo marca como excluidas las normales (no periodicas).
           const typecode rcode=code[p];
-          if(CODE_IsNormal(rcode))code[p]=CODE_SetOutRhop(rcode);
+          if(CODE_IsNormal(rcode))code[p]=CODE_SetOutRho(rcode);
         }
       }
       else{ //-Particles: Floating.
-        rvelrhopnew.w=(rvelrhopnew.w<rhopzero? rhopzero: rvelrhopnew.w); //-To prevent absorption of fluid particles by boundaries. | Evita q las floating absorvan a las fluidas.
+        rvelrhonew.w=(rvelrhonew.w<rhopzero? rhopzero: rvelrhonew.w); //-To prevent absorption of fluid particles by boundaries. | Evita q las floating absorvan a las fluidas.
       }
       //-Stores new velocity and density.
-      velrhop[p]=rvelrhopnew;
+      velrho[p]=rvelrhonew;
     }
   }
 }
@@ -421,29 +421,29 @@ template<bool floating,bool shift,bool inout> __global__ void KerComputeStepSymp
 /// Actualizacion de particulas usando Symplectic-Corrector.
 //==============================================================================   
 void ComputeStepSymplecticCor(bool floating,bool shift,bool inout,unsigned np
-  ,unsigned npb,const float4* velrhoppre,const float* ar,const float3* ace
+  ,unsigned npb,const float4* velrhopre,const float* ar,const float3* ace
   ,const float4* shiftposfs,const float3* indirvel,double dtm,double dt
   ,float rhopzero,float rhopoutmin,float rhopoutmax,tfloat3 gravity
-  ,typecode* code,double2* movxy,double* movz,float4* velrhop,cudaStream_t stm)
+  ,typecode* code,double2* movxy,double* movz,float4* velrho,cudaStream_t stm)
 {
   if(np){
     dim3 sgrid=GetSimpleGridSize(np,SPHBSIZE);
     if(inout){      const bool tinout=true;
       if(shift){    const bool shift=true;
-        if(floating)KerComputeStepSymplecticCor<true ,shift,tinout> <<<sgrid,SPHBSIZE,0,stm>>> (np,npb,velrhoppre,ar,ace,shiftposfs,indirvel,dtm,dt,rhopzero,rhopoutmin,rhopoutmax,Float3(gravity),code,movxy,movz,velrhop);
-        else        KerComputeStepSymplecticCor<false,shift,tinout> <<<sgrid,SPHBSIZE,0,stm>>> (np,npb,velrhoppre,ar,ace,shiftposfs,indirvel,dtm,dt,rhopzero,rhopoutmin,rhopoutmax,Float3(gravity),code,movxy,movz,velrhop);
+        if(floating)KerComputeStepSymplecticCor<true ,shift,tinout> <<<sgrid,SPHBSIZE,0,stm>>> (np,npb,velrhopre,ar,ace,shiftposfs,indirvel,dtm,dt,rhopzero,rhopoutmin,rhopoutmax,Float3(gravity),code,movxy,movz,velrho);
+        else        KerComputeStepSymplecticCor<false,shift,tinout> <<<sgrid,SPHBSIZE,0,stm>>> (np,npb,velrhopre,ar,ace,shiftposfs,indirvel,dtm,dt,rhopzero,rhopoutmin,rhopoutmax,Float3(gravity),code,movxy,movz,velrho);
       }else{        const bool shift=false;
-        if(floating)KerComputeStepSymplecticCor<true ,shift,tinout> <<<sgrid,SPHBSIZE,0,stm>>> (np,npb,velrhoppre,ar,ace,shiftposfs,indirvel,dtm,dt,rhopzero,rhopoutmin,rhopoutmax,Float3(gravity),code,movxy,movz,velrhop);
-        else        KerComputeStepSymplecticCor<false,shift,tinout> <<<sgrid,SPHBSIZE,0,stm>>> (np,npb,velrhoppre,ar,ace,shiftposfs,indirvel,dtm,dt,rhopzero,rhopoutmin,rhopoutmax,Float3(gravity),code,movxy,movz,velrhop);
+        if(floating)KerComputeStepSymplecticCor<true ,shift,tinout> <<<sgrid,SPHBSIZE,0,stm>>> (np,npb,velrhopre,ar,ace,shiftposfs,indirvel,dtm,dt,rhopzero,rhopoutmin,rhopoutmax,Float3(gravity),code,movxy,movz,velrho);
+        else        KerComputeStepSymplecticCor<false,shift,tinout> <<<sgrid,SPHBSIZE,0,stm>>> (np,npb,velrhopre,ar,ace,shiftposfs,indirvel,dtm,dt,rhopzero,rhopoutmin,rhopoutmax,Float3(gravity),code,movxy,movz,velrho);
       }
     }
     else{           const bool tinout=false;
       if(shift){    const bool shift=true;
-        if(floating)KerComputeStepSymplecticCor<true ,shift,tinout> <<<sgrid,SPHBSIZE,0,stm>>> (np,npb,velrhoppre,ar,ace,shiftposfs,indirvel,dtm,dt,rhopzero,rhopoutmin,rhopoutmax,Float3(gravity),code,movxy,movz,velrhop);
-        else        KerComputeStepSymplecticCor<false,shift,tinout> <<<sgrid,SPHBSIZE,0,stm>>> (np,npb,velrhoppre,ar,ace,shiftposfs,indirvel,dtm,dt,rhopzero,rhopoutmin,rhopoutmax,Float3(gravity),code,movxy,movz,velrhop);
+        if(floating)KerComputeStepSymplecticCor<true ,shift,tinout> <<<sgrid,SPHBSIZE,0,stm>>> (np,npb,velrhopre,ar,ace,shiftposfs,indirvel,dtm,dt,rhopzero,rhopoutmin,rhopoutmax,Float3(gravity),code,movxy,movz,velrho);
+        else        KerComputeStepSymplecticCor<false,shift,tinout> <<<sgrid,SPHBSIZE,0,stm>>> (np,npb,velrhopre,ar,ace,shiftposfs,indirvel,dtm,dt,rhopzero,rhopoutmin,rhopoutmax,Float3(gravity),code,movxy,movz,velrho);
       }else{        const bool shift=false;
-        if(floating)KerComputeStepSymplecticCor<true ,shift,tinout> <<<sgrid,SPHBSIZE,0,stm>>> (np,npb,velrhoppre,ar,ace,shiftposfs,indirvel,dtm,dt,rhopzero,rhopoutmin,rhopoutmax,Float3(gravity),code,movxy,movz,velrhop);
-        else        KerComputeStepSymplecticCor<false,shift,tinout> <<<sgrid,SPHBSIZE,0,stm>>> (np,npb,velrhoppre,ar,ace,shiftposfs,indirvel,dtm,dt,rhopzero,rhopoutmin,rhopoutmax,Float3(gravity),code,movxy,movz,velrhop);
+        if(floating)KerComputeStepSymplecticCor<true ,shift,tinout> <<<sgrid,SPHBSIZE,0,stm>>> (np,npb,velrhopre,ar,ace,shiftposfs,indirvel,dtm,dt,rhopzero,rhopoutmin,rhopoutmax,Float3(gravity),code,movxy,movz,velrho);
+        else        KerComputeStepSymplecticCor<false,shift,tinout> <<<sgrid,SPHBSIZE,0,stm>>> (np,npb,velrhopre,ar,ace,shiftposfs,indirvel,dtm,dt,rhopzero,rhopoutmin,rhopoutmax,Float3(gravity),code,movxy,movz,velrho);
       }
     }
   }

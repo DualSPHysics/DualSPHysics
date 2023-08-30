@@ -116,7 +116,7 @@ public:
   void ReadXmlOnlyPos(const JXml* sxml,TiXmlElement* ele);
   virtual void ReadXml(const JXml* sxml,TiXmlElement* ele)=0;
   virtual void Run(unsigned np,unsigned npb,const tdouble3* pos
-    ,const unsigned* idp,const word* mktype,tfloat4* velrhop,tfloat3* boundnor)=0;
+    ,const unsigned* idp,const word* mktype,tfloat4* velrho,tfloat3* boundnor)=0;
   virtual void GetConfig(std::vector<std::string>& lines)const=0;
   unsigned ComputeDomainMk(bool bound,word mktp,unsigned np,const word* mktype
     ,const unsigned* idp,const tdouble3* pos,tdouble3& posmin,tdouble3& posmax)const;
@@ -157,7 +157,7 @@ public:
   void Reset();
   void ReadXml(const JXml* sxml,TiXmlElement* ele);
   void Run(unsigned np,unsigned npb,const tdouble3* pos,const unsigned* idp
-    ,const word* mktype,tfloat4* velrhop,tfloat3* boundnor);
+    ,const word* mktype,tfloat4* velrho,tfloat3* boundnor);
   void GetConfig(std::vector<std::string>& lines)const;
 };  
 
@@ -176,7 +176,7 @@ public:
   void Reset();
   void ReadXml(const JXml* sxml,TiXmlElement* ele);
   void Run(unsigned np,unsigned npb,const tdouble3* pos,const unsigned* idp
-    ,const word* mktype,tfloat4* velrhop,tfloat3* boundnor);
+    ,const word* mktype,tfloat4* velrho,tfloat3* boundnor);
   void GetConfig(std::vector<std::string>& lines)const;
 };  
 
@@ -203,7 +203,7 @@ public:
   void ReadXml(const JXml* sxml,TiXmlElement* ele);
   void ReadKeyvals(const std::string& eparm);
   void Run(unsigned np,unsigned npb,const tdouble3* pos,const unsigned* idp
-    ,const word* mktype,tfloat4* velrhop,tfloat3* boundnor);
+    ,const word* mktype,tfloat4* velrho,tfloat3* boundnor);
   void GetConfig(std::vector<std::string>& lines)const;
 };  
 
@@ -226,7 +226,7 @@ public:
   void Reset();
   void ReadXml(const JXml* sxml,TiXmlElement* ele);
   void Run(unsigned np,unsigned npb,const tdouble3* pos,const unsigned* idp
-    ,const word* mktype,tfloat4* velrhop,tfloat3* boundnor);
+    ,const word* mktype,tfloat4* velrho,tfloat3* boundnor);
   void GetConfig(std::vector<std::string>& lines)const;
 };  
 
@@ -252,7 +252,7 @@ public:
   void Reset();
   void ReadXml(const JXml* sxml,TiXmlElement* ele);
   void Run(unsigned np,unsigned npb,const tdouble3* pos,const unsigned* idp
-    ,const word* mktype,tfloat4* velrhop,tfloat3* boundnor);
+    ,const word* mktype,tfloat4* velrho,tfloat3* boundnor);
   void GetConfig(std::vector<std::string>& lines)const;
 };  
 
@@ -274,7 +274,7 @@ public:
   void ReadXml(const JXml* sxml,TiXmlElement* ele);
   void ReadKeyvals(const std::string& eparm);
   void Run(unsigned np,unsigned npb,const tdouble3* pos,const unsigned* idp
-    ,const word* mktype,tfloat4* velrhop,tfloat3* boundnor);
+    ,const word* mktype,tfloat4* velrho,tfloat3* boundnor);
   void GetConfig(std::vector<std::string>& lines)const;
 };  
 
@@ -306,7 +306,7 @@ public:
   unsigned Count()const{ return(unsigned(Opes.size())); }
 
   void Run(unsigned np,unsigned npb,const tdouble3* pos
-    ,const unsigned* idp,const word* mktype,tfloat4* velrhop,tfloat3* boundnor);
+    ,const unsigned* idp,const word* mktype,tfloat4* velrho,tfloat3* boundnor);
   void GetConfig(std::vector<std::string>& lines)const;
 
 };

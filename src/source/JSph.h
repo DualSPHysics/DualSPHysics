@@ -448,7 +448,7 @@ protected:
   void LoadDcellParticles(unsigned n,const typecode* code,const tdouble3* pos
     ,unsigned* dcell)const;
   void RunInitialize(unsigned np,unsigned npb,const tdouble3* pos,const unsigned* idp
-    ,const typecode* code,tfloat4* velrhop,tfloat3* boundnor);
+    ,const typecode* code,tfloat4* velrho,tfloat3* boundnor);
   void CreatePartsInit(unsigned np,const tdouble3* pos,const typecode* code);
   void FreePartsInit();
 
@@ -539,13 +539,13 @@ public:
   unsigned DgNum;
   void DgSaveVtkParticlesCpu(std::string filename,int numfile
     ,unsigned pini,unsigned pfin,const tdouble3* pos,const typecode* code
-    ,const unsigned* idp,const tfloat4* velrhop,const tfloat3* ace=NULL)const;
+    ,const unsigned* idp,const tfloat4* velrho,const tfloat3* ace=NULL)const;
   void DgSaveVtkParticlesCpu(std::string filename,int numfile
     ,unsigned pini,unsigned pfin,const tfloat3* pos,const byte* check
-    ,const unsigned* idp,const tfloat3* vel,const float* rhop);
+    ,const unsigned* idp,const tfloat3* vel,const float* rho);
   void DgSaveCsvParticlesCpu(std::string filename,int numfile
     ,unsigned pini,unsigned pfin,std::string head,const tfloat3* pos
-    ,const unsigned* idp=NULL,const tfloat3* vel=NULL,const float* rhop=NULL
+    ,const unsigned* idp=NULL,const tfloat3* vel=NULL,const float* rho=NULL
     ,const float* ar=NULL,const tfloat3* ace=NULL,const tfloat3* vcorr=NULL);
 };
 

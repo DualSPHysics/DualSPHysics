@@ -883,8 +883,8 @@ void JSphGpu::ComputeVerlet(double dt){  //pdtedom
       ,Gravity,Code_g->ptr(),movxyg.ptr(),movzg.ptr(),VelrhoM1_g->ptr(),NULL);
     VerletStep=0;
   }
-  //-The new values are calculated in VelRhoM1_g.
-  //-Los nuevos valores se calculan en VelrhopM1g.
+  //-The new values are calculated in VelrhoM1_g.
+  //-Los nuevos valores se calculan en VelrhoM1g.
   Velrho_g->SwapPtr(VelrhoM1_g); //-Exchanges Velrho_g and VelrhoM1_g. | Intercambia Velrho_g y VelrhoM1_g.
   //-Applies displacement to non-periodic fluid particles.
   //-Aplica desplazamiento a las particulas fluid no periodicas.
@@ -908,7 +908,7 @@ void JSphGpu::ComputeSymplecticPre(double dt){
   //-Move current data to PRE variables for calculating the new data.
   PosxyPre_g->SwapPtr(Posxy_g);   //- PosxyPre_g[]   <= Posxy_g[]
   PoszPre_g->SwapPtr(Posz_g);     //- PoszPre_g[]    <= Posz_g[]
-  VelrhoPre_g->SwapPtr(Velrho_g); //- VelrhopPre_g[] <= Velrhop_g[]
+  VelrhoPre_g->SwapPtr(Velrho_g); //- VelrhoPre_g[]  <= Velrho_g[]
   //-Allocate memory to compute the diplacement.
   agdouble2 movxyg("movxyg",Arrays_Gpu,true);
   agdouble  movzg("movzg",Arrays_Gpu,true);
@@ -1114,7 +1114,7 @@ void JSphGpu::SaveVtkNormalsGpu(std::string filename,int numfile,unsigned np,uns
 //==============================================================================
 void JSphGpu::DgSaveVtkParticlesGpu(std::string filename,int numfile
   ,unsigned pini,unsigned pfin,const double2* posxyg,const double* poszg
-  ,const typecode* codeg,const unsigned* idpg,const float4* velrhopg)const
+  ,const typecode* codeg,const unsigned* idpg,const float4* velrhog)const
 {
   const unsigned np=pfin-pini;
   //-Copy data to CPU memory.
@@ -1125,14 +1125,14 @@ void JSphGpu::DgSaveVtkParticlesGpu(std::string filename,int numfile
     typecode* codeh=fcuda::ToHostWord(pini,np,codeg);
   #endif
   unsigned* idph=fcuda::ToHostUint(pini,np,idpg);
-  tfloat4*  velrhoph=fcuda::ToHostFloat4(pini,np,velrhopg);
+  tfloat4*  velrhoh=fcuda::ToHostFloat4(pini,np,velrhog);
   //-Creates VTK file.
-  DgSaveVtkParticlesCpu(filename,numfile,0,np,posh,codeh,idph,velrhoph);
+  DgSaveVtkParticlesCpu(filename,numfile,0,np,posh,codeh,idph,velrhoh);
   //-Deallocates memory.
   delete[] posh;  
   delete[] codeh;
   delete[] idph;
-  delete[] velrhoph;
+  delete[] velrhoh;
 }
 
 //==============================================================================
@@ -1142,7 +1142,7 @@ void JSphGpu::DgSaveVtkParticlesGpu(std::string filename,int numfile
 void JSphGpu::DgSaveVtkParticlesGpu(std::string filename,int numfile
   ,unsigned pini,unsigned pfin,unsigned cellcode,const double2* posxyg
   ,const double* poszg,const unsigned* idpg,const unsigned* dcelg
-  ,const typecode* codeg,const float4* velrhopg,const float4* velrhopm1g
+  ,const typecode* codeg,const float4* velrhog,const float4* velrhom1g
   ,const float3* aceg)
 {
   //-Allocates memory.
@@ -1173,26 +1173,26 @@ void JSphGpu::DgSaveVtkParticlesGpu(std::string filename,int numfile
     for(unsigned p=0;p<n;p++)dcel[p]=TUint3(unsigned(DCEL_Cellx(cellcode,aux[p])),unsigned(DCEL_Celly(cellcode,aux[p])),unsigned(DCEL_Cellz(cellcode,aux[p])));
     delete[] aux;
   }
-  //-Loads vel and rhop.
+  //-Loads vel and rho.
   tfloat3* vel=NULL;
-  float* rhop=NULL;
-  if(velrhopg){
+  float* rho=NULL;
+  if(velrhog){
     vel=new tfloat3[n];
-    rhop=new float[n];
+    rho=new float[n];
     tfloat4* aux=new tfloat4[n];
-    cudaMemcpy(aux,velrhopg+pini,sizeof(float4)*n,cudaMemcpyDeviceToHost);
-    for(unsigned p=0;p<n;p++){ vel[p]=TFloat3(aux[p].x,aux[p].y,aux[p].z); rhop[p]=aux[p].w; }
+    cudaMemcpy(aux,velrhog+pini,sizeof(float4)*n,cudaMemcpyDeviceToHost);
+    for(unsigned p=0;p<n;p++){ vel[p]=TFloat3(aux[p].x,aux[p].y,aux[p].z); rho[p]=aux[p].w; }
     delete[] aux;
   }
-  //-Loads velm1 and rhopm1.
+  //-Loads velm1 and rhom1.
   tfloat3* velm1=NULL;
-  float* rhopm1=NULL;
-  if(velrhopm1g){
+  float* rhom1=NULL;
+  if(velrhom1g){
     velm1=new tfloat3[n];
-    rhopm1=new float[n];
+    rhom1=new float[n];
     tfloat4* aux=new tfloat4[n];
-    cudaMemcpy(aux,velrhopm1g+pini,sizeof(float4)*n,cudaMemcpyDeviceToHost);
-    for(unsigned p=0;p<n;p++){ velm1[p]=TFloat3(aux[p].x,aux[p].y,aux[p].z); rhopm1[p]=aux[p].w; }
+    cudaMemcpy(aux,velrhom1g+pini,sizeof(float4)*n,cudaMemcpyDeviceToHost);
+    for(unsigned p=0;p<n;p++){ velm1[p]=TFloat3(aux[p].x,aux[p].y,aux[p].z); rhom1[p]=aux[p].w; }
     delete[] aux;
   }
   //-Loads ace.
@@ -1225,14 +1225,14 @@ void JSphGpu::DgSaveVtkParticlesGpu(std::string filename,int numfile
   //-Saves VTK file.
   JDataArrays arrays;
   arrays.AddArray("Pos",n,pos,true);
-  if(idp)   arrays.AddArray("Idp"   ,n,idp   ,true);
-  if(dcel)  arrays.AddArray("Dcel"  ,n,dcel  ,true);
-  if(vel)   arrays.AddArray("Vel"   ,n,vel   ,true);
-  if(rhop)  arrays.AddArray("Rhop"  ,n,rhop  ,true);
-  if(velm1) arrays.AddArray("Velm1" ,n,velm1 ,true);
-  if(rhopm1)arrays.AddArray("Rhopm1",n,rhopm1,true);
-  if(ace)   arrays.AddArray("Ace"   ,n,ace   ,true);
-  if(type)  arrays.AddArray("Typex" ,n,type  ,true);
+  if(idp)   arrays.AddArray("Idp"  ,n,idp  ,true);
+  if(dcel)  arrays.AddArray("Dcel" ,n,dcel ,true);
+  if(vel)   arrays.AddArray("Vel"  ,n,vel  ,true);
+  if(rho)   arrays.AddArray("Rhop" ,n,rho  ,true);
+  if(velm1) arrays.AddArray("Velm1",n,velm1,true);
+  if(rhom1) arrays.AddArray("Rhom1",n,rhom1,true);
+  if(ace)   arrays.AddArray("Ace"  ,n,ace  ,true);
+  if(type)  arrays.AddArray("Typex",n,type ,true);
   JVtkLib::SaveVtkData(fun::FileNameSec(filename,numfile),arrays,"Pos");
   arrays.Reset();
 }
@@ -1242,7 +1242,7 @@ void JSphGpu::DgSaveVtkParticlesGpu(std::string filename,int numfile
 /// Graba fichero VTK con datos de las particulas (debug).
 //==============================================================================
 void JSphGpu::DgSaveVtkParticlesGpu(std::string filename,int numfile
-  ,unsigned pini,unsigned pfin,bool idp,bool vel,bool rhop,bool code)
+  ,unsigned pini,unsigned pfin,bool idp,bool vel,bool rho,bool code)
 {
   if(numfile>=0)filename=fun::FileNameSec(filename,numfile);
   if(Log->GetMpiRank()>=0)filename=string("p")+fun::IntStr(Log->GetMpiRank())+"_"+filename;
@@ -1273,7 +1273,7 @@ void JSphGpu::DgSaveVtkParticlesGpu(std::string filename,int numfile
   if(idp) arrays.AddArray("Idp"  ,n,Idp_c->cptr()   ,false);
   if(type)arrays.AddArray("Typex",n,type            ,true);
   if(vel) arrays.AddArray("Vel"  ,n,AuxVel_c->cptr(),false);
-  if(rhop)arrays.AddArray("Rhop" ,n,AuxRho_c->cptr(),false);
+  if(rho) arrays.AddArray("Rho"  ,n,AuxRho_c->cptr(),false);
 #ifdef CODE_SIZE4
   if(code)arrays.AddArray("Code" ,n,(unsigned*)Code_c->cptr(),false);
 #else
@@ -1399,8 +1399,8 @@ void JSphGpu::DgSaveCsvParticlesGpu2(std::string filename,int numfile
 //==============================================================================
 void JSphGpu::DgSaveCsvParticles2(std::string filename,int numfile
   ,unsigned pini,unsigned pfin,std::string head,const tfloat3* pos
-  ,const unsigned* idp,const tfloat3* vel,const float* rhop
-  ,const tfloat4* pospres,const tfloat4* velrhop)
+  ,const unsigned* idp,const tfloat3* vel,const float* rho
+  ,const tfloat4* pospres,const tfloat4* velrho)
 {
   int mpirank=Log->GetMpiRank();
   if(mpirank>=0)filename=string("p")+fun::IntStr(mpirank)+"_"+filename;
@@ -1415,9 +1415,9 @@ void JSphGpu::DgSaveCsvParticles2(std::string filename,int numfile
     if(idp)pf << ";Idp";
     if(pos)pf << ";PosX;PosY;PosZ";
     if(vel)pf << ";VelX;VelY;VelZ";
-    if(rhop)pf << ";Rhop";
+    if(rho)pf << ";Rhop";
     if(pospres)pf << ";Px;Py;Pz;Pp";
-    if(velrhop)pf << ";Vx;Vy;Vz;Vr";
+    if(velrho) pf << ";Vx;Vy;Vz;Vr";
     pf << endl;
     const char fmt1[]="%f"; //="%24.16f";
     const char fmt3[]="%f;%f;%f"; //="%24.16f;%24.16f;%24.16f";
@@ -1426,9 +1426,9 @@ void JSphGpu::DgSaveCsvParticles2(std::string filename,int numfile
       if(idp)pf << ";" << fun::UintStr(idp[p]);
       if(pos)pf << ";" << fun::Float3Str(pos[p],fmt3);
       if(vel)pf << ";" << fun::Float3Str(vel[p],fmt3);
-      if(rhop)pf << ";" << fun::FloatStr(rhop[p],fmt1);
+      if(rho)pf << ";" << fun::FloatStr(rho[p],fmt1);
       if(pospres)pf << ";" <<  fun::FloatStr(pospres[p].x,fmt1) << ";" << fun::FloatStr(pospres[p].y,fmt1) << ";" << fun::FloatStr(pospres[p].z,fmt1) << ";" << fun::FloatStr(pospres[p].w,fmt1);
-      if(velrhop)pf << ";" <<  fun::FloatStr(velrhop[p].x,fmt1) << ";" << fun::FloatStr(velrhop[p].y,fmt1) << ";" << fun::FloatStr(velrhop[p].z,fmt1) << ";" << fun::FloatStr(velrhop[p].w,fmt1);
+      if(velrho)pf << ";" <<  fun::FloatStr(velrho[p].x,fmt1) << ";" << fun::FloatStr(velrho[p].y,fmt1) << ";" << fun::FloatStr(velrho[p].z,fmt1) << ";" << fun::FloatStr(velrho[p].w,fmt1);
       pf << endl;
     }
     if(pf.fail())Run_ExceptioonFile("Failed writing to file.",filename);

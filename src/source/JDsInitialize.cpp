@@ -184,7 +184,7 @@ void JDsInitializeOp_FluidVel::ReadXml(const JXml* sxml,TiXmlElement* xele){
 /// Initializes data of particles according XML configuration.
 //==============================================================================
 void JDsInitializeOp_FluidVel::Run(unsigned np,unsigned npb,const tdouble3* pos
-  ,const unsigned* idp,const word* mktype,tfloat4* velrhop,tfloat3* boundnor)
+  ,const unsigned* idp,const word* mktype,tfloat4* velrho,tfloat3* boundnor)
 {
   const tfloat3 dir=fgeo::VecUnitary(Direction);
   float m2=0,b2=0;
@@ -211,9 +211,9 @@ void JDsInitializeOp_FluidVel::Run(unsigned np,unsigned npb,const tdouble3* pos
     float v1=v;
     if(VelType==TVEL_Linear)v1=m2*float(pos[p].z)+b2;
     else if(VelType==TVEL_Parabolic)v1=a3*float(pos[p].z)*float(pos[p].z)+b3*float(pos[p].z)+c3;
-    velrhop[p].x=dir.x*v1;
-    velrhop[p].y=dir.y*v1;
-    velrhop[p].z=dir.z*v1;
+    velrho[p].x=dir.x*v1;
+    velrho[p].y=dir.y*v1;
+    velrho[p].z=dir.z*v1;
   }
 }
 
@@ -257,7 +257,7 @@ void JDsInitializeOp_BoundNormalSet::ReadXml(const JXml* sxml,TiXmlElement* xele
 /// Initializes data of particles according XML configuration.
 //==============================================================================
 void JDsInitializeOp_BoundNormalSet::Run(unsigned np,unsigned npb
-  ,const tdouble3* pos,const unsigned* idp,const word* mktype,tfloat4* velrhop
+  ,const tdouble3* pos,const unsigned* idp,const word* mktype,tfloat4* velrho
   ,tfloat3* boundnor)
 {
   JRangeFilter rg(MkBound);
@@ -362,7 +362,7 @@ void JDsInitializeOp_BoundNormalPlane::ReadKeyvals(const std::string& eparm){
 /// Initializes data of particles according XML configuration.
 //==============================================================================
 void JDsInitializeOp_BoundNormalPlane::Run(unsigned np,unsigned npb
-  ,const tdouble3* pos,const unsigned* idp,const word* mktype,tfloat4* velrhop
+  ,const tdouble3* pos,const unsigned* idp,const word* mktype,tfloat4* velrho
   ,tfloat3* boundnor)
 {
   const double maxdist=(MaxDisteH>0? InitCt.kernelh*MaxDisteH: DBL_MAX);
@@ -474,7 +474,7 @@ void JDsInitializeOp_BoundNormalSphere::ReadXml(const JXml* sxml,TiXmlElement* x
 /// Initializes data of particles according XML configuration.
 //==============================================================================
 void JDsInitializeOp_BoundNormalSphere::Run(unsigned np,unsigned npb
-  ,const tdouble3* pos,const unsigned* idp,const word* mktype,tfloat4* velrhop
+  ,const tdouble3* pos,const unsigned* idp,const word* mktype,tfloat4* velrho
   ,tfloat3* boundnor)
 {
   const tdouble3 pcen=ToTDouble3(Center);
@@ -552,7 +552,7 @@ void JDsInitializeOp_BoundNormalCylinder::ReadXml(const JXml* sxml
 /// Initializes data of particles according XML configuration.
 //==============================================================================
 void JDsInitializeOp_BoundNormalCylinder::Run(unsigned np,unsigned npb
-  ,const tdouble3* pos,const unsigned* idp,const word* mktype,tfloat4* velrhop
+  ,const tdouble3* pos,const unsigned* idp,const word* mktype,tfloat4* velrho
   ,tfloat3* boundnor)
 {
   const tdouble3 cen1=ToTDouble3(Center1);
@@ -689,7 +689,7 @@ void JDsInitializeOp_BoundNormalParts::ReadKeyvals(const std::string& eparm){
 /// Initializes data of particles according XML configuration.
 //==============================================================================
 void JDsInitializeOp_BoundNormalParts::Run(unsigned np,unsigned npb
-  ,const tdouble3* pos,const unsigned* idp,const word* mktype,tfloat4* velrhop
+  ,const tdouble3* pos,const unsigned* idp,const word* mktype,tfloat4* velrho
   ,tfloat3* boundnor)
 {
   if(!InitCt.simulate2d)Run_Exceptioon("Initialize option BoundNormalParts is not supported for 3D simulations.");
@@ -816,10 +816,10 @@ void JDsInitialize::LoadExecParms(const std::vector<std::string>& execparms){
 /// Initializes data of particles according XML configuration.
 //==============================================================================
 void JDsInitialize::Run(unsigned np,unsigned npb,const tdouble3* pos
-  ,const unsigned* idp,const word* mktype,tfloat4* velrhop,tfloat3* boundnor)
+  ,const unsigned* idp,const word* mktype,tfloat4* velrho,tfloat3* boundnor)
 {
   for(unsigned c=0;c<Count();c++){
-    Opes[c]->Run(np,npb,pos,idp,mktype,velrhop,boundnor);
+    Opes[c]->Run(np,npb,pos,idp,mktype,velrho,boundnor);
   }
 }
 

@@ -1766,7 +1766,7 @@ void JSph::LoadDcellParticles(unsigned n,const typecode* code,const tdouble3* po
 /// Inicializa datos de las particulas a partir de la configuracion en el XML.
 //==============================================================================
 void JSph::RunInitialize(unsigned np,unsigned npb,const tdouble3* pos
-  ,const unsigned* idp,const typecode* code,tfloat4* velrhop,tfloat3* boundnor)
+  ,const unsigned* idp,const typecode* code,tfloat4* velrho,tfloat3* boundnor)
 {
   if(!PartBegin){
     JDsInitialize init(Simulate2D,Simulate2DPosY,MapRealPosMin,MapRealPosMax
@@ -1789,7 +1789,7 @@ void JSph::RunInitialize(unsigned np,unsigned npb,const tdouble3* pos
         const unsigned cmk=MkInfo->GetMkBlockByCode(code[p]);
         mktype[p]=(cmk<MkInfo->Size()? word(MkInfo->Mkblock(cmk)->MkType): USHRT_MAX);
       }
-      init.Run(np,npb,pos,idp,mktype,velrhop,boundnor);
+      init.Run(np,npb,pos,idp,mktype,velrho,boundnor);
       init.GetConfig(InitializeInfo);
       //-Frees memory.
       delete[] mktype; mktype=NULL;
@@ -2610,10 +2610,10 @@ void JSph::AbortBoundOut(JLog2* log,unsigned nout,const unsigned* idp
     }
     //-Checks reason for exclusion.
     switch(CODE_GetSpecialValue(code[p])){
-      case CODE_OUTPOS:   motive[p]=1; outpos++;  break;
-      case CODE_OUTRHOP:  motive[p]=2; outrho++;  break; 
-      case CODE_OUTMOVE:  motive[p]=3; outmov++;  break; 
-      default:            motive[p]=0;            break; 
+      case CODE_OUTPOS:  motive[p]=1; outpos++;  break;
+      case CODE_OUTRHO:  motive[p]=2; outrho++;  break; 
+      case CODE_OUTMOV:  motive[p]=3; outmov++;  break; 
+      default:           motive[p]=0;            break; 
     }
     //-Checks out-position limits.
     if(CODE_GetSpecialValue(code[p])==CODE_OUTPOS){
@@ -2639,8 +2639,8 @@ void JSph::AbortBoundOut(JLog2* log,unsigned nout,const unsigned* idp
   if(!npunknown)log->Printf("Total boundary: %u  (fixed=%u  moving=%u  floating=%u)",nout,outfixed,outmoving,outfloat);
   else log->Printf("Total boundary: %u  (fixed=%u  moving=%u  floating=%u  UNKNOWN=%u)",nout,outfixed,outmoving,outfloat,npunknown);
   npunknown=nout-outpos-outrho-outmov;
-  if(!npunknown)log->Printf("Excluded for: position=%u  rhop=%u  velocity=%u",outpos,outrho,outmov);
-  else log->Printf("Excluded for: position=%u  rhop=%u  velocity=%u  UNKNOWN=%u",outpos,outrho,outmov,npunknown);
+  if(!npunknown)log->Printf("Excluded for: position=%u  rho=%u  velocity=%u",outpos,outrho,outmov);
+  else log->Printf("Excluded for: position=%u  rho=%u  velocity=%u  UNKNOWN=%u",outpos,outrho,outmov,npunknown);
   if(outxmin)log->Print("Some boundary particle exceeded the -X limit (left limit) of the simulation domain.");
   if(outxmax)log->Print("Some boundary particle exceeded the +X limit (right limit) of the simulation domain.");
   if(outymin)log->Print("Some boundary particle exceeded the -Y limit (front limit) of the simulation domain.");
@@ -3396,7 +3396,7 @@ std::string JSph::GetDDTConfig()const{
 //==============================================================================
 void JSph::DgSaveVtkParticlesCpu(std::string filename,int numfile
   ,unsigned pini,unsigned pfin,const tdouble3* pos,const typecode* code
-  ,const unsigned* idp,const tfloat4* velrhop,const tfloat3* ace)const
+  ,const unsigned* idp,const tfloat4* velrho,const tfloat3* ace)const
 {
   int mpirank=Log->GetMpiRank();
   if(mpirank>=0)filename=string("p")+fun::IntStr(mpirank)+"_"+filename;
@@ -3407,15 +3407,15 @@ void JSph::DgSaveVtkParticlesCpu(std::string filename,int numfile
   tfloat3* xpos=new tfloat3[np];
   tfloat3* xvel=new tfloat3[np];
   tfloat3* xace=(ace? new tfloat3[np]: NULL);
-  float*   xrhop=new float[np];
+  float*   xrho=new float[np];
   byte*    xtype=new byte[np];
   byte*    xkind=new byte[np];
   for(unsigned p=0;p<np;p++){
     xpos[p]=ToTFloat3(pos[p+pini]);
-    tfloat4 vr=velrhop[p+pini];
+    tfloat4 vr=velrho[p+pini];
     xvel[p]=TFloat3(vr.x,vr.y,vr.z);
     if(xace)xace[p]=ace[p+pini];
-    xrhop[p]=vr.w;
+    xrho[p]=vr.w;
     typecode t=CODE_GetType(code[p+pini]);
     xtype[p]=(t==CODE_TYPE_FIXED? 0: (t==CODE_TYPE_MOVING? 1: (t==CODE_TYPE_FLOATING? 2: 3)));
     typecode k=CODE_GetSpecialValue(code[p+pini]);
@@ -3432,7 +3432,7 @@ void JSph::DgSaveVtkParticlesCpu(std::string filename,int numfile
   if(xtype)arrays.AddArray("Type",np,xtype,true);
   if(xkind)arrays.AddArray("Kind",np,xkind,true);
   if(xvel) arrays.AddArray("Vel" ,np,xvel ,true);
-  if(xrhop)arrays.AddArray("Rhop",np,xrhop,true);
+  if(xrho) arrays.AddArray("Rhop",np,xrho ,true);
   if(xace) arrays.AddArray("Ace" ,np,xace ,true);
   JVtkLib::SaveVtkData(filename,arrays,"Pos");
   arrays.Reset();
@@ -3444,7 +3444,7 @@ void JSph::DgSaveVtkParticlesCpu(std::string filename,int numfile
 //==============================================================================
 void JSph::DgSaveVtkParticlesCpu(std::string filename,int numfile
   ,unsigned pini,unsigned pfin,const tfloat3* pos,const byte* check
-  ,const unsigned* idp,const tfloat3* vel,const float* rhop)
+  ,const unsigned* idp,const tfloat3* vel,const float* rho)
 {
   int mpirank=Log->GetMpiRank();
   if(mpirank>=0)filename=string("p")+fun::IntStr(mpirank)+"_"+filename;
@@ -3459,7 +3459,7 @@ void JSph::DgSaveVtkParticlesCpu(std::string filename,int numfile
   arrays.AddArray("Pos" ,n,pos+pini,false);
   if(idp)  arrays.AddArray("Idp"  ,n,idp+pini,false);
   if(vel)  arrays.AddArray("Vel"  ,n,vel+pini,false);
-  if(rhop) arrays.AddArray("Rhop" ,n,rhop+pini,false);
+  if(rho)  arrays.AddArray("Rho"  ,n,rho+pini,false);
   if(check)arrays.AddArray("Check",n,check+pini,false);
   if(num)  arrays.AddArray("Num"  ,n,num,true);
   JVtkLib::SaveVtkData(filename,arrays,"Pos");
@@ -3472,7 +3472,7 @@ void JSph::DgSaveVtkParticlesCpu(std::string filename,int numfile
 //==============================================================================
 void JSph::DgSaveCsvParticlesCpu(std::string filename,int numfile
   ,unsigned pini,unsigned pfin,std::string head,const tfloat3* pos
-  ,const unsigned* idp,const tfloat3* vel,const float* rhop,const float* ar
+  ,const unsigned* idp,const tfloat3* vel,const float* rho,const float* ar
   ,const tfloat3* ace,const tfloat3* vcorr)
 {
   int mpirank=Log->GetMpiRank();
@@ -3488,7 +3488,7 @@ void JSph::DgSaveCsvParticlesCpu(std::string filename,int numfile
     if(idp)pf << ";Idp";
     if(pos)pf << ";PosX;PosY;PosZ";
     if(vel)pf << ";VelX;VelY;VelZ";
-    if(rhop)pf << ";Rhop";
+    if(rho)pf << ";Rho";
     if(ar)pf << ";Ar";
     if(ace)pf << ";AceX;AceY;AceZ";
     if(vcorr)pf << ";VcorrX;VcorrY;VcorrZ";
@@ -3500,7 +3500,7 @@ void JSph::DgSaveCsvParticlesCpu(std::string filename,int numfile
       if(idp)pf << ";" << fun::UintStr(idp[p]);
       if(pos)pf << ";" << fun::Float3Str(pos[p],fmt3);
       if(vel)pf << ";" << fun::Float3Str(vel[p],fmt3);
-      if(rhop)pf << ";" << fun::FloatStr(rhop[p],fmt1);
+      if(rho)pf << ";" << fun::FloatStr(rho[p],fmt1);
       if(ar)pf << ";" << fun::FloatStr(ar[p],fmt1);
       if(ace)pf << ";" << fun::Float3Str(ace[p],fmt3);
       if(vcorr)pf << ";" << fun::Float3Str(vcorr[p],fmt3);

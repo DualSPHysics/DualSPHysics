@@ -139,13 +139,13 @@ inline float GetKernelCubic_WabFac(const StKCubicCte& kc,float h,float rr2
 /// Return tensil correction of kernel Cubic.
 //==============================================================================
 inline float GetKernelCubic_Tensil(const StKCubicCte& kc,float h,float rr2
-  ,float rhopp1,float pressp1,float rhopp2,float pressp2)
+  ,float rhop1,float pressp1,float rhop2,float pressp2)
 {
   const float wab=GetKernelCubic_Wab(kc,h,rr2);
   float fab=wab*kc.od_wdeltap;
   fab*=fab; fab*=fab; //fab=fab^4
-  const float tensilp1=(pressp1/(rhopp1*rhopp1))*(pressp1>0? 0.01f: -0.2f);
-  const float tensilp2=(pressp2/(rhopp2*rhopp2))*(pressp2>0? 0.01f: -0.2f);
+  const float tensilp1=(pressp1/(rhop1*rhop1))*(pressp1>0? 0.01f: -0.2f);
+  const float tensilp2=(pressp2/(rhop2*rhop2))*(pressp2>0? 0.01f: -0.2f);
   return(fab*(tensilp1+tensilp2));
 }
 
@@ -171,9 +171,9 @@ inline float GetKernelCubic_WabFac(const StCteSph& csp,float rr2,float& fac){
 /// Return tensil correction of kernel Cubic.
 //==============================================================================
 inline float GetKernelCubic_Tensil(const StCteSph& csp,float rr2
-  ,float rhopp1,float pressp1,float rhopp2,float pressp2)
+  ,float rhop1,float pressp1,float rhop2,float pressp2)
 {
-  return(GetKernelCubic_Tensil(csp.kcubic,csp.kernelh,rr2,rhopp1,pressp1,rhopp2,pressp2));
+  return(GetKernelCubic_Tensil(csp.kcubic,csp.kernelh,rr2,rhop1,pressp1,rhop2,pressp2));
 }
 
 
