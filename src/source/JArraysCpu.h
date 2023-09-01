@@ -40,7 +40,7 @@
 
 class JLog2;
 class JArraysCpu;
-class JArraySpu;
+class JArrayCpu;
 
 //#define DG_ARRSPU_PRINT  //-Active prints for debug.
   
@@ -63,7 +63,7 @@ protected:
 
   unsigned   Count;                   ///<Number of pointers with allocated memory.  
   void*      Pointers  [MAX_ARRAYS];  ///<Pointers to CPU memory. 
-  JArraySpu* PointersAr[MAX_ARRAYS];  ///<Pointer to JArraysCpu using the pointer Pointers[]. 
+  JArrayCpu* PointersAr[MAX_ARRAYS];  ///<Pointer to JArraysCpu using the pointer Pointers[]. 
 
   unsigned PointersUnused[MAX_ARRAYS]; ///<List of unused pointers (index to Pointers[]).
   unsigned CountUnused;                ///<Number of unused pointers.  
@@ -80,6 +80,7 @@ public:
   JArraysCpuList(JArraysCpu* head,unsigned valuesize);
   ~JArraysCpuList();
   void Reset();
+  void PrintArraysInfo()const;
 
   llong GetAllocMemoryCpu()const{ return(llong(ValueSize)*ArraySize*Count); };
 
@@ -93,14 +94,16 @@ public:
   unsigned GetArrayCountUsed()const{ return(Count-CountUnused); }
   unsigned GetArrayCountUsedMax()const{ return(CountUsedMax); }
 
+  void SetArrayCount(unsigned count);
+  void FreeUnusedArrays();
+
   unsigned GetArraySize()const{ return(ArraySize); }
 
-  void SetArrayCount(unsigned count);
   void SetArraySize(unsigned size);
 
-  void Reserve(JArraySpu* ar);
-  void Free(JArraySpu* ar);
-  void SwapPtr(JArraySpu* ar1,JArraySpu* ar2);
+  void Reserve(JArrayCpu* ar);
+  void Free(JArrayCpu* ar);
+  void SwapPtr(JArrayCpu* ar1,JArrayCpu* ar2);
 
   void SetDataArraySize(unsigned newsize,unsigned savesizedata);
 };
@@ -111,7 +114,7 @@ public:
 //##############################################################################
 class JArraysCpu : protected JObject
 {
-  friend class JArraySpu;
+  friend class JArrayCpu;
 
 public:
   static const unsigned MAX_ASIZE=9;
@@ -155,7 +158,7 @@ public:
   void Reset();
   llong GetAllocMemoryCpu()const;
   unsigned GetCountResizeDataCalls()const{ return(CountResizeDataCalls); }
-  void PrintAllocMemory(bool all)const;
+  void PrintAllocMemory(bool emptyblocks,bool arrayinfo)const;
 
   void SetAutoAddArrays(bool active);
   bool GetAutoAddArrays()const{ return(ArraysList[0]->GetAutoAddArrays()); }
@@ -167,6 +170,7 @@ public:
   unsigned GetArrayCountUpdated();
 
   void AddArrayCount(TpASizeId asize,unsigned count);
+  void FreeUnusedArrays();
 
   unsigned GetArraySize()const{ return(ArraysList[0]->GetArraySize()); }
 
@@ -179,7 +183,7 @@ public:
 //# JArraysCpu
 //##############################################################################
 /// \brief Defines the type of elements of the arrays managed in \ref JArraysCpu.
-class JArraySpu : protected JObject
+class JArrayCpu : protected JObject
 {
   friend class JArraysCpuList;
 
@@ -197,10 +201,10 @@ protected:
 protected:
   void AssignReserve(void* ptr,unsigned ptrid);
   void ClearReserve();
-  void PSwapPtr(JArraySpu* ar);
+  void PSwapPtr(JArrayCpu* ar);
   void PMemsetOffset(void* ptr_offset,unsigned offset,byte value,size_t size);
-  void PCopyFrom(const JArraySpu* src,size_t size);
-  void PCopyFromOffset(void* dst_ptr,unsigned dst_offset,const JArraySpu* src
+  void PCopyFrom(const JArrayCpu* src,size_t size);
+  void PCopyFromOffset(void* dst_ptr,unsigned dst_offset,const JArrayCpu* src
     ,const void* src_ptr,unsigned src_offset,size_t size);
   void PCopyFromPointer(const void* src_ptr,size_t size);
   void PCopyFromPointerOffset(void* dst_ptr,unsigned dst_offset
@@ -210,9 +214,9 @@ protected:
     ,void* dst_ptr,size_t size)const;
 
 public:
-  JArraySpu(const std::string& name,TpTypeData type
+  JArrayCpu(const std::string& name,TpTypeData type
     ,JArraysCpu::TpASizeId asize,JArraysCpu* head,bool reserve);
-  ~JArraySpu();
+  ~JArrayCpu();
   std::string ObjectId()const;
 
   void* ptrvoid(){ return(Ptr); }
@@ -234,13 +238,13 @@ public:
 //##############################################################################
 //# JArraysCpu
 //##############################################################################
-template <class T,TpTypeData ttype,JArraysCpu::TpASizeId tasize> class JArraySpuT : public JArraySpu
+template <class T,TpTypeData ttype,JArraysCpu::TpASizeId tasize> class JArrayCpuT : public JArrayCpu
 {
 public:
-  JArraySpuT(const std::string& name,JArraysCpu* head,bool reserve=false)
-    :JArraySpu(name,ttype,tasize,head,reserve){};
+  JArrayCpuT(const std::string& name,JArraysCpu* head,bool reserve=false)
+    :JArrayCpu(name,ttype,tasize,head,reserve){};
   //----------------------------------------------------------------------------
-  void SwapPtr(JArraySpuT* ar){ PSwapPtr((JArraySpu*)ar); }
+  void SwapPtr(JArrayCpuT* ar){ PSwapPtr((JArrayCpu*)ar); }
   //----------------------------------------------------------------------------
   T* ptr(){ return((T*)Ptr); }
   //----------------------------------------------------------------------------
@@ -252,21 +256,21 @@ public:
       ,offset,value,size);
   }
   //----------------------------------------------------------------------------
-  void CopyFrom(const JArraySpuT* src,size_t size){ 
-    PCopyFrom((const JArraySpu*)src,size); 
+  void CopyFrom(const JArrayCpuT* src,size_t size){ 
+    PCopyFrom((const JArrayCpu*)src,size); 
   }
   //----------------------------------------------------------------------------
   void CopyFrom(const T* src_ptr,size_t size){
     PCopyFromPointer((const void*)src_ptr,size); 
   }
   //----------------------------------------------------------------------------
-  void CopyFromOffset(unsigned dst_offset,const JArraySpuT* src
+  void CopyFromOffset(unsigned dst_offset,const JArrayCpuT* src
     ,unsigned src_offset,size_t size)
   { 
     PCopyFromOffset(
       (void*)(ptr()? ptr()+dst_offset: NULL)
       ,dst_offset
-      ,(const JArraySpu*)src
+      ,(const JArrayCpu*)src
       ,(const void*)(src && src->cptr()? src->cptr()+src_offset: NULL)
       ,src_offset,size); 
   }
@@ -297,49 +301,49 @@ public:
 };
 
 //##############################################################################
-typedef JArraySpuT<byte    ,TypeUchar  ,JArraysCpu::ASIZE_1B>  JArraySpuByte;
-typedef JArraySpuT<word    ,TypeUshort ,JArraysCpu::ASIZE_2B>  JArraySpuWord;
-typedef JArraySpuT<tword4  ,TypeNull   ,JArraysCpu::ASIZE_8B>  JArraySpuWord4;
-typedef JArraySpuT<int     ,TypeInt    ,JArraysCpu::ASIZE_4B>  JArraySpuInt;
-typedef JArraySpuT<unsigned,TypeUint   ,JArraysCpu::ASIZE_4B>  JArraySpuUint;
-typedef JArraySpuT<float   ,TypeFloat  ,JArraysCpu::ASIZE_4B>  JArraySpuFloat;
-typedef JArraySpuT<tfloat2 ,TypeFloat2 ,JArraysCpu::ASIZE_8B>  JArraySpuFloat2;
-typedef JArraySpuT<tfloat3 ,TypeFloat3 ,JArraysCpu::ASIZE_12B> JArraySpuFloat3;
-typedef JArraySpuT<tfloat4 ,TypeFloat4 ,JArraysCpu::ASIZE_16B> JArraySpuFloat4;
-typedef JArraySpuT<double  ,TypeDouble ,JArraysCpu::ASIZE_8B>  JArraySpuDouble;
-typedef JArraySpuT<tdouble2,TypeDouble2,JArraysCpu::ASIZE_16B> JArraySpuDouble2;
-typedef JArraySpuT<tdouble3,TypeDouble3,JArraysCpu::ASIZE_24B> JArraySpuDouble3;
-typedef JArraySpuT<tdouble4,TypeDouble4,JArraysCpu::ASIZE_32B> JArraySpuDouble4;
+typedef JArrayCpuT<byte    ,TypeUchar  ,JArraysCpu::ASIZE_1B>  JArrayCpuByte;
+typedef JArrayCpuT<word    ,TypeUshort ,JArraysCpu::ASIZE_2B>  JArrayCpuWord;
+typedef JArrayCpuT<tword4  ,TypeNull   ,JArraysCpu::ASIZE_8B>  JArrayCpuWord4;
+typedef JArrayCpuT<int     ,TypeInt    ,JArraysCpu::ASIZE_4B>  JArrayCpuInt;
+typedef JArrayCpuT<unsigned,TypeUint   ,JArraysCpu::ASIZE_4B>  JArrayCpuUint;
+typedef JArrayCpuT<float   ,TypeFloat  ,JArraysCpu::ASIZE_4B>  JArrayCpuFloat;
+typedef JArrayCpuT<tfloat2 ,TypeFloat2 ,JArraysCpu::ASIZE_8B>  JArrayCpuFloat2;
+typedef JArrayCpuT<tfloat3 ,TypeFloat3 ,JArraysCpu::ASIZE_12B> JArrayCpuFloat3;
+typedef JArrayCpuT<tfloat4 ,TypeFloat4 ,JArraysCpu::ASIZE_16B> JArrayCpuFloat4;
+typedef JArrayCpuT<double  ,TypeDouble ,JArraysCpu::ASIZE_8B>  JArrayCpuDouble;
+typedef JArrayCpuT<tdouble2,TypeDouble2,JArraysCpu::ASIZE_16B> JArrayCpuDouble2;
+typedef JArrayCpuT<tdouble3,TypeDouble3,JArraysCpu::ASIZE_24B> JArrayCpuDouble3;
+typedef JArrayCpuT<tdouble4,TypeDouble4,JArraysCpu::ASIZE_32B> JArrayCpuDouble4;
 
-typedef JArraySpuT<tmatrix2d  ,TypeNull,JArraysCpu::ASIZE_32B> JArraySpuMatrix2d;    // ***Use TypeNull***
-typedef JArraySpuT<tmatrix3d  ,TypeNull,JArraysCpu::ASIZE_72B> JArraySpuMatrix3d;    // ***Use TypeNull***
-typedef JArraySpuT<tsymatrix3f,TypeNull,JArraysCpu::ASIZE_24B> JArraySpuSymMatrix3f; // ***Use TypeNull***
+typedef JArrayCpuT<tmatrix2d  ,TypeNull,JArraysCpu::ASIZE_32B> JArrayCpuMatrix2d;    // ***Use TypeNull***
+typedef JArrayCpuT<tmatrix3d  ,TypeNull,JArraysCpu::ASIZE_72B> JArrayCpuMatrix3d;    // ***Use TypeNull***
+typedef JArrayCpuT<tsymatrix3f,TypeNull,JArraysCpu::ASIZE_24B> JArrayCpuSymMatrix3f; // ***Use TypeNull***
 
 //##############################################################################
-typedef JArraySpuByte     acbyte;
-typedef JArraySpuWord     acword;
-typedef JArraySpuWord4    acword4;
-typedef JArraySpuInt      acint;
-typedef JArraySpuUint     acuint;
-typedef JArraySpuFloat    acfloat;
-typedef JArraySpuFloat2   acfloat2;
-typedef JArraySpuFloat3   acfloat3;
-typedef JArraySpuFloat4   acfloat4;
-typedef JArraySpuDouble   acdouble;
-typedef JArraySpuDouble2  acdouble2;
-typedef JArraySpuDouble3  acdouble3;
-typedef JArraySpuDouble4  acdouble4;
-typedef JArraySpuMatrix2d acmatrix2d;
-typedef JArraySpuMatrix3d acmatrix3d;
-typedef JArraySpuSymMatrix3f acsymatrix3f;
+typedef JArrayCpuByte     acbyte;
+typedef JArrayCpuWord     acword;
+typedef JArrayCpuWord4    acword4;
+typedef JArrayCpuInt      acint;
+typedef JArrayCpuUint     acuint;
+typedef JArrayCpuFloat    acfloat;
+typedef JArrayCpuFloat2   acfloat2;
+typedef JArrayCpuFloat3   acfloat3;
+typedef JArrayCpuFloat4   acfloat4;
+typedef JArrayCpuDouble   acdouble;
+typedef JArrayCpuDouble2  acdouble2;
+typedef JArrayCpuDouble3  acdouble3;
+typedef JArrayCpuDouble4  acdouble4;
+typedef JArrayCpuMatrix2d acmatrix2d;
+typedef JArrayCpuMatrix3d acmatrix3d;
+typedef JArrayCpuSymMatrix3f acsymatrix3f;
 
 //-Code type (typecode) size 2-bytes or 4-bytes is defined in DualSphDef.h
 #ifdef CODE_SIZE4  
-  typedef JArraySpuUint JArraySpuTypecode;
-  typedef JArraySpuUint actypecode;
+  typedef JArrayCpuUint JArrayCpuTypecode;
+  typedef JArrayCpuUint actypecode;
 #else
-  typedef JArraySpuWord JArraySpuTypecode;
-  typedef JArraySpuWord actypecode;
+  typedef JArrayCpuWord JArrayCpuTypecode;
+  typedef JArrayCpuWord actypecode;
 #endif
 
 #endif

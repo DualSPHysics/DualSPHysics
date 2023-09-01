@@ -70,6 +70,20 @@ void JArraysGpuList::Reset(){
   CountUsedMax=0;
   ArraySize=0;
 }
+ 
+//==============================================================================
+/// Muestra informacion de los arrays con memoria reservada.
+/// Prints information on arrays with reserved memory.
+//==============================================================================
+void JArraysGpuList::PrintArraysInfo()const{
+  for(unsigned c=0;c<Count;c++)if(PointersAr[c]){
+    const JArrayGpu* ar=PointersAr[c];
+    Head->Log->Printf("        \"%s\" => ptrid:%2u  ptr:%p"
+      ,ar->Name.c_str(),ar->PtrId,ar->Ptr);
+    if(ar->PtrId!=c)Run_Exceptioon("PtrId value does not match.");
+    if(ar->Ptr!=Pointers[c])Run_Exceptioon("Ptr value does not match.");
+  }
+}
 
 //==============================================================================
 /// Frees CPU memory allocated and initialise variables for saving GPU data.
@@ -87,7 +101,7 @@ void JArraysGpuList::ResetDataCpu(){
 /// Frees allocated memory.
 //==============================================================================
 void JArraysGpuList::FreeMemory(){
-  //-Remove allocations to JArrayXpu objects.
+  //-Remove allocations to JArrayGpu objects.
   for(unsigned c=0;c<Count;c++)if(PointersAr[c])PointersAr[c]->Free();
   //-Free GPU memory in Pointers[].
   for(unsigned c=0;c<Count;c++)if(Pointers[c]){ 
@@ -167,6 +181,37 @@ void JArraysGpuList::SetArrayCount(unsigned count){
 }
 
 //==============================================================================
+/// Frees memory of unused allocated arrays.
+//==============================================================================
+void JArraysGpuList::FreeUnusedArrays(){
+  if(GetArrayCountUsed()){
+    unsigned nused=0;
+    //-Groups arrays in use at the beginning of the list.
+    for(unsigned c=0;c<Count;c++){
+      if(PointersAr[c]){//-In use.
+        if(c!=nused){
+          Pointers[nused]=Pointers[c];
+          PointersAr[nused]=PointersAr[c];
+          PointersAr[nused]->AssignReserve(Pointers[nused],nused);
+          Pointers[c]=NULL;
+          PointersAr[c]=NULL;
+        }
+        nused++;
+      }
+      else{//-Not in use.
+        cudaFree(Pointers[c]);
+        Pointers[c]=NULL;
+        Check_CudaErroor("Failed to free GPU memory.");
+      }
+    }
+    //-Update variables on unused arrays and Count.
+    CountUnused=0;
+    for(unsigned c=0;c<Count;c++)PointersUnused[c]=0;
+    Count=nused;
+  }
+}
+
+//==============================================================================
 /// Changes the number of allocated elements in the arrays.
 /// If there is any array in use raises an exception.
 //==============================================================================
@@ -187,7 +232,7 @@ void JArraysGpuList::SetArraySize(unsigned size){
 //==============================================================================
 /// Requests an allocated array.
 //==============================================================================
-void JArraysGpuList::Reserve(JArrayXpu* ar){
+void JArraysGpuList::Reserve(JArrayGpu* ar){
   if(!ArraySize)Run_Exceptioon(fun::PrintStr("There are no allocated memory for array \'%s\'.",ar->Name.c_str()));
   if(!CountUnused && AutoAddArrays)SetArrayCount(Count+1);
   if(!CountUnused)Run_Exceptioon(fun::PrintStr("There are no arrays available of %u bytes for array \'%s\'.",ValueSize,ar->Name.c_str()));
@@ -203,7 +248,7 @@ void JArraysGpuList::Reserve(JArrayXpu* ar){
 //==============================================================================
 /// Frees an allocated array.
 //==============================================================================
-void JArraysGpuList::Free(JArrayXpu* ar){
+void JArraysGpuList::Free(JArrayGpu* ar){
   const unsigned ptrid=ar->PtrId;
   if(ptrid>=Count || ar->Ptr!=Pointers[ptrid] || ar!=PointersAr[ptrid])
     Run_Exceptioon(fun::PrintStr("Error: Array was not reserved for array \'%s\'.",ar->Name.c_str()));
@@ -216,7 +261,7 @@ void JArraysGpuList::Free(JArrayXpu* ar){
 //==============================================================================
 /// Swap Ptr and PtrId data between objects.
 //==============================================================================
-void JArraysGpuList::SwapPtr(JArrayXpu* ar1,JArrayXpu* ar2){
+void JArraysGpuList::SwapPtr(JArrayGpu* ar1,JArrayGpu* ar2){
   void* ptr1=ar1->Ptr;
   unsigned ptrid1=ar1->PtrId;
   void* ptr2=ar2->Ptr;
@@ -323,14 +368,15 @@ llong JArraysGpu::GetAllocMemoryGpu()const{
 /// Muestra la memoria reservada de cada tipo de array.
 /// Prints the allocated memory by each array.
 //==============================================================================
-void JArraysGpu::PrintAllocMemory(bool all)const{ 
+void JArraysGpu::PrintAllocMemory(bool emptyblocks,bool arrayinfo)const{ 
   Log->Printf("Allocated memory for %s:",ClassName.c_str());
   for(unsigned a=0;a<MAX_ASIZE;a++){
     const JArraysGpuList* ar=ArraysList[a];
-    if(all || ar->GetArrayCount() || ar->GetArrayCountUsedMax()){
+    if(emptyblocks || ar->GetArrayCount() || ar->GetArrayCountUsedMax()){
       Log->Printf("  %2dB x [%u] x %2d = %7.2f MiB (used:%d maxused:%d)",ar->ValueSize,ar->GetArraySize()
         ,ar->GetArrayCount(),double(ar->GetAllocMemoryGpu())/MEBIBYTE
         ,ar->GetArrayCountUsed(),ar->GetArrayCountUsedMax());
+      if(arrayinfo)ar->PrintArraysInfo();
     }
   }
   Log->Printf("  Total = %.2f MiB",double(GetAllocMemoryGpu())/MEBIBYTE);
@@ -373,6 +419,13 @@ void JArraysGpu::AddArrayCount(TpASizeId asize,unsigned count){
 }
 
 //==============================================================================
+/// Frees memory of unused allocated arrays.
+//==============================================================================
+void JArraysGpu::FreeUnusedArrays(){
+  for(unsigned a=0;a<MAX_ASIZE;a++)ArraysList[a]->FreeUnusedArrays(); 
+}
+
+//==============================================================================
 /// Cambia el numero de elementos de los arrays.
 /// Si hay algun array en uso lanza una excepcion.
 /// Changes the number of elements in the arrays.
@@ -394,7 +447,7 @@ void JArraysGpu::SetArraySize(unsigned size){
 void JArraysGpu::SetDataArraySize(unsigned newsize,unsigned savesizedata){
   #ifdef DG_ARRXPU_PRINT
     Log->Printf("ARRXPU_JArraysGpu>  SetDataArraySize( newsize:%d savesizedata:%d )",newsize,savesizedata);
-    PrintAllocMemory(false);
+    PrintAllocMemory(false,false);
   #endif
   if(savesizedata>GetArraySize() || savesizedata>newsize)Run_Exceptioon("Size of data to save is higher than the current size or the new size.");
   //-Saves data on CPU memory and free GPU memory.
@@ -406,12 +459,12 @@ void JArraysGpu::SetDataArraySize(unsigned newsize,unsigned savesizedata){
 
 
 //##############################################################################
-//# JArrayXpu
+//# JArrayGpu
 //##############################################################################
 //==============================================================================
 /// Constructor.
 //==============================================================================
-JArrayXpu::JArrayXpu(const std::string& name,TpTypeData type
+JArrayGpu::JArrayGpu(const std::string& name,TpTypeData type
   ,JArraysGpu::TpASizeId asize,JArraysGpu* head,bool reserve)
   :Name(name),Type(type),Head(head),ArraysList(NULL)
 {
@@ -420,17 +473,17 @@ JArrayXpu::JArrayXpu(const std::string& name,TpTypeData type
   Ptr=NULL;
   DataCpu=NULL;
   #ifdef DG_ARRXPU_PRINT
-    Head->Log->Printf("ARRXPU_JArrayXpu>  Create array \'%s\'",Name.c_str());
+    Head->Log->Printf("ARRXPU_JArrayGpu>  Create array \'%s\'",Name.c_str());
   #endif
   if(reserve)Reserve();
 }
 //==============================================================================
 /// Destructor.
 //==============================================================================
-JArrayXpu::~JArrayXpu(){
+JArrayGpu::~JArrayGpu(){
   Free();
   #ifdef DG_ARRXPU_PRINT
-    Head->Log->Printf("ARRXPU_JArrayXpu>  Destroy array \'%s\'",Name.c_str());
+    Head->Log->Printf("ARRXPU_JArrayGpu>  Destroy array \'%s\'",Name.c_str());
   #endif
   Head=NULL;
   ArraysList=NULL;
@@ -438,7 +491,7 @@ JArrayXpu::~JArrayXpu(){
 //==============================================================================
 /// Returns the object identification for exception message and debug.
 //==============================================================================
-std::string JArrayXpu::ObjectId()const{
+std::string JArrayGpu::ObjectId()const{
   string id=fun::PrintStr("JArraysGpu_%dB.",(ArraysList? ArraysList->ValueSize: 0))+Name;
   if(Head && Head->Id>=0)id=id+fun::PrintStr("[g%u]",Head->Id);
   return(id);
@@ -446,21 +499,21 @@ std::string JArrayXpu::ObjectId()const{
 //==============================================================================
 /// Assigns the reserve by JArraysGpuList object.
 //==============================================================================
-void JArrayXpu::AssignReserve(void* ptr,unsigned ptrid){
+void JArrayGpu::AssignReserve(void* ptr,unsigned ptrid){
   Ptr=ptr;
   PtrId=ptrid;
 }
 //==============================================================================
 /// Clears the reserve by JArraysGpuList object.
 //==============================================================================
-void JArrayXpu::ClearReserve(){
+void JArrayGpu::ClearReserve(){
   Ptr=NULL;
   PtrId=UINT_MAX;
 }
 //==============================================================================
 /// Swap Ptr and PtrId data between objects.
 //==============================================================================
-void JArrayXpu::PSwapPtr(JArrayXpu* ar){
+void JArrayGpu::PSwapPtr(JArrayGpu* ar){
   if(this!=ar){
     if(ar==NULL)Run_Exceptioon("Invalid array for swap.");
     if(ArraysList!=ar->ArraysList)
@@ -474,7 +527,7 @@ void JArrayXpu::PSwapPtr(JArrayXpu* ar){
 //==============================================================================
 /// Run cudaMemset with Ptr using offset.
 //==============================================================================
-void JArrayXpu::PMemsetOffset(void* ptr_offset,unsigned offset,byte value
+void JArrayGpu::PMemsetOffset(void* ptr_offset,unsigned offset,byte value
   ,size_t size)
 {
   if(!Active())Run_Exceptioon("Invalid pointer.");
@@ -485,7 +538,7 @@ void JArrayXpu::PMemsetOffset(void* ptr_offset,unsigned offset,byte value
 //==============================================================================
 /// Copy data from src array.
 //==============================================================================
-void JArrayXpu::PCopyFrom(const JArrayXpu* src,size_t size){
+void JArrayGpu::PCopyFrom(const JArrayGpu* src,size_t size){
   if(this!=src){
     if(!Active() || src==NULL || !src->Active())Run_Exceptioon("Invalid arrays or pointers.");
     if(GetValueSize()!=src->GetValueSize())Run_Exceptioon("Size element does not match.");
@@ -496,8 +549,8 @@ void JArrayXpu::PCopyFrom(const JArrayXpu* src,size_t size){
 //==============================================================================
 /// Copy data from src array using offsets.
 //==============================================================================
-void JArrayXpu::PCopyFromOffset(void* dst_ptr,unsigned dst_offset
-  ,const JArrayXpu* src,const void* src_ptr,unsigned src_offset,size_t size)
+void JArrayGpu::PCopyFromOffset(void* dst_ptr,unsigned dst_offset
+  ,const JArrayGpu* src,const void* src_ptr,unsigned src_offset,size_t size)
 {
   if(!Active() || src==NULL || src_ptr==NULL)Run_Exceptioon("Invalid arrays or pointers.");
   if(GetValueSize()!=src->GetValueSize())Run_Exceptioon("Size element does not match.");
@@ -507,7 +560,7 @@ void JArrayXpu::PCopyFromOffset(void* dst_ptr,unsigned dst_offset
 //==============================================================================
 /// Copy data from src pointer.
 //==============================================================================
-void JArrayXpu::PCopyFromPointer(const void* src_ptr,size_t size){
+void JArrayGpu::PCopyFromPointer(const void* src_ptr,size_t size){
   if(!Active() || src_ptr==NULL)Run_Exceptioon("Invalid arrays or pointers.");
   if(size>GetSize())Run_Exceptioon("Invalid size.");
   cudaMemcpy(Ptr,src_ptr,Sizeof()*size,cudaMemcpyDeviceToDevice);
@@ -515,7 +568,7 @@ void JArrayXpu::PCopyFromPointer(const void* src_ptr,size_t size){
 //==============================================================================
 /// Copy data from src pointer using offsets.
 //==============================================================================
-void JArrayXpu::PCopyFromPointerOffset(void* dst_ptr,unsigned dst_offset
+void JArrayGpu::PCopyFromPointerOffset(void* dst_ptr,unsigned dst_offset
   ,const void* src_ptr,unsigned src_offset,size_t size)
 {
   if(!Active() || src_ptr==NULL)Run_Exceptioon("Invalid arrays or pointers.");
@@ -526,7 +579,7 @@ void JArrayXpu::PCopyFromPointerOffset(void* dst_ptr,unsigned dst_offset
 //==============================================================================
 /// Copy data to dst pointer.
 //==============================================================================
-void JArrayXpu::PCopyTo(void* dst_ptr,size_t size)const{
+void JArrayGpu::PCopyTo(void* dst_ptr,size_t size)const{
   if(!Active() || dst_ptr==NULL)Run_Exceptioon("Invalid arrays or pointers.");
   if(size>GetSize())Run_Exceptioon("Invalid size.");
   cudaMemcpy(dst_ptr,Ptr,Sizeof()*size,cudaMemcpyDeviceToDevice);
@@ -534,7 +587,7 @@ void JArrayXpu::PCopyTo(void* dst_ptr,size_t size)const{
 //==============================================================================
 /// Copy data to dst pointer using offsets.
 //==============================================================================
-void JArrayXpu::PCopyToOffset(const void* src_ptr,unsigned src_offset
+void JArrayGpu::PCopyToOffset(const void* src_ptr,unsigned src_offset
   ,void* dst_ptr,size_t size)const
 {
   if(!Active() || dst_ptr==NULL)Run_Exceptioon("Invalid arrays or pointers.");
@@ -545,7 +598,7 @@ void JArrayXpu::PCopyToOffset(const void* src_ptr,unsigned src_offset
 //==============================================================================
 /// Copy gpu data to cpu array (dst).
 //==============================================================================
-void JArrayXpu::PCopyToHost(JArraySpu* dst,size_t size)const{
+void JArrayGpu::PCopyToHost(JArrayCpu* dst,size_t size)const{
   if(!Active() || dst==NULL || !dst->Active())Run_Exceptioon("Invalid arrays or pointers.");
   if(GetValueSize()!=dst->GetValueSize())Run_Exceptioon("Size element does not match.");
   if(size>GetSize() || size>dst->GetSize())Run_Exceptioon("Invalid size.");
@@ -554,7 +607,7 @@ void JArrayXpu::PCopyToHost(JArraySpu* dst,size_t size)const{
 //==============================================================================
 /// Copy gpu data to cpu pointer (dst_ptr).
 //==============================================================================
-void JArrayXpu::PCopyToHostPointer(void* dst_ptr,size_t size)const{
+void JArrayGpu::PCopyToHostPointer(void* dst_ptr,size_t size)const{
   if(!Active() || dst_ptr==NULL)Run_Exceptioon("Invalid arrays or pointers.");
   if(size>GetSize())Run_Exceptioon("Invalid size.");
   cudaMemcpy(dst_ptr,Ptr,Sizeof()*size,cudaMemcpyDeviceToHost);
@@ -562,8 +615,8 @@ void JArrayXpu::PCopyToHostPointer(void* dst_ptr,size_t size)const{
 //==============================================================================
 /// Copy gpu data to cpu array (dst) using offset.
 //==============================================================================
-void JArrayXpu::PCopyToHostOffset(const void* src_ptr,unsigned src_offset
-  ,JArraySpu* dst,void* dst_ptr,unsigned dst_offset,size_t size)const
+void JArrayGpu::PCopyToHostOffset(const void* src_ptr,unsigned src_offset
+  ,JArrayCpu* dst,void* dst_ptr,unsigned dst_offset,size_t size)const
 {
   if(!Active() || dst==NULL || !dst->Active())Run_Exceptioon("Invalid arrays or pointers.");
   if(GetValueSize()!=dst->GetValueSize())Run_Exceptioon("Size element does not match.");
@@ -573,7 +626,7 @@ void JArrayXpu::PCopyToHostOffset(const void* src_ptr,unsigned src_offset
 //==============================================================================
 /// Copy gpu data to cpu pointer (dst_ptr) using offset.
 //==============================================================================
-void JArrayXpu::PCopyToHostPointerOffset(const void* src_ptr,unsigned src_offset
+void JArrayGpu::PCopyToHostPointerOffset(const void* src_ptr,unsigned src_offset
   ,void* dst_ptr,unsigned dst_offset,size_t size)const
 {
   if(!Active() || dst_ptr==NULL)Run_Exceptioon("Invalid arrays or pointers.");
@@ -584,7 +637,7 @@ void JArrayXpu::PCopyToHostPointerOffset(const void* src_ptr,unsigned src_offset
 //==============================================================================
 /// Copy from cpu array (src) to GPU.
 //==============================================================================
-void JArrayXpu::PCopyFromHost(const JArraySpu* src,size_t size){
+void JArrayGpu::PCopyFromHost(const JArrayCpu* src,size_t size){
   if(!Active() || src==NULL || !src->Active())Run_Exceptioon("Invalid arrays or pointers.");
   if(GetValueSize()!=src->GetValueSize())Run_Exceptioon("Size element does not match.");
   if(size>GetSize() || size>src->GetSize())Run_Exceptioon("Invalid size.");
@@ -593,7 +646,7 @@ void JArrayXpu::PCopyFromHost(const JArraySpu* src,size_t size){
 //==============================================================================
 /// Copy from cpu pointer (src_ptr) to GPU.
 //==============================================================================
-void JArrayXpu::PCopyFromHostPointer(const void* src_ptr,size_t size){
+void JArrayGpu::PCopyFromHostPointer(const void* src_ptr,size_t size){
   if(!Active() || src_ptr==NULL)Run_Exceptioon("Invalid arrays or pointers.");
   if(size>GetSize())Run_Exceptioon("Invalid size.");
   cudaMemcpy(Ptr,src_ptr,Sizeof()*size,cudaMemcpyHostToDevice);
@@ -601,8 +654,8 @@ void JArrayXpu::PCopyFromHostPointer(const void* src_ptr,size_t size){
 //==============================================================================
 /// Copy from cpu array (src) to GPU using offset.
 //==============================================================================
-void JArrayXpu::PCopyFromHostOffset(void* dst_ptr,unsigned dst_offset
-  ,const JArraySpu* src,const void* src_ptr,unsigned src_offset,size_t size)
+void JArrayGpu::PCopyFromHostOffset(void* dst_ptr,unsigned dst_offset
+  ,const JArrayCpu* src,const void* src_ptr,unsigned src_offset,size_t size)
 {
   if(!Active() || src==NULL || !src->Active())Run_Exceptioon("Invalid arrays or pointers.");
   if(GetValueSize()!=src->GetValueSize())Run_Exceptioon("Size element does not match.");
@@ -612,7 +665,7 @@ void JArrayXpu::PCopyFromHostOffset(void* dst_ptr,unsigned dst_offset
 //==============================================================================
 /// Copy gpu data to cpu pointer (dst_ptr) using offset.
 //==============================================================================
-void JArrayXpu::PCopyFromHostPointerOffset(void* dst_ptr,unsigned dst_offset
+void JArrayGpu::PCopyFromHostPointerOffset(void* dst_ptr,unsigned dst_offset
   ,const void* src_ptr,unsigned scr_offset,size_t size)
 {
   if(!Active() || src_ptr==NULL)Run_Exceptioon("Invalid arrays or pointers.");
@@ -624,12 +677,12 @@ void JArrayXpu::PCopyFromHostPointerOffset(void* dst_ptr,unsigned dst_offset
 //==============================================================================
 /// Requests an allocated array (and frees CPU memory).
 //==============================================================================
-void JArrayXpu::Reserve(){
+void JArrayGpu::Reserve(){
   if(!Ptr){
     if(DataCpu)DataFree();
     ArraysList->Reserve(this);
     #ifdef DG_ARRXPU_PRINT
-      Head->Log->Printf("ARRXPU_JArrayXpu>  Reserve array_%uB \'%s\' ptr:%d_%p"
+      Head->Log->Printf("ARRXPU_JArrayGpu>  Reserve array_%uB \'%s\' ptr:%d_%p"
         ,ArraysList->ValueSize,Name.c_str(),PtrId,Ptr);
     #endif
   }
@@ -637,11 +690,11 @@ void JArrayXpu::Reserve(){
 //==============================================================================
 /// Frees an allocated array (and frees CPU memory).
 //==============================================================================
-void JArrayXpu::Free(){
+void JArrayGpu::Free(){
   if(DataCpu)DataFree();
   if(Ptr){
     #ifdef DG_ARRXPU_PRINT
-      Head->Log->Printf("ARRXPU_JArrayXpu>  Free array_%uB \'%s\' ptr:%d_%p"
+      Head->Log->Printf("ARRXPU_JArrayGpu>  Free array_%uB \'%s\' ptr:%d_%p"
         ,ArraysList->ValueSize,Name.c_str(),PtrId,Ptr);
     #endif
     ArraysList->Free(this);
@@ -650,7 +703,7 @@ void JArrayXpu::Free(){
 //==============================================================================
 /// Run cudaMemset with Ptr.
 //==============================================================================
-void JArrayXpu::CuMemset(byte value,size_t size){
+void JArrayGpu::CuMemset(byte value,size_t size){
   if(!Active())Run_Exceptioon("Invalid pointer.");
   if(size>GetSize())Run_Exceptioon("Invalid size.");
   cudaMemset(Ptr,value,Sizeof()*size);
@@ -660,7 +713,7 @@ void JArrayXpu::CuMemset(byte value,size_t size){
 //==============================================================================
 /// Allocates CPU memory for data copy.
 //==============================================================================
-void JArrayXpu::DataAlloc(){
+void JArrayGpu::DataAlloc(){
   if(!Ptr)Run_Exceptioon(fun::PrintStr("Array_%uB \'%s\' is not active."
     ,ArraysList->ValueSize,Name.c_str()));
   if(!DataCpu)DataCpu=ArraysList->AllocCpuMemory(GetSize());
@@ -668,7 +721,7 @@ void JArrayXpu::DataAlloc(){
 //==============================================================================
 /// Frees allocated CPU memory for data.
 //==============================================================================
-void JArrayXpu::DataFree(){
+void JArrayGpu::DataFree(){
   if(DataCpu){
     ArraysList->FreeCpuMemory(DataCpu);
     DataCpu=NULL;
@@ -677,7 +730,7 @@ void JArrayXpu::DataFree(){
 //==============================================================================
 /// Allocates CPU memory and copy data from GPU memory.
 //==============================================================================
-void JArrayXpu::DataDown(unsigned ndata){
+void JArrayGpu::DataDown(unsigned ndata){
   if(ndata>GetSize())Run_Exceptioon(fun::PrintStr("Array_%uB \'%s\' does not have the requested amount of data."
     ,ArraysList->ValueSize,Name.c_str()));
   DataAlloc();

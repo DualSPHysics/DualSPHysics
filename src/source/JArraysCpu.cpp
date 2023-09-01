@@ -64,12 +64,26 @@ void JArraysCpuList::Reset(){
   CountUsedMax=0;
   ArraySize=0;
 }
+ 
+//==============================================================================
+/// Muestra informacion de los arrays con memoria reservada.
+/// Prints information on arrays with reserved memory.
+//==============================================================================
+void JArraysCpuList::PrintArraysInfo()const{
+  for(unsigned c=0;c<Count;c++)if(PointersAr[c]){
+    const JArrayCpu* ar=PointersAr[c];
+    Head->Log->Printf("        \"%s\" => ptrid:%2u  ptr:%p"
+      ,ar->Name.c_str(),ar->PtrId,ar->Ptr);
+    if(ar->PtrId!=c)Run_Exceptioon("PtrId value does not match.");
+    if(ar->Ptr!=Pointers[c])Run_Exceptioon("Ptr value does not match.");
+  }
+}
 
 //==============================================================================
 /// Frees allocated memory.
 //==============================================================================
 void JArraysCpuList::FreeMemory(){
-  //-Remove allocations to JArraySpu objects.
+  //-Remove allocations to JArrayCpu objects.
   for(unsigned c=0;c<Count;c++)if(PointersAr[c])PointersAr[c]->Free();
   //-Free CPU memory in Pointers[].
   for(unsigned c=0;c<Count;c++)if(Pointers[c]){
@@ -148,6 +162,36 @@ void JArraysCpuList::SetArrayCount(unsigned count){
 }
 
 //==============================================================================
+/// Frees memory of unused allocated arrays.
+//==============================================================================
+void JArraysCpuList::FreeUnusedArrays(){
+  if(GetArrayCountUsed()){
+    unsigned nused=0;
+    //-Groups arrays in use at the beginning of the list.
+    for(unsigned c=0;c<Count;c++){
+      if(PointersAr[c]){//-In use.
+        if(c!=nused){
+          Pointers[nused]=Pointers[c];
+          PointersAr[nused]=PointersAr[c];
+          PointersAr[nused]->AssignReserve(Pointers[nused],nused);
+          Pointers[c]=NULL;
+          PointersAr[c]=NULL;
+        }
+        nused++;
+      }
+      else{//-Not in use.
+        FreeCpuMemory(Pointers[c]);
+        Pointers[c]=NULL;
+      }
+    }
+    //-Update variables on unused arrays and Count.
+    CountUnused=0;
+    for(unsigned c=0;c<Count;c++)PointersUnused[c]=0;
+    Count=nused;
+  }
+}
+
+//==============================================================================
 /// Changes the number of allocated elements in the arrays.
 /// If there is any array in use raises an exception.
 //==============================================================================
@@ -168,7 +212,7 @@ void JArraysCpuList::SetArraySize(unsigned size){
 //==============================================================================
 /// Requests an allocated array.
 //==============================================================================
-void JArraysCpuList::Reserve(JArraySpu* ar){
+void JArraysCpuList::Reserve(JArrayCpu* ar){
   if(!ArraySize)Run_Exceptioon(fun::PrintStr("There are no allocated memory for array \'%s\'.",ar->Name.c_str()));
   if(!CountUnused && AutoAddArrays)SetArrayCount(Count+1);
   if(!CountUnused)Run_Exceptioon(fun::PrintStr("There are no arrays available of %u bytes for array \'%s\'.",ValueSize,ar->Name.c_str()));
@@ -184,7 +228,7 @@ void JArraysCpuList::Reserve(JArraySpu* ar){
 //==============================================================================
 /// Frees an allocated array.
 //==============================================================================
-void JArraysCpuList::Free(JArraySpu* ar){
+void JArraysCpuList::Free(JArrayCpu* ar){
   const unsigned ptrid=ar->PtrId;
   if(ptrid>=Count || ar->Ptr!=Pointers[ptrid] || ar!=PointersAr[ptrid])
     Run_Exceptioon(fun::PrintStr("Error: Array was not reserved for array \'%s\'.",ar->Name.c_str()));
@@ -197,7 +241,7 @@ void JArraysCpuList::Free(JArraySpu* ar){
 //==============================================================================
 /// Swap Ptr and PtrId data between objects.
 //==============================================================================
-void JArraysCpuList::SwapPtr(JArraySpu* ar1,JArraySpu* ar2){
+void JArraysCpuList::SwapPtr(JArrayCpu* ar1,JArrayCpu* ar2){
   void* ptr1=ar1->Ptr;
   unsigned ptrid1=ar1->PtrId;
   void* ptr2=ar2->Ptr;
@@ -214,7 +258,7 @@ void JArraysCpuList::SwapPtr(JArraySpu* ar1,JArraySpu* ar2){
 //==============================================================================
 void JArraysCpuList::SetDataArraySize(unsigned newsize,unsigned savesizedata){
   if(savesizedata>ArraySize)Run_Exceptioon("Size of data to save is invalid.");
-  //-Resize arrays and update Ptr in JArraySpuXXX.
+  //-Resize arrays and update Ptr in JArrayCpuXXX.
   unsigned nsave=0;
   for(unsigned c=0;c<Count;c++){ 
     void* ptrnew=AllocCpuMemory(newsize);
@@ -279,14 +323,15 @@ llong JArraysCpu::GetAllocMemoryCpu()const{
 /// Muestra la memoria reservada de cada tipo de array.
 /// Prints the allocated memory by each array.
 //==============================================================================
-void JArraysCpu::PrintAllocMemory(bool all)const{ 
+void JArraysCpu::PrintAllocMemory(bool emptyblocks,bool arrayinfo)const{ 
   Log->Printf("Allocated memory for %s:",ClassName.c_str());
   for(unsigned a=0;a<MAX_ASIZE;a++){
     const JArraysCpuList* ar=ArraysList[a];
-    if(all || ar->GetArrayCount() || ar->GetArrayCountUsedMax()){
+    if(emptyblocks || ar->GetArrayCount() || ar->GetArrayCountUsedMax()){
       Log->Printf("  %2dB x [%u] x %2d = %7.2f MiB (used:%d maxused:%d)",ar->ValueSize,ar->GetArraySize()
         ,ar->GetArrayCount(),double(ar->GetAllocMemoryCpu())/MEBIBYTE
         ,ar->GetArrayCountUsed(),ar->GetArrayCountUsedMax());
+      if(arrayinfo)ar->PrintArraysInfo();
     }
   }
   Log->Printf("  Total = %.2f MiB",double(GetAllocMemoryCpu())/MEBIBYTE);
@@ -329,6 +374,13 @@ void JArraysCpu::AddArrayCount(TpASizeId asize,unsigned count){
 }
 
 //==============================================================================
+/// Frees memory of unused allocated arrays.
+//==============================================================================
+void JArraysCpu::FreeUnusedArrays(){
+  for(unsigned a=0;a<MAX_ASIZE;a++)ArraysList[a]->FreeUnusedArrays(); 
+}
+
+//==============================================================================
 /// Cambia el numero de elementos de los arrays.
 /// Si hay algun array en uso lanza una excepcion.
 /// Changes the number of elements in the arrays.
@@ -348,7 +400,7 @@ void JArraysCpu::SetArraySize(unsigned size){
 void JArraysCpu::SetDataArraySize(unsigned newsize,unsigned savesizedata){
   #ifdef DG_ARRSPU_PRINT
     Log->Printf("ARRSPU_JArraysCpu>  SetDataArraySize( newsize:%d savesizedata:%d )",newsize,savesizedata);
-    PrintAllocMemory(false);
+    PrintAllocMemory(false,false);
   #endif
   if(savesizedata>GetArraySize() || savesizedata>newsize)Run_Exceptioon("Size of data to save is higher than the current size or the new size.");
   //-Resize allocated CPU memory of arrays.
@@ -358,12 +410,12 @@ void JArraysCpu::SetDataArraySize(unsigned newsize,unsigned savesizedata){
 
 
 //##############################################################################
-//# JArraySpu
+//# JArrayCpu
 //##############################################################################
 //==============================================================================
 /// Constructor.
 //==============================================================================
-JArraySpu::JArraySpu(const std::string& name,TpTypeData type
+JArrayCpu::JArrayCpu(const std::string& name,TpTypeData type
   ,JArraysCpu::TpASizeId asize,JArraysCpu* head,bool reserve)
   :Name(name),Type(type),Head(head),ArraysList(NULL)
 {
@@ -371,17 +423,17 @@ JArraySpu::JArraySpu(const std::string& name,TpTypeData type
   PtrId=UINT_MAX;
   Ptr=NULL;
   #ifdef DG_ARRSPU_PRINT
-    Head->Log->Printf("ARRSPU_JArraySpu>  Create array \'%s\'",Name.c_str());
+    Head->Log->Printf("ARRSPU_JArrayCpu>  Create array \'%s\'",Name.c_str());
   #endif
   if(reserve)Reserve();
 }
 //==============================================================================
 /// Destructor.
 //==============================================================================
-JArraySpu::~JArraySpu(){
+JArrayCpu::~JArrayCpu(){
   Free();
   #ifdef DG_ARRSPU_PRINT
-    Head->Log->Printf("ARRSPU_JArraySpu>  Destroy array \'%s\'",Name.c_str());
+    Head->Log->Printf("ARRSPU_JArrayCpu>  Destroy array \'%s\'",Name.c_str());
   #endif
   Head=NULL;
   ArraysList=NULL;
@@ -389,7 +441,7 @@ JArraySpu::~JArraySpu(){
 //==============================================================================
 /// Returns the object identification for exception message and debug.
 //==============================================================================
-std::string JArraySpu::ObjectId()const{
+std::string JArrayCpu::ObjectId()const{
   string id=fun::PrintStr("JArraysCpu_%dB.",(ArraysList? ArraysList->ValueSize: 0))+Name;
   if(Head && Head->Id>=0)id=id+fun::PrintStr("[c%u]",Head->Id);
   return(id);
@@ -397,21 +449,21 @@ std::string JArraySpu::ObjectId()const{
 //==============================================================================
 /// Assigns the reserve by JArraysCpuList object.
 //==============================================================================
-void JArraySpu::AssignReserve(void* ptr,unsigned ptrid){
+void JArrayCpu::AssignReserve(void* ptr,unsigned ptrid){
   Ptr=ptr;
   PtrId=ptrid;
 }
 //==============================================================================
 /// Clears the reserve by JArraysCpuList object.
 //==============================================================================
-void JArraySpu::ClearReserve(){
+void JArrayCpu::ClearReserve(){
   Ptr=NULL;
   PtrId=UINT_MAX;
 }
 //==============================================================================
 /// Swap Ptr and PtrId data between objects.
 //==============================================================================
-void JArraySpu::PSwapPtr(JArraySpu* ar){
+void JArrayCpu::PSwapPtr(JArrayCpu* ar){
   if(this!=ar){
     if(ar==NULL)Run_Exceptioon("Invalid array for swap.");
     if(ArraysList!=ar->ArraysList)
@@ -423,7 +475,7 @@ void JArraySpu::PSwapPtr(JArraySpu* ar){
 //==============================================================================
 /// Run memset with Ptr using offset.
 //==============================================================================
-void JArraySpu::PMemsetOffset(void* ptr_offset,unsigned offset,byte value
+void JArrayCpu::PMemsetOffset(void* ptr_offset,unsigned offset,byte value
   ,size_t size)
 {
   if(!Active())Run_Exceptioon("Invalid pointer.");
@@ -434,7 +486,7 @@ void JArraySpu::PMemsetOffset(void* ptr_offset,unsigned offset,byte value
 //==============================================================================
 /// Copy data from src array.
 //==============================================================================
-void JArraySpu::PCopyFrom(const JArraySpu* src,size_t size){
+void JArrayCpu::PCopyFrom(const JArrayCpu* src,size_t size){
   if(this!=src){
     if(!Active() || src==NULL || !src->Active())Run_Exceptioon("Invalid arrays or pointers.");
     if(GetValueSize()!=src->GetValueSize())Run_Exceptioon("Size element does not match.");
@@ -445,8 +497,8 @@ void JArraySpu::PCopyFrom(const JArraySpu* src,size_t size){
 //==============================================================================
 /// Copy data from src array using offsets.
 //==============================================================================
-void JArraySpu::PCopyFromOffset(void* dst_ptr,unsigned dst_offset
-  ,const JArraySpu* src,const void* src_ptr,unsigned src_offset,size_t size)
+void JArrayCpu::PCopyFromOffset(void* dst_ptr,unsigned dst_offset
+  ,const JArrayCpu* src,const void* src_ptr,unsigned src_offset,size_t size)
 {
   if(!Active() || src==NULL || src_ptr==NULL)Run_Exceptioon("Invalid arrays or pointers.");
   if(GetValueSize()!=src->GetValueSize())Run_Exceptioon("Size element does not match.");
@@ -456,7 +508,7 @@ void JArraySpu::PCopyFromOffset(void* dst_ptr,unsigned dst_offset
 //==============================================================================
 /// Copy data from src pointer.
 //==============================================================================
-void JArraySpu::PCopyFromPointer(const void* src_ptr,size_t size){
+void JArrayCpu::PCopyFromPointer(const void* src_ptr,size_t size){
   if(!Active() || src_ptr==NULL)Run_Exceptioon("Invalid arrays or pointers.");
   if(size>GetSize())Run_Exceptioon("Invalid size.");
   memcpy(Ptr,src_ptr,Sizeof()*size);
@@ -464,7 +516,7 @@ void JArraySpu::PCopyFromPointer(const void* src_ptr,size_t size){
 //==============================================================================
 /// Copy data from src pointer using offsets.
 //==============================================================================
-void JArraySpu::PCopyFromPointerOffset(void* dst_ptr,unsigned dst_offset
+void JArrayCpu::PCopyFromPointerOffset(void* dst_ptr,unsigned dst_offset
   ,const void* src_ptr,unsigned src_offset,size_t size)
 {
   if(!Active() || src_ptr==NULL)Run_Exceptioon("Invalid arrays or pointers.");
@@ -474,7 +526,7 @@ void JArraySpu::PCopyFromPointerOffset(void* dst_ptr,unsigned dst_offset
 //==============================================================================
 /// Copy data to dst pointer.
 //==============================================================================
-void JArraySpu::PCopyTo(void* dst_ptr,size_t size)const{
+void JArrayCpu::PCopyTo(void* dst_ptr,size_t size)const{
   if(!Active() || dst_ptr==NULL)Run_Exceptioon("Invalid arrays or pointers.");
   if(size>GetSize())Run_Exceptioon("Invalid size.");
   memcpy(dst_ptr,Ptr,Sizeof()*size);
@@ -482,7 +534,7 @@ void JArraySpu::PCopyTo(void* dst_ptr,size_t size)const{
 //==============================================================================
 /// Copy data to dst pointer using offsets.
 //==============================================================================
-void JArraySpu::PCopyToOffset(const void* src_ptr,unsigned src_offset
+void JArrayCpu::PCopyToOffset(const void* src_ptr,unsigned src_offset
   ,void* dst_ptr,size_t size)const
 {
   if(!Active() || dst_ptr==NULL)Run_Exceptioon("Invalid arrays or pointers.");
@@ -493,11 +545,11 @@ void JArraySpu::PCopyToOffset(const void* src_ptr,unsigned src_offset
 //==============================================================================
 /// Requests an allocated array.
 //==============================================================================
-void JArraySpu::Reserve(){
+void JArrayCpu::Reserve(){
   if(!Ptr){
     ArraysList->Reserve(this);
     #ifdef DG_ARRSPU_PRINT
-      Head->Log->Printf("ARRSPU_JArraySpu>  Reserve array_%uB \'%s\' ptr:%d_%p"
+      Head->Log->Printf("ARRSPU_JArrayCpu>  Reserve array_%uB \'%s\' ptr:%d_%p"
         ,ArraysList->ValueSize,Name.c_str(),PtrId,Ptr);
     #endif
   }
@@ -505,10 +557,10 @@ void JArraySpu::Reserve(){
 //==============================================================================
 /// Frees an allocated array.
 //==============================================================================
-void JArraySpu::Free(){
+void JArrayCpu::Free(){
   if(Ptr){
     #ifdef DG_ARRSPU_PRINT
-      Head->Log->Printf("ARRSPU_JArraySpu>  Free array_%uB \'%s\' ptr:%d_%p"
+      Head->Log->Printf("ARRSPU_JArrayCpu>  Free array_%uB \'%s\' ptr:%d_%p"
         ,ArraysList->ValueSize,Name.c_str(),PtrId,Ptr);
     #endif
     ArraysList->Free(this);
@@ -517,7 +569,7 @@ void JArraySpu::Free(){
 //==============================================================================
 /// Run memset with Ptr.
 //==============================================================================
-void JArraySpu::Memset(byte value,size_t size){
+void JArrayCpu::Memset(byte value,size_t size){
   if(!Active())Run_Exceptioon("Invalid pointer.");
   if(size>GetSize())Run_Exceptioon("Invalid size.");
   memset(Ptr,value,Sizeof()*size);

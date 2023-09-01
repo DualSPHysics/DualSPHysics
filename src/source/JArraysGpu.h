@@ -43,7 +43,7 @@
 
 class JLog2;
 class JArraysGpu;
-class JArrayXpu;
+class JArrayGpu;
 
 //#define DG_ARRXPU_PRINT  //-Active prints for debug.
 
@@ -66,7 +66,7 @@ protected:
 
   unsigned   Count;                   ///<Number of pointers with allocated memory.  
   void*      Pointers  [MAX_ARRAYS];  ///<Pointers to GPU memory. 
-  JArrayXpu* PointersAr[MAX_ARRAYS];  ///<Pointer to JArraysGpu using the pointer Pointers[]. 
+  JArrayGpu* PointersAr[MAX_ARRAYS];  ///<Pointer to JArraysGpu using the pointer Pointers[]. 
 
   unsigned PointersUnused[MAX_ARRAYS]; ///<List of unused pointers (index to Pointers[]).
   unsigned CountUnused;                ///<Number of unused pointers.  
@@ -79,7 +79,7 @@ protected:
   unsigned CountDataCpu;  ///<Number of saved data arrays.
   unsigned   SvCount;                  ///<Saves Count value. 
   void*      SvDataCpu[MAX_ARRAYS];    ///<Allocated CPU memory to save GPU data for reszing.  
-  JArrayXpu* SvPointersAr[MAX_ARRAYS]; ///<Saves PointersAr in use. 
+  JArrayGpu* SvPointersAr[MAX_ARRAYS]; ///<Saves PointersAr in use. 
 
   void ResetDataCpu();
   void FreeMemory();
@@ -91,6 +91,7 @@ public:
   JArraysGpuList(JArraysGpu* head,unsigned valuesize);
   ~JArraysGpuList();
   void Reset();
+  void PrintArraysInfo()const;
 
   llong GetAllocMemoryGpu()const{ return(llong(ValueSize)*ArraySize*Count); };
 
@@ -104,14 +105,16 @@ public:
   unsigned GetArrayCountUsed()const{ return(Count-CountUnused); }
   unsigned GetArrayCountUsedMax()const{ return(CountUsedMax); }
 
+  void SetArrayCount(unsigned count);
+  void FreeUnusedArrays();
+
   unsigned GetArraySize()const{ return(ArraySize); }
 
-  void SetArrayCount(unsigned count);
   void SetArraySize(unsigned size);
 
-  void Reserve(JArrayXpu* ar);
-  void Free(JArrayXpu* ar);
-  void SwapPtr(JArrayXpu* ar1,JArrayXpu* ar2);
+  void Reserve(JArrayGpu* ar);
+  void Free(JArrayGpu* ar);
+  void SwapPtr(JArrayGpu* ar1,JArrayGpu* ar2);
 
   void SaveDataArray(unsigned savesizedata);
   void RestoreDataArray(unsigned newsize);
@@ -123,7 +126,7 @@ public:
 //##############################################################################
 class JArraysGpu : protected JObjectGpu
 {
-  friend class JArrayXpu;
+  friend class JArrayGpu;
 
 public:
   static const unsigned MAX_ASIZE=9;
@@ -168,7 +171,7 @@ public:
   void Reset();
   llong GetAllocMemoryGpu()const;
   unsigned GetCountResizeDataCalls()const{ return(CountResizeDataCalls); }
-  void PrintAllocMemory(bool all)const;
+  void PrintAllocMemory(bool emptyblocks,bool arrayinfo)const;
 
   void SetAutoAddArrays(bool active);
   bool GetAutoAddArrays()const{ return(ArraysList[0]->GetAutoAddArrays()); }
@@ -180,6 +183,7 @@ public:
   unsigned GetArrayCountUpdated();
 
   void AddArrayCount(TpASizeId asize,unsigned count);
+  void FreeUnusedArrays();
 
   unsigned GetArraySize()const{ return(ArraysList[0]->GetArraySize()); }
 
@@ -192,7 +196,7 @@ public:
 //# JArraysGpu
 //##############################################################################
 /// \brief Defines the type of elements of the arrays managed in \ref JArraysGpu.
-class JArrayXpu : protected JObjectGpu
+class JArrayGpu : protected JObjectGpu
 {
   friend class JArraysGpuList;
 
@@ -211,11 +215,11 @@ protected:
 protected:
   void AssignReserve(void* ptr,unsigned ptrid);
   void ClearReserve();
-  void PSwapPtr(JArrayXpu* ar);
+  void PSwapPtr(JArrayGpu* ar);
   void PMemsetOffset(void* ptr_offset,unsigned offset,byte value,size_t size);
 
-  void PCopyFrom(const JArrayXpu* src,size_t size);
-  void PCopyFromOffset(void* dst_ptr,unsigned dst_offset,const JArrayXpu* src
+  void PCopyFrom(const JArrayGpu* src,size_t size);
+  void PCopyFromOffset(void* dst_ptr,unsigned dst_offset,const JArrayGpu* src
     ,const void* src_ptr,unsigned src_offset,size_t size);
   void PCopyFromPointer(const void* src_ptr,size_t size);
   void PCopyFromPointerOffset(void* dst_ptr,unsigned dst_offset
@@ -225,25 +229,25 @@ protected:
   void PCopyToOffset(const void* src_ptr,unsigned src_offset
     ,void* dst_ptr,size_t size)const;
 
-  void PCopyToHost(JArraySpu* dst,size_t size)const;
+  void PCopyToHost(JArrayCpu* dst,size_t size)const;
   void PCopyToHostPointer(void* dst_ptr,size_t size)const;
   void PCopyToHostOffset(const void* src_ptr,unsigned src_offset
-    ,JArraySpu* dst,void* dst_ptr,unsigned dst_offset,size_t size)const;
+    ,JArrayCpu* dst,void* dst_ptr,unsigned dst_offset,size_t size)const;
   void PCopyToHostPointerOffset(const void* src_ptr,unsigned src_offset
     ,void* dst_ptr,unsigned dst_offset,size_t size)const;
 
-  void PCopyFromHost(const JArraySpu* src,size_t size);
+  void PCopyFromHost(const JArrayCpu* src,size_t size);
   void PCopyFromHostPointer(const void* src_ptr,size_t size);
   void PCopyFromHostOffset(void* dst_ptr,unsigned dst_offset
-    ,const JArraySpu* src,const void* src_ptr,unsigned src_offset,size_t size);
+    ,const JArrayCpu* src,const void* src_ptr,unsigned src_offset,size_t size);
   void PCopyFromHostPointerOffset(void* dst_ptr,unsigned dst_offset
     ,const void* src_ptr,unsigned scr_offset,size_t size);
 
 
 public:
-  JArrayXpu(const std::string& name,TpTypeData type
+  JArrayGpu(const std::string& name,TpTypeData type
     ,JArraysGpu::TpASizeId asize,JArraysGpu* head,bool reserve);
-  ~JArrayXpu();
+  ~JArrayGpu();
   std::string ObjectId()const;
 
   unsigned GetSize()const{ return(ArraysList->GetArraySize()); }
@@ -269,13 +273,13 @@ public:
 //# JArraysGpu
 //##############################################################################
 template <class T,class T2,TpTypeData ttype,JArraysGpu::TpASizeId tasize,class TCPU> 
-  class JArrayXpuT : public JArrayXpu
+  class JArrayGpuT : public JArrayGpu
 {
 public:
-  JArrayXpuT(const std::string& name,JArraysGpu* head,bool reserve=false)
-    :JArrayXpu(name,ttype,tasize,head,reserve){};
+  JArrayGpuT(const std::string& name,JArraysGpu* head,bool reserve=false)
+    :JArrayGpu(name,ttype,tasize,head,reserve){};
   //----------------------------------------------------------------------------
-  void SwapPtr(JArrayXpuT* ar){ PSwapPtr((JArrayXpu*)ar); }
+  void SwapPtr(JArrayGpuT* ar){ PSwapPtr((JArrayGpu*)ar); }
   //----------------------------------------------------------------------------
   T* ptr(){ return((T*)Ptr); }
   //----------------------------------------------------------------------------
@@ -293,8 +297,8 @@ public:
   }
   //----------------------------------------------------------------------------
   //----------------------------------------------------------------------------
-  void CuCopyFrom(const JArrayXpuT* src,size_t size){ 
-    PCopyFrom((const JArrayXpu*)src,size); 
+  void CuCopyFrom(const JArrayGpuT* src,size_t size){ 
+    PCopyFrom((const JArrayGpu*)src,size); 
   }
   //----------------------------------------------------------------------------
   void CuCopyFrom(const T* src_ptr,size_t size){
@@ -305,13 +309,13 @@ public:
     CuCopyFrom((const T*)src_ptr,size); 
   }
   //----------------------------------------------------------------------------
-  void CuCopyFromOffset(unsigned dst_offset,const JArrayXpuT* src
+  void CuCopyFromOffset(unsigned dst_offset,const JArrayGpuT* src
     ,unsigned src_offset,size_t size)
   { 
     PCopyFromOffset(
       (void*)(ptr()? ptr()+dst_offset: NULL)
       ,dst_offset
-      ,(const JArrayXpu*)src
+      ,(const JArrayGpu*)src
       ,(const void*)(src && src->cptr()? src->cptr()+src_offset: NULL)
       ,src_offset,size); 
   }
@@ -343,7 +347,7 @@ public:
   //----------------------------------------------------------------------------
   //----------------------------------------------------------------------------
   void CuCopyToHost(TCPU* dst,size_t size)const{ 
-    PCopyToHost((JArraySpu*)dst,size);
+    PCopyToHost((JArrayCpu*)dst,size);
   }
   //----------------------------------------------------------------------------
   void CuCopyToHost(T* dst_ptr,size_t size)const{ 
@@ -356,7 +360,7 @@ public:
     PCopyToHostOffset(
       (const void*)(cptr()? cptr()+src_offset: NULL)
       ,src_offset
-      ,(JArraySpu*)dst
+      ,(JArrayCpu*)dst
       ,(void*)(dst && dst->cptr()? dst->cptr()+dst_offset: NULL)
       ,dst_offset
       ,size);
@@ -375,7 +379,7 @@ public:
   //----------------------------------------------------------------------------
   //----------------------------------------------------------------------------
   void CuCopyFromHost(const TCPU* src,size_t size){ 
-    PCopyFromHost((const JArraySpu*)src,size);
+    PCopyFromHost((const JArrayCpu*)src,size);
   }
   //----------------------------------------------------------------------------
   void CuCopyFromHost(const T* src_ptr,size_t size){ 
@@ -392,7 +396,7 @@ public:
     PCopyFromHostOffset(
       (void*)(cptr()? cptr()+dst_offset: NULL)
       ,dst_offset
-      ,(const JArraySpu*)src
+      ,(const JArrayCpu*)src
       ,(const void*)(src && src->cptr()? src->cptr()+src_offset: NULL)
       ,src_offset
       ,size);
@@ -412,49 +416,49 @@ public:
 };
 
 //##############################################################################
-typedef JArrayXpuT<byte    ,byte    ,TypeUchar  ,JArraysGpu::ASIZE_1B ,JArraySpuByte>    JArrayXpuByte;
-typedef JArrayXpuT<word    ,word    ,TypeUshort ,JArraysGpu::ASIZE_2B ,JArraySpuWord>    JArrayXpuWord;
-typedef JArrayXpuT<ushort4 ,tword4  ,TypeNull   ,JArraysGpu::ASIZE_8B ,JArraySpuWord4>   JArrayXpuWord4;  // ***Use TypeNull***
-typedef JArrayXpuT<int     ,int     ,TypeInt    ,JArraysGpu::ASIZE_4B ,JArraySpuInt>     JArrayXpuInt;
-typedef JArrayXpuT<unsigned,unsigned,TypeUint   ,JArraysGpu::ASIZE_4B ,JArraySpuUint>    JArrayXpuUint;
-typedef JArrayXpuT<float   ,float   ,TypeFloat  ,JArraysGpu::ASIZE_4B ,JArraySpuFloat>   JArrayXpuFloat;
-typedef JArrayXpuT<float2  ,tfloat2 ,TypeFloat2 ,JArraysGpu::ASIZE_8B ,JArraySpuFloat2>  JArrayXpuFloat2;
-typedef JArrayXpuT<float3  ,tfloat3 ,TypeFloat3 ,JArraysGpu::ASIZE_12B,JArraySpuFloat3>  JArrayXpuFloat3;
-typedef JArrayXpuT<float4  ,tfloat4 ,TypeFloat4 ,JArraysGpu::ASIZE_16B,JArraySpuFloat4>  JArrayXpuFloat4;
-typedef JArrayXpuT<double  ,double  ,TypeDouble ,JArraysGpu::ASIZE_8B ,JArraySpuDouble>  JArrayXpuDouble;
-typedef JArrayXpuT<double2 ,tdouble2,TypeDouble2,JArraysGpu::ASIZE_16B,JArraySpuDouble2> JArrayXpuDouble2;
-typedef JArrayXpuT<double3 ,double3 ,TypeDouble3,JArraysGpu::ASIZE_24B,JArraySpuDouble3> JArrayXpuDouble3;
-typedef JArrayXpuT<double4 ,double4 ,TypeDouble4,JArraysGpu::ASIZE_32B,JArraySpuDouble4> JArrayXpuDouble4;
+typedef JArrayGpuT<byte    ,byte    ,TypeUchar  ,JArraysGpu::ASIZE_1B ,JArrayCpuByte>    JArrayGpuByte;
+typedef JArrayGpuT<word    ,word    ,TypeUshort ,JArraysGpu::ASIZE_2B ,JArrayCpuWord>    JArrayGpuWord;
+typedef JArrayGpuT<ushort4 ,tword4  ,TypeNull   ,JArraysGpu::ASIZE_8B ,JArrayCpuWord4>   JArrayGpuWord4;  // ***Use TypeNull***
+typedef JArrayGpuT<int     ,int     ,TypeInt    ,JArraysGpu::ASIZE_4B ,JArrayCpuInt>     JArrayGpuInt;
+typedef JArrayGpuT<unsigned,unsigned,TypeUint   ,JArraysGpu::ASIZE_4B ,JArrayCpuUint>    JArrayGpuUint;
+typedef JArrayGpuT<float   ,float   ,TypeFloat  ,JArraysGpu::ASIZE_4B ,JArrayCpuFloat>   JArrayGpuFloat;
+typedef JArrayGpuT<float2  ,tfloat2 ,TypeFloat2 ,JArraysGpu::ASIZE_8B ,JArrayCpuFloat2>  JArrayGpuFloat2;
+typedef JArrayGpuT<float3  ,tfloat3 ,TypeFloat3 ,JArraysGpu::ASIZE_12B,JArrayCpuFloat3>  JArrayGpuFloat3;
+typedef JArrayGpuT<float4  ,tfloat4 ,TypeFloat4 ,JArraysGpu::ASIZE_16B,JArrayCpuFloat4>  JArrayGpuFloat4;
+typedef JArrayGpuT<double  ,double  ,TypeDouble ,JArraysGpu::ASIZE_8B ,JArrayCpuDouble>  JArrayGpuDouble;
+typedef JArrayGpuT<double2 ,tdouble2,TypeDouble2,JArraysGpu::ASIZE_16B,JArrayCpuDouble2> JArrayGpuDouble2;
+typedef JArrayGpuT<double3 ,double3 ,TypeDouble3,JArraysGpu::ASIZE_24B,JArrayCpuDouble3> JArrayGpuDouble3;
+typedef JArrayGpuT<double4 ,double4 ,TypeDouble4,JArraysGpu::ASIZE_32B,JArrayCpuDouble4> JArrayGpuDouble4;
 
-typedef JArrayXpuT<tmatrix2d  ,tmatrix2d  ,TypeNull,JArraysGpu::ASIZE_32B,JArraySpuMatrix2d> JArrayXpuMatrix2d;       // ***Use TypeNull***
-typedef JArrayXpuT<tmatrix3d  ,tmatrix3d  ,TypeNull,JArraysGpu::ASIZE_72B,JArraySpuMatrix3d> JArrayXpuMatrix3d;       // ***Use TypeNull***
-typedef JArrayXpuT<tsymatrix3f,tsymatrix3f,TypeNull,JArraysGpu::ASIZE_24B,JArraySpuSymMatrix3f> JArrayXpuSymMatrix3f; // ***Use TypeNull***
+typedef JArrayGpuT<tmatrix2d  ,tmatrix2d  ,TypeNull,JArraysGpu::ASIZE_32B,JArrayCpuMatrix2d> JArrayGpuMatrix2d;       // ***Use TypeNull***
+typedef JArrayGpuT<tmatrix3d  ,tmatrix3d  ,TypeNull,JArraysGpu::ASIZE_72B,JArrayCpuMatrix3d> JArrayGpuMatrix3d;       // ***Use TypeNull***
+typedef JArrayGpuT<tsymatrix3f,tsymatrix3f,TypeNull,JArraysGpu::ASIZE_24B,JArrayCpuSymMatrix3f> JArrayGpuSymMatrix3f; // ***Use TypeNull***
 
 //##############################################################################
-typedef JArrayXpuByte     agbyte;
-typedef JArrayXpuWord     agword;
-typedef JArrayXpuWord4    agword4;
-typedef JArrayXpuInt      agint;
-typedef JArrayXpuUint     aguint;
-typedef JArrayXpuFloat    agfloat;
-typedef JArrayXpuFloat2   agfloat2;
-typedef JArrayXpuFloat3   agfloat3;
-typedef JArrayXpuFloat4   agfloat4;
-typedef JArrayXpuDouble   agdouble;
-typedef JArrayXpuDouble2  agdouble2;
-typedef JArrayXpuDouble3  agdouble3;
-typedef JArrayXpuDouble4  agdouble4;
-typedef JArrayXpuMatrix2d agmatrix2d;
-typedef JArrayXpuMatrix3d agmatrix3d;
-typedef JArrayXpuSymMatrix3f agsymatrix3f;
+typedef JArrayGpuByte     agbyte;
+typedef JArrayGpuWord     agword;
+typedef JArrayGpuWord4    agword4;
+typedef JArrayGpuInt      agint;
+typedef JArrayGpuUint     aguint;
+typedef JArrayGpuFloat    agfloat;
+typedef JArrayGpuFloat2   agfloat2;
+typedef JArrayGpuFloat3   agfloat3;
+typedef JArrayGpuFloat4   agfloat4;
+typedef JArrayGpuDouble   agdouble;
+typedef JArrayGpuDouble2  agdouble2;
+typedef JArrayGpuDouble3  agdouble3;
+typedef JArrayGpuDouble4  agdouble4;
+typedef JArrayGpuMatrix2d agmatrix2d;
+typedef JArrayGpuMatrix3d agmatrix3d;
+typedef JArrayGpuSymMatrix3f agsymatrix3f;
 
 //-Code type (typecode) size 2-bytes or 4-bytes is defined in DualSphDef.h
 #ifdef CODE_SIZE4  
-  typedef JArrayXpuUint JArrayXpuTypecode;
-  typedef JArrayXpuUint agtypecode;
+  typedef JArrayGpuUint JArrayGpuTypecode;
+  typedef JArrayGpuUint agtypecode;
 #else
-  typedef JArrayXpuWord JArrayXpuTypecode;
-  typedef JArrayXpuWord agtypecode;
+  typedef JArrayGpuWord JArrayGpuTypecode;
+  typedef JArrayGpuWord agtypecode;
 #endif
 
 #endif

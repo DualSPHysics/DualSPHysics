@@ -1186,7 +1186,8 @@ void JSphCpuSingle::Run(std::string appname,const JSphCfgRun* cfg,JLog2* log){
   FreePartsInit();
   PrintAllocMemory(GetAllocMemoryCpu());
   UpdateMaxValues();
-  SaveData(); 
+  SaveData();
+  Arrays_Cpu->FreeUnusedArrays();
   Timersc->ResetTimes();
   Timersc->TmStop(TMC_Init);
   if(Log->WarningCount())Log->PrintWarningList("\n[WARNINGS]","");

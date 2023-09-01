@@ -935,6 +935,8 @@ void JSphGpuSingle::Run(std::string appname,const JSphCfgRun* cfg,JLog2* log){
   PrintAllocMemory(GetAllocMemoryCpu(),GetAllocMemoryGpu());
   UpdateMaxValues();
   SaveData(); 
+  Arrays_Cpu->FreeUnusedArrays();
+  Arrays_Gpu->FreeUnusedArrays();
   Timersg->ResetTimes();
   Timersg->TmStop(TMG_Init,true);
   if(Log->WarningCount())Log->PrintWarningList("\n[WARNINGS]","");
