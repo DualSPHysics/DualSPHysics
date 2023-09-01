@@ -109,7 +109,8 @@ protected:
 
   bool BoundChanged;  ///<Indicates if selected boundary has changed since last call of divide. | Indica si el contorno seleccionado a cambiado desde el ultimo divide.
 
-  unsigned CpuParticlesSize;  ///<Number of particles with reserved memory on the CPU. | Numero de particulas para las cuales se reservo memoria en cpu.
+  //-CPU memory allocated.
+  unsigned CpuParticlesSize;  ///<Number of particles with reserved memory on the CPU.
   llong MemCpuFixed;          ///<Memory reserved in AllocMemoryFixed. | Mermoria reservada en AllocMemoryFixed.
 
   unsigned* RidpMot; ///<Particle index according to Idp (only for moving and floating particles and updated after RunCellDivide) [CaseNmoving+CaseNfloat]. 
@@ -161,7 +162,7 @@ protected:
   void FreeCpuMemoryFixed();
   void AllocCpuMemoryFixed();
   void FreeCpuMemoryParticles();
-  void AllocCpuMemoryParticles(unsigned np,float over);
+  void AllocCpuMemoryParticles(unsigned np);
 
   void ResizeCpuMemoryParticlesData(unsigned ndatacpu,unsigned np,unsigned npmin);
   bool CheckCpuParticlesSize(unsigned requirednp)const{ 

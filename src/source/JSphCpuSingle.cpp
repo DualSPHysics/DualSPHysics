@@ -120,7 +120,7 @@ void JSphCpuSingle::ConfigDomain(){
   //-Allocates fixed CPU memory for moving & floating particles.
   AllocCpuMemoryFixed();
   //-Allocates CPU memory for particles.
-  AllocCpuMemoryParticles(Np,0);
+  AllocCpuMemoryParticles(Np);
 
   //-Copies particle data.
   Pos_c   ->CopyFrom(PartsLoaded->GetPos(),Np);
@@ -1168,12 +1168,10 @@ void JSphCpuSingle::Run(std::string appname,const JSphCfgRun* cfg,JLog2* log){
   Arrays_Cpu=new JArraysCpu(Log);
 
   //-Configure timers.
-  //-------------------
   Timersc->Config(cfg->SvTimers);
   Timersc->TmStart(TMC_Init);
 
-  //-Load parameters and values of input. | Carga de parametros y datos de entrada.
-  //--------------------------------------------------------------------------------
+  //-Load parameters and input data.
   LoadConfig(cfg);
   LoadCaseParticles();
   VisuConfig();
@@ -1181,8 +1179,7 @@ void JSphCpuSingle::Run(std::string appname,const JSphCfgRun* cfg,JLog2* log){
   ConfigRunMode();
   VisuParticleSummary();
 
-  //-Initialisation of execution variables. | Inicializacion de variables de ejecucion.
-  //------------------------------------------------------------------------------------
+  //-Initialisation of execution variables.
   InitRunCpu();
   RunGaugeSystem(TimeStep,true);
   if(InOut)InOutInit(TimeStepIni);

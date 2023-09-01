@@ -91,7 +91,8 @@ protected:
 
   bool BoundChanged;  ///<Indicates if a selected boundary particle has changed since the last time step. | Indica si el contorno seleccionado a cambiado desde el ultimo divide.
 
-  unsigned CpuParticlesSize; ///<Number of particles for which CPU memory was allocated. | Numero de particulas para las cuales se reservo memoria en cpu. 
+  //-CPU memory allocated.
+  unsigned CpuParticlesSize; ///<Number of particles for which CPU memory was allocated.
   llong MemCpuFixed;         ///<Allocated memory in AllocCpuMemoryFixed. | Mermoria reservada en AllocCpuMemoryFixed. 
 
   //-List of particle arrays on CPU [CpuParticlesSize=GpuParticlesSize].
@@ -101,9 +102,9 @@ protected:
   acuint*     Idp_c;    ///<Identifier of particle.
   actypecode* Code_c;   ///<Indicator of group of particles & other special markers.
   acuint*     Dcell_c;  ///<Cells inside DomCells coded with DomCellCode.
-  acdouble2*  Posxy_c;
-  acdouble*   Posz_c;
-  acfloat4*   Velrho_c;
+  acdouble2*  Posxy_c;  ///<Position (x,y).
+  acdouble*   Posz_c;   ///<Position (z).
+  acfloat4*   Velrho_c; ///<Velocity (x,y,z) and density (w).
 
   //-Auxiliary variables for the conversion [CpuParticlesSize].
   acdouble3*  AuxPos_c;
@@ -189,7 +190,7 @@ protected:
   void FreeCpuMemoryParticles();
   void AllocCpuMemoryParticles(unsigned np);
   void FreeGpuMemoryParticles();
-  void AllocGpuMemoryParticles(unsigned np,float over);
+  void AllocGpuMemoryParticles(unsigned np);
 
   void ResizeGpuMemoryParticlesData(unsigned ndatagpu,unsigned np,unsigned npmin);
   bool CheckGpuParticlesSize(unsigned requirednp)const{

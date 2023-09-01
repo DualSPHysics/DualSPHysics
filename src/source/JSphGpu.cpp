@@ -258,10 +258,9 @@ void JSphGpu::FreeGpuMemoryFixed(){
 //==============================================================================
 void JSphGpu::AllocGpuMemoryFixed(){
   MemGpuFixed=0;
-  //-Allocates memory for moving and floating objects.
+  //-Allocates memory for moving and floating particles.
   if(CaseNmoving || CaseNfloat){
-    const size_t m=sizeof(unsigned)*(CaseNmoving+CaseNfloat);
-    cudaMalloc((void**)&RidpMotg,m);  MemGpuFixed+=m;
+    MemGpuFixed+=fcuda::Malloc(&RidpMotg,CaseNmoving+CaseNfloat);
   }
   //-Allocates memory for floating bodies.
   if(CaseNfloat){
@@ -283,11 +282,12 @@ void JSphGpu::AllocGpuMemoryFixed(){
     const size_t m=sizeof(float4)*DemDataSize;
     cudaMalloc((void**)&DemDatag,m);  MemGpuFixed+=m;
   }
+  Check_CudaErroor("Failed GPU memory allocation.");
 }
 
 //==============================================================================
-/// Releases memory for the main particle data.
-/// Libera memoria para datos principales de particulas.
+/// Frees CPU memory for the particles.
+/// Libera memoria en CPU para particulas.
 //==============================================================================
 void JSphGpu::FreeCpuMemoryParticles(){
   //-Free array objects.
@@ -371,11 +371,10 @@ void JSphGpu::FreeGpuMemoryParticles(){
 /// Allocates GPU memory for the particles.
 /// Reserva memoria en Gpu para las particulas. 
 //==============================================================================
-void JSphGpu::AllocGpuMemoryParticles(unsigned np,float over){
+void JSphGpu::AllocGpuMemoryParticles(unsigned np){
   FreeGpuMemoryParticles();
   //-Calculate number of partices to allocate memory.
-  const unsigned np2=(over>0? unsigned(over*np): np);
-  GpuParticlesSize=np2+PARTICLES_OVERMEMORY_MIN;
+  GpuParticlesSize=np+PARTICLES_OVERMEMORY_MIN;
   //-Set size of arrays.
   Arrays_Gpu->SetArraySize(GpuParticlesSize);
   //-Create arrays for basic particle data.
@@ -416,9 +415,6 @@ void JSphGpu::AllocGpuMemoryParticles(unsigned np,float over){
     SpsGradvel_g=new agsymatrix3f("SpsGradvelg",Arrays_Gpu,false); //-NO INITIAL MEMORY.
   }
 
-
-  //-Shows the allocated memory.
-  //PrintSizeNp(GpuParticlesSize,MemGpuParticles,GpuParticlesAllocs);
   Check_CudaErroor("Failed GPU memory allocation.");
 }
 

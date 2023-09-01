@@ -422,7 +422,7 @@ typedef JArrayXpuT<float2  ,tfloat2 ,TypeFloat2 ,JArraysGpu::ASIZE_8B ,JArraySpu
 typedef JArrayXpuT<float3  ,tfloat3 ,TypeFloat3 ,JArraysGpu::ASIZE_12B,JArraySpuFloat3>  JArrayXpuFloat3;
 typedef JArrayXpuT<float4  ,tfloat4 ,TypeFloat4 ,JArraysGpu::ASIZE_16B,JArraySpuFloat4>  JArrayXpuFloat4;
 typedef JArrayXpuT<double  ,double  ,TypeDouble ,JArraysGpu::ASIZE_8B ,JArraySpuDouble>  JArrayXpuDouble;
-typedef JArrayXpuT<double2 ,double2 ,TypeDouble2,JArraysGpu::ASIZE_16B,JArraySpuDouble2> JArrayXpuDouble2;
+typedef JArrayXpuT<double2 ,tdouble2,TypeDouble2,JArraysGpu::ASIZE_16B,JArraySpuDouble2> JArrayXpuDouble2;
 typedef JArrayXpuT<double3 ,double3 ,TypeDouble3,JArraysGpu::ASIZE_24B,JArraySpuDouble3> JArrayXpuDouble3;
 typedef JArrayXpuT<double4 ,double4 ,TypeDouble4,JArraysGpu::ASIZE_32B,JArraySpuDouble4> JArrayXpuDouble4;
 

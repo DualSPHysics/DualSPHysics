@@ -173,19 +173,16 @@ void JSphGpuSingle::ConfigDomain(){
   LoadCodeParticles(Np,Idp_c->cptr(),Code_c->ptr());
 
   //-Load normals for boundary particles (fixed and moving).
-  tfloat3* boundnor=NULL;
-  if(UseNormals){
-    boundnor=new tfloat3[Np];
-    LoadBoundNormals(Np,Npb,Idp_c->cptr(),Code_c->cptr(),boundnor);
-  }
+  acfloat3 boundnorc("boundnor",Arrays_Cpu,UseNormals);
+  if(UseNormals)LoadBoundNormals(Np,Npb,Idp_c->cptr(),Code_c->cptr(),boundnorc.ptr());
 
   //-Creates PartsInit object with initial particle data for automatic configurations.
   CreatePartsInit(Np,AuxPos_c->cptr(),Code_c->cptr());
 
   //-Runs initialization operations from XML.
   RunInitialize(Np,Npb,AuxPos_c->cptr(),Idp_c->cptr(),Code_c->cptr()
-    ,Velrho_c->ptr(),boundnor);
-  if(UseNormals)ConfigBoundNormals(Np,Npb,AuxPos_c->cptr(),Idp_c->cptr(),boundnor);
+    ,Velrho_c->ptr(),boundnorc.ptr());
+  if(UseNormals)ConfigBoundNormals(Np,Npb,AuxPos_c->cptr(),Idp_c->cptr(),boundnorc.ptr());
 
   //-Computes MK domain for boundary and fluid particles.
   MkInfo->ComputeMkDomains(Np,AuxPos_c->cptr(),Code_c->cptr());
@@ -200,12 +197,13 @@ void JSphGpuSingle::ConfigDomain(){
   //-Allocates fixed GPU memory for moving & floating particles.
   AllocGpuMemoryFixed();
   //-Allocates GPU memory for particles.
-  AllocGpuMemoryParticles(Np,0);
+  AllocGpuMemoryParticles(Np);
 
   //-Uploads particle data on the GPU.
   Pos3ToPos21(Np,AuxPos_c->cptr(),Posxy_c->ptr(),Posz_c->ptr());
-  ParticlesDataUp(Np,boundnor);
-  delete[] boundnor; boundnor=NULL;
+  ParticlesDataUp(Np,boundnorc.cptr());
+  boundnorc.Free();
+
   //-Uploads constants on the GPU.
   ConstantDataUp();
 
@@ -918,12 +916,10 @@ void JSphGpuSingle::Run(std::string appname,const JSphCfgRun* cfg,JLog2* log){
   Arrays_Gpu=new JArraysGpu(gpuid,Log);
 
   //-Configures timers.
-  //-------------------
   Timersg->Config(cfg->SvTimers);
   Timersg->TmStart(TMG_Init,false);
 
-  //-Load parameters and values of input. | Carga de parametros y datos de entrada.
-  //--------------------------------------------------------------------------------
+  //-Load parameters and input data.
   LoadConfig(cfg);
   LoadCaseParticles();
   VisuConfig();
@@ -931,8 +927,7 @@ void JSphGpuSingle::Run(std::string appname,const JSphCfgRun* cfg,JLog2* log){
   ConfigRunMode();
   VisuParticleSummary();
 
-  //-Initialisation of execution variables. | Inicializacion de variables de ejecucion.
-  //------------------------------------------------------------------------------------
+  //-Initialisation of execution variables.
   InitRunGpu();
   RunGaugeSystem(TimeStep,true);
   if(InOut)InOutInit(TimeStepIni);

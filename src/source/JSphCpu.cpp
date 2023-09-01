@@ -130,7 +130,7 @@ void JSphCpu::FreeCpuMemoryFixed(){
 void JSphCpu::AllocCpuMemoryFixed(){
   MemCpuFixed=0;
   try{
-    //-Allocates memory for moving and floating objects.
+    //-Allocates memory for moving and floating particles.
     if(CaseNmoving || CaseNfloat){
       const unsigned sizen=CaseNmoving+CaseNfloat;
       RidpMot=new unsigned[sizen];  MemCpuFixed+=(sizeof(unsigned)*sizen);
@@ -183,11 +183,10 @@ void JSphCpu::FreeCpuMemoryParticles(){
 /// Allocte memory on CPU for the particles. 
 /// Reserva memoria en CPU para las particulas. 
 //==============================================================================
-void JSphCpu::AllocCpuMemoryParticles(unsigned np,float over){
+void JSphCpu::AllocCpuMemoryParticles(unsigned np){
   FreeCpuMemoryParticles();
   //-Calculate number of partices to allocate memory.
-  const unsigned np2=(over>0? unsigned(over*np): np);
-  CpuParticlesSize=np2+PARTICLES_OVERMEMORY_MIN;
+  CpuParticlesSize=np+PARTICLES_OVERMEMORY_MIN;
   //-Set size of arrays.
   Arrays_Cpu->SetArraySize(CpuParticlesSize);
   //-Create arrays for basic particle data. 
