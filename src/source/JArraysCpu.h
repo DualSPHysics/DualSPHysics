@@ -197,6 +197,7 @@ protected:
 
   unsigned PtrId;
   void* Ptr;
+  bool Locked;
 
 protected:
   void AssignReserve(void* ptr,unsigned ptrid);
@@ -230,6 +231,10 @@ public:
   bool Active()const{ return(Ptr!=NULL); }
   void Reserve();
   void Free();
+
+  bool IsLocked()const{ return(Locked); };
+  void LockPtr();
+  void UnlockPtr();
 
   void Memset(byte value,size_t size);
 };

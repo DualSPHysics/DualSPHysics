@@ -22,6 +22,7 @@
 #include "JCellDivGpu_ker.h"
 #include "JAppInfo.h"
 #include "Functions.h"
+#include "FunctionsCuda.h"
 
 using namespace std;
 
@@ -33,16 +34,17 @@ JCellDivGpu::JCellDivGpu(bool stable,bool floating,byte periactive
   ,bool celldomfixed,TpCellMode cellmode,float scell
   ,tdouble3 mapposmin,tdouble3 mapposmax,tuint3 mapcells
   ,unsigned casenbound,unsigned casenfixed,unsigned casenpb
-  ,std::string dirout,bool allocfullnct
-  ,float overmemorynp,word overmemorycells,unsigned overmemoryncells)
+  ,std::string dirout)
   :Log(AppInfo.LogPtr()),Stable(stable),Floating(floating),PeriActive(periactive)
   ,CellDomFixed(celldomfixed),CellMode(cellmode)
   ,ScellDiv(cellmode==CELLMODE_Full? 1: (cellmode==CELLMODE_Half? 2: 0))
   ,Scell(scell),OvScell(1.f/scell),KernelSize2(kernelsize2),PosCellSize(poscellsize)
   ,Map_PosMin(mapposmin),Map_PosMax(mapposmax),Map_PosDif(mapposmax-mapposmin)
-  ,Map_Cells(mapcells),CaseNbound(casenbound),CaseNfixed(casenfixed),CaseNpb(casenpb)
-  ,DirOut(dirout),AllocFullNct(allocfullnct),OverMemoryNp(overmemorynp)
-  ,OverMemoryCells(overmemorycells),OverMemoryNCells(overmemoryncells)
+  ,Map_Cells(mapcells),CaseNbound(casenbound),CaseNfixed(casenfixed)
+  ,CaseNpb(casenpb),DirOut(dirout)
+  ,OverMemoryNp(CELLDIV_OVERMEMORYNP)
+  ,OverMemoryCells(CELLDIV_OVERMEMORYCELLS)
+  ,OverMemoryNCells(CELLDIV_OVERMEMORYNCELLS)
 {
   ClassName="JCellDivGpu";
   CellPart=NULL;  SortPart=NULL;  AuxMem=NULL;
@@ -129,7 +131,8 @@ void JCellDivGpu::AllocMemoryNp(ullong np,ullong npmin){
   //-Comprueba reserva de memoria.
   cudaError_t cuerr=cudaGetLastError();
   if(cuerr!=cudaSuccess){
-    Run_ExceptioonCuda(cuerr,fun::PrintStr("Failed GPU memory allocation of %.1f MiB for %u particles."
+    Run_ExceptioonCuda(cuerr,fun::PrintStr(
+      "Failed GPU memory allocation of %.1f MiB for %u particles."
       ,double(MemAllocGpuNp)/MEBIBYTE,SizeNp));
   }
   //-Show requested memory.
@@ -145,24 +148,22 @@ void JCellDivGpu::AllocMemoryNp(ullong np,ullong npmin){
 void JCellDivGpu::AllocMemoryNct(ullong nct,ullong nctmin){
   FreeMemoryNct();
   SizeNct=unsigned(nct);
-  //-Checks cell number.
-  //-Comprueba numero de celdas.
-  if(nct!=SizeNct)Run_Exceptioon(string("Failed GPU memory allocation for ")+fun::UlongStr(nct)+" cells.");
+  const unsigned nctt=unsigned(SizeBeginEndCell(SizeNct));
+  //-Checks number of cells.
+  if(ullong(nctt)!=SizeBeginEndCell(nct))Run_Exceptioon(
+    fun::PrintStr("Failed GPU memory allocation for %s cells.",KINT(nct)));
   //-Allocates memory for cells.
-  //-Reserva memoria para celdas.
-  MemAllocGpuNct=0;
-  const size_t m=sizeof(int2)*SizeBeginEndCell(SizeNct);
-  cudaMalloc((void**)&BeginEndCell,m); MemAllocGpuNct+=m;
+  MemAllocGpuNct=fcuda::Malloc(&BeginEndCell,nctt);
   //-Checks allocated memory.
-  //-Comprueba reserva de memoria.
-  cudaError_t cuerr=cudaGetLastError();
+  const cudaError_t cuerr=cudaGetLastError();
   if(cuerr!=cudaSuccess){
-    Run_ExceptioonCuda(cuerr,fun::PrintStr("Failed GPU memory allocation of %.1f MiB for %u cells."
-      ,double(MemAllocGpuNct)/MEBIBYTE,SizeNct));
+    Run_ExceptioonCuda(cuerr,fun::PrintStr(
+      "Failed GPU memory allocation of %.1f MiB for %s cells."
+      ,double(MemAllocGpuNct)/MEBIBYTE,KINT(SizeNct)));
   }
-  //-Show requested memory.
+  //-Shows requested memory.
   const string txover=(nctmin>1? fun::PrintStr(" (over-allocation: %.2fX)",double(SizeNct)/nctmin): "");
-  Log->Printf("**CellDiv: Requested gpu memory for %s cells%s: %.1f MiB."
+  Log->Printf("**CellDiv: Requested GPU memory for %s cells%s: %.1f MiB."
     ,KINT(SizeNct),txover.c_str(),double(MemAllocGpuNct)/MEBIBYTE);
 }
 
@@ -197,9 +198,10 @@ void JCellDivGpu::CheckMemoryNct(unsigned nctmin){
     if(OverMemoryCells>0){
       const ullong nct1=ullong(Ncx+OverMemoryCells)*ullong(Ncy+OverMemoryCells)*ullong(Ncz+OverMemoryCells);
       const ullong nct2=ullong(nctmin)+OverMemoryNCells;
-      const ullong nct3=min(MaxDomCells,(nct1>nct2? nct1: nct2));
-      if(SizeBeginEndCell(nct3)>=UINT_MAX)Run_Exceptioon("The number of cells is too big.");
-      nctnew=unsigned(nct3);
+      const ullong nct3=(nct1>nct2? nct1: nct2);
+      const ullong nct4=min(DomCellsMax,nct3);
+      if(SizeBeginEndCell(nct4)>=UINT_MAX)Run_Exceptioon("The number of cells is too big.");
+      nctnew=unsigned(nct4);
     }
     AllocMemoryNct(nctnew,nctmin);
   }
@@ -219,7 +221,7 @@ void JCellDivGpu::DefineDomain(unsigned cellcode,tuint3 domcelini,tuint3 domcelf
   DomPosMin=domposmin;
   DomPosMax=domposmax;
   DomCells=DomCelFin-DomCelIni;
-  MaxDomCells=ullong(DomCells.x)*ullong(DomCells.y)*ullong(DomCells.z);
+  DomCellsMax=ullong(DomCells.x)*ullong(DomCells.y)*ullong(DomCells.z);
   //Log->Printf("-----> MaxDomCells:%s",KINT(MaxDomCells));
 }
 

@@ -102,7 +102,11 @@ void JArraysGpuList::ResetDataCpu(){
 //==============================================================================
 void JArraysGpuList::FreeMemory(){
   //-Remove allocations to JArrayGpu objects.
-  for(unsigned c=0;c<Count;c++)if(PointersAr[c])PointersAr[c]->Free();
+  for(unsigned c=0;c<Count;c++)if(PointersAr[c]){
+    if(PointersAr[c]->IsLocked())Run_Exceptioon(fun::PrintStr(
+      "Pointer of array %s is locked.",PointersAr[c]->ObjectId().c_str()));
+    PointersAr[c]->Free();
+  }
   //-Free GPU memory in Pointers[].
   for(unsigned c=0;c<Count;c++)if(Pointers[c]){ 
     cudaFree(Pointers[c]); Pointers[c]=NULL;
@@ -284,6 +288,8 @@ void JArraysGpuList::SaveDataArray(unsigned savesizedata){
   unsigned nsave=0;
   for(unsigned c=0;c<Count;c++){ 
     if(PointersAr[c]){
+      if(PointersAr[c]->IsLocked())Run_Exceptioon(fun::PrintStr(
+        "Pointer of array %s is locked.",PointersAr[c]->ObjectId().c_str()));
       SvPointersAr[nsave]=PointersAr[c];
       SvDataCpu[nsave]=AllocCpuMemory(SizeDataCpu);
       if(SizeDataCpu){
@@ -471,6 +477,7 @@ JArrayGpu::JArrayGpu(const std::string& name,TpTypeData type
   ArraysList=Head->GetArraysList(asize);
   PtrId=UINT_MAX;
   Ptr=NULL;
+  Locked=false;
   DataCpu=NULL;
   #ifdef DG_ARRXPU_PRINT
     Head->Log->Printf("ARRXPU_JArrayGpu>  Create array \'%s\'",Name.c_str());
@@ -489,10 +496,10 @@ JArrayGpu::~JArrayGpu(){
   ArraysList=NULL;
 }
 //==============================================================================
-/// Returns the object identification for exception message and debug.
+/// Returns the object identification for exception messages and debug.
 //==============================================================================
 std::string JArrayGpu::ObjectId()const{
-  string id=fun::PrintStr("JArraysGpu_%dB.",(ArraysList? ArraysList->ValueSize: 0))+Name;
+  string id=fun::PrintStr("JArraysGpu_%dB__",(ArraysList? ArraysList->ValueSize: 0))+Name;
   if(Head && Head->Id>=0)id=id+fun::PrintStr("[g%u]",Head->Id);
   return(id);
 }
@@ -500,6 +507,7 @@ std::string JArrayGpu::ObjectId()const{
 /// Assigns the reserve by JArraysGpuList object.
 //==============================================================================
 void JArrayGpu::AssignReserve(void* ptr,unsigned ptrid){
+  if(Locked && Ptr!=ptr)Run_Exceptioon("Pointer is locked.");
   Ptr=ptr;
   PtrId=ptrid;
 }
@@ -507,6 +515,7 @@ void JArrayGpu::AssignReserve(void* ptr,unsigned ptrid){
 /// Clears the reserve by JArraysGpuList object.
 //==============================================================================
 void JArrayGpu::ClearReserve(){
+  if(Locked)Run_Exceptioon("Pointer is locked.");
   Ptr=NULL;
   PtrId=UINT_MAX;
 }
@@ -693,12 +702,34 @@ void JArrayGpu::Reserve(){
 void JArrayGpu::Free(){
   if(DataCpu)DataFree();
   if(Ptr){
+    if(Locked)Run_Exceptioon("Pointer is locked.");
     #ifdef DG_ARRXPU_PRINT
       Head->Log->Printf("ARRXPU_JArrayGpu>  Free array_%uB \'%s\' ptr:%d_%p"
         ,ArraysList->ValueSize,Name.c_str(),PtrId,Ptr);
     #endif
     ArraysList->Free(this);
   }
+}
+//==============================================================================
+/// Locks memory pointer in use.
+//==============================================================================
+void JArrayGpu::LockPtr(){
+  if(!Active())Run_Exceptioon("Invalid pointer.");
+  #ifdef DG_ARRXPU_PRINT
+    Head->Log->Printf("ARRSXPU_JArrayGpu>  Lock array_%uB \'%s\' ptr:%d_%p"
+      ,ArraysList->ValueSize,Name.c_str(),PtrId,Ptr);
+  #endif
+  Locked=true;
+}
+//==============================================================================
+/// Release pointer lock.
+//==============================================================================
+void JArrayGpu::UnlockPtr(){
+  #ifdef DG_ARRXPU_PRINT
+    Head->Log->Printf("ARRXPU_JArrayGpu>  Unlock array_%uB \'%s\' ptr:%d_%p"
+      ,ArraysList->ValueSize,Name.c_str(),PtrId,Ptr);
+  #endif
+  Locked=false;
 }
 //==============================================================================
 /// Run cudaMemset with Ptr.

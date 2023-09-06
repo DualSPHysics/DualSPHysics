@@ -33,16 +33,17 @@ JCellDivCpu::JCellDivCpu(bool stable,bool floating,byte periactive
   ,bool celldomfixed,TpCellMode cellmode,float scell
   ,tdouble3 mapposmin,tdouble3 mapposmax,tuint3 mapcells
   ,unsigned casenbound,unsigned casenfixed,unsigned casenpb
-  ,std::string dirout,bool allocfullnct
-  ,float overmemorynp,word overmemorycells,unsigned overmemoryncells)
+  ,std::string dirout)
   :Log(AppInfo.LogPtr()),Stable(stable),Floating(floating),PeriActive(periactive)
   ,CellDomFixed(celldomfixed),CellMode(cellmode)
   ,ScellDiv(cellmode==CELLMODE_Full? 1: (cellmode==CELLMODE_Half? 2: 0))
   ,Scell(scell),OvScell(1.f/scell)
   ,Map_PosMin(mapposmin),Map_PosMax(mapposmax),Map_PosDif(mapposmax-mapposmin)
-  ,Map_Cells(mapcells),CaseNbound(casenbound),CaseNfixed(casenfixed),CaseNpb(casenpb)
-  ,DirOut(dirout),AllocFullNct(allocfullnct),OverMemoryNp(overmemorynp)
-  ,OverMemoryCells(overmemorycells),OverMemoryNCells(overmemoryncells)
+  ,Map_Cells(mapcells),CaseNbound(casenbound),CaseNfixed(casenfixed)
+  ,CaseNpb(casenpb),DirOut(dirout)
+  ,OverMemoryNp(CELLDIV_OVERMEMORYNP)
+  ,OverMemoryCells(CELLDIV_OVERMEMORYCELLS)
+  ,OverMemoryNCells(CELLDIV_OVERMEMORYNCELLS)
 {
   ClassName="JCellDivCpu";
   CellPart=NULL;    SortPart=NULL;
@@ -161,22 +162,23 @@ void JCellDivCpu::AllocMemoryNp(ullong np,ullong npmin){
 void JCellDivCpu::AllocMemoryNct(ullong nct,ullong nctmin){
   FreeMemoryNct();
   SizeNct=unsigned(nct);
-  //-Check number of cells | Comprueba numero de celdas.
-  if(nct!=SizeNct)Run_Exceptioon(string("Failed GPU memory allocation for ")+fun::UlongStr(nct)+" cells.");
-  //-Reserve memory for cells | Reserva memoria para celdas.
+  const unsigned nctt=unsigned(SizeBeginCell(SizeNct));
+  //-Checks number of cells.
+  if(ullong(nctt)!=SizeBeginCell(nct))Run_Exceptioon(
+    fun::PrintStr("Failed CPU memory allocation for %s cells.",KINT(nct)));
+  //-Allocates memory for cells.
   MemAllocNct=0;
-  const unsigned nc=(unsigned)SizeBeginCell(nct);
   try{
-    PartsInCell=new unsigned[nc-1];  MemAllocNct+=sizeof(unsigned)*(nc-1);
-    BeginCell=new unsigned[nc];      MemAllocNct+=sizeof(unsigned)*(nc);
+    PartsInCell=new unsigned[nctt-1];  MemAllocNct+=sizeof(unsigned)*(nctt-1);
+    BeginCell  =new unsigned[nctt];    MemAllocNct+=sizeof(unsigned)*(nctt);
   }
   catch(const std::bad_alloc){
-    Run_Exceptioon(fun::PrintStr("Failed CPU memory allocation of %.1f MiB for %u cells."
-      ,double(MemAllocNct)/MEBIBYTE,SizeNct));
+    Run_Exceptioon(fun::PrintStr("Failed CPU memory allocation of %.1f MiB for %s cells."
+      ,double(MemAllocNct)/MEBIBYTE,KINT(SizeNct)));
   }
-  //-Show requested memory.
+  //-Shows requested memory.
   const string txover=(nctmin>1? fun::PrintStr(" (over-allocation: %.2fX)",double(SizeNct)/nctmin): "");
-  Log->Printf("**CellDiv: Requested cpu memory for %s cells%s: %.1f MiB."
+  Log->Printf("**CellDiv: Requested CPU memory for %s cells%s: %.1f MiB."
     ,KINT(SizeNct),txover.c_str(),double(MemAllocNct)/MEBIBYTE);
 }
 
@@ -211,9 +213,10 @@ void JCellDivCpu::CheckMemoryNct(unsigned nctmin){
     if(OverMemoryCells>0){
       const ullong nct1=ullong(Ncx+OverMemoryCells)*ullong(Ncy+OverMemoryCells)*ullong(Ncz+OverMemoryCells);
       const ullong nct2=ullong(nctmin)+OverMemoryNCells;
-      const ullong nct3=min(MaxDomCells,(nct1>nct2? nct1: nct2));
-      if(SizeBeginCell(nct3)>=UINT_MAX)Run_Exceptioon("The number of cells is too big.");
-      nctnew=unsigned(nct3);
+      const ullong nct3=(nct1>nct2? nct1: nct2);
+      const ullong nct4=min(DomCellsMax,nct3);
+      if(SizeBeginCell(nct4)>=UINT_MAX)Run_Exceptioon("The number of cells is too big.");
+      nctnew=unsigned(nct4);
     }
     AllocMemoryNct(nctnew,nctmin);
   }
@@ -233,7 +236,7 @@ void JCellDivCpu::DefineDomain(unsigned cellcode,tuint3 domcelini,tuint3 domcelf
   DomPosMin=domposmin;
   DomPosMax=domposmax;
   DomCells=DomCelFin-DomCelIni;
-  MaxDomCells=ullong(DomCells.x)*ullong(DomCells.y)*ullong(DomCells.z);
+  DomCellsMax=ullong(DomCells.x)*ullong(DomCells.y)*ullong(DomCells.z);
   //Log->Printf("-----> MaxDomCells:%s",KINT(MaxDomCells));
 }
 

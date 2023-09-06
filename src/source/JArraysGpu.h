@@ -210,6 +210,8 @@ protected:
 
   unsigned PtrId;
   void* Ptr;
+  bool Locked;
+
   void* DataCpu;
 
 protected:
@@ -250,6 +252,9 @@ public:
   ~JArrayGpu();
   std::string ObjectId()const;
 
+  void* ptrvoid(){ return(Ptr); }
+  const void* cptrvoid()const{ return(Ptr); }
+
   unsigned GetSize()const{ return(ArraysList->GetArraySize()); }
   unsigned GetValueSize()const{ return(ArraysList->ValueSize); }
   size_t Sizeof()const{ return(size_t(ArraysList->ValueSize)); }
@@ -258,6 +263,10 @@ public:
   bool Active()const{ return(Ptr!=NULL); }
   void Reserve();
   void Free();
+
+  bool IsLocked()const{ return(Locked); };
+  void LockPtr();
+  void UnlockPtr();
   
   void CuMemset(byte value,size_t size);
 

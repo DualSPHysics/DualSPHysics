@@ -52,20 +52,22 @@ protected:
   const tdouble3 Map_PosMin,Map_PosMax,Map_PosDif;
   const tuint3 Map_Cells;
   const unsigned CaseNbound,CaseNfixed,CaseNpb;
+
+  const float OverMemoryNp;    ///<Percentage that is added to the memory reserved for Np. (def=0) | Porcentaje que se anhade a la reserva de memoria de Np. (def=0).
+  const word OverMemoryCells;  ///<Cell number that is incremented in each dimension to reserve memory. | Numero celdas que se incrementa en cada dimension reservar memoria. (def=0).
+  const unsigned OverMemoryNCells; ///<Minimum number of cells that is incremented to reserve memory.
+
   JLog2* Log;
   std::string DirOut;
 
-  bool AllocFullNct;     ///<Resserve memory for max number of cells of domain (DomCells). | Reserva memoria para el numero maximo de celdas del dominio (DomCells).
-  float OverMemoryNp;    ///<Percentage that is added to the memory reserved for Np. (def=0) | Porcentaje que se anhade a la reserva de memoria de Np. (def=0).
-  word OverMemoryCells;  ///<Cell number that is incremented in each dimension to reserve memory. | Numero celdas que se incrementa en cada dimension reservar memoria. (def=0).
-  unsigned OverMemoryNCells; ///<Minimum number of cells that is incremented to reserve memory.
-
   //-Variables to define the domain.
   unsigned DomCellCode;  ///<Key for codifying cell of position. | Clave para la codificacion de la celda de posicion.
-  tuint3 DomCelIni,DomCelFin;
-  tdouble3 DomPosMin,DomPosMax;
+  tuint3 DomCelIni;
+  tuint3 DomCelFin;
+  tdouble3 DomPosMin;
+  tdouble3 DomPosMax;
   tuint3 DomCells;
-  ullong MaxDomCells;    ///<Maximum number of cells according to DomCells.
+  ullong DomCellsMax;    ///<Maximum number of cells according to DomCells.
 
   //-Variables with allocated memory as a function of the number of particles in CPU.
   //-Memoria reservada en funcion de particulas en CPU.
@@ -164,10 +166,7 @@ public:
     ,bool celldomfixed,TpCellMode cellmode,float scell
     ,tdouble3 mapposmin,tdouble3 mapposmax,tuint3 mapcells
     ,unsigned casenbound,unsigned casenfixed,unsigned casenpb
-    ,std::string dirout,bool allocfullnct=true
-    ,float overmemorynp=CELLDIV_OVERMEMORYNP
-    ,word overmemorycells=CELLDIV_OVERMEMORYCELLS
-    ,unsigned overmemoryncells=CELLDIV_OVERMEMORYNCELLS);
+    ,std::string dirout);
   ~JCellDivCpu();
 
   void DefineDomain(unsigned cellcode,tuint3 domcelini,tuint3 domcelfin,tdouble3 domposmin,tdouble3 domposmax);

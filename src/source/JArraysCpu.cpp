@@ -84,7 +84,11 @@ void JArraysCpuList::PrintArraysInfo()const{
 //==============================================================================
 void JArraysCpuList::FreeMemory(){
   //-Remove allocations to JArrayCpu objects.
-  for(unsigned c=0;c<Count;c++)if(PointersAr[c])PointersAr[c]->Free();
+  for(unsigned c=0;c<Count;c++)if(PointersAr[c]){
+    if(PointersAr[c]->IsLocked())Run_Exceptioon(fun::PrintStr(
+      "Pointer of array %s is locked.",PointersAr[c]->ObjectId().c_str()));
+    PointersAr[c]->Free();
+  }
   //-Free CPU memory in Pointers[].
   for(unsigned c=0;c<Count;c++)if(Pointers[c]){
     FreeCpuMemory(Pointers[c]);
@@ -263,6 +267,8 @@ void JArraysCpuList::SetDataArraySize(unsigned newsize,unsigned savesizedata){
   for(unsigned c=0;c<Count;c++){ 
     void* ptrnew=AllocCpuMemory(newsize);
     if(PointersAr[c]){
+      if(PointersAr[c]->IsLocked())Run_Exceptioon(fun::PrintStr(
+        "Pointer of array %s is locked.",PointersAr[c]->ObjectId().c_str()));
       if(savesizedata)memcpy(ptrnew,Pointers[c],size_t(ValueSize)*savesizedata);
       FreeCpuMemory(Pointers[c]);
       Pointers[c]=ptrnew;
@@ -422,6 +428,7 @@ JArrayCpu::JArrayCpu(const std::string& name,TpTypeData type
   ArraysList=Head->GetArraysList(asize);
   PtrId=UINT_MAX;
   Ptr=NULL;
+  Locked=false;
   #ifdef DG_ARRSPU_PRINT
     Head->Log->Printf("ARRSPU_JArrayCpu>  Create array \'%s\'",Name.c_str());
   #endif
@@ -439,10 +446,10 @@ JArrayCpu::~JArrayCpu(){
   ArraysList=NULL;
 }
 //==============================================================================
-/// Returns the object identification for exception message and debug.
+/// Returns the object identification for exception messages and debug.
 //==============================================================================
 std::string JArrayCpu::ObjectId()const{
-  string id=fun::PrintStr("JArraysCpu_%dB.",(ArraysList? ArraysList->ValueSize: 0))+Name;
+  string id=fun::PrintStr("JArraysCpu_%dB__",(ArraysList? ArraysList->ValueSize: 0))+Name;
   if(Head && Head->Id>=0)id=id+fun::PrintStr("[c%u]",Head->Id);
   return(id);
 }
@@ -450,6 +457,7 @@ std::string JArrayCpu::ObjectId()const{
 /// Assigns the reserve by JArraysCpuList object.
 //==============================================================================
 void JArrayCpu::AssignReserve(void* ptr,unsigned ptrid){
+  if(Locked && Ptr!=ptr)Run_Exceptioon("Pointer is locked.");
   Ptr=ptr;
   PtrId=ptrid;
 }
@@ -457,6 +465,7 @@ void JArrayCpu::AssignReserve(void* ptr,unsigned ptrid){
 /// Clears the reserve by JArraysCpuList object.
 //==============================================================================
 void JArrayCpu::ClearReserve(){
+  if(Locked)Run_Exceptioon("Pointer is locked.");
   Ptr=NULL;
   PtrId=UINT_MAX;
 }
@@ -559,12 +568,34 @@ void JArrayCpu::Reserve(){
 //==============================================================================
 void JArrayCpu::Free(){
   if(Ptr){
+    if(Locked)Run_Exceptioon("Pointer is locked.");
     #ifdef DG_ARRSPU_PRINT
       Head->Log->Printf("ARRSPU_JArrayCpu>  Free array_%uB \'%s\' ptr:%d_%p"
         ,ArraysList->ValueSize,Name.c_str(),PtrId,Ptr);
     #endif
     ArraysList->Free(this);
   }
+}
+//==============================================================================
+/// Locks memory pointer in use.
+//==============================================================================
+void JArrayCpu::LockPtr(){
+  if(!Active())Run_Exceptioon("Invalid pointer.");
+  #ifdef DG_ARRSPU_PRINT
+    Head->Log->Printf("ARRSPU_JArrayCpu>  Lock array_%uB \'%s\' ptr:%d_%p"
+      ,ArraysList->ValueSize,Name.c_str(),PtrId,Ptr);
+  #endif
+  Locked=true;
+}
+//==============================================================================
+/// Release pointer lock.
+//==============================================================================
+void JArrayCpu::UnlockPtr(){
+  #ifdef DG_ARRSPU_PRINT
+    Head->Log->Printf("ARRSPU_JArrayCpu>  Unlock array_%uB \'%s\' ptr:%d_%p"
+      ,ArraysList->ValueSize,Name.c_str(),PtrId,Ptr);
+  #endif
+  Locked=false;
 }
 //==============================================================================
 /// Run memset with Ptr.
