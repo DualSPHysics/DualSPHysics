@@ -94,8 +94,10 @@ protected:
   tdouble3*    VSortDouble3;     ///<To order vectors tdouble3 (write to VSort). | Para ordenar vectores tdouble3 (apunta a VSort).
   tsymatrix3f* VSortSymmatrix3f; ///<To order vectors tsymatrix3f (write to VSort). | Para ordenar vectores tsymatrix3f (apunta a VSort).
 
-  llong MemAllocNp;  ///<Memory reserved for particles. | Mermoria reservada para particulas.
-  llong MemAllocNct; ///<Memory reserved for cells. | Mermoria reservada para celdas.
+  llong    MemAllocNp;       ///<CPU memory allocated for particles.
+  unsigned MemAllocNpTimes;  ///<Number of CPU memory allocations for cells.
+  llong    MemAllocNct;      ///<CPU memory reserved for cells.
+  unsigned MemAllocNctTimes; ///<Number of CPU memory allocations for cells.
 
   unsigned Ndiv;
   unsigned NdivFull;
@@ -145,9 +147,9 @@ protected:
 
   ullong SizeBeginCell(ullong nct)const{ return((nct*2)+5+1); } //-[BoundOk(nct),BoundIgnore(1),Fluid(nct),BoundOut(1),FluidOut(1),BoundOutIgnore(1),FluidOutIgnore(1),END(1)]
 
-  ullong GetAllocMemoryNp()const{ return(MemAllocNp); };
-  ullong GetAllocMemoryNct()const{ return(MemAllocNct); };
-  ullong GetAllocMemory()const{ return(GetAllocMemoryNp()+GetAllocMemoryNct()); };
+  llong GetAllocMemoryNp()const{ return(MemAllocNp); };
+  llong GetAllocMemoryNct()const{ return(MemAllocNct); };
+  llong GetAllocMemory()const{ return(GetAllocMemoryNp()+GetAllocMemoryNct()); };
 
   //tuint3 GetMapCell(const tfloat3& pos)const;
   void LimitsCellBound(unsigned n,unsigned pini,const unsigned* dcellc

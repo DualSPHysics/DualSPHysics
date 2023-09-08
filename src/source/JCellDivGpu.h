@@ -85,10 +85,13 @@ protected:
   int2* BeginEndCell;  ///<Contains the first and final particle of each cell. | Contiene el principio y final de cada celda. 
   // BeginEndCell=[BoundOk(nct),BoundIgnore(1),Fluid(nct),BoundOut(1),FluidOut(1),BoundOutIgnore(1),FluidOutIgnore(1)]
 
-  ullong MemAllocGpuNp;  ///<GPU memory reserved for particles. | Mermoria GPU reservada para particulas.
-  ullong MemAllocGpuNct; ///<GPU memory reserved for cells. | Mermoria GPU reservada para celdas.
+  llong    MemAllocGpuNp;       ///<GPU memory allocated for particles.
+  unsigned MemAllocGpuNpTimes;  ///<Number of GPU memory allocations for cells.
+  llong    MemAllocGpuNct;      ///<GPU memory reserved for cells.
+  unsigned MemAllocGpuNctTimes; ///<Number of GPU memory allocations for cells.
 
-  unsigned Ndiv,NdivFull;
+  unsigned Ndiv;
+  unsigned NdivFull;
 
   //-Number of particles by type to initialise in divide.
   //-Numero de particulas por tipo al iniciar el divide.
@@ -134,10 +137,10 @@ protected:
     return(unsigned(double(megabytes)/16*MEBIBYTE-(40./16.)));
   }
 
-  ullong GetAllocMemoryCpu()const{ return(0); }
-  ullong GetAllocMemoryGpuNp()const{ return(MemAllocGpuNp); };
-  ullong GetAllocMemoryGpuNct()const{ return(MemAllocGpuNct); };
-  ullong GetAllocMemoryGpu()const{ return(GetAllocMemoryGpuNp()+GetAllocMemoryGpuNct()); };
+  llong GetAllocMemoryCpu()const{ return(0); }
+  llong GetAllocMemoryGpuNp()const{ return(MemAllocGpuNp); };
+  llong GetAllocMemoryGpuNct()const{ return(MemAllocGpuNct); };
+  llong GetAllocMemoryGpu()const{ return(GetAllocMemoryGpuNp()+GetAllocMemoryGpuNct()); };
 
   //:tuint3 GetMapCell(const tfloat3& pos)const;
   void CalcCellDomainBound(unsigned n,unsigned pini,unsigned n2,unsigned pini2

@@ -55,10 +55,10 @@ public:
 
   StDivDataGpu GetCellDivData()const;
 
-  ullong GetAllocMemoryCpu()const{ return(JCellDivGpu::GetAllocMemoryCpu()); }
-  ullong GetAllocMemoryGpu()const{ return(JCellDivGpu::GetAllocMemoryGpu()); }
-  ullong GetAllocMemoryGpuNp()const{ return(JCellDivGpu::GetAllocMemoryGpuNp()); };
-  ullong GetAllocMemoryGpuNct()const{ return(JCellDivGpu::GetAllocMemoryGpuNct()); };
+  llong GetAllocMemoryCpu()const{ return(JCellDivGpu::GetAllocMemoryCpu()); }
+  llong GetAllocMemoryGpu()const{ return(JCellDivGpu::GetAllocMemoryGpu()); }
+  llong GetAllocMemoryGpuNp()const{ return(JCellDivGpu::GetAllocMemoryGpuNp()); };
+  llong GetAllocMemoryGpuNct()const{ return(JCellDivGpu::GetAllocMemoryGpuNct()); };
 };
 
 #endif

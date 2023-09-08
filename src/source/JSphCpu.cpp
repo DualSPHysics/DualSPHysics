@@ -240,8 +240,8 @@ void JSphCpu::ResizeCpuMemoryParticlesData(unsigned ndatacpu
   const llong memcpuparticles=Arrays_Cpu->GetAllocMemoryCpu();
   const double mbparticle=(double(memcpuparticles)/MEBIBYTE)/CpuParticlesSize; //-MB por particula.
   const string txover=(npmin>1? fun::PrintStr(" (over-allocation: %.2fX)",double(npnew)/npmin): "");
-  Log->Printf("**JSphCpu: Requesting CPU memory for %s particles%s: %.1f MiB."
-    ,KINT(npnew),txover.c_str(),mbparticle*npnew);
+  Log->Printf("**JSphCpu: Requesting CPU memory for %s particles%s: %.1f MiB (%u times)."
+    ,KINT(npnew),txover.c_str(),mbparticle*npnew,Arrays_Cpu->GetCountResizeDataCalls()+1);
   //-Resizes CPU memory allocation.
   Arrays_Cpu->SetDataArraySize(npnew,ndatacpu);
   //-Updates values.

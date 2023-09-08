@@ -58,9 +58,9 @@ public:
     ,const unsigned* dcellc,const typecode* codec,const unsigned* idpc,const tdouble3* posc
     ,JDsTimersCpu* timersc);
 
-  ullong GetAllocMemory()const{ return(JCellDivCpu::GetAllocMemory()); }
-  ullong GetAllocMemoryNp()const{ return(JCellDivCpu::GetAllocMemoryNp()); };
-  ullong GetAllocMemoryNct()const{ return(JCellDivCpu::GetAllocMemoryNct()); };
+  llong GetAllocMemory()const{ return(JCellDivCpu::GetAllocMemory()); }
+  llong GetAllocMemoryNp()const{ return(JCellDivCpu::GetAllocMemoryNp()); };
+  llong GetAllocMemoryNct()const{ return(JCellDivCpu::GetAllocMemoryNct()); };
 };
 
 #endif

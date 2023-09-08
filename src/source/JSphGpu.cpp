@@ -429,8 +429,8 @@ void JSphGpu::ResizeGpuMemoryParticlesData(unsigned ndatagpu
   const llong memgpuparticles=Arrays_Gpu->GetAllocMemoryGpu();
   const double mbparticle=(double(memgpuparticles)/MEBIBYTE)/GpuParticlesSize; //-MiB per particle.
   const string txover=(npmin>1? fun::PrintStr(" (over-allocation: %.2fX)",double(npnew)/npmin): "");
-  Log->Printf("**JSphGpu: Requesting GPU memory for %s particles%s: %.1f MiB."
-    ,KINT(npnew),txover.c_str(),mbparticle*npnew);
+  Log->Printf("**JSphGpu: Requesting GPU memory for %s particles%s: %.1f MiB (%u times)."
+    ,KINT(npnew),txover.c_str(),mbparticle*npnew,Arrays_Gpu->GetCountResizeDataCalls()+1);
   //-Resizes GPU memory allocation.
   Arrays_Gpu->SetDataArraySize(npnew,ndatagpu);
   //-Updates values.

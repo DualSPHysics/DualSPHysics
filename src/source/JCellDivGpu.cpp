@@ -71,6 +71,7 @@ void JCellDivGpu::Reset(){
   Ndiv=NdivFull=0;
   Nptot=Npb1=Npf1=Npb2=Npf2=0;
   MemAllocGpuNp=MemAllocGpuNct=0;
+  MemAllocGpuNpTimes=MemAllocGpuNctTimes=0;
   NpbOut=NpfOut=NpbOutIgnore=NpfOutIgnore=0;
   NpFinal=NpbFinal=0;
   NpbIgnore=0;
@@ -121,12 +122,11 @@ void JCellDivGpu::AllocMemoryNp(ullong np,ullong npmin){
   //-Allocates memory for the particles.
   //-Reserva memoria para particulas.
   MemAllocGpuNp=0;
-  size_t m=sizeof(unsigned)*SizeNp;
-  cudaMalloc((void**)&CellPart,m); MemAllocGpuNp+=m;
-  cudaMalloc((void**)&SortPart,m); MemAllocGpuNp+=m;
+  MemAllocGpuNp+=fcuda::Malloc(&CellPart,SizeNp);
+  MemAllocGpuNp+=fcuda::Malloc(&SortPart,SizeNp);
   SizeAuxMem=cudiv::LimitsPosSize(SizeNp);
-  m=sizeof(float)*SizeAuxMem;
-  cudaMalloc((void**)&AuxMem,m);   MemAllocGpuNp+=m;
+  MemAllocGpuNp+=fcuda::Malloc(&AuxMem,SizeAuxMem);
+  MemAllocGpuNpTimes++;
   //-Checks allocated memory.
   //-Comprueba reserva de memoria.
   cudaError_t cuerr=cudaGetLastError();
@@ -137,8 +137,8 @@ void JCellDivGpu::AllocMemoryNp(ullong np,ullong npmin){
   }
   //-Show requested memory.
   const string txover=(npmin>1? fun::PrintStr(" (over-allocation: %.2fX)",double(SizeNp)/npmin): "");
-  Log->Printf("**CellDiv: Requested gpu memory for %s particles%s: %.1f MiB."
-    ,KINT(SizeNp),txover.c_str(),double(MemAllocGpuNp)/MEBIBYTE);
+  Log->Printf("**CellDiv: Requested gpu memory for %s particles%s: %.1f MiB (%u times)."
+    ,KINT(SizeNp),txover.c_str(),double(MemAllocGpuNp)/MEBIBYTE,MemAllocGpuNpTimes);
 }
 
 //==============================================================================
@@ -154,6 +154,7 @@ void JCellDivGpu::AllocMemoryNct(ullong nct,ullong nctmin){
     fun::PrintStr("Failed GPU memory allocation for %s cells.",KINT(nct)));
   //-Allocates memory for cells.
   MemAllocGpuNct=fcuda::Malloc(&BeginEndCell,nctt);
+  MemAllocGpuNctTimes++;
   //-Checks allocated memory.
   const cudaError_t cuerr=cudaGetLastError();
   if(cuerr!=cudaSuccess){
@@ -163,8 +164,8 @@ void JCellDivGpu::AllocMemoryNct(ullong nct,ullong nctmin){
   }
   //-Shows requested memory.
   const string txover=(nctmin>1? fun::PrintStr(" (over-allocation: %.2fX)",double(SizeNct)/nctmin): "");
-  Log->Printf("**CellDiv: Requested GPU memory for %s cells%s: %.1f MiB."
-    ,KINT(SizeNct),txover.c_str(),double(MemAllocGpuNct)/MEBIBYTE);
+  Log->Printf("**CellDiv: Requested GPU memory for %s cells%s: %.1f MiB (%u times)."
+    ,KINT(SizeNct),txover.c_str(),double(MemAllocGpuNct)/MEBIBYTE,MemAllocGpuNctTimes);
 }
 
 //==============================================================================

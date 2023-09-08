@@ -71,6 +71,7 @@ void JCellDivCpu::Reset(){
   Ndiv=NdivFull=0;
   Nptot=Npb1=Npf1=Npb2=Npf2=0;
   MemAllocNp=MemAllocNct=0;
+  MemAllocNpTimes=MemAllocNctTimes=0;
   NpbOut=NpfOut=NpbOutIgnore=NpfOutIgnore=0;
   NpFinal=NpbFinal=0;
   NpbIgnore=0;
@@ -144,6 +145,7 @@ void JCellDivCpu::AllocMemoryNp(ullong np,ullong npmin){
     CellPart=new unsigned[SizeNp];                      MemAllocNp+=sizeof(unsigned)*SizeNp;
     SortPart=new unsigned[SizeNp];                      MemAllocNp+=sizeof(unsigned)*SizeNp;
     SetMemoryVSort(new byte[sizeof(tdouble3)*SizeNp]);  MemAllocNp+=sizeof(tdouble3)*SizeNp;
+    MemAllocNpTimes++;
   }
   catch(const std::bad_alloc){
     Run_Exceptioon(fun::PrintStr("Failed CPU memory allocation of %.1f MB for %u particles."
@@ -151,8 +153,8 @@ void JCellDivCpu::AllocMemoryNp(ullong np,ullong npmin){
   }
   //-Show requested memory.
   const string txover=(npmin>1? fun::PrintStr(" (over-allocation: %.2fX)",double(SizeNp)/npmin): "");
-  Log->Printf("**CellDiv: Requested cpu memory for %s particles%s: %.1f MiB."
-    ,KINT(SizeNp),txover.c_str(),double(MemAllocNp)/MEBIBYTE);
+  Log->Printf("**CellDiv: Requested cpu memory for %s particles%s: %.1f MiB (%u times)."
+    ,KINT(SizeNp),txover.c_str(),double(MemAllocNp)/MEBIBYTE,MemAllocNpTimes);
 }
 
 //==============================================================================
@@ -171,6 +173,7 @@ void JCellDivCpu::AllocMemoryNct(ullong nct,ullong nctmin){
   try{
     PartsInCell=new unsigned[nctt-1];  MemAllocNct+=sizeof(unsigned)*(nctt-1);
     BeginCell  =new unsigned[nctt];    MemAllocNct+=sizeof(unsigned)*(nctt);
+    MemAllocNctTimes++;
   }
   catch(const std::bad_alloc){
     Run_Exceptioon(fun::PrintStr("Failed CPU memory allocation of %.1f MiB for %s cells."
@@ -178,8 +181,8 @@ void JCellDivCpu::AllocMemoryNct(ullong nct,ullong nctmin){
   }
   //-Shows requested memory.
   const string txover=(nctmin>1? fun::PrintStr(" (over-allocation: %.2fX)",double(SizeNct)/nctmin): "");
-  Log->Printf("**CellDiv: Requested CPU memory for %s cells%s: %.1f MiB."
-    ,KINT(SizeNct),txover.c_str(),double(MemAllocNct)/MEBIBYTE);
+  Log->Printf("**CellDiv: Requested CPU memory for %s cells%s: %.1f MiB (%u times)."
+    ,KINT(SizeNct),txover.c_str(),double(MemAllocNct)/MEBIBYTE,MemAllocNctTimes);
 }
 
 //==============================================================================
