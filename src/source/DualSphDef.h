@@ -327,6 +327,26 @@ typedef struct StrInfoPartPlus{
     this->npbin=npbin;   this->npbout=npbout;  this->npf=npf;
     this->npbper=npbper; this->npfper=npfper;
   }
+  //-Adding values functions.
+  void AddNct(const StrInfoPartPlus& v){
+    this->nct+=v.nct; this->nctsize+=v.nctsize;
+  }
+  void AddNp(const StrInfoPartPlus& v){
+    this->npsim+=v.npsim;       this->npsize+=v.npsize; 
+    this->npnormal+=v.npnormal; this->npsave+=v.npsave;
+    this->npnew+=v.npnew;
+  }
+  void AddNpExtra(const StrInfoPartPlus& v)
+  {
+    this->npbin+=v.npbin;   this->npbout+=v.npbout;  this->npf+=v.npf;
+    this->npbper+=v.npbper; this->npfper+=v.npfper;
+  }
+  void AddMemory(const StrInfoPartPlus& v)
+  {
+    memorycpualloc+=v.memorycpualloc;
+    memorynpalloc +=v.memorynpalloc;   memorynpused +=v.memorynpused;
+    memorynctalloc+=v.memorynctalloc;  memorynctused+=v.memorynctused;
+  }
 }StInfoPartPlus;
 
 ///Structure that stores the maximum values (or almost) achieved during the simulation.

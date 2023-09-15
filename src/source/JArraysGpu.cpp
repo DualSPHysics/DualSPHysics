@@ -543,6 +543,16 @@ void JArrayGpu::PMemsetOffset(void* ptr_offset,unsigned offset,byte value
   if(size+offset>GetSize())Run_Exceptioon("Invalid size.");
   cudaMemset(ptr_offset,value,Sizeof()*size);
 }
+//==============================================================================
+/// Run cudaMemsetAsync with Ptr using offset.
+//==============================================================================
+void JArrayGpu::PMemsetAsyncOffset(void* ptr_offset,unsigned offset,byte value
+  ,size_t size,cudaStream_t stm)
+{
+  if(!Active())Run_Exceptioon("Invalid pointer.");
+  if(size+offset>GetSize())Run_Exceptioon("Invalid size.");
+  cudaMemsetAsync(ptr_offset,value,Sizeof()*size,stm);
+}
 
 //==============================================================================
 /// Copy data from src array.
@@ -738,6 +748,14 @@ void JArrayGpu::CuMemset(byte value,size_t size){
   if(!Active())Run_Exceptioon("Invalid pointer.");
   if(size>GetSize())Run_Exceptioon("Invalid size.");
   cudaMemset(Ptr,value,Sizeof()*size);
+}
+//==============================================================================
+/// Run cudaMemsetAsync with Ptr.
+//==============================================================================
+void JArrayGpu::CuMemsetAsync(byte value,size_t size,cudaStream_t stm){
+  if(!Active())Run_Exceptioon("Invalid pointer.");
+  if(size>GetSize())Run_Exceptioon("Invalid size.");
+  cudaMemsetAsync(Ptr,value,Sizeof()*size,stm);
 }
 
 

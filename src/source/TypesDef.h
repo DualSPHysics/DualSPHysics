@@ -261,6 +261,34 @@ inline tfloat3 ToTFloat3(const tdouble3& v){ return(TFloat3(float(v.x),float(v.y
 inline tdouble3 ToTDouble3(const tfloat3& v){ return(TDouble3(v.x,v.y,v.z)); }
 
 
+///Structure of 2x3 variables of type double.
+typedef struct strdouble6{
+  double x1,y1,z1;
+  double x2,y2,z2;
+
+  tdouble3 getlo()const{ 
+    return(TDouble3(x1,y1,z1));
+  }
+  tdouble3 gethi()const{
+    return(TDouble3(x2,y2,z2));
+  }
+  void setlo(const tdouble3& v){ 
+    x1=v.x;  y1=v.y;  z1=v.z;
+  }
+  void sethi(const tdouble3& v){ 
+    x2=v.x;  y2=v.y;  z2=v.z;
+  }
+}tdouble6;
+
+///Constructors other functions for type \ref tdouble6.
+inline tdouble6 TDouble6(){ tdouble6 m={0,0,0,0,0,0}; return(m); }
+inline tdouble6 TDouble6(double v){ tdouble6 m={v,v,v,v,v,v}; return(m); }
+inline tdouble6 TDouble6(double x1,double y1,double z1,double x2,double y2,double z2){ tdouble6 m={x1,y1,z1,x2,y2,z2}; return(m); }
+inline tdouble6 TDouble6(const tdouble3& v1,const tdouble3& v2){ tdouble6 m={v1.x,v1.y,v1.z,v2.x,v2.y,v2.z}; return(m); }
+inline bool operator ==(const tdouble6& a,const tdouble6& b){ return(a.getlo()==b.getlo() && a.gethi()==b.gethi()); }
+inline bool operator !=(const tdouble6& a,const tdouble6& b){ return(a.getlo()!=b.getlo() || a.gethi()!=b.gethi()); }
+
+
 ///Structure of 4 variables of type word.
 typedef struct{
   word x,y,z,w;

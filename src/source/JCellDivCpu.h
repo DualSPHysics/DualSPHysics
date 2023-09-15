@@ -196,6 +196,7 @@ public:
 
   tuint3 GetCellDomainMin()const{ return(CellDomainMin); }
   tuint3 GetCellDomainMax()const{ return(CellDomainMax); }
+  tdouble6 GetDomainLimitsMinMax(unsigned slicecellmin=0)const;
   tdouble3 GetDomainLimits(bool limitmin,unsigned slicecellmin=0)const;
 
   StDivDataCpu GetCellDivData()const;

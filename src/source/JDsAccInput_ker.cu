@@ -33,7 +33,7 @@ __global__ void KerAddAccInputAng(unsigned n,unsigned pini,typecode codesel1
   ,typecode codesel2,float3 gravity,bool setgravity,double3 acclin
   ,double3 accang,double3 centre,double3 velang,double3 vellin
   ,const typecode* code,const double2* posxy,const double* posz
-  ,const float4* velrhop,float3* ace)
+  ,const float4* velrho,float3* ace)
 {
   const unsigned pp=blockIdx.x*blockDim.x + threadIdx.x;
   if(pp<n){
@@ -56,7 +56,7 @@ __global__ void KerAddAccInputAng(unsigned n,unsigned pini,typecode codesel1
       const double dcy=rxy.y-centre.y;
       const double dcz=posz[p]-centre.z;
       //-Get the current particle's velocity.
-      const float4 rvel=velrhop[p];
+      const float4 rvel=velrho[p];
       const double velx=rvel.x;
       const double vely=rvel.y;
       const double velz=rvel.z;
@@ -120,13 +120,13 @@ __global__ void KerAddAccInputLin(unsigned n,unsigned pini
 //==================================================================================================
 void AddAccInput(unsigned n,unsigned pini,typecode codesel1,typecode codesel2,tdouble3 acclin
   ,tdouble3 accang,tdouble3 centre,tdouble3 velang,tdouble3 vellin,bool setgravity,tfloat3 gravity
-  ,const typecode* code,const double2* posxy,const double* posz,const float4* velrhop,float3* ace
+  ,const typecode* code,const double2* posxy,const double* posz,const float4* velrho,float3* ace
   ,cudaStream_t stm)
 {
   if(n){
     dim3 sgrid=GetSimpleGridSize(n,SPHBSIZE);
     const bool withaccang=(accang.x!=0 || accang.y!=0 || accang.z!=0);
-    if(withaccang)KerAddAccInputAng <<<sgrid,SPHBSIZE,0,stm>>> (n,pini,codesel1,codesel2,Float3(gravity),setgravity,Double3(acclin),Double3(accang),Double3(centre),Double3(velang),Double3(vellin),code,posxy,posz,velrhop,ace);
+    if(withaccang)KerAddAccInputAng <<<sgrid,SPHBSIZE,0,stm>>> (n,pini,codesel1,codesel2,Float3(gravity),setgravity,Double3(acclin),Double3(accang),Double3(centre),Double3(velang),Double3(vellin),code,posxy,posz,velrho,ace);
     else          KerAddAccInputLin <<<sgrid,SPHBSIZE,0,stm>>> (n,pini,codesel1,codesel2,Float3(gravity),setgravity,Double3(acclin),code,ace);
   }
 }

@@ -400,40 +400,6 @@ void JSphCpu::InitRunCpu(){
 /// Prepare variables for interaction functions.
 /// Prepara variables para interaccion.
 //==============================================================================
-void JSphCpu::PreInteractionVars_Forces(unsigned np,unsigned npb){
-  //-Initialise arrays.
-  const unsigned npf=np-npb;
-  Ar_c->Memset(0,np);                                             //Arc[]=0
-  Ace_c->Memset(0,np);                                            //Acec[]=(0)
-  if(AC_CPTR(Delta_c))Delta_c->Memset(0,np);                      //Deltac[]=0
-  if(AC_CPTR(SpsGradvel_c))SpsGradvel_c->MemsetOffset(npb,0,npf); //SpsGradvelc[]=(0).
-
-  //-Select particles for shifting.
-  if(AC_CPTR(ShiftPosfs_c))Shifting->InitCpu(npf,npb,Pos_c->cptr()
-    ,ShiftPosfs_c->ptr());
-
-  //-Adds variable acceleration from input configuration.
-  if(AccInput)AccInput->RunCpu(TimeStep,Gravity,npf,npb,Code_c->cptr()
-    ,Pos_c->cptr(),Velrho_c->cptr(),Ace_c->ptr());
-
-  //-Prepare press values for interaction.
-  {
-    float* press=Press_c->ptr(); 
-    const tfloat4* velrho=Velrho_c->cptr(); 
-    const int n=int(np);
-    #ifdef OMP_USE
-      #pragma omp parallel for schedule (static) if(n>OMP_LIMIT_COMPUTELIGHT)
-    #endif
-    for(int p=0;p<n;p++){
-      press[p]=fsph::ComputePress(velrho[p].w,CSP);
-    }
-  }
-}
-
-//==============================================================================
-/// Prepare variables for interaction functions.
-/// Prepara variables para interaccion.
-//==============================================================================
 void JSphCpu::PreInteraction_Forces(){
   Timersc->TmStart(TMC_CfPreForces);
   //-Assign memory.
@@ -445,7 +411,32 @@ void JSphCpu::PreInteraction_Forces(){
   if(TVisco==VISCO_LaminarSPS)SpsGradvel_c->Reserve();
 
   //-Initialise arrays.
-  PreInteractionVars_Forces(Np,Npb);
+  const unsigned npf=Np-Npb;
+  Ar_c->Memset(0,Np);                                             //Arc[]=0
+  Ace_c->Memset(0,Np);                                            //Acec[]=(0)
+  if(AC_CPTR(Delta_c))Delta_c->Memset(0,Np);                      //Deltac[]=0
+  if(AC_CPTR(SpsGradvel_c))SpsGradvel_c->MemsetOffset(Npb,0,npf); //SpsGradvelc[]=(0).
+
+  //-Select particles for shifting.
+  if(AC_CPTR(ShiftPosfs_c))Shifting->InitCpu(npf,Npb,Pos_c->cptr()
+    ,ShiftPosfs_c->ptr());
+
+  //-Adds variable acceleration from input configuration.
+  if(AccInput)AccInput->RunCpu(TimeStep,Gravity,npf,Npb,Code_c->cptr()
+    ,Pos_c->cptr(),Velrho_c->cptr(),Ace_c->ptr());
+
+  //-Prepare press values for interaction.
+  {
+    float* press=Press_c->ptr(); 
+    const tfloat4* velrho=Velrho_c->cptr(); 
+    const int n=int(Np);
+    #ifdef OMP_USE
+      #pragma omp parallel for schedule (static) if(n>OMP_LIMIT_COMPUTELIGHT)
+    #endif
+    for(int p=0;p<n;p++){
+      press[p]=fsph::ComputePress(velrho[p].w,CSP);
+    }
+  }
 
   //-Calculate VelMax: Floating object particles are included and do not affect use of periodic condition.
   //-Calcula VelMax: Se incluyen las particulas floatings y no afecta el uso de condiciones periodicas.
@@ -505,11 +496,10 @@ float JSphCpu::CalcVelMaxOmp(unsigned np,const tfloat4* velrho)const{
 }
 
 //==============================================================================
-/// Free memory assigned from Arrays_Cpu.
-/// Libera memoria asignada de Arrays_Cpu.
+/// Frees memory allocated from Arrays_Cpu in PreInteraction_Forces().
+/// Libera memoria asignada de Arrays_Cpu en PreInteraction_Forces().
 //==============================================================================
 void JSphCpu::PosInteraction_Forces(){
-  //-Frees memory allocated in PreInteraction_Forces().
   Ar_c->Free();
   Ace_c->Free();
   Press_c->Free();

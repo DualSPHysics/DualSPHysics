@@ -214,7 +214,6 @@ protected:
   void InitFloatingsGpu();
   void InitRunGpu();
 
-  void PreInteractionVars_Forces(unsigned np,unsigned npb);
   void PreInteraction_Forces();
   void PosInteraction_Forces();
   

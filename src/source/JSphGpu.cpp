@@ -787,28 +787,6 @@ void JSphGpu::InitRunGpu(){
 /// Prepares variables for interaction.
 /// Prepara variables para interaccion.
 //==============================================================================
-void JSphGpu::PreInteractionVars_Forces(unsigned np,unsigned npb){
-  //-Initialise arrays.
-  const unsigned npf=np-npb;
-  ViscDt_g->CuMemset(0,np);                                         //ViscDtg[]=0
-  Ar_g->CuMemset(0,np);                                             //Arc[]=0
-  Ace_g->CuMemset(0,np);                                            //Acec[]=(0)
-  if(AG_CPTR(Delta_g))Delta_g->CuMemset(0,np);                      //Deltac[]=0
-  if(AG_CPTR(SpsGradvel_g))SpsGradvel_g->CuMemsetOffset(npb,0,npf); //SpsGradvelc[]=(0).
-  
-  //-Select particles for shifting.
-  if(AC_CPTR(ShiftPosfs_g))Shifting->InitGpu(npf,npb,Posxy_g->cptr()
-    ,Posz_g->cptr(),ShiftPosfs_g->ptr());
-
-  //-Apply the extra forces to the correct particle sets.
-  if(AccInput)AccInput->RunGpu(TimeStep,Gravity,npf,npb,Code_g->cptr()
-    ,Posxy_g->cptr(),Posz_g->cptr(),Velrho_g->cptr(),Ace_g->ptr());
-}
-
-//==============================================================================
-/// Prepares variables for interaction.
-/// Prepara variables para interaccion.
-//==============================================================================
 void JSphGpu::PreInteraction_Forces(){
   Timersg->TmStart(TMG_CfPreForces,false);
   //-Assign memory.
@@ -820,7 +798,20 @@ void JSphGpu::PreInteraction_Forces(){
   if(TVisco==VISCO_LaminarSPS)SpsGradvel_g->Reserve();
 
   //-Initialise arrays.
-  PreInteractionVars_Forces(Np,Npb);
+  const unsigned npf=Np-Npb;
+  ViscDt_g->CuMemset(0,Np);                                         //ViscDtg[]=0
+  Ar_g->CuMemset(0,Np);                                             //Arc[]=0
+  Ace_g->CuMemset(0,Np);                                            //Acec[]=(0)
+  if(AG_CPTR(Delta_g))Delta_g->CuMemset(0,Np);                      //Deltac[]=0
+  if(AG_CPTR(SpsGradvel_g))SpsGradvel_g->CuMemsetOffset(Npb,0,npf); //SpsGradvelc[]=(0).
+  
+  //-Select particles for shifting.
+  if(AC_CPTR(ShiftPosfs_g))Shifting->InitGpu(npf,Npb,Posxy_g->cptr()
+    ,Posz_g->cptr(),ShiftPosfs_g->ptr());
+
+  //-Adds variable acceleration from input configuration.
+  if(AccInput)AccInput->RunGpu(TimeStep,Gravity,npf,Npb,Code_g->cptr()
+    ,Posxy_g->cptr(),Posz_g->cptr(),Velrho_g->cptr(),Ace_g->ptr());
 
   //-Computes VelMax: Includes the particles from floating bodies and does not affect the periodic conditions.
   //-Calcula VelMax: Se incluyen las particulas floatings y no afecta el uso de condiciones periodicas.
@@ -837,11 +828,10 @@ void JSphGpu::PreInteraction_Forces(){
 }
 
 //==============================================================================
-/// Frees memory allocated from Arrays_Gpu.
-/// Libera memoria asignada de Arrays_Gpu.
+/// Frees memory allocated from Arrays_Gpu in PreInteraction_Forces().
+/// Libera memoria asignada de Arrays_Gpu en PreInteraction_Forces().
 //==============================================================================
 void JSphGpu::PosInteraction_Forces(){
-  //-Frees memory allocated in PreInteraction_Forces().
   ViscDt_g->Free();
   Ar_g->Free();
   Ace_g->Free();
@@ -861,15 +851,14 @@ void JSphGpu::ComputeVerlet(double dt){  //pdtedom
   const float3* indirvel=(inout? InOut->GetDirVelg(): NULL);
   VerletStep++;
   //-Allocates memory to compute the displacement.
-  //-Asigna memoria para calcular el desplazamiento.
   agdouble2 movxyg("movxyg",Arrays_Gpu,true);
   agdouble movzg("movzg",Arrays_Gpu,true);
   //-Computes displacement, velocity and density.
-  //-Calcula desplazamiento, velocidad y densidad.
   if(VerletStep<VerletSteps){
+    const double twodt=dt+dt;
     cusphs::ComputeStepVerlet(WithFloating,shift,inout,Np,Npb
       ,Velrho_g->cptr(),VelrhoM1_g->cptr(),Ar_g->cptr(),Ace_g->cptr()
-      ,ShiftPosfs_g->cptr(),indirvel,dt,dt+dt,RhopZero,RhopOutMin,RhopOutMax
+      ,ShiftPosfs_g->cptr(),indirvel,dt,twodt,RhopZero,RhopOutMin,RhopOutMax
       ,Gravity,Code_g->ptr(),movxyg.ptr(),movzg.ptr(),VelrhoM1_g->ptr(),NULL);
   }
   else{
@@ -880,10 +869,8 @@ void JSphGpu::ComputeVerlet(double dt){  //pdtedom
     VerletStep=0;
   }
   //-The new values are calculated in VelrhoM1_g.
-  //-Los nuevos valores se calculan en VelrhoM1g.
-  Velrho_g->SwapPtr(VelrhoM1_g); //-Exchanges Velrho_g and VelrhoM1_g. | Intercambia Velrho_g y VelrhoM1_g.
+  Velrho_g->SwapPtr(VelrhoM1_g); //-Exchanges Velrho_g and VelrhoM1_g.
   //-Applies displacement to non-periodic fluid particles.
-  //-Aplica desplazamiento a las particulas fluid no periodicas.
   cusph::ComputeStepPos(PeriActive,WithFloating,Np,Npb,movxyg.cptr(),movzg.cptr()
     ,Posxy_g->ptr(),Posz_g->ptr(),Dcell_g->ptr(),Code_g->ptr());
   Timersg->TmStop(TMG_SuComputeStep,true);

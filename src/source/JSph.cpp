@@ -2816,7 +2816,7 @@ void JSph::SaveRunPartsCsvFinal()const{
 /// Graba los ficheros de datos de particulas.
 //==============================================================================
 void JSph::SavePartData(unsigned npsave,unsigned nout,const JDataArrays& arrays
-  ,unsigned ndom,const tdouble3* vdom,const StInfoPartPlus& infoplus)
+  ,unsigned ndom,const tdouble6* vdom,const StInfoPartPlus& infoplus)
 {
   TimerPart.Stop();
   TimerSim.Stop();
@@ -2828,11 +2828,11 @@ void JSph::SavePartData(unsigned npsave,unsigned nout,const JDataArrays& arrays
   //-Stores particle data and other information in bi4 format.
   if(DataBi4){
     tfloat3* posf3=NULL;
-    tdouble3 domainmin=vdom[0];
-    tdouble3 domainmax=vdom[1];
+    tdouble3 domainmin=vdom[0].getlo();
+    tdouble3 domainmax=vdom[0].gethi();
     for(unsigned c=1;c<ndom;c++){
-      domainmin=MinValues(domainmin,vdom[c*2  ]);
-      domainmax=MaxValues(domainmax,vdom[c*2+1]);
+      domainmin=MinValues(domainmin,vdom[c].getlo());
+      domainmax=MaxValues(domainmax,vdom[c].gethi());
     }
     JBinaryData* bdpart=DataBi4->AddPartInfo(Part,TimeStep,npsave,nout,Nstep
       ,TimerPart.GetElapsedTimeD()/1000.,domainmin,domainmax,TotalNp);
@@ -2869,8 +2869,8 @@ void JSph::SavePartData(unsigned npsave,unsigned nout,const JDataArrays& arrays
       if(ndom>1){
         bdpart->SetvUint("subdomain_count",ndom);
         for(unsigned c=0;c<ndom;c++){
-          bdpart->SetvDouble3(fun::PrintStr("subdomainmin_%02u",c),vdom[c*2  ]);
-          bdpart->SetvDouble3(fun::PrintStr("subdomainmax_%02u",c),vdom[c*2+1]);
+          bdpart->SetvDouble3(fun::PrintStr("subdomainmin_%02u",c),vdom[c].getlo());
+          bdpart->SetvDouble3(fun::PrintStr("subdomainmax_%02u",c),vdom[c].gethi());
         }
       }
     }
@@ -2963,7 +2963,7 @@ void JSph::SavePartData(unsigned npsave,unsigned nout,const JDataArrays& arrays
 /// Genera los ficheros de salida de datos.
 //==============================================================================
 void JSph::SaveData(unsigned npsave,const JDataArrays& arrays
-  ,unsigned ndom,const tdouble3* vdom,StInfoPartPlus infoplus)
+  ,unsigned ndom,const tdouble6* vdom,StInfoPartPlus infoplus)
 {
   string suffixpartx=fun::PrintStr("_%04d",Part);
 
@@ -3084,10 +3084,10 @@ void JSph::CheckTermination(){
 /// Generates VTK file with domain of the particles.
 /// Genera fichero VTK con el dominio de las particulas.
 //==============================================================================
-void JSph::SaveDomainVtk(unsigned ndom,const tdouble3* vdom)const{ 
+void JSph::SaveDomainVtk(unsigned ndom,const tdouble6* vdom)const{ 
   if(vdom){
     string fname=fun::FileNameSec("Domain.vtk",Part);
-    JVtkLib::SaveVtkBoxes(DirDataOut+fname,ndom,vdom,KernelH*0.5f);
+    JVtkLib::SaveVtkBoxes(DirDataOut+fname,ndom,(const tdouble3*)vdom,KernelH*0.5f);
   }
 }
 

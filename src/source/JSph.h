@@ -497,14 +497,14 @@ protected:
   void SaveRunPartsCsv(const StInfoPartPlus& infoplus,double tpart,double tsim)const;
   void SaveRunPartsCsvFinal()const;
   void SavePartData(unsigned npsave,unsigned nout,const JDataArrays& arrays
-    ,unsigned ndom,const tdouble3* vdom,const StInfoPartPlus& infoplus);
+    ,unsigned ndom,const tdouble6* vdom,const StInfoPartPlus& infoplus);
   void SaveData(unsigned npsave,const JDataArrays& arrays,unsigned ndom
-    ,const tdouble3* vdom,StInfoPartPlus infoplus);
+    ,const tdouble6* vdom,StInfoPartPlus infoplus);
 
   void CheckTermination();
   void TimeOutExtraUpdate(double timestep);
   bool TimeOutExtraCheck(double timestep)const{ return(timestep>=TimePartExtraNext); }
-  void SaveDomainVtk(unsigned ndom,const tdouble3* vdom)const;
+  void SaveDomainVtk(unsigned ndom,const tdouble6* vdom)const;
   void SaveInitialDomainVtk()const;
   unsigned SaveMapCellsVtkSize()const;
   void SaveMapCellsVtk(float scell)const;

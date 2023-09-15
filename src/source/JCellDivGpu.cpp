@@ -409,7 +409,7 @@ float* JCellDivGpu::GetAuxMem(unsigned size){
 /// Returns the actual limits of the domain.
 /// Devuelve limites actuales del dominio.
 //==============================================================================
-tdouble3 JCellDivGpu::GetDomainLimits(bool limitmin,unsigned slicecellmin)const{
+tdouble6 JCellDivGpu::GetDomainLimitsMinMax(unsigned slicecellmin)const{
   tuint3 celmin=GetCellDomainMin(),celmax=GetCellDomainMax();
   if(celmin.x>celmax.x)celmin.x=celmax.x=0; else celmax.x++;
   if(celmin.y>celmax.y)celmin.y=celmax.y=0; else celmax.y++;
@@ -417,7 +417,16 @@ tdouble3 JCellDivGpu::GetDomainLimits(bool limitmin,unsigned slicecellmin)const{
   double scell=double(Scell);
   tdouble3 pmin=DomPosMin+TDouble3(scell*celmin.x,scell*celmin.y,scell*celmin.z);
   tdouble3 pmax=DomPosMin+TDouble3(scell*celmax.x,scell*celmax.y,scell*celmax.z);
-  return(limitmin? pmin: pmax);
+  return(TDouble6(pmin,pmax));
+}
+
+//==============================================================================
+/// Returns the actual limits of the domain.
+/// Devuelve limites actuales del dominio.
+//==============================================================================
+tdouble3 JCellDivGpu::GetDomainLimits(bool limitmin,unsigned slicecellmin)const{
+  const tdouble6 limits=GetDomainLimitsMinMax(slicecellmin);
+  return(limitmin? limits.getlo(): limits.gethi());
 }
 
 /*:

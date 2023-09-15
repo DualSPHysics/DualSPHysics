@@ -184,7 +184,6 @@ protected:
   float CalcVelMaxSeq(unsigned np,const tfloat4* velrho)const;
   float CalcVelMaxOmp(unsigned np,const tfloat4* velrho)const;
 
-  void PreInteractionVars_Forces(unsigned np,unsigned npb);
   void PreInteraction_Forces();
   void PosInteraction_Forces();
 

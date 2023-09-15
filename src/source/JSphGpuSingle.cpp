@@ -989,7 +989,8 @@ void JSphGpuSingle::Run(std::string appname,const JSphCfgRun* cfg,JLog2* log){
     if(DsPips)ComputePips(laststep);
     if(Part<=PartIni+1 && tc.CheckTime())Log->Print(string("  ")
       +tc.GetInfoFinish((TimeStep-TimeStepIni)/(TimeMax-TimeStepIni)));
-    if(NstepsBreak && Nstep>=NstepsBreak)break; //-For debugging.
+    //-Terminates the simulation according to NstepsBreak (for debugging).
+    if(NstepsBreak && Nstep>=NstepsBreak)break;
   }
   TimerSim.Stop(); TimerTot.Stop();
 
@@ -1057,11 +1058,11 @@ void JSphGpuSingle::SaveData(){
     infoplus.timesim=TimerSim.GetElapsedTimeD()/1000.;
   }
   //-Obtains current domain limits.
-  const tdouble3 vdom[2]={CellDivSingle->GetDomainLimits(true),CellDivSingle->GetDomainLimits(false)};
+  const tdouble6 vdom=CellDivSingle->GetDomainLimitsMinMax();
   //-Stores particle data. | Graba datos de particulas.
   JDataArrays arrays;
   AddBasicArrays(arrays,npsave,AuxPos_c->cptr(),Idp_c->cptr(),AuxVel_c->cptr(),AuxRho_c->cptr());
-  JSph::SaveData(npsave,arrays,1,vdom,infoplus);
+  JSph::SaveData(npsave,arrays,1,&vdom,infoplus);
   if(UseNormals && SvNormals)SaveVtkNormalsGpu("normals/Normals.vtk",Part
     ,npsave,Npb,Posxy_g->cptr(),Posz_g->cptr(),Idp_g->cptr(),BoundNor_g->cptr());
   //-Save extra data.

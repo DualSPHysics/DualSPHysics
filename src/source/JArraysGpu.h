@@ -219,6 +219,7 @@ protected:
   void ClearReserve();
   void PSwapPtr(JArrayGpu* ar);
   void PMemsetOffset(void* ptr_offset,unsigned offset,byte value,size_t size);
+  void PMemsetAsyncOffset(void* ptr_offset,unsigned offset,byte value,size_t size,cudaStream_t stm);
 
   void PCopyFrom(const JArrayGpu* src,size_t size);
   void PCopyFromOffset(void* dst_ptr,unsigned dst_offset,const JArrayGpu* src
@@ -269,6 +270,7 @@ public:
   void UnlockPtr();
   
   void CuMemset(byte value,size_t size);
+  void CuMemsetAsync(byte value,size_t size,cudaStream_t stm);
 
   //-For data on CPU.
   void DataAlloc();
@@ -303,6 +305,12 @@ public:
     PMemsetOffset(
       (void*)(ptr()? ptr()+offset: NULL)
       ,offset,value,size);
+  }
+  //----------------------------------------------------------------------------
+  void CuMemsetAsyncOffset(unsigned offset,byte value,size_t size,cudaStream_t stm){
+    PMemsetAsyncOffset(
+      (void*)(ptr()? ptr()+offset: NULL)
+      ,offset,value,size,stm);
   }
   //----------------------------------------------------------------------------
   //----------------------------------------------------------------------------
@@ -361,6 +369,10 @@ public:
   //----------------------------------------------------------------------------
   void CuCopyToHost(T* dst_ptr,size_t size)const{ 
     PCopyToHostPointer((void*)dst_ptr,size);
+  }
+  //----------------------------------------------------------------------------
+  void CuCopyToHost2(T2* dst_ptr,size_t size)const{ 
+    CuCopyToHost((T*)dst_ptr,size); 
   }
   //----------------------------------------------------------------------------
   void CuCopyToHostOffset(unsigned src_offset,TCPU* dst,unsigned dst_offset
