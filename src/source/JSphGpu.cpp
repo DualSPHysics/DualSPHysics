@@ -472,6 +472,7 @@ llong JSphGpu::GetAllocMemoryGpu()const{
 /// Visualiza la memoria reservada.
 //==============================================================================
 void JSphGpu::PrintAllocMemory(llong mcpu,llong mgpu)const{
+  if(!Nstep)Log->Print("");
   Log->Printf("%s allocated memory in CPU: %s (%.2f MiB)  (%u particle arrays)"
     ,(!Nstep? "Initial": "**Updated"),KINT(mcpu),double(mcpu)/MEBIBYTE,Arrays_Cpu->GetArrayCount());
   Log->Printf("%s allocated memory in GPU: %s (%.2f MiB)  (%u particle arrays)"

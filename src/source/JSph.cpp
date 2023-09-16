@@ -201,8 +201,8 @@ void JSph::InitVars(){
   NoRtimes=false;
   TerminateMt=0;
   DtIni=DtMin=0; CoefDtMin=0; DtAllParticles=false;
-  PartsOutMax=0;
-  NpMinimum=0;
+  MinFluidStop=0;
+  NpfMinimum=0;
   PartsOutWrn=1; PartsOutTotWrn=10;
 
   SvData=byte(SDAT_Binx)|byte(SDAT_Info);
@@ -717,7 +717,9 @@ void JSph::LoadConfigParameters(const JXml* xml){
 
   if(eparms.Exists("RhopOutMin"))RhopOutMin=eparms.GetValueFloat("RhopOutMin");
   if(eparms.Exists("RhopOutMax"))RhopOutMax=eparms.GetValueFloat("RhopOutMax");
-  PartsOutMax=eparms.GetValueFloat("PartsOutMax",true,1);
+
+  if(eparms.Exists("PartsOutMax"))Log->PrintWarning("The XML option \'PartsOutMax\' is deprecated. Use \'MinFluidStop\' option.");
+  MinFluidStop=eparms.GetValueFloat("MinFluidStop",true,0);
 
   //-Configuration of symmetry calculation.            //<vs_syymmetry>
   Symmetry=(eparms.GetValueInt("Symmetry",true,0)!=0); //<vs_syymmetry>
@@ -1226,7 +1228,9 @@ void JSph::LoadCaseConfig(const JSphCfgRun* cfg){
     if(TVisco!=VISCO_Artificial)Run_Exceptioon("Symmetry is only allowed with Artificial viscosity.");
   } //<vs_syymmetry_end>
 
-  NpMinimum=CaseNp-unsigned(PartsOutMax*CaseNfluid);
+  //-Defines NpfMinimum according to CaseNfluid. It is updated later to add initial inlet fluid particles.
+  NpfMinimum=unsigned(MinFluidStop*CaseNfluid);
+
   Log->Print("**Basic case configuration is loaded");
 }
 
@@ -1643,7 +1647,6 @@ void JSph::VisuConfig(){
   Log->Printf("TimePart=%g",TimePart);
   if(TimePartExtra>=0)Log->Printf("TimePartExtra=%g",TimePartExtra);
   Log->Print(fun::VarStr("Gravity",Gravity));
-  Log->Print(fun::VarKStr("NpMinimum",NpMinimum));
   //-RhopOut limits.
   Log->Print(fun::VarStr("RhopOut",RhopOut));
   if(RhopOut){
@@ -1652,6 +1655,8 @@ void JSph::VisuConfig(){
     ConfigInfo=ConfigInfo+sep+fun::PrintStr("RhopOut(%G-%G)",RhopOutMin,RhopOutMax);
   }
   Log->Print(fun::VarStr("WrnPartsOut",WrnPartsOut));
+  Log->Print(fun::VarStr("MinFluidStop",MinFluidStop));
+  Log->Print(fun::VarKStr("NpfMinimum",NpfMinimum));
   //-Other configurations. 
   if(CteB==0)Run_Exceptioon("Constant \'b\' cannot be zero.\n\'b\' is zero when fluid height is zero (or fluid particles were not created)");
 }
@@ -1670,6 +1675,7 @@ void JSph::VisuRefs(){
   Log->Print("    Computational Particle Mechanics, 9:867-895. doi: https://doi.org/10.1007/s40571-021-00404-2");
   Log->Print("");
   //-Code implementation:
+  if(Mgpu)Log->Print("- New multi-GPU implementation for Smoothed Particle Hydrodynamics on heterogeneous clusters (Dominguez et al., 2013  https://doi.org/10.1016/j.cpc.2013.03.008)");
   Log->Print("- Optimised CPU multi-core and GPU implementation (Dominguez et al., 2013  https://doi.org/10.1016/j.cpc.2012.10.015)");
   //-Boundary conditions:
   if(TBoundary==BC_DBC )Log->Print("- Dynamic boundary conditions (Crespo et al., 2007  https://doi.org/10.3970/cmc.2007.005.173)");
@@ -2148,6 +2154,7 @@ void JSph::LoadCaseParticles(){
 void JSph::InitRun(unsigned np,const unsigned* idp,const tdouble3* pos){
   InterStep=(TStep==STEP_Symplectic? INTERSTEP_SymPredictor: INTERSTEP_Verlet);
   VerletStep=0;
+  if(FixedDt)DtIni=FixedDt->GetDt(TimeStep,DtIni);
   if(TStep==STEP_Symplectic)SymplecticDtPre=DtIni;
   if(UseDEM)DemDtForce=DtIni; //(DEM)
   
@@ -2290,7 +2297,6 @@ void JSph::InitRun(unsigned np,const unsigned* idp,const tdouble3* pos){
 
   Part=PartIni; Nstep=0; PartNstep=0; PartOut=0;
   TimeStep=TimeStepIni; TimeStepM1=TimeStep;
-  if(FixedDt)DtIni=FixedDt->GetDt(TimeStep,DtIni);
   TimePartNext=(SvAllSteps? TimeStep: OutputTime->GetNextTime(TimeStep));
 }
 

@@ -636,7 +636,7 @@ double JSphGpuSingle::ComputeStep_Sym(){
   //-----------
   DemDtForce=dt*0.5f;                          //-For DEM interaction.
   Interaction_Forces(INTERSTEP_SymPredictor);  //-Interaction.
-  const double ddt_p=DtVariable(false);        //-Calculate dt of predictor step.
+  const double dt_p=DtVariable(false);         //-Calculate dt of predictor step.
   if(Shifting)RunShifting(dt*.5);              //-Shifting.
   ComputeSymplecticPre(dt);                    //-Apply Symplectic-Predictor to particles (periodic particles become invalid).
   if(CaseNfloat)RunFloating(dt*.5,true);       //-Control of floating bodies.
@@ -646,7 +646,7 @@ double JSphGpuSingle::ComputeStep_Sym(){
   DemDtForce=dt;                               //-For DEM interaction.
   RunCellDivide(true);
   Interaction_Forces(INTERSTEP_SymCorrector);  //-Interaction.
-  const double ddt_c=DtVariable(true);         //-Calculate dt of corrector step.
+  const double dt_c=DtVariable(true);          //-Calculate dt of corrector step.
   if(Shifting)RunShifting(dt);                 //-Shifting.
   ComputeSymplecticCorr(dt);                   //-Apply Symplectic-Corrector to particles (periodic particles become invalid).
   if(CaseNfloat)RunFloating(dt,false);         //-Control of floating bodies.
@@ -654,7 +654,7 @@ double JSphGpuSingle::ComputeStep_Sym(){
   if(Damping)RunDamping(dt);                   //-Aplies Damping.
   if(RelaxZones)RunRelaxZone(dt);              //-Generate waves using RZ.
 
-  SymplecticDtPre=min(ddt_p,ddt_c);            //-Calculate dt for next ComputeStep.
+  SymplecticDtPre=min(dt_p,dt_c);              //-Calculate dt for next ComputeStep.
   return(dt);
 }
 
@@ -945,7 +945,7 @@ void JSphGpuSingle::Run(std::string appname,const JSphCfgRun* cfg,JLog2* log){
   //-Main Loop.
   //------------
   JTimeControl tc("30,60,300,600");//-Shows information at 0.5, 1, 5 y 10 minutes (before first PART).
-  bool partoutstop=false;
+  bool minfluidstopped=false;
   TimerSim.Start();
   TimerPart.Start();
   Log->Print(string("\n[Initialising simulation (")+RunCode+")  "+fun::GetDateTime()+"]");
@@ -970,11 +970,13 @@ void JSphGpuSingle::Run(std::string appname,const JSphCfgRun* cfg,JLog2* log){
         ,Posxy_g->cptr(),Posz_g->cptr(),RidpMotg);
       TimeOutExtraUpdate(TimeStep);
     }
+    //-Check minimum fluid allowed.
+    const unsigned npfnormal=Np-NpbPer-NpfPer-CaseNbound;
+    minfluidstopped=(npfnormal<NpfMinimum || !Np);
     //-Save main PART data.
-    partoutstop=(Np<NpMinimum || !Np);
-    if(TimeStep>=TimePartNext || partoutstop){
-      if(partoutstop){
-        Log->PrintWarning("Particles OUT limit reached...");
+    if(TimeStep>=TimePartNext || minfluidstopped){
+      if(minfluidstopped){
+        Log->PrintWarning(fun::PrintStr("The minimum number of fluid particles (%s) was reached.",KINT(NpfMinimum)));
         TimeMax=TimeStep;
       }
       SaveData();
@@ -996,7 +998,7 @@ void JSphGpuSingle::Run(std::string appname,const JSphCfgRun* cfg,JLog2* log){
 
   //-End of Simulation.
   //--------------------
-  FinishRun(partoutstop);
+  FinishRun(minfluidstopped);
 }
 
 //==============================================================================

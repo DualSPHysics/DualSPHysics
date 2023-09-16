@@ -164,6 +164,13 @@ void JSphGpuSingle::InOutInit(double timestepini){
   if(DBG_INOUT_PARTINIT)DgSaveVtkParticlesGpu("CfgInOut_InletIni.vtk",2
     ,0,Np,Posxy_g->cptr(),Posz_g->cptr(),Code_g->cptr()
     ,Idp_g->cptr(),Velrho_g->cptr());
+  
+  //-Defines NpfMinimum according to the current fluid including inlet particles.
+  const unsigned npfnormal=Np-NpbPer-NpfPer-CaseNbound;
+  NpfMinimum=unsigned(MinFluidStop*npfnormal);
+  Log->Printf("**MinFluidStop value was updated with inlet particles to %s (%g x %s)."
+    ,KINT(NpfMinimum),MinFluidStop,KINT(npfnormal));
+
   Timersg->TmStop(TMG_SuInOut,true);
 }
 

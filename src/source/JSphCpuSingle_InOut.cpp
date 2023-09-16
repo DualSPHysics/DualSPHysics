@@ -145,6 +145,13 @@ void JSphCpuSingle::InOutInit(double timestepini){
 
   if(DBG_INOUT_PARTINIT)DgSaveVtkParticlesCpu("CfgInOut_InletIni.vtk",2,0,Np
     ,Pos_c->cptr(),Code_c->cptr(),Idp_c->cptr(),Velrho_c->cptr());
+  
+  //-Defines NpfMinimum according to the current fluid including inlet particles.
+  const unsigned npfnormal=Np-NpbPer-NpfPer-CaseNbound;
+  NpfMinimum=unsigned(MinFluidStop*npfnormal);
+  Log->Printf("**MinFluidStop value was updated with inlet particles to %s (%g x %s)."
+    ,KINT(NpfMinimum),MinFluidStop,KINT(npfnormal));
+
   Timersc->TmStop(TMC_SuInOut);
 }
 

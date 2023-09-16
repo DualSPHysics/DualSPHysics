@@ -210,8 +210,8 @@ protected:
   JDsFixedDt* FixedDt;
   JDsSaveDt* SaveDt;
 
-  float PartsOutMax;         ///<Allowed percentage of fluid particles out of the domain. | Porcentaje maximo de particulas excluidas permitidas.                                  
-  unsigned NpMinimum;        ///<Minimum number of particles allowed.                     | Numero minimo de particulas permitidas.                                                
+  float MinFluidStop;        ///<Minimum proportion of initial fluid particles to continue the simulation 0:Never stops, 0.1:Stops when fluid drops to 10%. (default=0).
+  unsigned NpfMinimum;       ///<Minimum number of fluid particles allowed.                     | Numero minimo de particulas permitidas.
   unsigned PartsOutWrn;      ///<Limit percentage for warning generation about number of excluded particles in one PART.
   unsigned PartsOutTotWrn;   ///<Limit percentage for warning generation about total excluded particles.
 
