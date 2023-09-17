@@ -158,6 +158,7 @@ protected:
   std::string CaseName,DirCase,RunName;
   std::string DirOut;         ///<Specifies the general output directory.
   std::string DirDataOut;     ///<Specifies the output subdirectory for binary data.
+  std::string DirVtkOut;      ///<Specifies the output subdirectory for vtk files.
   std::string FileXml;
 
   //-Options for execution.
@@ -185,7 +186,7 @@ protected:
   float MdbcThreshold;        ///<Kernel support limit to apply mDBC correction (default=0).
   bool UseNormals;            ///<Indicates use of normals for mDBC.
   bool UseNormalsFt;          ///<Indicates use of normals of floating bodies for mDBC.
-  bool SvNormals;             ///<Saves normals VTK each PART (default=0).
+  bool SvNormals;             ///<Saves normals VTK each PART (default=false).
 
   bool RhopOut;               ///<Indicates whether the RhopOut density correction is active or not.    | Indica si activa la correccion de densidad RhopOut o no.                       
   float RhopOutMin;           ///<Minimum limit for Rhopout correction.                                 | Limite minimo para la correccion de RhopOut.
@@ -202,6 +203,7 @@ protected:
   bool SvAllSteps;            ///<Saves a PART for each step (debug).
   bool NoRtimes;              ///<Removes execution dependent values from bi4 files (debug).
   ullong TerminateMt;         ///<Modification time of file TERMINATE.
+  double TerminateTimeMax;    ///<New TimeMax value due to file TERMINATE configuration (DBL_MAX).
 
   double DtIni;              ///<Initial Dt
   double DtMin;              ///<Minimum allowed Dt (if the calculated value is lower is replaced by DTmin).

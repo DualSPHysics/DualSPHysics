@@ -1310,8 +1310,8 @@ void JSphCpuSingle::SaveData(){
   JDataArrays arrays;
   AddBasicArrays(arrays,npsave,svpos.cptr(),svidp.cptr(),svvel.cptr(),svrho.cptr());
   JSph::SaveData(npsave,arrays,1,&vdom,infoplus);
-  //-Free auxiliary memory for particle data. | Libera memoria auxiliar para datos de particulas.
-  if(UseNormals && SvNormals)SaveVtkNormals("normals/Normals.vtk",Part
+  //-Save VTK file with current boundary normals (for debug).
+  if(UseNormals && SvNormals)SaveVtkNormals(DirVtkOut+"Normals.vtk",Part
     ,npsave,Npb,Pos_c->cptr(),Idp_c->cptr(),BoundNor_c->cptr(),1.f);
   //-Save extra data.
   if(SvExtraDataBi4)SaveExtraData();

@@ -64,7 +64,7 @@ void JCaseEParms::Add(const std::string& key,const std::string& value
   {
     const string k=fun::StrLower(key);
     if(k=="incz" || k.substr(0,11)=="domainfixed" || k.substr(0,15)=="domainparticles"
-      || k=="deltasph" || k=="posdouble")
+      || k=="deltasph" || k=="posdouble" || k=="partsoutmax")
     {
       if(int(fun::StrUpper(comment2).find("**DEPRECATED**"))<0)
         comment2=string("**DEPRECATED** ")+comment2;

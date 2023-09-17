@@ -610,6 +610,7 @@ void JMotion::WriteXml(JXml* jxml,const std::string& path)const{
 void JMotion::ReadXml(const std::string& dirdata,JXml* jxml,TiXmlNode* node
   ,unsigned& id,unsigned idp)
 {
+  const string msgaxiserror="Rotation axis is invalid as axisp1 and axisp2 are equal.";
   TiXmlElement* ele=node->FirstChildElement(); 
   while(ele){
     string name=ele->Value();
@@ -619,7 +620,11 @@ void JMotion::ReadXml(const std::string& dirdata,JXml* jxml,TiXmlNode* node
         //printf("ObjAdd(%d,%d,%d)\n",id,idp,(name=="objreal"? jxml->GetAttributeInt(ele,"ref"): -1));
         ReadXml(dirdata,jxml,ele,id,id);
       }
-      else if(name=="wait"||name=="mvrect"||name=="mvrectace"||name=="mvrot"||name=="mvrotace"||name=="mvcir"||name=="mvcirace"||name=="mvrectsinu"||name=="mvrotsinu"||name=="mvcirsinu"||name=="mvpredef"||name=="mvfile"||name=="mvrectfile"||name=="mvrotfile"||name=="mvnull"){
+      else if(name=="wait" || name=="mvrect" || name=="mvrectace" || name=="mvrot"
+        || name=="mvrotace" || name=="mvcir" || name=="mvcirace" || name=="mvrectsinu"
+        || name=="mvrotsinu" || name=="mvcirsinu" || name=="mvpredef" || name=="mvfile"
+        || name=="mvrectfile" || name=="mvrotfile" || name=="mvnull")
+      {
         int mvid=jxml->GetAttributeInt(ele,"id");
         double time=0;
         int nextid=0;
@@ -650,6 +655,7 @@ void JMotion::ReadXml(const std::string& dirdata,JXml* jxml,TiXmlNode* node
         else if(name=="mvrot"){
           tdouble3 axisp1=jxml->ReadElementDouble3(ele,"axisp1");
           tdouble3 axisp2=jxml->ReadElementDouble3(ele,"axisp2");
+          if(axisp1==axisp2)jxml->ErrReadElement(ele,"axisp2",false,msgaxiserror);
           double vel=jxml->ReadElementDouble(ele,"vel","ang");
           MovAddRotation(idp,mvid,nextid,time,angdegrees,axisp1,axisp2,vel,true);
           //printf("MovAddRotation(%d,%d,%d,%g)\n",id,mvid,nextid,time);
@@ -657,6 +663,7 @@ void JMotion::ReadXml(const std::string& dirdata,JXml* jxml,TiXmlNode* node
         else if(name=="mvrotace"){
           tdouble3 axisp1=jxml->ReadElementDouble3(ele,"axisp1");
           tdouble3 axisp2=jxml->ReadElementDouble3(ele,"axisp2");
+          if(axisp1==axisp2)jxml->ErrReadElement(ele,"axisp2",false,msgaxiserror);
           double ace=jxml->ReadElementDouble(ele,"ace","ang");
           bool velpre=(ele->FirstChildElement("velini")==NULL);
           double velini=(!velpre? jxml->ReadElementDouble(ele,"velini","ang"): 0);
@@ -666,6 +673,7 @@ void JMotion::ReadXml(const std::string& dirdata,JXml* jxml,TiXmlNode* node
         else if(name=="mvcir"){
           tdouble3 axisp1=jxml->ReadElementDouble3(ele,"axisp1");
           tdouble3 axisp2=jxml->ReadElementDouble3(ele,"axisp2");
+          if(axisp1==axisp2)jxml->ErrReadElement(ele,"axisp2",false,msgaxiserror);
           tdouble3 ref=jxml->ReadElementDouble3(ele,"ref");
           double vel=jxml->ReadElementDouble(ele,"vel","ang");
           MovAddCircular(idp,mvid,nextid,time,angdegrees,axisp1,axisp2,ref,vel,true);       
@@ -674,6 +682,7 @@ void JMotion::ReadXml(const std::string& dirdata,JXml* jxml,TiXmlNode* node
         else if(name=="mvcirace"){
           tdouble3 axisp1=jxml->ReadElementDouble3(ele,"axisp1");
           tdouble3 axisp2=jxml->ReadElementDouble3(ele,"axisp2");
+          if(axisp1==axisp2)jxml->ErrReadElement(ele,"axisp2",false,msgaxiserror);
           tdouble3 ref=jxml->ReadElementDouble3(ele,"ref");
           double ace=jxml->ReadElementDouble(ele,"ace","ang");
           bool velpre=(ele->FirstChildElement("velini")==NULL);
@@ -692,6 +701,7 @@ void JMotion::ReadXml(const std::string& dirdata,JXml* jxml,TiXmlNode* node
         else if(name=="mvrotsinu"){
           tdouble3 axisp1=jxml->ReadElementDouble3(ele,"axisp1");
           tdouble3 axisp2=jxml->ReadElementDouble3(ele,"axisp2");
+          if(axisp1==axisp2)jxml->ErrReadElement(ele,"axisp2",false,msgaxiserror);
           double freq=jxml->ReadElementDouble(ele,"freq","v");
           double ampl=jxml->ReadElementDouble(ele,"ampl","v");
           bool phaseprev=(ele->FirstChildElement("phase")==NULL);
@@ -702,6 +712,7 @@ void JMotion::ReadXml(const std::string& dirdata,JXml* jxml,TiXmlNode* node
         else if(name=="mvcirsinu"){
           tdouble3 axisp1=jxml->ReadElementDouble3(ele,"axisp1");
           tdouble3 axisp2=jxml->ReadElementDouble3(ele,"axisp2");
+          if(axisp1==axisp2)jxml->ErrReadElement(ele,"axisp2",false,msgaxiserror);
           tdouble3 ref=jxml->ReadElementDouble3(ele,"ref");
           double freq=jxml->ReadElementDouble(ele,"freq","v");
           double ampl=jxml->ReadElementDouble(ele,"ampl","v");
@@ -724,6 +735,7 @@ void JMotion::ReadXml(const std::string& dirdata,JXml* jxml,TiXmlNode* node
         else if(name=="mvrotfile"){
           tdouble3 axisp1=jxml->ReadElementDouble3(ele,"axisp1");
           tdouble3 axisp2=jxml->ReadElementDouble3(ele,"axisp2");
+          if(axisp1==axisp2)jxml->ErrReadElement(ele,"axisp2",false,msgaxiserror);
           TiXmlElement* efile=jxml->GetFirstElement(ele,"file");
           string file=jxml->GetAttributeStr(efile,"name");
           MovAddRotationFile(idp,mvid,nextid,time,angdegrees,axisp1,axisp2,file);      

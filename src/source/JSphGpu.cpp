@@ -1012,6 +1012,8 @@ void JSphGpu::RunMotion(double stepdt){
     for(unsigned ref=0;ref<nref;ref++){
       const StMotionData& m=DsMotion->GetMotionData(ref);
       if(m.type==MOTT_Linear){//-Linear movement.
+        //Log->PrintfDbg("%u] t:%g  dt:%g  mov:(%g,%g,%g)  vel:(%g,%g,%g)"
+        //  ,Nstep,TimeStep,stepdt,m.linmov.x,m.linmov.y,m.linmov.z,m.linvel.x,m.linvel.y,m.linvel.z);
         cusph::MoveLinBound(PeriActive,m.count,m.idbegin-CaseNfixed,m.linmov
           ,ToTFloat3(m.linvel),RidpMotg,Posxy_g->ptr(),Posz_g->ptr()
           ,Dcell_g->ptr(),Velrho_g->ptr(),Code_g->ptr());
@@ -1079,7 +1081,7 @@ void JSphGpu::RunDamping(double dt){
 void JSphGpu::SaveVtkNormalsGpu(std::string filename,int numfile,unsigned np,unsigned npb
   ,const double2* posxyg,const double* poszg,const unsigned* idpg,const float3* boundnorg)
 {
-  //-Allocates memory.
+  //-Allocates memory (simple way for debug method).
   const unsigned n=(UseNormalsFt? np: npb);
   tdouble3* pos=fcuda::ToHostPosd3(0,n,posxyg,poszg);
   unsigned* idp=fcuda::ToHostUint(0,n,idpg);

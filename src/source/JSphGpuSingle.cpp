@@ -1065,7 +1065,8 @@ void JSphGpuSingle::SaveData(){
   JDataArrays arrays;
   AddBasicArrays(arrays,npsave,AuxPos_c->cptr(),Idp_c->cptr(),AuxVel_c->cptr(),AuxRho_c->cptr());
   JSph::SaveData(npsave,arrays,1,&vdom,infoplus);
-  if(UseNormals && SvNormals)SaveVtkNormalsGpu("normals/Normals.vtk",Part
+  //-Save VTK file with current boundary normals (for debug).
+  if(UseNormals && SvNormals)SaveVtkNormalsGpu(DirVtkOut+"Normals.vtk",Part
     ,npsave,Npb,Posxy_g->cptr(),Posz_g->cptr(),Idp_g->cptr(),BoundNor_g->cptr());
   //-Save extra data.
   if(SvExtraDataBi4)SaveExtraData();

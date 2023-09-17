@@ -167,8 +167,9 @@ void JSph::InitVars(){
   RunCode=CalcRunCode();
   RunTimeDate="";
   CaseName=""; DirCase=""; RunName="";
-  DirOut=""; 
-  DirDataOut=""; 
+  DirOut="";
+  DirDataOut="";
+  DirVtkOut="";
   FileXml="";
   TStep=STEP_None;
   InterStep=INTERSTEP_None;
@@ -200,6 +201,7 @@ void JSph::InitVars(){
   SvAllSteps=false;
   NoRtimes=false;
   TerminateMt=0;
+  TerminateTimeMax=DBL_MAX;
   DtIni=DtMin=0; CoefDtMin=0; DtAllParticles=false;
   MinFluidStop=0;
   NpfMinimum=0;
@@ -499,6 +501,7 @@ void JSph::LoadConfig(const JSphCfgRun* cfg){
   SvExtraParts="";   //-Options by default.
   DirOut=fun::GetDirWithSlash(cfg->DirOut);
   DirDataOut=(!cfg->DirDataOut.empty()? fun::GetDirWithSlash(DirOut+cfg->DirDataOut): DirOut);
+  DirVtkOut=fun::GetDirWithSlash(DirOut+"vtks");
   CaseName=cfg->CaseName; 
   DirCase=fun::GetDirWithSlash(fun::GetDirParent(CaseName));
   CaseName=CaseName.substr(DirCase.length());
@@ -537,6 +540,7 @@ void JSph::LoadConfig(const JSphCfgRun* cfg){
   if(AppInfo.GetCreateDirs()){
     fun::MkdirPath(DirOut);
     if(DirOut!=DirDataOut)fun::MkdirPath(DirDataOut);
+    if(SvData&SDAT_Vtk || SvNormals)fun::MkdirPath(DirVtkOut);
   }
 
   if(PartBegin){
@@ -1368,8 +1372,8 @@ void JSph::ConfigBoundNormals(unsigned np,unsigned npb,const tdouble3* pos
   }
 
   //-Saves normals from boundary particles to boundary limit.
-  const string file1="CfgInit_Normals.vtk";
-  Log->AddFileInfo(DirOut+file1,"Saves VTK file with initial normals (from boundary particles to boundary limit).");
+  const string file1=DirOut+"CfgInit_Normals.vtk";
+  Log->AddFileInfo(file1,"Saves VTK file with initial normals (from boundary particles to boundary limit).");
   SaveVtkNormals(file1,-1,np,npb,pos,idp,boundnor,(PartBegin? 0.5f: 1.f));
   //-Counts the null normals.
   unsigned nerr=0,nerrft=0;
@@ -1381,8 +1385,8 @@ void JSph::ConfigBoundNormals(unsigned np,unsigned npb,const tdouble3* pos
     if(!PartBegin)boundnor[p]=(boundnor[p]*2.f);
   }
   //-Saves normals from boundary particles to ghost node.
-  const string file2="CfgInit_NormalsGhost.vtk";
-  Log->AddFileInfo(DirOut+file2,"Saves VTK file with initial normals (from boundary particles to ghost node).");
+  const string file2=DirOut+"CfgInit_NormalsGhost.vtk";
+  Log->AddFileInfo(file2,"Saves VTK file with initial normals (from boundary particles to ghost node).");
   SaveVtkNormals(file2,-1,np,npb,pos,idp,boundnor,1.f);
   if(nerr  >0)Log->PrintfWarning("There are %u of %u fixed or moving boundary particles without normal data.",nerr,npb);
   if(nerrft>0)Log->PrintfWarning("There are %u of %u floating particles without normal data.",nerrft,CaseNfloat);
@@ -2438,7 +2442,7 @@ void JSph::CalcMotionWaveGen(double stepdt){
     for(unsigned c=0;c<WaveGen->GetCount();c++){
       const StMotionData m=(motsim? WaveGen->GetMotion(svdata,c,TimeStep,stepdt):
                                     WaveGen->GetMotionAce(svdata,c,TimeStep,stepdt));
-      //Log->Printf("%u> t:%f  tp:%d  mx:%f  SetMotionData-WaveGen",Nstep,TimeStep,m.type,m.linmov.x);
+      //Log->PrintfDbg("%u] CalcMotionWaveGen> t:%f  tp:%d  mx:%f",Nstep,TimeStep,m.type,m.linmov.x);
       if(m.type!=MOTT_None){
         if(motsim)DsMotion->SetMotionData   (m);
         else      DsMotion->SetMotionDataAce(m);
@@ -2935,7 +2939,7 @@ void JSph::SavePartData(unsigned npsave,unsigned nout,const JDataArrays& arrays
     arrays2.MoveArray(arrays2.Count()-1,4);
     //-Defines fields to be stored.
     if(SvData&SDAT_Vtk){
-      JVtkLib::SaveVtkData(DirDataOut+fun::FileNameSec("PartVtk.vtk",Part),arrays2,"Pos");
+      JVtkLib::SaveVtkData(DirVtkOut+fun::FileNameSec("PartVtk.vtk",Part),arrays2,"Pos");
     }
     if(SvData&SDAT_Csv){ 
       JOutputCsv ocsv(AppInfo.GetCsvSepComa());
@@ -3081,7 +3085,8 @@ void JSph::CheckTermination(){
     }
     if(tmax<TimeStep)tmax=TimeStep;
     Log->PrintfWarning("TERMINATE file has updated TimeMax from %gs to %gs (current time: %fs).",TimeMax,tmax,TimeStep);
-    TimeMax=tmax;
+    TerminateTimeMax=tmax;
+    if(!Mgpu)TimeMax=tmax;
   }
   TerminateMt=tmodif;
 }
@@ -3180,7 +3185,6 @@ void JSph::SaveVtkNormals(std::string filename,int numfile,unsigned np,unsigned 
 {
   if(JVtkLib::Available()){
     if(numfile>=0)filename=fun::FileNameSec(filename,numfile);
-    filename=DirOut+filename;
     //-Find floating particles.
     unsigned nfloat=0;
     unsigned* ftidx=NULL;
