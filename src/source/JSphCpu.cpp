@@ -107,9 +107,6 @@ void JSphCpu::InitVars(){
   FreeCpuMemoryParticles();
 
   RidpMot=NULL;
-  //-Floatings.
-  FtoForces=NULL;
-  FtoForcesRes=NULL;
   FreeCpuMemoryFixed();
 }
 
@@ -119,9 +116,7 @@ void JSphCpu::InitVars(){
 //==============================================================================
 void JSphCpu::FreeCpuMemoryFixed(){
   MemCpuFixed=0;
-  delete[] RidpMot;      RidpMot=NULL;
-  delete[] FtoForces;    FtoForces=NULL;
-  delete[] FtoForcesRes; FtoForcesRes=NULL;
+  delete[] RidpMot;  RidpMot=NULL;
 }
 
 //==============================================================================
@@ -134,11 +129,6 @@ void JSphCpu::AllocCpuMemoryFixed(){
     if(CaseNmoving || CaseNfloat){
       const unsigned sizen=CaseNmoving+CaseNfloat;
       RidpMot=new unsigned[sizen];  MemCpuFixed+=(sizeof(unsigned)*sizen);
-    }
-    //-Allocates memory for floating bodies.
-    if(CaseNfloat){
-      FtoForces   =new StFtoForces[FtCount];     MemCpuFixed+=(sizeof(StFtoForces)*FtCount);
-      FtoForcesRes=new StFtoForcesRes[FtCount];  MemCpuFixed+=(sizeof(StFtoForcesRes)*FtCount);
     }
   }
   catch(const std::bad_alloc){

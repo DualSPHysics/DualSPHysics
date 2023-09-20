@@ -136,10 +136,6 @@ protected:
   acdouble3*  PosPre_c;     ///<Sympletic: in order to keep predictor values (Opt,Null).
   acfloat4*   VelrhoPre_c;  ///<Sympletic: in order to keep predictor values (Opt,Null).
 
-  //-Variables for floating bodies.
-  StFtoForces*    FtoForces;    ///<Stores forces of floatings [FtCount].
-  StFtoForcesRes* FtoForcesRes; ///<Stores data to update floatings [FtCount].
-
   //-Variables for computing forces (Null).
   acfloat3*   Ace_c;        ///<Sum of interaction acceleration (Null).
   acfloat*    Ar_c;         ///<Sum of density variation (Null). 

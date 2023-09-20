@@ -261,6 +261,38 @@ inline tfloat3 ToTFloat3(const tdouble3& v){ return(TFloat3(float(v.x),float(v.y
 inline tdouble3 ToTDouble3(const tfloat3& v){ return(TDouble3(v.x,v.y,v.z)); }
 
 
+///Structure of 2x3 variables of type float.
+typedef struct strfloat6{
+  float x1,y1,z1;
+  float x2,y2,z2;
+
+  tfloat3 getlo()const{ 
+    return(TFloat3(x1,y1,z1));
+  }
+  tfloat3 gethi()const{
+    return(TFloat3(x2,y2,z2));
+  }
+  void setlo(const tfloat3& v){ 
+    x1=v.x;  y1=v.y;  z1=v.z;
+  }
+  void sethi(const tfloat3& v){ 
+    x2=v.x;  y2=v.y;  z2=v.z;
+  }
+  void add(const tfloat3& v1,const tfloat3& v2){ 
+    x1+=v1.x;  y1+=v1.y;  z1+=v1.z;
+    x2+=v2.x;  y2+=v2.y;  z2+=v2.z;
+  }
+}tfloat6;
+
+///Constructors other functions for type \ref tfloat6.
+inline tfloat6 TFloat6(){ tfloat6 m={0,0,0,0,0,0}; return(m); }
+inline tfloat6 TFloat6(float v){ tfloat6 m={v,v,v,v,v,v}; return(m); }
+inline tfloat6 TFloat6(float x1,float y1,float z1,float x2,float y2,float z2){ tfloat6 m={x1,y1,z1,x2,y2,z2}; return(m); }
+inline tfloat6 TFloat6(const tfloat3& v1,const tfloat3& v2){ tfloat6 m={v1.x,v1.y,v1.z,v2.x,v2.y,v2.z}; return(m); }
+inline bool operator ==(const tfloat6& a,const tfloat6& b){ return(a.getlo()==b.getlo() && a.gethi()==b.gethi()); }
+inline bool operator !=(const tfloat6& a,const tfloat6& b){ return(a.getlo()!=b.getlo() || a.gethi()!=b.gethi()); }
+
+
 ///Structure of 2x3 variables of type double.
 typedef struct strdouble6{
   double x1,y1,z1;
@@ -277,6 +309,10 @@ typedef struct strdouble6{
   }
   void sethi(const tdouble3& v){ 
     x2=v.x;  y2=v.y;  z2=v.z;
+  }
+  void add(const tdouble3& v1,const tdouble3& v2){ 
+    x1+=v1.x;  y1+=v1.y;  z1+=v1.z;
+    x2+=v2.x;  y2+=v2.y;  z2+=v2.z;
   }
 }tdouble6;
 

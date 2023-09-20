@@ -488,9 +488,9 @@ void JSphGpuSingle::SaveFluidOut(){
 //==============================================================================
 void JSphGpuSingle::Interaction_Forces(TpInterStep interstep){
   //-Boundary correction for mDBC.
-  if(TBoundary==BC_MDBC && (MdbcCorrector || interstep!=INTERSTEP_SymCorrector)){
-    MdbcBoundCorrection(); 
-  }
+  const bool runmdbc=(TBoundary==BC_MDBC && (MdbcCorrector || interstep!=INTERSTEP_SymCorrector));
+  if(runmdbc)MdbcBoundCorrection(); 
+
   InterStep=interstep;
   PreInteraction_Forces();
 
@@ -659,62 +659,6 @@ double JSphGpuSingle::ComputeStep_Sym(){
 }
 
 //==============================================================================
-/// Updates information in FtObjs[] copying data from GPU.
-/// Actualiza informacion en FtObjs[] copiando los datos en GPU.
-//==============================================================================
-void JSphGpuSingle::UpdateFtObjs(){
-  if(FtCount && FtObjsOutdated){
-    tdouble3* fcen=FtoAuxDouble6;
-    tfloat3*  fang=FtoAuxFloat15;
-    tfloat3*  fvellin=fang+FtCount;
-    tfloat3*  fvelang=fvellin+FtCount;
-    tfloat3*  facelin=fvelang+FtCount;
-    tfloat3*  faceang=facelin+FtCount;
-    cudaMemcpy(fcen,FtoCenterg,sizeof(double3)*FtCount,cudaMemcpyDeviceToHost);
-    cudaMemcpy(fang,FtoAnglesg,sizeof(float3) *FtCount,cudaMemcpyDeviceToHost);
-    cudaMemcpy(fvellin,FtoVelAceg,sizeof(float3)*FtCount*4,cudaMemcpyDeviceToHost);
-    for(unsigned cf=0;cf<FtCount;cf++){
-      FtObjs[cf].center=fcen[cf];
-      FtObjs[cf].angles=fang[cf];
-      FtObjs[cf].fvel  =fvellin[cf];
-      FtObjs[cf].fomega=fvelang[cf];
-      FtObjs[cf].facelin=facelin[cf];
-      FtObjs[cf].faceang=faceang[cf];
-    }
-  }
-  FtObjsOutdated=false;
-}
-
-//==============================================================================
-/// Applies imposed velocity.
-/// Aplica velocidad predefinida.
-//==============================================================================
-void JSphGpuSingle::FtApplyImposedVel(float3* ftoforcesresg)const{
-  tfloat3* ftoforcesresc=NULL;
-  for(unsigned cf=0;cf<FtCount;cf++)if(!FtObjs[cf].usechrono && (FtLinearVel[cf]!=NULL || FtAngularVel[cf]!=NULL)){
-    const tfloat3 v1=(FtLinearVel [cf]!=NULL? FtLinearVel [cf]->GetValue3f(TimeStep): TFloat3(FLT_MAX));
-    const tfloat3 v2=(FtAngularVel[cf]!=NULL? FtAngularVel[cf]->GetValue3f(TimeStep): TFloat3(FLT_MAX));
-    if(!ftoforcesresc && (v1!=TFloat3(FLT_MAX) || v2!=TFloat3(FLT_MAX))){
-      //-Copies data on GPU memory to CPU memory.
-      ftoforcesresc=FtoAuxFloat15;
-      cudaMemcpy(ftoforcesresc,ftoforcesresg,sizeof(tfloat3)*FtCount*2,cudaMemcpyDeviceToHost);
-    }
-    unsigned cfpos=cf*2+1;
-    if(v1.x!=FLT_MAX)ftoforcesresc[cfpos].x=v1.x;
-    if(v1.y!=FLT_MAX)ftoforcesresc[cfpos].y=v1.y;
-    if(v1.z!=FLT_MAX)ftoforcesresc[cfpos].z=v1.z;
-    cfpos--;
-    if(v2.x!=FLT_MAX)ftoforcesresc[cfpos].x=v2.x;
-    if(v2.y!=FLT_MAX)ftoforcesresc[cfpos].y=v2.y;
-    if(v2.z!=FLT_MAX)ftoforcesresc[cfpos].z=v2.z;
-  }
-  //-Updates data on GPU memory.
-  if(ftoforcesresc!=NULL){
-    cudaMemcpy(ftoforcesresg,ftoforcesresc,sizeof(tfloat3)*FtCount*2,cudaMemcpyHostToDevice);
-  }
-}
-
-//==============================================================================
 /// Process floating objects.
 /// Procesa floating objects.
 //==============================================================================
@@ -725,136 +669,70 @@ void JSphGpuSingle::RunFloating(double dt,bool predictor){
   const bool ftpaused=(TimeStep<FtPause);
 
   if(!ftpaused || saveftvalues){
-    //-Adds external forces (ForcePoints, Moorings, external file) to FtoForces[].
-    if(ForcePoints!=NULL || FtLinearForce!=NULL){
-      StFtoForces* ftoforces=(StFtoForces*)FtoAuxFloat15;
-      memset(ftoforces,0,sizeof(StFtoForces)*FtCount);
-      //-Loads sum of linear and angular forces from ForcePoints and Moorings.
-      if(ForcePoints)ForcePoints->GetFtForcesSum(ftoforces);
-      //-Adds the external forces.
-      if(FtLinearForce!=NULL){
-        for(unsigned cf=0;cf<FtCount;cf++){
-          ftoforces[cf].face     =ftoforces[cf].face     +GetFtExternalForceLin(cf,TimeStep);
-          ftoforces[cf].fomegaace=ftoforces[cf].fomegaace+GetFtExternalForceAng(cf,TimeStep);
-        }
-      }
-      //-Copies data to GPU memory.
-      cudaMemcpy(FtoForcesg,ftoforces,sizeof(StFtoForces)*FtCount,cudaMemcpyHostToDevice);
-      //-Saves sum of external forces applied to floating body.
-      if(saveftvalues)for(unsigned cf=0;cf<FtCount;cf++){
-        FtObjs[cf].extforcelin=ftoforces[cf].face;
-        FtObjs[cf].extforceang=ftoforces[cf].fomegaace;
-      }
-    }
-    else{
-      //-Initialises forces of floatings when no external forces are applied.
-      cudaMemset(FtoForcesg,0,sizeof(StFtoForces)*FtCount);
-      //-Saves sum of external forces applied to floating body.
-      if(saveftvalues)for(unsigned cf=0;cf<FtCount;cf++){
-        FtObjs[cf].extforcelin=TFloat3(0);
-        FtObjs[cf].extforceang=TFloat3(0);
-      }
-    }
+    //-Computes sum of linear and angular acceleration of floating particles.
+    cusph::FtPartsSumAce(PeriActive!=0,FtCount,FtoDatpg,FtoCenterg,RidpMotg
+      ,Posxy_g->cptr(),Posz_g->cptr(),Ace_g->cptr(),FtoAceg);
+    cudaMemcpy(Fto_AceLinAng,FtoAceg,sizeof(tfloat6)*FtCount,cudaMemcpyDeviceToHost);
+    //-Compute new linear and angular acceleration, velocity and center to update floatings.
+    FtComputeAceVel(dt,predictor,saveftvalues,Fto_AceLinAng,Fto_VelLinAng,Fto_Center);
+  }
 
-    //-Calculate forces summation (face,fomegaace) starting from floating particles and add in FtoForcesg[].
-    cusph::FtCalcForcesSum(PeriActive!=0,FtCount,FtoDatpg,FtoCenterg,RidpMotg
-      ,Posxy_g->cptr(),Posz_g->cptr(),Ace_g->cptr(),FtoForcesg);
-    //-Saves sum of fluid forces applied to floating body.
-    if(saveftvalues){
-      StFtoForces* ftoforces=(StFtoForces*)FtoAuxFloat15;
-      cudaMemcpy(ftoforces,FtoForcesg,sizeof(StFtoForces)*FtCount,cudaMemcpyDeviceToHost);
-      for(unsigned cf=0;cf<FtCount;cf++){
-        FtObjs[cf].fluforcelin=ftoforces[cf].face-FtObjs[cf].extforcelin;
-        FtObjs[cf].fluforceang=ftoforces[cf].fomegaace-FtObjs[cf].extforceang;
-      }    
-    }
-
-    //-Computes final acceleration from particles and from external forces in FtoForcesg[].
-    cusph::FtCalcForces(FtCount,Gravity,FtoMassg,FtoAnglesg,FtoInertiaini8g,FtoInertiaini1g,FtoForcesg);
-    //-Saves acceleration before constraints (includes external forces, gravity and rotated inertia tensor)
-    if(saveftvalues){
-      StFtoForces* ftoforces=(StFtoForces*)FtoAuxFloat15;
-      cudaMemcpy(ftoforces,FtoForcesg,sizeof(StFtoForces)*FtCount,cudaMemcpyDeviceToHost);
-      for(unsigned cf=0;cf<FtCount;cf++){
-        FtObjs[cf].preacelin=ftoforces[cf].face;
-        FtObjs[cf].preaceang=ftoforces[cf].fomegaace;
-      }    
-    }
+  //-Run floatings with Chrono library (change computed center, linear and angular velocity).
+  if(!ftpaused && ChronoObjects){
+    Timersg->TmStop(TMG_SuFloating,true);
+    Timersg->TmStart(TMG_SuChrono,false);
+    FtComputeChrono(dt,predictor,Fto_AceLinAng,Fto_VelLinAng,Fto_Center);
+    Timersg->TmStop(TMG_SuChrono,false);
+    Timersg->TmStart(TMG_SuFloating,false);
   }
 
   if(!ftpaused){//-Operator >= is used because when FtPause=0 in symplectic-predictor, code would not enter here. | Se usa >= pq si FtPause es cero en symplectic-predictor no entraria.
-    //-Calculate data to update floatings / Calcula datos para actualizar floatings.
-    cusph::FtCalcForcesRes(FtCount,Simulate2D,dt,FtoVelAceg,FtoCenterg,FtoForcesg,FtoForcesResg,FtoCenterResg);
-    //-Applies imposed velocity.
-    if(FtLinearVel!=NULL)FtApplyImposedVel(FtoForcesResg);
-    //-Applies motion constraints.
-    if(FtConstraints)cusph::FtApplyConstraints(FtCount,FtoConstraintsg,FtoForcesg,FtoForcesResg);
-    
-    //-Saves face and fomegace for debug.
-    if(SaveFtAce){
-      StFtoForces* ftoforces=(StFtoForces*)FtoAuxFloat15;
-      cudaMemcpy(ftoforces,FtoForcesg,sizeof(tfloat3)*FtCount*2,cudaMemcpyDeviceToHost);
-      SaveFtAceFun(dt,predictor,ftoforces);
-    }
-
-    //-Run floating with Chrono library.
-    if(ChronoObjects){      
-      Timersg->TmStop(TMG_SuFloating,true);
-      Timersg->TmStart(TMG_SuChrono,false);
-      //-Export data / Exporta datos.
-      tfloat3* ftoforces=FtoAuxFloat15;
-      cudaMemcpy(ftoforces,FtoForcesg,sizeof(tfloat3)*FtCount*2,cudaMemcpyDeviceToHost);
-      for(unsigned cf=0;cf<FtCount;cf++)if(FtObjs[cf].usechrono){
-        ChronoObjects->SetFtData(FtObjs[cf].mkbound,ftoforces[cf*2],ftoforces[cf*2+1]);
+    //-Apply displacement and new velocity to floating particles.
+    const bool updatenormals=(!predictor && UseNormalsFt);
+    const tmatrix4d mat0=TMatrix4d();
+    for(unsigned cf=0;cf<FtCount;cf++){
+      //-Get Floating object values.
+      const StFloatingData fobj=FtObjs[cf];
+      const float fradius=fobj.radius;
+      const unsigned fpini=fobj.begin-CaseNfixed;
+      const unsigned fnp=fobj.count;
+      const tfloat3  fvel  =Fto_VelLinAng[cf].getlo();
+      const tfloat3  fomega=Fto_VelLinAng[cf].gethi();
+      const tdouble3 fcenter=Fto_Center[cf];
+      if(updatenormals){
+        //-Compute matrix to update floating normals for mDBC.
+        JMatrix4d mat;
+        const tdouble3 dang=(ToTDouble3(fomega)*dt)*TODEG;
+        const tdouble3 cen2=(PeriActive? UpdatePeriodicPos(fcenter): fcenter);
+        mat.Move(cen2);
+        mat.Rotate(dang);
+        mat.Move(fobj.center*-1);
+        //-Run CUDA kernel.
+        cusph::FtPartsUpdate(PeriActive!=0,dt,updatenormals
+          ,fnp,fpini,fradius,mat.GetMatrix()
+          ,fvel,fomega,fcenter,RidpMotg,Posxy_g->ptr(),Posz_g->ptr(),Velrho_g->ptr()
+          ,Dcell_g->ptr(),Code_g->ptr(),AG_PTR(BoundNor_g));
       }
-      //-Applies the external velocities to each floating body of Chrono.
-      if(FtLinearVel!=NULL)ChronoFtApplyImposedVel();
-      //-Calculate data using Chrono / Calcula datos usando Chrono.
-      ChronoObjects->RunChrono(Nstep,TimeStep,dt,predictor);
-      //-Load calculated data by Chrono / Carga datos calculados por Chrono.
-      tdouble3* ftocenter=FtoAuxDouble6;
-      cudaMemcpy(ftocenter,FtoCenterResg,sizeof(tdouble3)*FtCount  ,cudaMemcpyDeviceToHost);//-Necesario para cargar datos de floatings sin chrono.
-      cudaMemcpy(ftoforces,FtoForcesResg,sizeof(tfloat3) *FtCount*2,cudaMemcpyDeviceToHost);//-Necesario para cargar datos de floatings sin chrono.
-      for(unsigned cf=0;cf<FtCount;cf++)if(FtObjs[cf].usechrono)ChronoObjects->GetFtData(FtObjs[cf].mkbound,ftocenter[cf],ftoforces[cf*2+1],ftoforces[cf*2]);
-      cudaMemcpy(FtoCenterResg,ftocenter,sizeof(tdouble3)*FtCount  ,cudaMemcpyHostToDevice);
-      cudaMemcpy(FtoForcesResg,ftoforces,sizeof(float3)  *FtCount*2,cudaMemcpyHostToDevice);
-      Timersg->TmStop(TMG_SuChrono,false);
-      Timersg->TmStart(TMG_SuFloating,false);
+      else{
+        //-Run CUDA kernel.
+        cusph::FtPartsUpdate(PeriActive!=0,dt,updatenormals
+          ,fnp,fpini,fradius,mat0
+          ,fvel,fomega,fcenter,RidpMotg,Posxy_g->ptr(),Posz_g->ptr(),Velrho_g->ptr()
+          ,Dcell_g->ptr(),Code_g->ptr(),AG_PTR(BoundNor_g));
+      }
     }
 
-    //-Apply movement around floating objects / Aplica movimiento sobre floatings.
-    cusph::FtUpdate(PeriActive!=0,predictor,FtCount,dt,FtoDatpg,FtoForcesResg,FtoCenterResg
-      ,RidpMotg,FtoCenterg,FtoAnglesg,FtoVelAceg,Posxy_g->ptr(),Posz_g->ptr(),Dcell_g->ptr()
-      ,Velrho_g->ptr(),Code_g->ptr());
-
-    //-Stores floating data.
+    //-Update floating data (FtObjs[]) for next step.
     if(!predictor){
-      FtObjsOutdated=true;
-      //-Updates floating normals for mDBC.
-      if(UseNormalsFt){
-        tdouble3* fcen=FtoAuxDouble6;
-        tfloat3*  fang=FtoAuxFloat15;
-        cudaMemcpy(fcen,FtoCenterg,sizeof(double3)*FtCount,cudaMemcpyDeviceToHost);
-        cudaMemcpy(fang,FtoAnglesg,sizeof(float3) *FtCount,cudaMemcpyDeviceToHost);
-        for(unsigned cf=0;cf<FtCount;cf++){
-          const StFloatingData fobj=FtObjs[cf];
-          FtObjs[cf].center=fcen[cf];
-          FtObjs[cf].angles=fang[cf];
-          const tdouble3 dang=ToTDouble3(FtObjs[cf].angles-fobj.angles)*TODEG;
-          const tdouble3 cen=FtObjs[cf].center;
-          JMatrix4d mat;
-          mat.Move(cen);
-          mat.Rotate(dang);
-          mat.Move(fobj.center*-1);
-          cusph::FtNormalsUpdate(fobj.count,fobj.begin-CaseNfixed,mat.GetMatrix()
-            ,RidpMotg,AG_PTR(BoundNor_g));
-        }
-      }
+      FtUpdateFloatings(dt,Fto_VelLinAng,Fto_Center);
+      //-Update center in GPU memory (FtoCenterg[]).
+      for(unsigned cf=0;cf<FtCount;cf++)FtoCenterc[cf]=FtObjs[cf].center;
+      cudaMemcpy(FtoCenterg,FtoCenterc,sizeof(tdouble3)*FtCount,cudaMemcpyHostToDevice);
     }
   }
+
   //-Saves current floating data for output.
   if(saveftvalues){
-    UpdateFtObjs(); //-Updates floating information on CPU memory.
     if(PartFloatSave)PartFloatSave->SetFtData(Part,TimeStep+dt,Nstep+1,FtObjs,ForcePoints);
   }
   Timersg->TmStop(TMG_SuFloating,true);
@@ -862,7 +740,6 @@ void JSphGpuSingle::RunFloating(double dt,bool predictor){
   //-Update data of points in FtForces and calculates motion data of affected floatings.
   if(!predictor && ForcePoints){
     Timersg->TmStart(TMG_SuMoorings,false);
-    UpdateFtObjs(); //-Updates floating information on CPU memory.
     ForcePoints->UpdatePoints(TimeStep,dt,ftpaused,FtObjs);
     if(Moorings)Moorings->ComputeForces(Nstep,TimeStep,dt,ForcePoints);
     ForcePoints->ComputeForcesSum();
@@ -1006,12 +883,6 @@ void JSphGpuSingle::Run(std::string appname,const JSphCfgRun* cfg,JLog2* log){
 /// Genera los ficheros de salida de datos.
 //==============================================================================
 void JSphGpuSingle::SaveData(){
-  //-Retrieve floating object data from the GPU. | Recupera datos de floatings en GPU.
-  if(FtCount){
-    Timersg->TmStart(TMG_SuDownData,false);
-    UpdateFtObjs();
-    Timersg->TmStop(TMG_SuDownData,true);
-  }
   const bool save=(SvData!=SDAT_None && SvData!=SDAT_Info);
   const unsigned npnormal=Np-NpbPer-NpfPer; //-Subtracts the periodic particles if they exist. | Resta las periodicas si las hubiera.
   unsigned npsave=npnormal;

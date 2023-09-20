@@ -73,13 +73,16 @@ protected:
   double ComputeStep_Ver();
   double ComputeStep_Sym();
 
-  inline tfloat3 FtPeriodicDist(const tdouble3& pos,const tdouble3& center,float radius)const;
-  void FtCalcForcesSum(unsigned cf,tfloat3& face,tfloat3& fomegaace)const;
-  void FtCalcForces(StFtoForces* ftoforces,bool saveftvalues)const;
-  void FtCalcForcesRes(double dt,const StFtoForces* ftoforces,StFtoForcesRes* ftoforcesres)const;
-  void FtApplyImposedVel(StFtoForcesRes* ftoforcesres)const;
-  void FtApplyConstraints(StFtoForces* ftoforces,StFtoForcesRes* ftoforcesres)const;
   void RunFloating(double dt,bool predictor);
+  inline tfloat3 FtPeriodicDist(const tdouble3& pos
+    ,const tdouble3& center,float radius)const;
+  void FtPartsSumAce(const tdouble3* posc,const tfloat3* acec
+    ,const unsigned* ridpmot,tfloat6* acelinang)const;
+  void FtPartsUpdate(double dt,bool updatenormals
+    ,const tfloat6* fto_vellinang,const tdouble3* fto_center
+    ,const unsigned* ridpmot,tdouble3* posc,tfloat4* velrhoc
+    ,unsigned* dcellc,typecode* codec,tfloat3* boundnorc)const;
+
   void RunGaugeSystem(double timestep,bool saveinput=false);
 
   void ComputePips(bool run);

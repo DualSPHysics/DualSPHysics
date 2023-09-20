@@ -405,11 +405,10 @@ void JDsFtForcePoints::ComputeForcesSum(){
 //==============================================================================
 /// Stores sum of linear and angular forces on floatings in ftoforces[].
 //==============================================================================
-void JDsFtForcePoints::GetFtForcesSum(StFtoForces* ftoforces)const{
+void JDsFtForcePoints::GetFtForcesSum(tfloat6* ftoforces)const{
   for(word cs=0;cs<SelFtCount;cs++){
     const word cf=SelFtid[cs];
-    ftoforces[cf].face     =SelFtForceLin[cs];
-    ftoforces[cf].fomegaace=SelFtForceAng[cs];
+    ftoforces[cf]=TFloat6(SelFtForceLin[cs],SelFtForceAng[cs]);
   }
 }
 

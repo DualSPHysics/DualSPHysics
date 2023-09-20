@@ -141,25 +141,13 @@ protected:
   agdouble*   PoszPre_g;   ///<Sympletic: in order to keep predictor values (Opt,Null).
   agfloat4*   VelrhoPre_g; ///<Sympletic: in order to keep predictor values (Opt,Null).
 
-  //-Variables for floating bodies.
-  float*    FtoMasspg;       ///<Mass of the particle for each floating body [FtCount] in GPU (used in interaction forces).
-  float4*   FtoDatpg;        ///<Constant data of floatings {pini_u,np_u,radius_f,massp_f} [FtCount] //__device__ int __float_as_int(float x) //__device__ float __int_as_float(int x).
-  float*    FtoMassg;        ///<Constant data of floatings (mass_f) [FtCount] 
-  byte*     FtoConstraintsg; ///<Constant value to define motion constraints.
-  float3*   FtoForcesg;      ///<Stores forces for the floating bodies {face_f3,fomegaace_f3} equivalent to JSphCpu::FtoForces [FtCount]. | Almacena fuerzas de floatings {face_f3,fomegaace_f3} equivalente a JSphCpu::FtoForces [FtCount]. 
-  float3*   FtoForcesResg;   ///<Stores data to update floatings {fomegares_f3,fvelres_f3} equivalent to JSphCpu::FtoForcesRes. [FtCount]. | Almacena datos para actualizar floatings {fomegares_f3,fvelres_f3} equivalente a JSphCpu::FtoForcesRes. [FtCount].
-  double3*  FtoCenterResg;   ///<Stores centre to update floatings. [Ftcount]. | Almacena centro para actualizar floatings. [FtCount]. 
-
-  tdouble3* FtoAuxDouble6;   ///<Memory to swap floating data with GPU. [2*FtCount]. | Memoria para intercambiar datos de floatings con GPU. [2*FtCount].
-  tfloat3*  FtoAuxFloat15;   ///<Memory to swap floating data with GPU. [5*FtCount]. | Memoria para intercambiar datos de floatings con GPU. [5*FtCount].
-
-  double3*  FtoCenterg;      ///<Maintains centre of floating bodies [Ftcount].   | Mantiene centro de floating. [FtCount].   
-  float3*   FtoAnglesg;      ///<Maintains rotation angles from center (angle xz, angle yz, angle xy) (units:Rad) [FtCount].   
-  float3*   FtoVelAceg;      ///<Maintains velocity and acceleration (linear and angular) of floating bodies (vellin,velang,acelin,aceang)  [FtCount*4].
-  float4*   FtoInertiaini8g; ///<Initial state inertia tensor in world coordinates (computed or user-given) (a11,...,a21,a22,...,a32) [Ftcount*2].
-  float*    FtoInertiaini1g; ///<Initial state inertia tensor in world coordinates (computed or user-given) (a33) [Ftcount].
-
-  bool FtObjsOutdated; ///<FtObjs[] was not updated with new GPU values.
+  //-Variables for floating bodies (GPU memory).
+  float*    FtoMasspg;   ///<Mass of the particle for each floating body [FtCount] in GPU (used in interaction forces).
+  float4*   FtoDatpg;    ///<Constant data of floatings {pini_u,np_u,radius_f,massp_f} [FtCount] //__device__ int __float_as_int(float x) //__device__ float __int_as_float(int x).
+  double3*  FtoCenterg;  ///<Auxiliary to store the center in floaging calculations. [FtCount].   
+  float3*   FtoAceg;     ///<Auxiliary to compute sum of linear and angular acceleration of floating bodies {acelin_f3,aceang_f3} [2*FtCount].
+  //-Variables for floating bodies (CPU memory).
+  tdouble3* FtoCenterc;   ///<Auxiliary CPU Memory to swap floating center with GPU [FtCount].
 
   //-Variables for DEM.
   float4*   DemDatag;  ///<Data of the object {mass, (1-poisson^2)/young, kfric, restitu} in GPU [DemObjsSize].

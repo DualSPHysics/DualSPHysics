@@ -148,10 +148,6 @@ void JSphGpu::InitVars(){
   AuxRho_c=NULL;
   FreeCpuMemoryParticles();
 
-  FtoAuxDouble6=NULL; //-Calculates forces on floating bodies.
-  FtoAuxFloat15=NULL; //-Calculates forces on floating bodies.
-  FreeCpuMemoryFixed();
-
   Idp_g=NULL;
   Code_g=NULL;
   Dcell_g=NULL;
@@ -179,26 +175,19 @@ void JSphGpu::InitVars(){
 
   FreeGpuMemoryParticles();
 
+  //-Variables for moving and floating bodies (GPU memory).
   RidpMotg=NULL;
-  //-Floatings.
   FtoMasspg=NULL;
   FtoDatpg=NULL;
-  FtoMassg=NULL;
-  //-Calculates forces on floating bodies.
-  FtoConstraintsg=NULL;                           
-  FtoForcesg=NULL;
-  FtoForcesResg=NULL;
-  FtoCenterResg=NULL;
-  //-Management of floating bodies.
   FtoCenterg=NULL;
-  FtoAnglesg=NULL;
-  FtoVelAceg=NULL;
-  FtoInertiaini8g=NULL;
-  FtoInertiaini1g=NULL;
-  FtObjsOutdated=true;
+  FtoAceg=NULL;
   //-DEM.
   DemDatag=NULL;
   FreeGpuMemoryFixed();
+
+  //-Variables for floating bodies (CPU memory).
+  FtoCenterc=NULL; //-Variables for floating bodies (CPU memory).
+  FreeCpuMemoryFixed();
 }
 
 //==============================================================================
@@ -207,8 +196,7 @@ void JSphGpu::InitVars(){
 //==============================================================================
 void JSphGpu::FreeCpuMemoryFixed(){
   MemCpuFixed=0;
-  delete[] FtoAuxDouble6; FtoAuxDouble6=NULL;
-  delete[] FtoAuxFloat15; FtoAuxFloat15=NULL;
+  delete[] FtoCenterc; FtoCenterc=NULL;
 }
 
 //==============================================================================
@@ -216,14 +204,10 @@ void JSphGpu::FreeCpuMemoryFixed(){
 //==============================================================================
 void JSphGpu::AllocCpuMemoryFixed(){
   MemCpuFixed=0;
-  //-Check size data matching.
-  if(sizeof(tfloat3)*2!=sizeof(StFtoForces))Run_Exceptioon("Error: FtoForcesg does not match float3*2.");
-  if(sizeof(float)*9!=sizeof(tmatrix3f))Run_Exceptioon("Error: FtoInertiainig does not match float*9.");
   try{
     //-Allocates memory for floating bodies.
     if(CaseNfloat){
-      FtoAuxDouble6=new tdouble3[FtCount*2];  MemCpuFixed+=(sizeof(tdouble3)*FtCount*2);
-      FtoAuxFloat15=new tfloat3 [FtCount*5];  MemCpuFixed+=(sizeof(tfloat3) *FtCount*5);
+      FtoCenterc=new tdouble3[FtCount];  MemCpuFixed+=(sizeof(tdouble3)*FtCount);
     }
   }
   catch(const std::bad_alloc){
@@ -237,20 +221,12 @@ void JSphGpu::AllocCpuMemoryFixed(){
 //==============================================================================
 void JSphGpu::FreeGpuMemoryFixed(){
   MemGpuFixed=0;
-  if(RidpMotg)          cudaFree(RidpMotg);           RidpMotg=NULL;
-  if(FtoMasspg)         cudaFree(FtoMasspg);          FtoMasspg=NULL;
-  if(FtoDatpg)          cudaFree(FtoDatpg);           FtoDatpg=NULL;
-  if(FtoMassg)          cudaFree(FtoMassg);           FtoMassg=NULL;
-  if(FtoConstraintsg)   cudaFree(FtoConstraintsg);    FtoConstraintsg=NULL;
-  if(FtoForcesg)        cudaFree(FtoForcesg);         FtoForcesg=NULL;
-  if(FtoForcesResg)     cudaFree(FtoForcesResg);      FtoForcesResg=NULL;
-  if(FtoCenterResg)     cudaFree(FtoCenterResg);      FtoCenterResg=NULL;
-  if(FtoCenterg)        cudaFree(FtoCenterg);         FtoCenterg=NULL;
-  if(FtoAnglesg)        cudaFree(FtoAnglesg);         FtoAnglesg=NULL;
-  if(FtoVelAceg)        cudaFree(FtoVelAceg);         FtoVelAceg=NULL;
-  if(FtoInertiaini8g)   cudaFree(FtoInertiaini8g);    FtoInertiaini8g=NULL;
-  if(FtoInertiaini1g)   cudaFree(FtoInertiaini1g);    FtoInertiaini1g=NULL;
-  if(DemDatag)          cudaFree(DemDatag);           DemDatag=NULL;
+  if(RidpMotg)  cudaFree(RidpMotg);    RidpMotg=NULL;
+  if(FtoMasspg) cudaFree(FtoMasspg);   FtoMasspg=NULL;
+  if(FtoDatpg)  cudaFree(FtoDatpg);    FtoDatpg=NULL;
+  if(FtoCenterg)cudaFree(FtoCenterg);  FtoCenterg=NULL;
+  if(FtoAceg)   cudaFree(FtoAceg);     FtoAceg=NULL;
+  if(DemDatag)  cudaFree(DemDatag);    DemDatag=NULL;
 }
 
 //==============================================================================
@@ -264,23 +240,13 @@ void JSphGpu::AllocGpuMemoryFixed(){
   }
   //-Allocates memory for floating bodies.
   if(CaseNfloat){
-    size_t m=0;
-    m=sizeof(float)   *FtCount;     cudaMalloc((void**)&FtoMasspg         ,m);  MemGpuFixed+=m;
-    m=sizeof(float4)  *FtCount;     cudaMalloc((void**)&FtoDatpg          ,m);  MemGpuFixed+=m;
-    m=sizeof(float)   *FtCount;     cudaMalloc((void**)&FtoMassg          ,m);  MemGpuFixed+=m;
-    m=sizeof(byte)    *FtCount;     cudaMalloc((void**)&FtoConstraintsg   ,m);  MemGpuFixed+=m;
-    m=sizeof(float3)  *FtCount*2;   cudaMalloc((void**)&FtoForcesg        ,m);  MemGpuFixed+=m;
-    m=sizeof(float3)  *FtCount*2;   cudaMalloc((void**)&FtoForcesResg     ,m);  MemGpuFixed+=m;
-    m=sizeof(double3) *FtCount;     cudaMalloc((void**)&FtoCenterResg     ,m);  MemGpuFixed+=m;
-    m=sizeof(double3) *FtCount;     cudaMalloc((void**)&FtoCenterg        ,m);  MemGpuFixed+=m;
-    m=sizeof(float3)  *FtCount;     cudaMalloc((void**)&FtoAnglesg        ,m);  MemGpuFixed+=m;
-    m=sizeof(float3)  *FtCount*4;   cudaMalloc((void**)&FtoVelAceg        ,m);  MemGpuFixed+=m;
-    m=sizeof(float4)  *FtCount*2;   cudaMalloc((void**)&FtoInertiaini8g   ,m);  MemGpuFixed+=m;
-    m=sizeof(float)   *FtCount;     cudaMalloc((void**)&FtoInertiaini1g   ,m);  MemGpuFixed+=m;
+    MemGpuFixed+=fcuda::Malloc(&FtoMasspg ,FtCount);
+    MemGpuFixed+=fcuda::Malloc(&FtoDatpg  ,FtCount);
+    MemGpuFixed+=fcuda::Malloc(&FtoCenterg,FtCount);
+    MemGpuFixed+=fcuda::Malloc(&FtoAceg   ,FtCount*2);
   }
   if(UseDEM){ //-DEM.
-    const size_t m=sizeof(float4)*DemDataSize;
-    cudaMalloc((void**)&DemDatag,m);  MemGpuFixed+=m;
+    MemGpuFixed+=fcuda::Malloc(&DemDatag,DemDataSize);
   }
   Check_CudaErroor("Failed GPU memory allocation.");
 }
@@ -702,7 +668,7 @@ void JSphGpu::InitFloatingsGpu(){
     float* massp=new float[FtCount];
     for(unsigned cf=0;cf<FtCount;cf++)massp[cf]=FtObjs[cf].massp;
     cudaMemcpy(FtoMasspg,massp,sizeof(float)*FtCount,cudaMemcpyHostToDevice);
-    delete[] massp;
+    delete[] massp; massp=NULL;
   }
   //-Copies floating values to GPU.
   {
@@ -712,48 +678,18 @@ void JSphGpu::InitFloatingsGpu(){
       float radius;
       float massp;
     }stdata;
-
-    stdata*   datp  =new stdata  [FtCount];
-    float*    ftmass=new float   [FtCount];
-    byte*     constr=new byte    [FtCount];
-    tdouble3* center=new tdouble3[FtCount];
-    tfloat3*  angles=new tfloat3 [FtCount];
-    tfloat3*  velace=new tfloat3 [FtCount*4];
-    tfloat4*  inert8=new tfloat4 [FtCount*2];
-    float*    inert1=new float   [FtCount];
-    memset(velace,0,sizeof(tfloat3)*FtCount*4);
+    stdata* datp=new stdata[FtCount];
     for(unsigned cf=0;cf<FtCount;cf++){
       const StFloatingData& fobj=FtObjs[cf];
       datp[cf].pini=fobj.begin-CaseNfixed;
       datp[cf].np=fobj.count;
       datp[cf].radius=fobj.radius;
       datp[cf].massp=fobj.massp;
-      ftmass[cf]=fobj.mass;
-      constr[cf]=fobj.constraints;
-      center[cf]=fobj.center;
-      angles[cf]=fobj.angles;
-      velace[cf]=fobj.fvel;
-      velace[FtCount+cf]=fobj.fomega;
-      const tmatrix3f v=fobj.inertiaini;
-      inert8[cf*2]  =TFloat4(v.a11,v.a12,v.a13,v.a21);
-      inert8[cf*2+1]=TFloat4(v.a22,v.a23,v.a31,v.a32);
-      inert1[cf]    =v.a33;
+      FtoCenterc[cf]=fobj.center;
     }
-    cudaMemcpy(FtoDatpg       ,datp  ,sizeof(float4)   *FtCount  ,cudaMemcpyHostToDevice);
-    cudaMemcpy(FtoMassg       ,ftmass,sizeof(float)    *FtCount  ,cudaMemcpyHostToDevice);
-    cudaMemcpy(FtoConstraintsg,constr,sizeof(byte)     *FtCount  ,cudaMemcpyHostToDevice);
-    cudaMemcpy(FtoCenterg     ,center,sizeof(double3)  *FtCount  ,cudaMemcpyHostToDevice);
-    cudaMemcpy(FtoAnglesg     ,angles,sizeof(float3)   *FtCount  ,cudaMemcpyHostToDevice);
-    cudaMemcpy(FtoVelAceg     ,velace,sizeof(float3)   *FtCount*4,cudaMemcpyHostToDevice);
-    cudaMemcpy(FtoInertiaini8g,inert8,sizeof(float4)   *FtCount*2,cudaMemcpyHostToDevice);
-    cudaMemcpy(FtoInertiaini1g,inert1,sizeof(float)    *FtCount  ,cudaMemcpyHostToDevice);
-    delete[] datp;
-    delete[] ftmass;
-    delete[] center;
-    delete[] angles;
-    delete[] velace;
-    delete[] inert8;
-    delete[] inert1;
+    cudaMemcpy(FtoDatpg,datp,sizeof(float4)*FtCount,cudaMemcpyHostToDevice);
+    cudaMemcpy(FtoCenterg,FtoCenterc,sizeof(double3)*FtCount,cudaMemcpyHostToDevice);
+    delete[] datp; datp=NULL;
   }
   //-Copies data object for DEM to GPU.
   if(UseDEM){ //(DEM)
@@ -765,7 +701,7 @@ void JSphGpu::InitFloatingsGpu(){
       data[c].w=DemData[c].restitu;
     }
     cudaMemcpy(DemDatag,data,sizeof(float4)*DemDataSize,cudaMemcpyHostToDevice);
-    delete[] data;
+    delete[] data; data=NULL;
   }
 }
 

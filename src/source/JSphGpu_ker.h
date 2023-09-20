@@ -266,24 +266,17 @@ void MovePiston2d(bool periactive,unsigned np,unsigned idini,double dp,double po
   ,double poszmin,unsigned poszcount,const double* movx,const double* velx,const unsigned* ridpmot
   ,double2* posxy,double* posz,unsigned* dcell,float4* velrho,typecode* code);
 
-//-Kernels for Floating bodies.
-void FtCalcForcesSum(bool periactive,unsigned ftcount
+//-Kernels for Floating bodies NEW.
+void FtPartsSumAce(bool periactive,unsigned ftcount
   ,const float4* ftodata,const double3* ftocenter,const unsigned* ridpmot
   ,const double2* posxy,const double* posz,const float3* ace
-  ,float3* ftoforcessum);
-void FtCalcForces(unsigned ftcount,tfloat3 gravity
-  ,const float* ftomass,const float3* ftoangles
-  ,const float4* ftoinertiaini8,const float* ftoinertiaini1
-  ,float3* ftoforces);
-void FtCalcForcesRes(unsigned ftcount,bool simulate2d,double dt
-  ,const float3* ftovelace,const double3* ftocenter,const float3* ftoforces
-  ,float3* ftoforcesres,double3* ftocenterres);
-void FtApplyConstraints(unsigned ftcount,const byte* ftoconstraints
-  ,float3* ftoforces,float3* ftoforcesres);
-void FtUpdate(bool periactive,bool predictor,unsigned ftcount,double dt
-  ,const float4* ftodatp,const float3* ftoforcesres,double3* ftocenterres,const unsigned* ridpmot
-  ,double3* ftocenter,float3* ftoangles,float3* ftovelace
-  ,double2* posxy,double* posz,unsigned* dcell,float4* velrho,typecode* code);
+  ,float3* ftoacelinang);
+
+void FtPartsUpdate(bool periactive,double dt,bool updatenormals
+  ,unsigned np,unsigned fpini,float fradius,tmatrix4d mat
+  ,tfloat3 fto_vellin,tfloat3 fto_velang,tdouble3 fto_center
+  ,const unsigned* ridpmot,double2* posxy,double* posz,float4* velrho
+  ,unsigned* dcell,typecode* code,float3* boundnor);
 
 //-Kernels for periodic conditions.
 void PeriodicIgnore(unsigned n,typecode* code);

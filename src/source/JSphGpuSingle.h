@@ -63,9 +63,8 @@ protected:
   double ComputeStep_Ver();
   double ComputeStep_Sym();
 
-  void UpdateFtObjs();
-  void FtApplyImposedVel(float3* ftoforcesresg)const;
   void RunFloating(double dt,bool predictor);
+
   void RunGaugeSystem(double timestep,bool saveinput=false);
 
   void ComputePips(bool run);

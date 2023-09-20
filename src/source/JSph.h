@@ -411,9 +411,14 @@ protected:
   double DemDtForce;       ///<Dt for tangencial acceleration.
   StMaxNumbers MaxNumbers; ///<Maximum values (or almost) achieved during the simulation.
 
+  //-Auxiliary variables for floating bodies calculations.
+  tfloat6*  Fto_ExForceLinAng; ///<Stores external forces on floatings (moorings and predefined) [FtCount].
+  tfloat6*  Fto_AceLinAng;     ///<Stores acceleration of floatings [FtCount].
+  tfloat6*  Fto_VelLinAng;     ///<Stores velocity to update floatings [FtCount].
+  tdouble3* Fto_Center;        ///<Stores center to update floatings [FtCount].
 
   bool SaveFtAce;    ///<Indicates whether linear and angular accelerations of each floating objects are saved.
-  void SaveFtAceFun(double dt,bool predictor,StFtoForces* ftoforces);
+  void SaveFtAceFun(double dt,bool predictor,const StFloatingData* ftobjs);
 
 
 protected:
@@ -476,7 +481,16 @@ protected:
 
   bool CalcMotion(double stepdt);
   void CalcMotionWaveGen(double stepdt);
+
   void ChronoFtApplyImposedVel();
+  void FtApplyImposedVel(double timestep,int cf,tfloat3& vellin,tfloat3& velang)const;
+  void FtComputeAceVel(double dt,bool predictor,bool saveftvalues
+    ,tfloat6* fto_acelinang,tfloat6* fto_vellinang,tdouble3* fto_center);
+  void FtComputeChrono(double dt,bool predictor,const tfloat6* fto_acelinang
+    ,tfloat6* fto_vellinang,tdouble3* fto_center);
+  void FtUpdateFloatings(double dt,const tfloat6* fto_vellinang
+    ,const tdouble3* fto_center);
+
   void PrintSizeNp(unsigned np,llong size,unsigned allocs)const;
   void PrintHeadPart();
 

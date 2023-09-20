@@ -250,19 +250,6 @@ typedef struct{
   tfloat3 preaceang;    ///<Angular acceleration before constraints (multiplied by rotated inertia tensor) (units:rad/s^2).
 }StFloatingData;
 
-///Structure with the information of the floating object in forces calculation.
-typedef struct{
-  tfloat3 face;       ///<Sum of particle acceleration (units:m/s2). | Sumatorio de ace de particulas.
-  tfloat3 fomegaace;  ///<Angular acceleration of the floating object (units:rad/s2). | Aceleracion angular del objecto floating.
-}StFtoForces;
-
-///Structure with the information of the floating object in forces calculation.
-typedef struct{
-  tfloat3 fomegares;   ///<Calculated angular velocity to upadte floating body (units:rad/s).
-  tfloat3 fvelres;     ///<Calculated linear velocity to upadte floating body (units:m/s).
-  tdouble3 fcenterres; ///<Calculated center to upadte floating body (units:m).
-}StFtoForcesRes;
-
 ///Structure with the information of the solid object for DEM interaction (Discrete Element Method).
 typedef struct{ //(DEM)
   float mass;         ///<Mass of the object (units:Kg).

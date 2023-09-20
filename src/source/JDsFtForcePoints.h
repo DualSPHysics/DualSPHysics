@@ -133,7 +133,7 @@ public:
 
   void SetForce(word idx,const tfloat3& force){ PtForce[idx]=force; }
   void ComputeForcesSum();
-  void GetFtForcesSum(StFtoForces* ftoforces)const;
+  void GetFtForcesSum(tfloat6* ftoforces)const;
 
   void SaveData(unsigned numfile)const;
 };

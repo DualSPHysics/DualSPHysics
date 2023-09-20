@@ -584,9 +584,9 @@ void JSphCpuSingle::SaveFluidOut(){
 //==============================================================================
 void JSphCpuSingle::Interaction_Forces(TpInterStep interstep){
   //-Boundary correction for mDBC.
-  if(TBoundary==BC_MDBC && (MdbcCorrector || interstep!=INTERSTEP_SymCorrector)){
-    MdbcBoundCorrection();
-  }
+  const bool runmdbc=(TBoundary==BC_MDBC && (MdbcCorrector || interstep!=INTERSTEP_SymCorrector));
+  if(runmdbc)MdbcBoundCorrection();
+  
   InterStep=interstep;
   PreInteraction_Forces();
 
@@ -792,6 +792,58 @@ double JSphCpuSingle::ComputeStep_Sym(){
 }
 
 //==============================================================================
+/// Process floating objects
+/// Procesa floating objects.
+//==============================================================================
+void JSphCpuSingle::RunFloating(double dt,bool predictor){
+  Timersc->TmStart(TMC_SuFloating);
+  const bool saveftmot=(!predictor && (PartFloatSave && TimeOutExtraCheck(TimeStep+dt)) );
+  const bool saveftvalues=(!predictor && (TimeStep+dt>=TimePartNext || saveftmot));
+  const bool ftpaused=(TimeStep<FtPause);
+
+  if(!ftpaused || saveftvalues){
+    //-Computes sum of linear and angular acceleration of floating particles.
+    FtPartsSumAce(Pos_c->cptr(),Ace_c->cptr(),RidpMot,Fto_AceLinAng);
+    //-Compute new linear and angular acceleration, velocity and center to update floatings.
+    FtComputeAceVel(dt,predictor,saveftvalues,Fto_AceLinAng,Fto_VelLinAng,Fto_Center);
+  }
+
+  //-Run floatings with Chrono library (change computed center, linear and angular velocity).
+  if(!ftpaused && ChronoObjects){
+    Timersc->TmStop(TMC_SuFloating);
+    Timersc->TmStart(TMC_SuChrono);
+    FtComputeChrono(dt,predictor,Fto_AceLinAng,Fto_VelLinAng,Fto_Center);
+    Timersc->TmStop(TMC_SuChrono);
+    Timersc->TmStart(TMC_SuFloating);
+  }
+
+  if(!ftpaused){//-Operator >= is used because when FtPause=0 in symplectic-predictor, code would not enter here. | Se usa >= pq si FtPause es cero en symplectic-predictor no entraria.
+    //-Apply displacement and new velocity to floating particles.
+    const bool updatenormals=(!predictor && UseNormalsFt);
+    FtPartsUpdate(dt,updatenormals,Fto_VelLinAng,Fto_Center,RidpMot
+      ,Pos_c->ptr(),Velrho_c->ptr(),Dcell_c->ptr(),Code_c->ptr(),AC_PTR(BoundNor_c));
+
+    //-Update floating data (FtObjs[]) for next step.
+    if(!predictor)FtUpdateFloatings(dt,Fto_VelLinAng,Fto_Center);
+  }
+
+  //-Saves current floating data for output.
+  if(saveftvalues){
+    if(PartFloatSave)PartFloatSave->SetFtData(Part,TimeStep+dt,Nstep+1,FtObjs,ForcePoints);
+  }
+  Timersc->TmStop(TMC_SuFloating);
+
+  //-Update data of points in FtForces and calculates motion data of affected floatings.
+  if(!predictor && ForcePoints){
+    Timersc->TmStart(TMC_SuMoorings);
+    ForcePoints->UpdatePoints(TimeStep,dt,ftpaused,FtObjs);
+    if(Moorings)Moorings->ComputeForces(Nstep,TimeStep,dt,ForcePoints);
+    ForcePoints->ComputeForcesSum();
+    Timersc->TmStop(TMC_SuMoorings);
+  }
+}
+
+//==============================================================================
 /// Calculate distance between floating particles & centre according to periodic conditions.
 /// Calcula distancia entre pariculas floatin y centro segun condiciones periodicas.
 //==============================================================================
@@ -815,317 +867,89 @@ tfloat3 JSphCpuSingle::FtPeriodicDist(const tdouble3& pos,const tdouble3& center
 }
 
 //==============================================================================
-/// Calculate summation of linear and angular forces starting from acceleration of particles.
-/// Calcula suma de fuerzas lineal y angular a partir de la aceleracion de las particulas.
+/// Calculate summation of linear and angular acceleration of floating particles.
+/// Calcula suma de aceleracion lineal y angular de las particulas floating.
 //==============================================================================
-void JSphCpuSingle::FtCalcForcesSum(unsigned cf,tfloat3& face,tfloat3& fomegaace)const{
-  const StFloatingData& fobj=FtObjs[cf];
-  const unsigned fpini=fobj.begin-CaseNfixed;
-  const unsigned fpfin=fpini+fobj.count;
-  const float    fradius=fobj.radius;
-  const tdouble3 fcenter=fobj.center;
-  const float    fmassp=fobj.massp;
-
-  //-Computes sumation of forces starting from acceleration of particles.
-  face=TFloat3(0);
-  fomegaace=TFloat3(0);
-  //-Calculate summation: face, fomegaace. | Calcula sumatorios: face, fomegaace.
-  const tfloat3* acec=Ace_c->cptr();
-  const tdouble3* posc=Pos_c->cptr();
-  for(unsigned fp=fpini;fp<fpfin;fp++){
-    int p=RidpMot[fp];
-    const tfloat3 force=acec[p]*fmassp;
-    face=face+force;
-    const tfloat3 dist=(PeriActive? FtPeriodicDist(posc[p],fcenter,fradius): ToTFloat3(posc[p]-fcenter)); 
-    fomegaace.x+= force.z*dist.y - force.y*dist.z;
-    fomegaace.y+= force.x*dist.z - force.z*dist.x;
-    fomegaace.z+= force.y*dist.x - force.x*dist.y;
-  }
-}
-
-//==============================================================================
-/// Computes final acceleration from particles and from external forces to ftoforces[].
-/// Calcula aceleracion final a parti de particulas y de fuerzas externas en ftoforces[].
-//==============================================================================
-void JSphCpuSingle::FtCalcForces(StFtoForces* ftoforces,bool saveftvalues)const{
+void JSphCpuSingle::FtPartsSumAce(const tdouble3* posc,const tfloat3* acec
+  ,const unsigned* ridpmot,tfloat6* acelinang)const
+{
   const int ftcount=int(FtCount);
   #ifdef OMP_USE
     #pragma omp parallel for schedule (guided)
   #endif
   for(int cf=0;cf<ftcount;cf++){
     const StFloatingData fobj=FtObjs[cf];
-    const float fmass=fobj.mass;
-    const tfloat3 fang=fobj.angles;
-    tmatrix3f inert=fobj.inertiaini;
-
-    //-Compute a cumulative rotation matrix.
-    const tmatrix3f frot=fmath::RotMatrix3x3(fang);
-    //-Compute the inertia tensor by rotating the initial tensor to the curent orientation I=(R*I_0)*R^T.
-    inert=fmath::MulMatrix3x3(fmath::MulMatrix3x3(frot,inert),fmath::TrasMatrix3x3(frot));
-    //-Calculates the inverse of the inertia matrix to compute the I^-1 * L= W
-    const tmatrix3f invinert=fmath::InverseMatrix3x3(inert);
-
-    //-Compute summation of linear and angular forces starting from acceleration of particles.
-    tfloat3 face,fomegaace;
-    FtCalcForcesSum(cf,face,fomegaace);
-    //-Saves sum of fluid forces applied to floating body.
-    if(saveftvalues){
-      FtObjs[cf].fluforcelin=face;
-      FtObjs[cf].fluforceang=fomegaace;
+    const unsigned fpini=fobj.begin-CaseNfixed;
+    const unsigned fpfin=fpini+fobj.count;
+    const float    fradius=fobj.radius;
+    const tdouble3 fcenter=fobj.center;
+    tfloat3 acelin=TFloat3(0);
+    tfloat3 aceang=TFloat3(0);
+    for(unsigned fp=fpini;fp<fpfin;fp++){
+      const unsigned p=ridpmot[fp];
+      const tfloat3 acep=acec[p];
+      acelin=acelin+acep;
+      const tfloat3 dist=(PeriActive? FtPeriodicDist(posc[p],fcenter,fradius): ToTFloat3(posc[p]-fcenter)); 
+      aceang.x+= acep.z*dist.y - acep.y*dist.z;
+      aceang.y+= acep.x*dist.z - acep.z*dist.x;
+      aceang.z+= acep.y*dist.x - acep.x*dist.y;
     }
-    //-Adds inital external forces from ForcePoints, Moorings and external files.
-    face=face+ftoforces[cf].face;
-    fomegaace=fomegaace+ftoforces[cf].fomegaace;
-
-    //-Calculate omega starting from fomegaace & invinert. | Calcula omega a partir de fomegaace y invinert.
-    {
-      tfloat3 omegaace;
-      omegaace.x=(fomegaace.x*invinert.a11+fomegaace.y*invinert.a12+fomegaace.z*invinert.a13);
-      omegaace.y=(fomegaace.x*invinert.a21+fomegaace.y*invinert.a22+fomegaace.z*invinert.a23);
-      omegaace.z=(fomegaace.x*invinert.a31+fomegaace.y*invinert.a32+fomegaace.z*invinert.a33);
-      fomegaace=omegaace;
-    }
-    //-Add gravity force and divide by mass. | Suma fuerza de gravedad y divide por la masa.
-    face.x=(face.x + fmass*Gravity.x) / fmass;
-    face.y=(face.y + fmass*Gravity.y) / fmass;
-    face.z=(face.z + fmass*Gravity.z) / fmass;
-    //-Keep result in ftoforces[]. | Guarda resultados en ftoforces[].
-    ftoforces[cf].face=face; //-Saves acceleration (forces/fmass);
-    ftoforces[cf].fomegaace=fomegaace;
-    //-Saves acceleration before constraints (includes external forces, 
-    //-gravity and rotated inertia tensor).
-    if(saveftvalues){
-      FtObjs[cf].preacelin=face;
-      FtObjs[cf].preaceang=fomegaace;
-    }
+    acelinang[cf]=TFloat6(acelin,aceang);
   }
 }
 
 //==============================================================================
-/// Calculate data to update floatings.
-/// Calcula datos para actualizar floatings.
+/// Apply displacement and new velocity to floating particles.
 //==============================================================================
-void JSphCpuSingle::FtCalcForcesRes(double dt,const StFtoForces* ftoforces
-  ,StFtoForcesRes* ftoforcesres)const
+void JSphCpuSingle::FtPartsUpdate(double dt,bool updatenormals
+  ,const tfloat6* fto_vellinang,const tdouble3* fto_center,const unsigned* ridpmot
+  ,tdouble3* posc,tfloat4* velrhoc,unsigned* dcellc,typecode* codec
+  ,tfloat3* boundnorc)const
 {
-  for(unsigned cf=0;cf<FtCount;cf++){
-    //-Get Floating object values. | Obtiene datos de floating.
+  const int ftcount=int(FtCount);
+  #ifdef OMP_USE
+    #pragma omp parallel for schedule (guided)
+  #endif
+  for(int cf=0;cf<ftcount;cf++){
+    //-Get Floating object values.
     const StFloatingData fobj=FtObjs[cf];
-    //-Compute fomega. | Calculo de fomega.
-    tfloat3 fomega=fobj.fomega;
-    {
-      const tfloat3 omegaace=ftoforces[cf].fomegaace;
-      fomega.x=float(dt*omegaace.x+fomega.x);
-      fomega.y=float(dt*omegaace.y+fomega.y);
-      fomega.z=float(dt*omegaace.z+fomega.z);
+    const float fradius=fobj.radius;
+    const unsigned fpini=fobj.begin-CaseNfixed;
+    const unsigned fpfin=fpini+fobj.count;
+    const tfloat3  fvel   =fto_vellinang[cf].getlo();
+    const tfloat3  fomega =fto_vellinang[cf].gethi();
+    const tdouble3 fcenter=fto_center[cf];
+    //-Compute matrix to update floating normals for mDBC.
+    JMatrix4d mat;
+    if(updatenormals){
+      const tdouble3 dang=(ToTDouble3(fomega)*dt)*TODEG;
+      const tdouble3 cen2=(PeriActive? UpdatePeriodicPos(fcenter): fcenter);
+      mat.Move(cen2);
+      mat.Rotate(dang);
+      mat.Move(fobj.center*-1);
     }
-    tfloat3 fvel=fobj.fvel;
-    //if(!cf)printf("--->fvel  f%d(%f,%f,%f)\n",cf,fvel.x,fvel.y,fvel.z);
-
-    //-Zero components for 2-D simulation. | Anula componentes para 2D.
-    tfloat3 face=ftoforces[cf].face;
-    if(Simulate2D){ face.y=0; fomega.x=0; fomega.z=0; fvel.y=0; }
-    //-Compute fcenter. | Calculo de fcenter.
-    tdouble3 fcenter=fobj.center;
-    fcenter.x+=dt*fvel.x;
-    fcenter.y+=dt*fvel.y;
-    fcenter.z+=dt*fvel.z;
-    //-Compute fvel. | Calculo de fvel.
-    fvel.x=float(dt*face.x+fvel.x);
-    fvel.y=float(dt*face.y+fvel.y);
-    fvel.z=float(dt*face.z+fvel.z);
-    //-Store data to update floating. | Guarda datos para actualizar floatings.
-    FtoForcesRes[cf].fomegares=fomega;
-    FtoForcesRes[cf].fvelres=fvel;
-    FtoForcesRes[cf].fcenterres=fcenter;
-  }
-}
-
-//==============================================================================
-/// Applies motion constraints.
-/// Aplica restricciones de movimiento.
-//==============================================================================
-void JSphCpuSingle::FtApplyConstraints(StFtoForces* ftoforces
-  ,StFtoForcesRes* ftoforcesres)const
-{
-  for(unsigned cf=0;cf<FtCount;cf++){
-    const StFloatingData fobj=FtObjs[cf];
-    if(fobj.constraints!=FTCON_Free){
-      ApplyConstraints(fobj.constraints,ftoforces[cf].face,ftoforces[cf].fomegaace);
-      ApplyConstraints(fobj.constraints,ftoforcesres[cf].fvelres,ftoforcesres[cf].fomegares);
-    }
-  }
-}
-
-//==============================================================================
-/// Applies imposed velocity.
-/// Aplica velocidad predefinida.
-//==============================================================================
-void JSphCpuSingle::FtApplyImposedVel(StFtoForcesRes* ftoforcesres)const{
-  for(unsigned cf=0;cf<FtCount;cf++){
-    if(!FtObjs[cf].usechrono && (FtLinearVel[cf]!=NULL || FtAngularVel[cf]!=NULL)){
-      if(FtLinearVel[cf]!=NULL){
-        const tfloat3 v=FtLinearVel[cf]->GetValue3f(TimeStep);
-        if(v.x!=FLT_MAX)FtoForcesRes[cf].fvelres.x=v.x;
-        if(v.y!=FLT_MAX)FtoForcesRes[cf].fvelres.y=v.y;
-        if(v.z!=FLT_MAX)FtoForcesRes[cf].fvelres.z=v.z;
-        //tfloat3 a=FtoForcesRes[cf].fvelres;
-        //Log->Printf("%d> t:%f v(%f,%f,%f)",Nstep,TimeStep,a.x,a.y,a.z);
-      }
-      if(FtAngularVel[cf]!=NULL){
-        const tfloat3 v=FtAngularVel[cf]->GetValue3f(TimeStep);
-        if(v.x!=FLT_MAX)FtoForcesRes[cf].fomegares.x=v.x;
-        if(v.y!=FLT_MAX)FtoForcesRes[cf].fomegares.y=v.y;
-        if(v.z!=FLT_MAX)FtoForcesRes[cf].fomegares.z=v.z;
-      }
-    }
-  }
-}
-
-//==============================================================================
-/// Process floating objects
-/// Procesa floating objects.
-//==============================================================================
-void JSphCpuSingle::RunFloating(double dt,bool predictor){
-  Timersc->TmStart(TMC_SuFloating);
-  const bool saveftmot=(!predictor && (PartFloatSave && TimeOutExtraCheck(TimeStep+dt)) );
-  const bool saveftvalues=(!predictor && (TimeStep+dt>=TimePartNext || saveftmot));
-  const bool ftpaused=(TimeStep<FtPause);
-
-  if(!ftpaused || saveftvalues){
-    //-Initialises forces of floatings.
-    memset(FtoForces,0,sizeof(StFtoForces)*FtCount); 
-
-    //-Adds external forces (ForcePoints, Moorings, external file) to FtoForces[].
-    if(ForcePoints!=NULL || FtLinearForce!=NULL){
-      //-Loads sum of linear and angular forces from ForcePoints and Moorings.
-      if(ForcePoints)ForcePoints->GetFtForcesSum(FtoForces);
-      //-Adds the external forces.
-      if(FtLinearForce!=NULL){
-        for(unsigned cf=0;cf<FtCount;cf++){
-          FtoForces[cf].face     =FtoForces[cf].face     +GetFtExternalForceLin(cf,TimeStep);
-          FtoForces[cf].fomegaace=FtoForces[cf].fomegaace+GetFtExternalForceAng(cf,TimeStep);
+    //-Updates floating particles.
+    for(unsigned fp=fpini;fp<fpfin;fp++){
+      const int p=ridpmot[fp];
+      if(p!=UINT_MAX){
+        tfloat4 vr=velrhoc[p];
+        //-Computes displacement and updates position.
+        const double dx=dt*double(vr.x);
+        const double dy=dt*double(vr.y);
+        const double dz=dt*double(vr.z);
+        UpdatePos(posc[p],dx,dy,dz,false,p,posc,dcellc,codec);
+        //-Computes and updates velocity.
+        const tfloat3 dist=(PeriActive? FtPeriodicDist(posc[p],fcenter,fradius): ToTFloat3(posc[p]-fcenter)); 
+        vr.x=fvel.x+(fomega.y*dist.z - fomega.z*dist.y);
+        vr.y=fvel.y+(fomega.z*dist.x - fomega.x*dist.z);
+        vr.z=fvel.z+(fomega.x*dist.y - fomega.y*dist.x);
+        velrhoc[p]=vr;
+        //-Updates floating normals for mDBC.
+        if(updatenormals){
+          boundnorc[p]=ToTFloat3(mat.MulNormal(ToTDouble3(boundnorc[p])));
         }
       }
     }
-    //-Saves sum of external forces applied to floating body.
-    if(saveftvalues)for(unsigned cf=0;cf<FtCount;cf++){
-      FtObjs[cf].extforcelin=FtoForces[cf].face;
-      FtObjs[cf].extforceang=FtoForces[cf].fomegaace;
-    }
-
-    //-Computes final acceleration from particles and from external forces in FtoForces[].
-    FtCalcForces(FtoForces,saveftvalues);
-  }
-
-  if(!ftpaused){//-Operator >= is used because when FtPause=0 in symplectic-predictor, code would not enter here. | Se usa >= pq si FtPause es cero en symplectic-predictor no entraria.
-    //-Calculate data to update floatings. | Calcula datos para actualizar floatings.
-    FtCalcForcesRes(dt,FtoForces,FtoForcesRes);
-    //-Applies imposed velocity.
-    if(FtLinearVel!=NULL)FtApplyImposedVel(FtoForcesRes);
-    //-Applies motion constraints.
-    if(FtConstraints)FtApplyConstraints(FtoForces,FtoForcesRes);
-
-    //-Saves face and fomegace for debug.
-    if(SaveFtAce)SaveFtAceFun(dt,predictor,FtoForces);
-
-    //-Run floating with Chrono library.
-    if(ChronoObjects){
-      Timersc->TmStop(TMC_SuFloating);
-      Timersc->TmStart(TMC_SuChrono);
-      //-Export data / Exporta datos.
-      for(unsigned cf=0;cf<FtCount;cf++)if(FtObjs[cf].usechrono){
-        ChronoObjects->SetFtData(FtObjs[cf].mkbound,FtoForces[cf].face,FtoForces[cf].fomegaace);
-      }
-      //-Applies the external velocities to each floating body of Chrono.
-      if(FtLinearVel!=NULL)ChronoFtApplyImposedVel();
-      //-Calculate data using Chrono / Calcula datos usando Chrono.
-      ChronoObjects->RunChrono(Nstep,TimeStep,dt,predictor);
-      //-Load calculated data by Chrono / Carga datos calculados por Chrono.
-      for(unsigned cf=0;cf<FtCount;cf++)if(FtObjs[cf].usechrono){
-        ChronoObjects->GetFtData(FtObjs[cf].mkbound,FtoForcesRes[cf].fcenterres,FtoForcesRes[cf].fvelres,FtoForcesRes[cf].fomegares);
-      }
-      Timersc->TmStop(TMC_SuChrono);
-      Timersc->TmStart(TMC_SuFloating);
-    }
-
-    //-Apply movement around floating objects. | Aplica movimiento sobre floatings.
-    {
-      tdouble3* posc    =Pos_c->ptr();
-      tfloat4*  velrhoc =Velrho_c->ptr();
-      unsigned* dcellc  =Dcell_c->ptr();
-      typecode* codec   =Code_c->ptr();
-      tfloat3*  bnormalc=AC_PTR(BoundNor_c);
-      const int ftcount=int(FtCount);
-      #ifdef OMP_USE
-        #pragma omp parallel for schedule (guided)
-      #endif
-      for(int cf=0;cf<ftcount;cf++){
-        //-Get Floating object values.
-        const StFloatingData fobj=FtObjs[cf];
-        const tfloat3 fomega=FtoForcesRes[cf].fomegares;
-        const tfloat3 fvel=FtoForcesRes[cf].fvelres;
-        const tdouble3 fcenter=FtoForcesRes[cf].fcenterres;
-        //-Updates floating particles.
-        const float fradius=fobj.radius;
-        const unsigned fpini=fobj.begin-CaseNfixed;
-        const unsigned fpfin=fpini+fobj.count;
-        for(unsigned fp=fpini;fp<fpfin;fp++){
-          const int p=RidpMot[fp];
-          if(p!=UINT_MAX){
-            tfloat4* velrho=velrhoc+p;
-            //-Compute and record position displacement. | Calcula y graba desplazamiento de posicion.
-            const double dx=dt*double(velrho->x);
-            const double dy=dt*double(velrho->y);
-            const double dz=dt*double(velrho->z);
-            UpdatePos(posc[p],dx,dy,dz,false,p,posc,dcellc,codec);
-            //-Compute and record new velocity. | Calcula y graba nueva velocidad.
-            tfloat3 dist=(PeriActive? FtPeriodicDist(posc[p],fcenter,fradius): ToTFloat3(posc[p]-fcenter)); 
-            velrho->x=fvel.x+(fomega.y*dist.z-fomega.z*dist.y);
-            velrho->y=fvel.y+(fomega.z*dist.x-fomega.x*dist.z);
-            velrho->z=fvel.z+(fomega.x*dist.y-fomega.y*dist.x);
-          }
-        }
-
-        //-Stores floating data.
-        if(!predictor){
-          FtObjs[cf].center=(PeriActive? UpdatePeriodicPos(fcenter): fcenter);
-          FtObjs[cf].angles=ToTFloat3(ToTDouble3(FtObjs[cf].angles)+ToTDouble3(fomega)*dt);
-          FtObjs[cf].facelin=(fvel  -FtObjs[cf].fvel  )/float(dt);
-          FtObjs[cf].faceang=(fomega-FtObjs[cf].fomega)/float(dt);
-          FtObjs[cf].fvel=fvel;
-          FtObjs[cf].fomega=fomega;
-          //-Updates floating normals for mDBC.
-          if(UseNormalsFt){
-            const tdouble3 dang=ToTDouble3(FtObjs[cf].angles-fobj.angles)*TODEG;
-            const tdouble3 cen=FtObjs[cf].center;
-            JMatrix4d mat;
-            mat.Move(cen);
-            mat.Rotate(dang);
-            mat.Move(fobj.center*-1);
-            for(unsigned fp=fpini;fp<fpfin;fp++){
-              const int p=RidpMot[fp];
-              if(p!=UINT_MAX)bnormalc[p]=ToTFloat3(mat.MulNormal(ToTDouble3(bnormalc[p])));
-            }
-          }
-        }
-      }
-    }
-
-  }
-  //-Saves current floating data for output.
-  if(saveftvalues){
-    if(PartFloatSave)PartFloatSave->SetFtData(Part,TimeStep+dt,Nstep+1,FtObjs,ForcePoints);
-  }
-  Timersc->TmStop(TMC_SuFloating);
-
-  //-Update data of points in FtForces and calculates motion data of affected floatings.
-  if(!predictor && ForcePoints){
-    Timersc->TmStart(TMC_SuMoorings);
-    ForcePoints->UpdatePoints(TimeStep,dt,ftpaused,FtObjs);
-    if(Moorings)Moorings->ComputeForces(Nstep,TimeStep,dt,ForcePoints);
-    ForcePoints->ComputeForcesSum();
-    Timersc->TmStop(TMC_SuMoorings);
   }
 }
 

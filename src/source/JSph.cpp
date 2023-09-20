@@ -21,6 +21,7 @@
 #include "JSph.h"
 #include "JAppInfo.h"
 #include "Functions.h"
+#include "FunctionsMath.h"
 #include "FunGeo3d.h"
 #include "FunSphKernelsCfg.h"
 #include "FunSphKernel.h"
@@ -113,6 +114,12 @@ JSph::JSph(bool cpu,bool mgpu,bool withmpi):Cpu(cpu),Mgpu(mgpu),WithMpi(withmpi)
   OutputParts=NULL; //<vs_outpaarts>
   DsPips=NULL;
   NuxLib=NULL;
+  //-Auxiliary variables for floating bodies calculations.
+  Fto_ExForceLinAng=NULL;
+  Fto_AceLinAng=NULL;
+  Fto_VelLinAng=NULL;
+  Fto_Center=NULL;
+
   InitVars();
 }
 
@@ -294,9 +301,10 @@ void JSph::InitVars(){
 }
 
 //==============================================================================
-/// Saves the linear and angular acceleration of each floating object in a csv file
+/// Saves the linear and angular acceleration of each floating object in 
+/// a csv file (for debug).
 //==============================================================================
-void JSph::SaveFtAceFun(double dt,bool predictor,StFtoForces* ftoforces){
+void JSph::SaveFtAceFun(double dt,bool predictor,const StFloatingData* ftobjs){
   const unsigned nstep=Nstep;
   const double timestep=TimeStep;
   const bool savedata=!(timestep<(floor((timestep-dt)/TimePart)+1.0)*TimePart);
@@ -308,14 +316,14 @@ void JSph::SaveFtAceFun(double dt,bool predictor,StFtoForces* ftoforces){
         Log->AddFileInfo("FloatingAce_mkbound_XX.csv", "Saves information of acceleration used to move the floating object.");
         //-Saves head.
         scsv.SetHead();
-        scsv << "nstep;time [s];dt [s];predictor;face.x [m/s^2];face.y [m/s^2];face.z [m/s^2]";
-        scsv << "fomegaace.x [rad/s^2];fomegaace.y [rad/s^2];fomegaace.z [rad/s^2]" << jcsv::Endl();
+        scsv << "nstep;time [s];dt [s];predictor;acelin.x [m/s^2];acelin.y [m/s^2];acelin.z [m/s^2]";
+        scsv << "aceang.x [rad/s^2];aceang.y [rad/s^2];aceang.z [rad/s^2]" << jcsv::Endl();
       }
       //-Saves data.
       scsv.SetData();
       scsv << nstep << timestep << dt << (predictor?"True":"False");
-      scsv << ftoforces[cf].face;
-      scsv << ftoforces[cf].fomegaace;
+      scsv << ftobjs[cf].preacelin;
+      scsv << ftobjs[cf].preaceang;
       scsv << jcsv::Endl();
       scsv.SaveData();
     }
@@ -439,6 +447,7 @@ void JSph::ConfigDomainResize(std::string key,const JCaseEParms* eparms){
 /// Allocates memory of floating objectcs.
 //==============================================================================
 void JSph::AllocMemoryFloating(unsigned ftcount,bool imposedvel,bool addedforce){
+  //-Free allocated memory for floatings.
   delete[] FtObjs; FtObjs=NULL;
   if(FtLinearVel){
     for(unsigned c=0;c<FtCount;c++)delete FtLinearVel[c];
@@ -456,6 +465,13 @@ void JSph::AllocMemoryFloating(unsigned ftcount,bool imposedvel,bool addedforce)
     for(unsigned c=0;c<FtCount;c++)delete FtAngularForce[c];
     delete[] FtAngularForce; FtAngularForce=NULL;
   }
+  //-Auxiliary variables for floating bodies calculations.
+  delete[] Fto_ExForceLinAng; Fto_ExForceLinAng=NULL;
+  delete[] Fto_AceLinAng;     Fto_AceLinAng=NULL;
+  delete[] Fto_VelLinAng;     Fto_VelLinAng=NULL;
+  delete[] Fto_Center;        Fto_Center=NULL;
+  
+  //-Allocate memory for floatings.
   if(ftcount){
     FtObjs=new StFloatingData[ftcount];
     if(imposedvel){
@@ -468,6 +484,11 @@ void JSph::AllocMemoryFloating(unsigned ftcount,bool imposedvel,bool addedforce)
       FtAngularForce=new JLinearValue*[ftcount];
       for(unsigned c=0;c<ftcount;c++)FtLinearForce[c]=FtAngularForce[c]=NULL;
     }
+    //-Auxiliary variables for floating bodies calculations.
+    Fto_ExForceLinAng =new tfloat6 [ftcount];
+    Fto_AceLinAng     =new tfloat6 [ftcount];
+    Fto_VelLinAng     =new tfloat6 [ftcount];
+    Fto_Center        =new tdouble3[ftcount];
   }
 }
 
@@ -478,7 +499,9 @@ llong JSph::GetAllocMemoryCpu()const{
   //-Allocated in AllocMemoryCase().
   llong s=0;
   //-Allocated in AllocMemoryFloating().
-  if(FtObjs)s+=sizeof(StFloatingData)*FtCount;
+  if(FtCount){
+    s+=(sizeof(StFloatingData)+sizeof(tfloat6)*3+sizeof(tdouble3))*FtCount;
+  }
   //-Allocated in other objects.
   if(PartsOut)s+=PartsOut->GetAllocMemory();
   if(ViscoTime)s+=ViscoTime->GetAllocMemory();
@@ -2464,6 +2487,176 @@ void JSph::ChronoFtApplyImposedVel(){
     ChronoObjects->SetFtDataVel(FtObjs[cf].mkbound,v1,v2);
   } 
 }
+
+//==============================================================================
+/// Applies imposed velocity to floating velocity.
+/// Aplica velocidad predefinida a la velocidad del floating.
+//==============================================================================
+void JSph::FtApplyImposedVel(double timestep,int cf,tfloat3& vellin
+  ,tfloat3& velang)const
+{
+  if(!FtObjs[cf].usechrono && (FtLinearVel[cf]!=NULL || FtAngularVel[cf]!=NULL)){
+    if(FtLinearVel[cf]!=NULL){
+      const tfloat3 v=FtLinearVel[cf]->GetValue3f(timestep);
+      if(v.x!=FLT_MAX)vellin.x=v.x;
+      if(v.y!=FLT_MAX)vellin.y=v.y;
+      if(v.z!=FLT_MAX)vellin.z=v.z;
+    }
+    if(FtAngularVel[cf]!=NULL){
+      const tfloat3 v=FtAngularVel[cf]->GetValue3f(timestep);
+      if(v.x!=FLT_MAX)velang.x=v.x;
+      if(v.y!=FLT_MAX)velang.y=v.y;
+      if(v.z!=FLT_MAX)velang.z=v.z;
+    }
+  }
+}
+
+//==============================================================================
+/// Compute new linear and angular acceleration, velocity and center of floating
+/// bodies in variables: fto_acelinang[], fto_vellinang[], fto_center[].
+//==============================================================================
+void JSph::FtComputeAceVel(double dt,bool predictor,bool saveftvalues
+  ,tfloat6* fto_acelinang,tfloat6* fto_vellinang,tdouble3* fto_center)
+{
+  const bool ftpaused=(TimeStep<FtPause);
+  if(!ftpaused || saveftvalues){
+    //-Get external forces from ForcePoints (moorings).
+    memset(Fto_ExForceLinAng,0,sizeof(tfloat6)*FtCount); 
+    if(ForcePoints)ForcePoints->GetFtForcesSum(Fto_ExForceLinAng);
+
+    for(unsigned cf=0;cf<FtCount;cf++){
+      const StFloatingData& fobj=FtObjs[cf];
+
+      //-Compute total external force (moorings + external file).
+      tfloat3 eforcelin=Fto_ExForceLinAng[cf].getlo();
+      tfloat3 eforceang=Fto_ExForceLinAng[cf].gethi();
+      //-Add predefined forces from external file.
+      if(FtLinearForce!=NULL){
+        eforcelin=eforcelin+GetFtExternalForceLin(cf,TimeStep);
+        eforceang=eforceang+GetFtExternalForceAng(cf,TimeStep);
+      }
+
+      //-Compute summation of linear and angular forces starting from acceleration of particles.
+      const float fmassp=fobj.massp;
+      const tfloat3 fforcelin=fto_acelinang[cf].getlo() * fmassp;
+      const tfloat3 fforceang=fto_acelinang[cf].gethi() * fmassp;
+
+      //-Computes total linear acceleration of fluid force + external force + weight due to gravity.
+      const float fmass=fobj.mass;
+      tfloat3 acelin=(fforcelin + eforcelin + (Gravity*fmass)) / fmass;
+
+      //-Computes total angular acceleration with rotated inertia tensor.
+      tfloat3 aceang;
+      {
+        const tfloat3 fang=fobj.angles;
+        tmatrix3f inert=fobj.inertiaini;
+        //-Compute a cumulative rotation matrix.
+        const tmatrix3f frot=fmath::RotMatrix3x3(fang);
+        //-Compute the inertia tensor by rotating the initial tensor to the curent orientation I=(R*I_0)*R^T.
+        inert=fmath::MulMatrix3x3(fmath::MulMatrix3x3(frot,inert),fmath::TrasMatrix3x3(frot));
+        //-Calculates the inverse of the inertia matrix to compute the I^-1 * L= W
+        const tmatrix3f invinert=fmath::InverseMatrix3x3(inert);
+        //-Calculate total angular acceleration using invinert.
+        const tfloat3 forceang=fforceang + eforceang; //-Fluid angular force + external angular force.
+        aceang.x=(forceang.x*invinert.a11+forceang.y*invinert.a12+forceang.z*invinert.a13);
+        aceang.y=(forceang.x*invinert.a21+forceang.y*invinert.a22+forceang.z*invinert.a23);
+        aceang.z=(forceang.x*invinert.a31+forceang.y*invinert.a32+forceang.z*invinert.a33);
+      }
+
+      //-Saves computed floating data for FloatingInfo file.
+      if(saveftvalues){
+        FtObjs[cf].fluforcelin=fforcelin;
+        FtObjs[cf].fluforceang=fforceang;
+        FtObjs[cf].extforcelin=eforcelin;
+        FtObjs[cf].extforceang=eforceang;
+        FtObjs[cf].preacelin=acelin;
+        FtObjs[cf].preaceang=aceang;
+      }
+
+      //-Calculate data to update floatings.
+      if(!ftpaused){//-Operator >= is used because when FtPause=0 in symplectic-predictor, code would not enter here. | Se usa >= pq si FtPause es cero en symplectic-predictor no entraria.
+        //-Compute new center.
+        const tfloat3 fvel0=fobj.fvel;
+        tdouble3 fcenter=fobj.center;
+        fcenter.x+=                dt*fvel0.x;
+        fcenter.y+=(Simulate2D? 0: dt*fvel0.y);
+        fcenter.z+=                dt*fvel0.z;
+        //-Compute new linear velocity.
+        tfloat3 fvel;
+        fvel.x=                float(dt*acelin.x + fvel0.x);
+        fvel.y=(Simulate2D? 0: float(dt*acelin.y + fvel0.y));
+        fvel.z=                float(dt*acelin.z + fvel0.z);
+        //-Compute new angular velocity.
+        tfloat3 fomega=fobj.fomega;
+        fomega.x=(Simulate2D? 0: float(dt*aceang.x + fomega.x));
+        fomega.y=                float(dt*aceang.y + fomega.y);
+        fomega.z=(Simulate2D? 0: float(dt*aceang.z + fomega.z));
+
+        //-Applies imposed velocity.
+        if(FtLinearVel!=NULL)FtApplyImposedVel(TimeStep,cf,fvel,fomega);
+        //-Applies motion constraints to computed velocity and acceleration.
+        if(fobj.constraints!=FTCON_Free){
+          ApplyConstraints(fobj.constraints,acelin,aceang);
+          ApplyConstraints(fobj.constraints,fvel,fomega);
+        }
+
+        //-Store data to update floating.
+        fto_acelinang[cf]=TFloat6(acelin,aceang);
+        fto_vellinang[cf]=TFloat6(fvel,fomega);
+        fto_center[cf]=fcenter;
+      }
+    }
+    //-Saves linear and angular acceleration of floatings (for debug).
+    if(SaveFtAce)SaveFtAceFun(dt,predictor,FtObjs);
+  }
+}
+
+//==============================================================================
+/// Run floating bodiess with Chrono library starting from computed acceleration
+/// in fto_acelinang[] and change computed center, linear and angular velocity.
+//==============================================================================
+void JSph::FtComputeChrono(double dt,bool predictor
+  ,const tfloat6* fto_acelinang,tfloat6* fto_vellinang,tdouble3* fto_center)
+{
+  //-Export data / Exporta datos.
+  for(unsigned cf=0;cf<FtCount;cf++)if(FtObjs[cf].usechrono){
+    const tfloat6 acelinang=fto_acelinang[cf];
+    ChronoObjects->SetFtData(FtObjs[cf].mkbound,acelinang.getlo(),acelinang.gethi());
+  }
+  //-Applies the external velocities to each floating body of Chrono.
+  if(FtLinearVel!=NULL)ChronoFtApplyImposedVel();
+  //-Calculate data using Chrono / Calcula datos usando Chrono.
+  ChronoObjects->RunChrono(Nstep,TimeStep,dt,predictor);
+  //-Load calculated data by Chrono / Carga datos calculados por Chrono.
+  for(unsigned cf=0;cf<FtCount;cf++)if(FtObjs[cf].usechrono){
+    tfloat3 vellin=TFloat3(0),velang=TFloat3(0);
+    ChronoObjects->GetFtData(FtObjs[cf].mkbound,fto_center[cf],vellin,velang);
+    fto_vellinang[cf]=TFloat6(vellin,velang);
+  }
+}
+
+//==============================================================================
+/// Update floating data (FtObjs[]) for next step according to new velocity 
+/// and new center. 
+//==============================================================================
+void JSph::FtUpdateFloatings(double dt,const tfloat6* fto_vellinang
+  ,const tdouble3* fto_center)
+{
+  for(unsigned cf=0;cf<FtCount;cf++){
+    const tfloat3  fvel   =Fto_VelLinAng[cf].getlo();
+    const tfloat3  fomega =Fto_VelLinAng[cf].gethi();
+    const tdouble3 fcenter=Fto_Center[cf];
+    //-Stores floating data.
+    FtObjs[cf].center=(PeriActive? UpdatePeriodicPos(fcenter): fcenter);
+    FtObjs[cf].angles=ToTFloat3(ToTDouble3(FtObjs[cf].angles)+ToTDouble3(fomega)*dt);
+    FtObjs[cf].facelin=(fvel  -FtObjs[cf].fvel  )/float(dt);
+    FtObjs[cf].faceang=(fomega-FtObjs[cf].fomega)/float(dt);
+    FtObjs[cf].fvel=fvel;
+    FtObjs[cf].fomega=fomega;
+  }
+}
+
+
 
 //==============================================================================
 /// Display a message with reserved memory for the basic data of particles.
