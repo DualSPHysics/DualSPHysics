@@ -181,6 +181,7 @@ void JSphGpu::InitVars(){
   FtoDatpg=NULL;
   FtoCenterg=NULL;
   FtoAceg=NULL;
+  for(unsigned c=0;c<NStmFloatings;c++)StmFloatings[c]=NULL;
   //-DEM.
   DemDatag=NULL;
   FreeGpuMemoryFixed();
@@ -227,6 +228,10 @@ void JSphGpu::FreeGpuMemoryFixed(){
   if(FtoCenterg)cudaFree(FtoCenterg);  FtoCenterg=NULL;
   if(FtoAceg)   cudaFree(FtoAceg);     FtoAceg=NULL;
   if(DemDatag)  cudaFree(DemDatag);    DemDatag=NULL;
+  for(unsigned c=0;c<NStmFloatings;c++){
+    if(StmFloatings[c])cudaStreamDestroy(StmFloatings[c]);
+    StmFloatings[c]=NULL;
+  }
 }
 
 //==============================================================================
@@ -244,6 +249,10 @@ void JSphGpu::AllocGpuMemoryFixed(){
     MemGpuFixed+=fcuda::Malloc(&FtoDatpg  ,FtCount);
     MemGpuFixed+=fcuda::Malloc(&FtoCenterg,FtCount);
     MemGpuFixed+=fcuda::Malloc(&FtoAceg   ,FtCount*2);
+  }
+  //-Allocates streams for floating bodies.
+  for(unsigned c=0;c<NStmFloatings;c++){
+    cudaStreamCreate(StmFloatings+c);
   }
   if(UseDEM){ //-DEM.
     MemGpuFixed+=fcuda::Malloc(&DemDatag,DemDataSize);

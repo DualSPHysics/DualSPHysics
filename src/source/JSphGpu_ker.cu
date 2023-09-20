@@ -2244,13 +2244,13 @@ void FtPartsUpdate(bool periactive,double dt,bool updatenormals
   ,unsigned np,unsigned fpini,float fradius,tmatrix4d mat
   ,tfloat3 fto_vellin,tfloat3 fto_velang,tdouble3 fto_center
   ,const unsigned* ridpmot,double2* posxy,double* posz,float4* velrho
-  ,unsigned* dcell,typecode* code,float3* boundnor)
+  ,unsigned* dcell,typecode* code,float3* boundnor,cudaStream_t stm)
 {
   if(np){
     const unsigned bsize=128; 
     dim3 sgrid=GetSimpleGridSize(np,bsize);
-    if(periactive)KerFtPartsUpdate<true>  <<<sgrid,bsize>>> (dt,updatenormals,np,fpini,fradius,mat,Float3(fto_vellin),Float3(fto_velang),Double3(fto_center),ridpmot,posxy,posz,velrho,dcell,code,boundnor);
-    else          KerFtPartsUpdate<false> <<<sgrid,bsize>>> (dt,updatenormals,np,fpini,fradius,mat,Float3(fto_vellin),Float3(fto_velang),Double3(fto_center),ridpmot,posxy,posz,velrho,dcell,code,boundnor); 
+    if(periactive)KerFtPartsUpdate<true>  <<<sgrid,bsize,0,stm>>> (dt,updatenormals,np,fpini,fradius,mat,Float3(fto_vellin),Float3(fto_velang),Double3(fto_center),ridpmot,posxy,posz,velrho,dcell,code,boundnor);
+    else          KerFtPartsUpdate<false> <<<sgrid,bsize,0,stm>>> (dt,updatenormals,np,fpini,fradius,mat,Float3(fto_vellin),Float3(fto_velang),Double3(fto_center),ridpmot,posxy,posz,velrho,dcell,code,boundnor); 
   }
 }
 

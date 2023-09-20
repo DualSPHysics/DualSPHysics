@@ -711,16 +711,17 @@ void JSphGpuSingle::RunFloating(double dt,bool predictor){
         cusph::FtPartsUpdate(PeriActive!=0,dt,updatenormals
           ,fnp,fpini,fradius,mat.GetMatrix()
           ,fvel,fomega,fcenter,RidpMotg,Posxy_g->ptr(),Posz_g->ptr(),Velrho_g->ptr()
-          ,Dcell_g->ptr(),Code_g->ptr(),AG_PTR(BoundNor_g));
+          ,Dcell_g->ptr(),Code_g->ptr(),AG_PTR(BoundNor_g),StmFloatings[cf%NStmFloatings]);
       }
       else{
         //-Run CUDA kernel.
         cusph::FtPartsUpdate(PeriActive!=0,dt,updatenormals
           ,fnp,fpini,fradius,mat0
           ,fvel,fomega,fcenter,RidpMotg,Posxy_g->ptr(),Posz_g->ptr(),Velrho_g->ptr()
-          ,Dcell_g->ptr(),Code_g->ptr(),AG_PTR(BoundNor_g));
+          ,Dcell_g->ptr(),Code_g->ptr(),AG_PTR(BoundNor_g),StmFloatings[cf%NStmFloatings]);
       }
     }
+    cudaDeviceSynchronize();
 
     //-Update floating data (FtObjs[]) for next step.
     if(!predictor){
