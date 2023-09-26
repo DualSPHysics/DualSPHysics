@@ -146,8 +146,9 @@ protected:
   float4*   FtoDatpg;    ///<Constant data of floatings {pini_u,np_u,radius_f,massp_f} [FtCount] //__device__ int __float_as_int(float x) //__device__ float __int_as_float(int x).
   double3*  FtoCenterg;  ///<Auxiliary to store the center in floaging calculations. [FtCount].   
   float3*   FtoAceg;     ///<Auxiliary to compute sum of linear and angular acceleration of floating bodies {acelin_f3,aceang_f3} [2*FtCount].
-  static const unsigned NStmFloatings=18;
-  cudaStream_t StmFloatings[NStmFloatings];
+  static const unsigned MaxNStmFloatings=18;
+  cudaStream_t StmFloatings[MaxNStmFloatings];
+  unsigned NStmFloatings;
   //-Variables for floating bodies (CPU memory).
   tdouble3* FtoCenterc;   ///<Auxiliary CPU Memory to swap floating center with GPU [FtCount].
 
@@ -201,7 +202,8 @@ protected:
 
   void ConfigRunMode();
   void ConfigCellDiv(JCellDivGpu* celldiv){ CellDiv=celldiv; }
-  void InitFloatingsGpu();
+  void InitFloatingsGpu(float* ftomasspg,float4* ftodatag
+    ,double3* ftocenterg,float4* demdatag)const;
   void InitRunGpu();
 
   void PreInteraction_Forces();

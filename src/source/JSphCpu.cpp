@@ -383,7 +383,6 @@ void JSphCpu::InitRunCpu(){
   InitRun(Np,Idp_c->cptr(),Pos_c->cptr());
   if(TStep==STEP_Verlet)VelrhoM1_c->CopyFrom(Velrho_c,Np);
   if(TVisco==VISCO_LaminarSPS)SpsTau_c->Memset(0,Np);
-  if(CaseNfloat)InitFloatings();
   if(MotionVel_c)MotionVel_c->Memset(0,Np);
 }
 

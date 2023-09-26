@@ -282,6 +282,10 @@ typedef struct strfloat6{
     x1+=v1.x;  y1+=v1.y;  z1+=v1.z;
     x2+=v2.x;  y2+=v2.y;  z2+=v2.z;
   }
+  void add(const strfloat6& v){ 
+    x1+=v.x1;  y1+=v.y1;  z1+=v.z1;
+    x2+=v.x2;  y2+=v.y2;  z2+=v.z2;
+  }
 }tfloat6;
 
 ///Constructors other functions for type \ref tfloat6.

@@ -90,6 +90,9 @@ void JDsPartMotionSave::Reset(){
   //-Free JPartMotRefBi4Save objects.
   delete MotData1;  MotData1=NULL;
   delete MotData2;  MotData2=NULL;
+
+  UseUnits=false;
+
 }
 
 //==============================================================================
@@ -304,4 +307,3 @@ void JDsPartMotionSave::AddDataExtraGpu(int cpart,double timestep,unsigned step
   MotData2->AddDataPart(cpart,LastTimestep,LastStep,PsCount,PosRef);
 }
 #endif
-

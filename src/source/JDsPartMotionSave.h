@@ -90,8 +90,10 @@ class JDsPartMotionSave : protected JObject
   double3*  PosRefg; ///<Position of selected particles [PsCount*3].
 #endif
 
-  JPartMotRefBi4Save* MotData1; ///Main object to save motion reference data according to TimeOut as file ibi4.
-  JPartMotRefBi4Save* MotData2; ///Extra object to save motion reference data according to TimeOut2 as file ibi4.
+  JPartMotRefBi4Save* MotData1; ///<Main object to save motion reference data according to TimeOut as file ibi4.
+  JPartMotRefBi4Save* MotData2; ///<Extra object to save motion reference data according to TimeOut2 as file ibi4.
+
+  bool UseUnits; ///<Activate the use of Units vector.
 
  private:
   //void ClearPartData();
@@ -141,6 +143,7 @@ class JDsPartMotionSave : protected JObject
   void AddDataExtraGpu(int cpart,double timestep,unsigned step
     ,unsigned np,const double2* posxy,const double* posz,const unsigned* ridpmot);
 #endif
+
 };
 
 #endif

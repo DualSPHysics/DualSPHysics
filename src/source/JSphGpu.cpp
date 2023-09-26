@@ -69,6 +69,7 @@ JSphGpu::~JSphGpu(){
   FreeCpuMemoryParticles();
   FreeGpuMemoryParticles();
   FreeGpuMemoryFixed();
+  FreeCpuMemoryFixed();
   delete Arrays_Cpu; Arrays_Cpu=NULL;
   delete Arrays_Gpu; Arrays_Gpu=NULL;
   delete GpuInfo;    GpuInfo=NULL;
@@ -181,13 +182,14 @@ void JSphGpu::InitVars(){
   FtoDatpg=NULL;
   FtoCenterg=NULL;
   FtoAceg=NULL;
-  for(unsigned c=0;c<NStmFloatings;c++)StmFloatings[c]=NULL;
+  NStmFloatings=0;
+  for(unsigned c=0;c<MaxNStmFloatings;c++)StmFloatings[c]=NULL;
   //-DEM.
   DemDatag=NULL;
   FreeGpuMemoryFixed();
 
   //-Variables for floating bodies (CPU memory).
-  FtoCenterc=NULL; //-Variables for floating bodies (CPU memory).
+  FtoCenterc=NULL;
   FreeCpuMemoryFixed();
 }
 
@@ -228,10 +230,12 @@ void JSphGpu::FreeGpuMemoryFixed(){
   if(FtoCenterg)cudaFree(FtoCenterg);  FtoCenterg=NULL;
   if(FtoAceg)   cudaFree(FtoAceg);     FtoAceg=NULL;
   if(DemDatag)  cudaFree(DemDatag);    DemDatag=NULL;
-  for(unsigned c=0;c<NStmFloatings;c++){
+  //-Frees streams for floating bodies.
+  for(unsigned c=0;c<MaxNStmFloatings;c++){
     if(StmFloatings[c])cudaStreamDestroy(StmFloatings[c]);
     StmFloatings[c]=NULL;
   }
+  NStmFloatings=0;
 }
 
 //==============================================================================
@@ -251,10 +255,12 @@ void JSphGpu::AllocGpuMemoryFixed(){
     MemGpuFixed+=fcuda::Malloc(&FtoAceg   ,FtCount*2);
   }
   //-Allocates streams for floating bodies.
+  NStmFloatings=(FtCount>1? min(MaxNStmFloatings,FtCount): 0);
   for(unsigned c=0;c<NStmFloatings;c++){
     cudaStreamCreate(StmFloatings+c);
   }
-  if(UseDEM){ //-DEM.
+  //-GPU memory for DEM.
+  if(UseDEM){
     MemGpuFixed+=fcuda::Malloc(&DemDatag,DemDataSize);
   }
   Check_CudaErroor("Failed GPU memory allocation.");
@@ -669,14 +675,14 @@ void JSphGpu::ConfigRunMode(){
 //==============================================================================
 /// Adjusts variables of particles of floating bodies for GPU execution.
 //==============================================================================
-void JSphGpu::InitFloatingsGpu(){
-  //-Adjusts variables of floating bodies on CPU.
-  InitFloatings();
+void JSphGpu::InitFloatingsGpu(float* ftomasspg,float4* ftodatag
+  ,double3* ftocenterg,float4* demdatag)const
+{
   //-Copies massp values to GPU.
   {
     float* massp=new float[FtCount];
     for(unsigned cf=0;cf<FtCount;cf++)massp[cf]=FtObjs[cf].massp;
-    cudaMemcpy(FtoMasspg,massp,sizeof(float)*FtCount,cudaMemcpyHostToDevice);
+    cudaMemcpy(ftomasspg,massp,sizeof(float)*FtCount,cudaMemcpyHostToDevice);
     delete[] massp; massp=NULL;
   }
   //-Copies floating values to GPU.
@@ -688,29 +694,31 @@ void JSphGpu::InitFloatingsGpu(){
       float massp;
     }stdata;
     stdata* datp=new stdata[FtCount];
+    tdouble3* centerc=new tdouble3[FtCount];
     for(unsigned cf=0;cf<FtCount;cf++){
       const StFloatingData& fobj=FtObjs[cf];
       datp[cf].pini=fobj.begin-CaseNfixed;
       datp[cf].np=fobj.count;
       datp[cf].radius=fobj.radius;
       datp[cf].massp=fobj.massp;
-      FtoCenterc[cf]=fobj.center;
+      centerc[cf]=fobj.center;
     }
-    cudaMemcpy(FtoDatpg,datp,sizeof(float4)*FtCount,cudaMemcpyHostToDevice);
-    cudaMemcpy(FtoCenterg,FtoCenterc,sizeof(double3)*FtCount,cudaMemcpyHostToDevice);
-    delete[] datp; datp=NULL;
+    cudaMemcpy(ftodatag,datp,sizeof(float4)*FtCount,cudaMemcpyHostToDevice);
+    cudaMemcpy(ftocenterg,centerc,sizeof(double3)*FtCount,cudaMemcpyHostToDevice);
+    delete[] datp;    datp=NULL;
+    delete[] centerc; centerc=NULL;
   }
   //-Copies data object for DEM to GPU.
-  if(UseDEM){ //(DEM)
-    float4* data=new float4[DemDataSize];
+  if(UseDEM){
+    float4* ddata=new float4[DemDataSize];
     for(unsigned c=0;c<DemDataSize;c++){
-      data[c].x=DemData[c].mass;
-      data[c].y=DemData[c].tau;
-      data[c].z=DemData[c].kfric;
-      data[c].w=DemData[c].restitu;
+      ddata[c].x=DemData[c].mass;
+      ddata[c].y=DemData[c].tau;
+      ddata[c].z=DemData[c].kfric;
+      ddata[c].w=DemData[c].restitu;
     }
-    cudaMemcpy(DemDatag,data,sizeof(float4)*DemDataSize,cudaMemcpyHostToDevice);
-    delete[] data; data=NULL;
+    cudaMemcpy(demdatag,ddata,sizeof(float4)*DemDataSize,cudaMemcpyHostToDevice);
+    delete[] ddata; ddata=NULL;
   }
 }
 
@@ -722,9 +730,9 @@ void JSphGpu::InitRunGpu(){
   unsigned nfilter=0;
   ParticlesDataDown(Np,0,false,false,NULL,nfilter);
   InitRun(Np,Idp_c->cptr(),AuxPos_c->cptr());
+  if(CaseNfloat)InitFloatingsGpu(FtoMasspg,FtoDatpg,FtoCenterg,DemDatag);
   if(TStep==STEP_Verlet)VelrhoM1_g->CuCopyFrom(Velrho_g,Np);
   if(TVisco==VISCO_LaminarSPS)SpsTau_g->CuMemset(0,Np);
-  if(CaseNfloat)InitFloatingsGpu();
   if(MotionVel_g)MotionVel_g->CuMemset(0,Np);
   Check_CudaErroor("Failed initializing variables for execution.");
 }

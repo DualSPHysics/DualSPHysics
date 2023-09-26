@@ -689,7 +689,7 @@ void JSphGpuSingle::RunFloating(double dt,bool predictor){
   if(!ftpaused){//-Operator >= is used because when FtPause=0 in symplectic-predictor, code would not enter here. | Se usa >= pq si FtPause es cero en symplectic-predictor no entraria.
     //-Apply displacement and new velocity to floating particles.
     const bool updatenormals=(!predictor && UseNormalsFt);
-    const tmatrix4d mat0=TMatrix4d();
+    tmatrix4d matc=TMatrix4d();
     for(unsigned cf=0;cf<FtCount;cf++){
       //-Get Floating object values.
       const StFloatingData fobj=FtObjs[cf];
@@ -707,21 +707,16 @@ void JSphGpuSingle::RunFloating(double dt,bool predictor){
         mat.Move(cen2);
         mat.Rotate(dang);
         mat.Move(fobj.center*-1);
-        //-Run CUDA kernel.
-        cusph::FtPartsUpdate(PeriActive!=0,dt,updatenormals
-          ,fnp,fpini,fradius,mat.GetMatrix()
-          ,fvel,fomega,fcenter,RidpMotg,Posxy_g->ptr(),Posz_g->ptr(),Velrho_g->ptr()
-          ,Dcell_g->ptr(),Code_g->ptr(),AG_PTR(BoundNor_g),StmFloatings[cf%NStmFloatings]);
+        matc=mat.GetMatrix();
       }
-      else{
-        //-Run CUDA kernel.
-        cusph::FtPartsUpdate(PeriActive!=0,dt,updatenormals
-          ,fnp,fpini,fradius,mat0
-          ,fvel,fomega,fcenter,RidpMotg,Posxy_g->ptr(),Posz_g->ptr(),Velrho_g->ptr()
-          ,Dcell_g->ptr(),Code_g->ptr(),AG_PTR(BoundNor_g),StmFloatings[cf%NStmFloatings]);
-      }
+      //-Run CUDA kernel.
+      cudaStream_t stm=(NStmFloatings? StmFloatings[cf%NStmFloatings]: NULL);
+      cusph::FtPartsUpdate(PeriActive!=0,dt,updatenormals
+        ,fnp,fpini,fradius,matc,fvel,fomega,fcenter
+        ,RidpMotg,Posxy_g->ptr(),Posz_g->ptr(),Velrho_g->ptr()
+        ,Dcell_g->ptr(),Code_g->ptr(),AG_PTR(BoundNor_g),stm);
     }
-    cudaDeviceSynchronize();
+    if(NStmFloatings)cudaDeviceSynchronize();
 
     //-Update floating data (FtObjs[]) for next step.
     if(!predictor){

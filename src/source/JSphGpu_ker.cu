@@ -1788,6 +1788,7 @@ __global__ void KerLoadPosRef(unsigned pscount,unsigned casenfixed,unsigned np
       const double rz=posz[p];
       posref[cp]=make_double3(rxy.x,rxy.y,rz);
     }
+    else posref[cp]=make_double3(DBL_MAX,DBL_MAX,DBL_MAX);
   }
 }
 
@@ -2253,6 +2254,7 @@ void FtPartsUpdate(bool periactive,double dt,bool updatenormals
     else          KerFtPartsUpdate<false> <<<sgrid,bsize,0,stm>>> (dt,updatenormals,np,fpini,fradius,mat,Float3(fto_vellin),Float3(fto_velang),Double3(fto_center),ridpmot,posxy,posz,velrho,dcell,code,boundnor); 
   }
 }
+
 
 
 //##############################################################################

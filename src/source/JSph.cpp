@@ -2322,6 +2322,9 @@ void JSph::InitRun(unsigned np,const unsigned* idp,const tdouble3* pos){
     Log->Print(lines);
   } //<vs_outpaarts_end>
 
+  //-Adjust variables of floating body particles for restart.
+  if(CaseNfloat && PartBegin)InitFloatingsRestart();
+
   Part=PartIni; Nstep=0; PartNstep=0; PartOut=0;
   TimeStep=TimeStepIni; TimeStepM1=TimeStep;
   TimePartNext=(SvAllSteps? TimeStep: OutputTime->GetNextTime(TimeStep));
@@ -2331,26 +2334,23 @@ void JSph::InitRun(unsigned np,const unsigned* idp,const tdouble3* pos){
 /// Adjust variables of floating body particles.
 /// Ajusta variables de particulas floating body.
 //==============================================================================
-void JSph::InitFloatings(){
-  if(PartBegin){
-    JPartFloatInfoBi4Load ftfile;
-    const string filedata=JPartFloatInfoBi4Load::GetFileNameDef(true,PartBeginDir);
-    ftfile.LoadFile(filedata);
-    //-Checks if the constant data match.
-    for(unsigned cf=0;cf<FtCount;cf++){
-      const StFloatingData& ft=FtObjs[cf];
-      ftfile.CheckHeadData(cf,ft.mkbound,ft.begin,ft.count,ft.mass,ft.massp);
-    }
-    //-Load PART data. | Carga datos de PART.
-    const JPartFloatInfoBi4Data* ftdata=ftfile.GetFtData();
-    const unsigned idx=ftdata->GetIdxPart(PartBegin,true);
-    for(unsigned cf=0;cf<FtCount;cf++){
-      FtObjs[cf].center=ftdata->GetPartCenter(idx,cf);
-      FtObjs[cf].fvel  =ftdata->GetPartVelLin(idx,cf);
-      FtObjs[cf].fomega=ftdata->GetPartVelAng(idx,cf);
-      FtObjs[cf].radius=ftdata->GetHeadRadius(cf);
-    }
-    //DemDtForce=0;
+void JSph::InitFloatingsRestart(){
+  JPartFloatInfoBi4Load ftfile;
+  const string filedata=JPartFloatInfoBi4Load::GetFileNameDef(true,PartBeginDir);
+  ftfile.LoadFile(filedata);
+  //-Checks if the constant data match.
+  for(unsigned cf=0;cf<FtCount;cf++){
+    const StFloatingData& ft=FtObjs[cf];
+    ftfile.CheckHeadData(cf,ft.mkbound,ft.begin,ft.count,ft.mass,ft.massp);
+  }
+  //-Load PART data. | Carga datos de PART.
+  const JPartFloatInfoBi4Data* ftdata=ftfile.GetFtData();
+  const unsigned idx=ftdata->GetIdxPart(PartBegin,true);
+  for(unsigned cf=0;cf<FtCount;cf++){
+    FtObjs[cf].center=ftdata->GetPartCenter(idx,cf);
+    FtObjs[cf].fvel  =ftdata->GetPartVelLin(idx,cf);
+    FtObjs[cf].fomega=ftdata->GetPartVelAng(idx,cf);
+    FtObjs[cf].radius=ftdata->GetHeadRadius(cf);
   }
 }
 
@@ -2733,7 +2733,7 @@ void JSph::ConfigSaveData(unsigned piece,unsigned pieces,std::string div
   if(SvData&SDAT_Binx && (CaseNmoving || CaseNfloat)){
     const word mkboundfirst=MkInfo->GetMkBoundFirst();
     const unsigned countmk=MkInfo->CountBlockType(TpPartMoving)+MkInfo->CountBlockType(TpPartFloating);
-    PartMotionSave=new JDsPartMotionSave(Cpu,AppName,DirDataOut,CaseNfixed,CaseNmoving,CaseNfloat,mkboundfirst,countmk,TimePart,TimePartExtra);
+    PartMotionSave=new JDsPartMotionSave(Cpu||Mgpu,AppName,DirDataOut,CaseNfixed,CaseNmoving,CaseNfloat,mkboundfirst,countmk,TimePart,TimePartExtra);
     for(unsigned cmk=0;cmk<MkInfo->Size();cmk++){
       const JSphMkBlock* pmk=MkInfo->Mkblock(cmk);
       if(pmk->Type==TpPartMoving  )PartMotionSave->ConfigAddMovingMk  (pmk->MkType,pmk->Begin,pmk->Count);

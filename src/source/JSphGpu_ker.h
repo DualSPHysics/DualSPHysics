@@ -278,6 +278,7 @@ void FtPartsUpdate(bool periactive,double dt,bool updatenormals
   ,const unsigned* ridpmot,double2* posxy,double* posz,float4* velrho
   ,unsigned* dcell,typecode* code,float3* boundnor,cudaStream_t stm=NULL);
 
+
 //-Kernels for periodic conditions.
 void PeriodicIgnore(unsigned n,typecode* code);
 unsigned PeriodicMakeList(unsigned n,unsigned pini,bool stable,unsigned nmax
