@@ -108,7 +108,11 @@ void JLog2::Init(std::string fname,bool mpirun,int mpirank,int mpilaunch){
 /// Visualises and/or stores information of the execution.
 //==============================================================================
 void JLog2::Print(const std::string& tx,TpMode_Out mode,bool flush){
-  if(Parent){ Parent->Print(ParentPrefix+tx,mode,flush); return; }
+  if(Parent){ 
+    if(!tx.empty() && tx[0]=='\n')Parent->Print(string("\n")+ParentPrefix+tx.substr(1),mode,flush);
+    else Parent->Print(ParentPrefix+tx,mode,flush);
+    return; 
+  }
   if(mode==Out_Default)mode=ModeOutDef;
   if(mode&Out_Screen){
     if(MpiRun){

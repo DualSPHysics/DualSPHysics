@@ -1340,8 +1340,8 @@ void JSph::LoadCodeParticles(unsigned np,const unsigned* idp,typecode* code)cons
 //==============================================================================
 /// Load normals for boundary particles (fixed and moving).
 //==============================================================================
-void JSph::LoadBoundNormals(unsigned np,unsigned npb,const unsigned* idp
-  ,const typecode* code,tfloat3* boundnor)
+void JSph::LoadBoundNormals(unsigned np,const unsigned* idp,const typecode* code
+  ,tfloat3* boundnor)
 {
   memset(boundnor,0,sizeof(tfloat3)*np);
   if(!PartBegin){

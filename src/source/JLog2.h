@@ -99,7 +99,7 @@ public:
   bool IsOk()const{ return(Ok); }
   int GetMpiRank()const{ return(MpiRun? MpiRank: -1); }
   std::string GetParentPrefix()const{ return(ParentPrefix); }
-
+  JLog2* GetParent(){ return(Parent); }
   //std::string GetDirOut()const{ return(DirOut); }
 
   void Printf(const char* format,...);

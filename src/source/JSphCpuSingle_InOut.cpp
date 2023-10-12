@@ -109,6 +109,7 @@ void JSphCpuSingle::InOutInit(double timestepini){
 
   //-Updates new particle values for Laminar+SPS.
   if(SpsTau_c)SpsTau_c->MemsetOffset(Np,0,newnp);
+  if(BoundNor_c)BoundNor_c->MemsetOffset(Np,0,newnp);
   if(DBG_INOUT_PARTINIT)DgSaveVtkParticlesCpu("CfgInOut_InletIni.vtk",0
     ,Np,Np+newnp,Pos_c->cptr(),Code_c->cptr(),Idp_c->cptr(),Velrho_c->cptr());
 

@@ -126,6 +126,7 @@ void JSphGpuSingle::InOutInit(double timestepini){
 
   //-Updates new particle values for Laminar+SPS.
   if(SpsTau_g)SpsTau_g->CuMemsetOffset(Np,0,newnp);
+  if(BoundNor_g)BoundNor_g->CuMemsetOffset(Np,0,newnp);
   if(DBG_INOUT_PARTINIT)DgSaveVtkParticlesGpu("CfgInOut_InletIni.vtk",0,Np,Np+newnp
     ,Posxy_g->cptr(),Posz_g->cptr(),Code_g->cptr(),Idp_g->cptr(),Velrho_g->cptr());
 

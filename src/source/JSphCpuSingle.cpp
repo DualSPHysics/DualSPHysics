@@ -138,7 +138,7 @@ void JSphCpuSingle::ConfigDomain(){
   LoadCodeParticles(Np,Idp_c->cptr(),Code_c->ptr());
 
   //-Load normals for boundary particles (fixed and moving).
-  if(UseNormals)LoadBoundNormals(Np,Npb,Idp_c->cptr(),Code_c->cptr(),BoundNor_c->ptr());
+  if(UseNormals)LoadBoundNormals(Np,Idp_c->cptr(),Code_c->cptr(),BoundNor_c->ptr());
 
   //-Creates PartsInit object with initial particle data for automatic configurations.
   CreatePartsInit(Np,Pos_c->cptr(),Code_c->cptr());

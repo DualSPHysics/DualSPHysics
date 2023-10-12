@@ -387,7 +387,8 @@ size_t Malloc(double3** ptr,unsigned count){
 //==============================================================================
 size_t HostAlloc(byte** ptr,unsigned count){
   const size_t size=sizeof(byte)*count;
-  cudaHostAlloc((void**)ptr,size,cudaHostAllocDefault);
+  //cudaHostAlloc((void**)ptr,size,cudaHostAllocPortable);
+  cudaMallocHost((void**)ptr,size);
   return(size);
 }
 
@@ -396,7 +397,8 @@ size_t HostAlloc(byte** ptr,unsigned count){
 //==============================================================================
 size_t HostAlloc(word** ptr,unsigned count){
   const size_t size=sizeof(word)*count;
-  cudaHostAlloc((void**)ptr,size,cudaHostAllocDefault);
+  //cudaHostAlloc((void**)ptr,size,cudaHostAllocPortable);
+  cudaMallocHost((void**)ptr,size);
   return(size);
 }
 
@@ -405,7 +407,8 @@ size_t HostAlloc(word** ptr,unsigned count){
 //==============================================================================
 size_t HostAlloc(unsigned** ptr,unsigned count){
   const size_t size=sizeof(unsigned)*count;
-  cudaHostAlloc((void**)ptr,size,cudaHostAllocDefault);
+  //cudaHostAlloc((void**)ptr,size,cudaHostAllocDefault_cudaHostAllocPortable);
+  cudaMallocHost((void**)ptr,size);
   return(size);
 }
 
@@ -414,7 +417,8 @@ size_t HostAlloc(unsigned** ptr,unsigned count){
 //==============================================================================
 size_t HostAlloc(int** ptr,unsigned count){
   const size_t size=sizeof(int)*count;
-  cudaHostAlloc((void**)ptr,size,cudaHostAllocDefault);
+  //cudaHostAlloc((void**)ptr,size,cudaHostAllocPortable);
+  cudaMallocHost((void**)ptr,size);
   return(size);
 }
 
@@ -423,7 +427,8 @@ size_t HostAlloc(int** ptr,unsigned count){
 //==============================================================================
 size_t HostAlloc(int2** ptr,unsigned count){
   const size_t size=sizeof(int2)*count;
-  cudaHostAlloc((void**)ptr,size,cudaHostAllocDefault);
+  //cudaHostAlloc((void**)ptr,size,cudaHostAllocPortable);
+  cudaMallocHost((void**)ptr,size);
   return(size);
 }
 
@@ -432,7 +437,8 @@ size_t HostAlloc(int2** ptr,unsigned count){
 //==============================================================================
 size_t HostAlloc(float** ptr,unsigned count){
   const size_t size=sizeof(float)*count; 
-  cudaHostAlloc((void**)ptr,size,cudaHostAllocDefault);
+  //cudaHostAlloc((void**)ptr,size,cudaHostAllocPortable);
+  cudaMallocHost((void**)ptr,size);
   return(size);
 }
 
@@ -441,7 +447,8 @@ size_t HostAlloc(float** ptr,unsigned count){
 //==============================================================================
 size_t HostAlloc(tfloat4** ptr,unsigned count){
   const size_t size=sizeof(tfloat4)*count;
-  cudaHostAlloc((void**)ptr,size,cudaHostAllocDefault);
+  //cudaHostAlloc((void**)ptr,size,cudaHostAllocPortable);
+  cudaMallocHost((void**)ptr,size);
   return(size);
 }
 
@@ -450,7 +457,8 @@ size_t HostAlloc(tfloat4** ptr,unsigned count){
 //==============================================================================
 size_t HostAlloc(double** ptr,unsigned count){
   const size_t size=sizeof(double)*count;
-  cudaHostAlloc((void**)ptr,size,cudaHostAllocDefault);
+  //cudaHostAlloc((void**)ptr,size,cudaHostAllocPortable);
+  cudaMallocHost((void**)ptr,size);
   return(size);
 }
 
@@ -459,7 +467,8 @@ size_t HostAlloc(double** ptr,unsigned count){
 //==============================================================================
 size_t HostAlloc(tdouble2** ptr,unsigned count){
   const size_t size=sizeof(tdouble2)*count;
-  cudaHostAlloc((void**)ptr,size,cudaHostAllocDefault);
+  //cudaHostAlloc((void**)ptr,size,cudaHostAllocPortable);
+  cudaMallocHost((void**)ptr,size);
   return(size);
 }
 

@@ -329,6 +329,12 @@ inline bool operator ==(const tdouble6& a,const tdouble6& b){ return(a.getlo()==
 inline bool operator !=(const tdouble6& a,const tdouble6& b){ return(a.getlo()!=b.getlo() || a.gethi()!=b.gethi()); }
 
 
+///Converts \ref tdouble6 to \ref tfloat6.
+inline tfloat6 ToTFloat6(const tdouble6& v){ return(TFloat6(ToTFloat3(v.getlo()),ToTFloat3(v.gethi()))); }
+///Converts \ref tfloat6 to \ref tdouble6.
+inline tdouble6 ToTDouble6(const tfloat6& v){ return(TDouble6(ToTDouble3(v.getlo()),ToTDouble3(v.gethi()))); }
+
+
 ///Structure of 4 variables of type word.
 typedef struct{
   word x,y,z,w;

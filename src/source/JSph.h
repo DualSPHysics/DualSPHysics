@@ -439,8 +439,8 @@ protected:
   void VisuDemCoefficients()const;
 
   void LoadCodeParticles(unsigned np,const unsigned* idp,typecode* code)const;
-  void LoadBoundNormals(unsigned np,unsigned npb,const unsigned* idp
-    ,const typecode* code,tfloat3* boundnor);
+  void LoadBoundNormals(unsigned np,const unsigned* idp,const typecode* code
+    ,tfloat3* boundnor);
   void ConfigBoundNormals(unsigned np,unsigned npb,const tdouble3* pos
     ,const unsigned* idp,tfloat3* boundnor);
 

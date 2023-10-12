@@ -174,7 +174,7 @@ void JSphGpuSingle::ConfigDomain(){
 
   //-Load normals for boundary particles (fixed and moving).
   acfloat3 boundnorc("boundnor",Arrays_Cpu,UseNormals);
-  if(UseNormals)LoadBoundNormals(Np,Npb,Idp_c->cptr(),Code_c->cptr(),boundnorc.ptr());
+  if(UseNormals)LoadBoundNormals(Np,Idp_c->cptr(),Code_c->cptr(),boundnorc.ptr());
 
   //-Creates PartsInit object with initial particle data for automatic configurations.
   CreatePartsInit(Np,AuxPos_c->cptr(),Code_c->cptr());
