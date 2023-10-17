@@ -28,6 +28,7 @@
 //# - La funcion CreateOBJsByMk() devuelve en numero de faces creadas. (v5.0.158 / 18-10-2020)
 //# - Nueva funcion SetShapeWireMode(). (14-10-2021)
 //# - Minor coding style changes. (28-08-2023)
+//# - Nuevas funciones AddShapeCircle(). (16-10-2023)
 //#############################################################################
 
 /// \file JVtkLib.h \brief Declares the class \ref JVtkLib.
@@ -163,6 +164,11 @@ public:
   /// Adds shape box (4pt front + 4pt back).
   void AddShapeBoxFront(const tdouble3& p,const tdouble3& px,const tdouble3& pxz,const tdouble3& pz
     ,const tdouble3& py,const tdouble3& pyx,const tdouble3& pyxz,const tdouble3& pyz,int value);
+
+  /// Adds shape circle.
+  void AddShapeCircle(const tfloat3&  p,float radius,const tfloat3&  vec,int nside,int value);
+  /// Adds shape circle.
+  void AddShapeCircle(const tdouble3& p,float radius,const tdouble3& vec,int nside,int value);
 
   /// Adds shape sphere using quads.
   void AddShapeSphere(const tfloat3&  p,float  radius,int nside,int value);

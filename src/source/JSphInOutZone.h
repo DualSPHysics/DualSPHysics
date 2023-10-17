@@ -93,6 +93,7 @@ private:
   tfloat3 BoxLimitMin;
   tfloat3 BoxLimitMax;
 
+  std::string XmlShape;    ///<Shape definition in XML (PARTICLES, LINE, BOX, CIRCLE).
   tdouble3 Direction;      ///<Inflow direction.
   tdouble3 PtPlane;        ///<Position to create inlet plane.
   tplane3f Plane;          ///<Inlet plane.
@@ -101,6 +102,8 @@ private:
 
   //-Configuration of velocity, zsurf and density.
   TpInVelMode VelMode;         ///<Inflow velocity mode (fixed or variable).
+  TpInVelProfile VelProfile;   ///<Inflow velocity profile for fixed or variable modes (uniform, linear, parabolic or special modes).
+
   JSphInOutVel* InOutVel;      ///<Manages Velocity configuration.
 
   TpInZsurfMode ZsurfMode;     ///<Inflow zsurf mode (fixed, variable...).
@@ -158,6 +161,9 @@ public:
     return(RhopMode==InRhop_Constant || RhopMode==InRhop_Hydrostatic
     || VelMode==InVelM_Fixed || VelMode==InVelM_Variable); 
   }
+
+  bool Use_SpecialProfile()const{ return(VelProfile==InVelP_JetCircle); }
+
   bool Use_ExtrapolatedData()const{ 
     return(RhopMode==InRhop_Extrapolated || VelMode==InVelM_Extrapolated); 
   }

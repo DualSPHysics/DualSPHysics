@@ -65,6 +65,8 @@ JSphInOutPoints::~JSphInOutPoints(){
 //==============================================================================
 void JSphInOutPoints::Reset(){
   ConfigInfo.clear();
+  XmlShape="";
+  CircleRadius=0;
   Direction=TDouble3(0);
   ResetPoints();
   for(unsigned c=0;c<10;c++)PtDom[c]=TDouble3(DBL_MAX);
@@ -100,15 +102,15 @@ void JSphInOutPoints::ResizeMemory(unsigned newnpt){
 /// Returns matrix for rotation in 2D.
 //==============================================================================
 JMatrix4d JSphInOutPoints::ReadRotate2D(const JXml* sxml,TiXmlElement* ele
-  ,const tdouble3& pt)
+  ,const tdouble3& pt,std::string& rotationinfo)
 {
   double rotate=sxml->ReadElementDouble(ele,"rotate","angle",true);
   string angunits=fun::StrLower(sxml->ReadElementStr(ele,"rotate","anglesunits"));
   if(angunits=="radians")rotate=rotate*TODEG;
   else if(angunits!="degrees")sxml->ErrReadElement(ele,"rotate",false,"The value anglesunits must be \"degrees\" or \"radians\"."); 
   const JMatrix4d m=JMatrix4d::MatrixRot(rotate,TDouble3(pt.x,0,pt.z),TDouble3(pt.x,1,pt.z));
-  //-Adds config information about rotation.
-  ConfigInfo.push_back(fun::PrintStr("  rotate: angle:%g",rotate));
+  //-Return config information about rotation.
+  rotationinfo=fun::PrintStr("  rotated: angle:%g",rotate);
   return(m);
 }
 
@@ -217,7 +219,9 @@ void JSphInOutPoints::Create2d_Line(const JXml* sxml,TiXmlElement* ele){
   //-Applies rotation to inlet definition.
   double rotate=sxml->ReadElementDouble(ele,"rotate","angle",true);
   if(rotate){
-    const JMatrix4d m=ReadRotate2D(sxml,ele,TDouble3(px1,0,pz1));
+    string rotinfo;
+    const JMatrix4d m=ReadRotate2D(sxml,ele,TDouble3(px1,0,pz1),rotinfo);
+    ConfigInfo.push_back(rotinfo);
     tdouble3 pt1=TDouble3(px1,Simulate2DPosY,pz1);
     tdouble3 pt2=TDouble3(px2,Simulate2DPosY,pz2);
     tdouble3 pdir=pt1+dir;
@@ -265,7 +269,9 @@ void JSphInOutPoints::Create2d_Line(const JXml* sxml,TiXmlElement* ele){
 //==============================================================================
 /// Returns matrix for rotation in 3D.
 //==============================================================================
-JMatrix4d JSphInOutPoints::ReadRotate3D(const JXml* sxml,TiXmlElement* ele){
+JMatrix4d JSphInOutPoints::ReadRotate3D(const JXml* sxml,TiXmlElement* ele
+  ,std::string& rotationinfo)
+{
   double rotate=sxml->ReadElementDouble(ele,"rotateaxis","angle",true);
   string angunits=fun::StrLower(sxml->ReadElementStr(ele,"rotateaxis","anglesunits"));
   if(angunits=="radians")rotate=rotate*TODEG;
@@ -274,8 +280,8 @@ JMatrix4d JSphInOutPoints::ReadRotate3D(const JXml* sxml,TiXmlElement* ele){
   tdouble3 pt1=sxml->ReadElementDouble3(rot,"point1");
   tdouble3 pt2=sxml->ReadElementDouble3(rot,"point2");
   const JMatrix4d m=JMatrix4d::MatrixRot(rotate,pt1,pt2);
-  //-Adds config information about rotation.
-  ConfigInfo.push_back(fun::PrintStr("  rotate: angle:%g axis:%s",rotate,fun::Double3gRangeStr(pt1,pt2).c_str()));
+  //-Return config information about rotation.
+  rotationinfo=fun::PrintStr("  rotated: angle:%g axis:%s",rotate,fun::Double3gRangeStr(pt1,pt2).c_str());
   return(m);
 }
 
@@ -299,7 +305,9 @@ void JSphInOutPoints::Create3d_Box(const JXml* sxml,TiXmlElement* ele){
   //-Applies rotation to inlet definition.
   double rotate=sxml->ReadElementDouble(ele,"rotateaxis","angle",true);
   if(rotate){
-    const JMatrix4d m=ReadRotate3D(sxml,ele);
+    string rotinfo;
+    const JMatrix4d m=ReadRotate3D(sxml,ele,rotinfo);
+    ConfigInfo.push_back(rotinfo);
     tdouble3 pdir=pt0+dir;
     pt0=m.MulPoint(pt0);
     ptx=m.MulPoint(ptx);
@@ -373,6 +381,7 @@ void JSphInOutPoints::Create3d_Circle(const JXml* sxml,TiXmlElement* ele){
   //-Load basic data.
   const tdouble3 pt0=sxml->ReadElementDouble3(ele,"point");
   const double radius=sxml->ReadElementDouble(ele,"radius","v");
+  CircleRadius=radius;
   tdouble3 pcen=pt0;
   //-Load direction.
   tdouble3 dir=TDouble3(0);
@@ -380,8 +389,9 @@ void JSphInOutPoints::Create3d_Circle(const JXml* sxml,TiXmlElement* ele){
   //-Applies rotation to inlet direction.
   JMatrix4d m;
   double rotate=sxml->ReadElementDouble(ele,"rotateaxis","angle",true);
+  string rotinfo;
   if(rotate){
-    m=ReadRotate3D(sxml,ele);
+    m=ReadRotate3D(sxml,ele,rotinfo);
     tdouble3 pdir=pt0+dir;
     pdir=m.MulPoint(pdir);
     pcen=m.MulPoint(pt0);
@@ -389,6 +399,8 @@ void JSphInOutPoints::Create3d_Circle(const JXml* sxml,TiXmlElement* ele){
   }
   //-Adds config information.
   ConfigInfo.push_back(fun::PrintStr("Circle: center:(%s) radius:%g",fun::Double3gStr(pcen).c_str(),radius));
+  if(rotate)ConfigInfo.push_back(rotinfo);
+
   //-Updates Direction.
   if(dir!=TDouble3(0)){
     dir=fgeo::VecUnitary(dir);
@@ -459,7 +471,7 @@ void JSphInOutPoints::CreatePoints(const JXml* sxml,TiXmlElement* lis
   TiXmlElement* ele=lis->FirstChildElement();
   while(ele){
     string cmd=ele->Value();
-    if(cmd.length()&&cmd[0]!='_'){
+    if(cmd.length() && cmd[0]!='_'){
       if(Simulate2D){//-Loads inflow definition for 2D.
         if(cmd=="particles")Create2d3d_Particles(sxml,ele,partsdata);
         else if(cmd=="line")Create2d_Line(sxml,ele);
@@ -471,6 +483,7 @@ void JSphInOutPoints::CreatePoints(const JXml* sxml,TiXmlElement* lis
         else if(cmd=="circle")Create3d_Circle(sxml,ele);
         else sxml->ErrReadElement(ele,cmd,false);
       }
+      XmlShape=fun::StrUpper(cmd);
     }
     ele=ele->NextSiblingElement();
   }

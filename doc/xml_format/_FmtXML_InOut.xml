@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<!-- *** DualSPHysics v5.3.277 (08-08-2023) *** -->
+<!-- *** DualSPHysics v5.3.293 (17-10-2023) *** -->
 <!-- *** class: JSphInOut *** -->
 <!------------------------------------------------------------------------------->
 <!------------------------------------------------------------------------------->
@@ -234,6 +234,10 @@
 <!-- Fixed Parabolic velocity -->
 	<imposevelocity mode="0" comment="Imposed velocity 0:fixed value, 1:variable value, 2:Extrapolated velocity, 3:Interpolated velocity (default=0)">
 		<velocity3 v="0" v2="0.608" v3="3" z="4" z2="4.5" z3="5" comment="Parabolic inlet velocity" units_comment="m/s" />
+	</imposevelocity>
+<!-- Fixed velocity for jet circle (only for <zone3d><circle>) -->
+	<imposevelocity mode="0" comment="Imposed velocity 0:fixed value, 1:variable value, 2:Extrapolated velocity, 3:Interpolated velocity (default=0)">
+        <jetcircle v="2" distance="0.010" radius="0.02" comment="Velocity for circular jet (velocity, distance and opening radius)" units_comment="m/s" />
 	</imposevelocity>
 <!-- Variable Uniform velocity using values in XML file-->
 	<imposevelocity mode="1" comment="Imposed velocity 0:fixed value, 1:variable value, 2:Extrapolated velocity, 3:Interpolated velocity (default=0)">

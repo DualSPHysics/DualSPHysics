@@ -59,7 +59,7 @@ protected:
   const tdouble3 ZonePosMax;  ///<Maximum position of inlet points.
 
   TpInVelMode VelMode;        ///<Inflow velocity mode (fixed, variable, extrapolated or interpolated).
-  TpInVelProfile VelProfile;  ///<Inflow velocity profile (uniform, linear or parabolic).
+  TpInVelProfile VelProfile;  ///<Inflow velocity profile for fixed or variable modes (uniform, linear, parabolic or special modes).
   TpInBehaviour VelBehaviour; ///<Behaviour of inlet/outlet according to the velocity.
 
   float VelMin;        ///<Minimum input velocity or -FLT_MAX (when it is unknown).
@@ -77,6 +77,11 @@ protected:
   float InputVelPosz;         ///<1st input velocity Z (used when VelMode==InVelM_Fixed).
   float InputVelPosz2;        ///<2nd input velocity Z (used when VelMode==InVelM_Fixed).
   float InputVelPosz3;        ///<3rd input velocity Z (used when VelMode==InVelM_Fixed).
+
+  //-Extra data for Jet circle velocity (VelProfile==InVelP_JetCircle).
+  double CircleRadius;       ///<Inlet radius.
+  float InputJetRadius;      ///<Opening radius.
+  float InputJetDistance;    ///<Opening distance.
 
   JLinearValue* InputTimeVel; ///<Input velocity in time (for VelMode==InVelM_Variable).
   unsigned TimeVelIdx0;
@@ -110,6 +115,7 @@ public:
   void Reset();
   TpInVelMode ReadXml(const JXml* sxml,TiXmlElement* lis,const std::string& dirdatafile
     ,JGaugeSystem* gaugesystem,double maprealposminy);
+  void ConfigCircleRadius(double radius);
 
   bool GetFlowActive()const{ return(FlowActive); }
   void ConfigFlowToVel(unsigned initnptok);
@@ -138,6 +144,14 @@ public:
     ,const unsigned* idpg,float4* velrhopg);
 #endif
 
+  void UpdateSpecialVelCpu(double timestep,unsigned nplist,const int* plist
+    ,const tdouble3* pos,const typecode* code,const unsigned* idp,tfloat4* velrhop);
+
+#ifdef _WITHGPU
+  void UpdateSpecialVelGpu(double timestep,unsigned nplist,const int* plist
+    ,const double2* posxyg,const double* poszg,const typecode* codeg
+    ,const unsigned* idpg,float4* velrhopg);
+#endif
 
   void SaveAwasVelCsv();
   void SaveVtkVelGrid();

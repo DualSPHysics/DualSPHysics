@@ -104,6 +104,7 @@ private:
   bool UseRefillAdvanced;   ///<Indicates if some inlet configuration uses advanced refilling method.
   bool UseZsurfNonUniform;  ///<Indicates if some inlet configuration uses Non-uniform zsurf. 
   bool UseAnalyticalData;   ///<Indicates if some inlet configuration uses analytical solution for density (Constant or Hydrostatic) or velocity (Fixed or Variable).
+  bool UseSpecialProfile;   ///<Indicates if some inlet configuration uses an special velocity profile included in analytical solution for velocity.
   bool UseExtrapolatedData; ///<Indicates if some inlet configuration uses extrapolated data for density or velocity.
   bool UseInterpolatedVel;  ///<Indicates if some inlet configuration uses interpolated velocity.
 
@@ -206,6 +207,9 @@ public:
     ,const tdouble3* pos,const typecode* code,const unsigned* idp,const float* zsurfpart
     ,tfloat4* velrhop);
 
+  void SetSpecialVelCpu(float timestep,unsigned inoutcount,const int* inoutpart
+    ,const tdouble3* pos,const typecode* code,const unsigned* idp,tfloat4* velrhop);
+
   void InterpolateVelCpu(float timestep,unsigned inoutcount,const int* inoutpart
     ,const tdouble3* pos,const typecode* code,const unsigned* idp,tfloat4* velrhop);
 
@@ -236,6 +240,10 @@ public:
   void SetAnalyticalDataGpu(float timestep,unsigned inoutcount,const int* inoutpartg
     ,const double2* posxyg,const double* poszg,const typecode* codeg
     ,const unsigned* idpg,const float* zsurfpart,float4* velrhopg);
+
+  void SetSpecialVelGpu(float timestep,unsigned inoutcount,const int* inoutpartg
+    ,const double2* posxyg,const double* poszg,const typecode* codeg
+    ,const unsigned* idpg,float4* velrhopg);
 
   void InterpolateVelGpu(float timestep,unsigned inoutcount,const int* inoutpartg
     ,const double2* posxyg,const double* poszg,const typecode* codeg
@@ -271,6 +279,7 @@ public:
   bool Use_RefillAdvanced()const{ return(UseRefillAdvanced); }
   bool Use_ZsurfNonUniform()const{ return(UseZsurfNonUniform); }
   bool Use_AnalyticalData()const{ return(UseAnalyticalData); }
+  bool Use_SpecialProfile()const{ return(UseSpecialProfile); }
   bool Use_ExtrapolatedData()const{ return(UseExtrapolatedData); }
   bool Use_InterpolatedVel()const{ return(UseInterpolatedVel); }
   bool Use_AwasVel()const;

@@ -281,7 +281,12 @@ void JSphGpuSingle::InOutUpdatePartsData(double timestepnew){
     InOut->SetAnalyticalDataGpu(float(timestepnew),inoutcount,inoutpartg.cptr()
       ,Posxy_g->cptr(),Posz_g->cptr(),Code_g->cptr()
       ,Idp_g->cptr(),zsurfpartg.cptr(),Velrho_g->ptr());
-    //-Free array.
+    
+    //-Updates velocity of inout particles when it uses an special velocity profile.
+    if(InOut->Use_SpecialProfile()){
+      InOut->SetSpecialVelGpu(float(timestepnew),inoutcount,inoutpartg.cptr()
+        ,Posxy_g->cptr(),Posz_g->cptr(),Code_g->cptr(),Idp_g->cptr(),Velrho_g->ptr());
+    }
   }
 
   //-Calculates extrapolated velocity and/or rhop for inlet/outlet particles from fluid domain.

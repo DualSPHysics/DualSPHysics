@@ -1423,6 +1423,68 @@ void Interaction_InOutExtrap(byte doublemode,bool simulate2d,TpKernel tkernel
   }
 }
 
+//------------------------------------------------------------------------------
+/// Updates velocity of inout fluid according to circle jet velocity profile.
+//------------------------------------------------------------------------------
+__global__ void KerInOutUpdateJetVel(unsigned izone,float4 plane,float3 ptplane
+  ,float3 opencenter,float radiusfr,float dp
+  ,float3 direction,float inputvel,unsigned np,const int* plist
+  ,const typecode* code,const double2* posxy,const double* posz,float4* velrhop)
+{
+  const unsigned cp=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
+  if(cp<np){
+    const unsigned p=plist[cp];
+    if(izone==CODE_GetIzoneFluidInout(code[p])){
+      const double2 psxy=posxy[p];
+      const float psx=float(psxy.x);
+      const float psy=float(psxy.y);
+      const float psz=float(posz[p]);
+      const float pladis=cugeo::PlaneDistSign(plane,psx,psy,psz);
+      float4 rvel=velrhop[p];
+      if(pladis<=-dp){
+        rvel.x=direction.x*inputvel;
+        rvel.y=direction.y*inputvel;
+        rvel.z=direction.z*inputvel;
+      }
+      else{
+        const float pscenx=ptplane.x+(direction.x*pladis);
+        const float psceny=ptplane.y+(direction.y*pladis);
+        const float pscenz=ptplane.z+(direction.z*pladis);
+        const float vcenx=psx-pscenx;
+        const float vceny=psy-psceny;
+        const float vcenz=psz-pscenz;
+        const float ps2x=opencenter.x+vcenx*radiusfr;
+        const float ps2y=opencenter.y+vceny*radiusfr;
+        const float ps2z=opencenter.z+vcenz*radiusfr;
+        const float3 v=cugeo::VecModule(ps2x-psx,ps2y-psy,ps2z-psz,inputvel);
+        rvel.x=v.x;
+        rvel.y=v.y;
+        rvel.z=v.z;
+      }
+      velrhop[p]=rvel;
+    }
+  }
+}
+
+//==============================================================================
+/// Updates velocity of inout fluid according to circle jet velocity profile.
+//==============================================================================
+void InOutUpdateJetVel(unsigned izone,const tplane3d& plane
+  ,const tdouble3& ptplane,const tdouble3& opencenter,double radiusfr,double dp
+  ,const tdouble3& direction,float inputvel,unsigned np,const int* plist
+  ,const typecode* code,const double2* posxy,const double* posz,float4* velrhop)
+{
+  if(np){
+    const float4 planef=Float4(ToTFloat4(TDouble4(plane.a,plane.b,plane.c,plane.d)));
+    const float3 ptplanef=Float3(ToTFloat3(ptplane));
+    const float3 opencenterf=Float3(ToTFloat3(opencenter));
+    const float3 directionf=Float3(ToTFloat3(direction));
+    dim3 sgrid=GetSimpleGridSize(np,SPHBSIZE);
+    KerInOutUpdateJetVel <<<sgrid,SPHBSIZE>>> (izone,planef,ptplanef,opencenterf
+      ,float(radiusfr),float(dp),directionf,inputvel,np,plist,code,posxy,posz,velrhop);
+  }
+}
+
 
 //##############################################################################
 //# Kernels to interpolate velocity (JSphInOutGridDataTime).

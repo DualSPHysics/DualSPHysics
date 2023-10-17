@@ -87,6 +87,8 @@ public:
     ,const tfloat3&  py,const tfloat3&  pyx,const tfloat3&  pyxz,const tfloat3&  pyz,int value){}
   void AddShapeBoxFront(const tdouble3& p,const tdouble3& px,const tdouble3& pxz,const tdouble3& pz
     ,const tdouble3& py,const tdouble3& pyx,const tdouble3& pyxz,const tdouble3& pyz,int value){}
+  void AddShapeCircle(const tfloat3&  p,float radius,const tfloat3&  vec,int nside,int value){}
+  void AddShapeCircle(const tdouble3& p,float radius,const tdouble3& vec,int nside,int value){}
   void AddShapeSphere(const tfloat3&  p,float  radius,int nside,int value){}
   void AddShapeSphere(const tdouble3& p,double radius,int nside,int value){}
   void AddShapeCylinder(const tfloat3&  p1,const tfloat3&  p2,float  radius,int nside,int value,unsigned maskfaceshide=0){}

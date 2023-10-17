@@ -86,11 +86,13 @@ void JSphInOutZone::Reset(){
   for(unsigned c=0;c<PTDOMSIZE;c++)PtDom[c]=TDouble3(DBL_MAX);
   BoxLimitMin=BoxLimitMax=TFloat3(FLT_MAX);
 
+  XmlShape="";
   Direction=PtPlane=TDouble3(0);
   Plane=TPlane3f(0);
   NptInit=NpartInit=0;
 
   VelMode=InVelM_Fixed;
+  VelProfile=InVelP_Uniform;
   delete InOutVel; InOutVel=NULL;
 
   ZsurfMode=InZsurf_Undefined;
@@ -227,6 +229,7 @@ void JSphInOutZone::ReadXml(const JXml* sxml,TiXmlElement* ele
   LoadDomain();
 
   //-Obtains information inlet/outlet points.
+  XmlShape=Points->GetXmlShape();
   Direction=Points->GetDirection();
   PtPlane=PtDom[8];
   if(PtPlane==TDouble3(DBL_MAX))Run_Exceptioon("Reference point in inout plane is invalid.");
@@ -236,6 +239,11 @@ void JSphInOutZone::ReadXml(const JXml* sxml,TiXmlElement* ele
   //-Velocity configuration.
   InOutVel=new JSphInOutVel(Cpu,IdZone,CSP,Direction,PtPlane,Points->GetZonePosMin(),Points->GetZonePosMax());
   VelMode=InOutVel->ReadXml(sxml,ele,dirdatafile,gaugesystem,MapRealPosMin.y);
+  VelProfile=InOutVel->GetVelProfile();
+  if(VelProfile==InVelP_JetCircle){
+    if(XmlShape!="CIRCLE")Run_Exceptioon(fun::PrintStr("Inlet/outlet zone %d: The use JetCircle velocity mode is only supported by Circle shape definition.",IdZone));
+    InOutVel->ConfigCircleRadius(Points->GetCircleRadius());
+  }
 
   //-Z-surface configuration.
   InOutZsurf=new JSphInOutZsurf(Cpu,IdZone,CSP,Direction,Points->GetZonePosMin(),Points->GetZonePosMax());
@@ -266,6 +274,16 @@ void JSphInOutZone::ReadXml(const JXml* sxml,TiXmlElement* ele
   else InOutZsurf->SetInitialPoints(Points->GetCount(),Points->GetPoints(),Points->GetPointsInit());
   NpartInit=Points->CountPointsInit()*Layers;
 
+  //-Check configuration for jet circle velocity.
+  if(VelMode==InVelM_Fixed && VelProfile==InVelP_JetCircle){
+    if(InOutVel->GetInletBehaviour()!=InVelB_Inlet)Run_Exceptioon(
+      fun::PrintStr("Inlet/outlet zone %d: The use JetCircle velocity mode is only supported by Inlet (velocity>0).",IdZone));
+    if(ZsurfMode!=InZsurf_Fixed && ZsurfMode!=InZsurf_Undefined)Run_Exceptioon(
+      fun::PrintStr("Inlet/outlet zone %d: The use JetCircle velocity mode is only supported by fixed or default zsurf configuration.",IdZone));
+    if(RhopMode!=InRhop_Constant)Run_Exceptioon(
+      fun::PrintStr("Inlet/outlet zone %d: The use JetCircle velocity mode is only supported by constant density configuration.",IdZone));
+  }
+
   //-Compute flow velocity factor.
   if(InOutVel->GetFlowActive()){
     if(ZsurfMode!=InZsurf_Fixed && ZsurfMode!=InZsurf_Undefined)
@@ -288,7 +306,8 @@ bool JSphInOutZone::Use_AwasVel()const{
 /// Returns a byte with information about VelMode, VelProfile and RhopMode.
 //==============================================================================
 byte JSphInOutZone::GetConfigZone()const{
-  const TpInVelProfile velprofile=InOutVel->GetVelProfile();
+  TpInVelProfile velprofile=InOutVel->GetVelProfile();
+  if(velprofile==InVelP_JetCircle)velprofile=InVelP_MASK;
   if((velprofile&InVelP_MASK)!=velprofile)Run_Exceptioon("VelProfile value is invalid to code using mask.");
   if((VelMode   &InVelM_MASK)!=VelMode   )Run_Exceptioon("VelMode value is invalid to code using mask.");
   if((RhopMode  &InRhop_MASK)!=RhopMode  )Run_Exceptioon("RhopMode value is invalid to code using mask.");
@@ -298,10 +317,10 @@ byte JSphInOutZone::GetConfigZone()const{
   ret|=byte(RhopMode);
   if(InputCheck)ret|=byte(CheckInput_MASK);
   //-Checks coded configuration.
-  TpInVelProfile vprof =GetConfigVelProfile(ret);
-  TpInVelMode    vmode =GetConfigVelMode(ret);
-  TpInRhopMode   rmode =GetConfigRhopMode(ret);
-  bool         checkf=GetConfigCheckInputDG(ret);
+  TpInVelProfile vprof=GetConfigVelProfile(ret);
+  TpInVelMode    vmode=GetConfigVelMode(ret);
+  TpInRhopMode   rmode=GetConfigRhopMode(ret);
+  bool          checkf=GetConfigCheckInputDG(ret);
   if(vprof!=velprofile || vmode!=VelMode || rmode!=RhopMode || checkf!=InputCheck)
     Run_Exceptioon("Coded configuration is not right.");
   return(ret);

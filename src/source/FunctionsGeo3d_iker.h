@@ -144,6 +144,16 @@ __device__ float3 VecModule(const float3& v,float module){
   return(m? make_float3(v.x*m2,v.y*m2,v.z*m2): v);
 }
 
+//------------------------------------------------------------------------------
+/// Devuelve vector unitario valido del vector or (0,0,0).
+/// Returns a valid unit vector of the vector or (0,0,0).
+//------------------------------------------------------------------------------
+__device__ float3 VecModule(float vx,float vy,float vz,float module){
+  const float m=sqrt(vx*vx+vy*vy+vz*vz);
+  const float m2=(m? module/m: 1);
+  return(make_float3(vx*m2,vy*m2,vz*m2));
+}
+
 //==============================================================================
 /// Devuelve el producto escalar de 2 vectores.
 /// Returns the scalar product of two vectors.

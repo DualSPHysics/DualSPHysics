@@ -82,6 +82,8 @@ private:
 
   std::vector<std::string> ConfigInfo;
 
+  std::string XmlShape;  ///<Shape definition in XML (PARTICLES, LINE, BOX, CIRCLE).
+  double CircleRadius;   ///<Radius of circle when circle shape is defined.
   tdouble3 Direction;    ///<Inflow direction.
 
   unsigned Size;        ///<Size of allocated memory for Points[].
@@ -96,8 +98,8 @@ private:
   tdouble3 ZonePosMax;
 
   void ResizeMemory(unsigned newnpt);
-  JMatrix4d ReadRotate2D(const JXml* sxml,TiXmlElement* ele,const tdouble3& pt);
-  JMatrix4d ReadRotate3D(const JXml* sxml,TiXmlElement* ele);
+  JMatrix4d ReadRotate2D(const JXml* sxml,TiXmlElement* ele,const tdouble3& pt,std::string& rotationinfo);
+  JMatrix4d ReadRotate3D(const JXml* sxml,TiXmlElement* ele,std::string& rotationinfo);
 
   tdouble3 DirectionFromStr(const std::string& strdir)const;
   std::string CheckParticlesDirection(const JSphMkBlock* pmk,const tdouble3& dir)const;
@@ -121,6 +123,9 @@ public:
   void CreatePoints(const JXml* sxml,TiXmlElement* ele,const JDsPartsInit* partsdata);
 
   void GetConfig(std::vector<std::string>& lines)const;
+
+  std::string GetXmlShape()const{ return(XmlShape); }
+  double GetCircleRadius()const{ return(CircleRadius); }
 
   tdouble3 GetDirection()const{ return(Direction); }
   unsigned GetCount()const{ return(Count); }

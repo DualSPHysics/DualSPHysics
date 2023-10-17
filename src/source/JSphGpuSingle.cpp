@@ -531,7 +531,7 @@ void JSphGpuSingle::Interaction_Forces(TpInterStep interstep){
   //-Computes Tau for Laminar+SPS.
   if(lamsps)cusph::ComputeSpsTau(Np,Npb,SpsSmag,SpsBlin,Velrho_g->cptr()
     ,SpsGradvel_g->cptr(),SpsTau_g->ptr());
-
+  
   //-Add Delta-SPH correction to Ar_g[].
   if(AG_CPTR(Delta_g))cusph::AddDelta(Np-Npb,Delta_g->cptr()+Npb,Ar_g->ptr()+Npb);
 

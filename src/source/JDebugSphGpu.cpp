@@ -167,7 +167,7 @@ std::string JDebugSphGpu::PrepareVars(const std::string& vlist){
 /// Checks list of variables and returns the unknown variable.
 //==============================================================================
 std::string JDebugSphGpu::CheckVars(std::string vlist){
-  const string allvars=",all,idp,gid,seq,cell,code,vel,rhop,ace,ar,poscell,boundnor,";
+  const string allvars=",all,idp,gid,seq,cell,code,vel,rho,ace,ar,poscell,boundnor,spstau,spsgrad,";
   vlist=fun::StrLower(vlist);
   while(!vlist.empty()){
     string var=fun::StrSplit(",",vlist);
@@ -218,10 +218,10 @@ void JDebugSphGpu::LoadParticlesData(const JSphGpuSingle* gp,unsigned pini
     delete[] dcell; dcell=NULL;
   }
   //-Loads vel and rhop.
-  if(all || FindVar("vel",vars) || FindVar("rhop",vars)){
+  if(all || FindVar("vel",vars) || FindVar("rho",vars)){
     const tfloat4* velrho=fcuda::ToHostFloat4(pini,n,gp->Velrho_g->cptr());
-    if(all || FindVar("vel",vars)) arrays->AddArray("Vel" ,n,JDataArrays::NewArrayFloat3xyz(n,velrho),true);
-    if(all || FindVar("rhop",vars))arrays->AddArray("Rhop",n,JDataArrays::NewArrayFloat1w(n,velrho),true);
+    if(all || FindVar("vel",vars)) arrays->AddArray("Vel",n,JDataArrays::NewArrayFloat3xyz(n,velrho),true);
+    if(all || FindVar("rho",vars))arrays->AddArray("Rho",n,JDataArrays::NewArrayFloat1w(n,velrho),true);
     delete[] velrho; velrho=NULL;
   }
   //-Loads code.
@@ -269,6 +269,62 @@ void JDebugSphGpu::LoadParticlesData(const JSphGpuSingle* gp,unsigned pini
     const float* ptrg=gp->Ar_g->cptr();
     if(ptrg)arrays->AddArray("Ar",n,fcuda::ToHostFloat(pini,n,ptrg),true);
     else if(!all)Run_ExceptioonFileSta("The variable Arg is NULL.",file);
+  }
+  //-Loads spstau.
+  if(all || FindVar("spstau",vars)){
+    const float* ptrg=(float*)AG_CPTR(gp->SpsTau_g);
+    if(ptrg){
+      const unsigned* idpc=arrays->GetArrayUint("Idp",n);
+      const tsymatrix3f* spstauc=(const tsymatrix3f*)fcuda::ToHostFloat(pini,n*6,(float*)ptrg);
+      float* ptr_xx=arrays->CreateArrayPtrFloat("SpsTau_xx",n);
+      float* ptr_xy=arrays->CreateArrayPtrFloat("SpsTau_xy",n);
+      float* ptr_xz=arrays->CreateArrayPtrFloat("SpsTau_xz",n);
+      float* ptr_yy=arrays->CreateArrayPtrFloat("SpsTau_yy",n);
+      float* ptr_yz=arrays->CreateArrayPtrFloat("SpsTau_yz",n);
+      float* ptr_zz=arrays->CreateArrayPtrFloat("SpsTau_zz",n);
+      const unsigned casenbound=gp->CaseNbound;
+      for(unsigned p=0;p<n;p++){
+        const tsymatrix3f t=spstauc[p];
+        if(idpc[p]>=casenbound){
+          ptr_xx[p]=t.xx;
+          ptr_xy[p]=t.xy;
+          ptr_xz[p]=t.xz;
+          ptr_yy[p]=t.yy;
+          ptr_yz[p]=t.yz;
+          ptr_zz[p]=t.zz;
+        }
+      }
+      delete[] (float*)spstauc;
+    }
+    else if(!all)Run_ExceptioonFileSta("The variable SpsTau_g is NULL.",file);
+  }
+  //-Loads spsgrad.
+  if(all || FindVar("spsgrad",vars)){
+    const float* ptrg=(float*)AG_CPTR(gp->SpsGradvel_g);
+    if(ptrg){
+      const unsigned* idpc=arrays->GetArrayUint("Idp",n);
+      const tsymatrix3f* spsgradc=(const tsymatrix3f*)fcuda::ToHostFloat(pini,n*6,(float*)ptrg);
+      float* ptr_xx=arrays->CreateArrayPtrFloat("SpsGrad_xx",n);
+      float* ptr_xy=arrays->CreateArrayPtrFloat("SpsGrad_xy",n);
+      float* ptr_xz=arrays->CreateArrayPtrFloat("SpsGrad_xz",n);
+      float* ptr_yy=arrays->CreateArrayPtrFloat("SpsGrad_yy",n);
+      float* ptr_yz=arrays->CreateArrayPtrFloat("SpsGrad_yz",n);
+      float* ptr_zz=arrays->CreateArrayPtrFloat("SpsGrad_zz",n);
+      const unsigned casenbound=gp->CaseNbound;
+      for(unsigned p=0;p<n;p++){
+        const tsymatrix3f t=spsgradc[p];
+        if(idpc[p]>=casenbound){
+          ptr_xx[p]=t.xx;
+          ptr_xy[p]=t.xy;
+          ptr_xz[p]=t.xz;
+          ptr_yy[p]=t.yy;
+          ptr_yz[p]=t.yz;
+          ptr_zz[p]=t.zz;
+        }
+      }
+      delete[] (float*)spsgradc;
+    }
+    else if(!all)Run_ExceptioonFileSta("The variable SpsGradvel_g is NULL.",file);
   }
 }
 

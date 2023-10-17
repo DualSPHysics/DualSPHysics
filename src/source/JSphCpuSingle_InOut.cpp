@@ -258,6 +258,12 @@ void JSphCpuSingle::InOutUpdatePartsData(double timestepnew){
     InOut->SetAnalyticalDataCpu(float(timestepnew),inoutcount,inoutpart.cptr()
       ,Pos_c->cptr(),Code_c->cptr(),Idp_c->cptr(),zsurfpart.cptr()
       ,Velrho_c->ptr());
+
+    //-Updates velocity of inout particles when it uses an special velocity profile.
+    if(InOut->Use_SpecialProfile()){
+      InOut->SetSpecialVelCpu(float(timestepnew),inoutcount,inoutpart.cptr()
+        ,Pos_c->cptr(),Code_c->cptr(),Idp_c->cptr(),Velrho_c->ptr());
+    }
   }
 
   //-Calculates extrapolated velocity and/or rhop for inlet/outlet particles from fluid domain.

@@ -754,10 +754,10 @@ void JSphGpu::PreInteraction_Forces(){
   //-Initialise arrays.
   const unsigned npf=Np-Npb;
   ViscDt_g->CuMemset(0,Np);                                         //ViscDtg[]=0
-  Ar_g->CuMemset(0,Np);                                             //Arc[]=0
-  Ace_g->CuMemset(0,Np);                                            //Acec[]=(0)
-  if(AG_CPTR(Delta_g))Delta_g->CuMemset(0,Np);                      //Deltac[]=0
-  if(AG_CPTR(SpsGradvel_g))SpsGradvel_g->CuMemsetOffset(Npb,0,npf); //SpsGradvelc[]=(0).
+  Ar_g->CuMemset(0,Np);                                             //Arg[]=0
+  Ace_g->CuMemset(0,Np);                                            //Aceg[]=(0)
+  if(AG_CPTR(Delta_g))Delta_g->CuMemset(0,Np);                      //Deltag[]=0
+  if(AG_CPTR(SpsGradvel_g))SpsGradvel_g->CuMemsetOffset(Npb,0,npf); //SpsGradvelg[]=(0).
   
   //-Select particles for shifting.
   if(AC_CPTR(ShiftPosfs_g))Shifting->InitGpu(npf,Npb,Posxy_g->cptr()

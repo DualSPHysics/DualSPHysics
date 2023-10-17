@@ -112,6 +112,7 @@ void JSphInOut::Reset(){
   UseRefillAdvanced=false;
   UseZsurfNonUniform=false;
   UseAnalyticalData=false;
+  UseSpecialProfile=false;
   UseExtrapolatedData=false;
   UseInterpolatedVel=false;
 
@@ -555,7 +556,8 @@ unsigned JSphInOut::Config(double timestep,bool stable,byte periactive
     CfgUpdate[ci]=List[ci]->GetConfigUpdate();
     Width    [ci]=float(CSP.dp*List[ci]->GetLayers());
     DirData  [ci]=ToTFloat3(List[ci]->GetDirection());
-    DirVel   [ci]=(List[ci]->GetVelMode()==InVelM_Interpolated? DirData[ci]: TFloat3(FLT_MAX));
+    DirVel   [ci]=(List[ci]->GetVelMode()==InVelM_Interpolated || List[ci]->Use_SpecialProfile()? 
+      DirData[ci]: TFloat3(FLT_MAX));
   }
   UpdateVelData(timestep);
   UpdateZsurfData(timestep,true);
@@ -612,6 +614,7 @@ unsigned JSphInOut::Config(double timestep,bool stable,byte periactive
   UseRefillAdvanced=false;
   UseZsurfNonUniform=false;
   UseAnalyticalData=false;
+  UseSpecialProfile=false;
   UseExtrapolatedData=false;
   UseInterpolatedVel=false;
 
@@ -622,9 +625,9 @@ unsigned JSphInOut::Config(double timestep,bool stable,byte periactive
     if(zo->Use_RefillAdvanced())UseRefillAdvanced=true; 
     if(zo->GetInOutZsurf()->GetUniformZsurf()==false)UseZsurfNonUniform=true;
     if(zo->Use_AnalyticalData())UseAnalyticalData=true;
+    if(zo->Use_SpecialProfile())UseSpecialProfile=true;
     if(zo->Use_ExtrapolatedData())UseExtrapolatedData=true;
     if(zo->Use_InterpolatedVel())UseInterpolatedVel=true;
-
     if(zo->GetVariableZsurf())VariableZsurf=true;
     if(zo->GetCalculatedZsurf())CalculatedZsurf=true;
   }
@@ -984,6 +987,34 @@ void JSphInOut::SetAnalyticalDataGpu(float timestep,unsigned inoutcount
       ,timestep,Zsurf[izone],VelData[izone*2],VelData[izone*2+1],DirData[izone]
       ,CoefHydro,CSP.rhopzero,CSP.gamma,codeg,poszg,zsurfpart,velrhopg);
   }
+}
+#endif
+
+//==============================================================================
+/// Updates velocity of inlet/outlet particles when it uses an special velocity
+/// profile.
+//==============================================================================
+void JSphInOut::SetSpecialVelCpu(float timestep,unsigned inoutcount
+  ,const int* inoutpart,const tdouble3* pos,const typecode* code
+  ,const unsigned* idp,tfloat4* velrhop)
+{
+  for(unsigned ci=0;ci<GetCount();ci++)if(List[ci]->Use_SpecialProfile())
+    List[ci]->GetInOutVel()->UpdateSpecialVelCpu(timestep
+      ,inoutcount,inoutpart,pos,code,idp,velrhop);
+}
+
+#ifdef _WITHGPU
+//==============================================================================
+/// Updates velocity of inlet/outlet particles when it uses an special velocity
+/// profile.
+//==============================================================================
+void JSphInOut::SetSpecialVelGpu(float timestep,unsigned inoutcount
+  ,const int* inoutpartg,const double2* posxyg,const double* poszg
+  ,const typecode* codeg,const unsigned* idpg,float4* velrhopg)
+{
+  for(unsigned ci=0;ci<GetCount();ci++)if(List[ci]->Use_SpecialProfile())
+    List[ci]->GetInOutVel()->UpdateSpecialVelGpu(timestep
+      ,inoutcount,inoutpartg,posxyg,poszg,codeg,idpg,velrhopg);
 }
 #endif
 

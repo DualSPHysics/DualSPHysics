@@ -21,12 +21,14 @@
 #include "JSphInOutVel.h"
 #include "Functions.h"
 #include "FunctionsMath.h"
+#include "FunGeo3d.h"
 #include "JAppInfo.h"
 #include "JLog2.h"
 #include "JXml.h"
 #include "JLinearValue.h"
 #include "JSphInOutVelAwas.h"
 #include "JSphInOutGridData.h"
+#include "JVtkLib.h"
 
 #ifdef _WITHGPU
   #include "FunctionsCuda.h"
@@ -85,6 +87,10 @@ void JSphInOutVel::Reset(){
   InputVel=InputVel2=InputVel3=0;
   InputVelPosz=InputVelPosz2=InputVelPosz3=0;
 
+  CircleRadius=0;
+  InputJetRadius=0;
+  InputJetDistance=0;
+
   delete InputTimeVel; InputTimeVel=NULL;
   TimeVelIdx0=TimeVelIdx1=UINT_MAX; 
 
@@ -123,8 +129,9 @@ TpInVelMode JSphInOutVel::ReadXml(const JXml* sxml,TiXmlElement* ele
       const byte vel1=(sxml->ExistsElement(xele,"velocity" )? 1: 0);
       const byte vel2=(sxml->ExistsElement(xele,"velocity2")? 1: 0);
       const byte vel3=(sxml->ExistsElement(xele,"velocity3")? 1: 0);
-      if(vel1+vel2+vel3>1)sxml->ErrReadElement(xele,"velocity",false,"Several definitions for velocity were found.");
-      if(vel1 || vel1+vel2+vel3==0){
+      const byte vel4=(sxml->ExistsElement(xele,"jetcircle")? 1: 0);
+      if(vel1+vel2+vel3+vel4>1)sxml->ErrReadElement(xele,"velocity",false,"Several definitions for velocity were found.");
+      if(vel1 || vel1+vel2+vel3+vel4==0){
         VelProfile=InVelP_Uniform;
         sxml->CheckAttributeNames(xele,"velocity","time v comment units_comment");
         InputVel=sxml->ReadElementFloat(xele,"velocity","v");
@@ -147,7 +154,14 @@ TpInVelMode JSphInOutVel::ReadXml(const JXml* sxml,TiXmlElement* ele
         InputVelPosz2=sxml->ReadElementFloat(xele,"velocity3","z2");
         InputVelPosz3=sxml->ReadElementFloat(xele,"velocity3","z3");
       }
-      sxml->CheckElementNames(xele,true,"*velocity *velocity2 *velocity3 *flowvelocity");
+      if(vel4){
+        VelProfile=InVelP_JetCircle;
+        sxml->CheckAttributeNames(xele,"jetcircle","v distance radius comment units_comment");
+        InputVel =sxml->ReadElementFloat(xele,"jetcircle","v");
+        InputJetRadius=sxml->ReadElementFloat(xele,"jetcircle","radius");
+        InputJetDistance=sxml->ReadElementFloat(xele,"jetcircle","distance");
+      }
+      sxml->CheckElementNames(xele,true,"*velocity *velocity2 *velocity3 *jetcircle *flowvelocity");
     }
 //-Variable velocity.
     else if(VelMode==InVelM_Variable){
@@ -250,7 +264,7 @@ TpInVelMode JSphInOutVel::ReadXml(const JXml* sxml,TiXmlElement* ele
       FlowActive=sxml->ReadElementBool(xele,"flowvelocity","active",true,false);
       if(FlowActive){
         if(VelMode!=InVelM_Fixed && VelMode!=InVelM_Variable)sxml->ErrReadElement(xele,"flowvelocity",false,"The use of flow velocity is only supported by fixed or variable velocity.");
-        if(VelProfile!=InVelP_Uniform)sxml->ErrReadElement(xele,"flowvelocity",false,"The use of flow velocity is only supported by uniform velocity profile.");
+        if(VelProfile!=InVelP_Uniform && VelProfile!=InVelP_JetCircle)sxml->ErrReadElement(xele,"flowvelocity",false,"The use of flow velocity is only supported by uniform velocity profile.");
         FlowRatio=sxml->ReadElementFloat(xele,"flowvelocity","ratio",true,1.f);
         FlowUnits=fun::StrLower(sxml->ReadElementStr(xele,"flowvelocity","units",true,"l/s"));
         if(FlowUnits=="l/s")FlowRatio=FlowRatio;
@@ -271,6 +285,20 @@ TpInVelMode JSphInOutVel::ReadXml(const JXml* sxml,TiXmlElement* ele
 }
 
 //==============================================================================
+/// Configures CircleRadius for velocity profile InVelP_JetCircle and generate
+/// VTK scheme.
+//==============================================================================
+void JSphInOutVel::ConfigCircleRadius(double radius){ 
+  CircleRadius=radius; 
+  JVtkLib sh;
+  sh.AddShapeCircle(PtPlane,float(CircleRadius),Direction,64,IdZone);
+  const tdouble3 pcen2=PtPlane+(Direction*InputJetDistance);
+  sh.AddShapeCircle(pcen2,float(InputJetRadius),Direction,64,IdZone);
+  string filevtk=AppInfo.GetDirOut()+fun::PrintStr("CfgInOut_Zone%02u.vtk",IdZone);
+  sh.SaveShapeVtk(filevtk,"izone");
+}
+
+//==============================================================================
 /// Calculates minimum and maximum velocity according velocity configuration.
 /// Returns -FLT_MAX and FLT_MAX when velocity is unknown.
 //==============================================================================
@@ -280,6 +308,7 @@ void JSphInOutVel::CalculateVelMinMax(float& velmin,float& velmax)const{
   if(VelMode==InVelM_Fixed){
     switch(VelProfile){
       case InVelP_Uniform:
+      case InVelP_JetCircle:
         velmin=velmax=InputVel;  
       break;
       case InVelP_Linear:    
@@ -386,10 +415,18 @@ void JSphInOutVel::GetConfig(std::vector<std::string>& lines)const{
       if(VelProfile==InVelP_Uniform && VelMode==InVelM_Fixed){
         lines.push_back(fun::PrintStr("  Velocity profile: Uniform %g m/s  (%g %s)",InputVel*FlowToVel,InputVel,FlowUnits.c_str()));
       }
+      if(VelProfile==InVelP_JetCircle && VelMode==InVelM_Fixed){
+        lines.push_back(fun::PrintStr("  Velocity profile: JetCircle %g m/s  (%g %s)",InputVel*FlowToVel,InputVel,FlowUnits.c_str()));
+        lines.push_back(fun::PrintStr("    (open radius:%g, distance:%g)",InputJetRadius,InputJetDistance));
+      }
     }
     else{
       if(VelProfile==InVelP_Uniform && VelMode==InVelM_Fixed)
         lines.push_back(fun::PrintStr("  Velocity profile: Uniform %g m/s",InputVel));
+      if(VelProfile==InVelP_JetCircle && VelMode==InVelM_Fixed){
+        lines.push_back(fun::PrintStr("  Velocity profile: JetCircle %g m/s",InputVel));
+        lines.push_back(fun::PrintStr("    (open radius:%g, distance:%g)",InputJetRadius,InputJetDistance));
+      }
     }
     if(VelProfile==InVelP_Linear   )lines.push_back(fun::PrintStr("  Velocity profile: Linear %g(z=%g), %g(z=%g)",InputVel,InputVelPosz,InputVel2,InputVelPosz2));
     if(VelProfile==InVelP_Parabolic)lines.push_back(fun::PrintStr("  Velocity profile: Parabolic %g(z=%g), %g(z=%g), %g(z=%g)",InputVel,InputVelPosz,InputVel2,InputVelPosz2,InputVel3,InputVelPosz3));
@@ -423,7 +460,8 @@ void JSphInOutVel::ComputeInitialVel(){
       const float c=inv.a31*InputVel+inv.a32*InputVel2+inv.a33*InputVel3;
       CurrentCoefs0=TFloat4(a,b,c,0);
     }
-    else Run_Exceptioon("Inlet/outlet velocity profile is unknown.");
+    else if(VelProfile!=InVelP_JetCircle)
+      Run_Exceptioon("Inlet/outlet velocity profile is unknown.");
   }
   UpdateVel(0);
 }
@@ -528,6 +566,67 @@ void JSphInOutVel::UpdateVelInterpolateGpu(double timestep,unsigned nplist
     if(InputVelGrid->GetUseVelz()){
       cusphinout::InOutInterpolateResetZVel(IdZone,nplist,plist,codeg,velrhopg);
     }
+  }
+}
+#endif
+
+//==============================================================================
+/// Updates velocity of inout fluid according to special velocity profile on CPU.
+//==============================================================================
+void JSphInOutVel::UpdateSpecialVelCpu(double timestep,unsigned nplist
+  ,const int* plist,const tdouble3* pos,const typecode* code
+  ,const unsigned* idp,tfloat4* velrhop)
+{
+  if(VelProfile==InVelP_JetCircle){
+    const tplane3d plane=fgeo::PlanePtVec(PtPlane,Direction);
+    const tdouble3 opencenter=PtPlane+(Direction*InputJetDistance);
+    const double dp=CSP.dp;
+    const double radiusfr=InputJetRadius/CircleRadius;
+    const tfloat3 velsp=ToTFloat3(Direction*double(InputVel));
+    //-Updates velocity of particles.
+    const int n=int(nplist);
+    #ifdef OMP_USE
+      #pragma omp parallel for schedule (static) if(n>OMP_LIMIT_COMPUTELIGHT)
+    #endif
+    for(int cp=0;cp<n;cp++){
+      const unsigned p=plist[cp];
+      if(IdZone==CODE_GetIzoneFluidInout(code[p])){
+        const tdouble3 ps=pos[p];
+        const double pladis=fgeo::PlaneDistSign(plane,ps);
+        tfloat3 vel=TFloat3(0);
+        if(pladis<=-dp)vel=velsp;
+        else{  
+          const tdouble3 pscen=PtPlane+(Direction*pladis);
+          const tdouble3 vcen=ps-pscen;
+          //const double cendis=fgeo::PointDist(vcen);
+          const tdouble3 ps2=opencenter+vcen*radiusfr;
+          vel=ToTFloat3(fgeo::VecModule(ps2-ps,double(InputVel)));
+        }
+        velrhop[p].x=vel.x;
+        velrhop[p].y=vel.y;
+        velrhop[p].z=vel.z;
+      }
+    }
+  }
+}
+
+#ifdef _WITHGPU
+//==============================================================================
+/// Updates velocity of inout fluid according to special velocity profile on GPU.
+//==============================================================================
+void JSphInOutVel::UpdateSpecialVelGpu(double timestep,unsigned nplist
+  ,const int* plist,const double2* posxyg,const double* poszg
+  ,const typecode* codeg,const unsigned* idpg,float4* velrhopg)
+{
+  if(VelProfile==InVelP_JetCircle){
+    const tplane3d plane=fgeo::PlanePtVec(PtPlane,Direction);
+    const tdouble3 opencenter=PtPlane+(Direction*InputJetDistance);
+    const double dp=CSP.dp;
+    const double radiusfr=InputJetRadius/CircleRadius;
+    const tfloat3 velsp=ToTFloat3(Direction*double(InputVel));
+    //-Updates velocity of particles.
+    cusphinout::InOutUpdateJetVel(IdZone,plane,PtPlane,opencenter,radiusfr
+      ,dp,Direction,InputVel,nplist,plist,codeg,posxyg,poszg,velrhopg);
   }
 }
 #endif

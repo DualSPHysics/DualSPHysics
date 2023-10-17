@@ -96,6 +96,12 @@ void Interaction_InOutExtrap(byte doublemode,bool simulate2d,TpKernel tkernel
   ,float determlimit,const StDivDataGpu& dvd,const double2* posxy,const double* posz
   ,const typecode* code,const unsigned* idp,float4* velrhop);
 
+void InOutUpdateJetVel(unsigned izone,const tplane3d& plane,const tdouble3& ptplane
+  ,const tdouble3& opencenter,double radiusfr,double dp,const tdouble3& direction
+  ,float inputvel,unsigned np,const int* plist,const typecode* code
+  ,const double2* posxy,const double* posz,float4* velrhop);
+
+
 //-Kernels to interpolate velocity (JSphInOutGridDataTime).
 void InOutInterpolateTime(unsigned npt,double time,double t0,double t1
   ,const float* velx0,const float* velx1,float* velx
