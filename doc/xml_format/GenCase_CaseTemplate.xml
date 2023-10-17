@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<case app="GenCase v5.0.278 (24-04-2023)" date="10-05-2023 18:26:46">
-    <casedef requiredversion="v5.0.278">
+<case app="GenCase v5.0.295 (11-08-2023)" date="30-08-2023 19:23:51">
+    <casedef requiredversion="v5.0.295">
         <constantsdef>
             <lattice bound="2" fluid="1" comment="Type of lattice to create the initial particles (default=1)" />
             <gravity x="0" y="0" z="-9.81" comment="Gravitational acceleration" units_comment="m/s^2" />
@@ -140,6 +140,11 @@
                     <clipbox>
                         <point x="0" y="0" z="0" />
                         <endpoint x="0.1" y="0.2" z="0.3" />
+                    </clipbox>
+                    <clipbox>
+                        <point x="0" y="0" z="0" />
+                        <size x="1" y="2" z="3" />
+                        <angles x="30" y="45" z="-60" />
                     </clipbox>
                     <clipbox>
                         <boxfaces>top</boxfaces>
@@ -373,6 +378,8 @@
                         <depth depthmax="0.02" />
                     </drawfileply>
                     <drawfilevtk file="File.vtk" />
+                    <drawfilevtk file="File.vtp" />
+                    <drawfilevtk file="File.vtu" />
                     <drawfilevtk file="File.vtk">
                         <polyselec>points</polyselec>
                     </drawfilevtk>
@@ -467,7 +474,12 @@
                     <fillbox x="0" y="1" z="0">
                         <modefill>border</modefill>
                         <point x="0.1" y="1" z="1.1" />
-                        <size x="0.1" y="1" z="1.1" />
+                        <size x="3" y="4" z="2" />
+                    </fillbox>
+                    <fillbox x="0" y="1" z="0">
+                        <modefill>border</modefill>
+                        <point x="0.1" y="1" z="1.1" />
+                        <endpoint x="3.1" y="5" z="3.1" />
                     </fillbox>
                     <fillfigure x="0.1" y="1" z="1.1">
                         <points>
@@ -503,6 +515,10 @@
                         <point x="0.1" y="1" z="1.1" />
                         <size x="3" y="4" z="2" />
                     </redrawbox>
+                    <redrawbox>
+                        <point x="0.1" y="1" z="1.1" />
+                        <endpoint x="3.1" y="5" z="3.1" />
+                    </redrawbox>
                     <redrawbox mkfluid="0">
                         <point x="0.1" y="1" z="1.1" />
                         <size x="3" y="4" z="2" />
@@ -528,6 +544,10 @@
                     <redrawnearbox targettp="fluid" targetmk="0" bordertp="bound" bordermk="2">
                         <point x="0.1" y="1" z="1.1" />
                         <size x="3" y="4" z="2" />
+                    </redrawnearbox>
+                    <redrawnearbox targettp="fluid" targetmk="0" bordertp="bound" bordermk="2">
+                        <point x="0.1" y="1" z="1.1" />
+                        <endpoint x="3.1" y="5" z="3.1" />
                     </redrawnearbox>
                     <redrawnearbox times="3" targettp="fluid" targetmk="0" bordertp="bound" bordermk="2">
                         <point x="0.1" y="1" z="1.1" />
@@ -571,6 +591,8 @@
                     <debugout />
                     <shapeout file="fshape_1" reset="false" />
                     <shapeout file="fshape_2" />
+                    <shapeout file="fshape_2" format="vtp" />
+                    <shapeout file="fshape_2" format="VTU" />
                     <shapeout file="fshape_3" reset="false" savenormal="1.5" />
                     <cellsout file="filecellsAll" />
                     <cellsout file="filecellsBound5" mkbound="5" />
@@ -930,9 +952,8 @@
         <normals active="true">
             <geometryfile file="[CaseName]_hdp_Actual.vtk" comment="File with boundary geometry (VTK format)" />
             <distanceh value="2.0" comment="Maximum distance (H*distanceh) to compute normals data (default=2)" />
-            <svnormals value="1" comment="Saves VTK with particle normals according to <computenormals> for debug (default=0)" />
+            <svnormals value="1" comment="Saves VTK with particle normals according to <computenormals> for debug (default=1)" />
             <svshapes value="0" comment="Saves VTK with geometry in triangles and quads with its normals for debug (default=0)" />
-            <svnormaldata value="0" comment="Saves binary and VTK with normal data for debug (default=0)" />
         </normals>
     </casedef>
     <execution>
