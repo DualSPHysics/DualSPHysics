@@ -112,11 +112,11 @@ __device__ float GetKernelWendland_Wab(float rr2,float h,float awen){
 //------------------------------------------------------------------------------
 /// Returns fac of kernel.
 //------------------------------------------------------------------------------
-__device__ float GetKernelWendland_Fac(float rr2,float h,float bwen){
+__device__ float GetKernelWendland_Fac(float rr2,float h,float bwenh){
   const float rad=sqrt(rr2);
   const float qq=rad/h;
   const float wqq1=1.f-0.5f*qq;
-  return(bwen*qq*wqq1*wqq1*wqq1/rad);
+  return(bwenh*wqq1*wqq1*wqq1);
 }
 
 #ifdef CTE_AVAILABLE
@@ -128,7 +128,7 @@ __device__ float GetKernelWendland_WabFac(float rr2,float& fac){
   const float qq=rad/CTE.kernelh;
   const float wqq1=1.f-0.5f*qq;
   const float wqq2=wqq1*wqq1;
-  fac=CTE.bwen*qq*wqq2*wqq1/rad;
+  fac=CTE.bwenh*wqq2*wqq1;
   const float wqq=qq+qq+1.f;
   return(CTE.awen*wqq*wqq2*wqq2);
 }
@@ -142,7 +142,7 @@ __device__ float GetKernelWendland_Wab(float rr2){
 /// Returns fac of kernel.
 //------------------------------------------------------------------------------
 __device__ float GetKernelWendland_Fac(float rr2){
-  return(GetKernelWendland_Fac(rr2,CTE.kernelh,CTE.bwen));
+  return(GetKernelWendland_Fac(rr2,CTE.kernelh,CTE.bwenh));
 }
 #endif
 
@@ -185,8 +185,8 @@ template<TpKernel tker> __device__ float GetKernel_Wab(float rr2,float h,float a
 //------------------------------------------------------------------------------
 /// Returns wab of kernel according to template.
 //------------------------------------------------------------------------------
-template<TpKernel tker> __device__ float GetKernel_Fac(float rr2,float h,float bker){
-       if(tker==KERNEL_Wendland  )return(GetKernelWendland_Fac  (rr2,h,bker));
+template<TpKernel tker> __device__ float GetKernel_Fac(float rr2,float h,float bhker){
+       if(tker==KERNEL_Wendland  )return(GetKernelWendland_Fac  (rr2,h,bhker));
   else return(0);
 }
 

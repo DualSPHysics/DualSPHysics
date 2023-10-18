@@ -76,7 +76,7 @@ void GetKernelConfig(const StCteSph& CSP,std::vector<std::string>& lines){
     case KERNEL_Wendland:{
       const StKWendlandCte& kc=CSP.kwend;
       lines.push_back(fun::VarStr("  Wendland.awen" ,kc.awen));
-      lines.push_back(fun::VarStr("  Wendland.bwen" ,kc.bwen));
+      lines.push_back(fun::VarStr("  Wendland.bwenh",kc.bwenh));
     }break;
     default: Run_ExceptioonFun("Kernel unknown.");
   }

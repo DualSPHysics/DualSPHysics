@@ -195,11 +195,11 @@ inline StKWendlandCte GetKernelWendland_Ctes(bool sim2d,double h){
   StKWendlandCte kc;
   if(sim2d){
     kc.awen=float(0.557/(h*h));
-    kc.bwen=float(-2.7852/(h*h*h));
+    kc.bwenh=float(-2.7852/(h*h*h*h));
   }
   else{
     kc.awen=float(0.41778/(h*h*h));
-    kc.bwen=float(-2.08891/(h*h*h*h));
+    kc.bwenh=float(-2.08891/(h*h*h*h*h));
   }
   return(kc);
 }
@@ -221,7 +221,7 @@ inline float GetKernelWendland_Fac(const StKWendlandCte& kc,float h,float rr2){
   const float rad=sqrt(rr2);
   const float qq=rad/h;
   const float wqq1=1.f-0.5f*qq;
-  return(kc.bwen*qq*wqq1*wqq1*wqq1/rad);
+  return(kc.bwenh*wqq1*wqq1*wqq1);
 }
 //============================================================================== 
 /// Returns wab and fac of kernel.
@@ -233,7 +233,7 @@ inline float GetKernelWendland_WabFac(const StKWendlandCte& kc,float h,float rr2
   const float qq=rad/h;
   const float wqq1=1.f-0.5f*qq;
   const float wqq2=wqq1*wqq1;
-  fac=kc.bwen*qq*wqq2*wqq1/rad;
+  fac=kc.bwenh*wqq2*wqq1;
   const float wqq=qq+qq+1.f;
   return(kc.awen*wqq*wqq2*wqq2);
 }
@@ -279,16 +279,16 @@ inline float GetKernel_Factor(TpKernel tker){
 /// Returns wab of kernel according to temaplate.
 //==============================================================================
 template<TpKernel tker> inline float GetKernel_Wab(const StCteSph& csp,float rr2){
-       if(tker==KERNEL_Wendland  )return(GetKernelWendland_Wab  (csp.kwend  ,csp.kernelh,rr2));
-  else if(tker==KERNEL_Cubic     )return(GetKernelCubic_Wab     (csp.kcubic ,csp.kernelh,rr2));
+       if(tker==KERNEL_Wendland  )return(GetKernelWendland_Wab  (csp.kwend,csp.kernelh,rr2));
+  else if(tker==KERNEL_Cubic     )return(GetKernelCubic_Wab     (csp.kcubic,csp.kernelh,rr2));
   else return(0);
 }
 //============================================================================== 
 /// Returns fac of kernel  according to template.
 //==============================================================================
 template<TpKernel tker> inline float GetKernel_Fac(const StCteSph& csp,float rr2){
-       if(tker==KERNEL_Wendland  )return(GetKernelWendland_Fac  (csp.kwend  ,csp.kernelh,rr2));
-  else if(tker==KERNEL_Cubic     )return(GetKernelCubic_Fac     (csp.kcubic ,csp.kernelh,rr2));
+       if(tker==KERNEL_Wendland  )return(GetKernelWendland_Fac  (csp.kwend,csp.kernelh,rr2));
+  else if(tker==KERNEL_Cubic     )return(GetKernelCubic_Fac     (csp.kcubic,csp.kernelh,rr2));
   else return(0);
 }
 //============================================================================== 
@@ -297,8 +297,8 @@ template<TpKernel tker> inline float GetKernel_Fac(const StCteSph& csp,float rr2
 template<TpKernel tker> inline float GetKernel_WabFac(const StCteSph& csp,float rr2
   ,float& fac)
 {
-       if(tker==KERNEL_Wendland  )return(GetKernelWendland_WabFac  (csp.kwend  ,csp.kernelh,rr2,fac));
-  else if(tker==KERNEL_Cubic     )return(GetKernelCubic_WabFac     (csp.kcubic ,csp.kernelh,rr2,fac));
+       if(tker==KERNEL_Wendland  )return(GetKernelWendland_WabFac  (csp.kwend,csp.kernelh,rr2,fac));
+  else if(tker==KERNEL_Cubic     )return(GetKernelCubic_WabFac     (csp.kcubic,csp.kernelh,rr2,fac));
   else return(0);
 }
 

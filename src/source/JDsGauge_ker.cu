@@ -309,7 +309,7 @@ void Interaction_GaugeMaxz(tdouble3 point0,float maxdist2,const StDivDataGpu& dv
 /// Calculates force on selected fixed or moving particles using only fluid particles.
 /// Ignores periodic boundary particles to avoid race condition problems.
 //------------------------------------------------------------------------------
-template<TpKernel tker> __global__ void KerInteractionGaugeForce(float bker
+template<TpKernel tker> __global__ void KerInteractionGaugeForce(float bhker
   ,unsigned n,unsigned idbegin,typecode codesel
   ,int scelldiv,int4 nc,int3 cellzero,const int2* beginendcellfluid
   ,unsigned axis,unsigned cellcode,double3 domposmin,float scell,float poscellsize
@@ -344,7 +344,7 @@ template<TpKernel tker> __global__ void KerInteractionGaugeForce(float bker
           const float rr2=(drx*drx + dry*dry + drz*drz);
           //-Interaction with real neighboring fluid particles.
           if(rr2<=kernelsize2 && rr2>=ALMOSTZERO && CODE_IsFluid(code[p2])){
-            const float fac=cufsph::GetKernel_Fac<tker>(rr2,kernelh,bker);
+            const float fac=cufsph::GetKernel_Fac<tker>(rr2,kernelh,bhker);
             const float frx=fac*drx;
             const float fry=fac*dry;
             const float frz=fac*drz;
@@ -384,8 +384,8 @@ void Interaction_GaugeForce(const StCteSph& CSP,const StDivDataGpu& dvd
     dim3 sgrid=GetSimpleGridSize(n,bsize);
     switch(CSP.tkernel){
       case KERNEL_Cubic:   //Kernel Cubic is not available.
-      case KERNEL_Wendland:{ const float bker=CSP.kwend.bwen;
-        KerInteractionGaugeForce<KERNEL_Wendland> <<<sgrid,bsize>>>(bker,n,idbegin,codesel
+      case KERNEL_Wendland:{ const float bhker=CSP.kwend.bwenh;
+        KerInteractionGaugeForce<KERNEL_Wendland> <<<sgrid,bsize>>>(bhker,n,idbegin,codesel
           ,dvd.scelldiv,dvd.nc,dvd.cellzero,beginendcellfluid
           ,dvd.axis,dvd.domcellcode,dvd.domposmin,dvd.scell,dvd.poscellsize
           ,dvd.kernelsize2,CSP.kernelh,CSP.massfluid,CSP.cteb,CSP.rhopzero,CSP.gamma,float(CSP.cs0)

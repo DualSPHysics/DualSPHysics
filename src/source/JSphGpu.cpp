@@ -475,7 +475,7 @@ void JSphGpu::ConstantDataUp(){
   ctes.kernelsize2=KernelSize2; 
   ctes.poscellsize=PosCellSize; 
   //-Wendland constants are always computed since this kernel is used in some parts where other kernels are not defined (e.g. mDBC, inlet/outlet...).
-  ctes.awen=KWend.awen; ctes.bwen=KWend.bwen;
+  ctes.awen=KWend.awen; ctes.bwenh=KWend.bwenh;
   //-Copies constants for other kernels.
   if(TKernel==KERNEL_Cubic){
     ctes.cubic_a1=KCubic.a1; ctes.cubic_a2=KCubic.a2; ctes.cubic_aa=KCubic.aa; ctes.cubic_a24=KCubic.a24;
