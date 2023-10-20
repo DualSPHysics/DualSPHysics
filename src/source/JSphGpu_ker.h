@@ -116,14 +116,14 @@ typedef struct StrInterParmsg{
   const unsigned*  idp;
   const typecode*  code;
   const float*     ftomassp;
-  const tsymatrix3f* tau;
+  const tsymatrix3f* spstaurho2;
   const float3*    dengradcorr;
   //-Output data arrays.
   float*  viscdt;
   float*  ar;
   float3* ace;
   float*  delta;
-  tsymatrix3f* gradvel;
+  tsymatrix3f* sps2strain;
   float4* shiftposfs;
   //-Other values and objects.
   cudaStream_t stm;
@@ -147,13 +147,14 @@ typedef struct StrInterParmsg{
     ,const unsigned* dcell
     ,const double2* posxy,const double* posz,const float4* poscell
     ,const float4* velrho,const unsigned* idp,const typecode* code
-    ,const float* ftomassp,const tsymatrix3f* spstau
+    ,const float* ftomassp
+    ,const tsymatrix3f* spstaurho2
     ,const float3* dengradcorr
     ,float* viscdt
     ,float* ar
     ,float3* ace
     ,float* delta
-    ,tsymatrix3f* spsgradvel
+    ,tsymatrix3f* sps2strain
     ,float4* shiftposfs
     ,cudaStream_t stm
     ,StKerInfo* kerinfo)
@@ -179,14 +180,15 @@ typedef struct StrInterParmsg{
     this->dcell=dcell;
     this->posxy=posxy; this->posz=posz; this->poscell=poscell;
     this->velrho=velrho; this->idp=idp; this->code=code;
-    this->ftomassp=ftomassp; this->tau=spstau;
+    this->ftomassp=ftomassp;
+    this->spstaurho2=spstaurho2;
     this->dengradcorr=dengradcorr;
     //-Output data arrays.
     this->viscdt=viscdt;
     this->ar=ar;
     this->ace=ace;
     this->delta=delta;
-    this->gradvel=spsgradvel;
+    this->sps2strain=sps2strain;
     this->shiftposfs=shiftposfs;
     //-Other values and objects.
     this->stm=stm;
@@ -231,7 +233,7 @@ void Interaction_ForcesDem(unsigned bsize,unsigned nfloat
 
 //-Kernels for calculating the Laminar+SPS viscosity.
 void ComputeSpsTau(unsigned np,unsigned npb,float smag,float blin
-  ,const float4* velrho,const tsymatrix3f* gradvelg,tsymatrix3f* tau
+  ,const float4* velrho,const tsymatrix3f* sps2strain,tsymatrix3f* tau_rho2
   ,cudaStream_t stm=NULL);
 
 //-Kernels for Delta-SPH.

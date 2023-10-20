@@ -188,8 +188,8 @@ public:
 /// \brief Defines the class for single-core executions.
 class DSPHChronoLibSC : public DSPHChronoLib {
 private:
-  chrono::ChSystem *MphysicalSystem; ///<Pointer to Chrono Systemç
-
+  chrono::ChSystem *MphysicalSystem; ///<Pointer to Chrono System
+  
   /// Establishes the variable coefficients to the link objects.
   virtual void SetVariableCoeff();
 

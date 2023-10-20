@@ -1517,7 +1517,7 @@ void JSph::ConfigConstants2(){
   //-Constants for Laminar viscosity + SPS turbulence model.
   if(TVisco==VISCO_LaminarSPS){
     const double dp_sps=(Simulate2D? sqrt(Dp*Dp*2.)/2.: sqrt(Dp*Dp*3.)/3.);  
-    SpsSmag=float(pow((0.12*dp_sps),2));
+    SpsSmag=float((2./3.)*pow((0.12*dp_sps),2));
     SpsBlin=float((2./3.)*0.0066*dp_sps*dp_sps); 
   }
   //-Constants for DDT.

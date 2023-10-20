@@ -101,8 +101,8 @@ void JSphCpu::InitVars(){
   Delta_c=NULL;
   ShiftPosfs_c=NULL;  //-Shifting.
 
-  SpsTau_c=NULL;      //-Laminar+SPS.
-  SpsGradvel_c=NULL;  //-Laminar+SPS.
+  SpsTauRho2_c=NULL;  //-Laminar+SPS.
+  Sps2Strain_c=NULL;  //-Laminar+SPS.
 
   FreeCpuMemoryParticles();
 
@@ -161,8 +161,8 @@ void JSphCpu::FreeCpuMemoryParticles(){
   delete Delta_c;       Delta_c=NULL;
   delete ShiftPosfs_c;  ShiftPosfs_c=NULL;  //-Shifting.
 
-  delete SpsTau_c;      SpsTau_c=NULL;      //-Laminar+SPS.
-  delete SpsGradvel_c;  SpsGradvel_c=NULL;  //-Laminar+SPS.
+  delete SpsTauRho2_c;  SpsTauRho2_c=NULL;  //-Laminar+SPS.
+  delete Sps2Strain_c;  Sps2Strain_c=NULL;  //-Laminar+SPS.
   
   //-Free CPU memory for array objects.
   CpuParticlesSize=0;
@@ -210,8 +210,8 @@ void JSphCpu::AllocCpuMemoryParticles(unsigned np){
   ShiftPosfs_c=new acfloat4("ShiftPosfsc",Arrays_Cpu,false); //-NO INITIAL MEMORY.
   //-Arrays for Laminar+SPS.
   if(TVisco==VISCO_LaminarSPS){
-    SpsTau_c    =new acsymatrix3f("SpsTauc"    ,Arrays_Cpu,true);
-    SpsGradvel_c=new acsymatrix3f("SpsGradvelc",Arrays_Cpu,false); //-NO INITIAL MEMORY.
+    SpsTauRho2_c=new acsymatrix3f("SpsTauRho2c",Arrays_Cpu,true);
+    Sps2Strain_c=new acsymatrix3f("Sps2Strainc",Arrays_Cpu,false); //-NO INITIAL MEMORY.
   }
 
 
@@ -382,7 +382,7 @@ void JSphCpu::ConfigRunMode(){
 void JSphCpu::InitRunCpu(){
   InitRun(Np,Idp_c->cptr(),Pos_c->cptr());
   if(TStep==STEP_Verlet)VelrhoM1_c->CopyFrom(Velrho_c,Np);
-  if(TVisco==VISCO_LaminarSPS)SpsTau_c->Memset(0,Np);
+  if(TVisco==VISCO_LaminarSPS)SpsTauRho2_c->Memset(0,Np);
   if(MotionVel_c)MotionVel_c->Memset(0,Np);
 }
 
@@ -398,14 +398,14 @@ void JSphCpu::PreInteraction_Forces(){
   Press_c->Reserve();
   if(DDTArray)Delta_c->Reserve();
   if(Shifting)ShiftPosfs_c->Reserve();
-  if(TVisco==VISCO_LaminarSPS)SpsGradvel_c->Reserve();
+  if(TVisco==VISCO_LaminarSPS)Sps2Strain_c->Reserve();
 
   //-Initialise arrays.
   const unsigned npf=Np-Npb;
   Ar_c->Memset(0,Np);                                             //Arc[]=0
   Ace_c->Memset(0,Np);                                            //Acec[]=(0)
   if(AC_CPTR(Delta_c))Delta_c->Memset(0,Np);                      //Deltac[]=0
-  if(AC_CPTR(SpsGradvel_c))SpsGradvel_c->MemsetOffset(Npb,0,npf); //SpsGradvelc[]=(0).
+  if(AC_CPTR(Sps2Strain_c))Sps2Strain_c->MemsetOffset(Npb,0,npf); //Sps2Strainc[]=(0).
 
   //-Select particles for shifting.
   if(AC_CPTR(ShiftPosfs_c))Shifting->InitCpu(npf,Npb,Pos_c->cptr()
@@ -495,7 +495,7 @@ void JSphCpu::PosInteraction_Forces(){
   Press_c->Free();
   Delta_c->Free();
   ShiftPosfs_c->Free();
-  if(SpsGradvel_c)SpsGradvel_c->Free();
+  if(Sps2Strain_c)Sps2Strain_c->Free();
 }
 
 //==============================================================================
@@ -588,7 +588,7 @@ template<TpKernel tker,TpFtMode ftmode> void JSphCpu::InteractionForcesBound
 template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity,bool shift> 
   void JSphCpu::InteractionForcesFluid(unsigned n,unsigned pinit,bool boundp2,float visco
   ,StDivDataCpu divdata,const unsigned* dcell
-  ,const tsymatrix3f* tau,tsymatrix3f* gradvel
+  ,const tsymatrix3f* tau,tsymatrix3f* two_strain
   ,const tdouble3* pos,const tfloat4* velrho,const typecode* code,const unsigned* idp
   ,const float* press,const tfloat3* dengradcorr
   ,float& viscdt,float* ar,tfloat3* ace,float* delta
@@ -605,7 +605,7 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity,bool sh
   for(int p1=int(pinit);p1<pfin;p1++){
     float visc=0,arp1=0,deltap1=0;
     tfloat3 acep1=TFloat3(0);
-    tsymatrix3f gradvelp1={0,0,0,0,0,0};
+    tsymatrix3f two_strainp1={0,0,0,0,0,0};
 
     //-Variables for Shifting.
     tfloat4 shiftposfsp1;
@@ -624,8 +624,11 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity,bool sh
     const tfloat3 velp1=TFloat3(velrho[p1].x,velrho[p1].y,velrho[p1].z);
     const float rhop1=velrho[p1].w;
     const float pressp1=press[p1];
-    const tsymatrix3f taup1=(tvisco==VISCO_Artificial? gradvelp1: tau[p1]);
     const bool rsymp1=(Symmetry && posp1.y<=KernelSize); //<vs_syymmetry>
+    
+    //-Variables for Laminar+SPS.
+    tsymatrix3f taup1; //-Note that taup1 is tau_a/rho_a^2.
+    if(tvisco==VISCO_LaminarSPS)taup1=tau[p1];
 
     //-Search for neighbours in adjacent cells.
     const StNgSearch ngs=nsearch::Init(dcell[p1],boundp2,divdata);
@@ -727,22 +730,25 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity,bool sh
                 acep1.x+=vtemp*dvx; acep1.y+=vtemp*dvy; acep1.z+=vtemp*dvz;
               }
               //-SPS turbulence model.
-              float tau_xx=taup1.xx,tau_xy=taup1.xy,tau_xz=taup1.xz; //-taup1 is always zero when p1 is not a fluid particle. | taup1 siempre es cero cuando p1 no es fluid.
-              float tau_yy=taup1.yy,tau_yz=taup1.yz,tau_zz=taup1.zz;
+              //-Note that taup1 is tau_a/rho_a^2 for interaction of particle a and b.
+              //-And taup1 is always zero when p1 is not a fluid particle.
+              float stau_xx=taup1.xx,stau_xy=taup1.xy,stau_xz=taup1.xz; 
+              float stau_yy=taup1.yy,stau_yz=taup1.yz,stau_zz=taup1.zz;
               if(!boundp2 && !ftp2){//-When p2 is a fluid particle. 
-                tau_xx+=tau[p2].xx; tau_xy+=tau[p2].xy; tau_xz+=tau[p2].xz;
-                tau_yy+=tau[p2].yy; tau_yz+=tau[p2].yz; tau_zz+=tau[p2].zz;
+                //-Note that tau[p2] is tau_b/rho_b^2 for interaction of particle a and b.
+                stau_xx+=tau[p2].xx; stau_xy+=tau[p2].xy; stau_xz+=tau[p2].xz;
+                stau_yy+=tau[p2].yy; stau_yz+=tau[p2].yz; stau_zz+=tau[p2].zz;
               }
-              acep1.x+=massp2*(tau_xx*frx + tau_xy*fry + tau_xz*frz);
-              acep1.y+=massp2*(tau_xy*frx + tau_yy*fry + tau_yz*frz);
-              acep1.z+=massp2*(tau_xz*frx + tau_yz*fry + tau_zz*frz);
+              acep1.x+=massp2*(stau_xx*frx + stau_xy*fry + stau_xz*frz);
+              acep1.y+=massp2*(stau_xy*frx + stau_yy*fry + stau_yz*frz);
+              acep1.z+=massp2*(stau_xz*frx + stau_yz*fry + stau_zz*frz);
               //-Velocity gradients.
               if(!ftp1){//-When p1 is a fluid particle. 
                 const float volp2=-massp2/velrhop2.w;
-                float dv=dvx*volp2; gradvelp1.xx+=dv*frx; gradvelp1.xy+=dv*fry; gradvelp1.xz+=dv*frz;
-                      dv=dvy*volp2; gradvelp1.xy+=dv*frx; gradvelp1.yy+=dv*fry; gradvelp1.yz+=dv*frz;
-                      dv=dvz*volp2; gradvelp1.xz+=dv*frx; gradvelp1.yz+=dv*fry; gradvelp1.zz+=dv*frz;
-                //-To compute tau terms we assume that gradvel.xy=gradvel.dudy+gradvel.dvdx, gradvel.xz=gradvel.dudz+gradvel.dwdx, gradvel.yz=gradvel.dvdz+gradvel.dwdy
+                float dv=dvx*volp2; two_strainp1.xx+=dv*frx; two_strainp1.xy+=dv*fry; two_strainp1.xz+=dv*frz;
+                      dv=dvy*volp2; two_strainp1.xy+=dv*frx; two_strainp1.yy+=dv*fry; two_strainp1.yz+=dv*frz;
+                      dv=dvz*volp2; two_strainp1.xz+=dv*frx; two_strainp1.yz+=dv*fry; two_strainp1.zz+=dv*frz;
+                //-To compute tau terms we assume that two_strain.xy=dudy+dvdx, two_strain.xz=dudz+dwdx, two_strain.yz=dvdz+dwdy
                 //-so only 6 elements are needed instead of 3x3.
               }
             }
@@ -764,12 +770,12 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity,bool sh
       const int th=omp_get_thread_num();
       if(visc>viscth[th*OMP_STRIDE])viscth[th*OMP_STRIDE]=visc;
       if(tvisco==VISCO_LaminarSPS){
-        gradvel[p1].xx+=gradvelp1.xx;
-        gradvel[p1].xy+=gradvelp1.xy;
-        gradvel[p1].xz+=gradvelp1.xz;
-        gradvel[p1].yy+=gradvelp1.yy;
-        gradvel[p1].yz+=gradvelp1.yz;
-        gradvel[p1].zz+=gradvelp1.zz;
+        two_strain[p1].xx+=two_strainp1.xx;
+        two_strain[p1].xy+=two_strainp1.xy;
+        two_strain[p1].xz+=two_strainp1.xz;
+        two_strain[p1].yy+=two_strainp1.yy;
+        two_strain[p1].yz+=two_strainp1.yz;
+        two_strain[p1].zz+=two_strainp1.zz;
       }
       if(shift)shiftposfs[p1]=shiftposfsp1;
     }
@@ -883,32 +889,38 @@ void JSphCpu::InteractionForcesDEM(unsigned nfloat,StDivDataCpu divdata
 
 
 //==============================================================================
-/// Computes sub-particle stress tensor (Tau) for SPS turbulence model.   
+/// Computes sub-particle stress tensor divided by rho^2 (tau/rho^2) for SPS 
+/// turbulence model.   
 //==============================================================================
 void JSphCpu::ComputeSpsTau(unsigned n,unsigned pini,const tfloat4* velrho
-  ,const tsymatrix3f* spsgradvel,tsymatrix3f* tau)const
+  ,const tsymatrix3f* sps2strain,tsymatrix3f* tau_rho2)const
 {
   const int pfin=int(pini+n);
   #ifdef OMP_USE
     #pragma omp parallel for schedule (static)
   #endif
   for(int p=int(pini);p<pfin;p++){
-    const tsymatrix3f gradvel=spsgradvel[p];
-    const float pow1=gradvel.xx*gradvel.xx + gradvel.yy*gradvel.yy + gradvel.zz*gradvel.zz;
-    const float prr=pow1+pow1 + gradvel.xy*gradvel.xy + gradvel.xz*gradvel.xz + gradvel.yz*gradvel.yz;
+    const tsymatrix3f two_strain=sps2strain[p];
+    const float pow1=two_strain.xx*two_strain.xx
+                   + two_strain.yy*two_strain.yy
+                   + two_strain.zz*two_strain.zz;
+    const float prr= two_strain.xy*two_strain.xy
+                   + two_strain.xz*two_strain.xz
+                   + two_strain.yz*two_strain.yz + pow1+pow1;
     const float visc_sps=SpsSmag*sqrt(prr);
-    const float div_u=gradvel.xx+gradvel.yy+gradvel.zz;
-    const float sps_k=(2.0f/3.0f)*visc_sps*div_u;
+    const float div_u=two_strain.xx+two_strain.yy+two_strain.zz;
+    const float sps_k=visc_sps*div_u; //-Factor 2/3 is included in SpsSmag constant.
     const float sps_blin=SpsBlin*prr;
     const float sumsps=-(sps_k+sps_blin);
     const float twovisc_sps=(visc_sps+visc_sps);
-    const float one_rho2=1.0f/velrho[p].w;   
-    tau[p].xx=one_rho2*(twovisc_sps*gradvel.xx +sumsps);
-    tau[p].xy=one_rho2*(visc_sps  * gradvel.xy);
-    tau[p].xz=one_rho2*(visc_sps  * gradvel.xz);
-    tau[p].yy=one_rho2*(twovisc_sps*gradvel.yy +sumsps);
-    tau[p].yz=one_rho2*(visc_sps  * gradvel.yz);
-    tau[p].zz=one_rho2*(twovisc_sps*gradvel.zz +sumsps);
+    const float one_rho=1.0f/velrho[p].w;
+    //-Computes new values of tau/rho^2.
+    tau_rho2[p].xx=one_rho*(twovisc_sps*two_strain.xx +sumsps);
+    tau_rho2[p].xy=one_rho*(visc_sps  * two_strain.xy);
+    tau_rho2[p].xz=one_rho*(visc_sps  * two_strain.xz);
+    tau_rho2[p].yy=one_rho*(twovisc_sps*two_strain.yy +sumsps);
+    tau_rho2[p].yz=one_rho*(visc_sps  * two_strain.yz);
+    tau_rho2[p].zz=one_rho*(twovisc_sps*two_strain.zz +sumsps);
   }
 }
 
@@ -923,11 +935,11 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity,bool sh
   if(t.npf){
     //-Interaction Fluid-Fluid.
     InteractionForcesFluid<tker,ftmode,tvisco,tdensity,shift> (t.npf,t.npb,false,Visco                 
-      ,t.divdata,t.dcell,t.spstau,t.spsgradvel,t.pos,t.velrho,t.code,t.idp,t.press,t.dengradcorr
+      ,t.divdata,t.dcell,t.spstaurho2,t.sps2strain,t.pos,t.velrho,t.code,t.idp,t.press,t.dengradcorr
       ,viscdt,t.ar,t.ace,t.delta,t.shiftmode,t.shiftposfs);
     //-Interaction Fluid-Bound.
     InteractionForcesFluid<tker,ftmode,tvisco,tdensity,shift> (t.npf,t.npb,true ,Visco*ViscoBoundFactor
-      ,t.divdata,t.dcell,t.spstau,t.spsgradvel,t.pos,t.velrho,t.code,t.idp,t.press,NULL
+      ,t.divdata,t.dcell,t.spstaurho2,t.sps2strain,t.pos,t.velrho,t.code,t.idp,t.press,NULL
       ,viscdt,t.ar,t.ace,t.delta,t.shiftmode,t.shiftposfs);
 
     //-Interaction of DEM Floating-Bound & Floating-Floating. //(DEM)
@@ -935,7 +947,7 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity,bool sh
       ,RidpMot+CaseNmoving,DemData,t.pos,t.velrho,t.code,t.idp,viscdt,t.ace);
 
     //-Computes tau for Laminar+SPS.
-    if(tvisco==VISCO_LaminarSPS)ComputeSpsTau(t.npf,t.npb,t.velrho,t.spsgradvel,t.spstau);
+    if(tvisco==VISCO_LaminarSPS)ComputeSpsTau(t.npf,t.npb,t.velrho,t.sps2strain,t.spstaurho2);
   }
   if(t.npbok){
     //-Interaction Bound-Fluid.

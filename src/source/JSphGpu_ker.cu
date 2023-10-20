@@ -529,7 +529,7 @@ template<TpKernel tker,TpFtMode ftmode,bool lamsps,TpDensity tdensity,bool shift
   ,float massp2,bool ftp1
   ,const float4& pscellp1,const float4& velrhop1,float pressp1
   ,const float2& taup1_xx_xy,const float2& taup1_xz_yy,const float2& taup1_yz_zz
-  ,float2& grap1_xx_xy,float2& grap1_xz_yy,float2& grap1_yz_zz
+  ,float2& two_strainp1_xx_xy,float2& two_strainp1_xz_yy,float2& two_strainp1_yz_zz
   ,float3& acep1,float& arp1,float& visc,float& deltap1
   ,TpShifting shiftmode,float4& shiftposfsp1)
 {
@@ -629,24 +629,27 @@ template<TpKernel tker,TpFtMode ftmode,bool lamsps,TpDensity tdensity,bool shift
             acep1.x+=vtemp*dvx; acep1.y+=vtemp*dvy; acep1.z+=vtemp*dvz;
           }
           //-SPS turbulence model.
-          float2 taup2_xx_xy=taup1_xx_xy; //-taup1 is always zero when p1 is not fluid. | taup1 siempre es cero cuando p1 no es fluid.
-          float2 taup2_xz_yy=taup1_xz_yy;
-          float2 taup2_yz_zz=taup1_yz_zz;
+          //-Note that taup1 is tau_a/rho_a^2 for interaction of particle a and b.
+          //-And taup1 is always zero when p1 is not a fluid particle.
+          float2 stau_xx_xy=taup1_xx_xy;
+          float2 stau_xz_yy=taup1_xz_yy;
+          float2 stau_yz_zz=taup1_yz_zz;
           if(!boundp2 && (USE_NOFLOATING || !ftp2)){//-When p2 is fluid.
-            float2 taup2=tauff[p2*3];     taup2_xx_xy.x+=taup2.x; taup2_xx_xy.y+=taup2.y;
-                   taup2=tauff[p2*3+1];   taup2_xz_yy.x+=taup2.x; taup2_xz_yy.y+=taup2.y;
-                   taup2=tauff[p2*3+2];   taup2_yz_zz.x+=taup2.x; taup2_yz_zz.y+=taup2.y;
+            //-Note that taup2 is tau_b/rho_b^2 for interaction of particle a and b.
+            float2 taup2=tauff[p2*3];     stau_xx_xy.x+=taup2.x; stau_xx_xy.y+=taup2.y;
+                   taup2=tauff[p2*3+1];   stau_xz_yy.x+=taup2.x; stau_xz_yy.y+=taup2.y;
+                   taup2=tauff[p2*3+2];   stau_yz_zz.x+=taup2.x; stau_yz_zz.y+=taup2.y;
           }
-          acep1.x+=(USE_FLOATING? ftmassp2: massp2)*(taup2_xx_xy.x*frx+taup2_xx_xy.y*fry+taup2_xz_yy.x*frz);
-          acep1.y+=(USE_FLOATING? ftmassp2: massp2)*(taup2_xx_xy.y*frx+taup2_xz_yy.y*fry+taup2_yz_zz.x*frz);
-          acep1.z+=(USE_FLOATING? ftmassp2: massp2)*(taup2_xz_yy.x*frx+taup2_yz_zz.x*fry+taup2_yz_zz.y*frz);
+          acep1.x+=(USE_FLOATING? ftmassp2: massp2)*(stau_xx_xy.x*frx + stau_xx_xy.y*fry + stau_xz_yy.x*frz);
+          acep1.y+=(USE_FLOATING? ftmassp2: massp2)*(stau_xx_xy.y*frx + stau_xz_yy.y*fry + stau_yz_zz.x*frz);
+          acep1.z+=(USE_FLOATING? ftmassp2: massp2)*(stau_xz_yy.x*frx + stau_yz_zz.x*fry + stau_yz_zz.y*frz);
           //-Velocity gradients.
           if(USE_NOFLOATING || !ftp1){//-When p1 is fluid.
             const float volp2=-(USE_FLOATING? ftmassp2: massp2)/velrhop2.w;
-            float dv=dvx*volp2; grap1_xx_xy.x+=dv*frx; grap1_xx_xy.y+=dv*fry; grap1_xz_yy.x+=dv*frz;
-                  dv=dvy*volp2; grap1_xx_xy.y+=dv*frx; grap1_xz_yy.y+=dv*fry; grap1_yz_zz.x+=dv*frz;
-                  dv=dvz*volp2; grap1_xz_yy.x+=dv*frx; grap1_yz_zz.x+=dv*fry; grap1_yz_zz.y+=dv*frz;
-            // to compute tau terms we assume that gradvel.xy=gradvel.dudy+gradvel.dvdx, gradvel.xz=gradvel.dudz+gradvel.dwdx, gradvel.yz=gradvel.dvdz+gradvel.dwdy
+            float dv=dvx*volp2; two_strainp1_xx_xy.x+=dv*frx; two_strainp1_xx_xy.y+=dv*fry; two_strainp1_xz_yy.x+=dv*frz;
+                  dv=dvy*volp2; two_strainp1_xx_xy.y+=dv*frx; two_strainp1_xz_yy.y+=dv*fry; two_strainp1_yz_zz.x+=dv*frz;
+                  dv=dvz*volp2; two_strainp1_xz_yy.x+=dv*frx; two_strainp1_yz_zz.x+=dv*fry; two_strainp1_yz_zz.y+=dv*frz;
+            // to compute tau terms we assume that two_strain.xy=dudy+dvdx, two_strain.xz=dudz+dwdx, two_strain.yz=dvdz+dwdy
             // so only 6 elements are needed instead of 3x3.
           }
         }
@@ -665,7 +668,7 @@ template<TpKernel tker,TpFtMode ftmode,bool lamsps,TpDensity tdensity,bool shift
 template<TpKernel tker,TpFtMode ftmode,bool lamsps,TpDensity tdensity,bool shift,bool symm>
   __global__ void KerInteractionForcesFluid(unsigned n,unsigned pinit,float viscob,float viscof
   ,int scelldiv,int4 nc,int3 cellzero,const int2* begincell,unsigned cellfluid
-  ,const unsigned* dcell,const float* ftomassp,const float2* tauff,float2* gradvelff
+  ,const unsigned* dcell,const float* ftomassp,const float2* tauff,float2* two_strain
   ,const float3* dengradcorr,const float4* poscell,const float4* velrho
   ,const typecode* code,const unsigned* idp,float* viscdt,float* ar,float3* ace
   ,float* delta,TpShifting shiftmode,float4* shiftposfs)
@@ -696,18 +699,18 @@ template<TpKernel tker,TpFtMode ftmode,bool lamsps,TpDensity tdensity,bool shift
     const bool rsymp1=(symm && PSCEL_GetPartY(__float_as_uint(pscellp1.w))==0); //<vs_syymmetry>
 
     //-Variables for Laminar+SPS.
-    float2 taup1_xx_xy,taup1_xz_yy,taup1_yz_zz;
+    float2 taup1_xx_xy,taup1_xz_yy,taup1_yz_zz; //-Note that taup1 is tau_a/rho_a^2.
     if(lamsps){
       taup1_xx_xy=tauff[p1*3];
       taup1_xz_yy=tauff[p1*3+1];
       taup1_yz_zz=tauff[p1*3+2];
     }
     //-Variables for Laminar+SPS (computation).
-    float2 grap1_xx_xy,grap1_xz_yy,grap1_yz_zz;
+    float2 two_strainp1_xx_xy,two_strainp1_xz_yy,two_strainp1_yz_zz;
     if(lamsps){
-      grap1_xx_xy=make_float2(0,0);
-      grap1_xz_yy=make_float2(0,0);
-      grap1_yz_zz=make_float2(0,0);
+      two_strainp1_xx_xy=make_float2(0,0);
+      two_strainp1_xz_yy=make_float2(0,0);
+      two_strainp1_yz_zz=make_float2(0,0);
     }
 
     //-Obtains neighborhood search limits.
@@ -719,8 +722,18 @@ template<TpKernel tker,TpFtMode ftmode,bool lamsps,TpDensity tdensity,bool shift
     for(int c3=ini3;c3<fin3;c3+=nc.w)for(int c2=ini2;c2<fin2;c2+=nc.x){
       unsigned pini,pfin=0;  cunsearch::ParticleRange(c2,c3,ini1,fin1,begincell,pini,pfin);
       if(pfin){
-                          KerInteractionForcesFluidBox<tker,ftmode,lamsps,tdensity,shift,false> (false,p1,pini,pfin,viscof,ftomassp,tauff,dengradcorr,poscell,velrho,code,idp,CTE.massf,ftp1,pscellp1,velrhop1,pressp1,taup1_xx_xy,taup1_xz_yy,taup1_yz_zz,grap1_xx_xy,grap1_xz_yy,grap1_yz_zz,acep1,arp1,visc,deltap1,shiftmode,shiftposfsp1);
-        if(symm && rsymp1)KerInteractionForcesFluidBox<tker,ftmode,lamsps,tdensity,shift,true > (false,p1,pini,pfin,viscof,ftomassp,tauff,dengradcorr,poscell,velrho,code,idp,CTE.massf,ftp1,pscellp1,velrhop1,pressp1,taup1_xx_xy,taup1_xz_yy,taup1_yz_zz,grap1_xx_xy,grap1_xz_yy,grap1_yz_zz,acep1,arp1,visc,deltap1,shiftmode,shiftposfsp1); //<vs_syymmetry>
+                          KerInteractionForcesFluidBox<tker,ftmode,lamsps,tdensity,shift,false> (false
+                            ,p1,pini,pfin,viscof,ftomassp,tauff,dengradcorr,poscell,velrho,code,idp
+                            ,CTE.massf,ftp1,pscellp1,velrhop1,pressp1,taup1_xx_xy,taup1_xz_yy,taup1_yz_zz
+                            ,two_strainp1_xx_xy,two_strainp1_xz_yy,two_strainp1_yz_zz,acep1,arp1,visc
+                            ,deltap1,shiftmode,shiftposfsp1);
+        //<vs_syymmetry_ini>
+        if(symm && rsymp1)KerInteractionForcesFluidBox<tker,ftmode,lamsps,tdensity,shift,true > (false
+                            ,p1,pini,pfin,viscof,ftomassp,tauff,dengradcorr,poscell,velrho,code,idp
+                            ,CTE.massf,ftp1,pscellp1,velrhop1,pressp1,taup1_xx_xy,taup1_xz_yy,taup1_yz_zz
+                            ,two_strainp1_xx_xy,two_strainp1_xz_yy,two_strainp1_yz_zz,acep1,arp1,visc
+                            ,deltap1,shiftmode,shiftposfsp1);
+        //<vs_syymmetry_end>
       }
     }
     //-Interaction with boundaries.
@@ -728,8 +741,18 @@ template<TpKernel tker,TpFtMode ftmode,bool lamsps,TpDensity tdensity,bool shift
     for(int c3=ini3;c3<fin3;c3+=nc.w)for(int c2=ini2;c2<fin2;c2+=nc.x){
       unsigned pini,pfin=0;  cunsearch::ParticleRange(c2,c3,ini1,fin1,begincell,pini,pfin);
       if(pfin){
-                        KerInteractionForcesFluidBox<tker,ftmode,lamsps,tdensity,shift,false> (true ,p1,pini,pfin,viscob,ftomassp,tauff,NULL,poscell,velrho,code,idp,CTE.massb,ftp1,pscellp1,velrhop1,pressp1,taup1_xx_xy,taup1_xz_yy,taup1_yz_zz,grap1_xx_xy,grap1_xz_yy,grap1_yz_zz,acep1,arp1,visc,deltap1,shiftmode,shiftposfsp1);
-      if(symm && rsymp1)KerInteractionForcesFluidBox<tker,ftmode,lamsps,tdensity,shift,true > (true ,p1,pini,pfin,viscob,ftomassp,tauff,NULL,poscell,velrho,code,idp,CTE.massb,ftp1,pscellp1,velrhop1,pressp1,taup1_xx_xy,taup1_xz_yy,taup1_yz_zz,grap1_xx_xy,grap1_xz_yy,grap1_yz_zz,acep1,arp1,visc,deltap1,shiftmode,shiftposfsp1);
+                          KerInteractionForcesFluidBox<tker,ftmode,lamsps,tdensity,shift,false> (true
+                            ,p1,pini,pfin,viscob,ftomassp,tauff,NULL,poscell,velrho,code,idp,CTE.massb
+                            ,ftp1,pscellp1,velrhop1,pressp1,taup1_xx_xy,taup1_xz_yy,taup1_yz_zz
+                            ,two_strainp1_xx_xy,two_strainp1_xz_yy,two_strainp1_yz_zz,acep1,arp1,visc
+                            ,deltap1,shiftmode,shiftposfsp1);
+        //<vs_syymmetry_ini>
+        if(symm && rsymp1)KerInteractionForcesFluidBox<tker,ftmode,lamsps,tdensity,shift,true > (true 
+                            ,p1,pini,pfin,viscob,ftomassp,tauff,NULL,poscell,velrho,code,idp,CTE.massb
+                            ,ftp1,pscellp1,velrhop1,pressp1,taup1_xx_xy,taup1_xz_yy,taup1_yz_zz
+                            ,two_strainp1_xx_xy,two_strainp1_xz_yy,two_strainp1_yz_zz,acep1,arp1,visc
+                            ,deltap1,shiftmode,shiftposfsp1);
+        //<vs_syymmetry_end>
       }
     }
 
@@ -747,9 +770,9 @@ template<TpKernel tker,TpFtMode ftmode,bool lamsps,TpDensity tdensity,bool shift
       if(visc>viscdt[p1])viscdt[p1]=visc;
       if(lamsps){
         float2 rg;
-        rg=gradvelff[p1*3  ];  rg=make_float2(rg.x+grap1_xx_xy.x,rg.y+grap1_xx_xy.y);  gradvelff[p1*3  ]=rg;
-        rg=gradvelff[p1*3+1];  rg=make_float2(rg.x+grap1_xz_yy.x,rg.y+grap1_xz_yy.y);  gradvelff[p1*3+1]=rg;
-        rg=gradvelff[p1*3+2];  rg=make_float2(rg.x+grap1_yz_zz.x,rg.y+grap1_yz_zz.y);  gradvelff[p1*3+2]=rg;
+        rg=two_strain[p1*3  ];  rg=make_float2(rg.x+two_strainp1_xx_xy.x,rg.y+two_strainp1_xx_xy.y);  two_strain[p1*3  ]=rg;
+        rg=two_strain[p1*3+1];  rg=make_float2(rg.x+two_strainp1_xz_yy.x,rg.y+two_strainp1_xz_yy.y);  two_strain[p1*3+1]=rg;
+        rg=two_strain[p1*3+2];  rg=make_float2(rg.x+two_strainp1_yz_zz.x,rg.y+two_strainp1_yz_zz.y);  two_strain[p1*3+2]=rg;
       }
       if(shift)shiftposfs[p1]=shiftposfsp1;
     }
@@ -816,12 +839,12 @@ template<TpKernel tker,TpFtMode ftmode,bool lamsps,TpDensity tdensity,bool shift
     if(t.symmetry) //<vs_syymmetry_ini>
       KerInteractionForcesFluid<tker,ftmode,lamsps,tdensity,shift,true> <<<sgridf,t.bsfluid,0,t.stm>>> 
       (t.fluidnum,t.fluidini,t.viscob,t.viscof,dvd.scelldiv,dvd.nc,dvd.cellzero,dvd.beginendcell,dvd.cellfluid,t.dcell
-      ,t.ftomassp,(const float2*)t.tau,(float2*)t.gradvel,t.dengradcorr,t.poscell,t.velrho,t.code,t.idp
+      ,t.ftomassp,(const float2*)t.spstaurho2,(float2*)t.sps2strain,t.dengradcorr,t.poscell,t.velrho,t.code,t.idp
       ,t.viscdt,t.ar,t.ace,t.delta,t.shiftmode,t.shiftposfs);
     else //<vs_syymmetry_end>
       KerInteractionForcesFluid<tker,ftmode,lamsps,tdensity,shift,false> <<<sgridf,t.bsfluid,0,t.stm>>> 
       (t.fluidnum,t.fluidini,t.viscob,t.viscof,dvd.scelldiv,dvd.nc,dvd.cellzero,dvd.beginendcell,dvd.cellfluid,t.dcell
-      ,t.ftomassp,(const float2*)t.tau,(float2*)t.gradvel,t.dengradcorr,t.poscell,t.velrho,t.code,t.idp
+      ,t.ftomassp,(const float2*)t.spstaurho2,(float2*)t.sps2strain,t.dengradcorr,t.poscell,t.velrho,t.code,t.idp
       ,t.viscdt,t.ar,t.ace,t.delta,t.shiftmode,t.shiftposfs);
       //KerInteractionForcesFluid<tker,ftmode,lamsps,tdensity,shift,false> <<<sgridf,t.bsfluid,0,t.stm>>> (t.fluidnum,t.fluidini,t.scelldiv,t.nc,t.cellfluid,t.viscob,t.viscof,t.begincell,Int3(t.cellmin),t.dcell,t.ftomassp,(const float2*)t.tau,(float2*)t.gradvel,t.poscell,t.velrho,t.code,t.idp,t.viscdt,t.ar,t.ace,t.delta,t.shiftmode,t.shiftposfs);
   }
@@ -1537,47 +1560,53 @@ void Interaction_ForcesDem(unsigned bsize,unsigned nfloat
 /// Computes sub-particle stress tensor (Tau) for SPS turbulence model.
 //------------------------------------------------------------------------------
 __global__ void KerComputeSpsTau(unsigned n,unsigned pini,float smag,float blin
-  ,const float4* velrho,const float2* gradvelff,float2* tauff)
+  ,const float4* velrho,const float2* sps2strain,float2* tau_rho2)
 {
   unsigned p=blockIdx.x*blockDim.x + threadIdx.x; 
   if(p<n){
     const unsigned p1=p+pini;
-    float2 rr=gradvelff[p1*3];   const float grad_xx=rr.x,grad_xy=rr.y;
-           rr=gradvelff[p1*3+1]; const float grad_xz=rr.x,grad_yy=rr.y;
-           rr=gradvelff[p1*3+2]; const float grad_yz=rr.x,grad_zz=rr.y;
-    const float pow1=grad_xx*grad_xx + grad_yy*grad_yy + grad_zz*grad_zz;
-    const float prr= grad_xy*grad_xy + grad_xz*grad_xz + grad_yz*grad_yz + pow1+pow1;
+    float2 rr=sps2strain[p1*3];   const float two_strain_xx=rr.x,two_strain_xy=rr.y;
+           rr=sps2strain[p1*3+1]; const float two_strain_xz=rr.x,two_strain_yy=rr.y;
+           rr=sps2strain[p1*3+2]; const float two_strain_yz=rr.x,two_strain_zz=rr.y;
+    const float pow1=two_strain_xx*two_strain_xx
+                   + two_strain_yy*two_strain_yy
+                   + two_strain_zz*two_strain_zz;
+    const float prr= two_strain_xy*two_strain_xy
+                   + two_strain_xz*two_strain_xz
+                   + two_strain_yz*two_strain_yz + pow1+pow1;
     const float visc_sps=smag*sqrt(prr);
-    const float div_u=grad_xx+grad_yy+grad_zz;
-    const float sps_k=(2.0f/3.0f)*visc_sps*div_u;
+    const float div_u=two_strain_xx+two_strain_yy+two_strain_zz;
+    const float sps_k=visc_sps*div_u; //-Factor 2/3 is included in smag constant.
     const float sps_blin=blin*prr;
     const float sumsps=-(sps_k+sps_blin);
     const float twovisc_sps=(visc_sps+visc_sps);
-    float one_rho2=1.0f/velrho[p1].w;
-    //-Computes new values of tau[].
-    const float tau_xx=one_rho2*(twovisc_sps*grad_xx +sumsps);
-    const float tau_xy=one_rho2*(visc_sps   *grad_xy);
-    tauff[p1*3]=make_float2(tau_xx,tau_xy);
-    const float tau_xz=one_rho2*(visc_sps   *grad_xz);
-    const float tau_yy=one_rho2*(twovisc_sps*grad_yy +sumsps);
-    tauff[p1*3+1]=make_float2(tau_xz,tau_yy);
-    const float tau_yz=one_rho2*(visc_sps   *grad_yz);
-    const float tau_zz=one_rho2*(twovisc_sps*grad_zz +sumsps);
-    tauff[p1*3+2]=make_float2(tau_yz,tau_zz);
+    float one_rho=1.0f/velrho[p1].w;
+    //-Computes new values of tau/rho^2.
+    const float tau_xx=one_rho*(twovisc_sps*two_strain_xx +sumsps);
+    const float tau_xy=one_rho*(visc_sps   *two_strain_xy);
+    tau_rho2[p1*3]=make_float2(tau_xx,tau_xy);
+    const float tau_xz=one_rho*(visc_sps   *two_strain_xz);
+    const float tau_yy=one_rho*(twovisc_sps*two_strain_yy +sumsps);
+    tau_rho2[p1*3+1]=make_float2(tau_xz,tau_yy);
+    const float tau_yz=one_rho*(visc_sps   *two_strain_yz);
+    const float tau_zz=one_rho*(twovisc_sps*two_strain_zz +sumsps);
+    tau_rho2[p1*3+2]=make_float2(tau_yz,tau_zz);
   }
 }
 
 //==============================================================================
-/// Computes sub-particle stress tensor (Tau) for SPS turbulence model.
+/// Computes sub-particle stress tensor divided by rho^2 (tau/rho^2) for SPS 
+/// turbulence model.   
 //==============================================================================
 void ComputeSpsTau(unsigned np,unsigned npb,float smag,float blin
-  ,const float4* velrho,const tsymatrix3f* gradvelg,tsymatrix3f* tau
+  ,const float4* velrho,const tsymatrix3f* sps2strain,tsymatrix3f* tau_rho2
   ,cudaStream_t stm)
 {
   const unsigned npf=np-npb;
   if(npf){
     dim3 sgridf=GetSimpleGridSize(npf,SPHBSIZE);
-    KerComputeSpsTau <<<sgridf,SPHBSIZE,0,stm>>> (npf,npb,smag,blin,velrho,(const float2*)gradvelg,(float2*)tau);
+    KerComputeSpsTau <<<sgridf,SPHBSIZE,0,stm>>> (npf,npb,smag,blin,velrho
+      ,(const float2*)sps2strain,(float2*)tau_rho2);
   }
 }
 

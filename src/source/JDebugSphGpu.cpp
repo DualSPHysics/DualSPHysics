@@ -167,7 +167,7 @@ std::string JDebugSphGpu::PrepareVars(const std::string& vlist){
 /// Checks list of variables and returns the unknown variable.
 //==============================================================================
 std::string JDebugSphGpu::CheckVars(std::string vlist){
-  const string allvars=",all,idp,gid,seq,cell,code,vel,rho,ace,ar,poscell,boundnor,spstau,spsgrad,";
+  const string allvars=",all,idp,gid,seq,cell,code,vel,rho,ace,ar,poscell,boundnor,spstaurho2,sps2strain,";
   vlist=fun::StrLower(vlist);
   while(!vlist.empty()){
     string var=fun::StrSplit(",",vlist);
@@ -271,17 +271,17 @@ void JDebugSphGpu::LoadParticlesData(const JSphGpuSingle* gp,unsigned pini
     else if(!all)Run_ExceptioonFileSta("The variable Arg is NULL.",file);
   }
   //-Loads spstau.
-  if(all || FindVar("spstau",vars)){
-    const float* ptrg=(float*)AG_CPTR(gp->SpsTau_g);
+  if(all || FindVar("spstaurho2",vars)){
+    const float* ptrg=(float*)AG_CPTR(gp->SpsTauRho2_g);
     if(ptrg){
       const unsigned* idpc=arrays->GetArrayUint("Idp",n);
       const tsymatrix3f* spstauc=(const tsymatrix3f*)fcuda::ToHostFloat(pini,n*6,(float*)ptrg);
-      float* ptr_xx=arrays->CreateArrayPtrFloat("SpsTau_xx",n);
-      float* ptr_xy=arrays->CreateArrayPtrFloat("SpsTau_xy",n);
-      float* ptr_xz=arrays->CreateArrayPtrFloat("SpsTau_xz",n);
-      float* ptr_yy=arrays->CreateArrayPtrFloat("SpsTau_yy",n);
-      float* ptr_yz=arrays->CreateArrayPtrFloat("SpsTau_yz",n);
-      float* ptr_zz=arrays->CreateArrayPtrFloat("SpsTau_zz",n);
+      float* ptr_xx=arrays->CreateArrayPtrFloat("SpsTauRho2_xx",n);
+      float* ptr_xy=arrays->CreateArrayPtrFloat("SpsTauRho2_xy",n);
+      float* ptr_xz=arrays->CreateArrayPtrFloat("SpsTauRho2_xz",n);
+      float* ptr_yy=arrays->CreateArrayPtrFloat("SpsTauRho2_yy",n);
+      float* ptr_yz=arrays->CreateArrayPtrFloat("SpsTauRho2_yz",n);
+      float* ptr_zz=arrays->CreateArrayPtrFloat("SpsTauRho2_zz",n);
       const unsigned casenbound=gp->CaseNbound;
       for(unsigned p=0;p<n;p++){
         const tsymatrix3f t=spstauc[p];
@@ -299,17 +299,17 @@ void JDebugSphGpu::LoadParticlesData(const JSphGpuSingle* gp,unsigned pini
     else if(!all)Run_ExceptioonFileSta("The variable SpsTau_g is NULL.",file);
   }
   //-Loads spsgrad.
-  if(all || FindVar("spsgrad",vars)){
-    const float* ptrg=(float*)AG_CPTR(gp->SpsGradvel_g);
+  if(all || FindVar("sps2strain",vars)){
+    const float* ptrg=(float*)AG_CPTR(gp->Sps2Strain_g);
     if(ptrg){
       const unsigned* idpc=arrays->GetArrayUint("Idp",n);
       const tsymatrix3f* spsgradc=(const tsymatrix3f*)fcuda::ToHostFloat(pini,n*6,(float*)ptrg);
-      float* ptr_xx=arrays->CreateArrayPtrFloat("SpsGrad_xx",n);
-      float* ptr_xy=arrays->CreateArrayPtrFloat("SpsGrad_xy",n);
-      float* ptr_xz=arrays->CreateArrayPtrFloat("SpsGrad_xz",n);
-      float* ptr_yy=arrays->CreateArrayPtrFloat("SpsGrad_yy",n);
-      float* ptr_yz=arrays->CreateArrayPtrFloat("SpsGrad_yz",n);
-      float* ptr_zz=arrays->CreateArrayPtrFloat("SpsGrad_zz",n);
+      float* ptr_xx=arrays->CreateArrayPtrFloat("Sps2Strain_xx",n);
+      float* ptr_xy=arrays->CreateArrayPtrFloat("Sps2Strain_xy",n);
+      float* ptr_xz=arrays->CreateArrayPtrFloat("Sps2Strain_xz",n);
+      float* ptr_yy=arrays->CreateArrayPtrFloat("Sps2Strain_yy",n);
+      float* ptr_yz=arrays->CreateArrayPtrFloat("Sps2Strain_yz",n);
+      float* ptr_zz=arrays->CreateArrayPtrFloat("Sps2Strain_zz",n);
       const unsigned casenbound=gp->CaseNbound;
       for(unsigned p=0;p<n;p++){
         const tsymatrix3f t=spsgradc[p];

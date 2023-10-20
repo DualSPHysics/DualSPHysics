@@ -325,14 +325,14 @@ void JSphGpuSingle::RunPeriodic(){
             if(TStep==STEP_Verlet){
               cusph::PeriodicDuplicateVerlet(count,Np,DomCells,perinc,listpg.cptr()
                 ,Idp_g->ptr(),Code_g->ptr(),Dcell_g->ptr(),Posxy_g->ptr(),Posz_g->ptr()
-                ,Velrho_g->ptr(),AG_PTR(SpsTau_g),VelrhoM1_g->ptr());
+                ,Velrho_g->ptr(),AG_PTR(SpsTauRho2_g),VelrhoM1_g->ptr());
             }
             if(TStep==STEP_Symplectic){
               if(PosxyPre_g->Active()!=PoszPre_g->Active() || PoszPre_g->Active()!=VelrhoPre_g->Active())
                 Run_Exceptioon("Symplectic data is invalid.");
               cusph::PeriodicDuplicateSymplectic(count,Np,DomCells,perinc,listpg.cptr()
                 ,Idp_g->ptr(),Code_g->ptr(),Dcell_g->ptr(),Posxy_g->ptr(),Posz_g->ptr()
-                ,Velrho_g->ptr(),AG_PTR(SpsTau_g),PosxyPre_g->ptr(),PoszPre_g->ptr(),VelrhoPre_g->ptr());
+                ,Velrho_g->ptr(),AG_PTR(SpsTauRho2_g),PosxyPre_g->ptr(),PoszPre_g->ptr(),VelrhoPre_g->ptr());
             }
             if(UseNormals){
               cusph::PeriodicDuplicateNormals(count,Np,listpg.cptr()
@@ -411,8 +411,8 @@ void JSphGpuSingle::RunCellDivide(bool updateperiodic){
   }
   if(TVisco==VISCO_LaminarSPS){
     agsymatrix3f spstaug("-",Arrays_Gpu,true);
-    CellDivSingle->SortDataArrays(SpsTau_g->cptr(),spstaug.ptr());
-    SpsTau_g->SwapPtr(&spstaug);
+    CellDivSingle->SortDataArrays(SpsTauRho2_g->cptr(),spstaug.ptr());
+    SpsTauRho2_g->SwapPtr(&spstaug);
   }
   if(UseNormals){
     agfloat3 auxg("-",Arrays_Gpu,true);
@@ -511,9 +511,9 @@ void JSphGpuSingle::Interaction_Forces(TpInterStep interstep){
     ,0,Nstep,DivData,Dcell_g->cptr()
     ,Posxy_g->cptr(),Posz_g->cptr(),PosCell_g->cptr()
     ,Velrho_g->cptr(),Idp_g->cptr(),Code_g->cptr()
-    ,FtoMasspg,AG_CPTR(SpsTau_g),dengradcorr
+    ,FtoMasspg,AG_CPTR(SpsTauRho2_g),dengradcorr
     ,ViscDt_g->ptr(),Ar_g->ptr(),Ace_g->ptr(),AG_PTR(Delta_g)
-    ,AG_PTR(SpsGradvel_g)
+    ,AG_PTR(Sps2Strain_g)
     ,AG_PTR(ShiftPosfs_g)
     ,NULL,NULL);
   cusph::Interaction_Forces(parms);
@@ -530,7 +530,7 @@ void JSphGpuSingle::Interaction_Forces(TpInterStep interstep){
 
   //-Computes Tau for Laminar+SPS.
   if(lamsps)cusph::ComputeSpsTau(Np,Npb,SpsSmag,SpsBlin,Velrho_g->cptr()
-    ,SpsGradvel_g->cptr(),SpsTau_g->ptr());
+    ,Sps2Strain_g->cptr(),SpsTauRho2_g->ptr());
   
   //-Add Delta-SPH correction to Ar_g[].
   if(AG_CPTR(Delta_g))cusph::AddDelta(Np-Npb,Delta_g->cptr()+Npb,Ar_g->ptr()+Npb);

@@ -167,8 +167,8 @@ protected:
   float ViscDtMax;    ///<Maximum value of ViscDt computed in Interaction_Forces().
 
   //-Variables for Laminar+SPS viscosity (Opt) & (Opt,Null).  
-  agsymatrix3f* SpsTau_g;     ///<SPS sub-particle stress tensor (Opt).
-  agsymatrix3f* SpsGradvel_g; ///<Velocity gradients (Opt,Null).
+  agsymatrix3f* SpsTauRho2_g; ///<SPS sub-particle stress tensor divided by rho^2 (tau/rho^2) (Opt).
+  agsymatrix3f* Sps2Strain_g; ///<Two times strain tensor for SPS (2S^ij) (Opt,Null).
 
   JDsTimersGpu* Timersg;  ///<Manages timers for GPU execution.
 

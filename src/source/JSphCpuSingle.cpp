@@ -446,14 +446,14 @@ void JSphCpuSingle::RunPeriodic(){
             if(TStep==STEP_Verlet){
               PeriodicDuplicateVerlet(count,Np,DomCells,perinc,listp.cptr()
                 ,Idp_c->ptr(),Code_c->ptr(),Dcell_c->ptr(),Pos_c->ptr(),Velrho_c->ptr()
-                ,AC_PTR(SpsTau_c),VelrhoM1_c->ptr());
+                ,AC_PTR(SpsTauRho2_c),VelrhoM1_c->ptr());
             }
             if(TStep==STEP_Symplectic){
               if(PosPre_c->Active()!=VelrhoPre_c->Active())
                 Run_Exceptioon("Symplectic data is invalid.");
               PeriodicDuplicateSymplectic(count,Np,DomCells,perinc,listp.cptr()
                 ,Idp_c->ptr(),Code_c->ptr(),Dcell_c->ptr(),Pos_c->ptr(),Velrho_c->ptr()
-                ,AC_PTR(SpsTau_c),PosPre_c->ptr(),VelrhoPre_c->ptr());
+                ,AC_PTR(SpsTauRho2_c),PosPre_c->ptr(),VelrhoPre_c->ptr());
             }
             if(UseNormals){
               PeriodicDuplicateNormals(count,Np,DomCells,perinc,listp.cptr()
@@ -505,7 +505,7 @@ void JSphCpuSingle::RunCellDivide(bool updateperiodic){
     CellDivSingle->SortArray(VelrhoPre_c->ptr());
   }
   if(TVisco==VISCO_LaminarSPS){
-    CellDivSingle->SortArray(SpsTau_c->ptr());
+    CellDivSingle->SortArray(SpsTauRho2_c->ptr());
   }
   if(UseNormals){
     CellDivSingle->SortArray(BoundNor_c->ptr());
@@ -600,7 +600,7 @@ void JSphCpuSingle::Interaction_Forces(TpInterStep interstep){
     ,Press_c->cptr(),dengradcorr
     ,Ar_c->ptr(),Ace_c->ptr(),AC_PTR(Delta_c)
     ,ShiftingMode,AC_PTR(ShiftPosfs_c)
-    ,AC_PTR(SpsTau_c),AC_PTR(SpsGradvel_c)
+    ,AC_PTR(SpsTauRho2_c),AC_PTR(Sps2Strain_c)
   );
   StInterResultc res;
   res.viscdt=0;

@@ -243,7 +243,7 @@ protected:
   float Eta2;              ///<Constant related to H (Eta2=(h*0.1)*(h*0.1)).
 
   //-Constants for computation 2 (computed starting from previous constants).
-  float SpsSmag;           ///<Smagorinsky constant used in SPS turbulence model.
+  float SpsSmag;           ///<Term with Smagorinsky constant used in SPS turbulence model.
   float SpsBlin;           ///<Blin constant used in the SPS turbulence model.
   float DDTkhCte;          ///<Store fixed constant DDTkh.
   float DDTkh;             ///<Constant for DDT1 & DDT2. DDTkh=DDTValue*KernelSize

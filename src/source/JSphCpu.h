@@ -45,8 +45,8 @@ typedef struct{
   float*   delta;
   TpShifting shiftmode;
   tfloat4*   shiftposfs;
-  tsymatrix3f* spstau;
-  tsymatrix3f* spsgradvel;
+  tsymatrix3f* spstaurho2;
+  tsymatrix3f* sps2strain;
 }stinterparmsc;
 
 ///Collects parameters for particle interaction on CPU.
@@ -57,7 +57,7 @@ inline stinterparmsc StInterparmsc(unsigned np,unsigned npb,unsigned npbok
   ,const tfloat3* dengradcorr
   ,float* ar,tfloat3* ace,float* delta
   ,TpShifting shiftmode,tfloat4* shiftposfs
-  ,tsymatrix3f* spstau,tsymatrix3f* spsgradvel
+  ,tsymatrix3f* spstaurho2,tsymatrix3f* sps2strain
 )
 {
   stinterparmsc d={np,npb,npbok,(np-npb)
@@ -67,7 +67,7 @@ inline stinterparmsc StInterparmsc(unsigned np,unsigned npb,unsigned npbok
     ,dengradcorr
     ,ar,ace,delta
     ,shiftmode,shiftposfs
-    ,spstau,spsgradvel
+    ,spstaurho2,sps2strain
   };
   return(d);
 }
@@ -148,8 +148,8 @@ protected:
   float ViscDtMax;      ///<Max value of ViscDt calculated in Interaction_Forces().
 
   //-Variables for Laminar+SPS viscosity (Opt) & (Opt,Null).  
-  acsymatrix3f* SpsTau_c;     ///<SPS sub-particle stress tensor (Opt).
-  acsymatrix3f* SpsGradvel_c; ///<Velocity gradients (Opt,Null).
+  acsymatrix3f* SpsTauRho2_c; ///<SPS sub-particle stress tensor divided by rho^2 (tau/rho^2) (Opt).
+  acsymatrix3f* Sps2Strain_c; ///<Two times strain tensor for SPS (2S^ij) (Opt,Null).
 
   JDsTimersCpu* Timersc;  ///<Manages timers for CPU execution.
 
@@ -222,7 +222,7 @@ protected:
     ,const tfloat3* boundnor,const tfloat3* motionvel,tfloat4* velrho);
 
   void ComputeSpsTau(unsigned n,unsigned pini,const tfloat4* velrho
-    ,const tsymatrix3f* spsgradvel,tsymatrix3f* tau)const;
+    ,const tsymatrix3f* sps2strain,tsymatrix3f* tau_rho2)const;
 
   void ComputeVerletVarsFluid(bool shift,const tfloat3* indirvel
     ,const tfloat4* velrho1,const tfloat4* velrho2,double dt,double dt2

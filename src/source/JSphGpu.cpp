@@ -171,8 +171,8 @@ void JSphGpu::InitVars(){
   Delta_g=NULL;
   ShiftPosfs_g=NULL;   //-Shifting.
 
-  SpsTau_g=NULL;       //-Laminar+SPS.
-  SpsGradvel_g=NULL;   //-Laminar+SPS.
+  SpsTauRho2_g=NULL;   //-Laminar+SPS.
+  Sps2Strain_g=NULL;   //-Laminar+SPS.
 
   FreeGpuMemoryParticles();
 
@@ -340,8 +340,8 @@ void JSphGpu::FreeGpuMemoryParticles(){
   delete Delta_g;       Delta_g=NULL;
   delete ShiftPosfs_g;  ShiftPosfs_g=NULL;  //-Shifting.
 
-  delete SpsTau_g;      SpsTau_g=NULL;      //-Laminar+SPS.
-  delete SpsGradvel_g;  SpsGradvel_g=NULL;  //-Laminar+SPS.
+  delete SpsTauRho2_g;  SpsTauRho2_g=NULL;  //-Laminar+SPS.
+  delete Sps2Strain_g;  Sps2Strain_g=NULL;  //-Laminar+SPS.
 
   //-Free GPU memory for array objects.
   GpuParticlesSize=0;
@@ -392,8 +392,8 @@ void JSphGpu::AllocGpuMemoryParticles(unsigned np){
   ShiftPosfs_g=new agfloat4("ShiftPosfsg",Arrays_Gpu,false); //-NO INITIAL MEMORY.
   //-Arrays for Laminar+SPS.
   if(TVisco==VISCO_LaminarSPS){
-    SpsTau_g    =new agsymatrix3f("SpsTaug"    ,Arrays_Gpu,true);
-    SpsGradvel_g=new agsymatrix3f("SpsGradvelg",Arrays_Gpu,false); //-NO INITIAL MEMORY.
+    SpsTauRho2_g=new agsymatrix3f("SpsTauRho2g",Arrays_Gpu,true);
+    Sps2Strain_g=new agsymatrix3f("Sps2Straing",Arrays_Gpu,false); //-NO INITIAL MEMORY.
   }
 
   Check_CudaErroor("Failed GPU memory allocation.");
@@ -732,7 +732,7 @@ void JSphGpu::InitRunGpu(){
   InitRun(Np,Idp_c->cptr(),AuxPos_c->cptr());
   if(CaseNfloat)InitFloatingsGpu(FtoMasspg,FtoDatpg,FtoCenterg,DemDatag);
   if(TStep==STEP_Verlet)VelrhoM1_g->CuCopyFrom(Velrho_g,Np);
-  if(TVisco==VISCO_LaminarSPS)SpsTau_g->CuMemset(0,Np);
+  if(TVisco==VISCO_LaminarSPS)SpsTauRho2_g->CuMemset(0,Np);
   if(MotionVel_g)MotionVel_g->CuMemset(0,Np);
   Check_CudaErroor("Failed initializing variables for execution.");
 }
@@ -749,7 +749,7 @@ void JSphGpu::PreInteraction_Forces(){
   Ace_g->Reserve();
   if(DDTArray)Delta_g->Reserve();
   if(Shifting)ShiftPosfs_g->Reserve();
-  if(TVisco==VISCO_LaminarSPS)SpsGradvel_g->Reserve();
+  if(TVisco==VISCO_LaminarSPS)Sps2Strain_g->Reserve();
 
   //-Initialise arrays.
   const unsigned npf=Np-Npb;
@@ -757,7 +757,7 @@ void JSphGpu::PreInteraction_Forces(){
   Ar_g->CuMemset(0,Np);                                             //Arg[]=0
   Ace_g->CuMemset(0,Np);                                            //Aceg[]=(0)
   if(AG_CPTR(Delta_g))Delta_g->CuMemset(0,Np);                      //Deltag[]=0
-  if(AG_CPTR(SpsGradvel_g))SpsGradvel_g->CuMemsetOffset(Npb,0,npf); //SpsGradvelg[]=(0).
+  if(AG_CPTR(Sps2Strain_g))Sps2Strain_g->CuMemsetOffset(Npb,0,npf); //Sps2Straing[]=(0).
   
   //-Select particles for shifting.
   if(AC_CPTR(ShiftPosfs_g))Shifting->InitGpu(npf,Npb,Posxy_g->cptr()
@@ -791,7 +791,7 @@ void JSphGpu::PosInteraction_Forces(){
   Ace_g->Free();
   Delta_g->Free();
   ShiftPosfs_g->Free();
-  if(SpsGradvel_g)SpsGradvel_g->Free();
+  if(Sps2Strain_g)Sps2Strain_g->Free();
 }
 
 //==============================================================================
