@@ -838,7 +838,7 @@ void JSph::LoadConfigCommands(const JSphCfgRun* cfg){
   if(TBoundary==BC_MDBC){
     if(cfg->MdbcThreshold >=0)MdbcThreshold=cfg->MdbcThreshold;
     if(cfg->MdbcFastSingle>=0)MdbcFastSingle=(cfg->MdbcFastSingle>0);
-    if(SlipMode!=SLIP_Vel0)Run_Exceptioon("Only the slip mode velocity=0 is allowed with mDBC conditions."); //SHABA
+    // if(SlipMode!=SLIP_Vel0)Run_Exceptioon("Only the slip mode velocity=0 is allowed with mDBC conditions."); //SHABA
     if(Cpu)MdbcFastSingle=false;
   }
     

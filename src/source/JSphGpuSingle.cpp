@@ -336,7 +336,7 @@ void JSphGpuSingle::RunPeriodic(){
             }
             if(UseNormals){
               cusph::PeriodicDuplicateNormals(count,Np,listpg.cptr()
-                ,BoundNor_g->ptr(),AG_PTR(MotionVel_g));
+                ,BoundNor_g->ptr(),AG_PTR(MotionVel_g),AG_PTR(MotionAce_g));
             }
             //-Update the total number of particles.
             Np+=count;
@@ -414,7 +414,7 @@ void JSphGpuSingle::RunCellDivide(bool updateperiodic){
     CellDivSingle->SortDataArrays(SpsTauRho2_g->cptr(),spstaug.ptr());
     SpsTauRho2_g->SwapPtr(&spstaug);
   }
-  if(UseNormals){
+  // if(UseNormals){
     agfloat3 auxg("-",Arrays_Gpu,true);
     CellDivSingle->SortDataArrays(BoundNor_g->cptr(),auxg.ptr());
     BoundNor_g->SwapPtr(&auxg);
@@ -422,7 +422,11 @@ void JSphGpuSingle::RunCellDivide(bool updateperiodic){
       CellDivSingle->SortDataArrays(MotionVel_g->cptr(),auxg.ptr());
       MotionVel_g->SwapPtr(&auxg);
     }
-  }
+    if(MotionAce_g){
+      CellDivSingle->SortDataArrays(MotionAce_g->cptr(),auxg.ptr());
+      MotionAce_g->SwapPtr(&auxg);
+    }
+  // }
 
   //-Collect divide data. | Recupera datos del divide.
   Np=CellDivSingle->GetNpFinal();
@@ -488,11 +492,12 @@ void JSphGpuSingle::SaveFluidOut(){
 //==============================================================================
 void JSphGpuSingle::Interaction_Forces(TpInterStep interstep){
   //-Boundary correction for mDBC.
-  const bool runmdbc=(TBoundary==BC_MDBC && (MdbcCorrector || interstep!=INTERSTEP_SymCorrector));
+  PreInteraction_Forces();
+  const bool runmdbc=(TBoundary==BC_MDBC);
   if(runmdbc)MdbcBoundCorrection(); 
 
   InterStep=interstep;
-  PreInteraction_Forces();
+  
 
   float3* dengradcorr=NULL;
 
@@ -515,6 +520,7 @@ void JSphGpuSingle::Interaction_Forces(TpInterStep interstep){
     ,ViscDt_g->ptr(),Ar_g->ptr(),Ace_g->ptr(),AG_PTR(Delta_g)
     ,AG_PTR(Sps2Strain_g)
     ,AG_PTR(ShiftPosfs_g)
+    ,AG_CPTR(BoundNor_g),AG_PTR(BoundOnOff_g),AG_CPTR(MotionVel_g)
     ,NULL,NULL);
   cusph::Interaction_Forces(parms);
 
@@ -557,7 +563,7 @@ void JSphGpuSingle::MdbcBoundCorrection(){
   cusph::Interaction_MdbcCorrection(TKernel,Simulate2D,SlipMode,MdbcFastSingle
     ,n,CaseNbound,MdbcThreshold,DivData,Map_PosMin,Posxy_g->cptr(),Posz_g->cptr()
     ,PosCell_g->cptr(),Code_g->cptr(),Idp_g->cptr(),BoundNor_g->cptr()
-    ,AG_CPTR(MotionVel_g),Velrho_g->ptr());
+    ,AG_CPTR(MotionVel_g),Velrho_g->ptr(),MotionAce_g->cptr(),BoundOnOff_g->ptr(),Gravity);
   Timersg->TmStop(TMG_CfPreForces,true);
 }
 
