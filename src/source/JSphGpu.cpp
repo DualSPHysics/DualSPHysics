@@ -758,6 +758,7 @@ void JSphGpu::PreInteraction_Forces(){
   if(DDTArray)Delta_g->Reserve();
   if(Shifting)ShiftPosfs_g->Reserve();
   if(TVisco==VISCO_LaminarSPS)Sps2Strain_g->Reserve();
+  BoundOnOff_g->Reserve();                                          // SHABA
 
   //-Initialise arrays.
   const unsigned npf=Np-Npb;
@@ -766,7 +767,8 @@ void JSphGpu::PreInteraction_Forces(){
   Ace_g->CuMemset(0,Np);                                            //Aceg[]=(0)
   if(AG_CPTR(Delta_g))Delta_g->CuMemset(0,Np);                      //Deltag[]=0
   if(AG_CPTR(Sps2Strain_g))Sps2Strain_g->CuMemsetOffset(Npb,0,npf); //Sps2Straing[]=(0).
-  
+  BoundOnOff_g->CuMemset(1,Np);                                     // SHABA
+
   //-Select particles for shifting.
   if(AC_CPTR(ShiftPosfs_g))Shifting->InitGpu(npf,Npb,Posxy_g->cptr()
     ,Posz_g->cptr(),ShiftPosfs_g->ptr());
@@ -800,6 +802,8 @@ void JSphGpu::PosInteraction_Forces(){
   Delta_g->Free();
   ShiftPosfs_g->Free();
   if(Sps2Strain_g)Sps2Strain_g->Free();
+  BoundOnOff_g->Free();                     // SHABA
+
 }
 
 //==============================================================================
