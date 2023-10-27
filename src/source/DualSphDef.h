@@ -570,10 +570,10 @@ inline const char* GetNameCellMode(TpCellMode cellmode){
 
 ///Domain division mode.
 typedef enum{ 
-  MGDIV_None=0,      ///<Not specified. 
-  MGDIV_X=1,         ///<Main division in X direction.
-  MGDIV_Y=2,         ///<Main division in Y direction.
-  MGDIV_Z=3          ///<Main division in Z direction.
+  MGDIV_None=0      ///<Not specified. 
+ ,MGDIV_X=1         ///<Main division in X direction.
+ ,MGDIV_Y=2         ///<Main division in Y direction.
+ ,MGDIV_Z=3         ///<Main division in Z direction (used for Single-GPU).
 }TpMgDivMode;  
 
 ///Returns the name of division mode in text.

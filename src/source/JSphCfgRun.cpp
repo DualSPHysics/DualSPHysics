@@ -98,21 +98,27 @@ void JSphCfgRun::VisuInfo()const{
   printf("    -opt <file> Loads a file configuration\n");
   printf("\n");
 
-  printf("  Execution options:\n");
+  printf("  Execution options for CPU:\n");
   printf("    -cpu        Execution on CPU (option by default)\n");
-  printf("    -gpu[:id]   Execution on GPU and id of the device\n");
+#ifdef OMP_USE
+  printf("    -ompthreads:<int>  Only for CPU execution, indicates the number of threads\n");
+  printf("                by host for parallel execution, this takes the number of cores\n");
+  printf("                of the device by default (or using zero value)\n");
+#endif
   printf("\n");
+
+#ifdef _WITHGPU
+  printf("  Execution options for Single-GPU:\n");
+  printf("    -gpu[:id]   Execution on GPU and optional id of the device\n");
+  printf("\n");
+#endif
+
+  printf("  General execution options:\n");
   printf("    -stable     The result is always the same but the execution is slower\n");
   printf("    -saveposdouble:<0/1>  Saves position using double precision (default=0)\n");
   printf("    -svextraparts:<int>  PART interval for saving extra data (default=0)\n");
   printf("    -svextraparts:<list> List of PARTs for saving extra data (default=0)\n");
   printf("\n");
-#ifdef OMP_USE
-  printf("    -ompthreads:<int>  Only for CPU execution, indicates the number of threads\n");
-  printf("                   by host for parallel execution, this takes the number of \n");
-  printf("                   cores of the device by default (or using zero value)\n");
-  printf("\n");
-#endif
   printf("    -cellmode:<mode>  Specifies the cell division mode\n");
   printf("        full      Lowest and the least expensive in memory (by default)\n");
   printf("        half      Fastest and the most expensive in memory\n");

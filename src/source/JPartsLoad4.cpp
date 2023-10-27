@@ -58,6 +58,7 @@ void JPartsLoad4::Reset(){
   Simulate2DPosY=0;
   NpDynamic=false;
   PosSingle=false;
+  CaseH=0;
   CaseNp=CaseNfixed=CaseNmoving=CaseNfloat=CaseNfluid=0;
   PeriMode=PERI_Unknown;
   PeriXinc=PeriYinc=PeriZinc=TDouble3(0);
@@ -196,6 +197,7 @@ void JPartsLoad4::LoadParticles(const std::string& casedir
   MapSize=(MapPosMin!=MapPosMax);
   CasePosMin=pd.Get_CasePosMin();
   CasePosMax=pd.Get_CasePosMax();
+  CaseH=pd.Get_H();
   if(!pd.Get_IdpSimple())Run_Exceptioon("Only Idp (32 bits) is valid at the moment.");
   //-Loads data for restarting.
   if(PartBegin){

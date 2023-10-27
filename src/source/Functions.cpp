@@ -1466,6 +1466,12 @@ std::string VarStr(const std::string& name,const std::vector<unsigned>& values
   return(VarStr(name,unsigned(values.size()),values.data(),size));
 }
 //==============================================================================
+std::string VarStr(const std::string& name,const std::vector<double>& values
+  ,std::string size)
+{
+  return(VarStr(name,unsigned(values.size()),values.data(),size));
+}
+//==============================================================================
 std::string VarStr(const std::string& name,const std::vector<tdouble3>& values
   ,std::string size,const char* fmt)
 {

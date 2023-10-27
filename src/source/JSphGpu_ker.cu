@@ -1307,7 +1307,7 @@ template<TpKernel tker,bool sim2d,TpSlipMode tslip> void Interaction_MdbcCorrect
   ,const StDivDataGpu& dvd,const tdouble3& mapposmin,const double2* posxy
   ,const double* posz,const float4* poscell,const typecode* code
   ,const unsigned* idp,const float3* boundnor,const float3* motionvel
-  ,float4* velrho)
+  ,float4* velrho,cudaStream_t stm)
 {
   const int2* beginendcellfluid=dvd.beginendcell+dvd.cellfluid;
   const float determlimit=1e-3f;
@@ -1316,15 +1316,15 @@ template<TpKernel tker,bool sim2d,TpSlipMode tslip> void Interaction_MdbcCorrect
     const unsigned bsbound=128;
     dim3 sgridb=cusph::GetSimpleGridSize(n,bsbound);
     if(fastsingle){//-mDBC-Fast_v2
-      KerInteractionMdbcCorrection_Fast <tker,sim2d,tslip> <<<sgridb,bsbound>>> (n,nbound
-        ,determlimit,mdbcthreshold,Double3(mapposmin),dvd.poscellsize,poscell
-        ,dvd.scelldiv,dvd.nc,dvd.cellzero,beginendcellfluid
+      KerInteractionMdbcCorrection_Fast <tker,sim2d,tslip> <<<sgridb,bsbound,0,stm>>>
+        (n,nbound,determlimit,mdbcthreshold,Double3(mapposmin),dvd.poscellsize
+        ,poscell,dvd.scelldiv,dvd.nc,dvd.cellzero,beginendcellfluid
         ,posxy,posz,code,idp,boundnor,motionvel,velrho);
     }
     else{//-mDBC_v0
-      KerInteractionMdbcCorrection_Dbl <tker,sim2d,tslip> <<<sgridb,bsbound>>> (n,nbound
-        ,determlimit,mdbcthreshold,dvd.scelldiv,dvd.nc,dvd.cellzero,beginendcellfluid
-        ,posxy,posz,code,idp,boundnor,motionvel,velrho);
+      KerInteractionMdbcCorrection_Dbl <tker,sim2d,tslip> <<<sgridb,bsbound,0,stm>>>
+        (n,nbound,determlimit,mdbcthreshold,dvd.scelldiv,dvd.nc,dvd.cellzero
+        ,beginendcellfluid,posxy,posz,code,idp,boundnor,motionvel,velrho);
     }
   }
 }
@@ -1334,21 +1334,21 @@ template<TpKernel tker> void Interaction_MdbcCorrectionT(bool simulate2d
   ,float mdbcthreshold,const StDivDataGpu& dvd,const tdouble3& mapposmin
   ,const double2* posxy,const double* posz,const float4* poscell
   ,const typecode* code,const unsigned* idp,const float3* boundnor
-  ,const float3* motionvel,float4* velrho)
+  ,const float3* motionvel,float4* velrho,cudaStream_t stm)
 {
   switch(slipmode){
     case SLIP_Vel0:{ const TpSlipMode tslip=SLIP_Vel0;
-      if(simulate2d)Interaction_MdbcCorrectionT2 <tker,true ,tslip> (fastsingle,n,nbound,mdbcthreshold,dvd,mapposmin,posxy,posz,poscell,code,idp,boundnor,motionvel,velrho);
-      else          Interaction_MdbcCorrectionT2 <tker,false,tslip> (fastsingle,n,nbound,mdbcthreshold,dvd,mapposmin,posxy,posz,poscell,code,idp,boundnor,motionvel,velrho);
+      if(simulate2d)Interaction_MdbcCorrectionT2 <tker,true ,tslip> (fastsingle,n,nbound,mdbcthreshold,dvd,mapposmin,posxy,posz,poscell,code,idp,boundnor,motionvel,velrho,stm);
+      else          Interaction_MdbcCorrectionT2 <tker,false,tslip> (fastsingle,n,nbound,mdbcthreshold,dvd,mapposmin,posxy,posz,poscell,code,idp,boundnor,motionvel,velrho,stm);
     }break;
 #ifndef DISABLE_MDBC_EXTRAMODES
     case SLIP_NoSlip:{ const TpSlipMode tslip=SLIP_NoSlip;
-      if(simulate2d)Interaction_MdbcCorrectionT2 <tker,true ,tslip> (fastsingle,n,nbound,mdbcthreshold,dvd,mapposmin,posxy,posz,poscell,code,idp,boundnor,motionvel,velrho);
-      else          Interaction_MdbcCorrectionT2 <tker,false,tslip> (fastsingle,n,nbound,mdbcthreshold,dvd,mapposmin,posxy,posz,poscell,code,idp,boundnor,motionvel,velrho);
+      if(simulate2d)Interaction_MdbcCorrectionT2 <tker,true ,tslip> (fastsingle,n,nbound,mdbcthreshold,dvd,mapposmin,posxy,posz,poscell,code,idp,boundnor,motionvel,velrho,stm);
+      else          Interaction_MdbcCorrectionT2 <tker,false,tslip> (fastsingle,n,nbound,mdbcthreshold,dvd,mapposmin,posxy,posz,poscell,code,idp,boundnor,motionvel,velrho,stm);
     }break;
     case SLIP_FreeSlip:{ const TpSlipMode tslip=SLIP_FreeSlip;
-      if(simulate2d)Interaction_MdbcCorrectionT2 <tker,true ,tslip> (fastsingle,n,nbound,mdbcthreshold,dvd,mapposmin,posxy,posz,poscell,code,idp,boundnor,motionvel,velrho);
-      else          Interaction_MdbcCorrectionT2 <tker,false,tslip> (fastsingle,n,nbound,mdbcthreshold,dvd,mapposmin,posxy,posz,poscell,code,idp,boundnor,motionvel,velrho);
+      if(simulate2d)Interaction_MdbcCorrectionT2 <tker,true ,tslip> (fastsingle,n,nbound,mdbcthreshold,dvd,mapposmin,posxy,posz,poscell,code,idp,boundnor,motionvel,velrho,stm);
+      else          Interaction_MdbcCorrectionT2 <tker,false,tslip> (fastsingle,n,nbound,mdbcthreshold,dvd,mapposmin,posxy,posz,poscell,code,idp,boundnor,motionvel,velrho,stm);
     }break;
 #endif
     default: throw "SlipMode unknown at Interaction_MdbcCorrectionT().";
@@ -1363,17 +1363,17 @@ void Interaction_MdbcCorrection(TpKernel tkernel,bool simulate2d,TpSlipMode slip
   ,const StDivDataGpu& dvd,const tdouble3& mapposmin
   ,const double2* posxy,const double* posz,const float4* poscell
   ,const typecode* code,const unsigned* idp,const float3* boundnor
-  ,const float3* motionvel,float4* velrho)
+  ,const float3* motionvel,float4* velrho,cudaStream_t stm)
 {
   switch(tkernel){
     case KERNEL_Wendland:{ const TpKernel tker=KERNEL_Wendland;
       Interaction_MdbcCorrectionT <tker> (simulate2d,slipmode,fastsingle,n,nbound,mdbcthreshold
-        ,dvd,mapposmin,posxy,posz,poscell,code,idp,boundnor,motionvel,velrho);
+        ,dvd,mapposmin,posxy,posz,poscell,code,idp,boundnor,motionvel,velrho,stm);
     }break;
 #ifndef DISABLE_KERNELS_EXTRA
     case KERNEL_Cubic:{ const TpKernel tker=KERNEL_Cubic;
       Interaction_MdbcCorrectionT <tker> (simulate2d,slipmode,fastsingle,n,nbound,mdbcthreshold
-        ,dvd,mapposmin,posxy,posz,poscell,code,idp,boundnor,motionvel,velrho);
+        ,dvd,mapposmin,posxy,posz,poscell,code,idp,boundnor,motionvel,velrho,stm);
     }break;
 #endif
     default: throw "Kernel unknown at Interaction_MdbcCorrection().";
@@ -1787,7 +1787,8 @@ __global__ void KerCalcRidp(unsigned n,unsigned ini,unsigned idini,unsigned idfi
 /// y todas son CODE_NORMAL.
 //==============================================================================
 void CalcRidp(bool periactive,unsigned np,unsigned pini,unsigned idini
-  ,unsigned idfin,const typecode* code,const unsigned* idp,unsigned* ridp)
+  ,unsigned idfin,const typecode* code,const unsigned* idp,unsigned* ridp
+  ,cudaStream_t stm)
 {
   //-Assigns values UINT_MAX
   const unsigned nsel=idfin-idini;
@@ -1795,8 +1796,8 @@ void CalcRidp(bool periactive,unsigned np,unsigned pini,unsigned idini
   //-Computes position according to id. | Calcula posicion segun id.
   if(np){
     dim3 sgrid=GetSimpleGridSize(np,SPHBSIZE);
-    if(periactive)KerCalcRidp <<<sgrid,SPHBSIZE>>> (np,pini,idini,idfin,code,idp,ridp);
-    else          KerCalcRidp <<<sgrid,SPHBSIZE>>> (np,pini,idini,idfin,idp,ridp);
+    if(periactive)KerCalcRidp <<<sgrid,SPHBSIZE,0,stm>>> (np,pini,idini,idfin,code,idp,ridp);
+    else          KerCalcRidp <<<sgrid,SPHBSIZE,0,stm>>> (np,pini,idini,idfin,idp,ridp);
   }
 }
 

@@ -26,7 +26,7 @@
 
 ///Structure with data of cell division for neighborhood search on GPU.
 typedef struct{
-  TpMgDivMode axis;
+  TpMgDivMode axis;     ///<Axis division (X, Y or Z).
   tuint3 ncells;
   int scelldiv;         ///<Value to divide KernelSize (1 or 2).
   int4 nc;

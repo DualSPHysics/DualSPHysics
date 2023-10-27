@@ -61,6 +61,7 @@ protected:
   double Simulate2DPosY;   ///<Y value in 2D simulations.
   bool NpDynamic;          ///<CaseNp can increase.
   bool PosSingle;          ///<Particles position in single precision.
+  double CaseH;            ///<SPH constant h. 
 
   ullong CaseNp;           ///<Number of total particles.  
   ullong CaseNfixed;       ///<Number of fixed boundary particles. 
@@ -121,6 +122,12 @@ public:
   bool GetPosSingle()const{ return(PosSingle); }
   double GetPartBeginTimeStep()const{ return(PartBeginTimeStep); }
   ullong GetPartBeginTotalNp()const{ return(PartBeginTotalNp); }
+
+  double GetCaseH()const{ return(CaseH); }
+  ullong GetCaseNfixed() const{ return(CaseNfixed); }
+  ullong GetCaseNmoving()const{ return(CaseNmoving); }
+  ullong GetCaseNfloat() const{ return(CaseNfloat); }
+  ullong GetCaseNfluid() const{ return(CaseNfluid); }
 
   const unsigned* GetIdp(){ return(Idp); }
   const tdouble3* GetPos(){ return(Pos); }

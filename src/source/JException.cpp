@@ -21,6 +21,7 @@
 #include "JException.h"
 #include "Functions.h"
 #include <cstdio>
+#include <iostream>
 
 //==============================================================================
 /// Constructor.
@@ -85,8 +86,9 @@ std::string JException::ToStr()const{
 /// Visualises the exception message in console.
 //==============================================================================
 void JException::Print()const{
-  printf("%s\n",ToStr().c_str());
+  //printf("%s\n",ToStr().c_str());
   fflush(stdout);
+  std::cerr << ToStr() << std::endl;
 }
 
 
