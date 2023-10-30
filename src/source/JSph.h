@@ -341,8 +341,9 @@ protected:
   JDsPips* DsPips;          ///<Object for PIPS calculation.
 
   //-Variables for division in cells.
-  bool CellDomFixed;       ///<The Cell domain is fixed according maximum domain size.
   TpCellMode CellMode;     ///<Cell division mode.
+  bool CellDomFixed;       ///<The Cell domain is fixed according maximum domain size (default=false).
+
   int ScellDiv;            ///<Value to divide KernelSize (1 or 2).
   float Scell;             ///<Cell size: KernelSize/ScellDiv (KernelSize or KernelSize/2).
   float MovLimit;          ///<Maximum distance a particle is allowed to move in one step (Scell*0.9).

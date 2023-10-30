@@ -298,6 +298,13 @@ typedef struct StrInfoPartPlus{
     timesim=0;
     gpudata=false;
   }
+  /// Stores basic values displayed in JSph::SaveData().
+  void SetBasic(unsigned npsim,unsigned npnormal,unsigned npf,unsigned nct){
+    this->npsim=npsim;
+    this->npnormal=npnormal;
+    this->npf=npf;
+    this->nct=nct;
+  }
   void SetNct(unsigned nct,unsigned nctsize){
     this->nct=nct; this->nctsize=nctsize;
   }
@@ -315,6 +322,12 @@ typedef struct StrInfoPartPlus{
     this->npbper=npbper; this->npfper=npfper;
   }
   //-Adding values functions.
+  void AddBasic(const StrInfoPartPlus& v){
+    this->npsim+=v.npsim;
+    this->npnormal+=v.npnormal;
+    this->npf+=v.npf;
+    this->nct+=v.nct;
+  }
   void AddNct(const StrInfoPartPlus& v){
     this->nct+=v.nct; this->nctsize+=v.nctsize;
   }

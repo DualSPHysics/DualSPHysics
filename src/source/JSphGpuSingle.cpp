@@ -452,6 +452,7 @@ void JSphGpuSingle::RunCellDivide(bool updateperiodic){
     Timersg->TmStop(TMG_NlOutCheck,true);
   }
   BoundChanged=false;
+  //JDebugSphGpu::SaveVtk("_DG_Divide_End.vtk",Nstep,0,Np,"idp,vel,rho",this);
 }
 
 //==============================================================================
@@ -926,6 +927,8 @@ void JSphGpuSingle::SaveData(){
     TimerSim.Stop();
     infoplus.timesim=TimerSim.GetElapsedTimeD()/1000.;
   }
+  else infoplus.SetBasic(Np,npnormal,Np-Npb,CellDivSingle->GetNct());
+
   //-Obtains current domain limits.
   const tdouble6 vdom=CellDivSingle->GetDomainLimitsMinMax();
   //-Stores particle data. | Graba datos de particulas.

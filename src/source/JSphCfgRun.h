@@ -45,8 +45,8 @@ public:
 
   int OmpThreads;
 
-  bool CellDomFixed;    ///<The Cell domain is fixed according maximum domain size.
   TpCellMode CellMode;  ///<Cell division mode.
+  bool CellDomFixed;    ///<The Cell domain is fixed according maximum domain size (default=false).
   int TBoundary;        ///<Boundary method: 0:None, 1:DBC (by default), 2:mDBC (SlipMode: 1:DBC vel=0)
   int SlipMode;         ///<Slip mode for mDBC: 0:None, 1:DBC vel=0, 2:No-slip, 3:Free slip (default=1).
   int MdbcFastSingle;   ///<Matrix calculations are done in single precision (default=1). 

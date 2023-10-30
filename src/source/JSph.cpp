@@ -257,8 +257,8 @@ void JSph::InitVars(){
 
   AllocMemoryFloating(0,false);
 
-  CellDomFixed=false;
   CellMode=CELLMODE_None;
+  CellDomFixed=false;
   ScellDiv=0;
   Scell=0;
   MovLimit=0;
@@ -913,8 +913,8 @@ void JSph::LoadConfigCommands(const JSphCfgRun* cfg){
   }
 
   //-Configuration of domain limits.
-  CellDomFixed=cfg->CellDomFixed;
   CellMode=cfg->CellMode;
+  CellDomFixed=cfg->CellDomFixed;
   if(cfg->DomainMode==2)ConfigDomainFixed(cfg->DomainFixedMin,cfg->DomainFixedMax);
 
   //-Configuration of density limits.
@@ -2152,6 +2152,7 @@ void JSph::LoadCaseParticles(){
     PartsLoaded->CalculeLimits(double(KernelH)*BORDER_MAP,Dp/2.,PeriX,PeriY,PeriZ,MapRealPosMin,MapRealPosMax);
     ResizeMapLimits();
   }
+
   Log->Print(string("MapRealPos(final)=")+fun::Double3gRangeStr(MapRealPosMin,MapRealPosMax));
   MapRealSize=MapRealPosMax-MapRealPosMin;
   Log->Print("**Initial state of particles is loaded");

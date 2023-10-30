@@ -45,8 +45,8 @@ void JSphCfgRun::Reset(){
   SvExtraParts="undefined";
   OmpThreads=0;
   SvTimers=true;
-  CellDomFixed=false;
   CellMode=CELLMODE_Full;
+  CellDomFixed=false;
   TBoundary=0; SlipMode=0; MdbcFastSingle=-1; MdbcThreshold=-1;
   DomainMode=0;
   DomainFixedMin=DomainFixedMax=TDouble3(0);
@@ -123,6 +123,7 @@ void JSphCfgRun::VisuInfo()const{
   printf("        full      Lowest and the least expensive in memory (by default)\n");
   printf("        half      Fastest and the most expensive in memory\n");
   printf("    -cellfixed:<0/1>  Cell domain is fixed according maximum domain size\n");
+  printf("                      (default=0)\n");
   printf("\n");
 
   printf("  Formulation options:\n");
@@ -287,8 +288,13 @@ void JSphCfgRun::LoadOpts(string* optlis,int optn,int lv,const std::string& file
       string txword,txoptfull,txopt1,txopt2,txopt3;
       SplitsOpts(opt,txword,txoptfull,txopt1,txopt2,txopt3);
       //-Checks keywords in commands.
-      if(txword=="CPU"){ Cpu=true; Gpu=false; }
-      else if(txword=="GPU"){ Gpu=true; Cpu=false;
+      if(txword=="CPU"){
+        Cpu=Gpu=false; 
+        Cpu=true;
+      }
+      else if(txword=="GPU"){ 
+        Cpu=Gpu=false; 
+        Gpu=true;
         if(txoptfull!="")GpuId=atoi(txoptfull.c_str()); 
       }
       else if(txword=="STABLE")Stable=(txoptfull!=""? atoi(txoptfull.c_str()): 1)!=0;
