@@ -129,11 +129,11 @@ void JSphCfgRun::VisuInfo()const{
   printf("  Formulation options:\n");
   printf("    -dbc           Dynamic Boundary Condition DBC (by default)\n");
   printf("    -mdbc          Modified Dynamic Boundary Condition mDBC (mode: vel=0)\n");
-  printf("    -mdbc_noslip   Modified Dynamic Boundary Condition mDBC (mode: no-slip)\n");
-  printf("    -mdbc_freeslip Modified Dynamic Boundary Condition mDBC (mode: free-slip)\n");
+  //printf("    -mdbc_noslip   Modified Dynamic Boundary Condition mDBC (mode: no-slip)\n");
+  //printf("    -mdbc_freeslip Modified Dynamic Boundary Condition mDBC (mode: free-slip)\n");
 /////////|---------1---------2---------3---------4---------5---------6---------7--------X8
-  printf("    -mdbc_fast:<0/1>        Fast single precision calculation on GPU (default=1)\n");
-  printf("    -mdbc_threshold:<float> Kernel support limit to apply mDBC correction [0-1]\n");
+  //printf("    -mdbc_fast:<0/1>        Fast single precision calculation on GPU (default=1)\n");
+  //printf("    -mdbc_threshold:<float> Kernel support limit to apply mDBC correction [0-1]\n");
   printf("\n");
   printf("    -initnorpla:<inlinecfg>  Initialize definition for <boundnormal_plane>\n");
   printf("    -initnorpart:<inlinecfg> Initialize definition for <boundnormal_parts>\n");

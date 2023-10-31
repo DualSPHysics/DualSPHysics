@@ -2144,6 +2144,8 @@ void JSph::LoadCaseParticles(){
   //-Recupera informacion de las particulas cargadas.
   CasePosMin=PartsLoaded->GetCasePosMin();
   CasePosMax=PartsLoaded->GetCasePosMax();
+  if(PartsLoaded->GetCount()==0)
+    Run_Exceptioon("The initial condition does not include any initial particle. Some particle is required to start the simulation.");
 
   //-Computes actual limits of simulation.
   //-Calcula limites reales de la simulacion.
