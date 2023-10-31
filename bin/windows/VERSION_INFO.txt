@@ -1,5 +1,17 @@
-GenCase           v5.0.278    24-04-2023
-GenCase [MkWord]  v5.0.278    24-04-2023
-IsoSurface        v5.0.206    12-04-2023
-MeasureTool       v5.0.206    12-04-2023
-PartVTK           v5.0.206    12-04-2023
+DualSPHysics5             v5.2.269            03-04-2023
+BoundaryVTK               v5.0.206            12-04-2023
+ComputeForces             v5.0.206            12-04-2023
+FloatingInfo              v5.0.206            12-04-2023
+GenCase                   v5.0.278c           30-10-2023
+GenCase [MkWord]          v5.0.278c           30-10-2023
+IsoSurface                v5.0.206            12-04-2023
+FlowTool                  v5.0.206            12-04-2023
+MeasureTool               v5.0.206            12-04-2023
+PartVTK                   v5.0.206            12-04-2023
+PartVTKOut                v5.0.206            12-04-2023
+BIFileInfo                v5.0.206            12-04-2023
+TracerParts               v5.0.206            12-04-2023
+ReadSwash                 v5.0.037            30-06-2020
+DualSPHysics5-NNewtonian  v1.005(v5.0.164)    21-11-2020
+DualSPHysics5-FlexStruc   v1.0(v5.2.269)      03-04-2023
+DualSPHysics4-LiquidGas   v1.010(v4.0.048)    04-06-2018
