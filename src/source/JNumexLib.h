@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2023 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -21,6 +21,7 @@
 //:# =========
 //:# - Interfaz simplificado de JNumex. (17-03-2020)
 //:# - CreateVar() permite remplazar variables y en ese caso devuelve true. (20-03-2020)
+//:# - Minor coding style changes. (28-08-2023)
 //:#############################################################################
 
 /// \file JNumexLib.h \brief Declares the class \ref JNumexLib.
@@ -63,19 +64,19 @@ public:
   JNumex* GetNuxPtr()const{ return(Nux); }
 
   /// Creates a new double variable.
-  bool CreateVar(const std::string &name,bool cte,bool replace,double value,std::string errtext="");
+  bool CreateVar(const std::string& name,bool cte,bool replace,double value,std::string errtext="");
   /// Creates new double variables (x,y,z) from tdouble3 value.
-  bool CreateVar(const std::string &name,bool cte,bool replace,const tdouble3 &value,std::string errtext="");
+  bool CreateVar(const std::string& name,bool cte,bool replace,const tdouble3& value,std::string errtext="");
   /// Creates new double variables (x,y,z) from tfloat3 value.
-  bool CreateVar(const std::string &name,bool cte,bool replace,const tfloat3 &value,std::string errtext=""){
+  bool CreateVar(const std::string& name,bool cte,bool replace,const tfloat3& value,std::string errtext=""){
     return(CreateVar(name,cte,replace,ToTDouble3(value),errtext));
   }
   /// Creates a new boolean variable.
-  bool CreateVar(const std::string &name,bool cte,bool replace,bool value,std::string errtext=""){
+  bool CreateVar(const std::string& name,bool cte,bool replace,bool value,std::string errtext=""){
     return(CreateVar(name,cte,replace,(value? 1.: 0.),errtext));
   };
   /// Creates a new string variable.
-  bool CreateVar(const std::string &name,bool cte,bool replace,const std::string &value,std::string errtext="");
+  bool CreateVar(const std::string& name,bool cte,bool replace,const std::string& value,std::string errtext="");
 
   /// Returns number of variables.
   unsigned CountVars()const;
@@ -88,16 +89,16 @@ public:
   /// Returns value of requested variable according to index.
   std::string GetVarStr(unsigned idx)const;
   /// Returns list of selected variables to export or all variables.
-  unsigned GetExportVars(std::vector<unsigned> &vars)const;
+  unsigned GetExportVars(std::vector<unsigned>& vars)const;
   /// Returns string with list of variables and its values in one line.
   std::string ListVarsToStr(unsigned firstvar=0)const;
 
   /// Evaluates numeric expression and returns double result.
-  double ComputeExpr(std::string expr,const std::string &errtext="");
+  double ComputeExpr(std::string expr,const std::string& errtext="");
   /// Evaluate expression to return a boolean result.
-  bool ComputeExprBool(std::string expr,const std::string &errtext="");
+  bool ComputeExprBool(std::string expr,const std::string& errtext="");
   /// Evaluate text expression.
-  std::string ComputeExprStr(std::string expr,const std::string &errtext="");
+  std::string ComputeExprStr(std::string expr,const std::string& errtext="");
 
 };
 #endif

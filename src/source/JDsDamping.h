@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2023 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -98,16 +98,17 @@ public:
   float   GetRedumax  ()const{ return(ReduMax); };
   tfloat3 GetFactorxyz()const{ return(Factorxyz); };
 
-  virtual void ReadXml(const JXml *sxml,TiXmlElement* ele)=0;
-  virtual void SaveVtkConfig(double dp,JVtkLib *sh)const=0;
-  virtual void GetConfig(std::vector<std::string> &lines)const=0;
+  virtual void ReadXml(const JXml* sxml,TiXmlElement* ele)=0;
+  virtual void SaveVtkConfig(double dp,JVtkLib* sh)const=0;
+  virtual void GetConfig(std::vector<std::string>& lines)const=0;
 
   virtual void ComputeDampingCpu(double dt,unsigned n,unsigned pini
-    ,const tdouble3 *pos,const typecode *code,tfloat4 *velrhop)const=0;
+    ,const tdouble3* pos,const typecode* code,tfloat4* velrhop)const=0;
 
 #ifdef _WITHGPU
   virtual void ComputeDampingGpu(double dt,unsigned n,unsigned pini
-    ,const double2 *posxy,const double *posz,const typecode *code,float4 *velrhop)const=0;
+    ,const double2* posxy,const double* posz,const typecode* code
+    ,float4* velrhop)const=0;
 #endif
 };
 
@@ -141,19 +142,20 @@ private:
   void ComputeDomPlanes();
 
 public:
-  JDsDampingOp_Plane(unsigned id,const JXml *sxml,TiXmlElement* ele)
+  JDsDampingOp_Plane(unsigned id,const JXml* sxml,TiXmlElement* ele)
     :JDsDampingOp(id,DA_Plane){ Reset(); ReadXml(sxml,ele); }
   void Reset();
-  void ReadXml(const JXml *sxml,TiXmlElement* ele);
-  void SaveVtkConfig(double dp,JVtkLib *sh)const;
-  void GetConfig(std::vector<std::string> &lines)const;
+  void ReadXml(const JXml* sxml,TiXmlElement* ele);
+  void SaveVtkConfig(double dp,JVtkLib* sh)const;
+  void GetConfig(std::vector<std::string>& lines)const;
 
   void ComputeDampingCpu(double dt,unsigned n,unsigned pini
-    ,const tdouble3 *pos,const typecode *code,tfloat4 *velrhop)const;
+    ,const tdouble3* pos,const typecode* code,tfloat4* velrhop)const;
 
 #ifdef _WITHGPU
   void ComputeDampingGpu(double dt,unsigned n,unsigned pini
-    ,const double2 *posxy,const double *posz,const typecode *code,float4 *velrhop)const;
+    ,const double2* posxy,const double* posz,const typecode* code
+    ,float4* velrhop)const;
 #endif
 };  
 
@@ -199,22 +201,23 @@ private:
   //float Dist;         ///<Distance between limitmin and limitmax points. | Distancia entre puntos limitmin y limitmax.
 
 private:
-  TpDirections ReadXmlDirections(const JXml *sxml,TiXmlElement* ele)const;
+  TpDirections ReadXmlDirections(const JXml* sxml,TiXmlElement* ele)const;
 
 public:
-  JDsDampingOp_Box(unsigned id,const JXml *sxml,TiXmlElement* ele)
+  JDsDampingOp_Box(unsigned id,const JXml* sxml,TiXmlElement* ele)
     :JDsDampingOp(id,DA_Box){ Reset(); ReadXml(sxml,ele); }
   void Reset();
-  void ReadXml(const JXml *sxml,TiXmlElement* ele);
-  void SaveVtkConfig(double dp,JVtkLib *sh)const;
-  void GetConfig(std::vector<std::string> &lines)const;
+  void ReadXml(const JXml* sxml,TiXmlElement* ele);
+  void SaveVtkConfig(double dp,JVtkLib* sh)const;
+  void GetConfig(std::vector<std::string>& lines)const;
 
   void ComputeDampingCpu(double dt,unsigned n,unsigned pini
-    ,const tdouble3 *pos,const typecode *code,tfloat4 *velrhop)const;
+    ,const tdouble3* pos,const typecode* code,tfloat4* velrhop)const;
 
 #ifdef _WITHGPU
   void ComputeDampingGpu(double dt,unsigned n,unsigned pini
-    ,const double2 *posxy,const double *posz,const typecode *code,float4 *velrhop)const;
+    ,const double2* posxy,const double* posz,const typecode* code
+    ,float4* velrhop)const;
 #endif
 };  
 
@@ -235,19 +238,20 @@ private:
   //float Dist;         ///<Distance between limitmin and limitmax points. | Distancia entre puntos limitmin y limitmax.
 
 public:
-  JDsDampingOp_Cylinder(unsigned id,const JXml *sxml,TiXmlElement* ele)
+  JDsDampingOp_Cylinder(unsigned id,const JXml* sxml,TiXmlElement* ele)
     :JDsDampingOp(id,DA_Cylinder){ Reset(); ReadXml(sxml,ele); }
   void Reset();
-  void ReadXml(const JXml *sxml,TiXmlElement* ele);
-  void SaveVtkConfig(double dp,JVtkLib *sh)const;
-  void GetConfig(std::vector<std::string> &lines)const;
+  void ReadXml(const JXml* sxml,TiXmlElement* ele);
+  void SaveVtkConfig(double dp,JVtkLib* sh)const;
+  void GetConfig(std::vector<std::string>& lines)const;
 
   void ComputeDampingCpu(double dt,unsigned n,unsigned pini
-    ,const tdouble3 *pos,const typecode *code,tfloat4 *velrhop)const;
+    ,const tdouble3* pos,const typecode* code,tfloat4* velrhop)const;
 
 #ifdef _WITHGPU
   void ComputeDampingGpu(double dt,unsigned n,unsigned pini
-    ,const double2 *posxy,const double *posz,const typecode *code,float4 *velrhop)const;
+    ,const double2* posxy,const double* posz,const typecode* code
+    ,float4* velrhop)const;
 #endif
 };  
 
@@ -264,7 +268,7 @@ private:
   const double Dp;      ///<Initial distance between particles [m].
   std::vector<JDsDampingOp*> List;
 
-  void ReadXml(const JXml *sxml,TiXmlElement* ele);
+  void ReadXml(const JXml* sxml,TiXmlElement* ele);
   void SaveVtkConfig(double dp)const;
 
 public:
@@ -274,15 +278,16 @@ public:
 
   unsigned Count()const{ return(unsigned(List.size())); }
 
-  void LoadXml(const JXml *sxml,const std::string &place);
+  void LoadXml(const JXml* sxml,const std::string& place);
   void VisuConfig(std::string txhead,std::string txfoot);
 
   void ComputeDampingCpu(double timestep,double dt,unsigned n,unsigned pini
-    ,const tdouble3 *pos,const typecode *code,tfloat4 *velrhop)const;
+    ,const tdouble3* pos,const typecode* code,tfloat4* velrhop)const;
 
 #ifdef _WITHGPU
   void ComputeDampingGpu(double timestep,double dt,unsigned n,unsigned pini
-    ,const double2 *posxy,const double *posz,const typecode *code,float4 *velrhop)const;
+    ,const double2* posxy,const double* posz,const typecode* code
+    ,float4* velrhop)const;
 #endif
 };
 

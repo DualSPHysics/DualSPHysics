@@ -1,6 +1,6 @@
 //HEAD_DSCODES
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2023 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -171,7 +171,7 @@ void JSaveCsv2::AddHead3(std::string headtx){
 //==============================================================================
 /// Returns string using the same parameters used in printf().
 //==============================================================================
-std::string JSaveCsv2::ToStr(const char *format,...)const{
+std::string JSaveCsv2::ToStr(const char* format,...)const{
   std::string ret;
   const unsigned SIZE=1024;
   char buffer[SIZE+1];
@@ -183,7 +183,7 @@ std::string JSaveCsv2::ToStr(const char *format,...)const{
     int rsize=-1;
     int size2=SIZE+SIZE*2;
     for(int c=0;c<10 && rsize<0;c++,size2+=SIZE*2){
-      char *buff2=new char[size2+1];
+      char* buff2=new char[size2+1];
       rsize=vsnprintf(buff2,size2,format,args);
       if(rsize>=0)ret=buff2;
       delete[] buff2;
@@ -197,7 +197,7 @@ std::string JSaveCsv2::ToStr(const char *format,...)const{
 //==============================================================================
 /// Operator: Adds one or several field separators.
 //==============================================================================
-JSaveCsv2& JSaveCsv2::operator <<(const Sep &obj){
+JSaveCsv2& JSaveCsv2::operator <<(const Sep& obj){
   AddSeparator(obj.Count);
   return(*this);
 }
@@ -205,7 +205,7 @@ JSaveCsv2& JSaveCsv2::operator <<(const Sep &obj){
 //==============================================================================
 /// Operator: Enable auto separator change according configuration.
 //==============================================================================
-JSaveCsv2& JSaveCsv2::operator <<(const AutoSepOn &obj){
+JSaveCsv2& JSaveCsv2::operator <<(const AutoSepOn& obj){
   AutoSepEnable=true;
   return(*this);
 }
@@ -213,7 +213,7 @@ JSaveCsv2& JSaveCsv2::operator <<(const AutoSepOn &obj){
 //==============================================================================
 /// Operator: Disable auto separator change according configuration.
 //==============================================================================
-JSaveCsv2& JSaveCsv2::operator <<(const AutoSepOff &obj){
+JSaveCsv2& JSaveCsv2::operator <<(const AutoSepOff& obj){
   AutoSepEnable=false;
   return(*this);
 }
@@ -221,7 +221,7 @@ JSaveCsv2& JSaveCsv2::operator <<(const AutoSepOff &obj){
 //==============================================================================
 /// Operator: Adds end of line.
 //==============================================================================
-JSaveCsv2& JSaveCsv2::operator <<(const Endl &obj){
+JSaveCsv2& JSaveCsv2::operator <<(const Endl& obj){
   AddEndl();
   return(*this);
 }
@@ -229,7 +229,7 @@ JSaveCsv2& JSaveCsv2::operator <<(const Endl &obj){
 //==============================================================================
 /// Operator: Sets format for output.
 //==============================================================================
-JSaveCsv2& JSaveCsv2::operator <<(const Fmt &obj){
+JSaveCsv2& JSaveCsv2::operator <<(const Fmt& obj){
   FmtCurrent[obj.TypeFmt]=(obj.Format.empty()? FmtDefault[obj.TypeFmt]: obj.Format);
   return(*this);
 }
@@ -237,7 +237,7 @@ JSaveCsv2& JSaveCsv2::operator <<(const Fmt &obj){
 //==============================================================================
 /// Operator: Add header for triple data.
 //==============================================================================
-JSaveCsv2& JSaveCsv2::operator <<(const Head3 &obj){
+JSaveCsv2& JSaveCsv2::operator <<(const Head3& obj){
   AddHead3(obj.HeadText);
   return(*this);
 }
@@ -246,7 +246,7 @@ JSaveCsv2& JSaveCsv2::operator <<(const Head3 &obj){
 /// Write string to file checking for line breaks.
 /// Graba string en fichero comprobando los saltos de linea.
 //==============================================================================
-void JSaveCsv2::Save(const std::string &tx){
+void JSaveCsv2::Save(const std::string& tx){
   Pf->write(tx.c_str(),tx.size());
   Pf->flush();
   //fflush(NULL);//-Vacia todos los bufers
@@ -257,7 +257,7 @@ void JSaveCsv2::Save(const std::string &tx){
 /// Sets separators according configuration.
 /// Cambia separadores segun configuracion.
 //==============================================================================
-void JSaveCsv2::SetSeparators(std::string &tx)const{
+void JSaveCsv2::SetSeparators(std::string& tx)const{
   const char sep0=(CsvSepComa? ';': ',');
   const char sep1=(CsvSepComa? ',': ';');
   const unsigned size=unsigned(tx.size());
@@ -281,6 +281,7 @@ void JSaveCsv2::SaveData(bool closefile){
     delete Pf; Pf=NULL;
   }
 }
+
 
 }
 

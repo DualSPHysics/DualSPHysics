@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2023 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -93,7 +93,7 @@ void JDsDampingOp_Plane::ComputeDomPlanes(){
 //==============================================================================
 /// Reads damping configuration in xml format.
 //==============================================================================
-void JDsDampingOp_Plane::ReadXml(const JXml *sxml,TiXmlElement* ele){
+void JDsDampingOp_Plane::ReadXml(const JXml* sxml,TiXmlElement* ele){
   sxml->CheckElementNames(ele,true,"overlimit redumax factorxyz limitmin limitmax domain");
   //-General options.
   OverLimit=sxml->ReadElementFloat(ele,"overlimit","value");
@@ -132,7 +132,7 @@ void JDsDampingOp_Plane::ReadXml(const JXml *sxml,TiXmlElement* ele){
 //==============================================================================
 /// Saves VTK file with scheme of configuration.
 //==============================================================================
-void JDsDampingOp_Plane::SaveVtkConfig(double dp,JVtkLib *sh)const{
+void JDsDampingOp_Plane::SaveVtkConfig(double dp,JVtkLib* sh)const{
   const double sizequad=dp*16;
   const double sizedir=dp*4;
   const int cv=int(Id);
@@ -171,7 +171,7 @@ void JDsDampingOp_Plane::SaveVtkConfig(double dp,JVtkLib *sh)const{
 //==============================================================================
 /// Returns strings with configuration.
 //==============================================================================
-void JDsDampingOp_Plane::GetConfig(std::vector<std::string> &lines)const{
+void JDsDampingOp_Plane::GetConfig(std::vector<std::string>& lines)const{
   lines.push_back(fun::PrintStr("Damping zone_%u (type: %s): ",Id,GetNameType(Type).c_str()));
   lines.push_back(fun::PrintStr("  LimitPoints: %s overlimit:%f",fun::Double3gRangeStr(LimitMin,LimitMax).c_str(),OverLimit));
   lines.push_back(fun::PrintStr("  LimitDist..: %g",Dist));
@@ -183,7 +183,7 @@ void JDsDampingOp_Plane::GetConfig(std::vector<std::string> &lines)const{
 /// Applies Damping to particles within the domain configuration on CPU.
 //==============================================================================
 void JDsDampingOp_Plane::ComputeDampingCpu(double dt,unsigned n,unsigned pini
-  ,const tdouble3 *pos,const typecode *code,tfloat4 *velrhop)const
+  ,const tdouble3* pos,const typecode* code,tfloat4* velrhop)const
 {
   const bool usedomain=UseDomain;
   const double zmin=DomzMin;
@@ -236,7 +236,7 @@ void JDsDampingOp_Plane::ComputeDampingCpu(double dt,unsigned n,unsigned pini
 /// Applies Damping to particles within the domain configuration on GPU.
 //==============================================================================
 void JDsDampingOp_Plane::ComputeDampingGpu(double dt,unsigned n,unsigned pini
-  ,const double2 *posxy,const double *posz,const typecode *code,float4 *velrhop)const
+  ,const double2* posxy,const double* posz,const typecode* code,float4* velrhop)const
 {
   const float dist=Dist;
   const float over=OverLimit;
@@ -310,7 +310,7 @@ std::string JDsDampingOp_Box::GetBoxDirText(JDsDampingOp_Box::TpDirections bdir)
 //==============================================================================
 /// Reads configuration on directions in xml format.
 //==============================================================================
-JDsDampingOp_Box::TpDirections JDsDampingOp_Box::ReadXmlDirections(const JXml *sxml
+JDsDampingOp_Box::TpDirections JDsDampingOp_Box::ReadXmlDirections(const JXml* sxml
   ,TiXmlElement* ele)const
 {
   string dirs=sxml->ReadElementStr(ele,"directions","value",true);
@@ -342,7 +342,7 @@ JDsDampingOp_Box::TpDirections JDsDampingOp_Box::ReadXmlDirections(const JXml *s
 //==============================================================================
 /// Reads damping configuration in xml format.
 //==============================================================================
-void JDsDampingOp_Box::ReadXml(const JXml *sxml,TiXmlElement* ele){
+void JDsDampingOp_Box::ReadXml(const JXml* sxml,TiXmlElement* ele){
   sxml->CheckElementNames(ele,true,"overlimit redumax factorxyz directions limitmin limitmax");
   //-General options.
   OverLimit=sxml->ReadElementFloat(ele,"overlimit","value");
@@ -392,7 +392,7 @@ void JDsDampingOp_Box::ReadXml(const JXml *sxml,TiXmlElement* ele){
 //==============================================================================
 /// Saves VTK file with scheme of configuration.
 //==============================================================================
-void JDsDampingOp_Box::SaveVtkConfig(double dp,JVtkLib *sh)const{
+void JDsDampingOp_Box::SaveVtkConfig(double dp,JVtkLib* sh)const{
   const int cv=int(Id);
   const tdouble3 smin=LimitMin2-LimitMin1;
   const tdouble3 smax=LimitMax2-LimitMax1;
@@ -432,7 +432,7 @@ void JDsDampingOp_Box::SaveVtkConfig(double dp,JVtkLib *sh)const{
 //==============================================================================
 /// Returns strings with configuration.
 //==============================================================================
-void JDsDampingOp_Box::GetConfig(std::vector<std::string> &lines)const{
+void JDsDampingOp_Box::GetConfig(std::vector<std::string>& lines)const{
   lines.push_back(fun::PrintStr("Damping zone_%u (type: %s): ",Id,GetNameType(Type).c_str()));
   lines.push_back(fun::PrintStr("  BoxDirections.: [%s]",GetBoxDirText(Directions).c_str()));
   lines.push_back(fun::PrintStr("  MinimalDamping: %s",fun::Double3gRangeStr(LimitMin1,LimitMin2).c_str()));
@@ -446,7 +446,7 @@ void JDsDampingOp_Box::GetConfig(std::vector<std::string> &lines)const{
 /// Applies Damping to particles within the domain configuration on CPU.
 //==============================================================================
 void JDsDampingOp_Box::ComputeDampingCpu(double dt,unsigned n,unsigned pini
-  ,const tdouble3 *pos,const typecode *code,tfloat4 *velrhop)const
+  ,const tdouble3* pos,const typecode* code,tfloat4* velrhop)const
 {
   const tfloat3 factorxyz=Factorxyz;
   const float redumax=ReduMax;
@@ -497,7 +497,8 @@ void JDsDampingOp_Box::ComputeDampingCpu(double dt,unsigned n,unsigned pini
 /// Applies Damping to particles within the domain configuration on GPU.
 //==============================================================================
 void JDsDampingOp_Box::ComputeDampingGpu(double dt,unsigned n,unsigned pini
-  ,const double2 *posxy,const double *posz,const typecode *code,float4 *velrhop)const
+  ,const double2* posxy,const double* posz,const typecode* code
+  ,float4* velrhop)const
 {
   cusph::ComputeDampingBox(n,pini,dt,Float3(Factorxyz),ReduMax
     ,Double3(LimitMin1),Double3(LimitMin2),Double3(LimitMax1),Double3(LimitMax2)
@@ -523,7 +524,7 @@ void JDsDampingOp_Cylinder::Reset(){
 //==============================================================================
 /// Reads damping configuration in xml format.
 //==============================================================================
-void JDsDampingOp_Cylinder::ReadXml(const JXml *sxml,TiXmlElement* ele){
+void JDsDampingOp_Cylinder::ReadXml(const JXml* sxml,TiXmlElement* ele){
   sxml->CheckElementNames(ele,true,"overlimit redumax factorxyz point1 point2 limitmin limitmax");
   //-General options.
   OverLimit=sxml->ReadElementFloat(ele,"overlimit","value");
@@ -544,7 +545,7 @@ void JDsDampingOp_Cylinder::ReadXml(const JXml *sxml,TiXmlElement* ele){
 //==============================================================================
 /// Saves VTK file with scheme of configuration.
 //==============================================================================
-void JDsDampingOp_Cylinder::SaveVtkConfig(double dp,JVtkLib *sh)const{
+void JDsDampingOp_Cylinder::SaveVtkConfig(double dp,JVtkLib* sh)const{
   const int cv=int(Id);
   sh->SetShapeWireMode(true);
   sh->AddShapeCylinder(Point1,Point2,LimitMin,28,cv,3);
@@ -557,7 +558,7 @@ void JDsDampingOp_Cylinder::SaveVtkConfig(double dp,JVtkLib *sh)const{
 //==============================================================================
 /// Returns strings with configuration.
 //==============================================================================
-void JDsDampingOp_Cylinder::GetConfig(std::vector<std::string> &lines)const{
+void JDsDampingOp_Cylinder::GetConfig(std::vector<std::string>& lines)const{
   lines.push_back(fun::PrintStr("Damping zone_%u (type: %s): ",Id,GetNameType(Type).c_str()));
   lines.push_back(fun::PrintStr("  Axis points.: %s",fun::Double3gRangeStr(Point1,Point2).c_str()));
   lines.push_back(fun::PrintStr("  LimitMin....: %f",LimitMin));
@@ -571,7 +572,7 @@ void JDsDampingOp_Cylinder::GetConfig(std::vector<std::string> &lines)const{
 /// Applies Damping to particles within the domain configuration on CPU.
 //==============================================================================
 void JDsDampingOp_Cylinder::ComputeDampingCpu(double dt,unsigned n,unsigned pini
-  ,const tdouble3 *pos,const typecode *code,tfloat4 *velrhop)const
+  ,const tdouble3* pos,const typecode* code,tfloat4* velrhop)const
 {
   const float dist=float(LimitMax-LimitMin);
   const bool isvertical=(Point1.x==Point2.x && Point1.y==Point2.y);
@@ -615,7 +616,8 @@ void JDsDampingOp_Cylinder::ComputeDampingCpu(double dt,unsigned n,unsigned pini
 /// Applies Damping to particles within the domain configuration on GPU.
 //==============================================================================
 void JDsDampingOp_Cylinder::ComputeDampingGpu(double dt,unsigned n,unsigned pini
-  ,const double2 *posxy,const double *posz,const typecode *code,float4 *velrhop)const
+  ,const double2* posxy,const double* posz,const typecode* code
+  ,float4* velrhop)const
 {
   const float dist=float(LimitMax-LimitMin);
   cusph::ComputeDampingCylinder(n,pini,dt,Double3(Point1),Double3(Point2),LimitMin
@@ -654,7 +656,7 @@ void JDsDamping::Reset(){
 //==============================================================================
 /// Loads damping configuration of XML object.
 //==============================================================================
-void JDsDamping::LoadXml(const JXml *sxml,const std::string &place){
+void JDsDamping::LoadXml(const JXml* sxml,const std::string& place){
   Reset();
   TiXmlNode* node=sxml->GetNodeSimple(place,false);
   if(!node)Run_Exceptioon(std::string("Cannot find the element \'")+place+"\'.");
@@ -664,16 +666,16 @@ void JDsDamping::LoadXml(const JXml *sxml,const std::string &place){
 //==============================================================================
 /// Reads list of damping configuration in the XML node.
 //==============================================================================
-void JDsDamping::ReadXml(const JXml *sxml,TiXmlElement* lis){
+void JDsDamping::ReadXml(const JXml* sxml,TiXmlElement* lis){
   //-Loads damping zones.
   TiXmlElement* ele=lis->FirstChildElement(); 
   while(ele){
     string cmd=ele->Value();
     if(cmd.length() && cmd[0]!='_' && sxml->CheckElementActive(ele)){
       //printf("-----------> [%s]\n",cmd.c_str());
-           if(cmd=="dampingzone"    ){  JDsDampingOp_Plane    *dmp=new JDsDampingOp_Plane   (Count(),sxml,ele); List.push_back(dmp);  }
-      else if(cmd=="dampingbox"     ){  JDsDampingOp_Box      *dmp=new JDsDampingOp_Box     (Count(),sxml,ele); List.push_back(dmp);  }
-      else if(cmd=="dampingcylinder"){  JDsDampingOp_Cylinder *dmp=new JDsDampingOp_Cylinder(Count(),sxml,ele); List.push_back(dmp);  }
+           if(cmd=="dampingzone"    ){  JDsDampingOp_Plane*    dmp=new JDsDampingOp_Plane   (Count(),sxml,ele); List.push_back(dmp);  }
+      else if(cmd=="dampingbox"     ){  JDsDampingOp_Box*      dmp=new JDsDampingOp_Box     (Count(),sxml,ele); List.push_back(dmp);  }
+      else if(cmd=="dampingcylinder"){  JDsDampingOp_Cylinder* dmp=new JDsDampingOp_Cylinder(Count(),sxml,ele); List.push_back(dmp);  }
       else sxml->ErrReadElement(ele,cmd,false);
     }
     ele=ele->NextSiblingElement();
@@ -713,8 +715,8 @@ void JDsDamping::SaveVtkConfig(double dp)const{
 /// Applies Damping to the indicated particles.
 //==============================================================================
 //:#include "JSaveCsv.h"
-void JDsDamping::ComputeDampingCpu(double timestep,double dt,unsigned n,unsigned pini
-  ,const tdouble3 *pos,const typecode *code,tfloat4 *velrhop)const
+void JDsDamping::ComputeDampingCpu(double timestep,double dt,unsigned n
+  ,unsigned pini,const tdouble3* pos,const typecode* code,tfloat4* velrhop)const
 {
   for(unsigned c=0;c<Count();c++){
     List[c]->ComputeDampingCpu(dt,n,pini,pos,code,velrhop);
@@ -725,8 +727,9 @@ void JDsDamping::ComputeDampingCpu(double timestep,double dt,unsigned n,unsigned
 //==============================================================================
 /// Applies Damping to the indicated particles.
 //==============================================================================
-void JDsDamping::ComputeDampingGpu(double timestep,double dt,unsigned n,unsigned pini
-  ,const double2 *posxy,const double *posz,const typecode *code,float4 *velrhop)const
+void JDsDamping::ComputeDampingGpu(double timestep,double dt,unsigned n
+  ,unsigned pini,const double2* posxy,const double* posz,const typecode* code
+  ,float4* velrhop)const
 {
   for(unsigned c=0;c<Count();c++){
     List[c]->ComputeDampingGpu(dt,n,pini,posxy,posz,code,velrhop);

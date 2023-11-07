@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2023 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -47,15 +47,15 @@ public:
   JNumex* GetNuxPtr()const{ return(NULL); }
 
   /// Creates a new double variable.
-  bool CreateVar(const std::string &name,bool cte,bool replace,double value,std::string errtext=""){ return(false); }
+  bool CreateVar(const std::string& name,bool cte,bool replace,double value,std::string errtext=""){ return(false); }
   /// Creates new double variables (x,y,z) from tdouble3 value.
-  bool CreateVar(const std::string &name,bool cte,bool replace,const tdouble3 &value,std::string errtext=""){ return(false); }
+  bool CreateVar(const std::string& name,bool cte,bool replace,const tdouble3& value,std::string errtext=""){ return(false); }
   /// Creates new double variables (x,y,z) from tfloat3 value.
-  bool CreateVar(const std::string &name,bool cte,bool replace,const tfloat3 &value,std::string errtext=""){ return(false); }
+  bool CreateVar(const std::string& name,bool cte,bool replace,const tfloat3& value,std::string errtext=""){ return(false); }
   /// Creates a new boolean variable.
-  bool CreateVar(const std::string &name,bool cte,bool replace,bool value,std::string errtext=""){ return(false); }
+  bool CreateVar(const std::string& name,bool cte,bool replace,bool value,std::string errtext=""){ return(false); }
   /// Creates a new string variable.
-  bool CreateVar(const std::string &name,bool cte,bool replace,const std::string &value,std::string errtext=""){ return(false); }
+  bool CreateVar(const std::string& name,bool cte,bool replace,const std::string& value,std::string errtext=""){ return(false); }
 
   /// Returns number of variables.
   unsigned CountVars()const{ return(0); }
@@ -68,16 +68,16 @@ public:
   /// Returns value of requested variable according to index.
   std::string GetVarStr(unsigned idx)const{ return(""); }
   /// Returns list of selected variables to export or all variables.
-  unsigned GetExportVars(std::vector<unsigned> &vars)const{ return(0); }
+  unsigned GetExportVars(std::vector<unsigned>& vars)const{ return(0); }
   /// Returns string with list of variables and its values in one line.
   std::string ListVarsToStr(unsigned firstvar=0)const{ return(""); }
 
   /// Evaluates numeric expression and returns double result.
-  double ComputeExpr(std::string expr,const std::string &errtext=""){ return(0); }
+  double ComputeExpr(std::string expr,const std::string& errtext=""){ return(0); }
   /// Evaluate expression to return a boolean result.
-  bool ComputeExprBool(std::string expr,const std::string &errtext=""){ return(false); }
+  bool ComputeExprBool(std::string expr,const std::string& errtext=""){ return(false); }
   /// Evaluate text expression.
-  std::string ComputeExprStr(std::string expr,const std::string &errtext=""){ return(""); }
+  std::string ComputeExprStr(std::string expr,const std::string& errtext=""){ return(""); }
 
 };
 #endif

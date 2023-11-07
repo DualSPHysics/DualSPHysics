@@ -1,6 +1,6 @@
 //HEAD_DSCODES
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2023 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -421,7 +421,7 @@ int JXml::CheckAttributes(const TiXmlElement* ele,std::string names
 int JXml::CheckAttributes(const TiXmlElement* lis,std::string elementname
   ,std::string names,bool checkmanyatt)const
 {
-  const TiXmlElement *ele=lis->FirstChildElement(elementname.c_str());
+  const TiXmlElement* ele=lis->FirstChildElement(elementname.c_str());
   if(ele)return(CheckAttributes(ele,names,checkmanyatt));
   return(0);
 }
@@ -569,7 +569,7 @@ int JXml::GetAttributeInt(const TiXmlElement* ele,const std::string& name
   ,bool optional,int valdef)const
 {
   int ret;
-  const char *vchar=ele->Attribute(name.c_str());
+  const char* vchar=ele->Attribute(name.c_str());
   if(vchar==NULL){
     if(optional)ret=valdef;
     else ErrReadAtrib(ele,name,true);
@@ -601,7 +601,7 @@ double JXml::GetAttributeDouble(const TiXmlElement* ele,const std::string& name
   ,bool optional,double valdef)const
 {
   double ret;
-  const char *vchar=ele->Attribute(name.c_str());
+  const char* vchar=ele->Attribute(name.c_str());
   if(vchar==NULL){
     if(optional)ret=valdef;
     else ErrReadAtrib(ele,name,true);
@@ -812,7 +812,7 @@ void JXml::AddAttribute(TiXmlElement* ele,const std::string& attrib
 /// \param name2 Name of the second attribute (y by default).
 /// \param name3 Name of the third attribute (z by default).
 //==============================================================================
-TiXmlElement JXml::MakeElementInt3(const std::string& name,const tint3 &v
+TiXmlElement JXml::MakeElementInt3(const std::string& name,const tint3& v
   ,const char* name1,const char* name2,const char* name3)
 {
   TiXmlElement item(name.c_str());
@@ -830,7 +830,7 @@ TiXmlElement JXml::MakeElementInt3(const std::string& name,const tint3 &v
 /// \param name2 Name of the second attribute (y by default).
 /// \param name3 Name of the third attribute (z by default).
 //==============================================================================
-TiXmlElement JXml::MakeElementDouble3(const std::string& name,const tdouble3 &v
+TiXmlElement JXml::MakeElementDouble3(const std::string& name,const tdouble3& v
   ,const char* name1,const char* name2,const char* name3)
 {
   TiXmlElement item(name.c_str());
@@ -951,7 +951,7 @@ void JXml::LoadFile(const std::string& fname){
 void JXml::CorrectFile(const std::string& fname){
   const unsigned sizemax=1024*1024*100;
   unsigned size=0;
-  char *data=NULL;
+  char* data=NULL;
   bool modif=false;
   //-Lee datos de fichero.
   {

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<!-- *** DualSPHysics v5.2.261 (04-03-2023) *** -->
+<!-- *** DualSPHysics v5.3.293 (17-10-2023) *** -->
 <!-- *** class: JSphInOut *** -->
 <!------------------------------------------------------------------------------->
 <!------------------------------------------------------------------------------->
@@ -235,6 +235,10 @@
 	<imposevelocity mode="0" comment="Imposed velocity 0:fixed value, 1:variable value, 2:Extrapolated velocity, 3:Interpolated velocity (default=0)">
 		<velocity3 v="0" v2="0.608" v3="3" z="4" z2="4.5" z3="5" comment="Parabolic inlet velocity" units_comment="m/s" />
 	</imposevelocity>
+<!-- Fixed velocity for jet circle (only for <zone3d><circle>) -->
+	<imposevelocity mode="0" comment="Imposed velocity 0:fixed value, 1:variable value, 2:Extrapolated velocity, 3:Interpolated velocity (default=0)">
+        <jetcircle v="2" distance="0.010" radius="0.02" comment="Velocity for circular jet (velocity, distance and opening radius)" units_comment="m/s" />
+	</imposevelocity>
 <!-- Variable Uniform velocity using values in XML file-->
 	<imposevelocity mode="1" comment="Imposed velocity 0:fixed value, 1:variable value, 2:Extrapolated velocity, 3:Interpolated velocity (default=0)">
 		<velocitytimes comment="Uniform inlet velocity in time">
@@ -283,11 +287,11 @@
 		<_gridposzero x="0" z="0" comment="Defines position of grid (default=0)" />
 	</imposevelocity>
 <!------------------------------------------------------------------------------->
-<!-- Flow velocity [l/s] definition instead of velocity [m/s] -->
-<!-- Flow velocity [l/s] is suported by uniform fixed or uniform veriable velocity when zsurf is fixed. -->
+<!-- Flow velocity [l/s, gal/s or gal/min] definition instead of velocity [m/s] -->
+<!-- Flow velocity [l/s, gal/s or gal/min] is suported by uniform fixed or uniform variable velocity when zsurf is fixed or undefined. -->
 	<imposevelocity mode="0" comment="Imposed velocity 0:fixed value, 1:variable value, 2:Extrapolated velocity, 3:Interpolated velocity (default=0)">
-	    <flowvelocity active="true" ratio="1.0" comment="Velocity values are read as flow [l/s] and ratio is used to compute particle volume (ratio*dp^3)." />
-		<velocity v="2" comment="Uniform velocity" units_comment="m/s" />
+		<flowvelocity active="true" units="l/s" ratio="1.0" comment="Velocity values are read as flow (units=l/s, gal/s or gal/min) and ratio is used to compute particle volume (ratio*dp^3)." />
+		<velocity v="2" comment="Uniform velocity" units_comment="l/s" />
 	</imposevelocity>
 <!------------------------------------------------------------------------------->
 <!------------------------------------------------------------------------------->

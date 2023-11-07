@@ -1,6 +1,6 @@
 //HEAD_DSCODES
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2023 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -44,7 +44,7 @@ JLog2::JLog2(TpMode_Out modeoutdef):ModeOutDef(modeoutdef){
 //==============================================================================
 /// Constructor.
 //==============================================================================
-JLog2::JLog2(JLog2 *parent,std::string prefix):ModeOutDef(parent->ModeOutDef){
+JLog2::JLog2(JLog2* parent,std::string prefix):ModeOutDef(parent->ModeOutDef){
   ClassName="JLog2";
   Pf=NULL;
   Reset();
@@ -107,8 +107,12 @@ void JLog2::Init(std::string fname,bool mpirun,int mpirank,int mpilaunch){
 //==============================================================================
 /// Visualises and/or stores information of the execution.
 //==============================================================================
-void JLog2::Print(const std::string &tx,TpMode_Out mode,bool flush){
-  if(Parent){ Parent->Print(ParentPrefix+tx,mode,flush); return; }
+void JLog2::Print(const std::string& tx,TpMode_Out mode,bool flush){
+  if(Parent){ 
+    if(!tx.empty() && tx[0]=='\n')Parent->Print(string("\n")+ParentPrefix+tx.substr(1),mode,flush);
+    else Parent->Print(ParentPrefix+tx,mode,flush);
+    return; 
+  }
   if(mode==Out_Default)mode=ModeOutDef;
   if(mode&Out_Screen){
     if(MpiRun){
@@ -125,7 +129,7 @@ void JLog2::Print(const std::string &tx,TpMode_Out mode,bool flush){
 //==============================================================================
 /// Visualises and/or stores information of the execution.
 //==============================================================================
-void JLog2::Print(const std::vector<std::string> &lines,TpMode_Out mode,bool flush){
+void JLog2::Print(const std::vector<std::string>& lines,TpMode_Out mode,bool flush){
   for(unsigned c=0;c<unsigned(lines.size());c++)Print(lines[c],mode,false);
   if(flush)fflush(stdout);
 }
@@ -133,7 +137,7 @@ void JLog2::Print(const std::vector<std::string> &lines,TpMode_Out mode,bool flu
 //==============================================================================
 /// Visualises and/or stores information of the execution.
 //==============================================================================
-void JLog2::Printf(const char *format,...){
+void JLog2::Printf(const char* format,...){
   const int SIZE=1024;
   char buffer[SIZE+1];
   va_list args;
@@ -144,7 +148,7 @@ void JLog2::Printf(const char *format,...){
     int rsize=-1;
     int size2=SIZE+SIZE*2;
     for(int c=0;c<10 && rsize<0;c++,size2+=SIZE*2){
-      char *buff2=new char[size2+1];
+      char* buff2=new char[size2+1];
       rsize=vsnprintf(buff2,size2,format,args);
       if(rsize>=0)Print(buff2);
       delete[] buff2;
@@ -157,7 +161,7 @@ void JLog2::Printf(const char *format,...){
 //==============================================================================
 /// Visualises and/or stores information of the execution.
 //==============================================================================
-void JLog2::PrintfDbg(const char *format,...){
+void JLog2::PrintfDbg(const char* format,...){
   const int SIZE=1024;
   char buffer[SIZE+1];
   va_list args;
@@ -168,7 +172,7 @@ void JLog2::PrintfDbg(const char *format,...){
     int rsize=-1;
     int size2=SIZE+SIZE*2;
     for(int c=0;c<10 && rsize<0;c++,size2+=SIZE*2){
-      char *buff2=new char[size2+1];
+      char* buff2=new char[size2+1];
       rsize=vsnprintf(buff2,size2,format,args);
       if(rsize>=0)Print(buff2,Out_Default,true);
       delete[] buff2;
@@ -181,7 +185,9 @@ void JLog2::PrintfDbg(const char *format,...){
 //==============================================================================
 /// Visualises and/or stores information of the execution adding a prefix.
 //==============================================================================
-void JLog2::Printp(const std::string &prefix,const std::vector<std::string> &lines,JLog2::TpMode_Out mode,bool flush){
+void JLog2::Printp(const std::string& prefix,const std::vector<std::string>& lines
+  ,JLog2::TpMode_Out mode,bool flush)
+{
   for(unsigned c=0;c<unsigned(lines.size());c++)Printp(prefix,lines[c],mode,false);
   if(flush)fflush(stdout);
 }
@@ -189,7 +195,7 @@ void JLog2::Printp(const std::string &prefix,const std::vector<std::string> &lin
 //==============================================================================
 /// Visualises and/or stores information of the execution adding a prefix.
 //==============================================================================
-void JLog2::Printfp(const std::string &prefix,const char *format,...){
+void JLog2::Printfp(const std::string& prefix,const char* format,...){
   const int SIZE=1024;
   char buffer[SIZE+1];
   va_list args;
@@ -200,7 +206,7 @@ void JLog2::Printfp(const std::string &prefix,const char *format,...){
     int rsize=-1;
     int size2=SIZE+SIZE*2;
     for(int c=0;c<10 && rsize<0;c++,size2+=SIZE*2){
-      char *buff2=new char[size2+1];
+      char* buff2=new char[size2+1];
       rsize=vsnprintf(buff2,size2,format,args);
       if(rsize>=0)Printp(prefix,buff2);
       delete[] buff2;
@@ -213,7 +219,7 @@ void JLog2::Printfp(const std::string &prefix,const char *format,...){
 //==============================================================================
 /// Visualises and/or stores information of the execution adding a prefix.
 //==============================================================================
-void JLog2::PrintfpDbg(const std::string &prefix,const char *format,...){
+void JLog2::PrintfpDbg(const std::string& prefix,const char* format,...){
   const int SIZE=1024;
   char buffer[SIZE+1];
   va_list args;
@@ -224,7 +230,7 @@ void JLog2::PrintfpDbg(const std::string &prefix,const char *format,...){
     int rsize=-1;
     int size2=SIZE+SIZE*2;
     for(int c=0;c<10 && rsize<0;c++,size2+=SIZE*2){
-      char *buff2=new char[size2+1];
+      char* buff2=new char[size2+1];
       rsize=vsnprintf(buff2,size2,format,args);
       if(rsize>=0)Printp(prefix,buff2,JLog2::Out_Default,true);
       delete[] buff2;
@@ -237,7 +243,7 @@ void JLog2::PrintfpDbg(const std::string &prefix,const char *format,...){
 //==============================================================================
 /// Adds warning to warning list.
 //==============================================================================
-void JLog2::AddWarning(const std::string &tx){
+void JLog2::AddWarning(const std::string& tx){
   if(Parent){ Parent->AddWarning(tx); return; }
   Warnings.push_back(tx);
 }
@@ -245,7 +251,7 @@ void JLog2::AddWarning(const std::string &tx){
 //==============================================================================
 /// Visualises and stores warning.
 //==============================================================================
-void JLog2::PrintWarning(const std::string &tx,TpMode_Out mode,bool flush){
+void JLog2::PrintWarning(const std::string& tx,TpMode_Out mode,bool flush){
   AddWarning(tx);
   Print(string("\n*** WARNING: ")+tx+"\n",mode,flush);
 }
@@ -253,7 +259,7 @@ void JLog2::PrintWarning(const std::string &tx,TpMode_Out mode,bool flush){
 //==============================================================================
 /// Visualises and stores warning.
 //==============================================================================
-void JLog2::PrintfWarning(const char *format,...){
+void JLog2::PrintfWarning(const char* format,...){
   const int SIZE=1024;
   char buffer[SIZE+1];
   va_list args;
@@ -264,7 +270,7 @@ void JLog2::PrintfWarning(const char *format,...){
     int rsize=-1;
     int size2=SIZE+SIZE*2;
     for(int c=0;c<10 && rsize<0;c++,size2+=SIZE*2){
-      char *buff2=new char[size2+1];
+      char* buff2=new char[size2+1];
       rsize=vsnprintf(buff2,size2,format,args);
       if(rsize>=0)PrintWarning(buff2);
       delete[] buff2;
@@ -277,7 +283,9 @@ void JLog2::PrintfWarning(const char *format,...){
 //==============================================================================
 /// Visualises list of warnings.
 //==============================================================================
-void JLog2::PrintWarningList(const std::string &txhead,const std::string &txfoot,TpMode_Out mode,bool flush){
+void JLog2::PrintWarningList(const std::string& txhead,const std::string& txfoot
+  ,TpMode_Out mode,bool flush)
+{
   if(Parent){ Parent->PrintWarningList(txhead,txfoot,mode,flush); return; }
   const unsigned nw=WarningCount();
   //Print(fun::PrintStr("[WARNINGS #:%u]",nw),mode,flush);
@@ -302,7 +310,7 @@ void JLog2::PrintWarningList(TpMode_Out mode,bool flush){
 //==============================================================================
 /// Adds file description.
 //==============================================================================
-void JLog2::AddFileInfo(std::string fname,const std::string &finfo){
+void JLog2::AddFileInfo(std::string fname,const std::string& finfo){
   if(Parent){ Parent->AddFileInfo(fname,finfo); return; }
   //-Removes execution path.
   if(int(fname.find(DirOut))==0)fname=fname.substr(DirOut.size());
@@ -324,7 +332,9 @@ bool SortFilesList(JLog2::StFileInfo a,JLog2::StFileInfo b){
 //==============================================================================
 /// Visualises list of file descriptions.
 //==============================================================================
-void JLog2::PrintFilesList(const std::string &txhead,const std::string &txfoot,TpMode_Out mode,bool flush){
+void JLog2::PrintFilesList(const std::string& txhead,const std::string& txfoot
+  ,TpMode_Out mode,bool flush)
+{
   if(Parent){ Parent->PrintFilesList(txhead,txfoot,mode,flush); return; }
   const unsigned nf=FilesCount();
   if(!txhead.empty())Print(txhead,mode,flush);

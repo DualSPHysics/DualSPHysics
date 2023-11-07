@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<case app="GenCase v5.0.268 (12-09-2022)" date="13-09-2022 03:09:49">
-    <casedef requiredversion="v5.0.268">
+<case app="GenCase v5.0.295 (11-08-2023)" date="30-08-2023 19:23:51">
+    <casedef requiredversion="v5.0.295">
         <constantsdef>
             <lattice bound="2" fluid="1" comment="Type of lattice to create the initial particles (default=1)" />
             <gravity x="0" y="0" z="-9.81" comment="Gravitational acceleration" units_comment="m/s^2" />
@@ -140,6 +140,11 @@
                     <clipbox>
                         <point x="0" y="0" z="0" />
                         <endpoint x="0.1" y="0.2" z="0.3" />
+                    </clipbox>
+                    <clipbox>
+                        <point x="0" y="0" z="0" />
+                        <size x="1" y="2" z="3" />
+                        <angles x="30" y="45" z="-60" />
                     </clipbox>
                     <clipbox>
                         <boxfaces>top</boxfaces>
@@ -353,6 +358,9 @@
                         <drawrotate angx="10" angy="15" angz="30" />
                         <drawscale x="1" y="1" z="0.8" />
                     </drawfilestl>
+                    <drawfilestl file="File.stl" advanced="true">
+                        <depth depthmin="0.02" />
+                    </drawfilestl>
                     <drawfileply file="File.ply" />
                     <drawfileply file="File.ply">
                         <drawmove x="0.5" y="0" z="0" />
@@ -364,7 +372,14 @@
                     <drawfileply file="File.ply" autofill="true">
                         <drawrotate angx="10" angy="15" angz="30" />
                     </drawfileply>
+                    <drawfileply file="File.ply" advanced="true">
+                        <drawmove x="0.5" y="0" z="0" />
+                        <drawrotate angx="10" angy="15" angz="30" />
+                        <depth depthmax="0.02" />
+                    </drawfileply>
                     <drawfilevtk file="File.vtk" />
+                    <drawfilevtk file="File.vtp" />
+                    <drawfilevtk file="File.vtu" />
                     <drawfilevtk file="File.vtk">
                         <polyselec>points</polyselec>
                     </drawfilevtk>
@@ -382,6 +397,13 @@
                     </drawfilevtk>
                     <drawfilevtk file="File.vtk">
                         <polyselec>polygons</polyselec>
+                    </drawfilevtk>
+                    <drawfilevtk file="File.vtk" advanced="true" />
+                    <drawfilevtk file="File.vtk" advanced="true">
+                        <depth depthmin="0.02" depthmax="0.1" />
+                    </drawfilevtk>
+                    <drawfilevtk file="File.vtk" autofill="true" advanced="true">
+                        <depth depthmin="0.02" />
                     </drawfilevtk>
                     <drawfilecsv file="Bathymetry.csv" mode="bathymetry">
                         <drawmove x="0.5" y="0" z="0" />
@@ -452,7 +474,12 @@
                     <fillbox x="0" y="1" z="0">
                         <modefill>border</modefill>
                         <point x="0.1" y="1" z="1.1" />
-                        <size x="0.1" y="1" z="1.1" />
+                        <size x="3" y="4" z="2" />
+                    </fillbox>
+                    <fillbox x="0" y="1" z="0">
+                        <modefill>border</modefill>
+                        <point x="0.1" y="1" z="1.1" />
+                        <endpoint x="3.1" y="5" z="3.1" />
                     </fillbox>
                     <fillfigure x="0.1" y="1" z="1.1">
                         <points>
@@ -488,6 +515,10 @@
                         <point x="0.1" y="1" z="1.1" />
                         <size x="3" y="4" z="2" />
                     </redrawbox>
+                    <redrawbox>
+                        <point x="0.1" y="1" z="1.1" />
+                        <endpoint x="3.1" y="5" z="3.1" />
+                    </redrawbox>
                     <redrawbox mkfluid="0">
                         <point x="0.1" y="1" z="1.1" />
                         <size x="3" y="4" z="2" />
@@ -513,6 +544,10 @@
                     <redrawnearbox targettp="fluid" targetmk="0" bordertp="bound" bordermk="2">
                         <point x="0.1" y="1" z="1.1" />
                         <size x="3" y="4" z="2" />
+                    </redrawnearbox>
+                    <redrawnearbox targettp="fluid" targetmk="0" bordertp="bound" bordermk="2">
+                        <point x="0.1" y="1" z="1.1" />
+                        <endpoint x="3.1" y="5" z="3.1" />
                     </redrawnearbox>
                     <redrawnearbox times="3" targettp="fluid" targetmk="0" bordertp="bound" bordermk="2">
                         <point x="0.1" y="1" z="1.1" />
@@ -556,6 +591,8 @@
                     <debugout />
                     <shapeout file="fshape_1" reset="false" />
                     <shapeout file="fshape_2" />
+                    <shapeout file="fshape_2" format="vtp" />
+                    <shapeout file="fshape_2" format="VTU" />
                     <shapeout file="fshape_3" reset="false" savenormal="1.5" />
                     <cellsout file="filecellsAll" />
                     <cellsout file="filecellsBound5" mkbound="5" />
@@ -610,10 +647,11 @@
                 <pos1 x="0" y="0" z="0" rhop="1000" comment="Initial density value" units_comment="kg/m^3" />
                 <pos2 x="0" y="0" z="-10" rhop="1002" comment="Final density value" units_comment="kg/m^3" />
             </densitygradient>
-            <densitydepth mkfluid="1">
+            <densitydepth mkfluid="1" comment="Position of surface water level is computed automatically" />
+            <densitydepth mkfluid="2">
                 <posswl x="0" y="0" z="10" comment="Position of surface water level" />
             </densitydepth>
-            <densitydepth mkfluid="2">
+            <densitydepth mkfluid="3">
                 <posswl x="0" y="0" z="10" comment="Position of surface water level" />
                 <gravity x="1" y="0" z="-9.81" comment="Gravitational acceleration" units_comment="m/s^2" />
                 <rhop0 value="1100" comment="Reference density" units_comment="kg/m^3" />
@@ -625,6 +663,9 @@
             </densitymesh>
             <move mkbound="0" x="0.1" y="0.4" z="0.2" />
             <move mkfluid="0" x="0.2" y="0" z="0" />
+            <moverandom mkfluid="10" randomseed="2810" dpxyz="0.01" />
+            <moverandom mkfluid="10" randomseed="2810" dpx="0.028" />
+            <moverandom mkfluid="10" randomseed="0" dpx="0.01" dpy="0.032" dpz="0.02" />
             <rotateaxis mkbound="0" angle="45" anglesunits="degrees">
                 <axisp1 x="0" y="0" z="0" />
                 <axisp2 x="0" y="1" z="0" />
@@ -911,9 +952,8 @@
         <normals active="true">
             <geometryfile file="[CaseName]_hdp_Actual.vtk" comment="File with boundary geometry (VTK format)" />
             <distanceh value="2.0" comment="Maximum distance (H*distanceh) to compute normals data (default=2)" />
-            <svnormals value="1" comment="Saves VTK with particle normals according to <computenormals> for debug (default=0)" />
+            <svnormals value="1" comment="Saves VTK with particle normals according to <computenormals> for debug (default=1)" />
             <svshapes value="0" comment="Saves VTK with geometry in triangles and quads with its normals for debug (default=0)" />
-            <svnormaldata value="0" comment="Saves binary and VTK with normal data for debug (default=0)" />
         </normals>
     </casedef>
     <execution>

@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2023 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -113,14 +113,14 @@ public:
   } 
   virtual ~JDsInitializeOp(){ DestructorActive=true; }
   void Reset();
-  void ReadXmlOnlyPos(const JXml *sxml,TiXmlElement* ele);
-  virtual void ReadXml(const JXml *sxml,TiXmlElement* ele)=0;
-  virtual void Run(unsigned np,unsigned npb,const tdouble3 *pos
-    ,const unsigned *idp,const word *mktype,tfloat4 *velrhop,tfloat3 *boundnormal)=0;
-  virtual void GetConfig(std::vector<std::string> &lines)const=0;
-  unsigned ComputeDomainMk(bool bound,word mktp,unsigned np,const word *mktype
-    ,const unsigned *idp,const tdouble3 *pos,tdouble3 &posmin,tdouble3 &posmax)const;
-  inline bool CheckPos(unsigned p,const tdouble3 *pos){
+  void ReadXmlOnlyPos(const JXml* sxml,TiXmlElement* ele);
+  virtual void ReadXml(const JXml* sxml,TiXmlElement* ele)=0;
+  virtual void Run(unsigned np,unsigned npb,const tdouble3* pos
+    ,const unsigned* idp,const word* mktype,tfloat4* velrho,tfloat3* boundnor)=0;
+  virtual void GetConfig(std::vector<std::string>& lines)const=0;
+  unsigned ComputeDomainMk(bool bound,word mktp,unsigned np,const word* mktype
+    ,const unsigned* idp,const tdouble3* pos,tdouble3& posmin,tdouble3& posmax)const;
+  inline bool CheckPos(unsigned p,const tdouble3* pos){
     NpTotal++;
     const bool sel=(!OnlyPos || (OnlyPosMin<=pos[p] && pos[p]<=OnlyPosMax));
     if(sel)NpUpdated++;
@@ -152,13 +152,13 @@ private:
   float Vel1,Vel2,Vel3;
   float Posz1,Posz2,Posz3;
 public:
-  JDsInitializeOp_FluidVel(const JXml *sxml,TiXmlElement* ele,StInitCt initct)
+  JDsInitializeOp_FluidVel(const JXml* sxml,TiXmlElement* ele,StInitCt initct)
     :JDsInitializeOp(IT_FluidVel,"FluidVel",initct){ Reset(); ReadXml(sxml,ele); }
   void Reset();
-  void ReadXml(const JXml *sxml,TiXmlElement* ele);
-  void Run(unsigned np,unsigned npb,const tdouble3 *pos,const unsigned *idp
-    ,const word *mktype,tfloat4 *velrhop,tfloat3 *boundnormal);
-  void GetConfig(std::vector<std::string> &lines)const;
+  void ReadXml(const JXml* sxml,TiXmlElement* ele);
+  void Run(unsigned np,unsigned npb,const tdouble3* pos,const unsigned* idp
+    ,const word* mktype,tfloat4* velrho,tfloat3* boundnor);
+  void GetConfig(std::vector<std::string>& lines)const;
 };  
 
 //##############################################################################
@@ -171,13 +171,13 @@ private:
   std::string MkBound;
   tfloat3 Normal;
 public:
-  JDsInitializeOp_BoundNormalSet(const JXml *sxml,TiXmlElement* ele,StInitCt initct)
+  JDsInitializeOp_BoundNormalSet(const JXml* sxml,TiXmlElement* ele,StInitCt initct)
     :JDsInitializeOp(IT_BoundNormalSet,"BoundNormalSet",initct){ Reset(); ReadXml(sxml,ele); }
   void Reset();
-  void ReadXml(const JXml *sxml,TiXmlElement* ele);
-  void Run(unsigned np,unsigned npb,const tdouble3 *pos,const unsigned *idp
-    ,const word *mktype,tfloat4 *velrhop,tfloat3 *boundnormal);
-  void GetConfig(std::vector<std::string> &lines)const;
+  void ReadXml(const JXml* sxml,TiXmlElement* ele);
+  void Run(unsigned np,unsigned npb,const tdouble3* pos,const unsigned* idp
+    ,const word* mktype,tfloat4* velrho,tfloat3* boundnor);
+  void GetConfig(std::vector<std::string>& lines)const;
 };  
 
 //##############################################################################
@@ -195,16 +195,16 @@ private:
   float MaxDisteH;  ///<Maximum distance to boundary limit. It uses H*distanceh (default=2).
   bool InitClear;   ///<Clears previous normal data (default=true).
 public:
-  JDsInitializeOp_BoundNormalPlane(const JXml *sxml,TiXmlElement* ele,StInitCt initct)
+  JDsInitializeOp_BoundNormalPlane(const JXml* sxml,TiXmlElement* ele,StInitCt initct)
     :JDsInitializeOp(IT_BoundNormalPlane,"BoundNormalPlane",initct){ Reset(); ReadXml(sxml,ele); }
-  JDsInitializeOp_BoundNormalPlane(const std::string &eparm,StInitCt initct)
+  JDsInitializeOp_BoundNormalPlane(const std::string& eparm,StInitCt initct)
     :JDsInitializeOp(IT_BoundNormalPlane,"BoundNormalPlane",initct){ Reset(); ReadKeyvals(eparm); }
   void Reset();
-  void ReadXml(const JXml *sxml,TiXmlElement* ele);
-  void ReadKeyvals(const std::string &eparm);
-  void Run(unsigned np,unsigned npb,const tdouble3 *pos,const unsigned *idp
-    ,const word *mktype,tfloat4 *velrhop,tfloat3 *boundnormal);
-  void GetConfig(std::vector<std::string> &lines)const;
+  void ReadXml(const JXml* sxml,TiXmlElement* ele);
+  void ReadKeyvals(const std::string& eparm);
+  void Run(unsigned np,unsigned npb,const tdouble3* pos,const unsigned* idp
+    ,const word* mktype,tfloat4* velrho,tfloat3* boundnor);
+  void GetConfig(std::vector<std::string>& lines)const;
 };  
 
 //##############################################################################
@@ -221,13 +221,13 @@ private:
   float MaxDisteH;  ///<Maximum distance to boundary limit. It uses H*distanceh (default=2).
   bool InitClear;   ///<Clears previous normal data (default=true).
 public:
-  JDsInitializeOp_BoundNormalSphere(const JXml *sxml,TiXmlElement* ele,StInitCt initct)
+  JDsInitializeOp_BoundNormalSphere(const JXml* sxml,TiXmlElement* ele,StInitCt initct)
     :JDsInitializeOp(IT_BoundNormalSphere,"BoundNormalSphere",initct){ Reset(); ReadXml(sxml,ele); }
   void Reset();
-  void ReadXml(const JXml *sxml,TiXmlElement* ele);
-  void Run(unsigned np,unsigned npb,const tdouble3 *pos,const unsigned *idp
-    ,const word *mktype,tfloat4 *velrhop,tfloat3 *boundnormal);
-  void GetConfig(std::vector<std::string> &lines)const;
+  void ReadXml(const JXml* sxml,TiXmlElement* ele);
+  void Run(unsigned np,unsigned npb,const tdouble3* pos,const unsigned* idp
+    ,const word* mktype,tfloat4* velrho,tfloat3* boundnor);
+  void GetConfig(std::vector<std::string>& lines)const;
 };  
 
 //##############################################################################
@@ -247,13 +247,13 @@ private:
   float MaxDisteH;  ///<Maximum distance to boundary limit. It uses H*distanceh (default=2).
   bool InitClear;   ///<Clears previous normal data (default=true).
 public:
-  JDsInitializeOp_BoundNormalCylinder(const JXml *sxml,TiXmlElement* ele,StInitCt initct)
+  JDsInitializeOp_BoundNormalCylinder(const JXml* sxml,TiXmlElement* ele,StInitCt initct)
     :JDsInitializeOp(IT_BoundNormalCylinder,"BoundNormalCylinder",initct){ Reset(); ReadXml(sxml,ele); }
   void Reset();
-  void ReadXml(const JXml *sxml,TiXmlElement* ele);
-  void Run(unsigned np,unsigned npb,const tdouble3 *pos,const unsigned *idp
-    ,const word *mktype,tfloat4 *velrhop,tfloat3 *boundnormal);
-  void GetConfig(std::vector<std::string> &lines)const;
+  void ReadXml(const JXml* sxml,TiXmlElement* ele);
+  void Run(unsigned np,unsigned npb,const tdouble3* pos,const unsigned* idp
+    ,const word* mktype,tfloat4* velrho,tfloat3* boundnor);
+  void GetConfig(std::vector<std::string>& lines)const;
 };  
 
 //##############################################################################
@@ -266,16 +266,16 @@ private:
   std::string MkBound;
   float MaxDisteH;  ///<Maximum distance to boundary limit. It uses H*distanceh (default=2).
 public:
-  JDsInitializeOp_BoundNormalParts(const JXml *sxml,TiXmlElement* ele,StInitCt initct)
+  JDsInitializeOp_BoundNormalParts(const JXml* sxml,TiXmlElement* ele,StInitCt initct)
     :JDsInitializeOp(IT_BoundNormalParts,"BoundNormalParts",initct){ Reset(); ReadXml(sxml,ele); }
-  JDsInitializeOp_BoundNormalParts(const std::string &eparm,StInitCt initct)
+  JDsInitializeOp_BoundNormalParts(const std::string& eparm,StInitCt initct)
     :JDsInitializeOp(IT_BoundNormalPlane,"BoundNormalParts",initct){ Reset(); ReadKeyvals(eparm); }
   void Reset();
-  void ReadXml(const JXml *sxml,TiXmlElement* ele);
-  void ReadKeyvals(const std::string &eparm);
-  void Run(unsigned np,unsigned npb,const tdouble3 *pos,const unsigned *idp
-    ,const word *mktype,tfloat4 *velrhop,tfloat3 *boundnormal);
-  void GetConfig(std::vector<std::string> &lines)const;
+  void ReadXml(const JXml* sxml,TiXmlElement* ele);
+  void ReadKeyvals(const std::string& eparm);
+  void Run(unsigned np,unsigned npb,const tdouble3* pos,const unsigned* idp
+    ,const word* mktype,tfloat4* velrho,tfloat3* boundnor);
+  void GetConfig(std::vector<std::string>& lines)const;
 };  
 
 
@@ -283,31 +283,31 @@ public:
 //# JDsInitialize
 //##############################################################################
 /// \brief Manages the info of particles from the input XML file.
-class JDsInitialize  : protected JObject
+class JDsInitialize : protected JObject
 {
 private:
   const bool BoundNormals;
   const JDsInitializeOp::StInitCt InitCt;  ///<Constant values needed for initialization tasks.
   std::vector<JDsInitializeOp*> Opes;
 
-  void LoadFileXml(const std::string &file,const std::string &path);
-  void ReadXml(const JXml *sxml,TiXmlElement* lis);
+  void LoadFileXml(const std::string& file,const std::string& path);
+  void ReadXml(const JXml* sxml,TiXmlElement* lis);
 
 public:
   JDsInitialize(bool sim2d,double sim2dy,tdouble3 posmin,tdouble3 posmax
-    ,double dp,float kernelh,const std::string &dirdatafile
+    ,double dp,float kernelh,const std::string& dirdatafile
     ,unsigned nbound,bool boundnormals);
   ~JDsInitialize();
   void Reset();
 
-  void LoadXml(const JXml *sxml,const std::string &place);
-  void LoadExecParms(const std::vector<std::string> &execparms);
+  void LoadXml(const JXml* sxml,const std::string& place);
+  void LoadExecParms(const std::vector<std::string>& execparms);
 
   unsigned Count()const{ return(unsigned(Opes.size())); }
 
-  void Run(unsigned np,unsigned npb,const tdouble3 *pos
-    ,const unsigned *idp,const word *mktype,tfloat4 *velrhop,tfloat3 *boundnormal);
-  void GetConfig(std::vector<std::string> &lines)const;
+  void Run(unsigned np,unsigned npb,const tdouble3* pos
+    ,const unsigned* idp,const word* mktype,tfloat4* velrho,tfloat3* boundnor);
+  void GetConfig(std::vector<std::string>& lines)const;
 
 };
 

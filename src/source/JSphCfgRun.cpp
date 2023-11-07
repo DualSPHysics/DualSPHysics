@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2023 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -21,6 +21,7 @@
 #include "JSphCfgRun.h"
 #include "JAppInfo.h"
 #include "JDsphConfig.h"
+#include <cfloat>
 
 using namespace std;
 
@@ -44,14 +45,19 @@ void JSphCfgRun::Reset(){
   SvExtraParts="undefined";
   OmpThreads=0;
   SvTimers=true;
-  CellDomFixed=false;
   CellMode=CELLMODE_Full;
+  CellDomFixed=false;
   TBoundary=0; SlipMode=0; MdbcFastSingle=-1; MdbcThreshold=-1;
   DomainMode=0;
   DomainFixedMin=DomainFixedMax=TDouble3(0);
   TStep=STEP_None; VerletSteps=-1;
   TKernel=KERNEL_None;
-  TVisco=VISCO_None; Visco=0; ViscoBoundFactor=-1;
+  TVisco=VISCO_None;
+  Visco=0;
+  ViscoBoundFactor=-1;
+  TimeMax=-1;
+  TimePart=-1;
+  TimePartExtra=DBL_MAX;
   TDensity=-1;
   DDTValue=-1;
   DDTValueTRamp=DDTValueTMax=DDTValueMax=0;  //<vs_ddramp>
@@ -66,7 +72,6 @@ void JSphCfgRun::Reset(){
   CaseName=""; RunName=""; DirOut=""; DirDataOut=""; 
   PartBegin=0; PartBeginFirst=0; PartBeginDir="";
   RestartChrono=false;
-  TimeMax=-1; TimePart=-1;
   CFLnumber=-1;
   RhopOutModif=false; RhopOutMin=700; RhopOutMax=1300;
   FtPause=-1;
@@ -93,25 +98,32 @@ void JSphCfgRun::VisuInfo()const{
   printf("    -opt <file> Loads a file configuration\n");
   printf("\n");
 
-  printf("  Execution options:\n");
+  printf("  Execution options for CPU:\n");
   printf("    -cpu        Execution on CPU (option by default)\n");
-  printf("    -gpu[:id]   Execution on GPU and id of the device\n");
+#ifdef OMP_USE
+  printf("    -ompthreads:<int>  Only for CPU execution, indicates the number of threads\n");
+  printf("                by host for parallel execution, this takes the number of cores\n");
+  printf("                of the device by default (or using zero value)\n");
+#endif
   printf("\n");
+
+#ifdef _WITHGPU
+  printf("  Execution options for Single-GPU:\n");
+  printf("    -gpu[:id]   Execution on GPU and optional id of the device\n");
+  printf("\n");
+#endif
+
+  printf("  General execution options:\n");
   printf("    -stable     The result is always the same but the execution is slower\n");
   printf("    -saveposdouble:<0/1>  Saves position using double precision (default=0)\n");
   printf("    -svextraparts:<int>  PART interval for saving extra data (default=0)\n");
   printf("    -svextraparts:<list> List of PARTs for saving extra data (default=0)\n");
   printf("\n");
-#ifdef OMP_USE
-  printf("    -ompthreads:<int>  Only for CPU execution, indicates the number of threads\n");
-  printf("                   by host for parallel execution, this takes the number of \n");
-  printf("                   cores of the device by default (or using zero value)\n");
-  printf("\n");
-#endif
   printf("    -cellmode:<mode>  Specifies the cell division mode\n");
   printf("        full      Lowest and the least expensive in memory (by default)\n");
   printf("        half      Fastest and the most expensive in memory\n");
   printf("    -cellfixed:<0/1>  Cell domain is fixed according maximum domain size\n");
+  printf("                      (default=0)\n");
   printf("\n");
 
   printf("  Formulation options:\n");
@@ -168,6 +180,7 @@ void JSphCfgRun::VisuInfo()const{
   printf("\n");
   printf("    -tmax:<float>   Maximum time of simulation\n");
   printf("    -tout:<float>   Time between output files\n");
+  printf("    -toutx:<float>  Time between extra output files on motion and floatings\n");
   printf("\n");
   printf("    -cfl:<float> CFL number coefficient to multiply dt\n");
   printf("    -ftpause:<float> Time to start floating bodies movement. By default 0\n");
@@ -261,7 +274,7 @@ void JSphCfgRun::VisuConfig()const{
 //==============================================================================
 /// Loads execution parameters.
 //==============================================================================
-void JSphCfgRun::LoadOpts(string *optlis,int optn,int lv,const std::string &file){
+void JSphCfgRun::LoadOpts(string* optlis,int optn,int lv,const std::string& file){
   if(lv>=10)Run_Exceptioon("No more than 10 levels of recursive configuration.");
   for(int c=0;c<optn;c++){
     const string opt=optlis[c];
@@ -275,8 +288,13 @@ void JSphCfgRun::LoadOpts(string *optlis,int optn,int lv,const std::string &file
       string txword,txoptfull,txopt1,txopt2,txopt3;
       SplitsOpts(opt,txword,txoptfull,txopt1,txopt2,txopt3);
       //-Checks keywords in commands.
-      if(txword=="CPU"){ Cpu=true; Gpu=false; }
-      else if(txword=="GPU"){ Gpu=true; Cpu=false;
+      if(txword=="CPU"){
+        Cpu=Gpu=false; 
+        Cpu=true;
+      }
+      else if(txword=="GPU"){ 
+        Cpu=Gpu=false; 
+        Gpu=true;
         if(txoptfull!="")GpuId=atoi(txoptfull.c_str()); 
       }
       else if(txword=="STABLE")Stable=(txoptfull!=""? atoi(txoptfull.c_str()): 1)!=0;
@@ -378,14 +396,14 @@ void JSphCfgRun::LoadOpts(string *optlis,int optn,int lv,const std::string &file
       }
       else if(txword=="CREATEDIRS")CreateDirs=(txoptfull!=""? atoi(txoptfull.c_str()): 1)!=0;
       else if(txword=="CSVSEP")CsvSepComa=(txoptfull!=""? atoi(txoptfull.c_str()): 1)!=0;
-      else if(txword=="NAME"&&c+1<optn){ CaseName=optlis[c+1]; c++; }
-      else if(txword=="RUNNAME"&&c+1<optn){ RunName=optlis[c+1]; c++; }
-      else if(txword=="DIROUT"&&c+1<optn){ DirOut=optlis[c+1]; c++; }
+      else if(txword=="NAME" && c+1<optn){ CaseName=optlis[c+1]; c++; }
+      else if(txword=="RUNNAME" && c+1<optn){ RunName=optlis[c+1]; c++; }
+      else if(txword=="DIROUT" && c+1<optn){ DirOut=optlis[c+1]; c++; }
       else if(txword=="DIRDATAOUT" && c+1<optn){ DirDataOut=optlis[c+1]; c++; }
-      else if(txword=="PARTBEGIN"&&c+1<optn){ 
+      else if(txword=="PARTBEGIN" && c+1<optn){ 
         int v1=atoi(txopt1.c_str());
         int v2=atoi(txopt2.c_str());
-        if(v1<0||v2<0)ErrorParm(opt,c,lv,file);
+        if(v1<0 || v2<0)ErrorParm(opt,c,lv,file);
         else{
           PartBegin=unsigned(v1);
           PartBeginFirst=(txopt2.empty()? PartBegin: unsigned(v2));
@@ -414,6 +432,9 @@ void JSphCfgRun::LoadOpts(string *optlis,int optn,int lv,const std::string &file
         TimePart=float(atof(txoptfull.c_str())); 
         if(TimePart<0)ErrorParm(opt,c,lv,file);
       }
+      else if(txword=="TOUTX"){ 
+        TimePartExtra=float(atof(txoptfull.c_str())); 
+      }
       else if(txword=="DOMAIN_FIXED"){
         LoadDouble6(txoptfull,0,DomainFixedMin,DomainFixedMax);
         DomainMode=2;
@@ -432,8 +453,8 @@ void JSphCfgRun::LoadOpts(string *optlis,int optn,int lv,const std::string &file
         if(PipsMode>2)ErrorParm(opt,c,lv,file);
         if(!txopt2.empty())PipsSteps=(unsigned)atoi(txopt2.c_str());
       }
-      else if(txword=="OPT"&&c+1<optn){ LoadFile(optlis[c+1],lv+1); c++; }
-      else if(txword=="H"||txword=="HELP"||txword=="?")PrintInfo=true;
+      else if(txword=="OPT" && c+1<optn){ LoadFile(optlis[c+1],lv+1); c++; }
+      else if(txword=="H" || txword=="HELP" || txword=="?")PrintInfo=true;
       else ErrorParm(opt,c,lv,file);
     }
   }

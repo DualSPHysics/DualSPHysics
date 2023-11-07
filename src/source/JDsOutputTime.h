@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2023 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -65,8 +65,8 @@ protected:
 
   bool SpecialConfig; ///<Configuration loaded from XML file in special section.
 
-  void ReadXml(const JXml *sxml,TiXmlElement* ele);
-  void LoadXml(const JXml *sxml,const std::string &place);
+  void ReadXml(const JXml* sxml,TiXmlElement* ele);
+  void LoadXml(const JXml* sxml,const std::string& place);
   unsigned GetCount()const{ return(unsigned(Times.size())); }
   bool AddTimeOut(double t,double tout);
   void CopyFrom(const JDsOutputTime* tout);
@@ -79,10 +79,10 @@ public:
   ~JDsOutputTime();
   void Reset();
   void Config(double timeoutdef);
-  void Config(std::string filexml,const std::string &place,double timeoutdef);
+  void Config(std::string filexml,const std::string& place,double timeoutdef);
   bool UseSpecialConfig()const{ return(SpecialConfig); }
   void VisuConfig(std::string txhead,std::string txfoot)const;
-  void GetConfig(std::string txhead,std::string txfoot,std::vector<std::string> &lines)const;
+  void GetConfig(std::string txhead,std::string txfoot,std::vector<std::string>& lines)const;
   double GetNextTime(double t);
 };
 

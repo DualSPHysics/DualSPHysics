@@ -1,6 +1,6 @@
 //HEAD_DSCODES
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2023 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -56,14 +56,16 @@ void JCaseUserVars::Reset(){
 //==============================================================================
 /// Sort funtion.
 //==============================================================================
-bool JCaseUserVarsSort(const JCaseUserVars::StVar &a,const JCaseUserVars::StVar &b){ 
+bool JCaseUserVarsSort(const JCaseUserVars::StVar& a
+  ,const JCaseUserVars::StVar& b)
+{ 
   return (a.isnum!=b.isnum? !a.isnum: a.name<b.name);
 }
 
 //==============================================================================
 /// Configures MkBoundFirst and MkFluidFirst.
 //==============================================================================
-void JCaseUserVars::LoadExportVars(const JNumexLib *nuxlib){
+void JCaseUserVars::LoadExportVars(const JNumexLib* nuxlib){
   Reset();
   std::vector<unsigned> vars;
   const unsigned nv=nuxlib->GetExportVars(vars);
@@ -83,7 +85,7 @@ void JCaseUserVars::LoadExportVars(const JNumexLib *nuxlib){
 //==============================================================================
 /// Reads particles information in XML format.
 //==============================================================================
-void JCaseUserVars::ReadXml(const JXml *sxml,TiXmlElement* lis){
+void JCaseUserVars::ReadXml(const JXml* sxml,TiXmlElement* lis){
   sxml->CheckElementNames(lis,false,"varstr varnum");
   //-Loads user variables.
   TiXmlElement* ele=lis->FirstChildElement();
@@ -112,11 +114,11 @@ void JCaseUserVars::ReadXml(const JXml *sxml,TiXmlElement* lis){
 //==============================================================================
 /// Writes information in XML format.
 //==============================================================================
-void JCaseUserVars::WriteXml(JXml *sxml,TiXmlElement* lis)const{
+void JCaseUserVars::WriteXml(JXml* sxml,TiXmlElement* lis)const{
   lis->Clear();
   const unsigned nv=unsigned(Vars.size());
   for(unsigned cv=0;cv<nv;cv++){
-    const StVar &v=Vars[cv];
+    const StVar& v=Vars[cv];
     TiXmlElement item(v.isnum? "varnum": "varstr");
     JXml::AddAttribute(&item,"name",v.name);
     if(v.isnum)JXml::AddAttribute(&item,"value",v.valuenum);
@@ -128,7 +130,7 @@ void JCaseUserVars::WriteXml(JXml *sxml,TiXmlElement* lis)const{
 //==============================================================================
 /// Loads data in XML format from a file.
 //==============================================================================
-void JCaseUserVars::LoadFileXml(const std::string &file,const std::string &path){
+void JCaseUserVars::LoadFileXml(const std::string& file,const std::string& path){
   JXml jxml;
   jxml.LoadFile(file);
   LoadXml(&jxml,path,false);
@@ -137,7 +139,9 @@ void JCaseUserVars::LoadFileXml(const std::string &file,const std::string &path)
 //==============================================================================
 /// Loads information from the object XML.
 //==============================================================================
-void JCaseUserVars::LoadXml(const JXml *sxml,const std::string &place,bool optional){
+void JCaseUserVars::LoadXml(const JXml* sxml,const std::string& place
+  ,bool optional)
+{
   Reset();
   TiXmlNode* node=sxml->GetNodeSimple(place);
   if(!node && !optional)Run_Exceptioon(std::string("Cannot find the element \'")+place+"\'.");
@@ -147,7 +151,7 @@ void JCaseUserVars::LoadXml(const JXml *sxml,const std::string &place,bool optio
 //==============================================================================
 /// Stores information in the object XML.
 //==============================================================================
-void JCaseUserVars::SaveXml(JXml *sxml,const std::string &place)const{
+void JCaseUserVars::SaveXml(JXml* sxml,const std::string& place)const{
   if(unsigned(Vars.size())>0)WriteXml(sxml,sxml->GetNode(place,true)->ToElement());
 }
 

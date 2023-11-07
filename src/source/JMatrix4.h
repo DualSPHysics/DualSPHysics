@@ -1,6 +1,6 @@
 //HEAD_DSCODES
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2023 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -30,6 +30,7 @@
 //:# - Cambio en GetMotion() para mantener compatibilidad con Linux. (01-02-2016)
 //:# - Nuevos metodos para la rotacion. (05-04-2020)
 //:# - Nuevos metodos IsIdentity() y IsMovMatrix(). (20-12-2020)
+//:# - Nuevo metodo RotatedAxis(). (18-07-2023)
 //:#############################################################################
 
 /// \file JMatrix4.h \brief Declares the template \ref JMatrix4
@@ -64,7 +65,7 @@ public:
 //==============================================================================
 /// Construtor of objects.
 //==============================================================================
-  //JMatrix4(const JMatrix4 &m){ 
+  //JMatrix4(const JMatrix4& m){ 
   //  //printf("***copia***\n");
   //  a11=m.a11;  a12=m.a12;  a13=m.a13;  a14=m.a14;
   //  a21=m.a21;  a22=m.a22;  a23=m.a23;  a24=m.a24;
@@ -118,7 +119,7 @@ public:
 //==============================================================================
 /// Adds the matrix \a m.
 //==============================================================================
-  void Sum(const JMatrix4 &m){
+  void Sum(const JMatrix4& m){
     a11+=m.a11; a12+=m.a12; a13+=m.a13; a14+=m.a14;
     a21+=m.a21; a22+=m.a22; a23+=m.a23; a24+=m.a24;
     a31+=m.a31; a32+=m.a32; a33+=m.a33; a34+=m.a34;
@@ -128,7 +129,7 @@ public:
 //==============================================================================
 /// Multiplies by the matrix \a m2.
 //==============================================================================
-  void Mul(const JMatrix4 &m2){
+  void Mul(const JMatrix4& m2){
     JMatrix4 m1=*this;
     a11= m1.a11*m2.a11 + m1.a12*m2.a21 + m1.a13*m2.a31 + m1.a14*m2.a41;
     a12= m1.a11*m2.a12 + m1.a12*m2.a22 + m1.a13*m2.a32 + m1.a14*m2.a42;
@@ -151,7 +152,7 @@ public:
 //==============================================================================
 /// Left multiplies by the matrix \a m1.
 //==============================================================================
-  void MulPre(const JMatrix4 &m1){
+  void MulPre(const JMatrix4& m1){
     JMatrix4 m2=*this;
     a11= m1.a11*m2.a11 + m1.a12*m2.a21 + m1.a13*m2.a31 + m1.a14*m2.a41;
     a12= m1.a11*m2.a12 + m1.a12*m2.a22 + m1.a13*m2.a32 + m1.a14*m2.a42;
@@ -174,7 +175,7 @@ public:
 //==============================================================================
 /// Returns the product of the matrix by the normal \a n.
 //==============================================================================
-  T3 MulNormal(const T3 &n)const{
+  T3 MulNormal(const T3& n)const{
     T3 r;
     r.x= a11*n.x + a12*n.y + a13*n.z;
     r.y= a21*n.x + a22*n.y + a23*n.z;
@@ -185,7 +186,7 @@ public:
 //==============================================================================
 /// Returns the product of the matrix by the point \a p.
 //==============================================================================
-  T3 MulPoint(const T3 &p)const{
+  T3 MulPoint(const T3& p)const{
     T3 r;
     r.x= a11*p.x + a12*p.y + a13*p.z + a14;
     r.y= a21*p.x + a22*p.y + a23*p.z + a24;
@@ -196,7 +197,7 @@ public:
 //==============================================================================
 /// Returns the product of the matrix by the array of points.
 //==============================================================================
-  void MulArray(unsigned np,T3 *vp)const{
+  void MulArray(unsigned np,T3* vp)const{
     for(unsigned c=0;c<np;c++){
       const T3 p=vp[c];
       T3 r;
@@ -210,7 +211,7 @@ public:
 //==============================================================================
 /// Returns the product of the matrix by the array of points.
 //==============================================================================
-  void MulArray(unsigned np,const T3 *vp,T3 *vr)const{
+  void MulArray(unsigned np,const T3* vp,T3* vr)const{
     for(unsigned c=0;c<np;c++){
       const T3 p=vp[c];
       T3 r;
@@ -225,7 +226,7 @@ public:
 /// Linear motion is applied.
 /// \param p Array with displacement in every axis.
 //==============================================================================
-  void Move(const T3 &p){
+  void Move(const T3& p){
     Mul(MatrixMov(p));
   }
 
@@ -235,7 +236,7 @@ public:
 /// \param axisp1 Initial point of the array that defines the axis of rotation.
 /// \param axisp2 Final point of the array that defines the axis of rotation.
 //==============================================================================
-  void Rotate(T ang,const T3 &axisp1,const T3 &axisp2){
+  void Rotate(T ang,const T3& axisp1,const T3& axisp2){
     Mul(MatrixRot(ang,axisp1,axisp2));
   }
 
@@ -251,7 +252,7 @@ public:
 /// Scaling is aplied.
 /// \param p Array with the scale in every axis.
 //==============================================================================
-  void Scale(const T3 &p){
+  void Scale(const T3& p){
     Mul(MatrixScale(p));
   }
 
@@ -259,7 +260,7 @@ public:
 /// Returns a transformation matrix for a linear movement.
 /// \param p Array with displacement in every axis.
 //==============================================================================
-  static JMatrix4 MatrixMov(const T3 &p){
+  static JMatrix4 MatrixMov(const T3& p){
     JMatrix4 m;
     m.a14=p.x; m.a24=p.y; m.a34=p.z;
     return(m);
@@ -269,7 +270,7 @@ public:
 /// Returns a transformation matrix for a scaling.
 /// \param p Array with displacement in every axis.
 //==============================================================================
-  static JMatrix4 MatrixScale(const T3 &p){
+  static JMatrix4 MatrixScale(const T3& p){
     JMatrix4 m;
     m.a11=p.x; m.a22=p.y; m.a33=p.z;
     return(m);
@@ -329,7 +330,7 @@ public:
 /// \param axisp1 Initial point of the array that defines the axis of rotation.
 /// \param axisp2 Final point of the array that defines the axis of rotation.
 //==============================================================================
-  static JMatrix4 MatrixRot(T ang,const T3 &axisp1,const T3 &axisp2){
+  static JMatrix4 MatrixRot(T ang,const T3& axisp1,const T3& axisp2){
     //fflush(stdout);    printf("MatrixRot\n");
 
     T rad=T(ang*TORAD);   //float(ang*PI/180);
@@ -366,11 +367,32 @@ public:
   }
 
 //==============================================================================
+/// Returns rotated axis vectors.
+/// \param ang Angle of roation in each axis (in degrees).
+//==============================================================================
+  static void RotatedAxis(const T3& ang,const T3& size,T3& vx,T3& vy,T3& vz){
+    const JMatrix4 m=MatrixRot(ang);
+    if(ang.x==0 && ang.y==0 && ang.z==0){
+      vx.x=size.x; vx.y=0;      vx.z=0;
+      vy.x=0;      vy.y=size.y; vy.z=0;
+      vz.x=0;      vz.y=0;      vz.z=size.z;
+    }
+    else{
+      vx.x=1; vx.y=0; vx.z=0;
+      vy.x=0; vy.y=1; vy.z=0;
+      vz.x=0; vz.y=0; vz.z=1;
+      vx=m.MulPoint(vx)*size.x;
+      vy=m.MulPoint(vy)*size.y;
+      vz=m.MulPoint(vz)*size.z;
+    }
+  }
+
+//==============================================================================
 /// Returns axis rotation and translation.
 /// \param rot Angles of roation (in degrees).
 /// \param mov Translation.
 //==============================================================================
-  void GetMotion(T3 &rot,T3 &mov)const{
+  void GetMotion(T3& rot,T3& mov)const{
     T3 pt[4]={{0,0,0},{1,0,0},{0,1,0},{0,0,1}};
     T3 pr[3]; MulArray(3,pt,pr);
     mov=pr[0];

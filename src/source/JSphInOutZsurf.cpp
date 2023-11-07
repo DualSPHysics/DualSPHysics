@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2023 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -45,7 +45,7 @@ using namespace std;
 //==============================================================================
 /// Constructor.
 //==============================================================================
-JSphInOutZsurf::JSphInOutZsurf(bool cpu,unsigned idzone,const StCteSph &csp
+JSphInOutZsurf::JSphInOutZsurf(bool cpu,unsigned idzone,const StCteSph& csp
   ,tdouble3 direction,tdouble3 zoneposmin,tdouble3 zoneposmax)
   :Log(AppInfo.LogPtr()),Cpu(cpu),IdZone(idzone),CSP(csp),Direction(direction)
   ,ZonePosMin(zoneposmin),ZonePosMax(zoneposmax)
@@ -97,8 +97,8 @@ void JSphInOutZsurf::Reset(){
 //==============================================================================
 /// Reads initial configuration in the XML node.
 //==============================================================================
-TpInZsurfMode JSphInOutZsurf::ReadXml(const JXml *sxml,TiXmlElement* ele
-  ,const std::string &dirdatafile,JGaugeSystem *gaugesystem)
+TpInZsurfMode JSphInOutZsurf::ReadXml(const JXml* sxml,TiXmlElement* ele
+  ,const std::string& dirdatafile,JGaugeSystem* gaugesystem)
 {
   ZsurfMode=InZsurf_Undefined;
   UniformZsurf=true;
@@ -187,8 +187,8 @@ void JSphInOutZsurf::InterpolateZsurfTime(double timestep,bool full){
     const float tf=float(TimeFactor);
     //-Computes zsurf values for timestep on CPU.
     if(full || Cpu){
-      const float *ptr0=TimesZsurf+(Nptx*TimePosition);
-      const float *ptr1=TimesZsurf+(Nptx*TimePositionNext);
+      const float* ptr0=TimesZsurf+(Nptx*TimePosition);
+      const float* ptr1=TimesZsurf+(Nptx*TimePositionNext);
       for(unsigned p=0;p<Nptx;p++){
         const float v0=ptr0[p];
         CurrentZsurf[p]=(ptr1[p]-v0)*tf+v0;
@@ -326,7 +326,7 @@ void JSphInOutZsurf::ComputeZsurfLine(bool forgauge,bool forceuniform){
 //==============================================================================
 /// Configures gauge to measure the zsurf. Returns true when zsurf is uniform.
 //==============================================================================
-bool JSphInOutZsurf::ConfigGaugeZsurf(JGaugeSystem *gaugesystem){
+bool JSphInOutZsurf::ConfigGaugeZsurf(JGaugeSystem* gaugesystem){
   ComputeZsurfLine(true,OldCode);
   const string gname=fun::PrintStr("Inlet_i%d_zsurf",IdZone);
   if(OldCode){
@@ -381,7 +381,7 @@ const StZsurfResult& JSphInOutZsurf::GetZsurfResults()const{
 //==============================================================================
 /// Loads lines with configuration information.
 //==============================================================================
-void JSphInOutZsurf::GetConfig(std::vector<std::string> &lines)const{
+void JSphInOutZsurf::GetConfig(std::vector<std::string>& lines)const{
   const bool simulate2d=CSP.simulate2d;
   lines.push_back(fun::PrintStr("Z-Surface mode: %s (%s)",TpInZsurfModeText(ZsurfMode),(UniformZsurf? "uniform": "non-uniform")));
   if(ZsurfMode!=InZsurf_Undefined){
@@ -410,7 +410,9 @@ void JSphInOutZsurf::GetConfig(std::vector<std::string> &lines)const{
 //==============================================================================
 /// Returns initial active points (below zsurf).
 //==============================================================================
-unsigned JSphInOutZsurf::ComputeActivePoints(unsigned npt,const tdouble3 *ptpos)const{
+unsigned JSphInOutZsurf::ComputeActivePoints(unsigned npt
+  ,const tdouble3* ptpos)const
+{
   unsigned npok=0;
   if(UniformZsurf){
     if(InputZsurf==FLT_MAX)npok=npt;
@@ -422,7 +424,9 @@ unsigned JSphInOutZsurf::ComputeActivePoints(unsigned npt,const tdouble3 *ptpos)
 //==============================================================================
 /// Activates or deactivates points according to zsurf.
 //==============================================================================
-void JSphInOutZsurf::SetInitialPoints(unsigned npt,const tdouble3 *ptpos,byte *ptok)const{
+void JSphInOutZsurf::SetInitialPoints(unsigned npt,const tdouble3* ptpos
+  ,byte* ptok)const
+{
   if(UniformZsurf){
     if(InputZsurf==FLT_MAX)memset(ptok,1,sizeof(byte)*npt);
     else for(unsigned p=0;p<npt;p++)ptok[p]=(float(ptpos[p].z)<=InputZsurf? 1: 0);
@@ -448,7 +452,7 @@ float JSphInOutZsurf::UpdateZsurf(double timestep){
 //==============================================================================
 /// Returns current zsurf non-uniform (according to position).
 //==============================================================================
-float JSphInOutZsurf::GetCurrentZsurfNonUniform(const tdouble3 &ps)const{
+float JSphInOutZsurf::GetCurrentZsurfNonUniform(const tdouble3& ps)const{
   const float dx=float(fgeo::PlanePoint(PlaDisx,ps));
   const unsigned cx=(dx<=0? 0: unsigned(dx));
   return(CurrentZsurf[(cx<Nptx? cx: Nptx-1)]);

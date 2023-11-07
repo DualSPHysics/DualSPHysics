@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2023 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -123,7 +123,8 @@
 #define DELTA_HEAVYFLOATING  ///<Applies DDT to fluid particles interacting with floatings with higher density (massp>MassFluid*1.2). | Aplica DDT a fluido que interaccionan con floatings pesados (massp>MassFluid*1.2). NO_COMENTARIO
 
 #define CELLDIV_OVERMEMORYNP 0.05f   ///<Memory that is reserved for the particle management in JCellDivGpu. | Memoria que se reserva de mas para la gestion de particulas en JCellDivGpu.
-#define CELLDIV_OVERMEMORYCELLS 1    ///<Number of cells in each dimension is increased to allocate memory for JCellDivGpu cells. | Numero celdas que se incrementa en cada dimension al reservar memoria para celdas en JCellDivGpu.
+#define CELLDIV_OVERMEMORYCELLS 2    ///<Number of cells in each dimension is increased to allocate memory for JCellDivGpu cells. | Numero celdas que se incrementa en cada dimension al reservar memoria para celdas en JCellDivGpu.
+#define CELLDIV_OVERMEMORYNCELLS 6553598 ///<Number of cells (6.5M for 100 MiB on GPU) to increase memory allocation for JCellDivGpu cells.
 #define PERIODIC_OVERMEMORYNP 0.05f  ///<Memory reserved for the creation of periodic particles in JSphGpuSingle::RunPeriodic(). | Mermoria que se reserva de mas para la creacion de particulas periodicas en JSphGpuSingle::RunPeriodic().
 #define PARTICLES_OVERMEMORY_MIN 128 ///<Minimum over memory allocated on CPU or GPU according number of particles.
 
@@ -143,9 +144,9 @@
   #define CODE_NORMAL   0x0            //-0  Particulas normales no excluidas.                              | 0 Normal particles (not excluded)
   #define CODE_PERIODIC 0x20000000     //-1  Particulas duplicadas por periodicas.                          | 1 Duplicate particles for periodic
   #define CODE_OUTIGNORE 0x40000000    //-2  Marca particulas que se van a ignorar en el siguiente divide.  | 2 Brands particles to be ignored in the next division.
-  #define CODE_OUTMOVE 0x60000000      //-3  Particulas normales excluidas por movimiento.                  | 3 Normal particles excluded for motion
+  #define CODE_OUTMOV 0x60000000       //-3  Particulas normales excluidas por movimiento.                  | 3 Normal particles excluded for motion
   #define CODE_OUTPOS 0x80000000       //-4  Particulas normales excluidas por posicion.                    | 4 Normal particles excluded for position
-  #define CODE_OUTRHOP 0xA0000000      //-5  Particulas normales excluidas por densidad.                    | 5 Normal particles excluded for density
+  #define CODE_OUTRHO 0xA0000000       //-5  Particulas normales excluidas por densidad.                    | 5 Normal particles excluded for density
 
   #define CODE_MASKTYPEVALUE 0x0003ffff //-Bits for type: 00000000 00000011 11111111 11111111
   #define CODE_MASKTYPE 0x00030000      //-Bits for type: 00000000 00000011 00000000 00000000
@@ -169,9 +170,9 @@
   #define CODE_NORMAL   0x0         //-0  Particulas normales no excluidas.                              | 0 Normal particles (not excluded)
   #define CODE_PERIODIC 0x2000      //-1  Particulas duplicadas por periodicas.                          | 1 Duplicate particles for periodic
   #define CODE_OUTIGNORE 0x4000     //-2  Marca particulas que se van a ignorar en el siguiente divide.  | 2 Brands particles to be ignored in the next division.
-  #define CODE_OUTMOVE 0x6000       //-3  Particulas normales excluidas por movimiento.                  | 3 Normal particles excluded for motion
+  #define CODE_OUTMOV 0x6000        //-3  Particulas normales excluidas por movimiento.                  | 3 Normal particles excluded for motion
   #define CODE_OUTPOS 0x8000        //-4  Particulas normales excluidas por posicion.                    | 4 Normal particles excluded for position
-  #define CODE_OUTRHOP 0xA000       //-5  Particulas normales excluidas por densidad.                    | 5 Normal particles excluded for density
+  #define CODE_OUTRHO 0xA000        //-5  Particulas normales excluidas por densidad.                    | 5 Normal particles excluded for density
   //#define CODE_SPECIAL1 0xC000    //-6  Por ejemplo, CODE_DOMAINPREV pertenece a Proceso-1             | 6 For example, CODE_DOMAINPREV belongs to Process-1
   //#define CODE_SPECIAL2 0xE000    //-7  Por ejemplo, CODE_DOMAINNEXT pertenece a Proceso+1             | 7 For example, CODE_DOMAINNEXT belongs to Process+1
 
@@ -199,8 +200,8 @@
 #define CODE_SetPeriodic(code)  (CODE_SetNormal(code)|CODE_PERIODIC)
 #define CODE_SetOutIgnore(code) (CODE_SetNormal(code)|CODE_OUTIGNORE)
 #define CODE_SetOutPos(code)    (CODE_SetNormal(code)|CODE_OUTPOS)
-#define CODE_SetOutMove(code)   (CODE_SetNormal(code)|CODE_OUTMOVE)
-#define CODE_SetOutRhop(code)   (CODE_SetNormal(code)|CODE_OUTRHOP)
+#define CODE_SetOutMov(code)    (CODE_SetNormal(code)|CODE_OUTMOV)
+#define CODE_SetOutRho(code)    (CODE_SetNormal(code)|CODE_OUTRHO)
 #define CODE_GetSpecialValue(code) (code&CODE_MASKSPECIAL)
 #define CODE_GetSpecialByte(code) (CODE_GetSpecialValue(code)>>CODE_MASKSPECIALMV)
 
@@ -211,7 +212,7 @@
 #define CODE_IsNormal(code)    (CODE_GetSpecialValue(code)==CODE_NORMAL)
 #define CODE_IsPeriodic(code)  (CODE_GetSpecialValue(code)==CODE_PERIODIC)
 #define CODE_IsNotOut(code)    (CODE_GetSpecialValue(code)<=CODE_PERIODIC)
-#define CODE_IsOutRhop(code)   (CODE_GetSpecialValue(code)==CODE_OUTRHOP)
+#define CODE_IsOutRho(code)   (CODE_GetSpecialValue(code)==CODE_OUTRHO)
 #define CODE_IsOutIgnore(code) (CODE_GetSpecialValue(code)==CODE_OUTIGNORE)
 
 #define CODE_IsFixed(code)    (CODE_GetType(code)==CODE_TYPE_FIXED)
@@ -267,20 +268,14 @@ typedef struct{
   tfloat3 faceang;  ///<Angular acceleration of the floating object computed from velocity difference (units:rad/s^2).
   tmatrix3f inertiaini; ///<Initial state inertia tensor in world coordinates (computed or user-given).
   bool usechrono;   ///<Activates the use of Chrono library.
+  //-Additional data stored for output results only.
+  tfloat3 extforcelin;  ///<External linear forces (moorings and imposed forces) (units:N).
+  tfloat3 extforceang;  ///<External angular forces (moorings and imposed forces) (units:N*m*rad).
+  tfloat3 fluforcelin;  ///<Linear forces from fluid (sum in eq.48 at Dominguez et al 2022) (units:N).
+  tfloat3 fluforceang;  ///<Angular forces from fluid (sum in eq.49 at Dominguez et al 2022) (units:N*m*rad).
+  tfloat3 preacelin;    ///<Linear acceleration before constraints (includes external forces and gravity) (units:m/s^2).
+  tfloat3 preaceang;    ///<Angular acceleration before constraints (multiplied by rotated inertia tensor) (units:rad/s^2).
 }StFloatingData;
-
-///Structure with the information of the floating object in forces calculation.
-typedef struct{
-  tfloat3 face;       ///<Sum of particle acceleration (units:m/s2). | Sumatorio de ace de particulas.
-  tfloat3 fomegaace;  ///<Angular acceleration of the floating object (units:rad/s2). | Aceleracion angular del objecto floating.
-}StFtoForces;
-
-///Structure with the information of the floating object in forces calculation.
-typedef struct{
-  tfloat3 fomegares;   ///<Calculated angular velocity to upadte floating body (units:rad/s).
-  tfloat3 fvelres;     ///<Calculated linear velocity to upadte floating body (units:m/s).
-  tdouble3 fcenterres; ///<Calculated center to upadte floating body (units:m).
-}StFtoForcesRes;
 
 ///Structure with the information of the solid object for DEM interaction (Discrete Element Method).
 typedef struct{ //(DEM)
@@ -294,18 +289,113 @@ typedef struct{ //(DEM)
   float restitu;      ///<Restitution Coefficient (units:-).
 }StDemData;
 
+///Structure that saves extra information about the execution.
+typedef struct StrInfoPartPlus{
+  unsigned nct;        ///<Number of cells used in the divide.
+  unsigned nctsize;    ///<Number of supported cells with memory allocated.
+  unsigned npsim;      ///<Number of particles used in simulation (normal + periodic particles).
+  unsigned npsize;     ///<Number of supported particles with memory allocated.
+  unsigned npnormal;   ///<Number of normal particles used in simulation (without periodic particles).
+  unsigned npsave;     ///<Number of selected particles to save.
+  unsigned npnew;      ///<Number of new fluid particles (inlet conditions).
+  unsigned noutpos;    ///<Number of excluded particles due to invalid position.
+  unsigned noutrho;    ///<Number of excluded particles due to invalid density.
+  unsigned noutmov;    ///<Number of excluded particles due to invalid movement.
+  unsigned npbin;      ///<Number of boundary particles within the area of the divide (includes periodic particles).
+  unsigned npbout;     ///<Number of boundary particles outside of the area of the divide (includes periodic particles).
+  unsigned npf;        ///<Number of floating+fluid particles (includes periodic particles).
+  unsigned npbper;     ///<Number of periodic boundary particles (inside and outside the area of the split).
+  unsigned npfper;     ///<Number of periodic floating+fluid particles.
+  llong memorycpualloc;
+  llong memorynpalloc;
+  llong memorynpused;
+  llong memorynctalloc;
+  llong memorynctused;
+  double timesim;      ///<Seconds from the start of the simulation (after loading the initial data).                    | Segundos desde el inicio de la simulacion (despues de cargar los datos iniciales).
+  bool gpudata;
+
+  StrInfoPartPlus(){ 
+    nct=nctsize=0;
+    npsim=npsize=npnormal=npsave=0;
+    npnew=0;
+    noutpos=noutrho=noutmov=0;
+    npbin=npbout=npf=npbper=npfper=0;
+    memorycpualloc=memorynpalloc=memorynpused=0;
+    memorynctalloc=memorynctused=0;
+    timesim=0;
+    gpudata=false;
+  }
+  /// Stores basic values displayed in JSph::SaveData().
+  void SetBasic(unsigned npsim,unsigned npnormal,unsigned npf,unsigned nct){
+    this->npsim=npsim;
+    this->npnormal=npnormal;
+    this->npf=npf;
+    this->nct=nct;
+  }
+  void SetNct(unsigned nct,unsigned nctsize){
+    this->nct=nct; this->nctsize=nctsize;
+  }
+  void SetNp(unsigned npsim,unsigned npsize,unsigned npnormal,unsigned npsave){
+    this->npsim=npsim;       this->npsize=npsize; 
+    this->npnormal=npnormal; this->npsave=npsave;
+  }
+  void SetNout(unsigned noutpos,unsigned noutrho,unsigned noutmov){
+    this->noutpos=noutpos; this->noutrho=noutrho; this->noutmov=noutmov;
+  }
+  void SetNpExtra(unsigned npbin,unsigned npbout,unsigned npf
+    ,unsigned npbper,unsigned npfper)
+  {
+    this->npbin=npbin;   this->npbout=npbout;  this->npf=npf;
+    this->npbper=npbper; this->npfper=npfper;
+  }
+  //-Adding values functions.
+  void AddBasic(const StrInfoPartPlus& v){
+    this->npsim+=v.npsim;
+    this->npnormal+=v.npnormal;
+    this->npf+=v.npf;
+    this->nct+=v.nct;
+  }
+  void AddNct(const StrInfoPartPlus& v){
+    this->nct+=v.nct; this->nctsize+=v.nctsize;
+  }
+  void AddNp(const StrInfoPartPlus& v){
+    this->npsim+=v.npsim;       this->npsize+=v.npsize; 
+    this->npnormal+=v.npnormal; this->npsave+=v.npsave;
+    this->npnew+=v.npnew;
+  }
+  void AddNpExtra(const StrInfoPartPlus& v)
+  {
+    this->npbin+=v.npbin;   this->npbout+=v.npbout;  this->npf+=v.npf;
+    this->npbper+=v.npbper; this->npfper+=v.npfper;
+  }
+  void AddMemory(const StrInfoPartPlus& v)
+  {
+    memorycpualloc+=v.memorycpualloc;
+    memorynpalloc +=v.memorynpalloc;   memorynpused +=v.memorynpused;
+    memorynctalloc+=v.memorynctalloc;  memorynctused+=v.memorynctused;
+  }
+}StInfoPartPlus;
+
 ///Structure that stores the maximum values (or almost) achieved during the simulation.
 typedef struct StrMaxNumbers{
-  llong memcpu;       ///<Amount of reserved CPU memory. | Cantidad de memoria Cpu reservada.            
-  llong memgpu;       ///<Amount of reserved GPU memory. | Cantidad de memoria Gpu reservada.
-  unsigned particles; ///<Maximum number of particles.   | Numero maximo de particulas.
-  unsigned cells;     ///<Maximum number of cells.       | Numero maximo de celdas.                   
+  llong memcpu;       ///<Amount of reserved CPU memory.
+  llong memgpu;       ///<Amount of reserved GPU memory.
+  llong memgpunct;    ///<Amount of reserved GPU memory for cells in memgpu.
+  unsigned particles; ///<Maximum number of particles in simulation.
+  unsigned cells;     ///<Maximum number of cells in simulation.
   StrMaxNumbers(){ Clear(); }
-  StrMaxNumbers(llong vmemcpu,llong vmemgpu,unsigned vparticles,unsigned vcells){
-    memcpu=vmemcpu; memgpu=vmemgpu; particles=vparticles; cells=vcells;
+  StrMaxNumbers(llong memcpu,llong memgpu,llong memgpunct
+    ,unsigned particles,unsigned cells)
+  {
+    this->memcpu=memcpu; 
+    this->memgpu=memgpu; 
+    this->memgpunct=memgpunct;
+    this->particles=particles; 
+    this->cells=cells;
   }
   void Clear(){ 
-    memcpu=memgpu=0; particles=cells=0;
+    memcpu=memgpu=memgpunct=0;
+    particles=cells=0;
   }
 }StMaxNumbers;
 
@@ -407,7 +497,7 @@ typedef struct{
   fsph::StKCubicCte      kcubic;  ///<Constants for the Cubic Spline kernel.
   fsph::StKWendlandCte   kwend;   ///<Constants for the Wendland kernel.
 
-  float kernelh;            ///<The smoothing length of SPH kernel [m].
+  float kernelh;            ///<The smoothing length of SPH kernel (h) [m].
   float cteb;               ///<Constant used in the state equation [Pa].
   float gamma;              ///<Politropic constant for water used in the state equation.
   float rhopzero;           ///<Reference density of the fluid [kg/m3].
@@ -417,10 +507,11 @@ typedef struct{
   tfloat3 gravity;          ///<Gravitational acceleration [m/s^2].
 
   //-Constants for computation (computed starting from previous constants).
-  float kernelsize;         ///<Maximum interaction distance between particles (KernelK*KernelH).
-  float kernelsize2;        ///<Maximum interaction distance squared (KernelSize^2).
+  float kernelsize;         ///<Maximum interaction distance between particles (2h) (KernelK*KernelH).
+  float kernelsize2;        ///<Maximum interaction distance squared (2h*2h) (KernelSize^2).
   double cs0;               ///<Speed of sound at the reference density.
   float eta2;               ///<Constant related to H (Eta2=(h*0.1)*(h*0.1)).
+  //-Other constants for computation of special features.
   float spssmag;            ///<Smagorinsky constant used in SPS turbulence model.
   float spsblin;            ///<Blin constant used in the SPS turbulence model.
   float ddtkhcte;           ///<Store fixed constant DDTkh.
@@ -460,7 +551,7 @@ inline const char* GetNameRigidMode(TpRigidMode rigidmode){
 typedef enum{ 
    FTMODE_None=0            ///<There are not floatings.
   ,FTMODE_Sph=1             ///<Interaction between floatings and boundaries in terms of SPH.
-  ,FTMODE_Ext=2              ///<Interaction between floatings and boundaries in terms of DEM or CHRONO.
+  ,FTMODE_Ext=2             ///<Interaction between floatings and boundaries in terms of DEM or CHRONO.
 }TpFtMode;  
 
 #define USE_FLOATING (ftmode!=FTMODE_None)
@@ -480,7 +571,7 @@ typedef enum{
 }TpFtConstrains;
 
 ///Returns combination of TpFtConstrains values to define the constraints.
-inline byte ComputeConstraintsValue(const tint3 &translationfree,const tint3 &rotationfree){
+inline byte ComputeConstraintsValue(const tint3& translationfree,const tint3& rotationfree){
   return((translationfree.x? 0: FTCON_MoveX)
         +(translationfree.y? 0: FTCON_MoveY)
         +(translationfree.z? 0: FTCON_MoveZ)
@@ -490,7 +581,7 @@ inline byte ComputeConstraintsValue(const tint3 &translationfree,const tint3 &ro
 }
 
 ///Applies constraints.
-inline void ApplyConstraints(byte constraints,tfloat3 &linear,tfloat3 &angular){
+inline void ApplyConstraints(byte constraints,tfloat3& linear,tfloat3& angular){
   if(constraints&FTCON_MoveX  )linear.x=0;
   if(constraints&FTCON_MoveY  )linear.y=0;
   if(constraints&FTCON_MoveZ  )linear.z=0;
@@ -529,10 +620,10 @@ inline const char* GetNameCellMode(TpCellMode cellmode){
 
 ///Domain division mode.
 typedef enum{ 
-  MGDIV_None=0,      ///<Not specified. 
-  MGDIV_X=1,         ///<Main division in X direction.
-  MGDIV_Y=2,         ///<Main division in Y direction.
-  MGDIV_Z=3          ///<Main division in Z direction.
+  MGDIV_None=0      ///<Not specified. 
+ ,MGDIV_X=1         ///<Main division in X direction.
+ ,MGDIV_Y=2         ///<Main division in Y direction.
+ ,MGDIV_Z=3         ///<Main division in Z direction (used for Single-GPU).
 }TpMgDivMode;  
 
 ///Returns the name of division mode in text.

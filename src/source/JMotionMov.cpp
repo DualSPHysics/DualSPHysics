@@ -1,6 +1,6 @@
 //HEAD_DSCODES
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2023 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -219,7 +219,10 @@ void JMotionMovNull::WriteXml(TiXmlNode* node)const{
 //==============================================================================
 // Constructor for positions.
 //==============================================================================
-JMotionDataFile::JMotionDataFile(std::string dirdata,std::string file,const int fields,const int fieldtime,const int fieldx,const int fieldy,const int fieldz):PosType(true){
+JMotionDataFile::JMotionDataFile(std::string dirdata,std::string file
+  ,const int fields,const int fieldtime,const int fieldx,const int fieldy
+  ,const int fieldz):PosType(true)
+{
   ClassName="JMotionDataFile";
   //printf("--------> NEW  JMotionDataFile\n");
   Times=NULL; ValuesPos=NULL; ValuesAng=NULL;
@@ -230,7 +233,9 @@ JMotionDataFile::JMotionDataFile(std::string dirdata,std::string file,const int 
 //==============================================================================
 // Constructor for angles.
 //==============================================================================
-JMotionDataFile::JMotionDataFile(std::string dirdata,std::string file,bool angdegrees):PosType(false){
+JMotionDataFile::JMotionDataFile(std::string dirdata,std::string file
+  ,bool angdegrees):PosType(false)
+{
   ClassName="JMotionDataFile";
   //printf("--------> NEW  JMotionDataFile\n");
   Times=NULL; ValuesPos=NULL; ValuesAng=NULL;
@@ -286,7 +291,10 @@ void JMotionDataFile::Resize(unsigned size){
 //==============================================================================
 // Carga y configura datos del movimiento a partir de fichero de datos.
 //==============================================================================
-void JMotionDataFile::LoadFilePos(std::string dirdata,std::string file,const int fields,const int fieldtime,const int fieldx,const int fieldy,const int fieldz){
+void JMotionDataFile::LoadFilePos(std::string dirdata,std::string file
+  ,const int fields,const int fieldtime,const int fieldx,const int fieldy
+  ,const int fieldz)
+{
   if(int(file.find("/"))<0 && int(file.find("\\"))<0)file=dirdata+file; //-If only name of file then add Dirin.
   //printf("LoadFilePos>  file:[%s]\n",file.c_str());
 
@@ -316,7 +324,9 @@ void JMotionDataFile::LoadFilePos(std::string dirdata,std::string file,const int
 //==============================================================================
 // Carga y configura datos del movimiento a partir de fichero de datos.
 //==============================================================================
-void JMotionDataFile::LoadFileAng(std::string dirdata,std::string file,bool angdegrees){
+void JMotionDataFile::LoadFileAng(std::string dirdata,std::string file
+  ,bool angdegrees)
+{
   if(int(file.find("/"))<0 && int(file.find("\\"))<0)file=dirdata+file; //-If only name of file then add Dirin.
 
   //-Carga datos del fichero.

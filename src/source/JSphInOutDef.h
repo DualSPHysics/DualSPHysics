@@ -1,6 +1,6 @@
 //HEAD_DSCODES
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2023 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -63,6 +63,7 @@ typedef enum{
    InVelP_Uniform=0x00     ///<Imposed velocity profile uniform (xxxx xx00).
   ,InVelP_Linear=0x01      ///<Imposed velocity profile linear (xxxx xx01).
   ,InVelP_Parabolic=0x02   ///<Imposed velocity profile parabolic (xxxx xx10).
+  ,InVelP_JetCircle=0x13   ///<Imposed velocity profile jet circle (0001 0011). Not included in analytical profiles.
   ,InVelP_MASK=0x03        ///<Mask to obtain value (0000 0011).
 }TpInVelProfile;
 
@@ -76,8 +77,8 @@ typedef enum{
 
 ///Controls imposed rhop.
 typedef enum{ 
-   InRhop_Constant=0x00      ///<Imposed rhop profile constant (xx00 xxxx).
-  ,InRhop_Hydrostatic=0x10   ///<Imposed rhop profile hydrostatic (xx01 xxxx).
+   InRhop_Constant=0x00      ///<Imposed rho profile constant (xx00 xxxx).
+  ,InRhop_Hydrostatic=0x10   ///<Imposed rho profile hydrostatic (xx01 xxxx).
   ,InRhop_Extrapolated=0x20  ///<Extrapolated from ghost nodes (xx10 xxxx).
   ,InRhop_MASK=0x30          ///<Mask to obtain value (0011 0000).
 }TpInRhopMode;   
@@ -104,7 +105,7 @@ inline const char* TpInZsurfModeText(const TpInZsurfMode t){
 ///Structure with zsurf results.
 typedef struct{
   unsigned npt;        ///<Number of zsurf values (uniform=1).
-  const float *zsurf;  ///<Pointer to zsurf values [npt].
+  const float* zsurf;  ///<Pointer to zsurf values [npt].
   tdouble3 pt;         ///<Reference point of gauge points.
   tdouble3 vdp;        ///<Vector to compute gauge positions.
   tdouble3 direction;  ///<Inflow direction.

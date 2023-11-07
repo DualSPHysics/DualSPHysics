@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2023 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -66,18 +66,18 @@ public:
     unsigned npbok;
     unsigned npb;
     unsigned np;
-    const tdouble3 *pos;
-    const typecode *code;
-    const unsigned *idp;
-    const tfloat4 *velrhop;
+    const tdouble3* pos;
+    const typecode* code;
+    const unsigned* idp;
+    const tfloat4*  velrho;
     StrInputCpu(){ ready=false; npbok=npb=np=0; }
-    StrInputCpu(double timestep_,const StDivDataCpu &dvd_
-      ,unsigned npbok_,unsigned npb_,unsigned np_,const tdouble3 *pos_
-      ,const typecode *code_,const unsigned *idp_,const tfloat4 *velrhop_)
+    StrInputCpu(double timestep,const StDivDataCpu& dvd
+      ,unsigned npbok,unsigned npb,unsigned np,const tdouble3* pos
+      ,const typecode* code,const unsigned* idp,const tfloat4* velrho)
     {
-      ready=true;  timestep=timestep_;
-      dvd=dvd_;  npbok=npbok_;  npb=npb_;   np=np_;  
-      pos=pos_;  code=code_;  idp=idp_;  velrhop=velrhop_;
+      ready=true;  this->timestep=timestep;
+      this->dvd=dvd;  this->npbok=npbok;  this->npb=npb;   this->np=np;  
+      this->pos=pos;  this->code=code;  this->idp=idp;  this->velrho=velrho;
     }
   }StInputCpu;
 
@@ -91,19 +91,21 @@ public:
     unsigned npbok;
     unsigned npb;
     unsigned np;
-    const double2 *posxy;
-    const double *posz;
-    const typecode *code;
-    const unsigned *idp;
-    const float4 *velrhop;
+    const double2*  posxy;
+    const double*   posz;
+    const typecode* code;
+    const unsigned* idp;
+    const float4*   velrho;
     StrInputGpu(){ ready=false; npbok=npb=np=0; }
-    StrInputGpu(double timestep_,const StDivDataGpu &dvd_
-      ,unsigned npbok_,unsigned npb_,unsigned np_,const double2 *posxy_,const double *posz_
-      ,const typecode *code_,const unsigned *idp_,const float4 *velrhop_)
+    StrInputGpu(double timestep,const StDivDataGpu& dvd
+      ,unsigned npbok,unsigned npb,unsigned np
+      ,const double2* posxy,const double* posz
+      ,const typecode* code,const unsigned* idp,const float4* velrho)
     {
-      ready=true;  timestep=timestep_;
-      dvd=dvd_;  npbok=npbok_;  npb=npb_;   np=np_;  
-      posxy=posxy_;  posz=posz_;  code=code_;  idp=idp_;  velrhop=velrhop_;
+      this->ready=true;  this->timestep=timestep;
+      this->dvd=dvd;  this->npbok=npbok;  this->npb=npb;   this->np=np;  
+      this->posxy=posxy;  this->posz=posz;  this->code=code;  
+      this->idp=idp;  this->velrho=velrho;
     }
   }StInputGpu;
  #endif
@@ -139,21 +141,22 @@ private:
  #endif
 
   void ResetCfgDefault();
-  void LoadLinePoints(double coefdp,const tdouble3 &point1,const tdouble3 &point2,std::vector<tdouble3> &points,const std::string &ref)const;
-  void LoadLinePoints(unsigned count,const tdouble3 &point1,const tdouble3 &point2,std::vector<tdouble3> &points,const std::string &ref)const;
-  void LoadPoints(JXml *sxml,TiXmlElement* lis,std::vector<tdouble3> &points)const;
-  JGaugeItem::StDefault ReadXmlCommon(const JXml *sxml,TiXmlElement* ele)const;
-  void ReadXml(const JXml *sxml,TiXmlElement* ele,const JSphMk* mkinfo);
+  void LoadLinePoints(double coefdp,const tdouble3& point1,const tdouble3& point2
+    ,std::vector<tdouble3>& points,const std::string& ref)const;
+  void LoadLinePoints(unsigned count,const tdouble3& point1,const tdouble3& point2,std::vector<tdouble3>& points,const std::string& ref)const;
+  void LoadPoints(JXml* sxml,TiXmlElement* lis,std::vector<tdouble3>& points)const;
+  JGaugeItem::StDefault ReadXmlCommon(const JXml* sxml,TiXmlElement* ele)const;
+  void ReadXml(const JXml* sxml,TiXmlElement* ele,const JSphMk* mkinfo);
 
 public:
   JGaugeSystem(bool cpu);
   ~JGaugeSystem();
   void Reset();
 
-  void Config(const StCteSph &csp,bool symmetry,double timemax,double timepart
+  void Config(const StCteSph& csp,bool symmetry,double timemax,double timepart
     ,tdouble3 posmin,tdouble3 posmax,float scell,int scelldiv);
 
-  void LoadXml(const JXml *sxml,const std::string &place,const JSphMk* mkinfo);
+  void LoadXml(const JXml* sxml,const std::string& place,const JSphMk* mkinfo);
   void VisuConfig(std::string txhead,std::string txfoot);
 
   bool GetSimulate2D()const{ return(CSP.simulate2d); };
@@ -166,11 +169,11 @@ public:
   float GetKernelH()const{ return(CSP.kernelh); }
   float GetScell()const{ return(Scell); }
 
-  void LoadLinePoints(double coefdp,const tdouble3 &point1,const tdouble3 &point2,std::vector<tdouble3> &points)const{ LoadLinePoints(coefdp,point1,point2,points,""); }
-  void LoadLinePoints(unsigned count,const tdouble3 &point1,const tdouble3 &point2,std::vector<tdouble3> &points)const{ LoadLinePoints(count,point1,point2,points,""); }
+  void LoadLinePoints(double coefdp,const tdouble3& point1,const tdouble3& point2,std::vector<tdouble3>& points)const{ LoadLinePoints(coefdp,point1,point2,points,""); }
+  void LoadLinePoints(unsigned count,const tdouble3& point1,const tdouble3& point2,std::vector<tdouble3>& points)const{ LoadLinePoints(count,point1,point2,points,""); }
 
   JGaugeVelocity* AddGaugeVel  (std::string name,double computestart,double computeend,double computedt
-    ,const tdouble3 &point);
+    ,const tdouble3& point);
   JGaugeSwl*      AddGaugeSwl  (std::string name,double computestart,double computeend,double computedt
     ,tdouble3 point0,tdouble3 point2,double pointdp,float masslimit=0);
   JGaugeMaxZ*     AddGaugeMaxZ (std::string name,double computestart,double computeend,double computedt
@@ -181,20 +184,20 @@ public:
   void SaveVtkInitPoints()const;
 
   unsigned GetCount()const{ return(unsigned(Gauges.size())); }
-  unsigned GetGaugeIdx(const std::string &name)const;
+  unsigned GetGaugeIdx(const std::string& name)const;
   JGaugeItem* GetGauge(unsigned c)const;
 
-  void CalculeCpu(double timestep,const StDivDataCpu &dvd
-    ,unsigned npbok,unsigned npb,unsigned np,const tdouble3 *pos
-    ,const typecode *code,const unsigned *idp,const tfloat4 *velrhop
+  void CalculeCpu(double timestep,const StDivDataCpu& dvd
+    ,unsigned npbok,unsigned npb,unsigned np,const tdouble3* pos
+    ,const typecode* code,const unsigned* idp,const tfloat4* velrho
     ,bool saveinput=false);
 
   void CalculeLastInputCpu(std::string gaugename);
 
  #ifdef _WITHGPU
-  void CalculeGpu(double timestep,const StDivDataGpu &dvd
-    ,unsigned npbok,unsigned npb,unsigned np,const double2 *posxy,const double *posz
-    ,const typecode *code,const unsigned *idp,const float4 *velrhop
+  void CalculeGpu(double timestep,const StDivDataGpu& dvd
+    ,unsigned npbok,unsigned npb,unsigned np,const double2* posxy,const double* posz
+    ,const typecode* code,const unsigned* idp,const float4* velrho
     ,bool saveinput=false);
 
   void CalculeLastInputGpu(std::string gaugename);

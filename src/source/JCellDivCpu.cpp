@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2023 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -33,15 +33,18 @@ using namespace std;
 JCellDivCpu::JCellDivCpu(bool stable,bool floating,byte periactive
   ,bool celldomfixed,TpCellMode cellmode,float scell
   ,tdouble3 mapposmin,tdouble3 mapposmax,tuint3 mapcells
-  ,unsigned casenbound,unsigned casenfixed,unsigned casenpb,std::string dirout
-  ,bool allocfullnct,float overmemorynp,word overmemorycells)
+  ,unsigned casenbound,unsigned casenfixed,unsigned casenpb
+  ,std::string dirout)
   :Log(AppInfo.LogPtr()),Stable(stable),Floating(floating),PeriActive(periactive)
   ,CellDomFixed(celldomfixed),CellMode(cellmode)
   ,ScellDiv(cellmode==CELLMODE_Full? 1: (cellmode==CELLMODE_Half? 2: 0))
   ,Scell(scell),OvScell(1.f/scell)
   ,Map_PosMin(mapposmin),Map_PosMax(mapposmax),Map_PosDif(mapposmax-mapposmin)
-  ,Map_Cells(mapcells),CaseNbound(casenbound),CaseNfixed(casenfixed),CaseNpb(casenpb)
-  ,DirOut(dirout),AllocFullNct(allocfullnct),OverMemoryNp(overmemorynp),OverMemoryCells(overmemorycells)
+  ,Map_Cells(mapcells),CaseNbound(casenbound),CaseNfixed(casenfixed)
+  ,CaseNpb(casenpb),DirOut(dirout)
+  ,OverMemoryNp(CELLDIV_OVERMEMORYNP)
+  ,OverMemoryCells(CELLDIV_OVERMEMORYCELLS)
+  ,OverMemoryNCells(CELLDIV_OVERMEMORYNCELLS)
 {
   ClassName="JCellDivCpu";
   CellPart=NULL;    SortPart=NULL;
@@ -70,6 +73,7 @@ void JCellDivCpu::Reset(){
   Ndiv=NdivFull=0;
   Nptot=Npb1=Npf1=Npb2=Npf2=0;
   MemAllocNp=MemAllocNct=0;
+  MemAllocNpTimes=MemAllocNctTimes=0;
   NpbOut=NpfOut=NpbOutIgnore=NpfOutIgnore=0;
   NpFinal=NpbFinal=0;
   NpbIgnore=0;
@@ -120,7 +124,7 @@ void JCellDivCpu::FreeMemoryAll(){
 /// Adjust buffers to reorder particle values.
 /// Ajusta buffers para reordenar datos de particulas.
 //==============================================================================
-void JCellDivCpu::SetMemoryVSort(byte *vsort){
+void JCellDivCpu::SetMemoryVSort(byte* vsort){
   VSort=vsort;
   VSortInt=(int*)VSort;        VSortWord=(word*)VSort;
   VSortFloat=(float*)VSort;    VSortFloat3=(tfloat3*)VSort;
@@ -132,7 +136,7 @@ void JCellDivCpu::SetMemoryVSort(byte *vsort){
 /// Assign memory according to number of particles. 
 /// Asigna memoria segun numero de particulas. 
 //==============================================================================
-void JCellDivCpu::AllocMemoryNp(ullong np){
+void JCellDivCpu::AllocMemoryNp(ullong np,ullong npmin){
   FreeMemoryNp();
   np=np+PARTICLES_OVERMEMORY_MIN;
   SizeNp=unsigned(np);
@@ -145,35 +149,44 @@ void JCellDivCpu::AllocMemoryNp(ullong np){
     SortPart=new unsigned[SizeNp];                      MemAllocNp+=sizeof(unsigned)*SizeNp;
     SetMemoryVSort(new byte[sizeof(tdouble3)*SizeNp]);  MemAllocNp+=sizeof(tdouble3)*SizeNp;
     SortIdx=new unsigned[SizeNp];                       MemAllocNp+=sizeof(unsigned)*SizeNp;  //<vs_flexstruc>
+    MemAllocNpTimes++;
   }
   catch(const std::bad_alloc){
-    Run_Exceptioon(fun::PrintStr("Failed CPU memory allocation of %.1f MB for %u particles.",double(MemAllocNp)/(1024*1024),SizeNp));
+    Run_Exceptioon(fun::PrintStr("Failed CPU memory allocation of %.1f MB for %u particles."
+      ,double(MemAllocNp)/MEBIBYTE,SizeNp));
   }
-  //-Show requested memory | Muestra la memoria solicitada.
-  Log->Printf("**CellDiv: Requested cpu memory for %u particles: %.1f MB.",SizeNp,double(MemAllocNp)/(1024*1024));
+  //-Show requested memory.
+  const string txover=(npmin>1? fun::PrintStr(" (over-allocation: %.2fX)",double(SizeNp)/npmin): "");
+  Log->Printf("**CellDiv: Requested cpu memory for %s particles%s: %.1f MiB (%u times)."
+    ,KINT(SizeNp),txover.c_str(),double(MemAllocNp)/MEBIBYTE,MemAllocNpTimes);
 }
 
 //==============================================================================
 /// Assign memory according to number of cells. 
 /// Asigna memoria segun numero de celdas. 
 //==============================================================================
-void JCellDivCpu::AllocMemoryNct(ullong nct){
+void JCellDivCpu::AllocMemoryNct(ullong nct,ullong nctmin){
   FreeMemoryNct();
   SizeNct=unsigned(nct);
-  //-Check number of cells | Comprueba numero de celdas.
-  if(nct!=SizeNct)Run_Exceptioon(string("Failed GPU memory allocation for ")+fun::UlongStr(nct)+" cells.");
-  //-Reserve memory for cells | Reserva memoria para celdas.
+  const unsigned nctt=unsigned(SizeBeginCell(SizeNct));
+  //-Checks number of cells.
+  if(ullong(nctt)!=SizeBeginCell(nct))Run_Exceptioon(
+    fun::PrintStr("Failed CPU memory allocation for %s cells.",KINT(nct)));
+  //-Allocates memory for cells.
   MemAllocNct=0;
-  const unsigned nc=(unsigned)SizeBeginCell(nct);
   try{
-    PartsInCell=new unsigned[nc-1];  MemAllocNct+=sizeof(unsigned)*(nc-1);
-    BeginCell=new unsigned[nc];      MemAllocNct+=sizeof(unsigned)*(nc);
+    PartsInCell=new unsigned[nctt-1];  MemAllocNct+=sizeof(unsigned)*(nctt-1);
+    BeginCell  =new unsigned[nctt];    MemAllocNct+=sizeof(unsigned)*(nctt);
+    MemAllocNctTimes++;
   }
   catch(const std::bad_alloc){
-    Run_Exceptioon(fun::PrintStr("Failed CPU memory allocation of %.1f MB for %u cells.",double(MemAllocNct)/(1024*1024),SizeNct));
+    Run_Exceptioon(fun::PrintStr("Failed CPU memory allocation of %.1f MiB for %s cells."
+      ,double(MemAllocNct)/MEBIBYTE,KINT(SizeNct)));
   }
-  //-Show requested memory | Muestra la memoria solicitada.
-  Log->Printf("**CellDiv: Requested cpu memory for %u cells (CellMode=%s): %.1f MB.",SizeNct,GetNameCellMode(CellMode),double(MemAllocNct)/(1024*1024));
+  //-Shows requested memory.
+  const string txover=(nctmin>1? fun::PrintStr(" (over-allocation: %.2fX)",double(SizeNct)/nctmin): "");
+  Log->Printf("**CellDiv: Requested CPU memory for %s cells%s: %.1f MiB (%u times)."
+    ,KINT(SizeNct),txover.c_str(),double(MemAllocNct)/MEBIBYTE,MemAllocNctTimes);
 }
 
 //==============================================================================
@@ -185,11 +198,11 @@ void JCellDivCpu::AllocMemoryNct(ullong nct){
 //==============================================================================
 void JCellDivCpu::CheckMemoryNp(unsigned npmin){
   if(SizeNp<npmin+PARTICLES_OVERMEMORY_MIN){
-    AllocMemoryNp(ullong(npmin)+ullong(OverMemoryNp*npmin)+IncreaseNp);
+    AllocMemoryNp(ullong(npmin)+ullong(OverMemoryNp*npmin)+IncreaseNp,npmin);
     IncreaseNp=0;
   }
   else if(!CellPart){
-    AllocMemoryNp(SizeNp+IncreaseNp);
+    AllocMemoryNp(SizeNp+IncreaseNp,npmin);
     IncreaseNp=0;
   }
 }
@@ -203,36 +216,42 @@ void JCellDivCpu::CheckMemoryNp(unsigned npmin){
 //==============================================================================
 void JCellDivCpu::CheckMemoryNct(unsigned nctmin){
   if(SizeNct<nctmin){
-    unsigned overnct=0;
+    unsigned nctnew=nctmin;
     if(OverMemoryCells>0){
-      ullong nct=ullong(Ncx+OverMemoryCells)*ullong(Ncy+OverMemoryCells)*ullong(Ncz+OverMemoryCells);
-      ullong nctt=SizeBeginCell(nct);
-      if(nctt!=unsigned(nctt))Run_Exceptioon("The number of cells is too big.");
-      overnct=unsigned(nct);
+      const ullong nct1=ullong(Ncx+OverMemoryCells)*ullong(Ncy+OverMemoryCells)*ullong(Ncz+OverMemoryCells);
+      const ullong nct2=ullong(nctmin)+OverMemoryNCells;
+      const ullong nct3=(nct1>nct2? nct1: nct2);
+      const ullong nct4=min(DomCellsMax,nct3);
+      if(SizeBeginCell(nct4)>=UINT_MAX)Run_Exceptioon("The number of cells is too big.");
+      nctnew=unsigned(nct4);
     }
-    AllocMemoryNct(nctmin>overnct? nctmin: overnct);
+    AllocMemoryNct(nctnew,nctmin);
   }
-  else if(!BeginCell)AllocMemoryNct(SizeNct);  
+  else if(!BeginCell)AllocMemoryNct(SizeNct,nctmin);  
 }
 
 //==============================================================================
 /// Define simulation domain to use.
 /// Define el dominio de simulacion a usar.
 //==============================================================================
-void JCellDivCpu::DefineDomain(unsigned cellcode,tuint3 domcelini,tuint3 domcelfin,tdouble3 domposmin,tdouble3 domposmax){
+void JCellDivCpu::DefineDomain(unsigned cellcode,tuint3 domcelini,tuint3 domcelfin
+  ,tdouble3 domposmin,tdouble3 domposmax)
+{
   DomCellCode=cellcode;
   DomCelIni=domcelini;
   DomCelFin=domcelfin;
   DomPosMin=domposmin;
   DomPosMax=domposmax;
   DomCells=DomCelFin-DomCelIni;
+  DomCellsMax=ullong(DomCells.x)*ullong(DomCells.y)*ullong(DomCells.z);
+  //Log->Printf("-----> MaxDomCells:%s",KINT(MaxDomCells));
 }
 
 /*:
 //==============================================================================
 // Devuelve coordenadas de celda a partir de una posicion.
 //==============================================================================
-//tuint3 JCellDivCpu::GetMapCell(const tfloat3 &pos)const{
+//tuint3 JCellDivCpu::GetMapCell(const tfloat3& pos)const{
 //  float dx=pos.x-MapPosMin.x,dy=pos.y-MapPosMin.y,dz=pos.z-MapPosMin.z;
 //  unsigned cx=unsigned(dx*OvScell),cy=unsigned(dy*OvScell),cz=unsigned(dz*OvScell);
 //  return(TUint3(cx,cy,cz));
@@ -248,7 +267,7 @@ void JCellDivCpu::DefineDomain(unsigned cellcode,tuint3 domcelini,tuint3 domcelf
 /// En caso de no haber ninguna particula valida el minimo sera mayor que el maximo.
 //==============================================================================
 void JCellDivCpu::LimitsCellBound(unsigned n,unsigned pini,const unsigned* dcellc
-  ,const typecode *codec,tuint3 &cellmin,tuint3 &cellmax)const
+  ,const typecode* codec,tuint3& cellmin,tuint3& cellmax)const
 {
   tuint3 cmin=TUint3(UINT_MAX);
   tuint3 cmax=TUint3(0);
@@ -281,7 +300,7 @@ void JCellDivCpu::LimitsCellBound(unsigned n,unsigned pini,const unsigned* dcell
 /// En code[] ya estan marcadas las particulas excluidas.
 //==============================================================================
 void JCellDivCpu::CalcCellDomainBound(unsigned n,unsigned pini,unsigned n2,unsigned pini2
-  ,const unsigned* dcellc,const typecode *codec,tuint3 &cellmin,tuint3 &cellmax)
+  ,const unsigned* dcellc,const typecode* codec,tuint3& cellmin,tuint3& cellmax)
 {
   tuint3 cmin,cmax;
   LimitsCellBound(n,pini,dcellc,codec,cmin,cmax);
@@ -306,7 +325,7 @@ void JCellDivCpu::CalcCellDomainBound(unsigned n,unsigned pini,unsigned n2,unsig
 /// En caso de no haber ninguna particula valida el minimo sera mayor que el maximo.
 //==============================================================================
 void JCellDivCpu::LimitsCellFluid(unsigned n,unsigned pini,const unsigned* dcellc
-  ,const typecode *codec,tuint3 &cellmin,tuint3 &cellmax)const
+  ,const typecode* codec,tuint3& cellmin,tuint3& cellmax)const
 {
   tuint3 cmin=TUint3(UINT_MAX);
   tuint3 cmax=TUint3(0);
@@ -337,7 +356,7 @@ void JCellDivCpu::LimitsCellFluid(unsigned n,unsigned pini,const unsigned* dcell
 /// Ignora particulas excluidas que ya estan marcadas en code[].
 //==============================================================================
 void JCellDivCpu::CalcCellDomainFluid(unsigned n,unsigned pini,unsigned n2,unsigned pini2
-  ,const unsigned* dcellc,const typecode *codec,tuint3 &cellmin,tuint3 &cellmax)
+  ,const unsigned* dcellc,const typecode* codec,tuint3& cellmin,tuint3& cellmax)
 {
   tuint3 cmin,cmax;
   LimitsCellFluid(n,pini,dcellc,codec,cmin,cmax);
@@ -357,7 +376,7 @@ void JCellDivCpu::CalcCellDomainFluid(unsigned n,unsigned pini,unsigned n2,unsig
 /// Reorder values of all particles (for type word).
 /// Reordena datos de todas las particulas (para tipo word).
 //==============================================================================
-void JCellDivCpu::SortArray(word *vec){
+void JCellDivCpu::SortArray(word* vec){
   const int n=int(Nptot);
   const int ini=(DivideFull? 0: int(NpbFinal));
   #ifdef OMP_USE
@@ -371,7 +390,7 @@ void JCellDivCpu::SortArray(word *vec){
 /// Reorder values of all particles (for type unsigned).
 /// Reordena datos de todas las particulas (para tipo unsigned).
 //==============================================================================
-void JCellDivCpu::SortArray(unsigned *vec){
+void JCellDivCpu::SortArray(unsigned* vec){
   const int n=int(Nptot);
   const int ini=(DivideFull? 0: int(NpbFinal));
   #ifdef OMP_USE
@@ -385,7 +404,7 @@ void JCellDivCpu::SortArray(unsigned *vec){
 /// Reorder values of all particles (for type float).
 /// Reordena datos de todas las particulas (para tipo float).
 //==============================================================================
-void JCellDivCpu::SortArray(float *vec){
+void JCellDivCpu::SortArray(float* vec){
   const int n=int(Nptot);
   const int ini=(DivideFull? 0: int(NpbFinal));
   #ifdef OMP_USE
@@ -399,7 +418,7 @@ void JCellDivCpu::SortArray(float *vec){
 /// Reorder values of all particles (for type tdouble3).
 /// Reordena datos de todas las particulas (para tipo tdouble3).
 //==============================================================================
-void JCellDivCpu::SortArray(tdouble3 *vec){
+void JCellDivCpu::SortArray(tdouble3* vec){
   const int n=int(Nptot);
   const int ini=(DivideFull? 0: int(NpbFinal));
   #ifdef OMP_USE
@@ -413,7 +432,7 @@ void JCellDivCpu::SortArray(tdouble3 *vec){
 /// Reorder values of all particles (for type tfloat3).
 /// Reordena datos de todas las particulas (para tipo tfloat3).
 //==============================================================================
-void JCellDivCpu::SortArray(tfloat3 *vec){
+void JCellDivCpu::SortArray(tfloat3* vec){
   const int n=int(Nptot);
   const int ini=(DivideFull? 0: int(NpbFinal));
   #ifdef OMP_USE
@@ -427,7 +446,7 @@ void JCellDivCpu::SortArray(tfloat3 *vec){
 /// Reorder values of all particles (for type tfloat4).
 /// Reordena datos de todas las particulas (para tipo tfloat4).
 //==============================================================================
-void JCellDivCpu::SortArray(tfloat4 *vec){
+void JCellDivCpu::SortArray(tfloat4* vec){
   const int n=int(Nptot);
   const int ini=(DivideFull? 0: int(NpbFinal));
   #ifdef OMP_USE
@@ -441,7 +460,7 @@ void JCellDivCpu::SortArray(tfloat4 *vec){
 /// Reorder values of all particles (for type tsymatrix3f).
 /// Reordena datos de todas las particulas (para tipo tsymatrix3f).
 //==============================================================================
-void JCellDivCpu::SortArray(tsymatrix3f *vec){
+void JCellDivCpu::SortArray(tsymatrix3f* vec){
   const int n=int(Nptot);
   const int ini=(DivideFull? 0: int(NpbFinal));
   #ifdef OMP_USE
@@ -455,7 +474,7 @@ void JCellDivCpu::SortArray(tsymatrix3f *vec){
 /// Return current limites of domain.
 /// Devuelve limites actuales del dominio.
 //==============================================================================
-tdouble3 JCellDivCpu::GetDomainLimits(bool limitmin,unsigned slicecellmin)const{
+tdouble6 JCellDivCpu::GetDomainLimitsMinMax(unsigned slicecellmin)const{
   tuint3 celmin=GetCellDomainMin(),celmax=GetCellDomainMax();
   if(celmin.x>celmax.x)celmin.x=celmax.x=0; else celmax.x++;
   if(celmin.y>celmax.y)celmin.y=celmax.y=0; else celmax.y++;
@@ -463,7 +482,16 @@ tdouble3 JCellDivCpu::GetDomainLimits(bool limitmin,unsigned slicecellmin)const{
   double scell=double(Scell);
   tdouble3 pmin=DomPosMin+TDouble3(scell*celmin.x,scell*celmin.y,scell*celmin.z);
   tdouble3 pmax=DomPosMin+TDouble3(scell*celmax.x,scell*celmax.y,scell*celmax.z);
-  return(limitmin? pmin: pmax);
+  return(TDouble6(pmin,pmax));
+}
+
+//==============================================================================
+/// Return current limites of domain.
+/// Devuelve limites actuales del dominio.
+//==============================================================================
+tdouble3 JCellDivCpu::GetDomainLimits(bool limitmin,unsigned slicecellmin)const{
+  const tdouble6 limits=GetDomainLimitsMinMax(slicecellmin);
+  return(limitmin? limits.getlo(): limits.gethi());
 }
 
 //==============================================================================

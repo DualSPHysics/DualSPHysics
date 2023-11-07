@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2023 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -68,7 +68,7 @@ void JCfgRunBase::LoadArgv(int argc,char** argv){
   #endif
   //-Loads execution parameters.
   const int MAXOPTS=100;
-  string *optlis=new string[MAXOPTS];
+  string* optlis=new string[MAXOPTS];
   int optn=0;
   for(int c=0;c<argc-1;c++){
     string tex=fun::StrTrim(argv[c+1]);
@@ -108,7 +108,7 @@ void JCfgRunBase::LoadFile(std::string fname,int lv){
   //printf("\nFile:[%s] lv:%d\n",fname.c_str(),lv);
   const int MAXOPTS=50;
   int optn=0;
-  std::string *optlis=new std::string[MAXOPTS];
+  std::string* optlis=new std::string[MAXOPTS];
   std::ifstream pf;
   pf.open(fname.c_str());
   if(pf){
@@ -131,8 +131,8 @@ void JCfgRunBase::LoadFile(std::string fname,int lv){
 //==============================================================================
 /// Generates error of unknown parameter.
 //==============================================================================
-void JCfgRunBase::ErrorParm(const std::string &opt,int optc,int lv
-  ,const std::string &file)const
+void JCfgRunBase::ErrorParm(const std::string& opt,int optc,int lv
+  ,const std::string& file)const
 {
   std::string tx=fun::PrintStr("Parameter \"%s\" unrecognised or invalid. ",opt.c_str());
   tx=tx+fun::PrintStr("(Level cfg:%d, Parameter:%d)",lv,optc);
@@ -142,8 +142,8 @@ void JCfgRunBase::ErrorParm(const std::string &opt,int optc,int lv
 //==============================================================================
 /// Generates error on parameter with indicated text.
 //==============================================================================
-void JCfgRunBase::ErrorParmText(const std::string &text,int optc,int lv
-  ,const std::string &file)const
+void JCfgRunBase::ErrorParmText(const std::string& text,int optc,int lv
+  ,const std::string& file)const
 {
   std::string tx=text+fun::PrintStr(" (Level cfg:%d, Parameter:%d)",lv,optc);
   Run_ExceptioonFile(tx,file);
@@ -183,7 +183,7 @@ std::string JCfgRunBase::VerText(const std::string fullname,const std::string ve
 /// values.
 //==============================================================================
 unsigned JCfgRunBase::LoadFloats(std::string txopt,float def,unsigned nv
-  ,std::vector<float> &vv)
+  ,std::vector<float>& vv)
 {
   //printf("txopt=[%s]\n",txopt.c_str());
   vv.clear();
@@ -202,7 +202,7 @@ unsigned JCfgRunBase::LoadFloats(std::string txopt,float def,unsigned nv
 /// values.
 //==============================================================================
 unsigned JCfgRunBase::LoadDoubles(std::string txopt,double def,unsigned nv
-  ,std::vector<double> &vv)
+  ,std::vector<double>& vv)
 {
   //printf("txopt=[%s]\n",txopt.c_str());
   vv.clear();
@@ -220,10 +220,10 @@ unsigned JCfgRunBase::LoadDoubles(std::string txopt,double def,unsigned nv
 /// Loads nv values tfloat3 using command options. Returns number of loaded 
 /// values.
 //==============================================================================
-unsigned JCfgRunBase::LoadFloat3(std::string txopt,float def,unsigned nv,tfloat3 *v){
+unsigned JCfgRunBase::LoadFloat3(std::string txopt,float def,unsigned nv,tfloat3* v){
   //printf("txopt=[%s]\n",txopt.c_str());
   unsigned num=0;
-  float *values=(float*)v;
+  float* values=(float*)v;
   for(unsigned c=0;c<nv*3;c++)values[c]=def;
   string ttx=txopt;
   for(unsigned tc=0;ttx!="" && tc<nv*3;tc++){
@@ -242,10 +242,10 @@ unsigned JCfgRunBase::LoadFloat3(std::string txopt,float def,unsigned nv,tfloat3
 /// Loads nv values tdouble3 using command options. Returns number of loaded 
 /// values.
 //==============================================================================
-unsigned JCfgRunBase::LoadDouble3(std::string txopt,double def,unsigned nv,tdouble3 *v){
+unsigned JCfgRunBase::LoadDouble3(std::string txopt,double def,unsigned nv,tdouble3* v){
   //printf("txopt=[%s]\n",txopt.c_str());
   unsigned num=0;
-  double *values=(double*)v;
+  double* values=(double*)v;
   for(unsigned c=0;c<nv*3;c++)values[c]=def;
   string ttx=txopt;
   for(unsigned tc=0;ttx!="" && tc<nv*3;tc++){
@@ -263,7 +263,7 @@ unsigned JCfgRunBase::LoadDouble3(std::string txopt,double def,unsigned nv,tdoub
 //==============================================================================
 /// Load 1 value tfloat3 using command options.
 //==============================================================================
-void JCfgRunBase::LoadFloat3(std::string txopt,float def,tfloat3 &v1){
+void JCfgRunBase::LoadFloat3(std::string txopt,float def,tfloat3& v1){
   //printf("txopt=[%s]\n",txopt.c_str());
   tdouble3 vd;
   LoadDouble3(txopt,def,vd);
@@ -273,7 +273,7 @@ void JCfgRunBase::LoadFloat3(std::string txopt,float def,tfloat3 &v1){
 //==============================================================================
 /// Load 2 values tfloat3 using command options.
 //==============================================================================
-void JCfgRunBase::LoadFloat6(std::string txopt,float def,tfloat3 &v1,tfloat3 &v2){
+void JCfgRunBase::LoadFloat6(std::string txopt,float def,tfloat3& v1,tfloat3& v2){
   tdouble3 vd1,vd2;
   LoadDouble6(txopt,def,vd1,vd2);
   v1=ToTFloat3(vd1);
@@ -283,7 +283,7 @@ void JCfgRunBase::LoadFloat6(std::string txopt,float def,tfloat3 &v1,tfloat3 &v2
 //==============================================================================
 /// Load 1 value tdouble2 using command options.
 //==============================================================================
-void JCfgRunBase::LoadDouble2(std::string txopt,double def,tdouble2 &v1){
+void JCfgRunBase::LoadDouble2(std::string txopt,double def,tdouble2& v1){
   //printf("txopt=[%s]\n",txopt.c_str());
   double values[2]={def,def};
   string aux=txopt;
@@ -297,7 +297,7 @@ void JCfgRunBase::LoadDouble2(std::string txopt,double def,tdouble2 &v1){
 //==============================================================================
 /// Load 1 value tdouble3 using command options.
 //==============================================================================
-void JCfgRunBase::LoadDouble3(std::string txopt,double def,tdouble3 &v1){
+void JCfgRunBase::LoadDouble3(std::string txopt,double def,tdouble3& v1){
   //printf("txopt=[%s]\n",txopt.c_str());
   double values[3]={def,def,def};
   string aux=txopt;
@@ -311,7 +311,7 @@ void JCfgRunBase::LoadDouble3(std::string txopt,double def,tdouble3 &v1){
 //==============================================================================
 /// Load 2 values tdouble3 using command options.
 //==============================================================================
-void JCfgRunBase::LoadDouble6(std::string txopt,double def,tdouble3 &v1,tdouble3 &v2){
+void JCfgRunBase::LoadDouble6(std::string txopt,double def,tdouble3& v1,tdouble3& v2){
   //printf("txopt=[%s]\n",txopt.c_str());
   double values[6]={def,def,def,def,def,def};
   string aux=txopt;
@@ -326,9 +326,9 @@ void JCfgRunBase::LoadDouble6(std::string txopt,double def,tdouble3 &v1,tdouble3
 //==============================================================================
 /// Splits options in txoptfull, txopt, txopt2, txopt3, txopt4 and txopt5.
 //==============================================================================
-void JCfgRunBase::SplitsOpts(const std::string &opt,std::string &txword
-  ,std::string &txoptfull,std::string &txopt1,std::string &txopt2
-  ,std::string &txopt3,std::string &txopt4,std::string &txopt5)const
+void JCfgRunBase::SplitsOpts(const std::string& opt,std::string& txword
+  ,std::string& txoptfull,std::string& txopt1,std::string& txopt2
+  ,std::string& txopt3,std::string& txopt4,std::string& txopt5)const
 {
   txword=txoptfull=txopt1=txopt2=txopt3=txopt4=txopt5="";
   string tx=opt.substr(1);

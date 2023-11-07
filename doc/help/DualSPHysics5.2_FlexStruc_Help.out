@@ -1,11 +1,12 @@
 
 
- <DUALSPHYSICS5> Copyright (c) 2020 by
+ <DUALSPHYSICS5-FLEXSTRUC> Copyright (c) 2023 by
  Dr Jose M. Dominguez Alonso, Dr Alejandro Crespo,
  Prof. Moncho Gomez Gesteira, Prof. Benedict Rogers,
  Dr Georgios Fourtakas, Prof. Peter Stansby,
  Dr Renato Vacondio, Dr Corrado Altomare, Dr Angelo Tafuni,
- Dr Orlando Garcia Feal, Ivan Martinez Estevez
+ Dr Orlando Garcia Feal, Ivan Martinez Estevez,
+ Dr Joseph O'Connor, Dr Aaron English
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester
@@ -23,10 +24,13 @@
  You should have received a copy of the GNU Lesser General Public License
  along with DualSPHysics. If not, see <http://www.gnu.org/licenses/>.
 
+ Free download source files and documentation from DualSPHysics website (http://dual.sphysics.org).
+ Full list of developers and contributors is available at https://dual.sphysics.org/developers
+ Properly cite the use of DualSPHysics (Dominguez et al., 2022) (https://dual.sphysics.org/references).
 
-DualSPHysics5 v5.0.233 (08-05-2022)
-====================================
-LoadDsphConfig> .../bin/windows/DsphConfig.xml
+
+DualSPHysics5-FlexStruc v1.0 (v5.2.269) (03-04-2023)
+=====================================================
 Information about execution parameters:
 
   DualSPHysics [name_case [dir_out]] [options]
@@ -83,6 +87,7 @@ Information about execution parameters:
         2          Diffusion term by Fourtakas et al 2019 (inner fluid particles)
         3          Diffusion term by Fourtakas et al 2019 (all fluid particles)
     -ddtvalue:<float> Constant for DDT (0.1 by default)
+    -ddtramp:tramp:tmax:maxvalue  Total time of DDT ramp and time for maxvalue
 
     -shifting:<mode> Specifies the use of Shifting correction
         none       Shifting is disabled (by default)
@@ -105,6 +110,7 @@ Information about execution parameters:
     -tmax:<float>   Maximum time of simulation
     -tout:<float>   Time between output files
 
+    -cfl:<float> CFL number coefficient to multiply dt
     -ftpause:<float> Time to start floating bodies movement. By default 0
     -rhopout:min:max Excludes fluid particles out of these density limits
     -domain_fixed:xmin:ymin:zmin:xmax:ymax:zmax    The domain is fixed
@@ -117,6 +123,7 @@ Information about execution parameters:
         info    Information about execution in .ibi4 format (by default)
         vtk     VTK files
         csv     CSV files
+    -svnormals:<0/1> Saves normal vector of boundary particles (default=0)
     -svres:<0/1>     Generates file that summarises the execution process
     -svtimers:<0/1>  Obtains timing for each individual process
     -svdomainvtk:<0/1>  Generates VTK file with domain limits

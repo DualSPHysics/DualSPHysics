@@ -1,6 +1,6 @@
 //HEAD_DSCODES
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2023 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -87,49 +87,69 @@ private:
   std::string Posminx,Posminy,Posminz;
   std::string Posmaxx,Posmaxy,Posmaxz;
 
-  int CheckPosValue(const std::string &value,bool isposmin,JCaseEParmsPos &ps)const;
-  std::string ReadPosValue(const JXml *sxml,TiXmlElement* ele,const std::string &name,const std::string &subname)const;
+  int CheckPosValue(const std::string& value,bool isposmin,JCaseEParmsPos& ps)const;
+  std::string ReadPosValue(const JXml* sxml,TiXmlElement* ele
+    ,const std::string& name,const std::string& subname)const;
 
-  JCaseEParmsItem* GetItemPointer(const std::string &key);
-  std::string GetValueNum(const std::string &key,int num);
-  void ReadXml(const JXml *sxml,TiXmlElement* lis);
-  void WriteXml(JXml *sxml,TiXmlElement* lis)const;
+  JCaseEParmsItem* GetItemPointer(const std::string& key);
+  std::string GetValueNum(const std::string& key,int num);
+  void ReadXml(const JXml* sxml,TiXmlElement* lis);
+  void WriteXml(JXml* sxml,TiXmlElement* lis)const;
 public:
   JCaseEParms();
   ~JCaseEParms();
   void Reset();
 
-  void Add(const std::string &key,const std::string &value,const std::string &comment,const std::string &unitscomment="");
-  void SetValue(const std::string &key,const std::string &value);
-  void SetComment(const std::string &key,const std::string &comment);
-  bool Exists(const std::string &key){ return(GetItemPointer(key)!=NULL); }
+  void Add(const std::string& key,const std::string& value
+    ,const std::string& comment,const std::string& unitscomment="");
+  void SetValue(const std::string& key,const std::string& value);
+  void SetComment(const std::string& key,const std::string& comment);
+  bool Exists(const std::string& key){ return(GetItemPointer(key)!=NULL); }
 
   void SetPosmin(std::string x,std::string y,std::string z);
   void SetPosmax(std::string x,std::string y,std::string z);
   JCaseEParmsPos GetPosminValue(char key)const;
   JCaseEParmsPos GetPosmaxValue(char key)const;
-  bool IsPosDefault()const{ return(Posminx=="default" && Posminy=="default" && Posminz=="default" && Posmaxx=="default" && Posmaxy=="default" && Posmaxz=="default"); }
+  bool IsPosDefault()const{ 
+    return(Posminx=="default" && Posminy=="default" && Posminz=="default" 
+      && Posmaxx=="default" && Posmaxy=="default" && Posmaxz=="default");
+  }
 
-  std::string GetValue(const std::string &key);
+  std::string GetValue(const std::string& key);
 
-  int GetValueNumInt(const std::string &key,int num,bool optional=false,int valdef=0);
-  double GetValueNumDouble(const std::string &key,int num,bool optional=false,double valdef=0);
-  float GetValueNumFloat(const std::string &key,int num,bool optional=false,float valdef=0){ return(float(GetValueNumDouble(key,num,optional,valdef))); }
-  std::string GetValueNumStr(const std::string &key,int num,bool optional=false,std::string valdef="");
+  int GetValueNumInt(const std::string& key,int num,bool optional=false,int valdef=0);
+  double GetValueNumDouble(const std::string& key,int num,bool optional=false,double valdef=0);
+  float GetValueNumFloat(const std::string& key,int num,bool optional=false,float valdef=0){ 
+    return(float(GetValueNumDouble(key,num,optional,valdef))); 
+  }
+  std::string GetValueNumStr(const std::string& key,int num,bool optional=false,std::string valdef="");
   
-  int GetValueInt(const std::string &key,bool optional=false,int valdef=0){ return(GetValueNumInt(key,0,optional,valdef)); }
-  double GetValueDouble(const std::string &key,bool optional=false,double valdef=0){ return(GetValueNumDouble(key,0,optional,valdef)); }
-  float GetValueFloat(const std::string &key,bool optional=false,float valdef=0){ return(GetValueNumFloat(key,0,optional,valdef)); }
-  std::string GetValueStr(const std::string &key,bool optional=false,std::string valdef=""){ return(GetValueNumStr(key,0,optional,valdef)); }
-  tdouble3 GetValueDouble3(const std::string &key,bool optional=false,tdouble3 valdef=TDouble3(0)){ return(TDouble3(GetValueNumDouble(key,0,optional,valdef.x),GetValueNumDouble(key,1,optional,valdef.y),GetValueNumDouble(key,2,optional,valdef.z))); }
+  int GetValueInt(const std::string& key,bool optional=false,int valdef=0){ 
+    return(GetValueNumInt(key,0,optional,valdef));
+  }
+  double GetValueDouble(const std::string& key,bool optional=false,double valdef=0){
+    return(GetValueNumDouble(key,0,optional,valdef));
+  }
+  float GetValueFloat(const std::string& key,bool optional=false,float valdef=0){
+    return(GetValueNumFloat(key,0,optional,valdef));
+  }
+  std::string GetValueStr(const std::string& key,bool optional=false,std::string valdef=""){
+    return(GetValueNumStr(key,0,optional,valdef));
+  }
+  tdouble3 GetValueDouble3(const std::string& key,bool optional=false,tdouble3 valdef=TDouble3(0)){
+    return(TDouble3(GetValueNumDouble(key,0,optional,valdef.x)
+                   ,GetValueNumDouble(key,1,optional,valdef.y)
+                   ,GetValueNumDouble(key,2,optional,valdef.z)));
+  }
 
   unsigned Count()const{ return(unsigned(List.size())); }
   std::string ToString(unsigned pos)const;
   JCaseEParmsItem GetParm(unsigned pos)const;
-  void LoadFileXml(const std::string &file,const std::string &path);
-  void SaveFileXml(const std::string &file,const std::string &path,bool newfile=true)const;
-  void LoadXml(const JXml *sxml,const std::string &place);
-  void SaveXml(JXml *sxml,const std::string &place)const;
+  void LoadFileXml(const std::string& file,const std::string& path);
+  void SaveFileXml(const std::string& file,const std::string& path
+    ,bool newfile=true)const;
+  void LoadXml(const JXml* sxml,const std::string& place);
+  void SaveXml(JXml* sxml,const std::string& place)const;
 };
 
 #endif

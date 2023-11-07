@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2023 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -42,18 +42,20 @@ protected:
   llong GetMemoryGpuNp()const;
   llong GetMemoryGpuNct()const;
   void UpdateMaxValues();
-  void LoadConfig(const JSphCfgRun *cfg);
+  void LoadConfig(const JSphCfgRun* cfg);
   void ConfigDomain();
 
-  void ResizeParticlesSize(unsigned newsize,float oversize,bool updatedivide);
+  void ResizeParticlesSizeData(unsigned ndatacpu,unsigned ndatagpu,unsigned newsize
+    ,unsigned minsize,float oversize,bool updatedivide);
   void RunPeriodic();
   void RunCellDivide(bool updateperiodic);
   void AbortBoundOut();
+  void SaveFluidOut();
 
   void Interaction_Forces(TpInterStep interstep);
   void MdbcBoundCorrection();
 
-  double ComputeAceMax(float *auxmem);
+  double ComputeAceMax(float* auxmemg);
 
   void RunInitialDDTRamp(); //<vs_ddramp>
 
@@ -61,9 +63,8 @@ protected:
   double ComputeStep_Ver();
   double ComputeStep_Sym();
 
-  void UpdateFtObjs();
-  void FtApplyImposedVel(float3 *ftoforcesresg)const;
   void RunFloating(double dt,bool predictor);
+
   void RunGaugeSystem(double timestep,bool saveinput=false);
 
   void ComputePips(bool run);
@@ -77,17 +78,17 @@ protected:
 public:
   JSphGpuSingle();
   ~JSphGpuSingle();
-  void Run(std::string appname,const JSphCfgRun *cfg,JLog2 *log);
+  void Run(std::string appname,const JSphCfgRun* cfg,JLog2* log);
 
 //-Code for InOut in JSphGpuSingle_InOut.cpp
 //--------------------------------------------
 protected:
   void InOutInit(double timestepini);
-  void InOutIgnoreFluidDef(const std::vector<unsigned> &mkfluidlist);
+  void InOutIgnoreFluidDef(const std::vector<unsigned>& mkfluidlist,typecode* codeg);
   void InOutCheckProximity(unsigned newnp);
   void InOutComputeStep(double stepdt);
   void InOutUpdatePartsData(double timestepnew);
-  void InOutExtrapolateData(unsigned inoutcount,const int *inoutpart);
+  void InOutExtrapolateData(unsigned inoutcount,const int* inoutpart);
 };
 
 #endif

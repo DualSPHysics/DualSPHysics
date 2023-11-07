@@ -1,6 +1,6 @@
 //HEAD_DSCODES
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2023 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -389,7 +389,7 @@ unsigned JPartDataHead::GetMkBlockById(unsigned id)const{
 //==============================================================================
 /// Returns string with particles information.
 //==============================================================================
-void JPartDataHead::GetParticlesInfo(std::vector<std::string> &out)const{
+void JPartDataHead::GetParticlesInfo(std::vector<std::string>& out)const{
   out.push_back("");
   out.push_back("Particles data:");
   out.push_back("----------------");

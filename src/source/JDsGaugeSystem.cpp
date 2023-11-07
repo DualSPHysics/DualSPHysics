@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2023 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -95,14 +95,14 @@ void JGaugeSystem::ResetCfgDefault(){
 //==============================================================================
 /// Configures object.
 //==============================================================================
-void JGaugeSystem::Config(const StCteSph & csp,bool symmetry,double timemax,double timepart
-  ,tdouble3 posmin,tdouble3 posmax,float scell,int scelldiv)
+void JGaugeSystem::Config(const StCteSph& csp,bool symmetry,double timemax
+  ,double timepart,tdouble3 posmin,tdouble3 posmax,float scell,int scelldiv)
 {
   CSP=csp;
   //-Wendland kernel is used when Cubic is selected.
   if(CSP.tkernel==KERNEL_Cubic){
     Log->PrintfWarning("The kernel Cubic Spline is not available in GaugeSystem, so kernel Wendland is used.");
-    if(!CSP.kwend.awen || !CSP.kwend.bwen)Run_Exceptioon("Constants of kernel Wendland are not defined.");
+    if(!CSP.kwend.awen || !CSP.kwend.bwenh)Run_Exceptioon("Constants of kernel Wendland are not defined.");
   }
   Symmetry=symmetry;
   TimeMax=timemax;
@@ -117,7 +117,9 @@ void JGaugeSystem::Config(const StCteSph & csp,bool symmetry,double timemax,doub
 //==============================================================================
 /// Loads initial conditions of XML object.
 //==============================================================================
-void JGaugeSystem::LoadXml(const JXml *sxml,const std::string &place,const JSphMk* mkinfo){
+void JGaugeSystem::LoadXml(const JXml* sxml,const std::string& place
+  ,const JSphMk* mkinfo)
+{
   TiXmlNode* node=sxml->GetNodeSimple(place);
   if(!node)Run_Exceptioon(std::string("Cannot find the element \'")+place+"\'.");
   if(sxml->CheckNodeActive(node))ReadXml(sxml,node->ToElement(),mkinfo);
@@ -126,8 +128,8 @@ void JGaugeSystem::LoadXml(const JXml *sxml,const std::string &place,const JSphM
 //==============================================================================
 /// Loads points of line point1-point2.
 //==============================================================================
-void JGaugeSystem::LoadLinePoints(double coefdp,const tdouble3 &point1,const tdouble3 &point2
-  ,std::vector<tdouble3> &points,const std::string &ref)const
+void JGaugeSystem::LoadLinePoints(double coefdp,const tdouble3& point1
+  ,const tdouble3& point2,std::vector<tdouble3>& points,const std::string& ref)const
 {
   const double dis=fgeo::PointsDist(point1,point2);
   const double dp=CSP.dp*coefdp;
@@ -142,8 +144,8 @@ void JGaugeSystem::LoadLinePoints(double coefdp,const tdouble3 &point1,const tdo
 //==============================================================================
 /// Loads points of line point1-point2.
 //==============================================================================
-void JGaugeSystem::LoadLinePoints(unsigned count,const tdouble3 &point1,const tdouble3 &point2
-  ,std::vector<tdouble3> &points,const std::string &ref)const
+void JGaugeSystem::LoadLinePoints(unsigned count,const tdouble3& point1
+  ,const tdouble3& point2,std::vector<tdouble3>& points,const std::string& ref)const
 {
   const double dis=fgeo::PointsDist(point1,point2);
   const double dp=dis/(count-1);
@@ -157,7 +159,9 @@ void JGaugeSystem::LoadLinePoints(unsigned count,const tdouble3 &point1,const td
 //==============================================================================
 /// Reads list of initial conditions in the XML node.
 //==============================================================================
-void JGaugeSystem::LoadPoints(JXml *sxml,TiXmlElement* lis,std::vector<tdouble3> &points)const{
+void JGaugeSystem::LoadPoints(JXml* sxml,TiXmlElement* lis
+  ,std::vector<tdouble3>& points)const
+{
   //-Loads points.
   TiXmlElement* ele=lis->FirstChildElement("point"); 
   while(ele){
@@ -183,7 +187,9 @@ void JGaugeSystem::LoadPoints(JXml *sxml,TiXmlElement* lis,std::vector<tdouble3>
 //==============================================================================
 /// Reads list of initial conditions in the XML node.
 //==============================================================================
-JGaugeItem::StDefault JGaugeSystem::ReadXmlCommon(const JXml *sxml,TiXmlElement* ele)const{
+JGaugeItem::StDefault JGaugeSystem::ReadXmlCommon(const JXml* sxml
+  ,TiXmlElement* ele)const
+{
   JGaugeItem::StDefault cfg=CfgDefault;
   if(ele){
     cfg.savevtkpart =sxml->ReadElementBool  (ele,"savevtkpart","value",true,CfgDefault.savevtkpart);
@@ -201,7 +207,7 @@ JGaugeItem::StDefault JGaugeSystem::ReadXmlCommon(const JXml *sxml,TiXmlElement*
 //==============================================================================
 /// Reads list of initial conditions in the XML node.
 //==============================================================================
-void JGaugeSystem::ReadXml(const JXml *sxml,TiXmlElement* lis,const JSphMk* mkinfo){
+void JGaugeSystem::ReadXml(const JXml* sxml,TiXmlElement* lis,const JSphMk* mkinfo){
   if(!Configured)Run_Exceptioon("The object is not yet configured.");
   //-Loads default configuration.
   ResetCfgDefault();
@@ -254,7 +260,7 @@ void JGaugeSystem::ReadXml(const JXml *sxml,TiXmlElement* lis,const JSphMk* mkin
             case 0:
             case 1:  distlimit=sxml->ReadElementFloat(ele,"distlimit","value");             break;
             case 2:  distlimit=float(CSP.dp*sxml->ReadElementFloat(ele,"distlimit","coefdp"));  break;
-            case 3:  distlimit=float(CSP.kernelh *sxml->ReadElementFloat(ele,"distlimit","coefh"));   break;
+            case 3:  distlimit=float(CSP.kernelh*sxml->ReadElementFloat(ele,"distlimit","coefh"));   break;
           }
           if(distlimit<=0)Run_ExceptioonFile(fun::PrintStr("The distlimit (%f) is invalid.",distlimit),sxml->ErrGetFileRow(ele));
           gau=AddGaugeMaxZ(name,cfg.computestart,cfg.computeend,cfg.computedt,pt0,height,distlimit);
@@ -278,7 +284,7 @@ void JGaugeSystem::ReadXml(const JXml *sxml,TiXmlElement* lis,const JSphMk* mkin
 /// Creates new gauge-Velocity and returns pointer.
 //==============================================================================
 JGaugeVelocity* JGaugeSystem::AddGaugeVel(std::string name,double computestart
-  ,double computeend,double computedt,const tdouble3 &point)
+  ,double computeend,double computedt,const tdouble3& point)
 {
   if(GetGaugeIdx(name)!=UINT_MAX)Run_Exceptioon(fun::PrintStr("The name \'%s\' already exists.",name.c_str()));
   //-Creates object.
@@ -382,9 +388,9 @@ void JGaugeSystem::SaveVtkInitPoints()const{
     //-Save individual schemes for complex gauges.
     for(unsigned cg=0;cg<GetCount();cg++)Gauges[cg]->SaveVtkScheme();
     //-Save VKT file with all initial gauge points.
-    unsigned *vidx=NULL;
-    unsigned *vtype=NULL;
-    byte *vout=NULL;
+    unsigned* vidx=NULL;
+    unsigned* vtype=NULL;
+    byte* vout=NULL;
     std::vector<tfloat3> points;
     unsigned ndata=0;
     for(unsigned cg=0;cg<GetCount();cg++){
@@ -425,7 +431,7 @@ void JGaugeSystem::SaveVtkInitPoints()const{
 /// Returns idx of gauge with indicated name (UINT_MAX: name did not exist).
 /// Devuelve idx del gauge con el nombre indicado (UINT_MAX: no existe).
 //==============================================================================
-unsigned JGaugeSystem::GetGaugeIdx(const std::string &name)const{
+unsigned JGaugeSystem::GetGaugeIdx(const std::string& name)const{
   unsigned idx=0;
   const unsigned n=GetCount();
   for(;idx<n && Gauges[idx]->Name!=name;idx++);
@@ -444,20 +450,20 @@ JGaugeItem* JGaugeSystem::GetGauge(unsigned c)const{
 //==============================================================================
 /// Updates results on gauges (on CPU).
 //==============================================================================
-void JGaugeSystem::CalculeCpu(double timestep,const StDivDataCpu &dvd
-  ,unsigned npbok,unsigned npb,unsigned np,const tdouble3 *pos
-  ,const typecode *code,const unsigned *idp,const tfloat4 *velrhop
+void JGaugeSystem::CalculeCpu(double timestep,const StDivDataCpu& dvd
+  ,unsigned npbok,unsigned npb,unsigned np,const tdouble3* pos
+  ,const typecode* code,const unsigned* idp,const tfloat4* velrho
   ,bool saveinput)
 {
   const unsigned ng=GetCount();
   for(unsigned cg=0;cg<ng;cg++){
     JGaugeItem* gau=Gauges[cg];
     if(gau->Update(timestep)){
-      gau->CalculeCpu(timestep,dvd,npbok,npb,np,pos,code,idp,velrhop);
+      gau->CalculeCpu(timestep,dvd,npbok,npb,np,pos,code,idp,velrho);
     }
   }
   //-Saves input state.
-  InputCpu=(saveinput? StrInputCpu(timestep,dvd,npbok,npb,np,pos,code,idp,velrhop): StrInputCpu());
+  InputCpu=(saveinput? StrInputCpu(timestep,dvd,npbok,npb,np,pos,code,idp,velrho): StrInputCpu());
 }
 
 //==============================================================================
@@ -467,17 +473,17 @@ void JGaugeSystem::CalculeLastInputCpu(std::string gaugename){
   const unsigned idx=GetGaugeIdx(gaugename);
   if(idx==UINT_MAX)Run_Exceptioon(fun::PrintStr("Requested gauge \'%s\' is missing.",gaugename.c_str()));
   if(!InputCpu.ready)Run_Exceptioon(fun::PrintStr("Input state to compute gauge \'%s\' is not available.",gaugename.c_str()));
-  const StInputCpu &s=InputCpu;
-  Gauges[idx]->CalculeCpu(s.timestep,s.dvd,s.npbok,s.npb,s.np,s.pos,s.code,s.idp,s.velrhop);
+  const StInputCpu& s=InputCpu;
+  Gauges[idx]->CalculeCpu(s.timestep,s.dvd,s.npbok,s.npb,s.np,s.pos,s.code,s.idp,s.velrho);
 }
 
 #ifdef _WITHGPU
 //==============================================================================
 /// Updates results on gauges (on GPU).
 //==============================================================================
-void JGaugeSystem::CalculeGpu(double timestep,const StDivDataGpu &dvd
-  ,unsigned npbok,unsigned npb,unsigned np,const double2 *posxy,const double *posz
-  ,const typecode *code,const unsigned *idp,const float4 *velrhop
+void JGaugeSystem::CalculeGpu(double timestep,const StDivDataGpu& dvd
+  ,unsigned npbok,unsigned npb,unsigned np,const double2* posxy,const double* posz
+  ,const typecode* code,const unsigned* idp,const float4* velrho
   ,bool saveinput)
 {
   //-Allocates GPU memory.
@@ -487,11 +493,11 @@ void JGaugeSystem::CalculeGpu(double timestep,const StDivDataGpu &dvd
   for(unsigned cg=0;cg<ng;cg++){
     JGaugeItem* gau=Gauges[cg];
     if(gau->Update(timestep)){
-      gau->CalculeGpu(timestep,dvd,npbok,npb,np,posxy,posz,code,idp,velrhop,AuxMemoryg);
+      gau->CalculeGpu(timestep,dvd,npbok,npb,np,posxy,posz,code,idp,velrho,AuxMemoryg);
     }
   }
   //-Saves input state.
-  InputGpu=(saveinput? StrInputGpu(timestep,dvd,npbok,npb,np,posxy,posz,code,idp,velrhop): StrInputGpu());
+  InputGpu=(saveinput? StrInputGpu(timestep,dvd,npbok,npb,np,posxy,posz,code,idp,velrho): StrInputGpu());
 }
 
 //==============================================================================
@@ -503,8 +509,8 @@ void JGaugeSystem::CalculeLastInputGpu(std::string gaugename){
   if(!InputGpu.ready)Run_Exceptioon(fun::PrintStr("Input state to compute gauge \'%s\' is not available.",gaugename.c_str()));
   //-Allocates GPU memory.
   if(!AuxMemoryg)fcuda::Malloc(&AuxMemoryg,1);
-  const StInputGpu &s=InputGpu;
-  Gauges[idx]->CalculeGpu(s.timestep,s.dvd,s.npbok,s.npb,s.np,s.posxy,s.posz,s.code,s.idp,s.velrhop,AuxMemoryg);
+  const StInputGpu& s=InputGpu;
+  Gauges[idx]->CalculeGpu(s.timestep,s.dvd,s.npbok,s.npb,s.np,s.posxy,s.posz,s.code,s.idp,s.velrho,AuxMemoryg);
 }
 #endif
 

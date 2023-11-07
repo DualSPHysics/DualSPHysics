@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2023 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -29,27 +29,27 @@
 namespace cugauge{
 
 //-Kernel for JGaugeVelocity.
-void Interaction_GaugeVel(const StCteSph &CSP,const StDivDataGpu &dvd
-  ,tdouble3 ptpos,const double2 *posxy,const double *posz
-  ,const typecode *code,const float4 *velrhop,float3 *ptvel);
+void Interaction_GaugeVel(const StCteSph& CSP,const StDivDataGpu& dvd
+  ,tdouble3 ptpos,const double2* posxy,const double* posz
+  ,const typecode* code,const float4* velrhop,float3* ptvel);
 
 //-Kernel for JGaugeSwl.
-void Interaction_GaugeSwl(const StCteSph &CSP,const StDivDataGpu &dvd
+void Interaction_GaugeSwl(const StCteSph& CSP,const StDivDataGpu& dvd
   ,tdouble3 point0,tdouble3 pointdir,unsigned pointnp,float masslimit
-  ,const double2 *posxy,const double *posz,const typecode *code
-  ,const float4 *velrhop,float3 *ptres);
+  ,const double2* posxy,const double* posz,const typecode* code
+  ,const float4* velrhop,float3* ptres);
 
 //-Kernel for JGaugeMaxZ.
-void Interaction_GaugeMaxz(tdouble3 point0,float maxdist2,const StDivDataGpu &dvd
+void Interaction_GaugeMaxz(tdouble3 point0,float maxdist2,const StDivDataGpu& dvd
   ,int cxini,int cxfin,int yini,int yfin,int zini,int zfin
-  ,const double2 *posxy,const double *posz,const typecode *code
-  ,float3 *ptres);
+  ,const double2* posxy,const double* posz,const typecode* code
+  ,float3* ptres);
 
 //-Kernel for JGaugeForce.
-void Interaction_GaugeForce(const StCteSph &CSP,const StDivDataGpu &dvd
-  ,unsigned n,unsigned idbegin,typecode codesel,const double2 *posxy,const double *posz
-  ,const typecode *code,const unsigned *idp,const float4 *velrhop
-  ,float3 *partace);
+void Interaction_GaugeForce(const StCteSph& CSP,const StDivDataGpu& dvd
+  ,unsigned n,unsigned idbegin,typecode codesel,const double2* posxy,const double* posz
+  ,const typecode* code,const unsigned* idp,const float4* velrhop
+  ,float3* partace);
 
 
 }

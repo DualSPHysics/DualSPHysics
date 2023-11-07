@@ -1,6 +1,6 @@
 //HEAD_DSCODES
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2023 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -32,7 +32,9 @@ using namespace std;
 //==============================================================================
 // Constructor.
 //==============================================================================
-JCaseVtkOutFile::JCaseVtkOutFile(const std::string &file,const std::string &mks):File(file){
+JCaseVtkOutFile::JCaseVtkOutFile(const std::string& file,const std::string& mks)
+  :File(file)
+{
   Reset();
   SetMks(mks);
 }
@@ -54,7 +56,7 @@ void JCaseVtkOutFile::Reset(){
 //==============================================================================
 // Replace list of mk values.
 //==============================================================================
-void JCaseVtkOutFile::SetMks(const std::string &mks){
+void JCaseVtkOutFile::SetMks(const std::string& mks){
   JRangeFilter rg(mks);
   ListMk=rg.ToString();
 }
@@ -98,7 +100,7 @@ void JCaseVtkOut::ConfigMkFirst(word mkboundfirst,word mkfluidfirst){
 //==============================================================================
 // Configures MkBoundFirst and MkFluidFirst.
 //==============================================================================
-void JCaseVtkOut::AddFile(const std::string &fname,const std::string &mks){
+void JCaseVtkOut::AddFile(const std::string& fname,const std::string& mks){
   unsigned cfile=GetByFileName(fname);
   if(cfile==UINT_MAX){
     JCaseVtkOutFile* pfile=new JCaseVtkOutFile(fname,mks);
@@ -136,7 +138,9 @@ std::string JCaseVtkOut::GetFileListMk(unsigned idx)const{
 //==============================================================================
 /// Returns list of files with indicated key.
 //==============================================================================
-unsigned JCaseVtkOut::GetFiles(std::string key,std::vector<std::string> &list)const{
+unsigned JCaseVtkOut::GetFiles(std::string key
+  ,std::vector<std::string>& list)const
+{
   list.clear();
   for(unsigned ipos=0;ipos<Count();ipos++){
     if(int(Files[ipos]->File.find(key))>=0)list.push_back(Files[ipos]->File);
@@ -147,7 +151,9 @@ unsigned JCaseVtkOut::GetFiles(std::string key,std::vector<std::string> &list)co
 //==============================================================================
 /// Returns list of files with requested mk.
 //==============================================================================
-unsigned JCaseVtkOut::GetFilesByMk(bool bound,word mk,std::vector<std::string> &list)const{
+unsigned JCaseVtkOut::GetFilesByMk(bool bound,word mk
+  ,std::vector<std::string>& list)const
+{
   list.clear();
   for(unsigned ipos=0;ipos<Count();ipos++){
     JRangeFilter rg(Files[ipos]->GetMks());
@@ -159,7 +165,7 @@ unsigned JCaseVtkOut::GetFilesByMk(bool bound,word mk,std::vector<std::string> &
 //==============================================================================
 // Replace list of mk values.
 //==============================================================================
-std::string JCaseVtkOut::GetListMkType(bool bound,const std::string &mks)const{
+std::string JCaseVtkOut::GetListMkType(bool bound,const std::string& mks)const{
   std::vector<unsigned> values;
   JRangeFilter rg(mks);
   rg.GetValues(values);
@@ -177,7 +183,7 @@ std::string JCaseVtkOut::GetListMkType(bool bound,const std::string &mks)const{
 //==============================================================================
 /// Reads particles information in XML format.
 //==============================================================================
-void JCaseVtkOut::ReadXml(const JXml *sxml,TiXmlElement* lis){
+void JCaseVtkOut::ReadXml(const JXml* sxml,TiXmlElement* lis){
   const word mkboundfirst=(word)sxml->GetAttributeUnsigned(lis,"mkboundfirst");
   const word mkfluidfirst=(word)sxml->GetAttributeUnsigned(lis,"mkfluidfirst");
   ConfigMkFirst(mkboundfirst,mkfluidfirst);
@@ -194,7 +200,7 @@ void JCaseVtkOut::ReadXml(const JXml *sxml,TiXmlElement* lis){
 //==============================================================================
 /// Writes information in XML format.
 //==============================================================================
-void JCaseVtkOut::WriteXml(JXml *sxml,TiXmlElement* lis)const{
+void JCaseVtkOut::WriteXml(JXml* sxml,TiXmlElement* lis)const{
   lis->Clear();
   JXml::AddAttribute(lis,"mkboundfirst",MkBoundFirst);
   JXml::AddAttribute(lis,"mkfluidfirst",MkFluidFirst);
@@ -214,7 +220,7 @@ void JCaseVtkOut::WriteXml(JXml *sxml,TiXmlElement* lis)const{
 //==============================================================================
 /// Loads data in XML format from a file.
 //==============================================================================
-void JCaseVtkOut::LoadFileXml(const std::string &file,const std::string &path){
+void JCaseVtkOut::LoadFileXml(const std::string& file,const std::string& path){
   JXml jxml;
   jxml.LoadFile(file);
   LoadXml(&jxml,path,false);
@@ -223,7 +229,7 @@ void JCaseVtkOut::LoadFileXml(const std::string &file,const std::string &path){
 //==============================================================================
 /// Loads information from the object XML.
 //==============================================================================
-void JCaseVtkOut::LoadXml(const JXml *sxml,const std::string &place,bool optional){
+void JCaseVtkOut::LoadXml(const JXml* sxml,const std::string& place,bool optional){
   Reset();
   TiXmlNode* node=sxml->GetNodeSimple(place);
   if(!node && !optional)Run_Exceptioon(std::string("Cannot find the element \'")+place+"\'.");
@@ -233,7 +239,7 @@ void JCaseVtkOut::LoadXml(const JXml *sxml,const std::string &place,bool optiona
 //==============================================================================
 /// Stores information in the object XML.
 //==============================================================================
-void JCaseVtkOut::SaveXml(JXml *sxml,const std::string &place)const{
+void JCaseVtkOut::SaveXml(JXml* sxml,const std::string& place)const{
   WriteXml(sxml,sxml->GetNode(place,true)->ToElement());
 }
 

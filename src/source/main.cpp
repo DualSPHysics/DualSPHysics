@@ -36,8 +36,8 @@ School of Mechanical, Aerospace and Civil Engineering, University of Manchester,
 \section compile_sec Project files
 Please download source files and documentation from <a href="http://dual.sphysics.org">DualSPHysics website.</a> \n
 \author <a href="http://dual.sphysics.org/index.php/developers">DualSPHysics Developers.</a> 
-\version 5.2.269
-\date 03-04-2023
+\version 5.3.298
+\date 29-10-2023
 \copyright GNU Lesser General Public License <a href="http://www.gnu.org/licenses/">GNU licenses.</a>
 */
 
@@ -61,12 +61,13 @@ Please download source files and documentation from <a href="http://dual.sphysic
 
 using namespace std;
 
-JAppInfo AppInfo("DualSPHysics5","v5.2.269","FlexStruc","v1.0","03-04-2023");
+JAppInfo AppInfo("DualSPHysics5","v5.3.298","29-10-2023");
+//JAppInfo AppInfo("DualSPHysics5","v5.0.???","UserVersion","v1.0","??-??-????"); //-for user versions.
 
 //==============================================================================
 /// LGPL License.
 //==============================================================================
-std::string getlicense_lgpl(const std::string &name,bool simple){
+std::string getlicense_lgpl(const std::string& name,bool simple){
   std::string tx=(simple? "": "\n");
   tx=tx+"\n <"+fun::StrUpper(name)+"> Copyright (c) 2023 by"; 
   tx=tx+"\n Dr Jose M. Dominguez Alonso, Dr Alejandro Crespo,";
@@ -133,13 +134,16 @@ bool ShowsVersionInfo(int argc,char** argv){
 }
 
 //==============================================================================
-///  Print exception message on screen and log file.
+/// Print exception message on standard error output and log file.
 //==============================================================================
-void PrintExceptionLog(const std::string &prefix,const std::string &text,JLog2 *log){
+void PrintExceptionLog(const std::string& prefix,const std::string& text
+  ,JLog2* log)
+{
   const bool prt=(text.empty() || text[0]!='#');
   const string tx=(prt? prefix+text: text.substr(1));
-  if(prt)printf("%s\n",tx.c_str());
+  //if(prt)printf("%s\n",tx.c_str());
   fflush(stdout);
+  if(prt)cerr << tx << endl;
   if(log && log->IsOk())log->PrintFile(tx,true);
 }
 
@@ -150,8 +154,6 @@ int main(int argc, char** argv){
 
   //AppInfo.AddNameExtra("Symmetry");    //<vs_syymmetry>
   //AppInfo.AddNameExtra("SaveFtAce");
-  //AppInfo.AddNameExtra("SaveFtMotion");//<vs_ftmottionsv>
-  //AppInfo.AddNameExtra("FlexStruc");   //<vs_flexstruc>
   #ifdef CODE_SIZE4
     AppInfo.AddNameExtra("MK65k");
   #endif
@@ -163,7 +165,7 @@ int main(int argc, char** argv){
   std::string appname=AppInfo.GetFullName();
   std::string appnamesub=fun::StrFillEnd("","=",unsigned(appname.size())+1);
   printf("\n%s\n%s\n",appname.c_str(),appnamesub.c_str());
-  JLog2 *log=NULL;
+  JLog2* log=NULL;
   JSphCfgRun cfg;
   try{
     cfg.LoadArgv(argc,argv);
@@ -193,22 +195,25 @@ int main(int argc, char** argv){
     }
     errcode=0;
   }
-  catch(const char *cad){
+  catch(const char* cad){
     PrintExceptionLog("\n*** Exception(chr): ",cad,log);
   }
-  catch(const string &e){
+  catch(const string& e){
     PrintExceptionLog("\n*** Exception(str): ",e,log);
   }
-  catch (const JException &e){
+  catch (const JException& e){
     if(log && log->IsOk())log->PrintFile(e.what());
   }
-  catch (const exception &e){
+  catch (const exception& e){
     PrintExceptionLog("\n*** Exception(exc): ",e.what(),log);
   }
   catch(...){
     PrintExceptionLog("","\n*** Attention: Unknown exception...",log);
   }
-  PrintExceptionLog("",fun::PrintStr("\nFinished execution (code=%d).\n",errcode),log);
+  //-Finished execution.
+  if(log && log->IsOk())log->PrintFile(fun::PrintStr("\nFinished execution (code=%d).\n",errcode),true);
+  printf("\nFinished execution (code=%d).\n",errcode);
+  fflush(stdout);
   return(errcode);
 }
 

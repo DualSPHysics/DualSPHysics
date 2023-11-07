@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2023 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -35,7 +35,9 @@ using namespace std;
 //==============================================================================
 JPartsLoad4::JPartsLoad4(bool useomp):UseOmp(useomp){
   ClassName="JPartsLoad4";
-  Idp=NULL; Pos=NULL; VelRhop=NULL;
+  Idp=NULL;
+  Pos=NULL;
+  VelRho=NULL;
   Reset();
 }
 
@@ -56,6 +58,7 @@ void JPartsLoad4::Reset(){
   Simulate2DPosY=0;
   NpDynamic=false;
   PosSingle=false;
+  CaseH=0;
   CaseNp=CaseNfixed=CaseNmoving=CaseNfloat=CaseNfluid=0;
   PeriMode=PERI_Unknown;
   PeriXinc=PeriYinc=PeriZinc=TDouble3(0);
@@ -74,14 +77,14 @@ void JPartsLoad4::Reset(){
 //==============================================================================
 void JPartsLoad4::AllocMemory(unsigned count){
   Count=count;
-  delete[] Idp;      Idp=NULL; 
-  delete[] Pos;      Pos=NULL; 
-  delete[] VelRhop;  VelRhop=NULL; 
+  delete[] Idp;     Idp=NULL; 
+  delete[] Pos;     Pos=NULL; 
+  delete[] VelRho;  VelRho=NULL; 
   if(Count){
     try{
       Idp=new unsigned[Count];
       Pos=new tdouble3[Count];
-      VelRhop=new tfloat4[Count];
+      VelRho=new tfloat4[Count];
     }
     catch(const std::bad_alloc){
       Run_Exceptioon("Could not allocate the requested memory.");
@@ -96,9 +99,9 @@ void JPartsLoad4::AllocMemory(unsigned count){
 llong JPartsLoad4::GetAllocMemory()const{  
   llong s=0;
   //-Allocated in AllocMemory().
-  if(Idp)s+=sizeof(unsigned)*Count;
-  if(Pos)s+=sizeof(tdouble3)*Count;
-  if(VelRhop)s+=sizeof(tfloat4)*Count;
+  if(Idp)   s+=sizeof(unsigned)*Count;
+  if(Pos)   s+=sizeof(tdouble3)*Count;
+  if(VelRho)s+=sizeof(tfloat4) *Count;
   return(s);
 }
 
@@ -106,7 +109,9 @@ llong JPartsLoad4::GetAllocMemory()const{
 /// Sorts values according to vsort[].
 /// Ordena valores segun vsort[].
 //==============================================================================
-template<typename T> T* JPartsLoad4::SortParticles(const unsigned *vsort,unsigned count,T *v)const{
+template<typename T> T* JPartsLoad4::SortParticles(const unsigned* vsort
+  ,unsigned count,T* v)const
+{
   T* v2=new T[count];
   for(unsigned p=0;p<count;p++)v2[p]=v[vsort[p]];
   delete[] v;
@@ -140,7 +145,7 @@ void JPartsLoad4::SortParticles(){
     JRadixSort rs(UseOmp);
     rs.Sort(true,Count,Idp);
     rs.SortData(Count,Pos,Pos);
-    rs.SortData(Count,VelRhop,VelRhop);
+    rs.SortData(Count,VelRho,VelRho);
   }
 }
 
@@ -148,8 +153,9 @@ void JPartsLoad4::SortParticles(){
 /// It loads particles of bi4 file and it orders them by Id.
 /// Carga particulas de fichero bi4 y las ordena por Id.
 //==============================================================================
-void JPartsLoad4::LoadParticles(const std::string &casedir,const std::string &casename
-  ,unsigned partbegin,const std::string &casedirbegin)
+void JPartsLoad4::LoadParticles(const std::string& casedir
+  ,const std::string& casename,unsigned partbegin
+  ,const std::string& casedirbegin)
 {
   Reset();
   PartBegin=partbegin;
@@ -191,6 +197,7 @@ void JPartsLoad4::LoadParticles(const std::string &casedir,const std::string &ca
   MapSize=(MapPosMin!=MapPosMax);
   CasePosMin=pd.Get_CasePosMin();
   CasePosMax=pd.Get_CasePosMax();
+  CaseH=pd.Get_H();
   if(!pd.Get_IdpSimple())Run_Exceptioon("Only Idp (32 bits) is valid at the moment.");
   //-Loads data for restarting.
   if(PartBegin){
@@ -211,8 +218,8 @@ void JPartsLoad4::LoadParticles(const std::string &casedir,const std::string &ca
   {
     unsigned ntot=0;
     unsigned auxsize=0;
-    tfloat3 *auxf3=NULL;
-    float *auxf=NULL;
+    tfloat3* auxf3=NULL;
+    float* auxf=NULL;
     for(unsigned piece=0;piece<Npiece;piece++){
       if(piece){
         if(!PartBegin)pd.LoadFileCase(dir,casename,piece,Npiece);
@@ -235,7 +242,7 @@ void JPartsLoad4::LoadParticles(const std::string &casedir,const std::string &ca
         pd.Get_Idp(npok,Idp+ntot);  
         pd.Get_Vel(npok,auxf3);  
         pd.Get_Rhop(npok,auxf);  
-        for(unsigned p=0;p<npok;p++)VelRhop[ntot+p]=TFloat4(auxf3[p].x,auxf3[p].y,auxf3[p].z,auxf[p]);
+        for(unsigned p=0;p<npok;p++)VelRho[ntot+p]=TFloat4(auxf3[p].x,auxf3[p].y,auxf3[p].z,auxf[p]);
       }
       ntot+=npok;
     }
@@ -258,12 +265,15 @@ void JPartsLoad4::LoadParticles(const std::string &casedir,const std::string &ca
 /// Comprueba validez de la configuracion cargada o lanza excepcion.
 //==============================================================================
 void JPartsLoad4::CheckConfig(ullong casenp,ullong casenfixed,ullong casenmoving
-  ,ullong casenfloat,ullong casenfluid,bool simulate2d,double simulate2dposy,TpPeri tperi)const
+  ,ullong casenfloat,ullong casenfluid,bool simulate2d,double simulate2dposy
+  ,TpPeri tperi)const
 {
   CheckConfig(casenp,casenfixed,casenmoving,casenfloat,casenfluid);
-  if(simulate2d!=Simulate2D || Simulate2DPosY!=simulate2dposy)Run_Exceptioon("Data file does not match the dimension of the case (2D/3D).");
+  if(simulate2d!=Simulate2D || Simulate2DPosY!=simulate2dposy)
+    Run_Exceptioon("Data file does not match the dimension of the case (2D/3D).");
   //-Obtains periodic mode and compares with loaded file.
-  if(tperi!=PeriMode && PeriMode!=PERI_Unknown)Run_Exceptioon("Data file does not match the periodic configuration of the case.");
+  if(tperi!=PeriMode && PeriMode!=PERI_Unknown)
+    Run_Exceptioon("Data file does not match the periodic configuration of the case.");
 }
 
 //==============================================================================
@@ -273,7 +283,8 @@ void JPartsLoad4::CheckConfig(ullong casenp,ullong casenfixed,ullong casenmoving
 void JPartsLoad4::CheckConfig(ullong casenp,ullong casenfixed,ullong casenmoving
   ,ullong casenfloat,ullong casenfluid)const
 {
-  if(casenp!=CaseNp || casenfixed!=CaseNfixed || casenmoving!=CaseNmoving || casenfloat!=CaseNfloat || casenfluid!=CaseNfluid)
+  if(casenp!=CaseNp || casenfixed!=CaseNfixed || casenmoving!=CaseNmoving 
+    || casenfloat!=CaseNfloat || casenfluid!=CaseNfluid)
     Run_Exceptioon("Particle number does not match the configuration of the case.");
 }
 
@@ -288,25 +299,25 @@ void JPartsLoad4::RemoveBoundary(){
   for(;nbound<Count && Idp[nbound]<casenbound;nbound++);
   //-Saves old pointers and allocates new memory.
   unsigned count0=Count;
-  unsigned *idp0=Idp;        Idp=NULL;
-  tdouble3 *pos0=Pos;        Pos=NULL;
-  tfloat4 *velrhop0=VelRhop; VelRhop=NULL;
+  unsigned* idp0=Idp;       Idp=NULL;
+  tdouble3* pos0=Pos;       Pos=NULL;
+  tfloat4*  velrho0=VelRho; VelRho=NULL;
   AllocMemory(count0-nbound);
   //-Copies data in new pointers.
-  memcpy(Idp,idp0+nbound,sizeof(unsigned)*Count);
-  memcpy(Pos,pos0+nbound,sizeof(tdouble3)*Count);
-  memcpy(VelRhop,velrhop0+nbound,sizeof(tfloat4)*Count);
+  memcpy(Idp   ,idp0   +nbound,sizeof(unsigned)*Count);
+  memcpy(Pos   ,pos0   +nbound,sizeof(tdouble3)*Count);
+  memcpy(VelRho,velrho0+nbound,sizeof(tfloat4) *Count);
   //-Frees old pointers.
-  delete[] idp0;      idp0=NULL; 
-  delete[] pos0;      pos0=NULL; 
-  delete[] velrhop0;  velrhop0=NULL; 
+  delete[] idp0;     idp0=NULL; 
+  delete[] pos0;     pos0=NULL; 
+  delete[] velrho0;  velrho0=NULL; 
 }
 
 //==============================================================================
 /// Returns the limits of the map and if they are not valid throws exception.
 /// Devuelve los limites del mapa y si no son validos genera excepcion.
 //==============================================================================
-void JPartsLoad4::GetMapSize(tdouble3 &mapmin,tdouble3 &mapmax)const{
+void JPartsLoad4::GetMapSize(tdouble3& mapmin,tdouble3& mapmax)const{
   if(!MapSizeLoaded())Run_Exceptioon("The MapSize information is invalid.");
   mapmin=MapPosMin; mapmax=MapPosMax;
 }
@@ -336,7 +347,9 @@ void JPartsLoad4::CalculateCasePos(){
 /// Calculates and returns particle limits with the indicated border.
 /// Calcula y devuelve limites de particulas con el borde indicado.
 //==============================================================================
-void JPartsLoad4::CalculeLimits(double border,double borderperi,bool perix,bool periy,bool periz,tdouble3 &mapmin,tdouble3 &mapmax){
+void JPartsLoad4::CalculeLimits(double border,double borderperi,bool perix
+  ,bool periy,bool periz,tdouble3& mapmin,tdouble3& mapmax)
+{
   if(CasePosMin==CasePosMax)CalculateCasePos();
   tdouble3 bor=TDouble3(border);
   if(perix)bor.x=borderperi;
@@ -345,5 +358,4 @@ void JPartsLoad4::CalculeLimits(double border,double borderperi,bool perix,bool 
   mapmin=CasePosMin-bor;
   mapmax=CasePosMax+bor;
 }
-
 

@@ -1,6 +1,6 @@
 ﻿//HEAD_DSCODES
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2023 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -163,7 +163,7 @@ public:
   void LoadFile(std::string dir);
   void SaveFile(std::string dir);
 
-  void GetParticlesInfo(std::vector<std::string> &out)const;
+  void GetParticlesInfo(std::vector<std::string>& out)const;
   void VisuParticlesInfo()const;
 
 //-Methods for Mk blocks.
