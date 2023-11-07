@@ -533,9 +533,9 @@ void JSphGpuSingle::Interaction_Forces(TpInterStep interstep){
   if(FlexStruc){
     Timersg->TmStart(TMG_SuFlexStruc,false);
     const StInterParmsFlexStrucg parmsfs=StrInterParmsFlexStrucg(Simulate2D,TKernel,(TVisco==VISCO_LaminarSPS)
-        ,Visco*ViscoBoundFactor,CaseNflexstruc,DivData,Dcellg
-        ,PosCellg,Velrhopg,Codeg
-        ,FlexStrucDatag,FlexStrucRidpg,PosCell0g,NumPairsg,PairIdxg,KerCorrg,FlexStrucDtg,DefGradg,Aceg,NULL);
+        ,Visco*ViscoBoundFactor,CaseNflexstruc,DivData,Dcell_g->cptr()
+        ,PosCell_g->cptr(),Velrho_g->cptr(),Code_g->cptr()
+        ,FlexStrucDatag,FlexStrucRidpg,PosCell0g,NumPairsg,PairIdxg,KerCorrg,FlexStrucDtg,DefGradg,Ace_g->ptr(),NULL);
     cusph::Interaction_ForcesFlexStruc(parmsfs);
     Timersg->TmStop(TMG_SuFlexStruc,false);
   }
@@ -1038,15 +1038,15 @@ void JSphGpuSingle::FlexStrucInit(){
   }
   cudaMemcpy(FlexStrucDatag,flexstrucdata.data(),sizeof(StFlexStrucData)*FlexStrucCount,cudaMemcpyHostToDevice);
   //-Configure code for flexible structures.
-  cudaMemcpy(Code,Codeg,sizeof(typecode)*Npb,cudaMemcpyDeviceToHost);
-  FlexStruc->ConfigCode(Npb,Code);
-  cudaMemcpy(Codeg,Code,sizeof(typecode)*Npb,cudaMemcpyHostToDevice);
-  cusph::SetClampCodes(Npb,PosCellg,FlexStrucDatag,Codeg);
-  cudaMemcpy(Code,Codeg,sizeof(typecode)*Npb,cudaMemcpyDeviceToHost);
+  cudaMemcpy(Code_c->ptr(),Code_g->ptr(),sizeof(typecode)*Npb,cudaMemcpyDeviceToHost);
+  FlexStruc->ConfigCode(Npb,Code_c->ptr());
+  cudaMemcpy(Code_g->ptr(),Code_c->ptr(),sizeof(typecode)*Npb,cudaMemcpyHostToDevice);
+  cusph::SetClampCodes(Npb,PosCell_g->cptr(),FlexStrucDatag,Code_g->ptr());
+  cudaMemcpy(Code_c->ptr(),Code_g->cptr(),sizeof(typecode)*Npb,cudaMemcpyDeviceToHost);
   //-Check that mDBC normals are not set on flexible structures.
-  if(TBoundary==BC_MDBC&&cusph::FlexStrucHasNormals(Npb,Codeg,BoundNormalg))Run_Exceptioon("mDBC normals are not permitted to be set for a flexible structure.");
+  if(TBoundary==BC_MDBC&&cusph::FlexStrucHasNormals(Npb,Code_g->cptr(),BoundNor_g->cptr()))Run_Exceptioon("mDBC normals are not permitted to be set for a flexible structure.");
   //-Count number of flexible structure particles.
-  CaseNflexstruc=cusph::CountFlexStrucParts(Npb,Codeg);
+  CaseNflexstruc=cusph::CountFlexStrucParts(Npb,Code_g->cptr());
   //-Allocate arrays.
   m=sizeof(unsigned)*CaseNflexstruc;        cudaMalloc((void**)&FlexStrucRidpg,   m);  MemGpuFixed+=m;
   m=sizeof(float4)*CaseNflexstruc;          cudaMalloc((void**)&PosCell0g,        m);  MemGpuFixed+=m;
@@ -1056,9 +1056,9 @@ void JSphGpuSingle::FlexStrucInit(){
   m=sizeof(float)*CaseNflexstruc;           cudaMalloc((void**)&FlexStrucDtg,     m);  MemGpuFixed+=m;
   m=sizeof(tmatrix3f)*CaseNflexstruc;       cudaMalloc((void**)&DefGradg,         m);  MemGpuFixed+=m;
   //-Calculate array for indexing into flexible structure particles.
-  cusph::CalcFlexStrucRidp(Npb,Codeg,FlexStrucRidpg);
+  cusph::CalcFlexStrucRidp(Npb,Code_g->cptr(),FlexStrucRidpg);
   //-Copy current position into initial position.
-  cusph::GatherToFlexStrucArray(CaseNflexstruc,FlexStrucRidpg,PosCellg,PosCell0g);
+  cusph::GatherToFlexStrucArray(CaseNflexstruc,FlexStrucRidpg,PosCell_g->cptr(),PosCell0g);
   //-Get number of particle pairs for each flexible structure particle.
   NumPairsTot=cusph::CountFlexStrucPairs(CaseNflexstruc,PosCell0g,NumPairsg);
   //-Download number of pairs for each particle.
@@ -1066,7 +1066,7 @@ void JSphGpuSingle::FlexStrucInit(){
   cudaMemcpy(numpairs.data(),NumPairsg,sizeof(unsigned)*CaseNflexstruc,cudaMemcpyDeviceToHost);
   //-Allocate memory for raw buffer for storing pair indices and set the pointers to the indices.
   m=sizeof(unsigned)*NumPairsTot; cudaMalloc((void**)&PairIdxBufferg,m);  MemGpuFixed+=m;
-  unsigned *offset=PairIdxBufferg;
+  unsigned* offset=PairIdxBufferg;
   vector<unsigned*> pairidx(CaseNflexstruc);
   for(unsigned p=0;p<CaseNflexstruc;p++){
     pairidx[p]=offset;
@@ -1077,9 +1077,9 @@ void JSphGpuSingle::FlexStrucInit(){
   cusph::SetFlexStrucPairs(CaseNflexstruc,PosCell0g,PairIdxg);
   //-Interaction parameters.
   const StInterParmsFlexStrucg parmsfs=StrInterParmsFlexStrucg(Simulate2D,TKernel,(TVisco==VISCO_LaminarSPS)
-      ,Visco*ViscoBoundFactor,CaseNflexstruc,DivData,Dcellg
-      ,PosCellg,Velrhopg,Codeg
-      ,FlexStrucDatag,FlexStrucRidpg,PosCell0g,NumPairsg,PairIdxg,KerCorrg,FlexStrucDtg,DefGradg,Aceg,NULL);
+      ,Visco*ViscoBoundFactor,CaseNflexstruc,DivData,Dcell_g->cptr()
+      ,PosCell_g->cptr(),Velrho_g->cptr(),Code_g->cptr()
+      ,FlexStrucDatag,FlexStrucRidpg,PosCell0g,NumPairsg,PairIdxg,KerCorrg,FlexStrucDtg,DefGradg,Ace_g->ptr(),NULL);
   //-Calculate kernel correction for each structure particle.
   cusph::CalcFlexStrucKerCorr(parmsfs);
   Log->Print("");

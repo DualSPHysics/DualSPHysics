@@ -3176,27 +3176,27 @@ void ComputeOutputPartsMk(byte resmask,bool cmband,bool inverse
 /// Functor para verificar si una estructura flexible tiene una normal definida.
 //==============================================================================
 struct FlexStrucHasNormal{
-  FlexStrucHasNormal(const typecode *code,const float3 *boundnormals):code(code),boundnormals(boundnormals){};
+  FlexStrucHasNormal(const typecode* code,const float3* boundnormals):code(code),boundnormals(boundnormals){};
   __host__ __device__ bool operator()(unsigned idx){
     const float3 bnormal=boundnormals[idx];
     return CODE_IsFlexStrucFlex(code[idx]) && (bnormal.x!=0 || bnormal.y!=0 || bnormal.z!=0);
   }
 private:
-  const typecode *code;
-  const float3 *boundnormals;
+  const typecode* code;
+  const float3* boundnormals;
 };
 
 //==============================================================================
 /// Functor for checking if particle is a flexible structure particle.
 /// Funtor para verificar si la partícula es una partícula de estructura flexible.
 //==============================================================================
-struct IsFlexStrucAny{ __host__ __device__ bool operator()(const typecode &code) { return CODE_IsFlexStrucAny(code); } };
+struct IsFlexStrucAny{ __host__ __device__ bool operator()(const typecode& code) { return CODE_IsFlexStrucAny(code); } };
 
 //==============================================================================
 /// Finds the clamp particles and updates the code.
 /// Encuentra las partículas de abrazadera y actualiza el código.
 //==============================================================================
-__global__ void KerSetClampCodes(unsigned n,const float4 *poscell,const StFlexStrucData *flexstrucdata,typecode *code){
+__global__ void KerSetClampCodes(unsigned n,const float4* poscell,const StFlexStrucData* flexstrucdata,typecode* code){
   const unsigned p=blockIdx.x*blockDim.x+threadIdx.x; //-Number of thread.
   if(p<n){
     const unsigned p1=p;      //-Number of particle.
@@ -3233,7 +3233,7 @@ __global__ void KerSetClampCodes(unsigned n,const float4 *poscell,const StFlexSt
 /// Finds the clamp particles and updates the code.
 /// Encuentra las partículas de abrazadera y actualiza el código.
 //==============================================================================
-void SetClampCodes(unsigned npb,const float4 *poscell,const StFlexStrucData *flexstrucdata,typecode *code){
+void SetClampCodes(unsigned npb,const float4* poscell,const StFlexStrucData* flexstrucdata,typecode* code){
   if(npb){
     dim3 sgridb=GetSimpleGridSize(npb,SPHBSIZE);
     KerSetClampCodes <<<sgridb,SPHBSIZE>>> (npb,poscell,flexstrucdata,code);
@@ -3244,7 +3244,7 @@ void SetClampCodes(unsigned npb,const float4 *poscell,const StFlexStrucData *fle
 /// Checks if any normals are defined for the flexible structure particles.
 /// Comprueba si se han definido normales para las partículas de estructura flexible.
 //==============================================================================
-bool FlexStrucHasNormals(unsigned npb,const typecode *code,const float3 *boundnormals){
+bool FlexStrucHasNormals(unsigned npb,const typecode* code,const float3* boundnormals){
   if(npb){
     thrust::counting_iterator<unsigned> idx(0);
     FlexStrucHasNormal pred=FlexStrucHasNormal(code,boundnormals);
@@ -3257,7 +3257,7 @@ bool FlexStrucHasNormals(unsigned npb,const typecode *code,const float3 *boundno
 /// Counts the number of flexible structure particles (includes clamps).
 /// Cuenta el número de partículas de estructura flexible (incluye abrazaderas).
 //==============================================================================
-unsigned CountFlexStrucParts(unsigned npb,const typecode *code){
+unsigned CountFlexStrucParts(unsigned npb,const typecode* code){
   if(npb){
     thrust::device_ptr<const typecode> dev_code(code);
     return thrust::count_if(dev_code,dev_code+npb,IsFlexStrucAny());
@@ -3269,7 +3269,7 @@ unsigned CountFlexStrucParts(unsigned npb,const typecode *code){
 /// Calculates indices to the main arrays for the flexible structure particles.
 /// Calcula los índices de las matrices principales para las partículas de estructura flexible.
 //==============================================================================
-void CalcFlexStrucRidp(unsigned npb,const typecode *code,unsigned *flexstrucridp){
+void CalcFlexStrucRidp(unsigned npb,const typecode* code,unsigned* flexstrucridp){
   if(npb){
     thrust::counting_iterator<unsigned> idx(0);
     thrust::device_ptr<const typecode> dev_code(code);
@@ -3282,7 +3282,7 @@ void CalcFlexStrucRidp(unsigned npb,const typecode *code,unsigned *flexstrucridp
 /// Gathers values from a main array into the smaller flexible structure array.
 /// Reúne valores de una matriz principal en la matriz de estructura flexible más pequeña.
 //==============================================================================
-void GatherToFlexStrucArray(unsigned npfs,const unsigned *flexstrucridp,const float4 *fullarray,float4 *flexstrucarray){
+void GatherToFlexStrucArray(unsigned npfs,const unsigned* flexstrucridp,const float4* fullarray,float4* flexstrucarray){
   if(npfs){
     thrust::device_ptr<const unsigned> dev_flexstrucridp(flexstrucridp);
     thrust::device_ptr<const float4> dev_fullarray(fullarray);
@@ -3295,7 +3295,7 @@ void GatherToFlexStrucArray(unsigned npfs,const unsigned *flexstrucridp,const fl
 /// Counts the total number of flexible structure pairs (neighbours).
 /// Cuenta el número total de pares de estructuras flexibles (vecinos).
 //==============================================================================
-__global__ void KerCountFlexStrucPairs(unsigned n,const float4 *poscell0,unsigned *numpairs){
+__global__ void KerCountFlexStrucPairs(unsigned n,const float4* poscell0,unsigned* numpairs){
   const unsigned p=blockIdx.x*blockDim.x+threadIdx.x; //-Number of thread.
   if(p<n){
     const unsigned pfs1=p;      //-Number of particle.
@@ -3321,7 +3321,7 @@ __global__ void KerCountFlexStrucPairs(unsigned n,const float4 *poscell0,unsigne
 /// Counts the total number of flexible structure pairs (neighbours).
 /// Cuenta el número total de pares de estructuras flexibles (vecinos).
 //==============================================================================
-unsigned CountFlexStrucPairs(unsigned npfs,const float4 *poscell0,unsigned *numpairs){
+unsigned CountFlexStrucPairs(unsigned npfs,const float4* poscell0,unsigned* numpairs){
   if(npfs){
     dim3 sgridb=GetSimpleGridSize(npfs,SPHBSIZE);
     KerCountFlexStrucPairs <<<sgridb,SPHBSIZE>>> (npfs,poscell0,numpairs);
@@ -3335,7 +3335,7 @@ unsigned CountFlexStrucPairs(unsigned npfs,const float4 *poscell0,unsigned *nump
 /// Sets the indices for each flexible structure pair.
 /// Establece los índices para cada par de estructuras flexibles.
 //==============================================================================
-__global__ void KerSetFlexStrucPairs(unsigned n,const float4 *poscell0,unsigned **pairidx)
+__global__ void KerSetFlexStrucPairs(unsigned n,const float4* poscell0,unsigned** pairidx)
 {
   const unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Number of thread.
   if(p<n){
@@ -3361,7 +3361,7 @@ __global__ void KerSetFlexStrucPairs(unsigned n,const float4 *poscell0,unsigned 
 /// Sets the indices for each flexible structure pair.
 /// Establece los índices para cada par de estructuras flexibles.
 //==============================================================================
-void SetFlexStrucPairs(unsigned npfs,const float4 *poscell0,unsigned **pairidx){
+void SetFlexStrucPairs(unsigned npfs,const float4* poscell0,unsigned** pairidx){
   if(npfs){
     dim3 sgridb=GetSimpleGridSize(npfs,SPHBSIZE);
     KerSetFlexStrucPairs <<<sgridb,SPHBSIZE>>> (npfs,poscell0,pairidx);
@@ -3372,9 +3372,9 @@ void SetFlexStrucPairs(unsigned npfs,const float4 *poscell0,unsigned **pairidx){
 /// Calculates the kernel correction matrix for each flexible structure particle.
 /// Calcula la matriz de corrección del kernel para cada partícula de estructura flexible.
 //==============================================================================
-template<TpKernel tker,bool simulate2d> __global__ void KerCalcFlexStrucKerCorr(unsigned n,const typecode *code,const StFlexStrucData *flexstrucdata
-    ,const unsigned *flexstrucridp,const float4 *poscell0,const unsigned *numpairs,const unsigned *const *pairidx
-    ,tmatrix3f *kercorr)
+template<TpKernel tker,bool simulate2d> __global__ void KerCalcFlexStrucKerCorr(unsigned n,const typecode* code,const StFlexStrucData* flexstrucdata
+    ,const unsigned* flexstrucridp,const float4* poscell0,const unsigned* numpairs,const unsigned* const* pairidx
+    ,tmatrix3f* kercorr)
 {
   const unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Number of thread.
   if(p<n){
@@ -3415,7 +3415,7 @@ template<TpKernel tker,bool simulate2d> __global__ void KerCalcFlexStrucKerCorr(
 /// Calculates the kernel correction matrix for each flexible structure particle.
 /// Calcula la matriz de corrección del kernel para cada partícula de estructura flexible.
 //==============================================================================
-template<TpKernel tker,bool simulate2d> void CalcFlexStrucKerCorrT(const StInterParmsFlexStrucg &tfs){
+template<TpKernel tker,bool simulate2d> void CalcFlexStrucKerCorrT(const StInterParmsFlexStrucg& tfs){
   if(tfs.vnpfs){
     dim3 sgridb=GetSimpleGridSize(tfs.vnpfs,SPHBSIZE);
     KerCalcFlexStrucKerCorr<tker,simulate2d> <<<sgridb,SPHBSIZE>>>
@@ -3427,7 +3427,7 @@ template<TpKernel tker,bool simulate2d> void CalcFlexStrucKerCorrT(const StInter
 /// Calculates the kernel correction matrix for each flexible structure particle.
 /// Calcula la matriz de corrección del kernel para cada partícula de estructura flexible.
 //==============================================================================
-template<TpKernel tker> void CalcFlexStrucKerCorr_gt0(const StInterParmsFlexStrucg &tfs){
+template<TpKernel tker> void CalcFlexStrucKerCorr_gt0(const StInterParmsFlexStrucg& tfs){
   if(tfs.simulate2d)CalcFlexStrucKerCorrT<tker,true>  (tfs);
   else              CalcFlexStrucKerCorrT<tker,false> (tfs);
 }
@@ -3436,7 +3436,7 @@ template<TpKernel tker> void CalcFlexStrucKerCorr_gt0(const StInterParmsFlexStru
 /// Calculates the kernel correction matrix for each flexible structure particle.
 /// Calcula la matriz de corrección del kernel para cada partícula de estructura flexible.
 //==============================================================================
-void CalcFlexStrucKerCorr(const StInterParmsFlexStrucg &tfs){
+void CalcFlexStrucKerCorr(const StInterParmsFlexStrucg& tfs){
 #ifdef FAST_COMPILATION
   if(tfs.tkernel!=KERNEL_Wendland)throw "Extra kernels are disabled for FastCompilation...";
   CalcFlexStrucKerCorr_gt0<KERNEL_Wendland> (tfs);
@@ -3452,10 +3452,10 @@ void CalcFlexStrucKerCorr(const StInterParmsFlexStrucg &tfs){
 /// Calculates the deformation gradient matrix for each flexible structure particle.
 /// Calcula la matriz de gradiente de deformación para cada partícula de estructura flexible.
 //==============================================================================
-template<TpKernel tker,bool simulate2d> __global__ void KerComputeDefGradFlexStruc(unsigned n,const float4 *poscell,const typecode *code
-    ,const StFlexStrucData *flexstrucdata,const unsigned *flexstrucridp
-    ,const float4 *poscell0,const unsigned *numpairs,const unsigned *const *pairidx,const tmatrix3f *kercorr
-    ,tmatrix3f *defgrad)
+template<TpKernel tker,bool simulate2d> __global__ void KerComputeDefGradFlexStruc(unsigned n,const float4* poscell,const typecode* code
+    ,const StFlexStrucData* flexstrucdata,const unsigned* flexstrucridp
+    ,const float4* poscell0,const unsigned* numpairs,const unsigned* const* pairidx,const tmatrix3f* kercorr
+    ,tmatrix3f* defgrad)
 {
   const unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Number of thread.
   if(p<n){
@@ -3503,7 +3503,7 @@ template<TpKernel tker,bool simulate2d> __global__ void KerComputeDefGradFlexStr
 /// Calculates the PK1 stress matrix for each flexible structure particle.
 /// Calcula la matriz de tensión PK1 para cada partícula de estructura flexible.
 //==============================================================================
-__device__ tmatrix3f KerComputePK1StressFlexStruc(const tmatrix3f &defgrad,const tmatrix6f &cmat)
+__device__ tmatrix3f KerComputePK1StressFlexStruc(const tmatrix3f& defgrad,const tmatrix6f& cmat)
 {
   //-Calculate Green-Lagrange strain from deformation gradient.
   tmatrix3f gl=cumath::MulMatrix3x3(cumath::TrasMatrix3x3(defgrad),defgrad);
@@ -3512,17 +3512,21 @@ __device__ tmatrix3f KerComputePK1StressFlexStruc(const tmatrix3f &defgrad,const
   gl.a21*=0.5f; gl.a22*=0.5f; gl.a23*=0.5f;
   gl.a31*=0.5f; gl.a32*=0.5f; gl.a33*=0.5f;
   //-Convert to Voigt notation.
-  const tfloat6 glv={gl.a11,gl.a22,gl.a33,gl.a23+gl.a32,gl.a31+gl.a13,gl.a12+gl.a21};
+  const float gl_1=gl.a11;
+  const float gl_2=gl.a22;
+  const float gl_3=gl.a33;
+  const float gl_4=gl.a23+gl.a32;
+  const float gl_5=gl.a31+gl.a13;
+  const float gl_6=gl.a12+gl.a21;
   //-Multiply with stiffness tensor to get PK2 stress in Voigt form.
-  tfloat6 pk2v;
-  pk2v.a1=cmat.a11*glv.a1+cmat.a12*glv.a2+cmat.a13*glv.a3+cmat.a14*glv.a4+cmat.a15*glv.a5+cmat.a16*glv.a6;
-  pk2v.a2=cmat.a21*glv.a1+cmat.a22*glv.a2+cmat.a23*glv.a3+cmat.a24*glv.a4+cmat.a25*glv.a5+cmat.a26*glv.a6;
-  pk2v.a3=cmat.a31*glv.a1+cmat.a32*glv.a2+cmat.a33*glv.a3+cmat.a34*glv.a4+cmat.a35*glv.a5+cmat.a36*glv.a6;
-  pk2v.a4=cmat.a41*glv.a1+cmat.a42*glv.a2+cmat.a43*glv.a3+cmat.a44*glv.a4+cmat.a45*glv.a5+cmat.a46*glv.a6;
-  pk2v.a5=cmat.a51*glv.a1+cmat.a52*glv.a2+cmat.a53*glv.a3+cmat.a54*glv.a4+cmat.a55*glv.a5+cmat.a56*glv.a6;
-  pk2v.a6=cmat.a61*glv.a1+cmat.a62*glv.a2+cmat.a63*glv.a3+cmat.a64*glv.a4+cmat.a65*glv.a5+cmat.a66*glv.a6;
+  const float pk2_1=cmat.a11*gl_1+cmat.a12*gl_2+cmat.a13*gl_3+cmat.a14*gl_4+cmat.a15*gl_5+cmat.a16*gl_6;
+  const float pk2_2=cmat.a21*gl_1+cmat.a22*gl_2+cmat.a23*gl_3+cmat.a24*gl_4+cmat.a25*gl_5+cmat.a26*gl_6;
+  const float pk2_3=cmat.a31*gl_1+cmat.a32*gl_2+cmat.a33*gl_3+cmat.a34*gl_4+cmat.a35*gl_5+cmat.a36*gl_6;
+  const float pk2_4=cmat.a41*gl_1+cmat.a42*gl_2+cmat.a43*gl_3+cmat.a44*gl_4+cmat.a45*gl_5+cmat.a46*gl_6;
+  const float pk2_5=cmat.a51*gl_1+cmat.a52*gl_2+cmat.a53*gl_3+cmat.a54*gl_4+cmat.a55*gl_5+cmat.a56*gl_6;
+  const float pk2_6=cmat.a61*gl_1+cmat.a62*gl_2+cmat.a63*gl_3+cmat.a64*gl_4+cmat.a65*gl_5+cmat.a66*gl_6;
   //-Convert PK2 stress back to normal notation.
-  const tmatrix3f pk2={pk2v.a1,pk2v.a6,pk2v.a5,pk2v.a6,pk2v.a2,pk2v.a4,pk2v.a5,pk2v.a4,pk2v.a3};
+  const tmatrix3f pk2={pk2_1,pk2_6,pk2_5,pk2_6,pk2_2,pk2_4,pk2_5,pk2_4,pk2_3};
   //-Convert PK2 to PK1 and return.
   return cumath::MulMatrix3x3(defgrad,pk2);
 }
@@ -3532,11 +3536,11 @@ __device__ tmatrix3f KerComputePK1StressFlexStruc(const tmatrix3f &defgrad,const
 /// Fuerzas de interacción para las partículas de estructura flexible.
 //==============================================================================
 template<TpKernel tker,bool simulate2d,bool lamsps> __global__ void KerInteractionForcesFlexStruc(unsigned n,float visco
-    ,int scelldiv,int4 nc,int3 cellzero,const int2 *beginendcellfluid,const unsigned *dcell
-    ,const float4 *poscell,const float4 *velrhop,const typecode *code
-    ,const StFlexStrucData *flexstrucdata,const unsigned *flexstrucridp
-    ,const float4 *poscell0,const unsigned *numpairs,const unsigned *const *pairidx,const tmatrix3f *kercorr,const tmatrix3f *defgrad
-    ,float *flexstrucdt,float3 *ace)
+    ,int scelldiv,int4 nc,int3 cellzero,const int2* beginendcellfluid,const unsigned* dcell
+    ,const float4* poscell,const float4* velrhop,const typecode* code
+    ,const StFlexStrucData* flexstrucdata,const unsigned* flexstrucridp
+    ,const float4* poscell0,const unsigned* numpairs,const unsigned* const* pairidx,const tmatrix3f* kercorr,const tmatrix3f* defgrad
+    ,float* flexstrucdt,float3* ace)
 {
   const unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Number of thread.
   if(p<n){
@@ -3687,9 +3691,9 @@ template<TpKernel tker,bool simulate2d,bool lamsps> __global__ void KerInteracti
 /// Interaction forces for the flexible structure particles.
 /// Fuerzas de interacción para las partículas de estructura flexible.
 //==============================================================================
-template<TpKernel tker,bool simulate2d,bool lamsps> void Interaction_ForcesFlexStrucT(const StInterParmsFlexStrucg &tfs){
+template<TpKernel tker,bool simulate2d,bool lamsps> void Interaction_ForcesFlexStrucT(const StInterParmsFlexStrucg& tfs){
   if(tfs.vnpfs){
-    const StDivDataGpu &dvd=tfs.divdatag;
+    const StDivDataGpu& dvd=tfs.divdatag;
     dim3 sgridb=GetSimpleGridSize(tfs.vnpfs,SPHBSIZE);
     KerComputeDefGradFlexStruc<tker,simulate2d> <<<sgridb,SPHBSIZE,0,tfs.stm>>>
         (tfs.vnpfs,tfs.poscell,tfs.code,tfs.flexstrucdata,tfs.flexstrucridp,tfs.poscell0,tfs.numpairs,tfs.pairidx,tfs.kercorr,tfs.defgrad);
@@ -3702,7 +3706,7 @@ template<TpKernel tker,bool simulate2d,bool lamsps> void Interaction_ForcesFlexS
 /// Interaction forces for the flexible structure particles.
 /// Fuerzas de interacción para las partículas de estructura flexible.
 //==============================================================================
-template<TpKernel tker,bool simulate2d> void Interaction_ForcesFlexStruc_gt1(const StInterParmsFlexStrucg &tfs){
+template<TpKernel tker,bool simulate2d> void Interaction_ForcesFlexStruc_gt1(const StInterParmsFlexStrucg& tfs){
   if(tfs.lamsps)Interaction_ForcesFlexStrucT<tker,simulate2d,true>  (tfs);
   else          Interaction_ForcesFlexStrucT<tker,simulate2d,false> (tfs);
 }
@@ -3711,7 +3715,7 @@ template<TpKernel tker,bool simulate2d> void Interaction_ForcesFlexStruc_gt1(con
 /// Interaction forces for the flexible structure particles.
 /// Fuerzas de interacción para las partículas de estructura flexible.
 //==============================================================================
-template<TpKernel tker> void Interaction_ForcesFlexStruc_gt0(const StInterParmsFlexStrucg &tfs){
+template<TpKernel tker> void Interaction_ForcesFlexStruc_gt0(const StInterParmsFlexStrucg& tfs){
   if(tfs.simulate2d)Interaction_ForcesFlexStruc_gt1<tker,true>  (tfs);
   else              Interaction_ForcesFlexStruc_gt1<tker,false> (tfs);
 }
@@ -3720,7 +3724,7 @@ template<TpKernel tker> void Interaction_ForcesFlexStruc_gt0(const StInterParmsF
 /// Interaction forces for the flexible structure particles.
 /// Fuerzas de interacción para las partículas de estructura flexible.
 //==============================================================================
-void Interaction_ForcesFlexStruc(const StInterParmsFlexStrucg &tfs){
+void Interaction_ForcesFlexStruc(const StInterParmsFlexStrucg& tfs){
 #ifdef FAST_COMPILATION
   if(tfs.tkernel!=KERNEL_Wendland)throw "Extra kernels are disabled for FastCompilation...";
   Interaction_ForcesFlexStruc_gt0<KERNEL_Wendland> (tfs);
@@ -3736,15 +3740,15 @@ void Interaction_ForcesFlexStruc(const StInterParmsFlexStrucg &tfs){
 /// Updates particle position according to displacement.
 /// Actualizacion de posicion de particulas segun desplazamiento.
 //==============================================================================
-__global__ void KerComputeStepPosFlexStruc(unsigned n,const unsigned *flexstrucridp
-    ,const double2 *posxypre,const double *poszpre,const double2 *movxy,const double *movz
-    ,double2 *posxy,double *posz,unsigned *dcell,typecode *code)
+__global__ void KerComputeStepPosFlexStruc(unsigned n,const unsigned* flexstrucridp
+    ,const double2* posxypre,const double* poszpre,const double2* movxy,const double* movz
+    ,double2* posxy,double* posz,unsigned* dcell,typecode* code)
 {
   unsigned pt=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
   if(pt<n){
     unsigned p=flexstrucridp[pt];
     const typecode rcode=code[p];
-    const bool outrhop=CODE_IsOutRhop(rcode);
+    const bool outrhop=CODE_IsOutRho(rcode);
     const bool flexstruc=CODE_IsFlexStrucFlex(rcode);
     const bool normal=(outrhop || CODE_IsNormal(rcode));
     if(normal && flexstruc){
@@ -3758,9 +3762,9 @@ __global__ void KerComputeStepPosFlexStruc(unsigned n,const unsigned *flexstrucr
 /// Updates particle position according to displacement.
 /// Actualizacion de posicion de particulas segun desplazamiento.
 //==============================================================================
-void ComputeStepPosFlexStruc(unsigned npfs,const unsigned *flexstrucridp
-    ,const double2 *posxypre,const double *poszpre,const double2 *movxy,const double *movz
-    ,double2 *posxy,double *posz,unsigned *dcell,typecode *code)
+void ComputeStepPosFlexStruc(unsigned npfs,const unsigned* flexstrucridp
+    ,const double2* posxypre,const double* poszpre,const double2* movxy,const double* movz
+    ,double2* posxy,double* posz,unsigned* dcell,typecode* code)
 {
   if(npfs){
     dim3 sgrid=GetSimpleGridSize(npfs,SPHBSIZE);

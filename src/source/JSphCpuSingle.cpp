@@ -1217,12 +1217,12 @@ void JSphCpuSingle::FlexStrucInit(){
     FlexStrucDatac[c].cmat=FlexStruc->GetBody(c)->GetConstitMatrix();
   }
   //-Configure code for flexible structures.
-  FlexStruc->ConfigCode(Npb,Codec);
-  JSphCpu::SetClampCodes(Npb,Posc,FlexStrucDatac,Codec);
+  FlexStruc->ConfigCode(Npb,Code_c->ptr());
+  JSphCpu::SetClampCodes(Npb,Pos_c->cptr(),FlexStrucDatac,Code_c->ptr());
   //-Check that mDBC normals are not set on flexible structures.
-  if(TBoundary==BC_MDBC&&JSphCpu::FlexStrucHasNormals(Npb,Codec,BoundNormalc))Run_Exceptioon("mDBC normals are not permitted to be set for a flexible structure.");
+  if(TBoundary==BC_MDBC&&JSphCpu::FlexStrucHasNormals(Npb,Code_c->cptr(),BoundNor_c->cptr()))Run_Exceptioon("mDBC normals are not permitted to be set for a flexible structure.");
   //-Count number of flexible structure particles.
-  CaseNflexstruc=JSphCpu::CountFlexStrucParts(Npb,Codec);
+  CaseNflexstruc=JSphCpu::CountFlexStrucParts(Npb,Code_c->cptr());
   //-Allocate arrays.
   FlexStrucRidpc=new unsigned[CaseNflexstruc];  MemCpuFixed+=(sizeof(unsigned)*CaseNflexstruc);
   Pos0c         =new tdouble3[CaseNflexstruc];  MemCpuFixed+=(sizeof(tdouble3)*CaseNflexstruc);
@@ -1231,14 +1231,14 @@ void JSphCpuSingle::FlexStrucInit(){
   KerCorrc      =new tmatrix3f[CaseNflexstruc]; MemCpuFixed+=(sizeof(tmatrix3f)*CaseNflexstruc);
   DefGradc      =new tmatrix3f[CaseNflexstruc]; MemCpuFixed+=(sizeof(tmatrix3f)*CaseNflexstruc);
   //-Calculate array for indexing into flexible structure particles.
-  JSphCpu::CalcFlexStrucRidp(Npb,Codec,FlexStrucRidpc);
+  JSphCpu::CalcFlexStrucRidp(Npb,Code_c->cptr(),FlexStrucRidpc);
   //-Copy current position into initial position.
-  JSphCpu::GatherToFlexStrucArray(CaseNflexstruc,FlexStrucRidpc,Posc,Pos0c);
+  JSphCpu::GatherToFlexStrucArray(CaseNflexstruc,FlexStrucRidpc,Pos_c->cptr(),Pos0c);
   //-Get number of particle pairs for each flexible structure particle.
   NumPairsTot=JSphCpu::CountFlexStrucPairs(CaseNflexstruc,Pos0c,NumPairsc);
   //-Allocate memory for raw buffer for storing pair indices and set the pointers to the indices.
   PairIdxBufferc=new unsigned[NumPairsTot]; MemCpuFixed+=(sizeof(unsigned)*NumPairsTot);
-  unsigned *offset=PairIdxBufferc;
+  unsigned* offset=PairIdxBufferc;
   vector<unsigned*> pairidx(CaseNflexstruc);
   for(unsigned p=0;p<CaseNflexstruc;p++){
     PairIdxc[p]=offset;

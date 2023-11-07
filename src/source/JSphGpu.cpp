@@ -783,9 +783,6 @@ void JSphGpu::PreInteraction_Forces(){
   Ace_g->CuMemset(0,Np);                                            //Aceg[]=(0)
   if(AG_CPTR(Delta_g))Delta_g->CuMemset(0,Np);                      //Deltag[]=0
   if(AG_CPTR(Sps2Strain_g))Sps2Strain_g->CuMemsetOffset(Npb,0,npf); //Sps2Straing[]=(0).
-
-  //-Initialise deformation gradient tensor.
-  if(DefGradg)cudaMemset(DefGradg,0,sizeof(tmatrix3f)*CaseNflexstruc);  //<vs_flexstruc>
   
   //-Select particles for shifting.
   if(AC_CPTR(ShiftPosfs_g))Shifting->InitGpu(npf,Npb,Posxy_g->cptr()
@@ -794,6 +791,9 @@ void JSphGpu::PreInteraction_Forces(){
   //-Adds variable acceleration from input configuration.
   if(AccInput)AccInput->RunGpu(TimeStep,Gravity,npf,Npb,Code_g->cptr()
     ,Posxy_g->cptr(),Posz_g->cptr(),Velrho_g->cptr(),Ace_g->ptr());
+
+  //-Initialise deformation gradient tensor.
+  if(DefGradg)cudaMemset(DefGradg,0,sizeof(tmatrix3f)*CaseNflexstruc);  //<vs_flexstruc>
 
   //-Computes VelMax: Includes the particles from floating bodies and does not affect the periodic conditions.
   //-Calcula VelMax: Se incluyen las particulas floatings y no afecta el uso de condiciones periodicas.
@@ -856,22 +856,25 @@ void JSphGpu::ComputeVerlet(double dt){  //pdtedom
       ,Gravity,Code_g->ptr(),movxyg.ptr(),movzg.ptr(),VelrhoM1_g->ptr(),NULL);
     VerletStep=0;
   }
-  //-The new values are calculated in VelrhoM1_g.
-  Velrho_g->SwapPtr(VelrhoM1_g); //-Exchanges Velrho_g and VelrhoM1_g.
   //-Applies displacement to non-periodic fluid particles.
   cusph::ComputeStepPos(PeriActive,WithFloating,Np,Npb,movxyg.cptr(),movzg.cptr()
     ,Posxy_g->ptr(),Posz_g->ptr(),Dcell_g->ptr(),Code_g->ptr());
-  Timersg->TmStop(TMG_SuComputeStep,true);
+
   //<vs_flexstruc_ini>
   //-Computes new position and velocity for flexible structures.
   if(CaseNflexstruc){
     Timersg->TmStart(TMG_SuFlexStruc,false);
-    cusphs::ComputeStepFlexStrucSemiImplicitEuler(CaseNflexstruc,Velrhopg,Codeg,FlexStrucRidpg,Aceg,dt,Gravity,movxyg,movzg,VelrhopM1g,NULL);
-    cusph::ComputeStepPosFlexStruc(CaseNflexstruc,FlexStrucRidpg,Posxyg,Poszg,movxyg,movzg,Posxyg,Poszg,Dcellg,Codeg);
+    cusphs::ComputeStepFlexStrucSemiImplicitEuler(CaseNflexstruc,Velrho_g->cptr(),Code_g->cptr(),FlexStrucRidpg,Ace_g->cptr(),dt,Gravity,movxyg.ptr(),movzg.ptr(),VelrhoM1_g->ptr(),NULL);
+    cusph::ComputeStepPosFlexStruc(CaseNflexstruc,FlexStrucRidpg,Posxy_g->cptr(),Posz_g->cptr(),movxyg.cptr(),movzg.cptr(),Posxy_g->ptr(),Posz_g->ptr(),Dcell_g->ptr(),Code_g->ptr());
     BoundChanged=true;
     Timersg->TmStop(TMG_SuFlexStruc,false);
   }
   //<vs_flexstruc_end>
+
+  //-The new values are calculated in VelrhoM1_g.
+  Velrho_g->SwapPtr(VelrhoM1_g); //-Exchanges Velrho_g and VelrhoM1_g.
+
+  Timersg->TmStop(TMG_SuComputeStep,true);
 }
 
 //==============================================================================
@@ -908,16 +911,18 @@ void JSphGpu::ComputeSymplecticPre(double dt){
   //-Copy previous position of the boundary particles.
   Posxy_g->CuCopyFrom(PosxyPre_g,Npb);
   Posz_g->CuCopyFrom(PoszPre_g,Npb);
+
   //<vs_flexstruc_ini>
   //-Computes new position and velocity for flexible structures.
   if(CaseNflexstruc){
     Timersg->TmStart(TMG_SuFlexStruc,false);
-    cusphs::ComputeStepFlexStrucSymplecticPre(CaseNflexstruc,VelrhopPreg,Codeg,FlexStrucRidpg,Aceg,dt05,Gravity,movxyg,movzg,Velrhopg,NULL);
-    cusph::ComputeStepPosFlexStruc(CaseNflexstruc,FlexStrucRidpg,PosxyPreg,PoszPreg,movxyg,movzg,Posxyg,Poszg,Dcellg,Codeg);
+    cusphs::ComputeStepFlexStrucSymplecticPre(CaseNflexstruc,VelrhoPre_g->cptr(),Code_g->cptr(),FlexStrucRidpg,Ace_g->cptr(),dt05,Gravity,movxyg.ptr(),movzg.ptr(),Velrho_g->ptr(),NULL);
+    cusph::ComputeStepPosFlexStruc(CaseNflexstruc,FlexStrucRidpg,PosxyPre_g->cptr(),PoszPre_g->cptr(),movxyg.cptr(),movzg.cptr(),Posxy_g->ptr(),Posz_g->ptr(),Dcell_g->ptr(),Code_g->ptr());
     BoundChanged=true;
     Timersg->TmStop(TMG_SuFlexStruc,false);
   }
   //<vs_flexstruc_end>
+
   Timersg->TmStop(TMG_SuComputeStep,false);
 }
 
@@ -949,8 +954,8 @@ void JSphGpu::ComputeSymplecticCorr(double dt){
   //-Computes new position and velocity for flexible structures.
   if(CaseNflexstruc){
     Timersg->TmStart(TMG_SuFlexStruc,false);
-    cusphs::ComputeStepFlexStrucSymplecticCor(CaseNflexstruc,VelrhopPreg,Codeg,FlexStrucRidpg,Aceg,dt05,dt,Gravity,movxyg,movzg,Velrhopg,NULL);
-    cusph::ComputeStepPosFlexStruc(CaseNflexstruc,FlexStrucRidpg,PosxyPreg,PoszPreg,movxyg,movzg,Posxyg,Poszg,Dcellg,Codeg);
+    cusphs::ComputeStepFlexStrucSymplecticCor(CaseNflexstruc,VelrhoPre_g->cptr(),Code_g->cptr(),FlexStrucRidpg,Ace_g->cptr(),dt05,dt,Gravity,movxyg.ptr(),movzg.ptr(),Velrho_g->ptr(),NULL);
+    cusph::ComputeStepPosFlexStruc(CaseNflexstruc,FlexStrucRidpg,PosxyPre_g->cptr(),PoszPre_g->cptr(),movxyg.cptr(),movzg.cptr(),Posxy_g->ptr(),Posz_g->ptr(),Dcell_g->ptr(),Code_g->ptr());
     BoundChanged=true;
     Timersg->TmStop(TMG_SuFlexStruc,false);
   }

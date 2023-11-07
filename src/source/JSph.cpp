@@ -112,7 +112,7 @@ JSph::JSph(bool cpu,bool mgpu,bool withmpi):Cpu(cpu),Mgpu(mgpu),WithMpi(withmpi)
   AccInput=NULL;
   PartsLoaded=NULL;
   InOut=NULL;
-  FlexStruc=NULL; //<vs_flexstruc>
+  FlexStruc=NULL;   //<vs_flexstruc>
   OutputParts=NULL; //<vs_outpaarts>
   DsPips=NULL;
   NuxLib=NULL;

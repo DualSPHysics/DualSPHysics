@@ -418,14 +418,6 @@ inline tfloat4 ToTFloat4(const tdouble4& v){ return(TFloat4(float(v.x),float(v.y
 ///Converts \ref tfloat4 to \ref tdouble4.
 inline tdouble4 ToTDouble4(const tfloat4& v){ return(TDouble4(v.x,v.y,v.z,v.w)); }
 
-//<vs_flexstruc_ini>
-///Structure of 6 variables of type float.
-typedef struct{
-  float a1,a2,a3,a4,a5,a6;
-}tfloat6;
-
-inline tfloat6 TFloat6(float v){ tfloat6 p={v,v,v,v,v,v}; return(p); }
-//<vs_flexstruc_end>
 
 ///Matrix of 2x2 values of type float.
 typedef struct{

@@ -1,19 +1,19 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/).
+ <DUALSPHYSICS>  Copyright (c) 2023 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
 
- This file is part of DualSPHysics.
+ This file is part of DualSPHysics. 
 
- DualSPHysics is free software: you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License
+ DualSPHysics is free software: you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License 
  as published by the Free Software Foundation; either version 2.1 of the License, or (at your option) any later version.
-
+ 
  DualSPHysics is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details. 
 
- You should have received a copy of the GNU Lesser General Public License along with DualSPHysics. If not, see <http://www.gnu.org/licenses/>.
+ You should have received a copy of the GNU Lesser General Public License along with DualSPHysics. If not, see <http://www.gnu.org/licenses/>. 
 */
 
 /// \file JSphFlexStruc.cpp \brief Implements the class \ref JSphFlexStruc.
@@ -117,7 +117,7 @@ void JSphFlexStrucBody::ConfigClampCode(typecode clampcode){
 //==============================================================================
 /// Loads lines with configuration information.
 //==============================================================================
-void JSphFlexStrucBody::GetConfig(std::vector<std::string> &lines)const{
+void JSphFlexStrucBody::GetConfig(std::vector<std::string>& lines)const{
   lines.push_back(fun::PrintStr("    Clamp mkbound: %i",MkClamp));
   lines.push_back(fun::PrintStr("    Particle volume: %g",GetParticleVolume()));
   lines.push_back(fun::PrintStr("    Particle mass: %g",GetParticleMass()));
@@ -137,7 +137,7 @@ void JSphFlexStrucBody::GetConfig(std::vector<std::string> &lines)const{
 //==============================================================================
 /// Constructor.
 //==============================================================================
-JSphFlexStruc::JSphFlexStruc(bool simulate2d,double dp,JXml *sxml,const std::string &place,const JSphMk *mkinfo)
+JSphFlexStruc::JSphFlexStruc(bool simulate2d,double dp,JXml* sxml,const std::string& place,const JSphMk* mkinfo)
     :Log(AppInfo.LogPtr()),Simulate2D(simulate2d),Dp(dp)
 {
   ClassName="JSphFlexStruc";
@@ -175,7 +175,7 @@ bool JSphFlexStruc::ExistMk(word mkbound)const{
 //==============================================================================
 /// Loads conditions of XML object.
 //==============================================================================
-void JSphFlexStruc::LoadXml(const JXml *sxml,const std::string &place){
+void JSphFlexStruc::LoadXml(const JXml* sxml,const std::string& place){
   TiXmlNode* node=sxml->GetNodeSimple(place);
   if(!node)Run_Exceptioon(std::string("Cannot find the element \'")+place+"\'.");
   if(sxml->CheckNodeActive(node))ReadXml(sxml,node->ToElement());
@@ -184,7 +184,7 @@ void JSphFlexStruc::LoadXml(const JXml *sxml,const std::string &place){
 //==============================================================================
 /// Reads list of configurations in the XML node.
 //==============================================================================
-void JSphFlexStruc::ReadXml(const JXml *sxml,TiXmlElement* lis){
+void JSphFlexStruc::ReadXml(const JXml* sxml,TiXmlElement* lis){
   //-Loads flexible structure body elements.
   const unsigned idmax=CODE_TYPE_FLEXSTRUCCLAMP_MASK-1;
   TiXmlElement* ele=lis->FirstChildElement("flexstrucbody");
@@ -221,7 +221,7 @@ void JSphFlexStruc::ReadXml(const JXml *sxml,TiXmlElement* lis){
 //==============================================================================
 /// Configures BoundCode for each body.
 //==============================================================================
-void JSphFlexStruc::ConfigBoundCode(const JSphMk *mkinfo){
+void JSphFlexStruc::ConfigBoundCode(const JSphMk* mkinfo){
   for(unsigned c=0;c<GetCount();c++){
     const unsigned cmk=mkinfo->GetMkBlockByMkBound(List[c]->MkBound);
     if(cmk<mkinfo->Size() && (CODE_IsMoving(mkinfo->Mkblock(cmk)->Code))){
@@ -234,7 +234,7 @@ void JSphFlexStruc::ConfigBoundCode(const JSphMk *mkinfo){
 //==============================================================================
 /// Configures ClampCode for each body.
 //==============================================================================
-void JSphFlexStruc::ConfigClampCode(const JSphMk *mkinfo){
+void JSphFlexStruc::ConfigClampCode(const JSphMk* mkinfo){
   for(unsigned c=0;c<GetCount();c++){
     if(ExistMk(List[c]->MkClamp))Run_Exceptioon(fun::PrintStr("MkClamp for mkbound=%u cannot be a flexible structure.",List[c]->MkBound));
     const unsigned cmk=mkinfo->GetMkBlockByMkBound(List[c]->MkClamp);
@@ -262,7 +262,7 @@ void JSphFlexStruc::VisuConfig(std::string txhead,std::string txfoot){
 //==============================================================================
 /// Configures particle codings for flexible structures.
 //==============================================================================
-void JSphFlexStruc::ConfigCode(unsigned npb,typecode *code){
+void JSphFlexStruc::ConfigCode(unsigned npb,typecode* code){
   for(unsigned c=0;c<GetCount();c++){
     typecode bcode=List[c]->GetBoundCode();
     for(unsigned p=0;p<npb;p++){

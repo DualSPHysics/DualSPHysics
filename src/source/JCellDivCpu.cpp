@@ -508,7 +508,7 @@ StDivDataCpu JCellDivCpu::GetCellDivData()const{
 /// Sorts and updates the indices of the flexible structure particles.
 /// Ordena y actualiza los índices de las partículas de estructura flexible.
 //==============================================================================
-void JCellDivCpu::UpdateIndices(unsigned n,unsigned *idx){
+void JCellDivCpu::UpdateIndices(unsigned n,unsigned* idx){
   if(DivideFull){
     SortIndices(SortPart,SortIdx,NpbFinal,Stable);
     UpdateIndices(n,SortIdx,idx);
@@ -519,7 +519,7 @@ void JCellDivCpu::UpdateIndices(unsigned n,unsigned *idx){
 /// Sorts the indices of the flexible structure particles.
 /// Ordena los índices de las partículas de estructura flexible.
 //==============================================================================
-void JCellDivCpu::SortIndices(unsigned *sortpart,unsigned* sortidx,unsigned np,bool stable){
+void JCellDivCpu::SortIndices(unsigned* sortpart,unsigned* sortidx,unsigned np,bool stable){
   iota(sortidx,sortidx+np,0);
   if(stable)stable_sort(sortidx,sortidx+np,[sortpart](unsigned i1,unsigned i2){return sortpart[i1]<sortpart[i2];});
   else             sort(sortidx,sortidx+np,[sortpart](unsigned i1,unsigned i2){return sortpart[i1]<sortpart[i2];});
@@ -529,7 +529,7 @@ void JCellDivCpu::SortIndices(unsigned *sortpart,unsigned* sortidx,unsigned np,b
 /// Updates the indices of the flexible structure particles.
 /// Actualiza los índices de las partículas de estructura flexible..
 //==============================================================================
-void JCellDivCpu::UpdateIndices(unsigned np,const unsigned *sortidx,unsigned *idx){
+void JCellDivCpu::UpdateIndices(unsigned np,const unsigned* sortidx,unsigned* idx){
   const int n=int(np);
   #ifdef OMP_USE
     #pragma omp parallel for schedule (static) if(n>OMP_LIMIT_COMPUTELIGHT)

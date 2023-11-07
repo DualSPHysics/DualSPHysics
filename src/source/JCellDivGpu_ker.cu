@@ -902,7 +902,7 @@ unsigned ReduUintSum(unsigned nblocks,unsigned* aux){
 /// Sorts the indices of the flexible structure particles.
 /// Ordena los índices de las partículas de estructura flexible.
 //==============================================================================
-void SortIndices(unsigned *sortpart,unsigned* sortidx,unsigned np,bool stable){
+void SortIndices(unsigned* sortpart,unsigned* sortidx,unsigned np,bool stable){
   thrust::device_ptr<unsigned> dev_sortidx(sortidx);
   thrust::sequence(dev_sortidx,dev_sortidx+np);
   Sort(sortpart,sortidx,np,stable);
@@ -912,7 +912,7 @@ void SortIndices(unsigned *sortpart,unsigned* sortidx,unsigned np,bool stable){
 /// Updates the indices of the flexible structure particles.
 /// Actualiza los índices de las partículas de estructura flexible..
 //==============================================================================
-__global__ void KerUpdateIndices(unsigned n,const unsigned *sortidx,unsigned *idx)
+__global__ void KerUpdateIndices(unsigned n,const unsigned* sortidx,unsigned* idx)
 {
   const unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Particle number.
   if(p<n)idx[p]=sortidx[idx[p]];
@@ -922,7 +922,7 @@ __global__ void KerUpdateIndices(unsigned n,const unsigned *sortidx,unsigned *id
 /// Updates the indices of the flexible structure particles.
 /// Actualiza los índices de las partículas de estructura flexible..
 //==============================================================================
-void UpdateIndices(unsigned n,const unsigned *sortidx,unsigned *idx){
+void UpdateIndices(unsigned n,const unsigned* sortidx,unsigned* idx){
   if(n){
     dim3 sgrid=GetSimpleGridSize(n,DIVBSIZE);
     KerUpdateIndices <<<sgrid,DIVBSIZE>>>(n,sortidx,idx);

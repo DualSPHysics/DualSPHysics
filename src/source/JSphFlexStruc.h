@@ -1,19 +1,19 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/).
+ <DUALSPHYSICS>  Copyright (c) 2023 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
 
- This file is part of DualSPHysics.
+ This file is part of DualSPHysics. 
 
- DualSPHysics is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by
- the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
-
+ DualSPHysics is free software: you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License 
+ as published by the Free Software Foundation; either version 2.1 of the License, or (at your option) any later version.
+ 
  DualSPHysics is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details. 
 
- You should have received a copy of the GNU General Public License, along with DualSPHysics. If not, see <http://www.gnu.org/licenses/>.
+ You should have received a copy of the GNU Lesser General Public License along with DualSPHysics. If not, see <http://www.gnu.org/licenses/>. 
 */
 
 /// \file JSphFlexStruc.h \brief Declares the class \ref JSphFlexStruc.
@@ -67,7 +67,7 @@ public:
   void ConfigBoundCode(typecode boundcode);
   void ConfigClampCode(typecode clampcode);
 
-  void GetConfig(std::vector<std::string> &lines)const;
+  void GetConfig(std::vector<std::string>& lines)const;
 
   typecode GetBoundCode()const{ return(BoundCode); }
   typecode GetClampCode()const{ return(ClampCode); }
@@ -99,14 +99,14 @@ private:
 
   void Reset();
   bool ExistMk(word mkbound)const;
-  void LoadXml(const JXml *sxml,const std::string &place);
-  void ReadXml(const JXml *sxml,TiXmlElement* lis);
-  void ConfigBoundCode(const JSphMk *mkinfo);
-  void ConfigClampCode(const JSphMk *mkinfo);
+  void LoadXml(const JXml* sxml,const std::string& place);
+  void ReadXml(const JXml* sxml,TiXmlElement* lis);
+  void ConfigBoundCode(const JSphMk* mkinfo);
+  void ConfigClampCode(const JSphMk* mkinfo);
 
 public:
 
-  JSphFlexStruc(bool simulate2d,double dp,JXml *sxml,const std::string &place,const JSphMk *mkinfo);
+  JSphFlexStruc(bool simulate2d,double dp,JXml* sxml,const std::string& place,const JSphMk* mkinfo);
   ~JSphFlexStruc();
 
   void VisuConfig(std::string txhead,std::string txfoot);
@@ -114,7 +114,7 @@ public:
   unsigned GetCount()const{ return(unsigned(List.size())); }
   const JSphFlexStrucBody* GetBody(unsigned idx)const{ return(idx<GetCount()?List[idx]:NULL); }
 
-  void ConfigCode(unsigned npb,typecode *code);
+  void ConfigCode(unsigned npb,typecode* code);
   double GetInitialSoundSpeed();
 };
 
