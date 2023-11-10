@@ -2004,7 +2004,9 @@ void JSphCpu::SetClampCodes(unsigned np,const tdouble3* pos
       for(int p2=0;p2<n;p2++){
         const typecode codep2=code[p2];
         if(CODE_IsFlexStrucFlex(codep2)){
-          if(codep1==flexstrucdata[CODE_GetIbodyFlexStruc(codep2)].clampcode){
+          const unsigned nc=flexstrucdata[CODE_GetIbodyFlexStruc(codep2)].nc;
+          const typecode* clampcode=flexstrucdata[CODE_GetIbodyFlexStruc(codep2)].clampcode;
+          if(std::find(clampcode,clampcode+nc,codep1)!=clampcode+nc){
             const tdouble3 posp2=pos[p2];
             const float drx=float(posp1.x-posp2.x);
             const float dry=float(posp1.y-posp2.y);

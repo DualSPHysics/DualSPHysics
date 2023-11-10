@@ -41,27 +41,27 @@ private:
   JLog2* Log;
 
   //-Selection of particles
-  typecode BoundCode;             ///<Code to select boundary particles.
-  typecode ClampCode;             ///<Code to select clamping particles.
+  typecode BoundCode;               ///<Code to select boundary particles.
+  std::vector<typecode> ClampCode;  ///<Codes to select clamping particles.
 
   //-Body parameters
-  float ParticleVolume;           ///<Initial particle volume.
-  float Density;                  ///<Initial particle density.
-  float YoungMod;                 ///<Young's modulus.
-  float PoissRatio;               ///<Poisson ratio.
-  TpConstitModel ConstitModel;    ///<Constitutive model.
-  float HgFactor;                 ///<Hourglass correction factor.
+  float ParticleVolume;             ///<Initial particle volume.
+  float Density;                    ///<Initial particle density.
+  float YoungMod;                   ///<Young's modulus.
+  float PoissRatio;                 ///<Poisson ratio.
+  TpConstitModel ConstitModel;      ///<Constitutive model.
+  float HgFactor;                   ///<Hourglass correction factor.
 
-  tmatrix6f ConstitMatrix;        ///<Constitutive matrix.
+  tmatrix6f ConstitMatrix;          ///<Constitutive matrix.
 
   void Reset();
 
 public:
-  const unsigned IdBody;          ///<Flexible structure ID.
-  const word MkBound;             ///<MkBound of flexible structure.
-  const word MkClamp;             ///<MkBound of clamp.
+  const unsigned IdBody;              ///<Flexible structure ID.
+  const word MkBound;                 ///<MkBound of flexible structure.
+  const std::vector<word> MkClamp;    ///<MkBounds of clamps.
 
-  JSphFlexStrucBody(unsigned idbody,word mkbound,word mkclamp,float particlevolume,float density,double youngmod,double poissratio,TpConstitModel constitmodel,float hgfactor);
+  JSphFlexStrucBody(unsigned idbody,word mkbound,const std::vector<word>& mkclamp,float particlevolume,float density,double youngmod,double poissratio,TpConstitModel constitmodel,float hgfactor);
   ~JSphFlexStrucBody();
 
   void ConfigBoundCode(typecode boundcode);
@@ -70,7 +70,7 @@ public:
   void GetConfig(std::vector<std::string>& lines)const;
 
   typecode GetBoundCode()const{ return(BoundCode); }
-  typecode GetClampCode()const{ return(ClampCode); }
+  std::vector<typecode> GetClampCode()const{ return(ClampCode); }
 
   float GetParticleVolume()const{ return ParticleVolume; };
   float GetDensity()const{ return Density; };

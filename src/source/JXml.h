@@ -1117,6 +1117,19 @@ public:
   //==============================================================================
   void CorrectFile(const std::string& fname);
 
+  //<vs_flexstruc_ini>
+  //==============================================================================
+  /// Checks and returns a vector of type word of an xml element that must be (0-65535).
+  /// \param ele Xml element.
+  /// \param optional If it does not exist,
+  /// returns \a valdef instead of throwing an exception.
+  /// \param valdef Value by default if it does not exist and \a optional was activated. 
+  /// \throw JException The requested attribute does not exist...
+  //==============================================================================
+  std::vector<word> GetAttributeVectorWord(const TiXmlElement* ele,const std::string& name
+    ,bool optional=false,std::vector<word> valdef={})const;
+  //<vs_flexstruc_end>  
+
 };
 
 #endif

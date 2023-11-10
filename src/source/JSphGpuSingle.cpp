@@ -960,7 +960,7 @@ void JSphGpuSingle::SaveData(){
   //-Stores particle data. | Graba datos de particulas.
   JDataArrays arrays;
   AddBasicArrays(arrays,npsave,AuxPos_c->cptr(),Idp_c->cptr(),AuxVel_c->cptr(),AuxRho_c->cptr());
-  JSph::SaveData(npsave,arrays,1,&vdom,infoplus);
+    JSph::SaveData(npsave,arrays,1,&vdom,infoplus);
   //-Save VTK file with current boundary normals (for debug).
   if(UseNormals && SvNormals)SaveVtkNormalsGpu(DirVtkOut+"Normals.vtk",Part
     ,npsave,Npb,Posxy_g->cptr(),Posz_g->cptr(),Idp_g->cptr(),BoundNor_g->cptr());
@@ -1028,7 +1028,9 @@ void JSphGpuSingle::FlexStrucInit(){
   //-Get flexible structure data for each body and copy to GPU
   vector<StFlexStrucData> flexstrucdata(FlexStrucCount);
   for(unsigned c=0;c<FlexStrucCount;c++){
-    flexstrucdata[c].clampcode=FlexStruc->GetBody(c)->GetClampCode();
+    std::vector<typecode> clampcode=FlexStruc->GetBody(c)->GetClampCode();
+    flexstrucdata[c].nc=clampcode.size();
+    std::copy(clampcode.begin(),clampcode.end(),flexstrucdata[c].clampcode);
     flexstrucdata[c].vol0=FlexStruc->GetBody(c)->GetParticleVolume();
     flexstrucdata[c].rho0=FlexStruc->GetBody(c)->GetDensity();
     flexstrucdata[c].youngmod=FlexStruc->GetBody(c)->GetYoungMod();

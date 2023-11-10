@@ -3212,7 +3212,9 @@ __global__ void KerSetClampCodes(unsigned n,const float4* poscell,const StFlexSt
       for(unsigned p2=0;p2<n;p2++){
         const typecode codep2=code[p2];
         if(CODE_IsFlexStrucFlex(codep2)){
-          if(codep1==flexstrucdata[CODE_GetIbodyFlexStruc(codep2)].clampcode){
+          const unsigned nc=flexstrucdata[CODE_GetIbodyFlexStruc(codep2)].nc;
+          const typecode* clampcode=flexstrucdata[CODE_GetIbodyFlexStruc(codep2)].clampcode;
+          if(thrust::find(thrust::seq,clampcode,clampcode+nc,codep1)!=clampcode+nc){
             const float4 pscellp2=poscell[p2];
             float drx=pscellp1.x-pscellp2.x+CTE.poscellsize*(PSCEL_GetfX(pscellp1.w)-PSCEL_GetfX(pscellp2.w));
             float dry=pscellp1.y-pscellp2.y+CTE.poscellsize*(PSCEL_GetfY(pscellp1.w)-PSCEL_GetfY(pscellp2.w));
