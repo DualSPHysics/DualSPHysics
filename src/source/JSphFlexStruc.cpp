@@ -210,6 +210,10 @@ void JSphFlexStruc::ReadXml(const JXml* sxml,TiXmlElement* lis){
         Run_Exceptioon(fun::PrintStr("Constitutive model for body %u is not valid for 2D simulations.",id));
       else if(!Simulate2D && constitmodel!=CONSTITMODEL_SVK)
         Run_Exceptioon(fun::PrintStr("Constitutive model for body %u is not valid for 3D simulations.",id));
+      if((constitmodel==CONSTITMODEL_PlaneStrain || constitmodel==CONSTITMODEL_SVK) && !(poissratio>-1.0 && poissratio<0.5))
+        Run_Exceptioon(fun::PrintStr("Valid Poisson ratio range for body %u constitutive model is -1 < poissratio < 0.5.",id));
+      else if(constitmodel==CONSTITMODEL_PlaneStress && !(poissratio>-1.0 && poissratio<=0.5))
+        Run_Exceptioon(fun::PrintStr("Valid Poisson ratio range for body %u constitutive model is -1 < poissratio <= 0.5.",id));
       float hgfactor=sxml->ReadElementFloat(ele,"hgfactor","value",true,0);
       JSphFlexStrucBody* body=new JSphFlexStrucBody(id,mkbound,mkclamp,particlevolume,density,youngmod,poissratio,constitmodel,hgfactor);
       List.push_back(body);
