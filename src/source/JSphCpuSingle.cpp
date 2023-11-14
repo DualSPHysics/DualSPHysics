@@ -1237,9 +1237,9 @@ void JSphCpuSingle::FlexStrucInit(){
   //-Copy current position into initial position.
   JSphCpu::GatherToFlexStrucArray(CaseNflexstruc,FlexStrucRidpc,Pos_c->cptr(),Pos0c);
   //-Get number of particle pairs for each flexible structure particle.
-  NumPairsTot=JSphCpu::CountFlexStrucPairs(CaseNflexstruc,Pos0c,NumPairsc);
+  const unsigned numpairstot=JSphCpu::CountFlexStrucPairs(CaseNflexstruc,Pos0c,NumPairsc);
   //-Allocate memory for raw buffer for storing pair indices and set the pointers to the indices.
-  PairIdxBufferc=new unsigned[NumPairsTot]; MemCpuFixed+=(sizeof(unsigned)*NumPairsTot);
+  PairIdxBufferc=new unsigned[numpairstot]; MemCpuFixed+=(sizeof(unsigned)*numpairstot);
   unsigned* offset=PairIdxBufferc;
   vector<unsigned*> pairidx(CaseNflexstruc);
   for(unsigned p=0;p<CaseNflexstruc;p++){

@@ -1055,19 +1055,19 @@ void JSphGpuSingle::FlexStrucInit(){
   m=sizeof(unsigned)*CaseNflexstruc;        cudaMalloc((void**)&NumPairsg,        m);  MemGpuFixed+=m;
   m=sizeof(unsigned*)*CaseNflexstruc;       cudaMalloc((void**)&PairIdxg,         m);  MemGpuFixed+=m;
   m=sizeof(tmatrix3f)*CaseNflexstruc;       cudaMalloc((void**)&KerCorrg,         m);  MemGpuFixed+=m;
-  m=sizeof(float)*CaseNflexstruc;           cudaMalloc((void**)&FlexStrucDtg,     m);  MemGpuFixed+=m;
   m=sizeof(tmatrix3f)*CaseNflexstruc;       cudaMalloc((void**)&DefGradg,         m);  MemGpuFixed+=m;
+  m=sizeof(float)*CaseNflexstruc;           cudaMalloc((void**)&FlexStrucDtg,     m);  MemGpuFixed+=m;
   //-Calculate array for indexing into flexible structure particles.
   cusph::CalcFlexStrucRidp(Npb,Code_g->cptr(),FlexStrucRidpg);
   //-Copy current position into initial position.
   cusph::GatherToFlexStrucArray(CaseNflexstruc,FlexStrucRidpg,PosCell_g->cptr(),PosCell0g);
   //-Get number of particle pairs for each flexible structure particle.
-  NumPairsTot=cusph::CountFlexStrucPairs(CaseNflexstruc,PosCell0g,NumPairsg);
+  const unsigned numpairstot=cusph::CountFlexStrucPairs(CaseNflexstruc,PosCell0g,NumPairsg);
   //-Download number of pairs for each particle.
   vector<unsigned> numpairs(CaseNflexstruc);
   cudaMemcpy(numpairs.data(),NumPairsg,sizeof(unsigned)*CaseNflexstruc,cudaMemcpyDeviceToHost);
   //-Allocate memory for raw buffer for storing pair indices and set the pointers to the indices.
-  m=sizeof(unsigned)*NumPairsTot; cudaMalloc((void**)&PairIdxBufferg,m);  MemGpuFixed+=m;
+  m=sizeof(unsigned)*numpairstot; cudaMalloc((void**)&PairIdxBufferg,m);  MemGpuFixed+=m;
   unsigned* offset=PairIdxBufferg;
   vector<unsigned*> pairidx(CaseNflexstruc);
   for(unsigned p=0;p<CaseNflexstruc;p++){

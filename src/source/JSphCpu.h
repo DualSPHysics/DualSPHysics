@@ -145,9 +145,8 @@ protected:
 
   //<vs_flexstruc_ini>
   //-Variables for flexible structures.
-  unsigned NumPairsTot;             ///<Total number of pairs across all flexible structure bodies.
   StFlexStrucData* FlexStrucDatac;  ///<Data for each individual flexible structure body [FlexStruc->GetCount()]
-  unsigned* FlexStrucRidpc;         ///<Identifier to access to the particles of the flexible structures [CaseNflexstruc].
+  unsigned* FlexStrucRidpc;         ///<Identifier to access the particles of the flexible structures [CaseNflexstruc].
   tdouble3* Pos0c;                  ///<Initial particle positions [CaseNflexstruc].
   unsigned* NumPairsc;              ///<Number of initial neighbours [CaseNflexstruc].
   unsigned* PairIdxBufferc;         ///<Raw buffer to particle indices [NumPairsTot].

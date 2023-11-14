@@ -106,7 +106,6 @@ void JSphCpu::InitVars(){
   Sps2Strain_c=NULL;  //-Laminar+SPS.
 
   //<vs_flexstruc_ini>
-  NumPairsTot=0;
   FlexStrucDatac=NULL;
   FlexStrucRidpc=NULL;
   Pos0c=NULL;

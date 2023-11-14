@@ -175,7 +175,6 @@ void JSphGpu::InitVars(){
   Sps2Strain_g=NULL;   //-Laminar+SPS.
 
   //<vs_flexstruc_ini>
-  NumPairsTot=0;
   FlexStrucDatag=NULL;
   FlexStrucRidpg=NULL;
   PosCell0g=NULL;
@@ -183,8 +182,8 @@ void JSphGpu::InitVars(){
   PairIdxBufferg=NULL;
   PairIdxg=NULL;
   KerCorrg=NULL;
-  FlexStrucDtg=NULL;
   DefGradg=NULL;
+  FlexStrucDtg=NULL;
   FlexStrucDtMax=0;
   //<vs_flexstruc_end>
 
@@ -252,8 +251,8 @@ void JSphGpu::FreeGpuMemoryFixed(){
   if(PairIdxBufferg)    cudaFree(PairIdxBufferg);     PairIdxBufferg=NULL;
   if(PairIdxg)          cudaFree(PairIdxg);           PairIdxg=NULL;
   if(KerCorrg)          cudaFree(KerCorrg);           KerCorrg=NULL;
-  if(FlexStrucDtg)      cudaFree(FlexStrucDtg);       FlexStrucDtg=NULL;
   if(DefGradg)          cudaFree(DefGradg);           DefGradg=NULL;
+  if(FlexStrucDtg)      cudaFree(FlexStrucDtg);       FlexStrucDtg=NULL;
   //<vs_flexstruc_end>
   //-Frees streams for floating bodies.
   for(unsigned c=0;c<MaxNStmFloatings;c++){
