@@ -2166,7 +2166,11 @@ template<TpKernel tker,bool simulate2d> void JSphCpu::CalcFlexStrucKerCorr(unsig
         kercorrp1.a21-=vol0p1*dry0*frx0; kercorrp1.a22-=vol0p1*dry0*fry0; kercorrp1.a23-=vol0p1*dry0*frz0;
         kercorrp1.a31-=vol0p1*drz0*frx0; kercorrp1.a32-=vol0p1*drz0*fry0; kercorrp1.a33-=vol0p1*drz0*frz0;
       }
-      kercorr[pfs1]=(simulate2d? fmath::InverseMatrix2x2(kercorrp1): fmath::InverseMatrix3x3(kercorrp1));
+      if(simulate2d){
+        kercorrp1.a12=kercorrp1.a21=kercorrp1.a23=kercorrp1.a32=0.0;
+        kercorrp1.a22=1.0;
+      }
+      kercorr[pfs1]=fmath::InverseMatrix3x3(kercorrp1);
     }
   }
 }
@@ -2250,6 +2254,10 @@ template<TpKernel tker,bool simulate2d> void JSphCpu::ComputeDefGradFlexStruc(un
         defgradp1.a21-=vol0p1*dry*frx0; defgradp1.a22-=vol0p1*dry*fry0; defgradp1.a23-=vol0p1*dry*frz0;
         defgradp1.a31-=vol0p1*drz*frx0; defgradp1.a32-=vol0p1*drz*fry0; defgradp1.a33-=vol0p1*drz*frz0;
       }
+      if(simulate2d){
+        defgradp1.a12=defgradp1.a21=defgradp1.a23=defgradp1.a32=0.0;
+        defgradp1.a22=1.0;
+      }
       defgrad[pfs1]=fmath::MulMatrix3x3(defgradp1,kercorrp1);
     }
   }
@@ -2290,7 +2298,7 @@ inline tmatrix3f JSphCpu::ComputePK1StressFlexStruc(const tmatrix3f& defgrad,con
 /// Interaction forces for the flexible structure particles.
 /// Fuerzas de interacción para las partículas de estructura flexible.
 //==============================================================================
-template<TpKernel tker,bool simulate2d,bool lamsps> void JSphCpu::InteractionForcesFlexStruc(unsigned np,float visco
+template<TpKernel tker,bool lamsps> void JSphCpu::InteractionForcesFlexStruc(unsigned np,float visco
     ,StDivDataCpu divdata,const unsigned* dcell
     ,const tdouble3* pos,const tfloat4* velrhop,const float* press,const typecode* code
     ,const StFlexStrucData* flexstrucdata,const unsigned* flexstrucridp
@@ -2333,7 +2341,7 @@ template<TpKernel tker,bool simulate2d,bool lamsps> void JSphCpu::InteractionFor
 
       //-Get current mass of flexible structure particle.
       const float mass0p1=vol0p1*rho0p1;
-      const float rhop1=rho0p1/(simulate2d? fmath::Determinant2x2(defgradp1): fmath::Determinant3x3(defgradp1));
+      const float rhop1=rho0p1/fmath::Determinant3x3(defgradp1);
 
       //-Calculate structural speed of sound.
       const float csp1=float( sqrt(youngmod*(1.0-poissratio)/(rhop1*(1.0+poissratio)*(1.0-2.0*poissratio))) );
@@ -2456,7 +2464,7 @@ template<TpKernel tker,bool simulate2d,bool lamsps> void JSphCpu::Interaction_Fo
   if(CaseNflexstruc){
     ComputeDefGradFlexStruc<tker,simulate2d>
       (CaseNflexstruc,Pos_c->cptr(),Code_c->cptr(),FlexStrucDatac,FlexStrucRidpc,Pos0c,NumPairsc,PairIdxc,KerCorrc,DefGradc);
-    InteractionForcesFlexStruc<tker,simulate2d,lamsps>
+    InteractionForcesFlexStruc<tker,lamsps>
       (CaseNflexstruc,Visco*ViscoBoundFactor,DivData,Dcell_c->cptr(),Pos_c->cptr(),Velrho_c->cptr(),Press_c->cptr(),Code_c->cptr(),FlexStrucDatac,FlexStrucRidpc,Pos0c,NumPairsc,PairIdxc,KerCorrc,DefGradc,flexstrucdtmax,Ace_c->ptr());
   }
 }

@@ -95,45 +95,6 @@ __device__ void Tmatrix4dReset(tmatrix4d& m){
   m.a11=m.a12=m.a13=m.a14=m.a21=m.a22=m.a23=m.a24=m.a31=m.a32=m.a33=m.a34=m.a41=m.a42=m.a43=m.a44=0; 
 }
 
-//<vs_flexstruc_ini>
-//------------------------------------------------------------------------------
-/// Calcula el determinante de una matriz de 2x2.
-/// Returns the determinant of a 2x2 matrix.
-//------------------------------------------------------------------------------
-__device__ float Determinant2x2(const tmatrix3f& d){
-  return(d.a11 * d.a33 - d.a13 * d.a31);
-}
-
-//------------------------------------------------------------------------------
-/// Devuelve la matriz inversa de una matriz de 2x2.
-/// Returns the inverse matrix of a 2x2 matrix.
-//------------------------------------------------------------------------------
-__device__ tmatrix3f InverseMatrix2x2(const tmatrix3f& d,const float det){
-  tmatrix3f inv;
-  if(det){
-    inv.a11= d.a33/det;
-    inv.a12= 0;
-    inv.a13=-d.a13/det;
-    inv.a21= 0;
-    inv.a22= 0;
-    inv.a23= 0;
-    inv.a31=-d.a31/det;
-    inv.a32= 0;
-    inv.a33= d.a11/det;
-  }
-  else Tmatrix3fReset(inv);
-  return(inv);
-}
-
-//==============================================================================
-/// Devuelve la matriz inversa de una matriz de 2x2.
-/// Returns the inverse matrix of a 2x2 matrix.
-//==============================================================================
-__device__ tmatrix3f InverseMatrix2x2(const tmatrix3f& d){
-  return(InverseMatrix2x2(d,Determinant2x2(d)));
-}
-//<vs_flexstruc_end>
-
 //------------------------------------------------------------------------------
 /// Calcula el determinante de una matriz de 3x3.
 /// Returns the determinant of a 3x3 matrix.

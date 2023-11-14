@@ -291,7 +291,7 @@ protected:
       ,const tdouble3* pos0,const unsigned* numpairs,const unsigned* const* pairidx,const tmatrix3f* kercorr
       ,tmatrix3f* defgrad)const;
   inline tmatrix3f ComputePK1StressFlexStruc(const tmatrix3f& defgrad,const tmatrix6f& cmat)const;
-  template<TpKernel tker,bool simulate2d,bool lamsps> void InteractionForcesFlexStruc(unsigned np,float visco
+  template<TpKernel tker,bool lamsps> void InteractionForcesFlexStruc(unsigned np,float visco
       ,StDivDataCpu divdata,const unsigned* dcell
       ,const tdouble3* pos,const tfloat4* velrhop,const float* press,const typecode* code
       ,const StFlexStrucData* flexstrucdata,const unsigned* flexstrucridp

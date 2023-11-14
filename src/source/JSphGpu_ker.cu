@@ -3408,7 +3408,11 @@ template<TpKernel tker,bool simulate2d> __global__ void KerCalcFlexStrucKerCorr(
         kercorrp1.a21-=vol0p1*dry0*frx0; kercorrp1.a22-=vol0p1*dry0*fry0; kercorrp1.a23-=vol0p1*dry0*frz0;
         kercorrp1.a31-=vol0p1*drz0*frx0; kercorrp1.a32-=vol0p1*drz0*fry0; kercorrp1.a33-=vol0p1*drz0*frz0;
       }
-      kercorr[pfs1]=(simulate2d? cumath::InverseMatrix2x2(kercorrp1): cumath::InverseMatrix3x3(kercorrp1));
+      if(simulate2d){
+        kercorrp1.a12=kercorrp1.a21=kercorrp1.a23=kercorrp1.a32=0.0;
+        kercorrp1.a22=1.0;
+      }
+      kercorr[pfs1]=cumath::InverseMatrix3x3(kercorrp1);
     }
   }
 }
@@ -3496,6 +3500,10 @@ template<TpKernel tker,bool simulate2d> __global__ void KerComputeDefGradFlexStr
         defgradp1.a21-=vol0p1*dry*frx0; defgradp1.a22-=vol0p1*dry*fry0; defgradp1.a23-=vol0p1*dry*frz0;
         defgradp1.a31-=vol0p1*drz*frx0; defgradp1.a32-=vol0p1*drz*fry0; defgradp1.a33-=vol0p1*drz*frz0;
       }
+      if(simulate2d){
+        defgradp1.a12=defgradp1.a21=defgradp1.a23=defgradp1.a32=0.0;
+        defgradp1.a22=1.0;
+      }
       defgrad[pfs1]=cumath::MulMatrix3x3(defgradp1,kercorrp1);
     }
   }
@@ -3537,7 +3545,7 @@ __device__ tmatrix3f KerComputePK1StressFlexStruc(const tmatrix3f& defgrad,const
 /// Interaction forces for the flexible structure particles.
 /// Fuerzas de interacción para las partículas de estructura flexible.
 //==============================================================================
-template<TpKernel tker,bool simulate2d,bool lamsps> __global__ void KerInteractionForcesFlexStruc(unsigned n,float visco
+template<TpKernel tker,bool lamsps> __global__ void KerInteractionForcesFlexStruc(unsigned n,float visco
     ,int scelldiv,int4 nc,int3 cellzero,const int2* beginendcellfluid,const unsigned* dcell
     ,const float4* poscell,const float4* velrhop,const typecode* code
     ,const StFlexStrucData* flexstrucdata,const unsigned* flexstrucridp
@@ -3574,7 +3582,7 @@ template<TpKernel tker,bool simulate2d,bool lamsps> __global__ void KerInteracti
 
       //-Get current mass of flexible structure particle.
       const float mass0p1=vol0p1*rho0p1;
-      const float rhop1=rho0p1/(simulate2d? cumath::Determinant2x2(defgradp1): cumath::Determinant3x3(defgradp1));
+      const float rhop1=rho0p1/cumath::Determinant3x3(defgradp1);
 
       //-Calculate structural speed of sound.
       const float csp1=sqrt(youngmod*(1.0-poissratio)/(rhop1*(1.0+poissratio)*(1.0-2.0*poissratio)));
@@ -3699,7 +3707,7 @@ template<TpKernel tker,bool simulate2d,bool lamsps> void Interaction_ForcesFlexS
     dim3 sgridb=GetSimpleGridSize(tfs.vnpfs,SPHBSIZE);
     KerComputeDefGradFlexStruc<tker,simulate2d> <<<sgridb,SPHBSIZE,0,tfs.stm>>>
         (tfs.vnpfs,tfs.poscell,tfs.code,tfs.flexstrucdata,tfs.flexstrucridp,tfs.poscell0,tfs.numpairs,tfs.pairidx,tfs.kercorr,tfs.defgrad);
-    KerInteractionForcesFlexStruc<tker,simulate2d,lamsps> <<<sgridb,SPHBSIZE,0,tfs.stm>>>
+    KerInteractionForcesFlexStruc<tker,lamsps> <<<sgridb,SPHBSIZE,0,tfs.stm>>>
         (tfs.vnpfs,tfs.viscob,dvd.scelldiv,dvd.nc,dvd.cellzero,dvd.beginendcell+dvd.cellfluid,tfs.dcell,tfs.poscell,tfs.velrhop,tfs.code,tfs.flexstrucdata,tfs.flexstrucridp,tfs.poscell0,tfs.numpairs,tfs.pairidx,tfs.kercorr,tfs.defgrad,tfs.flexstrucdt,tfs.ace);
   }
 }
