@@ -165,6 +165,7 @@ protected:
   unsigned** PairIdxg;              ///<List of indices to each initial neighbour [CaseNflexstruc].
   tmatrix3f* KerCorrg;              ///<Kernel correction [CaseNflexstruc].
   tmatrix3f* DefGradg;              ///<Deformation gradient tensor [CaseNflexstruc].
+  float3* BoundNor0g;               ///<Initial boundary normals for mDBC [CaseNflexstruc].
   float* FlexStrucDtg;              ///<Structural speed of sound for each flexible structure particle [CaseNflexstruc].
   float FlexStrucDtMax;             ///<Maximum value of FlexStrucDt computed in Interaction_ForcesFlexStruc().
   //<vs_flexstruc_end>

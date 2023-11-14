@@ -183,6 +183,7 @@ void JSphGpu::InitVars(){
   PairIdxg=NULL;
   KerCorrg=NULL;
   DefGradg=NULL;
+  BoundNor0g=NULL;
   FlexStrucDtg=NULL;
   FlexStrucDtMax=0;
   //<vs_flexstruc_end>
@@ -252,6 +253,7 @@ void JSphGpu::FreeGpuMemoryFixed(){
   if(PairIdxg)          cudaFree(PairIdxg);           PairIdxg=NULL;
   if(KerCorrg)          cudaFree(KerCorrg);           KerCorrg=NULL;
   if(DefGradg)          cudaFree(DefGradg);           DefGradg=NULL;
+  if(BoundNor0g)        cudaFree(BoundNor0g);         BoundNor0g=NULL;
   if(FlexStrucDtg)      cudaFree(FlexStrucDtg);       FlexStrucDtg=NULL;
   //<vs_flexstruc_end>
   //-Frees streams for floating bodies.
@@ -790,9 +792,6 @@ void JSphGpu::PreInteraction_Forces(){
   //-Adds variable acceleration from input configuration.
   if(AccInput)AccInput->RunGpu(TimeStep,Gravity,npf,Npb,Code_g->cptr()
     ,Posxy_g->cptr(),Posz_g->cptr(),Velrho_g->cptr(),Ace_g->ptr());
-
-  //-Initialise deformation gradient tensor.
-  if(DefGradg)cudaMemset(DefGradg,0,sizeof(tmatrix3f)*CaseNflexstruc);  //<vs_flexstruc>
 
   //-Computes VelMax: Includes the particles from floating bodies and does not affect the periodic conditions.
   //-Calcula VelMax: Se incluyen las particulas floatings y no afecta el uso de condiciones periodicas.

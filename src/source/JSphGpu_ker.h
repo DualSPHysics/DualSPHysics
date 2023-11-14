@@ -204,6 +204,7 @@ typedef struct StrInterParmsFlexStrucg{
   bool simulate2d;
   TpKernel tkernel;
   bool lamsps;
+  bool usenormals;
   //-Execution values.
   float viscob;
   unsigned vnpfs;
@@ -219,44 +220,46 @@ typedef struct StrInterParmsFlexStrucg{
   const unsigned* numpairs;
   const unsigned* const* pairidx;
   const tmatrix3f* kercorr;
+  const float3* boundnor0;
   //-Output data arrays.
-  float* flexstrucdt;
   tmatrix3f* defgrad;
+  float3* boundnor;
+  float* flexstrucdt;
   float3* ace;
   //-Other values and objects.
   cudaStream_t stm;
 
   ///Structure constructor.
   StrInterParmsFlexStrucg(
-       bool simulate2d_,TpKernel tkernel_,bool lamsps_
-      ,float viscob_,unsigned vnpfs_
-      ,const StDivDataGpu& divdatag_
-      ,const unsigned* dcell_
-      ,const float4* poscell_,const float4* velrhop_,const typecode* code_
-      ,const StFlexStrucData* flexstrucdata_
-      ,const unsigned* flexstrucridp_,const float4* poscell0_
-      ,const unsigned* numpairs_,const unsigned* const* pairidx_
-      ,const tmatrix3f* kercorr_
-      ,float* flexstrucdt_,tmatrix3f* defgrad_,float3* ace_
-      ,cudaStream_t stm_)
+       bool simulate2d,TpKernel tkernel,bool lamsps,bool usenormals
+      ,float viscob,unsigned vnpfs
+      ,const StDivDataGpu& divdatag
+      ,const unsigned* dcell
+      ,const float4* poscell,const float4* velrhop,const typecode* code
+      ,const StFlexStrucData* flexstrucdata
+      ,const unsigned* flexstrucridp,const float4* poscell0
+      ,const unsigned* numpairs,const unsigned* const* pairidx
+      ,const tmatrix3f* kercorr,const float3* boundnor0
+      ,tmatrix3f* defgrad,float3* boundnor,float* flexstrucdt,float3* ace
+      ,cudaStream_t stm)
   {
     //-Configuration options.
-    simulate2d=simulate2d_; tkernel=tkernel_; lamsps=lamsps_;
+    this->simulate2d=simulate2d; this->tkernel=tkernel; this->lamsps=lamsps; this->usenormals=usenormals;
     //-Execution values.
-    viscob=viscob_;
-    vnpfs=vnpfs_;
-    divdatag=divdatag_;
+    this->viscob=viscob;
+    this->vnpfs=vnpfs;
+    this->divdatag=divdatag;
     //-Input data arrays.
-    dcell=dcell_;
-    poscell=poscell_; velrhop=velrhop_; code=code_;
-    flexstrucdata=flexstrucdata_;
-    flexstrucridp=flexstrucridp_; poscell0=poscell0_;
-    numpairs=numpairs_; pairidx=pairidx_;
-    kercorr=kercorr_;
+    this->dcell=dcell;
+    this->poscell=poscell; this->velrhop=velrhop; this->code=code;
+    this->flexstrucdata=flexstrucdata;
+    this->flexstrucridp=flexstrucridp; this->poscell0=poscell0;
+    this->numpairs=numpairs; this->pairidx=pairidx;
+    this->kercorr=kercorr; this->boundnor0=boundnor0;
     //-Output data arrays.
-    flexstrucdt=flexstrucdt_; defgrad=defgrad_; ace=ace_;
+    this->defgrad=defgrad; this->boundnor=boundnor; this->flexstrucdt=flexstrucdt; this->ace=ace;
     //-Other values and objects.
-    stm=stm_;
+    this->stm=stm;
   }
 }StInterParmsFlexStrucg;
 //<vs_flexstruc_end>
@@ -407,14 +410,15 @@ void ComputeOutputPartsMk(byte resmask,bool cmband,bool inverse
 //<vs_outpaarts_end>
 
 //<vs_flexstruc_ini>
-void SetClampCodes(unsigned npb,const float4* poscell,const StFlexStrucData* flexstrucdata,typecode* code);
-bool FlexStrucHasNormals(unsigned npb,const typecode* code,const float3* boundnormals);
+void SetFlexStrucClampCodes(unsigned npb,const float4* poscell,const StFlexStrucData* flexstrucdata,typecode* code);
 unsigned CountFlexStrucParts(unsigned npb,const typecode* code);
 void CalcFlexStrucRidp(unsigned npb,const typecode* code,unsigned* flexstrucridp);
 void GatherToFlexStrucArray(unsigned npfs,const unsigned* flexstrucridp,const float4* fullarray,float4* flexstrucarray);
+void GatherToFlexStrucArray(unsigned npfs,const unsigned* flexstrucridp,const float3* fullarray,float3* flexstrucarray);
 unsigned CountFlexStrucPairs(unsigned npfs,const float4* poscell0,unsigned* numpairs);
 void SetFlexStrucPairs(unsigned npfs,const float4* poscell0,unsigned** pairidx);
 void CalcFlexStrucKerCorr(const StInterParmsFlexStrucg& tfs);
+void UpdateFlexStrucGeometry(const StInterParmsFlexStrucg& tfs);
 void Interaction_ForcesFlexStruc(const StInterParmsFlexStrucg& tfs);
 void ComputeStepPosFlexStruc(unsigned npfs,const unsigned* flexstrucridp
     ,const double2* posxypre,const double* poszpre,const double2* movxy,const double* movz

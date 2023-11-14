@@ -73,7 +73,10 @@ protected:
   void SaveExtraData();
   void FinishRun(bool stop);
 
-  void FlexStrucInit(); //<vs_flexstruc>
+  //<vs_flexstruc_ini>
+  void FlexStrucInit();
+  void UpdateFlexStrucGeometry();
+  //<vs_flexstruc_end>
 
 public:
   JSphGpuSingle();

@@ -153,6 +153,7 @@ protected:
   unsigned** PairIdxc;              ///<List of indices to each initial neighbour [CaseNflexstruc].
   tmatrix3f* KerCorrc;              ///<Kernel correction [CaseNflexstruc].
   tmatrix3f* DefGradc;              ///<Deformation gradient tensor [CaseNflexstruc].
+  tfloat3* BoundNor0c;              ///<Initial boundary normals for mDBC [CaseNflexstruc].
   float FlexStrucDtMax;             ///<Maximum value of FlexStrucDt computed in Interaction_ForcesFlexStruc().
   //<vs_flexstruc_end>
 
@@ -272,11 +273,11 @@ protected:
     ,const unsigned* ridpmot,tdouble3* pos,unsigned* dcell,tfloat4* velrho,typecode* code)const;
 
   //<vs_flexstruc_ini>
-  void SetClampCodes(unsigned np,const tdouble3* pos,const StFlexStrucData* flexstrucdata,typecode* code)const;
-  bool FlexStrucHasNormals(unsigned npb,const typecode* code,const tfloat3* boundnormals)const;
+  void SetFlexStrucClampCodes(unsigned np,const tdouble3* pos,const StFlexStrucData* flexstrucdata,typecode* code)const;
   unsigned CountFlexStrucParts(unsigned npb,const typecode* code)const;
   void CalcFlexStrucRidp(unsigned npb,const typecode* code,unsigned* flexstrucridp)const;
   void GatherToFlexStrucArray(unsigned npfs,const unsigned* flexstrucridp,const tdouble3* fullarray,tdouble3* flexstrucarray)const;
+  void GatherToFlexStrucArray(unsigned npfs,const unsigned* flexstrucridp,const tfloat3* fullarray,tfloat3* flexstrucarray)const;
   unsigned CountFlexStrucPairs(unsigned np,const tdouble3* pos0,unsigned* numpairs)const;
   void SetFlexStrucPairs(unsigned np,const tdouble3* pos0,unsigned** pairidx)const;
   template<TpKernel tker,bool simulate2d> void CalcFlexStrucKerCorr(unsigned np,const typecode* code,const StFlexStrucData* flexstrucdata
@@ -285,19 +286,22 @@ protected:
   template<TpKernel tker,bool simulate2d> void CalcFlexStrucKerCorrT()const;
   template<TpKernel tker> void CalcFlexStrucKerCorr_ct0()const;
   void CalcFlexStrucKerCorr()const;
-  template<TpKernel tker,bool simulate2d> void ComputeDefGradFlexStruc(unsigned np,const tdouble3* pos,const typecode* code
-      ,const StFlexStrucData* flexstrucdata,const unsigned* flexstrucridp
-      ,const tdouble3* pos0,const unsigned* numpairs,const unsigned* const* pairidx,const tmatrix3f* kercorr
-      ,tmatrix3f* defgrad)const;
-  inline tmatrix3f ComputePK1StressFlexStruc(const tmatrix3f& defgrad,const tmatrix6f& cmat)const;
+  template<TpKernel tker,bool simulate2d> void CalcFlexStrucDefGrad(unsigned np,const tdouble3* pos,const typecode* code
+    ,const StFlexStrucData* flexstrucdata,const unsigned* flexstrucridp
+    ,const tdouble3* pos0,const unsigned* numpairs,const unsigned* const* pairidx,const tmatrix3f* kercorr
+    ,tmatrix3f* defgrad)const;
+  template<TpKernel tker,bool simulate2d> void CalcFlexStrucDefGradT()const;
+  template<TpKernel tker> void CalcFlexStrucDefGrad_ct0()const;
+  void CalcFlexStrucNormals()const;
+  void UpdateFlexStrucGeometry()const;
+  inline tmatrix3f CalcFlexStrucPK1Stress(const tmatrix3f& defgrad,const tmatrix6f& cmat)const;
   template<TpKernel tker,bool lamsps> void InteractionForcesFlexStruc(unsigned np,float visco
       ,StDivDataCpu divdata,const unsigned* dcell
       ,const tdouble3* pos,const tfloat4* velrhop,const float* press,const typecode* code
       ,const StFlexStrucData* flexstrucdata,const unsigned* flexstrucridp
       ,const tdouble3* pos0,const unsigned* numpairs,const unsigned* const* pairidx,const tmatrix3f* kercorr,const tmatrix3f* defgrad
       ,float& flexstrucdt,tfloat3* ace)const;
-  template<TpKernel tker,bool simulate2d,bool lamsps> void Interaction_ForcesFlexStrucT(float& flexstrucdtmax)const;
-  template<TpKernel tker,bool simulate2d> void Interaction_ForcesFlexStruc_ct1(float& flexstrucdtmax)const;
+  template<TpKernel tker,bool lamsps> void Interaction_ForcesFlexStrucT(float& flexstrucdtmax)const;
   template<TpKernel tker> void Interaction_ForcesFlexStruc_ct0(float& flexstrucdtmax)const;
   void Interaction_ForcesFlexStruc(float& flexstrucdtmax)const;
   void ComputeSemiImplicitEulerFlexStruc(double dt,tdouble3* pos,unsigned* dcell,typecode* code)const;

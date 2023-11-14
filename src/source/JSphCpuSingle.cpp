@@ -790,6 +790,7 @@ double JSphCpuSingle::ComputeStep_Sym(){
   //-----------
   DemDtForce=dt;                               //-For DEM interaction.
   RunCellDivide(true);
+  if(FlexStruc)UpdateFlexStrucGeometry();      //-Update the geometric information for each flexible structure particle.
   Interaction_Forces(INTERSTEP_SymCorrector);  //-Interaction.
   const double dt_c=DtVariable(true);          //-Calculate dt of corrector step.
   if(Shifting)RunShifting(dt);                 //-Shifting.
@@ -1047,6 +1048,7 @@ void JSphCpuSingle::Run(std::string appname,const JSphCfgRun* cfg,JLog2* log){
     if(CaseNmoving)RunMotion(stepdt);
     if(InOut)InOutComputeStep(stepdt);
     else RunCellDivide(true);
+    if(FlexStruc)UpdateFlexStrucGeometry();
     TimeStep+=stepdt;
     LastDt=stepdt;
     Nstep++;
@@ -1220,22 +1222,22 @@ void JSphCpuSingle::FlexStrucInit(){
   }
   //-Configure code for flexible structures.
   FlexStruc->ConfigCode(Npb,Code_c->ptr());
-  JSphCpu::SetClampCodes(Npb,Pos_c->cptr(),FlexStrucDatac,Code_c->ptr());
-  //-Check that mDBC normals are not set on flexible structures.
-  if(TBoundary==BC_MDBC&&JSphCpu::FlexStrucHasNormals(Npb,Code_c->cptr(),BoundNor_c->cptr()))Run_Exceptioon("mDBC normals are not permitted to be set for a flexible structure.");
+  JSphCpu::SetFlexStrucClampCodes(Npb,Pos_c->cptr(),FlexStrucDatac,Code_c->ptr());
   //-Count number of flexible structure particles.
   CaseNflexstruc=JSphCpu::CountFlexStrucParts(Npb,Code_c->cptr());
   //-Allocate arrays.
-  FlexStrucRidpc=new unsigned[CaseNflexstruc];  MemCpuFixed+=(sizeof(unsigned)*CaseNflexstruc);
-  Pos0c         =new tdouble3[CaseNflexstruc];  MemCpuFixed+=(sizeof(tdouble3)*CaseNflexstruc);
-  NumPairsc     =new unsigned[CaseNflexstruc];  MemCpuFixed+=(sizeof(unsigned)*CaseNflexstruc);
-  PairIdxc      =new unsigned*[CaseNflexstruc]; MemCpuFixed+=(sizeof(unsigned*)*CaseNflexstruc);
-  KerCorrc      =new tmatrix3f[CaseNflexstruc]; MemCpuFixed+=(sizeof(tmatrix3f)*CaseNflexstruc);
-  DefGradc      =new tmatrix3f[CaseNflexstruc]; MemCpuFixed+=(sizeof(tmatrix3f)*CaseNflexstruc);
+  FlexStrucRidpc          =new unsigned[CaseNflexstruc];  MemCpuFixed+=(sizeof(unsigned)*CaseNflexstruc);
+  Pos0c                   =new tdouble3[CaseNflexstruc];  MemCpuFixed+=(sizeof(tdouble3)*CaseNflexstruc);
+  NumPairsc               =new unsigned[CaseNflexstruc];  MemCpuFixed+=(sizeof(unsigned)*CaseNflexstruc);
+  PairIdxc                =new unsigned*[CaseNflexstruc]; MemCpuFixed+=(sizeof(unsigned*)*CaseNflexstruc);
+  KerCorrc                =new tmatrix3f[CaseNflexstruc]; MemCpuFixed+=(sizeof(tmatrix3f)*CaseNflexstruc);
+  DefGradc                =new tmatrix3f[CaseNflexstruc]; MemCpuFixed+=(sizeof(tmatrix3f)*CaseNflexstruc);
+  if(UseNormals)BoundNor0c=new tfloat3[CaseNflexstruc];   MemCpuFixed+=(sizeof(tfloat3)*CaseNflexstruc);
   //-Calculate array for indexing into flexible structure particles.
   JSphCpu::CalcFlexStrucRidp(Npb,Code_c->cptr(),FlexStrucRidpc);
-  //-Copy current position into initial position.
+  //-Copy current position and normals into initial position and normals.
   JSphCpu::GatherToFlexStrucArray(CaseNflexstruc,FlexStrucRidpc,Pos_c->cptr(),Pos0c);
+  if(UseNormals)JSphCpu::GatherToFlexStrucArray(CaseNflexstruc,FlexStrucRidpc,BoundNor_c->cptr(),BoundNor0c);
   //-Get number of particle pairs for each flexible structure particle.
   const unsigned numpairstot=JSphCpu::CountFlexStrucPairs(CaseNflexstruc,Pos0c,NumPairsc);
   //-Allocate memory for raw buffer for storing pair indices and set the pointers to the indices.
@@ -1248,9 +1250,20 @@ void JSphCpuSingle::FlexStrucInit(){
   }
   //-Set the indices for each particle pair.
   JSphCpu::SetFlexStrucPairs(CaseNflexstruc,Pos0c,PairIdxc);
-  //-Calculate kernel correction for each structure particle.
+  //-Calculate kernel correction and update geometry.
   JSphCpu::CalcFlexStrucKerCorr();
+  JSphCpu::UpdateFlexStrucGeometry();
   Log->Print("");
+  Timersc->TmStop(TMC_SuFlexStruc);
+}
+
+//==============================================================================
+/// Updates the geometric information for each flexible structure particle.
+/// Actualiza la información geométrica de cada partícula de estructura flexible.
+//==============================================================================
+void JSphCpuSingle::UpdateFlexStrucGeometry(){
+  Timersc->TmStart(TMC_SuFlexStruc);
+  JSphCpu::UpdateFlexStrucGeometry();
   Timersc->TmStop(TMC_SuFlexStruc);
 }
 //<vs_flexstruc_end>
