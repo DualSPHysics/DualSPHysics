@@ -499,6 +499,9 @@
     <ClInclude Include="..\source\JPartFloatInfoBi4.h">
       <Filter>CommonDsph</Filter>
     </ClInclude>
+    <ClInclude Include="..\source\JViscosityDef.h">
+      <Filter>Source</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\source\main.cpp">

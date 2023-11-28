@@ -614,7 +614,6 @@ void JSphGpu::ConfigBlockSizes(bool usezone,bool useperi){
   Log->Print(" ");
   BlockSizesStr="";
   if(CellMode==CELLMODE_Full || CellMode==CELLMODE_Half){
-    const bool lamsps=(TVisco==VISCO_LaminarSPS);
     BlockSizes.forcesbound=BlockSizes.forcesfluid=BlockSizes.forcesdem=BSIZE_FORCES;
     //-Collects kernel information.
     StKerInfo kerinfo;
@@ -625,7 +624,7 @@ void JSphGpu::ConfigBlockSizes(bool usezone,bool useperi){
       const StInterParmsg parms=StrInterParmsg(Simulate2D
         ,Symmetry  //<vs_syymmetry>
         ,TKernel,FtMode
-        ,lamsps,TDensity,ShiftingMode
+        ,TVisco,TDensity,ShiftingMode
         ,0,0,0,0,100,0,0
         ,0,0,divdatag,NULL
         ,NULL,NULL,NULL,NULL,NULL,NULL

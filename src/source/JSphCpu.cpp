@@ -722,13 +722,13 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity,bool sh
                 acep1.x-=pi_visc*frx; acep1.y-=pi_visc*fry; acep1.z-=pi_visc*frz;
               }
             }
-            else if(tvisco==VISCO_LaminarSPS){//-Laminar+SPS viscosity. 
-              {//-Laminar contribution.
-                const float robar2=(rhop1+velrhop2.w);
-                const float temp=4.f*visco/((rr2+Eta2)*robar2);  //-Simplification of: temp=2.0f*visco/((rr2+CTE.eta2)*robar); robar=(rhop1+velrhop2.w)*0.5f;
-                const float vtemp=massp2*temp*(drx*frx+dry*fry+drz*frz);  
-                acep1.x+=vtemp*dvx; acep1.y+=vtemp*dvy; acep1.z+=vtemp*dvz;
-              }
+            if(tvisco==VISCO_Laminar || tvisco==VISCO_LaminarSPS){//-Laminar and Laminar+SPS viscosity.
+              const float robar2=(rhop1+velrhop2.w);
+              const float temp=4.f*visco/((rr2+Eta2)*robar2);  //-Simplification of: temp=2.0f*visco/((rr2+CTE.eta2)*robar); robar=(rhop1+velrhop2.w)*0.5f;
+              const float vtemp=massp2*temp*(drx*frx+dry*fry+drz*frz);  
+              acep1.x+=vtemp*dvx; acep1.y+=vtemp*dvy; acep1.z+=vtemp*dvz;
+            }
+            if(tvisco==VISCO_LaminarSPS){//-SPS contribution for Laminar viscosity. 
               //-SPS turbulence model.
               //-Note that taup1 is tau_a/rho_a^2 for interaction of particle a and b.
               //-And taup1 is always zero when p1 is not a fluid particle.
@@ -977,6 +977,7 @@ template<TpKernel tker,TpFtMode ftmode>
   void JSphCpu::Interaction_Forces_ct3(const stinterparmsc& t,StInterResultc& res)const
 {
        if(TVisco==VISCO_Artificial)Interaction_Forces_ct4<tker,ftmode,VISCO_Artificial>(t,res);
+  else if(TVisco==VISCO_Laminar   )Interaction_Forces_ct4<tker,ftmode,VISCO_Laminar   >(t,res);
   else if(TVisco==VISCO_LaminarSPS)Interaction_Forces_ct4<tker,ftmode,VISCO_LaminarSPS>(t,res);
 }
 //==============================================================================

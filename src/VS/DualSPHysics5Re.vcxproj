@@ -723,6 +723,7 @@ rem %CudaNvcc% -ccbin "$(VCInstallDir)bin" %gpuhw% -use_fast_math -c %ptxinfo% -
     <ClInclude Include="..\source\JTimerCuda.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">true</ExcludedFromBuild>
     </ClInclude>
+    <ClInclude Include="..\source\JViscosityDef.h" />
     <ClInclude Include="..\source\JVtkLib.h" />
     <ClInclude Include="..\source\JVtkLibDef.h" />
     <ClInclude Include="..\source\JVtkLibUndef.h" />

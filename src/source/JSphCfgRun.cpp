@@ -148,6 +148,7 @@ void JSphCfgRun::VisuInfo()const{
 #endif
   printf("\n");
   printf("    -viscoart:<float>          Artificial viscosity [0-1]\n");
+  printf("    -viscolam:<float>          Laminar viscosity [order of 1E-6]\n");  
   printf("    -viscolamsps:<float>       Laminar+SPS viscosity [order of 1E-6]\n");  
   printf("    -viscoboundfactor:<float>  Multiplies the viscosity value of boundary\n");
   printf("\n");
@@ -344,9 +345,14 @@ void JSphCfgRun::LoadOpts(string* optlis,int optn,int lv,const std::string& file
         if(Visco>10)ErrorParm(opt,c,lv,file);
         TVisco=VISCO_Artificial;
       }
+      else if(txword=="VISCOLAM"){ 
+        Visco=float(atof(txoptfull.c_str())); 
+        if(Visco>0.001f)ErrorParm(opt,c,lv,file);
+        TVisco=VISCO_Laminar;
+      }
       else if(txword=="VISCOLAMSPS"){ 
         Visco=float(atof(txoptfull.c_str())); 
-        if(Visco>0.001)ErrorParm(opt,c,lv,file);
+        if(Visco>0.001f)ErrorParm(opt,c,lv,file);
         TVisco=VISCO_LaminarSPS;
       }
       else if(txword=="VISCOBOUNDFACTOR"){ 

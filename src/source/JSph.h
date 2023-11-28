@@ -174,7 +174,7 @@ protected:
   tdouble3 DDTRamp;           ///<Configuration of initial DDT ramp (Total time, time for maxvalue, maxvalue).  //<vs_ddramp>
   bool DDTArray;              ///<Use extra array to compute Density Diffusion Term. The correction is applied after particle interaction. 
 
-  TpVisco TVisco;             ///<Viscosity type: Artificial,Laminar...
+  TpVisco TVisco;             ///<Viscosity type: Artificial, Laminar...
   float Visco;                ///<Viscosity value.
   float ViscoBoundFactor;     ///<For boundary interaction use Visco*ViscoBoundFactor.                  | Para interaccion con contorno usa Visco*ViscoBoundFactor.
   JDsViscoInput* ViscoTime;   ///<Provides a viscosity value as a function of simulation time.          | Proporciona un valor de viscosidad en funcion del instante de la simulacion.
@@ -543,7 +543,6 @@ public:
   ~JSph();
 
   static std::string GetStepName(TpStep tstep);
-  static std::string GetViscoName(TpVisco tvisco);
   static std::string GetBoundName(TpBoundary tboundary);
   static std::string GetSlipName(TpSlipMode tslip);
   std::string GetDDTName(TpDensity tdensity)const;
