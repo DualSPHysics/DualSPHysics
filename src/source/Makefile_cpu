@@ -1,4 +1,4 @@
-#DualSPHysics CPU v5.3.303 29-10-2023
+#DualSPHysics CPU v5.3.304 01-12-2023
 
 #=============== Compilation Options (YES/NO) ===============
 USE_DEBUG=NO
