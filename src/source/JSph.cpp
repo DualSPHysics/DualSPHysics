@@ -1724,6 +1724,9 @@ void JSph::VisuRefs(){
   if(TStep==STEP_Symplectic)Log->Print("- Time integration scheme: Symplectic (Leimkhuler, 1996  https://doi.org/10.1007/978-3-319-16375-8_1)");
   //-Other features:
   if(PeriActive!=0)Log->Print("- Periodic open boundaries (Gomez-Gesteira et al., 2012  https://doi.org/10.1016/j.cageo.2012.02.029)");
+  //<vs_meeshdat_ini>
+  if(InOut && InOut->Use_InterpolatedVel())Log->Print("- Inflow-outflow with interpolated mesh data (Ruffini et al., 2023  https://doi.org/10.1016/j.oceaneng.2022.113400)");
+  //<vs_meeshdat_end>
   if(InOut        )Log->Print("- Inflow-outflow boundary conditions (Tafuni et al., 2018  https://doi.org/10.1016/j.cma.2018.08.004)");
   if(WithFloating )Log->Print("- Floating objects (Canelas et al., 2015  https://doi.org/10.1002/fld.4031)");
   if(UseDEM       )Log->Print("- Coupling SPH-DCDEM (Canelas et al., 2017  https://doi.org/10.1061/(ASCE)HY.1943-7900.0001331)");

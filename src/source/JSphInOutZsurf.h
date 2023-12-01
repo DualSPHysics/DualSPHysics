@@ -33,6 +33,11 @@ class JLog2;
 class JLinearValue;
 class JGaugeSystem;
 class JGaugeSwl; 
+class JGaugeMesh; //<vs_meeshdat>
+
+namespace jmsh{       //<vs_meeshdat>
+  class JMeshTDatas;  //<vs_meeshdat>
+}                     //<vs_meeshdat>
 
 //##############################################################################
 //# JSphInOutZsurf
@@ -62,6 +67,19 @@ protected:
   float ZsurfFit;          ///<Set calculated zsurf (default -0.5*dp).
   JLinearValue* InputTime; ///<Input zsurf in time (for ZsurfMode==InZsurf_Variable).
 
+  //<vs_meeshdat_ini>
+  //-Zsurf variable from mesh-data file.
+  std::string MeshFile;    ///<File with mesh-data.
+  tdouble3 MeshSetPos;     ///<Position offset (applied after filters).
+  double MeshInitialTime;  ///<Defines initial time of data.
+  double MeshLoopTbegRq;   ///<Requested begin time of loop (DBL_MAX=disabled).
+  double MeshLoopTmaxRq;   ///<Requested final time of loop (DBL_MAX=disabled).
+  double MeshLoopTbeg;     ///<Begin time of loop (DBL_MAX=disabled).
+  double MeshLoopTmax;     ///<Final time of loop (DBL_MAX=disabled).
+
+  jmsh::JMeshTDatas* InputMesh; ///<Input zsurf in time from mesh data (for ZsurfMode==InZsurf_Variable).
+  //<vs_meeshdat_end>
+
   StZsurfResult ZsurfResults; ///<Stores zsurf results to send. 
 
   //-Zsurf line definition.
@@ -75,6 +93,7 @@ protected:
   tplane3d PlaDisx;   ///<Reference plane to compute horizontal distance.
 
   JGaugeSwl*  GaugeSwl;  ///<Gauge object to compute zsurf value.
+  JGaugeMesh* GaugeMesh; ///<Gauge object to compute zsurf values. //<vs_meeshdat>
 
 
   //-Zsurf data when UniformZsurf==false (calculated or from mesh data file).
@@ -101,6 +120,8 @@ protected:
   bool ConfigGaugeZsurf(JGaugeSystem* gaugesystem);
 
   void ConfigZsurfResults();
+  void MeshToUniformData(jmsh::JMeshTDatas* mdatas);     //<vs_meeshdat>
+  void MeshToZsurfLinePoints(jmsh::JMeshTDatas* mdatas); //<vs_meeshdat>
 
   void ResetTimes();
   void FindTime(double timestep);
@@ -136,6 +157,12 @@ public:
 
   const StZsurfResult& GetZsurfResults()const;
 
+//<vs_meeshdat_ini>
+  //-Set uniform Zsurf.
+  void RnSetZsurfUniform(double time0,double zsurf0,double time1,double zsurf1);
+  //-Set non-uniform Zsurf.
+  StRnZsurfData RnGetZsurfPtr(double time0,double time1);
+//<vs_meeshdat_end>
 };
 
 #endif

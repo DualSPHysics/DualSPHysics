@@ -40,6 +40,7 @@
 #include "JObject.h"
 #include "DualSphDef.h"
 #include "JDsGaugeItem.h"
+#include "JMeshDataDef.h" //<vs_meeshdat>
 
 class JXml;
 class TiXmlElement;
@@ -178,6 +179,8 @@ public:
     ,tdouble3 point0,tdouble3 point2,double pointdp,float masslimit=0);
   JGaugeMaxZ*     AddGaugeMaxZ (std::string name,double computestart,double computeend,double computedt
     ,tdouble3 point0,double height,float distlimit);
+  JGaugeMesh*     AddGaugeMesh (std::string name,double computestart,double computeend,double computedt                 //<vs_meeshdat>
+    ,const jmsh::StMeshBasic& meshbas,std::string outdata,unsigned tfmt,unsigned buffersize,float kclimit,float kcdummy,float masslimit=0); //<vs_meeshdat>
   JGaugeForce*    AddGaugeForce(std::string name,double computestart,double computeend,double computedt
     ,const JSphMk* mkinfo,word mkbound);
 

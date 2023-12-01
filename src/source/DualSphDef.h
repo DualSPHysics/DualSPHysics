@@ -27,6 +27,7 @@
 #include "JPeriodicDef.h"
 #include "JViscosityDef.h"
 #include "FunSphKernelDef.h"
+#include "JMeshDataDef.h" //<vs_meeshdat>
 #include "JDsDcellDef.h"  //-Includes definitions for cell codificantion as unsigned (32 bits) value.
 
 #include "OmpDefs.h"

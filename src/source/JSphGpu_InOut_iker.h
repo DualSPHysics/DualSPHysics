@@ -48,6 +48,21 @@ unsigned InOutCreateList(bool stable,unsigned n,unsigned pini
   ,const float2* boxlimit,const double2* posxy,const double* posz
   ,typecode* code,unsigned* listp);
 
+//<vs_meeshdat_ini>
+void InOutComputeZsurfPart(unsigned n,const unsigned* listp,byte izone
+  ,tplane3d pladisx,unsigned nptx,const float* zsurfdata
+  ,const typecode* code,const double2* posxy,const double* posz
+  ,float* zsurfpart,byte* zsurfok);
+void InOutComputeZsurfPartSp(unsigned n,const unsigned* listp,byte izone
+  ,float zsurf,const typecode* code,const double* posz
+  ,float* zsurfpart,byte* zsurfok);
+void InOutComputeZsurfokPtosSp(unsigned n,byte izone,float zsurf
+  ,const byte* ptzone,const double* ptposz,byte* zsurfok);
+void InOutComputeZsurfokPtos(unsigned n,byte izone,tplane3d pladisx,unsigned nptx
+  ,const float* zsurfdata,const byte* ptzone,const double2* ptposxy
+  ,const double* ptposz,byte* zsurfok);
+//<vs_meeshdat_end>
+
 void InOutSetAnalyticalData(unsigned n,const unsigned* listp
   ,byte izone,byte rmode,byte vmode,byte vprof,byte refillspfull
   ,float timestep,float zsurfv,tfloat4 veldata,tfloat4 veldata2,tfloat3 dirdata
@@ -111,6 +126,34 @@ void InOutInterpolateZVel(unsigned izone,double posminz,double dpz,int nz1
   ,const double* posz,const typecode* code,float4* velrhop,float velcorr);
 void InOutInterpolateResetZVel(unsigned izone,unsigned np,const int* plist
   ,const typecode* code,float4* velrhop);
+
+//<vs_meeshdat_ini>
+//-Kernels to interpolate data (JSphInOutZsurf and JMeshTDatasDsVel).
+void InOutInterpolateDataTime(unsigned np,float tf
+  ,const float* data0,const float* data1,float* res);
+void InOutInterpolateDataTime(unsigned np,float tf
+  ,const float3* data0,const float3* data1,float3* res);
+
+void InOutIntpVelFr0(byte izone,float velcorr,tfloat3 vdir
+  ,const float* data1,const float3* data3
+  ,unsigned np,const int* plist,const typecode* code,float4* velrhop);
+void InOutIntpVelFr1(byte izone,float velcorr,tfloat3 vdir
+  ,const float* data1,const float3* data3
+  ,tplane3d pla1,unsigned cmax1
+  ,unsigned np,const int* plist,const typecode* code,const double2* posxy
+  ,const double* posz,float4* velrhop);
+void InOutIntpVelFr2(byte izone,float velcorr,tfloat3 vdir
+  ,const float* data1,const float3* data3,unsigned frnum1
+  ,tplane3d pla1,unsigned cmax1,tplane3d pla2,unsigned cmax2
+  ,unsigned np,const int* plist,const typecode* code,const double2* posxy
+  ,const double* posz,float4* velrhop);
+void InOutIntpVelFr3(byte izone,float velcorr,tfloat3 vdir
+  ,const float* data1,const float3* data3,unsigned npt1,unsigned npt12
+  ,tplane3d pla1,unsigned cmax1,tplane3d pla2,unsigned cmax2
+  ,tplane3d pla3,unsigned cmax3
+  ,unsigned np,const int* plist,const typecode* code,const double2* posxy
+  ,const double* posz,float4* velrhop);
+//<vs_meeshdat_end>
 
 }
 

@@ -352,6 +352,138 @@ void InOutSetAnalyticalData(unsigned n,const unsigned* inoutpart
 }
 
 
+//<vs_meeshdat_ini>
+//------------------------------------------------------------------------------
+/// Computes Zsurf of current inout particles when the zsurf is non-uniform.
+//------------------------------------------------------------------------------
+__global__ void KerInOutComputeZsurfPart(unsigned n,const unsigned* inoutpart,byte izone
+  ,double pla_a,double pla_b,double pla_d,unsigned nptx,const float* zsurfdata
+  ,const typecode* code,const double2* posxy,const double* posz
+  ,float* zsurfpart,byte* zsurfok)
+{
+  const unsigned cp=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
+  if(cp<n){
+    const unsigned p=inoutpart[cp];
+    if(izone==byte(code[p]&CODE_TYPE_FLUID_INOUT015MASK)){//-Substract 16 to obtain the actual zone (0-15).
+      const double2 pxy=posxy[p];
+      const float dx=float(pla_a*pxy.x+pla_b*pxy.y+pla_d);//-It is simpliefied since z is always zero.
+      const unsigned cx=(dx<=0? 0: unsigned(dx));
+      const float zsurf=zsurfdata[(cx<nptx? cx: nptx-1)];
+      if(zsurfpart)zsurfpart[cp]=zsurf;
+      if(zsurfok)zsurfok[cp]=(posz[p]<=zsurf? 1: 0);
+    }
+  }
+}
+
+//==============================================================================
+/// Computes Zsurf of current inout particles when the zsurf is non-uniform.
+//==============================================================================
+void InOutComputeZsurfPart(unsigned n,const unsigned* inoutpart,byte izone
+  ,tplane3d pladisx,unsigned nptx,const float* zsurfdata
+  ,const typecode* code,const double2* posxy,const double* posz
+  ,float* zsurfpart,byte* zsurfok)
+{
+  if(n){
+    dim3 sgrid=GetSimpleGridSize(n,SPHBSIZE);
+    KerInOutComputeZsurfPart <<<sgrid,SPHBSIZE>>> (n,inoutpart,izone
+      ,pladisx.a,pladisx.b,pladisx.d,nptx,zsurfdata
+      ,code,posxy,posz,zsurfpart,zsurfok);
+  }
+}
+
+//------------------------------------------------------------------------------
+/// Computes Zsurf of current inout particles when the zsurf is uniform.
+//------------------------------------------------------------------------------
+__global__ void KerInOutComputeZsurfPartSp(unsigned n,const unsigned* inoutpart
+  ,byte izone,float zsurf,const typecode* code,const double* posz
+  ,float* zsurfpart,byte* zsurfok)
+{
+  const unsigned cp=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
+  if(cp<n){
+    const unsigned p=inoutpart[cp];
+    if(izone==byte(code[p]&CODE_TYPE_FLUID_INOUT015MASK)){//-Substract 16 to obtain the actual zone (0-15).
+      if(zsurfpart)zsurfpart[cp]=zsurf;
+      if(zsurfok)zsurfok[cp]=(posz[p]<=zsurf? 1: 0);
+    }
+  }
+}
+
+//==============================================================================
+/// Computes Zsurf of current inout particles when the zsurf is uniform.
+//==============================================================================
+void InOutComputeZsurfPartSp(unsigned n,const unsigned* inoutpart,byte izone
+  ,float zsurf,const typecode* code,const double* posz
+  ,float* zsurfpart,byte* zsurfok)
+{
+  if(n){
+    dim3 sgrid=GetSimpleGridSize(n,SPHBSIZE);
+    KerInOutComputeZsurfPartSp <<<sgrid,SPHBSIZE>>> (n,inoutpart,izone
+      ,zsurf,code,posz,zsurfpart,zsurfok);
+  }
+}
+
+//------------------------------------------------------------------------------
+/// Computes Zsurf of current inout points when the zsurf is uniform.
+//------------------------------------------------------------------------------
+__global__ void KerInOutComputeZsurfokPtosSp(unsigned n,byte izone,float zsurf
+  ,const byte* ptzone,const double* ptposz,byte* zsurfok)
+{
+  const unsigned cp=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
+  if(cp<n){
+    if(izone==ptzone[cp]){
+      zsurfok[cp]=(ptposz[cp]<=zsurf? 1: 0);
+    }
+  }
+}
+
+//==============================================================================
+/// Computes Zsurf of current inout points when the zsurf is uniform.
+//==============================================================================
+void InOutComputeZsurfokPtosSp(unsigned n,byte izone,float zsurf
+ ,const byte* ptzone,const double* ptposz,byte* zsurfok)
+{
+  if(n){
+    dim3 sgrid=GetSimpleGridSize(n,SPHBSIZE);
+    KerInOutComputeZsurfokPtosSp <<<sgrid,SPHBSIZE>>> (n,izone,zsurf
+      ,ptzone,ptposz,zsurfok);
+  }
+}
+
+//------------------------------------------------------------------------------
+/// Computes Zsurf of current inout points when the zsurf is non-uniform.
+//------------------------------------------------------------------------------
+__global__ void KerInOutComputeZsurfokPtos(unsigned n,byte izone
+  ,double pla_a,double pla_b,double pla_d,unsigned nptx,const float* zsurfdata
+  ,const byte* ptzone,const double2* ptposxy,const double* ptposz,byte* zsurfok)
+{
+  const unsigned cp=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
+  if(cp<n){
+    if(izone==ptzone[cp]){
+      const double2 pxy=ptposxy[cp];
+      const float dx=float(pla_a*pxy.x+pla_b*pxy.y+pla_d);//-It is simpliefied since z is always zero.
+      const unsigned cx=(dx<=0? 0: unsigned(dx));
+      const float zsurf=zsurfdata[(cx<nptx? cx: nptx-1)];
+      zsurfok[cp]=(ptposz[cp]<=zsurf? 1: 0);
+    }
+  }
+}
+
+//==============================================================================
+/// Computes Zsurf of current inout points when the zsurf is non-uniform.
+//==============================================================================
+void InOutComputeZsurfokPtos(unsigned n,byte izone,tplane3d pladisx,unsigned nptx
+  ,const float* zsurfdata,const byte* ptzone,const double2* ptposxy
+  ,const double* ptposz,byte* zsurfok)
+{
+  if(n){
+    dim3 sgrid=GetSimpleGridSize(n,SPHBSIZE);
+    KerInOutComputeZsurfokPtos <<<sgrid,SPHBSIZE>>> (n,izone
+      ,pladisx.a,pladisx.b,pladisx.d,nptx,zsurfdata
+      ,ptzone,ptposxy,ptposz,zsurfok);
+  }
+}
+//<vs_meeshdat_end>
+
 //------------------------------------------------------------------------------
 /// Updates velocity and rho of inlet/outlet particles when it is not extrapolated. 
 /// Actualiza velocidad y densidad de particulas inlet/outlet cuando no es extrapolada.
@@ -1588,6 +1720,407 @@ void InOutInterpolateResetZVel(unsigned izone,unsigned np,const int* plist
   }
 }
 
+
+//<vs_meeshdat_ini>
+//##############################################################################
+//# Kernels to interpolate data (JSphInOutZsurf and JMeshTDatasDsVel).
+//# Kernels para interpolar valores (JSphInOutZsurf and JMeshTDatasDsVel).
+//##############################################################################
+//------------------------------------------------------------------------------
+/// Interpolate data between time0 and time1.
+//------------------------------------------------------------------------------
+__global__ void KerInOutInterpolateDataTime(unsigned np,float tf
+  ,const float* data0,const float* data1,float* res)
+{
+  const unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Number of value.
+  if(p<np){
+    const float v0=data0[p];
+    res[p]=tf*(data1[p]-v0)+v0;
+  }
+}
+
+//==============================================================================
+/// Interpolate data between time0 and time1.
+//==============================================================================
+void InOutInterpolateDataTime(unsigned np,float tf
+  ,const float* data0,const float* data1,float* res)
+{
+  if(np){
+    dim3 sgrid=GetSimpleGridSize(np,SPHBSIZE);
+    KerInOutInterpolateDataTime <<<sgrid,SPHBSIZE>>> (np,tf,data0,data1,res);
+  }
+}
+
+//------------------------------------------------------------------------------
+/// Interpolate data between time0 and time1.
+//------------------------------------------------------------------------------
+__global__ void KerInOutInterpolateDataTime(unsigned np,float tf
+  ,const float3* data0,const float3* data1,float3* res)
+{
+  const unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Number of value.
+  if(p<np){
+    const float3 v0=data0[p];
+    const float3 v1=data1[p];
+    res[p]=make_float3(tf*(v1.x-v0.x)+v0.x, tf*(v1.y-v0.y)+v0.y, tf*(v1.z-v0.z)+v0.z);
+  }
+}
+
+//==============================================================================
+/// Interpolate data between time0 and time1.
+//==============================================================================
+void InOutInterpolateDataTime(unsigned np,float tf
+  ,const float3* data0,const float3* data1,float3* res)
+{
+  if(np){
+    dim3 sgrid=GetSimpleGridSize(np,SPHBSIZE);
+    KerInOutInterpolateDataTime <<<sgrid,SPHBSIZE>>> (np,tf,data0,data1,res);
+  }
+}
+
+//------------------------------------------------------------------------------
+/// Interpolate data between positions using a 0-D mesh data.
+//------------------------------------------------------------------------------
+__global__ void KerInOutIntpVelFr0_f1(byte izone,float velcorr,float3 vdir
+  ,const float* data1
+  ,unsigned np,const int* plist,const typecode* code,float4* velrhop)
+{
+  const unsigned cp=blockIdx.x*blockDim.x + threadIdx.x; //-Number of value.
+  if(cp<np){
+    const unsigned p=plist[cp];
+    if(izone==byte(CODE_GetIzoneFluidInout(code[p]))){
+      const float vv=data1[0]-velcorr;
+      velrhop[p]=make_float4(vv*vdir.x, vv*vdir.y, vv*vdir.z, velrhop[p].w);
+    }
+  }
+}
+//------------------------------------------------------------------------------
+/// Interpolate data between positions using a 0-D mesh data.
+//------------------------------------------------------------------------------
+__global__ void KerInOutIntpVelFr0_f3(byte izone,float3 vc3,const float3* data3
+  ,unsigned np,const int* plist,const typecode* code,float4* velrhop)
+{
+  const unsigned cp=blockIdx.x*blockDim.x + threadIdx.x; //-Number of value.
+  if(cp<np){
+    const unsigned p=plist[cp];
+    if(izone==byte(CODE_GetIzoneFluidInout(code[p]))){
+      const float3 v3=data3[0];
+      velrhop[p]=make_float4(v3.x-vc3.x, v3.y-vc3.y, v3.z-vc3.z, velrhop[p].w);
+    }
+  }
+}
+
+//==============================================================================
+/// Interpolate data between positions using a 0-D mesh data.
+//==============================================================================
+void InOutIntpVelFr0(byte izone,float velcorr,tfloat3 vdir
+  ,const float* data1,const float3* data3
+  ,unsigned np,const int* plist,const typecode* code,float4* velrhop)
+{
+  if(np){
+    const tfloat3 velcorr3=vdir*velcorr;
+    dim3 sgrid=GetSimpleGridSize(np,SPHBSIZE);
+    if(data1)KerInOutIntpVelFr0_f1 <<<sgrid,SPHBSIZE>>> (izone,velcorr,Float3(vdir),data1,np,plist,code,velrhop);
+    else     KerInOutIntpVelFr0_f3 <<<sgrid,SPHBSIZE>>> (izone,Float3(velcorr3)    ,data3,np,plist,code,velrhop);
+  }
+}
+
+
+//------------------------------------------------------------------------------
+/// Computes cell and factor position according to given data.
+//------------------------------------------------------------------------------
+__device__ float KerInOutIntpPosCellDist(const double3& ps,const double4& pla
+  ,unsigned cmax,uint2& cell)
+{
+  double d=(ps.x*pla.x + ps.y*pla.y + ps.z*pla.z + pla.w);
+  d=max(d,0.);
+  const unsigned c=unsigned(d);
+  cell.x=min(c,cmax);
+  cell.y=min(c+1,cmax);
+  return(c<cmax? float(d-c): 0);
+}
+
+//------------------------------------------------------------------------------
+/// Interpolate data between positions using a 1-D mesh data.
+//------------------------------------------------------------------------------
+__global__ void KerInOutIntpVelFr1_f1(byte izone,float velcorr,float3 vdir
+  ,const float* data,double4 pla1,unsigned cmax1
+  ,unsigned np,const int* plist,const typecode* code
+  ,const double2* posxy,const double* posz
+  ,float4* velrhop)
+{
+  const unsigned cp=blockIdx.x*blockDim.x + threadIdx.x; //-Number of value.
+  if(cp<np){
+    const unsigned p=plist[cp];
+    if(izone==byte(CODE_GetIzoneFluidInout(code[p]))){
+      double2 pxy=posxy[p];
+      const double3 ps=make_double3(pxy.x,pxy.y,posz[p]);
+      uint2 cell;
+      const float fdis=KerInOutIntpPosCellDist(ps,pla1,cmax1,cell);
+      const float v0=data[cell.x];
+      const float v1=data[cell.y];
+      const float vv=((v1-v0)*fdis+v0) -velcorr;
+      velrhop[p]=make_float4(vv*vdir.x, vv*vdir.y, vv*vdir.z, velrhop[p].w);
+    }
+  }
+}
+
+//------------------------------------------------------------------------------
+/// Interpolate data between positions using a 1-D mesh data.
+//------------------------------------------------------------------------------
+__global__ void KerInOutIntpVelFr1_f3(byte izone,float3 vc3
+  ,const float3* data,double4 pla1,unsigned cmax1
+  ,unsigned np,const int* plist,const typecode* code
+  ,const double2* posxy,const double* posz
+  ,float4* velrhop)
+{
+  const unsigned cp=blockIdx.x*blockDim.x + threadIdx.x; //-Number of value.
+  if(cp<np){
+    const unsigned p=plist[cp];
+    if(izone==byte(CODE_GetIzoneFluidInout(code[p]))){
+      double2 pxy=posxy[p];
+      const double3 ps=make_double3(pxy.x,pxy.y,posz[p]);
+      uint2 cell;
+      const float fdis=KerInOutIntpPosCellDist(ps,pla1,cmax1,cell);
+      const float3 v0=data[cell.x];
+      const float3 v1=data[cell.y];
+      const float vvx=((v1.x-v0.x)*fdis+v0.x) -vc3.x;
+      const float vvy=((v1.y-v0.y)*fdis+v0.y) -vc3.y;
+      const float vvz=((v1.z-v0.z)*fdis+v0.z) -vc3.z;
+      velrhop[p]=make_float4(vvx, vvy, vvz, velrhop[p].w);
+    }
+  }
+}
+
+//==============================================================================
+/// Interpolate data between positions using a 1-D mesh data.
+//==============================================================================
+void InOutIntpVelFr1(byte izone,float velcorr,tfloat3 vdir
+  ,const float* data1,const float3* data3
+  ,tplane3d pla1,unsigned cmax1
+  ,unsigned np,const int* plist,const typecode* code
+  ,const double2* posxy,const double* posz,float4* velrhop)
+{
+  if(np){
+    const tfloat3 velcorr3=vdir*velcorr;
+    dim3 sgrid=GetSimpleGridSize(np,SPHBSIZE);
+    if(data1)KerInOutIntpVelFr1_f1 <<<sgrid,SPHBSIZE>>> (izone,velcorr,Float3(vdir),data1,Double4(pla1),cmax1,np,plist,code,posxy,posz,velrhop);
+    else     KerInOutIntpVelFr1_f3 <<<sgrid,SPHBSIZE>>> (izone,Float3(velcorr3)    ,data3,Double4(pla1),cmax1,np,plist,code,posxy,posz,velrhop);
+  }
+}
+
+
+//------------------------------------------------------------------------------
+/// Interpolate data between positions using a 2-D mesh data.
+//------------------------------------------------------------------------------
+__global__ void KerInOutIntpVelFr2_f1(byte izone,float velcorr,float3 vdir
+  ,const float* data,double4 pla1,unsigned cmax1,double4 pla2,unsigned cmax2
+  ,unsigned frnum1
+  ,unsigned np,const int* plist,const typecode* code
+  ,const double2* posxy,const double* posz
+  ,float4* velrhop)
+{
+  const unsigned cp=blockIdx.x*blockDim.x + threadIdx.x; //-Number of value.
+  if(cp<np){
+    const unsigned p=plist[cp];
+    if(izone==byte(CODE_GetIzoneFluidInout(code[p]))){
+      double2 pxy=posxy[p];
+      const double3 ps=make_double3(pxy.x,pxy.y,posz[p]);
+      uint2 cell1,cell2;
+      const float fdis1=KerInOutIntpPosCellDist(ps,pla1,cmax1,cell1);
+      const float fdis2=KerInOutIntpPosCellDist(ps,pla2,cmax2,cell2);
+      const float v000=data[cell1.x + frnum1*cell2.x];
+      const float v010=data[cell1.y + frnum1*cell2.x];
+      const float v001=data[cell1.x + frnum1*cell2.y];
+      const float v011=data[cell1.y + frnum1*cell2.y];
+      const float v0x0=(v010-v000)*fdis1+v000;
+      const float v0x1=(v011-v001)*fdis1+v001;
+      const float vv=((v0x1-v0x0)*fdis2+v0x0) -velcorr;
+      velrhop[p]=make_float4(vv*vdir.x, vv*vdir.y, vv*vdir.z, velrhop[p].w);
+    }
+  }
+}
+
+//------------------------------------------------------------------------------
+/// Interpolate data between positions using a 2-D mesh data.
+//------------------------------------------------------------------------------
+__global__ void KerInOutIntpVelFr2_f3(byte izone,float3 vc3
+  ,const float3* data,double4 pla1,unsigned cmax1,double4 pla2,unsigned cmax2
+  ,unsigned frnum1
+  ,unsigned np,const int* plist,const typecode* code
+  ,const double2* posxy,const double* posz
+  ,float4* velrhop)
+{
+  const unsigned cp=blockIdx.x*blockDim.x + threadIdx.x; //-Number of value.
+  if(cp<np){
+    const unsigned p=plist[cp];
+    if(izone==byte(CODE_GetIzoneFluidInout(code[p]))){
+      double2 pxy=posxy[p];
+      const double3 ps=make_double3(pxy.x,pxy.y,posz[p]);
+      uint2 cell1,cell2;
+      const float fdis1=KerInOutIntpPosCellDist(ps,pla1,cmax1,cell1);
+      const float fdis2=KerInOutIntpPosCellDist(ps,pla2,cmax2,cell2);
+      const float3 v000=data[cell1.x + frnum1*cell2.x];
+      const float3 v010=data[cell1.y + frnum1*cell2.x];
+      const float3 v001=data[cell1.x + frnum1*cell2.y];
+      const float3 v011=data[cell1.y + frnum1*cell2.y];
+      const float v0x0_x=(v010.x-v000.x)*fdis1+v000.x;
+      const float v0x0_y=(v010.y-v000.y)*fdis1+v000.y;
+      const float v0x0_z=(v010.z-v000.z)*fdis1+v000.z;
+      const float v0x1_x=(v011.x-v001.x)*fdis1+v001.x;
+      const float v0x1_y=(v011.y-v001.y)*fdis1+v001.y;
+      const float v0x1_z=(v011.z-v001.z)*fdis1+v001.z;
+      const float vvx=((v0x1_x-v0x0_x)*fdis2+v0x0_x) -vc3.x;
+      const float vvy=((v0x1_y-v0x0_y)*fdis2+v0x0_y) -vc3.y;
+      const float vvz=((v0x1_z-v0x0_z)*fdis2+v0x0_z) -vc3.z;
+      velrhop[p]=make_float4(vvx, vvy, vvz, velrhop[p].w);
+    }
+  }
+}
+
+//==============================================================================
+/// Interpolate data between positions using a 2-D mesh data.
+//==============================================================================
+void InOutIntpVelFr2(byte izone,float velcorr,tfloat3 vdir
+  ,const float* data1,const float3* data3,unsigned frnum1
+  ,tplane3d pla1,unsigned cmax1,tplane3d pla2,unsigned cmax2
+  ,unsigned np,const int* plist,const typecode* code
+  ,const double2* posxy,const double* posz,float4* velrhop)
+{
+  if(np){
+    const tfloat3 velcorr3=vdir*velcorr;
+    dim3 sgrid=GetSimpleGridSize(np,SPHBSIZE);
+    if(data1)KerInOutIntpVelFr2_f1 <<<sgrid,SPHBSIZE>>> (izone,velcorr,Float3(vdir),data1,Double4(pla1),cmax1,Double4(pla2),cmax2,frnum1,np,plist,code,posxy,posz,velrhop);
+    else     KerInOutIntpVelFr2_f3 <<<sgrid,SPHBSIZE>>> (izone,Float3(velcorr3)    ,data3,Double4(pla1),cmax1,Double4(pla2),cmax2,frnum1,np,plist,code,posxy,posz,velrhop);
+  }
+}
+
+
+//------------------------------------------------------------------------------
+/// Interpolate data between positions using a 3-D mesh data.
+//------------------------------------------------------------------------------
+__global__ void KerInOutIntpVelFr3_f1(byte izone,float velcorr,float3 vdir
+  ,const float* tdat,double4 pla1,unsigned cmax1,double4 pla2,unsigned cmax2
+  ,double4 pla3,unsigned cmax3,unsigned npt1,unsigned npt12
+  ,unsigned np,const int* plist,const typecode* code
+  ,const double2* posxy,const double* posz
+  ,float4* velrhop)
+{
+  const unsigned cp=blockIdx.x*blockDim.x + threadIdx.x; //-Number of value.
+  if(cp<np){
+    const unsigned p=plist[cp];
+    if(izone==byte(CODE_GetIzoneFluidInout(code[p]))){
+      double2 pxy=posxy[p];
+      const double3 ps=make_double3(pxy.x,pxy.y,posz[p]);
+      uint2 cell1,cell2,cell3;
+      const float fdis1=KerInOutIntpPosCellDist(ps,pla1,cmax1,cell1);
+      const float fdis2=KerInOutIntpPosCellDist(ps,pla2,cmax2,cell2);
+      const float fdis3=KerInOutIntpPosCellDist(ps,pla3,cmax3,cell3);
+      float resx,resy;
+      {
+        const unsigned mod3=npt12*cell3.x;
+        const float v000=tdat[cell1.x + npt1*cell2.x + mod3];
+        const float v100=tdat[cell1.y + npt1*cell2.x + mod3];
+        const float v010=tdat[cell1.x + npt1*cell2.y + mod3];
+        const float v110=tdat[cell1.y + npt1*cell2.y + mod3];
+        const float vx00=(v100-v000)*fdis1+v000;
+        const float vx10=(v110-v010)*fdis1+v010;
+        resx=(vx10-vx00)*fdis2+vx00;
+      }
+      {
+        const unsigned mod3=npt12*cell3.y;
+        const float v000=tdat[cell1.x + npt1*cell2.x + mod3];
+        const float v100=tdat[cell1.y + npt1*cell2.x + mod3];
+        const float v010=tdat[cell1.x + npt1*cell2.y + mod3];
+        const float v110=tdat[cell1.y + npt1*cell2.y + mod3];
+        const float vx00=(v100-v000)*fdis1+v000;
+        const float vx10=(v110-v010)*fdis1+v010;
+        resy=(vx10-vx00)*fdis2+vx00;
+      }
+      const float vv=((resy-resx)*fdis3+resx) -velcorr;
+      velrhop[p]=make_float4(vv*vdir.x, vv*vdir.y, vv*vdir.z, velrhop[p].w);
+    }
+  }
+}
+
+//------------------------------------------------------------------------------
+/// Interpolate data between positions using a 3-D mesh data.
+//------------------------------------------------------------------------------
+__global__ void KerInOutIntpVelFr3_f3(byte izone,float3 vc3
+  ,const float3* tdat,double4 pla1,unsigned cmax1,double4 pla2,unsigned cmax2
+  ,double4 pla3,unsigned cmax3,unsigned npt1,unsigned npt12
+  ,unsigned np,const int* plist,const typecode* code
+  ,const double2* posxy,const double* posz
+  ,float4* velrhop)
+{
+  const unsigned cp=blockIdx.x*blockDim.x + threadIdx.x; //-Number of value.
+  if(cp<np){
+    const unsigned p=plist[cp];
+    if(izone==byte(CODE_GetIzoneFluidInout(code[p]))){
+      double2 pxy=posxy[p];
+      const double3 ps=make_double3(pxy.x,pxy.y,posz[p]);
+      uint2 cell1,cell2,cell3;
+      const float fdis1=KerInOutIntpPosCellDist(ps,pla1,cmax1,cell1);
+      const float fdis2=KerInOutIntpPosCellDist(ps,pla2,cmax2,cell2);
+      const float fdis3=KerInOutIntpPosCellDist(ps,pla3,cmax3,cell3);
+      float res0_x,res0_y,res0_z;
+      {
+        const unsigned mod3=npt12*cell3.x;
+        const float3 v000=tdat[cell1.x + npt1*cell2.x + mod3];
+        const float3 v100=tdat[cell1.y + npt1*cell2.x + mod3];
+        const float3 v010=tdat[cell1.x + npt1*cell2.y + mod3];
+        const float3 v110=tdat[cell1.y + npt1*cell2.y + mod3];
+        const float vx00_x=(v100.x-v000.x)*fdis1+v000.x;
+        const float vx00_y=(v100.y-v000.y)*fdis1+v000.y;
+        const float vx00_z=(v100.z-v000.z)*fdis1+v000.z;
+        const float vx10_x=(v110.x-v010.x)*fdis1+v010.x;
+        const float vx10_y=(v110.y-v010.y)*fdis1+v010.y;
+        const float vx10_z=(v110.z-v010.z)*fdis1+v010.z;
+        res0_x=(vx10_x-vx00_x)*fdis2+vx00_x;
+        res0_y=(vx10_y-vx00_y)*fdis2+vx00_y;
+        res0_z=(vx10_z-vx00_z)*fdis2+vx00_z;
+      }
+      float res1_x,res1_y,res1_z;
+      {
+        const unsigned mod3=npt12*cell3.y;
+        const float3 v000=tdat[cell1.x + npt1*cell2.x + mod3];
+        const float3 v100=tdat[cell1.y + npt1*cell2.x + mod3];
+        const float3 v010=tdat[cell1.x + npt1*cell2.y + mod3];
+        const float3 v110=tdat[cell1.y + npt1*cell2.y + mod3];
+        const float vx00_x=(v100.x-v000.x)*fdis1+v000.x;
+        const float vx00_y=(v100.y-v000.y)*fdis1+v000.y;
+        const float vx00_z=(v100.z-v000.z)*fdis1+v000.z;
+        const float vx10_x=(v110.x-v010.x)*fdis1+v010.x;
+        const float vx10_y=(v110.y-v010.y)*fdis1+v010.y;
+        const float vx10_z=(v110.z-v010.z)*fdis1+v010.z;
+        res1_x=(vx10_x-vx00_x)*fdis2+vx00_x;
+        res1_y=(vx10_y-vx00_y)*fdis2+vx00_y;
+        res1_z=(vx10_z-vx00_z)*fdis2+vx00_z;
+      }
+      const float vvx=((res1_x-res0_x)*fdis3+res0_x) -vc3.x;
+      const float vvy=((res1_y-res0_y)*fdis3+res0_y) -vc3.y;
+      const float vvz=((res1_z-res0_z)*fdis3+res0_z) -vc3.z;
+      velrhop[p]=make_float4(vvx, vvy, vvz, velrhop[p].w);
+    }
+  }
+}
+
+//==============================================================================
+/// Interpolate data between positions using a 3-D mesh data.
+//==============================================================================
+void InOutIntpVelFr3(byte izone,float velcorr,tfloat3 vdir
+  ,const float* data1,const float3* data3,unsigned npt1,unsigned npt12
+  ,tplane3d pla1,unsigned cmax1,tplane3d pla2,unsigned cmax2,tplane3d pla3,unsigned cmax3
+  ,unsigned np,const int* plist,const typecode* code
+  ,const double2* posxy,const double* posz,float4* velrhop)
+{
+  if(np){
+    const tfloat3 velcorr3=vdir*velcorr;
+    dim3 sgrid=GetSimpleGridSize(np,SPHBSIZE);
+    if(data1)KerInOutIntpVelFr3_f1 <<<sgrid,SPHBSIZE>>> (izone,velcorr,Float3(vdir),data1,Double4(pla1),cmax1,Double4(pla2),cmax2,Double4(pla3),cmax3,npt1,npt12,np,plist,code,posxy,posz,velrhop);
+    else     KerInOutIntpVelFr3_f3 <<<sgrid,SPHBSIZE>>> (izone,Float3(velcorr3)    ,data3,Double4(pla1),cmax1,Double4(pla2),cmax2,Double4(pla3),cmax3,npt1,npt12,np,plist,code,posxy,posz,velrhop);
+  }
+}
+//<vs_meeshdat_end>
 
 
 }
