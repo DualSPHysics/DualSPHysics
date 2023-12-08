@@ -47,6 +47,8 @@
 //#define DISABLE_TIMERS     ///<Compiles without timers. | Compilado sin timers.
 //#define DISABLE_BSMODES    ///<compiles without advanced BlockSize modes.
 
+// #define DISABLE_FLEXSTRUC_MDBC  ///<Prevents mDBC normals defined on flexible structures since still in beta. <vs_flexstruc>
+
 
 //-Removes dependencies from precompiled libraries.
 #include "JNumexLibDef.h"    //Defines DISABLE_NUMEXLIB to compile without Numex library.

@@ -1223,6 +1223,14 @@ void JSphCpuSingle::FlexStrucInit(){
   //-Configure code for flexible structures.
   FlexStruc->ConfigCode(Npb,Code_c->ptr());
   JSphCpu::SetFlexStrucClampCodes(Npb,Pos_c->cptr(),FlexStrucDatac,Code_c->ptr());
+  //-Check if mDBC is being used on a flexible structure.
+  if(TBoundary==BC_MDBC&&JSphCpu::FlexStrucHasNormals(Npb,Code_c->cptr(),BoundNor_c->cptr())){
+#ifdef DISABLE_FLEXSTRUC_MDBC
+    Run_Exceptioon("mDBC normals are not permitted to be set on a flexible structure (unset DISABLE_FLEXSTRUC_MDBC to override).");
+#else
+    Log->PrintWarning("Using mDBC on a flexible structure is still in development.");
+#endif
+  }
   //-Count number of flexible structure particles.
   CaseNflexstruc=JSphCpu::CountFlexStrucParts(Npb,Code_c->cptr());
   //-Allocate arrays.

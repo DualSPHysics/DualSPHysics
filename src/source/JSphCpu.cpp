@@ -2023,6 +2023,16 @@ void JSphCpu::SetFlexStrucClampCodes(unsigned np,const tdouble3* pos
 }
 
 //==============================================================================
+/// Checks if any normals are defined for the flexible structure particles.
+/// Comprueba si se han definido normales para las partículas de estructura flexible.
+//==============================================================================
+bool JSphCpu::FlexStrucHasNormals(unsigned npb,const typecode* code,const tfloat3* boundnor)const{
+  vector<unsigned> idx(npb);
+  iota(idx.begin(),idx.end(),0);
+  return any_of(idx.begin(),idx.end(),[code,boundnor](unsigned i){return CODE_IsFlexStrucFlex(code[i]) && (boundnor[i].x!=0 || boundnor[i].y!=0 || boundnor[i].z!=0);});
+}
+
+//==============================================================================
 /// Counts the number of flexible structure particles (includes clamps).
 /// Cuenta el número de partículas de estructura flexible (incluye abrazaderas).
 //==============================================================================

@@ -411,6 +411,7 @@ void ComputeOutputPartsMk(byte resmask,bool cmband,bool inverse
 
 //<vs_flexstruc_ini>
 void SetFlexStrucClampCodes(unsigned npb,const float4* poscell,const StFlexStrucData* flexstrucdata,typecode* code);
+bool FlexStrucHasNormals(unsigned npb,const typecode* code,const float3* boundnor);
 unsigned CountFlexStrucParts(unsigned npb,const typecode* code);
 void CalcFlexStrucRidp(unsigned npb,const typecode* code,unsigned* flexstrucridp);
 void GatherToFlexStrucArray(unsigned npfs,const unsigned* flexstrucridp,const float4* fullarray,float4* flexstrucarray);
