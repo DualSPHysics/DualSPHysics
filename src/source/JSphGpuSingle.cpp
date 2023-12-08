@@ -531,7 +531,7 @@ void JSphGpuSingle::Interaction_Forces(TpInterStep interstep){
   //-Interaction flexible structure-flexible structure.
   if(FlexStruc){
     Timersg->TmStart(TMG_SuFlexStruc,false);
-    const StInterParmsFlexStrucg parmsfs=StrInterParmsFlexStrucg(Simulate2D,TKernel,(TVisco==VISCO_LaminarSPS),UseNormals
+    const StInterParmsFlexStrucg parmsfs=StrInterParmsFlexStrucg(Simulate2D,TKernel,TVisco,UseNormals
       ,Visco*ViscoBoundFactor,CaseNflexstruc,DivData,Dcell_g->cptr()
       ,PosCell_g->cptr(),Velrho_g->cptr(),Code_g->cptr()
       ,FlexStrucDatag,FlexStrucRidpg,PosCell0g,NumPairsg,PairIdxg,KerCorrg,BoundNor0g,DefGradg,AG_PTR(BoundNor_g),FlexStrucDtg,Ace_g->ptr(),NULL);
@@ -961,7 +961,7 @@ void JSphGpuSingle::SaveData(){
   //-Stores particle data. | Graba datos de particulas.
   JDataArrays arrays;
   AddBasicArrays(arrays,npsave,AuxPos_c->cptr(),Idp_c->cptr(),AuxVel_c->cptr(),AuxRho_c->cptr());
-    JSph::SaveData(npsave,arrays,1,&vdom,infoplus);
+  JSph::SaveData(npsave,arrays,1,&vdom,infoplus);
   //-Save VTK file with current boundary normals (for debug).
   if(UseNormals && SvNormals)SaveVtkNormalsGpu(DirVtkOut+"Normals.vtk",Part
     ,npsave,Npb,Posxy_g->cptr(),Posz_g->cptr(),Idp_g->cptr(),BoundNor_g->cptr());
@@ -1079,7 +1079,7 @@ void JSphGpuSingle::FlexStrucInit(){
   //-Set the indices for each particle pair.
   cusph::SetFlexStrucPairs(CaseNflexstruc,PosCell0g,PairIdxg);
   //-Interaction parameters.
-  const StInterParmsFlexStrucg parmsfs=StrInterParmsFlexStrucg(Simulate2D,TKernel,(TVisco==VISCO_LaminarSPS),UseNormals
+  const StInterParmsFlexStrucg parmsfs=StrInterParmsFlexStrucg(Simulate2D,TKernel,TVisco,UseNormals
     ,Visco*ViscoBoundFactor,CaseNflexstruc,DivData,Dcell_g->cptr()
     ,PosCell_g->cptr(),Velrho_g->cptr(),Code_g->cptr()
     ,FlexStrucDatag,FlexStrucRidpg,PosCell0g,NumPairsg,PairIdxg,KerCorrg,BoundNor0g,DefGradg,AG_PTR(BoundNor_g),FlexStrucDtg,Ace_g->ptr(),NULL);
@@ -1096,7 +1096,7 @@ void JSphGpuSingle::FlexStrucInit(){
 //==============================================================================
 void JSphGpuSingle::UpdateFlexStrucGeometry(){
   Timersg->TmStart(TMG_SuFlexStruc,false);
-  const StInterParmsFlexStrucg parmsfs=StrInterParmsFlexStrucg(Simulate2D,TKernel,(TVisco==VISCO_LaminarSPS),UseNormals
+  const StInterParmsFlexStrucg parmsfs=StrInterParmsFlexStrucg(Simulate2D,TKernel,TVisco,UseNormals
     ,Visco*ViscoBoundFactor,CaseNflexstruc,DivData,Dcell_g->cptr()
     ,PosCell_g->cptr(),Velrho_g->cptr(),Code_g->cptr()
     ,FlexStrucDatag,FlexStrucRidpg,PosCell0g,NumPairsg,PairIdxg,KerCorrg,BoundNor0g,DefGradg,AG_PTR(BoundNor_g),FlexStrucDtg,Ace_g->ptr(),NULL);

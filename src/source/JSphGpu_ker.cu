@@ -3597,7 +3597,7 @@ __device__ tmatrix3f KerCalcFlexStrucPK1Stress(const tmatrix3f& defgrad,const tm
 /// Interaction forces for the flexible structure particles.
 /// Fuerzas de interacción para las partículas de estructura flexible.
 //==============================================================================
-template<TpKernel tker,bool lamsps> __global__ void KerInteractionForcesFlexStruc(unsigned n,float visco
+template<TpKernel tker,TpVisco tvisco> __global__ void KerInteractionForcesFlexStruc(unsigned n,float visco
     ,int scelldiv,int4 nc,int3 cellzero,const int2* beginendcellfluid,const unsigned* dcell
     ,const float4* poscell,const float4* velrhop,const typecode* code
     ,const StFlexStrucData* flexstrucdata,const unsigned* flexstrucridp
@@ -3662,7 +3662,7 @@ template<TpKernel tker,bool lamsps> __global__ void KerInteractionForcesFlexStru
                   float4 velrhop2=velrhop[p2];
                   const float dvx=velrhop1.x-velrhop2.x,dvy=velrhop1.y-velrhop2.y,dvz=velrhop1.z-velrhop2.z;
                   //-Artificial viscosity.
-                  if(!lamsps){
+                  if(tvisco==VISCO_Artificial){
                     const float dot=drx*dvx+dry*dvy+drz*dvz;
                     if(dot<0){
                       const float dot_rr2=dot/(rr2+CTE.eta2);
@@ -3753,11 +3753,11 @@ template<TpKernel tker,bool lamsps> __global__ void KerInteractionForcesFlexStru
 /// Interaction forces for the flexible structure particles.
 /// Fuerzas de interacción para las partículas de estructura flexible.
 //==============================================================================
-template<TpKernel tker,bool lamsps> void Interaction_ForcesFlexStrucT(const StInterParmsFlexStrucg& tfs){
+template<TpKernel tker,TpVisco tvisco> void Interaction_ForcesFlexStrucT(const StInterParmsFlexStrucg& tfs){
   if(tfs.vnpfs){
     const StDivDataGpu& dvd=tfs.divdatag;
     dim3 sgridb=GetSimpleGridSize(tfs.vnpfs,SPHBSIZE);
-    KerInteractionForcesFlexStruc<tker,lamsps> <<<sgridb,SPHBSIZE,0,tfs.stm>>>
+    KerInteractionForcesFlexStruc<tker,tvisco> <<<sgridb,SPHBSIZE,0,tfs.stm>>>
         (tfs.vnpfs,tfs.viscob,dvd.scelldiv,dvd.nc,dvd.cellzero,dvd.beginendcell+dvd.cellfluid,tfs.dcell,tfs.poscell,tfs.velrhop,tfs.code,tfs.flexstrucdata,tfs.flexstrucridp,tfs.poscell0,tfs.numpairs,tfs.pairidx,tfs.kercorr,tfs.defgrad,tfs.flexstrucdt,tfs.ace);
   }
 }
@@ -3767,8 +3767,14 @@ template<TpKernel tker,bool lamsps> void Interaction_ForcesFlexStrucT(const StIn
 /// Fuerzas de interacción para las partículas de estructura flexible.
 //==============================================================================
 template<TpKernel tker> void Interaction_ForcesFlexStruc_gt0(const StInterParmsFlexStrucg& tfs){
-  if(tfs.lamsps)Interaction_ForcesFlexStrucT<tker,true>  (tfs);
-  else          Interaction_ForcesFlexStrucT<tker,false> (tfs);
+#ifdef FAST_COMPILATION
+  if(tfs.tvisco!=VISCO_Artificial)throw "Extra viscosity options are disabled for FastCompilation...";
+  Interaction_ForcesFlexStrucT<tker,VISCO_Artificial> (tfs);
+#else
+  if(tfs.tvisco==VISCO_Artificial)     Interaction_ForcesFlexStrucT<tker,VISCO_Artificial>(tfs);
+  else if(tfs.tvisco==VISCO_Laminar)   Interaction_ForcesFlexStrucT<tker,VISCO_Laminar>   (tfs);
+  else if(tfs.tvisco==VISCO_LaminarSPS)Interaction_ForcesFlexStrucT<tker,VISCO_LaminarSPS>(tfs);
+#endif
 }
 
 //==============================================================================

@@ -32,9 +32,6 @@
     <Filter Include="Src_Moorings">
       <UniqueIdentifier>{b27c9e66-9b04-4b69-8a55-8dc262bfa75b}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Src_FSI">
-      <UniqueIdentifier>{0e625a79-26ea-4ba9-b426-1311f7a59dbe}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Source\CellDiv">
       <UniqueIdentifier>{a5e48308-a8b0-4f2e-a73d-ddec5dd622de}</UniqueIdentifier>
     </Filter>

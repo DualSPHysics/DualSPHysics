@@ -85,6 +85,7 @@ inline double InterpolationBilinear(double x,double y,double px,double py
   return(InterpolationLinear(y,py,py+dy,vy0,vy1));
 }
 
+
 //==============================================================================
 /// Calcula el determinante de una matriz de 3x3.
 /// Returns the determinant of a 3x3 matrix.

@@ -295,13 +295,13 @@ protected:
   void CalcFlexStrucNormals()const;
   void UpdateFlexStrucGeometry()const;
   inline tmatrix3f CalcFlexStrucPK1Stress(const tmatrix3f& defgrad,const tmatrix6f& cmat)const;
-  template<TpKernel tker,bool lamsps> void InteractionForcesFlexStruc(unsigned np,float visco
+  template<TpKernel tker,TpVisco tvisco> void InteractionForcesFlexStruc(unsigned np,float visco
       ,StDivDataCpu divdata,const unsigned* dcell
       ,const tdouble3* pos,const tfloat4* velrhop,const float* press,const typecode* code
       ,const StFlexStrucData* flexstrucdata,const unsigned* flexstrucridp
       ,const tdouble3* pos0,const unsigned* numpairs,const unsigned* const* pairidx,const tmatrix3f* kercorr,const tmatrix3f* defgrad
       ,float& flexstrucdt,tfloat3* ace)const;
-  template<TpKernel tker,bool lamsps> void Interaction_ForcesFlexStrucT(float& flexstrucdtmax)const;
+  template<TpKernel tker,TpVisco tvisco> void Interaction_ForcesFlexStrucT(float& flexstrucdtmax)const;
   template<TpKernel tker> void Interaction_ForcesFlexStruc_ct0(float& flexstrucdtmax)const;
   void Interaction_ForcesFlexStruc(float& flexstrucdtmax)const;
   void ComputeSemiImplicitEulerFlexStruc(double dt,tdouble3* pos,unsigned* dcell,typecode* code)const;

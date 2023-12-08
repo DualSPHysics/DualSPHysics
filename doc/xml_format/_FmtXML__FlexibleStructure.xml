@@ -8,15 +8,15 @@
 <!-- <_parameter... or changing the key value.                                 --> 
 <execution>
 	<special>
-		<structures>
-			<structure mkbound="1">
-				<Density value="1161.54" comment="Structure material density" units_comment="kg/m^3" />
-				<YoungMod value="3.5e6" comment="Young's Modulus" units_comment="Pa" />
-				<PoissonRatio value="0.49" comment="Poisson ratio" />
-				<ConstModel value="StVenantKirchhoff" comment="Constitutive model (PlaneStrain, PlaneStress, StVenantKirchhoff)" />
-				<HGFactor value="0.1" comment="Hourglass correction factor: keep as low as possible (default=0)" />
-			</structure>
+		<flexstrucs>
+			<flexstrucbody mkbound="1" mkclamp="0">
+                <density value="1161.54" comment="Mass density" units_comment="kg/m^3" />
+                <youngmod value="3.5e6" comment="Young Modulus" units_comment="Pa" />
+                <poissratio value="0.49" comment="Poisson ratio" />
+                <constitmodel value="3" comment="Constitutive model 1:Plane Strain (2D), 2:Plane Stress (2D), 3:St. Venant Kirchhoff (3D)" />
+                <hgfactor value="0.1" comment="Hourglass correction factor: keep as low as possible (default=0)" />
+			</flexstrucbody>
 			...
-		</structures>
+		</flexstrucs>
 	</special>
 </execution>

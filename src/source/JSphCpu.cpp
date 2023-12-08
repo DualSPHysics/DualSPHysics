@@ -2356,7 +2356,7 @@ inline tmatrix3f JSphCpu::CalcFlexStrucPK1Stress(const tmatrix3f& defgrad,const 
 /// Interaction forces for the flexible structure particles.
 /// Fuerzas de interacción para las partículas de estructura flexible.
 //==============================================================================
-template<TpKernel tker,bool lamsps> void JSphCpu::InteractionForcesFlexStruc(unsigned np,float visco
+template<TpKernel tker,TpVisco tvisco> void JSphCpu::InteractionForcesFlexStruc(unsigned np,float visco
     ,StDivDataCpu divdata,const unsigned* dcell
     ,const tdouble3* pos,const tfloat4* velrhop,const float* press,const typecode* code
     ,const StFlexStrucData* flexstrucdata,const unsigned* flexstrucridp
@@ -2425,7 +2425,7 @@ template<TpKernel tker,bool lamsps> void JSphCpu::InteractionForcesFlexStruc(uns
                 tfloat4 velrhop2=velrhop[p2];
                 const float dvx=velrhop1.x-velrhop2.x,dvy=velrhop1.y-velrhop2.y,dvz=velrhop1.z-velrhop2.z;
                 //-Artificial viscosity.
-                if(!lamsps){
+                if(tvisco==VISCO_Artificial){
                   const float dot=drx*dvx+dry*dvy+drz*dvz;
                   if(dot<0){
                     const float dot_rr2=dot/(rr2+Eta2);
@@ -2518,9 +2518,9 @@ template<TpKernel tker,bool lamsps> void JSphCpu::InteractionForcesFlexStruc(uns
 /// Interaction forces for the flexible structure particles.
 /// Fuerzas de interacción para las partículas de estructura flexible.
 //==============================================================================
-template<TpKernel tker,bool lamsps> void JSphCpu::Interaction_ForcesFlexStrucT(float& flexstrucdtmax)const{
+template<TpKernel tker,TpVisco tvisco> void JSphCpu::Interaction_ForcesFlexStrucT(float& flexstrucdtmax)const{
   if(CaseNflexstruc){
-    InteractionForcesFlexStruc<tker,lamsps>
+    InteractionForcesFlexStruc<tker,tvisco>
       (CaseNflexstruc,Visco*ViscoBoundFactor,DivData,Dcell_c->cptr(),Pos_c->cptr(),Velrho_c->cptr(),Press_c->cptr(),Code_c->cptr(),FlexStrucDatac,FlexStrucRidpc,Pos0c,NumPairsc,PairIdxc,KerCorrc,DefGradc,flexstrucdtmax,Ace_c->ptr());
   }
 }
@@ -2530,8 +2530,9 @@ template<TpKernel tker,bool lamsps> void JSphCpu::Interaction_ForcesFlexStrucT(f
 /// Fuerzas de interacción para las partículas de estructura flexible.
 //==============================================================================
 template<TpKernel tker> void JSphCpu::Interaction_ForcesFlexStruc_ct0(float& flexstrucdtmax)const{
-  if(TVisco==VISCO_LaminarSPS)Interaction_ForcesFlexStrucT<tker,true> (flexstrucdtmax);
-  else                        Interaction_ForcesFlexStrucT<tker,false>(flexstrucdtmax);
+       if(TVisco==VISCO_Artificial)Interaction_ForcesFlexStrucT<tker,VISCO_Artificial>(flexstrucdtmax);
+  else if(TVisco==VISCO_Laminar   )Interaction_ForcesFlexStrucT<tker,VISCO_Laminar   >(flexstrucdtmax);
+  else if(TVisco==VISCO_LaminarSPS)Interaction_ForcesFlexStrucT<tker,VISCO_LaminarSPS>(flexstrucdtmax);
 }
 
 //==============================================================================
