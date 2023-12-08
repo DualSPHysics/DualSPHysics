@@ -25,7 +25,9 @@
 #include "JAppInfoDef.h"
 #include "JParticlesDef.h"
 #include "JPeriodicDef.h"
+#include "JViscosityDef.h"
 #include "FunSphKernelDef.h"
+#include "JMeshDataDef.h" //<vs_meeshdat>
 #include "JDsDcellDef.h"  //-Includes definitions for cell codificantion as unsigned (32 bits) value.
 
 #include "OmpDefs.h"
@@ -446,11 +448,7 @@ typedef enum{
 }TpKernel;                  
 
 ///Types of viscosity treatment.
-typedef enum{ 
-  VISCO_LaminarSPS=2,        ///<Laminar viscosity and Sub-Partice Scale Turbulence.
-  VISCO_Artificial=1,        ///<Artificial viscosity.
-  VISCO_None=0 
-}TpVisco;            
+//-Defined in JViscosityDef.h
 
 ///Types of boundary conditions.
 typedef enum{ 

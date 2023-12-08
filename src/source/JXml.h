@@ -101,7 +101,7 @@ public:
   /// \param createpath Allows to create the path if does not exist,
   /// otherwise returns \a NULL.
   //==============================================================================
-  TiXmlNode* GetNode(const std::string& path,bool createpath=false);
+  TiXmlNode* GetNode(const std::string& path,bool createpath=false)const;
 
   //==============================================================================
   /// Returns the requested node.
@@ -120,7 +120,7 @@ public:
   /// Returns the requested node and if does not exist an exception is thrown.
   /// \throw The requested node does not exist.
   //==============================================================================
-  TiXmlNode* GetNodeError(const std::string& path);
+  TiXmlNode* GetNodeError(const std::string& path)const;
 
   //==============================================================================
   /// Returns the first requested element of a node TiXmlNode.

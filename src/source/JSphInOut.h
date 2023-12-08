@@ -203,6 +203,14 @@ public:
   unsigned CreateListCpu(unsigned npf,unsigned pini
     ,const tdouble3* pos,const unsigned* idp,typecode* code,int* inoutpart);
 
+//<vs_meeshdat_ini>
+  void ComputeZsurfPartCpu(unsigned inoutcount,const int* inoutpart
+    ,const tdouble3* pos,const typecode* code,const unsigned* idp,float* zsurfpart);
+  void ComputeZsurfokPartCpu(unsigned inoutcount,const int* inoutpart
+    ,const tdouble3* pos,const typecode* code,const unsigned* idp,byte* zsurfok);
+  void ComputeZsurfokPtosCpu(byte* zsurfok);
+//<vs_meeshdat_end>
+
   void SetAnalyticalDataCpu(float timestep,unsigned inoutcount,const int* inoutpart
     ,const tdouble3* pos,const typecode* code,const unsigned* idp,const float* zsurfpart
     ,tfloat4* velrhop);
@@ -236,6 +244,19 @@ public:
   unsigned CreateListGpu(unsigned npf,unsigned pini
     ,const double2* posxyg,const double* poszg,typecode* codeg
     ,unsigned size,int* inoutpartg);
+
+//<vs_meeshdat_ini>
+  void ComputeZsurfPartGpu(unsigned inoutcount,const int* inoutpartg
+    ,const double2* posxyg,const double* poszg,const typecode* codeg
+    ,const unsigned* idpg,float* zsurfpartg,byte* zsurfokg=NULL);
+  void ComputeZsurfokPartGpu(unsigned inoutcount,const int* inoutpartg
+    ,const double2* posxyg,const double* poszg,const typecode* codeg
+    ,const unsigned* idpg,byte* zsurfokg)
+  { 
+    ComputeZsurfPartGpu(inoutcount,inoutpartg,posxyg,poszg,codeg,idpg,NULL,zsurfokg); 
+  }
+  void ComputeZsurfokPtosGpu(byte* zsurfokg);
+//<vs_meeshdat_end>
 
   void SetAnalyticalDataGpu(float timestep,unsigned inoutcount,const int* inoutpartg
     ,const double2* posxyg,const double* poszg,const typecode* codeg
@@ -314,6 +335,22 @@ public:
   byte  GetExtrapVelMask() const;
 #endif
 
+//<vs_meeshdat_ini>
+  //-Set uniform Zsurf.
+  void RnSetZsurfUniform(unsigned idzone,double zsurf){ RnSetZsurfUniform(idzone,0,zsurf,0,zsurf); }
+  void RnSetZsurfUniform(unsigned idzone,double time0,double zsurf0,double time1,double zsurf1);
+  //-Set non-uniform Zsurf.
+  unsigned RnGetZsurfNpt(unsigned idzone)const;
+  StRnZsurfData RnGetZsurfPtr(unsigned idzone,double time0,double time1);
+  StZsurfResult RnGetCurrentZsurf(unsigned idzone);
+
+  //-Set uniform Velocity.
+  void RnSetVelUniform(unsigned idzone,float vel){ RnSetVelUniform(idzone,0,vel,0,vel); }
+  void RnSetVelUniform(unsigned idzone,double time0,float vel0,double time1,float vel1);
+  //-Set non-uniform Velocity.
+  jmsh::StMeshPts RnGetVelMeshInfo(unsigned idzone)const;
+  StRnVelData RnGetVelPtr(unsigned idzone,double time0,double time1);
+//<vs_meeshdat_end>
 };
 
 

@@ -37,6 +37,7 @@
 #include "DualSphDef.h"
 #include "JSaveCsv2.h"
 #include "JCellDivDataCpu.h"
+#include "JMeshDataDef.h" //<vs_meeshdat>
 
 #ifdef _WITHGPU
 #include "JCellDivDataGpu.h"
@@ -45,6 +46,10 @@
 
 
 class JLog2;
+namespace jmsh{          //<vs_meeshdat>
+  class JMeshData;       //<vs_meeshdat>
+  class JMeshTDatasSave; //<vs_meeshdat>
+}                        //<vs_meeshdat>
 
 //##############################################################################
 //# JGaugeItem
@@ -70,6 +75,7 @@ public:
      GAUGE_Vel
     ,GAUGE_Swl
     ,GAUGE_MaxZ
+    ,GAUGE_Mesh   //<vs_meeshdat>
     ,GAUGE_Force
   }TpGauge;
 
@@ -386,6 +392,135 @@ public:
  #endif
 };
 
+
+//<vs_meeshdat_ini>
+//##############################################################################
+//# JGaugeMesh
+//##############################################################################
+/// \brief Calculates Velocity and Surface Water Level in a grid of positions.
+class JGaugeMesh : public JGaugeItem
+{
+public:
+  ///Structure with basic information about configuration.
+  typedef struct{
+    tdouble3 ptref;      ///<Initial measurement position.
+    tdouble3 ptend;      ///<Final measurement position.
+    tdouble3 vec1;       ///<First axis vector to define the measurement grid.
+    tdouble3 vec2;       ///<Second axis vector to define the measurement grid.
+    tdouble3 vec3;       ///<Third axis vector to define the measurement grid (used for swl calculation).
+    tdouble3 dispt;      ///<Distance between measurement points.
+    tuint4   npt;        ///<Number of positions.
+    tfloat3 dirdat;      ///<Direction vector for computed linear velocity or other variables.
+    std::string outdata; ///<Output data selection.
+  }StInfo;
+
+  ///Structure with result of JGaugeMesh object.
+  typedef struct StrMeshRes{
+    double timestep;
+    jmsh::JMeshData* meshdat;
+    bool modified;
+    StrMeshRes(){ Reset(); }
+    void Reset(){
+      Set(0,NULL);
+      modified=false;
+    }
+    void Set(double t,jmsh::JMeshData* meshdat){
+      timestep=t; this->meshdat=meshdat; modified=true;
+    }
+  }StMeshRes;
+
+protected:
+  //-Definition.
+  std::string OutDataList;   ///<Output data selection.
+  bool ComputeVelxyz;        ///<Stores velocity in X, Y, Z.
+  bool ComputeVeldir;        ///<Stores velocity in requested direction.
+  bool ComputeRhop;          ///<Stores density.
+  bool ComputeZsurf;         ///<Stores Z surface water.
+  bool SaveCsv;              ///<Saves data in CSV file.
+  bool SaveBin;              ///<Saves data in binary file.
+  jmsh::StMeshBasic MeshBas; ///<Basic mesh configuration.
+  jmsh::StMeshPts MeshPts;   ///<Mesh configuration for calculations. 
+  float KcLimit;             ///<Minimum value of sum_wab_vol to apply the Kernel Correction. FLT_MAX to disable (default=0.5)
+  float KcDummy;             ///<Dummy value for non-corrected values. FLT_MAX to disable (default=0)
+  float MassLimit;
+
+
+  //-Auxiliary variables.
+  jmsh::JMeshData* MeshDat;
+  float* MassDat;      ///<Auxiliar memory to compute mass. [MeshPts.npt]
+
+ #ifdef _WITHGPU
+  bool GpuMemory;     ///<Indicates when GPU memory is allocated. 
+  float*  DataRhopg;  ///<Stores on GPU memory density. [GridPts.npt1*GridPts.npt2*GridPts.npt3]
+  float3* DataVxyzg;  ///<Stores on GPU memory velocity in X, Y, Z. [GridPts.npt1*GridPts.npt2*GridPts.npt3]
+  float*  DataVdirg;  ///<Stores on GPU memory velocity in requested direction. [GridPts.npt1*GridPts.npt2*GridPts.npt3]
+  float*  DataZsurfg; ///<Stores on GPU memory Z surface water. [GridPts.npt1*GridPts.npt2]
+  float*  DataMassg;  ///<Stores on GPU memory mass value. [GridPts.npt1*GridPts.npt2*GridPts.npt3]
+ #endif
+
+  //-Results.
+  StrMeshRes Result; ///<Result of the last measure.
+
+  std::vector<StrMeshRes> OutBuff; ///<Results in buffer.
+
+  jmsh::JMeshTDatasSave* MeshDataSave;  ///<Saves data in binary file.
+
+  void Reset();
+  void SetMeshData(const jmsh::StMeshBasic& meshbas,std::string outdata);
+  void ClearResult(){ Result.Reset(); }
+  void StoreResult();
+
+public:
+  JGaugeMesh(unsigned idx,std::string name,const jmsh::StMeshBasic& meshbas
+    ,std::string outdata,unsigned tfmt,unsigned buffersize
+    ,float kclimit,float kcdummy,float masslimit,bool cpu);
+  ~JGaugeMesh();
+
+ #ifdef _WITHGPU
+  void FreeGpuMemory();
+  void AllocGpuMemory();
+ #endif
+
+  static std::string CorrectDataList(std::string datalist);
+  void ConfigDataList(std::string datalist);
+  std::string GetDataList()const;
+
+  StInfo GetInfo()const;
+
+  void SaveResults();
+  void SaveVtkResult(unsigned cpart);
+  unsigned GetPointDef(std::vector<tfloat3>& points)const;
+  void SaveVtkScheme()const;
+
+  jmsh::StMeshBasic GetMeshBas()const{ return(MeshBas); }
+  jmsh::StMeshPts GetMesh()const{ return(MeshPts); }
+  float GetMassLimit()const{ return(MassLimit); }
+  float GetKcLimit()const{ return(KcLimit); }
+  float GetKcDummy()const{ return(KcDummy); }
+
+  const StMeshRes& GetResult()const{ return(Result); }
+
+  const float* GetPtrDataZsurf()const;
+#ifdef _WITHGPU
+  const float* GetPtrDataZsurfg()const;
+#endif
+
+  template<TpKernel tker> void CalculeCpuT(double timestep,const StDivDataCpu& dvd
+    ,unsigned npbok,unsigned npb,unsigned np,const tdouble3* pos
+    ,const typecode* code,const unsigned* idp,const tfloat4* velrho);
+
+   void CalculeCpu(double timestep,const StDivDataCpu& dvd
+    ,unsigned npbok,unsigned npb,unsigned np,const tdouble3* pos
+    ,const typecode* code,const unsigned* idp,const tfloat4* velrho);
+
+ #ifdef _WITHGPU
+  void CalculeGpu(double timestep,const StDivDataGpu& dvd
+    ,unsigned npbok,unsigned npb,unsigned np,const double2* posxy,const double* posz
+    ,const typecode* code,const unsigned* idp,const float4* velrho,float3* aux);
+ #endif
+
+};
+//<vs_meeshdat_end>
 
 //##############################################################################
 //# JGaugeForce

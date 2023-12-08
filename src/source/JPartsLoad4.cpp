@@ -351,11 +351,21 @@ void JPartsLoad4::CalculeLimits(double border,double borderperi,bool perix
   ,bool periy,bool periz,tdouble3& mapmin,tdouble3& mapmax)
 {
   if(CasePosMin==CasePosMax)CalculateCasePos();
+  CalculeLimitsPos(CasePosMin,CasePosMax,border,borderperi,perix,periy,periz,mapmin,mapmax);
+}
+
+//==============================================================================
+/// Calculates and returns position limits with the indicated border.
+/// Calcula y devuelve limites de posicion con el borde indicado.
+//==============================================================================
+void JPartsLoad4::CalculeLimitsPos(tdouble3 posmin,tdouble3 posmax,double border
+  ,double borderperi,bool perix,bool periy,bool periz,tdouble3& mapmin
+  ,tdouble3& mapmax)const
+{
   tdouble3 bor=TDouble3(border);
   if(perix)bor.x=borderperi;
   if(periy)bor.y=borderperi;
   if(periz)bor.z=borderperi;
-  mapmin=CasePosMin-bor;
-  mapmax=CasePosMax+bor;
+  mapmin=posmin-bor;
+  mapmax=posmax+bor;
 }
-

@@ -29,6 +29,7 @@
 //# - Nueva funcion SetShapeWireMode(). (14-10-2021)
 //# - Minor coding style changes. (28-08-2023)
 //# - Nuevas funciones AddShapeCircle(). (16-10-2023)
+//# - Error corregido en AddShapeQuadWire() y otros XXXWire(). (12-11-2023)
 //#############################################################################
 
 /// \file JVtkLib.h \brief Declares the class \ref JVtkLib.

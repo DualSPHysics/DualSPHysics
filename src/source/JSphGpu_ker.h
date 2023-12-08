@@ -93,7 +93,7 @@ typedef struct StrInterParmsg{
   bool symmetry; //<vs_syymmetry>
   TpKernel tkernel;
   TpFtMode ftmode;
-  bool lamsps;
+  TpVisco tvisco;
   TpDensity tdensity;
   TpShifting shiftmode;
   //-Execution values.
@@ -135,7 +135,7 @@ typedef struct StrInterParmsg{
     ,bool symmetry //<vs_syymmetry>
     ,TpKernel tkernel
     ,TpFtMode ftmode
-    ,bool lamsps
+    ,TpVisco tvisco
     ,TpDensity tdensity
     ,TpShifting shiftmode
     ,float viscob,float viscof
@@ -164,7 +164,7 @@ typedef struct StrInterParmsg{
     this->symmetry=symmetry; //<vs_syymmetry>
     this->tkernel=tkernel; 
     this->ftmode=ftmode;
-    this->lamsps=lamsps;
+    this->tvisco=tvisco;
     this->tdensity=tdensity;
     this->shiftmode=shiftmode;
     //-Execution values.

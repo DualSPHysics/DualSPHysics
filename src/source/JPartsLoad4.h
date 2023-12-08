@@ -116,6 +116,8 @@ public:
   void GetMapSize(tdouble3& mapmin,tdouble3& mapmax)const;
   void CalculeLimits(double border,double borderperi
     ,bool perix,bool periy,bool periz,tdouble3& mapmin,tdouble3& mapmax);
+  void CalculeLimitsPos(tdouble3 posmin,tdouble3 posmax,double border,double borderperi
+    ,bool perix,bool periy,bool periz,tdouble3& mapmin,tdouble3& mapmax)const;
 
   bool GetSimulate2D()const{ return(Simulate2D); }
   double GetSimulate2DPosY()const{ return(Simulate2DPosY); }

@@ -59,6 +59,8 @@ public:
 
   /// Returns number of variables.
   unsigned CountVars()const{ return(0); }
+  /// Returns index of requested var or UINT_MAX when it is not found.
+  unsigned GetVarIdx(const std::string& name)const{ return(0); }
   /// Returns name of requested variable according to index.
   std::string GetVarName(unsigned idx)const{ return(""); }
   /// Returns true when variable is numeric. Throws exception when it is not found.

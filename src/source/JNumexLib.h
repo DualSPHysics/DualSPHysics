@@ -22,6 +22,7 @@
 //:# - Interfaz simplificado de JNumex. (17-03-2020)
 //:# - CreateVar() permite remplazar variables y en ese caso devuelve true. (20-03-2020)
 //:# - Minor coding style changes. (28-08-2023)
+//:# - New method GetVarIdx(). (12-11-2023)
 //:#############################################################################
 
 /// \file JNumexLib.h \brief Declares the class \ref JNumexLib.
@@ -80,6 +81,8 @@ public:
 
   /// Returns number of variables.
   unsigned CountVars()const;
+  /// Returns index of requested var or UINT_MAX when it is not found.
+  unsigned GetVarIdx(const std::string& name)const;
   /// Returns name of requested variable according to index.
   std::string GetVarName(unsigned idx)const;
   /// Returns true when variable is numeric. Throws exception when it is not found.

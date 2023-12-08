@@ -40,6 +40,10 @@ class JSphInOutVelAwas;
 class JSphInOutGridData;
 class JGaugeSystem;
 
+namespace jmsh{            //<vs_meeshdat>
+  class JMeshTDatasDsVel;  //<vs_meeshdat>
+}                          //<vs_meeshdat>
+
 
 //##############################################################################
 //# JSphInOutVel
@@ -101,6 +105,10 @@ protected:
 
   JSphInOutGridData* InputVelGrid;  ///<Input velocity is interpolated in time from a data grid (for VelMode==InVelM_Interpolated).
 
+  //<vs_meeshdat_ini>
+  jmsh::JMeshTDatasDsVel* InputMeshVel;  ///<Input velocity in time from mesh data (for VelMode==InVelM_Interpolated).
+  //<vs_meeshdat_end>
+
 protected:
   void CalculateVelMinMax(float& velmin,float& velmax)const;
   void DefineBehaviour();
@@ -156,6 +164,13 @@ public:
   void SaveAwasVelCsv();
   void SaveVtkVelGrid();
 
+  //<vs_meeshdat_ini>
+  void RnSetVelUniform(double time0,float vel0,double time1,float vel1);
+
+  jmsh::StMeshPts RnGetVelMeshInfo()const;
+  StRnVelData RnGetVelPtr(double time0,double time1); 
+
+  //<vs_meeshdat_end>
 };
 
 #endif

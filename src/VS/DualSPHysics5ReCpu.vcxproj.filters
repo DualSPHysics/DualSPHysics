@@ -32,9 +32,6 @@
     <Filter Include="Src_Moorings">
       <UniqueIdentifier>{b27c9e66-9b04-4b69-8a55-8dc262bfa75b}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Src_FSI">
-      <UniqueIdentifier>{0e625a79-26ea-4ba9-b426-1311f7a59dbe}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Source\CellDiv">
       <UniqueIdentifier>{a5e48308-a8b0-4f2e-a73d-ddec5dd622de}</UniqueIdentifier>
     </Filter>
@@ -43,6 +40,9 @@
     </Filter>
     <Filter Include="Source\Inlet">
       <UniqueIdentifier>{4a2918ba-146c-4db2-a88f-96b2ecaedbb9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\MeshData">
+      <UniqueIdentifier>{14081430-9295-419c-9cb1-a37ac6195e86}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -59,9 +59,6 @@
       <Filter>CommonDsph</Filter>
     </ClInclude>
     <ClInclude Include="..\source\JPartOutBi4Save.h">
-      <Filter>CommonDsph</Filter>
-    </ClInclude>
-    <ClInclude Include="..\source\JPartFloatBi4.h">
       <Filter>CommonDsph</Filter>
     </ClInclude>
     <ClInclude Include="..\source\JWaveGen.h">
@@ -451,9 +448,6 @@
     <ClInclude Include="..\source\JComputeMotionRef.h">
       <Filter>Source\Other</Filter>
     </ClInclude>
-    <ClInclude Include="..\source\JFtMotionSave.h">
-      <Filter>Source\Other</Filter>
-    </ClInclude>
     <ClInclude Include="..\source\JPartMotionDef.h">
       <Filter>Source\Other</Filter>
     </ClInclude>
@@ -493,8 +487,44 @@
     <ClInclude Include="..\source\JDsMotionDef.h">
       <Filter>Source\Other</Filter>
     </ClInclude>
-    <ClInclude Include="..\source\JSphFlexStruc.h">
-      <Filter>Src_FSI</Filter>
+    <ClInclude Include="..\source\JDsOutputParts.h">
+      <Filter>Source\Other</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JDsPartFloatSave.h">
+      <Filter>Source\Other</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JDsPartMotionSave.h">
+      <Filter>Source\Other</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JPartMotRefBi4Save.h">
+      <Filter>Source\Other</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JPartFloatInfoBi4.h">
+      <Filter>CommonDsph</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JViscosityDef.h">
+      <Filter>Source</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JMeshData.h">
+      <Filter>Source\MeshData</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JMeshDataDef.h">
+      <Filter>Source\MeshData</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JMeshTDatas.h">
+      <Filter>Source\MeshData</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JMeshTDatasDsVel.h">
+      <Filter>Source\MeshData</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JMeshTDatasSave.h">
+      <Filter>Source\MeshData</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JMeshTDatasXml.h">
+      <Filter>Source\MeshData</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JMeshTDatasLoad.h">
+      <Filter>Source\MeshData</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -505,9 +535,6 @@
       <Filter>CommonDsph</Filter>
     </ClCompile>
     <ClCompile Include="..\source\JPartOutBi4Save.cpp">
-      <Filter>CommonDsph</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\JPartFloatBi4.cpp">
       <Filter>CommonDsph</Filter>
     </ClCompile>
     <ClCompile Include="..\source\JDsphConfig.cpp">
@@ -765,9 +792,6 @@
     <ClCompile Include="..\source\JComputeMotionRef.cpp">
       <Filter>Source\Other</Filter>
     </ClCompile>
-    <ClCompile Include="..\source\JFtMotionSave.cpp">
-      <Filter>Source\Other</Filter>
-    </ClCompile>
     <ClCompile Include="..\source\FunGeo3d.cpp">
       <Filter>Common</Filter>
     </ClCompile>
@@ -783,8 +807,38 @@
     <ClCompile Include="..\source\JDsGpuInfo.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="..\source\JSphFlexStruc.cpp">
-      <Filter>Src_FSI</Filter>
+    <ClCompile Include="..\source\JDsOutputParts.cpp">
+      <Filter>Source\Other</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JDsPartFloatSave.cpp">
+      <Filter>Source\Other</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JDsPartMotionSave.cpp">
+      <Filter>Source\Other</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JPartMotRefBi4Save.cpp">
+      <Filter>Source\Other</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JPartFloatInfoBi4.cpp">
+      <Filter>CommonDsph</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JMeshData.cpp">
+      <Filter>Source\MeshData</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JMeshTDatasDsVel.cpp">
+      <Filter>Source\MeshData</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JMeshTDatasSave.cpp">
+      <Filter>Source\MeshData</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JMeshTDatasLoad.cpp">
+      <Filter>Source\MeshData</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JMeshTDatas.cpp">
+      <Filter>Source\MeshData</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JMeshTDatasXml.cpp">
+      <Filter>Source\MeshData</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

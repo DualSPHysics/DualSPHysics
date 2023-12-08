@@ -68,7 +68,7 @@ void JXml::Reset(){
 /// \param createpath Allows to create the path if does not exist,
 /// otherwise returns \a NULL.
 //==============================================================================
-TiXmlNode* JXml::GetNode(const std::string& path,bool createpath){
+TiXmlNode* JXml::GetNode(const std::string& path,bool createpath)const{
   std::string pathx=path;
   TiXmlNode* node=NULL;
   TiXmlNode* base=Doc;
@@ -116,7 +116,7 @@ TiXmlNode* JXml::GetNodeSimple(const std::string& path,bool checkactive)const{
 /// Returns the requested node and if does not exist an exception is thrown.
 /// \throw The requested node does not exist.
 //==============================================================================
-TiXmlNode* JXml::GetNodeError(const std::string& path){
+TiXmlNode* JXml::GetNodeError(const std::string& path)const{
   TiXmlNode* node=GetNode(path,false);
   if(!node){
     std::string tex="Error reading xml - can not find the element \'";

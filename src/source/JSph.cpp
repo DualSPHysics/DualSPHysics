@@ -652,6 +652,7 @@ void JSph::LoadConfigParameters(const JXml* xml){
   switch(eparms.GetValueInt("ViscoTreatment",true,1)){
     case 1:  TVisco=VISCO_Artificial;  break;
     case 2:  TVisco=VISCO_LaminarSPS;  break;
+    case 3:  TVisco=VISCO_Laminar;     break;
     default: Run_Exceptioon("Viscosity treatment is not valid.");
   }
   Visco=eparms.GetValueFloat("Visco");
@@ -1272,7 +1273,7 @@ void JSph::LoadCaseConfig(const JSphCfgRun* cfg){
     if(PeriY)       Run_Exceptioon("Symmetry is not allowed with periodic conditions in axis Y.");
     if(WithFloating)Run_Exceptioon("Symmetry is not allowed with floating bodies.");
     if(UseChrono)   Run_Exceptioon("Symmetry is not allowed with Chrono objects.");
-    if(TVisco!=VISCO_Artificial)Run_Exceptioon("Symmetry is only allowed with Artificial viscosity.");
+    if(TVisco==VISCO_LaminarSPS)Run_Exceptioon("Symmetry is not allowed with Laminar+SPS viscosity.");
   } //<vs_syymmetry_end>
 
   //<vs_flexstruc_ini>
@@ -1742,7 +1743,7 @@ void JSph::VisuRefs(){
   if(TDensity==DDT_DDT2Full)Log->Print("- Density diffusion Term: Fourtakas (Fourtakas et al., 2019  https://doi.org/10.1016/j.compfluid.2019.06.009)");
   //-Viscosity:
   if(TVisco==VISCO_Artificial)Log->Print("- Viscosity: Artificial (Monaghan, 1992  https://doi.org/10.1146/annurev.aa.30.090192.002551)");
-  if(TVisco==VISCO_LaminarSPS)Log->Print("- Viscosity: Laminar + SPS turbulence model (Dalrymple and Rogers, 2006  https://doi.org/10.1016/j.coastaleng.2005.10.004)");
+  if(TVisco==VISCO_Laminar || TVisco==VISCO_LaminarSPS)Log->Print("- Viscosity: Laminar + SPS turbulence model (Dalrymple and Rogers, 2006  https://doi.org/10.1016/j.coastaleng.2005.10.004)");
   if(ViscoBoundFactor!=1     )Log->Print("- Viscosity: ViscoBoundFactor coefficient (Barreiro et al., 2014  https://doi.org/10.1371/journal.pone.0111031)");
   //-Kernel fuctions:
   if(TKernel==KERNEL_Cubic   )Log->Print("- Kernel: Cubic Spline (Monaghan, 1992  https://doi.org/10.1146/annurev.aa.30.090192.002551)");
@@ -1752,6 +1753,9 @@ void JSph::VisuRefs(){
   if(TStep==STEP_Symplectic)Log->Print("- Time integration scheme: Symplectic (Leimkhuler, 1996  https://doi.org/10.1007/978-3-319-16375-8_1)");
   //-Other features:
   if(PeriActive!=0)Log->Print("- Periodic open boundaries (Gomez-Gesteira et al., 2012  https://doi.org/10.1016/j.cageo.2012.02.029)");
+  //<vs_meeshdat_ini>
+  if(InOut && InOut->Use_InterpolatedVel())Log->Print("- Inflow-outflow with interpolated mesh data (Ruffini et al., 2023  https://doi.org/10.1016/j.oceaneng.2022.113400)");
+  //<vs_meeshdat_end>
   if(InOut        )Log->Print("- Inflow-outflow boundary conditions (Tafuni et al., 2018  https://doi.org/10.1016/j.cma.2018.08.004)");
   if(WithFloating )Log->Print("- Floating objects (Canelas et al., 2015  https://doi.org/10.1002/fld.4031)");
   if(UseDEM       )Log->Print("- Coupling SPH-DCDEM (Canelas et al., 2017  https://doi.org/10.1061/(ASCE)HY.1943-7900.0001331)");
@@ -2174,6 +2178,8 @@ void JSph::LoadCaseParticles(){
   //-Recupera informacion de las particulas cargadas.
   CasePosMin=PartsLoaded->GetCasePosMin();
   CasePosMax=PartsLoaded->GetCasePosMax();
+  if(PartsLoaded->GetCount()==0)
+    Run_Exceptioon("The initial condition does not include any initial particle. Some particle is required to start the simulation.");
 
   //-Computes actual limits of simulation.
   //-Calcula limites reales de la simulacion.
@@ -2734,12 +2740,7 @@ void JSph::ConfigSaveData(unsigned piece,unsigned pieces,std::string div
   parthead.ConfigSimMap(MapRealPosMin,MapRealPosMax);
   parthead.ConfigSimPeri(TpPeriFromPeriActive(PeriActive),PeriXinc,PeriYinc,PeriZinc);
   parthead.ConfigSymmetry(Symmetry); //<vs_syymmetry>
-  switch(TVisco){
-    case VISCO_None:        parthead.ConfigVisco(JPartDataHead::VISCO_None      ,Visco,ViscoBoundFactor);  break;
-    case VISCO_Artificial:  parthead.ConfigVisco(JPartDataHead::VISCO_Artificial,Visco,ViscoBoundFactor);  break;
-    case VISCO_LaminarSPS:  parthead.ConfigVisco(JPartDataHead::VISCO_LaminarSPS,Visco,ViscoBoundFactor);  break;
-    default: Run_Exceptioon("Viscosity type is unknown.");
-  }
+  parthead.ConfigVisco(TVisco,Visco,ViscoBoundFactor);
   if(SvData&SDAT_Binx){
     Log->AddFileInfo(DirDataOut+"Part_Head.ibi4","Binary file with basic information of simulation data.");
     parthead.SaveFile(DirDataOut);
@@ -3567,18 +3568,6 @@ std::string JSph::GetStepName(TpStep tstep){
   string tx;
   if(tstep==STEP_Verlet)tx="Verlet";
   else if(tstep==STEP_Symplectic)tx="Symplectic";
-  else tx="???";
-  return(tx);
-}
-
-//==============================================================================
-/// Returns value of viscosity in text format.
-/// Devuelve el nombre de la viscosidad en texto.
-//==============================================================================
-std::string JSph::GetViscoName(TpVisco tvisco){
-  string tx;
-  if(tvisco==VISCO_Artificial)tx="Artificial";
-  else if(tvisco==VISCO_LaminarSPS)tx="Laminar+SPS";
   else tx="???";
   return(tx);
 }

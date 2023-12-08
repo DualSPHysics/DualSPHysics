@@ -22,6 +22,7 @@
 #include "JSphInOutZone.h"
 #include "JSphInOutVel.h"
 #include "JSphInOutZsurf.h"
+#include "JMeshTDatasDsVel.h" //<vs_meeshdat>
 #include "JSphCpu.h"
 #include "JXml.h"
 #include "JLog2.h"
@@ -871,6 +872,107 @@ unsigned JSphInOut::CreateListGpu(unsigned npf,unsigned pini
 }
 #endif
 
+//<vs_meeshdat_ini>
+//==============================================================================
+/// Computes Zsurf of current inout particles when the zsurf is non-uniform.
+//==============================================================================
+void JSphInOut::ComputeZsurfPartCpu(unsigned inoutcount,const int* inoutpart
+  ,const tdouble3* pos,const typecode* code,const unsigned* idp,float* zsurfpart)
+{
+  const int ncp=int(inoutcount);
+  #ifdef OMP_USE
+    #pragma omp parallel for schedule (static)
+  #endif
+  for(int cp=0;cp<ncp;cp++){
+    const unsigned p=(unsigned)inoutpart[cp];
+    const unsigned izone=CODE_GetIzoneFluidInout(code[p]);
+    const JSphInOutZsurf* zozsurf=List[izone]->GetInOutZsurf();
+    if(zozsurf->GetUniformZsurf())zsurfpart[cp]=zozsurf->GetCurrentZsurfUniform();
+    else zsurfpart[cp]=zozsurf->GetCurrentZsurfNonUniform(pos[p]);
+  }
+}
+
+#ifdef _WITHGPU
+//==============================================================================
+/// Computes Zsurf of current inout particles when the zsurf is non-uniform.
+//==============================================================================
+void JSphInOut::ComputeZsurfPartGpu(unsigned inoutcount,const int* inoutpartg
+  ,const double2* posxyg,const double* poszg,const typecode* codeg
+  ,const unsigned* idpg,float* zsurfpartg,byte* zsurfokg)
+{
+  for(unsigned ci=0;ci<ListSize;ci++){
+    const JSphInOutZsurf* zz=List[ci]->GetInOutZsurf();
+    if(zz->GetUniformZsurf()){
+      cusphinout::InOutComputeZsurfPartSp(inoutcount,(unsigned*)inoutpartg,byte(ci)
+        ,zz->GetCurrentZsurfUniform(),codeg,poszg,zsurfpartg,zsurfokg);
+    }
+    else{
+      cusphinout::InOutComputeZsurfPart(inoutcount,(unsigned*)inoutpartg,byte(ci)
+        ,zz->GetPlaDisx(),zz->GetNptx(),zz->GetCurrentZsurfg()
+        ,codeg,posxyg,poszg,zsurfpartg,zsurfokg);
+    }
+  }
+}
+#endif
+
+//==============================================================================
+/// Computes Zsurf of current inout particles when the zsurf is non-uniform.
+//==============================================================================
+void JSphInOut::ComputeZsurfokPartCpu(unsigned inoutcount,const int* inoutpart
+  ,const tdouble3* pos,const typecode* code,const unsigned* idp,byte* zsurfok)
+{
+  const int ncp=int(inoutcount);
+  #ifdef OMP_USE
+    #pragma omp parallel for schedule (static)
+  #endif
+  for(int cp=0;cp<ncp;cp++){
+    const unsigned p=(unsigned)inoutpart[cp];
+    const unsigned izone=(code[p]&CODE_TYPE_FLUID_INOUT015MASK); //-Substract 16 to obtain the actual zone (0-15).
+    const JSphInOutZsurf* zozsurf=List[izone]->GetInOutZsurf();
+    const float zsurf=(zozsurf->GetUniformZsurf()? zozsurf->GetCurrentZsurfUniform(): zozsurf->GetCurrentZsurfNonUniform(pos[p]));
+    zsurfok[cp]=(pos[p].z<=zsurf? 1: 0);
+  }
+}
+
+//==============================================================================
+/// Computes Zsurf-ok of inout points when the zsurf is non-uniform.
+//==============================================================================
+void JSphInOut::ComputeZsurfokPtosCpu(byte* zsurfok){
+  const int npt=int(PtCount);
+  #ifdef OMP_USE
+    #pragma omp parallel for schedule (static)
+  #endif
+  for(int cpt=0;cpt<npt;cpt++){
+    const byte izone=PtZone[cpt];
+    const tdouble3 ps=PtPos[cpt];
+    const JSphInOutZsurf* zozsurf=List[izone]->GetInOutZsurf();
+    const float zsurf=(zozsurf->GetUniformZsurf()? zozsurf->GetCurrentZsurfUniform(): zozsurf->GetCurrentZsurfNonUniform(ps));
+    zsurfok[cpt]=(ps.z<=zsurf? 1: 0);
+  }
+}
+
+
+#ifdef _WITHGPU
+//==============================================================================
+/// Computes Zsurf-ok of inout points when the zsurf is non-uniform.
+//==============================================================================
+void JSphInOut::ComputeZsurfokPtosGpu(byte* zsurfokg){
+  for(unsigned ci=0;ci<ListSize;ci++){
+    const JSphInOutZsurf* zz=List[ci]->GetInOutZsurf();
+    if(zz->GetUniformZsurf()){
+      cusphinout::InOutComputeZsurfokPtosSp(PtCount,byte(ci),zz->GetCurrentZsurfUniform()
+        ,PtZoneg,PtPoszg,zsurfokg);
+    }
+    else{
+      cusphinout::InOutComputeZsurfokPtos(PtCount,byte(ci)
+        ,zz->GetPlaDisx(),zz->GetNptx(),zz->GetCurrentZsurfg()
+        ,PtZoneg,PtPosxyg,PtPoszg,zsurfokg);
+    }
+  }
+}
+#endif
+//<vs_meeshdat_end>
+
 
 //==============================================================================
 /// Updates velocity data according timestep. 
@@ -1453,3 +1555,72 @@ byte JSphInOut::GetExtrapVelMask()const{
   return(byte(InVelM_Extrapolated)); 
 }
 #endif
+
+//<vs_meeshdat_ini>
+//==============================================================================
+/// Set uniform Zsurf during simulation.
+//==============================================================================
+void JSphInOut::RnSetZsurfUniform(unsigned idzone,double time0,double zsurf0
+  ,double time1,double zsurf1)
+{ 
+  if(idzone>=GetCount())Run_Exceptioon("Inlet zone invalid.");
+  GetZone(idzone)->GetInOutZsurf()->RnSetZsurfUniform(time0,zsurf0,time1,zsurf1);
+}
+
+//==============================================================================
+/// Get number of points to define non-uniform Zsurf during simulation.
+/// Returns zero when it is not variable or non-uniform.
+//==============================================================================
+unsigned JSphInOut::RnGetZsurfNpt(unsigned idzone)const{ 
+  if(idzone>=GetCount())Run_Exceptioon("Inlet zone invalid.");
+  JSphInOutZsurf* izs=GetZone(idzone)->GetInOutZsurf();
+  if(izs->GetZsurfMode()!=InZsurf_Variable || izs->GetUniformZsurf()==true)return(0);
+  return(izs->GetNptx());
+}
+
+//==============================================================================
+/// Prepares data for two times, set time0 and time1 and return pointer (cpu or 
+/// gpu) for the modification of Zsurf data.
+//==============================================================================
+StRnZsurfData JSphInOut::RnGetZsurfPtr(unsigned idzone,double time0,double time1){
+  if(idzone>=GetCount())Run_Exceptioon("Inlet zone invalid.");
+  return(GetZone(idzone)->GetInOutZsurf()->RnGetZsurfPtr(time0,time1));
+}
+
+//==============================================================================
+/// Returns current zsurf and its definition.
+//==============================================================================
+StZsurfResult JSphInOut::RnGetCurrentZsurf(unsigned idzone){
+  if(idzone>=GetCount())Run_Exceptioon("Inlet zone invalid.");
+  return(GetZone(idzone)->GetInOutZsurf()->GetZsurfResults());
+}
+
+
+//==============================================================================
+/// Set uniform Velocity during simulation.
+//==============================================================================
+void JSphInOut::RnSetVelUniform(unsigned idzone,double time0,float vel0
+  ,double time1,float vel1)
+{ 
+  if(idzone>=GetCount())Run_Exceptioon("Inlet zone invalid.");
+  GetZone(idzone)->GetInOutVel()->RnSetVelUniform(time0,vel0,time1,vel1);
+}
+
+//==============================================================================
+/// Returns current velocity mesh definition.
+//==============================================================================
+jmsh::StMeshPts JSphInOut::RnGetVelMeshInfo(unsigned idzone)const{ 
+  if(idzone>=GetCount())Run_Exceptioon("Inlet zone invalid.");
+  return(GetZone(idzone)->GetInOutVel()->RnGetVelMeshInfo());
+}
+
+//==============================================================================
+/// Prepares data for two times, set time0 and time1 and return pointers (cpu or 
+/// gpu) for the modification of velocity data.
+//==============================================================================
+StRnVelData JSphInOut::RnGetVelPtr(unsigned idzone,double time0,double time1){
+  if(idzone>=GetCount())Run_Exceptioon("Inlet zone invalid.");
+  return(GetZone(idzone)->GetInOutVel()->RnGetVelPtr(time0,time1));
+}
+
+//<vs_meeshdat_end>

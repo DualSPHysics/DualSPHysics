@@ -52,6 +52,10 @@ class JDsPartsInit;
 class JGaugeSystem;
 class JGaugeSwl;
 
+namespace jmsh{            //<vs_meeshdat>
+  class JMeshTDatasDsVel;  //<vs_meeshdat>
+}                          //<vs_meeshdat>
+
 //##############################################################################
 //# XML format in _FmtXML_InOut.xml.
 //##############################################################################
