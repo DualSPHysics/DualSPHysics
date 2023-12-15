@@ -34,6 +34,7 @@
 #include <thrust/sort.h>
 #include <thrust/gather.h>
 #include <thrust/logical.h>
+#include <thrust/count.h>
 
 __constant__ StCteInteraction CTE;
 #define CTE_AVAILABLE
