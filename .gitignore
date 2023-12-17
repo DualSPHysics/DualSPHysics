@@ -20,3 +20,5 @@ bin/windows/*.iobj
 bin/windows/*.ipdb
 bin/windows/*.lib
 bin/windows/*.exp
+bin/windows/DualSPHysics*.exe
+bin/linux/DualSPHysics*_linux64
