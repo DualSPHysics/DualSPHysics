@@ -102,34 +102,38 @@ void JCaseEParms::SetComment(const std::string& key,const std::string& comment){
 //==============================================================================
 /// Modifies values Posminx, Posminy and Posminz.
 //==============================================================================
-void JCaseEParms::SetPosmin(std::string x,std::string y,std::string z){
+void JCaseEParms::SetPosmin(std::string x,std::string y,std::string z
+  ,std::string filerow)
+{
   const bool isposmin=true;
   JCaseEParmsPos ps;
   if(CheckPosValue(x,isposmin,ps))
-    Run_Exceptioon(fun::PrintStr("The value posmin.x=\"%s\" is invalid.",x.c_str()));
+    Run_ExceptioonFile(fun::PrintStr("The value posmin.x=\"%s\" is invalid.",x.c_str()),filerow);
   Posminx=ps.textmod;
   if(CheckPosValue(y,isposmin,ps))
-    Run_Exceptioon(fun::PrintStr("The value posmin.y=\"%s\" is invalid.",y.c_str()));
+    Run_ExceptioonFile(fun::PrintStr("The value posmin.y=\"%s\" is invalid.",y.c_str()),filerow);
   Posminy=ps.textmod;
   if(CheckPosValue(z,isposmin,ps))
-    Run_Exceptioon(fun::PrintStr("The value posmin.z=\"%s\" is invalid.",z.c_str()));
+    Run_ExceptioonFile(fun::PrintStr("The value posmin.z=\"%s\" is invalid.",z.c_str()),filerow);
   Posminz=ps.textmod;
 }
 
 //==============================================================================
 /// Modifies values Posmaxx, Posmaxy and Posmaxz.
 //==============================================================================
-void JCaseEParms::SetPosmax(std::string x,std::string y,std::string z){
+void JCaseEParms::SetPosmax(std::string x,std::string y,std::string z
+  ,std::string filerow)
+{
   const bool isposmin=false;
   JCaseEParmsPos ps;
   if(CheckPosValue(x,isposmin,ps))
-    Run_Exceptioon(fun::PrintStr("The value posmax.x=\"%s\" is invalid.",x.c_str()));
+    Run_ExceptioonFile(fun::PrintStr("The value posmax.x=\"%s\" is invalid.",x.c_str()),filerow);
   Posmaxx=ps.textmod;
   if(CheckPosValue(y,isposmin,ps))
-    Run_Exceptioon(fun::PrintStr("The value posmax.y=\"%s\" is invalid.",y.c_str()));
+    Run_ExceptioonFile(fun::PrintStr("The value posmax.y=\"%s\" is invalid.",y.c_str()),filerow);
   Posmaxy=ps.textmod;
   if(CheckPosValue(z,isposmin,ps))
-    Run_Exceptioon(fun::PrintStr("The value posmax.z=\"%s\" is invalid.",z.c_str()));
+    Run_ExceptioonFile(fun::PrintStr("The value posmax.z=\"%s\" is invalid.",z.c_str()),filerow);
   Posmaxz=ps.textmod;
 }
 
