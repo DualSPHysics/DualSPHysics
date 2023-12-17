@@ -14,8 +14,8 @@
 		<parameter key="StepAlgorithm" value="1" comment="Step Algorithm 1:Verlet, 2:Symplectic (default=1)" />
 		<parameter key="VerletSteps" value="40" comment="Verlet only: Number of steps to apply Euler timestepping (default=40)" />
 		<parameter key="Kernel" value="2" comment="Interaction Kernel 1:Cubic Spline, 2:Wendland (default=2)" />
-		<parameter key="ViscoTreatment" value="1" comment="Viscosity formulation 1:Artificial, 2:Laminar+SPS (default=1)" />
-		<parameter key="Visco" value="0.01" comment="Viscosity value" />
+		<parameter key="ViscoTreatment" value="1" comment="Viscosity formulation 1:Artificial, 2:Laminar+SPS, 3:Laminar (default=1)" />
+		<parameter key="Visco" value="0.01" comment="Viscosity value. Typically 0.01 for Artificial and 1e-6 m^2/s (water kinematic viscosity) for Laminar" />
 		<parameter key="ViscoBoundFactor" value="1" comment="Multiply viscosity value with boundary (default=1)" />
 		<parameter key="#DeltaSPH" value="0" comment="**DEPRECATED** DeltaSPH value, 0.1 is the typical value, with 0 disabled (default=0)" />
 		<parameter key="DensityDT" value="0" comment="Density Diffusion Term 0:None, 1:Molteni, 2:Fourtakas, 3:Fourtakas(full) (default=0)" />
@@ -37,8 +37,9 @@
 		<parameter key="TimeOutExtra" value="0.001" comment="Time out for extra output data on motion and floating information" units_comment="seconds" />
 		<parameter key="RhopOutMin" value="700" comment="Minimum rhop valid (default=700)" units_comment="kg/m^3" />
 		<parameter key="RhopOutMax" value="1300" comment="Maximum rhop valid (default=1300)" units_comment="kg/m^3" />
-		<parameter key="PartsOutMax" value="1" comment="%/100 of fluid particles allowed to be excluded from domain (default=1)" units_comment="decimal" />
 		<parameter key="WrnPartsOut" value="1" comment="Active warning according to number of out particles (default=1)" />
+		<parameter key="MinFluidStop" value="0" comment="Minimum proportion of initial fluid particles to continue the simulation 0:Never stops, 0.1:Stops when fluid drops to 10%. (default=0)" />
+		<parameter key="PartsOutMax" value="1" comment="**DEPRECATED** Proportion of initial fluid particles that can be excluded 0:none, 0.5:half, 1:all (default=1)" />
 		
 		<parameter key="XPeriodicIncZ" value="0" comment="Increase of Z with periodic BC in axis X" units_comment="metres (m)" />
 		<parameter key="XPeriodicIncY" value="0" comment="Increase of Y with periodic BC in axis X" units_comment="metres (m)" />

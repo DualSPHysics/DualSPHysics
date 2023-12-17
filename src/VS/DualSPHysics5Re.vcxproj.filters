@@ -41,6 +41,9 @@
     <Filter Include="Source\Inlet">
       <UniqueIdentifier>{4a2918ba-146c-4db2-a88f-96b2ecaedbb9}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source\MeshData">
+      <UniqueIdentifier>{14081430-9295-419c-9cb1-a37ac6195e86}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\source\JCellDivGpu_ker.h">
@@ -499,6 +502,30 @@
     <ClInclude Include="..\source\JPartFloatInfoBi4.h">
       <Filter>CommonDsph</Filter>
     </ClInclude>
+    <ClInclude Include="..\source\JViscosityDef.h">
+      <Filter>Source</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JMeshData.h">
+      <Filter>Source\MeshData</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JMeshDataDef.h">
+      <Filter>Source\MeshData</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JMeshTDatas.h">
+      <Filter>Source\MeshData</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JMeshTDatasDsVel.h">
+      <Filter>Source\MeshData</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JMeshTDatasSave.h">
+      <Filter>Source\MeshData</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JMeshTDatasXml.h">
+      <Filter>Source\MeshData</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JMeshTDatasLoad.h">
+      <Filter>Source\MeshData</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\source\main.cpp">
@@ -794,6 +821,24 @@
     </ClCompile>
     <ClCompile Include="..\source\JPartFloatInfoBi4.cpp">
       <Filter>CommonDsph</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JMeshData.cpp">
+      <Filter>Source\MeshData</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JMeshTDatasDsVel.cpp">
+      <Filter>Source\MeshData</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JMeshTDatasSave.cpp">
+      <Filter>Source\MeshData</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JMeshTDatasLoad.cpp">
+      <Filter>Source\MeshData</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JMeshTDatas.cpp">
+      <Filter>Source\MeshData</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JMeshTDatasXml.cpp">
+      <Filter>Source\MeshData</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

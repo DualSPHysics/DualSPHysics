@@ -101,10 +101,10 @@
     <CodeAnalysisRules Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" />
     <CodeAnalysisRuleAssemblies Condition="'$(Configuration)|$(Platform)'=='Release|x64'" />
     <CodeAnalysisRuleAssemblies Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" />
-    <TargetName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(ProjectName)5.2_win64</TargetName>
-    <TargetName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(ProjectName)5.2_win64_debug</TargetName>
-    <TargetName Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">$(ProjectName)5.2CPU_win64</TargetName>
-    <TargetName Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">$(ProjectName)5.2CPU_win64_debug</TargetName>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(ProjectName)5.3_win64</TargetName>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(ProjectName)5.3_win64_debug</TargetName>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">$(ProjectName)5.3CPU_win64</TargetName>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">$(ProjectName)5.3CPU_win64_debug</TargetName>
     <PreBuildEventUseInBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</PreBuildEventUseInBuild>
     <PreBuildEventUseInBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</PreBuildEventUseInBuild>
     <PreLinkEventUseInBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</PreLinkEventUseInBuild>
@@ -285,7 +285,7 @@
       <Command>IF EXIST cg_variables.h move cg_variables.h $(Configuration)\</Command>
     </PostBuildEvent>
     <CudaCompile>
-      <CodeGeneration>compute_30,sm_30</CodeGeneration>
+      <CodeGeneration>compute_35,sm_35;compute_60,sm_60;compute_61,sm_61;compute_70,sm_70;compute_80,sm_80</CodeGeneration>
     </CudaCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">
@@ -593,6 +593,9 @@ rem %CudaNvcc% -ccbin "$(VCInstallDir)bin" %gpuhw% -use_fast_math -c %ptxinfo% -
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">true</ExcludedFromBuild>
     </ClInclude>
     <ClInclude Include="..\source\JDsMotionDef.h" />
+    <ClInclude Include="..\source\JDsOutputParts.h" />
+    <ClInclude Include="..\source\JDsPartFloatSave.h" />
+    <ClInclude Include="..\source\JDsPartMotionSave.h" />
     <ClInclude Include="..\source\JDsphConfig.h" />
     <ClInclude Include="..\source\JDsPips.h" />
     <ClInclude Include="..\source\JDsPips_ker.h">
@@ -613,12 +616,18 @@ rem %CudaNvcc% -ccbin "$(VCInstallDir)bin" %gpuhw% -use_fast_math -c %ptxinfo% -
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">true</ExcludedFromBuild>
     </ClInclude>
-    <ClInclude Include="..\source\JFtMotionSave.h" />
     <ClInclude Include="..\source\JLinearValue.h" />
     <ClInclude Include="..\source\JLinearValueDef.h" />
     <ClInclude Include="..\source\JLog2.h" />
     <ClInclude Include="..\source\JMatrix4.h" />
     <ClInclude Include="..\source\JMeanValues.h" />
+    <ClInclude Include="..\source\JMeshData.h" />
+    <ClInclude Include="..\source\JMeshDataDef.h" />
+    <ClInclude Include="..\source\JMeshTDatas.h" />
+    <ClInclude Include="..\source\JMeshTDatasDsVel.h" />
+    <ClInclude Include="..\source\JMeshTDatasLoad.h" />
+    <ClInclude Include="..\source\JMeshTDatasSave.h" />
+    <ClInclude Include="..\source\JMeshTDatasXml.h" />
     <ClInclude Include="..\source\JMLPistons.h" />
     <ClInclude Include="..\source\JMLPistonsGpu.h" />
     <ClInclude Include="..\source\JDsMooredFloatings.h" />
@@ -639,9 +648,10 @@ rem %CudaNvcc% -ccbin "$(VCInstallDir)bin" %gpuhw% -use_fast_math -c %ptxinfo% -
     <ClInclude Include="..\source\JOutputCsv.h" />
     <ClInclude Include="..\source\JPartDataBi4.h" />
     <ClInclude Include="..\source\JPartDataHead.h" />
-    <ClInclude Include="..\source\JPartFloatBi4.h" />
+    <ClInclude Include="..\source\JPartFloatInfoBi4.h" />
     <ClInclude Include="..\source\JParticlesDef.h" />
     <ClInclude Include="..\source\JPartMotionDef.h" />
+    <ClInclude Include="..\source\JPartMotRefBi4Save.h" />
     <ClInclude Include="..\source\JPartNormalData.h" />
     <ClInclude Include="..\source\JPartOutBi4Save.h" />
     <ClInclude Include="..\source\JPartsLoad4.h" />
@@ -717,6 +727,7 @@ rem %CudaNvcc% -ccbin "$(VCInstallDir)bin" %gpuhw% -use_fast_math -c %ptxinfo% -
     <ClInclude Include="..\source\JTimerCuda.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">true</ExcludedFromBuild>
     </ClInclude>
+    <ClInclude Include="..\source\JViscosityDef.h" />
     <ClInclude Include="..\source\JVtkLib.h" />
     <ClInclude Include="..\source\JVtkLibDef.h" />
     <ClInclude Include="..\source\JVtkLibUndef.h" />
@@ -799,15 +810,23 @@ rem %CudaNvcc% -ccbin "$(VCInstallDir)bin" %gpuhw% -use_fast_math -c %ptxinfo% -
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">true</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="..\source\JDsOutputParts.cpp" />
+    <ClCompile Include="..\source\JDsPartFloatSave.cpp" />
+    <ClCompile Include="..\source\JDsPartMotionSave.cpp" />
     <ClCompile Include="..\source\JDsphConfig.cpp" />
     <ClCompile Include="..\source\JDsPips.cpp" />
     <ClCompile Include="..\source\JDsTimers.cpp" />
     <ClCompile Include="..\source\JException.cpp" />
     <ClCompile Include="..\source\JDsGaugeItem.cpp" />
     <ClCompile Include="..\source\JDsGaugeSystem.cpp" />
-    <ClCompile Include="..\source\JFtMotionSave.cpp" />
     <ClCompile Include="..\source\JLinearValue.cpp" />
     <ClCompile Include="..\source\JLog2.cpp" />
+    <ClCompile Include="..\source\JMeshData.cpp" />
+    <ClCompile Include="..\source\JMeshTDatas.cpp" />
+    <ClCompile Include="..\source\JMeshTDatasDsVel.cpp" />
+    <ClCompile Include="..\source\JMeshTDatasLoad.cpp" />
+    <ClCompile Include="..\source\JMeshTDatasSave.cpp" />
+    <ClCompile Include="..\source\JMeshTDatasXml.cpp" />
     <ClCompile Include="..\source\JMLPistonsGpu.cpp" />
     <ClCompile Include="..\source\JDsMooredFloatings.cpp" />
     <ClCompile Include="..\source\JMotion.cpp" />
@@ -823,7 +842,8 @@ rem %CudaNvcc% -ccbin "$(VCInstallDir)bin" %gpuhw% -use_fast_math -c %ptxinfo% -
     <ClCompile Include="..\source\JOutputCsv.cpp" />
     <ClCompile Include="..\source\JPartDataBi4.cpp" />
     <ClCompile Include="..\source\JPartDataHead.cpp" />
-    <ClCompile Include="..\source\JPartFloatBi4.cpp" />
+    <ClCompile Include="..\source\JPartFloatInfoBi4.cpp" />
+    <ClCompile Include="..\source\JPartMotRefBi4Save.cpp" />
     <ClCompile Include="..\source\JPartNormalData.cpp" />
     <ClCompile Include="..\source\JPartOutBi4Save.cpp" />
     <ClCompile Include="..\source\JPartsLoad4.cpp" />

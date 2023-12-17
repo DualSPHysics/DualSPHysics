@@ -1128,6 +1128,8 @@ void JSphCpuSingle::SaveData(){
     TimerSim.Stop();
     infoplus.timesim=TimerSim.GetElapsedTimeD()/1000.;
   }
+  else infoplus.SetBasic(Np,npnormal,Np-Npb,CellDivSingle->GetNct());
+
   //-Obtains current domain limits.
   const tdouble6 vdom=CellDivSingle->GetDomainLimitsMinMax();
   //-Stores particle data. | Graba datos de particulas.

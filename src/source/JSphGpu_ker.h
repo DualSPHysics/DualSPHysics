@@ -93,7 +93,7 @@ typedef struct StrInterParmsg{
   bool symmetry; //<vs_syymmetry>
   TpKernel tkernel;
   TpFtMode ftmode;
-  bool lamsps;
+  TpVisco tvisco;
   TpDensity tdensity;
   TpShifting shiftmode;
   //-Execution values.
@@ -139,7 +139,7 @@ typedef struct StrInterParmsg{
     ,bool symmetry //<vs_syymmetry>
     ,TpKernel tkernel
     ,TpFtMode ftmode
-    ,bool lamsps
+    ,TpVisco tvisco
     ,TpDensity tdensity
     ,TpShifting shiftmode
     ,float viscob,float viscof
@@ -170,7 +170,7 @@ typedef struct StrInterParmsg{
     this->symmetry=symmetry; //<vs_syymmetry>
     this->tkernel=tkernel; 
     this->ftmode=ftmode;
-    this->lamsps=lamsps;
+    this->tvisco=tvisco;
     this->tdensity=tdensity;
     this->shiftmode=shiftmode;
     //-Execution values.
@@ -230,7 +230,9 @@ void Interaction_MdbcCorrection(TpKernel tkernel,bool simulate2d
   ,float mdbcthreshold,const StDivDataGpu& dvd,const tdouble3& mapposmin
   ,const double2* posxy,const double* posz,const float4* poscell
   ,const typecode* code,const unsigned* idp,const float3* boundnor
-  ,const float3* motionvel,float4* velrho,const float3* motionace,float* boundonoff,const tfloat3 gravity);
+  ,const float3* motionvel,float4* velrho
+  ,const float3* motionace,float* boundonoff,const tfloat3 gravity
+  ,cudaStream_t stm=NULL);
 
 //-Kernels for the calculation of the DEM forces.
 void Interaction_ForcesDem(unsigned bsize,unsigned nfloat
@@ -257,7 +259,8 @@ void ComputeStepPos2(byte periactive,bool floatings,unsigned np,unsigned npb
 
 //-Kernels for Motion.
 void CalcRidp(bool periactive,unsigned np,unsigned pini,unsigned idini
-  ,unsigned idfin,const typecode* code,const unsigned* idp,unsigned* ridp);
+  ,unsigned idfin,const typecode* code,const unsigned* idp,unsigned* ridp
+  ,cudaStream_t stm=NULL);
 void LoadPosRef(unsigned pscount,unsigned casenfixed,unsigned np
   ,const double2* posxy,const double* posz,const unsigned* ridpmot
   ,const unsigned* idpref,double3* posref);

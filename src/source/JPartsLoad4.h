@@ -61,6 +61,7 @@ protected:
   double Simulate2DPosY;   ///<Y value in 2D simulations.
   bool NpDynamic;          ///<CaseNp can increase.
   bool PosSingle;          ///<Particles position in single precision.
+  double CaseH;            ///<SPH constant h. 
 
   ullong CaseNp;           ///<Number of total particles.  
   ullong CaseNfixed;       ///<Number of fixed boundary particles. 
@@ -115,12 +116,20 @@ public:
   void GetMapSize(tdouble3& mapmin,tdouble3& mapmax)const;
   void CalculeLimits(double border,double borderperi
     ,bool perix,bool periy,bool periz,tdouble3& mapmin,tdouble3& mapmax);
+  void CalculeLimitsPos(tdouble3 posmin,tdouble3 posmax,double border,double borderperi
+    ,bool perix,bool periy,bool periz,tdouble3& mapmin,tdouble3& mapmax)const;
 
   bool GetSimulate2D()const{ return(Simulate2D); }
   double GetSimulate2DPosY()const{ return(Simulate2DPosY); }
   bool GetPosSingle()const{ return(PosSingle); }
   double GetPartBeginTimeStep()const{ return(PartBeginTimeStep); }
   ullong GetPartBeginTotalNp()const{ return(PartBeginTotalNp); }
+
+  double GetCaseH()const{ return(CaseH); }
+  ullong GetCaseNfixed() const{ return(CaseNfixed); }
+  ullong GetCaseNmoving()const{ return(CaseNmoving); }
+  ullong GetCaseNfloat() const{ return(CaseNfloat); }
+  ullong GetCaseNfluid() const{ return(CaseNfluid); }
 
   const unsigned* GetIdp(){ return(Idp); }
   const tdouble3* GetPos(){ return(Pos); }

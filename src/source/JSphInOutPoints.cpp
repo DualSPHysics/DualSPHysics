@@ -272,16 +272,51 @@ void JSphInOutPoints::Create2d_Line(const JXml* sxml,TiXmlElement* ele){
 JMatrix4d JSphInOutPoints::ReadRotate3D(const JXml* sxml,TiXmlElement* ele
   ,std::string& rotationinfo)
 {
-  double rotate=sxml->ReadElementDouble(ele,"rotateaxis","angle",true);
-  string angunits=fun::StrLower(sxml->ReadElementStr(ele,"rotateaxis","anglesunits"));
-  if(angunits=="radians")rotate=rotate*TODEG;
-  else if(angunits!="degrees")sxml->ErrReadElement(ele,"rotate",false,"The value anglesunits must be \"degrees\" or \"radians\"."); 
-  TiXmlElement* rot=ele->FirstChildElement("rotateaxis");
-  tdouble3 pt1=sxml->ReadElementDouble3(rot,"point1");
-  tdouble3 pt2=sxml->ReadElementDouble3(rot,"point2");
-  const JMatrix4d m=JMatrix4d::MatrixRot(rotate,pt1,pt2);
-  //-Return config information about rotation.
-  rotationinfo=fun::PrintStr("  rotated: angle:%g axis:%s",rotate,fun::Double3gRangeStr(pt1,pt2).c_str());
+  JMatrix4d m;
+  const bool rotaxis=sxml->ExistsElement(ele,"rotateaxis");
+  const bool rotadv =sxml->ExistsElement(ele,"rotateadv");
+  if(rotaxis && rotadv)sxml->ErrReadElement(ele,"rotateaxis",false,"Only one rotation configuration is valid (<rotateaxis> or <rotateadv>)."); 
+  if(rotaxis){
+    double rotate=sxml->ReadElementDouble(ele,"rotateaxis","angle",true);
+    const string angunits=fun::StrLower(sxml->ReadElementStr(ele,"rotateaxis","anglesunits"));
+    if(angunits=="radians")rotate=rotate*TODEG;
+    else if(angunits!="degrees")sxml->ErrReadElement(ele,"rotate",false,"The value anglesunits must be \"degrees\" or \"radians\"."); 
+    TiXmlElement* rot=ele->FirstChildElement("rotateaxis");
+    tdouble3 pt1=sxml->ReadElementDouble3(rot,"point1");
+    tdouble3 pt2=sxml->ReadElementDouble3(rot,"point2");
+    m=JMatrix4d::MatrixRot(rotate,pt1,pt2);
+    //-Return config information about rotation.
+    rotationinfo=fun::PrintStr("  rotated: angle:%g axis:%s",rotate,fun::Double3gRangeStr(pt1,pt2).c_str());
+  }
+  if(rotadv){
+    //-Loads angles.
+    double angle1=sxml->ReadElementDouble(ele,"rotateadv","angle1",false);
+    double angle2=sxml->ReadElementDouble(ele,"rotateadv","angle2",true);
+    double angle3=sxml->ReadElementDouble(ele,"rotateadv","angle3",true);
+    //-Loads angles units.
+    const string angunits=fun::StrLower(sxml->ReadElementStr(ele,"rotateadv","anglesunits"));
+    if(angunits=="radians"){
+      angle1=angle1*TODEG;
+      angle2=angle2*TODEG;
+      angle3=angle3*TODEG;
+    }
+    else if(angunits!="degrees")sxml->ErrReadElement(ele,"rotateadv",false,"The value anglesunits must be \"degrees\" or \"radians\"."); 
+    //-Loads axes and intrinsic.
+    const string axes=fun::StrUpper(sxml->ReadElementStr(ele,"rotateadv","axes"));
+    if(axes.size()!=3 || !JMatrix4d::CheckRotateAxes(axes.c_str()))
+      sxml->ErrReadElement(ele,"rotateadv",false,"The axes value is invalid."); 
+    const bool intrinsic=sxml->ReadElementBool(ele,"rotateadv","intrinsic");
+    //-Loads center.
+    TiXmlElement* rot=ele->FirstChildElement("rotateadv");
+    const tdouble3 center=sxml->ReadElementDouble3(rot,"center",true,TDouble3(0));
+    //-Compute rotation matrix.
+    if(center==TDouble3(0))m=JMatrix4d::MatrixRotate(angle1,angle2,angle3,axes.c_str(),intrinsic);
+    else m=JMatrix4d::MatrixRotateCen(center,angle1,angle2,angle3,axes.c_str(),intrinsic);
+    //-Return config information about rotation.
+    rotationinfo=fun::PrintStr("  rotated: angles:(%g,%g,%g) axis:%s intrinsic:%s"
+      ,angle1,angle2,angle3,axes.c_str(),(intrinsic? "True": "False"));
+    if(center!=TDouble3(0))rotationinfo=rotationinfo+fun::PrintStr(" center:(%s)",fun::Double3gStr(center).c_str());
+  }
   return(m);
 }
 
@@ -303,10 +338,10 @@ void JSphInOutPoints::Create3d_Box(const JXml* sxml,TiXmlElement* ele){
   tdouble3 dir=fgeo::VecUnitary(sxml->ReadElementDouble3(ele,"direction"));
 
   //-Applies rotation to inlet definition.
-  double rotate=sxml->ReadElementDouble(ele,"rotateaxis","angle",true);
-  if(rotate){
-    string rotinfo;
-    const JMatrix4d m=ReadRotate3D(sxml,ele,rotinfo);
+  string rotinfo;
+  const JMatrix4d m=ReadRotate3D(sxml,ele,rotinfo);
+  const bool isrotate=(!rotinfo.empty());
+  if(isrotate){
     ConfigInfo.push_back(rotinfo);
     tdouble3 pdir=pt0+dir;
     pt0=m.MulPoint(pt0);
@@ -387,11 +422,10 @@ void JSphInOutPoints::Create3d_Circle(const JXml* sxml,TiXmlElement* ele){
   tdouble3 dir=TDouble3(0);
   if(sxml->ExistsElement(ele,"direction"))dir=sxml->ReadElementDouble3(ele,"direction");
   //-Applies rotation to inlet direction.
-  JMatrix4d m;
-  double rotate=sxml->ReadElementDouble(ele,"rotateaxis","angle",true);
   string rotinfo;
-  if(rotate){
-    m=ReadRotate3D(sxml,ele,rotinfo);
+  const JMatrix4d m=ReadRotate3D(sxml,ele,rotinfo);
+  const bool isrotate=(!rotinfo.empty());
+  if(isrotate){
     tdouble3 pdir=pt0+dir;
     pdir=m.MulPoint(pdir);
     pcen=m.MulPoint(pt0);
@@ -399,7 +433,7 @@ void JSphInOutPoints::Create3d_Circle(const JXml* sxml,TiXmlElement* ele){
   }
   //-Adds config information.
   ConfigInfo.push_back(fun::PrintStr("Circle: center:(%s) radius:%g",fun::Double3gStr(pcen).c_str(),radius));
-  if(rotate)ConfigInfo.push_back(rotinfo);
+  if(isrotate)ConfigInfo.push_back(rotinfo);
 
   //-Updates Direction.
   if(dir!=TDouble3(0)){
@@ -429,7 +463,7 @@ void JSphInOutPoints::Create3d_Circle(const JXml* sxml,TiXmlElement* ele){
       const double angsum=TWOPI/nang; //-In radians.
       for(unsigned c=0;c<nang;c++){
         const tdouble3 ps=pt0+TDouble3(ra*cos(angsum*c),0,ra*sin(angsum*c));
-        Points[Count+p]=(rotate? m.MulPoint(ps): ps)+inimove;
+        Points[Count+p]=(isrotate? m.MulPoint(ps): ps)+inimove;
         p++;
       }
     }
@@ -447,7 +481,7 @@ void JSphInOutPoints::Create3d_Circle(const JXml* sxml,TiXmlElement* ele){
       PtDom[1]=PtDom[0]+vxx;
       PtDom[2]=PtDom[1]+vyy;
       PtDom[3]=PtDom[0]+vyy;
-      if(rotate)for(unsigned c=0;c<4;c++)PtDom[c]=m.MulPoint(PtDom[c]);
+      if(isrotate)for(unsigned c=0;c<4;c++)PtDom[c]=m.MulPoint(PtDom[c]);
       const tdouble3 dir1=Direction*(Dp/2);
       const unsigned nfar=2*(Layers)+1;
       for(unsigned c=0;c<4;c++)PtDom[c]=PtDom[c]+dir1;

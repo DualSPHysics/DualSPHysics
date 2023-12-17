@@ -30,6 +30,8 @@
 #include "FunGeo3d.h"
 #include "JDataArrays.h"
 #include "JVtkLib.h"
+#include "JMeshData.h"        //<vs_meeshdat>
+#include "JMeshTDatasSave.h"  //<vs_meeshdat>
 #ifdef _WITHGPU
   #include "FunctionsCuda.h"
   #include "JDsGauge_ker.h"
@@ -136,6 +138,7 @@ std::string JGaugeItem::GetNameType(TpGauge type){
     case GAUGE_Vel:     return("Vel");
     case GAUGE_Swl:     return("SWL");
     case GAUGE_MaxZ:    return("MaxZ");
+    case GAUGE_Mesh:    return("Mesh");  //<vs_meeshdat>
     case GAUGE_Force:   return("Force");
   }
   return("???");
@@ -166,6 +169,24 @@ void JGaugeItem::GetConfig(std::vector<std::string>& lines)const{
     lines.push_back(fun::PrintStr("Point0.....: (%g,%g,%g)   Height:%g",gau->GetPoint0().x,gau->GetPoint0().y,gau->GetPoint0().z,gau->GetHeight()));
     lines.push_back(fun::PrintStr("DistLimit..: %g",gau->GetDistLimit()));
   }
+  else if(Type==GAUGE_Mesh){  //<vs_meeshdat_ini>
+    const JGaugeMesh* gau=(JGaugeMesh*)this;
+    lines.push_back(fun::PrintStr("MassLimit..: %g",gau->GetMassLimit()));
+    JGaugeMesh::StInfo v=gau->GetInfo();
+    lines.push_back(fun::PrintStr("GaugePoints: %u  (%u x %u x %u)",v.npt.w,v.npt.x,v.npt.y,v.npt.z));
+    lines.push_back(fun::PrintStr("GaugePos...: %s",fun::Double3gRangeStr(v.ptref,v.ptend).c_str()));
+    lines.push_back(fun::PrintStr("Vectors....: (%s) - (%s) - (%s)",fun::Double3gStr(v.vec1).c_str(),fun::Double3gStr(v.vec2).c_str(),fun::Double3gStr(v.vec3).c_str()));
+    lines.push_back(fun::PrintStr("PointDp....: (%s)",fun::Double3gStr(v.dispt).c_str()));
+    lines.push_back(fun::PrintStr("DirDat.....: (%s)",fun::Float3gStr(v.dirdat).c_str()));
+    lines.push_back(fun::PrintStr("Compute....: %s",v.outdata.c_str()));
+    string tkcorr="none";
+    if(gau->GetKcLimit()!=FLT_MAX){
+      tkcorr=fun::PrintStr("ksupport >= %g",gau->GetKcLimit());
+      if(gau->GetKcDummy()!=FLT_MAX)tkcorr=tkcorr+fun::PrintStr(" (dummy:%g)",gau->GetKcDummy());
+      else tkcorr=tkcorr+" (dummy:none)";
+    }
+    lines.push_back(fun::PrintStr("KernelCorr.: %s",tkcorr.c_str()));
+  }  //<vs_meeshdat_end>
   else if(Type==GAUGE_Force){
     const JGaugeForce* gau=(JGaugeForce*)this;
     lines.push_back(fun::PrintStr("MkBound.....: %u (%s particles)",gau->GetMkBound(),TpPartGetStrCode(gau->GetTypeParts())));
@@ -849,6 +870,489 @@ void JGaugeMaxZ::CalculeGpu(double timestep,const StDivDataGpu& dvd
 }
 #endif
 
+
+//<vs_meeshdat_ini>
+//##############################################################################
+//# JGaugeMesh
+//##############################################################################
+//==============================================================================
+/// Constructor.
+//==============================================================================
+JGaugeMesh::JGaugeMesh(unsigned idx,std::string name,const jmsh::StMeshBasic& meshbas
+  ,std::string outdata,unsigned tfmt,unsigned buffersize
+  ,float kclimit,float kcdummy,float masslimit,bool cpu)
+  :JGaugeItem(GAUGE_Mesh,idx,name,cpu,(buffersize<1? 30: buffersize))
+{
+  ClassName="JGaugeMesh";
+  FileInfo=string("Saves mesh data measured from fluid particles (by ")+ClassName+").";
+  MeshDat=NULL;
+  MassDat=NULL;
+ #ifdef _WITHGPU
+  GpuMemory=false;
+  DataRhopg=NULL;
+  DataVxyzg=NULL;
+  DataVdirg=NULL;
+  DataZsurfg=NULL;
+  DataMassg=NULL;
+ #endif
+  MeshDataSave=NULL; 
+  Reset();
+  SetMeshData(meshbas,outdata);
+  KcLimit=kclimit;
+  KcDummy=kcdummy;
+  MassLimit=masslimit;
+  SaveBin=(tfmt&jmsh::TpFmtBin)!=0;
+  SaveCsv=(tfmt&jmsh::TpFmtCsv)!=0;
+}
+
+//==============================================================================
+/// Destructor.
+//==============================================================================
+JGaugeMesh::~JGaugeMesh(){
+  DestructorActive=true;
+  Reset();
+}
+
+//==============================================================================
+/// Initialisation of variables.
+//==============================================================================
+void JGaugeMesh::Reset(){
+  OutDataList="";
+  ComputeRhop=ComputeVelxyz=ComputeVeldir=ComputeZsurf=false;
+  SaveCsv=SaveBin=false;
+  memset(&MeshBas,0,sizeof(jmsh::StMeshBasic));
+  memset(&MeshPts,0,sizeof(jmsh::StMeshPts));
+  MassLimit=0;
+  KcLimit=KcDummy=0;
+  delete   MeshDat; MeshDat=NULL;
+  delete[] MassDat; MassDat=NULL;
+  Result.Reset();
+  for(unsigned c=0;c<unsigned(OutBuff.size());c++)delete OutBuff[c].meshdat;
+  OutBuff.clear();
+  #ifdef _WITHGPU
+    if(!Cpu)FreeGpuMemory();//-Free GPU memory.
+  #endif
+  delete MeshDataSave; MeshDataSave=NULL; 
+  JGaugeItem::Reset();
+}
+
+#ifdef _WITHGPU
+//==============================================================================
+/// Frees GPU memory.
+//==============================================================================
+void JGaugeMesh::FreeGpuMemory(){
+  GpuMemory=false;
+  if(DataRhopg )cudaFree(DataRhopg ); DataRhopg=NULL;
+  if(DataVxyzg )cudaFree(DataVxyzg ); DataVxyzg=NULL;
+  if(DataVdirg )cudaFree(DataVdirg ); DataVdirg=NULL;
+  if(DataZsurfg)cudaFree(DataZsurfg); DataZsurfg=NULL;
+  if(DataMassg )cudaFree(DataMassg ); DataMassg=NULL;
+}
+
+//==============================================================================
+/// Allocates GPU memory.
+//==============================================================================
+void JGaugeMesh::AllocGpuMemory(){
+  if(GpuMemory)FreeGpuMemory();
+  const unsigned npt12=MeshPts.npt1*MeshPts.npt2;
+  const unsigned npt  =MeshPts.npt;
+  if(ComputeRhop  )fcuda::Malloc(&DataRhopg ,npt);
+  if(ComputeVelxyz)fcuda::Malloc(&DataVxyzg ,npt);
+  if(ComputeVeldir)fcuda::Malloc(&DataVdirg ,npt);
+  if(ComputeZsurf )fcuda::Malloc(&DataZsurfg,npt12);
+  if(ComputeZsurf )fcuda::Malloc(&DataMassg ,npt);
+  GpuMemory=true; 
+}
+#endif
+
+//==============================================================================
+/// Configures mesh positions for calculation.
+//==============================================================================
+void JGaugeMesh::SetMeshData(const jmsh::StMeshBasic& meshbas,std::string outdata){
+  //-Free memory.
+  delete   MeshDat; MeshDat=NULL;
+  delete[] MassDat; MassDat=NULL;
+  //-Configures mesh definition.
+  MeshBas=meshbas;
+  //printf("DDD_000 v3:(%f,%f,%f) dis3:%f/%f\n",MeshBas.vec3.x,MeshBas.vec3.y,MeshBas.vec3.z,MeshBas.dis3,MeshBas.dispt3);
+  MeshPts=jmsh::JMeshData::MakeMeshPt(meshbas);
+  //jmsh::JMeshData::PrintMeshPts(MeshPts);
+  //-Configures output data.
+  ConfigDataList(outdata);
+  //-Allocates memory on CPU.
+  MeshDat=new jmsh::JMeshData();
+  MeshDat->ConfigMesh(MeshPts,0,OutDataList);
+  try{
+    if(Cpu && ComputeZsurf)MassDat=new float[MeshPts.npt];
+  }
+  catch(const std::bad_alloc){
+    Run_Exceptioon("Could not allocate the requested memory.");
+  }
+  //-Allocates auxiliary memory on GPU.
+  #ifdef _WITHGPU
+    if(!Cpu)AllocGpuMemory();
+  #endif
+}
+
+//==============================================================================
+/// Returns corrected datalist or "error" when it is invalid.
+//==============================================================================
+std::string JGaugeMesh::CorrectDataList(std::string datalist){
+  bool err=false;
+  string ret;
+  datalist=fun::StrLower(fun::StrWithoutChar(datalist,' '));
+  vector<string> vstr;
+  unsigned nstr=fun::VectorSplitStr(",",datalist,vstr);
+  for(unsigned c=0;c<nstr && !err;c++){
+         if(vstr[c]=="vel"   )ret=ret+(ret.empty()? "": ",")+"Vel";
+    else if(vstr[c]=="veldir")ret=ret+(ret.empty()? "": ",")+"VelDir";
+    else if(vstr[c]=="rhop"  )ret=ret+(ret.empty()? "": ",")+"Rhop";
+    else if(vstr[c]=="zsurf" )ret=ret+(ret.empty()? "": ",")+"Zsurf";
+    else err=true;
+  }
+  return(err? string("error"): ret);
+}
+
+//==============================================================================
+/// Configure the output data selection.
+//==============================================================================
+void JGaugeMesh::ConfigDataList(std::string datalist){
+  ComputeRhop=ComputeVelxyz=ComputeVeldir=ComputeZsurf=false;
+  datalist=fun::StrLower(fun::StrWithoutChar(datalist,' '));
+  vector<string> vstr;
+  unsigned nstr=fun::VectorSplitStr(",",datalist,vstr);
+  for(unsigned c=0;c<nstr;c++){
+         if(vstr[c]=="vel"   )ComputeVelxyz=true;
+    else if(vstr[c]=="veldir")ComputeVeldir=true;
+    else if(vstr[c]=="rhop"  )ComputeRhop=true;
+    else if(vstr[c]=="zsurf" )ComputeZsurf=true;
+    else Run_Exceptioon("Output data name is unknown.");
+  }
+  OutDataList=GetDataList();
+}
+
+//==============================================================================
+/// Returns the output data selection as string.
+//==============================================================================
+std::string JGaugeMesh::GetDataList()const{
+  string ret;
+  if(ComputeVelxyz)ret=ret+(ret.empty()? "": ",")+"Vel";
+  if(ComputeVeldir)ret=ret+(ret.empty()? "": ",")+"VelDir";
+  if(ComputeRhop  )ret=ret+(ret.empty()? "": ",")+"Rhop";
+  if(ComputeZsurf )ret=ret+(ret.empty()? "": ",")+"Zsurf";
+  return(ret);
+}
+
+//==============================================================================
+/// Returns structure with basic information about configuration.
+//==============================================================================
+JGaugeMesh::StInfo JGaugeMesh::GetInfo()const{
+  StInfo v={TDouble3(0),TDouble3(0),TDouble3(0),TDouble3(0),TDouble3(0),TDouble3(0),TUint4(0),TFloat3(0),""};
+  const jmsh::StMeshBasic& mb=MeshBas;
+  const jmsh::StMeshPts& m=MeshPts;
+  v.ptref=m.ptref;
+  v.ptend=m.ptref+(m.vdp1*m.npt1)+(m.vdp2*m.npt2)+(m.vdp3*m.npt3);
+  v.vec1=mb.vec1;
+  v.vec2=mb.vec2;
+  v.vec3=mb.vec3;
+  v.dispt=TDouble3(mb.dispt1,mb.dispt2,mb.dispt3);
+  v.npt=TUint4(m.npt1,m.npt2,m.npt3,m.npt);
+  v.dirdat=m.dirdat;
+  v.outdata=OutDataList;
+  return(v);
+}
+
+//==============================================================================
+/// Record the last measure result.
+//==============================================================================
+void JGaugeMesh::StoreResult(){
+  if(OutputSave){
+    //-Allocates memory for OutSize records.
+    while(unsigned(OutBuff.size())<OutSize){
+      StMeshRes res=StrMeshRes();
+      res.meshdat=new jmsh::JMeshData();
+      OutBuff.push_back(res);
+    }
+    //-Empty buffer.
+    if(OutCount+1>=OutSize)SaveResults();
+    //-Stores last results.
+    jmsh::JMeshData* meshdat=OutBuff[OutCount].meshdat;
+    if(!meshdat->GetNpt()){
+      meshdat->ConfigMesh(MeshPts,0,OutDataList);
+    }
+    meshdat->CopyDataFrom(Result.meshdat);
+    OutBuff[OutCount].Set(Result.timestep,meshdat);
+    OutCount++;
+    //-Updates OutputNext.
+    if(OutputDt){
+      const unsigned nt=unsigned(TimeStep/OutputDt);
+      OutputNext=OutputDt*nt;
+      if(OutputNext<=TimeStep)OutputNext=OutputDt*(nt+1);
+    }
+  }
+}
+
+//==============================================================================
+/// Saves stored results in CSV file.
+//==============================================================================
+void JGaugeMesh::SaveResults(){
+  if(OutCount){
+    if(SaveCsv){
+      bool first=OutFile.empty();
+      if(first){
+        OutFile=GetResultsFileCsv("XXX");
+        Log->AddFileInfo(OutFile,FileInfo);
+      }
+      const JDataArrays* arr=OutBuff[0].meshdat->GetArrays();
+      const unsigned na=arr->Count();
+      for(unsigned ca=0;ca<na;ca++){
+        const JDataArrays::StDataArray& ar=arr->GetArrayCte(ca);
+        string file=GetResultsFileCsv(string("_")+ar.keyname);
+        jcsv::JSaveCsv2 scsv(file,!first,AppInfo.GetCsvSepComa());
+        for(unsigned c=0;c<OutCount;c++){
+          jmsh::JMeshTDatasSave::SaveCsv(OutBuff[c].meshdat,ca,scsv,first && !c);
+        }
+      }
+    }
+    if(SaveBin){
+      if(!MeshDataSave){
+        const string file=GetResultsFile(false,"mbi4");
+        Log->AddFileInfo(file,FileInfo);
+        MeshDataSave=new jmsh::JMeshTDatasSave();
+        MeshDataSave->Config(file,AppInfo.GetFullName(),OutBuff[0].meshdat);
+      }
+      if(OutCount>1){//-MultiData version.
+        //printf("---> OutCount:%u\n",OutCount);
+        jmsh::JMeshData** vmeshdat=new jmsh::JMeshData*[OutCount];
+        for(unsigned c=0;c<OutCount;c++)vmeshdat[c]=OutBuff[c].meshdat;
+        MeshDataSave->SaveDataTimes(OutCount,vmeshdat);
+        delete[] vmeshdat; vmeshdat=NULL;
+      }
+      else{//-SingleData version.
+        for(unsigned c=0;c<OutCount;c++){
+          MeshDataSave->SaveDataTime(OutBuff[c].meshdat);
+        }
+      }
+    }
+    OutCount=0;
+  }
+}
+
+//==============================================================================
+/// Saves last result in VTK file.
+//==============================================================================
+void JGaugeMesh::SaveVtkResult(unsigned cpart){
+  if(JVtkLib::Available()){
+    //-Saves VTK with npt size data.
+    Log->AddFileInfo(fun::FileNameSec(GetResultsFileVtk(),UINT_MAX),FileInfo);
+    jmsh::JMeshTDatasSave::SaveVtk(GetResultsFileVtk(),int(cpart),MeshDat,false);
+    //-Saves VTK with zsurf data.
+    if(ComputeZsurf){
+      Log->AddFileInfo(fun::FileNameSec(GetResultsFileVtk("_Zsurf"),UINT_MAX),FileInfo);
+      jmsh::JMeshTDatasSave::SaveVtk(GetResultsFileVtk("_Zsurf"),int(cpart),MeshDat,true);
+    }
+  }
+}
+
+//==============================================================================
+/// Loads and returns number definition points.
+//==============================================================================
+unsigned JGaugeMesh::GetPointDef(std::vector<tfloat3>& points)const{
+  //printf("=> GetPointDef  MeshPts.npt:%u \n",MeshPts.npt);
+  const unsigned np=MeshPts.npt;
+  tfloat3* pos=new tfloat3[np];
+  MeshDat->GetPosf(np,pos);
+  for(unsigned p=0;p<np;p++)points.push_back(pos[p]);
+  delete[] pos; pos=NULL;
+  return(np);
+}
+
+//==============================================================================
+/// Creates VTK file with the scheme of gauge configuration.
+//==============================================================================
+void JGaugeMesh::SaveVtkScheme()const{
+  const string filevtk=AppInfo.GetDirOut()+"CfgGaugeMesh_"+Name+".vtk";
+  Log->AddFileInfo(filevtk,"Saves VTK file with scheme of Mesh gauge.");
+  jmsh::JMeshTDatasSave::SaveVtkScheme(filevtk,MeshPts);
+}
+
+//==============================================================================
+/// Returns internal pointer to save Zsurf results on CPU.
+//==============================================================================
+const float* JGaugeMesh::GetPtrDataZsurf()const{
+  return(MeshDat->GetVarFloat("Zsurf"));
+}
+
+#ifdef _WITHGPU
+//==============================================================================
+/// Returns internal pointer to save Zsurf results on GPU.
+//==============================================================================
+const float* JGaugeMesh::GetPtrDataZsurfg()const{
+  return(DataZsurfg);
+}
+#endif
+
+//==============================================================================
+/// Calculates velocity and swl at indicated points (on CPU).
+//==============================================================================
+template<TpKernel tker> void JGaugeMesh::CalculeCpuT(double timestep
+  ,const StDivDataCpu& dvd,unsigned npbok,unsigned npb,unsigned np,const tdouble3* pos
+  ,const typecode* code,const unsigned* idp,const tfloat4* velrho)
+{
+  SetTimeStep(timestep);
+  //-Start measure.
+  //MeshDat->ClearData();  //-It is not necessary.
+  tfloat3* datavxyz =MeshDat->GetVarFloat3("Vel");
+  float*   datavdir =MeshDat->GetVarFloat("VelDir");
+  float*   datarhop =MeshDat->GetVarFloat("Rhop");
+  float*   datazsurf=MeshDat->GetVarFloat("Zsurf");
+  //-Obtains basic data for calculations.
+  const jmsh::StMeshPts& m=MeshPts;
+  const bool vel=(ComputeVelxyz || ComputeVeldir);
+  const unsigned npt1=m.npt1;
+  const unsigned npt2=m.npt2;
+  const unsigned npt3=m.npt3;
+  const unsigned npt12=npt1*npt2;
+  const tdouble3 ptref=m.ptref;
+  const tdouble3 vdp1=m.vdp1;
+  const tdouble3 vdp2=m.vdp2;
+  const tdouble3 vdp3=m.vdp3;
+  const tfloat3 vdir=m.dirdat;
+  //-Computes velocity and mass.
+  const int npt=int(m.npt);
+  for(int cp=0;cp<npt;cp++){
+    const unsigned cp3=unsigned(cp)/npt12;
+    const unsigned cp3r=unsigned(cp)-cp3*npt12;
+    const unsigned cp2=unsigned(cp3r)/npt1;
+    const unsigned cp1=unsigned(cp3r)-cp2*npt1;
+    //const tdouble3 pt2=ptref+(vdp2*cp2);
+    const tdouble3 ptpos=ptref+(vdp1*cp1)+(vdp2*cp2)+(vdp3*cp3);
+    float sumwab=0;
+    float summass=0;
+    float sumrhop=0;
+    tfloat3 sumvel=TFloat3(0);
+    //-Search for fluid neighbours in adjacent cells.
+    const StNgSearch ngs=nsearch::Init(ptpos,false,dvd);
+    for(int z=ngs.zini;z<ngs.zfin;z++)for(int y=ngs.yini;y<ngs.yfin;y++){
+      const tuint2 pif=nsearch::ParticleRange(y,z,ngs,dvd);
+      for(unsigned p2=pif.x;p2<pif.y;p2++){
+        const float rr2=nsearch::Distance2(ptpos,pos[p2]);
+        //-Interaction with real neighbouring particles.
+        if(rr2<=CSP.kernelsize2 && CODE_IsFluid(code[p2])){
+          float wab=fsph::GetKernel_Wab<tker>(CSP,rr2);
+          const tfloat4 velrho2=velrho[p2];
+          wab*=CSP.massfluid/velrho2.w;
+          sumwab+=wab;
+          summass+=wab*CSP.massfluid;
+          sumrhop+=wab*velrho2.w;
+          if(vel){
+            sumvel.x+=wab*velrho2.x;
+            sumvel.y+=wab*velrho2.y;
+            sumvel.z+=wab*velrho2.z;
+          }
+        }
+      }
+    }
+    //-Applies kernel correction.
+    if(KcLimit!=FLT_MAX){
+      if(sumwab>=KcLimit){
+        sumvel=sumvel/sumwab;
+        sumrhop/=sumwab;
+      }
+      else if(KcDummy!=FLT_MAX){
+        sumvel=TFloat3(KcDummy);
+        sumrhop=KcDummy;
+      }
+    }
+    //-Stores results.
+    if(vel){
+      if(datavxyz)datavxyz[cp]=sumvel;
+      if(datavdir)datavdir[cp]=(sumvel.x*vdir.x + sumvel.y*vdir.y + sumvel.z*vdir.z);
+    }
+    if(datarhop)datarhop[cp]=sumrhop;
+    if(MassDat)MassDat[cp]=summass;
+  }
+  //-Computes surface water level.
+  if(ComputeZsurf){
+    for(unsigned cp2=0;cp2<npt2;cp2++)for(unsigned cp1=0;cp1<npt1;cp1++){
+      float masspre=0;
+      unsigned cpsurf=0;
+      float    fsurf=0;
+      unsigned cp=cp1+cp2*npt1;
+      //const bool DG=(cp1==1 && cp2==0);
+      for(unsigned cp3=0;cp3<npt3 && !cpsurf;cp3++){
+        const float mass=MassDat[cp];
+        //if(DG)Log->Printf("==> mass[%u,%u,%u=%u]:%f  Masslimit:%f  z:%f",cp1,cp2,cp3,cp,mass,MassLimit,   ptref.z+vdp3.z*cp3);
+        if(mass>MassLimit)masspre=mass;
+        if(mass<MassLimit && masspre){
+          //if(DG)Log->Printf("==> mass<ML %f<%f  masspre:%f  cp3:%u  z:%f",mass,MassLimit,masspre,cp3,   ptref.z+vdp3.z*cp3);
+          fsurf=(MassLimit-masspre)/(mass-masspre);
+          cpsurf=cp3;
+        }
+        cp+=npt12;
+      }
+      float zsurf=float(ptref.z+(vdp1.z*cp1)+(vdp2.z*cp2));  //-Minimum zsurf.
+      if(cpsurf==0 && masspre)zsurf+=float(vdp3.z*(npt3-1)); //-Maximum zsurf.
+      if(cpsurf){
+        zsurf+=float((vdp3.z*(cpsurf-1))+(vdp3.z*fsurf));    //-Found zsurf.
+      }
+      datazsurf[cp1+cp2*npt1]=zsurf;
+      //if(DG)Log->Printf("==> zsurf[%u,%u]:%f  cpsurf:%d",cp1,cp2,zsurf,cpsurf);
+    }
+  }
+  //-Stores result. | Guarda resultado.
+  MeshDat->SetTimeStep(timestep);
+  Result.Set(timestep,MeshDat);
+  //Log->Printf("------> t:%f",TimeStep);
+  if(Output(timestep))StoreResult();
+}
+
+//==============================================================================
+/// Calculates data at indicated mesh points (on CPU).
+//==============================================================================
+void JGaugeMesh::CalculeCpu(double timestep,const StDivDataCpu& dvd
+  ,unsigned npbok,unsigned npb,unsigned np,const tdouble3* pos
+  ,const typecode* code,const unsigned* idp,const tfloat4* velrho)
+{
+  switch(CSP.tkernel){
+    case KERNEL_Cubic:       //Kernel Wendland is used since Cubic is not available.
+    case KERNEL_Wendland:    CalculeCpuT<KERNEL_Wendland>  (timestep,dvd,npbok,npb,np,pos,code,idp,velrho);  break;
+    default: Run_Exceptioon("Kernel unknown.");
+  }
+}
+#ifdef _WITHGPU
+//==============================================================================
+/// Calculates data at indicated mesh points (on GPU).
+//==============================================================================
+void JGaugeMesh::CalculeGpu(double timestep,const StDivDataGpu& dvd
+  ,unsigned npbok,unsigned npb,unsigned np,const double2* posxy,const double* posz
+  ,const typecode* code,const unsigned* idp,const float4* velrho,float3* aux)
+{
+  SetTimeStep(timestep);
+  tfloat3* datavxyz =MeshDat->GetVarFloat3("Vel");
+  float*   datavdir =MeshDat->GetVarFloat("VelDir");
+  float*   datarhop =MeshDat->GetVarFloat("Rhop");
+  float*   datazsurf=MeshDat->GetVarFloat("Zsurf");
+  //-Start measure.
+  if(!GpuMemory)AllocGpuMemory();
+  cugauge::ComputeGaugeMesh(CSP,dvd,MeshPts,KcLimit,KcDummy,posxy,posz,code,velrho,DataVxyzg,DataVdirg,DataRhopg,DataMassg);
+  if(ComputeZsurf)cugauge::ComputeGaugeMeshZsurf(MassLimit,MeshPts,DataMassg,DataZsurfg);
+  //-Copy data from GPU memory.
+  const unsigned npt12=MeshPts.npt1*MeshPts.npt2;
+  const unsigned npt=MeshPts.npt;
+  if(DataVxyzg )cudaMemcpy(datavxyz ,DataVxyzg ,sizeof(float3)*npt  ,cudaMemcpyDeviceToHost);
+  if(DataVdirg )cudaMemcpy(datavdir ,DataVdirg ,sizeof(float )*npt  ,cudaMemcpyDeviceToHost);
+  if(DataRhopg )cudaMemcpy(datarhop ,DataRhopg ,sizeof(float )*npt  ,cudaMemcpyDeviceToHost);
+  if(DataZsurfg)cudaMemcpy(datazsurf,DataZsurfg,sizeof(float )*npt12,cudaMemcpyDeviceToHost);
+  Check_CudaErroor("Failed in GaugeMesh calculation.");
+  //-Stores result. | Guarda resultado.
+  MeshDat->SetTimeStep(timestep);
+  Result.Set(timestep,MeshDat);
+  //Log->Printf("------> t:%f",TimeStep);
+  if(Output(timestep))StoreResult();
+}
+#endif
+//<vs_meeshdat_end>
 
 
 //##############################################################################

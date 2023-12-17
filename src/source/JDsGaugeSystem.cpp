@@ -269,6 +269,64 @@ void JGaugeSystem::ReadXml(const JXml* sxml,TiXmlElement* lis,const JSphMk* mkin
           const word mkbound=(word)sxml->ReadElementUnsigned(ele,"target","mkbound");
           gau=AddGaugeForce(name,cfg.computestart,cfg.computeend,cfg.computedt,mkinfo,mkbound);
         }
+        else if(cmd=="mesh"){ //<vs_meeshdat_ini>
+          sxml->CheckElementNames(ele,true,"outputdata outputfmt buffersize dirdat point vec1 vec2 vec3 size1 size2 size3 kclimit kcdummy masslimit savevtkpart computedt computetime output outputdt outputtime");
+          jmsh::StMeshBasic mesh={TDouble3(0),TDouble3(0),TDouble3(0),TDouble3(0),0,0,0,0,0,0,TFloat3(0)};
+          mesh.ptref=sxml->ReadElementDouble3(ele,"point");
+          mesh.vec1=sxml->ReadElementDouble3(ele,"vec1",true);
+          mesh.vec2=sxml->ReadElementDouble3(ele,"vec2",true);
+          mesh.vec3=sxml->ReadElementDouble3(ele,"vec3",true);
+          if(mesh.vec1!=TDouble3(0)){
+            mesh.dis1  =sxml->ReadElementDouble(ele,"size1","length");
+            mesh.dispt1=sxml->ReadElementDouble(ele,"size1","distpt");
+          }
+          if(mesh.vec2!=TDouble3(0)){
+            mesh.dis2  =sxml->ReadElementDouble(ele,"size2","length");
+            mesh.dispt2=sxml->ReadElementDouble(ele,"size2","distpt");
+          }
+          if(mesh.vec3!=TDouble3(0)){
+            mesh.dis3  =sxml->ReadElementDouble(ele,"size3","length");
+            mesh.dispt3=sxml->ReadElementDouble(ele,"size3","distpt");
+          }
+          mesh.dirdat=sxml->ReadElementFloat3(ele,"dirdat",true,TDouble3(1,0,0));
+          mesh.dirdat=fgeo::VecUnitary(mesh.dirdat);
+          string outdata=sxml->ReadElementStr(ele,"outputdata","value");
+          outdata=JGaugeMesh::CorrectDataList(outdata);
+          if(outdata.empty())Run_ExceptioonFile("No output data requested.",sxml->ErrGetFileRow(ele,"outputdata"));
+          if(outdata=="error")Run_ExceptioonFile("Output data requested is invalid.",sxml->ErrGetFileRow(ele,"outputdata"));
+          unsigned tfmt=0;
+          {
+            string txdata=sxml->ReadElementStr(ele,"outputfmt","value",true,"csv");
+            txdata=fun::StrLower(fun::StrWithoutChar(txdata,' '));
+            std::vector<std::string> vstr;
+            unsigned nstr=fun::VectorSplitStr(",",txdata,vstr);
+            for(unsigned c=0;c<nstr;c++)if(!vstr[c].empty()){
+                   if(vstr[c]==jmsh::GetTpFormatKey(jmsh::TpFmtBin))tfmt|=jmsh::TpFmtBin;
+              else if(vstr[c]==jmsh::GetTpFormatKey(jmsh::TpFmtCsv))tfmt|=jmsh::TpFmtCsv;
+              else Run_ExceptioonFile("The output format is invalid.",sxml->ErrGetFileRow(ele,"outputfmt"));
+            }
+          }
+          //-Reads buffersize.
+          unsigned buffersize=sxml->ReadElementUnsigned(ele,"buffersize","value",true,0);
+          //-Reads kclimit.
+          float kclimit=0.5f;
+          if(fun::StrLower(sxml->ReadElementStr(ele,"kclimit","value",true))=="none")kclimit=FLT_MAX;
+          else kclimit=sxml->ReadElementFloat(ele,"kclimit","value",true,0.5f);
+          //-Reads kcdummy.
+          float kcdummy=0;
+          if(fun::StrLower(sxml->ReadElementStr(ele,"kcdummy","value",true))=="none")kcdummy=FLT_MAX;
+          else kcdummy=sxml->ReadElementFloat(ele,"kcdummy","value",true,0);
+          //-Reads masslimit.
+          float masslimit=0;
+          switch(sxml->CheckElementAttributes(ele,"masslimit","value coef",true,true)){
+            case 1:  masslimit=sxml->ReadElementFloat(ele,"masslimit","value");           break;
+            case 2:  masslimit=CSP.massfluid*sxml->ReadElementFloat(ele,"masslimit","coef");  break;
+            case 0:  masslimit=CSP.massfluid*(CSP.simulate2d? 0.4f: 0.5f);                        break;
+          }
+          if(masslimit<=0)Run_ExceptioonFile(fun::PrintStr("The masslimit (%f) is invalid.",masslimit),sxml->ErrGetFileRow(ele));
+          //-Creates gauge object.
+          gau=AddGaugeMesh(name,cfg.computestart,cfg.computeend,cfg.computedt,mesh,outdata,tfmt,buffersize,kclimit,kcdummy,masslimit);
+        }  //<vs_meeshdat_end>
         else Run_ExceptioonFile(fun::PrintStr("Gauge type \'%s\' is invalid.",cmd.c_str()),sxml->ErrGetFileRow(ele));
         gau->SetSaveVtkPart(cfg.savevtkpart);
         //gau->ConfigComputeTiming(cfg.computestart,cfg.computeend,cfg.computedt);
@@ -335,6 +393,29 @@ JGaugeMaxZ* JGaugeSystem::AddGaugeMaxZ(std::string name,double computestart
   Gauges.push_back(gau);
   return(gau);
 }
+
+//<vs_meeshdat_ini>
+//==============================================================================
+/// Creates new gauge-Mesh and returns pointer.
+//==============================================================================
+JGaugeMesh* JGaugeSystem::AddGaugeMesh(std::string name,double computestart
+  ,double computeend,double computedt,const jmsh::StMeshBasic& meshbas
+  ,std::string outdata,unsigned tfmt,unsigned buffersize
+  ,float kclimit,float kcdummy,float masslimit)
+{
+  if(GetGaugeIdx(name)!=UINT_MAX)Run_Exceptioon(fun::PrintStr("The name \'%s\' already exists.",name.c_str()));
+  if(masslimit<=0)masslimit=CSP.massfluid*(CSP.simulate2d? 0.4f: 0.5f);
+  //-Creates object.
+  JGaugeMesh* gau=new JGaugeMesh(GetCount(),name,meshbas,outdata,tfmt,buffersize,kclimit,kcdummy,masslimit,Cpu);
+  gau->Config(CSP,Symmetry,DomPosMin,DomPosMax,Scell,ScellDiv);
+  gau->ConfigComputeTiming(computestart,computeend,computedt);
+  //-Uses common configuration.
+  gau->SetSaveVtkPart(CfgDefault.savevtkpart);
+  gau->ConfigOutputTiming(CfgDefault.output,CfgDefault.outputstart,CfgDefault.outputend,CfgDefault.outputdt);
+  Gauges.push_back(gau);
+  return(gau);
+}
+//<vs_meeshdat_end>
 
 //==============================================================================
 /// Creates new gauge-Force and returns pointer.

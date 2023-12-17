@@ -36,8 +36,8 @@ School of Mechanical, Aerospace and Civil Engineering, University of Manchester,
 \section compile_sec Project files
 Please download source files and documentation from <a href="http://dual.sphysics.org">DualSPHysics website.</a> \n
 \author <a href="http://dual.sphysics.org/index.php/developers">DualSPHysics Developers.</a> 
-\version 5.3.295
-\date 20-10-2023
+\version 5.3.305
+\date 16-12-2023
 \copyright GNU Lesser General Public License <a href="http://www.gnu.org/licenses/">GNU licenses.</a>
 */
 
@@ -61,7 +61,7 @@ Please download source files and documentation from <a href="http://dual.sphysic
 
 using namespace std;
 
-JAppInfo AppInfo("DualSPHysics5","v5.3.295","20-10-2023");
+JAppInfo AppInfo("DualSPHysics5","v5.3.305","16-12-2023");
 //JAppInfo AppInfo("DualSPHysics5","v5.0.???","UserVersion","v1.0","??-??-????"); //-for user versions.
 
 //==============================================================================
@@ -133,13 +133,16 @@ bool ShowsVersionInfo(int argc,char** argv){
 }
 
 //==============================================================================
-///  Print exception message on screen and log file.
+/// Print exception message on standard error output and log file.
 //==============================================================================
-void PrintExceptionLog(const std::string& prefix,const std::string& text,JLog2* log){
+void PrintExceptionLog(const std::string& prefix,const std::string& text
+  ,JLog2* log)
+{
   const bool prt=(text.empty() || text[0]!='#');
   const string tx=(prt? prefix+text: text.substr(1));
-  if(prt)printf("%s\n",tx.c_str());
+  //if(prt)printf("%s\n",tx.c_str());
   fflush(stdout);
+  if(prt)cerr << tx << endl;
   if(log && log->IsOk())log->PrintFile(tx,true);
 }
 
@@ -206,7 +209,10 @@ int main(int argc, char** argv){
   catch(...){
     PrintExceptionLog("","\n*** Attention: Unknown exception...",log);
   }
-  PrintExceptionLog("",fun::PrintStr("\nFinished execution (code=%d).\n",errcode),log);
+  //-Finished execution.
+  if(log && log->IsOk())log->PrintFile(fun::PrintStr("\nFinished execution (code=%d).\n",errcode),true);
+  printf("\nFinished execution (code=%d).\n",errcode);
+  fflush(stdout);
   return(errcode);
 }
 

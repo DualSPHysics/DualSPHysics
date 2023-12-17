@@ -196,6 +196,12 @@ void JSphCpuSingle::InOutComputeStep(double stepdt){
     const unsigned inoutcountpre=InOut->CreateListCpu(Np-Npb,Npb
       ,Pos_c->cptr(),Idp_c->cptr(),Code_c->ptr(),inoutpart.ptr());
 
+    //-Computes Zsurf-ok of current inout particles when it is necessary. //<vs_meeshdat_ini>
+    if(InOut->Use_ZsurfNonUniform()){
+      InOut->ComputeZsurfokPartCpu(inoutcountpre,inoutpart.cptr()
+        ,Pos_c->cptr(),Code_c->cptr(),Idp_c->cptr(),zsurfok.ptr());
+    } //<vs_meeshdat_end>
+
     //-Updates code of inout particles according its position and create new inlet particles when refilling=false.
     newnp=InOut->ComputeStepCpu(inoutcountpre,inoutpart.ptr(),this,IdMax+1
       ,CpuParticlesSize,Np,Pos_c->ptr(),Dcell_c->ptr(),Code_c->ptr(),Idp_c->ptr()
@@ -203,6 +209,8 @@ void JSphCpuSingle::InOutComputeStep(double stepdt){
 
     //-Creates new inlet particles using advanced refilling mode.
     if(InOut->Use_RefillAdvanced()){
+      //-Computes Zsurf-ok of inout points when it is necessary.     //<vs_meeshdat>
+      if(zsurfok.cptr())InOut->ComputeZsurfokPtosCpu(zsurfok.ptr()); //<vs_meeshdat>
       //-Creates new inlet particles using advanced refilling mode.
       if(!InOut->RefillingRate || (Nstep%InOut->RefillingRate)==0){
         acfloat   prodist("-",Arrays_Cpu,true);
@@ -254,6 +262,11 @@ void JSphCpuSingle::InOutUpdatePartsData(double timestepnew){
   //-Updates velocity and rhop (with analytical solution).
   if(InOut->Use_AnalyticalData()){
     acfloat zsurfpart("-",Arrays_Cpu,InOut->Use_ZsurfNonUniform());
+    //-Computes Zsurf of current inout particles when it is necessary. //<vs_meeshdat_ini>
+    if(InOut->Use_ZsurfNonUniform()){
+      InOut->ComputeZsurfPartCpu(inoutcount,inoutpart.cptr(),Pos_c->cptr()
+        ,Code_c->cptr(),Idp_c->cptr(),zsurfpart.ptr());
+    } //<vs_meeshdat_end>
     //-Updates velocity and rhop (with analytical solution).
     InOut->SetAnalyticalDataCpu(float(timestepnew),inoutcount,inoutpart.cptr()
       ,Pos_c->cptr(),Code_c->cptr(),Idp_c->cptr(),zsurfpart.cptr()

@@ -456,6 +456,7 @@ void JSphGpuSingle::RunCellDivide(bool updateperiodic){
     Timersg->TmStop(TMG_NlOutCheck,true);
   }
   BoundChanged=false;
+  //JDebugSphGpu::SaveVtk("_DG_Divide_End.vtk",Nstep,0,Np,"idp,vel,rho",this);
 }
 
 //==============================================================================
@@ -502,7 +503,6 @@ void JSphGpuSingle::Interaction_Forces(TpInterStep interstep){
   float3* dengradcorr=NULL;
 
   Timersg->TmStart(TMG_CfForces,true);
-  const bool lamsps=(TVisco==VISCO_LaminarSPS);
   unsigned bsfluid=BlockSizes.forcesfluid;
   unsigned bsbound=BlockSizes.forcesbound;
 
@@ -510,7 +510,7 @@ void JSphGpuSingle::Interaction_Forces(TpInterStep interstep){
   const StInterParmsg parms=StrInterParmsg(Simulate2D
     ,Symmetry //<vs_syymmetry>
     ,TKernel,FtMode
-    ,lamsps,TDensity,ShiftingMode
+    ,TVisco,TDensity,ShiftingMode
     ,Visco*ViscoBoundFactor,Visco
     ,bsbound,bsfluid,Np,Npb,NpbOk
     ,0,Nstep,DivData,Dcell_g->cptr()
@@ -535,8 +535,8 @@ void JSphGpuSingle::Interaction_Forces(TpInterStep interstep){
   if(Simulate2D)cusph::Resety(Np-Npb,Npb,Ace_g->ptr());
 
   //-Computes Tau for Laminar+SPS.
-  if(lamsps)cusph::ComputeSpsTau(Np,Npb,SpsSmag,SpsBlin,Velrho_g->cptr()
-    ,Sps2Strain_g->cptr(),SpsTauRho2_g->ptr());
+  if(TVisco==VISCO_LaminarSPS)cusph::ComputeSpsTau(Np,Npb,SpsSmag,SpsBlin
+    ,Velrho_g->cptr(),Sps2Strain_g->cptr(),SpsTauRho2_g->ptr());
   
   //-Add Delta-SPH correction to Ar_g[].
   if(AG_CPTR(Delta_g))cusph::AddDelta(Np-Npb,Delta_g->cptr()+Npb,Ar_g->ptr()+Npb);
@@ -932,6 +932,8 @@ void JSphGpuSingle::SaveData(){
     TimerSim.Stop();
     infoplus.timesim=TimerSim.GetElapsedTimeD()/1000.;
   }
+  else infoplus.SetBasic(Np,npnormal,Np-Npb,CellDivSingle->GetNct());
+
   //-Obtains current domain limits.
   const tdouble6 vdom=CellDivSingle->GetDomainLimitsMinMax();
   //-Stores particle data. | Graba datos de particulas.

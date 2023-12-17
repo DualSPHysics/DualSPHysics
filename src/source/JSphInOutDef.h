@@ -111,6 +111,24 @@ typedef struct{
   tdouble3 direction;  ///<Inflow direction.
 }StZsurfResult;
 
+//<vs_meeshdat_ini>
+///Structure with zsurf data for modification.
+typedef struct{
+  unsigned npt;  ///<Number of zsurf values.
+  float* zsurf;  ///<Pointer to zsurf values [npt*2].
+  bool gpuptr;   ///<Pointer to GPU memory.
+}StRnZsurfData;
+
+///Structure with velocity data for modification.
+typedef struct{
+  unsigned npt;  ///<Number of velocity values.
+  float* vel0;   ///<Pointer to velocity values at time0 [npt].
+  float* vel1;   ///<Pointer to velocity values at time1 [npt].
+  bool gpuptr;   ///<Pointers to GPU memory.
+  bool velxyz;   ///<Pointers to tfloat3 or float3 instead of float.
+}StRnVelData;
+//<vs_meeshdat_end>
+
 
 #endif
 

@@ -31,6 +31,7 @@
 //:# - Nuevos metodos para la rotacion. (05-04-2020)
 //:# - Nuevos metodos IsIdentity() y IsMovMatrix(). (20-12-2020)
 //:# - Nuevo metodo RotatedAxis(). (18-07-2023)
+//:# - Nuevo metodo Rotate() y RotateCen() para rotaciones Davenport. (13-11-2023)
 //:#############################################################################
 
 /// \file JMatrix4.h \brief Declares the template \ref JMatrix4
@@ -82,6 +83,26 @@ public:
     a21=m.a21;  a22=m.a22;  a23=m.a23;  a24=m.a24;
     a31=m.a31;  a32=m.a32;  a33=m.a33;  a34=m.a34;
     a41=m.a41;  a42=m.a42;  a43=m.a43;  a44=m.a44;
+  }
+
+//==============================================================================
+/// Becomes the null matrix.
+//==============================================================================
+  void SetNull(){
+    a11=0; a12=0; a13=0; a14=0;
+    a21=0; a22=0; a23=0; a24=0;
+    a31=0; a32=0; a33=0; a34=0;
+    a41=0; a42=0; a43=0; a44=0;
+  }
+
+//==============================================================================
+/// Returns true when matrix is the null matrix.
+//==============================================================================
+  bool IsNull(){
+    return(a11==0 && a12==0 && a13==0 && a14==0
+        && a21==0 && a22==0 && a23==0 && a24==0
+        && a31==0 && a32==0 && a33==0 && a34==0
+        && a41==0 && a42==0 && a43==0 && a44==0);
   }
 
 //==============================================================================
@@ -249,6 +270,38 @@ public:
   }
 
 //==============================================================================
+/// Rotational motion is applied for Davenport chained rotations (includes
+/// Euler and Tait-Bryan rotations).
+/// \param ang1 1st angle of roation for 1st axis (in degrees).
+/// \param ang2 2nd angle of roation for 2nd axis (in degrees).
+/// \param ang3 3th angle of roation for 3th axis (in degrees).
+/// \param axes List of 3 axes for rotation. E.g.:XYZ, ZYZ...
+/// \param intrinsic Indicates intrinsic instead of extrinsic rotation.
+//==============================================================================
+  void Rotate(T ang1,T ang2,T ang3,const char* axes,bool intrinsic){
+    Mul(MatrixRotate(ang1,ang2,ang3,axes,intrinsic));
+  }
+
+//==============================================================================
+/// Rotational motion is applied for Davenport chained rotations (includes
+/// Euler and Tait-Bryan rotations).
+/// \param center Center of roation.
+/// \param ang1 1st angle of roation for 1st axis (in degrees).
+/// \param ang2 2nd angle of roation for 2nd axis (in degrees).
+/// \param ang3 3th angle of roation for 3th axis (in degrees).
+/// \param axes List of 3 axes for rotation. E.g.:XYZ, ZYZ...
+/// \param intrinsic Indicates intrinsic instead of extrinsic rotation.
+//==============================================================================
+  void RotateCen(const T3& center,T ang1,T ang2,T ang3,const char* axes
+    ,bool intrinsic)
+  {
+    //Move(center);
+    //Mul(MatrixRotate(ang1,ang2,ang3,axes,intrinsic));
+    //Move(TDouble3(-center.x,-center.y,-center.z));
+    Mul(MatrixRotateCen(center,ang1,ang2,ang3,axes,intrinsic));
+  }
+
+//==============================================================================
 /// Scaling is aplied.
 /// \param p Array with the scale in every axis.
 //==============================================================================
@@ -284,7 +337,10 @@ public:
     //MatrixRot(ang,TDouble3(0,0,0),TDouble3(-1,0,0));
     const T rad=T(ang*TORAD);
     const T cs=cos(rad),sn=sin(rad);
-    const TMAT m={1,0,0,0 , 0,cs,-sn,0 , 0,sn,cs,0 , 0,0,0,1}; 
+    const TMAT m={  1,  0,  0,  0, 
+                    0, cs,-sn,  0,
+                    0, sn, cs,  0,
+                    0,  0,  0,  1}; 
     return(JMatrix4(m));
   }
 
@@ -296,7 +352,10 @@ public:
     //MatrixRot(ang,TDouble3(0,0,0),TDouble3(0,-1,0));
     const T rad=T(ang*TORAD);
     const T cs=cos(rad),sn=sin(rad);
-    const TMAT m={cs,0,sn,0 , 0,1,0,0 , -sn,0,cs,0 , 0,0,0,1}; 
+    const TMAT m={ cs,  0, sn,  0,
+                    0,  1,  0,  0,
+                  -sn,  0, cs,  0,
+                    0,  0,  0,  1}; 
     return(JMatrix4(m));
   }
 
@@ -308,7 +367,10 @@ public:
     //MatrixRot(ang,TDouble3(0,0,0),TDouble3(0,0,-1));
     const T rad=T(ang*TORAD);
     const T cs=cos(rad),sn=sin(rad);
-    const TMAT m={cs,-sn,0,0 , sn,cs,0,0 , 0,0,1,0 , 0,0,0,1}; 
+    const TMAT m={ cs,-sn,  0,  0,
+                   sn, cs,  0,  0,
+                    0,  0,  1,  0,
+                    0,  0,  0,  1}; 
     return(JMatrix4(m));
   }
 
@@ -321,6 +383,76 @@ public:
     if(ang.z)m.Mul(MatrixRotZ(ang.z));
     if(ang.x)m.Mul(MatrixRotX(ang.x));
     if(ang.y)m.Mul(MatrixRotY(ang.y));
+    return(m);
+  }
+
+//==============================================================================
+/// Returns true if axes value is valid for Davenport rotations.
+/// \param axes List of 3 axes for rotation. E.g.:XYZ, ZYZ...
+//==============================================================================
+  static bool CheckRotateAxes(const char* axes){
+    return((axes[0]=='X' || axes[0]=='Y' || axes[0]=='Z') &&
+           (axes[1]=='X' || axes[1]=='Y' || axes[1]=='Z') &&
+           (axes[2]=='X' || axes[2]=='Y' || axes[2]=='Z'));
+  }
+
+//==============================================================================
+/// Returns a transformation matrix for a rotation according to axes rotation.
+/// For Davenport chained rotations (includes Euler and Tait-Bryan rotations).
+/// \param ang1 1st angle of roation for 1st axis (in degrees).
+/// \param ang2 2nd angle of roation for 2nd axis (in degrees).
+/// \param ang3 3th angle of roation for 3th axis (in degrees).
+/// \param axes List of 3 axes for rotation. E.g.:XYZ, ZYZ...
+/// \param intrinsic Indicates intrinsic instead of extrinsic rotation.
+//==============================================================================
+  static JMatrix4 MatrixRotate(T ang1,T ang2,T ang3,const char* axes,bool intrinsic){
+    JMatrix4 m;
+    if(CheckRotateAxes(axes)){
+      if(intrinsic){
+        for(int c=0;c<3;c++){
+          const double ang=(c==0? ang1: (c==1? ang2: ang3));
+          switch(axes[c]){
+            case 'X':  if(ang)m.Mul(MatrixRotX(ang));  break;
+            case 'Y':  if(ang)m.Mul(MatrixRotY(ang));  break;
+            case 'Z':  if(ang)m.Mul(MatrixRotZ(ang));
+          }
+        }
+      }
+      else{
+        for(int c=0;c<3;c++){
+          const double ang=(c==0? ang3: (c==1? ang2: ang1));
+          switch(axes[2-c]){
+            case 'X':  if(ang)m.Mul(MatrixRotX(ang));  break;
+            case 'Y':  if(ang)m.Mul(MatrixRotY(ang));  break;
+            case 'Z':  if(ang)m.Mul(MatrixRotZ(ang));
+          }
+        }
+      }
+    }
+    else m.SetNull();
+    return(m);
+  }
+
+//==============================================================================
+/// Returns a transformation matrix for a rotation according to axes rotation.
+/// For Davenport chained rotations (includes Euler and Tait-Bryan rotations).
+/// \param center Center of roation.
+/// \param ang1 1st angle of roation for 1st axis (in degrees).
+/// \param ang2 2nd angle of roation for 2nd axis (in degrees).
+/// \param ang3 3th angle of roation for 3th axis (in degrees).
+/// \param axes List of 3 axes for rotation. E.g.:XYZ, ZYZ...
+/// \param intrinsic Indicates intrinsic instead of extrinsic rotation.
+//==============================================================================
+  static JMatrix4 MatrixRotateCen(const T3& center,T ang1,T ang2,T ang3
+    ,const char* axes,bool intrinsic)
+  {
+    JMatrix4 m;
+    if(CheckRotateAxes(axes)){
+      m.Move(center);
+      m.Rotate(ang1,ang2,ang3,axes,intrinsic);
+      m.Move(TDouble3(-center.x,-center.y,-center.z));
+    }
+    else m.SetNull();
     return(m);
   }
 

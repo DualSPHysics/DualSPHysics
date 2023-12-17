@@ -183,7 +183,7 @@ void JPartDataHead::ConfigSimPeri(TpPeri tperi,tdouble3 perixinc,tdouble3 periyi
 //==============================================================================
 /// Configuration used for Viscosity.
 //==============================================================================
-void JPartDataHead::ConfigVisco(JPartDataHead::TpVisco type,float value,float boundfactor){
+void JPartDataHead::ConfigVisco(TpVisco type,float value,float boundfactor){
   ViscoType=type; ViscoValue=value; ViscoBoundFactor=boundfactor;
 }
 

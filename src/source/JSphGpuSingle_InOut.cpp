@@ -216,6 +216,13 @@ void JSphGpuSingle::InOutComputeStep(double stepdt){
       ,Posxy_g->cptr(),Posz_g->cptr(),Code_g->ptr()
       ,GpuParticlesSize,inoutpartg.ptr());
 
+    //-Computes Zsurf-ok of current inout particles when it is necessary. //<vs_meeshdat_ini>
+    if(InOut->Use_ZsurfNonUniform()){
+      InOut->ComputeZsurfokPartGpu(inoutcountpre,inoutpartg.cptr()
+        ,Posxy_g->cptr(),Posz_g->cptr(),Code_g->cptr()
+        ,Idp_g->cptr(),zsurfokg.ptr());
+    } //<vs_meeshdat_end>
+
     //-Updates code of inout particles according its position and create new inlet particles when refilling=false.
     newnp=InOut->ComputeStepGpu(inoutcountpre,inoutpartg.ptr(),IdMax+1
       ,GpuParticlesSize,Np,Posxy_g->ptr(),Posz_g->ptr(),Dcell_g->ptr()
@@ -224,6 +231,8 @@ void JSphGpuSingle::InOutComputeStep(double stepdt){
 
     //-Creates new inlet particles using advanced refilling mode.
     if(InOut->Use_RefillAdvanced()){
+      //-Computes Zsurf-ok of inout points when it is necessary.       //<vs_meeshdat>
+      if(zsurfokg.cptr())InOut->ComputeZsurfokPtosGpu(zsurfokg.ptr()); //<vs_meeshdat>
       //-Creates new inlet particles using advanced refilling mode.
       if(!InOut->RefillingRate || (Nstep%InOut->RefillingRate)==0){
         agfloat   prodistg ("-",Arrays_Gpu,true);
@@ -277,6 +286,11 @@ void JSphGpuSingle::InOutUpdatePartsData(double timestepnew){
   //-Updates velocity and rhop (with analytical solution).
   if(InOut->Use_AnalyticalData()){
     agfloat zsurfpartg("-",Arrays_Gpu,InOut->Use_ZsurfNonUniform());
+    //-Computes Zsurf of current inout particles when it is necessary. //<vs_meeshdat_ini>
+    if(InOut->Use_ZsurfNonUniform()){
+      InOut->ComputeZsurfPartGpu(inoutcount,inoutpartg.cptr(),Posxy_g->cptr()
+        ,Posz_g->cptr(),Code_g->cptr(),Idp_g->cptr(),zsurfpartg.ptr());
+    } //<vs_meeshdat_end>
     //-Updates velocity and rhop (with analytical solution).
     InOut->SetAnalyticalDataGpu(float(timestepnew),inoutcount,inoutpartg.cptr()
       ,Posxy_g->cptr(),Posz_g->cptr(),Code_g->cptr()

@@ -304,6 +304,188 @@ void Interaction_GaugeMaxz(tdouble3 point0,float maxdist2,const StDivDataGpu& dv
     ,posxy,posz,code,ptres);
 }
 
+//<vs_meeshdat_ini>
+//------------------------------------------------------------------------------
+/// Calculates data interpolation according to fluid particle data.
+//------------------------------------------------------------------------------
+template<TpKernel tker,bool tvel> __global__ void KerComputeGaugeMesh(unsigned nptot
+  ,unsigned npt12,unsigned npt1,double3 ptref
+  ,double3 vdp1,double3 vdp2,double3 vdp3,float3 vdir
+  ,int scelldiv,int4 nc,int3 cellzero,const int2* beginendcellfluid
+  ,unsigned axis,unsigned cellcode,double3 domposmin,float scell,float poscellsize
+  ,float aker,float kernelsize2,float kernelh,float massf,float kclimit,float kcdummy
+  ,const double2* posxy,const double* posz,const typecode* code
+  ,const float4* velrhop,float3* ptvel,float* ptvdir,float* ptrhop
+  ,float* ptmass)
+{
+  unsigned cp=blockIdx.x*blockDim.x + threadIdx.x; //-Number of position.
+  if(cp<nptot){
+    const unsigned cp3=cp/npt12;
+    const unsigned cp3r=cp-cp3*npt12;
+    const unsigned cp2=cp3r/npt1;
+    const unsigned cp1=cp3r-cp2*npt1;
+    const double px=ptref.x+(vdp1.x*cp1)+(vdp2.x*cp2)+(vdp3.x*cp3);
+    const double py=ptref.y+(vdp1.y*cp1)+(vdp2.y*cp2)+(vdp3.y*cp3);
+    const double pz=ptref.z+(vdp1.z*cp1)+(vdp2.z*cp2)+(vdp3.z*cp3);
+    float sumwab=0;
+    float summass=0;
+    float sumrhop=0;
+    float3 sumvel=make_float3(0,0,0);
+
+    //-Obtains neighborhood search limits.
+    int ini1,fin1,ini2,fin2,ini3,fin3;
+    cunsearch::Initsp(px,py,pz,axis,domposmin,scell,scelldiv,nc,cellzero,ini1,fin1,ini2,fin2,ini3,fin3);
+
+    //-Interaction with fluids.
+    //ini3+=cellfluid; fin3+=cellfluid; //cellfluid is included in *beginendcellfluid.
+    for(int c3=ini3;c3<fin3;c3+=nc.w)for(int c2=ini2;c2<fin2;c2+=nc.x){
+      unsigned pini,pfin=0;  cunsearch::ParticleRange(c2,c3,ini1,fin1,beginendcellfluid,pini,pfin);
+      if(pfin)for(int p2=pini;p2<pfin;p2++){
+        const double2 pxyp2=posxy[p2];
+        const float drx=float(px-pxyp2.x);
+        const float dry=float(py-pxyp2.y);
+        const float drz=float(pz-posz[p2]);
+        const float rr2=(drx*drx + dry*dry + drz*drz);
+        //-Interaction with real neighboring fluid particles.
+        if(rr2<=kernelsize2 && CODE_IsFluid(code[p2])){
+          float wab=cufsph::GetKernel_Wab<tker>(rr2,kernelh,aker);
+          const float4 velrhopp2=velrhop[p2];
+          wab*=massf/velrhopp2.w;
+          sumwab+=wab;
+          summass+=wab*massf;
+          sumrhop+=wab*velrhopp2.w;
+          if(tvel){
+            sumvel.x+=wab*velrhopp2.x;
+            sumvel.y+=wab*velrhopp2.y;
+            sumvel.z+=wab*velrhopp2.z;
+          }
+        }
+      }
+    }
+    //-Applies kernel correction.
+    if(kclimit!=FLT_MAX){
+      if(sumwab>=kclimit){
+        sumvel.x/=sumwab;
+        sumvel.y/=sumwab;
+        sumvel.z/=sumwab;
+        sumrhop/=sumwab;
+      }
+      else if(kcdummy!=FLT_MAX){
+        sumvel=make_float3(kcdummy,kcdummy,kcdummy);
+        sumrhop=kcdummy;
+      }
+    }
+    //-Stores results.
+    if(tvel){
+      if(ptvel )ptvel [cp]=sumvel;
+      if(ptvdir)ptvdir[cp]=(sumvel.x*vdir.x + sumvel.y*vdir.y + sumvel.z*vdir.z);
+    }
+    if(ptrhop)ptrhop[cp]=sumrhop;
+    if(ptmass)ptmass[cp]=summass;
+  }
+}
+
+//==============================================================================
+/// Calculates data interpolation according to fluid particle data.
+//==============================================================================
+template<TpKernel tker,bool tvel> void ComputeGaugeMeshT(float aker
+  ,const StCteSph& CSP,const StDivDataGpu& dvd,const jmsh::StMeshPts& mp
+  ,float kclimit,float kcdummy,const double2* posxy,const double* posz
+  ,const typecode* code,const float4* velrhop,float3* ptvel,float* ptvdir
+  ,float* ptrhop,float* ptmass)
+{
+  //-Interaction with fluid particles.
+  const unsigned npt12=mp.npt1*mp.npt2;
+  const unsigned nptot=npt12*mp.npt3;
+  if(nptot){
+    const int2* beginendcellfluid=dvd.beginendcell+dvd.cellfluid;
+    const unsigned bsize=128;
+    dim3 sgrid=GetSimpleGridSize(nptot,bsize);
+    //:JDgKerPrint info;
+    //:byte* ik=NULL; //info.GetInfoPointer(sgridf,bsfluid);
+    KerComputeGaugeMesh<tker,tvel> <<<sgrid,bsize>>> (nptot,npt12,mp.npt1
+     ,Double3(mp.ptref),Double3(mp.vdp1),Double3(mp.vdp2),Double3(mp.vdp3),Float3(mp.dirdat)
+     ,dvd.scelldiv,dvd.nc,dvd.cellzero,beginendcellfluid
+     ,dvd.axis,dvd.domcellcode,dvd.domposmin,dvd.scell,dvd.poscellsize
+     ,aker,dvd.kernelsize2,CSP.kernelh,CSP.massfluid,kclimit,kcdummy
+     ,posxy,posz,code,velrhop,ptvel,ptvdir,ptrhop,ptmass);
+    //:info.PrintValuesFull(true); //info.PrintValuesInfo();
+  }
+}
+
+//==============================================================================
+/// Calculates velocity and/or mass interpolation according to fluid particle data.
+//==============================================================================
+void ComputeGaugeMesh(const StCteSph& CSP,const StDivDataGpu& dvd
+  ,const jmsh::StMeshPts& mp,float kclimit,float kcdummy,const double2* posxy
+  ,const double* posz,const typecode* code,const float4* velrhop
+  ,float3* ptvel,float* ptvdir,float* ptrhop,float* ptmass)
+{
+  const bool tvel=(ptvel!=NULL || ptvdir!=NULL);
+  switch(CSP.tkernel){
+    case KERNEL_Cubic:   //Kernel Cubic is not available.
+    case KERNEL_Wendland:{ const float aker=CSP.kwend.awen;
+      if(tvel)ComputeGaugeMeshT<KERNEL_Wendland,true >(aker,CSP,dvd,mp,kclimit,kcdummy,posxy,posz,code,velrhop,ptvel,ptvdir,ptrhop,ptmass);
+      else    ComputeGaugeMeshT<KERNEL_Wendland,false>(aker,CSP,dvd,mp,kclimit,kcdummy,posxy,posz,code,velrhop,ptvel,ptvdir,ptrhop,ptmass);
+    }break;
+    default: throw "Kernel unknown at ComputeGaugeMesh().";
+  }
+}
+
+//------------------------------------------------------------------------------
+/// Calculates Z surface water level according mass interpolation values on fluid.
+//------------------------------------------------------------------------------
+__global__ void KerComputeGaugeMeshZsurf(unsigned npt12,unsigned npt1,unsigned npt3
+  ,float masslimit,double ptrefz,double vdp1z,double vdp2z,double vdp3z
+  ,const float* ptmass,float* ptzsurf)
+{
+  const unsigned cp=blockIdx.x*blockDim.x + threadIdx.x; //-Number of position.
+  if(cp<npt12){
+    const unsigned cp2=cp/npt1;
+    const unsigned cp1=cp-cp2*npt1;
+    float masspre=0;
+    unsigned cpsurf=0;
+    float    fsurf=0;
+    unsigned cpp=cp;
+    for(unsigned cp3=0;cp3<npt3 && !cpsurf;cp3++){
+      const float mass=ptmass[cpp];
+      if(mass>masslimit)masspre=mass;
+      if(mass<masslimit && masspre){
+        fsurf=(masslimit-masspre)/(mass-masspre);
+        cpsurf=cp3;
+      }
+      cpp+=npt12;
+    }
+    float zsurf=float(ptrefz+(vdp1z*cp1)+(vdp2z*cp2));    //-Minimum zsurf.
+    if(cpsurf==0 && masspre)zsurf+=float(vdp3z*(npt3-1)); //-Maximum zsurf.
+    if(cpsurf){
+      zsurf+=float((vdp3z*(cpsurf-1))+(vdp3z*fsurf));     //-Found zsurf.
+    }
+    ptzsurf[cp]=zsurf;
+  }
+}
+
+//==============================================================================
+/// Calculates Z surface water level according mass interpolation values on fluid.
+//==============================================================================
+void ComputeGaugeMeshZsurf(float masslimit,const jmsh::StMeshPts& mp
+  ,const float* ptmass,float* ptzsurf)
+{
+  //-Interaction with fluid particles.
+  const unsigned npt12=mp.npt1*mp.npt2;
+  if(npt12){
+    const unsigned bsize=128;
+    dim3 sgrid=GetSimpleGridSize(npt12,bsize);
+    //:JDgKerPrint info;
+    //:byte* ik=NULL; //info.GetInfoPointer(sgridf,bsfluid);
+    cudaMemset(ptzsurf,0,sizeof(float)*npt12);
+    KerComputeGaugeMeshZsurf <<<sgrid,bsize>>> (npt12,mp.npt1,mp.npt3
+      ,masslimit,mp.ptref.z,mp.vdp1.z,mp.vdp2.z,mp.vdp3.z,ptmass,ptzsurf);
+    //:info.PrintValuesFull(true); //info.PrintValuesInfo();
+  }
+}
+//<vs_meeshdat_end>
+
 
 //------------------------------------------------------------------------------
 /// Calculates force on selected fixed or moving particles using only fluid particles.

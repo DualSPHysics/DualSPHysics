@@ -28,6 +28,8 @@
 #include "JLinearValue.h"
 #include "JSphInOutVelAwas.h"
 #include "JSphInOutGridData.h"
+#include "JMeshTDatasDsVel.h"  //<vs_meeshdat>
+#include "JMeshTDatasXml.h"  //<vs_meeshdat>
 #include "JVtkLib.h"
 
 #ifdef _WITHGPU
@@ -58,6 +60,7 @@ JSphInOutVel::JSphInOutVel(bool cpu,unsigned idzone,const StCteSph& csp
   InputTimeVel=NULL;
   AwasVel=NULL;
   InputVelGrid=NULL;
+  InputMeshVel=NULL; //<vs_meeshdat>
 
   Reset();
 }
@@ -106,6 +109,7 @@ void JSphInOutVel::Reset(){
 
   delete InputVelGrid; InputVelGrid=NULL;
 
+  delete InputMeshVel; InputMeshVel=NULL; //<vs_meeshdat>
 }
 
 //==============================================================================
@@ -242,6 +246,19 @@ TpInVelMode JSphInOutVel::ReadXml(const JXml* sxml,TiXmlElement* ele
       if(!InputTimeVel || InputTimeVel->GetCount()<1)Run_Exceptioon("There are not inlet/outlet velocity values.");
       sxml->CheckElementNames(xele,true,"*velocitytimes *velocitytimes2 *velocitytimes3 velocityfile velocityfile2 velocityfile3 *flowvelocity");
     }
+//-Interpolated velocity with mesh-data. //<vs_meeshdat_ini>
+    else if(VelMode==InVelM_Interpolated && sxml->ExistsElement(xele,"meshdata")){
+      sxml->CheckElementNames(xele,true,"meshdata");
+      TiXmlElement* xmes=xele->FirstChildElement("meshdata");
+      jmsh::StMeshVelExtCfg cfg;
+      jmsh::JMeshTDatasXml::ReadXmlVelExt(sxml,xmes,cfg);
+      //-Creates inlet-mesh object.
+      InputMeshVel=new jmsh::JMeshTDatasDsVel(AppInfo.GetFullName(),Cpu);
+      InputMeshVel->ConfigVel(dirdatafile+cfg.file,cfg.setpos,cfg.initialtime
+        ,cfg.looptmax,cfg.looptbeg,cfg.velmagnitude,ToTFloat3(Direction)
+        ,cfg.velreverse,cfg.velmul,cfg.veladd);
+    }
+    //<vs_meeshdat_end>
 //-Interpolated velocity with grid-data (old version).
     else if(VelMode==InVelM_Interpolated){
       const string checklist="gridveldata gridposzero awas";
@@ -431,6 +448,17 @@ void JSphInOutVel::GetConfig(std::vector<std::string>& lines)const{
     if(VelProfile==InVelP_Linear   )lines.push_back(fun::PrintStr("  Velocity profile: Linear %g(z=%g), %g(z=%g)",InputVel,InputVelPosz,InputVel2,InputVelPosz2));
     if(VelProfile==InVelP_Parabolic)lines.push_back(fun::PrintStr("  Velocity profile: Parabolic %g(z=%g), %g(z=%g), %g(z=%g)",InputVel,InputVelPosz,InputVel2,InputVelPosz2,InputVel3,InputVelPosz3));
   }
+  else if(VelMode==InVelM_Interpolated && InputMeshVel){ //<vs_meeshdat_ini>
+    lines.push_back(fun::PrintStr("  Velocity file: %s",InputMeshVel->GetFileIn().c_str()));
+    string txreverse=(InputMeshVel->GetVelReverse()? "(Reverse: true)": "");
+    lines.push_back(fun::PrintStr("    Mode: %s %s",(InputMeshVel->GetVelMagnitude()? "Vel-Magnitude": "Vel-XYZ"),txreverse.c_str()));
+    if(InputMeshVel->GetInitialTime()!=0)lines.push_back(fun::PrintStr("    Initial time: %g [s]",InputMeshVel->GetInitialTime()));
+    if(InputMeshVel->GetLoopTbeginRq()!=DBL_MAX)lines.push_back(fun::PrintStr("    Loop-Times: %g -> %g (-%g)  (configured: %g -> %g)"
+      ,InputMeshVel->GetLoopTbeg(),InputMeshVel->GetLoopTmax(),InputMeshVel->GetLoopTsub(),InputMeshVel->GetLoopTbeginRq(),InputMeshVel->GetLoopTmaxRq()));
+    if(InputMeshVel->GetSetPos()!=TDouble3(0))lines.push_back(fun::PrintStr("    SetPos: (%s)",fun::Double3gStr(InputMeshVel->GetSetPos()).c_str()));
+    if(InputMeshVel->GetSetVelMul()!=TDouble3(1))lines.push_back(fun::PrintStr("    SetVelMul: (%s)",fun::Double3gStr(InputMeshVel->GetSetVelMul()).c_str()));
+    if(InputMeshVel->GetSetVelAdd()!=TDouble3(0))lines.push_back(fun::PrintStr("    SetVelAdd: (%s)",fun::Double3gStr(InputMeshVel->GetSetVelAdd()).c_str()));
+  } //<vs_meeshdat_end>
   else if(VelMode==InVelM_Interpolated){
     lines.push_back(fun::PrintStr("  Velocity file: %s",InputVelGrid->GetFile().c_str()));
     lines.push_back(fun::PrintStr("  Reset Z velocity: %s","True"));
@@ -520,6 +548,7 @@ void JSphInOutVel::UpdateVelVariable(double timestep){
 void JSphInOutVel::UpdateVel(double timestep){
   if(InputTimeVel)UpdateVelVariable(timestep);
   //else if(VelMode==InVelM_Interpolated && InputVelGrid) Nothing to do.
+  //else if(VelMode==InVelM_Interpolated && InputMeshVel) Nothing to do. //<vs_meeshdat>
   CurrentTime=timestep;
 }
 
@@ -547,6 +576,11 @@ void JSphInOutVel::UpdateVelInterpolateCpu(double timestep,unsigned nplist
       }
     }
   }
+  else if(InputMeshVel){ //<vs_meeshdat_ini>
+    float velcorr=0;
+    InputMeshVel->InterpolateInOutVelCpu(timestep,byte(IdZone),nplist,plist
+      ,pos,code,idp,velrhop,velcorr); 
+  } //<vs_meeshdat_end>
 }
 
 #ifdef _WITHGPU
@@ -567,6 +601,11 @@ void JSphInOutVel::UpdateVelInterpolateGpu(double timestep,unsigned nplist
       cusphinout::InOutInterpolateResetZVel(IdZone,nplist,plist,codeg,velrhopg);
     }
   }
+  else if(InputMeshVel){ //<vs_meeshdat_ini>
+    float velcorr=0;
+    InputMeshVel->InterpolateInOutVelGpu(timestep,byte(IdZone),nplist,plist
+      ,posxyg,poszg,codeg,idpg,velrhopg,velcorr); 
+  } //<vs_meeshdat_end>
 }
 #endif
 
@@ -649,3 +688,59 @@ void JSphInOutVel::SaveVtkVelGrid(){
   }
 }
 
+
+//<vs_meeshdat_ini>
+//==============================================================================
+/// Set uniform Velocity during simulation.
+//==============================================================================
+void JSphInOutVel::RnSetVelUniform(double time0,float vel0,double time1,float vel1){ 
+  if(VelMode==InVelM_Interpolated && InputMeshVel){
+    const StRnVelData v=RnGetVelPtr(time0,time1);
+    if(v.velxyz)Run_Exceptioon("Operation is invalid because 3-component velocity is configured.");
+    const unsigned npt=v.npt;
+    float* ptr0=v.vel0;
+    float* ptr1=v.vel1;
+    float* ptrc0=(v.gpuptr? new float[npt]: ptr0);
+    float* ptrc1=(v.gpuptr? new float[npt]: ptr1);
+    for(unsigned p=0;p<npt;p++){
+      ptrc0[p]=vel0;
+      ptrc1[p]=vel1;
+    }
+    if(v.gpuptr){
+     #ifdef _WITHGPU
+      cudaMemcpy(ptr0,ptrc0,sizeof(float)*npt,cudaMemcpyHostToDevice);
+      cudaMemcpy(ptr1,ptrc1,sizeof(float)*npt,cudaMemcpyHostToDevice);
+      delete[] ptrc0;
+      delete[] ptrc1;
+     #endif
+    }
+    //throw "parate!";
+  }
+  else{
+    if(!InputTimeVel || InputTimeVel->Nvalues>1)Run_Exceptioon("Operation is invalid because Velocity mode is not variable with uniform profile.");
+    InputTimeVel->RnSetValues(time0,vel0,time1,vel1);
+    TimeVelIdx0=TimeVelIdx1=UINT_MAX; 
+  }
+}
+
+//==============================================================================
+/// Returns current velocity mesh definition.
+//==============================================================================
+jmsh::StMeshPts JSphInOutVel::RnGetVelMeshInfo()const{ 
+  jmsh::StMeshPts m;
+  if(InputMeshVel)m=InputMeshVel->GetMeshPt();
+  else memset(&m,0,sizeof(jmsh::StMeshPts));
+  return(m);
+}
+
+//==============================================================================
+/// Prepares data for two times, set time0 and time1 and return pointers (cpu or 
+/// gpu) for the modification of velocity data.
+//==============================================================================
+StRnVelData JSphInOutVel::RnGetVelPtr(double time0,double time1){ 
+  if(VelMode!=InVelM_Interpolated || InputMeshVel==NULL)
+    Run_Exceptioon("Operation is invalid because Velocity mode is not interpolated or do not use mesh-data.");
+  return(InputMeshVel->RnGetVelPtr(time0,time1));
+}
+
+//<vs_meeshdat_end>

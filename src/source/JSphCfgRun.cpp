@@ -45,8 +45,8 @@ void JSphCfgRun::Reset(){
   SvExtraParts="undefined";
   OmpThreads=0;
   SvTimers=true;
-  CellDomFixed=false;
   CellMode=CELLMODE_Full;
+  CellDomFixed=false;
   TBoundary=0; SlipMode=0; MdbcFastSingle=-1; MdbcThreshold=-1;
   DomainMode=0;
   DomainFixedMin=DomainFixedMax=TDouble3(0);
@@ -98,35 +98,42 @@ void JSphCfgRun::VisuInfo()const{
   printf("    -opt <file> Loads a file configuration\n");
   printf("\n");
 
-  printf("  Execution options:\n");
+  printf("  Execution options for CPU:\n");
   printf("    -cpu        Execution on CPU (option by default)\n");
-  printf("    -gpu[:id]   Execution on GPU and id of the device\n");
+#ifdef OMP_USE
+  printf("    -ompthreads:<int>  Only for CPU execution, indicates the number of threads\n");
+  printf("                by host for parallel execution, this takes the number of cores\n");
+  printf("                of the device by default (or using zero value)\n");
+#endif
   printf("\n");
+
+#ifdef _WITHGPU
+  printf("  Execution options for Single-GPU:\n");
+  printf("    -gpu[:id]   Execution on GPU and optional id of the device\n");
+  printf("\n");
+#endif
+
+  printf("  General execution options:\n");
   printf("    -stable     The result is always the same but the execution is slower\n");
   printf("    -saveposdouble:<0/1>  Saves position using double precision (default=0)\n");
   printf("    -svextraparts:<int>  PART interval for saving extra data (default=0)\n");
   printf("    -svextraparts:<list> List of PARTs for saving extra data (default=0)\n");
   printf("\n");
-#ifdef OMP_USE
-  printf("    -ompthreads:<int>  Only for CPU execution, indicates the number of threads\n");
-  printf("                   by host for parallel execution, this takes the number of \n");
-  printf("                   cores of the device by default (or using zero value)\n");
-  printf("\n");
-#endif
   printf("    -cellmode:<mode>  Specifies the cell division mode\n");
   printf("        full      Lowest and the least expensive in memory (by default)\n");
   printf("        half      Fastest and the most expensive in memory\n");
   printf("    -cellfixed:<0/1>  Cell domain is fixed according maximum domain size\n");
+  printf("                      (default=0)\n");
   printf("\n");
 
   printf("  Formulation options:\n");
   printf("    -dbc           Dynamic Boundary Condition DBC (by default)\n");
   printf("    -mdbc          Modified Dynamic Boundary Condition mDBC (mode: vel=0)\n");
-  printf("    -mdbc_noslip   Modified Dynamic Boundary Condition mDBC (mode: no-slip)\n");
-  printf("    -mdbc_freeslip Modified Dynamic Boundary Condition mDBC (mode: free-slip)\n");
+  //printf("    -mdbc_noslip   Modified Dynamic Boundary Condition mDBC (mode: no-slip)\n");
+  //printf("    -mdbc_freeslip Modified Dynamic Boundary Condition mDBC (mode: free-slip)\n");
 /////////|---------1---------2---------3---------4---------5---------6---------7--------X8
-  printf("    -mdbc_fast:<0/1>        Fast single precision calculation on GPU (default=1)\n");
-  printf("    -mdbc_threshold:<float> Kernel support limit to apply mDBC correction [0-1]\n");
+  //printf("    -mdbc_fast:<0/1>        Fast single precision calculation on GPU (default=1)\n");
+  //printf("    -mdbc_threshold:<float> Kernel support limit to apply mDBC correction [0-1]\n");
   printf("\n");
   printf("    -initnorpla:<inlinecfg>  Initialize definition for <boundnormal_plane>\n");
   printf("    -initnorpart:<inlinecfg> Initialize definition for <boundnormal_parts>\n");
@@ -141,6 +148,7 @@ void JSphCfgRun::VisuInfo()const{
 #endif
   printf("\n");
   printf("    -viscoart:<float>          Artificial viscosity [0-1]\n");
+  printf("    -viscolam:<float>          Laminar viscosity [order of 1E-6]\n");  
   printf("    -viscolamsps:<float>       Laminar+SPS viscosity [order of 1E-6]\n");  
   printf("    -viscoboundfactor:<float>  Multiplies the viscosity value of boundary\n");
   printf("\n");
@@ -281,8 +289,13 @@ void JSphCfgRun::LoadOpts(string* optlis,int optn,int lv,const std::string& file
       string txword,txoptfull,txopt1,txopt2,txopt3;
       SplitsOpts(opt,txword,txoptfull,txopt1,txopt2,txopt3);
       //-Checks keywords in commands.
-      if(txword=="CPU"){ Cpu=true; Gpu=false; }
-      else if(txword=="GPU"){ Gpu=true; Cpu=false;
+      if(txword=="CPU"){
+        Cpu=Gpu=false; 
+        Cpu=true;
+      }
+      else if(txword=="GPU"){ 
+        Cpu=Gpu=false; 
+        Gpu=true;
         if(txoptfull!="")GpuId=atoi(txoptfull.c_str()); 
       }
       else if(txword=="STABLE")Stable=(txoptfull!=""? atoi(txoptfull.c_str()): 1)!=0;
@@ -332,9 +345,14 @@ void JSphCfgRun::LoadOpts(string* optlis,int optn,int lv,const std::string& file
         if(Visco>10)ErrorParm(opt,c,lv,file);
         TVisco=VISCO_Artificial;
       }
+      else if(txword=="VISCOLAM"){ 
+        Visco=float(atof(txoptfull.c_str())); 
+        if(Visco>0.001f)ErrorParm(opt,c,lv,file);
+        TVisco=VISCO_Laminar;
+      }
       else if(txword=="VISCOLAMSPS"){ 
         Visco=float(atof(txoptfull.c_str())); 
-        if(Visco>0.001)ErrorParm(opt,c,lv,file);
+        if(Visco>0.001f)ErrorParm(opt,c,lv,file);
         TVisco=VISCO_LaminarSPS;
       }
       else if(txword=="VISCOBOUNDFACTOR"){ 

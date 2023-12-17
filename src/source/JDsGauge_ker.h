@@ -23,6 +23,7 @@
 
 #include "DualSphDef.h"
 #include "JCellDivDataGpu.h"
+#include "JMeshDataDef.h"  //<vs_meeshdat>
 #include <cuda_runtime_api.h>
 
 /// Implements a set of functions and CUDA kernels for classes that manage gauges.
@@ -44,6 +45,18 @@ void Interaction_GaugeMaxz(tdouble3 point0,float maxdist2,const StDivDataGpu& dv
   ,int cxini,int cxfin,int yini,int yfin,int zini,int zfin
   ,const double2* posxy,const double* posz,const typecode* code
   ,float3* ptres);
+
+//<vs_meeshdat_ini>
+//-Kernel for JGaugeMesh (velocity, rhop and mass in a mesh of points).
+void ComputeGaugeMesh(const StCteSph& CSP,const StDivDataGpu& dvd
+  ,const jmsh::StMeshPts& mp,float kclimit,float kcdummy,const double2* posxy
+  ,const double* posz,const typecode* code,const float4* velrhop
+  ,float3* ptvel,float* ptvdir,float* ptrhop,float* ptmass);
+
+//-Kernel for JGaugeMesh (zsurf starting from mass interpolation).
+void ComputeGaugeMeshZsurf(float masslimit,const jmsh::StMeshPts& mp
+  ,const float* ptmass,float* ptzsurf);
+//<vs_meeshdat_end>
 
 //-Kernel for JGaugeForce.
 void Interaction_GaugeForce(const StCteSph& CSP,const StDivDataGpu& dvd
