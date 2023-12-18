@@ -772,16 +772,15 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity,bool sh
     for(int c3=ini3;c3<fin3;c3+=nc.w)for(int c2=ini2;c2<fin2;c2+=nc.x){
       unsigned pini,pfin=0;  cunsearch::ParticleRange(c2,c3,ini1,fin1,begincell,pini,pfin);
       if(pfin){
-
-                          KerInteractionForcesFluidBox<tker,ftmode,tvisco,tdensity,shift,false> (false
-                            ,p1,pini,pfin,viscof,ftomassp,tauff,dengradcorr,poscell,velrho,code,idp
-                            ,CTE.massf,ftp1,pscellp1,velrhop1,pressp1,taup1_xx_xy,taup1_xz_yy,taup1_yz_zz
+                          KerInteractionForcesFluidBox<tker,ftmode,tvisco,tdensity,shift,false> (true
+                            ,p1,pini,pfin,viscob,ftomassp,tauff,NULL,poscell,velrho,code,idp,CTE.massb
+                            ,ftp1,pscellp1,velrhop1,pressp1,taup1_xx_xy,taup1_xz_yy,taup1_yz_zz
                             ,two_strainp1_xx_xy,two_strainp1_xz_yy,two_strainp1_yz_zz,acep1,arp1,visc
                             ,deltap1,shiftmode,shiftposfsp1,boundnormal,boundonoff,motionvel);
         //<vs_syymmetry_ini>
-        if(symm && rsymp1)KerInteractionForcesFluidBox<tker,ftmode,tvisco,tdensity,shift,true > (false
-                            ,p1,pini,pfin,viscof,ftomassp,tauff,dengradcorr,poscell,velrho,code,idp
-                            ,CTE.massf,ftp1,pscellp1,velrhop1,pressp1,taup1_xx_xy,taup1_xz_yy,taup1_yz_zz
+        if(symm && rsymp1)KerInteractionForcesFluidBox<tker,ftmode,tvisco,tdensity,shift,true > (true 
+                            ,p1,pini,pfin,viscob,ftomassp,tauff,NULL,poscell,velrho,code,idp,CTE.massb
+                            ,ftp1,pscellp1,velrhop1,pressp1,taup1_xx_xy,taup1_xz_yy,taup1_yz_zz
                             ,two_strainp1_xx_xy,two_strainp1_xz_yy,two_strainp1_yz_zz,acep1,arp1,visc
                             ,deltap1,shiftmode,shiftposfsp1,boundnormal,boundonoff,motionvel);
         //<vs_syymmetry_end>
