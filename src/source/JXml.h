@@ -96,6 +96,11 @@ public:
 #endif
 
   //==============================================================================
+  /// Returns loaded file name.
+  //==============================================================================
+  std::string GetFileReading()const{ return(FileReading); }
+
+  //==============================================================================
   /// Returns the requested node and creates it if necessary.
   /// \param path Path of the requested node.
   /// \param createpath Allows to create the path if does not exist,

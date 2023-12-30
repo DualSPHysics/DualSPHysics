@@ -304,6 +304,8 @@ void Interaction_GaugeMaxz(tdouble3 point0,float maxdist2,const StDivDataGpu& dv
     ,posxy,posz,code,ptres);
 }
 
+
+
 //<vs_meeshdat_ini>
 //------------------------------------------------------------------------------
 /// Calculates data interpolation according to fluid particle data.

@@ -957,12 +957,11 @@ void JSphCpuSingle::FtPartsUpdate(double dt,bool updatenormals
 /// Runs calculations in configured gauges.
 /// Ejecuta calculos en las posiciones de medida configuradas.
 //==============================================================================
-void JSphCpuSingle::RunGaugeSystem(double timestep,bool saveinput){
+void JSphCpuSingle::RunGaugeSystem(double timestep,bool savedivstate){
   if(!Nstep || GaugeSystem->GetCount()){
     Timersc->TmStart(TMC_SuGauges);
     //const bool svpart=(TimeStep>=TimePartNext);
-    GaugeSystem->CalculeCpu(timestep,DivData,NpbOk,Npb,Np
-      ,Pos_c->cptr(),Code_c->cptr(),Idp_c->cptr(),Velrho_c->cptr(),saveinput);
+    GaugeSystem->CalculeCpu(timestep,DivData,NpbOk,Npb,Np,savedivstate);
     Timersc->TmStop(TMC_SuGauges);
   }
 }

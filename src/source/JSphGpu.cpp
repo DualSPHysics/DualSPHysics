@@ -51,7 +51,7 @@ using namespace std;
 //==============================================================================
 /// Constructor.
 //==============================================================================
-JSphGpu::JSphGpu(bool withmpi):JSph(false,false,withmpi),DivAxis(MGDIV_None){
+JSphGpu::JSphGpu(bool withmpi):JSph(false,1,withmpi),DivAxis(MGDIV_None){
   ClassName="JSphGpu";
   CellDiv=NULL;
   Arrays_Cpu=NULL;
@@ -729,6 +729,7 @@ void JSphGpu::InitRunGpu(){
   unsigned nfilter=0;
   ParticlesDataDown(Np,0,false,false,NULL,nfilter);
   InitRun(Np,Idp_c->cptr(),AuxPos_c->cptr());
+  GaugeSystem->ConfigArraysGpu(0,Posxy_g,Posz_g,Code_g,Idp_g,Velrho_g);
   if(CaseNfloat)InitFloatingsGpu(FtoMasspg,FtoDatpg,FtoCenterg,DemDatag);
   if(TStep==STEP_Verlet)VelrhoM1_g->CuCopyFrom(Velrho_g,Np);
   if(TVisco==VISCO_LaminarSPS)SpsTauRho2_g->CuMemset(0,Np);

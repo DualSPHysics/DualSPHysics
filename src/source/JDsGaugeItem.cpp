@@ -86,7 +86,9 @@ void JGaugeItem::CheckCudaErroor(const std::string& srcfile,int srcline
 /// Initialisation of variables.
 //==============================================================================
 void JGaugeItem::Reset(){
-  Config(CteSphNull(),false,TDouble3(0),TDouble3(0),0,0);
+  Config(CteSphNull(),false,0,0,TDouble3(0),TDouble3(0),TDouble3(0));
+  FixedDomMCel=false;
+  DomMCelIni0=DomMCelFin0=TUint3(0);
   SaveVtkPart=false;
   ConfigComputeTiming(0,0,0);
   ConfigOutputTiming(false,0,0,0);
@@ -98,15 +100,16 @@ void JGaugeItem::Reset(){
 //==============================================================================
 /// Configures object.
 //==============================================================================
-void JGaugeItem::Config(const StCteSph& csp,bool symmetry,tdouble3 domposmin
-    ,tdouble3 domposmax,float scell,int scelldiv)
+void JGaugeItem::Config(const StCteSph& csp,bool symmetry,float scell
+  ,int scelldiv,tdouble3 mapposmin,tdouble3 domposmin,tdouble3 domposmax)
 {
   CSP=csp;
   Symmetry=symmetry;
-  DomPosMin=domposmin;
-  DomPosMax=domposmax;
   Scell=scell;
   ScellDiv=scelldiv;
+  MapPosMin=mapposmin;
+  DomPosMin=domposmin;
+  DomPosMax=domposmax;
 }
 
 //==============================================================================
@@ -148,12 +151,22 @@ std::string JGaugeItem::GetNameType(TpGauge type){
 /// Loads lines with configuration information.
 //==============================================================================
 void JGaugeItem::GetConfig(std::vector<std::string>& lines)const{
-  lines.push_back(fun::PrintStr("Type.......: %s",JGaugeItem::GetNameType(Type).c_str()));
+  lines.push_back(fun::PrintStr("Type.......: %s"
+    ,JGaugeItem::GetNameType(Type).c_str()));
   const string cpend=fun::DoublexStr(ComputeEnd,"%g");
-  lines.push_back(fun::PrintStr("Compute....: %g - %s   dt:%g",ComputeStart,cpend.c_str(),ComputeDt));
+  lines.push_back(fun::PrintStr("Compute....: %g - %s   dt:%g"
+    ,ComputeStart,cpend.c_str(),ComputeDt));
   const string ouend=fun::DoublexStr(OutputEnd,"%g");
-  lines.push_back(fun::PrintStr("Output.....:%s%g - %s   dt:%g",(OutputSave? " ": " (disabled)  "),OutputStart ,ouend.c_str(),OutputDt));
+  lines.push_back(fun::PrintStr("Output.....:%s%g - %s   dt:%g"
+    ,(OutputSave? " ": " (disabled)  "),OutputStart ,ouend.c_str(),OutputDt));
   lines.push_back(fun::PrintStr("SaveVtkPart: %s",(SaveVtkPart? "True": "False")));
+  if(Type!=GAUGE_Force){
+    //-Computes map-cell max according to final map-cell.
+    const tuint3 dcelmax=MinValues(DomMCelFin0,DomMCelFin0-TUint3(1));
+    lines.push_back(fun::PrintStr("DomainCells: %s   mode:%s"
+      ,fun::Uint3RangeStr(DomMCelIni0,dcelmax).c_str()
+      ,(FixedDomMCel? "fixed": "unfixed")));
+  }
   if(Type==GAUGE_Vel){
     const JGaugeVelocity* gau=(JGaugeVelocity*)this;
     lines.push_back(fun::PrintStr("Point......: (%g,%g,%g)",gau->GetPoint().x,gau->GetPoint().y,gau->GetPoint().z));
@@ -198,10 +211,10 @@ void JGaugeItem::GetConfig(std::vector<std::string>& lines)const{
 //==============================================================================
 /// Returns filename for output results files.
 //==============================================================================
-std::string JGaugeItem::GetResultsFile(bool dirdata,const std::string& fext
+std::string JGaugeItem::GetResultsFile(bool dirgauges,const std::string& fext
   ,const std::string& subname)const
 {
-  const string fdir=(dirdata? AppInfo.GetDirDataOut(): AppInfo.GetDirOut());
+  const string fdir=(dirgauges? AppInfo.GetDirOut()+"gaugesvtks/": AppInfo.GetDirOut());
   return(fdir+"Gauges"+GetNameType(Type)+"_"+Name+subname+"."+fun::StrLower(fext));
 }
 
@@ -239,6 +252,50 @@ void JGaugeItem::SaveResults(unsigned cpart){
   if(SaveVtkPart)SaveVtkResult(cpart);
 }
 
+//==============================================================================
+/// Returns MapCell of position. Note that the minimum cell is always zero.
+//==============================================================================
+tuint3 JGaugeItem::CalcMCelFromPos(const tdouble3& ps)const{
+  const double dx=ps.x-MapPosMin.x;
+  const double dy=ps.y-MapPosMin.y;
+  const double dz=ps.z-MapPosMin.z;
+  const unsigned cx=(dx>=0? unsigned(dx/Scell): 0);
+  const unsigned cy=(dy>=0? unsigned(dy/Scell): 0);
+  const unsigned cz=(dz>=0? unsigned(dz/Scell): 0);
+  return(TUint3(cx,cy,cz));
+}
+
+//==============================================================================
+/// Returns MapCell domain of one position.
+//==============================================================================
+void JGaugeItem::CalcMCelIniFinFromPos(const tdouble3& ps,tuint3& mcelini
+  ,tuint3& mcelfin)const
+{
+  const unsigned ncel=ScellDiv;
+  const tuint3 mcel=CalcMCelFromPos(ps);
+  const unsigned cxi=(mcel.x>ncel? mcel.x-ncel: 0);
+  const unsigned cyi=(mcel.y>ncel? mcel.y-ncel: 0);
+  const unsigned czi=(mcel.z>ncel? mcel.z-ncel: 0);
+  mcelini=TUint3(cxi,cyi,czi);
+  mcelfin=mcel+TUint3(ncel+1);
+}
+
+//==============================================================================
+/// Returns MapCell domain of two positions.
+//==============================================================================
+void JGaugeItem::CalcMCelIniFinFromPos(const tdouble3& psmin
+  ,const tdouble3& psmax,tuint3& mcelini,tuint3& mcelfin)const
+{
+  const unsigned ncel=ScellDiv;
+  const tuint3 mcel=CalcMCelFromPos(psmin);
+  const unsigned cxi=(mcel.x>ncel? mcel.x-ncel: 0);
+  const unsigned cyi=(mcel.y>ncel? mcel.y-ncel: 0);
+  const unsigned czi=(mcel.z>ncel? mcel.z-ncel: 0);
+  mcelini=TUint3(cxi,cyi,czi);
+  const tuint3 mcel2=CalcMCelFromPos(psmax);
+  mcelfin=mcel2+TUint3(ncel+1);
+}
+
 
 //##############################################################################
 //# JGaugeVelocity
@@ -269,6 +326,15 @@ JGaugeVelocity::~JGaugeVelocity(){
 void JGaugeVelocity::Reset(){
   SetPoint(TDouble3(0));
   JGaugeItem::Reset();
+}
+
+//==============================================================================
+/// Configuration of initial limits of calculation area.
+//==============================================================================
+void JGaugeVelocity::ConfigDomMCel(bool fixed){
+  if(!fixed)Run_Exceptioon("Unfixed calculation domain is invalid for Vel-Gauge.");
+  FixedDomMCel=fixed;
+  CalcMCelIniFinFromPos(Point,DomMCelIni0,DomMCelFin0);
 }
 
 //==============================================================================
@@ -343,10 +409,15 @@ unsigned JGaugeVelocity::GetPointDef(std::vector<tfloat3>& points)const{
 //==============================================================================
 /// Calculates velocity at indicated points (on CPU).
 //==============================================================================
-template<TpKernel tker> void JGaugeVelocity::CalculeCpuT(double timestep
-  ,const StDivDataCpu& dvd,unsigned npbok,unsigned npb,unsigned np,const tdouble3* pos
-  ,const typecode* code,const unsigned* idp,const tfloat4* velrho)
+template<TpKernel tker> void JGaugeVelocity::CalculeCpuT(const StDataCpu& datacpu)
 {
+  //-Prepare input data.
+  const double& timestep =datacpu.timestep;
+  const StDivDataCpu& dvd=datacpu.dvd;
+  const tdouble3* pos    =datacpu.pos_c->cptr();
+  const typecode* code   =datacpu.code_c->cptr();
+  //const unsigned* idp  =datacpu.idp_c->cptr();
+  const tfloat4*  velrho =datacpu.velrho_c->cptr();
   SetTimeStep(timestep);
   //-Start measure.
   tfloat3 ptvel=TFloat3(0);
@@ -391,13 +462,10 @@ template<TpKernel tker> void JGaugeVelocity::CalculeCpuT(double timestep
 //==============================================================================
 /// Calculates velocity at indicated points (on CPU).
 //==============================================================================
-void JGaugeVelocity::CalculeCpu(double timestep,const StDivDataCpu& dvd
-  ,unsigned npbok,unsigned npb,unsigned np,const tdouble3* pos
-  ,const typecode* code,const unsigned* idp,const tfloat4* velrho)
-{
+void JGaugeVelocity::CalculeCpu(const StDataCpu& datacpu){
   switch(CSP.tkernel){
     case KERNEL_Cubic:       //Kernel Wendland is used since Cubic is not available.
-    case KERNEL_Wendland:    CalculeCpuT<KERNEL_Wendland>  (timestep,dvd,npbok,npb,np,pos,code,idp,velrho);  break;
+    case KERNEL_Wendland:    CalculeCpuT<KERNEL_Wendland>  (datacpu);  break;
     default: Run_Exceptioon("Kernel unknown.");
   }
 }
@@ -406,23 +474,33 @@ void JGaugeVelocity::CalculeCpu(double timestep,const StDivDataCpu& dvd
 //==============================================================================
 /// Calculates velocity at indicated points (on GPU).
 //==============================================================================
-void JGaugeVelocity::CalculeGpu(double timestep,const StDivDataGpu& dvd
-  ,unsigned npbok,unsigned npb,unsigned np,const double2* posxy,const double* posz
-  ,const typecode* code,const unsigned* idp,const float4* velrho,float3* aux)
-{
-  SetTimeStep(timestep);
-  //-Start measure.
-  tfloat3 ptvel=TFloat3(0);
-  const bool ptout=PointIsOut(Point.x,Point.y,Point.z);//-Verify that the point is within domain boundaries. | Comprueba que el punto este dentro de limites del dominio.
-  if(!ptout){
-    cugauge::Interaction_GaugeVel(CSP,dvd,Point,posxy,posz,code,velrho,aux);
-    cudaMemcpy(&ptvel,aux,sizeof(float3),cudaMemcpyDeviceToHost);
-    Check_CudaErroor("Failed in velocity calculation.");
+void JGaugeVelocity::CalculeGpu(const StDataGpu& datagpu,float3* auxg){
+  const tdouble3 domposmin=DomPosMin,domposmax=DomPosMax;
+  const int indomain=2;
+  //-Run GPU calculation.
+  if(indomain==2){
+    //-Prepare input data.
+    const double& timestep =datagpu.timestep;
+    const StDivDataGpu& dvd=datagpu.dvd;
+    const double2*  posxy  =datagpu.posxy_g->cptr();
+    const double*   posz   =datagpu.posz_g->cptr();
+    const typecode* code   =datagpu.code_g->cptr();
+    //const unsigned* idp  =datagpu.idp_g->cptr();
+    const float4*   velrho =datagpu.velrho_g->cptr();
+    SetTimeStep(timestep);
+    //-Start measure.
+    tfloat3 ptvel=TFloat3(0);
+    const bool ptout=PointIsOut(Point.x,Point.y,Point.z,domposmin,domposmax);
+    if(!ptout){//-Verify that the point is within domain limits.
+      cugauge::Interaction_GaugeVel(CSP,dvd,Point,posxy,posz,code,velrho,auxg);
+      cudaMemcpy(&ptvel,auxg,sizeof(float3),cudaMemcpyDeviceToHost);
+      Check_CudaErroor("Failed in velocity calculation.");
+    }
+    //-Stores result. | Guarda resultado.
+    Result.Set(timestep,ToTFloat3(Point),ptvel);
+    //Log->Printf("------> t:%f",TimeStep);
+    if(Output(timestep))StoreResult();
   }
-  //-Stores result. | Guarda resultado.
-  Result.Set(timestep,ToTFloat3(Point),ptvel);
-  //Log->Printf("------> t:%f",TimeStep);
-  if(Output(timestep))StoreResult();
 }
 #endif
 
@@ -465,7 +543,9 @@ void JGaugeSwl::Reset(){
 //==============================================================================
 /// Changes points definition.
 //==============================================================================
-void JGaugeSwl::SetPoints(const tdouble3& point0,const tdouble3& point2,double pointdp){
+void JGaugeSwl::SetPoints(const tdouble3& point0,const tdouble3& point2
+  ,double pointdp)
+{
   //if(PointDp<=0)Run_Exceptioon(fun::PrintStr("The value of PointDp is <= zero in gauge \'%s\'.",Name.c_str()));
   Point0=point0;
   Point2=point2;
@@ -482,7 +562,22 @@ void JGaugeSwl::SetPoints(const tdouble3& point0,const tdouble3& point2,double p
   else{
     PointNp=0;
     PointDir=TDouble3(0);
-  } 
+  }
+  //-Updates limits of calculation area.
+  if(Scell){
+    if(FixedDomMCel)Run_Exceptioon("Set points is invalid for fixed calculation domain.");
+    ConfigDomMCel(FixedDomMCel);
+  }
+}
+
+//==============================================================================
+/// Configuration of initial limits of calculation area.
+//==============================================================================
+void JGaugeSwl::ConfigDomMCel(bool fixed){
+  FixedDomMCel=fixed;
+  const tdouble3 psmin=MinValues(Point0,Point2);
+  const tdouble3 psmax=MaxValues(Point0,Point2);
+  CalcMCelIniFinFromPos(psmin,psmax,DomMCelIni0,DomMCelFin0);
 }
 
 //==============================================================================
@@ -565,7 +660,8 @@ unsigned JGaugeSwl::GetPointDef(std::vector<tfloat3>& points)const{
 /// pertenecer al dominio de celdas.
 //==============================================================================
 template<TpKernel tker> float JGaugeSwl::CalculeMassCpu(const tdouble3& ptpos
-  ,const StDivDataCpu& dvd,const tdouble3* pos,const typecode* code,const tfloat4* velrho)const
+  ,const StDivDataCpu& dvd,const tdouble3* pos,const typecode* code
+  ,const tfloat4* velrho)const
 {
   //-Auxiliary variables.
   double sumwab=0;
@@ -593,10 +689,15 @@ template<TpKernel tker> float JGaugeSwl::CalculeMassCpu(const tdouble3& ptpos
 //==============================================================================
 /// Calculates surface water level at indicated points (on CPU).
 //==============================================================================
-template<TpKernel tker> void JGaugeSwl::CalculeCpuT(double timestep
-  ,const StDivDataCpu& dvd,unsigned npbok,unsigned npb,unsigned np
-  ,const tdouble3* pos,const typecode* code,const unsigned* idp,const tfloat4* velrho)
+template<TpKernel tker> void JGaugeSwl::CalculeCpuT(const StDataCpu& datacpu)
 {
+  //-Prepare input data.
+  const double& timestep =datacpu.timestep;
+  const StDivDataCpu& dvd=datacpu.dvd;
+  const tdouble3* pos    =datacpu.pos_c->cptr();
+  const typecode* code   =datacpu.code_c->cptr();
+  //const unsigned* idp  =datacpu.idp_c->cptr();
+  const tfloat4*  velrho =datacpu.velrho_c->cptr();
   SetTimeStep(timestep);
   //-Look for change of fluid to empty. | Busca paso de fluido a vacio.
   tdouble3 ptsurf=TDouble3(DBL_MAX);
@@ -622,13 +723,10 @@ template<TpKernel tker> void JGaugeSwl::CalculeCpuT(double timestep
 //==============================================================================
 /// Calculates surface water level at indicated points (on CPU).
 //==============================================================================
-void JGaugeSwl::CalculeCpu(double timestep,const StDivDataCpu& dvd
-  ,unsigned npbok,unsigned npb,unsigned np,const tdouble3* pos
-  ,const typecode* code,const unsigned* idp,const tfloat4* velrho)
-{
+void JGaugeSwl::CalculeCpu(const StDataCpu& datacpu){
   switch(CSP.tkernel){
     case KERNEL_Cubic:       //Kernel Wendland is used since Cubic is not available.
-    case KERNEL_Wendland:    CalculeCpuT<KERNEL_Wendland>  (timestep,dvd,npbok,npb,np,pos,code,idp,velrho);  break;
+    case KERNEL_Wendland:    CalculeCpuT<KERNEL_Wendland>  (datacpu);  break;
     default: Run_Exceptioon("Kernel unknown.");
   }
 }
@@ -636,21 +734,30 @@ void JGaugeSwl::CalculeCpu(double timestep,const StDivDataCpu& dvd
 //==============================================================================
 /// Calculates surface water level at indicated points (on GPU).
 //==============================================================================
-void JGaugeSwl::CalculeGpu(double timestep,const StDivDataGpu& dvd
-  ,unsigned npbok,unsigned npb,unsigned np,const double2* posxy,const double* posz
-  ,const typecode* code,const unsigned* idp,const float4* velrho,float3* aux)
-{
-  SetTimeStep(timestep);
-  //-Start measure.
-  cugauge::Interaction_GaugeSwl(CSP,dvd,Point0,PointDir,PointNp,MassLimit
-    ,posxy,posz,code,velrho,aux);
-  tfloat3 ptsurf=TFloat3(0);
-  cudaMemcpy(&ptsurf,aux,sizeof(float3),cudaMemcpyDeviceToHost);
-  Check_CudaErroor("Failed in Swl calculation.");
-  //-Stores result. | Guarda resultado.
-  Result.Set(timestep,ToTFloat3(Point0),ToTFloat3(Point2),ptsurf);
-  //Log->Printf("------> t:%f",TimeStep);
-  if(Output(timestep))StoreResult();
+void JGaugeSwl::CalculeGpu(const StDataGpu& datagpu,float3* auxg){
+  const int indomain=2;
+  //-Run GPU calculation.
+  if(indomain==2){
+    //-Prepare input data.
+    const double& timestep =datagpu.timestep;
+    const StDivDataGpu& dvd=datagpu.dvd;
+    const double2*  posxy  =datagpu.posxy_g->cptr();
+    const double*   posz   =datagpu.posz_g->cptr();
+    const typecode* code   =datagpu.code_g->cptr();
+    //const unsigned* idp  =datagpu.idp_g->cptr();
+    const float4*   velrho =datagpu.velrho_g->cptr();
+    SetTimeStep(timestep);
+    //-Start measure.
+    cugauge::Interaction_GaugeSwl(CSP,dvd,Point0,PointDir,PointNp,MassLimit
+      ,posxy,posz,code,velrho,auxg);
+    tfloat3 ptsurf=TFloat3(0);
+    cudaMemcpy(&ptsurf,auxg,sizeof(float3),cudaMemcpyDeviceToHost);
+    Check_CudaErroor("Failed in Swl calculation.");
+    //-Stores result. | Guarda resultado.
+    Result.Set(timestep,ToTFloat3(Point0),ToTFloat3(Point2),ptsurf);
+    //Log->Printf("------> t:%f",TimeStep);
+    if(Output(timestep))StoreResult();
+  }
 }
 #endif
 
@@ -661,8 +768,8 @@ void JGaugeSwl::CalculeGpu(double timestep,const StDivDataGpu& dvd
 //==============================================================================
 /// Constructor.
 //==============================================================================
-JGaugeMaxZ::JGaugeMaxZ(unsigned idx,std::string name,tdouble3 point0,double height,float distlimit,bool cpu)
-  :JGaugeItem(GAUGE_MaxZ,idx,name,cpu)
+JGaugeMaxZ::JGaugeMaxZ(unsigned idx,std::string name,tdouble3 point0
+  ,double height,float distlimit,bool cpu):JGaugeItem(GAUGE_MaxZ,idx,name,cpu)
 {
   ClassName="JGaugeMaxZ";
   FileInfo=string("Saves maximum Z position of fluid particles (by ")+ClassName+").";
@@ -688,6 +795,25 @@ void JGaugeMaxZ::Reset(){
   SetHeight(0);
   SetDistLimit(0);
   JGaugeItem::Reset();
+}
+
+//==============================================================================
+/// Configuration of initial limits of calculation area.
+//==============================================================================
+void JGaugeMaxZ::ConfigDomMCel(bool fixed){
+  if(!fixed)Run_Exceptioon("Unfixed calculation domain is invalid for MaxZ-Gauge.");
+  FixedDomMCel=fixed;
+  const unsigned ncel=unsigned(ceil(DistLimit/Scell));
+  tuint3 mcel0=CalcMCelFromPos(Point0);
+  const unsigned cxi=(mcel0.x>ncel? mcel0.x-ncel: 0);
+  const unsigned cyi=(mcel0.y>ncel? mcel0.y-ncel: 0);
+  const unsigned czi=mcel0.z;
+  const unsigned cxf=mcel0.x+(ncel+1);
+  const unsigned cyf=mcel0.y+(ncel+1);
+  const double   dz =(Point0.z+Height)-MapPosMin.z;
+  const unsigned czf=(dz>=0? unsigned(dz/Scell): 0)+1;
+  DomMCelIni0=TUint3(cxi,cyi,czi);
+  DomMCelFin0=TUint3(cxf,cyf,czf);
 }
 
 //==============================================================================
@@ -777,14 +903,15 @@ unsigned JGaugeMaxZ::GetPointDef(std::vector<tfloat3>& points)const{
 /// Return cell limits for interaction starting from position.
 /// Devuelve limites de celdas para interaccion a partir de posicion.
 //==============================================================================
-void JGaugeMaxZ::GetInteractionCellsMaxZ(const tdouble3& pos,const tint4& nc,const tint3& cellzero
+void JGaugeMaxZ::GetInteractionCellsMaxZ(const tdouble3& pos,const tint4& nc
+  ,const tdouble3& domposmin,const tint3& cellzero
   ,int& cxini,int& cxfin,int& yini,int& yfin,int& zini,int& zfin)const
 {
   //-Get cell coordinates of position pos.
-  const int cx=int((pos.x-DomPosMin.x)/Scell)-cellzero.x;
-  const int cy=int((pos.y-DomPosMin.y)/Scell)-cellzero.y;
-  const int cz=int((pos.z-DomPosMin.z)/Scell)-cellzero.z;
-  const int cz2=int((pos.z+Height-DomPosMin.z)/Scell)-cellzero.z;
+  const int cx=int((pos.x-domposmin.x)/Scell)-cellzero.x;
+  const int cy=int((pos.y-domposmin.y)/Scell)-cellzero.y;
+  const int cz=int((pos.z-domposmin.z)/Scell)-cellzero.z;
+  const int cz2=int((pos.z+Height-domposmin.z)/Scell)-cellzero.z;
   //-Calculates range of cells to check.
   const int ncel=int(ceil(DistLimit/Scell));
   cxini=max(cx-ncel,0);
@@ -798,17 +925,22 @@ void JGaugeMaxZ::GetInteractionCellsMaxZ(const tdouble3& pos,const tint4& nc,con
 //==============================================================================
 /// Calculates maximum z of fluid at distance of a vertical line (on CPU).
 //==============================================================================
-void JGaugeMaxZ::CalculeCpu(double timestep,const StDivDataCpu& dvd
-  ,unsigned npbok,unsigned npb,unsigned np,const tdouble3* pos
-  ,const typecode* code,const unsigned* idp,const tfloat4* velrho)
-{
+void JGaugeMaxZ::CalculeCpu(const StDataCpu& datacpu){
   //Log->Printf("JGaugeMaxZ----> timestep:%g  (%d)",timestep,(DG?1:0));
+  //-Prepare input data.
+  const double& timestep =datacpu.timestep;
+  const StDivDataCpu& dvd=datacpu.dvd;
+  const tdouble3* pos    =datacpu.pos_c->cptr();
+  const typecode* code   =datacpu.code_c->cptr();
+  //const unsigned* idp  =datacpu.idp_c->cptr();
+  //const tfloat4*  velrho=datacpu.velrho_c->cptr();
   SetTimeStep(timestep);
   //-Compute auxiliary constants.
   const float maxdist2=DistLimit*DistLimit;
   //-Obtain limits of interaction.
   int cxini,cxfin,yini,yfin,zini,zfin;
-  GetInteractionCellsMaxZ(Point0,dvd.nc,dvd.cellzero,cxini,cxfin,yini,yfin,zini,zfin);
+  GetInteractionCellsMaxZ(Point0,dvd.nc,dvd.domposmin,dvd.cellzero
+    ,cxini,cxfin,yini,yfin,zini,zfin);
   //-Start measure.
   unsigned pmax=UINT_MAX;
   float zmax=-FLT_MAX;
@@ -845,28 +977,41 @@ void JGaugeMaxZ::CalculeCpu(double timestep,const StDivDataCpu& dvd
 //==============================================================================
 /// Calculates maximum z of fluid at distance of a vertical line (on GPU).
 //==============================================================================
-void JGaugeMaxZ::CalculeGpu(double timestep,const StDivDataGpu& dvd
-  ,unsigned npbok,unsigned npb,unsigned np,const double2* posxy,const double* posz
-  ,const typecode* code,const unsigned* idp,const float4* velrho,float3* aux)
-{
-  SetTimeStep(timestep);
-  //-Compute auxiliary constants.
-  const float maxdist2=DistLimit*DistLimit;
-  //-Obtain limits of interaction.
-  const tint4 nc=TInt4(dvd.nc.x,dvd.nc.y,dvd.nc.z,dvd.nc.w);
-  const tint3 cellzero=TInt3(dvd.cellzero.x,dvd.cellzero.y,dvd.cellzero.z);
-  int cxini,cxfin,yini,yfin,zini,zfin;
-  GetInteractionCellsMaxZ(Point0,nc,cellzero,cxini,cxfin,yini,yfin,zini,zfin);
-  //-Start measure.
-  cugauge::Interaction_GaugeMaxz(Point0,maxdist2,dvd
-    ,cxini,cxfin,yini,yfin,zini,zfin,posxy,posz,code,aux);
-  tfloat3 ptsurf=TFloat3(0);
-  cudaMemcpy(&ptsurf,aux,sizeof(float3),cudaMemcpyDeviceToHost);
-  Check_CudaErroor("Failed in MaxZ calculation.");
-  //-Stores result. | Guarda resultado.
-  Result.Set(timestep,ToTFloat3(Point0),ptsurf.z);
-  //Log->Printf("------> t:%f",TimeStep);
-  if(Output(timestep))StoreResult();
+void JGaugeMaxZ::CalculeGpu(const StDataGpu& datagpu,float3* auxg){
+  const int indomain=2;
+  //-Run GPU calculation.
+  if(indomain==2){
+    //-Prepare input data.
+    const double& timestep =datagpu.timestep;
+    const StDivDataGpu& dvd=datagpu.dvd;
+    const double2*  posxy  =datagpu.posxy_g->cptr();
+    const double*   posz   =datagpu.posz_g->cptr();
+    const typecode* code   =datagpu.code_g->cptr();
+    //const unsigned* idp    =datagpu.idp_g->cptr();
+    //const float4*   velrho =datagpu.velrho_g->cptr();
+    SetTimeStep(timestep);
+    //-Compute auxiliary constants.
+    const float maxdist2=DistLimit*DistLimit;
+    tfloat3 ptsurf=TFloat3(0);
+    //-Obtain limits of interaction.
+    const tint4 nc=TInt4(dvd.nc.x,dvd.nc.y,dvd.nc.z,dvd.nc.w);
+    const tdouble3 domposmin=TDouble3(dvd.domposmin.x,dvd.domposmin.y,dvd.domposmin.z);
+    const tint3 cellzero=TInt3(dvd.cellzero.x,dvd.cellzero.y,dvd.cellzero.z);
+    int cxini,cxfin,yini,yfin,zini,zfin;
+    {
+      GetInteractionCellsMaxZ(Point0,nc,domposmin,cellzero
+        ,cxini,cxfin,yini,yfin,zini,zfin);
+      //-Start measure.
+      cugauge::Interaction_GaugeMaxz(Point0,maxdist2,dvd
+        ,cxini,cxfin,yini,yfin,zini,zfin,posxy,posz,code,auxg);
+    }
+    cudaMemcpy(&ptsurf,auxg,sizeof(float3),cudaMemcpyDeviceToHost);
+    Check_CudaErroor("Failed in MaxZ calculation.");
+    //-Stores result. | Guarda resultado.
+    Result.Set(timestep,ToTFloat3(Point0),ptsurf.z);
+    //Log->Printf("------> t:%f",TimeStep);
+    if(Output(timestep))StoreResult();
+  }
 }
 #endif
 
@@ -886,15 +1031,7 @@ JGaugeMesh::JGaugeMesh(unsigned idx,std::string name,const jmsh::StMeshBasic& me
   ClassName="JGaugeMesh";
   FileInfo=string("Saves mesh data measured from fluid particles (by ")+ClassName+").";
   MeshDat=NULL;
-  MassDat=NULL;
- #ifdef _WITHGPU
-  GpuMemory=false;
-  DataRhopg=NULL;
-  DataVxyzg=NULL;
-  DataVdirg=NULL;
-  DataZsurfg=NULL;
-  DataMassg=NULL;
- #endif
+  MassDatCpu=NULL;
   MeshDataSave=NULL; 
   Reset();
   SetMeshData(meshbas,outdata);
@@ -922,16 +1059,20 @@ void JGaugeMesh::Reset(){
   SaveCsv=SaveBin=false;
   memset(&MeshBas,0,sizeof(jmsh::StMeshBasic));
   memset(&MeshPts,0,sizeof(jmsh::StMeshPts));
-  MassLimit=0;
   KcLimit=KcDummy=0;
-  delete   MeshDat; MeshDat=NULL;
-  delete[] MassDat; MassDat=NULL;
+  MassLimit=0;
+  delete   MeshDat;    MeshDat=NULL;
+  delete[] MassDatCpu; MassDatCpu=NULL;
+  #ifdef _WITHGPU
+    for(int g=0;g<MAXGPUS;g++){
+      if(MeshDataGpu[g].GpuMemory)
+        Run_Exceptioon(fun::PrintStr("Auxiliary GPU memory for unit %d is not free.",g));
+      MeshDataGpu[g]=StrGaugeMeshDataGpu();
+    }
+  #endif
   Result.Reset();
   for(unsigned c=0;c<unsigned(OutBuff.size());c++)delete OutBuff[c].meshdat;
   OutBuff.clear();
-  #ifdef _WITHGPU
-    if(!Cpu)FreeGpuMemory();//-Free GPU memory.
-  #endif
   delete MeshDataSave; MeshDataSave=NULL; 
   JGaugeItem::Reset();
 }
@@ -940,28 +1081,32 @@ void JGaugeMesh::Reset(){
 //==============================================================================
 /// Frees GPU memory.
 //==============================================================================
-void JGaugeMesh::FreeGpuMemory(){
-  GpuMemory=false;
-  if(DataRhopg )cudaFree(DataRhopg ); DataRhopg=NULL;
-  if(DataVxyzg )cudaFree(DataVxyzg ); DataVxyzg=NULL;
-  if(DataVdirg )cudaFree(DataVdirg ); DataVdirg=NULL;
-  if(DataZsurfg)cudaFree(DataZsurfg); DataZsurfg=NULL;
-  if(DataMassg )cudaFree(DataMassg ); DataMassg=NULL;
+void JGaugeMesh::FreeGpuMemory(int id){
+  if(id>=MAXGPUS)Run_Exceptioon("Id is invalid.");
+  StGaugeMeshDataGpu& d=MeshDataGpu[id];
+  d.GpuMemory=false;
+  if(d.DataRhopg )cudaFree(d.DataRhopg ); d.DataRhopg=NULL;
+  if(d.DataVxyzg )cudaFree(d.DataVxyzg ); d.DataVxyzg=NULL;
+  if(d.DataVdirg )cudaFree(d.DataVdirg ); d.DataVdirg=NULL;
+  if(d.DataZsurfg)cudaFree(d.DataZsurfg); d.DataZsurfg=NULL;
+  if(d.DataMassg )cudaFree(d.DataMassg ); d.DataMassg=NULL;
 }
 
 //==============================================================================
 /// Allocates GPU memory.
 //==============================================================================
-void JGaugeMesh::AllocGpuMemory(){
-  if(GpuMemory)FreeGpuMemory();
+void JGaugeMesh::AllocGpuMemory(int id){
+  if(id>=MAXGPUS)Run_Exceptioon("Id is invalid.");
+  StGaugeMeshDataGpu& d=MeshDataGpu[id];
+  if(d.GpuMemory)FreeGpuMemory(id);
   const unsigned npt12=MeshPts.npt1*MeshPts.npt2;
   const unsigned npt  =MeshPts.npt;
-  if(ComputeRhop  )fcuda::Malloc(&DataRhopg ,npt);
-  if(ComputeVelxyz)fcuda::Malloc(&DataVxyzg ,npt);
-  if(ComputeVeldir)fcuda::Malloc(&DataVdirg ,npt);
-  if(ComputeZsurf )fcuda::Malloc(&DataZsurfg,npt12);
-  if(ComputeZsurf )fcuda::Malloc(&DataMassg ,npt);
-  GpuMemory=true; 
+  if(ComputeRhop  )fcuda::Malloc(&d.DataRhopg ,npt);
+  if(ComputeVelxyz)fcuda::Malloc(&d.DataVxyzg ,npt);
+  if(ComputeVeldir)fcuda::Malloc(&d.DataVdirg ,npt);
+  if(ComputeZsurf )fcuda::Malloc(&d.DataZsurfg,npt12);
+  if(ComputeZsurf )fcuda::Malloc(&d.DataMassg ,npt);
+  d.GpuMemory=true; 
 }
 #endif
 
@@ -971,7 +1116,7 @@ void JGaugeMesh::AllocGpuMemory(){
 void JGaugeMesh::SetMeshData(const jmsh::StMeshBasic& meshbas,std::string outdata){
   //-Free memory.
   delete   MeshDat; MeshDat=NULL;
-  delete[] MassDat; MassDat=NULL;
+  delete[] MassDatCpu; MassDatCpu=NULL;
   //-Configures mesh definition.
   MeshBas=meshbas;
   //printf("DDD_000 v3:(%f,%f,%f) dis3:%f/%f\n",MeshBas.vec3.x,MeshBas.vec3.y,MeshBas.vec3.z,MeshBas.dis3,MeshBas.dispt3);
@@ -982,16 +1127,14 @@ void JGaugeMesh::SetMeshData(const jmsh::StMeshBasic& meshbas,std::string outdat
   //-Allocates memory on CPU.
   MeshDat=new jmsh::JMeshData();
   MeshDat->ConfigMesh(MeshPts,0,OutDataList);
-  try{
-    if(Cpu && ComputeZsurf)MassDat=new float[MeshPts.npt];
+  if(Cpu && ComputeZsurf){
+    try{
+      MassDatCpu=new float[MeshPts.npt];
+    }
+    catch(const std::bad_alloc){
+      Run_Exceptioon("Could not allocate the requested memory.");
+    }
   }
-  catch(const std::bad_alloc){
-    Run_Exceptioon("Could not allocate the requested memory.");
-  }
-  //-Allocates auxiliary memory on GPU.
-  #ifdef _WITHGPU
-    if(!Cpu)AllocGpuMemory();
-  #endif
 }
 
 //==============================================================================
@@ -1060,6 +1203,20 @@ JGaugeMesh::StInfo JGaugeMesh::GetInfo()const{
   v.dirdat=m.dirdat;
   v.outdata=OutDataList;
   return(v);
+}
+
+//==============================================================================
+/// Configuration of initial limits of calculation area.
+//==============================================================================
+void JGaugeMesh::ConfigDomMCel(bool fixed){
+  if(!fixed)Run_Exceptioon("Unfixed calculation domain is invalid for Mesh-Gauge.");
+  FixedDomMCel=fixed;
+  const jmsh::StMeshPts& m=MeshPts;
+  const tdouble3 ptref=m.ptref;
+  const tdouble3 ptend=m.ptref+(m.vdp1*m.npt1)+(m.vdp2*m.npt2)+(m.vdp3*m.npt3);
+  const tdouble3 psmin=MinValues(ptref,ptend);
+  const tdouble3 psmax=MaxValues(ptref,ptend);
+  CalcMCelIniFinFromPos(psmin,psmax,DomMCelIni0,DomMCelFin0);
 }
 
 //==============================================================================
@@ -1187,18 +1344,23 @@ const float* JGaugeMesh::GetPtrDataZsurf()const{
 //==============================================================================
 /// Returns internal pointer to save Zsurf results on GPU.
 //==============================================================================
-const float* JGaugeMesh::GetPtrDataZsurfg()const{
-  return(DataZsurfg);
+const float* JGaugeMesh::GetPtrDataZsurfg(int id)const{
+  if(id>=MAXGPUS)Run_Exceptioon("Id is invalid.");
+  return(MeshDataGpu[id].DataZsurfg);
 }
 #endif
 
 //==============================================================================
 /// Calculates velocity and swl at indicated points (on CPU).
 //==============================================================================
-template<TpKernel tker> void JGaugeMesh::CalculeCpuT(double timestep
-  ,const StDivDataCpu& dvd,unsigned npbok,unsigned npb,unsigned np,const tdouble3* pos
-  ,const typecode* code,const unsigned* idp,const tfloat4* velrho)
-{
+template<TpKernel tker> void JGaugeMesh::CalculeCpuT(const StDataCpu& datacpu){
+  //-Prepare input data.
+  const double& timestep =datacpu.timestep;
+  const StDivDataCpu& dvd=datacpu.dvd;
+  const tdouble3* pos    =datacpu.pos_c->cptr();
+  const typecode* code   =datacpu.code_c->cptr();
+  //const unsigned* idp  =datacpu.idp_c->cptr();
+  const tfloat4*  velrho =datacpu.velrho_c->cptr();
   SetTimeStep(timestep);
   //-Start measure.
   //MeshDat->ClearData();  //-It is not necessary.
@@ -1270,7 +1432,7 @@ template<TpKernel tker> void JGaugeMesh::CalculeCpuT(double timestep
       if(datavdir)datavdir[cp]=(sumvel.x*vdir.x + sumvel.y*vdir.y + sumvel.z*vdir.z);
     }
     if(datarhop)datarhop[cp]=sumrhop;
-    if(MassDat)MassDat[cp]=summass;
+    if(MassDatCpu)MassDatCpu[cp]=summass;
   }
   //-Computes surface water level.
   if(ComputeZsurf){
@@ -1281,7 +1443,7 @@ template<TpKernel tker> void JGaugeMesh::CalculeCpuT(double timestep
       unsigned cp=cp1+cp2*npt1;
       //const bool DG=(cp1==1 && cp2==0);
       for(unsigned cp3=0;cp3<npt3 && !cpsurf;cp3++){
-        const float mass=MassDat[cp];
+        const float mass=MassDatCpu[cp];
         //if(DG)Log->Printf("==> mass[%u,%u,%u=%u]:%f  Masslimit:%f  z:%f",cp1,cp2,cp3,cp,mass,MassLimit,   ptref.z+vdp3.z*cp3);
         if(mass>MassLimit)masspre=mass;
         if(mass<MassLimit && masspre){
@@ -1310,13 +1472,10 @@ template<TpKernel tker> void JGaugeMesh::CalculeCpuT(double timestep
 //==============================================================================
 /// Calculates data at indicated mesh points (on CPU).
 //==============================================================================
-void JGaugeMesh::CalculeCpu(double timestep,const StDivDataCpu& dvd
-  ,unsigned npbok,unsigned npb,unsigned np,const tdouble3* pos
-  ,const typecode* code,const unsigned* idp,const tfloat4* velrho)
-{
+void JGaugeMesh::CalculeCpu(const StDataCpu& datacpu){
   switch(CSP.tkernel){
     case KERNEL_Cubic:       //Kernel Wendland is used since Cubic is not available.
-    case KERNEL_Wendland:    CalculeCpuT<KERNEL_Wendland>  (timestep,dvd,npbok,npb,np,pos,code,idp,velrho);  break;
+    case KERNEL_Wendland:    CalculeCpuT<KERNEL_Wendland>  (datacpu);  break;
     default: Run_Exceptioon("Kernel unknown.");
   }
 }
@@ -1324,32 +1483,46 @@ void JGaugeMesh::CalculeCpu(double timestep,const StDivDataCpu& dvd
 //==============================================================================
 /// Calculates data at indicated mesh points (on GPU).
 //==============================================================================
-void JGaugeMesh::CalculeGpu(double timestep,const StDivDataGpu& dvd
-  ,unsigned npbok,unsigned npb,unsigned np,const double2* posxy,const double* posz
-  ,const typecode* code,const unsigned* idp,const float4* velrho,float3* aux)
-{
-  SetTimeStep(timestep);
-  tfloat3* datavxyz =MeshDat->GetVarFloat3("Vel");
-  float*   datavdir =MeshDat->GetVarFloat("VelDir");
-  float*   datarhop =MeshDat->GetVarFloat("Rhop");
-  float*   datazsurf=MeshDat->GetVarFloat("Zsurf");
-  //-Start measure.
-  if(!GpuMemory)AllocGpuMemory();
-  cugauge::ComputeGaugeMesh(CSP,dvd,MeshPts,KcLimit,KcDummy,posxy,posz,code,velrho,DataVxyzg,DataVdirg,DataRhopg,DataMassg);
-  if(ComputeZsurf)cugauge::ComputeGaugeMeshZsurf(MassLimit,MeshPts,DataMassg,DataZsurfg);
-  //-Copy data from GPU memory.
-  const unsigned npt12=MeshPts.npt1*MeshPts.npt2;
-  const unsigned npt=MeshPts.npt;
-  if(DataVxyzg )cudaMemcpy(datavxyz ,DataVxyzg ,sizeof(float3)*npt  ,cudaMemcpyDeviceToHost);
-  if(DataVdirg )cudaMemcpy(datavdir ,DataVdirg ,sizeof(float )*npt  ,cudaMemcpyDeviceToHost);
-  if(DataRhopg )cudaMemcpy(datarhop ,DataRhopg ,sizeof(float )*npt  ,cudaMemcpyDeviceToHost);
-  if(DataZsurfg)cudaMemcpy(datazsurf,DataZsurfg,sizeof(float )*npt12,cudaMemcpyDeviceToHost);
-  Check_CudaErroor("Failed in GaugeMesh calculation.");
-  //-Stores result. | Guarda resultado.
-  MeshDat->SetTimeStep(timestep);
-  Result.Set(timestep,MeshDat);
-  //Log->Printf("------> t:%f",TimeStep);
-  if(Output(timestep))StoreResult();
+void JGaugeMesh::CalculeGpu(const StDataGpu& datagpu,float3* auxg){
+  const int indomain=2;
+  const int id=0;
+  //-Run GPU calculation.
+  if(indomain==2){
+    //-Prepare input data.
+    const double& timestep =datagpu.timestep;
+    const StDivDataGpu& dvd=datagpu.dvd;
+    const double2*  posxy  =datagpu.posxy_g->cptr();
+    const double*   posz   =datagpu.posz_g->cptr();
+    const typecode* code   =datagpu.code_g->cptr();
+    //const unsigned* idp  =datagpu.idp_g->cptr();
+    const float4*   velrho =datagpu.velrho_g->cptr();
+    SetTimeStep(timestep);
+    //-Prepare output arrays.
+    tfloat3* datavxyz =MeshDat->GetVarFloat3("Vel");
+    float*   datavdir =MeshDat->GetVarFloat("VelDir");
+    float*   datarhop =MeshDat->GetVarFloat("Rhop");
+    float*   datazsurf=MeshDat->GetVarFloat("Zsurf");
+    //-Start measure.
+    StGaugeMeshDataGpu& dgpu=MeshDataGpu[id];
+    if(!dgpu.GpuMemory)AllocGpuMemory(id);
+    cugauge::ComputeGaugeMesh(CSP,dvd,MeshPts,KcLimit,KcDummy,posxy,posz,code
+      ,velrho,dgpu.DataVxyzg,dgpu.DataVdirg,dgpu.DataRhopg,dgpu.DataMassg);
+    if(ComputeZsurf)cugauge::ComputeGaugeMeshZsurf(MassLimit,MeshPts
+      ,dgpu.DataMassg,dgpu.DataZsurfg);
+    //-Copy data from GPU memory.
+    const unsigned npt12=MeshPts.npt1*MeshPts.npt2;
+    const unsigned npt=MeshPts.npt;
+    if(dgpu.DataVxyzg )cudaMemcpy(datavxyz ,dgpu.DataVxyzg ,sizeof(float3)*npt  ,cudaMemcpyDeviceToHost);
+    if(dgpu.DataVdirg )cudaMemcpy(datavdir ,dgpu.DataVdirg ,sizeof(float )*npt  ,cudaMemcpyDeviceToHost);
+    if(dgpu.DataRhopg )cudaMemcpy(datarhop ,dgpu.DataRhopg ,sizeof(float )*npt  ,cudaMemcpyDeviceToHost);
+    if(dgpu.DataZsurfg)cudaMemcpy(datazsurf,dgpu.DataZsurfg,sizeof(float )*npt12,cudaMemcpyDeviceToHost);
+    Check_CudaErroor("Failed in GaugeMesh calculation.");
+    //-Stores result. | Guarda resultado.
+    MeshDat->SetTimeStep(timestep);
+    Result.Set(timestep,MeshDat);
+    //Log->Printf("------> t:%f",TimeStep);
+    if(Output(timestep))StoreResult();
+  }
 }
 #endif
 //<vs_meeshdat_end>
@@ -1412,6 +1585,16 @@ void JGaugeForce::Reset(){
   Code=0;
   InitialCenter=TFloat3(0);
   JGaugeItem::Reset();
+}
+
+//==============================================================================
+/// Configuration of initial limits of calculation area.
+//==============================================================================
+void JGaugeForce::ConfigDomMCel(bool fixed){
+  if(!fixed)Run_Exceptioon("Unfixed calculation domain is invalid for Force-Gauge.");
+  FixedDomMCel=fixed;
+  DomMCelIni0=TUint3(0);
+  DomMCelFin0=TUint3(UINT_MAX);
 }
 
 //==============================================================================
@@ -1487,10 +1670,16 @@ unsigned JGaugeForce::GetPointDef(std::vector<tfloat3>& points)const{
 /// Calculates force sumation on selected fixed or moving particles using only fluid particles (on CPU).
 /// Ignores periodic boundary particles to avoid race condition problems.
 //==============================================================================
-template<TpKernel tker> void JGaugeForce::CalculeCpuT(double timestep
-  ,const StDivDataCpu& dvd,unsigned npbok,unsigned npb,unsigned np,const tdouble3* pos
-  ,const typecode* code,const unsigned* idp,const tfloat4* velrho)
-{
+template<TpKernel tker> void JGaugeForce::CalculeCpuT(const StDataCpu& datacpu){
+  //-Prepare input data.
+  const double& timestep =datacpu.timestep;
+  const StDivDataCpu& dvd=datacpu.dvd;
+  const tdouble3* pos    =datacpu.pos_c->cptr();
+  const typecode* code   =datacpu.code_c->cptr();
+  const unsigned* idp    =datacpu.idp_c->cptr();
+  const tfloat4*  velrho =datacpu.velrho_c->cptr();
+  const unsigned  npbok  =datacpu.npbok;
+  const unsigned  np     =datacpu.np;
   SetTimeStep(timestep);
   //-Computes acceleration in selected boundary particles.
   memset(PartAcec,0,sizeof(tfloat3)*Count);
@@ -1547,13 +1736,10 @@ template<TpKernel tker> void JGaugeForce::CalculeCpuT(double timestep
 /// Calculates force sumation on selected fixed or moving particles using only fluid particles (on CPU).
 /// Ignores periodic boundary particles to avoid race condition problems.
 //==============================================================================
-void JGaugeForce::CalculeCpu(double timestep,const StDivDataCpu& dvd
-  ,unsigned npbok,unsigned npb,unsigned np,const tdouble3* pos
-  ,const typecode* code,const unsigned* idp,const tfloat4* velrho)
-{
+void JGaugeForce::CalculeCpu(const StDataCpu& datacpu){
   switch(CSP.tkernel){
     case KERNEL_Cubic:       //Kernel Wendland is used since Cubic is not available.
-    case KERNEL_Wendland:    CalculeCpuT<KERNEL_Wendland>  (timestep,dvd,npbok,npb,np,pos,code,idp,velrho);  break;
+    case KERNEL_Wendland:    CalculeCpuT<KERNEL_Wendland>  (datacpu);  break;
     default: Run_Exceptioon("Kernel unknown.");
   }
 }
@@ -1563,10 +1749,17 @@ void JGaugeForce::CalculeCpu(double timestep,const StDivDataCpu& dvd
 /// Calculates force sumation on selected fixed or moving particles using only fluid particles (on GPU).
 /// Ignores periodic boundary particles.
 //==============================================================================
-void JGaugeForce::CalculeGpu(double timestep,const StDivDataGpu& dvd
-  ,unsigned npbok,unsigned npb,unsigned np,const double2* posxy,const double* posz
-  ,const typecode* code,const unsigned* idp,const float4* velrho,float3* aux)
-{
+void JGaugeForce::CalculeGpu(const StDataGpu& datagpu,float3* auxg){
+  //-Prepare input data.
+  const double& timestep =datagpu.timestep;
+  const StDivDataGpu& dvd=datagpu.dvd;
+  const double2*  posxy  =datagpu.posxy_g->cptr();
+  const double*   posz   =datagpu.posz_g->cptr();
+  const typecode* code   =datagpu.code_g->cptr();
+  const unsigned* idp    =datagpu.idp_g->cptr();
+  const float4*   velrho =datagpu.velrho_g->cptr();
+  const unsigned  npbok  =datagpu.npbok;
+  const unsigned  np     =datagpu.np;
   SetTimeStep(timestep);
   //-Initializes acceleration array to zero.
   cudaMemset(PartAceg,0,sizeof(float3)*Count);

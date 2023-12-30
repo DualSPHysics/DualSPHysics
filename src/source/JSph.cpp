@@ -74,7 +74,8 @@ using namespace std;
 //==============================================================================
 /// Constructor.
 //==============================================================================
-JSph::JSph(bool cpu,bool mgpu,bool withmpi):Cpu(cpu),Mgpu(mgpu),WithMpi(withmpi)
+JSph::JSph(bool cpu,int gpucount,bool withmpi):Cpu(cpu)
+  ,Mgpu(cpu? false: gpucount>1),GpuCount(cpu? 0: gpucount),WithMpi(withmpi)
 {
   ClassName="JSph";
   DgNum=0;
@@ -200,6 +201,7 @@ void JSph::InitVars(){
   UseDEM=false;  //(DEM)
   delete[] DemData; DemData=NULL;  //(DEM)
   UseChrono=false;
+  UseWavegenAWAS=false;
   RhopOut=true; RhopOutMin=700; RhopOutMax=1300;
   TimeMax=TimePart=0;
   TimePartExtra=-1;
@@ -582,10 +584,10 @@ void JSph::LoadConfig(const JSphCfgRun* cfg){
 //==============================================================================
 /// Loads kernel selection to compute kernel values.
 //==============================================================================
-void JSph::LoadKernelSelection(const JSphCfgRun* cfg,const JXml* xml){
+void JSph::LoadKernelSelection(const JSphCfgRun* cfg,const JXml* cxml){
   //-Load kernel selection from execution parameters from XML.
   JCaseEParms eparms;
-  eparms.LoadXml(xml,"case.execution.parameters");
+  eparms.LoadXml(cxml,"case.execution.parameters");
   switch(eparms.GetValueInt("Kernel",true,2)){
     case 1:  TKernel=KERNEL_Cubic;     break;
     case 2:  TKernel=KERNEL_Wendland;  break;
@@ -598,9 +600,9 @@ void JSph::LoadKernelSelection(const JSphCfgRun* cfg,const JXml* xml){
 //==============================================================================
 /// Loads predefined constans from XML.
 //==============================================================================
-void JSph::LoadConfigCtes(const JXml* xml){
+void JSph::LoadConfigCtes(const JXml* cxml){
   JCaseCtes ctes;
-  ctes.LoadXmlRun(xml,"case.execution.constants");
+  ctes.LoadXmlRun(cxml,"case.execution.constants");
 
   Simulate2D=ctes.GetData2D();
   Simulate2DPosY=ctes.GetData2DPosY();
@@ -619,9 +621,9 @@ void JSph::LoadConfigCtes(const JXml* xml){
 //==============================================================================
 /// Loads execution parameters from XML.
 //==============================================================================
-void JSph::LoadConfigParameters(const JXml* xml){
+void JSph::LoadConfigParameters(const JXml* cxml){
   JCaseEParms eparms;
-  eparms.LoadXml(xml,"case.execution.parameters");
+  eparms.LoadXml(cxml,"case.execution.parameters");
   if(eparms.Exists("FtSaveAce"))SaveFtAce=(eparms.GetValueInt("FtSaveAce",true,0)!=0); //-For Debug.
   if(eparms.Exists("PosDouble")){
     Log->PrintWarning("The parameter \'PosDouble\' is deprecated.");
@@ -985,24 +987,27 @@ void JSph::LoadConfigVarsExec(){
 //==============================================================================
 void JSph::LoadCaseConfig(const JSphCfgRun* cfg){
   if(!fun::FileExists(FileXml))Run_ExceptioonFile("Case configuration was not found.",FileXml);
-  JXml xml; xml.LoadFile(FileXml);
+  JXml xml;
+  xml.LoadFile(FileXml);
+  const JXml* cxml=&xml;
   //-Shows pre-processing application generating the XML file.
-  Log->Printf("XML-App: %s",xml.GetAttributeStr(xml.GetNodeError("case")->ToElement(),"app",true,"unknown").c_str());
+  Log->Printf("XML-App: %s",cxml->GetAttributeStr(cxml->GetNodeError("case")->ToElement()
+    ,"app",true,"unknown").c_str());
 
   //-Loads kernel selection to compute kernel values.
-  LoadKernelSelection(cfg,&xml);
+  LoadKernelSelection(cfg,cxml);
   //-Loads predefined constants.
-  LoadConfigCtes(&xml);
+  LoadConfigCtes(cxml);
   //-Configures value of calculated constants and loads CSP structure.
   ConfigConstants1(Simulate2D);
 
   //-Define variables on NuxLib object.
-  LoadConfigVars(&xml);
+  LoadConfigVars(cxml);
   //-Enables the use of NuxLib in XML configuration.
   xml.SetNuxLib(NuxLib);
 
   //-Execution parameters from XML.
-  LoadConfigParameters(&xml);
+  LoadConfigParameters(cxml);
   //-Execution parameters from commands.
   LoadConfigCommands(cfg);
   //-Configures other constants according to formulation options and loads more values in CSP structure.
@@ -1013,7 +1018,7 @@ void JSph::LoadCaseConfig(const JSphCfgRun* cfg){
 
   //-Particle data.
   JCaseParts parts;
-  parts.LoadXml(&xml,"case.execution.particles");
+  parts.LoadXml(cxml,"case.execution.particles");
   CaseNp=parts.Count();
   CaseNfixed=parts.Count(TpPartFixed);
   CaseNmoving=parts.Count(TpPartMoving);
@@ -1030,7 +1035,7 @@ void JSph::LoadCaseConfig(const JSphCfgRun* cfg){
   MkInfo->Config(&parts);
 
   //-Configuration of GaugeSystem.
-  GaugeSystem=new JGaugeSystem(Cpu);
+  GaugeSystem=new JGaugeSystem(Cpu,GpuCount);
 
   //-Configuration of AccInput.
   if(xml.GetNodeSimple("case.execution.special.accinputs",true)){
@@ -1210,8 +1215,8 @@ void JSph::LoadCaseConfig(const JSphCfgRun* cfg){
   }
 
   //-Configuration of Inlet/Outlet.
-  if(xml.GetNodeSimple("case.execution.special.inout",true)){
-    InOut=new JSphInOut(Cpu,CSP,FileXml,&xml,"case.execution.special.inout",DirCase);
+  if(xml.GetNodeSimple(JSphInOut::XmlPath,true)){
+    InOut=new JSphInOut(Cpu,CSP,cxml,DirCase);
     NpDynamic=true;
     ReuseIds=InOut->GetReuseIds();
     if(ReuseIds)Run_Exceptioon("Inlet/Outlet with ReuseIds is not a valid option for now...");
@@ -2236,7 +2241,8 @@ void JSph::InitRun(unsigned np,const unsigned* idp,const tdouble3* pos){
   xml.SetNuxLib(NuxLib); //-Enables the use of NuxLib in XML configuration.
 
   //-Configuration of GaugeSystem.
-  GaugeSystem->Config(CSP,Symmetry,TimeMax,TimePart,DomPosMin,DomPosMax,Scell,ScellDiv);
+  GaugeSystem->ConfigCtes(CSP,Symmetry,TimeMax,TimePart,Scell,ScellDiv
+    ,Map_PosMin,Map_PosMin,Map_PosMax);
   if(xml.GetNodeSimple("case.execution.special.gauges",true))
     GaugeSystem->LoadXml(&xml,"case.execution.special.gauges",MkInfo);
 
@@ -2244,6 +2250,7 @@ void JSph::InitRun(unsigned np,const unsigned* idp,const tdouble3* pos){
   if(WaveGen){
     Log->Print("Wave paddles configuration:");
     WavesInit(GaugeSystem,MkInfo,TimeMax,TimePart);
+    UseWavegenAWAS=WaveGen->UseAwas();
     WaveGen->VisuConfig(""," ");
   }
 
@@ -2391,9 +2398,12 @@ void JSph::WavesInit(JGaugeSystem* gaugesystem,const JSphMk* mkinfo
       const double coefmassdef=(Simulate2D? 0.4: 0.5);
       double masslimit,tstart,gdp;
       tdouble3 point0,point2;
-      WaveGen->PaddleGetAwasInfo(cp,coefmassdef,wdims.massfluid,masslimit,tstart,gdp,point0,point2);
+      WaveGen->PaddleGetAwasInfo(cp,coefmassdef,wdims.massfluid,masslimit
+        ,tstart,gdp,point0,point2);
+
       //-Creates gauge for AWAS.
-      JGaugeSwl* gswl=gaugesystem->AddGaugeSwl(gname,tstart,DBL_MAX,0,point0,point2,gdp,float(masslimit));
+      JGaugeSwl* gswl=gaugesystem->AddGaugeSwl(gname,tstart,DBL_MAX,0
+        ,false,point0,point2,gdp,float(masslimit));
       WaveGen->PaddleGaugeInit(cp,(void*)gswl);
     }
   }

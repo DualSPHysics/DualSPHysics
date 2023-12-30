@@ -83,7 +83,7 @@ protected:
     ,const unsigned* ridpmot,tdouble3* posc,tfloat4* velrhoc
     ,unsigned* dcellc,typecode* codec,tfloat3* boundnorc)const;
 
-  void RunGaugeSystem(double timestep,bool saveinput=false);
+  void RunGaugeSystem(double timestep,bool savedivstate=false);
 
   void ComputePips(bool run);
   

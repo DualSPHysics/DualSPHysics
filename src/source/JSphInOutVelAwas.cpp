@@ -126,7 +126,8 @@ void JSphInOutVelAwas::ReadXml(const JXml* sxml,TiXmlElement* ele
   GaugeZmax=GaugeZmin+GaugeDp*gaugenmax;
   const tdouble3 point0=TDouble3(GaugeX,GaugeY,GaugeZmin);
   const tdouble3 point2=TDouble3(GaugeX,GaugeY,GaugeZmax);
-  GaugeSwl=gaugesystem->AddGaugeSwl(fun::PrintStr("AwasInlet%02u",IdZone),StartAwas,DBL_MAX,0,point0,point2,GaugeDp,0);
+  GaugeSwl=gaugesystem->AddGaugeSwl(fun::PrintStr("AwasInlet%02u",IdZone),StartAwas,DBL_MAX,0
+    ,true,point0,point2,GaugeDp,0);
 }
 
 //==============================================================================
