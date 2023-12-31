@@ -104,6 +104,7 @@ public:
   ~JGaugeSystem();
   void Reset();
  #ifdef _WITHGPU
+  bool AllocatedMemoryGpu()const;
   void FreeMemoryGpu(int id);
  #endif            
 

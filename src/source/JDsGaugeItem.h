@@ -135,14 +135,11 @@ public:
     const agtypecode* code_g;
     const aguint*     idp_g;
     const agfloat4*   velrho_g;
-    //-Common auxiliary memory.
-    float3* AuxMemoryg;     ///<Auxiliary allocated memory on GPU [1].
     //-Methods.
     StrDataGpu(){ 
       divstate=false;
       npbok=npb=np=0;
       ConfigArrays(NULL,NULL,NULL,NULL,NULL);
-      AuxMemoryg=NULL;
     }
     void ConfigArrays(const agdouble2* posxy,const agdouble* posz
       ,const agtypecode* code,const aguint* idp,const agfloat4* velrho)
@@ -279,7 +276,10 @@ public:
   virtual void CalculeCpu(const StDataCpu& datacpu)=0;
 
  #ifdef _WITHGPU
-  virtual void CalculeGpu(const StDataGpu& datagpu,float3* auxg)=0;
+  virtual bool AllocatedGpuMemory(int id)const=0;
+  virtual void FreeGpuMemory(int id)=0;
+  virtual void AllocGpuMemory(int id)=0;
+  virtual void CalculeGpu(const StDataGpu& datagpu)=0;
  #endif
 };
 
@@ -290,6 +290,20 @@ public:
 /// \brief Calculates velocity in fluid domain.
 class JGaugeVelocity : public JGaugeItem
 {
+private:
+ #ifdef _WITHGPU
+  ///Structure with auxiliary memory for execution on GPU.
+  typedef struct StrGaugeVelDataGpu{
+    bool GpuMemory;     ///<Indicates when GPU memory is allocated.
+    float3* Resultg;    ///<Stores final result from GPU [1].
+    //-Methods.
+    StrGaugeVelDataGpu(){ 
+      GpuMemory=false;
+      Resultg=NULL;
+    }
+  }StGaugeVelDataGpu;
+ #endif
+
 public:
   ///Structure with result of JGaugeVelocity object.
   typedef struct StrGaugeVelRes{
@@ -311,11 +325,20 @@ protected:
   //-Definition.
   tdouble3 Point;
 
-  StGaugeVelRes Result; ///<Result of the last measure.
+  //-Auxiliary variables for GPU execution.
+ #ifdef _WITHGPU
+  StGaugeVelDataGpu AuxDataGpu[MAXGPUS];
+ #endif
 
+  //-Result variables.
+  StGaugeVelRes Result;      ///<Result of the last measure.
   std::vector<StGaugeVelRes> OutBuff; ///<Results in buffer.
 
   void Reset();
+ #ifdef _WITHGPU
+  void ResetGpuMemory();
+ #endif
+
   void ClearResult(){ Result.Reset(); }
   void StoreResult();
 
@@ -337,7 +360,10 @@ public:
   void CalculeCpu(const StDataCpu& datacpu);
 
  #ifdef _WITHGPU
-  void CalculeGpu(const StDataGpu& datagpu,float3* auxg);
+  bool AllocatedGpuMemory(int id)const;
+  void FreeGpuMemory(int id);
+  void AllocGpuMemory(int id);
+  void CalculeGpu(const StDataGpu& datagpu);
  #endif
 };
 
@@ -348,6 +374,20 @@ public:
 /// \brief Calculates Surface Water Level in fluid domain.
 class JGaugeSwl : public JGaugeItem
 {
+private:
+ #ifdef _WITHGPU
+  ///Structure with auxiliary memory for execution on GPU.
+  typedef struct StrGaugeSwlDataGpu{
+    bool GpuMemory;     ///<Indicates when GPU memory is allocated.
+    float3* Resultg;    ///<Stores final result from GPU [1].
+    //-Methods.
+    StrGaugeSwlDataGpu(){ 
+      GpuMemory=false;
+      Resultg=NULL;
+    }
+  }StGaugeSwlDataGpu;
+ #endif
+
 public:
   ///Structure with result of JGaugeVelocity object.
   typedef struct StrGaugeSwlRes{
@@ -376,11 +416,20 @@ protected:
   unsigned PointNp;  ///<Number of points.
   tdouble3 PointDir; ///<Vector to compute points.
 
-  StGaugeSwlRes Result; ///<Result of the last measure.
+  //-Auxiliary variables for GPU execution.
+ #ifdef _WITHGPU
+  StGaugeSwlDataGpu AuxDataGpu[MAXGPUS];
+ #endif
 
+  //-Result variables.
+  StGaugeSwlRes Result;      ///<Result of the last measure.
   std::vector<StGaugeSwlRes> OutBuff; ///<Results in buffer.
 
   void Reset();
+ #ifdef _WITHGPU
+  void ResetGpuMemory();
+ #endif
+
   void ClearResult(){ Result.Reset(); }
   void StoreResult();
   template<TpKernel tker> float CalculeMassCpu(const tdouble3& ptpos,const StDivDataCpu& dvd
@@ -408,7 +457,10 @@ public:
   void CalculeCpu(const StDataCpu& datacpu);
 
  #ifdef _WITHGPU
-  void CalculeGpu(const StDataGpu& datagpu,float3* auxg);
+  bool AllocatedGpuMemory(int id)const;
+  void FreeGpuMemory(int id);
+  void AllocGpuMemory(int id);
+  void CalculeGpu(const StDataGpu& datagpu);
  #endif
 };
 
@@ -419,6 +471,20 @@ public:
 /// \brief Calculates maximum z of fluid at distance of a vertical line.
 class JGaugeMaxZ : public JGaugeItem
 {
+private:
+ #ifdef _WITHGPU
+  ///Structure with auxiliary memory for execution on GPU.
+  typedef struct StrGaugeMaxzDataGpu{
+    bool GpuMemory;     ///<Indicates when GPU memory is allocated.
+    float3* Resultg;    ///<Stores final result from GPU [1].
+    //-Methods.
+    StrGaugeMaxzDataGpu(){ 
+      GpuMemory=false;
+      Resultg=NULL;
+    }
+  }StGaugeMaxzDataGpu;
+ #endif
+
 public:
   ///Structure with result of JGaugeMaxZ object.
   typedef struct StrGaugeMaxzRes{
@@ -442,11 +508,20 @@ protected:
   double Height;
   float DistLimit;
 
-  StGaugeMaxzRes Result; ///<Result of the last measure.
+  //-Auxiliary variables for GPU execution.
+ #ifdef _WITHGPU
+  StGaugeMaxzDataGpu AuxDataGpu[MAXGPUS];
+ #endif
 
+  //-Result variables.
+  StGaugeMaxzRes Result;      ///<Result of the last measure.
   std::vector<StGaugeMaxzRes> OutBuff; ///<Results in buffer.
 
   void Reset();
+ #ifdef _WITHGPU
+  void ResetGpuMemory();
+ #endif
+
   void ClearResult(){ Result.Reset(); }
   void StoreResult();
   void GetInteractionCellsMaxZ(const tdouble3& pos,const tint4& nc
@@ -474,7 +549,10 @@ public:
    void CalculeCpu(const StDataCpu& datacpu);
 
  #ifdef _WITHGPU
-  void CalculeGpu(const StDataGpu& datagpu,float3* auxg);
+  bool AllocatedGpuMemory(int id)const;
+  void FreeGpuMemory(int id);
+  void AllocGpuMemory(int id);
+  void CalculeGpu(const StDataGpu& datagpu);
  #endif
 };
 
@@ -490,7 +568,8 @@ private:
  #ifdef _WITHGPU
   ///Structure with auxiliary memory for execution on GPU.
   typedef struct StrGaugeMeshDataGpu{
-    bool GpuMemory;     ///<Indicates when GPU memory is allocated. 
+    bool GpuMemory;     ///<Indicates when GPU memory is allocated.
+    //float3* Resultg;  ///<Stores final result from GPU [1].
     float*  DataRhopg;  ///<Stores on GPU memory density. [GridPts.npt1*GridPts.npt2*GridPts.npt3]
     float3* DataVxyzg;  ///<Stores on GPU memory velocity in X, Y, Z. [GridPts.npt1*GridPts.npt2*GridPts.npt3]
     float*  DataVdirg;  ///<Stores on GPU memory velocity in requested direction. [GridPts.npt1*GridPts.npt2*GridPts.npt3]
@@ -499,6 +578,7 @@ private:
     //-Methods.
     StrGaugeMeshDataGpu(){ 
       GpuMemory=false;
+      //Resultg=NULL;
       DataRhopg=NULL;
       DataVxyzg=NULL;
       DataVdirg=NULL;
@@ -556,19 +636,22 @@ protected:
   jmsh::JMeshData* MeshDat;
   float* MassDatCpu;   ///<Auxiliar memory to compute mass. [MeshPts.npt]
 
-  //-Auxiliary memory for gauges execution on GPU.
+  //-Auxiliary variables for GPU execution.
  #ifdef _WITHGPU
-  StGaugeMeshDataGpu MeshDataGpu[MAXGPUS];
+  StGaugeMeshDataGpu AuxDataGpu[MAXGPUS];
  #endif
 
-  //-Results.
-  StrMeshRes Result; ///<Result of the last measure.
-
+  //-Result variables.
+  StrMeshRes Result;      ///<Result of the last measure.
   std::vector<StrMeshRes> OutBuff; ///<Results in buffer.
 
   jmsh::JMeshTDatasSave* MeshDataSave;  ///<Saves data in binary file.
 
   void Reset();
+ #ifdef _WITHGPU
+  void ResetGpuMemory();
+ #endif
+
   void SetMeshData(const jmsh::StMeshBasic& meshbas,std::string outdata);
   void ClearResult(){ Result.Reset(); }
   void StoreResult();
@@ -579,11 +662,6 @@ public:
     ,float kclimit,float kcdummy,float masslimit,bool cpu);
   ~JGaugeMesh();
   void ConfigDomMCel(bool fixed);
-
- #ifdef _WITHGPU
-  void FreeGpuMemory(int id);
-  void AllocGpuMemory(int id);
- #endif
 
   static std::string CorrectDataList(std::string datalist);
   void ConfigDataList(std::string datalist);
@@ -613,7 +691,10 @@ public:
   void CalculeCpu(const StDataCpu& datacpu);
 
  #ifdef _WITHGPU
-  void CalculeGpu(const StDataGpu& datagpu,float3* auxg);
+  bool AllocatedGpuMemory(int id)const;
+  void FreeGpuMemory(int id);
+  void AllocGpuMemory(int id);
+  void CalculeGpu(const StDataGpu& datagpu);
  #endif
 
 };
@@ -625,6 +706,24 @@ public:
 /// \brief Calculates force sumation on selected particles (using only fluid particles).
 class JGaugeForce : public JGaugeItem
 {
+private:
+ #ifdef _WITHGPU
+  ///Structure with auxiliary memory for execution on GPU.
+  typedef struct StrGaugeForceDataGpu{
+    bool GpuMemory;     ///<Indicates when GPU memory is allocated.
+    float3* Resultg;    ///<Stores final result from GPU [1].
+    float3* PartAceg;   ///<Ace of particles [Count].
+    float3* AuxSumg;    ///<Used for Ace reduction [size reduction].
+    //-Methods.
+    StrGaugeForceDataGpu(){ 
+      GpuMemory=false;
+      Resultg=NULL;
+      PartAceg=NULL;
+      AuxSumg=NULL;
+    }
+  }StGaugeForceDataGpu;
+ #endif
+
 public:
   ///Structure with result of JGaugeForce object.
   typedef struct StrGaugeForceRes{
@@ -653,16 +752,21 @@ protected:
 
   //-Auxiliary variables.
   tfloat3* PartAcec;
+
+  //-Auxiliary variables for GPU execution.
  #ifdef _WITHGPU
-  float3* PartAceg;
-  float3* Auxg;
+  StGaugeForceDataGpu AuxDataGpu[MAXGPUS];
  #endif
 
-  StGaugeForceRes Result; ///<Result of the last measure.
-
+  //-Result variables.
+  StGaugeForceRes Result;      ///<Result of the last measure.
   std::vector<StGaugeForceRes> OutBuff; ///<Results in buffer.
 
   void Reset();
+ #ifdef _WITHGPU
+  void ResetGpuMemory();
+ #endif
+
   void ClearResult(){ Result.Reset(); }
   void StoreResult();
 
@@ -688,7 +792,10 @@ public:
   void CalculeCpu(const StDataCpu& datacpu);
 
  #ifdef _WITHGPU
-  void CalculeGpu(const StDataGpu& datagpu,float3* auxg);
+  bool AllocatedGpuMemory(int id)const;
+  void FreeGpuMemory(int id);
+  void AllocGpuMemory(int id);
+  void CalculeGpu(const StDataGpu& datagpu);
  #endif
 };
 

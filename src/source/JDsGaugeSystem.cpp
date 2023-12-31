@@ -90,19 +90,23 @@ void JGaugeSystem::Reset(){
 
 #ifdef _WITHGPU
 //==============================================================================
-/// Free GPU memory.
+/// Check if GPU memory was allocated for some gauge and gpu.
+//==============================================================================
+bool JGaugeSystem::AllocatedMemoryGpu()const{
+  bool allocated=false;
+  for(unsigned cg=0;cg<GetCount();cg++)for(int id=0;id<GpuCount;id++){
+    allocated=(allocated || Gauges[cg]->AllocatedGpuMemory(id));
+  }
+  return(allocated);
+}
+//==============================================================================
+/// Free GPU memory on gauges.
 //==============================================================================
 void JGaugeSystem::FreeMemoryGpu(int id){
   if(id>=GpuCount)Run_Exceptioon("Id is invalid.");
-  //-Free common auxiliary memory on GPU.
-  if(DataGpu[id].AuxMemoryg)cudaFree(DataGpu[id].AuxMemoryg);
-  DataGpu[id].AuxMemoryg=NULL;
-  //-Free gauges auxiliary memory on GPU (only Mesh-Gauges).
+  //-Free gauges auxiliary memory on GPU.
   for(unsigned cg=0;cg<GetCount();cg++){
-    if(Gauges[cg]->Type==JGaugeItem::GAUGE_Mesh){
-      JGaugeMesh* gau=(JGaugeMesh*)Gauges[cg];
-      gau->FreeGpuMemory(id);
-    }
+    Gauges[cg]->FreeGpuMemory(id);
   }
 }
 #endif
@@ -625,14 +629,12 @@ void JGaugeSystem::ConfigArraysGpu(int id,const agdouble2* posxy
 void JGaugeSystem::CalculeGpu(int id,double timestep,const StDivDataGpu& dvd
   ,unsigned npbok,unsigned npb,unsigned np,bool savedivstate)
 {
-  //-Allocates GPU memory.
-  if(!DataGpu[id].AuxMemoryg)fcuda::Malloc(&DataGpu[id].AuxMemoryg,1);
   //-Compute measures.
   const unsigned ng=GetCount();
   DataGpu[id].SetDivState(timestep,dvd,npbok,npb,np);
   for(unsigned cg=0;cg<ng;cg++){
     JGaugeItem* gau=Gauges[cg];
-    if(gau->Update(timestep))gau->CalculeGpu(DataGpu[id],DataGpu[id].AuxMemoryg);
+    if(gau->Update(timestep))gau->CalculeGpu(DataGpu[id]);
   }
   //-Clear divide state.
   if(!savedivstate)DataGpu[id].ClearDivState();
@@ -645,9 +647,7 @@ void JGaugeSystem::CalculeLastInputGpu(int id,std::string gaugename){
   const unsigned idx=GetGaugeIdx(gaugename);
   if(idx==UINT_MAX)Run_Exceptioon(fun::PrintStr("Requested gauge \'%s\' is missing.",gaugename.c_str()));
   if(!DataCpu.divstate)Run_Exceptioon(fun::PrintStr("Input state to compute gauge \'%s\' is not available.",gaugename.c_str()));
-  //-Allocates GPU memory.
-  if(!DataGpu[id].AuxMemoryg)fcuda::Malloc(&DataGpu[id].AuxMemoryg,1);
-  Gauges[idx]->CalculeGpu(DataGpu[id],DataGpu[id].AuxMemoryg);
+  Gauges[idx]->CalculeGpu(DataGpu[id]);
 }
 #endif
 
