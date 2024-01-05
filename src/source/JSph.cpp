@@ -74,8 +74,8 @@ using namespace std;
 //==============================================================================
 /// Constructor.
 //==============================================================================
-JSph::JSph(bool cpu,int gpucount,bool withmpi):Cpu(cpu)
-  ,Mgpu(cpu? false: gpucount>1),GpuCount(cpu? 0: gpucount),WithMpi(withmpi)
+JSph::JSph(int gpucount,bool withmpi):Cpu(gpucount==0)
+  ,Mgpu(gpucount>1),GpuCount(gpucount),WithMpi(withmpi)
 {
   ClassName="JSph";
   DgNum=0;
@@ -1035,7 +1035,7 @@ void JSph::LoadCaseConfig(const JSphCfgRun* cfg){
   MkInfo->Config(&parts);
 
   //-Configuration of GaugeSystem.
-  GaugeSystem=new JGaugeSystem(Cpu,GpuCount);
+  GaugeSystem=new JGaugeSystem(GpuCount);
 
   //-Configuration of AccInput.
   if(xml.GetNodeSimple("case.execution.special.accinputs",true)){

@@ -43,10 +43,11 @@ using namespace std;
 //==============================================================================
 /// Constructor.
 //==============================================================================
-JGaugeSystem::JGaugeSystem(bool cpu,int gpucount):Log(AppInfo.LogPtr())
-  ,Cpu(cpu),GpuCount(cpu? 0: gpucount)
+JGaugeSystem::JGaugeSystem(int gpucount):Log(AppInfo.LogPtr())
+  ,Cpu(gpucount==0),GpuCount(gpucount)
 {
   ClassName="JGaugeSystem";
+  if(unsigned(GpuCount)>MAXGPUS)Run_Exceptioon("Number of GPUs is invalid.");
   Reset();
 }
 
@@ -386,13 +387,14 @@ JGaugeVelocity* JGaugeSystem::AddGaugeVel(std::string name,double computestart
 {
   if(GetGaugeIdx(name)!=UINT_MAX)Run_Exceptioon(fun::PrintStr("The name \'%s\' already exists.",name.c_str()));
   //-Creates object.
-  JGaugeVelocity* gau=new JGaugeVelocity(GetCount(),name,point,Cpu);
+  JGaugeVelocity* gau=new JGaugeVelocity(GetCount(),name,point,GpuCount);
   gau->Config(CSP,Symmetry,Scell,ScellDiv,MapPosMin,DomPosMin,DomPosMax);
   gau->ConfigDomMCel(fixed);
   gau->ConfigComputeTiming(computestart,computeend,computedt);
   //-Uses common configuration.
   gau->SetSaveVtkPart(CfgDefault.savevtkpart);
-  gau->ConfigOutputTiming(CfgDefault.output,CfgDefault.outputstart,CfgDefault.outputend,CfgDefault.outputdt);
+  gau->ConfigOutputTiming(CfgDefault.output,CfgDefault.outputstart
+    ,CfgDefault.outputend,CfgDefault.outputdt);
   Gauges.push_back(gau);
   return(gau);
 }
@@ -407,13 +409,14 @@ JGaugeSwl* JGaugeSystem::AddGaugeSwl(std::string name,double computestart
   if(GetGaugeIdx(name)!=UINT_MAX)Run_Exceptioon(fun::PrintStr("The name \'%s\' already exists.",name.c_str()));
   if(masslimit<=0)masslimit=CSP.massfluid*(CSP.simulate2d? 0.4f: 0.5f);
   //-Creates object.
-  JGaugeSwl* gau=new JGaugeSwl(GetCount(),name,point0,point2,pointdp,masslimit,Cpu);
+  JGaugeSwl* gau=new JGaugeSwl(GetCount(),name,point0,point2,pointdp,masslimit,GpuCount);
   gau->Config(CSP,Symmetry,Scell,ScellDiv,MapPosMin,DomPosMin,DomPosMax);
   gau->ConfigDomMCel(fixed);
   gau->ConfigComputeTiming(computestart,computeend,computedt);
   //-Uses common configuration.
   gau->SetSaveVtkPart(CfgDefault.savevtkpart);
-  gau->ConfigOutputTiming(CfgDefault.output,CfgDefault.outputstart,CfgDefault.outputend,CfgDefault.outputdt);
+  gau->ConfigOutputTiming(CfgDefault.output,CfgDefault.outputstart
+    ,CfgDefault.outputend,CfgDefault.outputdt);
   Gauges.push_back(gau);
   return(gau);
 }
@@ -427,13 +430,14 @@ JGaugeMaxZ* JGaugeSystem::AddGaugeMaxZ(std::string name,double computestart
 {
   if(GetGaugeIdx(name)!=UINT_MAX)Run_Exceptioon(fun::PrintStr("The name \'%s\' already exists.",name.c_str()));
   //-Creates object.
-  JGaugeMaxZ* gau=new JGaugeMaxZ(GetCount(),name,point0,height,distlimit,Cpu);
+  JGaugeMaxZ* gau=new JGaugeMaxZ(GetCount(),name,point0,height,distlimit,GpuCount);
   gau->Config(CSP,Symmetry,Scell,ScellDiv,MapPosMin,DomPosMin,DomPosMax);
   gau->ConfigDomMCel(fixed);
   gau->ConfigComputeTiming(computestart,computeend,computedt);
   //-Uses common configuration.
   gau->SetSaveVtkPart(CfgDefault.savevtkpart);
-  gau->ConfigOutputTiming(CfgDefault.output,CfgDefault.outputstart,CfgDefault.outputend,CfgDefault.outputdt);
+  gau->ConfigOutputTiming(CfgDefault.output,CfgDefault.outputstart
+    ,CfgDefault.outputend,CfgDefault.outputdt);
   Gauges.push_back(gau);
   return(gau);
 }
@@ -450,13 +454,15 @@ JGaugeMesh* JGaugeSystem::AddGaugeMesh(std::string name,double computestart
   if(GetGaugeIdx(name)!=UINT_MAX)Run_Exceptioon(fun::PrintStr("The name \'%s\' already exists.",name.c_str()));
   if(masslimit<=0)masslimit=CSP.massfluid*(CSP.simulate2d? 0.4f: 0.5f);
   //-Creates object.
-  JGaugeMesh* gau=new JGaugeMesh(GetCount(),name,meshbas,outdata,tfmt,buffersize,kclimit,kcdummy,masslimit,Cpu);
+  JGaugeMesh* gau=new JGaugeMesh(GetCount(),name,meshbas,outdata,tfmt
+    ,buffersize,kclimit,kcdummy,masslimit,GpuCount);
   gau->Config(CSP,Symmetry,Scell,ScellDiv,MapPosMin,DomPosMin,DomPosMax);
   gau->ConfigDomMCel(fixed);
   gau->ConfigComputeTiming(computestart,computeend,computedt);
   //-Uses common configuration.
   gau->SetSaveVtkPart(CfgDefault.savevtkpart);
-  gau->ConfigOutputTiming(CfgDefault.output,CfgDefault.outputstart,CfgDefault.outputend,CfgDefault.outputdt);
+  gau->ConfigOutputTiming(CfgDefault.output,CfgDefault.outputstart
+    ,CfgDefault.outputend,CfgDefault.outputdt);
   Gauges.push_back(gau);
   return(gau);
 }
@@ -475,19 +481,22 @@ JGaugeForce* JGaugeSystem::AddGaugeForce(std::string name,double computestart
   if(cmk>=mkinfo->Size())Run_Exceptioon(fun::PrintStr("Error loading boundary objects. Mkbound=%u is unknown.",mkbound));
   const JSphMkBlock* mkb=mkinfo->Mkblock(cmk);
   const TpParticles typeparts=mkb->Type;
-  if(typeparts!=TpPartFixed && typeparts!=TpPartMoving)Run_Exceptioon(fun::PrintStr("Type of boundary particles (Mkbound=%u) is invalid. Only fixed or moving particles are allowed.",mkbound));
+  if(typeparts!=TpPartFixed && typeparts!=TpPartMoving)
+    Run_Exceptioon(fun::PrintStr("Type of boundary particles (Mkbound=%u) is invalid. Only fixed or moving particles are allowed.",mkbound));
   const unsigned idbegin=mkb->Begin;
   const unsigned count=mkb->Count;
   const typecode code=mkb->Code;
   const tfloat3 center=ToTFloat3((mkb->GetPosMin()+mkb->GetPosMax())/TDouble3(2));
   //-Creates object.
-  JGaugeForce* gau=new JGaugeForce(GetCount(),name,mkbound,typeparts,idbegin,count,code,center,Cpu);
+  JGaugeForce* gau=new JGaugeForce(GetCount(),name,mkbound,typeparts,idbegin
+    ,count,code,center,GpuCount);
   gau->Config(CSP,Symmetry,Scell,ScellDiv,MapPosMin,DomPosMin,DomPosMax);
   gau->ConfigDomMCel(fixed);
   gau->ConfigComputeTiming(computestart,computeend,computedt);
   //-Uses common configuration.
   gau->SetSaveVtkPart(CfgDefault.savevtkpart);
-  gau->ConfigOutputTiming(CfgDefault.output,CfgDefault.outputstart,CfgDefault.outputend,CfgDefault.outputdt);
+  gau->ConfigOutputTiming(CfgDefault.output,CfgDefault.outputstart
+    ,CfgDefault.outputend,CfgDefault.outputdt);
   Gauges.push_back(gau);
   return(gau);
 }
@@ -611,7 +620,6 @@ void JGaugeSystem::CalculeLastInputCpu(std::string gaugename){
 }
 
 #ifdef _WITHGPU
-
 //==============================================================================
 /// Configures particle arrays (on GPU).
 //==============================================================================

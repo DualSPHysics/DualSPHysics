@@ -48,7 +48,7 @@ using namespace std;
 //==============================================================================
 /// Constructor.
 //==============================================================================
-JSphCpu::JSphCpu(bool withmpi):JSph(true,0,withmpi){
+JSphCpu::JSphCpu(bool withmpi):JSph(0,withmpi){
   ClassName="JSphCpu";
   CellDiv=NULL;
   Arrays_Cpu=NULL;
@@ -381,7 +381,6 @@ void JSphCpu::ConfigRunMode(){
 //==============================================================================
 void JSphCpu::InitRunCpu(){
   InitRun(Np,Idp_c->cptr(),Pos_c->cptr());
-  GaugeSystem->ConfigArraysCpu(Pos_c,Code_c,Idp_c,Velrho_c);
   if(TStep==STEP_Verlet)VelrhoM1_c->CopyFrom(Velrho_c,Np);
   if(TVisco==VISCO_LaminarSPS)SpsTauRho2_c->Memset(0,Np);
   if(MotionVel_c)MotionVel_c->Memset(0,Np);

@@ -174,6 +174,7 @@ public:
 protected:
   JLog2* Log;
   const bool Cpu;
+  const int GpuCount;  ///<Number of GPUs (units) in use.
   std::string FileInfo;
 
   //-Constant values for calculation (they are constant).
@@ -210,7 +211,8 @@ protected:
   unsigned OutCount;      ///<Number of stored results in buffer.
   std::string OutFile;
 
-  JGaugeItem(TpGauge type,unsigned idx,std::string name,bool cpu,unsigned outsize=200);
+  JGaugeItem(TpGauge type,unsigned idx,std::string name,int gpucount
+    ,unsigned outsize=200);
   void Reset();
   void SetTimeStep(double timestep);
 
@@ -297,7 +299,7 @@ private:
     bool GpuMemory;     ///<Indicates when GPU memory is allocated.
     float3* Resultg;    ///<Stores final result from GPU [1].
     //-Methods.
-    StrGaugeVelDataGpu(){ 
+    StrGaugeVelDataGpu(){
       GpuMemory=false;
       Resultg=NULL;
     }
@@ -343,7 +345,8 @@ protected:
   void StoreResult();
 
 public:
-  JGaugeVelocity(unsigned idx,std::string name,tdouble3 point,bool cpu);
+  JGaugeVelocity(unsigned idx,std::string name,tdouble3 point
+    ,int gpucount);
   ~JGaugeVelocity();
   void ConfigDomMCel(bool fixed);
 
@@ -437,7 +440,7 @@ protected:
 
 public:
   JGaugeSwl(unsigned idx,std::string name,tdouble3 point0,tdouble3 point2
-    ,double pointdp,float masslimit,bool cpu);
+    ,double pointdp,float masslimit,int gpucount);
   ~JGaugeSwl();
   void ConfigDomMCel(bool fixed);
 
@@ -529,7 +532,8 @@ protected:
     ,int& cxini,int& cxfin,int& yini,int& yfin,int& zini,int& zfin)const;
 
 public:
-  JGaugeMaxZ(unsigned idx,std::string name,tdouble3 point0,double height,float distlimit,bool cpu);
+  JGaugeMaxZ(unsigned idx,std::string name,tdouble3 point0,double height
+    ,float distlimit,int gpucount);
   ~JGaugeMaxZ();
   void ConfigDomMCel(bool fixed);
 
@@ -659,7 +663,7 @@ protected:
 public:
   JGaugeMesh(unsigned idx,std::string name,const jmsh::StMeshBasic& meshbas
     ,std::string outdata,unsigned tfmt,unsigned buffersize
-    ,float kclimit,float kcdummy,float masslimit,bool cpu);
+    ,float kclimit,float kcdummy,float masslimit,int gpucount);
   ~JGaugeMesh();
   void ConfigDomMCel(bool fixed);
 
@@ -771,8 +775,9 @@ protected:
   void StoreResult();
 
 public:
-  JGaugeForce(unsigned idx,std::string name,word mkbound,TpParticles typeparts
-    ,unsigned idbegin,unsigned count,typecode code,tfloat3 center,bool cpu);
+  JGaugeForce(unsigned idx,std::string name,word mkbound
+    ,TpParticles typeparts,unsigned idbegin,unsigned count
+    ,typecode code,tfloat3 center,int gpucount);
   ~JGaugeForce();
   void ConfigDomMCel(bool fixed);
 

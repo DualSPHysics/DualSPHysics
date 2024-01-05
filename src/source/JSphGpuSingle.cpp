@@ -744,14 +744,23 @@ void JSphGpuSingle::RunFloating(double dt,bool predictor){
 }
 
 //==============================================================================
+/// Runs first calculations in configured gauges.
+/// Ejecuta primeros calculos en las posiciones de medida configuradas.
+//==============================================================================
+void JSphGpuSingle::RunFirstGaugeSystem(double timestep){
+  GaugeSystem->ConfigArraysGpu(0,Posxy_g,Posz_g,Code_g,Idp_g,Velrho_g);  
+  GaugeSystem->CalculeGpu(0,timestep,DivData,NpbOk,Npb,Np,true);
+}
+
+//==============================================================================
 /// Runs calculations in configured gauges.
 /// Ejecuta calculos en las posiciones de medida configuradas.
 //==============================================================================
-void JSphGpuSingle::RunGaugeSystem(double timestep,bool savedivstate){
-  if(!Nstep || GaugeSystem->GetCount()){
+void JSphGpuSingle::RunGaugeSystem(double timestep){
+  if(GaugeSystem->GetCount()){
     Timersg->TmStart(TMG_SuGauges,false);
     //const bool svpart=(TimeStep>=TimePartNext);
-    GaugeSystem->CalculeGpu(0,timestep,DivData,NpbOk,Npb,Np,savedivstate);
+    GaugeSystem->CalculeGpu(0,timestep,DivData,NpbOk,Npb,Np,false);
     Timersg->TmStop(TMG_SuGauges,true);
   }
 }
@@ -800,7 +809,7 @@ void JSphGpuSingle::Run(std::string appname,const JSphCfgRun* cfg,JLog2* log){
 
   //-Initialisation of execution variables.
   InitRunGpu();
-  RunGaugeSystem(TimeStep,true);
+  RunFirstGaugeSystem(TimeStep);
   if(InOut)InOutInit(TimeStepIni);
   FreePartsInit();
   PrintAllocMemory(GetAllocMemoryCpu(),GetAllocMemoryGpu());

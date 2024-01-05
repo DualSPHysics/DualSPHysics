@@ -535,7 +535,7 @@ protected:
   unsigned GetOutTotCount()const{ return(OutPosCount+OutRhoCount+OutMovCount); }
 
 public:
-  JSph(bool cpu,int gpucount,bool withmpi);
+  JSph(int gpucount,bool withmpi);
   ~JSph();
 
   static std::string GetStepName(TpStep tstep);

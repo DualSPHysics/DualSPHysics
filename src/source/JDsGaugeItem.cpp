@@ -50,8 +50,9 @@ using namespace std;
 //==============================================================================
 /// Constructor.
 //==============================================================================
-JGaugeItem::JGaugeItem(TpGauge type,unsigned idx,std::string name,bool cpu,unsigned outsize)
-  :Log(AppInfo.LogPtr()),Type(type),Idx(idx),Name(name),Cpu(cpu),OutSize(outsize)
+JGaugeItem::JGaugeItem(TpGauge type,unsigned idx,std::string name,int gpucount
+  ,unsigned outsize):Log(AppInfo.LogPtr()),Type(type),Idx(idx),Name(name)
+  ,Cpu(gpucount==0),GpuCount(gpucount),OutSize(outsize)
 {
   ClassName="JGaugeItem";
   Reset();
@@ -304,8 +305,8 @@ void JGaugeItem::CalcMCelIniFinFromPos(const tdouble3& psmin
 //==============================================================================
 /// Constructor.
 //==============================================================================
-JGaugeVelocity::JGaugeVelocity(unsigned idx,std::string name,tdouble3 point,bool cpu)
-  :JGaugeItem(GAUGE_Vel,idx,name,cpu)
+JGaugeVelocity::JGaugeVelocity(unsigned idx,std::string name,tdouble3 point
+  ,int gpucount):JGaugeItem(GAUGE_Vel,idx,name,gpucount)
 {
   ClassName="JGaugeVel";
   FileInfo=string("Saves velocity data measured from fluid particles (by ")+ClassName+").";
@@ -337,7 +338,7 @@ void JGaugeVelocity::Reset(){
 /// Reset GPU memory.
 //==============================================================================
 void JGaugeVelocity::ResetGpuMemory(){
-  for(int g=0;g<MAXGPUS;g++){
+  for(int g=0;g<GpuCount;g++){
     if(AuxDataGpu[g].GpuMemory)
       Run_Exceptioon(fun::PrintStr("Auxiliary GPU memory for unit %d is not free.",g));
     AuxDataGpu[g]=StrGaugeVelDataGpu();
@@ -492,7 +493,7 @@ void JGaugeVelocity::CalculeCpu(const StDataCpu& datacpu){
 /// Check if GPU memory was allocated.
 //==============================================================================
 bool JGaugeVelocity::AllocatedGpuMemory(int id)const{
-  if(id>=MAXGPUS)Run_Exceptioon("Id is invalid.");
+  if(id>=GpuCount)Run_Exceptioon("Id is invalid.");
   return(AuxDataGpu[id].GpuMemory);
 }
 
@@ -500,7 +501,7 @@ bool JGaugeVelocity::AllocatedGpuMemory(int id)const{
 /// Frees GPU memory.
 //==============================================================================
 void JGaugeVelocity::FreeGpuMemory(int id){
-  if(id>=MAXGPUS)Run_Exceptioon("Id is invalid.");
+  if(id>=GpuCount)Run_Exceptioon("Id is invalid.");
   StGaugeVelDataGpu& aug=AuxDataGpu[id];
   aug.GpuMemory=false;
   if(aug.Resultg)cudaFree(aug.Resultg); aug.Resultg=NULL;
@@ -510,7 +511,7 @@ void JGaugeVelocity::FreeGpuMemory(int id){
 /// Allocates GPU memory.
 //==============================================================================
 void JGaugeVelocity::AllocGpuMemory(int id){
-  if(id>=MAXGPUS)Run_Exceptioon("Id is invalid.");
+  if(id>=GpuCount)Run_Exceptioon("Id is invalid.");
   StGaugeVelDataGpu& aug=AuxDataGpu[id];
   if(aug.GpuMemory)FreeGpuMemory(id);
   fcuda::Malloc(&aug.Resultg,1);
@@ -525,32 +526,36 @@ void JGaugeVelocity::CalculeGpu(const StDataGpu& datagpu){
   const int indomain=2;
   const tdouble3 domposmin=DomPosMin,domposmax=DomPosMax;
   //-Run GPU calculation.
-  if(indomain==2){
+  if(indomain==1 || indomain==2){
     //-Prepare input data.
-    const double& timestep =datagpu.timestep;
     const StDivDataGpu& dvd=datagpu.dvd;
     const double2*  posxy  =datagpu.posxy_g->cptr();
     const double*   posz   =datagpu.posz_g->cptr();
     const typecode* code   =datagpu.code_g->cptr();
     //const unsigned* idp  =datagpu.idp_g->cptr();
     const float4*   velrho =datagpu.velrho_g->cptr();
-    SetTimeStep(timestep);
     //-Start measure.
     StGaugeVelDataGpu& aug=AuxDataGpu[id];
     if(!aug.GpuMemory)AllocGpuMemory(id);
     tfloat3 ptvel=TFloat3(0);
-    const bool ptout=PointIsOut(Point.x,Point.y,Point.z,domposmin,domposmax);
-    if(!ptout){//-Verify that the point is within domain limits.
+    //const bool ptout=PointIsOut(Point.x,Point.y,Point.z,domposmin,domposmax);
+    //if(!ptout){//-Verify that the point is within domain limits.
+    {
       cugauge::Interaction_GaugeVel(CSP,dvd,Point,posxy,posz,code,velrho,aug.Resultg);
       cudaMemcpy(&ptvel,aug.Resultg,sizeof(float3),cudaMemcpyDeviceToHost);
       Check_CudaErroor("Failed in velocity calculation.");
     }
-    //-Stores result. | Guarda resultado.
-    Result.Set(timestep,ToTFloat3(Point),ptvel);
-    //Log->Printf("------> t:%f",TimeStep);
-    if(Output(timestep))StoreResult();
+    //-Stores calculated result.
+    if(indomain==2){
+      const double& timestep=datagpu.timestep;
+      SetTimeStep(timestep);
+      Result.Set(timestep,ToTFloat3(Point),ptvel);
+      if(Output(timestep))StoreResult();
+      //Log->Printf("------> t:%f",TimeStep);
+    }
   }
 }
+
 #endif
 
 
@@ -560,8 +565,9 @@ void JGaugeVelocity::CalculeGpu(const StDataGpu& datagpu){
 //==============================================================================
 /// Constructor.
 //==============================================================================
-JGaugeSwl::JGaugeSwl(unsigned idx,std::string name,tdouble3 point0,tdouble3 point2
-  ,double pointdp,float masslimit,bool cpu):JGaugeItem(GAUGE_Swl,idx,name,cpu)
+JGaugeSwl::JGaugeSwl(unsigned idx,std::string name,tdouble3 point0
+  ,tdouble3 point2,double pointdp,float masslimit,int gpucount)
+  :JGaugeItem(GAUGE_Swl,idx,name,gpucount)
 {
   ClassName="JGaugeSwl";
   FileInfo=string("Saves SWL data measured from fluid particles (by ")+ClassName+").";
@@ -597,7 +603,7 @@ void JGaugeSwl::Reset(){
 /// Reset GPU memory.
 //==============================================================================
 void JGaugeSwl::ResetGpuMemory(){
-  for(int g=0;g<MAXGPUS;g++){
+  for(int g=0;g<GpuCount;g++){
     if(AuxDataGpu[g].GpuMemory)
       Run_Exceptioon(fun::PrintStr("Auxiliary GPU memory for unit %d is not free.",g));
     AuxDataGpu[g]=StrGaugeSwlDataGpu();
@@ -801,7 +807,7 @@ void JGaugeSwl::CalculeCpu(const StDataCpu& datacpu){
 /// Check if GPU memory was allocated.
 //==============================================================================
 bool JGaugeSwl::AllocatedGpuMemory(int id)const{
-  if(id>=MAXGPUS)Run_Exceptioon("Id is invalid.");
+  if(id>=GpuCount)Run_Exceptioon("Id is invalid.");
   return(AuxDataGpu[id].GpuMemory);
 }
 
@@ -809,7 +815,7 @@ bool JGaugeSwl::AllocatedGpuMemory(int id)const{
 /// Frees GPU memory.
 //==============================================================================
 void JGaugeSwl::FreeGpuMemory(int id){
-  if(id>=MAXGPUS)Run_Exceptioon("Id is invalid.");
+  if(id>=GpuCount)Run_Exceptioon("Id is invalid.");
   StGaugeSwlDataGpu& aug=AuxDataGpu[id];
   aug.GpuMemory=false;
   if(aug.Resultg)cudaFree(aug.Resultg); aug.Resultg=NULL;
@@ -819,7 +825,7 @@ void JGaugeSwl::FreeGpuMemory(int id){
 /// Allocates GPU memory.
 //==============================================================================
 void JGaugeSwl::AllocGpuMemory(int id){
-  if(id>=MAXGPUS)Run_Exceptioon("Id is invalid.");
+  if(id>=GpuCount)Run_Exceptioon("Id is invalid.");
   StGaugeSwlDataGpu& aug=AuxDataGpu[id];
   if(aug.GpuMemory)FreeGpuMemory(id);
   fcuda::Malloc(&aug.Resultg,1);
@@ -833,30 +839,33 @@ void JGaugeSwl::CalculeGpu(const StDataGpu& datagpu){
   const int id=0;
   const int indomain=2;
   //-Run GPU calculation.
-  if(indomain==2){
+  if(indomain==1 || indomain==2){
     //-Prepare input data.
-    const double& timestep =datagpu.timestep;
     const StDivDataGpu& dvd=datagpu.dvd;
     const double2*  posxy  =datagpu.posxy_g->cptr();
     const double*   posz   =datagpu.posz_g->cptr();
     const typecode* code   =datagpu.code_g->cptr();
     //const unsigned* idp  =datagpu.idp_g->cptr();
     const float4*   velrho =datagpu.velrho_g->cptr();
-    SetTimeStep(timestep);
     //-Start measure.
     StGaugeSwlDataGpu& aug=AuxDataGpu[id];
     if(!aug.GpuMemory)AllocGpuMemory(id);
-    cugauge::Interaction_GaugeSwl(CSP,dvd,Point0,PointDir,PointNp,MassLimit
-      ,posxy,posz,code,velrho,aug.Resultg);
-    tfloat3 ptsurf=TFloat3(0);
-    cudaMemcpy(&ptsurf,aug.Resultg,sizeof(float3),cudaMemcpyDeviceToHost);
-    Check_CudaErroor("Failed in Swl calculation.");
-    //-Stores result. | Guarda resultado.
-    Result.Set(timestep,ToTFloat3(Point0),ToTFloat3(Point2),ptsurf);
-    //Log->Printf("------> t:%f",TimeStep);
-    if(Output(timestep))StoreResult();
+    if(indomain==2){
+      cugauge::Interaction_GaugeSwl(CSP,dvd,Point0,PointDir,PointNp,MassLimit
+        ,posxy,posz,code,velrho,aug.Resultg);
+      tfloat3 ptsurf=TFloat3(0);
+      cudaMemcpy(&ptsurf,aug.Resultg,sizeof(float3),cudaMemcpyDeviceToHost);
+      Check_CudaErroor("Failed in Swl calculation.");
+      //-Stores calculated result.
+      const double& timestep=datagpu.timestep;
+      SetTimeStep(timestep);
+      Result.Set(timestep,ToTFloat3(Point0),ToTFloat3(Point2),ptsurf);
+      if(Output(timestep))StoreResult();
+      //Log->Printf("------> t:%f",TimeStep);
+    }
   }
 }
+
 #endif
 
 
@@ -867,7 +876,8 @@ void JGaugeSwl::CalculeGpu(const StDataGpu& datagpu){
 /// Constructor.
 //==============================================================================
 JGaugeMaxZ::JGaugeMaxZ(unsigned idx,std::string name,tdouble3 point0
-  ,double height,float distlimit,bool cpu):JGaugeItem(GAUGE_MaxZ,idx,name,cpu)
+  ,double height,float distlimit,int gpucount)
+  :JGaugeItem(GAUGE_MaxZ,idx,name,gpucount)
 {
   ClassName="JGaugeMaxZ";
   FileInfo=string("Saves maximum Z position of fluid particles (by ")+ClassName+").";
@@ -903,7 +913,7 @@ void JGaugeMaxZ::Reset(){
 /// Reset GPU memory.
 //==============================================================================
 void JGaugeMaxZ::ResetGpuMemory(){
-  for(int g=0;g<MAXGPUS;g++){
+  for(int g=0;g<GpuCount;g++){
     if(AuxDataGpu[g].GpuMemory)
       Run_Exceptioon(fun::PrintStr("Auxiliary GPU memory for unit %d is not free.",g));
     AuxDataGpu[g]=StrGaugeMaxzDataGpu();
@@ -1093,7 +1103,7 @@ void JGaugeMaxZ::CalculeCpu(const StDataCpu& datacpu){
 /// Check if GPU memory was allocated.
 //==============================================================================
 bool JGaugeMaxZ::AllocatedGpuMemory(int id)const{
-  if(id>=MAXGPUS)Run_Exceptioon("Id is invalid.");
+  if(id>=GpuCount)Run_Exceptioon("Id is invalid.");
   return(AuxDataGpu[id].GpuMemory);
 }
 
@@ -1101,7 +1111,7 @@ bool JGaugeMaxZ::AllocatedGpuMemory(int id)const{
 /// Frees GPU memory.
 //==============================================================================
 void JGaugeMaxZ::FreeGpuMemory(int id){
-  if(id>=MAXGPUS)Run_Exceptioon("Id is invalid.");
+  if(id>=GpuCount)Run_Exceptioon("Id is invalid.");
   StGaugeMaxzDataGpu& aug=AuxDataGpu[id];
   aug.GpuMemory=false;
   if(aug.Resultg)cudaFree(aug.Resultg); aug.Resultg=NULL;
@@ -1111,7 +1121,7 @@ void JGaugeMaxZ::FreeGpuMemory(int id){
 /// Allocates GPU memory.
 //==============================================================================
 void JGaugeMaxZ::AllocGpuMemory(int id){
-  if(id>=MAXGPUS)Run_Exceptioon("Id is invalid.");
+  if(id>=GpuCount)Run_Exceptioon("Id is invalid.");
   StGaugeMaxzDataGpu& aug=AuxDataGpu[id];
   if(aug.GpuMemory)FreeGpuMemory(id);
   fcuda::Malloc(&aug.Resultg,1);
@@ -1125,16 +1135,14 @@ void JGaugeMaxZ::CalculeGpu(const StDataGpu& datagpu){
   const int id=0;
   const int indomain=2;
   //-Run GPU calculation.
-  if(indomain==2){
+  if(indomain==1 || indomain==2){
     //-Prepare input data.
-    const double& timestep =datagpu.timestep;
     const StDivDataGpu& dvd=datagpu.dvd;
     const double2*  posxy  =datagpu.posxy_g->cptr();
     const double*   posz   =datagpu.posz_g->cptr();
     const typecode* code   =datagpu.code_g->cptr();
     //const unsigned* idp    =datagpu.idp_g->cptr();
     //const float4*   velrho =datagpu.velrho_g->cptr();
-    SetTimeStep(timestep);
     //-Start measure.
     StGaugeMaxzDataGpu& aug=AuxDataGpu[id];
     if(!aug.GpuMemory)AllocGpuMemory(id);
@@ -1155,12 +1163,17 @@ void JGaugeMaxZ::CalculeGpu(const StDataGpu& datagpu){
     }
     cudaMemcpy(&ptsurf,aug.Resultg,sizeof(float3),cudaMemcpyDeviceToHost);
     Check_CudaErroor("Failed in MaxZ calculation.");
-    //-Stores result. | Guarda resultado.
-    Result.Set(timestep,ToTFloat3(Point0),ptsurf.z);
-    //Log->Printf("------> t:%f",TimeStep);
-    if(Output(timestep))StoreResult();
+    //-Stores calculated result.
+    if(indomain==2){
+      const double& timestep=datagpu.timestep;
+      SetTimeStep(timestep);
+      Result.Set(timestep,ToTFloat3(Point0),ptsurf.z);
+      if(Output(timestep))StoreResult();
+      //Log->Printf("------> t:%f",TimeStep);
+    }
   }
 }
+
 #endif
 
 
@@ -1173,8 +1186,8 @@ void JGaugeMaxZ::CalculeGpu(const StDataGpu& datagpu){
 //==============================================================================
 JGaugeMesh::JGaugeMesh(unsigned idx,std::string name,const jmsh::StMeshBasic& meshbas
   ,std::string outdata,unsigned tfmt,unsigned buffersize
-  ,float kclimit,float kcdummy,float masslimit,bool cpu)
-  :JGaugeItem(GAUGE_Mesh,idx,name,cpu,(buffersize<1? 30: buffersize))
+  ,float kclimit,float kcdummy,float masslimit,int gpucount)
+  :JGaugeItem(GAUGE_Mesh,idx,name,gpucount,(buffersize<1? 30: buffersize))
 {
   ClassName="JGaugeMesh";
   FileInfo=string("Saves mesh data measured from fluid particles (by ")+ClassName+").";
@@ -1226,7 +1239,7 @@ void JGaugeMesh::Reset(){
 /// Reset GPU memory.
 //==============================================================================
 void JGaugeMesh::ResetGpuMemory(){
-  for(int g=0;g<MAXGPUS;g++){
+  for(int g=0;g<GpuCount;g++){
     if(AuxDataGpu[g].GpuMemory)
       Run_Exceptioon(fun::PrintStr("Auxiliary GPU memory for unit %d is not free.",g));
     AuxDataGpu[g]=StrGaugeMeshDataGpu();
@@ -1469,7 +1482,7 @@ const float* JGaugeMesh::GetPtrDataZsurf()const{
 /// Returns internal pointer to save Zsurf results on GPU.
 //==============================================================================
 const float* JGaugeMesh::GetPtrDataZsurfg(int id)const{
-  if(id>=MAXGPUS)Run_Exceptioon("Id is invalid.");
+  if(id>=GpuCount)Run_Exceptioon("Id is invalid.");
   return(AuxDataGpu[id].DataZsurfg);
 }
 #endif
@@ -1609,7 +1622,7 @@ void JGaugeMesh::CalculeCpu(const StDataCpu& datacpu){
 /// Check if GPU memory was allocated.
 //==============================================================================
 bool JGaugeMesh::AllocatedGpuMemory(int id)const{
-  if(id>=MAXGPUS)Run_Exceptioon("Id is invalid.");
+  if(id>=GpuCount)Run_Exceptioon("Id is invalid.");
   return(AuxDataGpu[id].GpuMemory);
 }
 
@@ -1617,7 +1630,7 @@ bool JGaugeMesh::AllocatedGpuMemory(int id)const{
 /// Frees GPU memory.
 //==============================================================================
 void JGaugeMesh::FreeGpuMemory(int id){
-  if(id>=MAXGPUS)Run_Exceptioon("Id is invalid.");
+  if(id>=GpuCount)Run_Exceptioon("Id is invalid.");
   StGaugeMeshDataGpu& aug=AuxDataGpu[id];
   aug.GpuMemory=false;
   //if(aug.Resultg   )cudaFree(aug.Resultg   ); aug.Resultg=NULL;
@@ -1632,7 +1645,7 @@ void JGaugeMesh::FreeGpuMemory(int id){
 /// Allocates GPU memory.
 //==============================================================================
 void JGaugeMesh::AllocGpuMemory(int id){
-  if(id>=MAXGPUS)Run_Exceptioon("Id is invalid.");
+  if(id>=GpuCount)Run_Exceptioon("Id is invalid.");
   StGaugeMeshDataGpu& aug=AuxDataGpu[id];
   if(aug.GpuMemory)FreeGpuMemory(id);
   //fcuda::Malloc(&aug.Resultg,1);
@@ -1655,14 +1668,12 @@ void JGaugeMesh::CalculeGpu(const StDataGpu& datagpu){
   //-Run GPU calculation.
   if(indomain==2){
     //-Prepare input data.
-    const double& timestep =datagpu.timestep;
     const StDivDataGpu& dvd=datagpu.dvd;
     const double2*  posxy  =datagpu.posxy_g->cptr();
     const double*   posz   =datagpu.posz_g->cptr();
     const typecode* code   =datagpu.code_g->cptr();
     //const unsigned* idp  =datagpu.idp_g->cptr();
     const float4*   velrho =datagpu.velrho_g->cptr();
-    SetTimeStep(timestep);
     //-Prepare output arrays.
     tfloat3* datavxyz =MeshDat->GetVarFloat3("Vel");
     float*   datavdir =MeshDat->GetVarFloat("VelDir");
@@ -1683,13 +1694,18 @@ void JGaugeMesh::CalculeGpu(const StDataGpu& datagpu){
     if(aug.DataRhopg )cudaMemcpy(datarhop ,aug.DataRhopg ,sizeof(float )*npt  ,cudaMemcpyDeviceToHost);
     if(aug.DataZsurfg)cudaMemcpy(datazsurf,aug.DataZsurfg,sizeof(float )*npt12,cudaMemcpyDeviceToHost);
     Check_CudaErroor("Failed in GaugeMesh calculation.");
-    //-Stores result. | Guarda resultado.
-    MeshDat->SetTimeStep(timestep);
-    Result.Set(timestep,MeshDat);
-    //Log->Printf("------> t:%f",TimeStep);
-    if(Output(timestep))StoreResult();
+    //-Stores calculated result.
+    {
+      const double& timestep=datagpu.timestep;
+      SetTimeStep(timestep);
+      MeshDat->SetTimeStep(timestep);
+      Result.Set(timestep,MeshDat);
+      if(Output(timestep))StoreResult();
+      //Log->Printf("------> t:%f",TimeStep);
+    }
   }
 }
+
 #endif
 //<vs_meeshdat_end>
 
@@ -1702,8 +1718,8 @@ void JGaugeMesh::CalculeGpu(const StDataGpu& datagpu){
 //==============================================================================
 JGaugeForce::JGaugeForce(unsigned idx,std::string name,word mkbound
   ,TpParticles typeparts,unsigned idbegin,unsigned count,typecode code
-  ,tfloat3 center,bool cpu)
-  :JGaugeItem(GAUGE_Force,idx,name,cpu)
+  ,tfloat3 center,int gpucount)
+  :JGaugeItem(GAUGE_Force,idx,name,gpucount)
 {
   ClassName="JGaugeForce";
   FileInfo=string("Saves Force data measured from boundary particles (by ")+ClassName+").";
@@ -1748,7 +1764,7 @@ void JGaugeForce::Reset(){
 /// Reset GPU memory.
 //==============================================================================
 void JGaugeForce::ResetGpuMemory(){
-  for(int g=0;g<MAXGPUS;g++){
+  for(int g=0;g<GpuCount;g++){
     if(AuxDataGpu[g].GpuMemory)
       Run_Exceptioon(fun::PrintStr("Auxiliary GPU memory for unit %d is not free.",g));
     AuxDataGpu[g]=StrGaugeForceDataGpu();
@@ -1918,7 +1934,7 @@ void JGaugeForce::CalculeCpu(const StDataCpu& datacpu){
 /// Check if GPU memory was allocated.
 //==============================================================================
 bool JGaugeForce::AllocatedGpuMemory(int id)const{
-  if(id>=MAXGPUS)Run_Exceptioon("Id is invalid.");
+  if(id>=GpuCount)Run_Exceptioon("Id is invalid.");
   return(AuxDataGpu[id].GpuMemory);
 }
 
@@ -1926,7 +1942,7 @@ bool JGaugeForce::AllocatedGpuMemory(int id)const{
 /// Frees GPU memory.
 //==============================================================================
 void JGaugeForce::FreeGpuMemory(int id){
-  if(id>=MAXGPUS)Run_Exceptioon("Id is invalid.");
+  if(id>=GpuCount)Run_Exceptioon("Id is invalid.");
   StGaugeForceDataGpu& aug=AuxDataGpu[id];
   aug.GpuMemory=false;
   if(aug.Resultg )cudaFree(aug.Resultg ); aug.Resultg=NULL;
@@ -1938,7 +1954,7 @@ void JGaugeForce::FreeGpuMemory(int id){
 /// Allocates GPU memory.
 //==============================================================================
 void JGaugeForce::AllocGpuMemory(int id){
-  if(id>=MAXGPUS)Run_Exceptioon("Id is invalid.");
+  if(id>=GpuCount)Run_Exceptioon("Id is invalid.");
   StGaugeForceDataGpu& aug=AuxDataGpu[id];
   if(aug.GpuMemory)FreeGpuMemory(id);
   fcuda::Malloc(&aug.Resultg,1);
@@ -1956,9 +1972,8 @@ void JGaugeForce::CalculeGpu(const StDataGpu& datagpu){
   const int id=0;
   const int indomain=2;
   //-Run GPU calculation.
-  if(indomain==2){
+  if(indomain==1 || indomain==2){
     //-Prepare input data.
-    const double& timestep =datagpu.timestep;
     const StDivDataGpu& dvd=datagpu.dvd;
     const double2*  posxy  =datagpu.posxy_g->cptr();
     const double*   posz   =datagpu.posz_g->cptr();
@@ -1967,7 +1982,6 @@ void JGaugeForce::CalculeGpu(const StDataGpu& datagpu){
     const float4*   velrho =datagpu.velrho_g->cptr();
     const unsigned  npbok  =datagpu.npbok;
     const unsigned  np     =datagpu.np;
-    SetTimeStep(timestep);
     //-Start measure.
     StGaugeForceDataGpu& aug=AuxDataGpu[id];
     if(!aug.GpuMemory)AllocGpuMemory(id);
@@ -1986,13 +2000,17 @@ void JGaugeForce::CalculeGpu(const StDataGpu& datagpu){
       acesum=TFloat3(result.x,result.y,result.z);
       Check_CudaErroor("Failed in Force calculation.");
     }
-
-    //-Stores result. | Guarda resultado.
-    Result.Set(timestep,acesum*CSP.massbound);
-    //Log->Printf("------> t:%f",TimeStep);
-    if(Output(timestep))StoreResult();
+    //-Stores calculated result.
+    if(indomain==2){
+      const double& timestep=datagpu.timestep;
+      SetTimeStep(timestep);
+      Result.Set(timestep,acesum*CSP.massbound);
+      if(Output(timestep))StoreResult();
+      //Log->Printf("------> t:%f",TimeStep);
+    }
   }
 }
+
 #endif
 
 

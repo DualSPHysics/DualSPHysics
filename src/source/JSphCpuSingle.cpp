@@ -954,14 +954,23 @@ void JSphCpuSingle::FtPartsUpdate(double dt,bool updatenormals
 }
 
 //==============================================================================
+/// Runs first calculations in configured gauges.
+/// Ejecuta primeros calculos en las posiciones de medida configuradas.
+//==============================================================================
+void JSphCpuSingle::RunFirstGaugeSystem(double timestep){
+  GaugeSystem->ConfigArraysCpu(Pos_c,Code_c,Idp_c,Velrho_c);
+  GaugeSystem->CalculeCpu(timestep,DivData,NpbOk,Npb,Np,true);
+}
+
+//==============================================================================
 /// Runs calculations in configured gauges.
 /// Ejecuta calculos en las posiciones de medida configuradas.
 //==============================================================================
-void JSphCpuSingle::RunGaugeSystem(double timestep,bool savedivstate){
-  if(!Nstep || GaugeSystem->GetCount()){
+void JSphCpuSingle::RunGaugeSystem(double timestep){
+  if(GaugeSystem->GetCount()){
     Timersc->TmStart(TMC_SuGauges);
     //const bool svpart=(TimeStep>=TimePartNext);
-    GaugeSystem->CalculeCpu(timestep,DivData,NpbOk,Npb,Np,savedivstate);
+    GaugeSystem->CalculeCpu(timestep,DivData,NpbOk,Npb,Np,false);
     Timersc->TmStop(TMC_SuGauges);
   }
 }
@@ -1004,7 +1013,7 @@ void JSphCpuSingle::Run(std::string appname,const JSphCfgRun* cfg,JLog2* log){
 
   //-Initialisation of execution variables.
   InitRunCpu();
-  RunGaugeSystem(TimeStep,true);
+  RunFirstGaugeSystem(TimeStep);
   if(InOut)InOutInit(TimeStepIni);
   FreePartsInit();
   PrintAllocMemory(GetAllocMemoryCpu());

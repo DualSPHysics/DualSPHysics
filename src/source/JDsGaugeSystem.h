@@ -100,7 +100,7 @@ public:
   const int GpuCount;   ///<Number of GPUs (units) in use.
 
 public:
-  JGaugeSystem(bool cpu,int gpucount);
+  JGaugeSystem(int gpucount);
   ~JGaugeSystem();
   void Reset();
  #ifdef _WITHGPU

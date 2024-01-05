@@ -245,6 +245,7 @@ void Interaction_GaugeSwl(const StCteSph& CSP,const StDivDataGpu& dvd
   }
 }
 
+
 //------------------------------------------------------------------------------
 /// Calculates maximum z of fluid at distance of a vertical line.
 //------------------------------------------------------------------------------
