@@ -51,13 +51,14 @@ using namespace std;
 //##############################################################################
 //# JSphInOut
 //##############################################################################
+const std::string JSphInOut::XmlPath="case.execution.special.inout"; ///<Path for InOut in XML file.
+
 //==============================================================================
 /// Constructor.
 //==============================================================================
-JSphInOut::JSphInOut(bool cpu,const StCteSph& csp,std::string xmlfile
-  ,JXml* sxml,std::string xmlpath,const std::string& dirdatafile)
-  :Log(AppInfo.LogPtr()),Cpu(cpu),CSP(csp),XmlFile(xmlfile),XmlPath(xmlpath)
-  ,DirDataFile(dirdatafile)
+JSphInOut::JSphInOut(bool cpu,const StCteSph& csp,const JXml* cxml
+  ,std::string dirdatafile):Log(AppInfo.LogPtr()),Cpu(cpu),CSP(csp)
+  ,XmlFile(cxml->GetFileReading()),DirDataFile(dirdatafile)
 {
   ClassName="JSphInOut";
   Planes=NULL;
@@ -71,7 +72,7 @@ JSphInOut::JSphInOut(bool cpu,const StCteSph& csp,std::string xmlfile
   #endif
   Reset();
   //-Loads basic configuration.
-  LoadXmlInit(sxml,xmlpath);
+  LoadXmlInit(cxml,XmlPath);
 }
 
 //==============================================================================

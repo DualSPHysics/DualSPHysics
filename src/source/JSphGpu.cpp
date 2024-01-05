@@ -51,7 +51,7 @@ using namespace std;
 //==============================================================================
 /// Constructor.
 //==============================================================================
-JSphGpu::JSphGpu(bool withmpi):JSph(false,false,withmpi),DivAxis(MGDIV_None){
+JSphGpu::JSphGpu(bool withmpi):JSph(1,withmpi),DivAxis(MGDIV_None){
   ClassName="JSphGpu";
   CellDiv=NULL;
   Arrays_Cpu=NULL;

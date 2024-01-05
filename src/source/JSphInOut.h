@@ -70,8 +70,6 @@ class JSphInOut : protected JObject
 {
 private:
   JLog2* Log;
-  const std::string XmlFile;
-  const std::string XmlPath;
   static const unsigned MaxZones=CODE_TYPE_FLUID_INOUTNUM;  ///<Maximum number of inout configurations.
 
   //-Basic simulation parameters.
@@ -149,7 +147,7 @@ private:
   float*   PtAuxDistg;
 #endif
 
-  void LoadXmlInit(const JXml* sxml,const std::string& place);
+  void LoadXmlInit(const JXml* cxml,const std::string& place);
   void LoadFileXml(const std::string& file,const std::string& path
     ,JNumexLib* nuxlib,const JDsPartsInit* partsdata,JGaugeSystem* gaugesystem);
   void LoadXml(const JXml* sxml,const std::string& place
@@ -175,6 +173,8 @@ private:
 #endif
 
 public:
+  static const std::string XmlPath; ///<Path for InOut in XML file.
+  const std::string XmlFile;
   const bool Cpu;
   const StCteSph CSP;     ///<Structure with main SPH constants values and configurations.
   unsigned Nstep;         ///<Number of step in execution.
@@ -182,8 +182,7 @@ public:
 
   std::vector<unsigned> MkFluidList;
     
-  JSphInOut(bool cpu,const StCteSph& csp,std::string xmlfile,JXml* sxml
-    ,std::string xmlpath,const std::string& dirdatafile);
+  JSphInOut(bool cpu,const StCteSph& csp,const JXml* cxml,std::string dirdatafile);
   ~JSphInOut();
   void Reset();
 

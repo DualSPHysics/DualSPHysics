@@ -228,11 +228,11 @@ TpInZsurfMode JSphInOutZsurf::ReadXml(const JXml* sxml,TiXmlElement* ele
       if(ZsurfMin<ZonePosMin.z)ZsurfMin=ZonePosMin.z;
       UniformZsurf=ConfigGaugeZsurf(gaugesystem);
       if(GaugeSwl){
-        gaugesystem->CalculeLastInput(GaugeSwl->Name);
+        gaugesystem->CalculeLastInput(0,GaugeSwl->Name);
         UpdateZsurf(-1);
       }
       else if(GaugeMesh){//<vs_meeshdat_ini>
-        gaugesystem->CalculeLastInput(GaugeMesh->Name);
+        gaugesystem->CalculeLastInput(0,GaugeMesh->Name);
         UpdateZsurf(-1);
       }//<vs_meeshdat_end>
       else Run_Exceptioon(fun::PrintStr("Inlet/outlet %d: Initial Zsurf is invalid.",IdZone));
@@ -500,7 +500,8 @@ bool JSphInOutZsurf::ConfigGaugeZsurf(JGaugeSystem* gaugesystem){
   ComputeZsurfLine(true,OldCode);
   const string gname=fun::PrintStr("Inlet_i%d_zsurf",IdZone);
   if(OldCode){
-    GaugeSwl=gaugesystem->AddGaugeSwl(gname,0,DBL_MAX,0,GaugePt0,GaugePtz,Dptz,0);
+    GaugeSwl=gaugesystem->AddGaugeSwl(gname,0,DBL_MAX,0
+      ,true,GaugePt0,GaugePtz,Dptz,0);
   }
   else{ //<vs_meeshdat_ini>
     jmsh::StMeshBasic m;
@@ -515,15 +516,20 @@ bool JSphInOutZsurf::ConfigGaugeZsurf(JGaugeSystem* gaugesystem){
       m.dispt1=Dptx;
     }
     unsigned tfmt=(jmsh::TpFmtBin|jmsh::TpFmtCsv);
-    GaugeMesh=gaugesystem->AddGaugeMesh(fun::PrintStr("Inlet_i%d_zsurf",IdZone),0,DBL_MAX,0,m,"Zsurf",tfmt,0,0.5,0,0);
+    GaugeMesh=gaugesystem->AddGaugeMesh(fun::PrintStr("Inlet_i%d_zsurf",IdZone),0,DBL_MAX,0
+      ,true,m,"Zsurf",tfmt,0,0.5,0,0);
     if(Nptx!=GaugeMesh->GetMesh().npt1)Run_Exceptioon("Number of gauge points in horizontal direction does not match.");
     gaugesystem->SaveVtkInitPoints();
     //-Set CurrentZsurf and CurrentZsurfg with GaugeMesh pointers.
     CurrentExternal=true;
     CurrentZsurf =(float*)GaugeMesh->GetPtrDataZsurf();
-   #ifdef _WITHGPU
-    CurrentZsurfg=(float*)GaugeMesh->GetPtrDataZsurfg();
-   #endif
+    #ifdef _WITHGPU
+      if(gaugesystem->GpuCount==1){
+        GaugeMesh->AllocGpuMemory(0);
+        CurrentZsurfg=(float*)GaugeMesh->GetPtrDataZsurfg(0);
+      }
+      if(!gaugesystem->Cpu && !CurrentZsurfg)Run_Exceptioon("Error: GPU pointer is NULL.");
+    #endif
   } //<vs_meeshdat_end>
   gaugesystem->SaveVtkInitPoints();
   UniformZsurf=(Nptx==1);

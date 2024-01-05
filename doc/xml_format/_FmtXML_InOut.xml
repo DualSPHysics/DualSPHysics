@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<!-- *** DualSPHysics v5.3.293 (17-10-2023) *** -->
+<!-- *** DualSPHysics v5.3.300 (14-11-2023) *** -->
 <!-- *** class: JSphInOut *** -->
 <!------------------------------------------------------------------------------->
 <!------------------------------------------------------------------------------->
@@ -206,6 +206,18 @@
 						<point1 x="1.4" y="0" z="0.7" />
 						<point2 x="1.4" y="1" z="0.7" />
 					</rotateaxis>
+				</box>
+			</zone3d>
+		</inoutzone>
+		<inoutzone>
+			<zone3d comment="Input zone for 3-D simulations">
+				<box>
+					<point x="1.2" y="2.8" z="0.5" />
+					<size x="0.4" y="0" z="0.4" />
+					<direction x="0" y="-1" z="0" />
+					<rotateadv angle1="45" angle2="30" angle3="-10" axes="ZYZ" intrinsic="true" anglesunits="degrees">
+						<center x="0.1" y="0.2" z="0" comment="It is optional (default=0,0,0)" />
+					</rotateadv>
 				</box>
 			</zone3d>
 		</inoutzone>

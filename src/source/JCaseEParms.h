@@ -106,8 +106,8 @@ public:
   void SetComment(const std::string& key,const std::string& comment);
   bool Exists(const std::string& key){ return(GetItemPointer(key)!=NULL); }
 
-  void SetPosmin(std::string x,std::string y,std::string z);
-  void SetPosmax(std::string x,std::string y,std::string z);
+  void SetPosmin(std::string x,std::string y,std::string z,std::string filerow);
+  void SetPosmax(std::string x,std::string y,std::string z,std::string filerow);
   JCaseEParmsPos GetPosminValue(char key)const;
   JCaseEParmsPos GetPosmaxValue(char key)const;
   bool IsPosDefault()const{ 

@@ -5,6 +5,7 @@ src/VS/*
 !src/VS/*.vcxproj.user
 !src/VS/*.vcxproj.filters
 !src/VS/*.sln
+src__*
 
 ## Ignores output of examples 
 examples/*/*/*_out
@@ -19,3 +20,5 @@ bin/windows/*.iobj
 bin/windows/*.ipdb
 bin/windows/*.lib
 bin/windows/*.exp
+bin/windows/DualSPHysics*.exe
+bin/linux/DualSPHysics*_linux64

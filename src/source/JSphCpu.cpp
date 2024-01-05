@@ -49,7 +49,7 @@ using namespace std;
 //==============================================================================
 /// Constructor.
 //==============================================================================
-JSphCpu::JSphCpu(bool withmpi):JSph(true,false,withmpi){
+JSphCpu::JSphCpu(bool withmpi):JSph(0,withmpi){
   ClassName="JSphCpu";
   CellDiv=NULL;
   Arrays_Cpu=NULL;
