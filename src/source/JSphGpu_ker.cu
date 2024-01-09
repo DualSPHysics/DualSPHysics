@@ -999,7 +999,6 @@ template<TpKernel tker,bool sim2d,TpSlipMode tslip>
       float3 velrhofinal=make_float3(0,0,0);
       float sumwab=0.0f;
       float submerged = 0.0f; //SHABA
-      float minrho=1000.0f;
 
 
       //-Calculates ghost node position.
@@ -1037,7 +1036,6 @@ template<TpKernel tker,bool sim2d,TpSlipMode tslip>
             const float4 velrhop2=velrho[p2];
             float massp2=CTE.massf;
             const float volp2=massp2/velrhop2.w;
-            minrho=fminf(minrho,velrhop2.w);
 
 
             //===== Check if ghost node is submerged ===== SHABA
@@ -1065,15 +1063,15 @@ template<TpKernel tker,bool sim2d,TpSlipMode tslip>
 
             //===== Matrix A for correction =====
             if(sim2d){
-              a_corr2.a11+=vwab;  a_corr2.a12+=drx*vwab;  a_corr2.a13+=drz*vwab;
-              a_corr2.a21+=vfrx;  a_corr2.a22+=drx*vfrx;  a_corr2.a23+=drz*vfrx;
-              a_corr2.a31+=vfrz;  a_corr2.a32+=drx*vfrz;  a_corr2.a33+=drz*vfrz;
+              a_corr2.a11+=vwab;  a_corr2.a12-=drx*vwab;  a_corr2.a13-=drz*vwab;
+              a_corr2.a21+=vfrx;  a_corr2.a22-=drx*vfrx;  a_corr2.a23-=drz*vfrx;
+              a_corr2.a31+=vfrz;  a_corr2.a32-=drx*vfrz;  a_corr2.a33-=drz*vfrz;
             }
             else{
-              a_corr3.a11+=vwab;  a_corr3.a12+=drx*vwab;  a_corr3.a13+=dry*vwab;  a_corr3.a14+=drz*vwab;
-              a_corr3.a21+=vfrx;  a_corr3.a22+=drx*vfrx;  a_corr3.a23+=dry*vfrx;  a_corr3.a24+=drz*vfrx;
-              a_corr3.a31+=vfry;  a_corr3.a32+=drx*vfry;  a_corr3.a33+=dry*vfry;  a_corr3.a34+=drz*vfry;
-              a_corr3.a41+=vfrz;  a_corr3.a42+=drx*vfrz;  a_corr3.a43+=dry*vfrz;  a_corr3.a44+=drz*vfrz;
+              a_corr3.a11+=vwab;  a_corr3.a12-=drx*vwab;  a_corr3.a13-=dry*vwab;  a_corr3.a14-=drz*vwab;
+              a_corr3.a21+=vfrx;  a_corr3.a22-=drx*vfrx;  a_corr3.a23-=dry*vfrx;  a_corr3.a24-=drz*vfrx;
+              a_corr3.a31+=vfry;  a_corr3.a32-=drx*vfry;  a_corr3.a33-=dry*vfry;  a_corr3.a34-=drz*vfry;
+              a_corr3.a41+=vfrz;  a_corr3.a42-=drx*vfrz;  a_corr3.a43-=dry*vfrz;  a_corr3.a44-=drz*vfrz;
             }
           }
         }
@@ -1409,15 +1407,15 @@ template<TpKernel tker,bool sim2d,TpSlipMode tslip>
 
             //===== Matrix A for correction =====
             if(sim2d){
-              a_corr2.a11+=vwab;  a_corr2.a12+=drx*vwab;  a_corr2.a13+=drz*vwab;
-              a_corr2.a21+=vfrx;  a_corr2.a22+=drx*vfrx;  a_corr2.a23+=drz*vfrx;
-              a_corr2.a31+=vfrz;  a_corr2.a32+=drx*vfrz;  a_corr2.a33+=drz*vfrz;
+              a_corr2.a11+=vwab;  a_corr2.a12-=drx*vwab;  a_corr2.a13-=drz*vwab;
+              a_corr2.a21+=vfrx;  a_corr2.a22-=drx*vfrx;  a_corr2.a23-=drz*vfrx;
+              a_corr2.a31+=vfrz;  a_corr2.a32-=drx*vfrz;  a_corr2.a33-=drz*vfrz;
             }
             else{
-              a_corr3.a11+=vwab;  a_corr3.a12+=drx*vwab;  a_corr3.a13+=dry*vwab;  a_corr3.a14+=drz*vwab;
-              a_corr3.a21+=vfrx;  a_corr3.a22+=drx*vfrx;  a_corr3.a23+=dry*vfrx;  a_corr3.a24+=drz*vfrx;
-              a_corr3.a31+=vfry;  a_corr3.a32+=drx*vfry;  a_corr3.a33+=dry*vfry;  a_corr3.a34+=drz*vfry;
-              a_corr3.a41+=vfrz;  a_corr3.a42+=drx*vfrz;  a_corr3.a43+=dry*vfrz;  a_corr3.a44+=drz*vfrz;
+              a_corr3.a11+=vwab;  a_corr3.a12-=drx*vwab;  a_corr3.a13-=dry*vwab;  a_corr3.a14-=drz*vwab;
+              a_corr3.a21+=vfrx;  a_corr3.a22-=drx*vfrx;  a_corr3.a23-=dry*vfrx;  a_corr3.a24-=drz*vfrx;
+              a_corr3.a31+=vfry;  a_corr3.a32-=drx*vfry;  a_corr3.a33-=dry*vfry;  a_corr3.a34-=drz*vfry;
+              a_corr3.a41+=vfrz;  a_corr3.a42-=drx*vfrz;  a_corr3.a43-=dry*vfrz;  a_corr3.a44-=drz*vfrz;
             }
           }
         }
@@ -2325,7 +2323,7 @@ void MoveMatBound(byte periactive,bool simulate2d,unsigned np,unsigned ini
 /// Copia velocidad de movimiento a MotionAce[].
 //------------------------------------------------------------------------------
 template<bool periactive> __global__ void KerCopyMotionAce(unsigned n
-    , const unsigned* ridpmv, const float4* velrhop, float3* motionvel, float3* motionace, double stepdt)
+    , const unsigned* ridpmv, const float4* velrho, float3* motionvel, float3* motionace, double stepdt)
 {
     unsigned p = blockIdx.x * blockDim.x + threadIdx.x; //-Number of particle.
     float dt = float(stepdt);
@@ -2333,7 +2331,7 @@ template<bool periactive> __global__ void KerCopyMotionAce(unsigned n
         int pid = ridpmv[p];
         if (pid >= 0) {
             //-Computes velocity.
-            const float4 v = velrhop[pid];
+            const float4 v = velrho[pid];
             motionace[pid] = make_float3(float((v.x - motionvel[pid].x) / dt), float((v.y - motionvel[pid].y) / dt), float((v.z - motionvel[pid].z) / dt));
         }
     }
@@ -2343,10 +2341,10 @@ template<bool periactive> __global__ void KerCopyMotionAce(unsigned n
 /// Give boundary acceleration to MotionAce[].
 /// SHABA
 //==============================================================================
-void CopyMotionAce(unsigned nmoving, const unsigned* ridp, const float4* velrhop, float3* motionvel, float3* motionace, double stepdt)
+void CopyMotionAce(unsigned nmoving, const unsigned* ridp, const float4* velrho, float3* motionvel, float3* motionace, double stepdt)
 {
     dim3 sgrid = GetSimpleGridSize(nmoving, SPHBSIZE);
-    KerCopyMotionAce<true> << <sgrid, SPHBSIZE >> > (nmoving, ridp, velrhop, motionvel,motionace,stepdt);
+    KerCopyMotionAce<true> << <sgrid, SPHBSIZE >> > (nmoving, ridp, velrho, motionvel,motionace,stepdt);
 }
 
 //------------------------------------------------------------------------------

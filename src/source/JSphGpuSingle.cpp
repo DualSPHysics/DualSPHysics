@@ -172,9 +172,20 @@ void JSphGpuSingle::ConfigDomain(){
   //-Loads Code of the particles.
   LoadCodeParticles(Np,Idp_c->cptr(),Code_c->ptr());
 
+
+  // JOSE HELP ME HERE, HOW DO I CREATE A NEW ARRAY?? SHABASTUCK
   //-Load normals for boundary particles (fixed and moving).
   acfloat3 boundnorc("boundnor",Arrays_Cpu,UseNormals);
-  if(UseNormals)LoadBoundNormals(Np,Idp_c->cptr(),Code_c->cptr(),boundnorc.ptr());
+  acfloat boundonoffc("boundonoff", Arrays_Cpu, UseNormals); //SHABA JAN
+  tfloat3 motionvelc("movionvel", Arrays_Cpu, UseNormals); // SHABA JAN
+  tfloat3 motionacec("motionace", Arrays_Cpu, UseNormals); // SHABA JAN
+  if (UseNormals) {
+      LoadBoundNormals(Np, Idp_c->cptr(), Code_c->cptr(), boundnorc.ptr(), boundonoffc.prt());
+      for (unsigned p = 0; p < Npb; p++) {
+          motionvelc[p] = TFloat3(0, 0, 0);
+          motionacec[p] = TFloat3(0, 0, 0);
+      }
+  }
 
   //-Creates PartsInit object with initial particle data for automatic configurations.
   CreatePartsInit(Np,AuxPos_c->cptr(),Code_c->cptr());
@@ -201,7 +212,7 @@ void JSphGpuSingle::ConfigDomain(){
 
   //-Uploads particle data on the GPU.
   Pos3ToPos21(Np,AuxPos_c->cptr(),Posxy_c->ptr(),Posz_c->ptr());
-  ParticlesDataUp(Np,boundnorc.cptr());
+  ParticlesDataUp(Np,boundnorc.cptr(), motionvelc.ptr(),motionacec.ptr(),boundonoffc.ptr()); // SHABA JAN
   boundnorc.Free();
 
   //-Uploads constants on the GPU.

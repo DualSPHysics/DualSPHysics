@@ -195,7 +195,7 @@ protected:
   void PrintAllocMemory(llong mcpu,llong mgpu)const;
 
   void ConstantDataUp();
-  void ParticlesDataUp(unsigned n,const tfloat3* boundnor);
+  void ParticlesDataUp(unsigned n,const tfloat3* boundnor, tfloat3* motionvel, tfloat3* motionace, float* boundonoff); // SHABA JAN
   unsigned ParticlesDataDown(unsigned n,unsigned pini,bool code
     ,bool onlynormal,const byte* filterg,unsigned& npfilterdel);
   

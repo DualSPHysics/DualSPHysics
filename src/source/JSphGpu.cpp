@@ -374,7 +374,7 @@ void JSphGpu::AllocGpuMemoryParticles(unsigned np){
   // if(UseNormals){
     BoundNor_g=new agfloat3("BoundNorg",Arrays_Gpu,true);
     MotionAce_g=new agfloat3("MotionAceg",Arrays_Gpu,true); //MotionAce SHABA
-    BoundOnOff_g=new agfloat("BoundOnOff",Arrays_Gpu,false); //BoundOnOff SHABA
+    BoundOnOff_g=new agfloat("BoundOnOff",Arrays_Gpu,true); //BoundOnOff SHABA
     // if(SlipMode!=SLIP_Vel0){
       MotionVel_g=new agfloat3("MotionVelg"  ,Arrays_Gpu,true);
     // }
@@ -514,18 +514,21 @@ void JSphGpu::ConstantDataUp(){
 
 //==============================================================================
 /// Uploads particle data to the GPU.
-/// Sube datos de particulas a la GPU.
+/// Sube datos de particulas a la GPU. // SHABA JAN
 //==============================================================================
-void JSphGpu::ParticlesDataUp(unsigned n,const tfloat3* boundnor){
+void JSphGpu::ParticlesDataUp(unsigned n,const tfloat3* boundnor, tfloat3* motionvel, tfloat3* motionace, float* boundonoff){
   Idp_g   ->CuCopyFromHost(Idp_c,n);
   Code_g  ->CuCopyFromHost(Code_c,n);
   Dcell_g ->CuCopyFromHost(Dcell_c,n);
   Posxy_g ->CuCopyFromHost(Posxy_c,n);
   Posz_g  ->CuCopyFromHost(Posz_c,n);
   Velrho_g->CuCopyFromHost(Velrho_c,n);
-  if(UseNormals){
+  //if(UseNormals){
     BoundNor_g->CuCopyFromHost2(boundnor,n);
-  }
+    BoundOnOff_g->CuCopyFromHost2(boundonoff, n);
+    MotionAce_g->CuCopyFromHost2(motionace, n);
+    MotionVel_g->CuCopyFromHost2(motionvel, n);
+  //}
   Check_CudaErroor("Failed copying data to GPU.");
 }
 

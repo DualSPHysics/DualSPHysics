@@ -1342,7 +1342,7 @@ void JSph::LoadCodeParticles(unsigned np,const unsigned* idp,typecode* code)cons
 /// Load normals for boundary particles (fixed and moving).
 //==============================================================================
 void JSph::LoadBoundNormals(unsigned np,const unsigned* idp,const typecode* code
-  ,tfloat3* boundnor)
+  ,tfloat3* boundnor, float* boundonoff)
 {
   memset(boundnor,0,sizeof(tfloat3)*np);
   if(!PartBegin){
@@ -1359,7 +1359,10 @@ void JSph::LoadBoundNormals(unsigned np,const unsigned* idp,const typecode* code
       if(pnorsize){
         Log->Printf("NormalDataFile=\"%s\"",filenormals.c_str());
         if(pnorsize!=CaseNbound)Run_ExceptioonFile("The number of final normals does not match boundary particles.",filenormals);
-        for(unsigned p=0;p<pnorsize;p++)boundnor[p]=ToTFloat3(pnor[p]);
+        for (unsigned p = 0; p < pnorsize; p++) {
+            boundnor[p] = ToTFloat3(pnor[p]);
+            boundonoff[p] = 1.f; // SHABA Setting all boundary particles to be on
+        }
       }
     }
     else{
