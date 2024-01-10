@@ -47,6 +47,9 @@ typedef struct{
   tfloat4*   shiftposfs;
   tsymatrix3f* spstaurho2;
   tsymatrix3f* sps2strain;
+  tfloat3* boundnormal; // SHABA 
+  tfloat3* motionvel; // SHABA
+  float* boundonoff; // SHABA
 }stinterparmsc;
 
 ///Collects parameters for particle interaction on CPU.
@@ -58,6 +61,7 @@ inline stinterparmsc StInterparmsc(unsigned np,unsigned npb,unsigned npbok
   ,float* ar,tfloat3* ace,float* delta
   ,TpShifting shiftmode,tfloat4* shiftposfs
   ,tsymatrix3f* spstaurho2,tsymatrix3f* sps2strain
+  ,tfloat3* boundnormal, tfloat3* motionvel, float* boundonoff // SHABA
 )
 {
   stinterparmsc d={np,npb,npbok,(np-npb)
@@ -68,6 +72,7 @@ inline stinterparmsc StInterparmsc(unsigned np,unsigned npb,unsigned npbok
     ,ar,ace,delta
     ,shiftmode,shiftposfs
     ,spstaurho2,sps2strain
+    ,boundnormal, motionvel, boundonoff // SHABA
   };
   return(d);
 }
@@ -127,7 +132,9 @@ protected:
 
   //-Variables for mDBC (Opt).
   acfloat3*   BoundNor_c;   ///<Normal (x,y,z) pointing from boundary particles to ghost nodes (Opt).
-  acfloat3*   MotionVel_c;  ///<Velocity of a moving boundary particle (Opt).
+  acfloat3*   MotionVel_c;  ///<Velocity of a moving boundary particle (Opt).]
+  acfloat3* MotionAce_c; /// acceleration of moving boundary SHABA JAN
+  acfloat* BoundOnOff_c; /// boundary particles on/off SHABA JAN
     
   //-Variables for compute step VERLET (Opt).
   acfloat4*   VelrhoM1_c;   ///<Verlet: in order to keep previous values (Opt).
@@ -195,7 +202,8 @@ protected:
     ,const tdouble3* pos,const tfloat4* velrho,const typecode* code,const unsigned* idp
     ,const float* press,const tfloat3* dengradcorr
     ,float& viscdt,float* ar,tfloat3* ace,float* delta
-    ,TpShifting shiftmode,tfloat4* shiftposfs)const;
+    ,TpShifting shiftmode,tfloat4* shiftposfs
+    , tfloat3* boundnormal, float* boundonoff, tfloat3* motionvel)const; // SHABA
 
   void InteractionForcesDEM(unsigned nfloat,StDivDataCpu divdata,const unsigned* dcell
     ,const unsigned* ftridp,const StDemData* demobjs
@@ -213,13 +221,13 @@ protected:
   template<TpKernel tker,bool sim2d,TpSlipMode tslip> void InteractionMdbcCorrectionT2
     (unsigned n,StDivDataCpu divdata,float determlimit,float mdbcthreshold
     ,const tdouble3* pos,const typecode* code,const unsigned* idp
-    ,const tfloat3* boundnor,const tfloat3* motionvel,tfloat4* velrho);
+    ,const tfloat3* boundnor,const tfloat3* motionvel, const tfloat3* motionace,tfloat4* velrho, float* boundonoff); // SHABA 
   template<TpKernel tker> void Interaction_MdbcCorrectionT(TpSlipMode slipmode,const StDivDataCpu& divdata
     ,const tdouble3* pos,const typecode* code,const unsigned* idp
-    ,const tfloat3* boundnor,const tfloat3* motionvel,tfloat4* velrho);
+    ,const tfloat3* boundnor,const tfloat3* motionvel, const tfloat3* motionace,tfloat4* velrho, float* boundonoff); // SHABA 
   void Interaction_MdbcCorrection(TpSlipMode slipmode,const StDivDataCpu& divdata
     ,const tdouble3* pos,const typecode* code,const unsigned* idp
-    ,const tfloat3* boundnor,const tfloat3* motionvel,tfloat4* velrho);
+    ,const tfloat3* boundnor,const tfloat3* motionvel, const tfloat3* motionace,tfloat4* velrho, float* boundonoff); // SHABA 
 
   void ComputeSpsTau(unsigned n,unsigned pini,const tfloat4* velrho
     ,const tsymatrix3f* sps2strain,tsymatrix3f* tau_rho2)const;
@@ -246,6 +254,7 @@ protected:
   void MoveMatBound(unsigned np,unsigned ini,tmatrix4d m,double dt,const unsigned* ridpmot
     ,tdouble3* pos,unsigned* dcell,tfloat4* velrho,typecode* code,tfloat3* boundnor)const;
   void CopyMotionVel(unsigned nmoving,const unsigned* ridpmot,const tfloat4* velrho,tfloat3* motionvel)const;
+  void CopyMotionAce(unsigned nmoving, const unsigned* ridpmot, const tfloat4* velrho, tfloat3* motionvel, tfloat3* motionace, double dt)const; // SHABA 
   void CalcMotion(double stepdt);
   void RunMotion(double stepdt);
   void RunRelaxZone(double dt);

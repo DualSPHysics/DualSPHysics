@@ -137,8 +137,36 @@ void JSphCpuSingle::ConfigDomain(){
   //-Load particle code. | Carga code de particulas.
   LoadCodeParticles(Np,Idp_c->cptr(),Code_c->ptr());
 
-  //-Load normals for boundary particles (fixed and moving).
-  if(UseNormals)LoadBoundNormals(Np,Idp_c->cptr(),Code_c->cptr(),BoundNor_c->ptr());
+
+  // JOSE HELP ME HERE, HOW DO I CREATE A NEW ARRAY?? SHABASTUCK
+   //-Load normals for boundary particles (fixed and moving).
+   //acfloat3 boundnorc("boundnor",Arrays_Cpu,UseNormals);
+   //acfloat boundonoffc("boundonoff", Arrays_Cpu, UseNormals); //SHABA JAN
+   //tfloat3 motionvelc("movionvel", Arrays_Cpu, UseNormals); // SHABA JAN
+   //tfloat3 motionacec("motionace", Arrays_Cpu, UseNormals); // SHABA JAN
+  tfloat3* boundnormal = NULL;
+  tfloat3* motionvel = NULL;
+  tfloat3* motionace = NULL;
+  float* boundonoff = NULL;
+  boundnormal = new tfloat3[Np];
+  motionvel = new tfloat3[Np];
+  motionace = new tfloat3[Np];
+  boundonoff = new float[Np];
+  if (UseNormals) {
+      LoadBoundNormals(Np, Idp_c->cptr(), Code_c->cptr(), boundnormal, boundonoff);
+      for (unsigned p = 0; p < Npb; p++) {
+          motionvel[p] = TFloat3(0, 0, 0);
+          motionace[p] = TFloat3(0, 0, 0);
+      }
+  }
+  else {// SHABA Setting all boundary particles to be on for DBC
+      for (unsigned p = 0; p < Npb; p++) {
+          boundnormal[p] = TFloat3(0, 0, 0);
+          boundonoff[p] = 1.f;
+          motionvel[p] = TFloat3(0, 0, 0);
+          motionace[p] = TFloat3(0, 0, 0);
+      }
+  }
 
   //-Creates PartsInit object with initial particle data for automatic configurations.
   CreatePartsInit(Np,Pos_c->cptr(),Code_c->cptr());
@@ -347,7 +375,7 @@ void JSphCpuSingle::PeriodicDuplicateSymplectic(unsigned np,unsigned pini
 //==============================================================================
 void JSphCpuSingle::PeriodicDuplicateNormals(unsigned np,unsigned pini
   ,tuint3 cellmax,tdouble3 perinc,const unsigned* listp,tfloat3* normals
-  ,tfloat3* motionvel)const
+  ,tfloat3* motionvel, float* boundonoff, tfloat3* motionace)const // SHABA
 {
   const int n=int(np);
   #ifdef OMP_USE
@@ -359,6 +387,8 @@ void JSphCpuSingle::PeriodicDuplicateNormals(unsigned np,unsigned pini
     const unsigned pcopy=(rp&0x7FFFFFFF);
     normals[pnew]=normals[pcopy];
     if(motionvel)motionvel[pnew]=motionvel[pcopy];
+    if (motionace) motionace[pnew] = motionace[pcopy]; // SHABA
+    if (boundonoff) boundonoff[pnew] = boundonoff[pcopy]; // SHABA
   }
 }
 
@@ -455,10 +485,10 @@ void JSphCpuSingle::RunPeriodic(){
                 ,Idp_c->ptr(),Code_c->ptr(),Dcell_c->ptr(),Pos_c->ptr(),Velrho_c->ptr()
                 ,AC_PTR(SpsTauRho2_c),PosPre_c->ptr(),VelrhoPre_c->ptr());
             }
-            if(UseNormals){
+            //if(UseNormals){ // SHABA
               PeriodicDuplicateNormals(count,Np,DomCells,perinc,listp.cptr()
-                ,BoundNor_c->ptr(),AC_PTR(MotionVel_c));
-            }
+                ,BoundNor_c->ptr(),AC_PTR(MotionVel_c), AC_PTR(BoundOnOff_c),AC_PTR(MotionAce_c));
+            //}
             //-Update the total number of particles.
             Np+=count;
             //-Update number of new periodic particles.
@@ -507,9 +537,12 @@ void JSphCpuSingle::RunCellDivide(bool updateperiodic){
   if(TVisco==VISCO_LaminarSPS){
     CellDivSingle->SortArray(SpsTauRho2_c->ptr());
   }
-  if(UseNormals){
+  if(UseNormals){ // SHABA
     CellDivSingle->SortArray(BoundNor_c->ptr());
-    if(MotionVel_c)CellDivSingle->SortArray(MotionVel_c->ptr());
+    //if(MotionVel_c)
+        CellDivSingle->SortArray(MotionVel_c->ptr());
+        CellDivSingle->SortArray(MotionAce_c->ptr()); // SHABA
+        CellDivSingle->SortArray(BoundOnOff_c->ptr()); // SHABA
   }
 
   //-Collect divide data. | Recupera datos del divide.
@@ -601,6 +634,7 @@ void JSphCpuSingle::Interaction_Forces(TpInterStep interstep){
     ,Ar_c->ptr(),Ace_c->ptr(),AC_PTR(Delta_c)
     ,ShiftingMode,AC_PTR(ShiftPosfs_c)
     ,AC_PTR(SpsTauRho2_c),AC_PTR(Sps2Strain_c)
+    , AC_PTR(BoundNor_c), AC_PTR(MotionVel_c), AC_PTR(BoundOnOff_c) // SHABA
   );
   StInterResultc res;
   res.viscdt=0;
@@ -642,7 +676,7 @@ void JSphCpuSingle::Interaction_Forces(TpInterStep interstep){
 void JSphCpuSingle::MdbcBoundCorrection(){
   Timersc->TmStart(TMC_CfPreForces);
   Interaction_MdbcCorrection(SlipMode,DivData,Pos_c->cptr(),Code_c->cptr()
-    ,Idp_c->cptr(),BoundNor_c->cptr(),AC_CPTR(MotionVel_c),Velrho_c->ptr());
+    ,Idp_c->cptr(),BoundNor_c->cptr(),AC_CPTR(MotionVel_c), AC_CPTR(MotionAce_c), Velrho_c->ptr(), BoundOnOff_c->ptr()); // SHABA
   Timersc->TmStop(TMC_CfPreForces);
 }
 

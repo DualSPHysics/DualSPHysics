@@ -51,8 +51,8 @@ protected:
     ,const unsigned* listp,unsigned* idp,typecode* code,unsigned* dcell,tdouble3* pos
     ,tfloat4* velrho,tsymatrix3f* spstau,tdouble3* pospre,tfloat4* velrhopre)const;
   void PeriodicDuplicateNormals(unsigned np,unsigned pini,tuint3 cellmax
-    ,tdouble3 perinc,const unsigned* listp,tfloat3* motionvel,tfloat3* normals)const;
-
+    ,tdouble3 perinc,const unsigned* listp,tfloat3* motionvel,tfloat3* normals, float* boundonoff, tfloat3* motionace)const;
+  // SHABA
   void PeriodicIgnore(unsigned np,typecode* code)const;
   void RunPeriodic();
 

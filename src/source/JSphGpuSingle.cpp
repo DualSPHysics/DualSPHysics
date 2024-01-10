@@ -175,15 +175,31 @@ void JSphGpuSingle::ConfigDomain(){
 
   // JOSE HELP ME HERE, HOW DO I CREATE A NEW ARRAY?? SHABASTUCK
   //-Load normals for boundary particles (fixed and moving).
-  acfloat3 boundnorc("boundnor",Arrays_Cpu,UseNormals);
-  acfloat boundonoffc("boundonoff", Arrays_Cpu, UseNormals); //SHABA JAN
-  tfloat3 motionvelc("movionvel", Arrays_Cpu, UseNormals); // SHABA JAN
-  tfloat3 motionacec("motionace", Arrays_Cpu, UseNormals); // SHABA JAN
+  //acfloat3 boundnorc("boundnor",Arrays_Cpu,UseNormals);
+  //acfloat boundonoffc("boundonoff", Arrays_Cpu, UseNormals); //SHABA JAN
+  //tfloat3 motionvelc("movionvel", Arrays_Cpu, UseNormals); // SHABA JAN
+  //tfloat3 motionacec("motionace", Arrays_Cpu, UseNormals); // SHABA JAN
+  tfloat3* boundnormal = NULL;
+  tfloat3* motionvel = NULL;
+  tfloat3* motionace = NULL;
+  float* boundonoff = NULL;
+  boundnormal = new tfloat3[Np];
+  motionvel = new tfloat3[Np];
+  motionace = new tfloat3[Np];
+  boundonoff = new float[Np];
   if (UseNormals) {
-      LoadBoundNormals(Np, Idp_c->cptr(), Code_c->cptr(), boundnorc.ptr(), boundonoffc.prt());
+      LoadBoundNormals(Np, Idp_c->cptr(), Code_c->cptr(), boundnormal, boundonoff);
       for (unsigned p = 0; p < Npb; p++) {
-          motionvelc[p] = TFloat3(0, 0, 0);
-          motionacec[p] = TFloat3(0, 0, 0);
+          motionvel[p] = TFloat3(0, 0, 0);
+          motionace[p] = TFloat3(0, 0, 0);
+      }
+  }
+  else {// SHABA Setting all boundary particles to be on for DBC
+      for (unsigned p = 0; p < Npb; p++) {
+          boundnormal[p] = TFloat3(0, 0, 0);
+          boundonoff[p] = 1.f;
+          motionvel[p] = TFloat3(0, 0, 0);
+          motionace[p] = TFloat3(0, 0, 0);
       }
   }
 
@@ -192,8 +208,8 @@ void JSphGpuSingle::ConfigDomain(){
 
   //-Runs initialization operations from XML.
   RunInitialize(Np,Npb,AuxPos_c->cptr(),Idp_c->cptr(),Code_c->cptr()
-    ,Velrho_c->ptr(),boundnorc.ptr());
-  if(UseNormals)ConfigBoundNormals(Np,Npb,AuxPos_c->cptr(),Idp_c->cptr(),boundnorc.ptr());
+    ,Velrho_c->ptr(),boundnormal);
+  if(UseNormals)ConfigBoundNormals(Np,Npb,AuxPos_c->cptr(),Idp_c->cptr(),boundnormal);
 
   //-Computes MK domain for boundary and fluid particles.
   MkInfo->ComputeMkDomains(Np,AuxPos_c->cptr(),Code_c->cptr());
@@ -212,9 +228,12 @@ void JSphGpuSingle::ConfigDomain(){
 
   //-Uploads particle data on the GPU.
   Pos3ToPos21(Np,AuxPos_c->cptr(),Posxy_c->ptr(),Posz_c->ptr());
-  ParticlesDataUp(Np,boundnorc.cptr(), motionvelc.ptr(),motionacec.ptr(),boundonoffc.ptr()); // SHABA JAN
-  boundnorc.Free();
-
+  ParticlesDataUp(Np,boundnormal, motionvel,motionace,boundonoff); // SHABA JAN
+  //boundnorc.Free();
+  delete[] boundnormal; boundnormal = NULL;
+  delete[] motionvel; motionvel = NULL;
+  delete[] motionace; motionace = NULL;
+  delete[] boundonoff; boundonoff = NULL;
   //-Uploads constants on the GPU.
   ConstantDataUp();
 

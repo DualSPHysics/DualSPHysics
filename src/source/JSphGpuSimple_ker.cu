@@ -141,7 +141,7 @@ template<bool floating,bool shift,bool inout> __global__ void KerComputeStepVerl
     if(p<npb){ //-Particles: Fixed & Moving.
       float rrho=float(double(velrho2[p].w)+dt2*ar[p]);
       rrho=(rrho<rhopzero? rhopzero: rrho); //-To prevent absorption of fluid particles by boundaries. | Evita q las boundary absorvan a las fluidas.
-      velrhonew[p]=velrho2[p];
+      velrhonew[p]=velrho2[p]; // SHABANOTE needs and mDBC update
     }
     else{ //-Particles: Floating & Fluid.
       const typecode rcode=code[p];
@@ -251,7 +251,7 @@ template<bool floating,bool shift,bool inout> __global__ void KerComputeStepSymp
   if(p<n){
     if(p<npb){ //-Particles: Fixed & Moving.
       float4 rvelrho=velrhopre[p];
-      // rvelrho.w=float(double(rvelrho.w)+dtm*ar[p]);
+      // rvelrho.w=float(double(rvelrho.w)+dtm*ar[p]); // SHABANOTE needs a mDBC update
       // rvelrho.w=(rvelrho.w<rhopzero? rhopzero: rvelrho.w); //-To prevent absorption of fluid particles by boundaries. | Evita que las boundary absorvan a las fluidas.
       velrho[p]=rvelrho;
     }
@@ -357,7 +357,7 @@ template<bool floating,bool shift,bool inout> __global__ void KerComputeStepSymp
       double epsilon_rdot=(-double(ar[p])/double(velrho[p].w))*dt;
       float rrho=float(double(velrhopre[p].w) * (2.-epsilon_rdot)/(2.+epsilon_rdot));
       // rrho=(rrho<rhopzero? rhopzero: rrho); //-To prevent absorption of fluid particles by boundaries. | Evita q las boundary absorvan a las fluidas.
-      velrho[p]=velrhopre[p];
+      velrho[p]=velrhopre[p]; // SHABANOTE needs an mDBC update
     }
     else{ //-Particles: Floating & Fluid.
       const typecode rcode=code[p];
