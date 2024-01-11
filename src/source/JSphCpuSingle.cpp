@@ -155,16 +155,16 @@ void JSphCpuSingle::ConfigDomain(){
   if (UseNormals) {
       LoadBoundNormals(Np, Idp_c->cptr(), Code_c->cptr(), boundnormal, boundonoff);
       for (unsigned p = 0; p < Npb; p++) {
-          motionvel[p] = TFloat3(0, 0, 0);
-          motionace[p] = TFloat3(0, 0, 0);
+          MotionVel_c[p] = TFloat3(0, 0, 0);
+          MotionAce_c[p] = TFloat3(0, 0, 0);
       }
   }
   else {// SHABA Setting all boundary particles to be on for DBC
       for (unsigned p = 0; p < Npb; p++) {
           boundnormal[p] = TFloat3(0, 0, 0);
           boundonoff[p] = 1.f;
-          motionvel[p] = TFloat3(0, 0, 0);
-          motionace[p] = TFloat3(0, 0, 0);
+          MotionVel_c[p] = TFloat3(0, 0, 0);
+          MotionAce_c[p] = TFloat3(0, 0, 0);
       }
   }
 
@@ -537,13 +537,13 @@ void JSphCpuSingle::RunCellDivide(bool updateperiodic){
   if(TVisco==VISCO_LaminarSPS){
     CellDivSingle->SortArray(SpsTauRho2_c->ptr());
   }
-  if(UseNormals){ // SHABA
+  //if(UseNormals){ // SHABA
     CellDivSingle->SortArray(BoundNor_c->ptr());
     //if(MotionVel_c)
         CellDivSingle->SortArray(MotionVel_c->ptr());
         CellDivSingle->SortArray(MotionAce_c->ptr()); // SHABA
         CellDivSingle->SortArray(BoundOnOff_c->ptr()); // SHABA
-  }
+  //}
 
   //-Collect divide data. | Recupera datos del divide.
   Np=CellDivSingle->GetNpFinal();

@@ -658,7 +658,7 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity,bool sh
           const float frx=fac*drx,fry=fac*dry,frz=fac*drz; //-Gradients.
 
           //===== Get mass of particle p2 ===== 
-          float massp2=(boundp2? boundonoff[p2] * MassBound : MassFluid); //-Contiene masa de particula segun sea bound o fluid. // SHABA updated with bounonoff
+          float massp2=(boundp2? MassBound : MassFluid); //-Contiene masa de particula segun sea bound o fluid. // SHABA updated with bounonoff
           bool ftp2=false;    //-Indicate if it is floating | Indica si es floating.
           bool compute=true;  //-Deactivate when using DEM and if it is of type float-float or float-bound | Se desactiva cuando se usa DEM y es float-float o float-bound.
           if(USE_FLOATING){
@@ -693,9 +693,9 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity,bool sh
                   normalvelp2.x = veldotnorm * normalp2.x; normalvelp2.y = veldotnorm * normalp2.y; normalvelp2.z = veldotnorm * normalp2.z;
                   tangentvelp2.x = velrhop2.x - normalvelp2.x; tangentvelp2.y = velrhop2.y - normalvelp2.y; tangentvelp2.z = velrhop2.z - normalvelp2.z;
 
-                  float movdotnorm = movvel.x * normalp2.x + movvel.y * normalp2.y + movvel.z * normalp2.z;
-                  normmovp2.x = movdotnorm * normalp2.x; normmovp2.y = movdotnorm * normalp2.y; normmovp2.z = movdotnorm * normalp2.z;
-                  tangmovp2.x = movvel.x - normalvelp2.x; tangmovp2.y = movvel.y - normalvelp2.y; tangmovp2.z = movvel.z - normalvelp2.z;
+                  //float movdotnorm = movvel.x * normalp2.x + movvel.y * normalp2.y + movvel.z * normalp2.z;
+                  //normmovp2.x = movdotnorm * normalp2.x; normmovp2.y = movdotnorm * normalp2.y; normmovp2.z = movdotnorm * normalp2.z;
+                  //tangmovp2.x = movvel.x - normalvelp2.x; tangmovp2.y = movvel.y - normalvelp2.y; tangmovp2.z = movvel.z - normalvelp2.z;
 
               }
               else { // DBC hopefulyl this doesnt break it
@@ -1739,7 +1739,7 @@ void JSphCpu::ComputeSymplecticCorr(double dt){
     for(int p=0;p<npb;p++){
       const double epsilon_rdot=(-double(arc[p])/double(velrhoc[p].w))*dt;
       const float rhonew=float(double(velrhoprec[p].w)*  (2.-epsilon_rdot)/(2.+epsilon_rdot));
-      velrhoc[p] = TFloat4(velrhoprec[p].x, velrhoprec[p].y, velrhoprec[p].z, velrhoprec[p].w);//  0, 0, 0, (rhonew < RhopZero ? RhopZero : rhonew));//-Avoid fluid particles being absorbed by boundary ones. | Evita q las boundary absorvan a las fluidas.
+      velrhoc[p] = TFloat4(velrhoc[p].x, velrhoc[p].y, velrhoc[p].z, velrhoc[p].w);//  0, 0, 0, (rhonew < RhopZero ? RhopZero : rhonew));//-Avoid fluid particles being absorbed by boundary ones. | Evita q las boundary absorvan a las fluidas.
     } // SHABA // SHABANOTE
   }
 
