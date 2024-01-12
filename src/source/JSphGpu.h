@@ -130,10 +130,10 @@ protected:
   agfloat4*   Velrho_g;
 
   //-Variables for mDBC (Opt).
-  agfloat3*   BoundNor_g;  ///<Normal (x,y,z) pointing from boundary particles to ghost nodes (Opt).
-  agfloat3*   MotionVel_g; ///<Velocity of a moving boundary particle (Opt).
-  agfloat3*   MotionAce_g; ///Acceleration of a moving boundary SHABA    
-  agfloat*    BoundOnOff_g; ///Boundary particle on off switch to ultiply massp2 SHABA
+  agfloat3*   BoundNor_g;   ///<Normal (x,y,z) pointing from boundary particles to ghost nodes (Opt).
+  agfloat3*   MotionVel_g;  ///<Velocity of a moving boundary particle (Opt).
+  agfloat3*   MotionAce_g;  ///<Acceleration of a moving boundary (Opt). SHABA
+  agfloat*    BoundOnOff_g; ///<Boundary particle on off switch to multiply massp2 (Opt,Null). SHABA
     
   //-Variables for compute step VERLET (Opt).
   agfloat4*   VelrhoM1_g;  ///<Verlet: in order to keep previous values (Opt).
@@ -195,7 +195,7 @@ protected:
   void PrintAllocMemory(llong mcpu,llong mgpu)const;
 
   void ConstantDataUp();
-  void ParticlesDataUp(unsigned n,const tfloat3* boundnor, tfloat3* motionvel, tfloat3* motionace, float* boundonoff); // SHABA JAN
+  void ParticlesDataUp(unsigned n,const tfloat3* boundnor);
   unsigned ParticlesDataDown(unsigned n,unsigned pini,bool code
     ,bool onlynormal,const byte* filterg,unsigned& npfilterdel);
   
@@ -208,7 +208,7 @@ protected:
     ,double3* ftocenterg,float4* demdatag)const;
   void InitRunGpu();
 
-  void PreInteraction_Forces();
+  void PreInteraction_Forces(bool runmdbc);
   void PosInteraction_Forces();
   
   void ComputeVerlet(double dt);

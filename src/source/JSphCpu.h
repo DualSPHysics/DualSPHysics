@@ -132,9 +132,9 @@ protected:
 
   //-Variables for mDBC (Opt).
   acfloat3*   BoundNor_c;   ///<Normal (x,y,z) pointing from boundary particles to ghost nodes (Opt).
-  acfloat3*   MotionVel_c;  ///<Velocity of a moving boundary particle (Opt).]
-  acfloat3* MotionAce_c; /// acceleration of moving boundary SHABA JAN
-  acfloat* BoundOnOff_c; /// boundary particles on/off SHABA JAN
+  acfloat3*   MotionVel_c;  ///<Velocity of a moving boundary particle (Opt).
+  acfloat3*   MotionAce_c;  ///<Acceleration of a moving boundary (Opt). SHABA
+  acfloat*    BoundOnOff_c; ///<Boundary particle on off switch to multiply massp2 (Opt,Null). SHABA
     
   //-Variables for compute step VERLET (Opt).
   acfloat4*   VelrhoM1_c;   ///<Verlet: in order to keep previous values (Opt).
@@ -187,7 +187,7 @@ protected:
   float CalcVelMaxSeq(unsigned np,const tfloat4* velrho)const;
   float CalcVelMaxOmp(unsigned np,const tfloat4* velrho)const;
 
-  void PreInteraction_Forces();
+  void PreInteraction_Forces(bool runmdbc);
   void PosInteraction_Forces();
 
   template<TpKernel tker,TpFtMode ftmode> void InteractionForcesBound
@@ -253,8 +253,8 @@ protected:
     ,const unsigned* ridpmot,tdouble3* pos,unsigned* dcell,tfloat4* velrho,typecode* code)const;
   void MoveMatBound(unsigned np,unsigned ini,tmatrix4d m,double dt,const unsigned* ridpmot
     ,tdouble3* pos,unsigned* dcell,tfloat4* velrho,typecode* code,tfloat3* boundnor)const;
-  void CopyMotionVel(unsigned nmoving,const unsigned* ridpmot,const tfloat4* velrho,tfloat3* motionvel)const;
-  void CopyMotionAce(unsigned nmoving, const unsigned* ridpmot, const tfloat4* velrho, tfloat3* motionvel, tfloat3* motionace, double dt)const; // SHABA 
+  void CopyMotionVelAce(unsigned nmoving,double dt,const unsigned* ridpmot
+    ,const tfloat4* velrho,tfloat3* motionvel,tfloat3* motionace)const; //SHABA 
   void CalcMotion(double stepdt);
   void RunMotion(double stepdt);
   void RunRelaxZone(double dt);

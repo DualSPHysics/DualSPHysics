@@ -230,8 +230,8 @@ void Interaction_MdbcCorrection(TpKernel tkernel,bool simulate2d
   ,float mdbcthreshold,const StDivDataGpu& dvd,const tdouble3& mapposmin
   ,const double2* posxy,const double* posz,const float4* poscell
   ,const typecode* code,const unsigned* idp,const float3* boundnor
-  ,const float3* motionvel,float4* velrho
-  ,const float3* motionace,float* boundonoff,const tfloat3 gravity
+  ,const float3* motionvel,const float3* motionace
+  ,float4* velrho,float* boundonoff,const tfloat3 gravity
   ,cudaStream_t stm=NULL);
 
 //-Kernels for the calculation of the DEM forces.
@@ -268,9 +268,9 @@ void MoveLinBound(byte periactive,unsigned np,unsigned ini,tdouble3 mvpos,tfloat
   ,const unsigned* ridpmot,double2* posxy,double* posz,unsigned* dcell,float4* velrho,typecode* code);
 void MoveMatBound(byte periactive,bool simulate2d,unsigned np,unsigned ini,tmatrix4d m,double dt
   ,const unsigned* ridpmot,double2* posxy,double* posz,unsigned* dcell,float4* velrho,typecode* code,float3* boundnor);
-void CopyMotionVel(unsigned nmoving,const unsigned* ridpmot,const float4* velrho,float3* motionvel);
+void CopyMotionVelAce(unsigned nmoving,double dt,const unsigned* ridpmot
+  ,const float4* velrho,float3* motionvel,float3* motionace); //SHABA
 void FtNormalsUpdate(unsigned np,unsigned ini,tmatrix4d m,const unsigned* ridpmot,float3* boundnor);
-void CopyMotionAce(unsigned nmoving,const unsigned* ridpmot,const float4* velrho,float3* motionvel,float3* motionace,double stepdt);
 
 //-Kernels for MLPistons motion.
 void MovePiston1d(bool periactive,unsigned np,unsigned idini,double dp,double poszmin
@@ -306,7 +306,7 @@ void PeriodicDuplicateSymplectic(unsigned n,unsigned pini
   ,unsigned* dcell,double2* posxy,double* posz,float4* velrho,tsymatrix3f* spstau
   ,double2* posxypre,double* poszpre,float4* velrhopre);
 void PeriodicDuplicateNormals(unsigned n,unsigned pini,const unsigned* listp
-  ,float3* normals,float3* motionvel,float3* motionace);
+  ,float3* normals,float3* motionvel,float3* motionace); //SHABA
 
 //-Kernels for Damping.
 void ComputeDampingPlane(double dt,double4 plane,float dist,float over

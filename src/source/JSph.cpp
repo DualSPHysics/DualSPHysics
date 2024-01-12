@@ -847,6 +847,8 @@ void JSph::LoadConfigCommands(const JSphCfgRun* cfg){
   if(cfg->VerletSteps>=0)VerletSteps=cfg->VerletSteps;
   if(cfg->TVisco){ TVisco=cfg->TVisco; Visco=cfg->Visco; }
   if(cfg->ViscoBoundFactor>=0)ViscoBoundFactor=cfg->ViscoBoundFactor;
+  if(TBoundary==BC_MDBC && TStep==STEP_Symplectic && !MdbcCorrector)
+    Log->PrintWarning("The mDBC calculation in corrector step should be activated when the improved mDBC formulation is used."); //SHABA
 
   //-Density Diffusion Term configuration.
   if(cfg->TDensity>=0){
@@ -1342,7 +1344,7 @@ void JSph::LoadCodeParticles(unsigned np,const unsigned* idp,typecode* code)cons
 /// Load normals for boundary particles (fixed and moving).
 //==============================================================================
 void JSph::LoadBoundNormals(unsigned np,const unsigned* idp,const typecode* code
-  ,tfloat3* boundnor, float* boundonoff)
+  ,tfloat3* boundnor)
 {
   memset(boundnor,0,sizeof(tfloat3)*np);
   if(!PartBegin){
@@ -1359,10 +1361,7 @@ void JSph::LoadBoundNormals(unsigned np,const unsigned* idp,const typecode* code
       if(pnorsize){
         Log->Printf("NormalDataFile=\"%s\"",filenormals.c_str());
         if(pnorsize!=CaseNbound)Run_ExceptioonFile("The number of final normals does not match boundary particles.",filenormals);
-        for (unsigned p = 0; p < pnorsize; p++) {
-            boundnor[p] = ToTFloat3(pnor[p]);
-            boundonoff[p] = 1.f; // SHABA Setting all boundary particles to be on
-        }
+        for(unsigned p=0;p<pnorsize;p++)boundnor[p]=ToTFloat3(pnor[p]);
       }
     }
     else{

@@ -159,8 +159,8 @@ void JSphGpu::InitVars(){
 
   BoundNor_g=NULL;     //-mDBC
   MotionVel_g=NULL;    //-mDBC
-  MotionAce_g=NULL;    //-newMDBC SHABA
-  BoundOnOff_g=NULL;   //-newMDBC SHABA
+  MotionAce_g=NULL;    //-mDBC SHABA
+  BoundOnOff_g=NULL;   //-mDBC SHABA
 
   VelrhoM1_g=NULL;     //-Verlet
   PosxyPre_g=NULL;     //-Symplectic
@@ -330,8 +330,8 @@ void JSphGpu::FreeGpuMemoryParticles(){
 
   delete BoundNor_g;    BoundNor_g=NULL;    //-mDBC
   delete MotionVel_g;   MotionVel_g=NULL;   //-mDBC
-  delete MotionAce_g;   MotionAce_g=NULL;   //-newmDBC SHABA
-  delete BoundOnOff_g;  BoundOnOff_g=NULL;  //-newmDBC SHABA
+  delete MotionAce_g;   MotionAce_g=NULL;   //-mDBC SHABA
+  delete BoundOnOff_g;  BoundOnOff_g=NULL;  //-mDBC SHABA
 
   delete VelrhoM1_g;    VelrhoM1_g=NULL;    //-Verlet
   delete PosxyPre_g;    PosxyPre_g=NULL;    //-Symplectic
@@ -371,14 +371,12 @@ void JSphGpu::AllocGpuMemoryParticles(unsigned np){
   PosCell_g=new agfloat4  ("PosCellg",Arrays_Gpu,true);
   Velrho_g =new agfloat4  ("Velrhog" ,Arrays_Gpu,true);
   //-Arrays for mDBC.
-  // if(UseNormals){
+  if(UseNormals){
     BoundNor_g=new agfloat3("BoundNorg",Arrays_Gpu,true);
-    MotionAce_g=new agfloat3("MotionAceg",Arrays_Gpu,true); //MotionAce SHABA
-    BoundOnOff_g=new agfloat("BoundOnOff",Arrays_Gpu,true); //BoundOnOff SHABA
-    // if(SlipMode!=SLIP_Vel0){
-      MotionVel_g=new agfloat3("MotionVelg"  ,Arrays_Gpu,true);
-    // }
-  // }
+    MotionVel_g=new agfloat3("MotionVelg",Arrays_Gpu,true);
+    MotionAce_g=new agfloat3("MotionAceg",Arrays_Gpu,true); //SHABA
+    BoundOnOff_g=new agfloat("BoundOnOffg",Arrays_Gpu,false); //-NO INITIAL MEMORY. SHABA
+  }
   //-Arrays for Verlet.
   if(TStep==STEP_Verlet){
     VelrhoM1_g=new agfloat4  ("VelrhoM1g",Arrays_Gpu,true);
@@ -514,21 +512,18 @@ void JSphGpu::ConstantDataUp(){
 
 //==============================================================================
 /// Uploads particle data to the GPU.
-/// Sube datos de particulas a la GPU. // SHABA JAN
+/// Sube datos de particulas a la GPU.
 //==============================================================================
-void JSphGpu::ParticlesDataUp(unsigned n,const tfloat3* boundnor, tfloat3* motionvel, tfloat3* motionace, float* boundonoff){
+void JSphGpu::ParticlesDataUp(unsigned n,const tfloat3* boundnor){
   Idp_g   ->CuCopyFromHost(Idp_c,n);
   Code_g  ->CuCopyFromHost(Code_c,n);
   Dcell_g ->CuCopyFromHost(Dcell_c,n);
   Posxy_g ->CuCopyFromHost(Posxy_c,n);
   Posz_g  ->CuCopyFromHost(Posz_c,n);
   Velrho_g->CuCopyFromHost(Velrho_c,n);
-  //if(UseNormals){
+  if(UseNormals){
     BoundNor_g->CuCopyFromHost2(boundnor,n);
-    BoundOnOff_g->CuCopyFromHost2(boundonoff, n);
-    MotionAce_g->CuCopyFromHost2(motionace, n);
-    MotionVel_g->CuCopyFromHost2(motionvel, n);
-  //}
+  }
   Check_CudaErroor("Failed copying data to GPU.");
 }
 
@@ -743,7 +738,7 @@ void JSphGpu::InitRunGpu(){
   if(TStep==STEP_Verlet)VelrhoM1_g->CuCopyFrom(Velrho_g,Np);
   if(TVisco==VISCO_LaminarSPS)SpsTauRho2_g->CuMemset(0,Np);
   if(MotionVel_g)MotionVel_g->CuMemset(0,Np);
-  if(MotionAce_g)MotionAce_g->CuMemset(0,Np);
+  if(MotionAce_g)MotionAce_g->CuMemset(0,Np); //SHABA
   Check_CudaErroor("Failed initializing variables for execution.");
 }
 
@@ -751,7 +746,7 @@ void JSphGpu::InitRunGpu(){
 /// Prepares variables for interaction.
 /// Prepara variables para interaccion.
 //==============================================================================
-void JSphGpu::PreInteraction_Forces(){
+void JSphGpu::PreInteraction_Forces(bool runmdbc){
   Timersg->TmStart(TMG_CfPreForces,false);
   //-Assign memory.
   ViscDt_g->Reserve();
@@ -760,7 +755,7 @@ void JSphGpu::PreInteraction_Forces(){
   if(DDTArray)Delta_g->Reserve();
   if(Shifting)ShiftPosfs_g->Reserve();
   if(TVisco==VISCO_LaminarSPS)Sps2Strain_g->Reserve();
-  //BoundOnOff_g->Reserve();                                          // SHABANOTE
+  if(runmdbc)BoundOnOff_g->Reserve(); //SHABA
 
   //-Initialise arrays.
   const unsigned npf=Np-Npb;
@@ -769,7 +764,7 @@ void JSphGpu::PreInteraction_Forces(){
   Ace_g->CuMemset(0,Np);                                            //Aceg[]=(0)
   if(AG_CPTR(Delta_g))Delta_g->CuMemset(0,Np);                      //Deltag[]=0
   if(AG_CPTR(Sps2Strain_g))Sps2Strain_g->CuMemsetOffset(Npb,0,npf); //Sps2Straing[]=(0).
-  //BoundOnOff_g->CuMemset(1,Np);                                     // SHABANOTE
+  if(AG_CPTR(BoundOnOff_g))BoundOnOff_g->CuMemset(0,Npb);           //BoundOnOffg[]=(0). SHABA
 
   //-Select particles for shifting.
   if(AC_CPTR(ShiftPosfs_g))Shifting->InitGpu(npf,Npb,Posxy_g->cptr()
@@ -804,8 +799,7 @@ void JSphGpu::PosInteraction_Forces(){
   Delta_g->Free();
   ShiftPosfs_g->Free();
   if(Sps2Strain_g)Sps2Strain_g->Free();
-  //BoundOnOff_g->Free();                     // SHABANOTE
-
+  if(BoundOnOff_g)BoundOnOff_g->Free(); //SHABA
 }
 
 //==============================================================================
@@ -1012,9 +1006,9 @@ void JSphGpu::RunMotion(double stepdt){
         ,Code_g->ptr());
     }
   }
-  if(MotionVel_g){
-    cusph::CopyMotionAce(CaseNmoving,RidpMotg,Velrho_g->cptr(),MotionVel_g->ptr(),MotionAce_g->ptr(),stepdt);
-    cusph::CopyMotionVel(CaseNmoving,RidpMotg,Velrho_g->cptr(),MotionVel_g->ptr());
+  if(MotionVel_g){ //SHABA
+    cusph::CopyMotionVelAce(CaseNmoving,stepdt,RidpMotg,Velrho_g->cptr()
+      ,MotionVel_g->ptr(),MotionAce_g->ptr());
   }
   Timersg->TmStop(TMG_SuMotion,true);
 }

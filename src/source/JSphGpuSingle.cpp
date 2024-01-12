@@ -172,44 +172,17 @@ void JSphGpuSingle::ConfigDomain(){
   //-Loads Code of the particles.
   LoadCodeParticles(Np,Idp_c->cptr(),Code_c->ptr());
 
-
-  // JOSE HELP ME HERE, HOW DO I CREATE A NEW ARRAY?? SHABASTUCK
   //-Load normals for boundary particles (fixed and moving).
-  //acfloat3 boundnorc("boundnor",Arrays_Cpu,UseNormals);
-  //acfloat boundonoffc("boundonoff", Arrays_Cpu, UseNormals); //SHABA JAN
-  //tfloat3 motionvelc("movionvel", Arrays_Cpu, UseNormals); // SHABA JAN
-  //tfloat3 motionacec("motionace", Arrays_Cpu, UseNormals); // SHABA JAN
-  tfloat3* boundnormal = NULL;
-  tfloat3* motionvel = NULL;
-  tfloat3* motionace = NULL;
-  float* boundonoff = NULL;
-  boundnormal = new tfloat3[Np];
-  motionvel = new tfloat3[Np];
-  motionace = new tfloat3[Np];
-  boundonoff = new float[Np];
-  if (UseNormals) {
-      LoadBoundNormals(Np, Idp_c->cptr(), Code_c->cptr(), boundnormal, boundonoff);
-      for (unsigned p = 0; p < Npb; p++) {
-          motionvel[p] = TFloat3(0, 0, 0);
-          motionace[p] = TFloat3(0, 0, 0);
-      }
-  }
-  else {// SHABA Setting all boundary particles to be on for DBC
-      for (unsigned p = 0; p < Npb; p++) {
-          boundnormal[p] = TFloat3(0, 0, 0);
-          boundonoff[p] = 1.f;
-          motionvel[p] = TFloat3(0, 0, 0);
-          motionace[p] = TFloat3(0, 0, 0);
-      }
-  }
+  acfloat3 boundnorc("boundnor",Arrays_Cpu,UseNormals);
+  if(UseNormals)LoadBoundNormals(Np,Idp_c->cptr(),Code_c->cptr(),boundnorc.ptr());
 
   //-Creates PartsInit object with initial particle data for automatic configurations.
   CreatePartsInit(Np,AuxPos_c->cptr(),Code_c->cptr());
 
   //-Runs initialization operations from XML.
   RunInitialize(Np,Npb,AuxPos_c->cptr(),Idp_c->cptr(),Code_c->cptr()
-    ,Velrho_c->ptr(),boundnormal);
-  if(UseNormals)ConfigBoundNormals(Np,Npb,AuxPos_c->cptr(),Idp_c->cptr(),boundnormal);
+    ,Velrho_c->ptr(),boundnorc.ptr());
+  if(UseNormals)ConfigBoundNormals(Np,Npb,AuxPos_c->cptr(),Idp_c->cptr(),boundnorc.ptr());
 
   //-Computes MK domain for boundary and fluid particles.
   MkInfo->ComputeMkDomains(Np,AuxPos_c->cptr(),Code_c->cptr());
@@ -228,12 +201,9 @@ void JSphGpuSingle::ConfigDomain(){
 
   //-Uploads particle data on the GPU.
   Pos3ToPos21(Np,AuxPos_c->cptr(),Posxy_c->ptr(),Posz_c->ptr());
-  ParticlesDataUp(Np,boundnormal, motionvel,motionace,boundonoff); // SHABA JAN
-  //boundnorc.Free();
-  delete[] boundnormal; boundnormal = NULL;
-  delete[] motionvel; motionvel = NULL;
-  delete[] motionace; motionace = NULL;
-  delete[] boundonoff; boundonoff = NULL;
+  ParticlesDataUp(Np,boundnorc.cptr());
+  boundnorc.Free();
+
   //-Uploads constants on the GPU.
   ConstantDataUp();
 
@@ -366,7 +336,7 @@ void JSphGpuSingle::RunPeriodic(){
             }
             if(UseNormals){
               cusph::PeriodicDuplicateNormals(count,Np,listpg.cptr()
-                ,BoundNor_g->ptr(),AG_PTR(MotionVel_g),AG_PTR(MotionAce_g));
+                ,BoundNor_g->ptr(),MotionVel_g->ptr(),MotionAce_g->ptr()); //SHABA
             }
             //-Update the total number of particles.
             Np+=count;
@@ -444,19 +414,15 @@ void JSphGpuSingle::RunCellDivide(bool updateperiodic){
     CellDivSingle->SortDataArrays(SpsTauRho2_g->cptr(),spstaug.ptr());
     SpsTauRho2_g->SwapPtr(&spstaug);
   }
-  // if(UseNormals){
+  if(UseNormals){
     agfloat3 auxg("-",Arrays_Gpu,true);
     CellDivSingle->SortDataArrays(BoundNor_g->cptr(),auxg.ptr());
     BoundNor_g->SwapPtr(&auxg);
-    if(MotionVel_g){
-      CellDivSingle->SortDataArrays(MotionVel_g->cptr(),auxg.ptr());
-      MotionVel_g->SwapPtr(&auxg);
-    }
-    if(MotionAce_g){
-      CellDivSingle->SortDataArrays(MotionAce_g->cptr(),auxg.ptr());
-      MotionAce_g->SwapPtr(&auxg);
-    }
-  // }
+    CellDivSingle->SortDataArrays(MotionVel_g->cptr(),auxg.ptr()); //SHABA
+    MotionVel_g->SwapPtr(&auxg);
+    CellDivSingle->SortDataArrays(MotionAce_g->cptr(),auxg.ptr()); //SHABA
+    MotionAce_g->SwapPtr(&auxg);
+  }
 
   //-Collect divide data. | Recupera datos del divide.
   Np=CellDivSingle->GetNpFinal();
@@ -522,13 +488,12 @@ void JSphGpuSingle::SaveFluidOut(){
 /// Interaccion para el calculo de fuerzas.
 //==============================================================================
 void JSphGpuSingle::Interaction_Forces(TpInterStep interstep){
-  //-Boundary correction for mDBC.
-  PreInteraction_Forces();
-  const bool runmdbc=(TBoundary==BC_MDBC);
-  if(runmdbc)MdbcBoundCorrection(); 
-
+  const bool runmdbc=(TBoundary==BC_MDBC && (MdbcCorrector || interstep!=INTERSTEP_SymCorrector));
   InterStep=interstep;
-  
+  PreInteraction_Forces(runmdbc); //SHABA
+
+  //-Boundary correction for mDBC.
+  if(runmdbc)MdbcBoundCorrection(); 
 
   float3* dengradcorr=NULL;
 
@@ -593,10 +558,10 @@ void JSphGpuSingle::MdbcBoundCorrection(){
   cusph::Interaction_MdbcCorrection(TKernel,Simulate2D,SlipMode,MdbcFastSingle
     ,n,CaseNbound,MdbcThreshold,DivData,Map_PosMin,Posxy_g->cptr(),Posz_g->cptr()
     ,PosCell_g->cptr(),Code_g->cptr(),Idp_g->cptr(),BoundNor_g->cptr()
-    ,AG_CPTR(MotionVel_g),Velrho_g->ptr(),MotionAce_g->cptr(),BoundOnOff_g->ptr(),Gravity);
+    ,MotionVel_g->cptr(),MotionAce_g->cptr(),Velrho_g->ptr(),BoundOnOff_g->ptr()
+    ,Gravity); //SHABA
   Timersg->TmStop(TMG_CfPreForces,true);
 }
-
 
 //==============================================================================
 /// Returns the maximum value of  (ace.x^2 + ace.y^2 + ace.z^2) from Acec[].

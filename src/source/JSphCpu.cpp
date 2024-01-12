@@ -90,8 +90,8 @@ void JSphCpu::InitVars(){
 
   BoundNor_c=NULL;    //-mDBC
   MotionVel_c=NULL;   //-mDBC
-  BoundOnOff_c = NULL;    //-mDBC // SHABA
-  MotionAce_c = NULL;   //-mDBC // SHABA
+  MotionAce_c=NULL;   //-mDBC SHABA
+  BoundOnOff_c=NULL;  //-mDBC SHABA
 
   VelrhoM1_c=NULL;    //-Verlet
   PosPre_c=NULL;      //-Symplectic
@@ -150,10 +150,10 @@ void JSphCpu::FreeCpuMemoryParticles(){
   delete Pos_c;         Pos_c=NULL;
   delete Velrho_c;      Velrho_c=NULL;
 
-  delete BoundNor_c;    BoundNor_c=NULL; //-mDBC
-  delete MotionVel_c;   MotionVel_c=NULL;   //-mDBC
-  delete BoundOnOff_c;    BoundOnOff_c = NULL; //-mDBC // SHABA
-  delete MotionAce_c;   MotionAce_c = NULL;   //-mDBC // SHABA
+  delete BoundNor_c;    BoundNor_c=NULL;   //-mDBC
+  delete MotionVel_c;   MotionVel_c=NULL;  //-mDBC
+  delete MotionAce_c;   MotionAce_c=NULL;  //-mDBC SHABA
+  delete BoundOnOff_c;  BoundOnOff_c=NULL; //-mDBC SHABA
 
   delete VelrhoM1_c;    VelrhoM1_c=NULL;    //-Verlet
   delete PosPre_c;      PosPre_c=NULL;      //-Symplectic
@@ -190,14 +190,12 @@ void JSphCpu::AllocCpuMemoryParticles(unsigned np){
   Pos_c   =new acdouble3 ("Posc"   ,Arrays_Cpu,true);
   Velrho_c=new acfloat4  ("Velrhoc",Arrays_Cpu,true);
   //-Arrays for mDBC.
-  // if(UseNormals){ // SHABA
+  if(UseNormals){
     BoundNor_c=new acfloat3("BoundNorc",Arrays_Cpu,true);
-    //if(SlipMode!=SLIP_Vel0){ // SHABA
-      MotionVel_c=new acfloat3("MotionVelc"  ,Arrays_Cpu,true);
-      BoundOnOff_c = new acfloat("BoundOnOffc", Arrays_Cpu, true); // SHABA
-      MotionAce_c = new acfloat3("MotionAcec", Arrays_Cpu, true); // SHABA
-    //}
-  //}
+    MotionVel_c=new acfloat3("MotionVelc",Arrays_Cpu,true);
+    MotionAce_c=new acfloat3("MotionAcec",Arrays_Cpu,true); // SHABA
+    BoundOnOff_c=new acfloat("BoundOnOffc",Arrays_Cpu,false); //-NO INITIAL MEMORY. SHABA
+  }
   //-Arrays for Verlet.
   if(TStep==STEP_Verlet){
     VelrhoM1_c=new acfloat4("VelrhoM1c",Arrays_Cpu,true);
@@ -390,15 +388,14 @@ void JSphCpu::InitRunCpu(){
   if(TStep==STEP_Verlet)VelrhoM1_c->CopyFrom(Velrho_c,Np);
   if(TVisco==VISCO_LaminarSPS)SpsTauRho2_c->Memset(0,Np);
   if(MotionVel_c)MotionVel_c->Memset(0,Np);
-  if (MotionAce_c)MotionAce_c->Memset(0, Np); // SHABA
-
+  if(MotionAce_c)MotionAce_c->Memset(0,Np); //SHABA
 }
 
 //==============================================================================
-/// Prepare variables for interaction functions.
+/// Prepares variables for interaction.
 /// Prepara variables para interaccion.
 //==============================================================================
-void JSphCpu::PreInteraction_Forces(){
+void JSphCpu::PreInteraction_Forces(bool runmdbc){
   Timersc->TmStart(TMC_CfPreForces);
   //-Assign memory.
   Ar_c->Reserve();
@@ -407,6 +404,7 @@ void JSphCpu::PreInteraction_Forces(){
   if(DDTArray)Delta_c->Reserve();
   if(Shifting)ShiftPosfs_c->Reserve();
   if(TVisco==VISCO_LaminarSPS)Sps2Strain_c->Reserve();
+  if(runmdbc)BoundOnOff_c->Reserve(); //SHABA
 
   //-Initialise arrays.
   const unsigned npf=Np-Npb;
@@ -414,6 +412,7 @@ void JSphCpu::PreInteraction_Forces(){
   Ace_c->Memset(0,Np);                                            //Acec[]=(0)
   if(AC_CPTR(Delta_c))Delta_c->Memset(0,Np);                      //Deltac[]=0
   if(AC_CPTR(Sps2Strain_c))Sps2Strain_c->MemsetOffset(Npb,0,npf); //Sps2Strainc[]=(0).
+  if(AC_CPTR(BoundOnOff_c))BoundOnOff_c->Memset(0,Npb);           //BoundOnOffc[]=(0). SHABA
 
   //-Select particles for shifting.
   if(AC_CPTR(ShiftPosfs_c))Shifting->InitCpu(npf,Npb,Pos_c->cptr()
@@ -504,6 +503,7 @@ void JSphCpu::PosInteraction_Forces(){
   Delta_c->Free();
   ShiftPosfs_c->Free();
   if(Sps2Strain_c)Sps2Strain_c->Free();
+  if(BoundOnOff_c)BoundOnOff_c->Free(); //SHABA
 }
 
 //==============================================================================
@@ -1966,35 +1966,23 @@ void JSphCpu::MoveMatBound(unsigned np,unsigned ini,tmatrix4d m,double dt
 }
 
 //==============================================================================
-/// Copy motion velocity to MotionVel[].
-/// Copia velocidad de movimiento a MotionVel[].
+/// Copy motion velocity and compute acceleration of moving particles.
 //==============================================================================
-void JSphCpu::CopyMotionVel(unsigned nmoving,const unsigned* ridpmot
-  ,const tfloat4* velrho,tfloat3* motionvel)const
+void JSphCpu::CopyMotionVelAce(unsigned nmoving,double dt,const unsigned* ridpmot
+  ,const tfloat4* velrho,tfloat3* motionvel,tfloat3* motionace)const //SHABA
 {
   for(unsigned id=0;id<nmoving;id++){
     const unsigned pid=ridpmot[id];
     if(pid!=UINT_MAX){
+      //-Computes acceleration and copy new velocity.
+      const tfloat3 mvel0=motionvel[pid];
       const tfloat4 v=velrho[pid];
+      motionace[pid]=TFloat3(float((double(v.x)-mvel0.x)/dt),
+                             float((double(v.y)-mvel0.y)/dt),
+                             float((double(v.z)-mvel0.z)/dt));
       motionvel[pid]=TFloat3(v.x,v.y,v.z);
     }
   }
-}
-
-//==============================================================================
-/// Copy motion acceleration to MotionAce[].
-/// Copia velocidad de movimiento a MotionAce[]. // SHABA
-//==============================================================================
-void JSphCpu::CopyMotionAce(unsigned nmoving, const unsigned* ridpmot
-    ,const tfloat4* velrho, tfloat3* motionvel, tfloat3* motionace, double dt)const
-{
-    for (unsigned id = 0; id < nmoving; id++) {
-        const unsigned pid = ridpmot[id];
-        if (pid != UINT_MAX) {
-            const tfloat4 v = velrho[pid];
-            motionace[pid] = TFloat3(float((v.x - motionvel[pid].x) / dt), float((v.y - motionvel[pid].y) / dt), float((v.z - motionvel[pid].z) / dt));
-        }
-    }
 }
 
 //==============================================================================
@@ -2050,11 +2038,9 @@ void JSphCpu::RunMotion(double stepdt){
         ,Velrho_c->ptr(),Code_c->ptr());
     }
   }
-  if(MotionAce_c){ // SHABA
-    CopyMotionAce(CaseNmoving,RidpMot,Velrho_c->cptr(),MotionVel_c->ptr(),MotionAce_c->ptr(),stepdt);
-  }
-  if(MotionVel_c){
-    CopyMotionVel(CaseNmoving,RidpMot,Velrho_c->cptr(),MotionVel_c->ptr());
+  if(MotionVel_c){ //SHABA
+    CopyMotionVelAce(CaseNmoving,stepdt,RidpMot,Velrho_c->cptr()
+      ,MotionVel_c->ptr(),MotionAce_c->ptr());
   }
   Timersc->TmStop(TMC_SuMotion);
 }
