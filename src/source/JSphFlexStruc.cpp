@@ -118,7 +118,9 @@ void JSphFlexStrucBody::ConfigClampCode(typecode clampcode){
 /// Loads lines with configuration information.
 //==============================================================================
 void JSphFlexStrucBody::GetConfig(std::vector<std::string>& lines)const{
-  lines.push_back(fun::PrintStr("    Clamp mkbound: %i",MkClamp));
+  std::string clampstr=(MkClamp.empty()? "None" : fun::PrintStr("%i",MkClamp[0]));
+  for(unsigned i=1;i<MkClamp.size();i++)clampstr+=fun::PrintStr(", %i",MkClamp[i]);
+  lines.push_back(fun::PrintStr("    Clamp mkbound: %s",clampstr.c_str()));
   lines.push_back(fun::PrintStr("    Particle volume: %g",GetParticleVolume()));
   lines.push_back(fun::PrintStr("    Particle mass: %g",GetParticleMass()));
   lines.push_back(fun::PrintStr("    Density: %g",GetDensity()));
