@@ -13,9 +13,10 @@ set diroutdata=%dirout%\data
 rem "executables" are renamed and called from their directory
 
 set dirbin=../../../bin/windows
+set dirbindsnn=%dirbin%/DSNNewtonian
 set gencase="%dirbin%/GenCase_win64.exe"
-set dualsphysicscpu="%dirbin%/DualSPHysics5.0_NNewtonianCPU_win64.exe"
-set dualsphysicsgpu="%dirbin%/DualSPHysics5.0_NNewtonian_win64.exe"
+set dualsphysicscpu="%dirbindsnn%/DualSPHysics5.0_NNewtonianCPU_win64.exe"
+set dualsphysicsgpu="%dirbindsnn%/DualSPHysics5.0_NNewtonian_win64.exe"
 set boundaryvtk="%dirbin%/BoundaryVTK_win64.exe"
 set partvtk="%dirbin%/PartVTK_win64.exe"
 set partvtkout="%dirbin%/PartVTKOut_win64.exe"
@@ -56,8 +57,8 @@ set dirout2=%dirout%\particles
 if not "%ERRORLEVEL%" == "0" goto fail
 
 rem Executes PartVTKOut to create VTK files with excluded particles.
-REM %partvtkout% -dirin %diroutdata% -savevtk %dirout2%/PartFluidOut -SaveResume %dirout2%/_ResumeFluidOut
-REM if not "%ERRORLEVEL%" == "0" goto fail
+%partvtkout% -dirin %diroutdata% -savevtk %dirout2%/PartFluidOut -SaveResume %dirout2%/_ResumeFluidOut
+if not "%ERRORLEVEL%" == "0" goto fail
 
 rem Executes IsoSurface to create VTK files with slices of surface.
 set dirout2=%dirout%\surface
