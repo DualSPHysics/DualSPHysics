@@ -382,6 +382,85 @@ void JLinearValue::GetValue3d3d(double timestep,tdouble3& v1,tdouble3& v2){
 }
 
 //==============================================================================
+/// Returns result of GetValue3dArray() converted to tfloat3* according special values.
+//==============================================================================
+tfloat3* JLinearValue::GetValue3fArray(double timestep,const unsigned size){
+  tfloat3 *fltval=new tfloat3[size];
+  memset(fltval,0,sizeof(tfloat3)*size);
+
+  const tdouble3* dblval=GetValue3dArray(timestep,size);
+  for(unsigned v=0;v<size;v++)
+    fltval[v]=TFloat3((dblval[v].x==DBL_MAX? FLT_MAX: float(dblval[v].x)),(dblval[v].y==DBL_MAX? FLT_MAX: float(dblval[v].y)),(dblval[v].z==DBL_MAX? FLT_MAX: float(dblval[v].z)));
+  
+  return (fltval);
+}
+
+//==============================================================================
+/// Returns the interpolated values for the time indicated.
+/// If no values always returns 0.
+/// If only one value always returns that value.
+/// If the indicated t is less than the minimum returns the first value.
+/// If the indicated t is greater than the maximum returns the last value.
+/// 
+/// Devuelve valor el valor interpolado para el instante indicado.
+/// Si no hay valores siempre devuelve 0.
+/// Si solo hay un valor siempre devuelve ese valor.
+/// Si el t indicado es menor que el minimo devuelve el primer valor.
+/// Si el t indicado es mayor que el maximo devuelve el ultimo valor.
+//==============================================================================
+tdouble3* JLinearValue::GetValue3dArray(double timestep,const unsigned size){
+  //-Check the size sent is equals than NValues/3
+  if(size!=Nvalues/3) Run_Exceptioon(fun::PrintStr("Expected size is %d but the size sent is %d.",Nvalues/3,size));
+  //-Allocate memory for the array and iniialise it
+  tdouble3 *dblval=new tdouble3[size];
+  memset(dblval,0,sizeof(tdouble3)*size);
+  
+  FindTime(timestep);
+  if(timestep<=TimePre){
+    unsigned rpos=Nvalues*Position;
+    for(unsigned v=0;v<size;v++){
+		dblval[v]=TDouble3(Values[rpos],Values[rpos+1],Values[rpos+2]);
+		rpos+=3;
+	}
+  }
+  else if(timestep>=TimeNext){
+    unsigned rpos=Nvalues*PositionNext;
+    for(unsigned v=0;v<size;v++){
+		dblval[v]=TDouble3(Values[rpos],Values[rpos+1],Values[rpos+2]);
+		rpos+=3;
+	}
+  }
+  else{
+    unsigned rpos =Nvalues*Position;
+    unsigned rpos2=Nvalues*PositionNext;
+    tdouble3 *vini=new tdouble3[size];
+    tdouble3 *vnext=new tdouble3[size];
+    memset(vini,0,sizeof(tdouble3)*size);  
+    memset(vnext,0,sizeof(tdouble3)*size);
+    for(unsigned v=0;v<size;v++){
+		vini[v] =TDouble3(Values[rpos ],Values[rpos +1],Values[rpos +2]);
+		vnext[v]=TDouble3(Values[rpos2],Values[rpos2+1],Values[rpos2+2]);
+		rpos +=3; rpos2+=3;
+	}
+
+    for(unsigned v=0;v<size;v++)dblval[v]=((vnext[v]-vini[v])*TimeFactor+vini[v]);
+
+    if(SpecialValues){
+      for(unsigned v=0;v<size;v++){
+        if(vini[v].x==DBL_MAX)dblval[v].x=DBL_MAX;
+        else if(vnext[v].x==DBL_MAX)dblval[v].x=vini[v].x;
+        if(vini[v].y==DBL_MAX)dblval[v].y=DBL_MAX;
+        else if(vnext[v].y==DBL_MAX)dblval[v].y=vini[v].y;
+        if(vini[v].z==DBL_MAX)dblval[v].z=DBL_MAX;
+        else if(vnext[v].z==DBL_MAX)dblval[v].z=vini[v].z;
+      }
+    }
+  }
+  return (dblval);
+}
+
+
+//==============================================================================
 /// Returns result of GetValue3d() converted to tfloat3 according special values.
 //==============================================================================
 tfloat3 JLinearValue::GetValue3f(double timestep){
@@ -521,6 +600,43 @@ void JLinearValue::ReadXmlValues(const JXml* sxml,TiXmlElement* ele
           }
           elet=elet->NextSiblingElement(subname.c_str());
         }
+      }
+    }
+  }
+}
+
+//==============================================================================
+/// Reads data from XML.
+/// Lee datos del XML.
+//==============================================================================
+void JLinearValue::ReadXmlValuesEle(const JXml* sxml,TiXmlElement* ele
+  ,std::string subname,std::string attributes)
+{
+  Reset();
+  if(ele){
+    File=sxml->GetAttributeStr(ele,"file",true);
+    if(File.empty()){
+      vector<string> attr;
+      if(fun::VectorSplitStr(":",attributes,attr)!=Nvalues+1)Run_Exceptioon("Number of values does not match.");
+      SetSize(sxml->CountElements(ele,subname));
+      TiXmlElement* elet=ele->FirstChildElement(subname.c_str()); 
+      while(elet){
+        double t=sxml->GetAttributeDouble(elet,attr[0]); //-Reads time.
+        if(SpecialValues){
+        unsigned idx=UINT_MAX;
+        for(unsigned ca=0;ca<Nvalues;ca++){
+            double v=0;
+            if(fun::StrLower(sxml->GetAttributeStr(elet,attr[ca+1],true))=="none")v=DBL_MAX;
+            else v=sxml->GetAttributeDouble(elet,attr[ca+1],true,DBL_MAX);
+            if(idx==UINT_MAX)idx=AddTimeValue(t,v);
+            else SetValue(idx,ca,v);
+        }
+        }
+        else{
+        const unsigned idx=AddTimeValue(t,sxml->GetAttributeDouble(elet,attr[1],OptionalValues));
+        for(unsigned ca=1;ca<Nvalues;ca++)SetValue(idx,ca,sxml->GetAttributeDouble(elet,attr[ca+1],OptionalValues));
+        }
+        elet=elet->NextSiblingElement(subname.c_str());
       }
     }
   }
