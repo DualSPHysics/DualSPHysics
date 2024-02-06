@@ -1655,13 +1655,24 @@ int MkdirPath(std::string path){
 
 
 //==============================================================================
-/// Returns the parent directory with its path.
+/// Returns the parent directory with its path. E.g. /saa/file.x  -->  /saa
 //==============================================================================
-std::string GetDirParent(const std::string& ruta){
+std::string GetDirParent(const std::string& fullfile){
   std::string dir;
-  int pos=int(ruta.find_last_of("/"));
-  if(pos<=0)pos=int(ruta.find_last_of("\\"));
-  if(pos>0)dir=ruta.substr(0,pos);
+  int pos=int(fullfile.find_last_of("/"));
+  if(pos<=0)pos=int(fullfile.find_last_of("\\"));
+  if(pos>0)dir=fullfile.substr(0,pos);
+  return(dir);
+}
+
+//==============================================================================
+/// Returns the path of file or directory. E.g. /saa/file.x  -->  /saa/
+//==============================================================================
+std::string GetParentPath(const std::string& fullfile){
+  std::string dir;
+  int pos=int(fullfile.find_last_of("/"));
+  if(pos<0)pos=int(fullfile.find_last_of("\\"));
+  if(pos>=0)dir=fullfile.substr(0,pos+1);
   return(dir);
 }
 

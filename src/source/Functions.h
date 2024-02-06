@@ -100,6 +100,7 @@
 //:# - Nuevas funciones StrFillBegin(), StrFillEnd().  (08-05-2022)
 //:# - Nuevas funciones GetDateTimet(),GetDateValuesDMY(). (02-08-2022)
 //:# - Nuevas funciones KnumStr(),KintStr(). (10-08-2023)
+//:# - Nuevas funcion GetParentPath(). (27-01-2024)
 //:#############################################################################
 
 /// \file Functions.h \brief Declares basic/general functions for the entire application.
@@ -366,7 +367,8 @@ std::string GetCurrentDir();
 int Mkdir(const std::string& dirname);
 int MkdirPath(std::string path);
 
-std::string GetDirParent(const std::string& ruta);
+std::string GetDirParent(const std::string& fullfile);
+std::string GetParentPath(const std::string& fullfile);
 std::string GetCanonicalPath(std::string pathbase,std::string path);
 std::string GetPathLevels(std::string path,unsigned levels);
 std::string GetFile(const std::string& ruta);
