@@ -44,7 +44,6 @@
 //:# - Con la opcion OptionalValues los valores que falten del XML se leen como 
 //:#   cero. No es compatible con la opcion SpecialValues. (24-04-2020)
 //:# - Nuevos metodos RnSetValues(). (05-09-2020)
-//:# - Nuevo metodo ReadXmlValuesEle(). (22-03-2022)
 //:# - Nuevos metodos ConfigLoopTime() para definir bucle de tiempo. (04-08-2022)
 //:# - Error corregido en GetValue() y GetValue3d() con valores none. (12-06-2023)
 //:# - Nuevos metodos GetValue3fArray() y GetValue3dArray(). (06-02-2024)
@@ -166,8 +165,6 @@ public:
 #ifdef JLinearValue_UseJXml
   void ReadXmlValues(const JXml* sxml,TiXmlElement* ele,std::string name
     ,std::string subname,std::string attributes);
-  void ReadXmlValuesEle(const JXml* sxml,TiXmlElement* ele,std::string subname
-    ,std::string attributes);
   TiXmlElement* WriteXmlValues(JXml* sxml,TiXmlElement* ele,std::string name
     ,std::string subname,std::string attributes)const;
 #endif

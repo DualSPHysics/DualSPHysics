@@ -606,43 +606,6 @@ void JLinearValue::ReadXmlValues(const JXml* sxml,TiXmlElement* ele
 }
 
 //==============================================================================
-/// Reads data from XML.
-/// Lee datos del XML.
-//==============================================================================
-void JLinearValue::ReadXmlValuesEle(const JXml* sxml,TiXmlElement* ele
-  ,std::string subname,std::string attributes)
-{
-  Reset();
-  if(ele){
-    File=sxml->GetAttributeStr(ele,"file",true);
-    if(File.empty()){
-      vector<string> attr;
-      if(fun::VectorSplitStr(":",attributes,attr)!=Nvalues+1)Run_Exceptioon("Number of values does not match.");
-      SetSize(sxml->CountElements(ele,subname));
-      TiXmlElement* elet=ele->FirstChildElement(subname.c_str()); 
-      while(elet){
-        double t=sxml->GetAttributeDouble(elet,attr[0]); //-Reads time.
-        if(SpecialValues){
-        unsigned idx=UINT_MAX;
-        for(unsigned ca=0;ca<Nvalues;ca++){
-            double v=0;
-            if(fun::StrLower(sxml->GetAttributeStr(elet,attr[ca+1],true))=="none")v=DBL_MAX;
-            else v=sxml->GetAttributeDouble(elet,attr[ca+1],true,DBL_MAX);
-            if(idx==UINT_MAX)idx=AddTimeValue(t,v);
-            else SetValue(idx,ca,v);
-        }
-        }
-        else{
-        const unsigned idx=AddTimeValue(t,sxml->GetAttributeDouble(elet,attr[1],OptionalValues));
-        for(unsigned ca=1;ca<Nvalues;ca++)SetValue(idx,ca,sxml->GetAttributeDouble(elet,attr[ca+1],OptionalValues));
-        }
-        elet=elet->NextSiblingElement(subname.c_str());
-      }
-    }
-  }
-}
-
-//==============================================================================
 /// Writes data on XML.
 /// Escribe datos en XML.
 //==============================================================================
