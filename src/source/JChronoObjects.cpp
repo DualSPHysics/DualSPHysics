@@ -330,7 +330,6 @@ void JChronoObjects::ReadXml(const JXml* sxml,TiXmlElement* lis){
         if(fun::StrUpper(mfilebase)=="AUTODP"     && Ptr_VtkSimple_AutoDp    ==NULL)LoadPtrAutoDp    (sxml,xmlrow);
         tnormal=ReadXmlModelNormal(sxml,ele);
         if(!mfilebase.empty())CollisionShapes+=CreateObjFiles(idnamebase,mkbounds,DirData,mfilebase,byte(tnormal),diroutobj,xmlrow);
-        else Run_Exceptioon(fun::PrintStr("The shape of the body \'%s\' (mkbound=%s) is missing.",idnamebase,rg.ToString()));
         imposefric=sxml->GetAttributeBool(ele,"imposefric",true,false);
       }
       //-Creates a body object for each MK value in mkbounds[].
