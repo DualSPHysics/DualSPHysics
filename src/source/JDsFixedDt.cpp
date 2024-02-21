@@ -79,7 +79,7 @@ unsigned JDsFixedDt::GetAllocMemory()const{
 }
 
 //==============================================================================
-/// Loads values of dt (MILISECONDS) for different instants (in SECONDS).
+/// Loads values of dt (MILLISECONDS) for different instants (in SECONDS).
 //==============================================================================
 void JDsFixedDt::LoadFile(std::string file){
   Reset();

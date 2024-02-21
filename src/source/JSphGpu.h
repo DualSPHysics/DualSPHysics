@@ -82,7 +82,7 @@ protected:
   //-Numero de particulas del dominio.
   unsigned Np;        ///<Total number of particles (including duplicate periodic particles). | Numero total de particulas (incluidas las duplicadas periodicas). 
   unsigned Npb;       ///<Number of boundary particles (including periodic boundaries). | Numero de particulas contorno (incluidas las contorno periodicas). 
-  unsigned NpbOk;     ///<Number of boundary particles interacting the fluid (including the periodic bounaries). | Numero de particulas contorno cerca del fluido (incluidas las contorno periodicas). 
+  unsigned NpbOk;     ///<Number of boundary particles interacting the fluid (including the periodic boundaries). | Numero de particulas contorno cerca del fluido (incluidas las contorno periodicas). 
 
   unsigned NpfPer;    ///<Number of periodic particles (fluid-floating). | Numero de particulas fluidas-floating periodicas. 
   unsigned NpbPer;    ///<Number of periodic boundary particles. | Numero de particulas contorno periodicas. 
@@ -126,7 +126,7 @@ protected:
   aguint*     Dcell_g;   ///<Cells inside DomCells coded with DomCellCode.
   agdouble2*  Posxy_g;
   agdouble*   Posz_g;
-  agfloat4*   PosCell_g; ///<Relative position and cell coordiantes for particle interaction {posx,posy,posz,cellxyz}
+  agfloat4*   PosCell_g; ///<Relative position and cell coordinates for particle interaction {posx,posy,posz,cellxyz}
   agfloat4*   Velrho_g;
 
   //-Variables for mDBC (Opt).

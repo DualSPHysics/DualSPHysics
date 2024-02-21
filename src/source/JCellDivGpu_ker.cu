@@ -356,7 +356,7 @@ template <unsigned blockSize> __device__ void KerLimitsCellRedu(unsigned cellcod
 }
 
 //------------------------------------------------------------------------------
-/// Computes minimum and maximum postion startibg from the results of KerPosLimit.
+/// Computes minimum and maximum position startibg from the results of KerPosLimit.
 /// Calcula posicion minima y maxima a partir de los resultados de KerPosLimit.
 //------------------------------------------------------------------------------
 template <unsigned int blockSize> __global__ void KerLimitsCellReduBase(
@@ -424,7 +424,7 @@ void LimitsCellRedu(unsigned cellcode,unsigned nblocks,unsigned* aux
 }
 
 //------------------------------------------------------------------------------
-/// Computes minimun and maximum cell for valid particles.
+/// Computes minimum and maximum cell for valid particles.
 /// The excluded particles are already marked in code[].
 /// In case of having no valid particles the minimum value igreater than the maximum.
 /// In results[], each block stores cxmin,cymin,czmin,cxmax,cymax,czmax encodes
@@ -474,7 +474,7 @@ template <unsigned int blockSize> __global__ void KerLimitsCell(unsigned n
 }
 
 //==============================================================================
-/// Computes minimun and maximum cell for valid particles.
+/// Computes minimum and maximum cell for valid particles.
 /// The excluded particles are already marked in code[].
 /// In case of having no valid particles the minimum value igreater than the maximum.
 /// In results[], each block stores cxmin,cymin,czmin,cxmax,cymax,czmax encodes

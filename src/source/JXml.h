@@ -82,7 +82,7 @@ class JXml : protected JObject
 {
 public:
   TiXmlDocument* Doc;       ///<Pointer at the xml document.
-  std::string FileReading;  ///<File to read the xml docuemnt.
+  std::string FileReading;  ///<File to read the xml document.
   JNumx* NuxLib;            ///<Pointer to JNumexLib object.
 
 
@@ -256,7 +256,7 @@ public:
   void CheckElementNames(const TiXmlElement* lis,bool checkrepeated,std::string names)const;
 
   //==============================================================================
-  /// Checks if some or several attributes appers in the element. Returns number
+  /// Checks if some or several attributes appears in the element. Returns number
   /// of found attribute (1...n), 0 none found and -1 several found.
   /// \param ele Xml element of the error.
   /// \param names Names of the requested attributes separated by by spaces.
@@ -294,7 +294,7 @@ public:
   bool ExistsAttribute(const TiXmlElement* ele,const std::string& name)const;
 
   //==============================================================================
-  /// Checks if some or several attributes appers in the element. Returns number
+  /// Checks if some or several attributes appears in the element. Returns number
   /// of found attribute (1...n), 0 none found and -1 several found.
   /// \param ele Xml element of the error.
   /// \param names Names of the requested attributes separated by by spaces.
@@ -303,7 +303,7 @@ public:
   int CheckAttributes(const TiXmlElement* ele,std::string names,bool checkmanyatt)const;
 
   //==============================================================================
-  /// Checks if some or several attributes appers in the element. Returns number
+  /// Checks if some or several attributes appears in the element. Returns number
   /// of found attribute (1...n), 0 none found and -1 several found.
   /// \param lis List of Xml elements of the error.
   /// \param elementname Name of the requested element.

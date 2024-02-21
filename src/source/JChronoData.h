@@ -20,7 +20,7 @@
 //:# - Clase creada para almacenar la configuracion de los distintos cuerpos y
 //:#   sus uniones para usar con Chrono. (05-05-2016).
 //:# - Nuevo enumerado para elegir el tipo de Solver (23-12-2019).
-//:# - Funcions para incorporar los parametros Young's Modulus y Poisson Ration 
+//:# - Funciones para incorporar los parametros Young's Modulus y Poisson Ration 
 //:#   a los objetos de Chrono (16-01-2020).
 //:# - Nuevo objeto link_pulley (24-02-2020).
 //:# - Nuevo objeto link_coulombdamping (27-02-2020).

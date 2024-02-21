@@ -183,7 +183,7 @@ void JMotion::MovAdd(unsigned objid,JMotionMov* mov){
 // Incorpora un tiempo de espera
 //==============================================================================
 void JMotion::MovAddWait(unsigned objid,unsigned id,unsigned nextid,double time){
-  if(time<0)Run_Exceptioon("Wating times lenght lower than zero are not allowed.");
+  if(time<0)Run_Exceptioon("Waiting times length lower than zero are not allowed.");
   MovAdd(objid,new JMotionMovWait(id,nextid,time));
 }
 //==============================================================================

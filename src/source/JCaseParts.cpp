@@ -315,8 +315,8 @@ TiXmlElement* JCasePartBlock_Floating::WriteXml(JXml* sxml,TiXmlElement* ele)con
   else sxml->AddAttribute(sxml->AddElementDouble3(ele,"inertia",TDouble3(Inertia.a11,Inertia.a22,Inertia.a33)),"units_comment","kg*m^2");
 #endif
   //-Writes motion data.
-  if(TranslationFree!=TInt3(1))JXml::AddAttribute(sxml->AddElementInt3(ele,"translationDOF",TranslationFree),"comment","Use 0 to restrict Degrees Of Freedon for translation (default=(1,1,1))");
-  if(RotationFree   !=TInt3(1))JXml::AddAttribute(sxml->AddElementInt3(ele,"rotationDOF"   ,RotationFree   ),"comment","Use 0 to restrict Degrees Of Freedon for rotation (default=(1,1,1))");
+  if(TranslationFree!=TInt3(1))JXml::AddAttribute(sxml->AddElementInt3(ele,"translationDOF",TranslationFree),"comment","Use 0 to restrict Degrees Of Freedom for translation (default=(1,1,1))");
+  if(RotationFree   !=TInt3(1))JXml::AddAttribute(sxml->AddElementInt3(ele,"rotationDOF"   ,RotationFree   ),"comment","Use 0 to restrict Degrees Of Freedom for rotation (default=(1,1,1))");
   if(LinearVelini !=TDouble3(0))JXml::AddAttribute(sxml->AddElementDouble3(ele,"linearvelini" ,LinearVelini),"units_comment","m/s");
   if(AngularVelini!=TDouble3(0))JXml::AddAttribute(sxml->AddElementDouble3(ele,"angularvelini",AngularVelini),"units_comment","rad/s");
 #ifdef JCaseParts_UseLinearv

@@ -24,7 +24,7 @@
 //:# - GetNextTime() guarda entrada y salida para evitar calculos con llamadas 
 //:#   consecutivas iguales. (29-08-2019)
 //:# - Objeto JXml pasado como const para operaciones de lectura. (18-03-2020)  
-//:# - Improved exception managment. (18-03-2020)
+//:# - Improved exception management. (18-03-2020)
 //:# - Comprueba opcion active en elementos de primer y segundo nivel. (19-03-2020)  
 //:# - Cambio de nombre de J.TimeOut a J.DsOutputTime. (28-06-2020)
 //:# - Elimina uso interno de JLog. (06-12-2020)

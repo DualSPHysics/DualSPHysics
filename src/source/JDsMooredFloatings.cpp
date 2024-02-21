@@ -260,7 +260,7 @@ void JDsMooredFloatings::Config(unsigned ftcount,const StFloatingData* ftdata
   
   //-Initilizes MoorDyn moorings.
   {
-    //-Prepares data to initilize moorings.
+    //-Prepares data to initialize moorings.
     unsigned* ftmkb=new unsigned[nftm];
     tdouble3* ftvellin=new tdouble3[nftm];
     tdouble3* ftvelang=new tdouble3[nftm];

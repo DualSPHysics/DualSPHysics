@@ -281,7 +281,7 @@ inline float GetKernel_Factor(TpKernel tker){
 
 
 //##############################################################################
-//# Computes kernel values usig templates.
+//# Computes kernel values using templates.
 //##############################################################################
 //============================================================================== 
 /// Returns the kernel (wab) according to temaplate.

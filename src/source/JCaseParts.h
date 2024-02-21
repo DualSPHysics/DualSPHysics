@@ -24,7 +24,7 @@
 //:# - Nuevos metodos LoadFileXml() y SaveFileXml() para cargar o generar un
 //:#   fichero xml de forma directa. (27-11-2010)
 //:# - Se guarda el Mk absoluto para cada bloque de particulas para facilitar
-//:#   su utilizacion en herramientas de postprocesing. (21-01-2011)
+//:#   su utilizacion en herramientas de postprocessing. (21-01-2011)
 //:# - Se anhadieron dos nuevas variables para los floating bodies: Velini y 
 //:#   Omegaini. (25-01-2011)
 //:# - Cambio de nombre, de JParticles a J.SpaceParts. (09-02-2012)

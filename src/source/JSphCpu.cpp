@@ -170,7 +170,7 @@ void JSphCpu::FreeCpuMemoryParticles(){
 }
 
 //==============================================================================
-/// Allocte memory on CPU for the particles. 
+/// Allocate memory on CPU for the particles. 
 /// Reserva memoria en CPU para las particulas. 
 //==============================================================================
 void JSphCpu::AllocCpuMemoryParticles(unsigned np){
@@ -1142,7 +1142,7 @@ template<TpKernel tker,bool sim2d,TpSlipMode tslip> void JSphCpu::InteractionMdb
 		tfloat3 normal; // creating a normailsed boundary normal
 		normal.x = fabs(boundnor[p1].x )/ norm; normal.y = fabs(boundnor[p1].y) / norm; normal.z = fabs(boundnor[p1].z) / norm;
 		
-		// finding the velocity componants normal and tangential to boundary 
+		// finding the velocity components normal and tangential to boundary 
 		tfloat3 normvel = TFloat3(velrhofinal.x*normal.x, velrhofinal.y*normal.y, velrhofinal.z*normal.z); // velocity in direction of normal pointin ginto fluid)
 		tfloat3 tangvel = TFloat3(velrhofinal.x - normvel.x, velrhofinal.y - normvel.y, velrhofinal.z - normvel.z); // velocity tangential to normal
 		
@@ -1150,7 +1150,7 @@ template<TpKernel tker,bool sim2d,TpSlipMode tslip> void JSphCpu::InteractionMdb
 			tfloat3 normmot = TFloat3(v.x*normal.x, v.y*normal.y, v.z*normal.z); // boundary motion in direction normal to boundary 
 			FSVelFinal = TFloat3(normmot.x+normmot.x-normvel.x, normmot.y + normmot.y -normvel.y, normmot.z + normmot.z -normvel.z);
 			// only velocity in normal direction for no-penetration
-			// fluid sees zero velocity in the tangetial direction
+			// fluid sees zero velocity in the tangential direction
 		}
 		else {
 			FSVelFinal = TFloat3(tangvel.x - normvel.x, tangvel.y - normvel.y, tangvel.z - normvel.z);
@@ -1520,7 +1520,7 @@ void JSphCpu::ComputeSymplecticCorr(double dt){
   const int npb=int(Npb);
   const int npf=np-npb;
   
-  //-Calculate rho of boudary and set velocity=0. | Calcula rho de contorno y vel igual a cero.
+  //-Calculate rho of boundary and set velocity=0. | Calcula rho de contorno y vel igual a cero.
   {
     const float*   arc=Ar_c->cptr();
     const tfloat4* velrhoprec=VelrhoPre_c->cptr();

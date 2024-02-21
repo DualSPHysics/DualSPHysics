@@ -300,7 +300,7 @@ void JRelaxZoneMeshdataExt::SetFluidVelOmp(double timestep,unsigned n,unsigned p
 {
 }
 //==============================================================================
-/// Initilise rzid[]=0 (for GPU).
+/// Initialise rzid[]=0 (for GPU).
 //==============================================================================
 void JRelaxZoneMeshdataExt::InitFindGpu(unsigned n,unsigned pini,byte* rzid)
 {

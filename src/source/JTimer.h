@@ -63,7 +63,7 @@ public:
   void Reset(){ Started=Stopped=false; CounterIni.QuadPart=0; CounterEnd.QuadPart=0; }
   void Start(){ Stopped=false; QueryPerformanceCounter(&CounterIni); Started=true; }
   void Stop(){ if(Started){ QueryPerformanceCounter(&CounterEnd); Stopped=true; } }
-  //-Returns time in miliseconds.
+  //-Returns time in milliseconds.
   float GetElapsedTimeF()const{ return((float(GetElapsed().QuadPart)*float(1000))/float(Freq.QuadPart)); }
   double GetElapsedTimeD()const{ return((double(GetElapsed().QuadPart)*double(1000))/double(Freq.QuadPart)); }
 };
@@ -96,7 +96,7 @@ public:
   void Reset(){ Started=Stopped=false; CounterIni.tv_sec=0; CounterIni.tv_usec=0; CounterEnd.tv_sec=0; CounterEnd.tv_usec=0; }
   void Start(){ Stopped=false; gettimeofday(&CounterIni,NULL); Started=true; }
   void Stop(){if(Started){ gettimeofday(&CounterEnd,NULL); Stopped=true; } }
-  //-Returns time in miliseconds.
+  //-Returns time in milliseconds.
   float GetElapsedTimeF()const{ 
     return((CounterEnd.tv_sec-CounterIni.tv_sec)*1000+(float(CounterEnd.tv_usec)/1000.f)-(float(CounterIni.tv_usec)/1000.f));
   }

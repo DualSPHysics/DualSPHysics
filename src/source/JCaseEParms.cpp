@@ -91,7 +91,7 @@ void JCaseEParms::SetValue(const std::string& key,const std::string& value){
 }
 
 //==============================================================================
-/// Modifies the coment of a pre-existing value.
+/// Modifies the comment of a pre-existing value.
 //==============================================================================
 void JCaseEParms::SetComment(const std::string& key,const std::string& comment){
   JCaseEParmsItem* item=GetItemPointer(key);
@@ -431,7 +431,7 @@ void JCaseEParms::WriteXml(JXml* sxml,TiXmlElement* lis)const{
     lis->InsertEndChild(item);
   }
   //-Defines simulation domain.
-  TiXmlElement* dom=sxml->AddElementAttrib(lis,"simulationdomain","comment","Defines domain of simulation (default=Uses minimun and maximum position of the generated particles)");
+  TiXmlElement* dom=sxml->AddElementAttrib(lis,"simulationdomain","comment","Defines domain of simulation (default=Uses minimum and maximum position of the generated particles)");
   TiXmlElement* pmin=sxml->AddElementAttrib(dom,"posmin","x",Posminx);
   sxml->AddAttribute(pmin,"y",Posminy);
   sxml->AddAttribute(pmin,"z",Posminz);

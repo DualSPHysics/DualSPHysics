@@ -443,7 +443,7 @@ llong JSphGpu::GetAllocMemoryGpu()const{
   if(Arrays_Gpu)s+=Arrays_Gpu->GetAllocMemoryGpu();
   //-Allocated in AllocGpuMemoryFixed().
   s+=MemGpuFixed;
-  //-Allocated in ther objects.
+  //-Allocated in their objects.
   if(MLPistons)s+=MLPistons->GetAllocMemoryGpu();
   return(s);
 }

@@ -190,7 +190,7 @@ void JSphGpuSingle::ConfigDomain(){
   //-Sets local domain of the simulation within Map_Cells and computes DomCellCode.
   //-Establece dominio de simulacion local dentro de Map_Cells y calcula DomCellCode.
   SelecDomain(TUint3(0,0,0),Map_Cells);
-  //-Computes inital cell of the particles and checks if there are unexpected excluded particles.
+  //-Computes initial cell of the particles and checks if there are unexpected excluded particles.
   //-Calcula celda inicial de particulas y comprueba si hay excluidas inesperadas.
   LoadDcellParticles(Np,Code_c->cptr(),AuxPos_c->cptr(),Dcell_c->ptr());
 
@@ -309,7 +309,7 @@ void JSphGpuSingle::RunPeriodic(){
           const unsigned count=cusph::PeriodicMakeList(num2,pini2,Stable
             ,nmax,Map_PosMin,Map_PosMax,perinc,Posxy_g->cptr()
             ,Posz_g->cptr(),Code_g->cptr(),listpg.ptr());
-          //-Resizes the allocated memory for the particles if there is not sufficient space and repeats the serach process.
+          //-Resizes the allocated memory for the particles if there is not sufficient space and repeats the search process.
           //-Redimensiona memoria para particulas si no hay espacio suficiente y repite el proceso de busqueda.
           if(count>nmax || !CheckGpuParticlesSize(count+Np)){
             listpg.Free(); //-Avoids unnecessary copying of its data during resizing.

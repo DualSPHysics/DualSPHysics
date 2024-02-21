@@ -106,7 +106,7 @@ void JDsMotion::Init(const JCaseParts* parts,JXml* jxml,const std::string& path
 }
 
 //==============================================================================
-/// Returns Idx of requested moving object accoring to MkBound.
+/// Returns Idx of requested moving object according to MkBound.
 /// Returns UINT_MAX when it was not found.
 //==============================================================================
 unsigned JDsMotion::GetObjIdxByMkBound(word mkbound)const{
