@@ -390,8 +390,9 @@ tfloat3* JLinearValue::GetValue3fArray(double timestep,const unsigned size){
 
   const tdouble3* dblval=GetValue3dArray(timestep,size);
   for(unsigned v=0;v<size;v++)
-    fltval[v]=TFloat3((dblval[v].x==DBL_MAX? FLT_MAX: float(dblval[v].x)),(dblval[v].y==DBL_MAX? FLT_MAX: float(dblval[v].y)),(dblval[v].z==DBL_MAX? FLT_MAX: float(dblval[v].z)));
-  
+    fltval[v]=TFloat3((dblval[v].x==DBL_MAX? FLT_MAX: float(dblval[v].x)),
+                      (dblval[v].y==DBL_MAX? FLT_MAX: float(dblval[v].y)),
+                      (dblval[v].z==DBL_MAX? FLT_MAX: float(dblval[v].z)));
   return (fltval);
 }
 
@@ -410,7 +411,7 @@ tfloat3* JLinearValue::GetValue3fArray(double timestep,const unsigned size){
 //==============================================================================
 tdouble3* JLinearValue::GetValue3dArray(double timestep,const unsigned size){
   //-Check the size sent is equals than NValues/3
-  if(size!=Nvalues/3) Run_Exceptioon(fun::PrintStr("Expected size is %d but the size sent is %d.",Nvalues/3,size));
+  if(size!=Nvalues/3)Run_Exceptioon(fun::PrintStr("Expected size is %d but the size sent is %d.",Nvalues/3,size));
   //-Allocate memory for the array and iniialise it
   tdouble3 *dblval=new tdouble3[size];
   memset(dblval,0,sizeof(tdouble3)*size);

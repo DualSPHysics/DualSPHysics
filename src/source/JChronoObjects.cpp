@@ -540,7 +540,7 @@ void JChronoObjects::ReadScaleForces(const JXml* sxml,TiXmlElement* lis){
     std::string cmd=ele->Value();
     if(cmd.length()&&cmd[0]!='_' && sxml->CheckElementActive(ele)){
       if(cmd=="body"){
-        const tfloat3 scaleforce=sxml->GetAttributeFloat3Def(ele,"x","y","z",true,TFloat3(FLT_MAX)); //-Get the vector to scale force. | Coge el vector para escalar fuerzas.
+        const tfloat3 scaleforce=sxml->GetAttributeFloat3Def0(ele,"x","y","z",true,TFloat3(FLT_MAX)); //-Get the vector to scale force. | Coge el vector para escalar fuerzas.
         //-Read the mkbound values.
         //-Lee los valores de mkbound.
         std::vector<unsigned> mkbounds;

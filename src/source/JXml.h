@@ -52,6 +52,7 @@
 //:# - Mejora en CheckElementActive(lis,name). Ahora devuelve false cuando no existe name. (03-09-2020)
 //:# - Usa GetDateTime() de Functions.h ya que actualmente esa cabecera esta incluida. (20-11-2020)
 //:# - Funciones GetAttributeFloat3Def() y GetAttributeDouble3Def que permiten incluir valores por defecto. (21-03-2022)
+//:# - Funciones GetAttributeFloat3Def0() y GetAttributeDouble3Def0 usan 0 como valor por defecto en lugar de FLT_MAX. (21-03-2022)
 //:#############################################################################
 
 /// \file JXml.h \brief Declares the class \ref JXml.
@@ -64,7 +65,6 @@
 #include "tinyxml.h"
 #include "JNumexLibDef.h"   //Defines DISABLE_NUMEXLIB to compile without Numex library.
 #include <string>
-#include <float.h>
 
 #ifndef DISABLE_NUMEXLIB
   class JNumexLib;
@@ -459,14 +459,9 @@ public:
   tfloat3 GetAttributeFloat3(const TiXmlElement* ele,const char* name1="x"
     ,const char* name2="y",const char* name3="z")const
   { 
-    tdouble3 v=GetAttributeDouble3(ele,name1,name2,name3);
-    return(TFloat3(float(v.x),float(v.y),float(v.z))); 
+    const tdouble3 v=GetAttributeDouble3(ele,name1,name2,name3);
+    return(ToTFloat3(v));
   }
-
-  //==============================================================================
-  /// Calls \ref GetAttributeDouble3() with the same parameters.
-  //==============================================================================
-  tfloat3 GetAttributeFloat3Def(TiXmlElement* ele,const char* name1="x",const char* name2="y",const char* name3="z",bool optional=false,tfloat3 valdef=TFloat3(FLT_MAX))const{ tdouble3 v=GetAttributeDouble3Def(ele,name1,name2,name3,optional,valdef); return(TFloat3(float(v.x),float(v.y),float(v.z))); }
   
   //==============================================================================
   /// Checks and returns value of type double3 of the xml element.
@@ -484,6 +479,17 @@ public:
   }
 
   //==============================================================================
+  /// Calls \ref GetAttributeDouble3() with the same parameters.
+  //==============================================================================
+  tfloat3 GetAttributeFloat3Def0(TiXmlElement* ele,const char* name1="x"
+    ,const char* name2="y",const char* name3="z",bool optional=false
+    ,tfloat3 valdef=TFloat3(0))const
+  { 
+    const tdouble3 v=GetAttributeDouble3Def0(ele,name1,name2,name3,optional,ToTDouble3(valdef));
+    return(ToTFloat3(v));
+  }
+
+  //==============================================================================
   /// Checks and returns value of type double3 of the xml element.
   /// \param ele Xml element to read.
   /// \param name1 Name of the first attribute (x by default).
@@ -493,7 +499,14 @@ public:
   /// \param valdef Value by default if it does not exist and \a optional was activated.
   /// \throw JException Format not valid for the requested type...
   //==============================================================================
-  tdouble3 GetAttributeDouble3Def(TiXmlElement* ele,const char* name1="x",const char* name2="y",const char* name3="z",bool optional=false,tfloat3 valdef=TFloat3(FLT_MAX))const{ return(TDouble3(GetAttributeDouble(ele,name1,optional,valdef.x),GetAttributeDouble(ele,name2,optional,valdef.y),GetAttributeDouble(ele,name3,optional,valdef.z))); }
+  tdouble3 GetAttributeDouble3Def0(TiXmlElement* ele,const char* name1="x"
+    ,const char* name2="y",const char* name3="z",bool optional=false
+    ,tdouble3 valdef=TDouble3(0))const
+  { 
+    return(TDouble3(GetAttributeDouble(ele,name1,optional,valdef.x)
+                   ,GetAttributeDouble(ele,name2,optional,valdef.y)
+                   ,GetAttributeDouble(ele,name3,optional,valdef.z)));
+  }
 
   //- Reading complete nodes.
 

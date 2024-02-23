@@ -1,4 +1,4 @@
-#DualSPHysics GPU/CPU v5.3.304 01-12-2023
+#DualSPHysics GPU/CPU v5.4.316 21-02-2024
 
 #=============== Compilation Options (YES/NO) ===============
 USE_DEBUG=NO
@@ -13,7 +13,7 @@ COMPILE_MOORDYN=YES
 LIBS_DIRECTORIES=-L./
 LIBS_DIRECTORIES:=$(LIBS_DIRECTORIES) -L../lib/linux_gcc
 
-EXECNAME=DualSPHysics5.3_linux64
+EXECNAME=DualSPHysics5.4_linux64
 EXECS_DIRECTORY=../../bin/linux
 
 # -std=c++0x ---> Used to avoid errors for calls to enums
