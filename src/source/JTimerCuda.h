@@ -60,7 +60,7 @@ public:
     cudaEventSynchronize(EventEnd);
     Stopped=true;
   }
-  //-Returns time in miliseconds.
+  //-Returns time in milliseconds.
   float GetElapsedTimeF(){ 
     float elapsed=0; if(Stopped&&EventIni&&EventEnd)cudaEventElapsedTime(&elapsed,EventIni,EventEnd);
     return(elapsed); 

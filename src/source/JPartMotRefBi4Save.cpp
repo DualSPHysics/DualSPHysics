@@ -220,7 +220,7 @@ JBinaryData* JPartMotRefBi4Save::MakeBdPartSingle(int cpart,double timestep
 }
 
 //==============================================================================
-/// Adds datas to BdPart object.
+/// Adds data to BdPart object.
 //==============================================================================
 JBinaryData* JPartMotRefBi4Save::MakeBdPartArray(int cpart){
   //-Configures item Part.

@@ -300,7 +300,7 @@ void JRelaxZoneMeshdataExt::SetFluidVelOmp(double timestep,unsigned n,unsigned p
 {
 }
 //==============================================================================
-/// Initilise rzid[]=0 (for GPU).
+/// Initialise rzid[]=0 (for GPU).
 //==============================================================================
 void JRelaxZoneMeshdataExt::InitFindGpu(unsigned n,unsigned pini,byte* rzid)
 {
@@ -315,7 +315,8 @@ void JRelaxZoneMeshdataExt::FindFluidVelGpu(unsigned n,unsigned pini
   ,const tfloat4& cenpla,const tfloat4& dompla1
   ,const tfloat4& dompla2,const tfloat4& dompla3
   ,const float domsize1,const float domsize2,const float domsize3
-  ,float widthhalf,float coeff,double falpha,double fbeta,double fsub
+  ,const tfloat3& borderdmp,float widthhalf,float coeff
+  ,double falpha,double fbeta,double fsub
   ,double fdiv,unsigned fluidbeginidp
   ,const tdouble2* posxy,const double* posz,const unsigned* idp
   ,byte* rzid,float* rzfactor)

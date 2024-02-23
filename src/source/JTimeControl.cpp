@@ -38,7 +38,7 @@ JTimeControl::JTimeControl(double tout){
 
 //==============================================================================
 /// Constructor for periodic evaluation using an initial time.
-/// Constructor para evaluacion periodica con un instane inicial.
+/// Constructor para evaluacion periodica con un instante inicial.
 //==============================================================================
 JTimeControl::JTimeControl(double tfirst,double tout){
   ClassName="JTimeControl";

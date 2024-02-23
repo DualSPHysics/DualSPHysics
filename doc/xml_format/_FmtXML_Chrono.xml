@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<!-- *** DualSPHysics [Chrono] v5.0.226 (24-02-2022) *** -->
+<!-- *** DualSPHysics [Chrono] v5.3.313 (09-02-2024) *** -->
 <!-- *** class: JChronoObjects *** -->
 <!------------------------------------------------------------------------------->
 <!------------------------------------------------------------------------------->
@@ -32,11 +32,6 @@
 		<chrono>
 			<savedata value="-1" comment="Saves CSV with data exchange for each time interval (0=all steps)" />
 			<schemescale value="1" comment="Scale used to create the initial scheme of Chrono objects (default=1)" />
-			<!-- Enable the use of a coefficient to scale the forces of each object -->	
-			<scaleforce>
-				<body mkbound="1" x="0.01" y="1" z="1" comment="Scale forces in all directions. (default=1,1,1)"/>
-				<body mkbound="2-4" x="0.02" y="1" z="1" comment="Scale forces in all directions. (default=1,1,1)"/>
-			</scaleforce>
 			<!-- Enable collisions for chrono -->
 			<collision activate="true">
 				<distancedp value="0.5" comment="Allowed collision overlap according Dp (default=0.5)" />
@@ -174,6 +169,24 @@
 	<!-- option may effect the results of the simulation.							   -->
 	<bodyfixed id="domain" mkbound="10" modelfile="AutoActual" modelnormal="invert" />
 </chrono>
+
+<!------------------------------------------------------------------------->
+<!------------------------------------------------------------------------->
+<!-- *** Attribute "scaleforce" in elements <bodyfloating> to enable *** --> 
+<!-- *** the use of a coefficient to scale the forces of each object.*** -->
+<!-- *** The scale factor will be multipled by the fluid force       *** -->
+<scaleforce>
+	<body mkbound="1" x="0.01" y="1" z="1" comment="Scale forces in all directions."/>
+	<body mkbound="2-4" x="0.02" y="1" z="1" comment="Scale forces in all directions."/>
+	<body mkbound="5" file="ScaleForce.csv" comment="Scale forces in all directions."/>
+	<body mkbound="5" comment="Scale forces in all directions.">
+		<scale time="0" x="0.01" y="1" z="1"/>
+		<scale time="5" x="0.5" y="1" z="1"/>
+		<scale time="5" x="0.8" y="1" z="1"/>
+		<scaletime="10" x="1" y="1" z="0.5"/>
+	</body>
+</scaleforce>
+
 <!----------------------------------------------------------------------------------------->
 <!----------------------------------------------------------------------------------------->
 <!-- *** Attribute "active" in elements <chrono>, <bodyXXX> and <link_XXX> to enable *** --> 

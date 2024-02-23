@@ -2337,7 +2337,7 @@ bool JBinaryData::ExistsValue(const std::string& name)const{
 
 //==============================================================================
 /// Indica si existe el value solicitado del tipo indicado.
-/// It indicates the existance of the requested value of the type.
+/// It indicates the existence of the requested value of the type.
 //==============================================================================
 bool JBinaryData::ExistsValue(const std::string& name
   ,JBinaryDataDef::TpData type)const

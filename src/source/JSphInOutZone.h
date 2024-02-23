@@ -101,8 +101,8 @@ private:
   tdouble3 Direction;      ///<Inflow direction.
   tdouble3 PtPlane;        ///<Position to create inlet plane.
   tplane3f Plane;          ///<Inlet plane.
-  unsigned NptInit;        ///<Number of inout points at the begining (first layer).
-  unsigned NpartInit;      ///<Number of inout particles at the begining.
+  unsigned NptInit;        ///<Number of inout points at the beginning (first layer).
+  unsigned NpartInit;      ///<Number of inout particles at the beginning.
 
   //-Configuration of velocity, zsurf and density.
   TpInVelMode VelMode;         ///<Inflow velocity mode (fixed or variable).

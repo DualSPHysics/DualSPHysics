@@ -40,7 +40,7 @@ class JNumex;
 //##############################################################################
 //# JNumexLib
 //##############################################################################
-/// \brief Implements library to evalute user-defined expressions.
+/// \brief Implements library to evaluate user-defined expressions.
 
 #ifdef DISABLE_NUMEXLIB
 #include "JNumexLibUndef.h"

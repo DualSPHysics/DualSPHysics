@@ -95,8 +95,8 @@ public:
 
 protected:
   bool OnlyPos;         ///<Activate filter according to position.
-  tdouble3 OnlyPosMin;  ///<Minimum positon for filtering.
-  tdouble3 OnlyPosMax;  ///<Maximum positon for filtering.
+  tdouble3 OnlyPosMin;  ///<Minimum position for filtering.
+  tdouble3 OnlyPosMax;  ///<Maximum position for filtering.
   unsigned NpUpdated;   ///<Number of updated particles.
   unsigned NpTotal;     ///<Total number of particles.
 public:
@@ -189,8 +189,8 @@ class JDsInitializeOp_BoundNormalPlane : public JDsInitializeOp
 {
 private:
   std::string MkBound;
-  bool PointAuto;   ///<Point is calculated automatically accoding to normal configuration.
-  float LimitDist;  ///<Minimun distance (Dp*vdp) between particles and boundary limit to calculate the point (default=0.5).
+  bool PointAuto;   ///<Point is calculated automatically according to normal configuration.
+  float LimitDist;  ///<Minimum distance (Dp*vdp) between particles and boundary limit to calculate the point (default=0.5).
   tfloat3 Point;
   tfloat3 Normal;
   float MaxDisteH;  ///<Maximum distance to boundary limit. It uses H*distanceh (default=2).

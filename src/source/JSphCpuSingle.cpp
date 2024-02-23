@@ -155,7 +155,7 @@ void JSphCpuSingle::ConfigDomain(){
   //-Sets local domain of the simulation within Map_Cells and computes DomCellCode.
   //-Establece dominio de simulacion local dentro de Map_Cells y calcula DomCellCode.
   SelecDomain(TUint3(0,0,0),Map_Cells);
-  //-Computes inital cell of the particles and checks if there are unexpected excluded particles.
+  //-Computes initial cell of the particles and checks if there are unexpected excluded particles.
   //-Calcula celda inicial de particulas y comprueba si hay excluidas inesperadas.
   LoadDcellParticles(Np,Code_c->cptr(),Pos_c->cptr(),Dcell_c->ptr());
 
@@ -378,7 +378,7 @@ void JSphCpuSingle::PeriodicIgnore(unsigned np,typecode* code)const{
 /// Create duplicate particles for periodic conditions.
 /// Create new periodic particles and mark the old ones to be ignored.
 /// New periodic particles are created from Np of the beginning, first the NpbPer
-/// of the boundry and then the NpfPer fluid ones. The Np of the those leaving contains also the
+/// of the boundary and then the NpfPer fluid ones. The Np of the those leaving contains also the
 /// new periodic ones.
 ///
 /// Crea particulas duplicadas de condiciones periodicas.
@@ -431,7 +431,7 @@ void JSphCpuSingle::RunPeriodic(){
           if(Np>=0x80000000)Run_Exceptioon("The number of particles is too big.");//-Because the last bit is used to mark the direction in which a new periodic particle is created. | Porque el ultimo bit se usa para marcar el sentido en que se crea la nueva periodica.
           const unsigned count=PeriodicMakeList(num2,pini2,Stable
             ,nmax,perinc,Pos_c->cptr(),Code_c->cptr(),listp.ptr());
-          //-Resizes the allocated memory for the particles if there is not sufficient space and repeats the serach process.
+          //-Resizes the allocated memory for the particles if there is not sufficient space and repeats the search process.
           //-Redimensiona memoria para particulas si no hay espacio suficiente y repite el proceso de busqueda.
           if(count>nmax || !CheckCpuParticlesSize(count+Np)){
             listp.Free(); //-Avoids unnecessary copying of its data during resizing.

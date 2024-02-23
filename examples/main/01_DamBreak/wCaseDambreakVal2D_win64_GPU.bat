@@ -14,8 +14,8 @@ rem "executables" are renamed and called from their directory
 
 set dirbin=../../../bin/windows
 set gencase="%dirbin%/GenCase_win64.exe"
-set dualsphysicscpu="%dirbin%/DualSPHysics5.2CPU_win64.exe"
-set dualsphysicsgpu="%dirbin%/DualSPHysics5.2_win64.exe"
+set dualsphysicscpu="%dirbin%/DualSPHysics5.3CPU_win64.exe"
+set dualsphysicsgpu="%dirbin%/DualSPHysics5.3_win64.exe"
 set boundaryvtk="%dirbin%/BoundaryVTK_win64.exe"
 set partvtk="%dirbin%/PartVTK_win64.exe"
 set partvtkout="%dirbin%/PartVTKOut_win64.exe"
@@ -62,17 +62,17 @@ if not "%ERRORLEVEL%" == "0" goto fail
 if not "%ERRORLEVEL%" == "0" goto fail
 
 rem Executes PartVTKOut to create VTK files with excluded particles.
-rem %partvtkout% -dirin %diroutdata% -savevtk %dirout2%/PartFluidOut -SaveResume %dirout2%/_ResumeFluidOut
-rem if not "%ERRORLEVEL%" == "0" goto fail
+%partvtkout% -dirin %diroutdata% -savevtk %dirout2%/PartFluidOut -SaveResume %dirout2%/_ResumeFluidOut
+if not "%ERRORLEVEL%" == "0" goto fail
 
 rem Executes PartVTK to create CSV with energy values.
 %partvtk% -dirin %diroutdata% -saveenergy %dirout%/Energy -last:90
 if not "%ERRORLEVEL%" == "0" goto fail
 
 rem Executes TracerParts to create VTK files with trajectory of some fluid particles.
-rem set dirout2=%dirout%\tracer
-rem %tracerparts% -dirin %diroutdata% -savevtk %dirout2%/BorderParts -onlytype:-all,+fluid -nearpartsdist:0.02 -nearpartsdef:pt=0.1:0:0.1,pt=0.15:0:0.15,pt=0.2:0:0.2,ptels[x=1:0:1,z=0:0.05:2],ptels[x=0:0.05:1,z=2:0:2] -tailsize:200
-rem if not "%ERRORLEVEL%" == "0" goto fail
+set dirout2=%dirout%\tracer
+%tracerparts% -dirin %diroutdata% -savevtk %dirout2%/BorderParts -onlytype:-all,+fluid -nearpartsdist:0.02 -nearpartsdef:pt=0.1:0:0.1,pt=0.15:0:0.15,pt=0.2:0:0.2,ptels[x=1:0:1,z=0:0.05:2],ptels[x=0:0.05:1,z=2:0:2] -tailsize:200
+if not "%ERRORLEVEL%" == "0" goto fail
 
 rem Executes MeasureTool to create VTK and CSV files with elevation at each simulation time.
 set dirout2=%dirout%\measuretool

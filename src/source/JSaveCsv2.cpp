@@ -249,7 +249,7 @@ JSaveCsv2& JSaveCsv2::operator <<(const Head3& obj){
 void JSaveCsv2::Save(const std::string& tx){
   Pf->write(tx.c_str(),tx.size());
   Pf->flush();
-  //fflush(NULL);//-Vacia todos los bufers
+  //fflush(NULL);//-Vacia todos los buffers
   if(Pf->fail())Run_ExceptioonFile("File writing failure.",FileName);
 }
 
