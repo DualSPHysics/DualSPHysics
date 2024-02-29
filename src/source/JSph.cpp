@@ -2643,7 +2643,7 @@ void JSph::FtComputeChrono(double dt,bool predictor
   //-Applies the external velocities to each floating body of Chrono.
   if(FtLinearVel!=NULL)ChronoFtApplyImposedVel();
   //-Calculate data using Chrono / Calcula datos usando Chrono.
-  ChronoObjects->RunChrono(Nstep,TimeStep+dt,dt,predictor);
+  ChronoObjects->RunChrono(Nstep,TimeStep,dt,predictor);
   //-Load calculated data by Chrono / Carga datos calculados por Chrono.
   for(unsigned cf=0;cf<FtCount;cf++)if(FtObjs[cf].usechrono){
     tfloat3 vellin=TFloat3(0),velang=TFloat3(0);
