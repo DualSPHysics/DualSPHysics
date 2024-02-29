@@ -218,6 +218,11 @@ protected:
   template<TpKernel tker> void Interaction_Forces_ct2(const stinterparmsc& t,StInterResultc& res)const;
   void Interaction_Forces_ct(const stinterparmsc& t,StInterResultc& res)const;
 
+
+  float InfNorm4x4(const tmatrix4f mat)const; // SHABA
+  float InfNorm3x3(const tmatrix3f mat)const; // SHABA
+  float PressClone(bool sim2d, const float rhog, const tfloat3 bnormal, const tfloat3 grav, const tfloat3 motace, const tfloat3 dpos)const; // SHABA
+
   template<TpKernel tker,bool sim2d,TpSlipMode tslip> void InteractionMdbcCorrectionT2
     (unsigned n,StDivDataCpu divdata,float determlimit,float mdbcthreshold
     ,const tdouble3* pos,const typecode* code,const unsigned* idp

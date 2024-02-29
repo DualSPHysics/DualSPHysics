@@ -835,11 +835,13 @@ void JSph::LoadConfigCommands(const JSphCfgRun* cfg){
     }
     UseNormals=(TBoundary==BC_MDBC);
     if(TBoundary!=BC_MDBC)MdbcCorrector=false;
+    if(SlipMode==SLIP_Vel0)MdbcCorrector=false; //-mDBC only predictor for old mDBC // SHABA
+    if(SlipMode==SLIP_NoSlip)MdbcCorrector=true; //-mDBC no slip uses corrector // SHABA
   }
   if(TBoundary==BC_MDBC){
     if(cfg->MdbcThreshold >=0)MdbcThreshold=cfg->MdbcThreshold;
     if(cfg->MdbcFastSingle>=0)MdbcFastSingle=(cfg->MdbcFastSingle>0);
-    // if(SlipMode!=SLIP_Vel0)Run_Exceptioon("Only the slip mode velocity=0 is allowed with mDBC conditions."); //SHABA
+    if(SlipMode==SLIP_FreeSlip)Run_Exceptioon("Only the slip modes velocity=0 and no slip are allowed with mDBC conditions."); //SHABA updated
     if(Cpu)MdbcFastSingle=false;
   }
     
