@@ -76,7 +76,10 @@ public:
   bool SvRes;
   bool SvTimers;
   bool SvDomainVtk;
-  std::string CaseName,RunName,DirOut,DirDataOut;
+  std::string CaseName;
+  std::string RunName;
+  std::string DirOut;
+  std::string DirDataOut;
   std::string PartBeginDir;
   unsigned PartBegin,PartBeginFirst;
   bool RestartChrono;             ///<Allows restart with Chrono active (default=0).

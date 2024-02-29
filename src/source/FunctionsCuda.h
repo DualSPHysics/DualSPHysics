@@ -28,6 +28,7 @@
 //:# - Nueva funcion ToHostFloatXYZ_W(). (10-09-2019)
 //:# - Gestion de excepciones mejorada.  (15-09-2019)
 //:# - Nuevas funciones HostAlloc(byte), ToHostByte(). (18-01-2020)
+//:# - Reconoce arquitectura Hopper hasta 9.0. (29-02-2024)
 //:#############################################################################
 
 /// \file FunctionsCuda.h \brief Declares basic/general GPU functions for the entire application.

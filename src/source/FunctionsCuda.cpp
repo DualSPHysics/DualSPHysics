@@ -154,7 +154,8 @@ int GetCudaDevicesInfo(std::vector<std::string>* gpuinfo
   int driverVersion=0,runtimeVersion=0;
   cudaDriverGetVersion(&driverVersion);
   cudaRuntimeGetVersion(&runtimeVersion);
-  if(gpuinfo)gpuinfo->push_back(fun::PrintStr("  CUDA Driver Version / Runtime Version: %d.%d / %d.%d",driverVersion/1000,(driverVersion%100)/10,runtimeVersion/1000,(runtimeVersion%100)/10));
+  if(gpuinfo)gpuinfo->push_back(fun::PrintStr("  CUDA Driver Version / Runtime Version: %d.%d / %d.%d"
+    ,driverVersion/1000,(driverVersion%100)/10,runtimeVersion/1000,(runtimeVersion%100)/10));
   //-Devices information.
   for(int dev=0;dev<deviceCount;++dev){
     const StGpuInfo g=GetCudaDeviceInfo(dev);
@@ -203,6 +204,7 @@ int GetCudaDevicesInfo(std::vector<std::string>* gpuinfo
 /// Returns cores per multiprocessor (code from helper_cuda.h).
 /// https://github.com/NVIDIA/cuda-samples/blob/master/Common/helper_cuda.h
 /// https://en.wikipedia.org/wiki/List_of_Nvidia_graphics_processing_units
+/// https://developer.nvidia.com/cuda-gpus
 /// https://en.wikipedia.org/wiki/GeForce_20_series
 /// https://en.wikipedia.org/wiki/GeForce_30_series
 /// https://en.wikipedia.org/wiki/Quadro
@@ -234,6 +236,9 @@ int _ConvertSMVer2Cores(int major, int minor){
     { 0x75,  64}, // Turing Generation (SM 7.5) TU10X class
     { 0x80,  64}, // Ampere Generation (SM 8.0) GA100 class: A100
     { 0x86, 128}, // Ampere Generation (SM 8.6) GA10x class: GeForce 30 series
+    { 0x87, 128}, // Ampere Generation (SM 8.7) Jetson XXX
+    { 0x89, 128}, // Ada Lovelace Generation (SM 8.9) AD10x class
+    { 0x90, 128}, // Hopper Generation (SM 9.0) GH100 class
     { -1, -1 }
   };
 
