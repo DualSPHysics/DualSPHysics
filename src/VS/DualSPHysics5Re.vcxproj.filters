@@ -202,9 +202,6 @@
     <ClInclude Include="..\source\JRelaxZone_ker.h">
       <Filter>Cuda</Filter>
     </ClInclude>
-    <ClInclude Include="..\source\JSphGpu_InOut_ker.h">
-      <Filter>Cuda</Filter>
-    </ClInclude>
     <ClInclude Include="..\source\JLinearValueDef.h">
       <Filter>Common</Filter>
     </ClInclude>
@@ -327,9 +324,6 @@
     </ClInclude>
     <ClInclude Include="..\source\JDsOutputTime.h">
       <Filter>Source\Other</Filter>
-    </ClInclude>
-    <ClInclude Include="..\source\DualSphDef.h">
-      <Filter>Source</Filter>
     </ClInclude>
     <ClInclude Include="..\source\JArraysCpu.h">
       <Filter>Source</Filter>
@@ -525,6 +519,12 @@
     </ClInclude>
     <ClInclude Include="..\source\JMeshTDatasLoad.h">
       <Filter>Source\MeshData</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\DualSphDef.h">
+      <Filter>Source\Other</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JSphGpu_InOut_iker.h">
+      <Filter>Cuda</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -865,9 +865,6 @@
     <CudaCompile Include="..\source\JRelaxZone_ker.cu">
       <Filter>Cuda</Filter>
     </CudaCompile>
-    <CudaCompile Include="..\source\JSphGpu_InOut_ker.cu">
-      <Filter>Cuda</Filter>
-    </CudaCompile>
     <CudaCompile Include="..\source\JSphGpuSimple_ker.cu">
       <Filter>Cuda</Filter>
     </CudaCompile>
@@ -887,6 +884,9 @@
       <Filter>Cuda</Filter>
     </CudaCompile>
     <CudaCompile Include="..\source\FunctionsMath_iker.h">
+      <Filter>Cuda</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\source\JSphGpu_InOut_iker.cu">
       <Filter>Cuda</Filter>
     </CudaCompile>
   </ItemGroup>
