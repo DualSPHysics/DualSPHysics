@@ -218,11 +218,11 @@ void Interaction_Forces(const StInterParmsg& t);
 
 //-Kernels for the boundary correction (mDBC).
 void Interaction_MdbcCorrection(TpKernel tkernel,bool simulate2d
-  ,TpSlipMode slipmode,bool fastsingle,unsigned n,unsigned nbound
-  ,float mdbcthreshold,const StDivDataGpu& dvd,const tdouble3& mapposmin
+  ,unsigned n,unsigned nbound,float mdbcthreshold
+  ,const StDivDataGpu& dvd,const tdouble3& mapposmin
   ,const double2* posxy,const double* posz,const float4* poscell
   ,const typecode* code,const unsigned* idp,const float3* boundnor
-  ,const float3* motionvel,float4* velrho,cudaStream_t stm=NULL);
+  ,float4* velrho,cudaStream_t stm=NULL);
 
 //-Kernels for the calculation of the DEM forces.
 void Interaction_ForcesDem(unsigned bsize,unsigned nfloat

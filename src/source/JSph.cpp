@@ -193,7 +193,6 @@ void JSph::InitVars(){
   TBoundary=BC_DBC;
   SlipMode=SLIP_Vel0;
   MdbcCorrector=false;
-  MdbcFastSingle=true;
   MdbcThreshold=0;
   UseNormals=false;
   UseNormalsFt=false;
@@ -672,9 +671,6 @@ void JSph::LoadConfigParameters(const JXml* cxml){
       case 3:  SlipMode=SLIP_FreeSlip;  break;
       default: Run_Exceptioon("Slip mode is not valid.");
     }
-    MdbcCorrector=(eparms.GetValueInt("MDBCCorrector",true,0)!=0);
-    MdbcFastSingle=(eparms.GetValueInt("MDBCFastSingle",true,1)!=0);
-    if(Cpu)MdbcFastSingle=false;
   } 
 
   //-Density Diffusion Term configuration.
@@ -822,8 +818,8 @@ void JSph::LoadConfigCommands(const JSphCfgRun* cfg){
   if(cfg->TBoundary){
     TBoundary=BC_DBC;
     SlipMode=SLIP_Vel0;
-    MdbcFastSingle=true;
     MdbcThreshold=0;
+    MdbcCorrector=false;
     switch(cfg->TBoundary){
       case 1:  TBoundary=BC_DBC;   break;
       case 2:  TBoundary=BC_MDBC;  break;
@@ -836,13 +832,13 @@ void JSph::LoadConfigCommands(const JSphCfgRun* cfg){
       default: Run_Exceptioon("Slip mode for mDBC is not valid.");
     }
     UseNormals=(TBoundary==BC_MDBC);
-    if(TBoundary!=BC_MDBC)MdbcCorrector=false;
+    MdbcCorrector=(TBoundary==BC_MDBC && (SlipMode==SLIP_NoSlip || SlipMode==SLIP_FreeSlip));
   }
   if(TBoundary==BC_MDBC){
     if(cfg->MdbcThreshold >=0)MdbcThreshold=cfg->MdbcThreshold;
-    if(cfg->MdbcFastSingle>=0)MdbcFastSingle=(cfg->MdbcFastSingle>0);
-    if(SlipMode!=SLIP_Vel0)Run_Exceptioon("Only the slip mode velocity=0 is allowed with mDBC conditions."); //SHABA
-    if(Cpu)MdbcFastSingle=false;
+    if(SlipMode!=SLIP_Vel0)MdbcThreshold=0;
+    if(SlipMode!=SLIP_Vel0)
+      Run_Exceptioon("Only the slip mode velocity=0 is allowed with mDBC conditions.");
   }
     
   if(cfg->TStep)TStep=cfg->TStep;
@@ -1576,11 +1572,9 @@ void JSph::VisuConfig(){
   if(TBoundary==BC_MDBC){
     Log->Print(fun::VarStr("  SlipMode",GetSlipName(SlipMode)));
     Log->Print(fun::VarStr("  mDBC-Corrector",MdbcCorrector));
-    Log->Print(fun::VarStr("  mDBC-FastSingle",MdbcFastSingle));
     Log->Print(fun::VarStr("  mDBC-Threshold",MdbcThreshold));
     ConfigInfo=ConfigInfo+"("+GetSlipName(SlipMode);
     if(MdbcCorrector)ConfigInfo=ConfigInfo+" - Corrector";
-    if(MdbcFastSingle)ConfigInfo=ConfigInfo+" - FastSingle";
     if(MdbcThreshold>0)ConfigInfo=ConfigInfo+fun::PrintStr(" - Threshold=%g",MdbcThreshold);
     ConfigInfo=ConfigInfo+")";
   }

@@ -210,16 +210,16 @@ protected:
   template<TpKernel tker> void Interaction_Forces_ct2(const stinterparmsc& t,StInterResultc& res)const;
   void Interaction_Forces_ct(const stinterparmsc& t,StInterResultc& res)const;
 
-  template<TpKernel tker,bool sim2d,TpSlipMode tslip> void InteractionMdbcCorrectionT2
-    (unsigned n,StDivDataCpu divdata,float determlimit,float mdbcthreshold
+  template<TpKernel tker,bool sim2d> void InteractionMdbcCorrectionT2
+    (unsigned n,StDivDataCpu divdata,float mdbcthreshold
     ,const tdouble3* pos,const typecode* code,const unsigned* idp
-    ,const tfloat3* boundnor,const tfloat3* motionvel,tfloat4* velrho);
-  template<TpKernel tker> void Interaction_MdbcCorrectionT(TpSlipMode slipmode,const StDivDataCpu& divdata
+    ,const tfloat3* boundnor,tfloat4* velrho);
+  template<TpKernel tker> void Interaction_MdbcCorrectionT(const StDivDataCpu& divdata
     ,const tdouble3* pos,const typecode* code,const unsigned* idp
-    ,const tfloat3* boundnor,const tfloat3* motionvel,tfloat4* velrho);
-  void Interaction_MdbcCorrection(TpSlipMode slipmode,const StDivDataCpu& divdata
+    ,const tfloat3* boundnor,tfloat4* velrho);
+  void Interaction_MdbcCorrection(const StDivDataCpu& divdata
     ,const tdouble3* pos,const typecode* code,const unsigned* idp
-    ,const tfloat3* boundnor,const tfloat3* motionvel,tfloat4* velrho);
+    ,const tfloat3* boundnor,tfloat4* velrho);
 
   void ComputeSpsTau(unsigned n,unsigned pini,const tfloat4* velrho
     ,const tsymatrix3f* sps2strain,tsymatrix3f* tau_rho2)const;
