@@ -219,14 +219,18 @@ protected:
   void Interaction_Forces_ct(const stinterparmsc& t,StInterResultc& res)const;
 
 
-  float InfNorm4x4(const tmatrix4f mat)const; // SHABA
-  float InfNorm3x3(const tmatrix3f mat)const; // SHABA
+  float InfNorm4x4(tmatrix4d mat)const; // SHABA
+  float InfNorm3x3(tmatrix3d mat)const; // SHABA
   float PressClone(bool sim2d, const float rhog, const tfloat3 bnormal, const tfloat3 grav, const tfloat3 motace, const tfloat3 dpos)const; // SHABA
 
+  template<TpKernel tker, bool sim2d, TpSlipMode tslip> void InteractionMdbcCorrectionT3
+  (unsigned n, StDivDataCpu divdata, float determlimit, float mdbcthreshold
+      , const tdouble3* pos, const typecode* code, const unsigned* idp
+      , const tfloat3* boundnor, const tfloat3* motionvel, const tfloat3* motionace, tfloat4* velrho, float* boundonoff); // SHABA no mDBC function BETA
   template<TpKernel tker,bool sim2d,TpSlipMode tslip> void InteractionMdbcCorrectionT2
     (unsigned n,StDivDataCpu divdata,float determlimit,float mdbcthreshold
     ,const tdouble3* pos,const typecode* code,const unsigned* idp
-    ,const tfloat3* boundnor,const tfloat3* motionvel, const tfloat3* motionace,tfloat4* velrho, float* boundonoff); // SHABA 
+    ,const tfloat3* boundnor,const tfloat3* motionvel,tfloat4* velrho); // SHABA original mDBC function
   template<TpKernel tker> void Interaction_MdbcCorrectionT(TpSlipMode slipmode,const StDivDataCpu& divdata
     ,const tdouble3* pos,const typecode* code,const unsigned* idp
     ,const tfloat3* boundnor,const tfloat3* motionvel, const tfloat3* motionace,tfloat4* velrho, float* boundonoff); // SHABA 

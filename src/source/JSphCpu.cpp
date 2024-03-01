@@ -1040,7 +1040,7 @@ void JSphCpu::Interaction_Forces_ct(const stinterparmsc& t,StInterResultc& res)c
 //------------------------------------------------------------------------------
 /// Calculates the infinity norm of a 4x4 matrix  // SHABA
 //------------------------------------------------------------------------------
-float JSphCpu::InfNorm4x4(const tmatrix4f mat)const{
+float JSphCpu::InfNorm4x4(tmatrix4d mat)const{
     float infnorm = 0.f;
 
     const float row1 = float(fabs(mat.a11) + fabs(mat.a12) + fabs(mat.a13) + fabs(mat.a14));
@@ -1056,7 +1056,7 @@ float JSphCpu::InfNorm4x4(const tmatrix4f mat)const{
 //------------------------------------------------------------------------------
 /// Calculates the infinity norm of a 3x3 matrix  // SHABA
 //------------------------------------------------------------------------------
-float JSphCpu::InfNorm3x3(const tmatrix3f mat)const{
+float JSphCpu::InfNorm3x3(tmatrix3d mat)const{
     float infnorm = 0.f;
 
     const float row1 = float(fabs(mat.a11) + fabs(mat.a12) + fabs(mat.a13));
@@ -1096,9 +1096,9 @@ float JSphCpu::PressClone(bool sim2d, const float rhog, const tfloat3 bnormal, c
 }
 
 //==============================================================================
-/// Perform interaction between ghost nodes of boundaries and fluid. // SHABA
+/// Perform interaction between ghost nodes of boundaries and fluid. new function BETA // SHABA
 //==============================================================================
-template<TpKernel tker,bool sim2d,TpSlipMode tslip> void JSphCpu::InteractionMdbcCorrectionT2
+template<TpKernel tker,bool sim2d,TpSlipMode tslip> void JSphCpu::InteractionMdbcCorrectionT3
   (unsigned n,StDivDataCpu divdata,float determlimit,float mdbcthreshold
   ,const tdouble3* pos,const typecode* code,const unsigned* idp
   ,const tfloat3* boundnor, const tfloat3* motionvel
@@ -1111,12 +1111,12 @@ template<TpKernel tker,bool sim2d,TpSlipMode tslip> void JSphCpu::InteractionMdb
     #pragma omp parallel for schedule (guided)
   #endif
   for(int p1=0;p1<nn;p1++)if(boundnor[p1]!=TFloat3(0)){
-    const tfloat3 bnormalp1 = TFloat3(boundnor[p1]);
+    const tfloat3 bnormalp1 = TFloat3(boundnor[p1].x, boundnor[p1].y, boundnor[p1].z);
     float rhofinal=FLT_MAX;
     tfloat3 velrhofinal=TFloat3(0);
     float sumwab=0;
     float submerged = 0; // SHABA //-Not for vel0
-    const tfloat3 motace = TFloat3(motionace[p1]); // SSHABA //-Not for vel0
+    const tfloat3 motace = TFloat3(motionace[p1].x, motionace[p1].y, motionace[p1].z ); // SSHABA //-Not for vel0
 
     //-Calculates ghost node position.
     tdouble3 gposp1=pos[p1]+ToTDouble3(boundnor[p1]);
@@ -1187,7 +1187,233 @@ template<TpKernel tker,bool sim2d,TpSlipMode tslip> void JSphCpu::InteractionMdb
         }
       }
     }
-    if (tslip == SLIP_Vel0) {//-DBC vel=0
+    if (submerged > 0.f) { // Check if ghost node is submerged enough
+        boundonoff[p1] = 1.0f; // setting bounddary particle to be on
+        const tfloat3 dpos = (boundnor[p1] * (-1.f)); //-Boundary particle position - ghost node position.
+        //-Store the results.
+        //--------------------
+        if (sim2d) { // 2D computation
+            if (sumwab < 0.1f) { // If kernel sum is small use shepherd density
+                // trying to avoid too negative pressures
+                const float rhog = max(RhopZero, float(rhop1 / a_corr2.a11));
+                // Clone particle proceedure
+                float pressfinal = PressClone(sim2d, rhog, bnormalp1, Gravity, motace, dpos);
+                // final values to be saved
+                rhofinal = RhopZero + float(pressfinal / (Cs0 * Cs0));
+            }
+            else {
+                const double determ = fmath::Determinant3x3(a_corr2);
+                if (fabs(determ) >= 0.001) {// if matrix is invertible caculate condition number
+                    tmatrix3d invacorr2 = fmath::InverseMatrix3x3(a_corr2, determ);
+                    // calculate the scaled condition number
+                    const float infnorma = InfNorm3x3(a_corr2);
+                    const float infnormainv = InfNorm3x3(invacorr2);
+                    const float condinf = float(Dp) * float(Dp) * infnorma * infnormainv;
+                    if (condinf <= 50.f) { // if matrix is well conditioned use matrix inverse for density
+                        const float rhog = float(invacorr2.a11 * rhop1 + invacorr2.a12 * gradrhop1.x + invacorr2.a13 * gradrhop1.z);
+                        // Clone particle proceedure
+                        float pressfinal = PressClone(sim2d, rhog, bnormalp1, Gravity, motace, dpos);
+                        // final values to be saved
+                        rhofinal = RhopZero + float(pressfinal / (Cs0 * Cs0));                            
+                    }
+                    else { // matrix is not well conditioned, use shepherd for density
+                        const float rhog = float(rhop1 / a_corr2.a11);
+                        // Clone particle proceedure
+                        float pressfinal = PressClone(sim2d, rhog, bnormalp1, Gravity, motace, dpos);
+                        // final values to be saved
+                        rhofinal = RhopZero + float(pressfinal / (Cs0 * Cs0));                            
+                    }
+                }
+                else { // matrix is not invertible use shepherd for density
+                    const float rhog = float(rhop1 / a_corr2.a11);
+                    // Clone particle proceedure
+                    float pressfinal = PressClone(sim2d, rhog, bnormalp1, Gravity, motace, dpos);
+                    // final values to be saved
+                    rhofinal = RhopZero + float(pressfinal / (Cs0 * Cs0));                       
+                }
+            }
+            // Use shepherd for velocity
+            velrhofinal.x = float(velp1.x / a_corr2.a11);
+            velrhofinal.y = 0.f;
+            velrhofinal.z = float(velp1.z / a_corr2.a11);
+                
+        }
+        else { // 3D computation
+            if (sumwab < 0.1f) { // If kernel sum is small use shepherd density
+                // trying to avoid too negative pressures
+                const float rhog = max(RhopZero, float(rhop1 / a_corr3.a11));
+                // Clone particle proceedure
+                float pressfinal = PressClone(sim2d, rhog, bnormalp1, Gravity, motace, dpos);
+                // final values to be saved
+                rhofinal = RhopZero + float(pressfinal / (Cs0 * Cs0));
+            }
+            else {
+                const double determ = fmath::Determinant4x4(a_corr3);
+                if (fabs(determ) >= 0.001) {
+                    tmatrix4d invacorr3 = fmath::InverseMatrix4x4(a_corr3, determ);
+                    // calculate the scaled condition number
+                    const float infnorma = InfNorm4x4(a_corr3);
+                    const float infnormainv = InfNorm4x4(invacorr3);
+                    const float condinf = float(Dp) * float(Dp) * infnorma * infnormainv;
+                    if (condinf <= 50.f) { // if matrix is well conditioned use matrix inverse for density
+                        const float rhog = float(invacorr3.a11 * rhop1 + invacorr3.a12 * gradrhop1.x + invacorr3.a13 * gradrhop1.y + invacorr3.a14 * gradrhop1.z);
+                        // Clone particle proceedure
+                        float pressfinal = PressClone(sim2d, rhog, bnormalp1, Gravity, motace, dpos);
+                        // final values to be saved
+                        rhofinal = RhopZero + float(pressfinal / (Cs0 * Cs0));
+                    }
+                    else { // matrix is not well conditioned, use shepherd for density
+                        const float rhog = float(rhop1 / a_corr3.a11);
+                        // Clone particle proceedure
+                        float pressfinal = PressClone(sim2d, rhog, bnormalp1, Gravity, motace, dpos);
+                        // final values to be saved
+                        rhofinal = RhopZero + float(pressfinal / (Cs0 * Cs0));
+                    }
+                }
+                else { // matrix is not invertible use shepherd for density
+                    const float rhog = float(rhop1 / a_corr3.a11);
+                    // Clone particle proceedure
+                    float pressfinal = PressClone(sim2d, rhog, bnormalp1, Gravity, motace, dpos);
+                    // final values to be saved
+                    rhofinal = RhopZero + float(pressfinal / (Cs0 * Cs0));
+                }
+            }
+            // Use shepherd for velocity
+            velrhofinal.x = float(velp1.x / a_corr3.a11);
+            velrhofinal.y = float(velp1.y / a_corr3.a11);
+            velrhofinal.z = float(velp1.z / a_corr3.a11);
+                
+        }
+            
+        if (tslip == SLIP_NoSlip) {//-No-Slip
+            const tfloat3 v = motionvel[p1];
+            velrho[p1] = TFloat4(v.x + v.x - velrhofinal.x, v.y + v.y - velrhofinal.y, v.z + v.z - velrhofinal.z, rhofinal);
+        }
+        if (tslip == SLIP_FreeSlip) {//-No-Penetration and free slip    SHABA
+
+            tfloat3 FSVelFinal; // final free slip boundary velocity
+            const tfloat3 v = motionvel[p1];
+            float motion = sqrt(v.x * v.x + v.y * v.y + v.z * v.z); // to check if boundary moving
+            float norm = sqrt(boundnor[p1].x * boundnor[p1].x + boundnor[p1].y * boundnor[p1].y + boundnor[p1].z * boundnor[p1].z);
+            tfloat3 normal; // creating a normailsed boundary normal
+            normal.x = fabs(boundnor[p1].x) / norm; normal.y = fabs(boundnor[p1].y) / norm; normal.z = fabs(boundnor[p1].z) / norm;
+
+            // finding the velocity componants normal and tangential to boundary 
+            tfloat3 normvel = TFloat3(velrhofinal.x * normal.x, velrhofinal.y * normal.y, velrhofinal.z * normal.z); // velocity in direction of normal pointin ginto fluid)
+            tfloat3 tangvel = TFloat3(velrhofinal.x - normvel.x, velrhofinal.y - normvel.y, velrhofinal.z - normvel.z); // velocity tangential to normal
+
+            if (motion > 0.f) { // if moving boundary
+                tfloat3 normmot = TFloat3(v.x * normal.x, v.y * normal.y, v.z * normal.z); // boundary motion in direction normal to boundary 
+                FSVelFinal = TFloat3(normmot.x + normmot.x - normvel.x, normmot.y + normmot.y - normvel.y, normmot.z + normmot.z - normvel.z);
+                // only velocity in normal direction for no-penetration
+                // fluid sees zero velocity in the tangetial direction
+            }
+            else {
+                FSVelFinal = TFloat3(tangvel.x - normvel.x, tangvel.y - normvel.y, tangvel.z - normvel.z);
+                // tangential velocity equal to fluid velocity for free slip
+                // normal velocity reversed for no-penetration
+            }
+
+            // Save the velocity and density
+            velrho[p1] = TFloat4(FSVelFinal.x, FSVelFinal.y, FSVelFinal.z, rhofinal);
+
+        }
+    }
+    else { // ghost node is unsubmerged
+        const tfloat3 v = motionvel[p1];
+        boundonoff[p1] = 0.0f; // setting bounddary particle to be off if unsubmerged
+        velrho[p1] = TFloat4(v.x, v.y, v.z, RhopZero);
+    }
+  }
+}
+
+//==============================================================================
+/// Perform interaction between ghost nodes of boundaries and fluid.
+//==============================================================================
+template<TpKernel tker, bool sim2d, TpSlipMode tslip> void JSphCpu::InteractionMdbcCorrectionT2
+(unsigned n, StDivDataCpu divdata, float determlimit, float mdbcthreshold
+    , const tdouble3* pos, const typecode* code, const unsigned* idp
+    , const tfloat3* boundnor, const tfloat3* motionvel, tfloat4* velrho)
+{
+    if (tslip == SLIP_FreeSlip)Run_Exceptioon("SlipMode=\'Free slip\' is not yet implemented...");
+    const int nn = int(n);
+#ifdef OMP_USE
+#pragma omp parallel for schedule (guided)
+#endif
+    for (int p1 = 0; p1 < nn; p1++)if (boundnor[p1] != TFloat3(0)) {
+        float rhofinal = FLT_MAX;
+        tfloat3 velrhofinal = TFloat3(0);
+        float sumwab = 0;
+
+        //-Calculates ghost node position.
+        tdouble3 gposp1 = pos[p1] + ToTDouble3(boundnor[p1]);
+        gposp1 = (PeriActive != 0 ? UpdatePeriodicPos(gposp1) : gposp1); //-Corrected interface Position.
+        //-Initializes variables for calculation.
+        float rhop1 = 0;
+        tfloat3 gradrhop1 = TFloat3(0);
+        tdouble3 velp1 = TDouble3(0);       //-Only for velocity.
+        tmatrix3d a_corr2 = TMatrix3d(0);   //-Only for 2D.
+        tmatrix4d a_corr3 = TMatrix4d(0);   //-Only for 3D.
+
+        //-Search for neighbours in adjacent cells.
+        const StNgSearch ngs = nsearch::Init(gposp1, false, divdata);
+        for (int z = ngs.zini; z < ngs.zfin; z++)for (int y = ngs.yini; y < ngs.yfin; y++) {
+            const tuint2 pif = nsearch::ParticleRange(y, z, ngs, divdata);
+            //-Interaction of boundary with type Fluid/Float.
+            for (unsigned p2 = pif.x; p2 < pif.y; p2++) {
+                const float drx = float(gposp1.x - pos[p2].x);
+                const float dry = float(gposp1.y - pos[p2].y);
+                const float drz = float(gposp1.z - pos[p2].z);
+                const float rr2 = (drx * drx + dry * dry + drz * drz);
+                if (rr2 <= KernelSize2 && CODE_IsFluid(code[p2])) {//-Only with fluid particles (including inout).
+                    //-Wendland kernel.
+                    float fac;
+                    const float wab = fsph::GetKernel_WabFac<tker>(CSP, rr2, fac);
+                    const float frx = fac * drx, fry = fac * dry, frz = fac * drz; //-Gradients.
+
+                    //===== Get mass and volume of particle p2 =====
+                    const tfloat4 velrhop2 = velrho[p2];
+                    const float massp2 = MassFluid;
+                    const float volp2 = massp2 / velrhop2.w;
+
+                    //===== Density and its gradient =====
+                    rhop1 += massp2 * wab;
+                    gradrhop1.x += massp2 * frx;
+                    gradrhop1.y += massp2 * fry;
+                    gradrhop1.z += massp2 * frz;
+
+                    //===== Kernel values multiplied by volume =====
+                    const float vwab = wab * volp2;
+                    sumwab += vwab;
+                    const float vfrx = frx * volp2;
+                    const float vfry = fry * volp2;
+                    const float vfrz = frz * volp2;
+
+                    //===== Velocity =====
+                    if (tslip != SLIP_Vel0) {
+                        velp1.x += vwab * velrhop2.x;
+                        velp1.y += vwab * velrhop2.y;
+                        velp1.z += vwab * velrhop2.z;
+                    }
+
+                    //===== Matrix A for correction =====
+                    if (sim2d) {
+                        a_corr2.a11 += vwab;  a_corr2.a12 += drx * vwab;  a_corr2.a13 += drz * vwab;
+                        a_corr2.a21 += vfrx;  a_corr2.a22 += drx * vfrx;  a_corr2.a23 += drz * vfrx;
+                        a_corr2.a31 += vfrz;  a_corr2.a32 += drx * vfrz;  a_corr2.a33 += drz * vfrz;
+                    }
+                    else {
+                        a_corr3.a11 += vwab;  a_corr3.a12 += drx * vwab;  a_corr3.a13 += dry * vwab;  a_corr3.a14 += drz * vwab;
+                        a_corr3.a21 += vfrx;  a_corr3.a22 += drx * vfrx;  a_corr3.a23 += dry * vfrx;  a_corr3.a24 += drz * vfrx;
+                        a_corr3.a31 += vfry;  a_corr3.a32 += drx * vfry;  a_corr3.a33 += dry * vfry;  a_corr3.a34 += drz * vfry;
+                        a_corr3.a41 += vfrz;  a_corr3.a42 += drx * vfrz;  a_corr3.a43 += dry * vfrz;  a_corr3.a44 += drz * vfrz;
+                    }
+                }
+            }
+        }
+
+        //-Store the results.
+        //--------------------
         if (sumwab >= mdbcthreshold || (mdbcthreshold >= 2 && sumwab + 2 >= mdbcthreshold)) {
             const tfloat3 dpos = (boundnor[p1] * (-1.f)); //-Boundary particle position - ghost node position.
             if (sim2d) {
@@ -1196,12 +1422,18 @@ template<TpKernel tker,bool sim2d,TpSlipMode tslip> void JSphCpu::InteractionMdb
                     const tmatrix3d invacorr2 = fmath::InverseMatrix3x3(a_corr2, determ);
                     //-GHOST NODE DENSITY IS MIRRORED BACK TO THE BOUNDARY PARTICLES.
                     const float rhoghost = float(invacorr2.a11 * rhop1 + invacorr2.a12 * gradrhop1.x + invacorr2.a13 * gradrhop1.z);
-                    const float grx = float(invacorr2.a21 * rhop1 + invacorr2.a22 * gradrhop1.x + invacorr2.a23 * gradrhop1.z);
-                    const float grz = float(invacorr2.a31 * rhop1 + invacorr2.a32 * gradrhop1.x + invacorr2.a33 * gradrhop1.z);
+                    const float grx = -float(invacorr2.a21 * rhop1 + invacorr2.a22 * gradrhop1.x + invacorr2.a23 * gradrhop1.z);
+                    const float grz = -float(invacorr2.a31 * rhop1 + invacorr2.a32 * gradrhop1.x + invacorr2.a33 * gradrhop1.z);
                     rhofinal = (rhoghost + grx * dpos.x + grz * dpos.z);
                 }
                 else if (a_corr2.a11 > 0) {//-Determinant is small but a11 is nonzero (0th order).
                     rhofinal = float(rhop1 / a_corr2.a11);
+                }
+                //-Ghost node velocity (0th order).
+                if (tslip != SLIP_Vel0) {
+                    velrhofinal.x = float(velp1.x / a_corr2.a11);
+                    velrhofinal.z = float(velp1.z / a_corr2.a11);
+                    velrhofinal.y = 0;
                 }
             }
             else {
@@ -1210,121 +1442,26 @@ template<TpKernel tker,bool sim2d,TpSlipMode tslip> void JSphCpu::InteractionMdb
                     const tmatrix4d invacorr3 = fmath::InverseMatrix4x4(a_corr3, determ);
                     //-GHOST NODE DENSITY IS MIRRORED BACK TO THE BOUNDARY PARTICLES.
                     const float rhoghost = float(invacorr3.a11 * rhop1 + invacorr3.a12 * gradrhop1.x + invacorr3.a13 * gradrhop1.y + invacorr3.a14 * gradrhop1.z);
-                    const float grx = float(invacorr3.a21 * rhop1 + invacorr3.a22 * gradrhop1.x + invacorr3.a23 * gradrhop1.y + invacorr3.a24 * gradrhop1.z);
-                    const float gry = float(invacorr3.a31 * rhop1 + invacorr3.a32 * gradrhop1.x + invacorr3.a33 * gradrhop1.y + invacorr3.a34 * gradrhop1.z);
-                    const float grz = float(invacorr3.a41 * rhop1 + invacorr3.a42 * gradrhop1.x + invacorr3.a43 * gradrhop1.y + invacorr3.a44 * gradrhop1.z);
+                    const float grx = -float(invacorr3.a21 * rhop1 + invacorr3.a22 * gradrhop1.x + invacorr3.a23 * gradrhop1.y + invacorr3.a24 * gradrhop1.z);
+                    const float gry = -float(invacorr3.a31 * rhop1 + invacorr3.a32 * gradrhop1.x + invacorr3.a33 * gradrhop1.y + invacorr3.a34 * gradrhop1.z);
+                    const float grz = -float(invacorr3.a41 * rhop1 + invacorr3.a42 * gradrhop1.x + invacorr3.a43 * gradrhop1.y + invacorr3.a44 * gradrhop1.z);
                     rhofinal = (rhoghost + grx * dpos.x + gry * dpos.y + grz * dpos.z);
                 }
                 else if (a_corr3.a11 > 0) {//-Determinant is small but a11 is nonzero (0th order).
                     rhofinal = float(rhop1 / a_corr3.a11);
                 }
-
+                //-Ghost node velocity (0th order).
+                if (tslip != SLIP_Vel0) {
+                    velrhofinal.x = float(velp1.x / a_corr3.a11);
+                    velrhofinal.y = float(velp1.y / a_corr3.a11);
+                    velrhofinal.z = float(velp1.z / a_corr3.a11);
+                }
             }
-
             //-Store the results.
             rhofinal = (rhofinal != FLT_MAX ? rhofinal : RhopZero);
-            velrho[p1].w = rhofinal;
-        }
-    }
-    else {
-        if (submerged > 0.f) { // Check if ghost node is submerged enough
-            boundonoff[p1] = 1.0f; // setting bounddary particle to be on
-            const tfloat3 dpos = (boundnor[p1] * (-1.f)); //-Boundary particle position - ghost node position.
-            //-Store the results.
-            //--------------------
-            if (sim2d) { // 2D computation
-                if (sumwab < 0.1f) { // If kernel sum is small use shepherd density
-                    // trying to avoid too negative pressures
-                    const float rhog = max(RhopZero, float(rhop1 / a_corr2.a11));
-                    // Clone particle proceedure
-                    float pressfinal = PressClone(sim2d, rhog, bnormalp1, Gravity, motace, dpos);
-                    // final values to be saved
-                    rhofinal = RhopZero + float(pressfinal / (Cs0 * Cs0));
-                }
-                else {
-                    const double determ = fmath::Determinant3x3(a_corr2);
-                    if (fabs(determ) >= 0.001) {// if matrix is invertible caculate condition number
-                        const tmatrix3d invacorr2 = fmath::InverseMatrix3x3(a_corr2, determ);
-                        // calculate the scaled condition number
-                        const float infnorma = InfNorm3x3(a_corr2);
-                        const float infnormainv = InfNorm3x3(invacorr2);
-                        const float condinf = float(Dp) * float(Dp) * infnorma * infnormainv;
-                        if (condinf <= 50.f) { // if matrix is well conditioned use matrix inverse for density
-                            const float rhoghost = float(invacorr2.a11 * rhop1 + invacorr2.a12 * gradrhop1.x + invacorr2.a13 * gradrhop1.z);
-                            // Clone particle proceedure
-                            float pressfinal = PressClone(sim2d, rhog, bnormalp1, Gravity, motace, dpos);
-                            // final values to be saved
-                            rhofinal = RhopZero + float(pressfinal / (Cs0 * Cs0));                            
-                        }
-                        else { // matrix is not well conditioned, use shepherd for density
-                            const float rhoghost = float(rhop1 / a_corr2.a11);
-                            // Clone particle proceedure
-                            float pressfinal = PressClone(sim2d, rhog, bnormalp1, Gravity, motace, dpos);
-                            // final values to be saved
-                            rhofinal = RhopZero + float(pressfinal / (Cs0 * Cs0));                            
-                        }
-                    }
-                    else { // matrix is not invertible use shepherd for density
-                        const float rhoghost = float(rhop1 / a_corr2.a11);
-                        // Clone particle proceedure
-                        float pressfinal = PressClone(sim2d, rhog, bnormalp1, Gravity, motace, dpos);
-                        // final values to be saved
-                        rhofinal = RhopZero + float(pressfinal / (Cs0 * Cs0));                       
-                    }
-                }
-                // Use shepherd for velocity
-                velrhofinal.x = float(velp1.x / a_corr2.a11);
-                velrhofinal.y = 0.f;
-                velrhofinal.z = float(velp1.z / a_corr2.a11);
-                
+            if (tslip == SLIP_Vel0) {//-DBC vel=0
+                velrho[p1].w = rhofinal;
             }
-            else { // 3D computation
-                if (sumwab < 0.1f) { // If kernel sum is small use shepherd density
-                    // trying to avoid too negative pressures
-                    const float rhoghost = max(RhopZero, float(rhop1 / a_corr3.a11));
-                    // Clone particle proceedure
-                    float pressfinal = PressClone(sim2d, rhog, bnormalp1, Gravity, motace, dpos);
-                    // final values to be saved
-                    rhofinal = RhopZero + float(pressfinal / (Cs0 * Cs0));
-                }
-                else {
-                    const double determ = fmath::Determinant4x4(a_corr3);
-                    if (fabs(determ) >= 0.001) {
-                        const tmatrix4d invacorr3 = fmath::InverseMatrix4x4(a_corr3, determ);
-                        // calculate the scaled condition number
-                        const float infnorma = InfNorm4x4(a_corr3);
-                        const float infnormainv = InfNorm4x4(invacorr3);
-                        const float condinf = float(Dp) * float(Dp) * infnorma * infnormainv;
-                        if (condinf <= 50.f) { // if matrix is well conditioned use matrix inverse for density
-                            const float rhoghost = float(invacorr3.a11 * rhop1 + invacorr3.a12 * gradrhop1.x + invacorr3.a13 * gradrhop1.y + invacorr3.a14 * gradrhop1.z);
-                            // Clone particle proceedure
-                            float pressfinal = PressClone(sim2d, rhog, bnormalp1, Gravity, motace, dpos);
-                            // final values to be saved
-                            rhofinal = RhopZero + float(pressfinal / (Cs0 * Cs0));
-                        }
-                        else { // matrix is not well conditioned, use shepherd for density
-                            const float rhoghost = float(rhop1 / a_corr3.a11);
-                            // Clone particle proceedure
-                            float pressfinal = PressClone(sim2d, rhog, bnormalp1, Gravity, motace, dpos);
-                            // final values to be saved
-                            rhofinal = RhopZero + float(pressfinal / (Cs0 * Cs0));
-                        }
-                    }
-                    else { // matrix is not invertible use shepherd for density
-                        const float rhoghost = float(rhop1 / a_corr3.a11);
-                        // Clone particle proceedure
-                        float pressfinal = PressClone(sim2d, rhog, bnormalp1, Gravity, motace, dpos);
-                        // final values to be saved
-                        rhofinal = RhopZero + float(pressfinal / (Cs0 * Cs0));
-                    }
-                }
-                // Use shepherd for velocity
-                velrhofinal.x = float(velp1.x / a_corr3.a11);
-                velrhofinal.y = float(velp1.y / a_corr3.a11);
-                velrhofinal.z = float(velp1.z / a_corr3.a11);
-                
-            }
-            
             if (tslip == SLIP_NoSlip) {//-No-Slip
                 const tfloat3 v = motionvel[p1];
                 velrho[p1] = TFloat4(v.x + v.x - velrhofinal.x, v.y + v.y - velrhofinal.y, v.z + v.z - velrhofinal.z, rhofinal);
@@ -1338,7 +1475,7 @@ template<TpKernel tker,bool sim2d,TpSlipMode tslip> void JSphCpu::InteractionMdb
                 tfloat3 normal; // creating a normailsed boundary normal
                 normal.x = fabs(boundnor[p1].x) / norm; normal.y = fabs(boundnor[p1].y) / norm; normal.z = fabs(boundnor[p1].z) / norm;
 
-                // finding the velocity componants normal and tangential to boundary 
+                // finding the velocity components normal and tangential to boundary 
                 tfloat3 normvel = TFloat3(velrhofinal.x * normal.x, velrhofinal.y * normal.y, velrhofinal.z * normal.z); // velocity in direction of normal pointin ginto fluid)
                 tfloat3 tangvel = TFloat3(velrhofinal.x - normvel.x, velrhofinal.y - normvel.y, velrhofinal.z - normvel.z); // velocity tangential to normal
 
@@ -1346,7 +1483,7 @@ template<TpKernel tker,bool sim2d,TpSlipMode tslip> void JSphCpu::InteractionMdb
                     tfloat3 normmot = TFloat3(v.x * normal.x, v.y * normal.y, v.z * normal.z); // boundary motion in direction normal to boundary 
                     FSVelFinal = TFloat3(normmot.x + normmot.x - normvel.x, normmot.y + normmot.y - normvel.y, normmot.z + normmot.z - normvel.z);
                     // only velocity in normal direction for no-penetration
-                    // fluid sees zero velocity in the tangetial direction
+                    // fluid sees zero velocity in the tangential direction
                 }
                 else {
                     FSVelFinal = TFloat3(tangvel.x - normvel.x, tangvel.y - normvel.y, tangvel.z - normvel.z);
@@ -1359,14 +1496,9 @@ template<TpKernel tker,bool sim2d,TpSlipMode tslip> void JSphCpu::InteractionMdb
 
             }
         }
-        else { // ghost node is unsubmerged
-            const tfloat3 v = motionvel[p1];
-            boundonoff[p1] = 0.0f; // setting bounddary particle to be off if unsubmerged
-            velrho[p1] = TFloat4(v.x, v.y, v.z, RhopZero);
-        }
     }
-  }
 }
+
 
 //==============================================================================
 /// Calculates extrapolated data on boundary particles from fluid domain for mDBC.
@@ -1382,14 +1514,14 @@ template<TpKernel tker,bool sim2d,TpSlipMode tslip> void JSphCpu::InteractionMdb
   //-Interaction GhostBoundaryNodes-Fluid.
   const unsigned n=(UseNormalsFt? Np: NpbOk);
   if(Simulate2D){ const bool sim2d=true;
-    if(slipmode==SLIP_Vel0    )InteractionMdbcCorrectionT2 <tker,sim2d,SLIP_Vel0    > (n,divdata,determlimit,MdbcThreshold,pos,code,idp,boundnor, motionvel, motionace, velrho, boundonoff);
-    if(slipmode==SLIP_NoSlip  )InteractionMdbcCorrectionT2 <tker,sim2d,SLIP_NoSlip  > (n,divdata,determlimit,MdbcThreshold,pos,code,idp,boundnor, motionvel, motionace, velrho, boundonoff);
-    if(slipmode==SLIP_FreeSlip)InteractionMdbcCorrectionT2 <tker,sim2d,SLIP_FreeSlip> (n,divdata,determlimit,MdbcThreshold,pos,code,idp,boundnor, motionvel, motionace, velrho, boundonoff);
+    if(slipmode==SLIP_Vel0    )InteractionMdbcCorrectionT2 <tker,sim2d,SLIP_Vel0    > (n,divdata,determlimit,MdbcThreshold,pos,code,idp,boundnor, motionvel, velrho);
+    if(slipmode==SLIP_NoSlip  )InteractionMdbcCorrectionT3 <tker,sim2d,SLIP_NoSlip  > (n,divdata,determlimit,MdbcThreshold,pos,code,idp,boundnor, motionvel, motionace, velrho, boundonoff);
+    if(slipmode==SLIP_FreeSlip)InteractionMdbcCorrectionT3 <tker,sim2d,SLIP_FreeSlip> (n,divdata,determlimit,MdbcThreshold,pos,code,idp,boundnor, motionvel, motionace, velrho, boundonoff);
   }else{          const bool sim2d=false;
-    if(slipmode==SLIP_Vel0    )InteractionMdbcCorrectionT2 <tker,sim2d,SLIP_Vel0    > (n,divdata,determlimit,MdbcThreshold,pos,code,idp,boundnor, motionvel, motionace, velrho, boundonoff);
-    if(slipmode==SLIP_NoSlip  )InteractionMdbcCorrectionT2 <tker,sim2d,SLIP_NoSlip  > (n,divdata,determlimit,MdbcThreshold,pos,code,idp,boundnor, motionvel, motionace, velrho, boundonoff);
-    if(slipmode==SLIP_FreeSlip)InteractionMdbcCorrectionT2 <tker,sim2d,SLIP_FreeSlip> (n,divdata,determlimit,MdbcThreshold,pos,code,idp,boundnor, motionvel, motionace, velrho, boundonoff);
-  }
+    if(slipmode==SLIP_Vel0    )InteractionMdbcCorrectionT2 <tker,sim2d,SLIP_Vel0    > (n,divdata,determlimit,MdbcThreshold,pos,code,idp,boundnor, motionvel, velrho);
+    if(slipmode==SLIP_NoSlip  )InteractionMdbcCorrectionT3 <tker,sim2d,SLIP_NoSlip  > (n,divdata,determlimit,MdbcThreshold,pos,code,idp,boundnor, motionvel, motionace, velrho, boundonoff);
+    if(slipmode==SLIP_FreeSlip)InteractionMdbcCorrectionT3 <tker,sim2d,SLIP_FreeSlip> (n,divdata,determlimit,MdbcThreshold,pos,code,idp,boundnor, motionvel, motionace, velrho, boundonoff);
+  } // Chnaged some to T3
 }
 
 //==============================================================================
