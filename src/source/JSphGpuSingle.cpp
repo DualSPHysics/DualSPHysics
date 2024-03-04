@@ -554,10 +554,10 @@ void JSphGpuSingle::Interaction_Forces(TpInterStep interstep){
 void JSphGpuSingle::MdbcBoundCorrection(){
   Timersg->TmStart(TMG_CfPreForces,false);
   const unsigned n=(UseNormalsFt? Np: NpbOk);
-  cusph::Interaction_MdbcCorrection(TKernel,Simulate2D,SlipMode,MdbcFastSingle
-    ,n,CaseNbound,MdbcThreshold,DivData,Map_PosMin,Posxy_g->cptr(),Posz_g->cptr()
+  cusph::Interaction_MdbcCorrection(TKernel,Simulate2D,n,CaseNbound
+    ,MdbcThreshold,DivData,Map_PosMin,Posxy_g->cptr(),Posz_g->cptr()
     ,PosCell_g->cptr(),Code_g->cptr(),Idp_g->cptr(),BoundNor_g->cptr()
-    ,AG_CPTR(MotionVel_g),Velrho_g->ptr());
+    ,Velrho_g->ptr());
   Timersg->TmStop(TMG_CfPreForces,true);
 }
 

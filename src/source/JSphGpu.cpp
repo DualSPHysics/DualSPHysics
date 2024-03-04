@@ -369,9 +369,9 @@ void JSphGpu::AllocGpuMemoryParticles(unsigned np){
   //-Arrays for mDBC.
   if(UseNormals){
     BoundNor_g=new agfloat3("BoundNorg",Arrays_Gpu,true);
-    if(SlipMode!=SLIP_Vel0){
-      MotionVel_g=new agfloat3("MotionVelg"  ,Arrays_Gpu,true);
-    }
+    //if(SlipMode!=SLIP_Vel0){
+    //  MotionVel_g=new agfloat3("MotionVelg"  ,Arrays_Gpu,true);
+    //}
   }
   //-Arrays for Verlet.
   if(TStep==STEP_Verlet){
