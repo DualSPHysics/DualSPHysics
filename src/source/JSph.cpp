@@ -815,11 +815,11 @@ void JSph::LoadConfigCommands(const JSphCfgRun* cfg){
   //-Aplies configuration using command line.
   if(cfg->SvPosDouble>=0)SvPosDouble=(cfg->SvPosDouble!=0);
   if(cfg->SvExtraParts!="undefined")SvExtraParts=cfg->SvExtraParts;
+
   if(cfg->TBoundary){
     TBoundary=BC_DBC;
     SlipMode=SLIP_Vel0;
     MdbcThreshold=0;
-    MdbcCorrector=false;
     switch(cfg->TBoundary){
       case 1:  TBoundary=BC_DBC;   break;
       case 2:  TBoundary=BC_MDBC;  break;
@@ -831,15 +831,15 @@ void JSph::LoadConfigCommands(const JSphCfgRun* cfg){
       case 3:  SlipMode=SLIP_FreeSlip;  break;
       default: Run_Exceptioon("Slip mode for mDBC is not valid.");
     }
-    UseNormals=(TBoundary==BC_MDBC);
-    MdbcCorrector=(TBoundary==BC_MDBC && (SlipMode==SLIP_NoSlip || SlipMode==SLIP_FreeSlip));
   }
   if(TBoundary==BC_MDBC){
-    if(cfg->MdbcThreshold >=0)MdbcThreshold=cfg->MdbcThreshold;
+    if(cfg->MdbcThreshold>=0)MdbcThreshold=cfg->MdbcThreshold;
     if(SlipMode!=SLIP_Vel0)MdbcThreshold=0;
     if(SlipMode!=SLIP_Vel0 && SlipMode!=SLIP_NoSlip)
       Run_Exceptioon("Only the slip modes velocity=0 and no-slip are allowed with mDBC conditions.");
   }
+  MdbcCorrector=(TBoundary==BC_MDBC && SlipMode!=SLIP_Vel0);
+  UseNormals=(TBoundary==BC_MDBC);
     
   if(cfg->TStep)TStep=cfg->TStep;
   if(cfg->VerletSteps>=0)VerletSteps=cfg->VerletSteps;
