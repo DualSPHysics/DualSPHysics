@@ -336,7 +336,7 @@ void JSphGpuSingle::RunPeriodic(){
             }
             if(UseNormals){
               cusph::PeriodicDuplicateNormals(count,Np,listpg.cptr()
-                ,BoundNor_g->ptr(),AG_PTR(MotionVel_g));
+                ,BoundNor_g->ptr(),AG_PTR(MotionVel_g),AG_PTR(MotionAce_g)); //<vs_m2dbc>
             }
             //-Update the total number of particles.
             Np+=count;
@@ -418,10 +418,12 @@ void JSphGpuSingle::RunCellDivide(bool updateperiodic){
     agfloat3 auxg("-",Arrays_Gpu,true);
     CellDivSingle->SortDataArrays(BoundNor_g->cptr(),auxg.ptr());
     BoundNor_g->SwapPtr(&auxg);
-    if(MotionVel_g){
+    if(MotionVel_g || MotionAce_g){ //<vs_m2dbc_ini>
       CellDivSingle->SortDataArrays(MotionVel_g->cptr(),auxg.ptr());
       MotionVel_g->SwapPtr(&auxg);
-    }
+      CellDivSingle->SortDataArrays(MotionAce_g->cptr(),auxg.ptr());
+      MotionAce_g->SwapPtr(&auxg);
+    } //<vs_m2dbc_end>
   }
 
   //-Collect divide data. | Recupera datos del divide.
@@ -491,6 +493,7 @@ void JSphGpuSingle::Interaction_Forces(TpInterStep interstep){
   //-Boundary correction for mDBC.
   const bool runmdbc=(TBoundary==BC_MDBC && (MdbcCorrector || interstep!=INTERSTEP_SymCorrector));
   if(runmdbc)MdbcBoundCorrection(); 
+  const bool mdbc2=(runmdbc && SlipMode==SLIP_NoSlip); //<vs_m2dbc>
 
   InterStep=interstep;
   PreInteraction_Forces();
@@ -505,12 +508,13 @@ void JSphGpuSingle::Interaction_Forces(TpInterStep interstep){
   const StInterParmsg parms=StrInterParmsg(Simulate2D
     ,Symmetry //<vs_syymmetry>
     ,TKernel,FtMode
-    ,TVisco,TDensity,ShiftingMode
+    ,TVisco,TDensity,ShiftingMode,mdbc2 //<vs_m2dbc>
     ,Visco*ViscoBoundFactor,Visco
     ,bsbound,bsfluid,Np,Npb,NpbOk
     ,0,Nstep,DivData,Dcell_g->cptr()
     ,Posxy_g->cptr(),Posz_g->cptr(),PosCell_g->cptr()
     ,Velrho_g->cptr(),Idp_g->cptr(),Code_g->cptr()
+    ,AG_CPTR(BoundNor_g),AG_CPTR(BoundOnOff_g),AG_CPTR(MotionVel_g) //<vs_m2dbc>
     ,FtoMasspg,AG_CPTR(SpsTauRho2_g),dengradcorr
     ,ViscDt_g->ptr(),Ar_g->ptr(),Ace_g->ptr(),AG_PTR(Delta_g)
     ,AG_PTR(Sps2Strain_g)
@@ -553,14 +557,26 @@ void JSphGpuSingle::Interaction_Forces(TpInterStep interstep){
 //==============================================================================
 void JSphGpuSingle::MdbcBoundCorrection(){
   Timersg->TmStart(TMG_CfPreForces,false);
-  const unsigned n=(UseNormalsFt? Np: NpbOk);
-  cusph::Interaction_MdbcCorrection(TKernel,Simulate2D,n,CaseNbound
-    ,MdbcThreshold,DivData,Map_PosMin,Posxy_g->cptr(),Posz_g->cptr()
-    ,PosCell_g->cptr(),Code_g->cptr(),Idp_g->cptr(),BoundNor_g->cptr()
-    ,Velrho_g->ptr());
+  if(SlipMode==SLIP_Vel0){
+    const unsigned n=(UseNormalsFt? Np: NpbOk);
+    cusph::Interaction_MdbcCorrection(TKernel,Simulate2D,n,CaseNbound
+      ,MdbcThreshold,DivData,Map_PosMin,Posxy_g->cptr(),Posz_g->cptr()
+      ,PosCell_g->cptr(),Code_g->cptr(),Idp_g->cptr(),BoundNor_g->cptr()
+      ,Velrho_g->ptr());
+  }
+  else if(SlipMode==SLIP_NoSlip){ //<vs_m2dbc_ini>
+    const unsigned n=NpbOk;  //-Note that floating boidies are not supported by mDBC2.
+    BoundOnOff_g->Reserve();       //-BoundOnOff_g is freed in PosInteraction_Forces().
+    BoundOnOff_g->CuMemset(0,Npb); //-BoundOnOff_g[]=0
+    cusph::Interaction_Mdbc2Correction(TKernel,Simulate2D,SlipMode,n,CaseNbound
+      ,Gravity,DivData,Map_PosMin,Posxy_g->cptr(),Posz_g->cptr()
+      ,PosCell_g->cptr(),Code_g->cptr(),Idp_g->cptr(),BoundNor_g->cptr()
+      ,MotionVel_g->cptr(),MotionAce_g->cptr(),Velrho_g->ptr()
+      ,BoundOnOff_g->ptr());
+  } //<vs_m2dbc_end>
+  else Run_Exceptioon("Error: SlipMode is invalid.");
   Timersg->TmStop(TMG_CfPreForces,true);
 }
-
 
 //==============================================================================
 /// Returns the maximum value of  (ace.x^2 + ace.y^2 + ace.z^2) from Acec[].

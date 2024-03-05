@@ -837,8 +837,8 @@ void JSph::LoadConfigCommands(const JSphCfgRun* cfg){
   if(TBoundary==BC_MDBC){
     if(cfg->MdbcThreshold >=0)MdbcThreshold=cfg->MdbcThreshold;
     if(SlipMode!=SLIP_Vel0)MdbcThreshold=0;
-    if(SlipMode!=SLIP_Vel0)
-      Run_Exceptioon("Only the slip mode velocity=0 is allowed with mDBC conditions.");
+    if(SlipMode!=SLIP_Vel0 && SlipMode!=SLIP_NoSlip)
+      Run_Exceptioon("Only the slip modes velocity=0 and no-slip are allowed with mDBC conditions.");
   }
     
   if(cfg->TStep)TStep=cfg->TStep;

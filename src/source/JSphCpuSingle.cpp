@@ -347,7 +347,7 @@ void JSphCpuSingle::PeriodicDuplicateSymplectic(unsigned np,unsigned pini
 //==============================================================================
 void JSphCpuSingle::PeriodicDuplicateNormals(unsigned np,unsigned pini
   ,tuint3 cellmax,tdouble3 perinc,const unsigned* listp,tfloat3* normals
-  ,tfloat3* motionvel)const
+  ,tfloat3* motionvel,tfloat3* motionace)const
 {
   const int n=int(np);
   #ifdef OMP_USE
@@ -358,7 +358,8 @@ void JSphCpuSingle::PeriodicDuplicateNormals(unsigned np,unsigned pini
     const unsigned rp=listp[p];
     const unsigned pcopy=(rp&0x7FFFFFFF);
     normals[pnew]=normals[pcopy];
-    if(motionvel)motionvel[pnew]=motionvel[pcopy];
+    if(motionvel)motionvel[pnew]=motionvel[pcopy]; //<vs_m2dbc>
+    if(motionace)motionace[pnew]=motionace[pcopy]; //<vs_m2dbc>
   }
 }
 
@@ -457,7 +458,7 @@ void JSphCpuSingle::RunPeriodic(){
             }
             if(UseNormals){
               PeriodicDuplicateNormals(count,Np,DomCells,perinc,listp.cptr()
-                ,BoundNor_c->ptr(),AC_PTR(MotionVel_c));
+                ,BoundNor_c->ptr(),AC_PTR(MotionVel_c),AC_PTR(MotionAce_c)); //<vs_m2dbc>
             }
             //-Update the total number of particles.
             Np+=count;
@@ -509,7 +510,10 @@ void JSphCpuSingle::RunCellDivide(bool updateperiodic){
   }
   if(UseNormals){
     CellDivSingle->SortArray(BoundNor_c->ptr());
-    if(MotionVel_c)CellDivSingle->SortArray(MotionVel_c->ptr());
+    if(MotionVel_c){ //<vs_m2dbc_ini>
+      CellDivSingle->SortArray(MotionVel_c->ptr());
+      CellDivSingle->SortArray(MotionAce_c->ptr());
+    } //<vs_m2dbc_end>
   }
 
   //-Collect divide data. | Recupera datos del divide.
@@ -586,6 +590,7 @@ void JSphCpuSingle::Interaction_Forces(TpInterStep interstep){
   //-Boundary correction for mDBC.
   const bool runmdbc=(TBoundary==BC_MDBC && (MdbcCorrector || interstep!=INTERSTEP_SymCorrector));
   if(runmdbc)MdbcBoundCorrection();
+  const bool mdbc2=(runmdbc && SlipMode==SLIP_NoSlip); //<vs_m2dbc>
   
   InterStep=interstep;
   PreInteraction_Forces();
@@ -596,8 +601,9 @@ void JSphCpuSingle::Interaction_Forces(TpInterStep interstep){
   //-Interaction of Fluid-Fluid/Bound & Bound-Fluid (forces and DEM). | Interaccion Fluid-Fluid/Bound & Bound-Fluid (forces and DEM).
   const stinterparmsc parms=StInterparmsc(Np,Npb,NpbOk
     ,DivData,Dcell_c->cptr()
-    ,Pos_c->cptr(),Velrho_c->cptr(),Idp_c->cptr(),Code_c->cptr()
-    ,Press_c->cptr(),dengradcorr
+    ,Pos_c->cptr(),Velrho_c->cptr(),Idp_c->cptr(),Code_c->cptr(),Press_c->cptr()
+    ,AC_CPTR(BoundNor_c),AC_CPTR(BoundOnOff_c),AC_CPTR(MotionVel_c) //<vs_m2dbc>
+    ,dengradcorr
     ,Ar_c->ptr(),Ace_c->ptr(),AC_PTR(Delta_c)
     ,ShiftingMode,AC_PTR(ShiftPosfs_c)
     ,AC_PTR(SpsTauRho2_c),AC_PTR(Sps2Strain_c)
@@ -641,8 +647,18 @@ void JSphCpuSingle::Interaction_Forces(TpInterStep interstep){
 //==============================================================================
 void JSphCpuSingle::MdbcBoundCorrection(){
   Timersc->TmStart(TMC_CfPreForces);
-  Interaction_MdbcCorrection(DivData,Pos_c->cptr(),Code_c->cptr()
-    ,Idp_c->cptr(),BoundNor_c->cptr(),Velrho_c->ptr());
+  if(SlipMode==SLIP_Vel0){
+    Interaction_MdbcCorrection(DivData,Pos_c->cptr(),Code_c->cptr()
+      ,Idp_c->cptr(),BoundNor_c->cptr(),Velrho_c->ptr());
+  }
+  else if(SlipMode==SLIP_NoSlip){ //<vs_m2dbc_ini>
+    BoundOnOff_c->Reserve();     //-BoundOnOff_c is freed in PosInteraction_Forces().
+    BoundOnOff_c->Memset(0,Npb); //-BoundOnOff_c[]=0
+    Interaction_Mdbc2Correction(DivData,Pos_c->cptr(),Code_c->cptr()
+      ,Idp_c->cptr(),BoundNor_c->cptr(),MotionVel_c->cptr()
+      ,MotionAce_c->cptr(),Velrho_c->ptr(),BoundOnOff_c->ptr());
+  } //<vs_m2dbc_end>
+  else Run_Exceptioon("Error: SlipMode is invalid.");
   Timersc->TmStop(TMC_CfPreForces);
 }
 
