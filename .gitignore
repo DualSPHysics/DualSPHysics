@@ -6,6 +6,8 @@ src/VS/*
 !src/VS/*.vcxproj.filters
 !src/VS/*.sln
 src__*
+src/source__*
+src/source/___*
 
 ## Ignores output of examples 
 examples/*/*/*_out

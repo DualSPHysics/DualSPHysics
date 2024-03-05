@@ -196,7 +196,6 @@ void JSph::InitVars(){
   TBoundary=BC_DBC;
   SlipMode=SLIP_Vel0;
   MdbcCorrector=false;
-  MdbcFastSingle=true;
   MdbcThreshold=0;
   UseNormals=false;
   UseNormalsFt=false;
@@ -679,9 +678,6 @@ void JSph::LoadConfigParameters(const JXml* cxml){
       case 3:  SlipMode=SLIP_FreeSlip;  break;
       default: Run_Exceptioon("Slip mode is not valid.");
     }
-    MdbcCorrector=(eparms.GetValueInt("MDBCCorrector",true,0)!=0);
-    MdbcFastSingle=(eparms.GetValueInt("MDBCFastSingle",true,1)!=0);
-    if(Cpu)MdbcFastSingle=false;
   } 
 
   //-Density Diffusion Term configuration.
@@ -826,10 +822,10 @@ void JSph::LoadConfigCommands(const JSphCfgRun* cfg){
   //-Aplies configuration using command line.
   if(cfg->SvPosDouble>=0)SvPosDouble=(cfg->SvPosDouble!=0);
   if(cfg->SvExtraParts!="undefined")SvExtraParts=cfg->SvExtraParts;
+
   if(cfg->TBoundary){
     TBoundary=BC_DBC;
     SlipMode=SLIP_Vel0;
-    MdbcFastSingle=true;
     MdbcThreshold=0;
     switch(cfg->TBoundary){
       case 1:  TBoundary=BC_DBC;   break;
@@ -842,15 +838,15 @@ void JSph::LoadConfigCommands(const JSphCfgRun* cfg){
       case 3:  SlipMode=SLIP_FreeSlip;  break;
       default: Run_Exceptioon("Slip mode for mDBC is not valid.");
     }
-    UseNormals=(TBoundary==BC_MDBC);
-    if(TBoundary!=BC_MDBC)MdbcCorrector=false;
   }
   if(TBoundary==BC_MDBC){
-    if(cfg->MdbcThreshold >=0)MdbcThreshold=cfg->MdbcThreshold;
-    if(cfg->MdbcFastSingle>=0)MdbcFastSingle=(cfg->MdbcFastSingle>0);
-    if(SlipMode!=SLIP_Vel0)Run_Exceptioon("Only the slip mode velocity=0 is allowed with mDBC conditions."); //SHABA
-    if(Cpu)MdbcFastSingle=false;
+    if(cfg->MdbcThreshold>=0)MdbcThreshold=cfg->MdbcThreshold;
+    if(SlipMode!=SLIP_Vel0)MdbcThreshold=0;
+    if(SlipMode!=SLIP_Vel0 && SlipMode!=SLIP_NoSlip)
+      Run_Exceptioon("Only the slip modes velocity=0 and no-slip are allowed with mDBC conditions.");
   }
+  MdbcCorrector=(TBoundary==BC_MDBC && SlipMode!=SLIP_Vel0);
+  UseNormals=(TBoundary==BC_MDBC);
     
   if(cfg->TStep)TStep=cfg->TStep;
   if(cfg->VerletSteps>=0)VerletSteps=cfg->VerletSteps;
@@ -1605,11 +1601,9 @@ void JSph::VisuConfig(){
   if(TBoundary==BC_MDBC){
     Log->Print(fun::VarStr("  SlipMode",GetSlipName(SlipMode)));
     Log->Print(fun::VarStr("  mDBC-Corrector",MdbcCorrector));
-    Log->Print(fun::VarStr("  mDBC-FastSingle",MdbcFastSingle));
     Log->Print(fun::VarStr("  mDBC-Threshold",MdbcThreshold));
     ConfigInfo=ConfigInfo+"("+GetSlipName(SlipMode);
     if(MdbcCorrector)ConfigInfo=ConfigInfo+" - Corrector";
-    if(MdbcFastSingle)ConfigInfo=ConfigInfo+" - FastSingle";
     if(MdbcThreshold>0)ConfigInfo=ConfigInfo+fun::PrintStr(" - Threshold=%g",MdbcThreshold);
     ConfigInfo=ConfigInfo+")";
   }
@@ -2681,7 +2675,7 @@ void JSph::FtComputeChrono(double dt,bool predictor
   //-Applies the external velocities to each floating body of Chrono.
   if(FtLinearVel!=NULL)ChronoFtApplyImposedVel();
   //-Calculate data using Chrono / Calcula datos usando Chrono.
-  ChronoObjects->RunChrono(Nstep,TimeStep+dt,dt,predictor);
+  ChronoObjects->RunChrono(Nstep,TimeStep,dt,predictor);
   //-Load calculated data by Chrono / Carga datos calculados por Chrono.
   for(unsigned cf=0;cf<FtCount;cf++)if(FtObjs[cf].usechrono){
     tfloat3 vellin=TFloat3(0),velang=TFloat3(0);

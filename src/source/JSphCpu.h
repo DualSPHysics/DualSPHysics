@@ -39,6 +39,9 @@ typedef struct{
   const unsigned* idp;
   const typecode* code;
   const float*    press;
+  const tfloat3*  boundnor;     //<vs_m2dbc>
+  const float*    boundonoff;   //<vs_m2dbc>
+  const tfloat3*  motionvel;    //<vs_m2dbc>
   const tfloat3*  dengradcorr;
   float*   ar;
   tfloat3* ace;
@@ -54,6 +57,9 @@ inline stinterparmsc StInterparmsc(unsigned np,unsigned npb,unsigned npbok
   ,StDivDataCpu divdata,const unsigned* dcell
   ,const tdouble3* pos,const tfloat4* velrho,const unsigned* idp
   ,const typecode* code,const float* press
+  ,const tfloat3* boundnor     //<vs_m2dbc>
+  ,const float*   boundonoff   //<vs_m2dbc>
+  ,const tfloat3* motionvel    //<vs_m2dbc>
   ,const tfloat3* dengradcorr
   ,float* ar,tfloat3* ace,float* delta
   ,TpShifting shiftmode,tfloat4* shiftposfs
@@ -64,6 +70,7 @@ inline stinterparmsc StInterparmsc(unsigned np,unsigned npb,unsigned npbok
     ,divdata,dcell
     ,pos,velrho,idp
     ,code,press
+    ,boundnor,boundonoff,motionvel //<vs_m2dbc>
     ,dengradcorr
     ,ar,ace,delta
     ,shiftmode,shiftposfs
@@ -128,6 +135,8 @@ protected:
   //-Variables for mDBC (Opt).
   acfloat3*   BoundNor_c;   ///<Normal (x,y,z) pointing from boundary particles to ghost nodes (Opt).
   acfloat3*   MotionVel_c;  ///<Velocity of a moving boundary particle (Opt).
+  acfloat3*   MotionAce_c;  ///<Acceleration of a moving boundary (Opt).
+  acfloat*    BoundOnOff_c; ///<Boundary particle on off switch to multiply massp2 (Opt,Null).
     
   //-Variables for compute step VERLET (Opt).
   acfloat4*   VelrhoM1_c;   ///<Verlet: in order to keep previous values (Opt).
@@ -202,12 +211,14 @@ protected:
     ,const tdouble3* pos,const tfloat4* velrho,const typecode* code,const unsigned* id
     ,float& viscdt,float* ar)const;
 
-  template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity,bool shift> 
-    void InteractionForcesFluid(unsigned n,unsigned pini,bool boundp2,float visco
+  template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity
+    ,bool shift,bool mdbc2> void InteractionForcesFluid
+    (unsigned n,unsigned pinit,bool boundp2,float visco
     ,StDivDataCpu divdata,const unsigned* dcell
     ,const tsymatrix3f* tau,tsymatrix3f* gradvel
-    ,const tdouble3* pos,const tfloat4* velrho,const typecode* code,const unsigned* idp
-    ,const float* press,const tfloat3* dengradcorr
+    ,const tdouble3* pos,const tfloat4* velrho,const typecode* code
+    ,const unsigned* idp,const float* press,const tfloat3* dengradcorr
+    ,const tfloat3* boundnor,const float* boundonoff,const tfloat3* motionvel //<vs_m2dbc>
     ,float& viscdt,float* ar,tfloat3* ace,float* delta
     ,TpShifting shiftmode,tfloat4* shiftposfs)const;
 
@@ -216,7 +227,7 @@ protected:
     ,const tdouble3* pos,const tfloat4* velrho,const typecode* code,const unsigned* idp
     ,float& viscdt,tfloat3* ace)const;
 
-  template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity,bool shift> 
+  template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity,bool shift,bool mdbc2>
     void Interaction_ForcesCpuT(const stinterparmsc& t,StInterResultc& res)const;
   template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity> void Interaction_Forces_ct5(const stinterparmsc& t,StInterResultc& res)const;
   template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco> void Interaction_Forces_ct4(const stinterparmsc& t,StInterResultc& res)const;
@@ -224,16 +235,35 @@ protected:
   template<TpKernel tker> void Interaction_Forces_ct2(const stinterparmsc& t,StInterResultc& res)const;
   void Interaction_Forces_ct(const stinterparmsc& t,StInterResultc& res)const;
 
-  template<TpKernel tker,bool sim2d,TpSlipMode tslip> void InteractionMdbcCorrectionT2
-    (unsigned n,StDivDataCpu divdata,float determlimit,float mdbcthreshold
+  template<TpKernel tker,bool sim2d> void InteractionMdbcCorrectionT2
+    (unsigned n,StDivDataCpu divdata,float mdbcthreshold
     ,const tdouble3* pos,const typecode* code,const unsigned* idp
-    ,const tfloat3* boundnor,const tfloat3* motionvel,tfloat4* velrho);
-  template<TpKernel tker> void Interaction_MdbcCorrectionT(TpSlipMode slipmode,const StDivDataCpu& divdata
+    ,const tfloat3* boundnor,tfloat4* velrho);
+  template<TpKernel tker> void Interaction_MdbcCorrectionT(const StDivDataCpu& divdata
     ,const tdouble3* pos,const typecode* code,const unsigned* idp
-    ,const tfloat3* boundnor,const tfloat3* motionvel,tfloat4* velrho);
-  void Interaction_MdbcCorrection(TpSlipMode slipmode,const StDivDataCpu& divdata
+    ,const tfloat3* boundnor,tfloat4* velrho);
+  void Interaction_MdbcCorrection(const StDivDataCpu& divdata
     ,const tdouble3* pos,const typecode* code,const unsigned* idp
-    ,const tfloat3* boundnor,const tfloat3* motionvel,tfloat4* velrho);
+    ,const tfloat3* boundnor,tfloat4* velrho);
+
+  //<vs_m2dbc_ini>
+  float Mdbc2PressClone(bool sim2d,const float rhoghost,tfloat3 bnormalp1
+    ,const tfloat3 gravity,const tfloat3 motacep1,const tfloat3 dpos)const;
+  float Mdbc2InfNorm3x3(tmatrix3d mat)const;
+  float Mdbc2InfNorm4x4(tmatrix4d mat)const;
+  template<TpKernel tker,bool sim2d> void InteractionMdbc2CorrectionT2
+    (unsigned n,const StDivDataCpu &divdata,const tdouble3* pos,const typecode* code
+    ,const unsigned* idp,const tfloat3* boundnor,const tfloat3* motionvel
+    ,const tfloat3* motionace,tfloat4* velrho,float* boundonoff);
+  template<TpKernel tker> void Interaction_Mdbc2CorrectionT
+    (const StDivDataCpu &divdata,const tdouble3* pos,const typecode* code
+    ,const unsigned* idp,const tfloat3* boundnor,const tfloat3* motionvel
+    ,const tfloat3* motionace,tfloat4* velrho,float* boundonoff);
+  void Interaction_Mdbc2Correction(const StDivDataCpu& divdata
+    ,const tdouble3* pos,const typecode* code,const unsigned* idp
+    ,const tfloat3* boundnor,const tfloat3* motionvel,const tfloat3* motionace
+    ,tfloat4* velrho,float* boundonoff);
+  //<vs_m2dbc_end>
 
   void ComputeSpsTau(unsigned n,unsigned pini,const tfloat4* velrho
     ,const tsymatrix3f* sps2strain,tsymatrix3f* tau_rho2)const;
@@ -259,7 +289,8 @@ protected:
     ,const unsigned* ridpmot,tdouble3* pos,unsigned* dcell,tfloat4* velrho,typecode* code)const;
   void MoveMatBound(unsigned np,unsigned ini,tmatrix4d m,double dt,const unsigned* ridpmot
     ,tdouble3* pos,unsigned* dcell,tfloat4* velrho,typecode* code,tfloat3* boundnor)const;
-  void CopyMotionVel(unsigned nmoving,const unsigned* ridpmot,const tfloat4* velrho,tfloat3* motionvel)const;
+  void CopyMotionVelAce(unsigned nmoving,double dt,const unsigned* ridpmot
+    ,const tfloat4* velrho,tfloat3* motionvel,tfloat3* motionace)const; //<vs_m2dbc>
   void CalcMotion(double stepdt);
   void RunMotion(double stepdt);
   void RunRelaxZone(double dt);

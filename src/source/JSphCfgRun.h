@@ -49,7 +49,6 @@ public:
   bool CellDomFixed;    ///<The Cell domain is fixed according maximum domain size (default=false).
   int TBoundary;        ///<Boundary method: 0:None, 1:DBC (by default), 2:mDBC (SlipMode: 1:DBC vel=0)
   int SlipMode;         ///<Slip mode for mDBC: 0:None, 1:DBC vel=0, 2:No-slip, 3:Free slip (default=1).
-  int MdbcFastSingle;   ///<Matrix calculations are done in single precision (default=1). 
   float MdbcThreshold;  ///<Kernel support limit to apply mDBC correction (default=0).
   std::vector<std::string> InitParms;
 
@@ -76,7 +75,10 @@ public:
   bool SvRes;
   bool SvTimers;
   bool SvDomainVtk;
-  std::string CaseName,RunName,DirOut,DirDataOut;
+  std::string CaseName;
+  std::string RunName;
+  std::string DirOut;
+  std::string DirDataOut;
   std::string PartBeginDir;
   unsigned PartBegin,PartBeginFirst;
   bool RestartChrono;             ///<Allows restart with Chrono active (default=0).
