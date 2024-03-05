@@ -154,7 +154,7 @@ void JSphCpuSingle::ConfigDomain(){
   //-Sets local domain of the simulation within Map_Cells and computes DomCellCode.
   //-Establece dominio de simulacion local dentro de Map_Cells y calcula DomCellCode.
   SelecDomain(TUint3(0,0,0),Map_Cells);
-  //-Computes inital cell of the particles and checks if there are unexpected excluded particles.
+  //-Computes initial cell of the particles and checks if there are unexpected excluded particles.
   //-Calcula celda inicial de particulas y comprueba si hay excluidas inesperadas.
   LoadDcellParticles(Np,Code_c->cptr(),Pos_c->cptr(),Dcell_c->ptr());
 
@@ -347,7 +347,7 @@ void JSphCpuSingle::PeriodicDuplicateSymplectic(unsigned np,unsigned pini
 //==============================================================================
 void JSphCpuSingle::PeriodicDuplicateNormals(unsigned np,unsigned pini
   ,tuint3 cellmax,tdouble3 perinc,const unsigned* listp,tfloat3* normals
-  ,tfloat3* motionvel,tfloat3* motionace)const //SHABA
+  ,tfloat3* motionvel,tfloat3* motionace)const
 {
   const int n=int(np);
   #ifdef OMP_USE
@@ -358,8 +358,8 @@ void JSphCpuSingle::PeriodicDuplicateNormals(unsigned np,unsigned pini
     const unsigned rp=listp[p];
     const unsigned pcopy=(rp&0x7FFFFFFF);
     normals[pnew]=normals[pcopy];
-    motionvel[pnew]=motionvel[pcopy];
-    motionace[pnew]=motionace[pcopy]; //SHABA
+    if(motionvel)motionvel[pnew]=motionvel[pcopy]; //<vs_m2dbc>
+    if(motionace)motionace[pnew]=motionace[pcopy]; //<vs_m2dbc>
   }
 }
 
@@ -378,7 +378,7 @@ void JSphCpuSingle::PeriodicIgnore(unsigned np,typecode* code)const{
 /// Create duplicate particles for periodic conditions.
 /// Create new periodic particles and mark the old ones to be ignored.
 /// New periodic particles are created from Np of the beginning, first the NpbPer
-/// of the boundry and then the NpfPer fluid ones. The Np of the those leaving contains also the
+/// of the boundary and then the NpfPer fluid ones. The Np of the those leaving contains also the
 /// new periodic ones.
 ///
 /// Crea particulas duplicadas de condiciones periodicas.
@@ -431,7 +431,7 @@ void JSphCpuSingle::RunPeriodic(){
           if(Np>=0x80000000)Run_Exceptioon("The number of particles is too big.");//-Because the last bit is used to mark the direction in which a new periodic particle is created. | Porque el ultimo bit se usa para marcar el sentido en que se crea la nueva periodica.
           const unsigned count=PeriodicMakeList(num2,pini2,Stable
             ,nmax,perinc,Pos_c->cptr(),Code_c->cptr(),listp.ptr());
-          //-Resizes the allocated memory for the particles if there is not sufficient space and repeats the serach process.
+          //-Resizes the allocated memory for the particles if there is not sufficient space and repeats the search process.
           //-Redimensiona memoria para particulas si no hay espacio suficiente y repite el proceso de busqueda.
           if(count>nmax || !CheckCpuParticlesSize(count+Np)){
             listp.Free(); //-Avoids unnecessary copying of its data during resizing.
@@ -458,7 +458,7 @@ void JSphCpuSingle::RunPeriodic(){
             }
             if(UseNormals){
               PeriodicDuplicateNormals(count,Np,DomCells,perinc,listp.cptr()
-                ,BoundNor_c->ptr(),MotionVel_c->ptr(),MotionAce_c->ptr()); //SHABA
+                ,BoundNor_c->ptr(),AC_PTR(MotionVel_c),AC_PTR(MotionAce_c)); //<vs_m2dbc>
             }
             //-Update the total number of particles.
             Np+=count;
@@ -510,8 +510,10 @@ void JSphCpuSingle::RunCellDivide(bool updateperiodic){
   }
   if(UseNormals){
     CellDivSingle->SortArray(BoundNor_c->ptr());
-    CellDivSingle->SortArray(MotionVel_c->ptr()); //SHABA
-    CellDivSingle->SortArray(MotionAce_c->ptr()); //SHABA
+    if(MotionVel_c){ //<vs_m2dbc_ini>
+      CellDivSingle->SortArray(MotionVel_c->ptr());
+      CellDivSingle->SortArray(MotionAce_c->ptr());
+    } //<vs_m2dbc_end>
   }
 
   //-Collect divide data. | Recupera datos del divide.
@@ -585,12 +587,13 @@ void JSphCpuSingle::SaveFluidOut(){
 /// Interaccion para el calculo de fuerzas.
 //==============================================================================
 void JSphCpuSingle::Interaction_Forces(TpInterStep interstep){
-  const bool runmdbc=(TBoundary==BC_MDBC && (MdbcCorrector || interstep!=INTERSTEP_SymCorrector));
-  InterStep=interstep;
-  PreInteraction_Forces(runmdbc); //SHABA
-
   //-Boundary correction for mDBC.
+  const bool runmdbc=(TBoundary==BC_MDBC && (MdbcCorrector || interstep!=INTERSTEP_SymCorrector));
   if(runmdbc)MdbcBoundCorrection();
+  const bool mdbc2=(runmdbc && SlipMode==SLIP_NoSlip); //<vs_m2dbc>
+  
+  InterStep=interstep;
+  PreInteraction_Forces();
 
   tfloat3* dengradcorr=NULL;
 
@@ -598,12 +601,12 @@ void JSphCpuSingle::Interaction_Forces(TpInterStep interstep){
   //-Interaction of Fluid-Fluid/Bound & Bound-Fluid (forces and DEM). | Interaccion Fluid-Fluid/Bound & Bound-Fluid (forces and DEM).
   const stinterparmsc parms=StInterparmsc(Np,Npb,NpbOk
     ,DivData,Dcell_c->cptr()
-    ,Pos_c->cptr(),Velrho_c->cptr(),Idp_c->cptr(),Code_c->cptr()
-    ,Press_c->cptr(),dengradcorr
+    ,Pos_c->cptr(),Velrho_c->cptr(),Idp_c->cptr(),Code_c->cptr(),Press_c->cptr()
+    ,AC_CPTR(BoundNor_c),AC_CPTR(BoundOnOff_c),AC_CPTR(MotionVel_c) //<vs_m2dbc>
+    ,dengradcorr
     ,Ar_c->ptr(),Ace_c->ptr(),AC_PTR(Delta_c)
     ,ShiftingMode,AC_PTR(ShiftPosfs_c)
     ,AC_PTR(SpsTauRho2_c),AC_PTR(Sps2Strain_c)
-    , AC_PTR(BoundNor_c), AC_PTR(MotionVel_c), AC_PTR(BoundOnOff_c) // SHABA
   );
   StInterResultc res;
   res.viscdt=0;
@@ -644,9 +647,18 @@ void JSphCpuSingle::Interaction_Forces(TpInterStep interstep){
 //==============================================================================
 void JSphCpuSingle::MdbcBoundCorrection(){
   Timersc->TmStart(TMC_CfPreForces);
-  Interaction_MdbcCorrection(SlipMode,DivData,Pos_c->cptr(),Code_c->cptr()
-    ,Idp_c->cptr(),BoundNor_c->cptr(),MotionVel_c->cptr(),MotionAce_c->cptr()
-    ,Velrho_c->ptr(),BoundOnOff_c->ptr()); //SHABA
+  if(SlipMode==SLIP_Vel0){
+    Interaction_MdbcCorrection(DivData,Pos_c->cptr(),Code_c->cptr()
+      ,Idp_c->cptr(),BoundNor_c->cptr(),Velrho_c->ptr());
+  }
+  else if(SlipMode==SLIP_NoSlip){ //<vs_m2dbc_ini>
+    BoundOnOff_c->Reserve();     //-BoundOnOff_c is freed in PosInteraction_Forces().
+    BoundOnOff_c->Memset(0,Npb); //-BoundOnOff_c[]=0
+    Interaction_Mdbc2Correction(DivData,Pos_c->cptr(),Code_c->cptr()
+      ,Idp_c->cptr(),BoundNor_c->cptr(),MotionVel_c->cptr()
+      ,MotionAce_c->cptr(),Velrho_c->ptr(),BoundOnOff_c->ptr());
+  } //<vs_m2dbc_end>
+  else Run_Exceptioon("Error: SlipMode is invalid.");
   Timersc->TmStop(TMC_CfPreForces);
 }
 
@@ -958,15 +970,23 @@ void JSphCpuSingle::FtPartsUpdate(double dt,bool updatenormals
 }
 
 //==============================================================================
+/// Runs first calculations in configured gauges.
+/// Ejecuta primeros calculos en las posiciones de medida configuradas.
+//==============================================================================
+void JSphCpuSingle::RunFirstGaugeSystem(double timestep){
+  GaugeSystem->ConfigArraysCpu(Pos_c,Code_c,Idp_c,Velrho_c);
+  GaugeSystem->CalculeCpu(timestep,DivData,NpbOk,Npb,Np,true);
+}
+
+//==============================================================================
 /// Runs calculations in configured gauges.
 /// Ejecuta calculos en las posiciones de medida configuradas.
 //==============================================================================
-void JSphCpuSingle::RunGaugeSystem(double timestep,bool saveinput){
-  if(!Nstep || GaugeSystem->GetCount()){
+void JSphCpuSingle::RunGaugeSystem(double timestep){
+  if(GaugeSystem->GetCount()){
     Timersc->TmStart(TMC_SuGauges);
     //const bool svpart=(TimeStep>=TimePartNext);
-    GaugeSystem->CalculeCpu(timestep,DivData,NpbOk,Npb,Np
-      ,Pos_c->cptr(),Code_c->cptr(),Idp_c->cptr(),Velrho_c->cptr(),saveinput);
+    GaugeSystem->CalculeCpu(timestep,DivData,NpbOk,Npb,Np,false);
     Timersc->TmStop(TMC_SuGauges);
   }
 }
@@ -1009,7 +1029,7 @@ void JSphCpuSingle::Run(std::string appname,const JSphCfgRun* cfg,JLog2* log){
 
   //-Initialisation of execution variables.
   InitRunCpu();
-  RunGaugeSystem(TimeStep,true);
+  RunFirstGaugeSystem(TimeStep);
   if(InOut)InOutInit(TimeStepIni);
   FreePartsInit();
   PrintAllocMemory(GetAllocMemoryCpu());

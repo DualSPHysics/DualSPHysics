@@ -47,7 +47,9 @@ void JSphCfgRun::Reset(){
   SvTimers=true;
   CellMode=CELLMODE_Full;
   CellDomFixed=false;
-  TBoundary=0; SlipMode=0; MdbcFastSingle=-1; MdbcThreshold=-1;
+  TBoundary=0;
+  SlipMode=0;
+  MdbcThreshold=-1;
   DomainMode=0;
   DomainFixedMin=DomainFixedMax=TDouble3(0);
   TStep=STEP_None; VerletSteps=-1;
@@ -69,7 +71,10 @@ void JSphCfgRun::Reset(){
   SvNormals=false; 
   SvRes=true; 
   SvDomainVtk=false;
-  CaseName=""; RunName=""; DirOut=""; DirDataOut=""; 
+  CaseName="";
+  RunName="";
+  DirOut="";
+  DirDataOut="data"; 
   PartBegin=0; PartBeginFirst=0; PartBeginDir="";
   RestartChrono=false;
   CFLnumber=-1;
@@ -129,10 +134,9 @@ void JSphCfgRun::VisuInfo()const{
   printf("  Formulation options:\n");
   printf("    -dbc           Dynamic Boundary Condition DBC (by default)\n");
   printf("    -mdbc          Modified Dynamic Boundary Condition mDBC (mode: vel=0)\n");
-  //printf("    -mdbc_noslip   Modified Dynamic Boundary Condition mDBC (mode: no-slip)\n");
+  printf("    -mdbc_noslip   Modified Dynamic Boundary Condition mDBC (mode: no-slip)\n");
   //printf("    -mdbc_freeslip Modified Dynamic Boundary Condition mDBC (mode: free-slip)\n");
 /////////|---------1---------2---------3---------4---------5---------6---------7--------X8
-  //printf("    -mdbc_fast:<0/1>        Fast single precision calculation on GPU (default=1)\n");
   //printf("    -mdbc_threshold:<float> Kernel support limit to apply mDBC correction [0-1]\n");
   printf("\n");
   printf("    -initnorpla:<inlinecfg>  Initialize definition for <boundnormal_plane>\n");
@@ -171,7 +175,8 @@ void JSphCfgRun::VisuInfo()const{
   printf("    -name <string>      Specifies path and name of the case \n");
   printf("    -runname <string>   Specifies name for case execution\n");
   printf("    -dirout <dir>       Specifies the general output directory \n");
-  printf("    -dirdataout <dir>   Specifies the output subdirectory for binary data \n");
+  printf("    -dirdataout <dir>   Specifies the output subdirectory for binary data\n");
+  printf("                        files (default=data) \n");
   printf("\n");
   printf("    -partbegin:begin[:first] dir \n");
   printf("     Specifies the beginning of the simulation starting from a given PART\n");
@@ -324,8 +329,7 @@ void JSphCfgRun::LoadOpts(string* optlis,int optn,int lv,const std::string& file
       else if(txword=="DBC")          { TBoundary=1; SlipMode=0; }
       else if(txword=="MDBC")         { TBoundary=2; SlipMode=1; }
       else if(txword=="MDBC_NOSLIP")  { TBoundary=2; SlipMode=2; }
-      else if(txword=="MDBC_FREESLIP"){ TBoundary=2; SlipMode=3; }
-      else if(txword=="MDBC_FAST")MdbcFastSingle=(txoptfull!=""? atoi(txoptfull.c_str()): 1);
+      //else if(txword=="MDBC_FREESLIP"){ TBoundary=2; SlipMode=3; }
       else if(txword=="MDBC_THRESHOLD"){ 
         MdbcThreshold=float(atof(txoptfull.c_str())); 
         if(MdbcThreshold<0 || MdbcThreshold>1.f)ErrorParm(opt,c,lv,file);
@@ -405,7 +409,10 @@ void JSphCfgRun::LoadOpts(string* optlis,int optn,int lv,const std::string& file
       else if(txword=="NAME" && c+1<optn){ CaseName=optlis[c+1]; c++; }
       else if(txword=="RUNNAME" && c+1<optn){ RunName=optlis[c+1]; c++; }
       else if(txword=="DIROUT" && c+1<optn){ DirOut=optlis[c+1]; c++; }
-      else if(txword=="DIRDATAOUT" && c+1<optn){ DirDataOut=optlis[c+1]; c++; }
+      else if(txword=="DIRDATAOUT" && c+1<optn){ 
+        DirDataOut=optlis[c+1]; c++;
+        if(DirDataOut==".")DirDataOut="";
+      }
       else if(txword=="PARTBEGIN" && c+1<optn){ 
         int v1=atoi(txopt1.c_str());
         int v2=atoi(txopt2.c_str());

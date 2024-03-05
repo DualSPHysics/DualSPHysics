@@ -100,7 +100,8 @@ __device__ void Tmatrix4dReset(tmatrix4d& m){
 /// Returns the determinant of a 3x3 matrix.
 //------------------------------------------------------------------------------
 __device__ float Determinant3x3(const tmatrix3f& d){
-  return(d.a11*d.a22*d.a33 + d.a12*d.a23*d.a31 + d.a13*d.a21*d.a32 - d.a31*d.a22*d.a13 - d.a32*d.a23*d.a11 - d.a33*d.a21*d.a12);
+  return(d.a11*d.a22*d.a33 + d.a12*d.a23*d.a31 + d.a13*d.a21*d.a32
+       - d.a31*d.a22*d.a13 - d.a32*d.a23*d.a11 - d.a33*d.a21*d.a12);
 }
 
 //------------------------------------------------------------------------------
@@ -108,7 +109,8 @@ __device__ float Determinant3x3(const tmatrix3f& d){
 /// Returns the determinant of a 3x3 matrix.
 //------------------------------------------------------------------------------
 __device__ double Determinant3x3dbl(const tmatrix3f& d){
-  return(double(d.a11)*double(d.a22)*double(d.a33) + double(d.a12)*double(d.a23)*double(d.a31) + double(d.a13)*double(d.a21)*double(d.a32) - double(d.a31)*double(d.a22)*double(d.a13) - double(d.a32)*double(d.a23)*double(d.a11) - double(d.a33)*double(d.a21)*double(d.a12));
+  return(double(d.a11)*double(d.a22)*double(d.a33) + double(d.a12)*double(d.a23)*double(d.a31) + double(d.a13)*double(d.a21)*double(d.a32)
+       - double(d.a31)*double(d.a22)*double(d.a13) - double(d.a32)*double(d.a23)*double(d.a11) - double(d.a33)*double(d.a21)*double(d.a12));
 }
 
 //------------------------------------------------------------------------------
@@ -116,7 +118,8 @@ __device__ double Determinant3x3dbl(const tmatrix3f& d){
 /// Returns the determinant of a 3x3 matrix.
 //------------------------------------------------------------------------------
 __device__ double Determinant3x3(const tmatrix3d& d){
-  return(d.a11*d.a22*d.a33 + d.a12*d.a23*d.a31 + d.a13*d.a21*d.a32 - d.a31*d.a22*d.a13 - d.a32*d.a23*d.a11 - d.a33*d.a21*d.a12);
+  return(d.a11*d.a22*d.a33 + d.a12*d.a23*d.a31 + d.a13*d.a21*d.a32
+       - d.a31*d.a22*d.a13 - d.a32*d.a23*d.a11 - d.a33*d.a21*d.a12);
 }
 
 //------------------------------------------------------------------------------

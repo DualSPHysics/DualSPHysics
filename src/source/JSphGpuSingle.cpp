@@ -190,7 +190,7 @@ void JSphGpuSingle::ConfigDomain(){
   //-Sets local domain of the simulation within Map_Cells and computes DomCellCode.
   //-Establece dominio de simulacion local dentro de Map_Cells y calcula DomCellCode.
   SelecDomain(TUint3(0,0,0),Map_Cells);
-  //-Computes inital cell of the particles and checks if there are unexpected excluded particles.
+  //-Computes initial cell of the particles and checks if there are unexpected excluded particles.
   //-Calcula celda inicial de particulas y comprueba si hay excluidas inesperadas.
   LoadDcellParticles(Np,Code_c->cptr(),AuxPos_c->cptr(),Dcell_c->ptr());
 
@@ -309,7 +309,7 @@ void JSphGpuSingle::RunPeriodic(){
           const unsigned count=cusph::PeriodicMakeList(num2,pini2,Stable
             ,nmax,Map_PosMin,Map_PosMax,perinc,Posxy_g->cptr()
             ,Posz_g->cptr(),Code_g->cptr(),listpg.ptr());
-          //-Resizes the allocated memory for the particles if there is not sufficient space and repeats the serach process.
+          //-Resizes the allocated memory for the particles if there is not sufficient space and repeats the search process.
           //-Redimensiona memoria para particulas si no hay espacio suficiente y repite el proceso de busqueda.
           if(count>nmax || !CheckGpuParticlesSize(count+Np)){
             listpg.Free(); //-Avoids unnecessary copying of its data during resizing.
@@ -336,7 +336,7 @@ void JSphGpuSingle::RunPeriodic(){
             }
             if(UseNormals){
               cusph::PeriodicDuplicateNormals(count,Np,listpg.cptr()
-                ,BoundNor_g->ptr(),MotionVel_g->ptr(),MotionAce_g->ptr()); //SHABA
+                ,BoundNor_g->ptr(),AG_PTR(MotionVel_g),AG_PTR(MotionAce_g)); //<vs_m2dbc>
             }
             //-Update the total number of particles.
             Np+=count;
@@ -418,10 +418,12 @@ void JSphGpuSingle::RunCellDivide(bool updateperiodic){
     agfloat3 auxg("-",Arrays_Gpu,true);
     CellDivSingle->SortDataArrays(BoundNor_g->cptr(),auxg.ptr());
     BoundNor_g->SwapPtr(&auxg);
-    CellDivSingle->SortDataArrays(MotionVel_g->cptr(),auxg.ptr()); //SHABA
-    MotionVel_g->SwapPtr(&auxg);
-    CellDivSingle->SortDataArrays(MotionAce_g->cptr(),auxg.ptr()); //SHABA
-    MotionAce_g->SwapPtr(&auxg);
+    if(MotionVel_g || MotionAce_g){ //<vs_m2dbc_ini>
+      CellDivSingle->SortDataArrays(MotionVel_g->cptr(),auxg.ptr());
+      MotionVel_g->SwapPtr(&auxg);
+      CellDivSingle->SortDataArrays(MotionAce_g->cptr(),auxg.ptr());
+      MotionAce_g->SwapPtr(&auxg);
+    } //<vs_m2dbc_end>
   }
 
   //-Collect divide data. | Recupera datos del divide.
@@ -488,12 +490,13 @@ void JSphGpuSingle::SaveFluidOut(){
 /// Interaccion para el calculo de fuerzas.
 //==============================================================================
 void JSphGpuSingle::Interaction_Forces(TpInterStep interstep){
-  const bool runmdbc=(TBoundary==BC_MDBC && (MdbcCorrector || interstep!=INTERSTEP_SymCorrector));
-  InterStep=interstep;
-  PreInteraction_Forces(runmdbc); //SHABA
-
   //-Boundary correction for mDBC.
+  const bool runmdbc=(TBoundary==BC_MDBC && (MdbcCorrector || interstep!=INTERSTEP_SymCorrector));
   if(runmdbc)MdbcBoundCorrection(); 
+  const bool mdbc2=(runmdbc && SlipMode==SLIP_NoSlip); //<vs_m2dbc>
+
+  InterStep=interstep;
+  PreInteraction_Forces();
 
   float3* dengradcorr=NULL;
 
@@ -505,17 +508,17 @@ void JSphGpuSingle::Interaction_Forces(TpInterStep interstep){
   const StInterParmsg parms=StrInterParmsg(Simulate2D
     ,Symmetry //<vs_syymmetry>
     ,TKernel,FtMode
-    ,TVisco,TDensity,ShiftingMode
+    ,TVisco,TDensity,ShiftingMode,mdbc2 //<vs_m2dbc>
     ,Visco*ViscoBoundFactor,Visco
     ,bsbound,bsfluid,Np,Npb,NpbOk
     ,0,Nstep,DivData,Dcell_g->cptr()
     ,Posxy_g->cptr(),Posz_g->cptr(),PosCell_g->cptr()
     ,Velrho_g->cptr(),Idp_g->cptr(),Code_g->cptr()
+    ,AG_CPTR(BoundNor_g),AG_CPTR(BoundOnOff_g),AG_CPTR(MotionVel_g) //<vs_m2dbc>
     ,FtoMasspg,AG_CPTR(SpsTauRho2_g),dengradcorr
     ,ViscDt_g->ptr(),Ar_g->ptr(),Ace_g->ptr(),AG_PTR(Delta_g)
     ,AG_PTR(Sps2Strain_g)
     ,AG_PTR(ShiftPosfs_g)
-    ,AG_CPTR(BoundNor_g),AG_PTR(BoundOnOff_g),AG_CPTR(MotionVel_g)
     ,NULL,NULL);
   cusph::Interaction_Forces(parms);
 
@@ -554,12 +557,24 @@ void JSphGpuSingle::Interaction_Forces(TpInterStep interstep){
 //==============================================================================
 void JSphGpuSingle::MdbcBoundCorrection(){
   Timersg->TmStart(TMG_CfPreForces,false);
-  const unsigned n=(UseNormalsFt? Np: NpbOk);
-  cusph::Interaction_MdbcCorrection(TKernel,Simulate2D,SlipMode,MdbcFastSingle
-    ,n,CaseNbound,MdbcThreshold,DivData,Map_PosMin,Posxy_g->cptr(),Posz_g->cptr()
-    ,PosCell_g->cptr(),Code_g->cptr(),Idp_g->cptr(),BoundNor_g->cptr()
-    ,MotionVel_g->cptr(),MotionAce_g->cptr(),Velrho_g->ptr(),BoundOnOff_g->ptr()
-    ,Gravity); //SHABA
+  if(SlipMode==SLIP_Vel0){
+    const unsigned n=(UseNormalsFt? Np: NpbOk);
+    cusph::Interaction_MdbcCorrection(TKernel,Simulate2D,n,CaseNbound
+      ,MdbcThreshold,DivData,Map_PosMin,Posxy_g->cptr(),Posz_g->cptr()
+      ,PosCell_g->cptr(),Code_g->cptr(),Idp_g->cptr(),BoundNor_g->cptr()
+      ,Velrho_g->ptr());
+  }
+  else if(SlipMode==SLIP_NoSlip){ //<vs_m2dbc_ini>
+    const unsigned n=NpbOk;  //-Note that floating boidies are not supported by mDBC2.
+    BoundOnOff_g->Reserve();       //-BoundOnOff_g is freed in PosInteraction_Forces().
+    BoundOnOff_g->CuMemset(0,Npb); //-BoundOnOff_g[]=0
+    cusph::Interaction_Mdbc2Correction(TKernel,Simulate2D,SlipMode,n,CaseNbound
+      ,Gravity,DivData,Map_PosMin,Posxy_g->cptr(),Posz_g->cptr()
+      ,PosCell_g->cptr(),Code_g->cptr(),Idp_g->cptr(),BoundNor_g->cptr()
+      ,MotionVel_g->cptr(),MotionAce_g->cptr(),Velrho_g->ptr()
+      ,BoundOnOff_g->ptr());
+  } //<vs_m2dbc_end>
+  else Run_Exceptioon("Error: SlipMode is invalid.");
   Timersg->TmStop(TMG_CfPreForces,true);
 }
 
@@ -745,16 +760,23 @@ void JSphGpuSingle::RunFloating(double dt,bool predictor){
 }
 
 //==============================================================================
+/// Runs first calculations in configured gauges.
+/// Ejecuta primeros calculos en las posiciones de medida configuradas.
+//==============================================================================
+void JSphGpuSingle::RunFirstGaugeSystem(double timestep){
+  GaugeSystem->ConfigArraysGpu(0,Posxy_g,Posz_g,Code_g,Idp_g,Velrho_g);  
+  GaugeSystem->CalculeGpu(0,timestep,DivData,NpbOk,Npb,Np,true);
+}
+
+//==============================================================================
 /// Runs calculations in configured gauges.
 /// Ejecuta calculos en las posiciones de medida configuradas.
 //==============================================================================
-void JSphGpuSingle::RunGaugeSystem(double timestep,bool saveinput){
-  if(!Nstep || GaugeSystem->GetCount()){
+void JSphGpuSingle::RunGaugeSystem(double timestep){
+  if(GaugeSystem->GetCount()){
     Timersg->TmStart(TMG_SuGauges,false);
     //const bool svpart=(TimeStep>=TimePartNext);
-    GaugeSystem->CalculeGpu(timestep,DivData
-      ,NpbOk,Npb,Np,Posxy_g->cptr(),Posz_g->cptr(),Code_g->cptr()
-      ,Idp_g->cptr(),Velrho_g->cptr(),saveinput);
+    GaugeSystem->CalculeGpu(0,timestep,DivData,NpbOk,Npb,Np,false);
     Timersg->TmStop(TMG_SuGauges,true);
   }
 }
@@ -803,7 +825,7 @@ void JSphGpuSingle::Run(std::string appname,const JSphCfgRun* cfg,JLog2* log){
 
   //-Initialisation of execution variables.
   InitRunGpu();
-  RunGaugeSystem(TimeStep,true);
+  RunFirstGaugeSystem(TimeStep);
   if(InOut)InOutInit(TimeStepIni);
   FreePartsInit();
   PrintAllocMemory(GetAllocMemoryCpu(),GetAllocMemoryGpu());

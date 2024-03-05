@@ -100,8 +100,9 @@ class DSPHChronoLib {
 public:
   //-States of execution.
   typedef enum { RSTATE_Init,RSTATE_Loading,RSTATE_Results }TpRunState;
-  const std::string version;       ///<DualSPHysics version
+  const std::string DsphVersion;   ///<DualSPHysics version
   const std::string DsphChVersion; ///<Interface version
+  const std::string DsphChDate;    ///<Interface date
   const std::string ChronoVersion; ///<Chrono version
 
 protected:
@@ -122,6 +123,9 @@ protected:
   /// Constructor
   DSPHChronoLib(const JChronoData &chdata);
 
+  /// Shows license
+  void PrintLicense();
+
   /// Initialisation of variables
   void Reset();
 
@@ -129,7 +133,7 @@ protected:
   virtual void SaveForcesHead(){};
   
   /// Establishes the variable coefficients to the link objects.
-  virtual void SetVariableCoeff(){};
+  virtual void SetVarLinkCoeff(){};
   
   /// Adds the material properties to a object to enable collisions
   void ConfigSurfaceBody(const JChBody &body,chrono::ChBody *chbody);
@@ -189,9 +193,9 @@ public:
 class DSPHChronoLibSC : public DSPHChronoLib {
 private:
   chrono::ChSystem *MphysicalSystem; ///<Pointer to Chrono System
-  
+
   /// Establishes the variable coefficients to the link objects.
-  virtual void SetVariableCoeff();
+  void SetVarLinkCoeff();
 
   /// Saves header for forces for each body and link (ChronoLink_forces.csv, ChronoBody_forces.csv).
   void SaveForcesHead();

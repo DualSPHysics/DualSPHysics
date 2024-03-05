@@ -90,12 +90,13 @@ typedef struct{
 typedef struct StrInterParmsg{
   //-Configuration options.
   bool simulate2d;
-  bool symmetry; //<vs_syymmetry>
+  bool symmetry;   //<vs_syymmetry>
   TpKernel tkernel;
   TpFtMode ftmode;
   TpVisco tvisco;
   TpDensity tdensity;
   TpShifting shiftmode;
+  bool mdbc2;      //<vs_m2dbc>
   //-Execution values.
   float viscob,viscof;
   unsigned bsbound,bsfluid;
@@ -115,6 +116,9 @@ typedef struct StrInterParmsg{
   const float4*    velrho;
   const unsigned*  idp;
   const typecode*  code;
+  const float3*    boundnor;     //<vs_m2dbc>
+  const float*     boundonoff;   //<vs_m2dbc>
+  const float3*    motionvel;    //<vs_m2dbc>
   const float*     ftomassp;
   const tsymatrix3f* spstaurho2;
   const float3*    dengradcorr;
@@ -125,10 +129,6 @@ typedef struct StrInterParmsg{
   float*  delta;
   tsymatrix3f* sps2strain;
   float4* shiftposfs;
-  //SHABA newMDBC
-  const float3* boundnormal;
-  float*  boundonoff;
-  const float3* motionvel;
   //-Other values and objects.
   cudaStream_t stm;
   StKerInfo* kerinfo;
@@ -142,6 +142,7 @@ typedef struct StrInterParmsg{
     ,TpVisco tvisco
     ,TpDensity tdensity
     ,TpShifting shiftmode
+    ,bool mdbc2                 //<vs_m2dbc>
     ,float viscob,float viscof
     ,unsigned bsbound,unsigned bsfluid
     ,unsigned np,unsigned npb,unsigned npbok
@@ -151,6 +152,9 @@ typedef struct StrInterParmsg{
     ,const unsigned* dcell
     ,const double2* posxy,const double* posz,const float4* poscell
     ,const float4* velrho,const unsigned* idp,const typecode* code
+    ,const float3* boundnor     //<vs_m2dbc>
+    ,const float*  boundonoff   //<vs_m2dbc>
+    ,const float3* motionvel    //<vs_m2dbc>
     ,const float* ftomassp
     ,const tsymatrix3f* spstaurho2
     ,const float3* dengradcorr
@@ -160,8 +164,6 @@ typedef struct StrInterParmsg{
     ,float* delta
     ,tsymatrix3f* sps2strain
     ,float4* shiftposfs
-    //SHABA
-    ,const float3* boundnormal,float* boundonoff,const float3* motionvel
     ,cudaStream_t stm
     ,StKerInfo* kerinfo)
   {
@@ -173,6 +175,7 @@ typedef struct StrInterParmsg{
     this->tvisco=tvisco;
     this->tdensity=tdensity;
     this->shiftmode=shiftmode;
+    this->mdbc2=mdbc2;       //<vs_m2dbc>
     //-Execution values.
     this->viscob=viscob;   this->viscof=viscof;
     this->bsbound=bsbound; this->bsfluid=bsfluid;
@@ -186,6 +189,9 @@ typedef struct StrInterParmsg{
     this->dcell=dcell;
     this->posxy=posxy; this->posz=posz; this->poscell=poscell;
     this->velrho=velrho; this->idp=idp; this->code=code;
+    this->boundnor  =boundnor;     //<vs_m2dbc>
+    this->boundonoff=boundonoff;   //<vs_m2dbc>
+    this->motionvel =motionvel;    //<vs_m2dbc>
     this->ftomassp=ftomassp;
     this->spstaurho2=spstaurho2;
     this->dengradcorr=dengradcorr;
@@ -196,8 +202,6 @@ typedef struct StrInterParmsg{
     this->delta=delta;
     this->sps2strain=sps2strain;
     this->shiftposfs=shiftposfs;
-    //SHABA
-    this->boundnormal=boundnormal; this->boundonoff=boundonoff; this->motionvel=motionvel;
     //-Other values and objects.
     this->stm=stm;
     this->kerinfo=kerinfo;
@@ -226,13 +230,20 @@ void Interaction_Forces(const StInterParmsg& t);
 
 //-Kernels for the boundary correction (mDBC).
 void Interaction_MdbcCorrection(TpKernel tkernel,bool simulate2d
-  ,TpSlipMode slipmode,bool fastsingle,unsigned n,unsigned nbound
-  ,float mdbcthreshold,const StDivDataGpu& dvd,const tdouble3& mapposmin
+  ,unsigned n,unsigned nbound,float mdbcthreshold
+  ,const StDivDataGpu& dvd,const tdouble3& mapposmin
   ,const double2* posxy,const double* posz,const float4* poscell
   ,const typecode* code,const unsigned* idp,const float3* boundnor
-  ,const float3* motionvel,const float3* motionace
-  ,float4* velrho,float* boundonoff,const tfloat3 gravity
-  ,cudaStream_t stm=NULL);
+  ,float4* velrho,cudaStream_t stm=NULL);
+
+//-Kernels for the boundary correction (mDBC2). //<vs_m2dbc_ini>
+void Interaction_Mdbc2Correction(TpKernel tkernel,bool simulate2d
+  ,TpSlipMode slipmode,unsigned n,unsigned nbound,const tfloat3 gravity
+  ,const StDivDataGpu& dvd,const tdouble3& mapposmin,const double2* posxy
+  ,const double* posz,const float4* poscell,const typecode* code
+  ,const unsigned* idp,const float3* boundnor,const float3* motionvel
+  ,const float3* motionace,float4* velrho,float* boundonoff
+  ,cudaStream_t stm=NULL);                      //<vs_m2dbc_end>
 
 //-Kernels for the calculation of the DEM forces.
 void Interaction_ForcesDem(unsigned bsize,unsigned nfloat
@@ -269,7 +280,8 @@ void MoveLinBound(byte periactive,unsigned np,unsigned ini,tdouble3 mvpos,tfloat
 void MoveMatBound(byte periactive,bool simulate2d,unsigned np,unsigned ini,tmatrix4d m,double dt
   ,const unsigned* ridpmot,double2* posxy,double* posz,unsigned* dcell,float4* velrho,typecode* code,float3* boundnor);
 void CopyMotionVelAce(unsigned nmoving,double dt,const unsigned* ridpmot
-  ,const float4* velrho,float3* motionvel,float3* motionace); //SHABA
+  ,const float4* velrho,float3* motionvel,float3* motionace); //<vs_m2dbc>
+
 void FtNormalsUpdate(unsigned np,unsigned ini,tmatrix4d m,const unsigned* ridpmot,float3* boundnor);
 
 //-Kernels for MLPistons motion.
@@ -306,7 +318,7 @@ void PeriodicDuplicateSymplectic(unsigned n,unsigned pini
   ,unsigned* dcell,double2* posxy,double* posz,float4* velrho,tsymatrix3f* spstau
   ,double2* posxypre,double* poszpre,float4* velrhopre);
 void PeriodicDuplicateNormals(unsigned n,unsigned pini,const unsigned* listp
-  ,float3* normals,float3* motionvel,float3* motionace); //SHABA
+  ,float3* normals,float3* motionvel,float3* motionace);
 
 //-Kernels for Damping.
 void ComputeDampingPlane(double dt,double4 plane,float dist,float over

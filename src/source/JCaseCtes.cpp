@@ -293,7 +293,7 @@ void JCaseCtes::SaveXmlRun(JXml* sxml,const std::string& place)const{
 }
 
 //==============================================================================
-/// Returns final H value accoding to current configuration.
+/// Returns final H value according to current configuration.
 //==============================================================================
 double JCaseCtes::ComputeFinalH(bool data2d,double dp)const{
   double coefh=GetCoefH();

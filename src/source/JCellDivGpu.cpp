@@ -170,7 +170,7 @@ void JCellDivGpu::AllocMemoryNct(ullong nct,ullong nctmin){
 
 //==============================================================================
 /// Checks allocated memory for the indicated number of particles.
-/// If the allocated memeory is not sufficient, reserve the required memory.
+/// If the allocated memory is not sufficient, reserve the required memory.
 ///
 /// Comprueba la reserva de memoria para el numero indicado de particulas. 
 /// Si no es suficiente o no hay reserva, entonces reserva la memoria requerida.
@@ -188,7 +188,7 @@ void JCellDivGpu::CheckMemoryNp(unsigned npmin){
 
 //==============================================================================
 /// Checks allocated memory for the indicated number of cells.
-/// If the allocated memeory is not sufficient, reserve the required memory.
+/// If the allocated memory is not sufficient, reserve the required memory.
 ///
 /// Comprueba la reserva de memoria para el numero indicado de celdas. 
 /// Si no es suficiente o no hay reserva, entonces reserva la memoria requerida.
@@ -236,7 +236,7 @@ void JCellDivGpu::DefineDomain(unsigned cellcode,tuint3 domcelini,tuint3 domcelf
 //}:*/
 
 //==============================================================================
-/// Computes the maximum and minimum postion for the indicated range of boundary particles.
+/// Computes the maximum and minimum position for the indicated range of boundary particles.
 /// The excluded particles are already marked in code[].
 ///
 /// Calcula posiciones minimas y maximas del rango de particulas Bound indicado.
@@ -261,7 +261,7 @@ void JCellDivGpu::CalcCellDomainBound(unsigned n,unsigned pini,unsigned n2
 }
 
 //==============================================================================
-/// Computes the maximum and minimum postion for the indicated range of fluid particles.
+/// Computes the maximum and minimum position for the indicated range of fluid particles.
 /// Ignores the excluded particles already marked in code[]
 ///
 /// Calcula posiciones minimas y maximas del rango de particulas Fluid indicado.

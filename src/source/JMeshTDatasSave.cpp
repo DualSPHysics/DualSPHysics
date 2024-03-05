@@ -403,7 +403,7 @@ void JMeshTDatasSave::SaveVtk(std::string file,int fnum,const JMeshData* mdat
 }
 
 //==============================================================================
-/// Creates VTK file with the scheme of mesh difinition.
+/// Creates VTK file with the scheme of mesh definition.
 //==============================================================================
 void JMeshTDatasSave::SaveVtkScheme(std::string file,StMeshPts m){
   //JMeshData::PrintMeshPts("SaveVtkSchem>\n",m);

@@ -84,9 +84,11 @@ protected:
   const bool Simulate2D;
   const double FtPause;
 
-  bool UseVariableCoeff; ///<Indicates the use of variable coefficients
+  bool UseVarLinkCoeff; ///<Indicates the use of variable coefficients
+  bool UseVarScaleForce; ///<Indicates the use of variable coefficients
   std::vector<JLinearValue*> StiffnessV; ///<For variable stiffness
   std::vector<JLinearValue*> DampingV;   ///<For variable damping
+  std::vector<JLinearValue*> ScaleForceV;   ///<For variable scaling forces
 
   int OmpThreads;        ///<Max number of OpenMP threads in execution on CPU host (minimum 1).
   const bool UseDVI;     ///<Uses Differential Variational Inequality (DVI) method.
@@ -131,8 +133,9 @@ protected:
     ,double restlength,double radius,double revlength,int nside)const;
   void SaveVtkScheme()const;
 
-  void SetVariableCoeff(const double timestep);
-  void ReadCoeffs(JChLink* link,const JXml* sxml,TiXmlElement* ele);
+  void SetVarLinkCoeff(const double timestep);
+  void SetVarScaleForce(const double timestep);
+  void ReadLinkCoeffs(JChLink* link,const JXml* sxml,TiXmlElement* ele,bool islinklock=false);
   void ReadScaleForces(const JXml* sxml,TiXmlElement* lis);
 
 public:

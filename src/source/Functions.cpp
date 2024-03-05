@@ -199,7 +199,7 @@ int GetWeekNumber(int day,int month,int year){
 
 //==============================================================================
 /// Returns day, month and year from text dd-mm-yyyy.
-/// Returns 0 when imput data is invalid.
+/// Returns 0 when input data is invalid.
 //==============================================================================
 void GetDateValuesDMY(std::string datetx,int& day,int& month,int& year){
   day=month=year=0;
@@ -445,7 +445,7 @@ std::string Uint3Str(const tuint3& v){
 }
 
 //==============================================================================
-/// Converts integral or real value to string with thousands seperator.
+/// Converts integral or real value to string with thousands separator.
 //==============================================================================
 std::string KnumStr(const char* v){
   const unsigned s=unsigned(strlen(v));
@@ -473,7 +473,7 @@ std::string KnumStr(const char* v){
 }
 
 //==============================================================================
-/// Converts unsigned value to string with thousands seperator.
+/// Converts unsigned value to string with thousands separator.
 //==============================================================================
 std::string KintStr(unsigned v){
   char cad[128];
@@ -482,7 +482,7 @@ std::string KintStr(unsigned v){
 }
 
 //==============================================================================
-/// Converts integer value to string with thousands seperator.
+/// Converts integer value to string with thousands separator.
 //==============================================================================
 std::string KintStr(int v){
   char cad[128];
@@ -491,7 +491,7 @@ std::string KintStr(int v){
 }
 
 //==============================================================================
-/// Converts ullong value to string with thousands seperator.
+/// Converts ullong value to string with thousands separator.
 //==============================================================================
 std::string KintStr(ullong v){
   char cad[128];
@@ -500,7 +500,7 @@ std::string KintStr(ullong v){
 }
 
 //==============================================================================
-/// Converts llong value to string with thousands seperator.
+/// Converts llong value to string with thousands separator.
 //==============================================================================
 std::string KintStr(llong v){
   char cad[128];
@@ -914,7 +914,7 @@ std::string StrStripSlashes(const std::string& cad){
 }
 
 //==============================================================================
-/// Inidicates if the string cad only contains characters in the string chars.
+/// Indicates if the string cad only contains characters in the string chars.
 //==============================================================================
 bool StrOnlyChars(const std::string& cad,const std::string& chars){
   bool ok=true;
@@ -983,7 +983,7 @@ std::string StrFileError(int error){
 }
 
 //==============================================================================
-/// Returns the text untill the indicated mark and saves the rest in text format.
+/// Returns the text until the indicated mark and saves the rest in text format.
 //==============================================================================
 std::string StrSplit(const std::string mark,std::string& text){
   const unsigned smark=unsigned(mark.size());
@@ -1655,13 +1655,24 @@ int MkdirPath(std::string path){
 
 
 //==============================================================================
-/// Returns the parent directory with its path.
+/// Returns the parent directory with its path. E.g. /saa/file.x  -->  /saa
 //==============================================================================
-std::string GetDirParent(const std::string& ruta){
+std::string GetDirParent(const std::string& fullfile){
   std::string dir;
-  int pos=int(ruta.find_last_of("/"));
-  if(pos<=0)pos=int(ruta.find_last_of("\\"));
-  if(pos>0)dir=ruta.substr(0,pos);
+  int pos=int(fullfile.find_last_of("/"));
+  if(pos<=0)pos=int(fullfile.find_last_of("\\"));
+  if(pos>0)dir=fullfile.substr(0,pos);
+  return(dir);
+}
+
+//==============================================================================
+/// Returns the path of file or directory. E.g. /saa/file.x  -->  /saa/
+//==============================================================================
+std::string GetParentPath(const std::string& fullfile){
+  std::string dir;
+  int pos=int(fullfile.find_last_of("/"));
+  if(pos<0)pos=int(fullfile.find_last_of("\\"));
+  if(pos>=0)dir=fullfile.substr(0,pos+1);
   return(dir);
 }
 
@@ -1831,7 +1842,7 @@ std::string GetNewFileName(std::string fnamefmt,unsigned initialnum){
 }
 
 //==============================================================================
-/// Returns the filename with a requested size of characteres.
+/// Returns the filename with a requested size of characters.
 //==============================================================================
 std::string ShortFileName(const std::string& file,unsigned maxlen,bool withpoints){
   std::string file2;
@@ -1851,7 +1862,7 @@ std::string ShortFileName(const std::string& file,unsigned maxlen,bool withpoint
 }
 
 //==============================================================================
-/// Returns text and filename with a requested size of characteres.
+/// Returns text and filename with a requested size of characters.
 //==============================================================================
 std::string TextWithShortFileName(const std::string& txpre
   ,const std::string& txpos,const std::string& file,unsigned maxlen)
@@ -1879,7 +1890,7 @@ bool FileMask(std::string text,std::string mask){
   int pos=(int)mask.find("|");
   if(pos>=0)return(FileMask(text,mask.substr(0,pos))||FileMask(text,mask.substr(pos+1)));
   else{
-  //-Checks corrleation of text with mask.
+  //-Checks correlation of text with mask.
     int stext=(int)text.length();
     int smask=(int)mask.length();
     if(!stext&&!smask)return(true);

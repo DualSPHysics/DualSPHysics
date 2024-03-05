@@ -30,6 +30,7 @@
 //:# - Nuevo metodo para cargar vector de valores. (21-10-2020)
 //:# - Nuevo metodo GetValuesSta() para cargar vector de valores. (22-04-2023)
 //:# - Nuevo metodo ToStringFull(). (23-04-2023)
+//:# - Nuevos metodos GetValueMin() y GetValueMax(). (13-02-2024)
 //:#############################################################################
 
 /// \file JRangeFilter.h \brief Declares the class \ref JRangeFilter.
@@ -54,7 +55,8 @@ private:
   unsigned Count;            ///<Number of intervals stored in \ref Ranges.
   unsigned Size;             ///<Number of intervals allocated in \ref Ranges.
 
-  unsigned ValueMin,ValueMax;
+  unsigned ValueMin;
+  unsigned ValueMax;
   byte* FastValue;           ///<Array to optimise the values search.
 
   void ResizeRanges(unsigned size);
@@ -74,6 +76,8 @@ public:
   void Reset();
   void Config(std::string filter);
   void Config(const std::vector<unsigned>& values);
+  unsigned GetValueMin()const;
+  unsigned GetValueMax()const;
   bool CheckValue(unsigned v)const;
   unsigned GetFirstValue()const;
   unsigned GetNextValue(unsigned v)const;

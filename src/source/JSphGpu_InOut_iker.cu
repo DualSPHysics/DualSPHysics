@@ -519,7 +519,7 @@ void InoutClearInteractionVars(unsigned npf,unsigned pini,const typecode* code
 
 //------------------------------------------------------------------------------
 /// Updates velocity and rhop for M1 variable when Verlet is used. 
-/// Actualiza velocidad y densidad de varible M1 cuando se usa Verlet.
+/// Actualiza velocidad y densidad de variable M1 cuando se usa Verlet.
 //------------------------------------------------------------------------------
 __global__ void KerInOutUpdateVelrhopM1(unsigned n,const int* inoutpart
   ,const float4* velrhop,float4* velrhopm1)
@@ -533,7 +533,7 @@ __global__ void KerInOutUpdateVelrhopM1(unsigned n,const int* inoutpart
 
 //==============================================================================
 /// Updates velocity and rhop for M1 variable when Verlet is used. 
-/// Actualiza velocidad y densidad de varible M1 cuando se usa Verlet.
+/// Actualiza velocidad y densidad de variable M1 cuando se usa Verlet.
 //==============================================================================
 void InOutUpdateVelrhopM1(unsigned n,const int* inoutpart
   ,const float4* velrhop,float4* velrhopm1)

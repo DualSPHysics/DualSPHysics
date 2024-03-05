@@ -51,6 +51,8 @@
 //:# - Nuevos metodos CheckAttributes(elementname) y ExistsElement(elementname,attribute). (27-08-2020)
 //:# - Mejora en CheckElementActive(lis,name). Ahora devuelve false cuando no existe name. (03-09-2020)
 //:# - Usa GetDateTime() de Functions.h ya que actualmente esa cabecera esta incluida. (20-11-2020)
+//:# - Funciones GetAttributeFloat3Def() y GetAttributeDouble3Def que permiten incluir valores por defecto. (21-03-2022)
+//:# - Funciones GetAttributeFloat3Def0() y GetAttributeDouble3Def0 usan 0 como valor por defecto en lugar de FLT_MAX. (21-03-2022)
 //:#############################################################################
 
 /// \file JXml.h \brief Declares the class \ref JXml.
@@ -80,7 +82,7 @@ class JXml : protected JObject
 {
 public:
   TiXmlDocument* Doc;       ///<Pointer at the xml document.
-  std::string FileReading;  ///<File to read the xml docuemnt.
+  std::string FileReading;  ///<File to read the xml document.
   JNumx* NuxLib;            ///<Pointer to JNumexLib object.
 
 
@@ -94,6 +96,11 @@ public:
 #else
   void SetNuxLib(JNumx* nux){ NuxLib=nux; }
 #endif
+
+  //==============================================================================
+  /// Returns loaded file name.
+  //==============================================================================
+  std::string GetFileReading()const{ return(FileReading); }
 
   //==============================================================================
   /// Returns the requested node and creates it if necessary.
@@ -249,7 +256,7 @@ public:
   void CheckElementNames(const TiXmlElement* lis,bool checkrepeated,std::string names)const;
 
   //==============================================================================
-  /// Checks if some or several attributes appers in the element. Returns number
+  /// Checks if some or several attributes appears in the element. Returns number
   /// of found attribute (1...n), 0 none found and -1 several found.
   /// \param ele Xml element of the error.
   /// \param names Names of the requested attributes separated by by spaces.
@@ -287,7 +294,7 @@ public:
   bool ExistsAttribute(const TiXmlElement* ele,const std::string& name)const;
 
   //==============================================================================
-  /// Checks if some or several attributes appers in the element. Returns number
+  /// Checks if some or several attributes appears in the element. Returns number
   /// of found attribute (1...n), 0 none found and -1 several found.
   /// \param ele Xml element of the error.
   /// \param names Names of the requested attributes separated by by spaces.
@@ -296,7 +303,7 @@ public:
   int CheckAttributes(const TiXmlElement* ele,std::string names,bool checkmanyatt)const;
 
   //==============================================================================
-  /// Checks if some or several attributes appers in the element. Returns number
+  /// Checks if some or several attributes appears in the element. Returns number
   /// of found attribute (1...n), 0 none found and -1 several found.
   /// \param lis List of Xml elements of the error.
   /// \param elementname Name of the requested element.
@@ -452,8 +459,8 @@ public:
   tfloat3 GetAttributeFloat3(const TiXmlElement* ele,const char* name1="x"
     ,const char* name2="y",const char* name3="z")const
   { 
-    tdouble3 v=GetAttributeDouble3(ele,name1,name2,name3);
-    return(TFloat3(float(v.x),float(v.y),float(v.z))); 
+    const tdouble3 v=GetAttributeDouble3(ele,name1,name2,name3);
+    return(ToTFloat3(v));
   }
   
   //==============================================================================
@@ -471,6 +478,35 @@ public:
       ,GetAttributeDouble(ele,name3))); 
   }
 
+  //==============================================================================
+  /// Calls \ref GetAttributeDouble3() with the same parameters.
+  //==============================================================================
+  tfloat3 GetAttributeFloat3Def0(TiXmlElement* ele,const char* name1="x"
+    ,const char* name2="y",const char* name3="z",bool optional=false
+    ,tfloat3 valdef=TFloat3(0))const
+  { 
+    const tdouble3 v=GetAttributeDouble3Def0(ele,name1,name2,name3,optional,ToTDouble3(valdef));
+    return(ToTFloat3(v));
+  }
+
+  //==============================================================================
+  /// Checks and returns value of type double3 of the xml element.
+  /// \param ele Xml element to read.
+  /// \param name1 Name of the first attribute (x by default).
+  /// \param name2 Name of the second attribute (y by default).
+  /// \param name3 Name of the third attribute (z by default).
+  /// \param optional If it does not exist,
+  /// \param valdef Value by default if it does not exist and \a optional was activated.
+  /// \throw JException Format not valid for the requested type...
+  //==============================================================================
+  tdouble3 GetAttributeDouble3Def0(TiXmlElement* ele,const char* name1="x"
+    ,const char* name2="y",const char* name3="z",bool optional=false
+    ,tdouble3 valdef=TDouble3(0))const
+  { 
+    return(TDouble3(GetAttributeDouble(ele,name1,optional,valdef.x)
+                   ,GetAttributeDouble(ele,name2,optional,valdef.y)
+                   ,GetAttributeDouble(ele,name3,optional,valdef.z)));
+  }
 
   //- Reading complete nodes.
 

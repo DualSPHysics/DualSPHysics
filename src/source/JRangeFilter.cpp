@@ -256,6 +256,20 @@ void JRangeFilter::Prepare(){
 }
 
 //==============================================================================
+/// Returns minimum value (UINT_MAX when it is empty).
+//==============================================================================
+unsigned JRangeFilter::GetValueMin()const{
+  return(Count? ValueMin: UINT_MAX);
+}
+
+//==============================================================================
+/// Returns maximum value (zero when it is empty).
+//==============================================================================
+unsigned JRangeFilter::GetValueMax()const{
+  return(Count? ValueMax: 0);
+}
+
+//==============================================================================
 /// Checks whether a value passes the filter.
 //==============================================================================
 bool JRangeFilter::CheckValue(unsigned v)const{

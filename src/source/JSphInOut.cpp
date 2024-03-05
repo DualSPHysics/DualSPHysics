@@ -51,13 +51,14 @@ using namespace std;
 //##############################################################################
 //# JSphInOut
 //##############################################################################
+const std::string JSphInOut::XmlPath="case.execution.special.inout"; ///<Path for InOut in XML file.
+
 //==============================================================================
 /// Constructor.
 //==============================================================================
-JSphInOut::JSphInOut(bool cpu,const StCteSph& csp,std::string xmlfile
-  ,JXml* sxml,std::string xmlpath,const std::string& dirdatafile)
-  :Log(AppInfo.LogPtr()),Cpu(cpu),CSP(csp),XmlFile(xmlfile),XmlPath(xmlpath)
-  ,DirDataFile(dirdatafile)
+JSphInOut::JSphInOut(bool cpu,const StCteSph& csp,const JXml* cxml
+  ,std::string dirdatafile):Log(AppInfo.LogPtr()),Cpu(cpu),CSP(csp)
+  ,XmlFile(cxml->GetFileReading()),DirDataFile(dirdatafile)
 {
   ClassName="JSphInOut";
   Planes=NULL;
@@ -71,7 +72,7 @@ JSphInOut::JSphInOut(bool cpu,const StCteSph& csp,std::string xmlfile
   #endif
   Reset();
   //-Loads basic configuration.
-  LoadXmlInit(sxml,xmlpath);
+  LoadXmlInit(cxml,XmlPath);
 }
 
 //==============================================================================
@@ -1402,7 +1403,7 @@ unsigned JSphInOut::ComputeStepFillingGpu(unsigned nstep,double dt
 
 //==============================================================================
 /// Updates velocity and rhop for M1 variable when Verlet is used. 
-/// Actualiza velocidad y densidad de varible M1 cuando se usa Verlet.
+/// Actualiza velocidad y densidad de variable M1 cuando se usa Verlet.
 //==============================================================================
 void JSphInOut::UpdateVelrhopM1Cpu(unsigned inoutcount,const int* inoutpart
   ,const tfloat4* velrho,tfloat4* velrhom1)
@@ -1420,7 +1421,7 @@ void JSphInOut::UpdateVelrhopM1Cpu(unsigned inoutcount,const int* inoutpart
 #ifdef _WITHGPU
 //==============================================================================
 /// Updates velocity and rhop for M1 variable when Verlet is used. 
-/// Actualiza velocidad y densidad de varible M1 cuando se usa Verlet.
+/// Actualiza velocidad y densidad de variable M1 cuando se usa Verlet.
 //==============================================================================
 void JSphInOut::UpdateVelrhopM1Gpu(unsigned inoutcount,const int* inoutpartg
   ,const float4* velrhopg,float4* velrhopm1g)

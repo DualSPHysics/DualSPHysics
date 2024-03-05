@@ -289,7 +289,7 @@ void JCellDivCpu::LimitsCellBound(unsigned n,unsigned pini,const unsigned* dcell
 }
 
 //==============================================================================
-/// Computes the maximum and minimum postion for the indicated range of boundary particles.
+/// Computes the maximum and minimum position for the indicated range of boundary particles.
 /// The excluded particles are already marked in code[].
 ///
 /// Calcula posiciones minimas y maximas del rango de particulas Bound indicado.
@@ -312,7 +312,7 @@ void JCellDivCpu::CalcCellDomainBound(unsigned n,unsigned pini,unsigned n2,unsig
 }
 
 //==============================================================================
-/// Computes minimun and maximum cell for valid particles.
+/// Computes minimum and maximum cell for valid particles.
 /// The excluded particles are already marked in code[].
 /// In case of having no valid particles the minimum value igreater than the maximum.
 ///
@@ -345,7 +345,7 @@ void JCellDivCpu::LimitsCellFluid(unsigned n,unsigned pini,const unsigned* dcell
 }
 
 //==============================================================================
-/// Computes the maximum and minimum postion for the indicated range of fluid particles.
+/// Computes the maximum and minimum position for the indicated range of fluid particles.
 /// Ignores the excluded particles already marked in code[]
 ///
 /// Calcula posiciones minimas y maximas del rango de particulas Fluid indicado.

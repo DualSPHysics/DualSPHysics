@@ -202,7 +202,7 @@ double PlaneDistMax(const tplane3d& pla,const tdouble3& p1,const tdouble3& p2
 
 //==============================================================================
 /// Devuelve planos y distancias para delimitar un dominio en forma de caja.
-/// Returns planes and distnaces to limit a box domain.
+/// Returns planes and distances to limit a box domain.
 //==============================================================================
 void PlanesDomain(const tdouble3& pt,const tdouble3& vx,const tdouble3& vy
   ,const tdouble3& vz,tplane3d& plax,tplane3d& play,tplane3d& plaz,tdouble3& pladist)

@@ -82,7 +82,7 @@ protected:
   //-Numero de particulas del dominio.
   unsigned Np;        ///<Total number of particles (including duplicate periodic particles). | Numero total de particulas (incluidas las duplicadas periodicas). 
   unsigned Npb;       ///<Number of boundary particles (including periodic boundaries). | Numero de particulas contorno (incluidas las contorno periodicas). 
-  unsigned NpbOk;     ///<Number of boundary particles interacting the fluid (including the periodic bounaries). | Numero de particulas contorno cerca del fluido (incluidas las contorno periodicas). 
+  unsigned NpbOk;     ///<Number of boundary particles interacting the fluid (including the periodic boundaries). | Numero de particulas contorno cerca del fluido (incluidas las contorno periodicas). 
 
   unsigned NpfPer;    ///<Number of periodic particles (fluid-floating). | Numero de particulas fluidas-floating periodicas. 
   unsigned NpbPer;    ///<Number of periodic boundary particles. | Numero de particulas contorno periodicas. 
@@ -126,14 +126,14 @@ protected:
   aguint*     Dcell_g;   ///<Cells inside DomCells coded with DomCellCode.
   agdouble2*  Posxy_g;
   agdouble*   Posz_g;
-  agfloat4*   PosCell_g; ///<Relative position and cell coordiantes for particle interaction {posx,posy,posz,cellxyz}
+  agfloat4*   PosCell_g; ///<Relative position and cell coordinates for particle interaction {posx,posy,posz,cellxyz}
   agfloat4*   Velrho_g;
 
   //-Variables for mDBC (Opt).
   agfloat3*   BoundNor_g;   ///<Normal (x,y,z) pointing from boundary particles to ghost nodes (Opt).
   agfloat3*   MotionVel_g;  ///<Velocity of a moving boundary particle (Opt).
-  agfloat3*   MotionAce_g;  ///<Acceleration of a moving boundary (Opt). SHABA
-  agfloat*    BoundOnOff_g; ///<Boundary particle on off switch to multiply massp2 (Opt,Null). SHABA
+  agfloat3*   MotionAce_g;  ///<Acceleration of a moving boundary (Opt).
+  agfloat*    BoundOnOff_g; ///<Boundary particle on off switch to multiply massp2 (Opt,Null).
     
   //-Variables for compute step VERLET (Opt).
   agfloat4*   VelrhoM1_g;  ///<Verlet: in order to keep previous values (Opt).
@@ -208,7 +208,7 @@ protected:
     ,double3* ftocenterg,float4* demdatag)const;
   void InitRunGpu();
 
-  void PreInteraction_Forces(bool runmdbc);
+  void PreInteraction_Forces();
   void PosInteraction_Forces();
   
   void ComputeVerlet(double dt);

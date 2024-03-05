@@ -1,5 +1,5 @@
 #==================================================================
-# DualSPHysics GPU/CPU v5.3.304 01-12-2023
+# DualSPHysics GPU/CPU v5.4.316 21-02-2024
 #==================================================================
 
 cmake_minimum_required(VERSION 3.0)
@@ -97,18 +97,18 @@ set (CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})  
 set (CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})           # Debug output directory
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-  add_executable(DualSPHysics5.3CPU_linux64 ${OBJXML} ${OBJSPHMOTION} ${OBCOMMON} ${OBCOMMONDSPH} ${OBSPH} ${OBSPHSINGLE} ${OBWAVERZ} ${OBCHRONO} ${OBMOORDYN} ${OBINOUT} ${OBMDBC} ${OBMESH})
-  install(TARGETS	DualSPHysics5.3CPU_linux64 DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
+  add_executable(DualSPHysics5.4CPU_linux64 ${OBJXML} ${OBJSPHMOTION} ${OBCOMMON} ${OBCOMMONDSPH} ${OBSPH} ${OBSPHSINGLE} ${OBWAVERZ} ${OBCHRONO} ${OBMOORDYN} ${OBINOUT} ${OBMDBC} ${OBMESH})
+  install(TARGETS	DualSPHysics5.4CPU_linux64 DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
   if (CUDA_FOUND)
-    cuda_add_executable(DualSPHysics5.3_linux64 ${OBJXML} ${OBJSPHMOTION} ${OBCOMMON} ${OBCOMMONDSPH} ${OBSPH} ${OBSPHSINGLE} ${OBCOMMONGPU} ${OBSPHGPU} ${OBSPHSINGLEGPU} ${OBCUDA} ${OBWAVERZ} ${OBWAVERZCUDA} ${OBCHRONO} ${OBMOORDYN} ${OBINOUT} ${OBINOUTGPU} ${OBMDBC} ${OBMESH})
-    install(TARGETS DualSPHysics5.3_linux64 DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
+    cuda_add_executable(DualSPHysics5.4_linux64 ${OBJXML} ${OBJSPHMOTION} ${OBCOMMON} ${OBCOMMONDSPH} ${OBSPH} ${OBSPHSINGLE} ${OBCOMMONGPU} ${OBSPHGPU} ${OBSPHSINGLEGPU} ${OBCUDA} ${OBWAVERZ} ${OBWAVERZCUDA} ${OBCHRONO} ${OBMOORDYN} ${OBINOUT} ${OBINOUTGPU} ${OBMDBC} ${OBMESH})
+    install(TARGETS DualSPHysics5.4_linux64 DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
   endif(CUDA_FOUND)
 elseif(MSVC) 
-  add_executable(DualSPHysics5.3CPU_win64 ${OBJXML} ${OBJSPHMOTION} ${OBCOMMON} ${OBCOMMONDSPH} ${OBSPH} ${OBSPHSINGLE} ${OBWAVERZ} ${OBCHRONO} ${OBMOORDYN} ${OBINOUT} ${OBMDBC} ${OBMESH})
-  install(TARGETS	DualSPHysics5.3CPU_win64 DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
+  add_executable(DualSPHysics5.4CPU_win64 ${OBJXML} ${OBJSPHMOTION} ${OBCOMMON} ${OBCOMMONDSPH} ${OBSPH} ${OBSPHSINGLE} ${OBWAVERZ} ${OBCHRONO} ${OBMOORDYN} ${OBINOUT} ${OBMDBC} ${OBMESH})
+  install(TARGETS	DualSPHysics5.4CPU_win64 DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
   if (CUDA_FOUND)
-    cuda_add_executable(DualSPHysics5.3_win64 ${OBJXML} ${OBJSPHMOTION} ${OBCOMMON} ${OBCOMMONDSPH} ${OBSPH} ${OBSPHSINGLE} ${OBCOMMONGPU} ${OBSPHGPU} ${OBSPHSINGLEGPU} ${OBCUDA} ${OBWAVERZ} ${OBWAVERZCUDA} ${OBCHRONO} ${OBMOORDYN} ${OBINOUT} ${OBINOUTGPU} ${OBMDBC} ${OBMESH})
-    install(TARGETS DualSPHysics5.3_win64 DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
+    cuda_add_executable(DualSPHysics5.4_win64 ${OBJXML} ${OBJSPHMOTION} ${OBCOMMON} ${OBCOMMONDSPH} ${OBSPH} ${OBSPHSINGLE} ${OBCOMMONGPU} ${OBSPHGPU} ${OBSPHSINGLEGPU} ${OBCUDA} ${OBWAVERZ} ${OBWAVERZCUDA} ${OBCHRONO} ${OBMOORDYN} ${OBINOUT} ${OBINOUTGPU} ${OBMDBC} ${OBMESH})
+    install(TARGETS DualSPHysics5.4_win64 DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
   endif(CUDA_FOUND)
 endif()
 
@@ -160,21 +160,21 @@ endif(ENABLE_CHRONO)
 # Linker flags
 #------------------------------------------------------------------
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-  target_link_libraries(DualSPHysics5.3CPU_linux64 ${LINKER_FLAGS})
-  set_target_properties(DualSPHysics5.3CPU_linux64 PROPERTIES COMPILE_FLAGS "-use_fast_math -O3 -fPIC -std=c++0x")
+  target_link_libraries(DualSPHysics5.4CPU_linux64 ${LINKER_FLAGS})
+  set_target_properties(DualSPHysics5.4CPU_linux64 PROPERTIES COMPILE_FLAGS "-use_fast_math -O3 -fPIC -std=c++0x")
   
   if (CUDA_FOUND)
-    target_link_libraries(DualSPHysics5.3_linux64 ${LINKER_FLAGS})
-    set_target_properties(DualSPHysics5.3_linux64 PROPERTIES COMPILE_FLAGS "-use_fast_math -O3 -D_WITHGPU -fPIC -std=c++0x -Wno-deprecated-gpu-targets")
+    target_link_libraries(DualSPHysics5.4_linux64 ${LINKER_FLAGS})
+    set_target_properties(DualSPHysics5.4_linux64 PROPERTIES COMPILE_FLAGS "-use_fast_math -O3 -D_WITHGPU -fPIC -std=c++0x -Wno-deprecated-gpu-targets")
   endif(CUDA_FOUND)
   
 elseif(MSVC)
-  set_target_properties(DualSPHysics5.3_win64 PROPERTIES COMPILE_FLAGS "/D _WITHGPU")
+  set_target_properties(DualSPHysics5.4_win64 PROPERTIES COMPILE_FLAGS "/D _WITHGPU")
 
   #if(MSVC_VERSION VERSION_EQUAL 1900)
     # MSVC 2022
-    target_link_libraries(DualSPHysics5.3CPU_win64  ${LINKER_FLAGS})
-    target_link_libraries(DualSPHysics5.3_win64 ${LINKER_FLAGS})
+    target_link_libraries(DualSPHysics5.4CPU_win64  ${LINKER_FLAGS})
+    target_link_libraries(DualSPHysics5.4_win64 ${LINKER_FLAGS})
   #endif()
   
   SET(CUDA_PROPAGATE_HOST_FLAGS OFF CACHE BOOL "Propagate C/CXX Flags and friends to the host compiler in NVCC via -Xompile  " FORCE)

@@ -850,4 +850,59 @@ unsigned JDataArrays::FilterSortList(unsigned n,const unsigned* list){
   return(n);
 }
 
+//==============================================================================
+/// Reallocates arrays according to its count value.
+//==============================================================================
+void JDataArrays::ReallocMemory(){
+  const unsigned na=Count();
+  for(unsigned c=0;c<na;c++){
+    StDataArray& arr=Arrays[c];
+    const unsigned count=arr.count;
+    if(count){
+      void* pnew=NULL;
+      switch(arr.type){
+        case TypeUchar:
+          pnew=NewArrayByte(count);
+          memcpy(pnew,arr.ptr,sizeof(byte)*count);
+        break;
+        case TypeUshort:
+          pnew=NewArrayWord(count);
+          memcpy(pnew,arr.ptr,sizeof(word)*count);
+        break;
+        case TypeUint:
+        case TypeInt:
+          pnew=NewArrayUint(count);
+          memcpy(pnew,arr.ptr,sizeof(unsigned)*count);
+        break;
+        case TypeFloat:
+          pnew=NewArrayFloat(count);
+          memcpy(pnew,arr.ptr,sizeof(float)*count);
+        break;
+        case TypeDouble:
+          pnew=NewArrayDouble(count);
+          memcpy(pnew,arr.ptr,sizeof(double)*count);
+        break;
+        case TypeUint3:
+        case TypeInt3:
+          pnew=NewArrayUint3(count);
+          memcpy(pnew,arr.ptr,sizeof(tuint3)*count);
+        break;
+        case TypeFloat3:
+          pnew=NewArrayFloat3(count);
+          memcpy(pnew,arr.ptr,sizeof(tfloat3)*count);
+        break;
+        case TypeDouble3:
+          pnew=NewArrayDouble3(count);
+          memcpy(pnew,arr.ptr,sizeof(tdouble3)*count);
+        break;
+        default: Run_Exceptioon(fun::PrintStr("Type of pointer \'%s\' is invalid.",TypeToStr(arr.type)));
+      }
+      FreeMemory(arr);
+      arr.delptr=true;
+      arr.ptr=pnew;
+      arr.count=count;
+    }
+  }
+}
+
 

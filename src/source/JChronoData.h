@@ -20,7 +20,7 @@
 //:# - Clase creada para almacenar la configuracion de los distintos cuerpos y
 //:#   sus uniones para usar con Chrono. (05-05-2016).
 //:# - Nuevo enumerado para elegir el tipo de Solver (23-12-2019).
-//:# - Funcions para incorporar los parametros Young's Modulus y Poisson Ration 
+//:# - Funciones para incorporar los parametros Young's Modulus y Poisson Ration 
 //:#   a los objetos de Chrono (16-01-2020).
 //:# - Nuevo objeto link_pulley (24-02-2020).
 //:# - Nuevo objeto link_coulombdamping (27-02-2020).
@@ -213,6 +213,7 @@ protected:
   std::string ModelFile;
   TpModelNormal ModelNormal;
   tfloat3 ScaleForce; ///<Scale the forces of each object in all directions.
+  bool VarScaleForce; ///<Indicates if it is using a variable scaling forces along time.
 
   //-Parameters for collisions.
   bool ImposeFric; ///< Indicates that its Sfric and Kfric coefficients will be used in collisions between two bodies.
@@ -265,6 +266,9 @@ public:
   void SetCollisionData(float kfric,float sfric,float restitu,float young,float poisson);
   
   void SetVelIni(tfloat3 linvelini,tfloat3 angvelini);
+  
+  void SetUseVarScaleForce(bool s){VarScaleForce=s;}
+  bool GetUseVarScaleForce()const{return(VarScaleForce); }
   
   void    SetScaleForce(tfloat3 s){        ScaleForce=s;}
   tfloat3 GetScaleForce()    const{ return(ScaleForce); }
@@ -389,8 +393,11 @@ protected:
   bool VariableK; ///<Indicates if it is using a variable stiffness coefficient along time.
   bool VariableC; ///<Indicates if it is using a variable damping coefficient along time.
 
-  double Stiffness;	///<Stiffness.
-  double Damping;	///<Damping.
+  bool UseLinConst; ///<Indicates if it uses linear constraint.
+  bool UseRotConst; ///<Indicates if it uses rotational constraint.
+
+  double Stiffness;	///<Rotational Stiffness.
+  double Damping;	///<Rotational Damping.
 
   tdouble3 RotPoint;	///<Point for rotation.
   tdouble3 RotVector;	///<Vector for rotation.  
@@ -407,6 +414,7 @@ protected:
 
 protected:
   void CopyFrom(const JChLink &src);
+  void Reset();
 
 public:
   const unsigned IdBody1;
@@ -416,7 +424,6 @@ public:
 
   JChLink(std::string name,TpLink type,unsigned idbody1,unsigned idbody2);
   virtual ~JChLink();
-  void Reset();
 
   void ResetRefs(){ BodyRefs.clear(); }
   void AddBodyRef(const JChBody* body);
@@ -427,13 +434,13 @@ public:
   double GetDamping()  const{ return(Damping);   }
   
   bool GetVariableK()  const{ return(VariableK); } 
-  bool GetVariableC()  const{ return(VariableC);   }
+  bool GetVariableC()  const{ return(VariableC); }
 
   void SetStiffness(double v){ Stiffness=v; } 
   void SetDamping  (double v){ Damping=v;   } 
   
   void SetVariableK(bool v){ VariableK=v; } 
-  void SetVariableC(bool v){ VariableC=v;   } 
+  void SetVariableC(bool v){ VariableC=v; } 
 };
 
 //##############################################################################
@@ -583,7 +590,8 @@ private:
   unsigned TimeStepper;
   int OmpThreads;
   TpContactMethod ContactMethod;
-  bool UseVariableCoeff;
+  bool UseVarLinkCoeff;
+  bool UseVarScaleForce;
   bool UseCollision;
   bool UseGravity;
   tfloat3 Gravity;
@@ -661,8 +669,9 @@ public:
   unsigned BodyIndexByName(const std::string &name)const;
   unsigned LinkIndexByName(const std::string &name)const;
 
-  const JChBody* GetBody(unsigned ipos)const;
+  JChBody* GetBody(unsigned ipos)const;
   const JChBody* GetBodyByMk(word mkbound)const;
+  unsigned GetPosBody(const JChBody* body)const;
   JChLink* GetLink(unsigned ipos)const;
   unsigned GetPosLink(const JChLink *link)const;
 
@@ -673,8 +682,11 @@ public:
   const JChBodyMoving*   GetBodyMoving  (word mkbound)const;
   const JChBodyFixed*    GetBodyFixed   (word mkbound)const;
 
-  bool GetUseVariableCoeff()const{return(UseVariableCoeff);}
-  void SetUseVariableCoeff(bool v){UseVariableCoeff=v;}
+  bool GetUseVarLinkCoeff()const{return(UseVarLinkCoeff);}
+  void SetUseVarLinkCoeff(bool v){UseVarLinkCoeff=v;}  
+  
+  bool GetUseVarScaleForce()const{return(UseVarScaleForce);}
+  void SetUseVarScaleForce(bool v){UseVarScaleForce=v;}
 
 
 };

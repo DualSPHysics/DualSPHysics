@@ -94,13 +94,6 @@ class JDsOutputParts;//<vs_outpaarts>
 
 class JSph : protected JObject
 {
-public:
-/// Structure with constants for the Cubic Spline kernel.
-  typedef struct {
-    float a1,a2,aa,a24,c1,d1,c2;
-    float od_wdeltap;        ///<Parameter for tensile instability correction.  
-  }StCubicCte;
-
 private:
   //-Configuration variables to compute the case limits.
   //-Variables de configuracion para calcular el limite del caso.
@@ -138,6 +131,7 @@ private:
 protected:
   const bool Cpu;
   const bool Mgpu;
+  const int  GpuCount; ///<Number of GPUs (units) in use.
   const bool WithMpi;
   JLog2* Log;
 
@@ -150,15 +144,17 @@ protected:
   bool SvPosDouble;      ///<Indicates whether Pos is saved as double in bi4 files. | Indica si en los ficheros bi4 se guarda Pos como double.
 
   std::string AppName;
-  std::string Hardware;  ///<Hardware description in short text.
-  std::string RunMode;   ///<Overall mode of execution in short text.
+  std::string Hardware;    ///<Hardware description in short text.
+  std::string RunMode;     ///<Overall mode of execution in short text.
   std::string ConfigInfo;  ///<Main configuration values in short text.
   std::string RunCode;
   std::string RunTimeDate;
-  std::string CaseName,DirCase,RunName;
-  std::string DirOut;         ///<Specifies the general output directory.
-  std::string DirDataOut;     ///<Specifies the output subdirectory for binary data.
-  std::string DirVtkOut;      ///<Specifies the output subdirectory for vtk files.
+  std::string CaseName;
+  std::string DirCase;
+  std::string RunName;
+  std::string DirOut;      ///<Specifies the general output directory.
+  std::string DirDataOut;  ///<Specifies the output subdirectory for binary data.
+  std::string DirVtkOut;   ///<Specifies the output subdirectory for vtk files.
   std::string FileXml;
 
   //-Options for execution.
@@ -182,7 +178,6 @@ protected:
   TpBoundary TBoundary;       ///<Boundary condition: DBC, M-DBC.
   TpSlipMode SlipMode;        ///<Slip mode for mDBC 1:DBC vel=0, 2:No-slip, 3:Free slip (default=1).
   bool MdbcCorrector;         ///<mDBC correction is also applied in corrector of Symplectic (default=0).
-  bool MdbcFastSingle;        ///<Matrix calculations are done in single precision (default=1).
   float MdbcThreshold;        ///<Kernel support limit to apply mDBC correction (default=0).
   bool UseNormals;            ///<Indicates use of normals for mDBC.
   bool UseNormalsFt;          ///<Indicates use of normals of floating bodies for mDBC.
@@ -314,11 +309,12 @@ protected:
 
   std::vector<std::string> InitializeInfo; ///<Stores information about initialize configuration applied.
 
-  JNumexLib* NuxLib;            ///<Object to evaluate user-defined expressions in XML.
+  JNumexLib* NuxLib;            ///<Object to evaluate user-defined expressions in XML (created in LoadCaseConfig()->LoadConfigVars()).
 
   JGaugeSystem* GaugeSystem;    ///<Object for automatic gauge system.
 
   JWaveGen* WaveGen;            ///<Object for wave generation.
+  bool UseWavegenAWAS;          ///<Use unfixed Swl-Gauge for WaveGen AWAS. 
 
   JMLPistons* MLPistons;        ///<Object for Multi-Layer Pistons.
 
@@ -426,13 +422,12 @@ protected:
   void AllocMemoryFloating(unsigned ftcount,bool imposedvel=false,bool addedforce=false);
   llong GetAllocMemoryCpu()const;
 
-
   void LoadConfig(const JSphCfgRun* cfg);
-  void LoadKernelSelection(const JSphCfgRun* cfg,const JXml* xml);
-  void LoadConfigCtes(const JXml* xml);
-  void LoadConfigVars(const JXml* xml);
+  void LoadKernelSelection(const JSphCfgRun* cfg,const JXml* cxml);
+  void LoadConfigCtes(const JXml* cxml);
+  void LoadConfigVars(const JXml* cxml);
   void LoadConfigVarsExec();
-  void LoadConfigParameters(const JXml* xml);
+  void LoadConfigParameters(const JXml* cxml);
   void LoadConfigCommands(const JSphCfgRun* cfg);
   void LoadCaseConfig(const JSphCfgRun* cfg);
 
@@ -539,7 +534,7 @@ protected:
   unsigned GetOutTotCount()const{ return(OutPosCount+OutRhoCount+OutMovCount); }
 
 public:
-  JSph(bool cpu,bool mgpu,bool withmpi);
+  JSph(int gpucount,bool withmpi);
   ~JSph();
 
   static std::string GetStepName(TpStep tstep);

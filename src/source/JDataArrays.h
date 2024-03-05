@@ -31,6 +31,7 @@
 //:# - Nuevos metodos CopyDataFrom(), EqualStructure(). (17-08-2020)
 //:# - Nuevos metodos ReverseArrayData(). (09-09-2020)
 //:# - Determina unidades para variables de una componente (e.g. Vel.x). (20-12-2020)
+//:# - Nuevo metodo ReallocMemory(). (11-02-2024)
 //:#############################################################################
 
 /// \file JDataArrays.h \brief Declares the class \ref JDataArrays.
@@ -217,6 +218,7 @@ public:
   unsigned FilterApply(unsigned count,const byte* filter);
   unsigned FilterList(unsigned n,const unsigned* list);
   unsigned FilterSortList(unsigned n,const unsigned* list);
+  void     ReallocMemory();
 
 };
 

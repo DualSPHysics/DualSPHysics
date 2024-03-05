@@ -229,8 +229,8 @@ void JMeshTDatasLoad::LoadFileBin(std::vector<JMeshData*>& vdata
   //-Final configuration for loop mode.
   if(loopmode){
     const unsigned ndata=unsigned(vdata.size());
-    if(loopct_tdif==DBL_MAX)Run_ExceptioonFile("The begining time for loop configuration not found.",FileIn);
-    if(loopct+1>=ndata)Run_ExceptioonFile("The final time is not higher than begining time for loop configuration.",FileIn);
+    if(loopct_tdif==DBL_MAX)Run_ExceptioonFile("The beginning time for loop configuration not found.",FileIn);
+    if(loopct+1>=ndata)Run_ExceptioonFile("The final time is not higher than beginning time for loop configuration.",FileIn);
     if(ndata){
       const JMeshData* mdat0=vdata[loopct];
       JMeshData* mdat=vdata[ndata-1];
@@ -336,8 +336,8 @@ void JMeshTDatasLoad::LoadFileCsv(std::vector<JMeshData*>& vdata){
   //-Final configuration for loop mode.
   if(loopmode){
     const unsigned ndata=unsigned(vdata.size());
-    if(loopct_tdif==DBL_MAX)Run_ExceptioonFile("The begining time for loop configuration not found.",FileIn);
-    if(loopct+1>=ndata)Run_ExceptioonFile("The final time is not higher than begining time for loop configuration.",FileIn);
+    if(loopct_tdif==DBL_MAX)Run_ExceptioonFile("The beginning time for loop configuration not found.",FileIn);
+    if(loopct+1>=ndata)Run_ExceptioonFile("The final time is not higher than beginning time for loop configuration.",FileIn);
     if(ndata){
       const JMeshData* mdat0=vdata[loopct];
       JMeshData* mdat=vdata[ndata-1];

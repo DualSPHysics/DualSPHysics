@@ -74,7 +74,7 @@ class JPartOutBi4Save : protected JObject
   static const unsigned BLOCKNOUTMIN=500000;      //-Valor por defecto para BlockNoutMin. 0.5M (18-24 MB). Default value for BlockNoutMin. 0.5 M (18-24 MB).
   static const unsigned BLOCKNOUTMAX=2500000;  //-Valor por defecto para BlockNoutMax. 2.5M (90-120 MB). Default value for BlockNoutMin.  2.5M (90-120 MB).
   unsigned BlockNoutMin; ///<Numero minimo de particulas que se meten por bloque. Minimum number of particles that are are getting in a block.
-  unsigned BlockNoutMax; ///<Maximum number of particles that should geting in a block.
+  unsigned BlockNoutMax; ///<Maximum number of particles that should getting in a block.
 
   unsigned Cpart;    ///<Numero de PART. PART number.
 

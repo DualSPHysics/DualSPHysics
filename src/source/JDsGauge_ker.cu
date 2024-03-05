@@ -245,6 +245,7 @@ void Interaction_GaugeSwl(const StCteSph& CSP,const StDivDataGpu& dvd
   }
 }
 
+
 //------------------------------------------------------------------------------
 /// Calculates maximum z of fluid at distance of a vertical line.
 //------------------------------------------------------------------------------
@@ -303,6 +304,8 @@ void Interaction_GaugeMaxz(tdouble3 point0,float maxdist2,const StDivDataGpu& dv
     ,cxini,cxfin,yini,yfin,zini,zfin,dvd.nc,dvd.cellfluid,dvd.beginendcell
     ,posxy,posz,code,ptres);
 }
+
+
 
 //<vs_meeshdat_ini>
 //------------------------------------------------------------------------------

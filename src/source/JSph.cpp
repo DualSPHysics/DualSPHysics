@@ -74,7 +74,8 @@ using namespace std;
 //==============================================================================
 /// Constructor.
 //==============================================================================
-JSph::JSph(bool cpu,bool mgpu,bool withmpi):Cpu(cpu),Mgpu(mgpu),WithMpi(withmpi)
+JSph::JSph(int gpucount,bool withmpi):Cpu(gpucount==0)
+  ,Mgpu(gpucount>1),GpuCount(gpucount),WithMpi(withmpi)
 {
   ClassName="JSph";
   DgNum=0;
@@ -192,7 +193,6 @@ void JSph::InitVars(){
   TBoundary=BC_DBC;
   SlipMode=SLIP_Vel0;
   MdbcCorrector=false;
-  MdbcFastSingle=true;
   MdbcThreshold=0;
   UseNormals=false;
   UseNormalsFt=false;
@@ -200,6 +200,7 @@ void JSph::InitVars(){
   UseDEM=false;  //(DEM)
   delete[] DemData; DemData=NULL;  //(DEM)
   UseChrono=false;
+  UseWavegenAWAS=false;
   RhopOut=true; RhopOutMin=700; RhopOutMax=1300;
   TimeMax=TimePart=0;
   TimePartExtra=-1;
@@ -582,10 +583,10 @@ void JSph::LoadConfig(const JSphCfgRun* cfg){
 //==============================================================================
 /// Loads kernel selection to compute kernel values.
 //==============================================================================
-void JSph::LoadKernelSelection(const JSphCfgRun* cfg,const JXml* xml){
+void JSph::LoadKernelSelection(const JSphCfgRun* cfg,const JXml* cxml){
   //-Load kernel selection from execution parameters from XML.
   JCaseEParms eparms;
-  eparms.LoadXml(xml,"case.execution.parameters");
+  eparms.LoadXml(cxml,"case.execution.parameters");
   switch(eparms.GetValueInt("Kernel",true,2)){
     case 1:  TKernel=KERNEL_Cubic;     break;
     case 2:  TKernel=KERNEL_Wendland;  break;
@@ -598,9 +599,9 @@ void JSph::LoadKernelSelection(const JSphCfgRun* cfg,const JXml* xml){
 //==============================================================================
 /// Loads predefined constans from XML.
 //==============================================================================
-void JSph::LoadConfigCtes(const JXml* xml){
+void JSph::LoadConfigCtes(const JXml* cxml){
   JCaseCtes ctes;
-  ctes.LoadXmlRun(xml,"case.execution.constants");
+  ctes.LoadXmlRun(cxml,"case.execution.constants");
 
   Simulate2D=ctes.GetData2D();
   Simulate2DPosY=ctes.GetData2DPosY();
@@ -619,9 +620,9 @@ void JSph::LoadConfigCtes(const JXml* xml){
 //==============================================================================
 /// Loads execution parameters from XML.
 //==============================================================================
-void JSph::LoadConfigParameters(const JXml* xml){
+void JSph::LoadConfigParameters(const JXml* cxml){
   JCaseEParms eparms;
-  eparms.LoadXml(xml,"case.execution.parameters");
+  eparms.LoadXml(cxml,"case.execution.parameters");
   if(eparms.Exists("FtSaveAce"))SaveFtAce=(eparms.GetValueInt("FtSaveAce",true,0)!=0); //-For Debug.
   if(eparms.Exists("PosDouble")){
     Log->PrintWarning("The parameter \'PosDouble\' is deprecated.");
@@ -670,9 +671,6 @@ void JSph::LoadConfigParameters(const JXml* xml){
       case 3:  SlipMode=SLIP_FreeSlip;  break;
       default: Run_Exceptioon("Slip mode is not valid.");
     }
-    MdbcCorrector=(eparms.GetValueInt("MDBCCorrector",true,0)!=0);
-    MdbcFastSingle=(eparms.GetValueInt("MDBCFastSingle",true,1)!=0);
-    if(Cpu)MdbcFastSingle=false;
   } 
 
   //-Density Diffusion Term configuration.
@@ -820,8 +818,8 @@ void JSph::LoadConfigCommands(const JSphCfgRun* cfg){
   if(cfg->TBoundary){
     TBoundary=BC_DBC;
     SlipMode=SLIP_Vel0;
-    MdbcFastSingle=true;
     MdbcThreshold=0;
+    MdbcCorrector=false;
     switch(cfg->TBoundary){
       case 1:  TBoundary=BC_DBC;   break;
       case 2:  TBoundary=BC_MDBC;  break;
@@ -834,23 +832,19 @@ void JSph::LoadConfigCommands(const JSphCfgRun* cfg){
       default: Run_Exceptioon("Slip mode for mDBC is not valid.");
     }
     UseNormals=(TBoundary==BC_MDBC);
-    if(TBoundary!=BC_MDBC)MdbcCorrector=false;
-    if(SlipMode==SLIP_Vel0)MdbcCorrector=false; //-mDBC only predictor for old mDBC // SHABA
-    if(SlipMode==SLIP_NoSlip)MdbcCorrector=true; //-mDBC no slip uses corrector // SHABA
+    MdbcCorrector=(TBoundary==BC_MDBC && (SlipMode==SLIP_NoSlip || SlipMode==SLIP_FreeSlip));
   }
   if(TBoundary==BC_MDBC){
     if(cfg->MdbcThreshold >=0)MdbcThreshold=cfg->MdbcThreshold;
-    if(cfg->MdbcFastSingle>=0)MdbcFastSingle=(cfg->MdbcFastSingle>0);
-    if(SlipMode==SLIP_FreeSlip)Run_Exceptioon("Only the slip modes velocity=0 and no slip are allowed with mDBC conditions."); //SHABA updated
-    if(Cpu)MdbcFastSingle=false;
+    if(SlipMode!=SLIP_Vel0)MdbcThreshold=0;
+    if(SlipMode!=SLIP_Vel0 && SlipMode!=SLIP_NoSlip)
+      Run_Exceptioon("Only the slip modes velocity=0 and no-slip are allowed with mDBC conditions.");
   }
     
   if(cfg->TStep)TStep=cfg->TStep;
   if(cfg->VerletSteps>=0)VerletSteps=cfg->VerletSteps;
   if(cfg->TVisco){ TVisco=cfg->TVisco; Visco=cfg->Visco; }
   if(cfg->ViscoBoundFactor>=0)ViscoBoundFactor=cfg->ViscoBoundFactor;
-  if(TBoundary==BC_MDBC && TStep==STEP_Symplectic && !MdbcCorrector)
-    Log->PrintWarning("The mDBC calculation in corrector step should be activated when the improved mDBC formulation is used."); //SHABA
 
   //-Density Diffusion Term configuration.
   if(cfg->TDensity>=0){
@@ -936,7 +930,7 @@ void JSph::LoadConfigCommands(const JSphCfgRun* cfg){
 /// Creates and load NuxLib object to evaluate user-defined expressions.
 //==============================================================================
 void JSph::LoadConfigVars(const JXml* xml){
-  if(!JNumexLib::Available())Log->PrintWarning("Code for JNumex libary is not included in the current compilation, so user-defined expresions in XML file are not evaluated.");
+  if(!JNumexLib::Available())Log->PrintWarning("Code for JNumex library is not included in the current compilation, so user-defined expressions in XML file are not evaluated.");
   else{
     NuxLib=new JNumexLib();
     //-Loads user variables from XML.
@@ -989,24 +983,27 @@ void JSph::LoadConfigVarsExec(){
 //==============================================================================
 void JSph::LoadCaseConfig(const JSphCfgRun* cfg){
   if(!fun::FileExists(FileXml))Run_ExceptioonFile("Case configuration was not found.",FileXml);
-  JXml xml; xml.LoadFile(FileXml);
+  JXml xml;
+  xml.LoadFile(FileXml);
+  const JXml* cxml=&xml;
   //-Shows pre-processing application generating the XML file.
-  Log->Printf("XML-App: %s",xml.GetAttributeStr(xml.GetNodeError("case")->ToElement(),"app",true,"unknown").c_str());
+  Log->Printf("XML-App: %s",cxml->GetAttributeStr(cxml->GetNodeError("case")->ToElement()
+    ,"app",true,"unknown").c_str());
 
   //-Loads kernel selection to compute kernel values.
-  LoadKernelSelection(cfg,&xml);
+  LoadKernelSelection(cfg,cxml);
   //-Loads predefined constants.
-  LoadConfigCtes(&xml);
+  LoadConfigCtes(cxml);
   //-Configures value of calculated constants and loads CSP structure.
   ConfigConstants1(Simulate2D);
 
   //-Define variables on NuxLib object.
-  LoadConfigVars(&xml);
+  LoadConfigVars(cxml);
   //-Enables the use of NuxLib in XML configuration.
   xml.SetNuxLib(NuxLib);
 
   //-Execution parameters from XML.
-  LoadConfigParameters(&xml);
+  LoadConfigParameters(cxml);
   //-Execution parameters from commands.
   LoadConfigCommands(cfg);
   //-Configures other constants according to formulation options and loads more values in CSP structure.
@@ -1017,7 +1014,7 @@ void JSph::LoadCaseConfig(const JSphCfgRun* cfg){
 
   //-Particle data.
   JCaseParts parts;
-  parts.LoadXml(&xml,"case.execution.particles");
+  parts.LoadXml(cxml,"case.execution.particles");
   CaseNp=parts.Count();
   CaseNfixed=parts.Count(TpPartFixed);
   CaseNmoving=parts.Count(TpPartMoving);
@@ -1034,7 +1031,7 @@ void JSph::LoadCaseConfig(const JSphCfgRun* cfg){
   MkInfo->Config(&parts);
 
   //-Configuration of GaugeSystem.
-  GaugeSystem=new JGaugeSystem(Cpu);
+  GaugeSystem=new JGaugeSystem(GpuCount);
 
   //-Configuration of AccInput.
   if(xml.GetNodeSimple("case.execution.special.accinputs",true)){
@@ -1214,8 +1211,8 @@ void JSph::LoadCaseConfig(const JSphCfgRun* cfg){
   }
 
   //-Configuration of Inlet/Outlet.
-  if(xml.GetNodeSimple("case.execution.special.inout",true)){
-    InOut=new JSphInOut(Cpu,CSP,FileXml,&xml,"case.execution.special.inout",DirCase);
+  if(xml.GetNodeSimple(JSphInOut::XmlPath,true)){
+    InOut=new JSphInOut(Cpu,CSP,cxml,DirCase);
     NpDynamic=true;
     ReuseIds=InOut->GetReuseIds();
     if(ReuseIds)Run_Exceptioon("Inlet/Outlet with ReuseIds is not a valid option for now...");
@@ -1575,11 +1572,9 @@ void JSph::VisuConfig(){
   if(TBoundary==BC_MDBC){
     Log->Print(fun::VarStr("  SlipMode",GetSlipName(SlipMode)));
     Log->Print(fun::VarStr("  mDBC-Corrector",MdbcCorrector));
-    Log->Print(fun::VarStr("  mDBC-FastSingle",MdbcFastSingle));
     Log->Print(fun::VarStr("  mDBC-Threshold",MdbcThreshold));
     ConfigInfo=ConfigInfo+"("+GetSlipName(SlipMode);
     if(MdbcCorrector)ConfigInfo=ConfigInfo+" - Corrector";
-    if(MdbcFastSingle)ConfigInfo=ConfigInfo+" - FastSingle";
     if(MdbcThreshold>0)ConfigInfo=ConfigInfo+fun::PrintStr(" - Threshold=%g",MdbcThreshold);
     ConfigInfo=ConfigInfo+")";
   }
@@ -1720,7 +1715,7 @@ void JSph::VisuRefs(){
   if(TVisco==VISCO_Artificial)Log->Print("- Viscosity: Artificial (Monaghan, 1992  https://doi.org/10.1146/annurev.aa.30.090192.002551)");
   if(TVisco==VISCO_Laminar || TVisco==VISCO_LaminarSPS)Log->Print("- Viscosity: Laminar + SPS turbulence model (Dalrymple and Rogers, 2006  https://doi.org/10.1016/j.coastaleng.2005.10.004)");
   if(ViscoBoundFactor!=1     )Log->Print("- Viscosity: ViscoBoundFactor coefficient (Barreiro et al., 2014  https://doi.org/10.1371/journal.pone.0111031)");
-  //-Kernel fuctions:
+  //-Kernel functions:
   if(TKernel==KERNEL_Cubic   )Log->Print("- Kernel: Cubic Spline (Monaghan, 1992  https://doi.org/10.1146/annurev.aa.30.090192.002551)");
   if(TKernel==KERNEL_Wendland)Log->Print("- Kernel: Quintic Wendland (Wendland, 1995  https://doi.org/10.1007/BF02123482)");
   //-Time integration scheme: 
@@ -2206,7 +2201,7 @@ void JSph::InitRun(unsigned np,const unsigned* idp,const tdouble3* pos){
   //-Free memory of PartsLoaded.
   delete PartsLoaded; PartsLoaded=NULL;
 
-  //-Adjust paramaters to start.
+  //-Adjust parameters to start.
   PartIni=PartBeginFirst;
   TimeStepIni=(!PartIni? 0: PartBeginTimeStep);
   //-Adjust motion for the instant of the loaded PART.
@@ -2240,7 +2235,8 @@ void JSph::InitRun(unsigned np,const unsigned* idp,const tdouble3* pos){
   xml.SetNuxLib(NuxLib); //-Enables the use of NuxLib in XML configuration.
 
   //-Configuration of GaugeSystem.
-  GaugeSystem->Config(CSP,Symmetry,TimeMax,TimePart,DomPosMin,DomPosMax,Scell,ScellDiv);
+  GaugeSystem->ConfigCtes(CSP,Symmetry,TimeMax,TimePart,Scell,ScellDiv
+    ,Map_PosMin,Map_PosMin,Map_PosMax);
   if(xml.GetNodeSimple("case.execution.special.gauges",true))
     GaugeSystem->LoadXml(&xml,"case.execution.special.gauges",MkInfo);
 
@@ -2248,6 +2244,7 @@ void JSph::InitRun(unsigned np,const unsigned* idp,const tdouble3* pos){
   if(WaveGen){
     Log->Print("Wave paddles configuration:");
     WavesInit(GaugeSystem,MkInfo,TimeMax,TimePart);
+    UseWavegenAWAS=WaveGen->UseAwas();
     WaveGen->VisuConfig(""," ");
   }
 
@@ -2395,9 +2392,12 @@ void JSph::WavesInit(JGaugeSystem* gaugesystem,const JSphMk* mkinfo
       const double coefmassdef=(Simulate2D? 0.4: 0.5);
       double masslimit,tstart,gdp;
       tdouble3 point0,point2;
-      WaveGen->PaddleGetAwasInfo(cp,coefmassdef,wdims.massfluid,masslimit,tstart,gdp,point0,point2);
+      WaveGen->PaddleGetAwasInfo(cp,coefmassdef,wdims.massfluid,masslimit
+        ,tstart,gdp,point0,point2);
+
       //-Creates gauge for AWAS.
-      JGaugeSwl* gswl=gaugesystem->AddGaugeSwl(gname,tstart,DBL_MAX,0,point0,point2,gdp,float(masslimit));
+      JGaugeSwl* gswl=gaugesystem->AddGaugeSwl(gname,tstart,DBL_MAX,0
+        ,false,point0,point2,gdp,float(masslimit));
       WaveGen->PaddleGaugeInit(cp,(void*)gswl);
     }
   }
@@ -2563,7 +2563,7 @@ void JSph::FtComputeAceVel(double dt,bool predictor,bool saveftvalues
         tmatrix3f inert=fobj.inertiaini;
         //-Compute a cumulative rotation matrix.
         const tmatrix3f frot=fmath::RotMatrix3x3(fang);
-        //-Compute the inertia tensor by rotating the initial tensor to the curent orientation I=(R*I_0)*R^T.
+        //-Compute the inertia tensor by rotating the initial tensor to the current orientation I=(R*I_0)*R^T.
         inert=fmath::MulMatrix3x3(fmath::MulMatrix3x3(frot,inert),fmath::TrasMatrix3x3(frot));
         //-Calculates the inverse of the inertia matrix to compute the I^-1 * L= W
         const tmatrix3f invinert=fmath::InverseMatrix3x3(inert);
@@ -3114,7 +3114,7 @@ void JSph::SavePartData(unsigned npsave,unsigned nout,const JDataArrays& arrays
     delete[] posf3;
   }
 
-  //-Stores VTK nd/or CSV files.
+  //-Stores VTK and/or CSV files.
   if((SvData&SDAT_Csv) || (SvData&SDAT_Vtk)){
     JDataArrays arrays2;
     arrays2.CopyFrom(arrays);
