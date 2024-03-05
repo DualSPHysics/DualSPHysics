@@ -1424,8 +1424,6 @@ template<TpKernel tker,bool sim2d,TpSlipMode tslip>
               const float infnorma   =KerMdbc2InfNorm4x4(a_corr3);
               const float infnormainv=KerMdbc2InfNorm4x4(invacorr3);
               const float condinf=CTE.dp*CTE.dp*infnorma*infnormainv;
-
-
               if(condinf<=50){//-If matrix is well conditioned use matrix inverse for density.
                 const float rhoghost=float(invacorr3.a11*rhop1 + invacorr3.a12*gradrhop1.x + invacorr3.a13*gradrhop1.y + invacorr3.a14*gradrhop1.z);
                 //-Clone particle proceedure.
