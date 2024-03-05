@@ -1364,7 +1364,7 @@ template<TpKernel tker,bool sim2d> void JSphCpu::InteractionMdbc2CorrectionT2
               //-Calculate the scaled condition number
               const float infnorma   =Mdbc2InfNorm3x3(a_corr2);
               const float infnormainv=Mdbc2InfNorm3x3(invacorr2);
-              const float condinf=float(Dp*Dp)*infnorma * infnormainv;
+              const float condinf=float(Dp*Dp)*infnorma*infnormainv;
               if(condinf<=50){//-If matrix is well conditioned use matrix inverse for density and shepherd for velocity.
                 const float rhoghost=float(invacorr2.a11*rhop1 + invacorr2.a12*gradrhop1.x + invacorr2.a13*gradrhop1.z);
                 //-Clone particle proceedure.
