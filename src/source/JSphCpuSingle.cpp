@@ -1235,7 +1235,7 @@ void JSphCpuSingle::FlexStrucInit(){
   //-Get flexible structure data for each body and copy to GPU
   for(unsigned c=0;c<FlexStrucCount;c++){
     std::vector<typecode> clampcode=FlexStruc->GetBody(c)->GetClampCode();
-    FlexStrucDatac[c].nc=clampcode.size();
+    FlexStrucDatac[c].nc=unsigned(clampcode.size());
     std::copy(clampcode.begin(),clampcode.end(),FlexStrucDatac[c].clampcode);
     FlexStrucDatac[c].vol0=FlexStruc->GetBody(c)->GetParticleVolume();
     FlexStrucDatac[c].rho0=FlexStruc->GetBody(c)->GetDensity();
