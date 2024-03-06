@@ -527,6 +527,7 @@ std::string JSph::GetFeatureList(){
   if(AVAILABLE_CHRONO  )list=list+", Project Chrono coupling";
   if(AVAILABLE_MOORDYN )list=list+", MoorDyn+ coupling";
   if(AVAILABLE_WAVEGEN )list=list+", Wave generation";
+  if(AVAILABLE_FLEXSTRUC)list=list+", FlexStruc";   //<vs_flexstruc>
   if(1)                 list=list+", mDBC no-slip"; //<vs_m2dbc>
   if(AVAILABLE_NUMEXLIB)list=list+", Numex vars";
   if(AVAILABLE_VTKLIB  )list=list+", VTK output";

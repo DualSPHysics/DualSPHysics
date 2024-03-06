@@ -136,6 +136,7 @@
 
 #define BSIZE_FORCES 128  ///<Blocksize for particle interaction (default=128).
 
+#define AVAILABLE_FLEXSTRUC true //<vs_flexstruc>
 #define MAX_NUM_MKCLAMP 8 ///<Maximum number of mkclamps for each flexible structure. <vs_flexstruc>
 
 //#define CODE_SIZE4  //-Enables or disables the use of unsigned type (32 bits) for code (allows valid 65530 MKs). | Activa o desactiva el uso de unsigned (32 bits) para code (permite 65530 MKs validos).
