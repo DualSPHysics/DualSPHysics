@@ -513,6 +513,28 @@ llong JSph::GetAllocMemoryCpu()const{
 }
 
 //==============================================================================
+/// Returns list of available features in current compilation.
+//==============================================================================
+std::string JSph::GetFeatureList(){
+  string list;
+  if(AVAILABLE_CHRONO  )list=list+", Project Chrono coupling";
+  if(AVAILABLE_MOORDYN )list=list+", MoorDyn+ coupling";
+  if(AVAILABLE_WAVEGEN )list=list+", Wave generation";
+  if(1)                 list=list+", mDBC no-slip"; //<vs_m2dbc>
+  if(AVAILABLE_NUMEXLIB)list=list+", Numex vars";
+  if(AVAILABLE_VTKLIB  )list=list+", VTK output";
+  #ifdef CODE_SIZE4
+                        list=list+", MkWord";
+  #endif
+  if(AVAILABLE_GPU     )list=list+", GPU execution";
+  #ifdef OMP_USE
+                        list=list+", OpenMP execution";
+  #endif
+  if(list.size()>2)list=list.substr(2);
+  return(list);
+}
+
+//==============================================================================
 /// Loads the configuration of the execution.
 //==============================================================================
 void JSph::LoadConfig(const JSphCfgRun* cfg){
@@ -555,6 +577,7 @@ void JSph::LoadConfig(const JSphCfgRun* cfg){
   if(!JVtkLib::Available())Log->PrintWarning("Code for VTK format files is not included in the current compilation, so no output VTK files will be created.");
   const string runpath=AppInfo.GetRunPath();
   Log->Printf("ProgramFile=\"%s\"",fun::GetPathLevels(fun::GetCanonicalPath(runpath,AppInfo.GetRunCommand()),3).c_str());
+  Log->Printf("Available features: %s.",GetFeatureList().c_str());
   Log->Printf("ExecutionDir=\"%s\"",fun::GetPathLevels(runpath,3).c_str());
   Log->Printf("XmlFile=\"%s\"",fun::GetPathLevels(fun::GetCanonicalPath(runpath,FileXml),3).c_str());
   Log->Printf("OutputDir=\"%s\"",fun::GetPathLevels(fun::GetCanonicalPath(runpath,DirOut),3).c_str());

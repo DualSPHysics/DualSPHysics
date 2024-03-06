@@ -37,7 +37,7 @@ School of Mechanical, Aerospace and Civil Engineering, University of Manchester,
 \section compile_sec Project files
 Please download source files and documentation from <a href="http://dual.sphysics.org">DualSPHysics website.</a> \n
 \author <a href="http://dual.sphysics.org/index.php/developers">DualSPHysics Developers.</a> 
-\version 5.4.320
+\version 5.4.321
 \date 05-03-2024
 \copyright GNU Lesser General Public License <a href="http://www.gnu.org/licenses/">GNU licenses.</a>
 */
@@ -62,7 +62,7 @@ Please download source files and documentation from <a href="http://dual.sphysic
 
 using namespace std;
 
-JAppInfo AppInfo("DualSPHysics5","v5.4.320","05-03-2024");
+JAppInfo AppInfo("DualSPHysics5","v5.4.321","05-03-2024");
 //JAppInfo AppInfo("DualSPHysics5","v5.0.???","UserVersion","v1.0","??-??-????"); //-for user versions.
 
 //==============================================================================
@@ -168,6 +168,7 @@ int main(int argc, char** argv){
   printf("\n%s\n%s\n",appname.c_str(),appnamesub.c_str());
   JLog2* log=NULL;
   JSphCfgRun cfg;
+  cfg.SetFeatureList(JSph::GetFeatureList());
   try{
     cfg.LoadArgv(argc,argv);
     //cfg.VisuConfig();

@@ -92,6 +92,8 @@ void JSphCfgRun::Reset(){
 /// Shows information about execution parameters.
 //==============================================================================
 void JSphCfgRun::VisuInfo()const{
+  if(!FeatureList.empty())printf("Available features: %s.\n",FeatureList.c_str());
+  printf("\n");
 /////////|---------1---------2---------3---------4---------5---------6---------7--------X8
   printf("Information about execution parameters:\n\n");
   printf("  DualSPHysics [name_case [dir_out]] [options]\n\n");

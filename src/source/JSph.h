@@ -537,6 +537,8 @@ public:
   JSph(int gpucount,bool withmpi);
   ~JSph();
 
+  static std::string GetFeatureList();
+
   static std::string GetStepName(TpStep tstep);
   static std::string GetBoundName(TpBoundary tboundary);
   static std::string GetSlipName(TpSlipMode tslip);
