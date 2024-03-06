@@ -1053,7 +1053,7 @@ void JSphGpuSingle::FlexStrucInit(){
   vector<StFlexStrucData> flexstrucdata(FlexStrucCount);
   for(unsigned c=0;c<FlexStrucCount;c++){
     std::vector<typecode> clampcode=FlexStruc->GetBody(c)->GetClampCode();
-    flexstrucdata[c].nc=clampcode.size();
+    flexstrucdata[c].nc=unsigned(clampcode.size());
     std::copy(clampcode.begin(),clampcode.end(),flexstrucdata[c].clampcode);
     flexstrucdata[c].vol0=FlexStruc->GetBody(c)->GetParticleVolume();
     flexstrucdata[c].rho0=FlexStruc->GetBody(c)->GetDensity();
