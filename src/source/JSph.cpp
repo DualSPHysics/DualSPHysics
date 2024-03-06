@@ -1244,6 +1244,11 @@ void JSph::LoadCaseConfig(const JSphCfgRun* cfg){
   //<vs_flexstruc_ini>
   //-Configuration of flexible structures.
   if(xml.GetNodeSimple("case.execution.special.flexstrucs",true)){
+    #ifndef AVAILABLE_FLEXSTRUC
+      Run_Exceptioon("FlexStruc feature is not available in the current compilation.");
+    #else
+      if(!AVAILABLE_FLEXSTRUC)Run_Exceptioon("FlexStruc feature is not available in the current compilation.");
+    #endif
     FlexStruc=new JSphFlexStruc(Simulate2D,Dp,&xml,"case.execution.special.flexstrucs",MkInfo);
     FlexStrucCount=FlexStruc->GetCount();
     FlexStrucCs0=FlexStruc->GetInitialSoundSpeed();
