@@ -53,6 +53,7 @@
 //:# - Usa GetDateTime() de Functions.h ya que actualmente esa cabecera esta incluida. (20-11-2020)
 //:# - Funciones GetAttributeFloat3Def() y GetAttributeDouble3Def que permiten incluir valores por defecto. (21-03-2022)
 //:# - Funciones GetAttributeFloat3Def0() y GetAttributeDouble3Def0 usan 0 como valor por defecto en lugar de FLT_MAX. (21-03-2022)
+//:# - Funcione GetAttributeVectorWord() para FlexStruc code. (06-03-2024)
 //:#############################################################################
 
 /// \file JXml.h \brief Declares the class \ref JXml.
@@ -1153,7 +1154,7 @@ public:
   //==============================================================================
   void CorrectFile(const std::string& fname);
 
-  //<vs_flexstruc_ini>
+
   //==============================================================================
   /// Checks and returns a vector of type word of an xml element that must be (0-65535).
   /// \param ele Xml element.
@@ -1162,9 +1163,8 @@ public:
   /// \param valdef Value by default if it does not exist and \a optional was activated. 
   /// \throw JException The requested attribute does not exist...
   //==============================================================================
-  std::vector<word> GetAttributeVectorWord(const TiXmlElement* ele,const std::string& name
-    ,bool optional=false,std::vector<word> valdef={})const;
-  //<vs_flexstruc_end>  
+  std::vector<word> GetAttributeVectorWord(const TiXmlElement* ele
+    ,const std::string& name,bool optional=false,std::vector<word> valdef={})const;
 
 };
 

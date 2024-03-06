@@ -1002,7 +1002,6 @@ void JXml::CorrectFile(const std::string& fname){
   delete[] data;
 }
 
-//<vs_flexstruc_ini>
 //==============================================================================
 /// Checks and returns a vector of type word of an xml element that must be (0-65535).
 /// \param ele Xml element.
@@ -1011,8 +1010,8 @@ void JXml::CorrectFile(const std::string& fname){
 /// \param valdef Value by default if it does not exist and \a optional was activated. 
 /// \throw JException The requested attribute does not exist...
 //==============================================================================
-std::vector<word> JXml::GetAttributeVectorWord(const TiXmlElement* ele,const std::string& name
-  ,bool optional,std::vector<word> valdef)const
+std::vector<word> JXml::GetAttributeVectorWord(const TiXmlElement* ele
+  ,const std::string& name,bool optional,std::vector<word> valdef)const
 {
   std::vector<word> ret;
   std::string vstr=GetAttributeStr(ele,name,optional,"");
@@ -1027,6 +1026,6 @@ std::vector<word> JXml::GetAttributeVectorWord(const TiXmlElement* ele,const std
       ret.push_back(GetAttributeWord(&temp,name));
     }
   }
-  return ret;
+  return(ret);
 }
-//<vs_flexstruc_end>
+

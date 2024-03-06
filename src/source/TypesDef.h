@@ -518,7 +518,6 @@ inline tdouble3 MatrixMulPoint(const tmatrix4d& m,const tdouble3& p){ return(TDo
 inline tfloat3 MatrixMulPointNormal(const tmatrix4d& m,const tfloat3& p){ return(ToTFloat3(TDouble3(m.a11*p.x + m.a12*p.y + m.a13*p.z, m.a21*p.x + m.a22*p.y + m.a23*p.z, m.a31*p.x + m.a32*p.y + m.a33*p.z))); }
 
 
-//<vs_flexstruc_ini>
 ///Matrix of 6x6 values of type float.
 typedef struct{
   float a11,a12,a13,a14,a15,a16;
@@ -531,7 +530,6 @@ typedef struct{
 
 ///Constructor of type \ref matrix6f.
 inline tmatrix6f TMatrix6f(float v){ tmatrix6f m={v,v,v,v,v,v,v,v,v,v,v,v,v,v,v,v,v,v,v,v,v,v,v,v,v,v,v,v,v,v,v,v,v,v,v,v}; return(m); }
-//<vs_flexstruc_end>
 
 
 ///Symmetric matrix 3x3 of 6 values of type float.
