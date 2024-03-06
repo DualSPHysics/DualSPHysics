@@ -33,6 +33,7 @@ class JSphCfgRun : public JCfgRunBase
 {
 protected:
   int DirsDef;
+  std::string FeatureList; ///<List of available features in current compilation.
 
 public:
   bool Cpu;
@@ -99,6 +100,7 @@ public:
 public:
   JSphCfgRun();
   void Reset();
+  void SetFeatureList(std::string list){ FeatureList=list; }
   void VisuInfo()const;
   void VisuConfig()const;
   void LoadOpts(std::string* optlis,int optn,int lv,const std::string& file);
