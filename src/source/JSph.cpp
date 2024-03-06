@@ -1233,6 +1233,15 @@ void JSph::LoadCaseConfig(const JSphCfgRun* cfg){
     }
   }
 
+  //-Configuration of flexible structures.
+  if(xml.GetNodeSimple("case.execution.special.flexstrucs",true)){
+    #ifndef AVAILABLE_FLEXSTRUC
+      Run_Exceptioon("FlexStruc feature is not available in the current compilation.");
+    #else
+      if(!AVAILABLE_FLEXSTRUC)Run_Exceptioon("FlexStruc feature is not available in the current compilation.");
+    #endif
+  }
+
   //-Configuration of Inlet/Outlet.
   if(xml.GetNodeSimple(JSphInOut::XmlPath,true)){
     InOut=new JSphInOut(Cpu,CSP,cxml,DirCase);
