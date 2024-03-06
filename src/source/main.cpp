@@ -37,8 +37,8 @@ School of Mechanical, Aerospace and Civil Engineering, University of Manchester,
 \section compile_sec Project files
 Please download source files and documentation from <a href="http://dual.sphysics.org">DualSPHysics website.</a> \n
 \author <a href="http://dual.sphysics.org/index.php/developers">DualSPHysics Developers.</a> 
-\version 5.4.321
-\date 05-03-2024
+\version 5.4.322
+\date 06-03-2024
 \copyright GNU Lesser General Public License <a href="http://www.gnu.org/licenses/">GNU licenses.</a>
 */
 
@@ -62,7 +62,7 @@ Please download source files and documentation from <a href="http://dual.sphysic
 
 using namespace std;
 
-JAppInfo AppInfo("DualSPHysics5","v5.4.321","05-03-2024");
+JAppInfo AppInfo("DualSPHysics5","v5.4.322","06-03-2024");
 //JAppInfo AppInfo("DualSPHysics5","v5.0.???","UserVersion","v1.0","??-??-????"); //-for user versions.
 
 //==============================================================================
