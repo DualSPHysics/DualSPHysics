@@ -1736,6 +1736,7 @@ void JSphCpu::ComputeVerlet(double dt){
   //-Computes new position and velocity for flexible structures.
   if(CaseNflexstruc){
     Timersc->TmStart(TMC_SuFlexStruc);
+    if(MotionVel_c)CopyMotionVelFlexStruc(Velrho_c->ptr());
     ComputeSemiImplicitEulerFlexStruc(dt,Pos_c->ptr(),Dcell_c->ptr(),Code_c->ptr());
     BoundChanged=true;
     Timersc->TmStop(TMC_SuFlexStruc);
@@ -1872,6 +1873,7 @@ void JSphCpu::ComputeSymplecticPre(double dt){
   //-Computes new position and velocity for flexible structures.
   if(CaseNflexstruc){
     Timersc->TmStart(TMC_SuFlexStruc);
+    if(MotionVel_c)CopyMotionVelFlexStruc(VelrhoPre_c->ptr());
     ComputeSymplecticPreFlexStruc(dt05,Pos_c->ptr(),Dcell_c->ptr(),Code_c->ptr());
     BoundChanged=true;
     Timersc->TmStop(TMC_SuFlexStruc);
@@ -2888,6 +2890,25 @@ template<TpKernel tker> void JSphCpu::Interaction_ForcesFlexStruc_ct0(float& fle
 void JSphCpu::Interaction_ForcesFlexStruc(float& flexstrucdtmax)const{
   if(TKernel==KERNEL_Wendland)  Interaction_ForcesFlexStruc_ct0<KERNEL_Wendland>(flexstrucdtmax);
   else if(TKernel==KERNEL_Cubic)Interaction_ForcesFlexStruc_ct0<KERNEL_Cubic>   (flexstrucdtmax);
+}
+
+//==============================================================================
+/// Copy motion velocity of flexible structure particles.
+/// Copie la velocidad de movimiento de partículas de estructura flexible.
+//==============================================================================
+void JSphCpu::CopyMotionVelFlexStruc(tfloat4* velrhop)const
+{
+  const int nflex=int(CaseNflexstruc);
+  #ifdef OMP_USE
+    #pragma omp parallel for schedule (static) if(nflex>OMP_LIMIT_COMPUTESTEP)
+  #endif
+  for(int p=0;p<nflex;p++){
+    const unsigned p1=FlexStrucRidpc[p]; //-Number of particle.
+    if(CODE_IsFlexStrucFlex(Code_c->cptr()[p1])){
+      const tfloat3 mvel=MotionVel_c->cptr()[p1];
+      velrhop[p1]=TFloat4(mvel.x,mvel.y,mvel.z,velrhop[p1].w);
+    }
+  }
 }
 
 //==============================================================================

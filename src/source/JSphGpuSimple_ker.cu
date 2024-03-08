@@ -467,6 +467,36 @@ void ComputeStepSymplecticCor(bool floating,bool shift,bool inout,bool mdbc2
 
 //<vs_flexstruc_ini>
 //==============================================================================
+/// Copy motion velocity of flexible structure particles.
+/// Copie la velocidad de movimiento de partículas de estructura flexible.
+//==============================================================================
+__global__ void KerCopyMotionVelFlexStruc(unsigned n,const typecode* code,const unsigned* flexstrucridp
+    ,const float3* motionvel,float4* velrhop)
+{
+  unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
+  if(p<n){
+    const unsigned p1=flexstrucridp[p]; //-Number of particle.
+    if(CODE_IsFlexStrucFlex(code[p1])){
+      const float3 mvel=motionvel[p1];
+      velrhop[p1]=make_float4(mvel.x,mvel.y,mvel.z,velrhop[p1].w);
+    }
+  }
+}
+
+//==============================================================================
+/// Copy motion velocity of flexible structure particles.
+/// Copie la velocidad de movimiento de partículas de estructura flexible.
+//==============================================================================
+void CopyMotionVelFlexStruc(unsigned npfs,const typecode* code,const unsigned* flexstrucridp
+    ,const float3* motionvel,float4* velrhop)
+{
+  if(npfs){
+    dim3 sgrid=GetSimpleGridSize(npfs,SPHBSIZE);
+    KerCopyMotionVelFlexStruc <<<sgrid,SPHBSIZE>>> (npfs,code,flexstrucridp,motionvel,velrhop);
+  }
+}
+
+//==============================================================================
 /// Updates position and velocity using semi-implicit Euler scheme (used with Verlet scheme).
 /// Actualiza la posición y la velocidad usando el esquema de Euler semiimplícito (usado con el esquema de Verlet).
 //==============================================================================
