@@ -220,7 +220,7 @@ TpInZsurfMode JSphInOutZsurf::ReadXml(const JXml* sxml,TiXmlElement* ele
       //if(sxml->ExistsElement(xele,"zbottom"))Log->PrintfWarning("Option \'zbottom\' is ignored at %s",sxml->ErrGetFileRow(xele,"zbottom").c_str());
       //InputZsurf=sxml->ReadElementFloat(xele,"zsurf","value");
       SvVtkZsurf=sxml->ReadElementBool(xele,"savevtk","value",true,false);
-      Zsurf0=sxml->ReadElementDouble(xele,"zsurf0","value",false);
+      Zsurf0=sxml->ReadElementFloat(xele,"zsurf0","value",false);
       ZsurfMin=sxml->ReadElementDouble(xele,"zsurfmin","value",true,ZonePosMin.z);
       ZsurfFit=-float(CSP.dp/2);
       switch(sxml->CheckAttributes(xele,"zsurffit","value valuedp",true)){
