@@ -3591,7 +3591,7 @@ std::string JSph::GetSlipName(TpSlipMode tslip){
   string tx;
   if(tslip==SLIP_Vel0)tx="DBC vel=0";
   else if(tslip==SLIP_NoSlip)tx="No-slip";
-  else if(tslip==SLIP_FreeSlip)tx="Free slip";
+  else if(tslip==SLIP_FreeSlip)tx="Free-slip";
   else tx="???";
   return(tx);
 }

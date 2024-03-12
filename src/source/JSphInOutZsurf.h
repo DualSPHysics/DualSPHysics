@@ -63,6 +63,7 @@ protected:
   float InputZsurf;        ///<Input uniform zsurf. It is FLT_MAX when ZsurfMode==InZsurf_Undefined or UniformZsurf==false.
   bool RemoveZsurf;        ///<Removes particles above the Zsurf limit (default=false).
   bool SvVtkZsurf;         ///<Creates VTK files with Zsurf for each PART (default=false).
+  double Zsurf0;           ///<Initial Z-surface value for ZsurfMode==InZsurf_Calculated.
   double ZsurfMin;         ///<Minimum Z-surface to reduce the calculation area (default=minimum Z inlet).
   float ZsurfFit;          ///<Set calculated zsurf (default -0.5*dp).
   JLinearValue* InputTime; ///<Input zsurf in time (for ZsurfMode==InZsurf_Variable).
