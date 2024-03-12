@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<!-- *** DualSPHysics v5.3.300 (14-11-2023) *** -->
+<!-- *** DualSPHysics v5.4.323 (12-03-2024) *** -->
 <!-- *** class: JSphInOut *** -->
 <!------------------------------------------------------------------------------->
 <!------------------------------------------------------------------------------->
@@ -345,6 +345,7 @@
 	<imposezsurf mode="2" comment="Inlet Z-surface 0:Imposed fixed value, 1:Imposed variable value, 2:Calculated from fluid domain (default=0)">
 		<savevtk value="true" comment="Creates VTK files with Zsurf for each PART (default=false)" />
 		<remove value="false" comment="Removes particles above the Zsurf limit (default=false)" />
+		<zsurf0 value="1.0" comment="Initial Z-surface value" units_comment="m" />
 		<zsurfmin value="0.8" comment="Minimum Z-surface to reduce the calculation area (default=minimun Z inlet)" units_comment="m" />
 		<zsurffit valuedp="0.5" comment="Reduction of calculated zsurf with explicit value (value) or according to dp (valuedp) (default vdp=0.5)" units_comment="m" />
 	</imposezsurf>

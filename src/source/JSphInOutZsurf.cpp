@@ -83,6 +83,7 @@ void JSphInOutZsurf::Reset(){
   InputZbottom=InputZsurf=FLT_MAX;
   RemoveZsurf=false;
   SvVtkZsurf=false;
+  Zsurf0=0;
   ZsurfMin=0;
   ZsurfFit=0;
   delete InputTime; InputTime=NULL;
@@ -214,11 +215,12 @@ TpInZsurfMode JSphInOutZsurf::ReadXml(const JXml* sxml,TiXmlElement* ele
       UniformZsurf=true;
     }
     else if(ZsurfMode==InZsurf_Calculated){
-      sxml->CheckElementNames(xele,true,"remove savevtk zsurfmin zsurffit zsurf zbottom");
-      if(sxml->ExistsElement(xele,"zsurf"  ))Log->PrintfWarning("Option \'zsurf\' is ignored at %s"  ,sxml->ErrGetFileRow(xele,"zsurf").c_str());
-      if(sxml->ExistsElement(xele,"zbottom"))Log->PrintfWarning("Option \'zbottom\' is ignored at %s",sxml->ErrGetFileRow(xele,"zbottom").c_str());
+      sxml->CheckElementNames(xele,true,"remove savevtk zsurf0 zsurfmin zsurffit");
+      //if(sxml->ExistsElement(xele,"zsurf"  ))Log->PrintfWarning("Option \'zsurf\' is ignored at %s"  ,sxml->ErrGetFileRow(xele,"zsurf").c_str());
+      //if(sxml->ExistsElement(xele,"zbottom"))Log->PrintfWarning("Option \'zbottom\' is ignored at %s",sxml->ErrGetFileRow(xele,"zbottom").c_str());
       //InputZsurf=sxml->ReadElementFloat(xele,"zsurf","value");
       SvVtkZsurf=sxml->ReadElementBool(xele,"savevtk","value",true,false);
+      Zsurf0=sxml->ReadElementDouble(xele,"zsurf0","value",false);
       ZsurfMin=sxml->ReadElementDouble(xele,"zsurfmin","value",true,ZonePosMin.z);
       ZsurfFit=-float(CSP.dp/2);
       switch(sxml->CheckAttributes(xele,"zsurffit","value valuedp",true)){
@@ -228,11 +230,11 @@ TpInZsurfMode JSphInOutZsurf::ReadXml(const JXml* sxml,TiXmlElement* ele
       if(ZsurfMin<ZonePosMin.z)ZsurfMin=ZonePosMin.z;
       UniformZsurf=ConfigGaugeZsurf(gaugesystem);
       if(GaugeSwl){
-        gaugesystem->CalculeLastInput(0,GaugeSwl->Name);
+        //gaugesystem->CalculeLastInput(0,GaugeSwl->Name);
         UpdateZsurf(-1);
       }
       else if(GaugeMesh){//<vs_meeshdat_ini>
-        gaugesystem->CalculeLastInput(0,GaugeMesh->Name);
+        //gaugesystem->CalculeLastInput(0,GaugeMesh->Name);
         UpdateZsurf(-1);
       }//<vs_meeshdat_end>
       else Run_Exceptioon(fun::PrintStr("Inlet/outlet %d: Initial Zsurf is invalid.",IdZone));
@@ -516,19 +518,22 @@ bool JSphInOutZsurf::ConfigGaugeZsurf(JGaugeSystem* gaugesystem){
       m.dispt1=Dptx;
     }
     unsigned tfmt=(jmsh::TpFmtBin|jmsh::TpFmtCsv);
-    GaugeMesh=gaugesystem->AddGaugeMesh(fun::PrintStr("Inlet_i%d_zsurf",IdZone),0,DBL_MAX,0
+    GaugeMesh=gaugesystem->AddGaugeMesh(gname,0,DBL_MAX,0
       ,true,m,"Zsurf",tfmt,0,0.5,0,0);
-    if(Nptx!=GaugeMesh->GetMesh().npt1)Run_Exceptioon("Number of gauge points in horizontal direction does not match.");
+    if(Nptx!=GaugeMesh->GetMesh().npt1)
+      Run_Exceptioon("Number of gauge points in horizontal direction does not match.");
     gaugesystem->SaveVtkInitPoints();
     //-Set CurrentZsurf and CurrentZsurfg with GaugeMesh pointers.
     CurrentExternal=true;
     CurrentZsurf =(float*)GaugeMesh->GetPtrDataZsurf();
     #ifdef _WITHGPU
+    if(!Cpu){
       if(gaugesystem->GpuCount==1){
         GaugeMesh->AllocGpuMemory(0);
         CurrentZsurfg=(float*)GaugeMesh->GetPtrDataZsurfg(0);
       }
-      if(!gaugesystem->Cpu && !CurrentZsurfg)Run_Exceptioon("Error: GPU pointer is NULL.");
+      if(!CurrentZsurfg)Run_Exceptioon("Error: GPU pointer is NULL.");
+    }
     #endif
   } //<vs_meeshdat_end>
   gaugesystem->SaveVtkInitPoints();
@@ -609,8 +614,9 @@ void JSphInOutZsurf::GetConfig(std::vector<std::string>& lines)const{
       lines.push_back(fun::PrintStr("  Z-Surface SaveVTK: %s",(SvVtkZsurf? "True": "False")));
     }
     if(ZsurfMode==InZsurf_Calculated){
+      lines.push_back(fun::PrintStr("  Z-Surface Initial: %g",Zsurf0));
       lines.push_back(fun::PrintStr("  Z-Surface Minimum: %g",ZsurfMin));
-      lines.push_back(fun::PrintStr("  Z-Surface final Fit: %g (%g x Dp)",ZsurfFit,ZsurfFit/float(CSP.dp)));
+      lines.push_back(fun::PrintStr("  Z-Surface Final Fit: %g (%g x Dp)",ZsurfFit,ZsurfFit/float(CSP.dp)));
     }
   }
 }
@@ -658,12 +664,15 @@ void JSphInOutZsurf::SetInitialPoints(unsigned npt,const tdouble3* ptpos
 float JSphInOutZsurf::UpdateZsurf(double timestep){
   if(InputTime)InputZsurf=(float)InputTime->GetValue(timestep);  
   else if(ZsurfMode==InZsurf_Calculated){
-    if(GaugeSwl){
-      const bool active=GaugeSwl->GetResult().modified;
-      if(active)InputZsurf=GaugeSwl->GetResult().posswl.z+ZsurfFit;
+    if(timestep<0)InputZsurf=Zsurf0;
+    else{
+      if(GaugeSwl){
+        const bool active=GaugeSwl->GetResult().modified;
+        if(active)InputZsurf=GaugeSwl->GetResult().posswl.z+ZsurfFit;
+      }
+      else if(GaugeMesh && UniformZsurf)InputZsurf=CurrentZsurf[0]; //<vs_meeshdat>
+      //else if(GaugeMesh && !UniformZsurf) Nothing to do since CurrentZsurf (for CPU and GPU) and CurrentZsurfg (only for GPU) contains the zsurf results. //<vs_meeshdat>
     }
-    else if(GaugeMesh && UniformZsurf)InputZsurf=CurrentZsurf[0]; //<vs_meeshdat>
-    //else if(GaugeMesh && !UniformZsurf) Nothing to do since CurrentZsurf (for CPU and GPU) and CurrentZsurfg (only for GPU) contains the zsurf results. //<vs_meeshdat>
   }
   else if(TimeCount)InterpolateZsurfTime(timestep,false); //<vs_meeshdat>
   return(InputZsurf);
