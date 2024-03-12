@@ -1654,6 +1654,7 @@ void JSph::VisuConfig(){
   Log->Print(fun::VarStr("Viscosity",GetViscoName(TVisco)));
   Log->Print(fun::VarStr("  Visco",Visco));
   Log->Print(fun::VarStr("  ViscoBoundFactor",ViscoBoundFactor));
+  if(ViscoBoundFactor!=1.f && TBoundary==BC_MDBC && SlipMode!=SLIP_Vel0)Log->PrintWarning("ViscoBoundFactor should be 1.0 when mDBC no-slip or free slip is used.");
   if(ViscoTime)Log->Print(fun::VarStr("ViscoTime",ViscoTime->GetFile()));
   ConfigInfo=ConfigInfo+sep+"Visco_"+GetViscoName(TVisco)+fun::PrintStr("(%gb%g)",Visco,ViscoBoundFactor);
   //-DensityDiffusion.
