@@ -104,13 +104,26 @@ private:
   tdouble3 DirectionFromStr(const std::string& strdir)const;
   std::string CheckParticlesDirection(const JSphMkBlock* pmk,const tdouble3& dir)const;
 
+  tdouble3 ComputeDir3dFromParts(unsigned mkfluid,const JDsPartsInit* partsdata)const;
 
   void Create2d3d_Particles(const JXml* sxml,TiXmlElement* ele,const JDsPartsInit* partsdata);
   void Create2d_Line(const JXml* sxml,TiXmlElement* ele);
   void Create3d_Box(const JXml* sxml,TiXmlElement* ele);
   void Create3d_Circle(const JXml* sxml,TiXmlElement* ele);
+
+  void CheckPointsInLine(tdouble3 dir,unsigned np,const tdouble3* points
+    ,std::string xmlrow)const;
+  void ComputeVectorExtremes(unsigned np,const tdouble3* points
+    ,tdouble3 pt0,tdouble3 vec,double& dmin,double& dmax)const;
+  void CheckPointsInPlane(tdouble3 dir,unsigned np,const tdouble3* points
+    ,std::string xmlrow)const;
   void CheckPoints(const std::string& xmlrow);
   void ComputeDomainLimits(tdouble3& posmin,tdouble3& posmax)const;
+  void FindLineExtremes(tdouble3 dirline,unsigned np,const tdouble3* points
+    ,tdouble3& ptmin,tdouble3& ptmax)const;
+  void ComputePackingBox(tdouble3 direction,unsigned np,const tdouble3* points
+    ,tdouble3& boxpt,tdouble3& boxv1,tdouble3& boxv2,tdouble3& boxv3)const;
+
   void ComputeDomainFromPoints();
 
 public:

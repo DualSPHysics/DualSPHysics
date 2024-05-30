@@ -185,8 +185,10 @@ void JSphInOutZone::ReadXml(const JXml* sxml,TiXmlElement* ele
   ,JGaugeSystem* gaugesystem)
 {
   //-Checks old configuration.
-  if(sxml->ExistsElement(ele,"userefilling"))Run_ExceptioonFile(fun::PrintStr("Inlet/outlet zone %d: <userefilling> is not supported by current inlet/outlet version.",IdZone),sxml->ErrGetFileRow(ele,"userefilling"));
-  if(sxml->ExistsElement(ele,"convertfluid"))Run_ExceptioonFile(fun::PrintStr("Inlet/outlet zone %d: <convertfluid> is not supported by current inlet/outlet version.",IdZone),sxml->ErrGetFileRow(ele,"convertfluid"));
+  if(sxml->ExistsElement(ele,"userefilling")) Run_ExceptioonFile(fun::PrintStr(
+    "Inlet/outlet zone %d: <userefilling> is not supported by current inlet/outlet version.",IdZone),sxml->ErrGetFileRow(ele,"userefilling"));
+  if(sxml->ExistsElement(ele,"convertfluid"))Run_ExceptioonFile(fun::PrintStr(
+    "Inlet/outlet zone %d: <convertfluid> is not supported by current inlet/outlet version.",IdZone),sxml->ErrGetFileRow(ele,"convertfluid"));
   //-Checks element names.
   sxml->CheckElementNames(ele,true,"refilling inputtreatment layers zone2d zone3d imposevelocity imposerhop imposezsurf");
   //-Loads InputMode (InputTreatment).
@@ -215,7 +217,8 @@ void JSphInOutZone::ReadXml(const JXml* sxml,TiXmlElement* ele
   if(layers>250)sxml->ErrReadElement(ele,"layers",false,"Maximum number of layers is 250.");
   Layers=byte(layers);
   //-Creates inlet points.
-  Points=new JSphInOutPoints(CSP.simulate2d,CSP.simulate2dposy,Layers,CSP.dp,0,MapRealPosMin,MapRealPosMax);
+  Points=new JSphInOutPoints(CSP.simulate2d,CSP.simulate2dposy,Layers,CSP.dp
+    ,0,MapRealPosMin,MapRealPosMax);
   if(CSP.simulate2d){
     TiXmlElement* zone2d=ele->FirstChildElement("zone2d"); 
     if(zone2d)Points->CreatePoints(sxml,zone2d,partsdata);

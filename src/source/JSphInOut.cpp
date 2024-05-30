@@ -711,7 +711,7 @@ void JSphInOut::InitCheckProximity(unsigned np,unsigned newnp,float scell
   ,const tdouble3* pos,const unsigned* idp,typecode* code)
 {
   //-Look for nearby particles.
-  const double disterror=CSP.dp*0.8;
+  const double disterror=CSP.dp*0.7;
   JSimpleNeigs neigs(np,pos,scell);
   byte* errpart=new byte[np];
   memset(errpart,0,sizeof(byte)*np);
