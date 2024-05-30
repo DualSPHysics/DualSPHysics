@@ -1,6 +1,6 @@
 //HEAD_DSCODES
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2023 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -71,6 +71,7 @@ void JPartDataBi4::ResetData(){
   Data=new JBinaryData(ClassName);
   Part=Data->CreateItem("Part");
   Cpart=0;
+  FileLoaded="";
 }
 
 //==============================================================================
@@ -508,9 +509,13 @@ void JPartDataBi4::LoadFileData(std::string file,unsigned cpart,unsigned piece
   ,unsigned npiece)
 {
   ResetData();
-  Cpart=cpart; Piece=piece; Npiece=npiece;
+  Cpart=cpart;
+  Piece=piece;
+  Npiece=npiece;
+  FileLoaded=file;
   Data->OpenFileStructure(file,ClassName);
-  if(Piece!=Data->GetvUint("Piece")||Npiece!=Data->GetvUint("Npiece"))Run_Exceptioon("PART configuration is invalid.");
+  if(Piece!=Data->GetvUint("Piece") || Npiece!=Data->GetvUint("Npiece"))
+    Run_Exceptioon("PART configuration is invalid.");
   Part=Data->GetItem(GetNamePart(Cpart));
   if(!Part)Run_Exceptioon("PART data is invalid.");
   Cpart=Part->GetvUint("Cpart");
@@ -523,7 +528,8 @@ void JPartDataBi4::LoadFileData(std::string file,unsigned cpart,unsigned piece
 void JPartDataBi4::LoadFileCase(std::string dir,std::string casename
   ,unsigned piece,unsigned npiece)
 {
-  LoadFileData(fun::GetDirWithSlash(dir)+GetFileNameCase(casename,piece,npiece),0,piece,npiece);
+  LoadFileData(fun::GetDirWithSlash(dir)+GetFileNameCase(casename,piece,npiece)
+    ,0,piece,npiece);
 }
 
 //==============================================================================
@@ -533,7 +539,8 @@ void JPartDataBi4::LoadFileCase(std::string dir,std::string casename
 void JPartDataBi4::LoadFilePart(std::string dir,unsigned cpart,unsigned piece
   ,unsigned npiece)
 {
-  LoadFileData(fun::GetDirWithSlash(dir)+GetFileNamePart(cpart,piece,npiece),cpart,piece,npiece);
+  LoadFileData(fun::GetDirWithSlash(dir)+GetFileNamePart(cpart,piece,npiece)
+    ,cpart,piece,npiece);
 }
 
 //==============================================================================

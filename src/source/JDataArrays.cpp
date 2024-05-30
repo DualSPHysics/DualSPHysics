@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2023 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -48,9 +48,9 @@ JDataArrays::~JDataArrays(){
 //==============================================================================
 /// Throws exception related to a file from a static method.
 //==============================================================================
-void JDataArrays::RunExceptioonStatic(const std::string &srcfile,int srcline
-  ,const std::string &method
-  ,const std::string &msg,const std::string &file)
+void JDataArrays::RunExceptioonStatic(const std::string& srcfile,int srcline
+  ,const std::string& method
+  ,const std::string& msg,const std::string& file)
 {
   throw JException(srcfile,srcline,"JDataArrays",method,msg,file);
 }
@@ -66,7 +66,7 @@ void JDataArrays::Reset(){
 //==============================================================================
 /// Copy data from other JDataArrays but delptr is changed to false.
 //==============================================================================
-void JDataArrays::CopyFrom(const JDataArrays &arr){
+void JDataArrays::CopyFrom(const JDataArrays& arr){
   Reset();
   const unsigned na=arr.Count();
   for(unsigned ca=0;ca<na;ca++){
@@ -80,7 +80,7 @@ void JDataArrays::CopyFrom(const JDataArrays &arr){
 /// Copy data (tag is not copied) from other JDataArrays throws exception when 
 /// structure does not match.
 //==============================================================================
-void JDataArrays::CopyDataFrom(const JDataArrays &arr,bool filterarrays){
+void JDataArrays::CopyDataFrom(const JDataArrays& arr,bool filterarrays){
   const unsigned na=Count();
   for(unsigned ca=0;ca<na;ca++){
     JDataArrays::StDataArray& ar=Arrays[ca];
@@ -104,7 +104,7 @@ void JDataArrays::CopyDataFrom(const JDataArrays &arr,bool filterarrays){
 //==============================================================================
 /// Returns true when name, type and size of arrays match.
 //==============================================================================
-bool JDataArrays::EqualStructure(const JDataArrays &arr,bool cmptag)const{
+bool JDataArrays::EqualStructure(const JDataArrays& arr,bool cmptag)const{
   bool eq=(Count()==arr.Count());
   const unsigned na=Count();
   for(unsigned ca=0;ca<na && eq;ca++){
@@ -119,19 +119,19 @@ bool JDataArrays::EqualStructure(const JDataArrays &arr,bool cmptag)const{
 //==============================================================================
 /// Frees dynamic memory of array pointer using delete[] when delptr=true.
 //==============================================================================
-void JDataArrays::FreeMemory(StDataArray &arr){
+void JDataArrays::FreeMemory(StDataArray& arr){
   if(arr.delptr){
-    void *ptr=arr.ptr;
+    void* ptr=arr.ptr;
     switch(arr.type){
-      case TypeUchar:    delete[] (byte    *)ptr;  break;
-      case TypeUshort:   delete[] (word    *)ptr;  break;
+      case TypeUchar:    delete[] (byte*    )ptr;  break;
+      case TypeUshort:   delete[] (word*    )ptr;  break;
       case TypeUint:     delete[] (unsigned*)ptr;  break;
-      case TypeInt:      delete[] (int     *)ptr;  break;
-      case TypeFloat:    delete[] (float   *)ptr;  break;
-      case TypeDouble:   delete[] (double  *)ptr;  break;
-      case TypeUint3:    delete[] (tuint3  *)ptr;  break;
-      case TypeInt3:     delete[] (tint3   *)ptr;  break;
-      case TypeFloat3:   delete[] (tfloat3 *)ptr;  break;
+      case TypeInt:      delete[] (int*     )ptr;  break;
+      case TypeFloat:    delete[] (float*   )ptr;  break;
+      case TypeDouble:   delete[] (double*  )ptr;  break;
+      case TypeUint3:    delete[] (tuint3*  )ptr;  break;
+      case TypeInt3:     delete[] (tint3*   )ptr;  break;
+      case TypeFloat3:   delete[] (tfloat3* )ptr;  break;
       case TypeDouble3:  delete[] (tdouble3*)ptr;  break;
       default: Run_Exceptioon(fun::PrintStr("Type of pointer \'%s\' is invalid.",TypeToStr(arr.type)));
     }
@@ -173,7 +173,7 @@ unsigned JDataArrays::GetDataCount()const{
 //==============================================================================
 /// Returns idx of array with given name.
 //==============================================================================
-unsigned JDataArrays::GetIdxName(const std::string &keyname)const{ 
+unsigned JDataArrays::GetIdxName(const std::string& keyname)const{ 
   unsigned idx=0;
   const unsigned na=Count();
   for(;idx<na && Arrays[idx].keyname!=keyname;idx++);
@@ -183,7 +183,9 @@ unsigned JDataArrays::GetIdxName(const std::string &keyname)const{
 //==============================================================================
 /// Returns idx of array with given name.
 //==============================================================================
-std::string JDataArrays::CheckErrorArray(const std::string &keyname,TpTypeData type,unsigned count)const{ 
+std::string JDataArrays::CheckErrorArray(const std::string& keyname
+  ,TpTypeData type,unsigned count)const
+{ 
   string err;
   unsigned idx=GetIdxName(keyname);
   if(idx==UINT_MAX)err=fun::PrintStr("Array \'%s\' is missing.",keyname.c_str());
@@ -194,7 +196,9 @@ std::string JDataArrays::CheckErrorArray(const std::string &keyname,TpTypeData t
 //==============================================================================
 /// Returns idx of array with given name.
 //==============================================================================
-std::string JDataArrays::CheckErrorArray(unsigned idx,TpTypeData type,unsigned count)const{ 
+std::string JDataArrays::CheckErrorArray(unsigned idx,TpTypeData type
+  ,unsigned count)const
+{ 
   string err;
   if(idx>=Count())err=fun::PrintStr("Array %u is missing.",idx);
   else{
@@ -210,7 +214,7 @@ std::string JDataArrays::CheckErrorArray(unsigned idx,TpTypeData type,unsigned c
 /// Adds generic array defined by the user.
 //==============================================================================
 unsigned JDataArrays::AddArray(std::string fullname,TpTypeData type
-  ,unsigned count,void *ptr,bool delptr)
+  ,unsigned count,void* ptr,bool delptr)
 {
   StDataArray ar;
   ar.fullname=fullname;
@@ -280,12 +284,12 @@ void JDataArrays::ReverseArrayData(unsigned idx){
     case TypeUshort:
     case TypeUint:
     case TypeUint3:    break;
-    case TypeInt:{     int    *v=(int   *)ar.ptr;  for(unsigned c=0;c<count ;c++)v[c]=-v[c];  }break;
-    case TypeFloat:{   float  *v=(float *)ar.ptr;  for(unsigned c=0;c<count ;c++)v[c]=-v[c];  }break;
-    case TypeDouble:{  double *v=(double*)ar.ptr;  for(unsigned c=0;c<count ;c++)v[c]=-v[c];  }break;
-    case TypeInt3:{    int    *v=(int   *)ar.ptr;  for(unsigned c=0;c<count3;c++)v[c]=-v[c];  }break;
-    case TypeFloat3:{  float  *v=(float *)ar.ptr;  for(unsigned c=0;c<count3;c++)v[c]=-v[c];  }break;
-    case TypeDouble3:{ double *v=(double*)ar.ptr;  for(unsigned c=0;c<count3;c++)v[c]=-v[c];  }break;
+    case TypeInt:{     int*    v=(int*   )ar.ptr;  for(unsigned c=0;c<count ;c++)v[c]=-v[c];  }break;
+    case TypeFloat:{   float*  v=(float* )ar.ptr;  for(unsigned c=0;c<count ;c++)v[c]=-v[c];  }break;
+    case TypeDouble:{  double* v=(double*)ar.ptr;  for(unsigned c=0;c<count ;c++)v[c]=-v[c];  }break;
+    case TypeInt3:{    int*    v=(int*   )ar.ptr;  for(unsigned c=0;c<count3;c++)v[c]=-v[c];  }break;
+    case TypeFloat3:{  float*  v=(float* )ar.ptr;  for(unsigned c=0;c<count3;c++)v[c]=-v[c];  }break;
+    case TypeDouble3:{ double* v=(double*)ar.ptr;  for(unsigned c=0;c<count3;c++)v[c]=-v[c];  }break;
     default: Run_Exceptioon(fun::PrintStr("Type of data \'%s\' is invalid.",TypeToStr(ar.type)));
   }
 }
@@ -296,7 +300,8 @@ void JDataArrays::ReverseArrayData(unsigned idx){
 //==============================================================================
 void JDataArrays::SetAddArrayData(unsigned idx,char selxyz,double v2){
   if(idx>=Count())Run_Exceptioon("Array idx is invalid.");
-  if(selxyz!='x' && selxyz!='y' && selxyz!='z' && selxyz!=' ')Run_Exceptioon("Component selection is invalid.");
+  if(selxyz!='x' && selxyz!='y' && selxyz!='z' && selxyz!=' ')
+    Run_Exceptioon("Component selection is invalid.");
   const int c0=(selxyz=='y'? 1: (selxyz=='z'? 2: 0));
   const int ci=(selxyz==' '? 1: 3);
   const int v2i=int(v2);
@@ -309,12 +314,12 @@ void JDataArrays::SetAddArrayData(unsigned idx,char selxyz,double v2){
     case TypeUshort:
     case TypeUint:
     case TypeUint3:    break;
-    case TypeInt:{     int    *v=(int   *)ar.ptr;  for(unsigned c=0;c<count ;c++)v[c]+=v2i;    }break;
-    case TypeFloat:{   float  *v=(float *)ar.ptr;  for(unsigned c=0;c<count ;c++)v[c]+=v2f;    }break;
-    case TypeDouble:{  double *v=(double*)ar.ptr;  for(unsigned c=0;c<count ;c++)v[c]+=v2;     }break;
-    case TypeInt3:{    int    *v=(int   *)ar.ptr;  for(unsigned c=c0;c<count3;c+=ci)v[c]+=v2i; }break;
-    case TypeFloat3:{  float  *v=(float *)ar.ptr;  for(unsigned c=c0;c<count3;c+=ci)v[c]+=v2f; }break;
-    case TypeDouble3:{ double *v=(double*)ar.ptr;  for(unsigned c=c0;c<count3;c+=ci)v[c]+=v2;  }break;
+    case TypeInt:{     int*    v=(int*   )ar.ptr;  for(unsigned c=0;c<count ;c++)v[c]+=v2i;    }break;
+    case TypeFloat:{   float*  v=(float* )ar.ptr;  for(unsigned c=0;c<count ;c++)v[c]+=v2f;    }break;
+    case TypeDouble:{  double* v=(double*)ar.ptr;  for(unsigned c=0;c<count ;c++)v[c]+=v2;     }break;
+    case TypeInt3:{    int*    v=(int*   )ar.ptr;  for(unsigned c=c0;c<count3;c+=ci)v[c]+=v2i; }break;
+    case TypeFloat3:{  float*  v=(float* )ar.ptr;  for(unsigned c=c0;c<count3;c+=ci)v[c]+=v2f; }break;
+    case TypeDouble3:{ double* v=(double*)ar.ptr;  for(unsigned c=c0;c<count3;c+=ci)v[c]+=v2;  }break;
     default: Run_Exceptioon(fun::PrintStr("Type of data \'%s\' is invalid.",TypeToStr(ar.type)));
   }
 }
@@ -325,7 +330,8 @@ void JDataArrays::SetAddArrayData(unsigned idx,char selxyz,double v2){
 //==============================================================================
 void JDataArrays::SetMulArrayData(unsigned idx,char selxyz,double v2){
   if(idx>=Count())Run_Exceptioon("Array idx is invalid.");
-  if(selxyz!='x' && selxyz!='y' && selxyz!='z' && selxyz!=' ')Run_Exceptioon("Component selection is invalid.");
+  if(selxyz!='x' && selxyz!='y' && selxyz!='z' && selxyz!=' ')
+    Run_Exceptioon("Component selection is invalid.");
   const int c0=(selxyz=='y'? 1: (selxyz=='z'? 2: 0));
   const int ci=(selxyz==' '? 1: 3);
   const int v2i=int(v2);
@@ -338,12 +344,12 @@ void JDataArrays::SetMulArrayData(unsigned idx,char selxyz,double v2){
     case TypeUshort:
     case TypeUint:
     case TypeUint3:    break;
-    case TypeInt:{     int    *v=(int   *)ar.ptr;  for(unsigned c=0;c<count ;c++)v[c]*=v2i;    }break;
-    case TypeFloat:{   float  *v=(float *)ar.ptr;  for(unsigned c=0;c<count ;c++)v[c]*=v2f;    }break;
-    case TypeDouble:{  double *v=(double*)ar.ptr;  for(unsigned c=0;c<count ;c++)v[c]*=v2;     }break;
-    case TypeInt3:{    int    *v=(int   *)ar.ptr;  for(unsigned c=c0;c<count3;c+=ci)v[c]*=v2i; }break;
-    case TypeFloat3:{  float  *v=(float *)ar.ptr;  for(unsigned c=c0;c<count3;c+=ci)v[c]*=v2f; }break;
-    case TypeDouble3:{ double *v=(double*)ar.ptr;  for(unsigned c=c0;c<count3;c+=ci)v[c]*=v2;  }break;
+    case TypeInt:{     int*    v=(int*   )ar.ptr;  for(unsigned c=0;c<count ;c++)v[c]*=v2i;    }break;
+    case TypeFloat:{   float*  v=(float* )ar.ptr;  for(unsigned c=0;c<count ;c++)v[c]*=v2f;    }break;
+    case TypeDouble:{  double* v=(double*)ar.ptr;  for(unsigned c=0;c<count ;c++)v[c]*=v2;     }break;
+    case TypeInt3:{    int*    v=(int*   )ar.ptr;  for(unsigned c=c0;c<count3;c+=ci)v[c]*=v2i; }break;
+    case TypeFloat3:{  float*  v=(float* )ar.ptr;  for(unsigned c=c0;c<count3;c+=ci)v[c]*=v2f; }break;
+    case TypeDouble3:{ double* v=(double*)ar.ptr;  for(unsigned c=c0;c<count3;c+=ci)v[c]*=v2;  }break;
     default: Run_Exceptioon(fun::PrintStr("Type of data \'%s\' is invalid.",TypeToStr(ar.type)));
   }
 }
@@ -359,7 +365,7 @@ JDataArrays::StDataArray& JDataArrays::GetArray(unsigned idx){
 //==============================================================================
 /// Returns reference to requested array by name.
 //==============================================================================
-JDataArrays::StDataArray& JDataArrays::GetArray(const std::string &keyname){
+JDataArrays::StDataArray& JDataArrays::GetArray(const std::string& keyname){
   const unsigned idx=GetIdxName(keyname);
   if(idx==UINT_MAX)Run_Exceptioon(fun::PrintStr("Array \'%s\' is missing.",keyname.c_str()));
   return(Arrays[idx]);
@@ -376,7 +382,7 @@ const JDataArrays::StDataArray& JDataArrays::GetArrayCte(unsigned idx)const{
 //==============================================================================
 /// Returns constant reference to requested array by name.
 //==============================================================================
-const JDataArrays::StDataArray& JDataArrays::GetArrayCte(const std::string &keyname)const{
+const JDataArrays::StDataArray& JDataArrays::GetArrayCte(const std::string& keyname)const{
   const unsigned idx=GetIdxName(keyname);
   if(idx==UINT_MAX)Run_Exceptioon(fun::PrintStr("Array \'%s\' is missing.",keyname.c_str()));
   return(Arrays[idx]);
@@ -393,7 +399,7 @@ JDataArrays::StDataArray JDataArrays::GetArrayData(unsigned idx)const{
 //==============================================================================
 /// Returns data of requested array by name.
 //==============================================================================
-JDataArrays::StDataArray JDataArrays::GetArrayData(const std::string &keyname)const{
+JDataArrays::StDataArray JDataArrays::GetArrayData(const std::string& keyname)const{
   const unsigned idx=GetIdxName(keyname);
   if(idx==UINT_MAX)Run_Exceptioon(fun::PrintStr("Array \'%s\' is missing.",keyname.c_str()));
   return(Arrays[idx]);
@@ -458,7 +464,7 @@ std::string JDataArrays::GetUnitsByName(std::string keyname){
   if(var=="pos")return(" [m]");
   else if(var=="vel")return(" [m/s]");
   else if(var=="veldir")return(" [m/s]");
-  else if(var=="rhop")return(" [kg/m^3]");
+  else if(var=="rhop" || var=="rho")return(" [kg/m^3]");
   else if(var=="mass")return(" [kg]");
   else if(var=="press")return(" [Pa]");
   else if(var=="vol")return(" [m^3]");
@@ -472,7 +478,9 @@ std::string JDataArrays::GetUnitsByName(std::string keyname){
 //==============================================================================
 /// Returns the pointer to data. Throw exception when idx, type or count is wrong.
 //==============================================================================
-const void* JDataArrays::GetArrayPtr(unsigned idx,TpTypeData type,unsigned count)const{
+const void* JDataArrays::GetArrayPtr(unsigned idx,TpTypeData type
+  ,unsigned count)const
+{
   string err=CheckErrorArray(idx,type,count);
   if(!err.empty())Run_Exceptioon(err);
   return(Arrays[idx].ptr);
@@ -481,7 +489,9 @@ const void* JDataArrays::GetArrayPtr(unsigned idx,TpTypeData type,unsigned count
 //==============================================================================
 /// Returns the pointer to data. Throw exception when keyname, type or count is wrong.
 //==============================================================================
-const void* JDataArrays::GetArrayPtr(const std::string &keyname,TpTypeData type,unsigned count)const{
+const void* JDataArrays::GetArrayPtr(const std::string& keyname,TpTypeData type
+  ,unsigned count)const
+{
   string err=CheckErrorArray(keyname,type,count);
   if(!err.empty())Run_Exceptioon(err);
   return(Arrays[GetIdxName(keyname)].ptr);
@@ -501,7 +511,7 @@ void JDataArrays::Print()const{
 /// Returns dynamic pointer with byte array. (this pointer must be deleted)
 //==============================================================================
 byte* JDataArrays::NewArrayByte(unsigned count,bool defvalue,byte value){
-  byte *v=NULL;
+  byte* v=NULL;
   try{
     v=new byte[count];
     if(count && defvalue)memset(v,value,sizeof(byte)*count);
@@ -516,7 +526,7 @@ byte* JDataArrays::NewArrayByte(unsigned count,bool defvalue,byte value){
 /// Returns dynamic pointer with word array. (this pointer must be deleted)
 //==============================================================================
 word* JDataArrays::NewArrayWord(unsigned count,bool defvalue,word value){
-  word *v=NULL;
+  word* v=NULL;
   try{
     v=new word[count];
     if(count && defvalue){
@@ -534,7 +544,7 @@ word* JDataArrays::NewArrayWord(unsigned count,bool defvalue,word value){
 /// Returns dynamic pointer with unsigned array. (this pointer must be deleted)
 //==============================================================================
 unsigned* JDataArrays::NewArrayUint(unsigned count,bool defvalue,unsigned value){
-  unsigned *v=NULL;
+  unsigned* v=NULL;
   try{
     v=new unsigned[count];
     if(count && defvalue){
@@ -552,7 +562,7 @@ unsigned* JDataArrays::NewArrayUint(unsigned count,bool defvalue,unsigned value)
 /// Returns dynamic pointer with int array. (this pointer must be deleted)
 //==============================================================================
 int* JDataArrays::NewArrayInt(unsigned count,bool defvalue,int value){
-  int *v=NULL;
+  int* v=NULL;
   try{
     v=new int[count];
     if(count && defvalue){
@@ -570,7 +580,7 @@ int* JDataArrays::NewArrayInt(unsigned count,bool defvalue,int value){
 /// Returns dynamic pointer with float array. (this pointer must be deleted)
 //==============================================================================
 float* JDataArrays::NewArrayFloat(unsigned count,bool defvalue,float value){
-  float *v=NULL;
+  float* v=NULL;
   try{
     v=new float[count];
     if(count && defvalue){
@@ -588,7 +598,7 @@ float* JDataArrays::NewArrayFloat(unsigned count,bool defvalue,float value){
 /// Returns dynamic pointer with double array. (this pointer must be deleted)
 //==============================================================================
 double* JDataArrays::NewArrayDouble(unsigned count,bool defvalue,double value){
-  double *v=NULL;
+  double* v=NULL;
   try{
     v=new double[count];
     if(count && defvalue){
@@ -606,7 +616,7 @@ double* JDataArrays::NewArrayDouble(unsigned count,bool defvalue,double value){
 /// Returns dynamic pointer with tuint3 array. (this pointer must be deleted)
 //==============================================================================
 tuint3* JDataArrays::NewArrayUint3(unsigned count,bool defvalue,tuint3 value){
-  tuint3 *v=NULL;
+  tuint3* v=NULL;
   try{
     v=new tuint3[count];
     if(count && defvalue){
@@ -624,7 +634,7 @@ tuint3* JDataArrays::NewArrayUint3(unsigned count,bool defvalue,tuint3 value){
 /// Returns dynamic pointer with tuint3 array. (this pointer must be deleted)
 //==============================================================================
 tint3* JDataArrays::NewArrayInt3(unsigned count,bool defvalue,tint3 value){
-  tint3 *v=NULL;
+  tint3* v=NULL;
   try{
     v=new tint3[count];
     if(count && defvalue){
@@ -642,7 +652,7 @@ tint3* JDataArrays::NewArrayInt3(unsigned count,bool defvalue,tint3 value){
 /// Returns dynamic pointer with tfloat3 array. (this pointer must be deleted)
 //==============================================================================
 tfloat3* JDataArrays::NewArrayFloat3(unsigned count,bool defvalue,tfloat3 value){
-  tfloat3 *v=NULL;
+  tfloat3* v=NULL;
   try{
     v=new tfloat3[count];
     if(count && defvalue){
@@ -660,7 +670,7 @@ tfloat3* JDataArrays::NewArrayFloat3(unsigned count,bool defvalue,tfloat3 value)
 /// Returns dynamic pointer with double array. (this pointer must be deleted)
 //==============================================================================
 tdouble3* JDataArrays::NewArrayDouble3(unsigned count,bool defvalue,tdouble3 value){
-  tdouble3 *v=NULL;
+  tdouble3* v=NULL;
   try{
     v=new tdouble3[count];
     if(count && defvalue){
@@ -678,7 +688,7 @@ tdouble3* JDataArrays::NewArrayDouble3(unsigned count,bool defvalue,tdouble3 val
 /// Returns dynamic pointer with a sequence. (this pointer must be deleted)
 //==============================================================================
 unsigned* JDataArrays::NewArraySeqUint(unsigned count,unsigned start,unsigned step){
-  unsigned *v=NULL;
+  unsigned* v=NULL;
   try{
     v=new unsigned[count];
     unsigned vv=start;
@@ -695,7 +705,7 @@ unsigned* JDataArrays::NewArraySeqUint(unsigned count,unsigned start,unsigned st
 //==============================================================================
 /// Obtains x,y,z values from tfloat4 values.
 //==============================================================================
-void JDataArrays::ToFloat3xyz(unsigned count,const tfloat4 *data,tfloat3 *dest){
+void JDataArrays::ToFloat3xyz(unsigned count,const tfloat4* data,tfloat3* dest){
   for(unsigned c=0;c<count;c++){
     const tfloat4 v=data[c];
     dest[c]=TFloat3(v.x,v.y,v.z);
@@ -705,15 +715,15 @@ void JDataArrays::ToFloat3xyz(unsigned count,const tfloat4 *data,tfloat3 *dest){
 //==============================================================================
 /// Obtains w values from tfloat4 values.
 //==============================================================================
-void JDataArrays::ToFloat1w(unsigned count,const tfloat4 *data,float *dest){
+void JDataArrays::ToFloat1w(unsigned count,const tfloat4* data,float* dest){
   for(unsigned c=0;c<count;c++)dest[c]=data[c].w;
 }
 
 //==============================================================================
 /// Returns dynamic pointer with x,y,z values from tfloat4 values. (this pointer must be deleted)
 //==============================================================================
-tfloat3* JDataArrays::NewArrayFloat3xyz(unsigned count,const tfloat4 *data){
-  tfloat3 *v=NewArrayFloat3(count,false);
+tfloat3* JDataArrays::NewArrayFloat3xyz(unsigned count,const tfloat4* data){
+  tfloat3* v=NewArrayFloat3(count,false);
   ToFloat3xyz(count,data,v);
   return(v);
 }
@@ -721,8 +731,8 @@ tfloat3* JDataArrays::NewArrayFloat3xyz(unsigned count,const tfloat4 *data){
 //==============================================================================
 /// Returns dynamic pointer with x,y,z values from tfloat4 values. (this pointer must be deleted)
 //==============================================================================
-float* JDataArrays::NewArrayFloat1w(unsigned count,const tfloat4 *data){
-  float *v=NewArrayFloat(count,false);
+float* JDataArrays::NewArrayFloat1w(unsigned count,const tfloat4* data){
+  float* v=NewArrayFloat(count,false);
   ToFloat1w(count,data,v);
   return(v);
 }
@@ -730,8 +740,8 @@ float* JDataArrays::NewArrayFloat1w(unsigned count,const tfloat4 *data){
 //==============================================================================
 /// Move array values according a reindex array.
 //==============================================================================
-template<class T> void JDataArrays::TReindexData(unsigned sreindex,const unsigned *reindex
-  ,unsigned ndata,T *data,T *aux)const
+template<class T> void JDataArrays::TReindexData(unsigned sreindex
+  ,const unsigned* reindex,unsigned ndata,T* data,T* aux)const
 {
   if(aux)memcpy(aux,data,sizeof(T)*ndata); //-Copy current data in auxiliary memory.
   else aux=data; //-Auxiliary memory is not used.
@@ -745,9 +755,9 @@ template<class T> void JDataArrays::TReindexData(unsigned sreindex,const unsigne
 //==============================================================================
 /// Apply filter array[count] (1:selected, 0:discarded).
 //==============================================================================
-unsigned JDataArrays::FilterApply(unsigned count,const byte *filter){
+unsigned JDataArrays::FilterApply(unsigned count,const byte* filter){
   //-Create index to compact filtered data.
-  unsigned *reindex=NewArrayUint(count);
+  unsigned* reindex=NewArrayUint(count);
   unsigned nsel=0;
   for(unsigned p=0;p<count;p++)if(filter[p]!=0){
     reindex[nsel++]=p;
@@ -755,18 +765,18 @@ unsigned JDataArrays::FilterApply(unsigned count,const byte *filter){
   //-Compact filtered data.
   const unsigned na=Count();
   for(unsigned c=0;c<na;c++){
-    StDataArray &arr=Arrays[c];
+    StDataArray& arr=Arrays[c];
     if(arr.count!=count)Run_Exceptioon(fun::PrintStr("Number of values of \'%s\' does not match size of filter.",arr.keyname.c_str()));
     switch(arr.type){
-      case TypeUchar:    ReindexData(nsel,reindex,arr.count,(byte    *)arr.ptr,NULL);  break;
-      case TypeUshort:   ReindexData(nsel,reindex,arr.count,(word    *)arr.ptr,NULL);  break;
+      case TypeUchar:    ReindexData(nsel,reindex,arr.count,(byte*    )arr.ptr,NULL);  break;
+      case TypeUshort:   ReindexData(nsel,reindex,arr.count,(word*    )arr.ptr,NULL);  break;
       case TypeUint:     ReindexData(nsel,reindex,arr.count,(unsigned*)arr.ptr,NULL);  break;
-      case TypeInt:      ReindexData(nsel,reindex,arr.count,(int     *)arr.ptr,NULL);  break;
-      case TypeFloat:    ReindexData(nsel,reindex,arr.count,(float   *)arr.ptr,NULL);  break;
-      case TypeDouble:   ReindexData(nsel,reindex,arr.count,(double  *)arr.ptr,NULL);  break;
-      case TypeUint3:    ReindexData(nsel,reindex,arr.count,(tuint3  *)arr.ptr,NULL);  break;
-      case TypeInt3:     ReindexData(nsel,reindex,arr.count,(tint3   *)arr.ptr,NULL);  break;
-      case TypeFloat3:   ReindexData(nsel,reindex,arr.count,(tfloat3 *)arr.ptr,NULL);  break;
+      case TypeInt:      ReindexData(nsel,reindex,arr.count,(int*     )arr.ptr,NULL);  break;
+      case TypeFloat:    ReindexData(nsel,reindex,arr.count,(float*   )arr.ptr,NULL);  break;
+      case TypeDouble:   ReindexData(nsel,reindex,arr.count,(double*  )arr.ptr,NULL);  break;
+      case TypeUint3:    ReindexData(nsel,reindex,arr.count,(tuint3*  )arr.ptr,NULL);  break;
+      case TypeInt3:     ReindexData(nsel,reindex,arr.count,(tint3*   )arr.ptr,NULL);  break;
+      case TypeFloat3:   ReindexData(nsel,reindex,arr.count,(tfloat3* )arr.ptr,NULL);  break;
       case TypeDouble3:  ReindexData(nsel,reindex,arr.count,(tdouble3*)arr.ptr,NULL);  break;
       default: Run_Exceptioon(fun::PrintStr("Type of pointer \'%s\' is invalid.",TypeToStr(arr.type)));
     }
@@ -780,7 +790,7 @@ unsigned JDataArrays::FilterApply(unsigned count,const byte *filter){
 //==============================================================================
 /// Sort and cut data.
 //==============================================================================
-unsigned JDataArrays::SortData(unsigned count,const unsigned *reindex){
+unsigned JDataArrays::SortData(unsigned count,const unsigned* reindex){
   const unsigned na=Count();
   //printf("00> count:%u \n",count);
   //-Create auxiliary memory to sort data.
@@ -794,18 +804,18 @@ unsigned JDataArrays::SortData(unsigned count,const unsigned *reindex){
   //printf("01> maxsize4b:%u \n",maxsize4b);
   //-Sort and cut each array data.
   for(unsigned c=0;c<na;c++){
-    StDataArray &arr=Arrays[c];
+    StDataArray& arr=Arrays[c];
     //printf("01b> [%s].%s count:%u \n",arr.keyname.c_str(),TypeToStr(arr.type),arr.count);
     switch(arr.type){
-      case TypeUchar:    ReindexData(count,reindex,arr.count,(byte    *)arr.ptr,(byte    *)aux);  break;
-      case TypeUshort:   ReindexData(count,reindex,arr.count,(word    *)arr.ptr,(word    *)aux);  break;
+      case TypeUchar:    ReindexData(count,reindex,arr.count,(byte*    )arr.ptr,(byte*    )aux);  break;
+      case TypeUshort:   ReindexData(count,reindex,arr.count,(word*    )arr.ptr,(word*    )aux);  break;
       case TypeUint:     ReindexData(count,reindex,arr.count,(unsigned*)arr.ptr,(unsigned*)aux);  break;
-      case TypeInt:      ReindexData(count,reindex,arr.count,(int     *)arr.ptr,(int     *)aux);  break;
-      case TypeFloat:    ReindexData(count,reindex,arr.count,(float   *)arr.ptr,(float   *)aux);  break;
-      case TypeDouble:   ReindexData(count,reindex,arr.count,(double  *)arr.ptr,(double  *)aux);  break;
-      case TypeUint3:    ReindexData(count,reindex,arr.count,(tuint3  *)arr.ptr,(tuint3  *)aux);  break;
-      case TypeInt3:     ReindexData(count,reindex,arr.count,(tint3   *)arr.ptr,(tint3   *)aux);  break;
-      case TypeFloat3:   ReindexData(count,reindex,arr.count,(tfloat3 *)arr.ptr,(tfloat3 *)aux);  break;
+      case TypeInt:      ReindexData(count,reindex,arr.count,(int*     )arr.ptr,(int*     )aux);  break;
+      case TypeFloat:    ReindexData(count,reindex,arr.count,(float*   )arr.ptr,(float*   )aux);  break;
+      case TypeDouble:   ReindexData(count,reindex,arr.count,(double*  )arr.ptr,(double*  )aux);  break;
+      case TypeUint3:    ReindexData(count,reindex,arr.count,(tuint3*  )arr.ptr,(tuint3*  )aux);  break;
+      case TypeInt3:     ReindexData(count,reindex,arr.count,(tint3*   )arr.ptr,(tint3*   )aux);  break;
+      case TypeFloat3:   ReindexData(count,reindex,arr.count,(tfloat3* )arr.ptr,(tfloat3* )aux);  break;
       case TypeDouble3:  ReindexData(count,reindex,arr.count,(tdouble3*)arr.ptr,(tdouble3*)aux);  break;
       default: Run_Exceptioon(fun::PrintStr("Type of pointer \'%s\' is invalid.",TypeToStr(arr.type)));
     }
@@ -819,10 +829,10 @@ unsigned JDataArrays::SortData(unsigned count,const unsigned *reindex){
 //==============================================================================
 /// Filter list of values according its memory position.
 //==============================================================================
-unsigned JDataArrays::FilterList(unsigned n,const unsigned *list){
+unsigned JDataArrays::FilterList(unsigned n,const unsigned* list){
   const unsigned count=GetDataCount(false);
   if(count!=GetDataCount(true))Run_Exceptioon("All arrays must have the same number of values.");
-  byte *filter=NewArrayByte(count,true);
+  byte* filter=NewArrayByte(count,true);
   for(unsigned c=0;c<n;c++)if(list[c]<count)filter[list[c]]=1;
   const unsigned nfinal=FilterApply(count,filter);
   delete[] filter; filter=NULL;
@@ -832,12 +842,67 @@ unsigned JDataArrays::FilterList(unsigned n,const unsigned *list){
 //==============================================================================
 /// Sort and filter list of values according its memory position.
 //==============================================================================
-unsigned JDataArrays::FilterSortList(unsigned n,const unsigned *list){
+unsigned JDataArrays::FilterSortList(unsigned n,const unsigned* list){
   const unsigned count=GetDataCount(false);
   if(count!=GetDataCount(true))Run_Exceptioon("All arrays must have the same number of values.");
   if(n>count)Run_Exceptioon("Size of list is higher than number of values.");
   SortData(n,list);
   return(n);
+}
+
+//==============================================================================
+/// Reallocates arrays according to its count value.
+//==============================================================================
+void JDataArrays::ReallocMemory(){
+  const unsigned na=Count();
+  for(unsigned c=0;c<na;c++){
+    StDataArray& arr=Arrays[c];
+    const unsigned count=arr.count;
+    if(count){
+      void* pnew=NULL;
+      switch(arr.type){
+        case TypeUchar:
+          pnew=NewArrayByte(count);
+          memcpy(pnew,arr.ptr,sizeof(byte)*count);
+        break;
+        case TypeUshort:
+          pnew=NewArrayWord(count);
+          memcpy(pnew,arr.ptr,sizeof(word)*count);
+        break;
+        case TypeUint:
+        case TypeInt:
+          pnew=NewArrayUint(count);
+          memcpy(pnew,arr.ptr,sizeof(unsigned)*count);
+        break;
+        case TypeFloat:
+          pnew=NewArrayFloat(count);
+          memcpy(pnew,arr.ptr,sizeof(float)*count);
+        break;
+        case TypeDouble:
+          pnew=NewArrayDouble(count);
+          memcpy(pnew,arr.ptr,sizeof(double)*count);
+        break;
+        case TypeUint3:
+        case TypeInt3:
+          pnew=NewArrayUint3(count);
+          memcpy(pnew,arr.ptr,sizeof(tuint3)*count);
+        break;
+        case TypeFloat3:
+          pnew=NewArrayFloat3(count);
+          memcpy(pnew,arr.ptr,sizeof(tfloat3)*count);
+        break;
+        case TypeDouble3:
+          pnew=NewArrayDouble3(count);
+          memcpy(pnew,arr.ptr,sizeof(tdouble3)*count);
+        break;
+        default: Run_Exceptioon(fun::PrintStr("Type of pointer \'%s\' is invalid.",TypeToStr(arr.type)));
+      }
+      FreeMemory(arr);
+      arr.delptr=true;
+      arr.ptr=pnew;
+      arr.count=count;
+    }
+  }
 }
 
 

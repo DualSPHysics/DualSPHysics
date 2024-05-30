@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!-- *** DualSPHysics (18-04-2023) *** -->
+<!-- *** class: JOutputParts *** -->
+<!------------------------------------------------------------------------------->
+<!------------------------------------------------------------------------------->
+<!-- *** Example for output particles selection *** -->
+<special>
+	<outputparts preselection="none" comment="Initial selection: all or none">
+		<ignore nparts="10" comment="Ignore filters every nparts output files (default=0)"/>
+		<!-- *** operation="add": Includes selected particles *** --> 
+		<!-- *** operation="del": Excludes selected particles *** --> 
+		<!-- *** operation="confirm": Intersection operation with already included particles *** --> 
+		<!-- *** inverse="true": Inverse selection (default=false) *** --> 
+		<!-- *** <filterpos>: Particle selection according to minimum and/or maximum positions *** --> 
+		<filterpos operation="add" inverse="false">
+			<posmin x="1" y="0" z="0" />
+			<posmax x="2" y="1" z="3" />
+		</filterpos>
+		<filterpos operation="del" inverse="false">
+			<posmin x="2" />
+			<posmax x="4" />
+		</filterpos>
+		<filterpos operation="confirm" inverse="false">
+			<posmax x="1" />
+		</filterpos>
+		<filterpos operation="add" inverse="false">
+			<ftfollow mk="55" comment="Defines mkbound or mk floating to follow."/>
+			<posmin x="0.4" z="-1.1" />
+		</filterpos>
+
+		<!-- *** <filterplane>: Selection according to position in relation to a plane *** --> 
+		<filterplane operation="add" inverse="true" >
+			<point x="0.3" y="0" z="0.2" />
+			<vector x=".2" y="0" z="2" />
+			<distance v="0.1" comment="Maximum orthogonal distance to point (default=maximum)"/>
+		</filterplane>
+		<filterplane operation="add" inverse="false" >
+			<ftfollow mk="55" comment="Defines mkbound or mk floating to follow."/>
+			<point x="0.5" y="0" z="-1" />
+			<vector x="1" y="0" z="1" />
+			<distance v="0.3" comment="Maximum orthogonal distance to point (default=maximum)"/>
+		</filterplane>
+
+		<!-- *** <filtersphere>: Selection according to position in relation to a sphere *** --> 
+		<filtersphere operation="add" inverse="true" >
+			<centre x="0.1" y="0" z="0.45" />
+			<radius v="0.2" />
+		</filtersphere>
+		<filtersphere operation="add" inverse="false" >
+			<ftfollow mkbound="50" comment="Defines mkbound or mk floating to follow."/>
+			<_centre x="0.1" y="0" z="0.45" comment="If not defined use the centre of floating body." />
+			<radius v="0.3" />
+		</filtersphere>
+
+		<!-- *** <filtercylinder>: Selection according to position in relation to a cylinder *** --> 
+		<filtercylinder operation="del" inverse="true" >
+			<point1 x="0.3" y="0" z="0.2" />
+			<point2 x="0.5" y="0" z="2.2" />
+			<radius v="0.1" />
+		</filtercylinder>
+		<filtercylinder operation="add" inverse="false" >
+			<ftfollow mk="55" comment="Defines mkbound or mk floating to follow."/>
+			<point1 x="0.5" y="0" z="-1" />
+			<point2 x="0.7" y="0" z="-0.8" />
+			<radius v="0.3" />
+		</filtercylinder>
+
+		<!-- *** <filtertype>: Selection according to particle type *** --> 
+		<filtertype operation="add" inverse="false">
+			<type v="floating,fluid" comment="Selection by type: bound, fixed, moving, floating and/or fluid" />
+		</filtertype>
+
+		<!-- *** <filtermk>: Selection according to particle mk *** --> 
+		<filtermk operation="add" inverse="false">
+			<mk v="10" comment="Selection by mk value (a value or a range of values of the same type)" />
+		</filtermk>
+		<filtermk operation="add" inverse="false">
+			<mk v="10-15" comment="Selection by mk value (a value or a range of values of the same type)" />
+		</filtermk>
+		<filtermk operation="add" inverse="false">
+			<mkbound v="20-25" comment="Selection by mk value (a value or a range of values of the same type)" />
+		</filtermk>
+		<filtermk operation="add" inverse="false">
+			<mkfluid v="0" comment="Selection by mk value (a value or a range of values of the same type)" />
+		</filtermk>
+
+		<!-- *** <filtergroup>: Group filters for complex filtering combinations (7 levels max.) *** --> 
+		<filtergroup preselection="none" operation="add" inverse="false" comment="Initial selection: all or none">
+			<filtertype operation="add" inverse="false">
+				<type v="fluid" comment="Selection by type: bound, fixed, moving, floating and/or fluid" />
+			</filtertype>
+			<filtergroup preselection="none" operation="del" inverse="false" comment="Initial selection: all or none">
+				<filterpos operation="add" inverse="false">
+					<posmin x="0.1" />
+					<posmax z="0.1" />
+				</filterpos>
+				<filterpos operation="add" inverse="false">
+					<posmin z="0.2" />
+					<posmax x="-0.1" />
+				</filterpos>
+			</filtergroup>
+			<filterpos operation="del" inverse="false">
+				<posmin z="-0.79" />
+				<posmax z="-0.69" />
+			</filterpos>
+		</filtergroup>
+	</outputparts>
+</special>
+<!------------------------------------------------------------------------------------>
+<!------------------------------------------------------------------------------------>
+<!-- *** Attribute "active" in elements <outputparts> and <filterXXX> to enable *** --> 
+<!-- *** (using active="true" or active="1") or disable (using active="false"   *** -->
+<!-- *** or active="0"). It is an optional attribute and true by default.       *** -->
+<outputparts active="true">
+	<filterpos active="true"/>
+	<filterplane active="true"/>
+	<filtersphere active="true"/>
+	<filtercylinder active="true"/>
+	<filtercylinder active="true"/>
+	<filtertype active="true"/>
+	<filtermk active="true"/>
+	<filtergroup active="true"/>
+</outputparts>

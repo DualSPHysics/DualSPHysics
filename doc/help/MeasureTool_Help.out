@@ -31,7 +31,7 @@
  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-MeasureTool v5.0.206 (12-04-2023)
+MeasureTool v5.3.215 (30-07-2023)
 ==================================
 LoadDsphConfig> .../bin/windows/DsphConfig.xml
 Information about parameters of execution:
@@ -79,7 +79,7 @@ Information about parameters of execution:
        (by default: all, + means include, - means do not include)
 
   Set the configuration of interpolation:
-    -pointstemplate Creates example file to be used with -points or -pointspos
+    -templates      Creates example file to be used with -points or -pointspos
     -points <file>  Defines the points where interpolated data will be
                     computed (each value separated by space or a new line)
     -pointsdef:<def>  Definition of points by command line intead of by file.

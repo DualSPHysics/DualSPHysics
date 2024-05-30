@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2023 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -127,7 +127,7 @@ protected:
 
 public:
   JDsOutputPartsOp_Init(unsigned id,bool selall,byte bitres
-    ,const JXml *sxml,const TiXmlElement* ele)
+    ,const JXml* sxml,const TiXmlElement* ele)
     :JDsOutputPartsOp(id,OPA_Init,false,false,bitres,0,UINT_MAX)
     ,SelAll(selall)
   { ReadXmlExtra(sxml,ele); } 
@@ -157,7 +157,7 @@ protected:
 public:
   JDsOutputPartsOp_GroupFin(unsigned id,bool selall
     ,bool inverse,bool cmband,byte bitres,byte bitprev
-    ,const JXml *sxml,const TiXmlElement* ele)
+    ,const JXml* sxml,const TiXmlElement* ele)
     :JDsOutputPartsOp(id,OPA_GroupFin,inverse,cmband,bitres,bitprev,UINT_MAX)
     ,SelAll(selall)
   { ReadXmlExtra(sxml,ele); } 
@@ -190,7 +190,7 @@ protected:
 public:
   JDsOutputPartsOp_Pos(unsigned id,bool inverse,bool cmband
     ,byte bitres,unsigned ftid,unsigned ftmkb,tdouble3 ftcen
-    ,const JXml *sxml,const TiXmlElement* ele)
+    ,const JXml* sxml,const TiXmlElement* ele)
     :JDsOutputPartsOp(id,OPA_Pos,inverse,cmband,bitres,0
       ,ftid,ftmkb,ftcen)
   { ReadXmlExtra(sxml,ele); } 
@@ -225,7 +225,7 @@ protected:
 public:
   JDsOutputPartsOp_Plane(unsigned id,bool inverse,bool cmband
     ,byte bitres,unsigned ftid,unsigned ftmkb,tdouble3 ftcen
-    ,const JXml *sxml,const TiXmlElement* ele)
+    ,const JXml* sxml,const TiXmlElement* ele)
     :JDsOutputPartsOp(id,OPA_Plane,inverse,cmband,bitres,0
       ,ftid,ftmkb,ftcen)
   { ReadXmlExtra(sxml,ele); } 
@@ -258,7 +258,7 @@ protected:
 public:
   JDsOutputPartsOp_Sphere(unsigned id,bool inverse,bool cmband
     ,byte bitres,unsigned ftid,unsigned ftmkb,tdouble3 ftcen
-    ,const JXml *sxml,const TiXmlElement* ele)
+    ,const JXml* sxml,const TiXmlElement* ele)
     :JDsOutputPartsOp(id,OPA_Sphere,inverse,cmband,bitres,0
       ,ftid,ftmkb,ftcen)
   { ReadXmlExtra(sxml,ele); } 
@@ -295,7 +295,7 @@ protected:
 public:
   JDsOutputPartsOp_Cylinder(unsigned id,bool inverse,bool cmband
     ,byte bitres,unsigned ftid,unsigned ftmkb,tdouble3 ftcen
-    ,const JXml *sxml,const TiXmlElement* ele)
+    ,const JXml* sxml,const TiXmlElement* ele)
     :JDsOutputPartsOp(id,OPA_Cylinder,inverse,cmband,bitres,0
       ,ftid,ftmkb,ftcen)
   { ReadXmlExtra(sxml,ele); } 
@@ -325,7 +325,7 @@ protected:
 
 public:
   JDsOutputPartsOp_Type(unsigned id,bool inverse,bool cmband
-    ,byte bitres,const JXml *sxml,const TiXmlElement* ele)
+    ,byte bitres,const JXml* sxml,const TiXmlElement* ele)
     :JDsOutputPartsOp(id,OPA_Type,inverse,cmband,bitres,0,UINT_MAX)
   { ReadXmlExtra(sxml,ele); } 
   void Reset();
@@ -356,7 +356,7 @@ protected:
 
 public:
   JDsOutputPartsOp_Mk(unsigned id,bool inverse,bool cmband
-    ,byte bitres,const JXml *sxml,const TiXmlElement* ele
+    ,byte bitres,const JXml* sxml,const TiXmlElement* ele
     ,const JSphMk* mkinfo)
     :JDsOutputPartsOp(id,OPA_Mk,inverse,cmband,bitres,0,UINT_MAX),MkInfo(mkinfo)
   { ReadXmlExtra(sxml,ele); } 

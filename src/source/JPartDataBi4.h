@@ -1,6 +1,6 @@
 //HEAD_DSCODES
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2023 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -53,6 +53,7 @@
 //:# - Option NoRtimes to removes execution dependent values from bi4 files. (28-02-2022)
 //:# - Option NoRtimes is enabled by default. (08-05-2022)
 //:# - Updated for JBinaryData with 64-bit size. (20-06-2023)
+//:# - Nuevo metodo GetFileLoaded(). (09-02-2024)
 //:#############################################################################
 
 /// \file JPartDataBi4.h \brief Declares the class \ref JPartDataBi4.
@@ -90,10 +91,11 @@ class JPartDataBi4 : protected JObject
   unsigned FormatVer;    ///<Version de formato. Version of format.
   bool NoRtimes;         ///<Removes execution times and other execution-only dependent values.
 
-  std::string Dir;   ///<Directorio de datos. Data Directory.
-  unsigned Piece;    ///<Numero de parte. Part number.
-  unsigned Npiece;   ///<Numero total de partes. Number of total parts.
-  unsigned Cpart;    ///<Numero de PART. PART number.
+  std::string Dir;        ///<Directorio de datos. Data Directory.
+  unsigned Piece;         ///<Numero de parte. Part number.
+  unsigned Npiece;        ///<Numero total de partes. Number of total parts.
+  unsigned Cpart;         ///<Numero de PART. PART number.
+  std::string FileLoaded; ///<Path and filename of loaded file.
 
   static std::string GetNamePart(unsigned cpart);
   void AddPartData(unsigned npok,const unsigned* idp,const ullong* idpd
@@ -182,6 +184,7 @@ class JPartDataBi4 : protected JObject
   unsigned GetPiecesFilePart(std::string dir,unsigned cpart)const;
   void LoadFileCase(std::string dir,std::string casename,unsigned piece=0,unsigned npiece=1);
   void LoadFilePart(std::string dir,unsigned cpart,unsigned piece=0,unsigned npiece=1);
+  std::string GetFileLoaded()const{ return(FileLoaded); }
 
   //Obtencion de datos basicos:
   //Obtaining basic data:

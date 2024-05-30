@@ -45,7 +45,7 @@ typedef struct {
 ///Structure with constants for the Wendland kernel.
 typedef struct {
   float awen;  ///<Constant to compute wab.
-  float bwen;  ///<Constant to compute fac (kernel derivative).
+  float bwenh; ///<Constant to compute fac (kernel derivative).
 }StKWendlandCte;
 
 }

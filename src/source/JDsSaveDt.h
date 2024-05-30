@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2023 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -25,7 +25,7 @@
 //:# - Error corregido cuando TimeFinish=0. (22-01-2018)
 //:# - Error corregido al generar excepcion por error en fichero. (22-01-2018)
 //:# - Se escriben las unidades en las cabeceras de los ficheros CSV. (26-04-2018)
-//:# - Improved exception managment. (19-03-2020)  
+//:# - Improved exception management. (19-03-2020)  
 //:# - Objeto JXml pasado como const para operaciones de lectura. (19-03-2020)  
 //:# - Comprueba opcion active en elementos de primer y segundo nivel. (19-03-2020)  
 //:# - Cambio de nombre de J.SaveDt a J.DsSaveDt. (28-06-2020)
@@ -99,8 +99,8 @@ private:
   StValue LastDtf,LastDt1,LastDt2;
   StValue LastAceMax,LastViscDtMax,LastVelMax;
 
-  void ReadXml(const JXml *sxml,TiXmlElement* ele);
-  void LoadXml(const JXml *sxml,const std::string &place);
+  void ReadXml(const JXml* sxml,TiXmlElement* ele);
+  void LoadXml(const JXml* sxml,const std::string &place);
   void SaveFileValues();
   void SaveFileValuesEnd();
   void SaveFileAllDts();
@@ -111,9 +111,10 @@ public:
   JDsSaveDt();
   ~JDsSaveDt();
   void Reset();
-  void Config(const JXml *sxml,const std::string &place,double timemax,double timeout);
+  void Config(const JXml* sxml,const std::string &place,double timemax,double timeout);
   void VisuConfig(std::string txhead,std::string txfoot);
-  void AddValues(double timestep,double dtfinal,double dt1,double dt2,double acemax,double viscdtmax,double velmax);
+  void AddValues(double timestep,double dtfinal,double dt1,double dt2,double acemax
+    ,double viscdtmax,double velmax);
   bool GetFullInfo()const{ return(FullInfo); }
   void SaveData();
 };

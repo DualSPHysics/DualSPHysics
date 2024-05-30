@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<!-- *** DualSPHysics v5.2.261 (04-03-2023) *** -->
+<!-- *** DualSPHysics v5.4.323 (12-03-2024) *** -->
 <!-- *** class: JSphInOut *** -->
 <!------------------------------------------------------------------------------->
 <!------------------------------------------------------------------------------->
@@ -211,6 +211,18 @@
 		</inoutzone>
 		<inoutzone>
 			<zone3d comment="Input zone for 3-D simulations">
+				<box>
+					<point x="1.2" y="2.8" z="0.5" />
+					<size x="0.4" y="0" z="0.4" />
+					<direction x="0" y="-1" z="0" />
+					<rotateadv angle1="45" angle2="30" angle3="-10" axes="ZYZ" intrinsic="true" anglesunits="degrees">
+						<center x="0.1" y="0.2" z="0" comment="It is optional (default=0,0,0)" />
+					</rotateadv>
+				</box>
+			</zone3d>
+		</inoutzone>
+		<inoutzone>
+			<zone3d comment="Input zone for 3-D simulations">
 				<circle>
 					<point x="2.2" y="2.8" z="0.7" />
 					<radius v="0.2" />
@@ -234,6 +246,10 @@
 <!-- Fixed Parabolic velocity -->
 	<imposevelocity mode="0" comment="Imposed velocity 0:fixed value, 1:variable value, 2:Extrapolated velocity, 3:Interpolated velocity (default=0)">
 		<velocity3 v="0" v2="0.608" v3="3" z="4" z2="4.5" z3="5" comment="Parabolic inlet velocity" units_comment="m/s" />
+	</imposevelocity>
+<!-- Fixed velocity for jet circle (only for <zone3d><circle>) -->
+	<imposevelocity mode="0" comment="Imposed velocity 0:fixed value, 1:variable value, 2:Extrapolated velocity, 3:Interpolated velocity (default=0)">
+        <jetcircle v="2" distance="0.010" radius="0.02" comment="Velocity for circular jet (velocity, distance and opening radius)" units_comment="m/s" />
 	</imposevelocity>
 <!-- Variable Uniform velocity using values in XML file-->
 	<imposevelocity mode="1" comment="Imposed velocity 0:fixed value, 1:variable value, 2:Extrapolated velocity, 3:Interpolated velocity (default=0)">
@@ -283,11 +299,11 @@
 		<_gridposzero x="0" z="0" comment="Defines position of grid (default=0)" />
 	</imposevelocity>
 <!------------------------------------------------------------------------------->
-<!-- Flow velocity [l/s] definition instead of velocity [m/s] -->
-<!-- Flow velocity [l/s] is suported by uniform fixed or uniform veriable velocity when zsurf is fixed. -->
+<!-- Flow velocity [l/s, gal/s or gal/min] definition instead of velocity [m/s] -->
+<!-- Flow velocity [l/s, gal/s or gal/min] is suported by uniform fixed or uniform variable velocity when zsurf is fixed or undefined. -->
 	<imposevelocity mode="0" comment="Imposed velocity 0:fixed value, 1:variable value, 2:Extrapolated velocity, 3:Interpolated velocity (default=0)">
-	    <flowvelocity active="true" ratio="1.0" comment="Velocity values are read as flow [l/s] and ratio is used to compute particle volume (ratio*dp^3)." />
-		<velocity v="2" comment="Uniform velocity" units_comment="m/s" />
+		<flowvelocity active="true" units="l/s" ratio="1.0" comment="Velocity values are read as flow (units=l/s, gal/s or gal/min) and ratio is used to compute particle volume (ratio*dp^3)." />
+		<velocity v="2" comment="Uniform velocity" units_comment="l/s" />
 	</imposevelocity>
 <!------------------------------------------------------------------------------->
 <!------------------------------------------------------------------------------->
@@ -329,6 +345,7 @@
 	<imposezsurf mode="2" comment="Inlet Z-surface 0:Imposed fixed value, 1:Imposed variable value, 2:Calculated from fluid domain (default=0)">
 		<savevtk value="true" comment="Creates VTK files with Zsurf for each PART (default=false)" />
 		<remove value="false" comment="Removes particles above the Zsurf limit (default=false)" />
+		<zsurf0 value="1.0" comment="Initial Z-surface value" units_comment="m" />
 		<zsurfmin value="0.8" comment="Minimum Z-surface to reduce the calculation area (default=minimun Z inlet)" units_comment="m" />
 		<zsurffit valuedp="0.5" comment="Reduction of calculated zsurf with explicit value (value) or according to dp (valuedp) (default vdp=0.5)" units_comment="m" />
 	</imposezsurf>

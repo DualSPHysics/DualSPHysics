@@ -1,6 +1,6 @@
 ﻿//HEAD_DSCODES
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2023 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -63,23 +63,23 @@ private:
   double Data2dPosY;     ///<Y value in 2D simulations.
   double Dp;
   double H;
-  double Dist;           ///<Distance used for calculating normal data (tipically KernelSize).
+  double Dist;           ///<Distance used for calculating normal data (typically KernelSize).
 
   std::string PartNormalsName; ///<Name of normals approach used for PartNormals (Mean or Marrone).
-  unsigned Nbound;       ///<Number boudary particles.
-  tdouble3 *PartNormals; ///<Final normals of particles [Nbound]
+  unsigned Nbound;       ///<Number boundary particles.
+  tdouble3* PartNormals; ///<Final normals of particles [Nbound]
 
   unsigned CountNormals; ///<Total number of normals.
-  unsigned *NormalBegin; ///<Normals for each particle [Nbound+1]
-  tdouble3 *Normals;     ///<Unitary normal to shape [CountNormals]
-  double   *NormalsDist;  ///<Distance to shape [CountNormals]
-  tdouble3 *OutVecs;     ///<Unitary vector to limit of shape [CountNormals]
-  double   *OutVecsDist;  ///<Distance to limit of shape [CountNormals]
+  unsigned* NormalBegin; ///<Normals for each particle [Nbound+1]
+  tdouble3* Normals;     ///<Unitary normal to shape [CountNormals]
+  double*   NormalsDist;  ///<Distance to shape [CountNormals]
+  tdouble3* OutVecs;     ///<Unitary vector to limit of shape [CountNormals]
+  double*   OutVecsDist;  ///<Distance to limit of shape [CountNormals]
 
   void AllocNormals(unsigned nbound,unsigned countnor,bool usepartnormals);
-  bool ArrayExists(JBinaryData *bd,std::string name)const;
-  JBinaryDataArray* GetArray(JBinaryData *bd,std::string name)const;
-  JBinaryDataArray* GetArray(JBinaryData *bd,std::string name,JBinaryDataDef::TpData type)const;
+  bool ArrayExists(JBinaryData* bd,std::string name)const;
+  JBinaryDataArray* GetArray(JBinaryData* bd,std::string name)const;
+  JBinaryDataArray* GetArray(JBinaryData* bd,std::string name,JBinaryDataDef::TpData type)const;
 
 public:
   JPartNormalData();
@@ -88,12 +88,12 @@ public:
   void ConfigBasic(std::string appname,std::string casename
     ,bool data2d,double data2dposy,double dp,double h,double dist);
   void AddNormalData(
-    std::string partnorname,unsigned nbound,const tdouble3 *partnor
-    ,const unsigned *norbegin,unsigned countnor
-    ,const tdouble3 *nordata,const double *nordist
-    ,const tdouble3 *outdata,const double *outdist);
-  void AddNormalData(
-    std::string partnorname,unsigned nbound,const tdouble3 *partnor);
+    std::string partnorname,unsigned nbound,const tdouble3* partnor
+    ,const unsigned* norbegin,unsigned countnor
+    ,const tdouble3* nordata,const double* nordist
+    ,const tdouble3* outdata,const double* outdist);
+  void AddNormalData(std::string partnorname,unsigned nbound
+    ,const tdouble3* partnor);
 
   static std::string GetFileName(bool ndata,std::string casename,std::string dir="");
   static std::string GetNormalDataFile(bool ndata,std::string casename);

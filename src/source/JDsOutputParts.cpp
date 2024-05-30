@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2023 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -655,7 +655,7 @@ void JDsOutputPartsOp_Type::ReadXmlExtra(const JXml* sxml,const TiXmlElement* el
   unsigned n=fun::VectorSplitStr(",",txtypes,vtypes);
   for(unsigned c=0;c<n;c++){
     const string tx=fun::StrTrim(vtypes[c]);
-    printf("--->[%s]\n",tx.c_str());
+    //printf("--->[%s]\n",tx.c_str());
     if(tx=="fixed")Types=(Types|1);
     else if(tx=="moving")Types=(Types|2);
     else if(tx=="floating")Types=(Types|4);

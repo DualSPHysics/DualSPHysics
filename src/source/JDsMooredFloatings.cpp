@@ -1,6 +1,6 @@
 //HEAD_DSTOOLS
 /* 
- <DualSPHysics codes>  Copyright (c) 2020 by Dr Jose M. Dominguez
+ <DualSPHysics codes>  Copyright (c) 2023 by Dr Jose M. Dominguez
  All rights reserved.
 
  DualSPHysics is an international collaboration between:
@@ -85,7 +85,9 @@ void JDsMooredFloating::ConfigIds(unsigned ftidx,unsigned ftid){
 //==============================================================================
 /// Adds new link point.
 //==============================================================================
-void JDsMooredFloating::AddFairlead(unsigned fairnum,const tdouble3 &linkpos,word ptid){
+void JDsMooredFloating::AddFairlead(unsigned fairnum,const tdouble3& linkpos
+  ,word ptid)
+{
   Fairleads.push_back(StrLinkData(FtId,fairnum,linkpos,ptid));
 }
 
@@ -169,7 +171,7 @@ unsigned JDsMooredFloatings::GetFloatingByMkbound(word mkbound)const{
 //==============================================================================
 /// Reads list of mooredfloatings in the XML node.
 //==============================================================================
-void JDsMooredFloatings::ReadXml(const JXml *sxml,TiXmlElement* lis){
+void JDsMooredFloatings::ReadXml(const JXml* sxml,TiXmlElement* lis){
   sxml->CheckElementNames(lis,true,"moordyn start savevtk_lines savevtk_moorings savecsv_points savevtk_points mooredfloatings");
   //-Loads configuration file for MoorDyn solver.
   if(sxml->CheckElementActive(lis,"moordyn")){
@@ -199,7 +201,7 @@ void JDsMooredFloatings::ReadXml(const JXml *sxml,TiXmlElement* lis){
       if(sxml->CheckElementActive(ele)){
         const word floatingmkbound=sxml->GetAttributeWord(ele,"mkbound");
         if(GetFloatingByMkbound(floatingmkbound)!=UINT_MAX)Run_Exceptioon(fun::PrintStr("Floating mkbound=%d is already configured.",floatingmkbound));
-        JDsMooredFloating *mo=new JDsMooredFloating(floatingmkbound);
+        JDsMooredFloating* mo=new JDsMooredFloating(floatingmkbound);
         Floatings.push_back(mo);
       }
       ele=ele->NextSiblingElement("floating");
@@ -215,7 +217,7 @@ void JDsMooredFloatings::ReadXml(const JXml *sxml,TiXmlElement* lis){
 //==============================================================================
 /// Loads initial conditions of XML object.
 //==============================================================================
-void JDsMooredFloatings::LoadXml(const JXml *sxml,const std::string &place){
+void JDsMooredFloatings::LoadXml(const JXml* sxml,const std::string& place){
   Reset();
   TiXmlNode* node=sxml->GetNodeSimple(place);
   if(!node)Run_Exceptioon(string("Cannot find the element \'")+place+"\'.");
@@ -225,7 +227,9 @@ void JDsMooredFloatings::LoadXml(const JXml *sxml,const std::string &place){
 //==============================================================================
 /// Asocia moorings con floatings y los reordena.
 //==============================================================================
-void JDsMooredFloatings::ConfigFloatings(unsigned ftcount,const StFloatingData *ftdata){
+void JDsMooredFloatings::ConfigFloatings(unsigned ftcount
+  ,const StFloatingData* ftdata)
+{
   //-Ordena floatings amarrados segun MkBound de floating.
   const unsigned nftm=Count();
   for(unsigned c=0;c<nftm-1;c++)for(unsigned c2=c+1;c2<nftm;c2++)if(Floatings[c]->FloatingMkBound>Floatings[c2]->FloatingMkBound){
@@ -244,8 +248,8 @@ void JDsMooredFloatings::ConfigFloatings(unsigned ftcount,const StFloatingData *
 //==============================================================================
 /// Configures object.
 //==============================================================================
-void JDsMooredFloatings::Config(unsigned ftcount,const StFloatingData *ftdata
-  ,JDsFtForcePoints *forcepoints)
+void JDsMooredFloatings::Config(unsigned ftcount,const StFloatingData* ftdata
+  ,JDsFtForcePoints* forcepoints)
 {
   //-Asocia moorings con floatings y los reordena.
   ConfigFloatings(ftcount,ftdata);
@@ -256,10 +260,10 @@ void JDsMooredFloatings::Config(unsigned ftcount,const StFloatingData *ftdata
   
   //-Initilizes MoorDyn moorings.
   {
-    //-Prepares data to initilize moorings.
-    unsigned *ftmkb=new unsigned[nftm];
-    tdouble3 *ftvellin=new tdouble3[nftm];
-    tdouble3 *ftvelang=new tdouble3[nftm];
+    //-Prepares data to initialize moorings.
+    unsigned* ftmkb=new unsigned[nftm];
+    tdouble3* ftvellin=new tdouble3[nftm];
+    tdouble3* ftvelang=new tdouble3[nftm];
     for(unsigned cfm=0;cfm<nftm;cfm++){
       const unsigned ftid=Floatings[cfm]->GetFtId();
       ftmkb   [cfm]=Floatings[cfm]->FloatingMkBound;
@@ -318,7 +322,7 @@ void JDsMooredFloatings::VisuConfig(std::string txhead,std::string txfoot)const{
 void JDsMooredFloatings::SaveVtkMoorings(unsigned numfile,bool svlines)const{
   JVtkLib sh;
   unsigned vpossize=0;
-  tfloat3 *vpos=NULL;
+  tfloat3* vpos=NULL;
   const unsigned nlines=MoorDyn_LinesCount();
   for(unsigned cl=0;cl<nlines;cl++){
     const unsigned nodes=MoorDyn_SegsCount(cl)+1;
@@ -410,7 +414,9 @@ void JDsMooredFloatings::FreeFairMemory(){
 //==============================================================================
 /// Calcula acelaracion y momento angular para aplicar al floating.
 //==============================================================================
-void JDsMooredFloatings::ComputeForces(unsigned nstep,double timestep,double dt,JDsFtForcePoints *forcepoints){
+void JDsMooredFloatings::ComputeForces(unsigned nstep,double timestep,double dt
+  ,JDsFtForcePoints* forcepoints)
+{
   //Log->Printf("Moorings> timestep:%f",timestep);
   //-Allocates memory for fairlead link data.
   if(!FairArrays)AllocFairMemory();

@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2023 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -33,6 +33,7 @@ class JSphCfgRun : public JCfgRunBase
 {
 protected:
   int DirsDef;
+  std::string FeatureList; ///<List of available features in current compilation.
 
 public:
   bool Cpu;
@@ -45,34 +46,40 @@ public:
 
   int OmpThreads;
 
-  bool CellDomFixed;    ///<The Cell domain is fixed according maximum domain size.
   TpCellMode CellMode;  ///<Cell division mode.
+  bool CellDomFixed;    ///<The Cell domain is fixed according maximum domain size (default=false).
   int TBoundary;        ///<Boundary method: 0:None, 1:DBC (by default), 2:mDBC (SlipMode: 1:DBC vel=0)
   int SlipMode;         ///<Slip mode for mDBC: 0:None, 1:DBC vel=0, 2:No-slip, 3:Free slip (default=1).
-  int MdbcFastSingle;   ///<Matrix calculations are done in single precision (default=1). 
   float MdbcThreshold;  ///<Kernel support limit to apply mDBC correction (default=0).
   std::vector<std::string> InitParms;
 
   TpStep TStep;
   int VerletSteps;
   TpKernel TKernel;
-  TpVisco TVisco;
-  float Visco;
-  float ViscoBoundFactor;
-  double TimeMax,TimePart;
-  double CFLnumber;  ///<Coefficient to multiply dt.
-  int TDensity;      ///<Density Diffusion Term 0:None, 1:Molteni, 2:Fourtakas, 3:Fourtakas(full) (default=0)
-  float DDTValue;    ///<Value used with Density Diffusion Term (default=0.1)
-  double DDTValueTRamp;  ///<Total time of initial ramp for DDT value (default=0)  //<vs_ddramp>
-  double DDTValueTMax;   ///<Time of maximum DDT value (default=0)                 //<vs_ddramp>
-  double DDTValueMax;    ///<Maximum DDT value for initial ramp (default=0)        //<vs_ddramp>
+  TpVisco TVisco;         ///<Viscosity type: Artificial,Laminar...
+  float Visco;            ///<Viscosity value.
+  float ViscoBoundFactor; ///<For boundary interaction use Visco*ViscoBoundFactor.
+
+  double TimeMax;         ///<Total time to simulate [s].
+  double TimePart;        ///<Time of output data [s].
+  double TimePartExtra;   ///<Time for extra output data on motion and floating information (-1:Disabled) [s].
+
+  double CFLnumber;       ///<Coefficient to multiply dt.
+  int TDensity;           ///<Density Diffusion Term 0:None, 1:Molteni, 2:Fourtakas, 3:Fourtakas(full) (default=0)
+  float DDTValue;         ///<Value used with Density Diffusion Term (default=0.1)
+  double DDTValueTRamp;   ///<Total time of initial ramp for DDT value (default=0)  //<vs_ddramp>
+  double DDTValueTMax;    ///<Time of maximum DDT value (default=0)                 //<vs_ddramp>
+  double DDTValueMax;     ///<Maximum DDT value for initial ramp (default=0)        //<vs_ddramp>
   int Shifting;   ///<Shifting mode -1:no defined, 0:none, 1:nobound, 2:nofixed, 3:full
   bool Sv_Binx,Sv_Info,Sv_Csv,Sv_Vtk;
   bool SvNormals; ///<Saves normals VTK each PART (default=0).
   bool SvRes;
   bool SvTimers;
   bool SvDomainVtk;
-  std::string CaseName,RunName,DirOut,DirDataOut;
+  std::string CaseName;
+  std::string RunName;
+  std::string DirOut;
+  std::string DirDataOut;
   std::string PartBeginDir;
   unsigned PartBegin,PartBeginFirst;
   bool RestartChrono;             ///<Allows restart with Chrono active (default=0).
@@ -93,9 +100,10 @@ public:
 public:
   JSphCfgRun();
   void Reset();
+  void SetFeatureList(std::string list){ FeatureList=list; }
   void VisuInfo()const;
   void VisuConfig()const;
-  void LoadOpts(std::string *optlis,int optn,int lv,const std::string &file);
+  void LoadOpts(std::string* optlis,int optn,int lv,const std::string& file);
   void ValidaCfg(){}
 };
 

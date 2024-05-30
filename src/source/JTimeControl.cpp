@@ -1,6 +1,6 @@
 //HEAD_DSCODES
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2023 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -38,7 +38,7 @@ JTimeControl::JTimeControl(double tout){
 
 //==============================================================================
 /// Constructor for periodic evaluation using an initial time.
-/// Constructor para evaluacion periodica con un instane inicial.
+/// Constructor para evaluacion periodica con un instante inicial.
 //==============================================================================
 JTimeControl::JTimeControl(double tfirst,double tout){
   ClassName="JTimeControl";
@@ -48,7 +48,7 @@ JTimeControl::JTimeControl(double tfirst,double tout){
 //==============================================================================
 /// Constructor.
 //==============================================================================
-JTimeControl::JTimeControl(unsigned ntimes,const double *vtimes){
+JTimeControl::JTimeControl(unsigned ntimes,const double* vtimes){
   ClassName="JTimeControl";
   ConfigTimes(ntimes,vtimes);
 }
@@ -56,7 +56,7 @@ JTimeControl::JTimeControl(unsigned ntimes,const double *vtimes){
 //==============================================================================
 /// Constructor.
 //==============================================================================
-JTimeControl::JTimeControl(const std::string &times){
+JTimeControl::JTimeControl(const std::string& times){
   ClassName="JTimeControl";
   ConfigTimes(times);
 }
@@ -103,7 +103,7 @@ void JTimeControl::ConfigPeriodic(double tfirst,double tout){
 /// Configures list of times.
 /// Configura lista de tiempos.
 //==============================================================================
-void JTimeControl::ConfigTimes(unsigned ntimes,const double *vtimes){
+void JTimeControl::ConfigTimes(unsigned ntimes,const double* vtimes){
   Reset();
   for(unsigned c=0;c<ntimes;c++)Times.push_back(vtimes[c]);
   PrepareTimes();

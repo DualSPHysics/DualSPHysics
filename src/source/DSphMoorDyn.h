@@ -110,13 +110,13 @@ unsigned MoorDyn_GetMooringReference(const unsigned ftid);
 //==============================================================================
 /// Sends to MoorDyn+ the object to manage Logs from DualSPHysics
 //==============================================================================
-void MoorDyn_LogInit(JLog2 *log);
+void MoorDyn_LogInit(JLog2* log);
 
 //==============================================================================
 /// Sends to MoorDyn the object to manage user-defined variables from DualSPHysics
 //==============================================================================
 #ifndef DISABLE_NUMEXLIB
-void MoorDyn_NuxLibInit(JNumx *nuxlib);
+void MoorDyn_NuxLibInit(JNumx* nuxlib);
 #endif // !DISABLE_NUMEXLIB
 
 #endif

@@ -14,8 +14,8 @@ rem "executables" are renamed and called from their directory
 
 set dirbin=../../../bin/windows
 set gencase="%dirbin%/GenCase_win64.exe"
-set dualsphysicscpu="%dirbin%/DualSPHysics5.2CPU_win64.exe"
-set dualsphysicsgpu="%dirbin%/DualSPHysics5.2_win64.exe"
+set dualsphysicscpu="%dirbin%/DualSPHysics5.3CPU_win64.exe"
+set dualsphysicsgpu="%dirbin%/DualSPHysics5.3_win64.exe"
 set boundaryvtk="%dirbin%/BoundaryVTK_win64.exe"
 set partvtk="%dirbin%/PartVTK_win64.exe"
 set partvtkout="%dirbin%/PartVTKOut_win64.exe"
@@ -59,8 +59,8 @@ set dirout2=%dirout%\particles
 if not "%ERRORLEVEL%" == "0" goto fail
 
 rem Executes PartVTKOut to create VTK files with excluded particles.
-REM %partvtkout% -dirin %diroutdata% -savevtk %dirout2%/PartFluidOut -SaveResume %dirout2%/_ResumeFluidOut
-REM if not "%ERRORLEVEL%" == "0" goto fail
+%partvtkout% -dirin %diroutdata% -savevtk %dirout2%/PartFluidOut -SaveResume %dirout2%/_ResumeFluidOut
+if not "%ERRORLEVEL%" == "0" goto fail
 
 rem Executes MeasureTool to create VTK files with velocity and a CSV file with velocity at each simulation time.
 set dirout2=%dirout%\measuretool
@@ -76,9 +76,9 @@ rem Executes MeasureTool to create VTK files with correct pressure and a CSV fil
 if not "%ERRORLEVEL%" == "0" goto fail
 
 rem Executes ComputeForces to create a CSV file with force at each simulation time.
-REM set dirout2=%dirout%\forces
-REM %computeforces% -dirin %diroutdata% -onlymk:20 -viscoart:0.1 -savecsv %dirout2%/_ForceBuilding
-REM if not "%ERRORLEVEL%" == "0" goto fail
+set dirout2=%dirout%\forces
+%computeforces% -dirin %diroutdata% -onlymk:20 -viscoart:0.1 -savecsv %dirout2%/_ForceBuilding
+if not "%ERRORLEVEL%" == "0" goto fail
 
 rem Executes IsoSurface to create VTK files with surface fluid and slices of surface.
 set dirout2=%dirout%\surface
@@ -89,9 +89,9 @@ set planesd="-slice3pt:0:0:0:1:0.7:0:1:0.7:1"
 if not "%ERRORLEVEL%" == "0" goto fail
 
 rem Executes FlowTool to create VTK files with particles assigned to different zones and a CSV file with information of each zone.
-REM set dirout2=%dirout%\flow
-REM %flowtool% -dirin %diroutdata% -fileboxes CaseDambreak_FileBoxes.txt -savecsv %dirout2%/_ResultFlow.csv -savevtk %dirout2%/Boxes.vtk
-REM if not "%ERRORLEVEL%" == "0" goto fail
+set dirout2=%dirout%\flow
+%flowtool% -dirin %diroutdata% -fileboxes CaseDambreak_FileBoxes.txt -savecsv %dirout2%/_ResultFlow.csv -savevtk %dirout2%/Boxes.vtk
+if not "%ERRORLEVEL%" == "0" goto fail
 
 
 :success
