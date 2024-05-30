@@ -63,7 +63,7 @@ void JOutputCsv::Reset(){
 void JOutputCsv::SaveCsv(std::string fname,const JDataArrays& arrays
   ,std::string head)
 {
-  if(fun::GetExtension(fname).empty())FileName=fname=fun::AddExtension(fname,".csv");
+  if(fun::GetExtension(fname).empty())FileName=fname=fun::AddExtension(fname,"csv");
   const char csvsep=(CsvSepComa? ',': ';');
   const unsigned nf=arrays.Count();
   const unsigned nv=arrays.GetDataCount(true);
@@ -177,7 +177,7 @@ template<typename T> void JOutputCsv::CalculateStatsArray3(unsigned ndata,T* dat
 //void JOutputCsv::SaveStatsCsv(std::string fname,bool create,int part
 //  ,double timestep,const JDataArrays& arrays,std::string head)
 //{
-//  if(fun::GetExtension(fname).empty())FileName=fname=fun::AddExtension(fname,".csv");
+//  if(fun::GetExtension(fname).empty())FileName=fname=fun::AddExtension(fname,"csv");
 //  const char csvsep=(CsvSepComa? ',': ';');
 //  const unsigned nf=arrays.GetCount();
 //  const unsigned nv=arrays.GetDataCount();

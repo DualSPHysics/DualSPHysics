@@ -51,6 +51,7 @@ void JDsphConfig::Reset(){
   FileCfg="";
   CreateDirs=-1;
   CsvSeparator=-1;
+  CsvSepThousands=-1;
 }
 
 //==============================================================================
@@ -69,6 +70,7 @@ void JDsphConfig::Init(std::string path){
     //-Reads configuration values in XML file.
     CreateDirs=sxml.ReadElementInt(node,"createdirs","v",true,-1);
     CsvSeparator=sxml.ReadElementInt(node,"csvseparator","v",true,-1);
+    CsvSepThousands=sxml.ReadElementInt(node,"csvsepthousands","v",true,-1);
     //printf("JDsphConfig::CreateDirs: %d\n",CreateDirs);
     //printf("JDsphConfig::csvseparator: %d\n",CsvSeparator);
     //-Stores name of configuration file.

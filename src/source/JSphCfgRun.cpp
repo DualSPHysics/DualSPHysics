@@ -305,7 +305,7 @@ void JSphCfgRun::LoadOpts(string* optlis,int optn,int lv,const std::string& file
         Gpu=true;
         if(txoptfull!="")GpuId=atoi(txoptfull.c_str()); 
       }
-      else if(txword=="STABLE")Stable=(txoptfull!=""? atoi(txoptfull.c_str()): 1)!=0;
+      else if(txword=="STABLE")Stable=OptIsEnabled(txoptfull);
       else if(txword=="SAVEPOSDOUBLE"){
         const int v=(txoptfull!=""? atoi(txoptfull.c_str()): 1);
         SvPosDouble=(!v? 0: 1);
@@ -327,7 +327,7 @@ void JSphCfgRun::LoadOpts(string* optlis,int optn,int lv,const std::string& file
         else ok=false;
         if(!ok)ErrorParm(opt,c,lv,file);
       }
-      else if(txword=="CELLFIXED")CellDomFixed=(txoptfull!=""? atoi(txoptfull.c_str()): 1)!=0;
+      else if(txword=="CELLFIXED")CellDomFixed=OptIsEnabled(txoptfull);
       else if(txword=="DBC")          { TBoundary=1; SlipMode=0; }
       else if(txword=="MDBC")         { TBoundary=2; SlipMode=1; }
       else if(txword=="MDBC_NOSLIP")  { TBoundary=2; SlipMode=2; }
@@ -390,10 +390,10 @@ void JSphCfgRun::LoadOpts(string* optlis,int optn,int lv,const std::string& file
         else if(tx=="FULL")Shifting=3;
         else ErrorParm(opt,c,lv,file);
       }
-      else if(txword=="SVNORMALS")SvNormals=(txoptfull!=""? atoi(txoptfull.c_str()): 1)!=0;
-      else if(txword=="SVRES")SvRes=(txoptfull!=""? atoi(txoptfull.c_str()): 1)!=0;
-      else if(txword=="SVTIMERS")SvTimers=(txoptfull!=""? atoi(txoptfull.c_str()): 1)!=0;
-      else if(txword=="SVDOMAINVTK")SvDomainVtk=(txoptfull!=""? atoi(txoptfull.c_str()): 1)!=0;
+      else if(txword=="SVNORMALS")SvNormals=OptIsEnabled(txoptfull);
+      else if(txword=="SVRES")SvRes=OptIsEnabled(txoptfull);
+      else if(txword=="SVTIMERS")SvTimers=OptIsEnabled(txoptfull);
+      else if(txword=="SVDOMAINVTK")SvDomainVtk=OptIsEnabled(txoptfull);
       else if(txword=="SV"){
         string txop=fun::StrUpper(txoptfull);
         while(!txop.empty()){
@@ -406,8 +406,8 @@ void JSphCfgRun::LoadOpts(string* optlis,int optn,int lv,const std::string& file
           else ErrorParm(opt,c,lv,file);
         }
       }
-      else if(txword=="CREATEDIRS")CreateDirs=(txoptfull!=""? atoi(txoptfull.c_str()): 1)!=0;
-      else if(txword=="CSVSEP")CsvSepComa=(txoptfull!=""? atoi(txoptfull.c_str()): 1)!=0;
+      else if(txword=="CREATEDIRS")CreateDirs=OptIsEnabled(txoptfull);
+      else if(txword=="CSVSEP")CsvSepComa=OptIsEnabled(txoptfull);
       else if(txword=="NAME" && c+1<optn){ CaseName=optlis[c+1]; c++; }
       else if(txword=="RUNNAME" && c+1<optn){ RunName=optlis[c+1]; c++; }
       else if(txword=="DIROUT" && c+1<optn){ DirOut=optlis[c+1]; c++; }
@@ -425,7 +425,7 @@ void JSphCfgRun::LoadOpts(string* optlis,int optn,int lv,const std::string& file
         }
         PartBeginDir=optlis[c+1]; c++; 
       }
-      else if(txword=="RESTARTCHRONO")RestartChrono=(txoptfull!=""? atoi(txoptfull.c_str()): 1)!=0;
+      else if(txword=="RESTARTCHRONO")RestartChrono=OptIsEnabled(txoptfull);
       else if(txword=="RHOPOUT"){ 
         RhopOutMin=float(atof(txopt1.c_str())); 
         RhopOutMax=float(atof(txopt2.c_str())); 
@@ -459,10 +459,10 @@ void JSphCfgRun::LoadOpts(string* optlis,int optn,int lv,const std::string& file
         if(NstepsBreak)NoRtimes=true;
       }
       else if(txword=="SVSTEPS"){
-        SvAllSteps=(txoptfull!=""? atoi(txoptfull.c_str()): 1)!=0;
+        SvAllSteps=OptIsEnabled(txoptfull);
         if(SvAllSteps)NoRtimes=true;
       }
-      else if(txword=="NORTIMES")NoRtimes=(txoptfull!=""? atoi(txoptfull.c_str()): 1)!=0;
+      else if(txword=="NORTIMES")NoRtimes=OptIsEnabled(txoptfull);
       else if(txword=="SVPIPS"){
         PipsMode=(unsigned)atoi(txopt1.c_str());
         if(PipsMode>2)ErrorParm(opt,c,lv,file);

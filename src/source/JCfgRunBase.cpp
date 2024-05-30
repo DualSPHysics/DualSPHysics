@@ -42,6 +42,7 @@ void JCfgRunBase::Reset(){
   PrintInfo=false; ParmDef=0;
   CreateDirs=true;
   CsvSepComa=false;
+  CsvSepThou=false;
 }
 
 //==============================================================================
@@ -54,6 +55,7 @@ void JCfgRunBase::LoadDsphConfig(std::string path){
   if(!dsphconfig.GetFileCfg().empty())printf("LoadDsphConfig> %s\n",fun::GetPathLevels(dsphconfig.GetFileCfg(),3).c_str());
   if(dsphconfig.GetCreateDirs()!=-1)CreateDirs=(dsphconfig.GetCreateDirs()==1);
   if(dsphconfig.GetCsvSeparator()!=-1)CsvSepComa=(dsphconfig.GetCsvSeparator()==1);
+  if(dsphconfig.GetCsvSepThousands()!=-1)CsvSepThou=(dsphconfig.GetCsvSepThousands()==1);
 #endif
 }
 
@@ -321,6 +323,13 @@ void JCfgRunBase::LoadDouble6(std::string txopt,double def,tdouble3& v1,tdouble3
   }
   v1=TDouble3(values[0],values[1],values[2]);
   v2=TDouble3(values[3],values[4],values[5]);
+}
+
+//==============================================================================
+/// Returns true when is empty or not 0.
+//==============================================================================
+bool JCfgRunBase::OptIsEnabled(const std::string& txopt){
+  return(txopt.empty()? true: atoi(txopt.c_str())!=0);
 }
 
 //==============================================================================

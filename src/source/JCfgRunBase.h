@@ -29,6 +29,7 @@
 //#   para floats. Ahora toma el valor default siempre que falte un valor. (14-09-2021)
 //# - Nuevo metodo VerText(). (08-05-2022)
 //# - Incluye txopt5 en SplitsOpts(). (25-08-2022)
+//# - Carga nueva configuracion CsvSepThou. (12-04-2024)
 //#############################################################################
 
 #ifndef _JCfgRunBase_
@@ -89,6 +90,7 @@ protected:
     std::string tx1,tx2,tx3,tx4; SplitsOpts(opt,txword,txoptfull,tx1,tx2,tx3,tx4);
   }
 
+  static bool OptIsEnabled(const std::string& txopt);
 public:
   const bool NoParms; ///<Allows zero parameters without showing help.
   bool PrintInfo;
@@ -96,6 +98,7 @@ public:
   //-General configuration from DsphConfig.xml
   bool CreateDirs;   ///<Creates full path for output files (true by default).
   bool CsvSepComa;   ///<Separator character in CSV files (false=semicolon, true=coma).
+  bool CsvSepThou;   ///<Use thousands separator (false by default).
 
 public:
   JCfgRunBase(bool noparms=false);

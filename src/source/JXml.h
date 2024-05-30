@@ -54,6 +54,7 @@
 //:# - Funciones GetAttributeFloat3Def() y GetAttributeDouble3Def que permiten incluir valores por defecto. (21-03-2022)
 //:# - Funciones GetAttributeFloat3Def0() y GetAttributeDouble3Def0 usan 0 como valor por defecto en lugar de FLT_MAX. (21-03-2022)
 //:# - Funcione GetAttributeVectorWord() para FlexStruc code. (06-03-2024)
+//:# - Nuevos metodos para llong y ullong. (07-05-2024)
 //:#############################################################################
 
 /// \file JXml.h \brief Declares the class \ref JXml.
@@ -413,6 +414,30 @@ public:
   //==============================================================================
   int GetAttributeInt(const TiXmlElement* ele,const std::string& name
     ,bool optional=false,int valdef=0)const;
+
+  //==============================================================================
+  /// Checks and returns a value of type ullong of an xml element that must be positive.
+  /// \param ele Xml element.
+  /// \param name Name of the requested attribute.
+  /// \param optional If it does not exist,
+  /// returns \a valdef instead of throwing an exception.
+  /// \param valdef Value by default if it does not exist and \a optional was activated. 
+  /// \throw JException The requested attribute does not exist...
+  //==============================================================================
+  ullong GetAttributeUlong(const TiXmlElement* ele,const std::string& name
+    ,bool optional=false,ullong valdef=0)const;
+
+  //==============================================================================
+  /// Checks and returns a value of type llong of an xml element. 
+  /// \param ele Xml element.
+  /// \param name Name of the requested attribute.
+  /// \param optional If it does not exist,
+  /// returns \a valdef instead of throwing an exception.
+  /// \param valdef Value by default if it does not exist and \a optional was activated. 
+  /// \throw JException The requested attribute does not exist...
+  //==============================================================================
+  llong GetAttributeLlong(const TiXmlElement* ele,const std::string& name
+    ,bool optional=false,llong valdef=0)const;
 
   //==============================================================================
   /// Checks and returns a value of type double of an xml element. 
@@ -800,6 +825,22 @@ public:
   /// \param v Value of the attribute.
   //==============================================================================
   static void AddAttribute(TiXmlElement* ele,const std::string& attrib,int v);
+
+  //==============================================================================
+  /// Adds attribute of type ullong to an xml element.
+  /// \param ele Xml element.
+  /// \param attrib Name of the attribute.
+  /// \param v Value of the attribute.
+  //==============================================================================
+  static void AddAttribute(TiXmlElement* ele,const std::string& attrib,ullong v);
+
+  //==============================================================================
+  /// Adds attribute of type llong to an xml element.
+  /// \param ele Xml element.
+  /// \param attrib Name of the attribute.
+  /// \param v Value of the attribute.
+  //==============================================================================
+  static void AddAttribute(TiXmlElement* ele,const std::string& attrib,llong v);
 
   //==============================================================================
   /// Adds attribute of type double to an xml element.

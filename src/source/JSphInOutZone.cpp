@@ -53,7 +53,8 @@ JSphInOutZone::JSphInOutZone(bool cpu,unsigned idzone,const StCteSph& csp
   ,const tdouble3& posmin,const tdouble3& posmax
   ,const JXml* sxml,TiXmlElement* ele,const std::string& dirdatafile
   ,const JDsPartsInit* partsdata,JGaugeSystem* gaugesystem)
-  :Log(AppInfo.LogPtr()),Cpu(cpu),IdZone(idzone),CSP(csp),MapRealPosMin(posmin),MapRealPosMax(posmax)
+  :Log(AppInfo.LogPtr()),Cpu(cpu),IdZone(idzone),CSP(csp),MapRealPosMin(posmin)
+  ,MapRealPosMax(posmax)
 {
   ClassName="JSphInOutZone";
   Points=NULL;

@@ -544,6 +544,19 @@ void JPartDataBi4::LoadFilePart(std::string dir,unsigned cpart,unsigned piece
 }
 
 //==============================================================================
+/// Carga fichero solicitad con datos de particulas.
+/// Load requested file with data of particles.
+//==============================================================================
+void JPartDataBi4::LoadFilename(std::string filename){
+  string fdir,fname,fext;
+  fun::GetFileNameSplit(filename,fdir,fname,fext);
+  if(fun::StrUpper(fext)!="BI4")Run_ExceptioonFile("File format is invalid.",filename);
+  if(fun::StrEqualBegin(fname,"Part_") && fun::StrIsIntegerNumber(fname.substr(5)))
+    LoadFilePart(fdir,unsigned(fun::StrToInt(fname.substr(5))));
+  else LoadFileCase(fdir,fname);
+}
+
+//==============================================================================
 /// Devuelve el puntero a Part con los datos del PART.
 /// Returns a pointer to Part with the data of the PART.
 //==============================================================================

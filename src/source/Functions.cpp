@@ -475,37 +475,37 @@ std::string KnumStr(const char* v){
 //==============================================================================
 /// Converts unsigned value to string with thousands separator.
 //==============================================================================
-std::string KintStr(unsigned v){
+std::string KintStr(unsigned v,bool thousep){
   char cad[128];
   sprintf(cad,"%u",v);
-  return(KnumStr(cad));
+  return(thousep? KnumStr(cad): string(cad));
 }
 
 //==============================================================================
 /// Converts integer value to string with thousands separator.
 //==============================================================================
-std::string KintStr(int v){
+std::string KintStr(int v,bool thousep){
   char cad[128];
   sprintf(cad,"%d",v);
-  return(KnumStr(cad));
+  return(thousep? KnumStr(cad): string(cad));
 }
 
 //==============================================================================
 /// Converts ullong value to string with thousands separator.
 //==============================================================================
-std::string KintStr(ullong v){
+std::string KintStr(ullong v,bool thousep){
   char cad[128];
   sprintf(cad,"%llu",v);
-  return(KnumStr(cad));
+  return(thousep? KnumStr(cad): string(cad));
 }
 
 //==============================================================================
 /// Converts llong value to string with thousands separator.
 //==============================================================================
-std::string KintStr(llong v){
+std::string KintStr(llong v,bool thousep){
   char cad[128];
   sprintf(cad,"%lld",v);
-  return(KnumStr(cad));
+  return(thousep? KnumStr(cad): string(cad));
 }
 
 //==============================================================================
@@ -1785,7 +1785,7 @@ std::string GetExtension(const std::string& file){
 std::string GetWithoutExtension(const std::string& ruta){
   int pos=(int)ruta.find_last_of(".");
   int posmin=std::max((int)ruta.find_last_of("/"),(int)ruta.find_last_of("\\"));
-  return(pos>=0&&pos>posmin? ruta.substr(0,pos): ruta);
+  return(pos>=0 && pos>posmin? ruta.substr(0,pos): ruta);
 }
 
 //==============================================================================

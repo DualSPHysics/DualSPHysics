@@ -101,6 +101,7 @@
 //:# - Nuevas funciones GetDateTimet(),GetDateValuesDMY(). (02-08-2022)
 //:# - Nuevas funciones KnumStr(),KintStr(). (10-08-2023)
 //:# - Nuevas funcion GetParentPath(). (27-01-2024)
+//:# - Nuevo parametro de activacion en funciones KnumStr(),KintStr(). (12-04-2024)
 //:#############################################################################
 
 /// \file Functions.h \brief Declares basic/general functions for the entire application.
@@ -110,6 +111,8 @@
 
 #define KINT(a) fun::KintStr(a).c_str()
 #define KSTR(a) fun::KnumStr(a).c_str()
+#define KINTSW(a,thousep) fun::KintStr(a,thousep).c_str()
+#define KSTRSW(a,thousep) fun::KnumStr(a,thousep).c_str()
 
 #include <ctime>
 #include <string>
@@ -168,10 +171,10 @@ std::string Uint3Str(const tuint3& v);
 
 std::string KnumStr(const char* v);
 inline std::string KnumStr(std::string v){ return(KnumStr(v.c_str())); }
-std::string KintStr(unsigned v);
-std::string KintStr(int v);
-std::string KintStr(ullong v);
-std::string KintStr(llong v);
+std::string KintStr(unsigned v,bool thousep=true);
+std::string KintStr(int      v,bool thousep=true);
+std::string KintStr(ullong   v,bool thousep=true);
+std::string KintStr(llong    v,bool thousep=true);
 
 /// Converts range of tint3 values to string.  
 inline std::string Int3RangeStr(const tint3& v,const tint3& v2){ 
@@ -225,7 +228,6 @@ inline std::string Double4gStr(const tdouble4& v){
 }
 
 std::string VectorStr(const std::vector<std::string>& v);
-
 
 bool StrIsIntegerNumber(const std::string& v);
 bool StrIsRealNumber(const std::string& v);

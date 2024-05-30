@@ -589,6 +589,56 @@ int JXml::GetAttributeInt(const TiXmlElement* ele,const std::string& name
 }
 
 //==============================================================================
+/// Checks and returns a value of type ullong of an xml element that must be positive.
+/// \param ele Xml element.
+/// \param name Name of the requested attribute.
+/// \param optional If it does not exist,
+/// returns \a valdef instead of throwing an exception.
+/// \param valdef Value by default if it does not exist and \a optional was activated. 
+/// \throw JException The requested attribute does not exist...
+//==============================================================================
+ullong JXml::GetAttributeUlong(const TiXmlElement* ele
+  ,const std::string& name,bool optional,ullong valdef)const
+{
+  llong ret=GetAttributeLlong(ele,name,optional,llong(valdef));
+  double retdbl=GetAttributeDouble(ele,name,optional,double(valdef));
+  if(retdbl<0)ErrReadAtrib(ele,name,false);
+  return(ullong(ret));
+}
+
+//==============================================================================
+/// Checks and returns a value of type llong of an xml element. 
+/// \param ele Xml element.
+/// \param name Name of the requested attribute.
+/// \param optional If it does not exist,
+/// returns \a valdef instead of throwing an exception.
+/// \param valdef Value by default if it does not exist and \a optional was activated. 
+/// \throw JException The requested attribute does not exist...
+//==============================================================================
+llong JXml::GetAttributeLlong(const TiXmlElement* ele,const std::string& name
+  ,bool optional,llong valdef)const
+{
+  llong ret;
+  const char* vchar=ele->Attribute(name.c_str());
+  if(vchar==NULL){
+    if(optional)ret=valdef;
+    else ErrReadAtrib(ele,name,true);
+  }
+  else{
+    if(NuxLib!=NULL && vchar[0]=='#'){
+      #ifndef DISABLE_NUMEXLIB
+      ret=llong(NuxLib->ComputeExpr(vchar,std::string("\nFile: ")+ErrGetFileRow(ele)));
+      #endif
+    }
+    else{
+      if(!fun::StrIsIntegerNumber(vchar))ErrReadAtrib(ele,name,false,"It is not a valid integer number.");
+      ret=atoll(vchar);
+    }
+  }
+  return(ret);
+}
+
+//==============================================================================
 /// Checks and returns a value of type double of an xml element. 
 /// \param ele Xml element.
 /// \param name Name of the requested attribute.
