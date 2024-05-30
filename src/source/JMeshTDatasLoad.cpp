@@ -26,6 +26,7 @@
 #include "JBinaryData.h"
 #include "JReadDatafile.h"
 #include "JDataArrays.h"
+#include "JTimeControl.h"
 
 #include <fstream>
 #include <cmath>
@@ -148,7 +149,8 @@ void JMeshTDatasLoad::LoadFileBin(std::vector<JMeshData*>& vdata
   bdat.LoadFileListApp(FileIn,"JMeshTDatas",false);
   const size_t ntimes=bdat.GetItemsCount()-1;
   //printf("==> times:%u\n",ntimes);
-  for(size_t ct=0;ct<ntimes;ct++){
+  bool nextct=true;
+  for(size_t ct=0;ct<ntimes && nextct;ct++){
     JBinaryData* ite=bdat.GetItem(ct+1);
     if(!ite->ExistsValue("Ntimes")){//-SigleData version.
       const double t=ite->GetvDouble("TimeStep");
@@ -167,7 +169,17 @@ void JMeshTDatasLoad::LoadFileBin(std::vector<JMeshData*>& vdata
           }
         }
         vdata.push_back(mdat);
+        //-Configuration for loop mode.
+        if(loopmode){
+          const double tdif=fabs(t-looptbeg);
+          if(tdif<loopct_tdif){
+            loopct=unsigned(vdata.size())-1;
+            loopct_time=t;
+            loopct_tdif=tdif;
+          }
+        }
       }
+      else if(t>TimeMax)nextct=false;
     }
     else{//-MultiData version.
       const unsigned nt2=ite->GetvUint("Ntimes");
@@ -295,6 +307,9 @@ void JMeshTDatasLoad::LoadFileCsv(std::vector<JMeshData*>& vdata){
   //-Loads data times.
   const int dattag=(dat12? JMeshData::TAGDATA12: 0);
   const unsigned datsize=(dat12? m.npt1*m.npt2: m.npt);
+  const bool printtime=true;
+  const bool tc_rows=(!FilterTime || TimeMax==DBL_MAX);
+  JTimeControl tc(5,60);
   for(unsigned cr=3;cr<rows;cr++){
     rdat.SetReadLine(cr);
     const double t=rdat.ReadNextDouble(true);
@@ -330,6 +345,10 @@ void JMeshTDatasLoad::LoadFileCsv(std::vector<JMeshData*>& vdata){
           loopct_time=t;
           loopct_tdif=tdif;
         }
+      }
+      if(printtime && tc.CheckTime()){
+        const double tt=(tc_rows? double(cr)/double(rows+1): t/TimeMax);
+        printf("  %s\n",tc.GetInfoFinish(tt).c_str());
       }
     }
   }

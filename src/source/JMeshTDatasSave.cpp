@@ -369,7 +369,7 @@ void JMeshTDatasSave::SaveVtk(std::string file,int fnum,const JMeshData* mdat
   ,bool svdata12)
 {
   if(JVtkLib::Available()){
-    if(fun::GetExtension(file).empty())file=fun::AddExtension(file,".vtk");
+    if(fun::GetExtension(file).empty())file=fun::AddExtension(file,"vtk");
     if(fnum>=0)file=fun::FileNameSec(file,fnum);
     //-Loads data in arrays.
     JDataArrays arrays;

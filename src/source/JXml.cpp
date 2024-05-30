@@ -843,6 +843,28 @@ void JXml::AddAttribute(TiXmlElement* ele,const std::string& attrib,int v){
 }
 
 //==============================================================================
+/// Adds attribute of type ullong to an xml element.
+/// \param ele Xml element.
+/// \param attrib Name of the attribute.
+/// \param v Value of the attribute.
+//==============================================================================
+void JXml::AddAttribute(TiXmlElement* ele,const std::string& attrib,ullong v){
+  const string vv=fun::UlongStr(v);
+  ele->SetAttribute(attrib.c_str(),vv.c_str());
+}
+
+//==============================================================================
+/// Adds attribute of type llong to an xml element.
+/// \param ele Xml element.
+/// \param attrib Name of the attribute.
+/// \param v Value of the attribute.
+//==============================================================================
+void JXml::AddAttribute(TiXmlElement* ele,const std::string& attrib,llong v){
+  const string vv=fun::LongStr(v);
+  ele->SetAttribute(attrib.c_str(),vv.c_str());
+}
+
+//==============================================================================
 /// Adds attribute of type string to an xml element.
 /// \param ele Xml element.
 /// \param attrib Name of the attribute.
