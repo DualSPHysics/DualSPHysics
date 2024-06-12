@@ -28,7 +28,7 @@
 //:# =========
 //:# - Gestion de moorings usando la libreria MoorDyn. (06-02-2017)
 //:# - Inclusion en codigo DualSPHysics v4.2.073. (13-08-2018)
-//:# - Actualiza coupling con MoorDyn. (23-12-2019)
+//:# - Actualiza coupling con MoorDynPlus. (23-12-2019)
 //:# - Saves VTK files in MooringsVtk directory. (24-12-2019)
 //:# - Muestra warning en el caso de que la gravedad no sea definida solo en Z
 //:#   y error en caso de ser cero. (12-03-2020)
@@ -116,7 +116,7 @@ private:
   const double TimeMax;
   const double DtOut;
   std::string FileLines;
-  std::string MoordynDir;   ///<Work directory for MoorDyn.
+  std::string MdpDir;   ///<Work directory for MoorDynPlus.
 
   double StartTime;    ///<Start time of the application of mooring forces. (def=0).
   double StartRamp;    ///<Ramp time after start time. (def=0).
@@ -129,7 +129,7 @@ private:
 
   std::vector<JDsMooredFloating*> Floatings; ///<List of floatings with moorings.
 
-  bool MoorDynReady;   ///<Indicate if MoorDyn was initializated.
+  bool MoorDynPlusReady;    ///<Indicate if MoorDynPlus was initializated.
 
   bool FairArrays;          ///<Indicate if the fairlead arrays was initializated.
   unsigned FairNftm;        ///<Number of moored floatings.

@@ -232,10 +232,10 @@
     <ClInclude Include="..\source\JSphGpuSimple_ker.h">
       <Filter>Cuda</Filter>
     </ClInclude>
-    <ClInclude Include="..\source\DSphMoorDyn.h">
+    <ClInclude Include="..\source\DSphMoorDynPlus.h">
       <Filter>Libs</Filter>
     </ClInclude>
-    <ClInclude Include="..\source\DSphMoorDynUndef.h">
+    <ClInclude Include="..\source\DSphMoorDynPlusUndef.h">
       <Filter>Libs</Filter>
     </ClInclude>
     <ClInclude Include="..\source\JNumexLib.h">

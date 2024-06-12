@@ -8,7 +8,7 @@ COMPILE_VTKLIB=YES
 COMPILE_NUMEXLIB=YES
 COMPILE_CHRONO=YES
 COMPILE_WAVEGEN=YES
-COMPILE_MOORDYN=YES
+COMPILE_MOORDYNPLUS=YES
 
 LIBS_DIRECTORIES=-L./
 LIBS_DIRECTORIES:=$(LIBS_DIRECTORIES) -L../lib/linux_gcc
@@ -43,8 +43,8 @@ endif
 ifeq ($(COMPILE_WAVEGEN), NO)
   CCFLAGS:=$(CCFLAGS) -DDISABLE_WAVEGEN
 endif
-ifeq ($(COMPILE_MOORDYN), NO)
-  CCFLAGS:=$(CCFLAGS) -DDISABLE_MOORDYN
+ifeq ($(COMPILE_MOORDYNPLUS), NO)
+  CCFLAGS:=$(CCFLAGS) -DDISABLE_MOORDYNPLUS
 endif
 
 #=============== CUDA selection ===============
@@ -122,7 +122,7 @@ OBCUDA=JCellDivGpu_ker.o JCellDivGpuSingle_ker.o JDsPips_ker.o JDsGauge_ker.o JR
 OBWAVERZ=JMLPistonsGpu.o JRelaxZonesGpu.o
 OBWAVERZCUDA=JRelaxZone_ker.o
 OBCHRONO=JChronoObjects.o
-OBMOORDYN=JDsMooredFloatings.o JDsFtForcePoints.o
+OBMOORDYNPLUS=JDsMooredFloatings.o JDsFtForcePoints.o
 OBINOUT=JSphCpu_InOut.o JSphCpuSingle_InOut.o JSphInOut.o JSphInOutZone.o JSphInOutGridData.o JSphInOutPoints.o JSphInOutVel.o JSphInOutVelAwas.o JSphInOutZsurf.o JSimpleNeigs.o
 OBINOUTGPU=JSphGpuSingle_InOut.o
 OBMDBC=JPartNormalData.o
@@ -130,7 +130,7 @@ OBMESH=JMeshData.o JMeshTDatas.o JMeshTDatasLoad.o JMeshTDatasSave.o JMeshTDatas
 
 OBJECTS=$(OBJXML) $(OBJSPHMOTION) $(OBCOMMON) $(OBCOMMONDSPH) $(OBSPH) $(OBSPHSINGLE)
 OBJECTS:=$(OBJECTS) $(OBCOMMONGPU) $(OBSPHGPU) $(OBSPHSINGLEGPU) $(OBCUDA)
-OBJECTS:=$(OBJECTS) $(OBWAVERZ) $(OBWAVERZCUDA) $(OBCHRONO) $(OBMOORDYN) $(OBINOUT) $(OBINOUTGPU) $(OBMDBC) $(OBMESH)
+OBJECTS:=$(OBJECTS) $(OBWAVERZ) $(OBWAVERZCUDA) $(OBCHRONO) $(OBMOORDYNPLUS) $(OBINOUT) $(OBINOUTGPU) $(OBMDBC) $(OBMESH)
 
 #=============== DualSPHysics libs to be included ===============
 JLIBS=${LIBS_DIRECTORIES}
@@ -146,8 +146,8 @@ endif
 ifeq ($(COMPILE_WAVEGEN), YES)
   JLIBS:=$(JLIBS) -ljwavegen_64
 endif
-ifeq ($(COMPILE_MOORDYN), YES)
-  JLIBS:=$(JLIBS) -ldsphmoordyn_64
+ifeq ($(COMPILE_MOORDYNPLUS), YES)
+  JLIBS:=$(JLIBS) -ldsphmoordynplus_64
 endif
 
 #=============== GPU Code Compilation ===============

@@ -9,7 +9,7 @@ PROJECT(DualSPHysics)
 #------------------------------------------------------------------
 # Coupling options
 #------------------------------------------------------------------
-option(ENABLE_MOORDYN "Enable the MoorDyn+ library" ON)
+option(ENABLE_MOORDYNPLUS "Enable the MoorDynPlus library" ON)
 option(ENABLE_CHRONO "Enable the Chrono Engine library" ON)
 
 #------------------------------------------------------------------
@@ -34,7 +34,7 @@ set(OBCUDA JCellDivGpu_ker.cu JCellDivGpuSingle_ker.cu JDsPips_ker.cu JDsGauge_k
 set(OBWAVERZ JMLPistonsGpu.cpp JRelaxZonesGpu.cpp)
 set(OBWAVERZCUDA JRelaxZone_ker.cu)
 set(OBCHRONO JChronoObjects.cpp)
-set(OBMOORDYN JDsMooredFloatings.cpp JDsFtForcePoints.cpp)
+set(OBMOORDYNPLUS JDsMooredFloatings.cpp JDsFtForcePoints.cpp)
 set(OBINOUT JSphCpu_InOut.cpp JSphCpuSingle_InOut.cpp JSphInOut.cpp JSphInOutZone.cpp JSphInOutGridData.cpp JSphInOutPoints.cpp JSphInOutVel.cpp JSphInOutVelAwas.cpp JSphInOutZsurf.cpp JSimpleNeigs.cpp)
 set(OBINOUTGPU JSphGpuSingle_InOut.cpp)
 set(OBMDBC JPartNormalData.cpp)
@@ -97,17 +97,17 @@ set (CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})  
 set (CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})           # Debug output directory
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-  add_executable(DualSPHysics5.4CPU_linux64 ${OBJXML} ${OBJSPHMOTION} ${OBCOMMON} ${OBCOMMONDSPH} ${OBSPH} ${OBSPHSINGLE} ${OBWAVERZ} ${OBCHRONO} ${OBMOORDYN} ${OBINOUT} ${OBMDBC} ${OBMESH})
+  add_executable(DualSPHysics5.4CPU_linux64 ${OBJXML} ${OBJSPHMOTION} ${OBCOMMON} ${OBCOMMONDSPH} ${OBSPH} ${OBSPHSINGLE} ${OBWAVERZ} ${OBCHRONO} ${OBMOORDYNPLUS} ${OBINOUT} ${OBMDBC} ${OBMESH})
   install(TARGETS	DualSPHysics5.4CPU_linux64 DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
   if (CUDA_FOUND)
-    cuda_add_executable(DualSPHysics5.4_linux64 ${OBJXML} ${OBJSPHMOTION} ${OBCOMMON} ${OBCOMMONDSPH} ${OBSPH} ${OBSPHSINGLE} ${OBCOMMONGPU} ${OBSPHGPU} ${OBSPHSINGLEGPU} ${OBCUDA} ${OBWAVERZ} ${OBWAVERZCUDA} ${OBCHRONO} ${OBMOORDYN} ${OBINOUT} ${OBINOUTGPU} ${OBMDBC} ${OBMESH})
+    cuda_add_executable(DualSPHysics5.4_linux64 ${OBJXML} ${OBJSPHMOTION} ${OBCOMMON} ${OBCOMMONDSPH} ${OBSPH} ${OBSPHSINGLE} ${OBCOMMONGPU} ${OBSPHGPU} ${OBSPHSINGLEGPU} ${OBCUDA} ${OBWAVERZ} ${OBWAVERZCUDA} ${OBCHRONO} ${OBMOORDYNPLUS} ${OBINOUT} ${OBINOUTGPU} ${OBMDBC} ${OBMESH})
     install(TARGETS DualSPHysics5.4_linux64 DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
   endif(CUDA_FOUND)
 elseif(MSVC) 
-  add_executable(DualSPHysics5.4CPU_win64 ${OBJXML} ${OBJSPHMOTION} ${OBCOMMON} ${OBCOMMONDSPH} ${OBSPH} ${OBSPHSINGLE} ${OBWAVERZ} ${OBCHRONO} ${OBMOORDYN} ${OBINOUT} ${OBMDBC} ${OBMESH})
+  add_executable(DualSPHysics5.4CPU_win64 ${OBJXML} ${OBJSPHMOTION} ${OBCOMMON} ${OBCOMMONDSPH} ${OBSPH} ${OBSPHSINGLE} ${OBWAVERZ} ${OBCHRONO} ${OBMOORDYNPLUS} ${OBINOUT} ${OBMDBC} ${OBMESH})
   install(TARGETS	DualSPHysics5.4CPU_win64 DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
   if (CUDA_FOUND)
-    cuda_add_executable(DualSPHysics5.4_win64 ${OBJXML} ${OBJSPHMOTION} ${OBCOMMON} ${OBCOMMONDSPH} ${OBSPH} ${OBSPHSINGLE} ${OBCOMMONGPU} ${OBSPHGPU} ${OBSPHSINGLEGPU} ${OBCUDA} ${OBWAVERZ} ${OBWAVERZCUDA} ${OBCHRONO} ${OBMOORDYN} ${OBINOUT} ${OBINOUTGPU} ${OBMDBC} ${OBMESH})
+    cuda_add_executable(DualSPHysics5.4_win64 ${OBJXML} ${OBJSPHMOTION} ${OBCOMMON} ${OBCOMMONDSPH} ${OBSPH} ${OBSPHSINGLE} ${OBCOMMONGPU} ${OBSPHGPU} ${OBSPHSINGLEGPU} ${OBCUDA} ${OBWAVERZ} ${OBWAVERZCUDA} ${OBCHRONO} ${OBMOORDYNPLUS} ${OBINOUT} ${OBINOUTGPU} ${OBMDBC} ${OBMESH})
     install(TARGETS DualSPHysics5.4_win64 DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
   endif(CUDA_FOUND)
 endif()
@@ -130,18 +130,18 @@ endif()
 #------------------------------------------------------------------
 # Coupled libraries
 #------------------------------------------------------------------
-# MoorDyn+
-if(ENABLE_MOORDYN)
-  message(STATUS "Using MoorDyn+")
+# MoorDynPlus
+if(ENABLE_MOORDYNPLUS)
+  message(STATUS "Using MoorDynPlus")
   if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-    set(LINKER_FLAGS ${LINKER_FLAGS} dsphmoordyn_64)
+    set(LINKER_FLAGS ${LINKER_FLAGS} dsphmoordynplus_64)
   elseif(MSVC) 
-    set(LINKER_FLAGS ${LINKER_FLAGS} LibDSphMoorDyn_x64_v143_Release)
+    set(LINKER_FLAGS ${LINKER_FLAGS} LibDSphMoorDynPlus_x64_v143_Release)
   endif()
 else()
-  set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DDISABLE_MOORDYN")
-  set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DDISABLE_MOORDYN")
-endif(ENABLE_MOORDYN)
+  set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DDISABLE_MOORDYNPLUS")
+  set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DDISABLE_MOORDYNPLUS")
+endif(ENABLE_MOORDYNPLUS)
 
 # Chrono Engine
 if(ENABLE_CHRONO)

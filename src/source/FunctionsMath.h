@@ -184,6 +184,26 @@ inline tmatrix3d InverseMatrix3x3(const tmatrix3d& d){
 }
 
 //==============================================================================
+/// Funcion para calcular el producto de un vector fila (v1) y 
+/// un vector de columna (v2) y lo almacenamos en una matriz de 3x3
+/// Function to compute the product of a row vector (v1) and 
+/// a column vector (v2) and store it in a 3x3 matrix
+//==============================================================================
+inline tmatrix3d ProductMatrix3x3(const tdouble3& v1,const tdouble3& v2){
+  tmatrix3d mat;
+  mat.a11=v1.x*v2.x;
+  mat.a12=v1.x*v2.y;
+  mat.a13=v1.x*v2.z;
+  mat.a21=v1.y*v2.x;
+  mat.a22=v1.y*v2.y;
+  mat.a23=v1.y*v2.z;
+  mat.a31=v1.z*v2.x;
+  mat.a32=v1.z*v2.y;
+  mat.a33=v1.z*v2.z;
+  return mat;
+}
+
+//==============================================================================
 /// Calcula el determinante de una matriz de 4x4.
 /// Returns the determinant of a 4x4 matrix.
 //==============================================================================

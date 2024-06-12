@@ -52,7 +52,7 @@
 //#define DISABLE_CHRONO     ///<It allows compile without ChronoLib library (dsphchrono.dll, ChronoEngine.dll and ChronoEngine_parallel.dll).
 #define DISABLE_CHRONO_OMP   ///<It allows compile without parallel module of Chrono (ignores ChronoEngine_parallel.dll).
 //#define DISABLE_WAVEGEN    ///<It allows compile without Wave-Paddles, Multi-Layer Pistons and Relaxation Zones libraries.
-//#define DISABLE_MOORDYN    ///<It allows compile without LibDSphMoorDyn library.
+//#define DISABLE_MOORDYNPLUS    ///<It allows compile without LibDSphMoorDynPlus library.
 
 
 //-Defines AVAILABLE_VTKLIB when this feature is compiled.
@@ -98,11 +98,11 @@
   #define AVAILABLE_WAVEGEN true
 #endif
 
-//-Defines AVAILABLE_MOORDYN when this feature is compiled.
-#ifdef DISABLE_MOORDYN
-  #define AVAILABLE_MOORDYN false
+//-Defines AVAILABLE_MOORDYNPLUS when this feature is compiled.
+#ifdef DISABLE_MOORDYNPLUS
+  #define AVAILABLE_MOORDYNPLUS false
 #else
-  #define AVAILABLE_MOORDYN true
+  #define AVAILABLE_MOORDYNPLUS true
 #endif
 
 //-Defines AVAILABLE_GPU when this feature is compiled.

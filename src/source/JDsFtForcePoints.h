@@ -29,7 +29,7 @@
 //:# - Gestiona la aplicacion de fuerzas externas a floatings. (07-02-2017)
 //:# - Inclusion en codigo DualSPHysics v4.2.073. (13-08-2018)
 //:# - Cambia uso de JFormatFiles2 por JVtkLib. (12-12-2019)
-//:# - Actualiza coupling con MoorDyn. (23-12-2019)
+//:# - Actualiza coupling con MoorDynPlus. (23-12-2019)
 //:# - Saves VTK files in MooringsVtk directory. (24-12-2019)
 //:# - Cambio de nombre de J.SphFtForcePoints a J.DsFtForcePoints. (28-06-2020)
 //:# - Se proporcionan datos de fuerzas en lugar de aceleraciones. (24-11-2021)

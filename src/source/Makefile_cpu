@@ -8,7 +8,7 @@ COMPILE_VTKLIB=YES
 COMPILE_NUMEXLIB=YES
 COMPILE_CHRONO=YES
 COMPILE_WAVEGEN=YES
-COMPILE_MOORDYN=YES
+COMPILE_MOORDYNPLUS=YES
 
 LIBS_DIRECTORIES=-L./
 LIBS_DIRECTORIES:=$(LIBS_DIRECTORIES) -L../lib/linux_gcc
@@ -43,8 +43,8 @@ endif
 ifeq ($(COMPILE_WAVEGEN), NO)
   CCFLAGS:=$(CCFLAGS) -DDISABLE_WAVEGEN
 endif
-ifeq ($(COMPILE_MOORDYN), NO)
-  CCFLAGS:=$(CCFLAGS) -DDISABLE_MOORDYN
+ifeq ($(COMPILE_MOORDYNPLUS), NO)
+  CCFLAGS:=$(CCFLAGS) -DDISABLE_MOORDYNPLUS
 endif
 
 #=============== Files to compile ===============
@@ -57,13 +57,13 @@ OBSPHSINGLE=JCellDivCpuSingle.o JPartsLoad4.o JSphCpuSingle.o
 
 OBWAVERZ=JMLPistonsGpu.o JRelaxZonesGpu.o
 OBCHRONO=JChronoObjects.o
-OBMOORDYN=JDsMooredFloatings.o JDsFtForcePoints.o
+OBMOORDYNPLUS=JDsMooredFloatings.o JDsFtForcePoints.o
 OBINOUT=JSphCpu_InOut.o JSphCpuSingle_InOut.o JSphInOut.o JSphInOutZone.o JSphInOutGridData.o JSphInOutPoints.o JSphInOutVel.o JSphInOutVelAwas.o JSphInOutZsurf.o JSimpleNeigs.o
 OBMDBC=JPartNormalData.o
 OBMESH=JMeshData.o JMeshTDatas.o JMeshTDatasLoad.o JMeshTDatasSave.o JMeshTDatasDsVel.o JMeshTDatasXml.o
 
 OBJECTS=$(OBJXML) $(OBJSPHMOTION) $(OBCOMMON) $(OBCOMMONDSPH) $(OBSPH) $(OBSPHSINGLE)
-OBJECTS:=$(OBJECTS) $(OBWAVERZ) $(OBCHRONO) $(OBMOORDYN) $(OBINOUT) $(OBMDBC) $(OBMESH)
+OBJECTS:=$(OBJECTS) $(OBWAVERZ) $(OBCHRONO) $(OBMOORDYNPLUS) $(OBINOUT) $(OBMDBC) $(OBMESH) 
 
 #=============== DualSPHysics libs to be included ===============
 JLIBS=${LIBS_DIRECTORIES}
@@ -79,8 +79,8 @@ endif
 ifeq ($(COMPILE_WAVEGEN), YES)
   JLIBS:=$(JLIBS) -ljwavegen_64
 endif
-ifeq ($(COMPILE_MOORDYN), YES)
-  JLIBS:=$(JLIBS) -ldsphmoordyn_64
+ifeq ($(COMPILE_MOORDYNPLUS), YES)
+  JLIBS:=$(JLIBS) -ldsphmoordynplus_64
 endif
 
 #=============== CPU Code Compilation ===============

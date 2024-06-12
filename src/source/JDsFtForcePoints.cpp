@@ -422,7 +422,7 @@ void JDsFtForcePoints::SaveVtkPoints(unsigned numfile)const{
   if(PtVel)  arrays.AddArray("Vel"  ,PtCount,PtVel  ,false);
   if(PtForce)arrays.AddArray("Force",PtCount,PtForce,false);
   const string files=AppInfo.GetDirOut()+"MooringsVtk/FtForcesPoints.vtk";
-  Log->AddFileInfo(fun::FileNameSec(files,UINT_MAX),"Saves VTK file with force points (Moordyn coupling).");
+  Log->AddFileInfo(fun::FileNameSec(files,UINT_MAX),"Saves VTK file with force points (MoorDynPlus coupling).");
   JVtkLib::SaveVtkData(fun::FileNameSec(files,numfile),arrays,"Pos");
 }
 
@@ -430,7 +430,7 @@ void JDsFtForcePoints::SaveVtkPoints(unsigned numfile)const{
 /// Saves CSV with force points.
 //==============================================================================
 void JDsFtForcePoints::SaveCsvPoints(unsigned numfile)const{
-  if(PtCount)Log->AddFileInfo("FtForcesPoints_ft????_pt??.csv","Saves CSV file with force points (Moordyn coupling).");
+  if(PtCount)Log->AddFileInfo("FtForcesPoints_ft????_pt??.csv","Saves CSV file with force points (MoorDynPlus coupling).");
   for(word cp=0;cp<PtCount;cp++){
     const string file=AppInfo.GetDirOut()+fun::PrintStr("FtForcePoints_ft%04d_pt%02u.csv",PtFtid[cp],cp);
     jcsv::JSaveCsv2 scsv(file,true,AppInfo.GetCsvSepComa());

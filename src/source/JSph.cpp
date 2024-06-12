@@ -518,7 +518,7 @@ llong JSph::GetAllocMemoryCpu()const{
 std::string JSph::GetFeatureList(){
   string list;
   if(AVAILABLE_CHRONO  )list=list+", Project Chrono coupling";
-  if(AVAILABLE_MOORDYN )list=list+", MoorDyn+ coupling";
+  if(AVAILABLE_MOORDYNPLUS )list=list+", MoorDynPlus coupling";
   if(AVAILABLE_WAVEGEN )list=list+", Wave generation";
   if(1)                 list=list+", mDBC no-slip"; //<vs_m2dbc>
   if(AVAILABLE_NUMEXLIB)list=list+", Numex vars";
@@ -1257,7 +1257,7 @@ void JSph::LoadCaseConfig(const JSphCfgRun* cfg){
   //-Configuration of Moorings object.
   if(xml.GetNodeSimple("case.execution.special.moorings",true)){
     if(WithFloating){
-      if(!AVAILABLE_MOORDYN)Run_Exceptioon("Code for moorings and MoorDyn+ coupling is not included in the current compilation.");
+      if(!AVAILABLE_MOORDYNPLUS)Run_Exceptioon("Code for moorings and MoorDynPlus coupling is not included in the current compilation.");
       Moorings=new JDsMooredFloatings(DirCase,CaseName,Gravity,TimeMax,TimePart);
       Moorings->LoadXml(&xml,"case.execution.special.moorings");
     }
@@ -1658,7 +1658,7 @@ void JSph::VisuConfig(){
   Log->Print(fun::VarStr("RigidAlgorithm",rigidalgorithm));
   if(FtCount)ConfigInfo=ConfigInfo+sep+"Ft-"+rigidalgorithm;
   //-Moorings.
-  if(Moorings)ConfigInfo=ConfigInfo+sep+"MoorDyn+";
+  if(Moorings)ConfigInfo=ConfigInfo+sep+"MoorDynPlus";
   //-Other configurations. 
   Log->Print(fun::VarStr("FloatingCount",FtCount));
   if(FtCount)Log->Print(fun::VarStr("FtPause",FtPause));
@@ -1763,7 +1763,7 @@ void JSph::VisuRefs(){
   if(WithFloating )Log->Print("- Floating objects (Canelas et al., 2015  https://doi.org/10.1002/fld.4031)");
   if(UseDEM       )Log->Print("- Coupling SPH-DCDEM (Canelas et al., 2017  https://doi.org/10.1061/(ASCE)HY.1943-7900.0001331)");
   if(UseChrono    )Log->Print("- New coupling with Project Chrono (Martinez-Estevez et al., 2023  https://doi.org/10.1016/j.cpc.2022.108581)");
-  if(Moorings     )Log->Print("- Coupling with MoorDyn+ (Dominguez et al., 2019  https://doi.org/10.1016/j.coastaleng.2019.103560)");
+  if(Moorings     )Log->Print("- Coupling with MoorDynPlus (Dominguez et al., 2019  https://doi.org/10.1016/j.coastaleng.2019.103560)");
   if(Shifting     )Log->Print("- Shifting algorithm (Lind et al., 2012  https://doi.org/10.1016/j.jcp.2011.10.027)");
   if(AccInput     )Log->Print("- External imposed forces (Longshaw and Rogers, 2015  https://doi.org/10.1016/j.advengsoft.2015.01.008)");
   //-Wave generation:
