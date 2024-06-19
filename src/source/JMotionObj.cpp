@@ -41,7 +41,10 @@ JMotionMovActive::JMotionMovActive(double start,double eventfinish
   ,JMotionMov* mov):EventFinish(eventfinish)
 {
   ClassName="JMotionMovActive";
-  DfTimes=NULL; DfPos=NULL; DfAng=NULL;
+  DfTimes=NULL;
+  DfPos=NULL;
+  DfAng=NULL;
+  DfAngXYZ=NULL;
   Mov=mov;
   Start=start;
   Flash=(Mov->Time<0);
@@ -62,13 +65,16 @@ JMotionMovActive::~JMotionMovActive(){
 // Resetea memoria asignada y datos de movimientos RectFile y RotFile.
 //==============================================================================
 void JMotionMovActive::DfReset(){
+  DfType=TpDfNull;
   DfTimes=NULL;
   DfPos=NULL;
   DfAng=NULL;
-  DfPosType=false;
-  DfCount=0; DfIndex=0;
+  DfAngXYZ=NULL;
+  DfCount=0;
+  DfIndex=0;
   DfLastPos=TDouble3(0);
   DfLastAng=0;
+  DfLastAngXYZ=TDouble3(0);
 }
 
 //==============================================================================
@@ -87,32 +93,55 @@ void JMotionMovActive::ConfigData(){
     case JMotionMov::RectilinearSinusoidal: Phase=((JMotionMovRectSinu*)Mov)->Phase;    break;
     case JMotionMov::RotationSinusoidal:    PhaseUni=((JMotionMovRotSinu*)Mov)->Phase;  break;
     case JMotionMov::CircularSinusoidal:    PhaseUni=((JMotionMovCirSinu*)Mov)->Phase;  break;
-    case JMotionMov::RectilinearFile:       DfConfig(true);                             break;
-    case JMotionMov::RotationFile:          DfConfig(false);                            break;
+    case JMotionMov::RectilinearFile:       DfConfig(TpDfMov);                          break;
+    case JMotionMov::RotationFile:          DfConfig(TpDfRotAxis);                      break;
+    case JMotionMov::RotAdvFile:            DfConfig(TpDfRotEuler);                     break;
+    case JMotionMov::RotTransFile:          DfConfig(TpDfPath);                         break;
   }
 }
 
 //==============================================================================
 // Carga y configura datos del movimiento a partir de fichero de datos.
 //==============================================================================
-void JMotionMovActive::DfConfig(bool postype){
+void JMotionMovActive::DfConfig(JMotionMovActive::TpDfType dftype){
   DfReset();
-  DfPosType=postype;
-  if(DfPosType){
-    JMotionMovRectFile* mv=(JMotionMovRectFile*)Mov;
-    mv->PrepareData();
-    DfCount=mv->GetCount();
-    DfTimes=mv->GetTimes();
-    DfPos=mv->GetValuesPos();
-    DfLastPos=DfPos[0];
-  }
-  else{
-    JMotionMovRotFile* mv=(JMotionMovRotFile*)Mov;
-    mv->PrepareData();
-    DfCount=mv->GetCount();
-    DfTimes=mv->GetTimes();
-    DfAng=mv->GetValuesAng();
-    DfLastAng=DfAng[0];
+  DfType=dftype;
+  switch(DfType){
+    case TpDfMov:{
+      JMotionMovRectFile* mv=(JMotionMovRectFile*)Mov;
+      mv->PrepareData();
+      DfCount=mv->GetCount();
+      DfTimes=mv->GetTimes();
+      DfPos=mv->GetValuesPos();
+      DfLastPos=DfPos[0];
+    }break;
+    case TpDfRotAxis:{
+      JMotionMovRotFile* mv=(JMotionMovRotFile*)Mov;
+      mv->PrepareData();
+      DfCount=mv->GetCount();
+      DfTimes=mv->GetTimes();
+      DfAng=mv->GetValuesAng();
+      DfLastAng=DfAng[0];
+    }break;
+    case TpDfRotEuler:{
+      JMotionMovRotAdvFile* mv=(JMotionMovRotAdvFile*)Mov;
+      mv->PrepareData();
+      DfCount=mv->GetCount();
+      DfTimes=mv->GetTimes();
+      DfAngXYZ=mv->GetValuesAngXYZ();
+      DfLastAngXYZ=DfAngXYZ[0];
+    }break;
+    case TpDfPath:{
+      JMotionMovPathFile* mv=(JMotionMovPathFile*)Mov;
+      mv->PrepareData();
+      DfCount=mv->GetCount();
+      DfTimes=mv->GetTimes();
+      DfPos=mv->GetValuesPos();
+      DfAngXYZ=mv->GetValuesAngXYZ();
+      DfLastPos=DfPos[0];
+      DfLastAngXYZ=DfAngXYZ[0];
+    }break;
+    default: Run_Exceptioon("Type of motion data is unknown.");
   }
 }
 
@@ -159,9 +188,19 @@ tdouble3 JMotionMovActive::DfGetNewPos(double t){
   else{
     const double tfactor=(t-DfTimes[DfIndex-1])/(DfTimes[DfIndex]-DfTimes[DfIndex-1]);
     tdouble3 pos0=DfPos[DfIndex-1],pos=DfPos[DfIndex];
-    double x=(((JMotionMovRectFile*)Mov)->FieldX>=0? pos0.x+tfactor*(pos.x-pos0.x): 0);
-    double y=(((JMotionMovRectFile*)Mov)->FieldY>=0? pos0.y+tfactor*(pos.y-pos0.y): 0);
-    double z=(((JMotionMovRectFile*)Mov)->FieldZ>=0? pos0.z+tfactor*(pos.z-pos0.z): 0);
+    tint3 fpos=TInt3(0);
+    if(Mov->Type==JMotionMov::RectilinearFile){
+      const JMotionMovRectFile* mv=(JMotionMovRectFile*)Mov;
+      fpos=TInt3(mv->FieldX,mv->FieldY,mv->FieldZ);
+    }
+    else if(Mov->Type==JMotionMov::RotTransFile){
+      const JMotionMovPathFile* mv=(JMotionMovPathFile*)Mov;
+      fpos=TInt3(mv->FieldX,mv->FieldY,mv->FieldZ);
+    }
+    else Run_Exceptioon("Motion type does not match.");
+    const double x=(fpos.x>=0? pos0.x+tfactor*(pos.x-pos0.x): 0);
+    const double y=(fpos.y>=0? pos0.y+tfactor*(pos.y-pos0.y): 0);
+    const double z=(fpos.z>=0? pos0.z+tfactor*(pos.z-pos0.z): 0);
     newpos=TDouble3(x,y,z);
     //newpos=DfPosX[DfIndex-1]+tfactor*(DfPosX[DfIndex]-DfPosX[DfIndex-1]);
   }
@@ -184,6 +223,36 @@ double JMotionMovActive::DfGetNewAng(double t){
   }
   //printf("index:%u  t:%g  newpos:%f\n",DfIndex,t,newpos);
   return(newang);
+}
+
+//==============================================================================
+// Devuelve la siguiente angulo(Euler) en funcion del instante indicado
+//==============================================================================
+tdouble3 JMotionMovActive::DfGetNewAngXYZ(double t){
+  tdouble3 newangxyz;
+  if(DfIndex==0)DfIndex=BinarySearch(DfCount,DfTimes,t);
+  while(DfIndex<DfCount&&t>DfTimes[DfIndex])DfIndex++;
+  if(DfIndex>=DfCount)newangxyz=DfAngXYZ[DfCount-1];//-Mayor al instante final se queda con el ultimo angulo.
+  else{
+    const double tfactor=(t-DfTimes[DfIndex-1])/(DfTimes[DfIndex]-DfTimes[DfIndex-1]);
+    tdouble3 angxyz0=DfAngXYZ[DfIndex-1],angxyz=DfAngXYZ[DfIndex];
+    tint3 fang=TInt3(0);
+    if(Mov->Type==JMotionMov::RotAdvFile){
+      const JMotionMovRotAdvFile* mv=(JMotionMovRotAdvFile*)Mov;
+      fang=TInt3(mv->FieldAng1,mv->FieldAng2,mv->FieldAng3);
+    }
+    else if(Mov->Type==JMotionMov::RotTransFile){
+      const JMotionMovPathFile* mv=(JMotionMovPathFile*)Mov;
+      fang=TInt3(mv->FieldAng1,mv->FieldAng2,mv->FieldAng3);
+    }
+    else Run_Exceptioon("Motion type does not match.");
+    const double angx=(fang.x>=0? angxyz0.x+tfactor*(angxyz.x-angxyz0.x): 0);
+    const double angy=(fang.y>=0? angxyz0.y+tfactor*(angxyz.y-angxyz0.y): 0);
+    const double angz=(fang.z>=0? angxyz0.z+tfactor*(angxyz.z-angxyz0.z): 0);
+    newangxyz=TDouble3(angx,angy,angz);
+  }
+  //printf("index:%u  t:%g  newpos:%f\n",DfIndex,t,newpos);
+  return(newangxyz);
 }
 
 //==============================================================================
@@ -324,8 +393,9 @@ void JMotionObj::LinkMovs(){
     JMotionMov* mov=Movs[c];
     if(mov->NextId){
       mov->SetNextMov(MovGetPointer(mov->NextId));
-      if(!mov->NextMov)
-        Run_Exceptioon(fun::PrintStr("The movement with id=%u refers to another non-existent movement (id=%u) within the object.",mov->Id,mov->NextId)); 
+      if(!mov->NextMov)Run_Exceptioon(fun::PrintStr(
+        "The movement with id=%u refers to another non-existent movement (id=%u) within the object."
+        ,mov->Id,mov->NextId)); 
     }
   }
   for(unsigned c=0;c<Children.size();c++)Children[c]->LinkMovs();
@@ -556,6 +626,45 @@ bool JMotionObj::ProcesTime(double timestep,double dt,JMotionObj** lismov
               modif=true;
               //printf(" PT>> t:%f ang:%f newang:%f\n",t,ang,newang);
             }break;
+            case JMotionMov::RotAdvFile:{
+              const JMotionMovRotAdvFile* mv=(JMotionMovRotAdvFile*)mov;
+              double t=timestep-amov->Start;
+              if(t<0)t=0;
+              t+=amov->DfTimes[0];
+              t+=(amov->Flash? -mv->Time: dtmov);
+              const char* axes=mv->Axes.c_str();
+              const bool intrinsic=mv->Intrinsic;
+              tdouble3 newangxyz=amov->DfGetNewAngXYZ(t);
+              tdouble3 angxyz=newangxyz-amov->DfLastAngXYZ;
+              ModPos.RotateXYZ(TDouble3(newangxyz.x-amov->DfLastAngXYZ.x
+                                       ,newangxyz.y-amov->DfLastAngXYZ.y
+                                       ,newangxyz.z-amov->DfLastAngXYZ.z)
+                                       ,mv->Center,axes,intrinsic);
+              amov->DfLastAngXYZ=newangxyz;
+              modif=true;
+              //printf(" PT>> t:%f ang:%f newang:%f\n",t,ang,newang);
+            }break;
+            case JMotionMov::RotTransFile:{
+              JMotionMovPathFile* mv=(JMotionMovPathFile*)mov;
+              double t=timestep-amov->Start;
+              if(t<0)t=0;
+              t+=amov->DfTimes[0];
+              t+=(amov->Flash? -mv->Time: dtmov);
+              const bool movecenter = mv->MoveCenter;
+              const bool intrinsic = mv->Intrinsic;
+              const char* axes = mv->Axes.c_str();
+              tdouble3 newpos=amov->DfGetNewPos(t);
+              tdouble3 dpos = newpos-amov->DfLastPos;
+              tdouble3 newangxyz=amov->DfGetNewAngXYZ(t);
+              tdouble3 angxyz=newangxyz-amov->DfLastAngXYZ;
+              ModPos.Move(dpos);
+              if(movecenter)mv->Center = mv->Center + dpos;
+              ModPos.RotateXYZ(angxyz,mv->Center,axes,intrinsic);
+              amov->DfLastAngXYZ=newangxyz;
+              amov->DfLastPos=newpos;
+              modif=true;
+              //printf(" PT>> t:%f ang:%f newang:%f\n",t,ang,newang);
+            }break;
           }
           //-Cambia al movimiento enlazado con el actual para terminar de consumir el dt.
           if((dtover>0||dtmov==0)&&mov->NextMov!=NULL){
@@ -596,9 +705,12 @@ bool JMotionObj::GetMov(unsigned& ref,tdouble3& mvsimple
   ,JMatrix4d& mvmatrix)const
 {
   ref=Ref;
-  bool simple=ModPos.IsSimple();
+  const bool simple=ModPos.IsSimple();
   if(simple)mvsimple=ModPos.GetSimple();
-  else mvmatrix=ModPos.GetMatrix();
+  else{
+	  mvmatrix=ModPos.GetMatrix();
+	  //if(ModPos.GetSimple()!= TDouble3(0.0))mvsimple=ModPos.GetSimple(); //TODO Check for failure
+  }
   return(simple);
 }
 
@@ -642,43 +754,69 @@ void JMotionObj::CopyConfigMovs(JMotion& mot)const{
       }break; 
       case JMotionMov::RectilinearAce:{
         JMotionMovRectAce* mv=(JMotionMovRectAce*)Movs[c];
-        mot.MovAddRectilinearAce(Id,mv->Id,mv->NextId,mv->Time,mv->Ace,mv->Vel,mv->VelPrev);
+        mot.MovAddRectilinearAce(Id,mv->Id,mv->NextId,mv->Time,mv->Ace,mv->Vel
+          ,mv->VelPrev);
       }break; 
       case JMotionMov::Rotation:{
         JMotionMovRot* mv=(JMotionMovRot*)Movs[c];
-        mot.MovAddRotation(Id,mv->Id,mv->NextId,mv->Time,mv->AngDegrees,mv->Axis->P1,mv->Axis->P2,mv->VelAng,false);
+        mot.MovAddRotation(Id,mv->Id,mv->NextId,mv->Time,mv->AngDegrees
+          ,mv->Axis->P1,mv->Axis->P2,mv->VelAng,false);
       }break;
       case JMotionMov::RotationAce:{
         JMotionMovRotAce* mv=(JMotionMovRotAce*)Movs[c];
-        mot.MovAddRotationAce(Id,mv->Id,mv->NextId,mv->Time,mv->AngDegrees,mv->Axis->P1,mv->Axis->P2,mv->AceAng,mv->VelAng,mv->VelPrev,false);
+        mot.MovAddRotationAce(Id,mv->Id,mv->NextId,mv->Time,mv->AngDegrees
+          ,mv->Axis->P1,mv->Axis->P2,mv->AceAng,mv->VelAng,mv->VelPrev,false);
       }break;
       case JMotionMov::Circular:{
         JMotionMovCir* mv=(JMotionMovCir*)Movs[c];
-        mot.MovAddCircular(Id,mv->Id,mv->NextId,mv->Time,mv->AngDegrees,mv->Axis->P1,mv->Axis->P2,mv->Ref->P1,mv->VelAng,false);
+        mot.MovAddCircular(Id,mv->Id,mv->NextId,mv->Time,mv->AngDegrees
+          ,mv->Axis->P1,mv->Axis->P2,mv->Ref->P1,mv->VelAng,false);
       }break;
       case JMotionMov::CircularAce:{
         JMotionMovCirAce* mv=(JMotionMovCirAce*)Movs[c];
-        mot.MovAddCircularAce(Id,mv->Id,mv->NextId,mv->Time,mv->AngDegrees,mv->Axis->P1,mv->Axis->P2,mv->Ref->P1,mv->AceAng,mv->VelAng,mv->VelPrev,false);
+        mot.MovAddCircularAce(Id,mv->Id,mv->NextId,mv->Time,mv->AngDegrees
+          ,mv->Axis->P1,mv->Axis->P2,mv->Ref->P1,mv->AceAng,mv->VelAng
+          ,mv->VelPrev,false);
       }break;
       case JMotionMov::RectilinearSinusoidal:{
         JMotionMovRectSinu* mv=(JMotionMovRectSinu*)Movs[c];
-        mot.MovAddRecSinu(Id,mv->Id,mv->NextId,mv->Time,mv->AngDegrees,mv->Freq,mv->Ampl,mv->Phase,mv->PhasePrev,false);
+        mot.MovAddRecSinu(Id,mv->Id,mv->NextId,mv->Time,mv->AngDegrees
+          ,mv->Freq,mv->Ampl,mv->Phase,mv->PhasePrev,false);
       }break;
       case JMotionMov::RotationSinusoidal:{
         JMotionMovRotSinu* mv=(JMotionMovRotSinu*)Movs[c];
-        mot.MovAddRotSinu(Id,mv->Id,mv->NextId,mv->Time,mv->AngDegrees,mv->Axis->P1,mv->Axis->P2,mv->Freq,mv->Ampl,mv->Phase,mv->PhasePrev,false);
+        mot.MovAddRotSinu(Id,mv->Id,mv->NextId,mv->Time,mv->AngDegrees
+          ,mv->Axis->P1,mv->Axis->P2,mv->Freq,mv->Ampl,mv->Phase
+          ,mv->PhasePrev,false);
       }break;
       case JMotionMov::CircularSinusoidal:{
         JMotionMovCirSinu* mv=(JMotionMovCirSinu*)Movs[c];
-        mot.MovAddCirSinu(Id,mv->Id,mv->NextId,mv->Time,mv->AngDegrees,mv->Axis->P1,mv->Axis->P2,mv->Ref->P1,mv->Freq,mv->Ampl,mv->Phase,mv->PhasePrev,false);
+        mot.MovAddCirSinu(Id,mv->Id,mv->NextId,mv->Time,mv->AngDegrees
+          ,mv->Axis->P1,mv->Axis->P2,mv->Ref->P1,mv->Freq,mv->Ampl
+          ,mv->Phase,mv->PhasePrev,false);
       }break;
       case JMotionMov::RectilinearFile:{
         JMotionMovRectFile* mv=(JMotionMovRectFile*)Movs[c];
-        mot.MovAddRectilinearFile(Id,mv->Id,mv->NextId,mv->Time,mv->File,mv->Fields,mv->FieldTime,mv->FieldX,mv->FieldY,mv->FieldZ);
+        mot.MovAddRectilinearFile(Id,mv->Id,mv->NextId,mv->Time,mv->File
+          ,mv->Fields,mv->FieldTime,mv->FieldX,mv->FieldY,mv->FieldZ);
       }break;
       case JMotionMov::RotationFile:{
         JMotionMovRotFile* mv=(JMotionMovRotFile*)Movs[c];
-        mot.MovAddRotationFile(Id,mv->Id,mv->NextId,mv->Time,mv->AngDegrees,mv->Axis->P1,mv->Axis->P2,mv->File);
+        mot.MovAddRotationFile(Id,mv->Id,mv->NextId,mv->Time,mv->AngDegrees
+          ,mv->Axis->P1,mv->Axis->P2,mv->File);
+      }break;
+      case JMotionMov::RotAdvFile:{
+        JMotionMovRotAdvFile* mv=(JMotionMovRotAdvFile*)Movs[c];
+        mot.MovAddRotationAdvFile(Id,mv->Id,mv->NextId,mv->Time
+          ,mv->AngDegrees,mv->Center,mv->File,mv->Fields,mv->FieldTime
+          ,mv->FieldAng1,mv->FieldAng2,mv->FieldAng3,mv->Intrinsic,mv->Axes);
+      }break;
+      case JMotionMov::RotTransFile:{
+        JMotionMovPathFile* mv=(JMotionMovPathFile*)Movs[c];
+        mot.MovAddPathFile(Id,mv->Id,mv->NextId,mv->Time,mv->AngDegrees
+          ,mv->Center,mv->File,mv->Fields,mv->FieldTime,mv->FieldX,mv->FieldY
+          ,mv->FieldZ,mv->FieldAng1,mv->FieldAng2,mv->FieldAng3,mv->MoveCenter
+          ,mv->Intrinsic,mv->Axes);
       }break;
       case JMotionMov::Nulo:{
         JMotionMovNull* mv=(JMotionMovNull*)Movs[c];

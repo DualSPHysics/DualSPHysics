@@ -23,6 +23,7 @@
 
 #include "TypesDef.h"
 #include "JObject.h"
+#include "JMotionData.h"
 
 class JXml;
 class TiXmlNode;
@@ -48,7 +49,10 @@ public:
     ,Rotation
     ,RectilinearFile
     ,RectilinearAce
-    ,Rectilinear,Wait
+    ,Rectilinear
+    ,Wait
+    ,RotAdvFile
+    ,RotTransFile
   }TpMotionMov; 
 
   const unsigned Id;
@@ -288,48 +292,13 @@ public:
   void WriteXml(TiXmlNode* node)const;
 };
 
-
-//==============================================================================
-//##############################################################################
-//==============================================================================
-class JMotionDataFile : protected JObject
-{
-private:
-  static const unsigned SIZEMAX=104857600; ///<Maximum file size (100mb).
-
-  unsigned Size;   //-Posiciones reservadas para vectores
-  unsigned Count;  //-Numero de posiciones
-  double*   Times;     //-Tiempos
-  tdouble3* ValuesPos; //-Posiciones.
-  double*   ValuesAng; //-Angulos, siemgre en grados.
-
-  void Reset();
-  void Resize(unsigned size);
-  void LoadFilePos(std::string dirdata,std::string file,const int fields
-    ,const int fieldtime,const int fieldx,const int fieldy,const int fieldz);
-  void LoadFileAng(std::string dirdata,std::string file,bool angdegrees);
-
-public:
-  const bool PosType;    //-Indica que se almacenan posiciones.
-  JMotionDataFile(std::string dirdata,std::string file,const int fields
-    ,const int fieldtime,const int fieldx,const int fieldy,const int fieldz);
-  JMotionDataFile(std::string dirdata,std::string file,bool angdegrees);
-  ~JMotionDataFile();
-
-  unsigned GetCount()const{ return(Count); }
-  const double*   GetTimes()const{ return(Times); }
-  const tdouble3* GetValuesPos()const{ return(ValuesPos); }
-  const double*   GetValuesAng()const{ return(ValuesAng); }
-};
-
-
 //==============================================================================
 //##############################################################################
 //==============================================================================
 class JMotionMovRectFile : public JMotionMovBlock
 {
 private:
-  JMotionDataFile* DataFile;
+  JMotionDataMov* DataFile;
 public:
   const std::string* DirData;
   const std::string File;
@@ -353,8 +322,7 @@ public:
   void WriteXml(TiXmlNode* node)const;
 
   void PrepareData(){  
-    if(!DataFile)DataFile=new JMotionDataFile(*DirData,File,Fields
-      ,FieldTime,FieldX,FieldY,FieldZ);
+    if(!DataFile)DataFile=new JMotionDataMov(*DirData,File,Fields,FieldTime,FieldX,FieldY,FieldZ);
   }
   unsigned GetCount()const{  return(DataFile->GetCount());  }
   const double*   GetTimes()const{  return(DataFile->GetTimes());  }
@@ -367,7 +335,7 @@ public:
 class JMotionMovRotFile : public JMotionMovPart
 {
 private:
-  JMotionDataFile* DataFile;
+  JMotionDataRotAxis* DataFile;
 public:
   const std::string* DirData;
   const std::string File;
@@ -386,11 +354,107 @@ public:
   void WriteXml(TiXmlNode* node)const;
 
   void PrepareData(){
-    if(!DataFile)DataFile=new JMotionDataFile(*DirData,File,AngDegrees);
+    if(!DataFile)DataFile=new JMotionDataRotAxis(*DirData,File,AngDegrees);
   }
   unsigned GetCount()const{ return(DataFile->GetCount()); }
   const double* GetTimes()const{ return(DataFile->GetTimes()); }
   const double* GetValuesAng()const{ return(DataFile->GetValuesAng()); }
+};
+
+//==============================================================================
+//##############################################################################
+//==============================================================================
+class JMotionMovRotAdvFile : public JMotionMovPart
+{
+private:
+  JMotionDataRotEuler* DataFile;
+public:
+  const std::string* DirData;
+  const std::string File;
+  const int Fields;
+  const bool AngDegrees;
+  const int FieldTime;
+  const int FieldAng1;
+  const int FieldAng2;
+  const int FieldAng3;
+  const tdouble3 Center;
+  const bool Intrinsic;
+  const std::string Axes;
+//==============================================================================
+  JMotionMovRotAdvFile(unsigned id,unsigned nextid,double time,bool angdegrees
+    ,const std::string* dirdata,const std::string& file,int fields,int fieldtime
+    ,int fieldang1,int fieldang2,int fieldang3,const tdouble3 center
+    ,const bool intrinsic,const std::string& axes)
+    :JMotionMovPart("JMotionMovRotAdvFile",RotAdvFile,id,nextid,time)
+    ,DirData(dirdata),AngDegrees(angdegrees),File(file),Fields(fields)
+    ,FieldTime(fieldtime),FieldAng1(fieldang1),FieldAng2(fieldang2)
+    ,FieldAng3(fieldang3),Center(center),Intrinsic(intrinsic),Axes(axes)
+  {
+    DataFile=NULL;
+  }
+  ~JMotionMovRotAdvFile(){
+    DestructorActive=true; delete DataFile; DataFile=NULL;
+  }
+  void WriteXml(TiXmlNode* node)const;
+  void PrepareData(){
+    if(!DataFile)DataFile=new JMotionDataRotEuler(*DirData,File,Fields
+      ,FieldTime,FieldAng1,FieldAng2,FieldAng3,AngDegrees);
+  }
+  unsigned GetCount()const{ return(DataFile->GetCount()); }
+  const double* GetTimes()const{ return(DataFile->GetTimes()); }
+  const tdouble3* GetValuesAngXYZ()const{ return(DataFile->GetValuesAng3()); }
+};
+
+//==============================================================================
+//##############################################################################
+//==============================================================================
+class JMotionMovPathFile : public JMotionMovPart
+{
+private:
+  JMotionDataPath* DataFile;
+public:
+  const std::string* DirData;
+  const std::string File;
+  const int Fields;
+  const bool AngDegrees;
+  const int FieldTime;
+  const int FieldX;
+  const int FieldY;
+  const int FieldZ;
+  const int FieldAng1;
+  const int FieldAng2;
+  const int FieldAng3;
+  const bool MoveCenter;
+  const bool Intrinsic;
+  const std::string Axes;
+  tdouble3 Center;
+  //tdouble3 ActualCenter;
+//==============================================================================
+  JMotionMovPathFile(unsigned id,unsigned nextid,double time,bool angdegrees
+    ,const std::string* dirdata,const std::string& file,int fields,int fieldtime
+    ,int fieldx,int fieldy,int fieldz,int fieldang1,int fieldang2,int fieldang3
+    ,const tdouble3 center,const bool movecenter,const bool intrinsic
+    ,const std::string& axes)
+    :JMotionMovPart("JMotionMovPathFile",RotTransFile,id,nextid,time)
+    ,DirData(dirdata),AngDegrees(angdegrees),File(file),Fields(fields)
+    ,FieldTime(fieldtime),FieldX(fieldx),FieldY(fieldy),FieldZ(fieldz)
+    ,FieldAng1(fieldang1),FieldAng2(fieldang2),FieldAng3(fieldang3)
+    ,Center(center),MoveCenter(movecenter),Intrinsic(intrinsic),Axes(axes)
+  {
+    DataFile=NULL;
+  }
+  ~JMotionMovPathFile(){
+    DestructorActive=true; delete DataFile; DataFile=NULL;
+  }
+  void WriteXml(TiXmlNode* node)const;
+  void PrepareData(){
+    if(!DataFile)DataFile=new JMotionDataPath(*DirData,File,Fields,FieldTime
+      ,FieldX,FieldY,FieldZ,FieldAng1,FieldAng2,FieldAng3,AngDegrees);
+  }
+  unsigned GetCount()const{ return(DataFile->GetCount()); }
+  const double* GetTimes()const{ return(DataFile->GetTimes()); }
+  const tdouble3* GetValuesAngXYZ()const{ return(DataFile->GetValuesAng3());}
+  const tdouble3* GetValuesPos()const{  return(DataFile->GetValuesPos());}
 };
 
 //==============================================================================
