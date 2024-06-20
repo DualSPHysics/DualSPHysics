@@ -24,7 +24,7 @@
     <Keyword>Win32Proj</Keyword>
     <ProjectName>DualSPHysics</ProjectName>
     <CudaToolkitCustomDir>$(CUDA_PATH_V11_7)</CudaToolkitCustomDir>
-    <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'" Label="Configuration">
@@ -632,6 +632,7 @@ rem %CudaNvcc% -ccbin "$(VCInstallDir)bin" %gpuhw% -use_fast_math -c %ptxinfo% -
     <ClInclude Include="..\source\JMLPistonsGpu.h" />
     <ClInclude Include="..\source\JDsMooredFloatings.h" />
     <ClInclude Include="..\source\JMotion.h" />
+    <ClInclude Include="..\source\JMotionData.h" />
     <ClInclude Include="..\source\JMotionEvent.h" />
     <ClInclude Include="..\source\JMotionList.h" />
     <ClInclude Include="..\source\JMotionMov.h" />
@@ -830,6 +831,7 @@ rem %CudaNvcc% -ccbin "$(VCInstallDir)bin" %gpuhw% -use_fast_math -c %ptxinfo% -
     <ClCompile Include="..\source\JMLPistonsGpu.cpp" />
     <ClCompile Include="..\source\JDsMooredFloatings.cpp" />
     <ClCompile Include="..\source\JMotion.cpp" />
+    <ClCompile Include="..\source\JMotionData.cpp" />
     <ClCompile Include="..\source\JMotionList.cpp" />
     <ClCompile Include="..\source\JMotionMov.cpp" />
     <ClCompile Include="..\source\JMotionObj.cpp" />

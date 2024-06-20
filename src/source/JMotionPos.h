@@ -40,11 +40,12 @@ private:
   bool TypeSimple;
 
 public:
-
   JMotionPos();
   void Reset();
   void Move(const tdouble3& dis);
   void Rotate(double ang,const tdouble3& axisp1,const tdouble3& axisp2);
+  void RotateXYZ(const tdouble3& angxyz,const tdouble3& center
+    ,const char* axes="XYZ",const bool intrinsic=false);
   void MoveMix(const JMotionPos& modpos);
   void ToMatrix();
 
@@ -57,7 +58,6 @@ public:
   tdouble3 GetSimple()const{ return(PosSimple); }
   JMatrix4d GetMatrix()const{ return(PosMatrix); }
 };
-
 
 #endif
 

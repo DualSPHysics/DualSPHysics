@@ -25,6 +25,7 @@
 #include "JMotionList.h"
 #include "Functions.h"
 #include "JXml.h"
+#include "JMatrix4.h"
 #include <algorithm>
 
 using namespace std;
@@ -306,13 +307,19 @@ void JMotion::MovAddRectilinearFile(unsigned objid,unsigned id,unsigned nextid
   ,double time,const std::string& file,int fields,int fieldtime,int fieldx
   ,int fieldy,int fieldz)
 {
-  if(fieldtime<0)Run_Exceptioon("The \'time\' is not defined.");
-  if(fieldtime>=0 && fieldtime>=fields)Run_Exceptioon("the position of field \'time\' is invalid.");
-  if(fieldx<0 && fieldy<0 && fieldz<0)Run_Exceptioon("You need at least one position field.");
-  if(fieldx>=0 && fieldx>=fields)Run_Exceptioon("the position of field \'x\' is invalid.");
-  if(fieldy>=0 && fieldy>=fields)Run_Exceptioon("the position of field \'y\' is invalid.");
-  if(fieldz>=0 && fieldz>=fields)Run_Exceptioon("the position of field \'z\' is invalid.");
-  MovAdd(objid,new JMotionMovRectFile(id,nextid,time,&DirData,file,fields,fieldtime,fieldx,fieldy,fieldz));
+  if(fieldtime<0)Run_ExceptioonFile("The \'time\' is not defined.",file);
+  if(fieldtime>=0 && fieldtime>=fields)
+    Run_ExceptioonFile("the position of field \'time\' is invalid.",file);
+  if(fieldx<0 && fieldy<0 && fieldz<0)
+    Run_ExceptioonFile("You need at least one position field.",file);
+  if(fieldx>=0 && fieldx>=fields)
+    Run_ExceptioonFile("the position of field \'x\' is invalid.",file);
+  if(fieldy>=0 && fieldy>=fields)
+    Run_ExceptioonFile("the position of field \'y\' is invalid.",file);
+  if(fieldz>=0 && fieldz>=fields)
+    Run_ExceptioonFile("the position of field \'z\' is invalid.",file);
+  MovAdd(objid,new JMotionMovRectFile(id,nextid,time,&DirData,file
+    ,fields,fieldtime,fieldx,fieldy,fieldz));
 }
 //==============================================================================
 // Incorpora un movimiento de rotacion a partir de datos de un fichero.
@@ -323,6 +330,80 @@ void JMotion::MovAddRotationFile(unsigned objid,unsigned id,unsigned nextid
 {
   MovAdd(objid,new JMotionMovRotFile(id,nextid,time,angdegrees
     ,AxisAdd(objid,axisp1,axisp2),&DirData,file));
+}
+
+//==============================================================================
+// Incorpora un movimiento de rotacion Euleriana a partir de datos de un fichero.
+// - fields: Numero total de campos en el fichero.
+// - fieldtime: Posicion del campo time dentro de fields.
+// - fieldangx: Posicion del campo angx dentro de fields (menor que 0 se ignora).
+// - fieldangy: Posicion del campo angy dentro de fields (menor que 0 se ignora).
+// - fieldangz: Posicion del campo angz dentro de fields (menor que 0 se ignora).
+//==============================================================================
+void JMotion::MovAddRotationAdvFile(unsigned objid,unsigned id,unsigned nextid
+  ,double time,bool angdegrees,const tdouble3& center,const std::string& file
+  ,int fields,int fieldtime,int fieldang1,int fieldang2,int fieldang3,
+	bool intrinsic,const std::string& axes)
+{
+  if(fields<=0)  Run_ExceptioonFile("Fields number is not defined.",file);
+  if(fieldtime<0)Run_ExceptioonFile("The \'time\' is not defined.",file);
+  if(fieldtime>=0 && fieldtime>=fields)
+    Run_ExceptioonFile("the position of field \'time\' is invalid.",file);
+  if(fieldang1<0 && fieldang2<0 && fieldang3<0)
+    Run_ExceptioonFile("You need at least one angle field.",file);
+  if(fieldang1>=0 && fieldang1>=fields)
+    Run_ExceptioonFile("the position of field \'ang1\' is invalid.",file);
+  if(fieldang2>=0 && fieldang2>=fields)
+    Run_ExceptioonFile("the position of field \'ang2\' is invalid.",file);
+  if(fieldang3>=0 && fieldang3>=fields)
+    Run_ExceptioonFile("the position of field \'ang3\' is invalid.",file);
+  if(!JMatrix4d::CheckRotateAxes(axes.c_str()))
+    Run_ExceptioonFile("the definition of axes is invalid, it must be XYZ,ZYZ,etc.",file);
+  MovAdd(objid,new JMotionMovRotAdvFile(id,nextid,time,angdegrees,&DirData
+    ,file,fields,fieldtime,fieldang1,fieldang2,fieldang3,center,intrinsic,axes));
+}
+
+//==============================================================================
+// Incorpora un movimiento de desplazamiento + rotacion Euleriana a partir de 
+// datos de un fichero.
+// - fields: Numero total de campos en el fichero.
+// - fieldtime: Posicion del campo time dentro de fields.
+// - fieldx: Posicion del campo x dentro de fields (menor que 0 se ignora).
+// - fieldy: Posicion del campo y dentro de fields (menor que 0 se ignora).
+// - fieldz: Posicion del campo z dentro de fields (menor que 0 se ignora).
+// - fieldangx: Posicion del campo angx dentro de fields (menor que 0 se ignora).
+// - fieldangy: Posicion del campo angy dentro de fields (menor que 0 se ignora).
+// - fieldangz: Posicion del campo angz dentro de fields (menor que 0 se ignora).
+//==============================================================================
+void JMotion::MovAddPathFile(unsigned objid,unsigned id,unsigned nextid
+  ,double time,bool angdegrees,const tdouble3& center,const std::string& file
+  ,int fields,int fieldtime,int fieldx,int fieldy,int fieldz,int fieldang1
+  ,int fieldang2,int fieldang3,bool movecenter,bool intrinsic
+  ,const std::string& axes)
+{
+  if(fields<=0)  Run_ExceptioonFile("Fields number is not defined.",file);
+  if(fieldtime<0)Run_ExceptioonFile("The \'time\' is not defined.",file);
+  if(fieldtime>=0 && fieldtime>=fields)
+    Run_ExceptioonFile("the position of field \'time\' is invalid.",file);
+  if(fieldang1<0 && fieldang2<0 && fieldang3<0)
+    Run_ExceptioonFile("You need at least one angle field.",file);
+  if(fieldx>=0 && fieldx>=fields)
+    Run_ExceptioonFile("the position of field \'x\' is invalid.",file);
+  if(fieldy>=0 && fieldy>=fields)
+    Run_ExceptioonFile("the position of field \'y\' is invalid.",file);
+  if(fieldz>=0 && fieldz>=fields)
+    Run_ExceptioonFile("the position of field \'z\' is invalid.",file);
+  if(fieldang1>=0 && fieldang1>=fields)
+    Run_ExceptioonFile("the position of field \'ang1\' is invalid.",file);
+  if(fieldang2>=0 && fieldang2>=fields)
+    Run_ExceptioonFile("the position of field \'ang2\' is invalid.",file);
+  if(fieldang3>=0 && fieldang3>=fields)
+    Run_ExceptioonFile("the position of field \'ang3\' is invalid.",file);
+  if(!JMatrix4d::CheckRotateAxes(axes.c_str()))
+    Run_ExceptioonFile("the definition of axes is invalid, it must be XYZ,ZYX,etc.",file);
+  MovAdd(objid,new JMotionMovPathFile(id,nextid,time,angdegrees,&DirData
+    ,file,fields,fieldtime,fieldx,fieldy,fieldz,fieldang1,fieldang2,fieldang3
+    ,center,movecenter,intrinsic,axes));
 }
 
 //==============================================================================
@@ -402,8 +483,9 @@ bool JMotion::ProcesTimeSimple(double timestep,double dt){
       unsigned ref;
       tdouble3 mvsimple;
       JMatrix4d mvmatrix;
-      if(GetMov(c,ref,mvsimple,mvmatrix))MotList->Sp_Movedt(ref,mvsimple,dt);//-Simple movement. | Movimiento simple.
-      else MotList->Sp_Movedt(ref,mvmatrix.GetMatrix4d(),dt); //-Movement using a matrix. | Movimiento con matriz.
+      const bool issimple=GetMov(c,ref,mvsimple,mvmatrix);
+      if(issimple)MotList->Sp_Movedt(ref,mvsimple,dt);        //-Simple movement.
+      else MotList->Sp_Movedt(ref,mvmatrix.GetMatrix4d(),dt); //-Movement using a matrix.
     }
   }
   MotList->TimeStep=timestep+dt;
@@ -620,10 +702,12 @@ void JMotion::ReadXml(const std::string& dirdata,JXml* jxml,TiXmlNode* node
         //printf("ObjAdd(%d,%d,%d)\n",id,idp,(name=="objreal"? jxml->GetAttributeInt(ele,"ref"): -1));
         ReadXml(dirdata,jxml,ele,id,id);
       }
-      else if(name=="wait" || name=="mvrect" || name=="mvrectace" || name=="mvrot"
-        || name=="mvrotace" || name=="mvcir" || name=="mvcirace" || name=="mvrectsinu"
-        || name=="mvrotsinu" || name=="mvcirsinu" || name=="mvpredef" || name=="mvfile"
-        || name=="mvrectfile" || name=="mvrotfile" || name=="mvnull")
+      else if(name=="wait" || name=="mvrect" || name=="mvrectace"
+        || name=="mvrot" || name=="mvrotace" || name=="mvcir" || name=="mvcirace"
+        || name=="mvrectsinu" || name=="mvrotsinu" || name=="mvcirsinu"
+        || name=="mvpredef" || name=="mvfile" || name=="mvrectfile"
+        || name=="mvrotfile" || name == "mvrotadvfile" || name=="mvpathfile"
+        || name=="mvnull")
       {
         int mvid=jxml->GetAttributeInt(ele,"id");
         double time=0;
@@ -667,7 +751,8 @@ void JMotion::ReadXml(const std::string& dirdata,JXml* jxml,TiXmlNode* node
           double ace=jxml->ReadElementDouble(ele,"ace","ang");
           bool velpre=(ele->FirstChildElement("velini")==NULL);
           double velini=(!velpre? jxml->ReadElementDouble(ele,"velini","ang"): 0);
-          MovAddRotationAce(idp,mvid,nextid,time,angdegrees,axisp1,axisp2,ace,velini,velpre,true);      
+          MovAddRotationAce(idp,mvid,nextid,time,angdegrees,axisp1,axisp2
+            ,ace,velini,velpre,true);      
           //printf("MovAddRotationAce(%d,%d,%d,%g)\n",id,mvid,nextid,time);
         }
         else if(name=="mvcir"){
@@ -676,7 +761,8 @@ void JMotion::ReadXml(const std::string& dirdata,JXml* jxml,TiXmlNode* node
           if(axisp1==axisp2)jxml->ErrReadElement(ele,"axisp2",false,msgaxiserror);
           tdouble3 ref=jxml->ReadElementDouble3(ele,"ref");
           double vel=jxml->ReadElementDouble(ele,"vel","ang");
-          MovAddCircular(idp,mvid,nextid,time,angdegrees,axisp1,axisp2,ref,vel,true);       
+          MovAddCircular(idp,mvid,nextid,time,angdegrees,axisp1,axisp2
+            ,ref,vel,true);       
           //printf("MovAddCircular(%d,%d,%d,%g)\n",id,mvid,nextid,time);
         }
         else if(name=="mvcirace"){
@@ -687,7 +773,8 @@ void JMotion::ReadXml(const std::string& dirdata,JXml* jxml,TiXmlNode* node
           double ace=jxml->ReadElementDouble(ele,"ace","ang");
           bool velpre=(ele->FirstChildElement("velini")==NULL);
           double velini=(!velpre? jxml->ReadElementDouble(ele,"velini","ang"): 0);
-          MovAddCircularAce(idp,mvid,nextid,time,angdegrees,axisp1,axisp2,ref,ace,velini,velpre,true);      
+          MovAddCircularAce(idp,mvid,nextid,time,angdegrees,axisp1,axisp2
+            ,ref,ace,velini,velpre,true);      
           //printf("MovAddCircularAce(%d,%d,%d,%g)\n",id,mvid,nextid,time);
         }
         else if(name=="mvrectsinu"){
@@ -695,7 +782,8 @@ void JMotion::ReadXml(const std::string& dirdata,JXml* jxml,TiXmlNode* node
           tdouble3 ampl=jxml->ReadElementDouble3(ele,"ampl");
           bool phaseprev=(ele->FirstChildElement("phase")==NULL);
           tdouble3 phase=(!phaseprev? jxml->ReadElementDouble3(ele,"phase"): TDouble3(0));
-          MovAddRecSinu(idp,mvid,nextid,time,angdegrees,freq,ampl,phase,phaseprev,true);        
+          MovAddRecSinu(idp,mvid,nextid,time,angdegrees,freq,ampl,phase
+            ,phaseprev,true);        
           //printf("MovAddRecSinu(%d,%d,%d,%g)\n",id,mvid,nextid,time);
         }
         else if(name=="mvrotsinu"){
@@ -706,7 +794,8 @@ void JMotion::ReadXml(const std::string& dirdata,JXml* jxml,TiXmlNode* node
           double ampl=jxml->ReadElementDouble(ele,"ampl","v");
           bool phaseprev=(ele->FirstChildElement("phase")==NULL);
           double phase=(!phaseprev? jxml->ReadElementDouble(ele,"phase","v"): 0);
-          MovAddRotSinu(idp,mvid,nextid,time,angdegrees,axisp1,axisp2,freq,ampl,phase,phaseprev,true);      
+          MovAddRotSinu(idp,mvid,nextid,time,angdegrees,axisp1,axisp2,freq,ampl
+            ,phase,phaseprev,true);      
           //printf("MovAddRotSinu(%d,%d,%d,%g)\n",id,mvid,nextid,time);
         }
         else if(name=="mvcirsinu"){
@@ -718,28 +807,76 @@ void JMotion::ReadXml(const std::string& dirdata,JXml* jxml,TiXmlNode* node
           double ampl=jxml->ReadElementDouble(ele,"ampl","v");
           bool phaseprev=(ele->FirstChildElement("phase")==NULL);
           double phase=(!phaseprev? jxml->ReadElementDouble(ele,"phase","v"): 0);
-          MovAddCirSinu(idp,mvid,nextid,time,angdegrees,axisp1,axisp2,ref,freq,ampl,phase,phaseprev,true);      
+          MovAddCirSinu(idp,mvid,nextid,time,angdegrees,axisp1,axisp2,ref,freq
+            ,ampl,phase,phaseprev,true);      
           //printf("MovAddCirSinu(%d,%d,%d,%g)\n",id,mvid,nextid,time);
         }
         else if(name=="mvpredef" || name=="mvfile" || name=="mvrectfile"){
           TiXmlElement* efile=jxml->GetFirstElement(ele,"file");
+          //-Loads file configuration.
           string file=jxml->GetAttributeStr(efile,"name");
           int fields=jxml->GetAttributeInt(efile,"fields");
           int fieldtime=jxml->GetAttributeInt(efile,"fieldtime");
           int fieldx=jxml->GetAttributeInt(efile,"fieldx",true,-1);
           int fieldy=jxml->GetAttributeInt(efile,"fieldy",true,-1);
           int fieldz=jxml->GetAttributeInt(efile,"fieldz",true,-1);
-          MovAddRectilinearFile(idp,mvid,nextid,time,file,fields,fieldtime,fieldx,fieldy,fieldz);
+          //-Creates motion.
+          MovAddRectilinearFile(idp,mvid,nextid,time,file,fields,fieldtime
+            ,fieldx,fieldy,fieldz);
           //printf("MovAddRectilinearFile(%d,%d,%d,%g)\n",id,mvid,nextid,time);
         }
         else if(name=="mvrotfile"){
+          //-Loads file configuration.
+          TiXmlElement* efile=jxml->GetFirstElement(ele,"file");
+          string file=jxml->GetAttributeStr(efile,"name");
+          //-Loads other configuration.
           tdouble3 axisp1=jxml->ReadElementDouble3(ele,"axisp1");
           tdouble3 axisp2=jxml->ReadElementDouble3(ele,"axisp2");
           if(axisp1==axisp2)jxml->ErrReadElement(ele,"axisp2",false,msgaxiserror);
-          TiXmlElement* efile=jxml->GetFirstElement(ele,"file");
-          string file=jxml->GetAttributeStr(efile,"name");
+          //-Creates motion.
           MovAddRotationFile(idp,mvid,nextid,time,angdegrees,axisp1,axisp2,file);      
           //printf("MovAddRotationFile(%d,%d,%d,%g)\n",id,mvid,nextid,time);
+        }
+        else if(name=="mvrotadvfile"){
+          //-Loads file configuration.
+          TiXmlElement* efile=jxml->GetFirstElement(ele,"file");
+          string file=jxml->GetAttributeStr(efile,"name");
+          int fields=jxml->GetAttributeInt(efile,"fields",true,4);
+          int fieldtime=jxml->GetAttributeInt(efile,"fieldtime",true,0);
+          int fieldang1=jxml->GetAttributeInt(efile,"fieldang1",true,1);
+          int fieldang2=jxml->GetAttributeInt(efile,"fieldang2",true,2);
+          int fieldang3=jxml->GetAttributeInt(efile,"fieldang3",true,3);
+          //-Loads other configuration.
+          tdouble3 center=jxml->ReadElementDouble3(ele,"center");
+          bool intrinsic =jxml->ReadElementBool(ele,"intrinsic","value",true,false);
+          string axes=jxml->GetAttributeStr(efile,"axes",true,"XYZ");
+          //-Creates motion.
+          MovAddRotationAdvFile(idp,mvid,nextid,time,angdegrees,center,file
+            ,fields,fieldtime,fieldang1,fieldang2,fieldang3,intrinsic,axes);
+          //printf("MovAddRotationEulerFile(%d,%d,%d,%g)\n",id,mvid,nextid,time);
+        }
+        else if(name=="mvpathfile"){
+          //-Loads file configuration.
+          TiXmlElement* efile=jxml->GetFirstElement(ele,"file");
+          string file=jxml->GetAttributeStr(efile,"name");
+          int fields=jxml->GetAttributeInt(efile,"fields",true,7);
+          int fieldtime=jxml->GetAttributeInt(efile,"fieldtime",true,0);
+          int fieldx=jxml->GetAttributeInt(efile,"fieldx",true,1);
+          int fieldy=jxml->GetAttributeInt(efile,"fieldy",true,2);
+          int fieldz=jxml->GetAttributeInt(efile,"fieldz",true,3);
+          int fieldang1=jxml->GetAttributeInt(efile,"fieldang1",true,4);
+          int fieldang2=jxml->GetAttributeInt(efile,"fieldang2",true,5);
+          int fieldang3=jxml->GetAttributeInt(efile,"fieldang3",true,6);
+          //-Loads other configuration.
+          tdouble3 center=jxml->ReadElementDouble3(ele,"center");
+          bool movecenter=jxml->ReadElementBool(ele,"movecenter","value",true,true);
+          bool intrinsic =jxml->ReadElementBool(ele,"intrinsic","value",true,false);
+          string axes=jxml->GetAttributeStr(efile,"axes",true,"XYZ");
+          //-Creates motion.
+          MovAddPathFile(idp,mvid,nextid,time,angdegrees,center,file,fields
+            ,fieldtime,fieldx,fieldy,fieldz,fieldang1,fieldang2,fieldang3
+            ,movecenter,intrinsic,axes);
+          //printf("MovAddPathFile(%d,%d,%d,%g)\n",id,mvid,nextid,time);
         }
         else if(name=="mvnull"){
           MovAddNull(idp,mvid);
